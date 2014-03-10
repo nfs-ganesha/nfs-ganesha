@@ -57,350 +57,16 @@
 #include "export_mgr.h"
 #include "uid2grp.h"
 
-const char *Rpc_gss_svc_name[] = {
-	"no name", "RPCSEC_GSS_SVC_NONE", "RPCSEC_GSS_SVC_INTEGRITY",
-	"RPCSEC_GSS_SVC_PRIVACY"
-};
-
-/**
- * @brief Get numeric credentials from request
- *
- * @todo This MUST be refactored to not use TI-RPC private structures.
- * Instead, export appropriate functions from lib(n)tirpc.
- *
- * @param[in]  req              Incoming request.
- * @param[out] user_credentials Filled in structure with UID and GIDs
- *
- * @return true if successful, false otherwise
- *
- */
-bool get_req_uid_gid(struct svc_req *req,
-		     struct user_cred *user_credentials,
-		     export_perms_t *export_perms)
-{
-	struct authunix_parms *punix_creds = NULL;
-#ifdef _HAVE_GSSAPI
-	struct svc_rpc_gss_data *gd = NULL;
-	char principal[MAXNAMLEN + 1];
-#endif
-
-	if (user_credentials == NULL)
-		return false;
-
-	switch (req->rq_cred.oa_flavor) {
-	case AUTH_NONE:
-		/* Nothing to be done here... */
-		LogMidDebug(COMPONENT_DISPATCH,
-		  "Request xid=%u has authentication AUTH_NONE",
-		  req->rq_xid);
-		user_credentials->caller_flags |= USER_CRED_ANONYMOUS;
-		break;
-
-	case AUTH_UNIX:
-		/* We map the rq_cred to Authunix_parms */
-		punix_creds = (struct authunix_parms *) req->rq_clntcred;
-
-		/* Do we trust AUTH_SYS creds for groups or not ? */
-		if (export_perms->options &
-		    EXPORT_OPTION_MANAGE_GIDS) {
-			struct group_data *grpdata;
-
-			LogMidDebug(COMPONENT_DISPATCH,
-			     "Request xid=%u uses AUTH_UNIX, uid=%d,gid=%d won't trust altgrp",
-			     req->rq_xid,
-			     (int)punix_creds->aup_uid,
-			     (int)punix_creds->aup_gid);
-
-			if (!uid2grp(punix_creds->aup_uid,
-				     &user_credentials->caller_gdata))
-				return false;
-
-			grpdata = user_credentials->caller_gdata;
-			user_credentials->caller_uid = grpdata->uid;
-			user_credentials->caller_gid = grpdata->gid;
-			user_credentials->caller_glen = grpdata->nbgroups;
-			user_credentials->caller_garray = grpdata->groups;
-
-			LogMidDebug(COMPONENT_DISPATCH, "----> Uid=%u Gid=%u",
-				   (unsigned int)user_credentials->caller_uid,
-				   (unsigned int)user_credentials->caller_gid);
-		} else {
-			LogMidDebug(COMPONENT_DISPATCH,
-			     "Request xid=%u uses AUTH_UNIX, uid=%d,gid=%d",
-			     req->rq_xid,
-			     (int)punix_creds->aup_uid,
-			     (int)punix_creds->aup_gid);
-
-			user_credentials->caller_uid = punix_creds->aup_uid;
-			user_credentials->caller_gid = punix_creds->aup_gid;
-			user_credentials->caller_glen = punix_creds->aup_len;
-			user_credentials->caller_garray = punix_creds->aup_gids;
-
-			LogMidDebug(COMPONENT_DISPATCH, "----> Uid=%u Gid=%u",
-				    (unsigned int)user_credentials->caller_uid,
-				    (unsigned int)user_credentials->caller_gid);
-		}
-		break;
-
-#ifdef _HAVE_GSSAPI
-	case RPCSEC_GSS:
-		if (user_credentials->caller_flags & USER_CRED_GSS_PROCESSED) {
-			/* Only process credentials once. */
-			LogMidDebug(COMPONENT_DISPATCH,
-				     "Request xid=%u has authentication RPCSEC_GSS, uid=%d, gid=%d",
-				     req->rq_xid, user_credentials->caller_uid,
-				     user_credentials->caller_gid);
-			break;
-		}
-
-		user_credentials->caller_flags |= USER_CRED_GSS_PROCESSED;
-		LogMidDebug(COMPONENT_DISPATCH,
-			     "Request xid=%u has authentication RPCSEC_GSS",
-			     req->rq_xid);
-		/* Get the gss data to process them */
-		gd = SVCAUTH_PRIVATE(req->rq_auth);
-
-		if (isFullDebug(COMPONENT_RPCSEC_GSS)) {
-			OM_uint32 maj_stat = 0;
-			OM_uint32 min_stat = 0;
-			char ptr[256];
-
-			gss_buffer_desc oidbuff;
-
-			LogMidDebug(COMPONENT_RPCSEC_GSS,
-				     "----> RPCSEC_GSS svc=%u RPCSEC_GSS_SVC_NONE=%u "
-				     "RPCSEC_GSS_SVC_INTEGRITY=%u RPCSEC_GSS_SVC_PRIVACY=%u",
-				     gd->sec.svc, RPCSEC_GSS_SVC_NONE,
-				     RPCSEC_GSS_SVC_INTEGRITY,
-				     RPCSEC_GSS_SVC_PRIVACY);
-
-			memcpy(&ptr, (void *)gd->ctx + 4, 4);
-			LogMidDebug(COMPONENT_RPCSEC_GSS,
-				     "----> Client=%s length=%lu  Qop=%u established=%u "
-				     "gss_ctx_id=%p|%p",
-				     (char *)gd->cname.value, gd->cname.length,
-				     gd->established, gd->sec.qop, gd->ctx,
-				     ptr);
-
-			maj_stat = gss_oid_to_str(&min_stat,
-						  gd->sec.mech,
-						  &oidbuff);
-
-			if (maj_stat != GSS_S_COMPLETE) {
-				LogMidDebug(COMPONENT_DISPATCH,
-					     "Error in gss_oid_to_str: %u|%u",
-					     maj_stat, min_stat);
-			} else {
-				LogMidDebug(COMPONENT_RPCSEC_GSS,
-					     "----> Client mech=%s len=%lu",
-					     (char *)oidbuff.value,
-					     oidbuff.length);
-
-				/* Release the string */
-				(void)gss_release_buffer(&min_stat, &oidbuff);
-			}
-		}
-
-		LogMidDebug(COMPONENT_RPCSEC_GSS,
-			     "Mapping principal %s to uid/gid",
-			     (char *)gd->cname.value);
-
-		memcpy(principal, gd->cname.value, gd->cname.length);
-		principal[gd->cname.length] = 0;
-
-		/* Convert to uid */
-#if _MSPAC_SUPPORT
-		if (!principal2uid(principal,
-				   &user_credentials->caller_uid,
-				   &user_credentials->caller_gid,
-				   gd)) {
-#else
-		if (!principal2uid(principal,
-				   &user_credentials->caller_uid,
-				   &user_credentials->caller_gid)) {
-#endif
-			LogWarn(COMPONENT_IDMAPPER,
-				"WARNING: Could not map principal to uid; mapping principal "
-				"to anonymous uid/gid");
-
-			/* For compatibility with Linux knfsd, we set the
-			 * uid/gid to anonymous when a name->uid mapping can't
-			 * be found.
-			 */
-			user_credentials->caller_flags |= USER_CRED_ANONYMOUS;
-
-			return true;
-		}
-
-		LogMidDebug(COMPONENT_DISPATCH, "----> Uid=%u Gid=%u",
-			     (unsigned int)user_credentials->caller_uid,
-			     (unsigned int)user_credentials->caller_gid);
-
-		if (export_perms->options &
-		    EXPORT_OPTION_MANAGE_GIDS) {
-			struct group_data *grpdata;
-
-			LogMidDebug(COMPONENT_DISPATCH,
-			     "Request xid=%u uses RPCSEC_GSS, uid=%u,gid=%u won't trust altgrp",
-			     req->rq_xid,
-			     (unsigned int)user_credentials->caller_uid,
-			     (unsigned int)user_credentials->caller_gid);
-
-			if (!uid2grp(user_credentials->caller_uid,
-				     &user_credentials->caller_gdata))
-				return false;
-
-			grpdata = user_credentials->caller_gdata;
-			user_credentials->caller_glen = grpdata->nbgroups;
-			user_credentials->caller_garray = grpdata->groups;
-		} else {
-			/* Gids are not managed, use no altrgroups */
-			user_credentials->caller_glen = 0;
-			user_credentials->caller_garray = 0;
-		}
-
-		break;
-#endif				/* _USE_GSSRPC */
-
-	default:
-		LogMidDebug(COMPONENT_DISPATCH,
-			     "FAILURE: Request xid=%u, has unsupported authentication %d",
-			     req->rq_xid, req->rq_cred.oa_flavor);
-		/* Reject the request for weak authentication and
-		 * return to worker
-		 */
-		return false;
-
-		break;
-	}
-	return true;
-}
-
-void nfs_check_anon(export_perms_t *export_perms, exportlist_t *export,
-		    struct user_cred *user_credentials)
-{
-	/* Do we need to revert? */
-	if (user_credentials->caller_flags & USER_CRED_SAVED) {
-		user_credentials->caller_uid =
-		    user_credentials->caller_uid_saved;
-		user_credentials->caller_gid =
-		    user_credentials->caller_gid_saved;
-		user_credentials->caller_glen =
-		    user_credentials->caller_glen_saved;
-		if (user_credentials->caller_gpos_root <
-		    user_credentials->caller_glen_saved)
-			user_credentials->caller_garray[user_credentials->
-							caller_gpos_root] = 0;
-	}
-
-	/* Do we have root access ? */
-	/* Are we squashing _all_ users to the anonymous uid/gid ? */
-	if (((user_credentials->caller_uid == 0)
-	     && !(export_perms->options & EXPORT_OPTION_ROOT))
-	    || export_perms->options & EXPORT_OPTION_ALL_ANONYMOUS
-	    || ((user_credentials->caller_flags & USER_CRED_ANONYMOUS) != 0)) {
-		LogMidDebug(COMPONENT_DISPATCH,
-			     "Anonymizing for export %d caller uid=%d gid=%d to uid=%d gid=%d",
-			     export->id, user_credentials->caller_uid,
-			     user_credentials->caller_gid,
-			     export_perms->anonymous_uid,
-			     export_perms->anonymous_gid);
-
-		/* Save old credentials */
-		user_credentials->caller_uid_saved =
-		    user_credentials->caller_uid;
-		user_credentials->caller_gid_saved =
-		    user_credentials->caller_gid;
-		user_credentials->caller_glen_saved =
-		    user_credentials->caller_glen;
-		user_credentials->caller_gpos_root =
-		    user_credentials->caller_glen + 1;
-		user_credentials->caller_flags |= USER_CRED_SAVED;
-
-		/* Map uid and gid to "nobody" */
-		user_credentials->caller_uid = export_perms->anonymous_uid;
-		user_credentials->caller_gid = export_perms->anonymous_gid;
-
-		/* No alternate groups for "nobody" */
-		user_credentials->caller_glen = 0;
-	} else if ((user_credentials->caller_gid == 0)
-		   && !(export_perms->options & EXPORT_OPTION_ROOT)) {
-		LogMidDebug(COMPONENT_DISPATCH,
-			     "Anonymizing for export %d caller uid=%d gid=%d to uid=%d gid=%d",
-			     export->id, user_credentials->caller_uid,
-			     user_credentials->caller_gid,
-			     user_credentials->caller_uid,
-			     export_perms->anonymous_gid);
-
-		/* Save old credentials */
-		user_credentials->caller_uid_saved =
-		    user_credentials->caller_uid;
-		user_credentials->caller_gid_saved =
-		    user_credentials->caller_gid;
-		user_credentials->caller_glen_saved =
-		    user_credentials->caller_glen;
-		user_credentials->caller_gpos_root =
-		    user_credentials->caller_glen + 1;
-		user_credentials->caller_flags |= USER_CRED_SAVED;
-
-		/* Map gid to "nobody" */
-		user_credentials->caller_gid = export_perms->anonymous_gid;
-
-		/* Keep alternate groups, we may squash them below */
-	} else {
-		LogMidDebug(COMPONENT_DISPATCH,
-			     "Accepting credentials for export %d caller uid=%d gid=%d",
-			     export->id, user_credentials->caller_uid,
-			     user_credentials->caller_gid);
-	}
-
-	/* Check the garray for gid 0 to squash */
-	if (!(export_perms->options & EXPORT_OPTION_ROOT)
-	    && user_credentials->caller_glen > 0) {
-		unsigned int i;
-		for (i = 0; i < user_credentials->caller_glen; i++) {
-			if (user_credentials->caller_garray[i] == 0) {
-				if ((user_credentials->
-				     caller_flags & USER_CRED_SAVED) == 0) {
-					/* Save old credentials */
-					user_credentials->caller_uid_saved =
-					    user_credentials->caller_uid;
-					user_credentials->caller_gid_saved =
-					    user_credentials->caller_gid;
-					user_credentials->caller_glen_saved =
-					    user_credentials->caller_glen;
-					user_credentials->caller_gpos_root =
-					    user_credentials->caller_glen + 1;
-					user_credentials->caller_flags |=
-					    USER_CRED_SAVED;
-				}
-
-				/* Save the position of the first instance
-				 * of root in the garray
-				 */
-				LogMidDebug(COMPONENT_DISPATCH,
-					     "Squashing alternate group #%d to %d",
-					     i, export_perms->anonymous_gid);
-				if (user_credentials->caller_gpos_root >=
-				    user_credentials->caller_glen_saved)
-					user_credentials->caller_gpos_root = i;
-				user_credentials->caller_garray[i] =
-				    export_perms->anonymous_gid;
-			}
-		}
-	}
-}
-
 void squash_setattr(export_perms_t *export_perms,
-		    struct user_cred *user_credentials, struct attrlist *attr)
+		    struct req_op_context *req_ctx,
+		    struct attrlist *attr)
 {
 	if (attr->mask & ATTR_OWNER) {
 		if (export_perms->options & EXPORT_OPTION_ALL_ANONYMOUS)
 			attr->owner = export_perms->anonymous_uid;
 		else if (!(export_perms->options & EXPORT_OPTION_ROOT)
 			 && (attr->owner == 0)
-			 && (user_credentials->caller_uid ==
-			     export_perms->anonymous_uid))
+			 && ((req_ctx->cred_flags & UID_SQUASHED) != 0))
 			attr->owner = export_perms->anonymous_uid;
 	}
 
@@ -415,33 +81,10 @@ void squash_setattr(export_perms_t *export_perms,
 			attr->group = export_perms->anonymous_gid;
 		else if (!(export_perms->options & EXPORT_OPTION_ROOT)
 			 && (attr->group == 0)
-			 &&
-			 ((user_credentials->caller_gid ==
-			   export_perms->anonymous_gid)
-			  ||
-			  (((user_credentials->caller_flags & USER_CRED_SAVED)
-			    && (user_credentials->caller_gpos_root <
-				user_credentials->caller_glen_saved)))))
+			 && ((req_ctx->cred_flags & (GID_SQUASHED |
+						     GARRAY_SQUASHED)) != 0))
 			attr->group = export_perms->anonymous_gid;
 	}
-}
-
-void init_credentials(struct user_cred *user_credentials)
-{
-	memset(user_credentials, 0, sizeof(*user_credentials));
-	user_credentials->caller_uid = (uid_t) ANON_UID;
-	user_credentials->caller_gid = (gid_t) ANON_GID;
-}
-
-void clean_credentials(struct user_cred *user_credentials)
-{
-#ifdef _HAVE_GSSAPI
-	if (((user_credentials->caller_flags & USER_CRED_GSS_PROCESSED) != 0)
-	    && (user_credentials->caller_garray != NULL)) {
-		gsh_free(user_credentials->caller_garray);
-	}
-#endif
-	init_credentials(user_credentials);
 }
 
 /**
@@ -531,4 +174,292 @@ int nfs_rpc_req2client_cred(struct svc_req *req, nfs_client_cred_t *pcred)
 	}
 
 	return 1;
+}
+
+/**
+ * @brief Get numeric credentials from request
+ *
+ * @todo This MUST be refactored to not use TI-RPC private structures.
+ * Instead, export appropriate functions from lib(n)tirpc.
+ *
+ * @param[in]  req              Incoming request.
+ * @param[out] user_credentials Filled in structure with UID and GIDs
+ *
+ * @return true if successful, false otherwise
+ *
+ */
+bool get_req_creds(struct svc_req *req,
+		   struct req_op_context *req_ctx,
+		   export_perms_t *export_perms)
+{
+	unsigned int i;
+	const char *auth_label = "UNKNOWN";
+	gid_t **garray_copy = &req_ctx->caller_garray_copy;
+#ifdef _HAVE_GSSAPI
+	struct svc_rpc_gss_data *gd = NULL;
+	char principal[MAXNAMLEN + 1];
+#endif
+
+	/* Make sure we clear out all the cred_flags except CREDS_LOADED and
+	 * CREDS_ANON.
+	 */
+	req_ctx->cred_flags &= CREDS_LOADED | CREDS_ANON;
+
+	switch (req->rq_cred.oa_flavor) {
+	case AUTH_NONE:
+		/* Nothing to be done here... */
+		req_ctx->cred_flags |= CREDS_LOADED | CREDS_ANON;
+		auth_label = "AUTH_NONE";
+		break;
+
+	case AUTH_SYS:
+		if ((req_ctx->cred_flags & CREDS_LOADED) == 0) {
+			struct authunix_parms *creds = NULL;
+
+			/* We map the rq_cred to Authunix_parms */
+			creds = (struct authunix_parms *) req->rq_clntcred;
+			req_ctx->original_creds.caller_uid = creds->aup_uid;
+			req_ctx->original_creds.caller_gid = creds->aup_gid;
+			req_ctx->original_creds.caller_glen = creds->aup_len;
+			req_ctx->original_creds.caller_garray = creds->aup_gids;
+			req_ctx->cred_flags |= CREDS_LOADED;
+		}
+
+		/* Copy original_creds creds */
+		*req_ctx->creds = req_ctx->original_creds;
+
+		/* Do we trust AUTH_SYS creds for groups or not ? */
+		if ((export_perms->options & EXPORT_OPTION_MANAGE_GIDS)
+		    != 0) {
+			req_ctx->cred_flags |= MANAGED_GIDS;
+			garray_copy = &req_ctx->managed_garray_copy;
+		}
+
+		auth_label = "AUTH_SYS";
+		break;
+
+#ifdef _HAVE_GSSAPI
+	case RPCSEC_GSS:
+		if ((req_ctx->cred_flags & CREDS_LOADED) == 0) {
+			/* Get the gss data to process them */
+			gd = SVCAUTH_PRIVATE(req->rq_auth);
+
+			memcpy(principal, gd->cname.value, gd->cname.length);
+			principal[gd->cname.length] = 0;
+
+			LogMidDebug(COMPONENT_RPCSEC_GSS,
+				     "Mapping RPCSEC_GSS principal %s to uid/gid",
+				     principal);
+
+			/* Convert to uid */
+#if _MSPAC_SUPPORT
+			if (!principal2uid(principal,
+					   &req_ctx->original_creds.caller_uid,
+					   &req_ctx->original_creds.caller_gid,
+					   gd)) {
+#else
+			if (!principal2uid(principal,
+					   &req_ctx->original_creds.caller_uid,
+					   &req_ctx->original_creds.caller_gid)) {
+#endif
+				LogWarn(COMPONENT_IDMAPPER,
+					"Could not map principal %s to uid",
+					principal);
+				/* For compatibility with Linux knfsd, we set
+				 * the uid/gid to anonymous when a name->uid
+				 * mapping can't be found.
+				 */
+				req_ctx->cred_flags |= CREDS_ANON |
+						       CREDS_LOADED;
+				auth_label = "RPCSEC_GSS (no mapping)";
+				break;
+			}
+
+			req_ctx->cred_flags |= CREDS_LOADED;
+		}
+
+		auth_label = "RPCSEC_GSS";
+		req_ctx->cred_flags |= MANAGED_GIDS;
+		garray_copy = &req_ctx->managed_garray_copy;
+
+		break;
+#endif				/* _USE_GSSRPC */
+
+	default:
+		LogMidDebug(COMPONENT_DISPATCH,
+			     "FAILURE: Request xid=%u, has unsupported authentication %d",
+			     req->rq_xid, req->rq_cred.oa_flavor);
+		/* Reject the request for weak authentication and
+		 * return to worker
+		 */
+		return false;
+
+		break;
+	}
+
+	/****************************************************************/
+	/* Mow check for anon creds or id squashing			*/
+	/****************************************************************/
+	if ((req_ctx->cred_flags & CREDS_ANON) != 0 ||
+	    ((export_perms->options & EXPORT_OPTION_ALL_ANONYMOUS) != 0) ||
+	    ((export_perms->options & EXPORT_OPTION_ROOT) == 0 &&
+	      req_ctx->original_creds.caller_uid == 0)) {
+		req_ctx->creds->caller_uid = export_perms->anonymous_uid;
+		req_ctx->creds->caller_gid = export_perms->anonymous_gid;
+		req_ctx->creds->caller_glen = 0;
+		LogMidDebug(COMPONENT_DISPATCH,
+			    "%s creds squashed to uid=%u, gid=%u",
+			    auth_label,
+			    req_ctx->creds->caller_uid,
+			    req_ctx->creds->caller_gid);
+		req_ctx->cred_flags |= UID_SQUASHED | GID_SQUASHED;
+		return true;
+	}
+
+	/* Now we will use the original_creds uid from original credential */
+	req_ctx->creds->caller_uid = req_ctx->original_creds.caller_uid;
+
+	/****************************************************************/
+	/* Now sqush group or use original_creds gid			*/
+	/****************************************************************/
+	if ((export_perms->options & EXPORT_OPTION_ROOT) == 0 &&
+	    req_ctx->original_creds.caller_gid == 0) {
+		/* Squash gid */
+		req_ctx->creds->caller_gid = export_perms->anonymous_gid;
+		req_ctx->cred_flags |= GID_SQUASHED;
+	} else {
+		/* Use original_creds gid */
+		req_ctx->creds->caller_gid = req_ctx->original_creds.caller_gid;
+	}
+
+	/****************************************************************/
+	/* Check if we have manage_gids.				*/
+	/****************************************************************/
+	if ((req_ctx->cred_flags & MANAGED_GIDS) != 0) {
+		/* Fetch the group data if required */
+		if (req_ctx->caller_gdata == NULL &&
+		    !uid2grp(req_ctx->original_creds.caller_uid,
+			     &req_ctx->caller_gdata)) {
+			/** @todo: do we really want to bail here? */
+			LogCrit(COMPONENT_DISPATCH,
+				"Attempt to fetch managed_gids failed");
+			return false;
+		}
+
+		req_ctx->creds->caller_glen = req_ctx->caller_gdata->nbgroups;
+		req_ctx->creds->caller_garray = req_ctx->caller_gdata->groups;
+	} else {
+		/* Use the original_creds group list */
+		req_ctx->creds->caller_glen   =
+					req_ctx->original_creds.caller_glen;
+		req_ctx->creds->caller_garray =
+					req_ctx->original_creds.caller_garray;
+	}
+
+	/****************************************************************/
+	/* Check the garray for gid 0 to squash				*/
+	/****************************************************************/
+
+	/* If no root squashing in caller_garray, return now */
+	if ((export_perms->options & EXPORT_OPTION_ROOT) != 0 ||
+	    req_ctx->creds->caller_glen == 0)
+		goto out;
+
+	for (i = 0; i < req_ctx->creds->caller_glen; i++) {
+		if (req_ctx->creds->caller_garray[i] == 0) {
+			/* Meed to make a copy, or use the old copy */
+			if ((*garray_copy) == NULL) {
+				/* Make a copy of the active garray */
+				(*garray_copy) =
+					gsh_malloc(req_ctx->creds->caller_glen *
+						   sizeof(gid_t));
+
+				if ((*garray_copy) == NULL) {
+					LogCrit(COMPONENT_DISPATCH,
+						"Attempt to sqaush caller_garray failed - no memory");
+					return false;
+				}
+
+				memcpy((*garray_copy),
+				       req_ctx->creds->caller_garray,
+				       req_ctx->creds->caller_glen *
+				       sizeof(gid_t));
+			}
+
+			/* Now squash the root id. Since the original copy is
+			 * always the same, any root ids in it were still in
+			 * the same place, so even if using a copy that had a
+			 * different anonymous_gid, we're fine.
+			 */
+			(*garray_copy)[i] = export_perms->anonymous_gid;
+
+			/* Indicate we squashed the caller_garray */
+			req_ctx->cred_flags |= GARRAY_SQUASHED;
+		}
+	}
+
+	/* If we squashed the caller_garray, use the squashed copy */
+	if ((req_ctx->cred_flags & GARRAY_SQUASHED) != 0)
+		req_ctx->creds->caller_garray = *garray_copy;
+
+out:
+
+	LogMidDebug(COMPONENT_DISPATCH,
+		    "%s creds mapped to uid=%u, gid=%u%s, glen=%d%s",
+		    auth_label,
+		    req_ctx->creds->caller_uid,
+		    req_ctx->creds->caller_gid,
+		    (req_ctx->cred_flags & GID_SQUASHED) != 0
+		    	? " (squashed)"
+		    	: "",
+		    req_ctx->creds->caller_glen,
+		    (req_ctx->cred_flags & MANAGED_GIDS) != 0
+			? ((req_ctx->cred_flags & GARRAY_SQUASHED) != 0
+				? " (managed and squashed)"
+				: " (managed)")
+			: ((req_ctx->cred_flags & GARRAY_SQUASHED) != 0
+				? " (squashed)"
+				: ""));
+
+	return true;
+}
+
+/**
+ * @brief Initialize request context and credentials.
+ *
+ * @param[in] req_ctx The request context to initialize.
+ */
+void init_credentials(struct req_op_context *req_ctx)
+{
+	memset(req_ctx->creds, 0, sizeof(*req_ctx->creds));
+	memset(&req_ctx->original_creds, 0, sizeof(req_ctx->original_creds));
+	req_ctx->creds->caller_uid = (uid_t) ANON_UID;
+	req_ctx->creds->caller_gid = (gid_t) ANON_GID;
+	req_ctx->caller_gdata = NULL;
+	req_ctx->caller_garray_copy = NULL;
+	req_ctx->managed_garray_copy = NULL;
+	req_ctx->cred_flags = 0;
+}
+
+/**
+ * @brief Release temporary credential resources.
+ *
+ * @param[in] req_ctx The request context to clean up.
+ */
+void clean_credentials(struct req_op_context *req_ctx)
+{
+	/* If Manage_gids is used, unref the group list. */
+	if (req_ctx->caller_gdata != NULL)
+		uid2grp_unref(req_ctx->caller_gdata);
+
+	/* Have we made a local copy of the managed_gids garray? */
+	if (req_ctx->managed_garray_copy != NULL)
+	    	gsh_free(req_ctx->caller_garray_copy);
+
+	/* Have we made a local copy of the AUTH_SYS garray? */
+	if (req_ctx->caller_garray_copy != NULL)
+	    	gsh_free(req_ctx->caller_garray_copy);
+
+	/* Prepare the request context and creds for re-use */
+	init_credentials(req_ctx);
 }

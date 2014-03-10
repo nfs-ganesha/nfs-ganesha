@@ -249,7 +249,7 @@ int nfs3_mknod(nfs_arg_t *arg, exportlist_t *export,
 	rok->obj.handle_follows = TRUE;
 
 	/*Set attributes if required */
-	squash_setattr(&export->export_perms, req_ctx->creds, &sattr);
+	squash_setattr(&export->export_perms, req_ctx, &sattr);
 
 	if ((sattr.mask & (ATTR_ATIME | ATTR_MTIME | ATTR_CTIME))
 	    || ((sattr.mask & ATTR_OWNER)

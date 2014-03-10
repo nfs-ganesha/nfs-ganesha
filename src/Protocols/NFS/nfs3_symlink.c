@@ -179,7 +179,7 @@ int nfs3_symlink(nfs_arg_t *arg, exportlist_t *export,
 	/* If owner or owner_group are set, and the credential was
 	 * squashed, then we must squash the set owner and owner_group.
 	 */
-	squash_setattr(&export->export_perms, req_ctx->creds, &sattr);
+	squash_setattr(&export->export_perms, req_ctx, &sattr);
 
 	if ((sattr.mask & (ATTR_ATIME | ATTR_MTIME | ATTR_CTIME))
 	    || ((sattr.mask & ATTR_OWNER)

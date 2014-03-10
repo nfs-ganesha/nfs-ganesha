@@ -728,7 +728,7 @@ static nfsstat4 open4_create(OPEN4args *arg, compound_data_t *data,
 		 * squashed, then we must squash the set owner and owner_group.
 		 */
 		squash_setattr(&data->export_perms,
-			       data->req_ctx->creds,
+			       data->req_ctx,
 			       &sattr);
 
 		/* Skip setting attributes if all asked attributes

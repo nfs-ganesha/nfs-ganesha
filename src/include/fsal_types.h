@@ -102,23 +102,21 @@ typedef struct fsal_init_info__ {
 
 /** object name.  */
 
-#define USER_CRED_ANONYMOUS     0x0001
-#define USER_CRED_GSS_PROCESSED 0x0002
-#define USER_CRED_SAVED         0x0004
-
 /* Used to record the uid and gid of the client that made a request. */
 struct user_cred {
 	uid_t caller_uid;
 	gid_t caller_gid;
-	uid_t caller_uid_saved;
-	gid_t caller_gid_saved;
-	int caller_flags;
-	unsigned int caller_glen_saved;
-	unsigned int caller_gpos_root;
 	unsigned int caller_glen;
 	gid_t *caller_garray;
-	struct group_data *caller_gdata;
 };
+
+/* Define bit values for cred_flags */
+#define CREDS_LOADED	0x01
+#define CREDS_ANON	0x02
+#define UID_SQUASHED	0x04
+#define GID_SQUASHED	0x08
+#define GARRAY_SQUASHED	0x10
+#define MANAGED_GIDS	0x20
 
 /**
  * @brief request op context
@@ -155,6 +153,11 @@ struct user_cred {
 
 struct req_op_context {
 	struct user_cred *creds;	/*< resolved user creds from request */
+	struct user_cred original_creds;	/*< Saved creds */
+	struct group_data *caller_gdata;
+	gid_t *caller_garray_copy;	/*< Copied garray from AUTH_SYS */
+	gid_t *managed_garray_copy;	/*< Copied garray from managed gids */
+	int	cred_flags;		/* Various cred flags */
 	sockaddr_t *caller_addr;	/*< IP connection info */
 	const uint64_t *clientid;	/*< Client ID of caller, NULL if
 					   unknown/not applicable. */

@@ -280,15 +280,11 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 		data->export = &data->req_ctx->export->export;
 
 		/* Restore creds */
-		if (!get_req_uid_gid(data->req,
-				     data->req_ctx->creds,
-				     &data->export_perms)) {
+		if (!get_req_creds(data->req,
+				   data->req_ctx,
+				   &data->export_perms)) {
 			LogCrit(COMPONENT_NFS_V4_PSEUDO,
 				"Failure to restore creds");
-		} else {
-			nfs_check_anon(&data->export_perms,
-				       data->export,
-				       data->req_ctx->creds);
 		}
 	}
 

@@ -728,9 +728,6 @@ static void nfs_rpc_execute(request_data_t *req,
 	export_perms.anonymous_uid = (uid_t) ANON_UID;
 	export_perms.anonymous_gid = (gid_t) ANON_GID;
 
-	/* Initialized user_credentials */
-	init_credentials(&user_credentials);
-
 	/* set up the request context
 	 */
 	memset(&req_ctx, 0, sizeof(struct req_op_context));
@@ -738,6 +735,9 @@ static void nfs_rpc_execute(request_data_t *req,
 	req_ctx.caller_addr = &worker_data->hostaddr;
 	req_ctx.nfs_vers = svcreq->rq_vers;
 	req_ctx.req_type = req->rtype;
+
+	/* Initialized user_credentials */
+	init_credentials(&req_ctx);
 
 	/* XXX must hold lock when calling any TI-RPC channel function,
 	 * including svc_sendreply2 and the svcerr_* calls */
@@ -1132,20 +1132,6 @@ static void nfs_rpc_execute(request_data_t *req,
 		}
 	}
 
-	/* Get user credentials */
-	if (reqnfs->funcdesc->dispatch_behaviour & NEEDS_CRED) {
-		if (get_req_uid_gid(svcreq,
-				    &user_credentials,
-				    &export_perms) == false) {
-			LogInfo(COMPONENT_DISPATCH,
-				"could not get uid and gid, rejecting client %s",
-				req_ctx.client->hostaddr_str);
-
-			auth_rc = AUTH_TOOWEAK;
-			goto auth_failure;
-		}
-	}
-
 	/*
 	 * It is now time for checking if export list allows the machine
 	 * to perform the request
@@ -1214,15 +1200,26 @@ static void nfs_rpc_execute(request_data_t *req,
 		auth_rc = AUTH_TOOWEAK;
 		goto auth_failure;
 	} else {
-		/* Do the authentication stuff, if needed */
-		if (req_ctx.export != NULL
-		    && (reqnfs->funcdesc->
-			dispatch_behaviour & (NEEDS_CRED | NEEDS_EXPORT)) ==
-		    (NEEDS_CRED | NEEDS_EXPORT)) {
-			/* Swap the anonymous uid/gid if the user
-			 * should be anonymous */
-			nfs_check_anon(&export_perms, &req_ctx.export->export,
-				       &user_credentials);
+		/* Get user credentials */
+		if (reqnfs->funcdesc->dispatch_behaviour & NEEDS_CRED) {
+			if ((reqnfs->funcdesc->dispatch_behaviour &
+			     NEEDS_EXPORT) == 0) {
+				/* If NEEDS_CRED and not NEEDS_EXPORT,
+				 * don't squash
+				 */
+				export_perms.options = EXPORT_OPTION_ROOT;
+			}
+
+			if (get_req_creds(svcreq,
+					  &req_ctx,
+					  &export_perms) == false) {
+				LogInfo(COMPONENT_DISPATCH,
+					"could not get uid and gid, rejecting client %s",
+					req_ctx.client->hostaddr_str);
+
+				auth_rc = AUTH_TOOWEAK;
+				goto auth_failure;
+			}
 		}
 
 		/* processing
@@ -1257,11 +1254,6 @@ static void nfs_rpc_execute(request_data_t *req,
 							res_nfs);
 	}
 
-	/* If Manage_gids is used, unref the group list */
-	if (export_perms.options & EXPORT_OPTION_MANAGE_GIDS &&
-			user_credentials.caller_gdata) {
-		uid2grp_unref(user_credentials.caller_gdata);
-	}
  req_error:
 
 #ifdef USE_DBUS_STATS
@@ -1348,7 +1340,7 @@ static void nfs_rpc_execute(request_data_t *req,
 	}
 
  freeargs:
-	clean_credentials(&user_credentials);
+	clean_credentials(&req_ctx);
 	/* XXX no need for xprt slock across SVC_FREEARGS */
 	DISP_SUNLOCK(xprt);
 

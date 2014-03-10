@@ -396,7 +396,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 		/* If owner or owner_group are set, and the credential was
 		 * squashed, then we must squash the set owner and owner_group.
 		 */
-		squash_setattr(&data->export_perms, data->req_ctx->creds,
+		squash_setattr(&data->export_perms, data->req_ctx,
 			       &sattr);
 
 		/* Skip setting attributes if all asked attributes

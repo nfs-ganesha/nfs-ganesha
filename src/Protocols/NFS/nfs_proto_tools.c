@@ -4488,11 +4488,6 @@ int nfs4_MakeCred(compound_data_t *data)
 	nfs_export_check_access(data->req_ctx->caller_addr, data->export,
 				&data->export_perms);
 
-	if (!get_req_uid_gid(data->req,
-			     data->req_ctx->creds,
-			     &data->export_perms))
-		return NFS4ERR_ACCESS;
-
 	/* Check protocol version */
 	if ((data->export_perms.options & EXPORT_OPTION_NFSV4) == 0) {
 		LogInfo(COMPONENT_NFS_V4,
@@ -4501,6 +4496,7 @@ int nfs4_MakeCred(compound_data_t *data)
 			data->req_ctx->client->hostaddr_str);
 		return NFS4ERR_ACCESS;
 	}
+
 	/* Check transport type */
 	if (((xprt_type == XPRT_UDP)
 	     && ((data->export_perms.options & EXPORT_OPTION_UDP) == 0))
@@ -4513,6 +4509,7 @@ int nfs4_MakeCred(compound_data_t *data)
 			data->req_ctx->client->hostaddr_str);
 		return NFS4ERR_ACCESS;
 	}
+
 	/* Check if client is using a privileged port. */
 	if (((data->export_perms.options & EXPORT_OPTION_PRIVILEGED_PORT) != 0)
 	    && (port >= IPPORT_RESERVED)) {
@@ -4522,6 +4519,7 @@ int nfs4_MakeCred(compound_data_t *data)
 			data->req_ctx->client->hostaddr_str);
 		return NFS4ERR_ACCESS;
 	}
+
 	/* Test if export allows the authentication provided */
 	if (nfs_export_check_security
 	    (data->req, &data->export_perms, data->export) == FALSE) {
@@ -4531,8 +4529,13 @@ int nfs4_MakeCred(compound_data_t *data)
 			data->req_ctx->client->hostaddr_str);
 		return NFS4ERR_WRONGSEC;
 	}
-	nfs_check_anon(&data->export_perms, data->export,
-		       data->req_ctx->creds);
+
+	/* Get creds */
+	if (!get_req_creds(data->req,
+			   data->req_ctx,
+			   &data->export_perms))
+		return NFS4ERR_ACCESS;
+
 	return NFS4_OK;
 }
 
