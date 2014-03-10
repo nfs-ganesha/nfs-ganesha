@@ -371,13 +371,6 @@ static inline void set_current_entry(compound_data_t *data,
 /* Export list related functions */
 sockaddr_t *check_convert_ipv6_to_ipv4(sockaddr_t *ipv6, sockaddr_t *ipv4);
 
-bool get_req_creds(struct svc_req *req,
-		   struct req_op_context *req_ctx,
-		   export_perms_t *export_perms);
-
-void init_credentials(struct req_op_context *req_ctx);
-void clean_credentials(struct req_op_context *req_ctx);
-
 bool nfs_compare_clientcred(nfs_client_cred_t *cred1,
 			    nfs_client_cred_t *cred2);
 int nfs_rpc_req2client_cred(struct svc_req *req, nfs_client_cred_t *pcred);
@@ -391,10 +384,6 @@ bool nfs_export_check_security(struct svc_req *req,
 
 void LogClientListEntry(log_components_t component,
 			exportlist_client_entry_t *entry);
-
-void squash_setattr(export_perms_t *export_perms,
-		    struct req_op_context *req_ctx,
-		    struct attrlist *attr);
 
 bool init_export_root(struct gsh_export *exp);
 

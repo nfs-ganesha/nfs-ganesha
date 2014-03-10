@@ -40,6 +40,7 @@
 #include "nfs_proto_tools.h"
 #include "cache_inode_lru.h"
 #include "fsal_convert.h"
+#include "nfs_creds.h"
 
 static const char *open_tag = "OPEN";
 

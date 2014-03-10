@@ -41,6 +41,7 @@
 #include "nfs_proto_tools.h"
 #include "nfs_tools.h"
 #include "sal_functions.h"
+#include "nfs_creds.h"
 
 /**
  * @brief The NFS4_OP_SETATTR operation.

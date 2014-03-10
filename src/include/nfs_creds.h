@@ -47,38 +47,15 @@
 #include "nfs4.h"
 #include "mount.h"
 
-typedef enum CredType__ { CRED_NONE = 1, CRED_UNIX = 2, CRED_GSS =
-	    3 } CredType_t;
+bool get_req_creds(struct svc_req *req,
+		   struct req_op_context *req_ctx,
+		   export_perms_t *export_perms);
 
-typedef struct CredUnix__ {
-	u_int uid;
-	u_int gid;
-	/* May be we could had list of groups management */
-} CredUnix_t;
+void init_credentials(struct req_op_context *req_ctx);
+void clean_credentials(struct req_op_context *req_ctx);
 
-typedef struct CredGss__ {
-#if (defined(HAVE_KRB5) && defined(_HAVE_GSSAPI))
-	gss_qop_t qop;
-	gss_OID mech;
-	rpc_gss_svc_t svc;
-	gss_ctx_id_t context;
-#else
-	int dummy;
-#endif
-} CredGss_t;
-
-typedef union CredData__ {
-#ifdef HAVE_KRB5
-	CredUnix_t unix_cred;
-	CredGss_t gss_cred;
-#else
-	int dummy;
-#endif
-} CredData_t;
-
-typedef struct RPCSEC_GSS_cred__ {
-	CredType_t type;
-	CredData_t data;
-} RPCSEC_GSS_cred_t;
+void squash_setattr(export_perms_t *export_perms,
+		    struct req_op_context *req_ctx,
+		    struct attrlist *attr);
 
 #endif				/* _NFS_CREDS_H */
