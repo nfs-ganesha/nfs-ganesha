@@ -85,18 +85,6 @@ enum log_flag_index_t {
 };
 
 /**
- * @brief Description of a flag tha controls a log field.
- *
- */
-struct log_flag {
-	int lf_idx;		/*< The log field index this flag controls. */
-	bool_t lf_val;		/*< True/False value for the flag. */
-	int lf_ext;		/*< Extended value for the flag,
-				    if it has one. */
-	char *lf_name;		/*< Name of the flag. */
-};
-
-/**
  * @brief Define a set of possible time and date formats.
  *
  * These values will be stored in lf_ext for the LF_DATE and LF_TIME flags.
@@ -164,30 +152,6 @@ static struct logfields *logfields = &default_logfields;
  * user date and user time format plus room for blanks around them.
  */
 #define MAX_TD_FMT_LEN (MAX_TD_USER_LEN * 2 + 4)
-
-/**
- * @brief Actually define the flag variables with their default values.
- *
- * Flags that don't have an extended value will have lf_ext initialized to 0.
- *
- */
-struct log_flag tab_log_flag[] = {
-/*                          Extended
- * Index             Flag   Value       Name
- */
-	{LF_DATE, TRUE, TD_GANESHA, "DATE"},
-	{LF_TIME, TRUE, TD_GANESHA, "TIME"},
-	{LF_EPOCH, TRUE, 0, "EPOCH"},
-	{LF_HOSTAME, TRUE, 0, "HOSTNAME"},
-	{LF_PROGNAME, TRUE, 0, "PROGNAME"},
-	{LF_PID, TRUE, 0, "PID"},
-	{LF_THREAD_NAME, TRUE, 0, "THREAD_NAME"},
-	{LF_FILE_NAME, FALSE, 0, "FILE_NAME"},
-	{LF_LINE_NUM, FALSE, 0, "LINE_NUM"},
-	{LF_FUNCTION_NAME, TRUE, 0, "FUNCTION_NAME"},
-	{LF_COMPONENT, TRUE, 0, "COMPONENT"},
-	{LF_LEVEL, TRUE, 0, "LEVEL"},
-};
 
 static int log_to_syslog(struct log_facility *facility, log_levels_t level,
 			 struct display_buffer *buffer, char *compstr,
@@ -2262,49 +2226,6 @@ void rpc_warnx(char *fmt, ...)
 	va_end(ap);
 
 }
-
-/** @todo turn these into dbus admin methods */
-
-#if 0				/* _SNMP_ADM_ACTIVE */
-
-int getComponentLogLevel(snmp_adm_type_union *param, void *opt)
-{
-	long component = (long)opt;
-
-	strncpy(param->string,
-		ReturnLevelInt(component_log_level[component]),
-		sizeof(param->string));
-	param->string[sizeof(param->string) - 1] = '\0';
-	return 0;
-}
-
-int setComponentLogLevel(const snmp_adm_type_union *param, void *opt)
-{
-	long component = (long)opt;
-	int level_to_set = ReturnLevelAscii(param->string);
-
-	if (level_to_set == -1)
-		return -1;
-
-	if (component == COMPONENT_ALL) {
-		_SetLevelDebug(level_to_set);
-
-		LogChanges(
-		     "SNMP request changing log level for all components to %s",
-		     ReturnLevelInt(level_to_set));
-	} else {
-		LogChanges(
-		     "SNMP request changing log level of %s from %s to %s.",
-		     LogComponents[component].comp_name,
-		     ReturnLevelInt(component_log_level[component]),
-		     ReturnLevelInt(level_to_set));
-		component_log_level[component] = level_to_set;
-	}
-
-	return 0;
-}
-
-#endif				/* _SNMP_ADM_ACTIVE */
 
 #ifdef USE_DBUS
 
