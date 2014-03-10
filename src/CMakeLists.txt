@@ -83,10 +83,9 @@ include(${CMAKE_SOURCE_DIR}/cmake/maintainer_mode.cmake)
 
 # If we are in a git tree, then this CMakeLists.txt is in "src/" and go .git is in "src/.."
 IF( EXISTS ${CMAKE_SOURCE_DIR}/../.git/HEAD  )
-  message( STATUS "Compilation from within a git repository. Using GetGitRevisionDescription" )
-  include(GetGitRevisionDescription)
-  get_git_head_revision(GIT_REFSPEC _GIT_HEAD_COMMIT)
-  git_describe(_GIT_DESCRIBE)
+  message( STATUS "Compilation from within a git repository. Using git rev-parse HEAD")
+  EXEC_PROGRAM( git ARGS rev-parse HEAD OUTPUT_VARIABLE _GIT_HEAD_COMMIT)
+  EXEC_PROGRAM( git ARGS describe --long OUTPUT_VARIABLE _GIT_DESCRIBE)
 
 ELSE( EXISTS ${CMAKE_SOURCE_DIR}/../.git/HEAD  )
   message( STATUS "Outside a git repository, use saved data" )
