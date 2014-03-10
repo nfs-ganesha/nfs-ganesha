@@ -174,7 +174,8 @@ typedef enum log_type {
 typedef enum log_header_t {
 	LH_NONE,
 	LH_COMPONENT,
-	LH_ALL
+	LH_ALL,
+	NB_LH_TYPES
 } log_header_t;
 
 struct log_facility;
@@ -221,7 +222,7 @@ struct log_component_info {
 	bool comp_env_set;	/* level was set by env(), now RO */
 };
 
-extern log_levels_t component_log_level[COMPONENT_COUNT];
+extern log_levels_t *component_log_level;
 
 extern struct log_component_info LogComponents[COMPONENT_COUNT];
 

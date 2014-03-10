@@ -54,6 +54,7 @@
 #endif
 
 #include "nfs_core.h"
+#include "config_parsing.h"
 
 pthread_rwlock_t log_rwlock = PTHREAD_RWLOCK_INITIALIZER;
 
@@ -1674,6 +1675,8 @@ static int log_to_stream(struct log_facility *facility, log_levels_t level,
 	case LH_ALL:
 		msg = buffer->b_start;
 		break;
+	default:
+		msg = "Somehow header level got messed up!!";
 	}
 
 	rc = fputs(msg, stream);
@@ -1865,7 +1868,52 @@ void display_log_component_level(log_components_t component, char *file,
 		Fatal();
 }
 
-log_levels_t component_log_level[COMPONENT_COUNT];
+/**
+ * @brief Default logging levels
+ *
+ * These are for early initialization and whenever we
+ * have to fall back to something that will at least work...
+ */
+
+static log_levels_t default_log_levels[] = {
+	[COMPONENT_ALL] = NIV_NULL,
+	[COMPONENT_LOG] = NIV_EVENT,
+	[COMPONENT_LOG_EMERG] = NIV_EVENT,
+	[COMPONENT_MEMLEAKS] = NIV_EVENT,
+	[COMPONENT_FSAL] = NIV_EVENT,
+	[COMPONENT_NFSPROTO] = NIV_EVENT,
+	[COMPONENT_NFS_V4] = NIV_EVENT,
+	[COMPONENT_EXPORT] = NIV_EVENT,
+	[COMPONENT_FILEHANDLE] = NIV_EVENT,
+	[COMPONENT_DISPATCH] = NIV_EVENT,
+	[COMPONENT_CACHE_INODE] = NIV_EVENT,
+	[COMPONENT_CACHE_INODE_LRU] = NIV_EVENT,
+	[COMPONENT_HASHTABLE] = NIV_EVENT,
+	[COMPONENT_HASHTABLE_CACHE] = NIV_EVENT,
+	[COMPONENT_DUPREQ] = NIV_EVENT,
+	[COMPONENT_INIT] = NIV_EVENT,
+	[COMPONENT_MAIN] = NIV_EVENT,
+	[COMPONENT_IDMAPPER] = NIV_EVENT,
+	[COMPONENT_NFS_READDIR] = NIV_EVENT,
+	[COMPONENT_NFS_V4_LOCK] = NIV_EVENT,
+	[COMPONENT_CONFIG] = NIV_EVENT,
+	[COMPONENT_CLIENTID] = NIV_EVENT,
+	[COMPONENT_SESSIONS] = NIV_EVENT,
+	[COMPONENT_PNFS] = NIV_EVENT,
+	[COMPONENT_RW_LOCK] = NIV_EVENT,
+	[COMPONENT_NLM] = NIV_EVENT,
+	[COMPONENT_RPC] = NIV_EVENT,
+	[COMPONENT_NFS_CB] = NIV_EVENT,
+	[COMPONENT_THREAD] = NIV_EVENT,
+	[COMPONENT_NFS_V4_ACL] = NIV_EVENT,
+	[COMPONENT_STATE] = NIV_EVENT,
+	[COMPONENT_9P] = NIV_EVENT,
+	[COMPONENT_9P_DISPATCH] = NIV_EVENT,
+	[COMPONENT_FSAL_UP] = NIV_EVENT,
+	[COMPONENT_DBUS] = NIV_EVENT
+};
+
+log_levels_t *component_log_level = default_log_levels;
 
 struct log_component_info LogComponents[COMPONENT_COUNT] = {
 	[COMPONENT_ALL] = {
@@ -2366,220 +2414,680 @@ struct gsh_dbus_interface log_interface = {
 
 #endif				/* USE_DBUS */
 
-#define CONF_LABEL_LOG "LOG"
+enum facility_state {
+	FAC_IDLE,
+	FAC_ACTIVE,
+	FAC_DEFAULT
+};
+	
+struct facility_config {
+	struct glist_head fac_list;
+	char *facility_name;
+	char *dest;
+	enum facility_state state;
+	lf_function_t *func;
+	log_header_t headers;
+	log_levels_t max_level;
+	void *lf_private;
+};
+
+/**
+ * @brief Logger config block parameters
+ */
+
+struct logger_config {
+	log_levels_t default_level;
+	struct glist_head facility_list;
+	struct logfields *logfields;
+	log_levels_t *comp_log_level;
+};
+
+/**
+ * @brief Enumerated time and date format parameters
+ */
+
+static struct config_item_list timeformats[] = {
+	CONFIG_LIST_TOK("ganesha", TD_GANESHA),
+	CONFIG_LIST_TOK("true", TD_GANESHA),
+	CONFIG_LIST_TOK("local", TD_LOCAL),
+	CONFIG_LIST_TOK("8601", TD_8601),
+	CONFIG_LIST_TOK("ISO-8601", TD_8601),
+	CONFIG_LIST_TOK("ISO 8601", TD_8601),
+	CONFIG_LIST_TOK("ISO", TD_8601),
+	CONFIG_LIST_TOK("syslog", TD_SYSLOG),
+	CONFIG_LIST_TOK("syslog_usec",TD_SYSLOG_USEC),
+	CONFIG_LIST_TOK("false", TD_NONE),
+	CONFIG_LIST_TOK("none", TD_NONE),
+	CONFIG_LIST_TOK("user_defined", TD_USER),
+	CONFIG_LIST_EOL
+};
+
+/**
+ * @brief Logging format parameters
+ */
+
+static struct config_item format_options[] = {
+	CONF_ITEM_ENUM("date_format", TD_GANESHA, timeformats,
+		       logfields, datefmt),
+	CONF_ITEM_ENUM("time_format", TD_GANESHA, timeformats,
+		       logfields, timefmt),
+	CONF_ITEM_STR("user_date_format", 1, MAX_TD_FMT_LEN, NULL,
+		       logfields, user_date_fmt),
+	CONF_ITEM_STR("user_time_format", 1, MAX_TD_FMT_LEN, NULL,
+		       logfields, user_time_fmt),
+	CONF_ITEM_BOOL("EPOCH", true,
+		       logfields, disp_epoch),
+	CONF_ITEM_BOOL("HOSTNAME", true,
+		       logfields, disp_host),
+	CONF_ITEM_BOOL("PROGNAME", true,
+		       logfields, disp_prog),
+	CONF_ITEM_BOOL("PID", true,
+		       logfields, disp_pid),
+	CONF_ITEM_BOOL("THREAD_NAME", true,
+		       logfields, disp_threadname),
+	CONF_ITEM_BOOL("FILE_NAME", true,
+		       logfields, disp_filename),
+	CONF_ITEM_BOOL("LINE_NUM", true,
+		       logfields, disp_linenum),
+	CONF_ITEM_BOOL("FUNCTION_NAME", true,
+		       logfields, disp_funct),
+	CONF_ITEM_BOOL("COMPONENT", true,
+		       logfields, disp_comp),
+	CONF_ITEM_BOOL("LEVEL", true,
+		       logfields, disp_level),
+	CONFIG_EOL
+};
+
+/**
+ * @brief Initialize the log message format parameters
+ */
+
+static void *format_init(void *link_mem, void *self_struct)
+{
+	assert(link_mem != NULL || self_struct != NULL);
+
+	if (link_mem == NULL)
+		return NULL;
+	if (self_struct == NULL)
+		return gsh_calloc(1, sizeof(struct logfields));
+	else {
+		struct logfields *lf = self_struct;
+		if (lf->user_date_fmt != NULL)
+			gsh_free(lf->user_date_fmt);
+		if (lf->user_time_fmt != NULL)
+			gsh_free(lf->user_time_fmt);
+		gsh_free(lf);
+		return NULL;
+	}
+}
+
+/**
+ * @brief Commit the log format parameters
+ *
+ * I'd prefer that Date_format and Time_format be enums but they are not.
+ * They are enums except when they are not and we do hope that whatever
+ * that is can be digested by printf...
+ */
+
+static int format_commit(void *node, void *link_mem, void *self_struct)
+{
+	struct logfields *log = (struct logfields *)self_struct;
+	struct logfields **logp = link_mem;
+	struct logger_config *logger;
+	int errcnt = 0;
+
+	if (log->datefmt == TD_USER && log->user_date_fmt == NULL) {
+		LogCrit(COMPONENT_CONFIG,
+			"Date is \"user_set\" with empty date format.");
+		errcnt++;
+	}
+	if (log->datefmt != TD_USER && log->user_date_fmt != NULL) {
+		LogCrit(COMPONENT_CONFIG,
+			"Set user date format (%s) but not \"user_set\" format",
+			log->user_date_fmt);
+		errcnt++;
+	}
+	if (log->timefmt == TD_USER && log->user_time_fmt == NULL) {
+		LogCrit(COMPONENT_CONFIG,
+			"Time is \"user_set\" with empty time format.");
+		errcnt++;
+	}
+	if (log->timefmt != TD_USER && log->user_time_fmt != NULL) {
+		LogCrit(COMPONENT_CONFIG,
+			"Set time format string (%s) but not \"user_set\" format",
+			log->user_time_fmt);
+		errcnt++;
+	}
+	if (errcnt == 0) {
+		logger = container_of(logp, struct logger_config, logfields);
+		logger->logfields = log;
+	}
+	return errcnt;
+}
+
+/**
+ * @brief Log component levels
+ */
+
+static struct config_item_list log_levels[] = {
+	CONFIG_LIST_TOK("NIV_NULL", NIV_NULL),
+	CONFIG_LIST_TOK("NULL", NIV_NULL),
+	CONFIG_LIST_TOK("NIV_FATAL", NIV_FATAL),
+	CONFIG_LIST_TOK("FATAL", NIV_FATAL),
+	CONFIG_LIST_TOK("NIV_MAJ", NIV_MAJ),
+	CONFIG_LIST_TOK("MAJ", NIV_MAJ),
+	CONFIG_LIST_TOK("NIV_CRIT", NIV_CRIT),
+	CONFIG_LIST_TOK("CRIT", NIV_CRIT),
+	CONFIG_LIST_TOK("NIV_WARN", NIV_WARN),
+	CONFIG_LIST_TOK("WARN", NIV_WARN),
+	CONFIG_LIST_TOK("NIV_EVENT", NIV_EVENT),
+	CONFIG_LIST_TOK("EVENT", NIV_EVENT),
+	CONFIG_LIST_TOK("NIV_INFO", NIV_INFO),
+	CONFIG_LIST_TOK("INFO", NIV_INFO),
+	CONFIG_LIST_TOK("NIV_DEBUG", NIV_DEBUG),
+	CONFIG_LIST_TOK("DEBUG", NIV_DEBUG),
+	CONFIG_LIST_TOK("NIV_MID_DEBUG", NIV_MID_DEBUG),
+	CONFIG_LIST_TOK("M_DBG", NIV_MID_DEBUG),
+	CONFIG_LIST_TOK("NIV_FULL_DEBUG", NIV_FULL_DEBUG),
+	CONFIG_LIST_TOK("F_DBG", NIV_FULL_DEBUG),
+	CONFIG_LIST_EOL
+};
+
+/**
+ * @brief Logging components
+ */
+static struct config_item component_levels[] = {
+	CONF_INDEX_TOKEN("COMPONENT_ALL", NB_LOG_LEVEL, log_levels,
+			 COMPONENT_ALL, int),
+	CONF_INDEX_TOKEN("COMPONENT_LOG", NB_LOG_LEVEL, log_levels,
+			 COMPONENT_LOG, int),
+	CONF_INDEX_TOKEN("COMPONENT_LOG_EMERG", NB_LOG_LEVEL, log_levels,
+			 COMPONENT_LOG_EMERG, int),
+	CONF_INDEX_TOKEN("COMPONENT_MEMLEAKS", NB_LOG_LEVEL, log_levels,
+			 COMPONENT_MEMLEAKS, int),
+	CONF_INDEX_TOKEN("COMPONENT_FSAL", NB_LOG_LEVEL, log_levels,
+			 COMPONENT_FSAL, int),
+	CONF_INDEX_TOKEN("COMPONENT_NFSPROTO", NB_LOG_LEVEL, log_levels,
+			 COMPONENT_NFSPROTO, int),
+	CONF_INDEX_TOKEN("COMPONENT_NFS_V4", NB_LOG_LEVEL, log_levels,
+			 COMPONENT_NFS_V4, int),
+	CONF_INDEX_TOKEN("COMPONENT_FILEHANDLE", NB_LOG_LEVEL, log_levels,
+			 COMPONENT_FILEHANDLE, int),
+	CONF_INDEX_TOKEN("COMPONENT_DISPATCH", NB_LOG_LEVEL, log_levels,
+			 COMPONENT_DISPATCH, int),
+	CONF_INDEX_TOKEN("COMPONENT_CACHE_INODE", NB_LOG_LEVEL, log_levels,
+			 COMPONENT_CACHE_INODE, int),
+	CONF_INDEX_TOKEN("COMPONENT_CACHE_INODE_LRU", NB_LOG_LEVEL, log_levels,
+			 COMPONENT_CACHE_INODE_LRU, int),
+	CONF_INDEX_TOKEN("COMPONENT_HASHTABLE", NB_LOG_LEVEL, log_levels,
+			 COMPONENT_HASHTABLE, int),
+	CONF_INDEX_TOKEN("COMPONENT_HASHTABLE_CACHE", NB_LOG_LEVEL, log_levels,
+			 COMPONENT_HASHTABLE_CACHE, int),
+	CONF_INDEX_TOKEN("COMPONENT_DUPREQ", NB_LOG_LEVEL, log_levels,
+			 COMPONENT_DUPREQ, int),
+	CONF_INDEX_TOKEN("COMPONENT_INIT", NB_LOG_LEVEL, log_levels,
+			 COMPONENT_INIT, int),
+	CONF_INDEX_TOKEN("COMPONENT_MAIN", NB_LOG_LEVEL, log_levels,
+			 COMPONENT_MAIN, int),
+	CONF_INDEX_TOKEN("COMPONENT_IDMAPPER", NB_LOG_LEVEL, log_levels,
+			 COMPONENT_IDMAPPER, int),
+	CONF_INDEX_TOKEN("COMPONENT_NFS_READDIR", NB_LOG_LEVEL, log_levels,
+			 COMPONENT_NFS_READDIR, int),
+	CONF_INDEX_TOKEN("COMPONENT_NFS_V4_LOCK", NB_LOG_LEVEL, log_levels,
+			 COMPONENT_NFS_V4_LOCK, int),
+	CONF_INDEX_TOKEN("COMPONENT_CONFIG", NB_LOG_LEVEL, log_levels,
+			 COMPONENT_CONFIG, int),
+	CONF_INDEX_TOKEN("COMPONENT_CLIENTID", NB_LOG_LEVEL, log_levels,
+			 COMPONENT_CLIENTID, int),
+	CONF_INDEX_TOKEN("COMPONENT_SESSIONS", NB_LOG_LEVEL, log_levels,
+			 COMPONENT_SESSIONS, int),
+	CONF_INDEX_TOKEN("COMPONENT_PNFS", NB_LOG_LEVEL, log_levels,
+			 COMPONENT_PNFS, int),
+	CONF_INDEX_TOKEN("COMPONENT_RW_LOCK", NB_LOG_LEVEL, log_levels,
+			 COMPONENT_RW_LOCK, int),
+	CONF_INDEX_TOKEN("COMPONENT_NLM", NB_LOG_LEVEL, log_levels,
+			 COMPONENT_NLM, int),
+	CONF_INDEX_TOKEN("COMPONENT_RPC", NB_LOG_LEVEL, log_levels,
+			 COMPONENT_RPC, int),
+	CONF_INDEX_TOKEN("COMPONENT_NFS_CB", NB_LOG_LEVEL, log_levels,
+			 COMPONENT_NFS_CB, int),
+	CONF_INDEX_TOKEN("COMPONENT_THREAD", NB_LOG_LEVEL, log_levels,
+			 COMPONENT_THREAD, int),
+	CONF_INDEX_TOKEN("COMPONENT_NFS_V4_ACL", NB_LOG_LEVEL, log_levels,
+			 COMPONENT_NFS_V4_ACL, int),
+	CONF_INDEX_TOKEN("COMPONENT_STATE", NB_LOG_LEVEL, log_levels,
+			 COMPONENT_STATE, int),
+	CONF_INDEX_TOKEN("COMPONENT_9P", NB_LOG_LEVEL, log_levels,
+			 COMPONENT_9P, int),
+	CONF_INDEX_TOKEN("COMPONENT_9P_DISPATCH", NB_LOG_LEVEL, log_levels,
+			 COMPONENT_9P_DISPATCH, int),
+	CONF_INDEX_TOKEN("COMPONENT_FSAL_UP", NB_LOG_LEVEL, log_levels,
+			 COMPONENT_FSAL_UP, int),
+	CONF_INDEX_TOKEN("COMPONENT_DBUS", NB_LOG_LEVEL, log_levels,
+			 COMPONENT_DBUS, int),
+	CONFIG_EOL
+};
+
+/**
+ * @brief Initialize the log level array
+ *
+ * We allocate an array here even for the global case so as to 
+ * preserve something that works (default_log_levels) during config
+ * processing.  If the parse errors out, we just throw it away...
+ *
+ */
+
+static void *component_init(void *link_mem, void *self_struct)
+{
+	assert(link_mem != NULL || self_struct != NULL);
+
+	if (link_mem == NULL)
+		return NULL;
+	if (self_struct == NULL)
+		return gsh_calloc(COMPONENT_COUNT, sizeof(log_levels_t));
+	else {
+		gsh_free(self_struct);
+		return NULL;
+	}
+}
+
+/**
+ * @brief Commit the component levels
+ *
+ * COMPONENT_ALL is a magic component.  It gets statically initialized
+ * to NIV_NULL (no output) but the initialize pass changes that to
+ * NB_LOG_LEVEL which is +1 the last valid level. This is used to detect
+ * if COMPONENT_ALL has been set.  If ALL is set, it overrides all
+ * components including any that were set in the block.
+ *
+ * We also set the default for all components to be NB_LOG_LEVELS which
+ * gets changed to the LOG { default_log_level ...} or NIV_EVENT if it
+ * was not changed by the config.
+ */
+
+static int component_commit(void *node, void *link_mem, void *self_struct)
+{
+	log_levels_t **log_lvls = link_mem;
+	struct logger_config *logger;
+	log_levels_t *log_level = self_struct;
+
+	if (log_level[COMPONENT_ALL] != NB_LOG_LEVEL) {
+		SetLevelDebug(log_level[COMPONENT_ALL]);
+	} else {
+		int comp;
+
+		logger = container_of(log_lvls,
+				      struct logger_config,
+				      comp_log_level);
+		if (logger->default_level == NB_LOG_LEVEL)
+			logger->default_level = NIV_EVENT;
+		for (comp = COMPONENT_LOG; comp < COMPONENT_COUNT; comp++)
+			if (log_level[comp] == NB_LOG_LEVEL)
+				log_level[comp] = logger->default_level;
+		log_level[COMPONENT_ALL] = NIV_NULL;
+		logger->comp_log_level = log_level;
+	}
+	return 0;
+}
+
+static struct config_item_list header_options[] = {
+	CONFIG_LIST_TOK("none", LH_NONE),
+	CONFIG_LIST_TOK("component", LH_COMPONENT),
+	CONFIG_LIST_TOK("all", LH_ALL),
+	CONFIG_LIST_EOL
+};
+
+static struct config_item_list enable_options[] = {
+	CONFIG_LIST_TOK("idle", FAC_IDLE),
+	CONFIG_LIST_TOK("active", FAC_ACTIVE),
+	CONFIG_LIST_TOK("default", FAC_DEFAULT),
+	CONFIG_LIST_EOL
+};
+
+static struct config_item facility_params[] = {
+	CONF_ITEM_STR("name", 1, 20, NULL,
+		      facility_config, facility_name),
+	CONF_MAND_STR("destination", 1, MAXPATHLEN, NULL,
+		      facility_config, dest),
+	CONF_ITEM_TOKEN("max_level", NB_LOG_LEVEL, log_levels,
+			facility_config, max_level),
+	CONF_ITEM_TOKEN("headers", NB_LH_TYPES, header_options,
+			facility_config, headers),
+	CONF_ITEM_TOKEN("enable", FAC_IDLE, enable_options,
+			facility_config, state),
+	CONFIG_EOL
+};
+
+/**
+ * @brief Initialize a Facility block.
+ *
+ * This block is allocated just to capture the fields.  It's members
+ * are used to create/modify a facility at which point it gets freed.
+ */
+
+static void *facility_init(void *link_mem, void *self_struct)
+{
+	struct facility_config *facility;
+
+	assert(link_mem != NULL || self_struct != NULL);
+
+	if (link_mem == NULL) {
+		struct glist_head *facility_list;
+		struct logger_config *logger;
+
+		facility_list = self_struct;
+		logger = container_of(facility_list,
+				      struct logger_config,
+				      facility_list);
+		glist_init(&logger->facility_list);
+		return self_struct;
+	} else if (self_struct == NULL) {
+		facility = gsh_calloc(1, sizeof(struct facility_config));
+		if (facility != NULL)
+			glist_init(&facility->fac_list);
+		return facility;
+	} else {
+		facility = self_struct;
+
+		assert(glist_null(&facility->fac_list));
+
+		if (facility->facility_name != NULL)
+			gsh_free(facility->facility_name);
+		if (facility->dest != NULL)
+			gsh_free(facility->dest);
+		gsh_free(self_struct);
+	}
+	return NULL;
+}
+
+/**
+ * @brief Commit a facility block
+ *
+ * It can create a stream, syslog, or file facility and modify any
+ * existing one.  Special loggers must be created elsewhere.
+ * Note that you cannot use a log { facility {... }} to modify one
+ * of these special loggers because log block parsing is done first
+ * at server initialization.
+ */
+
+static int facility_commit(void *node, void *link_mem, void *self_struct)
+{
+	struct facility_config *conf = self_struct;
+	struct glist_head *fac_list;
+	int errcnt = 0;
+
+	if (conf->facility_name == NULL) {
+		LogCrit(COMPONENT_LOG,
+			"No facility name given");
+		errcnt++;
+		goto out;
+	}
+	if (conf->dest != NULL) {
+		if (strcasecmp(conf->dest, "stderr") == 0) {
+			conf->func = log_to_stream;
+			conf->lf_private = stderr;
+			if (conf->headers == NB_LH_TYPES)
+				conf->headers = LH_ALL;
+		} else if (strcasecmp(conf->dest, "stdout") == 0) {
+			conf->func = log_to_stream;
+			conf->lf_private = stdout;
+			if (conf->headers == NB_LH_TYPES)
+				conf->headers = LH_ALL;
+		} else if (strcasecmp(conf->dest, "syslog") == 0) {
+			conf->func = log_to_syslog;
+			if (conf->headers == NB_LH_TYPES)
+				conf->headers = LH_COMPONENT;
+		} else {
+			conf->func = log_to_file;
+			conf->lf_private = conf->dest;
+			if (conf->headers == NB_LH_TYPES)
+				conf->headers = LH_ALL;
+		}
+	} else {
+		LogCrit(COMPONENT_LOG,
+			"No facility destination given for (%s)",
+			conf->facility_name);
+		errcnt++;
+		goto out;
+	}
+	if (conf->func != log_to_syslog && conf->headers < LH_ALL)
+		LogWarn(COMPONENT_CONFIG,
+			"Headers setting for %s could drop some format fields!",
+			conf->facility_name);
+	if (conf->max_level == NB_LOG_LEVEL)
+		conf->max_level = NIV_FULL_DEBUG;
+	fac_list = link_mem;
+	glist_add_tail(fac_list, &conf->fac_list);
+	return 0;
+		
+out:
+	gsh_free(self_struct); /* got the bits, be done with it */
+	return errcnt;
+}
+
+static void *log_conf_init(void *link_mem, void *self_struct)
+{
+	struct logger_config *logger = self_struct;
+
+	assert(link_mem != NULL || self_struct != NULL);
+
+	if (link_mem == NULL)
+		return self_struct;
+	else if (self_struct == NULL)
+		return link_mem;
+	else {
+		if (logger->comp_log_level) {
+			(void)component_init(&logger->comp_log_level,
+					     logger->comp_log_level);
+			logger->comp_log_level = NULL;
+		}
+		if (!glist_empty(&logger->facility_list)) {
+			struct glist_head *glist, *glistn;
+
+			glist_for_each_safe(glist, glistn,
+					    &logger->facility_list) {
+				struct facility_config *conf;
+
+				conf = glist_entry(glist,
+						   struct facility_config,
+						   fac_list);
+				glist_del(&conf->fac_list);
+				(void)facility_init(&logger->facility_list,
+						    conf);
+			}
+		}
+		if (logger->logfields != NULL) {
+			(void)format_init(&logger->logfields,
+					  logger->logfields);
+			logger->logfields = NULL;
+		}
+	}
+	return NULL;
+}
+
+static int log_conf_commit(void *node, void *link_mem, void *self_struct)
+{
+	struct logger_config *logger = self_struct;
+	struct glist_head *glist, *glistn;
+	int errcnt = 0;
+	int rc;
+
+	glist_for_each_safe(glist, glistn, &logger->facility_list) {
+		struct facility_config *conf;
+		bool facility_exists;
+
+		conf = glist_entry(glist, struct facility_config, fac_list);
+		glist_del(&conf->fac_list);
+		if (errcnt) {
+			LogEvent(COMPONENT_CONFIG,
+				 "Skipping facility (%s) due to errors",
+				 conf->facility_name);
+			goto done;
+		}
+		rc = create_log_facility(conf->facility_name,
+					 conf->func,
+					 conf->max_level,
+					 conf->headers,
+					 conf->lf_private);
+		if (rc != 0 && rc != -EEXIST) {
+			LogCrit(COMPONENT_CONFIG,
+				"Failed to create facility (%s), (%s)",
+				conf->facility_name,
+				strerror(-rc));
+			errcnt++;
+			goto done;
+		}
+		facility_exists = (rc == -EEXIST);
+		if (facility_exists && conf->dest != NULL) {
+			rc = set_log_destination(conf->facility_name,
+						 conf->dest);
+			if (rc < 0) {
+				errcnt++;
+				LogCrit(COMPONENT_LOG,
+					"Could not set destination for (%s) because (%s)",
+					conf->facility_name,
+					strerror(-rc));
+				goto done;
+			}
+		}
+		if (facility_exists && conf->max_level != NB_LOG_LEVEL) {
+			rc =  set_log_level(conf->facility_name,
+					    conf->max_level);
+			if (rc < 0)  {
+				LogCrit(COMPONENT_LOG,
+					"Could not set severity level for (%s) because (%s)",
+					conf->facility_name,
+					strerror(-rc));
+				errcnt++;
+				goto done;
+			}
+		}
+		if (conf->state == FAC_ACTIVE) {
+			rc = enable_log_facility(conf->facility_name);
+			if (rc != 0) {
+				LogCrit(COMPONENT_CONFIG,
+					"Could not enable (%s) because (%s)",
+					conf->facility_name,
+					strerror(-rc));
+				errcnt++;
+			}
+		} else if (conf->state == FAC_DEFAULT) {
+			struct log_facility *old_def
+				= default_facility;
+
+			rc = set_default_log_facility(conf->facility_name);
+			if (rc != 0) {
+				LogCrit(COMPONENT_CONFIG,
+					"Could not make (%s) the default because (%s)",
+					conf->facility_name,
+					strerror(-rc));
+				errcnt++;
+			} else if (old_def != default_facility)
+				LogEvent(COMPONENT_CONFIG,
+					 "Switched default logger from %s to %s",
+					 old_def->lf_name,
+					 default_facility->lf_name);
+		}
+		if (errcnt > 0 && !facility_exists) {
+			LogCrit(COMPONENT_CONFIG,
+				"Releasing new logger (%s) because of errors",
+				conf->facility_name);
+			release_log_facility(conf->facility_name);
+		}
+	done:
+		(void)facility_init(&logger->facility_list, conf);
+	}
+	if (errcnt == 0) {
+		if (logger->logfields != NULL) {
+			LogEvent(COMPONENT_CONFIG,
+				 "Changing definition of log fields");
+			if (logfields != &default_logfields) {
+				if (logfields->user_date_fmt != NULL)
+					gsh_free(logfields->user_date_fmt);
+				if (logfields->user_time_fmt != NULL)
+					gsh_free(logfields->user_time_fmt);
+				gsh_free(logfields);
+			}
+			logfields = logger->logfields;
+
+			/* rebuild const_log_str with new format params. */
+			set_const_log_str();
+		}
+		if (logger->comp_log_level != NULL) {
+			LogEvent(COMPONENT_CONFIG,
+				 "Switching to new component log levels");
+			if (component_log_level != default_log_levels)
+				gsh_free(component_log_level);
+			component_log_level = logger->comp_log_level;
+		}
+	} else {
+		if (logger->logfields != NULL) {
+			struct logfields *lf = logger->logfields;
+			
+			if (lf->user_date_fmt != NULL)
+				gsh_free(lf->user_date_fmt);
+			if (lf->user_time_fmt != NULL)
+				gsh_free(lf->user_time_fmt);
+			gsh_free(lf);
+		}
+		if (logger->comp_log_level != NULL) {
+			gsh_free(logger->comp_log_level);
+		}
+	}
+	logger->logfields = NULL;
+	logger->comp_log_level = NULL;
+	return errcnt;
+}
+
+static struct config_item logging_params[] = {
+	CONF_ITEM_TOKEN("Default_log_level", NB_LOG_LEVEL, log_levels,
+			 logger_config, default_level),
+	CONF_ITEM_BLOCK("Facility", facility_params,
+			facility_init, facility_commit,
+			logger_config, facility_list),
+	CONF_ITEM_BLOCK("Format", format_options,
+			format_init, format_commit,
+			logger_config, logfields),
+	CONF_ITEM_BLOCK("Components", component_levels,
+			component_init, component_commit,
+			logger_config, comp_log_level),
+	CONFIG_EOL
+};
+
+struct config_block logging_param = {
+	.dbus_interface_name = "org.ganesha.nfsd.config.log",
+	.blk_desc.name = "LOG",
+	.blk_desc.type = CONFIG_BLOCK,
+	.blk_desc.flags = CONFIG_UNIQUE,  /* too risky to have more */
+	.blk_desc.u.blk.init = log_conf_init,
+	.blk_desc.u.blk.params = logging_params,
+	.blk_desc.u.blk.commit = log_conf_commit
+};
 
 /**
  *
- * read_log_config: Read the configuration ite; for the logging component.
+ * @brief Process the config parse tree for the logging component.
  *
- * Read the configuration ite; for the logging component.
- *
+ * Switch from the default component levels only if we found one
  * @param in_config [IN] configuration file handle
- * @param pparam [OUT] read parameters
  *
- * @return 0 if ok, -1 if failed, 1 is stanza is not there
+ * @return 0 if ok, -1 if failed,
  *
  */
 int read_log_config(config_file_t in_config)
 {
-	int var_max;
-	int var_index;
-	int err;
-	char *key_name;
-	char *key_value;
-	config_item_t block;
-	int component;
-	int level;
-	struct log_flag *flag;
-	int date_spec = FALSE;
-	int time_spec = FALSE;
-	struct log_facility *facility;
+	struct logger_config logger;
+	int rc;
 
-	/* Is the config tree initialized ? */
-	if (in_config == NULL)
+	memset(&logger, 0, sizeof(struct logger_config));
+	rc = load_config_from_parse(in_config,
+				    &logging_param,
+				    &logger,
+				    true);
+	if (rc >= 0)
+		return 0;
+	else
 		return -1;
-
-	/* Get the config BLOCK */
-	block = config_FindItemByName(in_config, CONF_LABEL_LOG);
-
-	if (block == NULL) {
-		LogDebug(COMPONENT_CONFIG,
-			 "Cannot read item \"%s\" from configuration file",
-			 CONF_LABEL_LOG);
-		return 1;
-	} else if (config_ItemType(block) != CONFIG_ITEM_BLOCK) {
-		/* Expected to be a block */
-		LogCrit(COMPONENT_CONFIG,
-			"Item \"%s\" is expected to be a block",
-			CONF_LABEL_LOG);
-		return 1;
-	}
-
-	var_max = config_GetNbItems(block);
-
-	for (var_index = 0; var_index < var_max; var_index++) {
-		config_item_t item;
-
-		item = config_GetItemByIndex(block, var_index);
-
-		/* Get key's name */
-		err = config_GetKeyValue(item, &key_name, &key_value);
-
-		if (err != 0) {
-			LogCrit(COMPONENT_CONFIG,
-				"Error reading key[%d] from section \"%s\" of configuration file.",
-				var_index, CONF_LABEL_LOG);
-			return -1;
-		}
-
-		if (!strcasecmp(key_name, "Facility")) {
-			if (create_null_facility(key_value) == NULL)
-				LogWarn(COMPONENT_CONFIG,
-					"Can not create %s=\'%s\'", key_name,
-					key_value);
-			continue;
-		}
-
-		if (!strcasecmp(key_name, "LogFile")) {
-			SetLogFile(key_value);
-			continue;
-		}
-
-		flag = StrToFlag(key_name);
-
-		if (!strcasecmp(key_name, "time")
-		    || !strcasecmp(key_name, "date")) {
-			if ((flag->lf_idx == LF_DATE && date_spec)
-			    || (flag->lf_idx == LF_TIME && time_spec)) {
-				LogWarn(COMPONENT_CONFIG,
-					"Can only specify %s once, ignoring %s=\"%s\"",
-					key_name, key_name, key_value);
-				continue;
-			}
-
-			if (flag->lf_idx == LF_DATE)
-				date_spec = TRUE;
-
-			if (flag->lf_idx == LF_TIME)
-				time_spec = TRUE;
-
-			if (!strcasecmp(key_value, "ganesha")
-			    || !strcasecmp(key_value, "true")) {
-				flag->lf_ext = TD_GANESHA;
-				flag->lf_val = TRUE;
-			} else if (!strcasecmp(key_value, "local")) {
-				flag->lf_ext = TD_LOCAL;
-				flag->lf_val = TRUE;
-			} else if (!strcasecmp(key_value, "8601")
-				   || !strcasecmp(key_value, "ISO-8601")
-				   || !strcasecmp(key_value, "ISO 8601")
-				   || !strcasecmp(key_value, "ISO")) {
-				flag->lf_ext = TD_8601;
-				flag->lf_val = TRUE;
-			} else if (!strcasecmp(key_value, "syslog")) {
-				flag->lf_ext = TD_SYSLOG;
-				flag->lf_val = TRUE;
-			} else if (!strcasecmp(key_value, "syslog_usec")) {
-				flag->lf_ext = TD_SYSLOG_USEC;
-				flag->lf_val = TRUE;
-			} else if (!strcasecmp(key_value, "false")
-				   || !strcasecmp(key_value, "none")) {
-				flag->lf_val = FALSE;
-				flag->lf_ext = TD_NONE;
-			} else if (flag->lf_idx == LF_DATE) {
-				if (strmaxcpy
-				    (user_date_fmt, key_value,
-				     sizeof(user_date_fmt)) == -1)
-					LogCrit(COMPONENT_CONFIG,
-						"%s value of \'%s\' too long",
-						key_name, key_value);
-				else {
-					flag->lf_ext = TD_USER;
-					flag->lf_val = TRUE;
-				}
-			} else if (flag->lf_idx == LF_TIME) {
-				if (strmaxcpy
-				    (user_time_fmt, key_value,
-				     sizeof(user_date_fmt)) == -1)
-					LogCrit(COMPONENT_CONFIG,
-						"%s value of \'%s\' too long",
-						key_name, key_value);
-				else {
-					flag->lf_ext = TD_USER;
-					flag->lf_val = TRUE;
-				}
-			}
-			continue;
-		}
-
-		if (flag != NULL) {
-			flag->lf_val = str_to_bool(key_value);
-			continue;
-		}
-
-		component = ReturnComponentAscii(key_name);
-
-		if (component != -1) {
-			level = ReturnLevelAscii(key_value);
-
-			if (level == -1) {
-				LogWarn(COMPONENT_CONFIG,
-					"Error parsing section \"LOG\" of configuration file, \"%s\" is not a valid LOG LEVEL for \"%s\"",
-					key_value, key_name);
-				continue;
-			}
-
-			SetComponentLogLevel(component, level);
-
-			continue;
-		}
-
-		pthread_rwlock_wrlock(&log_rwlock);
-
-		facility = find_log_facility(key_name);
-
-		if (facility != NULL) {
-			level = ReturnLevelAscii(key_value);
-
-			if (level == -1) {
-				pthread_rwlock_unlock(&log_rwlock);
-
-				LogWarn(COMPONENT_CONFIG,
-					"Error parsing section \"LOG\" of configuration file, \"%s\" is not a valid LOG LEVEL for \"%s\"",
-					key_value, key_name);
-
-				continue;
-			}
-
-			facility->lf_max_level = level;
-
-			if (level != NIV_NULL)
-				_activate_log_facility(facility);
-			else
-				_deactivate_log_facility(facility);
-
-			pthread_rwlock_unlock(&log_rwlock);
-
-			continue;
-		}
-
-		pthread_rwlock_unlock(&log_rwlock);
-
-		LogWarn(COMPONENT_CONFIG,
-			"Error parsing section \"LOG\" of configuration file, \"%s\" is not a valid LOG configuration variable",
-			key_name);
-	}
-
-	if (date_spec && !time_spec && tab_log_flag[LF_DATE].lf_ext != TD_NONE)
-		tab_log_flag[LF_TIME].lf_ext = tab_log_flag[LF_DATE].lf_ext;
-
-	if (time_spec && !date_spec && tab_log_flag[LF_TIME].lf_ext != TD_NONE)
-		tab_log_flag[LF_DATE].lf_ext = tab_log_flag[LF_TIME].lf_ext;
-
-	/* Now that the LOG config has been processed, rebuild const_log_str. */
-	set_const_log_str();
-
-	return 0;
 }				/* read_log_config */
 
 void reread_log_config()
