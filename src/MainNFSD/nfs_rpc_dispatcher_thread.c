@@ -50,7 +50,6 @@
 #include "nfs_core.h"
 #include "cache_inode.h"
 #include "nfs_exports.h"
-#include "nfs_creds.h"
 #include "nfs_proto_functions.h"
 #include "nfs_req_queue.h"
 #include "nfs_dupreq.h"

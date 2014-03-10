@@ -38,7 +38,6 @@
 #include "cache_inode.h"
 #include "fsal.h"
 #include "nfs_exports.h"
-#include "nfs_creds.h"
 #include "nfs_proto_functions.h"
 #include "nfs_dupreq.h"
 #include "nfs_file_handle.h"

@@ -44,7 +44,6 @@
 #include "fsal.h"
 #include "cache_inode.h"
 #include "nfs_exports.h"
-#include "nfs_creds.h"
 #include "nfs_file_handle.h"
 
 #define  NFS4_ATTRVALS_BUFFLEN  1024
