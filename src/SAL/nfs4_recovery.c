@@ -443,6 +443,7 @@ static int nfs4_read_recov_clids(DIR *dp, const char *parent_path, char *clid_st
                 /* don't add '.' and '..', or any '.*' entry */
                 if (dentp->d_name[0] != '.') {
                         num++;
+                        new_path = NULL;
 
                         /* construct the path by appending the subdir for the next */
                         /* readdir. This recursion keeps reading the subdirectory */
@@ -528,21 +529,24 @@ static int nfs4_read_recov_clids(DIR *dp, const char *parent_path, char *clid_st
                                 if (ptr == NULL) {
                                         LogEvent(COMPONENT_CLIENTID,
                                                         "invalid clid format: %s", build_clid);
-                                        free_heap(path, new_path, build_clid);
+                                        free_heap(path, NULL, build_clid);
+                                        dentp = readdir(dp);
                                         continue;
                                 }
                                 ptr2 = strchr(ptr, ':');
                                 if (ptr2 == NULL) {
                                         LogEvent(COMPONENT_CLIENTID,
                                                         "invalid clid format: %s", build_clid);
-                                        free_heap(path, new_path, build_clid);
+                                        free_heap(path, NULL, build_clid);
+                                        dentp = readdir(dp);
                                         continue;
                                 }
                                 len = ptr2-ptr-1;
                                 if (len >= 9) {
                                         LogEvent(COMPONENT_CLIENTID,
                                                         "invalid clid format: %s", build_clid);
-                                        free_heap(path, new_path, build_clid);
+                                        free_heap(path, NULL, build_clid);
+                                        dentp = readdir(dp);
                                         continue;
                                 }
 
@@ -556,7 +560,7 @@ static int nfs4_read_recov_clids(DIR *dp, const char *parent_path, char *clid_st
                                 	if (new_ent == NULL) {
                                         	LogEvent(COMPONENT_CLIENTID,
                                                 	"Unable to allocate memory.");
-                                                free_heap(path, new_path, build_clid);
+                                                free_heap(path, NULL, build_clid);
                                                 continue;
                                 	}
                                 	strcpy(new_ent->cl_name, build_clid);
