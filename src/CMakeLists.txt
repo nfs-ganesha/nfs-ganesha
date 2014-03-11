@@ -699,7 +699,7 @@ set(GANESHA_CORE ${GANESHA_CORE} NodeList)
 
 if(USE_9P_RDMA)
   find_package(PkgConfig)
-  pkg_check_modules(MOOSHIKA REQUIRED libmooshika>=0.4)
+  pkg_check_modules(MOOSHIKA REQUIRED libmooshika>=0.5)
   set(GANESHA_CORE ${GANESHA_CORE} ${MOOSHIKA_LIBRARIES})
   include_directories(${MOOSHIKA_INCLUDE_DIRS})
   link_directories (${MOOSHIKA_LIBRARY_DIRS})

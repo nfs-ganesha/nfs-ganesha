@@ -364,12 +364,17 @@ struct _9p_outqueue {
 	pthread_cond_t cond;
 };
 
-struct _9p_rdma_priv {
-	struct _9p_conn *pconn;
+struct _9p_rdma_priv_pernic {
+	struct ibv_mr *outmr;
+	struct ibv_mr *inmr;
 	uint8_t *rdmabuf;
 	msk_data_t *rdata;
+};
+
+struct _9p_rdma_priv {
+	struct _9p_conn *pconn;
 	struct _9p_outqueue *outqueue;
-	struct ibv_mr *outmr;
+	struct _9p_rdma_priv_pernic *pernic;
 };
 #define _9p_rdma_priv_of(x) ((struct _9p_rdma_priv *)x->private_data)
 #endif

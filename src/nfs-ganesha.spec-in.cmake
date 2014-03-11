@@ -90,8 +90,8 @@ BuildRequires:	nfs-utils-lib-devel
 Requires:	nfs-utils-lib
 %endif
 %if %{with_rdma}
-BuildRequires:	libmooshika >= 0.4-15
-Requires:	libmooshika-devel >= 0.4-15
+BuildRequires:	libmooshika >= 0.5-0
+Requires:	libmooshika-devel >= 0.5-0
 %endif
 
 # Use CMake variables
