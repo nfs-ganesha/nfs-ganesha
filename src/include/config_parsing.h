@@ -468,6 +468,22 @@ struct config_item {
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
 
+#define CONF_ITEM_TOKEN(_name_, _def_, _tokens_, _struct_, _mem_) \
+	{ .name = _name_,			    \
+	  .type = CONFIG_TOKEN,		    \
+	  .u.lst.def = _def_,			    \
+	  .u.lst.tokens = _tokens_,		    \
+	  .off = offsetof(struct _struct_, _mem_)   \
+	}
+
+#define CONF_INDEX_TOKEN(_name_, _def_, _tokens_, _idx_, _sizeof_) \
+	{ .name = _name_,			    \
+	  .type = CONFIG_TOKEN,		    \
+	  .u.lst.def = _def_,			    \
+	  .u.lst.tokens = _tokens_,		    \
+	  .off = (sizeof(_sizeof_) * _idx_)  \
+	}
+
 #define CONF_ITEM_BOOL(_name_, _def_, _struct_, _mem_) \
 	{ .name = _name_,			    \
 	  .type = CONFIG_BOOL,		    \
@@ -576,6 +592,16 @@ struct config_item {
 	  .u.i32.maxval = _max_,		    \
 	  .u.i32.def = _def_,			    \
 	  .off = offsetof(struct _struct_, _mem_)   \
+	}
+
+#define CONF_INDEX_I32(_name_, _min_, _max_, _def_, _idx_, _struct_, _mem_) \
+	{ .name = _name_,			    \
+	  .type = CONFIG_INT32,		    \
+	  .u.i32.minval = _min_,		    \
+	  .u.i32.maxval = _max_,		    \
+	  .u.i32.def = _def_,			    \
+	  .off = (sizeof(struct _struct_) * _idx_)	\
+		  + offsetof(struct _struct_, _mem_)	\
 	}
 
 #define CONF_ITEM_UI32(_name_, _min_, _max_, _def_, _struct_, _mem_) \

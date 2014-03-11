@@ -544,6 +544,9 @@ static int do_block_init(struct config_item *params,
 			else
 				*(char **)param_addr = NULL;
 			break;
+		case CONFIG_TOKEN:
+			*(uint32_t *)param_addr = item->u.lst.def;
+			break;
 		case CONFIG_BOOL:
 			*(bool *)param_addr = item->u.b.def;
 			break;
@@ -795,6 +798,13 @@ static int do_block_load(struct config_node *blk,
 				/** @todo validate path with access() */
 				*(char **)param_addr =
 					gsh_strdup(node->u.varvalue);
+				break;
+			case CONFIG_TOKEN:
+				rc = convert_enum(node, item, &flags);
+				if (rc == 0)
+					*(uint32_t *)param_addr = flags;
+				else
+					errors += rc;
 				break;
 			case CONFIG_BOOL:
 				if (convert_bool(node, &bval))
