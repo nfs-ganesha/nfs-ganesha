@@ -80,10 +80,7 @@ void _9p_rdma_callback_send_err(msk_trans_t *trans, msk_data_t *data,
 	 * before unlocking
 	 */
 
-	if (trans->state == MSK_CONNECTED && priv && priv->outqueue) {
-		LogMajor(COMPONENT_9P, "send error on trans %p!!!\n",
-			 trans);
-
+	if (priv && priv->outqueue) {
 		pthread_mutex_lock(&priv->outqueue->lock);
 		data->next = priv->outqueue->data;
 		priv->outqueue->data = data;

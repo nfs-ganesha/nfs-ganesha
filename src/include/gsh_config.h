@@ -461,8 +461,8 @@ typedef struct nfs_version4_parameter {
 /**
  * @brief Default number of send buffer (total, not per nic)
  *
- * shared pool for sends - optimal when set to number of workers
- * (todo: use conf value)
+ * shared pool for sends - optimal when set oh-so-slightly
+ * higher than the number of worker threads
  */
 #define _9P_RDMA_OUTPOOL_SIZE 32
 
