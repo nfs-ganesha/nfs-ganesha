@@ -232,12 +232,16 @@ typedef struct exportlist {
 #define EXPORT_OPTION_NFSV2 0x00100000	/*< NFSv2 operations are supported */
 #define EXPORT_OPTION_NFSV3 0x00100000	/*< NFSv3 operations are supported */
 #define EXPORT_OPTION_NFSV4 0x00200000	/*< NFSv4 operations are supported */
-#define EXPORT_OPTION_UDP 0x00400000	/*< UDP protocol is supported */
-#define EXPORT_OPTION_TCP 0x00800000	/*< TCP protocol is supported */
+#define EXPORT_OPTION_9P 0x00400000	/*< 9P operations are supported */
+#define EXPORT_OPTION_UDP 0x01000000	/*< UDP protocol is supported */
+#define EXPORT_OPTION_TCP 0x02000000	/*< TCP protocol is supported */
+#define EXPORT_OPTION_RDMA 0x04000000	/*< RDMA protocol is supported */
 #define EXPORT_OPTION_PROTOCOLS	      (EXPORT_OPTION_NFSV3	     | \
-				       EXPORT_OPTION_NFSV4)
+				       EXPORT_OPTION_NFSV4	     | \
+				       EXPORT_OPTION_9P)
 #define EXPORT_OPTION_TRANSPORTS      (EXPORT_OPTION_UDP	     | \
-				       EXPORT_OPTION_TCP)
+				       EXPORT_OPTION_TCP	     | \
+				       EXPORT_OPTION_RDMA)
 
 #define EXPORT_OPTION_READ_DELEG 0x10000000	/*< Enable read delegations */
 #define EXPORT_OPTION_WRITE_DELEG 0x20000000	/*< Using write delegations */

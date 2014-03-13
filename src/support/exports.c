@@ -61,11 +61,13 @@ struct global_export_perms export_opt = {
 	.def.anonymous_gid = ANON_GID,
 	/* Note: Access_Type defaults to None on purpose */
 	.def.options = EXPORT_OPTION_ROOT_SQUASH |
-		   EXPORT_OPTION_NO_ACCESS |
-		   EXPORT_OPTION_AUTH_NONE |
-		   EXPORT_OPTION_AUTH_UNIX |
-		   EXPORT_OPTION_PROTOCOLS |
-		   EXPORT_OPTION_TRANSPORTS,
+		       EXPORT_OPTION_NO_ACCESS |
+		       EXPORT_OPTION_AUTH_NONE |
+		       EXPORT_OPTION_AUTH_UNIX |
+		       EXPORT_OPTION_NFSV3 |
+		       EXPORT_OPTION_NFSV4 |
+		       EXPORT_OPTION_UDP |
+		       EXPORT_OPTION_TCP,
 	.def.set = UINT32_MAX
 };
 
@@ -115,8 +117,12 @@ static void StrExportOptions(export_perms_t *p_perms, char *buffer)
 			buf += sprintf(buf, "4");
 		else
 			buf += sprintf(buf, "-");
+		if ((p_perms->options & EXPORT_OPTION_9P) != 0)
+			buf += sprintf(buf, "9");
+		else
+			buf += sprintf(buf, "-");
 	} else
-		buf += sprintf(buf, ",   ");
+		buf += sprintf(buf, ",    ");
 
 	if ((p_perms->set & EXPORT_OPTION_TRANSPORTS) != 0) {
 		if ((p_perms->options & EXPORT_OPTION_UDP) != 0)
@@ -127,8 +133,12 @@ static void StrExportOptions(export_perms_t *p_perms, char *buffer)
 			buf += sprintf(buf, ", TCP");
 		else
 			buf += sprintf(buf, ", ---");
+		if ((p_perms->options & EXPORT_OPTION_RDMA) != 0)
+			buf += sprintf(buf, ", RDMA");
+		else
+			buf += sprintf(buf, ", ----");
 	} else
-		buf += sprintf(buf, ",         ");
+		buf += sprintf(buf, ",              ");
 
 	if ((p_perms->set & EXPORT_OPTION_MANAGE_GIDS) == 0)
 		buf += sprintf(buf, ",               ");
@@ -868,6 +878,13 @@ static struct config_item_list access_types[] = {
 static struct config_item_list nfs_protocols[] = {
 	CONFIG_LIST_TOK("3", EXPORT_OPTION_NFSV3),
 	CONFIG_LIST_TOK("4", EXPORT_OPTION_NFSV4),
+	CONFIG_LIST_TOK("NFSV", EXPORT_OPTION_NFSV3),
+	CONFIG_LIST_TOK("NFSV", EXPORT_OPTION_NFSV4),
+	CONFIG_LIST_TOK("V3", EXPORT_OPTION_NFSV3),
+	CONFIG_LIST_TOK("V4", EXPORT_OPTION_NFSV4),
+	CONFIG_LIST_TOK("NFSV3", EXPORT_OPTION_NFSV3),
+	CONFIG_LIST_TOK("NFSV4", EXPORT_OPTION_NFSV4),
+	CONFIG_LIST_TOK("9P", EXPORT_OPTION_9P),
 	CONFIG_LIST_EOL
 };
 
@@ -932,10 +949,10 @@ static struct config_item_list delegations[] = {
 		EXPORT_OPTION_NO_ACCESS,				\
 		EXPORT_OPTION_ACCESS_TYPE,				\
 		access_types, _struct_, _perms_.options, _perms_.set),	\
-	CONF_ITEM_LIST_BITS_SET("NFS_Protocols",			\
+	CONF_ITEM_LIST_BITS_SET("Protocols",				\
 		EXPORT_OPTION_PROTOCOLS, EXPORT_OPTION_PROTOCOLS,	\
 		nfs_protocols, _struct_, _perms_.options, _perms_.set),	\
-	CONF_ITEM_LIST_BITS_SET("Transport_Protocols",			\
+	CONF_ITEM_LIST_BITS_SET("Transports",				\
 		EXPORT_OPTION_TRANSPORTS, EXPORT_OPTION_TRANSPORTS,	\
 		transports, _struct_, _perms_.options, _perms_.set),	\
 	CONF_ITEM_ANONID("Anonymous_uid",				\
