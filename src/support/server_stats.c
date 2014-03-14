@@ -692,6 +692,7 @@ static void record_stats(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
  * @brief Record transport stats
  *
  */
+#ifdef _USE_9P
 static void record_transport_stats(struct transport_stats *t_st,
 				   uint64_t rx_bytes, uint64_t rx_pkt,
 				   uint64_t rx_err, uint64_t tx_bytes,
@@ -710,12 +711,13 @@ static void record_transport_stats(struct transport_stats *t_st,
 	if (tx_err)
 		atomic_add_uint64_t(&t_st->tx_err, tx_err);
 }
-
+#endif
 /**
  * @brief record 9P tcp transport stats
  *
  * Called from 9P functions doing send/recv
  */
+#ifdef _USE_9P
 void server_stats_transport_done(struct gsh_client *client,
 				uint64_t rx_bytes, uint64_t rx_pkt,
 				uint64_t rx_err, uint64_t tx_bytes,
@@ -729,6 +731,7 @@ void server_stats_transport_done(struct gsh_client *client,
 		record_transport_stats(&sp->trans, rx_bytes, rx_pkt, rx_err,
 				       tx_bytes, tx_pkt, tx_err);
 }
+#endif
 
 /**
  * @brief record NFS op finished
