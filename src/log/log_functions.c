@@ -1016,18 +1016,6 @@ static void DecrementLevelDebug()
 		   ReturnLevelInt(component_log_level[COMPONENT_ALL]));
 }				/* DecrementLevelDebug */
 
-struct log_flag *StrToFlag(const char *str)
-{
-	int i = 0;
-
-	for (i = 0; i < ARRAY_SIZE(tab_log_flag); i++)
-		if (!strcasecmp(tab_log_flag[i].lf_name, str))
-			return &tab_log_flag[i];
-
-	/* If nothing found, return NULL */
-	return NULL;
-}
-
 void set_const_log_str()
 {
 	struct display_buffer dspbuf = { sizeof(const_log_str),
