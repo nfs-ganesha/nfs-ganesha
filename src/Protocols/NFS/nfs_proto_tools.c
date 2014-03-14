@@ -511,12 +511,18 @@ static fattr_xdr_result decode_namedattrsupport(XDR *xdr,
 
 static fattr_xdr_result encode_fsid(XDR *xdr, struct xdr_attrs_args *args)
 {
-	fsid4 fsid;
+	fsid4 fsid = {0, 0};
 
-	if (args->data != NULL && args->data->export != NULL) {
+	if (args->data != NULL && args->data->export != NULL &&
+	    (args->data->export->export_perms.set &
+	     EXPORT_OPTION_FSID_SET) != 0) {
 		fsid.major = args->data->export->filesystem_id.major;
 		fsid.minor = args->data->export->filesystem_id.minor;
+	} else {
+		fsid.major = args->attrs->fsid.major;
+		fsid.minor = args->attrs->fsid.minor;
 	}
+
 	if (!xdr_u_int64_t(xdr, &fsid.major))
 		return FATTR_XDR_FAILED;
 	if (!xdr_u_int64_t(xdr, &fsid.minor))
@@ -3493,6 +3499,28 @@ static void nfs3_FSALattr_To_PartialFattr(const struct attrlist *FSAL_attr,
 		*mask |= ATTR_RAWDEV;
 	}
 
+	if (FSAL_attr->mask & ATTR_FSID) {
+		/* xor filesystem_id major and rotated minor to create unique
+		 * on-wire fsid.
+		 */
+		Fattr->fsid = (nfs3_uint64) (FSAL_attr->fsid.major ^
+					    (FSAL_attr->fsid.minor << 32 |
+					     FSAL_attr->fsid.minor >> 32));
+
+		LogFullDebug(COMPONENT_NFSPROTO,
+			     "Compressing fsid for NFS v3 from "
+			     "fsid major %#" PRIX64 " (%" PRIu64 "), minor %#"
+			     PRIX64 " (%" PRIu64 ") to nfs3_fsid = %#" PRIX64
+			     " (%" PRIu64 ")",
+			     FSAL_attr->fsid.major,
+			     FSAL_attr->fsid.major,
+			     FSAL_attr->fsid.minor,
+			     FSAL_attr->fsid.minor,
+			     (uint64_t) Fattr->fsid, (uint64_t) Fattr->fsid);
+
+		*mask |= ATTR_FILEID;
+	}
+
 	if (FSAL_attr->mask & ATTR_FILEID) {
 		Fattr->fileid = FSAL_attr->fileid;
 		*mask |= ATTR_FILEID;
@@ -3576,19 +3604,26 @@ bool nfs3_FSALattr_To_Fattr(exportlist_t *export,
 			"attribute: missing %lx", want & ~got);
 	}
 
-	/* xor filesystem_id major and rotated minor to create unique
-	 * on-wire fsid.
-	 */
-	Fattr->fsid = (nfs3_uint64) (export->filesystem_id.major ^
-				    (export->filesystem_id.minor << 32 |
-				    export->filesystem_id.minor >> 32));
+	if ((export->export_perms.set & EXPORT_OPTION_FSID_SET) != 0) {
+		/* xor filesystem_id major and rotated minor to create unique
+		 * on-wire fsid.
+		 */
+		Fattr->fsid = (nfs3_uint64) (export->filesystem_id.major ^
+					    (export->filesystem_id.minor << 32 |
+					     export->filesystem_id.minor >> 32));
 
-	LogFullDebug(COMPONENT_NFSPROTO,
-		     "fsid major %#" PRIX64 " (%" PRIu64 "), minor %#" PRIX64
-		     " (%" PRIu64 "), nfs3_fsid = %#" PRIX64 " (%" PRIu64 ")",
-		     export->filesystem_id.major, export->filesystem_id.major,
-		     export->filesystem_id.minor, export->filesystem_id.minor,
-		     (uint64_t) Fattr->fsid, (uint64_t) Fattr->fsid);
+		LogFullDebug(COMPONENT_NFSPROTO,
+			     "Compressing export filesystem_id for NFS v3 from "
+			     "fsid major %#" PRIX64 " (%" PRIu64 "), minor %#"
+			     PRIX64 " (%" PRIu64 ") to nfs3_fsid = %#" PRIX64
+			     " (%" PRIu64 ")",
+			     export->filesystem_id.major,
+			     export->filesystem_id.major,
+			     export->filesystem_id.minor,
+			     export->filesystem_id.minor,
+			     (uint64_t) Fattr->fsid, (uint64_t) Fattr->fsid);
+	}
+
 	return true;
 }
 
