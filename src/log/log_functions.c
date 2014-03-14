@@ -112,6 +112,51 @@ enum timedate_formats_t {
 	TD_USER,		/* Use a user defined time/date format. */
 };
 
+/**
+ * @brief Format control for log messages
+ *
+ */
+
+struct logfields {
+	bool disp_epoch;
+	bool disp_host;
+	bool disp_prog;
+	bool disp_pid;
+	bool disp_threadname;
+	bool disp_filename;
+	bool disp_linenum;
+	bool disp_funct;
+	bool disp_comp;
+	bool disp_level;
+	enum timedate_formats_t datefmt;
+	enum timedate_formats_t timefmt;
+	char *user_date_fmt;
+	char *user_time_fmt;
+};
+
+/**
+ * @brief Startup default log message format
+ *
+ * Baked in here so early startup has something to work with
+ */
+
+static struct logfields default_logfields = {
+	.disp_epoch = true,
+	.disp_host = true,
+	.disp_prog = true,
+	.disp_pid = true,
+	.disp_threadname = true,
+	.disp_filename = false,
+	.disp_linenum = false,
+	.disp_funct = true,
+	.disp_comp = true,
+	.disp_level = true,
+	.datefmt = TD_GANESHA,
+	.timefmt = TD_GANESHA
+};
+
+static struct logfields *logfields = &default_logfields;	
+
 /* Define the maximum length of a user time/date format. */
 #define MAX_TD_USER_LEN 64
 /* Define the maximum overall time/date format length, should have room for both
@@ -997,35 +1042,35 @@ void set_const_log_str()
 
 	const_log_str[0] = '\0';
 
-	if (b_left > 0 && tab_log_flag[LF_EPOCH].lf_val)
+	if (b_left > 0 && logfields->disp_epoch)
 		b_left = display_printf(&dspbuf, ": epoch %08x ", ServerEpoch);
 
-	if (b_left > 0 && tab_log_flag[LF_HOSTAME].lf_val)
+	if (b_left > 0 && logfields->disp_host)
 		b_left = display_printf(&dspbuf, ": %s ", hostname);
 
-	if (b_left > 0 && tab_log_flag[LF_PROGNAME].lf_val)
+	if (b_left > 0 && logfields->disp_prog)
 		b_left = display_printf(&dspbuf, ": %s", program_name);
 
-	if (b_left > 0 && tab_log_flag[LF_PROGNAME].lf_val
-	    && tab_log_flag[LF_PID].lf_val)
+	if (b_left > 0 && logfields->disp_prog
+	    && logfields->disp_pid)
 		b_left = display_cat(&dspbuf, "-");
 
-	if (b_left > 0 && tab_log_flag[LF_PID].lf_val)
+	if (b_left > 0 && logfields->disp_pid)
 		b_left = display_printf(&dspbuf, "%d", getpid());
 
 	if (b_left > 0
-	    && (tab_log_flag[LF_PROGNAME].lf_val || tab_log_flag[LF_PID].lf_val)
-	    && !tab_log_flag[LF_THREAD_NAME].lf_val)
+	    && (logfields->disp_prog || logfields->disp_pid)
+	    && !logfields->disp_threadname)
 		b_left = display_cat(&dspbuf, " ");
 
 	b_left = display_start(&tdfbuf);
 
-	if (tab_log_flag[LF_DATE].lf_ext == TD_LOCAL
-	    && tab_log_flag[LF_TIME].lf_ext == TD_LOCAL) {
+	if (logfields->datefmt == TD_LOCAL
+	    && logfields->timefmt == TD_LOCAL) {
 		if (b_left > 0)
 			b_left = display_cat(&tdfbuf, "%c ");
 	} else {
-		switch (tab_log_flag[LF_DATE].lf_ext) {
+		switch (logfields->datefmt) {
 		case TD_GANESHA:
 			b_left = display_cat(&tdfbuf, "%d/%m/%Y ");
 			break;
@@ -1039,7 +1084,7 @@ void set_const_log_str()
 			b_left = display_cat(&tdfbuf, "%b %e ");
 			break;
 		case TD_SYSLOG_USEC:
-			if (tab_log_flag[LF_TIME].lf_ext == TD_SYSLOG_USEC)
+			if (logfields->timefmt == TD_SYSLOG_USEC)
 				b_left = display_cat(&tdfbuf, "%F");
 			else
 				b_left = display_cat(&tdfbuf, "%F ");
@@ -1052,7 +1097,7 @@ void set_const_log_str()
 			break;
 		}
 
-		switch (tab_log_flag[LF_TIME].lf_ext) {
+		switch (logfields->timefmt) {
 		case TD_GANESHA:
 			b_left = display_cat(&tdfbuf, "%H:%M:%S ");
 			break;
@@ -1261,13 +1306,14 @@ static int display_log_header(struct thread_log_context *context)
 
 	/* Print date and/or time if either flag is enabled. */
 	if (b_left > 0
-	    && (tab_log_flag[LF_DATE].lf_val || tab_log_flag[LF_TIME].lf_val)) {
+	    && (logfields->datefmt != TD_NONE
+		|| logfields->timefmt != TD_NONE)) {
 		struct tm the_date;
 		char tbuf[MAX_TD_FMT_LEN];
 		time_t tm;
 		struct timeval tv;
 
-		if (tab_log_flag[LF_TIME].lf_ext == TD_SYSLOG_USEC) {
+		if (logfields->timefmt == TD_SYSLOG_USEC) {
 			gettimeofday(&tv, NULL);
 			tm = tv.tv_sec;
 		} else {
@@ -1287,7 +1333,7 @@ static int display_log_header(struct thread_log_context *context)
 			     sizeof(tbuf),
 			     date_time_fmt,
 			     &the_date) != 0) {
-			if (tab_log_flag[LF_TIME].lf_ext == TD_SYSLOG_USEC)
+			if (logfields->timefmt == TD_SYSLOG_USEC)
 				b_left =
 				    display_printf(&context->dspbuf, tbuf,
 						   tv.tv_usec);
@@ -1300,7 +1346,7 @@ static int display_log_header(struct thread_log_context *context)
 		b_left = display_cat(&context->dspbuf, const_log_str);
 
 	/* If thread name will not follow, need a : separator */
-	if (b_left > 0 && !tab_log_flag[LF_THREAD_NAME].lf_val)
+	if (b_left > 0 && !logfields->disp_threadname)
 		b_left = display_cat(&context->dspbuf, ": ");
 
 	/* If we overflowed the buffer with the header, just skip it. */
@@ -1322,30 +1368,30 @@ static int display_log_component(struct thread_log_context *context,
 	if (b_left <= 0 || max_headers < LH_COMPONENT)
 		return b_left;
 
-	if (b_left > 0 && tab_log_flag[LF_THREAD_NAME].lf_val)
+	if (b_left > 0 && logfields->disp_threadname)
 		b_left =
 		    display_printf(&context->dspbuf, "[%s] ",
 				   context->thread_name);
 
-	if (b_left > 0 && tab_log_flag[LF_FILE_NAME].lf_val) {
-		if (tab_log_flag[LF_LINE_NUM].lf_val)
+	if (b_left > 0 && logfields->disp_filename) {
+		if (logfields->disp_linenum)
 			b_left = display_printf(&context->dspbuf, "%s:", file);
 		else
 			b_left = display_printf(&context->dspbuf, "%s :", file);
 	}
 
-	if (b_left > 0 && tab_log_flag[LF_LINE_NUM].lf_val)
+	if (b_left > 0 && logfields->disp_linenum)
 		b_left = display_printf(&context->dspbuf, "%d :", line);
 
-	if (b_left > 0 && tab_log_flag[LF_FUNCTION_NAME].lf_val)
+	if (b_left > 0 && logfields->disp_funct)
 		b_left = display_printf(&context->dspbuf, "%s :", function);
 
-	if (b_left > 0 && tab_log_flag[LF_COMPONENT].lf_val)
+	if (b_left > 0 && logfields->disp_comp)
 		b_left =
 		    display_printf(&context->dspbuf, "%s :",
 				   LogComponents[component].comp_str);
 
-	if (b_left > 0 && tab_log_flag[LF_LEVEL].lf_val)
+	if (b_left > 0 && logfields->disp_level)
 		b_left =
 		    display_printf(&context->dspbuf, "%s :",
 				   tabLogLevel[level].short_str);
