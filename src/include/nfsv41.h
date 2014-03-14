@@ -7633,16 +7633,13 @@ extern "C" {
 			return false;
 		if (objp->what == NFS4_CONTENT_DATA) {
 			if (!xdr_offset4(xdrs,
-					&objp->data.d_offset))
+					&objp->hole.di_offset))
+				return false;
+			if (!xdr_length4(xdrs,
+					&objp->hole.di_length))
 				return false;
 			if (!inline_xdr_bool(xdrs,
-					&objp->data.d_allocated))
-				return false;
-			if (!inline_xdr_bytes
-			    (xdrs,
-			      (char **)&objp->data.d_data.data_val,
-			      (u_int *)&objp->data.d_data.data_len,
-			       ~0))
+					&objp->hole.di_allocated))
 				return false;
 			return true;
 		}

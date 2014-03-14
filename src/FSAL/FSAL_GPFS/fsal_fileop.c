@@ -276,11 +276,6 @@ fsal_status_t GPFSFSAL_clear(int fd,	/* IN */
 	ssize_t nb_write;
 	int errsv = 0;
 
-	/* sanity checks. */
-
-	if (!buffer || !p_write_amount)
-		return fsalstat(ERR_FSAL_FAULT, 0);
-
 	warg.mountdirfd = fd;
 	warg.fd = fd;
 	warg.bufP = buffer;

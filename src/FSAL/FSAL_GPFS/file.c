@@ -259,10 +259,8 @@ fsal_status_t gpfs_seek(struct fsal_obj_handle *obj_hdl,
 	arg.mountdirfd = myself->u.file.fd;
 	arg.openfd = myself->u.file.fd;
 	arg.info = &io_info;
-	if (info->io_content.what == NFS4_CONTENT_DATA) {
-		io_info.io_offset = info->io_content.data.d_offset;
-		io_info.io_what = SEEK_DATA;
-	} else if (info->io_content.what == NFS4_CONTENT_HOLE) {
+	if (info->io_content.what == NFS4_CONTENT_DATA ||
+			info->io_content.what == NFS4_CONTENT_HOLE) {
 		io_info.io_offset = info->io_content.hole.di_offset;
 		io_info.io_what = SEEK_HOLE;
 	} else
@@ -274,16 +272,9 @@ fsal_status_t gpfs_seek(struct fsal_obj_handle *obj_hdl,
 		fsal_error = posix2fsal_error(retval);
 	} else {
 		info->io_eof = io_info.io_eof;
-		if (info->io_content.what == NFS4_CONTENT_DATA) {
-			info->io_content.data.d_offset = io_info.io_offset;
-			info->io_content.data.d_allocated = io_info.io_alloc;
-			info->io_content.data.d_data.data_len = io_info.io_len;
-			info->io_content.data.d_data.data_val = NULL;
-		} else {   /* NFS4_CONTENT_HOLE */
-			info->io_content.hole.di_offset = io_info.io_offset;
-			info->io_content.hole.di_allocated = io_info.io_alloc;
-			info->io_content.hole.di_length = io_info.io_len;
-		}
+		info->io_content.hole.di_offset = io_info.io_offset;
+		info->io_content.hole.di_allocated = io_info.io_alloc;
+		info->io_content.hole.di_length = io_info.io_len;
 	}
 	return fsalstat(fsal_error, 0);
 }

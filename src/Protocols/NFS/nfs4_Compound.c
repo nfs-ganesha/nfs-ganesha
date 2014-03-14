@@ -623,7 +623,7 @@ int nfs4_Compound(nfs_arg_t *arg, exportlist_t *export,
 				}
 			}
 
-			if (opcode > NFS4_OP_RECLAIM_COMPLETE)
+			if (opcode > NFS4_OP_IO_ADVISE)
 				opcode = 0;
 		}
 		LogDebug(COMPONENT_NFS_V4, "Request %d: opcode %d is %s", i,
