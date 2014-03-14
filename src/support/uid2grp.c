@@ -253,7 +253,8 @@ bool name2grp(const struct gsh_buffdesc *name, struct group_data **gdata)
 
 	*gdata = uid2grp_allocate_by_name(name);
 	pthread_rwlock_wrlock(&uid2grp_user_lock);
-	uid2grp_add_user(*gdata);
+	if (*gdata)
+		uid2grp_add_user(*gdata);
 	success = uid2grp_lookup_by_uname(name, &uid, gdata);
 	if (success)
 		uid2grp_hold_group_data(*gdata);
@@ -294,7 +295,8 @@ bool uid2grp(uid_t uid, struct group_data **gdata)
 
 	*gdata = uid2grp_allocate_by_uid(uid);
 	pthread_rwlock_wrlock(&uid2grp_user_lock);
-	uid2grp_add_user(*gdata);
+	if (*gdata)
+		uid2grp_add_user(*gdata);
 	success = uid2grp_lookup_by_uid(uid, gdata);
 	if (success)
 		uid2grp_hold_group_data(*gdata);
