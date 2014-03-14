@@ -567,8 +567,10 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 
 	pthread_mutex_lock(&myself->export.lock);
 	retval = fsal_attach_export(fsal_hdl, &myself->export.exports);
-	if (retval != 0)
+	if (retval != 0) {
+		fsal_error = posix2fsal_error(retval);
 		goto errout;	/* seriously bad */
+	}
 	myself->export.fsal = fsal_hdl;
 
 	/* start looking for the mount point */
@@ -655,11 +657,11 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 
 	myself->root_fd = open(mntdir, O_RDONLY | O_DIRECTORY);
 	if (myself->root_fd < 0) {
+		retval = errno;
 		LogMajor(COMPONENT_FSAL,
 			 "Could not open VFS mount point %s: rc = %d", mntdir,
-			 errno);
-		fsal_error = posix2fsal_error(errno);
-		retval = errno;
+			 retval);
+		fsal_error = posix2fsal_error(retval);
 		goto errout;
 	} else {
 		struct stat root_stat;
@@ -667,32 +669,33 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 		vfs_alloc_handle(fh);
 		retval = fstat(myself->root_fd, &root_stat);
 		if (retval < 0) {
+			retval = errno;
 			LogMajor(COMPONENT_FSAL,
 				 "fstat: root_path: %s, fd=%d, errno=(%d) %s",
-				 mntdir, myself->root_fd, errno,
-				 strerror(errno));
-			fsal_error = posix2fsal_error(errno);
-			retval = errno;
+				 mntdir, myself->root_fd, retval,
+				 strerror(retval));
+			fsal_error = posix2fsal_error(retval);
 			goto errout;
 		}
 		myself->root_dev = root_stat.st_dev;
 		retval = hops->vex_fd_to_handle(myself->root_fd, fh);
 		if (retval != 0) {
+			retval = errno;
 			LogMajor(COMPONENT_FSAL,
 				 "vfs_fd_to_handle: root_path: %s, root_fd=%d, errno=(%d) %s",
-				 mntdir, myself->root_fd, errno,
-				 strerror(errno));
-			fsal_error = posix2fsal_error(errno);
-			retval = errno;
+				 mntdir, myself->root_fd, retval,
+				 strerror(retval));
+			fsal_error = posix2fsal_error(retval);
 			goto errout;
 		}
 		myself->root_handle = gsh_malloc(sizeof(vfs_file_handle_t));
 		if (myself->root_handle == NULL) {
-			LogMajor(COMPONENT_FSAL,
-				 "memory for root handle, errno=(%d) %s", errno,
-				 strerror(errno));
-			fsal_error = posix2fsal_error(errno);
 			retval = errno;
+			LogMajor(COMPONENT_FSAL,
+				 "memory for root handle, errno=(%d) %s",
+				 retval,
+				 strerror(retval));
+			fsal_error = posix2fsal_error(retval);
 			goto errout;
 		}
 		memcpy(myself->root_handle, fh, sizeof(vfs_file_handle_t));
@@ -702,8 +705,10 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 		retval = pnfs_panfs_init(myself->root_fd, &myself->pnfs_data);
 		if (retval) {
 			LogCrit(COMPONENT_FSAL,
-				"vfs export_ops_pnfs faild => %d [%s]", retval,
+				"vfs export_ops_pnfs failed => %d [%s]",
+				retval,
 				strerror(retval));
+			fsal_error = posix2fsal_error(retval);
 			goto errout;
 		}
 	}

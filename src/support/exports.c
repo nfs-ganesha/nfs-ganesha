@@ -591,6 +591,7 @@ static int fsal_commit(void *node, void *link_mem, void *self_struct)
 				"Failed to initialize FSAL (%s)",
 				fp->name);
 			fsal->ops->put(fsal);
+			errcnt++;
 			goto err;
 		}
 	}
@@ -608,6 +609,7 @@ static int fsal_commit(void *node, void *link_mem, void *self_struct)
 			exp->pseudopath,
 			exp->fullpath);
 		errcnt++;
+		goto err;
 	}
 	/* We are connected up to the fsal side.  Now
 	 * validate maxread/write etc with fsal params */
@@ -625,6 +627,7 @@ static int fsal_commit(void *node, void *link_mem, void *self_struct)
 			 fsal_exp->ops->fs_maxwrite(fsal_exp));
 		exp->MaxWrite = fsal_exp->ops->fs_maxwrite(fsal_exp);
 	}
+	assert(fsal_exp != NULL);
 	exp->export_hdl = fsal_exp;
 
 err:
