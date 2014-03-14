@@ -231,30 +231,6 @@ log_header_t max_headers = LH_COMPONENT;
 
 /**
  *
- * @brief Finds a log facility by name
- *
- * @param[in]  name The name of the facility to be found
- *
- * @retval NULL No facility by that name
- * @retval non-NULL Pointer to the facility structure
- *
- */
-struct log_facility *find_log_facility(const char *name)
-{
-	struct glist_head *glist;
-	struct log_facility *facility;
-
-	glist_for_each(glist, &facility_list) {
-		facility = glist_entry(glist, struct log_facility, lf_list);
-		if (!strcasecmp(name, facility->lf_name))
-			return facility;
-	}
-
-	return NULL;
-}
-
-/**
- *
  * @brief Test if facility is active
  *
  * @param[in]  facility The facility to test
@@ -1137,6 +1113,435 @@ static void set_logging_from_env(void)
 	}
 
 }				/* InitLogging */
+
+/**
+ *
+ * @brief Finds a log facility by name
+ *
+ * Must be called under the rwlock
+ *
+ * @param[in]  name The name of the facility to be found
+ *
+ * @retval NULL No facility by that name
+ * @retval non-NULL Pointer to the facility structure
+ *
+ */
+static struct log_facility *find_log_facility(const char *name)
+{
+	struct glist_head *glist;
+	struct log_facility *facility;
+
+	glist_for_each(glist, &facility_list) {
+		facility = glist_entry(glist, struct log_facility, lf_list);
+		if (!strcasecmp(name, facility->lf_name))
+			return facility;
+	}
+
+	return NULL;
+}
+
+/**
+ * @brief Create a logging facility
+ *
+ * A logging facility outputs log messages using the helper function
+ * log_func.  See below for enabling/disabling.
+ *
+ * @param name       [IN] the name of the new logger
+ * @param log_func   [IN] function pointer to the helper
+ * @param max_level  [IN] maximum message level this logger will handle.
+ * @param header     [IN] detail level for header part of messages
+ * @param private    [IN] logger specific argument.
+ *
+ * @return 0 on success, -errno for failure
+ */
+
+int create_log_facility(char *name,
+			lf_function_t *log_func,
+			log_levels_t max_level,
+			log_header_t header,
+			void *private)
+{
+	struct log_facility *facility;
+
+	if (name == NULL || *name == '\0')
+		return -EINVAL;
+	if (max_level < NIV_NULL || max_level >= NB_LOG_LEVEL)
+		return -EINVAL;
+	if (log_func == log_to_file && private != NULL) {
+		char *dir;
+		int rc;
+
+		if (*(char *)private == '\0' ||
+		    strlen(private) >= MAXPATHLEN) {
+			LogCrit(COMPONENT_LOG,
+				 "New log file path empty or too long");
+			return -EINVAL;
+		}
+		dir = alloca(strlen(private) + 1);
+		strcpy(dir, private);
+		dir = dirname(dir);
+		rc = access(dir, W_OK);
+		if (rc != 0) {
+			rc = errno;
+			LogCrit(COMPONENT_LOG,
+				 "Cannot create new log file (%s), because: %s",
+				 (char *)private, strerror(rc));
+			return -rc;
+		}
+	}
+	pthread_rwlock_wrlock(&log_rwlock);
+
+	facility = find_log_facility(name);
+
+	if (facility != NULL) {
+		pthread_rwlock_unlock(&log_rwlock);
+
+		LogInfo(COMPONENT_LOG, "Facility %s already exists", name);
+
+		return -EEXIST;
+	}
+
+	facility = gsh_calloc(1, sizeof(*facility));
+
+	if (facility == NULL) {
+		pthread_rwlock_unlock(&log_rwlock);
+
+		LogCrit(COMPONENT_LOG, "Can not allocate a facility for %s",
+			 name);
+
+		return -ENOMEM;
+	}
+	glist_init(&facility->lf_list);
+	glist_init(&facility->lf_active);
+	facility->lf_name = gsh_strdup(name);
+	facility->lf_func = log_func;
+	facility->lf_max_level = max_level;
+	facility->lf_headers = header;
+	if (log_func == log_to_file && private != NULL) {
+		facility->lf_private = gsh_strdup(private);
+		if (facility->lf_private == NULL)
+			return -ENOMEM;
+	} else
+		facility->lf_private = private;
+	glist_add_tail(&facility_list, &facility->lf_list);
+
+	pthread_rwlock_unlock(&log_rwlock);
+
+	LogInfo(COMPONENT_LOG, "Created log facility %s",
+		facility->lf_name);
+
+	return 0;
+}
+
+/**
+ * @brief Release a logger facility
+ *
+ * Release the named facility and all its resources.
+ * disable it first if it is active.  It will refuse to
+ * release the default logger because that could leave the server
+ * with no place to send messages.
+ *
+ * @param name [IN] name of soon to be deceased logger
+ *
+ * @returns always.  The logger is not disabled or released on errors
+ */
+
+void release_log_facility(char *name)
+{
+	struct log_facility *facility;
+
+	pthread_rwlock_wrlock(&log_rwlock);
+	facility = find_log_facility(name);
+	if (facility == NULL) {
+		pthread_rwlock_unlock(&log_rwlock);
+		LogCrit(COMPONENT_LOG,
+			 "Attempting release of non-existant log facility (%s)",
+			 name);
+		return;
+	}
+	if (facility == default_facility) {
+		pthread_rwlock_unlock(&log_rwlock);
+		LogCrit(COMPONENT_LOG,
+			 "Attempting to release default log facility (%s)",
+			 name);
+		return;
+	}
+	if (!glist_empty(&facility->lf_active))
+		glist_del(&facility->lf_active);
+	glist_del(&facility->lf_list);
+	pthread_rwlock_unlock(&log_rwlock);
+	if (facility->lf_func == log_to_file &&
+	    facility->lf_private != NULL)
+		gsh_free(facility->lf_private);
+	gsh_free(facility->lf_name);
+	gsh_free(facility);
+	return;
+}
+
+/**
+ * @brief Enable the named logger
+ *
+ * Enabling a logger adds it to the list of facilites that will be
+ * used to report messages.
+ *
+ * @param name [IN] the name of the logger to enable
+ *
+ * @return 0 on success, -errno on errors.
+ */
+
+int enable_log_facility(char *name)
+{
+	struct log_facility *facility;
+
+	if (name == NULL || *name == '\0')
+		return -EINVAL;
+	pthread_rwlock_wrlock(&log_rwlock);
+	facility = find_log_facility(name);
+	if (facility == NULL) {
+		pthread_rwlock_unlock(&log_rwlock);
+		LogInfo(COMPONENT_LOG, "Facility %s does not exist", name);
+		return -EEXIST;
+	}
+	if (!glist_empty(&facility->lf_active)) {
+		pthread_rwlock_unlock(&log_rwlock);
+		LogCrit(COMPONENT_LOG,
+			 "Log facility (%s) is already enabled",
+			 name);
+		return -EINVAL;
+	}
+	glist_add_tail(&active_facility_list, &facility->lf_active);
+	if (facility->lf_headers > max_headers)
+		max_headers = facility->lf_headers;
+	pthread_rwlock_unlock(&log_rwlock);
+	return 0;
+}
+
+/**
+ * @brief Disable the named logger
+ *
+ * Disabling a logger ends logging output to that facility.
+ * Disabling the default logger is not allowed.  Another facility
+ * must be set instead.  Loggers can be re-enabled at any time.
+ *
+ * @param name [IN] the name of the logger to enable
+ *
+ * @return 0 on success, -errno on errors.
+ */
+
+int disable_log_facility(char * name)
+{
+	struct log_facility *facility;
+
+	if (name == NULL || *name == '\0')
+		return -EINVAL;
+	pthread_rwlock_wrlock(&log_rwlock);
+	facility = find_log_facility(name);
+	if (facility == NULL) {
+		pthread_rwlock_unlock(&log_rwlock);
+		LogInfo(COMPONENT_LOG, "Facility %s already exists", name);
+		return -EEXIST;
+	}
+	if (glist_empty(&facility->lf_active)) {
+		pthread_rwlock_unlock(&log_rwlock);
+		LogCrit(COMPONENT_LOG,
+			 "Log facility (%s) is already disabled",
+			 name);
+		return -EINVAL;
+	}
+	if (facility == default_facility) {
+		pthread_rwlock_unlock(&log_rwlock);
+		LogCrit(COMPONENT_LOG,
+			 "Cannot disable the default logger (%s)",
+			 default_facility->lf_name);
+		return -EPERM;
+	}
+	glist_del(&facility->lf_active);
+	glist_init(&facility->lf_active);
+	if (facility->lf_headers == max_headers) {
+		struct glist_head *glist;
+		struct log_facility *found;
+
+		max_headers = LH_NONE;
+		glist_for_each(glist, &active_facility_list) {
+			found = glist_entry(glist,
+					    struct log_facility, lf_active);
+			if (found->lf_headers > max_headers)
+				max_headers = found->lf_headers;
+		}
+	}
+	pthread_rwlock_unlock(&log_rwlock);
+	return 0;
+}
+
+/**
+ * @brief Set the named logger as the default logger
+ *
+ * The default logger can not be released sp we set another one as
+ * the default instead.  The previous default logger is disabled.
+ *
+ * @param name [IN] the name of the logger to enable
+ *
+ * @return 0 on success, -errno on errors.
+ */
+
+static int set_default_log_facility(char *name)
+{
+	struct log_facility *facility;
+
+	if (name == NULL || *name == '\0')
+		return -EINVAL;
+	
+	pthread_rwlock_wrlock(&log_rwlock);
+	facility = find_log_facility(name);
+	if (facility == NULL) {
+		pthread_rwlock_unlock(&log_rwlock);
+		LogCrit(COMPONENT_LOG, "Facility %s does not exist", name);
+		return -EEXIST;
+	}
+	if (facility == default_facility)
+		goto out;
+	if (glist_empty(&facility->lf_active))
+		glist_add_tail(&active_facility_list, &facility->lf_active);
+	if (default_facility != NULL) {
+		assert(!glist_empty(&default_facility->lf_active));
+		glist_del(&default_facility->lf_active);
+		glist_init(&default_facility->lf_active);
+		if (facility->lf_headers != max_headers) {
+			struct glist_head *glist;
+			struct log_facility *found;
+
+			max_headers = LH_NONE;
+			glist_for_each(glist, &active_facility_list) {
+				found = glist_entry(glist,
+						    struct log_facility,
+						    lf_active);
+				if (found->lf_headers > max_headers)
+					max_headers = found->lf_headers;
+			}
+		}
+	} else if (facility->lf_headers > max_headers)
+		max_headers = facility->lf_headers;
+	default_facility = facility;
+out:
+	pthread_rwlock_unlock(&log_rwlock);
+	return 0;
+}
+
+/**
+ * @brief Set the destination for logger
+ *
+ * This function only works if the facility outputs to files.
+ *
+ * @param name [IN] the name of the facility
+ * @param dest [IN] "stdout", "stderr", "syslog", or a file path
+ *
+ * @return 0 on success, -errno on errors
+ */
+
+int set_log_destination(char *name, char *dest)
+{
+	struct log_facility *facility;
+	int rc;
+
+	if (name == NULL || *name == '\0')
+		return -EINVAL;
+	if (dest == NULL ||
+	    *dest == '\0' ||
+	    strlen(dest) >= MAXPATHLEN) {
+		LogCrit(COMPONENT_LOG,
+			 "New log file path empty or too long");
+		return -EINVAL;
+	}
+	pthread_rwlock_wrlock(&log_rwlock);
+	facility = find_log_facility(name);
+	if (facility == NULL) {
+		pthread_rwlock_unlock(&log_rwlock);
+		LogCrit(COMPONENT_LOG,
+			 "No such log facility (%s)",
+			 name);
+		return -ENOENT;
+	}
+	if (facility->lf_func == log_to_file) {
+		char *logfile, *dir;
+
+		dir = alloca(strlen(dest) + 1);
+		strcpy(dir, dest);
+		dir = dirname(dir);
+		rc = access(dir, W_OK);
+		if (rc != 0) {
+			LogCrit(COMPONENT_LOG,
+				"Cannot create new log file (%s), because: %s",
+				dest, strerror(errno));
+			return -errno;
+		}
+		logfile = gsh_strdup(dest);
+		if (logfile == NULL) {
+			pthread_rwlock_unlock(&log_rwlock);
+			LogCrit(COMPONENT_LOG,
+				"No memory for log file name (%s) for %s",
+				dest, facility->lf_name);
+			return -ENOMEM;
+		}
+		if (facility->lf_private != NULL)
+			gsh_free(facility->lf_private);
+		facility->lf_private = logfile;
+	} else if (facility->lf_func == log_to_stream) {
+		FILE *out;
+
+		if (strcasecmp(dest, "stdout") == 0) {
+			out = stdout;
+		} else if (strcasecmp(dest, "stderr") == 0) {
+			out = stderr;
+		} else {
+			pthread_rwlock_unlock(&log_rwlock);
+			LogCrit(COMPONENT_LOG,
+				"Expected STDERR or STDOUT, not (%s)",
+				dest);
+			return -EINVAL;
+		}
+		facility->lf_private = out;
+	} else {
+		pthread_rwlock_unlock(&log_rwlock);
+		LogCrit(COMPONENT_LOG,
+			 "Log facility %s destination is not changable",
+			facility->lf_name);
+		return -EINVAL;
+	}
+	pthread_rwlock_unlock(&log_rwlock);
+	return 0;
+}
+
+/**
+ * @brief Set maximum logging level for a facilty
+ *
+ * @param name [IN] the name of the facility
+ * @param max_level [IN] Maximum level
+ *
+ *
+ * @return 0 on success, -errno on errors
+ */
+
+int set_log_level(char *name, log_levels_t max_level)
+{
+	struct log_facility *facility;
+
+	if (name == NULL || *name == '\0')
+		return -EINVAL;
+	if (max_level < NIV_NULL || max_level >= NB_LOG_LEVEL)
+		return -EINVAL;
+	pthread_rwlock_wrlock(&log_rwlock);
+	facility = find_log_facility(name);
+	if (facility == NULL) {
+		pthread_rwlock_unlock(&log_rwlock);
+		LogCrit(COMPONENT_LOG,
+			 "No such log facility (%s)",
+			 name);
+		return -ENOENT;
+	}
+	facility->lf_max_level = max_level;
+	pthread_rwlock_unlock(&log_rwlock);
+	return 0;
+}
 
 void init_logging(const char *log_path, const int debug_level)
 {
