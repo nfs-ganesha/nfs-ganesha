@@ -1544,24 +1544,29 @@ int set_log_level(char *name, log_levels_t max_level)
 	return 0;
 }
 
+/**
+ * @brief Initialize Logging
+ *
+ * Called very early in server init to make logging available as
+ * soon as possible. Create a logger to stderr first and make it
+ * the default.  We are forced to fprintf to stderr by hand until
+ * this happens.  Once this is up, the logger is working.
+ * We then get stdout and syslog loggers init'd.
+ * If log_path (passed in via -L on the command line), we get a
+ * FILE logger going and make it our default logger.  Otherwise,
+ * we use syslog as the default.
+ *
+ * @param log_path    [IN] optarg from -L, otherwise NULL
+ * @param debug_level [IN] global debug level from -N optarg
+ */
+
 void init_logging(const char *log_path, const int debug_level)
 {
-	log_type_t ltyp;
+	int rc;
 
 	/* Finish initialization of and register log facilities. */
 	glist_init(&facility_list);
 	glist_init(&active_facility_list);
-
-	facilities[STDERRLOG].lf_private = stderr;
-	facilities[STDOUTLOG].lf_private = stdout;
-	facilities[TESTLOG].lf_private = stdout;
-	facilities[FILELOG].lf_private = gsh_strdup("/tmp/ganesha.log");
-
-	for (ltyp = SYSLOG; ltyp <= TESTLOG; ltyp++)
-		register_log_facility(&facilities[ltyp]);
-
-	/* Activate the default facility */
-	activate_log_facility(default_facility);
 
 	/* Initialize const_log_str to defaults. Ganesha can start logging
 	 * before the LOG config is processed (in fact, LOG config can itself
@@ -1569,10 +1574,54 @@ void init_logging(const char *log_path, const int debug_level)
 	 */
 	set_const_log_str();
 
-	if (log_path)
-		SetDefaultLogging(log_path);
-
-	SetLevelDebug(debug_level >= 0 ? debug_level : NIV_EVENT);
+	rc = create_log_facility("STDERR", log_to_stream,
+				 NIV_FULL_DEBUG, LH_ALL, stderr);
+	if (rc != 0) {
+		fprintf(stderr, "Create error (%s) for STDERR log facility!",
+			strerror(-rc));
+		Fatal();
+	}
+	rc = set_default_log_facility("STDERR");
+	if (rc != 0) {
+		fprintf(stderr, "Enable error (%s) for STDERR log facility!",
+			strerror(-rc));
+		Fatal();
+	}
+	rc = create_log_facility("STDOUT", log_to_stream,
+				 NIV_FULL_DEBUG, LH_ALL, stdout);
+	if (rc != 0)
+		LogFatal(COMPONENT_LOG,
+			 "Create error (%s) for STDOUT log facility!",
+			strerror(-rc));
+	rc = create_log_facility("SYSLOG", log_to_syslog,
+				 NIV_FULL_DEBUG, LH_COMPONENT, NULL);
+	if (rc != 0)
+		LogFatal(COMPONENT_LOG,
+			 "Create error (%s) for SYSLOG log facility!",
+			 strerror(-rc));
+	if (log_path) {
+		rc = create_log_facility("FILE", log_to_file,
+					 NIV_FULL_DEBUG, LH_ALL,
+					 (void *)log_path);
+		if (rc != 0)
+			LogFatal(COMPONENT_LOG,
+				 "Create error (%s) for FILE (%s) logging!",
+				 strerror(-rc), log_path);
+		rc = set_default_log_facility("FILE");
+		if (rc != 0)
+			LogFatal(COMPONENT_LOG,
+				 "Enable error (%s) for FILE (%s) logging!",
+				 strerror(-rc), log_path);
+	} else {
+		/* Fall back to SYSLOG as the first default facility */
+		rc = set_default_log_facility("SYSLOG");
+		if (rc != 0)
+			LogFatal(COMPONENT_LOG,
+				 "Enable error (%s) for SYSLOG logging!",
+				 strerror(-rc));
+	}
+	if (debug_level >= 0)
+		SetLevelDebug(debug_level);
 
 	set_logging_from_env();
 
