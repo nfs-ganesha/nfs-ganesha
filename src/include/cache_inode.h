@@ -176,7 +176,8 @@ typedef struct cache_inode_share__ {
  */
 typedef struct cache_inode_key {
 	uint64_t hk;		/* hash key */
-	struct gsh_buffdesc kv;
+	struct fsal_module *fsal;	/*< fsal module */
+	struct gsh_buffdesc kv;		/*< fsal handle */
 } cache_inode_key_t;
 
 /**
@@ -203,6 +204,7 @@ cache_inode_key_dup(cache_inode_key_t *tgt,
 
 	memcpy(tgt->kv.addr, src->kv.addr, src->kv.len);
 	tgt->hk = src->hk;
+	tgt->fsal = src->fsal;
 
 	return 0;
 }

@@ -206,7 +206,9 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 					.lock_length = fl.flock.l_len
 				};
 				rc = up_async_lock_grant(general_fridge,
-							 event_func, &key,
+							 event_func,
+							 gpfs_fsal_up_ctx->gf_fsal,
+							 &key,
 							 fl.lock_owner,
 							 &lockdesc, NULL, NULL);
 			}
@@ -217,6 +219,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 				 "delegation recall: flags:%x ino %ld", flags,
 				 callback.buf->st_ino);
 			rc = up_async_delegrecall(general_fridge, event_func,
+						  gpfs_fsal_up_ctx->gf_fsal,
 						  &key, NULL, NULL);
 			break;
 
@@ -232,7 +235,9 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 					 flags, callback.buf->st_ino);
 
 				rc = up_async_layoutrecall(general_fridge,
-							event_func, &key,
+							event_func,
+							gpfs_fsal_up_ctx->gf_fsal,
+							&key,
 							LAYOUT4_NFSV4_1_FILES,
 							false, &segment,
 							NULL, NULL, NULL,
@@ -322,7 +327,8 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 					    grace_period_attr;
 
 					rc = event_func->
-					    update(&key, &attr, upflags);
+					    update(gpfs_fsal_up_ctx->gf_fsal,
+					    	   &key, &attr, upflags);
 
 					if ((flags & UP_NLINK)
 					    && (attr.numlinks == 0)) {
@@ -331,12 +337,14 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 						rc = up_async_update
 						    (general_fridge,
 						     event_func,
+						     gpfs_fsal_up_ctx->gf_fsal,
 						     &key, &attr,
 						     upflags, NULL, NULL);
 					}
 				} else {
 					rc = event_func->
-					    invalidate(&key,
+					    invalidate(
+						gpfs_fsal_up_ctx->gf_fsal, &key,
 						CACHE_INODE_INVALIDATE_ATTRS
 						|
 						CACHE_INODE_INVALIDATE_CONTENT);
@@ -356,6 +364,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 				    "inode invalidate: flags:%x update ino %ld",
 				    flags, callback.buf->st_ino);
 			rc = event_func->invalidate(
+						gpfs_fsal_up_ctx->gf_fsal,
 						&key,
 						CACHE_INODE_INVALIDATE_ATTRS
 						|

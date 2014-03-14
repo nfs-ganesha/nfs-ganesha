@@ -267,7 +267,8 @@ static void initiate_recall(struct vfs_fsal_obj_handle *myself,
 	/* For layoutrecall up_ops are probably set to default recieved at
 	 * vfs_create_export
 	 */
-	myself->up_ops->layoutrecall(&handle, LAYOUT4_OSD2_OBJECTS,
+	myself->up_ops->layoutrecall(myself->obj_handle.fsal,
+				     &handle, LAYOUT4_OSD2_OBJECTS,
 				     false, &up_segment, r_cookie, NULL);
 
 }
