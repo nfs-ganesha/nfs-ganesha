@@ -543,7 +543,8 @@ int ptfsal_stat_by_name(const struct req_op_context *p_context,
 
 	ccl_context_t ccl_context;
 
-	ptfsal_set_fsi_handle_data(export, p_context, &ccl_context);
+	ptfsal_set_fsi_handle_data_path(export, p_context,
+				      (char *)p_fsalpath, &ccl_context);
 
 	FSI_TRACE(FSI_DEBUG, "FSI - name = %s\n", p_fsalpath);
 
@@ -1484,9 +1485,23 @@ mode_t fsal_type2unix(int fsal_type)
 	return outMode;
 }
 
-/* This function will fill in ccl_context_t */
 void ptfsal_set_fsi_handle_data(struct fsal_export *exp_hdl,
 				const struct req_op_context *p_context,
+				ccl_context_t *ccl_context) {
+	char *export_path = NULL;
+	if (p_context != NULL)
+		export_path = (char *)p_context->export->export.fullpath;
+	ptfsal_set_fsi_handle_data_path(exp_hdl,
+			p_context,
+			export_path,
+			ccl_context);
+}
+
+
+/* This function will fill in ccl_context_t */
+void ptfsal_set_fsi_handle_data_path(struct fsal_export *exp_hdl,
+				const struct req_op_context *p_context,
+				char *export_path,
 				ccl_context_t *ccl_context)
 {
 	unsigned char *bytes;
@@ -1494,11 +1509,12 @@ void ptfsal_set_fsi_handle_data(struct fsal_export *exp_hdl,
 	myself = container_of(exp_hdl, struct pt_fsal_export, export);
 
 	ccl_context->export_id = myself->pt_export_id;
-	/* (p_context == NULL?0: p_context->creds->caller_uid); */
 	ccl_context->uid = 0;
-	/* (p_context == NULL?0:p_context->creds->caller_gid); */
 	ccl_context->gid = 0;
-	ccl_context->export_path = p_context->export->export.fullpath;
+	if (p_context != NULL)
+		ccl_context->export_path = p_context->export->export.fullpath;
+	else
+		ccl_context->export_path = export_path;
 	memset(ccl_context->client_address, 0,
 	       sizeof(ccl_context->client_address));
 	if (p_context == NULL) {
@@ -1514,11 +1530,12 @@ void ptfsal_set_fsi_handle_data(struct fsal_export *exp_hdl,
 			 bytes[0], bytes[1], bytes[2], bytes[3]);
 	}
 	FSI_TRACE(FSI_DEBUG,
-		  "Export ID = %u, uid = %u, gid = %u, Export Path = "
-		  "%s, client ip = %s\n", p_context->export->export.id,
-		  (p_context == NULL ? 0 : p_context->creds->caller_uid),
-		  (p_context == NULL ? 0 : p_context->creds->caller_gid),
-		  p_context->export->export.fullpath,
+		  "Export ID = %lu, uid = %lu, gid = %lu, Export Path = "
+		  "%s, client ip = %s\n",
+		  ccl_context->export_id,
+		  ccl_context->uid,
+		  ccl_context->gid,
+		  ccl_context->export_path,
 		  ccl_context->client_address);
 }
 

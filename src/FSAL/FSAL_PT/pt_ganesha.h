@@ -439,6 +439,10 @@ mode_t fsal_type2unix(int fsal_type);
 void ptfsal_set_fsi_handle_data(struct fsal_export *export,
 				const struct req_op_context *p_context,
 				ccl_context_t *context);
+void ptfsal_set_fsi_handle_data_path(struct fsal_export *exp_hdl,
+				const struct req_op_context *p_context,
+				char *export_path,
+				ccl_context_t *ccl_context);
 void *ptfsal_closeHandle_listener_thread(void *args);
 
 int ptfsal_implicit_close_for_nfs(int handle_index_to_close, int close_style);
