@@ -794,12 +794,10 @@ clientid_status_t nfs_client_id_confirm(nfs_client_id_t *clientid,
  * reference to record also.
  *
  * @param[in] clientid The client id to expire
- * @param[in] req_ctx  Request context
  *
  * @return true if the clientid is successfully expired.
  */
-bool nfs_client_id_expire(nfs_client_id_t *clientid,
-			  struct req_op_context *req_ctx)
+bool nfs_client_id_expire(nfs_client_id_t *clientid)
 {
 	struct glist_head *glist, *glistn;
 	struct glist_head *glist2, *glistn2;
@@ -810,6 +808,11 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid,
 	hash_table_t *ht_expire;
 	nfs_client_record_t *record;
 	char str[HASHTABLE_DISPLAY_STRLEN];
+	struct root_op_context root_op_context;
+
+	/* Initialize req_ctx */
+	init_root_op_context(&root_op_context, NULL, NULL,
+			     0, 0, UNKNOWN_REQUEST);
 
 	pthread_mutex_lock(&clientid->cid_mutex);
 	if (clientid->cid_confirmed == EXPIRED_CLIENT_ID) {
@@ -874,7 +877,8 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid,
 							   state_t,
 							   state_owner_list);
 
-			state_owner_unlock_all(plock_owner, req_ctx,
+			state_owner_unlock_all(plock_owner,
+					       &root_op_context.req_ctx,
 					       plock_state);
 		}
 	}
@@ -887,7 +891,7 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid,
 							 so_owner.so_nfs4_owner.
 							 so_perclient);
 		inc_state_owner_ref(plock_owner);
-		release_lockstate(req_ctx, plock_owner);
+		release_lockstate(&root_op_context.req_ctx, plock_owner);
 
 		if (isFullDebug(COMPONENT_CLIENTID)) {
 			int32_t refcount =
@@ -913,7 +917,7 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid,
 							 so_owner.so_nfs4_owner.
 							 so_perclient);
 		inc_state_owner_ref(popen_owner);
-		release_openstate(req_ctx, popen_owner);
+		release_openstate(&root_op_context.req_ctx, popen_owner);
 
 		if (isFullDebug(COMPONENT_CLIENTID)) {
 			int32_t refcount =

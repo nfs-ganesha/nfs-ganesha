@@ -924,7 +924,7 @@ static void nfs_release_v4_client(char *ip)
 
 				pthread_mutex_lock(&recp->cr_mutex);
 
-				nfs_client_id_expire(cp, NULL);
+				nfs_client_id_expire(cp);
 
 				pthread_mutex_unlock(&recp->cr_mutex);
 

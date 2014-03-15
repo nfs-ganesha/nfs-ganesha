@@ -3302,7 +3302,8 @@ state_status_t state_owner_unlock_all(state_owner_t *owner,
 	}
 
 	req_ctx->export = saved_export;
-	req_ctx->fsal_export = req_ctx->export->export.export_hdl;
+	if (saved_export != NULL)
+		req_ctx->fsal_export = req_ctx->export->export.export_hdl;
 	return status;
 }
 
