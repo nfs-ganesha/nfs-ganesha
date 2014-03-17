@@ -128,7 +128,6 @@ char *get_debug_info(int *size);
 
 void SetNamePgm(const char *nom);
 void SetNameHost(const char *nom);
-void SetDefaultLogging(const char *name);
 void SetNameFunction(const char *nom);	/* thread safe */
 
 void init_logging(const char *log_path, const int debug_level);
@@ -195,11 +194,6 @@ struct log_facility {
 	void *lf_private;	/*< Private info for facility          */
 };
 
-void deactivate_log_facility(struct log_facility *facility);
-void activate_log_facility(struct log_facility *facility);
-int register_log_facility(struct log_facility *facility);
-int unregister_log_facility(struct log_facility *facility);
-int activate_custom_log_facility(struct log_facility *facility);
 int create_log_facility(char *name,
 			lf_function_t *log_func,
 			log_levels_t max_level,
