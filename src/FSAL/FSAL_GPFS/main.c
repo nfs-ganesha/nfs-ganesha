@@ -145,12 +145,6 @@ static int log_to_gpfs(struct log_facility *facility, log_levels_t level,
 	return retval;
 }
 
-struct log_facility facility = {
-	{NULL, NULL}, {NULL, NULL},
-	"GPFS", NIV_FULL_DEBUG,
-	LH_COMPONENT, log_to_gpfs, NULL
-};
-
 static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 				 config_file_t config_struct)
 {
@@ -177,7 +171,17 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 		 "FSAL INIT: Supported attributes mask = 0x%" PRIx64,
 		 gpfs_me->fs_info.supported_attrs);
 
-	activate_custom_log_facility(&facility);
+	rc = create_log_facility("GPFS", log_to_gpfs,
+				 NIV_FULL_DEBUG, LH_COMPONENT, NULL);
+	if (rc != 0)
+		LogCrit(COMPONENT_FSAL,
+			"Could not create GPFS logger (%s)",
+			strerror(-rc));
+	rc = enable_log_facility("GPFS");
+	if (rc != 0)
+		LogCrit(COMPONENT_FSAL,
+			"Could not enable GPFS logger (%s)",
+			strerror(-rc));
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -226,7 +230,7 @@ MODULE_FINI void gpfs_unload(void)
 {
 	int retval;
 
-	unregister_log_facility(&facility);
+	release_log_facility("GPFS");
 
 	retval = unregister_fsal(&GPFS.fsal);
 	if (retval != 0) {
