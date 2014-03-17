@@ -565,21 +565,23 @@ char date_time_fmt[MAX_TD_FMT_LEN];
 char user_date_fmt[MAX_TD_USER_LEN];
 char user_time_fmt[MAX_TD_USER_LEN];
 
-/* La longueur d'une chaine */
-#define MAX_NUM_FAMILY  50
-#define UNUSED_SLOT -1
+typedef struct loglev {
+	char *str;
+	char *short_str;
+	int syslog_level;
+} log_level_t;
 
-log_level_t tabLogLevel[] = {
-	{NIV_NULL, "NIV_NULL", "NULL", LOG_NOTICE},
-	{NIV_FATAL, "NIV_FATAL", "FATAL", LOG_CRIT},
-	{NIV_MAJ, "NIV_MAJ", "MAJ", LOG_CRIT},
-	{NIV_CRIT, "NIV_CRIT", "CRIT", LOG_ERR},
-	{NIV_WARN, "NIV_WARN", "WARN", LOG_WARNING},
-	{NIV_EVENT, "NIV_EVENT", "EVENT", LOG_NOTICE},
-	{NIV_INFO, "NIV_INFO", "INFO", LOG_INFO},
-	{NIV_DEBUG, "NIV_DEBUG", "DEBUG", LOG_DEBUG},
-	{NIV_MID_DEBUG, "NIV_MID_DEBUG", "M_DBG", LOG_DEBUG},
-	{NIV_FULL_DEBUG, "NIV_FULL_DEBUG", "F_DBG", LOG_DEBUG}
+static log_level_t tabLogLevel[] = {
+	[NIV_NULL] = {"NIV_NULL", "NULL", LOG_NOTICE},
+	[NIV_FATAL] = {"NIV_FATAL", "FATAL", LOG_CRIT},
+	[NIV_MAJ] = {"NIV_MAJ", "MAJ", LOG_CRIT},
+	[NIV_CRIT] = {"NIV_CRIT", "CRIT", LOG_ERR},
+	[NIV_WARN] = {"NIV_WARN", "WARN", LOG_WARNING},
+	[NIV_EVENT] = {"NIV_EVENT", "EVENT", LOG_NOTICE},
+	[NIV_INFO] = {"NIV_INFO", "INFO", LOG_INFO},
+	[NIV_DEBUG] = {"NIV_DEBUG", "DEBUG", LOG_DEBUG},
+	[NIV_MID_DEBUG] = {"NIV_MID_DEBUG", "M_DBG", LOG_DEBUG},
+	[NIV_FULL_DEBUG] = {"NIV_FULL_DEBUG", "F_DBG", LOG_DEBUG}
 };
 
 #ifndef ARRAY_SIZE
@@ -789,10 +791,11 @@ int ReturnLevelAscii(const char *LevelInAscii)
 	int i = 0;
 
 	for (i = 0; i < ARRAY_SIZE(tabLogLevel); i++)
-		if (!strcasecmp(tabLogLevel[i].str, LevelInAscii)
-		    || !strcasecmp(tabLogLevel[i].str + 4, LevelInAscii)
-		    || !strcasecmp(tabLogLevel[i].short_str, LevelInAscii))
-			return tabLogLevel[i].value;
+		if (tabLogLevel[i].str != NULL &&
+		    (!strcasecmp(tabLogLevel[i].str, LevelInAscii)
+		     || !strcasecmp(tabLogLevel[i].str + 4, LevelInAscii)
+		     || !strcasecmp(tabLogLevel[i].short_str, LevelInAscii)))
+			return i;
 
 	/* If nothing found, return -1 */
 	return -1;
@@ -817,11 +820,8 @@ static int ReturnComponentAscii(const char *ComponentInAscii)
 
 char *ReturnLevelInt(int level)
 {
-	int i = 0;
-
-	for (i = 0; i < ARRAY_SIZE(tabLogLevel); i++)
-		if (tabLogLevel[i].value == level)
-			return tabLogLevel[i].str;
+	if (level >= 0 && level < NB_LOG_LEVEL)
+		return tabLogLevel[level].str;
 
 	/* If nothing is found, return NULL. */
 	return NULL;
