@@ -179,21 +179,6 @@ typedef int (lf_function_t) (log_header_t headers, void *private,
 			     struct display_buffer *buffer, char *compstr,
 			     char *message);
 
-/**
- * @brief Define the structure for a log facility.
- *
- */
-struct log_facility {
-	struct glist_head lf_list;	/*< List of log facilities */
-	struct glist_head lf_active;	/*< This is an active facility */
-	char *lf_name;			/*< Name of log facility */
-	log_levels_t lf_max_level;	/*< Max log level for this facility */
-	log_header_t lf_headers;	/*< If time stamp etc. are part of msg
-					 */
-	lf_function_t *lf_func;	/*< Function that describes facility   */
-	void *lf_private;	/*< Private info for facility          */
-};
-
 int create_log_facility(char *name,
 			lf_function_t *log_func,
 			log_levels_t max_level,

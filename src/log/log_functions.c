@@ -145,6 +145,21 @@ static struct logfields default_logfields = {
 };
 
 static struct logfields *logfields = &default_logfields;	
+	
+/**
+ * @brief Define the structure for a log facility.
+ *
+ */
+struct log_facility {
+	struct glist_head lf_list;	/*< List of log facilities */
+	struct glist_head lf_active;	/*< This is an active facility */
+	char *lf_name;			/*< Name of log facility */
+	log_levels_t lf_max_level;	/*< Max log level for this facility */
+	log_header_t lf_headers;	/*< If time stamp etc. are part of msg
+					 */
+	lf_function_t *lf_func;	/*< Function that describes facility   */
+	void *lf_private;	/*< Private info for facility          */
+};
 
 /* Define the maximum length of a user time/date format. */
 #define MAX_TD_USER_LEN 64
