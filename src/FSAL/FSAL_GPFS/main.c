@@ -129,7 +129,8 @@ struct fsal_staticfsinfo_t *gpfs_staticinfo(struct fsal_module *hdl)
  * must be called with a reference taken (via lookup_fsal)
  */
 
-static int log_to_gpfs(struct log_facility *facility, log_levels_t level,
+static int log_to_gpfs(log_header_t headers, void *private,
+		       log_levels_t level,
 		       struct display_buffer *buffer, char *compstr,
 		       char *message)
 {
