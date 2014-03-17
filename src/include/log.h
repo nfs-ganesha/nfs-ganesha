@@ -178,9 +178,12 @@ typedef enum log_header_t {
 	NB_LH_TYPES
 } log_header_t;
 
-struct log_facility;
+/**
+ * @brief Prototype for special log facility logging functions
+ */
 
-typedef int (lf_function_t) (struct log_facility *facility, log_levels_t level,
+typedef int (lf_function_t) (log_header_t headers, void *private,
+			     log_levels_t level,
 			     struct display_buffer *buffer, char *compstr,
 			     char *message);
 
