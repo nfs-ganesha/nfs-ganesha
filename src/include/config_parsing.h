@@ -30,7 +30,6 @@
 
 /* opaque type */
 typedef caddr_t config_file_t;
-typedef caddr_t config_item_t;
 
 typedef enum { CONFIG_ITEM_BLOCK = 1, CONFIG_ITEM_VAR } config_item_type;
 
@@ -712,49 +711,5 @@ int load_config_from_parse(config_file_t config,
  */
 void *noop_conf_init(void *link_mem, void *self_struct);
 int noop_conf_commit(void *node, void *link_mem, void *self_struct);
-
-/*
- * Old, deprecated API.  Will disappear
- */
-
-/* Indicates how many main blocks are defined into the config file.
- * \return A positive value if no error.
- *         Else return a negative error code.
- */
-int config_GetNbBlocks(config_file_t config);
-
-/* retrieves a given block from the config file, from its index */
-config_item_t config_GetBlockByIndex(config_file_t config,
-				     unsigned int block_no);
-
-/* Return the name of a block */
-char *config_GetBlockName(config_item_t block);
-
-/* Indicates how many items are defines in a block */
-int config_GetNbItems(config_item_t block);
-
-/* Retrieves an item from a given block and the subitem index. */
-config_item_t config_GetItemByIndex(config_item_t block, unsigned int item_no);
-
-/* indicates which type of item it is */
-config_item_type config_ItemType(config_item_t item);
-
-/* Retrieves a key-value peer from a CONFIG_ITEM_VAR */
-int config_GetKeyValue(config_item_t item, char **var_name, char **var_value);
-
-/* Returns a block or variable with the specified name. This name can be
- * "BLOCK::SUBBLOCK::SUBBLOCK"
- */
-config_item_t config_FindItemByName(config_file_t config, const char *name);
-
-/* Directly returns the value of the key with the specified name.
- * This name can be "BLOCK::SUBBLOCK::SUBBLOCK::VARNAME"
- */
-char *config_FindKeyValueByName(config_file_t config, const char *key_name);
-
-/* Directly returns the value of the key with the specified name
- * relative to the given block.
- */
-char *config_GetKeyValueByName(config_item_t block, const char *key_name);
 
 #endif
