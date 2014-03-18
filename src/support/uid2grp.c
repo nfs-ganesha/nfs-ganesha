@@ -129,26 +129,21 @@ static struct group_data *uid2grp_allocate_by_name(
 {
 	struct passwd p;
 	struct passwd *pp;
-	char *buff = alloca(sysconf(_SC_GETPW_R_SIZE_MAX));
 	char *namebuff = alloca(name->len + 1);
 	struct group_data *gdata = NULL;
-
-	if (namebuff == NULL) {
-		LogMajor(COMPONENT_IDMAPPER,
-			 "Can't allocate memory for namebuff");
-		return gdata;
-	}
+	char *buff;
+	long buff_size;
 
 	memcpy(namebuff, name->addr, name->len);
 	*(namebuff + name->len) = '\0';
 
-	buff = alloca(sysconf(_SC_GETPW_R_SIZE_MAX));
-	if (buff == NULL) {
-		LogMajor(COMPONENT_IDMAPPER,
-			 "Can't allocate memory for getpwnam_r");
-		return gdata;
+	buff_size = sysconf(_SC_GETPW_R_SIZE_MAX);
+	if (buff_size == -1) {
+		LogMajor(COMPONENT_IDMAPPER, "sysconf failure: %d", errno);
+		return NULL;
 	}
 
+	buff = alloca(buff_size);
 	if ((getpwnam_r(namebuff, &p, buff, MAXPATHLEN, &pp) != 0)
 	    || (pp == NULL)) {
 		LogEvent(COMPONENT_IDMAPPER, "getpwnam_r %s failed", namebuff);
@@ -182,15 +177,17 @@ static struct group_data *uid2grp_allocate_by_uid(uid_t uid)
 {
 	struct passwd p;
 	struct passwd *pp;
-	char *buff = alloca(sysconf(_SC_GETPW_R_SIZE_MAX));
 	struct group_data *gdata = NULL;
+	char *buff;
+	long buff_size;
 
-	if (buff == NULL) {
-		LogMajor(COMPONENT_IDMAPPER,
-			 "Can't allocate memory for getpwuid_r");
-		return gdata;
+	buff_size = sysconf(_SC_GETPW_R_SIZE_MAX);
+	if (buff_size == -1) {
+		LogMajor(COMPONENT_IDMAPPER, "sysconf failure: %d", errno);
+		return NULL;
 	}
 
+	buff = alloca(buff_size);
 	if ((getpwuid_r(uid, &p, buff, MAXPATHLEN, &pp) != 0) || (pp == NULL)) {
 		LogEvent(COMPONENT_IDMAPPER, "getpwuid_r %u failed", uid);
 		return gdata;
