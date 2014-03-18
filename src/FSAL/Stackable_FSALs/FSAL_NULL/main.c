@@ -56,7 +56,6 @@
 struct nullfs_fsal_module {
 	struct fsal_module fsal;
 	struct fsal_staticfsinfo_t fs_info;
-	fsal_init_info_t fsal_info;
 	/* nullfsfs_specific_initinfo_t specific_info;  placeholder */
 };
 
@@ -182,7 +181,6 @@ MODULE_INIT void nullfs_init(void)
 	}
 	myself->ops->create_export = nullfs_create_export;
 	myself->ops->init_config = init_config;
-	init_fsal_parameters(&NULLFS.fsal_info);
 }
 
 MODULE_FINI void nullfs_unload(void)

@@ -158,9 +158,4 @@ uint32_t fsal_xattr_access_rights(struct fsal_staticfsinfo_t *info)
 	return info->xattr_access_rights;
 }
 
-void init_fsal_parameters(fsal_init_info_t *init_info)
-{
-	return;
-}
-
 /** @} */

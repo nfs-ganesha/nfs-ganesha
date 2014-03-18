@@ -31,7 +31,6 @@ typedef struct pxy_client_params {
 struct pxy_fsal_module {
 	struct fsal_module module;
 	struct fsal_staticfsinfo_t fsinfo;
-	fsal_init_info_t init;
 	proxyfs_specific_initinfo_t special;
 /*       struct fsal_ops pxy_ops; */
 };

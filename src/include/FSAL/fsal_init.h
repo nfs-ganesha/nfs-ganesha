@@ -29,8 +29,3 @@
  */
 
 #define MODULE_FINI __attribute__((destructor))
-
-/* Initialization
- */
-
-void init_fsal_parameters(fsal_init_info_t *);

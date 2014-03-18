@@ -55,7 +55,6 @@
 struct vfs_fsal_module {
 	struct fsal_module fsal;
 	struct fsal_staticfsinfo_t fs_info;
-	fsal_init_info_t fsal_info;
 	/* vfsfs_specific_initinfo_t specific_info;  placeholder */
 };
 
@@ -194,7 +193,6 @@ MODULE_INIT void vfs_init(void)
 	}
 	myself->ops->create_export = vfs_create_export;
 	myself->ops->init_config = init_config;
-	init_fsal_parameters(&VFS.fsal_info);
 }
 
 MODULE_FINI void vfs_unload(void)

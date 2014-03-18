@@ -57,7 +57,6 @@
 struct pseudo_fsal_module {
 	struct fsal_module fsal;
 	struct fsal_staticfsinfo_t fs_info;
-	fsal_init_info_t fsal_info;
 	/* pseudofsfs_specific_initinfo_t specific_info;  placeholder */
 };
 
@@ -177,5 +176,4 @@ void pseudo_fsal_init(void)
 	myself->ops->init_config = init_config;
 	myself->ops->unload = unload_pseudo_fsal;
 	myself->name = gsh_strdup("PSEUDO");
-	init_fsal_parameters(&PSEUDOFS.fsal_info);
 }

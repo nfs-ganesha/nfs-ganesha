@@ -47,7 +47,6 @@
 struct lustre_fsal_module {
 	struct fsal_module fsal;
 	struct fsal_staticfsinfo_t fs_info;
-	fsal_init_info_t fsal_info;
 	/* vfsfs_specific_initinfo_t specific_info;  placeholder */
 };
 
@@ -291,7 +290,6 @@ MODULE_INIT void lustre_init(void)
 	}
 	myself->ops->create_export = lustre_create_export;
 	myself->ops->init_config = lustre_init_config;
-	init_fsal_parameters(&LUSTRE.fsal_info);
 }
 
 MODULE_FINI void lustre_unload(void)

@@ -36,13 +36,6 @@
 #ifndef _FSAL_TYPES_H
 #define _FSAL_TYPES_H
 
-/*
- * labels in the config file
- */
-
-static const char *CONF_LABEL_FSAL __attribute__ ((unused)) = "FSAL";
-static const char *CONF_LABEL_FS_COMMON __attribute__ ((unused)) = "FileSystem";
-
 /* other includes */
 #include <sys/types.h>
 #include <sys/param.h>
@@ -75,15 +68,6 @@ typedef enum {
 	FS_JUNCTION = 8,
 	EXTENDED_ATTR = 9
 } object_file_type_t;
-
-/**
- * As per chat with lieb, the call-limit should be FSAL internal, not
- * global.  If there are FSAL configuration options that cut across
- * FSALs, they should go here.
- */
-
-typedef struct fsal_init_info__ {
-} fsal_init_info_t;
 
 /* ---------------
  *  FS dependant :
