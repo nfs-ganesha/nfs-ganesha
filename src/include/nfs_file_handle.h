@@ -126,6 +126,9 @@ struct __attribute__ ((__packed__)) alloc_file_handle_v4 {
 	uint8_t pad[122];	/*< Pad to mandatory max 128 bytes */
 };
 
+int nfs3_AllocateFH(nfs_fh3 *);
+int nfs4_AllocateFH(nfs_fh4 *);
+
 /**
  * @brief Get the actual size of a v4 handle based on the sized fsopaque
  *
@@ -217,6 +220,13 @@ static inline int nfs4_Is_Fh_Empty(nfs_fh4 *pfh)
 int nfs4_Is_Fh_Invalid(nfs_fh4 *);
 int nfs4_Is_Fh_DSHandle(nfs_fh4 *);
 
+nfsstat4 nfs4_sanity_check_FH(compound_data_t *data,
+			      object_file_type_t required_type,
+			      bool ds_allowed);
+
+nfsstat4 nfs4_sanity_check_saved_FH(compound_data_t *data, int required_type,
+				    bool ds_allowed);
+
 /* File handle print function (mostly used for debugging) */
 void print_fhandle3(log_components_t, nfs_fh3 *);
 void print_fhandle4(log_components_t, nfs_fh4 *);
@@ -229,6 +239,8 @@ void sprint_fhandle4(char *str, nfs_fh4 *fh);
 void sprint_fhandle_nlm(char *str, netobj *fh);
 void sprint_buff(char *str, char *buff, int len);
 void sprint_mem(char *str, char *buff, int len);
+
+void nfs_FhandleToStr(u_long rq_vers, nfs_fh3 *pfh3, nfs_fh4 *pfh4, char *str);
 
 #define LogHandleNFS4(label, fh4) \
 	do { \

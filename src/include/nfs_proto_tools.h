@@ -142,8 +142,6 @@ static inline bool clear_attribute_in_bitmap(struct bitmap4 *bits, int attr)
 	return TRUE;
 }
 
-void nfs_FhandleToStr(u_long rq_vers, nfs_fh3 *pfh3, nfs_fh4 *pfh4, char *str);
-
 void nfs_SetWccData(const struct pre_op_attr *before_attr,
 		    cache_entry_t *entry, struct req_op_context *ctx,
 		    wcc_data *pwcc_data);
@@ -168,9 +166,6 @@ nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
 			       struct pnfs_segment spec_segment,
 			       size_t body_len, const void *body_val,
 			       bool *deleted, bool hold_lock);
-nfsstat4 nfs4_sanity_check_FH(compound_data_t *data,
-			      object_file_type_t required_type,
-			      bool ds_allowed);
 
 typedef enum {
 	UTF8_SCAN_NONE = 0,	/* do no validation other than size */
@@ -185,8 +180,6 @@ typedef enum {
 nfsstat4 nfs4_utf8string2dynamic(const utf8string *input, utf8_scantype_t scan,
 				 char **obj_name);
 
-nfsstat4 nfs4_sanity_check_saved_FH(compound_data_t *data, int required_type,
-				    bool ds_allowed);
 void handle_recalls(struct fsal_layoutreturn_arg *arg, state_t *state,
 		    const struct pnfs_segment *segment);
 

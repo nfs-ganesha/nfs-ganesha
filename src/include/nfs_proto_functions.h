@@ -806,6 +806,4 @@ nfsstat4 nfs4_Errno_verbose(cache_inode_status_t, const char *);
 nfsstat3 nfs3_Errno_verbose(cache_inode_status_t, const char *);
 #define nfs4_Errno(e) nfs4_Errno_verbose(e, __func__)
 #define nfs3_Errno(e) nfs3_Errno_verbose(e, __func__)
-int nfs3_AllocateFH(nfs_fh3 *);
-int nfs4_AllocateFH(nfs_fh4 *);
 #endif	/* NFS_PROTO_FUNCTIONS_H */
