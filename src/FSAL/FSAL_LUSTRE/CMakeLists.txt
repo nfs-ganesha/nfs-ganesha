@@ -2,7 +2,6 @@
 ########### next target ###############
 
 SET(fsallustre_LIB_SRCS
-   fsal_convert.c
    fsal_internal.c
    fsal_internal.h
    main.c
@@ -26,8 +25,7 @@ install(TARGETS fsallustre COMPONENT fsal DESTINATION  ${FSAL_DESTINATION} )
 
 if(USE_FSAL_SHOOK)
   SET(fsalshook_LIB_SRCS
-    fsal_convert.c
-    fsal_internal.c
+     fsal_internal.c
     fsal_internal.h
     lustre_extended_types.h
     main.c

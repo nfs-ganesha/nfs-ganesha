@@ -14,7 +14,6 @@ endif(USE_FSAL_XFS)
 ########### next target ###############
 
 SET(fsalvfs_LIB_SRCS
-   fsal_convert.c
    main.c
    export.c
    handle.c
