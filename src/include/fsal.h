@@ -165,5 +165,7 @@ static const size_t fsal_default_linksize = 4096;
 void destroy_fsals(void);
 void emergency_cleanup_fsals(void);
 
+const char *msg_fsal_err(fsal_errors_t fsal_err);
+
 #endif				/* !FSAL_H */
 /** @} */
