@@ -384,7 +384,7 @@ static fsal_status_t pt_extract_handle(struct fsal_export *exp_hdl,
 
 	hdl = (ptfsal_handle_t *) fh_desc->addr;
 	fh_size = pt_sizeof_handle(hdl);
-	if (in_type != FSAL_DIGEST_SIZEOF && fh_desc->len != fh_size) {
+	if (fh_desc->len != fh_size) {
 		LogMajor(COMPONENT_FSAL,
 			 "Size mismatch for handle.  should be %lu, got %lu",
 			 fh_size, fh_desc->len);

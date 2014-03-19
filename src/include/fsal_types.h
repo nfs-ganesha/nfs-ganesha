@@ -735,7 +735,6 @@ typedef enum {
  */
 
 typedef enum fsal_digesttype_t {
-	FSAL_DIGEST_SIZEOF,	/* just tell me how big... */
 	/* NFS handles */
 	FSAL_DIGEST_NFSV3,
 	FSAL_DIGEST_NFSV4,
