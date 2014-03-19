@@ -14,7 +14,6 @@ SET(fsalpseudo_LIB_SRCS
    pseudofs_methods.h
    main.c
    export.c
-   fsal_convert.c
 )
 
 add_library(fsalpseudo STATIC ${fsalpseudo_LIB_SRCS})

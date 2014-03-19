@@ -74,6 +74,4 @@ static inline struct timespec posix2fsal_time(time_t tsec, time_t nsec)
 #define high32m(a) ((unsigned int)(a >> 32))
 #define low32m(a) ((unsigned int)a)
 
-extern size_t open_fd_count;
-
 #endif

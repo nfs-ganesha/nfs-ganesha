@@ -14,7 +14,6 @@ SET(fsalnull_LIB_SRCS
    nullfs_methods.h
    main.c
    export.c
-   fsal_convert.c
 )
 
 add_library(fsalnull SHARED ${fsalnull_LIB_SRCS})
