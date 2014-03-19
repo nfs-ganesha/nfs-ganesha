@@ -766,8 +766,6 @@ void create_pseudofs(void);
 void pseudo_unmount_export(struct gsh_export *exp,
 			   struct req_op_context *req_ctx);
 
-int nfs4_MakeCred(compound_data_t *);
-
 nfsstat4 cache_entry_To_Fattr(cache_entry_t *, fattr4 *,
 			      compound_data_t *, nfs_fh4 *,
 			      struct bitmap4 *);

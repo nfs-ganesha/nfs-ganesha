@@ -160,12 +160,6 @@ int nfs3_Sattr_To_FSAL_attr(struct attrlist *pFSALattr, sattr3 *psattr);
 
 void nfs4_Fattr_Free(fattr4 *fattr);
 
-cache_inode_status_t nfs_access_op(cache_entry_t *entry,
-				   uint32_t requested_access,
-				   uint32_t *granted_access,
-				   uint32_t *supported_access,
-				   struct req_op_context *req_ctx);
-
 nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
 			       struct req_op_context *req_ctx,
 			       layoutreturn_type4 return_type,

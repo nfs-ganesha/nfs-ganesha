@@ -35,6 +35,7 @@
 #include "nfs4.h"
 #include "nfs_core.h"
 #include "export_mgr.h"
+#include "nfs_creds.h"
 
 /**
  *
