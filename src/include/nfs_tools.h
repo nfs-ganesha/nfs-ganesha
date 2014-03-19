@@ -47,10 +47,6 @@
 int token_to_proc(char *line, char separator,
 		  bool(*proc) (char *token, void *arg), void *arg);
 
-int ReadExports(config_file_t in_config);
-void free_export_resources(exportlist_t *export);
-void exports_pkginit(void);
-
 char *nfsstat3_to_str(nfsstat3 code);
 char *nfsstat4_to_str(nfsstat4 code);
 char *nfstype3_to_str(ftype3 code);
