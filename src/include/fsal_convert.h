@@ -88,5 +88,7 @@ const char *object_file_type_to_str(object_file_type_t type);
 
 extern size_t open_fd_count;
 
+fsal_dev_t posix2fsal_devt(dev_t posix_devid);
+
 #endif				/* !FSAL_CONVERT_H */
 /** @} */
