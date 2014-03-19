@@ -26,7 +26,7 @@ static int gpfs_acl_2_fsal_acl(struct attrlist *p_object_attributes,
 			       gpfs_acl_t *p_gpfsacl);
 #endif				/* _USE_NFS4_ACL */
 
-fsal_status_t posix2fsal_attributes(struct stat *p_buffstat,
+fsal_status_t posix2fsal_attributes(const struct stat *p_buffstat,
 				    struct attrlist *p_fsalattr_out)
 {
 	/* sanity checks */
