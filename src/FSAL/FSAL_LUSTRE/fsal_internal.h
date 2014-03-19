@@ -41,9 +41,6 @@
 #include "fsal_pnfs.h"
 #include "lustre_extended_types.h"
 
-#define MAX_2(x, y)    ((x) > (y) ? (x) : (y))
-#define MAX_3(x, y, z) ((x) > (y) ? MAX_2((x), (z)) : MAX_2((y), (z)))
-
 #define min(a, b)          \
 	({ typeof(a) _a = (a);     \
 	typeof(b) _b = (b);        \

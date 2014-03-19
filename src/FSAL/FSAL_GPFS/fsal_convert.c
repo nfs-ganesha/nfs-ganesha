@@ -22,9 +22,6 @@
 #include <fcntl.h>
 #include <sys/resource.h>
 
-#define MAX_2(x, y)    ((x) > (y) ? (x) : (y))
-#define MAX_3(x, y, z) ((x) > (y) ? MAX_2((x), (z)) : MAX_2((y), (z)))
-
 #ifdef _USE_NFS4_ACL
 static int gpfs_acl_2_fsal_acl(struct attrlist *p_object_attributes,
 			       gpfs_acl_t *p_gpfsacl);

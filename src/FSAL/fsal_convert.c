@@ -16,9 +16,6 @@
 #include <string.h>
 #include <fcntl.h>
 
-#define MAX_2(x, y)    ((x) > (y) ? (x) : (y))
-#define MAX_3(x, y, z) ((x) > (y) ? MAX_2((x), (z)) : MAX_2((y), (z)))
-
 /**
  * @brief Convert FSAL permission flags to Posix permission flags.
  *

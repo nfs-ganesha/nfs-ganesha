@@ -216,7 +216,7 @@ fsal_status_t posix2fsal_attributes(
 	FSAL_SET_MASK(fsalattr->mask, ATTR_MTIME);
 
 	fsalattr->chgtime =
-	    posix2fsal_time(MAX_2(buffstat->st_mtime, buffstat->st_ctime), 0);
+	    posix2fsal_time(MAX(buffstat->st_mtime, buffstat->st_ctime), 0);
 	fsalattr->change = fsalattr->chgtime.tv_sec;
 	FSAL_SET_MASK(fsalattr->mask, ATTR_CHGTIME);
 

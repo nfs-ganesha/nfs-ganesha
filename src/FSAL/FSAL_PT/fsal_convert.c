@@ -35,9 +35,6 @@
 #include <string.h>
 #include <fcntl.h>
 
-#define MAX_2( x, y )    ( (x) > (y) ? (x) : (y) )
-#define MAX_3( x, y, z ) ( (x) > (y) ? MAX_2((x),(z)) : MAX_2((y),(z)) )
-
 /**
  * posix2fsal_error :
  * Convert POSIX error codes to FSAL error codes.
@@ -333,7 +330,7 @@ fsal_status_t posix2fsal_attributes(struct stat * p_buffstat,
 
 	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_CHGTIME)) {
 		p_fsalattr_out->chgtime =
-		    posix2fsal_time(MAX_2
+		    posix2fsal_time(MAX
 				    (p_buffstat->st_mtime,
 				     p_buffstat->st_ctime), 0);
 		p_fsalattr_out->change =
@@ -414,7 +411,7 @@ fsal_status_t posixstat64_2_fsal_attributes(struct stat * p_buffstat,
 
 	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_CHGTIME)) {
 		p_fsalattr_out->chgtime =
-		    posix2fsal_time(MAX_2
+		    posix2fsal_time(MAX
 				    (p_buffstat->st_mtime,
 				     p_buffstat->st_ctime), 0);
 		p_fsalattr_out->change =

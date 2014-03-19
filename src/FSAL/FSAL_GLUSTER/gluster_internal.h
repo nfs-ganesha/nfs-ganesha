@@ -33,7 +33,6 @@
 #define GLUSTER_VOLNAME_KEY  "volume"
 #define GLUSTER_HOSTNAME_KEY "hostname"
 #define GLUSTER_VOLPATH_KEY  "volpath"
-#define MAX_2( x, y )	 ( (x) > (y) ? (x) : (y) )
 
 /* defined the set of attributes supported with POSIX */
 #define GLUSTERFS_SUPPORTED_ATTRIBUTES (         \

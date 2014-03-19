@@ -18,9 +18,6 @@ struct next_ops {
 extern struct next_ops next_ops;
 extern struct fsal_up_vector fsal_up_top;
 void nullfs_handle_ops_init(struct fsal_obj_ops *ops);
-#define MAX_2(x, y)    ((x) > (y) ? (x) : (y))
-#define MAX_3(x, y, z) ((x) > (y) ? MAX_2((x), (z)) : MAX_2((y), (z)))
-
 
 /*
  * NULLFS internal export
