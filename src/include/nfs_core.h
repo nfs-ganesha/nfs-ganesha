@@ -56,11 +56,7 @@
 #include "err_inject.h"
 #endif
 
-#define RQCRED_SIZE 400		/* this size is excessive */
-
 /* Arbitrary string buffer lengths */
-#define PWENT_MAX_LEN 81
-
 #define XATTR_BUFFERSIZE 4096
 
 char *host_name;
@@ -235,44 +231,19 @@ extern char *config_path;
 extern char *pidfile_path;
 extern ushort g_nodeid;
 
-typedef enum process_status {
-	PROCESS_DISPATCHED,
-	PROCESS_LOST_CONN,
-	PROCESS_DONE
-} process_status_t;
-
-#if 0				/* XXXX */
-typedef enum worker_available_rc {
-	WORKER_AVAILABLE,
-	WORKER_BUSY,
-	WORKER_PAUSED,
-	WORKER_GC,
-	WORKER_ALL_PAUSED,
-	WORKER_EXIT
-} worker_available_rc;
-#endif
-
-extern pool_t *nfs_clientid_pool;
-
 /*
  * function prototypes
  */
 request_data_t *nfs_rpc_get_nfsreq(uint32_t flags);
 void nfs_rpc_enqueue_req(request_data_t *req);
-int stats_snmp(void);
 
 /*
  * Thread entry functions
  */
 void *rpc_dispatcher_thread(void *UnusedArg);
 void *admin_thread(void *UnusedArg);
-void *stats_thread(void *UnusedArg);
-void *long_processing_thread(void *UnusedArg);
-void *stat_exporter_thread(void *UnusedArg);
 void *reaper_thread(void *UnusedArg);
-void *rpc_tcp_socket_manager_thread(void *Arg);
 void *sigmgr_thread(void *UnusedArg);
-void *state_async_thread(void *UnusedArg);
 
 #ifdef _USE_9P
 void *_9p_dispatcher_thread(void *arg);
@@ -291,10 +262,6 @@ void _9p_rdma_process_request(struct _9p_request_data *req9p,
 			      nfs_worker_data_t *worker_data);
 void _9p_rdma_cleanup_conn(msk_trans_t *trans);
 #endif
-
-void nfs_operate_on_sigusr1(void);
-void nfs_operate_on_sigterm(void);
-void nfs_operate_on_sighup(void);
 
 void nfs_Init_svc(void);
 int nfs_Init_worker_data(nfs_worker_data_t *pdata);
@@ -322,9 +289,6 @@ void admin_replace_exports(void);
 void admin_halt(void);
 
 /* Tools */
-unsigned int get_rpc_xid(struct svc_req *);
-
-void nfs_reset_stats(void);
 
 int compare_state_id(struct gsh_buffdesc *buff1, struct gsh_buffdesc *buff2);
 
@@ -337,7 +301,6 @@ unsigned int nfs_core_select_worker_queue(unsigned int avoid_index);
 
 int nfs_Init_ip_name(nfs_ip_name_parameter_t param);
 
-extern const nfs_function_desc_t *INVALID_FUNCDESC;
 void nfs_rpc_destroy_chan(rpc_call_channel_t *chan);
 int32_t nfs_rpc_dispatch_call(rpc_call_t *call, uint32_t flags);
 

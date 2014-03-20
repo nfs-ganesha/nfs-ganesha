@@ -80,8 +80,6 @@ const nfs_function_desc_t invalid_funcdesc = {
 	.dispatch_behaviour = NOTHING_SPECIAL
 };
 
-const nfs_function_desc_t *INVALID_FUNCDESC = &invalid_funcdesc;
-
 const nfs_function_desc_t nfs3_func_desc[] = {
 	{
 	 .service_function = nfs_null,
@@ -675,7 +673,7 @@ const nfs_function_desc_t rquota2_func_desc[] = {
 const nfs_function_desc_t *nfs_rpc_get_funcdesc(nfs_request_data_t *reqnfs)
 {
 	struct svc_req *req = &reqnfs->req;
-	const nfs_function_desc_t *funcdesc = INVALID_FUNCDESC;
+	const nfs_function_desc_t *funcdesc = &invalid_funcdesc;
 
 	if (req->rq_prog == nfs_param.core_param.program[P_NFS]) {
 		funcdesc = (req->rq_vers == NFS_V3) ?

@@ -44,6 +44,9 @@
 #include "ganesha_rpc.h"
 #include "ganesha_types.h"
 
+/* Arbitrary string buffer lengths */
+#define PWENT_MAX_LEN 81
+
 /**
  * @brief Shared between idmapper.c and idmapper_cache.c.  If you
  * aren't in idmapper.c, leave these symbols alone.
