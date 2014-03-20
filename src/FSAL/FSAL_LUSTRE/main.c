@@ -56,7 +56,7 @@ struct lustre_pnfs_parameter pnfs_param;
 
 /* filesystem info for LUSTRE */
 static struct fsal_staticfsinfo_t lustre_info = {
-	.maxfilesize = 0xFFFFFFFFFFFFFFFFLL, /* (64bits) */
+	.maxfilesize = UINT64_MAX,
 	.maxlink = _POSIX_LINK_MAX,
 	.maxnamelen = 1024,
 	.maxpathlen = 1024,

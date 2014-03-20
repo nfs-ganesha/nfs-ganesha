@@ -62,7 +62,7 @@ const char myname[] = "VFS";
 
 /* filesystem info for VFS */
 static struct fsal_staticfsinfo_t default_posix_info = {
-	.maxfilesize = 0xFFFFFFFFFFFFFFFFLL,	/* (64bits) */
+	.maxfilesize = UINT64_MAX,
 	.maxlink = _POSIX_LINK_MAX,
 	.maxnamelen = 1024,
 	.maxpathlen = 1024,
@@ -79,6 +79,8 @@ static struct fsal_staticfsinfo_t default_posix_info = {
 	.acl_support = FSAL_ACLSUPPORT_ALLOW,
 	.homogenous = true,
 	.supported_attrs = VFS_SUPPORTED_ATTRIBUTES,
+	.maxread = FSAL_MAXIOSIZE,
+	.maxwrite = FSAL_MAXIOSIZE,
 };
 
 static struct config_item vfs_params[] = {

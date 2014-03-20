@@ -53,7 +53,7 @@ const char myname[] = "ZFS";
 
 /* filesystem info for your filesystem */
 static struct fsal_staticfsinfo_t default_zfs_info = {
-	.maxfilesize = 0xFFFFFFFFFFFFFFFFLL,	/* max file size (64bits) */
+	.maxfilesize = UINT64_MAX,		/* Max fiule size */
 	.maxlink = 1024,	/* max links for an object of your filesystem */
 	.maxnamelen = MAXNAMLEN,		/* max filename */
 	.maxpathlen = MAXPATHLEN,		/* min filename */
