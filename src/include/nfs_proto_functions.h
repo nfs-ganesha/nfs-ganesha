@@ -797,13 +797,6 @@ int nfs4_Fattr_Fill_Error(fattr4 *, nfsstat4);
 int nfs4_FSALattr_To_Fattr(struct xdr_attrs_args *, struct bitmap4 *,
 			   fattr4 *);
 
-uint64_t nfs_htonl64(uint64_t);
-uint64_t nfs_ntohl64(uint64_t);
 void nfs4_bitmap4_Remove_Unsupported(struct bitmap4 *);
 
-/* Error conversion routines */
-nfsstat4 nfs4_Errno_verbose(cache_inode_status_t, const char *);
-nfsstat3 nfs3_Errno_verbose(cache_inode_status_t, const char *);
-#define nfs4_Errno(e) nfs4_Errno_verbose(e, __func__)
-#define nfs3_Errno(e) nfs3_Errno_verbose(e, __func__)
 #endif	/* NFS_PROTO_FUNCTIONS_H */

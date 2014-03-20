@@ -29,13 +29,12 @@
  * @brief NFS conversion tools.
  */
 
-#include "config.h"
 #include <string.h>
-#include "ganesha_rpc.h"
-#include "nfs_core.h"
-#include "nfs_tools.h"
-#include "mount.h"
+#include "nfs_convert.h"
 #include "nfs23.h"
+#include "nfs4.h"
+#include "mount.h"
+#include "cache_inode.h"
 
 char *nfsstat3_to_str(nfsstat3 code)
 {
@@ -458,3 +457,332 @@ const char *auth_stat2str(enum auth_stat why)
 
 	return "UNKNOWN AUTH";
 }
+
+/* Error conversion routines */
+
+/**
+ * @brief Convert a cache_inode status to a nfsv4 status.
+ *
+ * @param[in] error The cache inode error
+ * @param[in] where String identifying the caller
+ *
+ * @return the converted NFSv4 status.
+ *
+ */
+nfsstat4 nfs4_Errno_verbose(cache_inode_status_t error, const char *where)
+{
+	nfsstat4 nfserror = NFS4ERR_INVAL;
+
+	switch (error) {
+	case CACHE_INODE_SUCCESS:
+		nfserror = NFS4_OK;
+		break;
+
+	case CACHE_INODE_MALLOC_ERROR:
+	case CACHE_INODE_POOL_MUTEX_INIT_ERROR:
+	case CACHE_INODE_GET_NEW_LRU_ENTRY:
+	case CACHE_INODE_INIT_ENTRY_FAILED:
+		nfserror = NFS4ERR_SERVERFAULT;
+		break;
+
+	case CACHE_INODE_BAD_TYPE:
+	case CACHE_INODE_INVALID_ARGUMENT:
+		nfserror = NFS4ERR_INVAL;
+		break;
+
+	case CACHE_INODE_NOT_A_DIRECTORY:
+		nfserror = NFS4ERR_NOTDIR;
+		break;
+
+	case CACHE_INODE_ENTRY_EXISTS:
+		nfserror = NFS4ERR_EXIST;
+		break;
+
+	case CACHE_INODE_DIR_NOT_EMPTY:
+		nfserror = NFS4ERR_NOTEMPTY;
+		break;
+
+	case CACHE_INODE_NOT_FOUND:
+		nfserror = NFS4ERR_NOENT;
+		break;
+
+	case CACHE_INODE_FSAL_ERROR:
+	case CACHE_INODE_INSERT_ERROR:
+	case CACHE_INODE_LRU_ERROR:
+	case CACHE_INODE_HASH_SET_ERROR:
+		nfserror = NFS4ERR_IO;
+		break;
+
+	case CACHE_INODE_FSAL_EACCESS:
+		nfserror = NFS4ERR_ACCESS;
+		break;
+
+	case CACHE_INODE_FSAL_EPERM:
+	case CACHE_INODE_FSAL_ERR_SEC:
+		nfserror = NFS4ERR_PERM;
+		break;
+
+	case CACHE_INODE_NO_SPACE_LEFT:
+		nfserror = NFS4ERR_NOSPC;
+		break;
+
+	case CACHE_INODE_IS_A_DIRECTORY:
+		nfserror = NFS4ERR_ISDIR;
+		break;
+
+	case CACHE_INODE_READ_ONLY_FS:
+		nfserror = NFS4ERR_ROFS;
+		break;
+
+	case CACHE_INODE_IO_ERROR:
+		nfserror = NFS4ERR_IO;
+		break;
+
+	case CACHE_INODE_NAME_TOO_LONG:
+		nfserror = NFS4ERR_NAMETOOLONG;
+		break;
+
+	case CACHE_INODE_KILLED:
+	case CACHE_INODE_DEAD_ENTRY:
+	case CACHE_INODE_FSAL_ESTALE:
+		nfserror = NFS4ERR_STALE;
+		break;
+
+	case CACHE_INODE_STATE_CONFLICT:
+		nfserror = NFS4ERR_PERM;
+		break;
+
+	case CACHE_INODE_QUOTA_EXCEEDED:
+		nfserror = NFS4ERR_DQUOT;
+		break;
+
+	case CACHE_INODE_NOT_SUPPORTED:
+		nfserror = NFS4ERR_NOTSUPP;
+		break;
+
+	case CACHE_INODE_UNION_NOTSUPP:
+		nfserror = NFS4ERR_UNION_NOTSUPP;
+		break;
+
+	case CACHE_INODE_DELAY:
+		nfserror = NFS4ERR_DELAY;
+		break;
+
+	case CACHE_INODE_FILE_BIG:
+		nfserror = NFS4ERR_FBIG;
+		break;
+
+	case CACHE_INODE_FILE_OPEN:
+		nfserror = NFS4ERR_FILE_OPEN;
+		break;
+
+	case CACHE_INODE_STATE_ERROR:
+		nfserror = NFS4ERR_BAD_STATEID;
+		break;
+
+	case CACHE_INODE_BAD_COOKIE:
+		nfserror = NFS4ERR_BAD_COOKIE;
+		break;
+
+	case CACHE_INODE_TOOSMALL:
+		nfserror = NFS4ERR_TOOSMALL;
+		break;
+
+	case CACHE_INODE_SERVERFAULT:
+		nfserror = NFS4ERR_SERVERFAULT;
+		break;
+
+	case CACHE_INODE_FSAL_XDEV:
+		nfserror = NFS4ERR_XDEV;
+		break;
+
+	case CACHE_INODE_BADNAME:
+		nfserror = NFS4ERR_BADNAME;
+		break;
+
+	case CACHE_INODE_FSAL_MLINK:
+		nfserror = NFS4ERR_MLINK;
+		break;
+
+	case CACHE_INODE_FSAL_SHARE_DENIED:
+		nfserror = NFS4ERR_SHARE_DENIED;
+		break;
+
+	case CACHE_INODE_INCONSISTENT_ENTRY:
+	case CACHE_INODE_HASH_TABLE_ERROR:
+	case CACHE_INODE_ASYNC_POST_ERROR:
+	case CACHE_INODE_CROSS_JUNCTION:
+		/* Should not occur */
+		LogDebug(COMPONENT_NFS_V4,
+			 "Line %u should never be reached in nfs4_Errno"
+			 " from %s for cache_status=%u", __LINE__, where,
+			 error);
+		nfserror = NFS4ERR_INVAL;
+		break;
+	}
+
+	return nfserror;
+}
+
+/**
+ *
+ * @brief Convert a cache_inode status to a nfsv3 status.
+ *
+ * @param[in] error Input cache inode error
+ * @param[in] where String identifying caller
+ *
+ * @return the converted NFSv3 status.
+ *
+ */
+nfsstat3 nfs3_Errno_verbose(cache_inode_status_t error, const char *where)
+{
+	nfsstat3 nfserror = NFS3ERR_INVAL;
+
+	switch (error) {
+	case CACHE_INODE_SUCCESS:
+		nfserror = NFS3_OK;
+		break;
+
+	case CACHE_INODE_MALLOC_ERROR:
+	case CACHE_INODE_POOL_MUTEX_INIT_ERROR:
+	case CACHE_INODE_GET_NEW_LRU_ENTRY:
+	case CACHE_INODE_INIT_ENTRY_FAILED:
+	case CACHE_INODE_INSERT_ERROR:
+	case CACHE_INODE_LRU_ERROR:
+	case CACHE_INODE_HASH_SET_ERROR:
+	case CACHE_INODE_FILE_OPEN:
+		LogCrit(COMPONENT_NFSPROTO,
+			"Error %u in %s converted to NFS3ERR_IO but was set non-retryable",
+			error, where);
+		nfserror = NFS3ERR_IO;
+		break;
+
+	case CACHE_INODE_INVALID_ARGUMENT:
+		nfserror = NFS3ERR_INVAL;
+		break;
+
+	case CACHE_INODE_FSAL_ERROR:
+		/** @todo: Check if this works by making stress tests */
+		LogCrit(COMPONENT_NFSPROTO,
+			"Error CACHE_INODE_FSAL_ERROR in %s converted to NFS3ERR_IO but was set non-retryable",
+			where);
+		nfserror = NFS3ERR_IO;
+		break;
+
+	case CACHE_INODE_NOT_A_DIRECTORY:
+		nfserror = NFS3ERR_NOTDIR;
+		break;
+
+	case CACHE_INODE_ENTRY_EXISTS:
+		nfserror = NFS3ERR_EXIST;
+		break;
+
+	case CACHE_INODE_DIR_NOT_EMPTY:
+		nfserror = NFS3ERR_NOTEMPTY;
+		break;
+
+	case CACHE_INODE_NOT_FOUND:
+		nfserror = NFS3ERR_NOENT;
+		break;
+
+	case CACHE_INODE_FSAL_EACCESS:
+		nfserror = NFS3ERR_ACCES;
+		break;
+
+	case CACHE_INODE_FSAL_EPERM:
+	case CACHE_INODE_FSAL_ERR_SEC:
+		nfserror = NFS3ERR_PERM;
+		break;
+
+	case CACHE_INODE_NO_SPACE_LEFT:
+		nfserror = NFS3ERR_NOSPC;
+		break;
+
+	case CACHE_INODE_IS_A_DIRECTORY:
+		nfserror = NFS3ERR_ISDIR;
+		break;
+
+	case CACHE_INODE_READ_ONLY_FS:
+		nfserror = NFS3ERR_ROFS;
+		break;
+
+	case CACHE_INODE_KILLED:
+	case CACHE_INODE_DEAD_ENTRY:
+	case CACHE_INODE_FSAL_ESTALE:
+		nfserror = NFS3ERR_STALE;
+		break;
+
+	case CACHE_INODE_QUOTA_EXCEEDED:
+		nfserror = NFS3ERR_DQUOT;
+		break;
+
+	case CACHE_INODE_BAD_TYPE:
+		nfserror = NFS3ERR_BADTYPE;
+		break;
+
+	case CACHE_INODE_NOT_SUPPORTED:
+	case CACHE_INODE_UNION_NOTSUPP:
+		nfserror = NFS3ERR_NOTSUPP;
+		break;
+
+	case CACHE_INODE_DELAY:
+	case CACHE_INODE_FSAL_SHARE_DENIED:
+		nfserror = NFS3ERR_JUKEBOX;
+		break;
+
+	case CACHE_INODE_IO_ERROR:
+		LogCrit(COMPONENT_NFSPROTO,
+			"Error CACHE_INODE_IO_ERROR in %s converted to NFS3ERR_IO"
+			" but was set non-retryable", where);
+		nfserror = NFS3ERR_IO;
+		break;
+
+	case CACHE_INODE_NAME_TOO_LONG:
+		nfserror = NFS3ERR_NAMETOOLONG;
+		break;
+
+	case CACHE_INODE_FILE_BIG:
+		nfserror = NFS3ERR_FBIG;
+		break;
+
+	case CACHE_INODE_BAD_COOKIE:
+		nfserror = NFS3ERR_BAD_COOKIE;
+		break;
+
+	case CACHE_INODE_TOOSMALL:
+		nfserror = NFS3ERR_TOOSMALL;
+		break;
+
+	case CACHE_INODE_SERVERFAULT:
+		nfserror = NFS3ERR_SERVERFAULT;
+		break;
+
+	case CACHE_INODE_FSAL_XDEV:
+		nfserror = NFS3ERR_XDEV;
+		break;
+
+	case CACHE_INODE_BADNAME:
+		nfserror = NFS3ERR_INVAL;
+		break;
+
+	case CACHE_INODE_FSAL_MLINK:
+		nfserror = NFS3ERR_MLINK;
+		break;
+
+	case CACHE_INODE_INCONSISTENT_ENTRY:
+	case CACHE_INODE_HASH_TABLE_ERROR:
+	case CACHE_INODE_STATE_CONFLICT:
+	case CACHE_INODE_ASYNC_POST_ERROR:
+	case CACHE_INODE_STATE_ERROR:
+	case CACHE_INODE_CROSS_JUNCTION:
+		/* Should not occur */
+		LogDebug(COMPONENT_NFSPROTO,
+			 "Line %u should never be reached in nfs3_Errno"
+			 " from %s for cache_status=%u", __LINE__, where,
+			 error);
+		nfserror = NFS3ERR_INVAL;
+		break;
+	}
+
+	return nfserror;
+}				/* nfs3_Errno */

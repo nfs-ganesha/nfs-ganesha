@@ -39,7 +39,6 @@
 #include "cache_inode_lru.h"
 #include "nfs_file_handle.h"
 #include "nfs_exports.h"
-#include "nfs_tools.h"
 #include "nfs_proto_functions.h"
 #include "nfs_dupreq.h"
 #include "config_parsing.h"

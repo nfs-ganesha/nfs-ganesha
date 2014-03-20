@@ -44,7 +44,6 @@
 #include "nfs_exports.h"
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
-#include "nfs_tools.h"
 
 /**
  * @brief Implement NFSPROC3_FSINFO

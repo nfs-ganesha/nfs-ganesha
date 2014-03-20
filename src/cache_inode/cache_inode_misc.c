@@ -42,7 +42,6 @@
 #include "nfs4_acls.h"
 #include "sal_functions.h"
 #include "nfs_core.h"
-#include "nfs_tools.h"
 #include "export_mgr.h"
 
 #include <unistd.h>

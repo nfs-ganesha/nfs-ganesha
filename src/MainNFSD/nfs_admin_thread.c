@@ -34,7 +34,6 @@
 #include <string.h>
 #include <pthread.h>
 #include "nfs_core.h"
-#include "nfs_tools.h"
 #include "log.h"
 #include "sal_functions.h"
 #include "sal_data.h"

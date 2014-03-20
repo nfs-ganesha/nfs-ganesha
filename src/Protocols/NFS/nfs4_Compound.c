@@ -33,7 +33,7 @@
  */
 #include "config.h"
 #include "sal_functions.h"
-#include "nfs_tools.h"
+#include "nfs_convert.h"
 #include "nfs_proto_tools.h"
 #include "server_stats.h"
 #include "export_mgr.h"

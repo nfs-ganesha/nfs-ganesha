@@ -50,7 +50,6 @@
 #include "nfs23.h"
 #include "nfs4.h"
 #include "fsal.h"
-#include "nfs_tools.h"
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_file_handle.h"

@@ -331,7 +331,6 @@ unsigned int get_rpc_xid(struct svc_req *);
 
 void nfs_reset_stats(void);
 
-const char *auth_stat2str(enum auth_stat);
 int compare_state_id(struct gsh_buffdesc *buff1, struct gsh_buffdesc *buff2);
 
 /* used in DBUS-api diagnostic functions (e.g., serialize sessionid) */

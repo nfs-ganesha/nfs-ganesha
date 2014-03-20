@@ -40,6 +40,7 @@
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
+#include "nfs_convert.h"
 #include "export_mgr.h"
 #include "client_mgr.h"
 

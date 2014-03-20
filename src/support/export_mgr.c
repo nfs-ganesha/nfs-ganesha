@@ -62,7 +62,6 @@
 #include "server_stats.h"
 #include "abstract_atomic.h"
 #include "gsh_intrinsic.h"
-#include "nfs_tools.h"
 #include "sal_functions.h"
 
 /**

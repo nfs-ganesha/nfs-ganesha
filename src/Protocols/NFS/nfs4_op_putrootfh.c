@@ -34,6 +34,7 @@
 #include "log.h"
 #include "nfs4.h"
 #include "nfs_core.h"
+#include "nfs_convert.h"
 #include "export_mgr.h"
 #include "nfs_creds.h"
 

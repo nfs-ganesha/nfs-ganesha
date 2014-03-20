@@ -43,7 +43,6 @@
 #include "cache_inode.h"
 #include "nfs_exports.h"
 #include "nfs_proto_functions.h"
-#include "nfs_tools.h"
 
 /**
  * @brief NFS4_OP_DELEGPURGE

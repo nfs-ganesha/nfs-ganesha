@@ -24,31 +24,34 @@
  */
 
 /**
- * @file    nfs_tools.h
- * @brief   Prototypes for miscellaneous service routines.
+ * @file    nfs_convert.h
+ * @brief   Prototypes for miscellaneous conversion routines.
  *
- * nfs_tools.h :  Prototypes for miscellaneous service routines.
+ * nfs_convert.h :  Prototypes for miscellaneous conversion routines.
  *
  *
  */
 
-#ifndef _NFS_TOOLS_H
-#define _NFS_TOOLS_H
+#ifndef _NFS_CONVERT_H
+#define _NFS_CONVERT_H
 
-#include "fsal.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"
-#include "nfs_exports.h"
-#include "config_parsing.h"
-
-#define  ATTRVALS_BUFFLEN  1024
-
-int token_to_proc(char *line, char separator,
-		  bool(*proc) (char *token, void *arg), void *arg);
+#include "cache_inode.h"
 
 char *nfsstat3_to_str(nfsstat3 code);
 char *nfsstat4_to_str(nfsstat4 code);
 char *nfstype3_to_str(ftype3 code);
+const char *auth_stat2str(enum auth_stat);
 
-#endif				/* _NFS_TOOLS_H */
+uint64_t nfs_htonl64(uint64_t);
+uint64_t nfs_ntohl64(uint64_t);
+
+/* Error conversion routines */
+nfsstat4 nfs4_Errno_verbose(cache_inode_status_t, const char *);
+nfsstat3 nfs3_Errno_verbose(cache_inode_status_t, const char *);
+#define nfs4_Errno(e) nfs4_Errno_verbose(e, __func__)
+#define nfs3_Errno(e) nfs3_Errno_verbose(e, __func__)
+
+#endif				/* _NFS_CONVERT_H */

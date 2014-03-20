@@ -44,7 +44,7 @@
 #include "nfs_exports.h"
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
-#include "nfs_tools.h"
+#include "nfs_convert.h"
 #include "server_stats.h"
 
 static void nfs_read_ok(exportlist_t *export, struct svc_req *req,

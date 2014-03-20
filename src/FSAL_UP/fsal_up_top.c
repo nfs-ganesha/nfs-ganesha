@@ -45,6 +45,7 @@
 #include "pnfs_utils.h"
 #include "nfs_rpc_callback.h"
 #include "nfs_proto_tools.h"
+#include "nfs_convert.h"
 #include "delayed_exec.h"
 #include "export_mgr.h"
 

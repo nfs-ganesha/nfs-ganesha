@@ -410,4 +410,7 @@ static inline int strmaxcat(char *dest, const char *src, size_t dest_size)
 	return 0;
 }
 
+int token_to_proc(char *line, char separator,
+		  bool(*proc) (char *token, void *arg), void *arg);
+
 #endif				/* !COMMON_UTILS_H */

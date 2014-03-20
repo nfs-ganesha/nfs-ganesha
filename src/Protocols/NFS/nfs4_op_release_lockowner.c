@@ -39,7 +39,6 @@
 #include "sal_functions.h"
 #include "cache_inode.h"
 #include "nfs_proto_functions.h"
-#include "nfs_tools.h"
 
 /**
  * @brief NFS4_OP_RELEASE_LOCKOWNER
