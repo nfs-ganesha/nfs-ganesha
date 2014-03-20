@@ -83,6 +83,7 @@ static struct fsal_staticfsinfo_t default_posix_info = {
 	.delegations = false,	/* not working with pNFS */
 	.pnfs_file = true,
 	.fsal_trace = true,
+	.reopen_method = true,
 };
 
 static struct config_item gpfs_params[] = {

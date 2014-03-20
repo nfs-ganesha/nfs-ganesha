@@ -70,8 +70,9 @@
 fsal_status_t GPFSFSAL_open(struct fsal_obj_handle *obj_hdl,	/* IN */
 			    const struct req_op_context *p_context,	/* IN */
 			    fsal_openflags_t openflags,	/* IN */
-			    int *file_desc,	/* OUT */
-			    struct attrlist *p_file_attributes) /* IN/OUT */
+			    int *file_desc,	/* IN/OUT */
+			    struct attrlist *p_file_attributes, /* IN/OUT */
+			    bool reopen) /* IN */
 {
 
 	int rc;
@@ -99,7 +100,7 @@ fsal_status_t GPFSFSAL_open(struct fsal_obj_handle *obj_hdl,	/* IN */
 	}
 
 	status = fsal_internal_handle2fd(gpfs_fs->root_fd, myself->handle,
-					 file_desc, posix_flags);
+					 file_desc, posix_flags, reopen);
 
 	if (FSAL_IS_ERROR(status)) {
 		*file_desc = 0;

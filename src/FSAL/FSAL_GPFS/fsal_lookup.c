@@ -85,7 +85,8 @@ fsal_status_t GPFSFSAL_lookup(const struct req_op_context *p_context,
 	status = fsal_internal_handle2fd_at(gpfs_fs->root_fd,
 					    parent_hdl->handle,
 					    &parent_fd,
-					    O_RDONLY);
+					    O_RDONLY,
+					    0);
 	if (FSAL_IS_ERROR(status))
 		return status;
 

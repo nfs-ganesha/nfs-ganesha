@@ -84,14 +84,15 @@ struct fsal_staticfsinfo_t global_fs_info;
 
 fsal_status_t fsal_internal_handle2fd(int dirfd,
 				      struct gpfs_file_handle *phandle,
-				      int *pfd, int oflags)
+				      int *pfd, int oflags, bool reopen)
 {
 	fsal_status_t status;
 
 	if (!phandle || !pfd)
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
-	status = fsal_internal_handle2fd_at(dirfd, phandle, pfd, oflags);
+	status = fsal_internal_handle2fd_at(dirfd, phandle, pfd, oflags,
+					    reopen);
 
 	if (FSAL_IS_ERROR(status))
 		return status;
@@ -148,27 +149,47 @@ fsal_status_t fsal_internal_close(int fd, void *owner, int cflags)
 
 fsal_status_t fsal_internal_handle2fd_at(int dirfd,
 					 struct gpfs_file_handle *phandle,
-					 int *pfd, int oflags)
+					 int *pfd, int oflags, bool reopen)
 {
 	int rc = 0;
-	struct open_arg oarg;
+	union {
+		struct open_arg oarg;
+		struct open_share_arg sarg;
+	} u;
 
 	if (!phandle || !pfd)
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
-	oarg.mountdirfd = dirfd;
-	oarg.handle = phandle;
-	oarg.flags = oflags;
+	if (reopen) {
+		u.sarg.mountdirfd = dirfd;
+		u.sarg.handle = phandle;
+		u.sarg.flags = oflags;
+		u.sarg.openfd = *pfd;
+		/* share_access and share_deny are unused by REOPEN */
+		u.sarg.share_access = 0;
+		u.sarg.share_deny = 0;
+		rc = gpfs_ganesha(OPENHANDLE_REOPEN_BY_FD, &u.sarg);
+		LogFullDebug(COMPONENT_FSAL,
+			     "OPENHANDLE_REOPEN_BY_FD returned: rc %d", rc);
+	} else {
+		u.oarg.mountdirfd = dirfd;
+		u.oarg.handle = phandle;
+		u.oarg.flags = oflags;
 
-	rc = gpfs_ganesha(OPENHANDLE_OPEN_BY_HANDLE, &oarg);
-
-	LogFullDebug(COMPONENT_FSAL,
-		     "OPENHANDLE_OPEN_BY_HANDLE returned: rc %d", rc);
+		rc = gpfs_ganesha(OPENHANDLE_OPEN_BY_HANDLE, &u.oarg);
+		LogFullDebug(COMPONENT_FSAL,
+			     "OPENHANDLE_OPEN_BY_HANDLE returned: rc %d", rc);
+	}
 
 	if (rc < 0)
 		return fsalstat(posix2fsal_error(errno), errno);
 
-	*pfd = rc;
+	/* gpfs_open returns fd number for OPENHANDLE_OPEN_BY_HANDLE,
+	 * but only returns 0 for success for OPENHANDLE_REOPEN_BY_FD
+	 * operation. We already have correct (*pfd) in reopen case!
+	 */
+	if (!reopen)
+		*pfd = rc;
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
