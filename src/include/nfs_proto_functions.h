@@ -546,10 +546,6 @@ void nfs4_op_io_advise_Free(nfs_resop4 *resp);
  * -- End of NFS protocols functions. --
  */
 
-/* BUGAZOMEU: Some definitions to be removed. FSAL parameters to be
-   used instead */
-#define FSINFO_MAX_FILESIZE  0xFFFFFFFFFFFFFFFFll
-
 #define NFS_REQ_OK   0
 #define NFS_REQ_DROP 1
 
