@@ -1016,6 +1016,47 @@ static state_status_t subtract_lock_from_entry(cache_entry_t *entry,
 }
 
 /**
+ * @brief Subtract a delegation from a list of delegations
+ *
+ * Subtract a delegation from a list of delegations
+ *
+ * @param[in,out] entry   Cache entry on which to operate
+ * @param[in]     owner   Client owner of delegation
+ * @param[in]     state   Associated lock state
+ * @param[in]     lock    Delegation to remove
+ * @param[out]    removed True if an entry was removed
+ * @param[in,out] list    List of locks to modify
+ *
+ * @return State status.
+ */
+static state_status_t subtract_deleg_from_list(cache_entry_t *entry,
+					       state_owner_t *owner,
+					       state_t *state,
+					       bool *removed,
+					       struct glist_head *list)
+{
+	state_lock_entry_t *found_entry;
+	struct glist_head *glist, *glistn;
+	state_status_t status = STATE_SUCCESS;
+
+	*removed = false;
+
+	glist_for_each_safe(glist, glistn, list) {
+		found_entry = glist_entry(glist, state_lock_entry_t, sle_list);
+		if (owner != NULL
+		    && different_owners(found_entry->sle_owner, owner))
+			continue;
+		if (found_entry->sle_type != LEASE_LOCK)
+		  continue;
+
+		/* Tell GPFS delegation is returned then remove from list. */
+		glist_del(&found_entry->sle_list);
+		*removed = true;
+	}
+	return status;
+}
+
+/**
  * @brief Subtract a lock from a list of locks
  *
  * This function possibly splits entries in the list.
@@ -2839,6 +2880,21 @@ state_status_t state_unlock(cache_entry_t *entry, exportlist_t *export,
 	 * nlm_lock implies remove all entries
 	 */
 	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
+
+	if (state->state_type == STATE_TYPE_DELEG
+	    && glist_empty(&entry->object.file.deleg_list)) {
+	  cache_inode_dec_pin_ref(entry, FALSE);
+	  LogDebug(COMPONENT_STATE,
+		   "Unlock success on file with no delegations");
+	  return STATE_SUCCESS;
+	}
+
+	if (state->state_type == STATE_TYPE_DELEG) {
+	  status =
+	    subtract_deleg_from_list(entry, owner, state, &removed,
+				     &entry->object.file.deleg_list);
+	  return status;
+	}
 
 	/* If lock list is empty, there really isn't any work for us to do. */
 	if (glist_empty(&entry->object.file.lock_list)) {
