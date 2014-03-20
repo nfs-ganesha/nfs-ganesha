@@ -74,7 +74,7 @@ retry:
 	if (cache_status == CACHE_INODE_SUCCESS) {
 		/* Make sure new node is a directory */
 		if (new_node->type != DIRECTORY) {
-			LogCrit(COMPONENT_NFS_V4_PSEUDO,
+			LogCrit(COMPONENT_EXPORT,
 				"BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s LOOKUP %s is not a directory",
 				state->export->export.id,
 				state->export->export.fullpath,
@@ -85,7 +85,7 @@ retry:
 			return false;
 		}
 
-		LogDebug(COMPONENT_NFS_V4_PSEUDO,
+		LogDebug(COMPONENT_EXPORT,
 			 "BUILDING PSEUDOFS: Parent %p Node %p %s already exists",
 			 state->dirent, new_node, name);
 		/* Release reference to the old node */
@@ -98,7 +98,7 @@ retry:
 
 	if (cache_status != CACHE_INODE_NOT_FOUND) {
 		/* An error occurred */
-		LogCrit(COMPONENT_NFS_V4_PSEUDO,
+		LogCrit(COMPONENT_EXPORT,
 			"BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s LOOKUP %s failed with %s",
 			state->export->export.id,
 			state->export->export.fullpath,
@@ -111,7 +111,7 @@ retry:
 	if (strcmp(state->req_ctx->export->export.export_hdl->fsal->name,
 		   "PSEUDO") != 0) {
 		/* Only allowed to create directories on FSAL_PSEUDO */
-		LogCrit(COMPONENT_NFS_V4_PSEUDO,
+		LogCrit(COMPONENT_EXPORT,
 			"BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s LOOKUP %s failed with %s (can't create directory on non-PSEUDO FSAL)",
 			state->export->export.id,
 			state->export->export.fullpath,
@@ -131,7 +131,7 @@ retry:
 					  &new_node);
 
 	if (cache_status == CACHE_INODE_ENTRY_EXISTS && !retried) {
-		LogDebug(COMPONENT_NFS_V4_PSEUDO,
+		LogDebug(COMPONENT_EXPORT,
 			 "BUILDING PSEUDOFS: Parent %p Node %p %s seems to already exist, try LOOKUP again",
 			 state->dirent, new_node, name);
 		retried = true;
@@ -140,7 +140,7 @@ retry:
 
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		/* An error occurred */
-		LogCrit(COMPONENT_NFS_V4_PSEUDO,
+		LogCrit(COMPONENT_EXPORT,
 			"BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s CREATE %s failed with %s",
 			state->export->export.id,
 			state->export->export.fullpath,
@@ -155,7 +155,7 @@ retry:
 	    cache_inode_lock_trust_attrs(state->dirent, state->req_ctx, true);
 
 	if (cache_status != CACHE_INODE_SUCCESS) {
-		LogCrit(COMPONENT_NFS_V4_PSEUDO,
+		LogCrit(COMPONENT_EXPORT,
 			"BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s GETATTR %s failed with %s",
 			state->export->export.id,
 			state->export->export.fullpath,
@@ -167,7 +167,7 @@ retry:
 
 	PTHREAD_RWLOCK_unlock(&state->dirent->attr_lock);
 
-	LogDebug(COMPONENT_NFS_V4_PSEUDO,
+	LogDebug(COMPONENT_EXPORT,
 		 "BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s CREATE %s succeded",
 		 state->export->export.id,
 		 state->export->export.fullpath,
@@ -217,7 +217,7 @@ bool pseudo_mount_export(struct gsh_export *exp,
 	state.export = exp;
 	state.req_ctx = req_ctx;
 
-	LogDebug(COMPONENT_NFS_V4_PSEUDO,
+	LogDebug(COMPONENT_EXPORT,
 		 "BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s",
 		 export->id, export->fullpath, export->pseudopath);
 
@@ -237,7 +237,7 @@ bool pseudo_mount_export(struct gsh_export *exp,
 	/* Terminate path leading to junction. */
 	*last_slash = '\0';
 
-	LogDebug(COMPONENT_NFS_V4_PSEUDO,
+	LogDebug(COMPONENT_EXPORT,
 		 "BUILDING PSEUDOFS: Looking for export for %s",
 		 tmp_pseudopath);
 
@@ -246,7 +246,7 @@ bool pseudo_mount_export(struct gsh_export *exp,
 	    get_gsh_export_by_pseudo_locked(tmp_pseudopath, false);
 
 	if (state.req_ctx->export == NULL) {
-		LogFatal(COMPONENT_NFS_V4_PSEUDO,
+		LogFatal(COMPONENT_EXPORT,
 			 "Could not find mounted on export for %s, tmp=%s",
 			 export->pseudopath, tmp_pseudopath);
 	}
@@ -265,7 +265,7 @@ bool pseudo_mount_export(struct gsh_export *exp,
 		rest = tmp_pseudopath +
 		       strlen(state.req_ctx->export->export.pseudopath) + 1;
 
-	LogDebug(COMPONENT_NFS_V4_PSEUDO,
+	LogDebug(COMPONENT_EXPORT,
 		 "BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s Rest %s",
 		 export->id, export->fullpath, export->pseudopath, rest);
 
@@ -274,7 +274,7 @@ bool pseudo_mount_export(struct gsh_export *exp,
 						 &state.dirent);
 
 	if (cache_status != CACHE_INODE_SUCCESS) {
-		LogCrit(COMPONENT_NFS_V4_PSEUDO,
+		LogCrit(COMPONENT_EXPORT,
 			"BUILDING PSEUDOFS: Could not get root entry for Export_Id %d Path %s Pseudo Path %s",
 			export->id, export->fullpath, export->pseudopath);
 
@@ -302,7 +302,7 @@ bool pseudo_mount_export(struct gsh_export *exp,
 	    cache_inode_lock_trust_attrs(state.dirent, state.req_ctx, true);
 
 	if (cache_status != CACHE_INODE_SUCCESS) {
-		LogCrit(COMPONENT_NFS_V4_PSEUDO,
+		LogCrit(COMPONENT_EXPORT,
 			"BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s final GETATTR failed with %s",
 			exp->export.id,
 			exp->export.fullpath,

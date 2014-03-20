@@ -84,7 +84,7 @@ typedef enum log_components {
 	COMPONENT_FSAL,
 	COMPONENT_NFSPROTO,
 	COMPONENT_NFS_V4,
-	COMPONENT_NFS_V4_PSEUDO,
+	COMPONENT_EXPORT,
 	COMPONENT_FILEHANDLE,
 	COMPONENT_NFS_SHELL,
 	COMPONENT_DISPATCH,
@@ -481,6 +481,26 @@ LogFullDebugOpaque(component, format, buf_size, value, length, args...) \
 /* Use either the first component, or if it is not at least at level,
  * use the second component.
  */
+#define LogInfoAlt(comp1, comp2, format, args...) \
+	do { \
+		if (unlikely(LogComponents[comp1].comp_log_level \
+		    >= NIV_INFO) || \
+		    unlikely(LogComponents[comp2].comp_log_level \
+		    >= NIV_INFO)) { \
+			log_components_t component = \
+			    LogComponents[comp1].comp_log_level \
+				>= NIV_INFO ? comp1 : comp2; \
+			\
+			DisplayLogComponentLevel(component, (char *) __FILE__, \
+						 __LINE__, \
+						 (char *)__func__, \
+						 NIV_INFO, \
+						 "%s: INFO: " format, \
+						 LogComponents[component] \
+						     .comp_str, ## args); \
+		} \
+	} while (0)
+
 #define LogDebugAlt(comp1, comp2, format, args...) \
 	do { \
 		if (unlikely(LogComponents[comp1].comp_log_level \

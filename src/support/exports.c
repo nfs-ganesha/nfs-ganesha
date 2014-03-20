@@ -137,7 +137,7 @@ static void StrExportOptions(export_perms_t *p_perms, char *buffer)
 		else
 			buf += sprintf(buf, ", ----");
 	} else
-		buf += sprintf(buf, ",              ");
+		buf += sprintf(buf, ",               ");
 
 	if ((p_perms->set & EXPORT_OPTION_MANAGE_GIDS) == 0)
 		buf += sprintf(buf, ",               ");
@@ -162,13 +162,13 @@ static void StrExportOptions(export_perms_t *p_perms, char *buffer)
 		buf += sprintf(buf, ", anon_uid=%6d",
 			       (int)p_perms->anonymous_uid);
 	else
-		buf += sprintf(buf, ", no anon_uid    ");
+		buf += sprintf(buf, ",                ");
 
 	if ((p_perms->set & EXPORT_OPTION_ANON_GID_SET) == 0)
 		buf += sprintf(buf, ", anon_gid=%6d",
 			       (int)p_perms->anonymous_gid);
 	else
-		buf += sprintf(buf, ", no anon_gid    ");
+		buf += sprintf(buf, ",                ");
 
 	if ((p_perms->set & EXPORT_OPTION_AUTH_TYPES) != 0) {
 		if ((p_perms->options & EXPORT_OPTION_AUTH_NONE) != 0)
@@ -200,7 +200,7 @@ void LogClientListEntry(log_components_t component,
 		     sizeof(addr)) == NULL) {
 			paddr = "Invalid Host address";
 		}
-		LogMidDebug(component, "  %p HOSTIF_CLIENT: %s(%s)", entry,
+		LogMidDebug(component, "  %p HOSTIF_CLIENT: %s (%s)", entry,
 			    paddr, perms);
 		return;
 
@@ -210,22 +210,22 @@ void LogClientListEntry(log_components_t component,
 		     sizeof(addr)) == NULL) {
 			paddr = "Invalid Network address";
 		}
-		LogMidDebug(component, "  %p NETWORK_CLIENT: %s(%s)", entry,
+		LogMidDebug(component, "  %p NETWORK_CLIENT: %s (%s)", entry,
 			    paddr, perms);
 		return;
 
 	case NETGROUP_CLIENT:
-		LogMidDebug(component, "  %p NETWORK_CLIENT: %s(%s)", entry,
+		LogMidDebug(component, "  %p NETWORK_CLIENT: %s (%s)", entry,
 			    entry->client.netgroup.netgroupname, perms);
 		return;
 
 	case WILDCARDHOST_CLIENT:
-		LogMidDebug(component, "  %p WILDCARDHOST_CLIENT: %s(%s)",
+		LogMidDebug(component, "  %p WILDCARDHOST_CLIENT: %s (%s)",
 			    entry, entry->client.wildcard.wildcard, perms);
 		return;
 
 	case GSSPRINCIPAL_CLIENT:
-		LogMidDebug(component, "  %p NETWORK_CLIENT: %s(%s)", entry,
+		LogMidDebug(component, "  %p NETWORK_CLIENT: %s (%s)", entry,
 			    entry->client.gssprinc.princname, perms);
 		return;
 
@@ -235,12 +235,12 @@ void LogClientListEntry(log_components_t component,
 		     sizeof(addr)) == NULL) {
 			paddr = "Invalid Host address";
 		}
-		LogMidDebug(component, "  %p HOSTIF_CLIENT_V6: %s(%s)", entry,
+		LogMidDebug(component, "  %p HOSTIF_CLIENT_V6: %s (%s)", entry,
 			    paddr, perms);
 		return;
 
 	case MATCH_ANY_CLIENT:
-		LogMidDebug(component, "  %p MATCH_ANY_CLIENT: *(%s)", entry,
+		LogMidDebug(component, "  %p MATCH_ANY_CLIENT: * (%s)", entry,
 			    perms);
 		return;
 
@@ -254,7 +254,7 @@ void LogClientListEntry(log_components_t component,
 		return;
 	}
 
-	LogCrit(component, "  %p UNKNOWN_CLIENT_TYPE: %08x(%s)", entry,
+	LogCrit(component, "  %p UNKNOWN_CLIENT_TYPE: %08x (%s)", entry,
 		entry->type, perms);
 }
 
@@ -1661,12 +1661,12 @@ static exportlist_client_entry_t *client_match(sockaddr_t *hostaddr,
 
 		client = glist_entry(glist, exportlist_client_entry_t,
 				     cle_list);
-		LogMidDebug(COMPONENT_DISPATCH,
+		LogMidDebug(COMPONENT_EXPORT,
 			    "Match %p, type = %s, options 0x%X",
 			    client,
 			    client_types[client->type],
 			    client->client_perms.options);
-		LogClientListEntry(COMPONENT_DISPATCH, client);
+		LogClientListEntry(COMPONENT_EXPORT, client);
 
 		switch (client->type) {
 		case HOSTIF_CLIENT:
@@ -1762,7 +1762,7 @@ static exportlist_client_entry_t *client_match(sockaddr_t *hostaddr,
 
 		case GSSPRINCIPAL_CLIENT:
 	  /** @todo BUGAZOMEU a completer lors de l'integration de RPCSEC_GSS */
-			LogCrit(COMPONENT_DISPATCH,
+			LogCrit(COMPONENT_EXPORT,
 				"Unsupported type GSS_PRINCIPAL_CLIENT");
 			break;
 
@@ -1803,12 +1803,12 @@ static exportlist_client_entry_t *client_matchv6(struct in6_addr *paddrv6,
 
 		client = glist_entry(glist, exportlist_client_entry_t,
 				     cle_list);
-		LogMidDebug(COMPONENT_DISPATCH,
+		LogMidDebug(COMPONENT_EXPORT,
 			    "Matchv6 %p, type = %s, options 0x%X",
 			    client,
 			    client_types[client->type],
 			    client->client_perms.options);
-		LogClientListEntry(COMPONENT_DISPATCH, client);
+		LogClientListEntry(COMPONENT_EXPORT, client);
 
 		switch (client->type) {
 		case HOSTIF_CLIENT:
@@ -1871,7 +1871,7 @@ bool nfs_export_check_security(struct svc_req *req,
 	switch (req->rq_cred.oa_flavor) {
 	case AUTH_NONE:
 		if ((export_perms->options & EXPORT_OPTION_AUTH_NONE) == 0) {
-			LogInfo(COMPONENT_DISPATCH,
+			LogInfo(COMPONENT_EXPORT,
 				"Export %s does not support AUTH_NONE",
 				export->fullpath);
 			return false;
@@ -1880,7 +1880,7 @@ bool nfs_export_check_security(struct svc_req *req,
 
 	case AUTH_UNIX:
 		if ((export_perms->options & EXPORT_OPTION_AUTH_UNIX) == 0) {
-			LogInfo(COMPONENT_DISPATCH,
+			LogInfo(COMPONENT_EXPORT,
 				"Export %s does not support AUTH_UNIX",
 				export->fullpath);
 			return false;
@@ -1893,7 +1893,7 @@ bool nfs_export_check_security(struct svc_req *req,
 		     options & (EXPORT_OPTION_RPCSEC_GSS_NONE |
 				EXPORT_OPTION_RPCSEC_GSS_INTG |
 				EXPORT_OPTION_RPCSEC_GSS_PRIV)) == 0) {
-			LogInfo(COMPONENT_DISPATCH,
+			LogInfo(COMPONENT_EXPORT,
 				"Export %s does not support RPCSEC_GSS",
 				export->fullpath);
 			return false;
@@ -1902,13 +1902,13 @@ bool nfs_export_check_security(struct svc_req *req,
 			rpc_gss_svc_t svc;
 			gd = SVCAUTH_PRIVATE(req->rq_auth);
 			svc = gd->sec.svc;
-			LogFullDebug(COMPONENT_DISPATCH, "Testing svc %d",
+			LogFullDebug(COMPONENT_EXPORT, "Testing svc %d",
 				     (int)svc);
 			switch (svc) {
 			case RPCSEC_GSS_SVC_NONE:
 				if ((export_perms->options &
 				     EXPORT_OPTION_RPCSEC_GSS_NONE) == 0) {
-					LogInfo(COMPONENT_DISPATCH,
+					LogInfo(COMPONENT_EXPORT,
 						"Export %s does not support "
 						"RPCSEC_GSS_SVC_NONE",
 						export->fullpath);
@@ -1919,7 +1919,7 @@ bool nfs_export_check_security(struct svc_req *req,
 			case RPCSEC_GSS_SVC_INTEGRITY:
 				if ((export_perms->options &
 				     EXPORT_OPTION_RPCSEC_GSS_INTG) == 0) {
-					LogInfo(COMPONENT_DISPATCH,
+					LogInfo(COMPONENT_EXPORT,
 						"Export %s does not support "
 						"RPCSEC_GSS_SVC_INTEGRITY",
 						export->fullpath);
@@ -1930,7 +1930,7 @@ bool nfs_export_check_security(struct svc_req *req,
 			case RPCSEC_GSS_SVC_PRIVACY:
 				if ((export_perms->options &
 				     EXPORT_OPTION_RPCSEC_GSS_PRIV) == 0) {
-					LogInfo(COMPONENT_DISPATCH,
+					LogInfo(COMPONENT_EXPORT,
 						"Export %s does not support "
 						"RPCSEC_GSS_SVC_PRIVACY",
 						export->fullpath);
@@ -1939,7 +1939,7 @@ bool nfs_export_check_security(struct svc_req *req,
 				break;
 
 			default:
-				LogInfo(COMPONENT_DISPATCH,
+				LogInfo(COMPONENT_EXPORT,
 					"Export %s does not support unknown "
 					"RPCSEC_GSS_SVC %d", export->fullpath,
 					(int)svc);
@@ -1949,7 +1949,7 @@ bool nfs_export_check_security(struct svc_req *req,
 		break;
 #endif
 	default:
-		LogInfo(COMPONENT_DISPATCH,
+		LogInfo(COMPONENT_EXPORT,
 			"Export %s does not support unknown oa_flavor %d",
 			export->fullpath, (int)req->rq_cred.oa_flavor);
 		return false;
@@ -1986,13 +1986,13 @@ sockaddr_t *check_convert_ipv6_to_ipv4(sockaddr_t *ipv6, sockaddr_t *ipv4)
 		paddr->sin_addr.s_addr = *(in_addr_t *) ab;
 		ipv4->ss_family = AF_INET;
 
-		if (isFullDebug(COMPONENT_DISPATCH)) {
+		if (isFullDebug(COMPONENT_EXPORT)) {
 			char ipstring4[SOCK_NAME_MAX];
 			char ipstring6[SOCK_NAME_MAX];
 
 			sprint_sockaddr(ipv6, ipstring6, sizeof(ipstring6));
 			sprint_sockaddr(ipv4, ipstring4, sizeof(ipstring4));
-			LogMidDebug(COMPONENT_DISPATCH,
+			LogMidDebug(COMPONENT_EXPORT,
 				    "Converting IPv6 encapsulated IPv4 address %s to IPv4 %s",
 				    ipstring6, ipstring4);
 		}
@@ -2026,21 +2026,21 @@ void nfs_export_check_access(sockaddr_t *hostaddr, exportlist_t *export,
 	export_perms->anonymous_gid = (gid_t) ANON_GID;
 
 	if (export == NULL) {
-		LogCrit(COMPONENT_DISPATCH,
+		LogCrit(COMPONENT_EXPORT,
 			"No export to check permission against");
 		return;
 	}
 
 	puse_hostaddr = check_convert_ipv6_to_ipv4(hostaddr, &alt_hostaddr);
 
-	if (isFullDebug(COMPONENT_DISPATCH)) {
+	if (isMidDebug(COMPONENT_EXPORT)) {
 		char ipstring[SOCK_NAME_MAX];
 
 		ipstring[0] = '\0';
 		(void) sprint_sockip(puse_hostaddr,
 				     ipstring, sizeof(ipstring));
-		LogMidDebug(COMPONENT_DISPATCH, "Check for address %s",
-			    ipstring);
+		LogMidDebug(COMPONENT_EXPORT, "Check for address %s for export id %u fullpath %s",
+			    ipstring, export->id, export->fullpath);
 	}
 
 	/* Does the client match anyone on the client list? */
@@ -2107,28 +2107,28 @@ void nfs_export_check_access(sockaddr_t *hostaddr, exportlist_t *export,
 
 	export_perms->set |= export_opt.def.set;
 	
-	if (isMidDebug(COMPONENT_DISPATCH)) {
+	if (isMidDebug(COMPONENT_EXPORT)) {
 		char perms[1024];
 		if (client != NULL) {
 			StrExportOptions(&client->client_perms, perms);
-			LogMidDebug(COMPONENT_DISPATCH,
+			LogMidDebug(COMPONENT_EXPORT,
 				    "CLIENT          (%s)",
 				    perms);
 		}
 		StrExportOptions(&export->export_perms, perms);
-		LogMidDebug(COMPONENT_DISPATCH,
+		LogMidDebug(COMPONENT_EXPORT,
 			    "EXPORT          (%s)",
 			    perms);
 		StrExportOptions(&export_opt.conf, perms);
-		LogMidDebug(COMPONENT_DISPATCH,
+		LogMidDebug(COMPONENT_EXPORT,
 			    "EXPORT_DEFAULTS (%s)",
 			    perms);
 		StrExportOptions(&export_opt.def, perms);
-		LogMidDebug(COMPONENT_DISPATCH,
+		LogMidDebug(COMPONENT_EXPORT,
 			    "default options (%s)",
 			    perms);
 		StrExportOptions(export_perms, perms);
-		LogMidDebug(COMPONENT_DISPATCH,
+		LogMidDebug(COMPONENT_EXPORT,
 			    "Final options   (%s)",
 			    perms);
 	}

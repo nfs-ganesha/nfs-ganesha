@@ -83,7 +83,7 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op, compound_data_t *data,
 	data->req_ctx->export = get_gsh_export_by_pseudo("/", true);
 
 	if (data->req_ctx->export == NULL) {
-		LogCrit(COMPONENT_NFS_V4_PSEUDO,
+		LogCrit(COMPONENT_EXPORT,
 			"Could not get export for Pseudo Root");
 
 		res_PUTROOTFH4->status = NFS4ERR_NOENT;
@@ -99,13 +99,13 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op, compound_data_t *data,
 	/* Test for access error (export should not be visible). */
 	if (res_PUTROOTFH4->status == NFS4ERR_ACCESS) {
 		/* Client has no access at all */
-		LogDebug(COMPONENT_NFS_V4_PSEUDO,
+		LogDebug(COMPONENT_EXPORT,
 			 "Client doesn't have access to Pseudo Root");
 		return res_PUTROOTFH4->status;
 	}
 
 	if (res_PUTROOTFH4->status != NFS4_OK) {
-		LogMajor(COMPONENT_NFS_V4_PSEUDO,
+		LogMajor(COMPONENT_EXPORT,
 			 "Failed to get FSAL credentials Pseudo Root");
 		return res_PUTROOTFH4->status;
 	}
@@ -115,14 +115,14 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op, compound_data_t *data,
 						 &file_entry);
 
 	if (cache_status != CACHE_INODE_SUCCESS) {
-		LogCrit(COMPONENT_NFS_V4_PSEUDO,
+		LogCrit(COMPONENT_EXPORT,
 			"Could not get root inode for Pseudo Root");
 
 		res_PUTROOTFH4->status = nfs4_Errno(cache_status);
 		return res_PUTROOTFH4->status;
 	}
 
-	LogFullDebug(COMPONENT_NFS_V4_PSEUDO,
+	LogFullDebug(COMPONENT_EXPORT,
 		     "Root node %p", data->current_entry);
 
 	/* Set the current entry using the ref from get */
@@ -139,7 +139,7 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op, compound_data_t *data,
 	if (!nfs4_FSALToFhandle(&data->currentFH,
 				data->current_entry->obj_handle,
 				data->req_ctx->export)) {
-		LogCrit(COMPONENT_NFS_V4_PSEUDO,
+		LogCrit(COMPONENT_EXPORT,
 			"Could not get handle for Pseudo Root");
 
 		res_PUTROOTFH4->status = NFS4ERR_SERVERFAULT;

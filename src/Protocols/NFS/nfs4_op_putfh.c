@@ -108,7 +108,7 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t *data,
 	if (data->req_ctx->export == NULL) {
 		data->export = NULL;
 
-		LogInfo(COMPONENT_DISPATCH,
+		LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 			"NFS4 Request from client %s has invalid export %d",
 			data->req_ctx->client->hostaddr_str,
 			v4_handle->exportid);

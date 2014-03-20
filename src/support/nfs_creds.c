@@ -308,7 +308,7 @@ bool get_req_creds(struct svc_req *req,
 		req_ctx->creds->caller_uid = export_perms->anonymous_uid;
 		req_ctx->creds->caller_gid = export_perms->anonymous_gid;
 		req_ctx->creds->caller_glen = 0;
-		LogMidDebug(COMPONENT_DISPATCH,
+		LogMidDebugAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 			    "%s creds squashed to uid=%u, gid=%u",
 			    auth_label,
 			    req_ctx->creds->caller_uid,
@@ -405,7 +405,7 @@ bool get_req_creds(struct svc_req *req,
 
 out:
 
-	LogMidDebug(COMPONENT_DISPATCH,
+	LogMidDebugAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 		    "%s creds mapped to uid=%u, gid=%u%s, glen=%d%s",
 		    auth_label,
 		    req_ctx->creds->caller_uid,
@@ -478,14 +478,14 @@ int nfs4_MakeCred(compound_data_t *data)
 	xprt_type_t xprt_type = svc_get_xprt_type(data->req->rq_xprt);
 	int port = get_port(data->req_ctx->caller_addr);
 
-	LogMidDebug(COMPONENT_DISPATCH,
+	LogMidDebugAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
 		    "nfs4_MakeCred about to call nfs_export_check_access");
 	nfs_export_check_access(data->req_ctx->caller_addr, data->export,
 				&data->export_perms);
 
 	/* Check protocol version */
 	if ((data->export_perms.options & EXPORT_OPTION_NFSV4) == 0) {
-		LogInfo(COMPONENT_NFS_V4,
+		LogInfoAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
 			"NFS4 not allowed on Export_Id %d %s for client %s",
 			data->export->id, data->export->fullpath,
 			data->req_ctx->client->hostaddr_str);
@@ -497,7 +497,7 @@ int nfs4_MakeCred(compound_data_t *data)
 	     && ((data->export_perms.options & EXPORT_OPTION_UDP) == 0))
 	    || ((xprt_type == XPRT_TCP)
 		&& ((data->export_perms.options & EXPORT_OPTION_TCP) == 0))) {
-		LogInfo(COMPONENT_NFS_V4,
+		LogInfoAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
 			"NFS4 over %s not allowed on Export_Id %d %s for client %s",
 			xprt_type_to_str(xprt_type), data->export->id,
 			data->export->fullpath,
@@ -508,7 +508,7 @@ int nfs4_MakeCred(compound_data_t *data)
 	/* Check if client is using a privileged port. */
 	if (((data->export_perms.options & EXPORT_OPTION_PRIVILEGED_PORT) != 0)
 	    && (port >= IPPORT_RESERVED)) {
-		LogInfo(COMPONENT_NFS_V4,
+		LogInfoAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
 			"Non-reserved Port %d is not allowed on Export_Id %d %s for client %s",
 			port, data->export->id, data->export->fullpath,
 			data->req_ctx->client->hostaddr_str);
@@ -518,7 +518,7 @@ int nfs4_MakeCred(compound_data_t *data)
 	/* Test if export allows the authentication provided */
 	if (nfs_export_check_security
 	    (data->req, &data->export_perms, data->export) == FALSE) {
-		LogInfo(COMPONENT_NFS_V4,
+		LogInfoAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
 			"NFS4 auth not allowed on Export_Id %d %s for client %s",
 			data->export->id, data->export->fullpath,
 			data->req_ctx->client->hostaddr_str);

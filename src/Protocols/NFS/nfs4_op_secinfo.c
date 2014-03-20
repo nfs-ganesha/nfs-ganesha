@@ -133,7 +133,7 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 			 * have access to this export, return NFS4ERR_NOENT to
 			 * hide it. It was not visible in READDIR response.
 			 */
-			LogDebug(COMPONENT_NFS_V4_PSEUDO,
+			LogDebug(COMPONENT_EXPORT,
 				 "NFS4ERR_ACCESS Hiding Export_Id %d Path %s with NFS4ERR_NOENT",
 				 data->export->id, data->export->fullpath);
 			res_SECINFO4->status = NFS4ERR_NOENT;
@@ -148,7 +148,7 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 		    nfs_export_get_root_entry(data->req_ctx->export, &entry);
 
 		if (cache_status != CACHE_INODE_SUCCESS) {
-			LogMajor(COMPONENT_NFS_V4_PSEUDO,
+			LogMajor(COMPONENT_EXPORT,
 				 "PSEUDO FS JUNCTION TRAVERSAL: Failed to get root for %s, id=%d, status = %s",
 				 data->export->fullpath,
 				 data->export->id,
@@ -158,7 +158,7 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 			goto out;
 		}
 
-		LogMidDebug(COMPONENT_NFS_V4_PSEUDO,
+		LogMidDebug(COMPONENT_EXPORT,
 			    "PSEUDO FS JUNCTION TRAVERSAL: Crossed to %s, id=%d for name=%s",
 			    data->export->fullpath,
 			    data->export->id,
@@ -288,7 +288,7 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 		if (!get_req_creds(data->req,
 				   data->req_ctx,
 				   &data->export_perms)) {
-			LogCrit(COMPONENT_NFS_V4_PSEUDO,
+			LogCrit(COMPONENT_EXPORT,
 				"Failure to restore creds");
 		}
 	}
