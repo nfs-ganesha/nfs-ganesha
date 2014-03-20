@@ -46,8 +46,6 @@
 #include "nfs_exports.h"
 #include "nfs_file_handle.h"
 
-#define  NFS4_ATTRVALS_BUFFLEN  1024
-
 /* ------------------------------ Typedefs and structs----------------------- */
 
 typedef union nfs_arg__ {
@@ -548,80 +546,6 @@ void nfs4_op_io_advise_Free(nfs_resop4 *resp);
  * -- End of NFS protocols functions. --
  */
 
-/*
- * Definition of an array for the characteristics of each GETATTR sub-operations
- */
-
-#define FATTR4_ATTR_READ       0x00001
-#define FATTR4_ATTR_WRITE      0x00010
-#define FATTR4_ATTR_READ_WRITE 0x00011
-
-typedef enum {
-	FATTR_XDR_NOOP,
-	FATTR_XDR_SUCCESS,
-	FATTR_XDR_SUCCESS_EXP,
-	FATTR_XDR_FAILED,
-	FATTR_BADOWNER
-} fattr_xdr_result;
-
-struct xdr_attrs_args {
-	struct attrlist *attrs;
-	nfs_fh4 *hdl4;
-	uint32_t rdattr_error;
-	uint64_t mounted_on_fileid;	/*< If this is the root directory
-					   of a filesystem, the fileid of
-					   the directory on which the
-					   filesystem is mounted. */
-	int nfs_status;
-	compound_data_t *data;
-	bool statfscalled;
-	fsal_dynamicfsinfo_t *dynamicinfo;
-};
-
-typedef struct fattr4_dent {
-	char *name;		/* The name of the operation */
-	unsigned int supported;	/* Is this action supported? */
-	unsigned int size_fattr4; /* The size of the dedicated attr subtype */
-	unsigned int access;	/* The access type for this attributes */
-	attrmask_t attrmask;	/* attr bit for decoding to attrs */
-	attrmask_t exp_attrmask; /* attr bit for decoding to attrs in
-				    case of exepction */
-	fattr_xdr_result(*encode) (XDR * xdr, struct xdr_attrs_args *args);
-	fattr_xdr_result(*decode) (XDR * xdr, struct xdr_attrs_args *args);
-	fattr_xdr_result(*compare) (XDR * xdr1, XDR * xdr2);
-} fattr4_dent_t;
-
-extern const struct fattr4_dent fattr4tab[];
-
-#define WORD0_FATTR4_RDATTR_ERROR (1 << FATTR4_RDATTR_ERROR)
-#define WORD1_FATTR4_MOUNTED_ON_FILEID (1 << (FATTR4_MOUNTED_ON_FILEID - 32))
-
-static inline int check_for_wrongsec_ok_attr(struct bitmap4 *attr_request)
-{
-	if (attr_request->bitmap4_len < 1)
-		return true;
-	if ((attr_request->map[0] & ~WORD0_FATTR4_RDATTR_ERROR) != 0)
-		return false;
-	if (attr_request->bitmap4_len < 2)
-		return true;
-	if ((attr_request->map[1] & ~WORD1_FATTR4_MOUNTED_ON_FILEID) != 0)
-		return false;
-	if (attr_request->bitmap4_len < 3)
-		return true;
-	if (attr_request->map[2] != 0)
-		return false;
-	return true;
-}
-
-static inline int check_for_rdattr_error(struct bitmap4 *attr_request)
-{
-	if (attr_request->bitmap4_len < 1)
-		return false;
-	if ((attr_request->map[0] & WORD0_FATTR4_RDATTR_ERROR) != 0)
-		return true;
-	return false;
-}
-
 /* BUGAZOMEU: Some definitions to be removed. FSAL parameters to be
    used instead */
 #define FSINFO_MAX_FILESIZE  0xFFFFFFFFFFFFFFFFll
@@ -765,38 +689,5 @@ bool pseudo_mount_export(struct gsh_export *exp,
 void create_pseudofs(void);
 void pseudo_unmount_export(struct gsh_export *exp,
 			   struct req_op_context *req_ctx);
-
-nfsstat4 cache_entry_To_Fattr(cache_entry_t *, fattr4 *,
-			      compound_data_t *, nfs_fh4 *,
-			      struct bitmap4 *);
-
-int nfs4_fsal_attr_To_Fattr(const struct attrlist *, fattr4 *,
-			    compound_data_t *, struct bitmap4 *);
-int nfs4_Fattr_To_fsal_attr(struct attrlist *, fattr4 *,
-			    compound_data_t *, struct bitmap4 *);
-bool nfs4_Fattr_Check_Access(fattr4 *, int);
-bool nfs4_Fattr_Check_Access_Bitmap(struct bitmap4 *, int);
-bool nfs4_Fattr_Supported(fattr4 *);
-bool nfs4_Fattr_Supported_Bitmap(struct bitmap4 *);
-int nfs4_Fattr_cmp(fattr4 *, fattr4 *);
-
-bool nfs3_FSALattr_To_Fattr(exportlist_t *, const struct attrlist *,
-			    fattr3 *);
-
-bool cache_entry_to_nfs3_Fattr(cache_entry_t *, struct req_op_context *,
-			       fattr3 *);
-
-bool nfs3_Sattr_To_FSALattr(struct attrlist *, sattr3 *);
-
-int nfs4_Fattr_To_FSAL_attr(struct attrlist *, fattr4 *, compound_data_t *);
-
-int nfs4_Fattr_To_fsinfo(fsal_dynamicfsinfo_t *, fattr4 *);
-
-int nfs4_Fattr_Fill_Error(fattr4 *, nfsstat4);
-
-int nfs4_FSALattr_To_Fattr(struct xdr_attrs_args *, struct bitmap4 *,
-			   fattr4 *);
-
-void nfs4_bitmap4_Remove_Unsupported(struct bitmap4 *);
 
 #endif	/* NFS_PROTO_FUNCTIONS_H */

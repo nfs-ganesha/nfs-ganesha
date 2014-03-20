@@ -61,11 +61,6 @@
 /* Arbitrary string buffer lengths */
 #define PWENT_MAX_LEN 81
 
-/* Hard and soft limit for nfsv4 quotas */
-#define NFS_V4_MAX_QUOTA_SOFT 4294967296LL	/*  4 GB */
-#define NFS_V4_MAX_QUOTA_HARD 17179869184LL	/* 16 GB */
-#define NFS_V4_MAX_QUOTA      34359738368LL	/* 32 GB */
-
 #define XATTR_BUFFERSIZE 4096
 
 char *host_name;

@@ -59,6 +59,7 @@
 #include "nfs_exports.h"
 #include "nfs_file_handle.h"
 #include "sal_functions.h"
+#include "nfs_proto_tools.h"
 
 /**
  * @brief Hash table for stateids.
