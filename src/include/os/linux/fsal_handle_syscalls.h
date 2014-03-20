@@ -59,6 +59,9 @@ struct file_handle {
 #elif defined(__x86_64__)
 #define __NR_name_to_handle_at  303
 #define __NR_open_by_handle_at  304
+#elif defined(__PPC64__)
+#define __NR_name_to_handle_at  345
+#define __NR_open_by_handle_at  346
 #endif
 
 static inline int name_to_handle_at(int mdirfd, const char *name,
