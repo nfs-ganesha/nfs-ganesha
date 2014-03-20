@@ -589,6 +589,9 @@ typedef enum enum_fsal_fsinfo_options {
 	fso_pnfs_ds_supported
 } fsal_fsinfo_options_t;
 
+/* The largest maxread and maxwrite value */
+#define FSAL_MAXIOSIZE (64*1024*1024)
+
 struct fsal_staticfsinfo_t {
 	uint64_t maxfilesize;	/*< maximum allowed filesize     */
 	uint32_t maxlink;	/*< maximum hard links on a file */

@@ -610,16 +610,19 @@ static int fsal_commit(void *node, void *link_mem, void *self_struct)
 		errcnt++;
 		goto err;
 	}
+
 	/* We are connected up to the fsal side.  Now
 	 * validate maxread/write etc with fsal params */
-	if (exp->MaxRead > fsal_exp->ops->fs_maxread(fsal_exp)) {
+	if (exp->MaxRead > fsal_exp->ops->fs_maxread(fsal_exp) &&
+	    fsal_exp->ops->fs_maxread(fsal_exp) != 0) {
 		LogEvent(COMPONENT_CONFIG,
 			 "Readjusting MaxRead to FSAL, %" PRIu64 " -> %" PRIu32,
 			 exp->MaxRead,
 			 fsal_exp->ops->fs_maxread(fsal_exp));
 		exp->MaxRead = fsal_exp->ops->fs_maxread(fsal_exp);
 	}
-	if (exp->MaxWrite > fsal_exp->ops->fs_maxwrite(fsal_exp)) {
+	if (exp->MaxWrite > fsal_exp->ops->fs_maxwrite(fsal_exp) &&
+	    fsal_exp->ops->fs_maxwrite(fsal_exp) != 0) {
 		LogEvent(COMPONENT_CONFIG,
 			 "Readjusting MaxWrite to FSAL, %" PRIu64 " -> %" PRIu32,
 			 exp->MaxWrite,
@@ -1035,15 +1038,15 @@ static struct config_item export_params[] = {
 		       exportlist, fullpath), /* must chomp '/' */
 	CONF_UNIQ_PATH("Pseudo", 1, MAXPATHLEN, NULL,
 		       exportlist, pseudopath),
-	CONF_ITEM_UI64("MaxRead", 512, 9*1024*1024, 4*1024*1024,
+	CONF_ITEM_UI64("MaxRead", 512, FSAL_MAXIOSIZE, FSAL_MAXIOSIZE,
 		       exportlist, MaxRead),
-	CONF_ITEM_UI64("MaxWrite", 512, 9*1024*1024, 4*1024*1024,
+	CONF_ITEM_UI64("MaxWrite", 512, FSAL_MAXIOSIZE, FSAL_MAXIOSIZE,
 		       exportlist, MaxWrite),
-	CONF_ITEM_UI64("PrefRead", 512, 9*1024*1024, 4*1024*1024,
+	CONF_ITEM_UI64("PrefRead", 512, FSAL_MAXIOSIZE, FSAL_MAXIOSIZE,
 		       exportlist, PrefRead),
-	CONF_ITEM_UI64("PrefWrite", 512, 9*1024*1024, 4*1024*1024,
+	CONF_ITEM_UI64("PrefWrite", 512, FSAL_MAXIOSIZE, FSAL_MAXIOSIZE,
 		       exportlist, PrefWrite),
-	CONF_ITEM_UI64("PrefReaddir", 512, 9*1024*1024, 16384,
+	CONF_ITEM_UI64("PrefReaddir", 512, FSAL_MAXIOSIZE, 16384,
 		       exportlist, PrefReaddir),
 	CONF_ITEM_FSID_SET("Filesystem_id", 666, 666,
 		       exportlist, filesystem_id, /* major.minor */
@@ -1149,10 +1152,10 @@ static int build_default_root(void)
 	p_entry->UseCookieVerifier = true;
 	p_entry->filesystem_id.major = 152;
 	p_entry->filesystem_id.minor = 152;
-	p_entry->MaxWrite = 16384;
-	p_entry->MaxRead = 16384;
-	p_entry->PrefWrite = 16384;
-	p_entry->PrefRead = 16384;
+	p_entry->MaxWrite = FSAL_MAXIOSIZE;
+	p_entry->MaxRead = FSAL_MAXIOSIZE;
+	p_entry->PrefWrite = FSAL_MAXIOSIZE;
+	p_entry->PrefRead = FSAL_MAXIOSIZE;
 	p_entry->PrefReaddir = 16384;
 	p_entry->expire_type_attr = nfs_param.cache_param.expire_type_attr;
 	glist_init(&p_entry->exp_state_list);
