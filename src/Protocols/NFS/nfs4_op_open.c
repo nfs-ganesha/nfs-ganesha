@@ -855,7 +855,7 @@ static void get_delegation(compound_data_t *data, struct nfs_argop4 *op,
 {
 	state_status_t state_status;
 	fsal_lock_param_t lock_desc;
-	state_data_t deleg_data, candidate_data;
+	state_data_t deleg_data, candidate_data,*saved_data;
 	open_delegation_type4 deleg_type;
 	state_owner_t *clientowner = &client->cid_owner;
 	OPEN4args *args = &op->nfs_argop4_u.opopen;
@@ -925,7 +925,16 @@ static void get_delegation(compound_data_t *data, struct nfs_argop4 *op,
 			 state_err_str(state_status));
 		return;
 	} else {
-		LogDebug(COMPONENT_STATE, "delegation state added");
+		saved_data = &new_state->state_data;
+		saved_data->deleg.sd_stateid.seqid = ++new_state->state_seqid;
+		memcpy(saved_data->deleg.sd_stateid.other,
+		       new_state->stateid_other,
+		       sizeof(saved_data->deleg.sd_stateid.other));
+
+		LogFullDebugOpaque(COMPONENT_STATE, "delegation state added, stateid: %s",
+				   100, &saved_data->deleg.sd_stateid.other,
+				   sizeof(saved_data->deleg.sd_stateid.other));
+
 		/* Attach this open to an export */
 		new_state->state_export = data->export;
 		pthread_mutex_lock(&data->export->exp_state_mutex);
@@ -938,15 +947,16 @@ static void get_delegation(compound_data_t *data, struct nfs_argop4 *op,
 			open_write_delegation4 *writeres =
 				&resok->delegation.open_delegation4_u.write;
 			writeres->space_limit.limitby = NFS_LIMIT_SIZE;
-			writeres->space_limit.nfs_space_limit4_u.filesize = 100000;
-			writeres->stateid = deleg_data.deleg.sd_stateid;
+			writeres->space_limit.nfs_space_limit4_u.filesize =
+				100000;
+			writeres->stateid = saved_data->deleg.sd_stateid;
 			writeres->recall = FALSE;
 			get_deleg_perm(data->current_entry,
 				       &writeres->permissions, deleg_type);
 		} else if (deleg_type == OPEN_DELEGATE_READ) {
 			open_read_delegation4 *readres =
 				&resok->delegation.open_delegation4_u.read;
-			readres->stateid = deleg_data.deleg.sd_stateid;
+			readres->stateid = saved_data->deleg.sd_stateid;
 			readres->recall = FALSE;
 			get_deleg_perm(data->current_entry,
 				       &readres->permissions, deleg_type);
@@ -958,7 +968,7 @@ static void get_delegation(compound_data_t *data, struct nfs_argop4 *op,
 		state_status = state_lock(data->current_entry,
 					  data->export,
 					  data->req_ctx,
-					  openowner,
+					  clientowner,
 					  new_state,
 					  STATE_NON_BLOCKING,
 					  NULL,	/* No block data */
