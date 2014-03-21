@@ -424,11 +424,14 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 		   not happen because client will get FATTR4_MAXREAD value
 		   at mount time */
 
-		LogFullDebug(COMPONENT_NFS_V4,
-			     "NFS4_OP_READ: read requested size = %"PRIu64
-			     " read allowed size = %" PRIu64,
-			     size, data->export->MaxRead);
-		size = data->export->MaxRead;
+		if (info == NULL ||
+		    info->io_content.what != NFS4_CONTENT_HOLE) {
+			LogFullDebug(COMPONENT_NFS_V4,
+				     "read requested size = %"PRIu64
+				     " read allowed size = %" PRIu64,
+				     size, data->export->MaxRead);
+			size = data->export->MaxRead;
+		}
 	}
 
 	/* If size == 0, no I/O is to be made and everything is
@@ -569,6 +572,7 @@ int nfs4_op_read_plus(struct nfs_argop4 *op, compound_data_t *data,
 	READ_PLUS4res * const res_RPLUS = &resp->nfs_resop4_u.opread_plus;
 	READ4res *res_READ4 = &res.nfs_resop4_u.opread;
 	contents *contentp = &res_RPLUS->rpr_resok4.rpr_contents;
+	resp->resop = NFS4_OP_READ_PLUS;
 
 	nfs4_read(op, data, &res, CACHE_INODE_READ_PLUS, &info);
 
@@ -750,8 +754,9 @@ int nfs4_op_seek(struct nfs_argop4 *op, compound_data_t *data,
 		info.io_content.what = arg_SEEK->sa_what;
 
 		if (arg_SEEK->sa_what == NFS4_CONTENT_DATA ||
-				arg_SEEK->sa_what == NFS4_CONTENT_HOLE)
+				arg_SEEK->sa_what == NFS4_CONTENT_HOLE) {
 			info.io_content.hole.di_offset = arg_SEEK->sa_offset;
+}
 		else
 			info.io_content.adh.adh_offset = arg_SEEK->sa_offset;
 
@@ -759,7 +764,7 @@ int nfs4_op_seek(struct nfs_argop4 *op, compound_data_t *data,
 					entry->obj_handle,
 					data->req_ctx,	&info);
 		if (FSAL_IS_ERROR(fsal_status)) {
-			res_SEEK->sr_status = NFS4ERR_NOTSUPP;
+			res_SEEK->sr_status = NFS4ERR_NXIO;
 			goto done;
 		}
 		res_SEEK->sr_resok4.sr_eof = info.io_eof;

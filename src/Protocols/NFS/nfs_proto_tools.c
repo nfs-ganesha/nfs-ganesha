@@ -2291,7 +2291,7 @@ static fattr_xdr_result decode_fs_charset_cap(XDR *xdr,
  * indexed by attribute number
  */
 
-const struct fattr4_dent fattr4tab[FATTR4_SPACE_RESERVED + 1] = {
+const struct fattr4_dent fattr4tab[FATTR4_CHANGE_SEC_LABEL + 1] = {
 	[FATTR4_SUPPORTED_ATTRS] = {
 		.name = "FATTR4_SUPPORTED_ATTRS",
 		.supported = 1,

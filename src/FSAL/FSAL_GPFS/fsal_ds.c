@@ -182,7 +182,7 @@ static nfsstat4 ds_read_plus(struct fsal_ds_handle *const ds_pub,
 	rarg.bufP = buffer;
 	rarg.offset = offset;
 	rarg.length = requested_length;
-	rarg.options = SKIP_HOLE;
+	rarg.options = IO_SKIP_HOLE;
 
 	LogDebug(COMPONENT_PNFS,
 		 "fh len %d type %d key %d: %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x\n",
@@ -354,7 +354,7 @@ static nfsstat4 ds_write_plus(struct fsal_ds_handle *const ds_pub,
 	warg.options = 0;
 
 	if (info->io_content.what == NFS4_CONTENT_HOLE)
-		warg.options = SKIP_HOLE;
+		warg.options = IO_SKIP_HOLE;
 
 	LogDebug(COMPONENT_PNFS,
 		 "fh len %d type %d key %d: %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x\n",

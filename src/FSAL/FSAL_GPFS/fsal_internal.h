@@ -306,7 +306,8 @@ fsal_status_t GPFSFSAL_clear(int fd,	/* IN */
 			     caddr_t buffer,	/* IN */
 			     size_t *p_write_amount,	/* OUT */
 			     bool *fsal_stable,	/* IN/OUT */
-			     const struct req_op_context *p_context);
+			     const struct req_op_context *p_context,
+			     bool allocate);
 
 fsal_status_t GPFSFSAL_close(int *p_file_descriptor);	/* IN */
 
