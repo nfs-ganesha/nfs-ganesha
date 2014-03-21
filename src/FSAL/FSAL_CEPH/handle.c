@@ -35,6 +35,7 @@
 #include <cephfs/libcephfs.h>
 #include "fsal.h"
 #include "fsal_types.h"
+#include "fsal_convert.h"
 #include "fsal_api.h"
 #include "internal.h"
 #include "nfs_exports.h"
