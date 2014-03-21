@@ -80,8 +80,6 @@ const nfs_function_desc_t invalid_funcdesc = {
 	.dispatch_behaviour = NOTHING_SPECIAL
 };
 
-const nfs_function_desc_t *INVALID_FUNCDESC = &invalid_funcdesc;
-
 const nfs_function_desc_t nfs3_func_desc[] = {
 	{
 	 .service_function = nfs_null,
@@ -675,7 +673,7 @@ const nfs_function_desc_t rquota2_func_desc[] = {
 const nfs_function_desc_t *nfs_rpc_get_funcdesc(nfs_request_data_t *reqnfs)
 {
 	struct svc_req *req = &reqnfs->req;
-	const nfs_function_desc_t *funcdesc = INVALID_FUNCDESC;
+	const nfs_function_desc_t *funcdesc = &invalid_funcdesc;
 
 	if (req->rq_prog == nfs_param.core_param.program[P_NFS]) {
 		funcdesc = (req->rq_vers == NFS_V3) ?
@@ -771,13 +769,11 @@ static void nfs_rpc_execute(request_data_t *req,
 			 "Function %d", (int)svcreq->rq_prog,
 			 (int)svcreq->rq_vers, (int)svcreq->rq_proc);
 	}
-	if (isDebug(COMPONENT_DISPATCH)) {
-		LogDebug(COMPONENT_DISPATCH,
-			 "Request from %s for Program %d, Version %d, Function %d "
-			 "has xid=%u", req_ctx.client->hostaddr_str,
-			 (int)svcreq->rq_prog, (int)svcreq->rq_vers,
-			 (int)svcreq->rq_proc, svcreq->rq_xid);
-	}
+	LogDebug(COMPONENT_DISPATCH,
+		 "Request from %s for Program %d, Version %d, Function %d "
+		 "has xid=%u", req_ctx.client->hostaddr_str,
+		 (int)svcreq->rq_prog, (int)svcreq->rq_vers,
+		 (int)svcreq->rq_proc, svcreq->rq_xid);
 
 	/* start the processing clock
 	 * we measure all time stats as intervals (elapsed nsecs) from
@@ -912,7 +908,7 @@ static void nfs_rpc_execute(request_data_t *req,
 			}
 			req_ctx.export = get_gsh_export(exportid, true);
 			if (req_ctx.export == NULL) {
-				LogInfo(COMPONENT_DISPATCH,
+				LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 					"NFS3 Request from client %s has invalid export %d",
 					req_ctx.client->hostaddr_str, exportid);
 
@@ -931,14 +927,14 @@ static void nfs_rpc_execute(request_data_t *req,
 			if ((req_ctx.export->export.export_perms.
 			     options & EXPORT_OPTION_PRIVILEGED_PORT)
 			    && (port >= IPPORT_RESERVED)) {
-				LogInfo(COMPONENT_DISPATCH,
+				LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 					"Port %d is too high for this export entry, rejecting client",
 					port);
 				auth_rc = AUTH_TOOWEAK;
 				goto auth_failure;
 			}
 
-			LogMidDebug(COMPONENT_DISPATCH,
+			LogMidDebugAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 				    "Found export entry for path=%s as exportid=%d",
 				    req_ctx.export->export.fullpath,
 				    req_ctx.export->export.id);
@@ -1010,7 +1006,7 @@ static void nfs_rpc_execute(request_data_t *req,
 			} else {
 				req_ctx.export = get_gsh_export(exportid, true);
 				if (req_ctx.export == NULL) {
-					LogInfo(COMPONENT_DISPATCH,
+					LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 						"NLM4 Request from client %s has invalid export %d",
 						req_ctx.client->hostaddr_str,
 						exportid);
@@ -1033,7 +1029,7 @@ static void nfs_rpc_execute(request_data_t *req,
 					    req_ctx.export->export.export_hdl;
 				}
 
-				LogMidDebug(COMPONENT_DISPATCH,
+				LogMidDebugAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 					    "Found export entry for dirname=%s as exportid=%d",
 					    req_ctx.export->export.fullpath,
 					    req_ctx.export->export.id);
@@ -1047,7 +1043,7 @@ static void nfs_rpc_execute(request_data_t *req,
 	if (req_ctx.export != NULL) {
 		xprt_type_t xprt_type = svc_get_xprt_type(xprt);
 
-		LogMidDebug(COMPONENT_DISPATCH,
+		LogMidDebugAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 			    "nfs_rpc_execute about to call nfs_export_check_access for client %s",
 			    req_ctx.client->hostaddr_str);
 
@@ -1055,7 +1051,7 @@ static void nfs_rpc_execute(request_data_t *req,
 					&req_ctx.export->export, &export_perms);
 
 		if (export_perms.options == 0) {
-			LogInfo(COMPONENT_DISPATCH,
+			LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 				"Client %s is not allowed to access Export_Id %d %s, vers=%d, proc=%d",
 				req_ctx.client->hostaddr_str,
 				req_ctx.export->export.id,
@@ -1076,7 +1072,7 @@ static void nfs_rpc_execute(request_data_t *req,
 		}
 
 		if ((protocol_options & export_perms.options) == 0) {
-			LogInfo(COMPONENT_DISPATCH,
+			LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 				"%s Version %d not allowed on Export_Id %d %s for client %s",
 				progname, svcreq->rq_vers,
 				req_ctx.export->export.id,
@@ -1092,7 +1088,7 @@ static void nfs_rpc_execute(request_data_t *req,
 		     && ((export_perms.options & EXPORT_OPTION_UDP) == 0))
 		    || ((xprt_type == XPRT_TCP)
 			&& ((export_perms.options & EXPORT_OPTION_TCP) == 0))) {
-			LogInfo(COMPONENT_DISPATCH,
+			LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 				"%s Version %d over %s not allowed on Export_Id %d %s for client %s",
 				progname, svcreq->rq_vers,
 				xprt_type_to_str(xprt_type),
@@ -1112,7 +1108,7 @@ static void nfs_rpc_execute(request_data_t *req,
 			    svcreq, &export_perms,
 		     &req_ctx.export->export)
 		     == false)) {
-			LogInfo(COMPONENT_DISPATCH,
+			LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 				"%s Version %d auth not allowed on Export_Id %d %s for client %s",
 				progname, svcreq->rq_vers,
 				req_ctx.export->export.id,
@@ -1128,7 +1124,7 @@ static void nfs_rpc_execute(request_data_t *req,
 		if ((svcreq->rq_prog == nfs_param.core_param.program[P_NFS])
 		    && ((export_perms.options & EXPORT_OPTION_PRIVILEGED_PORT)
 			!= 0) && (port >= IPPORT_RESERVED)) {
-			LogInfo(COMPONENT_DISPATCH,
+			LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 				"Non-reserved Port %d is not allowed on Export_Id %d %s for client %s",
 				port, req_ctx.export->export.id,
 				req_ctx.export->export.fullpath,
@@ -1155,19 +1151,19 @@ static void nfs_rpc_execute(request_data_t *req,
 		if (svcreq->rq_prog == nfs_param.core_param.program[P_NFS])
 			switch (svcreq->rq_vers) {
 			case NFS_V3:
-				LogDebug(COMPONENT_DISPATCH,
+				LogDebugAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 					 "Returning NFS3ERR_DQUOT because request is on an MD Only export");
 				res_nfs->res_getattr3.status = NFS3ERR_DQUOT;
 				rc = NFS_REQ_OK;
 				break;
 
 			default:
-				LogDebug(COMPONENT_DISPATCH,
+				LogDebugAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 					 "Dropping IO request on an MD Only export");
 				rc = NFS_REQ_DROP;
 				break;
 		} else {
-			LogDebug(COMPONENT_DISPATCH,
+			LogDebugAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 				 "Dropping IO request on an MD Only export");
 			rc = NFS_REQ_DROP;
 		}
@@ -1179,19 +1175,19 @@ static void nfs_rpc_execute(request_data_t *req,
 		if (svcreq->rq_prog == nfs_param.core_param.program[P_NFS])
 			switch (svcreq->rq_vers) {
 			case NFS_V3:
-				LogDebug(COMPONENT_DISPATCH,
+				LogDebugAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 					 "Returning NFS3ERR_ROFS because request is on a Read Only export");
 				res_nfs->res_getattr3.status = NFS3ERR_ROFS;
 				rc = NFS_REQ_OK;
 				break;
 
 			default:
-				LogDebug(COMPONENT_DISPATCH,
+				LogDebugAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 					 "Dropping request on a Read Only export");
 				rc = NFS_REQ_DROP;
 				break;
 		} else {
-			LogDebug(COMPONENT_DISPATCH,
+			LogDebugAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 				 "Dropping request on a Read Only export");
 			rc = NFS_REQ_DROP;
 		}
@@ -1199,7 +1195,7 @@ static void nfs_rpc_execute(request_data_t *req,
 		   && (export_perms.
 		       options & (EXPORT_OPTION_READ_ACCESS |
 				  EXPORT_OPTION_MD_READ_ACCESS)) == 0) {
-		LogInfo(COMPONENT_DISPATCH,
+		LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 			"Client %s is not allowed to access Export_Id %d %s, vers=%d, proc=%d",
 			req_ctx.client->hostaddr_str, req_ctx.export->export.id,
 			req_ctx.export->export.fullpath, (int)svcreq->rq_vers,
@@ -1220,7 +1216,7 @@ static void nfs_rpc_execute(request_data_t *req,
 			if (get_req_creds(svcreq,
 					  &req_ctx,
 					  &export_perms) == false) {
-				LogInfo(COMPONENT_DISPATCH,
+				LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 					"could not get uid and gid, rejecting client %s",
 					req_ctx.client->hostaddr_str);
 
@@ -1326,13 +1322,13 @@ static void nfs_rpc_execute(request_data_t *req,
  handle_err:
 	/* Reject the request for authentication reason (incompatible
 	 * file handle) */
-	if (isInfo(COMPONENT_DISPATCH)) {
+	if (isInfo(COMPONENT_DISPATCH) || isInfo(COMPONENT_EXPORT)) {
 		char dumpfh[1024];
 		sprint_fhandle3(dumpfh, (nfs_fh3 *) arg_nfs);
-		LogMajor(COMPONENT_DISPATCH,
-			 "%s Request from host %s V3 not allowed on this export, proc=%d, FH=%s",
-			 progname, req_ctx.client->hostaddr_str,
-			 (int)svcreq->rq_proc, dumpfh);
+		LogInfo(COMPONENT_DISPATCH,
+			"%s Request from host %s V3 not allowed on this export, proc=%d, FH=%s",
+			progname, req_ctx.client->hostaddr_str,
+			(int)svcreq->rq_proc, dumpfh);
 	}
 	auth_rc = AUTH_FAILED;
 

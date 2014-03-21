@@ -148,7 +148,7 @@ static fsal_status_t extract_handle(struct fsal_export *exp_hdl,
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
 	fh_size = GLAPI_HANDLE_LENGTH;
-	if (in_type != FSAL_DIGEST_SIZEOF && fh_desc->len != fh_size) {
+	if (fh_desc->len != fh_size) {
 		LogMajor(COMPONENT_FSAL,
 			 "Size mismatch for handle.  should be %lu, got %lu",
 			 fh_size, fh_desc->len);

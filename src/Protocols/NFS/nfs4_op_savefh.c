@@ -41,7 +41,6 @@
 #include "nfs_exports.h"
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
-#include "nfs_tools.h"
 #include "nfs_file_handle.h"
 #include "export_mgr.h"
 

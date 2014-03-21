@@ -97,7 +97,6 @@ void *ptfsal_closeHandle_listener_thread(void *args);
 struct pt_fsal_module {
 	struct fsal_module fsal;
 	struct fsal_staticfsinfo_t fs_info;
-	fsal_init_info_t fsal_info;
 	/* ptfs_specific_initinfo_t specific_info;  placeholder */
 };
 
@@ -105,7 +104,7 @@ const char myname[] = "PT";
 
 /* filesystem info for PT */
 static struct fsal_staticfsinfo_t default_posix_info = {
-	.maxfilesize = 0xFFFFFFFFFFFFFFFFLL,	/* (64bits) */
+	.maxfilesize = UINT64_MAX,
 	.maxlink = _POSIX_LINK_MAX,
 	.maxnamelen = 1024,
 	.maxpathlen = 1024,
@@ -321,7 +320,6 @@ MODULE_INIT void pt_init(void)
 	}
 	myself->ops->create_export = pt_create_export;
 	myself->ops->init_config = init_config;
-	init_fsal_parameters(&PT.fsal_info);
 }
 
 MODULE_FINI void pt_unload(void)

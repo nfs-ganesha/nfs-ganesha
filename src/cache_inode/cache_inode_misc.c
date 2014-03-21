@@ -42,7 +42,6 @@
 #include "nfs4_acls.h"
 #include "sal_functions.h"
 #include "nfs_core.h"
-#include "nfs_tools.h"
 #include "export_mgr.h"
 
 #include <unistd.h>
@@ -246,17 +245,21 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 	cih_latch_t latch;
 	bool has_hashkey = false;
 	int rc = 0;
+	cache_inode_key_t key;
 
 	*entry = NULL;
 
 	/* Get FSAL-specific key */
 	new_obj->ops->handle_to_key(new_obj, &fh_desc);
 
+	(void) cih_hash_key(&key, opctx->fsal_export->fsal, &fh_desc,
+			    CIH_HASH_KEY_PROTOTYPE);
+
 	/* Check if the entry already exists.  We allow the following race
 	 * because cache_inode_lru_get has a slow path, and the latch is a
 	 * shared lock. */
 	oentry =
-	    cih_get_by_fh_latched(&fh_desc, &latch,
+	    cih_get_by_key_latched(&key, &latch,
 				  CIH_GET_RLOCK | CIH_GET_UNLOCK_ON_MISS,
 				  __func__, __LINE__);
 	if (oentry) {
@@ -297,7 +300,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 
 	/* See if someone raced us. */
 	oentry =
-	    cih_get_by_fh_latched(&fh_desc, &latch, CIH_GET_WLOCK, __func__,
+	    cih_get_by_key_latched(&key, &latch, CIH_GET_WLOCK, __func__,
 				  __LINE__);
 	if (oentry) {
 		/* Entry is already in the cache, do not add it. */
@@ -320,7 +323,8 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 
 	/* Set cache key */
 
-	has_hashkey = cih_hash_entry(nentry, &fh_desc, CIH_HASH_NONE);
+	has_hashkey = cih_hash_key(&nentry->fh_hk.key, opctx->fsal_export->fsal,
+				   &fh_desc, CIH_HASH_NONE);
 
 	if (!has_hashkey) {
 		cih_latch_rele(&latch);
@@ -399,7 +403,8 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 	nentry->flags = LRU_FLAG_NONE;
 
 	/* Hash and insert entry */
-	rc = cih_set_latched(nentry, &latch, &fh_desc,
+	rc = cih_set_latched(nentry, &latch,
+			     opctx->fsal_export->fsal, &fh_desc,
 			     CIH_SET_UNLOCK | CIH_SET_HASHED);
 	if (unlikely(rc)) {
 		LogCrit(COMPONENT_CACHE_INODE,

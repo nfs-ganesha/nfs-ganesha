@@ -45,6 +45,7 @@
 #include "pnfs_utils.h"
 #include "nfs_rpc_callback.h"
 #include "nfs_proto_tools.h"
+#include "nfs_convert.h"
 #include "delayed_exec.h"
 #include "export_mgr.h"
 
@@ -57,13 +58,14 @@
  * @return CACHE_INODE_SUCCESS or errors.
  */
 
-cache_inode_status_t fsal_invalidate(const struct gsh_buffdesc *key,
+cache_inode_status_t fsal_invalidate(struct fsal_module *fsal,
+				     struct gsh_buffdesc *handle,
 				     uint32_t flags)
 {
 	cache_entry_t *entry = NULL;
 	cache_inode_status_t rc = 0;
 
-	rc = up_get(key, &entry);
+	rc = up_get(fsal, handle, &entry);
 	if (rc == 0) {
 		rc = cache_inode_invalidate(entry, flags);
 		cache_inode_put(entry);
@@ -82,7 +84,8 @@ cache_inode_status_t fsal_invalidate(const struct gsh_buffdesc *key,
  * @return CACHE_INODE_SUCCESS or errors.
  */
 
-static cache_inode_status_t update(const struct gsh_buffdesc *obj,
+static cache_inode_status_t update(struct fsal_module *fsal,
+				   struct gsh_buffdesc *obj,
 				   struct attrlist *attr, uint32_t flags)
 {
 	cache_entry_t *entry = NULL;
@@ -109,7 +112,7 @@ static cache_inode_status_t update(const struct gsh_buffdesc *obj,
 		return CACHE_INODE_INVALID_ARGUMENT;
 	}
 
-	rc = up_get(obj, &entry);
+	rc = up_get(fsal, obj, &entry);
 	if (rc != 0)
 		return rc;
 
@@ -276,13 +279,15 @@ static cache_inode_status_t update(const struct gsh_buffdesc *obj,
  * @return STATE_SUCCESS or errors.
  */
 
-static state_status_t lock_grant(const struct gsh_buffdesc *file, void *owner,
+static state_status_t lock_grant(struct fsal_module *fsal,
+				 struct gsh_buffdesc *file,
+				 void *owner,
 				 fsal_lock_param_t *lock_param)
 {
 	cache_entry_t *entry = NULL;
 	int rc = 0;
 
-	rc = up_get(file, &entry);
+	rc = up_get(fsal, file, &entry);
 	if (rc == 0) {
 		grant_blocked_lock_upcall(entry, owner, lock_param);
 
@@ -306,13 +311,15 @@ static state_status_t lock_grant(const struct gsh_buffdesc *file, void *owner,
  * @return STATE_SUCCESS or errors.
  */
 
-static state_status_t lock_avail(const struct gsh_buffdesc *file, void *owner,
+static state_status_t lock_avail(struct fsal_module *fsal,
+				 struct gsh_buffdesc *file,
+				 void *owner,
 				 fsal_lock_param_t *lock_param)
 {
 	cache_entry_t *entry = NULL;
 	int rc = 0;
 
-	rc = up_get(file, &entry);
+	rc = up_get(fsal, file, &entry);
 	if (rc == 0) {
 		available_blocked_lock_upcall(entry, owner, lock_param);
 
@@ -524,7 +531,8 @@ struct layoutrecall_cb_data {
  * @retval STATE_MALLOC_ERROR if there was insufficient memory to construct the
  *         recall state.
  */
-state_status_t layoutrecall(const struct gsh_buffdesc *handle,
+state_status_t layoutrecall(struct fsal_module *fsal,
+			    struct gsh_buffdesc *handle,
 			    layouttype4 layout_type, bool changed,
 			    const struct pnfs_segment *segment, void *cookie,
 			    struct layoutrecall_spec *spec)
@@ -538,7 +546,7 @@ state_status_t layoutrecall(const struct gsh_buffdesc *handle,
 	/* Iterator over the work list */
 	struct glist_head *wi = NULL;
 
-	rc = cache_inode_status_to_state_status(up_get(handle, &entry));
+	rc = cache_inode_status_to_state_status(up_get(fsal, handle, &entry));
 	if (rc != STATE_SUCCESS)
 		return rc;
 
@@ -1159,14 +1167,15 @@ static void delegrecall_one(state_lock_entry_t *found_entry,
  * @return STATE_SUCCESS or errors.
  */
 
-state_status_t delegrecall(const struct gsh_buffdesc *handle)
+state_status_t delegrecall(struct fsal_module *fsal,
+			   struct gsh_buffdesc *handle)
 {
 	cache_entry_t *entry = NULL;
 	struct glist_head *glist;
 	state_lock_entry_t *found_entry = NULL;
 	state_status_t rc = 0;
 
-	rc = cache_inode_status_to_state_status(up_get(handle, &entry));
+	rc = cache_inode_status_to_state_status(up_get(fsal, handle, &entry));
 	if (rc != STATE_SUCCESS) {
 		LogDebug(COMPONENT_FSAL_UP,
 			 "FSAL_UP_DELEG: cache inode get failed, rc %d", rc);

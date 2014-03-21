@@ -23,12 +23,6 @@ extern fsal_staticfsinfo_t global_fs_info;
 #endif
 
 /**
- *  This function initializes shared variables of the FSAL.
- */
-fsal_status_t fsal_internal_init_global(fsal_init_info_t *fsal_info,
-					fs_common_initinfo_t *fs_common_info);
-
-/**
  * fsal_do_log:
  * Indicates if an FSAL error has to be traced
  * into its log file in the NIV_EVENT level.

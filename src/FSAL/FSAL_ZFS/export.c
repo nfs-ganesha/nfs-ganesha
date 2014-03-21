@@ -255,7 +255,7 @@ static fsal_status_t tank_extract_handle(struct fsal_export *exp_hdl,
 
 	hdl = (struct zfs_file_handle *)fh_desc->addr;
 	fh_size = zfs_sizeof_handle(hdl);
-	if (in_type != FSAL_DIGEST_SIZEOF && fh_desc->len != fh_size) {
+	if (fh_desc->len != fh_size) {
 		LogMajor(COMPONENT_FSAL,
 			 "Size mismatch for handle.  should be %lu, got %u",
 			 (unsigned long int)fh_size,

@@ -46,7 +46,6 @@
 struct gpfs_fsal_module {
 	struct fsal_module fsal;
 	struct fsal_staticfsinfo_t fs_info;
-	fsal_init_info_t fsal_info;
 	/* gpfsfs_specific_initinfo_t specific_info;  placeholder */
 };
 
@@ -54,7 +53,7 @@ const char myname[] = "GPFS";
 
 /* filesystem info for GPFS */
 static struct fsal_staticfsinfo_t default_posix_info = {
-	.maxfilesize = 0xFFFFFFFFFFFFFFFFLL,	/* (64bits) */
+	.maxfilesize = UINT64_MAX,
 	.maxlink = _POSIX_LINK_MAX,
 	.maxnamelen = 1024,
 	.maxpathlen = 1024,
@@ -74,8 +73,8 @@ static struct fsal_staticfsinfo_t default_posix_info = {
 	.cansettime = true,
 	.homogenous = true,
 	.supported_attrs = GPFS_SUPPORTED_ATTRIBUTES,
-	.maxread = 4194304,
-	.maxwrite = 4194304,
+	.maxread = FSAL_MAXIOSIZE,
+	.maxwrite = FSAL_MAXIOSIZE,
 	.umask = 0,
 	.auth_exportpath_xdev= true,
 	.xattr_access_rights = 0,
@@ -221,7 +220,6 @@ MODULE_INIT void gpfs_init(void)
 	}
 	myself->ops->create_export = gpfs_create_export;
 	myself->ops->init_config = init_config;
-	init_fsal_parameters(&GPFS.fsal_info);
 }
 
 MODULE_FINI void gpfs_unload(void)

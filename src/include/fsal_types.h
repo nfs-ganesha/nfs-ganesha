@@ -36,19 +36,11 @@
 #ifndef _FSAL_TYPES_H
 #define _FSAL_TYPES_H
 
-/*
- * labels in the config file
- */
-
-static const char *CONF_LABEL_FSAL __attribute__ ((unused)) = "FSAL";
-static const char *CONF_LABEL_FS_COMMON __attribute__ ((unused)) = "FileSystem";
-
 /* other includes */
 #include <sys/types.h>
 #include <sys/param.h>
 #include <dirent.h>		/* for MAXNAMLEN */
 #include "config_parsing.h"
-#include "err_fsal.h"
 #include "ganesha_rpc.h"
 #include "ganesha_types.h"
 #include "uid2grp.h"
@@ -75,15 +67,6 @@ typedef enum {
 	FS_JUNCTION = 8,
 	EXTENDED_ATTR = 9
 } object_file_type_t;
-
-/**
- * As per chat with lieb, the call-limit should be FSAL internal, not
- * global.  If there are FSAL configuration options that cut across
- * FSALs, they should go here.
- */
-
-typedef struct fsal_init_info__ {
-} fsal_init_info_t;
 
 /* ---------------
  *  FS dependant :
@@ -606,6 +589,9 @@ typedef enum enum_fsal_fsinfo_options {
 	fso_pnfs_ds_supported
 } fsal_fsinfo_options_t;
 
+/* The largest maxread and maxwrite value */
+#define FSAL_MAXIOSIZE (64*1024*1024)
+
 struct fsal_staticfsinfo_t {
 	uint64_t maxfilesize;	/*< maximum allowed filesize     */
 	uint32_t maxlink;	/*< maximum hard links on a file */
@@ -649,6 +635,58 @@ struct fsal_staticfsinfo_t {
 	bool delegations;	/*< fsal supports delegations */
 	bool pnfs_file;		/*< fsal supports file pnfs */
 };
+
+/**
+ * @brief The return error values of FSAL calls.
+ */
+
+typedef enum fsal_errors_t {
+	ERR_FSAL_NO_ERROR = 0,
+	ERR_FSAL_PERM = 1,
+	ERR_FSAL_NOENT = 2,
+	ERR_FSAL_IO = 5,
+	ERR_FSAL_NXIO = 6,
+	ERR_FSAL_NOMEM = 12,
+	ERR_FSAL_ACCESS = 13,
+	ERR_FSAL_FAULT = 14,
+	ERR_FSAL_EXIST = 17,
+	ERR_FSAL_XDEV = 18,
+	ERR_FSAL_NOTDIR = 20,
+	ERR_FSAL_ISDIR = 21,
+	ERR_FSAL_INVAL = 22,
+	ERR_FSAL_FBIG = 27,
+	ERR_FSAL_NOSPC = 28,
+	ERR_FSAL_ROFS = 30,
+	ERR_FSAL_MLINK = 31,
+	ERR_FSAL_DQUOT = 49,
+	ERR_FSAL_NAMETOOLONG = 78,
+	ERR_FSAL_NOTEMPTY = 93,
+	ERR_FSAL_STALE = 151,
+	ERR_FSAL_BADHANDLE = 10001,
+	ERR_FSAL_BADCOOKIE = 10003,
+	ERR_FSAL_NOTSUPP = 10004,
+	ERR_FSAL_TOOSMALL = 10005,
+	ERR_FSAL_SERVERFAULT = 10006,
+	ERR_FSAL_BADTYPE = 10007,
+	ERR_FSAL_DELAY = 10008,
+	ERR_FSAL_FHEXPIRED = 10014,
+	ERR_FSAL_SHARE_DENIED = 10015,
+	ERR_FSAL_SYMLINK = 10029,
+	ERR_FSAL_ATTRNOTSUPP = 10032,
+	ERR_FSAL_NOT_INIT = 20001,
+	ERR_FSAL_ALREADY_INIT = 20002,
+	ERR_FSAL_BAD_INIT = 20003,
+	ERR_FSAL_SEC = 20004,
+	ERR_FSAL_NO_QUOTA = 20005,
+	ERR_FSAL_NOT_OPENED = 20010,
+	ERR_FSAL_DEADLOCK = 20011,
+	ERR_FSAL_OVERFLOW = 20012,
+	ERR_FSAL_INTERRUPT = 20013,
+	ERR_FSAL_BLOCKED = 20014,
+	ERR_FSAL_TIMEOUT = 20015,
+	ERR_FSAL_FILE_OPEN = 10046,
+	ERR_FSAL_UNION_NOTSUPP = 10094,
+} fsal_errors_t;
 
 /**
  * @brief The return status of FSAL calls.
@@ -700,7 +738,6 @@ typedef enum {
  */
 
 typedef enum fsal_digesttype_t {
-	FSAL_DIGEST_SIZEOF,	/* just tell me how big... */
 	/* NFS handles */
 	FSAL_DIGEST_NFSV3,
 	FSAL_DIGEST_NFSV4,

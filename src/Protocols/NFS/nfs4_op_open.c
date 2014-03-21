@@ -38,6 +38,7 @@
 #include "sal_functions.h"
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
+#include "nfs_convert.h"
 #include "cache_inode_lru.h"
 #include "fsal_convert.h"
 #include "nfs_creds.h"

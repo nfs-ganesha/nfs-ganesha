@@ -6,7 +6,6 @@ SET(fsalpt_LIB_SRCS
   fsal_attrs.c
   fsal_close_listener.c
   fsal_convert.c
-  fsal_convert.h
   fsal_create.c
   fsal_fileop.c
   fsal_internal.c

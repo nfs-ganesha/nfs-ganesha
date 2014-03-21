@@ -434,7 +434,7 @@ static fsal_status_t extract_handle(struct fsal_export *exp_hdl,
 	size_t fh_min;
 
 	fh_min = VFS_FILE_HANDLE_MIN;
-	if (in_type != FSAL_DIGEST_SIZEOF && fh_desc->len < fh_min) {
+	if (fh_desc->len < fh_min) {
 		LogMajor(COMPONENT_FSAL,
 			 "Size mismatch for handle.  should be >= %lu, got %lu",
 			 fh_min, fh_desc->len);

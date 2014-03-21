@@ -46,7 +46,6 @@
 struct zfs_fsal_module {
 	struct fsal_module fsal;
 	struct fsal_staticfsinfo_t fs_info;
-	fsal_init_info_t fsal_info;
 	/* vfsfs_specific_initinfo_t specific_info;  placeholder */
 };
 
@@ -54,7 +53,7 @@ const char myname[] = "ZFS";
 
 /* filesystem info for your filesystem */
 static struct fsal_staticfsinfo_t default_zfs_info = {
-	.maxfilesize = 0xFFFFFFFFFFFFFFFFLL,	/* max file size (64bits) */
+	.maxfilesize = UINT64_MAX,		/* Max fiule size */
 	.maxlink = 1024,	/* max links for an object of your filesystem */
 	.maxnamelen = MAXNAMLEN,		/* max filename */
 	.maxpathlen = MAXPATHLEN,		/* min filename */
@@ -183,7 +182,6 @@ MODULE_INIT void zfs_load(void)
 
 	myself->ops->create_export = zfs_create_export;
 	myself->ops->init_config = init_config;
-	init_fsal_parameters(&ZFS.fsal_info);
 }
 
 MODULE_FINI void zfs_unload(void)

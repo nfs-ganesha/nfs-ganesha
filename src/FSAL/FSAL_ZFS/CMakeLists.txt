@@ -2,7 +2,6 @@
 ########### next target ###############
 
 SET(fsalzfs_LIB_SRCS
-   fsal_convert.c
    fsal_internal.c
    main.c
    export.c

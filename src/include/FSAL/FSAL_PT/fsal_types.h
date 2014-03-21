@@ -56,7 +56,6 @@
  */
 
 #include "config_parsing.h"
-#include "err_fsal.h"
 #include "fsal_types.h"
 
 #ifndef _GNU_SOURCE

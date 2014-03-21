@@ -49,15 +49,19 @@
  *         referenced.
  */
 
-cache_inode_status_t up_get(const struct gsh_buffdesc *key,
+cache_inode_status_t up_get(struct fsal_module *fsal,
+			    struct gsh_buffdesc *handle,
 			    cache_entry_t **entry)
 {
 	cih_latch_t latch;
+	struct cache_inode_key key;
+
+	(void) cih_hash_key(&key, fsal, handle, CIH_HASH_KEY_PROTOTYPE);
 
 	if ((&cih_fhcache)->partition == NULL)
 		return CACHE_INODE_NOT_FOUND;
 	*entry =
-	    cih_get_by_fh_latched(key, &latch,
+	    cih_get_by_key_latched(&key, &latch,
 				  CIH_GET_RLOCK | CIH_GET_UNLOCK_ON_MISS,
 				  __func__, __LINE__);
 	if (*entry == NULL)

@@ -32,7 +32,7 @@
 #include "config.h"
 #include "sal_functions.h"
 #include "nfs_rpc_callback.h"
-#include "nfs_tools.h"
+#include "nfs_convert.h"
 
 /**
  * @brief the NFS4_OP_SEQUENCE operation

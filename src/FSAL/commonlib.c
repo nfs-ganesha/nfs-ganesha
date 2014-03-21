@@ -261,4 +261,164 @@ int fsal_ds_handle_uninit(struct fsal_ds_handle *ds)
 	return 0;
 }
 
+/**
+ * @brief FSAL error code to error message
+ *
+ * @param[in] fsal_err Error code
+ *
+ * @return Error message, empty string if not found.
+ */
+
+const char *msg_fsal_err(fsal_errors_t fsal_err)
+{
+	switch (fsal_err) {
+	case ERR_FSAL_NO_ERROR:
+		return "No error";
+	case ERR_FSAL_PERM:
+		return "Forbidden action";
+	case ERR_FSAL_NOENT:
+		return "No such file or directory";
+	case ERR_FSAL_IO:
+		return "I/O error";
+	case ERR_FSAL_NXIO:
+		return "No such device or address";
+	case ERR_FSAL_NOMEM:
+		return "Not enough memory";
+	case ERR_FSAL_ACCESS:
+		return "Permission denied";
+	case ERR_FSAL_FAULT:
+		return "Bad address";
+	case ERR_FSAL_EXIST:
+		return "This object already exists";
+	case ERR_FSAL_XDEV:
+		return "This operation can't cross filesystems";
+	case ERR_FSAL_NOTDIR:
+		return "This object is not a directory";
+	case ERR_FSAL_ISDIR:
+		return "Directory used in a nondirectory operation";
+	case ERR_FSAL_INVAL:
+		return "Invalid object type";
+	case ERR_FSAL_FBIG:
+		return "File exceeds max file size";
+	case ERR_FSAL_NOSPC:
+		return "No space left on filesystem";
+	case ERR_FSAL_ROFS:
+		return "Read-only filesystem";
+	case ERR_FSAL_MLINK:
+		return "Too many hard links";
+	case ERR_FSAL_DQUOT:
+		return "Quota exceeded";
+	case ERR_FSAL_NAMETOOLONG:
+		return "Max name length exceeded";
+	case ERR_FSAL_NOTEMPTY:
+		return "The directory is not empty";
+	case ERR_FSAL_STALE:
+		return "The file no longer exists";
+	case ERR_FSAL_BADHANDLE:
+		return "Illegal filehandle";
+	case ERR_FSAL_BADCOOKIE:
+		return "Invalid cookie";
+	case ERR_FSAL_NOTSUPP:
+		return "Operation not supported";
+	case ERR_FSAL_TOOSMALL:
+		return "Output buffer too small";
+	case ERR_FSAL_SERVERFAULT:
+		return "Undefined server error";
+	case ERR_FSAL_BADTYPE:
+		return "Invalid type for create operation";
+	case ERR_FSAL_DELAY:
+		return "File busy, retry";
+	case ERR_FSAL_FHEXPIRED:
+		return "Filehandle expired";
+	case ERR_FSAL_SYMLINK:
+		return "This is a symbolic link, should be file/directory";
+	case ERR_FSAL_ATTRNOTSUPP:
+		return "Attribute not supported";
+	case ERR_FSAL_NOT_INIT:
+		return "Filesystem not initialized";
+	case ERR_FSAL_ALREADY_INIT:
+		return "Filesystem already initialised";
+	case ERR_FSAL_BAD_INIT:
+		return "Filesystem initialisation error";
+	case ERR_FSAL_SEC:
+		return "Security context error";
+	case ERR_FSAL_NO_QUOTA:
+		return "No Quota available";
+	case ERR_FSAL_NOT_OPENED:
+		return "File/directory not opened";
+	case ERR_FSAL_DEADLOCK:
+		return "Deadlock";
+	case ERR_FSAL_OVERFLOW:
+		return "Overflow";
+	case ERR_FSAL_INTERRUPT:
+		return "Operation Interrupted";
+	case ERR_FSAL_BLOCKED:
+		return "Lock Blocked";
+	case ERR_FSAL_SHARE_DENIED:
+		return "Share Denied";
+	case ERR_FSAL_TIMEOUT:
+		return "Timeout";
+	case ERR_FSAL_FILE_OPEN:
+		return "File Open";
+	case ERR_FSAL_UNION_NOTSUPP:
+		return "Union Not Supported";
+	}
+
+	return "Unknown FSAL error";
+}
+
+/**
+ * @brief Dump and fsal_staticfsinfo_t to a log
+ *
+ * This is used for debugging
+ *
+ * @param[in] info The info to dump
+ */
+void display_fsinfo(struct fsal_staticfsinfo_t *info)
+{
+	LogDebug(COMPONENT_FSAL, "FileSystem info: {");
+	LogDebug(COMPONENT_FSAL, "  maxfilesize  = %" PRIX64 "    ",
+		 (uint64_t) info->maxfilesize);
+	LogDebug(COMPONENT_FSAL, "  maxlink  = %" PRIu32, info->maxlink);
+	LogDebug(COMPONENT_FSAL, "  maxnamelen  = %" PRIu32, info->maxnamelen);
+	LogDebug(COMPONENT_FSAL, "  maxpathlen  = %" PRIu32, info->maxpathlen);
+	LogDebug(COMPONENT_FSAL, "  no_trunc  = %d ", info->no_trunc);
+	LogDebug(COMPONENT_FSAL, "  chown_restricted  = %d ",
+		 info->chown_restricted);
+	LogDebug(COMPONENT_FSAL, "  case_insensitive  = %d ",
+		 info->case_insensitive);
+	LogDebug(COMPONENT_FSAL, "  case_preserving  = %d ",
+		 info->case_preserving);
+	LogDebug(COMPONENT_FSAL, "  link_support  = %d  ", info->link_support);
+	LogDebug(COMPONENT_FSAL, "  symlink_support  = %d  ",
+		 info->symlink_support);
+	LogDebug(COMPONENT_FSAL, "  lock_support  = %d  ", info->lock_support);
+	LogDebug(COMPONENT_FSAL, "  lock_support_owner  = %d  ",
+		 info->lock_support_owner);
+	LogDebug(COMPONENT_FSAL, "  lock_support_async_block  = %d  ",
+		 info->lock_support_async_block);
+	LogDebug(COMPONENT_FSAL, "  named_attr  = %d  ", info->named_attr);
+	LogDebug(COMPONENT_FSAL, "  unique_handles  = %d  ",
+		 info->unique_handles);
+	LogDebug(COMPONENT_FSAL, "  acl_support  = %hu  ", info->acl_support);
+	LogDebug(COMPONENT_FSAL, "  cansettime  = %d  ", info->cansettime);
+	LogDebug(COMPONENT_FSAL, "  homogenous  = %d  ", info->homogenous);
+	LogDebug(COMPONENT_FSAL, "  supported_attrs  = %" PRIX64,
+		 info->supported_attrs);
+	LogDebug(COMPONENT_FSAL, "  maxread  = %" PRIu32, info->maxread);
+	LogDebug(COMPONENT_FSAL, "  maxwrite  = %" PRIu32, info->maxwrite);
+	LogDebug(COMPONENT_FSAL, "  umask  = %X ", info->umask);
+	LogDebug(COMPONENT_FSAL, "  auth_exportpath_xdev  = %d  ",
+		 info->auth_exportpath_xdev);
+	LogDebug(COMPONENT_FSAL, "  xattr_access_rights = %#o ",
+		 info->xattr_access_rights);
+	LogDebug(COMPONENT_FSAL, "  accesscheck_support  = %d  ",
+		 info->accesscheck_support);
+	LogDebug(COMPONENT_FSAL, "  share_support  = %d  ",
+		 info->share_support);
+	LogDebug(COMPONENT_FSAL, "  share_support_owner  = %d  ",
+		 info->share_support_owner);
+	LogDebug(COMPONENT_FSAL, "}");
+}
+
 /** @} */

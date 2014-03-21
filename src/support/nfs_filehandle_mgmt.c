@@ -30,27 +30,79 @@
  */
 
 #include "config.h"
-#include <stdio.h>
-#include <sys/types.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <string.h>
-#include <pthread.h>
-#include <fcntl.h>
-#include <pwd.h>
-#include <grp.h>
 #include "log.h"
-#include "ganesha_rpc.h"
 #include "nfs_core.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "fsal.h"
-#include "nfs_tools.h"
 #include "nfs_exports.h"
 #include "nfs_file_handle.h"
 #include "nfs_proto_tools.h"
+#include "nfs_convert.h"
 #include "export_mgr.h"
+#include "fsal_convert.h"
+
+/**
+ *
+ * @brief Allocates a buffer to be used for storing a NFSv4 filehandle.
+ *
+ * Allocates a buffer to be used for storing a NFSv3 filehandle.
+ *
+ * @param fh [INOUT] the filehandle to manage.
+ *
+ * @return NFS3_OK if successful, NFS3ERR_SERVERFAULT, otherwise.
+ *
+ */
+int nfs3_AllocateFH(nfs_fh3 *fh)
+{
+	/* Allocating the filehandle in memory */
+	fh->data.data_len = sizeof(struct alloc_file_handle_v3);
+
+	fh->data.data_val = gsh_malloc(fh->data.data_len);
+
+	if (fh->data.data_val == NULL) {
+		LogCrit(COMPONENT_NFSPROTO,
+			"Could not allocate space for filehandle");
+		return NFS3ERR_SERVERFAULT;
+	}
+
+	memset((char *)fh->data.data_val, 0, fh->data.data_len);
+
+	return NFS3_OK;
+}				/* nfs4_AllocateFH */
+
+/**
+ *
+ * @brief Allocates a buffer to be used for storing a NFSv4 filehandle.
+ *
+ * Allocates a buffer to be used for storing a NFSv4 filehandle.
+ *
+ * @param fh [INOUT] the filehandle to manage.
+ *
+ * @return NFS4_OK if successful, NFS3ERR_SERVERFAULT, NFS4ERR_RESOURCE or
+ *                 NFS4ERR_STALE  otherwise.
+ *
+ */
+int nfs4_AllocateFH(nfs_fh4 *fh)
+{
+	/* Allocating the filehandle in memory */
+	fh->nfs_fh4_len = sizeof(struct alloc_file_handle_v4);
+
+	fh->nfs_fh4_val = gsh_malloc(fh->nfs_fh4_len);
+
+	if (fh->nfs_fh4_val == NULL) {
+		LogCrit(COMPONENT_NFS_V4,
+			"Could not allocate memory for filehandle");
+		return NFS4ERR_RESOURCE;
+	}
+
+	memset(fh->nfs_fh4_val, 0, fh->nfs_fh4_len);
+
+	LogFullDebugOpaque(COMPONENT_FILEHANDLE, "NFS4 Handle %s", LEN_FH_STR,
+			   fh->nfs_fh4_val, fh->nfs_fh4_len);
+
+	return NFS4_OK;
+}
 
 /**
  *
@@ -496,6 +548,29 @@ void sprint_mem(char *str, char *buff, int len)
 }
 
 /**
+ * @brief Convert a file handle to a string representation
+ *
+ * @param rq_vers  [IN]    version of the NFS protocol to be used
+ * @param fh3      [IN]    NFSv3 file handle or NULL
+ * @param fh4      [IN]    NFSv4 file handle or NULL
+ * @param str      [OUT]   string version of handle
+ *
+ */
+void nfs_FhandleToStr(u_long rq_vers, nfs_fh3 *fh3, nfs_fh4 *fh4, char *str)
+{
+
+	switch (rq_vers) {
+	case NFS_V4:
+		sprint_fhandle4(str, fh4);
+		break;
+
+	case NFS_V3:
+		sprint_fhandle3(str, fh3);
+		break;
+	}
+}				/* nfs_FhandleToStr */
+
+/**
  *
  * print_compound_fh
  *
@@ -516,3 +591,152 @@ void LogCompoundFH(compound_data_t *data)
 		LogFullDebug(COMPONENT_FILEHANDLE, "Saved FH    %s", str);
 	}
 }
+
+/**
+ * @brief Do basic checks on the CurrentFH
+ *
+ * This function performs basic checks to make sure the supplied
+ * filehandle is sane for a given operation.
+ *
+ * @param data          [IN] Compound_data_t for the operation to check
+ * @param required_type [IN] The file type this operation requires.
+ *                           Set to 0 to allow any type.
+ * @param ds_allowed    [IN] true if DS handles are allowed.
+ *
+ * @return NFSv4.1 status codes
+ */
+
+nfsstat4 nfs4_sanity_check_FH(compound_data_t *data,
+			      object_file_type_t required_type,
+			      bool ds_allowed)
+{
+	int fh_status;
+
+	/* If there is no FH */
+	fh_status = nfs4_Is_Fh_Empty(&data->currentFH);
+
+	if (fh_status != NFS4_OK)
+		return fh_status;
+
+	assert(data->current_entry != NULL &&
+	       data->current_filetype != NO_FILE_TYPE);
+
+	/* If the filehandle is invalid */
+	fh_status = nfs4_Is_Fh_Invalid(&data->currentFH);
+
+	if (fh_status != NFS4_OK)
+		return fh_status;
+
+
+	/* Check for the correct file type */
+	if (required_type != NO_FILE_TYPE) {
+		if (data->current_filetype != required_type) {
+			LogDebug(COMPONENT_NFS_V4,
+				 "Wrong file type expected %s actual %s",
+				 object_file_type_to_str(required_type),
+				 object_file_type_to_str(data->
+							 current_filetype));
+
+			if (required_type == DIRECTORY) {
+				if (data->current_filetype == SYMBOLIC_LINK)
+					return NFS4ERR_SYMLINK;
+				else
+					return NFS4ERR_NOTDIR;
+			} else if (required_type == SYMBOLIC_LINK)
+				return NFS4ERR_INVAL;
+
+			switch (data->current_filetype) {
+			case DIRECTORY:
+				return NFS4ERR_ISDIR;
+			default:
+				return NFS4ERR_INVAL;
+			}
+		}
+	}
+
+	if (nfs4_Is_Fh_DSHandle(&data->currentFH) && !ds_allowed) {
+		LogDebug(COMPONENT_NFS_V4, "DS Handle");
+		return NFS4ERR_INVAL;
+	}
+
+	return NFS4_OK;
+}				/* nfs4_sanity_check_FH */
+
+/**
+ * @brief Do basic checks on the SavedFH
+ *
+ * This function performs basic checks to make sure the supplied
+ * filehandle is sane for a given operation.
+ *
+ * @param data          [IN] Compound_data_t for the operation to check
+ * @param required_type [IN] The file type this operation requires.
+ *                           Set to 0 to allow any type. A negative value
+ *                           indicates any type BUT that type is allowed.
+ * @param ds_allowed    [IN] true if DS handles are allowed.
+ *
+ * @return NFSv4.1 status codes
+ */
+
+nfsstat4 nfs4_sanity_check_saved_FH(compound_data_t *data, int required_type,
+				    bool ds_allowed)
+{
+	int fh_status;
+
+	/* If there is no FH */
+	fh_status = nfs4_Is_Fh_Empty(&data->savedFH);
+
+	if (fh_status != NFS4_OK)
+		return fh_status;
+
+	/* If the filehandle is invalid */
+	fh_status = nfs4_Is_Fh_Invalid(&data->savedFH);
+	if (fh_status != NFS4_OK)
+		return fh_status;
+
+	if (nfs4_Is_Fh_DSHandle(&data->savedFH) && !ds_allowed) {
+		LogDebug(COMPONENT_NFS_V4, "DS Handle");
+		return NFS4ERR_INVAL;
+	}
+
+	/* Check for the correct file type */
+	if (required_type < 0) {
+		if (-required_type == data->saved_filetype) {
+			LogDebug(COMPONENT_NFS_V4,
+				 "Wrong file type expected not to be %s was %s",
+				 object_file_type_to_str((object_file_type_t) -
+							 required_type),
+				 object_file_type_to_str(data->
+							 current_filetype));
+			if (-required_type == DIRECTORY) {
+				return NFS4ERR_ISDIR;
+				return NFS4ERR_INVAL;
+			}
+		}
+	} else if (required_type != NO_FILE_TYPE) {
+		if (data->saved_filetype != required_type) {
+			LogDebug(COMPONENT_NFS_V4,
+				 "Wrong file type expected %s was %s",
+				 object_file_type_to_str((object_file_type_t)
+							 required_type),
+				 object_file_type_to_str(data->
+							 current_filetype));
+
+			if (required_type == DIRECTORY) {
+				if (data->current_filetype == SYMBOLIC_LINK)
+					return NFS4ERR_SYMLINK;
+				else
+					return NFS4ERR_NOTDIR;
+			} else if (required_type == SYMBOLIC_LINK)
+				return NFS4ERR_INVAL;
+
+			switch (data->saved_filetype) {
+			case DIRECTORY:
+				return NFS4ERR_ISDIR;
+			default:
+				return NFS4ERR_INVAL;
+			}
+		}
+	}
+
+	return NFS4_OK;
+}				/* nfs4_sanity_check_saved_FH */

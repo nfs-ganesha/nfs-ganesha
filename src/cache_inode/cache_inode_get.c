@@ -212,13 +212,19 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
 	struct fsal_obj_handle *new_hdl;
 	cache_inode_status_t status = CACHE_INODE_SUCCESS;
 	cih_latch_t latch;
+	cache_inode_key_t key;
+
+	key.fsal = fsdata->export->fsal;
+
+	(void) cih_hash_key(&key, fsdata->export->fsal, &fsdata->fh_desc,
+			    CIH_HASH_KEY_PROTOTYPE);
 
 #ifdef USE_DBUS
 	(void)atomic_inc_uint64_t(&cache_stp->inode_req);
 #endif
 	/* Do lookup */
 	*entry =
-	    cih_get_by_fh_latched(&fsdata->fh_desc, &latch,
+	    cih_get_by_key_latched(&key, &latch,
 				  CIH_GET_RLOCK | CIH_GET_UNLOCK_ON_MISS,
 				  __func__, __LINE__);
 	if (*entry) {

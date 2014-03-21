@@ -55,7 +55,6 @@
 struct vfs_fsal_module {
 	struct fsal_module fsal;
 	struct fsal_staticfsinfo_t fs_info;
-	fsal_init_info_t fsal_info;
 	/* vfsfs_specific_initinfo_t specific_info;  placeholder */
 };
 
@@ -63,7 +62,7 @@ const char myname[] = "VFS";
 
 /* filesystem info for VFS */
 static struct fsal_staticfsinfo_t default_posix_info = {
-	.maxfilesize = 0xFFFFFFFFFFFFFFFFLL,	/* (64bits) */
+	.maxfilesize = UINT64_MAX,
 	.maxlink = _POSIX_LINK_MAX,
 	.maxnamelen = 1024,
 	.maxpathlen = 1024,
@@ -80,6 +79,8 @@ static struct fsal_staticfsinfo_t default_posix_info = {
 	.acl_support = FSAL_ACLSUPPORT_ALLOW,
 	.homogenous = true,
 	.supported_attrs = VFS_SUPPORTED_ATTRIBUTES,
+	.maxread = FSAL_MAXIOSIZE,
+	.maxwrite = FSAL_MAXIOSIZE,
 };
 
 static struct config_item vfs_params[] = {
@@ -194,7 +195,6 @@ MODULE_INIT void vfs_init(void)
 	}
 	myself->ops->create_export = vfs_create_export;
 	myself->ops->init_config = init_config;
-	init_fsal_parameters(&VFS.fsal_info);
 }
 
 MODULE_FINI void vfs_unload(void)

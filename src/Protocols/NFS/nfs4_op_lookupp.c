@@ -33,22 +33,15 @@
  *
  */
 #include "config.h"
-#include <stdio.h>
-#include <string.h>
-#include <pthread.h>
-#include <fcntl.h>
-#include "hashtable.h"
 #include "log.h"
-#include "ganesha_rpc.h"
 #include "nfs4.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
-#include "cache_inode_lru.h"
 #include "nfs_exports.h"
-#include "nfs_proto_functions.h"
+#include "nfs_creds.h"
 #include "nfs_proto_tools.h"
-#include "nfs_tools.h"
 #include "nfs_file_handle.h"
+#include "nfs_convert.h"
 #include "export_mgr.h"
 
 /**
@@ -99,7 +92,7 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 		struct gsh_export *parent_exp;
 
 		/* Handle reverse junction */
-		LogDebug(COMPONENT_NFS_V4_PSEUDO,
+		LogDebug(COMPONENT_EXPORT,
 			 "Handling reverse junction from Export_Id %d Path %s Parent=%p",
 			 data->export->id,
 			 data->export->fullpath,
@@ -139,7 +132,7 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 		/* Check if there is a problem with the export. */
 		if (dir_entry == NULL || parent_exp == NULL) {
 			/* Export is in the process of dying */
-			LogCrit(COMPONENT_NFS_V4_PSEUDO,
+			LogCrit(COMPONENT_EXPORT,
 				"Reverse junction from Export_Id %d Path %s Parent=%p is stale",
 				data->export->id,
 				data->export->fullpath,
@@ -182,7 +175,7 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 			 * have access to this export, return NFS4ERR_NOENT to
 			 * hide it. It was not visible in READDIR response.
 			 */
-			LogDebug(COMPONENT_NFS_V4_PSEUDO,
+			LogDebug(COMPONENT_EXPORT,
 				 "NFS4ERR_ACCESS Hiding Export_Id %d Path %s with NFS4ERR_NOENT",
 				 data->export->id, data->export->fullpath);
 			res_LOOKUPP4->status = NFS4ERR_NOENT;

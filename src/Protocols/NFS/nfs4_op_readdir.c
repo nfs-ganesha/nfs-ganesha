@@ -33,6 +33,7 @@
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
 #include "nfs_file_handle.h"
+#include "nfs_convert.h"
 #include "export_mgr.h"
 
 /**
@@ -77,7 +78,7 @@ static void restore_data(struct nfs4_readdir_cb_data *tracker)
 	if (!get_req_creds(tracker->data->req,
 			   tracker->data->req_ctx,
 			   &tracker->data->export_perms)) {
-		LogCrit(COMPONENT_NFS_V4_PSEUDO,
+		LogCrit(COMPONENT_EXPORT,
 			"Failure to restore creds");
 	}
 }
@@ -145,7 +146,7 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 		 * this. Now we go to the junction to get the
 		 * attributes.
 		 */
-		LogMidDebug(COMPONENT_NFS_V4_PSEUDO,
+		LogMidDebug(COMPONENT_EXPORT,
 			    "Offspring DIR %s is a junction Export_id %d Path %s",
 			    cb_parms->name,
 			    entry->object.dir.junction_export->export.id,
@@ -176,7 +177,7 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 			 * doesn't have access to this export, quietly
 			 * skip the export.
 			 */
-			LogDebug(COMPONENT_NFS_V4_PSEUDO,
+			LogDebug(COMPONENT_EXPORT,
 				 "NFS4ERR_ACCESS Skipping Export_Id %d Path %s",
 				 data->export->id,
 				 data->export->fullpath);
@@ -205,7 +206,7 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 				/* Client is requesting attr that are allowed
 				 * when NFS4ERR_WRONGSEC occurs.
 				 */
-				LogDebug(COMPONENT_NFS_V4_PSEUDO,
+				LogDebug(COMPONENT_EXPORT,
 					 "Ignoring NFS4ERR_WRONGSEC (only asked for MOUNTED_IN_FILEID) On ReadDir Export_Id %d Path %s",
 					 data->export->id,
 					 data->export->fullpath);
@@ -231,7 +232,7 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 				 * We will report it below, but we need to get
 				 * the name into the entry.
 				 */
-				LogDebug(COMPONENT_NFS_V4_PSEUDO,
+				LogDebug(COMPONENT_EXPORT,
 					 "NFS4ERR_WRONGSEC On ReadDir Export_Id %d Path %s",
 					 data->export->id,
 					 data->export->fullpath);
@@ -245,7 +246,7 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 			 * signal to ourselves that the call back will be
 			 * across the junction.
 			 */
-			LogMidDebug(COMPONENT_NFS_V4_PSEUDO,
+			LogMidDebug(COMPONENT_EXPORT,
 				    "Need to cross junction to Export_Id %d Path %s",
 				    data->export->id,
 				    data->export->fullpath);
@@ -258,7 +259,7 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 		 *
 		 * Restore export and creds.
 		 */
-		LogMidDebug(COMPONENT_NFS_V4_PSEUDO,
+		LogMidDebug(COMPONENT_EXPORT,
 			    "Need to report error for junction to Export_Id %d Path %s",
 			    data->export->id,
 			    data->export->fullpath);

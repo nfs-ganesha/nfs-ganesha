@@ -407,7 +407,7 @@ static fsal_status_t gpfs_extract_handle(struct fsal_export *exp_hdl,
 
 	hdl = (struct gpfs_file_handle *)fh_desc->addr;
 	fh_size = gpfs_sizeof_handle(hdl);
-	if (in_type != FSAL_DIGEST_SIZEOF && fh_desc->len != fh_size) {
+	if (fh_desc->len != fh_size) {
 		LogMajor(COMPONENT_FSAL,
 			 "Size mismatch for handle.  should be %lu, got %lu",
 			 fh_size, fh_desc->len);
@@ -707,6 +707,7 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 		/* Initialize the gpfs_fsal_up_ctx */
 		glist_init(&gpfs_fsal_up_ctx->gf_exports);
 		gpfs_fsal_up_ctx->gf_export = &myself->export;
+		gpfs_fsal_up_ctx->gf_fsal = myself->export.fsal;
 		gpfs_fsal_up_ctx->gf_fd = myself->root_fd;
 		gpfs_fsal_up_ctx->gf_fsid[0] =
 		    myself->root_handle->handle_fsid[0];

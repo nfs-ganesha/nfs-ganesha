@@ -69,6 +69,7 @@
 
 struct invalidate_args {
 	const struct fsal_up_vector *up_ops;
+	struct fsal_module *fsal;
 	struct gsh_buffdesc obj;
 	uint32_t flags;
 	void (*cb) (void *, cache_inode_status_t);
@@ -81,7 +82,7 @@ static void queue_invalidate(struct fridgethr_context *ctx)
 	struct invalidate_args *args = ctx->arg;
 	cache_inode_status_t status;
 
-	status = args->up_ops->invalidate(&args->obj, args->flags);
+	status = args->up_ops->invalidate(args->fsal, &args->obj, args->flags);
 
 	if (args->cb)
 		args->cb(args->cb_arg, status);
@@ -91,7 +92,8 @@ static void queue_invalidate(struct fridgethr_context *ctx)
 
 int up_async_invalidate(struct fridgethr *fr,
 			const struct fsal_up_vector *up_ops,
-			const struct gsh_buffdesc *obj, uint32_t flags,
+			struct fsal_module *fsal,
+			struct gsh_buffdesc *obj, uint32_t flags,
 			void (*cb) (void *, cache_inode_status_t), void *cb_arg)
 {
 	struct invalidate_args *args = NULL;
@@ -124,6 +126,7 @@ int up_async_invalidate(struct fridgethr *fr,
 
 struct update_args {
 	const struct fsal_up_vector *up_ops;
+	struct fsal_module *fsal;
 	struct gsh_buffdesc obj;
 	struct attrlist attr;
 	uint32_t flags;
@@ -137,7 +140,8 @@ static void queue_update(struct fridgethr_context *ctx)
 	struct update_args *args = ctx->arg;
 	cache_inode_status_t status;
 
-	status = args->up_ops->update(&args->obj, &args->attr, args->flags);
+	status = args->up_ops->update(args->fsal, &args->obj,
+				      &args->attr, args->flags);
 
 	if (args->cb)
 		args->cb(args->cb_arg, status);
@@ -147,7 +151,8 @@ static void queue_update(struct fridgethr_context *ctx)
 
 int up_async_update(struct fridgethr *fr,
 		    const struct fsal_up_vector *up_ops,
-		    const struct gsh_buffdesc *obj, struct attrlist *attr,
+		    struct fsal_module *fsal,
+		    struct gsh_buffdesc *obj, struct attrlist *attr,
 		    uint32_t flags, void (*cb) (void *, cache_inode_status_t),
 		    void *cb_arg)
 {
@@ -182,6 +187,7 @@ int up_async_update(struct fridgethr *fr,
 
 struct lock_grant_args {
 	const struct fsal_up_vector *up_ops;
+	struct fsal_module *fsal;
 	struct gsh_buffdesc file;
 	void *owner;
 	fsal_lock_param_t lock_param;
@@ -195,7 +201,7 @@ static void queue_lock_grant(struct fridgethr_context *ctx)
 	struct lock_grant_args *args = ctx->arg;
 	state_status_t status;
 
-	status = args->up_ops->lock_grant(&args->file, args->owner,
+	status = args->up_ops->lock_grant(args->fsal, &args->file, args->owner,
 					  &args->lock_param);
 
 	if (args->cb)
@@ -206,7 +212,8 @@ static void queue_lock_grant(struct fridgethr_context *ctx)
 
 int up_async_lock_grant(struct fridgethr *fr,
 			const struct fsal_up_vector *up_ops,
-			const struct gsh_buffdesc *file, void *owner,
+			struct fsal_module *fsal,
+			struct gsh_buffdesc *file, void *owner,
 			fsal_lock_param_t *lock_param,
 			void (*cb)(void *, state_status_t),
 			void *cb_arg)
@@ -242,6 +249,7 @@ int up_async_lock_grant(struct fridgethr *fr,
 
 struct lock_avail_args {
 	const struct fsal_up_vector *up_ops;
+	struct fsal_module *fsal;
 	struct gsh_buffdesc file;
 	void *owner;
 	fsal_lock_param_t lock_param;
@@ -255,7 +263,7 @@ static void queue_lock_avail(struct fridgethr_context *ctx)
 	struct lock_avail_args *args = ctx->arg;
 	state_status_t status;
 
-	status = args->up_ops->lock_avail(&args->file, args->owner,
+	status = args->up_ops->lock_avail(args->fsal, &args->file, args->owner,
 					  &args->lock_param);
 
 	if (args->cb)
@@ -266,7 +274,8 @@ static void queue_lock_avail(struct fridgethr_context *ctx)
 
 int up_async_lock_avail(struct fridgethr *fr,
 			const struct fsal_up_vector *up_ops,
-			const struct gsh_buffdesc *file, void *owner,
+			struct fsal_module *fsal,
+			struct gsh_buffdesc *file, void *owner,
 			fsal_lock_param_t *lock_param,
 			void (*cb) (void *, state_status_t),
 			void *cb_arg)
@@ -302,6 +311,7 @@ int up_async_lock_avail(struct fridgethr *fr,
 
 struct layoutrecall_args {
 	const struct fsal_up_vector *up_ops;
+	struct fsal_module *fsal;
 	struct gsh_buffdesc handle;
 	layouttype4 layout_type;
 	bool changed;
@@ -318,7 +328,8 @@ static void queue_layoutrecall(struct fridgethr_context *ctx)
 	struct layoutrecall_args *args = ctx->arg;
 	state_status_t status;
 
-	status = args->up_ops->layoutrecall(&args->handle, args->layout_type,
+	status = args->up_ops->layoutrecall(args->fsal, &args->handle,
+					    args->layout_type,
 					    args->changed, &args->segment,
 					    args->cookie,
 					    args->spec.how
@@ -334,7 +345,8 @@ static void queue_layoutrecall(struct fridgethr_context *ctx)
 
 int up_async_layoutrecall(struct fridgethr *fr,
 			  const struct fsal_up_vector *up_ops,
-			  const struct gsh_buffdesc *handle,
+			  struct fsal_module *fsal,
+			  struct gsh_buffdesc *handle,
 			  layouttype4 layout_type, bool changed,
 			  const struct pnfs_segment *segment, void *cookie,
 			  struct layoutrecall_spec *spec,
@@ -447,6 +459,7 @@ int up_async_notify_device(struct fridgethr *fr,
 
 struct delegrecall_args {
 	const struct fsal_up_vector *up_ops;
+	struct fsal_module *fsal;
 	struct gsh_buffdesc handle;
 	void (*cb) (void *, state_status_t);
 	void *cb_arg;
@@ -458,7 +471,7 @@ static void queue_delegrecall(struct fridgethr_context *ctx)
 	struct delegrecall_args *args = ctx->arg;
 	state_status_t status;
 
-	status = args->up_ops->delegrecall(&args->handle);
+	status = args->up_ops->delegrecall(args->fsal, &args->handle);
 
 	if (args->cb)
 		args->cb(args->cb_arg, status);
@@ -468,7 +481,8 @@ static void queue_delegrecall(struct fridgethr_context *ctx)
 
 int up_async_delegrecall(struct fridgethr *fr,
 			 const struct fsal_up_vector *up_ops,
-			 const struct gsh_buffdesc *handle,
+			 struct fsal_module *fsal,
+			 struct gsh_buffdesc *handle,
 			 void (*cb)(void *, state_status_t),
 			 void *cb_arg)
 {

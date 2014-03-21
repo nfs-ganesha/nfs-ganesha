@@ -68,12 +68,10 @@ add_library(MainServices STATIC ${MainServices_STAT_SRCS})
 # present and available for runtime linkage.
 
 set(fsal_CORE_SRCS
-   ../FSAL/fsal_errors.c
    ../FSAL/fsal_convert.c
-   ../FSAL/fsal_commonlib.c
+   ../FSAL/commonlib.c
    ../FSAL/fsal_manager.c
    ../FSAL/access_check.c
-   ../FSAL/common_functions.c
    ../FSAL/fsal_config.c
    ../FSAL/default_methods.c
    ../FSAL/common_pnfs.c

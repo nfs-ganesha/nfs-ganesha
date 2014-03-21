@@ -34,14 +34,13 @@
 #include "config.h"
 #include "hashtable.h"
 #include "log.h"
-#include "ganesha_rpc.h"
 #include "nfs4.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
 #include "nfs_exports.h"
+#include "nfs_creds.h"
 #include "nfs_proto_functions.h"
-#include "nfs_tools.h"
-#include "nfs_proto_tools.h"
+#include "nfs_convert.h"
 #include "export_mgr.h"
 #include "client_mgr.h"
 
@@ -109,7 +108,7 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t *data,
 	if (data->req_ctx->export == NULL) {
 		data->export = NULL;
 
-		LogInfo(COMPONENT_DISPATCH,
+		LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 			"NFS4 Request from client %s has invalid export %d",
 			data->req_ctx->client->hostaddr_str,
 			v4_handle->exportid);

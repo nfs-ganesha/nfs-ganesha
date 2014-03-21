@@ -62,7 +62,6 @@
 #include "server_stats.h"
 #include "abstract_atomic.h"
 #include "gsh_intrinsic.h"
-#include "nfs_tools.h"
 #include "sal_functions.h"
 
 /**
@@ -500,7 +499,7 @@ struct gsh_export *get_gsh_export_by_pseudo_locked(char *path,
 
 		len_export = strlen(export->pseudopath);
 
-		LogFullDebug(COMPONENT_NFS_V4_PSEUDO,
+		LogFullDebug(COMPONENT_EXPORT,
 			     "Comparing %s %d to %s %d",
 			     path, len_path,
 			     export->pseudopath, len_export);

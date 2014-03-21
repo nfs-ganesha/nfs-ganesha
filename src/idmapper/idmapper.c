@@ -35,7 +35,6 @@
 #include "config.h"
 #include "ganesha_rpc.h"
 #include "nfs_core.h"
-#include "nfs_tools.h"
 #include <unistd.h>		/* for using gethostname */
 #include <stdlib.h>		/* for using exit */
 #include <strings.h>

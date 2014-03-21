@@ -58,4 +58,12 @@ void squash_setattr(export_perms_t *export_perms,
 		    struct req_op_context *req_ctx,
 		    struct attrlist *attr);
 
+int nfs4_MakeCred(compound_data_t *);
+
+cache_inode_status_t nfs_access_op(cache_entry_t *entry,
+				   uint32_t requested_access,
+				   uint32_t *granted_access,
+				   uint32_t *supported_access,
+				   struct req_op_context *req_ctx);
+
 #endif				/* _NFS_CREDS_H */

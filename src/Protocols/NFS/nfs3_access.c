@@ -43,9 +43,10 @@
 #include "nfs_core.h"
 #include "cache_inode.h"
 #include "nfs_exports.h"
+#include "nfs_creds.h"
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
-#include "nfs_tools.h"
+#include "nfs_convert.h"
 
 /**
  * Implements NFSPROC3_ACCESS.

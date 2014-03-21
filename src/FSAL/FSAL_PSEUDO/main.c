@@ -57,7 +57,6 @@
 struct pseudo_fsal_module {
 	struct fsal_module fsal;
 	struct fsal_staticfsinfo_t fs_info;
-	fsal_init_info_t fsal_info;
 	/* pseudofsfs_specific_initinfo_t specific_info;  placeholder */
 };
 
@@ -65,7 +64,7 @@ const char myname[] = "PSEUDOFS";
 
 /* filesystem info for PSEUDOFS */
 static struct fsal_staticfsinfo_t default_posix_info = {
-	.maxfilesize = 0,
+	.maxfilesize = UINT64_MAX,
 	.maxlink = 0,
 	.maxnamelen = MAXNAMLEN,
 	.maxpathlen = MAXPATHLEN,
@@ -85,8 +84,8 @@ static struct fsal_staticfsinfo_t default_posix_info = {
 	.cansettime = true,
 	.homogenous = true,
 	.supported_attrs = PSEUDOFS_SUPPORTED_ATTRIBUTES,
-	.maxread = 0,
-	.maxwrite = 0,
+	.maxread = FSAL_MAXIOSIZE,
+	.maxwrite = FSAL_MAXIOSIZE,
 	.umask = 0,
 	.auth_exportpath_xdev = false,
 	.xattr_access_rights = 0400,	/* root=RW, owner=R */
@@ -177,5 +176,4 @@ void pseudo_fsal_init(void)
 	myself->ops->init_config = init_config;
 	myself->ops->unload = unload_pseudo_fsal;
 	myself->name = gsh_strdup("PSEUDO");
-	init_fsal_parameters(&PSEUDOFS.fsal_info);
 }

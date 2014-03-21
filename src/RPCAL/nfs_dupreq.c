@@ -46,7 +46,6 @@
 #include "nfs23.h"
 #include "nfs4.h"
 #include "fsal.h"
-#include "nfs_tools.h"
 
 #include "nfs_dupreq.h"
 #include "city.h"
