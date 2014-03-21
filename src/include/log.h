@@ -44,13 +44,10 @@
 #include "gsh_intrinsic.h"
 #include "config_parsing.h"
 #include "display.h"
-
-#include "display.h"
 #include "nlm_list.h"
 
 /* The maximum size of a log buffer */
 #define LOG_BUFF_LEN 2048
-#define STR_LEN 256
 
 /*
  * Log message severity constants
@@ -79,37 +76,27 @@ typedef enum log_components {
 				 * being the first component */
 	COMPONENT_LOG_EMERG,	/* Component for logging emergency log
 				 * messages - avoid infinite recursion */
-	COMPONENT_MEMALLOC,
 	COMPONENT_MEMLEAKS,
 	COMPONENT_FSAL,
 	COMPONENT_NFSPROTO,
 	COMPONENT_NFS_V4,
 	COMPONENT_EXPORT,
 	COMPONENT_FILEHANDLE,
-	COMPONENT_NFS_SHELL,
 	COMPONENT_DISPATCH,
 	COMPONENT_CACHE_INODE,
-	COMPONENT_CACHE_INODE_GC,
 	COMPONENT_CACHE_INODE_LRU,
 	COMPONENT_HASHTABLE,
 	COMPONENT_HASHTABLE_CACHE,
-	COMPONENT_LRU,
 	COMPONENT_DUPREQ,
-	COMPONENT_RPCSEC_GSS,
 	COMPONENT_INIT,
 	COMPONENT_MAIN,
 	COMPONENT_IDMAPPER,
 	COMPONENT_NFS_READDIR,
 	COMPONENT_NFS_V4_LOCK,
-	COMPONENT_NFS_V4_XATTR,
-	COMPONENT_NFS_V4_REFERRAL,
-	COMPONENT_MEMCORRUPT,
 	COMPONENT_CONFIG,
 	COMPONENT_CLIENTID,
-	COMPONENT_STDOUT,
 	COMPONENT_SESSIONS,
 	COMPONENT_PNFS,
-	COMPONENT_RPC_CACHE,
 	COMPONENT_RW_LOCK,
 	COMPONENT_NLM,
 	COMPONENT_RPC,
@@ -130,88 +117,6 @@ typedef struct loglev {
 	char *short_str;
 	int syslog_level;
 } log_level_t;
-
-extern log_level_t tabLogLevel[NB_LOG_LEVEL];
-
-#define NIV_MAJOR NIV_MAJ
-
-#define ERR_NULL -1
-
-/* Error codes */
-#define ERR_SYS 0
-#define SUCCES                    0
-#define ERR_FAILURE               1
-#define EVNT                      2
-#define ERR_EVNT                  2
-#define ERR_PTHREAD_KEY_CREATE    3
-#define ERR_MALLOC                4
-#define ERR_SIGACTION             5
-#define ERR_PTHREAD_ONCE          6
-#define ERR_FILE_LOG              7
-#define ERR_GETHOSTBYNAME         8
-#define ERR_MMAP                  9
-#define ERR_SOCKET               10
-#define ERR_BIND                 11
-#define ERR_CONNECT              12
-#define ERR_LISTEN               13
-#define ERR_ACCEPT               14
-#define ERR_RRESVPORT            15
-#define ERR_GETHOSTNAME          16
-#define ERR_GETSOCKNAME          17
-#define ERR_IOCTL                18
-#define ERR_UTIME                19
-#define ERR_XDR                  20
-#define ERR_CHMOD                21
-#define ERR_SEND                 22
-#define ERR_GETHOSTBYADDR        23
-#define ERR_PREAD                24
-#define ERR_PWRITE               25
-#define ERR_STAT                 26
-#define ERR_GETPEERNAME          27
-#define ERR_FORK                 28
-#define ERR_GETSERVBYNAME        29
-#define ERR_MUNMAP               30
-#define ERR_STATVFS              31
-#define ERR_OPENDIR              32
-#define ERR_READDIR              33
-#define ERR_CLOSEDIR             34
-#define ERR_LSTAT                35
-#define ERR_GETWD                36
-#define ERR_CHDIR                37
-#define ERR_CHOWN                38
-#define ERR_MKDIR                39
-#define ERR_OPEN                 40
-#define ERR_READ                 41
-#define ERR_WRITE                42
-#define ERR_UTIMES               43
-#define ERR_READLINK             44
-#define ERR_SYMLINK              45
-#define ERR_SYSTEM               46
-#define ERR_POPEN                47
-#define ERR_LSEEK                48
-#define ERR_PTHREAD_CREATE       49
-#define ERR_RECV                 50
-#define ERR_FOPEN                51
-#define ERR_GETCWD               52
-#define ERR_SETUID               53
-#define ERR_RENAME               54
-#define ERR_UNLINK		 55
-#define ERR_SELECT               56
-#define ERR_WAIT                 57
-#define ERR_SETSID               58
-#define ERR_SETGID		 59
-#define ERR_GETGROUPS            60
-#define ERR_SETGROUPS            61
-#define ERR_UMASK                62
-#define ERR_CREAT                63
-#define ERR_SETSOCKOPT           64
-#define ERR_DIRECTIO             65
-#define ERR_GETRLIMIT            66
-#define ERR_SETRLIMIT            67
-#define ERR_TRUNCATE		 68
-#define ERR_PTHREAD_MUTEX_INIT   69
-#define ERR_PTHREAD_COND_INIT    70
-#define ERR_FCNTL                71
 
 /* previously at log_macros.h */
 typedef void (*cleanup_function) (void);
@@ -339,7 +244,7 @@ extern struct log_component_info LogComponents[COMPONENT_COUNT];
 #define LogMajor(component, format, args...) \
 	do { \
 		if (likely(LogComponents[component].comp_log_level \
-		    >= NIV_MAJOR)) \
+		    >= NIV_MAJ)) \
 			DisplayLogComponentLevel(component, (char *) __FILE__, \
 						 __LINE__, \
 						 (char *) __func__, \
