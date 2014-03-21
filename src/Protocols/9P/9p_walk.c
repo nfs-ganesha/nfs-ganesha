@@ -109,10 +109,6 @@ int _9p_walk(struct _9p_request_data *req9p, void *worker_data,
 
 		/* Increments refcount */
 		cache_inode_lru_ref(pnewfid->pentry, LRU_FLAG_NONE);
-
-		/* gdata ref is not hold : the pfid, which use same gdata */
-		/*  will be clunked after pnewfid */
-		/* This clunk release the gdata */
 	} else {
 		/* the walk is in fact a lookup */
 		pentry = pfid->pentry;
@@ -214,6 +210,9 @@ int _9p_walk(struct _9p_request_data *req9p, void *worker_data,
 
 	/* As much qid as requested fid */
 	nwqid = nwname;
+
+	/* Hold refcount on gdata */
+	uid2grp_hold_group_data(pnewfid->gdata);
 
 	/* Build the reply */
 	_9p_setinitptr(cursor, preply, _9P_RWALK);

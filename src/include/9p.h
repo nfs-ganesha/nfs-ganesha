@@ -67,13 +67,6 @@ typedef uint64_t u64;
 #define _9P_BLK_SIZE 4096
 #define _9P_IOUNIT   0
 
-/* number of receive buffers per child */
-#define _9P_RDMA_BUFF_NUM 32
-/* shared pool for sends - optimal when set to number of workers
- * (todo: use conf value) */
-#define _9P_RDMA_OUT 32
-#define _9P_RDMA_BACKLOG 10
-
 /**
  * enum _9p_msg_t - 9P message types
  * @_9P_TLERROR: not used
@@ -343,7 +336,7 @@ struct _9p_flush_bucket {
 	struct glist_head list;
 };
 
-#define FLUSH_BUCKETS 64
+#define FLUSH_BUCKETS 32
 
 struct _9p_conn {
 	union trans_data {
@@ -371,12 +364,17 @@ struct _9p_outqueue {
 	pthread_cond_t cond;
 };
 
-struct _9p_rdma_priv {
-	struct _9p_conn *pconn;
+struct _9p_rdma_priv_pernic {
+	struct ibv_mr *outmr;
+	struct ibv_mr *inmr;
 	uint8_t *rdmabuf;
 	msk_data_t *rdata;
+};
+
+struct _9p_rdma_priv {
+	struct _9p_conn *pconn;
 	struct _9p_outqueue *outqueue;
-	struct ibv_mr *outmr;
+	struct _9p_rdma_priv_pernic *pernic;
 };
 #define _9p_rdma_priv_of(x) ((struct _9p_rdma_priv *)x->private_data)
 #endif

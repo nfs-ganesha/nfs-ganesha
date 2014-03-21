@@ -257,6 +257,9 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, void *worker_data,
 	/* Increments refcount as we're manually making a new copy */
 	cache_inode_lru_ref(pfid->pentry, LRU_FLAG_NONE);
 
+	/* hold reference on gdata */
+	uid2grp_hold_group_data(pxattrfid->gdata);
+
 	/* Build the reply */
 	_9p_setinitptr(cursor, preply, _9P_RXATTRWALK);
 	_9p_setptr(cursor, msgtag, u16);

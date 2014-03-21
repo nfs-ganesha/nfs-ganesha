@@ -55,7 +55,6 @@
 
 #include <mooshika.h>
 
-
 void _9p_rdma_callback_send(msk_trans_t *trans, msk_data_t *data, void *arg)
 {
 	struct _9p_rdma_priv *priv = _9p_rdma_priv_of(trans);
@@ -81,10 +80,7 @@ void _9p_rdma_callback_send_err(msk_trans_t *trans, msk_data_t *data,
 	 * before unlocking
 	 */
 
-	if (trans->state == MSK_CONNECTED && priv && priv->outqueue) {
-		LogMajor(COMPONENT_9P, "send error on trans %p!!!\n",
-			 trans);
-
+	if (priv && priv->outqueue) {
 		pthread_mutex_lock(&priv->outqueue->lock);
 		data->next = priv->outqueue->data;
 		priv->outqueue->data = data;
@@ -143,7 +139,7 @@ void _9p_rdma_process_request(struct _9p_request_data *req9p,
 	pthread_mutex_unlock(&priv->outqueue->lock);
 
 	dataout->size = 0;
-	dataout->mr = priv->outmr;
+	dataout->mr = priv->pernic->outmr;
 
 	/* Use buffer received via RDMA as a 9P message */
 	req9p->_9pmsg = req9p->data->data;
@@ -153,7 +149,7 @@ void _9p_rdma_process_request(struct _9p_request_data *req9p,
 	    || msglen != req9p->data->size) {
 		LogMajor(COMPONENT_9P,
 			 "Malformed 9P/RDMA packet, bad header size");
-		/* semd a rerror ? */
+		/* send a rerror ? */
 		msk_post_recv(trans, req9p->data, _9p_rdma_callback_recv,
 			      _9p_rdma_callback_recv_err, NULL);
 	} else {
@@ -194,9 +190,8 @@ void _9p_rdma_process_request(struct _9p_request_data *req9p,
 			pthread_cond_signal(&priv->outqueue->cond);
 			pthread_mutex_unlock(&priv->outqueue->lock);
 		}
-
-		_9p_DiscardFlushHook(req9p);
 	}
+	_9p_DiscardFlushHook(req9p);
 }
 
 void _9p_rdma_callback_recv(msk_trans_t *trans, msk_data_t *data, void *arg)
@@ -221,4 +216,5 @@ void _9p_rdma_callback_recv(msk_trans_t *trans, msk_data_t *data, void *arg)
 	server_stats_transport_done(_9p_rdma_priv_of(trans)->pconn->client,
 				    data->size, 1, 0,
 				    0, 0, 0);
+
 }				/* _9p_rdma_callback_recv */
