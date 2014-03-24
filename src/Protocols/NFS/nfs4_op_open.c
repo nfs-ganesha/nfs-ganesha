@@ -112,7 +112,7 @@ static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	if (args->share_access & OPEN4_SHARE_ACCESS_WRITE)
-		access_mask |= FSAL_READ_ACCESS;
+		access_mask |= FSAL_WRITE_ACCESS;
 
 	if (args->share_access & OPEN4_SHARE_ACCESS_READ)
 		access_mask |= FSAL_READ_ACCESS;
