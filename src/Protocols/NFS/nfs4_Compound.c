@@ -540,7 +540,7 @@ int nfs4_Compound(nfs_arg_t *arg, exportlist_t *export,
 
 	/* Manage errors NFS4ERR_OP_NOT_IN_SESSION and NFS4ERR_NOT_ONLY_OP.
 	 * These checks apply only to 4.1 */
-	if (compound4_minor == 1) {
+	if (compound4_minor > 0) {
 
 		if (argarray[0].argop != NFS4_OP_ILLEGAL
 		    && argarray[0].argop != NFS4_OP_SEQUENCE

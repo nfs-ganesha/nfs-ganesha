@@ -270,7 +270,8 @@ fsal_status_t GPFSFSAL_clear(int fd,	/* IN */
 			     caddr_t buffer,	/* IN */
 			     size_t *p_write_amount,	/* OUT */
 			     bool *fsal_stable,	/* IN/OUT */
-			     const struct req_op_context *p_context)
+			     const struct req_op_context *p_context,
+			     bool allocate)
 {
 	struct write_arg warg;
 	ssize_t nb_write;
@@ -283,6 +284,11 @@ fsal_status_t GPFSFSAL_clear(int fd,	/* IN */
 	warg.length = buffer_size;
 	warg.stability_wanted = *fsal_stable;
 	warg.stability_got = (uint32_t *) fsal_stable;
+	if (allocate)
+		warg.options = IO_ALLOCATE;
+	else
+		warg.options = 0;
+
 	/* read operation */
 
 	fsal_set_credentials(p_context->creds);

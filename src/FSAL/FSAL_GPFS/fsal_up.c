@@ -57,6 +57,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 	int retry = 0;
 	struct gsh_buffdesc key;
 	uint32_t grace_period_attr = 0;
+	uint32_t upflags = 0;
 
 	snprintf(thr_name, sizeof(thr_name), "fsal_up_%d.%d",
 		 gpfs_fsal_up_ctx->gf_fsid[0], gpfs_fsal_up_ctx->gf_fsid[1]);
@@ -290,7 +291,6 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 				if (flags &
 				    (UP_SIZE | UP_NLINK | UP_MODE | UP_OWN |
 				     UP_TIMES | UP_ATIME | UP_SIZE_BIG)) {
-					uint32_t upflags = 0;
 					attr.mask = 0;
 					if (flags & UP_SIZE)
 						attr.mask |=
@@ -363,12 +363,14 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 			LogMidDebug(COMPONENT_FSAL_UP,
 				    "inode invalidate: flags:%x update ino %ld",
 				    flags, callback.buf->st_ino);
-			rc = event_func->invalidate(
+
+			upflags = CACHE_INODE_INVALIDATE_ATTRS |
+				  CACHE_INODE_INVALIDATE_CONTENT;
+			rc = event_func->invalidate_close(
 						gpfs_fsal_up_ctx->gf_fsal,
+					        event_func,
 						&key,
-						CACHE_INODE_INVALIDATE_ATTRS
-						|
-						CACHE_INODE_INVALIDATE_CONTENT);
+						upflags);
 			break;
 
 		default:

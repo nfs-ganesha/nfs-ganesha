@@ -319,8 +319,7 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 	size = arg_WRITE4->data.data_len;
 	stable_how = arg_WRITE4->stable;
 	LogFullDebug(COMPONENT_NFS_V4,
-		     "NFS4_OP_WRITE: offset = %" PRIu64 "  length = %" PRIu64
-		     "  stable = %d",
+		     "offset = %" PRIu64 "  length = %" PRIu64 "  stable = %d",
 		     offset, size, stable_how);
 
 	if (data->export->MaxOffsetWrite < UINT64_MAX) {
@@ -349,19 +348,21 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 		 * must restrict him
 		 */
 
-		LogFullDebug(COMPONENT_NFS_V4,
-			     "NFS4_OP_WRITE: write requested size = %" PRIu64
-			     " write allowed size = %" PRIu64,
-			     size, data->export->MaxWrite);
-
-		size = data->export->MaxWrite;
+		if (info == NULL ||
+		    info->io_content.what != NFS4_CONTENT_HOLE) {
+			LogFullDebug(COMPONENT_NFS_V4,
+				     "write requested size = %" PRIu64
+				     " write allowed size = %" PRIu64,
+				     size, data->export->MaxWrite);
+			size = data->export->MaxWrite;
+		}
 	}
 
 	/* Where are the data ? */
 	bufferdata = arg_WRITE4->data.data_val;
 
 	LogFullDebug(COMPONENT_NFS_V4,
-		     "NFS4_OP_WRITE: offset = %" PRIu64 " length = %" PRIu64,
+		     "offset = %" PRIu64 " length = %" PRIu64,
 		     offset, size);
 
 	/* if size == 0 , no I/O) are actually made and everything is alright */
@@ -500,22 +501,31 @@ int nfs4_op_write_plus(struct nfs_argop4 *op, compound_data_t *data,
 	WRITE_PLUS4args * const arg_WPLUS = &op->nfs_argop4_u.opwrite_plus;
 	WRITE_PLUS4res * const res_WPLUS = &resp->nfs_resop4_u.opwrite_plus;
 
-	info.io_content.what = arg_WPLUS->wp_what;
-	if (info.io_content.what == NFS4_CONTENT_DATA)
-		info.io_content.data = arg_WPLUS->wp_data;
-	else if (info.io_content.what == NFS4_CONTENT_APP_DATA_HOLE)
-		info.io_content.adh = arg_WPLUS->wp_adh;
-	else
-		info.io_content.hole = arg_WPLUS->wp_hole;
-	info.io_advise = 0;
+	resp->resop = NFS4_OP_WRITE_PLUS;
+	res_WPLUS->wpr_status = NFS4_OK;
 
 	arg.nfs_argop4_u.opwrite.stateid = arg_WPLUS->wp_stateid;
 	arg.nfs_argop4_u.opwrite.stable = arg_WPLUS->wp_stable;
-	arg.nfs_argop4_u.opwrite.offset = arg_WPLUS->wp_data.d_offset;
-	arg.nfs_argop4_u.opwrite.data.data_len =
+	info.io_content.what = arg_WPLUS->wp_what;
+
+	if (info.io_content.what == NFS4_CONTENT_DATA) {
+		info.io_content.data = arg_WPLUS->wp_data;
+		arg.nfs_argop4_u.opwrite.offset = arg_WPLUS->wp_data.d_offset;
+		arg.nfs_argop4_u.opwrite.data.data_len =
 					arg_WPLUS->wp_data.d_data.data_len;
-	arg.nfs_argop4_u.opwrite.data.data_val =
+		arg.nfs_argop4_u.opwrite.data.data_val =
 					arg_WPLUS->wp_data.d_data.data_val;
+	} else if (info.io_content.what == NFS4_CONTENT_HOLE) {
+		info.io_content.hole = arg_WPLUS->wp_hole;
+		arg.nfs_argop4_u.opwrite.offset = arg_WPLUS->wp_hole.di_offset;
+		arg.nfs_argop4_u.opwrite.data.data_len =
+					arg_WPLUS->wp_hole.di_length;
+		arg.nfs_argop4_u.opwrite.data.data_val = NULL;
+	} else {
+		res_WPLUS->wpr_status = NFS4ERR_UNION_NOTSUPP;
+		return res_WPLUS->wpr_status;
+	}
+	info.io_advise = 0;
 
 	res_WPLUS->wpr_status = nfs4_write(&arg, data, &res,
 					   CACHE_INODE_WRITE_PLUS, &info);

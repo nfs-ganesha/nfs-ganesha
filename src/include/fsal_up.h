@@ -214,6 +214,16 @@ struct fsal_up_vector {
 		struct gsh_buffdesc *handle /*< Handle on which the
 						    delegation is held */
 		);
+
+	/** Invalidate some or all of a cache entry and close if open */
+	cache_inode_status_t(*invalidate_close)(
+		struct fsal_module *fsal,
+		const struct fsal_up_vector *up_ops,
+		struct gsh_buffdesc *obj,	/*< The file to invalidate */
+		uint32_t flags /*< Flags governing invalidation */
+		);
+
+
 };
 
 extern struct fsal_up_vector fsal_up_top;

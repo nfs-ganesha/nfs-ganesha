@@ -2531,7 +2531,7 @@ extern "C" {
 	typedef struct {
 		count4          wr_ids;
 		stateid4        wr_callback_id;
-		count4          wr_count;
+		length4         wr_count;
 		stable_how4     wr_committed;
 		verifier4       wr_writeverf;
 	} write_response4;
@@ -7496,7 +7496,7 @@ extern "C" {
 		if (objp->wr_ids == 1)
 			if (!xdr_stateid4(xdrs, &objp->wr_callback_id))
 				return false;
-		if (!xdr_count4(xdrs, &objp->wr_count))
+		if (!xdr_length4(xdrs, &objp->wr_count))
 			return false;
 		if (!xdr_stable_how4(xdrs, &objp->wr_committed))
 			return false;

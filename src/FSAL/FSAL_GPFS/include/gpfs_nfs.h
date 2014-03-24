@@ -450,8 +450,9 @@ struct dsread_arg
 };
 
 /* define flags for options */
-#define SKIP_HOLE      (1 << 0) //  01
-#define SKIP_DATA      (1 << 1) //  02
+#define IO_SKIP_HOLE      (1 << 0) //  01
+#define IO_SKIP_DATA      (1 << 1) //  02
+#define IO_ALLOCATE       (1 << 2) //  04
 
 struct dswrite_arg
 {
