@@ -455,7 +455,7 @@ void clean_credentials(struct req_op_context *req_ctx)
 
 	/* Have we made a local copy of the managed_gids garray? */
 	if (req_ctx->managed_garray_copy != NULL)
-	    	gsh_free(req_ctx->caller_garray_copy);
+		gsh_free(req_ctx->managed_garray_copy);
 
 	/* Have we made a local copy of the AUTH_SYS garray? */
 	if (req_ctx->caller_garray_copy != NULL)
