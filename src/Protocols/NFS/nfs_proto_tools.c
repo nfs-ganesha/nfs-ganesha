@@ -667,7 +667,7 @@ static fattr_xdr_result decode_acl(XDR *xdr, struct xdr_attrs_args *args)
 	char buffer[MAXNAMLEN + 1];
 	char *buffp = buffer;
 	utf8string utf8buffer;
-	int who = 0;		/* not ASE_SPECIAL anything */
+	int who = 0;		/* not ACE_SPECIAL anything */
 
 	acldata.naces = 0;
 
@@ -684,6 +684,7 @@ static fattr_xdr_result decode_acl(XDR *xdr, struct xdr_attrs_args *args)
 	memset(acldata.aces, 0, acldata.naces * sizeof(fsal_ace_t));
 	for (ace = acldata.aces; ace < acldata.aces + acldata.naces; ace++) {
 		int i;
+		who = 0;
 
 		if (!inline_xdr_u_int32_t(xdr, &ace->type))
 			goto baderr;
