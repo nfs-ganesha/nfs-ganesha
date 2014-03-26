@@ -190,6 +190,14 @@ start() {
 		start_ganesha=0
 	fi
 
+	# Check if there is any zombie process. If so we don't want to start restart ganesha
+	# due to gpfs inode_update issue	
+	result=`ps -ef | grep "\[gpfs.ganesha.nf\] <defunct>"|grep -v grep`
+	if [ "$result" ]; then
+		echo "GPFS Ganesha is in zombie state."
+		start_ganesha=0
+	fi
+
 	# start the statd daemon only if it is not running
 	if [ $start_statd -eq 1 ]; then
 		rm -f /var/lock/subsys/rpc.statd
