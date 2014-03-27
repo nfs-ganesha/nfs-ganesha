@@ -27,7 +27,7 @@
 #include <string.h>
 #include <fcntl.h>
 
-fsal_status_t posix2fsal_attributes(struct stat *p_buffstat,
+fsal_status_t pt_posix2fsal_attributes(struct stat *p_buffstat,
 				    struct attrlist *p_fsalattr_out)
 {
 

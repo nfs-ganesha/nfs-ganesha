@@ -546,4 +546,6 @@ void fsi_cache_32Bytes_rawDump(fsi_ipc_trace_level loglevel, void *data,
 			       int index);
 extern CACHE_TABLE_T g_fsi_name_handle_cache_opened_files;
 int pt_ganesha_fsal_ccl_init();
+fsal_status_t pt_posix2fsal_attributes(struct stat *p_buffstat,
+				       struct attrlist *p_fsalattr_out);
 #endif				/* ifndef __PT_GANESHA_H__ */

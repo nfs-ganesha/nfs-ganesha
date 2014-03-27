@@ -72,7 +72,7 @@ fsal_status_t PTFSAL_getattrs(struct fsal_export *export,
 
 	/* convert attributes */
 
-	st = posix2fsal_attributes(&buffstat, p_object_attributes);
+	st = pt_posix2fsal_attributes(&buffstat, p_object_attributes);
 	FSI_TRACE(FSI_DEBUG, "Handle type=%d st_mode=%o (octal)",
 		  p_object_attributes->type, buffstat.st_mode);
 

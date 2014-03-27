@@ -811,7 +811,7 @@ fsal_status_t pt_lookup_path(struct fsal_export *exp_hdl,
 		goto fileerr;
 
 	attributes.mask = exp_hdl->ops->fs_supported_attrs(exp_hdl);
-	fsal_status = posix2fsal_attributes(&stat, &attributes);
+	fsal_status = pt_posix2fsal_attributes(&stat, &attributes);
 	if (FSAL_IS_ERROR(fsal_status))
 		goto fileerr;
 
