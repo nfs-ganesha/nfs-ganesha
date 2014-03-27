@@ -157,6 +157,7 @@ void nfs4_create_clid_name(nfs_client_record_t *cl_rec,
 	char buf[SOCK_NAME_MAX + 1];
 	char cidstr[PATH_MAX];
 	struct display_buffer       dspbuf = {sizeof(cidstr), cidstr, cidstr};
+	char                         cidstr_len[10];
 	int total_len;
 
 	/* get the caller's IP addr */
@@ -166,7 +167,10 @@ void nfs4_create_clid_name(nfs_client_record_t *cl_rec,
 		strmaxcpy(buf, "Unknown", SOCK_NAME_MAX);
 
 	if (convert_opaque_value_max_for_dir(&dspbuf, cl_rec->cr_client_val, cl_rec->cr_client_val_len, PATH_MAX) > 0) {
-		total_len = strlen(cidstr) + strlen(buf) + 2;
+		/* convert_opaque_value_max_for_dir does not prefix 
+		 * the "(<length>:". So we need to do it here */
+		sprintf(cidstr_len, "%ld", strlen(cidstr));
+		total_len = strlen(cidstr) + strlen(buf) + 5 + strlen(cidstr_len);
 		/* hold both long form clientid and IP */
 		clientid->cid_recov_dir = gsh_malloc(total_len);
 		if (clientid->cid_recov_dir == NULL) {
@@ -175,8 +179,8 @@ void nfs4_create_clid_name(nfs_client_record_t *cl_rec,
 		}
 		memset(clientid->cid_recov_dir, 0, total_len);
 		
-		(void) snprintf(clientid->cid_recov_dir, total_len, "%s-%s",
-				buf, cidstr);
+		(void) snprintf(clientid->cid_recov_dir, total_len, "%s-(%s:%s)",
+				buf, cidstr_len, cidstr);
 	}
 
 	LogDebug(COMPONENT_CLIENTID, "Created client name [%s]",
@@ -199,6 +203,7 @@ void nfs4_create_clid_name41(nfs_client_record_t *cl_rec,
 	char buf[SOCK_NAME_MAX + 1];
 	char cidstr[PATH_MAX];
 	struct display_buffer       dspbuf = {sizeof(cidstr), cidstr, cidstr};
+	char                         cidstr_len[10];
 	int total_len;
 
 	clientid->cid_recov_dir = gsh_malloc(PATH_MAX);
@@ -210,7 +215,10 @@ void nfs4_create_clid_name41(nfs_client_record_t *cl_rec,
 	sprint_sockip(&clientid->cid_client_addr, buf, sizeof(buf));
 
 	if (convert_opaque_value_max_for_dir(&dspbuf, cl_rec->cr_client_val, cl_rec->cr_client_val_len, PATH_MAX) > 0) {
-		total_len = strlen(cidstr) + strlen(buf) + 2;
+		/* convert_opaque_value_max_for_dir does not prefix 
+		 * the "(<length>:". So we need to do it here */
+		sprintf(cidstr_len, "%ld", strlen(cidstr));
+		total_len = strlen(cidstr) + strlen(buf) + 5 + strlen(cidstr_len);
 		/* hold both long form clientid and IP */
 		clientid->cid_recov_dir = gsh_malloc(total_len);
 		if (clientid->cid_recov_dir == NULL) {
@@ -219,8 +227,8 @@ void nfs4_create_clid_name41(nfs_client_record_t *cl_rec,
 		}
 		memset(clientid->cid_recov_dir, 0, total_len);
 
-		(void) snprintf(clientid->cid_recov_dir, total_len, "%s-%s",
-				buf, cidstr);
+		(void) snprintf(clientid->cid_recov_dir, total_len, "%s-(%s:%s)",
+				buf, cidstr_len, cidstr);
 	}
 
 	LogDebug(COMPONENT_CLIENTID, "Created client name [%s]",
