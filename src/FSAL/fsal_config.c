@@ -96,6 +96,8 @@ bool fsal_supports(struct fsal_staticfsinfo_t *info,
 		return !!info->share_support;
 	case fso_share_support_owner:
 		return !!info->share_support_owner;
+	case fso_reopen_method:
+		return !!info->reopen_method;
 	default:
 		return false;	/* whatever I don't know about,
 				 * you can't do

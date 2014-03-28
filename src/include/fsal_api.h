@@ -779,6 +779,7 @@ struct export_ops {
 				      struct fsal_ds_handle **const handle);
 /**@}*/
 
+/**@{*/
 /**
  * Statistics and configuration for this filesystem
  */
@@ -1544,6 +1545,19 @@ struct fsal_obj_ops {
 			       fsal_openflags_t openflags);
 
 /**
+ * @brief Re-open a file that may be already opened
+ *
+ * This function reopens the file with the given open flags. You can
+ * atomically go from read only flag to readwrite or vice versa.
+ * This is used to reopen a file for readwrite, if the file is already
+ * opened for readonly. This will not lose any file locks that are
+ * already placed. May not be supported by all FSALs.
+ */
+	 fsal_status_t(*reopen) (struct fsal_obj_handle *obj_hdl,
+				 const struct req_op_context *opctx,
+				 fsal_openflags_t openflags);
+
+/**
  * @brief Return open status
  *
  * This function returns open flags representing the current open
@@ -1934,6 +1948,7 @@ struct fsal_obj_ops {
 						 const char *xattr_name);
 /**@}*/
 
+/**@{*/
 /**
  * Handle operations
  */
