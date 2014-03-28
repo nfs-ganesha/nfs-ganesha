@@ -2479,6 +2479,7 @@ state_status_t state_lock(cache_entry_t *entry, exportlist_t *export,
 	struct fsal_export *fsal_export = req_ctx->export->export.export_hdl;
 	fsal_lock_op_t lock_op;
 	state_status_t status = 0;
+	fsal_openflags_t openflags;
 
 	cache_status = cache_inode_inc_pin_ref(entry);
 
@@ -2488,8 +2489,25 @@ state_status_t state_lock(cache_entry_t *entry, exportlist_t *export,
 		return status;
 	}
 
+	/*
+	 * If we already have a read lock, and then get a write lock
+	 * request, we need to close the file that was already open for
+	 * read, and then open the file for readwrite for the write lock
+	 * request.  Closing the file loses all lock state, so we just
+	 * open the file for readwrite for any kind of lock request.
+	 *
+	 * If the FSAL supports atomicaly updating the read only fd to
+	 * readwrite fd, then we don't need to open a file for readwrite
+	 * for read only lock request. This helps with delegations as
+	 * well.
+	 */
+	if (lock->lock_type == FSAL_LOCK_R &&
+	    fsal_export->ops->fs_supports(fsal_export, fso_reopen_method))
+		openflags = FSAL_O_READ;
+	else
+		openflags = FSAL_O_RDWR;
 	cache_status = cache_inode_open(entry,
-					FSAL_O_RDWR,
+					openflags,
 					req_ctx,
 					(lock->lock_reclaim) ?
 						CACHE_INODE_FLAG_RECLAIM : 0);
