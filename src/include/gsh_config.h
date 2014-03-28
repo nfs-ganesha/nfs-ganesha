@@ -597,6 +597,11 @@ typedef struct cache_inode_parameter {
 	    we disable caching, when in extremis.  Defaults to 8,
 	    settable with Futility_Count */
 	uint32_t futility_count;
+	/** Behavior for when readdir fails for some reason:
+	    true will ask the client to retry later, false will give the
+	    client a partial reply based on what we have.
+	    Defaults to false, settable with Retry_Readdir */
+	bool retry_readdir;
 } cache_inode_parameter_t;
 
 /** @} */
