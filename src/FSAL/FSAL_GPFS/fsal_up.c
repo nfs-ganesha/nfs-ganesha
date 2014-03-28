@@ -178,6 +178,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
                   gpfs_fsal_up_ctx->gf_fs, rc, errno, strerror(errno), reason);
 
           gsh_free(phandle);
+          pool_free(fsal_up_event_pool, pevent);
 
           if(retry < 100)
             {
