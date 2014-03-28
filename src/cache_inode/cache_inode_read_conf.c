@@ -84,6 +84,8 @@ static struct config_item cache_inode_params[] = {
 		       cache_inode_parameter, required_progress),
 	CONF_ITEM_UI32("Futility_Count", 1, 50, 8,
 		       cache_inode_parameter, futility_count),
+	CONF_ITEM_BOOL("Retry_Readdir", false,
+		       cache_inode_parameter, retry_readdir),
 	CONFIG_EOL
 };
 

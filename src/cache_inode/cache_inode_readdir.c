@@ -393,7 +393,10 @@ populate_dirent(const struct req_op_context *opctx,
 	fsal_status = dir_hdl->ops->lookup(dir_hdl, opctx, name, &entry_hdl);
 	if (FSAL_IS_ERROR(fsal_status)) {
 		*state->status = cache_inode_error_convert(fsal_status);
-		return false;
+		LogInfo(COMPONENT_CACHE_INODE,
+			"Lookup failed on %s in dir %p with %s",
+			name, dir_hdl, cache_inode_err_str(*state->status));
+		return !nfs_param.cache_param.retry_readdir;
 	}
 
 	LogFullDebug(COMPONENT_NFS_READDIR, "Creating entry for %s", name);
@@ -406,6 +409,9 @@ populate_dirent(const struct req_op_context *opctx,
 		*state->status = CACHE_INODE_NOT_FOUND;
 		/* we do not free entry_hdl because it is consumed by
 		   cache_inode_new_entry */
+		LogEvent(COMPONENT_NFS_READDIR,
+			 "cache_inode_new_entry failed with %s",
+			 cache_inode_err_str(*state->status));
 		return false;
 	}
 
@@ -422,8 +428,12 @@ populate_dirent(const struct req_op_context *opctx,
 	cache_inode_put(cache_entry);
 
 	if ((*state->status != CACHE_INODE_SUCCESS) &&
-	    (*state->status != CACHE_INODE_ENTRY_EXISTS))
+	    (*state->status != CACHE_INODE_ENTRY_EXISTS)) {
+		LogEvent(COMPONENT_NFS_READDIR,
+			 "cache_inode_add_cached_dirent failed with %s",
+			 cache_inode_err_str(*state->status));
 		return false;
+	}
 
 	return true;
 }
@@ -502,9 +512,25 @@ cache_inode_readdir_populate(const struct req_op_context *req_ctx,
 		return status;
 	}
 
-	assert(eod);		/* we were supposed to read to the end.... */
-	/* End of work */
-	atomic_set_uint32_t_bits(&directory->flags, CACHE_INODE_DIR_POPULATED);
+	/* we were supposed to read to the end.... */
+	if (!eod && nfs_param.cache_param.retry_readdir) {
+		LogInfo(COMPONENT_NFS_READDIR,
+			"Readdir didn't reach eod on dir %p (status %s)",
+			directory->obj_handle, cache_inode_err_str(status));
+		status = CACHE_INODE_DELAY;
+	} else if (eod) {
+		/* End of work */
+		atomic_set_uint32_t_bits(&directory->flags,
+					 CACHE_INODE_DIR_POPULATED);
+
+		/* override status in case it was set to a
+		 * minor error in the callback */
+		status = CACHE_INODE_SUCCESS;
+	}
+
+	/* If !eod (and fsal_status isn't an error), then the only error path
+	 * is through a callback failure and status has been set the
+	 * populate_dirent callback */
 
 	return status;
 }				/* cache_inode_readdir_populate */

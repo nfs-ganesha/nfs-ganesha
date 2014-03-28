@@ -128,9 +128,6 @@ void *_9p_rdma_thread(void *Arg)
 
 	struct _9p_rdma_priv *priv = NULL;
 	struct _9p_conn *p_9p_conn = NULL;
-	uint8_t *rdmabuf = NULL;
-	struct ibv_mr *mr = NULL;
-	msk_data_t *rdata = NULL;
 	unsigned int i = 0;
 	int rc = 0;
 	struct _9p_outqueue *outqueue = trans->private_data;
