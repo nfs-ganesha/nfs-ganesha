@@ -3463,7 +3463,7 @@ void find_blocked_lock_upcall(cache_entry_t *entry, void *owner,
 	}
 
 	/* We must be out of sync with FSAL, this is fatal */
-	LogLockDesc(COMPONENT_STATE, NIV_MAJOR, "Blocked Lock Not Found for",
+	LogLockDesc(COMPONENT_STATE, NIV_MAJ, "Blocked Lock Not Found for",
 		    entry, owner, lock);
 	LogFatal(COMPONENT_STATE, "Locks out of sync with FSAL");
 }

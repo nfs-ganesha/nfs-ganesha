@@ -82,7 +82,7 @@ int PTFSAL_log(int level, const char *message)
 int PTFSAL_log_level_check(int level)
 {
 	return (unlikely
-		(LogComponents[COMPONENT_FSAL_PT].comp_log_level >= level));
+		(component_log_level[COMPONENT_FSAL_PT] >= level));
 }
 
 int pt_ganesha_fsal_ccl_init();

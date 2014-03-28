@@ -248,7 +248,7 @@ bool get_req_creds(struct svc_req *req,
 			memcpy(principal, gd->cname.value, gd->cname.length);
 			principal[gd->cname.length] = 0;
 
-			LogMidDebug(COMPONENT_RPCSEC_GSS,
+			LogMidDebug(COMPONENT_DISPATCH,
 				     "Mapping RPCSEC_GSS principal %s to uid/gid",
 				     principal);
 

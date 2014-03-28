@@ -632,7 +632,7 @@ static pthread_once_t once_key = PTHREAD_ONCE_INIT;
 
 #define LogChanges(format, args...) \
 	do { \
-		if (LogComponents[COMPONENT_LOG].comp_log_level == \
+		if (component_log_level[COMPONENT_LOG] == \
 		    NIV_FULL_DEBUG) \
 			DisplayLogComponentLevel(COMPONENT_LOG, \
 						 (char *) __FILE__, \
@@ -907,7 +907,7 @@ static void _SetLevelDebug(int level_to_set)
 		level_to_set = NB_LOG_LEVEL - 1;
 
 	for (i = COMPONENT_ALL; i < COMPONENT_COUNT; i++)
-		LogComponents[i].comp_log_level = level_to_set;
+		component_log_level[i] = level_to_set;
 }				/* _SetLevelDebug */
 
 static void SetLevelDebug(int level_to_set)
@@ -915,7 +915,7 @@ static void SetLevelDebug(int level_to_set)
 	_SetLevelDebug(level_to_set);
 
 	LogChanges("Setting log level for all components to %s",
-		   ReturnLevelInt(LogComponents[COMPONENT_ALL].comp_log_level));
+		   ReturnLevelInt(component_log_level[COMPONENT_ALL]));
 }
 
 void SetComponentLogLevel(log_components_t component, int level_to_set)
@@ -937,24 +937,22 @@ void SetComponentLogLevel(log_components_t component, int level_to_set)
 			" was set in environment",
 			LogComponents[component].comp_name,
 			ReturnLevelInt(level_to_set),
-			ReturnLevelInt(LogComponents[component].
-				       comp_log_level));
+			ReturnLevelInt(component_log_level[component]));
 		return;
 	}
 
-	if (LogComponents[component].comp_log_level != level_to_set) {
+	if (component_log_level[component] != level_to_set) {
 		LogChanges("Changing log level of %s from %s to %s",
 			   LogComponents[component].comp_name,
-			   ReturnLevelInt(LogComponents[component].
-					  comp_log_level),
+			   ReturnLevelInt(component_log_level[component]),
 			   ReturnLevelInt(level_to_set));
-		LogComponents[component].comp_log_level = level_to_set;
+		component_log_level[component] = level_to_set;
 	}
 }
 
 inline int ReturnLevelDebug()
 {
-	return LogComponents[COMPONENT_ALL].comp_log_level;
+	return component_log_level[COMPONENT_ALL];
 }				/* ReturnLevelDebug */
 
 static void IncrementLevelDebug()
@@ -962,7 +960,7 @@ static void IncrementLevelDebug()
 	_SetLevelDebug(ReturnLevelDebug() + 1);
 
 	LogChanges("SIGUSR1 Increasing log level for all components to %s",
-		   ReturnLevelInt(LogComponents[COMPONENT_ALL].comp_log_level));
+		   ReturnLevelInt(component_log_level[COMPONENT_ALL]));
 }				/* IncrementLevelDebug */
 
 static void DecrementLevelDebug()
@@ -970,7 +968,7 @@ static void DecrementLevelDebug()
 	_SetLevelDebug(ReturnLevelDebug() - 1);
 
 	LogChanges("SIGUSR2 Decreasing log level for all components to %s",
-		   ReturnLevelInt(LogComponents[COMPONENT_ALL].comp_log_level));
+		   ReturnLevelInt(component_log_level[COMPONENT_ALL]));
 }				/* DecrementLevelDebug */
 
 struct log_flag *StrToFlag(const char *str)
@@ -1095,8 +1093,8 @@ static void set_logging_from_env(void)
 				env_value);
 			continue;
 		}
-		oldlevel = LogComponents[component].comp_log_level;
-		LogComponents[component].comp_log_level = newlevel;
+		oldlevel = component_log_level[component];
+		component_log_level[component] = newlevel;
 		LogComponents[component].comp_env_set = true;
 		LogChanges(
 		     "Using environment variable to switch log level for %s from %s to %s",
@@ -1135,8 +1133,7 @@ void init_logging(const char *log_path, const int debug_level)
 	if (log_path)
 		SetDefaultLogging(log_path);
 
-	if (debug_level >= 0)
-		SetLevelDebug(debug_level);
+	SetLevelDebug(debug_level >= 0 ? debug_level : NIV_EVENT);
 
 	set_logging_from_env();
 
@@ -1429,187 +1426,114 @@ void display_log_component_level(log_components_t component, char *file,
 		Fatal();
 }
 
+log_levels_t component_log_level[COMPONENT_COUNT];
+
 struct log_component_info LogComponents[COMPONENT_COUNT] = {
 	[COMPONENT_ALL] = {
 		.comp_name = "COMPONENT_ALL",
-		.comp_str = "",
-		.comp_log_level = NIV_EVENT,},
+		.comp_str = "",},
 	[COMPONENT_LOG] = {
 		.comp_name = "COMPONENT_LOG",
-		.comp_str = "LOG",
-		.comp_log_level = NIV_EVENT,},
+		.comp_str = "LOG",},
 	[COMPONENT_LOG_EMERG] = {
 		.comp_name = "COMPONENT_LOG_EMERG",
-		.comp_str = "LOG_EMERG",
-		.comp_log_level = NIV_EVENT,},
-	[COMPONENT_MEMALLOC] = {
-		.comp_name = "COMPONENT_MEMALLOC",
-		.comp_str = "ALLOC",
-		.comp_log_level = NIV_EVENT,},
+		.comp_str = "LOG_EMERG",},
 	[COMPONENT_MEMLEAKS] = {
 		.comp_name = "COMPONENT_MEMLEAKS",
-		.comp_str = "LEAKS",
-		.comp_log_level = NIV_EVENT,},
+		.comp_str = "LEAKS",},
 	[COMPONENT_FSAL] = {
 		.comp_name = "COMPONENT_FSAL",
-		.comp_str = "FSAL",
-		.comp_log_level = NIV_EVENT,},
+		.comp_str = "FSAL",},
 	[COMPONENT_NFSPROTO] = {
 		.comp_name = "COMPONENT_NFSPROTO",
-		.comp_str = "NFS3",
-		.comp_log_level = NIV_EVENT,},
+		.comp_str = "NFS3",},
 	[COMPONENT_NFS_V4] = {
 		.comp_name = "COMPONENT_NFS_V4",
-		.comp_str = "NFS4",
-		.comp_log_level = NIV_EVENT,},
+		.comp_str = "NFS4",},
 	[COMPONENT_EXPORT] = {
 		.comp_name = "COMPONENT_EXPORT",
-		.comp_str = "EXPORT",
-		.comp_log_level = NIV_EVENT,},
+		.comp_str = "EXPORT",},
 	[COMPONENT_FILEHANDLE] = {
 		.comp_name = "COMPONENT_FILEHANDLE",
-		.comp_str = "FH",
-		.comp_log_level = NIV_EVENT,},
-	[COMPONENT_NFS_SHELL] = {
-		.comp_name = "COMPONENT_NFS_SHELL",
-		.comp_str = "NFS SHELL",
-		.comp_log_level = NIV_EVENT,},
+		.comp_str = "FH",},
 	[COMPONENT_DISPATCH] = {
 		.comp_name = "COMPONENT_DISPATCH",
-		.comp_str = "DISP",
-		.comp_log_level = NIV_EVENT,},
+		.comp_str = "DISP",},
 	[COMPONENT_CACHE_INODE] = {
 		.comp_name = "COMPONENT_CACHE_INODE",
-		.comp_str = "INODE",
-		.comp_log_level = NIV_EVENT,},
-	[COMPONENT_CACHE_INODE_GC] = {
-		.comp_name = "COMPONENT_CACHE_INODE_GC",
-		.comp_str = "INODE GC",
-		.comp_log_level = NIV_EVENT,},
+		.comp_str = "INODE",},
 	[COMPONENT_CACHE_INODE_LRU] = {
 		.comp_name = "COMPONENT_CACHE_INODE_LRU",
-		.comp_str = "INODE LRU",
-		.comp_log_level = NIV_EVENT,},
+		.comp_str = "INODE LRU",},
 	[COMPONENT_HASHTABLE] = {
 		.comp_name = "COMPONENT_HASHTABLE",
-		.comp_str = "HT",
-		.comp_log_level = NIV_EVENT,},
+		.comp_str = "HT",},
 	[COMPONENT_HASHTABLE_CACHE] = {
 		.comp_name = "COMPONENT_HASHTABLE_CACHE",
-		"HT CACHE",
-		.comp_log_level = NIV_EVENT,},
-	[COMPONENT_LRU] = {
-		.comp_name = "COMPONENT_LRU",
-		.comp_str = "LRU",
-		.comp_log_level = NIV_EVENT,},
+		.comp_str = "HT CACHE",},
 	[COMPONENT_DUPREQ] = {
 		.comp_name = "COMPONENT_DUPREQ",
-		.comp_str = "DUPREQ",
-		.comp_log_level = NIV_EVENT,},
-	[COMPONENT_RPCSEC_GSS] = {
-		.comp_name = "COMPONENT_RPCSEC_GSS",
-		.comp_str = "RPCSEC GSS",
-		NIV_EVENT,},
+		.comp_str = "DUPREQ",},
 	[COMPONENT_INIT] = {
 		.comp_name = "COMPONENT_INIT",
-		.comp_str = "NFS STARTUP",
-		.comp_log_level = NIV_EVENT,},
+		.comp_str = "NFS STARTUP",},
 	[COMPONENT_MAIN] = {
 		.comp_name = "COMPONENT_MAIN",
-		.comp_str = "MAIN",
-		.comp_log_level = NIV_EVENT,},
+		.comp_str = "MAIN",},
 	[COMPONENT_IDMAPPER] = {
 		.comp_name = "COMPONENT_IDMAPPER",
-		.comp_str = "ID MAPPER",
-		.comp_log_level = NIV_EVENT,},
+		.comp_str = "ID MAPPER",},
 	[COMPONENT_NFS_READDIR] = {
 		.comp_name = "COMPONENT_NFS_READDIR",
-		.comp_str = "NFS READDIR",
-		NIV_EVENT,},
+		.comp_str = "NFS READDIR",},
 	[COMPONENT_NFS_V4_LOCK] = {
 		.comp_name = "COMPONENT_NFS_V4_LOCK",
-		.comp_str = "NFS4 LOCK",
-		NIV_EVENT,},
-	[COMPONENT_NFS_V4_XATTR] = {
-		.comp_name = "COMPONENT_NFS_V4_XATTR",
-		.comp_str = "NFS4 XATTR",
-		NIV_EVENT,},
-	[COMPONENT_NFS_V4_REFERRAL] = {
-		.comp_name = "COMPONENT_NFS_V4_REFERRAL",
-		.comp_str = "NFS4 REFERRAL",
-		.comp_log_level = NIV_EVENT,},
-	[COMPONENT_MEMCORRUPT] = {
-		.comp_name = "COMPONENT_MEMCORRUPT",
-		.comp_str = "MEM CORRUPT",
-		NIV_EVENT,},
+		.comp_str = "NFS4 LOCK",},
 	[COMPONENT_CONFIG] = {
 		.comp_name = "COMPONENT_CONFIG",
-		.comp_str = "CONFIG",
-		.comp_log_level = NIV_EVENT,},
+		.comp_str = "CONFIG",},
 	[COMPONENT_CLIENTID] = {
 		.comp_name = "COMPONENT_CLIENTID",
-		.comp_str = "CLIENT ID",
-		.comp_log_level = NIV_EVENT,},
-	[COMPONENT_STDOUT] = {
-		.comp_name = "COMPONENT_STDOUT",
-		.comp_str = "STDOUT",
-		.comp_log_level = NIV_EVENT,},
+		.comp_str = "CLIENT ID",},
 	[COMPONENT_SESSIONS] = {
 		.comp_name = "COMPONENT_SESSIONS",
-		.comp_str = "SESSIONS",
-		.comp_log_level = NIV_EVENT,},
+		.comp_str = "SESSIONS",},
 	[COMPONENT_PNFS] = {
 		.comp_name = "COMPONENT_PNFS",
-		.comp_str = "PNFS",
-		.comp_log_level = NIV_EVENT,},
-	[COMPONENT_RPC_CACHE] = {
-		.comp_name = "COMPONENT_RPC_CACHE",
-		.comp_str = "RPC CACHE",
-		.comp_log_level = NIV_EVENT,},
+		.comp_str = "PNFS",},
 	[COMPONENT_RW_LOCK] = {
 		.comp_name = "COMPONENT_RW_LOCK",
-		.comp_str = "RW LOCK",
-		.comp_log_level = NIV_EVENT,},
+		.comp_str = "RW LOCK",},
 	[COMPONENT_NLM] = {
 		.comp_name = "COMPONENT_NLM",
-		.comp_str = "NLM",
-		.comp_log_level = NIV_EVENT,},
+		.comp_str = "NLM",},
 	[COMPONENT_RPC] = {
 		.comp_name = "COMPONENT_RPC",
-		.comp_str = "RPC",
-		.comp_log_level = NIV_EVENT,},
+		.comp_str = "RPC",},
 	[COMPONENT_NFS_CB] = {
 		.comp_name = "COMPONENT_NFS_CB",
-		.comp_str = "NFS CB",
-		.comp_log_level = NIV_EVENT,},
+		.comp_str = "NFS CB",},
 	[COMPONENT_THREAD] = {
 		.comp_name = "COMPONENT_THREAD",
-		.comp_str = "THREAD",
-		.comp_log_level = NIV_EVENT,},
+		.comp_str = "THREAD",},
 	[COMPONENT_NFS_V4_ACL] = {
 		.comp_name = "COMPONENT_NFS_V4_ACL",
-		.comp_str = "NFS4 ACL",
-		.comp_log_level = NIV_EVENT,},
+		.comp_str = "NFS4 ACL",},
 	[COMPONENT_STATE] = {
 		.comp_name = "COMPONENT_STATE",
-		.comp_str = "STATE",
-		.comp_log_level = NIV_EVENT,},
+		.comp_str = "STATE",},
 	[COMPONENT_9P] = {
 		.comp_name = "COMPONENT_9P",
-		.comp_str = "9P",
-		.comp_log_level = NIV_EVENT,},
+		.comp_str = "9P",},
 	[COMPONENT_9P_DISPATCH] = {
 		.comp_name = "COMPONENT_9P_DISPATCH",
-		.comp_str = "9P DISP",
-		.comp_log_level = NIV_EVENT,},
+		.comp_str = "9P DISP",},
 	[COMPONENT_FSAL_UP] = {
 		.comp_name = "COMPONENT_FSAL_UP",
-		.comp_str = "FSAL_UP",
-		.comp_log_level = NIV_EVENT,},
+		.comp_str = "FSAL_UP",},
 	[COMPONENT_DBUS] = {
 		.comp_name = "COMPONENT_DBUS",
-		.comp_str = "DBUS",
-		.comp_log_level = NIV_EVENT,},
+		.comp_str = "DBUS",}
 };
 
 void DisplayLogComponentLevel(log_components_t component, char *file, int line,
@@ -1791,7 +1715,7 @@ void rpc_warnx(char *fmt, ...)
 {
 	va_list ap;
 
-	if (LogComponents[COMPONENT_RPC].comp_log_level < NIV_DEBUG)
+	if (component_log_level[COMPONENT_RPC] < NIV_DEBUG)
 		return;
 
 	va_start(ap, fmt);
@@ -1812,7 +1736,7 @@ int getComponentLogLevel(snmp_adm_type_union *param, void *opt)
 	long component = (long)opt;
 
 	strncpy(param->string,
-		ReturnLevelInt(LogComponents[component].comp_log_level),
+		ReturnLevelInt(component_log_level[component]),
 		sizeof(param->string));
 	param->string[sizeof(param->string) - 1] = '\0';
 	return 0;
@@ -1836,9 +1760,9 @@ int setComponentLogLevel(const snmp_adm_type_union *param, void *opt)
 		LogChanges(
 		     "SNMP request changing log level of %s from %s to %s.",
 		     LogComponents[component].comp_name,
-		     ReturnLevelInt(LogComponents[component].comp_log_level),
+		     ReturnLevelInt(component_log_level[component]),
 		     ReturnLevelInt(level_to_set));
-		LogComponents[component].comp_log_level = level_to_set;
+		component_log_level[component] = level_to_set;
 	}
 
 	return 0;
@@ -1852,7 +1776,7 @@ static bool dbus_prop_get(log_components_t component, DBusMessageIter *reply)
 {
 	char *level_code;
 
-	level_code = ReturnLevelInt(LogComponents[component].comp_log_level);
+	level_code = ReturnLevelInt(component_log_level[component]);
 	if (level_code == NULL)
 		return false;
 	if (!dbus_message_iter_append_basic
@@ -1877,10 +1801,9 @@ static bool dbus_prop_set(log_components_t component, DBusMessageIter *arg)
 	} else {
 		LogChanges("Dbus set log level for %s from %s to %s.",
 			   LogComponents[component].comp_name,
-			   ReturnLevelInt(LogComponents[component].
-					  comp_log_level),
+			   ReturnLevelInt(component_log_level[component]),
 			   ReturnLevelInt(log_level));
-		LogComponents[component].comp_log_level = log_level;
+		component_log_level[component] = log_level;
 	}
 	return true;
 }
@@ -1922,7 +1845,6 @@ static struct gsh_dbus_prop component##_prop = { \
 HANDLE_PROP(COMPONENT_ALL);
 HANDLE_PROP(COMPONENT_LOG);
 HANDLE_PROP(COMPONENT_LOG_EMERG);
-HANDLE_PROP(COMPONENT_MEMALLOC);
 HANDLE_PROP(COMPONENT_MEMLEAKS);
 HANDLE_PROP(COMPONENT_FSAL);
 HANDLE_PROP(COMPONENT_NFSPROTO);
@@ -1931,27 +1853,19 @@ HANDLE_PROP(COMPONENT_EXPORT);
 HANDLE_PROP(COMPONENT_FILEHANDLE);
 HANDLE_PROP(COMPONENT_DISPATCH);
 HANDLE_PROP(COMPONENT_CACHE_INODE);
-HANDLE_PROP(COMPONENT_CACHE_INODE_GC);
 HANDLE_PROP(COMPONENT_CACHE_INODE_LRU);
 HANDLE_PROP(COMPONENT_HASHTABLE);
 HANDLE_PROP(COMPONENT_HASHTABLE_CACHE);
-HANDLE_PROP(COMPONENT_LRU);
 HANDLE_PROP(COMPONENT_DUPREQ);
-HANDLE_PROP(COMPONENT_RPCSEC_GSS);
 HANDLE_PROP(COMPONENT_INIT);
 HANDLE_PROP(COMPONENT_MAIN);
 HANDLE_PROP(COMPONENT_IDMAPPER);
 HANDLE_PROP(COMPONENT_NFS_READDIR);
 HANDLE_PROP(COMPONENT_NFS_V4_LOCK);
-HANDLE_PROP(COMPONENT_NFS_V4_XATTR);
-HANDLE_PROP(COMPONENT_NFS_V4_REFERRAL);
-HANDLE_PROP(COMPONENT_MEMCORRUPT);
 HANDLE_PROP(COMPONENT_CONFIG);
 HANDLE_PROP(COMPONENT_CLIENTID);
-HANDLE_PROP(COMPONENT_STDOUT);
 HANDLE_PROP(COMPONENT_SESSIONS);
 HANDLE_PROP(COMPONENT_PNFS);
-HANDLE_PROP(COMPONENT_RPC_CACHE);
 HANDLE_PROP(COMPONENT_RW_LOCK);
 HANDLE_PROP(COMPONENT_NLM);
 HANDLE_PROP(COMPONENT_RPC);
@@ -1968,7 +1882,6 @@ static struct gsh_dbus_prop *log_props[] = {
 	LOG_PROPERTY_ITEM(COMPONENT_ALL),
 	LOG_PROPERTY_ITEM(COMPONENT_LOG),
 	LOG_PROPERTY_ITEM(COMPONENT_LOG_EMERG),
-	LOG_PROPERTY_ITEM(COMPONENT_MEMALLOC),
 	LOG_PROPERTY_ITEM(COMPONENT_MEMLEAKS),
 	LOG_PROPERTY_ITEM(COMPONENT_FSAL),
 	LOG_PROPERTY_ITEM(COMPONENT_NFSPROTO),
@@ -1977,27 +1890,19 @@ static struct gsh_dbus_prop *log_props[] = {
 	LOG_PROPERTY_ITEM(COMPONENT_FILEHANDLE),
 	LOG_PROPERTY_ITEM(COMPONENT_DISPATCH),
 	LOG_PROPERTY_ITEM(COMPONENT_CACHE_INODE),
-	LOG_PROPERTY_ITEM(COMPONENT_CACHE_INODE_GC),
 	LOG_PROPERTY_ITEM(COMPONENT_CACHE_INODE_LRU),
 	LOG_PROPERTY_ITEM(COMPONENT_HASHTABLE),
 	LOG_PROPERTY_ITEM(COMPONENT_HASHTABLE_CACHE),
-	LOG_PROPERTY_ITEM(COMPONENT_LRU),
 	LOG_PROPERTY_ITEM(COMPONENT_DUPREQ),
-	LOG_PROPERTY_ITEM(COMPONENT_RPCSEC_GSS),
 	LOG_PROPERTY_ITEM(COMPONENT_INIT),
 	LOG_PROPERTY_ITEM(COMPONENT_MAIN),
 	LOG_PROPERTY_ITEM(COMPONENT_IDMAPPER),
 	LOG_PROPERTY_ITEM(COMPONENT_NFS_READDIR),
 	LOG_PROPERTY_ITEM(COMPONENT_NFS_V4_LOCK),
-	LOG_PROPERTY_ITEM(COMPONENT_NFS_V4_XATTR),
-	LOG_PROPERTY_ITEM(COMPONENT_NFS_V4_REFERRAL),
-	LOG_PROPERTY_ITEM(COMPONENT_MEMCORRUPT),
 	LOG_PROPERTY_ITEM(COMPONENT_CONFIG),
 	LOG_PROPERTY_ITEM(COMPONENT_CLIENTID),
-	LOG_PROPERTY_ITEM(COMPONENT_STDOUT),
 	LOG_PROPERTY_ITEM(COMPONENT_SESSIONS),
 	LOG_PROPERTY_ITEM(COMPONENT_PNFS),
-	LOG_PROPERTY_ITEM(COMPONENT_RPC_CACHE),
 	LOG_PROPERTY_ITEM(COMPONENT_RW_LOCK),
 	LOG_PROPERTY_ITEM(COMPONENT_NLM),
 	LOG_PROPERTY_ITEM(COMPONENT_RPC),

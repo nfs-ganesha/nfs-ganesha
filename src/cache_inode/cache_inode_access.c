@@ -51,12 +51,12 @@
 
 #define LogDebugCIA(comp1, comp2, format, args...) \
 	do { \
-		if (unlikely(LogComponents[comp1].comp_log_level >= \
+		if (unlikely(component_log_level[comp1] >= \
 			     NIV_FULL_DEBUG) || \
-		    unlikely(LogComponents[comp2].comp_log_level >= \
+		    unlikely(component_log_level[comp2] >= \
 			     NIV_DEBUG)) { \
 			log_components_t component = \
-				LogComponents[comp1].comp_log_level >= \
+				component_log_level[comp1] >= \
 				NIV_DEBUG ? comp1 : comp2; \
 			DisplayLogComponentLevel( \
 				component, \
