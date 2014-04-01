@@ -319,7 +319,8 @@ static nfsstat4 create_ds_handle(struct fsal_export *const exp_hdl,
  * default case is not supported
  */
 
-static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
+static fsal_status_t get_dynamic_info(struct fsal_obj_handle *obj_hdl,
+				      struct fsal_export *exp_hdl,
 				      const struct req_op_context *opctx,
 				      fsal_dynamicfsinfo_t *infop)
 {

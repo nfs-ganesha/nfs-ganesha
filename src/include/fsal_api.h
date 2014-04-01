@@ -790,13 +790,15 @@ struct export_ops {
  * for a filesystem.  See @c fsal_dynamicinfo_t for details of what to
  * fill out.
  *
+ * @param[in]  obj_hdl Directory
  * @param[in]  exp_hdl Export handle to interrogate
  * @param[in]  opctx   Request context (user creds, client address)
  * @param[out] info    Buffer to fill with information
  *
  * @retval FSAL status.
  */
-	 fsal_status_t(*get_fs_dynamic_info) (struct fsal_export *exp_hdl,
+	 fsal_status_t(*get_fs_dynamic_info) (struct fsal_obj_handle *obj_hdl,
+	 				      struct fsal_export *exp_hdl,
 					      const struct req_op_context *
 					      opctx,
 					      fsal_dynamicfsinfo_t *info);

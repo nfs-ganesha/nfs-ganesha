@@ -89,6 +89,7 @@ struct flock
 #define OPENHANDLE_REOPEN_BY_FD   140
 #define OPENHANDLE_FADVISE_BY_FD  141
 #define OPENHANDLE_SEEK_BY_FD     142
+#define OPENHANDLE_STATFS_BY_FH   143
 #define OPENHANDLE_TRACE_ME       150
 #define OPENHANDLE_QUOTA          151
 
@@ -516,6 +517,13 @@ struct fsync_arg
   uint64_t offset;
   uint64_t length;
   uint32_t *verifier4;
+};
+
+struct statfs_arg
+{
+  int mountdirfd;
+  struct gpfs_file_handle *handle;
+  struct statfs *buf;
 };
 
 struct stat_arg

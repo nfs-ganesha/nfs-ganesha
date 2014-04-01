@@ -38,7 +38,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <mntent.h>
-#include <sys/statvfs.h>
+#include <sys/statfs.h>
 #include <sys/quota.h>
 #include "nlm_list.h"
 #include "fsal_internal.h"
@@ -117,37 +117,37 @@ static fsal_status_t release(struct fsal_export *exp_hdl)
 	return fsalstat(fsal_error, retval);
 }
 
-static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
+static fsal_status_t get_dynamic_info(struct fsal_obj_handle *obj_hdl,
+				      struct fsal_export *exp_hdl,
 				      const struct req_op_context *opctx,
 				      fsal_dynamicfsinfo_t *infop)
 {
+	fsal_status_t status;
 	struct gpfs_fsal_export *myself;
-	struct statvfs buffstatgpfs;
+	struct statfs buffstatgpfs;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
-	int retval = 0;
 
 	if (!infop) {
 		fsal_error = ERR_FSAL_FAULT;
 		goto out;
 	}
 	myself = container_of(exp_hdl, struct gpfs_fsal_export, export);
-	retval = fstatvfs(myself->root_fd, &buffstatgpfs);
-	if (retval < 0) {
-		fsal_error = posix2fsal_error(errno);
-		retval = errno;
-		goto out;
-	}
+
+	status = GPFSFSAL_statfs(myself->root_fd, obj_hdl, &buffstatgpfs);
+	if (FSAL_IS_ERROR(status))
+		return status;
+
 	infop->total_bytes = buffstatgpfs.f_frsize * buffstatgpfs.f_blocks;
 	infop->free_bytes = buffstatgpfs.f_frsize * buffstatgpfs.f_bfree;
 	infop->avail_bytes = buffstatgpfs.f_frsize * buffstatgpfs.f_bavail;
 	infop->total_files = buffstatgpfs.f_files;
 	infop->free_files = buffstatgpfs.f_ffree;
-	infop->avail_files = buffstatgpfs.f_favail;
+	infop->avail_files = buffstatgpfs.f_ffree;
 	infop->time_delta.tv_sec = 1;
 	infop->time_delta.tv_nsec = 0;
 
  out:
-	return fsalstat(fsal_error, retval);
+	return fsalstat(fsal_error, 0);
 }
 
 static bool fs_supports(struct fsal_export *exp_hdl,

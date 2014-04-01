@@ -100,6 +100,39 @@ fsal_status_t GPFSFSAL_getattrs(struct fsal_export *export,	/* IN */
 }
 
 /**
+ * GPFSFSAL_statfs:
+ * Get fs attributes for the object specified by its filehandle.
+ *
+ * \return Major error codes :
+ *        - ERR_FSAL_NO_ERROR     (no error)
+ *        - Another error code if an error occured.
+ */
+fsal_status_t GPFSFSAL_statfs(int mountdirfd,			/* IN */
+			      struct fsal_obj_handle *obj_hdl,   /* IN */
+			      struct statfs *buf)                /* OUT */
+{
+	int rc;
+	struct statfs_arg sarg;
+	struct gpfs_fsal_obj_handle *myself;
+
+	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
+
+	sarg.handle = myself->handle;
+	sarg.mountdirfd = mountdirfd;
+	sarg.buf = buf;
+
+	rc = gpfs_ganesha(OPENHANDLE_STATFS_BY_FH, &sarg);
+
+	LogFullDebug(COMPONENT_FSAL,
+		     "OPENHANDLE_STATFS_BY_FH returned: rc %d", rc);
+
+	if (rc < 0)
+		return fsalstat(posix2fsal_error(errno), errno);
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
+/**
  * GPFSFSAL_setattrs:
  * Set attributes for the object specified by its filehandle.
  *

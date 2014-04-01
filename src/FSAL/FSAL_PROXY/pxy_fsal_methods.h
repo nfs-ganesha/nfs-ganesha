@@ -108,7 +108,8 @@ fsal_status_t pxy_create_export(struct fsal_module *fsal_hdl,
 				const struct fsal_up_vector *up_ops,
 				struct fsal_export **export);
 
-fsal_status_t pxy_get_dynamic_info(struct fsal_export *,
+fsal_status_t pxy_get_dynamic_info(struct fsal_obj_handle *,
+				   struct fsal_export *,
 				   const struct req_op_context *,
 				   fsal_dynamicfsinfo_t *);
 

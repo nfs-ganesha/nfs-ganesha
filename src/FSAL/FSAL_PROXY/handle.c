@@ -2191,7 +2191,8 @@ fsal_status_t pxy_create_handle(struct fsal_export *exp_hdl,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-fsal_status_t pxy_get_dynamic_info(struct fsal_export *exp_hdl,
+fsal_status_t pxy_get_dynamic_info(struct fsal_obj_handle *obj_hdl,
+				   struct fsal_export *exp_hdl,
 				   const struct req_op_context *opctx,
 				   fsal_dynamicfsinfo_t *infop)
 {
