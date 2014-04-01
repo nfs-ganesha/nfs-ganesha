@@ -1351,6 +1351,9 @@ static int BuildExportEntry(config_item_t        block,
             {
               continue;
             }
+
+          p_perms->options |= EXPORT_OPTION_NETBIOS_NAME;
+
           parseAccessParam(var_name, var_value, p_access_list,
                            EXPORT_OPTION_NETBIOS_NAME,
                            label);
