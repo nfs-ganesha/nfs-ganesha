@@ -394,9 +394,6 @@ int convert_opaque_value_max_for_dir(struct display_buffer * dspbuf,
   if(len == 0)
     return 0;
 
-  /* Display the length of the value. */
-  b_left = display_printf(dspbuf, "(%d:", len);
-
   if(b_left <= 0)
     return 0;
 
@@ -424,7 +421,7 @@ int convert_opaque_value_max_for_dir(struct display_buffer * dspbuf,
   if(b_left <= 0)
     return 0;
 
-  return display_cat(dspbuf, ")");
+  return b_left;
 }
 
 /**

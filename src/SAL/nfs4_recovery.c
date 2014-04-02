@@ -186,21 +186,25 @@ nfs4_create_clid_name(nfs_client_record_t * cl_recp,
         struct sockaddr             *local_addr_ptr;
         sockaddr_t                   local_addr;
         socklen_t                    addr_len;
-	int                          total_len;
+        int                          total_len;
+        char                         cidstr_len[10];
         struct display_buffer       dspbuf = {sizeof(cidstr), cidstr, cidstr};
 
         /* hold both long form clientid and IP */
         if (convert_opaque_value_max_for_dir(&dspbuf, 
 				cl_recp->cr_client_val, cl_recp->cr_client_val_len, PATH_MAX) > 0) {
-                total_len = strlen(cidstr) + strlen(data->pworker->hostaddr_str) + 2;
+                /* convert_opaque_value_max_for_dir does not prefix 
+                * the "(<length>:". So we need to do it here */
+                sprintf(cidstr_len, "%ld", strlen(cidstr));
+                total_len = strlen(cidstr) + strlen(data->pworker->hostaddr_str) + 5 + strlen(cidstr_len);
                 pclientid->cid_recov_dir = gsh_malloc(total_len);
                 if (pclientid->cid_recov_dir == NULL) {
                         LogEvent(COMPONENT_CLIENTID, "Mem_Alloc FAILED");
                         return;
                 }
 		memset(pclientid->cid_recov_dir, 0, total_len);
-                (void) snprintf(pclientid->cid_recov_dir, total_len, "%s-%s",
-                        data->pworker->hostaddr_str, cidstr);
+                (void) snprintf(pclientid->cid_recov_dir, total_len, "%s-(%s:%s)",
+                        data->pworker->hostaddr_str, cidstr_len, cidstr);
 	}
 
         local_addr_ptr = (struct sockaddr *)&local_addr;
