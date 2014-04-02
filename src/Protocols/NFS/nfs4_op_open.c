@@ -266,7 +266,8 @@ static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t *data,
 		state_status = state_share_add(data->current_entry,
 					       data->req_ctx,
 					       owner,
-					       file_state);
+					       file_state,
+					       (openflags & FSAL_O_RECLAIM));
 
 		if (state_status != STATE_SUCCESS) {
 			cache_status =
@@ -288,10 +289,11 @@ static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t *data,
 			LogFullDebug(COMPONENT_STATE,
 				     "Update existing share state");
 			state_status = state_share_upgrade(data->req_ctx,
-							   data->current_entry,
-							   &candidate_data,
-							   owner,
-							   file_state);
+						   data->current_entry,
+						   &candidate_data,
+						   owner,
+						   file_state,
+						   (openflags & FSAL_O_RECLAIM));
 
 			if (state_status != STATE_SUCCESS) {
 				cache_status =
@@ -391,7 +393,7 @@ static nfsstat4 open4_validate_claim(compound_data_t *data,
 		if (data->minorversion == 0)
 			status = NFS4ERR_NOTSUPP;
 
-		if (nfs_in_grace())
+		if (!fsal_grace() && nfs_in_grace())
 			status = NFS4ERR_GRACE;
 		break;
 
@@ -1267,6 +1269,9 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (arg_OPEN4->share_access & OPEN4_SHARE_ACCESS_WRITE)
 		openflags = FSAL_O_RDWR;
+
+	if (arg_OPEN4->claim.claim)
+		openflags = FSAL_O_RECLAIM;
 
 	PTHREAD_RWLOCK_wrlock(&data->current_entry->state_lock);
 

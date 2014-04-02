@@ -164,6 +164,8 @@ const char *state_err_str(state_status_t err)
 		return "STATE_TOOSMALL";
 	case STATE_XDEV:
 		return "STATE_XDEV";
+	case STATE_IN_GRACE:
+		return "STATE_IN_GRACE";
 	}
 	return "unknown";
 }
@@ -265,6 +267,8 @@ state_status_t cache_inode_status_to_state_status(cache_inode_status_t status)
 		return STATE_TOOSMALL;
 	case CACHE_INODE_FSAL_XDEV:
 		return STATE_XDEV;
+	case CACHE_INODE_IN_GRACE:
+		return STATE_IN_GRACE;
 	}
 	return STATE_CACHE_INODE_ERR;
 }
@@ -354,6 +358,9 @@ state_status_t state_error_convert(fsal_status_t fsal_status)
 
 	case ERR_FSAL_BLOCKED:
 		return STATE_LOCK_BLOCKED;
+
+	case ERR_FSAL_IN_GRACE:
+		return STATE_IN_GRACE;
 
 	case ERR_FSAL_DQUOT:
 	case ERR_FSAL_NAMETOOLONG:
@@ -536,6 +543,10 @@ nfsstat4 nfs4_Errno_state(state_status_t error)
 		nfserror = NFS4ERR_TOOSMALL;
 		break;
 
+	case STATE_IN_GRACE:
+		nfserror = NFS4ERR_GRACE;
+		break;
+
 	case STATE_XDEV:
 		nfserror = NFS4ERR_XDEV;
 		break;
@@ -687,6 +698,10 @@ nfsstat3 nfs3_Errno_state(state_status_t error)
 
 	case STATE_XDEV:
 		nfserror = NFS3ERR_XDEV;
+		break;
+
+	case STATE_IN_GRACE:
+		nfserror = NFS3ERR_JUKEBOX;
 		break;
 
 	case STATE_CACHE_INODE_ERR:

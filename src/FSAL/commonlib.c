@@ -362,6 +362,8 @@ const char *msg_fsal_err(fsal_errors_t fsal_err)
 		return "File Open";
 	case ERR_FSAL_UNION_NOTSUPP:
 		return "Union Not Supported";
+	case ERR_FSAL_IN_GRACE:
+		return "Server in Grace";
 	}
 
 	return "Unknown FSAL error";

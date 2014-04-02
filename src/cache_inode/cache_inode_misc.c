@@ -151,6 +151,8 @@ cache_inode_err_str(cache_inode_status_t err)
 		return "CACHE_INODE_FSAL_SHARE_DENIED";
 	case CACHE_INODE_BADNAME:
 		return "CACHE_INODE_BADNAME";
+	case CACHE_INODE_IN_GRACE:
+		return "CACHE_INODE_IN_GRACE";
 	case CACHE_INODE_CROSS_JUNCTION:
 		return "CACHE_INODE_CROSS_JUNCTION";
 	}
@@ -725,6 +727,9 @@ cache_inode_error_convert(fsal_status_t fsal_status)
 
 	case ERR_FSAL_SHARE_DENIED:
 		return CACHE_INODE_FSAL_SHARE_DENIED;
+
+	case ERR_FSAL_IN_GRACE:
+		return CACHE_INODE_IN_GRACE;
 
 	case ERR_FSAL_BLOCKED:
 	case ERR_FSAL_INTERRUPT:

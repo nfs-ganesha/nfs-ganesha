@@ -561,6 +561,7 @@ typedef uint16_t fsal_openflags_t;
 						     * so that FSAL_O_RDWR can
 						     * be used as a mask */
 #define FSAL_O_SYNC     0x0004	/* sync */
+#define FSAL_O_RECLAIM  0x0008	/* open reclaim */
 
 /** File system static info. */
 
@@ -686,6 +687,7 @@ typedef enum fsal_errors_t {
 	ERR_FSAL_TIMEOUT = 20015,
 	ERR_FSAL_FILE_OPEN = 10046,
 	ERR_FSAL_UNION_NOTSUPP = 10094,
+	ERR_FSAL_IN_GRACE = 10095,
 } fsal_errors_t;
 
 /**
@@ -767,11 +769,13 @@ typedef struct fsal_lock_param_t {
 	fsal_lock_t lock_type;
 	uint64_t lock_start;
 	uint64_t lock_length;
+	bool lock_reclaim;
 } fsal_lock_param_t;
 
 typedef struct fsal_share_param_t {
 	uint32_t share_access;
 	uint32_t share_deny;
+	bool share_reclaim;
 } fsal_share_param_t;
 
 #endif				/* _FSAL_TYPES_H */

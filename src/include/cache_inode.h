@@ -470,6 +470,8 @@ static const uint32_t CACHE_INODE_FLAG_CONTENT_HAVE = 0x20;
 static const uint32_t CACHE_INODE_FLAG_REALLYCLOSE = 0x80;
 /** File can't be pinned, so close need not check. */
 static const uint32_t CACHE_INODE_FLAG_NOT_PINNED = 0x100;
+/** Open for reclaim. */
+static const uint32_t CACHE_INODE_FLAG_RECLAIM = 0x200;
 
 /**
  * Flags to cache_inode_invalidate
@@ -528,6 +530,7 @@ typedef enum cache_inode_status_t {
 	CACHE_INODE_BADNAME = 42,
 	CACHE_INODE_UNION_NOTSUPP = 43,
 	CACHE_INODE_CROSS_JUNCTION = 44,
+	CACHE_INODE_IN_GRACE = 45,
 } cache_inode_status_t;
 
 /**

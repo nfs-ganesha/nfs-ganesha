@@ -185,11 +185,14 @@ struct glock
   struct flock flock;
 };
 #define GPFS_F_CANCELLK (1024 + 5)   /* Maps to Linux F_CANCELLK */
+#define FL_RECLAIM 4
+#define EGRACE 140
 
 struct set_get_lock_arg
 {
   int mountdirfd;
   struct glock *lock;
+  int reclaim;
 };
 
 struct open_share_arg

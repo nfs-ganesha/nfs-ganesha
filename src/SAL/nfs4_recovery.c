@@ -140,6 +140,17 @@ int nfs_in_grace(void)
 }
 
 /**
+ * @brief Check if FSAL will handle grace period
+ *
+ * @retval true if so.
+ * @retval false if not.
+ */
+int fsal_grace(void)
+{
+	return (nfs_param.nfsv4_param.fsal_grace);
+}
+
+/**
  * @brief generate a name that identifies this client
  *
  * This name will be used to know that a client was talking to the

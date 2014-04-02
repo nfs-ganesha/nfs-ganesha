@@ -590,7 +590,7 @@ state_status_t state_share_add(cache_entry_t *entry,
 			       struct req_op_context *req_ctx,
 			       state_owner_t *owner,
 			       /* state that holds share bits to be added */
-			       state_t *state);
+			       state_t *state, bool reclaim);
 
 state_status_t state_share_remove(cache_entry_t *entry,
 				  struct req_op_context *req_ctx,
@@ -605,7 +605,7 @@ state_status_t state_share_upgrade(struct req_op_context *req_ctx,
 				   state_data_t *state_data,
 				   state_owner_t *owner,
 				   /* state that holds current share bits */
-				   state_t *state);
+				   state_t *state, bool reclaim);
 
 state_status_t state_share_downgrade(struct req_op_context *req_ctx,
 				     cache_entry_t *entry,
@@ -629,7 +629,8 @@ state_status_t state_share_anonymous_io_start(cache_entry_t *entry,
 void state_share_anonymous_io_done(cache_entry_t *entry, int share_access);
 
 state_status_t state_nlm_share(cache_entry_t *, struct req_op_context *,
-			       exportlist_t *, int, int, state_owner_t *);
+			       exportlist_t *, int, int, state_owner_t *,
+			       bool);
 
 state_status_t state_nlm_unshare(cache_entry_t *entry,
 				 struct req_op_context *req_ctx,
@@ -678,6 +679,7 @@ void process_blocked_lock_upcall(state_block_data_t *block_data);
 void nfs4_init_grace(void);
 void nfs4_start_grace(nfs_grace_start_t *gsp);
 int nfs_in_grace(void);
+int fsal_grace(void);
 void nfs4_create_clid_name(nfs_client_record_t *, nfs_client_id_t *,
 			   struct svc_req *);
 void nfs4_add_clid(nfs_client_id_t *);

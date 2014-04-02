@@ -386,7 +386,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	/* Do grace period checking */
-	if (nfs_in_grace() && !arg_LOCK4->reclaim) {
+	if (!fsal_grace() && nfs_in_grace() && !arg_LOCK4->reclaim) {
 		LogLock(COMPONENT_NFS_V4_LOCK, NIV_DEBUG,
 			"LOCK failed, non-reclaim while in grace",
 			data->current_entry, lock_owner, &lock_desc);
@@ -394,7 +394,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 		goto out;
 	}
 
-	if (nfs_in_grace()
+	if (!fsal_grace() && nfs_in_grace()
 	    && arg_LOCK4->reclaim
 	    && !clientid->cid_allow_reclaim) {
 		LogLock(COMPONENT_NFS_V4_LOCK, NIV_DEBUG,
@@ -404,7 +404,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 		goto out;
 	}
 
-	if (!nfs_in_grace() && arg_LOCK4->reclaim) {
+	if (!fsal_grace() && !nfs_in_grace() && arg_LOCK4->reclaim) {
 		LogLock(COMPONENT_NFS_V4_LOCK, NIV_DEBUG,
 			"LOCK failed, reclaim while not in grace",
 			data->current_entry, lock_owner, &lock_desc);

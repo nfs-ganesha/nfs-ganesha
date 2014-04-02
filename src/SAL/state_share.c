@@ -113,7 +113,7 @@ static state_status_t do_share_op(cache_entry_t *entry,
 state_status_t state_share_add(cache_entry_t *entry,
 			       struct req_op_context *req_ctx,
 			       state_owner_t *owner,
-			       state_t *state)
+			       state_t *state, bool reclaim)
 {
 	state_status_t status = STATE_SUCCESS;
 	unsigned int old_entry_share_access = 0;
@@ -161,6 +161,7 @@ state_status_t state_share_add(cache_entry_t *entry,
 		/* Try to push to FSAL. */
 		share_param.share_access = new_entry_share_access;
 		share_param.share_deny = new_entry_share_deny;
+		share_param.share_reclaim = reclaim;
 
 		status = do_share_op(entry, req_ctx, owner, &share_param);
 
@@ -235,6 +236,7 @@ state_status_t state_share_remove(cache_entry_t *entry,
 		/* Try to push to FSAL. */
 		share_param.share_access = new_entry_share_access;
 		share_param.share_deny = new_entry_share_deny;
+		share_param.share_reclaim = false;
 
 		status = do_share_op(entry, req_ctx, owner, &share_param);
 
@@ -272,7 +274,8 @@ state_status_t state_share_remove(cache_entry_t *entry,
 state_status_t state_share_upgrade(struct req_op_context *req_ctx,
 				   cache_entry_t *entry,
 				   state_data_t *state_data,
-				   state_owner_t *owner, state_t *state)
+				   state_owner_t *owner, state_t *state,
+				   bool reclaim)
 {
 	state_status_t status = STATE_SUCCESS;
 	unsigned int old_entry_share_access = 0;
@@ -324,6 +327,7 @@ state_status_t state_share_upgrade(struct req_op_context *req_ctx,
 		/* Try to push to FSAL. */
 		share_param.share_access = new_entry_share_access;
 		share_param.share_deny = new_entry_share_deny;
+		share_param.share_reclaim = reclaim;
 
 		status = do_share_op(entry, req_ctx, owner, &share_param);
 
@@ -408,6 +412,7 @@ state_status_t state_share_downgrade(struct req_op_context *req_ctx,
 		/* Try to push to FSAL. */
 		share_param.share_access = new_entry_share_access;
 		share_param.share_deny = new_entry_share_deny;
+		share_param.share_reclaim = false;
 
 		status = do_share_op(entry, req_ctx, owner, &share_param);
 
@@ -685,7 +690,8 @@ void state_share_anonymous_io_done(cache_entry_t *entry, int share_access)
 state_status_t state_nlm_share(cache_entry_t *entry,
 			       struct req_op_context *req_ctx,
 			       exportlist_t *export, int share_access,
-			       int share_deny, state_owner_t *owner)
+			       int share_deny, state_owner_t *owner,
+			       bool reclaim)
 {
 	unsigned int old_entry_share_access;
 	unsigned int old_entry_share_deny;
@@ -694,6 +700,7 @@ state_status_t state_nlm_share(cache_entry_t *entry,
 	fsal_share_param_t share_param;
 	state_nlm_share_t *nlm_share;
 	cache_inode_status_t cache_status;
+	fsal_openflags_t openflags;
 	state_status_t status = 0;
 
 	cache_status = cache_inode_inc_pin_ref(entry);
@@ -704,7 +711,10 @@ state_status_t state_nlm_share(cache_entry_t *entry,
 		return status;
 	}
 
-	cache_status = cache_inode_open(entry, FSAL_O_RDWR, req_ctx, 0);
+	openflags = FSAL_O_RDWR;
+	if (reclaim)
+		openflags |= FSAL_O_RECLAIM;
+	cache_status = cache_inode_open(entry, openflags, req_ctx, 0);
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		cache_inode_dec_pin_ref(entry, true);
 
@@ -811,6 +821,7 @@ state_status_t state_nlm_share(cache_entry_t *entry,
 		/* Try to push to FSAL. */
 		share_param.share_access = new_entry_share_access;
 		share_param.share_deny = new_entry_share_deny;
+		share_param.share_reclaim = reclaim;
 
 		status = do_share_op(entry, req_ctx, owner, &share_param);
 
@@ -965,6 +976,7 @@ state_status_t state_nlm_unshare(cache_entry_t *entry,
 			/* Try to push to FSAL. */
 			share_param.share_access = new_entry_share_access;
 			share_param.share_deny = new_entry_share_deny;
+			share_param.share_reclaim = false;
 
 			status = do_share_op(entry, req_ctx, owner,
 					     &share_param);

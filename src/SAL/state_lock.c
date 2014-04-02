@@ -2448,7 +2448,7 @@ state_status_t state_lock(cache_entry_t *entry, exportlist_t *export,
 		return status;
 	}
 
-	cache_status = cache_inode_open(entry, FSAL_O_RDWR, req_ctx, 0);
+	cache_status = cache_inode_open(entry, FSAL_O_RDWR, req_ctx, (lock->lock_reclaim) ? CACHE_INODE_FLAG_RECLAIM : 0);
 
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		cache_inode_dec_pin_ref(entry, false);

@@ -124,6 +124,7 @@ fsal_status_t GPFSFSAL_lock_op(struct fsal_export *export,
 	glock_args.lock_owner = p_owner;
 	gpfs_sg_arg.mountdirfd = gpfs_get_root_fd(export);
 	gpfs_sg_arg.lock = &glock_args;
+	gpfs_sg_arg.reclaim = request_lock.lock_reclaim;
 
 	errno = 0;
 
@@ -164,6 +165,8 @@ fsal_status_t GPFSFSAL_lock_op(struct fsal_export *export,
 			LogFullDebug(COMPONENT_FSAL,
 				     "GPFS lock operation failed error %d %d (%s)",
 				     retval, errsv, strerror(errsv));
+			if (errsv == EGRACE)
+				return fsalstat(ERR_FSAL_IN_GRACE, 0);
 			return fsalstat(posix2fsal_error(errsv), errsv);
 		}
 	}

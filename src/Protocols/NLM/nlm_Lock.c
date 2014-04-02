@@ -93,13 +93,15 @@ int nlm4_Lock(nfs_arg_t *args, exportlist_t *export,
 	}
 
 	/* allow only reclaim lock request during recovery and visa versa */
-	if ((grace && !arg->reclaim) || (!grace && arg->reclaim)) {
+	if (!fsal_grace() &&
+	    ((grace && !arg->reclaim) || (!grace && arg->reclaim))) {
 		res->res_nlm4.stat.stat = NLM4_DENIED_GRACE_PERIOD;
 		LogDebug(COMPONENT_NLM,
 			 "REQUEST RESULT: %s %s",
 			 proc_name, lock_result_str(res->res_nlm4.stat.stat));
 		return NFS_REQ_OK;
 	}
+	lock.lock_reclaim = arg->reclaim;
 
 	rc = nlm_process_parameters(req,
 				    arg->exclusive,
@@ -155,6 +157,12 @@ int nlm4_Lock(nfs_arg_t *args, exportlist_t *export,
 		/* If we didn't block, release the block data */
 		if (state_status != STATE_LOCK_BLOCKED && pblock_data != NULL)
 			gsh_free(pblock_data);
+
+		if (state_status == STATE_IN_GRACE) {
+			res->res_nlm4.stat.stat = NLM4_DENIED_GRACE_PERIOD;
+			return NFS_REQ_OK;
+		}
+
 	} else {
 		res->res_nlm4.stat.stat = NLM4_GRANTED;
 	}
