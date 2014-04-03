@@ -934,7 +934,7 @@ void free_rpc_call(rpc_call_t *call)
 static inline void RPC_CALL_HOOK(rpc_call_t *call, rpc_call_hook hook,
 				 void *arg, uint32_t flags)
 {
-	if (call)
+	if (call && call->call_hook)
 		call->call_hook(call, hook, arg, flags);
 }
 

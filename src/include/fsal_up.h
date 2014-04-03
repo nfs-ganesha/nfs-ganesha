@@ -289,5 +289,11 @@ cache_inode_status_t up_get(struct fsal_module *fsal,
 			    struct gsh_buffdesc *handle,
 			    cache_entry_t **entry);
 
+struct delegrecall_completion_ags {
+	cache_entry_t *entry;
+	nfs_client_id_t *clid;
+	state_lock_entry_t *sle_entry;
+};
+
 #endif /* FSAL_UP_H */
 /** @} */

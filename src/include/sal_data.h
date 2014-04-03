@@ -76,6 +76,16 @@
  */
 #define STATE_LOCK_OFFSET_EOF 0xFFFFFFFFFFFFFFFFLL
 
+/**
+ * @brief States of a delegation
+ *
+ * Different states a delegation can be in during its lifetime
+ */
+#define DELEG_GRANTED          0x00000001  /* Granted               */
+#define DELEG_RECALL_WIP       0x00000002  /* Recall in progress    */
+#define DELEG_REVOKED          0x00000004  /* Revoked               */
+#define DELEG_RETURNED         0x00000010  /* Delegation returned   */
+
 /* Forward references to types */
 typedef struct state_nfs4_owner_t state_nfs4_owner_t;
 typedef struct state_owner_t state_owner_t;
@@ -259,19 +269,26 @@ struct client_deleg_heuristics {
 	uint32_t tot_recalls;       /* total num of times client was asked to
 				       recall */
 	uint32_t failed_recalls;    /* times client failed to process recall */
+	uint32_t num_revokes;	    /* Num revokes for the client */
 };
 
 struct clientfile_deleg_heuristics {
 	struct nfs_client_id_t *clientid; /* client for this file. */
 	time_t last_delegation;           /* time of successful delegation */
-	uint32_t num_recalls;       /* total number of recalls on this file from
-				       this client
+	uint32_t num_revokes;		  /* number of revokes for this file */
+	uint32_t num_recalls;       /* total number of recalls on this
+				       file from this client
 				       badhandles + races + timeouts +
 				       aborts = tot number of failed recalls. */
-	uint32_t num_recall_badhandles;   /* num of badhandle replies */
 	uint32_t num_recall_races;        /* num of races detected */
 	uint32_t num_recall_timeouts;     /* num of recalls that timed out */
 	uint32_t num_recall_aborts;       /* num of recalls aborted */
+	time_t recall_success_time;       /* time when the client responsed
+					     NFS4_OK for a recall. */
+	time_t first_recall_time;       /* time of first recall attempt */
+	time_t last_write;               /* time when the last write was
+					     done by client. */
+
 };
 
 /**
@@ -296,6 +313,7 @@ typedef struct state_deleg__ {
 	state_t *sd_open_state;          /*  */
 	struct glist_head sd_deleg_list; /*  */
 	time_t grant_time;               /* time of successful delegation */
+	uint32_t deleg_state;
 	struct clientfile_deleg_heuristics clfile_stats;  /* client specific */
 } state_deleg_t;
 
@@ -641,7 +659,9 @@ struct nfs_client_id_t {
 			struct glist_head cb_session_list;
 		} v41;		/*< v4.1 callback information */
 	} cid_cb;		/*< Version specific callback information */
-	bool_t cb_chan_down;
+	bool_t cb_chan_down;    /* Callback channel state */
+	time_t first_path_down_resp_time;  /* Time when the server first sent
+					       NFS4ERR_CB_PATH_DOWN */
 	char cid_server_owner[MAXNAMLEN + 1];	/*< Server owner.
 						 * @note Why is this
 						 * stored per-client? */

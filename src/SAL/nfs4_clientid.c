@@ -542,6 +542,8 @@ nfs_client_id_t *create_client_id(clientid4 clientid,
 	client_rec->cid_client_addr = *client_addr;
 	client_rec->cid_credential = *credential;
 	client_rec->cid_minorversion = minorversion;
+	client_rec->cb_chan_down = TRUE;
+	client_rec->first_path_down_resp_time = 0;
 
 	/* need to init the list_head */
 	glist_init(&client_rec->cid_openowners);

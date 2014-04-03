@@ -56,7 +56,10 @@
 #include "err_inject.h"
 #endif
 
-/* Arbitrary string buffer lengths */
+/* Delegation client cache limits */
+#define DELEG_SPACE_LIMIT_FILESZ 102400  /* just 100K, revisit? */
+#define DELEG_SPACE_LIMIT_BLOCKS 200
+
 #define XATTR_BUFFERSIZE 4096
 
 char *host_name;

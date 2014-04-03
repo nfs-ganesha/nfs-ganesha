@@ -67,6 +67,8 @@ bool different_owners(state_owner_t *owner1, state_owner_t *owner2);
 int DisplayOwner(state_owner_t *owner, char *buf);
 void inc_state_owner_ref(state_owner_t *owner);
 void dec_state_owner_ref(state_owner_t *owner);
+void lock_entry_inc_ref(state_lock_entry_t *lock_entry);
+void lock_entry_dec_ref(state_lock_entry_t *lock_entry);
 
 state_owner_t *get_state_owner(care_t care, state_owner_t *pkey,
 			       state_owner_init_t init_owner, bool_t *isnew);
@@ -581,6 +583,7 @@ void get_deleg_perm(cache_entry_t *entry, nfsace4 *permissions,
 		    open_delegation_type4 type);
 bool update_delegation_stats(cache_entry_t *entry, state_t *state);
 state_status_t delegrecall(cache_entry_t *entry, bool rwlocked);
+state_status_t deleg_revoke(state_lock_entry_t *found_entry, bool rwlocked);
 
 #ifdef DEBUG_SAL
 void dump_all_states(void);

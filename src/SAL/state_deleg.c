@@ -75,14 +75,18 @@ void init_new_deleg_state(state_data_t *deleg_state, state_t *open_state,
 	deleg_state->deleg.sd_open_state = open_state;
 	deleg_state->deleg.sd_type = sd_type;
 	deleg_state->deleg.grant_time = time(NULL);
+	deleg_state->deleg.deleg_state = DELEG_GRANTED;
 
 	clfile_entry->clientid = client;
 	clfile_entry->last_delegation = 0;
 	clfile_entry->num_recalls = 0;
-	clfile_entry->num_recall_badhandles = 0;
 	clfile_entry->num_recall_races = 0;
 	clfile_entry->num_recall_timeouts = 0;
 	clfile_entry->num_recall_aborts = 0;
+	clfile_entry->recall_success_time = 0;
+	clfile_entry->first_recall_time = 0;
+	clfile_entry->last_write = 0;
+
 }
 
 /**
@@ -297,4 +301,24 @@ void get_deleg_perm(cache_entry_t *entry, nfsace4 *permissions,
 	permissions->access_mask = 0;
 	permissions->who.utf8string_len = 0;
 	permissions->who.utf8string_val = NULL;
+}
+
+/**
+ * @brief Mark a delegation revoked
+ *
+ * Mark the delegation state revoked, further ops on this state should return
+ * NFS4ERR_REVOKED
+ *
+ * @param[in] deleg state lock entry.
+ * @param[in] flag to specify whether this thread already holds a lock on
+ * entry->state_lock
+ */
+state_status_t deleg_revoke(state_lock_entry_t *deleg_entry, bool rwlocked)
+{
+	/* dummy */
+	LogDebug(COMPONENT_NFS_V4, "Not really revoking the delegation");
+	pthread_mutex_lock(&deleg_entry->sle_mutex);
+	deleg_entry->sle_state->state_data.deleg.deleg_state = DELEG_REVOKED;
+	pthread_mutex_unlock(&deleg_entry->sle_mutex);
+	return STATE_SUCCESS;
 }
