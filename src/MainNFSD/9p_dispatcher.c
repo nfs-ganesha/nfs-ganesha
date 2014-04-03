@@ -349,8 +349,6 @@ void *_9p_socket_thread(void *Arg)
 	if (_9p_conn.client != NULL)
 		put_gsh_client(_9p_conn.client);
 
-
-	Log_FreeThreadContext();
 	pthread_exit(NULL);
 }				/* _9p_socket_thread */
 
