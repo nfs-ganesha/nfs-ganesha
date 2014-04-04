@@ -40,7 +40,6 @@
 #include <fcntl.h>
 #include "FSAL/fsal_commonlib.h"
 #include "vfs_methods.h"
-#include "fsal_handle_syscalls.h"
 
 /** vfs_open
  * called with appropriate locks taken at the cache inode level

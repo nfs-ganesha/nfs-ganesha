@@ -39,7 +39,6 @@
 #include <fcntl.h>
 #include "FSAL/fsal_commonlib.h"
 #include "pseudofs_methods.h"
-#include "fsal_handle_syscalls.h"
 
 /** pseudofs_open
  * called with appropriate locks taken at the cache inode level

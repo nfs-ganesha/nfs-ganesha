@@ -43,7 +43,6 @@
 #include "fsal_convert.h"
 #include "FSAL/fsal_commonlib.h"
 #include "FSAL/fsal_config.h"
-#include "fsal_handle_syscalls.h"
 #include "pseudofs_methods.h"
 
 /* helpers to/from other PSEUDO objects

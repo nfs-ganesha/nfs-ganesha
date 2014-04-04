@@ -45,7 +45,6 @@
 #include "fsal_convert.h"
 #include "FSAL/fsal_commonlib.h"
 #include "FSAL/fsal_config.h"
-#include "fsal_handle_syscalls.h"
 #include "nullfs_methods.h"
 
 /* helpers to/from other VFS objects
@@ -333,7 +332,7 @@ fsal_status_t nullfs_create_export(struct fsal_module *fsal_hdl,
 	memcpy(next_ops.ds_ops, (*export)->ds_ops, sizeof(struct fsal_ds_ops));
 	next_ops.up_ops = up_ops;
 
-/* 	End of tmp code */
+	/*	End of tmp code */
 
 	nullfs_export_ops_init((*export)->ops);
 	nullfs_handle_ops_init((*export)->obj_ops);

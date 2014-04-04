@@ -1,7 +1,6 @@
 /* NULLFS methods for handles
  */
 
-#include "fsal_handle_syscalls.h"
 struct nullfs_fsal_obj_handle;
 
 struct nullfs_file_handle {
