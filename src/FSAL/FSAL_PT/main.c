@@ -720,7 +720,7 @@ void *ptfsal_parallel_close_thread(void *args)
 	int index = *((int *)args);
 	char threadName[40];
 
-	snprintf(threadName, sizeof(threadName), "PT FSAL ParallelClose %d",
+	snprintf(threadName, sizeof(threadName), "PT PClose %d",
 		 index);
 	SetNameFunction(threadName);
 	FSI_TRACE(FSI_NOTICE, "Closing handle[%d]", index);

@@ -72,7 +72,7 @@ int ptfsal_closeHandle_attach_to_queues(void)
 
 void *ptfsal_closeHandle_listener_thread(void *args)
 {
-	SetNameFunction("PT FSAL CloseOnOpen Handler");
+	SetNameFunction("PT Cls Handler");
 
 	int rc = ptfsal_closeHandle_attach_to_queues();
 	if (rc == -1)
@@ -160,7 +160,7 @@ void ptfsal_close_timedout_handle_bkg(void)
 
 void *ptfsal_polling_closeHandler_thread(void *args)
 {
-	SetNameFunction("PT FSAL Polling Close");
+	SetNameFunction("PT Polling Cls");
 
 	g_poll_iterations = 1;
 	g_poll_for_timeouts = false;
