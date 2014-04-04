@@ -137,7 +137,8 @@ static fsal_status_t lustre_release(struct fsal_export *exp_hdl)
 	return fsalstat(fsal_error, retval);
 }
 
-static fsal_status_t lustre_get_dynamic_info(struct fsal_export *exp_hdl,
+static fsal_status_t lustre_get_dynamic_info(struct fsal_obj_handle *obj_hdl,
+					     struct fsal_export *exp_hdl,
 					     const struct req_op_context *opctx,
 					     fsal_dynamicfsinfo_t *infop)
 {

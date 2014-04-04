@@ -87,7 +87,8 @@ int nlm4_Share(nfs_arg_t *args, exportlist_t *export,
 	 * Note: NLM_SHARE is indicated to be non-monitored, however, it does
 	 * have a reclaim flag, so we will honor the reclaim flag if used.
 	 */
-	if ((grace && !arg->reclaim) || (!grace && arg->reclaim)) {
+	if (!fsal_grace() &&
+	    ((grace && !arg->reclaim) || (!grace && arg->reclaim))) {
 		res->res_nlm4share.stat = NLM4_DENIED_GRACE_PERIOD;
 
 		LogDebug(COMPONENT_NLM,
@@ -121,7 +122,8 @@ int nlm4_Share(nfs_arg_t *args, exportlist_t *export,
 				       export,
 				       arg->share.access,
 				       arg->share.mode,
-				       nlm_owner);
+				       nlm_owner,
+				       grace);
 
 	if (state_status != STATE_SUCCESS) {
 		res->res_nlm4share.stat =

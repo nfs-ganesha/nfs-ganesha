@@ -270,6 +270,8 @@ int nfs_read_krb5_conf(config_file_t in_config, nfs_krb5_parameter_t *pparam)
 #endif
 
 static struct config_item version4_params[] = {
+	CONF_ITEM_BOOL("FSAL_Grace", false,
+		       nfs_version4_parameter, fsal_grace),
 	CONF_ITEM_BOOL("Graceless", false,
 		       nfs_version4_parameter, graceless),
 	CONF_ITEM_UI32("Lease_Lifetime", 0, 120, LEASE_LIFETIME_DEFAULT,

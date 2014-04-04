@@ -325,7 +325,8 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
  * @return FSAL status.
  */
 
-static fsal_status_t get_fs_dynamic_info(struct fsal_export *export_pub,
+static fsal_status_t get_fs_dynamic_info(struct fsal_obj_handle *obj_hdl,
+					 struct fsal_export *export_pub,
 					 const struct req_op_context *opctx,
 					 fsal_dynamicfsinfo_t *info)
 {

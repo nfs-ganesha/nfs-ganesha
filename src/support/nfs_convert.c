@@ -608,6 +608,10 @@ nfsstat4 nfs4_Errno_verbose(cache_inode_status_t error, const char *where)
 		nfserror = NFS4ERR_SHARE_DENIED;
 		break;
 
+	case CACHE_INODE_IN_GRACE:
+		nfserror = NFS4ERR_GRACE;
+		break;
+
 	case CACHE_INODE_INCONSISTENT_ENTRY:
 	case CACHE_INODE_HASH_TABLE_ERROR:
 	case CACHE_INODE_ASYNC_POST_ERROR:
@@ -767,6 +771,10 @@ nfsstat3 nfs3_Errno_verbose(cache_inode_status_t error, const char *where)
 
 	case CACHE_INODE_FSAL_MLINK:
 		nfserror = NFS3ERR_MLINK;
+		break;
+
+	case CACHE_INODE_IN_GRACE:
+		nfserror = NFS3ERR_JUKEBOX;
 		break;
 
 	case CACHE_INODE_INCONSISTENT_ENTRY:
