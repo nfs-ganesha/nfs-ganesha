@@ -305,8 +305,8 @@ fsal_fsid_t posix2fsal_fsid(dev_t posix_devid)
 
 	fsal_fsid_t fsid;
 
-	fsid.major = posix_devid;
-	fsid.minor = 0;
+	fsid.major = major(posix_devid);
+	fsid.minor = minor(posix_devid);
 
 	return fsid;
 

@@ -66,13 +66,18 @@ struct global_export_perms export_opt = {
 		       EXPORT_OPTION_NFSV3 |
 		       EXPORT_OPTION_NFSV4 |
 		       EXPORT_OPTION_UDP |
-		       EXPORT_OPTION_TCP,
-	.def.set = UINT32_MAX
+		       EXPORT_OPTION_TCP |
+		       EXPORT_OPTION_NO_DELEGATIONS,
+	/* The only option not considered set is FSID */
+	.def.set = ~EXPORT_OPTION_FSID_SET
 };
 
 static void StrExportOptions(export_perms_t *p_perms, char *buffer)
 {
 	char *buf = buffer;
+
+	if ((p_perms->set & EXPORT_OPTION_FSID_SET) != 0)
+		buf += sprintf(buf, "FSID_SET ");
 
 	if ((p_perms->set & EXPORT_OPTION_SQUASH_TYPES) != 0) {
 		if ((p_perms->options & EXPORT_OPTION_ROOT) != 0)
@@ -615,7 +620,7 @@ static int fsal_commit(void *node, void *link_mem, void *self_struct)
 	 * validate maxread/write etc with fsal params */
 	if (exp->MaxRead > fsal_exp->ops->fs_maxread(fsal_exp) &&
 	    fsal_exp->ops->fs_maxread(fsal_exp) != 0) {
-		LogEvent(COMPONENT_CONFIG,
+		LogInfo(COMPONENT_CONFIG,
 			 "Readjusting MaxRead to FSAL, %" PRIu64 " -> %" PRIu32,
 			 exp->MaxRead,
 			 fsal_exp->ops->fs_maxread(fsal_exp));
@@ -623,7 +628,7 @@ static int fsal_commit(void *node, void *link_mem, void *self_struct)
 	}
 	if (exp->MaxWrite > fsal_exp->ops->fs_maxwrite(fsal_exp) &&
 	    fsal_exp->ops->fs_maxwrite(fsal_exp) != 0) {
-		LogEvent(COMPONENT_CONFIG,
+		LogInfo(COMPONENT_CONFIG,
 			 "Readjusting MaxWrite to FSAL, %" PRIu64 " -> %" PRIu32,
 			 exp->MaxWrite,
 			 fsal_exp->ops->fs_maxwrite(fsal_exp));
@@ -1424,6 +1429,9 @@ bool init_export_root(struct gsh_export *exp)
 			     0, 0, UNKNOWN_REQUEST);
 
 	/* Lookup for the FSAL Path */
+	LogFullDebug(COMPONENT_INIT,
+		     "About to lookup_path for ExportId=%u Path=%s",
+		     export->id, export->fullpath);
 	fsal_status =
 	    export->export_hdl->ops->lookup_path(export->export_hdl,
 						 &root_op_context.req_ctx,

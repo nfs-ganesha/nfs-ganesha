@@ -1428,69 +1428,56 @@ fsal_status_t vfs_lookup_path(struct fsal_export *exp_hdl,
 			      const struct req_op_context *opctx,
 			      const char *path, struct fsal_obj_handle **handle)
 {
-	int dir_fd;
+	int dir_fd = -1;
 	struct stat stat;
 	struct vfs_fsal_obj_handle *hdl;
-	char *basepart;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval = 0;
 	vfs_file_handle_t *fh = NULL;
 	vfs_alloc_handle(fh);
 
-	if (path == NULL || path[0] != '/' || strlen(path) > PATH_MAX
-	    || strlen(path) < 2) {
-		fsal_error = ERR_FSAL_INVAL;
-		goto errout;
-	}
-	basepart = rindex(path, '/');
-	if (basepart[1] == '\0') {
-		fsal_error = ERR_FSAL_INVAL;
-		goto errout;
-	}
-	if (basepart == path) {
-		dir_fd = open("/", O_RDONLY);
-	} else {
-		char *dirpart = alloca(basepart - path + 1);
+	*handle = NULL;	/* poison it */
 
-		memcpy(dirpart, path, basepart - path);
-		dirpart[basepart - path] = '\0';
-		dir_fd = open(dirpart, O_RDONLY, 0600);
-	}
+	dir_fd = open_dir_by_path_walk(-1, path, &stat);
+
 	if (dir_fd < 0) {
-		retval = errno;
-		fsal_error = posix2fsal_error(retval);
+		LogCrit(COMPONENT_FSAL,
+			"Could not open directory for path %s",
+			path);
+		retval = -dir_fd;
 		goto errout;
 	}
-	retval = fstat(dir_fd, &stat);
-	if (!S_ISDIR(stat.st_mode))	/* this had better be a DIR! */
-		goto fileerr;
-	basepart++;
-	retval = vfs_fsal_name_to_handle(exp_hdl, dir_fd, basepart, fh);
-	if (retval < 0)
-		goto fileerr;
 
-	/* what about the file? Do no symlink chasing here. */
-	retval = fstatat(dir_fd, basepart, &stat, AT_SYMLINK_NOFOLLOW);
-	if (retval < 0)
-		goto fileerr;
+	retval = vfs_fsal_fd_to_handle(exp_hdl, dir_fd, fh);
+
+	if (retval < 0) {
+		retval = errno;
+		LogCrit(COMPONENT_FSAL,
+			"Could not get handle for path %s, error %s",
+			path, strerror(retval));
+		goto errout;
+	}
 
 	/* allocate an obj_handle and fill it up */
-	hdl = alloc_handle(dir_fd, fh, &stat, NULL, basepart, exp_hdl);
-	close(dir_fd);
+	hdl = alloc_handle(-1, fh, &stat, NULL, "", exp_hdl);
+
 	if (hdl == NULL) {
-		fsal_error = ERR_FSAL_NOMEM;
-		*handle = NULL;	/* poison it */
+		retval = ENOMEM;
+		LogCrit(COMPONENT_FSAL,
+			"Could not allocate handle for path %s",
+			path);
 		goto errout;
 	}
+
+	close(dir_fd);
+
 	*handle = &hdl->obj_handle;
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
- fileerr:
-	retval = errno;
-	close(dir_fd);
-	fsal_error = posix2fsal_error(retval);
-
  errout:
+ 	if (dir_fd >= 0)
+		close(dir_fd);
+	fsal_error = posix2fsal_error(retval);
 	return fsalstat(fsal_error, retval);
 }
 

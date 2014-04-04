@@ -645,6 +645,45 @@ else(HAVE_LIBCAP)
   message(STATUS "Could not find capabilities library, disabling USE_CAPS")
 endif(HAVE_LIBCAP)
 
+# Check if we have libblkid and libuuid, will just be reported under one
+# flag USE_BLKID
+
+check_include_files("blkid/blkid.h" HAVE_LIBBLKID_H)
+find_library(LIBBLKID blkid)  # Management of Capablilities
+check_library_exists(
+	blkid
+	blkid_devno_to_devname
+	""
+	HAVE_LIBBLKID
+	)
+
+check_include_files("uuid/uuid.h" HAVE_LIBUUID_H)
+find_library(LIBUUID uuid)  # Management of Capablilities
+check_library_exists(
+	uuid
+	uuid_parse
+	""
+	HAVE_LIBUUID
+	)
+
+if(HAVE_LIBBLKID AND HAVE_LIBUUID AND HAVE_LIBBLKID_H AND HAVE_LIBUUID_H)
+  # we have all the libraries and include files to use libblkid and libuuid
+  set(SYSTEM_LIBRARIES ${SYSTEM_LIBRARIES} ${LIBBLKID} ${LIBUUID})
+  set(USE_BLKID ON)
+else(HAVE_LIBBLKID AND HAVE_LIBUUID AND HAVE_LIBBLKID_H AND HAVE_LIBUUID_H)
+  # we are missing something and can't use libblkid and libuuid
+  set(USE_BLKID OFF)
+  if(NOT HAVE_LIBBLKID)
+    message(STATUS "Could not find blkid library, disabling USE_BLKID")
+  elseif(NOT HAVE_LIBUUID)
+    message(STATUS "Could not find uuid library, disabling USE_BLKID")
+  elseif(NOT HAVE_LIBBLKID_H)
+    message(STATUS "Could not find blkid header files, disabling USE_BLKID")
+  else(NOT HAVE_LIBBLKID)
+    message(STATUS "Could not find uuid header files, disabling USE_BLKID")
+  endif(NOT HAVE_LIBBLKID)
+endif(HAVE_LIBBLKID AND HAVE_LIBUUID AND HAVE_LIBBLKID_H AND HAVE_LIBUUID_H)
+
 # check is daemon exists
 # I use check_library_exists there to be portab;e
 check_library_exists(
@@ -776,6 +815,7 @@ message(STATUS "USE_DBUS_STATS = ${USE_DBUS_STATS}")
 message(STATUS "USE_NFSIDMAP = ${USE_NFSIDMAP}")
 message(STATUS "ENABLE_ERROR_INJECTION = ${ENABLE_ERROR_INJECTION}")
 message(STATUS "USE_CAPS = ${USE_CAPS}")
+message(STATUS "USE_BLKID = ${USE_BLKID}")
 message(STATUS "STRICT_PACKAGE = ${STRICT_PACKAGE}")
 message(STATUS "DISTNAME_HAS_GIT_DATA = ${DISTNAME_HAS_GIT_DATA}" )
 message(STATUS "_MSPAC_SUPPORT = ${_MSPAC_SUPPORT}")

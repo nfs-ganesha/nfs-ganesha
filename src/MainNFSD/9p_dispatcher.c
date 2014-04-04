@@ -508,7 +508,7 @@ void *_9p_dispatcher_thread(void *Arg)
 {
 	int _9p_socket = -1;
 
-	SetNameFunction("_9p_dispatch_thr");
+	SetNameFunction("_9p_disp");
 
 	/* Calling dispatcher main loop */
 	LogInfo(COMPONENT_9P_DISPATCH, "Entering nfs/rpc dispatcher");

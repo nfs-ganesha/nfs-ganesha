@@ -1523,7 +1523,7 @@ int general_fridge_init(void)
 	frp.flavor = fridgethr_flavor_worker;
 	frp.deferment = fridgethr_defer_queue;
 
-	rc = fridgethr_init(&general_fridge, "General Use Fridge", &frp);
+	rc = fridgethr_init(&general_fridge, "Gen_Fridge", &frp);
 	if (rc != 0) {
 		LogMajor(COMPONENT_THREAD,
 			 "Unable to initialize general fridge, error code %d.",

@@ -382,7 +382,7 @@ void *_9p_rdma_dispatcher_thread(void *Arg)
 	/* mooshika stats:
 	 * trans_attr.stats_prefix + trans_attr.debug |= MSK_DEBUG_SPEED */
 
-	SetNameFunction("_9p_rdma_dispatch_thr");
+	SetNameFunction("_9p_rdma_disp");
 
 	/* Calling dispatcher main loop */
 	LogInfo(COMPONENT_9P_DISPATCH, "Entering 9P/RDMA dispatcher");

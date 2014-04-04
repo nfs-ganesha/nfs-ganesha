@@ -43,16 +43,22 @@
 #include "fsal.h"
 #include <libgen.h>		/* used for 'dirname' */
 #include <pthread.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <strings.h>
 #include <string.h>
+#include <fcntl.h>
 #include <sys/types.h>
 #ifdef HAVE_MNTENT_H
 #include <mntent.h>
 #endif
 #include <sys/statvfs.h>
+#include <sys/vfs.h>
 #include <os/quota.h>
 #include "nlm_list.h"
 #include "FSAL/fsal_commonlib.h"
 #include "fsal_private.h"
+#include "fsal_convert.h"
 
 /* fsal_module to fsal_export helpers
  */
@@ -419,6 +425,127 @@ void display_fsinfo(struct fsal_staticfsinfo_t *info)
 	LogDebug(COMPONENT_FSAL, "  share_support_owner  = %d  ",
 		 info->share_support_owner);
 	LogDebug(COMPONENT_FSAL, "}");
+}
+
+int open_dir_by_path_walk(int first_fd, const char *path, struct stat *stat)
+{
+	char *name, *rest, *p;
+	int fd = first_fd, len, rc, err;
+
+	/* Get length of the path */
+	len = strlen(path);
+
+	/* Strip terminating '/' by shrinking length */
+	while (path[len-1] == '/' && len > 1)
+		len--;
+
+	/* Allocate space for duplicate */
+	name = alloca(len + 1);
+
+	if (name == NULL) {
+		LogCrit(COMPONENT_FSAL,
+			"No memory for path duplicate of %s",
+			path);
+		return -ENOMEM;
+	}
+
+	/* Copy the string */
+	memcpy(name, path, len);
+	/* Terminate it */
+
+	name[len] = '\0';
+
+	/* Determine if this is a relative path off some directory
+	 * or an absolute path. If absolute path, open root dir.
+	 */
+	if (first_fd == -1) {
+		if (name[0] != '/') {
+			LogInfo(COMPONENT_FSAL,
+				"Absolute path %s must start with '/'",
+				path);
+			return -EINVAL;
+		}
+		rest = name + 1;
+		fd = open("/", O_RDONLY | O_NOFOLLOW);
+	} else {
+		rest = name;
+		fd = dup(first_fd);
+	}
+
+	if (fd == -1) {
+		err = errno;
+		LogCrit(COMPONENT_FSAL,
+			"Failed initial directory open for path %s with %s",
+			path, strerror(err));
+		return -err;
+	}
+
+	while (rest[0] != '\0') {
+		/* Find the end of this path element */
+		p = index(rest, '/');
+
+		/* NUL terminate element (if not at end of string */
+		if (p != NULL)
+			*p = '\0';
+
+		/* Skip extra '/' */
+		if (rest[0] == '\0') {
+			rest++;
+			continue;
+		}
+
+		/* Disallow .. elements... */
+		if (strcmp(rest, "..") == 0) {
+			close(fd);
+			LogInfo(COMPONENT_FSAL,
+				"Failed due to '..' element in path %s",
+				path);
+			return -EACCES;
+		}
+
+		/* Open the next directory in the path */
+		rc = openat(fd, rest, O_RDONLY | O_NOFOLLOW);
+		err = errno;
+
+		close(fd);
+
+		if (rc == -1) {
+			LogDebug(COMPONENT_FSAL,
+				 "openat(%s) in path %s failed with %s",
+				 rest, path, strerror(err));
+			return -err;
+		}
+
+		fd = rc;
+
+		/* Done, break out */
+		if (p == NULL)
+			break;
+
+		/* Skip the '/' */
+		rest = p+1;
+	}
+
+	rc = fstat(fd, stat);
+	err = errno;
+
+	if (rc == -1) {
+		close(fd);
+		LogDebug(COMPONENT_FSAL,
+			 "fstat %s failed with %s",
+			 path, strerror(err));
+		return -err;
+	}
+
+	if (!S_ISDIR(stat->st_mode)) {
+		close(fd);
+		LogInfo(COMPONENT_FSAL,
+			"Path %s is not a directory",
+			path);
+		return -ENOTDIR;
+	}
+
+	return fd;
 }
 
 /** @} */
