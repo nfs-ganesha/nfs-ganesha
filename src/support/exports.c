@@ -998,7 +998,10 @@ static struct config_item_list expire_types[] = {
 		squash_types, _struct_, _perms_.options, _perms_.set),	\
 	CONF_ITEM_ENUM_BITS_SET("Delegations",				\
 		EXPORT_OPTION_NO_DELEGATIONS, EXPORT_OPTION_DELEGATIONS,\
-		delegations, _struct_, _perms_.options, _perms_.set)
+		delegations, _struct_, _perms_.options, _perms_.set),	\
+	CONF_ITEM_BOOLBIT_SET("Disable_ACL",				\
+		false, EXPORT_OPTION_DISABLE_ACL,			\
+		_struct_, _perms_.options, _perms_.set)		
 
 /**
  * @brief Table of client sub-block parameters
