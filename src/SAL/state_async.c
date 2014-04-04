@@ -137,7 +137,7 @@ state_status_t state_async_init(void)
 	memset(&frp, 0, sizeof(struct fridgethr_params));
 	frp.thr_max = 1;
 	frp.deferment = fridgethr_defer_queue;
-	rc = fridgethr_init(&state_async_fridge, "State Async", &frp);
+	rc = fridgethr_init(&state_async_fridge, "State_Async", &frp);
 	if (rc != 0) {
 		LogMajor(COMPONENT_STATE,
 			 "Unable to initialize state async thread fridge: %d",

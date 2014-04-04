@@ -178,10 +178,7 @@ int reaper_init(void)
 	frp.thread_delay = reaper_delay;
 	frp.flavor = fridgethr_flavor_looper;
 
-	rc = fridgethr_init(&reaper_fridge,
-			    /* You may be a king or a little street sweeper
-			       but sooner or later you'll dance with */
-			    "The Reaper", &frp);
+	rc = fridgethr_init(&reaper_fridge, "reaper", &frp);
 	if (rc != 0) {
 		LogMajor(COMPONENT_CLIENTID,
 			 "Unable to initialize reaper fridge, error code %d.",

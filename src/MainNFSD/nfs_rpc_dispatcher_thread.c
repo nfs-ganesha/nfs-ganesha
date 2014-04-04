@@ -910,7 +910,7 @@ void nfs_rpc_queue_init(void)
 	     600);
 
 	/* decoder thread pool */
-	rc = fridgethr_init(&req_fridge, "decoder_thr", &reqparams);
+	rc = fridgethr_init(&req_fridge, "decoder", &reqparams);
 	if (rc != 0)
 		LogFatal(COMPONENT_DISPATCH,
 			 "Unable to initialize decoder thread pool: %d", rc);

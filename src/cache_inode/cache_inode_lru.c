@@ -1067,7 +1067,7 @@ cache_inode_lru_pkginit(void)
 	lru_init_queues();
 
 	/* spawn LRU background thread */
-	code = fridgethr_init(&lru_fridge, "LRU Thread", &frp);
+	code = fridgethr_init(&lru_fridge, "LRU_fridge", &frp);
 	if (code != 0) {
 		LogMajor(COMPONENT_CACHE_INODE_LRU,
 			 "Unable to initialize LRU fridge, error code %d.",
