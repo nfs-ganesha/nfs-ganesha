@@ -555,6 +555,7 @@ typedef enum cache_inode_status_t {
 	CACHE_INODE_UNION_NOTSUPP = 43,
 	CACHE_INODE_CROSS_JUNCTION = 44,
 	CACHE_INODE_IN_GRACE = 45,
+	CACHE_INODE_BADHANDLE = 46,
 } cache_inode_status_t;
 
 /**

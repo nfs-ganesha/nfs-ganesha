@@ -155,6 +155,8 @@ cache_inode_err_str(cache_inode_status_t err)
 		return "CACHE_INODE_IN_GRACE";
 	case CACHE_INODE_CROSS_JUNCTION:
 		return "CACHE_INODE_CROSS_JUNCTION";
+	case CACHE_INODE_BADHANDLE:
+		return "CACHE_INODE_BADHANDLE";
 	}
 	return "unknown";
 }
@@ -671,7 +673,6 @@ cache_inode_error_convert(fsal_status_t fsal_status)
 		return CACHE_INODE_IO_ERROR;
 
 	case ERR_FSAL_STALE:
-	case ERR_FSAL_BADHANDLE:
 	case ERR_FSAL_FHEXPIRED:
 		return CACHE_INODE_FSAL_ESTALE;
 
@@ -743,6 +744,9 @@ cache_inode_error_convert(fsal_status_t fsal_status)
 
 	case ERR_FSAL_IN_GRACE:
 		return CACHE_INODE_IN_GRACE;
+
+	case ERR_FSAL_BADHANDLE:
+		return CACHE_INODE_BADHANDLE;
 
 	case ERR_FSAL_BLOCKED:
 	case ERR_FSAL_INTERRUPT:
