@@ -281,6 +281,24 @@ struct entry_export_map {
 };
 
 /**
+ * @brief Stats for file-specific and client-file delegation heuristics
+ */
+
+struct file_deleg_heuristics {
+	uint32_t curr_delegations;        /* number of delegations on file */
+	open_delegation_type4 deleg_type; /* if delegated is it read or write */
+	bool disabled;                    /* deleg disabled for this file */
+	uint32_t delegation_count;        /* times file has been delegated */
+	uint32_t recall_count;            /* times file has been recalled */
+	time_t avg_hold;                  /* avg amount of time deleg held */
+	time_t last_delegation;
+	time_t last_recall;
+	uint32_t num_opens;               /* total num of opens so far. */
+	time_t first_open;                /* time that we started recording
+					     num_opens */
+};
+
+/**
  * @brief Represents a cached inode
  *
  * Information representing a cached file (inode) including metadata,
@@ -391,10 +409,14 @@ struct cache_entry_t {
 		struct cache_inode_file {
 			/** Pointers for lock list */
 			struct glist_head lock_list;
+			/** Pointers for delegation list */
+			struct glist_head deleg_list;
 			/** Pointers for NLM share list */
 			struct glist_head nlm_share_list;
 			/** Share reservation state for this file. */
 			cache_inode_share_t share_state;
+			/** Delegation statistics */
+			struct file_deleg_heuristics deleg_heuristics;
 		} file;		/*< REGULAR_FILE data */
 
 		struct {

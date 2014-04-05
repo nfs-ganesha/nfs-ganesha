@@ -248,6 +248,31 @@ typedef struct state_share__ {
 } state_share_t;
 
 /**
+ * @brief Stats for client and client-file delegation heuristics
+ */
+
+struct client_deleg_heuristics {
+	uint32_t curr_deleg_grants; /* current num of delegations owned by
+				       this client */
+	uint32_t tot_recalls;       /* total num of times client was asked to
+				       recall */
+	uint32_t failed_recalls;    /* times client failed to process recall */
+};
+
+struct clientfile_deleg_heuristics {
+	struct nfs_client_id_t *clientid; /* client for this file. */
+	time_t last_delegation;           /* time of successful delegation */
+	uint32_t num_recalls;       /* total number of recalls on this file from
+				       this client
+				       badhandles + races + timeouts +
+				       aborts = tot number of failed recalls. */
+	uint32_t num_recall_badhandles;   /* num of badhandle replies */
+	uint32_t num_recall_races;        /* num of races detected */
+	uint32_t num_recall_timeouts;     /* num of recalls that timed out */
+	uint32_t num_recall_aborts;       /* num of recalls aborted */
+};
+
+/**
  * @brief Data for a set of locks
  */
 
@@ -261,13 +286,15 @@ typedef struct state_lock_t {
 
 /**
  * @brief Data for a delegation
- *
- * @todo We should at least track whether this is a read or write
- * delegation.
  */
 
 typedef struct state_deleg__ {
-	unsigned int nothing;
+	open_delegation_type4 sd_type;
+	stateid4 sd_stateid;             /* unique delegation stateid */
+	state_t *sd_open_state;          /*  */
+	struct glist_head sd_deleg_list; /*  */
+	time_t grant_time;               /* time of successful delegation */
+	struct clientfile_deleg_heuristics clfile_stats;  /* client specific */
 } state_deleg_t;
 
 /**
@@ -605,6 +632,7 @@ struct nfs_client_id_t {
 			struct glist_head cb_session_list;
 		} v41;		/*< v4.1 callback information */
 	} cid_cb;		/*< Version specific callback information */
+	bool_t cb_chan_down;
 	char cid_server_owner[MAXNAMLEN + 1];	/*< Server owner.
 						 * @note Why is this
 						 * stored per-client? */
@@ -620,6 +648,8 @@ struct nfs_client_id_t {
 					   this clientid from the reaper */
 	uint32_t cid_minorversion;
 	uint32_t cid_stateid_counter;
+
+	struct client_deleg_heuristics deleg_heuristics;
 };
 
 /**

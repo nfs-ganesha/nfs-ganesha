@@ -574,6 +574,22 @@ void release_openstate(struct req_op_context *req_ctx,
 void state_export_release_nfs4_state(struct req_op_context *req_ctx,
 				     exportlist_t *export);
 
+/* Specifically for delegations */
+bool init_deleg_heuristics(cache_entry_t *entry);
+bool should_we_grant_deleg(cache_entry_t *entry, nfs_client_id_t *client,
+			   state_t *open_state);
+void init_new_deleg_state(state_data_t *deleg_state, state_t *open_state,
+			  open_delegation_type4 sd_type,
+			  nfs_client_id_t *clientid);
+bool deleg_heuristics_recall(cache_entry_t *entry, nfs_client_id_t *client);
+void get_deleg_perm(cache_entry_t *entry, nfsace4 *permissions,
+		    open_delegation_type4 type);
+void free_deleg_locked(state_lock_entry_t *deleg_lock, cache_entry_t *entry,
+		       struct fsal_export *export,
+		       struct req_op_context *fake_req_ctx);
+bool update_delegation_stats(cache_entry_t *entry, state_t *state);
+state_status_t delegrecall(cache_entry_t *entry, bool rwlocked);
+
 #ifdef DEBUG_SAL
 void dump_all_states(void);
 #endif

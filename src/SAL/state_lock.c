@@ -356,7 +356,8 @@ static bool LogList(const char *reason, cache_entry_t *entry,
 
 		glist_for_each(glist, list) {
 			found_entry =
-			    glist_entry(glist, state_lock_entry_t, sle_list);
+				glist_entry(glist, state_lock_entry_t,
+					    sle_list);
 			LogEntry(reason, found_entry);
 			if (found_entry->sle_entry == NULL)
 				break;
@@ -550,7 +551,6 @@ static state_lock_entry_t *create_state_lock_entry(cache_entry_t *entry,
 
 		pthread_mutex_lock(&owner->so_owner.so_nlm_owner.so_client
 				   ->slc_nsm_client->ssc_mutex);
-
 		glist_add_tail(&owner->so_owner.so_nlm_owner.so_client->
 			       slc_nsm_client->ssc_lock_list,
 			       &new_entry->sle_client_locks);
@@ -1012,6 +1012,47 @@ static state_status_t subtract_lock_from_entry(cache_entry_t *entry,
 	glist_add_tail(remove_list, &(found_entry->sle_list));
 
 	*removed = true;
+	return status;
+}
+
+/**
+ * @brief Subtract a delegation from a list of delegations
+ *
+ * Subtract a delegation from a list of delegations
+ *
+ * @param[in,out] entry   Cache entry on which to operate
+ * @param[in]     owner   Client owner of delegation
+ * @param[in]     state   Associated lock state
+ * @param[in]     lock    Delegation to remove
+ * @param[out]    removed True if an entry was removed
+ * @param[in,out] list    List of locks to modify
+ *
+ * @return State status.
+ */
+static state_status_t subtract_deleg_from_list(cache_entry_t *entry,
+					       state_owner_t *owner,
+					       state_t *state,
+					       bool *removed,
+					       struct glist_head *list)
+{
+	state_lock_entry_t *found_entry;
+	struct glist_head *glist, *glistn;
+	state_status_t status = STATE_SUCCESS;
+
+	*removed = false;
+
+	glist_for_each_safe(glist, glistn, list) {
+		found_entry = glist_entry(glist, state_lock_entry_t, sle_list);
+		if (owner != NULL
+		    && different_owners(found_entry->sle_owner, owner))
+			continue;
+		if (found_entry->sle_type != LEASE_LOCK)
+		  continue;
+
+		/* Tell GPFS delegation is returned then remove from list. */
+		glist_del(&found_entry->sle_list);
+		*removed = true;
+	}
 	return status;
 }
 
@@ -2516,6 +2557,15 @@ state_status_t state_lock(cache_entry_t *entry, exportlist_t *export,
 	glist_for_each(glist, &entry->object.file.lock_list) {
 		found_entry = glist_entry(glist, state_lock_entry_t, sle_list);
 
+		/* Delegations owned by a client won't conflict with delegations
+		   to that same client, but maybe we should just return
+		   success. */
+		if (found_entry->sle_type == LEASE_LOCK &&
+		    lock->lock_sle_type == FSAL_LEASE_LOCK &&
+		    owner->so_owner.so_nfs4_owner.so_clientid ==
+		    found_entry->sle_owner->so_owner.so_nfs4_owner.so_clientid)
+			continue;
+
 		/* Need to reject lock request if this lock owner already has
 		 * a lock on this file via a different export.
 		 */
@@ -2539,7 +2589,6 @@ state_status_t state_lock(cache_entry_t *entry, exportlist_t *export,
 		}
 
 		/* Don't skip blocked locks for fairness */
-
 		found_entry_end = lock_end(&found_entry->sle_lock);
 
 		if ((found_entry_end >= lock->lock_start)
@@ -2630,7 +2679,7 @@ state_status_t state_lock(cache_entry_t *entry, exportlist_t *export,
 		lock_op = FSAL_OP_LOCK;
 	} else {
 		/* Can't do async blocking lock in FSAL and have a conflict.
-		 * Return it.
+		 * Return it. This is true for conflicting delegations as well.
 		 */
 		PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
@@ -2713,14 +2762,21 @@ state_status_t state_lock(cache_entry_t *entry, exportlist_t *export,
 	} else
 		status = STATE_LOCK_BLOCKED;
 
-	if (status == STATE_SUCCESS) {
+	if (status == STATE_SUCCESS && sle_type == LEASE_LOCK) {
+		/* Insert entry into delegation list */
+		LogEntry("New delegation", found_entry);
+		update_delegation_stats(entry, state);
+		glist_add_tail(&entry->object.file.deleg_list,
+			       &found_entry->sle_list);
+	} else if (status == STATE_SUCCESS && sle_type == POSIX_LOCK) {
 		/* Merge any touching or overlapping locks into this one */
-		LogEntry("FSAL lock acquired, merging locks for", found_entry);
+		LogEntry("FSAL lock acquired, merging locks for",
+			 found_entry);
 
 		merge_lock_entry(entry, found_entry);
 
 		/* Insert entry into lock list */
-		LogEntry("New", found_entry);
+		LogEntry("New lock", found_entry);
 
 		/* if the list is empty to start with; increment the pin ref
 		 * count before adding it to the list
@@ -2824,6 +2880,21 @@ state_status_t state_unlock(cache_entry_t *entry, exportlist_t *export,
 	 * nlm_lock implies remove all entries
 	 */
 	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
+
+	if (state->state_type == STATE_TYPE_DELEG
+	    && glist_empty(&entry->object.file.deleg_list)) {
+	  cache_inode_dec_pin_ref(entry, FALSE);
+	  LogDebug(COMPONENT_STATE,
+		   "Unlock success on file with no delegations");
+	  return STATE_SUCCESS;
+	}
+
+	if (state->state_type == STATE_TYPE_DELEG) {
+	  status =
+	    subtract_deleg_from_list(entry, owner, state, &removed,
+				     &entry->object.file.deleg_list);
+	  return status;
+	}
 
 	/* If lock list is empty, there really isn't any work for us to do. */
 	if (glist_empty(&entry->object.file.lock_list)) {
