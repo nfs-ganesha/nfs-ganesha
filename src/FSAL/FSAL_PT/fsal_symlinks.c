@@ -1,12 +1,14 @@
-// ----------------------------------------------------------------------------
-// Copyright IBM Corp. 2012, 2012
-// All Rights Reserved
-// ----------------------------------------------------------------------------
-// ----------------------------------------------------------------------------
-// Filename:    fsal_symlinks.c
-// Description: FSAL symlink operations implementation
-// Author:      FSI IPC dev team
-// ----------------------------------------------------------------------------
+/*
+ * ----------------------------------------------------------------------------
+ * Copyright IBM Corp. 2012, 2012
+ * All Rights Reserved
+ * ----------------------------------------------------------------------------
+ * ----------------------------------------------------------------------------
+ * Filename:    fsal_symlinks.c
+ * Description: FSAL symlink operations implementation
+ * Author:      FSI IPC dev team
+ * ----------------------------------------------------------------------------
+ */
 
 /*
  * vim:noexpandtab:shiftwidth=8:tabstop=8:
@@ -28,18 +30,9 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * -------------
- */
-
-/**
- * \file    fsal_symlinks.c
- * \author  $Author: leibovic $
- * \date    $Date: 2005/07/29 09:39:04 $
- * \version $Revision: 1.15 $
- * \brief   symlinks operations.
- *
  */
 
 #ifdef HAVE_CONFIG_H
@@ -82,7 +75,7 @@
 fsal_status_t PTFSAL_readlink(struct fsal_obj_handle *dir_hdl,	/* IN */
 			      const struct req_op_context *p_context,	/* IN */
 			      char *p_link_content,	/* OUT */
-			      size_t * link_len,	/* IN/OUT */
+			      size_t *link_len,	/* IN/OUT */
 			      struct attrlist *p_link_attributes)
 {				/* IN/OUT */
 
@@ -112,7 +105,7 @@ fsal_status_t PTFSAL_readlink(struct fsal_obj_handle *dir_hdl,	/* IN */
 	if (p_link_attributes) {
 
 		status = PTFSAL_getattrs(p_context->fsal_export, p_context,
-		    			 pt_hdl->handle, p_link_attributes);
+					 pt_hdl->handle, p_link_attributes);
 
 		/* On error, we set a flag in the returned attributes */
 

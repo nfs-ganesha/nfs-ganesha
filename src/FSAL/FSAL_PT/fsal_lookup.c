@@ -1,13 +1,14 @@
-// ----------------------------------------------------------------------------
-// Copyright IBM Corp. 2012, 2012
-// All Rights Reserved
-// ----------------------------------------------------------------------------
-// ----------------------------------------------------------------------------
-// Filename:    fsal_lookup.c
-// Description: FSAL lookup operations implementation
-// Author:      FSI IPC dev team
-// ----------------------------------------------------------------------------
-
+/*
+ * ----------------------------------------------------------------------------
+ * Copyright IBM Corp. 2012, 2012
+ * All Rights Reserved
+ * ----------------------------------------------------------------------------
+ * ----------------------------------------------------------------------------
+ * Filename:    fsal_lookup.c
+ * Description: FSAL lookup operations implementation
+ * Author:      FSI IPC dev team
+ * ----------------------------------------------------------------------------
+ */
 /*
  * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
@@ -28,18 +29,9 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * -------------
- */
-
-/**
- * \file    fsal_lookup.c
- * \author  $Author: leibovic $
- * \date    $Date: 2006/01/24 13:45:37 $
- * \version $Revision: 1.17 $
- * \brief   Lookup operations.
- *
  */
 
 #ifdef HAVE_CONFIG_H
@@ -84,7 +76,7 @@ fsal_status_t PTFSAL_lookup(const struct req_op_context *p_context,
 			    struct fsal_obj_handle *parent,
 			    const char *p_filename,
 			    struct attrlist *p_object_attr,
-			    ptfsal_handle_t * fh)
+			    ptfsal_handle_t *fh)
 {
 	fsal_status_t status;
 	int parent_fd;
@@ -101,9 +93,8 @@ fsal_status_t PTFSAL_lookup(const struct req_op_context *p_context,
 	if (parent != NULL)
 		FSI_TRACE(FSI_DEBUG, "FSI - fsal_lookup parent dir\n");
 
-	if (!parent || !p_filename) {
+	if (!parent || !p_filename)
 		return fsalstat(ERR_FSAL_FAULT, 0);
-	}
 
 	parent_hdl =
 	    container_of(parent, struct pt_fsal_obj_handle, obj_handle);
@@ -117,9 +108,8 @@ fsal_status_t PTFSAL_lookup(const struct req_op_context *p_context,
 	    fsal_internal_handle2fd_at(p_context, parent_hdl, &parent_fd,
 				       O_RDONLY);
 
-	if (FSAL_IS_ERROR(status)) {
+	if (FSAL_IS_ERROR(status))
 		return status;
-	}
 
 	FSI_TRACE(FSI_DEBUG, "FSI - lookup parent directory type = %d\n",
 		  parent_dir_attrs->type);
@@ -127,16 +117,16 @@ fsal_status_t PTFSAL_lookup(const struct req_op_context *p_context,
 	/* Be careful about junction crossing, symlinks, hardlinks,... */
 	switch (parent_dir_attrs->type) {
 	case DIRECTORY:
-		// OK
+		/* OK */
 		break;
 
 	case FS_JUNCTION:
-		// This is a junction
+		/* This is a junction */
 		return fsalstat(ERR_FSAL_XDEV, 0);
 
 	case REGULAR_FILE:
 	case SYMBOLIC_LINK:
-		// not a directory
+		/* not a directory */
 		pt_close(parent);
 		return fsalstat(ERR_FSAL_NOTDIR, 0);
 

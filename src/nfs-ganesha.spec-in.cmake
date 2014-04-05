@@ -240,11 +240,10 @@ be used with NFS-Ganesha to support HPSS
 
 # PT
 %if %{with_fsal_pt}
-%package hpss
+%package pt 
 Summary: The NFS-GANESHA's PT FSAL
 Group: Applications/System
 Requires: nfs-ganesha
-BuildRequires:
 
 %description pt
 This package contains a FSAL shared object to 

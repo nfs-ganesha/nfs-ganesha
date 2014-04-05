@@ -18,9 +18,9 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
- * ------------- 
+ * -------------
  */
 
 /* file.c
@@ -60,7 +60,7 @@ fsal_status_t pt_open(struct fsal_obj_handle *obj_hdl,
 
 	status = PTFSAL_open(obj_hdl, opctx, openflags, &fd, NULL);
 	if (FSAL_IS_ERROR(status))
-		return (status);
+		return status;
 
 	myself->u.file.fd = fd;
 	myself->u.file.openflags = openflags;
@@ -72,7 +72,7 @@ fsal_status_t pt_open(struct fsal_obj_handle *obj_hdl,
  * Let the caller peek into the file's open/close state.
  */
 
-fsal_openflags_t pt_status(struct fsal_obj_handle * obj_hdl)
+fsal_openflags_t pt_status(struct fsal_obj_handle *obj_hdl)
 {
 	struct pt_fsal_obj_handle *myself;
 
@@ -84,10 +84,10 @@ fsal_openflags_t pt_status(struct fsal_obj_handle * obj_hdl)
  * concurrency (locks) is managed in cache_inode_*
  */
 
-fsal_status_t pt_read(struct fsal_obj_handle * obj_hdl,
-		      const struct req_op_context * opctx, uint64_t offset,
-		      size_t buffer_size, void *buffer, size_t * read_amount,
-		      bool * end_of_file)
+fsal_status_t pt_read(struct fsal_obj_handle *obj_hdl,
+		      const struct req_op_context *opctx, uint64_t offset,
+		      size_t buffer_size, void *buffer, size_t *read_amount,
+		      bool *end_of_file)
 {
 	struct pt_fsal_obj_handle *myself;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
@@ -102,7 +102,7 @@ fsal_status_t pt_read(struct fsal_obj_handle * obj_hdl,
 	    PTFSAL_read(myself, opctx, offset, buffer_size, buffer, read_amount,
 			end_of_file);
 	if (FSAL_IS_ERROR(status))
-		return (status);
+		return status;
 
 	*end_of_file = *read_amount == 0 ? true : false;
 
@@ -113,10 +113,10 @@ fsal_status_t pt_read(struct fsal_obj_handle * obj_hdl,
  * concurrency (locks) is managed in cache_inode_*
  */
 
-fsal_status_t pt_write(struct fsal_obj_handle * obj_hdl,
-		       const struct req_op_context * opctx, uint64_t offset,
-		       size_t buffer_size, void *buffer, size_t * wrote_amount,
-		       bool * fsal_stable)
+fsal_status_t pt_write(struct fsal_obj_handle *obj_hdl,
+		       const struct req_op_context *opctx, uint64_t offset,
+		       size_t buffer_size, void *buffer, size_t *wrote_amount,
+		       bool *fsal_stable)
 {
 	struct pt_fsal_obj_handle *myself;
 	fsal_status_t status;
@@ -129,14 +129,14 @@ fsal_status_t pt_write(struct fsal_obj_handle * obj_hdl,
 	status =
 	    PTFSAL_write(myself, opctx, offset, buffer_size, buffer,
 			 wrote_amount, fsal_stable);
-	return (status);
+	return status;
 }
 
 /* pt_commit
  * Commit a file range to storage.
  * for right now, fsync will have to do.
  */
-fsal_status_t pt_commit(struct fsal_obj_handle * obj_hdl,	/* sync */
+fsal_status_t pt_commit(struct fsal_obj_handle *obj_hdl,	/* sync */
 			const struct req_op_context *opctx,
 			off_t offset, size_t len)
 {
@@ -159,14 +159,15 @@ fsal_status_t pt_commit(struct fsal_obj_handle * obj_hdl,	/* sync */
  * releases all locks but that is state and cache inode's problem.
  */
 
-fsal_status_t pt_close(struct fsal_obj_handle * obj_hdl)
+fsal_status_t pt_close(struct fsal_obj_handle *obj_hdl)
 {
 	struct pt_fsal_obj_handle *myself;
 	fsal_status_t status = fsalstat(ERR_FSAL_NO_ERROR, 0);
 
 	assert(obj_hdl->type == REGULAR_FILE);
 	myself = container_of(obj_hdl, struct pt_fsal_obj_handle, obj_handle);
-	if (myself->u.file.fd >= 0 && myself->u.file.openflags != FSAL_O_CLOSED) {
+	if (myself->u.file.fd >= 0 &&
+	    myself->u.file.openflags != FSAL_O_CLOSED) {
 		status = PTFSAL_close(myself->u.file.fd);
 		myself->u.file.fd = -1;
 		myself->u.file.openflags = FSAL_O_CLOSED;
@@ -180,7 +181,7 @@ fsal_status_t pt_close(struct fsal_obj_handle * obj_hdl)
  * trimming.
  */
 
-fsal_status_t pt_lru_cleanup(struct fsal_obj_handle * obj_hdl,
+fsal_status_t pt_lru_cleanup(struct fsal_obj_handle *obj_hdl,
 			     lru_actions_t requests)
 {
 	struct pt_fsal_obj_handle *myself;

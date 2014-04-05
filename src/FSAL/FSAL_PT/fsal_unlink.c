@@ -1,13 +1,14 @@
-// ----------------------------------------------------------------------------
-// Copyright IBM Corp. 2012, 2012
-// All Rights Reserved
-// ----------------------------------------------------------------------------
-// ----------------------------------------------------------------------------
-// Filename:    fsal_unlink.c
-// Description: FSAL unlink operations implementation
-// Author:      FSI IPC dev team
-// ----------------------------------------------------------------------------
-
+/*
+ * ----------------------------------------------------------------------------
+ * Copyright IBM Corp. 2012, 2012
+ * All Rights Reserved
+ * ----------------------------------------------------------------------------
+ * ----------------------------------------------------------------------------
+ * Filename:    fsal_unlink.c
+ * Description: FSAL unlink operations implementation
+ * Author:      FSI IPC dev team
+ * ----------------------------------------------------------------------------
+ */
 /*
  * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
@@ -28,19 +29,9 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * -------------
- */
-
-/**
- *
- * \file    fsal_unlink.c
- * \author  $Author: leibovic $
- * \date    $Date: 2006/01/24 13:45:37 $
- * \version $Revision: 1.9 $
- * \brief   object removing function.
- *
  */
 
 #ifdef HAVE_CONFIG_H
@@ -114,8 +105,8 @@ fsal_status_t PTFSAL_unlink(struct fsal_obj_handle *dir_hdl,	/* IN */
    * DELETE FROM THE FILESYSTEM *
    ******************************/
 
-	/* If the object to delete is a directory, use 'rmdir' to delete the object, 
-	 * else use 'unlink' 
+	/* If the object to delete is a directory, use 'rmdir' to delete
+	 * the object else use 'unlink'
 	 */
 	if (S_ISDIR(buffstat.st_mode)) {
 		FSI_TRACE(FSI_DEBUG, "Deleting directory %s", p_object_name);
@@ -135,8 +126,8 @@ fsal_status_t PTFSAL_unlink(struct fsal_obj_handle *dir_hdl,	/* IN */
    ***********************/
 
 	if (p_parent_attributes) {
-		status =PTFSAL_getattrs(p_context->fsal_export, p_context,
-		    			pt_hdl->handle, p_parent_attributes);
+		status = PTFSAL_getattrs(p_context->fsal_export, p_context,
+					pt_hdl->handle, p_parent_attributes);
 		if (FSAL_IS_ERROR(status)) {
 			FSAL_CLEAR_MASK(p_parent_attributes->mask);
 			FSAL_SET_MASK(p_parent_attributes->mask,

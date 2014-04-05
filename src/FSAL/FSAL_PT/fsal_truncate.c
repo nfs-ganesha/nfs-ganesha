@@ -1,12 +1,14 @@
-// ----------------------------------------------------------------------------
-// Copyright IBM Corp. 2012, 2012
-// All Rights Reserved
-// ----------------------------------------------------------------------------
-// ----------------------------------------------------------------------------
-// Filename:    fsal_truncate.c
-// Description: FSAL truncate operations implementation
-// Author:      FSI IPC dev team
-// ----------------------------------------------------------------------------
+/*
+ * ----------------------------------------------------------------------------
+ * Copyright IBM Corp. 2012, 2012
+ * All Rights Reserved
+ * ----------------------------------------------------------------------------
+ * ----------------------------------------------------------------------------
+ * Filename:    fsal_truncate.c
+ * Description: FSAL truncate operations implementation
+ * Author:      FSI IPC dev team
+ * ----------------------------------------------------------------------------
+ */
 
 /*
  * vim:noexpandtab:shiftwidth=8:tabstop=8:
@@ -28,19 +30,9 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * -------------
- */
-
-/**
- *
- * \file    fsal_truncate.c
- * \author  $Author: leibovic $
- * \date    $Date: 2005/07/29 09:39:05 $
- * \version $Revision: 1.4 $
- * \brief   Truncate function.
- *
  */
 
 #ifdef HAVE_CONFIG_H
@@ -81,11 +73,11 @@
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occurred.
  */
-fsal_status_t PTFSAL_truncate(struct fsal_export * export,	/* IN */
-			      struct pt_fsal_obj_handle * p_filehandle,	/* IN */
-			      const struct req_op_context * p_context,	/* IN */
+fsal_status_t PTFSAL_truncate(struct fsal_export *export,	/* IN */
+			      struct pt_fsal_obj_handle *p_filehandle,	/* IN */
+			      const struct req_op_context *p_context,	/* IN */
 			      size_t length,	/* IN */
-			      struct attrlist * p_object_attributes)
+			      struct attrlist *p_object_attributes)
 {				/* IN/OUT */
 
 	int rc = 0, errsv;
