@@ -144,7 +144,7 @@ static struct group_data *uid2grp_allocate_by_name(
 	}
 
 	buff = alloca(buff_size);
-	if ((getpwnam_r(namebuff, &p, buff, MAXPATHLEN, &pp) != 0)
+	if ((getpwnam_r(namebuff, &p, buff, buff_size, &pp) != 0)
 	    || (pp == NULL)) {
 		LogEvent(COMPONENT_IDMAPPER, "getpwnam_r %s failed", namebuff);
 		return gdata;
@@ -188,7 +188,7 @@ static struct group_data *uid2grp_allocate_by_uid(uid_t uid)
 	}
 
 	buff = alloca(buff_size);
-	if ((getpwuid_r(uid, &p, buff, MAXPATHLEN, &pp) != 0) || (pp == NULL)) {
+	if ((getpwuid_r(uid, &p, buff, buff_size, &pp) != 0) || (pp == NULL)) {
 		LogEvent(COMPONENT_IDMAPPER, "getpwuid_r %u failed", uid);
 		return gdata;
 	}
