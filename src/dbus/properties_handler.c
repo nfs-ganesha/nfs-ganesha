@@ -158,13 +158,13 @@ bool dbus_proc_property(const char *method, DBusMessage *msg,
 		     DBUS_DICT_ENTRY_END_CHAR_AS_STRING, &getall_dict))
 			goto getall_err;
 		for (prop = (*iface)->props; prop && *prop; prop++) {
+			prop_name = (*prop)->name;
 			if ((*prop)->access == DBUS_PROP_READ
 			    || (*prop)->access == DBUS_PROP_READWRITE) {
 				if (!dbus_message_iter_open_container
 				    (&getall_dict, DBUS_TYPE_DICT_ENTRY, NULL,
 				     &dict_entry))
 					goto getall_err;
-				prop_name = (*prop)->name;
 				if (!dbus_message_iter_append_basic
 				    (&dict_entry, DBUS_TYPE_STRING, &prop_name))
 					goto getall_err;
