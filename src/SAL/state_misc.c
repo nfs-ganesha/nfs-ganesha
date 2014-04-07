@@ -788,8 +788,8 @@ bool different_owners(state_owner_t *owner1, state_owner_t *owner2)
 		if (owner2->so_type != STATE_LOCK_OWNER_NLM)
 			return true;
 		return compare_nlm_owner(owner1, owner2);
-#ifdef _USE_9P
 	case STATE_LOCK_OWNER_9P:
+#ifdef _USE_9P
 		if (owner2->so_type != STATE_LOCK_OWNER_9P)
 			return true;
 		return compare_9p_owner(owner1, owner2);
@@ -824,8 +824,8 @@ int DisplayOwner(state_owner_t *owner, char *buf)
 	switch (owner->so_type) {
 	case STATE_LOCK_OWNER_NLM:
 		return display_nlm_owner(owner, buf);
-#ifdef _USE_9P
 	case STATE_LOCK_OWNER_9P:
+#ifdef _USE_9P
 		return display_9p_owner(owner, buf);
 #endif
 
@@ -919,8 +919,8 @@ hash_table_t *get_state_owner_hash_table(state_owner_t *owner)
 	case STATE_LOCK_OWNER_NLM:
 		return ht_nlm_owner;
 
-#ifdef _USE_9P
 	case STATE_LOCK_OWNER_9P:
+#ifdef _USE_9P
 		return ht_9p_owner;
 #endif
 
