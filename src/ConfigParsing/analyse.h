@@ -73,6 +73,8 @@ struct file_list {
  * All storage allocated into the parse tree is here
  */
 
+struct bufstack;  /* defined in conf_lex.l */
+
 struct config_root {
 	struct config_node root;
 	char *conf_dir;
@@ -86,6 +88,9 @@ struct config_root {
 struct parser_state {
 	struct config_root *root_node;
 	void *scanner;
+	struct bufstack *curbs;
+	char *current_file;
+	int block_depth; /* block/subblock nesting level */
 };
 
 int ganesha_yyparse(struct parser_state *st);

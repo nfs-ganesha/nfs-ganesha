@@ -37,28 +37,25 @@
 #include "log.h"
 #include "fsal_convert.h"
 
-struct parser_state parser_state;
-
 /* config_ParseFile:
  * Reads the content of a configuration file and
  * stores it in a memory structure.
  */
 config_file_t config_ParseFile(char *file_path)
 {
-
-	struct parser_state *st = &parser_state;
+	struct parser_state st;
 	int rc;
 
-	memset(st, 0, sizeof(struct parser_state));
-	rc = ganeshun_yy_init_parser(file_path, st);
+	memset(&st, 0, sizeof(struct parser_state));
+	rc = ganeshun_yy_init_parser(file_path, &st);
 	if (rc) {
 		return NULL;
 	}
-	rc = ganesha_yyparse(st);
-	ganeshun_yylex_destroy(st->scanner);
+	rc = ganesha_yyparse(&st);
+	ganeshun_yylex_destroy(st.scanner);
 
 	/* converts pointer to pointer */
-	return rc ? NULL : (config_file_t) st->root_node;
+	return rc ? NULL : (config_file_t) st.root_node;
 }
 
 /* If config_ParseFile returns a NULL pointer,

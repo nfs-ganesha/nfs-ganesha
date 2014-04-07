@@ -23,9 +23,6 @@
 
 #define ganeshun_yyerror ganesha_yyerror
 
-/* block/subblock nesting level */
-int block_depth;
-
 /* Our versions of parser macros */
 
 #define YY_USER_INIT \
@@ -37,7 +34,7 @@ do { \
 	yylloc->first_line = yylloc->last_line = yylineno; \
 	yylloc->first_column = yylloc->last_column = yycolumn + yyleng -1; \
 	yycolumn += yyleng; \
-	yylloc->filename = current_file;
+	yylloc->filename = stp->current_file;
 
 #ifdef _DEBUG_PARSING
 #define DEBUG_LEX   printf
@@ -51,14 +48,12 @@ struct bufstack {
 	int lineno;
 	char *filename;
 	FILE *f;
-} *curbs = NULL;
+};
 
 static char *filter_string(char *src, int esc);
 static int new_file(char *filename,
 	     struct parser_state *st);
 static int pop_file(struct parser_state *st);
-
-static char *current_file;
 
 %}
 
@@ -157,7 +152,7 @@ IDENTIFIER [a-zA-Z_.][a-zA-Z0-9_.\-]*
 <BLOCK>"{"        {/* start of  block */
 	DEBUG_LEX("BEGIN_BLOCK\n");
 	BEGIN IN_BLOCK;
-	block_depth++;
+	stp->block_depth++;
 	return BEGIN_BLOCK;
 }
 
@@ -171,15 +166,15 @@ IDENTIFIER [a-zA-Z_.][a-zA-Z0-9_.\-]*
 
 <IN_BLOCK>"}"     {   /* end of block */
 	DEBUG_LEX("END_BLOCK\n");
-	if (block_depth <= 0) {
+	if (stp->block_depth <= 0) {
 		/* error */
 		ganeshun_yyerror(yylloc, yyscanner,
 				"closing bracket outside a block");
 		return _ERROR_;
 	} else
-		block_depth --;
+		stp->block_depth --;
 
-	if (block_depth == 0) {
+	if (stp->block_depth == 0) {
 		BEGIN YY_INIT;
 		return END_BLOCK;
 	} else {
@@ -199,7 +194,7 @@ IDENTIFIER [a-zA-Z_.][a-zA-Z0-9_.\-]*
 	/* sub-block */
 	DEBUG_LEX("\nBEGIN_SUB_BLOCK\n");
 	BEGIN IN_BLOCK;
-	block_depth++;
+	stp->block_depth++;
 	return BEGIN_SUB_BLOCK;
 }
 
@@ -433,14 +428,14 @@ static int new_file(char *name_tok,
 	bs->bs = ganeshun_yy_create_buffer(in_file,
 					 YY_BUF_SIZE,
 					 yyscanner);
-	if (curbs)
-		curbs->lineno = yylineno;
-	bs->prev = curbs;
+	if (st->curbs)
+		st->curbs->lineno = yylineno;
+	bs->prev = st->curbs;
 	bs->f = in_file;
 	bs->filename = flist->pathname;
 	ganeshun_yy_switch_to_buffer(bs->bs, yyscanner);
-	current_file = flist->pathname;
-	curbs = bs;
+	st->current_file = flist->pathname;
+	st->curbs = bs;
 	return 0;
 
 errout:
@@ -450,7 +445,7 @@ errout:
 
 static int pop_file(struct parser_state *st)
 {
-	struct bufstack *bs = curbs;
+	struct bufstack *bs = st->curbs;
 	struct bufstack *prevbs;
 	void *yyscanner = st->scanner;
 	struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
@@ -464,8 +459,8 @@ static int pop_file(struct parser_state *st)
 	if (prevbs == NULL)
 		return 0;
 	ganeshun_yy_switch_to_buffer(prevbs->bs, yyscanner);
-	curbs = prevbs;
-	yylineno = curbs->lineno;
-	current_file = curbs->filename;
+	st->curbs = prevbs;
+	yylineno = st->curbs->lineno;
+	st->current_file = st->curbs->filename;
 	return 1;
 }
