@@ -75,13 +75,15 @@ Version:	2.0
 Release:	1%{?dist}
 Summary:	NFS-Ganesha is a NFS Server running in user space
 Group:		Applications/System
-License:	LGPLv3	
+License:	LGPLv3
 Url:		http://nfs-ganesha.sourceforge.net
 Source:		%{sourcename}.tar.gz
 BuildRequires:	initscripts
-BuildRequires:	cmake 
-BuildRequires:	dbus-devel  libcap-devel krb5-devel libgssglue-devel bison flex
-Requires:	dbus-libs libcap krb5-libs libgssglue 
+BuildRequires:	cmake
+BuildRequires:	bison flex
+BuildRequires:	dbus-devel  libcap-devel krb5-devel libgssglue-devel
+BuildRequires:	libblkid-devel libuuid-devel
+Requires:	dbus-libs libcap krb5-libs libgssglue libblkid libuuid
 %if %{with_nfsidmap}
 BuildRequires:	libnfsidmap-devel
 Requires:	libnfsidmap
@@ -108,7 +110,7 @@ Group: Applications/System
 %description mount-9P
 This package contains the mount.9P script
 This is a 9p mount help
- 
+
 %package vfs
 Summary: The NFS-GANESHA's VFS FSAL
 Group: Applications/System
@@ -116,7 +118,7 @@ BuildRequires: libattr-devel
 Requires: nfs-ganesha
 
 %description vfs
-This package contains a FSAL shared object to 
+This package contains a FSAL shared object to
 be used with NFS-Ganesha to support VFS based filesystems
 
 %package nullfs
@@ -124,7 +126,7 @@ Summary: The NFS-GANESHA's NULLFS Stackable FSAL
 Group: Applications/System
 
 %description nullfs
-This package contains a Stackble FSAL shared object to 
+This package contains a Stackble FSAL shared object to
 be used with NFS-Ganesha. This is mostly a template for future (more sophisticated) stackable FSALs
 
 %package proxy
@@ -134,7 +136,7 @@ BuildRequires: libattr-devel
 Requires: nfs-ganesha
 
 %description proxy
-This package contains a FSAL shared object to 
+This package contains a FSAL shared object to
 be used with NFS-Ganesha to support PROXY based filesystems
 
 # Option packages start here. use "rpmbuild --with lustre" (or equivalent)
@@ -147,7 +149,7 @@ Summary: The NFS-GANESHA's GPFS FSAL
 Group: Applications/System
 
 %description gpfs
-This package contains a FSAL shared object to 
+This package contains a FSAL shared object to
 be used with NFS-Ganesha to support GPFS backend
 %endif
 
@@ -160,8 +162,8 @@ Requires: libzfswrap nfs-ganesha
 BuildRequires: libzfswrap-devel
 
 %description zfs
-This package contains a FSAL shared object to 
-be used with NFS-Ganesha to support ZFS 
+This package contains a FSAL shared object to
+be used with NFS-Ganesha to support ZFS
 %endif
 
 # CEPH
@@ -171,8 +173,8 @@ Summary: The NFS-GANESHA's ZFS FSAL
 Group: Applications/System
 
 %description ceph
-This package contains a FSAL shared object to 
-be used with NFS-Ganesha to support CEPH 
+This package contains a FSAL shared object to
+be used with NFS-Ganesha to support CEPH
 %endif
 
 # CEPH
@@ -182,8 +184,8 @@ Summary: The NFS-GANESHA's ZFS FSAL
 Group: Applications/System
 
 %description ceph
-This package contains a FSAL shared object to 
-be used with NFS-Ganesha to support CEPH 
+This package contains a FSAL shared object to
+be used with NFS-Ganesha to support CEPH
 %endif
 
 # LUSTRE
@@ -195,7 +197,7 @@ Requires: libattr lustre nfs-ganesha
 BuildRequires: libattr-devel lustre
 
 %description lustre
-This package contains a FSAL shared object to 
+This package contains a FSAL shared object to
 be used with NFS-Ganesha to support LUSTRE
 %endif
 
@@ -208,7 +210,7 @@ Requires: libattr lustre shook-client nfs-ganesha
 BuildRequires: libattr-devel lustre shook-devel
 
 %description shook
-This package contains a FSAL shared object to 
+This package contains a FSAL shared object to
 be used with NFS-Ganesha to support LUSTRE via SHOOK
 %endif
 
@@ -234,20 +236,20 @@ Requires: nfs-ganesha
 BuildRequires:
 
 %description hpss
-This package contains a FSAL shared object to 
-be used with NFS-Ganesha to support HPSS 
+This package contains a FSAL shared object to
+be used with NFS-Ganesha to support HPSS
 %endif
 
 # PT
 %if %{with_fsal_pt}
-%package pt 
+%package pt
 Summary: The NFS-GANESHA's PT FSAL
 Group: Applications/System
 Requires: nfs-ganesha
 
 %description pt
-This package contains a FSAL shared object to 
-be used with NFS-Ganesha to support PT 
+This package contains a FSAL shared object to
+be used with NFS-Ganesha to support PT
 %endif
 
 # GLUSTER
@@ -259,59 +261,59 @@ Requires: nfs-ganesha
 BuildRequires:
 
 %description gluster
-This package contains a FSAL shared object to 
-be used with NFS-Ganesha to support Gluster 
+This package contains a FSAL shared object to
+be used with NFS-Ganesha to support Gluster
 %endif
 
 %prep
-%setup -q -n %{sourcename} 
+%setup -q -n %{sourcename}
 
 %build
 cmake .	-DCMAKE_BUILD_TYPE=Debug			\
 	-DCMAKE_INSTALL_PREFIX=$RPM_BUILD_ROOT/usr	\
 	-DCMAKE_BUILD_TYPE=Debug			\
 	-DBUILD_CONFIG=rpmbuild				\
-%if %{with_fsal_zfs} 
+%if %{with_fsal_zfs}
 	-DUSE_FSAL_XFS=ON				\
 %else
 	-DUSE_FSAL_XFS=OFF				\
 %endif
-%if %{with_fsal_zfs} 
+%if %{with_fsal_zfs}
 	-DUSE_FSAL_ZFS=ON				\
 %else
 	-DUSE_FSAL_ZFS=OFF				\
 %endif
-%if %{with_fsal_xfs} 
+%if %{with_fsal_xfs}
 	-DUSE_FSAL_XFS=ON				\
 %else
 	-DUSE_FSAL_XFS=OFF				\
 %endif
-%if %{with_fsal_ceph} 
+%if %{with_fsal_ceph}
 	-DUSE_FSAL_CEPH=ON				\
 %else
 	-DUSE_FSAL_CEPH=OFF				\
 %endif
-%if %{with_fsal_lustre} 
+%if %{with_fsal_lustre}
 	-DUSE_FSAL_LUSTRE=ON				\
 %else
 	-DUSE_FSAL_LUSTRE=OFF				\
 %endif
-%if %{with_fsal_shook} 
+%if %{with_fsal_shook}
 	-DUSE_FSAL_SHOOK=ON				\
 %else
 	-DUSE_FSAL_SHOOK=OFF				\
 %endif
-%if %{with_fsal_gpfs} 
+%if %{with_fsal_gpfs}
 	-DUSE_FSAL_GPFS=ON				\
 %else
 	-DUSE_FSAL_GPFS=OFF				\
 %endif
-%if %{with_fsal_hpss} 
+%if %{with_fsal_hpss}
 	-DUSE_FSAL_HPSS=ON				\
 %else
 	-DUSE_FSAL_HPSS=OFF				\
 %endif
-%if %{with_fsal_pt} 
+%if %{with_fsal_pt}
 	-DUSE_FSAL_PT=ON				\
 %else
 	-DUSE_FSAL_PT=OFF				\
@@ -343,7 +345,7 @@ install -m 755 tools/mount.9P				%{buildroot}%{_sbindir}/mount.9P
 
 install -m 644 config_samples/ganesha.conf		%{buildroot}%{_sysconfdir}/ganesha
 
-%if 0%{?fedora} 
+%if 0%{?fedora}
 mkdir -p %{buildroot}%{_unitdir}
 install -m 644 scripts/systemd/nfs-ganesha.service	%{buildroot}%{_unitdir}/nfs-ganesha.service
 %endif
@@ -351,12 +353,12 @@ install -m 644 scripts/systemd/nfs-ganesha.service	%{buildroot}%{_unitdir}/nfs-g
 %if 0%{?rhel}
 mkdir -p %{buildroot}%{_sysconfdir}/init.d
 install -m 755 ganesha.init				%{buildroot}%{_sysconfdir}/init.d/nfs-ganesha
-%endif 
+%endif
 
 %if 0%{?bl6}
 mkdir -p %{buildroot}%{_sysconfdir}/init.d
 install -m 755 ganesha.init				%{buildroot}%{_sysconfdir}/init.d/nfs-ganesha
-%endif 
+%endif
 
 
 make install
@@ -371,10 +373,10 @@ make install
 %dir %{_sysconfdir}/ganesha/
 %config(noreplace) %{_sysconfdir}/ganesha/ganesha.conf
 
-%if 0%{?fedora} 
+%if 0%{?fedora}
 %config %{_unitdir}/nfs-ganesha.service
 %endif
- 
+
 %if 0%{?rhel}
 %config %{_sysconfdir}/init.d/nfs-ganesha
 %endif
@@ -428,7 +430,7 @@ make install
 %endif
 
 %if %{with_fsal_lustre}
-%files lustre 
+%files lustre
 %defattr(-,root,root,-)
 %{_libdir}/ganesha/libfsallustre*
 %endif
@@ -446,7 +448,7 @@ make install
 %endif
 
 %if %{with_fsal_hpss}
-%files hpss 
+%files hpss
 %defattr(-,root,root,-)
 %{_libdir}/ganesha/libfsalhpss*
 %endif
@@ -460,5 +462,5 @@ make install
 
 %changelog
 * Thu Nov 21 2013  Philippe DENIEL <philippe.deniel@cea.fr> 2.O
-- bunches of cool new stuff 
+- bunches of cool new stuff
 
