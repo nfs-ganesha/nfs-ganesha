@@ -1046,8 +1046,9 @@ static state_status_t subtract_deleg_from_list(cache_entry_t *entry,
 		if (owner != NULL
 		    && different_owners(found_entry->sle_owner, owner))
 			continue;
+
 		if (found_entry->sle_type != LEASE_LOCK)
-		  continue;
+			continue;
 
 		/* Tell GPFS delegation is returned then remove from list. */
 		glist_del(&found_entry->sle_list);
@@ -2313,9 +2314,7 @@ static state_status_t do_lock_op(cache_entry_t *entry,
 			status = STATE_FSAL_ERROR;
 		}
 	} else {
-#ifdef _USE_9P
 		if (owner->so_type != STATE_LOCK_OWNER_9P)
-#endif				/* _USE_9P */
 			status =
 			    do_unlock_no_owner(entry, export, req_ctx, lock,
 					       sle_type);
@@ -2489,7 +2488,11 @@ state_status_t state_lock(cache_entry_t *entry, exportlist_t *export,
 		return status;
 	}
 
-	cache_status = cache_inode_open(entry, FSAL_O_RDWR, req_ctx, (lock->lock_reclaim) ? CACHE_INODE_FLAG_RECLAIM : 0);
+	cache_status = cache_inode_open(entry,
+					FSAL_O_RDWR,
+					req_ctx,
+					(lock->lock_reclaim) ?
+						CACHE_INODE_FLAG_RECLAIM : 0);
 
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		cache_inode_dec_pin_ref(entry, false);
@@ -2881,19 +2884,23 @@ state_status_t state_unlock(cache_entry_t *entry, exportlist_t *export,
 	 */
 	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 
-	if (state->state_type == STATE_TYPE_DELEG
-	    && glist_empty(&entry->object.file.deleg_list)) {
-	  cache_inode_dec_pin_ref(entry, FALSE);
-	  LogDebug(COMPONENT_STATE,
-		   "Unlock success on file with no delegations");
-	  return STATE_SUCCESS;
+	/* The 9p protocols holds no state, just locks */
+	/* Opened files are managed on the client side */
+	if ((owner->so_type != STATE_LOCK_OWNER_9P) &&
+	    (state->state_type == STATE_TYPE_DELEG) &&
+	    glist_empty(&entry->object.file.deleg_list)) {
+		cache_inode_dec_pin_ref(entry, FALSE);
+		LogDebug(COMPONENT_STATE,
+			"Unlock success on file with no delegations");
+		return STATE_SUCCESS;
 	}
 
-	if (state->state_type == STATE_TYPE_DELEG) {
-	  status =
-	    subtract_deleg_from_list(entry, owner, state, &removed,
-				     &entry->object.file.deleg_list);
-	  return status;
+	if ((owner->so_type != STATE_LOCK_OWNER_9P) &&
+	    (state->state_type == STATE_TYPE_DELEG)) {
+		status =
+		   subtract_deleg_from_list(entry, owner, state, &removed,
+					&entry->object.file.deleg_list);
+		return status;
 	}
 
 	/* If lock list is empty, there really isn't any work for us to do. */
