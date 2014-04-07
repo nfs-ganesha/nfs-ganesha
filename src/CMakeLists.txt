@@ -988,8 +988,11 @@ configure_file(
 )
 
 
-########### add a "make dist"  ###############
+########### add a "make dist" and a "make rpmi"  ###############
+set( PKG_NAME "${CPACK_PACKAGE_FILE_NAME}.tar.gz")
 add_custom_target(dist COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
+add_custom_target( rpm COMMAND rpmbuild -ta  ${PKG_NAME}
+		   DEPENDS dist )
 
 ########### add a "make doc" target to call Doxygen
 find_package(Doxygen)
