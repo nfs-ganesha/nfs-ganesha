@@ -800,8 +800,11 @@ int create_log_facility(char *name,
 	facility->lf_headers = header;
 	if (log_func == log_to_file && private != NULL) {
 		facility->lf_private = gsh_strdup(private);
-		if (facility->lf_private == NULL)
+		if (facility->lf_private == NULL) {
+			pthread_rwlock_unlock(&log_rwlock);
+
 			return -ENOMEM;
+		}
 	} else
 		facility->lf_private = private;
 	glist_add_tail(&facility_list, &facility->lf_list);
@@ -1050,6 +1053,7 @@ int set_log_destination(char *name, char *dest)
 		dir = dirname(dir);
 		rc = access(dir, W_OK);
 		if (rc != 0) {
+			pthread_rwlock_unlock(&log_rwlock);
 			LogCrit(COMPONENT_LOG,
 				"Cannot create new log file (%s), because: %s",
 				dest, strerror(errno));
