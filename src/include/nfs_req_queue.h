@@ -35,7 +35,7 @@
 #ifndef NFS_REQ_QUEUE_H
 #define NFS_REQ_QUEUE_H
 
-#include "nlm_list.h"
+#include "ganesha_list.h"
 #include "wait_queue.h"
 
 /* XXX moving to gsh_intrinsic.h */

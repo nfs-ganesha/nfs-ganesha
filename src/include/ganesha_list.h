@@ -25,8 +25,8 @@
  *
  */
 
-#ifndef _NLM_LIST_H
-#define _NLM_LIST_H
+#ifndef _GANESHA_LIST_H
+#define _GANESHA_LIST_H
 
 #include <stddef.h>
 
@@ -161,4 +161,4 @@ static inline size_t glist_length(struct glist_head *head)
 	     node != (head);				\
 	     node = noden, noden = node->next)
 
-#endif				/* _NLM_LIST_H */
+#endif				/* _GANESHA_LIST_H */

@@ -52,7 +52,7 @@
 #include "nfs23.h"
 #include "nfs4.h"
 #include "nlm4.h"
-#include "nlm_list.h"
+#include "ganesha_list.h"
 #include "nfs4_acls.h"
 
 /* Forward references */

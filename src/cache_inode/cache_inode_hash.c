@@ -36,7 +36,6 @@
 #include <assert.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include "nlm_list.h"
 #include "fsal.h"
 #include "nfs_core.h"
 #include "log.h"

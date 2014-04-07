@@ -36,7 +36,6 @@
 #include <pthread.h>
 #include <string.h>
 #include <sys/types.h>
-#include "nlm_list.h"
 #include "fsal_internal.h"
 #include "FSAL/fsal_init.h"
 

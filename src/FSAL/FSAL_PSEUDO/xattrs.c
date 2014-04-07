@@ -40,7 +40,6 @@
 #include <sys/types.h>
 #include <os/xattr.h>
 #include <ctype.h>
-#include "nlm_list.h"
 #include "fsal_convert.h"
 #include "FSAL/fsal_commonlib.h"
 #include "pseudofs_methods.h"

@@ -37,7 +37,7 @@
 #include <string.h>
 #include <limits.h>
 #include <sys/types.h>
-#include "nlm_list.h"
+#include "ganesha_list.h"
 #include "FSAL/fsal_init.h"
 
 /* VFS FSAL module private storage

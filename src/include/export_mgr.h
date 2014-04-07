@@ -36,7 +36,7 @@
  * @brief Export manager
  */
 
-#include "nlm_list.h"
+#include "ganesha_list.h"
 
 #ifndef EXPORT_MGR_H
 #define EXPORT_MGR_H

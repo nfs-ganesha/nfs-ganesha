@@ -38,7 +38,7 @@
 #include <sys/types.h>
 #include <mntent.h>
 #include <sys/statvfs.h>
-#include "nlm_list.h"
+#include "ganesha_list.h"
 #include "fsal_handle.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"

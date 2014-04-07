@@ -25,7 +25,7 @@
 #ifndef _NLM_UTIL_H
 #define _NLM_UTIL_H
 
-#include "nlm_list.h"
+#include "ganesha_list.h"
 #include "nlm4.h"
 #include "sal_functions.h"
 

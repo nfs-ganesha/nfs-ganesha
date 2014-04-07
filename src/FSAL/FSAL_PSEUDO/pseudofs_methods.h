@@ -31,7 +31,7 @@
 
 #include "fsal_handle_syscalls.h"
 #include "avltree.h"
-#include "nlm_list.h"
+#include "ganesha_list.h"
 
 struct pseudo_fsal_obj_handle;
 

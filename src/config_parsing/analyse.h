@@ -26,7 +26,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdio.h>
-#include "nlm_list.h"
+#include "ganesha_list.h"
 
 /**
  * @brief Configuration parser data structures

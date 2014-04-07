@@ -53,7 +53,6 @@
 #include "cache_inode.h"
 #include "cache_inode_lru.h"
 #include "nfs_ip_stats.h"
-#include "nlm_list.h"
 
 /*
  * Export List structure

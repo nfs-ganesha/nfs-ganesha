@@ -22,7 +22,7 @@
 #include <rpc/rpc_msg.h>
 #include <rpc/gss_internal.h>	/* XXX */
 #include "abstract_mem.h"
-#include "nlm_list.h"
+#include "ganesha_list.h"
 #include "log.h"
 #include "fridgethr.h"
 

@@ -27,7 +27,6 @@
 #include <pthread.h>
 
 #include "nfs_proto_functions.h"
-#include "nlm_list.h"
 #include "nlm_util.h"
 #include "nlm4.h"
 #include "cache_inode.h"

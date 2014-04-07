@@ -39,7 +39,6 @@
 
 #include <stddef.h>
 
-#include "nlm_list.h"
 /* fsal_types contains constants and type definitions for FSAL */
 #include "fsal_types.h"
 #include "common_utils.h"

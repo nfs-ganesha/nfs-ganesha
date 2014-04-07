@@ -55,7 +55,7 @@
 #include <sys/statvfs.h>
 #include <sys/vfs.h>
 #include <os/quota.h>
-#include "nlm_list.h"
+#include "ganesha_list.h"
 #include "FSAL/fsal_commonlib.h"
 #include "fsal_private.h"
 #include "fsal_convert.h"

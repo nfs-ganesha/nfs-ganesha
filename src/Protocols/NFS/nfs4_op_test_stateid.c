@@ -44,7 +44,7 @@
 #include "sal_functions.h"
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
-#include "nlm_list.h"
+#include "ganesha_list.h"
 
 /**
  * @brief The NFS4_OP_TEST_STATEID operation.

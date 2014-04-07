@@ -40,7 +40,6 @@
 #include <mntent.h>
 #include <sys/statfs.h>
 #include <sys/quota.h>
-#include "nlm_list.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 #include "FSAL/fsal_commonlib.h"

@@ -45,6 +45,7 @@
 #include <sys/resource.h>
 
 #include "log.h"
+#include "ganesha_list.h"
 #include "rpc/rpc.h"
 #include "common_utils.h"
 #include "abstract_mem.h"

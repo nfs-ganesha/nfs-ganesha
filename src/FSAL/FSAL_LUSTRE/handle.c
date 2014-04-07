@@ -39,7 +39,7 @@
 #include <sys/types.h>
 #include <sys/syscall.h>
 #include <mntent.h>
-#include "nlm_list.h"
+#include "ganesha_list.h"
 #include "fsal_handle.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"

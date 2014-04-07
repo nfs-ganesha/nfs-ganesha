@@ -32,7 +32,7 @@
 #include <pthread.h>
 #include <arpa/inet.h>
 #include <sys/poll.h>
-#include "nlm_list.h"
+#include "ganesha_list.h"
 #include "fsal_types.h"
 #include "FSAL/fsal_commonlib.h"
 #include "pxy_fsal_methods.h"

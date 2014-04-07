@@ -39,7 +39,7 @@
 #include <mntent.h>
 #include <xfs/xfs.h>
 #include <xfs/handle.h>
-#include "nlm_list.h"
+#include "ganesha_list.h"
 #include "fsal_convert.h"
 #include "FSAL/fsal_commonlib.h"
 #include "../vfs_methods.h"

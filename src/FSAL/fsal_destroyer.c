@@ -26,7 +26,7 @@
  * @{
  */
 
-#include "nlm_list.h"
+#include "ganesha_list.h"
 #include "fsal.h"
 #include "fsal_api.h"
 #include "nfs_exports.h"

@@ -59,7 +59,6 @@
 #ifdef _USE_9P
 #include "9p.h"
 #endif				/* _USE_9P */
-#include "nlm_list.h"
 #include "fsal_pnfs.h"
 
 /**

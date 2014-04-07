@@ -45,7 +45,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <unistd.h>
-#include "nlm_list.h"
 #include "fsal.h"
 #include "nfs_core.h"
 #include "log.h"

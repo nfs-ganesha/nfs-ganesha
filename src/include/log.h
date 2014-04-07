@@ -44,7 +44,6 @@
 #include "gsh_intrinsic.h"
 #include "config_parsing.h"
 #include "display.h"
-#include "nlm_list.h"
 
 /* The maximum size of a log buffer */
 #define LOG_BUFF_LEN 2048

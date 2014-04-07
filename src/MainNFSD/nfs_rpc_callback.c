@@ -46,7 +46,6 @@
 #include <pthread.h>
 #include <assert.h>
 #include <arpa/inet.h>
-#include "nlm_list.h"
 #include "fsal.h"
 #include "nfs_core.h"
 #include "nfs_req_queue.h"
