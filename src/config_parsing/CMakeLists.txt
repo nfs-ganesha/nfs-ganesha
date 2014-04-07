@@ -21,14 +21,14 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 
 ########### next target ###############
 
-SET(ConfigParsing_STAT_SRCS
+SET(config_parsing_STAT_SRCS
    analyse.c
    config_parsing.c
    analyse.h
 )
 
-add_library(ConfigParsing STATIC
-  ${ConfigParsing_STAT_SRCS}
+add_library(config_parsing STATIC
+  ${config_parsing_STAT_SRCS}
   ${BISON_ConfigParser_OUTPUTS}
   ${FLEX_ConfigScanner_OUTPUTS}
 )
@@ -42,7 +42,7 @@ SET(verif_syntax_SRCS
 
 add_executable(verif_syntax EXCLUDE_FROM_ALL ${verif_syntax_SRCS})
 
-target_link_libraries(verif_syntax ConfigParsing log ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(verif_syntax config_parsing log ${CMAKE_THREAD_LIBS_INIT})
 
 
 ########### next target ###############
@@ -53,7 +53,7 @@ SET(test_parsing_SRCS
 
 add_executable(test_parsing EXCLUDE_FROM_ALL ${test_parsing_SRCS})
 
-target_link_libraries(test_parsing ConfigParsing log ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(test_parsing config_parsing log ${CMAKE_THREAD_LIBS_INIT})
 
 
 ########### install files ###############

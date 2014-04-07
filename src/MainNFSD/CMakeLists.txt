@@ -96,7 +96,7 @@ target_link_libraries(ganesha.nfsd
   MainServices
   ${PROTOCOLS}
   ${GANESHA_CORE}
-  ConfigParsing
+  config_parsing
   ${LIBTIRPC_LIBRARIES}
   ${SYSTEM_LIBRARIES}
 )

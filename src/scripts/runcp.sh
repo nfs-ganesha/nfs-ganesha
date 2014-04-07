@@ -150,7 +150,7 @@ Options:
          --ignore COMPLEX_MACRO on certain files
          --ignore BRACKET_SPACE in certain files
          --ignore DEEP_INDENTATION in certain files
--i       Include files agreed on to ignore (ConfigParsing|Protocols/XDR
+-i       Include files agreed on to ignore (config_parsing|Protocols/XDR
 -e       Include files from external prohects (murmur3|cidr|atomic_x86|city)
 -g       Use git-diff --name-only instead of find (-d will be ignored)
 -k       Specify commit for git-diff, default is HEAD
@@ -170,7 +170,7 @@ EXTERNAL="$EXTERNAL|test/test_atomic_x86_86.c|avl/|FSAL/FSAL_GPFS/include"
 
 NO_EXTERNAL=0
 
-IGNORE="ConfigParsing|Protocols/XDR|NodeList|include/nodelist.h"
+IGNORE="config_parsing|Protocols/XDR|NodeList|include/nodelist.h"
 IGNORE="$IGNORE|include/gsh_intrinsic.h"
 
 NO_IGNORE=0

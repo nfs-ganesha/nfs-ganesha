@@ -774,7 +774,7 @@ ENDIF( NOT EXISTS ${PROJECT_SOURCE_DIR}/libntirpc/CMakeLists.txt )
 
 add_subdirectory(log)
 add_subdirectory(common)
-add_subdirectory(ConfigParsing)
+add_subdirectory(config_parsing)
 add_subdirectory(cidr)
 add_subdirectory(test)
 add_subdirectory(avl)
