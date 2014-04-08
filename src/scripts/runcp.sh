@@ -1,5 +1,9 @@
 #!/bin/sh
 
+# Find directory where runcp.sh lives for checkpatch will be there too
+# We keep that in CURDIR
+CURDIR=$(dirname $(readlink -m $0))
+
 check_one_file()
 {
 	FDIR=`echo $1 | sed -e "s@$DIR\(.*\)/.*@$ODIR\1@"`
@@ -64,7 +68,8 @@ check_one_file()
 		fi
 	fi
 
-	checkpatch.pl $TYPEDEF $EXTRA_OPT  --file $1 > $OUTFILE 2> $ERROR_FILE
+	$CURDIR/checkpatch.pl $TYPEDEF $EXTRA_OPT \
+		 --file $1 > $OUTFILE 2> $ERROR_FILE
 
 	RESULT=`grep '^total:'  $OUTFILE`
 
@@ -339,5 +344,3 @@ if [ $REPORT -eq 1 ]
 then
 	cat $REPORT_FILE
 fi
-
-
