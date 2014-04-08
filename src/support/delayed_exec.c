@@ -162,6 +162,7 @@ static enum delayed_employment delayed_get_work(struct timespec *when,
 	struct avltree_node *first = avltree_first(&tree);
 	struct delayed_multi *mul;
 	struct timespec current;
+	struct delayed_task *task;
 
 	if (first == NULL)
 		return delayed_unemployed;
@@ -174,17 +175,18 @@ static enum delayed_employment delayed_get_work(struct timespec *when,
 		return delayed_on_break;
 	}
 
-	struct delayed_task *task = mul->list.lh_first;
+	if (mul->list.lh_first == NULL) {
+		avltree_remove(first, &tree);
+		gsh_free(mul);
+		return delayed_unemployed;
+	}
+	task = mul->list.lh_first;
 
 	*func = task->func;
 	*arg = task->arg;
 	LIST_REMOVE(task, link);
 	gsh_free(task);
 
-	if (mul->list.lh_first == NULL) {
-		avltree_remove(first, &tree);
-		gsh_free(mul);
-	}
 
 	return delayed_employed;
 }
