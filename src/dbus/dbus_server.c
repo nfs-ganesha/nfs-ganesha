@@ -370,7 +370,7 @@ static DBusHandlerResult dbus_message_entrypoint(DBusConnection *conn,
 	} else if (!strcmp(interface, DBUS_INTERFACE_PROPERTIES)) {
 		retval =
 		    dbus_proc_property(method, msg, reply, &error, interfaces);
-	} else {
+	} else if (method != NULL) {
 		struct gsh_dbus_interface **iface;
 
 		if (dbus_message_iter_init(msg, &args))
@@ -395,7 +395,8 @@ static DBusHandlerResult dbus_message_entrypoint(DBusConnection *conn,
 			}
 		}
 		LogMajor(COMPONENT_DBUS, "Unknown interface (%s)", interface);
-	}
+	} else
+		method = "No method arg";
  done:
 	if (!retval) {
 		const char *err_name, *err_text;
