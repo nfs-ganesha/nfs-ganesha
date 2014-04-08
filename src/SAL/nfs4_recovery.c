@@ -509,12 +509,19 @@ static int nfs4_read_recov_clids(DIR *dp, const char *parent_path, char *clid_st
                         {
                                 LogEvent(COMPONENT_CLIENTID, "opendir %s failed errno=%d", dentp->d_name, errno);
                                 free_heap(path, new_path, build_clid);
+                                /* this shouldn't happen, but we should skip the entry
+                                 * to avoid infinite loops
+                                 */
+                                dentp = readdir(dp);
                                 continue;
                         }
                         if (tgtdir)
                                 rc = nfs4_read_recov_clids(subdp, path, build_clid, new_path, takeover);
                         else
                                 rc = nfs4_read_recov_clids(subdp, path, build_clid, NULL, takeover);
+
+                        /* close the sub directory */
+                        (void)closedir(subdp);
 
                         if (new_path)
                                 gsh_free(new_path);
