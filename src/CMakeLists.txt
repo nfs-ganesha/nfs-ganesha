@@ -359,6 +359,11 @@ check_include_files(stdbool.h HAVE_STDBOOL_H)
 check_include_files(strings.h HAVE_STRINGS_H)
 check_include_files(string.h HAVE_STRING_H)
 
+if(HAVE_STRING_H AND HAVE_STRINGS_H)
+  # we have all the libraries and include files to use string.h
+  set(HAVE_STRNLEN ON)
+endif(HAVE_STRING_H)
+
 # PROXY handle mapping needs sqlite3
 IF(PROXY_HANDLE_MAPPING)
   check_include_files(sqlite3.h, HAVE_SQLITE3_H)

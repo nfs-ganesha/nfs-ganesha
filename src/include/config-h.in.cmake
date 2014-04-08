@@ -41,6 +41,7 @@
 #cmakedefine _HAVE_GSSAPI 1
 #cmakedefine HAVE_STRING_H 1
 #cmakedefine HAVE_STRINGS_H 1
+#cmakedefine HAVE_STRNLEN 1
 #cmakedefine LITTLEEND 1
 #cmakedefine BIGEND 1
 #cmakedefine HAVE_XATTR_H 1
