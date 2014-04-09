@@ -360,10 +360,11 @@ done:
 static int new_file(char *name_tok,
 	     struct parser_state *st)
 {
-	struct bufstack *bs;
+	struct bufstack *bs = NULL;
 	FILE *in_file;
 	YY_BUFFER_STATE inbuf;
-	struct file_list *flist, *fp;
+	struct file_list *flist = NULL;
+	struct file_list *fp;
 	void *yyscanner = st->scanner;
 	struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 	struct config_root *confroot = st->root_node;
@@ -410,11 +411,13 @@ static int new_file(char *name_tok,
 		}
 	}
 	bs = gsh_calloc(1, sizeof(struct bufstack));
-	if (bs == NULL)
+	if (bs == NULL) {
+		rc = ENOMEM;
 		goto errout;
+	}
 	flist = gsh_calloc(1, sizeof(struct file_list));
 	if (flist == NULL) {
-		gsh_free(bs);
+		rc = ENOMEM;
 		goto errout;
 	}
 	flist->next = confroot->files;
@@ -422,8 +425,8 @@ static int new_file(char *name_tok,
 	confroot->files = flist;
 	in_file = fopen(flist->pathname, "r" );
 	if (in_file == NULL) {
-		/* error */
-		return errno;
+		rc = errno;
+		goto errout;
 	}
 	bs->bs = ganeshun_yy_create_buffer(in_file,
 					 YY_BUF_SIZE,
@@ -439,6 +442,10 @@ static int new_file(char *name_tok,
 	return 0;
 
 errout:
+	if (flist != NULL)
+		gsh_free(flist);
+	if (bs != NULL)
+		gsh_free(bs);
 	gsh_free(fullpath);
 	return rc;
 }
