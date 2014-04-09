@@ -129,12 +129,10 @@ static struct gsh_dbus_method method_reload = {
 
 static bool admin_dbus_grace(DBusMessageIter *args, DBusMessage *reply)
 {
-#define IP_INPUT 120
 	char *errormsg = "Started grace period";
 	bool success = true;
 	DBusMessageIter iter;
 	nfs_grace_start_t gsp;
-	char buf[IP_INPUT];
 	char *input = NULL;
 	char *ip;
 
@@ -156,15 +154,17 @@ static bool admin_dbus_grace(DBusMessageIter *args, DBusMessage *reply)
 	gsp.nodeid = -1;
 	gsp.event = EVENT_TAKE_IP;
 
-	ip = strstr(input, ":");
+	ip = index(input, ':');
 	if (ip == NULL)
 		gsp.ipaddr = input;	/* no event specified */
 	else {
+		char *buf = alloca(strlen(input) + 1);
+
 		gsp.ipaddr = ip + 1;	/* point at the ip passed the : */
-		strncpy(buf, input, IP_INPUT);
+		strcpy(buf, input);
 		ip = strstr(buf, ":");
 		if (ip != NULL) {
-			*ip = 0x0;	/* replace ":" with null */
+			*ip = '\0';	/* replace ":" with null */
 			gsp.event = atoi(buf);
 		}
 		if (gsp.event == EVENT_TAKE_NODEID)
