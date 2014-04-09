@@ -581,16 +581,12 @@ static int fridgethr_spawn(struct fridgethr *fr,
 	/* The condition variable has/not been initialized */
 	bool conditioned = false;
 
-	PTHREAD_MUTEX_unlock(&fr->mtx);
 	fe = gsh_calloc(sizeof(struct fridgethr_entry), 1);
 	if (fe == NULL)
 		goto create_err;
 
-	/* Make a new thread */
-	++(fr->nthreads);
-
+	glist_init(&fe->thread_link);
 	fe->fr = fr;
-	glist_add_tail(&fr->thread_list, &fe->thread_link);
 	rc = pthread_mutex_init(&fe->ctx.mtx, NULL);
 	if (rc != 0) {
 		LogMajor(COMPONENT_THREAD,
@@ -628,14 +624,15 @@ static int fridgethr_spawn(struct fridgethr *fr,
 		     "fr %p created thread %u (nthreads %u nidle %u)", fr,
 		     (unsigned int)fe->ctx.id, fr->nthreads, fr->nidle);
 #endif
+	/* Make a new thread */
+	++(fr->nthreads);
+
+	glist_add_tail(&fr->thread_list, &fe->thread_link);
+	PTHREAD_MUTEX_unlock(&fr->mtx);
 
 	return rc;
 
  create_err:
-
-	PTHREAD_MUTEX_lock(&fr->mtx);
-	--(fr->nthreads);
-	PTHREAD_MUTEX_unlock(&fr->mtx);
 
 	if (conditioned)
 		pthread_cond_destroy(&fe->ctx.cv);
