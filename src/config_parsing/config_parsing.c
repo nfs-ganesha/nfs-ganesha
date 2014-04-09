@@ -224,7 +224,7 @@ static int convert_fsid(struct config_node *node, void *param)
 	errno = 0;
 	major = strtoull(node->u.varvalue, &endptr, 10);
 	if (*node->u.varvalue != '\0' && *endptr == '.') {
-		if (errno != 0 || major < 0 || major >= UINT64_MAX) {
+		if (errno != 0 || major == ULLONG_MAX) {
 			LogMajor(COMPONENT_CONFIG,
 				 "At (%s:%d): %s (%s) major is out of range",
 				 node->filename,
@@ -246,7 +246,7 @@ static int convert_fsid(struct config_node *node, void *param)
 		sp = endptr + 1;
 		minor = strtoull(sp, &endptr, 10);
 		if (*sp != '\0' && *endptr == '\0') {
-			if (errno != 0 || minor < 0 || minor >= UINT64_MAX) {
+			if (errno != 0 || minor == ULLONG_MAX) {
 				LogMajor(COMPONENT_CONFIG,
 					 "At (%s:%d): %s (%s) minor is out of range",
 					 node->filename,
