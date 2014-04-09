@@ -434,7 +434,7 @@ static fattr_xdr_result encode_linksupport(XDR *xdr,
 					   struct xdr_attrs_args *args)
 {
 	struct fsal_export *export;
-	int linksupport;
+	int linksupport = FALSE;
 
 	if (args->data != NULL && args->data->export != NULL) {
 		export = args->data->export->export_hdl;
@@ -460,7 +460,7 @@ static fattr_xdr_result encode_symlinksupport(XDR *xdr,
 					      struct xdr_attrs_args *args)
 {
 	struct fsal_export *export;
-	int symlinksupport;
+	int symlinksupport = FALSE;
 
 	if (args->data != NULL && args->data->export != NULL) {
 		export = args->data->export->export_hdl;
@@ -488,7 +488,7 @@ static fattr_xdr_result encode_namedattrsupport(XDR *xdr,
 						struct xdr_attrs_args *args)
 {
 	struct fsal_export *export;
-	int namedattrsupport;
+	int namedattrsupport = FALSE;
 
 	if (args->data != NULL && args->data->export != NULL) {
 		export = args->data->export->export_hdl;
@@ -548,7 +548,7 @@ static fattr_xdr_result encode_uniquehandles(XDR *xdr,
 					     struct xdr_attrs_args *args)
 {
 	struct fsal_export *export;
-	int uniquehandles;
+	int uniquehandles = FALSE;
 
 	if (args->data != NULL && args->data->export != NULL) {
 		export = args->data->export->export_hdl;
@@ -796,7 +796,7 @@ static fattr_xdr_result encode_aclsupport(XDR *xdr,
 					  struct xdr_attrs_args *args)
 {
 	struct fsal_export *export;
-	uint32_t aclsupport;
+	uint32_t aclsupport = 0;
 
 	if (args->data != NULL && args->data->export != NULL) {
 		export = args->data->export->export_hdl;
@@ -842,7 +842,7 @@ static fattr_xdr_result encode_cansettime(XDR *xdr,
 					  struct xdr_attrs_args *args)
 {
 	struct fsal_export *export;
-	uint32_t cansettime;
+	uint32_t cansettime = FALSE;
 
 	if (args->data != NULL && args->data->export != NULL) {
 		export = args->data->export->export_hdl;
@@ -868,7 +868,7 @@ static fattr_xdr_result encode_case_insensitive(XDR *xdr,
 						struct xdr_attrs_args *args)
 {
 	struct fsal_export *export;
-	uint32_t caseinsensitive;
+	uint32_t caseinsensitive = FALSE;
 
 	if (args->data != NULL && args->data->export != NULL) {
 		export = args->data->export->export_hdl;
@@ -895,7 +895,7 @@ static fattr_xdr_result encode_case_preserving(XDR *xdr,
 					       struct xdr_attrs_args *args)
 {
 	struct fsal_export *export;
-	uint32_t casepreserving;
+	uint32_t casepreserving = FALSE;
 
 	if (args->data != NULL && args->data->export != NULL) {
 		export = args->data->export->export_hdl;
@@ -922,7 +922,7 @@ static fattr_xdr_result encode_chown_restricted(XDR *xdr,
 						struct xdr_attrs_args *args)
 {
 	struct fsal_export *export;
-	uint32_t chownrestricted;
+	uint32_t chownrestricted = FALSE;
 
 	if (args->data != NULL && args->data->export != NULL) {
 		export = args->data->export->export_hdl;
@@ -1160,7 +1160,7 @@ static fattr_xdr_result encode_homogeneous(XDR *xdr,
 					   struct xdr_attrs_args *args)
 {
 	struct fsal_export *export;
-	uint32_t homogeneous;
+	uint32_t homogeneous = FALSE;
 
 	if (args->data != NULL && args->data->export != NULL) {
 		export = args->data->export->export_hdl;
@@ -1185,7 +1185,7 @@ static fattr_xdr_result encode_maxfilesize(XDR *xdr,
 					   struct xdr_attrs_args *args)
 {
 	struct fsal_export *export;
-	uint64_t maxfilesize;
+	uint64_t maxfilesize = 0;
 
 	if (args->data != NULL && args->data->export != NULL) {
 		export = args->data->export->export_hdl;
@@ -1209,7 +1209,7 @@ static fattr_xdr_result decode_maxfilesize(XDR *xdr,
 static fattr_xdr_result encode_maxlink(XDR *xdr, struct xdr_attrs_args *args)
 {
 	struct fsal_export *export;
-	uint32_t maxlink;
+	uint32_t maxlink = 0;
 
 	if (args->data != NULL && args->data->export != NULL) {
 		export = args->data->export->export_hdl;
@@ -1232,7 +1232,7 @@ static fattr_xdr_result decode_maxlink(XDR *xdr, struct xdr_attrs_args *args)
 static fattr_xdr_result encode_maxname(XDR *xdr, struct xdr_attrs_args *args)
 {
 	struct fsal_export *export;
-	uint32_t maxname;
+	uint32_t maxname = 0;
 
 	if (args->data != NULL && args->data->export != NULL) {
 		export = args->data->export->export_hdl;
@@ -1341,7 +1341,7 @@ static fattr_xdr_result decode_mode(XDR *xdr, struct xdr_attrs_args *args)
 static fattr_xdr_result encode_no_trunc(XDR *xdr, struct xdr_attrs_args *args)
 {
 	struct fsal_export *export;
-	uint32_t no_trunc = 0;
+	uint32_t no_trunc = FALSE;
 
 	if (args->data != NULL && args->data->export != NULL) {
 		export = args->data->export->export_hdl;
