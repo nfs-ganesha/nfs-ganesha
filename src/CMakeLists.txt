@@ -15,7 +15,6 @@ endif( "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_GREATER "2.6" )
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules/")
 
 project(nfs-ganesha C)
-
 # Project versioning
 set(GANESHA_MAJOR_VERSION 2)
 set(GANESHA_MINOR_VERSION 1)
@@ -988,16 +987,70 @@ configure_file(
 )
 
 
-########### add a "make dist" and a "make rpmi"  ###############
+########### add a "make dist" and a "make rpm"  ###############
+
 set( PKG_NAME "${CPACK_PACKAGE_FILE_NAME}.tar.gz")
 add_custom_target(dist COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
-add_custom_target( rpm COMMAND rpmbuild -ta  ${PKG_NAME}
-		   DEPENDS dist )
+
+# set "--with" arguments for rpmbuild
+# This has to be coherent with chosen FSALs
+set( WITH_ARG "")
+
+if(USE_FSAL_LUSTRE)
+    set( WITH_ARG "${WITH_ARG} --with lustre")
+endif(USE_FSAL_LUSTRE)
+
+if(USE_FSAL_SHOOK)
+    set( WITH_ARG "${WITH_ARG} --with shook")
+endif(USE_FSAL_SHOOK)
+
+if(USE_FSAL_ZFS)
+    set( WITH_ARG "${WITH_ARG} --with zfs")
+endif(USE_FSAL_ZFS)
+
+if(USE_FSAL_XFS)
+    set( WITH_ARG "${WITH_ARG} --with xfs")
+endif(USE_FSAL_XFS)
+
+if(USE_FSAL_GPFS)
+    set( WITH_ARG "${WITH_ARG} --with gpfs")
+endif(USE_FSAL_GPFS)
+
+if(USE_FSAL_CEPH)
+    set( WITH_ARG "${WITH_ARG} --with ceph")
+endif(USE_FSAL_CEPH)
+
+if(USE_FSAL_CEPH)
+    set( WITH_ARG "${WITH_ARG} --with ceph")
+endif(USE_FSAL_CEPH)
+
+if(USE_FSAL_GLUSTER)
+    set( WITH_ARG "${WITH_ARG} --with gluster")
+endif(USE_FSAL_GLUSTER)
+
+if(USE_FSAL_HPSS)
+    set( WITH_ARG "${WITH_ARG} --with hpss")
+endif(USE_FSAL_HPSS)
+
+if(USE_FSAL_PT)
+    set( WITH_ARG "${WITH_ARG} --with pt")
+endif(USE_FSAL_PT)
+
+if(USE_9P_RDMA)
+    set( WITH_ARG "${WITH_ARG} --with rdma")
+endif(USE_9P_RDMA)
+
+add_custom_target( rpm DEPENDS dist)
+add_custom_command(TARGET rpm
+                  COMMAND sh -c "rpmbuild ${WITH_ARG} -ta ${PKG_NAME}"
+		  VERBATIM
+		  DEPENDS dist)
 
 ########### add a "make doc" target to call Doxygen
 find_package(Doxygen)
 if(DOXYGEN_FOUND)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in
+		 ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
   add_custom_target(doc
     ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
