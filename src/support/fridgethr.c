@@ -1307,22 +1307,20 @@ int fridgethr_sync_command(struct fridgethr *fr, fridgethr_comm_t command,
 		ts.tv_sec += timeout;
 	}
 
- retry:
-	while ((rc == 0) && !done) {
-		if (timeout == 0)
+	while (!done) {
+		if (timeout == 0) {
 			rc = pthread_cond_wait(&cv, &mtx);
-		else
+			assert(rc == 0);
+		} else {
 			rc = pthread_cond_timedwait(&cv, &mtx, &ts);
+			if (rc == ETIMEDOUT)
+				LogMajor(COMPONENT_THREAD,
+					"Sync command seems to be stalled");
+			else
+				assert(rc == 0);
+		}
 	}
-
-	if (rc == EINTR) {
-		PTHREAD_MUTEX_lock(&mtx);
-		goto retry;
-	}
-
-	if (rc == 0)
-		PTHREAD_MUTEX_unlock(&mtx);
-
+	PTHREAD_MUTEX_unlock(&mtx);
 	return rc;
 }
 
