@@ -380,22 +380,13 @@ int convert_opaque_value_max_for_dir(struct display_buffer *dspbuf,
 	if (b_left <= 0)
 		return 0;
 
-	/* Check that the length is ok */
-	if (len < 0)
+	/* Check that the length is ok
+	 * If the value is empty, display EMPTY value. */
+	if (len <= 0 || len > max)
 		return 0;
 
 	/* If the value is NULL, display NULL value. */
 	if (value == NULL)
-		return 0;
-
-	/* If the value is empty, display EMPTY value. */
-	if (len == 0)
-		return 0;
-
-	if (b_left <= 0)
-		return 0;
-
-	if (len > max)
 		return 0;
 
 	/* Determine if the value is entirely printable characters, */
