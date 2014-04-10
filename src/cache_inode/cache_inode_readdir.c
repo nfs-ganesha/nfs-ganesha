@@ -393,6 +393,13 @@ populate_dirent(const struct req_op_context *opctx,
 	fsal_status = dir_hdl->ops->lookup(dir_hdl, opctx, name, &entry_hdl);
 	if (FSAL_IS_ERROR(fsal_status)) {
 		*state->status = cache_inode_error_convert(fsal_status);
+		if (*state->status == CACHE_INODE_FSAL_XDEV) {
+			LogInfo(COMPONENT_NFS_READDIR,
+				"Ignoring XDEV entry %s",
+				name);
+			*state->status = CACHE_INODE_SUCCESS;
+			return true;
+		}
 		LogInfo(COMPONENT_CACHE_INODE,
 			"Lookup failed on %s in dir %p with %s",
 			name, dir_hdl, cache_inode_err_str(*state->status));
