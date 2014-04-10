@@ -56,6 +56,10 @@
 #include <sys/vfs.h>
 #include <os/quota.h>
 #include "ganesha_list.h"
+#ifdef USE_BLKID
+#include <blkid/blkid.h>
+#include <uuid/uuid.h>
+#endif
 #include "FSAL/fsal_commonlib.h"
 #include "fsal_private.h"
 #include "fsal_convert.h"
@@ -555,6 +559,968 @@ int open_dir_by_path_walk(int first_fd, const char *path, struct stat *stat)
 	}
 
 	return fd;
+}
+
+pthread_rwlock_t fs_lock = PTHREAD_RWLOCK_INITIALIZER;
+
+struct glist_head posix_file_systems = {
+	&posix_file_systems, &posix_file_systems
+};
+
+struct avltree avl_fsid;
+struct avltree avl_dev;
+
+static inline int
+fsal_fs_cmpf_fsid(const struct avltree_node *lhs,
+		  const struct avltree_node *rhs)
+{
+	struct fsal_filesystem *lk, *rk;
+
+	lk = avltree_container_of(lhs, struct fsal_filesystem, avl_fsid);
+	rk = avltree_container_of(rhs, struct fsal_filesystem, avl_fsid);
+
+	if (lk->fsid.major < rk->fsid.major)
+		return -1;
+
+	if (lk->fsid.major > rk->fsid.major)
+		return 1;
+
+	if (lk->fsid_type == FSID_MAJOR_64 &&
+	    rk->fsid_type == FSID_MAJOR_64)
+		return 0;
+
+	/* Treat no minor as strictly less than any minor */
+	if (lk->fsid_type == FSID_MAJOR_64)
+		return -1;
+
+	/* Treat no minor as strictly less than any minor */
+	if (rk->fsid_type == FSID_MAJOR_64)
+		return 1;
+
+	if (lk->fsid.minor < rk->fsid.minor)
+		return -1;
+
+	if (lk->fsid.minor > rk->fsid.minor)
+		return 1;
+
+	return 0;
+}
+
+static inline struct fsal_filesystem *
+avltree_inline_fsid_lookup(const struct avltree_node *key)
+{
+	struct avltree_node *node = avl_fsid.root;
+	int res = 0;
+
+	while (node) {
+		res = fsal_fs_cmpf_fsid(node, key);
+		if (res == 0)
+			return avltree_container_of(node,
+						    struct fsal_filesystem,
+						    avl_fsid);
+		if (res > 0)
+			node = node->left;
+		else
+			node = node->right;
+	}
+	return NULL;
+}
+
+static inline int
+fsal_fs_cmpf_dev(const struct avltree_node *lhs,
+		 const struct avltree_node *rhs)
+{
+	struct fsal_filesystem *lk, *rk;
+
+	lk = avltree_container_of(lhs, struct fsal_filesystem, avl_dev);
+	rk = avltree_container_of(rhs, struct fsal_filesystem, avl_dev);
+
+	if (lk->dev.major < rk->dev.major)
+		return -1;
+
+	if (lk->dev.major > rk->dev.major)
+		return 1;
+
+	if (lk->dev.minor < rk->dev.minor)
+		return -1;
+
+	if (lk->dev.minor > rk->dev.minor)
+		return 1;
+
+	return 0;
+}
+
+static inline struct fsal_filesystem *
+avltree_inline_dev_lookup(const struct avltree_node *key)
+{
+	struct avltree_node *node = avl_dev.root;
+	int res = 0;
+
+	while (node) {
+		res = fsal_fs_cmpf_dev(node, key);
+		if (res == 0)
+			return avltree_container_of(node,
+						    struct fsal_filesystem,
+						    avl_dev);
+		if (res > 0)
+			node = node->left;
+		else
+			node = node->right;
+	}
+	return NULL;
+}
+
+void remove_fs(struct fsal_filesystem *fs)
+{
+	if (fs->in_fsid_avl)
+		avltree_remove(&fs->avl_fsid, &avl_fsid);
+
+	if (fs->in_dev_avl)
+		avltree_remove(&fs->avl_dev, &avl_dev);
+
+	glist_del(&fs->siblings);
+	glist_del(&fs->filesystems);
+}
+
+void free_fs(struct fsal_filesystem *fs)
+{
+	if (fs->path != NULL)
+		gsh_free(fs->path);
+
+	if (fs->device != NULL)
+		gsh_free(fs->device);
+
+	if (fs->type != NULL)
+		gsh_free(fs->type);
+
+	gsh_free(fs);
+}
+
+int re_index_fs_fsid(struct fsal_filesystem *fs,
+		     enum fsid_type fsid_type,
+		     uint64_t major,
+		     uint64_t minor)
+{
+	struct avltree_node *node;
+	struct fsal_fsid__ old_fsid = fs->fsid;
+
+	LogDebug(COMPONENT_FSAL,
+		 "Reindex %s from %"PRIu64".%"PRIu64
+		 " to %"PRIu64".%"PRIu64,
+		 fs->path,
+		 fs->fsid.major, fs->fsid.minor,
+		 major, minor);
+
+	/* It is not valid to use this routine to
+	 * remove fs from index.
+	 */
+	if (fsid_type == FSID_NO_TYPE)
+		return -EINVAL;
+
+	if (fs->in_fsid_avl)
+		avltree_remove(&fs->avl_fsid, &avl_fsid);
+
+	fs->fsid.major = major;
+	fs->fsid.minor = minor;
+
+	node = avltree_insert(&fs->avl_fsid, &avl_fsid);
+
+	if (node != NULL) {
+		/* This is a duplicate file system. */
+		fs->fsid = old_fsid;
+		if (fs->in_fsid_avl) {
+			/* Put it back where it was */
+			node = avltree_insert(&fs->avl_fsid, &avl_fsid);
+			if (node != NULL) {
+				LogFatal(COMPONENT_FSAL,
+					 "Could not re-insert filesystem %s",
+					 fs->path);
+			}
+		}
+		return -EEXIST;
+	}
+
+	fs->in_fsid_avl = true;
+	fs->fsid_type = fsid_type;
+
+	return 0;
+}
+
+int re_index_fs_dev(struct fsal_filesystem *fs,
+		    struct fsal_dev__ *dev)
+{
+	struct avltree_node *node;
+	struct fsal_dev__ old_dev = fs->dev;
+
+	/* It is not valid to use this routine to
+	 * remove fs from index.
+	 */
+	if (dev == NULL)
+		return -EINVAL;
+
+	if (fs->in_dev_avl)
+		avltree_remove(&fs->avl_dev, &avl_dev);
+
+	fs->dev = *dev;
+
+	node = avltree_insert(&fs->avl_dev, &avl_dev);
+
+	if (node != NULL) {
+		/* This is a duplicate file system. */
+		fs->dev = old_dev;
+		if (fs->in_dev_avl) {
+			/* Put it back where it was */
+			node = avltree_insert(&fs->avl_dev, &avl_dev);
+			if (node != NULL) {
+				LogFatal(COMPONENT_FSAL,
+					 "Could not re-insert filesystem %s",
+					 fs->path);
+			}
+		}
+		return -EEXIST;
+	}
+
+	fs->in_dev_avl = true;
+
+	return 0;
+}
+
+#define MASK_32 ((uint64_t) UINT32_MAX)
+
+int change_fsid_type(struct fsal_filesystem *fs,
+		     enum fsid_type fsid_type)
+{
+	uint64_t major, minor;
+	bool valid = false;
+
+	if (fs->fsid_type == fsid_type)
+		return 0;
+
+	switch (fsid_type) {
+	case FSID_ONE_UINT64:
+		if (fs->fsid_type == FSID_TWO_UINT64) {
+			/* Use the same compression we use for NFS v3 fsid */
+			major = squash_fsid(&fs->fsid);
+			valid = true;
+		} else if (fs->fsid_type == FSID_TWO_UINT32) {
+			/* Put major in the high order 32 bits and minor
+			 * in the low order 32 bits.
+			 */
+			major = fs->fsid.major << 32 |
+				fs->fsid.minor;
+			valid = true;
+		}
+		minor = 0;
+		break;
+
+	case FSID_MAJOR_64:
+		/* Nothing to do, will ignore fsid.minor in index */
+		valid = true;
+		break;
+
+	case FSID_TWO_UINT64:
+		/* Nothing to do, FSID_TWO_UINT32 will just have high order
+		 * zero bits while FSID_ONE_UINT64 will have minor = 0,
+		 * without changing the actual value.
+		 */
+		fs->fsid_type = fsid_type;
+		return 0;
+
+	case FSID_DEVICE:
+		major = fs->dev.major;
+		minor = fs->dev.minor;
+		valid = true;
+
+	case FSID_TWO_UINT32:
+		if (fs->fsid_type == FSID_TWO_UINT64) {
+			/* Shrink each 64 bit quantity to 32 bits by xoring the
+			 * two halves.
+			 */
+			major = (fs->fsid.major && MASK_32) ^
+				(fs->fsid.major >> 32);
+			minor = (fs->fsid.minor && MASK_32) ^
+				(fs->fsid.minor >> 32);
+			valid = true;
+		} else if (fs->fsid_type == FSID_ONE_UINT64) {
+			/* Split 64 bit that is in major into two 32 bit using
+			 * the high order 32 bits as major.
+			 */
+			major = fs->fsid.major >> 32;
+			minor = fs->fsid.major && MASK_32;
+			valid = true;
+		}
+
+		break;
+
+	case FSID_NO_TYPE:
+		/* It is not valid to use this routine to remove an fs */
+		break;
+	}
+
+	if (!valid)
+		return -EINVAL;
+
+	return re_index_fs_fsid(fs, fsid_type, major, minor);
+}
+
+static bool posix_get_fsid(struct fsal_filesystem *fs)
+{
+	struct statfs stat_fs;
+	struct stat mnt_stat;
+#ifdef USE_BLKID
+	char *dev_name = NULL, *uuid_str;
+	static struct blkid_struct_cache *cache;
+	struct blkid_struct_dev *dev;
+#endif
+
+	if (statfs(fs->path, &stat_fs) != 0) {
+		LogCrit(COMPONENT_FSAL,
+			"stat_fs of %s resulted in error %s(%d)",
+			fs->path, strerror(errno), errno);
+	}
+
+	fs->namelen = stat_fs.f_namelen;
+
+	if (stat(fs->path, &mnt_stat) != 0) {
+		LogCrit(COMPONENT_FSAL,
+			"stat of %s resulted in error %s(%d)",
+			fs->path, strerror(errno), errno);
+		return false;
+	}
+
+	fs->dev = posix2fsal_devt(mnt_stat.st_dev);
+
+#ifdef USE_BLKID
+	dev_name = blkid_devno_to_devname(mnt_stat.st_dev);
+
+	if (dev_name == NULL) {
+		LogInfo(COMPONENT_FSAL,
+			"blkid_devno_to_devname of %s failed for dev %d.%d",
+			fs->path,
+			major(mnt_stat.st_dev),
+			minor(mnt_stat.st_dev));
+		goto no_uuid;
+	}
+
+	if (cache == NULL && blkid_get_cache(&cache, NULL) != 0) {
+		LogInfo(COMPONENT_FSAL,
+			"blkid_get_cache of %s failed",
+			fs->path);
+		free(dev_name);
+		goto no_uuid;
+	}
+
+	dev = (struct blkid_struct_dev *)blkid_get_dev(cache,
+						       dev_name,
+						       BLKID_DEV_NORMAL);
+
+	if (dev == NULL) {
+		LogInfo(COMPONENT_FSAL,
+			"blkid_get_dev of %s failed for devname %s",
+			fs->path, dev_name);
+		goto no_uuid;
+	}
+
+	uuid_str = blkid_get_tag_value(cache, "UUID", dev_name);
+
+	if  (uuid_str == NULL) {
+		LogInfo(COMPONENT_FSAL,
+			"blkid_get_tag_value of %s failed",
+			fs->path);
+		goto no_uuid;
+	}
+
+	if (uuid_parse(uuid_str, (char *) &fs->fsid) == -1) {
+		LogInfo(COMPONENT_FSAL,
+			"uuid_parse of %s failed for uuid %s",
+			fs->path, uuid_str);
+		goto no_uuid;
+	}
+
+	fs->fsid_type = FSID_TWO_UINT64;
+	free(dev_name);
+
+	return true;
+
+ no_uuid:
+
+	if (dev_name)
+		free(dev_name);
+#endif
+
+	fs->fsid_type = FSID_TWO_UINT32;
+	fs->fsid.major = stat_fs.f_fsid.__val[0];
+	fs->fsid.minor = stat_fs.f_fsid.__val[1];
+	return true;
+}
+
+static void posix_create_file_system(struct mntent *mnt)
+{
+	struct fsal_filesystem *fs;
+	struct avltree_node *node;
+
+	if (strncasecmp(mnt->mnt_type, "nfs", 3) == 0) {
+		LogDebug(COMPONENT_FSAL,
+			 "Ignoring %s because type %s",
+			 mnt->mnt_dir,
+			 mnt->mnt_type);
+		return;
+	}
+
+	fs = gsh_calloc(1, sizeof(*fs));
+
+	if (fs == NULL) {
+		LogFatal(COMPONENT_FSAL,
+			 "mem alloc for %s failed",
+			 mnt->mnt_dir);
+	}
+
+	fs->path = gsh_strdup(mnt->mnt_dir);
+	fs->device = gsh_strdup(mnt->mnt_fsname);
+	fs->type = gsh_strdup(mnt->mnt_type);
+
+	if (fs->path == NULL) {
+		LogFatal(COMPONENT_FSAL,
+			 "mem alloc for %s failed",
+			 mnt->mnt_dir);
+	}
+
+	if (!posix_get_fsid(fs)) {
+		free_fs(fs);
+		return;
+	}
+
+	fs->pathlen = strlen(mnt->mnt_dir);
+
+	node = avltree_insert(&fs->avl_fsid, &avl_fsid);
+
+	if (node != NULL) {
+		/* This is a duplicate file system. */
+		struct fsal_filesystem *fs1;
+
+		fs1 = avltree_container_of(node,
+					   struct fsal_filesystem,
+					   avl_fsid);
+
+		LogDebug(COMPONENT_FSAL,
+			 "Skipped duplicate %s namelen=%d fsid=%016"
+			 PRIx64".%016"PRIx64" %"PRIu64".%"PRIu64,
+			 fs->path, (int) fs->namelen,
+			 fs->fsid.major, fs->fsid.minor,
+			 fs->fsid.major, fs->fsid.minor);
+
+		if (fs1->device[0] != '/' && fs->device[0] == '/') {
+			LogDebug(COMPONENT_FSAL,
+				 "Switching device for %s from %s to %s type from %s to %s",
+				 fs->path, fs1->device, fs->device,
+				 fs1->type, fs->type);
+			gsh_free(fs1->device);
+			fs1->device = fs->device;
+			fs->device = NULL;
+			gsh_free(fs1->type);
+			fs1->type = fs->type;
+			fs->type = NULL;
+		}
+
+		free_fs(fs);
+		return;
+	}
+
+	fs->in_fsid_avl = true;
+
+	node = avltree_insert(&fs->avl_dev, &avl_dev);
+
+	if (node != NULL) {
+		/* This is a duplicate file system. */
+		struct fsal_filesystem *fs1;
+
+		fs1 = avltree_container_of(node,
+					   struct fsal_filesystem,
+					   avl_dev);
+
+		LogDebug(COMPONENT_FSAL,
+			 "Skipped duplicate %s namelen=%d dev=%"
+			 PRIu64".%"PRIu64,
+			 fs->path, (int) fs->namelen,
+			 fs->dev.major, fs->dev.minor);
+
+		if (fs1->device[0] != '/' && fs->device[0] == '/') {
+			LogDebug(COMPONENT_FSAL,
+				 "Switching device for %s from %s to %s type from %s to %s",
+				 fs->path, fs1->device, fs->device,
+				 fs1->type, fs->type);
+			gsh_free(fs1->device);
+			fs1->device = fs->device;
+			fs->device = NULL;
+			gsh_free(fs1->type);
+			fs1->type = fs->type;
+			fs->type = NULL;
+		}
+
+		remove_fs(fs);
+		free_fs(fs);
+		return;
+	}
+
+	fs->in_dev_avl = true;
+
+	glist_add_tail(&posix_file_systems, &fs->filesystems);
+	glist_init(&fs->children);
+
+	LogInfo(COMPONENT_FSAL,
+		"Added filesystem %s namelen=%d dev=%"PRIu64".%"PRIu64
+		"fsid=%016"PRIx64".%016"PRIx64" %"PRIu64".%"PRIu64,
+		fs->path, (int) fs->namelen,
+		fs->dev.major, fs->dev.minor,
+		fs->fsid.major, fs->fsid.minor,
+		fs->fsid.major, fs->fsid.minor);
+}
+
+static void posix_find_parent(struct fsal_filesystem *this)
+{
+	struct glist_head *glist;
+	struct fsal_filesystem *fs;
+	int plen = 0;
+
+	/* Check for root fs, it has no parent */
+	if (this->pathlen == 1 && this->path[0] == '/')
+		return;
+
+	glist_for_each(glist, &posix_file_systems) {
+		fs = glist_entry(glist, struct fsal_filesystem, filesystems);
+
+		/* If this path is longer than this path, then it
+		 * can't be a parent, or if it's shorter than the
+		 * current match;
+		 */
+		if (fs->pathlen >= this->pathlen ||
+		    fs->pathlen < plen)
+			continue;
+
+		/* Check for sub-string match */
+		if (strncmp(fs->path, this->path, fs->pathlen) != 0)
+			continue;
+
+		this->parent = fs;
+		plen = fs->pathlen;
+	}
+
+	if (this->parent == NULL) {
+		LogInfo(COMPONENT_FSAL,
+			"Unattached file system %s",
+			this->path);
+		return;
+	}
+
+	/* Add to parent's list of children */
+	glist_add_tail(&this->parent->children, &this->siblings);
+	LogInfo(COMPONENT_FSAL,
+		"File system %s is a child of %s",
+		this->path, this->parent->path);
+}
+
+void show_tree(struct fsal_filesystem *this, int nest)
+{
+	struct glist_head *glist;
+	char blanks[1024];
+	memset(blanks, ' ', nest * 2);
+	blanks[nest * 2] = '\0';
+
+	LogInfo(COMPONENT_FSAL,
+		"%s%s",
+		blanks, this->path);
+
+	/* Claim the children now */
+	glist_for_each(glist, &this->children) {
+		show_tree(glist_entry(glist,
+				      struct fsal_filesystem,
+				      siblings),
+			  nest + 1);
+	}
+}
+
+int populate_posix_file_systems(void)
+{
+	FILE *fp;
+	struct mntent *mnt;
+	int retval = 0;
+	struct glist_head *glist;
+	struct fsal_filesystem *fs;
+
+	PTHREAD_RWLOCK_wrlock(&fs_lock);
+
+	if (!glist_empty(&posix_file_systems))
+		goto out;
+
+	avltree_init(&avl_fsid, fsal_fs_cmpf_fsid, 0);
+	avltree_init(&avl_dev, fsal_fs_cmpf_dev, 0);
+
+	/* start looking for the mount point */
+	fp = setmntent(MOUNTED, "r");
+
+	if (fp == NULL) {
+		retval = errno;
+		LogCrit(COMPONENT_FSAL, "Error %d in setmntent(%s): %s", retval,
+			MOUNTED, strerror(retval));
+		goto out;
+	}
+
+	while ((mnt = getmntent(fp)) != NULL) {
+		if (mnt->mnt_dir == NULL)
+			continue;
+
+		posix_create_file_system(mnt);
+	}
+
+	endmntent(fp);
+
+	/* build tree of POSIX file systems */
+	glist_for_each(glist, &posix_file_systems) {
+		posix_find_parent(glist_entry(glist,
+					      struct fsal_filesystem,
+					      filesystems));
+	}
+
+	/* show tree */
+	glist_for_each(glist, &posix_file_systems) {
+		fs = glist_entry(glist, struct fsal_filesystem, filesystems);
+		if (fs->parent == NULL)
+			show_tree(fs, 0);
+	}
+
+ out:
+
+	PTHREAD_RWLOCK_unlock(&fs_lock);
+	return retval;
+}
+
+void release_posix_file_systems(void)
+{
+	struct glist_head *glist, *glistn;
+	struct fsal_filesystem *fs;
+
+	PTHREAD_RWLOCK_wrlock(&fs_lock);
+
+	glist_for_each_safe(glist, glistn, &posix_file_systems) {
+		fs = glist_entry(glist, struct fsal_filesystem, filesystems);
+		if (fs->unclaim != NULL) {
+			LogWarn(COMPONENT_FSAL,
+				"Fileystem %s is still claimed",
+				fs->path);
+			unclaim_fs(fs);
+		}
+		LogDebug(COMPONENT_FSAL,
+			 "Releasing filesystem %s",
+			 fs->path);
+		remove_fs(fs);
+		free_fs(fs);
+	}
+
+	PTHREAD_RWLOCK_unlock(&fs_lock);
+}
+
+struct fsal_filesystem *lookup_fsid_locked(struct fsal_fsid__ *fsid,
+					   enum fsid_type fsid_type)
+{
+	struct fsal_filesystem key;
+	key.fsid = *fsid;
+	key.fsid_type = fsid_type;
+	return avltree_inline_fsid_lookup(&key.avl_fsid);
+}
+
+struct fsal_filesystem *lookup_dev_locked(struct fsal_dev__ *dev)
+{
+	struct fsal_filesystem key;
+	key.dev = *dev;
+	return avltree_inline_dev_lookup(&key.avl_dev);
+}
+
+struct fsal_filesystem *lookup_fsid(struct fsal_fsid__ *fsid,
+				    enum fsid_type fsid_type)
+{
+	struct fsal_filesystem *fs;
+
+	PTHREAD_RWLOCK_rdlock(&fs_lock);
+
+	fs = lookup_fsid_locked(fsid, fsid_type);
+
+	PTHREAD_RWLOCK_unlock(&fs_lock);
+	return fs;
+}
+
+struct fsal_filesystem *lookup_dev(struct fsal_dev__ *dev)
+{
+	struct fsal_filesystem *fs;
+
+	PTHREAD_RWLOCK_rdlock(&fs_lock);
+
+	fs = lookup_dev_locked(dev);
+
+	PTHREAD_RWLOCK_unlock(&fs_lock);
+
+	return fs;
+}
+
+void unclaim_fs(struct fsal_filesystem *this)
+{
+	/* One call to unclaim resolves all claims to the filesystem */
+	if (this->unclaim != NULL) {
+		LogDebug(COMPONENT_FSAL,
+			 "Have FSAL %s unclaim filesystem %s",
+			 this->fsal->name, this->path);
+		this->unclaim(this);
+	}
+
+	this->fsal = NULL;
+	this->unclaim = NULL;
+	this->exported = false;
+}
+
+int process_claim(const char *path,
+		  int pathlen,
+		  struct fsal_filesystem *this,
+		  struct fsal_module *fsal,
+		  struct fsal_export *exp,
+		  claim_filesystem_cb claim,
+		  unclaim_filesystem_cb unclaim)
+{
+	struct glist_head *glist;
+	struct fsal_filesystem *fs;
+	int retval = 0;
+
+	/* Check if the filesystem is already directly exported by some other
+	 * FSAL - note we can only get here is this is the root filesystem for
+	 * the export, once we start processing nested filesystems, we skip
+	 * any that are directly exported.
+	 */
+	if (this->fsal != NULL && this->fsal != fsal && this->exported) {
+		LogCrit(COMPONENT_FSAL,
+			"Filesystem %s already exported by FSAL %s for export path %s",
+			this->path, this->fsal->name, path);
+		return EINVAL;
+	}
+
+	/* Check if another FSAL had claimed this file system as a sub-mounted
+	 * file system.
+	 */
+	if (this->fsal != fsal)
+		unclaim_fs(this);
+
+	/* Now claim the file system (we may call claim multiple times */
+	retval = claim(this, exp);
+
+	if (retval == ENXIO) {
+		if (path != NULL) {
+			LogCrit(COMPONENT_FSAL,
+				"FSAL %s could not to claim root file system %s for export %s",
+				fsal->name, this->path, path);
+			return EINVAL;
+		} else {
+			LogInfo(COMPONENT_FSAL,
+				"FSAL %s could not to claim file system %s",
+				fsal->name, this->path);
+			return 0;
+		}
+	}
+
+	if (retval != 0) {
+		LogCrit(COMPONENT_FSAL,
+			"FSAL %s failed to claim file system %s error %s",
+			fsal->name, this->path, strerror(retval));
+		return retval;
+	}
+
+	LogDebug(COMPONENT_FSAL,
+		 "FSAL %s Claiming %s",
+		 fsal->name, this->path);
+
+	/* Complete the claim */
+	this->fsal = fsal;
+	this->unclaim = unclaim;
+
+	/* If this was the root of the export, indicate this filesystem is
+	 * directly exported.
+	 */
+	if (path != NULL)
+		this->exported = true;
+
+	/* If this has no children, done */
+	if (glist_empty(&this->children))
+		return 0;
+
+	/* Claim the children now */
+	glist_for_each(glist, &this->children) {
+		fs = glist_entry(glist, struct fsal_filesystem, siblings);
+		/* If path is provided, only consider children that are
+		 * children of the provided directory. This handles the
+		 * case of an export of something other than the root
+		 * of a file system.
+		 */
+		if (path != NULL && (fs->pathlen < pathlen ||
+		    (strncmp(fs->path, path, pathlen) != 0)))
+			continue;
+
+		/* Test if this fs is directly exported, if so, no more
+		 * sub-mounted exports.
+		 */
+		if (fs->exported)
+			continue;
+
+		/* Try to claim this child */
+		retval = process_claim(NULL, 0, fs, fsal,
+				       exp, claim, unclaim);
+
+		if (retval != 0)
+			break;
+	}
+
+	return retval;
+}
+
+int claim_posix_filesystems(const char *path,
+			    struct fsal_module *fsal,
+			    struct fsal_export *exp,
+			    claim_filesystem_cb claim,
+			    unclaim_filesystem_cb unclaim,
+			    struct fsal_filesystem **root_fs)
+{
+	int retval = 0;
+	struct fsal_filesystem *fs, *root = NULL;
+	struct glist_head *glist;
+	int pathlen = strlen(path), outlen = 0;
+
+	*root_fs = NULL;
+
+	PTHREAD_RWLOCK_wrlock(&fs_lock);
+
+	/* Scan POSIX file systems to find export root fs */
+	glist_for_each(glist, &posix_file_systems) {
+		fs = glist_entry(glist, struct fsal_filesystem, filesystems);
+		if (fs->pathlen > outlen) {
+			if (strcmp(fs->path, "/") == 0) {
+				outlen = fs->pathlen;
+				root = fs;
+			} else if ((strncmp(path, fs->path, fs->pathlen) == 0)
+				   && ((path[fs->pathlen] == '/') ||
+				       (path[fs->pathlen] == '\0'))) {
+				outlen = fs->pathlen;
+				root = fs;
+			}
+		}
+	}
+
+	/* Check if we found a filesystem */
+	if (root == NULL) {
+		LogCrit(COMPONENT_FSAL,
+			"No file system for export path %s",
+			path);
+		retval = ENOENT;
+		goto out;
+	}
+
+	/* Claim this file system and it's children */
+	retval = process_claim(path, pathlen, root, fsal,
+			       exp, claim, unclaim);
+
+	if (retval == 0) {
+		LogInfo(COMPONENT_FSAL,
+			"Root fs for export %s is %s",
+			path, root->path);
+		*root_fs = root;
+	}
+
+out:
+
+	PTHREAD_RWLOCK_unlock(&fs_lock);
+	return retval;
+}
+
+int encode_fsid(char *buf,
+		int max,
+		struct fsal_fsid__ *fsid,
+		enum fsid_type fsid_type)
+{
+	uint32_t u32;
+
+	if (sizeof_fsid(fsid_type) > max)
+		return -1;
+
+	/* Pack fsid into the bytes */
+	switch (fsid_type) {
+	case FSID_NO_TYPE:
+		break;
+
+	case FSID_ONE_UINT64:
+	case FSID_MAJOR_64:
+		memcpy(buf,
+		       &fsid->major,
+		       sizeof(fsid->major));
+		break;
+
+	case FSID_TWO_UINT64:
+		memcpy(buf,
+		       fsid,
+		       sizeof(*fsid));
+		break;
+
+	case FSID_TWO_UINT32:
+	case FSID_DEVICE:
+		u32 = fsid->major;
+		memcpy(buf,
+		       &u32,
+		       sizeof(u32));
+		u32 = fsid->minor;
+		memcpy(buf + sizeof(u32),
+		       &u32,
+		       sizeof(u32));
+	}
+
+	return sizeof_fsid(fsid_type);
+}
+
+int decode_fsid(char *buf,
+		int max,
+		struct fsal_fsid__ *fsid,
+		enum fsid_type fsid_type)
+{
+	uint32_t u32;
+
+	if (sizeof_fsid(fsid_type) > max)
+		return -1;
+
+	switch (fsid_type) {
+	case FSID_NO_TYPE:
+		memset(fsid, 0, sizeof(*fsid));
+		break;
+
+	case FSID_ONE_UINT64:
+	case FSID_MAJOR_64:
+		memcpy(&fsid->major,
+		       buf,
+		       sizeof(fsid->major));
+		fsid->minor = 0;
+		break;
+
+	case FSID_TWO_UINT64:
+		memcpy(fsid,
+		       buf,
+		       sizeof(*fsid));
+		break;
+
+	case FSID_TWO_UINT32:
+	case FSID_DEVICE:
+		memcpy(&u32,
+		       buf,
+		       sizeof(u32));
+		fsid->major = u32;
+		memcpy(&u32,
+		       buf + sizeof(u32),
+		       sizeof(u32));
+		fsid->minor = u32;
+		break;
+	}
+
+	return sizeof_fsid(fsid_type);
 }
 
 /** @} */

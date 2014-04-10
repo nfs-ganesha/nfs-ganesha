@@ -3506,9 +3506,7 @@ static void nfs3_FSALattr_To_PartialFattr(const struct attrlist *FSAL_attr,
 		/* xor filesystem_id major and rotated minor to create unique
 		 * on-wire fsid.
 		 */
-		Fattr->fsid = (nfs3_uint64) (FSAL_attr->fsid.major ^
-					    (FSAL_attr->fsid.minor << 32 |
-					     FSAL_attr->fsid.minor >> 32));
+		Fattr->fsid = (nfs3_uint64) squash_fsid(&FSAL_attr->fsid);
 
 		LogFullDebug(COMPONENT_NFSPROTO,
 			     "Compressing fsid for NFS v3 from "
@@ -3611,9 +3609,7 @@ bool nfs3_FSALattr_To_Fattr(exportlist_t *export,
 		/* xor filesystem_id major and rotated minor to create unique
 		 * on-wire fsid.
 		 */
-		Fattr->fsid = (nfs3_uint64) (export->filesystem_id.major ^
-					    (export->filesystem_id.minor << 32 |
-					     export->filesystem_id.minor >> 32));
+		Fattr->fsid = (nfs3_uint64) squash_fsid(&export->filesystem_id);
 
 		LogFullDebug(COMPONENT_NFSPROTO,
 			     "Compressing export filesystem_id for NFS v3 from "
