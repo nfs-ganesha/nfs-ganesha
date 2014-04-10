@@ -471,6 +471,8 @@ static const char *config_type_str(enum config_type type)
 		return "CONFIG_LIST";
 	case CONFIG_ENUM:
 		return "CONFIG_ENUM";
+	case CONFIG_ENUM_SET:
+		return "CONFIG_ENUM_SET";
 	case CONFIG_TOKEN:
 		return "CONFIG_TOKEN";
 	case CONFIG_BOOL:
@@ -570,6 +572,16 @@ static int do_block_init(struct config_item *params,
 			*(uint32_t *)param_addr |= item->u.lst.def;
 			LogFullDebug(COMPONENT_CONFIG,
 				     "%p CONFIG_ENUM %s mask=%08x def=%08x"
+				     " value=%08"PRIx32,
+				     param_addr,
+				     item->name,
+				     item->u.lst.mask, item->u.lst.def,
+				     *(uint32_t *)param_addr);
+			break;
+		case CONFIG_ENUM_SET:
+			*(uint32_t *)param_addr |= item->u.lst.def;
+			LogFullDebug(COMPONENT_CONFIG,
+				     "%p CONFIG_ENUM_SET %s mask=%08x def=%08x"
 				     " value=%08"PRIx32,
 				     param_addr,
 				     item->name,
@@ -877,6 +889,31 @@ static int do_block_load(struct config_node *blk,
 					errors += rc;
 				LogFullDebug(COMPONENT_CONFIG,
 					     "%p CONFIG_ENUM %s mask=%08x flags=%08x"
+					     " value=%08"PRIx32,
+					     param_addr,
+					     item->name,
+					     item->u.lst.mask, flags,
+					     *(uint32_t *)param_addr);
+			case CONFIG_ENUM_SET:
+				if (item->u.lst.def ==
+				   (*(uint32_t *)param_addr & item->u.lst.mask))
+					*(uint32_t *)param_addr &=
+							~item->u.lst.mask;
+				rc = convert_enum(node, item, &flags);
+				if (rc == 0) {
+					*(uint32_t *)param_addr |= flags;
+					if (item->u.lst.set_off < UINT32_MAX) {
+						caddr_t *mask_addr;
+						mask_addr = (caddr_t *)
+							((uint64_t)param_struct
+							+ item->u.lst.set_off);
+						*(uint32_t *)mask_addr
+							|= item->u.lst.bit;
+					}	
+				} else
+					errors += rc;
+				LogFullDebug(COMPONENT_CONFIG,
+					     "%p CONFIG_ENUM_SET %s mask=%08x flags=%08x"
 					     " value=%08"PRIx32,
 					     param_addr,
 					     item->name,
