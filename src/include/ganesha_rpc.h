@@ -198,6 +198,8 @@ static inline bool gsh_xprt_ref(SVCXPRT *xprt, uint32_t flags,
 
 	if (flags & XPRT_PRIVATE_FLAG_INCREQ)
 		req_cnt = ++(xu->req_cnt);
+	else
+		req_cnt = xu->req_cnt;
 
 	refd = SVC_REF2(xprt, SVC_REF_FLAG_LOCKED, tag, line);
 
