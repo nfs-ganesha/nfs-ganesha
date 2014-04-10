@@ -130,7 +130,6 @@ void SetNameHost(const char *nom);
 void SetNameFunction(const char *nom);	/* thread safe */
 
 void init_logging(const char *log_path, const int debug_level);
-void Log_FreeThreadContext();
 
 int ReturnLevelAscii(const char *LevelInAscii);
 char *ReturnLevelInt(int level);

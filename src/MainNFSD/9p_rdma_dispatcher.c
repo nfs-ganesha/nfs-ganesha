@@ -94,7 +94,6 @@ static void *_9p_rdma_cleanup_conn_thread(void *arg)
 	}
 
 	msk_destroy_trans(&trans);
-	Log_FreeThreadContext();
 	pthread_exit(NULL);
 }
 
@@ -184,14 +183,12 @@ void *_9p_rdma_thread(void *Arg)
 		goto error;
 	}
 
-	Log_FreeThreadContext();
 	pthread_exit(NULL);
 
  error:
 
 	_9p_rdma_cleanup_conn_thread(trans);
 
-	Log_FreeThreadContext();
 	pthread_exit(NULL);
 }				/* _9p_rdma_handle_trans */
 

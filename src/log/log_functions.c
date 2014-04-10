@@ -232,26 +232,10 @@ static int syslog_opened;
  * Variables specifiques aux threads.
  */
 
-struct thread_log_context {
-	char *thread_name;
-	struct display_buffer dspbuf;
-	char buffer[LOG_BUFF_LEN + 1];
-
-};
-
-struct thread_log_context emergency_context = {
-	"* log emergency *",
-	{sizeof(emergency_context.buffer),
-	 emergency_context.buffer,
-	 emergency_context.buffer}
-};
-
-pthread_mutex_t emergency_mutex = PTHREAD_MUTEX_INITIALIZER;
+__thread char thread_name[16];
+__thread char log_buffer[LOG_BUFF_LEN + 1];
 
 /* threads keys */
-static pthread_key_t thread_key;
-static pthread_once_t once_key = PTHREAD_ONCE_INIT;
-
 #define LogChanges(format, args...) \
 	do { \
 		if (component_log_level[COMPONENT_LOG] == \
@@ -322,97 +306,6 @@ static struct tm *Localtime_r(const time_t *p_time, struct tm *p_tm)
 #define Localtime_r localtime_r
 #endif
 
-/* Init of pthread_keys */
-static void init_keys(void)
-{
-	if (pthread_key_create(&thread_key, NULL) == -1)
-		LogCrit(COMPONENT_LOG,
-			"init_keys - pthread_key_create returned %d (%s)",
-			errno, strerror(errno));
-}				/* init_keys */
-
-/**
- * GetThreadContext :
- * manages pthread_keys.
- */
-static struct thread_log_context *Log_GetThreadContext(int ok_errors)
-{
-	struct thread_log_context *context;
-
-	/* first, we init the keys if this is the first time */
-	if (pthread_once(&once_key, init_keys) != 0) {
-		if (ok_errors)
-			LogCrit(COMPONENT_LOG_EMERG,
-				"Log_GetThreadContext - pthread_once returned %d (%s)",
-				errno, strerror(errno));
-		return &emergency_context;
-	}
-
-	context = (struct thread_log_context *) pthread_getspecific(thread_key);
-
-	/* we allocate the thread key if this is the first time */
-	if (context == NULL) {
-		/* allocates thread structure */
-		context = gsh_malloc(sizeof(struct thread_log_context));
-
-		if (context == NULL) {
-			if (ok_errors)
-				LogCrit(COMPONENT_LOG_EMERG,
-					"Log_GetThreadContext - malloc returned %d (%s)",
-					errno, strerror(errno));
-			return &emergency_context;
-		}
-
-		/* inits thread structures */
-		context->thread_name = emergency_context.thread_name;
-		context->dspbuf.b_size = sizeof(context->buffer);
-		context->dspbuf.b_start = context->buffer;
-		context->dspbuf.b_current = context->buffer;
-
-		/* set the specific value */
-		pthread_setspecific(thread_key, context);
-
-		if (ok_errors)
-			LogFullDebug(COMPONENT_LOG_EMERG, "malloc => %p",
-				     context);
-	}
-
-	return context;
-
-}				/* Log_GetThreadContext */
-
-static inline const char *Log_GetThreadFunction(int ok_errors)
-{
-	struct thread_log_context *context = Log_GetThreadContext(ok_errors);
-
-	return context->thread_name;
-}
-
-/**
- * Log_FreeThreadContext
- *
- * Free context allocated whenever a log function is used in a thread.
- * This function should be called before a thread exits if log functions
- * have been used.
- */
-void Log_FreeThreadContext()
-{
-	struct thread_log_context *context;
-
-	/* Init the key if first time.
-	 * Would if(once_key == PTHREAD_ONCE_INIT) be safe?
-	 * (no race for thread variables) */
-	if (pthread_once(&once_key, init_keys) != 0)
-		return;
-
-	context = (struct thread_log_context *) pthread_getspecific(thread_key);
-
-	if (context) {
-		pthread_setspecific(thread_key, NULL);
-		gsh_free(context);
-	}
-}
-
 /*
  * Convert a numeral log level in ascii to
  * the numeral value.
@@ -465,13 +358,13 @@ void SetNameHost(const char *name)
 /* Set the function name in progress. */
 void SetNameFunction(const char *nom)
 {
-	struct thread_log_context *context = Log_GetThreadContext(0);
-	if (context == NULL)
-		return;
-	if (context->thread_name != emergency_context.thread_name)
-		gsh_free(context->thread_name);
-	context->thread_name = gsh_strdup(nom);
-}				/* SetNameFunction */
+	strncpy(thread_name, nom, sizeof(thread_name));
+	thread_name[sizeof(thread_name)-1] = '\0';
+	if (strlen(nom) >= sizeof(thread_name))
+		LogWarn(COMPONENT_LOG,
+			"Thread name %s too long truncated to %s",
+			nom, thread_name);
+}
 
 /* Installs a signal handler */
 static void ArmSignal(int signal, void (*action) ())
@@ -1330,9 +1223,9 @@ static int log_to_stream(log_header_t headers, void *private,
 		return 0;
 }
 
-static int display_log_header(struct thread_log_context *context)
+static int display_log_header(struct display_buffer *dsp_log)
 {
-	int b_left = display_start(&context->dspbuf);
+	int b_left = display_start(dsp_log);
 
 	if (b_left <= 0 || max_headers < LH_ALL)
 		return b_left;
@@ -1368,71 +1261,75 @@ static int display_log_header(struct thread_log_context *context)
 			     &the_date) != 0) {
 			if (logfields->timefmt == TD_SYSLOG_USEC)
 				b_left =
-				    display_printf(&context->dspbuf, tbuf,
+				    display_printf(dsp_log, tbuf,
 						   tv.tv_usec);
 			else
-				b_left = display_cat(&context->dspbuf, tbuf);
+				b_left = display_cat(dsp_log, tbuf);
 		}
 	}
 
 	if (b_left > 0 && const_log_str[0] != '\0')
-		b_left = display_cat(&context->dspbuf, const_log_str);
+		b_left = display_cat(dsp_log, const_log_str);
 
 	/* If thread name will not follow, need a : separator */
 	if (b_left > 0 && !logfields->disp_threadname)
-		b_left = display_cat(&context->dspbuf, ": ");
+		b_left = display_cat(dsp_log, ": ");
 
 	/* If we overflowed the buffer with the header, just skip it. */
 	if (b_left == 0) {
-		display_reset_buffer(&context->dspbuf);
-		b_left = display_start(&context->dspbuf);
+		display_reset_buffer(dsp_log);
+		b_left = display_start(dsp_log);
 	}
 
-	/* The message will now start at context->dspbuf.b_current */
+	/* The message will now start at dsp_log.b_current */
 	return b_left;
 }
 
-static int display_log_component(struct thread_log_context *context,
+static int display_log_component(struct display_buffer *dsp_log,
 				 log_components_t component, char *file,
 				 int line, const char *function, int level)
 {
-	int b_left = display_start(&context->dspbuf);
+	int b_left = display_start(dsp_log);
 
 	if (b_left <= 0 || max_headers < LH_COMPONENT)
 		return b_left;
 
-	if (b_left > 0 && logfields->disp_threadname)
-		b_left =
-		    display_printf(&context->dspbuf, "[%s] ",
-				   context->thread_name);
+	if (b_left > 0 && logfields->disp_threadname) {
+		if (thread_name[0] != '\0')
+			b_left = display_printf(dsp_log, "[%s] ",
+						thread_name);
+		else
+			b_left = display_printf(dsp_log, "[%p] ",
+						thread_name);
+	}
 
 	if (b_left > 0 && logfields->disp_filename) {
 		if (logfields->disp_linenum)
-			b_left = display_printf(&context->dspbuf, "%s:", file);
+			b_left = display_printf(dsp_log, "%s:", file);
 		else
-			b_left = display_printf(&context->dspbuf, "%s :", file);
+			b_left = display_printf(dsp_log, "%s :", file);
 	}
 
 	if (b_left > 0 && logfields->disp_linenum)
-		b_left = display_printf(&context->dspbuf, "%d :", line);
+		b_left = display_printf(dsp_log, "%d :", line);
 
 	if (b_left > 0 && logfields->disp_funct)
-		b_left = display_printf(&context->dspbuf, "%s :", function);
+		b_left = display_printf(dsp_log, "%s :", function);
 
 	if (b_left > 0 && logfields->disp_comp)
 		b_left =
-		    display_printf(&context->dspbuf, "%s :",
+		    display_printf(dsp_log, "%s :",
 				   LogComponents[component].comp_str);
 
 	if (b_left > 0 && logfields->disp_level)
 		b_left =
-		    display_printf(&context->dspbuf, "%s :",
+		    display_printf(dsp_log, "%s :",
 				   tabLogLevel[level].short_str);
 
 	/* If we overflowed the buffer with the header, just skip it. */
 	if (b_left == 0) {
-		display_reset_buffer(&context->dspbuf);
-		b_left = display_start(&context->dspbuf);
+		display_reset_buffer(dsp_log);
+		b_left = display_start(dsp_log);
 	}
 
 	return b_left;
@@ -1442,48 +1339,34 @@ void display_log_component_level(log_components_t component, char *file,
 				 int line, char *function, log_levels_t level,
 				 char *format, va_list arguments)
 {
-	struct thread_log_context *context;
 	char *compstr;
 	char *message;
 	int b_left;
 	struct glist_head *glist;
 	struct log_facility *facility;
-
-	context = Log_GetThreadContext(component != COMPONENT_LOG_EMERG);
-
-	if (context != &emergency_context) {
-		/* Reset and verify the buffer. */
-		display_reset_buffer(&context->dspbuf);
-
-		b_left = display_start(&context->dspbuf);
-
-		if (b_left <= 0)
-			context = &emergency_context;
-	}
-
-	if (context == &emergency_context)
-		pthread_mutex_lock(&emergency_mutex);
+	struct display_buffer dsp_log = {sizeof(log_buffer),
+					 log_buffer, log_buffer};
 
 	/* Build up the messsage and capture the various positions in it. */
-	b_left = display_log_header(context);
+	b_left = display_log_header(&dsp_log);
 
 	if (b_left > 0)
-		compstr = context->dspbuf.b_current;
+		compstr = dsp_log.b_current;
 	else
-		compstr = context->dspbuf.b_start;
+		compstr = dsp_log.b_start;
 
 	if (b_left > 0)
 		b_left =
-		    display_log_component(context, component, file, line,
+		    display_log_component(&dsp_log, component, file, line,
 					  function, level);
 
 	if (b_left > 0)
-		message = context->dspbuf.b_current;
+		message = dsp_log.b_current;
 	else
-		message = context->dspbuf.b_start;
+		message = dsp_log.b_start;
 
 	if (b_left > 0)
-		b_left = display_vprintf(&context->dspbuf, format, arguments);
+		b_left = display_vprintf(&dsp_log, format, arguments);
 
 	pthread_rwlock_rdlock(&log_rwlock);
 
@@ -1494,14 +1377,11 @@ void display_log_component_level(log_components_t component, char *file,
 		    && facility->lf_func != NULL)
 			facility->lf_func(facility->lf_headers,
 					  facility->lf_private,
-					  level, &context->dspbuf,
+					  level, &dsp_log,
 					  compstr, message);
 	}
 
 	pthread_rwlock_unlock(&log_rwlock);
-
-	if (context == &emergency_context)
-		pthread_mutex_unlock(&emergency_mutex);
 
 	if (level == NIV_FATAL)
 		Fatal();
