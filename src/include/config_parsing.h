@@ -51,6 +51,7 @@ enum config_type {
 	CONFIG_PATH,
 	CONFIG_LIST,
 	CONFIG_ENUM,
+	CONFIG_ENUM_SET,
 	CONFIG_TOKEN,
 	CONFIG_BOOL,
 	CONFIG_BOOLBIT,
@@ -219,11 +220,12 @@ struct config_item {
 			uint32_t bit;
 			size_t set_off;
 		} anonid;
-		struct { /* CONFIG_LIST | CONFIG_ENUM |
+		struct { /* CONFIG_LIST | CONFIG_ENUM | CONFIG_ENUM_SET |
 			    CONFIG_LIST_BITS | CONFIG_ENUM_BITS */
 			uint32_t def;
 			uint32_t mask;
 			struct config_item_list *tokens;
+			uint32_t bit;
 			size_t set_off;
 		} lst;
 		struct { /* CONFIG_BOOLBIT */
@@ -434,6 +436,19 @@ struct config_item {
 	  .u.lst.mask = UINT32_MAX,		    \
 	  .u.lst.set_off = UINT32_MAX,		    \
 	  .u.lst.tokens = _tokens_,		    \
+	  .off = offsetof(struct _struct_, _mem_)   \
+	}
+
+#define CONF_ITEM_ENUM_SET(_name_, _def_, _tokens_, _struct_, _mem_, \
+			   _bit_, _set_)		   \
+	{ .name = _name_,			    \
+	  .type = CONFIG_ENUM_SET,		    \
+	  .u.lst.def = _def_,			    \
+	  .u.lst.mask = UINT32_MAX,		    \
+	  .u.lst.set_off = UINT32_MAX,		    \
+	  .u.lst.tokens = _tokens_,		    \
+	  .u.lst.bit = _bit_,			    \
+	  .u.lst.set_off = offsetof(struct _struct_, _set_),   \
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
 

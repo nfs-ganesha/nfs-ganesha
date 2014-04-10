@@ -188,6 +188,7 @@ void fsal_obj_handle_init(struct fsal_obj_handle *obj, struct fsal_export *exp,
 	obj->ops = exp->obj_ops;
 	obj->fsal = exp->fsal;
 	obj->type = type;
+	obj->attributes.expire_time_attr = 0;
 	pthread_mutexattr_init(&attrs);
 #if defined(__linux__)
 	pthread_mutexattr_settype(&attrs, PTHREAD_MUTEX_ADAPTIVE_NP);
@@ -426,6 +427,12 @@ void display_fsinfo(struct fsal_staticfsinfo_t *info)
 		 info->share_support);
 	LogDebug(COMPONENT_FSAL, "  share_support_owner  = %d  ",
 		 info->share_support_owner);
+	LogDebug(COMPONENT_FSAL, "  delegations = %d  ",
+		 info->delegations);
+	LogDebug(COMPONENT_FSAL, "  pnfs_file = %d  ",
+		 info->pnfs_file);
+	LogDebug(COMPONENT_FSAL, "  fsal_trace = %d  ",
+		 info->fsal_trace);
 	LogDebug(COMPONENT_FSAL, "}");
 }
 

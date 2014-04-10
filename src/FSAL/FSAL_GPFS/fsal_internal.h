@@ -198,7 +198,7 @@ fsal_status_t fsal_stat_by_handle(int dirfd, struct gpfs_file_handle *p_handle,
 fsal_status_t fsal_get_xstat_by_handle(int dirfd,
 				       struct gpfs_file_handle *p_handle,
 				       gpfsfsal_xstat_t *p_buffxstat,
-				       uint32_t *grace_period_attr,
+				       uint32_t *expire_time_attr,
 				       bool expire);
 
 fsal_status_t fsal_set_xstat_by_handle(int dirfd,

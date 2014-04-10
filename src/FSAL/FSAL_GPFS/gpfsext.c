@@ -42,7 +42,7 @@ int gpfs_ganesha(int op, void *oarg)
 				"Ganesha call to GPFS failed with ENOSYS\n");
 			return ENOSYS;
 		}
-		fcntl(localFD, F_SETFD, FD_CLOEXEC);
+		(void)fcntl(localFD, F_SETFD, FD_CLOEXEC);
 		fd = localFD;
 	}
 

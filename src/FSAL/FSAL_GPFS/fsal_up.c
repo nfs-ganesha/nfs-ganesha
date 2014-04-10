@@ -56,7 +56,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 	unsigned int *fhP;
 	int retry = 0;
 	struct gsh_buffdesc key;
-	uint32_t grace_period_attr = 0;
+	uint32_t expire_time_attr = 0;
 	uint32_t upflags = 0;
 
 	snprintf(thr_name, sizeof(thr_name), "fsal_up_%d.%d",
@@ -110,7 +110,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 		callback.buf = &buf;
 		callback.fl = &fl;
 		callback.dev_id = &dev_id;
-		callback.expire_attr = &grace_period_attr;
+		callback.expire_attr = &expire_time_attr;
 
 #ifdef _VALGRIND_MEMCHECK
 		memset(callback.handle->f_handle, 0,
@@ -168,7 +168,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 			     callback.handle->handle_key_size,
 			     callback.handle->handle_fsid[0],
 			     callback.handle->handle_fsid[1],
-			     callback.handle->f_handle, grace_period_attr);
+			     callback.handle->f_handle, expire_time_attr);
 
 		callback.handle->handle_version = OPENHANDLE_VERSION;
 
@@ -323,8 +323,8 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 						   ATTR_ATIME;
 
 					posix2fsal_attributes(&buf, &attr);
-					attr.grace_period_attr =
-					    grace_period_attr;
+					attr.expire_time_attr =
+					    expire_time_attr;
 
 					rc = event_func->
 					    update(gpfs_fsal_up_ctx->gf_fsal,

@@ -662,7 +662,7 @@ int fsal_internal_version()
 fsal_status_t fsal_get_xstat_by_handle(int dirfd,
 				       struct gpfs_file_handle *p_handle,
 				       gpfsfsal_xstat_t *p_buffxstat,
-				       uint32_t *grace_period_attr,
+				       uint32_t *expire_time_attr,
 				       bool expire)
 {
 	int rc;
@@ -704,7 +704,7 @@ fsal_status_t fsal_get_xstat_by_handle(int dirfd,
 #endif
 	xstatarg.attr_changed = 0;
 	xstatarg.buf = &p_buffxstat->buffstat;
-	xstatarg.expire_attr = grace_period_attr;
+	xstatarg.expire_attr = expire_time_attr;
 
 	rc = gpfs_ganesha(OPENHANDLE_GET_XSTAT, &xstatarg);
 	LogDebug(COMPONENT_FSAL,

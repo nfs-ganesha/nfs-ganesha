@@ -493,7 +493,7 @@ struct attrlist {
 	uint64_t spaceused;	/*< Space used on underlying filesystem */
 	uint64_t change;	/*< A 'change id' */
 	uint64_t generation;	/*< Generation number for this file */
-	uint32_t grace_period_attr;	/*< Expiration time interval in seconds
+	uint32_t expire_time_attr;	/*< Expiration time interval in seconds
 					   for attributes. Settable by FSAL. */
 };
 
@@ -637,6 +637,7 @@ struct fsal_staticfsinfo_t {
 	bool delegations;	/*< fsal supports delegations */
 	bool pnfs_file;		/*< fsal supports file pnfs */
 	bool reopen_method;	/* fsal supports reopen method */
+	bool fsal_trace; 	/*< fsal trace supports */
 };
 
 /**

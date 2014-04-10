@@ -151,6 +151,9 @@ static cache_inode_status_t update(struct fsal_module *fsal,
 
 	PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
 
+	if (attr->expire_time_attr != 0)
+		entry->obj_handle->attributes.expire_time_attr =
+							attr->expire_time_attr;
 	if (FSAL_TEST_MASK(attr->mask, ATTR_SIZE)) {
 		if (flags & fsal_up_update_filesize_inc) {
 			if (attr->filesize >
