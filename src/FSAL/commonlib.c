@@ -188,6 +188,7 @@ void fsal_obj_handle_init(struct fsal_obj_handle *obj, struct fsal_export *exp,
 	obj->ops = exp->obj_ops;
 	obj->fsal = exp->fsal;
 	obj->type = type;
+	obj->attributes.expire_time_attr = 0;
 	pthread_mutexattr_init(&attrs);
 #if defined(__linux__)
 	pthread_mutexattr_settype(&attrs, PTHREAD_MUTEX_ADAPTIVE_NP);

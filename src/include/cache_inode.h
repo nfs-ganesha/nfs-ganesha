@@ -378,6 +378,8 @@ struct cache_entry_t {
 	time_t change_time;
 	/** Time at which we last refreshed attributes. */
 	time_t attr_time;
+	/** Expiration type for attributes. */
+	cache_inode_expire_type_t expire_type_attr;
 	/** New style LRU link */
 	cache_inode_lru_t lru;
 	/** There is one export root reference counted for each export
@@ -857,14 +859,11 @@ static inline void
 cache_inode_fixup_md(cache_entry_t *entry)
 {
 	/* Set the refresh time for the cache entry */
-	if (nfs_param.cache_param.expire_type_attr == CACHE_INODE_EXPIRE) {
+	if (entry->expire_type_attr == CACHE_INODE_EXPIRE)
 		entry->attr_time = time(NULL);
-		if (entry->obj_handle->attributes.grace_period_attr == 0)
-			entry->obj_handle->attributes.grace_period_attr =
-			    nfs_param.cache_param.grace_period_attr;
-	} else {
+	else
 		entry->attr_time = 0;
-	}
+
 	/* I don't like using nsecs as a counter, it will be annoying in
 	 * 500 years.  I'll fix to match MS nano-intervals later.
 	 *
@@ -900,15 +899,14 @@ cache_inode_is_attrs_valid(const cache_entry_t *entry)
 	    && nfs_param.cache_param.getattr_dir_invalidation)
 		return false;
 
-	if (nfs_param.cache_param.expire_type_attr ==
-	    CACHE_INODE_EXPIRE_IMMEDIATE)
+	if (entry->expire_type_attr == CACHE_INODE_EXPIRE_IMMEDIATE)
 		return false;
 
-	if (nfs_param.cache_param.expire_type_attr !=
-	    CACHE_INODE_EXPIRE_NEVER) {
+	if (entry->expire_type_attr == CACHE_INODE_EXPIRE &&
+	    entry->obj_handle->attributes.expire_time_attr != 0) {
 		time_t current_time = time(NULL);
 		if (current_time - entry->attr_time >
-		    entry->obj_handle->attributes.grace_period_attr)
+		    entry->obj_handle->attributes.expire_time_attr)
 			return false;
 	}
 

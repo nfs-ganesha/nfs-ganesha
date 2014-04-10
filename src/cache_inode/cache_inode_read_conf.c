@@ -61,7 +61,7 @@ static struct config_item cache_inode_params[] = {
 		       expire_types,
 		       cache_inode_parameter, expire_type_attr),
 	CONF_ITEM_UI32("Attr_Expiration_Time", 0, 120, 60,
-		       cache_inode_parameter, grace_period_attr),
+		       cache_inode_parameter, expire_time_attr),
 	CONF_ITEM_BOOL("Use_Getattr_Directory_Invalidation", false,
 		       cache_inode_parameter, getattr_dir_invalidation),
 	CONF_ITEM_UI32("Entries_HWMark", 1, 200000, 100000,

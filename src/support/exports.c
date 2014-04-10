@@ -79,6 +79,9 @@ static void StrExportOptions(export_perms_t *p_perms, char *buffer)
 	if ((p_perms->set & EXPORT_OPTION_FSID_SET) != 0)
 		buf += sprintf(buf, "FSID_SET ");
 
+	if ((p_perms->set & EXPORT_OPTION_EXPIRE_SET) != 0)
+		buf += sprintf(buf, "EXPIRE_SET ");
+
 	if ((p_perms->set & EXPORT_OPTION_SQUASH_TYPES) != 0) {
 		if ((p_perms->options & EXPORT_OPTION_ROOT) != 0)
 			buf += sprintf(buf, "no_root_squash");
@@ -432,8 +435,6 @@ static void *client_init(void *link_mem, void *self_struct)
 		cli_list = self_struct;
 		exp = container_of(cli_list, struct exportlist,
 				   clients);
-		exp->expire_type_attr =
-			nfs_param.cache_param.expire_type_attr;
 		glist_init(&exp->clients);
 		return self_struct;
 	} else if (self_struct == NULL) {
@@ -606,6 +607,10 @@ static int fsal_commit(void *node, void *link_mem, void *self_struct)
 					  NULL,
 					  &fsal_up_top,
 					  &fsal_exp);
+	if (!(exp->export_perms.set & EXPORT_OPTION_EXPIRE_SET)) {
+		exp->expire_type_attr = nfs_param.cache_param.expire_type_attr;
+		exp->expire_time_attr = nfs_param.cache_param.expire_time_attr;
+	}
 	fsal->ops->put(fsal);
 	if (FSAL_IS_ERROR(status)) {
 		LogCrit(COMPONENT_CONFIG,
@@ -953,6 +958,13 @@ static struct config_item_list delegations[] = {
 	CONFIG_LIST_EOL
 };
 
+static struct config_item_list expire_types[] = {
+	CONFIG_LIST_TOK("Expire", CACHE_INODE_EXPIRE),
+	CONFIG_LIST_TOK("Never", CACHE_INODE_EXPIRE_NEVER),
+	CONFIG_LIST_TOK("Immediate", CACHE_INODE_EXPIRE_IMMEDIATE),
+	CONFIG_LIST_EOL
+};
+
 #define CONF_EXPORT_PERMS(_struct_, _perms_)				\
 	/* Note: Access_Type defaults to None on purpose */		\
 	CONF_ITEM_ENUM_BITS_SET("Access_Type",				\
@@ -985,7 +997,7 @@ static struct config_item_list delegations[] = {
 		EXPORT_OPTION_ROOT_SQUASH, EXPORT_OPTION_SQUASH_TYPES,	\
 		squash_types, _struct_, _perms_.options, _perms_.set),	\
 	CONF_ITEM_ENUM_BITS_SET("Delegations",				\
-		EXPORT_OPTION_NO_DELEGATIONS, EXPORT_OPTION_DELEGATIONS,				\
+		EXPORT_OPTION_NO_DELEGATIONS, EXPORT_OPTION_DELEGATIONS,\
 		delegations, _struct_, _perms_.options, _perms_.set)
 
 /**
@@ -1068,6 +1080,13 @@ static struct config_item export_params[] = {
 	CONF_ITEM_BLOCK("Client", client_params,
 			client_init, client_commit,
 			exportlist, clients),
+	CONF_ITEM_ENUM_SET("Attr_Expiration_Type",
+			   CACHE_INODE_EXPIRE_NEVER,
+			   expire_types,
+			   exportlist, expire_type_attr,
+			   EXPORT_OPTION_EXPIRE_SET, export_perms.set),
+	CONF_ITEM_UI32("Attr_Expiration_Time", 0, 360, 60,
+		       exportlist, expire_time_attr),
 	CONF_RELAX_BLOCK("FSAL", fsal_params,
 			 fsal_init, fsal_commit,
 			 exportlist, export_hdl),

@@ -68,7 +68,7 @@ fsal_status_t GPFSFSAL_getattrs(struct fsal_export *export,	/* IN */
 	gpfsfsal_xstat_t buffxstat;
 	int mntfd;
 	bool expire = FALSE;
-	uint32_t grace_period_attr = 0;	/*< Expiration time for attributes. */
+	uint32_t expire_time_attr = 0;	/*< Expiration time for attributes. */
 
 	/* sanity checks.
 	 * note : object_attributes is mandatory in GPFSFSAL_getattrs.
@@ -82,12 +82,13 @@ fsal_status_t GPFSFSAL_getattrs(struct fsal_export *export,	/* IN */
 		expire = TRUE;
 
 	st = fsal_get_xstat_by_handle(mntfd, p_filehandle, &buffxstat,
-				      &grace_period_attr, expire);
+				      &expire_time_attr, expire);
 	if (FSAL_IS_ERROR(st))
 		return st;
 
 	/* convert attributes */
-	p_object_attributes->grace_period_attr = grace_period_attr;
+	if (expire_time_attr != 0)
+		p_object_attributes->expire_time_attr = expire_time_attr;
 	st = gpfsfsal_xstat_2_fsal_attributes(&buffxstat, p_object_attributes);
 	if (FSAL_IS_ERROR(st)) {
 		FSAL_CLEAR_MASK(p_object_attributes->mask);

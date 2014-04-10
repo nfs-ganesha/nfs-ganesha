@@ -169,7 +169,12 @@ typedef struct exportlist {
 						    sits on.
 						    Protected by gsh_export lock
 						 */
-	cache_inode_expire_type_t expire_type_attr; /* not really used */
+	/** Expiration type for attributes.  Defaults to never,
+	    settable with Attr_Expiration_Time. */
+	cache_inode_expire_type_t expire_type_attr;
+	/** Expiration time interval in seconds for attributes.  Settable with
+	    Attr_Expiration_Time. */
+	time_t expire_time_attr;
 } exportlist_t;
 
 /* Constant for options masks */
@@ -235,6 +240,7 @@ typedef struct exportlist {
 #define EXPORT_OPTION_UDP 0x01000000	/*< UDP protocol is supported */
 #define EXPORT_OPTION_TCP 0x02000000	/*< TCP protocol is supported */
 #define EXPORT_OPTION_RDMA 0x04000000	/*< RDMA protocol is supported */
+#define EXPORT_OPTION_EXPIRE_SET 0x08000000	/*< Inode expire was set */
 #define EXPORT_OPTION_PROTOCOLS	      (EXPORT_OPTION_NFSV3	     | \
 				       EXPORT_OPTION_NFSV4	     | \
 				       EXPORT_OPTION_9P)
