@@ -27,13 +27,13 @@ int main(int argc, char **argv)
 	/* test de la syntaxe du fichier */
 	config = config_ParseFile(fichier);
 	if (config == NULL) {
-		errtxt = config_GetErrorMsg();
-		LogTest("Error parsing %s : %s", argv[1], errtxt);
+		LogTest("Error parsing %s", argv[1]);
 		exit(EINVAL);
 	} else {
 		LogTest("The syntax of the file %s is correct!", argv[1]);
 		exit(0);
 	}
+	config_Free(config);
 
 	return 0;
 

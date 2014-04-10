@@ -349,8 +349,8 @@ int rebuild_export_list(void)
 	config_struct = config_ParseFile(config_path);
 	if (!config_struct) {
 		LogCrit(COMPONENT_CONFIG,
-			"rebuild_export_list: Error while parsing new configuration file %s: %s",
-			config_path, config_GetErrorMsg());
+			"rebuild_export_list: Error while parsing new configuration file %s",
+			config_path);
 		return 0;
 	}
 

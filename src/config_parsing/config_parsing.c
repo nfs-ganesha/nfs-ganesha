@@ -58,17 +58,6 @@ config_file_t config_ParseFile(char *file_path)
 	return rc ? NULL : (config_file_t) st.root_node;
 }
 
-/* If config_ParseFile returns a NULL pointer,
- * config_GetErrorMsg returns a detailled message
- * to indicate the reason for this error.
- */
-char *config_GetErrorMsg()
-{
-
-	return "Help! Help! We're all gonna die!!!";
-
-}
-
 /**
  * config_Print:
  * Print the content of the syntax tree

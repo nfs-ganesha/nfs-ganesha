@@ -2551,8 +2551,8 @@ void reread_log_config()
 	config_struct = config_ParseFile(config_path);
 	if (!config_struct) {
 		LogCrit(COMPONENT_CONFIG,
-			"Error while parsing new configuration file %s: %s",
-			config_path, config_GetErrorMsg());
+			"Error while parsing new configuration file %s",
+			config_path);
 		return;
 	}
 
