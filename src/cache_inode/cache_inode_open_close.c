@@ -144,6 +144,8 @@ cache_inode_open(cache_entry_t *entry,
 	fsal_openflags_t current_flags;
 	struct fsal_obj_handle *obj_hdl;
 	cache_inode_status_t status = CACHE_INODE_SUCCESS;
+	struct fsal_export *fsal_export;
+	bool closed;
 
 	assert(entry->obj_handle != NULL);
 
@@ -168,7 +170,21 @@ cache_inode_open(cache_entry_t *entry,
 	 * read/write */
 	if ((current_flags != FSAL_O_RDWR) && (current_flags != FSAL_O_CLOSED)
 	    && (current_flags != openflags)) {
-		fsal_status = obj_hdl->ops->close(obj_hdl);
+		/* If the FSAL has reopen method, we just use it instead
+		 * of closing and opening the file again. This avoids
+		 * losing any lock state due to closing the file!
+		 */
+		fsal_export = req_ctx->fsal_export;
+		if (fsal_export->ops->fs_supports(fsal_export,
+						  fso_reopen_method)) {
+			fsal_status = obj_hdl->ops->reopen(obj_hdl,
+							   req_ctx,
+							   openflags);
+			closed = false;
+		} else {
+			fsal_status = obj_hdl->ops->close(obj_hdl);
+			closed = true;
+		}
 		if (FSAL_IS_ERROR(fsal_status)
 		    && (fsal_status.major != ERR_FSAL_NOT_OPENED)) {
 			status = cache_inode_error_convert(fsal_status);
@@ -186,7 +202,7 @@ cache_inode_open(cache_entry_t *entry,
 			goto unlock;
 		}
 
-		if (!FSAL_IS_ERROR(fsal_status))
+		if (!FSAL_IS_ERROR(fsal_status) && closed)
 			atomic_dec_size_t(&open_fd_count);
 
 		/* Force re-openning */

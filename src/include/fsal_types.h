@@ -587,7 +587,8 @@ typedef enum enum_fsal_fsinfo_options {
 	fso_accesscheck_support,
 	fso_share_support,
 	fso_share_support_owner,
-	fso_pnfs_ds_supported
+	fso_pnfs_ds_supported,
+	fso_reopen_method
 } fsal_fsinfo_options_t;
 
 /* The largest maxread and maxwrite value */
@@ -635,6 +636,7 @@ struct fsal_staticfsinfo_t {
 					   with open owners ? */
 	bool delegations;	/*< fsal supports delegations */
 	bool pnfs_file;		/*< fsal supports file pnfs */
+	bool reopen_method;	/* fsal supports reopen method */
 };
 
 /**

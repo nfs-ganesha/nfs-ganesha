@@ -702,6 +702,7 @@ state_status_t state_nlm_share(cache_entry_t *entry,
 	cache_inode_status_t cache_status;
 	fsal_openflags_t openflags;
 	state_status_t status = 0;
+	struct fsal_export *fsal_export = req_ctx->fsal_export;
 
 	cache_status = cache_inode_inc_pin_ref(entry);
 
@@ -711,7 +712,17 @@ state_status_t state_nlm_share(cache_entry_t *entry,
 		return status;
 	}
 
-	openflags = FSAL_O_RDWR;
+	/* If FSAL supports reopen method, we open read-only if the access
+	 * needs read only. If not, a later request may need read-write
+	 * open that needs closing and then opening the file again. The
+	 * act of closing the file may remove shared lock state, so we
+	 * open read-write now itself for all access needs.
+	 */
+	if (share_access == fsa_R &&
+	    fsal_export->ops->fs_supports(fsal_export, fso_reopen_method))
+		openflags = FSAL_O_READ;
+	else
+		openflags = FSAL_O_RDWR;
 	if (reclaim)
 		openflags |= FSAL_O_RECLAIM;
 	cache_status = cache_inode_open(entry, openflags, req_ctx, 0);

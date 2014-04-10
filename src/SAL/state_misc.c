@@ -750,10 +750,8 @@ const char *state_owner_type_to_str(state_owner_type_t type)
 		return "STATE_LOCK_OWNER_UNKNOWN";
 	case STATE_LOCK_OWNER_NLM:
 		return "STATE_LOCK_OWNER_NLM";
-#ifdef _USE_9P
 	case STATE_LOCK_OWNER_9P:
 		return "STALE_LOCK_OWNER_9P";
-#endif
 	case STATE_OPEN_OWNER_NFSV4:
 		return "STATE_OPEN_OWNER_NFSV4";
 	case STATE_LOCK_OWNER_NFSV4:
@@ -878,10 +876,8 @@ void free_state_owner(state_owner_t *owner)
 		free_nlm_owner(owner);
 		break;
 
-#ifdef _USE_9P
 	case STATE_LOCK_OWNER_9P:
 		break;
-#endif
 
 	case STATE_OPEN_OWNER_NFSV4:
 	case STATE_LOCK_OWNER_NFSV4:
