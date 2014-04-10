@@ -635,6 +635,7 @@ struct fsal_staticfsinfo_t {
 					   with open owners ? */
 	bool delegations;	/*< fsal supports delegations */
 	bool pnfs_file;		/*< fsal supports file pnfs */
+	bool fsal_trace; 	/*< fsal trace supports */
 };
 
 /**

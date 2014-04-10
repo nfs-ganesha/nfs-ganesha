@@ -83,6 +83,7 @@ static struct fsal_staticfsinfo_t default_posix_info = {
 	.share_support_owner = false,
 	.delegations = true,	/* not working with pNFS */
 	.pnfs_file = true,
+	.fsal_trace = true,
 };
 
 static struct config_item gpfs_params[] = {
@@ -92,16 +93,18 @@ static struct config_item gpfs_params[] = {
 		       fsal_staticfsinfo_t, symlink_support),
 	CONF_ITEM_BOOL("cansettime", true,
 		       fsal_staticfsinfo_t, cansettime),
-	CONF_ITEM_UI32("maxread", 512, 1024*1024, 1048576,
-		       fsal_staticfsinfo_t, maxread),
-	CONF_ITEM_UI32("maxwrite", 512, 1024*1024, 1048576,
-		       fsal_staticfsinfo_t, maxwrite),
 	CONF_ITEM_MODE("umask", 0, 0777, 0,
 		       fsal_staticfsinfo_t, umask),
 	CONF_ITEM_BOOL("auth_xdev_export", false,
 		       fsal_staticfsinfo_t, auth_exportpath_xdev),
 	CONF_ITEM_MODE("xattr_access_rights", 0, 0777, 0400,
 		       fsal_staticfsinfo_t, xattr_access_rights),
+	CONF_ITEM_BOOL("delegations", false,
+		       fsal_staticfsinfo_t, delegations),
+	CONF_ITEM_BOOL("pnfs_file", false,
+		       fsal_staticfsinfo_t, pnfs_file),
+	CONF_ITEM_BOOL("fsal_trace", true,
+		       fsal_staticfsinfo_t, fsal_trace),
 	CONFIG_EOL
 };
 
@@ -178,7 +181,10 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 		LogCrit(COMPONENT_FSAL,
 			"Could not create GPFS logger (%s)",
 			strerror(-rc));
-	rc = enable_log_facility("GPFS");
+	if (gpfs_me->fs_info.fsal_trace)
+		rc = enable_log_facility("GPFS");
+	else
+		rc = disable_log_facility("GPFS");
 	if (rc != 0)
 		LogCrit(COMPONENT_FSAL,
 			"Could not enable GPFS logger (%s)",
