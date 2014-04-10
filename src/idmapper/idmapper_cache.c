@@ -682,11 +682,13 @@ void idmapper_clear_cache(void)
 	memset(uid_cache, 0, id_cache_size * sizeof(struct avltree_node *));
 	memset(gid_cache, 0, id_cache_size * sizeof(struct avltree_node *));
 
-	while ((node = avltree_first(&uname_tree))) {
-		struct cache_user *user = avltree_container_of(node,
-							       struct
-							       cache_user,
-							       uname_node);
+	for (node = avltree_first(&uname_tree);
+	     node != NULL;
+	     node = avltree_first(&uname_tree)) {
+		struct cache_user *user;
+
+		user = avltree_container_of(node,
+					    struct cache_user, uname_node);
 		avltree_remove(&user->uname_node, &uname_tree);
 		avltree_remove(&user->uid_node, &uid_tree);
 		gsh_free(user);
@@ -694,11 +696,13 @@ void idmapper_clear_cache(void)
 
 	assert(avltree_first(&uid_tree) == NULL);
 
-	while ((node = avltree_first(&gname_tree))) {
-		struct cache_group *group = avltree_container_of(node,
-								 struct
-								 cache_group,
-								 gname_node);
+	for (node = avltree_first(&gname_tree);
+	     node != NULL;
+	     node = avltree_first(&gname_tree)) {
+		struct cache_group *group;
+
+		group = avltree_container_of(node,
+					     struct cache_group, gname_node);
 		avltree_remove(&group->gname_node, &gname_tree);
 		avltree_remove(&group->gid_node, &gid_tree);
 		gsh_free(group);
