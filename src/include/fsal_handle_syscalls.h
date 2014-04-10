@@ -47,32 +47,30 @@
 #include <string.h>
 #include <stddef.h>		/* For having offsetof defined */
 
-/* This is large enough for PanFS file handles embedded in a BSD fhandle */
-#define VFS_HANDLE_LEN 48
-
-/* A file system with handles smaller than this would be surprising */
-#define VFS_HANDLE_MIN_INTERNAL 4
-
-/*
- * The vfs_file_handle_t is similar to the Linux struct file_handle,
- * except the handle[] array is fixed size in this definition.
- * The BSD struct fhandle is a bit different (of course).
- * So the Linux code will typecast all of vfs_file_handle_t to
- * a struct file_handle, while the BSD code will cast the
- * handle subfield to struct fhandle.
- */
+#define VFS_HANDLE_LEN 59
 
 typedef struct vfs_file_handle {
-	unsigned int handle_bytes;
-	int handle_type;
-	unsigned char handle[VFS_HANDLE_LEN];
+	uint8_t handle_len; /* does not go on the wire */
+	uint8_t handle_data[VFS_HANDLE_LEN];
 } vfs_file_handle_t;
 
-#define VFS_FILE_HANDLE_MIN \
-	(offsetof(vfs_file_handle_t, handle) + VFS_HANDLE_MIN_INTERNAL)
+static inline bool vfs_handle_invalid(struct gsh_buffdesc *desc)
+{
+	return desc->len > VFS_HANDLE_LEN;
+}
 
-#define vfs_file_handle_size(fh) \
-	(offsetof(vfs_file_handle_t, handle) + fh->handle_bytes)
+#define vfs_alloc_handle(fh)						\
+	do {								\
+		(fh) = alloca(sizeof(struct vfs_file_handle));		\
+		memset((fh), 0, (sizeof(struct vfs_file_handle)));	\
+		(fh)->handle_len = VFS_HANDLE_LEN;			\
+	} while (0)
+
+#define vfs_malloc_handle(fh)						\
+	do {								\
+		(fh) = gsh_calloc(1, sizeof(struct vfs_file_handle));	\
+		(fh)->handle_len = VFS_HANDLE_LEN;			\
+	} while (0)
 
 #ifdef LINUX
 #include "os/linux/fsal_handle_syscalls.h"

@@ -259,8 +259,8 @@ static void initiate_recall(struct vfs_fsal_obj_handle *myself,
 {
 	struct pnfs_segment up_segment = *seg;
 	struct gsh_buffdesc handle = {
-		.addr = myself->handle,
-		.len = vfs_sizeof_handle(myself->handle)
+		.addr = myself->handle->handle_data,
+		.len = myself->handle->handle_len
 	};
 	up_segment.io_mode = LAYOUTIOMODE4_ANY; /*TODO: seg->io_mode */
 

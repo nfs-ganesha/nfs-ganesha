@@ -59,41 +59,12 @@ struct fsal_staticfsinfo_t *vfs_staticinfo(struct fsal_module *hdl);
 int vfs_get_root_fd(struct fsal_export *exp_hdl)
 {
 	struct vfs_fsal_export *myself;
+	struct vfs_filesystem *my_root_fs;
 
 	myself = container_of(exp_hdl, struct vfs_fsal_export, export);
-	return myself->root_fd;
+	my_root_fs = myself->root_fs->private;
+	return my_root_fs->root_fd;
 }
-
-static int vfs_fsal_open_exp(struct fsal_export *exp, vfs_file_handle_t *fh,
-			     int openflags, fsal_errors_t *fsal_error)
-{
-	int mount_fd = vfs_get_root_fd(exp);
-	int fd = vfs_open_by_handle(mount_fd, fh, openflags);
-	if (fd < 0) {
-		fd = -errno;
-		if (fd == -ENOENT) {
-			*fsal_error = ERR_FSAL_STALE;
-			fd = -ESTALE;
-		} else {
-			*fsal_error = posix2fsal_error(-fd);
-		}
-		LogDebug(COMPONENT_FSAL, "Failed with %s", strerror(-fd));
-	}
-	return fd;
-}
-
-static int vfs_exp_fd_to_handle(int fd, vfs_file_handle_t *fh)
-{
-	int mntid;
-	return vfs_fd_to_handle(fd, fh, &mntid);
-}
-
-static struct vfs_exp_handle_ops defops = {
-	.vex_open_by_handle = vfs_fsal_open_exp,
-	.vex_name_to_handle = vfs_name_to_handle_at,
-	.vex_fd_to_handle = vfs_exp_fd_to_handle,
-	.vex_readlink = vfs_fsal_readlink
-};
 
 /* export object methods
  */
@@ -106,7 +77,7 @@ static fsal_status_t release(struct fsal_export *exp_hdl)
 
 	myself = container_of(exp_hdl, struct vfs_fsal_export, export);
 
-	pnfs_panfs_fini(myself->pnfs_data);
+	vfs_fini(myself);
 	pthread_mutex_lock(&exp_hdl->lock);
 	if (exp_hdl->refs > 0) {
 		LogMajor(COMPONENT_FSAL, "VFS release: export (0x%p)busy",
@@ -115,18 +86,12 @@ static fsal_status_t release(struct fsal_export *exp_hdl)
 		retval = EBUSY;
 		goto errout;
 	}
+
+	vfs_unexport_filesystems(myself);
+
 	fsal_detach_export(exp_hdl->fsal, &exp_hdl->exports);
 	free_export_ops(exp_hdl);
-	if (myself->root_fd >= 0)
-		close(myself->root_fd);
-	if (myself->root_handle != NULL)
-		gsh_free(myself->root_handle);
-	if (myself->fstype != NULL)
-		gsh_free(myself->fstype);
-	if (myself->mntdir != NULL)
-		gsh_free(myself->mntdir);
-	if (myself->fs_spec != NULL)
-		gsh_free(myself->fs_spec);
+
 	if (myself->handle_lib != NULL)
 		gsh_free(myself->handle_lib);
 	pthread_mutex_unlock(&exp_hdl->lock);
@@ -145,22 +110,27 @@ static fsal_status_t get_dynamic_info(struct fsal_obj_handle *obj_hdl,
 				      const struct req_op_context *opctx,
 				      fsal_dynamicfsinfo_t *infop)
 {
-	struct vfs_fsal_export *myself;
 	struct statvfs buffstatvfs;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval = 0;
 
-	if (!infop) {
-		fsal_error = ERR_FSAL_FAULT;
+	if (obj_hdl->fsal != obj_hdl->fs->fsal) {
+		LogDebug(COMPONENT_FSAL,
+			 "FSAL %s operation for handle belonging to FSAL %s, return EXDEV",
+			 obj_hdl->fsal->name, obj_hdl->fs->fsal->name);
+		retval = EXDEV;
+		fsal_error = posix2fsal_error(retval);
 		goto out;
 	}
-	myself = container_of(exp_hdl, struct vfs_fsal_export, export);
-	retval = fstatvfs(myself->root_fd, &buffstatvfs);
+
+	retval = statvfs(obj_hdl->fs->path, &buffstatvfs);
+
 	if (retval < 0) {
 		fsal_error = posix2fsal_error(errno);
 		retval = errno;
 		goto out;
 	}
+
 	infop->total_bytes = buffstatvfs.f_frsize * buffstatvfs.f_blocks;
 	infop->free_bytes = buffstatvfs.f_frsize * buffstatvfs.f_bfree;
 	infop->avail_bytes = buffstatvfs.f_frsize * buffstatvfs.f_bavail;
@@ -287,37 +257,28 @@ static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 {
 	struct vfs_fsal_export *myself;
 	struct dqblk fs_quota;
-	struct stat path_stat;
 	uid_t id;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval;
 
 	myself = container_of(exp_hdl, struct vfs_fsal_export, export);
-	retval = stat(filepath, &path_stat);
-	if (retval < 0) {
-		LogMajor(COMPONENT_FSAL,
-			 "VFS get_quota, fstat: root_path: %s, fd=%d, errno=(%d) %s",
-			 myself->mntdir, myself->root_fd, errno,
-			 strerror(errno));
-		fsal_error = posix2fsal_error(errno);
-		retval = errno;
-		goto out;
-	}
-	if (path_stat.st_dev != myself->root_dev) {
-		LogMajor(COMPONENT_FSAL,
-			 "VFS get_quota: crossed mount boundary! root_path: %s, quota path: %s",
-			 myself->mntdir, filepath);
-		fsal_error = ERR_FSAL_FAULT;	/* maybe a better error? */
-		retval = 0;
-		goto out;
-	}
+
+	/** @todo	if we later have a config to disallow crossmnt, check
+	 *		that the quota is in the same file system as export.
+	 *		Otherwise, the fact that the quota path will have
+	 *		made the longest match means the path MUST be exported
+	 *		by this export.
+	 */
+
 	id = (quota_type ==
 	      USRQUOTA) ? req_ctx->creds->caller_uid : req_ctx->creds->
 	    caller_gid;
 	memset((char *)&fs_quota, 0, sizeof(struct dqblk));
-	retval =
-	    QUOTACTL(QCMD(Q_GETQUOTA, quota_type), myself->fs_spec, id,
-		     (caddr_t) &fs_quota);
+
+	/** @todo need to get the right file system... */
+	retval = QUOTACTL(QCMD(Q_GETQUOTA, quota_type), myself->root_fs->device,
+			  id, (caddr_t) &fs_quota);
+
 	if (retval < 0) {
 		fsal_error = posix2fsal_error(errno);
 		retval = errno;
@@ -347,30 +308,19 @@ static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 {
 	struct vfs_fsal_export *myself;
 	struct dqblk fs_quota;
-	struct stat path_stat;
 	uid_t id;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval;
 
 	myself = container_of(exp_hdl, struct vfs_fsal_export, export);
-	retval = stat(filepath, &path_stat);
-	if (retval < 0) {
-		LogMajor(COMPONENT_FSAL,
-			 "VFS set_quota, fstat: root_path: %s, fd=%d, errno=(%d) %s",
-			 myself->mntdir, myself->root_fd, errno,
-			 strerror(errno));
-		fsal_error = posix2fsal_error(errno);
-		retval = errno;
-		goto err;
-	}
-	if (path_stat.st_dev != myself->root_dev) {
-		LogMajor(COMPONENT_FSAL,
-			 "VFS set_quota: crossed mount boundary! root_path: %s, quota path: %s",
-			 myself->mntdir, filepath);
-		fsal_error = ERR_FSAL_FAULT;	/* maybe a better error? */
-		retval = 0;
-		goto err;
-	}
+
+	/** @todo	if we later have a config to disallow crossmnt, check
+	 *		that the quota is in the same file system as export.
+	 *		Otherwise, the fact that the quota path will have
+	 *		made the longest match means the path MUST be exported
+	 *		by this export.
+	 */
+
 	id = (quota_type ==
 	      USRQUOTA) ? req_ctx->creds->caller_uid : req_ctx->creds->
 	    caller_gid;
@@ -397,9 +347,11 @@ static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 	if (pquota->ftimeleft != 0)
 		fs_quota.dqb_valid |= QIF_ITIME;
 #endif
-	retval =
-	    QUOTACTL(QCMD(Q_SETQUOTA, quota_type), myself->fs_spec, id,
-		     (caddr_t) &fs_quota);
+
+	/** @todo need to get the right file system... */
+	retval = QUOTACTL(QCMD(Q_SETQUOTA, quota_type), myself->root_fs->device,
+			  id, (caddr_t) &fs_quota);
+
 	if (retval < 0) {
 		fsal_error = posix2fsal_error(errno);
 		retval = errno;
@@ -432,16 +384,10 @@ static fsal_status_t extract_handle(struct fsal_export *exp_hdl,
 				    fsal_digesttype_t in_type,
 				    struct gsh_buffdesc *fh_desc)
 {
-	size_t fh_min;
-
-	fh_min = VFS_FILE_HANDLE_MIN;
-	if (fh_desc->len < fh_min) {
-		LogMajor(COMPONENT_FSAL,
-			 "Size mismatch for handle.  should be >= %lu, got %lu",
-			 fh_min, fh_desc->len);
-		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
-	}
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	if (vfs_valid_handle(fh_desc))
+		return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	else
+		return fsalstat(ERR_FSAL_BADHANDLE, 0);
 }
 
 /* vfs_export_ops_init
@@ -471,7 +417,17 @@ void vfs_export_ops_init(struct export_ops *ops)
 	ops->set_quota = set_quota;
 }
 
-void vfs_handle_ops_init(struct fsal_obj_ops *ops);
+static struct config_item_list fsid_types[] = {
+	CONFIG_LIST_TOK("None", FSID_NO_TYPE),
+	CONFIG_LIST_TOK("One64", FSID_ONE_UINT64),
+	CONFIG_LIST_TOK("Major64", FSID_MAJOR_64),
+	CONFIG_LIST_TOK("Two64", FSID_TWO_UINT64),
+	CONFIG_LIST_TOK("uuid", FSID_TWO_UINT64),
+	CONFIG_LIST_TOK("Two32", FSID_TWO_UINT32),
+	CONFIG_LIST_TOK("Dev", FSID_DEVICE),
+	CONFIG_LIST_TOK("Device", FSID_DEVICE),
+	CONFIG_LIST_EOL
+};
 
 static struct config_item export_params[] = {
 	CONF_ITEM_NOOP("name"),
@@ -479,6 +435,9 @@ static struct config_item export_params[] = {
 		       vfs_fsal_export, pnfs_panfs_enabled),
 	CONF_ITEM_PATH("handle_lib", 1, MAXPATHLEN, NULL,
 		       vfs_fsal_export, handle_lib),
+	CONF_ITEM_ENUM("fsid_type", -1,
+		       fsid_types,
+		       vfs_fsal_export, fsid_type),
 	CONFIG_EOL
 };
 
@@ -490,6 +449,161 @@ static struct config_block export_param = {
 	.blk_desc.u.blk.params = export_params,
 	.blk_desc.u.blk.commit = noop_conf_commit
 };
+
+void free_vfs_filesystem(struct vfs_filesystem *vfs_fs)
+{
+	if (vfs_fs->root_fd >= 0)
+		close(vfs_fs->root_fd);
+	gsh_free(vfs_fs);
+}
+
+int vfs_claim_filesystem(struct fsal_filesystem *fs, struct fsal_export *exp)
+{
+	struct vfs_filesystem *vfs_fs = fs->private;
+	int retval;
+	struct vfs_fsal_export *myself;
+	struct vfs_filesystem_export_map *map;
+
+	myself = container_of(exp, struct vfs_fsal_export, export);
+
+	map = gsh_calloc(1, sizeof(*map));
+
+	if (map == NULL) {
+		LogCrit(COMPONENT_FSAL,
+			"Out of memory to claim file system %s",
+			fs->path);
+		retval = ENOMEM;
+		goto errout;
+	}
+
+	if (fs->fsal != NULL) {
+		vfs_fs = fs->private;
+		if (vfs_fs == NULL) {
+			LogCrit(COMPONENT_FSAL,
+				"Something wrong with export, fs %s appears already claimed but doesn't have private data",
+				fs->path);
+			retval = EINVAL;
+			goto errout;
+		}
+
+		goto already_claimed;
+	}
+
+	vfs_fs = gsh_calloc(1, sizeof(*vfs_fs));
+
+	if (vfs_fs == NULL) {
+		LogCrit(COMPONENT_FSAL,
+			"Out of memory to claim file system %s",
+			fs->path);
+		retval = ENOMEM;
+		goto errout;
+	}
+
+	glist_init(&vfs_fs->exports);
+	vfs_fs->root_fd = -1;
+
+	vfs_fs->fs = fs;
+
+	retval = vfs_get_root_handle(vfs_fs, myself);
+
+	if (retval != 0) {
+		if (retval == ENOTTY) {
+			LogInfo(COMPONENT_FSAL,
+				"file system %s is not exportable with %s",
+				fs->path, exp->fsal->name);
+			retval = ENXIO;
+		}
+		goto errout;
+	}
+
+	fs->private = vfs_fs;
+
+already_claimed:
+
+	/* Now map the file system and export */
+	map->fs = vfs_fs;
+	map->exp = myself;
+	glist_add_tail(&vfs_fs->exports, &map->on_exports);
+	glist_add_tail(&myself->filesystems, &map->on_filesystems);
+
+	return 0;
+
+errout:
+
+	if (map != NULL)
+		gsh_free(map);
+
+	if (vfs_fs != NULL)
+		free_vfs_filesystem(vfs_fs);
+
+	return retval;
+}
+
+void vfs_unclaim_filesystem(struct fsal_filesystem *fs)
+{
+	struct vfs_filesystem *vfs_fs = fs->private;
+	struct glist_head *glist, *glistn;
+	struct vfs_filesystem_export_map *map;
+
+	if (vfs_fs != NULL) {
+		glist_for_each_safe(glist, glistn, &vfs_fs->exports) {
+			map = glist_entry(glist,
+					  struct vfs_filesystem_export_map,
+					  on_exports);
+
+			/* Remove this file system from mapping */
+			glist_del(&map->on_filesystems);
+			glist_del(&map->on_exports);
+
+			if (map->exp->root_fs == fs) {
+				LogInfo(COMPONENT_FSAL,
+					"Removing root_fs %s from VFS export",
+					fs->path);
+			}
+
+			/* And free it */
+			gsh_free(map);
+		}
+
+		free_vfs_filesystem(vfs_fs);
+
+		fs->private = NULL;
+	}
+
+	LogInfo(COMPONENT_FSAL,
+		"VFS Unclaiming %s",
+		fs->path);
+}
+
+void vfs_unexport_filesystems(struct vfs_fsal_export *exp)
+{
+	struct glist_head *glist, *glistn;
+	struct vfs_filesystem_export_map *map;
+
+	PTHREAD_RWLOCK_wrlock(&fs_lock);
+
+	glist_for_each_safe(glist, glistn, &exp->filesystems) {
+		map = glist_entry(glist,
+				  struct vfs_filesystem_export_map,
+				  on_filesystems);
+
+		/* Remove this export from mapping */
+		glist_del(&map->on_filesystems);
+		glist_del(&map->on_exports);
+
+		if (glist_empty(&map->fs->exports)) {
+			LogInfo(COMPONENT_FSAL,
+				"VFS is no longer exporting filesystem %s",
+				map->fs->fs->path);
+			unclaim_fs(map->fs->fs);
+		}
+
+		/* And free it */
+		gsh_free(map);
+	}
+
+	PTHREAD_RWLOCK_unlock(&fs_lock);
+}
 
 /* create_export
  * Create an export point and return a handle to it to be kept
@@ -507,13 +621,6 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 				struct fsal_export **export)
 {
 	struct vfs_fsal_export *myself;
-	FILE *fp;
-	struct mntent *p_mnt;
-	size_t pathlen, outlen = 0;
-	char mntdir[MAXPATHLEN + 1]; /* there has got to be a better way... */
-	char fs_spec[MAXPATHLEN + 1];
-	struct vfs_exp_handle_ops *hops = &defops;
-	char type[MAXNAMLEN + 1];
 	int retval = 0;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 
@@ -521,7 +628,7 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 	if (export_path == NULL || strlen(export_path) == 0
 	    || strlen(export_path) > MAXPATHLEN) {
 		LogMajor(COMPONENT_FSAL,
-			 "vfs_create_export: export path empty or too big");
+			 "export path empty or too big");
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	}
 	if (next_fsal != NULL) {
@@ -532,15 +639,16 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 	myself = gsh_calloc(1, sizeof(struct vfs_fsal_export));
 	if (myself == NULL) {
 		LogMajor(COMPONENT_FSAL,
-			 "vfs_fsal_create: out of memory for object");
+			 "out of memory for object");
 		return fsalstat(posix2fsal_error(errno), errno);
 	}
-	myself->root_fd = -1;
+
+	glist_init(&myself->filesystems);
 
 	retval = fsal_export_init(&myself->export, exp_entry);
 	if (retval != 0) {
 		LogMajor(COMPONENT_FSAL,
-			 "vfs_fsal_create: out of memory for object");
+			 "out of memory for object");
 		gsh_free(myself);
 		return fsalstat(posix2fsal_error(retval), retval);
 	}
@@ -554,13 +662,7 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 				       true);
 	if (retval != 0)
 		return fsalstat(ERR_FSAL_INVAL, 0);
-	if (myself->pnfs_panfs_enabled) {
-		LogInfo(COMPONENT_FSAL,
-			"vfs_fsal_create: pnfs_panfs was enabled for [%s]",
-			export_path);
-		export_ops_pnfs(myself->export.ops);
-		handle_ops_pnfs(myself->export.obj_ops);
-	}
+	vfs_init_export_ops(myself, export_path);
 
 	/* lock myself before attaching to the fsal.
 	 * keep myself locked until done with creating myself.
@@ -574,164 +676,45 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 	}
 	myself->export.fsal = fsal_hdl;
 
-	/* start looking for the mount point */
-	fp = setmntent(MOUNTED, "r");
-	if (fp == NULL) {
-		retval = errno;
-		LogCrit(COMPONENT_FSAL, "Error %d in setmntent(%s): %s", retval,
-			MOUNTED, strerror(retval));
+	retval = populate_posix_file_systems();
+
+	if (retval != 0) {
+		LogCrit(COMPONENT_FSAL,
+			"populate_posix_file_systems returned %s (%d)",
+			strerror(retval), retval);
 		fsal_error = posix2fsal_error(retval);
 		goto errout;
 	}
-	while ((p_mnt = getmntent(fp)) != NULL) {
-		if (p_mnt->mnt_dir != NULL) {
-			pathlen = strlen(p_mnt->mnt_dir);
-			if (pathlen > outlen) {
-				if (strcmp(p_mnt->mnt_dir, "/") == 0) {
-					outlen = pathlen;
-					strncpy(mntdir, p_mnt->mnt_dir,
-						MAXPATHLEN);
-					strncpy(type, p_mnt->mnt_type,
-						MAXNAMLEN);
-					strncpy(fs_spec, p_mnt->mnt_fsname,
-						MAXPATHLEN);
-				} else
-				    if ((strncmp
-					 (export_path, p_mnt->mnt_dir,
-					  pathlen) == 0)
-					&& ((export_path[pathlen] == '/')
-					    || (export_path[pathlen] ==
-						'\0'))) {
-					outlen = pathlen;
-					strncpy(mntdir, p_mnt->mnt_dir,
-						MAXPATHLEN);
-					strncpy(type, p_mnt->mnt_type,
-						MAXNAMLEN);
-					strncpy(fs_spec, p_mnt->mnt_fsname,
-						MAXPATHLEN);
-				}
-			}
-		}
-	}
-	endmntent(fp);
-	if (outlen <= 0) {
-		LogCrit(COMPONENT_FSAL, "No mount entry matches '%s' in %s",
-			export_path, MOUNTED);
-		fsal_error = ERR_FSAL_NOENT;
-		goto errout;
-	}
-#ifdef LINUX
-	if (myself->handle_lib != NULL) {
-		void *dl;
-		void *sym;
 
-		dl = dlopen(myself->handle_lib, RTLD_NOW | RTLD_LOCAL);
-		if (dl == NULL) {
-			LogCrit(COMPONENT_FSAL,
-				"Could not load handle module '%s' for export '%s' - %s",
-				myself->handle_lib, export_path,
-				dlerror());
-			fsal_error = ERR_FSAL_NOENT;
-			goto errout;
-		}
+	retval = claim_posix_filesystems(export_path,
+					 fsal_hdl,
+					 &myself->export,
+					 vfs_claim_filesystem,
+					 vfs_unclaim_filesystem,
+					 &myself->root_fs);
 
-		sym = dlsym(dl, "get_handle_ops");
-		if (sym == NULL) {
-			LogCrit(COMPONENT_FSAL,
-				"No bootstrap entry in handle module '%s'",
-				myself->handle_lib);
-			dlclose(dl);
-			fsal_error = ERR_FSAL_NOENT;
-			goto errout;
-		}
-		hops = ((struct vfs_exp_handle_ops * (*)(char *))sym) (mntdir);
-		if (hops == NULL) {
-			LogCrit(COMPONENT_FSAL,
-				"%s - cannot bootstrap handle module '%s' with %s",
-				export_path, myself->handle_lib, mntdir);
-			dlclose(dl);
-			fsal_error = ERR_FSAL_NOENT;
-			goto errout;
-		}
-	}
-#endif
-
-	myself->root_fd = open(mntdir, O_RDONLY | O_DIRECTORY);
-	if (myself->root_fd < 0) {
-		retval = errno;
-		LogMajor(COMPONENT_FSAL,
-			 "Could not open VFS mount point %s: rc = %d", mntdir,
-			 retval);
+	if (retval != 0) {
+		LogCrit(COMPONENT_FSAL,
+			"claim_posix_filesystems(%s) returned %s (%d)",
+			export_path, strerror(retval), retval);
 		fsal_error = posix2fsal_error(retval);
 		goto errout;
-	} else {
-		struct stat root_stat;
-		vfs_file_handle_t *fh = NULL;
-		vfs_alloc_handle(fh);
-		retval = fstat(myself->root_fd, &root_stat);
-		if (retval < 0) {
-			retval = errno;
-			LogMajor(COMPONENT_FSAL,
-				 "fstat: root_path: %s, fd=%d, errno=(%d) %s",
-				 mntdir, myself->root_fd, retval,
-				 strerror(retval));
-			fsal_error = posix2fsal_error(retval);
-			goto errout;
-		}
-		myself->root_dev = root_stat.st_dev;
-		retval = hops->vex_fd_to_handle(myself->root_fd, fh);
-		if (retval != 0) {
-			retval = errno;
-			LogMajor(COMPONENT_FSAL,
-				 "vfs_fd_to_handle: root_path: %s, root_fd=%d, errno=(%d) %s",
-				 mntdir, myself->root_fd, retval,
-				 strerror(retval));
-			fsal_error = posix2fsal_error(retval);
-			goto errout;
-		}
-		myself->root_handle = gsh_malloc(sizeof(vfs_file_handle_t));
-		if (myself->root_handle == NULL) {
-			retval = errno;
-			LogMajor(COMPONENT_FSAL,
-				 "memory for root handle, errno=(%d) %s",
-				 retval,
-				 strerror(retval));
-			fsal_error = posix2fsal_error(retval);
-			goto errout;
-		}
-		memcpy(myself->root_handle, fh, sizeof(vfs_file_handle_t));
 	}
 
-	if (myself->pnfs_panfs_enabled) {
-		retval = pnfs_panfs_init(myself->root_fd, &myself->pnfs_data);
-		if (retval) {
-			LogCrit(COMPONENT_FSAL,
-				"vfs export_ops_pnfs failed => %d [%s]",
-				retval,
-				strerror(retval));
-			fsal_error = posix2fsal_error(retval);
-			goto errout;
-		}
+	retval = vfs_init_export_pnfs(myself);
+	if (retval != 0) {
+		fsal_error = posix2fsal_error(retval);
+		goto errout;
 	}
-	myself->fstype = gsh_strdup(type);
-	myself->fs_spec = gsh_strdup(fs_spec);
-	myself->mntdir = gsh_strdup(mntdir);
-	myself->vex_ops = *hops;
+
 	*export = &myself->export;
 	pthread_mutex_unlock(&myself->export.lock);
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
  errout:
-	if (myself->root_fd >= 0)
-		close(myself->root_fd);
-	if (myself->root_handle != NULL)
-		gsh_free(myself->root_handle);
-	if (myself->fstype != NULL)
-		gsh_free(myself->fstype);
-	if (myself->mntdir != NULL)
-		gsh_free(myself->mntdir);
-	if (myself->fs_spec != NULL)
-		gsh_free(myself->fs_spec);
+
+	vfs_unexport_filesystems(myself);
+
 	if (myself->handle_lib != NULL)
 		gsh_free(myself->handle_lib);
 	free_export_ops(&myself->export);

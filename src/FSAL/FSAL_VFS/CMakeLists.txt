@@ -6,6 +6,7 @@ add_definitions(
 set( LIB_PREFIX 64)
 
 add_subdirectory(pnfs_panfs)
+add_subdirectory(os)
 
 if(USE_FSAL_XFS)
     add_subdirectory(xfs)
@@ -17,6 +18,7 @@ SET(fsalvfs_LIB_SRCS
    main.c
    export.c
    handle.c
+   handle_syscalls.c
    file.c
    xattrs.c
    vfs_methods.h
@@ -26,6 +28,7 @@ add_library(fsalvfs SHARED ${fsalvfs_LIB_SRCS})
 
 target_link_libraries(fsalvfs
   gos
+  fsal_os
   pnfs_panfs
   ${SYSTEM_LIBRARIES}
 )
