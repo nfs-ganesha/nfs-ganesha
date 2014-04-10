@@ -360,6 +360,11 @@ mkdir -p %{buildroot}%{_sysconfdir}/init.d
 install -m 755 ganesha.init				%{buildroot}%{_sysconfdir}/init.d/nfs-ganesha
 %endif
 
+%if %{with_fsal_pt}
+install -m 755 ganesha.pt.init                            %{buildroot}%{_sysconfdir}/init.d/nfs-ganesha-pt
+install -m 644 config_samples/pt_config.conf              %{buildroot}%{_sysconfdir}/ganesha
+install -m 644 config_samples/export_pt.conf              %{buildroot}%{_sysconfdir}/ganesha
+%endif
 
 make install
 
@@ -457,6 +462,9 @@ make install
 %files pt
 %defattr(-,root,root,-)
 %{_libdir}/ganesha/libfsalpt*
+%config(noreplace) %{_sysconfdir}/init.d/nfs-ganesha-pt
+%config(noreplace) %{_sysconfdir}/ganesha/pt_config.conf
+%config(noreplace) %{_sysconfdir}/ganesha/export_pt.conf
 %endif
 
 
