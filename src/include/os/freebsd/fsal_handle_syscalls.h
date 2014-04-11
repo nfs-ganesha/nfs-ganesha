@@ -52,13 +52,8 @@
 static inline int vfs_stat_by_handle(int mountfd, vfs_file_handle_t *fh,
 				     struct stat *buf, int flags)
 {
-	int fd, ret;
-	fd = vfs_open_by_handle(mountfd, fh, flags);
-	if (fd < 0)
-		return fd;
 	/* BSD doesn't (yet) have AT_EMPTY_PATH support, so just use fstat() */
-	ret = fstat(fd, buf);
-	close(fd);
+	ret = fstat(mountfd, buf);
 	return ret;
 }
 
