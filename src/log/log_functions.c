@@ -696,6 +696,7 @@ int create_log_facility(char *name,
 		facility->lf_private = gsh_strdup(private);
 		if (facility->lf_private == NULL) {
 			pthread_rwlock_unlock(&log_rwlock);
+			gsh_free(facility);
 
 			return -ENOMEM;
 		}
