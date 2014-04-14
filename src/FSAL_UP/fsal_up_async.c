@@ -374,6 +374,9 @@ int up_async_layoutrecall(struct fridgethr *fr,
 	args->changed = changed;
 	args->segment = *segment;
 	args->cookie = cookie;
+
+	args->fsal = fsal;
+
 	if (spec)
 		args->spec = *spec;
 	else
@@ -502,6 +505,8 @@ int up_async_delegrecall(struct fridgethr *fr,
 	memcpy(args->key, handle->addr, handle->len);
 	args->handle.addr = args->key;
 	args->handle.len = handle->len;
+
+	args->fsal = fsal;
 
 	rc = fridgethr_submit(fr, queue_delegrecall, args);
  out:
