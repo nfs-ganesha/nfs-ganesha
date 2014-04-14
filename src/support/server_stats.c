@@ -70,6 +70,147 @@
 #define NFS_V41_NB_OPERATION 58
 #define _9P_NB_COMMAND 33
 
+struct op_name {
+	char *name;
+};
+
+static const struct op_name optqta[] = {
+	[RQUOTAPROC_GETQUOTA] = {.name = "GETQUOTA", },
+	[RQUOTAPROC_GETACTIVEQUOTA] = {.name = "GETACTIVEQUOTA", },
+	[RQUOTAPROC_SETQUOTA] = {.name = "SETQUOTA", },
+	[RQUOTAPROC_SETACTIVEQUOTA] = {.name = "SETACTIVEQUOTA", },
+};
+
+static const struct op_name optmnt[] = {
+	[MOUNTPROC3_NULL] = {.name = "NULL", },
+	[MOUNTPROC3_MNT] = {.name = "MNT", },
+	[MOUNTPROC3_DUMP] = {.name = "DUMP", },
+	[MOUNTPROC3_UMNT] = {.name = "UMNT", },
+	[MOUNTPROC3_UMNTALL] = {.name = "UMNTALL", },
+	[MOUNTPROC3_EXPORT] = {.name = "EXPORT", },
+};
+
+static const struct op_name optnlm[] = {
+	[NLMPROC4_NULL] = {.name = "NULL", },
+	[NLMPROC4_TEST] = {.name = "TEST", },
+	[NLMPROC4_LOCK] = {.name = "LOCK", },
+	[NLMPROC4_CANCEL] = {.name = "CANCEL", },
+	[NLMPROC4_UNLOCK] = {.name = "UNLOCK", },
+	[NLMPROC4_GRANTED] = {.name = "GRANTED", },
+	[NLMPROC4_TEST_MSG] = {.name = "TEST_MSG", },
+	[NLMPROC4_LOCK_MSG] = {.name = "LOCK_MSG", },
+	[NLMPROC4_CANCEL_MSG] = {.name = "CANCEL_MSG", },
+	[NLMPROC4_UNLOCK_MSG] = {.name = "UNLOCK_MSG", },
+	[NLMPROC4_GRANTED_MSG] = {.name = "GRANTED_MSG", },
+	[NLMPROC4_TEST_RES] = {.name = "TEST_RES ", },
+	[NLMPROC4_LOCK_RES] = {.name = "LOCK_RES", },
+	[NLMPROC4_CANCEL_RES] = {.name = "CANCEL_RES", },
+	[NLMPROC4_UNLOCK_RES] = {.name = "UNLOCK_RES", },
+	[NLMPROC4_GRANTED_RES] = {.name = "GRANTED_RES", },
+	[NLMPROC4_SM_NOTIFY] = {.name = "SM_NOTIFY", },
+	[NLMPROC4_SHARE] = {.name = "SHARE", },
+	[NLMPROC4_UNSHARE] = {.name = "UNSHARE", },
+	[NLMPROC4_NM_LOCK] = {.name = "NM_LOCK", },
+	[NLMPROC4_FREE_ALL] = {.name = "FREE_ALL", },
+};
+
+static const struct op_name optabv3[] = {
+	[NFSPROC3_NULL] = {.name = "NULL", },
+	[NFSPROC3_GETATTR] = {.name = "GETATTR", },
+	[NFSPROC3_SETATTR] = {.name = "SETATTR", },
+	[NFSPROC3_LOOKUP] = {.name = "LOOKUP", },
+	[NFSPROC3_ACCESS] = {.name = "ACCESS" , } ,
+	[NFSPROC3_READLINK] = {.name = "READLINK", },
+	[NFSPROC3_READ] = {.name = "READ", },
+	[NFSPROC3_WRITE] = {.name = "WRITE", },
+	[NFSPROC3_CREATE] = {.name = "CREATE", },
+	[NFSPROC3_MKDIR] = {.name = "MKDIR", },
+	[NFSPROC3_SYMLINK] = {.name = "SYMLINK", },
+	[NFSPROC3_MKNOD] = {.name = "MKNOD", },
+	[NFSPROC3_REMOVE] = {.name = "REMOVE", },
+	[NFSPROC3_RMDIR] = {.name = "RMDIR", },
+	[NFSPROC3_RENAME] = {.name = "RENAME", },
+	[NFSPROC3_LINK] = {.name = "LINK", },
+	[NFSPROC3_READDIR] = {.name = "READDIR", },
+	[NFSPROC3_READDIRPLUS] = {.name = "READDIRPLUS", },
+	[NFSPROC3_FSSTAT] = {.name = "FSSTAT", },
+	[NFSPROC3_FSINFO] = {.name = "FSINFO	", },
+	[NFSPROC3_PATHCONF] = {.name = "PATHCONF", },
+	[NFSPROC3_COMMIT] = {.name = "COMMIT", },
+};
+
+static const struct op_name optabv4[] = {
+	[0] = {.name = "ILLEGAL", },
+	[1] = {.name = "ILLEGAL",},
+	[2] = {.name = "ILLEGAL",},
+	[NFS4_OP_ACCESS] = {.name = "ACCESS",},
+	[NFS4_OP_CLOSE] = {.name = "CLOSE",},
+	[NFS4_OP_COMMIT] = {.name = "COMMIT",},
+	[NFS4_OP_CREATE] = {.name = "CREATE",},
+	[NFS4_OP_DELEGPURGE] = {.name = "DELEGPURGE",},
+	[NFS4_OP_DELEGRETURN] = {.name = "DELEGRETURN",},
+	[NFS4_OP_GETATTR] = {.name = "GETATTR",},
+	[NFS4_OP_GETFH] = {.name = "GETFH",},
+	[NFS4_OP_LINK] = {.name = "LINK",},
+	[NFS4_OP_LOCK] = {.name = "LOCK",},
+	[NFS4_OP_LOCKT] = {.name = "LOCKT",},
+	[NFS4_OP_LOCKU] = {.name = "LOCKU",},
+	[NFS4_OP_LOOKUP] = {.name = "LOOKUP",},
+	[NFS4_OP_LOOKUPP] = {.name = "LOOKUPP",},
+	[NFS4_OP_NVERIFY] = {.name = "NVERIFY",},
+	[NFS4_OP_OPEN] = {.name = "OPEN",},
+	[NFS4_OP_OPENATTR] = {.name = "OPENATTR",},
+	[NFS4_OP_OPEN_CONFIRM] = {.name = "OPEN_CONFIRM",},
+	[NFS4_OP_OPEN_DOWNGRADE] = {.name = "OPEN_DOWNGRADE",},
+	[NFS4_OP_PUTFH] = {.name = "PUTFH",},
+	[NFS4_OP_PUTPUBFH] = {.name = "PUTPUBFH",},
+	[NFS4_OP_PUTROOTFH] = {.name = "PUTROOTFH",},
+	[NFS4_OP_READ] = {.name = "READ",},
+	[NFS4_OP_READDIR] = {.name = "READDIR",},
+	[NFS4_OP_READLINK] = {.name = "READLINK",},
+	[NFS4_OP_REMOVE] = {.name = "REMOVE",},
+	[NFS4_OP_RENAME] = {.name = "RENAME",},
+	[NFS4_OP_RENEW] = {.name = "RENEW",},
+	[NFS4_OP_RESTOREFH] = {.name = "RESTOREFH",},
+	[NFS4_OP_SAVEFH] = {.name = "SAVEFH",},
+	[NFS4_OP_SECINFO] = {.name = "SECINFO",},
+	[NFS4_OP_SETATTR] = {.name = "SETATTR",},
+	[NFS4_OP_SETCLIENTID] = {.name = "SETCLIENTID",},
+	[NFS4_OP_SETCLIENTID_CONFIRM] = {.name = "SETCLIENTID_CONFIRM",},
+	[NFS4_OP_VERIFY] = {.name = "VERIFY",},
+	[NFS4_OP_WRITE] = {.name = "WRITE",},
+	[NFS4_OP_RELEASE_LOCKOWNER] = {.name = "RELEASE_LOCKOWNER",},
+	[NFS4_OP_BACKCHANNEL_CTL] = {.name = "BACKCHANNEL_CTL",},
+	[NFS4_OP_BIND_CONN_TO_SESSION] = {.name = "BIND_CONN_TO_SESSION",},
+	[NFS4_OP_EXCHANGE_ID] = {.name = "EXCHANGE_ID",},
+	[NFS4_OP_CREATE_SESSION] = {.name = "CREATE_SESSION",},
+	[NFS4_OP_DESTROY_SESSION] = {.name = "DESTROY_SESSION",},
+	[NFS4_OP_FREE_STATEID] = {.name = "FREE_STATEID",},
+	[NFS4_OP_GET_DIR_DELEGATION] = {.name = "GET_DIR_DELEGATION",},
+	[NFS4_OP_GETDEVICEINFO] = {.name = "GETDEVICEINFO",},
+	[NFS4_OP_GETDEVICELIST] = {.name = "GETDEVICELIST",},
+	[NFS4_OP_LAYOUTCOMMIT] = {.name = "LAYOUTCOMMIT",},
+	[NFS4_OP_LAYOUTGET] = {.name = "LAYOUTGET",},
+	[NFS4_OP_LAYOUTRETURN] = {.name = "LAYOUTRETURN",},
+	[NFS4_OP_SECINFO_NO_NAME] = {.name = "SECINFO_NO_NAME",},
+	[NFS4_OP_SEQUENCE] = {.name = "SEQUENCE",},
+	[NFS4_OP_SET_SSV] = {.name = "SET_SSV",},
+	[NFS4_OP_TEST_STATEID] = {.name = "TEST_STATEID",},
+	[NFS4_OP_WANT_DELEGATION] = {.name = "WANT_DELEGATION",},
+	[NFS4_OP_DESTROY_CLIENTID] = {.name = "DESTROY_CLIENTID",},
+	[NFS4_OP_RECLAIM_COMPLETE] = {.name = "RECLAIM_COMPLETE",},
+	/* NFSv4.2 */
+	[NFS4_OP_COPY] = {.name = "COPY",},
+	[NFS4_OP_OFFLOAD_ABORT] = {.name = "OFFLOAD_ABORT",},
+	[NFS4_OP_COPY_NOTIFY] = {.name = "COPY_NOTIFY",},
+	[NFS4_OP_OFFLOAD_REVOKE] = {.name = "OFFLOAD_REVOKE",},
+	[NFS4_OP_OFFLOAD_STATUS] = {.name = "OFFLOAD_STATUS",},
+	[NFS4_OP_WRITE_PLUS] = {.name = "WRITE_PLUS",},
+	[NFS4_OP_READ_PLUS] = {.name = "READ_PLUS",},
+	[NFS4_OP_SEEK] = {.name = "SEEK",},
+	[NFS4_OP_IO_ADVISE] = {.name = "IO_ADVISE",},
+};
+
 /* Classify protocol ops for stats purposes
  */
 
@@ -106,6 +247,36 @@ struct op_latency {
 	uint64_t latency;
 	uint64_t min;
 	uint64_t max;
+};
+
+/* v3 ops
+ */
+struct nfsv3_ops {
+	uint64_t op[NFSPROC3_COMMIT+1];
+};
+
+/* quota ops
+ */
+struct qta_ops {
+	uint64_t op[RQUOTAPROC_SETACTIVEQUOTA+1];
+};
+
+/* nlm ops
+ */
+struct nlm_ops {
+	uint64_t op[NLMPROC4_FREE_ALL+1];
+};
+
+/* mount ops
+ */
+struct mnt_ops {
+	uint64_t op[MOUNTPROC3_EXPORT+1];
+};
+
+/* v4 ops
+ */
+struct nfsv4_ops {
+	uint64_t op[NFS4_OP_IO_ADVISE+1];
 };
 
 /* basic op counter
@@ -211,6 +382,11 @@ struct global_stats {
 	struct rquota_stats rquota;
 	struct nfsv40_stats nfsv40;
 	struct nfsv41_stats nfsv41;
+	struct nfsv3_ops v3;
+	struct nfsv4_ops v4;
+	struct nlm_ops lm;
+	struct mnt_ops mn;
+	struct qta_ops qt;
 };
 
 static struct global_stats global_st;
@@ -516,8 +692,6 @@ static void record_nfsv4_op(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
 		if (sp == NULL)
 			return;
 		/* record stuff */
-		record_op(&global_st.nfsv40.compounds, request_time, qwait_time,
-			  status == NFS4_OK, false);
 		switch (nfsv40_optype[proto_op]) {
 		case READ_OP:
 			record_latency(&sp->read.cmd, request_time, qwait_time,
@@ -534,8 +708,6 @@ static void record_nfsv4_op(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
 	} else {		/* assume minor == 1 this low in stack */
 		struct nfsv41_stats *sp = get_v41(gsh_st, lock);
 
-		record_op(&global_st.nfsv41.compounds, request_time, qwait_time,
-			  status == NFS4_OK, false);
 		if (sp == NULL)
 			return;
 		/* record stuff */
@@ -609,7 +781,7 @@ static void record_compound(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
 static void record_stats(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
 			 request_data_t *reqdata, bool success,
 			 nsecs_elapsed_t request_time,
-			 nsecs_elapsed_t qwait_time, bool dup)
+			 nsecs_elapsed_t qwait_time, bool dup, bool global)
 {
 	struct svc_req *req = &reqdata->r_u.nfs->req;
 	uint32_t proto_op = req->rq_proc;
@@ -623,8 +795,9 @@ static void record_stats(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
 			if (sp == NULL)
 				return;
 			/* record stuff */
-			record_op(&global_st.nfsv3.cmds, request_time,
-				  qwait_time, success, dup);
+			if (global)
+				record_op(&global_st.nfsv3.cmds, request_time,
+					  qwait_time, success, dup);
 			switch (nfsv3_optype[proto_op]) {
 			case READ_OP:
 				record_latency(&sp->read.cmd, request_time,
@@ -645,10 +818,10 @@ static void record_stats(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
 	} else if (req->rq_prog == nfs_param.core_param.program[P_MNT]) {
 		struct mnt_stats *sp = get_mnt(gsh_st, lock);
 
-		if (req->rq_vers == MOUNT_V1)
+		if (global && req->rq_vers == MOUNT_V1)
 			record_op(&global_st.mnt.v1_ops, request_time,
 				  qwait_time, success, dup);
-		else
+		else if (global)
 			record_op(&global_st.mnt.v3_ops, request_time,
 				  qwait_time, success, dup);
 		
@@ -664,7 +837,8 @@ static void record_stats(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
 	} else if (req->rq_prog == nfs_param.core_param.program[P_NLM]) {
 		struct nlmv4_stats *sp = get_nlm4(gsh_st, lock);
 
-		record_op(&global_st.nlm4.ops, request_time,
+		if (global)
+			record_op(&global_st.nlm4.ops, request_time,
 				  qwait_time, success, dup);
 		if (sp == NULL)
 			return;
@@ -673,7 +847,8 @@ static void record_stats(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
 	} else if (req->rq_prog == nfs_param.core_param.program[P_RQUOTA]) {
 		struct rquota_stats *sp = get_rquota(gsh_st, lock);
 
-		record_op(&global_st.rquota.ops, request_time,
+		if (global)
+			record_op(&global_st.rquota.ops, request_time,
 				  qwait_time, success, dup);
 		if (sp == NULL)
 			return;
@@ -745,13 +920,27 @@ void server_stats_nfs_done(struct req_op_context *req_ctx,
 	struct server_stats *server_st;
 	struct timespec current_time;
 	nsecs_elapsed_t stop_time;
+	struct svc_req *req = &reqdata->r_u.nfs->req;
+	uint32_t proto_op = req->rq_proc;
+
+	if (req->rq_prog == NFS_PROGRAM && req_ctx->nfs_vers == NFS_V3)
+			global_st.v3.op[proto_op]++;
+	else if (req->rq_prog == nfs_param.core_param.program[P_NLM])
+		global_st.lm.op[proto_op]++;
+	else if (req->rq_prog == nfs_param.core_param.program[P_MNT])
+		global_st.mn.op[proto_op]++;
+	else if (req->rq_prog == nfs_param.core_param.program[P_RQUOTA])
+		global_st.qt.op[proto_op]++;
+
+	if (nfs_param.core_param.enable_FASTSTATS)
+		return;
 
 	now(&current_time);
 	stop_time = timespec_diff(&ServerBootTime, &current_time);
 	server_st = container_of(client, struct server_stats, client);
 	record_stats(&server_st->st, &client->lock, reqdata,
 		     stop_time - req_ctx->start_time, req_ctx->queue_wait,
-		     rc == NFS_REQ_OK, dup);
+		     rc == NFS_REQ_OK, dup, true);
 	(void)atomic_store_uint64_t(&client->last_update, stop_time);
 	if (!dup && req_ctx->export != NULL) {
 		struct export_stats *exp_st;
@@ -760,7 +949,7 @@ void server_stats_nfs_done(struct req_op_context *req_ctx,
 		    container_of(req_ctx->export, struct export_stats, export);
 		record_stats(&exp_st->st, &req_ctx->export->lock, reqdata,
 			     stop_time - req_ctx->start_time,
-			     req_ctx->queue_wait, rc == NFS_REQ_OK, dup);
+			     req_ctx->queue_wait, rc == NFS_REQ_OK, dup, false);
 		(void)atomic_store_uint64_t(&req_ctx->export->last_update,
 					    stop_time);
 	}
@@ -781,6 +970,12 @@ void server_stats_nfsv4_op_done(struct req_op_context *req_ctx, int proto_op,
 	struct timespec current_time;
 	nsecs_elapsed_t stop_time;
 
+	if (req_ctx->nfs_vers == NFS_V4)
+		global_st.v4.op[proto_op]++;
+
+	if (nfs_param.core_param.enable_FASTSTATS)
+		return;
+
 	if (client == NULL) {
 		/* we can have cases where we cannot find the client... */
 		return;
@@ -788,6 +983,14 @@ void server_stats_nfsv4_op_done(struct req_op_context *req_ctx, int proto_op,
 	now(&current_time);
 	stop_time = timespec_diff(&ServerBootTime, &current_time);
 	server_st = container_of(client, struct server_stats, client);
+
+	if (req_ctx->nfs_minorvers == 0)
+		record_op(&global_st.nfsv40.compounds, stop_time - start_time,
+			  req_ctx->queue_wait, status == NFS4_OK, false);
+	else
+		record_op(&global_st.nfsv41.compounds, stop_time - start_time,
+			  req_ctx->queue_wait, status == NFS4_OK, false);
+
 	record_nfsv4_op(&server_st->st, &client->lock, proto_op,
 			req_ctx->nfs_minorvers, stop_time - start_time,
 			req_ctx->queue_wait, status);
@@ -1055,6 +1258,79 @@ void global_dbus_total(DBusMessageIter *iter)
 	dbus_message_iter_close_container(iter, &struct_iter);
 }
 
+void global_dbus_fast(DBusMessageIter *iter)
+{
+	DBusMessageIter struct_iter;
+	char *version;
+	char *op;
+	int i;
+
+	dbus_message_iter_open_container(iter, DBUS_TYPE_STRUCT, NULL,
+					 &struct_iter);
+
+	version = "NFSv3:";
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING,
+				       &version);
+	for (i = 0; i < NFSPROC3_COMMIT; i++) {
+		if (global_st.v3.op[i] > 0) {
+			op = optabv3[i].name;
+			dbus_message_iter_append_basic(&struct_iter,
+					DBUS_TYPE_STRING, &op);
+			dbus_message_iter_append_basic(&struct_iter,
+					DBUS_TYPE_UINT64, &global_st.v3.op[i]);
+		}
+	}
+	version = "\nNFSv4:";
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING,
+				       &version);
+	for (i = 0; i < NFS4_OP_IO_ADVISE; i++) {
+		if (global_st.v4.op[i] > 0) {
+			op = optabv4[i].name;
+			dbus_message_iter_append_basic(&struct_iter,
+					DBUS_TYPE_STRING, &op);
+			dbus_message_iter_append_basic(&struct_iter,
+					DBUS_TYPE_UINT64, &global_st.v4.op[i]);
+		}
+	}
+	version = "\nNLM:";
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING,
+				       &version);
+	for (i = 0; i < NLM4_FAILED; i++) {
+		if (global_st.lm.op[i] > 0) {
+			op = optnlm[i].name;
+			dbus_message_iter_append_basic(&struct_iter,
+					DBUS_TYPE_STRING, &op);
+			dbus_message_iter_append_basic(&struct_iter,
+					DBUS_TYPE_UINT64, &global_st.lm.op[i]);
+		}
+	}
+	version = "\nMNT:";
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING,
+				       &version);
+	for (i = 0; i < MOUNTPROC3_EXPORT; i++) {
+		if (global_st.mn.op[i] > 0) {
+			op = optmnt[i].name;
+			dbus_message_iter_append_basic(&struct_iter,
+					DBUS_TYPE_STRING, &op);
+			dbus_message_iter_append_basic(&struct_iter,
+					DBUS_TYPE_UINT64, &global_st.mn.op[i]);
+		}
+	}
+	version = "\nQUOTA:";
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING,
+				       &version);
+	for (i = 0; i < RQUOTAPROC_SETACTIVEQUOTA; i++) {
+		if (global_st.qt.op[i] > 0) {
+			op = optqta[i].name;
+			dbus_message_iter_append_basic(&struct_iter,
+					DBUS_TYPE_STRING, &op);
+			dbus_message_iter_append_basic(&struct_iter,
+					DBUS_TYPE_UINT64, &global_st.qt.op[i]);
+		}
+	}
+	dbus_message_iter_close_container(iter, &struct_iter);
+}
+
 void server_dbus_v3_iostats(struct nfsv3_stats *v3p, DBusMessageIter *iter)
 {
 	struct timespec timestamp;
@@ -1092,6 +1368,15 @@ void server_dbus_total_ops(struct export_stats *export_st, DBusMessageIter *iter
 	now(&timestamp);
 	dbus_append_timestamp(iter, &timestamp);
 	server_dbus_total(export_st, iter);
+}
+
+void server_dbus_fast_ops(DBusMessageIter *iter)
+{
+	struct timespec timestamp;
+
+	now(&timestamp);
+	dbus_append_timestamp(iter, &timestamp);
+	global_dbus_fast(iter);
 }
 
 void global_dbus_total_ops(DBusMessageIter *iter)

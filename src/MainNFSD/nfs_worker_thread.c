@@ -1262,7 +1262,8 @@ static void nfs_rpc_execute(request_data_t *req,
 #ifdef USE_DBUS_STATS
 /* NFSv4 stats are handled in nfs4_compound()
  */
-	if (svcreq->rq_vers != NFS_V4)
+	if (svcreq->rq_prog != nfs_param.core_param.program[P_NFS]
+	    || svcreq->rq_vers != NFS_V4)
 		server_stats_nfs_done(&req_ctx, req, rc, false);
 #endif
 
