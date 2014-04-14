@@ -2134,6 +2134,17 @@ fsal_status_t pxy_lookup_path(struct fsal_export *exp_hdl,
 
 	p = strtok_r(pcopy, "/", &saved);
 	do {
+		if (strcmp(p, "..") == 0) {
+			/* Don't allow lookup of ".." */
+			LogInfo(COMPONENT_FSAL,
+				"Attempt to use \"..\" element in path %s",
+				path);
+			gsh_free(pcopy);
+			return fsalstat(ERR_FSAL_ACCESS, EACCES);
+		}
+		/* Note that if any element is a symlink, the following will
+		 * fail, thus no security exposure.
+		 */
 		fsal_status_t st = pxy_lookup_impl(parent, exp_hdl,
 						   creds, p, &next);
 		if (FSAL_IS_ERROR(st)) {
@@ -2146,6 +2157,9 @@ fsal_status_t pxy_lookup_path(struct fsal_export *exp_hdl,
 			parent = next;
 		}
 	} while (p);
+	/* The final element could be a symlink, but either way we are called
+	 * will not work with a symlink, so no security exposure there.
+	 */
 
 	gsh_free(pcopy);
 	*handle = next;
