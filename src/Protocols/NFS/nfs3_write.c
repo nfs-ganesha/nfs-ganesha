@@ -78,7 +78,7 @@ int nfs3_write(nfs_arg_t *arg, exportlist_t *export,
 	};
 	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
 	size_t size = 0;
-	size_t written_size;
+	size_t written_size = 0;
 	uint64_t offset = 0;
 	void *data = NULL;
 	bool eof_met = false;
