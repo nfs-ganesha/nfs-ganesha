@@ -757,7 +757,9 @@ static bool export_to_dbus(struct gsh_export *exp_node, void *state)
 	return true;
 }
 
-static bool gsh_export_showexports(DBusMessageIter *args, DBusMessage *reply)
+static bool gsh_export_showexports(DBusMessageIter *args,
+				   DBusMessage *reply,
+				   DBusError *error)
 {
 	DBusMessageIter iter;
 	struct showexports_state iter_state;
@@ -848,7 +850,9 @@ static struct gsh_export *lookup_export(DBusMessageIter *args, char **errormsg)
  *
  */
 
-static bool get_nfsv3_export_io(DBusMessageIter *args, DBusMessage *reply)
+static bool get_nfsv3_export_io(DBusMessageIter *args,
+				DBusMessage *reply,
+				DBusError *error)
 {
 	struct gsh_export *export = NULL;
 	struct export_stats *export_st = NULL;
@@ -891,7 +895,9 @@ static struct gsh_dbus_method export_show_v3_io = {
  *
  */
 
-static bool get_nfsv40_export_io(DBusMessageIter *args, DBusMessage *reply)
+static bool get_nfsv40_export_io(DBusMessageIter *args,
+				 DBusMessage *reply,
+				 DBusError *error)
 {
 	struct gsh_export *export = NULL;
 	struct export_stats *export_st = NULL;
@@ -934,7 +940,9 @@ static struct gsh_dbus_method export_show_v40_io = {
  *
  */
 
-static bool get_nfsv41_export_io(DBusMessageIter *args, DBusMessage *reply)
+static bool get_nfsv41_export_io(DBusMessageIter *args,
+				 DBusMessage *reply,
+				 DBusError *error)
 {
 	struct gsh_export *export = NULL;
 	struct export_stats *export_st = NULL;
@@ -978,7 +986,8 @@ static struct gsh_dbus_method export_show_v41_io = {
  */
 
 static bool get_nfsv41_export_layouts(DBusMessageIter *args,
-				      DBusMessage *reply)
+				      DBusMessage *reply,
+				      DBusError *error)
 {
 	struct gsh_export *export = NULL;
 	struct export_stats *export_st = NULL;
@@ -1012,7 +1021,8 @@ static bool get_nfsv41_export_layouts(DBusMessageIter *args,
  */
 
 static bool get_nfsv_export_total_ops(DBusMessageIter *args,
-				      DBusMessage *reply)
+				      DBusMessage *reply,
+				      DBusError *error)
 {
 	struct gsh_export *export = NULL;
 	struct export_stats *export_st = NULL;
@@ -1041,7 +1051,8 @@ static bool get_nfsv_export_total_ops(DBusMessageIter *args,
 }
 
 static bool get_nfsv_global_total_ops(DBusMessageIter *args,
-				      DBusMessage *reply)
+				      DBusMessage *reply,
+				      DBusError *error)
 {
 	bool success = true;
 	char *errormsg = "OK";
@@ -1056,7 +1067,8 @@ static bool get_nfsv_global_total_ops(DBusMessageIter *args,
 }
 
 static bool show_cache_inode_stats(DBusMessageIter *args,
-				  DBusMessage *reply)
+				  DBusMessage *reply,
+				   DBusError *error)
 {
 	bool success = true;
 	char *errormsg = "OK";
@@ -1084,7 +1096,9 @@ static struct gsh_dbus_method export_show_v41_layouts = {
  * DBUS method to report 9p I/O statistics
  *
  */
-static bool get_9p_export_io(DBusMessageIter *args, DBusMessage *reply)
+static bool get_9p_export_io(DBusMessageIter *args,
+			     DBusMessage *reply,
+			     DBusError *error)
 {
 	struct gsh_export *export = NULL;
 	struct export_stats *export_st = NULL;

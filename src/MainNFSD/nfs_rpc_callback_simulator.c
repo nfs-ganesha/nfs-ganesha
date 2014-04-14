@@ -69,7 +69,8 @@
  */
 
 static bool nfs_rpc_cbsim_get_v40_client_ids(DBusMessageIter *args,
-					     DBusMessage *reply)
+					     DBusMessage *reply,
+					     DBusError *error)
 {
 	uint32_t i;
 	hash_table_t *ht = ht_confirmed_client_id;
@@ -138,7 +139,8 @@ static struct gsh_dbus_method cbsim_get_client_ids = {
  */
 
 static bool nfs_rpc_cbsim_get_session_ids(DBusMessageIter *args,
-					  DBusMessage *reply)
+					  DBusMessage *reply,
+					  DBusError *error)
 {
 	uint32_t i;
 	hash_table_t *ht = ht_session_id;
@@ -378,7 +380,8 @@ static int32_t cbsim_fake_cbrecall(clientid4 clientid)
  */
 
 static bool nfs_rpc_cbsim_fake_recall(DBusMessageIter *args,
-				      DBusMessage *reply)
+				      DBusMessage *reply,
+				      DBusError *error)
 {
 	clientid4 clientid = 9315;	/* XXX ew! */
 

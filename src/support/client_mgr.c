@@ -428,7 +428,9 @@ static bool arg_ipaddr(DBusMessageIter *args, sockaddr_t *sp, char **errormsg)
  * @param reply [OUT] dbus reply stream for method to fill
  */
 
-static bool gsh_client_addclient(DBusMessageIter *args, DBusMessage *reply)
+static bool gsh_client_addclient(DBusMessageIter *args,
+				 DBusMessage *reply,
+				 DBusError *error)
 {
 	struct gsh_client *client;
 	sockaddr_t sockaddr;
@@ -459,7 +461,9 @@ static struct gsh_dbus_method cltmgr_add_client = {
 		 END_ARG_LIST}
 };
 
-static bool gsh_client_removeclient(DBusMessageIter *args, DBusMessage *reply)
+static bool gsh_client_removeclient(DBusMessageIter *args,
+				    DBusMessage *reply,
+				    DBusError *error)
 {
 	sockaddr_t sockaddr;
 	bool success = true;
@@ -513,7 +517,9 @@ static bool client_to_dbus(struct gsh_client *cl_node, void *state)
 	return true;
 }
 
-static bool gsh_client_showclients(DBusMessageIter *args, DBusMessage *reply)
+static bool gsh_client_showclients(DBusMessageIter *args,
+				   DBusMessage *reply,
+				   DBusError *error)
 {
 	DBusMessageIter iter;
 	struct showclients_state iter_state;
@@ -582,7 +588,9 @@ static struct gsh_client *lookup_client(DBusMessageIter *args, char **errormsg)
  *
  */
 
-static bool get_nfsv3_stats_io(DBusMessageIter *args, DBusMessage *reply)
+static bool get_nfsv3_stats_io(DBusMessageIter *args,
+			       DBusMessage *reply,
+			       DBusError *error)
 {
 	struct gsh_client *client = NULL;
 	struct server_stats *server_st = NULL;
@@ -627,7 +635,9 @@ static struct gsh_dbus_method cltmgr_show_v3_io = {
  *
  */
 
-static bool get_nfsv40_stats_io(DBusMessageIter *args, DBusMessage *reply)
+static bool get_nfsv40_stats_io(DBusMessageIter *args,
+				DBusMessage *reply,
+				DBusError *error)
 {
 	struct gsh_client *client = NULL;
 	struct server_stats *server_st = NULL;
@@ -672,7 +682,9 @@ static struct gsh_dbus_method cltmgr_show_v40_io = {
  *
  */
 
-static bool get_nfsv41_stats_io(DBusMessageIter *args, DBusMessage *reply)
+static bool get_nfsv41_stats_io(DBusMessageIter *args,
+				DBusMessage *reply,
+				DBusError *error)
 {
 	struct gsh_client *client = NULL;
 	struct server_stats *server_st = NULL;
@@ -719,7 +731,8 @@ static struct gsh_dbus_method cltmgr_show_v41_io = {
  */
 
 static bool get_nfsv41_stats_layouts(DBusMessageIter *args,
-				     DBusMessage *reply)
+				     DBusMessage *reply,
+				     DBusError *error)
 {
 	struct gsh_client *client = NULL;
 	struct server_stats *server_st = NULL;
@@ -764,7 +777,9 @@ static struct gsh_dbus_method cltmgr_show_v41_layouts = {
  *
  */
 
-static bool get_9p_stats_io(DBusMessageIter *args, DBusMessage *reply)
+static bool get_9p_stats_io(DBusMessageIter *args,
+			    DBusMessage *reply,
+			    DBusError *error)
 {
 	struct gsh_client *client = NULL;
 	struct server_stats *server_st = NULL;
@@ -809,7 +824,9 @@ static struct gsh_dbus_method cltmgr_show_9p_io = {
  *
  */
 
-static bool get_9p_stats_trans(DBusMessageIter *args, DBusMessage *reply)
+static bool get_9p_stats_trans(DBusMessageIter *args,
+			       DBusMessage *reply,
+			       DBusError *error)
 {
 	struct gsh_client *client = NULL;
 	struct server_stats *server_st = NULL;

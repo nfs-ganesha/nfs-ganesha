@@ -93,7 +93,9 @@ static admin_status_t admin_status;
  * @param[out] reply Unused
  */
 
-static bool admin_dbus_reload(DBusMessageIter *args, DBusMessage *reply)
+static bool admin_dbus_reload(DBusMessageIter *args,
+			      DBusMessage *reply,
+			      DBusError *error)
 {
 	char *errormsg = "Exports reloaded";
 	bool success = true;
@@ -127,7 +129,9 @@ static struct gsh_dbus_method method_reload = {
  * @param[out] reply Unused
  */
 
-static bool admin_dbus_grace(DBusMessageIter *args, DBusMessage *reply)
+static bool admin_dbus_grace(DBusMessageIter *args,
+			     DBusMessage *reply,
+			     DBusError *error)
 {
 	char *errormsg = "Started grace period";
 	bool success = true;
@@ -191,7 +195,9 @@ static struct gsh_dbus_method method_grace_period = {
  * @param[out] reply Unused
  */
 
-static bool admin_dbus_shutdown(DBusMessageIter *args, DBusMessage *reply)
+static bool admin_dbus_shutdown(DBusMessageIter *args,
+				DBusMessage *reply,
+				DBusError *error)
 {
 	char *errormsg = "Server shut down";
 	bool success = true;
@@ -225,7 +231,9 @@ static struct gsh_dbus_method method_shutdown = {
  * @param[in]  args
  * @param[out] reply
  */
-static bool admin_dbus_purge_gids(DBusMessageIter *args, DBusMessage *reply)
+static bool admin_dbus_purge_gids(DBusMessageIter *args,
+				  DBusMessage *reply,
+				  DBusError *error)
 {
 	char *errormsg = "Purge gids cache";
 	bool success = true;

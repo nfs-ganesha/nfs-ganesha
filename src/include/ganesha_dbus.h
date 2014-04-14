@@ -109,7 +109,9 @@ struct gsh_dbus_arg {
 
 struct gsh_dbus_method {
 	const char *name;
-	 bool(*method) (DBusMessageIter *args, DBusMessage *reply);
+	 bool(*method) (DBusMessageIter *args,
+			DBusMessage *reply,
+			DBusError *error);
 	struct gsh_dbus_arg args[];
 };
 

@@ -368,8 +368,8 @@ static DBusHandlerResult dbus_message_entrypoint(DBusConnection *conn,
 	    || (method && (!strcmp(method, "Introspect")))) {
 		retval = dbus_reply_introspection(reply, interfaces);
 	} else if (!strcmp(interface, DBUS_INTERFACE_PROPERTIES)) {
-		retval =
-		    dbus_proc_property(method, msg, reply, &error, interfaces);
+		retval = dbus_proc_property(method, msg,
+					    reply, &error, interfaces);
 	} else if (method != NULL) {
 		struct gsh_dbus_interface **iface;
 
@@ -384,7 +384,9 @@ static DBusHandlerResult dbus_message_entrypoint(DBusConnection *conn,
 				for (m = (*iface)->methods; *m; m++) {
 					if (strcmp(method, (*m)->name) == 0) {
 						retval =
-						    (*m)->method(argsp, reply);
+						    (*m)->method(argsp,
+								 reply,
+								 &error);
 						goto done;
 					}
 				}
