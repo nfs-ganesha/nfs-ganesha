@@ -607,6 +607,29 @@ struct gsh_export *get_gsh_export_by_tag(char *tag)
 	return exp;
 }
 
+/**
+ * @brief mount the export in pseudo FS
+ *
+ */
+
+bool mount_gsh_export(struct gsh_export *exp)
+{
+	struct root_op_context root_op_context;
+	bool rc = true;
+
+	/* Initialize req_ctx */
+	init_root_op_context(&root_op_context, NULL, NULL,
+				NFS_V4, 0, NFS_REQUEST);
+
+	PTHREAD_RWLOCK_rdlock(&export_by_id.lock);
+	if (!pseudo_mount_export(exp, &root_op_context.req_ctx))
+		rc = false;
+	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
+
+	return rc;
+}
+
+
 pthread_mutex_t release_export_serializer = PTHREAD_MUTEX_INITIALIZER;
 
 /**

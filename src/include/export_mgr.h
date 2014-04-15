@@ -85,6 +85,7 @@ struct gsh_export *get_gsh_export_by_pseudo(char *path, bool exact_match);
 struct gsh_export *get_gsh_export_by_pseudo_locked(char *path,
 						   bool exact_match);
 struct gsh_export *get_gsh_export_by_tag(char *tag);
+bool mount_gsh_export(struct gsh_export *exp);
 void set_gsh_export_state(struct gsh_export *export, export_state_t state);
 void put_gsh_export(struct gsh_export *export);
 void remove_gsh_export(int export_id);
@@ -95,6 +96,8 @@ static inline void get_gsh_export_ref(struct gsh_export *exp)
 {
 	atomic_inc_int64_t(&exp->refcnt);
 }
+
+extern struct config_block add_export_param;
 
 #endif				/* !EXPORT_MGR_H */
 /** @} */

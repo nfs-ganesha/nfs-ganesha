@@ -823,6 +823,35 @@ static void export_display(const char *step, void *node,
 }
 
 /**
+ * @brief Commit an add export
+ * commit the export
+ * init export root and mount it in pseudo fs
+ */
+
+static int add_export_commit(void *node, void *link_mem, void *self_struct)
+{
+	struct exportlist *exp = self_struct;
+	struct gsh_export *export;
+	int errcnt = 0;
+
+	errcnt = export_commit(node, link_mem, self_struct);
+	if (errcnt != 0)
+		goto err_out;
+
+	export = container_of(exp, struct gsh_export, export);
+	if (!init_export_root(export)) {
+		errcnt++;
+		goto err_out;
+	}
+
+	if (!mount_gsh_export(export))
+		errcnt++;
+
+err_out:
+	return errcnt;
+}
+
+/**
  * @brief Initialize an EXPORT_DEFAULTS block
  *
  */
@@ -1106,6 +1135,21 @@ struct config_block export_param = {
 	.blk_desc.u.blk.commit = export_commit,
 	.blk_desc.u.blk.display = export_display
 };
+
+/**
+ * @brief Top level definition for an ADD EXPORT block
+ */
+
+struct config_block add_export_param = {
+	.dbus_interface_name = "org.ganesha.nfsd.config.export.%d",
+	.blk_desc.name = "EXPORT",
+	.blk_desc.type = CONFIG_BLOCK,
+	.blk_desc.u.blk.init = export_init,
+	.blk_desc.u.blk.params = export_params,
+	.blk_desc.u.blk.commit = add_export_commit,
+	.blk_desc.u.blk.display = export_display
+};
+
 
 /**
  * @brief Top level definition for an EXPORT_DEFAULTS block
