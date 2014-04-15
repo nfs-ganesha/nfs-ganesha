@@ -792,6 +792,220 @@ struct showexports_state {
 	DBusMessageIter export_iter;
 };
 
+/**
+ * @brief Add an export either before or after the ID'd export
+ *
+ * This method passes a pathname in the server's local filesystem
+ * that should be parsed and processed by the config_parsing module.
+ * The resulting export entry is then added before or after the ID'd
+ * export entry. Params are in the args iter
+ *
+ * @param "path"   [IN] A local path to a file with only an EXPORT {...}
+ *
+ * @return        true for success, false with error filled out for failure
+ */
+
+static bool gsh_export_addexport(DBusMessageIter *args,
+				 DBusMessage *reply,
+				 DBusError *error)
+{
+	int rc;
+	bool retval = true;
+	char *file_path = NULL;
+	config_file_t config_struct;
+
+	/* Get path */
+	if (DBUS_TYPE_STRING == dbus_message_iter_get_arg_type(args))
+		dbus_message_iter_get_basic(args, &file_path);
+	else {
+		dbus_set_error(error, DBUS_ERROR_INVALID_ARGS,
+			       "Pathname is not a string not a (%c)",
+			       dbus_message_iter_get_arg_type(args));
+		retval = false;
+		goto out;
+	}
+	LogInfo(COMPONENT_EXPORT, "Adding export from file: %s", file_path);
+
+	config_struct = config_ParseFile(file_path);
+	if (!config_struct) {
+		LogCrit(COMPONENT_EXPORT, "Error while parsing %s",
+		file_path); 
+		dbus_set_error(error, DBUS_ERROR_INVALID_FILE_CONTENT,
+			       "Error while parsing %s",
+			       file_path);
+		retval = false;
+		goto out;
+	}
+
+	/* Load export entry from parsed file */
+	rc = load_config_from_parse(config_struct,
+					&add_export_param,
+					NULL,
+					false);
+	if (rc < 0) {
+		LogCrit(COMPONENT_EXPORT, "Error while processing export entry");
+		dbus_set_error(error, DBUS_ERROR_INVALID_FILE_CONTENT,
+			       "Error while processing %s",
+			       file_path);
+		retval = false;
+	} else if (rc == 0) {
+		LogWarn(COMPONENT_EXPORT,
+			"No export entry found in configuration file !!!");
+		dbus_set_error(error, DBUS_ERROR_INVALID_FILE_CONTENT,
+			       "No export entry found in %s",
+			       file_path);
+		retval = false;
+	}
+	config_Free(config_struct);
+
+out:
+	return retval;
+}
+
+static struct gsh_dbus_method export_add_export = {
+	.name = "AddExport",
+	.method = gsh_export_addexport,
+	.args =	{PATH_ARG,
+		 END_ARG_LIST}
+};
+
+/**
+ * @brief Remove an export
+ *
+ * @param "id"  [IN] the id of the export to remove
+ *
+ * @return           As above, use DBusError to return errors.
+ */
+
+static bool gsh_export_removeexport(DBusMessageIter *args,
+				    DBusMessage *reply,
+				    DBusError *error)
+{
+	struct gsh_export *export = NULL;
+	char *errormsg;
+	bool rc = true;
+
+	export = lookup_export(args, &errormsg);
+	if (export == NULL) {
+		LogDebug(COMPONENT_EXPORT, "lookup_export failed with %s",
+			errormsg);
+		dbus_set_error(error, DBUS_ERROR_INVALID_ARGS,
+			       "lookup_export failed with %s",
+			       errormsg);
+		rc = false;
+		goto out;
+	} else {
+		if (export->export.id == 0) {
+			LogDebug(COMPONENT_EXPORT,
+				"Cannot remove export with id 0");
+			put_gsh_export(export);
+			rc = false;
+			dbus_set_error(error, DBUS_ERROR_INVALID_ARGS,
+				       "Cannot remove export with id 0");
+			goto out;
+		}
+		unexport(export);
+		LogInfo(COMPONENT_EXPORT, "Removed export with id %d",
+			export->export.id);
+
+		put_gsh_export(export);
+	}
+
+out:
+	return rc;
+}
+
+static struct gsh_dbus_method export_remove_export = {
+	.name = "RemoveExport",
+	.method = gsh_export_removeexport,
+	.args = {ID_ARG,
+		 END_ARG_LIST}
+};
+
+#define DISP_EXP_REPLY		\
+{				\
+	.name = "id",		\
+	.type = "i",		\
+	.direction = "out"	\
+},				\
+{				\
+	.name = "fullpath",	\
+	.type = "s",		\
+	.direction = "out"	\
+},				\
+{				\
+	.name = "pseudopath",	\
+	.type = "s",		\
+	.direction = "out"	\
+},				\
+{				\
+	.name = "tag",	\
+	.type = "s",		\
+	.direction = "out"	\
+}
+
+/**
+ * @brief Display the contents of an export
+ *
+ * NOTE: this is probably better done as properties.
+ * the interfaces are set up for it.  This is here for now
+ * but should not be considered a permanent method
+ */
+
+static bool gsh_export_displayexport(DBusMessageIter *args,
+				     DBusMessage *reply,
+				     DBusError *error)
+{
+	DBusMessageIter iter;
+	struct gsh_export *export = NULL;
+	char *errormsg;
+	bool rc = true;
+	char *path;
+
+	export = lookup_export(args, &errormsg);
+	if (export == NULL) {
+		LogDebug(COMPONENT_EXPORT, "lookup_export failed with %s",
+			errormsg);
+		dbus_set_error(error, DBUS_ERROR_INVALID_ARGS,
+			       "lookup_export failed with %s",
+			       errormsg);
+		rc = false;
+		goto out;
+	}
+
+	/* create a reply from the message */
+	dbus_message_iter_init_append(reply, &iter);
+	dbus_message_iter_append_basic(&iter,
+				       DBUS_TYPE_INT32,
+				       &export->export.id);
+	path = (export->export.fullpath != NULL) ?
+		export->export.fullpath : "";
+	dbus_message_iter_append_basic(&iter,
+				       DBUS_TYPE_STRING,
+				       &path);
+	path = (export->export.pseudopath != NULL) ?
+		export->export.pseudopath : "";
+	dbus_message_iter_append_basic(&iter,
+				       DBUS_TYPE_STRING,
+				       &path);
+	path = (export->export.FS_tag != NULL) ?
+		export->export.FS_tag : "";
+	dbus_message_iter_append_basic(&iter,
+				       DBUS_TYPE_STRING,
+				       &path);
+	
+out:
+	return rc;
+}
+
+static struct gsh_dbus_method export_display_export = {
+	.name = "DisplayExport",
+	.method = gsh_export_displayexport,
+	.args = {ID_ARG,
+		 DISP_EXP_REPLY,
+		 END_ARG_LIST}
+};
+
 static bool export_to_dbus(struct gsh_export *exp_node, void *state)
 {
 	struct showexports_state *iter_state =
@@ -852,6 +1066,9 @@ static struct gsh_dbus_method export_show_exports = {
 };
 
 static struct gsh_dbus_method *export_mgr_methods[] = {
+	&export_add_export,
+	&export_remove_export,
+	&export_display_export,
 	&export_show_exports,
 	NULL
 };
