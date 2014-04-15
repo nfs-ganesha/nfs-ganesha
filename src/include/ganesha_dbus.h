@@ -80,6 +80,20 @@
 	.direction = "in"\
 }
 
+#define ID_ARG			\
+{				\
+	.name = "id",		\
+	.type = "i",		\
+	.direction = "in"	\
+}
+
+#define PATH_ARG		\
+{				\
+	.name = "path",		\
+	.type = "s",		\
+	.direction = "in"	\
+}
+
 /* Properties list helper macros
  */
 
