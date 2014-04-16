@@ -31,7 +31,6 @@
 [ -f /etc/sysconfig/nfs ] && . /etc/sysconfig/nfs
 
 PATHPROG=/usr/bin/ganesha.nfsd
-PROG=pt.ganesha.nfsd
 LOGFILE=/pt_work/log/ganesha/nfs-ganesha.log
 #LOGFILE=SYSLOG
 #LOGFILE=STDERR
@@ -75,7 +74,7 @@ CONFFILE=/etc/ganesha/pt_config.conf
 
 OPTIONS="-d -f $CONFFILE -L $LOGFILE -N NIV_INFO"
 RETVAL=0
-prog="pt.ganesha.nfsd"
+prog="ganesha.nfsd"
 
 which sm-notify &> /dev/null
 HAVE_SMNOTIFY=`echo $?`
