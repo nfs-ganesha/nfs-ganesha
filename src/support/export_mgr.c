@@ -94,54 +94,6 @@ static inline uint32_t eid_cache_offsetof(struct export_by_id *eid, uint64_t k)
 	return k % eid->cache_sz;
 }
 
-/* XXX GCC header include issue (abstract_atomic.h IS included, but
- * atomic_fetch_voidptr fails when used from cache_inode_remove.c. */
-
-/**
- * @brief Atomically fetch a void *
- *
- * This function atomically fetches the value indicated by the
- * supplied pointer.
- *
- * @param[in,out] var Pointer to the variable to fetch
- *
- * @return the value pointed to by var.
- */
-
-#ifdef GCC_ATOMIC_FUNCTIONS
-static inline void *atomic_fetch_voidptr(void **var)
-{
-	return __atomic_load_n(var, __ATOMIC_SEQ_CST);
-}
-#elif defined(GCC_SYNC_FUNCTIONS)
-static inline void *atomic_fetch_voidptr(void **var)
-{
-	return __sync_fetch_and_add(var, 0);
-}
-#endif
-
-/**
- * @brief Atomically store a void *
- *
- * This function atomically stores the value indicated by the
- * supplied pointer.
- *
- * @param[in,out] var Pointer to the variable to modify
- * @param[in]     val The value to store
- */
-
-#ifdef GCC_ATOMIC_FUNCTIONS
-static inline void atomic_store_voidptr(void **var, void *val)
-{
-	__atomic_store_n(var, val, __ATOMIC_SEQ_CST);
-}
-#elif defined(GCC_SYNC_FUNCTIONS)
-static inline void atomic_store_voidptr(void **var, void *val)
-{
-	(void)__sync_lock_test_and_set(var, val);
-}
-#endif
-
 /**
  * @brief Export id comparator for AVL tree walk
  *
