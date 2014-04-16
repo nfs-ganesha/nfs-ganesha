@@ -191,6 +191,10 @@ cache_inode_lookup_impl(cache_entry_t *parent,
 	if (unlikely(!*entry))
 		goto out;
 
+	LogFullDebug(COMPONENT_CACHE_INODE,
+		     "Created entry %p FSAL %s for %s",
+		     *entry, (*entry)->obj_handle->fsal->name, name);
+
 	/* Entry was found in the FSAL, add this entry to the
 	   parent directory */
 	status = cache_inode_add_cached_dirent(parent, name, *entry, NULL);

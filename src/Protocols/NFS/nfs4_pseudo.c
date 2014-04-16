@@ -86,8 +86,9 @@ retry:
 		}
 
 		LogDebug(COMPONENT_EXPORT,
-			 "BUILDING PSEUDOFS: Parent %p Node %p %s already exists",
-			 state->dirent, new_node, name);
+			 "BUILDING PSEUDOFS: Parent %p entry %p %s FSAL %s already exists",
+			 state->dirent, new_node, name,
+			 new_node->obj_handle->fsal->name);
 		/* Release reference to the old node */
 		cache_inode_put(state->dirent);
 

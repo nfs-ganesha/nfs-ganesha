@@ -1448,7 +1448,7 @@ bool init_export_root(struct gsh_export *exp)
 			     0, 0, UNKNOWN_REQUEST);
 
 	/* Lookup for the FSAL Path */
-	LogFullDebug(COMPONENT_INIT,
+	LogFullDebug(COMPONENT_EXPORT,
 		     "About to lookup_path for ExportId=%u Path=%s",
 		     export->id, export->fullpath);
 	fsal_status =
@@ -1458,7 +1458,7 @@ bool init_export_root(struct gsh_export *exp)
 						 &root_handle);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
-		LogCrit(COMPONENT_INIT,
+		LogCrit(COMPONENT_EXPORT,
 			"Lookup failed on path, ExportId=%u Path=%s FSAL_ERROR=(%s,%u)",
 			export->id, export->fullpath,
 			msg_fsal_err(fsal_status.major), fsal_status.minor);
@@ -1472,7 +1472,7 @@ bool init_export_root(struct gsh_export *exp)
 					     &entry, &root_op_context.req_ctx);
 
 	if (entry == NULL) {
-		LogCrit(COMPONENT_INIT,
+		LogCrit(COMPONENT_EXPORT,
 			"Error when creating root cached entry for %s, export_id=%d, cache_status=%s",
 			export->fullpath,
 			export->id,
@@ -1484,7 +1484,7 @@ bool init_export_root(struct gsh_export *exp)
 	cache_status = cache_inode_inc_pin_ref(entry);
 
 	if (cache_status != CACHE_INODE_SUCCESS) {
-		LogCrit(COMPONENT_INIT,
+		LogCrit(COMPONENT_EXPORT,
 			"Error when creating root cached entry for %s, export_id=%d, cache_status=%s",
 			export->fullpath,
 			export->id,
@@ -1509,9 +1509,17 @@ bool init_export_root(struct gsh_export *exp)
 	PTHREAD_RWLOCK_unlock(&exp->lock);
 	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 
-	LogInfo(COMPONENT_INIT,
-		"Added root entry for path %s on export_id=%d",
-		export->fullpath, export->id);
+	if (isDebug(COMPONENT_EXPORT)) {
+		LogDebug(COMPONENT_EXPORT,
+			 "Added root entry %p FSAL %s for path %s on export_id=%d",
+			 entry,
+			 entry->obj_handle->fsal->name,
+			 export->fullpath, export->id);
+	} else {
+		LogInfo(COMPONENT_EXPORT,
+			"Added root entry for path %s on export_id=%d",
+			export->fullpath, export->id);
+	}
 
 	/* Release the LRU reference and return success. */
 	cache_inode_put(entry);
@@ -1541,7 +1549,7 @@ void release_export_root_locked(struct gsh_export *exp)
 		cache_inode_dec_pin_ref(entry, false);
 	}
 
-	LogDebug(COMPONENT_INIT,
+	LogDebug(COMPONENT_EXPORT,
 		 "Released root entry %p for path %s on export_id=%d",
 		 entry, export->fullpath, export->id);
 }
