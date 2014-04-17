@@ -2902,10 +2902,7 @@ state_status_t state_unlock(cache_entry_t *entry, exportlist_t *export,
 	 */
 	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 
-	/* The 9p protocols holds no state, just locks */
-	/* Opened files are managed on the client side */
-	if ((owner->so_type != STATE_LOCK_OWNER_9P) &&
-	    (state->state_type == STATE_TYPE_DELEG) &&
+	if (state && (state->state_type == STATE_TYPE_DELEG) &&
 	    glist_empty(&entry->object.file.deleg_list)) {
 		cache_inode_dec_pin_ref(entry, FALSE);
 		PTHREAD_RWLOCK_unlock(&entry->state_lock);
@@ -2915,7 +2912,7 @@ state_status_t state_unlock(cache_entry_t *entry, exportlist_t *export,
 	}
 
 	if ((owner->so_type != STATE_LOCK_OWNER_9P) &&
-	    (state->state_type == STATE_TYPE_DELEG)) {
+	    state && (state->state_type == STATE_TYPE_DELEG)) {
 		LogFullDebug(COMPONENT_STATE, "Removing delegation from list");
 		status =
 			subtract_deleg_from_list(entry, owner, state, &removed,

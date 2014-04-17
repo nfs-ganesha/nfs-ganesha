@@ -212,6 +212,8 @@ typedef struct exportlist {
 #define EXPORT_OPTION_PRIVILEGED_PORT 0x00000100	/*< Clients use only
 							   privileged port */
 
+#define EXPORT_OPTION_COMMIT 0x00000200		/*< NFS Commit writes */
+
 /* @todo BUGAZOMEU : Mettre au carre les flags des flavors */
 
 #define EXPORT_OPTION_AUTH_NONE 0x00001000	/*< Auth None authentication
