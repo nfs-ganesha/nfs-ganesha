@@ -593,7 +593,7 @@ void cache_inode_unexport(struct gsh_export *export)
 		/* Remove from list of entries for this export */
 		glist_del(&parms.expmap->entry_per_export);
 
-		expmap = glist_first_entry(&entry->export_list, 
+		expmap = glist_first_entry(&entry->export_list,
 					   struct entry_export_map,
 					   export_per_entry);
 

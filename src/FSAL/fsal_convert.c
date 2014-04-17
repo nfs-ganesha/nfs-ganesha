@@ -72,8 +72,8 @@ int posix2fsal_error(int posix_errorcode)
 		} else {
 			LogInfo(COMPONENT_FSAL,
 				"Mapping %d to ERR_FSAL_IO, open_fd_count=%ld rlim_cur=%ld rlim_max=%ld",
-				+posix_errorcode, (long) open_fd_count, rlim.rlim_cur,
-				rlim.rlim_max);
+				+posix_errorcode, (long) open_fd_count,
+				rlim.rlim_cur, rlim.rlim_max);
 		}
 		return ERR_FSAL_IO;
 

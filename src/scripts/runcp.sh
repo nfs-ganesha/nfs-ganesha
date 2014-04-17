@@ -193,6 +193,7 @@ NO_SPACING_FILES="nfs23.h|nfsv41.h|nlm4.h|nsm.h|rquota.h"
 
 NO_COMPLEX_MACRO_FILES="include/ganesha_dbus.h|include/server_stats_private.h"
 NO_COMPLEX_MACRO_FILES="$NO_COMPLEX_MACRO_FILES|include/gsh_intrinsic.h"
+NO_COMPLEX_MACRO_FILES="$NO_COMPLEX_MACRO_FILES|support/exports.c"
 
 NO_DEEP_INDENTATION_FILES="cache_inode/cache_inode_lru.c|include/rbt_tree.h"
 

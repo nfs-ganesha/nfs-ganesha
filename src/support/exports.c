@@ -349,9 +349,9 @@ static int add_client(struct exportlist *exp,
 				     (int) ap->ai_addrlen,
 				     ap->ai_canonname);
 			if (cli == NULL) {
-				cli = gsh_calloc(sizeof(struct
-							exportlist_client_entry__),
-						 1);
+				cli = gsh_calloc(
+				    sizeof(struct exportlist_client_entry__),
+				    1);
 				if (cli == NULL) {
 					LogMajor(COMPONENT_CONFIG,
 						 "Allocate of client space failed");
@@ -634,7 +634,7 @@ static int fsal_commit(void *node, void *link_mem, void *self_struct)
 	if (exp->MaxWrite > fsal_exp->ops->fs_maxwrite(fsal_exp) &&
 	    fsal_exp->ops->fs_maxwrite(fsal_exp) != 0) {
 		LogInfo(COMPONENT_CONFIG,
-			 "Readjusting MaxWrite to FSAL, %" PRIu64 " -> %" PRIu32,
+			 "Readjusting MaxWrite to FSAL, %"PRIu64" -> %"PRIu32,
 			 exp->MaxWrite,
 			 fsal_exp->ops->fs_maxwrite(fsal_exp));
 		exp->MaxWrite = fsal_exp->ops->fs_maxwrite(fsal_exp);
@@ -695,7 +695,7 @@ static int export_commit(void *node, void *link_mem, void *self_struct)
 	char perms[1024];
 
 	exp = self_struct;
-	
+
 	/* validate the export now */
 	if ((exp->export_perms.options & EXPORT_OPTION_NFSV4)) {
 		if (exp->pseudopath == NULL) {
@@ -796,7 +796,7 @@ static int export_commit(void *node, void *link_mem, void *self_struct)
 
 err_fsal:
 	pthread_mutex_destroy(&exp->exp_state_mutex);
-	
+
 err_out:
 	return errcnt;
 }
@@ -813,7 +813,7 @@ static void export_display(const char *step, void *node,
 {
 	struct exportlist *exp = self_struct;
 	char perms[1024];
-	
+
 	StrExportOptions(&exp->export_perms, perms);
 
 	LogMidDebug(COMPONENT_CONFIG,
@@ -859,7 +859,7 @@ static void export_defaults_display(const char *step, void *node,
 {
 	struct export_perms__ *defaults = self_struct;
 	char perms[1024];
-	
+
 	StrExportOptions(defaults, perms);
 
 	LogEvent(COMPONENT_CONFIG,
@@ -878,7 +878,7 @@ static void export_defaults_display(const char *step, void *node,
 static struct config_item_list access_types[] = {
 	CONFIG_LIST_TOK("NONE", 0),
 	CONFIG_LIST_TOK("RW", (EXPORT_OPTION_RW_ACCESS |
-			       EXPORT_OPTION_MD_ACCESS )),
+			       EXPORT_OPTION_MD_ACCESS)),
 	CONFIG_LIST_TOK("RO", (EXPORT_OPTION_READ_ACCESS |
 			       EXPORT_OPTION_MD_READ_ACCESS)),
 	CONFIG_LIST_TOK("MDONLY", EXPORT_OPTION_MD_ACCESS),
@@ -1294,7 +1294,7 @@ int ReadExports(config_file_t in_config)
 			return -1;
 		}
 	}
-	return rc + ret;				
+	return rc + ret;
 }
 
 static void FreeClientList(struct glist_head *clients)
@@ -1700,16 +1700,14 @@ static exportlist_client_entry_t *client_match(sockaddr_t *hostaddr,
 
 		switch (client->type) {
 		case HOSTIF_CLIENT:
-			if (client->client.hostif.clientaddr == addr) {
+			if (client->client.hostif.clientaddr == addr)
 				return client;
-			}
 			break;
 
 		case NETWORK_CLIENT:
 			if ((client->client.network.netmask & ntohl(addr)) ==
-			    client->client.network.netaddr) {
+			    client->client.network.netaddr)
 				return client;
-			}
 			break;
 
 		case NETGROUP_CLIENT:
@@ -1871,8 +1869,8 @@ static exportlist_client_entry_t *client_matchv6(struct in6_addr *paddrv6,
 	return NULL;
 }
 
-static exportlist_client_entry_t * client_match_any(sockaddr_t *hostaddr,
-				   struct exportlist *exp)
+static exportlist_client_entry_t *client_match_any(sockaddr_t *hostaddr,
+				  struct exportlist *exp)
 {
 	if (hostaddr->ss_family == AF_INET6) {
 		struct sockaddr_in6 *psockaddr_in6 =
@@ -2069,7 +2067,8 @@ void nfs_export_check_access(sockaddr_t *hostaddr, exportlist_t *export,
 		ipstring[0] = '\0';
 		(void) sprint_sockip(puse_hostaddr,
 				     ipstring, sizeof(ipstring));
-		LogMidDebug(COMPONENT_EXPORT, "Check for address %s for export id %u fullpath %s",
+		LogMidDebug(COMPONENT_EXPORT,
+			    "Check for address %s for export id %u fullpath %s",
 			    ipstring, export->id, export->fullpath);
 	}
 
@@ -2100,7 +2099,7 @@ void nfs_export_check_access(sockaddr_t *hostaddr, exportlist_t *export,
 	    (export->export_perms.set & EXPORT_OPTION_ANON_UID_SET) != 0)
 		export_perms->anonymous_uid =
 					export->export_perms.anonymous_uid;
-	
+
 	if ((export_perms->set & EXPORT_OPTION_ANON_GID_SET) == 0 &&
 	    (export->export_perms.set & EXPORT_OPTION_ANON_GID_SET) != 0)
 		export_perms->anonymous_gid =
@@ -2118,7 +2117,7 @@ void nfs_export_check_access(sockaddr_t *hostaddr, exportlist_t *export,
 	if ((export_perms->set & EXPORT_OPTION_ANON_UID_SET) == 0 &&
 	    (export_opt.conf.set & EXPORT_OPTION_ANON_UID_SET) != 0)
 		export_perms->anonymous_uid = export_opt.conf.anonymous_uid;
-	
+
 	if ((export_perms->set & EXPORT_OPTION_ANON_GID_SET) == 0 &&
 	    (export_opt.conf.set & EXPORT_OPTION_ANON_GID_SET) != 0)
 		export_perms->anonymous_gid = export_opt.conf.anonymous_gid;
@@ -2131,12 +2130,12 @@ void nfs_export_check_access(sockaddr_t *hostaddr, exportlist_t *export,
 
 	if ((export_perms->set & EXPORT_OPTION_ANON_UID_SET) == 0)
 		export_perms->anonymous_uid = export_opt.def.anonymous_uid;
-	
+
 	if ((export_perms->set & EXPORT_OPTION_ANON_GID_SET) == 0)
 		export_perms->anonymous_gid = export_opt.def.anonymous_gid;
 
 	export_perms->set |= export_opt.def.set;
-	
+
 	if (isMidDebug(COMPONENT_EXPORT)) {
 		char perms[1024];
 		if (client != NULL) {
