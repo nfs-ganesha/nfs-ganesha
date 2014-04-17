@@ -372,6 +372,7 @@ void *_9p_rdma_dispatcher_thread(void *Arg)
 	snprintf(port, PORT_MAX_LEN, "%d", nfs_param._9p_param._9p_rdma_port);
 	trans_attr.port = port;
 	trans_attr.node = "::";
+	trans_attr.use_srq = 1;
 	trans_attr.disconnect_callback = _9p_rdma_callback_disconnect;
 	trans_attr.worker_count = -1;
 	/* if worker_count isn't -1: trans_attr.worker_queue_size = 256; */
