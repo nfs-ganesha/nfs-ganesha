@@ -20,10 +20,27 @@ class ShowExports(QtCore.QObject):
                                    sysbus, self.show_status)
         self.show_status.connect(self.status_message)
         self.exportmgr.show_exports.connect(self.proc_exports)
+        self.exportmgr.display_export.connect(self.proc_export)
 
     def showexports(self):
         self.exportmgr.ShowExports()
         print "Show exports"
+
+    def addexport(self, conf_path):
+        self.exportmgr.AddExport(conf_path)
+        print "Add Export in %s" % conf_path
+
+    def removeexport(self, exp_id):
+        self.exportmgr.RemoveExport(exp_id)
+        print "Remove Export with id %d" % int(exp_id)
+
+    def displayexport(self, exp_id):
+        self.exportmgr.DisplayExport(exp_id)
+        print "Display export with id %d" % int(exp_id)
+
+    def proc_export(self, id, path, pseudo, tag):
+        print "export %d: path = %s, pseudo = %s, tag = %s" % (id, path, pseudo, tag)
+        sys.exit()
 
     def proc_exports(self, ts, exports):
         print "Timestamp: ", time.ctime(ts[0]), ts[1], " nsecs"
@@ -56,5 +73,15 @@ if __name__ == '__main__':
     loop = DBusQtMainLoop(set_as_default=True)
     sysbus = QtDBus.QDBusConnection.systemBus()
     exportmgr = ShowExports(sysbus)
-    exportmgr.showexports()
+    if sys.argv[1] == "add":
+        exportmgr.addexport(sys.argv[2])
+    elif sys.argv[1] == "remove":
+        exportmgr.removeexport(sys.argv[2])
+    elif sys.argv[1] == "display":
+        exportmgr.displayexport(sys.argv[2])
+    elif sys.argv[1] == "show":
+        exportmgr.showexports()
+    else:
+        print "Unknown/missing command"
+        sys.exit()
     app.exec_()

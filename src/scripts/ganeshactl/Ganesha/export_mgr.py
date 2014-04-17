@@ -20,8 +20,10 @@ class ExportMgr(QtDBus.QDBusAbstractInterface):
     org.ganesha.nfsd.exportmgr
     '''
     show_exports = pyqtSignal(tuple, list)
+    display_export = pyqtSignal(int, str, str, str)
     
-    def __init__(self, service, path, connection, show_status, parent=None):
+    def __init__(self, service, path, connection,
+                 show_status, parent=None):
         super(ExportMgr, self).__init__(service,
                                         path,
                                         'org.ganesha.nfsd.exportmgr',
@@ -29,11 +31,46 @@ class ExportMgr(QtDBus.QDBusAbstractInterface):
                                         parent)
         self.show_status = show_status
 
+    def AddExport(self, conf_path):
+        async = self.asyncCall("AddExport", conf_path)
+        status = QtDBus.QDBusPendingCallWatcher(async, self)
+        status.finished.connect(self.exportmgr_done)
+
+    def RemoveExport(self, exp_id):
+        async = self.asyncCall("RemoveExport", int(exp_id))
+        status = QtDBus.QDBusPendingCallWatcher(async, self)
+        status.finished.connect(self.exportmgr_done)
+
+    def DisplayExport(self, exp_id):
+        async = self.asyncCall("DisplayExport", int(exp_id))
+        status = QtDBus.QDBusPendingCallWatcher(async, self)
+        status.finished.connect(self.exportdisplay_done)
+        
     def ShowExports(self):
         async = self.asyncCall("ShowExports")
         status = QtDBus.QDBusPendingCallWatcher(async, self)
         status.finished.connect(self.exportshow_done)
 
+    def exportmgr_done(self, call):
+        reply = QtDBus.QDBusPendingReply(call)
+        if reply.isError():
+            self.show_status.emit(False,
+                                  "Error:" + str(reply.error().message()))
+        else:
+            self.show_status.emit(True, "Done")
+
+    def exportdisplay_done(self, call):
+        reply = QtDBus.QDBusPendingReply(call)
+        if reply.isError():
+            self.show_status.emit(False,
+                                  "Error:" + str(reply.error().message()))
+        else:
+            id = reply.argumentAt(0).toPyObject()
+            fullpath = reply.argumentAt(1).toPyObject()
+            pseudopath = reply.argumentAt(2).toPyObject()
+            tag = reply.argumentAt(3).toPyObject()
+            self.display_export.emit(id, fullpath, pseudopath, tag)
+            
     def exportshow_done(self, call):
         reply = QtDBus.QDBusPendingReply(call)
         if reply.isError():
