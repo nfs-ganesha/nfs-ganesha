@@ -280,11 +280,8 @@ int nfs3_write(nfs_arg_t *arg, exportlist_t *export,
 	if (entry)
 		cache_inode_put(entry);
 
-#ifdef USE_DBUS_STATS
 	server_stats_io_done(req_ctx, size, written_size,
 			     (rc == NFS_REQ_OK) ? true : false, true);
-#endif
-
 	return rc;
 
 }				/* nfs3_write */

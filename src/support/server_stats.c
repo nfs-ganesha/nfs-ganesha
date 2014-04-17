@@ -52,7 +52,7 @@
 #include "log.h"
 #include "avltree.h"
 #include "ganesha_types.h"
-#ifdef USE_DBUS_STATS
+#ifdef USE_DBUS
 #include "ganesha_dbus.h"
 #endif
 #include "client_mgr.h"
@@ -868,7 +868,7 @@ void server_stats_io_done(struct req_op_context *req_ctx, size_t requested,
 	return;
 }
 
-#ifdef USE_DBUS_STATS
+#ifdef USE_DBUS
 
 /* Functions for marshalling statistics to DBUS
  */
@@ -1202,7 +1202,7 @@ void server_dbus_v41_layouts(struct nfsv41_stats *v41p, DBusMessageIter *iter)
 	server_dbus_layouts(&v41p->recall, iter);
 }
 
-#endif				/* USE_DBUS_STATS */
+#endif				/* USE_DBUS */
 
 /**
  * @brief Free statistics storage

@@ -867,9 +867,7 @@ static void nfs_rpc_execute(request_data_t *req,
 			svcerr_systemerr(xprt, svcreq);
 			break;
 		}
-#ifdef USE_DBUS_STATS
 		server_stats_nfs_done(&req_ctx, req, rc, true);
-#endif
 		goto freeargs;
 	}
 
@@ -1259,12 +1257,10 @@ static void nfs_rpc_execute(request_data_t *req,
 
  req_error:
 
-#ifdef USE_DBUS_STATS
 /* NFSv4 stats are handled in nfs4_compound()
  */
 	if (svcreq->rq_vers != NFS_V4)
 		server_stats_nfs_done(&req_ctx, req, rc, false);
-#endif
 
 	/* If request is dropped, no return to the client */
 	if (rc == NFS_REQ_DROP) {

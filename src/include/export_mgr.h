@@ -71,7 +71,7 @@ struct gsh_export {
 };
 
 void export_pkginit(void);
-#ifdef USE_DBUS_STATS
+#ifdef USE_DBUS
 void dbus_export_init(void);
 #endif
 struct exportlist *alloc_exportlist(void);

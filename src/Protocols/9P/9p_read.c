@@ -113,7 +113,6 @@ int _9p_read(struct _9p_request_data *req9p, void *worker_data,
 				     *count, &read_size, databuffer, &eof_met,
 				     &pfid->op_context, &sync);
 
-#ifdef USE_DBUS_STATS
 		/* Get the handle, for stats */
 		struct gsh_client *client = req9p->pconn->client;
 
@@ -126,7 +125,6 @@ int _9p_read(struct _9p_request_data *req9p, void *worker_data,
 				     (cache_status ==
 				      CACHE_INODE_SUCCESS) ? true : false,
 				     false);
-#endif
 
 		if (cache_status != CACHE_INODE_SUCCESS)
 			return _9p_rerror(req9p, worker_data, msgtag,

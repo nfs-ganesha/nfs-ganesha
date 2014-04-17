@@ -98,7 +98,7 @@ struct export_stats {
 	struct gsh_export export;
 };
 
-#ifdef USE_DBUS_STATS
+#ifdef USE_DBUS
 
 /* Bits for introspect arg structures
  */
@@ -208,7 +208,7 @@ void server_dbus_9p_iostats(struct _9p_stats *_9pp, DBusMessageIter *iter);
 void server_dbus_9p_transstats(struct _9p_stats *_9pp, DBusMessageIter *iter);
 void server_dbus_9p_tcpstats(struct _9p_stats *_9pp, DBusMessageIter *iter);
 void server_dbus_9p_rdmastats(struct _9p_stats *_9pp, DBusMessageIter *iter);
-#endif				/* USE_DBUS_STATS */
+#endif				/* USE_DBUS */
 
 void server_stats_free(struct gsh_stats *statsp);
 

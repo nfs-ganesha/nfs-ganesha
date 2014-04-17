@@ -500,12 +500,9 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
  done:
 	if (anonymous)
 		PTHREAD_RWLOCK_unlock(&entry->state_lock);
-#ifdef USE_DBUS_STATS
 	server_stats_io_done(data->req_ctx, size, read_size,
 			     (res_READ4->status == NFS4_OK) ? true : false,
 			     false);
-#endif
-
 	return res_READ4->status;
 }				/* nfs4_op_read */
 

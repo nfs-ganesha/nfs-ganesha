@@ -432,9 +432,7 @@ int nfs4_Compound(nfs_arg_t *arg, exportlist_t *export,
 	const uint32_t argarray_len = arg->arg_compound4.argarray.argarray_len;
 	nfs_argop4 * const argarray = arg->arg_compound4.argarray.argarray_val;
 	nfs_resop4 *resarray;
-#ifdef USE_DBUS_STATS
 	nsecs_elapsed_t op_start_time;
-#endif
 	struct timespec ts;
 	int perm_flags;
 	char *tagname = NULL;
@@ -604,9 +602,7 @@ int nfs4_Compound(nfs_arg_t *arg, exportlist_t *export,
 
 		/* time each op */
 		now(&ts);
-#ifdef USE_DBUS_STATS
 		op_start_time = timespec_diff(&ServerBootTime, &ts);
-#endif
 		opcode = argarray[i].argop;
 		if (compound4_minor == 0) {
 			if (opcode > NFS4_OP_RELEASE_LOCKOWNER)
@@ -694,10 +690,8 @@ int nfs4_Compound(nfs_arg_t *arg, exportlist_t *export,
 		 */
 		resarray[i].nfs_resop4_u.opaccess.status = status;
 
-#ifdef USE_DBUS_STATS
 		server_stats_nfsv4_op_done(data.req_ctx, opcode,
 					   op_start_time, status == NFS4_OK);
-#endif				/* USE_DBUS_STATS */
 
 		if (status != NFS4_OK) {
 			/* An error occured, we do not manage the other requests
@@ -736,9 +730,7 @@ int nfs4_Compound(nfs_arg_t *arg, exportlist_t *export,
 		}
 	}			/* for */
 
-#ifdef USE_DBUS_STATS
 	server_stats_compound_done(req_ctx, argarray_len, status);
-#endif
 
 	/* Complete the reply, in particular, tell where you stopped if
 	 * unsuccessfull COMPOUD

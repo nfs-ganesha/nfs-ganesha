@@ -50,7 +50,7 @@ struct gsh_client {
 };
 
 void client_pkginit(void);
-#ifdef USE_DBUS_STATS
+#ifdef USE_DBUS
 void dbus_client_init(void);
 #endif
 struct gsh_client *get_gsh_client(sockaddr_t *client_ipaddr, bool lookup_only);

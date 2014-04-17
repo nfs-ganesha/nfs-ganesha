@@ -52,7 +52,7 @@
 #include "log.h"
 #include "avltree.h"
 #include "ganesha_types.h"
-#ifdef USE_DBUS_STATS
+#ifdef USE_DBUS
 #include "ganesha_dbus.h"
 #endif
 #include "export_mgr.h"
@@ -722,7 +722,7 @@ bool foreach_gsh_export(bool(*cb) (struct gsh_export *exp, void *state),
 	return rc;
 }
 
-#ifdef USE_DBUS_STATS
+#ifdef USE_DBUS
 
 /* DBUS interfaces
  */
@@ -1196,7 +1196,7 @@ void dbus_export_init(void)
 {
 	gsh_dbus_register_path("ExportMgr", export_interfaces);
 }
-#endif				/* USE_DBUS_STATS */
+#endif				/* USE_DBUS */
 
 /**
  * @brief Initialize export manager

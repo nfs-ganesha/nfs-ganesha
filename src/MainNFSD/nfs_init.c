@@ -685,10 +685,8 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 #ifdef USE_DBUS
 	/* DBUS init */
 	gsh_dbus_pkginit();
-#ifdef USE_DBUS_STATS
 	dbus_export_init();
 	dbus_client_init();
-#endif
 #endif
 	/* init uid2grp cache */
 	uid2grp_cache_init();

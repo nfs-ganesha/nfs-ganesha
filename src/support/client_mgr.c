@@ -52,7 +52,7 @@
 #include "log.h"
 #include "avltree.h"
 #include "ganesha_types.h"
-#ifdef USE_DBUS_STATS
+#ifdef USE_DBUS
 #include "ganesha_dbus.h"
 #endif
 #include "client_mgr.h"
@@ -375,7 +375,7 @@ int foreach_gsh_client(bool(*cb) (struct gsh_client *cl, void *state),
 	return cnt;
 }
 
-#ifdef USE_DBUS_STATS
+#ifdef USE_DBUS
 
 /* DBUS helpers
  */
@@ -898,7 +898,7 @@ void dbus_client_init(void)
 	gsh_dbus_register_path("ClientMgr", cltmgr_interfaces);
 }
 
-#endif				/* USE_DBUS_STATS */
+#endif				/* USE_DBUS */
 
 /**
  * @brief Initialize client manager
