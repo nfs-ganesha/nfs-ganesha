@@ -7,6 +7,13 @@
 #include "config.h"
 
 #include <stdbool.h>
+
+/* Ganesha project has abstract_atomic.h file and tirpc also has a
+ * similar header with the same name.  We want to include ganesha
+ * project's header here, so include it here before including any
+ * RPC headers.
+ */
+#include "abstract_atomic.h"
 #include <rpc/xdr_inline.h>
 #include <rpc/rpc.h>
 #include <rpc/svc.h>

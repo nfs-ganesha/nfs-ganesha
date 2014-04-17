@@ -864,6 +864,8 @@ static void get_delegation(compound_data_t *data, struct nfs_argop4 *op,
 	struct state_refer refer;
 	state_t *new_state;
 
+	resok->delegation.delegation_type = OPEN_DELEGATE_NONE;
+
 	/* Record the sequence info */
 	if (data->minorversion > 0) {
 		memcpy(refer.session,
@@ -944,27 +946,6 @@ static void get_delegation(compound_data_t *data, struct nfs_argop4 *op,
 			       &new_state->state_export_list);
 		pthread_mutex_unlock(&data->export->exp_state_mutex);
 
-		resok->delegation.delegation_type = deleg_type;
-		if (deleg_type == OPEN_DELEGATE_WRITE) {
-			open_write_delegation4 *writeres =
-				&resok->delegation.open_delegation4_u.write;
-			writeres->space_limit.limitby = NFS_LIMIT_SIZE;
-			writeres->space_limit.nfs_space_limit4_u.filesize =
-				100000;
-			writeres->stateid = saved_data->deleg.sd_stateid;
-			writeres->recall = FALSE;
-			get_deleg_perm(data->current_entry,
-				       &writeres->permissions, deleg_type);
-		} else if (deleg_type == OPEN_DELEGATE_READ) {
-			open_read_delegation4 *readres =
-				&resok->delegation.open_delegation4_u.read;
-			readres->stateid = saved_data->deleg.sd_stateid;
-			readres->recall = FALSE;
-			get_deleg_perm(data->current_entry,
-				       &readres->permissions, deleg_type);
-		} else { /* NONE */
-			return;
-		}
 
 		/* PTHREAD_RWLOCK_unlock(&data->current_entry->state_lock); */
 		state_status = state_lock(data->current_entry,
@@ -985,6 +966,33 @@ static void get_delegation(compound_data_t *data, struct nfs_argop4 *op,
 				 state_err_str(state_status));
 			state_del(new_state, false);
 			return;
+		} else {
+			resok->delegation.delegation_type = deleg_type;
+			if (deleg_type == OPEN_DELEGATE_WRITE) {
+				open_write_delegation4 *writeres =
+				&resok->delegation.open_delegation4_u.write;
+				writeres->
+					space_limit.limitby = NFS_LIMIT_SIZE;
+				writeres->
+				space_limit.nfs_space_limit4_u.filesize =
+									100000;
+				writeres->stateid =
+						saved_data->deleg.sd_stateid;
+				writeres->recall = FALSE;
+				get_deleg_perm(data->current_entry,
+					       &writeres->permissions,
+					       deleg_type);
+			} else if (deleg_type == OPEN_DELEGATE_READ) {
+				open_read_delegation4 *readres =
+				&resok->delegation.open_delegation4_u.read;
+				readres->stateid = saved_data->deleg.sd_stateid;
+				readres->recall = FALSE;
+				get_deleg_perm(data->current_entry,
+					       &readres->permissions,
+					       deleg_type);
+			} else { /* NONE */
+				return;
+			}
 		}
 	}
 
