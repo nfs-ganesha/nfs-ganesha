@@ -2,11 +2,11 @@ include_directories(
   ${LIBTIRPC_INCLUDE_DIR}
 )
 
-if(USE_DBUS_STATS)
+if(USE_DBUS)
   include_directories(
     ${DBUS_INCLUDE_DIRS}
     )
-endif(USE_DBUS_STATS)
+endif(USE_DBUS)
 
 # string utilities.  This should eventually go into src/os
 # because BSD has them and Linux doesn't

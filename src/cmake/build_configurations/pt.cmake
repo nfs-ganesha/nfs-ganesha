@@ -10,7 +10,6 @@ set(USE_FSAL_GPFS ON)
 
 
 set(USE_DBUS ON)
-set(USE_DBUS_STATS ON)
 
 # Disable FSAL's we don't use
 set(USE_FSAL_POSIX  OFF)

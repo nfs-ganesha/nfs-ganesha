@@ -8,7 +8,6 @@ set(USE_FSAL_VFS ON)
 set(USE_FSAL_PROXY  ON)
 
 set(USE_DBUS ON)
-set(USE_DBUS_STATS ON)
 
 # Disable FSAL's we don't use
 set(USE_FSAL_CEPH OFF)

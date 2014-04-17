@@ -21,7 +21,6 @@
 #cmakedefine USE_NFSIDMAP 1
 #cmakedefine USE_DBUS 1
 #cmakedefine _USE_CB_SIMULATOR 1
-#cmakedefine USE_DBUS_STATS 1
 #cmakedefine USE_CAPS 1
 #cmakedefine USE_BLKID 1
 #cmakedefine PROXY_HANDLE_MAPPING 1

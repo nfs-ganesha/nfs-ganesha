@@ -178,7 +178,6 @@ option(USE_DBUS "enable DBUS protocol support" OFF)
 
 # Various DBUS enabled features
 option(USE_CB_SIMULATOR "enable callback simulator thread" OFF)
-option(USE_DBUS_STATS "enable DBUS interface for server statistics" OFF)
 
 option(USE_TIRPC_IPV6 "enable IPv6 support (via IPv6)" OFF)
 option(USE_NFSIDMAP "Use of libnfsidmap for name resolution" ON)
@@ -326,11 +325,6 @@ endif(USE_CB_SIMULATOR AND NOT USE_DBUS)
 if(USE_TIRPC_IPV6)
   set(_USE_TIRPC_IPV6 ON)
 endif(USE_TIRPC_IPV6)
-
-if(USE_DBUS_STATS AND NOT USE_DBUS)
-  message(WARNING "The DBUS server statistics needs DBUS.  Enabling DBUS")
-  set(USE_DBUS ON)
-endif(USE_DBUS_STATS AND NOT USE_DBUS)
 
 if(USE_9P_RDMA AND NOT USE_9P)
   message(WARNING "The support of 9P/RDMA needs 9P protocol support. Enabling 9P")
@@ -823,7 +817,6 @@ message(STATUS "USE_FSAL_SHOOK = ${USE_FSAL_SHOOK}")
 message(STATUS "USE_FSAL_GLUSTER = ${USE_FSAL_GLUSTER}")
 message(STATUS "USE_DBUS = ${USE_DBUS}")
 message(STATUS "USE_CB_SIMULATOR = ${USE_CB_SIMULATOR}")
-message(STATUS "USE_DBUS_STATS = ${USE_DBUS_STATS}")
 message(STATUS "USE_NFSIDMAP = ${USE_NFSIDMAP}")
 message(STATUS "ENABLE_ERROR_INJECTION = ${ENABLE_ERROR_INJECTION}")
 message(STATUS "USE_CAPS = ${USE_CAPS}")
@@ -932,11 +925,6 @@ set(USE_DBUS ${USE_DBUS}
 set(USE_CB_SIMULATOR ${USE_CB_SIMULATOR}
   CACHE BOOL
    "enable callback simulator thread"
-   FORCE)
-
-set(USE_DBUS_STATS ${USE_DBUS_STATS}
-  CACHE BOOL
-   "enable DBUS interface for server statistics"
    FORCE)
 
 set(USE_NFSIDMAP ${USE_NFSIDMAP}

@@ -323,7 +323,6 @@ cmake .	-DCMAKE_BUILD_TYPE=Debug			\
 %endif
 	-DUSE_FSAL_VFS=ON				\
 	-DUSE_FSAL_PROXY=ON				\
-	-DUSE_DBUS_STATS=ON				\
 	-DUSE_DBUS=ON					\
 	-DUSE_9P=ON					\
 	-DDISTNAME_HAS_GIT_DATA=OFF
