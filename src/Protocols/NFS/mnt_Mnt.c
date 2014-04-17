@@ -114,6 +114,10 @@ int mnt_Mnt(nfs_arg_t *arg, exportlist_t *export,
 
 	p_current_item = &exp->export;
 
+	/* set the export in the context */
+	req_ctx->export = exp;
+	req_ctx->fsal_export = req_ctx->export->export.export_hdl;
+
 	/* Check access based on client. Don't bother checking TCP/UDP as some
 	 * clients use UDP for MOUNT even when they will use TCP for NFS.
 	 */
@@ -216,8 +220,11 @@ int mnt_Mnt(nfs_arg_t *arg, exportlist_t *export,
 		    auth_flavor[i];
 
  out:
-	if (exp != NULL)
+	if (exp != NULL) {
+		req_ctx->export = NULL;
+		req_ctx->fsal_export = NULL;
 		put_gsh_export(exp);
+	}
 	return retval;
 
 }				/* mnt_Mnt */
