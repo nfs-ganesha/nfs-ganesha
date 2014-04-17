@@ -219,6 +219,9 @@ option(STRICT_PACKAGE "Enable strict packaging behavior" OFF )
 # This option will trigger "long distro name" aka name that contains git information
 option(DISTNAME_HAS_GIT_DATA "Distribution package's name carries git data" OFF )
 
+# Enable GCC Thread-sanitizer
+option(USE_TSAN "Enable GCC Thread-Sanitizer" OFF)
+
 # Choose a shortcut build config
 
 IF(BUILD_CONFIG)
@@ -850,6 +853,7 @@ message(STATUS "ALLOCATOR = ${ALLOCATOR}")
 message(STATUS "GOLD_LINKER = ${GOLD_LINKER}")
 message(STATUS "CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX}")
 message(STATUS "FSAL_DESTINATION = ${FSAL_DESTINATION}")
+message(STATUS "USE_TSAN = ${USE_TSAN}")
 
 #force command line options to be stored in cache
 set(USE_FSAL_VFS ${USE_FSAL_VFS}
@@ -1050,3 +1054,5 @@ if(DOXYGEN_FOUND)
     )
 endif(DOXYGEN_FOUND)
 
+# Include thread-sanitizer module
+include(${CMAKE_SOURCE_DIR}/cmake/tsan.cmake)
