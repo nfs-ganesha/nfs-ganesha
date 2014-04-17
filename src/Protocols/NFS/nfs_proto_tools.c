@@ -3078,6 +3078,7 @@ struct Fattr_filler_opaque {
  */
 
 static cache_inode_status_t Fattr_filler(void *opaque,
+					 cache_entry_t *entry,
 					 const struct attrlist *attr,
 					 uint64_t mounted_on_fileid)
 {

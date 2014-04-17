@@ -96,7 +96,10 @@ cache_inode_getattr(cache_entry_t *entry,
 
 	PTHREAD_RWLOCK_unlock(&req_ctx->export->lock);
 
-	status = cb(opaque, &entry->obj_handle->attributes, mounted_on_fileid);
+	status = cb(opaque,
+		    entry,
+		    &entry->obj_handle->attributes,
+		    mounted_on_fileid);
 
 	if (status == CACHE_INODE_CROSS_JUNCTION) {
 		PTHREAD_RWLOCK_rdlock(&req_ctx->export->lock);
@@ -126,7 +129,7 @@ cache_inode_getattr(cache_entry_t *entry,
 				 junction_export->export.id,
 				 cache_inode_err_str(status));
 			/* Need to signal problem to callback */
-			(void) cb(opaque, NULL, 0);
+			(void) cb(opaque, junction_entry, NULL, 0);
 			return status;
 		}
 

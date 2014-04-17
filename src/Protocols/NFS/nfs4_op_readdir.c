@@ -100,6 +100,7 @@ static void restore_data(struct nfs4_readdir_cb_data *tracker)
  */
 
 cache_inode_status_t nfs4_readdir_callback(void *opaque,
+					   cache_entry_t *entry,
 					   const struct attrlist *attr,
 					   uint64_t mounted_on_fileid)
 {
@@ -117,7 +118,6 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 	entry4 *tracker_entry = tracker->entries + tracker->count;
 	cache_inode_status_t attr_status;
 	fsal_accessflags_t access_mask_attr = 0;
-	cache_entry_t *entry = cb_parms->entry;
 
 	/* If being called on error regarding junction, go cleanup. */
 	if (attr == NULL)

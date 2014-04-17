@@ -572,7 +572,6 @@ typedef enum cache_inode_status_t {
 struct cache_inode_readdir_cb_parms {
 	void *opaque;		/*< Protocol specific parms */
 	const char *name;	/*< Dir entry name */
-	cache_entry_t *entry;	/*< Cache entry */
 	bool attr_allowed;	/*< True if caller has perm to getattr */
 	uint64_t cookie;	/*< Directory cookie for this entry */
 	bool in_result;		/*< true if the entry has been added to the
@@ -592,7 +591,10 @@ struct cache_inode_readdir_cb_parms {
  */
 
 typedef cache_inode_status_t (*cache_inode_getattr_cb_t)
-(void *opaque, const struct attrlist *attr, uint64_t mounted_on_fileid);
+	(void *opaque,
+	 cache_entry_t *entry,
+	 const struct attrlist *attr,
+	 uint64_t mounted_on_fileid);
 
 const char *cache_inode_err_str(cache_inode_status_t err);
 
