@@ -348,6 +348,8 @@ typedef struct nfs_core_param {
 	/** Whether to support the Remote Quota protocol.  Defaults
 	    to true and is settable with Enable_RQUOTA. */
 	bool enable_RQUOTA;
+	/** Whether to use fast stats.  Defaults to false. */
+	bool enable_FASTSTATS;
 	/** How long the server will trust information it got by
 	    calling getgroups() when "Manage_Gids = TRUE" is
 	    used in a export entry. */

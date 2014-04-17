@@ -402,7 +402,6 @@ const char *object_file_type_to_str(object_file_type_t type)
 fsal_status_t posix2fsal_attributes(const struct stat *buffstat,
 				    struct attrlist *fsalattr)
 {
-	FSAL_CLEAR_MASK(fsalattr->mask);
 	/* sanity checks */
 	if (!buffstat || !fsalattr)
 		return fsalstat(ERR_FSAL_FAULT, 0);

@@ -604,6 +604,10 @@ state_status_t layoutrecall(struct fsal_module *fsal,
 		exp = container_of(s->state_export, struct gsh_export, export);
 
 		cb_data = gsh_malloc(sizeof(struct layoutrecall_cb_data));
+		if (cb_data == NULL) {
+			rc = STATE_MALLOC_ERROR;
+			goto out;
+		}
 		arg = &cb_data->arg;
 		arg->argop = NFS4_OP_CB_LAYOUTRECALL;
 		cb_layoutrec = &arg->nfs_cb_argop4_u.opcblayoutrecall;
