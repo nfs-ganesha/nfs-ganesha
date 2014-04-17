@@ -484,6 +484,15 @@ int nfs4_MakeCred(compound_data_t *data)
 	nfs_export_check_access(data->req_ctx->caller_addr, data->export,
 				&data->export_perms);
 
+	/* Check if any access at all */
+	if ((data->export_perms.options & EXPORT_OPTION_ACCESS_TYPE) == 0) {
+		LogInfoAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
+			"Access not allowed on Export_Id %d %s for client %s",
+			data->export->id, data->export->fullpath,
+			data->req_ctx->client->hostaddr_str);
+		return NFS4ERR_ACCESS;
+	}
+
 	/* Check protocol version */
 	if ((data->export_perms.options & EXPORT_OPTION_NFSV4) == 0) {
 		LogInfoAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,

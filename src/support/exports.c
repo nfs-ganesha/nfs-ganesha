@@ -78,9 +78,13 @@ static void StrExportOptions(export_perms_t *p_perms, char *buffer)
 
 	if ((p_perms->set & EXPORT_OPTION_FSID_SET) != 0)
 		buf += sprintf(buf, "FSID_SET ");
+	else
+		buf += sprintf(buf, "         ");
 
 	if ((p_perms->set & EXPORT_OPTION_EXPIRE_SET) != 0)
 		buf += sprintf(buf, "EXPIRE_SET ");
+	else
+		buf += sprintf(buf, "           ");
 
 	if ((p_perms->set & EXPORT_OPTION_SQUASH_TYPES) != 0) {
 		if ((p_perms->options & EXPORT_OPTION_ROOT) != 0)
