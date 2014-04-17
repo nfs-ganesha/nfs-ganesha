@@ -996,6 +996,9 @@ static struct config_item_list expire_types[] = {
 	CONF_ITEM_LIST_BITS_SET("Squash",				\
 		EXPORT_OPTION_ROOT_SQUASH, EXPORT_OPTION_SQUASH_TYPES,	\
 		squash_types, _struct_, _perms_.options, _perms_.set),	\
+	CONF_ITEM_BOOLBIT_SET("NFS_Commit",				\
+		false, EXPORT_OPTION_COMMIT,				\
+		_struct_, _perms_.options, _perms_.set),		\
 	CONF_ITEM_ENUM_BITS_SET("Delegations",				\
 		EXPORT_OPTION_NO_DELEGATIONS, EXPORT_OPTION_DELEGATIONS,\
 		delegations, _struct_, _perms_.options, _perms_.set)

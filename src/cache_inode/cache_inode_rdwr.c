@@ -42,6 +42,8 @@
 #include "cache_inode.h"
 #include "cache_inode_lru.h"
 #include "nfs_core.h"
+#include "nfs_exports.h"
+#include "export_mgr.h"
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -102,7 +104,8 @@ cache_inode_rdwr_plus(cache_entry_t *entry,
 		openflags = FSAL_O_READ;
 	} else {
 		openflags = FSAL_O_WRITE;
-		if (*sync)
+		if (*sync || (req_ctx->export->export.export_perms.options &
+			      EXPORT_OPTION_COMMIT))
 			openflags |= FSAL_O_SYNC;
 	}
 
