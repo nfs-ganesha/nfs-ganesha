@@ -213,6 +213,7 @@ fsal_status_t GPFSFSAL_write(int fd,	/* IN */
 	struct write_arg warg;
 	ssize_t nb_write;
 	int errsv = 0;
+	uint32_t stability_got;
 
 	/* sanity checks. */
 
@@ -225,7 +226,7 @@ fsal_status_t GPFSFSAL_write(int fd,	/* IN */
 	warg.offset = offset;
 	warg.length = buffer_size;
 	warg.stability_wanted = *fsal_stable;
-	warg.stability_got = (uint32_t *) fsal_stable;
+	warg.stability_got = &stability_got;
 	warg.options = 0;
 	/* read operation */
 
@@ -240,7 +241,7 @@ fsal_status_t GPFSFSAL_write(int fd,	/* IN */
 		return fsalstat(posix2fsal_error(errsv), errsv);
 
 	*p_write_amount = nb_write;
-	*fsal_stable = warg.stability_wanted;
+	*fsal_stable = (stability_got) ? true : false;
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 

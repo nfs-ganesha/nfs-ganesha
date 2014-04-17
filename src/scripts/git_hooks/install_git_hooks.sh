@@ -1,11 +1,16 @@
 #!/bin/sh
 
-CURDIR=$(dirname $(readlink -m $0))
-HOOKDIR=$(git rev-parse --show-toplevel)/.git/hooks
+CURDIR=$(dirname "$(readlink -m "$0")")
+TOPDIR=$(git rev-parse --show-toplevel)
+HOOKDIR=$TOPDIR/.git/hooks
 
-cp $CURDIR/pre-commit $HOOKDIR/
-chmod +x  $HOOKDIR/pre-commit
+# Link checkpatch script configuration file to top level working
+# directory.
+ln -sf ./src/scripts/checkpatch.conf "$TOPDIR/.checkpatch.conf"
 
-cp $CURDIR/commit-msg $HOOKDIR
-chmod +x  $HOOKDIR/commit-msg
+cp "$CURDIR/pre-commit" "$HOOKDIR"
+chmod +x  "$HOOKDIR/pre-commit"
+
+cp "$CURDIR/commit-msg" "$HOOKDIR"
+chmod +x "$HOOKDIR/commit-msg"
 
