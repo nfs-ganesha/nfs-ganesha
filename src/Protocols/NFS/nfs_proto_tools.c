@@ -232,6 +232,7 @@ bool nfs_RetryableError(cache_inode_status_t cache_status)
 	case CACHE_INODE_BADNAME:
 	case CACHE_INODE_CROSS_JUNCTION:
 	case CACHE_INODE_IN_GRACE:
+	case CACHE_INODE_BADHANDLE:
 		/* Non retryable error, return error to client */
 		return false;
 		break;
@@ -3078,6 +3079,7 @@ struct Fattr_filler_opaque {
  */
 
 static cache_inode_status_t Fattr_filler(void *opaque,
+					 cache_entry_t *entry,
 					 const struct attrlist *attr,
 					 uint64_t mounted_on_fileid)
 {

@@ -261,7 +261,8 @@ bool get_req_creds(struct svc_req *req,
 #else
 			if (!principal2uid(principal,
 					   &req_ctx->original_creds.caller_uid,
-					   &req_ctx->original_creds.caller_gid)) {
+					   &req_ctx->original_creds.caller_gid)
+			   ) {
 #endif
 				LogWarn(COMPONENT_IDMAPPER,
 					"Could not map principal %s to uid",
@@ -411,8 +412,8 @@ out:
 		    req_ctx->creds->caller_uid,
 		    req_ctx->creds->caller_gid,
 		    (req_ctx->cred_flags & GID_SQUASHED) != 0
-		    	? " (squashed)"
-		    	: "",
+			? " (squashed)"
+			: "",
 		    req_ctx->creds->caller_glen,
 		    (req_ctx->cred_flags & MANAGED_GIDS) != 0
 			? ((req_ctx->cred_flags & GARRAY_SQUASHED) != 0
@@ -459,7 +460,7 @@ void clean_credentials(struct req_op_context *req_ctx)
 
 	/* Have we made a local copy of the AUTH_SYS garray? */
 	if (req_ctx->caller_garray_copy != NULL)
-	    	gsh_free(req_ctx->caller_garray_copy);
+		gsh_free(req_ctx->caller_garray_copy);
 
 	/* Prepare the request context and creds for re-use */
 	init_credentials(req_ctx);
@@ -482,6 +483,15 @@ int nfs4_MakeCred(compound_data_t *data)
 		    "nfs4_MakeCred about to call nfs_export_check_access");
 	nfs_export_check_access(data->req_ctx->caller_addr, data->export,
 				&data->export_perms);
+
+	/* Check if any access at all */
+	if ((data->export_perms.options & EXPORT_OPTION_ACCESS_TYPE) == 0) {
+		LogInfoAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
+			"Access not allowed on Export_Id %d %s for client %s",
+			data->export->id, data->export->fullpath,
+			data->req_ctx->client->hostaddr_str);
+		return NFS4ERR_ACCESS;
+	}
 
 	/* Check protocol version */
 	if ((data->export_perms.options & EXPORT_OPTION_NFSV4) == 0) {

@@ -166,6 +166,8 @@ const char *state_err_str(state_status_t err)
 		return "STATE_XDEV";
 	case STATE_IN_GRACE:
 		return "STATE_IN_GRACE";
+	case STATE_BADHANDLE:
+		return "STATE_BADHANDLE";
 	}
 	return "unknown";
 }
@@ -269,6 +271,8 @@ state_status_t cache_inode_status_to_state_status(cache_inode_status_t status)
 		return STATE_XDEV;
 	case CACHE_INODE_IN_GRACE:
 		return STATE_IN_GRACE;
+	case CACHE_INODE_BADHANDLE:
+		return STATE_BADHANDLE;
 	}
 	return STATE_CACHE_INODE_ERR;
 }
@@ -310,7 +314,6 @@ state_status_t state_error_convert(fsal_status_t fsal_status)
 		return STATE_IO_ERROR;
 
 	case ERR_FSAL_STALE:
-	case ERR_FSAL_BADHANDLE:
 	case ERR_FSAL_FHEXPIRED:
 		return STATE_FSAL_ESTALE;
 
@@ -361,6 +364,9 @@ state_status_t state_error_convert(fsal_status_t fsal_status)
 
 	case ERR_FSAL_IN_GRACE:
 		return STATE_IN_GRACE;
+
+	case ERR_FSAL_BADHANDLE:
+		return STATE_BADHANDLE;
 
 	case ERR_FSAL_DQUOT:
 	case ERR_FSAL_NAMETOOLONG:
@@ -551,6 +557,10 @@ nfsstat4 nfs4_Errno_state(state_status_t error)
 		nfserror = NFS4ERR_XDEV;
 		break;
 
+	case STATE_BADHANDLE:
+		nfserror = NFS4ERR_BADHANDLE;
+		break;
+
 	case STATE_INVALID_ARGUMENT:
 	case STATE_CACHE_INODE_ERR:
 	case STATE_INCONSISTENT_ENTRY:
@@ -702,6 +712,10 @@ nfsstat3 nfs3_Errno_state(state_status_t error)
 
 	case STATE_IN_GRACE:
 		nfserror = NFS3ERR_JUKEBOX;
+		break;
+
+	case STATE_BADHANDLE:
+		nfserror = NFS3ERR_BADHANDLE;
 		break;
 
 	case STATE_CACHE_INODE_ERR:

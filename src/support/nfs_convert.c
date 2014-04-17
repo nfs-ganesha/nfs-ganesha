@@ -600,6 +600,10 @@ nfsstat4 nfs4_Errno_verbose(cache_inode_status_t error, const char *where)
 		nfserror = NFS4ERR_BADNAME;
 		break;
 
+	case CACHE_INODE_BADHANDLE:
+		nfserror = NFS4ERR_BADHANDLE;
+		break;
+
 	case CACHE_INODE_FSAL_MLINK:
 		nfserror = NFS4ERR_MLINK;
 		break;
@@ -767,6 +771,10 @@ nfsstat3 nfs3_Errno_verbose(cache_inode_status_t error, const char *where)
 
 	case CACHE_INODE_BADNAME:
 		nfserror = NFS3ERR_INVAL;
+		break;
+
+	case CACHE_INODE_BADHANDLE:
+		nfserror = NFS3ERR_BADHANDLE;
 		break;
 
 	case CACHE_INODE_FSAL_MLINK:

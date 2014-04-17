@@ -84,6 +84,7 @@ static inline u8 *fill_entry(u8 *cursor, u8 qid_type, u64 qid_path, u64 cookie,
 }
 
 static cache_inode_status_t _9p_readdir_callback(void *opaque,
+						 cache_entry_t *entry,
 						 const struct attrlist *attr,
 						 uint64_t mounted_on_fileid)
 {

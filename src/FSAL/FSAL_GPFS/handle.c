@@ -812,54 +812,26 @@ fsal_status_t gpfs_lookup_path(struct fsal_export *exp_hdl,
 	int dir_fd;
 	struct stat stat;
 	struct gpfs_fsal_obj_handle *hdl;
-	char *basepart;
-	char *link_content = NULL;
-	ssize_t retlink;
 	struct attrlist attributes;
 	struct gpfs_file_handle *fh = alloca(sizeof(struct gpfs_file_handle));
 
 	memset(fh, 0, sizeof(struct gpfs_file_handle));
 	fh->handle_size = OPENHANDLE_HANDLE_LEN;
-	if (path == NULL || path[0] != '/' || strlen(path) > PATH_MAX
-	    || strlen(path) < 2) {
-		fsal_error = ERR_FSAL_INVAL;
-		goto errout;
-	}
-	basepart = rindex(path, '/');
-	if (basepart[1] == '\0') {
-		fsal_error = ERR_FSAL_INVAL;
-		goto errout;
-	}
-	fsal_status = fsal_internal_get_handle(path, fh);
-	if (FSAL_IS_ERROR(fsal_status))
-		return fsal_status;
 
-	if (basepart == path) {
-		dir_fd = open("/", O_RDONLY);
-	} else {
-		char *dirpart = alloca(basepart - path + 1);
+	*handle = NULL;	/* poison it */
 
-		memcpy(dirpart, path, basepart - path);
-		dirpart[basepart - path] = '\0';
-		dir_fd = open(dirpart, O_RDONLY, 0600);
-	}
+	dir_fd = open_dir_by_path_walk(-1, path, &stat);
+
 	if (dir_fd < 0) {
-		retval = errno;
-		fsal_error = posix2fsal_error(retval);
+		LogCrit(COMPONENT_FSAL,
+			"Could not open directory for path %s",
+			path);
+		retval = -dir_fd;
 		goto errout;
 	}
-	retval = fstat(dir_fd, &stat);
-	if (!S_ISDIR(stat.st_mode)) {	/* this had better be a DIR! */
-		goto fileerr;
-	}
-	basepart++;
-	fsal_status = fsal_internal_get_handle_at(dir_fd, basepart, fh);
-	if (FSAL_IS_ERROR(fsal_status))
-		goto fileerr;
 
-	/* what about the file? Do no symlink chasing here. */
-	retval = fstatat(dir_fd, basepart, &stat, AT_SYMLINK_NOFOLLOW);
-	if (retval < 0)
+	fsal_status = fsal_internal_fd2handle(dir_fd, fh);
+	if (FSAL_IS_ERROR(fsal_status))
 		goto fileerr;
 
 	attributes.mask = exp_hdl->ops->fs_supported_attrs(exp_hdl);
@@ -867,26 +839,12 @@ fsal_status_t gpfs_lookup_path(struct fsal_export *exp_hdl,
 	if (FSAL_IS_ERROR(fsal_status))
 		goto fileerr;
 
-	if (S_ISLNK(stat.st_mode)) {
-		link_content = gsh_malloc(PATH_MAX + 1);
-		retlink = readlinkat(dir_fd, basepart, link_content, PATH_MAX);
-		if (retlink < 0 || retlink == PATH_MAX) {
-			retval = errno;
-			if (retlink == PATH_MAX)
-				retval = ENAMETOOLONG;
-			goto linkerr;
-		}
-		link_content[retlink] = '\0';
-	}
 	close(dir_fd);
 
 	/* allocate an obj_handle and fill it up */
 	hdl = alloc_handle(fh, &attributes, NULL, NULL, NULL, exp_hdl);
-	if (link_content != NULL)
-		gsh_free(link_content);
 	if (hdl == NULL) {
-		fsal_error = ERR_FSAL_NOMEM;
-		*handle = NULL;	/* poison it */
+		retval = ENOMEM;
 		goto errout;
 	}
 	*handle = &hdl->obj_handle;
@@ -894,13 +852,10 @@ fsal_status_t gpfs_lookup_path(struct fsal_export *exp_hdl,
 
  fileerr:
 	retval = errno;
- linkerr:
-	if (link_content != NULL)
-		gsh_free(link_content);
 	close(dir_fd);
-	fsal_error = posix2fsal_error(retval);
 
  errout:
+	fsal_error = posix2fsal_error(retval);
 	return fsalstat(fsal_error, retval);
 }
 

@@ -29,7 +29,6 @@
 /* PSEUDOFS methods for handles
  */
 
-#include "fsal_handle_syscalls.h"
 #include "avltree.h"
 #include "ganesha_list.h"
 

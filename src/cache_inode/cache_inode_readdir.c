@@ -585,7 +585,7 @@ cache_inode_readdir(cache_entry_t *directory,
 	     FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_EXECUTE));
 	cache_inode_status_t status = CACHE_INODE_SUCCESS;
 	cache_inode_status_t attr_status;
-	struct cache_inode_readdir_cb_parms cb_parms = { opaque, NULL, NULL,
+	struct cache_inode_readdir_cb_parms cb_parms = { opaque, NULL,
 							 true, 0, true };
 	bool retry_stale = true;
 
@@ -785,7 +785,6 @@ cache_inode_readdir(cache_entry_t *directory,
 			     dirent->name, dirent->hk.k, dirent->hk.p);
 
 		cb_parms.name = dirent->name;
-		cb_parms.entry = entry;
 		cb_parms.attr_allowed = attr_status == CACHE_INODE_SUCCESS;
 		cb_parms.cookie = dirent->hk.k;
 

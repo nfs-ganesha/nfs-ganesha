@@ -51,6 +51,7 @@
 #include <assert.h>
 
 cache_inode_status_t nfs3_readdirplus_callback(void *opaque,
+					       cache_entry_t *entry,
 					       const struct attrlist *attr,
 					       uint64_t mounted_on_fileid);
 
@@ -86,11 +87,10 @@ nfsstat3 nfs_readdir_dot_entry(cache_entry_t *entry, const char *name,
 
 	cb_parms.opaque = tracker;
 	cb_parms.name = name;
-	cb_parms.entry = entry;
 	cb_parms.attr_allowed = true;
 	cb_parms.cookie = cookie;
 	cb_parms.in_result = true;
-	cache_status = cb(&cb_parms, &entry->obj_handle->attributes, 0);
+	cache_status = cb(&cb_parms, entry, &entry->obj_handle->attributes, 0);
 
 	if (cache_status != CACHE_INODE_SUCCESS)
 		return nfs3_Errno(cache_status);
@@ -405,6 +405,7 @@ void nfs3_readdirplus_free(nfs_res_t *resp)
  */
 
 cache_inode_status_t nfs3_readdirplus_callback(void *opaque,
+					       cache_entry_t *entry,
 					       const struct attrlist *attr,
 					       uint64_t mounted_on_fileid)
 {
@@ -459,7 +460,7 @@ cache_inode_status_t nfs3_readdirplus_callback(void *opaque,
 		}
 
 		if (!nfs3_FSALToFhandle(&ep3->name_handle.post_op_fh3_u.handle,
-					cb_parms->entry->obj_handle,
+					entry->obj_handle,
 					tracker->req_ctx->export)) {
 			tracker->error = NFS3ERR_SERVERFAULT;
 			gsh_free(ep3->name);

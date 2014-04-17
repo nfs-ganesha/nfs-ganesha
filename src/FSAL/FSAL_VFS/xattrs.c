@@ -33,7 +33,6 @@
 #include "config.h"
 
 #include "fsal.h"
-#include "fsal_handle_syscalls.h"
 #include <libgen.h>		/* used for 'dirname' */
 #include <pthread.h>
 #include <string.h>

@@ -38,7 +38,6 @@
 #include <fcntl.h>
 #include "FSAL/fsal_commonlib.h"
 #include "nullfs_methods.h"
-#include "fsal_handle_syscalls.h"
 
 
 /** nullfs_open

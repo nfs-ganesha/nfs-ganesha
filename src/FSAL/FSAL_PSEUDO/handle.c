@@ -32,7 +32,6 @@
 #include "config.h"
 
 #include "fsal.h"
-#include "fsal_handle_syscalls.h"
 #include "fsal_convert.h"
 #include "FSAL/fsal_commonlib.h"
 #include "pseudofs_methods.h"

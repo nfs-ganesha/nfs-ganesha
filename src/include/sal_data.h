@@ -740,6 +740,7 @@ typedef enum state_status_t {
 	STATE_XDEV,
 	STATE_FSAL_SHARE_DENIED,
 	STATE_IN_GRACE,
+	STATE_BADHANDLE,
 } state_status_t;
 
 /******************************************************************************

@@ -32,7 +32,6 @@
 #include "config.h"
 
 #include "fsal.h"
-#include <fsal_handle_syscalls.h>
 #include <libgen.h>		/* used for 'dirname' */
 #include <pthread.h>
 #include <string.h>
@@ -1367,102 +1366,48 @@ fsal_status_t lustre_lookup_path(struct fsal_export *exp_hdl,
 	int dir_fd;
 	struct stat stat;
 	struct lustre_fsal_obj_handle *hdl;
-	char *basepart;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval = 0;
-	char *link_content = NULL;
-	ssize_t retlink;
-	struct lustre_file_handle *dir_fh = NULL;
-	char *sock_name = NULL;
-	char dirpart[MAXPATHLEN];
-	char dirfullpath[MAXPATHLEN];
 	struct lustre_file_handle *fh =
 	    alloca(sizeof(struct lustre_file_handle));
 
 	memset(fh, 0, sizeof(struct lustre_file_handle));
-	if (path == NULL || path[0] != '/' || strlen(path) > PATH_MAX
-	    || strlen(path) < 2) {
-		fsal_error = ERR_FSAL_INVAL;
-		goto errout;
-	}
-	basepart = rindex(path, '/');
-	if (basepart[1] == '\0') {
-		fsal_error = ERR_FSAL_INVAL;
-		goto errout;
-	}
-	if (basepart == path) {
-		dir_fd = open("/", O_RDONLY);
-	} else {
-		memcpy(dirpart, path, basepart - path);
-		dirpart[basepart - path] = '\0';
-		dir_fd = open(dirpart, O_RDONLY, 0600);
-	}
-	if (dir_fd < 0) {
-		retval = errno;
-		fsal_error = posix2fsal_error(retval);
-		goto errout;
-	}
-	retval = fstat(dir_fd, &stat);
-	if (!S_ISDIR(stat.st_mode)) {	/* this had better be a DIR! */
-		goto fileerr;
-	}
-	basepart++;
-	snprintf(dirfullpath, MAXPATHLEN, "%s/%s", dirpart, basepart);
-	retval = lustre_path_to_handle(path, fh);
-	if (retval < 0)
-		goto fileerr;
 
-	/* what about the file? Do no symlink chasing here. */
-	retval = fstatat(dir_fd, basepart, &stat, AT_SYMLINK_NOFOLLOW);
-	if (retval < 0)
-		goto fileerr;
-	if (S_ISLNK(stat.st_mode)) {
-		link_content = gsh_malloc(PATH_MAX+1);
-		retlink = readlinkat(dir_fd, basepart, link_content,
-				     PATH_MAX);
-		if (retlink < 0 || retlink == PATH_MAX) {
-			retval = errno;
-			if (retlink == PATH_MAX)
-				retval = ENAMETOOLONG;
-			goto linkerr;
-		}
-		link_content[retlink] = '\0';
-	} else if (S_ISSOCK(stat.st_mode)) {
-		/* AF_UNIX sockets require craziness */
-		dir_fh = gsh_malloc(sizeof(struct lustre_file_handle));
-		memset(dir_fh, 0, sizeof(struct lustre_file_handle));
-		retval = lustre_path_to_handle(path, dir_fh);
-		if (retval < 0)
-			goto fileerr;
-		sock_name = basepart;
+	*handle = NULL;	/* poison it */
+
+	/* Use open_dir_by_path_walk to validate path and stat the final
+	 * directory.
+	 */
+	dir_fd = open_dir_by_path_walk(-1, path, &stat);
+
+	if (dir_fd < 0) {
+		LogCrit(COMPONENT_FSAL,
+			"Could not open directory for path %s",
+			path);
+		retval = -dir_fd;
+		goto errout;
 	}
+
 	close(dir_fd);
 
+	/* Get a lustre handle for the requested path */
+	retval = lustre_path_to_handle(path, fh);
+	if (retval < 0) {
+		retval = errno;
+		goto errout;
+	}
+
 	/* allocate an obj_handle and fill it up */
-	hdl = alloc_handle(fh, &stat, link_content, dir_fh, sock_name, exp_hdl);
-	if (link_content != NULL)
-		gsh_free(link_content);
-	if (dir_fh != NULL)
-		gsh_free(dir_fh);
+	hdl = alloc_handle(fh, &stat, NULL, NULL, NULL, exp_hdl);
 	if (hdl == NULL) {
-		fsal_error = ERR_FSAL_NOMEM;
-		*handle = NULL;	/* poison it */
+		retval = ENOMEM;
 		goto errout;
 	}
 	*handle = &hdl->obj_handle;
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
- fileerr:
-	retval = errno;
- linkerr:
-	if (link_content != NULL)
-		gsh_free(link_content);
-	if (dir_fh != NULL)
-		gsh_free(dir_fh);
-	close(dir_fd);
-	fsal_error = posix2fsal_error(retval);
-
  errout:
+	fsal_error = posix2fsal_error(retval);
 	return fsalstat(fsal_error, retval);
 }
 
