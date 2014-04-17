@@ -31,7 +31,6 @@
  *          accessed as extern by the fsal modules
  *
  */
-#define FSAL_INTERNAL_C
 #include "config.h"
 
 #include <sys/ioctl.h>
