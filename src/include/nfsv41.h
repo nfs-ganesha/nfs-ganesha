@@ -7750,7 +7750,7 @@ extern "C" {
 
 	static inline bool xdr_nfs_argop4(XDR * xdrs, nfs_argop4 *objp)
 	{
-		static struct nfs_request_lookahead slhd = {
+		struct nfs_request_lookahead slhd = {
 			.flags = 0,
 			.read = 0,
 			.write = 0
