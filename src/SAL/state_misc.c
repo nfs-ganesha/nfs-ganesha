@@ -801,20 +801,14 @@ bool different_owners(state_owner_t *owner1, state_owner_t *owner2)
 
 	switch (owner1->so_type) {
 	case STATE_LOCK_OWNER_NLM:
-		if (owner2->so_type != STATE_LOCK_OWNER_NLM)
-			return true;
 		return compare_nlm_owner(owner1, owner2);
 #ifdef _USE_9P
 	case STATE_LOCK_OWNER_9P:
-		if (owner2->so_type != STATE_LOCK_OWNER_9P)
-			return true;
 		return compare_9p_owner(owner1, owner2);
 #endif
 	case STATE_OPEN_OWNER_NFSV4:
 	case STATE_LOCK_OWNER_NFSV4:
 	case STATE_CLIENTID_OWNER_NFSV4:
-		if (owner1->so_type != owner2->so_type)
-			return true;
 		return compare_nfs4_owner(owner1, owner2);
 
 	case STATE_LOCK_OWNER_UNKNOWN:
