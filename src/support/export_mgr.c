@@ -1259,7 +1259,8 @@ static bool get_nfsv_global_total_ops(DBusMessageIter *args,
 }
 
 static bool get_nfsv_global_fast_ops(DBusMessageIter *args,
-				    DBusMessage *reply)
+				     DBusMessage *reply,
+				     DBusError *error)
 {
 	bool success = true;
 	char *errormsg = "OK";
@@ -1274,7 +1275,7 @@ static bool get_nfsv_global_fast_ops(DBusMessageIter *args,
 }
 
 static bool show_cache_inode_stats(DBusMessageIter *args,
-				  DBusMessage *reply,
+				   DBusMessage *reply,
 				   DBusError *error)
 {
 	bool success = true;
