@@ -213,6 +213,7 @@ typedef struct exportlist {
 							   privileged port */
 
 #define EXPORT_OPTION_COMMIT 0x00000200		/*< NFS Commit writes */
+#define EXPORT_OPTION_DISABLE_ACL   0x00000400	/*< ACL is disabled */
 
 /* @todo BUGAZOMEU : Mettre au carre les flags des flavors */
 
