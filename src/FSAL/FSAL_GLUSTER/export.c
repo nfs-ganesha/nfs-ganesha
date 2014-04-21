@@ -38,6 +38,7 @@
 #include "FSAL/fsal_config.h"
 #include "config_parsing.h"
 #include "gluster_internal.h"
+#include "nfs_exports.h"
 
 /**
  * @brief Implements GLUSTER FSAL exportoperation release
@@ -627,6 +628,9 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 	glfsexport->saveduid = geteuid();
 	glfsexport->savedgid = getegid();
 	glfsexport->export.fsal = fsal_hdl;
+	glfsexport->acl_enable =
+		((exp_entry->export_perms.options &
+		  EXPORT_OPTION_DISABLE_ACL) ? 0 : 1);
 
 	*pub_export = &glfsexport->export;
 

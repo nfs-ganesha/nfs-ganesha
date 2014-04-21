@@ -625,11 +625,12 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
 {
 	int rc = 0;
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
-	struct stat sb;
+	glusterfs_fsal_xstat_t buffxstat;
 	struct glusterfs_export *glfs_export =
 	    container_of(opctx->fsal_export, struct glusterfs_export, export);
 	struct glusterfs_handle *objhandle =
 	    container_of(obj_hdl, struct glusterfs_handle, handle);
+	struct attrlist *fsalattr;
 #ifdef GLTIMING
 	struct timespec s_time, e_time;
 
@@ -639,9 +640,9 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
 	/* FIXME: Should we hold the fd so that any async op does
 	 * not close it */
 	if (objhandle->openflags != FSAL_O_CLOSED) {
-		rc = glfs_fstat(objhandle->glfd, &sb);
+		rc = glfs_fstat(objhandle->glfd, &buffxstat.buffstat);
 	} else {
-		rc = glfs_h_stat(glfs_export->gl_fs, objhandle->glhandle, &sb);
+		rc = glfs_h_stat(glfs_export->gl_fs, objhandle->glhandle, &buffxstat.buffstat);
 	}
 
 	if (rc != 0) {
@@ -653,7 +654,11 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
 		goto out;
 	}
 
-	stat2fsal_attributes(&sb, &objhandle->handle.attributes);
+	fsalattr = &objhandle->handle.attributes;
+	stat2fsal_attributes(&buffxstat.buffstat, fsalattr);
+
+	status = glusterfs_get_acl(glfs_export, objhandle->glhandle,
+				   &buffxstat, fsalattr);
 
  out:
 #ifdef GLTIMING
@@ -674,8 +679,10 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 {
 	int rc = 0;
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
-	struct stat sb;
+	glusterfs_fsal_xstat_t buffxstat;
 	int mask = 0;
+	int attr_valid = 0;
+	bool is_dir = 0;
 	struct glusterfs_export *glfs_export =
 	    container_of(opctx->fsal_export, struct glusterfs_export, export);
 	struct glusterfs_handle *objhandle =
@@ -685,8 +692,13 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 
 	now(&s_time);
 #endif
+	memset(&buffxstat, 0, sizeof(glusterfs_fsal_xstat_t));
 
-	memset(&sb, 0, sizeof(struct stat));
+	/* sanity checks.
+	 * note : object_attributes is optional.
+	 */
+	if (!obj_hdl || !opctx || !attrs)
+		return fsalstat(ERR_FSAL_FAULT, 0);
 
 	if (FSAL_TEST_MASK(attrs->mask, ATTR_SIZE)) {
 		rc = glfs_h_truncate(glfs_export->gl_fs, objhandle->glhandle,
@@ -699,22 +711,22 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 
 	if (FSAL_TEST_MASK(attrs->mask, ATTR_MODE)) {
 		mask |= GLAPI_SET_ATTR_MODE;
-		sb.st_mode = fsal2unix_mode(attrs->mode);
+		buffxstat.buffstat.st_mode = fsal2unix_mode(attrs->mode);
 	}
 
 	if (FSAL_TEST_MASK(attrs->mask, ATTR_OWNER)) {
 		mask |= GLAPI_SET_ATTR_UID;
-		sb.st_uid = attrs->owner;
+		buffxstat.buffstat.st_uid = attrs->owner;
 	}
 
 	if (FSAL_TEST_MASK(attrs->mask, ATTR_GROUP)) {
 		mask |= GLAPI_SET_ATTR_GID;
-		sb.st_gid = attrs->group;
+		buffxstat.buffstat.st_gid = attrs->group;
 	}
 
 	if (FSAL_TEST_MASK(attrs->mask, ATTR_ATIME)) {
 		mask |= GLAPI_SET_ATTR_ATIME;
-		sb.st_atim = attrs->atime;
+		buffxstat.buffstat.st_atim = attrs->atime;
 	}
 
 	if (FSAL_TEST_MASK(attrs->mask, ATTR_ATIME_SERVER)) {
@@ -726,12 +738,12 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 			status = gluster2fsal_error(errno);
 			goto out;
 		}
-		sb.st_atim = timestamp;
+		buffxstat.buffstat.st_atim = timestamp;
 	}
 
 	if (FSAL_TEST_MASK(attrs->mask, ATTR_MTIME)) {
 		mask |= GLAPI_SET_ATTR_MTIME;
-		sb.st_mtim = attrs->mtime;
+		buffxstat.buffstat.st_mtim = attrs->mtime;
 	}
 	if (FSAL_TEST_MASK(attrs->mask, ATTR_MTIME_SERVER)) {
 		mask |= GLAPI_SET_ATTR_MTIME;
@@ -742,17 +754,67 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 			status = gluster2fsal_error(rc);
 			goto out;
 		}
-		sb.st_mtim = timestamp;
+		buffxstat.buffstat.st_mtim = timestamp;
 	}
 
-	rc = glfs_h_setattrs(glfs_export->gl_fs, objhandle->glhandle, &sb,
-			     mask);
-	if (rc != 0) {
-		status = gluster2fsal_error(errno);
+	// TODO: Check for attributes not supported and return
+	// EATTRNOTSUPP error.
+	
+	if (NFSv4_ACL_SUPPORT) {
+		if (FSAL_TEST_MASK(attrs->mask, ATTR_ACL)) {
+			attr_valid |= XATTR_ACL;
+			status = 
+			  glusterfs_process_acl(glfs_export->gl_fs,
+					        objhandle->glhandle,
+						attrs, &buffxstat);
+
+			if (FSAL_IS_ERROR(status))
+				goto out;
+			/* setting the ACL will set the mode-bits too if not already passed */
+			mask |= GLAPI_SET_ATTR_MODE;
+		} else if (mask & GLAPI_SET_ATTR_MODE) {
+			switch (obj_hdl->type) {
+				case REGULAR_FILE:
+					is_dir = 0; break;
+				case DIRECTORY:
+					is_dir = 1; break;
+				default :
+					break;
+			}
+			status =
+			 mode_bits_to_acl(glfs_export->gl_fs, objhandle,
+					  attrs, &attr_valid,
+					  &buffxstat, is_dir);
+
+			if (FSAL_IS_ERROR(status))
+				goto out;
+		}
+	} else if (FSAL_TEST_MASK(attrs->mask, ATTR_ACL)) { 
+		status = fsalstat(ERR_FSAL_ATTRNOTSUPP, 0);
 		goto out;
 	}
 
- out:
+	/* If any stat changed, indicate that */
+	if (mask != 0) {
+		attr_valid |= XATTR_STAT;
+	}
+
+	if (attr_valid & XATTR_STAT) {
+		// Only if there is any change in attributes send them down to fs
+		rc = glfs_h_setattrs(glfs_export->gl_fs,
+				     objhandle->glhandle,
+				     &buffxstat.buffstat,
+				     mask);
+		GLUSTER_VALIDATE_RETURN_STATUS (rc);
+	}
+
+	if (attr_valid & XATTR_ACL) {
+		status = glusterfs_set_acl(glfs_export,
+				           objhandle, &buffxstat);
+		if (FSAL_IS_ERROR(status))
+			goto out;
+	}
+out:
 #ifdef GLTIMING
 	now(&e_time);
 	latency_update(&s_time, &e_time, lat_setattrs);
