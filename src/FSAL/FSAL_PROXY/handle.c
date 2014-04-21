@@ -56,6 +56,11 @@ static pthread_mutex_t listlock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t sockless = PTHREAD_COND_INITIALIZER;
 static pthread_cond_t need_context = PTHREAD_COND_INITIALIZER;
 
+/*
+ * Protects the "free_contexts" list and the "need_context" condition.
+ */
+static pthread_mutex_t context_lock = PTHREAD_MUTEX_INITIALIZER;
+
 /* NB! nfs_prog is just an easy way to get this info into the call
  *     It should really be fetched via export pointer */
 struct pxy_rpc_io_context {
@@ -766,13 +771,13 @@ int pxy_compoundv4_execute(const char *caller, const struct user_cred *creds,
 		.resarray.resarray_len = cnt
 	};
 
-	pthread_mutex_lock(&listlock);
+	pthread_mutex_lock(&context_lock);
 	while (glist_empty(&free_contexts))
-		pthread_cond_wait(&need_context, &listlock);
+		pthread_cond_wait(&need_context, &context_lock);
 	ctx =
 	    glist_first_entry(&free_contexts, struct pxy_rpc_io_context, calls);
 	glist_del(&ctx->calls);
-	pthread_mutex_unlock(&listlock);
+	pthread_mutex_unlock(&context_lock);
 
 	do {
 		rc = pxy_compoundv4_call(ctx, creds, &arg, &res);
@@ -784,11 +789,10 @@ int pxy_compoundv4_execute(const char *caller, const struct user_cred *creds,
 	} while ((rc == RPC_CANTRECV && (ctx->ioresult == -EAGAIN))
 		 || (rc == RPC_CANTSEND));
 
-	pthread_mutex_lock(&listlock);
-	if (glist_empty(&free_contexts))
-		pthread_cond_signal(&need_context);
+	pthread_mutex_lock(&context_lock);
+	pthread_cond_signal(&need_context);
 	glist_add(&free_contexts, &ctx->calls);
-	pthread_mutex_unlock(&listlock);
+	pthread_mutex_unlock(&context_lock);
 
 	if (rc == RPC_SUCCESS)
 		return res.status;
