@@ -122,7 +122,7 @@ fsal_status_t gpfsfsal_xstat_2_fsal_attributes(gpfsfsal_xstat_t *p_buffxstat,
 			     (unsigned long long)p_fsalattr_out->filesize);
 	}
 	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_FSID)) {
-		p_fsalattr_out->fsid = posix2fsal_fsid(p_buffstat->st_dev);
+		p_fsalattr_out->fsid = p_buffxstat->fsal_fsid;
 		LogFullDebug(COMPONENT_FSAL, "fsid major = %lu, minor = %lu",
 			     p_fsalattr_out->fsid.major,
 			     p_fsalattr_out->fsid.minor);

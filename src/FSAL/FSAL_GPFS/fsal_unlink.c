@@ -38,11 +38,6 @@
 #include "gpfs_methods.h"
 #include <unistd.h>
 
-extern fsal_status_t gpfsfsal_xstat_2_fsal_attributes(gpfsfsal_xstat_t *
-						      p_buffxstat,
-						      struct attrlist
-						      *p_fsalattr_out);
-
 /**
  * FSAL_unlink:
  * Remove a filesystem object .
@@ -68,9 +63,8 @@ extern fsal_status_t gpfsfsal_xstat_2_fsal_attributes(gpfsfsal_xstat_t *
 
 fsal_status_t GPFSFSAL_unlink(struct fsal_obj_handle *dir_hdl,	/* IN */
 			      const char *p_object_name,	/* IN */
-			      const struct req_op_context *p_context,	/* IN */
-			      struct attrlist *p_parent_attributes)
-{				/* IN/OUT */
+			      const struct req_op_context *p_context)	/* IN */
+{
 
 	fsal_status_t status;
 	gpfsfsal_xstat_t buffxstat;
@@ -108,21 +102,6 @@ fsal_status_t GPFSFSAL_unlink(struct fsal_obj_handle *dir_hdl,	/* IN */
 	if (FSAL_IS_ERROR(status))
 		return status;
 
-  /***********************
-   * FILL THE ATTRIBUTES *
-   ***********************/
-
-	if (p_parent_attributes) {
-		buffxstat.attr_valid = XATTR_STAT;
-		status =
-		    gpfsfsal_xstat_2_fsal_attributes(&buffxstat,
-						     p_parent_attributes);
-		if (FSAL_IS_ERROR(status)) {
-			FSAL_CLEAR_MASK(p_parent_attributes->mask);
-			FSAL_SET_MASK(p_parent_attributes->mask,
-				      ATTR_RDATTR_ERR);
-		}
-	}
 	/* OK */
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 

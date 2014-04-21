@@ -203,6 +203,7 @@ struct open_share_arg
   struct gpfs_file_handle *handle;
   int share_access;
   int share_deny;
+  int reclaim;
 };
 
 struct share_reserve_arg
@@ -611,6 +612,7 @@ struct callback_arg
 #define XATTR_ACL       (1 << 1)
 #define XATTR_NO_CACHE  (1 << 2)
 #define XATTR_EXPIRE    (1 << 3)
+#define XATTR_FSID      (1 << 4)
 
 /* define flags for attr_chaged */
 #define XATTR_MODE           (1 << 0) //  01
@@ -626,6 +628,11 @@ struct callback_arg
 #define XATTR_MTIME_NOW      (1 << 10)// 400
 #define XATTR_SPACE_RESERVED (1 << 11)// 800
 
+struct fsal_fsid {
+	uint64_t major;
+	uint64_t minor;
+};
+
 struct xstat_arg
 {
     int attr_valid;
@@ -634,6 +641,7 @@ struct xstat_arg
     struct gpfs_acl *acl;
     int attr_changed;
     struct stat *buf;
+    struct fsal_fsid *fsid;
     uint32_t *expire_attr;
 };
 

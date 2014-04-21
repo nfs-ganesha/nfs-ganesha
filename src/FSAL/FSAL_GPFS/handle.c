@@ -624,7 +624,7 @@ static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
 {
 	fsal_status_t status;
 
-	status = GPFSFSAL_unlink(dir_hdl, name, opctx, NULL);
+	status = GPFSFSAL_unlink(dir_hdl, name, opctx);
 
 	return status;
 }
@@ -810,9 +810,9 @@ fsal_status_t gpfs_lookup_path(struct fsal_export *exp_hdl,
 	fsal_status_t fsal_status;
 	int retval = 0;
 	int dir_fd;
-	struct stat stat;
 	struct gpfs_fsal_obj_handle *hdl;
 	struct attrlist attributes;
+	gpfsfsal_xstat_t buffxstat;
 	struct gpfs_file_handle *fh = alloca(sizeof(struct gpfs_file_handle));
 
 	memset(fh, 0, sizeof(struct gpfs_file_handle));
@@ -820,7 +820,7 @@ fsal_status_t gpfs_lookup_path(struct fsal_export *exp_hdl,
 
 	*handle = NULL;	/* poison it */
 
-	dir_fd = open_dir_by_path_walk(-1, path, &stat);
+	dir_fd = open_dir_by_path_walk(-1, path, &buffxstat.buffstat);
 
 	if (dir_fd < 0) {
 		LogCrit(COMPONENT_FSAL,
@@ -835,7 +835,14 @@ fsal_status_t gpfs_lookup_path(struct fsal_export *exp_hdl,
 		goto fileerr;
 
 	attributes.mask = exp_hdl->ops->fs_supported_attrs(exp_hdl);
-	fsal_status = posix2fsal_attributes(&stat, &attributes);
+	fsal_status = fsal_get_xstat_by_handle(dir_fd, fh, &buffxstat,
+					       NULL, false);
+	if (FSAL_IS_ERROR(fsal_status))
+		goto fileerr;
+	fsal_status = gpfsfsal_xstat_2_fsal_attributes(&buffxstat, &attributes);
+	LogFullDebug(COMPONENT_FSAL, "fsid major = %lu, minor = %lu",
+		     attributes.fsid.major,
+		     attributes.fsid.minor);
 	if (FSAL_IS_ERROR(fsal_status))
 		goto fileerr;
 

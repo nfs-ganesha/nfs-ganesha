@@ -98,6 +98,7 @@ struct gpfs_ds {
 typedef struct fsal_xstat__ {
 	int attr_valid;
 	struct stat buffstat;
+	fsal_fsid_t fsal_fsid;
 	char buffacl[GPFS_ACL_BUF_SIZE];
 } gpfsfsal_xstat_t;
 
@@ -122,6 +123,16 @@ fsal_status_t fsal_internal_get_handle(const char *p_fsalpath,	/* IN */
 fsal_status_t fsal_internal_get_handle_at(int dfd,
 				const char *p_fsalname,  /* IN */
 				struct gpfs_file_handle *p_handle); /* OUT */
+
+fsal_status_t gpfsfsal_xstat_2_fsal_attributes(
+					gpfsfsal_xstat_t *p_buffxstat,
+					struct attrlist *p_fsalattr_out);
+
+fsal_status_t fsal_get_xstat_by_handle(int dirfd,
+				       struct gpfs_file_handle *p_handle,
+				       gpfsfsal_xstat_t *p_buffxstat,
+				       uint32_t *expire_time_attr,
+				       bool expire);
 
 /**
  * Gets a fd from a handle
@@ -392,8 +403,7 @@ fsal_status_t GPFSFSAL_truncate(struct fsal_export *export,	/* IN */
 
 fsal_status_t GPFSFSAL_unlink(struct fsal_obj_handle *dir_hdl,	/* IN */
 			      const char *p_object_name,	/* IN */
-			      const struct req_op_context *p_context,	/* IN */
-			      struct attrlist *p_parent_attributes); /* IO */
+			      const struct req_op_context *p_context);	/* IN */
 
 char *GPFSFSAL_GetFSName();
 

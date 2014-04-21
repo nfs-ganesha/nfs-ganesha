@@ -42,10 +42,6 @@
 #include <sys/time.h>
 #include "export_mgr.h"
 
-extern fsal_status_t gpfsfsal_xstat_2_fsal_attributes(
-					gpfsfsal_xstat_t *p_buffxstat,
-					struct attrlist *p_fsalattr_out);
-
 #ifdef _USE_NFS4_ACL
 extern fsal_status_t fsal_acl_2_gpfs_acl(fsal_acl_t *p_fsalacl,
 					 gpfsfsal_xstat_t *p_buffxstat);

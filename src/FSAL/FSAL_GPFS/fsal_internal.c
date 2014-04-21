@@ -685,30 +685,27 @@ fsal_status_t fsal_get_xstat_by_handle(int dirfd,
 	pacl_gpfs->acl_version = GPFS_ACL_VERSION_NFS4;
 	pacl_gpfs->acl_type = GPFS_ACL_TYPE_NFS4;
 	pacl_gpfs->acl_len = GPFS_ACL_BUF_SIZE;
-#endif				/* _USE_NFS4_ACL */
-
-#ifdef _USE_NFS4_ACL
+	xstatarg.acl = pacl_gpfs;
 	xstatarg.attr_valid = XATTR_STAT | XATTR_ACL;
 #else
+	xstatarg.acl = NULL;
 	xstatarg.attr_valid = XATTR_STAT;
-#endif
+#endif /* _USE_NFS4_ACL */
 	if (expire)
 		xstatarg.attr_valid |= XATTR_EXPIRE;
 
 	xstatarg.mountdirfd = dirfd;
 	xstatarg.handle = p_handle;
-#ifdef _USE_NFS4_ACL
-	xstatarg.acl = pacl_gpfs;
-#else
-	xstatarg.acl = NULL;
-#endif
 	xstatarg.attr_changed = 0;
 	xstatarg.buf = &p_buffxstat->buffstat;
+	xstatarg.fsid = (struct fsal_fsid *)&p_buffxstat->fsal_fsid;
+	xstatarg.attr_valid |= XATTR_FSID;
 	xstatarg.expire_attr = expire_time_attr;
 
 	rc = gpfs_ganesha(OPENHANDLE_GET_XSTAT, &xstatarg);
 	LogDebug(COMPONENT_FSAL,
-		 "gpfs_ganesha: GET_XSTAT returned, fd %d rc %d", dirfd, rc);
+		 "gpfs_ganesha: GET_XSTAT returned, fd %d rc %d fh_size %d",
+		 dirfd, rc, p_handle->handle_size);
 
 	if (rc < 0) {
 		if (errno == ENODATA) {
@@ -729,9 +726,9 @@ fsal_status_t fsal_get_xstat_by_handle(int dirfd,
 		}
 	}
 #ifdef _USE_NFS4_ACL
-	p_buffxstat->attr_valid = XATTR_STAT | XATTR_ACL;
+	p_buffxstat->attr_valid = XATTR_FSID | XATTR_STAT | XATTR_ACL;
 #else
-	p_buffxstat->attr_valid = XATTR_STAT;
+	p_buffxstat->attr_valid = XATTR_FSID | XATTR_STAT;
 #endif
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
