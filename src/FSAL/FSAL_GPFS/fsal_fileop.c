@@ -168,6 +168,7 @@ fsal_status_t GPFSFSAL_read(int fd,	/* IN */
 	rarg.bufP = buffer;
 	rarg.offset = offset;
 	rarg.length = buffer_size;
+	rarg.options = 0;
 
 	/* read operation */
 
