@@ -219,6 +219,9 @@ option(STRICT_PACKAGE "Enable strict packaging behavior" OFF )
 # This option will trigger "long distro name" aka name that contains git information
 option(DISTNAME_HAS_GIT_DATA "Distribution package's name carries git data" OFF )
 
+# Build and package Python admin scripts for managing via DBus
+option(USE_ADMIN_TOOLS "Package Admin scripts" OFF)
+
 # Choose a shortcut build config
 
 IF(BUILD_CONFIG)
@@ -797,6 +800,7 @@ add_subdirectory(tools)
 if(USE_DBUS)
   add_subdirectory(dbus)
 endif(USE_DBUS)
+add_subdirectory(scripts)
 
 # display configuration vars
 
@@ -852,6 +856,7 @@ message(STATUS "ALLOCATOR = ${ALLOCATOR}")
 message(STATUS "GOLD_LINKER = ${GOLD_LINKER}")
 message(STATUS "CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX}")
 message(STATUS "FSAL_DESTINATION = ${FSAL_DESTINATION}")
+message(STATUS "USE_ADMIN_TOOLS = ${USE_ADMII_TOOLS}")
 
 #force command line options to be stored in cache
 set(USE_FSAL_VFS ${USE_FSAL_VFS}
@@ -974,6 +979,11 @@ set(_USE_9P_RDMA ${_USE_9P_RDMA}
   CACHE BOOL
    "enable 9P_RDMA support"
    FORCE)
+
+set(USE_ADMIN_TOOLS ${USE_ADMIN_TOOLS}
+  CACHE BOOL
+  "Package Admin Scripts"
+  FORCE)
 
 # Now create a useable config.h
 configure_file(
