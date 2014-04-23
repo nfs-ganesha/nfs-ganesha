@@ -34,3 +34,4 @@ pNFSReply = namedtuple('pNFSReply',
 
 class IOstat(Object):
     def __init__(self, stat):
+        pass
