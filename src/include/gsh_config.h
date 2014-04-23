@@ -377,11 +377,6 @@ typedef struct nfs_core_param {
 #define DELEG_RECALL_RETRY_COUNT_DEFAULT 3
 
 /**
- * @brief Default value of data deleg_recall_race_retry_count.
- */
-#define DELEG_RECALL_RACE_RETRY_COUNT_DEFAULT 3
-
-/**
  * @brief Default value of deleg_recall_retry_delay.
  */
 #define DELEG_RECALL_RETRY_DELAY_DEFAULT 1
@@ -418,13 +413,8 @@ typedef struct nfs_version4_parameter {
 	/** Whether to allow delegations. Defaults to false and settable
 	    with Delegations */
 	bool allow_delegations;
-	/** Number of times the server will retry a recall before
-	    revoking the delegation */
+	/** Number of times the server will retry a recall */
 	uint32_t deleg_recall_retry_count;
-	/** Number of times the server will retry a recall before
-	    revoking the delegation when it detects a open-recall
-	    race. i.e client returns NFS4ERR_BADHANDLE for recall*/
-	uint32_t deleg_recall_race_retry_count;
 	/** Delay after which server will retry a recall in case of failures */
 	uint32_t deleg_recall_retry_delay;
 } nfs_version4_parameter_t;
