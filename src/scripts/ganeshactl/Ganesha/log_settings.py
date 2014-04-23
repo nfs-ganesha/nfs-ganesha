@@ -1,6 +1,6 @@
 from PyQt4.QtCore import *
 from PyQt4 import QtGui
-from ui_log_dialog import Ui_LogSettings
+from Ganesha.QtUI.ui_log_dialog import Ui_LogSettings
 
 class DebugLevelDelegate(QtGui.QItemDelegate):
     '''

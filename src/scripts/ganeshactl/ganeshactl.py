@@ -8,12 +8,12 @@ NFS Ganesha administration tool
 import sys
 
 from PyQt4 import QtCore, QtGui, QtDBus 
-from ui_main_window import Ui_MainWindow
+from Ganesha.QtUI.ui_main_window import Ui_MainWindow
 from Ganesha.admin import AdminInterface
 from Ganesha.export_mgr import ExportMgr
-from Ganesha.exports_table import ExportTableModel
+from Ganesha.QtUI.exports_table import ExportTableModel
 from Ganesha.client_mgr import ClientMgr
-from Ganesha.clients_table import ClientTableModel
+from Ganesha.QtUI.clients_table import ClientTableModel
 from Ganesha.log_mgr import LogManager
 from Ganesha.log_settings import LogSetDialog
 
