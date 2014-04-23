@@ -509,8 +509,7 @@ fsal_status_t fsal_internal_unlink(int dirfd,
  *
  * \return status of operation
  */
-fsal_status_t fsal_internal_create(int dirfd,
-				   struct gpfs_file_handle *p_dir_handle,
+fsal_status_t fsal_internal_create(struct fsal_obj_handle *dir_hdl,
 				   const char *p_stat_name, mode_t mode,
 				   dev_t dev,
 				   struct gpfs_file_handle *p_new_handle,
@@ -518,6 +517,8 @@ fsal_status_t fsal_internal_create(int dirfd,
 {
 	int rc;
 	struct create_name_arg crarg;
+	struct gpfs_filesystem *gpfs_fs;
+	struct gpfs_fsal_obj_handle *gpfs_hdl;
 #ifdef _VALGRIND_MEMCHECK
 	gpfsfsal_handle_t *p_handle = (gpfsfsal_handle_t *) p_new_handle;
 #endif
@@ -529,12 +530,16 @@ fsal_status_t fsal_internal_create(int dirfd,
 	memset(p_handle, 0, sizeof(*p_handle));
 #endif
 
-	crarg.mountdirfd = dirfd;
+	gpfs_hdl =
+	    container_of(dir_hdl, struct gpfs_fsal_obj_handle, obj_handle);
+	gpfs_fs = dir_hdl->fs->private;
+
+	crarg.mountdirfd = gpfs_fs->root_fd;
 	crarg.mode = mode;
 	crarg.dev = dev;
 	crarg.len = strlen(p_stat_name);
 	crarg.name = p_stat_name;
-	crarg.dir_fh = p_dir_handle;
+	crarg.dir_fh = gpfs_hdl->handle;
 	crarg.new_fh = p_new_handle;
 	crarg.new_fh->handle_size = OPENHANDLE_HANDLE_LEN;
 	crarg.new_fh->handle_key_size = OPENHANDLE_KEY_LEN;

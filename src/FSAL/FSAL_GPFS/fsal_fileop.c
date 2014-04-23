@@ -78,7 +78,7 @@ fsal_status_t GPFSFSAL_open(struct fsal_obj_handle *obj_hdl,	/* IN */
 	fsal_status_t status;
 	int posix_flags = 0;
 	struct gpfs_fsal_obj_handle *myself;
-	int mntfd;
+	struct gpfs_filesystem *gpfs_fs;
 
 	/* sanity checks.
 	 * note : file_attributes is optional.
@@ -87,7 +87,7 @@ fsal_status_t GPFSFSAL_open(struct fsal_obj_handle *obj_hdl,	/* IN */
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
 	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
-	mntfd = gpfs_get_root_fd(p_context->fsal_export);
+	gpfs_fs = obj_hdl->fs->private;
 
 	/* convert fsal open flags to posix open flags */
 	rc = fsal2posix_openflags(openflags, &posix_flags);
@@ -98,9 +98,8 @@ fsal_status_t GPFSFSAL_open(struct fsal_obj_handle *obj_hdl,	/* IN */
 		return fsalstat(rc, 0);
 	}
 
-	status =
-	    fsal_internal_handle2fd(mntfd, myself->handle, file_desc,
-				    posix_flags);
+	status = fsal_internal_handle2fd(gpfs_fs->root_fd, myself->handle,
+					 file_desc, posix_flags);
 
 	if (FSAL_IS_ERROR(status)) {
 		*file_desc = 0;
@@ -112,6 +111,7 @@ fsal_status_t GPFSFSAL_open(struct fsal_obj_handle *obj_hdl,	/* IN */
 
 		p_file_attributes->mask = GPFS_SUPPORTED_ATTRIBUTES;
 		status = GPFSFSAL_getattrs(p_context->fsal_export,
+					   gpfs_fs,
 					   p_context, myself->handle,
 					   p_file_attributes);
 		if (FSAL_IS_ERROR(status)) {

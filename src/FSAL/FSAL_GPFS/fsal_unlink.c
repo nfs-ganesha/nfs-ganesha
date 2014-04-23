@@ -68,8 +68,8 @@ fsal_status_t GPFSFSAL_unlink(struct fsal_obj_handle *dir_hdl,	/* IN */
 
 	fsal_status_t status;
 	gpfsfsal_xstat_t buffxstat;
-	int mount_fd;
 	struct gpfs_fsal_obj_handle *gpfs_hdl;
+	struct gpfs_filesystem *gpfs_fs;
 
 	/* sanity checks. */
 	if (!dir_hdl || !p_context || !p_object_name)
@@ -77,14 +77,13 @@ fsal_status_t GPFSFSAL_unlink(struct fsal_obj_handle *dir_hdl,	/* IN */
 
 	gpfs_hdl =
 	    container_of(dir_hdl, struct gpfs_fsal_obj_handle, obj_handle);
-	mount_fd = gpfs_get_root_fd(p_context->fsal_export);
+	gpfs_fs = dir_hdl->fs->private;
 
 	/* build the child path */
 
 	/* get file metadata */
-	status =
-	    fsal_internal_stat_name(mount_fd, gpfs_hdl->handle, p_object_name,
-				    &buffxstat.buffstat);
+	status = fsal_internal_stat_name(gpfs_fs->root_fd, gpfs_hdl->handle,
+					 p_object_name, &buffxstat.buffstat);
 	if (FSAL_IS_ERROR(status))
 		return status;
 
@@ -93,9 +92,8 @@ fsal_status_t GPFSFSAL_unlink(struct fsal_obj_handle *dir_hdl,	/* IN */
    ******************************/
 	fsal_set_credentials(p_context->creds);
 
-	status =
-	    fsal_internal_unlink(mount_fd, gpfs_hdl->handle, p_object_name,
-				 &buffxstat.buffstat);
+	status = fsal_internal_unlink(gpfs_fs->root_fd, gpfs_hdl->handle,
+				      p_object_name, &buffxstat.buffstat);
 
 	fsal_restore_ganesha_credentials();
 

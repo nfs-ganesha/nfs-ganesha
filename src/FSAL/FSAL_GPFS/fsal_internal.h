@@ -41,6 +41,8 @@
 #include "include/gpfs_nfs.h"
 #include "fsal_up.h"
 
+struct gpfs_filesystem;
+
 void gpfs_handle_ops_init(struct fsal_obj_ops *ops);
 
 bool fsal_error_is_event(fsal_status_t status);
@@ -51,17 +53,6 @@ bool fsal_error_is_info(fsal_status_t status);
 
 void set_gpfs_verifier(verifier4 *verifier);
 
-struct gpfs_fsal_up_ctx {
-	/* There is one GPFS FSAL UP Context per GPFS file system */
-	struct glist_head gf_list;	/* List of GPFS FSAL UP Contexts */
-	struct glist_head gf_exports;	/* List of GPFS Export Contexts on
-					   this FSAL UP context */
-	struct fsal_export *gf_export;
-	int gf_fd;		/* GPFS File System Directory fd */
-	unsigned int gf_fsid[2];
-	pthread_t gf_thread;
-	struct fsal_module *gf_fsal; /* FSAL module */
-};
 /**
  * The full, 'private' DS (data server) handle
  */
@@ -69,6 +60,7 @@ struct gpfs_fsal_up_ctx {
 struct gpfs_ds {
 	struct gpfs_file_handle wire;	/*< Wire data */
 	struct fsal_ds_handle ds;	/*< Public DS handle */
+	struct gpfs_filesystem *gpfs_fs; /*< filesystem handle belongs to */
 	bool connected;		/*< True if the handle has been connected */
 };
 
@@ -171,8 +163,7 @@ fsal_status_t fsal_internal_unlink(int dirfd,
 				   struct gpfs_file_handle *p_dir_handle,
 				   const char *p_stat_name, struct stat *buf);
 
-fsal_status_t fsal_internal_create(int dirfd,
-				   struct gpfs_file_handle *p_dir_handle,
+fsal_status_t fsal_internal_create(struct fsal_obj_handle *dir_hdl,
 				   const char *p_stat_name, mode_t mode,
 				   dev_t dev,
 				   struct gpfs_file_handle *p_new_handle,
@@ -204,6 +195,7 @@ fsal_status_t fsal_trucate_by_handle(int dirfd,
 /* All the call to FSAL to be wrapped */
 
 fsal_status_t GPFSFSAL_getattrs(struct fsal_export *export,	/* IN */
+				struct gpfs_filesystem *gpfs_fs, /* IN */
 				const struct req_op_context *p_context,	/* IN */
 				struct gpfs_file_handle *p_filehandle,	/* IN */
 				struct attrlist *p_object_attributes); /* IO */
@@ -317,9 +309,4 @@ fsal_status_t GPFSFSAL_unlink(struct fsal_obj_handle *dir_hdl,	/* IN */
 			      const char *p_object_name,	/* IN */
 			      const struct req_op_context *p_context);	/* IN */
 
-struct glist_head gpfs_fsal_up_ctx_list;
-
 void *GPFSFSAL_UP_Thread(void *Arg);
-
-struct gpfs_fsal_up_ctx *gpfsfsal_find_fsal_up_context(struct gpfs_fsal_up_ctx
-						       *ctx);

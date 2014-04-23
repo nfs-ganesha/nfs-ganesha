@@ -66,8 +66,8 @@ fsal_status_t GPFSFSAL_rename(struct fsal_obj_handle *old_hdl,	/* IN */
 
 	fsal_status_t status;
 	struct stat buffstat;
-	int mount_fd;
 	struct gpfs_fsal_obj_handle *old_gpfs_hdl, *new_gpfs_hdl;
+	struct gpfs_filesystem *gpfs_fs;
 
 	/* sanity checks.
 	 * note : src/tgt_dir_attributes are optional.
@@ -79,12 +79,11 @@ fsal_status_t GPFSFSAL_rename(struct fsal_obj_handle *old_hdl,	/* IN */
 	    container_of(old_hdl, struct gpfs_fsal_obj_handle, obj_handle);
 	new_gpfs_hdl =
 	    container_of(new_hdl, struct gpfs_fsal_obj_handle, obj_handle);
-	mount_fd = gpfs_get_root_fd(p_context->fsal_export);
+	gpfs_fs = old_hdl->fs->private;
 
 	/* build file paths */
-	status =
-	    fsal_internal_stat_name(mount_fd, old_gpfs_hdl->handle, p_old_name,
-				    &buffstat);
+	status = fsal_internal_stat_name(gpfs_fs->root_fd, old_gpfs_hdl->handle,
+					 p_old_name, &buffstat);
 	if (FSAL_IS_ERROR(status))
 		return status;
 
@@ -93,10 +92,9 @@ fsal_status_t GPFSFSAL_rename(struct fsal_obj_handle *old_hdl,	/* IN */
    *************************************/
 	fsal_set_credentials(p_context->creds);
 
-	status =
-	    fsal_internal_rename_fh(mount_fd, old_gpfs_hdl->handle,
-				    new_gpfs_hdl->handle, p_old_name,
-				    p_new_name);
+	status = fsal_internal_rename_fh(gpfs_fs->root_fd, old_gpfs_hdl->handle,
+					 new_gpfs_hdl->handle, p_old_name,
+					 p_new_name);
 
 	fsal_restore_ganesha_credentials();
 
