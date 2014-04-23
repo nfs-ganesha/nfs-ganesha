@@ -625,10 +625,23 @@ state_status_t layoutrecall(struct fsal_module *fsal,
 		cb_layoutrec->clora_recall.layoutrecall4_u.lor_layout.lor_fh.
 		    nfs_fh4_val =
 		    gsh_malloc(sizeof(struct alloc_file_handle_v4));
-		nfs4_FSALToFhandle(&cb_layoutrec->clora_recall.layoutrecall4_u
-				   .lor_layout.lor_fh,
-				   entry->obj_handle,
-				   exp);
+		if (cb_layoutrec->clora_recall.layoutrecall4_u.lor_layout.
+				lor_fh.nfs_fh4_val == NULL) {
+			gsh_free(cb_data);
+			rc = STATE_MALLOC_ERROR;
+			goto out;
+		}
+		if (!nfs4_FSALToFhandle(
+				&cb_layoutrec->clora_recall.layoutrecall4_u
+				.lor_layout.lor_fh,
+				entry->obj_handle,
+				exp)) {
+			gsh_free(cb_data);
+			gsh_free(cb_layoutrec->clora_recall.layoutrecall4_u.
+						lor_layout.lor_fh.nfs_fh4_val);
+			rc = STATE_MALLOC_ERROR;
+			goto out;
+		}
 		update_stateid(s,
 			       &cb_layoutrec->clora_recall.layoutrecall4_u.
 			       lor_layout.lor_stateid, NULL, "LAYOUTRECALL");
@@ -1233,6 +1246,8 @@ state_status_t delegrecall(cache_entry_t *entry, bool rwlocked)
 	glist_for_each_safe(glist, glist_n, &entry->object.file.deleg_list) {
 		found_entry = glist_entry(glist, state_lock_entry_t, sle_list);
 
+		if (found_entry == NULL)
+			break;
 		if (found_entry->sle_type != LEASE_LOCK || found_entry == NULL
 		    || found_entry->sle_state == NULL)
 			continue;
