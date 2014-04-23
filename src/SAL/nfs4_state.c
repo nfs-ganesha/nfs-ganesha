@@ -270,8 +270,8 @@ state_status_t state_add_impl(cache_entry_t *entry, state_type_t state_type,
 			}
 			if (check_deleg_conflict(piter_state, state_type,
 						 state_data, owner_input)) {
-				status = delegrecall(entry, true);
-				if (status != STATE_SUCCESS) {
+				int rc = async_delegrecall(general_fridge, entry);
+				if (rc != 0) {
 					LogDebug(COMPONENT_STATE,
 						 "Failed to recall delegation");
 				} else {

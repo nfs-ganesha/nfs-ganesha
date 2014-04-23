@@ -280,7 +280,7 @@ int up_async_delegrecall(struct fridgethr *fr,
 			 void *cb_arg);
 
 /** @} */
-
+int async_delegrecall(struct fridgethr *fr, cache_entry_t *entry);
 cache_inode_status_t fsal_invalidate(struct fsal_module *fsal,
 				     struct gsh_buffdesc *handle,
 				     uint32_t flags);
