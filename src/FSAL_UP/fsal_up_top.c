@@ -1105,7 +1105,7 @@ bool eval_revoke(state_lock_entry_t *deleg_entry)
 	if ((first_recall_time > 0) &&
 	    (curr_time - first_recall_time) > (2 * lease_lifetime)) {
 		LogDebug(COMPONENT_STATE,
-			 "More than one lease time has passed since recall was sent");
+			 "More than two lease times have passed since first recall was tried");
 		rc = TRUE;
 	}
 
@@ -1325,9 +1325,11 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 				LogCrit(COMPONENT_NFS_V4,
 					"Delegation could not be revoked(%p)",
 				deleg_entry);
-			} else
+			} else {
 				LogDebug(COMPONENT_NFS_V4,
 					 "Delegation revoked(%p)", deleg_entry);
+				deleg_cleanup(deleg_entry);
+			}
 		} else
 			schedule_delegrecall_task(deleg_entry);
 	} else {
@@ -1480,6 +1482,8 @@ static uint32_t delegrecall_one(state_lock_entry_t *deleg_entry)
 	p_cargs->sle_entry = deleg_entry;
 	nfs_rpc_submit_call(call, p_cargs, NFS_RPC_CALL_NONE);
 	code = call->states;
+	maxfh = NULL; /* avoid free */
+	call = NULL;
 out:
 	switch (code) {
 	case NFS_CB_CALL_FINISHED:
@@ -1508,8 +1512,12 @@ out:
 		needs_revoke = TRUE;
 		break;
 	}
-	clfl_stats->first_recall_time = time(NULL);
 	if (needs_revoke) {
+		if (maxfh)
+			gsh_free(maxfh);
+		if (call)
+			gsh_free(call);
+
 		if (eval_revoke(deleg_entry)) {
 			LogCrit(COMPONENT_STATE, "Delegation will be revoked");
 			atomic_inc_uint32_t(&clfl_stats->num_revokes);
@@ -1518,15 +1526,13 @@ out:
 				LogCrit(COMPONENT_NFS_V4,
 					"Delegation could not be revoked(%p)",
 					deleg_entry);
-			else
+			else {
 				LogDebug(COMPONENT_NFS_V4,
 					 "Delegation revoked(%p)", deleg_entry);
-		}
-
-		if (maxfh)
-			gsh_free(maxfh);
-		if (call)
-			gsh_free(call);
+				deleg_cleanup(deleg_entry);
+			}
+		} else
+			schedule_delegrecall_task(deleg_entry);
 	}
 
 	return code;
@@ -1565,9 +1571,11 @@ static void delegrevoke_check(struct fridgethr_context *ctx)
 			LogCrit(COMPONENT_NFS_V4,
 				"Delegation could not be revoked(%p)",
 				deleg_entry);
-		} else
+		} else {
 			LogDebug(COMPONENT_NFS_V4,
 				 "Delegation revoked(%p)", deleg_entry);
+			deleg_cleanup(deleg_entry);
+		}
 	} else {
 		LogFullDebug(COMPONENT_STATE, "Not revoking the delegation(%p)",
 			     deleg_entry);
@@ -1608,6 +1616,7 @@ state_status_t delegrecall(cache_entry_t *entry, bool rwlocked)
 	state_lock_entry_t *deleg_entry = NULL;
 	state_status_t rc = 0;
 	uint32_t *deleg_state = NULL;
+	struct clientfile_deleg_heuristics *clfl_stats = NULL;
 
 	LogDebug(COMPONENT_FSAL_UP,
 		 "FSAL_UP_DELEG: Invalidate cache found entry %p type %u",
@@ -1624,6 +1633,8 @@ state_status_t delegrecall(cache_entry_t *entry, bool rwlocked)
 			continue;
 
 		LogDebug(COMPONENT_NFS_CB, "deleg_entry %p", deleg_entry);
+		clfl_stats =
+			&deleg_entry->sle_state->state_data.deleg.clfile_stats;
 		deleg_state =
 			&deleg_entry->sle_state->state_data.deleg.deleg_state;
 		if (*deleg_state != DELEG_GRANTED) {
@@ -1634,6 +1645,7 @@ state_status_t delegrecall(cache_entry_t *entry, bool rwlocked)
 			return rc;
 		}
 		*deleg_state = DELEG_RECALL_WIP;
+		clfl_stats->first_recall_time = time(NULL);
 
 		lock_entry_inc_ref(deleg_entry); /* dec in deleg_cleanup */
 		rc = delegrecall_one(deleg_entry);

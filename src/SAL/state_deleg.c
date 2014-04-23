@@ -50,6 +50,32 @@
 #include "cache_inode_lru.h"
 #include "export_mgr.h"
 
+/**
+ * @brief Free a delegation while the lock state is locked.
+ *
+ * Free a delegation while the lock state is locked.
+ * The caller must hold the state lock exclusively.
+ *
+ * @param[in] deleg_lock The delegation lock to remove.
+ * @param[in] entry Inode entry that was delegated.
+ * @param[in] export Export that the delegation and file are in.
+ * @param[in] fake_req_ctx Fake request context when called from fsal_up
+ */
+void free_deleg_locked(state_lock_entry_t *deleg_lock, cache_entry_t *entry,
+		      struct fsal_export *export)
+{
+	nfs_client_id_t *clientid =
+		deleg_lock->sle_owner->so_owner.so_nfs4_owner.so_clientrec;
+
+	state_unlock(entry,
+		     deleg_lock->sle_owner,
+		     deleg_lock->sle_state,
+		     &deleg_lock->sle_lock,
+		     deleg_lock->sle_type);
+	state_del_locked(deleg_lock->sle_state, entry);
+	deleg_heuristics_recall(entry, clientid);
+}
+
 void init_clientfile_deleg(struct clientfile_deleg_heuristics *clfile_entry)
 {
 }
@@ -315,8 +341,36 @@ void get_deleg_perm(cache_entry_t *entry, nfsace4 *permissions,
  */
 state_status_t deleg_revoke(state_lock_entry_t *deleg_entry, bool rwlocked)
 {
-	/* dummy */
-	LogDebug(COMPONENT_NFS_V4, "Not really revoking the delegation");
+	state_status_t state_status;
+	cache_entry_t *pentry = NULL;
+	state_owner_t *clientowner = NULL;
+	fsal_lock_param_t lock_desc;
+	struct nfs_client_id_t *clid = NULL;
+
+	uint32_t code =
+		nfs_client_id_get_confirmed(deleg_entry->sle_owner->so_owner.
+					    so_nfs4_owner.so_clientid, &clid);
+	if (code != CLIENT_ID_SUCCESS) {
+		LogCrit(COMPONENT_NFS_V4_LOCK, "No clid record  code %d", code);
+		return STATE_NOT_FOUND;
+	}
+
+	clientowner = &clid->cid_owner;
+	pentry = deleg_entry->sle_entry;
+
+	lock_desc.lock_type = FSAL_LOCK_R;  /* doesn't matter for unlock */
+	lock_desc.lock_start = 0;
+	lock_desc.lock_length = 0;
+	lock_desc.lock_sle_type = FSAL_LEASE_LOCK;
+
+	state_status = state_unlock(pentry, clientowner, 
+				    deleg_entry->sle_state,
+				    &lock_desc, deleg_entry->sle_type);
+
+	if (state_status != STATE_SUCCESS) {
+		LogDebug(COMPONENT_NFS_V4_LOCK, "state unlock failed: %d",
+			 state_status);
+	}
 	pthread_mutex_lock(&deleg_entry->sle_mutex);
 	deleg_entry->sle_state->state_data.deleg.deleg_state = DELEG_REVOKED;
 	pthread_mutex_unlock(&deleg_entry->sle_mutex);
