@@ -128,6 +128,7 @@ char *get_debug_info(int *size);
 void SetNamePgm(const char *nom);
 void SetNameHost(const char *nom);
 void SetNameFunction(const char *nom);	/* thread safe */
+void SetClientIP(char *ip_str);
 
 void init_logging(const char *log_path, const int debug_level);
 
