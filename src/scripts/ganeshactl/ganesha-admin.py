@@ -4,16 +4,16 @@ import sys
 from PyQt4 import QtCore, QtDBus
 from PyQt4.QtGui import QApplication
 from dbus.mainloop.qt import DBusQtMainLoop
-from admin import AdminInterface
+from Ganesha.admin import AdminInterface
 
 SERVICE = 'org.ganesha.nfsd'
 
-class ShutDown(QtCore.QObject):
+class ServerAdmin(QtCore.QObject):
 
     show_status = QtCore.pyqtSignal(bool, str)
     
     def __init__(self, sysbus, parent=None):
-        super(ShutDown, self).__init__()
+        super(ServerAdmin, self).__init__()
         self.admin = AdminInterface(SERVICE,
                                     '/org/ganesha/nfsd/admin',
                                     sysbus,
@@ -24,6 +24,14 @@ class ShutDown(QtCore.QObject):
         self.admin.shutdown()
         print "Shutting down server."
 
+    def reload(self):
+        self.admin.reload()
+        print "Reload server configuration."
+
+    def grace(self, ipaddr):
+        self.admin.grace(ipaddr)
+        print "Start grace period."
+
     def status_message(self, status, errormsg):
         print "Returns: status = %s, %s" % (str(status), errormsg)
         sys.exit()
@@ -33,7 +41,15 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     loop = DBusQtMainLoop(set_as_default=True)
     sysbus = QtDBus.QDBusConnection.systemBus()
-    shutdown = ShutDown(sysbus)
-    shutdown.shutdown()
+    ganesha = ServerAdmin(sysbus)
+    if sys.argv[1] == "shutdown":
+        ganesha.shutdown()
+    elif sys.argv[1] == "reload":
+        ganesha.reload()
+    elif sys.argv[1] == "grace":
+        ganesha.grace(argv[2])
+    else:
+        print "Unknown/missing command"
+        sys.exit()
     app.exec_()
 
