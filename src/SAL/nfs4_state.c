@@ -251,7 +251,7 @@ state_status_t state_add_impl(cache_entry_t *entry, state_type_t state_type,
 
 	/* Check conflicting delegations and recall if necessary */
 	if (entry->type == REGULAR_FILE
-	    && (!glist_empty(&entry->object.file.deleg_list)))
+	    && (!glist_empty(&entry->object.file.deleg_list))) {
 		glist_for_each_safe(glist, glistn,
 				    &entry->object.file.deleg_list) {
 			piter_lock = glist_entry(glist, state_lock_entry_t,
@@ -271,9 +271,13 @@ state_status_t state_add_impl(cache_entry_t *entry, state_type_t state_type,
 				if (status != STATE_SUCCESS) {
 					LogDebug(COMPONENT_STATE,
 						 "Failed to recall delegation");
+				} else {
+					status = STATE_FSAL_DELAY;
+					return status;
 				}
 			}
 		}
+	}
 
 	/* Browse the state's list */
 	glist_for_each(glist, &entry->state_list) {
