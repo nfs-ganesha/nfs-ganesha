@@ -1047,6 +1047,22 @@ add_custom_command(TARGET rpm
 		  VERBATIM
 		  DEPENDS dist)
 
+if(COVERAGE)
+	find_program(LCOV_EXEC lcov)
+	find_program(GENHTML_EXEC genhtml)
+	if(LCOV_EXEC AND GENHTML_EXEC)
+		add_custom_target(lcov)
+		add_custom_command(TARGET lcov
+			COMMAND ${LCOV_EXEC} --capture --directory .
+			--output-file coverage.info
+			COMMAND ${GENHTML_EXEC} coverage.info
+			--output-directory ./coverage_html/
+			VERBATIM
+			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+			)
+	endif(LCOV_EXEC AND GENHTML_EXEC)
+endif(COVERAGE)
+
 ########### add a "make doc" target to call Doxygen
 find_package(Doxygen)
 if(DOXYGEN_FOUND)
