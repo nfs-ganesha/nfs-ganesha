@@ -244,7 +244,7 @@ struct fsal_staticfsinfo_t *gluster_staticinfo(struct fsal_module *hdl)
 
 int construct_handle(struct glusterfs_export *glexport, const struct stat *sb,
 		     struct glfs_object *glhandle, unsigned char *globjhdl,
-		     int len, struct glusterfs_handle **obj)
+		     int len, struct glusterfs_handle **obj, const char *vol_uuid)
 {
 	struct glusterfs_handle *constructing = NULL;
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
@@ -271,7 +271,8 @@ int construct_handle(struct glusterfs_export *glexport, const struct stat *sb,
 	}
 
 	constructing->glhandle = glhandle;
-	memcpy(constructing->globjhdl, globjhdl, len);
+	memcpy(constructing->globjhdl, vol_uuid, GLAPI_UUID_LENGTH);
+	memcpy(constructing->globjhdl+GLAPI_UUID_LENGTH, globjhdl, GFAPI_HANDLE_LENGTH);
 	constructing->glfd = NULL;
 
 	fsal_obj_handle_init(&constructing->handle, &glexport->export,

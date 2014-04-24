@@ -71,9 +71,19 @@ ATTR_SIZE     | ATTR_MTIME_SERVER | ATTR_ATIME_SERVER)   \
 #define GLAPI_SET_ATTR_ATIME GFAPI_SET_ATTR_ATIME
 #define GLAPI_SET_ATTR_MTIME GFAPI_SET_ATTR_MTIME
 
-/* Handle length for object handles returned from glfs_h_extract_handle or
- * glfs_h_create_from_handle */
-#define GLAPI_HANDLE_LENGTH GFAPI_HANDLE_LENGTH
+/* UUID length for the object returned from glfs_get_volume_id */
+#define GLAPI_UUID_LENGTH   16
+
+/*
+ * GFAPI_HANDLE_LENGTH is the handle length for object handles
+ * returned from glfs_h_extract_handle or glfs_h_create_from_handle
+ *
+ * GLAPI_HANDLE_LENGTH is the total length of the handle descriptor
+ * to be used in the wire handle.
+ */
+#define GLAPI_HANDLE_LENGTH (		\
+		GFAPI_HANDLE_LENGTH +	\
+		GLAPI_UUID_LENGTH )
 
 /*
  * Macros related to ACL processing
@@ -328,6 +338,7 @@ struct glusterfs_fsal_module {
 
 struct glusterfs_export {
 	glfs_t *gl_fs;
+        char *mount_path;
 	char *export_path;
 	uid_t saveduid;
 	gid_t savedgid;
@@ -419,7 +430,7 @@ struct fsal_staticfsinfo_t *gluster_staticinfo(struct fsal_module *hdl);
 
 int construct_handle(struct glusterfs_export *glexport, const struct stat *st,
 		     struct glfs_object *glhandle, unsigned char *globjhdl,
-		     int len, struct glusterfs_handle **obj);
+		     int len, struct glusterfs_handle **obj, const char *vol_uuid);
 
 fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 				      const char *export_path,

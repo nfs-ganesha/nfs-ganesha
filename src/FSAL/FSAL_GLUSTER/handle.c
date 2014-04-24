@@ -96,7 +96,8 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	struct stat sb;
 	struct glfs_object *glhandle = NULL;
-	unsigned char globjhdl[GLAPI_HANDLE_LENGTH];
+	unsigned char globjhdl[GFAPI_HANDLE_LENGTH] = {'\0'};
+        char vol_uuid[GLAPI_UUID_LENGTH] = {'\0'};
 	struct glusterfs_handle *objhandle = NULL;
 	struct glusterfs_export *glfs_export =
 	    container_of(opctx->fsal_export, struct glusterfs_export, export);
@@ -116,14 +117,20 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 		goto out;
 	}
 
-	rc = glfs_h_extract_handle(glhandle, globjhdl, GLAPI_HANDLE_LENGTH);
+	rc = glfs_h_extract_handle(glhandle, globjhdl, GFAPI_HANDLE_LENGTH);
 	if (rc < 0) {
 		status = gluster2fsal_error(errno);
 		goto out;
 	}
 
+	rc = glfs_get_volumeid(glfs_export->gl_fs, vol_uuid);
+	if (rc != 0) {
+		status = gluster2fsal_error(rc);
+		goto out;
+	}
+
 	rc = construct_handle(glfs_export, &sb, glhandle, globjhdl,
-			      GLAPI_HANDLE_LENGTH, &objhandle);
+			      GLAPI_HANDLE_LENGTH, &objhandle, vol_uuid);
 	if (rc != 0) {
 		status = gluster2fsal_error(rc);
 		goto out;
@@ -229,7 +236,8 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	struct stat sb;
 	struct glfs_object *glhandle = NULL;
-	unsigned char globjhdl[GLAPI_HANDLE_LENGTH];
+	unsigned char globjhdl[GFAPI_HANDLE_LENGTH] = {'\0'};
+        char vol_uuid[GLAPI_UUID_LENGTH] = {'\0'};
 	struct glusterfs_handle *objhandle = NULL;
 	struct glusterfs_export *glfs_export =
 	    container_of(opctx->fsal_export, struct glusterfs_export, export);
@@ -268,14 +276,20 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 		goto out;
 	}
 
-	rc = glfs_h_extract_handle(glhandle, globjhdl, GLAPI_HANDLE_LENGTH);
+	rc = glfs_h_extract_handle(glhandle, globjhdl, GFAPI_HANDLE_LENGTH);
 	if (rc < 0) {
 		status = gluster2fsal_error(errno);
 		goto out;
 	}
 
+	rc = glfs_get_volumeid(glfs_export->gl_fs, vol_uuid);
+	if (rc != 0) {
+		status = gluster2fsal_error(rc);
+		goto out;
+	}
+
 	rc = construct_handle(glfs_export, &sb, glhandle, globjhdl,
-			      GLAPI_HANDLE_LENGTH, &objhandle);
+			      GLAPI_HANDLE_LENGTH, &objhandle, vol_uuid);
 	if (rc != 0) {
 		status = gluster2fsal_error(rc);
 		goto out;
@@ -309,7 +323,8 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	struct stat sb;
 	struct glfs_object *glhandle = NULL;
-	unsigned char globjhdl[GLAPI_HANDLE_LENGTH];
+	unsigned char globjhdl[GFAPI_HANDLE_LENGTH] = {'\0'};
+        char vol_uuid[GLAPI_UUID_LENGTH] = {'\0'};
 	struct glusterfs_handle *objhandle = NULL;
 	struct glusterfs_export *glfs_export =
 	    container_of(opctx->fsal_export, struct glusterfs_export, export);
@@ -348,14 +363,20 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 		goto out;
 	}
 
-	rc = glfs_h_extract_handle(glhandle, globjhdl, GLAPI_HANDLE_LENGTH);
+	rc = glfs_h_extract_handle(glhandle, globjhdl, GFAPI_HANDLE_LENGTH);
 	if (rc < 0) {
 		status = gluster2fsal_error(errno);
 		goto out;
 	}
 
+	rc = glfs_get_volumeid(glfs_export->gl_fs, vol_uuid);
+	if (rc != 0) {
+		status = gluster2fsal_error(rc);
+		goto out;
+	}
+
 	rc = construct_handle(glfs_export, &sb, glhandle, globjhdl,
-			      GLAPI_HANDLE_LENGTH, &objhandle);
+			      GLAPI_HANDLE_LENGTH, &objhandle, vol_uuid);
 	if (rc != 0) {
 		status = gluster2fsal_error(rc);
 		goto out;
@@ -389,7 +410,8 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	struct stat sb;
 	struct glfs_object *glhandle = NULL;
-	unsigned char globjhdl[GLAPI_HANDLE_LENGTH];
+	unsigned char globjhdl[GFAPI_HANDLE_LENGTH] = {'\0'};
+        char vol_uuid[GLAPI_UUID_LENGTH] = {'\0'};
 	struct glusterfs_handle *objhandle = NULL;
 	dev_t ndev = { 0, };
 	struct glusterfs_export *glfs_export =
@@ -456,14 +478,20 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 		goto out;
 	}
 
-	rc = glfs_h_extract_handle(glhandle, globjhdl, GLAPI_HANDLE_LENGTH);
+	rc = glfs_h_extract_handle(glhandle, globjhdl, GFAPI_HANDLE_LENGTH);
 	if (rc < 0) {
 		status = gluster2fsal_error(errno);
 		goto out;
 	}
 
+	rc = glfs_get_volumeid(glfs_export->gl_fs, vol_uuid);
+	if (rc != 0) {
+		status = gluster2fsal_error(rc);
+		goto out;
+	}
+
 	rc = construct_handle(glfs_export, &sb, glhandle, globjhdl,
-			      GLAPI_HANDLE_LENGTH, &objhandle);
+			      GLAPI_HANDLE_LENGTH, &objhandle, vol_uuid);
 	if (rc != 0) {
 		status = gluster2fsal_error(rc);
 		goto out;
@@ -497,7 +525,8 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	struct stat sb;
 	struct glfs_object *glhandle = NULL;
-	unsigned char globjhdl[GLAPI_HANDLE_LENGTH];
+	unsigned char globjhdl[GFAPI_HANDLE_LENGTH] = {'\0'};
+        char vol_uuid[GLAPI_UUID_LENGTH] = {'\0'};
 	struct glusterfs_handle *objhandle = NULL;
 	struct glusterfs_export *glfs_export =
 	    container_of(opctx->fsal_export, struct glusterfs_export, export);
@@ -536,14 +565,20 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 		goto out;
 	}
 
-	rc = glfs_h_extract_handle(glhandle, globjhdl, GLAPI_HANDLE_LENGTH);
+	rc = glfs_h_extract_handle(glhandle, globjhdl, GFAPI_HANDLE_LENGTH);
 	if (rc < 0) {
 		status = gluster2fsal_error(errno);
 		goto out;
 	}
 
+	rc = glfs_get_volumeid(glfs_export->gl_fs, vol_uuid);
+	if (rc != 0) {
+		status = gluster2fsal_error(rc);
+		goto out;
+	}
+
 	rc = construct_handle(glfs_export, &sb, glhandle, globjhdl,
-			      GLAPI_HANDLE_LENGTH, &objhandle);
+			      GLAPI_HANDLE_LENGTH, &objhandle, vol_uuid);
 	if (rc != 0) {
 		status = gluster2fsal_error(rc);
 		goto out;
