@@ -169,18 +169,7 @@ be used with NFS-Ganesha to support ZFS
 # CEPH
 %if %{with_fsal_ceph}
 %package ceph
-Summary: The NFS-GANESHA's ZFS FSAL
-Group: Applications/System
-
-%description ceph
-This package contains a FSAL shared object to
-be used with NFS-Ganesha to support CEPH
-%endif
-
-# CEPH
-%if %{with_fsal_ceph}
-%package ceph
-Summary: The NFS-GANESHA's ZFS FSAL
+Summary: The NFS-GANESHA's CEPH FSAL
 Group: Applications/System
 
 %description ceph
@@ -233,7 +222,7 @@ to support XFS correctly
 Summary: The NFS-GANESHA's HPSS FSAL
 Group: Applications/System
 Requires: nfs-ganesha
-BuildRequires:
+#BuildRequires:
 
 %description hpss
 This package contains a FSAL shared object to
@@ -254,11 +243,11 @@ be used with NFS-Ganesha to support PT
 
 # GLUSTER
 %if %{with_fsal_gluster}
-%package hpss
-Summary: The NFS-GANESHA's GLSUTER FSAL
+%package gluster
+Summary: The NFS-GANESHA's GLUSTER FSAL
 Group: Applications/System
 Requires: nfs-ganesha
-BuildRequires:
+#BuildRequires:
 
 %description gluster
 This package contains a FSAL shared object to
