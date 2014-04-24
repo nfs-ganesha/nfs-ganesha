@@ -70,8 +70,6 @@
 
 struct lustre_file_handle {
 	lustre_fid fid;
-	/* used for FSAL_DIGEST_FILEID */
-	unsigned long long inode;
 };	 /**< FS object handle */
 
 static inline int lustre_handle_to_path(char *mntpath,
@@ -92,7 +90,6 @@ static inline int lustre_path_to_handle(const char *path,
 					struct lustre_file_handle *out_handle)
 {
 	lustre_fid fid;
-	struct stat ino;
 
 	if (!path || !out_handle)
 		return -1;
@@ -102,12 +99,6 @@ static inline int lustre_path_to_handle(const char *path,
 		return -1;
 
 	out_handle->fid = fid;
-
-	/* Get the inode number */
-	if (lstat(path, &ino) != 0)
-		return -1;
-
-	out_handle->inode = ino.st_ino;
 
 	return 1;
 }
