@@ -270,7 +270,7 @@ be used with NFS-Ganesha to support Gluster
 
 %build
 cmake .	-DCMAKE_BUILD_TYPE=Debug			\
-	-DCMAKE_INSTALL_PREFIX=$RPM_BUILD_ROOT/usr	\
+	-DCMAKE_INSTALL_PREFIX=/usr			\
 	-DCMAKE_BUILD_TYPE=Debug			\
 	-DBUILD_CONFIG=rpmbuild				\
 %if %{with_fsal_zfs}
@@ -365,7 +365,7 @@ install -m 644 config_samples/pt_config.conf              %{buildroot}%{_sysconf
 install -m 644 config_samples/export_pt.conf              %{buildroot}%{_sysconfdir}/ganesha
 %endif
 
-make install
+make DESTDIR=%{buildroot} install
 
 
 %files
