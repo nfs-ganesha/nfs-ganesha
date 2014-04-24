@@ -2314,10 +2314,9 @@ static state_status_t do_lock_op(cache_entry_t *entry,
 			status = STATE_FSAL_ERROR;
 		}
 	} else {
-		if (owner->so_type != STATE_LOCK_OWNER_9P)
-			status =
-			    do_unlock_no_owner(entry, export, req_ctx, lock,
-					       sle_type);
+		if (!LOCK_OWNER_9P(owner))
+			status = do_unlock_no_owner(entry, export, req_ctx,
+						    lock, sle_type);
 	}
 
 	if (status == STATE_LOCK_CONFLICT) {
@@ -2911,8 +2910,7 @@ state_status_t state_unlock(cache_entry_t *entry, exportlist_t *export,
 		return STATE_SUCCESS;
 	}
 
-	if ((owner->so_type != STATE_LOCK_OWNER_9P) &&
-	    state && (state->state_type == STATE_TYPE_DELEG)) {
+	if (state && (state->state_type == STATE_TYPE_DELEG)) {
 		LogFullDebug(COMPONENT_STATE, "Removing delegation from list");
 		status =
 			subtract_deleg_from_list(entry, owner, state, &removed,

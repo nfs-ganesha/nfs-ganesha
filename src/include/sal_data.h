@@ -396,7 +396,9 @@ typedef struct state_nfs4_owner_name_t {
 typedef enum state_owner_type_t {
 	STATE_LOCK_OWNER_UNKNOWN,	/*< Unknown */
 	STATE_LOCK_OWNER_NLM,	/*< An NLM client */
+#ifdef _USE_9P
 	STATE_LOCK_OWNER_9P,	/*< A 9P client */
+#endif
 	STATE_OPEN_OWNER_NFSV4,	/*< An NFSv4 owner of an open */
 	STATE_LOCK_OWNER_NFSV4,	/*< An NFSv4 owner of a set of locks */
 	STATE_CLIENTID_OWNER_NFSV4	/*< An NFSv4 client, owns all
@@ -548,6 +550,13 @@ struct state_owner_t {
 #endif
 	} so_owner;
 };
+
+/* Test if the lock owner type is 9P */
+#ifdef _USE_9P
+#define LOCK_OWNER_9P(owner) ((owner)->so_type == STATE_LOCK_OWNER_9P)
+#else
+#define LOCK_OWNER_9P(owner) (0)
+#endif
 
 extern state_owner_t unknown_owner;
 
