@@ -196,6 +196,9 @@ option(PROXY_HANDLE_MAPPING "enable NFSv3 handle mapping for PROXY FSAL" OFF)
 # Debug symbols (-g) build flag
 option(DEBUG_SYMS "include debug symbols to binaries (-g option)" OFF)
 
+# Add coverage information to build tree
+option(COVERAGE "add flag to generate coverage data at runtime" OFF)
+
 # enable code profiling [-g -pg]
 option(PROFILING "turn on code profiling (-g and -pg)" OFF)
 
@@ -232,6 +235,10 @@ ENDIF()
 IF(DEBUG_SYMS)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -g")
 ENDIF(DEBUG_SYMS)
+
+IF(COVERAGE)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --coverage")
+ENDIF(COVERAGE)
 
 # Build source locations and parameters
 IF(USE_FSAL_CEPH)
@@ -837,6 +844,7 @@ message(STATUS "_NO_XATTRD = ${_NO_XATTRD}")
 message(STATUS "DEBUG_SAL = ${DEBUG_SAL}")
 message(STATUS "PROXY_HANDLE_MAPPING = ${PROXY_HANDLE_MAPPING}")
 message(STATUS "DEBUG_SYMS = ${DEBUG_SYMS}")
+message(STATUS "COVERAGE = ${COVERAGE}")
 message(STATUS "PROFILING = ${PROFILING}")
 message(STATUS "USE_GSS = ${USE_GSS}")
 message(STATUS "TIRPC_EPOLL = ${TIRPC_EPOLL}")
@@ -1050,6 +1058,22 @@ add_custom_command(TARGET rpm
                   COMMAND sh -c "rpmbuild ${WITH_ARG} -ta ${PKG_NAME}"
 		  VERBATIM
 		  DEPENDS dist)
+
+if(COVERAGE)
+	find_program(LCOV_EXEC lcov)
+	find_program(GENHTML_EXEC genhtml)
+	if(LCOV_EXEC AND GENHTML_EXEC)
+		add_custom_target(lcov)
+		add_custom_command(TARGET lcov
+			COMMAND ${LCOV_EXEC} --capture --directory .
+			--output-file coverage.info
+			COMMAND ${GENHTML_EXEC} coverage.info
+			--output-directory ./coverage_html/
+			VERBATIM
+			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+			)
+	endif(LCOV_EXEC AND GENHTML_EXEC)
+endif(COVERAGE)
 
 ########### add a "make doc" target to call Doxygen
 find_package(Doxygen)
