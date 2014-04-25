@@ -38,6 +38,7 @@
 #include "FSAL/fsal_config.h"
 #include "config_parsing.h"
 #include "gluster_internal.h"
+#include "nfs_exports.h"
 
 /**
  * @brief Implements GLUSTER FSAL exportoperation release
@@ -87,33 +88,60 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 {
 	int rc = 0;
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
-	char *realpath;
+	char *realpath = NULL;
 	struct stat sb;
 	struct glfs_object *glhandle = NULL;
-	unsigned char globjhdl[GLAPI_HANDLE_LENGTH];
+	unsigned char globjhdl[GFAPI_HANDLE_LENGTH] = {'\0'};
 	struct glusterfs_handle *objhandle = NULL;
 	struct glusterfs_export *glfs_export =
 	    container_of(export_pub, struct glusterfs_export, export);
+	char vol_uuid[GLAPI_UUID_LENGTH] = {'\0'};
 
 	LogFullDebug(COMPONENT_FSAL, "In args: path = %s", path);
 
 	*pub_handle = NULL;
-	realpath = glfs_export->export_path;
 
+        if (strcmp(path, glfs_export->mount_path) == 0) {
+	        realpath = strdup(glfs_export->export_path);
+        } else {
+                /*
+                 *  mount path is not same as the exported one. Should be subdir
+                 *  then.
+                 *  TODO: How do we handle symlinks if present in the path.
+                 */
+                realpath = malloc(strlen(glfs_export->mount_path));
+                if (realpath) {
+                        strcpy(realpath, glfs_export->export_path);
+                        strcpy(realpath+strlen(glfs_export->export_path),
+                                &path[strlen(glfs_export->mount_path)]);
+                }
+        }
+        if (!realpath) {
+                errno = ENOMEM;
+	        status = gluster2fsal_error(errno);
+       		goto out;
+        }
+                
 	glhandle = glfs_h_lookupat(glfs_export->gl_fs, NULL, realpath, &sb);
 	if (glhandle == NULL) {
 		status = gluster2fsal_error(errno);
 		goto out;
 	}
 
-	rc = glfs_h_extract_handle(glhandle, globjhdl, GLAPI_HANDLE_LENGTH);
+	rc = glfs_h_extract_handle(glhandle, globjhdl, GFAPI_HANDLE_LENGTH);
 	if (rc < 0) {
 		status = gluster2fsal_error(errno);
 		goto out;
 	}
 
+	rc = glfs_get_volumeid(glfs_export->gl_fs, vol_uuid);
+	if (rc != 0) {
+		status = gluster2fsal_error(rc);
+		goto out;
+	}
+
 	rc = construct_handle(glfs_export, &sb, glhandle, globjhdl,
-			      GLAPI_HANDLE_LENGTH, &objhandle);
+			      GLAPI_HANDLE_LENGTH, &objhandle, vol_uuid);
 	if (rc != 0) {
 		status = gluster2fsal_error(rc);
 		goto out;
@@ -121,9 +149,15 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 
 	*pub_handle = &objhandle->handle;
 
+        if (realpath) {
+                free(realpath);
+        }
 	return status;
  out:
 	gluster_cleanup_vars(glhandle);
+        if (realpath) {
+                free(realpath);
+        }
 
 	return status;
 }
@@ -177,10 +211,11 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	struct stat sb;
 	struct glfs_object *glhandle = NULL;
-	unsigned char globjhdl[GLAPI_HANDLE_LENGTH];
+	unsigned char globjhdl[GFAPI_HANDLE_LENGTH] = {'\0'};
 	struct glusterfs_handle *objhandle = NULL;
 	struct glusterfs_export *glfs_export =
 	    container_of(export_pub, struct glusterfs_export, export);
+	char vol_uuid[GLAPI_UUID_LENGTH] = {'\0'};
 #ifdef GLTIMING
 	struct timespec s_time, e_time;
 
@@ -194,18 +229,26 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 		goto out;
 	}
 
-	memcpy(globjhdl, fh_desc->addr, 16);
+	// First 16bytes contain volume UUID. globjhdl is stored in the second
+	// half(16bytes) of the fs_desc->addr. 
+	memcpy(globjhdl, fh_desc->addr+GLAPI_UUID_LENGTH, GFAPI_HANDLE_LENGTH);
 
 	glhandle =
 	    glfs_h_create_from_handle(glfs_export->gl_fs, globjhdl,
-				      GLAPI_HANDLE_LENGTH, &sb);
+				      GFAPI_HANDLE_LENGTH, &sb);
 	if (glhandle == NULL) {
 		status = gluster2fsal_error(errno);
 		goto out;
 	}
 
+	rc = glfs_get_volumeid(glfs_export->gl_fs, vol_uuid);
+	if (rc != 0) {
+		status = gluster2fsal_error(rc);
+		goto out;
+	}
+
 	rc = construct_handle(glfs_export, &sb, glhandle, globjhdl,
-			      GLAPI_HANDLE_LENGTH, &objhandle);
+			      GLAPI_HANDLE_LENGTH, &objhandle, vol_uuid);
 	if (rc != 0) {
 		status = gluster2fsal_error(rc);
 		goto out;
@@ -622,11 +665,15 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 		goto out;
 	}
 
+        glfsexport->mount_path = exp_entry->fullpath; // fullpath is the actual exported path
 	glfsexport->export_path = params.glvolpath;
 	glfsexport->gl_fs = fs;
 	glfsexport->saveduid = geteuid();
 	glfsexport->savedgid = getegid();
 	glfsexport->export.fsal = fsal_hdl;
+	glfsexport->acl_enable =
+		((exp_entry->export_perms.options &
+		  EXPORT_OPTION_DISABLE_ACL) ? 0 : 1);
 
 	*pub_export = &glfsexport->export;
 

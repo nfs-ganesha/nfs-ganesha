@@ -38,7 +38,7 @@
 /* GLUSTERFS FSAL module private storage
  */
 
-const char glfsal_name[] = "GLUSTERFS";
+const char glfsal_name[] = "GLUSTER";
 
 /* filesystem info for GLUSTERFS */
 static struct fsal_staticfsinfo_t default_gluster_info = {
@@ -58,7 +58,7 @@ static struct fsal_staticfsinfo_t default_gluster_info = {
 	.named_attr = true,
 	.unique_handles = true,
 	.lease_time = {10, 0},
-	.acl_support = FSAL_ACLSUPPORT_ALLOW,
+	.acl_support = FSAL_ACLSUPPORT_ALLOW | FSAL_ACLSUPPORT_DENY,
 	.cansettime = true,
 	.homogenous = true,
 	.supported_attrs = GLUSTERFS_SUPPORTED_ATTRIBUTES,
