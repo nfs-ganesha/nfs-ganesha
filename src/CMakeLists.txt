@@ -225,6 +225,9 @@ option(DISTNAME_HAS_GIT_DATA "Distribution package's name carries git data" OFF 
 # Build and package Python admin scripts for managing via DBus
 option(USE_ADMIN_TOOLS "Package Admin scripts" OFF)
 
+# Enable GCC Thread-sanitizer
+option(USE_TSAN "Enable GCC Thread-Sanitizer" OFF)
+
 # Choose a shortcut build config
 
 IF(BUILD_CONFIG)
@@ -864,7 +867,11 @@ message(STATUS "ALLOCATOR = ${ALLOCATOR}")
 message(STATUS "GOLD_LINKER = ${GOLD_LINKER}")
 message(STATUS "CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX}")
 message(STATUS "FSAL_DESTINATION = ${FSAL_DESTINATION}")
+<<<<<<< HEAD
 message(STATUS "USE_ADMIN_TOOLS = ${USE_ADMII_TOOLS}")
+=======
+message(STATUS "USE_TSAN = ${USE_TSAN}")
+>>>>>>> ming_chen/next
 
 #force command line options to be stored in cache
 set(USE_FSAL_VFS ${USE_FSAL_VFS}
@@ -1086,3 +1093,5 @@ if(DOXYGEN_FOUND)
     )
 endif(DOXYGEN_FOUND)
 
+# Include thread-sanitizer module
+include(${CMAKE_SOURCE_DIR}/cmake/tsan.cmake)

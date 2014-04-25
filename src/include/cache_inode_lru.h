@@ -155,7 +155,7 @@ void cache_inode_lru_kill_for_shutdown(cache_entry_t *entry);
 
 static inline bool cache_inode_lru_fds_available(void)
 {
-	if ((open_fd_count >= lru_state.fds_hard_limit)
+	if ((atomic_fetch_size_t(&open_fd_count) >= lru_state.fds_hard_limit)
 	    && lru_state.caching_fds) {
 		LogCrit(COMPONENT_CACHE_INODE_LRU,
 			"FD Hard Limit Exceeded.  Disabling FD Cache and waking"
@@ -164,7 +164,7 @@ static inline bool cache_inode_lru_fds_available(void)
 		lru_wake_thread();
 		return false;
 	}
-	if (open_fd_count >= lru_state.fds_hiwat) {
+	if (atomic_fetch_size_t(&open_fd_count) >= lru_state.fds_hiwat) {
 		LogInfo(COMPONENT_CACHE_INODE_LRU,
 			"FDs above high water mark, waking LRU thread.");
 		lru_wake_thread();

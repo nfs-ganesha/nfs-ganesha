@@ -230,10 +230,11 @@ cache_inode_open(cache_entry_t *entry,
 		   thread will interrogate FSALs for their FD use. */
 		atomic_inc_size_t(&open_fd_count);
 
+
 		LogDebug(COMPONENT_CACHE_INODE,
 			 "cache_inode_open: pentry %p: openflags = %d, "
 			 "open_fd_count = %zd", entry, openflags,
-			 open_fd_count);
+			 atomic_fetch_size_t(&open_fd_count));
 	}
 
 	status = CACHE_INODE_SUCCESS;
