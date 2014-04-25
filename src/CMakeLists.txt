@@ -475,7 +475,9 @@ if(USE_FSAL_LUSTRE)
   if( ( NOT HAVE_INCLUDE_LUSTREAPI_H ) AND ( NOT HAVE_INCLUDE_LIBLUSTREAPI_H ) )
     message( ERROR "Cannot find lustre header files, aborting" )
   endif( ( NOT HAVE_INCLUDE_LUSTREAPI_H ) AND ( NOT HAVE_INCLUDE_LIBLUSTREAPI_H ) )
-
+else(USE_FSAL_LUSTRE)
+  message(WARNING "Disabling SHOOK because it needs LUSTRE")
+  set(USE_FSAL_SHOOK OFF)
 endif(USE_FSAL_LUSTRE)
 
 if(USE_FSAL_LUSTRE AND USE_FSAL_SHOOK)
