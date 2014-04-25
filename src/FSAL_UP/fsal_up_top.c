@@ -1095,7 +1095,7 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 		* TODO: what to do about server issues which made the RPC call fail ? */
 		if (call->stat != RPC_SUCCESS) {
 			pthread_mutex_lock(&clid->cid_mutex);
-			clid->cb_chan_down = TRUE;
+			clid->cb_chan_down = true;
 			pthread_mutex_unlock(&clid->cid_mutex);
 		}
 		gsh_free(fh);
@@ -1148,7 +1148,7 @@ static uint32_t delegrecall_one(state_lock_entry_t *found_entry,
 
 	/* Attempt a recall only if channel state is UP */
 	pthread_mutex_lock(&clid->cid_mutex);
-	if (clid->cb_chan_down == TRUE) {
+	if (clid->cb_chan_down) {
 		pthread_mutex_unlock(&clid->cid_mutex);
 		LogCrit(COMPONENT_NFS_CB, "Call back channel down, not issuing a recall");
 		gsh_free(maxfh);
@@ -1161,7 +1161,7 @@ static uint32_t delegrecall_one(state_lock_entry_t *found_entry,
 		LogCrit(COMPONENT_NFS_CB, "nfs_rpc_get_chan failed");
 		/* TODO: move this to nfs_rpc_get_chan ? */
 		pthread_mutex_lock(&clid->cid_mutex);
-		clid->cb_chan_down = TRUE;
+		clid->cb_chan_down = true;
 		pthread_mutex_unlock(&clid->cid_mutex);
 		gsh_free(maxfh);
 		return NFS_CB_CALL_ABORTED;
@@ -1169,7 +1169,7 @@ static uint32_t delegrecall_one(state_lock_entry_t *found_entry,
 	if (!chan->clnt) {
 		LogCrit(COMPONENT_NFS_CB, "nfs_rpc_get_chan failed (no clnt)");
 		pthread_mutex_lock(&clid->cid_mutex);
-		clid->cb_chan_down = TRUE;
+		clid->cb_chan_down = true;
 		pthread_mutex_unlock(&clid->cid_mutex);
 		gsh_free(maxfh);
 		return NFS_CB_CALL_ABORTED;
