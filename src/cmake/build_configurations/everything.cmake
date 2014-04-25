@@ -5,5 +5,6 @@ set(PROXY_HANDLE_MAPPING ON)
 set(_NO_XATTRD OFF)
 set(USE_DBUS ON)
 set(USE_CB_SIMULATOR ON)
+set(USE_ADMIN_TOOLS ON)
 
 message(STATUS "Building everything")
