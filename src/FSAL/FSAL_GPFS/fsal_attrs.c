@@ -42,10 +42,6 @@
 #include <sys/time.h>
 #include "export_mgr.h"
 
-extern fsal_status_t gpfsfsal_xstat_2_fsal_attributes(
-					gpfsfsal_xstat_t *p_buffxstat,
-					struct attrlist *p_fsalattr_out);
-
 #ifdef _USE_NFS4_ACL
 extern fsal_status_t fsal_acl_2_gpfs_acl(fsal_acl_t *p_fsalacl,
 					 gpfsfsal_xstat_t *p_buffxstat);
@@ -60,29 +56,21 @@ extern fsal_status_t fsal_acl_2_gpfs_acl(fsal_acl_t *p_fsalacl,
  *        - Another error code if an error occured.
  */
 fsal_status_t GPFSFSAL_getattrs(struct fsal_export *export,	/* IN */
+				struct gpfs_filesystem *gpfs_fs, /* IN */
 				const struct req_op_context *p_context,	/* IN */
 				struct gpfs_file_handle *p_filehandle,	/* IN */
 				struct attrlist *p_object_attributes)
 {				/* IN/OUT */
 	fsal_status_t st;
 	gpfsfsal_xstat_t buffxstat;
-	int mntfd;
 	bool expire = FALSE;
 	uint32_t expire_time_attr = 0;	/*< Expiration time for attributes. */
-
-	/* sanity checks.
-	 * note : object_attributes is mandatory in GPFSFSAL_getattrs.
-	 */
-	if (!p_filehandle || !export || !p_object_attributes)
-		return fsalstat(ERR_FSAL_FAULT, 0);
-
-	mntfd = gpfs_get_root_fd(export);
 
 	if (p_context->export->export.expire_type_attr == CACHE_INODE_EXPIRE)
 		expire = TRUE;
 
-	st = fsal_get_xstat_by_handle(mntfd, p_filehandle, &buffxstat,
-				      &expire_time_attr, expire);
+	st = fsal_get_xstat_by_handle(gpfs_fs->root_fd, p_filehandle,
+				      &buffxstat, &expire_time_attr, expire);
 	if (FSAL_IS_ERROR(st))
 		return st;
 
@@ -161,10 +149,10 @@ fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,	/* IN */
 				const struct req_op_context *p_context,	/* IN */
 				struct attrlist *p_object_attributes)
 {				/* IN */
-	unsigned int mntfd;
 	fsal_status_t status;
 	struct gpfs_fsal_obj_handle *myself;
 	gpfsfsal_xstat_t buffxstat;
+	struct gpfs_filesystem *gpfs_fs;
 
 	/* Indicate if stat or acl or both should be changed. */
 	int attr_valid = 0;
@@ -179,7 +167,7 @@ fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,	/* IN */
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
 	myself = container_of(dir_hdl, struct gpfs_fsal_obj_handle, obj_handle);
-	mntfd = gpfs_get_root_fd(p_context->fsal_export);
+	gpfs_fs = dir_hdl->fs->private;
 
 	/* First, check that FSAL attributes changes are allowed. */
 
@@ -343,10 +331,9 @@ fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,	/* IN */
 
 	/* If there is any change in stat or acl or both, send it down to fs. */
 	if (attr_valid != 0) {
-		status =
-		    fsal_set_xstat_by_handle(mntfd, p_context, myself->handle,
-					     attr_valid, attr_changed,
-					     &buffxstat);
+		status = fsal_set_xstat_by_handle(gpfs_fs->root_fd, p_context,
+						  myself->handle, attr_valid,
+						  attr_changed, &buffxstat);
 
 		if (FSAL_IS_ERROR(status))
 			return status;

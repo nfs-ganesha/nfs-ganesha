@@ -27,12 +27,11 @@
 #include "fsal_up.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
+#include "gpfs_methods.h"
 #include <sys/types.h>
 #include <unistd.h>
 #include <utime.h>
 #include <sys/time.h>
-
-struct glist_head gpfs_fsal_up_ctx_list;
 
 /** @todo FSF: there are lots of assumptions in here that must be fixed when we
  *             support unexport. The thread may go away when all exports are
@@ -41,10 +40,9 @@ struct glist_head gpfs_fsal_up_ctx_list;
  */
 void *GPFSFSAL_UP_Thread(void *Arg)
 {
+	struct gpfs_filesystem *gpfs_fs = Arg;
 	const struct fsal_up_vector *event_func;
-	char thr_name[80];
-	struct gpfs_fsal_up_ctx *gpfs_fsal_up_ctx =
-	    (struct gpfs_fsal_up_ctx *)Arg;
+	char thr_name[16];
 	int rc = 0;
 	struct nfsd4_pnfs_deviceid dev_id;
 	struct stat buf;
@@ -59,12 +57,13 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 	uint32_t expire_time_attr = 0;
 	uint32_t upflags = 0;
 
-	snprintf(thr_name, sizeof(thr_name), "fsal_up_%d.%d",
-		 gpfs_fsal_up_ctx->gf_fsid[0], gpfs_fsal_up_ctx->gf_fsid[1]);
+	snprintf(thr_name, sizeof(thr_name),
+		 "fsal_up_%"PRIu64".%"PRIu64,
+		 gpfs_fs->fs->dev.major, gpfs_fs->fs->dev.minor);
 	SetNameFunction(thr_name);
 
 	/* Set the FSAL UP functions that will be used to process events. */
-	event_func = gpfs_fsal_up_ctx->gf_export->up_ops;
+	event_func = gpfs_fs->up_ops;
 
 	if (event_func == NULL) {
 		LogFatal(COMPONENT_FSAL_UP,
@@ -75,26 +74,15 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 
 	LogFullDebug(COMPONENT_FSAL_UP,
 		     "Initializing FSAL Callback context for %d.",
-		     gpfs_fsal_up_ctx->gf_fd);
+		     gpfs_fs->root_fd);
 
 	/* Start querying for events and processing. */
 	while (1) {
-		/* Make sure we have at least one export. */
-		if (glist_empty(&gpfs_fsal_up_ctx_list)) {
-			/** @todo FSF: should properly clean up if we have
-			*              unexported all exports on this
-			*              file system.
-			*/
-			LogCrit(COMPONENT_FSAL_UP,
-				"All exports for file system %d have gone away",
-				gpfs_fsal_up_ctx->gf_fd);
-			gsh_free(Arg);
-			return NULL;
-		}
+		/* @todo FSF: need to figure out how to exit in new scheme */
 
 		LogFullDebug(COMPONENT_FSAL_UP,
 			     "Requesting event from FSAL Callback interface for %d.",
-			     gpfs_fsal_up_ctx->gf_fd);
+			     gpfs_fs->root_fd);
 
 		handle.handle_size = OPENHANDLE_HANDLE_LEN;
 		handle.handle_key_size = OPENHANDLE_KEY_LEN;
@@ -103,7 +91,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 		callback.interface_version =
 		    GPFS_INTERFACE_VERSION + GPFS_INTERFACE_SUB_VER;
 
-		callback.mountdirfd = gpfs_fsal_up_ctx->gf_fd;
+		callback.mountdirfd = gpfs_fs->root_fd;
 		callback.handle = &handle;
 		callback.reason = &reason;
 		callback.flags = &flags;
@@ -128,7 +116,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 			LogCrit(COMPONENT_FSAL_UP,
 				"OPENHANDLE_INODE_UPDATE failed for %d."
 				" rc %d, errno %d (%s) reason %d",
-				gpfs_fsal_up_ctx->gf_fd, rc, errno,
+				gpfs_fs->root_fd, rc, errno,
 				strerror(errno), reason);
 
 			rc = -(rc);
@@ -146,7 +134,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 			if (errno == EUNATCH)
 				LogFatal(COMPONENT_FSAL_UP,
 					 "GPFS file system %d has gone away.",
-					 gpfs_fsal_up_ctx->gf_fd);
+					 gpfs_fs->root_fd);
 
 			continue;
 		}
@@ -184,7 +172,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 		key.len = handle.handle_key_size;
 
 		LogDebug(COMPONENT_FSAL_UP, "Received event to process for %d",
-			 gpfs_fsal_up_ctx->gf_fd);
+			 gpfs_fs->root_fd);
 
 		switch (reason) {
 		case INODE_LOCK_GRANTED:	/* Lock Event */
@@ -208,7 +196,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 				};
 				rc = up_async_lock_grant(general_fridge,
 							 event_func,
-							 gpfs_fsal_up_ctx->gf_fsal,
+							 gpfs_fs->fs->fsal,
 							 &key,
 							 fl.lock_owner,
 							 &lockdesc, NULL, NULL);
@@ -220,7 +208,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 				 "delegation recall: flags:%x ino %ld", flags,
 				 callback.buf->st_ino);
 			rc = up_async_delegrecall(general_fridge, event_func,
-						  gpfs_fsal_up_ctx->gf_fsal,
+						  gpfs_fs->fs->fsal,
 						  &key, NULL, NULL);
 			break;
 
@@ -237,7 +225,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 
 				rc = up_async_layoutrecall(general_fridge,
 							event_func,
-							gpfs_fsal_up_ctx->gf_fsal,
+							gpfs_fs->fs->fsal,
 							&key,
 							LAYOUT4_NFSV4_1_FILES,
 							false, &segment,
@@ -327,7 +315,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 					    expire_time_attr;
 
 					rc = event_func->
-					    update(gpfs_fsal_up_ctx->gf_fsal,
+					    update(gpfs_fs->fs->fsal,
 					    	   &key, &attr, upflags);
 
 					if ((flags & UP_NLINK)
@@ -337,14 +325,14 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 						rc = up_async_update
 						    (general_fridge,
 						     event_func,
-						     gpfs_fsal_up_ctx->gf_fsal,
+						     gpfs_fs->fs->fsal,
 						     &key, &attr,
 						     upflags, NULL, NULL);
 					}
 				} else {
 					rc = event_func->
 					    invalidate(
-						gpfs_fsal_up_ctx->gf_fsal, &key,
+						gpfs_fs->fs->fsal, &key,
 						CACHE_INODE_INVALIDATE_ATTRS
 						|
 						CACHE_INODE_INVALIDATE_CONTENT);
@@ -356,7 +344,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 		case THREAD_STOP:	/* GPFS export no longer available */
 			LogWarn(COMPONENT_FSAL_UP,
 				"GPFS file system %d is no longer available",
-				gpfs_fsal_up_ctx->gf_fd);
+				gpfs_fs->root_fd);
 			return NULL;
 
 		case INODE_INVALIDATE:
@@ -367,7 +355,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 			upflags = CACHE_INODE_INVALIDATE_ATTRS |
 				  CACHE_INODE_INVALIDATE_CONTENT;
 			rc = event_func->invalidate_close(
-						gpfs_fsal_up_ctx->gf_fsal,
+						gpfs_fs->fs->fsal,
 					        event_func,
 						&key,
 						upflags);
@@ -381,28 +369,9 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 		if (rc && rc != CACHE_INODE_NOT_FOUND) {
 			LogWarn(COMPONENT_FSAL_UP,
 				"Event %d could not be processed for fd %d rc %d",
-				reason, gpfs_fsal_up_ctx->gf_fd, rc);
+				reason, gpfs_fs->root_fd, rc);
 		}
 	}
 
 	return NULL;
 }				/* GPFSFSAL_UP_Thread */
-
-struct gpfs_fsal_up_ctx *gpfsfsal_find_fsal_up_context(struct gpfs_fsal_up_ctx
-						       *export_ctx)
-{
-	struct glist_head *glist;
-
-	glist_for_each(glist, &gpfs_fsal_up_ctx_list) {
-		struct gpfs_fsal_up_ctx *gpfs_fsal_up_ctx;
-
-		gpfs_fsal_up_ctx =
-		    glist_entry(glist, struct gpfs_fsal_up_ctx, gf_list);
-
-		if ((gpfs_fsal_up_ctx->gf_fsid[0] == export_ctx->gf_fsid[0])
-		    && (gpfs_fsal_up_ctx->gf_fsid[1] == export_ctx->gf_fsid[1]))
-			return gpfs_fsal_up_ctx;
-	}
-
-	return NULL;
-}

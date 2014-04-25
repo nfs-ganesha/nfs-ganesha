@@ -76,4 +76,54 @@ int fsal_ds_handle_uninit(struct fsal_ds_handle *ds);
 
 int open_dir_by_path_walk(int first_fd, const char *path, struct stat *stat);
 
+struct avltree avl_fsid;
+struct avltree avl_dev;
+
+struct glist_head posix_file_systems;
+
+pthread_rwlock_t fs_lock;
+
+void free_fs(struct fsal_filesystem *fs);
+
+int populate_posix_file_systems(void);
+
+void release_posix_file_systems(void);
+
+int re_index_fs_fsid(struct fsal_filesystem *fs,
+		     enum fsid_type fsid_type,
+		     uint64_t major,
+		     uint64_t minor);
+
+int re_index_fs_dev(struct fsal_filesystem *fs,
+		    struct fsal_dev__ *dev);
+
+int change_fsid_type(struct fsal_filesystem *fs,
+		     enum fsid_type fsid_type);
+
+struct fsal_filesystem *lookup_fsid_locked(struct fsal_fsid__ *fsid,
+					   enum fsid_type fsid_type);
+struct fsal_filesystem *lookup_dev_locked(struct fsal_dev__ *dev);
+struct fsal_filesystem *lookup_fsid(struct fsal_fsid__ *fsid,
+				    enum fsid_type fsid_type);
+struct fsal_filesystem *lookup_dev(struct fsal_dev__ *dev);
+
+void unclaim_fs(struct fsal_filesystem *this);
+
+int claim_posix_filesystems(const char *path,
+			    struct fsal_module *fsal,
+			    struct fsal_export *exp,
+			    claim_filesystem_cb claim,
+			    unclaim_filesystem_cb unclaim,
+			    struct fsal_filesystem **root_fs);
+
+int encode_fsid(char *buf,
+		int max,
+		struct fsal_fsid__ *fsid,
+		enum fsid_type fsid_type);
+
+int decode_fsid(char *buf,
+		int max,
+		struct fsal_fsid__ *fsid,
+		enum fsid_type fsid_type);
+
 #endif				/* FSAL_COMMONLIB_H */

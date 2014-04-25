@@ -49,8 +49,16 @@ static void fs_layouttypes(struct fsal_export *export_hdl, size_t *count,
 	int rc;
 	struct open_arg arg;
 	static const layouttype4 supported_layout_type = LAYOUT4_NFSV4_1_FILES;
+	struct gpfs_filesystem *gpfs_fs;
+	struct gpfs_fsal_export *myself;
 
-	arg.mountdirfd = gpfs_get_root_fd(export_hdl);
+	/** @todo FSF: needs real getdeviceinfo that gets to the correct
+	 * filesystem, this will not work for sub-mounted filesystems.
+	 */
+	myself = container_of(export_hdl, struct gpfs_fsal_export, export);
+	gpfs_fs = myself->root_fs->private;
+
+	arg.mountdirfd = gpfs_fs->root_fd;
 	rc = gpfs_ganesha(OPENHANDLE_LAYOUT_TYPE, &arg);
 	if (rc < 0 || (rc != LAYOUT4_NFSV4_1_FILES)) {
 		LogDebug(COMPONENT_PNFS, "fs_layouttypes rc %d\n", rc);
@@ -143,8 +151,16 @@ static nfsstat4 getdeviceinfo(struct fsal_export *export_hdl,
 	int rc = 0;
 	size_t ds_buffer = 0;
 	struct deviceinfo_arg darg;
+	struct gpfs_filesystem *gpfs_fs;
+	struct gpfs_fsal_export *myself;
 
-	darg.mountdirfd = gpfs_get_root_fd(export_hdl);
+	/** @todo FSF: needs real getdeviceinfo that gets to the correct
+	 * filesystem, this will not work for sub-mounted filesystems.
+	 */
+	myself = container_of(export_hdl, struct gpfs_fsal_export, export);
+	gpfs_fs = myself->root_fs->private;
+
+	darg.mountdirfd = gpfs_fs->root_fd;
 	darg.type = LAYOUT4_NFSV4_1_FILES;
 	darg.devid.sbid = deviceid->export_id;
 	darg.devid.devid = deviceid->devid;

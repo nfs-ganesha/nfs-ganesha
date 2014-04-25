@@ -41,6 +41,7 @@
 #define FSAL_API
 
 #include "fsal_pnfs.h"
+#include "avltree.h"
 
 /**
  * @page newapi New FSAL API
@@ -297,6 +298,7 @@ struct fsal_export;
 struct export_ops;
 struct fsal_obj_handle;
 struct fsal_obj_ops;
+struct fsal_filesystem;
 struct exportlist;		/* We just need a pointer, not all of
 				 * nfs_exports.h full def in
 				 * include/nfs_exports.h */
@@ -799,7 +801,7 @@ struct export_ops {
  * @retval FSAL status.
  */
 	 fsal_status_t(*get_fs_dynamic_info) (struct fsal_obj_handle *obj_hdl,
-	 				      struct fsal_export *exp_hdl,
+					      struct fsal_export *exp_hdl,
 					      const struct req_op_context *
 					      opctx,
 					      fsal_dynamicfsinfo_t *info);
@@ -1171,8 +1173,80 @@ struct fsal_obj_handle {
 	int refs;		/*< Reference count */
 	object_file_type_t type;	/*< Object file type */
 	struct fsal_module *fsal;	/*< Link back to fsal module */
+	struct fsal_filesystem *fs;	/*< Owning filesystem */
 	struct attrlist attributes;	/*< Cached attributes */
 	struct fsal_obj_ops *ops;	/*< Operations vector */
+};
+
+/**
+ * @brief Public structure for filesystem descriptions
+ *
+ * This stucture is provided along with a general interface to support those
+ * FSALs that map into a traditional file system model. Note that
+ * fsal_obj_handles do not link to an fsal_filesystem, that linkage is reserved
+ * for and FSAL's private obj handle if appropriate.
+ *
+ */
+
+typedef int (*claim_filesystem_cb)(struct fsal_filesystem *fs,
+				   struct fsal_export *exp);
+
+typedef void (*unclaim_filesystem_cb)(struct fsal_filesystem *fs);
+
+enum fsid_type {
+	FSID_NO_TYPE,
+	FSID_ONE_UINT64,
+	FSID_MAJOR_64,
+	FSID_TWO_UINT64,
+	FSID_TWO_UINT32,
+	FSID_DEVICE
+};
+
+static inline uint64_t squash_fsid(const struct fsal_fsid__ *fsid)
+{
+	return fsid->major ^ (fsid->minor << 32 | fsid->minor >> 32);
+}
+
+static inline int sizeof_fsid(enum fsid_type type)
+{
+	switch (type) {
+	case FSID_NO_TYPE:
+		return 0;
+	case FSID_ONE_UINT64:
+	case FSID_MAJOR_64:
+		return sizeof(uint64_t);
+	case FSID_TWO_UINT64:
+		return 2 * sizeof(uint64_t);
+	case FSID_TWO_UINT32:
+	case FSID_DEVICE:
+		return 2 * sizeof(uint32_t);
+	}
+
+	return -1;
+}
+
+struct fsal_filesystem {
+	struct fsal_module *fsal;	/*< Link back to fsal module */
+	struct glist_head filesystems;	/*< List of file systems */
+	unclaim_filesystem_cb unclaim;  /*< Call back to unclaim this fs */
+	struct fsal_filesystem *parent;	/*< Parent file system */
+	struct glist_head children;	/*< Child file systems */
+	struct glist_head siblings;	/*< Entry in list of parent's child
+					    file systems */
+	bool exported;			/*< true if explicitly exported */
+	bool in_fsid_avl;		/*< true if inserted in fsid avl */
+	bool in_dev_avl;		/*< true if inserted in dev avl */
+	fsal_dev_t dev;			/*< device filesystem is on */
+	enum fsid_type fsid_type;	/*< type of fsid present */
+	struct fsal_fsid__ fsid;	/*< file system id */
+	struct avltree_node avl_fsid;	/*< AVL indexed by fsid */
+	struct avltree_node avl_dev;	/*< AVL indexed by dev */
+	void *private;			/*< Private data for owning FSAL */
+	char *path;			/*< Path to root of this file system */
+	char *device;			/*< Path to block device */
+	char *type;			/*< fs type */
+	uint32_t pathlen;		/*< Length of path */
+	uint32_t namelen;		/*< Name length from statfs */
 };
 
 /**

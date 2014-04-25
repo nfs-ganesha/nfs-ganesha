@@ -63,6 +63,7 @@ fsal_status_t GPFSFSAL_lock_op(struct fsal_export *export,
 	struct glock glock_args;
 	struct set_get_lock_arg gpfs_sg_arg;
 	struct gpfs_fsal_obj_handle *myself;
+	struct gpfs_filesystem *gpfs_fs;
 
 	if (obj_hdl == NULL) {
 		LogDebug(COMPONENT_FSAL, "obj_hdl arg is NULL.");
@@ -80,6 +81,7 @@ fsal_status_t GPFSFSAL_lock_op(struct fsal_export *export,
 	}
 
 	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
+	gpfs_fs = obj_hdl->fs->private;
 	glock_args.lfd = myself->u.file.fd;
 
 	LogFullDebug(COMPONENT_FSAL,
@@ -122,7 +124,7 @@ fsal_status_t GPFSFSAL_lock_op(struct fsal_export *export,
 
 	glock_args.lfd = myself->u.file.fd;
 	glock_args.lock_owner = p_owner;
-	gpfs_sg_arg.mountdirfd = gpfs_get_root_fd(export);
+	gpfs_sg_arg.mountdirfd = gpfs_fs->root_fd;
 	gpfs_sg_arg.lock = &glock_args;
 	gpfs_sg_arg.reclaim = request_lock.lock_reclaim;
 

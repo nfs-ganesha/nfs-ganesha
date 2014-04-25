@@ -78,6 +78,7 @@ int posix2fsal_error(int posix_errorcode)
 		return ERR_FSAL_IO;
 
 		/* no such device */
+	case ENOTTY:
 	case ENODEV:
 	case ENXIO:
 		LogInfo(COMPONENT_FSAL, "Mapping %d to ERR_FSAL_NXIO",

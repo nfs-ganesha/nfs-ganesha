@@ -32,6 +32,7 @@
 #include "nfs_exports.h"
 #include "nfs_core.h"
 #include "fsal_private.h"
+#include "FSAL/fsal_commonlib.h"
 
 /**
  * @file fsal_destroyer.c
@@ -204,6 +205,8 @@ void destroy_fsals(void)
 			gsh_free(fsal_name);
 		}
 	}
+
+	release_posix_file_systems();
 }
 
 /**

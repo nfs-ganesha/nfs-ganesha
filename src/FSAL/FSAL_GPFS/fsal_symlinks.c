@@ -74,7 +74,7 @@ fsal_status_t GPFSFSAL_readlink(struct fsal_obj_handle *dir_hdl,	/* IN */
 /*   int errsv; */
 	fsal_status_t status;
 	struct gpfs_fsal_obj_handle *gpfs_hdl;
-	int mount_fd;
+	struct gpfs_filesystem *gpfs_fs;
 
 	/* sanity checks.
 	 * note : link_attributes is optional.
@@ -84,12 +84,11 @@ fsal_status_t GPFSFSAL_readlink(struct fsal_obj_handle *dir_hdl,	/* IN */
 
 	gpfs_hdl =
 	    container_of(dir_hdl, struct gpfs_fsal_obj_handle, obj_handle);
-	mount_fd = gpfs_get_root_fd(p_context->fsal_export);
+	gpfs_fs = dir_hdl->fs->private;
 
 	/* Read the link on the filesystem */
-	status =
-	    fsal_readlink_by_handle(mount_fd, gpfs_hdl->handle, p_link_content,
-				    link_len);
+	status = fsal_readlink_by_handle(gpfs_fs->root_fd, gpfs_hdl->handle,
+					 p_link_content, link_len);
 
 	if (FSAL_IS_ERROR(status))
 		return status;
@@ -98,9 +97,8 @@ fsal_status_t GPFSFSAL_readlink(struct fsal_obj_handle *dir_hdl,	/* IN */
 
 	if (p_link_attributes) {
 
-		status = GPFSFSAL_getattrs(p_context->fsal_export,
-					   p_context,
-					   gpfs_hdl->handle,
+		status = GPFSFSAL_getattrs(p_context->fsal_export, gpfs_fs,
+					   p_context, gpfs_hdl->handle,
 					   p_link_attributes);
 
 		/* On error, we set a flag in the returned attributes */
@@ -153,8 +151,9 @@ fsal_status_t GPFSFSAL_symlink(struct fsal_obj_handle *dir_hdl,	/* IN */
 
 	int rc, errsv;
 	fsal_status_t status;
-	int mount_fd, fd;
+	int fd;
 	struct gpfs_fsal_obj_handle *gpfs_hdl;
+	struct gpfs_filesystem *gpfs_fs;
 
 	/* sanity checks.
 	 * note : link_attributes is optional.
@@ -166,7 +165,7 @@ fsal_status_t GPFSFSAL_symlink(struct fsal_obj_handle *dir_hdl,	/* IN */
 	gpfs_hdl =
 	    container_of(dir_hdl, struct gpfs_fsal_obj_handle, obj_handle);
 
-	mount_fd = gpfs_get_root_fd(p_context->fsal_export);
+	gpfs_fs = dir_hdl->fs->private;
 
 	/* Tests if symlinking is allowed by configuration. */
 
@@ -175,9 +174,8 @@ fsal_status_t GPFSFSAL_symlink(struct fsal_obj_handle *dir_hdl,	/* IN */
 			fso_symlink_support))
 		return fsalstat(ERR_FSAL_NOTSUPP, 0);
 
-	status =
-	    fsal_internal_handle2fd(mount_fd, gpfs_hdl->handle, &fd,
-				    O_RDONLY | O_DIRECTORY);
+	status = fsal_internal_handle2fd(gpfs_fs->root_fd, gpfs_hdl->handle,
+					 &fd, O_RDONLY | O_DIRECTORY);
 
 	if (FSAL_IS_ERROR(status))
 		return status;
@@ -213,10 +211,9 @@ fsal_status_t GPFSFSAL_symlink(struct fsal_obj_handle *dir_hdl,	/* IN */
 
 	if (p_link_attributes) {
 
-		status =
-		    GPFSFSAL_getattrs(p_context->fsal_export,
-		    		      p_context, p_link_handle,
-				      p_link_attributes);
+		status = GPFSFSAL_getattrs(p_context->fsal_export, gpfs_fs,
+					   p_context, p_link_handle,
+					   p_link_attributes);
 
 		/* On error, we set a flag in the returned attributes */
 

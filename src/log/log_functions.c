@@ -863,7 +863,7 @@ int disable_log_facility(char * name)
  * @return 0 on success, -errno on errors.
  */
 
-static int set_default_log_facility(char *name)
+static int set_default_log_facility(const char *name)
 {
 	struct log_facility *facility;
 
@@ -1078,19 +1078,30 @@ void init_logging(const char *log_path, const int debug_level)
 		LogFatal(COMPONENT_LOG,
 			 "Create error (%s) for SYSLOG log facility!",
 			 strerror(-rc));
+
 	if (log_path) {
-		rc = create_log_facility("FILE", log_to_file,
-					 NIV_FULL_DEBUG, LH_ALL,
-					 (void *)log_path);
-		if (rc != 0)
-			LogFatal(COMPONENT_LOG,
-				 "Create error (%s) for FILE (%s) logging!",
-				 strerror(-rc), log_path);
-		rc = set_default_log_facility("FILE");
-		if (rc != 0)
-			LogFatal(COMPONENT_LOG,
-				 "Enable error (%s) for FILE (%s) logging!",
-				 strerror(-rc), log_path);
+		if ((strcmp(log_path, "STDERR") == 0) ||
+		    (strcmp(log_path, "SYSLOG") == 0) ||
+		    (strcmp(log_path, "STDOUT") == 0)) {
+			rc = set_default_log_facility(log_path);
+			if (rc != 0)
+				LogFatal(COMPONENT_LOG,
+					 "Enable error (%s) for %s logging!",
+					 strerror(-rc), log_path);
+		} else {
+			rc = create_log_facility("FILE", log_to_file,
+						 NIV_FULL_DEBUG, LH_ALL,
+						 (void *)log_path);
+			if (rc != 0)
+				LogFatal(COMPONENT_LOG,
+					 "Create error (%s) for FILE (%s) logging!",
+					 strerror(-rc), log_path);
+			rc = set_default_log_facility("FILE");
+			if (rc != 0)
+				LogFatal(COMPONENT_LOG,
+					 "Enable error (%s) for FILE (%s) logging!",
+					 strerror(-rc), log_path);
+		}
 	} else {
 		/* Fall back to SYSLOG as the first default facility */
 		rc = set_default_log_facility("SYSLOG");

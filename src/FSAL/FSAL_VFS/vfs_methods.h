@@ -1,40 +1,78 @@
+/*
+ *   Copyright (C) International Business Machines  Corp., 2010
+ *   Author(s): Aneesh Kumar K.V <aneesh.kumar@linux.vnet.ibm.com>
+ *
+ *   This library is free software; you can redistribute it and/or modify
+ *   it under the terms of the GNU Lesser General Public License as published
+ *   by the Free Software Foundation; either version 2.1 of the License, or
+ *   (at your option) any later version.
+ *
+ *   This library is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
+ *   the GNU Lesser General Public License for more details.
+ *
+ *   You should have received a copy of the GNU Lesser General Public License
+ *   along with this library; if not, write to the Free Software
+ *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ */
+
+/**
+ * @file FSAL/FSAL_VFS/vfs_methods.h
+ * @brief System calls for the FreeBSD handle calls
+ */
+
 /* VFS methods for handles
  */
 
-#include "fsal_handle_syscalls.h"
-struct vfs_fsal_obj_handle;
+#ifndef VFS_METHODS_H
+#define VFS_METHODS_H
 
-struct vfs_exp_handle_ops {
-	int (*vex_open_by_handle) (struct fsal_export *exp,
-				   vfs_file_handle_t *fh, int openflags,
-				   fsal_errors_t *fsal_error);
-	int (*vex_name_to_handle) (int fd, const char *name,
-				   vfs_file_handle_t *fh);
-	int (*vex_fd_to_handle) (int fd, vfs_file_handle_t *fh);
-	int (*vex_readlink) (struct fsal_export *exp,
-			     struct vfs_fsal_obj_handle *,
-			     fsal_errors_t *);
-};
+#include "fsal_handle_syscalls.h"
+
+struct vfs_fsal_obj_handle;
+struct vfs_fsal_export;
+struct vfs_filesystem;
 
 /*
  * VFS internal export
  */
 struct vfs_fsal_export {
 	struct fsal_export export;
-	char *mntdir;
-	char *fs_spec;
-	char *fstype;
-	int root_fd;
-	dev_t root_dev;
-	vfs_file_handle_t *root_handle;
 	bool pnfs_panfs_enabled;
-	struct vfs_exp_handle_ops vex_ops;
 	char *handle_lib;
 	void *pnfs_data;
+	struct fsal_filesystem *root_fs;
+	struct glist_head filesystems;
+	int fsid_type;
 };
+
+/*
+ * VFS internal filesystem
+ */
+struct vfs_filesystem {
+	struct fsal_filesystem *fs;
+	int root_fd;
+	struct glist_head exports;
+};
+
+/*
+ * Link VFS file systems and exports
+ * Supports a many-to-many relationship
+ */
+struct vfs_filesystem_export_map {
+	struct vfs_fsal_export *exp;
+	struct vfs_filesystem *fs;
+	struct glist_head on_exports;
+	struct glist_head on_filesystems;
+};
+
+void vfs_unexport_filesystems(struct vfs_fsal_export *exp);
 
 /* private helpers from export
  */
+
+void vfs_handle_ops_init(struct fsal_obj_ops *ops);
 
 int vfs_get_root_fd(struct fsal_export *exp_hdl);
 
@@ -67,6 +105,7 @@ fsal_status_t vfs_create_handle(struct fsal_export *exp_hdl,
 
 struct vfs_fsal_obj_handle {
 	struct fsal_obj_handle obj_handle;
+	fsal_dev_t dev;
 	vfs_file_handle_t *handle;
 	const struct fsal_up_vector *up_ops;	/*< Upcall operations */
 	union {
@@ -85,6 +124,45 @@ struct vfs_fsal_obj_handle {
 	} u;
 };
 
+/* default vex ops */
+int vfs_fd_to_handle(int fd, struct fsal_filesystem *fs,
+		     vfs_file_handle_t *fh);
+
+int vfs_name_to_handle(int atfd,
+		       struct fsal_filesystem *fs,
+		       const char *name,
+		       vfs_file_handle_t *fh);
+
+int vfs_open_by_handle(struct vfs_filesystem *fs,
+		       vfs_file_handle_t *fh, int openflags,
+		       fsal_errors_t *fsal_error);
+
+int vfs_encode_dummy_handle(vfs_file_handle_t *fh,
+			    struct fsal_filesystem *fs);
+
+bool vfs_is_dummy_handle(vfs_file_handle_t *fh);
+
+bool vfs_valid_handle(struct gsh_buffdesc *desc);
+
+int vfs_readlink(struct vfs_fsal_obj_handle *myself,
+		 fsal_errors_t *fsal_error);
+
+int vfs_extract_fsid(vfs_file_handle_t *fh,
+		     enum fsid_type *fsid_type,
+		     struct fsal_fsid__ *fsid);
+
+int vfs_get_root_handle(struct vfs_filesystem *vfs_fs,
+			struct vfs_fsal_export *exp);
+
+int vfs_re_index(struct vfs_filesystem *vfs_fs,
+		 struct vfs_fsal_export *exp);
+
+void vfs_fini(struct vfs_fsal_export *myself);
+
+void vfs_init_export_ops(struct vfs_fsal_export *myself,
+			 const char *export_path);
+
+int vfs_init_export_pnfs(struct vfs_fsal_export *myself);
 
 /*
  * VFS structure to tell subfunctions wether they should close the
@@ -96,12 +174,9 @@ struct closefd {
 };
 
 
-int vfs_fsal_open(struct fsal_export *exp,
-		  struct vfs_fsal_obj_handle *,
-		  int, fsal_errors_t *);
-int vfs_fsal_readlink(struct fsal_export *exp,
-		      struct vfs_fsal_obj_handle *,
-		      fsal_errors_t *);
+int vfs_fsal_open(struct vfs_fsal_obj_handle *hdl,
+		  int openflags,
+		  fsal_errors_t *fsal_error);
 
 static inline bool vfs_unopenable_type(object_file_type_t type)
 {
@@ -182,3 +257,5 @@ fsal_status_t vfs_remove_extattr_by_id(struct fsal_obj_handle *obj_hdl,
 fsal_status_t vfs_remove_extattr_by_name(struct fsal_obj_handle *obj_hdl,
 					 const struct req_op_context *opctx,
 					 const char *xattr_name);
+
+#endif			/* VFS_METHODS_H */

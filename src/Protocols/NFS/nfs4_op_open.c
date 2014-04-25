@@ -1458,7 +1458,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 							  fso_delegations)
 	    && (data->export_perms.options & EXPORT_OPTION_DELEGATIONS)
 	    && owner->so_owner.so_nfs4_owner.so_confirmed == TRUE
-	    && clientid->cb_chan_down == FALSE
+	    && !clientid->cb_chan_down
 	    && claim != CLAIM_DELEGATE_CUR
 	    && should_we_grant_deleg(data->current_entry,
 				     clientid,

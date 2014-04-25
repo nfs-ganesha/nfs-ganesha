@@ -31,7 +31,6 @@
  *          accessed as extern by the fsal modules
  *
  */
-#define FSAL_INTERNAL_C
 #include "config.h"
 
 #include <sys/ioctl.h>
@@ -510,8 +509,7 @@ fsal_status_t fsal_internal_unlink(int dirfd,
  *
  * \return status of operation
  */
-fsal_status_t fsal_internal_create(int dirfd,
-				   struct gpfs_file_handle *p_dir_handle,
+fsal_status_t fsal_internal_create(struct fsal_obj_handle *dir_hdl,
 				   const char *p_stat_name, mode_t mode,
 				   dev_t dev,
 				   struct gpfs_file_handle *p_new_handle,
@@ -519,6 +517,8 @@ fsal_status_t fsal_internal_create(int dirfd,
 {
 	int rc;
 	struct create_name_arg crarg;
+	struct gpfs_filesystem *gpfs_fs;
+	struct gpfs_fsal_obj_handle *gpfs_hdl;
 #ifdef _VALGRIND_MEMCHECK
 	gpfsfsal_handle_t *p_handle = (gpfsfsal_handle_t *) p_new_handle;
 #endif
@@ -530,12 +530,16 @@ fsal_status_t fsal_internal_create(int dirfd,
 	memset(p_handle, 0, sizeof(*p_handle));
 #endif
 
-	crarg.mountdirfd = dirfd;
+	gpfs_hdl =
+	    container_of(dir_hdl, struct gpfs_fsal_obj_handle, obj_handle);
+	gpfs_fs = dir_hdl->fs->private;
+
+	crarg.mountdirfd = gpfs_fs->root_fd;
 	crarg.mode = mode;
 	crarg.dev = dev;
 	crarg.len = strlen(p_stat_name);
 	crarg.name = p_stat_name;
-	crarg.dir_fh = p_dir_handle;
+	crarg.dir_fh = gpfs_hdl->handle;
 	crarg.new_fh = p_new_handle;
 	crarg.new_fh->handle_size = OPENHANDLE_HANDLE_LEN;
 	crarg.new_fh->handle_key_size = OPENHANDLE_KEY_LEN;
@@ -685,30 +689,27 @@ fsal_status_t fsal_get_xstat_by_handle(int dirfd,
 	pacl_gpfs->acl_version = GPFS_ACL_VERSION_NFS4;
 	pacl_gpfs->acl_type = GPFS_ACL_TYPE_NFS4;
 	pacl_gpfs->acl_len = GPFS_ACL_BUF_SIZE;
-#endif				/* _USE_NFS4_ACL */
-
-#ifdef _USE_NFS4_ACL
+	xstatarg.acl = pacl_gpfs;
 	xstatarg.attr_valid = XATTR_STAT | XATTR_ACL;
 #else
+	xstatarg.acl = NULL;
 	xstatarg.attr_valid = XATTR_STAT;
-#endif
+#endif /* _USE_NFS4_ACL */
 	if (expire)
 		xstatarg.attr_valid |= XATTR_EXPIRE;
 
 	xstatarg.mountdirfd = dirfd;
 	xstatarg.handle = p_handle;
-#ifdef _USE_NFS4_ACL
-	xstatarg.acl = pacl_gpfs;
-#else
-	xstatarg.acl = NULL;
-#endif
 	xstatarg.attr_changed = 0;
 	xstatarg.buf = &p_buffxstat->buffstat;
+	xstatarg.fsid = (struct fsal_fsid *)&p_buffxstat->fsal_fsid;
+	xstatarg.attr_valid |= XATTR_FSID;
 	xstatarg.expire_attr = expire_time_attr;
 
 	rc = gpfs_ganesha(OPENHANDLE_GET_XSTAT, &xstatarg);
 	LogDebug(COMPONENT_FSAL,
-		 "gpfs_ganesha: GET_XSTAT returned, fd %d rc %d", dirfd, rc);
+		 "gpfs_ganesha: GET_XSTAT returned, fd %d rc %d fh_size %d",
+		 dirfd, rc, p_handle->handle_size);
 
 	if (rc < 0) {
 		if (errno == ENODATA) {
@@ -729,9 +730,9 @@ fsal_status_t fsal_get_xstat_by_handle(int dirfd,
 		}
 	}
 #ifdef _USE_NFS4_ACL
-	p_buffxstat->attr_valid = XATTR_STAT | XATTR_ACL;
+	p_buffxstat->attr_valid = XATTR_FSID | XATTR_STAT | XATTR_ACL;
 #else
-	p_buffxstat->attr_valid = XATTR_STAT;
+	p_buffxstat->attr_valid = XATTR_FSID | XATTR_STAT;
 #endif
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
