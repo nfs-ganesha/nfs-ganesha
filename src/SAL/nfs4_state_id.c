@@ -371,7 +371,12 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, cache_entry_t *entry,
 	uint32_t epoch = 0;
 	uint64_t epoch_low = ServerEpoch & 0xFFFFFFFF;
 	state_t *state2 = NULL;
-	char str[OTHERSIZE * 2 + 1 + 6];
+        
+	/* string str has to accomodate stateid->other(OTHERSIZE * 2 ),
+         * stateid->seqid(max 10 bytes),
+ 	 * a colon (:) and a terminating null character. 
+ 	 */
+	char str[OTHERSIZE * 2 + 10 + 2];
 	int32_t diff;
 	clientid4 clientid;
 	nfs_client_id_t *pclientid;
