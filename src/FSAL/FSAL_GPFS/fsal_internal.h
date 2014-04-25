@@ -122,11 +122,11 @@ fsal_status_t fsal_get_xstat_by_handle(int dirfd,
  */
 fsal_status_t fsal_internal_handle2fd(int dirfd,
 				      struct gpfs_file_handle *phandle,
-				      int *pfd, int oflags);
+				      int *pfd, int oflags, bool reopen);
 
 fsal_status_t fsal_internal_handle2fd_at(int dirfd,
 					 struct gpfs_file_handle *phandle,
-					 int *pfd, int oflags);
+					 int *pfd, int oflags, bool reopen);
 /**
  * Gets a file handle from a parent handle and name
  */
@@ -240,8 +240,9 @@ fsal_status_t GPFSFSAL_mknode(struct fsal_obj_handle *dir_hdl,	/* IN */
 fsal_status_t GPFSFSAL_open(struct fsal_obj_handle *obj_hdl,	/* IN */
 			    const struct req_op_context *p_context, /* IN */
 			    fsal_openflags_t openflags,	/* IN */
-			    int *p_file_descriptor,	/* OUT */
-			    struct attrlist *p_file_attributes); /* IO */
+			    int *p_file_descriptor,	/* IN/OUT */
+			    struct attrlist *p_file_attributes, /* IN/OUT */
+			    bool reopen); /* IN */
 
 fsal_status_t GPFSFSAL_read(int fd,	/* IN */
 			    uint64_t offset,	/* IN */
