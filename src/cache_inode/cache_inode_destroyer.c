@@ -334,8 +334,9 @@ dec_state_owner_ref_for_shutdown(state_owner_t *owner)
 	case STATE_LOCK_OWNER_NLM:
 		remove_nlm_owner_for_shutdown(owner);
 		break;
-	case STATE_LOCK_OWNER_9P:
+
 #ifdef _USE_9P
+	case STATE_LOCK_OWNER_9P:
 		remove_9p_owner_for_shutdown(owner);
 #endif
 		break;

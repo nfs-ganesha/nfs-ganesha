@@ -768,6 +768,9 @@ static void nfs_rpc_execute(request_data_t *req,
 			 "Cannot get client block for Program %d, Version %d, "
 			 "Function %d", (int)svcreq->rq_prog,
 			 (int)svcreq->rq_vers, (int)svcreq->rq_proc);
+	} else {
+		/* Set the Client IP for this thread */	
+		SetClientIP(req_ctx.client->hostaddr_str);
 	}
 	LogDebug(COMPONENT_DISPATCH,
 		 "Request from %s for Program %d, Version %d, Function %d "
@@ -1361,6 +1364,7 @@ static void nfs_rpc_execute(request_data_t *req,
 	if (res_nfs)
 		nfs_dupreq_rele(svcreq, reqnfs->funcdesc);
 
+	SetClientIP(NULL);
 	if (req_ctx.client != NULL)
 		put_gsh_client(req_ctx.client);
 	if (req_ctx.export != NULL)

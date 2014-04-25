@@ -112,6 +112,7 @@ int up_async_invalidate(struct fridgethr *fr,
 	memcpy(args->key, obj->addr, obj->len);
 	args->obj.addr = args->key;
 	args->obj.len = obj->len;
+	args->fsal = fsal;
 
 	rc = fridgethr_submit(fr, queue_invalidate, args);
  out:
@@ -173,6 +174,7 @@ int up_async_update(struct fridgethr *fr,
 	memcpy(args->key, obj->addr, obj->len);
 	args->obj.addr = args->key;
 	args->obj.len = obj->len;
+	args->fsal = fsal;
 
 	rc = fridgethr_submit(fr, queue_update, args);
  out:
@@ -235,6 +237,7 @@ int up_async_lock_grant(struct fridgethr *fr,
 	memcpy(args->key, file->addr, file->len);
 	args->file.addr = args->key;
 	args->file.len = file->len;
+	args->fsal = fsal;
 
 	rc = fridgethr_submit(fr, queue_lock_grant, args);
  out:
@@ -297,6 +300,7 @@ int up_async_lock_avail(struct fridgethr *fr,
 	memcpy(args->key, file->addr, file->len);
 	args->file.addr = args->key;
 	args->file.len = file->len;
+	args->fsal = fsal;
 
 	rc = fridgethr_submit(fr, queue_lock_avail, args);
  out:

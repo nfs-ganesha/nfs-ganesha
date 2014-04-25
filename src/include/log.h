@@ -128,6 +128,7 @@ char *get_debug_info(int *size);
 void SetNamePgm(const char *nom);
 void SetNameHost(const char *nom);
 void SetNameFunction(const char *nom);	/* thread safe */
+void SetClientIP(char *ip_str);
 
 void init_logging(const char *log_path, const int debug_level);
 
@@ -216,12 +217,10 @@ extern struct log_component_info LogComponents[COMPONENT_COUNT];
 
 #define LogFatal(component, format, args...) \
 	do { \
-		if (likely(component_log_level[component] \
-		    >= NIV_FATAL)) \
-			DisplayLogComponentLevel(component, (char *) __FILE__, \
-						 __LINE__, \
-						 (char *) __func__, \
-						 NIV_FATAL, format, ## args); \
+		DisplayLogComponentLevel(component, (char *) __FILE__, \
+					 __LINE__, \
+					 (char *) __func__, \
+					 NIV_FATAL, format, ## args); \
 	} while (0)
 
 #define LogMajor(component, format, args...) \
