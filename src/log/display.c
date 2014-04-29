@@ -359,60 +359,6 @@ int display_opaque_bytes(struct display_buffer *dspbuf, void *value, int len)
 }
 
 /**
- * @brief convert clientid opaque bytes as a hex string for mkdir purpose.
- *
- * @param[in,out] dspbuf The buffer.
- * @param[in]     value  The bytes to display
- * @param[in]     len    The number of bytes to display
- *
- * @return the bytes remaining in the buffer.
- *
- */
-int convert_opaque_value_max_for_dir(struct display_buffer *dspbuf,
-					void                  *value,
-					int                     len,
-					int                     max)
-{
-	unsigned int i = 0;
-	int          b_left = display_start(dspbuf);
-	int          cpy = len;
-
-	if (b_left <= 0)
-		return 0;
-
-	/* Check that the length is ok
-	 * If the value is empty, display EMPTY value. */
-	if (len <= 0 || len > max)
-		return 0;
-
-	/* If the value is NULL, display NULL value. */
-	if (value == NULL)
-		return 0;
-
-	/* Determine if the value is entirely printable characters, */
-	/* and it contains no slash character (reserved for filename) */
-	for (i = 0; i < len; i++)
-		if ((!isprint(((char *)value)[i])) ||
-		    (((char *)value)[i] == '/'))
-			break;
-
-	if (i == len) {
-		/* Entirely printable character, so we will just copy the
-		 * characters into the buffer (to the extent there is room
-		 * for them).
-		 */
-		b_left = display_len_cat(dspbuf, value, cpy);
-	} else {
-		b_left = display_opaque_bytes(dspbuf, value, cpy);
-	}
-
-	if (b_left <= 0)
-		return 0;
-
-	return b_left;
-}
-
-/**
  * @brief Display a number of opaque bytes as a hex string, limiting the number
  *        of bytes used from the opaque value.
  *

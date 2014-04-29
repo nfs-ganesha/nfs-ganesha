@@ -36,6 +36,7 @@
 #include "sal_functions.h"
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <ctype.h>
 
 #define NFS_V4_RECOV_ROOT "/var/lib/nfs/ganesha"
 #define NFS_V4_RECOV_DIR "v4recov"
@@ -148,6 +149,60 @@ int nfs_in_grace(void)
 int fsal_grace(void)
 {
 	return nfs_param.nfsv4_param.fsal_grace;
+}
+
+/**
+ * @brief convert clientid opaque bytes as a hex string for mkdir purpose.
+ *
+ * @param[in,out] dspbuf The buffer.
+ * @param[in]     value  The bytes to display
+ * @param[in]     len    The number of bytes to display
+ *
+ * @return the bytes remaining in the buffer.
+ *
+ */
+int convert_opaque_value_max_for_dir(struct display_buffer *dspbuf,
+				     void *value,
+				     int len,
+				     int max)
+{
+	unsigned int i = 0;
+	int          b_left = display_start(dspbuf);
+	int          cpy = len;
+
+	if (b_left <= 0)
+		return 0;
+
+	/* Check that the length is ok
+	 * If the value is empty, display EMPTY value. */
+	if (len <= 0 || len > max)
+		return 0;
+
+	/* If the value is NULL, display NULL value. */
+	if (value == NULL)
+		return 0;
+
+	/* Determine if the value is entirely printable characters, */
+	/* and it contains no slash character (reserved for filename) */
+	for (i = 0; i < len; i++)
+		if ((!isprint(((char *)value)[i])) ||
+		    (((char *)value)[i] == '/'))
+			break;
+
+	if (i == len) {
+		/* Entirely printable character, so we will just copy the
+		 * characters into the buffer (to the extent there is room
+		 * for them).
+		 */
+		b_left = display_len_cat(dspbuf, value, cpy);
+	} else {
+		b_left = display_opaque_bytes(dspbuf, value, cpy);
+	}
+
+	if (b_left <= 0)
+		return 0;
+
+	return b_left;
 }
 
 /**
