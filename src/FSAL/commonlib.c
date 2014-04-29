@@ -816,15 +816,27 @@ int change_fsid_type(struct fsal_filesystem *fs,
 	case FSID_MAJOR_64:
 		/* Nothing to do, will ignore fsid.minor in index */
 		valid = true;
+		major = fs->fsid.major;
+		minor = fs->fsid.minor;
 		break;
 
 	case FSID_TWO_UINT64:
-		/* Nothing to do, FSID_TWO_UINT32 will just have high order
-		 * zero bits while FSID_ONE_UINT64 will have minor = 0,
-		 * without changing the actual value.
-		 */
-		fs->fsid_type = fsid_type;
-		return 0;
+		if (fs->fsid_type == FSID_MAJOR_64) {
+			/* Must re-index since minor was not indexed
+			 * previously.
+			 */
+			major = fs->fsid.major;
+			minor = fs->fsid.minor;
+			valid = true;
+		} else {
+			/* Nothing to do, FSID_TWO_UINT32 will just have high
+			 * order zero bits while FSID_ONE_UINT64 will have
+			 * minor = 0, without changing the actual value.
+			 */
+			fs->fsid_type = fsid_type;
+			return 0;
+		}
+		break;
 
 	case FSID_DEVICE:
 		major = fs->dev.major;
