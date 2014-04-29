@@ -66,6 +66,10 @@ fsal_status_t GPFSFSAL_getattrs(struct fsal_export *export,	/* IN */
 	bool expire = FALSE;
 	uint32_t expire_time_attr = 0;	/*< Expiration time for attributes. */
 
+	/* Initialize fsal_fsid to 0.0 in case older GPFS */
+	buffxstat.fsal_fsid.major = 0;
+	buffxstat.fsal_fsid.minor = 0;
+
 	if (p_context->export->export.expire_type_attr == CACHE_INODE_EXPIRE)
 		expire = TRUE;
 
@@ -77,6 +81,13 @@ fsal_status_t GPFSFSAL_getattrs(struct fsal_export *export,	/* IN */
 	/* convert attributes */
 	if (expire_time_attr != 0)
 		p_object_attributes->expire_time_attr = expire_time_attr;
+
+	/* Assume if fsid = 0.0, then old GPFS didn't fill it in, in that
+	 * case, fill in from the object's filesystem.
+	 */
+	if (buffxstat.fsal_fsid.major == 0 && buffxstat.fsal_fsid.minor == 0)
+		buffxstat.fsal_fsid = gpfs_fs->fs->fsid;
+
 	st = gpfsfsal_xstat_2_fsal_attributes(&buffxstat, p_object_attributes);
 	if (FSAL_IS_ERROR(st)) {
 		FSAL_CLEAR_MASK(p_object_attributes->mask);

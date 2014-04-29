@@ -144,35 +144,9 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 		goto hdlerr;
 	}
 	attrib.mask = parent->attributes.mask;
-	status = GPFSFSAL_lookup(opctx, parent, path, &attrib, fh);
+	status = GPFSFSAL_lookup(opctx, parent, path, &attrib, fh, &fs);
 	if (FSAL_IS_ERROR(status))
 		return status;
-
-	if (attrib.fsid.major != parent->attributes.fsid.major) {
-		/* XDEV */
-		fs = lookup_fsid(&attrib.fsid, FSID_MAJOR_64);
-		if (fs == NULL) {
-			LogDebug(COMPONENT_FSAL,
-				 "Lookup of %s crosses filesystem boundary to "
-				 "unknown file system fsid=%"PRIu64".%"PRIu64,
-				 path, attrib.fsid.major, attrib.fsid.minor);
-			retval = EXDEV;
-			goto hdlerr;
-		}
-
-		if (fs->fsal != parent->fsal) {
-			LogDebug(COMPONENT_FSAL,
-				 "Lookup of %s crosses filesystem boundary to file system %s into FSAL %s",
-				 path, fs->path,
-				 fs->fsal != NULL
-					? fs->fsal->name
-					: "(none)");
-		} else {
-			LogDebug(COMPONENT_FSAL,
-				 "Lookup of %s crosses filesystem boundary to file system %s",
-				 path, fs->path);
-		}
-	}
 
 	/* allocate an obj_handle and fill it up */
 	hdl = alloc_handle(fh, fs, &attrib, NULL,
@@ -827,6 +801,8 @@ fsal_status_t gpfs_lookup_path(struct fsal_export *exp_hdl,
 	struct attrlist attributes;
 	gpfsfsal_xstat_t buffxstat;
 	struct gpfs_file_handle *fh = alloca(sizeof(struct gpfs_file_handle));
+	enum fsid_type fsid_type;
+	struct fsal_fsid__ fsid;
 
 	memset(fh, 0, sizeof(struct gpfs_file_handle));
 	fh->handle_size = OPENHANDLE_HANDLE_LEN;
@@ -861,7 +837,10 @@ fsal_status_t gpfs_lookup_path(struct fsal_export *exp_hdl,
 
 	close(dir_fd);
 
-	fs = lookup_fsid(&attributes.fsid, FSID_MAJOR_64);
+	gpfs_extract_fsid(fh, &fsid_type, &fsid);
+
+	fs = lookup_fsid(&fsid, fsid_type);
+
 	if (fs == NULL) {
 		LogInfo(COMPONENT_FSAL,
 			"Could not find file system for path %s",

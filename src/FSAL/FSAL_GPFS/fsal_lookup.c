@@ -33,6 +33,7 @@
 
 #include <string.h>
 #include "fsal.h"
+#include "FSAL/fsal_commonlib.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 #include "gpfs_methods.h"
@@ -68,15 +69,20 @@ fsal_status_t GPFSFSAL_lookup(const struct req_op_context *p_context,
 			      struct fsal_obj_handle *parent,
 			      const char *p_filename,
 			      struct attrlist *p_object_attr,
-			      struct gpfs_file_handle *fh)
+			      struct gpfs_file_handle *fh,
+			      struct fsal_filesystem **new_fs)
 {
 	fsal_status_t status;
 	int parent_fd;
 	struct gpfs_fsal_obj_handle *parent_hdl;
 	struct gpfs_filesystem *gpfs_fs;
+	enum fsid_type fsid_type;
+	struct fsal_fsid__ fsid;
 
 	if (!parent || !p_filename)
 		return fsalstat(ERR_FSAL_FAULT, 0);
+
+	assert(*new_fs == parent->fs);
 
 	parent_hdl =
 	    container_of(parent, struct gpfs_fsal_obj_handle, obj_handle);
@@ -117,6 +123,41 @@ fsal_status_t GPFSFSAL_lookup(const struct req_op_context *p_context,
 		close(parent_fd);
 		return status;
 	}
+
+	/* In order to check XDEV, we need to get the fsid from the handle.
+	 * We need to do this before getting attributes in order to have tthe
+	 * correct gpfs_fs to pass to GPFSFSAL_getattrs. We also return
+	 * the correct fs to the caller.
+	 */
+	gpfs_extract_fsid(fh, &fsid_type, &fsid);
+
+	if (fsid.major != parent->attributes.fsid.major) {
+		/* XDEV */
+		*new_fs = lookup_fsid(&fsid, fsid_type);
+		if (*new_fs == NULL) {
+			LogDebug(COMPONENT_FSAL,
+				 "Lookup of %s crosses filesystem boundary to "
+				 "unknown file system fsid=%"PRIu64".%"PRIu64,
+				 p_filename, fsid.major, fsid.minor);
+			return fsalstat(ERR_FSAL_XDEV, EXDEV);
+		}
+
+		if ((*new_fs)->fsal != parent->fsal) {
+			LogDebug(COMPONENT_FSAL,
+				 "Lookup of %s crosses filesystem boundary to file system %s into FSAL %s",
+				 p_filename, (*new_fs)->path,
+				 (*new_fs)->fsal != NULL
+					? (*new_fs)->fsal->name
+					: "(none)");
+			return fsalstat(ERR_FSAL_XDEV, EXDEV);
+		} else {
+			LogDebug(COMPONENT_FSAL,
+				 "Lookup of %s crosses filesystem boundary to file system %s",
+				 p_filename, (*new_fs)->path);
+		}
+		gpfs_fs = (*new_fs)->private;
+	}
+
 	/* get object attributes */
 	if (p_object_attr) {
 		p_object_attr->mask =

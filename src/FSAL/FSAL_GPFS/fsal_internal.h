@@ -272,7 +272,8 @@ fsal_status_t GPFSFSAL_lookup(const struct req_op_context *p_context,	/* IN */
 			      struct fsal_obj_handle *parent,
 			      const char *p_filename,
 			      struct attrlist *p_object_attr,
-			      struct gpfs_file_handle *fh);
+			      struct gpfs_file_handle *fh,
+			      struct fsal_filesystem **new_fs);
 
 fsal_status_t GPFSFSAL_lock_op(struct fsal_export *export,
 			       struct fsal_obj_handle *obj_hdl,	/* IN */
