@@ -99,6 +99,7 @@ void set_creds_to_root();
 struct lustre_ds {
 	struct lustre_file_handle wire; /*< Wire data */
 	struct fsal_ds_handle ds; /*< Public DS handle */
+	struct lustre_filesystem *lustre_fs; /*< Related Lustre filesystem */
 	bool connected; /*< True if the handle has been connected */
 };
 

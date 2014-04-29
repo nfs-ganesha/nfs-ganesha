@@ -14,10 +14,39 @@
 			__rc_type __local_rc = __function(__VA_ARGS__);  \
 			fsal_restore_ganesha_credentials();              \
 			__local_rc; })
-
 /* private helpers from export
  */
-char *lustre_get_root_path(struct fsal_export *exp_hdl);
+
+struct fsal_staticfsinfo_t *lustre_staticinfo(struct fsal_module *hdl);
+
+/*
+ * LUSTRE internal export
+ */
+struct lustre_fsal_export {
+	struct fsal_export export;
+	struct fsal_filesystem *root_fs;
+	struct glist_head filesystems;
+	bool pnfs_enabled;
+};
+
+/*
+ * LUSTRE internal filesystem
+ */
+struct lustre_filesystem {
+	struct fsal_filesystem *fs;
+	struct glist_head exports;
+};
+
+/*
+ * Link LUSTRE file systems and exports
+ * Supports a many-to-many relationship
+ */
+struct lustre_filesystem_export_map {
+	struct lustre_fsal_export *exp;
+	struct lustre_filesystem *fs;
+	struct glist_head on_exports;
+	struct glist_head on_filesystems;
+};
 
 /* method proto linkage to handle.c for export
  */
@@ -48,6 +77,7 @@ fsal_status_t lustre_create_handle(struct fsal_export *exp_hdl,
 
 struct lustre_fsal_obj_handle {
 	struct fsal_obj_handle obj_handle;
+	fsal_dev_t dev;
 	struct lustre_file_handle *handle;
 	union {
 		struct {

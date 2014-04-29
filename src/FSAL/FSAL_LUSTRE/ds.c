@@ -114,7 +114,7 @@ lustre_ds_read(struct fsal_ds_handle *const ds_pub,
 	lustre_handle = &ds->wire;
 
 	/* get the path of the file in Lustre */
-	lustre_handle_to_path(lustre_get_root_path(req_ctx->fsal_export),
+	lustre_handle_to_path(ds->lustre_fs->fs->path,
 			      lustre_handle, mypath);
 
 	/* @todo: we could take care of parameter stability_wanted here */
@@ -185,7 +185,7 @@ lustre_ds_write(struct fsal_ds_handle *const ds_pub,
 	/** @todo Add some debug code here about the fh to be used */
 
 	/* get the path of the file in Lustre */
-	lustre_handle_to_path(lustre_get_root_path(req_ctx->fsal_export),
+	lustre_handle_to_path(ds->lustre_fs->fs->path,
 			      lustre_handle, mypath);
 
 	/* @todo: we could take care of parameter stability_wanted here */

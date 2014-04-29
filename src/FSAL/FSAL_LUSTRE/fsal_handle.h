@@ -70,7 +70,19 @@
 
 struct lustre_file_handle {
 	lustre_fid fid;
+	dev_t fsdev;
 };	 /**< FS object handle */
+
+#define lustre_alloc_handle(fh)                                       \
+	do {                                                          \
+		(fh) = alloca(sizeof(struct lustre_file_handle));     \
+		memset((fh), 0, (sizeof(struct lustre_file_handle))); \
+	} while (0)
+
+static inline void lustre_malloc_handle(struct lustre_file_handle *fh)
+{
+	fh = gsh_calloc(1, sizeof(struct lustre_file_handle));
+}
 
 static inline int lustre_handle_to_path(char *mntpath,
 					struct lustre_file_handle *handle,
@@ -90,6 +102,7 @@ static inline int lustre_path_to_handle(const char *path,
 					struct lustre_file_handle *out_handle)
 {
 	lustre_fid fid;
+	struct stat ino;
 
 	if (!path || !out_handle)
 		return -1;
@@ -99,6 +112,12 @@ static inline int lustre_path_to_handle(const char *path,
 		return -1;
 
 	out_handle->fid = fid;
+
+	/* Get the inode number */
+	if (lstat(path, &ino) != 0)
+		return -1;
+
+	out_handle->fsdev = ino.st_dev;
 
 	return 1;
 }

@@ -58,37 +58,6 @@
 #endif
 #endif
 
-/*
- * VFS internal export
- */
-
-struct lustre_fsal_export {
-	struct fsal_export export;
-	char *mntdir;
-	char *fs_spec;
-	char *fstype;
-	int root_fd;
-	dev_t root_dev;
-	struct file_handle *root_handle;
-	bool  pnfs_enabled;
-};
-
-char *lustre_get_root_path(struct fsal_export *exp_hdl)
-{
-	struct lustre_fsal_export *myself;
-
-	myself = container_of(exp_hdl, struct lustre_fsal_export, export);
-	return myself->mntdir;
-}
-
-/* helpers to/from other VFS objects
- */
-
-struct fsal_staticfsinfo_t *lustre_staticinfo(struct fsal_module *hdl);
-
-/* export object methods
- */
-
 static void lustre_release(struct fsal_export *exp_hdl)
 {
 	struct lustre_fsal_export *myself;
@@ -98,17 +67,6 @@ static void lustre_release(struct fsal_export *exp_hdl)
 	PTHREAD_RWLOCK_wrlock(&exp_hdl->lock);
 	fsal_detach_export(exp_hdl->fsal, &exp_hdl->exports);
 	free_export_ops(exp_hdl);
-	if (myself->root_fd >= 0)
-		close(myself->root_fd);
-	if (myself->root_handle != NULL)
-		gsh_free(myself->root_handle);
-	if (myself->fstype != NULL)
-		gsh_free(myself->fstype);
-	if (myself->mntdir != NULL)
-		gsh_free(myself->mntdir);
-	if (myself->fs_spec != NULL)
-		gsh_free(myself->fs_spec);
-	myself->export.ops = NULL;	/* poison myself */
 	PTHREAD_RWLOCK_unlock(&exp_hdl->lock);
 
 	pthread_rwlock_destroy(&exp_hdl->lock);
@@ -120,17 +78,18 @@ static fsal_status_t lustre_get_dynamic_info(struct fsal_obj_handle *obj_hdl,
 					     const struct req_op_context *opctx,
 					     fsal_dynamicfsinfo_t *infop)
 {
-	struct lustre_fsal_export *myself;
 	struct statvfs buffstatvfs;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval = 0;
+	struct lustre_filesystem *lustre_fs;
 
 	if (!infop) {
 		fsal_error = ERR_FSAL_FAULT;
 		goto out;
 	}
-	myself = container_of(exp_hdl, struct lustre_fsal_export, export);
-	retval = fstatvfs(myself->root_fd, &buffstatvfs);
+	lustre_fs = obj_hdl->fs->private;
+
+	retval = statvfs(lustre_fs->fs->path, &buffstatvfs);
 	if (retval < 0) {
 		fsal_error = posix2fsal_error(errno);
 		retval = errno;
@@ -272,17 +231,18 @@ static fsal_status_t lustre_get_quota(struct fsal_export *exp_hdl,
 	retval = stat(filepath, &path_stat);
 	if (retval < 0) {
 		LogMajor(COMPONENT_FSAL,
-			 "VFS get_quota, fstat: root_path: %s, fd=%d, errno=(%d) %s",
-			 myself->mntdir, myself->root_fd, errno,
+			 "LUSTRE get_quota, fstat: root_path: %s, errno=(%d) %s",
+			 myself->root_fs->path, errno,
 			 strerror(errno));
 		fsal_error = posix2fsal_error(errno);
 		retval = errno;
 		goto out;
 	}
-	if (path_stat.st_dev != myself->root_dev) {
+	if ((major(path_stat.st_dev) != myself->root_fs->dev.major) ||
+	    (minor(path_stat.st_dev) != myself->root_fs->dev.minor)) {
 		LogMajor(COMPONENT_FSAL,
-			 "VFS get_quota: crossed mount boundary! root_path: %s, quota path: %s",
-			 myself->mntdir, filepath);
+			 "LUSTRE get_quota: crossed mount boundary! root_path: %s, quota path: %s",
+			 myself->root_fs->path, filepath);
 		fsal_error = ERR_FSAL_FAULT;	/* maybe a better error? */
 		retval = 0;
 		goto out;
@@ -350,17 +310,18 @@ static fsal_status_t lustre_set_quota(struct fsal_export *exp_hdl,
 	retval = stat(filepath, &path_stat);
 	if (retval < 0) {
 		LogMajor(COMPONENT_FSAL,
-			 "VFS set_quota, fstat: root_path: %s, fd=%d, errno=(%d) %s",
-			 myself->mntdir, myself->root_fd, errno,
-			 strerror(errno));
+			 "LUSTRE set_quota, fstat: root_path: %s, errno=(%d) %s",
+			 myself->root_fs->path,
+			 errno, strerror(errno));
 		fsal_error = posix2fsal_error(errno);
 		retval = errno;
 		goto err;
 	}
-	if (path_stat.st_dev != myself->root_dev) {
+	if ((major(path_stat.st_dev) != myself->root_fs->dev.major) ||
+	    (minor(path_stat.st_dev) != myself->root_fs->dev.minor)) {
 		LogMajor(COMPONENT_FSAL,
-			 "VFS set_quota: crossed mount boundary! root_path: %s, quota path: %s",
-			 myself->mntdir, filepath);
+			 "LUSTRE set_quota: crossed mount boundary! root_path: %s, quota path: %s",
+			 myself->root_fs->path, filepath);
 		fsal_error = ERR_FSAL_FAULT;	/* maybe a better error? */
 		retval = 0;
 		goto err;
@@ -516,6 +477,159 @@ void lustre_export_ops_init(struct export_ops *ops)
 	ops->set_quota = lustre_set_quota;
 }
 
+void free_lustre_filesystem(struct lustre_filesystem *lustre_fs)
+{
+	gsh_free(lustre_fs);
+}
+
+int lustre_claim_filesystem(struct fsal_filesystem *fs, struct fsal_export *exp)
+{
+	struct lustre_filesystem *lustre_fs = fs->private;
+	int retval = 0;
+	struct lustre_fsal_export *myself;
+	struct lustre_filesystem_export_map *map = NULL;
+
+	myself = container_of(exp, struct lustre_fsal_export, export);
+
+	if (strcmp(fs->type, "lustre") != 0) {
+		LogInfo(COMPONENT_FSAL,
+			"Attempt to claim non-LUSTRE filesystem %s",
+			fs->path);
+		retval = ENXIO;
+		goto errout;
+	}
+
+	map = gsh_calloc(1, sizeof(*map));
+
+	if (map == NULL) {
+		LogCrit(COMPONENT_FSAL,
+			"Out of memory to claim file system %s",
+			fs->path);
+		retval = ENOMEM;
+		goto errout;
+	}
+
+	if (fs->fsal != NULL) {
+		lustre_fs = fs->private;
+		if (lustre_fs == NULL) {
+			LogCrit(COMPONENT_FSAL,
+				"Something wrong with export, fs %s appears already claimed but doesn't have private data",
+				fs->path);
+			retval = EINVAL;
+			goto errout;
+		}
+
+		goto already_claimed;
+	}
+
+	if (fs->private != NULL) {
+			LogCrit(COMPONENT_FSAL,
+				"Something wrong with export, fs %s was not claimed but had non-NULL private",
+				fs->path);
+	}
+
+	lustre_fs = gsh_calloc(1, sizeof(*lustre_fs));
+
+	if (lustre_fs == NULL) {
+		LogCrit(COMPONENT_FSAL,
+			"Out of memory to claim file system %s",
+			fs->path);
+		retval = ENOMEM;
+		goto errout;
+	}
+
+	glist_init(&lustre_fs->exports);
+
+	lustre_fs->fs = fs;
+	fs->private = lustre_fs;
+
+already_claimed:
+
+	/* Now map the file system and export */
+	map->fs = lustre_fs;
+	map->exp = myself;
+	glist_add_tail(&lustre_fs->exports, &map->on_exports);
+	glist_add_tail(&myself->filesystems, &map->on_filesystems);
+
+	return 0;
+
+errout:
+
+	if (map != NULL)
+		gsh_free(map);
+
+	if (lustre_fs != NULL)
+		free_lustre_filesystem(lustre_fs);
+
+	return retval;
+}
+
+void lustre_unclaim_filesystem(struct fsal_filesystem *fs)
+{
+	struct lustre_filesystem *lustre_fs = fs->private;
+	struct glist_head *glist, *glistn;
+	struct lustre_filesystem_export_map *map;
+
+	if (lustre_fs != NULL) {
+		glist_for_each_safe(glist, glistn, &lustre_fs->exports) {
+			map = glist_entry(glist,
+					  struct lustre_filesystem_export_map,
+					  on_exports);
+
+			/* Remove this file system from mapping */
+			glist_del(&map->on_filesystems);
+			glist_del(&map->on_exports);
+
+			if (map->exp->root_fs == fs) {
+				LogInfo(COMPONENT_FSAL,
+					"Removing root_fs %s from LUSTRE export",
+					fs->path);
+			}
+
+			/* And free it */
+			gsh_free(map);
+		}
+
+		free_lustre_filesystem(lustre_fs);
+
+		fs->private = NULL;
+	}
+
+	LogInfo(COMPONENT_FSAL,
+		"LUSTRE Unclaiming %s",
+		fs->path);
+}
+
+void lustre_unexport_filesystems(struct lustre_fsal_export *exp)
+{
+	struct glist_head *glist, *glistn;
+	struct lustre_filesystem_export_map *map;
+
+	PTHREAD_RWLOCK_wrlock(&fs_lock);
+
+	glist_for_each_safe(glist, glistn, &exp->filesystems) {
+		map = glist_entry(glist,
+				  struct lustre_filesystem_export_map,
+				  on_filesystems);
+
+		/* Remove this export from mapping */
+		glist_del(&map->on_filesystems);
+		glist_del(&map->on_exports);
+
+		if (glist_empty(&map->fs->exports)) {
+			LogInfo(COMPONENT_FSAL,
+				"LUSTRE is no longer exporting filesystem %s",
+				map->fs->fs->path);
+			unclaim_fs(map->fs->fs);
+		}
+
+		/* And free it */
+		gsh_free(map);
+	}
+
+	PTHREAD_RWLOCK_unlock(&fs_lock);
+}
+
 /* create_export
  * Create an export point and return a handle to it to be kept
  * in the export list.
@@ -532,12 +646,6 @@ fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
 				   struct fsal_export **export)
 {
 	struct lustre_fsal_export *myself;
-	FILE *fp;
-	struct mntent *p_mnt;
-	size_t pathlen, outlen = 0;
-	char mntdir[MAXPATHLEN];
-	char fs_spec[MAXPATHLEN];
-	char type[MAXNAMLEN];
 	int retval = 0;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 
@@ -560,12 +668,15 @@ fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
 		return fsalstat(posix2fsal_error(errno), errno);
 	}
 	memset(myself, 0, sizeof(struct lustre_fsal_export));
-	myself->root_fd = -1;
+	glist_init(&myself->filesystems);
 
 	retval = fsal_export_init(&myself->export, exp_entry);
-	if (retval != 0)
-		goto errout;
-
+	if (retval != 0) {
+		LogMajor(COMPONENT_FSAL,
+			 "out of memory for object");
+		gsh_free(myself);
+		return fsalstat(posix2fsal_error(retval), retval);
+	}
 	lustre_export_ops_init(myself->export.ops);
 	lustre_handle_ops_init(myself->export.obj_ops);
 	myself->export.up_ops = up_ops;
@@ -580,140 +691,48 @@ fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
 		goto errout;	/* seriously bad */
 	myself->export.fsal = fsal_hdl;
 
-	/* start looking for the mount point */
-	fp = setmntent(MOUNTED, "r");
-	if (fp == NULL) {
-		retval = errno;
-		LogCrit(COMPONENT_FSAL, "Error %d in setmntent(%s): %s", retval,
-			MOUNTED, strerror(retval));
+	retval = populate_posix_file_systems();
+	if (retval != 0) {
+		LogCrit(COMPONENT_FSAL,
+			"populate_posix_file_systems returned %s (%d)",
+			strerror(retval), retval);
 		fsal_error = posix2fsal_error(retval);
 		goto errout;
 	}
-	while ((p_mnt = getmntent(fp)) != NULL) {
-		if (p_mnt->mnt_dir != NULL) {
-			pathlen = strlen(p_mnt->mnt_dir);
-			if (pathlen > outlen) {
-				if (strcmp(p_mnt->mnt_dir, "/") == 0) {
-					outlen = pathlen;
-					strncpy(mntdir, p_mnt->mnt_dir,
-						MAXPATHLEN);
-					strncpy(type, p_mnt->mnt_type,
-						MAXNAMLEN);
-					strncpy(fs_spec, p_mnt->mnt_fsname,
-						MAXPATHLEN);
-				} else
-				    if ((strncmp
-					 (export_path, p_mnt->mnt_dir,
-					  pathlen) == 0)
-					&& ((export_path[pathlen] == '/')
-					    || (export_path[pathlen] ==
-						'\0'))) {
-					if (strcasecmp
-					    (p_mnt->mnt_type, "lustre") != 0) {
-						LogDebug(COMPONENT_FSAL,
-							 "Mount (%s) is not LUSTRE, skipping",
-							 p_mnt->mnt_dir);
-						continue;
-					}
-					outlen = pathlen;
-					strncpy(mntdir, p_mnt->mnt_dir,
-						MAXPATHLEN);
-					strncpy(type, p_mnt->mnt_type,
-						MAXNAMLEN);
-					strncpy(fs_spec, p_mnt->mnt_fsname,
-						MAXPATHLEN);
-				}
-			}
-		}
-	}
-	endmntent(fp);
-	if (outlen <= 0) {
-		LogCrit(COMPONENT_FSAL, "No mount entry matches '%s' in %s",
-			export_path, MOUNTED);
-		fsal_error = ERR_FSAL_NOENT;
+
+	retval = claim_posix_filesystems(export_path,
+					 fsal_hdl,
+					 &myself->export,
+					 lustre_claim_filesystem,
+					 lustre_unclaim_filesystem,
+					 &myself->root_fs);
+	if (retval != 0) {
+		LogCrit(COMPONENT_FSAL,
+			"claim_posix_filesystems(%s) returned %s (%d)",
+			export_path, strerror(retval), retval);
+		fsal_error = posix2fsal_error(retval);
 		goto errout;
 	}
-	myself->root_fd = open(mntdir, O_RDONLY | O_DIRECTORY);
-	if (myself->root_fd < 0) {
-		LogMajor(COMPONENT_FSAL,
-			 "Could not open VFS mount point %s: rc = %d", mntdir,
-			 errno);
-		fsal_error = posix2fsal_error(errno);
-		retval = errno;
-		goto errout;
-	} else {
-		struct stat root_stat;
-		struct lustre_file_handle *fh =
-		    alloca(sizeof(struct lustre_file_handle));
 
-		memset(fh, 0, sizeof(struct lustre_file_handle));
-		retval = fstat(myself->root_fd, &root_stat);
-		if (retval < 0) {
-			LogMajor(COMPONENT_FSAL,
-				 "fstat: root_path: %s, fd=%d, errno=(%d) %s",
-				 mntdir, myself->root_fd, errno,
-				 strerror(errno));
-			fsal_error = posix2fsal_error(errno);
-			retval = errno;
-			goto errout;
-		}
-		myself->root_dev = root_stat.st_dev;
-		retval = lustre_path_to_handle(export_path, fh);
-		if (retval < 0) {
-			LogMajor(COMPONENT_FSAL,
-				 "lustre_name_to_handle_at: root_path: %s, root_fd=%d, errno=(%d) %s",
-				 mntdir, myself->root_fd, errno,
-				 strerror(errno));
-			fsal_error = posix2fsal_error(errno);
 
-			if (errno == ENOTTY)
-				LogFatal(COMPONENT_FSAL,
-					 "Critical error in FSAL, exiting... Check if %s is mounted",
-					 mntdir);
-
-			retval = errno;
-			goto errout;
-		}
-		myself->root_handle
-			= gsh_malloc(sizeof(struct lustre_file_handle));
-		if (myself->root_handle == NULL) {
-			LogMajor(COMPONENT_FSAL,
-				 "memory for root handle, errno=(%d) %s", errno,
-				 strerror(errno));
-			fsal_error = posix2fsal_error(errno);
-			retval = errno;
-			goto errout;
-		}
-		memcpy(myself->root_handle, fh,
-		       sizeof(struct lustre_file_handle));
-	}
-	myself->fstype = gsh_strdup(type);
-	myself->fs_spec = gsh_strdup(fs_spec);
-	myself->mntdir = gsh_strdup(mntdir);
 	*export = &myself->export;
 	PTHREAD_RWLOCK_unlock(&myself->export.lock);
 
-	LogInfo(COMPONENT_FSAL,
-		"lustre_fsal_create: pnfs was enabled for [%s]",
-		export_path);
-	export_ops_pnfs(myself->export.ops);
-	handle_ops_pnfs(myself->export.obj_ops);
-	ds_ops_init(myself->export.ds_ops);
-
+	myself->pnfs_enabled =
+	    myself->export.ops->fs_supports(&myself->export,
+					    fso_pnfs_ds_supported);
+	if (myself->pnfs_enabled) {
+		LogInfo(COMPONENT_FSAL,
+			"lustre_fsal_create: pnfs was enabled for [%s]",
+			export_path);
+		export_ops_pnfs(myself->export.ops);
+		handle_ops_pnfs(myself->export.obj_ops);
+		ds_ops_init(myself->export.ds_ops);
+	}
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
  errout:
-	if (myself->root_fd >= 0)
-		close(myself->root_fd);
-	if (myself->root_handle != NULL)
-		gsh_free(myself->root_handle);
-	if (myself->fstype != NULL)
-		gsh_free(myself->fstype);
-	if (myself->mntdir != NULL)
-		gsh_free(myself->mntdir);
-	if (myself->fs_spec != NULL)
-		gsh_free(myself->fs_spec);
-	myself->export.ops = NULL;	/* poison myself */
+	free_export_ops(&myself->export);
 	PTHREAD_RWLOCK_unlock(&myself->export.lock);
 	pthread_rwlock_destroy(&myself->export.lock);
 	gsh_free(myself);		/* elvis has left the building */
