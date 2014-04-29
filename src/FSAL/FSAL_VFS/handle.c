@@ -1747,12 +1747,16 @@ fsal_status_t vfs_create_handle(struct fsal_export *exp_hdl,
 	if (retval != 0) {
 		retval = errno;
 		fsal_error = posix2fsal_error(retval);
-		close(fd);
+		if (fd >= 0)
+			close(fd);
 		goto errout;
 	}
 
 	hdl = alloc_handle(fd, fh, fs, &obj_stat, NULL, "", exp_hdl);
-	close(fd);
+
+	if (fd >= 0)
+		close(fd);
+
 	if (hdl == NULL) {
 		fsal_error = ERR_FSAL_NOMEM;
 		goto errout;
