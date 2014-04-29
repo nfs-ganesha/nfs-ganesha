@@ -1,8 +1,13 @@
+#  -*-Python-*-
+
 from distutils.core import setup, Extension
 
 if __name__ == '__main__':
 	setup(name='ganeshactl',
-		version='${GANESHA_VERSION}',
-		package_dir = { '': '${CMAKE_CURRENT_SOURCE_DIR}' },
-		packages = ['Ganesha', 'Ganesha.QtUI'],
-		scripts = [${SCRIPTS_STRING}])
+	      version='${GANESHA_VERSION}',
+	      author = "Jim Lieb",
+	      maintainer_email = "jlieb@panasas.com",
+	      description = "NFS Ganesha Administration tools",
+	      package_dir = { '': '${CMAKE_CURRENT_SOURCE_DIR}' },
+	      packages = ['Ganesha', 'Ganesha.QtUI'],
+	      scripts = [${SCRIPTS_STRING}])

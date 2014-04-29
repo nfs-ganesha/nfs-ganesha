@@ -34,7 +34,7 @@ from Ganesha.QtUI.exports_table import ExportTableModel
 from Ganesha.client_mgr import ClientMgr
 from Ganesha.QtUI.clients_table import ClientTableModel
 from Ganesha.log_mgr import LogManager
-from Ganesha.log_settings import LogSetDialog
+from Ganesha.QtUI.log_settings import LogSetDialog
 
 SERVICE = 'org.ganesha.nfsd'
 
