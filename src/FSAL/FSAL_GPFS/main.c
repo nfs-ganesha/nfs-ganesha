@@ -122,7 +122,9 @@ struct config_block gpfs_param = {
 
 struct fsal_staticfsinfo_t *gpfs_staticinfo(struct fsal_module *hdl)
 {
-	return &default_posix_info;
+  struct gpfs_fsal_module *gpfs_me =
+    container_of(hdl, struct gpfs_fsal_module, fsal);
+  return &gpfs_me->fs_info;
 }
 
 /* Module methods
