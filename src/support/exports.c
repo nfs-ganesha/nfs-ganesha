@@ -604,6 +604,19 @@ static int fsal_commit(void *node, void *link_mem, void *self_struct)
 			goto err;
 		}
 	}
+
+	/* Some admins stuff a '/' at  the end for some reason.
+	 * chomp it so we have a /dir/path/basename to work
+	 * with. But only if it's a non-root path starting
+	 * with /.
+	 */
+	if (exp->fullpath[0] == '/') {
+		int pathlen;
+		pathlen = strlen(exp->fullpath);
+		while ((exp->fullpath[pathlen - 1] == '/') && (pathlen > 1)) 
+			pathlen--;
+		exp->fullpath[pathlen] = '\0';
+	}
 	status = fsal->ops->create_export(fsal,
 					  exp->fullpath,
 					  node,
