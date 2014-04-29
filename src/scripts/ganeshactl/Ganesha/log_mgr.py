@@ -23,11 +23,11 @@ from PyQt4 import QtCore, QtDBus
 
 ADMIN_OBJECT = '/org/ganesha/nfsd/admin'
 PROP_INTERFACE = 'org.freedesktop.DBus.Properties'
-LOGGER_PROPS = 'org.ganesha.nfsd.log'
+LOGGER_PROPS = 'org.ganesha.nfsd.log.component'
 
 class LogManager(QtDBus.QDBusAbstractInterface):
     '''
-    org.ganesha.nfsd.log
+    org.ganesha.nfsd.log.component
     '''
     
     show_components = QtCore.pyqtSignal(dict)
