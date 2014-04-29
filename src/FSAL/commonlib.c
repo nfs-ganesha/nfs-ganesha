@@ -911,14 +911,13 @@ static bool posix_get_fsid(struct fsal_filesystem *fs)
 			fs->path,
 			major(mnt_stat.st_dev),
 			minor(mnt_stat.st_dev));
-		goto no_uuid;
+		goto no_uuid_no_dev_name;
 	}
 
 	if (cache == NULL && blkid_get_cache(&cache, NULL) != 0) {
 		LogInfo(COMPONENT_FSAL,
 			"blkid_get_cache of %s failed",
 			fs->path);
-		free(dev_name);
 		goto no_uuid;
 	}
 
@@ -956,8 +955,10 @@ static bool posix_get_fsid(struct fsal_filesystem *fs)
 
  no_uuid:
 
-	if (dev_name)
-		free(dev_name);
+	free(dev_name);
+
+ no_uuid_no_dev_name:
+
 #endif
 
 	fs->fsid_type = FSID_TWO_UINT32;
