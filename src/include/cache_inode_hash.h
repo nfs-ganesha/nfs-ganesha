@@ -387,7 +387,8 @@ cih_set_latched(cache_entry_t *entry, cih_latch_t *latch,
 	/* Omit hash if you are SURE we hashed it, and that the
 	 * hash remains valid */
 	if (unlikely(!(flags & CIH_SET_HASHED)))
-		if (!cih_hash_key(&entry->fh_hk.key, fsal, fh_desc, CIH_HASH_NONE))
+		if (!cih_hash_key(&entry->fh_hk.key, fsal,
+				  fh_desc, CIH_HASH_NONE))
 			return 1;
 
 	(void)avltree_insert(&entry->fh_hk.node_k, &cp->t);

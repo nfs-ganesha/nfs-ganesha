@@ -392,12 +392,14 @@ int convert_opaque_value_max_for_dir(struct display_buffer *dspbuf,
 	/* Determine if the value is entirely printable characters, */
 	/* and it contains no slash character (reserved for filename) */
 	for (i = 0; i < len; i++)
-		if ((!isprint(((char *)value)[i])) || (((char *)value)[i] == '/'))
+		if ((!isprint(((char *)value)[i])) ||
+		    (((char *)value)[i] == '/'))
 			break;
 
 	if (i == len) {
-		/* Entirely printable character, so we will just copy the characters into
-		 * the buffer (to the extent there is room for them).
+		/* Entirely printable character, so we will just copy the
+		 * characters into the buffer (to the extent there is room
+		 * for them).
 		 */
 		b_left = display_len_cat(dspbuf, value, cpy);
 	} else {

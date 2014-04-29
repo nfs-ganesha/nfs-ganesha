@@ -80,8 +80,6 @@ uint64_t clientid_verifier;
  */
 pool_t *client_id_pool;
 
-extern char     v4_recov_dir[PATH_MAX + 1];
-
 /**
  * @brief Return the NFSv4 status for the client id error code
  *

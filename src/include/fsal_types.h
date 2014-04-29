@@ -637,7 +637,7 @@ struct fsal_staticfsinfo_t {
 	bool delegations;	/*< fsal supports delegations */
 	bool pnfs_file;		/*< fsal supports file pnfs */
 	bool reopen_method;	/* fsal supports reopen method */
-	bool fsal_trace; 	/*< fsal trace supports */
+	bool fsal_trace;	/*< fsal trace supports */
 };
 
 /**

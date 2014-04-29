@@ -780,8 +780,9 @@ static bool gsh_export_addexport(DBusMessageIter *args,
 
 	config_struct = config_ParseFile(file_path);
 	if (!config_struct) {
-		LogCrit(COMPONENT_EXPORT, "Error while parsing %s",
-		file_path); 
+		LogCrit(COMPONENT_EXPORT,
+			"Error while parsing %s",
+			file_path);
 		dbus_set_error(error, DBUS_ERROR_INVALID_FILE_CONTENT,
 			       "Error while parsing %s",
 			       file_path);
@@ -795,7 +796,8 @@ static bool gsh_export_addexport(DBusMessageIter *args,
 					NULL,
 					false);
 	if (rc < 0) {
-		LogCrit(COMPONENT_EXPORT, "Error while processing export entry");
+		LogCrit(COMPONENT_EXPORT,
+			"Error while processing export entry");
 		dbus_set_error(error, DBUS_ERROR_INVALID_FILE_CONTENT,
 			       "Error while processing %s",
 			       file_path);
@@ -945,7 +947,7 @@ static bool gsh_export_displayexport(DBusMessageIter *args,
 	dbus_message_iter_append_basic(&iter,
 				       DBUS_TYPE_STRING,
 				       &path);
-	
+
 out:
 	return rc;
 }

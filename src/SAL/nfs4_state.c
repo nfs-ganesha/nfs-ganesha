@@ -87,8 +87,8 @@ static bool check_deleg_conflict(state_t *state, state_type_t candidate_type,
 		candidate_owner->so_owner.so_nfs4_owner.so_clientid;
 
 	if (state->state_type != STATE_TYPE_DELEG) {
-		LogDebug(COMPONENT_STATE, "ERROR: Non-delegation state found in"
-			 " delegation list!");
+		LogDebug(COMPONENT_STATE,
+			 "ERROR: Non-delegation state found in delegation list!");
 		return false;
 	}
 
@@ -97,50 +97,46 @@ static bool check_deleg_conflict(state_t *state, state_type_t candidate_type,
 	case STATE_TYPE_DELEG:
 		/* This should not happen, but we'll see. */
 		if (deleg_clientid == candidate_clientid) {
-			LogDebug(COMPONENT_STATE, "Requesting delegation for"
-				 " client that has a delegation on this file."
-				 " no conflict");
+			LogDebug(COMPONENT_STATE,
+				 "Requesting delegation for client that has a delegation on this file. no conflict");
 			return false;
 		}
 		if (state->state_data.deleg.sd_type == OPEN_DELEGATE_WRITE) {
-			LogDebug(COMPONENT_STATE, "Getting a delegation when "
-				 "write delegation exists on different client"
-				 " conflict");
+			LogDebug(COMPONENT_STATE,
+				 "Getting a delegation when write delegation exists on different client conflict");
 			return true;
 		}
 		if (candidate_data->deleg.sd_type
 		    == OPEN_DELEGATE_WRITE) {
-			LogDebug(COMPONENT_STATE, "Getting a write delegation "
-				 "when delegation exists on different client"
-				 " conflict");
+			LogDebug(COMPONENT_STATE,
+				 "Getting a write delegation  when delegation exists on different client conflict");
 			return true;
 		}
 		break;
 	case STATE_TYPE_SHARE:
 		if (deleg_clientid == candidate_clientid) {
-			LogDebug(COMPONENT_STATE, "New share state is for same "
-				 " client that owns delegation. no conflict.");
+			LogDebug(COMPONENT_STATE,
+				 "New share state is for same client that owns delegation. no conflict.");
 			return false;
 		}
 
 		if (state->state_data.deleg.sd_type == OPEN_DELEGATE_READ
 		    && candidate_data->share.share_access
 		    & OPEN4_SHARE_ACCESS_WRITE) {
-			LogDebug(COMPONENT_STATE, "Read delegation exists. "
-				 "New share is WRITE on different client. "
-				 " conflict");
+			LogDebug(COMPONENT_STATE,
+				 "Read delegation exists. New share is WRITE on different client. conflict");
 			return true;
 		}
 		if (state->state_data.deleg.sd_type == OPEN_DELEGATE_WRITE) {
-			LogDebug(COMPONENT_STATE, "Write delegation exists. "
-				 " New share is with diff client. conflict.");
+			LogDebug(COMPONENT_STATE,
+				 "Write delegation exists. New share is with diff client. conflict.");
 			return true;
 		}
 		break;
 	case STATE_TYPE_LOCK:
 		if (deleg_clientid == candidate_clientid) {
-			LogDebug(COMPONENT_STATE, "Creating lock for client "
-				 "that owns the delegation. no conflict.");
+			LogDebug(COMPONENT_STATE,
+				 "Creating lock for client that owns the delegation. no conflict.");
 			return false;
 		}
 
@@ -149,22 +145,20 @@ static bool check_deleg_conflict(state_t *state, state_type_t candidate_type,
 			found_lock = glist_entry(glist, state_lock_entry_t,
 						 sle_state_locks);
 			if (found_lock->sle_type != POSIX_LOCK) {
-				LogDebug(COMPONENT_STATE, "non posix lock in "
-					 "lock list");
+				LogDebug(COMPONENT_STATE,
+					 "non posix lock in lock list");
 				continue;
 			}
 			if (found_lock->sle_lock.lock_type == FSAL_LOCK_R
 			    && state->state_data.deleg.sd_type
 			    == OPEN_DELEGATE_WRITE) {
-				LogDebug(COMPONENT_STATE, "Trying to get"
-					 "read lock. write delegation exists."
-					 " conflict");
+				LogDebug(COMPONENT_STATE,
+					 "Trying to get read lock. write delegation exists. conflict");
 				return true; /*recall delegation*/
 			}
 			if (found_lock->sle_lock.lock_type == FSAL_LOCK_W) {
-				LogDebug(COMPONENT_STATE, "Trying to get"
-					 "write lock. delegation exists."
-					 " conflict");
+				LogDebug(COMPONENT_STATE,
+					 "Trying to get write lock. delegation exists. conflict");
 				return true;
 			}
 		}
@@ -202,11 +196,13 @@ bool state_conflict(state_t *state, state_type_t state_type,
 
 	case STATE_TYPE_SHARE:
 		if (state->state_type == STATE_TYPE_SHARE) {
-			if ((state->state_data.share.share_access & candidate_data->
-			     share.share_deny)
-			    || (state->state_data.share.
-				share_deny & candidate_data->share.share_access))
+			if ((state->state_data.share.share_access &
+			     candidate_data->share.share_deny)
+			    || (state->state_data.share.share_deny &
+				candidate_data->share.share_access)) {
+				/* Conflicting share reservation */
 				return true;
+			}
 		}
 		return false;
 
@@ -220,7 +216,8 @@ bool state_conflict(state_t *state, state_type_t state_type,
 
 	case STATE_TYPE_DELEG:
 		/* This will appear during new OPEN share state
-		 * We are getting a delegation and found a diff share entry. */
+		 * We are getting a delegation and found a diff share entry.
+		 */
 		if (state->state_type == STATE_TYPE_SHARE) {
 			/* */
 			if (candidate_data->deleg.sd_type

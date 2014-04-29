@@ -105,9 +105,11 @@ static struct config_item proxy_client_params[] = {
 #ifdef PROXY_HANDLE_MAPPING
 	CONF_ITEM_BOOL("Enable_Handle_Mapping", false,
 		       pxy_client_params, enable_handle_mapping),
-	CONF_ITEM_STR("HandleMap_DB_Dir", 0, MAXPATHLEN, "/var/ganesha/handlemap",
+	CONF_ITEM_STR("HandleMap_DB_Dir", 0, MAXPATHLEN,
+		      "/var/ganesha/handlemap",
 		      pxy_client_params, hdlmap.databases_directory),
-	CONF_ITEM_STR("HandleMap_Tmp_Dir", 0, MAXPATHLEN, "/var/ganesha/tmp",
+	CONF_ITEM_STR("HandleMap_Tmp_Dir", 0, MAXPATHLEN,
+		      "/var/ganesha/tmp",
 		      pxy_client_params, hdlmap.temp_directory),
 	CONF_ITEM_UI32("HandleMap_DB_Count", 1, 16, 8,
 		       pxy_client_params, hdlmap.database_count),

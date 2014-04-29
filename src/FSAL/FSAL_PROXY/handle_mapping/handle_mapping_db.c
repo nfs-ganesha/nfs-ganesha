@@ -43,7 +43,7 @@ do { \
 		if (_msg_str_) { \
 			sqlite3_free(_msg_str_); \
 			_msg_str_ = NULL; \
-		} 			  \
+		}			  \
 		return HANDLEMAP_DB_ERROR;	\
 	}					\
 } while (0)
@@ -362,11 +362,12 @@ static int db_load_operation(db_thread_info_t *p_info, hash_table_t *p_hash)
 						 fsal_handle_str);
 				} else {
 					/* now insert it to the hash table */
-					rc = handle_mapping_hash_add(p_hash,
-								     object_id,
-								     handle_hash,
-								     fh4_data,
-								     len / 2);
+					rc = handle_mapping_hash_add(
+								p_hash,
+								object_id,
+								handle_hash,
+								fh4_data,
+								len / 2);
 
 					if (rc == 0)
 						nb_loaded++;
@@ -561,7 +562,8 @@ static void *database_worker_thread(void *arg)
 			/* if termination is requested, exit */
 			if (do_terminate) {
 				p_info->work_queue.status = FINISHED;
-				pthread_mutex_unlock(&p_info->work_queue.queues_mutex);
+				pthread_mutex_unlock(&p_info->work_queue
+								.queues_mutex);
 				return (void *)p_info;
 			}
 

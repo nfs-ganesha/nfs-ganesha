@@ -10,8 +10,14 @@ int main(int argc, char **argv)
 	char *dir;
 	time_t now;
 
-	if (argc != 3 || (count = atoi(argv[2])) == 0) {
-		LogTest("usage: test_handle_mapping <db_dir> <db_count>");
+	if (argc != 3) {
+		LogTest("usage: test_handle_mapping_db <db_dir> <db_count>");
+		exit(1);
+	}
+
+	count = atoi(argv[2])
+	if (count == 0) {
+		LogTest("usage: test_handle_mapping_db <db_dir> <db_count>");
 		exit(1);
 	}
 
@@ -30,7 +36,8 @@ int main(int argc, char **argv)
 	LogTest("handlemap_db_count(%s)=%d", dir, rc);
 
 	if (rc != 0 && count != rc) {
-		LogTest("Warning: incompatible thread count %d <> database count %d",
+		LogTest(
+			"Warning: incompatible thread count %d <> database count %d",
 			count, rc);
 	}
 

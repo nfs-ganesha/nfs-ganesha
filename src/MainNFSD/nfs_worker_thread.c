@@ -769,7 +769,7 @@ static void nfs_rpc_execute(request_data_t *req,
 			 "Function %d", (int)svcreq->rq_prog,
 			 (int)svcreq->rq_vers, (int)svcreq->rq_proc);
 	} else {
-		/* Set the Client IP for this thread */	
+		/* Set the Client IP for this thread */
 		SetClientIP(req_ctx.client->hostaddr_str);
 	}
 	LogDebug(COMPONENT_DISPATCH,
@@ -1007,10 +1007,11 @@ static void nfs_rpc_execute(request_data_t *req,
 			} else {
 				req_ctx.export = get_gsh_export(exportid, true);
 				if (req_ctx.export == NULL) {
-					LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
-						"NLM4 Request from client %s has invalid export %d",
-						req_ctx.client->hostaddr_str,
-						exportid);
+					LogInfoAlt(COMPONENT_DISPATCH,
+						   COMPONENT_EXPORT,
+						   "NLM4 Request from client %s has invalid export %d",
+						   req_ctx.client->hostaddr_str,
+						   exportid);
 
 					/* We need to send a NLM4_STALE_FH
 					 * response (NLM doesn't have an error
@@ -1030,10 +1031,11 @@ static void nfs_rpc_execute(request_data_t *req,
 					    req_ctx.export->export.export_hdl;
 				}
 
-				LogMidDebugAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
-					    "Found export entry for dirname=%s as exportid=%d",
-					    req_ctx.export->export.fullpath,
-					    req_ctx.export->export.id);
+				LogMidDebugAlt(COMPONENT_DISPATCH,
+					       COMPONENT_EXPORT,
+					       "Found export entry for dirname=%s as exportid=%d",
+					       req_ctx.export->export.fullpath,
+					       req_ctx.export->export.id);
 			}
 		}
 	} else if (svcreq->rq_prog == nfs_param.core_param.program[P_MNT]) {
@@ -1152,15 +1154,17 @@ static void nfs_rpc_execute(request_data_t *req,
 		if (svcreq->rq_prog == nfs_param.core_param.program[P_NFS])
 			switch (svcreq->rq_vers) {
 			case NFS_V3:
-				LogDebugAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
-					 "Returning NFS3ERR_DQUOT because request is on an MD Only export");
+				LogDebugAlt(COMPONENT_DISPATCH,
+					    COMPONENT_EXPORT,
+					    "Returning NFS3ERR_DQUOT because request is on an MD Only export");
 				res_nfs->res_getattr3.status = NFS3ERR_DQUOT;
 				rc = NFS_REQ_OK;
 				break;
 
 			default:
-				LogDebugAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
-					 "Dropping IO request on an MD Only export");
+				LogDebugAlt(COMPONENT_DISPATCH,
+					    COMPONENT_EXPORT,
+					    "Dropping IO request on an MD Only export");
 				rc = NFS_REQ_DROP;
 				break;
 		} else {
@@ -1176,15 +1180,17 @@ static void nfs_rpc_execute(request_data_t *req,
 		if (svcreq->rq_prog == nfs_param.core_param.program[P_NFS])
 			switch (svcreq->rq_vers) {
 			case NFS_V3:
-				LogDebugAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
-					 "Returning NFS3ERR_ROFS because request is on a Read Only export");
+				LogDebugAlt(COMPONENT_DISPATCH,
+					    COMPONENT_EXPORT,
+					    "Returning NFS3ERR_ROFS because request is on a Read Only export");
 				res_nfs->res_getattr3.status = NFS3ERR_ROFS;
 				rc = NFS_REQ_OK;
 				break;
 
 			default:
-				LogDebugAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
-					 "Dropping request on a Read Only export");
+				LogDebugAlt(COMPONENT_DISPATCH,
+					    COMPONENT_EXPORT,
+					    "Dropping request on a Read Only export");
 				rc = NFS_REQ_DROP;
 				break;
 		} else {

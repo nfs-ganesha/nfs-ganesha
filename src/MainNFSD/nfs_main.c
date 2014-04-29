@@ -372,7 +372,8 @@ int main(int argc, char *argv[])
 	config_struct = config_ParseFile(config_path);
 
 	if (!config_struct) {
-		LogFatal(COMPONENT_INIT, "Exiting due to error while parsing %s",
+		LogFatal(COMPONENT_INIT,
+			 "Exiting due to error while parsing %s",
 			 config_path);
 	}
 

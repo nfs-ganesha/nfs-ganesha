@@ -112,6 +112,8 @@ struct cache_stats {
 	uint64_t inode_mapping;
 };
 
+extern struct cache_stats *cache_stp;
+
 /**
  * Indicate whether this is a read or write operation, for
  * cache_inode_rdwr.

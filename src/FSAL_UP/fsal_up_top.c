@@ -1104,8 +1104,10 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 		LogDebug(COMPONENT_NFS_CB, "call result: %d", call->stat);
 		fh = call->cbt.v_u.v4.args.argarray.argarray_val->
 		    nfs_cb_argop4_u.opcbrecall.fh.nfs_fh4_val;
-		/* Mark the channel down if the rpc call failed
-		* TODO: what to do about server issues which made the RPC call fail ? */
+		/* Mark the channel down if the rpc call failed */
+		/** @todo: what to do about server issues which made the RPC
+		 *         call fail?
+		 */
 		if (call->stat != RPC_SUCCESS) {
 			pthread_mutex_lock(&clid->cid_mutex);
 			clid->cb_chan_down = true;
@@ -1163,7 +1165,8 @@ static uint32_t delegrecall_one(state_lock_entry_t *found_entry,
 	pthread_mutex_lock(&clid->cid_mutex);
 	if (clid->cb_chan_down) {
 		pthread_mutex_unlock(&clid->cid_mutex);
-		LogCrit(COMPONENT_NFS_CB, "Call back channel down, not issuing a recall");
+		LogCrit(COMPONENT_NFS_CB,
+			"Call back channel down, not issuing a recall");
 		gsh_free(maxfh);
 		return NFS_CB_CALL_ABORTED;
 	}
@@ -1241,7 +1244,7 @@ state_status_t delegrecall(cache_entry_t *entry, bool rwlocked)
 		 entry, entry->type);
 
 	if (!rwlocked)
-	  PTHREAD_RWLOCK_wrlock(&entry->state_lock);
+		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 
 	glist_for_each_safe(glist, glist_n, &entry->object.file.deleg_list) {
 		found_entry = glist_entry(glist, state_lock_entry_t, sle_list);
@@ -1254,7 +1257,8 @@ state_status_t delegrecall(cache_entry_t *entry, bool rwlocked)
 
 		LogDebug(COMPONENT_NFS_CB, "found_entry %p", found_entry);
 
-		clfl_stats = &found_entry->sle_state->state_data.deleg.clfile_stats;
+		clfl_stats =
+			&found_entry->sle_state->state_data.deleg.clfile_stats;
 		cl_stats = &clfl_stats->clientid->deleg_heuristics;
 		clfl_stats->num_recalls++;
 		cl_stats->tot_recalls++;
@@ -1274,8 +1278,8 @@ state_status_t delegrecall(cache_entry_t *entry, bool rwlocked)
 			cl_stats->failed_recalls++;
 			break;
 		case NFS_CB_CALL_TIMEDOUT: /* network or client trouble */
-			LogCrit(COMPONENT_NFS_CB, "Failed to recall due to "
-				"timeout!");
+			LogCrit(COMPONENT_NFS_CB,
+				"Failed to recall due to timeout!");
 			clfl_stats->num_recall_timeouts++;
 			cl_stats->failed_recalls++;
 			break;
@@ -1286,7 +1290,7 @@ state_status_t delegrecall(cache_entry_t *entry, bool rwlocked)
 	}
 
 	if (!rwlocked)
-	  PTHREAD_RWLOCK_unlock(&entry->state_lock);
+		PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
 	/* cache_inode_put(entry); why are we doing this? */
 

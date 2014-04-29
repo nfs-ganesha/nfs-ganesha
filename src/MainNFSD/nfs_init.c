@@ -240,8 +240,6 @@ char *config_path = "/etc/ganesha/ganesha.conf";
 
 char *pidfile_path = "/var/run/ganesha.pid";
 
-extern char v4_old_dir[PATH_MAX];
-
 /**
  * @brief This thread is in charge of signal management
  *

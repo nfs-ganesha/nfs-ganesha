@@ -185,7 +185,7 @@ int create_log_facility(char *name,
 			void *private);
 void release_log_facility(char *name);
 int enable_log_facility(char *name);
-int disable_log_facility(char * name);
+int disable_log_facility(char *name);
 int set_log_destination(char *name, char *dest);
 int set_log_level(char *name, log_levels_t max_level);
 void set_const_log_str();
@@ -216,12 +216,10 @@ extern struct log_component_info LogComponents[COMPONENT_COUNT];
 				 NIV_NULL, format, ## args)
 
 #define LogFatal(component, format, args...) \
-	do { \
-		DisplayLogComponentLevel(component, (char *) __FILE__, \
-					 __LINE__, \
-					 (char *) __func__, \
-					 NIV_FATAL, format, ## args); \
-	} while (0)
+	DisplayLogComponentLevel(component, (char *) __FILE__, \
+				 __LINE__, \
+				 (char *) __func__, \
+				 NIV_FATAL, format, ## args)
 
 #define LogMajor(component, format, args...) \
 	do { \

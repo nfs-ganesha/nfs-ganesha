@@ -824,7 +824,7 @@ static void record_stats(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
 		else if (global)
 			record_op(&global_st.mnt.v3_ops, request_time,
 				  qwait_time, success, dup);
-		
+
 		if (sp == NULL)
 			return;
 		/* record stuff */
@@ -1193,24 +1193,27 @@ void server_dbus_total(struct export_stats *export_st, DBusMessageIter *iter)
 					 &struct_iter);
 
 	version = "NFSv3";
-	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &version);
-        if (export_st->st.nfsv3 == NULL)
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING,
+				       &version);
+	if (export_st->st.nfsv3 == NULL)
 		dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
 				&total);
 	else
 		dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
 				&export_st->st.nfsv3->cmds.total);
 	version = "NFSv40";
-	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &version);
-        if (export_st->st.nfsv40 == NULL)
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING,
+				       &version);
+	if (export_st->st.nfsv40 == NULL)
 		dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
 				&total);
 	else
 		dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
 				&export_st->st.nfsv40->compounds.total);
 	version = "NFSv41";
-	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &version);
-        if (export_st->st.nfsv41 == NULL)
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING,
+				       &version);
+	if (export_st->st.nfsv41 == NULL)
 		dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
 				&total);
 	else
@@ -1228,31 +1231,38 @@ void global_dbus_total(DBusMessageIter *iter)
 					 &struct_iter);
 
 	version = "NFSv3";
-	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &version);
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING,
+				       &version);
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
 					&global_st.nfsv3.cmds.total);
 	version = "NFSv40";
-	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &version);
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING,
+				       &version);
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
 					&global_st.nfsv40.compounds.total);
 	version = "NFSv41";
-	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &version);
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING,
+				       &version);
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
 					&global_st.nfsv41.compounds.total);
 	version = "NLM4";
-	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &version);
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING,
+				       &version);
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
 					&global_st.nlm4.ops.total);
 	version = "MNTv1";
-	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &version);
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING,
+				       &version);
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
 					&global_st.mnt.v1_ops.total);
 	version = "MNTv3";
-	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &version);
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING,
+				       &version);
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
 					&global_st.mnt.v3_ops.total);
 	version = "RQUOTA";
-	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &version);
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING,
+				       &version);
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
 					&global_st.rquota.ops.total);
 	dbus_message_iter_close_container(iter, &struct_iter);
@@ -1361,7 +1371,8 @@ void server_dbus_v41_iostats(struct nfsv41_stats *v41p, DBusMessageIter *iter)
 	server_dbus_iostats(&v41p->write, iter);
 }
 
-void server_dbus_total_ops(struct export_stats *export_st, DBusMessageIter *iter)
+void server_dbus_total_ops(struct export_stats *export_st,
+			   DBusMessageIter *iter)
 {
 	struct timespec timestamp;
 
@@ -1396,7 +1407,7 @@ void cache_inode_dbus_show(DBusMessageIter *iter)
 
 	now(&timestamp);
 	dbus_append_timestamp(iter, &timestamp);
-	
+
 	dbus_message_iter_open_container(iter, DBUS_TYPE_STRUCT, NULL,
 					 &struct_iter);
 	type = "cache_req";

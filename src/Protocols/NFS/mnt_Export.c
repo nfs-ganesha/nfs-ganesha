@@ -63,20 +63,19 @@ static bool proc_export(struct gsh_export *exp, void *arg)
 
 	state->retval = 0;
 
-        /* If client does not have any access to the export,
-         * don't add it to the list
-         */
-        nfs_export_check_access(&state->req_client,
-                                export,
-                                &pexport_perms);
-        if(pexport_perms.options == 0)
-        {
-                LogFullDebug(COMPONENT_NFSPROTO,
-                             "Client is not allowed to access Export_Id %d %s",
-                             export->id, export->fullpath);
+	/* If client does not have any access to the export,
+	 * don't add it to the list
+	 */
+	nfs_export_check_access(&state->req_client,
+				export,
+				&pexport_perms);
+	if (pexport_perms.options == 0) {
+		LogFullDebug(COMPONENT_NFSPROTO,
+			     "Client is not allowed to access Export_Id %d %s",
+			     export->id, export->fullpath);
 
-                return true;
-        }
+		return true;
+	}
 
 	new_expnode = gsh_calloc(1, sizeof(struct exportnode));
 	if (new_expnode == NULL)
@@ -189,7 +188,7 @@ int mnt_Export(nfs_arg_t *arg, exportlist_t *export,
  *
  * Frees the result structure allocated for mnt_Dump.
  *
- * @param res        [INOUT]   Pointer to the result structure.
+ * @param res	[INOUT]   Pointer to the result structure.
  *
  */
 void mnt_Export_Free(nfs_res_t *res)

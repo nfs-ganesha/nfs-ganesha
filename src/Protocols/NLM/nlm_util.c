@@ -260,7 +260,8 @@ static void nlm4_send_grant_msg(state_async_queue_t *arg)
 			     export, export->export.export_hdl,
 			     NFS_V3, 0, NFS_REQUEST);
 
-	state_status = state_release_grant(cookie_entry, &root_op_context.req_ctx);
+	state_status = state_release_grant(cookie_entry,
+					   &root_op_context.req_ctx);
 
 	if (state_status != STATE_SUCCESS) {
 		/* Huh? */

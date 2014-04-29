@@ -147,8 +147,8 @@ static struct logfields default_logfields = {
 	.timefmt = TD_GANESHA
 };
 
-static struct logfields *logfields = &default_logfields;	
-	
+static struct logfields *logfields = &default_logfields;
+
 /**
  * @brief Define the structure for a log facility.
  *
@@ -820,7 +820,7 @@ int enable_log_facility(char *name)
  * @return 0 on success, -errno on errors.
  */
 
-int disable_log_facility(char * name)
+int disable_log_facility(char *name)
 {
 	struct log_facility *facility;
 
@@ -882,7 +882,7 @@ static int set_default_log_facility(const char *name)
 
 	if (name == NULL || *name == '\0')
 		return -EINVAL;
-	
+
 	pthread_rwlock_wrlock(&log_rwlock);
 	facility = find_log_facility(name);
 	if (facility == NULL) {
@@ -1770,7 +1770,7 @@ enum facility_state {
 	FAC_ACTIVE,
 	FAC_DEFAULT
 };
-	
+
 struct facility_config {
 	struct glist_head fac_list;
 	char *facility_name;
@@ -1806,7 +1806,7 @@ static struct config_item_list timeformats[] = {
 	CONFIG_LIST_TOK("ISO 8601", TD_8601),
 	CONFIG_LIST_TOK("ISO", TD_8601),
 	CONFIG_LIST_TOK("syslog", TD_SYSLOG),
-	CONFIG_LIST_TOK("syslog_usec",TD_SYSLOG_USEC),
+	CONFIG_LIST_TOK("syslog_usec", TD_SYSLOG_USEC),
 	CONFIG_LIST_TOK("false", TD_NONE),
 	CONFIG_LIST_TOK("none", TD_NONE),
 	CONFIG_LIST_TOK("user_defined", TD_USER),
@@ -2026,7 +2026,7 @@ static struct config_item component_levels[] = {
 /**
  * @brief Initialize the log level array
  *
- * We allocate an array here even for the global case so as to 
+ * We allocate an array here even for the global case so as to
  * preserve something that works (default_log_levels) during config
  * processing.  If the parse errors out, we just throw it away...
  *
@@ -2214,7 +2214,7 @@ static int facility_commit(void *node, void *link_mem, void *self_struct)
 	fac_list = link_mem;
 	glist_add_tail(fac_list, &conf->fac_list);
 	return 0;
-		
+
 out:
 	gsh_free(self_struct); /* got the bits, be done with it */
 	return errcnt;
@@ -2349,7 +2349,7 @@ static int log_conf_commit(void *node, void *link_mem, void *self_struct)
 				conf->facility_name);
 			release_log_facility(conf->facility_name);
 		}
-	done:
+ done:
 		(void)facility_init(&logger->facility_list, conf);
 	}
 	if (errcnt == 0) {
@@ -2378,16 +2378,15 @@ static int log_conf_commit(void *node, void *link_mem, void *self_struct)
 	} else {
 		if (logger->logfields != NULL) {
 			struct logfields *lf = logger->logfields;
-			
+
 			if (lf->user_date_fmt != NULL)
 				gsh_free(lf->user_date_fmt);
 			if (lf->user_time_fmt != NULL)
 				gsh_free(lf->user_time_fmt);
 			gsh_free(lf);
 		}
-		if (logger->comp_log_level != NULL) {
+		if (logger->comp_log_level != NULL)
 			gsh_free(logger->comp_log_level);
-		}
 	}
 	logger->logfields = NULL;
 	logger->comp_log_level = NULL;

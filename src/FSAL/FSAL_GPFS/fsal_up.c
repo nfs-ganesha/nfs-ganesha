@@ -316,7 +316,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 
 					rc = event_func->
 					    update(gpfs_fs->fs->fsal,
-					    	   &key, &attr, upflags);
+						   &key, &attr, upflags);
 
 					if ((flags & UP_NLINK)
 					    && (attr.numlinks == 0)) {
@@ -356,7 +356,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 				  CACHE_INODE_INVALIDATE_CONTENT;
 			rc = event_func->invalidate_close(
 						gpfs_fs->fs->fsal,
-					        event_func,
+						event_func,
 						&key,
 						upflags);
 			break;

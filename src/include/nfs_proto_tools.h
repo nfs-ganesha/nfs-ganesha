@@ -224,7 +224,7 @@ static inline bool clear_attribute_in_bitmap(struct bitmap4 *bits, int attr)
 
 void nfs_SetWccData(const struct pre_op_attr *before_attr,
 		    cache_entry_t *entry, struct req_op_context *ctx,
-		    wcc_data *pwcc_data);
+		    wcc_data * pwcc_data);
 
 void nfs_SetPostOpAttr(cache_entry_t *entry, struct req_op_context *ctx,
 		       post_op_attr *attr);

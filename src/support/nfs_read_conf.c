@@ -62,11 +62,15 @@ static struct config_item_list protocols[] = {
 
 static struct config_item core_params[] = {
 	CONF_ITEM_UI16("NFS_Port", 1024, 65535, NFS_PORT,
-		      nfs_core_param, port[P_NFS]),
-/* 	CONF_ITEM_UI16("MNT_Port", 1024, 65535, 0, nfs_core_param, port[P_MNT]), */
-/* 	CONF_ITEM_UI16("NLM_Port", 1024, 65535, 0, nfs_core_param, port[P_NLM]), */
+		       nfs_core_param, port[P_NFS]),
+#if 0
+	CONF_ITEM_UI16("MNT_Port", 1024, 65535, 0,
+		       nfs_core_param, port[P_MNT]),
+	CONF_ITEM_UI16("NLM_Port", 1024, 65535, 0,
+		       nfs_core_param, port[P_NLM]),
+#endif
 	CONF_ITEM_UI16("Rquota_Port", 1024, 65535, RQUOTA_PORT,
-		      nfs_core_param, port[P_RQUOTA]),
+		       nfs_core_param, port[P_RQUOTA]),
 	CONF_ITEM_IPV4_ADDR("Bind_Addr", "0.0.0.0",
 			    nfs_core_param, bind_addr),
 	CONF_ITEM_UI32("NFS_Program", 1, 200499999, NFS_PROGRAM,
@@ -179,7 +183,7 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t *pparam)
 				    &nfs_core,
 				    pparam,
 				    true);
-	return (rc == 0)? 1 : ((rc < 0) ? -1 : 0);
+	return (rc == 0) ? 1 : ((rc < 0) ? -1 : 0);
 }
 
 static struct config_item ip_name_params[] = {
@@ -216,7 +220,7 @@ int nfs_read_ip_name_conf(config_file_t in_config,
 				    &nfs_ip_name,
 				    pparam,
 				    true);
-	return (rc == 0)? 1 : ((rc < 0) ? -1 : 0);
+	return (rc == 0) ? 1 : ((rc < 0) ? -1 : 0);
 }
 
 #ifdef _HAVE_GSSAPI
@@ -261,7 +265,7 @@ int nfs_read_krb5_conf(config_file_t in_config, nfs_krb5_parameter_t *pparam)
 				    &krb5_param,
 				    pparam,
 				    true);
-	return (rc == 0)? 1 : ((rc < 0) ? -1 : 0);
+	return (rc == 0) ? 1 : ((rc < 0) ? -1 : 0);
 }
 #endif
 
@@ -317,5 +321,5 @@ int nfs_read_version4_conf(config_file_t in_config,
 				    &version4_param,
 				    pparam,
 				    true);
-	return (rc == 0)? 1 : ((rc < 0) ? -1 : 0);
+	return (rc == 0) ? 1 : ((rc < 0) ? -1 : 0);
 }				/* nfs_read_version4_conf */

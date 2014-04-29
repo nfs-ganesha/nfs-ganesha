@@ -1037,7 +1037,7 @@ static struct config_item_list expire_types[] = {
 		delegations, _struct_, _perms_.options, _perms_.set),	\
 	CONF_ITEM_BOOLBIT_SET("Disable_ACL",				\
 		false, EXPORT_OPTION_DISABLE_ACL,			\
-		_struct_, _perms_.options, _perms_.set)		
+		_struct_, _perms_.options, _perms_.set)
 
 /**
  * @brief Table of client sub-block parameters

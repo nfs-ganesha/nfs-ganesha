@@ -38,7 +38,6 @@
 #define REAPER_DELAY 10
 
 unsigned int reaper_delay = REAPER_DELAY;
-extern char v4_old_dir[PATH_MAX];
 
 static struct fridgethr *reaper_fridge;
 

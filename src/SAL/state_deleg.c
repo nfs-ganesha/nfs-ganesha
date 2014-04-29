@@ -194,8 +194,8 @@ bool init_deleg_heuristics(cache_entry_t *entry)
 	struct file_deleg_heuristics *statistics;
 
 	if (entry->type != REGULAR_FILE) {
-		LogCrit(COMPONENT_STATE, "Initialization of delegation stats "
-			"for an entry that is NOT a regular file!");
+		LogCrit(COMPONENT_STATE,
+			"Initialization of delegation stats for an entry that is NOT a regular file!");
 		return false;
 	}
 
@@ -243,8 +243,8 @@ bool should_we_grant_deleg(cache_entry_t *entry, nfs_client_id_t *client,
 	LogDebug(COMPONENT_STATE, "Checking if we should grant delegation.");
 
 	if (open_state->state_type != STATE_TYPE_SHARE) {
-		LogDebug(COMPONENT_STATE, "expects a SHARE open state and no "
-			 "other.");
+		LogDebug(COMPONENT_STATE,
+			 "expects a SHARE open state and no other.");
 		return false;
 	}
 
@@ -252,8 +252,8 @@ bool should_we_grant_deleg(cache_entry_t *entry, nfs_client_id_t *client,
 	spread = time(NULL) - file_stats->first_open;
 	if (spread != 0 &&
 	     (file_stats->num_opens / spread) > ACCEPTABLE_OPEN_FREQUENCY) {
-		LogDebug(COMPONENT_STATE, "This file is opened too frequently"
-			 " to delegate.");
+		LogDebug(COMPONENT_STATE,
+			 "This file is opened too frequently to delegate.");
 		return false;
 	}
 
@@ -262,15 +262,15 @@ bool should_we_grant_deleg(cache_entry_t *entry, nfs_client_id_t *client,
 		if (file_stats->deleg_type == OPEN_DELEGATE_READ &&
 		    open_state->state_data.share.share_access &
 		    OPEN4_SHARE_ACCESS_WRITE) {
-			LogMidDebug(COMPONENT_STATE, "READ delegate requested, "
-				    "but file is opened for WRITE.");
+			LogMidDebug(COMPONENT_STATE,
+				    "READ delegate requested, but file is opened for WRITE.");
 			return false;
 		}
 		if (file_stats->deleg_type == OPEN_DELEGATE_WRITE &&
 		    !(open_state->state_data.share.share_access &
 		      OPEN4_SHARE_ACCESS_WRITE)) {
-			LogMidDebug(COMPONENT_STATE, "WRITE delegate requested,"
-				    " but file is not opened for WRITE.");
+			LogMidDebug(COMPONENT_STATE,
+				    "WRITE delegate requested, but file is not opened for WRITE.");
 		}
 	}
 
@@ -278,9 +278,8 @@ bool should_we_grant_deleg(cache_entry_t *entry, nfs_client_id_t *client,
 	if (cl_stats->tot_recalls > 0 &&
 	    ((1.0 - (cl_stats->failed_recalls / cl_stats->tot_recalls))
 	     > ACCEPTABLE_FAILS)) {
-		LogDebug(COMPONENT_STATE, "Client is %.0f unreliable during "
-			 "recalls. Allowed failure rate is %.0f. Denying "
-			 "delegation.",
+		LogDebug(COMPONENT_STATE,
+			 "Client is %.0f unreliable during recalls. Allowed failure rate is %.0f. Denying delegation.",
 			 1.0 - (cl_stats->failed_recalls
 				/ cl_stats->tot_recalls),
 			 ACCEPTABLE_FAILS);
@@ -291,8 +290,8 @@ bool should_we_grant_deleg(cache_entry_t *entry, nfs_client_id_t *client,
 #define MIN_AVG_HOLD 1500
 	if (file_stats->avg_hold < MIN_AVG_HOLD
 	    && file_stats->avg_hold != 0) {
-		LogDebug(COMPONENT_STATE, "Average length of delegation (%lld) "
-			 "is less than minimum avg (%lld). Denying delegation.",
+		LogDebug(COMPONENT_STATE,
+			 "Average length of delegation (%lld) is less than minimum avg (%lld). Denying delegation.",
 			 (long long) file_stats->avg_hold,
 			 (long long) MIN_AVG_HOLD);
 		return false;

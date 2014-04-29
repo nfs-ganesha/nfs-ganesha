@@ -76,5 +76,5 @@ int _9p_read_conf(config_file_t in_config, _9p_parameter_t *pparam)
 				    &_9p_param,
 				    pparam,
 				    true);
-	return (rc == 0)? -2 : ((rc < 0) ? -1 : 1);
+	return (rc == 0) ? -2 : ((rc < 0) ? -1 : 1);
 }				/* _9p_read_conf */

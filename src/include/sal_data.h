@@ -213,6 +213,9 @@ typedef struct clid_entry {
 	char cl_name[PATH_MAX];	/*< Client name */
 } clid_entry_t;
 
+extern char v4_old_dir[PATH_MAX+1];
+extern char v4_recov_dir[PATH_MAX + 1];
+
 /******************************************************************************
  *
  * NFSv4 State data

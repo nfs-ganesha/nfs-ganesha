@@ -289,7 +289,7 @@ static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t *data,
 						   &candidate_data,
 						   owner,
 						   file_state,
-						   (openflags & FSAL_O_RECLAIM));
+						   openflags & FSAL_O_RECLAIM);
 
 			if (state_status != STATE_SUCCESS) {
 				cache_status =
@@ -857,7 +857,7 @@ static void get_delegation(compound_data_t *data, struct nfs_argop4 *op,
 {
 	state_status_t state_status;
 	fsal_lock_param_t lock_desc;
-	state_data_t deleg_data, candidate_data,*saved_data;
+	state_data_t deleg_data, candidate_data, *saved_data;
 	open_delegation_type4 deleg_type;
 	state_owner_t *clientowner = &client->cid_owner;
 	OPEN4args *args = &op->nfs_argop4_u.opopen;
@@ -935,7 +935,8 @@ static void get_delegation(compound_data_t *data, struct nfs_argop4 *op,
 		       new_state->stateid_other,
 		       sizeof(saved_data->deleg.sd_stateid.other));
 
-		LogFullDebugOpaque(COMPONENT_STATE, "delegation state added, stateid: %s",
+		LogFullDebugOpaque(COMPONENT_STATE,
+				   "delegation state added, stateid: %s",
 				   100, &saved_data->deleg.sd_stateid.other,
 				   sizeof(saved_data->deleg.sd_stateid.other));
 
@@ -996,8 +997,8 @@ static void get_delegation(compound_data_t *data, struct nfs_argop4 *op,
 		}
 	}
 
-	LogDebug(COMPONENT_NFS_V4_LOCK, "get_delegation openowner %p "
-		 "clientowner %p status %s",
+	LogDebug(COMPONENT_NFS_V4_LOCK,
+		 "get_delegation openowner %p clientowner %p status %s",
 		 openowner, clientowner, state_err_str(state_status));
 }
 
@@ -1446,16 +1447,20 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* Update delegation open stats */
 	if (data->current_entry->type == REGULAR_FILE) {
-		if (data->current_entry->object.file.deleg_heuristics.num_opens == 0)
-			data->current_entry->object.file.deleg_heuristics.first_open = time(NULL);
+		if (data->current_entry->object.file.deleg_heuristics.num_opens
+		    == 0) {
+			data->current_entry->object.file.deleg_heuristics
+						.first_open = time(NULL);
+		}
 		data->current_entry->object.file.deleg_heuristics.num_opens++;
 	}
 
 	pthread_mutex_lock(&clientid->cid_mutex);
 	/* Decide if we should delegate, then add it. */
 	if (data->current_entry->type != DIRECTORY
-	    && data->export->export_hdl->ops->fs_supports(data->export->export_hdl,
-							  fso_delegations)
+	    && data->export->export_hdl->ops->fs_supports(
+						data->export->export_hdl,
+						fso_delegations)
 	    && (data->export_perms.options & EXPORT_OPTION_DELEGATIONS)
 	    && owner->so_owner.so_nfs4_owner.so_confirmed == TRUE
 	    && !clientid->cb_chan_down

@@ -237,7 +237,8 @@ int up_async_invalidate(struct fridgethr *fr,
 			const struct fsal_up_vector *up_ops,
 			struct fsal_module *fsal,
 			struct gsh_buffdesc *obj, uint32_t flags,
-			void (*cb) (void *, cache_inode_status_t), void *cb_arg);
+			void (*cb) (void *, cache_inode_status_t),
+			void *cb_arg);
 int up_async_update(struct fridgethr *fr,
 		    const struct fsal_up_vector *up_ops,
 		    struct fsal_module *fsal,

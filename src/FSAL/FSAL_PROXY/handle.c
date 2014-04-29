@@ -820,7 +820,6 @@ static int pxy_setclientid(clientid4 *resultclientid, uint32_t *lease_time)
 	cb_client4 cbproxy;
 	char clientid_name[MAXNAMLEN + 1];
 	SETCLIENTID4resok *sok;
-	extern struct timespec ServerBootTime;
 	struct sockaddr_in sin;
 	socklen_t slen = sizeof(sin);
 	char addrbuf[sizeof("255.255.255.255")];

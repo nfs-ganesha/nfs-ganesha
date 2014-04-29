@@ -55,8 +55,6 @@
 
 pool_t *cache_inode_entry_pool;
 
-extern struct cache_stats *cache_stp;
-
 const char *
 cache_inode_err_str(cache_inode_status_t err)
 {

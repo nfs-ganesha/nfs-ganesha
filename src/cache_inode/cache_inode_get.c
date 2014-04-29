@@ -54,9 +54,6 @@
 #include <assert.h>
 #include "export_mgr.h"
 
-extern struct cache_stats *cache_stp;
-
-
 /**
  *
  * @brief Check the active export mapping for this entry and update if
@@ -233,7 +230,7 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
 			return CACHE_INODE_MALLOC_ERROR;
 		}
 		(void)atomic_inc_uint64_t(&cache_stp->inode_hit);
-		
+
 		return CACHE_INODE_SUCCESS;
 	}
 

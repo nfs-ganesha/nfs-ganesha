@@ -368,7 +368,7 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op, compound_data_t *data,
 		}
 #if 0
 		/* Check and update call back channel state */
-		if(nfs_test_cb_chan(conf) != RPC_SUCCESS)
+		if (nfs_test_cb_chan(conf) != RPC_SUCCESS)
 			conf->cb_chan_down = true;
 		else
 			conf->cb_chan_down = false;
@@ -420,7 +420,7 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op, compound_data_t *data,
 
 #if 0
 		/* Check and update call back channel state */
-		if(nfs_test_cb_chan(unconf) != RPC_SUCCESS)
+		if (nfs_test_cb_chan(unconf) != RPC_SUCCESS)
 			unconf->cb_chan_down = true;
 		else
 			unconf->cb_chan_down = false;

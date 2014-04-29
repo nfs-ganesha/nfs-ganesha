@@ -401,13 +401,13 @@ fsal_status_t zfs_create_export(struct fsal_module *fsal_hdl,
 		p_snapshots[0].p_vfs = p_zfs;
 		i_snapshots = 0;
 	}
-	
+
 	if (libargs.pool_path)
 		gsh_free(libargs.pool_path);
 	myself->p_vfs = p_snapshots[0].p_vfs;
 	*export = &myself->export;
 	pthread_mutex_unlock(&myself->export.lock);
-	
+
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
  errout:

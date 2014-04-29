@@ -160,12 +160,12 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t *data,
 	PTHREAD_RWLOCK_unlock(&pentry->state_lock);
 
 	if (found_entry == NULL) {
-		LogDebug(COMPONENT_NFS_V4_LOCK, "We did not find a delegation"
-			 " in the delegation lock list.");
+		LogDebug(COMPONENT_NFS_V4_LOCK,
+			 "We did not find a delegation in the delegation lock list.");
 		res_DELEGRETURN4->status = NFS4ERR_BAD_STATEID;
 		return res_DELEGRETURN4->status;
 	}
-		
+
 	plock_owner = found_entry->sle_owner;
 
 	LogLock(COMPONENT_NFS_V4_LOCK, NIV_FULL_DEBUG, tag, data->current_entry,
@@ -198,7 +198,8 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* Remove state entry and update stats */
 	deleg_heuristics_recall(data->current_entry,
-				pstate_found->state_data.deleg.clfile_stats.clientid);
+				pstate_found->state_data.deleg.clfile_stats
+					.clientid);
 	state_del(pstate_found, false);
 
 	/* Successful exit */
