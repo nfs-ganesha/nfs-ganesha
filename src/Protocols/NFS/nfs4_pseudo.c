@@ -201,6 +201,8 @@ bool pseudo_mount_export(struct gsh_export *exp,
 	char *p;
 	char *rest;
 	cache_inode_status_t cache_status;
+	char *tok;
+	char *saveptr;
 	int rc;
 
 	/* skip exports that aren't for NFS v4
@@ -287,15 +289,18 @@ bool pseudo_mount_export(struct gsh_export *exp,
 	/* Now we need to process the rest of the path, creating directories
 	 * if necessary.
 	 */
-	rc = token_to_proc(rest, '/', make_pseudofs_node, &state);
-
-	if (rc == -1) {
-		/* Release reference on mount point inode
-		 * and the mounted on export
-		 */
-		cache_inode_put(state.dirent);
-		put_gsh_export(state.req_ctx->export);
-		return false;
+	for (tok = strtok_r(rest, "/", &saveptr);
+	     tok;
+	     tok = strtok_r(NULL, "/", &saveptr)) {
+		rc = make_pseudofs_node(tok, &state);
+		if (!rc) {
+			/* Release reference on mount point inode
+			 * and the mounted on export
+			 */
+			cache_inode_put(state.dirent);
+			put_gsh_export(state.req_ctx->export);
+			return false;
+		}
 	}
 
 	/* Lock (and refresh if necessary) the attributes */
