@@ -197,6 +197,7 @@ struct config_block proxy_param = {
 static fsal_status_t pxy_init_config(struct fsal_module *fsal_hdl,
 				     config_file_t config_struct)
 {
+	struct config_error_type err_type;
 	int rc;
 	struct pxy_fsal_module *pxy =
 	    container_of(fsal_hdl, struct pxy_fsal_module, module);
@@ -205,7 +206,8 @@ static fsal_status_t pxy_init_config(struct fsal_module *fsal_hdl,
 	rc = load_config_from_parse(config_struct,
 				    &proxy_param,
 				    &pxy->fsinfo,
-				    true);
+				    true,
+				    &err_type);
 	if (rc < 0)
 		return fsalstat(ERR_FSAL_INVAL, 0);
 

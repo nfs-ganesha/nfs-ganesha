@@ -179,6 +179,7 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 {
 	struct pt_fsal_module *pt_me =
 	    container_of(fsal_hdl, struct pt_fsal_module, fsal);
+	struct config_error_type err_type;
 	int rc;
 
 	pt_me->fs_info = default_posix_info;	/* copy of the defaults */
@@ -186,7 +187,8 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 	rc = load_config_from_parse(config_struct,
 				    &pt_param,
 				    &pt_me->fs_info,
-				    true);
+				    true,
+				    &err_type);
 	if (rc < 0)
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	display_fsinfo(&pt_me->fs_info);

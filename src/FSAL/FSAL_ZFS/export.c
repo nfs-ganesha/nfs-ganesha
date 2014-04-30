@@ -328,6 +328,7 @@ fsal_status_t zfs_create_export(struct fsal_module *fsal_hdl,
 				struct fsal_export **export)
 {
 	struct zfs_fsal_export *myself;
+	struct config_error_type err_type;
 	int retval = 0;
 	fsal_errors_t fsal_error = ERR_FSAL_INVAL;
 	libzfswrap_vfs_t *p_zfs = NULL;
@@ -365,7 +366,8 @@ fsal_status_t zfs_create_export(struct fsal_module *fsal_hdl,
 	retval = load_config_from_node(parse_node,
 				       &export_param,
 				       &libargs,
-				       true);
+				       true,
+				       &err_type);
 	if (retval != 0) {
 		fsal_error = ERR_FSAL_INVAL;
 		goto errout;

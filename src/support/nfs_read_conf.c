@@ -173,12 +173,14 @@ struct config_block nfs_core = {
  */
 int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t *pparam)
 {
+	struct config_error_type err_type;
 	int rc;
 
 	rc = load_config_from_parse(in_config,
 				    &nfs_core,
 				    pparam,
-				    true);
+				    true,
+				    &err_type);
 	return (rc == 0)? 1 : ((rc < 0) ? -1 : 0);
 }
 
@@ -210,12 +212,14 @@ struct config_block nfs_ip_name = {
 int nfs_read_ip_name_conf(config_file_t in_config,
 			  nfs_ip_name_parameter_t *pparam)
 {
+	struct config_error_type err_type;
 	int rc;
 
 	rc = load_config_from_parse(in_config,
 				    &nfs_ip_name,
 				    pparam,
-				    true);
+				    true,
+				    &err_type);
 	return (rc == 0)? 1 : ((rc < 0) ? -1 : 0);
 }
 
@@ -255,12 +259,14 @@ struct config_block krb5_param = {
  */
 int nfs_read_krb5_conf(config_file_t in_config, nfs_krb5_parameter_t *pparam)
 {
+	struct config_error_type err_type;
 	int rc;
 
 	rc = load_config_from_parse(in_config,
 				    &krb5_param,
 				    pparam,
-				    true);
+				    true,
+				    &err_type);
 	return (rc == 0)? 1 : ((rc < 0) ? -1 : 0);
 }
 #endif
@@ -311,11 +317,13 @@ struct config_block version4_param = {
 int nfs_read_version4_conf(config_file_t in_config,
 			   nfs_version4_parameter_t *pparam)
 {
+	struct config_error_type err_type;
 	int rc;
 
 	rc = load_config_from_parse(in_config,
 				    &version4_param,
 				    pparam,
-				    true);
+				    true,
+				    &err_type);
 	return (rc == 0)? 1 : ((rc < 0) ? -1 : 0);
 }				/* nfs_read_version4_conf */

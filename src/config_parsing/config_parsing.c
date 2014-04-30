@@ -1118,6 +1118,7 @@ config_file_t get_parse_root(void *node)
  * @param conf_blk    [IN] pointer to configuration description
  * @param param       [IN] pointer to struct to fill or NULL
  * @param unique      [IN] bool if true, more than one is an error
+ * @param err_type    [OUT] error type return
  *
  * @returns -1 on errors, 0 for success
  */
@@ -1125,12 +1126,14 @@ config_file_t get_parse_root(void *node)
 int load_config_from_node(void *tree_node,
 			  struct config_block *conf_blk,
 			  void *param,
-			  bool unique)
+			  bool unique,
+			  struct config_error_type *err_type)
 {
 	struct config_node *node = (struct config_node *)tree_node;
 	char *blkname = conf_blk->blk_desc.name;
 	int rc;
 
+	memset(err_type, 0, sizeof(struct config_error_type));
 	if (node->type == TYPE_BLOCK) {
 		if (strcasecmp(node->name, blkname) != 0) {
 			LogCrit(COMPONENT_CONFIG,
@@ -1177,6 +1180,7 @@ int load_config_from_node(void *tree_node,
  * @param conf_blk [IN] pointer to configuration description
  * @param param    [IN] pointer to struct to fill or NULL
  * @param unique   [IN] bool if true, more than one is an error
+ * @param err_type [OUT] pointer to error type return
  *
  * @returns -1 on errors, number of blocks found )(0 == none)
  */
@@ -1184,7 +1188,8 @@ int load_config_from_node(void *tree_node,
 int load_config_from_parse(config_file_t config,
 			   struct config_block *conf_blk,
 			   void *param,
-			   bool unique)
+			   bool unique,
+			   struct config_error_type *err_type)
 {
 	struct config_root *tree = (struct config_root *)config;
 	struct config_node *node = NULL;
@@ -1194,6 +1199,7 @@ int load_config_from_parse(config_file_t config,
 	int rc, cum_errs = 0;
 	void *blk_mem = NULL;
 
+	memset(err_type, 0, sizeof(struct config_error_type));
 	if (tree->root.type != TYPE_ROOT) {
 		LogInfo(COMPONENT_CONFIG,
 			"Expected to start at parse tree root for (%s)",

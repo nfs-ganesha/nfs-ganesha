@@ -765,6 +765,7 @@ static bool gsh_export_addexport(DBusMessageIter *args,
 	bool retval = true;
 	char *file_path = NULL;
 	config_file_t config_struct;
+	struct config_error_type err_type;
 
 	/* Get path */
 	if (DBUS_TYPE_STRING == dbus_message_iter_get_arg_type(args))
@@ -791,9 +792,10 @@ static bool gsh_export_addexport(DBusMessageIter *args,
 
 	/* Load export entry from parsed file */
 	rc = load_config_from_parse(config_struct,
-					&add_export_param,
-					NULL,
-					false);
+				    &add_export_param,
+				    NULL,
+				    false,
+				    &err_type);
 	if (rc < 0) {
 		LogCrit(COMPONENT_EXPORT, "Error while processing export entry");
 		dbus_set_error(error, DBUS_ERROR_INVALID_FILE_CONTENT,

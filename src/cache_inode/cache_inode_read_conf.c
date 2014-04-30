@@ -112,12 +112,14 @@ cache_inode_status_t
 cache_inode_read_conf_parameter(config_file_t config,
 				cache_inode_parameter_t *param)
 {
+	struct config_error_type err_type;
 	int rc;
 
 	rc = load_config_from_parse(config,
 				    &cache_inode_param,
 				    param,
-				    true);
+				    true,
+				    &err_type);
 	return (rc < 0) ? CACHE_INODE_INVALID_ARGUMENT : CACHE_INODE_SUCCESS;
 }
 

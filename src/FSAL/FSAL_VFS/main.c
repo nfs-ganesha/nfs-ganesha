@@ -135,13 +135,15 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 {
 	struct vfs_fsal_module *vfs_me =
 	    container_of(fsal_hdl, struct vfs_fsal_module, fsal);
+	struct config_error_type err_type;
 	int rc;
 
 	vfs_me->fs_info = default_posix_info;	/* copy the consts */
 	rc = load_config_from_parse(config_struct,
 				    &vfs_param,
 				    &vfs_me->fs_info,
-				    true);
+				    true,
+				    &err_type);
 	if (rc < 0)
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	display_fsinfo(&vfs_me->fs_info);

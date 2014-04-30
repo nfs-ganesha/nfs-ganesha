@@ -621,6 +621,7 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 				struct fsal_export **export)
 {
 	struct vfs_fsal_export *myself;
+	struct config_error_type err_type;
 	int retval = 0;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 
@@ -659,7 +660,8 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 	retval = load_config_from_node(parse_node,
 				       &export_param,
 				       myself,
-				       true);
+				       true,
+				       &err_type);
 	if (retval != 0)
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	vfs_init_export_ops(myself, export_path);

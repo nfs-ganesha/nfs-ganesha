@@ -277,6 +277,7 @@ fsal_status_t nullfs_create_export(struct fsal_module *fsal_hdl,
 	struct nullfs_fsal_export *myself;
 	struct fsal_export *sub_export;
 	struct subfsal_args subfsal;
+	struct config_error_type err_type;
 	int retval;
 
 	/* process our FSAL block to get the name of the fsal
@@ -285,7 +286,8 @@ fsal_status_t nullfs_create_export(struct fsal_module *fsal_hdl,
 	retval = load_config_from_node(parse_node,
 				       &export_param,
 				       &subfsal,
-				       true);
+				       true,
+				       &err_type);
 	if (retval != 0)
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	fsal_stack = lookup_fsal(subfsal.name);

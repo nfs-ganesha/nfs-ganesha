@@ -70,11 +70,13 @@ struct config_block _9p_param = {
 
 int _9p_read_conf(config_file_t in_config, _9p_parameter_t *pparam)
 {
+	struct config_error_type err_type;
 	int rc;
 
 	rc = load_config_from_parse(in_config,
 				    &_9p_param,
 				    pparam,
-				    true);
+				    true,
+				    &err_type);
 	return (rc == 0)? -2 : ((rc < 0) ? -1 : 1);
 }				/* _9p_read_conf */

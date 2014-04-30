@@ -796,13 +796,15 @@ config_file_t get_parse_root(void *node);
 int load_config_from_node(void *tree_node,
 			  struct config_block *conf_blk,
 			  void *param,
-			  bool unique);
+			  bool unique,
+			  struct config_error_type *err_type);
 
 /* fill configuration structure from parse tree */
 int load_config_from_parse(config_file_t config,
 			   struct config_block *conf_blk,
 			   void *param,
-			   bool unique);
+			   bool unique,
+			   struct config_error_type *err_type);
 
 /**
  * @brief NOOP config initializer and commit functions.

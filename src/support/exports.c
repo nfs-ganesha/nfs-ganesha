@@ -896,7 +896,7 @@ static void export_defaults_display(const char *step, void *node,
 	StrExportOptions(defaults, perms);
 
 	LogEvent(COMPONENT_CONFIG,
-		 "%s Export Deafults (%s)",
+		 "%s Export Defaults (%s)",
 		 step, perms);
 }
 
@@ -1327,19 +1327,22 @@ err_out:
  */
 int ReadExports(config_file_t in_config)
 {
+	struct config_error_type err_type;
 	int rc, ret = 0;
 
 	rc = load_config_from_parse(in_config,
-				      &export_defaults_param,
-				      NULL,
-				      false);
+				    &export_defaults_param,
+				    NULL,
+				    false,
+				    &err_type);
 	if (rc < 0)
 		return rc;
 
 	rc = load_config_from_parse(in_config,
-				      &export_param,
-				      NULL,
-				      false);
+				    &export_param,
+				    NULL,
+				    false,
+				    &err_type);
 	if (rc >= 0) {
 		ret = build_default_root();
 		if (ret < 0) {
