@@ -552,11 +552,11 @@ static void state_share_update_counter(cache_entry_t *entry, int old_access,
 	    ((new_access & OPEN4_SHARE_ACCESS_WRITE) !=
 	     0) - ((old_access & OPEN4_SHARE_ACCESS_WRITE) != 0);
 	int deny_read_inc =
-	    ((new_deny & OPEN4_SHARE_ACCESS_READ) !=
-	     0) - ((old_deny & OPEN4_SHARE_ACCESS_READ) != 0);
+	    ((new_deny & OPEN4_SHARE_DENY_READ) !=
+	     0) - ((old_deny & OPEN4_SHARE_DENY_READ) != 0);
 	int deny_write_inc =
-	    ((new_deny & OPEN4_SHARE_ACCESS_WRITE) !=
-	     0) - ((old_deny & OPEN4_SHARE_ACCESS_WRITE) != 0);
+	    ((new_deny & OPEN4_SHARE_DENY_WRITE) !=
+	     0) - ((old_deny & OPEN4_SHARE_DENY_WRITE) != 0);
 
 	entry->object.file.share_state.share_access_read += access_read_inc;
 	entry->object.file.share_state.share_access_write += access_write_inc;

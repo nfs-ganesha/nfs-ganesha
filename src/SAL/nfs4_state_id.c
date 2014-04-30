@@ -670,8 +670,6 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, cache_entry_t *entry,
 
 	if ((flags & STATEID_SPECIAL_FREE) != 0) {
 		switch (state2->state_type) {
-			break;
-
 		case STATE_TYPE_LOCK:
 			PTHREAD_RWLOCK_rdlock(&state2->state_entry->state_lock);
 			if (glist_empty
