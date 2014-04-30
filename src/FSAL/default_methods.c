@@ -78,12 +78,12 @@ static int put_fsal(struct fsal_module *fsal_hdl)
 {
 	int retval = EINVAL;	/* too many 'puts" */
 
-	pthread_mutex_lock(&fsal_hdl->lock);
+	PTHREAD_RWLOCK_wrlock(&fsal_hdl->lock);
 	if (fsal_hdl->refs > 0) {
 		fsal_hdl->refs--;
 		retval = 0;
 	}
-	pthread_mutex_unlock(&fsal_hdl->lock);
+	PTHREAD_RWLOCK_unlock(&fsal_hdl->lock);
 	return retval;
 }
 
@@ -98,14 +98,14 @@ static const char *get_name(struct fsal_module *fsal_hdl)
 {
 	char *name;
 
-	pthread_mutex_lock(&fsal_hdl->lock);
+	PTHREAD_RWLOCK_wrlock(&fsal_hdl->lock);
 	if (fsal_hdl->refs <= 0) {
 		LogCrit(COMPONENT_CONFIG, "Called without reference!");
 		name = NULL;
 	} else {
 		name = fsal_hdl->name;
 	}
-	pthread_mutex_unlock(&fsal_hdl->lock);
+	PTHREAD_RWLOCK_unlock(&fsal_hdl->lock);
 	return name;
 }
 
@@ -120,14 +120,14 @@ static const char *get_lib_name(struct fsal_module *fsal_hdl)
 {
 	char *path;
 
-	pthread_mutex_lock(&fsal_hdl->lock);
+	PTHREAD_RWLOCK_wrlock(&fsal_hdl->lock);
 	if (fsal_hdl->refs <= 0) {
 		LogCrit(COMPONENT_CONFIG, "Called without reference!");
 		path = NULL;
 	} else {
 		path = fsal_hdl->path;
 	}
-	pthread_mutex_unlock(&fsal_hdl->lock);
+	PTHREAD_RWLOCK_unlock(&fsal_hdl->lock);
 	return path;
 }
 
@@ -143,7 +143,7 @@ static int unload_fsal(struct fsal_module *fsal_hdl)
 	int retval = EBUSY;	/* someone still has a reference */
 
 	pthread_mutex_lock(&fsal_lock);
-	pthread_mutex_lock(&fsal_hdl->lock);
+	PTHREAD_RWLOCK_wrlock(&fsal_hdl->lock);
 	if (fsal_hdl->refs != 0 || !glist_empty(&fsal_hdl->exports))
 		goto err;
 	if (fsal_hdl->dl_handle == NULL) {
@@ -151,8 +151,8 @@ static int unload_fsal(struct fsal_module *fsal_hdl)
 		goto err;
 	}
 	glist_del(&fsal_hdl->fsals);
-	pthread_mutex_unlock(&fsal_hdl->lock);
-	pthread_mutex_destroy(&fsal_hdl->lock);
+	PTHREAD_RWLOCK_unlock(&fsal_hdl->lock);
+	pthread_rwlock_destroy(&fsal_hdl->lock);
 	fsal_hdl->refs = 0;
 
 	retval = dlclose(fsal_hdl->dl_handle);
@@ -160,7 +160,7 @@ static int unload_fsal(struct fsal_module *fsal_hdl)
 	return retval;
 
  err:
-	pthread_mutex_unlock(&fsal_hdl->lock);
+	PTHREAD_RWLOCK_unlock(&fsal_hdl->lock);
 	pthread_mutex_unlock(&fsal_lock);
 	return retval;
 }
@@ -230,21 +230,21 @@ struct fsal_ops def_fsal_ops = {
 
 static void export_get(struct fsal_export *exp_hdl)
 {
-	pthread_mutex_lock(&exp_hdl->lock);
+	PTHREAD_RWLOCK_wrlock(&exp_hdl->lock);
 	exp_hdl->refs++;
-	pthread_mutex_unlock(&exp_hdl->lock);
+	PTHREAD_RWLOCK_unlock(&exp_hdl->lock);
 }
 
 static int export_put(struct fsal_export *exp_hdl)
 {
 	int retval = EINVAL;	/* too many 'puts" */
 
-	pthread_mutex_lock(&exp_hdl->lock);
+	PTHREAD_RWLOCK_wrlock(&exp_hdl->lock);
 	if (exp_hdl->refs > 0) {
 		exp_hdl->refs--;
 		retval = 0;
 	}
-	pthread_mutex_unlock(&exp_hdl->lock);
+	PTHREAD_RWLOCK_unlock(&exp_hdl->lock);
 	return retval;
 }
 
@@ -602,21 +602,21 @@ struct export_ops def_export_ops = {
 
 static void handle_get(struct fsal_obj_handle *obj_hdl)
 {
-	pthread_mutex_lock(&obj_hdl->lock);
+	PTHREAD_RWLOCK_wrlock(&obj_hdl->lock);
 	obj_hdl->refs++;
-	pthread_mutex_unlock(&obj_hdl->lock);
+	PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
 }
 
 static int handle_put(struct fsal_obj_handle *obj_hdl)
 {
 	int retval = EINVAL;	/* too many 'puts" */
 
-	pthread_mutex_lock(&obj_hdl->lock);
+	PTHREAD_RWLOCK_wrlock(&obj_hdl->lock);
 	if (obj_hdl->refs > 0) {
 		obj_hdl->refs--;
 		retval = 0;
 	}
-	pthread_mutex_unlock(&obj_hdl->lock);
+	PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
 	return retval;
 }
 

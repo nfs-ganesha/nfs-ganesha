@@ -345,7 +345,7 @@ struct io_hints {
 
 struct fsal_module {
 	struct glist_head fsals;	/*< link in list of loaded fsals */
-	pthread_mutex_t lock;	/*< Lock to be held when
+	pthread_rwlock_t lock;	/*< Lock to be held when
 				   incrementing/decrementing the
 				   reference count or manipulating the
 				   list of exports. */
@@ -613,7 +613,7 @@ struct fsal_module *lookup_fsal(const char *name);
 
 struct fsal_export {
 	struct fsal_module *fsal;	/*< Link back to the FSAL module */
-	pthread_mutex_t lock;	/*< A lock, to be held when
+	pthread_rwlock_t lock;	/*< A lock, to be held when
 				   taking/yielding references and
 				   manipulating the list of handles. */
 	int refs;			/*< Reference count */
@@ -1167,7 +1167,7 @@ struct export_ops {
  */
 
 struct fsal_obj_handle {
-	pthread_mutex_t lock;	/*< Lock on handle */
+	pthread_rwlock_t lock;	/*< Lock on handle */
 	struct glist_head handles;	/*< Link in list of handles under
 					   an fsal */
 	int refs;		/*< Reference count */

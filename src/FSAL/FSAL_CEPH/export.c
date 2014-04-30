@@ -64,20 +64,20 @@ static fsal_status_t release(struct fsal_export *export_pub)
 	deconstruct_handle(export->root);
 	export->root = 0;
 
-	pthread_mutex_lock(&export->export.lock);
+	PTHREAD_RWLOCK_wrlock(&export->export.lock);
 	if (export->export.refs > 0) {
-		pthread_mutex_lock(&export->export.lock);
+		PTHREAD_RWLOCK_unlock(&export->export.lock);
 		status.major = ERR_FSAL_INVAL;
 		return status;
 	}
 	fsal_detach_export(export->export.fsal, &export->export.exports);
 	free_export_ops(&export->export);
-	pthread_mutex_unlock(&export->export.lock);
+	PTHREAD_RWLOCK_unlock(&export->export.lock);
 
 	export->export.ops = NULL;
 	ceph_shutdown(export->cmount);
 	export->cmount = NULL;
-	pthread_mutex_destroy(&export->export.lock);
+	pthread_rwlock_destroy(&export->export.lock);
 	gsh_free(export);
 	export = NULL;
 

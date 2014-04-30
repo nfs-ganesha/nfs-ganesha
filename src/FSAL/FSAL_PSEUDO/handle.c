@@ -310,12 +310,12 @@ static struct pseudo_fsal_obj_handle
 	hdl->next_i = 2;
 	if (parent != NULL) {
 		/* Attach myself to my parent */
-		pthread_mutex_lock(&parent->obj_handle.lock);
+		PTHREAD_RWLOCK_wrlock(&parent->obj_handle.lock);
 		avltree_insert(&hdl->avl_n, &parent->avl_name);
 		hdl->index = (parent->next_i)++;
 		avltree_insert(&hdl->avl_i, &parent->avl_index);
 		hdl->inavl = true;
-		pthread_mutex_unlock(&parent->obj_handle.lock);
+		PTHREAD_RWLOCK_unlock(&parent->obj_handle.lock);
 	}
 	return hdl;
 
@@ -353,7 +353,7 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 	 * this directory.
 	 */
 	if (opctx->fsal_private != parent)
-		pthread_mutex_lock(&parent->lock);
+		PTHREAD_RWLOCK_rdlock(&parent->lock);
 	else
 		LogFullDebug(COMPONENT_FSAL,
 			     "Skipping lock for %s",
@@ -388,7 +388,7 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 out:
 
 	if (opctx->fsal_private != parent)
-		pthread_mutex_unlock(&parent->lock);
+		PTHREAD_RWLOCK_unlock(&parent->lock);
 
 	return fsalstat(error, 0);
 }
@@ -546,7 +546,7 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 		 "hdl=%p, name=%s",
 		 myself, myself->name);
 
-	pthread_mutex_lock(&dir_hdl->lock);
+	PTHREAD_RWLOCK_rdlock(&dir_hdl->lock);
 
 	/* Use fsal_private to signal to lookup that we hold
 	 * the lock.
@@ -571,7 +571,7 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 
 	((struct req_op_context *)opctx)->fsal_private = NULL;
 
-	pthread_mutex_unlock(&dir_hdl->lock);
+	PTHREAD_RWLOCK_unlock(&dir_hdl->lock);
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -650,7 +650,7 @@ static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
 			      struct pseudo_fsal_obj_handle,
 			      obj_handle);
 
-	pthread_mutex_lock(&dir_hdl->lock);
+	PTHREAD_RWLOCK_wrlock(&dir_hdl->lock);
 
 	key->name = (char *) name;
 	node = avltree_inline_name_lookup(&key->avl_n, &myself->avl_name);
@@ -682,7 +682,7 @@ static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
 	}
 
 unlock:
-	pthread_mutex_unlock(&dir_hdl->lock);
+	PTHREAD_RWLOCK_unlock(&dir_hdl->lock);
 
 	return fsalstat(error, 0);
 }
@@ -904,7 +904,7 @@ fsal_status_t pseudofs_create_handle(struct fsal_export *exp_hdl,
 		return fsalstat(ERR_FSAL_BADHANDLE, 0);
 	}
 
-	pthread_mutex_lock(&exp_hdl->fsal->lock);
+	PTHREAD_RWLOCK_rdlock(&exp_hdl->fsal->lock);
 
 	glist_for_each(glist, &exp_hdl->fsal->handles) {
 		hdl = glist_entry(glist, struct fsal_obj_handle, handles);
@@ -922,7 +922,7 @@ fsal_status_t pseudofs_create_handle(struct fsal_export *exp_hdl,
 
 			*handle = hdl;
 
-			pthread_mutex_unlock(&exp_hdl->fsal->lock);
+			PTHREAD_RWLOCK_unlock(&exp_hdl->fsal->lock);
 
 			return fsalstat(ERR_FSAL_NO_ERROR, 0);
 		}
@@ -931,7 +931,7 @@ fsal_status_t pseudofs_create_handle(struct fsal_export *exp_hdl,
 	LogDebug(COMPONENT_FSAL,
 		"Could not find handle");
 
-	pthread_mutex_unlock(&exp_hdl->fsal->lock);
+	PTHREAD_RWLOCK_unlock(&exp_hdl->fsal->lock);
 
 	return fsalstat(ERR_FSAL_STALE, ESTALE);
 }

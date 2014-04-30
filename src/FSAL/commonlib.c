@@ -76,7 +76,7 @@ int fsal_attach_export(struct fsal_module *fsal_hdl,
 {
 	int retval = 0;
 
-	pthread_mutex_lock(&fsal_hdl->lock);
+	PTHREAD_RWLOCK_wrlock(&fsal_hdl->lock);
 	if (fsal_hdl->refs > 0) {
 		glist_add(&fsal_hdl->exports, obj_link);
 	} else {
@@ -85,7 +85,7 @@ int fsal_attach_export(struct fsal_module *fsal_hdl,
 			fsal_hdl);
 		retval = EINVAL;
 	}
-	pthread_mutex_unlock(&fsal_hdl->lock);
+	PTHREAD_RWLOCK_unlock(&fsal_hdl->lock);
 	return retval;
 }
 
@@ -98,9 +98,9 @@ int fsal_attach_export(struct fsal_module *fsal_hdl,
 void fsal_detach_export(struct fsal_module *fsal_hdl,
 			struct glist_head *obj_link)
 {
-	pthread_mutex_lock(&fsal_hdl->lock);
+	PTHREAD_RWLOCK_wrlock(&fsal_hdl->lock);
 	glist_del(obj_link);
-	pthread_mutex_unlock(&fsal_hdl->lock);
+	PTHREAD_RWLOCK_unlock(&fsal_hdl->lock);
 }
 
 /* fsal_export to fsal_obj_handle helpers
@@ -109,22 +109,22 @@ void fsal_detach_export(struct fsal_module *fsal_hdl,
 static void fsal_attach_handle(struct fsal_module *fsal,
 			       struct glist_head *obj_link)
 {
-	pthread_mutex_lock(&fsal->lock);
+	PTHREAD_RWLOCK_wrlock(&fsal->lock);
 	glist_add(&fsal->handles, obj_link);
-	pthread_mutex_unlock(&fsal->lock);
+	PTHREAD_RWLOCK_unlock(&fsal->lock);
 }
 
 static void fsal_detach_handle(struct fsal_module *fsal,
 			       struct glist_head *obj_link)
 {
-	pthread_mutex_lock(&fsal->lock);
+	PTHREAD_RWLOCK_wrlock(&fsal->lock);
 	glist_del(obj_link);
-	pthread_mutex_unlock(&fsal->lock);
+	PTHREAD_RWLOCK_unlock(&fsal->lock);
 }
 
 int fsal_export_init(struct fsal_export *exp, struct exportlist *exp_entry)
 {
-	pthread_mutexattr_t attrs;
+	pthread_rwlockattr_t attrs;
 
 	exp->ops = gsh_malloc(sizeof(struct export_ops));
 	if (exp->ops == NULL)
@@ -141,11 +141,13 @@ int fsal_export_init(struct fsal_export *exp, struct exportlist *exp_entry)
 		goto errout;
 	memcpy(exp->ds_ops, &def_ds_ops, sizeof(struct fsal_ds_ops));
 
-	pthread_mutexattr_init(&attrs);
-#if defined(__linux__)
-	pthread_mutexattr_settype(&attrs, PTHREAD_MUTEX_ADAPTIVE_NP);
+	pthread_rwlockattr_init(&attrs);
+#ifdef GLIBC
+	pthread_rwlockattr_setkind_np(
+		&attrs,
+		PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
 #endif
-	pthread_mutex_init(&exp->lock, &attrs);
+	pthread_rwlock_init(&exp->lock, &attrs);
 
 	exp->refs = 1;		/* we exit with a reference held */
 	return 0;
@@ -186,33 +188,35 @@ void free_export_ops(struct fsal_export *exp_hdl)
 void fsal_obj_handle_init(struct fsal_obj_handle *obj, struct fsal_export *exp,
 			  object_file_type_t type)
 {
-	pthread_mutexattr_t attrs;
+	pthread_rwlockattr_t attrs;
 
 	obj->refs = 1;		/* we start out with a reference */
 	obj->ops = exp->obj_ops;
 	obj->fsal = exp->fsal;
 	obj->type = type;
 	obj->attributes.expire_time_attr = 0;
-	pthread_mutexattr_init(&attrs);
-#if defined(__linux__)
-	pthread_mutexattr_settype(&attrs, PTHREAD_MUTEX_ADAPTIVE_NP);
+	pthread_rwlockattr_init(&attrs);
+#ifdef GLIBC
+	pthread_rwlockattr_setkind_np(
+		&attrs,
+		PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
 #endif
-	pthread_mutex_init(&obj->lock, &attrs);
+	pthread_rwlock_init(&obj->lock, &attrs);
 
 	fsal_attach_handle(exp->fsal, &obj->handles);
 }
 
 int fsal_obj_handle_uninit(struct fsal_obj_handle *obj)
 {
-	pthread_mutex_lock(&obj->lock);
+	PTHREAD_RWLOCK_wrlock(&obj->lock);
 	obj->refs--;	/* subtract the reference when we were created */
 	if (obj->refs != 0) {
-		pthread_mutex_unlock(&obj->lock);
+		PTHREAD_RWLOCK_unlock(&obj->lock);
 		return EBUSY;
 	}
 
-	pthread_mutex_unlock(&obj->lock);
-	pthread_mutex_destroy(&obj->lock);
+	PTHREAD_RWLOCK_unlock(&obj->lock);
+	pthread_rwlock_destroy(&obj->lock);
 
 	fsal_detach_handle(obj->fsal, &obj->handles);
 
@@ -224,16 +228,16 @@ int fsal_obj_handle_uninit(struct fsal_obj_handle *obj)
 
 void fsal_attach_ds(struct fsal_module *fsal, struct glist_head *ds_link)
 {
-	pthread_mutex_lock(&fsal->lock);
+	PTHREAD_RWLOCK_wrlock(&fsal->lock);
 	glist_add(&fsal->ds_handles, ds_link);
-	pthread_mutex_unlock(&fsal->lock);
+	PTHREAD_RWLOCK_unlock(&fsal->lock);
 }
 
 void fsal_detach_ds(struct fsal_module *fsal, struct glist_head *ds_link)
 {
-	pthread_mutex_lock(&fsal->lock);
+	PTHREAD_RWLOCK_wrlock(&fsal->lock);
 	glist_del(ds_link);
-	pthread_mutex_unlock(&fsal->lock);
+	PTHREAD_RWLOCK_unlock(&fsal->lock);
 }
 
 void fsal_ds_handle_init(struct fsal_ds_handle *ds, struct fsal_ds_ops *ops,

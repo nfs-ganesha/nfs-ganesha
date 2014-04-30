@@ -51,9 +51,9 @@ static fsal_status_t export_release(struct fsal_export *exp_hdl)
 	    container_of(exp_hdl, struct glusterfs_export, export);
 
 	/* check activity on the export */
-	pthread_mutex_lock(&glfs_export->export.lock);
+	PTHREAD_RWLOCK_wrlock(&glfs_export->export.lock);
 	if (glfs_export->export.refs > 0) {
-		pthread_mutex_unlock(&glfs_export->export.lock);
+		PTHREAD_RWLOCK_unlock(&glfs_export->export.lock);
 		status.major = ERR_FSAL_INVAL;
 		return status;
 	}
@@ -63,14 +63,14 @@ static fsal_status_t export_release(struct fsal_export *exp_hdl)
 			   &glfs_export->export.exports);
 	free_export_ops(&glfs_export->export);
 	glfs_export->export.ops = NULL;
-	pthread_mutex_unlock(&glfs_export->export.lock);
+	PTHREAD_RWLOCK_unlock(&glfs_export->export.lock);
 
 	/* Gluster and memory cleanup */
 	glfs_fini(glfs_export->gl_fs);
 	glfs_export->gl_fs = NULL;
 	gsh_free(glfs_export->export_path);
 	glfs_export->export_path = NULL;
-	pthread_mutex_destroy(&glfs_export->export.lock);
+	pthread_rwlock_destroy(&glfs_export->export.lock);
 	gsh_free(glfs_export);
 	glfs_export = NULL;
 
@@ -692,7 +692,7 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 			gsh_free(params.glvolpath);
 
 		if (export_inited)
-			pthread_mutex_destroy(&glfsexport->export.lock);
+			pthread_rwlock_destroy(&glfsexport->export.lock);
 
 		if (fs)
 			glfs_fini(fs);

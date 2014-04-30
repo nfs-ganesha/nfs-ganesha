@@ -63,7 +63,7 @@ static fsal_status_t release(struct fsal_export *exp_hdl)
 
 	myself = container_of(exp_hdl, struct pt_fsal_export, export);
 
-	pthread_mutex_lock(&exp_hdl->lock);
+	PTHREAD_RWLOCK_wrlock(&exp_hdl->lock);
 	if (exp_hdl->refs > 0) {
 		LogMajor(COMPONENT_FSAL, "PT release: export (0x%p)busy",
 			 exp_hdl);
@@ -83,14 +83,14 @@ static fsal_status_t release(struct fsal_export *exp_hdl)
 		gsh_free(myself->mntdir);
 	if (myself->fs_spec != NULL)
 		gsh_free(myself->fs_spec);
-	pthread_mutex_unlock(&exp_hdl->lock);
+	PTHREAD_RWLOCK_unlock(&exp_hdl->lock);
 
-	pthread_mutex_destroy(&exp_hdl->lock);
+	pthread_rwlock_destroy(&exp_hdl->lock);
 	gsh_free(myself);	/* elvis has left the building */
 	return fsalstat(fsal_error, retval);
 
  errout:
-	pthread_mutex_unlock(&exp_hdl->lock);
+	PTHREAD_RWLOCK_unlock(&exp_hdl->lock);
 	return fsalstat(fsal_error, retval);
 }
 
@@ -499,7 +499,7 @@ fsal_status_t pt_create_export(struct fsal_module *fsal_hdl,
 	 * keep myself locked until done with creating myself.
 	 */
 
-	pthread_mutex_lock(&myself->export.lock);
+	PTHREAD_RWLOCK_wrlock(&myself->export.lock);
 	retval = fsal_attach_export(fsal_hdl, &myself->export.exports);
 	if (retval != 0)
 		goto errout;	/* seriously bad */
@@ -620,7 +620,7 @@ fsal_status_t pt_create_export(struct fsal_module *fsal_hdl,
 	}
 	*export = &myself->export;
 
-	pthread_mutex_unlock(&myself->export.lock);
+	PTHREAD_RWLOCK_unlock(&myself->export.lock);
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
  errout:
@@ -635,8 +635,8 @@ fsal_status_t pt_create_export(struct fsal_module *fsal_hdl,
 	if (myself->fs_spec != NULL)
 		gsh_free(myself->fs_spec);
 	free_export_ops(&myself->export);
-	pthread_mutex_unlock(&myself->export.lock);
-	pthread_mutex_destroy(&myself->export.lock);
+	PTHREAD_RWLOCK_unlock(&myself->export.lock);
+	pthread_rwlock_destroy(&myself->export.lock);
 	gsh_free(myself);	/* elvis has left the building */
 	return fsalstat(fsal_error, retval);
 }

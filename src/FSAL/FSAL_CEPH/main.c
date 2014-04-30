@@ -208,7 +208,7 @@ static fsal_status_t create_export(struct fsal_module *module,
 	}
 
 	if (initialized) {
-		pthread_mutex_destroy(&export->export.lock);
+		pthread_rwlock_destroy(&export->export.lock);
 		initialized = false;
 	}
 

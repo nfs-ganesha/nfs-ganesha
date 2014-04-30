@@ -37,16 +37,16 @@ static fsal_status_t pxy_release(struct fsal_export *exp_hdl)
 	struct pxy_export *pxy_exp =
 	    container_of(exp_hdl, struct pxy_export, exp);
 
-	pthread_mutex_lock(&exp_hdl->lock);
+	PTHREAD_RWLOCK_wrlock(&exp_hdl->lock);
 	if (exp_hdl->refs > 0) {
-		pthread_mutex_unlock(&exp_hdl->lock);
+		PTHREAD_RWLOCK_unlock(&exp_hdl->lock);
 		return fsalstat(ERR_FSAL_INVAL, EBUSY);
 	}
 	fsal_detach_export(exp_hdl->fsal, &exp_hdl->exports);
 	free_export_ops(exp_hdl);
-	pthread_mutex_unlock(&exp_hdl->lock);
+	PTHREAD_RWLOCK_unlock(&exp_hdl->lock);
 
-	pthread_mutex_destroy(&exp_hdl->lock);
+	pthread_rwlock_destroy(&exp_hdl->lock);
 	gsh_free(pxy_exp);
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }

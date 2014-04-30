@@ -66,7 +66,7 @@ static fsal_status_t release(struct fsal_export *exp_hdl)
 
 	myself = container_of(exp_hdl, struct nullfs_fsal_export, export);
 
-	pthread_mutex_lock(&exp_hdl->lock);
+	PTHREAD_RWLOCK_wrlock(&exp_hdl->lock);
 	if (exp_hdl->refs > 0) {
 		LogMajor(COMPONENT_FSAL, "VFS release: export (0x%p)busy",
 			 exp_hdl);
@@ -76,14 +76,14 @@ static fsal_status_t release(struct fsal_export *exp_hdl)
 	}
 	fsal_detach_export(exp_hdl->fsal, &exp_hdl->exports);
 	free_export_ops(exp_hdl);
-	pthread_mutex_unlock(&exp_hdl->lock);
+	PTHREAD_RWLOCK_unlock(&exp_hdl->lock);
 
-	pthread_mutex_destroy(&exp_hdl->lock);
+	pthread_rwlock_destroy(&exp_hdl->lock);
 	gsh_free(myself);	/* elvis has left the building */
 	return fsalstat(fsal_error, retval);
 
  errout:
-	pthread_mutex_unlock(&exp_hdl->lock);
+	PTHREAD_RWLOCK_unlock(&exp_hdl->lock);
 	return fsalstat(fsal_error, retval);
 }
 

@@ -418,7 +418,7 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_pub,
 	/* If we have a cached capbility, use that.  Otherwise, call
 	   in to Ceph. */
 
-	pthread_mutex_lock(&handle->handle.lock);
+	PTHREAD_RWLOCK_wrlock(&handle->handle.lock);
 	if (res->segment.io_mode == LAYOUTIOMODE4_READ) {
 		uint32_t r = 0;
 		if (handle->rd_issued == 0) {
@@ -426,7 +426,7 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_pub,
 					    false, initiate_recall, handle,
 					    &handle->rd_serial, NULL);
 			if (r < 0) {
-				pthread_mutex_unlock(&handle->handle.lock);
+				PTHREAD_RWLOCK_unlock(&handle->handle.lock);
 				return posix2nfs4_error(-r);
 			}
 		}
@@ -439,14 +439,14 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_pub,
 					    &handle->rw_serial,
 					    &handle->rw_max_len);
 			if (r < 0) {
-				pthread_mutex_unlock(&handle->handle.lock);
+				PTHREAD_RWLOCK_unlock(&handle->handle.lock);
 				return posix2nfs4_error(-r);
 			}
 		}
 		forbidden_area.offset = handle->rw_max_len;
 		if (pnfs_segments_overlap
 		    (&smallest_acceptable, &forbidden_area)) {
-			pthread_mutex_unlock(&handle->handle.lock);
+			PTHREAD_RWLOCK_unlock(&handle->handle.lock);
 			return NFS4ERR_BADLAYOUT;
 		}
 #if CLIENTS_WILL_ACCEPT_SEGMENTED_LAYOUTS	/* sigh */
@@ -455,7 +455,7 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_pub,
 #endif
 		++handle->rw_issued;
 	}
-	pthread_mutex_unlock(&handle->handle.lock);
+	PTHREAD_RWLOCK_unlock(&handle->handle.lock);
 
 	/* For now, just make the low quad of the deviceid be the
 	   inode number.  With the span of the layouts constrained
@@ -495,15 +495,15 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_pub,
 	/* If we failed in encoding the lo_content, relinquish what we
 	   reserved for it. */
 
-	pthread_mutex_lock(&handle->handle.lock);
+	PTHREAD_RWLOCK_wrlock(&handle->handle.lock);
 	if (res->segment.io_mode == LAYOUTIOMODE4_READ) {
 		if (--handle->rd_issued != 0) {
-			pthread_mutex_unlock(&handle->handle.lock);
+			PTHREAD_RWLOCK_unlock(&handle->handle.lock);
 			return nfs_status;
 		}
 	} else {
 		if (--handle->rd_issued != 0) {
-			pthread_mutex_unlock(&handle->handle.lock);
+			PTHREAD_RWLOCK_unlock(&handle->handle.lock);
 			return nfs_status;
 		}
 	}
@@ -513,7 +513,7 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_pub,
 			  LAYOUTIOMODE4_READ ? handle->rd_serial : handle->
 			  rw_serial);
 
-	pthread_mutex_unlock(&handle->handle.lock);
+	PTHREAD_RWLOCK_unlock(&handle->handle.lock);
 
 	return nfs_status;
 }
@@ -550,15 +550,15 @@ static nfsstat4 layoutreturn(struct fsal_obj_handle *obj_pub,
 	}
 
 	if (arg->dispose) {
-		pthread_mutex_lock(&handle->handle.lock);
+		PTHREAD_RWLOCK_wrlock(&handle->handle.lock);
 		if (arg->cur_segment.io_mode == LAYOUTIOMODE4_READ) {
 			if (--handle->rd_issued != 0) {
-				pthread_mutex_unlock(&handle->handle.lock);
+				PTHREAD_RWLOCK_unlock(&handle->handle.lock);
 				return NFS4_OK;
 			}
 		} else {
 			if (--handle->rd_issued != 0) {
-				pthread_mutex_unlock(&handle->handle.lock);
+				PTHREAD_RWLOCK_unlock(&handle->handle.lock);
 				return NFS4_OK;
 			}
 		}
@@ -568,7 +568,7 @@ static nfsstat4 layoutreturn(struct fsal_obj_handle *obj_pub,
 				  LAYOUTIOMODE4_READ ? handle->
 				  rd_serial : handle->rw_serial);
 
-		pthread_mutex_unlock(&handle->handle.lock);
+		PTHREAD_RWLOCK_unlock(&handle->handle.lock);
 	}
 
 	return NFS4_OK;

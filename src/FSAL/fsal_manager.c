@@ -342,14 +342,14 @@ struct fsal_module *lookup_fsal(const char *name)
 	pthread_mutex_lock(&fsal_lock);
 	glist_for_each(entry, &fsal_list) {
 		fsal = glist_entry(entry, struct fsal_module, fsals);
-		pthread_mutex_lock(&fsal->lock);
+		PTHREAD_RWLOCK_wrlock(&fsal->lock);
 		if (strcasecmp(name, fsal->name) == 0) {
 			fsal->refs++;
-			pthread_mutex_unlock(&fsal->lock);
+			PTHREAD_RWLOCK_unlock(&fsal->lock);
 			pthread_mutex_unlock(&fsal_lock);
 			return fsal;
 		}
-		pthread_mutex_unlock(&fsal->lock);
+		PTHREAD_RWLOCK_unlock(&fsal->lock);
 	}
 	pthread_mutex_unlock(&fsal_lock);
 	return NULL;
@@ -371,9 +371,6 @@ struct fsal_module *lookup_fsal(const char *name)
  * Any other case is an error.
  * Change load_state only for dynamically loaded modules.
  *
- * @note We use an ADAPTIVE_NP mutex because the initial spinlock is low
- * impact for protecting the list add/del atomicity.  Does FBSD have this?
- *
  * @param[in] fsal_hdl      FSAL module handle
  * @param[in] name          FSAL name
  * @param[in] major_version Major version
@@ -388,7 +385,7 @@ struct fsal_module *lookup_fsal(const char *name)
 int register_fsal(struct fsal_module *fsal_hdl, const char *name,
 		  uint32_t major_version, uint32_t minor_version)
 {
-	pthread_mutexattr_t attrs;
+	pthread_rwlockattr_t attrs;
 
 	if ((major_version != FSAL_MAJOR_VERSION)
 	    || (minor_version > FSAL_MINOR_VERSION)) {
@@ -426,11 +423,13 @@ int register_fsal(struct fsal_module *fsal_hdl, const char *name,
 	}
 	memcpy(fsal_hdl->ops, &def_fsal_ops, sizeof(struct fsal_ops));
 
-	pthread_mutexattr_init(&attrs);
-#if defined(__linux__)
-	pthread_mutexattr_settype(&attrs, PTHREAD_MUTEX_ADAPTIVE_NP);
+	pthread_rwlockattr_init(&attrs);
+#ifdef GLIBC
+	pthread_rwlockattr_setkind_np(
+		&attrs,
+		PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
 #endif
-	pthread_mutex_init(&fsal_hdl->lock, &attrs);
+	pthread_rwlock_init(&fsal_hdl->lock, &attrs);
 	glist_init(&fsal_hdl->ds_handles);
 	glist_init(&fsal_hdl->handles);
 	glist_init(&fsal_hdl->exports);
@@ -458,7 +457,7 @@ int register_fsal(struct fsal_module *fsal_hdl, const char *name,
  * @brief Unregisterx an FSAL
  *
  * Verify that the fsal is not busy and release all its resources
- * owned at this level.  Mutex is already freed.  Called from the
+ * owned at this level.  RW Lock is already freed.  Called from the
  * module's MODULE_FINI
  *
  * @param[in] fsal_hdl FSAL handle
