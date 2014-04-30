@@ -766,6 +766,8 @@ static bool gsh_export_addexport(DBusMessageIter *args,
 	char *file_path = NULL;
 	config_file_t config_struct;
 	struct config_error_type err_type;
+	DBusMessageIter iter;
+	char *err_detail = NULL;
 
 	/* Get path */
 	if (DBUS_TYPE_STRING == dbus_message_iter_get_arg_type(args))
@@ -780,15 +782,16 @@ static bool gsh_export_addexport(DBusMessageIter *args,
 	LogInfo(COMPONENT_EXPORT, "Adding export from file: %s", file_path);
 
 	config_struct = config_ParseFile(file_path, &err_type);
-	if (!config_error_no_error(&err_type)) {
-		config_Free(config_struct);
-		LogCrit(COMPONENT_EXPORT, "Error while parsing %s",
-		file_path); 
+	if (!config_error_is_harmless(&err_type)) {
+		err_detail = err_type_str(&err_type);
+		LogCrit(COMPONENT_EXPORT,
+			"Error while parsing %s", file_path); 
 		dbus_set_error(error, DBUS_ERROR_INVALID_FILE_CONTENT,
-			       "Error while parsing %s",
-			       file_path);
-		retval = false;
-		goto out;
+			       "Error while parsing %s because of %s errors",
+			       file_path,
+			       err_detail != NULL ? err_detail : "unknown");
+			retval = false;
+			goto out;
 	}
 
 	/* Load export entry from parsed file */
@@ -797,23 +800,43 @@ static bool gsh_export_addexport(DBusMessageIter *args,
 				    NULL,
 				    false,
 				    &err_type);
-	if (rc < 0) {
-		LogCrit(COMPONENT_EXPORT, "Error while processing export entry");
-		dbus_set_error(error, DBUS_ERROR_INVALID_FILE_CONTENT,
-			       "Error while processing %s",
-			       file_path);
-		retval = false;
-	} else if (rc == 0) {
-		LogWarn(COMPONENT_EXPORT,
-			"No export entry found in configuration file !!!");
-		dbus_set_error(error, DBUS_ERROR_INVALID_FILE_CONTENT,
-			       "No export entry found in %s",
-			       file_path);
-		retval = false;
-	}
-	config_Free(config_struct);
+	if (config_error_is_harmless(&err_type) || err_type.exists) {
+		if (rc > 0) {
+			char *message = alloca(sizeof("%d exports added") + 10);
 
+			snprintf(message,
+				 sizeof("%d exports added") + 10,
+				 "%d exports added", rc);
+			dbus_message_iter_init_append(reply, &iter);
+			dbus_message_iter_append_basic(&iter,
+						       DBUS_TYPE_STRING,
+						       &message);
+		} else {
+			LogWarn(COMPONENT_EXPORT,
+				"No usable export entry found in %s!!!",
+				file_path);
+			dbus_set_error(error, DBUS_ERROR_INVALID_FILE_CONTENT,
+				       "No new export entries found in %s",
+				       file_path);
+			retval = false;
+		}
+		goto out;
+	}
+	err_detail = err_type_str(&err_type);
+	LogCrit(COMPONENT_EXPORT,
+		"Export entry in  %s not added because %s errors",
+		file_path,
+		err_detail != NULL ? err_detail : "unknown");
+	dbus_set_error(error,
+		       DBUS_ERROR_INVALID_FILE_CONTENT,
+		       "Export entry in %s not added because %s errors",
+		       file_path,
+		       err_detail != NULL ? err_detail : "unknown");
+	retval = false;
 out:
+	if (err_detail != NULL)
+		gsh_free(err_detail);
+	config_Free(config_struct);
 	return retval;
 }
 
@@ -821,6 +844,7 @@ static struct gsh_dbus_method export_add_export = {
 	.name = "AddExport",
 	.method = gsh_export_addexport,
 	.args =	{PATH_ARG,
+		 MESSAGE_REPLY,
 		 END_ARG_LIST}
 };
 
