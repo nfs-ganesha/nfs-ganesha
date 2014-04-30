@@ -134,7 +134,7 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 		goto out;
 	}
 
-	rc = glfs_get_volumeid(glfs_export->gl_fs, vol_uuid);
+	rc = glfs_get_volumeid(glfs_export->gl_fs, vol_uuid, GLAPI_UUID_LENGTH);
 	if (rc != 0) {
 		status = gluster2fsal_error(rc);
 		goto out;
@@ -241,7 +241,7 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 		goto out;
 	}
 
-	rc = glfs_get_volumeid(glfs_export->gl_fs, vol_uuid);
+	rc = glfs_get_volumeid(glfs_export->gl_fs, vol_uuid, GLAPI_UUID_LENGTH);
 	if (rc != 0) {
 		status = gluster2fsal_error(rc);
 		goto out;
