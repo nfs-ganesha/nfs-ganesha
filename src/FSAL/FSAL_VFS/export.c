@@ -384,10 +384,13 @@ static fsal_status_t extract_handle(struct fsal_export *exp_hdl,
 				    fsal_digesttype_t in_type,
 				    struct gsh_buffdesc *fh_desc)
 {
-	if (vfs_valid_handle(fh_desc))
-		return fsalstat(ERR_FSAL_NO_ERROR, 0);
-	else
-		return fsalstat(ERR_FSAL_BADHANDLE, 0);
+	struct fsal_filesystem *fs;
+	bool dummy;
+	vfs_file_handle_t *fh = NULL;
+
+	vfs_alloc_handle(fh);
+
+	return vfs_check_handle(exp_hdl, fh_desc, &fs, fh, &dummy);
 }
 
 /* vfs_export_ops_init

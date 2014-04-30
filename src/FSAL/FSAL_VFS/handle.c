@@ -1654,6 +1654,66 @@ fsal_status_t vfs_lookup_path(struct fsal_export *exp_hdl,
 	return fsalstat(fsal_error, retval);
 }
 
+fsal_status_t vfs_check_handle(struct fsal_export *exp_hdl,
+			       struct gsh_buffdesc *hdl_desc,
+			       struct fsal_filesystem **fs,
+			       vfs_file_handle_t *fh,
+			       bool *dummy)
+{
+	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
+	int retval = 0;
+	struct fsal_fsid__ fsid;
+	enum fsid_type fsid_type;
+
+	*fs = NULL;
+
+	if (!vfs_valid_handle(hdl_desc))
+		return fsalstat(ERR_FSAL_BADHANDLE, 0);
+
+	memcpy(fh->handle_data, hdl_desc->addr, hdl_desc->len);
+	fh->handle_len = hdl_desc->len;
+
+	*dummy = vfs_is_dummy_handle(fh);
+
+	retval = vfs_extract_fsid(fh, &fsid_type, &fsid);
+
+	if (retval == 0) {
+		*fs = lookup_fsid(&fsid, fsid_type);
+		if (fs == NULL) {
+			LogInfo(COMPONENT_FSAL,
+				"Could not map fsid %"PRIu64".%"PRIu64
+				" to filesytem",
+				fsid.major, fsid.minor);
+			retval = ESTALE;
+			fsal_error = posix2fsal_error(retval);
+			goto errout;
+		}
+		if (((*fs)->fsal != exp_hdl->fsal) && !(*dummy)) {
+			LogInfo(COMPONENT_FSAL,
+				"fsid %"PRIu64".%"PRIu64
+				" in handle not a %s filesystem",
+				fsid.major, fsid.minor,
+				exp_hdl->fsal->name);
+			retval = ESTALE;
+			fsal_error = posix2fsal_error(retval);
+			goto errout;
+		}
+
+		LogDebug(COMPONENT_FSAL,
+			 "Found filesystem %s for handle for FSAL %s",
+			 (*fs)->path,
+			 (*fs)->fsal != NULL ? (*fs)->fsal->name : "(none)");
+	} else {
+		LogDebug(COMPONENT_FSAL,
+			 "Could not map handle to fsid");
+		fsal_error = ERR_FSAL_BADHANDLE;
+		goto errout;
+	}
+
+ errout:
+	return fsalstat(fsal_error, retval);
+}
+
 /* create_handle
  * Does what original FSAL_ExpandHandle did (sort of)
  * returns a ref counted handle to be later used in cache_inode etc.
@@ -1671,6 +1731,7 @@ fsal_status_t vfs_create_handle(struct fsal_export *exp_hdl,
 				struct gsh_buffdesc *hdl_desc,
 				struct fsal_obj_handle **handle)
 {
+	fsal_status_t status;
 	struct vfs_fsal_obj_handle *hdl;
 	struct stat obj_stat;
 	vfs_file_handle_t *fh = NULL;
@@ -1678,56 +1739,16 @@ fsal_status_t vfs_create_handle(struct fsal_export *exp_hdl,
 	int retval = 0;
 	int fd;
 	int flags = O_PATH | O_NOACCESS | O_NOFOLLOW;
-	struct fsal_fsid__ fsid;
-	enum fsid_type fsid_type;
 	struct fsal_filesystem *fs;
 	bool dummy;
 
 	vfs_alloc_handle(fh);
 	*handle = NULL;		/* poison it first */
 
-	if (!vfs_valid_handle(hdl_desc))
-		return fsalstat(ERR_FSAL_BADHANDLE, 0);
+	status = vfs_check_handle(exp_hdl, hdl_desc, &fs, fh, &dummy);
 
-	memcpy(fh->handle_data, hdl_desc->addr, hdl_desc->len);
-	fh->handle_len = hdl_desc->len;
-
-	dummy = vfs_is_dummy_handle(fh);
-
-	retval = vfs_extract_fsid(fh, &fsid_type, &fsid);
-
-	if (retval == 0) {
-		fs = lookup_fsid(&fsid, fsid_type);
-		if (fs == NULL) {
-			LogInfo(COMPONENT_FSAL,
-				"Could not map fsid %"PRIu64".%"PRIu64
-				" to filesytem",
-				fsid.major, fsid.minor);
-			retval = ESTALE;
-			fsal_error = posix2fsal_error(retval);
-			goto errout;
-		}
-		if ((fs->fsal != exp_hdl->fsal) && !dummy) {
-			LogInfo(COMPONENT_FSAL,
-				"fsid %"PRIu64".%"PRIu64
-				" in handle not a %s filesystem",
-				fsid.major, fsid.minor,
-				exp_hdl->fsal->name);
-			retval = ESTALE;
-			fsal_error = posix2fsal_error(retval);
-			goto errout;
-		}
-
-		LogDebug(COMPONENT_FSAL,
-			 "Found filesystem %s for handle for FSAL %s",
-			 fs->path,
-			 fs->fsal != NULL ? fs->fsal->name : "(none)");
-	} else {
-		LogDebug(COMPONENT_FSAL,
-			 "Could not map handle to fsid");
-		fsal_error = ERR_FSAL_BADHANDLE;
-		goto errout;
-	}
+	if (FSAL_IS_ERROR(status))
+		return status;
 
 	if (dummy) {
 		/* We don't need fd here, just stat the fs->path */

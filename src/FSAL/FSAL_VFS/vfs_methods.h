@@ -142,6 +142,12 @@ int vfs_encode_dummy_handle(vfs_file_handle_t *fh,
 
 bool vfs_is_dummy_handle(vfs_file_handle_t *fh);
 
+fsal_status_t vfs_check_handle(struct fsal_export *exp_hdl,
+			       struct gsh_buffdesc *hdl_desc,
+			       struct fsal_filesystem **fs,
+			       vfs_file_handle_t *fh,
+			       bool *dummy);
+
 bool vfs_valid_handle(struct gsh_buffdesc *desc);
 
 int vfs_readlink(struct vfs_fsal_obj_handle *myself,
