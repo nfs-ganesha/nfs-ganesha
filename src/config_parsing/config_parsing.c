@@ -84,6 +84,75 @@ void config_Free(config_file_t config)
 
 }
 
+/**
+ * @brief Return an error string constructed from an err_type
+ *
+ * The string is constructed in allocate memory that must be freed
+ * by the caller.
+ *
+ * @param err_type [IN] the err_type struct in question.
+ *
+ * @return a NULL term'd string or NULL on failure.
+ */
+
+char *err_type_str(struct config_error_type *err_type)
+{
+	char *buf = NULL;
+	size_t bufsize;
+	FILE *fp;
+
+	if (config_error_no_error(err_type))
+		return gsh_strdup("(no errors)");
+	fp = open_memstream(&buf, &bufsize);
+	if (fp == NULL) {
+		LogCrit(COMPONENT_CONFIG,
+			"Could not open memstream for err_type string");
+		return NULL;
+	}
+	fputc('(', fp);
+	if (err_type->scan)
+		fputs("token scan, ", fp);
+	if (err_type->parse)
+		fputs("parser rule, ", fp);
+	if (err_type->init)
+		fputs("block init, ", fp);
+	if (err_type->fsal)
+		fputs("fsal load, ", fp);
+	if (err_type->export)
+		fputs("export create, ", fp);
+	if (err_type->resource)
+		fputs("resource alloc, ", fp);
+	if (err_type->unique)
+		fputs("not unique param, ", fp);
+	if (err_type->invalid)
+		fputs("invalid param value, ", fp);
+	if (err_type->missing)
+		fputs("missing mandatory param, ", fp);
+	if (err_type->validate)
+		fputs("block validation, ", fp);
+	if (err_type->exists)
+		fputs("block exists, ", fp);
+	if (err_type->empty)
+		fputs("block empty, ", fp);
+	if (err_type->bogus)
+		fputs("unknown param, ", fp);
+	if (ferror(fp))
+		LogCrit(COMPONENT_CONFIG,
+			"file error while constructing err_type string");
+	fclose(fp);
+	if (buf == NULL) {
+		LogCrit(COMPONENT_CONFIG,
+			"close of memstream for err_type string failed");
+		return NULL;
+	}
+	/* each of the above strings (had better) have ', ' at the end! */
+	if (buf[strlen(buf) -1] == ' ') {
+		buf[bufsize - 2] = ')';
+		buf[bufsize - 1] = '\0';
+	}
+	return buf;
+}
+
 static bool convert_bool(struct config_node *node,
 			 bool *b)
 {

@@ -809,6 +809,9 @@ int load_config_from_parse(config_file_t config,
 			   bool unique,
 			   struct config_error_type *err_type);
 
+/* translate err_type values to log/dbus error string*/
+char *err_type_str(struct config_error_type *err_type);
+
 /**
  * @brief NOOP config initializer and commit functions.
  * Most config blocks refer to static structures that don't
