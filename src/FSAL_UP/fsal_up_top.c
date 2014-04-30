@@ -1355,7 +1355,7 @@ static uint32_t delegrecall_one(state_lock_entry_t *deleg_entry)
 	char *maxfh = NULL;
 	uint32_t code = 0;
 	rpc_call_channel_t *chan;
-	rpc_call_t *call;
+	rpc_call_t *call = NULL;
 	nfs_client_id_t *clid = NULL;
 	nfs_cb_argop4 argop[1];
 	struct gsh_export *exp;
@@ -1516,7 +1516,7 @@ out:
 		if (maxfh)
 			gsh_free(maxfh);
 		if (call)
-			gsh_free(call);
+		  free_rpc_call(call);
 
 		if (eval_revoke(deleg_entry)) {
 			LogCrit(COMPONENT_STATE, "Delegation will be revoked");
