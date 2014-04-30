@@ -294,9 +294,9 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 		goto failure;
 	}
 
-	tracker->mem_left -= (namelen);
+	tracker->mem_left -= (namelen + 1);
 	tracker_entry->name.utf8string_len = namelen;
-	tracker_entry->name.utf8string_val = gsh_malloc(namelen);
+	tracker_entry->name.utf8string_val = gsh_malloc(namelen + 1);
 
 	if (tracker_entry->name.utf8string_val == NULL) {
 		/* Could not allocate name */
