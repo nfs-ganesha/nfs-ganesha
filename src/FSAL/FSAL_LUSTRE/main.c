@@ -86,19 +86,19 @@ static struct config_item ds_params[] = {
 	CONFIG_EOL
 };
 
-static void *dataserver_init(void *parent, void *child)
+static void *dataserver_init(void *link_mem, void *self_struct)
 {
 	struct lustre_pnfs_parameter *child_param
-		= (struct lustre_pnfs_parameter *)child;
+		= (struct lustre_pnfs_parameter *)self_struct;
 
-	assert(parent != NULL || child != NULL);
+	assert(link_mem != NULL || self_struct != NULL);
 
-	if (parent == NULL) {
-		struct glist_head *dslist = (struct glist_head *)child;
+	if (link_mem == NULL) {
+		struct glist_head *dslist = (struct glist_head *)self_struct;
 
 		glist_init(dslist);
-		return child;
-	} else if (child == NULL) {
+		return self_struct;
+	} else if (self_struct == NULL) {
 		child_param = gsh_calloc(1,
 					 sizeof(struct lustre_pnfs_parameter));
 		if (child_param != NULL)
@@ -112,12 +112,13 @@ static void *dataserver_init(void *parent, void *child)
 	}
 }
 
-static int dataserver_commit(void *node, void *parent, void *child)
+static int dataserver_commit(void *node, void *link_mem, void *self_struct,
+			     struct config_error_type *err_type)
 {
 	struct glist_head *ds_head
-		= (struct glist_head *)parent;
+		= (struct glist_head *)link_mem;
 	struct lustre_pnfs_parameter *child_param
-		= (struct lustre_pnfs_parameter *)child;
+		= (struct lustre_pnfs_parameter *)self_struct;
 
 	glist_add_tail(ds_head, &child_param->ds_list);
 	return 0;
@@ -137,13 +138,13 @@ static struct config_item pnfs_params[] = {
 /* Just return the static pointer.  No linkage to init
  */
 
-static void *pnfs_init(void *parent, void *child)
+static void *pnfs_init(void *link_mem, void *self_struct)
 {
-	assert(parent != NULL || child != NULL);
+	assert(link_mem != NULL || self_struct != NULL);
 
-	if (parent == NULL)
-		return child; /* NOP */
-	else if (child == NULL)
+	if (link_mem == NULL)
+		return self_struct; /* NOP */
+	else if (self_struct == NULL)
 		return &pnfs_param;
 	else
 		return NULL;
@@ -151,22 +152,23 @@ static void *pnfs_init(void *parent, void *child)
 
 /* Just set the flag. linkage attach is a NOP
  */
-static int pnfs_commit(void *node, void *parent, void *child)
+static int pnfs_commit(void *node, void *link_mem, void *self_struct,
+		       struct config_error_type *err_type)
 {
-	if (child == NULL)
+	if (self_struct == NULL)
 		pnfs_enabled = false;
 	else
 		pnfs_enabled = true;
 	return 0;
 }
 
-static void *lustre_config_init(void *parent, void *child)
+static void *lustre_config_init(void *link_mem, void *self_struct)
 {
-	assert(parent != NULL || child != NULL);
+	assert(link_mem != NULL || self_struct != NULL);
 
-	if (parent == NULL)
-		return child; /* NOP */
-	else if (child == NULL)
+	if (link_mem == NULL)
+		return self_struct; /* NOP */
+	else if (self_struct == NULL)
 		return &pnfs_param;
 	else
 		return NULL;

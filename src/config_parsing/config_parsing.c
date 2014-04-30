@@ -638,7 +638,8 @@ void *noop_conf_init(void *link_mem, void *self_struct)
 		return NULL;
 }
 
-int noop_conf_commit(void *node, void *link_mem, void *self_struct)
+int noop_conf_commit(void *node, void *link_mem, void *self_struct,
+		     struct config_error_type *err_type)
 {
 	return 0;
 }

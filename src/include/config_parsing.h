@@ -328,7 +328,8 @@ struct config_item {
 			void *(*init)(void *link_mem, void *self_struct);
 			struct config_item *params;
 			int (*commit)(void *node, void *link_mem,
-				      void *self_struct);
+				      void *self_struct,
+				      struct config_error_type *err_type);
 			void (*display)(const char *step,
 					void *node, void *link_mem,
 					void *self_struct);
@@ -812,6 +813,7 @@ int load_config_from_parse(config_file_t config,
  * need either allocation and sometimes validation/commit
  */
 void *noop_conf_init(void *link_mem, void *self_struct);
-int noop_conf_commit(void *node, void *link_mem, void *self_struct);
+int noop_conf_commit(void *node, void *link_mem, void *self_struct,
+		     struct config_error_type *err_type);
 
 #endif
