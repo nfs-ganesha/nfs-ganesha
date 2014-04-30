@@ -101,6 +101,7 @@ int main(int argc, char *argv[])
 	pid_t son_pid;
 #endif
 	sigset_t signals_to_block;
+	struct config_error_type err_type;
 
 	/* Set the server's boot time and epoch */
 	now(&ServerBootTime);
@@ -369,11 +370,22 @@ int main(int argc, char *argv[])
 			 "start_fsals: No configuration file named.");
 		return 1;
 	}
-	config_struct = config_ParseFile(config_path);
+	config_struct = config_ParseFile(config_path, &err_type);
 
-	if (!config_struct) {
-		LogFatal(COMPONENT_INIT, "Exiting due to error while parsing %s",
-			 config_path);
+	if (!config_error_no_error(&err_type)) {
+		char *errstr = err_type_str(&err_type);
+
+		if (!config_error_is_harmless(&err_type))
+			LogFatal(COMPONENT_INIT,
+				 "Fatal error while parsing %s because of %s errors",
+				 config_path,
+				 errstr != NULL ? errstr : "unknown");
+			/* NOT REACHED */
+		LogCrit(COMPONENT_INIT,
+			"Minor parse errors found %s in %s",
+			errstr != NULL ? errstr : "unknown", config_path);
+		if (errstr != NULL)
+			gsh_free(errstr);
 	}
 
 	if (read_log_config(config_struct) < 0)

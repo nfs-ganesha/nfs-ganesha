@@ -129,6 +129,7 @@ IDENTIFIER [a-zA-Z_.][a-zA-Z0-9_.\-]*
 <INCLUDE>[.\n]+ {
 	DEBUG_LEX("BAD include, line break\n");
 	/* error bad include */
+	stp->err_type->scan = true;
 	yyterminate();
 }
 
@@ -170,6 +171,7 @@ IDENTIFIER [a-zA-Z_.][a-zA-Z0-9_.\-]*
 		/* error */
 		ganeshun_yyerror(yylloc, yyscanner,
 				"closing bracket outside a block");
+		stp->err_type->scan = true;
 		return _ERROR_;
 	} else
 		stp->block_depth --;
@@ -229,9 +231,11 @@ IDENTIFIER [a-zA-Z_.][a-zA-Z0-9_.\-]*
 		yylval->token = filter_string(yytext, 1);
 		if (yylval->token == NULL) {
 			ganeshun_yyerror(yylloc, yyscanner, "Out of memory");
+			stp->err_type->resource = true;
 			return _ERROR_;
 		} else if (yylval->token == (char *)-1) {
 			ganeshun_yyerror(yylloc, yyscanner, "Bad literal string");
+			stp->err_type->scan = true;
 			return _ERROR_;
 		}
 		DEBUG_LEX("%s>", yylval->token);
@@ -244,9 +248,11 @@ IDENTIFIER [a-zA-Z_.][a-zA-Z0-9_.\-]*
 	yylval->token =	filter_string(yytext, 0);
 	if (yylval->token == NULL) {
 		ganeshun_yyerror(yylloc, yyscanner, "Out of memory");
+		stp->err_type->resource = true;
 		return _ERROR_;
 	} else if (yylval->token == (char *)-1) {
 		ganeshun_yyerror(yylloc, yyscanner, "Bad literal string");
+		stp->err_type->scan = true;
 		return _ERROR_;
 	}
 	DEBUG_LEX("%s>", yylval->token);
@@ -256,6 +262,7 @@ IDENTIFIER [a-zA-Z_.][a-zA-Z0-9_.\-]*
 
 <LIT_STRING>\n { /* ERROR: eol within single quote string */
 	ganeshun_yyerror(yylloc, yyscanner, "closing quote missing");
+	stp->err_type->scan = true;
 	return _ERROR_;
 }
 
@@ -266,6 +273,7 @@ IDENTIFIER [a-zA-Z_.][a-zA-Z0-9_.\-]*
 . { /* ERROR: out of character character */
 	DEBUG_LEX("unexpected stuff %s\n", yytext);
 	ganeshun_yyerror(yylloc, yyscanner, "Unexpected character");
+	stp->err_type->scan = true;
 	return _ERROR_;
 }
 
@@ -275,8 +283,8 @@ int ganeshun_yywrap(void *yyscanner){
     return 1;
 }
 
-int ganeshun_yy_init_parser(char *srcfile,
-			   struct parser_state *st) {
+int ganeshun_yy_init_parser(char *srcfile, struct parser_state *st)
+{
 	FILE *in_file;
 	void *yyscanner = st->scanner;
 	/* reentrant scanner macro magic requires this... */
@@ -296,7 +304,19 @@ int ganeshun_yy_init_parser(char *srcfile,
 	return new_file(srcfile, st);
 
 nospc:
+	st->err_type->resource = true;
 	return rc;
+}
+
+void ganeshun_yy_cleanup_parser(struct parser_state *st)
+{
+	int rc;
+
+	if (st->curbs != NULL) {
+		st->err_type->parse = true;
+		while(pop_file(st) != 0);
+	}
+	ganeshun_yylex_destroy(st->scanner);
 }
 
 /**
@@ -368,7 +388,7 @@ static int new_file(char *name_tok,
 	void *yyscanner = st->scanner;
 	struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 	struct config_root *confroot = st->root_node;
-	char *fullpath;
+	char *fullpath = NULL;
 	int rc = ENOMEM;
 	char *filename = alloca(strlen(name_tok) + 1);
 
@@ -383,24 +403,24 @@ static int new_file(char *name_tok,
 			char *path = gsh_strdup(filename);
 
 			if (path == NULL)
-				return ENOMEM;
+				goto errout;
 			confroot->conf_dir = gsh_strdup(dirname(path));
 			gsh_free(path);
 		} else {
 			confroot->conf_dir = gsh_strdup(".");
 		}
 		if (confroot->conf_dir == NULL)
-			return ENOMEM;
+			goto errout;
 	}
 	if (filename[0] == '/') {
 		fullpath = gsh_strdup(filename);
 		if (fullpath == NULL)
-			return ENOMEM;
+			goto errout;
 	} else {
 		fullpath = gsh_calloc(1, (strlen(filename) +
 					  strlen(confroot->conf_dir) + 2));
 		if (fullpath == NULL)
-			return ENOMEM;
+			goto errout;
 		sprintf(fullpath, "%s/%s", confroot->conf_dir, filename);
 	}
 	/* loop detection */
@@ -412,12 +432,10 @@ static int new_file(char *name_tok,
 	}
 	bs = gsh_calloc(1, sizeof(struct bufstack));
 	if (bs == NULL) {
-		rc = ENOMEM;
 		goto errout;
 	}
 	flist = gsh_calloc(1, sizeof(struct file_list));
 	if (flist == NULL) {
-		rc = ENOMEM;
 		goto errout;
 	}
 	flist->next = confroot->files;
@@ -442,11 +460,16 @@ static int new_file(char *name_tok,
 	return 0;
 
 errout:
+	if (rc == ENOMEM)
+		st->err_type->resource = true;
+	else
+		st->err_type->scan = true;
 	if (flist != NULL)
 		gsh_free(flist);
 	if (bs != NULL)
 		gsh_free(bs);
-	gsh_free(fullpath);
+	if (fullpath != NULL)
+		gsh_free(fullpath);
 	return rc;
 }
 
@@ -462,11 +485,11 @@ static int pop_file(struct parser_state *st)
 	fclose(bs->f);
 	ganeshun_yy_delete_buffer(bs->bs, yyscanner);
 	prevbs = bs->prev;
+	st->curbs = prevbs;
 	gsh_free(bs);
 	if (prevbs == NULL)
 		return 0;
 	ganeshun_yy_switch_to_buffer(prevbs->bs, yyscanner);
-	st->curbs = prevbs;
 	yylineno = st->curbs->lineno;
 	st->current_file = st->curbs->filename;
 	return 1;

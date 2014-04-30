@@ -78,14 +78,16 @@ void ganesha_yyerror(YYLTYPE *yylloc_param,
 struct config_node *config_block(char *blockname,
 				 struct config_node *list,
 				 char *filename,
-				 int lineno);
+				 int lineno,
+				 struct parser_state *st);
 
 void link_node(struct config_node *node);
 
 struct config_node *config_stmt(char *varname,
 				char *varval,
 				char *filename,
-				int lineno);
+				int lineno,
+				struct parser_state *st);
 
 #ifdef _DEBUG_PARSING
 #define DEBUG_YACK   print_parse_tree
@@ -135,7 +137,8 @@ blocklist: /* empty */ {
   if ($1 == NULL) {
     $$ = $2;
   } else {
-    glist_add_tail(&($1)->node, &($2)->node);
+    if ($2 != NULL)
+      glist_add_tail(&($1)->node, &($2)->node);
     $$ = $1;
   }
 }
@@ -144,7 +147,7 @@ blocklist: /* empty */ {
 block:
 IDENTIFIER BEGIN_BLOCK listitems END_BLOCK
 {
-  $$=config_block($1, $3, @$.filename, @$.first_line);
+  $$=config_block($1, $3, @$.filename, @$.first_line, st);
 }
 ;
 
@@ -156,7 +159,8 @@ listitems: /* empty */ {
   if ($1 == NULL) {
     $$ = $2;
   } else {
-    glist_add_tail(&($1)->node, &($2)->node);
+    if ($2 != NULL)
+      glist_add_tail(&($1)->node, &($2)->node);
     $$ = $1;
   }
 }
@@ -171,14 +175,14 @@ statement
 statement:
 IDENTIFIER EQUAL_OP KEYVALUE END_STMT
 {
-  $$=config_stmt($1, $3, @$.filename, @$.first_line);
+  $$=config_stmt($1, $3, @$.filename, @$.first_line, st);
 }
 ;
 
 subblock:
 IDENTIFIER BEGIN_SUB_BLOCK listitems END_SUB_BLOCK
 {
-  $$=config_block($1, $3, @$.filename, @$.first_line);
+  $$=config_block($1, $3, @$.filename, @$.first_line, st);
 }
 ;
 
@@ -202,13 +206,22 @@ void ganesha_yyerror(YYLTYPE *yylloc_param,
 struct config_node *config_block(char *blockname,
 				 struct config_node *list,
 				 char *filename,
-				 int lineno)
+				 int lineno,
+				 struct parser_state *st)
 {
 	struct config_node *node, *cnode;
 	int cnt;
 
+	if (list == NULL) {
+		LogWarn(COMPONENT_CONFIG,
+			"Config file (%s:%d) Block %s is empty",
+			filename, lineno,  blockname);
+		st->err_type->empty = true;
+		return NULL;
+	}
 	node = gsh_calloc(1, sizeof(struct config_node));
 	if (node == NULL) {
+		st->err_type->resource = true;
 		return NULL;
 	}
 	glist_init(&node->node);
@@ -217,13 +230,7 @@ struct config_node *config_block(char *blockname,
 	node->linenumber = lineno;
 	node->type = TYPE_BLOCK;
 	glist_init(&node->u.blk.sub_nodes);
-	if (list != NULL) {
-		glist_add_tail(&list->node, &node->u.blk.sub_nodes);
-	} else {
-		LogWarn(COMPONENT_CONFIG,
-			"Config file (%s:%d) Block %s is empty",
-			filename, lineno,  blockname);
-	}
+	glist_add_tail(&list->node, &node->u.blk.sub_nodes);
 	link_node(node);
 	return node;
 }
@@ -253,12 +260,14 @@ void link_node(struct config_node *node)
 struct config_node *config_stmt(char *varname,
 				char *varval,
 				char *filename,
-				int lineno)
+				int lineno,
+				struct parser_state *st)
 {
 	struct config_node *node;
 
 	node = gsh_calloc(1, sizeof(struct config_node));
 	if (node == NULL) {
+		st->err_type->resource = true;
 		return NULL;
 	}
 	glist_init(&node->node);

@@ -2467,6 +2467,7 @@ void reread_log_config()
 	int status = 0;
 	int i;
 	config_file_t config_struct;
+	struct config_error_type err_type;
 
 	/* Clear out the flag indicating component was set from environment. */
 	for (i = COMPONENT_ALL; i < COMPONENT_COUNT; i++)
@@ -2482,8 +2483,9 @@ void reread_log_config()
 	}
 
 	/* Attempt to parse the new configuration file */
-	config_struct = config_ParseFile(config_path);
-	if (!config_struct) {
+	config_struct = config_ParseFile(config_path, &err_type);
+	if (!config_error_no_error(&err_type)) {
+		config_Free(config_struct);
 		LogCrit(COMPONENT_CONFIG,
 			"Error while parsing new configuration file %s",
 			config_path);

@@ -779,8 +779,9 @@ static bool gsh_export_addexport(DBusMessageIter *args,
 	}
 	LogInfo(COMPONENT_EXPORT, "Adding export from file: %s", file_path);
 
-	config_struct = config_ParseFile(file_path);
-	if (!config_struct) {
+	config_struct = config_ParseFile(file_path, &err_type);
+	if (!config_error_no_error(&err_type)) {
+		config_Free(config_struct);
 		LogCrit(COMPONENT_EXPORT, "Error while parsing %s",
 		file_path); 
 		dbus_set_error(error, DBUS_ERROR_INVALID_FILE_CONTENT,

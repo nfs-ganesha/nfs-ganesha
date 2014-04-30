@@ -41,21 +41,24 @@
  * Reads the content of a configuration file and
  * stores it in a memory structure.
  */
-config_file_t config_ParseFile(char *file_path)
+config_file_t config_ParseFile(char *file_path,
+			       struct config_error_type *err_type)
 {
 	struct parser_state st;
+	struct config_root *root;
 	int rc;
 
+	clear_error_type(err_type);
 	memset(&st, 0, sizeof(struct parser_state));
+	st.err_type = err_type;
 	rc = ganeshun_yy_init_parser(file_path, &st);
 	if (rc) {
 		return NULL;
 	}
 	rc = ganesha_yyparse(&st);
-	ganeshun_yylex_destroy(st.scanner);
-
-	/* converts pointer to pointer */
-	return rc ? NULL : (config_file_t) st.root_node;
+	root = st.root_node;
+	ganeshun_yy_cleanup_parser(&st);
+	return (config_file_t)root;
 }
 
 /**
@@ -75,7 +78,8 @@ void config_Print(FILE * output, config_file_t config)
 
 void config_Free(config_file_t config)
 {
-	free_parse_tree((struct config_root *)config);
+	if (config != NULL)
+		free_parse_tree((struct config_root *)config);
 	return;
 
 }

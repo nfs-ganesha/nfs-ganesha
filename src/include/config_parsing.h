@@ -771,14 +771,16 @@ struct config_block {
 	struct config_item blk_desc;
 };
 	
-	
-
-/* config_ParseFile:
- * Reads the content of a configuration file and
- * stores it in a memory structure.
- * \return NULL on error.
+/**
+ * @brief Parse the content of a configuration file into a parse tree.
+ *
+ * @param file_path [IN]  local path to the config file
+ * @param err_type  [OUT] Error type. Check this for success.
+ *
+ * @return pointer to parse tree.  Must be freed if != NULL
  */
-config_file_t config_ParseFile(char *file_path);
+config_file_t config_ParseFile(char *file_path,
+			       struct config_error_type *err_type);
 
 /**
  * config_Print:
