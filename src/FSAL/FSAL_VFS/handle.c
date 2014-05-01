@@ -126,6 +126,7 @@ static struct vfs_fsal_obj_handle *alloc_handle(int dirfd,
 	st = posix2fsal_attributes(stat, &hdl->obj_handle.attributes);
 	if (FSAL_IS_ERROR(st))
 		goto spcerr;
+	hdl->obj_handle.attributes.fsid = fs->fsid;
 	fsal_obj_handle_init(&hdl->obj_handle, exp_hdl,
 			     posix2fsal_type(stat->st_mode));
 	return hdl;
