@@ -1339,7 +1339,7 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 out_free:
 	gsh_free(fh);
 	gsh_free(p_cargs);
-	cb_compound_free(&call->cbt);
+	free_rpc_call(call);
 	return 0; /*Always return zero, the delegation is recalled or revoked */
 }
 
