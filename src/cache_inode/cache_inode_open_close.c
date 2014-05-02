@@ -278,12 +278,10 @@ cache_inode_close(cache_entry_t *entry, uint32_t flags)
 
 	/* If nothing is opened, do nothing */
 	if (!is_open(entry)) {
-		if (!(flags & CACHE_INODE_FLAG_CONTENT_HOLD))
-			PTHREAD_RWLOCK_unlock(&entry->content_lock);
 		LogFullDebug(COMPONENT_CACHE_INODE, "Entry %p File not open",
 			     entry);
 		status = CACHE_INODE_SUCCESS;
-		return status;
+		goto unlock;
 	}
 
 	/* If file is pinned, do not close it.  This should
