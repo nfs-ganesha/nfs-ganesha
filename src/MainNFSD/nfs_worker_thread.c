@@ -907,7 +907,7 @@ static void nfs_rpc_execute(request_data_t *req,
 				rc = NFS_REQ_OK;
 				goto req_error;
 			}
-			req_ctx.export = get_gsh_export(exportid, true);
+			req_ctx.export = get_gsh_export(exportid);
 			if (req_ctx.export == NULL) {
 				LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 					"NFS3 Request from client %s has invalid export %d",
@@ -1005,12 +1005,13 @@ static void nfs_rpc_execute(request_data_t *req,
 				 * can respond to ASYNC calls.
 				 */
 			} else {
-				req_ctx.export = get_gsh_export(exportid, true);
+				req_ctx.export = get_gsh_export(exportid);
 				if (req_ctx.export == NULL) {
-					LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
-						"NLM4 Request from client %s has invalid export %d",
-						req_ctx.client->hostaddr_str,
-						exportid);
+					LogInfoAlt(COMPONENT_DISPATCH,
+						   COMPONENT_EXPORT,
+						   "NLM4 Request from client %s has invalid export %d",
+						   req_ctx.client->hostaddr_str,
+						   exportid);
 
 					/* We need to send a NLM4_STALE_FH
 					 * response (NLM doesn't have an error

@@ -118,7 +118,7 @@ int nfs4_op_getdeviceinfo(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* Check that we have space */
 
-	exp = get_gsh_export(deviceid.export_id, true);
+	exp = get_gsh_export(deviceid.export_id);
 
 	if (exp == NULL) {
 		nfs_status = NFS4ERR_NOENT;

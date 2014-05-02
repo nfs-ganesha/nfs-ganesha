@@ -1244,7 +1244,7 @@ static int build_default_root(void)
 	struct fsal_module *fsal_hdl = NULL;
 
 	/* See if export_id = 0 has already been specified */
-	exp = get_gsh_export(0, true);
+	exp = get_gsh_export(0);
 
 	if (exp != NULL) {
 		/* export_id = 0 has already been specified */

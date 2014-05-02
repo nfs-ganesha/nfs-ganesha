@@ -196,20 +196,17 @@ struct gsh_export *insert_gsh_export(struct exportlist *explist)
  * by file handles.
  *
  * @param export_id   [IN] the export id extracted from the handle
- * @param lookup_only [IN] if true, don't create a new entry
  *
  * @return pointer to ref locked export
  */
-struct gsh_export *get_gsh_export(int export_id, bool lookup_only)
+struct gsh_export *get_gsh_export(int export_id)
 {
 	struct avltree_node *node = NULL;
 	struct gsh_export *exp;
-	struct export_stats *export_st;
 	struct gsh_export v;
 	void **cache_slot;
 
 	v.export.id = export_id;
-	assert(lookup_only);
 	PTHREAD_RWLOCK_rdlock(&export_by_id.lock);
 
 	/* check cache */
@@ -241,31 +238,9 @@ struct gsh_export *get_gsh_export(int export_id, bool lookup_only)
 		/* update cache */
 		atomic_store_voidptr(cache_slot, node);
 		goto out;
-	} else if (lookup_only) {
+	} else {
 		PTHREAD_RWLOCK_unlock(&export_by_id.lock);
 		return NULL;
-	}
-	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
-
-	export_st = gsh_calloc(sizeof(struct export_stats), 1);
-	if (export_st == NULL)
-		return NULL;
-
-	exp = &export_st->export;
-	exp->export.id = export_id;
-	exp->refcnt = 1;	/* we will hold a ref starting out... */
-
-	PTHREAD_RWLOCK_wrlock(&export_by_id.lock);
-	node = avltree_insert(&exp->node_k, &export_by_id.t);
-	if (node) {
-		gsh_free(export_st);	/* somebody beat us to it */
-		exp = avltree_container_of(node, struct gsh_export, node_k);
-	} else {
-		pthread_rwlock_init(&exp->lock, NULL);
-		/* update cache */
-		atomic_store_voidptr(cache_slot, &exp->node_k);
-		glist_add_tail(&exportlist, &exp->export.exp_list);
-		glist_init(&exp->entry_list);
 	}
 
  out:
@@ -733,7 +708,7 @@ static struct gsh_export *lookup_export(DBusMessageIter *args, char **errormsg)
 
 	success = arg_export_id(args, &export_id, errormsg);
 	if (success) {
-		export = get_gsh_export(export_id, true);
+		export = get_gsh_export(export_id);
 		if (export == NULL)
 			*errormsg = "Export id not found";
 	}
