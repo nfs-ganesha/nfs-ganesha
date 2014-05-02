@@ -26,7 +26,7 @@
 
 /**
  * @file  nfs_read_conf.c
- * @brief This file that contain the routine required for parsing the NFS specific configuraion file.
+ * @brief This file tables required for parsing the NFS specific parameters.
  */
 
 #include "config.h"
@@ -53,6 +53,10 @@
 #include "nfs_proto_functions.h"
 #include "nfs_dupreq.h"
 #include "config_parsing.h"
+
+/**
+ * @brief Core configuration parameters
+ */
 
 static struct config_item_list protocols[] = {
 	CONFIG_LIST_TOK("3", CORE_OPTION_NFSV3),
@@ -164,25 +168,8 @@ struct config_block nfs_core = {
 };
 
 /**
- * @brief Read the core configuration
- *
- * @param[in]  in_config Configuration file handle
- * @param[out] pparam    Read parameters
- *
- * @return 0 if ok, -1 if failed, 1 is stanza is not there.
+ * @brief IP name cache parameters
  */
-int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t *pparam)
-{
-	struct config_error_type err_type;
-	int rc;
-
-	rc = load_config_from_parse(in_config,
-				    &nfs_core,
-				    pparam,
-				    true,
-				    &err_type);
-	return (rc == 0)? 1 : ((rc < 0) ? -1 : 0);
-}
 
 static struct config_item ip_name_params[] = {
 	CONF_ITEM_UI32("Index_Size", 1, 51, PRIME_IP_NAME,
@@ -202,27 +189,8 @@ struct config_block nfs_ip_name = {
 };
 
 /**
- * @brief Reads the configuration for the IP/name.
- *
- * @param[in]  in_config Configuration file handle
- * @param[out] pparam    Read parameters
- *
- * @return 0 if ok,  -1 if not, 1 is stanza is not there.
+ * @brief Kerberos/GSSAPI parameters
  */
-int nfs_read_ip_name_conf(config_file_t in_config,
-			  nfs_ip_name_parameter_t *pparam)
-{
-	struct config_error_type err_type;
-	int rc;
-
-	rc = load_config_from_parse(in_config,
-				    &nfs_ip_name,
-				    pparam,
-				    true,
-				    &err_type);
-	return (rc == 0)? 1 : ((rc < 0) ? -1 : 0);
-}
-
 #ifdef _HAVE_GSSAPI
 static struct config_item krb5_params[] = {
 	CONF_ITEM_STR("PrincipalName", 1, MAXPATHLEN,
@@ -247,28 +215,6 @@ struct config_block krb5_param = {
 	.blk_desc.u.blk.params = krb5_params,
 	.blk_desc.u.blk.commit = noop_conf_commit
 };
-
-/**
- *
- * @brief Read the configuration for krb5 stuff
- *
- * @param[in]  in_config Configuration file handle
- * @param[out] pparam    Read parameters
- *
- * @return 0 if ok, -1 if failed,1 is stanza is not there
- */
-int nfs_read_krb5_conf(config_file_t in_config, nfs_krb5_parameter_t *pparam)
-{
-	struct config_error_type err_type;
-	int rc;
-
-	rc = load_config_from_parse(in_config,
-				    &krb5_param,
-				    pparam,
-				    true,
-				    &err_type);
-	return (rc == 0)? 1 : ((rc < 0) ? -1 : 0);
-}
 #endif
 
 #ifdef USE_NFS_IDMAP
@@ -276,6 +222,10 @@ int nfs_read_krb5_conf(config_file_t in_config, nfs_krb5_parameter_t *pparam)
 #else
 #define GETPWNAMDEF true
 #endif
+
+/**
+ * @brief NFSv4 specific parameters
+ */
 
 static struct config_item version4_params[] = {
 	CONF_ITEM_BOOL("FSAL_Grace", false,
@@ -306,24 +256,3 @@ struct config_block version4_param = {
 	.blk_desc.u.blk.commit = noop_conf_commit
 };
 
-/**
- * @brief Read the configuration for NFSv4 stuff
- *
- * @param[in]  in_config Configuration file handle
- * @param[out] pparam    Read parameters
- *
- * @return 0 if ok, -1 if failed,1 is stanza is not there
- */
-int nfs_read_version4_conf(config_file_t in_config,
-			   nfs_version4_parameter_t *pparam)
-{
-	struct config_error_type err_type;
-	int rc;
-
-	rc = load_config_from_parse(in_config,
-				    &version4_param,
-				    pparam,
-				    true,
-				    &err_type);
-	return (rc == 0)? 1 : ((rc < 0) ? -1 : 0);
-}				/* nfs_read_version4_conf */

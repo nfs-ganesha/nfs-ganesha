@@ -556,8 +556,10 @@ do {                                                   \
 #define _9P_LOCK_FLAGS_BLOCK 1
 #define _9P_LOCK_FLAGS_RECLAIM 2
 
+/* protocol parameter tables */
+extern struct config_block _9p_param;
+
 /* service functions */
-int _9p_read_conf(config_file_t in_config, _9p_parameter_t *pparam);
 int _9p_init(_9p_parameter_t *pparam);
 
 /* Tools functions */

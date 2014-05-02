@@ -24,19 +24,11 @@
  */
 
 /**
- * \file    9p_proto_tools.c
- * \brief   9P version
- *
- * 9p_proto_tools.c : _9P_interpretor, protocol's service functions
+ * @brief 9P protocol parameter tables
  *
  */
 
 #include "config.h"
-#include <stdio.h>
-#include <string.h>
-#include <pthread.h>
-#include "nfs_core.h"
-#include "log.h"
 #include "9p.h"
 #include "config_parsing.h"
 
@@ -67,16 +59,3 @@ struct config_block _9p_param = {
 	.blk_desc.u.blk.params = _9p_params,
 	.blk_desc.u.blk.commit = noop_conf_commit
 };
-
-int _9p_read_conf(config_file_t in_config, _9p_parameter_t *pparam)
-{
-	struct config_error_type err_type;
-	int rc;
-
-	rc = load_config_from_parse(in_config,
-				    &_9p_param,
-				    pparam,
-				    true,
-				    &err_type);
-	return (rc == 0)? -2 : ((rc < 0) ? -1 : 1);
-}				/* _9p_read_conf */

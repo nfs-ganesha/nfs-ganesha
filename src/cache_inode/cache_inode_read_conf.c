@@ -31,7 +31,7 @@
 
 /**
  * @file cache_inode_read_conf.c
- * @brief Read the configuration file for the Cache inode initialization.
+ * @brief Cache inode configuration parameter tables.
  */
 #include "config.h"
 #include "log.h"
@@ -97,30 +97,5 @@ struct config_block cache_inode_param = {
 	.blk_desc.u.blk.params = cache_inode_params,
 	.blk_desc.u.blk.commit = noop_conf_commit
 };
-
-/**
- * @brief Read the configuration for the Cache inode layer
- *
- * @param[in]  config Configuration file handle
- * @param[out] param  Read parameters
- *
- * @retval CACHE_INODE_SUCCESS on success.
- * @retval CACHE_INODE_NOT_FOUND if stanza not present
- * @retval CACHE_INODE_INVALID_ARGUMENT otherwise
- */
-cache_inode_status_t
-cache_inode_read_conf_parameter(config_file_t config,
-				cache_inode_parameter_t *param)
-{
-	struct config_error_type err_type;
-	int rc;
-
-	rc = load_config_from_parse(config,
-				    &cache_inode_param,
-				    param,
-				    true,
-				    &err_type);
-	return (rc < 0) ? CACHE_INODE_INVALID_ARGUMENT : CACHE_INODE_SUCCESS;
-}
 
 /** @} */

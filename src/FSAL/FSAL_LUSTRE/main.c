@@ -230,16 +230,15 @@ static fsal_status_t lustre_init_config(struct fsal_module *fsal_hdl,
 	struct lustre_fsal_module *lustre_me =
 	    container_of(fsal_hdl, struct lustre_fsal_module, fsal);
 	struct config_error_type err_type;
-	int rc;
 
 	memset(&pnfs_param, 0, sizeof(pnfs_param));
 	lustre_me->fs_info = lustre_info; /* get a copy of the defaults */
-	rc = load_config_from_parse(config_struct,
-				    &lustre_param,
-				    &lustre_me->fs_info,
-				    true,
-				    &err_type);
-	if (rc < 0)
+	(void) load_config_from_parse(config_struct,
+				      &lustre_param,
+				      &lustre_me->fs_info,
+				      true,
+				      &err_type);
+	if (!config_error_is_harmless(&err_type))
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	display_fsinfo(&lustre_me->fs_info);
 

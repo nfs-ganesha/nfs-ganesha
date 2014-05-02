@@ -1309,7 +1309,7 @@ int load_config_from_node(void *tree_node,
  * @param unique   [IN] bool if true, more than one is an error
  * @param err_type [OUT] pointer to error type return
  *
- * @returns -1 on errors, number of blocks found (0 == none)
+ * @returns number of blocks found. errors are in err_type
  */
 
 int load_config_from_parse(config_file_t config,
@@ -1402,10 +1402,6 @@ int load_config_from_parse(config_file_t config,
 			 cum_errs,
 			 errstr != NULL ? errstr : "unknown",
 			 blkname);
-		if (config_error_is_harmless(err_type))
-			return found;
-		else
-			return -1;
 	}
 	return found;
 }

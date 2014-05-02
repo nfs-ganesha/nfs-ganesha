@@ -203,12 +203,12 @@ static fsal_status_t pxy_init_config(struct fsal_module *fsal_hdl,
 	    container_of(fsal_hdl, struct pxy_fsal_module, module);
 
 	pxy->fsinfo = proxy_info;
-	rc = load_config_from_parse(config_struct,
-				    &proxy_param,
-				    &pxy->fsinfo,
-				    true,
-				    &err_type);
-	if (rc < 0)
+	(void) load_config_from_parse(config_struct,
+				      &proxy_param,
+				      &pxy->fsinfo,
+				      true,
+				      &err_type);
+	if (!config_error_is_harmless(&err_type))
 		return fsalstat(ERR_FSAL_INVAL, 0);
 
 #ifdef PROXY_HANDLE_MAPPING

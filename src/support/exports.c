@@ -1377,6 +1377,7 @@ err_out:
  * @return A negative value on error,
  *         the number of export entries else.
  */
+
 int ReadExports(config_file_t in_config)
 {
 	struct config_error_type err_type;
@@ -1387,21 +1388,21 @@ int ReadExports(config_file_t in_config)
 				    NULL,
 				    false,
 				    &err_type);
-	if (rc < 0)
-		return rc;
+	if (!config_error_is_harmless(&err_type))
+		return -1;
 
 	rc = load_config_from_parse(in_config,
 				    &export_param,
 				    NULL,
 				    false,
 				    &err_type);
-	if (rc >= 0) {
-		ret = build_default_root();
-		if (ret < 0) {
-			LogCrit(COMPONENT_CONFIG,
-				"No pseudo root!");
-			return -1;
-		}
+	if (!config_error_is_harmless(&err_type))
+		return -1;
+	ret = build_default_root();
+	if (ret < 0) {
+		LogCrit(COMPONENT_CONFIG,
+			"No pseudo root!");
+		return -1;
 	}
 	return rc + ret;
 }

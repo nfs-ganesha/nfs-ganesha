@@ -2448,15 +2448,14 @@ int read_log_config(config_file_t in_config)
 {
 	struct logger_config logger;
 	struct config_error_type err_type;
-	int rc;
 
 	memset(&logger, 0, sizeof(struct logger_config));
-	rc = load_config_from_parse(in_config,
-				    &logging_param,
-				    &logger,
-				    true,
-				    &err_type);
-	if (rc >= 0)
+	(void)load_config_from_parse(in_config,
+				     &logging_param,
+				     &logger,
+				     true,
+				     &err_type);
+	if (config_error_is_harmless(&err_type))
 		return 0;
 	else
 		return -1;
