@@ -413,7 +413,7 @@ make DESTDIR=%{buildroot} install
 %if %{with_fsal_xfs}
 %files xfs
 %defattr(-,root,root,-)
-%{_libdir}/ganesha/libxfsfdhdl*
+%{_libdir}/ganesha/libfsalxfs*
 %endif
 
 %if %{with_fsal_ceph}
