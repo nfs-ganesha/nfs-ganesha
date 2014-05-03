@@ -333,13 +333,11 @@ void get_deleg_perm(cache_entry_t *entry, nfsace4 *permissions,
  * @brief Mark a delegation revoked
  *
  * Mark the delegation state revoked, further ops on this state should return
- * NFS4ERR_REVOKED
+ * NFS4ERR_REVOKED or NFS4ERR_EXPIRED
  *
  * @param[in] deleg state lock entry.
- * @param[in] flag to specify whether this thread already holds a lock on
- * entry->state_lock
  */
-state_status_t deleg_revoke(state_lock_entry_t *deleg_entry, bool rwlocked)
+state_status_t deleg_revoke(state_lock_entry_t *deleg_entry)
 {
 	state_status_t state_status;
 	cache_entry_t *pentry = NULL;
