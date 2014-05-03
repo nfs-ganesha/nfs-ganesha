@@ -368,11 +368,11 @@ void nfs_print_param_config()
  *
  * @return -1 on failure.
  */
-int nfs_set_param_from_conf(config_file_t config_struct,
+int nfs_set_param_from_conf(config_file_t parse_tree,
 			    nfs_start_info_t *p_start_info)
 {
 	int rc;
-	cache_inode_status_t cache_inode_status;
+	struct config_error_type err_type;
 
 	/*
 	 * Initialize exports and clients so config parsing can use them
@@ -382,106 +382,84 @@ int nfs_set_param_from_conf(config_file_t config_struct,
 	export_pkginit();
 
 	/* Core parameters */
-	rc = nfs_read_core_conf(config_struct, &nfs_param.core_param);
-	if (rc < 0) {
+	(void) load_config_from_parse(parse_tree,
+				    &nfs_core,
+				    &nfs_param.core_param,
+				    true,
+				    &err_type);
+	if (!config_error_is_harmless(&err_type)) {
 		LogCrit(COMPONENT_INIT,
 			"Error while parsing core configuration");
 		return -1;
-	} else {
-		/* No such stanza in configuration file */
-		if (rc == 1)
-			LogEvent(COMPONENT_INIT,
-				 "No core configuration found in config file, using default");
-		else
-			LogDebug(COMPONENT_INIT,
-				 "core configuration read from config file");
 	}
 
 	/* Worker paramters: ip/name hash table and expiration for each entry */
-	rc = nfs_read_ip_name_conf(config_struct, &nfs_param.ip_name_param);
-	if (rc < 0) {
+	(void) load_config_from_parse(parse_tree,
+				    &nfs_ip_name,
+				    &nfs_param.ip_name_param,
+				    true,
+				    &err_type);
+	if (!config_error_is_harmless(&err_type)) {
 		LogCrit(COMPONENT_INIT,
 			"Error while parsing IP/name configuration");
 		return -1;
-	} else {
-		/* No such stanza in configuration file */
-		if (rc == 1)
-			LogDebug(COMPONENT_INIT,
-				 "No IP/name configuration found in config file, using default");
-		else
-			LogDebug(COMPONENT_INIT,
-				 "IP/name configuration read from config file");
 	}
 
 #ifdef _HAVE_GSSAPI
 	/* NFS kerberos5 configuration */
-	rc = nfs_read_krb5_conf(config_struct, &nfs_param.krb5_param);
-	if (rc < 0) {
+	(void) load_config_from_parse(parse_tree,
+				    &krb5_param,
+				    &nfs_param.krb5_param,
+				    true,
+				    &err_type);
+	if (!config_error_is_harmless(&err_type)) {
 		LogCrit(COMPONENT_INIT,
 			"Error while parsing NFS/KRB5 configuration for RPCSEC_GSS");
 		return -1;
-	} else {
-		/* No such stanza in configuration file */
-		if (rc == 1)
-			LogDebug(COMPONENT_INIT,
-				 "No NFS/KRB5 configuration found in config file, using default");
-		else
-			LogDebug(COMPONENT_INIT,
-				 "NFS/KRB5 configuration read from config file");
 	}
 #endif
 
 	/* NFSv4 specific configuration */
-	rc = nfs_read_version4_conf(config_struct, &nfs_param.nfsv4_param);
-	if (rc < 0) {
+	(void) load_config_from_parse(parse_tree,
+				    &version4_param,
+				    &nfs_param.nfsv4_param,
+				    true,
+				    &err_type);
+	if (!config_error_is_harmless(&err_type)) {
 		LogCrit(COMPONENT_INIT,
 			"Error while parsing NFSv4 specific configuration");
 		return -1;
-	} else {
-		/* No such stanza in configuration file */
-		if (rc == 1)
-			LogDebug(COMPONENT_INIT,
-				 "No NFSv4 specific configuration found in config file, using default");
-		else
-			LogDebug(COMPONENT_INIT,
-				 "NFSv4 specific configuration read from config file");
 	}
 
 #ifdef _USE_9P
-	rc = _9p_read_conf(config_struct, &nfs_param._9p_param);
-	if (rc < 0) {
-		if (rc == -2)
-			LogDebug(COMPONENT_INIT,
-				 "No 9P configuration found, using default");
-		else {
-			LogCrit(COMPONENT_INIT,
-				"Error while parsing 9P configuration");
-			return -1;
-		}
+	(void) load_config_from_parse(parse_tree,
+				    &_9p_param,
+				    &nfs_param._9p_param,
+				    true,
+				    &err_type);
+	if (!config_error_is_harmless(&err_type)) {
+		LogCrit(COMPONENT_INIT,
+			"Error while parsing 9P specific configuration");
+		return -1;
 	}
 #endif
 
 	/* Cache inode client parameters */
-	cache_inode_status =
-		cache_inode_read_conf_parameter(config_struct,
-						&nfs_param.cache_param);
-	if (cache_inode_status != CACHE_INODE_SUCCESS) {
-		if (cache_inode_status == CACHE_INODE_NOT_FOUND)
-			LogDebug(COMPONENT_INIT,
-				 "No Cache Inode Client configuration found, using default");
-		else {
-			LogCrit(COMPONENT_INIT,
-				"Error while parsing Cache Inode Client configuration");
-			return 1;
-		}
-	} else
-		LogDebug(COMPONENT_INIT,
-			 "Cache Inode Client configuration read from config file");
+	(void) load_config_from_parse(parse_tree,
+				    &cache_inode_param,
+				    &nfs_param.cache_param,
+				    true,
+				    &err_type);
+	if (!config_error_is_harmless(&err_type)) {
+		LogCrit(COMPONENT_INIT,
+			"Error while parsing 9P specific configuration");
+		return -1;
+	}
 
 	/* Load export entries from parsed file
 	 * returns the number of export entries.
 	 */
-	rc = ReadExports(config_struct);
+	rc = ReadExports(parse_tree);
 	if (rc < 0) {
 		LogCrit(COMPONENT_INIT, "Error while parsing export entries");
 		return -1;

@@ -11,7 +11,7 @@ set(GANESHA_SRCS
   Ganesha/export_mgr.py
   Ganesha/QtUI/exports_table.py
   Ganesha/log_mgr.py
-  Ganesha/log_settings.py
+  Ganesha/QtUI/log_settings.py
   Ganesha/io_stats.py
   )
 

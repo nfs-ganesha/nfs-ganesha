@@ -179,15 +179,16 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 {
 	struct pt_fsal_module *pt_me =
 	    container_of(fsal_hdl, struct pt_fsal_module, fsal);
-	int rc;
+	struct config_error_type err_type;
 
 	pt_me->fs_info = default_posix_info;	/* copy of the defaults */
 
-	rc = load_config_from_parse(config_struct,
-				    &pt_param,
-				    &pt_me->fs_info,
-				    true);
-	if (rc < 0)
+	(void) load_config_from_parse(config_struct,
+				      &pt_param,
+				      &pt_me->fs_info,
+				      true,
+				      &err_type);
+	if (!config_error_is_harmless(&err_type))
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	display_fsinfo(&pt_me->fs_info);
 	LogFullDebug(COMPONENT_FSAL,

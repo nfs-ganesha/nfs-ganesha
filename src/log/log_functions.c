@@ -1882,7 +1882,8 @@ static void *format_init(void *link_mem, void *self_struct)
  * that is can be digested by printf...
  */
 
-static int format_commit(void *node, void *link_mem, void *self_struct)
+static int format_commit(void *node, void *link_mem, void *self_struct,
+			 struct config_error_type *err_type)
 {
 	struct logfields *log = (struct logfields *)self_struct;
 	struct logfields **logp = link_mem;
@@ -1892,23 +1893,27 @@ static int format_commit(void *node, void *link_mem, void *self_struct)
 	if (log->datefmt == TD_USER && log->user_date_fmt == NULL) {
 		LogCrit(COMPONENT_CONFIG,
 			"Date is \"user_set\" with empty date format.");
+		err_type->validate = true;
 		errcnt++;
 	}
 	if (log->datefmt != TD_USER && log->user_date_fmt != NULL) {
 		LogCrit(COMPONENT_CONFIG,
 			"Set user date format (%s) but not \"user_set\" format",
 			log->user_date_fmt);
+		err_type->validate = true;
 		errcnt++;
 	}
 	if (log->timefmt == TD_USER && log->user_time_fmt == NULL) {
 		LogCrit(COMPONENT_CONFIG,
 			"Time is \"user_set\" with empty time format.");
+		err_type->validate = true;
 		errcnt++;
 	}
 	if (log->timefmt != TD_USER && log->user_time_fmt != NULL) {
 		LogCrit(COMPONENT_CONFIG,
 			"Set time format string (%s) but not \"user_set\" format",
 			log->user_time_fmt);
+		err_type->validate = true;
 		errcnt++;
 	}
 	if (errcnt == 0) {
@@ -2078,7 +2083,8 @@ static void *component_init(void *link_mem, void *self_struct)
  * was not changed by the config.
  */
 
-static int component_commit(void *node, void *link_mem, void *self_struct)
+static int component_commit(void *node, void *link_mem, void *self_struct,
+			    struct config_error_type *err_type)
 {
 	log_levels_t **log_lvls = link_mem;
 	struct logger_config *logger;
@@ -2183,7 +2189,8 @@ static void *facility_init(void *link_mem, void *self_struct)
  * at server initialization.
  */
 
-static int facility_commit(void *node, void *link_mem, void *self_struct)
+static int facility_commit(void *node, void *link_mem, void *self_struct,
+			   struct config_error_type *err_type)
 {
 	struct facility_config *conf = self_struct;
 	struct glist_head *fac_list;
@@ -2192,6 +2199,7 @@ static int facility_commit(void *node, void *link_mem, void *self_struct)
 	if (conf->facility_name == NULL) {
 		LogCrit(COMPONENT_LOG,
 			"No facility name given");
+		err_type->missing = true;
 		errcnt++;
 		goto out;
 	}
@@ -2220,6 +2228,7 @@ static int facility_commit(void *node, void *link_mem, void *self_struct)
 		LogCrit(COMPONENT_LOG,
 			"No facility destination given for (%s)",
 			conf->facility_name);
+		err_type->missing = true;
 		errcnt++;
 		goto out;
 	}
@@ -2278,7 +2287,8 @@ static void *log_conf_init(void *link_mem, void *self_struct)
 	return NULL;
 }
 
-static int log_conf_commit(void *node, void *link_mem, void *self_struct)
+static int log_conf_commit(void *node, void *link_mem, void *self_struct,
+			   struct config_error_type *err_type)
 {
 	struct logger_config *logger = self_struct;
 	struct glist_head *glist, *glistn;
@@ -2307,6 +2317,7 @@ static int log_conf_commit(void *node, void *link_mem, void *self_struct)
 				"Failed to create facility (%s), (%s)",
 				conf->facility_name,
 				strerror(-rc));
+			err_type->resource = true;
 			errcnt++;
 			goto done;
 		}
@@ -2315,11 +2326,12 @@ static int log_conf_commit(void *node, void *link_mem, void *self_struct)
 			rc = set_log_destination(conf->facility_name,
 						 conf->dest);
 			if (rc < 0) {
-				errcnt++;
 				LogCrit(COMPONENT_LOG,
 					"Could not set destination for (%s) because (%s)",
 					conf->facility_name,
 					strerror(-rc));
+				err_type->resource = true;
+				errcnt++;
 				goto done;
 			}
 		}
@@ -2331,6 +2343,7 @@ static int log_conf_commit(void *node, void *link_mem, void *self_struct)
 					"Could not set severity level for (%s) because (%s)",
 					conf->facility_name,
 					strerror(-rc));
+				err_type->resource = true;
 				errcnt++;
 				goto done;
 			}
@@ -2342,6 +2355,7 @@ static int log_conf_commit(void *node, void *link_mem, void *self_struct)
 					"Could not enable (%s) because (%s)",
 					conf->facility_name,
 					strerror(-rc));
+				err_type->resource = true;
 				errcnt++;
 			}
 		} else if (conf->state == FAC_DEFAULT) {
@@ -2354,6 +2368,7 @@ static int log_conf_commit(void *node, void *link_mem, void *self_struct)
 					"Could not make (%s) the default because (%s)",
 					conf->facility_name,
 					strerror(-rc));
+				err_type->resource = true;
 				errcnt++;
 			} else if (old_def != default_facility)
 				LogEvent(COMPONENT_CONFIG,
@@ -2449,14 +2464,15 @@ struct config_block logging_param = {
 int read_log_config(config_file_t in_config)
 {
 	struct logger_config logger;
-	int rc;
+	struct config_error_type err_type;
 
 	memset(&logger, 0, sizeof(struct logger_config));
-	rc = load_config_from_parse(in_config,
-				    &logging_param,
-				    &logger,
-				    true);
-	if (rc >= 0)
+	(void)load_config_from_parse(in_config,
+				     &logging_param,
+				     &logger,
+				     true,
+				     &err_type);
+	if (config_error_is_harmless(&err_type))
 		return 0;
 	else
 		return -1;
@@ -2467,6 +2483,7 @@ void reread_log_config()
 	int status = 0;
 	int i;
 	config_file_t config_struct;
+	struct config_error_type err_type;
 
 	/* Clear out the flag indicating component was set from environment. */
 	for (i = COMPONENT_ALL; i < COMPONENT_COUNT; i++)
@@ -2482,8 +2499,9 @@ void reread_log_config()
 	}
 
 	/* Attempt to parse the new configuration file */
-	config_struct = config_ParseFile(config_path);
-	if (!config_struct) {
+	config_struct = config_ParseFile(config_path, &err_type);
+	if (!config_error_no_error(&err_type)) {
+		config_Free(config_struct);
 		LogCrit(COMPONENT_CONFIG,
 			"Error while parsing new configuration file %s",
 			config_path);

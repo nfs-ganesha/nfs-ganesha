@@ -460,6 +460,7 @@ fsal_status_t pt_create_export(struct fsal_module *fsal_hdl,
 	char fs_spec[MAXPATHLEN + 1];
 	char type[MAXNAMLEN + 1];
 	int retval = 0;
+	struct config_error_type err_type;
 	fsal_status_t status;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 
@@ -611,7 +612,8 @@ fsal_status_t pt_create_export(struct fsal_module *fsal_hdl,
 	retval = load_config_from_node(parse_node,
 				       &export_param,
 				       myself,
-				       true);
+				       true,
+				       &err_type);
 	if (retval != 0) {
 		retval = EINVAL;
 		goto errout;

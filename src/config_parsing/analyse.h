@@ -91,12 +91,13 @@ struct parser_state {
 	struct bufstack *curbs;
 	char *current_file;
 	int block_depth; /* block/subblock nesting level */
+	struct config_error_type *err_type;
 };
 
 int ganesha_yyparse(struct parser_state *st);
 int ganeshun_yy_init_parser(char *srcfile,
 			   struct parser_state *st);
-int ganeshun_yylex_destroy (void *yyscanner);
+void ganeshun_yy_cleanup_parser(struct parser_state *st);
 
 /**
  *  Displays the content of parse tree.

@@ -103,7 +103,7 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t *data,
 	v4_handle = (struct file_handle_v4 *)data->currentFH.nfs_fh4_val;
 
 	/* Get the exportid from the handle. */
-	data->req_ctx->export = get_gsh_export(v4_handle->exportid, true);
+	data->req_ctx->export = get_gsh_export(v4_handle->exportid);
 
 	if (data->req_ctx->export == NULL) {
 		data->export = NULL;

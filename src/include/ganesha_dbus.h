@@ -71,6 +71,13 @@
 	.direction = "out"\
 }
 
+#define MESSAGE_REPLY		\
+{				\
+	.name = "message",	\
+	.type = "s",		\
+	.direction = "out"	\
+}
+
 #define END_ARG_LIST {NULL, NULL, NULL}
 
 #define IPADDR_ARG       \

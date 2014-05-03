@@ -581,7 +581,7 @@ bool nlm_block_data_to_export(state_block_data_t *block_data)
 	if (exportid < 0)
 		goto err;
 
-	exp = get_gsh_export(exportid, true);
+	exp = get_gsh_export(exportid);
 	if (exp == NULL)
 		goto err;
 

@@ -867,7 +867,7 @@ message(STATUS "ALLOCATOR = ${ALLOCATOR}")
 message(STATUS "GOLD_LINKER = ${GOLD_LINKER}")
 message(STATUS "CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX}")
 message(STATUS "FSAL_DESTINATION = ${FSAL_DESTINATION}")
-message(STATUS "USE_ADMIN_TOOLS = ${USE_ADMII_TOOLS}")
+message(STATUS "USE_ADMIN_TOOLS = ${USE_ADMIN_TOOLS}")
 message(STATUS "USE_TSAN = ${USE_TSAN}")
 
 #force command line options to be stored in cache
@@ -995,6 +995,11 @@ set(_USE_9P_RDMA ${_USE_9P_RDMA}
 set(USE_ADMIN_TOOLS ${USE_ADMIN_TOOLS}
   CACHE BOOL
   "Package Admin Scripts"
+  FORCE)
+
+set(USE_ADMIN_TOOLS ${USE_TSAN}
+  CACHE BOOL
+  "Enable GCC Thread-Sanitizer"
   FORCE)
 
 # Now create a useable config.h

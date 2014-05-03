@@ -283,7 +283,8 @@ void LogClientListEntry(log_components_t component,
 
 static int add_client(struct exportlist *exp,
 		      char *client_tok,
-		      struct export_perms__ *perms)
+		      struct export_perms__ *perms,
+		      struct config_error_type *err_type)
 {
 	struct exportlist_client_entry__ *cli;
 	int errcnt = 0;
@@ -306,6 +307,7 @@ static int add_client(struct exportlist *exp,
 			LogMajor(COMPONENT_CONFIG,
 				 "netgroup (%s) name too long",
 				 client_tok);
+			err_type->invalid = true;
 			errcnt++;
 			goto out;
 		}
@@ -320,6 +322,7 @@ static int add_client(struct exportlist *exp,
 			LogMajor(COMPONENT_CONFIG,
 				 "Expected a CIDR address, got (%s)",
 				 client_tok);
+			err_type->invalid = true;
 			errcnt++;
 			goto out;
 		}
@@ -335,6 +338,7 @@ static int add_client(struct exportlist *exp,
 			LogMajor(COMPONENT_CONFIG,
 				 "Wildcard client (%s) name too long",
 				 client_tok);
+			err_type->invalid = true;
 			errcnt++;
 			goto out;
 		}
@@ -398,6 +402,7 @@ static int add_client(struct exportlist *exp,
 		LogMajor(COMPONENT_CONFIG,
 			 "Unknown client token (%s)",
 			 client_tok);
+		err_type->bogus = true;
 		errcnt++;
 		goto out;
 	}
@@ -474,7 +479,8 @@ static void *client_init(void *link_mem, void *self_struct)
  * @return 0 on success, error count for failure.
  */
 
-static int client_commit(void *node, void *link_mem, void *self_struct)
+static int client_commit(void *node, void *link_mem, void *self_struct,
+			 struct config_error_type *err_type)
 {
 	struct exportlist_client_entry__ *cli;
 	struct exportlist *exp;
@@ -493,6 +499,7 @@ static int client_commit(void *node, void *link_mem, void *self_struct)
 	if (client_list == NULL || client_list[0] == '\0') {
 		LogCrit(COMPONENT_CONFIG,
 			"No clients specified");
+		err_type->invalid = true;
 		errcnt++;
 	}
 	/* take the first token for ourselves.  it may expand!
@@ -505,7 +512,8 @@ static int client_commit(void *node, void *link_mem, void *self_struct)
 			*endptr++ = '\0';
 		LogMidDebug(COMPONENT_CONFIG,
 			    "Adding client %s", tok);
-		errcnt += add_client(exp, tok, &cli->client_perms);
+		errcnt += add_client(exp, tok, &cli->client_perms,
+				     err_type);
 		tok = endptr;
 	}
 	if (errcnt == 0)
@@ -563,7 +571,8 @@ static void *fsal_init(void *link_mem, void *self_struct)
  * fsal method can process the rest of the parameters in the block
  */
 
-static int fsal_commit(void *node, void *link_mem, void *self_struct)
+static int fsal_commit(void *node, void *link_mem, void *self_struct,
+		       struct config_error_type *err_type)
 {
 	struct fsal_export **exp_hdl = link_mem;
 	struct exportlist *exp;
@@ -587,10 +596,12 @@ static int fsal_commit(void *node, void *link_mem, void *self_struct)
 
 		retval = load_fsal(fp->name, &fsal);
 		if (retval != 0) {
-			LogFatal(COMPONENT_CONFIG,
+			LogCrit(COMPONENT_CONFIG,
 				"Failed to load FSAL (%s)"
 				" because: %s", fp->name,
 				strerror(retval));
+			err_type->fsal = true;
+			errcnt++;
 			goto err;
 		}
 		myconfig = get_parse_root(node);
@@ -600,6 +611,7 @@ static int fsal_commit(void *node, void *link_mem, void *self_struct)
 				"Failed to initialize FSAL (%s)",
 				fp->name);
 			fsal->ops->put(fsal);
+			err_type->fsal = true;
 			errcnt++;
 			goto err;
 		}
@@ -634,6 +646,7 @@ static int fsal_commit(void *node, void *link_mem, void *self_struct)
 			"Could not create export for (%s) to (%s)",
 			exp->pseudopath,
 			exp->fullpath);
+		err_type->export = true;
 		errcnt++;
 		goto err;
 	}
@@ -704,7 +717,8 @@ static void *export_init(void *link_mem, void *self_struct)
  * parameters are already done.
  */
 
-static int export_commit(void *node, void *link_mem, void *self_struct)
+static int export_commit(void *node, void *link_mem, void *self_struct,
+			 struct config_error_type *err_type)
 {
 	struct exportlist *exp;
 	struct gsh_export *export, *probe_exp;
@@ -718,54 +732,76 @@ static int export_commit(void *node, void *link_mem, void *self_struct)
 		if (exp->pseudopath == NULL) {
 			LogCrit(COMPONENT_CONFIG,
 				"Exporting to NFSv4 but not Pseudo path defined");
+			err_type->invalid = true;
 			errcnt++;
+			goto err_out;
 		} else if (exp->id == 0 && strcmp(exp->pseudopath, "/") != 0) {
 			LogCrit(COMPONENT_CONFIG,
 				"Export id 0 can only export \"/\" not (%s)",
 				exp->pseudopath);
+			err_type->invalid = true;
 			errcnt++;
+			goto err_out;
 		}
 	}
-	if (exp->FS_tag != NULL) {
-		probe_exp = get_gsh_export_by_tag(exp->FS_tag);
-		if (probe_exp != NULL) {
-			LogCrit(COMPONENT_CONFIG,
-				"Tag (%s) is a duplicate",
-				exp->FS_tag);
-			errcnt++;
-			put_gsh_export(probe_exp);
-		}
-	}
-	if (exp->pseudopath != NULL) {
-		if (exp->pseudopath[0] != '/') {
-			LogCrit(COMPONENT_CONFIG,
-				"A Pseudo path must be an absolute path");
-			errcnt++;
-		}
-		probe_exp = get_gsh_export_by_pseudo(exp->pseudopath, true);
-		if (probe_exp != NULL) {
-			LogCrit(COMPONENT_CONFIG,
-				"Pseudo path (%s) is a duplicate",
-				exp->pseudopath);
-			errcnt++;
-			put_gsh_export(probe_exp);
-		}
+	if (exp->pseudopath != NULL && exp->pseudopath[0] != '/') {
+		LogCrit(COMPONENT_CONFIG,
+			"A Pseudo path must be an absolute path");
+		err_type->invalid = true;
+		errcnt++;
 	}
 	if (exp->id == 0) {
 		if (exp->pseudopath == NULL) {
 			LogCrit(COMPONENT_CONFIG,
 				"Pseudo path must be \"/\" for export id 0");
+			err_type->invalid = true;
 			errcnt++;
 		} else if (exp->pseudopath[1] != '\0') {
 			LogCrit(COMPONENT_CONFIG,
 				"Pseudo path must be \"/\" for export id 0");
+			err_type->invalid = true;
 			errcnt++;
 		}
 		if ((exp->export_perms.options & EXPORT_OPTION_PROTOCOLS)
 		    != EXPORT_OPTION_NFSV4) {
 			LogCrit(COMPONENT_CONFIG,
 				"Export id 0 must indicate Protocols=4");
+			err_type->invalid = true;
 			errcnt++;
+		}
+	}
+	if (errcnt)
+		goto err_out;  /* have basic errors. don't even try more... */
+	probe_exp = get_gsh_export(exp->id);
+	if (probe_exp != NULL) {
+		LogDebug(COMPONENT_CONFIG,
+			 "Export %d already exists", exp->id);
+		put_gsh_export(probe_exp);
+		err_type->exists = true;
+		errcnt++;
+	}
+	if (exp->FS_tag != NULL) {
+		probe_exp = get_gsh_export_by_tag(exp->FS_tag);
+		if (probe_exp != NULL) {
+			put_gsh_export(probe_exp);
+			LogCrit(COMPONENT_CONFIG,
+				"Tag (%s) is a duplicate",
+				exp->FS_tag);
+			if (!err_type->exists)
+				err_type->invalid = true;
+			errcnt++;
+		}
+	}
+	if (exp->pseudopath != NULL) {
+		probe_exp = get_gsh_export_by_pseudo(exp->pseudopath, true);
+		if (probe_exp != NULL) {
+			LogCrit(COMPONENT_CONFIG,
+				"Pseudo path (%s) is a duplicate",
+				exp->pseudopath);
+			if (!err_type->exists)
+				err_type->invalid = true;
+			errcnt++;
+			put_gsh_export(probe_exp);
 		}
 	}
 	probe_exp = get_gsh_export_by_path(exp->fullpath, true);
@@ -775,11 +811,19 @@ static int export_commit(void *node, void *link_mem, void *self_struct)
 		LogCrit(COMPONENT_CONFIG,
 			"Duplicate path (%s) without unique tag or Pseudo path",
 			exp->fullpath);
+		err_type->invalid = true;
 		errcnt++;
 		put_gsh_export(probe_exp);
 	}
-	if (errcnt)
+	if (errcnt) {
+		if (err_type->exists && !err_type->invalid)
+			LogDebug(COMPONENT_CONFIG,
+				 "Duplicate export id = %d", exp->id);
+		else
+			LogCrit(COMPONENT_CONFIG,
+				 "Duplicate export id = %d", exp->id);
 		goto err_out;  /* have errors. don't init or load a fsal */
+	}
 	glist_init(&exp->exp_state_list);
 	glist_init(&exp->exp_lock_list);
 	glist_init(&exp->exp_nlm_share_list);
@@ -788,6 +832,7 @@ static int export_commit(void *node, void *link_mem, void *self_struct)
 		LogCrit(COMPONENT_CONFIG,
 			"Cannot initialize state mutex for export %d",
 			exp->id);
+		err_type->resource = true;
 		errcnt++;
 		goto err_out;
 	}
@@ -798,6 +843,7 @@ static int export_commit(void *node, void *link_mem, void *self_struct)
 		LogCrit(COMPONENT_CONFIG,
 			"Export id %d already in use.",
 			exp->id);
+		err_type->exists = true;
 		errcnt++;
 		goto err_fsal;
 	}
@@ -845,24 +891,28 @@ static void export_display(const char *step, void *node,
  * init export root and mount it in pseudo fs
  */
 
-static int add_export_commit(void *node, void *link_mem, void *self_struct)
+static int add_export_commit(void *node, void *link_mem, void *self_struct,
+			     struct config_error_type *err_type)
 {
 	struct exportlist *exp = self_struct;
 	struct gsh_export *export;
 	int errcnt = 0;
 
-	errcnt = export_commit(node, link_mem, self_struct);
+	errcnt = export_commit(node, link_mem, self_struct, err_type);
 	if (errcnt != 0)
 		goto err_out;
 
 	export = container_of(exp, struct gsh_export, export);
 	if (!init_export_root(export)) {
+		err_type->resource = true;
 		errcnt++;
 		goto err_out;
 	}
 
-	if (!mount_gsh_export(export))
+	if (!mount_gsh_export(export)) {
+		err_type->resource = true;
 		errcnt++;
+	}
 
 err_out:
 	return errcnt;
@@ -888,7 +938,9 @@ static void *export_defaults_init(void *link_mem, void *self_struct)
  * parameters are already done.
  */
 
-static int export_defaults_commit(void *node, void *link_mem, void *self_struct)
+static int export_defaults_commit(void *node, void *link_mem,
+				  void *self_struct,
+				  struct config_error_type *err_type)
 {
 	return 0;
 }
@@ -909,7 +961,7 @@ static void export_defaults_display(const char *step, void *node,
 	StrExportOptions(defaults, perms);
 
 	LogEvent(COMPONENT_CONFIG,
-		 "%s Export Deafults (%s)",
+		 "%s Export Defaults (%s)",
 		 step, perms);
 }
 
@@ -1205,7 +1257,7 @@ static int build_default_root(void)
 	struct fsal_module *fsal_hdl = NULL;
 
 	/* See if export_id = 0 has already been specified */
-	exp = get_gsh_export(0, true);
+	exp = get_gsh_export(0);
 
 	if (exp != NULL) {
 		/* export_id = 0 has already been specified */
@@ -1338,28 +1390,32 @@ err_out:
  * @return A negative value on error,
  *         the number of export entries else.
  */
+
 int ReadExports(config_file_t in_config)
 {
+	struct config_error_type err_type;
 	int rc, ret = 0;
 
 	rc = load_config_from_parse(in_config,
-				      &export_defaults_param,
-				      NULL,
-				      false);
-	if (rc < 0)
-		return rc;
+				    &export_defaults_param,
+				    NULL,
+				    false,
+				    &err_type);
+	if (!config_error_is_harmless(&err_type))
+		return -1;
 
 	rc = load_config_from_parse(in_config,
-				      &export_param,
-				      NULL,
-				      false);
-	if (rc >= 0) {
-		ret = build_default_root();
-		if (ret < 0) {
-			LogCrit(COMPONENT_CONFIG,
-				"No pseudo root!");
-			return -1;
-		}
+				    &export_param,
+				    NULL,
+				    false,
+				    &err_type);
+	if (!config_error_is_harmless(&err_type))
+		return -1;
+	ret = build_default_root();
+	if (ret < 0) {
+		LogCrit(COMPONENT_CONFIG,
+			"No pseudo root!");
+		return -1;
 	}
 	return rc + ret;
 }

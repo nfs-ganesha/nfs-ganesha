@@ -25,6 +25,7 @@
 #include <unistd.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
 #include <stdio.h>
 #include <sys/types.h>
 
@@ -67,6 +68,96 @@ enum config_type {
 #define CONFIG_MODE		0x004  /*< this param is octal "mode" */
 #define CONFIG_RELAX		0x008  /*< this block has extra params
 					*  so don't complain about them */
+
+/**
+ * @brief Config file processing error type
+ *
+ * This is a better way than a bunch of mask bits...
+ * Examination of the error type lets the calling code decide
+ * just how bad and messed up the config file is.
+ */
+
+struct config_error_type {
+	bool scan:1;		/*< lexer/scanner */
+	bool parse:1;		/*< parser rules */
+	bool init:1;		/*< block initialization */
+	bool fsal:1;		/*< fsal load failure */
+	bool export:1;		/*< export create failure */
+	bool resource:1;	/*< system resource */
+	bool unique:1;		/*< unique block/param */
+	bool invalid:1;		/*< invalid param value */
+	bool missing:1;		/*< missing mandatory parameter */
+	bool validate:1;	/*< commit param validation */
+	bool exists:1;		/*< block already exists */
+	bool empty:1;		/*< block is empty */
+	bool bogus:1;		/*< bogus (deprecated?) param */
+};
+
+/** @brief Error detail decoders
+ */
+
+/**
+ * @brief Test for errors that require us to exit the server
+ */
+
+static inline bool config_error_is_fatal(struct config_error_type *err_type)
+{
+	return err_type->scan || err_type->parse || err_type->init ||
+		err_type->fsal || err_type->resource;
+}
+
+/**
+ * @brief Test for errors that make the processed block unuseable
+ */
+
+static inline bool config_error_is_crit(struct config_error_type *err_type)
+{
+	return config_error_is_fatal(err_type) ||
+		(err_type->invalid || err_type->export || err_type->missing);
+}
+
+/**
+ * @brief Test for errors that will not cause problems
+ */
+
+static inline bool config_error_is_harmless(struct config_error_type *err_type)
+{
+	return !(config_error_is_crit(err_type) ||
+		 err_type->unique || err_type->exists);
+}
+
+/**
+ * @brief Test that there are no errors at all
+ *
+ * NOTE: This is valid so long as sizeof(struct config_error_type)
+ *        == sizeof(uint16_t).  Use uint32_t if this expands beyond 16 bools.
+ *       It could be a union here but that makes for messy code all
+ *       over the place.  Handle with care and it won't bite you.
+ */
+
+static inline bool config_error_no_error(struct config_error_type *err_type)
+{
+	return *(uint16_t *)err_type == 0;
+}
+
+/**
+ * @brief Collect/combine errors
+ */
+
+static inline void config_error_comb_errors(struct config_error_type *err_type,
+					    struct config_error_type *more_errs)
+{
+	*(uint16_t *)err_type |= *(uint16_t *)more_errs;
+}
+
+/**
+ * @brief Clear the error types
+ */
+
+static inline void clear_error_type(struct config_error_type *err_type)
+{
+	memset(err_type, 0, sizeof(struct config_error_type));
+}
 
 struct config_block;
 struct config_item;
@@ -237,7 +328,8 @@ struct config_item {
 			void *(*init)(void *link_mem, void *self_struct);
 			struct config_item *params;
 			int (*commit)(void *node, void *link_mem,
-				      void *self_struct);
+				      void *self_struct,
+				      struct config_error_type *err_type);
 			void (*display)(const char *step,
 					void *node, void *link_mem,
 					void *self_struct);
@@ -679,14 +771,16 @@ struct config_block {
 	struct config_item blk_desc;
 };
 	
-	
-
-/* config_ParseFile:
- * Reads the content of a configuration file and
- * stores it in a memory structure.
- * \return NULL on error.
+/**
+ * @brief Parse the content of a configuration file into a parse tree.
+ *
+ * @param file_path [IN]  local path to the config file
+ * @param err_type  [OUT] Error type. Check this for success.
+ *
+ * @return pointer to parse tree.  Must be freed if != NULL
  */
-config_file_t config_ParseFile(char *file_path);
+config_file_t config_ParseFile(char *file_path,
+			       struct config_error_type *err_type);
 
 /**
  * config_Print:
@@ -705,13 +799,18 @@ config_file_t get_parse_root(void *node);
 int load_config_from_node(void *tree_node,
 			  struct config_block *conf_blk,
 			  void *param,
-			  bool unique);
+			  bool unique,
+			  struct config_error_type *err_type);
 
 /* fill configuration structure from parse tree */
 int load_config_from_parse(config_file_t config,
 			   struct config_block *conf_blk,
 			   void *param,
-			   bool unique);
+			   bool unique,
+			   struct config_error_type *err_type);
+
+/* translate err_type values to log/dbus error string*/
+char *err_type_str(struct config_error_type *err_type);
 
 /**
  * @brief NOOP config initializer and commit functions.
@@ -719,6 +818,7 @@ int load_config_from_parse(config_file_t config,
  * need either allocation and sometimes validation/commit
  */
 void *noop_conf_init(void *link_mem, void *self_struct);
-int noop_conf_commit(void *node, void *link_mem, void *self_struct);
+int noop_conf_commit(void *node, void *link_mem, void *self_struct,
+		     struct config_error_type *err_type);
 
 #endif

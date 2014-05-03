@@ -843,8 +843,7 @@ void cache_inode_kill_entry(cache_entry_t *entry);
 cache_inode_status_t cache_inode_invalidate(cache_entry_t *entry,
 					    uint32_t flags);
 
-cache_inode_status_t cache_inode_read_conf_parameter(
-	config_file_t in_config, cache_inode_parameter_t *param);
+extern struct config_block cache_inode_param;
 
 inline int cache_inode_set_time_current(struct timespec *time);
 

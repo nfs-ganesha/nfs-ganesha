@@ -272,15 +272,12 @@ void Clean_RPC(void);
 
 /* Config parsing routines */
 extern config_file_t config_struct;
-
-int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t *pparam);
-int nfs_read_ip_name_conf(config_file_t in_config,
-			  nfs_ip_name_parameter_t *pparam);
-int nfs_read_version4_conf(config_file_t in_config,
-			   nfs_version4_parameter_t *pparam);
+extern struct config_block nfs_core;
+extern struct config_block nfs_ip_name;
 #ifdef _HAVE_GSSAPI
-int nfs_read_krb5_conf(config_file_t in_config, nfs_krb5_parameter_t *pparam);
+extern struct config_block krb5_param;
 #endif
+extern struct config_block version4_param;
 
 /* Admin thread control */
 

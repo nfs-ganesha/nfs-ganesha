@@ -134,14 +134,15 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 {
 	struct xfs_fsal_module *xfs_me =
 	    container_of(fsal_hdl, struct xfs_fsal_module, fsal);
-	int rc;
+	struct config_error_type err_type;
 
 	xfs_me->fs_info = default_posix_info;	/* copy the consts */
-	rc = load_config_from_parse(config_struct,
-				    &xfs_param,
-				    &xfs_me->fs_info,
-				    true);
-	if (rc < 0)
+	(void) load_config_from_parse(config_struct,
+				      &xfs_param,
+				      &xfs_me->fs_info,
+				      true,
+				      &err_type);
+	if (!config_error_is_harmless(&err_type))
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	display_fsinfo(&xfs_me->fs_info);
 	LogFullDebug(COMPONENT_FSAL,

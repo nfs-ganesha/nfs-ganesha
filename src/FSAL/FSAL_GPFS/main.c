@@ -154,15 +154,17 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 {
 	struct gpfs_fsal_module *gpfs_me =
 	    container_of(fsal_hdl, struct gpfs_fsal_module, fsal);
+	struct config_error_type err_type;
 	int rc;
 
 	gpfs_me->fs_info = default_posix_info; /* get a copy of the defaults */
 
-	rc = load_config_from_parse(config_struct,
-				    &gpfs_param,
-				    &gpfs_me->fs_info,
-				    true);
-	if (rc < 0)
+	(void) load_config_from_parse(config_struct,
+				      &gpfs_param,
+				      &gpfs_me->fs_info,
+				      true,
+				      &err_type);
+	if (!config_error_is_harmless(&err_type))
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	display_fsinfo(&gpfs_me->fs_info);
 	LogFullDebug(COMPONENT_FSAL,

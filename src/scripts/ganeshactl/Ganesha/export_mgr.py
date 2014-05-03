@@ -55,12 +55,12 @@ class ExportMgr(QtDBus.QDBusAbstractInterface):
     def AddExport(self, conf_path):
         async = self.asyncCall("AddExport", conf_path)
         status = QtDBus.QDBusPendingCallWatcher(async, self)
-        status.finished.connect(self.exportmgr_done)
+        status.finished.connect(self.exportadd_done)
 
     def RemoveExport(self, exp_id):
         async = self.asyncCall("RemoveExport", int(exp_id))
         status = QtDBus.QDBusPendingCallWatcher(async, self)
-        status.finished.connect(self.exportmgr_done)
+        status.finished.connect(self.exportrm_done)
 
     def DisplayExport(self, exp_id):
         async = self.asyncCall("DisplayExport", int(exp_id))
@@ -72,7 +72,16 @@ class ExportMgr(QtDBus.QDBusAbstractInterface):
         status = QtDBus.QDBusPendingCallWatcher(async, self)
         status.finished.connect(self.exportshow_done)
 
-    def exportmgr_done(self, call):
+    def exportadd_done(self, call):
+        reply = QtDBus.QDBusPendingReply(call)
+        if reply.isError():
+            self.show_status.emit(False,
+                                  "Error:" + str(reply.error().message()))
+        else:
+            message = reply.argumentAt(0).toPyObject()
+            self.show_status.emit(True, "Done: " + message)
+
+    def exportrm_done(self, call):
         reply = QtDBus.QDBusPendingReply(call)
         if reply.isError():
             self.show_status.emit(False,
