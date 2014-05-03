@@ -22,4 +22,22 @@ SET(nlm_STAT_SRCS
 
 add_library(nlm STATIC ${nlm_STAT_SRCS})
 
+########### next target ###############
+
+SET(sm_notify_SRCS
+   sm_notify.c
+)
+
+add_executable(sm_notify.ganesha ${sm_notify_SRCS})
+
+target_link_libraries(sm_notify.ganesha
+  ${PROTOCOLS}
+  ${LIBTIRPC_LIBRARIES}
+  ${SYSTEM_LIBRARIES}
+)
+
+#target_link_libraries(sm_notify.ganesha ${CMAKE_THREAD_LIBS_INIT})
+
+install(TARGETS sm_notify.ganesha COMPONENT daemon DESTINATION bin)
+
 ########### install files ###############
