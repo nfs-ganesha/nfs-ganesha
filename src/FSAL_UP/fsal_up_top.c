@@ -627,6 +627,7 @@ state_status_t layoutrecall(struct fsal_module *fsal,
 		    gsh_malloc(sizeof(struct alloc_file_handle_v4));
 		if (cb_layoutrec->clora_recall.layoutrecall4_u.lor_layout.
 				lor_fh.nfs_fh4_val == NULL) {
+			PTHREAD_RWLOCK_unlock(&entry->state_lock);
 			gsh_free(cb_data);
 			rc = STATE_MALLOC_ERROR;
 			goto out;
@@ -636,6 +637,7 @@ state_status_t layoutrecall(struct fsal_module *fsal,
 				.lor_layout.lor_fh,
 				entry->obj_handle,
 				exp)) {
+			PTHREAD_RWLOCK_unlock(&entry->state_lock);
 			gsh_free(cb_data);
 			gsh_free(cb_layoutrec->clora_recall.layoutrecall4_u.
 						lor_layout.lor_fh.nfs_fh4_val);
@@ -1248,11 +1250,8 @@ state_status_t delegrecall(cache_entry_t *entry, bool rwlocked)
 
 	glist_for_each_safe(glist, glist_n, &entry->object.file.deleg_list) {
 		found_entry = glist_entry(glist, state_lock_entry_t, sle_list);
-
-		if (found_entry == NULL)
-			break;
-		if (found_entry->sle_type != LEASE_LOCK || found_entry == NULL
-		    || found_entry->sle_state == NULL)
+		if (found_entry->sle_type != LEASE_LOCK ||
+		    found_entry->sle_state == NULL)
 			continue;
 
 		LogDebug(COMPONENT_NFS_CB, "found_entry %p", found_entry);
@@ -1291,8 +1290,6 @@ state_status_t delegrecall(cache_entry_t *entry, bool rwlocked)
 
 	if (!rwlocked)
 		PTHREAD_RWLOCK_unlock(&entry->state_lock);
-
-	/* cache_inode_put(entry); why are we doing this? */
 
 	return rc;
 }

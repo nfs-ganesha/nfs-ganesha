@@ -691,6 +691,12 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 			 "Unable to initialize LRU subsystem: %d.", rc);
 	}
 
+	/* acls cache may be needed by exports_pkginit */
+	LogDebug(COMPONENT_INIT, "Now building NFSv4 ACL cache");
+	if (nfs4_acls_init() != 0)
+		LogFatal(COMPONENT_INIT, "Error while initializing NFSv4 ACLs");
+	LogInfo(COMPONENT_INIT, "NFSv4 ACL cache successfully initialized");
+
 	/* finish the job with exports by caching the root entries
 	 */
 	exports_pkginit();
@@ -876,12 +882,6 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 	LogInfo(COMPONENT_INIT,
 		"NFSv4 Session Id cache successfully initialized");
 
-	LogDebug(COMPONENT_INIT, "Now building NFSv4 ACL cache");
-	if (nfs4_acls_init() != 0) {
-		LogCrit(COMPONENT_INIT, "Error while initializing NFSv4 ACLs");
-		exit(1);
-	}
-	LogInfo(COMPONENT_INIT, "NFSv4 ACL cache successfully initialized");
 
 #ifdef _USE_9P
 	LogDebug(COMPONENT_INIT, "Now building 9P resources");

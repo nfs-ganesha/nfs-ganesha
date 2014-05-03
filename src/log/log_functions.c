@@ -699,8 +699,6 @@ int create_log_facility(char *name,
 
 		return -ENOMEM;
 	}
-	glist_init(&facility->lf_list);
-	glist_init(&facility->lf_active);
 	facility->lf_name = gsh_strdup(name);
 	facility->lf_func = log_func;
 	facility->lf_max_level = max_level;
@@ -758,7 +756,7 @@ void release_log_facility(char *name)
 			 name);
 		return;
 	}
-	if (!glist_empty(&facility->lf_active))
+	if (!glist_null(&facility->lf_active))
 		glist_del(&facility->lf_active);
 	glist_del(&facility->lf_list);
 	pthread_rwlock_unlock(&log_rwlock);
@@ -794,7 +792,7 @@ int enable_log_facility(char *name)
 		LogInfo(COMPONENT_LOG, "Facility %s does not exist", name);
 		return -EEXIST;
 	}
-	if (!glist_empty(&facility->lf_active)) {
+	if (!glist_null(&facility->lf_active)) {
 		pthread_rwlock_unlock(&log_rwlock);
 		LogCrit(COMPONENT_LOG,
 			 "Log facility (%s) is already enabled",
@@ -833,7 +831,7 @@ int disable_log_facility(char *name)
 		LogInfo(COMPONENT_LOG, "Facility %s already exists", name);
 		return -EEXIST;
 	}
-	if (glist_empty(&facility->lf_active)) {
+	if (glist_null(&facility->lf_active)) {
 		pthread_rwlock_unlock(&log_rwlock);
 		LogCrit(COMPONENT_LOG,
 			 "Log facility (%s) is already disabled",
@@ -848,7 +846,6 @@ int disable_log_facility(char *name)
 		return -EPERM;
 	}
 	glist_del(&facility->lf_active);
-	glist_init(&facility->lf_active);
 	if (facility->lf_headers == max_headers) {
 		struct glist_head *glist;
 		struct log_facility *found;
@@ -892,12 +889,11 @@ static int set_default_log_facility(const char *name)
 	}
 	if (facility == default_facility)
 		goto out;
-	if (glist_empty(&facility->lf_active))
+	if (glist_null(&facility->lf_active))
 		glist_add_tail(&active_facility_list, &facility->lf_active);
 	if (default_facility != NULL) {
-		assert(!glist_empty(&default_facility->lf_active));
+		assert(!glist_null(&default_facility->lf_active));
 		glist_del(&default_facility->lf_active);
-		glist_init(&default_facility->lf_active);
 		if (facility->lf_headers != max_headers) {
 			struct glist_head *glist;
 			struct log_facility *found;
@@ -2162,8 +2158,6 @@ static void *facility_init(void *link_mem, void *self_struct)
 		return self_struct;
 	} else if (self_struct == NULL) {
 		facility = gsh_calloc(1, sizeof(struct facility_config));
-		if (facility != NULL)
-			glist_init(&facility->fac_list);
 		return facility;
 	} else {
 		facility = self_struct;
