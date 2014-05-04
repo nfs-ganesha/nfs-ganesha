@@ -155,7 +155,7 @@ static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	candidate_data.share.share_access =
-	    args->share_access & ~OPEN4_SHARE_ACCESS_WANT_DELEG_MASK;
+	    args->share_access & OPEN4_SHARE_ACCESS_BOTH;
 	candidate_data.share.share_deny = args->share_deny;
 	candidate_data.share.share_access_prev = 0;
 	candidate_data.share.share_deny_prev = 0;
@@ -908,7 +908,7 @@ static void get_delegation(compound_data_t *data, struct nfs_argop4 *op,
 
 	/* Check for conflict. */
 	candidate_data.share.share_access =
-	    args->share_access & ~OPEN4_SHARE_ACCESS_WANT_DELEG_MASK;
+	    args->share_access & OPEN4_SHARE_ACCESS_BOTH;
 	candidate_data.share.share_deny = args->share_deny;
 	candidate_data.share.share_access_prev = 0;
 	candidate_data.share.share_deny_prev = 0;
