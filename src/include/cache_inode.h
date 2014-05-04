@@ -696,6 +696,8 @@ cache_inode_status_t cache_inode_open(cache_entry_t *entry,
 				      struct req_op_context *req_ctx,
 				      uint32_t flags);
 cache_inode_status_t cache_inode_close(cache_entry_t *entry, uint32_t flags);
+void cache_inode_adjust_openflags(cache_entry_t *entry,
+				  struct req_op_context *req_ctx);
 
 cache_inode_status_t cache_inode_create(cache_entry_t *entry_parent,
 					const char *name,
