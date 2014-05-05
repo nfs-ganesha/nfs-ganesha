@@ -585,6 +585,7 @@ static int fsal_commit(void *node, void *link_mem, void *self_struct,
 	if (fp->name == NULL || strlen(fp->name) == 0) {
 		LogCrit(COMPONENT_CONFIG,
 			"Name of FSAL is empty");
+		err_type->missing = true;
 		errcnt++;
 		goto err;
 	}
