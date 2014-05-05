@@ -246,6 +246,8 @@ static struct config_item version4_params[] = {
 		       nfs_version4_parameter, idmapconf),
 	CONF_ITEM_BOOL("Allow_Numeric_Owners", true,
 		       nfs_version4_parameter, allow_numeric_owners),
+	CONF_ITEM_BOOL("Delegations", false,
+		       nfs_version4_parameter, allow_delegations),
 	CONFIG_EOL
 };
 

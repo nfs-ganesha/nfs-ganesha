@@ -421,6 +421,9 @@ typedef struct nfs_version4_parameter {
 	    group identifiers.  Defaults to true and is settable with
 	    Allow_Numeric_Owners. */
 	bool allow_numeric_owners;
+	/** Whether to allow delegations. Defaults to false and settable
+	    with Delegations */
+	bool allow_delegations;
 } nfs_version4_parameter_t;
 
 /** @} */

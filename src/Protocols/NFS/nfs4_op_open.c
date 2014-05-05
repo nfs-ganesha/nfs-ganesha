@@ -1457,7 +1457,8 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 
 	pthread_mutex_lock(&clientid->cid_mutex);
 	/* Decide if we should delegate, then add it. */
-	if (data->current_entry->type != DIRECTORY
+	if (nfs_param.nfsv4_param.allow_delegations &&
+	    data->current_entry->type != DIRECTORY
 	    && data->export->export_hdl->ops->fs_supports(
 						data->export->export_hdl,
 						fso_delegations)

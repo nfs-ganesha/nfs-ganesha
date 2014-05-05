@@ -366,15 +366,12 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op, compound_data_t *data,
 			display_client_id_rec(conf, str);
 			LogDebug(COMPONENT_CLIENTID, "Updated %s", str);
 		}
-#if 0
 		/* Check and update call back channel state */
-		if (nfs_test_cb_chan(conf) != RPC_SUCCESS)
+		if (nfs_param.nfsv4_param.allow_delegations &&
+		    nfs_test_cb_chan(conf) != RPC_SUCCESS)
 			conf->cb_chan_down = true;
 		else
 			conf->cb_chan_down = false;
-#else
-		conf->cb_chan_down = false;
-#endif
 
 		/* Release our reference to the confirmed clientid. */
 		dec_client_id_ref(conf);
@@ -418,15 +415,12 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op, compound_data_t *data,
 			LogDebug(COMPONENT_CLIENTID, "Confirmed %s", str);
 		}
 
-#if 0
 		/* Check and update call back channel state */
-		if (nfs_test_cb_chan(unconf) != RPC_SUCCESS)
+		if (nfs_param.nfsv4_param.allow_delegations &&
+		    nfs_test_cb_chan(unconf) != RPC_SUCCESS)
 			unconf->cb_chan_down = true;
 		else
 			unconf->cb_chan_down = false;
-#else
-		unconf->cb_chan_down = false;
-#endif
 
 		/* Release our reference to the now confirmed record */
 		dec_client_id_ref(unconf);
