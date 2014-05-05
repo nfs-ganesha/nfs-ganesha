@@ -1667,7 +1667,7 @@ void release_export_root_locked(struct gsh_export *exp)
 
 	if (entry != NULL) {
 		/* Allow this entry to be removed (unlink) */
-		atomic_dec_int32_t(&entry->exp_root_refcount);
+		(void)atomic_dec_int32_t(&entry->exp_root_refcount);
 
 		/* Release the pin reference */
 		cache_inode_dec_pin_ref(entry, false);
