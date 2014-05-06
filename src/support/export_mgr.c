@@ -589,8 +589,16 @@ void put_gsh_export(struct gsh_export *exp)
 	/* Flush cache inodes belonging to this export */
 	cache_inode_unexport(exp);
 
+	/* can we really let go or do we have unfinished business? */
+	assert(glist_empty(&exp->entry_list));
+	assert(glist_empty(&export->exp_state_list));
+	assert(glist_empty(&export->exp_lock_list));
+	assert(glist_empty(&export->exp_nlm_share_list));
+	assert(glist_null(&export->exp_root_list));
+
 	/* free resources */
 	free_export_resources(export);
+	pthread_rwlock_destroy(&exp->lock);
 	export_st = container_of(exp, struct export_stats, export);
 	server_stats_free(&export_st->st);
 	gsh_free(export_st);
