@@ -76,8 +76,7 @@ int fsal_attach_export(struct fsal_module *fsal_hdl,
 {
 	int retval = 0;
 
-	PTHREAD_RWLOCK_wrlock(&fsal_hdl->lock);
-	if (fsal_hdl->refs > 0) {
+	if (atomic_fetch_int32_t(&fsal_hdl->refcount) > 0) {
 		glist_add(&fsal_hdl->exports, obj_link);
 	} else {
 		LogCrit(COMPONENT_CONFIG,
@@ -85,7 +84,6 @@ int fsal_attach_export(struct fsal_module *fsal_hdl,
 			fsal_hdl);
 		retval = EINVAL;
 	}
-	PTHREAD_RWLOCK_unlock(&fsal_hdl->lock);
 	return retval;
 }
 
@@ -149,7 +147,6 @@ int fsal_export_init(struct fsal_export *exp, struct exportlist *exp_entry)
 #endif
 	pthread_rwlock_init(&exp->lock, &attrs);
 
-	exp->refs = 1;		/* we exit with a reference held */
 	return 0;
 
  errout:
@@ -190,7 +187,6 @@ void fsal_obj_handle_init(struct fsal_obj_handle *obj, struct fsal_export *exp,
 {
 	pthread_rwlockattr_t attrs;
 
-	obj->refs = 1;		/* we start out with a reference */
 	obj->ops = exp->obj_ops;
 	obj->fsal = exp->fsal;
 	obj->type = type;
@@ -206,24 +202,14 @@ void fsal_obj_handle_init(struct fsal_obj_handle *obj, struct fsal_export *exp,
 	fsal_attach_handle(exp->fsal, &obj->handles);
 }
 
-int fsal_obj_handle_uninit(struct fsal_obj_handle *obj)
+void fsal_obj_handle_uninit(struct fsal_obj_handle *obj)
 {
-	PTHREAD_RWLOCK_wrlock(&obj->lock);
-	obj->refs--;	/* subtract the reference when we were created */
-	if (obj->refs != 0) {
-		PTHREAD_RWLOCK_unlock(&obj->lock);
-		return EBUSY;
-	}
-
-	PTHREAD_RWLOCK_unlock(&obj->lock);
 	pthread_rwlock_destroy(&obj->lock);
 
 	fsal_detach_handle(obj->fsal, &obj->handles);
 
 	obj->ops = NULL;	/*poison myself */
 	obj->fsal = NULL;
-
-	return 0;
 }
 
 void fsal_attach_ds(struct fsal_module *fsal, struct glist_head *ds_link)
@@ -243,37 +229,17 @@ void fsal_detach_ds(struct fsal_module *fsal, struct glist_head *ds_link)
 void fsal_ds_handle_init(struct fsal_ds_handle *ds, struct fsal_ds_ops *ops,
 			 struct fsal_module *fsal)
 {
-	pthread_mutexattr_t attrs;
-
-	ds->refs = 1;		/* we start out with a reference */
+	ds->refcount = 1;	/* we start out with a reference */
 	ds->ops = ops;
 	ds->fsal = fsal;
-	pthread_mutexattr_init(&attrs);
-#if defined(__linux__)
-	pthread_mutexattr_settype(&attrs, PTHREAD_MUTEX_ADAPTIVE_NP);
-#endif
-	pthread_mutex_init(&ds->lock, &attrs);
-
 	fsal_attach_ds(fsal, &ds->ds_handles);
 }
 
-int fsal_ds_handle_uninit(struct fsal_ds_handle *ds)
+void fsal_ds_handle_uninit(struct fsal_ds_handle *ds)
 {
-	pthread_mutex_lock(&ds->lock);
-	if (ds->refs) {
-		pthread_mutex_unlock(&ds->lock);
-		return EINVAL;
-	}
-
-	pthread_mutex_unlock(&ds->lock);
-	pthread_mutex_destroy(&ds->lock);
-
 	fsal_detach_ds(ds->fsal, &ds->ds_handles);
-
 	ds->ops = NULL;		/*poison myself */
 	ds->fsal = NULL;
-
-	return 0;
 }
 
 /**

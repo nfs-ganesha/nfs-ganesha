@@ -210,9 +210,9 @@ static void handle_to_key(struct fsal_obj_handle *obj_hdl,
  * release our export first so they know we are gone
  */
 
-static fsal_status_t release(struct fsal_obj_handle *obj_hdl)
+static void release(struct fsal_obj_handle *obj_hdl)
 {
-	return next_ops.obj_ops->release(obj_hdl);
+	next_ops.obj_ops->release(obj_hdl);
 }
 
 void nullfs_handle_ops_init(struct fsal_obj_ops *ops)

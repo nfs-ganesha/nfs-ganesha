@@ -53,21 +53,13 @@ struct fsal_staticfsinfo_t *pseudofs_staticinfo(struct fsal_module *hdl);
 /* export object methods
  */
 
-static fsal_status_t release(struct fsal_export *exp_hdl)
+static void release(struct fsal_export *exp_hdl)
 {
 	struct pseudofs_fsal_export *myself;
 
 	myself = container_of(exp_hdl, struct pseudofs_fsal_export, export);
 
 	PTHREAD_RWLOCK_wrlock(&exp_hdl->lock);
-
-	if (exp_hdl->refs > 0) {
-		LogMajor(COMPONENT_FSAL,
-			 "export %p - %s busy",
-			 exp_hdl, myself->export_path);
-		PTHREAD_RWLOCK_unlock(&exp_hdl->lock);
-		return fsalstat(posix2fsal_error(EBUSY), EBUSY);
-	}
 
 	fsal_detach_export(exp_hdl->fsal, &exp_hdl->exports);
 	free_export_ops(exp_hdl);
@@ -80,8 +72,6 @@ static fsal_status_t release(struct fsal_export *exp_hdl)
 		gsh_free(myself->export_path);
 
 	gsh_free(myself);
-
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 static fsal_status_t get_dynamic_info(struct fsal_obj_handle *obj_hdl,

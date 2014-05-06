@@ -77,15 +77,12 @@ static inline void local_invalidate(struct ds *ds, struct fsal_export *export)
  * @return NFS Status codes.
  */
 
-static nfsstat4 release(struct fsal_ds_handle *const ds_pub)
+static void release(struct fsal_ds_handle *const ds_pub)
 {
 	/* The private 'full' DS handle */
 	struct ds *ds = container_of(ds_pub, struct ds, ds);
-	if (fsal_ds_handle_uninit(&ds->ds))
-		return EINVAL;
-
+	fsal_ds_handle_uninit(&ds->ds);
 	gsh_free(ds);
-	return 0;
 }
 
 /**

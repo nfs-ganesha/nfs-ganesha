@@ -42,6 +42,7 @@
 
 #include "fsal_pnfs.h"
 #include "avltree.h"
+#include "abstract_atomic.h"
 
 /**
  * @page newapi New FSAL API
@@ -345,11 +346,9 @@ struct io_hints {
 
 struct fsal_module {
 	struct glist_head fsals;	/*< link in list of loaded fsals */
-	pthread_rwlock_t lock;	/*< Lock to be held when
-				   incrementing/decrementing the
-				   reference count or manipulating the
-				   list of exports. */
-	int refs;		/*< Reference count */
+	pthread_rwlock_t lock;		/*< Lock to be held when
+					    manipulating the list of exports. */
+	uint32_t refcount;		/*< Reference count */
 	struct glist_head exports;	/*< Head of list of exports from
 					   this FSAL */
 	struct glist_head handles;	/*< Head of list of object handles */
@@ -382,48 +381,6 @@ struct fsal_ops {
  * @retval EBUSY If there are outstanding references or exports.
  */
 	int (*unload) (struct fsal_module *fsal_hdl);
-
-/**
- * @brief Get the name of the FSAL
- *
- * This function looks up the name of the FSAL, as it would be used to
- * associate an export in the configuration file.  This function
- * should not be overridden.
- *
- * @param[in] fsal_hdl The FSAL to interrogate.
- *
- * @return A pointer to a statically allocated buffer containing the
- * name.  This buffer must not be freed or modified.  This pointer
- * must not be dereferenced after a call to @c put.
- */
-	const char *(*get_name) (struct fsal_module *fsal_hdl);
-
-/**
- * @brief Get the name of the library
- *
- * This function looks up the name of the shared object containing
- * code for the FSAL.  This function should not be overridden.
- *
- * @param[in] fsal_hdl The FSAL to interrogate.
- *
- * @return A pointer to a statically allocated buffer containing the
- * library name.  This buffer must not be freed or modified.  This
- * pointer must not be dereferenced after a call to @c put.
- */
-	const char *(*get_lib_name) (struct fsal_module *fsal_hdl);
-/**
- * @brief Relinquish a reference to the module
- *
- * This function relinquishes one reference to the FSAL.  After the
- * reference count falls to zero, the FSAL may be freed and unloaded.
- * This function should not be overridden.
- *
- * @param[in] fsal_hdl FSAL on which to release reference.
- *
- * @retval 0 on success.
- * @retval EINVAL if there are no references to put.
- */
-	int (*put) (struct fsal_module *fsal_hdl);
 
 /**@}*/
 
@@ -547,6 +504,30 @@ struct fsal_ops {
 };
 
 /**
+ * @brief Relinquish a reference to the module
+ *
+ * This function relinquishes one reference to the FSAL.  After the
+ * reference count falls to zero, the FSAL may be freed and unloaded.
+ *
+ * @param[in] fsal_hdl FSAL on which to release reference.
+ */
+
+static inline void fsal_put(struct fsal_module *fsal_hdl)
+{
+	int32_t refcount;
+
+	refcount = atomic_dec_int32_t(&fsal_hdl->refcount);
+
+	assert(refcount >= 0);
+
+	if (refcount == 0) {
+		LogInfo(COMPONENT_FSAL,
+			"FSAL %s now unused",
+			fsal_hdl->name);
+	}
+}
+
+/**
  * Global fsal manager functions
  * used by nfs_main to initialize fsal modules.
  */
@@ -613,10 +594,8 @@ struct fsal_module *lookup_fsal(const char *name);
 
 struct fsal_export {
 	struct fsal_module *fsal;	/*< Link back to the FSAL module */
-	pthread_rwlock_t lock;	/*< A lock, to be held when
-				   taking/yielding references and
-				   manipulating the list of handles. */
-	int refs;			/*< Reference count */
+	pthread_rwlock_t lock;		/*< A lock, to be held when
+					    manipulating the export. */
 	struct glist_head exports;	/*< Link in list of exports from
 					   the same FSAL. */
 	struct export_ops *ops;	/*< Vector of operations */
@@ -637,31 +616,6 @@ struct export_ops {
 */
 
 /**
- * @brief Get a reference
- *
- * This function gets a reference on this export.  This function
- * should not be overridden.
- *
- * @param[in] exp_hdl The export to reference.
- */
-	void (*get) (struct fsal_export *exp_hdl);
-
-/**
- * @brief Relinquish a reference
- *
- * This function relinquishes a reference on the given export.  One
- * should make no attempt to access the export or even dereference
- * the handle after relinquishing the reference.  This function should
- * not be overridden.
- *
- * @param[in] exp_hdl The export handle to relinquish.
- *
- * @retval 0 on success.
- * @retval EINVAL if no reference exists.
- */
-	int (*put) (struct fsal_export *exp_hdl);
-
-/**
  * @brief Finalize an export
  *
  * This function is called as part of cleanup when the last reference to
@@ -672,7 +626,7 @@ struct export_ops {
  *
  * @return FSAL status.
  */
-	 fsal_status_t(*release) (struct fsal_export *exp_hdl);
+	 void (*release) (struct fsal_export *exp_hdl);
 /**@}*/
 
 /**@{*/
@@ -1167,10 +1121,9 @@ struct export_ops {
  */
 
 struct fsal_obj_handle {
-	pthread_rwlock_t lock;	/*< Lock on handle */
+	pthread_rwlock_t lock;		/*< Lock on handle */
 	struct glist_head handles;	/*< Link in list of handles under
 					   an fsal */
-	int refs;		/*< Reference count */
 	object_file_type_t type;	/*< Object file type */
 	struct fsal_module *fsal;	/*< Link back to fsal module */
 	struct fsal_filesystem *fs;	/*< Owning filesystem */
@@ -1270,31 +1223,6 @@ struct fsal_obj_ops {
  */
 
 /**
- * @brief Get a reference on a handle
- *
- * This function increments the reference count on a handle.  It
- * should not be overridden.
- *
- * @param[in] obj_hdl The handle to reference
- */
-	void (*get) (struct fsal_obj_handle *obj_hdl);
-
-/**
- * @brief Release a reference on a handle
- *
- * This function releases a reference to a handle.  Once a caller's
- * reference is released they should make no attempt to access the
- * handle or even dereference a pointer to it.  This function should
- * not be overridden.
- *
- * @param[in] obj_hdl The handle to relinquish
- *
- * @retval 0 on success.
- * @retval EINVAL if no references were outstanding.
- */
-	int (*put) (struct fsal_obj_handle *obj_hdl);
-
-/**
  * @brief Clean up a filehandle
  *
  * This function cleans up private resources associated with a
@@ -1305,7 +1233,7 @@ struct fsal_obj_ops {
  *
  * @return FSAL status.
  */
-	 fsal_status_t(*release) (struct fsal_obj_handle *obj_hdl);
+	 void (*release) (struct fsal_obj_handle *obj_hdl);
 /**@}*/
 
 /**@{*/
@@ -2190,10 +2118,9 @@ struct fsal_obj_ops {
  */
 
 struct fsal_ds_handle {
-	pthread_mutex_t lock;	/*< Lock on handle */
 	struct glist_head ds_handles;	/*< Link in list of DS handles under
 					   an fsal */
-	int refs;		/*< Reference count */
+	int32_t refcount;		/*< Reference count */
 	struct fsal_module *fsal;	/*< Link back to fsal module */
 	struct fsal_ds_ops *ops;	/*< Operations vector */
 };
@@ -2206,31 +2133,6 @@ struct fsal_ds_ops {
  */
 
 /**
- * @brief Get a reference on a handle
- *
- * This function increments the reference count on a handle.  It
- * should not be overridden.
- *
- * @param[in] ds_hdl The handle to reference
- */
-	void (*get) (struct fsal_ds_handle *const ds_hdl);
-
-/**
- * @brief Release a reference on a handle
- *
- * This function releases a reference to a handle.  Once a caller's
- * reference is released they should make no attempt to access the
- * handle or even dereference a pointer to it.  This function should
- * not be overridden.
- *
- * @param[in] ds_hdl The handle to relinquish
- *
- * @retval 0 on success.
- * @retval EINVAL if no references were outstanding.
- */
-	 nfsstat4(*put) (struct fsal_ds_handle *const ds_hdl);
-
-/**
  * @brief Clean up a DS handle
  *
  * This function cleans up private resources associated with a
@@ -2241,7 +2143,7 @@ struct fsal_ds_ops {
  *
  * @return NFSv4.1 status codes.
  */
-	 nfsstat4(*release) (struct fsal_ds_handle *const ds_hdl);
+	 void (*release) (struct fsal_ds_handle *const ds_hdl);
 /**@}*/
 
 /**@{*/
@@ -2404,5 +2306,42 @@ struct fsal_ds_ops {
 			    const count4 count,
 			    verifier4 * const writeverf);
 };
+
+
+/**
+ * @brief Get a reference on a handle
+ *
+ * This function increments the reference count on a handle.
+ *
+ * @param[in] ds_hdl The handle to reference
+ */
+
+static inline void ds_get(struct fsal_ds_handle *const ds_hdl)
+{
+	atomic_inc_int32_t(&ds_hdl->refcount);
+}
+
+/**
+ * @brief Release a reference on a handle
+ *
+ * This function releases a reference to a handle.  Once a caller's
+ * reference is released they should make no attempt to access the
+ * handle or even dereference a pointer to it.
+ *
+ * @param[in] ds_hdl The handle to relinquish
+ */
+
+static inline void ds_put(struct fsal_ds_handle *const ds_hdl)
+{
+	int32_t refcount;
+
+	refcount = atomic_dec_int32_t(&ds_hdl->refcount);
+
+	assert(refcount >= 0);
+
+	if (refcount == 0)
+		ds_hdl->ops->release(ds_hdl);
+}
+
 #endif				/* !FSAL_API */
 /** @} */

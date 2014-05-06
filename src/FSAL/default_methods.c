@@ -69,68 +69,6 @@
  *    version detection is correct.
  */
 
-/* put_fsal
- * put the fsal back that we got with lookup_fsal.
- * Indicates that we are no longer interested in it (for now)
- */
-
-static int put_fsal(struct fsal_module *fsal_hdl)
-{
-	int retval = EINVAL;	/* too many 'puts" */
-
-	PTHREAD_RWLOCK_wrlock(&fsal_hdl->lock);
-	if (fsal_hdl->refs > 0) {
-		fsal_hdl->refs--;
-		retval = 0;
-	}
-	PTHREAD_RWLOCK_unlock(&fsal_hdl->lock);
-	return retval;
-}
-
-/* get_name
- * return the name of the loaded fsal.
- * Must be called while holding a reference.
- * Return a pointer to the name, possibly NULL;
- * Note! do not dereference after doing a 'put'.
- */
-
-static const char *get_name(struct fsal_module *fsal_hdl)
-{
-	char *name;
-
-	PTHREAD_RWLOCK_wrlock(&fsal_hdl->lock);
-	if (fsal_hdl->refs <= 0) {
-		LogCrit(COMPONENT_CONFIG, "Called without reference!");
-		name = NULL;
-	} else {
-		name = fsal_hdl->name;
-	}
-	PTHREAD_RWLOCK_unlock(&fsal_hdl->lock);
-	return name;
-}
-
-/* fsal_get_lib_name
- * return the pathname loaded for the fsal.
- * Must be called while holding a reference.
- * Return a pointer to the library path, possibly NULL;
- * Note! do not dereference after doing a 'put'.
- */
-
-static const char *get_lib_name(struct fsal_module *fsal_hdl)
-{
-	char *path;
-
-	PTHREAD_RWLOCK_wrlock(&fsal_hdl->lock);
-	if (fsal_hdl->refs <= 0) {
-		LogCrit(COMPONENT_CONFIG, "Called without reference!");
-		path = NULL;
-	} else {
-		path = fsal_hdl->path;
-	}
-	PTHREAD_RWLOCK_unlock(&fsal_hdl->lock);
-	return path;
-}
-
 /* unload fsal
  * called while holding the last remaining reference
  * remove from list and dlclose the module
@@ -141,19 +79,30 @@ static const char *get_lib_name(struct fsal_module *fsal_hdl)
 static int unload_fsal(struct fsal_module *fsal_hdl)
 {
 	int retval = EBUSY;	/* someone still has a reference */
+	int32_t refcount = atomic_fetch_int32_t(&fsal_hdl->refcount);
+
+	LogDebug(COMPONENT_FSAL,
+		 "refcount = %"PRIi32,
+		 refcount);
 
 	pthread_mutex_lock(&fsal_lock);
-	PTHREAD_RWLOCK_wrlock(&fsal_hdl->lock);
-	if (fsal_hdl->refs != 0 || !glist_empty(&fsal_hdl->exports))
-		goto err;
-	if (fsal_hdl->dl_handle == NULL) {
-		retval = EACCES;	/* cannot unload static linked fsals */
+
+	if (refcount != 0 || !glist_empty(&fsal_hdl->exports)) {
+		LogCrit(COMPONENT_FSAL,
+			"Can not unload FSAL %s refcount=%"PRIi32,
+			fsal_hdl->name, refcount);
 		goto err;
 	}
+	if (fsal_hdl->dl_handle == NULL) {
+		LogCrit(COMPONENT_FSAL,
+			"Can not unload static linked FSAL %s",
+			fsal_hdl->name);
+		retval = EACCES;
+		goto err;
+	}
+
 	glist_del(&fsal_hdl->fsals);
-	PTHREAD_RWLOCK_unlock(&fsal_hdl->lock);
 	pthread_rwlock_destroy(&fsal_hdl->lock);
-	fsal_hdl->refs = 0;
 
 	retval = dlclose(fsal_hdl->dl_handle);
 	pthread_mutex_unlock(&fsal_lock);
@@ -216,46 +165,20 @@ static void emergency_cleanup(void)
 
 struct fsal_ops def_fsal_ops = {
 	.unload = unload_fsal,
-	.get_name = get_name,
-	.get_lib_name = get_lib_name,
-	.put = put_fsal,
 	.init_config = init_config,
 	.dump_config = dump_config,
 	.create_export = create_export,
 	.emergency_cleanup = emergency_cleanup
 };
 
-/* fsal_export common methods
- */
-
-static void export_get(struct fsal_export *exp_hdl)
-{
-	PTHREAD_RWLOCK_wrlock(&exp_hdl->lock);
-	exp_hdl->refs++;
-	PTHREAD_RWLOCK_unlock(&exp_hdl->lock);
-}
-
-static int export_put(struct fsal_export *exp_hdl)
-{
-	int retval = EINVAL;	/* too many 'puts" */
-
-	PTHREAD_RWLOCK_wrlock(&exp_hdl->lock);
-	if (exp_hdl->refs > 0) {
-		exp_hdl->refs--;
-		retval = 0;
-	}
-	PTHREAD_RWLOCK_unlock(&exp_hdl->lock);
-	return retval;
-}
-
 /* export_release
  * default case is to throw a fault error.
  * creating an export is not supported so getting here is bad
  */
 
-static fsal_status_t export_release(struct fsal_export *exp_hdl)
+static void export_release(struct fsal_export *exp_hdl)
 {
-	return fsalstat(ERR_FSAL_FAULT, 0);
+	return;
 }
 
 /* lookup_path
@@ -563,8 +486,6 @@ static void global_verifier(struct gsh_buffdesc *verf_desc)
  */
 
 struct export_ops def_export_ops = {
-	.get = export_get,
-	.put = export_put,
 	.release = export_release,
 	.lookup_path = lookup_path,
 	.lookup_junction = lookup_junction,
@@ -600,26 +521,6 @@ struct export_ops def_export_ops = {
 /* fsal_obj_handle common methods
  */
 
-static void handle_get(struct fsal_obj_handle *obj_hdl)
-{
-	PTHREAD_RWLOCK_wrlock(&obj_hdl->lock);
-	obj_hdl->refs++;
-	PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
-}
-
-static int handle_put(struct fsal_obj_handle *obj_hdl)
-{
-	int retval = EINVAL;	/* too many 'puts" */
-
-	PTHREAD_RWLOCK_wrlock(&obj_hdl->lock);
-	if (obj_hdl->refs > 0) {
-		obj_hdl->refs--;
-		retval = 0;
-	}
-	PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
-	return retval;
-}
-
 /* handle_is
  * test the type of this handle
  */
@@ -634,9 +535,9 @@ static bool handle_is(struct fsal_obj_handle *obj_hdl, object_file_type_t type)
  * creating an handle is not supported so getting here is bad
  */
 
-static fsal_status_t handle_release(struct fsal_obj_handle *obj_hdl)
+static void handle_release(struct fsal_obj_handle *obj_hdl)
 {
-	return fsalstat(ERR_FSAL_FAULT, 0);
+	return;
 }
 
 /* lookup
@@ -1150,8 +1051,6 @@ static nfsstat4 layoutcommit(struct fsal_obj_handle *obj_hdl,
  */
 
 struct fsal_obj_ops def_handle_ops = {
-	.get = handle_get,
-	.put = handle_put,
 	.release = handle_release,
 	.lookup = lookup,
 	.readdir = read_dirents,
@@ -1200,51 +1099,6 @@ struct fsal_obj_ops def_handle_ops = {
 /* fsal_ds_handle common methods */
 
 /**
- * @brief Get a reference on a handle
- *
- * This function increments the reference count on a handle.  It
- * should not be overridden.
- *
- * @param[in] obj_hdl The handle to reference
- */
-
-static void ds_get(struct fsal_ds_handle *const ds_hdl)
-{
-	pthread_mutex_lock(&ds_hdl->lock);
-	if (ds_hdl->refs > 0)
-		ds_hdl->refs++;
-	pthread_mutex_unlock(&ds_hdl->lock);
-}
-
-/**
- * @brief Release a reference on a handle
- *
- * This function releases a reference to a handle.  Once a caller's
- * reference is released they should make no attempt to access the
- * handle or even dereference a pointer to it.  This function should
- * not be overridden.
- *
- * @param[in] obj_hdl The handle to relinquish
- *
- * @return NFS status codes.
- */
-static nfsstat4 ds_put(struct fsal_ds_handle *const ds_hdl)
-{
-	int retval = EINVAL;	/* too many 'puts" */
-
-	pthread_mutex_lock(&ds_hdl->lock);
-	if (ds_hdl->refs > 0) {
-		ds_hdl->refs--;
-		retval = 0;
-	}
-	pthread_mutex_unlock(&ds_hdl->lock);
-	if (ds_hdl->refs == 0)
-		return ds_hdl->ops->release(ds_hdl);
-
-	return retval;
-}
-
-/**
  * @brief Fail to clean up a filehandle
  *
  * Getting here is bad, it means we support but have not completely
@@ -1254,10 +1108,9 @@ static nfsstat4 ds_put(struct fsal_ds_handle *const ds_hdl)
  *
  * @return NFSv4.1 status codes.
  */
-static nfsstat4 ds_release(struct fsal_ds_handle *const ds_hdl)
+static void ds_release(struct fsal_ds_handle *const ds_hdl)
 {
 	LogCrit(COMPONENT_PNFS, "Unimplemented DS release!");
-	return NFS4ERR_SERVERFAULT;
 }
 
 /**
@@ -1359,8 +1212,6 @@ static nfsstat4 ds_commit(struct fsal_ds_handle *const ds_hdl,
 }
 
 struct fsal_ds_ops def_ds_ops = {
-	.get = ds_get,
-	.put = ds_put,
 	.release = ds_release,
 	.read = ds_read,
 	.read_plus = ds_read_plus,

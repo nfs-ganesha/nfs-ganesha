@@ -306,20 +306,11 @@ int construct_handle(const struct stat *st, struct Inode *i,
  * @brief Release all resrouces for a handle
  *
  * @param[in] obj Handle to release
- *
- * @retval 0 on success.
- * @retval Not quite zero on not quite success.
  */
 
-int deconstruct_handle(struct handle *obj)
+void deconstruct_handle(struct handle *obj)
 {
-	int retval;
-
 	ceph_ll_put(obj->export->cmount, obj->i);
-	retval = fsal_obj_handle_uninit(&obj->handle);
-	if (retval != 0)
-		return -retval;
-
+	fsal_obj_handle_uninit(&obj->handle);
 	gsh_free(obj);
-	return 0;
 }

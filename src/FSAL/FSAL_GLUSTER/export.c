@@ -44,19 +44,13 @@
  * @brief Implements GLUSTER FSAL exportoperation release
  */
 
-static fsal_status_t export_release(struct fsal_export *exp_hdl)
+static void export_release(struct fsal_export *exp_hdl)
 {
-	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	struct glusterfs_export *glfs_export =
 	    container_of(exp_hdl, struct glusterfs_export, export);
 
 	/* check activity on the export */
 	PTHREAD_RWLOCK_wrlock(&glfs_export->export.lock);
-	if (glfs_export->export.refs > 0) {
-		PTHREAD_RWLOCK_unlock(&glfs_export->export.lock);
-		status.major = ERR_FSAL_INVAL;
-		return status;
-	}
 
 	/* detach the export */
 	fsal_detach_export(glfs_export->export.fsal,
@@ -73,8 +67,6 @@ static fsal_status_t export_release(struct fsal_export *exp_hdl)
 	pthread_rwlock_destroy(&glfs_export->export.lock);
 	gsh_free(glfs_export);
 	glfs_export = NULL;
-
-	return status;
 }
 
 /**

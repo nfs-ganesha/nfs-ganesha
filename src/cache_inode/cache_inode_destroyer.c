@@ -813,8 +813,6 @@ static void destroy_mapping(cache_entry_t *entry)
 static void
 destroy_entry(cache_entry_t *entry)
 {
-	/* FSAL Error Code */
-	fsal_status_t fsal_status = { 0, 0 };
 	struct root_op_context root_op_context;
 	struct gsh_export *export = entry->first_export;
 	struct fsal_export *fsal_export = NULL;
@@ -832,16 +830,11 @@ destroy_entry(cache_entry_t *entry)
 	if (entry->type == DIRECTORY)
 		cache_inode_release_dirents(entry, CACHE_INODE_AVL_BOTH);
 
+	/* Free FSAL resources */
 	if (entry->obj_handle) {
-		fsal_status =
-		    (entry->obj_handle->ops->release(entry->obj_handle));
-		if (FSAL_IS_ERROR(fsal_status)) {
-			LogMajor(COMPONENT_CACHE_INODE,
-				 "Couldn't free FSAL ressources "
-				 "fsal_status.major=%u", fsal_status.major);
-		}
+		entry->obj_handle->ops->release(entry->obj_handle);
+		entry->obj_handle = NULL;
 	}
-	entry->obj_handle = NULL;
 
 	destroy_mapping(entry);
 }

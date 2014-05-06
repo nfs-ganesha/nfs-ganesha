@@ -239,7 +239,6 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 		      const struct req_op_context *opctx)
 {
 	cache_inode_status_t status;
-	fsal_status_t fsal_status;
 	cache_entry_t *oentry, *nentry = NULL;
 	struct gsh_buffdesc fh_desc;
 	cih_latch_t latch;
@@ -473,16 +472,8 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 	}
 
 	/* must free new_obj if no new entry was created to reference it. */
-	if (new_obj != NULL) {
-		fsal_status = new_obj->ops->release(new_obj);
-		if (FSAL_IS_ERROR(fsal_status)) {
-			status = cache_inode_error_convert(fsal_status);
-			LogDebug(COMPONENT_CACHE_INODE,
-				 "failed to release unused new_obj %p",
-				 new_obj);
-			/* further recovery ?? */
-		}
-	}
+	if (new_obj != NULL)
+		new_obj->ops->release(new_obj);
 
 	return status;
 }				/* cache_inode_new_entry */

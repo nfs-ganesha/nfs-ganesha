@@ -1862,22 +1862,14 @@ static void pxy_handle_to_key(struct fsal_obj_handle *obj_hdl,
 	fh_desc->len = ph->blob.len;
 }
 
-static fsal_status_t pxy_hdl_release(struct fsal_obj_handle *obj_hdl)
+static void pxy_hdl_release(struct fsal_obj_handle *obj_hdl)
 {
 	struct pxy_obj_handle *ph =
 	    container_of(obj_hdl, struct pxy_obj_handle, obj);
-	int retval;
 
-	retval = fsal_obj_handle_uninit(obj_hdl);
-	if (retval != 0) {
-		LogCrit(COMPONENT_FSAL,
-			"Tried to release busy handle @ %p with %d refs",
-			obj_hdl, obj_hdl->refs);
-		return fsalstat(ERR_FSAL_DELAY, EBUSY);
-	}
+	fsal_obj_handle_uninit(obj_hdl);
 
 	gsh_free(ph);
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /*

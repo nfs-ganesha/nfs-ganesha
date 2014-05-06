@@ -303,7 +303,10 @@ int load_fsal(const char *name,
 
 	fsal = new_fsal;   /* recover handle from .ctor and poison again */
 	new_fsal = NULL;
-	fsal->refs++; /* take initial ref so we can pass it back... */
+
+	/* take initial ref so we can pass it back... */
+	atomic_inc_int32_t(&fsal->refcount);
+
 	fsal->path = dl_path;
 	fsal->dl_handle = dl;
 	so_error = 0;
@@ -342,14 +345,11 @@ struct fsal_module *lookup_fsal(const char *name)
 	pthread_mutex_lock(&fsal_lock);
 	glist_for_each(entry, &fsal_list) {
 		fsal = glist_entry(entry, struct fsal_module, fsals);
-		PTHREAD_RWLOCK_wrlock(&fsal->lock);
 		if (strcasecmp(name, fsal->name) == 0) {
-			fsal->refs++;
-			PTHREAD_RWLOCK_unlock(&fsal->lock);
+			atomic_inc_int32_t(&fsal->refcount);
 			pthread_mutex_unlock(&fsal_lock);
 			return fsal;
 		}
-		PTHREAD_RWLOCK_unlock(&fsal->lock);
 	}
 	pthread_mutex_unlock(&fsal_lock);
 	return NULL;
@@ -468,10 +468,14 @@ int register_fsal(struct fsal_module *fsal_hdl, const char *name,
 
 int unregister_fsal(struct fsal_module *fsal_hdl)
 {
-	int retval = EBUSY;
+	int32_t refcount = atomic_fetch_int32_t(&fsal_hdl->refcount);
 
-	if (fsal_hdl->refs != 0) {	/* this would be very bad */
-		goto out;
+	if (refcount != 0) {
+		/* this would be very bad */
+		LogCrit(COMPONENT_FSAL,
+			"Unregister FSAL %s with non-zero refcount=%"PRIi32,
+			fsal_hdl->name, refcount);
+		return EBUSY;
 	}
 	if (fsal_hdl->path)
 		gsh_free(fsal_hdl->path);
@@ -479,9 +483,7 @@ int unregister_fsal(struct fsal_module *fsal_hdl)
 		gsh_free(fsal_hdl->name);
 	if (fsal_hdl->ops)
 		gsh_free(fsal_hdl->ops);
-	retval = 0;
- out:
-	return retval;
+	return 0;
 }
 
 /** @} */

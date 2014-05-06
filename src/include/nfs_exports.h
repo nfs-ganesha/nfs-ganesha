@@ -357,7 +357,7 @@ static inline void set_current_entry(compound_data_t *data,
 
 	/* Clear out the current_ds */
 	if (data->current_ds) {
-		data->current_ds->ops->put(data->current_ds);
+		ds_put(data->current_ds);
 		data->current_ds = NULL;
 	}
 

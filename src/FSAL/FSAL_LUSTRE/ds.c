@@ -60,7 +60,7 @@
  *
  * @return FSAL status codes.
  */
-static nfsstat4
+static void
 lustre_release(struct fsal_ds_handle *const ds_pub)
 {
 	/* The private 'full' DS handle */
@@ -68,12 +68,9 @@ lustre_release(struct fsal_ds_handle *const ds_pub)
 					    struct lustre_ds,
 					    ds);
 
-	if (fsal_ds_handle_uninit(&ds->ds))
-		return EINVAL;
+	fsal_ds_handle_uninit(&ds->ds);
 
 	gsh_free(ds);
-
-	return 0;
 }
 
 /**

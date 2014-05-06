@@ -39,10 +39,9 @@
  * Typically free up any members of the struct glusterfs_handle
  */
 
-static fsal_status_t handle_release(struct fsal_obj_handle *obj_hdl)
+static void handle_release(struct fsal_obj_handle *obj_hdl)
 {
 	int rc = 0;
-	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	struct glusterfs_handle *objhandle =
 	    container_of(obj_hdl, struct glusterfs_handle, handle);
 #ifdef GLTIMING
@@ -51,16 +50,14 @@ static fsal_status_t handle_release(struct fsal_obj_handle *obj_hdl)
 	now(&s_time);
 #endif
 
-	rc = fsal_obj_handle_uninit(&objhandle->handle);
-	if (rc != 0) {
-		status = gluster2fsal_error(rc);
-		goto out;
-	}
+	fsal_obj_handle_uninit(&objhandle->handle);
 
 	if (objhandle->glfd) {
 		rc = glfs_close(objhandle->glfd);
 		if (rc) {
-			status = gluster2fsal_error(errno);
+			LogCrit(COMPONENT_FSAL,
+				"glfs_close returned %s(%d)",
+				strerror(errno), errno);
 			/* cleanup as much as possible */
 		}
 	}
@@ -68,20 +65,18 @@ static fsal_status_t handle_release(struct fsal_obj_handle *obj_hdl)
 	if (objhandle->glhandle) {
 		rc = glfs_h_close(objhandle->glhandle);
 		if (rc) {
-			status = gluster2fsal_error(errno);
-			goto out;
+			LogCrit(COMPONENT_FSAL,
+				"glfs_h_close returned error %s(%d)",
+				strerror(errno), errno);
 		}
 	}
 
 	gsh_free(objhandle);
 
- out:
 #ifdef GLTIMING
 	now(&e_time);
 	latency_update(&s_time, &e_time, lat_handle_release);
 #endif
-
-	return status;
 }
 
 /**

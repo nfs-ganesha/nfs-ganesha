@@ -32,23 +32,18 @@
 #include "pxy_fsal_methods.h"
 #include <nfs_exports.h>
 
-static fsal_status_t pxy_release(struct fsal_export *exp_hdl)
+static void pxy_release(struct fsal_export *exp_hdl)
 {
 	struct pxy_export *pxy_exp =
 	    container_of(exp_hdl, struct pxy_export, exp);
 
 	PTHREAD_RWLOCK_wrlock(&exp_hdl->lock);
-	if (exp_hdl->refs > 0) {
-		PTHREAD_RWLOCK_unlock(&exp_hdl->lock);
-		return fsalstat(ERR_FSAL_INVAL, EBUSY);
-	}
 	fsal_detach_export(exp_hdl->fsal, &exp_hdl->exports);
 	free_export_ops(exp_hdl);
 	PTHREAD_RWLOCK_unlock(&exp_hdl->lock);
 
 	pthread_rwlock_destroy(&exp_hdl->lock);
 	gsh_free(pxy_exp);
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 static bool pxy_get_supports(struct fsal_export *exp_hdl,

@@ -126,7 +126,7 @@ int nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	if (data->saved_ds) {
-		data->saved_ds->ops->put(data->saved_ds);
+		ds_put(data->saved_ds);
 		data->saved_ds = NULL;
 	}
 
@@ -136,7 +136,7 @@ int nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t *data,
 	/* Make SAVEFH work right for DS handle */
 	if (data->current_ds != NULL) {
 		data->saved_ds = data->current_ds;
-		data->saved_ds->ops->get(data->saved_ds);
+		ds_get(data->saved_ds);
 	}
 
 	/* Take another reference.  As of now the filehandle is both saved

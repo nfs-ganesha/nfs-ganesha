@@ -134,7 +134,7 @@ int nfs4_op_restorefh(struct nfs_argop4 *op, compound_data_t *data,
 	if (data->current_ds != NULL) {
 		data->current_ds = data->saved_ds;
 		data->current_filetype = data->saved_filetype;
-		data->current_ds->ops->get(data->current_ds);
+		ds_get(data->current_ds);
 	}
 
 	if (isFullDebug(COMPONENT_NFS_V4)) {

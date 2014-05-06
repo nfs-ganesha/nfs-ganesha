@@ -610,7 +610,7 @@ static int fsal_commit(void *node, void *link_mem, void *self_struct,
 			LogCrit(COMPONENT_CONFIG,
 				"Failed to initialize FSAL (%s)",
 				fp->name);
-			fsal->ops->put(fsal);
+			fsal_put(fsal);
 			err_type->fsal = true;
 			errcnt++;
 			goto err;
@@ -640,8 +640,9 @@ static int fsal_commit(void *node, void *link_mem, void *self_struct,
 		exp->expire_type_attr = nfs_param.cache_param.expire_type_attr;
 		exp->expire_time_attr = nfs_param.cache_param.expire_time_attr;
 	}
-	fsal->ops->put(fsal);
+
 	if (FSAL_IS_ERROR(status)) {
+		fsal_put(fsal);
 		LogCrit(COMPONENT_CONFIG,
 			"Could not create export for (%s) to (%s)",
 			exp->pseudopath,
@@ -1351,8 +1352,8 @@ static int build_default_root(void)
 						  &fsal_up_top,
 						  &p_entry->export_hdl);
 
-		fsal_hdl->ops->put(fsal_hdl);
 		if (FSAL_IS_ERROR(rc)) {
+			fsal_put(fsal_hdl);
 			LogCrit(COMPONENT_CONFIG,
 				"Could not create FSAL export for %s",
 				p_entry->fullpath);
@@ -1363,6 +1364,8 @@ static int build_default_root(void)
 
 	exp = insert_gsh_export(p_entry);
 	if (exp == NULL) {
+		p_entry->export_hdl->ops->release(p_entry->export_hdl);
+		fsal_put(fsal_hdl);
 		LogCrit(COMPONENT_CONFIG,
 			"Failed to insert pseudo root export.  In use??");
 		goto err_out;
@@ -1453,22 +1456,11 @@ static void FreeClientList(struct glist_head *clients)
 
 void free_export_resources(exportlist_t *export)
 {
-	fsal_status_t fsal_status;
-
 	FreeClientList(&export->clients);
 	if (export->export_hdl != NULL) {
-		if (export->export_hdl->ops->put(export->export_hdl) == 0) {
-			fsal_status =
-			    export->export_hdl->ops->release(export->
-							     export_hdl);
-			if (FSAL_IS_ERROR(fsal_status)) {
-				LogCrit(COMPONENT_CONFIG,
-					"Cannot release export object, quitting");
-			}
-		} else {
-			LogCrit(COMPONENT_CONFIG,
-				"Cannot put export object, quitting");
-		}
+		struct fsal_module *fsal = export->export_hdl->fsal;
+		export->export_hdl->ops->release(export->export_hdl);
+		fsal_put(fsal);
 	}
 	export->export_hdl = NULL;
 	/* free strings here */

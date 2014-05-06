@@ -750,10 +750,9 @@ static void handle_to_key(struct fsal_obj_handle *obj_hdl,
  * release our export first so they know we are gone
  */
 
-static fsal_status_t release(struct fsal_obj_handle *obj_hdl)
+static void release(struct fsal_obj_handle *obj_hdl)
 {
 	struct pseudo_fsal_obj_handle *myself;
-	int retval = 0;
 
 	myself = container_of(obj_hdl,
 			      struct pseudo_fsal_obj_handle,
@@ -764,17 +763,10 @@ static fsal_status_t release(struct fsal_obj_handle *obj_hdl)
 		LogDebug(COMPONENT_FSAL,
 			 "Releasing live hdl=%p, name=%s, don't deconstruct it",
 			 myself, myself->name);
-		return fsalstat(ERR_FSAL_NO_ERROR, 0);
+		return;
 	}
 
-	retval = fsal_obj_handle_uninit(obj_hdl);
-
-	if (retval != 0) {
-		LogCrit(COMPONENT_FSAL,
-			"Tried to release busy handle, hdl=%p, refs=%d, name=%s",
-			obj_hdl, obj_hdl->refs, myself->name);
-		return fsalstat(posix2fsal_error(retval), retval);
-	}
+	fsal_obj_handle_uninit(obj_hdl);
 
 	LogDebug(COMPONENT_FSAL,
 		 "Releasing hdl=%p, name=%s",
@@ -784,8 +776,6 @@ static fsal_status_t release(struct fsal_obj_handle *obj_hdl)
 		gsh_free(myself->name);
 
 	gsh_free(myself);
-
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 void pseudofs_handle_ops_init(struct fsal_obj_ops *ops)

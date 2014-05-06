@@ -392,7 +392,6 @@ static inline void
 cache_inode_lru_clean(cache_entry_t *entry)
 {
 	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
-	fsal_status_t fsal_status = { 0, 0 };
 
 	if (is_open(entry)) {
 		cache_status =
@@ -411,15 +410,7 @@ cache_inode_lru_clean(cache_entry_t *entry)
 
 	/* Free FSAL resources */
 	if (entry->obj_handle) {
-		/* release the handle object too */
-		fsal_status =
-		    entry->obj_handle->ops->release(entry->obj_handle);
-		if (FSAL_IS_ERROR(fsal_status)) {
-			LogCrit(COMPONENT_CACHE_INODE,
-				"Couldn't free FSAL ressources "
-				"fsal_status.major=%u",
-				fsal_status.major);
-		}
+		entry->obj_handle->ops->release(entry->obj_handle);
 		entry->obj_handle = NULL;
 	}
 

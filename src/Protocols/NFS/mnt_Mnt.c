@@ -156,9 +156,9 @@ int mnt_Mnt(nfs_arg_t *arg, exportlist_t *export,
 							    &pfsal_handle))) {
 			res->res_mnt3.fhs_status = MNT3ERR_ACCES;
 			goto out;
+		}
 
 		release_handle = true;
-		}
 	}
 
 	/* convert the fsal_handle to a file handle */

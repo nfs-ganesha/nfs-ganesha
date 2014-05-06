@@ -86,33 +86,16 @@ char *lustre_get_root_path(struct fsal_export *exp_hdl)
 
 struct fsal_staticfsinfo_t *lustre_staticinfo(struct fsal_module *hdl);
 
-int lustre_get_root_fd(struct fsal_export *exp_hdl)
-{
-	struct lustre_fsal_export *myself;
-
-	myself = container_of(exp_hdl, struct lustre_fsal_export, export);
-	return myself->root_fd;
-}
-
 /* export object methods
  */
 
-static fsal_status_t lustre_release(struct fsal_export *exp_hdl)
+static void lustre_release(struct fsal_export *exp_hdl)
 {
 	struct lustre_fsal_export *myself;
-	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
-	int retval = 0;
 
 	myself = container_of(exp_hdl, struct lustre_fsal_export, export);
 
 	PTHREAD_RWLOCK_wrlock(&exp_hdl->lock);
-	if (exp_hdl->refs > 0) {
-		LogMajor(COMPONENT_FSAL, "VFS release: export (0x%p)busy",
-			 exp_hdl);
-		fsal_error = posix2fsal_error(EBUSY);
-		retval = EBUSY;
-		goto errout;
-	}
 	fsal_detach_export(exp_hdl->fsal, &exp_hdl->exports);
 	free_export_ops(exp_hdl);
 	if (myself->root_fd >= 0)
@@ -130,11 +113,6 @@ static fsal_status_t lustre_release(struct fsal_export *exp_hdl)
 
 	pthread_rwlock_destroy(&exp_hdl->lock);
 	gsh_free(myself);		/* elvis has left the building */
-	return fsalstat(fsal_error, retval);
-
- errout:
-	PTHREAD_RWLOCK_unlock(&exp_hdl->lock);
-	return fsalstat(fsal_error, retval);
 }
 
 static fsal_status_t lustre_get_dynamic_info(struct fsal_obj_handle *obj_hdl,

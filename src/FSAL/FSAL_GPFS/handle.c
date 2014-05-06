@@ -686,10 +686,9 @@ static void handle_to_key(struct fsal_obj_handle *obj_hdl,
  * release our export first so they know we are gone
  */
 
-static fsal_status_t release(struct fsal_obj_handle *obj_hdl)
+static void release(struct fsal_obj_handle *obj_hdl)
 {
 	struct gpfs_fsal_obj_handle *myself;
-	int retval = 0;
 	object_file_type_t type = obj_hdl->type;
 
 	if (type == REGULAR_FILE)
@@ -697,31 +696,13 @@ static fsal_status_t release(struct fsal_obj_handle *obj_hdl)
 
 	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
 
-	if (type == REGULAR_FILE
-	    && (myself->u.file.fd >= 0
-		|| myself->u.file.openflags != FSAL_O_CLOSED)) {
-		LogCrit(COMPONENT_FSAL,
-			"Tried to release busy handle, "
-			"hdl = 0x%p, fd = %d, openflags = 0x%x", obj_hdl,
-			myself->u.file.fd, myself->u.file.openflags);
-		return fsalstat(posix2fsal_error(EINVAL), EINVAL);
-	}
-
-	retval = fsal_obj_handle_uninit(obj_hdl);
-	if (retval != 0) {
-		LogCrit(COMPONENT_FSAL,
-			"Tried to release busy handle, "
-			"hdl = 0x%p->refs = %d", obj_hdl, obj_hdl->refs);
-		return fsalstat(posix2fsal_error(retval), retval);
-	}
+	fsal_obj_handle_uninit(obj_hdl);
 
 	if (type == SYMBOLIC_LINK) {
 		if (myself->u.symlink.link_content != NULL)
 			gsh_free(myself->u.symlink.link_content);
 	}
 	gsh_free(myself);
-
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /* gpfs_share_op

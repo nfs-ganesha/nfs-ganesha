@@ -54,22 +54,15 @@
  * @retval ERR_FSAL_BUSY if the export is in use.
  */
 
-static fsal_status_t release(struct fsal_export *export_pub)
+static void release(struct fsal_export *export_pub)
 {
 	/* The priate, expanded export */
 	struct export *export = container_of(export_pub, struct export, export);
-	/* Return code */
-	fsal_status_t status = { ERR_FSAL_INVAL, 0 };
 
 	deconstruct_handle(export->root);
 	export->root = 0;
 
 	PTHREAD_RWLOCK_wrlock(&export->export.lock);
-	if (export->export.refs > 0) {
-		PTHREAD_RWLOCK_unlock(&export->export.lock);
-		status.major = ERR_FSAL_INVAL;
-		return status;
-	}
 	fsal_detach_export(export->export.fsal, &export->export.exports);
 	free_export_ops(&export->export);
 	PTHREAD_RWLOCK_unlock(&export->export.lock);
@@ -80,8 +73,6 @@ static fsal_status_t release(struct fsal_export *export_pub)
 	pthread_rwlock_destroy(&export->export.lock);
 	gsh_free(export);
 	export = NULL;
-
-	return status;
 }
 
 /**

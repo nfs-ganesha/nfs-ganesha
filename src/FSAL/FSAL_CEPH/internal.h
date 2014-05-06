@@ -117,7 +117,7 @@ static const size_t BIGGEST_PATTERN = 1024;
 
 int construct_handle(const struct stat *st, struct Inode *i,
 		     struct export *export, struct handle **obj);
-int deconstruct_handle(struct handle *obj);
+void deconstruct_handle(struct handle *obj);
 fsal_status_t ceph2fsal_error(const int ceph_errorcode);
 void ceph2fsal_attributes(const struct stat *buffstat,
 			  struct attrlist *fsalattr);

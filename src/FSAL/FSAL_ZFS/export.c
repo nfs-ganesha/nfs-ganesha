@@ -70,22 +70,13 @@ libzfswrap_vfs_t *tank_get_root_pvfs(struct fsal_export *exp_hdl)
 /* export object methods
  */
 
-static fsal_status_t release(struct fsal_export *exp_hdl)
+static void release(struct fsal_export *exp_hdl)
 {
 	struct zfs_fsal_export *myself;
-	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
-	int retval = 0;
 
 	myself = container_of(exp_hdl, struct zfs_fsal_export, export);
 
 	PTHREAD_RWLOCK_wrlock(&exp_hdl->lock);
-	if (exp_hdl->refs > 0) {
-		LogMajor(COMPONENT_FSAL, "ZFS release: export (0x%p)busy",
-			 exp_hdl);
-		fsal_error = posix2fsal_error(EBUSY);
-		retval = EBUSY;
-		goto errout;
-	}
 	fsal_detach_export(exp_hdl->fsal, &exp_hdl->exports);
 	free_export_ops(exp_hdl);
 	myself->export.ops = NULL;	/* poison myself */
@@ -93,11 +84,6 @@ static fsal_status_t release(struct fsal_export *exp_hdl)
 
 	pthread_rwlock_destroy(&exp_hdl->lock);
 	gsh_free(myself);		/* elvis has left the building */
-	return fsalstat(fsal_error, retval);
-
- errout:
-	PTHREAD_RWLOCK_unlock(&exp_hdl->lock);
-	return fsalstat(fsal_error, retval);
 }
 
 static fsal_status_t get_dynamic_info(struct fsal_obj_handle *obj_hdl,

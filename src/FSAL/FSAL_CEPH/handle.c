@@ -51,15 +51,13 @@
  * @return FSAL status codes.
  */
 
-static fsal_status_t release(struct fsal_obj_handle *obj_pub)
+static void release(struct fsal_obj_handle *obj_pub)
 {
 	/* The private 'full' handle */
 	struct handle *obj = container_of(obj_pub, struct handle, handle);
 
-	if (obj == obj->export->root)
-		return fsalstat(ERR_FSAL_NO_ERROR, 0);
-	else
-		return ceph2fsal_error(deconstruct_handle(obj));
+	if (obj != obj->export->root)
+		deconstruct_handle(obj);
 }
 
 /**

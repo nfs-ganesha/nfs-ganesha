@@ -58,17 +58,14 @@
  *
  * @return FSAL status codes.
  */
-static nfsstat4 release(struct fsal_ds_handle *const ds_pub)
+static void release(struct fsal_ds_handle *const ds_pub)
 {
 	/* The private 'full' DS handle */
 	struct gpfs_ds *ds = container_of(ds_pub, struct gpfs_ds, ds);
 
-	if (fsal_ds_handle_uninit(&ds->ds))
-		return EINVAL;
+	fsal_ds_handle_uninit(&ds->ds);
 
 	gsh_free(ds);
-
-	return 0;
 }
 
 /**

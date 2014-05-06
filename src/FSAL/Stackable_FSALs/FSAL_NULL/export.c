@@ -55,36 +55,25 @@ struct fsal_staticfsinfo_t *nullfs_staticinfo(struct fsal_module *hdl);
 /* export object methods
  */
 
-static fsal_status_t release(struct fsal_export *exp_hdl)
+static void release(struct fsal_export *exp_hdl)
 {
 	struct nullfs_fsal_export *myself;
-	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
-	int retval = 0;
-
-	/* Question : should I release next_fsal or not ? */
-	next_ops.exp_ops->release(exp_hdl);
+	struct fsal_module *sub_fsal;
 
 	myself = container_of(exp_hdl, struct nullfs_fsal_export, export);
+	sub_fsal = myself->sub_export->fsal;
+
+	/* Release the sub_export */
+	myself->sub_export->ops->release(myself->sub_export);
+	fsal_put(sub_fsal);
 
 	PTHREAD_RWLOCK_wrlock(&exp_hdl->lock);
-	if (exp_hdl->refs > 0) {
-		LogMajor(COMPONENT_FSAL, "VFS release: export (0x%p)busy",
-			 exp_hdl);
-		fsal_error = posix2fsal_error(EBUSY);
-		retval = EBUSY;
-		goto errout;
-	}
 	fsal_detach_export(exp_hdl->fsal, &exp_hdl->exports);
 	free_export_ops(exp_hdl);
 	PTHREAD_RWLOCK_unlock(&exp_hdl->lock);
 
 	pthread_rwlock_destroy(&exp_hdl->lock);
 	gsh_free(myself);	/* elvis has left the building */
-	return fsalstat(fsal_error, retval);
-
- errout:
-	PTHREAD_RWLOCK_unlock(&exp_hdl->lock);
-	return fsalstat(fsal_error, retval);
 }
 
 static fsal_status_t get_dynamic_info(struct fsal_obj_handle *obj_hdl,
@@ -298,6 +287,14 @@ fsal_status_t nullfs_create_export(struct fsal_module *fsal_hdl,
 		return fsalstat(ERR_FSAL_INVAL, EINVAL);
 	}
 
+	myself = gsh_calloc(1, sizeof(struct nullfs_fsal_export));
+	if (myself == NULL) {
+		LogMajor(COMPONENT_FSAL,
+			 "Could not allocate memory for export %s",
+			 export_path);
+		return fsalstat(ERR_FSAL_NOMEM, ENOMEM);
+	}
+
 	expres = fsal_stack->ops->create_export(fsal_stack,
 						export_path,
 						subfsal.fsal_node,
@@ -305,23 +302,15 @@ fsal_status_t nullfs_create_export(struct fsal_module *fsal_hdl,
 						NULL,
 						up_ops,
 						&sub_export);
-	fsal_stack->ops->put(fsal_stack);
+	fsal_put(fsal_stack);
 	if (FSAL_IS_ERROR(expres)) {
 		LogMajor(COMPONENT_FSAL,
 			 "Failed to call create_export on underlying FSAL %s",
 			 subfsal.name);
+		gsh_free(myself);
 		return expres;
 	}
-	myself = gsh_calloc(1, sizeof(struct nullfs_fsal_export));
-	if (myself == NULL) {
-		expres = sub_export->ops->release(sub_export);
-		if (FSAL_IS_ERROR(expres)) {
-			LogMajor(COMPONENT_FSAL,
-				 "Could not release FSAL %s",
-			 subfsal.name);
-		return expres;
-		}
-	}
+
 	myself->sub_export = sub_export;
 	/* Init next_ops structure */
 	next_ops.exp_ops = gsh_malloc(sizeof(struct export_ops));
