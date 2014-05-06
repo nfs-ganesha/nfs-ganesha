@@ -1435,7 +1435,7 @@ static uint32_t delegrecall_one(state_lock_entry_t *deleg_entry)
 	    deleg_entry->sle_state->state_seqid;
 	memcpy(argop->nfs_cb_argop4_u.opcbrecall.stateid.other,
 	       deleg_entry->sle_state->stateid_other, OTHERSIZE);
-	argop->nfs_cb_argop4_u.opcbrecall.truncate = TRUE;
+	argop->nfs_cb_argop4_u.opcbrecall.truncate = FALSE;
 
 	/* Convert it to a file handle */
 	argop->nfs_cb_argop4_u.opcbrecall.fh.nfs_fh4_len = 0;
