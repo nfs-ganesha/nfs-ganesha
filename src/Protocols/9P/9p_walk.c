@@ -190,7 +190,6 @@ int _9p_walk(struct _9p_request_data *req9p, void *worker_data,
 			break;
 
 		case DIRECTORY:
-		case FS_JUNCTION:
 			pnewfid->qid.type = _9P_QTDIR;
 			break;
 

@@ -1044,9 +1044,6 @@ static fsal_status_t pxy_lookup_impl(struct fsal_obj_handle *parent,
 		case DIRECTORY:
 			break;
 
-		case FS_JUNCTION:
-			return fsalstat(ERR_FSAL_XDEV, 0);
-
 		default:
 			return fsalstat(ERR_FSAL_NOTDIR, 0);
 		}

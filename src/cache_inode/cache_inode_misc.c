@@ -380,11 +380,6 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 			 nentry->type, nentry);
 		break;
 
-	case FS_JUNCTION:
-		/* I don't think this ever actually gets called */
-		abort();
-		break;
-
 	default:
 		/* Should never happen */
 		cih_latch_rele(&latch);
@@ -882,15 +877,6 @@ cache_inode_lock_trust_attrs(cache_entry_t *entry,
 {
 	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
 	time_t oldmtime = 0;
-
-	if (entry->type == FS_JUNCTION) {
-		LogCrit(COMPONENT_CACHE_INODE,
-			"cache_inode_lock_trust_attrs called on file %p of bad "
-			"type %d", entry, entry->type);
-
-		cache_status = CACHE_INODE_BAD_TYPE;
-		goto out;
-	}
 
 	if (need_wr_lock)
 		PTHREAD_RWLOCK_wrlock(&entry->attr_lock);

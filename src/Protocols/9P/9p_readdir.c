@@ -129,7 +129,6 @@ static cache_inode_status_t _9p_readdir_callback(void *opaque,
 		d_type = DT_SOCK;
 		break;
 
-	case FS_JUNCTION:
 	case DIRECTORY:
 		qid_type = _9P_QTDIR;
 		d_type = DT_DIR;

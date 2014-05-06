@@ -102,11 +102,6 @@ fsal_status_t GPFSFSAL_lookup(const struct req_op_context *p_context,
 		/* OK */
 		break;
 
-	case FS_JUNCTION:
-		/* This is a junction */
-		close(parent_fd);
-		return fsalstat(ERR_FSAL_XDEV, 0);
-
 	case REGULAR_FILE:
 	case SYMBOLIC_LINK:
 		/* not a directory */

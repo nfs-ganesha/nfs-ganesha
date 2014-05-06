@@ -395,8 +395,6 @@ const char *object_file_type_to_str(object_file_type_t type)
 		return "FIFO_FILE";
 	case DIRECTORY:
 		return "DIRECTORY";
-	case FS_JUNCTION:
-		return "FS_JUNCTION";
 	case EXTENDED_ATTR:
 		return "EXTENDED_ATTR";
 	}

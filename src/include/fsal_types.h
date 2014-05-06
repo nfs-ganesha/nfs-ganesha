@@ -64,8 +64,7 @@ typedef enum {
 	SOCKET_FILE = 5,
 	FIFO_FILE = 6,
 	DIRECTORY = 7,
-	FS_JUNCTION = 8,
-	EXTENDED_ATTR = 9
+	EXTENDED_ATTR = 8
 } object_file_type_t;
 
 /* ---------------
