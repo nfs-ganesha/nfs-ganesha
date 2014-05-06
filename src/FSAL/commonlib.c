@@ -934,6 +934,12 @@ static bool posix_get_fsid(struct fsal_filesystem *fs)
 	fs->fsid_type = FSID_TWO_UINT32;
 	fs->fsid.major = stat_fs.f_fsid.__val[0];
 	fs->fsid.minor = stat_fs.f_fsid.__val[1];
+
+	if ((fs->fsid.major == 0) && (fs->fsid.minor == 0)) {
+		fs->fsid.major = fs->dev.major;
+		fs->fsid.minor = fs->dev.minor;
+	}
+
 	return true;
 }
 
