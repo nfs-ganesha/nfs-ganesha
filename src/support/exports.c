@@ -829,14 +829,7 @@ static int export_commit(void *node, void *link_mem, void *self_struct,
 	glist_init(&exp->exp_lock_list);
 	glist_init(&exp->exp_nlm_share_list);
 	glist_init(&exp->exp_root_list);
-	if (pthread_mutex_init(&exp->exp_state_mutex, NULL) == -1) {
-		LogCrit(COMPONENT_CONFIG,
-			"Cannot initialize state mutex for export %d",
-			exp->id);
-		err_type->resource = true;
-		errcnt++;
-		goto err_out;
-	}
+
 	/* now probe the fsal and init it */
 	/* pass along the block that is/was the FS_Specific */
 	export = insert_gsh_export(exp);
@@ -846,7 +839,7 @@ static int export_commit(void *node, void *link_mem, void *self_struct,
 			exp->id);
 		err_type->exists = true;
 		errcnt++;
-		goto err_fsal;
+		goto err_out;
 	}
 
 	StrExportOptions(&exp->export_perms, perms);
@@ -857,9 +850,6 @@ static int export_commit(void *node, void *link_mem, void *self_struct,
 	set_gsh_export_state(export, EXPORT_READY);
 	put_gsh_export(export);
 	return 0;
-
-err_fsal:
-	pthread_mutex_destroy(&exp->exp_state_mutex);
 
 err_out:
 	return errcnt;
@@ -1286,11 +1276,6 @@ static int build_default_root(void)
 		LogCrit(COMPONENT_CONFIG,
 			"Could not allocate space for pseudoroot export");
 		return -1;
-	}
-	if (pthread_mutex_init(&p_entry->exp_state_mutex, NULL) == -1) {
-		LogCrit(COMPONENT_CONFIG,
-			"Could not initialize exp_state_mutex for export id 0");
-		goto err_out;
 	}
 
 	p_entry->UseCookieVerifier = true;

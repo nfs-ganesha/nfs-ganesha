@@ -39,7 +39,7 @@
 #include "mount.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
-#include "nfs_exports.h"
+#include "export_mgr.h"
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
 #include "nfs_file_handle.h"
@@ -196,10 +196,10 @@ static nfsstat4 acquire_layout_state(compound_data_t *data,
 
 		/* Attach this open to an export */
 		(*layout_state)->state_export = data->export;
-		pthread_mutex_lock(&data->export->exp_state_mutex);
+		export_writelock(data->export);
 		glist_add_tail(&data->export->exp_state_list,
 			       &(*layout_state)->state_export_list);
-		pthread_mutex_unlock(&data->export->exp_state_mutex);
+		export_rwunlock(data->export);
 	} else {
 		/* A state eixsts but is of an invalid type. */
 		nfs_status = NFS4ERR_BAD_STATEID;

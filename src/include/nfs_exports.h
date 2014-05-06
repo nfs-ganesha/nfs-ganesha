@@ -143,8 +143,6 @@ typedef struct exportlist {
 	struct glist_head clients;	/*< Allowed clients */
 	struct fsal_export *export_hdl;	/*< Handle into our FSAL */
 
-	pthread_mutex_t exp_state_mutex;	/*< Mutex to protect per-export
-						   state information. */
 	struct glist_head exp_state_list;	/*< List of NFS v4 state
 						    belonging to this export */
 	struct glist_head exp_lock_list;	/*< List of locks belonging

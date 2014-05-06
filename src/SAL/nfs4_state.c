@@ -501,9 +501,9 @@ void state_del_locked(state_t *state, cache_entry_t *entry)
 		glist_del(&state->state_data.lock.state_sharelist);
 
 	/* Remove from list of states for a particular export */
-	pthread_mutex_lock(&state->state_export->exp_state_mutex);
+	export_writelock(state->state_export);
 	glist_del(&state->state_export_list);
-	pthread_mutex_unlock(&state->state_export->exp_state_mutex);
+	export_rwunlock(state->state_export);
 
 #ifdef DEBUG_SAL
 	pthread_mutex_lock(&all_state_v4_mutex);
@@ -667,13 +667,13 @@ void state_export_release_nfs4_state(struct req_op_context *req_ctx,
 	state_status_t state_status;
 
 	while (1) {
-		pthread_mutex_lock(&export->exp_state_mutex);
+		export_writelock(export);
 
 		state = glist_first_entry(&export->exp_state_list,
 					  state_t,
 					  state_export_list);
 
-		pthread_mutex_unlock(&export->exp_state_mutex);
+		export_rwunlock(export);
 
 		if (state == NULL)
 			break;
