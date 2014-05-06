@@ -1234,21 +1234,16 @@ static bool get_nfsv_export_total_ops(DBusMessageIter *args,
 
 	dbus_message_iter_init_append(reply, &iter);
 	export = lookup_export(args, &errormsg);
-	if (export == NULL) {
-		success = false;
-	} else {
+	if (export != NULL) {
 		export_st = container_of(export, struct export_stats, export);
-		if (export_st == NULL) {
-			success = false;
-			errormsg = "Export does not have any activity";
-		}
-	}
-	dbus_status_reply(&iter, success, errormsg);
-	if (success)
+		dbus_status_reply(&iter, success, errormsg);
 		server_dbus_total_ops(export_st, &iter);
-
-	if (export != NULL)
 		put_gsh_export(export);
+	} else {
+		success = false;
+		errormsg = "Export does not have any activity";
+		dbus_status_reply(&iter, success, errormsg);
+	}
 	return true;
 }
 
