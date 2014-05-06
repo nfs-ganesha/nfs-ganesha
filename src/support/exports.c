@@ -700,12 +700,11 @@ static void *export_init(void *link_mem, void *self_struct)
 		exp = alloc_exportlist();
 		if (exp == NULL)
 			return NULL;
-		glist_init(&exp->exp_list);
 		return exp;
 	} else { /* free resources case */
 		exp = self_struct;
 
-		assert(glist_empty(&exp->exp_list));
+		assert(glist_null(&exp->exp_list));
 		free_exportlist(exp);
 		return NULL;
 	}
@@ -828,7 +827,6 @@ static int export_commit(void *node, void *link_mem, void *self_struct,
 	glist_init(&exp->exp_state_list);
 	glist_init(&exp->exp_lock_list);
 	glist_init(&exp->exp_nlm_share_list);
-	glist_init(&exp->exp_root_list);
 
 	/* now probe the fsal and init it */
 	/* pass along the block that is/was the FS_Specific */
@@ -1290,7 +1288,6 @@ static int build_default_root(void)
 	glist_init(&p_entry->exp_state_list);
 	glist_init(&p_entry->exp_lock_list);
 	glist_init(&p_entry->exp_nlm_share_list);
-	glist_init(&p_entry->exp_root_list);
 	glist_init(&p_entry->clients);
 
 	/* Default anonymous uid and gid */

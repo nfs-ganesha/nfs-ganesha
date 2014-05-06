@@ -35,6 +35,14 @@ struct glist_head {
 	struct glist_head *prev;
 };
 
+/**
+ * @brief List head initialization
+ *
+ * These macros and functions are only for list heads,
+ * not nodes.  The head always points to something and
+ * if the list is empty, it points to itself.
+ */
+
 #define GLIST_HEAD_INIT(name) { &(name), &(name) }
 
 #define GLIST_HEAD(name) \
@@ -81,10 +89,20 @@ static inline void glist_del(struct glist_head *node)
 	node->prev = NULL;
 }
 
+/**
+ * @brief Test if the list in this head is empty
+ */
 static inline int glist_empty(struct glist_head *head)
 {
 	return head->next == head;
 }
+
+/**
+ * @brief Test if this node is not on a list.
+ *
+ * NOT to be confused with glist_empty which is just
+ * for heads.  We poison with NULL for disconnected nodes.
+ */
 
 static inline int glist_null(struct glist_head *head)
 {
