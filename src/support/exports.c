@@ -1319,12 +1319,14 @@ static int build_default_root(void)
 	p_entry->export_perms.options = EXPORT_OPTION_ROOT |
 					EXPORT_OPTION_MD_READ_ACCESS |
 					EXPORT_OPTION_NFSV4 |
+					EXPORT_OPTION_AUTH_TYPES |
 					EXPORT_OPTION_TCP;
 
 	p_entry->export_perms.set = EXPORT_OPTION_SQUASH_TYPES |
 				    EXPORT_OPTION_ACCESS_TYPE |
 				    EXPORT_OPTION_PROTOCOLS |
 				    EXPORT_OPTION_TRANSPORTS |
+				    EXPORT_OPTION_AUTH_TYPES |
 				    EXPORT_OPTION_FSID_SET;
 
 	/* Set the fullpath to "/" */
