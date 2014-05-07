@@ -1233,7 +1233,7 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 					   rpc_call_hook hook, void *arg,
 					   uint32_t flags)
 {
-	char *fh;
+	char *fh = NULL;
 	bool needs_revoke = FALSE;
 	state_status_t rc = STATE_SUCCESS;
 	struct delegrecall_context *deleg_ctx =
@@ -1330,6 +1330,8 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 	}
 out_free:
 	PTHREAD_RWLOCK_unlock(&entry->state_lock);
+	fh = call->cbt.v_u.v4.args.argarray.argarray_val->
+				nfs_cb_argop4_u.opcbrecall.fh.nfs_fh4_val;
 	gsh_free(fh);
 	gsh_free(deleg_ctx);
 	free_rpc_call(call);
