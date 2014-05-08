@@ -54,7 +54,7 @@
 static nfsstat4 nfs4_do_open_downgrade(struct nfs_argop4 *op,
 				       compound_data_t *data,
 				       cache_entry_t *entry_file,
-				       state_owner_t *owner, state_t **state,
+				       state_owner_t *owner, state_t *state,
 				       char **cause);
 
 int nfs4_op_open_downgrade(struct nfs_argop4 *op, compound_data_t *data,
@@ -161,7 +161,7 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op, compound_data_t *data,
 						 data,
 						 state_found->state_entry,
 						 state_found->state_owner,
-						 &state_found,
+						 state_found,
 						 &cause);
 
 		if (status4 != NFS4_OK) {
@@ -218,7 +218,7 @@ void nfs4_op_open_downgrade_CopyRes(OPEN_DOWNGRADE4res *res_dst,
 static nfsstat4 nfs4_do_open_downgrade(struct nfs_argop4 *op,
 				       compound_data_t *data,
 				       cache_entry_t *entry_file,
-				       state_owner_t *owner, state_t **state,
+				       state_owner_t *owner, state_t *state,
 				       char **cause)
 {
 	state_data_t candidate_data;
@@ -231,7 +231,7 @@ static nfsstat4 nfs4_do_open_downgrade(struct nfs_argop4 *op,
 	PTHREAD_RWLOCK_wrlock(&data->current_entry->state_lock);
 
 	/* Check if given share access is subset of current share access */
-	if (((*state)->state_data.share.share_access & args->share_access) !=
+	if ((state->state_data.share.share_access & args->share_access) !=
 	    (args->share_access)) {
 		/* Open share access is not a superset of
 		 * downgrade share access
@@ -242,7 +242,7 @@ static nfsstat4 nfs4_do_open_downgrade(struct nfs_argop4 *op,
 	}
 
 	/* Check if given share deny is subset of current share deny */
-	if (((*state)->state_data.share.share_deny & args->share_deny) !=
+	if ((state->state_data.share.share_deny & args->share_deny) !=
 	    (args->share_deny)) {
 		/* Open share deny is not a superset of
 		 * downgrade share deny
@@ -253,14 +253,14 @@ static nfsstat4 nfs4_do_open_downgrade(struct nfs_argop4 *op,
 	}
 
 	/* Check if given share access is previously seen */
-	if (state_share_check_prev(*state, &candidate_data) != STATE_SUCCESS) {
+	if (state_share_check_prev(state, &candidate_data) != STATE_SUCCESS) {
 		*cause = " (share access or deny never seen before)";
 		PTHREAD_RWLOCK_unlock(&data->current_entry->state_lock);
 		return NFS4ERR_INVAL;
 	}
 
 	state_status = state_share_downgrade(data->req_ctx, entry_file,
-					     &candidate_data, owner, *state);
+					     &candidate_data, owner, state);
 
 	if (state_status != STATE_SUCCESS) {
 		*cause = " (state_share_downgrade failed)";
