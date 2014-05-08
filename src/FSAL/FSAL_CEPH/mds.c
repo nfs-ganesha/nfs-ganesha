@@ -234,7 +234,7 @@ static void fs_layouttypes(struct fsal_export *export_pub, size_t *count,
 /**
  * @brief Get layout block size for export
  *
- * This function just return the Ceph default.
+ * This function just returns the Ceph default.
  *
  * @param[in] export_pub Public export handle
  *

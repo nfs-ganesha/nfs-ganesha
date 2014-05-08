@@ -26,7 +26,7 @@
  */
 
 /* export.c
- * VFS FSAL export object
+ * ZFS FSAL export object
  */
 
 #include "config.h"
@@ -46,7 +46,7 @@ size_t i_snapshots = 0;
 snapshot_t *p_snapshots = NULL;
 
 /*
- * VFS internal export
+ * ZFS internal export
  */
 
 struct zfs_fsal_export {
@@ -54,7 +54,7 @@ struct zfs_fsal_export {
 	libzfswrap_vfs_t *p_vfs;
 };
 
-/* helpers to/from other VFS objects
+/* helpers to/from other ZFS objects
  */
 
 struct fsal_staticfsinfo_t *zfs_staticinfo(struct fsal_module *hdl);
@@ -290,7 +290,7 @@ static struct config_item export_params[] = {
 };
 
 static struct config_block export_param = {
-	.dbus_interface_name = "org.ganesha.nfsd.config.fsal.vfs-export%d",
+	.dbus_interface_name = "org.ganesha.nfsd.config.fsal.zfs-export%d",
 	.blk_desc.name = "FSAL",
 	.blk_desc.type = CONFIG_BLOCK,
 	.blk_desc.u.blk.init = noop_conf_init,

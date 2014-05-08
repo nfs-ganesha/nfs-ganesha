@@ -508,7 +508,7 @@ int open_root_fd(struct gpfs_filesystem *gpfs_fs)
 	if (gpfs_fs->root_fd < 0) {
 		retval = errno;
 		LogMajor(COMPONENT_FSAL,
-			 "Could not open XFS mount point %s: rc = %s (%d)",
+			 "Could not open GPFS mount point %s: rc = %s (%d)",
 			 gpfs_fs->fs->path, strerror(retval), retval);
 		return retval;
 	}

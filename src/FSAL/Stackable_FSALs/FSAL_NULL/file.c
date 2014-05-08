@@ -25,7 +25,7 @@
  */
 
 /* file.c
- * File I/O methods for VFS module
+ * File I/O methods for NULL module
  */
 
 #include "config.h"

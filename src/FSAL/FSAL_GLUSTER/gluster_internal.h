@@ -116,7 +116,7 @@ ATTR_SIZE     | ATTR_MTIME_SERVER | ATTR_ATIME_SERVER)   \
 			      S_IRGRP | S_IWGRP | S_IXGRP |  \
 			      S_IROTH | S_IWOTH | S_IXOTH)))
 
-/* ACL types (acl_type field in gpfs_opaque_acl_t or gpfs_acl_t) */
+/* ACL types (acl_type field in glusterfs_acl_t) */
 #define GLUSTERFS_ACL_TYPE_ACCESS  1
 #define GLUSTERFS_ACL_TYPE_DEFAULT 2
 #define GLUSTERFS_ACL_TYPE_NFS4    3

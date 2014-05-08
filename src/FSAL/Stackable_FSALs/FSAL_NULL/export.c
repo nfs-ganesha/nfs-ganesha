@@ -27,7 +27,7 @@
  */
 
 /* export.c
- * VFS FSAL export object
+ * NULL FSAL export object
  */
 
 #include "config.h"
@@ -47,7 +47,7 @@
 #include "FSAL/fsal_config.h"
 #include "nullfs_methods.h"
 
-/* helpers to/from other VFS objects
+/* helpers to/from other NULL objects
  */
 
 struct fsal_staticfsinfo_t *nullfs_staticinfo(struct fsal_module *hdl);

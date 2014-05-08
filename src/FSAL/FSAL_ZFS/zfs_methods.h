@@ -1,7 +1,7 @@
 extern size_t i_snapshots;
 extern snapshot_t *p_snapshots;
 
-/* VFS methods for handles
+/* ZFS methods for handles
  */
 
 void zfs_handle_ops_init(struct fsal_obj_ops *ops);
@@ -25,7 +25,7 @@ fsal_status_t tank_create_handle(struct fsal_export *exp_hdl,
 				 struct fsal_obj_handle **handle);
 
 /*
- * VFS internal object handle
+ * ZFS internal object handle
  * handle is a pointer because
  *  a) the last element of file_handle is a char[] meaning variable len...
  *  b) we cannot depend on it *always* being last or being the only
@@ -49,16 +49,6 @@ struct zfs_fsal_obj_handle {
 		} symlink;
 	} u;
 };
-
-static inline bool vfs_unopenable_type(object_file_type_t type)
-{
-	if ((type == SOCKET_FILE) || (type == CHARACTER_FILE)
-	    || (type == BLOCK_FILE)) {
-		return true;
-	} else {
-		return false;
-	}
-}
 
 	/* I/O management */
 fsal_status_t tank_open(struct fsal_obj_handle *obj_hdl,

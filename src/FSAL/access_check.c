@@ -106,7 +106,7 @@ static bool fsal_check_ace_applicable(fsal_ace_t *pace,
 		return false;
 	}
 
-	/* Use GPFS internal flag to further check the entry is applicable
+	/* Use internal flag to further check the entry is applicable
 	 * to this object type. */
 	if (is_file) {
 		if (!IS_FSAL_FILE_APPLICABLE(*pace)) {
@@ -135,10 +135,6 @@ static bool fsal_check_ace_applicable(fsal_ace_t *pace,
 
 	return is_applicable;
 }
-
-/* originally def'd in /FSAL/FSAL_GPFS/fsal_internal.c:56: fix later */
-
-#define ACL_DEBUG_BUF_SIZE 256
 
 int display_fsal_inherit_flags(struct display_buffer *dspbuf, fsal_ace_t *pace)
 {

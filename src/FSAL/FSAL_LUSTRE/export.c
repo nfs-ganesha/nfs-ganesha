@@ -26,7 +26,7 @@
  */
 
 /* export.c
- * VFS FSAL export object
+ * LUSTRE FSAL export object
  */
 
 #include "config.h"

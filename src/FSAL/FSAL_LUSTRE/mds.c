@@ -72,7 +72,7 @@ lustre_fs_layouttypes(struct fsal_export *export_hdl,
 /**
  * @brief Get layout block size for export
  *
- * This function just return the GPFS default.
+ * This function just returns the LUSTRE default.
  *
  * @param[in] export_pub Public export handle
  *

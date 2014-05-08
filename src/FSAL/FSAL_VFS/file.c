@@ -133,7 +133,7 @@ fsal_status_t vfs_read(struct fsal_obj_handle *obj_hdl,
 
 	*read_amount = nb_read;
 
-	/* dual eof condition, cf. GPFS */
+	/* dual eof condition */
 	*end_of_file = ((nb_read == 0) /* most clients */ ||	/* ESXi */
 			(((offset + nb_read) >= obj_hdl->attributes.filesize)))
 	    ? true : false;

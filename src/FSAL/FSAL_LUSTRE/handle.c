@@ -26,7 +26,7 @@
  */
 
 /* handle.c
- * VFS object (file|dir) handle object
+ * LUSTRE object (file|dir) handle object
  */
 
 #include "config.h"

@@ -3,7 +3,7 @@
  */
 
 
-/* VFS methods for handles
+/* LUSTRE methods for handles
  */
 
 /*
@@ -62,7 +62,7 @@ fsal_status_t lustre_create_handle(struct fsal_export *exp_hdl,
 				   struct fsal_obj_handle **handle);
 
 /*
- * VFS internal object handle
+ * LUSTRE internal object handle
  * handle is a pointer because
  *  a) the last element of file_handle is a char[] meaning variable len...
  *  b) we cannot depend on it *always* being last or being the only

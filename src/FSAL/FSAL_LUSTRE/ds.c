@@ -26,10 +26,10 @@
 /**
  * @file   ds.c
  *
- * @brief pNFS DS operations for GPFS
+ * @brief pNFS DS operations for LUSTRE
  *
  * This file implements the read, write, commit, and dispose
- * operations for GPFS data-server handles.  The functionality to
+ * operations for LUSTRE data-server handles.  The functionality to
  * create a data server handle is in the export.c file, as it is part
  * of the export object's interface.
  */

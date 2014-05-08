@@ -24,7 +24,7 @@
  */
 
 /* handle.c
- * VFS object (file|dir) handle object
+ * PT object (file|dir) handle object
  */
 
 #ifdef HAVE_CONFIG_H

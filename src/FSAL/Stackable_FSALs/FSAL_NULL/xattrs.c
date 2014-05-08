@@ -27,7 +27,7 @@
  */
 
 /* xattrs.c
- * VFS object (file|dir) handle object extended attributes
+ * NULL object (file|dir) handle object extended attributes
  */
 
 #include "config.h"

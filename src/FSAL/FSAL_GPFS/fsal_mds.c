@@ -73,7 +73,7 @@ static void fs_layouttypes(struct fsal_export *export_hdl, size_t *count,
 /**
  * @brief Get layout block size for export
  *
- * This function just return the GPFS default.
+ * This function just returns the GPFS default.
  *
  * @param[in] export_pub Public export handle
  *

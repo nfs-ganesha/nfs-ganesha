@@ -636,7 +636,6 @@ fsal_status_t vfs_setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 	else if (xattr_id < XATTR_COUNT)
 		return fsalstat(ERR_FSAL_PERM, 0);
 
-	/* build fid path in lustre */
 	fd = (obj_hdl->type == DIRECTORY) ?
 	    vfs_fsal_open(obj_handle, O_DIRECTORY, &fe) :
 	    vfs_fsal_open(obj_handle, O_RDWR, &fe);

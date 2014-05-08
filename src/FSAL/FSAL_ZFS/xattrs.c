@@ -25,7 +25,7 @@
  */
 
 /* xattrs.c
- * VFS object (file|dir) handle object extended attributes
+ * ZFS object (file|dir) handle object extended attributes
  */
 
 #include "config.h"

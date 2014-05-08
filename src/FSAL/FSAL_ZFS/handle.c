@@ -27,7 +27,7 @@
  */
 
 /* handle.c
- * VFS object (file|dir) handle object
+ * ZFS object (file|dir) handle object
  */
 
 #include "config.h"

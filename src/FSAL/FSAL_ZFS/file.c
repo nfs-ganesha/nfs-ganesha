@@ -26,7 +26,7 @@
  */
 
 /* file.c
- * File I/O methods for VFS module
+ * File I/O methods for ZFS module
  */
 
 #include "config.h"
@@ -44,7 +44,7 @@
 
 libzfswrap_vfs_t *ZFSFSAL_GetVFS(zfs_file_handle_t *handle);
 
-/** lustre_open
+/** tank_open
  * called with appropriate locks taken at the cache inode level
  */
 
@@ -91,7 +91,7 @@ fsal_status_t tank_open(struct fsal_obj_handle *obj_hdl,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-/* lustre_status
+/* tank_status
  * Let the caller peek into the file's open/close state.
  */
 
@@ -103,7 +103,7 @@ fsal_openflags_t tank_status(struct fsal_obj_handle *obj_hdl)
 	return myself->u.file.openflags;
 }
 
-/* lustre_read
+/* tank_read
  * concurrency (locks) is managed in cache_inode_*
  */
 
@@ -141,7 +141,7 @@ fsal_status_t tank_read(struct fsal_obj_handle *obj_hdl,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-/* lustre_write
+/* tank_write
  * concurrency (locks) is managed in cache_inode_*
  */
 
@@ -174,7 +174,7 @@ fsal_status_t tank_write(struct fsal_obj_handle *obj_hdl,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-/* lustre_commit
+/* tank_commit
  * Commit a file range to storage.
  * for right now, fsync will have to do.
  */
@@ -187,7 +187,7 @@ fsal_status_t tank_commit(struct fsal_obj_handle *obj_hdl,	/* sync */
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-/* lustre_close
+/* tank_close
  * Close the file if it is still open.
  * Yes, we ignor lock status.  Closing a file in POSIX
  * releases all locks but that is state and cache inode's problem.
@@ -212,7 +212,7 @@ fsal_status_t tank_close(struct fsal_obj_handle *obj_hdl)
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-/* lustre_lru_cleanup
+/* tank_lru_cleanup
  * free non-essential resources at the request of cache inode's
  * LRU processing identifying this handle as stale enough for resource
  * trimming.

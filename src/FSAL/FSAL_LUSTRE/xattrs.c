@@ -26,7 +26,7 @@
  */
 
 /* xattrs.c
- * VFS object (file|dir) handle object extended attributes
+ * LUSTRE object (file|dir) handle object extended attributes
  */
 
 #include "config.h"

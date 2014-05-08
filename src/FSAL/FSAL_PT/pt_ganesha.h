@@ -40,7 +40,7 @@
 #include <sys/stat.h>
 #include <sys/param.h>
 
-/* VFS operations structure */
+/* PT operations structure */
 struct vfs_fn_pointers {
 	int (*init_fn) (int multi_threaded, log_function_t log_fn,
 			log_level_check_function_t log_level_check_fn,

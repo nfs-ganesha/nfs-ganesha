@@ -47,7 +47,6 @@
 struct lustre_fsal_module {
 	struct fsal_module fsal;
 	struct fsal_staticfsinfo_t fs_info;
-	/* vfsfs_specific_initinfo_t specific_info;  placeholder */
 };
 
 const char myname[] = "LUSTRE";

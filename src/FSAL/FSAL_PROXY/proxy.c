@@ -46,7 +46,7 @@
 		ATTR_CTIME    | ATTR_MTIME    | ATTR_SPACEUSED |     \
 		ATTR_CHGTIME)
 
-/* filesystem info for VFS */
+/* filesystem info for PROXY */
 static struct fsal_staticfsinfo_t proxy_info = {
 	.maxfilesize = UINT64_MAX,
 	.maxlink = _POSIX_LINK_MAX,

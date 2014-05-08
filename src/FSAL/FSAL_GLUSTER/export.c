@@ -291,7 +291,7 @@ static fsal_status_t get_dynamic_info(struct fsal_obj_handle *obj_hdl,
 	return status;
 }
 
-/* TODO: We have gone POSIX way for the APIs below, can consider the CEPH way
+/** @todo: We have gone POSIX way for the APIs below, can consider the CEPH way
  * in case all are constants across all volumes etc. */
 
 /**
