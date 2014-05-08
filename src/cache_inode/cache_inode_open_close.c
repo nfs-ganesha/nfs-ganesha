@@ -95,7 +95,7 @@ is_open_for_write(cache_entry_t *entry)
 	if ((entry == NULL) || (entry->type != REGULAR_FILE))
 		return false;
 	openflags = entry->obj_handle->ops->status(entry->obj_handle);
-	return ((openflags == FSAL_O_RDWR) || (openflags == FSAL_O_WRITE));
+	return openflags & FSAL_O_WRITE;
 }
 
 /**
@@ -116,7 +116,7 @@ bool is_open_for_read(cache_entry_t *entry)
 	if ((entry == NULL) || (entry->type != REGULAR_FILE))
 		return false;
 	openflags = entry->obj_handle->ops->status(entry->obj_handle);
-	return ((openflags == FSAL_O_RDWR) || (openflags == FSAL_O_READ));
+	return openflags & FSAL_O_READ;
 }
 
 /**
