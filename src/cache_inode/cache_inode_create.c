@@ -232,7 +232,7 @@ cache_inode_create(cache_entry_t *parent,
 	LogFullDebug(COMPONENT_CACHE_INODE,
 		     "Returning entry=%p status=%s for %s FSAL=%s", *entry,
 		     cache_inode_err_str(status), name,
-		     (*entry)->obj_handle->fsal->name);
+		     parent->obj_handle->fsal->name);
 
 	return status;
 }
