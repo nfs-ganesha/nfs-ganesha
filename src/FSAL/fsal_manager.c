@@ -268,14 +268,14 @@ int load_fsal(const char *name,
 			LogCrit(COMPONENT_INIT,
 				"Could not execute symbol fsal_init"
 				" from module:%s Error:%s", path, dl_error);
-			goto errout;
+			goto dlerr;
 		}
 		if ((void *)module_init == NULL) {
 			so_error = EFAULT;
 			LogCrit(COMPONENT_INIT,
 				"Could not execute symbol fsal_init"
 				" from module:%s Error:%s", path, dl_error);
-			goto errout;
+			goto dlerr;
 		}
 		pthread_mutex_unlock(&fsal_lock);
 
@@ -284,19 +284,18 @@ int load_fsal(const char *name,
 		pthread_mutex_lock(&fsal_lock);
 	}
 	if (load_state == error) {	/* we are in registration hell */
-		dlclose(dl);
 		retval = so_error;	/* this is the registration error */
 		LogCrit(COMPONENT_INIT,
 			"Could not execute symbol fsal_init"
 			" from module:%s Error:%s", path, dl_error);
-		goto errout;
+		goto dlerr;
 	}
 	if (load_state != registered) {
 		retval = EPERM;
 		LogCrit(COMPONENT_INIT,
 			"Could not execute symbol fsal_init"
 			" from module:%s Error:%s", path, dl_error);
-		goto errout;
+		goto dlerr;
 	}
 
 /* we now finish things up, doing things the module can't see */
@@ -312,7 +311,9 @@ int load_fsal(const char *name,
 	pthread_mutex_unlock(&fsal_lock);
 	return 0;
 
- errout:
+dlerr:
+	dlclose(dl);
+errout:
 	load_state = idle;
 	pthread_mutex_unlock(&fsal_lock);
 	LogMajor(COMPONENT_INIT, "Failed to load module (%s) because: %s",

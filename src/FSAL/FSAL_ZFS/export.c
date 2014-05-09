@@ -345,7 +345,15 @@ fsal_status_t zfs_create_export(struct fsal_module *fsal_hdl,
 		LogCrit(COMPONENT_FSAL, "This module is not stackable");
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	}
-
+	retval = load_config_from_node(parse_node,
+				       &export_param,
+				       &libargs,
+				       true,
+				       &err_type);
+	if (retval != 0) {
+		return fsalstat(ERR_FSAL_INVAL, 0);
+		goto errout;
+	}
 	myself = gsh_calloc(1, sizeof(struct zfs_fsal_export));
 	if (myself == NULL) {
 		LogMajor(COMPONENT_FSAL,
@@ -363,15 +371,6 @@ fsal_status_t zfs_create_export(struct fsal_module *fsal_hdl,
 	/* lock myself before attaching to the fsal.
 	 * keep myself locked until done with creating myself.
 	 */
-	retval = load_config_from_node(parse_node,
-				       &export_param,
-				       &libargs,
-				       true,
-				       &err_type);
-	if (retval != 0) {
-		fsal_error = ERR_FSAL_INVAL;
-		goto errout;
-	}
 
 	pthread_mutex_lock(&myself->export.lock);
 	retval = fsal_attach_export(fsal_hdl, &myself->export.exports);

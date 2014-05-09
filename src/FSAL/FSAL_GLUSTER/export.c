@@ -566,7 +566,11 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	struct glusterfs_export *glfsexport = NULL;
 	glfs_t *fs = NULL;
-	struct glexport_params params;
+	struct glexport_params params = {
+		.glvolname = NULL,
+		.glhostname = NULL,
+		.glvolpath = NULL,
+		.glfs_log = NULL};
 	int/*  oplen = 0, */ export_inited = 0;
 
 	LogDebug(COMPONENT_FSAL, "In args: export path = %s",

@@ -747,7 +747,7 @@ static bool gsh_export_addexport(DBusMessageIter *args,
 	int rc;
 	bool retval = true;
 	char *file_path = NULL;
-	config_file_t config_struct;
+	config_file_t config_struct = NULL;
 	struct config_error_type err_type;
 	DBusMessageIter iter;
 	char *err_detail = NULL;

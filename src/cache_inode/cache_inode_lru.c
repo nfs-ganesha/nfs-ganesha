@@ -1007,15 +1007,16 @@ cache_inode_lru_pkginit(void)
 			}
 		}
 		if (rlim.rlim_cur == RLIM_INFINITY) {
-			FILE * const nr_open = fopen("/proc/sys/fs/nr_open",
-						    "r");
-			if (!
-			    (nr_open
-			     &&
-			     (fscanf
-			      (nr_open, "%" SCNu32 "\n",
-			       &lru_state.fds_system_imposed) == 1)
-			     && (fclose(nr_open) == 0))) {
+			FILE *nr_open;
+
+			nr_open = fopen("/proc/sys/fs/nr_open", "r");
+			if (nr_open == NULL) {
+				code = errno;
+				goto err_open;
+			}
+			code = fscanf(nr_open, "%" SCNu32 "\n",
+				      &lru_state.fds_system_imposed);
+			if (code != 1) {
 				code = errno;
 				LogMajor(COMPONENT_CACHE_INODE_LRU,
 					 "The rlimit on open file descriptors "
@@ -1036,6 +1037,9 @@ cache_inode_lru_pkginit(void)
 				lru_state.fds_system_imposed =
 				    FD_FALLBACK_LIMIT;
 			}
+			fclose(nr_open);
+err_open:
+			;
 		} else {
 			lru_state.fds_system_imposed = rlim.rlim_cur;
 		}
