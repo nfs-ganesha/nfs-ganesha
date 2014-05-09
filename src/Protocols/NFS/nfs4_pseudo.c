@@ -56,6 +56,123 @@ struct pseudofs_state {
 	struct req_op_context *req_ctx;
 };
 
+/**
+ * @brief Delete the unecessary directories from pseudo FS
+ *
+ * @param token [IN] full path of the node
+ * @param token [IN] cache entry for the last directory in the path
+ * If this entry is present is pseudo FSAL, and is unnecessary, then remove it.
+ * Check recursively if the parent entry is needed.
+ *
+ * Must be called with additional ref on the entry.
+ * This routin will put one ref on entry.
+ */
+bool cleanup_pseudofs_node(const char *pseudopath, cache_entry_t *entry)
+{
+	struct gsh_export *node_exp;
+	cache_entry_t *parent_entry;
+	char *parent_pseudopath;
+	char *last_slash;
+	char *p;
+	char *name;
+	struct root_op_context root_op_context;
+	int pseudopath_len = strlen(pseudopath);
+	cache_inode_status_t cache_status;
+	bool retval = true;
+
+	assert(entry->type == DIRECTORY);
+
+	if (pseudopath_len == 0)
+		goto out;
+
+	node_exp = (struct gsh_export *)
+			atomic_fetch_voidptr(&entry->first_export);
+	if (strcmp(node_exp->export.export_hdl->fsal->name, "PSEUDO") != 0) {
+		/* Junction is NOT in FSAL_PSEUDO */
+		goto out;
+	}
+
+	/* Make a copy of the path */
+	parent_pseudopath = alloca(pseudopath_len + 1);
+	strcpy(parent_pseudopath, pseudopath);
+
+	/* Find last '/' in path */
+	p = parent_pseudopath;
+	last_slash = parent_pseudopath;
+	while (*p != '\0') {
+		if (*p == '/')
+			last_slash = p;
+		p++;
+	}
+	/* Terminate path leading to junction. */
+	*last_slash = '\0';
+	name = last_slash + 1;
+
+	LogDebug(COMPONENT_EXPORT,
+		 "Checking if pseudo node is needed: %s", pseudopath);
+
+	/* Get attr_lock for looking at junction_export */
+	PTHREAD_RWLOCK_rdlock(&entry->attr_lock);
+
+	/**
+	 * entry is needed if:
+	 * It has active children
+	 * OR is a junction
+	 * OR is pseudo root "/"
+	 */
+	if (entry->object.dir.nbactive > 0 ||
+	    entry->object.dir.junction_export != NULL ||
+	    entry == node_exp->export.exp_root_cache_inode) {
+		/* This node is needed */
+		LogInfo(COMPONENT_EXPORT,
+			 "Pseudo node is needed : %s", name);
+
+		/* Release attr_lock */
+		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+		goto out;
+	}
+
+	/* Release attr_lock */
+	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+
+	/* Delete the current entry */
+	LogInfo(COMPONENT_EXPORT,
+		 "Removing pseudo node: %s", name);
+
+	/* Initialize req_ctx */
+	init_root_op_context(&root_op_context, node_exp,
+				node_exp->export.export_hdl,
+				NFS_V4, 0, NFS_REQUEST);
+
+	parent_entry = cache_inode_get_keyed(&entry->object.dir.parent,
+					     &root_op_context.req_ctx,
+					     CIG_KEYED_FLAG_CACHED_ONLY,
+					     &cache_status);
+
+	if (cache_status != CACHE_INODE_SUCCESS) {
+		retval = false;
+		goto out;
+	}
+
+	cache_status = cache_inode_remove(parent_entry, name,
+					  &root_op_context.req_ctx);
+	if (cache_status != CACHE_INODE_SUCCESS) {
+		LogCrit(COMPONENT_EXPORT,
+			"Removing pseudo node failed for node name : %s",
+			name);
+		retval = false;
+		cache_inode_put(parent_entry);
+		goto out;
+	}
+
+	/* check if its parent is needed */
+	retval = cleanup_pseudofs_node(parent_pseudopath, parent_entry);
+
+out:
+	cache_inode_put(entry);
+	return retval;
+}
+
 bool make_pseudofs_node(char *name, void *arg)
 {
 	struct pseudofs_state *state = arg;
@@ -422,16 +539,22 @@ void pseudo_unmount_export(struct gsh_export *exp,
 	/* Detach the export from the export it's mounted on */
 	export->exp_parent_exp = NULL;
 
+	/* Remove the unused pseudofs nodes
+	 * Need to take addtional ref for cleanup_pseudofs_node
+	 */
+	cache_inode_lru_ref(junction_inode, LRU_FLAG_NONE);
+	if (!cleanup_pseudofs_node(export->pseudopath, junction_inode)) {
+		LogCrit(COMPONENT_EXPORT,
+			"pseudofs node cleanup failed for path: %s",
+			export->pseudopath);
+	}
+
 	/* Release the pin reference */
 	cache_inode_dec_pin_ref(junction_inode, false);
 
 	/* Release our reference to the export we are mounted on. */
 	if (mounted_on_export != NULL)
 		put_gsh_export(mounted_on_export);
-
-	/** @todo if junction is in FSAL_PSEUDO, remove all the directories
-	 *        leading to it that are otherwise unecessary.
-	 */
 
 out:
 
