@@ -111,9 +111,17 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
                  */
                 realpath = malloc(strlen(glfs_export->mount_path));
                 if (realpath) {
-                        strcpy(realpath, glfs_export->export_path);
-                        strcpy(realpath+strlen(glfs_export->export_path),
-                                &path[strlen(glfs_export->mount_path)]);
+                        /*
+                         * Handle the case wherein glfs_export->export_path
+                         * is root i.e, '/' separately.
+                         */
+                        if (strlen(glfs_export->export_path) != 1) {
+                                strcpy(realpath, glfs_export->export_path);
+                                strcpy(realpath+strlen(glfs_export->export_path),
+                                        &path[strlen(glfs_export->mount_path)]);
+                        } else {
+                                strcpy(realpath, &path[strlen(glfs_export->mount_path)]);
+                        }
                 }
         }
         if (!realpath) {
@@ -135,7 +143,7 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 	}
 
 	rc = glfs_get_volumeid(glfs_export->gl_fs, vol_uuid, GLAPI_UUID_LENGTH);
-	if (rc != 0) {
+	if (rc < 0) {
 		status = gluster2fsal_error(rc);
 		goto out;
 	}
@@ -242,7 +250,7 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 	}
 
 	rc = glfs_get_volumeid(glfs_export->gl_fs, vol_uuid, GLAPI_UUID_LENGTH);
-	if (rc != 0) {
+	if (rc < 0) {
 		status = gluster2fsal_error(rc);
 		goto out;
 	}
