@@ -94,7 +94,8 @@ int nfs4_op_renew(struct nfs_argop4 *op, compound_data_t *data,
 		/* update the lease, check the state of callback path and return
 		 * correct error
 		 */
-		if (clientid->cb_chan_down)
+		if (nfs_param.nfsv4_param.allow_delegations &&
+		    clientid->cb_chan_down)
 			res_RENEW4->status = NFS4ERR_CB_PATH_DOWN;
 		else
 			res_RENEW4->status = NFS4_OK;

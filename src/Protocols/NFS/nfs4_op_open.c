@@ -156,7 +156,7 @@ static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	candidate_data.share.share_access =
-	    args->share_access & ~OPEN4_SHARE_ACCESS_WANT_DELEG_MASK;
+	    args->share_access & OPEN4_SHARE_ACCESS_BOTH;
 	candidate_data.share.share_deny = args->share_deny;
 	candidate_data.share.share_access_prev = 0;
 	candidate_data.share.share_deny_prev = 0;
@@ -909,7 +909,7 @@ static void get_delegation(compound_data_t *data, struct nfs_argop4 *op,
 
 	/* Check for conflict. */
 	candidate_data.share.share_access =
-	    args->share_access & ~OPEN4_SHARE_ACCESS_WANT_DELEG_MASK;
+	    args->share_access & OPEN4_SHARE_ACCESS_BOTH;
 	candidate_data.share.share_deny = args->share_deny;
 	candidate_data.share.share_access_prev = 0;
 	candidate_data.share.share_deny_prev = 0;
@@ -1036,7 +1036,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 	 */
 	cache_entry_t *entry_change = NULL;
 	/* Open flags to be passed to the FSAL */
-	fsal_openflags_t openflags = 0;
+	fsal_openflags_t openflags;
 	/* The found client record */
 	nfs_client_id_t *clientid = NULL;
 	/* The found or created state owner for this open */
@@ -1195,17 +1195,6 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 			 "Invalid SHARE_ACCESS or SHARE_DENY");
 		goto out;
 	}
-
-	/* Set openflags. */
-	if ((arg_OPEN4->share_access & OPEN4_SHARE_ACCESS_BOTH) ==
-	    OPEN4_SHARE_ACCESS_BOTH)
-		openflags = FSAL_O_RDWR;
-	else if ((arg_OPEN4->share_access & OPEN4_SHARE_ACCESS_BOTH) ==
-		   OPEN4_SHARE_ACCESS_READ)
-		openflags = FSAL_O_READ;
-	else if ((arg_OPEN4->share_access & OPEN4_SHARE_ACCESS_BOTH) ==
-		   OPEN4_SHARE_ACCESS_WRITE)
-		openflags = FSAL_O_WRITE;
 
 	/* Set the current entry to the file to be opened */
 	switch (claim) {
@@ -1383,15 +1372,19 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 		goto out;
 	}
 
-	/* Set the openflags variable */
-	if (arg_OPEN4->share_deny & OPEN4_SHARE_DENY_WRITE)
-		openflags |= FSAL_O_READ;
-
-	if (arg_OPEN4->share_deny & OPEN4_SHARE_DENY_READ)
-		openflags |= FSAL_O_WRITE;
-
-	if (arg_OPEN4->share_access & OPEN4_SHARE_ACCESS_WRITE)
+	/* Set openflags. */
+	switch (arg_OPEN4->share_access & OPEN4_SHARE_ACCESS_BOTH) {
+	case OPEN4_SHARE_ACCESS_READ:
+		openflags = FSAL_O_READ;
+		break;
+	case OPEN4_SHARE_ACCESS_WRITE:
+		/* clients may read as well due to buffer cache constraints */
+		/* Fallthrough */
+	case OPEN4_SHARE_ACCESS_BOTH:
+	default:
 		openflags = FSAL_O_RDWR;
+		break;
+	}
 
 	if (arg_OPEN4->claim.claim)
 		openflags = FSAL_O_RECLAIM;
@@ -1459,7 +1452,8 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 
 	pthread_mutex_lock(&clientid->cid_mutex);
 	/* Decide if we should delegate, then add it. */
-	if (data->current_entry->type != DIRECTORY
+	if (nfs_param.nfsv4_param.allow_delegations &&
+	    data->current_entry->type != DIRECTORY
 	    && data->export->export_hdl->ops->fs_supports(
 						data->export->export_hdl,
 						fso_delegations)

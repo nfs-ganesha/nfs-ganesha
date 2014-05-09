@@ -320,16 +320,12 @@ fsal_status_t GPFSFSAL_mknode(struct fsal_obj_handle *dir_hdl,	/* IN */
 	fsal_status_t status;
 	mode_t unix_mode = 0;
 	dev_t unix_dev = 0;
-	struct gpfs_fsal_obj_handle *gpfs_hdl;
 
 	/* sanity checks.
 	 * note : link_attributes is optional.
 	 */
 	if (!dir_hdl || !p_context || !p_node_name)
 		return fsalstat(ERR_FSAL_FAULT, 0);
-
-	gpfs_hdl =
-	    container_of(dir_hdl, struct gpfs_fsal_obj_handle, obj_handle);
 
 	unix_mode = fsal2unix_mode(accessmode);
 
@@ -380,7 +376,7 @@ fsal_status_t GPFSFSAL_mknode(struct fsal_obj_handle *dir_hdl,	/* IN */
 
 		status = GPFSFSAL_getattrs(p_context->fsal_export,
 					   dir_hdl->fs->private,
-					   p_context, gpfs_hdl->handle,
+					   p_context, p_object_handle,
 					   node_attributes);
 
 		/* on error, we set a special bit in the mask. */

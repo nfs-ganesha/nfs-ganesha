@@ -233,13 +233,9 @@ bool state_conflict(state_t *state, state_type_t state_type,
 			if (candidate_data->deleg.sd_type
 			    == OPEN_DELEGATE_WRITE
 			    && state->state_data.share.share_access
-			    & OPEN4_SHARE_ACCESS_READ)
+			    & OPEN4_SHARE_ACCESS_WRITE)
 				return true;
 		}
-		if (state->state_type == STATE_TYPE_LOCK)
-			;
-		if (state->state_type == STATE_TYPE_LAYOUT)
-			;
 	}
 	return false;
 }
@@ -306,7 +302,8 @@ state_status_t state_add_impl(cache_entry_t *entry, state_type_t state_type,
 	    && (!glist_empty(&entry->object.file.deleg_list)))
 		glist_for_each_safe(glist, glistn,
 				    &entry->object.file.deleg_list) {
-		piter_lock = glist_entry(glist, state_lock_entry_t, sle_list);
+			piter_lock = glist_entry(glist, state_lock_entry_t,
+						 sle_list);
 			piter_state = piter_lock->sle_state;
 			if (piter_lock->sle_type != LEASE_LOCK) {
 				LogDebug(COMPONENT_STATE, "Wrong lock type");

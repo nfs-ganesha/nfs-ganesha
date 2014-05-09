@@ -1307,6 +1307,12 @@ state_status_t delegrecall_upcall(struct fsal_module *fsal,
 	cache_entry_t *entry = NULL;
 	state_status_t rc = 0;
 
+	if (!nfs_param.nfsv4_param.allow_delegations) {
+		LogCrit(COMPONENT_FSAL_UP,
+			"BUG: Got BREAK_DELEGATION: upcall when delegations are disabled, ignoring");
+		return STATE_SUCCESS;
+	}
+
 	rc = cache_inode_status_to_state_status(up_get(fsal, handle, &entry));
 	if (rc != STATE_SUCCESS) {
 		LogDebug(COMPONENT_FSAL_UP,

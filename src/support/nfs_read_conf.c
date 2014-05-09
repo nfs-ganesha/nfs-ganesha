@@ -219,7 +219,7 @@ struct config_block krb5_param = {
 };
 #endif
 
-#ifdef USE_NFS_IDMAP
+#ifdef USE_NFSIDMAP
 #define GETPWNAMDEF false
 #else
 #define GETPWNAMDEF true
@@ -243,9 +243,11 @@ static struct config_item version4_params[] = {
 	CONF_ITEM_PATH("IdmapConf", 1, MAXPATHLEN, "/etc/idmapd.conf",
 		       nfs_version4_parameter, idmapconf),
 	CONF_ITEM_BOOL("UseGetpwnam", GETPWNAMDEF,
-		       nfs_version4_parameter, idmapconf),
+		       nfs_version4_parameter, use_getpwnam),
 	CONF_ITEM_BOOL("Allow_Numeric_Owners", true,
 		       nfs_version4_parameter, allow_numeric_owners),
+	CONF_ITEM_BOOL("Delegations", false,
+		       nfs_version4_parameter, allow_delegations),
 	CONFIG_EOL
 };
 

@@ -95,7 +95,7 @@ is_open_for_write(cache_entry_t *entry)
 	if ((entry == NULL) || (entry->type != REGULAR_FILE))
 		return false;
 	openflags = entry->obj_handle->ops->status(entry->obj_handle);
-	return ((openflags == FSAL_O_RDWR) || (openflags == FSAL_O_WRITE));
+	return openflags & FSAL_O_WRITE;
 }
 
 /**
@@ -116,7 +116,7 @@ bool is_open_for_read(cache_entry_t *entry)
 	if ((entry == NULL) || (entry->type != REGULAR_FILE))
 		return false;
 	openflags = entry->obj_handle->ops->status(entry->obj_handle);
-	return ((openflags == FSAL_O_RDWR) || (openflags == FSAL_O_READ));
+	return openflags & FSAL_O_READ;
 }
 
 /**
@@ -278,12 +278,10 @@ cache_inode_close(cache_entry_t *entry, uint32_t flags)
 
 	/* If nothing is opened, do nothing */
 	if (!is_open(entry)) {
-		if (!(flags & CACHE_INODE_FLAG_CONTENT_HOLD))
-			PTHREAD_RWLOCK_unlock(&entry->content_lock);
 		LogFullDebug(COMPONENT_CACHE_INODE, "Entry %p File not open",
 			     entry);
 		status = CACHE_INODE_SUCCESS;
-		return status;
+		goto unlock;
 	}
 
 	/* If file is pinned, do not close it.  This should
@@ -329,6 +327,72 @@ unlock:
 
 out:
 	return status;
+}
+
+/**
+ * @brief adjust open flags of a file
+ *
+ * This function adjusts the current mode of open flags by doing reopen.
+ * If all open states that need write access are gone, this function
+ * will do reopen and remove the write open flag by calling FSAL's
+ * reopen method if present.
+ *
+ * @param[in]  entry  Cache entry to adjust open flags @param[in]
+ * req_ctx Current request context.
+ *
+ * entry->state_lock should be held while calling this.
+ *
+ * NOTE: This currently adjusts only the write mode open flag!
+ */
+void cache_inode_adjust_openflags(cache_entry_t *entry,
+				  struct req_op_context *req_ctx)
+{
+	struct fsal_export *fsal_export = req_ctx->fsal_export;
+	struct fsal_obj_handle *obj_hdl;
+	fsal_openflags_t openflags;
+	fsal_status_t fsal_status;
+
+	if (entry->type != REGULAR_FILE) {
+		LogFullDebug(COMPONENT_CACHE_INODE,
+			     "Entry %p File not a REGULAR_FILE", entry);
+		return;
+	}
+
+	/*
+	 * If the file needs to be in write mode, we shouldn't downgrage.
+	 * If the fsal doesn't support reopen method, we can't downgrade.
+	 */
+	if (entry->object.file.share_state.share_access_write > 0 ||
+	    !fsal_export->ops->fs_supports(fsal_export, fso_reopen_method))
+		return;
+
+	obj_hdl = entry->obj_handle;
+	PTHREAD_RWLOCK_wrlock(&entry->content_lock);
+	openflags = obj_hdl->ops->status(obj_hdl);
+	if (!(openflags & FSAL_O_WRITE)) /* nothing to downgrade */
+		goto unlock;
+
+	/*
+	 * Open or a reopen requires either a WRITE or a READ mode flag.
+	 * If the file is not already opened with READ mode, then we
+	 * can't downgrade, but the file will eventually be closed later
+	 * as no other NFSv4 open (or NFSv4 anonymous read) can race
+	 * as cache inode entry's state lock is held until we close the
+	 * file.
+	 */
+	if (!(openflags & FSAL_O_READ))
+		goto unlock;
+
+	openflags &= ~FSAL_O_WRITE;
+	fsal_status = obj_hdl->ops->reopen(obj_hdl, req_ctx, openflags);
+	if (FSAL_IS_ERROR(fsal_status)) {
+		LogWarn(COMPONENT_CACHE_INODE,
+			"fsal reopen method returned: %d(%d)",
+			fsal_status.major, fsal_status.minor);
+	}
+
+unlock:
+	PTHREAD_RWLOCK_unlock(&entry->content_lock);
 }
 
 /** @} */
