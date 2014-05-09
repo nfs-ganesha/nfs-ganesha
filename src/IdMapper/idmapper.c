@@ -153,7 +153,7 @@ int uid2name(char *name, uid_t * puid, size_t namesize)
       rc = nfs4_uid_to_name(*puid, idmap_domain, name, namesize);
       if(rc != 0)
         {
-          LogCrit(COMPONENT_IDMAPPER,
+          LogDebug(COMPONENT_IDMAPPER,
                    "uid2name: nfs4_uid_to_name %u returned %d (%s)",
                    *puid, -rc, strerror(-rc));
           goto v3compat;
@@ -637,7 +637,7 @@ int gid2name(char *name, gid_t * pgid, size_t namesize)
       rc = nfs4_gid_to_name(*pgid, idmap_domain, name, namesize);
       if(rc != 0)
         {
-          LogInfo(COMPONENT_IDMAPPER,
+          LogDebug(COMPONENT_IDMAPPER,
                    "gid2name: nfs4_gid_to_name %u returned %d (%s)",
                    *pgid, -rc, strerror(-rc));
           goto v3compat;
