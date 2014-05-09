@@ -296,8 +296,7 @@ void nfs_set_client_location(nfs_client_id_t *clientid,
 static inline int32_t nfs_clid_connected_socket(nfs_client_id_t *clientid,
 						int *fd, int *proto)
 {
-	struct sockaddr_in *sin;
-	struct sockaddr_in6 *sin6;
+	int domain, sock_type, protocol, sock_size;
 	int nfd, code = 0;
 
 	assert(clientid->cid_minorversion == 0);
@@ -305,62 +304,53 @@ static inline int32_t nfs_clid_connected_socket(nfs_client_id_t *clientid,
 	*fd = 0;
 	*proto = -1;
 
-	switch (clientid->cid_cb.v40.cb_addr.ss.ss_family) {
-	case AF_INET:
-		sin = (struct sockaddr_in *)&clientid->cid_cb.v40.cb_addr.ss;
-		switch (clientid->cid_cb.v40.cb_addr.nc) {
-		case _NC_TCP:
-			nfd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
-			*proto = IPPROTO_TCP;
-			break;
-		case _NC_UDP:
-			nfd = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
-			*proto = IPPROTO_UDP;
-			break;
-		default:
-			code = EINVAL;
-			goto out;
-			break;
-		}
-
-		code = connect(nfd, (struct sockaddr *)sin,
-			       sizeof(struct sockaddr_in));
-		if (code == -1) {
-			LogWarn(COMPONENT_NFS_CB, "connect fail errno %d",
-				errno);
-			goto out;
-		}
-		*fd = nfd;
+	switch (clientid->cid_cb.v40.cb_addr.nc) {
+	case _NC_TCP:
+	case _NC_TCP6:
+		sock_type = SOCK_STREAM;
+		protocol = IPPROTO_TCP;
 		break;
-	case AF_INET6:
-		sin6 = (struct sockaddr_in6 *)&clientid->cid_cb.v40.cb_addr.ss;
-		switch (clientid->cid_cb.v40.cb_addr.nc) {
-		case _NC_TCP6:
-			nfd = socket(PF_INET6, SOCK_STREAM, IPPROTO_TCP);
-			*proto = IPPROTO_TCP;
-			break;
-		case _NC_UDP6:
-			nfd = socket(PF_INET6, SOCK_DGRAM, IPPROTO_UDP);
-			*proto = IPPROTO_UDP;
-			break;
-		default:
-			code = EINVAL;
-			goto out;
-			break;
-		}
-		code = connect(nfd, (struct sockaddr *)sin6,
-			       sizeof(struct sockaddr_in6));
-		if (code == -1) {
-			LogWarn(COMPONENT_NFS_CB, "connect fail errno %d",
-				errno);
-			goto out;
-		}
-		*fd = nfd;
+	case _NC_UDP6:
+	case _NC_UDP:
+		sock_type = SOCK_DGRAM;
+		protocol = IPPROTO_UDP;
 		break;
 	default:
 		code = EINVAL;
-		break;
+		goto out;
 	}
+	switch (clientid->cid_cb.v40.cb_addr.ss.ss_family) {
+	case AF_INET:
+		domain = PF_INET;
+		sock_size = sizeof(struct sockaddr_in);
+		break;
+	case AF_INET6:
+		domain = PF_INET6;
+		sock_size = sizeof(struct sockaddr_in6);
+		break;
+	default:
+		code = EINVAL;
+		goto out;
+	}
+	nfd = socket(domain, sock_type, protocol);
+	if (nfd < 0) {
+		code = errno;
+		LogWarn(COMPONENT_NFS_CB,
+			"socket failed %d (%s)", code, strerror(code));
+		goto out;
+	}
+	code = connect(nfd,
+		       (struct sockaddr *)&clientid->cid_cb.v40.cb_addr.ss,
+		       sock_size);
+	if (code < 0) {
+		code = errno;
+		LogWarn(COMPONENT_NFS_CB, "connect fail errno %d (%s)",
+			code, strerror(code));
+		close(nfd);
+		goto out;
+	}
+	*proto = protocol;
+	*fd = nfd;
 
  out:
 	return code;

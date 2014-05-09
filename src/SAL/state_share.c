@@ -806,10 +806,10 @@ state_status_t state_nlm_share(cache_entry_t *entry,
 		       &nlm_share->sns_share_per_file);
 
 	/* Add to share list for export */
-	pthread_mutex_lock(&export->exp_state_mutex);
+	export_writelock(export);
 	glist_add_tail(&export->exp_nlm_share_list,
 		       &nlm_share->sns_share_per_export);
-	pthread_mutex_unlock(&export->exp_state_mutex);
+	export_rwunlock(export);
 
 	/* Get the current union of share states of this file. */
 	old_entry_share_access = state_share_get_share_access(entry);
@@ -844,9 +844,9 @@ state_status_t state_nlm_share(cache_entry_t *entry,
 						   OPEN4_SHARE_DENY_NONE, true);
 
 			/* Remove from share list for export */
-			pthread_mutex_lock(&export->exp_state_mutex);
+			export_writelock(export);
 			glist_del(&nlm_share->sns_share_per_export);
-			pthread_mutex_unlock(&export->exp_state_mutex);
+			export_rwunlock(export);
 
 			/* Remove the share from the list for the file. If the
 			 * list is now empty also remove the extra pin ref.
@@ -1019,9 +1019,9 @@ state_status_t state_nlm_unshare(cache_entry_t *entry,
 			     removed_share_access, removed_share_deny);
 
 		/* Remove from share list for export */
-		pthread_mutex_lock(&nlm_share->sns_export->exp_state_mutex);
+		export_writelock(nlm_share->sns_export);
 		glist_del(&nlm_share->sns_share_per_export);
-		pthread_mutex_unlock(&nlm_share->sns_export->exp_state_mutex);
+		export_rwunlock(nlm_share->sns_export);
 
 		/* Remove the share from the list for the file. If the list
 		 * is now empty also remove the extra pin ref.
@@ -1082,9 +1082,9 @@ void state_share_wipe(cache_entry_t *entry)
 		owner = nlm_share->sns_owner;
 
 		/* Remove from share list for export */
-		pthread_mutex_lock(&nlm_share->sns_export->exp_state_mutex);
+		export_writelock(nlm_share->sns_export);
 		glist_del(&nlm_share->sns_share_per_export);
-		pthread_mutex_unlock(&nlm_share->sns_export->exp_state_mutex);
+		export_rwunlock(nlm_share->sns_export);
 
 		/* Remove the share from the list for the file. If the list
 		 * is now empty also remove the extra pin ref.
@@ -1130,14 +1130,14 @@ void state_export_unshare_all(struct req_op_context *req_ctx)
 	state_status_t status;
 
 	while (errcnt < STATE_ERR_MAX) {
-		pthread_mutex_lock(&export->exp_state_mutex);
+		export_writelock(export);
 
 		nlm_share = glist_first_entry(&export->exp_nlm_share_list,
 					      state_nlm_share_t,
 					      sns_share_per_export);
 
 		if (nlm_share == NULL) {
-			pthread_mutex_unlock(&export->exp_state_mutex);
+			export_rwunlock(export);
 			break;
 		}
 
@@ -1150,7 +1150,7 @@ void state_export_unshare_all(struct req_op_context *req_ctx)
 		cache_inode_lru_ref(entry, LRU_FLAG_NONE);
 
 		/* Drop the export mutex to call unshare */
-		pthread_mutex_unlock(&export->exp_state_mutex);
+		export_rwunlock(export);
 
 		/* Remove all shares held by this Owner on this export */
 		status = state_nlm_unshare(entry,

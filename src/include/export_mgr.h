@@ -70,6 +70,30 @@ struct gsh_export {
 	export_state_t state;
 };
 
+static inline void export_readlock(struct exportlist *export)
+{
+	struct gsh_export *exp;
+
+	exp = container_of(export, struct gsh_export, export);
+	pthread_rwlock_rdlock(&exp->lock);
+}
+
+static inline void export_writelock(struct exportlist *export)
+{
+	struct gsh_export *exp;
+
+	exp = container_of(export, struct gsh_export, export);
+	pthread_rwlock_wrlock(&exp->lock);
+}
+
+static inline void export_rwunlock(struct exportlist *export)
+{
+	struct gsh_export *exp;
+
+	exp = container_of(export, struct gsh_export, export);
+	pthread_rwlock_unlock(&exp->lock);
+}
+
 void export_pkginit(void);
 #ifdef USE_DBUS
 void dbus_export_init(void);

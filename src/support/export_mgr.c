@@ -589,8 +589,16 @@ void put_gsh_export(struct gsh_export *exp)
 	/* Flush cache inodes belonging to this export */
 	cache_inode_unexport(exp);
 
+	/* can we really let go or do we have unfinished business? */
+	assert(glist_empty(&exp->entry_list));
+	assert(glist_empty(&export->exp_state_list));
+	assert(glist_empty(&export->exp_lock_list));
+	assert(glist_empty(&export->exp_nlm_share_list));
+	assert(glist_null(&export->exp_root_list));
+
 	/* free resources */
 	free_export_resources(export);
+	pthread_rwlock_destroy(&exp->lock);
 	export_st = container_of(exp, struct export_stats, export);
 	server_stats_free(&export_st->st);
 	gsh_free(export_st);
@@ -739,7 +747,7 @@ static bool gsh_export_addexport(DBusMessageIter *args,
 	int rc;
 	bool retval = true;
 	char *file_path = NULL;
-	config_file_t config_struct;
+	config_file_t config_struct = NULL;
 	struct config_error_type err_type;
 	DBusMessageIter iter;
 	char *err_detail = NULL;
@@ -1226,21 +1234,16 @@ static bool get_nfsv_export_total_ops(DBusMessageIter *args,
 
 	dbus_message_iter_init_append(reply, &iter);
 	export = lookup_export(args, &errormsg);
-	if (export == NULL) {
-		success = false;
-	} else {
+	if (export != NULL) {
 		export_st = container_of(export, struct export_stats, export);
-		if (export_st == NULL) {
-			success = false;
-			errormsg = "Export does not have any activity";
-		}
-	}
-	dbus_status_reply(&iter, success, errormsg);
-	if (success)
+		dbus_status_reply(&iter, success, errormsg);
 		server_dbus_total_ops(export_st, &iter);
-
-	if (export != NULL)
 		put_gsh_export(export);
+	} else {
+		success = false;
+		errormsg = "Export does not have any activity";
+		dbus_status_reply(&iter, success, errormsg);
+	}
 	return true;
 }
 

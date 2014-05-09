@@ -560,10 +560,10 @@ static state_lock_entry_t *create_state_lock_entry(cache_entry_t *entry,
 	}
 
 	/* Add to list of locks owned by export */
-	pthread_mutex_lock(&export->exp_state_mutex);
+	export_writelock(export);
 	glist_add_tail(&export->exp_lock_list,
 		       &new_entry->sle_export_locks);
-	pthread_mutex_unlock(&export->exp_state_mutex);
+	export_rwunlock(export);
 
 	/* Add to list of locks owned by owner */
 	inc_state_owner_ref(owner);
@@ -701,9 +701,9 @@ static void remove_from_locklist(state_lock_entry_t *lock_entry)
 		}
 
 		/* Remove from list of locks owned by export */
-		pthread_mutex_lock(&lock_entry->sle_export->exp_state_mutex);
+		export_writelock(lock_entry->sle_export);
 		glist_del(&lock_entry->sle_export_locks);
-		pthread_mutex_unlock(&lock_entry->sle_export->exp_state_mutex);
+		export_rwunlock(lock_entry->sle_export);
 
 		/* Remove from list of locks owned by owner */
 		pthread_mutex_lock(&owner->so_mutex);
@@ -3420,7 +3420,7 @@ void state_export_unlock_all(struct req_op_context *req_ctx)
 
 	/* Only accept so many errors before giving up. */
 	while (errcnt < STATE_ERR_MAX) {
-		pthread_mutex_lock(&export->exp_state_mutex);
+		export_writelock(export);
 
 		/* We just need to find any file this owner has locks on.
 		 * We pick the first lock the owner holds, and use it's file.
@@ -3431,7 +3431,7 @@ void state_export_unlock_all(struct req_op_context *req_ctx)
 
 		/* If we don't find any entries, then we are done. */
 		if (found_entry == NULL) {
-			pthread_mutex_unlock(&export->exp_state_mutex);
+			export_rwunlock(export);
 			break;
 		}
 
@@ -3444,7 +3444,7 @@ void state_export_unlock_all(struct req_op_context *req_ctx)
 		glist_add_tail(&export->exp_lock_list,
 			       &found_entry->sle_export_locks);
 
-		pthread_mutex_unlock(&export->exp_state_mutex);
+		export_rwunlock(export);
 
 		/* Extract the cache inode entry from the lock entry and
 		 * release the lock entry

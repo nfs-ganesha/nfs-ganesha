@@ -585,6 +585,7 @@ static int fsal_commit(void *node, void *link_mem, void *self_struct,
 	if (fp->name == NULL || strlen(fp->name) == 0) {
 		LogCrit(COMPONENT_CONFIG,
 			"Name of FSAL is empty");
+		err_type->missing = true;
 		errcnt++;
 		goto err;
 	}
@@ -700,12 +701,11 @@ static void *export_init(void *link_mem, void *self_struct)
 		exp = alloc_exportlist();
 		if (exp == NULL)
 			return NULL;
-		glist_init(&exp->exp_list);
 		return exp;
 	} else { /* free resources case */
 		exp = self_struct;
 
-		assert(glist_empty(&exp->exp_list));
+		assert(glist_null(&exp->exp_list));
 		free_exportlist(exp);
 		return NULL;
 	}
@@ -828,15 +828,7 @@ static int export_commit(void *node, void *link_mem, void *self_struct,
 	glist_init(&exp->exp_state_list);
 	glist_init(&exp->exp_lock_list);
 	glist_init(&exp->exp_nlm_share_list);
-	glist_init(&exp->exp_root_list);
-	if (pthread_mutex_init(&exp->exp_state_mutex, NULL) == -1) {
-		LogCrit(COMPONENT_CONFIG,
-			"Cannot initialize state mutex for export %d",
-			exp->id);
-		err_type->resource = true;
-		errcnt++;
-		goto err_out;
-	}
+
 	/* now probe the fsal and init it */
 	/* pass along the block that is/was the FS_Specific */
 	export = insert_gsh_export(exp);
@@ -846,7 +838,7 @@ static int export_commit(void *node, void *link_mem, void *self_struct,
 			exp->id);
 		err_type->exists = true;
 		errcnt++;
-		goto err_fsal;
+		goto err_out;
 	}
 
 	StrExportOptions(&exp->export_perms, perms);
@@ -857,9 +849,6 @@ static int export_commit(void *node, void *link_mem, void *self_struct,
 	set_gsh_export_state(export, EXPORT_READY);
 	put_gsh_export(export);
 	return 0;
-
-err_fsal:
-	pthread_mutex_destroy(&exp->exp_state_mutex);
 
 err_out:
 	return errcnt;
@@ -1287,11 +1276,6 @@ static int build_default_root(void)
 			"Could not allocate space for pseudoroot export");
 		return -1;
 	}
-	if (pthread_mutex_init(&p_entry->exp_state_mutex, NULL) == -1) {
-		LogCrit(COMPONENT_CONFIG,
-			"Could not initialize exp_state_mutex for export id 0");
-		goto err_out;
-	}
 
 	p_entry->UseCookieVerifier = true;
 	p_entry->filesystem_id.major = 152;
@@ -1305,7 +1289,6 @@ static int build_default_root(void)
 	glist_init(&p_entry->exp_state_list);
 	glist_init(&p_entry->exp_lock_list);
 	glist_init(&p_entry->exp_nlm_share_list);
-	glist_init(&p_entry->exp_root_list);
 	glist_init(&p_entry->clients);
 
 	/* Default anonymous uid and gid */
@@ -1658,7 +1641,7 @@ void release_export_root_locked(struct gsh_export *exp)
 
 	if (entry != NULL) {
 		/* Allow this entry to be removed (unlink) */
-		atomic_dec_int32_t(&entry->exp_root_refcount);
+		(void)atomic_dec_int32_t(&entry->exp_root_refcount);
 
 		/* Release the pin reference */
 		cache_inode_dec_pin_ref(entry, false);

@@ -42,6 +42,7 @@
 #include "cache_inode_lru.h"
 #include "fsal_convert.h"
 #include "nfs_creds.h"
+#include "export_mgr.h"
 
 static const char *open_tag = "OPEN";
 
@@ -222,10 +223,10 @@ static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t *data,
 
 		/* Attach this open to an export */
 		file_state->state_export = data->export;
-		pthread_mutex_lock(&data->export->exp_state_mutex);
+		export_writelock(data->export);
 		glist_add_tail(&data->export->exp_state_list,
 			       &file_state->state_export_list);
-		pthread_mutex_unlock(&data->export->exp_state_mutex);
+		export_rwunlock(data->export);
 	} else {
 		/* Check if open from another export */
 		if (file_state->state_export != data->export) {
@@ -942,10 +943,11 @@ static void get_delegation(compound_data_t *data, struct nfs_argop4 *op,
 
 		/* Attach this open to an export */
 		new_state->state_export = data->export;
-		pthread_mutex_lock(&data->export->exp_state_mutex);
+
+		export_writelock(data->export);
 		glist_add_tail(&data->export->exp_state_list,
 			       &new_state->state_export_list);
-		pthread_mutex_unlock(&data->export->exp_state_mutex);
+		export_rwunlock(data->export);
 
 
 		/* PTHREAD_RWLOCK_unlock(&data->current_entry->state_lock); */

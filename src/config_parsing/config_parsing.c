@@ -1402,6 +1402,8 @@ int load_config_from_parse(config_file_t config,
 			 cum_errs,
 			 errstr != NULL ? errstr : "unknown",
 			 blkname);
+		if (errstr != NULL)
+			gsh_free(errstr);
 	}
 	return found;
 }

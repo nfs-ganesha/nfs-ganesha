@@ -642,6 +642,7 @@ static int fridgethr_spawn(struct fridgethr *fr,
 
 	if (fe != NULL)
 		gsh_free(fe);
+	PTHREAD_MUTEX_unlock(&fr->mtx);
 
 	return rc;
 }

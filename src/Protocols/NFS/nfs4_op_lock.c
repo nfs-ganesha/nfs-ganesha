@@ -36,6 +36,7 @@
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
 #include "ganesha_list.h"
+#include "export_mgr.h"
 
 static const char *lock_tag = "LOCK";
 
@@ -497,12 +498,12 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 		/* Attach this lock to an export */
 		lock_state->state_export = data->export;
 
-		pthread_mutex_lock(&data->export->exp_state_mutex);
+		export_writelock(data->export);
 
 		glist_add_tail(&data->export->exp_state_list,
 			       &lock_state->state_export_list);
 
-		pthread_mutex_unlock(&data->export->exp_state_mutex);
+		export_rwunlock(data->export);
 
 		/* Add lock state to the list of lock states belonging
 		   to the open state */
