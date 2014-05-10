@@ -503,6 +503,7 @@ nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
 
 			if (arg->dispose) {
 				state_status = state_delete_segment(g);
+				seg_locked = false;
 				if (state_status != STATE_SUCCESS) {
 					nfs_status =
 					    nfs4_Errno_state(state_status);
