@@ -74,7 +74,7 @@ typedef int (*xattr_setfunc_t) (struct fsal_obj_handle *, /* object handle */
 				void *arg);	/* optionnal argument */
 
 struct fsal_xattr_def {
-	char xattr_name[MAXNAMLEN];
+	char xattr_name[MAXNAMLEN+1];
 	xattr_getfunc_t get_func;
 	xattr_setfunc_t set_func;
 	int flags;
@@ -398,7 +398,13 @@ fsal_status_t lustre_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
 
 			/* fills an xattr entry */
 			xattrs_tab[out_index].xattr_id = index;
-			strncpy(xattrs_tab[out_index].xattr_name, ptr, len + 1);
+			/*
+			 * We probably ought to check if len is greater
+			 * than MAXNAMLEN ? Should be safe depending on
+			 * underlying FS...
+			 */
+			strncpy(xattrs_tab[out_index].xattr_name, ptr,
+				MAXNAMLEN);
 			xattrs_tab[out_index].xattr_cookie = index + 1;
 
 			/* set asked attributes (all supported) */
