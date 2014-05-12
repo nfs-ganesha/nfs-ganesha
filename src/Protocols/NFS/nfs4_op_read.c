@@ -283,11 +283,6 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 			break;
 
 		case STATE_TYPE_DELEG:
-			state_open = NULL;
-			/**
-			 * @todo FSF: should check that this is a read
-			 * delegation?
-			 */
 			break;
 
 		default:
@@ -300,7 +295,8 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 
 		/* This is a read operation, this means that the file
 		   MUST have been opened for reading */
-		if (state_open != NULL
+		if (state_found->state_type != STATE_TYPE_DELEG
+		    && state_open != NULL
 		    && (state_open->state_data.share.
 			share_access & OPEN4_SHARE_ACCESS_READ) == 0) {
 			/* Even if file is open for write, the client
@@ -341,11 +337,10 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 				return res_READ4->status;
 			}
 			break;
-
 		case STATE_TYPE_LOCK:
+		case STATE_TYPE_DELEG:
 			/* Nothing to do */
 			break;
-
 		default:
 			/* Sanity check: all other types are illegal.
 			 * we should not got that place (similar check
@@ -375,7 +370,8 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 	/** @todo this is racy, use cache_inode_lock_trust_attrs and
 	 *        cache_inode_access_no_mutex
 	 */
-	if (state_open == NULL
+	if (state_found->state_type != STATE_TYPE_DELEG
+	    && state_open == NULL
 	    && entry->obj_handle->attributes.owner !=
 	    op_ctx->creds->caller_uid) {
 		/* Need to permission check the read. */
