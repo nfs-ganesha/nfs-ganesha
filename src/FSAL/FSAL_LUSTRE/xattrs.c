@@ -519,17 +519,16 @@ fsal_status_t lustre_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 		 */
 		*p_output_size = rc;
 
-		return fsalstat(ERR_FSAL_NO_ERROR, 0);
+		rc = ERR_FSAL_NO_ERROR;
 	} else {		/* built-in attr */
 
 		/* get the value */
 		rc = xattr_list[xattr_id].get_func(obj_hdl, buffer_addr,
 						   buffer_size, p_output_size,
 						   xattr_list[xattr_id].arg);
-		return fsalstat(rc, 0);
 	}
 
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	return fsalstat(rc, 0);
 }
 
 fsal_status_t lustre_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
