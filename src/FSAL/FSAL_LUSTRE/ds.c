@@ -124,11 +124,15 @@ lustre_ds_read(struct fsal_ds_handle *const ds_pub,
 
 	/* write the data */
 	amount_read = pread(fd, buffer, requested_length, offset);
-	if (amount_read < 0)
+	if (amount_read < 0) {
+		/* ignore any potential error on close if read failed? */
+		close(fd);
 		return posix2nfs4_error(-amount_read);
+	}
 
 	if (close(fd) < 0)
 		return posix2nfs4_error(errno);
+
 
 	*supplied_length = amount_read;
 	*end_of_file = amount_read == 0 ? true : false;
