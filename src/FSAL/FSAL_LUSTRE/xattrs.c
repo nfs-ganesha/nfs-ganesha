@@ -467,19 +467,14 @@ fsal_status_t lustre_getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
 
 		errno = 0;
 		rc = xattr_name_to_id(mypath, xattr_name);
-		if (rc < 0) {
+		if (rc < 0)
 			return fsalstat(-rc, errno);
-		} else {
-			index = rc;
-			found = TRUE;
-		}
+
+		index = rc;
 	}
 
-	if (found) {
-		*pxattr_id = index;
-		return fsalstat(ERR_FSAL_NO_ERROR, 0);
-	} else
-		return fsalstat(ERR_FSAL_NOENT, ENOENT);
+	*pxattr_id = index;
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 fsal_status_t lustre_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
