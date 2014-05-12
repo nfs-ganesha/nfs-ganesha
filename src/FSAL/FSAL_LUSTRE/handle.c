@@ -532,15 +532,16 @@ static fsal_status_t lustre_makenode(struct fsal_obj_handle *dir_hdl,
 			   opctx->fsal_export);
 	if (hdl == NULL) {
 		fsal_error = ERR_FSAL_NOMEM;
-		goto errout;
+		goto unlinkout;
 	}
 	*handle = &hdl->obj_handle;
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
  direrr:
 	fsal_error = posix2fsal_error(retval);
- errout:
+ unlinkout:
 	unlink(newpath);
+ errout:
 	return fsalstat(fsal_error, retval);
 }
 
