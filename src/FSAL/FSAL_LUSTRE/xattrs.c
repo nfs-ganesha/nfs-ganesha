@@ -254,7 +254,7 @@ static int xattr_id_to_name(char *lustre_path, unsigned int xattr_id,
 	unsigned int index;
 	unsigned int curr_idx;
 	char names[MAXPATHLEN], *ptr;
-	size_t namesize;
+	ssize_t namesize;
 	size_t len = 0;
 
 	if (xattr_id < XATTR_COUNT)
@@ -294,7 +294,7 @@ static int xattr_name_to_id(char *lustre_path, const char *name)
 {
 	unsigned int i;
 	char names[MAXPATHLEN], *ptr;
-	size_t namesize;
+	ssize_t namesize;
 
 	/* get xattrs */
 
@@ -326,7 +326,7 @@ fsal_status_t lustre_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
 	char mypath[MAXPATHLEN];
 
 	char names[MAXPATHLEN], *ptr;
-	size_t namesize;
+	ssize_t namesize;
 	int xattr_idx;
 
 	/* sanity checks */
@@ -484,7 +484,7 @@ fsal_status_t lustre_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 					    size_t *p_output_size)
 {
 	struct lustre_fsal_obj_handle *obj_handle = NULL;
-	int rc = 0;
+	ssize_t rc = 0;
 	char mypath[MAXPATHLEN];
 
 	obj_handle =
@@ -539,7 +539,7 @@ fsal_status_t lustre_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
 				      size_t *p_output_size)
 {
 	struct lustre_fsal_obj_handle *obj_handle = NULL;
-	int rc = 0;
+	ssize_t rc = 0;
 	char mypath[MAXPATHLEN];
 	unsigned int index;
 
