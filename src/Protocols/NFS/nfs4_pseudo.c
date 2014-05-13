@@ -469,7 +469,7 @@ bool pseudo_mount_export(struct gsh_export *exp,
 	/* And fill in the mounted on information for the export. */
 	PTHREAD_RWLOCK_wrlock(&exp->lock);
 
-	exp->export.exp_mounted_on_file_id =
+	exp->exp_mounted_on_file_id =
 	    state.dirent->obj_handle->attributes.fileid;
 	exp->exp_junction_inode = state.dirent;
 	exp->exp_parent_exp = state.req_ctx->export;

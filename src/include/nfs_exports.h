@@ -150,9 +150,6 @@ typedef struct exportlist {
 						   belonging to this export */
 	struct glist_head exp_root_list;	/*< List of exports rooted
 						    on the same inode */
-	uint64_t exp_mounted_on_file_id;	/*< Node id this is mounted on
-						    Protected by gsh_export lock
-						 */
 	/** Expiration type for attributes.  Defaults to never,
 	    settable with Attr_Expiration_Time. */
 	cache_inode_expire_type_t expire_type_attr;
