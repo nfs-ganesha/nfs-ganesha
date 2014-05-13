@@ -153,10 +153,6 @@ typedef struct exportlist {
 	uint64_t exp_mounted_on_file_id;	/*< Node id this is mounted on
 						    Protected by gsh_export lock
 						 */
-	cache_entry_t *exp_root_cache_inode;	/*< entry for root of this
-						    export
-						    Protected by gsh_export lock
-						 */
 	cache_entry_t *exp_junction_inode;	/*< entry for the junction of
 						    this export
 						    Protected by gsh_export lock

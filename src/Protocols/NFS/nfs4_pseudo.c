@@ -122,7 +122,7 @@ bool cleanup_pseudofs_node(const char *pseudopath, cache_entry_t *entry)
 	 */
 	if (entry->object.dir.nbactive > 0 ||
 	    entry->object.dir.junction_export != NULL ||
-	    entry == node_exp->export.exp_root_cache_inode) {
+	    entry == node_exp->exp_root_cache_inode) {
 		/* This node is needed */
 		LogInfo(COMPONENT_EXPORT,
 			 "Pseudo node is needed : %s", name);

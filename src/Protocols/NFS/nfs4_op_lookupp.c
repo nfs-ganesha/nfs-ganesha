@@ -87,8 +87,7 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 
 	PTHREAD_RWLOCK_rdlock(&original_export->lock);
 
-	if (data->current_entry ==
-	    original_export->export.exp_root_cache_inode) {
+	if (data->current_entry == original_export->exp_root_cache_inode) {
 		struct gsh_export *parent_exp;
 
 		/* Handle reverse junction */

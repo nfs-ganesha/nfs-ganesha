@@ -37,6 +37,7 @@
  */
 
 #include "ganesha_list.h"
+#include "cache_inode.h"
 
 #ifndef EXPORT_MGR_H
 #define EXPORT_MGR_H
@@ -60,6 +61,8 @@ struct gsh_export {
 	struct avltree_node node_k;
 	/** The list of cache inode entries belonging to this export */
 	struct glist_head entry_list;
+	/** Entry for the root of this export, protected by lock */
+	cache_entry_t *exp_root_cache_inode;
 	/** Read/Write lock protecting export */
 	pthread_rwlock_t lock;
 	/** References to this export */

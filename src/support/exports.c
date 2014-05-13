@@ -1489,7 +1489,7 @@ void exports_pkginit(void)
 
 cache_inode_status_t export_get_root_entry(cache_entry_t **entry, void *source)
 {
-	exportlist_t *export = source;
+	struct gsh_export *export = source;
 
 	*entry = export->exp_root_cache_inode;
 
@@ -1513,13 +1513,13 @@ cache_inode_status_t export_get_root_entry(cache_entry_t **entry, void *source)
  * @return cache inode status code
  */
 
-cache_inode_status_t nfs_export_get_root_entry(struct gsh_export *exp,
+cache_inode_status_t nfs_export_get_root_entry(struct gsh_export *export,
 					       cache_entry_t **entry)
 {
 	return cache_inode_get_protected(entry,
-					 &exp->lock,
+					 &export->lock,
 					 export_get_root_entry,
-					 &exp->export);
+					 export);
 }
 
 /**
@@ -1596,7 +1596,7 @@ bool init_export_root(struct gsh_export *exp)
 	PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
 	PTHREAD_RWLOCK_wrlock(&exp->lock);
 
-	export->exp_root_cache_inode = entry;
+	exp->exp_root_cache_inode = entry;
 
 	glist_add_tail(&entry->object.dir.export_roots,
 		       &export->exp_root_list);
@@ -1636,8 +1636,8 @@ void release_export_root_locked(struct gsh_export *exp)
 	cache_entry_t *entry = NULL;
 
 	glist_del(&export->exp_root_list);
-	entry = export->exp_root_cache_inode;
-	export->exp_root_cache_inode = NULL;
+	entry = exp->exp_root_cache_inode;
+	exp->exp_root_cache_inode = NULL;
 
 	if (entry != NULL) {
 		/* Allow this entry to be removed (unlink) */
