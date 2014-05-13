@@ -63,6 +63,10 @@ struct gsh_export {
 	struct glist_head entry_list;
 	/** Entry for the root of this export, protected by lock */
 	cache_entry_t *exp_root_cache_inode;
+	/** Entry for the junction of this export.  Protected by lock */
+	cache_entry_t *exp_junction_inode;
+	/** The export this export sits on. Protected by lock */
+	struct gsh_export *exp_parent_exp;
 	/** Read/Write lock protecting export */
 	pthread_rwlock_t lock;
 	/** References to this export */

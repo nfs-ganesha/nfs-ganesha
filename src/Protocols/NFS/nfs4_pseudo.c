@@ -471,8 +471,8 @@ bool pseudo_mount_export(struct gsh_export *exp,
 
 	exp->export.exp_mounted_on_file_id =
 	    state.dirent->obj_handle->attributes.fileid;
-	exp->export.exp_junction_inode = state.dirent;
-	exp->export.exp_parent_exp = state.req_ctx->export;
+	exp->exp_junction_inode = state.dirent;
+	exp->exp_parent_exp = state.req_ctx->export;
 
 	PTHREAD_RWLOCK_unlock(&exp->lock);
 
@@ -517,15 +517,14 @@ void create_pseudofs(void)
  * @param exp     [IN] export in question
  * @param req_ctx [IN] req_op_context to operate in
  */
-void pseudo_unmount_export(struct gsh_export *exp,
+void pseudo_unmount_export(struct gsh_export *export,
 			   struct req_op_context *req_ctx)
 {
-	exportlist_t *export = &exp->export;
 	struct gsh_export *mounted_on_export;
 	cache_entry_t *junction_inode;
 
 	/* Take the lock to clean out the junction information. */
-	PTHREAD_RWLOCK_wrlock(&exp->lock);
+	PTHREAD_RWLOCK_wrlock(&export->lock);
 
 	mounted_on_export = export->exp_parent_exp;
 	junction_inode = export->exp_junction_inode;
@@ -543,10 +542,11 @@ void pseudo_unmount_export(struct gsh_export *exp,
 	 * Need to take addtional ref for cleanup_pseudofs_node
 	 */
 	cache_inode_lru_ref(junction_inode, LRU_FLAG_NONE);
-	if (!cleanup_pseudofs_node(export->pseudopath, junction_inode)) {
+	if (!cleanup_pseudofs_node(export->export.pseudopath,
+				   junction_inode)) {
 		LogCrit(COMPONENT_EXPORT,
 			"pseudofs node cleanup failed for path: %s",
-			export->pseudopath);
+			export->export.pseudopath);
 	}
 
 	/* Release the pin reference */
@@ -558,5 +558,5 @@ void pseudo_unmount_export(struct gsh_export *exp,
 
 out:
 
-	PTHREAD_RWLOCK_unlock(&exp->lock);
+	PTHREAD_RWLOCK_unlock(&export->lock);
 }

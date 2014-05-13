@@ -95,9 +95,9 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 			 "Handling reverse junction from Export_Id %d Path %s Parent=%p",
 			 data->export->id,
 			 data->export->fullpath,
-			 data->export->exp_parent_exp);
+			 original_export->exp_parent_exp);
 
-		if (data->export->exp_parent_exp == NULL) {
+		if (original_export->exp_parent_exp == NULL) {
 			/* lookupp on the root on the pseudofs should return
 			 * NFS4ERR_NOENT (RFC3530, page 166)
 			 */
@@ -125,8 +125,8 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 		/* Get the junction inode into dir_entry and parent_exp
 		 * for reference.
 		 */
-		dir_entry = data->export->exp_junction_inode;
-		parent_exp = data->export->exp_parent_exp;
+		dir_entry = original_export->exp_junction_inode;
+		parent_exp = original_export->exp_parent_exp;
 
 		/* Check if there is a problem with the export. */
 		if (dir_entry == NULL || parent_exp == NULL) {
@@ -135,7 +135,7 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 				"Reverse junction from Export_Id %d Path %s Parent=%p is stale",
 				data->export->id,
 				data->export->fullpath,
-				data->export->exp_parent_exp);
+				parent_exp);
 			PTHREAD_RWLOCK_unlock(&original_export->lock);
 			res_LOOKUPP4->status = NFS4ERR_STALE;
 			return res_LOOKUPP4->status;
