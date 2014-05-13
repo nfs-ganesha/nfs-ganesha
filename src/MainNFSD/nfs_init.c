@@ -732,11 +732,6 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 	if (!(dupreq_pool))
 		LogFatal(COMPONENT_INIT,
 			"Error while allocating duplicate request pool");
-#ifdef _USE_ASYNC_CACHE_INODE
-	/* Start the TAD and synclets for writeback cache inode */
-	cache_inode_async_init(nfs_param.cache_layers_param.
-			       cache_inode_client_param);
-#endif
 
 	/* If rpcsec_gss is used, set the path to the keytab */
 #ifdef _HAVE_GSSAPI
