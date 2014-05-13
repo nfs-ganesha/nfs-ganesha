@@ -172,10 +172,12 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 
       if(rc != 0)
         {
+          /* save the errno for later use */
+          int errsv = errno;
           LogCrit(COMPONENT_FSAL_UP,
                   "OPENHANDLE_INODE_UPDATE failed for %s."
                   " rc %d, errno %d (%s) reason %d",
-                  gpfs_fsal_up_ctx->gf_fs, rc, errno, strerror(errno), reason);
+                  gpfs_fsal_up_ctx->gf_fs, rc, errsv, strerror(errsv), reason);
 
           gsh_free(phandle);
           pool_free(fsal_up_event_pool, pevent);
@@ -186,7 +188,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
               continue;
             }
 
-          if(errno == EUNATCH)
+          if(errsv == EUNATCH)
             LogFatal(COMPONENT_FSAL,
                      "GPFS file system %s has gone away.",
                      gpfs_fsal_up_ctx->gf_fs);
