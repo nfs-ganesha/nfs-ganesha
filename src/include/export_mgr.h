@@ -54,6 +54,8 @@ typedef enum export_state {
  */
 
 struct gsh_export {
+	/** List of all exports */
+	struct glist_head exp_list;
 	/** gsh_exports are kept in an AVL tree by export_id */
 	struct avltree_node node_k;
 	/** The list of cache inode entries belonging to this export */

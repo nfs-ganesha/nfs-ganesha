@@ -162,30 +162,30 @@ void free_exportlist(struct exportlist *exp)
 
 struct gsh_export *insert_gsh_export(struct exportlist *explist)
 {
-	struct gsh_export *exp;
+	struct gsh_export *export;
 	struct avltree_node *node = NULL;
 	void **cache_slot;
 
-	exp = container_of(explist, struct gsh_export, export);
-	exp->refcnt = 1;	/* we will hold a ref starting out... */
+	export = container_of(explist, struct gsh_export, export);
+	export->refcnt = 1;	/* we will hold a ref starting out... */
 
 	PTHREAD_RWLOCK_wrlock(&export_by_id.lock);
-	node = avltree_insert(&exp->node_k, &export_by_id.t);
+	node = avltree_insert(&export->node_k, &export_by_id.t);
 	if (node) {
 		PTHREAD_RWLOCK_unlock(&export_by_id.lock);
 		return NULL;	/* somebody beat us to it */
 	}
-	pthread_rwlock_init(&exp->lock, NULL);
+	pthread_rwlock_init(&export->lock, NULL);
 	/* update cache */
 	cache_slot = (void **)
 		&(export_by_id.cache[eid_cache_offsetof(&export_by_id,
 							explist->id)]);
-	atomic_store_voidptr(cache_slot, &exp->node_k);
-	glist_add_tail(&exportlist, &exp->export.exp_list);
-	get_gsh_export_ref(exp);
-	glist_init(&exp->entry_list);
+	atomic_store_voidptr(cache_slot, &export->node_k);
+	glist_add_tail(&exportlist, &export->exp_list);
+	get_gsh_export_ref(export);
+	glist_init(&export->entry_list);
 	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
-	return exp;
+	return export;
 }
 
 /**
@@ -294,8 +294,7 @@ void set_gsh_export_state(struct gsh_export *export, export_state_t state)
 struct gsh_export *get_gsh_export_by_path_locked(char *path,
 						 bool exact_match)
 {
-	struct gsh_export *exp;
-	exportlist_t *export = NULL;
+	struct gsh_export *export;
 	struct glist_head *glist;
 	int len_path = strlen(path);
 	int len_export;
@@ -306,17 +305,16 @@ struct gsh_export *get_gsh_export_by_path_locked(char *path,
 		len_path--;
 
 	glist_for_each(glist, &exportlist) {
-		export = glist_entry(glist, exportlist_t, exp_list);
-		exp = container_of(export, struct gsh_export, export);
+		export = glist_entry(glist, struct gsh_export, exp_list);
 
-		if (exp->state != EXPORT_READY)
+		if (export->state != EXPORT_READY)
 			continue;
 
-		len_export = strlen(export->fullpath);
+		len_export = strlen(export->export.fullpath);
 
 		if (len_path == 0 && len_export == 1) {
 			/* Special case for root match */
-			ret_exp = exp;
+			ret_exp = export;
 			len_ret = len_export;
 			break;
 		}
@@ -343,8 +341,8 @@ struct gsh_export *get_gsh_export_by_path_locked(char *path,
 
 		/* we agree on size, now compare the leading substring
 		 */
-		if (strncmp(export->fullpath, path, len_export) == 0) {
-			ret_exp = exp;
+		if (strncmp(export->export.fullpath, path, len_export) == 0) {
+			ret_exp = export;
 			len_ret = len_export;
 
 			/* If we have found an exact match, exit loop. */
@@ -401,8 +399,7 @@ struct gsh_export *get_gsh_export_by_path(char *path, bool exact_match)
 struct gsh_export *get_gsh_export_by_pseudo_locked(char *path,
 						   bool exact_match)
 {
-	struct gsh_export *exp;
-	exportlist_t *export = NULL;
+	struct gsh_export *export;
 	struct glist_head *glist;
 	int len_path = strlen(path);
 	int len_export;
@@ -414,25 +411,24 @@ struct gsh_export *get_gsh_export_by_pseudo_locked(char *path,
 		len_path--;
 
 	glist_for_each(glist, &exportlist) {
-		export = glist_entry(glist, exportlist_t, exp_list);
-		exp = container_of(export, struct gsh_export, export);
+		export = glist_entry(glist, struct gsh_export, exp_list);
 
-		if (exp->state != EXPORT_READY)
+		if (export->state != EXPORT_READY)
 			continue;
 
-		if (export->pseudopath == NULL)
+		if (export->export.pseudopath == NULL)
 			continue;
 
-		len_export = strlen(export->pseudopath);
+		len_export = strlen(export->export.pseudopath);
 
 		LogFullDebug(COMPONENT_EXPORT,
 			     "Comparing %s %d to %s %d",
 			     path, len_path,
-			     export->pseudopath, len_export);
+			     export->export.pseudopath, len_export);
 
 		if (len_path == 0 && len_export == 1) {
 			/* Special case for Pseudo root match */
-			ret_exp = exp;
+			ret_exp = export;
 			len_ret = len_export;
 			break;
 		}
@@ -459,8 +455,9 @@ struct gsh_export *get_gsh_export_by_pseudo_locked(char *path,
 
 		/* we agree on size, now compare the leading substring
 		 */
-		if (strncmp(export->pseudopath, path, len_export) == 0) {
-			ret_exp = exp;
+		if (strncmp(export->export.pseudopath, path, len_export)
+		    == 0) {
+			ret_exp = export;
 			len_ret = len_export;
 
 			/* If we have found an exact match, exit loop. */
@@ -511,27 +508,25 @@ struct gsh_export *get_gsh_export_by_pseudo(char *path, bool exact_match)
 
 struct gsh_export *get_gsh_export_by_tag(char *tag)
 {
-	struct gsh_export *exp;
-	exportlist_t *export = NULL;
+	struct gsh_export *export;
 	struct glist_head *glist;
 
 	PTHREAD_RWLOCK_rdlock(&export_by_id.lock);
 	glist_for_each(glist, &exportlist) {
-		export = glist_entry(glist, exportlist_t, exp_list);
-		exp = container_of(export, struct gsh_export, export);
-		if (exp->state != EXPORT_READY)
+		export = glist_entry(glist, struct gsh_export, exp_list);
+		if (export->state != EXPORT_READY)
 			continue;
-		if (export->FS_tag != NULL && !strcmp(export->FS_tag, tag))
+		if (export->export.FS_tag != NULL &&
+		    !strcmp(export->export.FS_tag, tag))
 			goto out;
 	}
 	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
 	return NULL;
 
  out:
-	exp = container_of(export, struct gsh_export, export);
-	get_gsh_export_ref(exp);
+	get_gsh_export_ref(export);
 	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
-	return exp;
+	return export;
 }
 
 /**
@@ -616,8 +611,7 @@ void remove_gsh_export(int export_id)
 {
 	struct avltree_node *node = NULL;
 	struct avltree_node *cnode = NULL;
-	struct gsh_export *exp = NULL;
-	exportlist_t *export = NULL;
+	struct gsh_export *export = NULL;
 	struct gsh_export v;
 	void **cache_slot;
 
@@ -626,7 +620,8 @@ void remove_gsh_export(int export_id)
 	PTHREAD_RWLOCK_wrlock(&export_by_id.lock);
 	node = avltree_lookup(&v.node_k, &export_by_id.t);
 	if (node) {
-		exp = avltree_container_of(node, struct gsh_export, node_k);
+		export =
+		    avltree_container_of(node, struct gsh_export, node_k);
 
 		/* Remove the export from the AVL tree */
 		cache_slot = (void **)
@@ -638,18 +633,17 @@ void remove_gsh_export(int export_id)
 		avltree_remove(node, &export_by_id.t);
 
 		/* Remove the export from the export list */
-		export = &exp->export;
 		glist_del(&export->exp_list);
 	}
 
 	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
 
-	if (exp != NULL) {
+	if (export != NULL) {
 		/* Release table reference to the export.
 		 * Release of resources will occur on last reference.
 		 * Which may or may not be from this call.
 		 */
-		put_gsh_export(exp);
+		put_gsh_export(export);
 	}
 }
 
@@ -664,15 +658,13 @@ bool foreach_gsh_export(bool(*cb) (struct gsh_export *exp, void *state),
 			void *state)
 {
 	struct glist_head *glist;
-	struct gsh_export *exp;
-	exportlist_t *export;
+	struct gsh_export *export;
 	int rc = true;
 
 	PTHREAD_RWLOCK_rdlock(&export_by_id.lock);
 	glist_for_each(glist, &exportlist) {
-		export = glist_entry(glist, exportlist_t, exp_list);
-		exp = container_of(export, struct gsh_export, export);
-		rc = cb(exp, state);
+		export = glist_entry(glist, struct gsh_export, exp_list);
+		rc = cb(export, state);
 		if (!rc)
 			break;
 	}

@@ -704,8 +704,6 @@ static void *export_init(void *link_mem, void *self_struct)
 		return exp;
 	} else { /* free resources case */
 		exp = self_struct;
-
-		assert(glist_null(&exp->exp_list));
 		free_exportlist(exp);
 		return NULL;
 	}

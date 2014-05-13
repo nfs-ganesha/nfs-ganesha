@@ -123,7 +123,6 @@ typedef struct exportlist_client_entry__ {
 } exportlist_client_entry_t;
 
 typedef struct exportlist {
-	struct glist_head exp_list;
 	uint32_t id;		/*< Entry identifier */
 	char *fullpath;		/*< The path from the root */
 	char *pseudopath;	/*< NFSv4 pseudo-filesystem 'virtual' path */
