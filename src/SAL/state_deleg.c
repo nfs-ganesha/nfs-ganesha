@@ -302,6 +302,16 @@ state_status_t deleg_revoke(state_lock_entry_t *deleg_entry)
 	state_owner_t *clientowner = NULL;
 	fsal_lock_param_t lock_desc;
 	state_t *deleg_state = NULL;
+	struct nfs_client_id_t *clid = NULL;
+	nfs_fh4 fhandle;
+
+	uint32_t code =
+		nfs_client_id_get_confirmed(deleg_entry->sle_owner->so_owner.
+					    so_nfs4_owner.so_clientid, &clid);
+	if (code != CLIENT_ID_SUCCESS) {
+		LogCrit(COMPONENT_NFS_V4_LOCK, "No clid record  code %d", code);
+		return STATE_NOT_FOUND;
+	}
 
 	deleg_state = deleg_entry->sle_state;
 	clientowner = deleg_entry->sle_owner;
@@ -324,7 +334,23 @@ state_status_t deleg_revoke(state_lock_entry_t *deleg_entry)
 			 state_status);
 	}
 
+	/* Allocation of a new file handle */
+	if (nfs4_AllocateFH(&fhandle) != NFS4_OK) {
+		LogDebug(COMPONENT_NFS_V4_LOCK, "nfs4_AllocateFH failed");
+		return NFS4ERR_SERVERFAULT;
+	}
+
+	pthread_mutex_lock(&deleg_entry->sle_mutex);
+	deleg_entry->sle_state->state_data.deleg.sd_state = DELEG_REVOKED;
+	/* Building a new fh ; Ignore return code, should not fail*/
+	(void) nfs4_FSALToFhandle(&fhandle,
+				  deleg_entry->sle_entry->obj_handle,
+				  deleg_entry->sle_state->state_export);
+	/* Put the revoked delegation on the stable storage. */
+	nfs4_record_revoke(clid, &fhandle);
+	pthread_mutex_unlock(&deleg_entry->sle_mutex);
 	state_del_locked(deleg_state, pentry);
+	gsh_free(fhandle.nfs_fh4_val);
 
 	return STATE_SUCCESS;
 }
