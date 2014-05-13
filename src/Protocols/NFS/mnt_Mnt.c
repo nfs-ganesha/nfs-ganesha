@@ -61,7 +61,6 @@ int mnt_Mnt(nfs_arg_t *arg, exportlist_t *export,
 	exportlist_t *p_current_item = NULL;
 	struct gsh_export *exp = NULL;
 	struct fsal_obj_handle *pfsal_handle = NULL;
-	bool release_handle = false;
 	struct fsal_export *exp_hdl;
 	int auth_flavor[NB_AUTH_FLAVOR];
 	int index_auth = 0;
@@ -70,6 +69,7 @@ int mnt_Mnt(nfs_arg_t *arg, exportlist_t *export,
 	export_perms_t export_perms;
 	int retval = NFS_REQ_OK;
 	nfs_fh3 *fh3 = (nfs_fh3 *) &res->res_mnt3.mountres3_u.mountinfo.fhandle;
+	cache_entry_t *entry = NULL;
 
 	LogDebug(COMPONENT_NFSPROTO,
 		 "REQUEST PROCESSING: Calling mnt_Mnt path=%s", arg->arg_mnt);
@@ -136,16 +136,12 @@ int mnt_Mnt(nfs_arg_t *arg, exportlist_t *export,
 	/* retrieve the associated NFS handle */
 	if (arg->arg_mnt[0] != '/' || !strcmp(arg->arg_mnt,
 					      p_current_item->fullpath)) {
-		PTHREAD_RWLOCK_rdlock(&exp->lock);
-		if (p_current_item->exp_root_cache_inode != NULL) {
-			pfsal_handle =
-			    p_current_item->exp_root_cache_inode->obj_handle;
-			PTHREAD_RWLOCK_unlock(&exp->lock);
-		} else {
-			PTHREAD_RWLOCK_unlock(&exp->lock);
+		if (nfs_export_get_root_entry(exp, &entry)
+		    != CACHE_INODE_SUCCESS) {
 			res->res_mnt3.fhs_status = MNT3ERR_ACCES;
 			goto out;
 		}
+		pfsal_handle = entry->obj_handle;
 	} else {
 		exp_hdl = p_current_item->export_hdl;
 		LogEvent(COMPONENT_NFSPROTO,
@@ -157,8 +153,6 @@ int mnt_Mnt(nfs_arg_t *arg, exportlist_t *export,
 			res->res_mnt3.fhs_status = MNT3ERR_ACCES;
 			goto out;
 		}
-
-		release_handle = true;
 	}
 
 	/* convert the fsal_handle to a file handle */
@@ -178,8 +172,13 @@ int mnt_Mnt(nfs_arg_t *arg, exportlist_t *export,
 		}
 	}
 
-	if (release_handle)
+	if (entry != NULL) {
+		/* Release the export root cache inode entry */
+		cache_inode_put(entry);
+	} else {
+		/* Release the fsal_obj_handle created for the path */
 		pfsal_handle->ops->release(pfsal_handle);
+	}
 
 	/* Return the supported authentication flavor in V3 based
 	 * on the client's export permissions.
