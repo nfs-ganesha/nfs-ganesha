@@ -574,8 +574,8 @@ static nfsstat4 open4_create(OPEN4args *arg, compound_data_t *data,
 
 	/* if quota support is active, then we should check is
 	   the FSAL allows inode creation or not */
-	fsal_status = data->export->export_hdl->ops->check_quota(
-						data->export->export_hdl,
+	fsal_status = data->req_ctx->fsal_export->ops->check_quota(
+						data->req_ctx->fsal_export,
 						data->export->fullpath,
 						FSAL_QUOTA_INODES,
 						data->req_ctx);
@@ -1223,8 +1223,8 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 
 	case CLAIM_DELEGATE_CUR:
 
-		if (!data->export->export_hdl->ops->fs_supports(
-				data->export->export_hdl, fso_delegations)) {
+		if (!data->req_ctx->fsal_export->ops->fs_supports(
+				data->req_ctx->fsal_export, fso_delegations)) {
 			res_OPEN4->status = NFS4ERR_NOTSUPP;
 			LogDebug(COMPONENT_STATE,
 				 "NFS4 OPEN returning NFS4ERR_NOTSUPP for CLAIM_DELEGATE");
@@ -1454,8 +1454,8 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 	/* Decide if we should delegate, then add it. */
 	if (nfs_param.nfsv4_param.allow_delegations &&
 	    data->current_entry->type != DIRECTORY
-	    && data->export->export_hdl->ops->fs_supports(
-						data->export->export_hdl,
+	    && data->req_ctx->fsal_export->ops->fs_supports(
+						data->req_ctx->fsal_export,
 						fso_delegations)
 	    && (data->export_perms.options & EXPORT_OPTION_DELEGATIONS)
 	    && owner->so_owner.so_nfs4_owner.so_confirmed == TRUE

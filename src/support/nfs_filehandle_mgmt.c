@@ -145,7 +145,7 @@ cache_entry_t *nfs3_FhandleToCache(nfs_fh3 *fh3,
 
 	assert(v3_handle->exportid == req_ctx->export->export.id);
 
-	export = req_ctx->export->export.export_hdl;
+	export = req_ctx->fsal_export;
 
 	/* Give the export a crack at it */
 	fsal_data.export = export;

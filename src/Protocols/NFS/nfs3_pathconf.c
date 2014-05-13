@@ -70,7 +70,7 @@ int nfs3_pathconf(nfs_arg_t *arg, exportlist_t *export,
 {
 	cache_entry_t *entry = NULL;
 	int rc = NFS_REQ_OK;
-	struct fsal_export *exp_hdl = export->export_hdl;
+	struct fsal_export *exp_hdl = req_ctx->fsal_export;
 
 	if (isDebug(COMPONENT_NFSPROTO)) {
 		char str[LEN_FH_STR];

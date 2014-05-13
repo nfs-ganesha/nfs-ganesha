@@ -100,7 +100,7 @@ int nlm4_Share(nfs_arg_t *args, exportlist_t *export,
 
 	rc = nlm_process_share_parms(req,
 				     &arg->share,
-				     export->export_hdl,
+				     req_ctx->fsal_export,
 				     req_ctx,
 				     &entry,
 				     CARE_NO_MONITOR,

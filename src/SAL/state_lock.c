@@ -1830,7 +1830,7 @@ static void grant_blocked_locks(cache_entry_t *entry,
 {
 	state_lock_entry_t *found_entry;
 	struct glist_head *glist, *glistn;
-	struct fsal_export *export = req_ctx->export->export.export_hdl;
+	struct fsal_export *export = req_ctx->fsal_export;
 
 	/* If FSAL supports async blocking locks,
 	 * allow it to grant blocked locks.
@@ -2254,7 +2254,7 @@ static state_status_t do_lock_op(cache_entry_t *entry,
 	fsal_status_t fsal_status;
 	state_status_t status = STATE_SUCCESS;
 	fsal_lock_param_t conflicting_lock;
-	struct fsal_export *fsal_export = req_ctx->export->export.export_hdl;
+	struct fsal_export *fsal_export = req_ctx->fsal_export;
 
 	lock->lock_sle_type = sle_type;
 
@@ -2475,7 +2475,7 @@ state_status_t state_lock(cache_entry_t *entry, exportlist_t *export,
 	uint64_t found_entry_end;
 	uint64_t range_end = lock_end(lock);
 	cache_inode_status_t cache_status;
-	struct fsal_export *fsal_export = req_ctx->export->export.export_hdl;
+	struct fsal_export *fsal_export = req_ctx->fsal_export;
 	fsal_lock_op_t lock_op;
 	state_status_t status = 0;
 	fsal_openflags_t openflags;
