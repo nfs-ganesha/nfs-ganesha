@@ -90,7 +90,6 @@ int nfs3_fsstat(nfs_arg_t *arg, exportlist_t *export,
 
 	entry = nfs3_FhandleToCache(&arg->arg_fsstat3.fsroot,
 				    req_ctx,
-				    export,
 				    &res->res_fsstat3.status,
 				    &rc);
 

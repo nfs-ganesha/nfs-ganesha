@@ -89,7 +89,6 @@ int nfs3_access(nfs_arg_t *arg, exportlist_t *export,
 	/* Convert file handle into a vnode */
 	entry = nfs3_FhandleToCache(&(arg->arg_access3.object),
 				    req_ctx,
-				    export,
 				    &(res->res_access3.status),
 				    &rc);
 

@@ -90,7 +90,6 @@ int nfs3_commit(nfs_arg_t *arg, exportlist_t *export,
 
 	entry = nfs3_FhandleToCache(&arg->arg_commit3.file,
 				    req_ctx,
-				    export,
 				    &res->res_commit3.status,
 				    &rc);
 

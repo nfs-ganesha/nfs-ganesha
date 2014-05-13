@@ -96,7 +96,6 @@ int nfs3_readlink(nfs_arg_t *arg, exportlist_t *export,
 
 	entry = nfs3_FhandleToCache(&arg->arg_readlink3.symlink,
 				    req_ctx,
-				    export,
 				    &res->res_readlink3.status,
 				    &rc);
 

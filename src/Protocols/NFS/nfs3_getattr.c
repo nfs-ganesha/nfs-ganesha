@@ -82,7 +82,6 @@ int nfs3_getattr(nfs_arg_t *arg, exportlist_t *export,
 
 	entry = nfs3_FhandleToCache(&arg->arg_getattr3.object,
 				    req_ctx,
-				    export,
 				    &res->res_getattr3.status,
 				    &rc);
 

@@ -132,7 +132,6 @@ int nfs3_link(nfs_arg_t *arg, exportlist_t *export,
 	/* Get entry for parent directory */
 	parent_entry = nfs3_FhandleToCache(&arg->arg_link3.link.dir,
 					   req_ctx,
-					   export,
 					   &res->res_link3.status,
 					   &rc);
 
@@ -145,7 +144,6 @@ int nfs3_link(nfs_arg_t *arg, exportlist_t *export,
 
 	target_entry = nfs3_FhandleToCache(&arg->arg_link3.file,
 					   req_ctx,
-					   export,
 					   &res->res_link3.status,
 					   &rc);
 

@@ -106,7 +106,6 @@ int nfs3_create(nfs_arg_t *arg, exportlist_t *export,
 
 	parent_entry = nfs3_FhandleToCache(&arg->arg_create3.where.dir,
 					   req_ctx,
-					   export,
 					   &res->res_create3.status,
 					   &rc);
 

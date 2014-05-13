@@ -87,7 +87,6 @@ int nfs3_pathconf(nfs_arg_t *arg, exportlist_t *export,
 	/* Convert file handle into a fsal_handle */
 	entry = nfs3_FhandleToCache(&arg->arg_pathconf3.object,
 				    req_ctx,
-				    export,
 				    &res->res_pathconf3.status,
 				    &rc);
 

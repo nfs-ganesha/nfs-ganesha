@@ -99,7 +99,6 @@ int nfs3_setattr(nfs_arg_t *arg, exportlist_t *export,
 
 	entry = nfs3_FhandleToCache(&arg->arg_setattr3.object,
 				    req_ctx,
-				    export,
 				    &res->res_setattr3.status,
 				    &rc);
 

@@ -125,7 +125,6 @@ int nfs3_write(nfs_arg_t *arg, exportlist_t *export,
 
 	entry = nfs3_FhandleToCache(&arg->arg_write3.file,
 				    req_ctx,
-				    export,
 				    &res->res_write3.status,
 				    &rc);
 

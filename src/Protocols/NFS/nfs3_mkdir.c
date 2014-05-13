@@ -103,7 +103,6 @@ int nfs3_mkdir(nfs_arg_t *arg, exportlist_t *export,
 
 	parent_entry = nfs3_FhandleToCache(&arg->arg_mkdir3.where.dir,
 					   req_ctx,
-					   export,
 					   &res->res_mkdir3.status,
 					   &rc);
 

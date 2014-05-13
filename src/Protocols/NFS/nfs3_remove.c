@@ -100,7 +100,6 @@ int nfs3_remove(nfs_arg_t *arg, exportlist_t *export,
 
 	parent_entry = nfs3_FhandleToCache(&arg->arg_remove3.object.dir,
 					   req_ctx,
-					   export,
 					   &res->res_remove3.status,
 					   &rc);
 

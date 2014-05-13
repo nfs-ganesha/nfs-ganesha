@@ -124,9 +124,8 @@ int nfs3_read(nfs_arg_t *arg, exportlist_t *export,
 	res->res_read3.READ3res_u.resok.data.data_val = NULL;
 	res->res_read3.READ3res_u.resok.data.data_len = 0;
 	res->res_read3.status = NFS3_OK;
-	entry =
-	    nfs3_FhandleToCache(&arg->arg_read3.file, req_ctx, export,
-				&res->res_read3.status, &rc);
+	entry = nfs3_FhandleToCache(&arg->arg_read3.file, req_ctx,
+				    &res->res_read3.status, &rc);
 
 	if (entry == NULL) {
 		/* Status and rc have been set by nfs3_FhandleToCache */

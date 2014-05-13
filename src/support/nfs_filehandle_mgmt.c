@@ -120,8 +120,8 @@ int nfs4_AllocateFH(nfs_fh4 *fh)
  *
  */
 cache_entry_t *nfs3_FhandleToCache(nfs_fh3 *fh3,
-				   const struct req_op_context *req_ctx,
-				   exportlist_t *exp_list, nfsstat3 *status,
+				   struct req_op_context *req_ctx,
+				   nfsstat3 *status,
 				   int *rc)
 {
 	fsal_status_t fsal_status;

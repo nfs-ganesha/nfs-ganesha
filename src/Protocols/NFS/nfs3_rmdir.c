@@ -101,7 +101,6 @@ int nfs3_rmdir(nfs_arg_t *arg, exportlist_t *export,
 
 	parent_entry = nfs3_FhandleToCache(&arg->arg_rmdir3.object.dir,
 					   req_ctx,
-					   export,
 					   &res->res_rmdir3.status,
 					   &rc);
 
