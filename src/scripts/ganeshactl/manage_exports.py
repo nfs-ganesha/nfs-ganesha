@@ -46,8 +46,8 @@ class ShowExports(QtCore.QObject):
         self.exportmgr.ShowExports()
         print "Show exports"
 
-    def addexport(self, conf_path):
-        self.exportmgr.AddExport(conf_path)
+    def addexport(self, conf_path, exp_expr):
+        self.exportmgr.AddExport(conf_path, exp_expr)
         print "Add Export in %s" % conf_path
 
     def removeexport(self, exp_id):
@@ -94,7 +94,7 @@ if __name__ == '__main__':
     sysbus = QtDBus.QDBusConnection.systemBus()
     exportmgr = ShowExports(sysbus)
     if sys.argv[1] == "add":
-        exportmgr.addexport(sys.argv[2])
+        exportmgr.addexport(sys.argv[2], sys.argv[3])
     elif sys.argv[1] == "remove":
         exportmgr.removeexport(sys.argv[2])
     elif sys.argv[1] == "display":

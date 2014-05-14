@@ -52,8 +52,8 @@ class ExportMgr(QtDBus.QDBusAbstractInterface):
                                         parent)
         self.show_status = show_status
 
-    def AddExport(self, conf_path):
-        async = self.asyncCall("AddExport", conf_path)
+    def AddExport(self, conf_path, exp_expr):
+        async = self.asyncCall("AddExport", conf_path, exp_expr)
         status = QtDBus.QDBusPendingCallWatcher(async, self)
         status.finished.connect(self.exportadd_done)
 
