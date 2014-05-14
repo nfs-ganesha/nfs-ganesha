@@ -101,6 +101,13 @@
 	.direction = "in"	\
 }
 
+#define EXPR_ARG		\
+{				\
+	.name = "expr",		\
+	.type = "s",		\
+	.direction = "in"	\
+}
+
 /* Properties list helper macros
  */
 
