@@ -735,7 +735,7 @@ static int export_commit(void *node, void *link_mem, void *self_struct,
 			err_type->invalid = true;
 			errcnt++;
 			goto err_out;
-		} else if (export->export.id == 0 &&
+		} else if (export->export_id == 0 &&
 			   strcmp(export->export.pseudopath, "/") != 0) {
 			LogCrit(COMPONENT_CONFIG,
 				"Export id 0 can only export \"/\" not (%s)",
@@ -752,7 +752,7 @@ static int export_commit(void *node, void *link_mem, void *self_struct,
 		err_type->invalid = true;
 		errcnt++;
 	}
-	if (export->export.id == 0) {
+	if (export->export_id == 0) {
 		if (export->export.pseudopath == NULL) {
 			LogCrit(COMPONENT_CONFIG,
 				"Pseudo path must be \"/\" for export id 0");
@@ -774,10 +774,10 @@ static int export_commit(void *node, void *link_mem, void *self_struct,
 	}
 	if (errcnt)
 		goto err_out;  /* have basic errors. don't even try more... */
-	probe_exp = get_gsh_export(export->export.id);
+	probe_exp = get_gsh_export(export->export_id);
 	if (probe_exp != NULL) {
 		LogDebug(COMPONENT_CONFIG,
-			 "Export %d already exists", export->export.id);
+			 "Export %d already exists", export->export_id);
 		put_gsh_export(probe_exp);
 		err_type->exists = true;
 		errcnt++;
@@ -822,11 +822,11 @@ static int export_commit(void *node, void *link_mem, void *self_struct,
 		if (err_type->exists && !err_type->invalid)
 			LogDebug(COMPONENT_CONFIG,
 				 "Duplicate export id = %d",
-				 export->export.id);
+				 export->export_id);
 		else
 			LogCrit(COMPONENT_CONFIG,
 				 "Duplicate export id = %d",
-				 export->export.id);
+				 export->export_id);
 		goto err_out;  /* have errors. don't init or load a fsal */
 	}
 	glist_init(&export->export.exp_state_list);
@@ -838,7 +838,7 @@ static int export_commit(void *node, void *link_mem, void *self_struct,
 	if (!insert_gsh_export(export)) {
 		LogCrit(COMPONENT_CONFIG,
 			"Export id %d already in use.",
-			export->export.id);
+			export->export_id);
 		err_type->exists = true;
 		errcnt++;
 		goto err_out;
@@ -848,7 +848,7 @@ static int export_commit(void *node, void *link_mem, void *self_struct,
 
 	LogEvent(COMPONENT_CONFIG,
 		 "Export %d created at pseudo (%s) with path (%s) and tag (%s) perms (%s)",
-		 export->export.id, export->export.pseudopath,
+		 export->export_id, export->export.pseudopath,
 		 export->export.fullpath, export->export.FS_tag, perms);
 	set_gsh_export_state(export, EXPORT_READY);
 	put_gsh_export(export);
@@ -875,7 +875,7 @@ static void export_display(const char *step, void *node,
 
 	LogMidDebug(COMPONENT_CONFIG,
 		    "%s %p Export %d pseudo (%s) with path (%s) and tag (%s) perms (%s)",
-		    step, export, export->export.id, export->export.pseudopath,
+		    step, export, export->export_id, export->export.pseudopath,
 		    export->export.fullpath, export->export.FS_tag, perms);
 }
 
@@ -1146,7 +1146,7 @@ static struct config_item fsal_params[] = {
 
 static struct config_item export_params[] = {
 	CONF_MAND_UI32("Export_id", 0, 0xffff, 1,
-		       gsh_export, export.id),
+		       gsh_export, export_id),
 	CONF_MAND_PATH("Path", 1, MAXPATHLEN, NULL,
 		       gsh_export, export.fullpath), /* must chomp '/' */
 	CONF_UNIQ_PATH("Pseudo", 1, MAXPATHLEN, NULL,
@@ -1549,7 +1549,7 @@ bool init_export_root(struct gsh_export *export)
 	/* Lookup for the FSAL Path */
 	LogFullDebug(COMPONENT_EXPORT,
 		     "About to lookup_path for ExportId=%u Path=%s",
-		     export->export.id, export->export.fullpath);
+		     export->export_id, export->export.fullpath);
 	fsal_status =
 	    export->fsal_export->ops->lookup_path(export->fsal_export,
 						  &root_op_context.req_ctx,
@@ -1559,7 +1559,7 @@ bool init_export_root(struct gsh_export *export)
 	if (FSAL_IS_ERROR(fsal_status)) {
 		LogCrit(COMPONENT_EXPORT,
 			"Lookup failed on path, ExportId=%u Path=%s FSAL_ERROR=(%s,%u)",
-			export->export.id, export->export.fullpath,
+			export->export_id, export->export.fullpath,
 			msg_fsal_err(fsal_status.major), fsal_status.minor);
 		return false;
 	}
@@ -1574,7 +1574,7 @@ bool init_export_root(struct gsh_export *export)
 		LogCrit(COMPONENT_EXPORT,
 			"Error when creating root cached entry for %s, export_id=%d, cache_status=%s",
 			export->export.fullpath,
-			export->export.id,
+			export->export_id,
 			cache_inode_err_str(cache_status));
 		return false;
 	}
@@ -1586,7 +1586,7 @@ bool init_export_root(struct gsh_export *export)
 		LogCrit(COMPONENT_EXPORT,
 			"Error when creating root cached entry for %s, export_id=%d, cache_status=%s",
 			export->export.fullpath,
-			export->export.id,
+			export->export_id,
 			cache_inode_err_str(cache_status));
 
 		/* Release the LRU reference and return failure. */
@@ -1613,11 +1613,11 @@ bool init_export_root(struct gsh_export *export)
 			 "Added root entry %p FSAL %s for path %s on export_id=%d",
 			 entry,
 			 entry->obj_handle->fsal->name,
-			 export->export.fullpath, export->export.id);
+			 export->export.fullpath, export->export_id);
 	} else {
 		LogInfo(COMPONENT_EXPORT,
 			"Added root entry for path %s on export_id=%d",
-			export->export.fullpath, export->export.id);
+			export->export.fullpath, export->export_id);
 	}
 
 	/* Release the LRU reference and return success. */
@@ -1649,7 +1649,7 @@ void release_export_root_locked(struct gsh_export *export)
 
 	LogDebug(COMPONENT_EXPORT,
 		 "Released root entry %p for path %s on export_id=%d",
-		 entry, export->export.fullpath, export->export.id);
+		 entry, export->export.fullpath, export->export_id);
 }
 
 /**
@@ -1672,7 +1672,7 @@ void release_export_root(struct gsh_export *export)
 		 */
 		LogInfo(COMPONENT_CACHE_INODE,
 			"Export root for export id %d status %s",
-			export->export.id, cache_inode_err_str(status));
+			export->export_id, cache_inode_err_str(status));
 		return;
 	}
 
@@ -1701,7 +1701,7 @@ void unexport(struct gsh_export *export)
 
 	/* Make the export unreachable */
 	pseudo_unmount_export(export, &root_op_context.req_ctx);
-	remove_gsh_export(export->export.id);
+	remove_gsh_export(export->export_id);
 	release_export_root(export);
 }
 
@@ -1740,7 +1740,7 @@ void kill_export_root_entry(cache_entry_t *entry)
 		get_gsh_export_ref(export);
 		LogInfo(COMPONENT_CONFIG,
 			"Killing export_id %d because root entry went bad",
-			export->export.id);
+			export->export_id);
 
 		PTHREAD_RWLOCK_wrlock(&export->lock);
 
@@ -1754,7 +1754,7 @@ void kill_export_root_entry(cache_entry_t *entry)
 		root_op_context.req_ctx.export = export;
 		root_op_context.req_ctx.fsal_export = export->fsal_export;
 		pseudo_unmount_export(export, &root_op_context.req_ctx);
-		remove_gsh_export(export->export.id);
+		remove_gsh_export(export->export_id);
 
 		put_gsh_export(export);
 	}
@@ -2171,7 +2171,7 @@ void export_check_access(struct req_op_context *req_ctx)
 				     ipstring, sizeof(ipstring));
 		LogMidDebug(COMPONENT_EXPORT,
 			    "Check for address %s for export id %u fullpath %s",
-			    ipstring, req_ctx->export->export.id,
+			    ipstring, req_ctx->export->export_id,
 			    req_ctx->export->export.fullpath);
 	}
 

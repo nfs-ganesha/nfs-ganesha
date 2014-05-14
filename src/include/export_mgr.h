@@ -81,6 +81,8 @@ struct gsh_export {
 	nsecs_elapsed_t last_update;
 	/** The condition the export is in */
 	export_state_t state;
+	/** Export_Id for this export */
+	uint32_t export_id;
 };
 
 static inline void export_readlock(struct exportlist *export)

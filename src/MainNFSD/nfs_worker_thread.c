@@ -939,7 +939,7 @@ static void nfs_rpc_execute(request_data_t *req,
 			LogMidDebugAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 				    "Found export entry for path=%s as exportid=%d",
 				    req_ctx.export->export.fullpath,
-				    req_ctx.export->export.id);
+				    req_ctx.export->export_id);
 		} else {	/* NFS V4 gets its own export id from the ops
 				 * in the compound */
 			protocol_options |= EXPORT_OPTION_NFSV4;
@@ -1036,7 +1036,7 @@ static void nfs_rpc_execute(request_data_t *req,
 					       COMPONENT_EXPORT,
 					       "Found export entry for dirname=%s as exportid=%d",
 					       req_ctx.export->export.fullpath,
-					       req_ctx.export->export.id);
+					       req_ctx.export->export_id);
 			}
 		}
 	} else if (svcreq->rq_prog == nfs_param.core_param.program[P_MNT]) {
@@ -1057,7 +1057,7 @@ static void nfs_rpc_execute(request_data_t *req,
 			LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 				"Client %s is not allowed to access Export_Id %d %s, vers=%d, proc=%d",
 				req_ctx.client->hostaddr_str,
-				req_ctx.export->export.id,
+				req_ctx.export->export_id,
 				req_ctx.export->export.fullpath,
 				(int)svcreq->rq_vers, (int)svcreq->rq_proc);
 
@@ -1078,7 +1078,7 @@ static void nfs_rpc_execute(request_data_t *req,
 			LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 				"%s Version %d not allowed on Export_Id %d %s for client %s",
 				progname, svcreq->rq_vers,
-				req_ctx.export->export.id,
+				req_ctx.export->export_id,
 				req_ctx.export->export.fullpath,
 				req_ctx.client->hostaddr_str);
 
@@ -1095,7 +1095,7 @@ static void nfs_rpc_execute(request_data_t *req,
 				"%s Version %d over %s not allowed on Export_Id %d %s for client %s",
 				progname, svcreq->rq_vers,
 				xprt_type_to_str(xprt_type),
-				req_ctx.export->export.id,
+				req_ctx.export->export_id,
 				req_ctx.export->export.fullpath,
 				req_ctx.client->hostaddr_str);
 
@@ -1110,7 +1110,7 @@ static void nfs_rpc_execute(request_data_t *req,
 			LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 				"%s Version %d auth not allowed on Export_Id %d %s for client %s",
 				progname, svcreq->rq_vers,
-				req_ctx.export->export.id,
+				req_ctx.export->export_id,
 				req_ctx.export->export.fullpath,
 				req_ctx.client->hostaddr_str);
 
@@ -1125,7 +1125,7 @@ static void nfs_rpc_execute(request_data_t *req,
 			!= 0) && (port >= IPPORT_RESERVED)) {
 			LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 				"Non-reserved Port %d is not allowed on Export_Id %d %s for client %s",
-				port, req_ctx.export->export.id,
+				port, req_ctx.export->export_id,
 				req_ctx.export->export.fullpath,
 				req_ctx.client->hostaddr_str);
 
@@ -1200,7 +1200,7 @@ static void nfs_rpc_execute(request_data_t *req,
 				  EXPORT_OPTION_MD_READ_ACCESS)) == 0) {
 		LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 			"Client %s is not allowed to access Export_Id %d %s, vers=%d, proc=%d",
-			req_ctx.client->hostaddr_str, req_ctx.export->export.id,
+			req_ctx.client->hostaddr_str, req_ctx.export->export_id,
 			req_ctx.export->export.fullpath, (int)svcreq->rq_vers,
 			(int)svcreq->rq_proc);
 		auth_rc = AUTH_TOOWEAK;

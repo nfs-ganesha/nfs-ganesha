@@ -93,7 +93,7 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 		/* Handle reverse junction */
 		LogDebug(COMPONENT_EXPORT,
 			 "Handling reverse junction from Export_Id %d Path %s Parent=%p",
-			 data->export->id,
+			 data->req_ctx->export->export_id,
 			 data->export->fullpath,
 			 original_export->exp_parent_exp);
 
@@ -133,7 +133,7 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 			/* Export is in the process of dying */
 			LogCrit(COMPONENT_EXPORT,
 				"Reverse junction from Export_Id %d Path %s Parent=%p is stale",
-				data->export->id,
+				data->req_ctx->export->export_id,
 				data->export->fullpath,
 				parent_exp);
 			PTHREAD_RWLOCK_unlock(&original_export->lock);
@@ -176,7 +176,8 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 			 */
 			LogDebug(COMPONENT_EXPORT,
 				 "NFS4ERR_ACCESS Hiding Export_Id %d Path %s with NFS4ERR_NOENT",
-				 data->export->id, data->export->fullpath);
+				 data->req_ctx->export->export_id,
+				 data->export->fullpath);
 			res_LOOKUPP4->status = NFS4ERR_NOENT;
 			return res_LOOKUPP4->status;
 		}

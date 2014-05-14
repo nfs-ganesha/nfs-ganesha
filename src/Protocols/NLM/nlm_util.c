@@ -586,7 +586,7 @@ bool nlm_block_data_to_export(state_block_data_t *block_data)
 		LogFullDebug(COMPONENT_NLM,
 			     "Found export entry for dirname=%s as exportid=%d",
 			     exp->export.fullpath,
-			     exp->export.id);
+			     exp->export_id);
 	}
 
  err:

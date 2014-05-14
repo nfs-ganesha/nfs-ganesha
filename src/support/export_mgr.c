@@ -105,8 +105,8 @@ static int export_id_cmpf(const struct avltree_node *lhs,
 
 	lk = avltree_container_of(lhs, struct gsh_export, node_k);
 	rk = avltree_container_of(rhs, struct gsh_export, node_k);
-	if (lk->export.id != rk->export.id)
-		return (lk->export.id < rk->export.id) ? -1 : 1;
+	if (lk->export_id != rk->export_id)
+		return (lk->export_id < rk->export_id) ? -1 : 1;
 	else
 		return 0;
 }
@@ -177,7 +177,7 @@ bool insert_gsh_export(struct gsh_export *export)
 	/* update cache */
 	cache_slot = (void **)
 		&(export_by_id.cache[eid_cache_offsetof(&export_by_id,
-							export->export.id)]);
+							export->export_id)]);
 	atomic_store_voidptr(cache_slot, &export->node_k);
 	glist_add_tail(&exportlist, &export->exp_list);
 	get_gsh_export_ref(export);
@@ -204,7 +204,7 @@ struct gsh_export *get_gsh_export(int export_id)
 	struct gsh_export v;
 	void **cache_slot;
 
-	v.export.id = export_id;
+	v.export_id = export_id;
 	PTHREAD_RWLOCK_rdlock(&export_by_id.lock);
 
 	/* check cache */
@@ -612,7 +612,7 @@ void remove_gsh_export(int export_id)
 	struct gsh_export v;
 	void **cache_slot;
 
-	v.export.id = export_id;
+	v.export_id = export_id;
 
 	PTHREAD_RWLOCK_wrlock(&export_by_id.lock);
 	node = avltree_lookup(&v.node_k, &export_by_id.t);
@@ -846,7 +846,7 @@ static bool gsh_export_removeexport(DBusMessageIter *args,
 		rc = false;
 		goto out;
 	} else {
-		if (export->export.id == 0) {
+		if (export->export_id == 0) {
 			LogDebug(COMPONENT_EXPORT,
 				"Cannot remove export with id 0");
 			put_gsh_export(export);
@@ -857,7 +857,7 @@ static bool gsh_export_removeexport(DBusMessageIter *args,
 		}
 		unexport(export);
 		LogInfo(COMPONENT_EXPORT, "Removed export with id %d",
-			export->export.id);
+			export->export_id);
 
 		put_gsh_export(export);
 	}
@@ -928,7 +928,7 @@ static bool gsh_export_displayexport(DBusMessageIter *args,
 	dbus_message_iter_init_append(reply, &iter);
 	dbus_message_iter_append_basic(&iter,
 				       DBUS_TYPE_INT32,
-				       &export->export.id);
+				       &export->export_id);
 	path = (export->export.fullpath != NULL) ?
 		export->export.fullpath : "";
 	dbus_message_iter_append_basic(&iter,
@@ -974,7 +974,7 @@ static bool export_to_dbus(struct gsh_export *exp_node, void *state)
 	dbus_message_iter_open_container(&iter_state->export_iter,
 					 DBUS_TYPE_STRUCT, NULL, &struct_iter);
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_INT32,
-				       &exp_node->export.id);
+				       &exp_node->export_id);
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &path);
 	server_stats_summary(&struct_iter, &exp->st);
 	dbus_append_timestamp(&struct_iter, &last_as_ts);

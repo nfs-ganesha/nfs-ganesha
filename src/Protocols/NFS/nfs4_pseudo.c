@@ -193,7 +193,7 @@ retry:
 		if (new_node->type != DIRECTORY) {
 			LogCrit(COMPONENT_EXPORT,
 				"BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s LOOKUP %s is not a directory",
-				state->export->export.id,
+				state->export->export_id,
 				state->export->export.fullpath,
 				state->export->export.pseudopath,
 				name);
@@ -218,7 +218,7 @@ retry:
 		/* An error occurred */
 		LogCrit(COMPONENT_EXPORT,
 			"BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s LOOKUP %s failed with %s",
-			state->export->export.id,
+			state->export->export_id,
 			state->export->export.fullpath,
 			state->export->export.pseudopath,
 			name,
@@ -231,7 +231,7 @@ retry:
 		/* Only allowed to create directories on FSAL_PSEUDO */
 		LogCrit(COMPONENT_EXPORT,
 			"BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s LOOKUP %s failed with %s (can't create directory on non-PSEUDO FSAL)",
-			state->export->export.id,
+			state->export->export_id,
 			state->export->export.fullpath,
 			state->export->export.pseudopath,
 			name,
@@ -260,7 +260,7 @@ retry:
 		/* An error occurred */
 		LogCrit(COMPONENT_EXPORT,
 			"BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s CREATE %s failed with %s",
-			state->export->export.id,
+			state->export->export_id,
 			state->export->export.fullpath,
 			state->export->export.pseudopath,
 			name,
@@ -275,7 +275,7 @@ retry:
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		LogCrit(COMPONENT_EXPORT,
 			"BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s GETATTR %s failed with %s",
-			state->export->export.id,
+			state->export->export_id,
 			state->export->export.fullpath,
 			state->export->export.pseudopath,
 			name,
@@ -287,7 +287,7 @@ retry:
 
 	LogDebug(COMPONENT_EXPORT,
 		 "BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s CREATE %s succeded",
-		 state->export->export.id,
+		 state->export->export_id,
 		 state->export->export.fullpath,
 		 state->export->export.pseudopath,
 		 name);
@@ -327,7 +327,7 @@ bool pseudo_mount_export(struct gsh_export *exp,
 	 */
 	if ((export->export_perms.options & EXPORT_OPTION_NFSV4) == 0
 	    || export->pseudopath == NULL
-	    || export->id == 0
+	    || exp->export_id == 0
 	    || export->pseudopath[1] == '\0')
 		return true;
 
@@ -339,7 +339,7 @@ bool pseudo_mount_export(struct gsh_export *exp,
 
 	LogDebug(COMPONENT_EXPORT,
 		 "BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s",
-		 export->id, export->fullpath, export->pseudopath);
+		 exp->export_id, export->fullpath, export->pseudopath);
 
 	/* Make a copy of the path */
 	tmp_pseudopath = alloca(strlen(export->pseudopath) + 1);
@@ -387,7 +387,7 @@ bool pseudo_mount_export(struct gsh_export *exp,
 
 	LogDebug(COMPONENT_EXPORT,
 		 "BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s Rest %s",
-		 export->id, export->fullpath, export->pseudopath, rest);
+		 exp->export_id, export->fullpath, export->pseudopath, rest);
 
 	/* Get the root inode of the mounted on export */
 	cache_status = nfs_export_get_root_entry(state.req_ctx->export,
@@ -396,7 +396,7 @@ bool pseudo_mount_export(struct gsh_export *exp,
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		LogCrit(COMPONENT_EXPORT,
 			"BUILDING PSEUDOFS: Could not get root entry for Export_Id %d Path %s Pseudo Path %s",
-			export->id, export->fullpath, export->pseudopath);
+			exp->export_id, export->fullpath, export->pseudopath);
 
 		/* Release the reference on the mounted on export. */
 		put_gsh_export(state.req_ctx->export);
@@ -427,7 +427,7 @@ bool pseudo_mount_export(struct gsh_export *exp,
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		LogCrit(COMPONENT_EXPORT,
 			"BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s final GETATTR failed with %s",
-			exp->export.id,
+			exp->export_id,
 			exp->export.fullpath,
 			exp->export.pseudopath,
 			cache_inode_err_str(cache_status));
@@ -451,7 +451,7 @@ bool pseudo_mount_export(struct gsh_export *exp,
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		LogCrit(COMPONENT_INIT,
 			"BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s final pin failed with %s",
-			exp->export.id,
+			exp->export_id,
 			exp->export.fullpath,
 			exp->export.pseudopath,
 			cache_inode_err_str(cache_status));

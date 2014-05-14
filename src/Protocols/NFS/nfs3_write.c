@@ -48,6 +48,7 @@
 #include "nfs_convert.h"
 #include "nfs_proto_tools.h"
 #include "server_stats.h"
+#include "export_mgr.h"
 
 /**
  *
@@ -198,7 +199,8 @@ int nfs3_write(nfs_arg_t *arg, exportlist_t *export,
 			LogEvent(COMPONENT_NFSPROTO,
 				 "A client tryed to violate max "
 				 "file size %" PRIu64 " for exportid #%hu",
-				 export->MaxOffsetWrite, export->id);
+				 export->MaxOffsetWrite,
+				 req_ctx->export->export_id);
 
 			res->res_write3.status = NFS3ERR_INVAL;
 

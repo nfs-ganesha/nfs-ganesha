@@ -47,6 +47,7 @@
 #include <unistd.h>
 #include "fsal_pnfs.h"
 #include "server_stats.h"
+#include "export_mgr.h"
 
 /**
  * @brief Read on a pNFS pNFS data server
@@ -412,7 +413,7 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 				 "A client tryed to violate max "
 				 "file size %" PRIu64 " for exportid #%hu",
 				 data->export->MaxOffsetRead,
-				 data->export->id);
+				 data->req_ctx->export->export_id);
 
 			res_READ4->status = NFS4ERR_DQUOT;
 			goto done;

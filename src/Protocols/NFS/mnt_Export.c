@@ -70,7 +70,7 @@ static bool proc_export(struct gsh_export *export, void *arg)
 	if (state->req_ctx->export_perms->options == 0) {
 		LogFullDebug(COMPONENT_NFSPROTO,
 			     "Client is not allowed to access Export_Id %d %s",
-			     export->export.id, export->export.fullpath);
+			     export->export_id, export->export.fullpath);
 
 		return true;
 	}

@@ -42,6 +42,7 @@
 #include "nfs_convert.h"
 #include "fsal_pnfs.h"
 #include "server_stats.h"
+#include "export_mgr.h"
 
 /**
  * @brief Write for a data server
@@ -333,7 +334,7 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 				 "A client tryed to violate max "
 				 "file size %" PRIu64 " for exportid #%hu",
 				 data->export->MaxOffsetWrite,
-				 data->export->id);
+				 data->req_ctx->export->export_id);
 
 			res_WRITE4->status = NFS4ERR_DQUOT;
 			if (anonymous)

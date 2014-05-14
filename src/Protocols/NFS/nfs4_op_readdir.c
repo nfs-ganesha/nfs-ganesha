@@ -147,7 +147,7 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 		LogMidDebug(COMPONENT_EXPORT,
 			    "Offspring DIR %s is a junction Export_id %d Path %s",
 			    cb_parms->name,
-			    entry->object.dir.junction_export->export.id,
+			    entry->object.dir.junction_export->export_id,
 			    entry->object.dir.junction_export->export.fullpath);
 
 		/* Save the compound data context */
@@ -177,7 +177,7 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 			 */
 			LogDebug(COMPONENT_EXPORT,
 				 "NFS4ERR_ACCESS Skipping Export_Id %d Path %s",
-				 data->export->id,
+				 data->req_ctx->export->export_id,
 				 data->export->fullpath);
 
 			/* Restore export and creds */
@@ -206,7 +206,7 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 				 */
 				LogDebug(COMPONENT_EXPORT,
 					 "Ignoring NFS4ERR_WRONGSEC (only asked for MOUNTED_IN_FILEID) On ReadDir Export_Id %d Path %s",
-					 data->export->id,
+					 data->req_ctx->export->export_id,
 					 data->export->fullpath);
 
 				/* Because we are not asking for any attributes
@@ -232,7 +232,7 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 				 */
 				LogDebug(COMPONENT_EXPORT,
 					 "NFS4ERR_WRONGSEC On ReadDir Export_Id %d Path %s",
-					 data->export->id,
+					 data->req_ctx->export->export_id,
 					 data->export->fullpath);
 			}
 		} else if (rdattr_error == NFS4_OK) {
@@ -246,7 +246,7 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 			 */
 			LogMidDebug(COMPONENT_EXPORT,
 				    "Need to cross junction to Export_Id %d Path %s",
-				    data->export->id,
+				    data->req_ctx->export->export_id,
 				    data->export->fullpath);
 			tracker->junction_cb = true;
 			return CACHE_INODE_CROSS_JUNCTION;
@@ -259,7 +259,7 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 		 */
 		LogMidDebug(COMPONENT_EXPORT,
 			    "Need to report error for junction to Export_Id %d Path %s",
-			    data->export->id,
+			    data->req_ctx->export->export_id,
 			    data->export->fullpath);
 		restore_data(tracker);
 	}

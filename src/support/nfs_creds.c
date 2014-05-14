@@ -508,7 +508,8 @@ int nfs4_MakeCred(compound_data_t *data)
 	     EXPORT_OPTION_ACCESS_TYPE) == 0) {
 		LogInfoAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
 			"Access not allowed on Export_Id %d %s for client %s",
-			data->export->id, data->export->fullpath,
+			data->req_ctx->export->export_id,
+			data->export->fullpath,
 			data->req_ctx->client->hostaddr_str);
 		return NFS4ERR_ACCESS;
 	}
@@ -517,7 +518,8 @@ int nfs4_MakeCred(compound_data_t *data)
 	if ((data->req_ctx->export_perms->options & EXPORT_OPTION_NFSV4) == 0) {
 		LogInfoAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
 			"NFS4 not allowed on Export_Id %d %s for client %s",
-			data->export->id, data->export->fullpath,
+			data->req_ctx->export->export_id,
+			data->export->fullpath,
 			data->req_ctx->client->hostaddr_str);
 		return NFS4ERR_ACCESS;
 	}
@@ -532,7 +534,8 @@ int nfs4_MakeCred(compound_data_t *data)
 	      EXPORT_OPTION_TCP) == 0))) {
 		LogInfoAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
 			"NFS4 over %s not allowed on Export_Id %d %s for client %s",
-			xprt_type_to_str(xprt_type), data->export->id,
+			xprt_type_to_str(xprt_type),
+			data->req_ctx->export->export_id,
 			data->export->fullpath,
 			data->req_ctx->client->hostaddr_str);
 		return NFS4ERR_ACCESS;
@@ -544,7 +547,8 @@ int nfs4_MakeCred(compound_data_t *data)
 	    && (port >= IPPORT_RESERVED)) {
 		LogInfoAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
 			"Non-reserved Port %d is not allowed on Export_Id %d %s for client %s",
-			port, data->export->id, data->export->fullpath,
+			port, data->req_ctx->export->export_id,
+			data->export->fullpath,
 			data->req_ctx->client->hostaddr_str);
 		return NFS4ERR_ACCESS;
 	}
@@ -553,7 +557,8 @@ int nfs4_MakeCred(compound_data_t *data)
 	if (export_check_security(data->req, data->req_ctx) == false) {
 		LogInfoAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
 			"NFS4 auth not allowed on Export_Id %d %s for client %s",
-			data->export->id, data->export->fullpath,
+			data->req_ctx->export->export_id,
+			data->export->fullpath,
 			data->req_ctx->client->hostaddr_str);
 		return NFS4ERR_WRONGSEC;
 	}

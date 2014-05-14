@@ -232,9 +232,10 @@ static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t *data,
 		if (file_state->state_export != data->req_ctx->export) {
 			LogEvent(COMPONENT_STATE,
 				 "Lock Owner Export Conflict, Lock held for export %d (%s), request for export %d (%s)",
-				 file_state->state_export->export.id,
+				 file_state->state_export->export_id,
 				 file_state->state_export->export.fullpath,
-				 data->export->id, data->export->fullpath);
+				 data->req_ctx->export->export_id,
+				 data->export->fullpath);
 			return STATE_INVALID_ARGUMENT;
 		}
 	}

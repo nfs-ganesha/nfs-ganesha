@@ -756,7 +756,7 @@ int ptfsal_fsync(struct pt_fsal_obj_handle *p_file_descriptor,
 		return -1;
 
 	ccl_context.handle_index = p_file_descriptor->u.file.fd;
-	ccl_context.export_id = opctx->export->export.id;
+	ccl_context.export_id = opctx->export->export_id;
 	ccl_context.uid = opctx->creds->caller_uid;
 	ccl_context.gid = opctx->creds->caller_gid;
 
@@ -1187,7 +1187,7 @@ uint64_t ptfsal_read(struct pt_fsal_obj_handle *p_file_descriptor,
 	uint64_t max_readahead_offset = UINT64_MAX;
 
 	ccl_context.handle_index = p_file_descriptor->u.file.fd;
-	ccl_context.export_id = opctx->export->export.id;
+	ccl_context.export_id = opctx->export->export_id;
 	ccl_context.uid = opctx->creds->caller_uid;
 	ccl_context.gid = opctx->creds->caller_gid;
 
@@ -1242,7 +1242,7 @@ uint64_t ptfsal_write(struct pt_fsal_obj_handle *p_file_descriptor,
 	ccl_context_t ccl_context;
 
 	ccl_context.handle_index = p_file_descriptor->u.file.fd;
-	ccl_context.export_id = opctx->export->export.id;
+	ccl_context.export_id = opctx->export->export_id;
 	ccl_context.uid = opctx->creds->caller_uid;
 	ccl_context.gid = opctx->creds->caller_gid;
 

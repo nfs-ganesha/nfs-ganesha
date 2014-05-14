@@ -316,7 +316,7 @@ static void LogEntry(const char *reason, state_lock_entry_t *le)
 			     ", export=%u, type=%s, start=0x%llx, end=0x%llx, blocked=%s/%p, state=%p, refcount=%d, type %d owner={%s}",
 			     reason, le, le->sle_entry,
 			     (uint64_t) le->sle_entry->obj_handle->attributes.
-			     fileid, (unsigned int)le->sle_export->export.id,
+			     fileid, (unsigned int)le->sle_export->export_id,
 			     str_lockt(le->sle_lock.lock_type),
 			     (unsigned long long)le->sle_lock.lock_start,
 			     (unsigned long long)lock_end(&le->sle_lock),
@@ -2542,10 +2542,11 @@ state_status_t state_lock(cache_entry_t *entry, exportlist_t *export,
 
 				LogEvent(COMPONENT_STATE,
 					 "Lock Owner Export Conflict, Lock held for export %d (%s), request for export %d (%s)",
-					 found_entry->sle_export->export.id,
+					 found_entry->sle_export->export_id,
 					 found_entry->
 						sle_export->export.fullpath,
-					 export->id, export->fullpath);
+					 req_ctx->export->export_id,
+					 export->fullpath);
 				LogEntry(
 					"Found lock entry belonging to another export",
 					found_entry);
@@ -2596,9 +2597,9 @@ state_status_t state_lock(cache_entry_t *entry, exportlist_t *export,
 
 			LogEvent(COMPONENT_STATE,
 				 "Lock Owner Export Conflict, Lock held for export %d (%s), request for export %d (%s)",
-				 found_entry->sle_export->export.id,
+				 found_entry->sle_export->export_id,
 				 found_entry->sle_export->export.fullpath,
-				 export->id,
+				 req_ctx->export->export_id,
 				 export->fullpath);
 
 			LogEntry("Found lock entry belonging to another export",

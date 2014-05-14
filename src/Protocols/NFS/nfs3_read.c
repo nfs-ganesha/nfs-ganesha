@@ -46,6 +46,7 @@
 #include "nfs_proto_tools.h"
 #include "nfs_convert.h"
 #include "server_stats.h"
+#include "export_mgr.h"
 
 static void nfs_read_ok(exportlist_t *export, struct svc_req *req,
 			struct req_op_context *req_ctx, nfs_res_t *res,
@@ -184,7 +185,8 @@ int nfs3_read(nfs_arg_t *arg, exportlist_t *export,
 			LogEvent(COMPONENT_NFSPROTO,
 				 "A client tryed to violate max "
 				 "file size %" PRIu64 " for exportid #%hu",
-				 export->MaxOffsetRead, export->id);
+				 export->MaxOffsetRead,
+				 req_ctx->export->export_id);
 
 			res->res_read3.status = NFS3ERR_INVAL;
 
