@@ -835,7 +835,7 @@ struct state_lock_entry_t {
 #endif				/* DEBUG_SAL */
 	struct glist_head sle_export_locks;	/*< Link on the export
 						   lock list */
-	exportlist_t *sle_export;
+	struct gsh_export *sle_export;
 	cache_entry_t *sle_entry;	/*< File being locked */
 	state_block_data_t *sle_block_data;	/*< Blocking lock data */
 	state_owner_t *sle_owner;	/* Lock owner */

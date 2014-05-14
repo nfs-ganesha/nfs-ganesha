@@ -48,6 +48,7 @@
 #include "sal_functions.h"
 #include "nlm_util.h"
 #include "cache_inode_lru.h"
+#include "export_mgr.h"
 
 /**
  * @brief Free a delegation while the lock state is locked.
@@ -67,7 +68,7 @@ void free_deleg_locked(state_lock_entry_t *deleg_lock, cache_entry_t *entry,
 	nfs_client_id_t *clientid =
 		deleg_lock->sle_owner->so_owner.so_nfs4_owner.so_clientrec;
 
-	state_unlock(entry, deleg_lock->sle_export,
+	state_unlock(entry, &deleg_lock->sle_export->export,
 		     fake_req_ctx,
 		     deleg_lock->sle_owner,
 		     deleg_lock->sle_state,

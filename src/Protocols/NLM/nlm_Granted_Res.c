@@ -89,8 +89,7 @@ int nlm4_Granted_Res(nfs_arg_t *args, exportlist_t *export,
 	PTHREAD_RWLOCK_unlock(&cookie_entry->sce_entry->state_lock);
 
 	/* Fill in req_ctx */
-	req_ctx->export = container_of(cookie_entry->sce_lock_entry->sle_export,
-				       struct gsh_export, export);
+	req_ctx->export = cookie_entry->sce_lock_entry->sle_export;
 	get_gsh_export_ref(req_ctx->export); /* nfs_rpc_execute will release */
 	req_ctx->fsal_export = req_ctx->export->fsal_export;
 	if (arg->stat.stat != NLM4_GRANTED) {

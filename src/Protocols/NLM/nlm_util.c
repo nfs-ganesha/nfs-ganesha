@@ -252,9 +252,7 @@ static void nlm4_send_grant_msg(state_async_queue_t *arg)
 	PTHREAD_RWLOCK_unlock(&cookie_entry->sce_entry->state_lock);
 
 	/* Initialize req_ctx */
-	export = container_of(cookie_entry->sce_lock_entry->sle_export,
-			      struct gsh_export,
-			      export);
+	export = cookie_entry->sce_lock_entry->sle_export;
 
 	init_root_op_context(&root_op_context,
 			     export, export->fsal_export,
