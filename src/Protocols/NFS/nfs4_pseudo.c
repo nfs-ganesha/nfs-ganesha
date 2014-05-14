@@ -87,7 +87,7 @@ bool cleanup_pseudofs_node(const char *pseudopath, cache_entry_t *entry)
 
 	node_exp = (struct gsh_export *)
 			atomic_fetch_voidptr(&entry->first_export);
-	if (strcmp(node_exp->export.export_hdl->fsal->name, "PSEUDO") != 0) {
+	if (strcmp(node_exp->fsal_export->fsal->name, "PSEUDO") != 0) {
 		/* Junction is NOT in FSAL_PSEUDO */
 		goto out;
 	}
@@ -141,7 +141,7 @@ bool cleanup_pseudofs_node(const char *pseudopath, cache_entry_t *entry)
 
 	/* Initialize req_ctx */
 	init_root_op_context(&root_op_context, node_exp,
-				node_exp->export.export_hdl,
+				node_exp->fsal_export,
 				NFS_V4, 0, NFS_REQUEST);
 
 	parent_entry = cache_inode_get_keyed(&entry->object.dir.parent,
@@ -226,7 +226,7 @@ retry:
 		return false;
 	}
 
-	if (strcmp(state->req_ctx->export->export.export_hdl->fsal->name,
+	if (strcmp(state->req_ctx->export->fsal_export->fsal->name,
 		   "PSEUDO") != 0) {
 		/* Only allowed to create directories on FSAL_PSEUDO */
 		LogCrit(COMPONENT_EXPORT,
@@ -371,7 +371,7 @@ bool pseudo_mount_export(struct gsh_export *exp,
 			 export->pseudopath, tmp_pseudopath);
 	}
 
-	state.req_ctx->fsal_export = req_ctx->export->export.export_hdl;
+	state.req_ctx->fsal_export = req_ctx->export->fsal_export;
 
 	/* Put the slash back in */
 	*last_slash = '/';

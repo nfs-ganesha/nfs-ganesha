@@ -140,8 +140,6 @@ typedef struct exportlist {
 	uint64_t MaxCacheSize;	/*< Maximum Cache Size allowed */
 	bool UseCookieVerifier;	/*< Is Cookie verifier to be used? */
 	struct glist_head clients;	/*< Allowed clients */
-	struct fsal_export *export_hdl;	/*< Handle into our FSAL */
-
 	struct glist_head exp_state_list;	/*< List of NFS v4 state
 						    belonging to this export */
 	struct glist_head exp_lock_list;	/*< List of locks belonging

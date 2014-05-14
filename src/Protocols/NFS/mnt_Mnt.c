@@ -61,7 +61,6 @@ int mnt_Mnt(nfs_arg_t *arg, exportlist_t *export,
 	exportlist_t *p_current_item = NULL;
 	struct gsh_export *exp = NULL;
 	struct fsal_obj_handle *pfsal_handle = NULL;
-	struct fsal_export *exp_hdl;
 	int auth_flavor[NB_AUTH_FLAVOR];
 	int index_auth = 0;
 	int i = 0;
@@ -116,7 +115,7 @@ int mnt_Mnt(nfs_arg_t *arg, exportlist_t *export,
 
 	/* set the export in the context */
 	req_ctx->export = exp;
-	req_ctx->fsal_export = req_ctx->export->export.export_hdl;
+	req_ctx->fsal_export = req_ctx->export->fsal_export;
 
 	/* Check access based on client. Don't bother checking TCP/UDP as some
 	 * clients use UDP for MOUNT even when they will use TCP for NFS.
@@ -143,13 +142,14 @@ int mnt_Mnt(nfs_arg_t *arg, exportlist_t *export,
 		}
 		pfsal_handle = entry->obj_handle;
 	} else {
-		exp_hdl = p_current_item->export_hdl;
 		LogEvent(COMPONENT_NFSPROTO,
 			 "MOUNT: Performance warning: Export entry is not cached");
 
-		if (FSAL_IS_ERROR(exp_hdl->ops->lookup_path(exp_hdl, req_ctx,
-							    arg->arg_mnt,
-							    &pfsal_handle))) {
+		if (FSAL_IS_ERROR(req_ctx->fsal_export->ops->lookup_path(
+						req_ctx->fsal_export,
+						req_ctx,
+						arg->arg_mnt,
+						&pfsal_handle))) {
 			res->res_mnt3.fhs_status = MNT3ERR_ACCES;
 			goto out;
 		}

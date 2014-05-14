@@ -818,7 +818,7 @@ destroy_entry(cache_entry_t *entry)
 	struct fsal_export *fsal_export = NULL;
 
 	if (export != NULL)
-		fsal_export = export->export.export_hdl;
+		fsal_export = export->fsal_export;
 
 	/* Initialize req_ctx */
 	init_root_op_context(&root_op_context, export, fsal_export,

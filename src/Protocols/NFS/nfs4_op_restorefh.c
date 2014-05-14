@@ -108,7 +108,7 @@ int nfs4_op_restorefh(struct nfs_argop4 *op, compound_data_t *data,
 	if (data->req_ctx->export != NULL) {
 		data->export = &data->req_ctx->export->export;
 		data->req_ctx->fsal_export =
-			data->req_ctx->export->export.export_hdl;
+			data->req_ctx->export->fsal_export;
 
 		/* Get a reference to the export for the new CurrentFH
 		 * independent of SavedFH if appropriate.

@@ -918,7 +918,7 @@ static void nfs_rpc_execute(request_data_t *req,
 				rc = NFS_REQ_OK;
 				goto req_error;
 			}
-			req_ctx.fsal_export = req_ctx.export->export.export_hdl;
+			req_ctx.fsal_export = req_ctx.export->fsal_export;
 			if ((req_ctx.export->export.export_perms.
 			     options & EXPORT_OPTION_NFSV3) == 0)
 				goto handle_err;
@@ -1028,7 +1028,7 @@ static void nfs_rpc_execute(request_data_t *req,
 					    == 0)
 						goto handle_err;
 					req_ctx.fsal_export =
-					    req_ctx.export->export.export_hdl;
+					    req_ctx.export->fsal_export;
 				}
 
 				LogMidDebugAlt(COMPONENT_DISPATCH,

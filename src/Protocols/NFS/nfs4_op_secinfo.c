@@ -118,7 +118,7 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 
 		data->req_ctx->export = entry_src->object.dir.junction_export;
 		data->req_ctx->fsal_export =
-			data->req_ctx->export->export.export_hdl;
+			data->req_ctx->export->fsal_export;
 		data->export = &data->req_ctx->export->export;
 
 		/* Release attr_lock */
@@ -281,7 +281,7 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 		data->export_perms = save_export_perms;
 		data->req_ctx->export = saved_gsh_export;
 		data->req_ctx->fsal_export =
-			data->req_ctx->export->export.export_hdl;
+			data->req_ctx->export->fsal_export;
 		data->export = &data->req_ctx->export->export;
 
 		/* Restore creds */

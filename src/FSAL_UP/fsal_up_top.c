@@ -799,7 +799,7 @@ static int32_t layoutrec_completion(rpc_call_t *call, rpc_call_hook hook,
 				     struct gsh_export,
 				     export);
 		root_op_context.req_ctx.fsal_export =
-			state->state_export->export_hdl;
+			root_op_context.req_ctx.export->fsal_export;
 
 		nfs4_return_one_state(state->state_entry,
 				      &root_op_context.req_ctx,
@@ -847,7 +847,7 @@ static void return_one_async(void *arg)
 				     struct gsh_export,
 				     export);
 		root_op_context.req_ctx.fsal_export =
-			s->state_export->export_hdl;
+			root_op_context.req_ctx.export->fsal_export;
 
 		nfs4_return_one_state(s->state_entry,
 				      &root_op_context.req_ctx,
@@ -928,7 +928,7 @@ static void layoutrecall_one_call(void *arg)
 						     struct gsh_export,
 						     export);
 				root_op_context.req_ctx.fsal_export =
-					s->state_export->export_hdl;
+				    root_op_context.req_ctx.export->fsal_export;
 
 				nfs4_return_one_state(s->state_entry,
 						      &root_op_context.req_ctx,

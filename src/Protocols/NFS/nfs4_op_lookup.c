@@ -133,7 +133,7 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t *data,
 
 		data->req_ctx->export = file_entry->object.dir.junction_export;
 		data->req_ctx->fsal_export =
-			data->req_ctx->export->export.export_hdl;
+			data->req_ctx->export->fsal_export;
 		data->export = &data->req_ctx->export->export;
 
 		/* Release attr_lock */

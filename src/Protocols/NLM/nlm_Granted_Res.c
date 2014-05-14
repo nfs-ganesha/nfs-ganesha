@@ -92,7 +92,7 @@ int nlm4_Granted_Res(nfs_arg_t *args, exportlist_t *export,
 	req_ctx->export = container_of(cookie_entry->sce_lock_entry->sle_export,
 				       struct gsh_export, export);
 	get_gsh_export_ref(req_ctx->export); /* nfs_rpc_execute will release */
-	req_ctx->fsal_export = req_ctx->export->export.export_hdl;
+	req_ctx->fsal_export = req_ctx->export->fsal_export;
 	if (arg->stat.stat != NLM4_GRANTED) {
 		LogMajor(COMPONENT_NLM,
 			 "Granted call failed due to client error, releasing lock");

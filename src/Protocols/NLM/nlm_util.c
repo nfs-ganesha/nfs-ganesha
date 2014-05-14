@@ -257,7 +257,7 @@ static void nlm4_send_grant_msg(state_async_queue_t *arg)
 			      export);
 
 	init_root_op_context(&root_op_context,
-			     export, export->export.export_hdl,
+			     export, export->fsal_export,
 			     NFS_V3, 0, NFS_REQUEST);
 
 	state_status = state_release_grant(cookie_entry,

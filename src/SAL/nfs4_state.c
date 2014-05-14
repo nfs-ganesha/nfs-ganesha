@@ -624,8 +624,7 @@ void release_openstate(struct req_op_context *req_ctx,
 					     struct gsh_export,
 					     export);
 
-			req_ctx->fsal_export =
-				state_found->state_export->export_hdl;
+			req_ctx->fsal_export = req_ctx->export->fsal_export;
 
 			state_status =
 			    state_share_remove(state_found->state_entry,

@@ -83,9 +83,9 @@ int rquota_getquota(nfs_arg_t *arg, exportlist_t *export,
 		quota_path = exp->export.fullpath;
 	}
 	fsal_status =
-	    exp->export.export_hdl->ops->get_quota(exp->export.export_hdl,
-						   quota_path, quota_type,
-						   req_ctx, &fsal_quota);
+	    exp->fsal_export->ops->get_quota(exp->fsal_export,
+					     quota_path, quota_type,
+					     req_ctx, &fsal_quota);
 	if (FSAL_IS_ERROR(fsal_status)) {
 		if (fsal_status.major == ERR_FSAL_NO_QUOTA)
 			qres->status = Q_NOQUOTA;

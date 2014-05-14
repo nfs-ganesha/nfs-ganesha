@@ -62,7 +62,7 @@ cache_inode_statfs(cache_entry_t *entry,
 	struct fsal_export *export;
 	cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
-	export = req_ctx->export->export.export_hdl;
+	export = req_ctx->export->fsal_export;
 	/* Get FSAL to get dynamic info */
 	fsal_status =
 	    export->ops->get_fs_dynamic_info(entry->obj_handle, export,

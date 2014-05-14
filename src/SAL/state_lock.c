@@ -1796,7 +1796,7 @@ void process_blocked_lock_upcall(state_block_data_t *block_data)
 					      export);
 
 	/* Initialize req_ctx */
-	init_root_op_context(&root_op_context, exp, exp->export.export_hdl,
+	init_root_op_context(&root_op_context, exp, exp->fsal_export,
 			     0, 0, UNKNOWN_REQUEST);
 
 	/* This routine does not call cache_inode_inc_pin_ref() because there
@@ -1830,7 +1830,7 @@ static void grant_blocked_locks(cache_entry_t *entry,
 {
 	state_lock_entry_t *found_entry;
 	struct glist_head *glist, *glistn;
-	struct fsal_export *export = req_ctx->fsal_export;
+	struct fsal_export *export = req_ctx->export->fsal_export;
 
 	/* If FSAL supports async blocking locks,
 	 * allow it to grant blocked locks.
@@ -3197,7 +3197,8 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 		root_op_context.req_ctx.export = container_of(export,
 							      struct gsh_export,
 							      export);
-		root_op_context.req_ctx.fsal_export = export->export_hdl;
+		root_op_context.req_ctx.fsal_export =
+			root_op_context.req_ctx.export->fsal_export;
 		get_gsh_export_ref(root_op_context.req_ctx.export);
 
 		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
@@ -3357,7 +3358,7 @@ state_status_t state_owner_unlock_all(state_owner_t *owner,
 		export = found_entry->sle_export;
 		req_ctx->export =
 		    container_of(export, struct gsh_export, export);
-		req_ctx->fsal_export = req_ctx->export->export.export_hdl;
+		req_ctx->fsal_export = req_ctx->export->fsal_export;
 
 		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 
@@ -3396,7 +3397,7 @@ state_status_t state_owner_unlock_all(state_owner_t *owner,
 
 	req_ctx->export = saved_export;
 	if (saved_export != NULL)
-		req_ctx->fsal_export = req_ctx->export->export.export_hdl;
+		req_ctx->fsal_export = req_ctx->export->fsal_export;
 	return status;
 }
 

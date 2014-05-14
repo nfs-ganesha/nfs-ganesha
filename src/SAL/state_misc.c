@@ -1334,7 +1334,7 @@ void state_release_export(struct gsh_export *exp)
 	struct root_op_context root_op_context;
 
 	/* Initialize req_ctx */
-	init_root_op_context(&root_op_context, exp, exp->export.export_hdl,
+	init_root_op_context(&root_op_context, exp, exp->fsal_export,
 			     0, 0, UNKNOWN_REQUEST);
 
 	state_export_unlock_all(&root_op_context.req_ctx);

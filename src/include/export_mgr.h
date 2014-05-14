@@ -67,6 +67,8 @@ struct gsh_export {
 	cache_entry_t *exp_junction_inode;
 	/** The export this export sits on. Protected by lock */
 	struct gsh_export *exp_parent_exp;
+	/** Pointer to the fsal_export associated with this export */
+	struct fsal_export *fsal_export;
 	/** Node id this is mounted on. Protected by lock */
 	uint64_t exp_mounted_on_file_id;
 	/** Read/Write lock protecting export */

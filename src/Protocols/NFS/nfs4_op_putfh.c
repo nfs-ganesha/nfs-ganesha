@@ -118,7 +118,7 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t *data,
 		return res_PUTFH4->status;
 	}
 
-	data->req_ctx->fsal_export = data->req_ctx->export->export.export_hdl;
+	data->req_ctx->fsal_export = data->req_ctx->export->fsal_export;
 
 	if (&data->req_ctx->export->export != data->export) {
 		data->export = &data->req_ctx->export->export;

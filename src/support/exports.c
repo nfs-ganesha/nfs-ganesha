@@ -589,7 +589,7 @@ static int fsal_commit(void *node, void *link_mem, void *self_struct,
 		errcnt++;
 		goto err;
 	}
-	export = container_of(exp_hdl, struct gsh_export, export.export_hdl);
+	export = container_of(exp_hdl, struct gsh_export, fsal_export);
 	fsal = lookup_fsal(fp->name);
 	if (fsal == NULL) {
 		int retval;
@@ -675,7 +675,7 @@ static int fsal_commit(void *node, void *link_mem, void *self_struct,
 		export->export.MaxWrite = fsal_exp->ops->fs_maxwrite(fsal_exp);
 	}
 	assert(fsal_exp != NULL);
-	export->export.export_hdl = fsal_exp;
+	export->fsal_export = fsal_exp;
 
 err:
 	return errcnt;
@@ -1186,7 +1186,7 @@ static struct config_item export_params[] = {
 		       gsh_export, export.expire_time_attr),
 	CONF_RELAX_BLOCK("FSAL", fsal_params,
 			 fsal_init, fsal_commit,
-			 gsh_export, export.export_hdl),
+			 gsh_export, fsal_export),
 	CONFIG_EOL
 };
 
@@ -1338,7 +1338,7 @@ static int build_default_root(void)
 						  &export->export,
 						  NULL,
 						  &fsal_up_top,
-						  &export->export.export_hdl);
+						  &export->fsal_export);
 
 		if (FSAL_IS_ERROR(rc)) {
 			fsal_put(fsal_hdl);
@@ -1351,8 +1351,7 @@ static int build_default_root(void)
 	}
 
 	if (!insert_gsh_export(export)) {
-		export->export.export_hdl->ops->release(
-			export->export.export_hdl);
+		export->fsal_export->ops->release(export->fsal_export);
 		fsal_put(fsal_hdl);
 		LogCrit(COMPONENT_CONFIG,
 			"Failed to insert pseudo root export.  In use??");
@@ -1444,13 +1443,12 @@ static void FreeClientList(struct glist_head *clients)
 void free_export_resources(struct gsh_export *export)
 {
 	FreeClientList(&export->export.clients);
-	if (export->export.export_hdl != NULL) {
-		struct fsal_module *fsal = export->export.export_hdl->fsal;
-		export->export.export_hdl->ops->release(
-			export->export.export_hdl);
+	if (export->fsal_export != NULL) {
+		struct fsal_module *fsal = export->fsal_export->fsal;
+		export->fsal_export->ops->release(export->fsal_export);
 		fsal_put(fsal);
 	}
-	export->export.export_hdl = NULL;
+	export->fsal_export = NULL;
 	/* free strings here */
 	if (export->export.fullpath != NULL)
 		gsh_free(export->export.fullpath);
@@ -1547,7 +1545,7 @@ bool init_export_root(struct gsh_export *exp)
 	struct root_op_context root_op_context;
 
 	/* Initialize req_ctx */
-	init_root_op_context(&root_op_context, exp, export->export_hdl,
+	init_root_op_context(&root_op_context, exp, exp->fsal_export,
 			     0, 0, UNKNOWN_REQUEST);
 
 	/* Lookup for the FSAL Path */
@@ -1555,10 +1553,10 @@ bool init_export_root(struct gsh_export *exp)
 		     "About to lookup_path for ExportId=%u Path=%s",
 		     export->id, export->fullpath);
 	fsal_status =
-	    export->export_hdl->ops->lookup_path(export->export_hdl,
-						 &root_op_context.req_ctx,
-						 export->fullpath,
-						 &root_handle);
+	    exp->fsal_export->ops->lookup_path(exp->fsal_export,
+					       &root_op_context.req_ctx,
+					       export->fullpath,
+					       &root_handle);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		LogCrit(COMPONENT_EXPORT,
@@ -1702,7 +1700,7 @@ void unexport(struct gsh_export *export)
 			     0, 0, UNKNOWN_REQUEST);
 
 	root_op_context.req_ctx.export = export;
-	root_op_context.req_ctx.fsal_export = export->export.export_hdl;
+	root_op_context.req_ctx.fsal_export = export->fsal_export;
 
 	/* Make the export unreachable */
 	pseudo_unmount_export(export, &root_op_context.req_ctx);
@@ -1757,7 +1755,7 @@ void kill_export_root_entry(cache_entry_t *entry)
 
 		/* Make the export otherwise unreachable */
 		root_op_context.req_ctx.export = exp;
-		root_op_context.req_ctx.fsal_export = exp->export.export_hdl;
+		root_op_context.req_ctx.fsal_export = exp->fsal_export;
 		pseudo_unmount_export(exp, &root_op_context.req_ctx);
 		remove_gsh_export(exp->export.id);
 
