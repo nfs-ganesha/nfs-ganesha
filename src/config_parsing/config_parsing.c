@@ -27,6 +27,7 @@
 #include <string.h>
 #endif
 #include <sys/types.h>
+#include <ctype.h>
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <sys/socket.h>
@@ -1230,6 +1231,376 @@ config_file_t get_parse_root(void *node)
 	assert(parent->type == TYPE_ROOT);
 	root = container_of(parent, struct config_root, root);
 	return (config_file_t)root;
+}
+
+/**
+ * @brief Data structures for walking parse trees
+ *
+ * These structures hold the result of the parse of a block
+ * description string that is passed to find_config_nodes
+ *
+ * expr_parse is for blocks
+ *
+ * expr_parse_arg is for indexing/matching parameters.
+ */
+
+struct expr_parse_arg {
+	char *name;
+	char *value;
+	struct expr_parse_arg *next;
+};
+
+struct expr_parse {
+	char *name;
+	struct expr_parse_arg *arg;
+	struct expr_parse *next;
+};
+
+/**
+ * @brief Skip 0 or more white space chars
+ *
+ * @return pointer to first non-white space char
+ */
+
+static inline char *skip_white(char *sp)
+{
+	while (isspace(*sp))
+		sp++;
+	return sp;
+}
+
+/**
+ * @brief Find the end of a token, i.e. [A-Za-z0-9_]+
+ *
+ * @return pointer to first unmatched char.
+ */
+
+static inline char *end_of_token(char *sp)
+{
+	while (isalnum(*sp) || *sp == '_')
+		sp++;
+	return sp;
+}
+
+/**
+ * @brief Find end of a value string.
+ *
+ * @return pointer to first white or syntax token
+ */
+
+static inline char *end_of_value(char *sp)
+{
+	while (*sp != '\0') {
+		if (isspace(*sp) || *sp == ',' || *sp == ')' || *sp == '(')
+			break;
+		sp++;
+	 }
+	return sp;
+}
+
+/**
+ * @brief Release storage for arg list
+ */
+
+static void free_expr_parse_arg(struct expr_parse_arg *argp)
+{
+	struct expr_parse_arg *nxtarg, *arg = NULL;
+
+	if (argp == NULL)
+		return;
+	for (arg = argp; arg != NULL; arg = nxtarg) {
+		nxtarg = arg->next;
+		gsh_free(arg->name);
+		gsh_free(arg->value);
+		gsh_free(arg);
+	}
+}
+
+/**
+ * @brief Release storage for the expression parse tree
+ */
+
+static void free_expr_parse(struct expr_parse *snode)
+{
+	struct expr_parse *nxtnode, *node = NULL;
+
+	if (snode == NULL)
+		return;
+	for (node = snode; node != NULL; node = nxtnode) {
+		nxtnode = node->next;
+		gsh_free(node->name);
+		free_expr_parse_arg(node->arg);
+		gsh_free(node);
+	}
+}
+
+/**
+ * @brief Parse "token = string" or "token1 = string1, ..."
+ *
+ * @param arg_str [IN] pointer to first char to parse
+ * @param argp    [OUT] list of parsed expr_parse_arg
+ *
+ * @return pointer to first unmatching char or NULL on parse error
+ */
+
+static char *parse_args(char *arg_str, struct expr_parse_arg **argp)
+{
+	char *sp, *name, *val;
+	int saved_char;
+	struct expr_parse_arg *arg = NULL;
+
+	sp = skip_white(arg_str);
+	if (*sp == '\0')
+		return NULL;
+	name = sp;		/* name matches [A-Za-z_][A-Za-z0-9_]* */
+	if (!(isalpha(*sp) || *sp == '_'))
+		return NULL;
+	sp = end_of_token(sp);
+	if (isspace(*sp))
+		*sp++ = '\0';
+	sp = skip_white(sp);
+	if (*sp != '=')
+		return NULL;
+	*sp++ = '\0';		/* name = ... */
+	sp = skip_white(sp);
+	if (*sp == '\0')
+		return NULL;
+	val = sp;
+	sp = end_of_value(sp);
+	if (*sp == '\0')
+		return NULL;
+	if (isspace(*sp)) {	/* name = val */
+		*sp++ = '\0';
+		sp = skip_white(sp);
+	}
+	if (*sp == '\0')
+		return NULL;
+	saved_char = *sp;
+	*sp = '\0';
+	arg = gsh_calloc(1, sizeof(struct expr_parse_arg));
+	if (arg == NULL)
+		return NULL;
+	arg->name = gsh_strdup(name);
+	arg->value = gsh_strdup(val);
+	*argp = arg;
+	if (saved_char != ',') {
+		*sp = saved_char;
+		return sp;
+	}
+	sp++;			/* name = val , ... */
+	return parse_args(sp, &arg->next);
+}
+
+/**
+ * @brief Parse "token ( .... )" and "token ( .... ) . token ( ... )"
+ *
+ * @param str   [IN] pointer to first char to be parsed
+ * @param node  [OUT] reference pointer to returned expr_parse list
+ *
+ * @return pointer to first char after parse or NULL on errors
+ */
+
+static char *parse_block(char *str, struct expr_parse **node)
+{
+	char *sp, *name;
+	struct expr_parse_arg *arg = NULL;
+	struct expr_parse *new_node;
+
+	sp = skip_white(str);
+	if (*sp == '\0')
+		return NULL;
+	name = sp;		/* name matches [A-Za-z_][A-Za-z0-9_]* */
+	if (!(isalpha(*sp) || *sp != '_'))
+		return NULL;
+	if (*sp == '_')
+		sp++;
+	sp = end_of_token(sp);
+	if (isspace(*sp))
+		*sp++ = '\0';
+	sp = skip_white(sp);
+	if (*sp == '(') {
+		*sp++ = '\0';	/* name ( ... */
+		sp = parse_args(sp, &arg);
+	}
+	if (sp == NULL)
+		goto errout;
+	sp = skip_white(sp);
+	if (*sp == ')') {	/* name ( ... ) */
+		new_node = gsh_calloc(1, sizeof(struct expr_parse));
+		new_node->name = gsh_strdup(name);
+		new_node->arg = arg;
+		*node = new_node;
+		return sp + 1;
+	}
+
+errout:
+	free_expr_parse_arg(arg);
+	return NULL;
+}
+
+/**
+ * @brief Parse a treewalk expression
+ *
+ * A full expression describes the path down a parse tree with
+ * each node described as "block_name ( qualifiers )".
+ * Each node in the path is a series of block name and qualifiers
+ * separated by '.'.
+ *
+ * The parse errors are detected as either ret val == NULL
+ * or *retval != '\0', i.e. pointing to a garbage char
+ *
+ * @param expr   [IN] pointer to the expression to be parsed
+ * @param expr_node [OUT] pointer to expression parse tree
+ *
+ * @return pointer to first char past parse or NULL for erros.
+ */
+
+static char *parse_expr(char *expr, struct expr_parse **expr_node)
+{
+	char *sp;
+	struct expr_parse *node = NULL, *prev_node = NULL, *root_node = NULL;
+	char *lexpr = alloca(strlen(expr) + 1);
+
+	strcpy(lexpr, expr);
+	sp = lexpr;
+	while (sp != NULL && *sp != '\0') {
+		sp = parse_block(sp, &node);	/* block is name ( ... ) */
+		if (sp == NULL)
+			break;
+		if (root_node == NULL)
+			root_node = node;
+		else
+			prev_node->next = node;
+		prev_node = node;
+		sp = skip_white(sp);
+		if (*sp == '.') {
+			sp++;		/* boock '.' block ... */
+		} else if (*sp != '\0') {
+			sp = NULL;
+			break;
+		}
+	}
+	*expr_node = root_node;
+	return expr + (sp - lexpr);
+}
+
+/**
+ * @brief Select block based on the evaluation of the qualifier args
+ *
+ * use each qualifier to match.  The token name is found in the block.
+ * once found, the token value is compared.  '*' matches anything. else
+ * it is a case-insensitive string compare.
+ *
+ * @param blk   [IN] pointer to config_node descibing the block
+ * @param expr  [IN] expr_parse node to match
+ *
+ * @return true if matched, else false
+ */
+
+static bool match_block(struct config_node *blk,
+			struct expr_parse *expr)
+{
+	struct glist_head *ns;
+	struct config_node *sub_node;
+	struct expr_parse_arg *arg;
+	bool found = false;
+
+	assert(blk->type == TYPE_BLOCK);
+	for (arg = expr->arg; arg != NULL; arg = arg->next) {
+		glist_for_each(ns, &blk->u.blk.sub_nodes) {
+			sub_node = glist_entry(ns, struct config_node, node);
+			if (sub_node->type == TYPE_STMT &&
+			    strcasecmp(arg->name, sub_node->name) == 0) {
+				found = true;
+				if (expr->next == NULL &&
+				    strcasecmp(arg->value, "*") == 0)
+					continue;
+				if (strcasecmp(arg->value,
+					       sub_node->u.varvalue) != 0)
+					return false;
+			}
+		}
+	}
+	return found;
+}
+
+/**
+ * @brief Find nodes in parse tree using expression
+ *
+ * Lookup signature describes the nested block it is of the form:
+ * block_name '(' param_name '=' param_value ')' ...
+ * where block_name and param_name are alphanumerics and param_value is
+ * and arbitrary token.
+ * This can name a subblock (the ...) part by a '.' sub-block_name...
+ * as in:
+
+ *   some_block(indexing_param = foo).the_subblock(its_index = baz)
+ *
+ * NOTE: This will return ENOENT not only if the the comparison
+ * fails but also if the search cannot find the token. In other words,
+ * the match succeeds only if there is a node in the parse tree and it
+ * matches.
+ *
+ * @param config    [IN] root of parse tree
+ * @param expr_str  [IN] expression description of block
+ * @param node_list [OUT] pointer to store node list
+ *
+ * @return 0 on success, errno for errors
+ */
+
+int find_config_nodes(config_file_t config, char *expr_str,
+		     struct config_node_list **node_list)
+{
+	struct config_root *tree = (struct config_root *)config;
+	struct glist_head *ns;
+	struct config_node *sub_node;
+	struct config_node *top;
+	struct expr_parse *expr, *expr_head;
+	struct config_node_list *list = NULL, *list_tail;
+	char *ep;
+	int rc = EINVAL;
+	bool found = false;
+
+	ep = parse_expr(expr_str, &expr_head);
+	if (ep == NULL || *ep != '\0')
+		goto out;
+	if (tree->root.type != TYPE_ROOT) {
+		LogCrit(COMPONENT_CONFIG,
+			"Expected to start at parse tree root for (%s)",
+			expr_str);
+		goto out;
+	}
+	top = &tree->root;
+	expr = expr_head;
+	*node_list = NULL;
+again:
+	glist_for_each(ns, &top->u.blk.sub_nodes) {
+		sub_node = glist_entry(ns, struct config_node, node);
+		if (strcasecmp(expr->name, sub_node->name) == 0 &&
+		    sub_node->type == TYPE_BLOCK &&
+		    match_block(sub_node, expr)) {
+			if (expr->next != NULL) {
+				top = sub_node;
+				expr = expr->next;
+				goto again;
+			}
+			list = gsh_calloc(1, sizeof(struct config_node_list));
+			list->tree_node = sub_node;
+			if (*node_list == NULL)
+				*node_list = list;
+			else
+				list_tail->next = list;
+			list_tail = list;
+			found = true;
+		}
+	}
+	if (found)
+		rc = 0;
+	else
+		rc = ENOENT;
+out:
+	free_expr_parse(expr_head);
+	return rc;
 }
 
 /**

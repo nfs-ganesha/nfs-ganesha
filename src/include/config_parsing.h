@@ -795,6 +795,15 @@ void config_Free(config_file_t config);
 /* Find the root of the parse tree given a TYPE_BLOCK node */
 config_file_t get_parse_root(void *node);
 
+struct config_node_list {
+	void *tree_node;
+	struct config_node_list *next;
+};
+
+/* find a node in the parse tree using expression */
+int find_config_nodes(config_file_t config, char *expr,
+		     struct config_node_list **node_list);
+
 /* fill configuration structure from parse tree */
 int load_config_from_node(void *tree_node,
 			  struct config_block *conf_blk,
