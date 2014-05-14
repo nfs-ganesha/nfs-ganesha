@@ -596,12 +596,10 @@ state_status_t layoutrecall(struct fsal_module *fsal,
 							  link);
 		struct state_t *s = g->state;
 		struct layoutrecall_cb_data *cb_data;
-		struct gsh_export *exp;
+		struct gsh_export *exp = s->state_export;
 		cache_entry_t *entry = s->state_entry;
 		nfs_cb_argop4 *arg;
 		CB_LAYOUTRECALL4args *cb_layoutrec;
-
-		exp = container_of(s->state_export, struct gsh_export, export);
 
 		cb_data = gsh_malloc(sizeof(struct layoutrecall_cb_data));
 		if (cb_data == NULL) {
@@ -794,10 +792,7 @@ static int32_t layoutrec_completion(rpc_call_t *call, rpc_call_hook hook,
 
 		root_op_context.req_ctx.clientid = &state->state_owner
 			->so_owner.so_nfs4_owner.so_clientid;
-		root_op_context.req_ctx.export =
-			container_of(state->state_export,
-				     struct gsh_export,
-				     export);
+		root_op_context.req_ctx.export = state->state_export;
 		root_op_context.req_ctx.fsal_export =
 			root_op_context.req_ctx.export->fsal_export;
 
@@ -842,10 +837,7 @@ static void return_one_async(void *arg)
 
 		root_op_context.req_ctx.clientid = &s->state_owner
 			->so_owner.so_nfs4_owner.so_clientid;
-		root_op_context.req_ctx.export =
-			container_of(s->state_export,
-				     struct gsh_export,
-				     export);
+		root_op_context.req_ctx.export = s->state_export;
 		root_op_context.req_ctx.fsal_export =
 			root_op_context.req_ctx.export->fsal_export;
 
@@ -924,9 +916,7 @@ static void layoutrecall_one_call(void *arg)
 					&s->state_owner->so_owner.so_nfs4_owner
 					.so_clientid;
 				root_op_context.req_ctx.export =
-					container_of(s->state_export,
-						     struct gsh_export,
-						     export);
+					s->state_export;
 				root_op_context.req_ctx.fsal_export =
 				    root_op_context.req_ctx.export->fsal_export;
 
@@ -1133,7 +1123,7 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
  */
 
 static uint32_t delegrecall_one(state_lock_entry_t *found_entry,
-			    cache_entry_t *entry)
+				cache_entry_t *entry)
 {
 	char *maxfh;
 	int32_t code = 0;
@@ -1141,11 +1131,7 @@ static uint32_t delegrecall_one(state_lock_entry_t *found_entry,
 	rpc_call_t *call;
 	nfs_client_id_t *clid = NULL;
 	nfs_cb_argop4 argop[1];
-	struct gsh_export *exp;
-
-	exp = container_of(found_entry->sle_state->state_export,
-			   struct gsh_export,
-			   export);
+	struct gsh_export *exp = found_entry->sle_state->state_export;
 
 	maxfh = gsh_malloc(NFS4_FHSIZE); /* free in cb_completion_func() */
 	if (maxfh == NULL) {

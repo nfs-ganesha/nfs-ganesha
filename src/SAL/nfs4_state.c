@@ -498,9 +498,9 @@ void state_del_locked(state_t *state, cache_entry_t *entry)
 		glist_del(&state->state_data.lock.state_sharelist);
 
 	/* Remove from list of states for a particular export */
-	export_writelock(state->state_export);
+	PTHREAD_RWLOCK_wrlock(&state->state_export->lock);
 	glist_del(&state->state_export_list);
-	export_rwunlock(state->state_export);
+	PTHREAD_RWLOCK_unlock(&state->state_export->lock);
 
 #ifdef DEBUG_SAL
 	pthread_mutex_lock(&all_state_v4_mutex);
@@ -619,11 +619,7 @@ void release_openstate(struct req_op_context *req_ctx,
 		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 
 		if (state_found->state_type == STATE_TYPE_SHARE) {
-			req_ctx->export =
-				container_of(state_found->state_export,
-					     struct gsh_export,
-					     export);
-
+			req_ctx->export = state_found->state_export;
 			req_ctx->fsal_export = req_ctx->export->fsal_export;
 
 			state_status =

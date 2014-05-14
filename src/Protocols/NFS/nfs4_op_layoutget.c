@@ -195,7 +195,7 @@ static nfsstat4 acquire_layout_state(compound_data_t *data,
 		glist_init(&(*layout_state)->state_data.layout.state_segments);
 
 		/* Attach this open to an export */
-		(*layout_state)->state_export = data->export;
+		(*layout_state)->state_export = data->req_ctx->export;
 		export_writelock(data->export);
 		glist_add_tail(&data->export->exp_state_list,
 			       &(*layout_state)->state_export_list);

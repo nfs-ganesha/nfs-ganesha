@@ -222,18 +222,18 @@ static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t *data,
 		glist_init(&(file_state->state_data.share.share_lockstates));
 
 		/* Attach this open to an export */
-		file_state->state_export = data->export;
+		file_state->state_export = data->req_ctx->export;
 		export_writelock(data->export);
 		glist_add_tail(&data->export->exp_state_list,
 			       &file_state->state_export_list);
 		export_rwunlock(data->export);
 	} else {
 		/* Check if open from another export */
-		if (file_state->state_export != data->export) {
+		if (file_state->state_export != data->req_ctx->export) {
 			LogEvent(COMPONENT_STATE,
 				 "Lock Owner Export Conflict, Lock held for export %d (%s), request for export %d (%s)",
-				 file_state->state_export->id,
-				 file_state->state_export->fullpath,
+				 file_state->state_export->export.id,
+				 file_state->state_export->export.fullpath,
 				 data->export->id, data->export->fullpath);
 			return STATE_INVALID_ARGUMENT;
 		}
@@ -941,7 +941,7 @@ static void get_delegation(compound_data_t *data, struct nfs_argop4 *op,
 				   sizeof(saved_data->deleg.sd_stateid.other));
 
 		/* Attach this open to an export */
-		new_state->state_export = data->export;
+		new_state->state_export = data->req_ctx->export;
 
 		export_writelock(data->export);
 		glist_add_tail(&data->export->exp_state_list,
