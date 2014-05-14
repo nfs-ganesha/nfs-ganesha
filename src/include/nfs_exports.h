@@ -357,18 +357,16 @@ static inline void set_current_entry(compound_data_t *data,
 }
 
 /* Export list related functions */
-sockaddr_t *check_convert_ipv6_to_ipv4(sockaddr_t *ipv6, sockaddr_t *ipv4);
-
 bool nfs_compare_clientcred(nfs_client_cred_t *cred1,
 			    nfs_client_cred_t *cred2);
 int nfs_rpc_req2client_cred(struct svc_req *req, nfs_client_cred_t *pcred);
 
-void nfs_export_check_access(sockaddr_t *hostaddr, exportlist_t *export,
-			     export_perms_t *export_perms);
+void export_check_access(struct req_op_context *req_ctx,
+			 export_perms_t *export_perms);
 
-bool nfs_export_check_security(struct svc_req *req,
-			       export_perms_t *export_perms,
-			       exportlist_t *export);
+bool export_check_security(struct svc_req *req,
+			   struct req_op_context *req_ctx,
+			   export_perms_t *export_perms);
 
 void LogClientListEntry(log_components_t component,
 			exportlist_client_entry_t *entry);

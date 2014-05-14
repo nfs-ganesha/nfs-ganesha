@@ -281,7 +281,7 @@ void LogClientListEntry(log_components_t component,
  * @returns 0 on success, error count on failure
  */
 
-static int add_client(struct exportlist *exp,
+static int add_client(struct gsh_export *export,
 		      char *client_tok,
 		      struct export_perms__ *perms,
 		      struct config_error_type *err_type)
@@ -393,7 +393,7 @@ static int add_client(struct exportlist *exp,
 				continue;
 			cli->client_perms = *perms;
 			LogClientListEntry(COMPONENT_CONFIG, cli);
-			glist_add_tail(&exp->clients,
+			glist_add_tail(&export->export.clients,
 				       &cli->cle_list);
 			cli = NULL; /* let go of it */
 		}
@@ -408,7 +408,7 @@ static int add_client(struct exportlist *exp,
 	}
 	cli->client_perms = *perms;
 	LogClientListEntry(COMPONENT_CONFIG, cli);
-	glist_add_tail(&exp->clients,
+	glist_add_tail(&export->export.clients,
 		       &cli->cle_list);
 	cli = NULL;
 out:
@@ -439,12 +439,12 @@ static void *client_init(void *link_mem, void *self_struct)
 
 	if (link_mem == NULL) {
 		struct glist_head *cli_list;
-		struct exportlist *exp;
+		struct gsh_export *export;
 
 		cli_list = self_struct;
-		exp = container_of(cli_list, struct exportlist,
-				   clients);
-		glist_init(&exp->clients);
+		export = container_of(cli_list, struct gsh_export,
+				      export.clients);
+		glist_init(&export->export.clients);
 		return self_struct;
 	} else if (self_struct == NULL) {
 		cli = gsh_calloc(sizeof(struct exportlist_client_entry__), 1);
@@ -483,14 +483,13 @@ static int client_commit(void *node, void *link_mem, void *self_struct,
 			 struct config_error_type *err_type)
 {
 	struct exportlist_client_entry__ *cli;
-	struct exportlist *exp;
+	struct gsh_export *export;
 	struct glist_head *cli_list;
 	char *client_list, *tok, *endptr;
 	int errcnt = 0;
 
 	cli_list = link_mem;
-	exp = container_of(cli_list, struct exportlist,
-			   clients);
+	export = container_of(cli_list, struct gsh_export, export.clients);
 	cli = self_struct;
 	assert(cli->type == RAW_CLIENT_LIST);
 
@@ -512,7 +511,7 @@ static int client_commit(void *node, void *link_mem, void *self_struct,
 			*endptr++ = '\0';
 		LogMidDebug(COMPONENT_CONFIG,
 			    "Adding client %s", tok);
-		errcnt += add_client(exp, tok, &cli->client_perms,
+		errcnt += add_client(export, tok, &cli->client_perms,
 				     err_type);
 		tok = endptr;
 	}
@@ -1535,9 +1534,8 @@ cache_inode_status_t nfs_export_get_root_entry(struct gsh_export *export,
  * @return true if successful.
  */
 
-bool init_export_root(struct gsh_export *exp)
+bool init_export_root(struct gsh_export *export)
 {
-	exportlist_t *export = &exp->export;
 	fsal_status_t fsal_status;
 	cache_inode_status_t cache_status;
 	struct fsal_obj_handle *root_handle;
@@ -1545,23 +1543,23 @@ bool init_export_root(struct gsh_export *exp)
 	struct root_op_context root_op_context;
 
 	/* Initialize req_ctx */
-	init_root_op_context(&root_op_context, exp, exp->fsal_export,
+	init_root_op_context(&root_op_context, export, export->fsal_export,
 			     0, 0, UNKNOWN_REQUEST);
 
 	/* Lookup for the FSAL Path */
 	LogFullDebug(COMPONENT_EXPORT,
 		     "About to lookup_path for ExportId=%u Path=%s",
-		     export->id, export->fullpath);
+		     export->export.id, export->export.fullpath);
 	fsal_status =
-	    exp->fsal_export->ops->lookup_path(exp->fsal_export,
-					       &root_op_context.req_ctx,
-					       export->fullpath,
-					       &root_handle);
+	    export->fsal_export->ops->lookup_path(export->fsal_export,
+						  &root_op_context.req_ctx,
+						  export->export.fullpath,
+						  &root_handle);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		LogCrit(COMPONENT_EXPORT,
 			"Lookup failed on path, ExportId=%u Path=%s FSAL_ERROR=(%s,%u)",
-			export->id, export->fullpath,
+			export->export.id, export->export.fullpath,
 			msg_fsal_err(fsal_status.major), fsal_status.minor);
 		return false;
 	}
@@ -1575,8 +1573,8 @@ bool init_export_root(struct gsh_export *exp)
 	if (entry == NULL) {
 		LogCrit(COMPONENT_EXPORT,
 			"Error when creating root cached entry for %s, export_id=%d, cache_status=%s",
-			export->fullpath,
-			export->id,
+			export->export.fullpath,
+			export->export.id,
 			cache_inode_err_str(cache_status));
 		return false;
 	}
@@ -1587,8 +1585,8 @@ bool init_export_root(struct gsh_export *exp)
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		LogCrit(COMPONENT_EXPORT,
 			"Error when creating root cached entry for %s, export_id=%d, cache_status=%s",
-			export->fullpath,
-			export->id,
+			export->export.fullpath,
+			export->export.id,
 			cache_inode_err_str(cache_status));
 
 		/* Release the LRU reference and return failure. */
@@ -1597,17 +1595,17 @@ bool init_export_root(struct gsh_export *exp)
 	}
 
 	PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
-	PTHREAD_RWLOCK_wrlock(&exp->lock);
+	PTHREAD_RWLOCK_wrlock(&export->lock);
 
-	exp->exp_root_cache_inode = entry;
+	export->exp_root_cache_inode = entry;
 
 	glist_add_tail(&entry->object.dir.export_roots,
-		       &export->exp_root_list);
+		       &export->export.exp_root_list);
 
 	/* Protect this entry from removal (unlink) */
 	atomic_inc_int32_t(&entry->exp_root_refcount);
 
-	PTHREAD_RWLOCK_unlock(&exp->lock);
+	PTHREAD_RWLOCK_unlock(&export->lock);
 	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 
 	if (isDebug(COMPONENT_EXPORT)) {
@@ -1615,11 +1613,11 @@ bool init_export_root(struct gsh_export *exp)
 			 "Added root entry %p FSAL %s for path %s on export_id=%d",
 			 entry,
 			 entry->obj_handle->fsal->name,
-			 export->fullpath, export->id);
+			 export->export.fullpath, export->export.id);
 	} else {
 		LogInfo(COMPONENT_EXPORT,
 			"Added root entry for path %s on export_id=%d",
-			export->fullpath, export->id);
+			export->export.fullpath, export->export.id);
 	}
 
 	/* Release the LRU reference and return success. */
@@ -1633,14 +1631,13 @@ bool init_export_root(struct gsh_export *exp)
  * @param exp [IN] the export
  */
 
-void release_export_root_locked(struct gsh_export *exp)
+void release_export_root_locked(struct gsh_export *export)
 {
-	exportlist_t *export = &exp->export;
 	cache_entry_t *entry = NULL;
 
-	glist_del(&export->exp_root_list);
-	entry = exp->exp_root_cache_inode;
-	exp->exp_root_cache_inode = NULL;
+	glist_del(&export->export.exp_root_list);
+	entry = export->exp_root_cache_inode;
+	export->exp_root_cache_inode = NULL;
 
 	if (entry != NULL) {
 		/* Allow this entry to be removed (unlink) */
@@ -1652,7 +1649,7 @@ void release_export_root_locked(struct gsh_export *exp)
 
 	LogDebug(COMPONENT_EXPORT,
 		 "Released root entry %p for path %s on export_id=%d",
-		 entry, export->fullpath, export->id);
+		 entry, export->export.fullpath, export->export.id);
 }
 
 /**
@@ -1661,13 +1658,13 @@ void release_export_root_locked(struct gsh_export *exp)
  * @param exp [IN] the export
  */
 
-void release_export_root(struct gsh_export *exp)
+void release_export_root(struct gsh_export *export)
 {
 	cache_entry_t *entry = NULL;
 	cache_inode_status_t status;
 
 	/* Get a reference to the root entry */
-	status = nfs_export_get_root_entry(exp, &entry);
+	status = nfs_export_get_root_entry(export, &entry);
 
 	if (status != CACHE_INODE_SUCCESS) {
 		/* No more root entry, bail out, this export is
@@ -1675,17 +1672,17 @@ void release_export_root(struct gsh_export *exp)
 		 */
 		LogInfo(COMPONENT_CACHE_INODE,
 			"Export root for export id %d status %s",
-			exp->export.id, cache_inode_err_str(status));
+			export->export.id, cache_inode_err_str(status));
 		return;
 	}
 
 	PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
-	PTHREAD_RWLOCK_wrlock(&exp->lock);
+	PTHREAD_RWLOCK_wrlock(&export->lock);
 
 	/* Make the export unreachable as a root cache inode */
-	release_export_root_locked(exp);
+	release_export_root_locked(export);
 
-	PTHREAD_RWLOCK_unlock(&exp->lock);
+	PTHREAD_RWLOCK_unlock(&export->lock);
 	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 
 	cache_inode_put(entry);
@@ -1716,8 +1713,8 @@ void unexport(struct gsh_export *export)
 
 void kill_export_root_entry(cache_entry_t *entry)
 {
-	exportlist_t *export;
-	struct gsh_export *exp;
+	exportlist_t *exp;
+	struct gsh_export *export;
 	struct root_op_context root_op_context;
 
 	/* Initialize req_ctx */
@@ -1730,36 +1727,36 @@ void kill_export_root_entry(cache_entry_t *entry)
 	while (true) {
 		PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
 
-		export = glist_first_entry(&entry->object.dir.export_roots,
-					   exportlist_t,
-					   exp_root_list);
+		exp = glist_first_entry(&entry->object.dir.export_roots,
+					exportlist_t,
+					exp_root_list);
 
-		if (export == NULL) {
+		if (exp == NULL) {
 			PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 			return;
 		}
 
-		exp = container_of(export, struct gsh_export, export);
-		get_gsh_export_ref(exp);
+		export = container_of(exp, struct gsh_export, export);
+		get_gsh_export_ref(export);
 		LogInfo(COMPONENT_CONFIG,
 			"Killing export_id %d because root entry went bad",
-			export->id);
+			export->export.id);
 
-		PTHREAD_RWLOCK_wrlock(&exp->lock);
+		PTHREAD_RWLOCK_wrlock(&export->lock);
 
 		/* Make the export unreachable as a root cache inode */
-		release_export_root_locked(exp);
+		release_export_root_locked(export);
 
-		PTHREAD_RWLOCK_unlock(&exp->lock);
+		PTHREAD_RWLOCK_unlock(&export->lock);
 		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 
 		/* Make the export otherwise unreachable */
-		root_op_context.req_ctx.export = exp;
-		root_op_context.req_ctx.fsal_export = exp->fsal_export;
-		pseudo_unmount_export(exp, &root_op_context.req_ctx);
-		remove_gsh_export(exp->export.id);
+		root_op_context.req_ctx.export = export;
+		root_op_context.req_ctx.fsal_export = export->fsal_export;
+		pseudo_unmount_export(export, &root_op_context.req_ctx);
+		remove_gsh_export(export->export.id);
 
-		put_gsh_export(exp);
+		put_gsh_export(export);
 	}
 }
 
@@ -1786,7 +1783,7 @@ static char *client_types[] = {
  * @return true if found, false otherwise.
  */
 static exportlist_client_entry_t *client_match(sockaddr_t *hostaddr,
-				struct exportlist *exp)
+					       struct gsh_export *export)
 {
 	struct glist_head *glist;
 	in_addr_t addr = get_in_addr(hostaddr);
@@ -1795,7 +1792,7 @@ static exportlist_client_entry_t *client_match(sockaddr_t *hostaddr,
 	char hostname[MAXHOSTNAMELEN + 1];
 	char ipstring[SOCK_NAME_MAX + 1];
 
-	glist_for_each(glist, &exp->clients) {
+	glist_for_each(glist, &export->export.clients) {
 		exportlist_client_entry_t *client;
 
 		client = glist_entry(glist, exportlist_client_entry_t,
@@ -1931,11 +1928,11 @@ static exportlist_client_entry_t *client_match(sockaddr_t *hostaddr,
  * @return true if found, false otherwise.
  */
 static exportlist_client_entry_t *client_matchv6(struct in6_addr *paddrv6,
-				  struct exportlist *exp)
+						 struct gsh_export *export)
 {
 	struct glist_head *glist;
 
-	glist_for_each(glist, &exp->clients) {
+	glist_for_each(glist, &export->export.clients) {
 		exportlist_client_entry_t *client;
 
 		client = glist_entry(glist, exportlist_client_entry_t,
@@ -1979,15 +1976,14 @@ static exportlist_client_entry_t *client_matchv6(struct in6_addr *paddrv6,
 }
 
 static exportlist_client_entry_t *client_match_any(sockaddr_t *hostaddr,
-				  struct exportlist *exp)
+						   struct gsh_export *export)
 {
 	if (hostaddr->ss_family == AF_INET6) {
 		struct sockaddr_in6 *psockaddr_in6 =
 		    (struct sockaddr_in6 *)hostaddr;
-		return client_matchv6(&(psockaddr_in6->sin6_addr),
-					     exp);
+		return client_matchv6(&(psockaddr_in6->sin6_addr), export);
 	} else {
-		return client_match(hostaddr, exp);
+		return client_match(hostaddr, export);
 	}
 }
 
@@ -2001,16 +1997,16 @@ static exportlist_client_entry_t *client_match_any(sockaddr_t *hostaddr,
  * @return true if the request flavor exists in the matching export
  * false otherwise
  */
-bool nfs_export_check_security(struct svc_req *req,
-			       export_perms_t *export_perms,
-			       exportlist_t *export)
+bool export_check_security(struct svc_req *req,
+			   struct req_op_context *req_ctx,
+			   export_perms_t *export_perms)
 {
 	switch (req->rq_cred.oa_flavor) {
 	case AUTH_NONE:
 		if ((export_perms->options & EXPORT_OPTION_AUTH_NONE) == 0) {
 			LogInfo(COMPONENT_EXPORT,
 				"Export %s does not support AUTH_NONE",
-				export->fullpath);
+				req_ctx->export->export.fullpath);
 			return false;
 		}
 		break;
@@ -2019,7 +2015,7 @@ bool nfs_export_check_security(struct svc_req *req,
 		if ((export_perms->options & EXPORT_OPTION_AUTH_UNIX) == 0) {
 			LogInfo(COMPONENT_EXPORT,
 				"Export %s does not support AUTH_UNIX",
-				export->fullpath);
+				req_ctx->export->export.fullpath);
 			return false;
 		}
 		break;
@@ -2032,7 +2028,7 @@ bool nfs_export_check_security(struct svc_req *req,
 				EXPORT_OPTION_RPCSEC_GSS_PRIV)) == 0) {
 			LogInfo(COMPONENT_EXPORT,
 				"Export %s does not support RPCSEC_GSS",
-				export->fullpath);
+				req_ctx->export->export.fullpath);
 			return false;
 		} else {
 			struct svc_rpc_gss_data *gd;
@@ -2046,9 +2042,9 @@ bool nfs_export_check_security(struct svc_req *req,
 				if ((export_perms->options &
 				     EXPORT_OPTION_RPCSEC_GSS_NONE) == 0) {
 					LogInfo(COMPONENT_EXPORT,
-						"Export %s does not support "
-						"RPCSEC_GSS_SVC_NONE",
-						export->fullpath);
+						"Export %s does not support RPCSEC_GSS_SVC_NONE",
+						req_ctx->export->export
+							.fullpath);
 					return false;
 				}
 				break;
@@ -2057,9 +2053,9 @@ bool nfs_export_check_security(struct svc_req *req,
 				if ((export_perms->options &
 				     EXPORT_OPTION_RPCSEC_GSS_INTG) == 0) {
 					LogInfo(COMPONENT_EXPORT,
-						"Export %s does not support "
-						"RPCSEC_GSS_SVC_INTEGRITY",
-						export->fullpath);
+						"Export %s does not support RPCSEC_GSS_SVC_INTEGRITY",
+						req_ctx->export->export
+							.fullpath);
 					return false;
 				}
 				break;
@@ -2068,17 +2064,17 @@ bool nfs_export_check_security(struct svc_req *req,
 				if ((export_perms->options &
 				     EXPORT_OPTION_RPCSEC_GSS_PRIV) == 0) {
 					LogInfo(COMPONENT_EXPORT,
-						"Export %s does not support "
-						"RPCSEC_GSS_SVC_PRIVACY",
-						export->fullpath);
+						"Export %s does not support RPCSEC_GSS_SVC_PRIVACY",
+						req_ctx->export->export
+							.fullpath);
 					return false;
 				}
 				break;
 
 			default:
 				LogInfo(COMPONENT_EXPORT,
-					"Export %s does not support unknown "
-					"RPCSEC_GSS_SVC %d", export->fullpath,
+					"Export %s does not support unknown RPCSEC_GSS_SVC %d",
+					req_ctx->export->export.fullpath,
 					(int)svc);
 				return false;
 			}
@@ -2088,7 +2084,8 @@ bool nfs_export_check_security(struct svc_req *req,
 	default:
 		LogInfo(COMPONENT_EXPORT,
 			"Export %s does not support unknown oa_flavor %d",
-			export->fullpath, (int)req->rq_cred.oa_flavor);
+			req_ctx->export->export.fullpath,
+			(int)req->rq_cred.oa_flavor);
 		return false;
 	}
 
@@ -2097,7 +2094,7 @@ bool nfs_export_check_security(struct svc_req *req,
 
 static char ten_bytes_all_0[10];
 
-sockaddr_t *check_convert_ipv6_to_ipv4(sockaddr_t *ipv6, sockaddr_t *ipv4)
+sockaddr_t *convert_ipv6_to_ipv4(sockaddr_t *ipv6, sockaddr_t *ipv4)
 {
 	struct sockaddr_in *paddr = (struct sockaddr_in *)ipv4;
 	struct sockaddr_in6 *psockaddr_in6 = (struct sockaddr_in6 *)ipv6;
@@ -2149,12 +2146,12 @@ sockaddr_t *check_convert_ipv6_to_ipv4(sockaddr_t *ipv6, sockaddr_t *ipv4)
  * @param[out]    client_perms     Client perms found.
  */
 
-void nfs_export_check_access(sockaddr_t *hostaddr, exportlist_t *export,
-			     export_perms_t *export_perms)
+void export_check_access(struct req_op_context *req_ctx,
+			 export_perms_t *export_perms)
 {
 	exportlist_client_entry_t *client;
 	sockaddr_t alt_hostaddr;
-	sockaddr_t *puse_hostaddr;
+	sockaddr_t *hostaddr;
 
 	/* Initialize permissions to allow nothing */
 	export_perms->options = 0;
@@ -2162,27 +2159,24 @@ void nfs_export_check_access(sockaddr_t *hostaddr, exportlist_t *export,
 	export_perms->anonymous_uid = (uid_t) ANON_UID;
 	export_perms->anonymous_gid = (gid_t) ANON_GID;
 
-	if (export == NULL) {
-		LogCrit(COMPONENT_EXPORT,
-			"No export to check permission against");
-		return;
-	}
+	assert(req_ctx->export != NULL);
 
-	puse_hostaddr = check_convert_ipv6_to_ipv4(hostaddr, &alt_hostaddr);
+	hostaddr = convert_ipv6_to_ipv4(req_ctx->caller_addr, &alt_hostaddr);
 
 	if (isMidDebug(COMPONENT_EXPORT)) {
 		char ipstring[SOCK_NAME_MAX];
 
 		ipstring[0] = '\0';
-		(void) sprint_sockip(puse_hostaddr,
+		(void) sprint_sockip(hostaddr,
 				     ipstring, sizeof(ipstring));
 		LogMidDebug(COMPONENT_EXPORT,
 			    "Check for address %s for export id %u fullpath %s",
-			    ipstring, export->id, export->fullpath);
+			    ipstring, req_ctx->export->export.id,
+			    req_ctx->export->export.fullpath);
 	}
 
 	/* Does the client match anyone on the client list? */
-	client = client_match_any(puse_hostaddr, export);
+	client = client_match_any(hostaddr, req_ctx->export);
 	if (client != NULL) {
 		/* Take client options */
 		export_perms->options = client->client_perms.options &
@@ -2200,21 +2194,23 @@ void nfs_export_check_access(sockaddr_t *hostaddr, exportlist_t *export,
 	}
 
 	/* Any options not set by the client, take from the export */
-	export_perms->options |= export->export_perms.options &
-				 export->export_perms.set &
+	export_perms->options |= req_ctx->export->export.export_perms.options &
+				 req_ctx->export->export.export_perms.set &
 				 ~export_perms->set;
 
 	if ((export_perms->set & EXPORT_OPTION_ANON_UID_SET) == 0 &&
-	    (export->export_perms.set & EXPORT_OPTION_ANON_UID_SET) != 0)
+	    (req_ctx->export->export.export_perms.set &
+	     EXPORT_OPTION_ANON_UID_SET) != 0)
 		export_perms->anonymous_uid =
-					export->export_perms.anonymous_uid;
+			req_ctx->export->export.export_perms.anonymous_uid;
 
 	if ((export_perms->set & EXPORT_OPTION_ANON_GID_SET) == 0 &&
-	    (export->export_perms.set & EXPORT_OPTION_ANON_GID_SET) != 0)
+	    (req_ctx->export->export.export_perms.set &
+	     EXPORT_OPTION_ANON_GID_SET) != 0)
 		export_perms->anonymous_gid =
-					export->export_perms.anonymous_gid;
+			req_ctx->export->export.export_perms.anonymous_gid;
 
-	export_perms->set |= export->export_perms.set;
+	export_perms->set |= req_ctx->export->export.export_perms.set;
 
 	/* Any options not set by the client or export, take from the
 	 *  EXPORT_DEFAULTS block.
@@ -2253,7 +2249,7 @@ void nfs_export_check_access(sockaddr_t *hostaddr, exportlist_t *export,
 				    "CLIENT          (%s)",
 				    perms);
 		}
-		StrExportOptions(&export->export_perms, perms);
+		StrExportOptions(&req_ctx->export->export.export_perms, perms);
 		LogMidDebug(COMPONENT_EXPORT,
 			    "EXPORT          (%s)",
 			    perms);

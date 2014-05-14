@@ -1050,8 +1050,7 @@ static void nfs_rpc_execute(request_data_t *req,
 			    "nfs_rpc_execute about to call nfs_export_check_access for client %s",
 			    req_ctx.client->hostaddr_str);
 
-		nfs_export_check_access(req_ctx.caller_addr,
-					&req_ctx.export->export, &export_perms);
+		export_check_access(&req_ctx, &export_perms);
 
 		if (export_perms.options == 0) {
 			LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
@@ -1104,13 +1103,9 @@ static void nfs_rpc_execute(request_data_t *req,
 		}
 
 		/* Test if export allows the authentication provided */
-		if (((reqnfs->funcdesc->dispatch_behaviour & SUPPORTS_GSS) !=
-		     0)
-		    &&
-		    (nfs_export_check_security(
-			    svcreq, &export_perms,
-		     &req_ctx.export->export)
-		     == false)) {
+		if (((reqnfs->funcdesc->dispatch_behaviour & SUPPORTS_GSS)
+		      != 0) &&
+		    !export_check_security(svcreq, &req_ctx, &export_perms)) {
 			LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 				"%s Version %d auth not allowed on Export_Id %d %s for client %s",
 				progname, svcreq->rq_vers,

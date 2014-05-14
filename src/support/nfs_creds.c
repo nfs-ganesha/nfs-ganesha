@@ -481,8 +481,7 @@ int nfs4_MakeCred(compound_data_t *data)
 
 	LogMidDebugAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
 		    "nfs4_MakeCred about to call nfs_export_check_access");
-	nfs_export_check_access(data->req_ctx->caller_addr, data->export,
-				&data->export_perms);
+	export_check_access(data->req_ctx, &data->export_perms);
 
 	/* Check if any access at all */
 	if ((data->export_perms.options & EXPORT_OPTION_ACCESS_TYPE) == 0) {
@@ -526,8 +525,8 @@ int nfs4_MakeCred(compound_data_t *data)
 	}
 
 	/* Test if export allows the authentication provided */
-	if (nfs_export_check_security
-	    (data->req, &data->export_perms, data->export) == FALSE) {
+	if (export_check_security
+	    (data->req, data->req_ctx, &data->export_perms) == FALSE) {
 		LogInfoAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
 			"NFS4 auth not allowed on Export_Id %d %s for client %s",
 			data->export->id, data->export->fullpath,

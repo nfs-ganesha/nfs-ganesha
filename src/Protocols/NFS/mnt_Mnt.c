@@ -53,13 +53,11 @@
  *
  */
 
-int mnt_Mnt(nfs_arg_t *arg, exportlist_t *export,
+int mnt_Mnt(nfs_arg_t *arg, exportlist_t *unused,
 	    struct req_op_context *req_ctx, nfs_worker_data_t *worker,
 	    struct svc_req *req, nfs_res_t *res)
 {
-
-	exportlist_t *p_current_item = NULL;
-	struct gsh_export *exp = NULL;
+	struct gsh_export *export = NULL;
 	struct fsal_obj_handle *pfsal_handle = NULL;
 	int auth_flavor[NB_AUTH_FLAVOR];
 	int index_auth = 0;
@@ -96,11 +94,11 @@ int mnt_Mnt(nfs_arg_t *arg, exportlist_t *export,
 
 	/*  Find the export for the dirname (using as well Path or Tag) */
 	if (arg->arg_mnt[0] == '/')
-		exp = get_gsh_export_by_path(arg->arg_mnt, false);
+		export = get_gsh_export_by_path(arg->arg_mnt, false);
 	else
-		exp = get_gsh_export_by_tag(arg->arg_mnt);
+		export = get_gsh_export_by_tag(arg->arg_mnt);
 
-	if (exp == NULL) {
+	if (export == NULL) {
 		/* No export found, return ACCESS error. */
 		LogEvent(COMPONENT_NFSPROTO,
 			 "MOUNT: Export entry for %s not found", arg->arg_mnt);
@@ -111,31 +109,28 @@ int mnt_Mnt(nfs_arg_t *arg, exportlist_t *export,
 		goto out;
 	}
 
-	p_current_item = &exp->export;
-
 	/* set the export in the context */
-	req_ctx->export = exp;
+	req_ctx->export = export;
 	req_ctx->fsal_export = req_ctx->export->fsal_export;
 
 	/* Check access based on client. Don't bother checking TCP/UDP as some
 	 * clients use UDP for MOUNT even when they will use TCP for NFS.
 	 */
-	nfs_export_check_access(req_ctx->caller_addr, p_current_item,
-				&export_perms);
+	export_check_access(req_ctx, &export_perms);
 
 	if ((export_perms.options & EXPORT_OPTION_NFSV3) == 0) {
 		LogInfo(COMPONENT_NFSPROTO,
 			"MOUNT: Export entry %s does not support NFS v3 for client %s",
-			p_current_item->fullpath,
+			export->export.fullpath,
 			req_ctx->client->hostaddr_str);
 		res->res_mnt3.fhs_status = MNT3ERR_ACCES;
 		goto out;
 	}
 
 	/* retrieve the associated NFS handle */
-	if (arg->arg_mnt[0] != '/' || !strcmp(arg->arg_mnt,
-					      p_current_item->fullpath)) {
-		if (nfs_export_get_root_entry(exp, &entry)
+	if (arg->arg_mnt[0] != '/' ||
+	    !strcmp(arg->arg_mnt, export->export.fullpath)) {
+		if (nfs_export_get_root_entry(export, &entry)
 		    != CACHE_INODE_SUCCESS) {
 			res->res_mnt3.fhs_status = MNT3ERR_ACCES;
 			goto out;
@@ -163,7 +158,7 @@ int mnt_Mnt(nfs_arg_t *arg, exportlist_t *export,
 	res->res_mnt3.fhs_status = nfs3_AllocateFH(fh3);
 
 	if (res->res_mnt3.fhs_status == MNT3_OK) {
-		if (!nfs3_FSALToFhandle(fh3, pfsal_handle, exp)) {
+		if (!nfs3_FSALToFhandle(fh3, pfsal_handle, export)) {
 			res->res_mnt3.fhs_status = MNT3ERR_INVAL;
 		} else {
 			if (isDebug(COMPONENT_NFSPROTO))
@@ -219,10 +214,10 @@ int mnt_Mnt(nfs_arg_t *arg, exportlist_t *export,
 		    auth_flavor[i];
 
  out:
-	if (exp != NULL) {
+	if (export != NULL) {
 		req_ctx->export = NULL;
 		req_ctx->fsal_export = NULL;
-		put_gsh_export(exp);
+		put_gsh_export(export);
 	}
 	return retval;
 
