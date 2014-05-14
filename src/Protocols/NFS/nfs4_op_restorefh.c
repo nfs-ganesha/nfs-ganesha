@@ -116,7 +116,7 @@ int nfs4_op_restorefh(struct nfs_argop4 *op, compound_data_t *data,
 		get_gsh_export_ref(data->req_ctx->export);
 	}
 
-	data->export_perms = data->saved_export_perms;
+	*data->req_ctx->export_perms = data->saved_export_perms;
 
 	/* No need to call nfs4_SetCompoundExport or nfs4_MakeCred
 	 * because we are restoring saved information, and the

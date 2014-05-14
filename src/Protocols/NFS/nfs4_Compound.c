@@ -504,8 +504,6 @@ int nfs4_Compound(nfs_arg_t *arg, exportlist_t *export,
 	/* Initialisation of the compound request internal's data */
 	memset(&data, 0, sizeof(data));
 	data.req_ctx = req_ctx;
-	data.export_perms.anonymous_uid = (uid_t) ANON_UID;
-	data.export_perms.anonymous_gid = (gid_t) ANON_GID;
 	req_ctx->nfs_minorvers = compound4_minor;
 
 	/* Minor version related stuff */
@@ -644,11 +642,11 @@ int nfs4_Compound(nfs_arg_t *arg, exportlist_t *export,
 			 */
 			LogFullDebug(COMPONENT_NFS_V4,
 				     "Check export perms export = %08x req = %08x",
-				     data.export_perms.
-				     options & EXPORT_OPTION_ACCESS_TYPE,
+				     data.req_ctx->export_perms->options &
+						EXPORT_OPTION_ACCESS_TYPE,
 				     perm_flags);
-			if ((data.export_perms.options & perm_flags) !=
-			    perm_flags) {
+			if ((data.req_ctx->export_perms->options &
+			     perm_flags) != perm_flags) {
 				/* Export doesn't allow requested
 				 * access for this client.
 				 */

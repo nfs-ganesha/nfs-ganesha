@@ -710,7 +710,7 @@ static void nfs_rpc_execute(request_data_t *req,
 	int exportid = -1;
 	struct svc_req *svcreq = &reqnfs->req;
 	SVCXPRT *xprt = reqnfs->xprt;
-	export_perms_t export_perms;
+	struct export_perms export_perms;
 	int protocol_options = 0;
 	struct user_cred user_credentials;
 	struct req_op_context req_ctx;
@@ -733,6 +733,7 @@ static void nfs_rpc_execute(request_data_t *req,
 	req_ctx.caller_addr = &worker_data->hostaddr;
 	req_ctx.nfs_vers = svcreq->rq_vers;
 	req_ctx.req_type = req->rtype;
+	req_ctx.export_perms = &export_perms;
 
 	/* Initialized user_credentials */
 	init_credentials(&req_ctx);
@@ -1050,7 +1051,7 @@ static void nfs_rpc_execute(request_data_t *req,
 			    "nfs_rpc_execute about to call nfs_export_check_access for client %s",
 			    req_ctx.client->hostaddr_str);
 
-		export_check_access(&req_ctx, &export_perms);
+		export_check_access(&req_ctx);
 
 		if (export_perms.options == 0) {
 			LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
@@ -1105,7 +1106,7 @@ static void nfs_rpc_execute(request_data_t *req,
 		/* Test if export allows the authentication provided */
 		if (((reqnfs->funcdesc->dispatch_behaviour & SUPPORTS_GSS)
 		      != 0) &&
-		    !export_check_security(svcreq, &req_ctx, &export_perms)) {
+		    !export_check_security(svcreq, &req_ctx)) {
 			LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 				"%s Version %d auth not allowed on Export_Id %d %s for client %s",
 				progname, svcreq->rq_vers,
@@ -1215,9 +1216,7 @@ static void nfs_rpc_execute(request_data_t *req,
 				export_perms.options = EXPORT_OPTION_ROOT;
 			}
 
-			if (get_req_creds(svcreq,
-					  &req_ctx,
-					  &export_perms) == false) {
+			if (get_req_creds(svcreq, &req_ctx) == false) {
 				LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 					"could not get uid and gid, rejecting client %s",
 					req_ctx.client->hostaddr_str);

@@ -72,7 +72,7 @@ struct global_export_perms export_opt = {
 	.def.set = ~EXPORT_OPTION_FSID_SET
 };
 
-static void StrExportOptions(export_perms_t *p_perms, char *buffer)
+static void StrExportOptions(struct export_perms *p_perms, char *buffer)
 {
 	char *buf = buffer;
 
@@ -283,7 +283,7 @@ void LogClientListEntry(log_components_t component,
 
 static int add_client(struct gsh_export *export,
 		      char *client_tok,
-		      struct export_perms__ *perms,
+		      struct export_perms *perms,
 		      struct config_error_type *err_type)
 {
 	struct exportlist_client_entry__ *cli;
@@ -947,7 +947,7 @@ static int export_defaults_commit(void *node, void *link_mem,
 static void export_defaults_display(const char *step, void *node,
 			   void *link_mem, void *self_struct)
 {
-	struct export_perms__ *defaults = self_struct;
+	struct export_perms *defaults = self_struct;
 	char perms[1024];
 
 	StrExportOptions(defaults, perms);
@@ -1998,12 +1998,12 @@ static exportlist_client_entry_t *client_match_any(sockaddr_t *hostaddr,
  * false otherwise
  */
 bool export_check_security(struct svc_req *req,
-			   struct req_op_context *req_ctx,
-			   export_perms_t *export_perms)
+			   struct req_op_context *req_ctx)
 {
 	switch (req->rq_cred.oa_flavor) {
 	case AUTH_NONE:
-		if ((export_perms->options & EXPORT_OPTION_AUTH_NONE) == 0) {
+		if ((req_ctx->export_perms->options &
+		     EXPORT_OPTION_AUTH_NONE) == 0) {
 			LogInfo(COMPONENT_EXPORT,
 				"Export %s does not support AUTH_NONE",
 				req_ctx->export->export.fullpath);
@@ -2012,7 +2012,8 @@ bool export_check_security(struct svc_req *req,
 		break;
 
 	case AUTH_UNIX:
-		if ((export_perms->options & EXPORT_OPTION_AUTH_UNIX) == 0) {
+		if ((req_ctx->export_perms->options &
+		     EXPORT_OPTION_AUTH_UNIX) == 0) {
 			LogInfo(COMPONENT_EXPORT,
 				"Export %s does not support AUTH_UNIX",
 				req_ctx->export->export.fullpath);
@@ -2022,10 +2023,10 @@ bool export_check_security(struct svc_req *req,
 
 #ifdef _HAVE_GSSAPI
 	case RPCSEC_GSS:
-		if ((export_perms->
-		     options & (EXPORT_OPTION_RPCSEC_GSS_NONE |
-				EXPORT_OPTION_RPCSEC_GSS_INTG |
-				EXPORT_OPTION_RPCSEC_GSS_PRIV)) == 0) {
+		if ((req_ctx->export_perms->options &
+				(EXPORT_OPTION_RPCSEC_GSS_NONE |
+				 EXPORT_OPTION_RPCSEC_GSS_INTG |
+				 EXPORT_OPTION_RPCSEC_GSS_PRIV)) == 0) {
 			LogInfo(COMPONENT_EXPORT,
 				"Export %s does not support RPCSEC_GSS",
 				req_ctx->export->export.fullpath);
@@ -2039,7 +2040,7 @@ bool export_check_security(struct svc_req *req,
 				     (int)svc);
 			switch (svc) {
 			case RPCSEC_GSS_SVC_NONE:
-				if ((export_perms->options &
+				if ((req_ctx->export_perms->options &
 				     EXPORT_OPTION_RPCSEC_GSS_NONE) == 0) {
 					LogInfo(COMPONENT_EXPORT,
 						"Export %s does not support RPCSEC_GSS_SVC_NONE",
@@ -2050,7 +2051,7 @@ bool export_check_security(struct svc_req *req,
 				break;
 
 			case RPCSEC_GSS_SVC_INTEGRITY:
-				if ((export_perms->options &
+				if ((req_ctx->export_perms->options &
 				     EXPORT_OPTION_RPCSEC_GSS_INTG) == 0) {
 					LogInfo(COMPONENT_EXPORT,
 						"Export %s does not support RPCSEC_GSS_SVC_INTEGRITY",
@@ -2061,7 +2062,7 @@ bool export_check_security(struct svc_req *req,
 				break;
 
 			case RPCSEC_GSS_SVC_PRIVACY:
-				if ((export_perms->options &
+				if ((req_ctx->export_perms->options &
 				     EXPORT_OPTION_RPCSEC_GSS_PRIV) == 0) {
 					LogInfo(COMPONENT_EXPORT,
 						"Export %s does not support RPCSEC_GSS_SVC_PRIVACY",
@@ -2146,18 +2147,17 @@ sockaddr_t *convert_ipv6_to_ipv4(sockaddr_t *ipv6, sockaddr_t *ipv4)
  * @param[out]    client_perms     Client perms found.
  */
 
-void export_check_access(struct req_op_context *req_ctx,
-			 export_perms_t *export_perms)
+void export_check_access(struct req_op_context *req_ctx)
 {
 	exportlist_client_entry_t *client;
 	sockaddr_t alt_hostaddr;
 	sockaddr_t *hostaddr;
 
 	/* Initialize permissions to allow nothing */
-	export_perms->options = 0;
-	export_perms->set = 0;
-	export_perms->anonymous_uid = (uid_t) ANON_UID;
-	export_perms->anonymous_gid = (gid_t) ANON_GID;
+	req_ctx->export_perms->options = 0;
+	req_ctx->export_perms->set = 0;
+	req_ctx->export_perms->anonymous_uid = (uid_t) ANON_UID;
+	req_ctx->export_perms->anonymous_gid = (gid_t) ANON_GID;
 
 	assert(req_ctx->export != NULL);
 
@@ -2179,67 +2179,72 @@ void export_check_access(struct req_op_context *req_ctx,
 	client = client_match_any(hostaddr, req_ctx->export);
 	if (client != NULL) {
 		/* Take client options */
-		export_perms->options = client->client_perms.options &
-					client->client_perms.set;
+		req_ctx->export_perms->options = client->client_perms.options &
+						 client->client_perms.set;
 
 		if (client->client_perms.set & EXPORT_OPTION_ANON_UID_SET)
-			export_perms->anonymous_uid =
+			req_ctx->export_perms->anonymous_uid =
 					client->client_perms.anonymous_uid;
 
 		if (client->client_perms.set & EXPORT_OPTION_ANON_GID_SET)
-			export_perms->anonymous_gid =
+			req_ctx->export_perms->anonymous_gid =
 					client->client_perms.anonymous_gid;
 
-		export_perms->set = client->client_perms.set;
+		req_ctx->export_perms->set = client->client_perms.set;
 	}
 
 	/* Any options not set by the client, take from the export */
-	export_perms->options |= req_ctx->export->export.export_perms.options &
-				 req_ctx->export->export.export_perms.set &
-				 ~export_perms->set;
+	req_ctx->export_perms->options |=
+				req_ctx->export->export.export_perms.options &
+				req_ctx->export->export.export_perms.set &
+				~req_ctx->export_perms->set;
 
-	if ((export_perms->set & EXPORT_OPTION_ANON_UID_SET) == 0 &&
+	if ((req_ctx->export_perms->set & EXPORT_OPTION_ANON_UID_SET) == 0 &&
 	    (req_ctx->export->export.export_perms.set &
 	     EXPORT_OPTION_ANON_UID_SET) != 0)
-		export_perms->anonymous_uid =
+		req_ctx->export_perms->anonymous_uid =
 			req_ctx->export->export.export_perms.anonymous_uid;
 
-	if ((export_perms->set & EXPORT_OPTION_ANON_GID_SET) == 0 &&
+	if ((req_ctx->export_perms->set & EXPORT_OPTION_ANON_GID_SET) == 0 &&
 	    (req_ctx->export->export.export_perms.set &
 	     EXPORT_OPTION_ANON_GID_SET) != 0)
-		export_perms->anonymous_gid =
+		req_ctx->export_perms->anonymous_gid =
 			req_ctx->export->export.export_perms.anonymous_gid;
 
-	export_perms->set |= req_ctx->export->export.export_perms.set;
+	req_ctx->export_perms->set |= req_ctx->export->export.export_perms.set;
 
 	/* Any options not set by the client or export, take from the
 	 *  EXPORT_DEFAULTS block.
 	 */
-	export_perms->options |= export_opt.conf.options &
-				 export_opt.conf.set &
-				 ~export_perms->set;
+	req_ctx->export_perms->options |= export_opt.conf.options &
+					  export_opt.conf.set &
+					  ~req_ctx->export_perms->set;
 
-	if ((export_perms->set & EXPORT_OPTION_ANON_UID_SET) == 0 &&
+	if ((req_ctx->export_perms->set & EXPORT_OPTION_ANON_UID_SET) == 0 &&
 	    (export_opt.conf.set & EXPORT_OPTION_ANON_UID_SET) != 0)
-		export_perms->anonymous_uid = export_opt.conf.anonymous_uid;
+		req_ctx->export_perms->anonymous_uid =
+					export_opt.conf.anonymous_uid;
 
-	if ((export_perms->set & EXPORT_OPTION_ANON_GID_SET) == 0 &&
+	if ((req_ctx->export_perms->set & EXPORT_OPTION_ANON_GID_SET) == 0 &&
 	    (export_opt.conf.set & EXPORT_OPTION_ANON_GID_SET) != 0)
-		export_perms->anonymous_gid = export_opt.conf.anonymous_gid;
+		req_ctx->export_perms->anonymous_gid =
+					export_opt.conf.anonymous_gid;
 
-	export_perms->set |= export_opt.conf.set;
+	req_ctx->export_perms->set |= export_opt.conf.set;
 
 	/* And finally take any options not yet set from global defaults */
-	export_perms->options |= export_opt.def.options &
-				 ~export_perms->set;
+	req_ctx->export_perms->options |= export_opt.def.options &
+					  ~req_ctx->export_perms->set;
 
-	if ((export_perms->set & EXPORT_OPTION_ANON_UID_SET) == 0)
-		export_perms->anonymous_uid = export_opt.def.anonymous_uid;
+	if ((req_ctx->export_perms->set & EXPORT_OPTION_ANON_UID_SET) == 0)
+		req_ctx->export_perms->anonymous_uid =
+					export_opt.def.anonymous_uid;
 
-	if ((export_perms->set & EXPORT_OPTION_ANON_GID_SET) == 0)
-		export_perms->anonymous_gid = export_opt.def.anonymous_gid;
+	if ((req_ctx->export_perms->set & EXPORT_OPTION_ANON_GID_SET) == 0)
+		req_ctx->export_perms->anonymous_gid =
+					export_opt.def.anonymous_gid;
 
-	export_perms->set |= export_opt.def.set;
+	req_ctx->export_perms->set |= export_opt.def.set;
 
 	if (isMidDebug(COMPONENT_EXPORT)) {
 		char perms[1024];
@@ -2261,7 +2266,7 @@ void export_check_access(struct req_op_context *req_ctx,
 		LogMidDebug(COMPONENT_EXPORT,
 			    "default options (%s)",
 			    perms);
-		StrExportOptions(export_perms, perms);
+		StrExportOptions(req_ctx->export_perms, perms);
 		LogMidDebug(COMPONENT_EXPORT,
 			    "Final options   (%s)",
 			    perms);

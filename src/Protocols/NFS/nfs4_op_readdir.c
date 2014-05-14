@@ -57,7 +57,7 @@ struct nfs4_readdir_cb_data {
 	compound_data_t *data;	/*< The compound data, so we can produce
 				   nfs_fh4s. */
 	bool junction_cb;	/*< True if this is a callback for junction. */
-	export_perms_t save_export_perms;	/*< Saved export perms. */
+	struct export_perms save_export_perms;	/*< Saved export perms. */
 	struct gsh_export *saved_gsh_export;	/*< Saved export */
 };
 
@@ -67,7 +67,7 @@ static void restore_data(struct nfs4_readdir_cb_data *tracker)
 	if (tracker->data->req_ctx->export)
 		put_gsh_export(tracker->data->req_ctx->export);
 
-	tracker->data->export_perms = tracker->save_export_perms;
+	*tracker->data->req_ctx->export_perms = tracker->save_export_perms;
 	tracker->data->req_ctx->export = tracker->saved_gsh_export;
 	tracker->data->req_ctx->fsal_export =
 		tracker->data->req_ctx->export->fsal_export;
@@ -75,9 +75,7 @@ static void restore_data(struct nfs4_readdir_cb_data *tracker)
 	tracker->saved_gsh_export = NULL;
 
 	/* Restore creds */
-	if (!get_req_creds(tracker->data->req,
-			   tracker->data->req_ctx,
-			   &tracker->data->export_perms)) {
+	if (!get_req_creds(tracker->data->req, tracker->data->req_ctx)) {
 		LogCrit(COMPONENT_EXPORT,
 			"Failure to restore creds");
 	}
@@ -153,7 +151,7 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 			    entry->object.dir.junction_export->export.fullpath);
 
 		/* Save the compound data context */
-		tracker->save_export_perms = data->export_perms;
+		tracker->save_export_perms = *data->req_ctx->export_perms;
 		tracker->saved_gsh_export = data->req_ctx->export;
 
 		/* Get a reference to the export and stash it in

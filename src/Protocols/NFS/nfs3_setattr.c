@@ -145,7 +145,7 @@ int nfs3_setattr(nfs_arg_t *arg, exportlist_t *export,
 		/* If owner or owner_group are set, and the credential was
 		 * squashed, then we must squash the set owner and owner_group.
 		 */
-		squash_setattr(&export->export_perms, req_ctx, &setattr);
+		squash_setattr(req_ctx, &setattr);
 
 		cache_status = cache_inode_setattr(entry,
 						   &setattr,

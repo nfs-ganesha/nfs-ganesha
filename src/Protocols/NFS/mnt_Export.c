@@ -58,15 +58,16 @@ static bool proc_export(struct gsh_export *export, void *arg)
 	struct groupnode *group, *grp_tail = NULL;
 	const char *grp_name;
 	char addr_buf[INET6_ADDRSTRLEN + 1];
-	export_perms_t export_perms;
 
 	state->retval = 0;
 
 	/* If client does not have any access to the export,
 	 * don't add it to the list
 	 */
-	export_check_access(state->req_ctx, &export_perms);
-	if (export_perms.options == 0) {
+	state->req_ctx->export = export;
+	state->req_ctx->fsal_export = export->fsal_export;
+	export_check_access(state->req_ctx);
+	if (state->req_ctx->export_perms->options == 0) {
 		LogFullDebug(COMPONENT_NFSPROTO,
 			     "Client is not allowed to access Export_Id %d %s",
 			     export->export.id, export->export.fullpath);
@@ -176,6 +177,8 @@ int mnt_Export(nfs_arg_t *arg, exportlist_t *export,
 			"Processing exports failed. error = \"%s\" (%d)",
 			strerror(proc_state.retval), proc_state.retval);
 	}
+	req_ctx->export = NULL;
+	req_ctx->fsal_export = NULL;
 	res->res_mntexport = proc_state.head;
 	return NFS_REQ_OK;
 }				/* mnt_Export */

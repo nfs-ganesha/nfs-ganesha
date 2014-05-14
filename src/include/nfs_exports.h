@@ -77,21 +77,9 @@ typedef enum exportlist_client_type__ {
 	BAD_CLIENT = 8
 } exportlist_client_type_t;
 
-
-typedef struct export_perms__ {
-	uid_t anonymous_uid;	/* root uid when no root access is available
-				 * uid when access is available but all users
-				 * are being squashed. */
-	gid_t anonymous_gid;	/* root gid when no root access is available
-				 * gid when access is available but all users
-				 * are being squashed. */
-	uint32_t options;	/* avail. mnt options */
-	uint32_t set;		/* Options that have been set */
-} export_perms_t;
-
 struct global_export_perms {
-	struct export_perms__ def;
-	struct export_perms__ conf;
+	struct export_perms def;
+	struct export_perms conf;
 };
 
 #define GSS_DEFINE_LEN_TEMP 255
@@ -119,7 +107,7 @@ typedef struct exportlist_client_entry__ {
 			char *princname;
 		} gssprinc;
 	} client;
-	export_perms_t client_perms;	/*< Available mount options */
+	struct export_perms client_perms;	/*< Available mount options */
 } exportlist_client_entry_t;
 
 typedef struct exportlist {
@@ -129,7 +117,7 @@ typedef struct exportlist {
 	char *FS_tag;		/*< Filesystem "tag" string */
 
 	fsal_fsid_t filesystem_id;	/*< Filesystem ID */
-	export_perms_t export_perms;	/*< available mount options */
+	struct export_perms export_perms;	/*< available mount options */
 	uint64_t MaxRead;	/*< Max Read for this entry */
 	uint64_t MaxWrite;	/*< Max Write for this entry */
 	uint64_t PrefRead;	/*< Preferred Read size */
@@ -302,8 +290,7 @@ typedef struct compound_data {
 	exportlist_t *export;	/*< Export entry related to the request */
 	struct gsh_export *saved_export; /*< Export entry related to the
 					     savedFH */
-	export_perms_t export_perms; /*< Permissions for export for currentFH */
-	export_perms_t saved_export_perms; /*< Permissions for export for
+	struct export_perms saved_export_perms; /*< Permissions for export for
 					       savedFH */
 	struct svc_req *req;	/*< RPC Request related to the compound */
 	struct nfs_worker_data *worker;	/*< Worker thread data */
@@ -361,12 +348,10 @@ bool nfs_compare_clientcred(nfs_client_cred_t *cred1,
 			    nfs_client_cred_t *cred2);
 int nfs_rpc_req2client_cred(struct svc_req *req, nfs_client_cred_t *pcred);
 
-void export_check_access(struct req_op_context *req_ctx,
-			 export_perms_t *export_perms);
+void export_check_access(struct req_op_context *req_ctx);
 
 bool export_check_security(struct svc_req *req,
-			   struct req_op_context *req_ctx,
-			   export_perms_t *export_perms);
+			   struct req_op_context *req_ctx);
 
 void LogClientListEntry(log_components_t component,
 			exportlist_client_entry_t *entry);

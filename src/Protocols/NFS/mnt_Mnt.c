@@ -63,7 +63,6 @@ int mnt_Mnt(nfs_arg_t *arg, exportlist_t *unused,
 	int index_auth = 0;
 	int i = 0;
 	char dumpfh[1024];
-	export_perms_t export_perms;
 	int retval = NFS_REQ_OK;
 	nfs_fh3 *fh3 = (nfs_fh3 *) &res->res_mnt3.mountres3_u.mountinfo.fhandle;
 	cache_entry_t *entry = NULL;
@@ -116,9 +115,9 @@ int mnt_Mnt(nfs_arg_t *arg, exportlist_t *unused,
 	/* Check access based on client. Don't bother checking TCP/UDP as some
 	 * clients use UDP for MOUNT even when they will use TCP for NFS.
 	 */
-	export_check_access(req_ctx, &export_perms);
+	export_check_access(req_ctx);
 
-	if ((export_perms.options & EXPORT_OPTION_NFSV3) == 0) {
+	if ((req_ctx->export_perms->options & EXPORT_OPTION_NFSV3) == 0) {
 		LogInfo(COMPONENT_NFSPROTO,
 			"MOUNT: Export entry %s does not support NFS v3 for client %s",
 			export->export.fullpath,
@@ -178,17 +177,20 @@ int mnt_Mnt(nfs_arg_t *arg, exportlist_t *unused,
 	/* Return the supported authentication flavor in V3 based
 	 * on the client's export permissions.
 	 */
-	if (export_perms.options & EXPORT_OPTION_AUTH_NONE)
+	if (req_ctx->export_perms->options & EXPORT_OPTION_AUTH_NONE)
 		auth_flavor[index_auth++] = AUTH_NONE;
-	if (export_perms.options & EXPORT_OPTION_AUTH_UNIX)
+	if (req_ctx->export_perms->options & EXPORT_OPTION_AUTH_UNIX)
 		auth_flavor[index_auth++] = AUTH_UNIX;
 #ifdef _HAVE_GSSAPI
 	if (nfs_param.krb5_param.active_krb5 == TRUE) {
-		if (export_perms.options & EXPORT_OPTION_RPCSEC_GSS_NONE)
+		if (req_ctx->export_perms->options &
+		    EXPORT_OPTION_RPCSEC_GSS_NONE)
 			auth_flavor[index_auth++] = MNT_RPC_GSS_NONE;
-		if (export_perms.options & EXPORT_OPTION_RPCSEC_GSS_INTG)
+		if (req_ctx->export_perms->options &
+		    EXPORT_OPTION_RPCSEC_GSS_INTG)
 			auth_flavor[index_auth++] = MNT_RPC_GSS_INTEGRITY;
-		if (export_perms.options & EXPORT_OPTION_RPCSEC_GSS_PRIV)
+		if (req_ctx->export_perms->options &
+		    EXPORT_OPTION_RPCSEC_GSS_PRIV)
 			auth_flavor[index_auth++] = MNT_RPC_GSS_PRIVACY;
 	}
 #endif
