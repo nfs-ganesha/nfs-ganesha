@@ -109,9 +109,9 @@ void export_pkginit(void);
 #ifdef USE_DBUS
 void dbus_export_init(void);
 #endif
-struct exportlist *alloc_exportlist(void);
-void free_exportlist(struct exportlist *exp);
-struct gsh_export *insert_gsh_export(struct exportlist *exp);
+struct gsh_export *alloc_export(void);
+void free_export(struct gsh_export *export);
+bool insert_gsh_export(struct gsh_export *export);
 struct gsh_export *get_gsh_export(int export_id);
 struct gsh_export *get_gsh_export_by_path(char *path, bool exact_match);
 struct gsh_export *get_gsh_export_by_path_locked(char *path,

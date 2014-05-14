@@ -575,10 +575,10 @@ static int fsal_commit(void *node, void *link_mem, void *self_struct,
 		       struct config_error_type *err_type)
 {
 	struct fsal_export **exp_hdl = link_mem;
-	struct exportlist *exp;
 	struct fsal_params *fp = self_struct;
 	struct fsal_module *fsal;
 	struct fsal_export *fsal_exp;
+	struct gsh_export *export;
 	fsal_status_t status;
 	int errcnt = 0;
 
@@ -589,7 +589,7 @@ static int fsal_commit(void *node, void *link_mem, void *self_struct,
 		errcnt++;
 		goto err;
 	}
-	exp = container_of(exp_hdl, struct exportlist, export_hdl);
+	export = container_of(exp_hdl, struct gsh_export, export.export_hdl);
 	fsal = lookup_fsal(fp->name);
 	if (fsal == NULL) {
 		int retval;
@@ -623,31 +623,34 @@ static int fsal_commit(void *node, void *link_mem, void *self_struct,
 	 * with. But only if it's a non-root path starting
 	 * with /.
 	 */
-	if (exp->fullpath[0] == '/') {
+	if (export->export.fullpath[0] == '/') {
 		int pathlen;
-		pathlen = strlen(exp->fullpath);
-		while ((exp->fullpath[pathlen - 1] == '/') && (pathlen > 1))
+		pathlen = strlen(export->export.fullpath);
+		while ((export->export.fullpath[pathlen - 1] == '/') &&
+		       (pathlen > 1))
 			pathlen--;
-		exp->fullpath[pathlen] = '\0';
+		export->export.fullpath[pathlen] = '\0';
 	}
 	status = fsal->ops->create_export(fsal,
-					  exp->fullpath,
+					  export->export.fullpath,
 					  node,
-					  exp,
+					  &export->export,
 					  NULL,
 					  &fsal_up_top,
 					  &fsal_exp);
-	if (!(exp->export_perms.set & EXPORT_OPTION_EXPIRE_SET)) {
-		exp->expire_type_attr = nfs_param.cache_param.expire_type_attr;
-		exp->expire_time_attr = nfs_param.cache_param.expire_time_attr;
+	if (!(export->export.export_perms.set & EXPORT_OPTION_EXPIRE_SET)) {
+		export->export.expire_type_attr =
+			nfs_param.cache_param.expire_type_attr;
+		export->export.expire_time_attr =
+			nfs_param.cache_param.expire_time_attr;
 	}
 
 	if (FSAL_IS_ERROR(status)) {
 		fsal_put(fsal);
 		LogCrit(COMPONENT_CONFIG,
 			"Could not create export for (%s) to (%s)",
-			exp->pseudopath,
-			exp->fullpath);
+			export->export.pseudopath,
+			export->export.fullpath);
 		err_type->export = true;
 		errcnt++;
 		goto err;
@@ -655,24 +658,24 @@ static int fsal_commit(void *node, void *link_mem, void *self_struct,
 
 	/* We are connected up to the fsal side.  Now
 	 * validate maxread/write etc with fsal params */
-	if (exp->MaxRead > fsal_exp->ops->fs_maxread(fsal_exp) &&
+	if (export->export.MaxRead > fsal_exp->ops->fs_maxread(fsal_exp) &&
 	    fsal_exp->ops->fs_maxread(fsal_exp) != 0) {
 		LogInfo(COMPONENT_CONFIG,
 			 "Readjusting MaxRead to FSAL, %" PRIu64 " -> %" PRIu32,
-			 exp->MaxRead,
+			 export->export.MaxRead,
 			 fsal_exp->ops->fs_maxread(fsal_exp));
-		exp->MaxRead = fsal_exp->ops->fs_maxread(fsal_exp);
+		export->export.MaxRead = fsal_exp->ops->fs_maxread(fsal_exp);
 	}
-	if (exp->MaxWrite > fsal_exp->ops->fs_maxwrite(fsal_exp) &&
+	if (export->export.MaxWrite > fsal_exp->ops->fs_maxwrite(fsal_exp) &&
 	    fsal_exp->ops->fs_maxwrite(fsal_exp) != 0) {
 		LogInfo(COMPONENT_CONFIG,
 			 "Readjusting MaxWrite to FSAL, %"PRIu64" -> %"PRIu32,
-			 exp->MaxWrite,
+			 export->export.MaxWrite,
 			 fsal_exp->ops->fs_maxwrite(fsal_exp));
-		exp->MaxWrite = fsal_exp->ops->fs_maxwrite(fsal_exp);
+		export->export.MaxWrite = fsal_exp->ops->fs_maxwrite(fsal_exp);
 	}
 	assert(fsal_exp != NULL);
-	exp->export_hdl = fsal_exp;
+	export->export.export_hdl = fsal_exp;
 
 err:
 	return errcnt;
@@ -695,16 +698,16 @@ err:
 
 static void *export_init(void *link_mem, void *self_struct)
 {
-	struct exportlist *exp;
+	struct gsh_export *export;
 
 	if (self_struct == NULL) {
-		exp = alloc_exportlist();
-		if (exp == NULL)
+		export = alloc_export();
+		if (export == NULL)
 			return NULL;
-		return exp;
+		return export;
 	} else { /* free resources case */
-		exp = self_struct;
-		free_exportlist(exp);
+		export = self_struct;
+		free_export(export);
 		return NULL;
 	}
 }
@@ -719,50 +722,51 @@ static void *export_init(void *link_mem, void *self_struct)
 static int export_commit(void *node, void *link_mem, void *self_struct,
 			 struct config_error_type *err_type)
 {
-	struct exportlist *exp;
 	struct gsh_export *export, *probe_exp;
 	int errcnt = 0;
 	char perms[1024];
 
-	exp = self_struct;
+	export = self_struct;
 
 	/* validate the export now */
-	if ((exp->export_perms.options & EXPORT_OPTION_NFSV4)) {
-		if (exp->pseudopath == NULL) {
+	if ((export->export.export_perms.options & EXPORT_OPTION_NFSV4)) {
+		if (export->export.pseudopath == NULL) {
 			LogCrit(COMPONENT_CONFIG,
 				"Exporting to NFSv4 but not Pseudo path defined");
 			err_type->invalid = true;
 			errcnt++;
 			goto err_out;
-		} else if (exp->id == 0 && strcmp(exp->pseudopath, "/") != 0) {
+		} else if (export->export.id == 0 &&
+			   strcmp(export->export.pseudopath, "/") != 0) {
 			LogCrit(COMPONENT_CONFIG,
 				"Export id 0 can only export \"/\" not (%s)",
-				exp->pseudopath);
+				export->export.pseudopath);
 			err_type->invalid = true;
 			errcnt++;
 			goto err_out;
 		}
 	}
-	if (exp->pseudopath != NULL && exp->pseudopath[0] != '/') {
+	if (export->export.pseudopath != NULL &&
+	    export->export.pseudopath[0] != '/') {
 		LogCrit(COMPONENT_CONFIG,
 			"A Pseudo path must be an absolute path");
 		err_type->invalid = true;
 		errcnt++;
 	}
-	if (exp->id == 0) {
-		if (exp->pseudopath == NULL) {
+	if (export->export.id == 0) {
+		if (export->export.pseudopath == NULL) {
 			LogCrit(COMPONENT_CONFIG,
 				"Pseudo path must be \"/\" for export id 0");
 			err_type->invalid = true;
 			errcnt++;
-		} else if (exp->pseudopath[1] != '\0') {
+		} else if (export->export.pseudopath[1] != '\0') {
 			LogCrit(COMPONENT_CONFIG,
 				"Pseudo path must be \"/\" for export id 0");
 			err_type->invalid = true;
 			errcnt++;
 		}
-		if ((exp->export_perms.options & EXPORT_OPTION_PROTOCOLS)
-		    != EXPORT_OPTION_NFSV4) {
+		if ((export->export.export_perms.options &
+		     EXPORT_OPTION_PROTOCOLS) != EXPORT_OPTION_NFSV4) {
 			LogCrit(COMPONENT_CONFIG,
 				"Export id 0 must indicate Protocols=4");
 			err_type->invalid = true;
@@ -771,45 +775,46 @@ static int export_commit(void *node, void *link_mem, void *self_struct,
 	}
 	if (errcnt)
 		goto err_out;  /* have basic errors. don't even try more... */
-	probe_exp = get_gsh_export(exp->id);
+	probe_exp = get_gsh_export(export->export.id);
 	if (probe_exp != NULL) {
 		LogDebug(COMPONENT_CONFIG,
-			 "Export %d already exists", exp->id);
+			 "Export %d already exists", export->export.id);
 		put_gsh_export(probe_exp);
 		err_type->exists = true;
 		errcnt++;
 	}
-	if (exp->FS_tag != NULL) {
-		probe_exp = get_gsh_export_by_tag(exp->FS_tag);
+	if (export->export.FS_tag != NULL) {
+		probe_exp = get_gsh_export_by_tag(export->export.FS_tag);
 		if (probe_exp != NULL) {
 			put_gsh_export(probe_exp);
 			LogCrit(COMPONENT_CONFIG,
 				"Tag (%s) is a duplicate",
-				exp->FS_tag);
+				export->export.FS_tag);
 			if (!err_type->exists)
 				err_type->invalid = true;
 			errcnt++;
 		}
 	}
-	if (exp->pseudopath != NULL) {
-		probe_exp = get_gsh_export_by_pseudo(exp->pseudopath, true);
+	if (export->export.pseudopath != NULL) {
+		probe_exp = get_gsh_export_by_pseudo(export->export.pseudopath,
+						     true);
 		if (probe_exp != NULL) {
 			LogCrit(COMPONENT_CONFIG,
 				"Pseudo path (%s) is a duplicate",
-				exp->pseudopath);
+				export->export.pseudopath);
 			if (!err_type->exists)
 				err_type->invalid = true;
 			errcnt++;
 			put_gsh_export(probe_exp);
 		}
 	}
-	probe_exp = get_gsh_export_by_path(exp->fullpath, true);
+	probe_exp = get_gsh_export_by_path(export->export.fullpath, true);
 	if (probe_exp != NULL &&
-	    exp->pseudopath == NULL &&
-	    exp->FS_tag == NULL) {
+	    export->export.pseudopath == NULL &&
+	    export->export.FS_tag == NULL) {
 		LogCrit(COMPONENT_CONFIG,
 			"Duplicate path (%s) without unique tag or Pseudo path",
-			exp->fullpath);
+			export->export.fullpath);
 		err_type->invalid = true;
 		errcnt++;
 		put_gsh_export(probe_exp);
@@ -817,33 +822,35 @@ static int export_commit(void *node, void *link_mem, void *self_struct,
 	if (errcnt) {
 		if (err_type->exists && !err_type->invalid)
 			LogDebug(COMPONENT_CONFIG,
-				 "Duplicate export id = %d", exp->id);
+				 "Duplicate export id = %d",
+				 export->export.id);
 		else
 			LogCrit(COMPONENT_CONFIG,
-				 "Duplicate export id = %d", exp->id);
+				 "Duplicate export id = %d",
+				 export->export.id);
 		goto err_out;  /* have errors. don't init or load a fsal */
 	}
-	glist_init(&exp->exp_state_list);
-	glist_init(&exp->exp_lock_list);
-	glist_init(&exp->exp_nlm_share_list);
+	glist_init(&export->export.exp_state_list);
+	glist_init(&export->export.exp_lock_list);
+	glist_init(&export->export.exp_nlm_share_list);
 
 	/* now probe the fsal and init it */
 	/* pass along the block that is/was the FS_Specific */
-	export = insert_gsh_export(exp);
-	if (export == NULL) {
+	if (!insert_gsh_export(export)) {
 		LogCrit(COMPONENT_CONFIG,
 			"Export id %d already in use.",
-			exp->id);
+			export->export.id);
 		err_type->exists = true;
 		errcnt++;
 		goto err_out;
 	}
 
-	StrExportOptions(&exp->export_perms, perms);
+	StrExportOptions(&export->export.export_perms, perms);
 
 	LogEvent(COMPONENT_CONFIG,
 		 "Export %d created at pseudo (%s) with path (%s) and tag (%s) perms (%s)",
-		 exp->id, exp->pseudopath, exp->fullpath, exp->FS_tag, perms);
+		 export->export.id, export->export.pseudopath,
+		 export->export.fullpath, export->export.FS_tag, perms);
 	set_gsh_export_state(export, EXPORT_READY);
 	put_gsh_export(export);
 	return 0;
@@ -862,15 +869,15 @@ err_out:
 static void export_display(const char *step, void *node,
 			   void *link_mem, void *self_struct)
 {
-	struct exportlist *exp = self_struct;
+	struct gsh_export *export = self_struct;
 	char perms[1024];
 
-	StrExportOptions(&exp->export_perms, perms);
+	StrExportOptions(&export->export.export_perms, perms);
 
 	LogMidDebug(COMPONENT_CONFIG,
 		    "%s %p Export %d pseudo (%s) with path (%s) and tag (%s) perms (%s)",
-		    step, exp, exp->id, exp->pseudopath,
-		    exp->fullpath, exp->FS_tag, perms);
+		    step, export, export->export.id, export->export.pseudopath,
+		    export->export.fullpath, export->export.FS_tag, perms);
 }
 
 /**
@@ -882,15 +889,13 @@ static void export_display(const char *step, void *node,
 static int add_export_commit(void *node, void *link_mem, void *self_struct,
 			     struct config_error_type *err_type)
 {
-	struct exportlist *exp = self_struct;
-	struct gsh_export *export;
+	struct gsh_export *export = self_struct;
 	int errcnt = 0;
 
 	errcnt = export_commit(node, link_mem, self_struct, err_type);
 	if (errcnt != 0)
 		goto err_out;
 
-	export = container_of(exp, struct gsh_export, export);
 	if (!init_export_root(export)) {
 		err_type->resource = true;
 		errcnt++;
@@ -1142,46 +1147,46 @@ static struct config_item fsal_params[] = {
 
 static struct config_item export_params[] = {
 	CONF_MAND_UI32("Export_id", 0, 0xffff, 1,
-		       exportlist, id),
+		       gsh_export, export.id),
 	CONF_MAND_PATH("Path", 1, MAXPATHLEN, NULL,
-		       exportlist, fullpath), /* must chomp '/' */
+		       gsh_export, export.fullpath), /* must chomp '/' */
 	CONF_UNIQ_PATH("Pseudo", 1, MAXPATHLEN, NULL,
-		       exportlist, pseudopath),
+		       gsh_export, export.pseudopath),
 	CONF_ITEM_UI64("MaxRead", 512, FSAL_MAXIOSIZE, FSAL_MAXIOSIZE,
-		       exportlist, MaxRead),
+		       gsh_export, export.MaxRead),
 	CONF_ITEM_UI64("MaxWrite", 512, FSAL_MAXIOSIZE, FSAL_MAXIOSIZE,
-		       exportlist, MaxWrite),
+		       gsh_export, export.MaxWrite),
 	CONF_ITEM_UI64("PrefRead", 512, FSAL_MAXIOSIZE, FSAL_MAXIOSIZE,
-		       exportlist, PrefRead),
+		       gsh_export, export.PrefRead),
 	CONF_ITEM_UI64("PrefWrite", 512, FSAL_MAXIOSIZE, FSAL_MAXIOSIZE,
-		       exportlist, PrefWrite),
+		       gsh_export, export.PrefWrite),
 	CONF_ITEM_UI64("PrefReaddir", 512, FSAL_MAXIOSIZE, 16384,
-		       exportlist, PrefReaddir),
+		       gsh_export, export.PrefReaddir),
 	CONF_ITEM_FSID_SET("Filesystem_id", 666, 666,
-		       exportlist, filesystem_id, /* major.minor */
-		       EXPORT_OPTION_FSID_SET, export_perms.set),
+		       gsh_export, export.filesystem_id, /* major.minor */
+		       EXPORT_OPTION_FSID_SET, export.export_perms.set),
 	CONF_ITEM_STR("Tag", 1, MAXPATHLEN, NULL,
-		      exportlist, FS_tag),
+		      gsh_export, export.FS_tag),
 	CONF_ITEM_UI64("MaxOffsetWrite", 512, UINT64_MAX, UINT64_MAX,
-		       exportlist, MaxOffsetWrite),
+		       gsh_export, export.MaxOffsetWrite),
 	CONF_ITEM_UI64("MaxOffsetRead", 512, UINT64_MAX, UINT64_MAX,
-		       exportlist, MaxOffsetRead),
+		       gsh_export, export.MaxOffsetRead),
 	CONF_ITEM_BOOL("UseCookieVerifier", true,
-		       exportlist, UseCookieVerifier),
-	CONF_EXPORT_PERMS(exportlist, export_perms),
+		       gsh_export, export.UseCookieVerifier),
+	CONF_EXPORT_PERMS(gsh_export, export.export_perms),
 	CONF_ITEM_BLOCK("Client", client_params,
 			client_init, client_commit,
-			exportlist, clients),
+			gsh_export, export.clients),
 	CONF_ITEM_ENUM_SET("Attr_Expiration_Type",
 			   CACHE_INODE_EXPIRE_NEVER,
 			   expire_types,
-			   exportlist, expire_type_attr,
-			   EXPORT_OPTION_EXPIRE_SET, export_perms.set),
+			   gsh_export, export.expire_type_attr,
+			   EXPORT_OPTION_EXPIRE_SET, export.export_perms.set),
 	CONF_ITEM_UI32("Attr_Expiration_Time", 0, 360, 60,
-		       exportlist, expire_time_attr),
+		       gsh_export, export.expire_time_attr),
 	CONF_RELAX_BLOCK("FSAL", fsal_params,
 			 fsal_init, fsal_commit,
-			 exportlist, export_hdl),
+			 gsh_export, export.export_hdl),
 	CONFIG_EOL
 };
 
@@ -1240,71 +1245,71 @@ struct config_block export_defaults_param = {
 
 static int build_default_root(void)
 {
-	exportlist_t *p_entry = NULL;
-	struct gsh_export *exp;
+	struct gsh_export *export;
 	struct fsal_module *fsal_hdl = NULL;
 
 	/* See if export_id = 0 has already been specified */
-	exp = get_gsh_export(0);
+	export = get_gsh_export(0);
 
-	if (exp != NULL) {
+	if (export != NULL) {
 		/* export_id = 0 has already been specified */
 		LogDebug(COMPONENT_CONFIG,
 			 "Export 0 already exists");
-		put_gsh_export(exp);
+		put_gsh_export(export);
 		return 0;
 	}
 
 	/* See if another export with Pseudo = "/" has already been specified.
 	 */
-	exp = get_gsh_export_by_pseudo("/", true);
+	export = get_gsh_export_by_pseudo("/", true);
 
-	if (exp != NULL) {
+	if (export != NULL) {
 		/* Pseudo = / has already been specified */
 		LogDebug(COMPONENT_CONFIG,
 			 "Pseudo root already exists");
-		put_gsh_export(exp);
+		put_gsh_export(export);
 		return 0;
 	}
 
 	/* allocate and initialize the exportlist part with the id */
-	p_entry = alloc_exportlist();
-	if (p_entry == NULL) {
+	export = alloc_export();
+	if (export == NULL) {
 		LogCrit(COMPONENT_CONFIG,
 			"Could not allocate space for pseudoroot export");
 		return -1;
 	}
 
-	p_entry->UseCookieVerifier = true;
-	p_entry->filesystem_id.major = 152;
-	p_entry->filesystem_id.minor = 152;
-	p_entry->MaxWrite = FSAL_MAXIOSIZE;
-	p_entry->MaxRead = FSAL_MAXIOSIZE;
-	p_entry->PrefWrite = FSAL_MAXIOSIZE;
-	p_entry->PrefRead = FSAL_MAXIOSIZE;
-	p_entry->PrefReaddir = 16384;
-	p_entry->expire_type_attr = nfs_param.cache_param.expire_type_attr;
-	glist_init(&p_entry->exp_state_list);
-	glist_init(&p_entry->exp_lock_list);
-	glist_init(&p_entry->exp_nlm_share_list);
-	glist_init(&p_entry->clients);
+	export->export.UseCookieVerifier = true;
+	export->export.filesystem_id.major = 152;
+	export->export.filesystem_id.minor = 152;
+	export->export.MaxWrite = FSAL_MAXIOSIZE;
+	export->export.MaxRead = FSAL_MAXIOSIZE;
+	export->export.PrefWrite = FSAL_MAXIOSIZE;
+	export->export.PrefRead = FSAL_MAXIOSIZE;
+	export->export.PrefReaddir = 16384;
+	export->export.expire_type_attr =
+		nfs_param.cache_param.expire_type_attr;
+	glist_init(&export->export.exp_state_list);
+	glist_init(&export->export.exp_lock_list);
+	glist_init(&export->export.exp_nlm_share_list);
+	glist_init(&export->export.clients);
 
 	/* Default anonymous uid and gid */
-	p_entry->export_perms.anonymous_uid = (uid_t) ANON_UID;
-	p_entry->export_perms.anonymous_gid = (gid_t) ANON_GID;
+	export->export.export_perms.anonymous_uid = (uid_t) ANON_UID;
+	export->export.export_perms.anonymous_gid = (gid_t) ANON_GID;
 
 	/* Support only NFS v4 and TCP.
 	 * Root is allowed
 	 * MD Read Access
 	 * Allow use of default auth types
 	 */
-	p_entry->export_perms.options = EXPORT_OPTION_ROOT |
+	export->export.export_perms.options = EXPORT_OPTION_ROOT |
 					EXPORT_OPTION_MD_READ_ACCESS |
 					EXPORT_OPTION_NFSV4 |
 					EXPORT_OPTION_AUTH_TYPES |
 					EXPORT_OPTION_TCP;
 
-	p_entry->export_perms.set = EXPORT_OPTION_SQUASH_TYPES |
+	export->export.export_perms.set = EXPORT_OPTION_SQUASH_TYPES |
 				    EXPORT_OPTION_ACCESS_TYPE |
 				    EXPORT_OPTION_PROTOCOLS |
 				    EXPORT_OPTION_TRANSPORTS |
@@ -1312,10 +1317,10 @@ static int build_default_root(void)
 				    EXPORT_OPTION_FSID_SET;
 
 	/* Set the fullpath to "/" */
-	p_entry->fullpath = gsh_strdup("/");
+	export->export.fullpath = gsh_strdup("/");
 
 	/* Set Pseudo Path to "/" */
-	p_entry->pseudopath = gsh_strdup("/");
+	export->export.pseudopath = gsh_strdup("/");
 
 	/* Assign FSAL_PSEUDO */
 	fsal_hdl = lookup_fsal("PSEUDO");
@@ -1328,43 +1333,42 @@ static int build_default_root(void)
 		fsal_status_t rc;
 
 		rc = fsal_hdl->ops->create_export(fsal_hdl,
-						  p_entry->fullpath,
+						  export->export.fullpath,
 						  NULL,
-						  p_entry,
+						  &export->export,
 						  NULL,
 						  &fsal_up_top,
-						  &p_entry->export_hdl);
+						  &export->export.export_hdl);
 
 		if (FSAL_IS_ERROR(rc)) {
 			fsal_put(fsal_hdl);
 			LogCrit(COMPONENT_CONFIG,
 				"Could not create FSAL export for %s",
-				p_entry->fullpath);
+				export->export.fullpath);
 			goto err_out;
 		}
 
 	}
 
-	exp = insert_gsh_export(p_entry);
-	if (exp == NULL) {
-		p_entry->export_hdl->ops->release(p_entry->export_hdl);
+	if (!insert_gsh_export(export)) {
+		export->export.export_hdl->ops->release(
+			export->export.export_hdl);
 		fsal_put(fsal_hdl);
 		LogCrit(COMPONENT_CONFIG,
 			"Failed to insert pseudo root export.  In use??");
 		goto err_out;
 	}
-	p_entry = NULL;  /* so coverity thinks we are done with this */
-	set_gsh_export_state(exp, EXPORT_READY);
+	set_gsh_export_state(export, EXPORT_READY);
 
 	LogEvent(COMPONENT_CONFIG,
 		 "Export 0 (/) successfully created");
 
-	put_gsh_export(exp);	/* all done, let go */
+	put_gsh_export(export);	/* all done, let go */
 
 	return 1;
 
 err_out:
-	free_exportlist(p_entry);
+	free_export(export);
 	return -1;
 }
 
@@ -1437,22 +1441,23 @@ static void FreeClientList(struct glist_head *clients)
  * @return true if all went well
  */
 
-void free_export_resources(exportlist_t *export)
+void free_export_resources(struct gsh_export *export)
 {
-	FreeClientList(&export->clients);
-	if (export->export_hdl != NULL) {
-		struct fsal_module *fsal = export->export_hdl->fsal;
-		export->export_hdl->ops->release(export->export_hdl);
+	FreeClientList(&export->export.clients);
+	if (export->export.export_hdl != NULL) {
+		struct fsal_module *fsal = export->export.export_hdl->fsal;
+		export->export.export_hdl->ops->release(
+			export->export.export_hdl);
 		fsal_put(fsal);
 	}
-	export->export_hdl = NULL;
+	export->export.export_hdl = NULL;
 	/* free strings here */
-	if (export->fullpath != NULL)
-		gsh_free(export->fullpath);
-	if (export->pseudopath != NULL)
-		gsh_free(export->pseudopath);
-	if (export->FS_tag != NULL)
-		gsh_free(export->FS_tag);
+	if (export->export.fullpath != NULL)
+		gsh_free(export->export.fullpath);
+	if (export->export.pseudopath != NULL)
+		gsh_free(export->export.pseudopath);
+	if (export->export.FS_tag != NULL)
+		gsh_free(export->export.FS_tag);
 }
 
 /**

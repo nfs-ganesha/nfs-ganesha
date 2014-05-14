@@ -383,7 +383,7 @@ void unexport(struct gsh_export *export);
 void kill_export_root_entry(cache_entry_t *entry);
 
 int ReadExports(config_file_t in_config);
-void free_export_resources(exportlist_t *export);
+void free_export_resources(struct gsh_export *export);
 void exports_pkginit(void);
 
 #endif				/* !NFS_EXPORTS_H */

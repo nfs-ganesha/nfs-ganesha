@@ -112,15 +112,15 @@ static int export_id_cmpf(const struct avltree_node *lhs,
 }
 
 /**
- * @brief Allocate an exportlist entry.
+ * @brief Allocate a gsh_export entry.
  *
- * This is the ONLY function that should allocate exportlists
+ * This is the ONLY function that should allocate gsh_exports
  *
- * @return pointer to export list to be used by insert_gsh_export.
+ * @return pointer to gsh_export.
  * NULL on allocation errors.
  */
 
-struct exportlist *alloc_exportlist(void)
+struct gsh_export *alloc_export(void)
 {
 	struct export_stats *export_st;
 
@@ -128,7 +128,7 @@ struct exportlist *alloc_exportlist(void)
 	if (export_st == NULL)
 		return NULL;
 
-	return &export_st->export.export;
+	return &export_st->export;
 }
 
 /**
@@ -138,12 +138,12 @@ struct exportlist *alloc_exportlist(void)
  * Once they get inserted into the export manager, it will release it.
  */
 
-void free_exportlist(struct exportlist *exp)
+void free_export(struct gsh_export *export)
 {
 	struct export_stats *export_st;
 
-	free_export_resources(exp);
-	export_st = container_of(exp, struct export_stats, export.export);
+	free_export_resources(export);
+	export_st = container_of(export, struct export_stats, export);
 	gsh_free(export_st);
 }
 
@@ -160,32 +160,30 @@ void free_exportlist(struct exportlist *exp)
  * @return pointer to ref locked export.  Return NULL on error
  */
 
-struct gsh_export *insert_gsh_export(struct exportlist *explist)
+bool insert_gsh_export(struct gsh_export *export)
 {
-	struct gsh_export *export;
 	struct avltree_node *node = NULL;
 	void **cache_slot;
 
-	export = container_of(explist, struct gsh_export, export);
 	export->refcnt = 1;	/* we will hold a ref starting out... */
 
 	PTHREAD_RWLOCK_wrlock(&export_by_id.lock);
 	node = avltree_insert(&export->node_k, &export_by_id.t);
 	if (node) {
 		PTHREAD_RWLOCK_unlock(&export_by_id.lock);
-		return NULL;	/* somebody beat us to it */
+		return false;	/* somebody beat us to it */
 	}
 	pthread_rwlock_init(&export->lock, NULL);
 	/* update cache */
 	cache_slot = (void **)
 		&(export_by_id.cache[eid_cache_offsetof(&export_by_id,
-							explist->id)]);
+							export->export.id)]);
 	atomic_store_voidptr(cache_slot, &export->node_k);
 	glist_add_tail(&exportlist, &export->exp_list);
 	get_gsh_export_ref(export);
 	glist_init(&export->entry_list);
 	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
-	return export;
+	return true;
 }
 
 /**
@@ -560,15 +558,14 @@ pthread_mutex_t release_export_serializer = PTHREAD_MUTEX_INITIALIZER;
  * We are done with it, let it go.
  */
 
-void put_gsh_export(struct gsh_export *exp)
+void put_gsh_export(struct gsh_export *export)
 {
 	int64_t refcount;
-	exportlist_t *export = &exp->export;
 	struct export_stats *export_st;
 
-	assert(exp->refcnt > 0);
+	assert(export->refcnt > 0);
 
-	refcount = atomic_dec_int64_t(&exp->refcnt);
+	refcount = atomic_dec_int64_t(&export->refcnt);
 
 	if (refcount != 0)
 		return;
@@ -579,22 +576,22 @@ void put_gsh_export(struct gsh_export *exp)
 	/* Releasing last reference */
 
 	/* Release state belonging to this export */
-	state_release_export(exp);
+	state_release_export(export);
 
 	/* Flush cache inodes belonging to this export */
-	cache_inode_unexport(exp);
+	cache_inode_unexport(export);
 
 	/* can we really let go or do we have unfinished business? */
-	assert(glist_empty(&exp->entry_list));
-	assert(glist_empty(&export->exp_state_list));
-	assert(glist_empty(&export->exp_lock_list));
-	assert(glist_empty(&export->exp_nlm_share_list));
-	assert(glist_null(&export->exp_root_list));
+	assert(glist_empty(&export->entry_list));
+	assert(glist_empty(&export->export.exp_state_list));
+	assert(glist_empty(&export->export.exp_lock_list));
+	assert(glist_empty(&export->export.exp_nlm_share_list));
+	assert(glist_null(&export->export.exp_root_list));
 
 	/* free resources */
 	free_export_resources(export);
-	pthread_rwlock_destroy(&exp->lock);
-	export_st = container_of(exp, struct export_stats, export);
+	pthread_rwlock_destroy(&export->lock);
+	export_st = container_of(export, struct export_stats, export);
 	server_stats_free(&export_st->st);
 	gsh_free(export_st);
 
