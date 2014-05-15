@@ -112,7 +112,6 @@ typedef struct exportlist_client_entry__ {
 
 typedef struct exportlist {
 	struct export_perms export_perms;	/*< available mount options */
-	bool UseCookieVerifier;	/*< Is Cookie verifier to be used? */
 	struct glist_head clients;	/*< Allowed clients */
 	struct glist_head exp_state_list;	/*< List of NFS v4 state
 						    belonging to this export */

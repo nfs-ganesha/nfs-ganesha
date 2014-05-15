@@ -1177,7 +1177,7 @@ static struct config_item export_params[] = {
 	CONF_ITEM_UI64("MaxOffsetRead", 512, UINT64_MAX, UINT64_MAX,
 		       gsh_export, MaxOffsetRead),
 	CONF_ITEM_BOOL("UseCookieVerifier", true,
-		       gsh_export, export.UseCookieVerifier),
+		       gsh_export, UseCookieVerifier),
 	CONF_EXPORT_PERMS(gsh_export, export.export_perms),
 	CONF_ITEM_BLOCK("Client", client_params,
 			client_init, client_commit,
@@ -1290,7 +1290,7 @@ static int build_default_root(void)
 	init_root_op_context(&root_op_context, export, NULL, 0, 0,
 			     UNKNOWN_REQUEST);
 
-	export->export.UseCookieVerifier = true;
+	export->UseCookieVerifier = true;
 	export->filesystem_id.major = 152;
 	export->filesystem_id.minor = 152;
 	export->MaxWrite = FSAL_MAXIOSIZE;

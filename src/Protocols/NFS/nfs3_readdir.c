@@ -44,6 +44,7 @@
 #include "cache_inode.h"
 #include "cache_inode_lru.h"
 #include "nfs_exports.h"
+#include "export_mgr.h"
 #include "nfs_proto_functions.h"
 #include "nfs_convert.h"
 #include "nfs_proto_tools.h"
@@ -209,7 +210,7 @@ int nfs3_readdir(nfs_arg_t *arg, exportlist_t *export,
 	 * unused (as in many NFS Servers) then only a set of zeros
 	 * is returned (trivial value).
 	 */
-	if (export->UseCookieVerifier)
+	if (req_ctx->export->UseCookieVerifier)
 		memcpy(cookie_verifier,
 		       &dir_entry->change_time,
 		       sizeof(dir_entry->change_time));
@@ -217,7 +218,7 @@ int nfs3_readdir(nfs_arg_t *arg, exportlist_t *export,
 	/* Nothing to do if != 0 because the area is already full of
 	 * zero
 	 */
-	if ((cookie != 0) && (export->UseCookieVerifier)) {
+	if ((cookie != 0) && (req_ctx->export->UseCookieVerifier)) {
 		/* Not the first call, so we have to check the cookie
 		 * verifier
 		 */

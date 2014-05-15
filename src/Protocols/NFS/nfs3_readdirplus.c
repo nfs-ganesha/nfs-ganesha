@@ -208,12 +208,12 @@ int nfs3_readdirplus(nfs_arg_t *arg, exportlist_t *export,
 	   directory. If verifier is unused (as in many NFS Servers) then
 	   only a set of zeros is returned (trivial value) */
 
-	if (export->UseCookieVerifier)
+	if (req_ctx->export->UseCookieVerifier)
 		memcpy(cookie_verifier,
 		       &(dir_entry->change_time),
 		       sizeof(dir_entry->change_time));
 
-	if (export->UseCookieVerifier && (begin_cookie != 0)) {
+	if (req_ctx->export->UseCookieVerifier && (begin_cookie != 0)) {
 		/* Not the first call, so we have to check the cookie
 		   verifier */
 		if (memcmp(cookie_verifier,
