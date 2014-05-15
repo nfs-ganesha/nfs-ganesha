@@ -1736,12 +1736,13 @@ void state_complete_grant(state_cookie_entry_t *cookie_entry,
  * @param[in] req_ctx  Request context
  */
 
-void try_to_grant_lock(state_lock_entry_t *lock_entry,
-		       struct req_op_context *req_ctx)
+void try_to_grant_lock(state_lock_entry_t *lock_entry)
 {
 	granted_callback_t call_back;
 	state_blocking_t blocked;
 	state_status_t status;
+	struct root_op_context root_op_context;
+	struct gsh_export *export = lock_entry->sle_export;
 
 	/* Try to grant if not cancelled and has block data */
 	if (lock_entry->sle_blocked != STATE_CANCELED
@@ -1758,7 +1759,19 @@ void try_to_grant_lock(state_lock_entry_t *lock_entry,
 			lock_entry->sle_block_data->sbd_grant_type =
 			    STATE_GRANT_INTERNAL;
 
-		status = call_back(lock_entry->sle_entry, req_ctx, lock_entry);
+		/* Initialize req_ctx */
+		get_gsh_export_ref(export);
+
+		init_root_op_context(&root_op_context,
+				     export, export->fsal_export,
+				     0, 0, UNKNOWN_REQUEST);
+
+		status = call_back(lock_entry->sle_entry,
+				   &root_op_context.req_ctx,
+				   lock_entry);
+
+		put_gsh_export(export);
+
 		if (status == STATE_LOCK_BLOCKED) {
 			/* The lock is still blocked,
 			 * restore it's type and leave it in the list
@@ -1790,12 +1803,6 @@ void process_blocked_lock_upcall(state_block_data_t *block_data)
 {
 	state_lock_entry_t *lock_entry = block_data->sbd_lock_entry;
 	cache_entry_t *entry = lock_entry->sle_entry;
-	struct root_op_context root_op_context;
-	struct gsh_export *exp = lock_entry->sle_export;
-
-	/* Initialize req_ctx */
-	init_root_op_context(&root_op_context, exp, exp->fsal_export,
-			     0, 0, UNKNOWN_REQUEST);
 
 	/* This routine does not call cache_inode_inc_pin_ref() because there
 	 * MUST be at least one lock present for there to be a block_data to
@@ -1805,7 +1812,7 @@ void process_blocked_lock_upcall(state_block_data_t *block_data)
 
 	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 
-	try_to_grant_lock(lock_entry, &root_op_context.req_ctx);
+	try_to_grant_lock(lock_entry);
 
 	/* In case all locks have wound up free,
 	 * we must release the pin reference.
@@ -1852,7 +1859,7 @@ static void grant_blocked_locks(cache_entry_t *entry,
 			continue;
 
 		/* Found an entry that might work, try to grant it. */
-		try_to_grant_lock(found_entry, req_ctx);
+		try_to_grant_lock(found_entry);
 	}
 }
 
@@ -3614,7 +3621,10 @@ void cancel_all_nlm_blocked()
 	state_lock_entry_t *found_entry;
 	cache_entry_t *pentry;
 	state_block_data_t *pblock;
-/*   state_status_t state_status = STATE_SUCCESS; */
+	struct root_op_context root_op_context;
+
+	/* Initialize req_ctx */
+	init_root_op_context(&root_op_context, NULL, NULL, 0, 0, NFS_REQUEST);
 
 	LogDebug(COMPONENT_STATE, "Cancel all blocked locks");
 
@@ -3645,12 +3655,18 @@ void cancel_all_nlm_blocked()
 
 		pthread_mutex_unlock(&blocked_locks_mutex);
 
+		root_op_context.req_ctx.export = found_entry->sle_export;
+		root_op_context.req_ctx.fsal_export =
+			root_op_context.req_ctx.export->fsal_export;
+		get_gsh_export_ref(root_op_context.req_ctx.export);
+
 		LogEntry("Blocked Lock found", found_entry);
 
 		pentry = found_entry->sle_entry;
 
-		/* state_status = */ (void)
-		    cancel_blocked_lock(pentry, NULL, found_entry);
+		(void) cancel_blocked_lock(pentry,
+					   &root_op_context.req_ctx,
+					   found_entry);
 
 		if (pblock->sbd_blocked_cookie != NULL)
 			gsh_free(pblock->sbd_blocked_cookie);
@@ -3659,6 +3675,8 @@ void cancel_all_nlm_blocked()
 		found_entry->sle_block_data = NULL;
 
 		LogEntry("Canceled Lock", found_entry);
+
+		put_gsh_export(root_op_context.req_ctx.export);
 
 		lock_entry_dec_ref(found_entry);
 
