@@ -29,8 +29,6 @@
 #include "nlm4.h"
 #include "sal_functions.h"
 
-bool nlm_block_data_to_export(state_block_data_t *block_data);
-
 extern const char *lock_result_str(int rc);
 extern netobj *copy_netobj(netobj *dst, netobj *src);
 extern void netobj_free(netobj *obj);

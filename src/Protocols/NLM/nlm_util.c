@@ -238,9 +238,7 @@ static void nlm4_send_grant_msg(state_async_queue_t *arg)
 
 	PTHREAD_RWLOCK_wrlock(&cookie_entry->sce_entry->state_lock);
 
-	if (cookie_entry->sce_lock_entry->sle_block_data == NULL
-	    || !nlm_block_data_to_export(
-				cookie_entry->sce_lock_entry->sle_block_data)) {
+	if (cookie_entry->sce_lock_entry->sle_block_data == NULL) {
 		/* Wow, we're not doing well... */
 		PTHREAD_RWLOCK_unlock(&cookie_entry->sce_entry->state_lock);
 		LogFullDebug(COMPONENT_NLM,
@@ -253,6 +251,7 @@ static void nlm4_send_grant_msg(state_async_queue_t *arg)
 
 	/* Initialize req_ctx */
 	export = cookie_entry->sce_lock_entry->sle_export;
+	get_gsh_export_ref(export);
 
 	init_root_op_context(&root_op_context,
 			     export, export->fsal_export,
@@ -260,6 +259,8 @@ static void nlm4_send_grant_msg(state_async_queue_t *arg)
 
 	state_status = state_release_grant(cookie_entry,
 					   &root_op_context.req_ctx);
+
+	put_gsh_export(export);
 
 	if (state_status != STATE_SUCCESS) {
 		/* Huh? */
@@ -562,62 +563,6 @@ nlm4_stats nlm_convert_state_error(state_status_t status)
 	}
 }
 
-bool nlm_block_data_to_export(state_block_data_t *block_data)
-{
-	short exportid;
-	struct gsh_export *exp = NULL;
-	state_nlm_block_data_t *nlm_block_data =
-	    &block_data->sbd_block_data.sbd_nlm_block_data;
-	bool retval = false;
-
-	/* Get export ID from handle */
-	exportid = nlm4_FhandleToExportId(&nlm_block_data->sbd_nlm_fh);
-
-	/* Get export matching export ID */
-	if (exportid < 0)
-		goto err;
-
-	exp = get_gsh_export(exportid);
-	if (exp == NULL)
-		goto err;
-
-	if ((exp->export.export_perms.options & EXPORT_OPTION_NFSV3) != 0) {
-		retval = true;
-		LogFullDebug(COMPONENT_NLM,
-			     "Found export entry for dirname=%s as exportid=%d",
-			     exp->export.fullpath,
-			     exp->export_id);
-	}
-
- err:
-	if (!retval && isInfo(COMPONENT_NLM)) {
-		char addrbuf[SOCK_NAME_MAX + 1];
-
-		sprint_sockaddr(&nlm_block_data->sbd_nlm_hostaddr,
-				addrbuf,
-				sizeof(addrbuf));
-
-		if (exportid < 0) {
-			LogInfo(COMPONENT_NLM,
-				"NLM4 granted lock from client %s has badly formed handle",
-				addrbuf);
-		} else if (exp == NULL) {
-			LogInfo(COMPONENT_NLM,
-				"NLM4 granted lock from client %s has invalid export %d",
-				addrbuf, exportid);
-		} else {
-			LogInfo(COMPONENT_NLM,
-				"NLM4 granted lock from client %s V3 is not allowed on export %d",
-				addrbuf, exportid);
-		}
-	}
-
-	if (exp != NULL)
-		put_gsh_export(exp);
-
-	return retval;
-}
-
 state_status_t nlm_granted_callback(cache_entry_t *pentry,
 				    struct req_op_context *req_ctx,
 				    state_lock_entry_t *lock_entry)
@@ -634,11 +579,6 @@ state_status_t nlm_granted_callback(cache_entry_t *pentry,
 	struct granted_cookie nlm_grant_cookie;
 	state_status_t state_status;
 	state_status_t state_status_int;
-
-	if (nlm_block_data_to_export(block_data) != true) {
-		state_status = STATE_INCONSISTENT_ENTRY;
-		return state_status;
-	}
 
 	arg = gsh_malloc(sizeof(*arg));
 	if (arg == NULL) {
