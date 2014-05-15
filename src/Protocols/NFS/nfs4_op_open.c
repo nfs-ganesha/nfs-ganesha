@@ -233,9 +233,9 @@ static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t *data,
 			LogEvent(COMPONENT_STATE,
 				 "Lock Owner Export Conflict, Lock held for export %d (%s), request for export %d (%s)",
 				 file_state->state_export->export_id,
-				 file_state->state_export->export.fullpath,
+				 file_state->state_export->fullpath,
 				 data->req_ctx->export->export_id,
-				 data->export->fullpath);
+				 data->req_ctx->export->fullpath);
 			return STATE_INVALID_ARGUMENT;
 		}
 	}
@@ -577,7 +577,7 @@ static nfsstat4 open4_create(OPEN4args *arg, compound_data_t *data,
 	   the FSAL allows inode creation or not */
 	fsal_status = data->req_ctx->fsal_export->ops->check_quota(
 						data->req_ctx->fsal_export,
-						data->export->fullpath,
+						data->req_ctx->export->fullpath,
 						FSAL_QUOTA_INODES,
 						data->req_ctx);
 

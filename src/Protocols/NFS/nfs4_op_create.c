@@ -48,6 +48,7 @@
 #include "nfs_proto_tools.h"
 #include "nfs_convert.h"
 #include "nfs_file_handle.h"
+#include "export_mgr.h"
 
 /**
  * @brief NFS4_OP_CREATE, creates a non-regular entry
@@ -96,7 +97,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 	exp_hdl = data->req_ctx->fsal_export;
 
 	fsal_status = exp_hdl->ops->check_quota(exp_hdl,
-						data->export->fullpath,
+						data->req_ctx->export->fullpath,
 						FSAL_QUOTA_INODES,
 						data->req_ctx);
 

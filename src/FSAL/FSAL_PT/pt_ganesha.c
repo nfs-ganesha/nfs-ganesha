@@ -1490,7 +1490,7 @@ void ptfsal_set_fsi_handle_data(struct fsal_export *exp_hdl,
 				ccl_context_t *ccl_context) {
 	char *export_path = NULL;
 	if (p_context != NULL)
-		export_path = (char *)p_context->export->export.fullpath;
+		export_path = (char *)p_context->export->fullpath;
 	ptfsal_set_fsi_handle_data_path(exp_hdl,
 			p_context,
 			export_path,
@@ -1512,7 +1512,7 @@ void ptfsal_set_fsi_handle_data_path(struct fsal_export *exp_hdl,
 	ccl_context->uid = 0;
 	ccl_context->gid = 0;
 	if (p_context != NULL)
-		ccl_context->export_path = p_context->export->export.fullpath;
+		ccl_context->export_path = p_context->export->fullpath;
 	else
 		ccl_context->export_path = export_path;
 	memset(ccl_context->client_address, 0,

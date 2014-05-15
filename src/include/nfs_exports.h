@@ -111,10 +111,6 @@ typedef struct exportlist_client_entry__ {
 } exportlist_client_entry_t;
 
 typedef struct exportlist {
-	char *fullpath;		/*< The path from the root */
-	char *pseudopath;	/*< NFSv4 pseudo-filesystem 'virtual' path */
-	char *FS_tag;		/*< Filesystem "tag" string */
-
 	fsal_fsid_t filesystem_id;	/*< Filesystem ID */
 	struct export_perms export_perms;	/*< available mount options */
 	uint64_t MaxRead;	/*< Max Read for this entry */

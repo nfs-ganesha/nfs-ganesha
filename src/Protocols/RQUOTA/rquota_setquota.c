@@ -80,7 +80,7 @@ int rquota_setquota(nfs_arg_t *arg, exportlist_t *export,
 		exp = get_gsh_export_by_tag(qarg->sqa_pathp);
 		if (exp == NULL)
 			goto out;
-		quota_path = exp->export.fullpath;
+		quota_path = exp->fullpath;
 	}
 
 	memset(&fsal_quota_in, 0, sizeof(fsal_quota_t));

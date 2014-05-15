@@ -808,7 +808,7 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 		goto errout;
 	}
 
-	retval = claim_posix_filesystems(req_ctx->export->export.fullpath,
+	retval = claim_posix_filesystems(req_ctx->export->fullpath,
 					 fsal_hdl,
 					 &myself->export,
 					 gpfs_claim_filesystem,
@@ -818,7 +818,7 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 	if (retval != 0) {
 		LogCrit(COMPONENT_FSAL,
 			"claim_posix_filesystems(%s) returned %s (%d)",
-			req_ctx->export->export.fullpath,
+			req_ctx->export->fullpath,
 			strerror(retval), retval);
 		fsal_error = posix2fsal_error(retval);
 		goto errout;
@@ -836,7 +836,7 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 	if (myself->pnfs_enabled) {
 		LogInfo(COMPONENT_FSAL,
 			"gpfs_fsal_create: pnfs was enabled for [%s]",
-			req_ctx->export->export.fullpath);
+			req_ctx->export->fullpath);
 		export_ops_pnfs(myself->export.ops);
 		handle_ops_pnfs(myself->export.obj_ops);
 		ds_ops_init(myself->export.ds_ops);

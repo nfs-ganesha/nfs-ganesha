@@ -48,6 +48,7 @@
 #include "nfs_file_handle.h"
 #include "nfs_proto_tools.h"
 #include "fsal_convert.h"
+#include "export_mgr.h"
 
 /**
  *
@@ -129,7 +130,7 @@ int nfs3_create(nfs_arg_t *arg, exportlist_t *export,
 	   FSAL allows inode creation or not */
 	fsal_status =
 	    req_ctx->fsal_export->ops->check_quota(req_ctx->fsal_export,
-						   export->fullpath,
+						   req_ctx->export->fullpath,
 						   FSAL_QUOTA_INODES,
 						   req_ctx);
 

@@ -70,7 +70,7 @@ static bool proc_export(struct gsh_export *export, void *arg)
 	if (state->req_ctx->export_perms->options == 0) {
 		LogFullDebug(COMPONENT_NFSPROTO,
 			     "Client is not allowed to access Export_Id %d %s",
-			     export->export_id, export->export.fullpath);
+			     export->export_id, export->fullpath);
 
 		return true;
 	}
@@ -78,7 +78,7 @@ static bool proc_export(struct gsh_export *export, void *arg)
 	new_expnode = gsh_calloc(1, sizeof(struct exportnode));
 	if (new_expnode == NULL)
 		goto nomem;
-	new_expnode->ex_dir = gsh_strdup(export->export.fullpath);
+	new_expnode->ex_dir = gsh_strdup(export->fullpath);
 	if (new_expnode->ex_dir == NULL)
 		goto nomem;
 	glist_for_each(glist_item, &export->export.clients) {

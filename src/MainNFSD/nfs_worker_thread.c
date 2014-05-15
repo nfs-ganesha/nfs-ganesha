@@ -938,7 +938,7 @@ static void nfs_rpc_execute(request_data_t *req,
 
 			LogMidDebugAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 				    "Found export entry for path=%s as exportid=%d",
-				    req_ctx.export->export.fullpath,
+				    req_ctx.export->fullpath,
 				    req_ctx.export->export_id);
 		} else {	/* NFS V4 gets its own export id from the ops
 				 * in the compound */
@@ -1035,7 +1035,7 @@ static void nfs_rpc_execute(request_data_t *req,
 				LogMidDebugAlt(COMPONENT_DISPATCH,
 					       COMPONENT_EXPORT,
 					       "Found export entry for dirname=%s as exportid=%d",
-					       req_ctx.export->export.fullpath,
+					       req_ctx.export->fullpath,
 					       req_ctx.export->export_id);
 			}
 		}
@@ -1058,7 +1058,7 @@ static void nfs_rpc_execute(request_data_t *req,
 				"Client %s is not allowed to access Export_Id %d %s, vers=%d, proc=%d",
 				req_ctx.client->hostaddr_str,
 				req_ctx.export->export_id,
-				req_ctx.export->export.fullpath,
+				req_ctx.export->fullpath,
 				(int)svcreq->rq_vers, (int)svcreq->rq_proc);
 
 			auth_rc = AUTH_TOOWEAK;
@@ -1079,7 +1079,7 @@ static void nfs_rpc_execute(request_data_t *req,
 				"%s Version %d not allowed on Export_Id %d %s for client %s",
 				progname, svcreq->rq_vers,
 				req_ctx.export->export_id,
-				req_ctx.export->export.fullpath,
+				req_ctx.export->fullpath,
 				req_ctx.client->hostaddr_str);
 
 			auth_rc = AUTH_FAILED;
@@ -1096,7 +1096,7 @@ static void nfs_rpc_execute(request_data_t *req,
 				progname, svcreq->rq_vers,
 				xprt_type_to_str(xprt_type),
 				req_ctx.export->export_id,
-				req_ctx.export->export.fullpath,
+				req_ctx.export->fullpath,
 				req_ctx.client->hostaddr_str);
 
 			auth_rc = AUTH_FAILED;
@@ -1111,7 +1111,7 @@ static void nfs_rpc_execute(request_data_t *req,
 				"%s Version %d auth not allowed on Export_Id %d %s for client %s",
 				progname, svcreq->rq_vers,
 				req_ctx.export->export_id,
-				req_ctx.export->export.fullpath,
+				req_ctx.export->fullpath,
 				req_ctx.client->hostaddr_str);
 
 			auth_rc = AUTH_TOOWEAK;
@@ -1126,7 +1126,7 @@ static void nfs_rpc_execute(request_data_t *req,
 			LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 				"Non-reserved Port %d is not allowed on Export_Id %d %s for client %s",
 				port, req_ctx.export->export_id,
-				req_ctx.export->export.fullpath,
+				req_ctx.export->fullpath,
 				req_ctx.client->hostaddr_str);
 
 			auth_rc = AUTH_TOOWEAK;
@@ -1201,7 +1201,7 @@ static void nfs_rpc_execute(request_data_t *req,
 		LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 			"Client %s is not allowed to access Export_Id %d %s, vers=%d, proc=%d",
 			req_ctx.client->hostaddr_str, req_ctx.export->export_id,
-			req_ctx.export->export.fullpath, (int)svcreq->rq_vers,
+			req_ctx.export->fullpath, (int)svcreq->rq_vers,
 			(int)svcreq->rq_proc);
 		auth_rc = AUTH_TOOWEAK;
 		goto auth_failure;

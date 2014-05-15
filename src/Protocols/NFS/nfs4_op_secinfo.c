@@ -136,7 +136,7 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 			LogDebug(COMPONENT_EXPORT,
 				 "NFS4ERR_ACCESS Hiding Export_Id %d Path %s with NFS4ERR_NOENT",
 				 data->req_ctx->export->export_id,
-				 data->export->fullpath);
+				 data->req_ctx->export->fullpath);
 			res_SECINFO4->status = NFS4ERR_NOENT;
 			goto out;
 		}
@@ -151,7 +151,7 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 		if (cache_status != CACHE_INODE_SUCCESS) {
 			LogMajor(COMPONENT_EXPORT,
 				 "PSEUDO FS JUNCTION TRAVERSAL: Failed to get root for %s, id=%d, status = %s",
-				 data->export->fullpath,
+				 data->req_ctx->export->fullpath,
 				 data->req_ctx->export->export_id,
 				 cache_inode_err_str(cache_status));
 
@@ -161,7 +161,7 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 
 		LogMidDebug(COMPONENT_EXPORT,
 			    "PSEUDO FS JUNCTION TRAVERSAL: Crossed to %s, id=%d for name=%s",
-			    data->export->fullpath,
+			    data->req_ctx->export->fullpath,
 			    data->req_ctx->export->export_id,
 			    secinfo_fh_name);
 

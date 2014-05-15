@@ -80,7 +80,7 @@ int rquota_getquota(nfs_arg_t *arg, exportlist_t *export,
 		    get_gsh_export_by_tag(arg->arg_rquota_getquota.gqa_pathp);
 		if (exp == NULL)
 			goto out;
-		quota_path = exp->export.fullpath;
+		quota_path = exp->fullpath;
 	}
 	fsal_status =
 	    exp->fsal_export->ops->get_quota(exp->fsal_export,

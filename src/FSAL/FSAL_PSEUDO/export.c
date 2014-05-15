@@ -328,7 +328,7 @@ fsal_status_t pseudofs_create_export(struct fsal_module *fsal_hdl,
 	myself->export.fsal = fsal_hdl;
 
 	/* Save the export path. */
-	myself->export_path = gsh_strdup(req_ctx->export->export.fullpath);
+	myself->export_path = gsh_strdup(req_ctx->export->fullpath);
 
 	if (myself->export_path == NULL) {
 		LogCrit(COMPONENT_FSAL,

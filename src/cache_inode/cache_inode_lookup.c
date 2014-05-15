@@ -176,7 +176,7 @@ cache_inode_lookup_impl(cache_entry_t *parent,
 		LogFullDebug(COMPONENT_CACHE_INODE,
 			     "FSAL %d %s returned %s",
 			     (int) req_ctx->export->export_id,
-			     req_ctx->export->export.fullpath,
+			     req_ctx->export->fullpath,
 			     cache_inode_err_str(status));
 		*entry = NULL;
 		goto out;

@@ -69,6 +69,12 @@ struct gsh_export {
 	struct gsh_export *exp_parent_exp;
 	/** Pointer to the fsal_export associated with this export */
 	struct fsal_export *fsal_export;
+	/** Exported path */
+	char *fullpath;
+	/** PseudoFS path for export */
+	char *pseudopath;
+	/** Tag for direct NFS v3 mounting of export */
+	char *FS_tag;
 	/** Node id this is mounted on. Protected by lock */
 	uint64_t exp_mounted_on_file_id;
 	/** Read/Write lock protecting export */

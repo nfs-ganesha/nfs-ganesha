@@ -308,7 +308,7 @@ struct gsh_export *get_gsh_export_by_path_locked(char *path,
 		if (export->state != EXPORT_READY)
 			continue;
 
-		len_export = strlen(export->export.fullpath);
+		len_export = strlen(export->fullpath);
 
 		if (len_path == 0 && len_export == 1) {
 			/* Special case for root match */
@@ -339,7 +339,7 @@ struct gsh_export *get_gsh_export_by_path_locked(char *path,
 
 		/* we agree on size, now compare the leading substring
 		 */
-		if (strncmp(export->export.fullpath, path, len_export) == 0) {
+		if (strncmp(export->fullpath, path, len_export) == 0) {
 			ret_exp = export;
 			len_ret = len_export;
 
@@ -414,15 +414,15 @@ struct gsh_export *get_gsh_export_by_pseudo_locked(char *path,
 		if (export->state != EXPORT_READY)
 			continue;
 
-		if (export->export.pseudopath == NULL)
+		if (export->pseudopath == NULL)
 			continue;
 
-		len_export = strlen(export->export.pseudopath);
+		len_export = strlen(export->pseudopath);
 
 		LogFullDebug(COMPONENT_EXPORT,
 			     "Comparing %s %d to %s %d",
 			     path, len_path,
-			     export->export.pseudopath, len_export);
+			     export->pseudopath, len_export);
 
 		if (len_path == 0 && len_export == 1) {
 			/* Special case for Pseudo root match */
@@ -453,7 +453,7 @@ struct gsh_export *get_gsh_export_by_pseudo_locked(char *path,
 
 		/* we agree on size, now compare the leading substring
 		 */
-		if (strncmp(export->export.pseudopath, path, len_export)
+		if (strncmp(export->pseudopath, path, len_export)
 		    == 0) {
 			ret_exp = export;
 			len_ret = len_export;
@@ -514,8 +514,8 @@ struct gsh_export *get_gsh_export_by_tag(char *tag)
 		export = glist_entry(glist, struct gsh_export, exp_list);
 		if (export->state != EXPORT_READY)
 			continue;
-		if (export->export.FS_tag != NULL &&
-		    !strcmp(export->export.FS_tag, tag))
+		if (export->FS_tag != NULL &&
+		    !strcmp(export->FS_tag, tag))
 			goto out;
 	}
 	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
@@ -929,18 +929,15 @@ static bool gsh_export_displayexport(DBusMessageIter *args,
 	dbus_message_iter_append_basic(&iter,
 				       DBUS_TYPE_INT32,
 				       &export->export_id);
-	path = (export->export.fullpath != NULL) ?
-		export->export.fullpath : "";
+	path = (export->fullpath != NULL) ? export->fullpath : "";
 	dbus_message_iter_append_basic(&iter,
 				       DBUS_TYPE_STRING,
 				       &path);
-	path = (export->export.pseudopath != NULL) ?
-		export->export.pseudopath : "";
+	path = (export->pseudopath != NULL) ? export->pseudopath : "";
 	dbus_message_iter_append_basic(&iter,
 				       DBUS_TYPE_STRING,
 				       &path);
-	path = (export->export.FS_tag != NULL) ?
-		export->export.FS_tag : "";
+	path = (export->FS_tag != NULL) ? export->FS_tag : "";
 	dbus_message_iter_append_basic(&iter,
 				       DBUS_TYPE_STRING,
 				       &path);
@@ -967,9 +964,8 @@ static bool export_to_dbus(struct gsh_export *exp_node, void *state)
 	const char *path;
 
 	exp = container_of(exp_node, struct export_stats, export);
-	path =
-	    (exp_node->export.pseudopath !=
-	     NULL) ? exp_node->export.pseudopath : exp_node->export.fullpath;
+	path = (exp_node->pseudopath != NULL) ?
+		exp_node->pseudopath : exp_node->fullpath;
 	timespec_add_nsecs(exp_node->last_update, &last_as_ts);
 	dbus_message_iter_open_container(&iter_state->export_iter,
 					 DBUS_TYPE_STRUCT, NULL, &struct_iter);

@@ -120,7 +120,7 @@ int mnt_Mnt(nfs_arg_t *arg, exportlist_t *unused,
 	if ((req_ctx->export_perms->options & EXPORT_OPTION_NFSV3) == 0) {
 		LogInfo(COMPONENT_NFSPROTO,
 			"MOUNT: Export entry %s does not support NFS v3 for client %s",
-			export->export.fullpath,
+			export->fullpath,
 			req_ctx->client->hostaddr_str);
 		res->res_mnt3.fhs_status = MNT3ERR_ACCES;
 		goto out;
@@ -128,7 +128,7 @@ int mnt_Mnt(nfs_arg_t *arg, exportlist_t *unused,
 
 	/* retrieve the associated NFS handle */
 	if (arg->arg_mnt[0] != '/' ||
-	    !strcmp(arg->arg_mnt, export->export.fullpath)) {
+	    !strcmp(arg->arg_mnt, export->fullpath)) {
 		if (nfs_export_get_root_entry(export, &entry)
 		    != CACHE_INODE_SUCCESS) {
 			res->res_mnt3.fhs_status = MNT3ERR_ACCES;

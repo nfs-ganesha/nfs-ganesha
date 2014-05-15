@@ -285,9 +285,9 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 				 "for export %d (%s), request for "
 				 "export %d (%s)",
 				 lock_state->state_export->export_id,
-				 lock_state->state_export->export.fullpath,
+				 lock_state->state_export->fullpath,
 				 data->req_ctx->export->export_id,
-				 data->export->fullpath);
+				 data->req_ctx->export->fullpath);
 			res_LOCK4->status = STATE_INVALID_ARGUMENT;
 			return res_LOCK4->status;
 		}

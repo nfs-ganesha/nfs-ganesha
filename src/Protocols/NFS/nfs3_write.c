@@ -166,7 +166,7 @@ int nfs3_write(nfs_arg_t *arg, exportlist_t *export,
 	   FSAL allows inode creation or not */
 	fsal_status =
 	    req_ctx->fsal_export->ops->check_quota(req_ctx->fsal_export,
-						   export->fullpath,
+						   req_ctx->export->fullpath,
 						   FSAL_QUOTA_BLOCKS,
 						   req_ctx);
 

@@ -124,7 +124,7 @@ cache_inode_getattr(cache_entry_t *entry,
 		if (status != CACHE_INODE_SUCCESS) {
 			LogMajor(COMPONENT_CACHE_INODE,
 				 "Failed to get root for %s, id=%d, status = %s",
-				 junction_export->export.fullpath,
+				 junction_export->fullpath,
 				 junction_export->export_id,
 				 cache_inode_err_str(status));
 			/* Need to signal problem to callback */

@@ -501,13 +501,13 @@ fsal_status_t pt_create_export(struct fsal_module *fsal_hdl,
 						MAXPATHLEN);
 				} else
 				    if ((strncmp
-					 (req_ctx->export->export.fullpath,
+					 (req_ctx->export->fullpath,
 					  p_mnt->mnt_dir,
 					  pathlen) == 0)
-					&& ((req_ctx->export->export
-						.fullpath[pathlen] == '/')
-					|| (req_ctx->export->export
-						.fullpath[pathlen] == '\0'))) {
+					&& ((req_ctx->export->fullpath[pathlen]
+					     == '/')
+					|| (req_ctx->export->fullpath[pathlen]
+					    == '\0'))) {
 					if (strcasecmp(p_mnt->mnt_type, "xfs")
 					    == 0) {
 						LogDebug(COMPONENT_FSAL,
@@ -529,7 +529,7 @@ fsal_status_t pt_create_export(struct fsal_module *fsal_hdl,
 	endmntent(fp);
 	if (outlen <= 0) {
 		LogCrit(COMPONENT_FSAL, "No mount entry matches '%s' in %s",
-			req_ctx->export->export.fullpath, MOUNTED);
+			req_ctx->export->fullpath, MOUNTED);
 		fsal_error = ERR_FSAL_NOENT;
 		goto errout;
 	}
@@ -562,8 +562,7 @@ fsal_status_t pt_create_export(struct fsal_module *fsal_hdl,
 		status =
 		    fsal_internal_get_handle_at(NULL, &myself->export,
 						myself->root_fd,
-						req_ctx->export->export
-								.fullpath,
+						req_ctx->export->fullpath,
 						fh);
 		if (FSAL_IS_ERROR(status)) {
 			fsal_error = retval = status.major;

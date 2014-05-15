@@ -509,7 +509,7 @@ int nfs4_MakeCred(compound_data_t *data)
 		LogInfoAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
 			"Access not allowed on Export_Id %d %s for client %s",
 			data->req_ctx->export->export_id,
-			data->export->fullpath,
+			data->req_ctx->export->fullpath,
 			data->req_ctx->client->hostaddr_str);
 		return NFS4ERR_ACCESS;
 	}
@@ -519,7 +519,7 @@ int nfs4_MakeCred(compound_data_t *data)
 		LogInfoAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
 			"NFS4 not allowed on Export_Id %d %s for client %s",
 			data->req_ctx->export->export_id,
-			data->export->fullpath,
+			data->req_ctx->export->fullpath,
 			data->req_ctx->client->hostaddr_str);
 		return NFS4ERR_ACCESS;
 	}
@@ -536,7 +536,7 @@ int nfs4_MakeCred(compound_data_t *data)
 			"NFS4 over %s not allowed on Export_Id %d %s for client %s",
 			xprt_type_to_str(xprt_type),
 			data->req_ctx->export->export_id,
-			data->export->fullpath,
+			data->req_ctx->export->fullpath,
 			data->req_ctx->client->hostaddr_str);
 		return NFS4ERR_ACCESS;
 	}
@@ -548,7 +548,7 @@ int nfs4_MakeCred(compound_data_t *data)
 		LogInfoAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
 			"Non-reserved Port %d is not allowed on Export_Id %d %s for client %s",
 			port, data->req_ctx->export->export_id,
-			data->export->fullpath,
+			data->req_ctx->export->fullpath,
 			data->req_ctx->client->hostaddr_str);
 		return NFS4ERR_ACCESS;
 	}
@@ -558,7 +558,7 @@ int nfs4_MakeCred(compound_data_t *data)
 		LogInfoAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
 			"NFS4 auth not allowed on Export_Id %d %s for client %s",
 			data->req_ctx->export->export_id,
-			data->export->fullpath,
+			data->req_ctx->export->fullpath,
 			data->req_ctx->client->hostaddr_str);
 		return NFS4ERR_WRONGSEC;
 	}

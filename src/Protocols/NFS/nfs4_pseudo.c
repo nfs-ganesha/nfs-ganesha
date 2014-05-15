@@ -194,8 +194,8 @@ retry:
 			LogCrit(COMPONENT_EXPORT,
 				"BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s LOOKUP %s is not a directory",
 				state->export->export_id,
-				state->export->export.fullpath,
-				state->export->export.pseudopath,
+				state->export->fullpath,
+				state->export->pseudopath,
 				name);
 			/* Release the reference on the new node */
 			cache_inode_put(new_node);
@@ -219,8 +219,8 @@ retry:
 		LogCrit(COMPONENT_EXPORT,
 			"BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s LOOKUP %s failed with %s",
 			state->export->export_id,
-			state->export->export.fullpath,
-			state->export->export.pseudopath,
+			state->export->fullpath,
+			state->export->pseudopath,
 			name,
 			cache_inode_err_str(cache_status));
 		return false;
@@ -232,8 +232,8 @@ retry:
 		LogCrit(COMPONENT_EXPORT,
 			"BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s LOOKUP %s failed with %s (can't create directory on non-PSEUDO FSAL)",
 			state->export->export_id,
-			state->export->export.fullpath,
-			state->export->export.pseudopath,
+			state->export->fullpath,
+			state->export->pseudopath,
 			name,
 			cache_inode_err_str(cache_status));
 		return false;
@@ -261,8 +261,8 @@ retry:
 		LogCrit(COMPONENT_EXPORT,
 			"BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s CREATE %s failed with %s",
 			state->export->export_id,
-			state->export->export.fullpath,
-			state->export->export.pseudopath,
+			state->export->fullpath,
+			state->export->pseudopath,
 			name,
 			cache_inode_err_str(cache_status));
 		return false;
@@ -276,8 +276,8 @@ retry:
 		LogCrit(COMPONENT_EXPORT,
 			"BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s GETATTR %s failed with %s",
 			state->export->export_id,
-			state->export->export.fullpath,
-			state->export->export.pseudopath,
+			state->export->fullpath,
+			state->export->pseudopath,
 			name,
 			cache_inode_err_str(cache_status));
 		return false;
@@ -288,8 +288,8 @@ retry:
 	LogDebug(COMPONENT_EXPORT,
 		 "BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s CREATE %s succeded",
 		 state->export->export_id,
-		 state->export->export.fullpath,
-		 state->export->export.pseudopath,
+		 state->export->fullpath,
+		 state->export->pseudopath,
 		 name);
 
 	/* Release reference to the old node */
@@ -326,9 +326,9 @@ bool pseudo_mount_export(struct gsh_export *exp,
 	 * Also, nothing to actually do for Pseudo Root
 	 */
 	if ((export->export_perms.options & EXPORT_OPTION_NFSV4) == 0
-	    || export->pseudopath == NULL
+	    || exp->pseudopath == NULL
 	    || exp->export_id == 0
-	    || export->pseudopath[1] == '\0')
+	    || exp->pseudopath[1] == '\0')
 		return true;
 
 	/* Initialize state and it's req_ctx.
@@ -339,11 +339,11 @@ bool pseudo_mount_export(struct gsh_export *exp,
 
 	LogDebug(COMPONENT_EXPORT,
 		 "BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s",
-		 exp->export_id, export->fullpath, export->pseudopath);
+		 exp->export_id, exp->fullpath, exp->pseudopath);
 
 	/* Make a copy of the path */
-	tmp_pseudopath = alloca(strlen(export->pseudopath) + 1);
-	strcpy(tmp_pseudopath, export->pseudopath);
+	tmp_pseudopath = alloca(strlen(exp->pseudopath) + 1);
+	strcpy(tmp_pseudopath, exp->pseudopath);
 
 	/* Find last '/' in path */
 	p = tmp_pseudopath;
@@ -368,7 +368,7 @@ bool pseudo_mount_export(struct gsh_export *exp,
 	if (state.req_ctx->export == NULL) {
 		LogFatal(COMPONENT_EXPORT,
 			 "Could not find mounted on export for %s, tmp=%s",
-			 export->pseudopath, tmp_pseudopath);
+			 exp->pseudopath, tmp_pseudopath);
 	}
 
 	state.req_ctx->fsal_export = req_ctx->export->fsal_export;
@@ -379,15 +379,15 @@ bool pseudo_mount_export(struct gsh_export *exp,
 	/* Point to the portion of this export's pseudo path that is beyond the
 	 * mounted on export's pseudo path.
 	 */
-	if (state.req_ctx->export->export.pseudopath[1] == '\0')
+	if (state.req_ctx->export->pseudopath[1] == '\0')
 		rest = tmp_pseudopath + 1;
 	else
 		rest = tmp_pseudopath +
-		       strlen(state.req_ctx->export->export.pseudopath) + 1;
+		       strlen(state.req_ctx->export->pseudopath) + 1;
 
 	LogDebug(COMPONENT_EXPORT,
 		 "BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s Rest %s",
-		 exp->export_id, export->fullpath, export->pseudopath, rest);
+		 exp->export_id, exp->fullpath, exp->pseudopath, rest);
 
 	/* Get the root inode of the mounted on export */
 	cache_status = nfs_export_get_root_entry(state.req_ctx->export,
@@ -396,7 +396,7 @@ bool pseudo_mount_export(struct gsh_export *exp,
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		LogCrit(COMPONENT_EXPORT,
 			"BUILDING PSEUDOFS: Could not get root entry for Export_Id %d Path %s Pseudo Path %s",
-			exp->export_id, export->fullpath, export->pseudopath);
+			exp->export_id, exp->fullpath, exp->pseudopath);
 
 		/* Release the reference on the mounted on export. */
 		put_gsh_export(state.req_ctx->export);
@@ -428,8 +428,8 @@ bool pseudo_mount_export(struct gsh_export *exp,
 		LogCrit(COMPONENT_EXPORT,
 			"BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s final GETATTR failed with %s",
 			exp->export_id,
-			exp->export.fullpath,
-			exp->export.pseudopath,
+			exp->fullpath,
+			exp->pseudopath,
 			cache_inode_err_str(cache_status));
 
 		/* Release reference on mount point inode
@@ -452,8 +452,8 @@ bool pseudo_mount_export(struct gsh_export *exp,
 		LogCrit(COMPONENT_INIT,
 			"BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s final pin failed with %s",
 			exp->export_id,
-			exp->export.fullpath,
-			exp->export.pseudopath,
+			exp->fullpath,
+			exp->pseudopath,
 			cache_inode_err_str(cache_status));
 
 		/* Release the LRU reference and return failure. */
@@ -542,11 +542,10 @@ void pseudo_unmount_export(struct gsh_export *export,
 	 * Need to take addtional ref for cleanup_pseudofs_node
 	 */
 	cache_inode_lru_ref(junction_inode, LRU_FLAG_NONE);
-	if (!cleanup_pseudofs_node(export->export.pseudopath,
-				   junction_inode)) {
+	if (!cleanup_pseudofs_node(export->pseudopath, junction_inode)) {
 		LogCrit(COMPONENT_EXPORT,
 			"pseudofs node cleanup failed for path: %s",
-			export->export.pseudopath);
+			export->pseudopath);
 	}
 
 	/* Release the pin reference */

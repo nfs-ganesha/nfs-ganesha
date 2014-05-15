@@ -196,7 +196,7 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 	   allows inode creation or not */
 	fsal_status = data->req_ctx->fsal_export->ops->check_quota(
 						data->req_ctx->fsal_export,
-						data->export->fullpath,
+						data->req_ctx->export->fullpath,
 						FSAL_QUOTA_INODES,
 						data->req_ctx);
 

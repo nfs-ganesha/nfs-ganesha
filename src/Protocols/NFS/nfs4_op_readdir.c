@@ -148,7 +148,7 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 			    "Offspring DIR %s is a junction Export_id %d Path %s",
 			    cb_parms->name,
 			    entry->object.dir.junction_export->export_id,
-			    entry->object.dir.junction_export->export.fullpath);
+			    entry->object.dir.junction_export->fullpath);
 
 		/* Save the compound data context */
 		tracker->save_export_perms = *data->req_ctx->export_perms;
@@ -178,7 +178,7 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 			LogDebug(COMPONENT_EXPORT,
 				 "NFS4ERR_ACCESS Skipping Export_Id %d Path %s",
 				 data->req_ctx->export->export_id,
-				 data->export->fullpath);
+				 data->req_ctx->export->fullpath);
 
 			/* Restore export and creds */
 			restore_data(tracker);
@@ -207,7 +207,7 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 				LogDebug(COMPONENT_EXPORT,
 					 "Ignoring NFS4ERR_WRONGSEC (only asked for MOUNTED_IN_FILEID) On ReadDir Export_Id %d Path %s",
 					 data->req_ctx->export->export_id,
-					 data->export->fullpath);
+					 data->req_ctx->export->fullpath);
 
 				/* Because we are not asking for any attributes
 				 * which are a property of the exported file
@@ -233,7 +233,7 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 				LogDebug(COMPONENT_EXPORT,
 					 "NFS4ERR_WRONGSEC On ReadDir Export_Id %d Path %s",
 					 data->req_ctx->export->export_id,
-					 data->export->fullpath);
+					 data->req_ctx->export->fullpath);
 			}
 		} else if (rdattr_error == NFS4_OK) {
 			/* Now we must traverse the junction to get the
@@ -247,7 +247,7 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 			LogMidDebug(COMPONENT_EXPORT,
 				    "Need to cross junction to Export_Id %d Path %s",
 				    data->req_ctx->export->export_id,
-				    data->export->fullpath);
+				    data->req_ctx->export->fullpath);
 			tracker->junction_cb = true;
 			return CACHE_INODE_CROSS_JUNCTION;
 		}
@@ -260,7 +260,7 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 		LogMidDebug(COMPONENT_EXPORT,
 			    "Need to report error for junction to Export_Id %d Path %s",
 			    data->req_ctx->export->export_id,
-			    data->export->fullpath);
+			    data->req_ctx->export->fullpath);
 		restore_data(tracker);
 	}
 

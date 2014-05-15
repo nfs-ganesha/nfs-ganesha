@@ -639,7 +639,7 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 				       &err_type);
 	if (retval != 0)
 		return fsalstat(ERR_FSAL_INVAL, 0);
-	vfs_init_export_ops(myself, req_ctx->export->export.fullpath);
+	vfs_init_export_ops(myself, req_ctx->export->fullpath);
 
 	/* lock myself before attaching to the fsal.
 	 * keep myself locked until done with creating myself.
@@ -663,7 +663,7 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 		goto errout;
 	}
 
-	retval = claim_posix_filesystems(req_ctx->export->export.fullpath,
+	retval = claim_posix_filesystems(req_ctx->export->fullpath,
 					 fsal_hdl,
 					 &myself->export,
 					 vfs_claim_filesystem,
@@ -673,7 +673,7 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 	if (retval != 0) {
 		LogCrit(COMPONENT_FSAL,
 			"claim_posix_filesystems(%s) returned %s (%d)",
-			req_ctx->export->export.fullpath,
+			req_ctx->export->fullpath,
 			strerror(retval), retval);
 		fsal_error = posix2fsal_error(retval);
 		goto errout;

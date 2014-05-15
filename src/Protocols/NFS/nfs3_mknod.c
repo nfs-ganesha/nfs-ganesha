@@ -49,6 +49,7 @@
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
 #include "nfs_convert.h"
+#include "export_mgr.h"
 
 /**
  * @brief Implements NFSPROC3_MKNOD
@@ -209,7 +210,7 @@ int nfs3_mknod(nfs_arg_t *arg, exportlist_t *export,
 	   FSAL allows inode creation or not */
 	fsal_status =
 	    req_ctx->fsal_export->ops->check_quota(req_ctx->fsal_export,
-						   export->fullpath,
+						   req_ctx->export->fullpath,
 						   FSAL_QUOTA_INODES,
 						   req_ctx);
 	if (FSAL_IS_ERROR(fsal_status)) {
