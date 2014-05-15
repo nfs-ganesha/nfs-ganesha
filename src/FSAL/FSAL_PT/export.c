@@ -87,8 +87,7 @@ static fsal_status_t get_dynamic_info(struct fsal_obj_handle *obj_hdl,
 				      const struct req_op_context *opctx,
 				      fsal_dynamicfsinfo_t *infop)
 {
-	struct pt_fsal_export *myself;
-	struct statvfs buffstatpt;
+	struct pt_fsal_obj_handle *myself;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval = 0;
 
@@ -96,21 +95,15 @@ static fsal_status_t get_dynamic_info(struct fsal_obj_handle *obj_hdl,
 		fsal_error = ERR_FSAL_FAULT;
 		goto out;
 	}
-	myself = container_of(exp_hdl, struct pt_fsal_export, export);
-	retval = fstatvfs(myself->root_fd, &buffstatpt);
+	myself = container_of(obj_hdl, struct pt_fsal_obj_handle, obj_handle);
+
+	retval = ptfsal_dynamic_fsinfo(myself, opctx, infop);
+
 	if (retval < 0) {
 		fsal_error = posix2fsal_error(errno);
 		retval = errno;
 		goto out;
 	}
-	infop->total_bytes = buffstatpt.f_frsize * buffstatpt.f_blocks;
-	infop->free_bytes = buffstatpt.f_frsize * buffstatpt.f_bfree;
-	infop->avail_bytes = buffstatpt.f_frsize * buffstatpt.f_bavail;
-	infop->total_files = buffstatpt.f_files;
-	infop->free_files = buffstatpt.f_ffree;
-	infop->avail_files = buffstatpt.f_favail;
-	infop->time_delta.tv_sec = 1;
-	infop->time_delta.tv_nsec = 0;
 
  out:
 	return fsalstat(fsal_error, retval);
