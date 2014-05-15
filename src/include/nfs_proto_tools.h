@@ -273,7 +273,7 @@ bool nfs4_Fattr_Supported(fattr4 *);
 bool nfs4_Fattr_Supported_Bitmap(struct bitmap4 *);
 int nfs4_Fattr_cmp(fattr4 *, fattr4 *);
 
-bool nfs3_FSALattr_To_Fattr(exportlist_t *, const struct attrlist *,
+bool nfs3_FSALattr_To_Fattr(struct gsh_export *, const struct attrlist *,
 			    fattr3 *);
 
 bool cache_entry_to_nfs3_Fattr(cache_entry_t *, struct req_op_context *,

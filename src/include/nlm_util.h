@@ -59,7 +59,7 @@ extern void netobj_to_string(netobj *obj, char *buffer, int maxlen);
 int nlm_process_parameters(struct svc_req *, bool,
 			   nlm4_lock *, fsal_lock_param_t *,
 			   struct req_op_context *,
-			   cache_entry_t **, exportlist_t *,
+			   cache_entry_t **,
 			   care_t, state_nsm_client_t **,
 			   state_nlm_client_t **,
 			   state_owner_t **,

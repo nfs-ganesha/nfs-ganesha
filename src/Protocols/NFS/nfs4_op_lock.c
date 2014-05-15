@@ -500,12 +500,12 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 		/* Attach this lock to an export */
 		lock_state->state_export = data->req_ctx->export;
 
-		export_writelock(data->export);
+		PTHREAD_RWLOCK_wrlock(&data->req_ctx->export->lock);
 
 		glist_add_tail(&data->export->exp_state_list,
 			       &lock_state->state_export_list);
 
-		export_rwunlock(data->export);
+		PTHREAD_RWLOCK_unlock(&data->req_ctx->export->lock);
 
 		/* Add lock state to the list of lock states belonging
 		   to the open state */
@@ -521,7 +521,6 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 	/* Now we have a lock owner and a stateid.  Go ahead and push
 	   lock into SAL (and FSAL). */
 	state_status = state_lock(data->current_entry,
-				  data->export,
 				  data->req_ctx,
 				  lock_owner,
 				  lock_state,

@@ -3566,7 +3566,7 @@ bool cache_entry_to_nfs3_Fattr(cache_entry_t *entry,
 	bool rc = false;
 	if (entry && (cache_inode_lock_trust_attrs(entry, ctx, false)
 		      == CACHE_INODE_SUCCESS)) {
-		rc = nfs3_FSALattr_To_Fattr(&ctx->export->export,
+		rc = nfs3_FSALattr_To_Fattr(ctx->export,
 					    &entry->obj_handle->attributes,
 					    Fattr);
 		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
@@ -3590,7 +3590,7 @@ bool cache_entry_to_nfs3_Fattr(cache_entry_t *entry,
  * @retval false  otherwise.
  *
  */
-bool nfs3_FSALattr_To_Fattr(exportlist_t *export,
+bool nfs3_FSALattr_To_Fattr(struct gsh_export *export,
 			    const struct attrlist *FSAL_attr, fattr3 *Fattr)
 {
 	/* We want to override the FSAL fsid with the export's configured fsid
@@ -3605,21 +3605,22 @@ bool nfs3_FSALattr_To_Fattr(exportlist_t *export,
 			"attribute: missing %lx", want & ~got);
 	}
 
-	if ((export->export_perms.set & EXPORT_OPTION_FSID_SET) != 0) {
+	if ((export->export.export_perms.set & EXPORT_OPTION_FSID_SET) != 0) {
 		/* xor filesystem_id major and rotated minor to create unique
 		 * on-wire fsid.
 		 */
-		Fattr->fsid = (nfs3_uint64) squash_fsid(&export->filesystem_id);
+		Fattr->fsid = (nfs3_uint64) squash_fsid(
+					&export->export.filesystem_id);
 
 		LogFullDebug(COMPONENT_NFSPROTO,
 			     "Compressing export filesystem_id for NFS v3 from "
 			     "fsid major %#" PRIX64 " (%" PRIu64 "), minor %#"
 			     PRIX64 " (%" PRIu64 ") to nfs3_fsid = %#" PRIX64
 			     " (%" PRIu64 ")",
-			     export->filesystem_id.major,
-			     export->filesystem_id.major,
-			     export->filesystem_id.minor,
-			     export->filesystem_id.minor,
+			     export->export.filesystem_id.major,
+			     export->export.filesystem_id.major,
+			     export->export.filesystem_id.minor,
+			     export->export.filesystem_id.minor,
 			     (uint64_t) Fattr->fsid, (uint64_t) Fattr->fsid);
 	}
 

@@ -175,7 +175,6 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t *data,
 	 * Go ahead and push unlock into SAL (and FSAL).
 	 */
 	state_status = state_unlock(data->current_entry,
-				    data->export,
 				    data->req_ctx,
 				    plock_owner,
 				    pstate_found,

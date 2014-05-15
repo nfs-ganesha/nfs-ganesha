@@ -474,7 +474,7 @@ cache_inode_status_t nfs3_readdirplus_callback(void *opaque,
 		    ep3->name_handle.post_op_fh3_u.handle.data.data_len + 12;
 
 		ep3->name_attributes.attributes_follow =
-		    nfs3_FSALattr_To_Fattr(&tracker->req_ctx->export->export,
+		    nfs3_FSALattr_To_Fattr(tracker->req_ctx->export,
 					   attr,
 					   &(ep3->name_attributes.
 					     post_op_attr_u.attributes));

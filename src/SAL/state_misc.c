@@ -1329,17 +1329,16 @@ void dump_all_owners(void)
  *
  */
 
-void state_release_export(struct gsh_export *exp)
+void state_release_export(struct gsh_export *export)
 {
 	struct root_op_context root_op_context;
 
 	/* Initialize req_ctx */
-	init_root_op_context(&root_op_context, exp, exp->fsal_export,
+	init_root_op_context(&root_op_context, export, export->fsal_export,
 			     0, 0, UNKNOWN_REQUEST);
 
 	state_export_unlock_all(&root_op_context.req_ctx);
-	state_export_release_nfs4_state(&root_op_context.req_ctx,
-					&exp->export);
+	state_export_release_nfs4_state(&root_op_context.req_ctx);
 	state_export_unshare_all(&root_op_context.req_ctx);
 }
 

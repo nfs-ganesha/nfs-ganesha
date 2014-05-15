@@ -109,7 +109,6 @@ int nlm4_Lock(nfs_arg_t *args, exportlist_t *export,
 				    &lock,
 				    req_ctx,
 				    &entry,
-				    export,
 				    care,
 				    &nsm_client,
 				    &nlm_client,
@@ -131,17 +130,16 @@ int nlm4_Lock(nfs_arg_t *args, exportlist_t *export,
 	 * that will release old locks
 	 */
 	state_status = state_lock(entry,
-				 export,
-				 req_ctx,
-				 nlm_owner,
-				 (void *)(ptrdiff_t) arg->state,
-				 arg->block ? STATE_NLM_BLOCKING :
-					      STATE_NON_BLOCKING,
-				 pblock_data,
-				 &lock,
-				 &holder,
-				 &conflict,
-				 POSIX_LOCK);
+				  req_ctx,
+				  nlm_owner,
+				  (void *)(ptrdiff_t) arg->state,
+				  arg->block ? STATE_NLM_BLOCKING :
+					       STATE_NON_BLOCKING,
+				  pblock_data,
+				  &lock,
+				  &holder,
+				  &conflict,
+				  POSIX_LOCK);
 
 	if (state_status != STATE_SUCCESS) {
 		res->res_nlm4test.test_stat.stat =

@@ -223,10 +223,10 @@ static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t *data,
 
 		/* Attach this open to an export */
 		file_state->state_export = data->req_ctx->export;
-		export_writelock(data->export);
+		PTHREAD_RWLOCK_wrlock(&data->req_ctx->export->lock);
 		glist_add_tail(&data->export->exp_state_list,
 			       &file_state->state_export_list);
-		export_rwunlock(data->export);
+		PTHREAD_RWLOCK_unlock(&data->req_ctx->export->lock);
 	} else {
 		/* Check if open from another export */
 		if (file_state->state_export != data->req_ctx->export) {
@@ -944,15 +944,14 @@ static void get_delegation(compound_data_t *data, struct nfs_argop4 *op,
 		/* Attach this open to an export */
 		new_state->state_export = data->req_ctx->export;
 
-		export_writelock(data->export);
+		PTHREAD_RWLOCK_wrlock(&data->req_ctx->export->lock);
 		glist_add_tail(&data->export->exp_state_list,
 			       &new_state->state_export_list);
-		export_rwunlock(data->export);
+		PTHREAD_RWLOCK_unlock(&data->req_ctx->export->lock);
 
 
 		/* PTHREAD_RWLOCK_unlock(&data->current_entry->state_lock); */
 		state_status = state_lock(data->current_entry,
-					  data->export,
 					  data->req_ctx,
 					  clientowner,
 					  new_state,

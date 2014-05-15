@@ -483,7 +483,7 @@ state_status_t state_cancel_grant(state_cookie_entry_t *cookie_entry,
 
 state_status_t state_release_grant(state_cookie_entry_t *cookie_entry,
 				   struct req_op_context *req_ctx);
-state_status_t state_test(cache_entry_t *entry, exportlist_t *export,
+state_status_t state_test(cache_entry_t *entry,
 			  struct req_op_context *req_ctx, state_owner_t *owner,
 			  fsal_lock_param_t *lock,
 			  /* owner that holds conflicting lock */
@@ -491,7 +491,7 @@ state_status_t state_test(cache_entry_t *entry, exportlist_t *export,
 			  /* description of conflicting lock */
 			  fsal_lock_param_t *conflict);
 
-state_status_t state_lock(cache_entry_t *entry, exportlist_t *export,
+state_status_t state_lock(cache_entry_t *entry,
 			  struct req_op_context *req_ctx, state_owner_t *owner,
 			  state_t *state, state_blocking_t blocking,
 			  state_block_data_t *block_data,
@@ -502,12 +502,12 @@ state_status_t state_lock(cache_entry_t *entry, exportlist_t *export,
 			  fsal_lock_param_t *conflict,
 			  lock_type_t sle_type);
 
-state_status_t state_unlock(cache_entry_t *entry, exportlist_t *export,
+state_status_t state_unlock(cache_entry_t *entry,
 			    struct req_op_context *req_ctx,
 			    state_owner_t *owner, state_t *state,
 			    fsal_lock_param_t *lock, lock_type_t sle_type);
 
-state_status_t state_cancel(cache_entry_t *entry, exportlist_t *export,
+state_status_t state_cancel(cache_entry_t *entry,
 			    struct req_op_context *req_ctx,
 			    state_owner_t *owner, fsal_lock_param_t *lock);
 
@@ -571,8 +571,7 @@ void release_lockstate(struct req_op_context *req_ctx,
 		       state_owner_t *lock_owner);
 void release_openstate(struct req_op_context *req_ctx,
 		       state_owner_t *open_owner);
-void state_export_release_nfs4_state(struct req_op_context *req_ctx,
-				     exportlist_t *export);
+void state_export_release_nfs4_state(struct req_op_context *req_ctx);
 
 /* Specifically for delegations */
 bool init_deleg_heuristics(cache_entry_t *entry);
@@ -584,9 +583,6 @@ void init_new_deleg_state(state_data_t *deleg_state, state_t *open_state,
 bool deleg_heuristics_recall(cache_entry_t *entry, nfs_client_id_t *client);
 void get_deleg_perm(cache_entry_t *entry, nfsace4 *permissions,
 		    open_delegation_type4 type);
-void free_deleg_locked(state_lock_entry_t *deleg_lock, cache_entry_t *entry,
-		       struct fsal_export *export,
-		       struct req_op_context *fake_req_ctx);
 bool update_delegation_stats(cache_entry_t *entry, state_t *state);
 state_status_t delegrecall(cache_entry_t *entry, bool rwlocked);
 
@@ -645,12 +641,10 @@ state_status_t state_share_anonymous_io_start(cache_entry_t *entry,
 void state_share_anonymous_io_done(cache_entry_t *entry, int share_access);
 
 state_status_t state_nlm_share(cache_entry_t *, struct req_op_context *,
-			       exportlist_t *, int, int, state_owner_t *,
-			       bool);
+			       int, int, state_owner_t *, bool);
 
 state_status_t state_nlm_unshare(cache_entry_t *entry,
 				 struct req_op_context *req_ctx,
-				 exportlist_t *export,
 				 int share_access,
 				 int share_deny,
 				 state_owner_t *owner);

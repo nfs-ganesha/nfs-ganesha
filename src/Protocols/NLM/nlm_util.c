@@ -276,7 +276,7 @@ static void nlm4_send_grant_msg(state_async_queue_t *arg)
 int nlm_process_parameters(struct svc_req *req, bool exclusive,
 			   nlm4_lock *alock, fsal_lock_param_t *plock,
 			   struct req_op_context *req_ctx,
-			   cache_entry_t **ppentry, exportlist_t *export,
+			   cache_entry_t **ppentry,
 			   care_t care, state_nsm_client_t **ppnsm_client,
 			   state_nlm_client_t **ppnlm_client,
 			   state_owner_t **ppowner,

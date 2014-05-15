@@ -1021,7 +1021,7 @@ struct state_nlm_share_t {
 	struct glist_head sns_share_per_export;	/*< Shares for this export */
 	state_owner_t *sns_owner;	/*< State owner */
 	cache_entry_t *sns_entry;	/*< File */
-	exportlist_t *sns_export;	/*< Export */
+	struct gsh_export *sns_export;	/*< Export */
 	int sns_access;		/*< Access mode */
 	int sns_deny;		/*< Deny mode */
 };

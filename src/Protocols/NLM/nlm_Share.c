@@ -119,7 +119,6 @@ int nlm4_Share(nfs_arg_t *args, exportlist_t *export,
 
 	state_status = state_nlm_share(entry,
 				       req_ctx,
-				       export,
 				       arg->share.access,
 				       arg->share.mode,
 				       nlm_owner,
