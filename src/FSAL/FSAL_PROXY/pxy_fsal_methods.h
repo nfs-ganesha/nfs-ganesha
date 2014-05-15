@@ -101,12 +101,9 @@ fsal_status_t pxy_create_handle(struct fsal_export *exp_hdl,
 				struct fsal_obj_handle **handle);
 
 fsal_status_t pxy_create_export(struct fsal_module *fsal_hdl,
-				const char *export_path,
+				struct req_op_context *req_ctx,
 				void *parse_node,
-				struct exportlist *exp_entry,
-				struct fsal_module *next_fsal,
-				const struct fsal_up_vector *up_ops,
-				struct fsal_export **export);
+				const struct fsal_up_vector *up_ops);
 
 fsal_status_t pxy_get_dynamic_info(struct fsal_obj_handle *,
 				   struct fsal_export *,

@@ -46,6 +46,8 @@
 #include "FSAL/fsal_commonlib.h"
 #include "FSAL/fsal_config.h"
 #include "nullfs_methods.h"
+#include "nfs_exports.h"
+#include "export_mgr.h"
 
 /* helpers to/from other NULL objects
  */
@@ -254,17 +256,13 @@ static struct config_block export_param = {
  */
 
 fsal_status_t nullfs_create_export(struct fsal_module *fsal_hdl,
-				   const char *export_path,
+				   struct req_op_context *req_ctx,
 				   void *parse_node,
-				   struct exportlist *exp_entry,
-				   struct fsal_module *next_fsal,
-				   struct fsal_up_vector *up_ops,
-				   struct fsal_export **export)
+				   const struct fsal_up_vector *up_ops)
 {
 	fsal_status_t expres;
 	struct fsal_module *fsal_stack;
 	struct nullfs_fsal_export *myself;
-	struct fsal_export *sub_export;
 	struct subfsal_args subfsal;
 	struct config_error_type err_type;
 	int retval;
@@ -291,17 +289,14 @@ fsal_status_t nullfs_create_export(struct fsal_module *fsal_hdl,
 	if (myself == NULL) {
 		LogMajor(COMPONENT_FSAL,
 			 "Could not allocate memory for export %s",
-			 export_path);
+			 req_ctx->export->export.fullpath);
 		return fsalstat(ERR_FSAL_NOMEM, ENOMEM);
 	}
 
 	expres = fsal_stack->ops->create_export(fsal_stack,
-						export_path,
+						req_ctx,
 						subfsal.fsal_node,
-						exp_entry,
-						NULL,
-						up_ops,
-						&sub_export);
+						up_ops);
 	fsal_put(fsal_stack);
 	if (FSAL_IS_ERROR(expres)) {
 		LogMajor(COMPONENT_FSAL,
@@ -311,26 +306,31 @@ fsal_status_t nullfs_create_export(struct fsal_module *fsal_hdl,
 		return expres;
 	}
 
-	myself->sub_export = sub_export;
+	myself->sub_export = req_ctx->fsal_export;
 	/* Init next_ops structure */
 	next_ops.exp_ops = gsh_malloc(sizeof(struct export_ops));
 	next_ops.obj_ops = gsh_malloc(sizeof(struct fsal_obj_ops));
 	next_ops.ds_ops = gsh_malloc(sizeof(struct fsal_ds_ops));
 
-	memcpy(next_ops.exp_ops, (*export)->ops, sizeof(struct export_ops));
-	memcpy(next_ops.obj_ops, (*export)->obj_ops,
+	memcpy(next_ops.exp_ops,
+	       myself->sub_export->ops,
+	       sizeof(struct export_ops));
+	memcpy(next_ops.obj_ops,
+	       myself->sub_export->obj_ops,
 	       sizeof(struct fsal_obj_ops));
-	memcpy(next_ops.ds_ops, (*export)->ds_ops, sizeof(struct fsal_ds_ops));
+	memcpy(next_ops.ds_ops,
+	       myself->sub_export->ds_ops,
+	       sizeof(struct fsal_ds_ops));
 	next_ops.up_ops = up_ops;
 
 	/*	End of tmp code */
 
-	nullfs_export_ops_init((*export)->ops);
-	nullfs_handle_ops_init((*export)->obj_ops);
+	nullfs_export_ops_init(myself->export.ops);
+	nullfs_handle_ops_init(myself->export.obj_ops);
 
 	/* lock myself before attaching to the fsal.
 	 * keep myself locked until done with creating myself.
 	 */
-	*export = &myself->export;
+	req_ctx->fsal_export = &myself->export;
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }

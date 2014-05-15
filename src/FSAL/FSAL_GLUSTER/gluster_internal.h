@@ -433,12 +433,9 @@ int construct_handle(struct glusterfs_export *glexport, const struct stat *st,
 		     int len, struct glusterfs_handle **obj, const char *vol_uuid);
 
 fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
-				      const char *export_path,
+				      struct req_op_context *req_ctx,
 				      void *parse_node,
-				      struct exportlist *exp_entry,
-				      struct fsal_module *next_fsal,
-				      const struct fsal_up_vector *up_ops,
-				      struct fsal_export **export);
+				      const struct fsal_up_vector *up_ops);
 
 void gluster_cleanup_vars(struct glfs_object *glhandle);
 

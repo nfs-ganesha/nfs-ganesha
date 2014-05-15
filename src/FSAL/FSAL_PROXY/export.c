@@ -30,7 +30,8 @@
 #include "FSAL/fsal_commonlib.h"
 #include "FSAL/fsal_config.h"
 #include "pxy_fsal_methods.h"
-#include <nfs_exports.h>
+#include "nfs_exports.h"
+#include "export_mgr.h"
 
 static void pxy_release(struct fsal_export *exp_hdl)
 {
@@ -156,12 +157,9 @@ void pxy_export_ops_init(struct export_ops *ops)
  * but we also need access to pxy_exp_ops - I'd rather
  * keep the later static then the former */
 fsal_status_t pxy_create_export(struct fsal_module *fsal_hdl,
-				const char *export_path,
+				struct req_op_context *req_ctx,
 				void *parse_node,
-				struct exportlist *exp_entry,
-				struct fsal_module *next_fsal,
-				const struct fsal_up_vector *up_ops,
-				struct fsal_export **export)
+				const struct fsal_up_vector *up_ops)
 {
 	struct pxy_export *exp = gsh_calloc(1, sizeof(*exp));
 	struct pxy_fsal_module *pxy =
@@ -169,7 +167,7 @@ fsal_status_t pxy_create_export(struct fsal_module *fsal_hdl,
 
 	if (!exp)
 		return fsalstat(ERR_FSAL_NOMEM, ENOMEM);
-	if (fsal_export_init(&exp->exp, exp_entry) != 0) {
+	if (fsal_export_init(&exp->exp) != 0) {
 		gsh_free(exp);
 		return fsalstat(ERR_FSAL_NOMEM, ENOMEM);
 	}
@@ -178,6 +176,6 @@ fsal_status_t pxy_create_export(struct fsal_module *fsal_hdl,
 	exp->exp.up_ops = up_ops;
 	exp->info = &pxy->special;
 	exp->exp.fsal = fsal_hdl;
-	*export = &exp->exp;
+	req_ctx->fsal_export = &exp->exp;
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }

@@ -576,10 +576,11 @@ static int fsal_commit(void *node, void *link_mem, void *self_struct,
 	struct fsal_export **exp_hdl = link_mem;
 	struct fsal_params *fp = self_struct;
 	struct fsal_module *fsal;
-	struct fsal_export *fsal_exp;
 	struct gsh_export *export;
 	fsal_status_t status;
 	int errcnt = 0;
+	struct root_op_context root_op_context;
+	uint64_t MaxRead, MaxWrite;
 
 	if (fp->name == NULL || strlen(fp->name) == 0) {
 		LogCrit(COMPONENT_CONFIG,
@@ -588,7 +589,13 @@ static int fsal_commit(void *node, void *link_mem, void *self_struct,
 		errcnt++;
 		goto err;
 	}
+
 	export = container_of(exp_hdl, struct gsh_export, fsal_export);
+
+	/* Initialize req_ctx */
+	init_root_op_context(&root_op_context, export, NULL, 0, 0,
+			     UNKNOWN_REQUEST);
+
 	fsal = lookup_fsal(fp->name);
 	if (fsal == NULL) {
 		int retval;
@@ -631,12 +638,9 @@ static int fsal_commit(void *node, void *link_mem, void *self_struct,
 		export->export.fullpath[pathlen] = '\0';
 	}
 	status = fsal->ops->create_export(fsal,
-					  export->export.fullpath,
+					  &root_op_context.req_ctx,
 					  node,
-					  &export->export,
-					  NULL,
-					  &fsal_up_top,
-					  &fsal_exp);
+					  &fsal_up_top);
 	if (!(export->export.export_perms.set & EXPORT_OPTION_EXPIRE_SET)) {
 		export->export.expire_type_attr =
 			nfs_param.cache_param.expire_type_attr;
@@ -655,26 +659,29 @@ static int fsal_commit(void *node, void *link_mem, void *self_struct,
 		goto err;
 	}
 
+	assert(root_op_context.req_ctx.fsal_export != NULL);
+	export->fsal_export = root_op_context.req_ctx.fsal_export;
+
 	/* We are connected up to the fsal side.  Now
-	 * validate maxread/write etc with fsal params */
-	if (export->export.MaxRead > fsal_exp->ops->fs_maxread(fsal_exp) &&
-	    fsal_exp->ops->fs_maxread(fsal_exp) != 0) {
+	 * validate maxread/write etc with fsal params
+	 */
+	MaxRead = export->fsal_export->ops->fs_maxread(export->fsal_export);
+	MaxWrite = export->fsal_export->ops->fs_maxwrite(export->fsal_export);
+
+	if (export->export.MaxRead > MaxRead && MaxRead != 0) {
 		LogInfo(COMPONENT_CONFIG,
-			 "Readjusting MaxRead to FSAL, %" PRIu64 " -> %" PRIu32,
+			 "Readjusting MaxRead to FSAL, %" PRIu64 " -> %" PRIu64,
 			 export->export.MaxRead,
-			 fsal_exp->ops->fs_maxread(fsal_exp));
-		export->export.MaxRead = fsal_exp->ops->fs_maxread(fsal_exp);
+			 MaxRead);
+		export->export.MaxRead = MaxRead;
 	}
-	if (export->export.MaxWrite > fsal_exp->ops->fs_maxwrite(fsal_exp) &&
-	    fsal_exp->ops->fs_maxwrite(fsal_exp) != 0) {
+	if (export->export.MaxWrite > MaxWrite && MaxWrite != 0) {
 		LogInfo(COMPONENT_CONFIG,
-			 "Readjusting MaxWrite to FSAL, %"PRIu64" -> %"PRIu32,
+			 "Readjusting MaxWrite to FSAL, %"PRIu64" -> %"PRIu64,
 			 export->export.MaxWrite,
-			 fsal_exp->ops->fs_maxwrite(fsal_exp));
-		export->export.MaxWrite = fsal_exp->ops->fs_maxwrite(fsal_exp);
+			 MaxWrite);
+		export->export.MaxWrite = MaxWrite;
 	}
-	assert(fsal_exp != NULL);
-	export->fsal_export = fsal_exp;
 
 err:
 	return errcnt;
@@ -1246,6 +1253,7 @@ static int build_default_root(void)
 {
 	struct gsh_export *export;
 	struct fsal_module *fsal_hdl = NULL;
+	struct root_op_context root_op_context;
 
 	/* See if export_id = 0 has already been specified */
 	export = get_gsh_export(0);
@@ -1272,11 +1280,16 @@ static int build_default_root(void)
 
 	/* allocate and initialize the exportlist part with the id */
 	export = alloc_export();
+
 	if (export == NULL) {
 		LogCrit(COMPONENT_CONFIG,
 			"Could not allocate space for pseudoroot export");
 		return -1;
 	}
+
+	/* Initialize req_ctx */
+	init_root_op_context(&root_op_context, export, NULL, 0, 0,
+			     UNKNOWN_REQUEST);
 
 	export->export.UseCookieVerifier = true;
 	export->export.filesystem_id.major = 152;
@@ -1332,12 +1345,9 @@ static int build_default_root(void)
 		fsal_status_t rc;
 
 		rc = fsal_hdl->ops->create_export(fsal_hdl,
-						  export->export.fullpath,
+						  &root_op_context.req_ctx,
 						  NULL,
-						  &export->export,
-						  NULL,
-						  &fsal_up_top,
-						  &export->fsal_export);
+						  &fsal_up_top);
 
 		if (FSAL_IS_ERROR(rc)) {
 			fsal_put(fsal_hdl);
@@ -1348,6 +1358,9 @@ static int build_default_root(void)
 		}
 
 	}
+
+	assert(root_op_context.req_ctx.fsal_export != NULL);
+	export->fsal_export = root_op_context.req_ctx.fsal_export;
 
 	if (!insert_gsh_export(export)) {
 		export->fsal_export->ops->release(export->fsal_export);

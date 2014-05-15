@@ -46,6 +46,8 @@
 #include "FSAL/fsal_config.h"
 #include "pt_methods.h"
 #include "fsal_types.h"
+#include "nfs_exports.h"
+#include "export_mgr.h"
 
 /* helpers to/from other PT objects
  */
@@ -431,12 +433,9 @@ static struct config_block export_param = {
  */
 
 fsal_status_t pt_create_export(struct fsal_module *fsal_hdl,
-			       const char *export_path,
+			       struct req_op_context *req_ctx,
 			       void *parse_node,
-			       struct exportlist *exp_entry,
-			       struct fsal_module *next_fsal,
-			       const struct fsal_up_vector *up_ops,
-			       struct fsal_export **export)
+			       const struct fsal_up_vector *up_ops)
 {
 	struct pt_fsal_export *myself;
 	FILE *fp;
@@ -450,18 +449,6 @@ fsal_status_t pt_create_export(struct fsal_module *fsal_hdl,
 	fsal_status_t status;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 
-	*export = NULL;		/* poison it first */
-	if (export_path == NULL || strlen(export_path) == 0
-	    || strlen(export_path) > MAXPATHLEN) {
-		LogMajor(COMPONENT_FSAL,
-			 "pt_create_export: export path empty or too big");
-		return fsalstat(ERR_FSAL_INVAL, 0);
-	}
-	if (next_fsal != NULL) {
-		LogCrit(COMPONENT_FSAL, "This module is not stackable");
-		return fsalstat(ERR_FSAL_INVAL, 0);
-	}
-
 	myself = gsh_malloc(sizeof(struct pt_fsal_export));
 	if (myself == NULL) {
 		LogMajor(COMPONENT_FSAL,
@@ -471,7 +458,7 @@ fsal_status_t pt_create_export(struct fsal_module *fsal_hdl,
 	memset(myself, 0, sizeof(struct pt_fsal_export));
 	myself->root_fd = -1;
 
-	retval = fsal_export_init(&myself->export, exp_entry);
+	retval = fsal_export_init(&myself->export);
 	if (retval != 0) {
 		LogMajor(COMPONENT_FSAL,
 			 "pt_fsal_create: out of memory for object");
@@ -514,10 +501,13 @@ fsal_status_t pt_create_export(struct fsal_module *fsal_hdl,
 						MAXPATHLEN);
 				} else
 				    if ((strncmp
-					 (export_path, p_mnt->mnt_dir,
+					 (req_ctx->export->export.fullpath,
+					  p_mnt->mnt_dir,
 					  pathlen) == 0)
-					&& ((export_path[pathlen] == '/')
-					|| (export_path[pathlen] == '\0'))) {
+					&& ((req_ctx->export->export
+						.fullpath[pathlen] == '/')
+					|| (req_ctx->export->export
+						.fullpath[pathlen] == '\0'))) {
 					if (strcasecmp(p_mnt->mnt_type, "xfs")
 					    == 0) {
 						LogDebug(COMPONENT_FSAL,
@@ -539,7 +529,7 @@ fsal_status_t pt_create_export(struct fsal_module *fsal_hdl,
 	endmntent(fp);
 	if (outlen <= 0) {
 		LogCrit(COMPONENT_FSAL, "No mount entry matches '%s' in %s",
-			export_path, MOUNTED);
+			req_ctx->export->export.fullpath, MOUNTED);
 		fsal_error = ERR_FSAL_NOENT;
 		goto errout;
 	}
@@ -571,7 +561,9 @@ fsal_status_t pt_create_export(struct fsal_module *fsal_hdl,
 		myself->root_dev = root_stat.st_dev;
 		status =
 		    fsal_internal_get_handle_at(NULL, &myself->export,
-						myself->root_fd, export_path,
+						myself->root_fd,
+						req_ctx->export->export
+								.fullpath,
 						fh);
 		if (FSAL_IS_ERROR(status)) {
 			fsal_error = retval = status.major;
@@ -604,7 +596,7 @@ fsal_status_t pt_create_export(struct fsal_module *fsal_hdl,
 		retval = EINVAL;
 		goto errout;
 	}
-	*export = &myself->export;
+	req_ctx->fsal_export = &myself->export;
 
 	PTHREAD_RWLOCK_unlock(&myself->export.lock);
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);

@@ -44,6 +44,8 @@
 #include "FSAL/fsal_commonlib.h"
 #include "FSAL/fsal_config.h"
 #include "pseudofs_methods.h"
+#include "nfs_exports.h"
+#include "export_mgr.h"
 
 /* helpers to/from other PSEUDO objects
  */
@@ -279,22 +281,12 @@ void pseudofs_export_ops_init(struct export_ops *ops)
  */
 
 fsal_status_t pseudofs_create_export(struct fsal_module *fsal_hdl,
-				     const char *export_path,
+				     struct req_op_context *req_ctx,
 				     void *parse_node,
-				     struct exportlist *exp_entry,
-				     struct fsal_module *next_fsal,
-				     const struct fsal_up_vector *up_ops,
-				     struct fsal_export **export)
+				     const struct fsal_up_vector *up_ops)
 {
 	struct pseudofs_fsal_export *myself;
 	int retval = 0;
-
-	*export = NULL;		/* poison it first */
-
-	if (next_fsal != NULL) {
-		LogCrit(COMPONENT_FSAL, "This module is not stackable");
-		return fsalstat(ERR_FSAL_INVAL, 0);
-	}
 
 	myself = gsh_calloc(1, sizeof(struct pseudofs_fsal_export));
 
@@ -304,7 +296,7 @@ fsal_status_t pseudofs_create_export(struct fsal_module *fsal_hdl,
 		return fsalstat(posix2fsal_error(errno), errno);
 	}
 
-	retval = fsal_export_init(&myself->export, exp_entry);
+	retval = fsal_export_init(&myself->export);
 
 	if (retval != 0) {
 		LogMajor(COMPONENT_FSAL,
@@ -336,7 +328,7 @@ fsal_status_t pseudofs_create_export(struct fsal_module *fsal_hdl,
 	myself->export.fsal = fsal_hdl;
 
 	/* Save the export path. */
-	myself->export_path = gsh_strdup(export_path);
+	myself->export_path = gsh_strdup(req_ctx->export->export.fullpath);
 
 	if (myself->export_path == NULL) {
 		LogCrit(COMPONENT_FSAL,
@@ -345,7 +337,7 @@ fsal_status_t pseudofs_create_export(struct fsal_module *fsal_hdl,
 		goto errout;
 	}
 
-	*export = &myself->export;
+	req_ctx->fsal_export = &myself->export;
 
 	PTHREAD_RWLOCK_unlock(&myself->export.lock);
 

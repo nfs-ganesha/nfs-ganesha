@@ -11,7 +11,7 @@ struct next_ops {
 	struct export_ops *exp_ops;	/*< Vector of operations */
 	struct fsal_obj_ops *obj_ops;	/*< Shared handle methods vector */
 	struct fsal_ds_ops *ds_ops;	/*< Shared handle methods vector */
-	struct fsal_up_vector *up_ops;	/*< Upcall operations */
+	const struct fsal_up_vector *up_ops;	/*< Upcall operations */
 };
 
 extern struct next_ops next_ops;

@@ -40,6 +40,8 @@
 #include "FSAL/fsal_commonlib.h"
 #include "FSAL/fsal_config.h"
 #include "zfs_methods.h"
+#include "nfs_exports.h"
+#include "export_mgr.h"
 
 libzfswrap_handle_t *p_zhd = NULL;
 size_t i_snapshots = 0;
@@ -306,12 +308,9 @@ static struct config_block export_param = {
  */
 
 fsal_status_t zfs_create_export(struct fsal_module *fsal_hdl,
-				const char *export_path,
+				struct req_op_context *req_ctx,
 				void *parse_node,
-				struct exportlist *exp_entry,
-				struct fsal_module *next_fsal,
-				const struct fsal_up_vector *up_ops,
-				struct fsal_export **export)
+				const struct fsal_up_vector *up_ops)
 {
 	struct zfs_fsal_export *myself;
 	struct config_error_type err_type;
@@ -320,17 +319,6 @@ fsal_status_t zfs_create_export(struct fsal_module *fsal_hdl,
 	libzfswrap_vfs_t *p_zfs = NULL;
 	struct zfs_export_args libargs;
 
-	*export = NULL;		/* poison it first */
-	if (export_path == NULL || strlen(export_path) == 0
-	    || strlen(export_path) > MAXPATHLEN) {
-		LogMajor(COMPONENT_FSAL,
-			 "zfs_create_export: export path empty or too big");
-		return fsalstat(ERR_FSAL_INVAL, 0);
-	}
-	if (next_fsal != NULL) {
-		LogCrit(COMPONENT_FSAL, "This module is not stackable");
-		return fsalstat(ERR_FSAL_INVAL, 0);
-	}
 	retval = load_config_from_node(parse_node,
 				       &export_param,
 				       &libargs,
@@ -347,7 +335,7 @@ fsal_status_t zfs_create_export(struct fsal_module *fsal_hdl,
 		return fsalstat(posix2fsal_error(errno), errno);
 	}
 
-	retval = fsal_export_init(&myself->export, exp_entry);
+	retval = fsal_export_init(&myself->export);
 	if (retval != 0)
 		goto errout;
 
@@ -392,7 +380,7 @@ fsal_status_t zfs_create_export(struct fsal_module *fsal_hdl,
 	if (libargs.pool_path)
 		gsh_free(libargs.pool_path);
 	myself->p_vfs = p_snapshots[0].p_vfs;
-	*export = &myself->export;
+	req_ctx->fsal_export = &myself->export;
 	PTHREAD_RWLOCK_unlock(&myself->export.lock);
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
