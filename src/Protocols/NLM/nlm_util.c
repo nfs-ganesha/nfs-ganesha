@@ -280,7 +280,7 @@ int nlm_process_parameters(struct svc_req *req, bool exclusive,
 			   care_t care, state_nsm_client_t **ppnsm_client,
 			   state_nlm_client_t **ppnlm_client,
 			   state_owner_t **ppowner,
-			   state_block_data_t **ppblock_data)
+			   state_block_data_t **block_data)
 {
 	nfsstat3 nfsstat3;
 	SVCXPRT *ptr_svc = req->rq_xprt;
@@ -354,39 +354,23 @@ int nlm_process_parameters(struct svc_req *req, bool exclusive,
 		goto out_put;
 	}
 
-	if (ppblock_data != NULL) {
-		*ppblock_data = gsh_malloc(sizeof(**ppblock_data));
+	if (block_data != NULL) {
+		state_block_data_t *bdat = gsh_malloc(sizeof(*bdat));
+		*block_data = bdat;
 
 		/* Fill in the block data, if we don't get one, we will just
 		 * proceed without (which will mean the lock doesn't block.
 		 */
-		if (*ppblock_data != NULL) {
-			memset(*ppblock_data, 0, sizeof(**ppblock_data));
-			if (copy_xprt_addr(&(*ppblock_data)->sbd_block_data.
-					      sbd_nlm_block_data.
-					      sbd_nlm_hostaddr,
-					   ptr_svc) == 0) {
-				LogFullDebug(COMPONENT_NLM,
-					     "copy_xprt_addr failed for Program %d, Version %d, Function %d",
-					     (int)req->rq_prog,
-					     (int)req->rq_vers,
-					     (int)req->rq_proc);
-				gsh_free(*ppblock_data);
-				*ppblock_data = NULL;
-				rc = NLM4_FAILED;
-				goto out_put;
-			}
-			(*ppblock_data)->sbd_granted_callback =
-			    nlm_granted_callback;
-			(*ppblock_data)->sbd_block_data.sbd_nlm_block_data.
-			    sbd_nlm_fh.n_bytes =
-			    (*ppblock_data)->sbd_block_data.sbd_nlm_block_data.
-			    sbd_nlm_fh_buf;
-			(*ppblock_data)->sbd_block_data.sbd_nlm_block_data.
-			    sbd_nlm_fh.n_len = alock->fh.n_len;
-			memcpy((*ppblock_data)->sbd_block_data.
-			       sbd_nlm_block_data.sbd_nlm_fh_buf,
-			       alock->fh.n_bytes, alock->fh.n_len);
+		if (bdat != NULL) {
+			memset(bdat, 0, sizeof(*bdat));
+			bdat->sbd_granted_callback = nlm_granted_callback;
+			bdat->sbd_prot.sbd_nlm.sbd_nlm_fh.n_bytes =
+				bdat->sbd_prot.sbd_nlm.sbd_nlm_fh_buf;
+			bdat->sbd_prot.sbd_nlm.sbd_nlm_fh.n_len =
+				alock->fh.n_len;
+			memcpy(bdat->sbd_prot.sbd_nlm.sbd_nlm_fh_buf,
+			       alock->fh.n_bytes,
+			       alock->fh.n_len);
 		}
 	}
 	/* Fill in plock */
@@ -568,8 +552,7 @@ state_status_t nlm_granted_callback(cache_entry_t *pentry,
 				    state_lock_entry_t *lock_entry)
 {
 	state_block_data_t *block_data = lock_entry->sle_block_data;
-	state_nlm_block_data_t *nlm_block_data =
-	    &block_data->sbd_block_data.sbd_nlm_block_data;
+	state_nlm_block_data_t *nlm_block_data = &block_data->sbd_prot.sbd_nlm;
 	state_cookie_entry_t *cookie_entry = NULL;
 	state_async_queue_t *arg;
 	nlm4_testargs *inarg;

@@ -788,7 +788,6 @@ typedef state_status_t(*granted_callback_t) (cache_entry_t *entry,
  */
 
 typedef struct state_nlm_block_data_t {
-	sockaddr_t sbd_nlm_hostaddr;	/*< Host waiting for blocked lock */
 	netobj sbd_nlm_fh;	/*< Filehandle */
 	char sbd_nlm_fh_buf[MAX_NETOBJ_SZ];	/*< Statically allocated
 						   FH buffer */
@@ -816,9 +815,9 @@ struct state_block_data_t {
 	state_cookie_entry_t *sbd_blocked_cookie; /*< Blocking lock cookie */
 	state_lock_entry_t *sbd_lock_entry;	/*< Details of lock */
 	union {
-		state_nlm_block_data_t sbd_nlm_block_data; /*< NLM block data */
-		void *sbd_v4_block_data;	/*< NFSv4 block data */
-	} sbd_block_data;
+		state_nlm_block_data_t sbd_nlm; /*< NLM block data */
+		void *sbd_v4;			/*< NFSv4 block data */
+	} sbd_prot;
 };
 
 typedef enum lock_type_t {
