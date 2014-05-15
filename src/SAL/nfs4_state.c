@@ -133,13 +133,13 @@ static bool check_deleg_conflict(state_t *state, state_type_t candidate_type,
  * @retval true if there is a conflict.
  * @retval false if no conflict has been found
  */
-bool state_conflict(state_t *state, state_type_t state_type,
+bool state_conflict(state_t *state, state_type_t candidate_type,
 		    state_data_t *candidate_data)
 {
 	if (state == NULL || candidate_data == NULL)
 		return true;
 
-	switch (state_type) {
+	switch (candidate_type) {
 	case STATE_TYPE_NONE:
 		return false;	/* STATE_NONE conflicts with nobody */
 
