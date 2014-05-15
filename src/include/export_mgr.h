@@ -91,10 +91,12 @@ struct gsh_export {
 	uint64_t MaxOffsetWrite;
 	/** Maximum Offset allowed for read */
 	uint64_t MaxOffsetRead;
-	/** Read/Write lock protecting export */
-	pthread_rwlock_t lock;
+	/** Filesystem ID for overriding fsid from FSAL*/
+	fsal_fsid_t filesystem_id;
 	/** References to this export */
 	int64_t refcnt;
+	/** Read/Write lock protecting export */
+	pthread_rwlock_t lock;
 	/** The NFS server definition of the export */
 	exportlist_t export;
 	/** The last time the export stats were updated */

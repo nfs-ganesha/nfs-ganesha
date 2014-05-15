@@ -1168,7 +1168,7 @@ static struct config_item export_params[] = {
 	CONF_ITEM_UI64("PrefReaddir", 512, FSAL_MAXIOSIZE, 16384,
 		       gsh_export, PrefReaddir),
 	CONF_ITEM_FSID_SET("Filesystem_id", 666, 666,
-		       gsh_export, export.filesystem_id, /* major.minor */
+		       gsh_export, filesystem_id, /* major.minor */
 		       EXPORT_OPTION_FSID_SET, export.export_perms.set),
 	CONF_ITEM_STR("Tag", 1, MAXPATHLEN, NULL,
 		      gsh_export, FS_tag),
@@ -1291,8 +1291,8 @@ static int build_default_root(void)
 			     UNKNOWN_REQUEST);
 
 	export->export.UseCookieVerifier = true;
-	export->export.filesystem_id.major = 152;
-	export->export.filesystem_id.minor = 152;
+	export->filesystem_id.major = 152;
+	export->filesystem_id.minor = 152;
 	export->MaxWrite = FSAL_MAXIOSIZE;
 	export->MaxRead = FSAL_MAXIOSIZE;
 	export->PrefWrite = FSAL_MAXIOSIZE;

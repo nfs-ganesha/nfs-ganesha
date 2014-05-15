@@ -111,7 +111,6 @@ typedef struct exportlist_client_entry__ {
 } exportlist_client_entry_t;
 
 typedef struct exportlist {
-	fsal_fsid_t filesystem_id;	/*< Filesystem ID */
 	struct export_perms export_perms;	/*< available mount options */
 	bool UseCookieVerifier;	/*< Is Cookie verifier to be used? */
 	struct glist_head clients;	/*< Allowed clients */
