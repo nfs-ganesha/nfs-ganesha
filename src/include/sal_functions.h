@@ -669,8 +669,6 @@ void signal_async_work(void);
 
 state_status_t state_async_init(void);
 state_status_t state_async_shutdown(void);
-state_status_t state_async_pause(void);
-state_status_t state_async_resume(void);
 
 void grant_blocked_lock_upcall(cache_entry_t *entry, void *owner,
 			       fsal_lock_param_t *lock);
