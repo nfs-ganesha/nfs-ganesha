@@ -323,17 +323,17 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 		     "offset = %" PRIu64 "  length = %" PRIu64 "  stable = %d",
 		     offset, size, stable_how);
 
-	if (data->export->MaxOffsetWrite < UINT64_MAX) {
+	if (data->req_ctx->export->MaxOffsetWrite < UINT64_MAX) {
 		LogFullDebug(COMPONENT_NFS_V4,
 			     "Write offset=%" PRIu64 " count=%" PRIu64
 			     " MaxOffSet=%" PRIu64, offset, size,
-			     data->export->MaxOffsetWrite);
+			     data->req_ctx->export->MaxOffsetWrite);
 
-		if ((offset + size) > data->export->MaxOffsetWrite) {
+		if ((offset + size) > data->req_ctx->export->MaxOffsetWrite) {
 			LogEvent(COMPONENT_NFS_V4,
 				 "A client tryed to violate max "
 				 "file size %" PRIu64 " for exportid #%hu",
-				 data->export->MaxOffsetWrite,
+				 data->req_ctx->export->MaxOffsetWrite,
 				 data->req_ctx->export->export_id);
 
 			res_WRITE4->status = NFS4ERR_DQUOT;
@@ -343,7 +343,7 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 		}
 	}
 
-	if (size > data->export->MaxWrite) {
+	if (size > data->req_ctx->export->MaxWrite) {
 		/*
 		 * The client asked for too much data, we
 		 * must restrict him
@@ -354,8 +354,8 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 			LogFullDebug(COMPONENT_NFS_V4,
 				     "write requested size = %" PRIu64
 				     " write allowed size = %" PRIu64,
-				     size, data->export->MaxWrite);
-			size = data->export->MaxWrite;
+				     size, data->req_ctx->export->MaxWrite);
+			size = data->req_ctx->export->MaxWrite;
 		}
 	}
 

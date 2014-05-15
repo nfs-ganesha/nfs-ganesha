@@ -1268,7 +1268,7 @@ static fattr_xdr_result decode_maxname(XDR *xdr, struct xdr_attrs_args *args)
 
 static fattr_xdr_result encode_maxread(XDR *xdr, struct xdr_attrs_args *args)
 {
-	if (!inline_xdr_u_int64_t(xdr, &args->data->export->MaxRead))
+	if (!inline_xdr_u_int64_t(xdr, &args->data->req_ctx->export->MaxRead))
 		return FATTR_XDR_FAILED;
 	return FATTR_XDR_SUCCESS;
 }
@@ -1284,7 +1284,7 @@ static fattr_xdr_result decode_maxread(XDR *xdr, struct xdr_attrs_args *args)
 
 static fattr_xdr_result encode_maxwrite(XDR *xdr, struct xdr_attrs_args *args)
 {
-	if (!inline_xdr_u_int64_t(xdr, &args->data->export->MaxWrite))
+	if (!inline_xdr_u_int64_t(xdr, &args->data->req_ctx->export->MaxWrite))
 		return FATTR_XDR_FAILED;
 	return FATTR_XDR_SUCCESS;
 }

@@ -189,17 +189,17 @@ int nfs3_write(nfs_arg_t *arg, exportlist_t *export,
 	data = arg->arg_write3.data.data_val;
 
 	/* Do not exceed maxium WRITE offset if set */
-	if (export->MaxOffsetWrite < UINT64_MAX) {
+	if (req_ctx->export->MaxOffsetWrite < UINT64_MAX) {
 		LogFullDebug(COMPONENT_NFSPROTO,
 			     "Write offset=%" PRIu64 " count=%" PRIu64
 			     " MaxOffSet=%" PRIu64, offset, size,
-			     export->MaxOffsetWrite);
+			     req_ctx->export->MaxOffsetWrite);
 
-		if ((offset + size) > export->MaxOffsetWrite) {
+		if ((offset + size) > req_ctx->export->MaxOffsetWrite) {
 			LogEvent(COMPONENT_NFSPROTO,
 				 "A client tryed to violate max "
 				 "file size %" PRIu64 " for exportid #%hu",
-				 export->MaxOffsetWrite,
+				 req_ctx->export->MaxOffsetWrite,
 				 req_ctx->export->export_id);
 
 			res->res_write3.status = NFS3ERR_INVAL;
@@ -216,9 +216,9 @@ int nfs3_write(nfs_arg_t *arg, exportlist_t *export,
 	}
 
 	/* We should take care not to exceed FSINFO wtmax field for the size */
-	if (size > export->MaxWrite) {
+	if (size > req_ctx->export->MaxWrite) {
 		/* The client asked for too much data, we must restrict him */
-		size = export->MaxWrite;
+		size = req_ctx->export->MaxWrite;
 	}
 
 	if (size == 0) {

@@ -668,19 +668,19 @@ static int fsal_commit(void *node, void *link_mem, void *self_struct,
 	MaxRead = export->fsal_export->ops->fs_maxread(export->fsal_export);
 	MaxWrite = export->fsal_export->ops->fs_maxwrite(export->fsal_export);
 
-	if (export->export.MaxRead > MaxRead && MaxRead != 0) {
+	if (export->MaxRead > MaxRead && MaxRead != 0) {
 		LogInfo(COMPONENT_CONFIG,
 			 "Readjusting MaxRead to FSAL, %" PRIu64 " -> %" PRIu64,
-			 export->export.MaxRead,
+			 export->MaxRead,
 			 MaxRead);
-		export->export.MaxRead = MaxRead;
+		export->MaxRead = MaxRead;
 	}
-	if (export->export.MaxWrite > MaxWrite && MaxWrite != 0) {
+	if (export->MaxWrite > MaxWrite && MaxWrite != 0) {
 		LogInfo(COMPONENT_CONFIG,
 			 "Readjusting MaxWrite to FSAL, %"PRIu64" -> %"PRIu64,
-			 export->export.MaxWrite,
+			 export->MaxWrite,
 			 MaxWrite);
-		export->export.MaxWrite = MaxWrite;
+		export->MaxWrite = MaxWrite;
 	}
 
 err:
@@ -1158,24 +1158,24 @@ static struct config_item export_params[] = {
 	CONF_UNIQ_PATH("Pseudo", 1, MAXPATHLEN, NULL,
 		       gsh_export, pseudopath),
 	CONF_ITEM_UI64("MaxRead", 512, FSAL_MAXIOSIZE, FSAL_MAXIOSIZE,
-		       gsh_export, export.MaxRead),
+		       gsh_export, MaxRead),
 	CONF_ITEM_UI64("MaxWrite", 512, FSAL_MAXIOSIZE, FSAL_MAXIOSIZE,
-		       gsh_export, export.MaxWrite),
+		       gsh_export, MaxWrite),
 	CONF_ITEM_UI64("PrefRead", 512, FSAL_MAXIOSIZE, FSAL_MAXIOSIZE,
-		       gsh_export, export.PrefRead),
+		       gsh_export, PrefRead),
 	CONF_ITEM_UI64("PrefWrite", 512, FSAL_MAXIOSIZE, FSAL_MAXIOSIZE,
-		       gsh_export, export.PrefWrite),
+		       gsh_export, PrefWrite),
 	CONF_ITEM_UI64("PrefReaddir", 512, FSAL_MAXIOSIZE, 16384,
-		       gsh_export, export.PrefReaddir),
+		       gsh_export, PrefReaddir),
 	CONF_ITEM_FSID_SET("Filesystem_id", 666, 666,
 		       gsh_export, export.filesystem_id, /* major.minor */
 		       EXPORT_OPTION_FSID_SET, export.export_perms.set),
 	CONF_ITEM_STR("Tag", 1, MAXPATHLEN, NULL,
 		      gsh_export, FS_tag),
 	CONF_ITEM_UI64("MaxOffsetWrite", 512, UINT64_MAX, UINT64_MAX,
-		       gsh_export, export.MaxOffsetWrite),
+		       gsh_export, MaxOffsetWrite),
 	CONF_ITEM_UI64("MaxOffsetRead", 512, UINT64_MAX, UINT64_MAX,
-		       gsh_export, export.MaxOffsetRead),
+		       gsh_export, MaxOffsetRead),
 	CONF_ITEM_BOOL("UseCookieVerifier", true,
 		       gsh_export, export.UseCookieVerifier),
 	CONF_EXPORT_PERMS(gsh_export, export.export_perms),
@@ -1293,11 +1293,11 @@ static int build_default_root(void)
 	export->export.UseCookieVerifier = true;
 	export->export.filesystem_id.major = 152;
 	export->export.filesystem_id.minor = 152;
-	export->export.MaxWrite = FSAL_MAXIOSIZE;
-	export->export.MaxRead = FSAL_MAXIOSIZE;
-	export->export.PrefWrite = FSAL_MAXIOSIZE;
-	export->export.PrefRead = FSAL_MAXIOSIZE;
-	export->export.PrefReaddir = 16384;
+	export->MaxWrite = FSAL_MAXIOSIZE;
+	export->MaxRead = FSAL_MAXIOSIZE;
+	export->PrefWrite = FSAL_MAXIOSIZE;
+	export->PrefRead = FSAL_MAXIOSIZE;
+	export->PrefReaddir = 16384;
 	export->export.expire_type_attr =
 		nfs_param.cache_param.expire_type_attr;
 	glist_init(&export->export.exp_state_list);

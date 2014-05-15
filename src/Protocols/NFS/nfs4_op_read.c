@@ -402,17 +402,17 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 	offset = arg_READ4->offset;
 	size = arg_READ4->count;
 
-	if (data->export->MaxOffsetRead < UINT64_MAX) {
+	if (data->req_ctx->export->MaxOffsetRead < UINT64_MAX) {
 		LogFullDebug(COMPONENT_NFS_V4,
 			     "Read offset=%" PRIu64 " count=%zd "
 			     "MaxOffSet=%" PRIu64, offset, size,
-			     data->export->MaxOffsetRead);
+			     data->req_ctx->export->MaxOffsetRead);
 
-		if ((offset + size) > data->export->MaxOffsetRead) {
+		if ((offset + size) > data->req_ctx->export->MaxOffsetRead) {
 			LogEvent(COMPONENT_NFS_V4,
 				 "A client tryed to violate max "
 				 "file size %" PRIu64 " for exportid #%hu",
-				 data->export->MaxOffsetRead,
+				 data->req_ctx->export->MaxOffsetRead,
 				 data->req_ctx->export->export_id);
 
 			res_READ4->status = NFS4ERR_DQUOT;
@@ -420,7 +420,7 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 		}
 	}
 
-	if (size > data->export->MaxRead) {
+	if (size > data->req_ctx->export->MaxRead) {
 		/* the client asked for too much data, this should normally
 		   not happen because client will get FATTR4_MAXREAD value
 		   at mount time */
@@ -430,8 +430,8 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 			LogFullDebug(COMPONENT_NFS_V4,
 				     "read requested size = %"PRIu64
 				     " read allowed size = %" PRIu64,
-				     size, data->export->MaxRead);
-			size = data->export->MaxRead;
+				     size, data->req_ctx->export->MaxRead);
+			size = data->req_ctx->export->MaxRead;
 		}
 	}
 

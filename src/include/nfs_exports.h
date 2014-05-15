@@ -113,14 +113,6 @@ typedef struct exportlist_client_entry__ {
 typedef struct exportlist {
 	fsal_fsid_t filesystem_id;	/*< Filesystem ID */
 	struct export_perms export_perms;	/*< available mount options */
-	uint64_t MaxRead;	/*< Max Read for this entry */
-	uint64_t MaxWrite;	/*< Max Write for this entry */
-	uint64_t PrefRead;	/*< Preferred Read size */
-	uint64_t PrefWrite;	/*< Preferred Write size */
-	uint64_t PrefReaddir;	/*< Preferred Readdir size */
-	uint64_t MaxOffsetWrite;	/*< Maximum Offset allowed for write */
-	uint64_t MaxOffsetRead;	/*< Maximum Offset allowed for read */
-	uint64_t MaxCacheSize;	/*< Maximum Cache Size allowed */
 	bool UseCookieVerifier;	/*< Is Cookie verifier to be used? */
 	struct glist_head clients;	/*< Allowed clients */
 	struct glist_head exp_state_list;	/*< List of NFS v4 state

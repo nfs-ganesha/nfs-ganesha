@@ -77,6 +77,20 @@ struct gsh_export {
 	char *FS_tag;
 	/** Node id this is mounted on. Protected by lock */
 	uint64_t exp_mounted_on_file_id;
+	/** Max Read for this entry */
+	uint64_t MaxRead;
+	/** Max Write for this entry */
+	uint64_t MaxWrite;
+	/** Preferred Read size */
+	uint64_t PrefRead;
+	/** Preferred Write size */
+	uint64_t PrefWrite;
+	/** Preferred Readdir size */
+	uint64_t PrefReaddir;
+	/** Maximum Offset allowed for write */
+	uint64_t MaxOffsetWrite;
+	/** Maximum Offset allowed for read */
+	uint64_t MaxOffsetRead;
 	/** Read/Write lock protecting export */
 	pthread_rwlock_t lock;
 	/** References to this export */

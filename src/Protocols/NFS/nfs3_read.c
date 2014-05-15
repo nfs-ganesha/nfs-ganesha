@@ -175,17 +175,17 @@ int nfs3_read(nfs_arg_t *arg, exportlist_t *export,
 	size = arg->arg_read3.count;
 
 	/* do not exceed maxium READ offset if set */
-	if (export->MaxOffsetRead < UINT64_MAX) {
+	if (req_ctx->export->MaxOffsetRead < UINT64_MAX) {
 		LogFullDebug(COMPONENT_NFSPROTO,
 			     "Read offset=%" PRIu64 " count=%zd "
 			     "MaxOffSet=%" PRIu64, offset, size,
-			     export->MaxOffsetRead);
+			     req_ctx->export->MaxOffsetRead);
 
-		if ((offset + size) > export->MaxOffsetRead) {
+		if ((offset + size) > req_ctx->export->MaxOffsetRead) {
 			LogEvent(COMPONENT_NFSPROTO,
 				 "A client tryed to violate max "
 				 "file size %" PRIu64 " for exportid #%hu",
-				 export->MaxOffsetRead,
+				 req_ctx->export->MaxOffsetRead,
 				 req_ctx->export->export_id);
 
 			res->res_read3.status = NFS3ERR_INVAL;
@@ -200,12 +200,12 @@ int nfs3_read(nfs_arg_t *arg, exportlist_t *export,
 	}
 
 	/* We should not exceed the FSINFO rtmax field for the size */
-	if (size > export->MaxRead) {
+	if (size > req_ctx->export->MaxRead) {
 		/* The client asked for too much, normally this should
 		   not happen because the client is calling nfs_Fsinfo
 		   at mount time and so is aware of the server maximum
 		   write size */
-		size = export->MaxRead;
+		size = req_ctx->export->MaxRead;
 	}
 
 	if (size == 0) {
