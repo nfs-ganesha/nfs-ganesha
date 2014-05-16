@@ -168,15 +168,14 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t *data,
 						&fsal_data.fh_desc);
 
 		if (FSAL_IS_ERROR(fsal_status)) {
-			cache_status =
-			    cache_inode_error_convert(fsal_status);
-		} else {
-			/* Build the pentry.  Refcount +1. */
-			cache_status =
-			    cache_inode_get(&fsal_data,
-					    data->req_ctx,
-					    &file_entry);
+			res_PUTFH4->status =
+			    nfs4_Errno(cache_inode_error_convert(fsal_status));
+			return res_PUTFH4->status;
 		}
+		/* Build the pentry.  Refcount +1. */
+		cache_status = cache_inode_get(&fsal_data,
+					       data->req_ctx,
+					       &file_entry);
 
 		if (cache_status != CACHE_INODE_SUCCESS) {
 			res_PUTFH4->status = nfs4_Errno(cache_status);

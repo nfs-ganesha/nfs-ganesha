@@ -142,6 +142,18 @@ static bool proc_export(struct gsh_export *export, void *arg)
 	return true;
 
  nomem:
+	if (new_expnode != NULL) {
+		if (new_expnode->ex_dir != NULL)
+			gsh_free(new_expnode->ex_dir);
+		for (group = new_expnode->ex_groups;
+		     group != NULL;
+		     group = grp_tail) {
+			grp_tail = group->gr_next;
+			if (group->gr_name != NULL)
+				gsh_free(group->gr_name);
+			gsh_free(group);
+		}
+	}
 	state->retval = errno;
 	return false;
 }

@@ -132,6 +132,7 @@ state_status_t state_delete_segment(state_layout_segment_t *segment)
 {
 	glist_del(&segment->sls_state_segments);
 	pthread_mutex_unlock(&segment->sls_mutex);
+	pthread_mutex_destroy(&segment->sls_mutex);
 	gsh_free(segment);
 	return STATE_SUCCESS;
 }

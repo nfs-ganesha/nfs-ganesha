@@ -803,9 +803,9 @@ static int32_t layoutrec_completion(rpc_call_t *call, rpc_call_hook hook,
 				      &deleted, true);
 		PTHREAD_RWLOCK_unlock(&state->state_entry->state_lock);
 	}
-	gsh_free(cb_data);
 	free_layoutrec(&call->cbt.v_u.v4.args.argarray.argarray_val[1]);
 	nfs41_complete_single(call, hook, arg, flags);
+	gsh_free(cb_data);
 	return 0;
 }
 
