@@ -530,9 +530,15 @@ void pseudo_unmount_export(struct gsh_export *export,
 	mounted_on_export = export->exp_parent_exp;
 	junction_inode = export->exp_junction_inode;
 
-	/* If the node is not mounted in the Pseudo FS, bail out. */
-	if (junction_inode == NULL)
+	if (junction_inode) {
+		/* Make the node not accessible from the junction node */
+		PTHREAD_RWLOCK_wrlock(&junction_inode->attr_lock);
+		junction_inode->object.dir.junction_export = NULL;
+		PTHREAD_RWLOCK_unlock(&junction_inode->attr_lock);
+	} else {
+		/* The node is not mounted in the Pseudo FS, bail out. */
 		goto out;
+	}
 
 	/* Detach the export from the inode */
 	export->exp_junction_inode = NULL;
