@@ -113,12 +113,6 @@ typedef struct exportlist_client_entry__ {
 typedef struct exportlist {
 	struct export_perms export_perms;	/*< available mount options */
 	struct glist_head clients;	/*< Allowed clients */
-	struct glist_head exp_state_list;	/*< List of NFS v4 state
-						    belonging to this export */
-	struct glist_head exp_lock_list;	/*< List of locks belonging
-						   to this export */
-	struct glist_head exp_nlm_share_list;	/*< List of NLM shares
-						   belonging to this export */
 	struct glist_head exp_root_list;	/*< List of exports rooted
 						    on the same inode */
 	/** Expiration type for attributes.  Defaults to never,

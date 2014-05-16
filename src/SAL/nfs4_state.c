@@ -660,10 +660,9 @@ void state_export_release_nfs4_state(struct req_op_context *req_ctx)
 	while (1) {
 		PTHREAD_RWLOCK_wrlock(&req_ctx->export->lock);
 
-		state = glist_first_entry(
-			&req_ctx->export->export.exp_state_list,
-			state_t,
-			state_export_list);
+		state = glist_first_entry(&req_ctx->export->exp_state_list,
+					  state_t,
+					  state_export_list);
 
 		PTHREAD_RWLOCK_unlock(&req_ctx->export->lock);
 

@@ -502,7 +502,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 
 		PTHREAD_RWLOCK_wrlock(&data->req_ctx->export->lock);
 
-		glist_add_tail(&data->export->exp_state_list,
+		glist_add_tail(&data->req_ctx->export->exp_state_list,
 			       &lock_state->state_export_list);
 
 		PTHREAD_RWLOCK_unlock(&data->req_ctx->export->lock);

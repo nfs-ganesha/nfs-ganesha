@@ -835,9 +835,9 @@ static int export_commit(void *node, void *link_mem, void *self_struct,
 				 export->export_id);
 		goto err_out;  /* have errors. don't init or load a fsal */
 	}
-	glist_init(&export->export.exp_state_list);
-	glist_init(&export->export.exp_lock_list);
-	glist_init(&export->export.exp_nlm_share_list);
+	glist_init(&export->exp_state_list);
+	glist_init(&export->exp_lock_list);
+	glist_init(&export->exp_nlm_share_list);
 
 	/* now probe the fsal and init it */
 	/* pass along the block that is/was the FS_Specific */
@@ -1300,9 +1300,9 @@ static int build_default_root(void)
 	export->PrefReaddir = 16384;
 	export->export.expire_type_attr =
 		nfs_param.cache_param.expire_type_attr;
-	glist_init(&export->export.exp_state_list);
-	glist_init(&export->export.exp_lock_list);
-	glist_init(&export->export.exp_nlm_share_list);
+	glist_init(&export->exp_state_list);
+	glist_init(&export->exp_lock_list);
+	glist_init(&export->exp_nlm_share_list);
 	glist_init(&export->export.clients);
 
 	/* Default anonymous uid and gid */

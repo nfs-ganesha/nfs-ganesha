@@ -61,6 +61,12 @@ struct gsh_export {
 	struct avltree_node node_k;
 	/** The list of cache inode entries belonging to this export */
 	struct glist_head entry_list;
+	/** List of NFS v4 state belonging to this export */
+	struct glist_head exp_state_list;
+	/** List of locks belonging to this export */
+	struct glist_head exp_lock_list;
+	/** List of NLM shares belonging to this export */
+	struct glist_head exp_nlm_share_list;
 	/** Entry for the root of this export, protected by lock */
 	cache_entry_t *exp_root_cache_inode;
 	/** Entry for the junction of this export.  Protected by lock */

@@ -560,7 +560,7 @@ static state_lock_entry_t *create_state_lock_entry(cache_entry_t *entry,
 
 	/* Add to list of locks owned by export */
 	PTHREAD_RWLOCK_wrlock(&export->lock);
-	glist_add_tail(&export->export.exp_lock_list,
+	glist_add_tail(&export->exp_lock_list,
 		       &new_entry->sle_export_locks);
 	PTHREAD_RWLOCK_unlock(&export->lock);
 
@@ -3427,7 +3427,7 @@ void state_export_unlock_all(struct req_op_context *req_ctx)
 		/* We just need to find any file this owner has locks on.
 		 * We pick the first lock the owner holds, and use it's file.
 		 */
-		found_entry = glist_first_entry(&export->exp_lock_list,
+		found_entry = glist_first_entry(&req_ctx->export->exp_lock_list,
 						state_lock_entry_t,
 						sle_export_locks);
 
@@ -3443,7 +3443,7 @@ void state_export_unlock_all(struct req_op_context *req_ctx)
 		 * (this will help if errors occur)
 		 */
 		glist_del(&found_entry->sle_export_locks);
-		glist_add_tail(&export->exp_lock_list,
+		glist_add_tail(&req_ctx->export->exp_lock_list,
 			       &found_entry->sle_export_locks);
 
 		PTHREAD_RWLOCK_unlock(&req_ctx->export->lock);

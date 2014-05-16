@@ -814,7 +814,7 @@ state_status_t state_nlm_share(cache_entry_t *entry,
 
 	/* Add to share list for export */
 	PTHREAD_RWLOCK_wrlock(&req_ctx->export->lock);
-	glist_add_tail(&req_ctx->export->export.exp_nlm_share_list,
+	glist_add_tail(&req_ctx->export->exp_nlm_share_list,
 		       &nlm_share->sns_share_per_export);
 	PTHREAD_RWLOCK_unlock(&req_ctx->export->lock);
 
@@ -1129,7 +1129,6 @@ void state_share_wipe(cache_entry_t *entry)
 
 void state_export_unshare_all(struct req_op_context *req_ctx)
 {
-	exportlist_t *export = &req_ctx->export->export;
 	int errcnt = 0;
 	state_nlm_share_t *nlm_share;
 	state_owner_t *owner;
@@ -1137,14 +1136,15 @@ void state_export_unshare_all(struct req_op_context *req_ctx)
 	state_status_t status;
 
 	while (errcnt < STATE_ERR_MAX) {
-		export_writelock(export);
+		PTHREAD_RWLOCK_wrlock(&req_ctx->export->lock);
 
-		nlm_share = glist_first_entry(&export->exp_nlm_share_list,
-					      state_nlm_share_t,
-					      sns_share_per_export);
+		nlm_share =
+		    glist_first_entry(&req_ctx->export->exp_nlm_share_list,
+				      state_nlm_share_t,
+				      sns_share_per_export);
 
 		if (nlm_share == NULL) {
-			export_rwunlock(export);
+			PTHREAD_RWLOCK_unlock(&req_ctx->export->lock);
 			break;
 		}
 
@@ -1157,7 +1157,7 @@ void state_export_unshare_all(struct req_op_context *req_ctx)
 		cache_inode_lru_ref(entry, LRU_FLAG_NONE);
 
 		/* Drop the export mutex to call unshare */
-		export_rwunlock(export);
+		PTHREAD_RWLOCK_unlock(&req_ctx->export->lock);
 
 		/* Remove all shares held by this Owner on this export */
 		status = state_nlm_unshare(entry,
