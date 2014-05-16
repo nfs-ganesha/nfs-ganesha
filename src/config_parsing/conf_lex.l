@@ -70,7 +70,7 @@ VAL_CHAR     [^ \t\r\n\f;"'#]
 COMMENTEXT	 #.*$
 /* lettre posant probleme dans une chaine */
 STRING_CHAR       [^\n]
-IDENTIFIER [a-zA-Z_.][a-zA-Z0-9_.\-]*
+IDENTIFIER [a-zA-Z_][a-zA-Z0-9_\-]*
 
 /* INCLUDE state is used for picking the name of the include file */
 %START YY_INIT BLOCK IN_BLOCK STMT_OR_SUB_BLOCK VALUE ENDVALUE QUOTE_STR LIT_STRING INCLUDE
