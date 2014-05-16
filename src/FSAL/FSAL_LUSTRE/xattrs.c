@@ -74,7 +74,7 @@ typedef int (*xattr_setfunc_t) (struct fsal_obj_handle *, /* object handle */
 				void *arg);	/* optionnal argument */
 
 struct fsal_xattr_def {
-	char xattr_name[MAXNAMLEN];
+	char xattr_name[MAXNAMLEN+1];
 	xattr_getfunc_t get_func;
 	xattr_setfunc_t set_func;
 	int flags;
@@ -254,7 +254,7 @@ static int xattr_id_to_name(char *lustre_path, unsigned int xattr_id,
 	unsigned int index;
 	unsigned int curr_idx;
 	char names[MAXPATHLEN], *ptr;
-	size_t namesize;
+	ssize_t namesize;
 	size_t len = 0;
 
 	if (xattr_id < XATTR_COUNT)
@@ -294,7 +294,7 @@ static int xattr_name_to_id(char *lustre_path, const char *name)
 {
 	unsigned int i;
 	char names[MAXPATHLEN], *ptr;
-	size_t namesize;
+	ssize_t namesize;
 
 	/* get xattrs */
 
@@ -326,7 +326,7 @@ fsal_status_t lustre_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
 	char mypath[MAXPATHLEN];
 
 	char names[MAXPATHLEN], *ptr;
-	size_t namesize;
+	ssize_t namesize;
 	int xattr_idx;
 
 	/* sanity checks */
@@ -398,7 +398,13 @@ fsal_status_t lustre_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
 
 			/* fills an xattr entry */
 			xattrs_tab[out_index].xattr_id = index;
-			strncpy(xattrs_tab[out_index].xattr_name, ptr, len + 1);
+			/*
+			 * We probably ought to check if len is greater
+			 * than MAXNAMLEN ? Should be safe depending on
+			 * underlying FS...
+			 */
+			strncpy(xattrs_tab[out_index].xattr_name, ptr,
+				MAXNAMLEN);
 			xattrs_tab[out_index].xattr_cookie = index + 1;
 
 			/* set asked attributes (all supported) */
@@ -461,19 +467,14 @@ fsal_status_t lustre_getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
 
 		errno = 0;
 		rc = xattr_name_to_id(mypath, xattr_name);
-		if (rc < 0) {
+		if (rc < 0)
 			return fsalstat(-rc, errno);
-		} else {
-			index = rc;
-			found = TRUE;
-		}
+
+		index = rc;
 	}
 
-	if (found) {
-		*pxattr_id = index;
-		return fsalstat(ERR_FSAL_NO_ERROR, 0);
-	} else
-		return fsalstat(ERR_FSAL_NOENT, ENOENT);
+	*pxattr_id = index;
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 fsal_status_t lustre_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
@@ -484,7 +485,7 @@ fsal_status_t lustre_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 					    size_t *p_output_size)
 {
 	struct lustre_fsal_obj_handle *obj_handle = NULL;
-	int rc = 0;
+	ssize_t rc = 0;
 	char mypath[MAXPATHLEN];
 
 	obj_handle =
@@ -518,17 +519,16 @@ fsal_status_t lustre_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 		 */
 		*p_output_size = rc;
 
-		return fsalstat(ERR_FSAL_NO_ERROR, 0);
+		rc = ERR_FSAL_NO_ERROR;
 	} else {		/* built-in attr */
 
 		/* get the value */
 		rc = xattr_list[xattr_id].get_func(obj_hdl, buffer_addr,
 						   buffer_size, p_output_size,
 						   xattr_list[xattr_id].arg);
-		return fsalstat(rc, 0);
 	}
 
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	return fsalstat(rc, 0);
 }
 
 fsal_status_t lustre_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
@@ -539,7 +539,7 @@ fsal_status_t lustre_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
 				      size_t *p_output_size)
 {
 	struct lustre_fsal_obj_handle *obj_handle = NULL;
-	int rc = 0;
+	ssize_t rc = 0;
 	char mypath[MAXPATHLEN];
 	unsigned int index;
 
