@@ -70,7 +70,11 @@ int nlm4_Lock(nfs_arg_t *args, exportlist_t *export,
 		care = CARE_NO_MONITOR;
 	}
 
-	if (export == NULL) {
+	/* NLM doesn't have a BADHANDLE error, nor can rpc_execute deal with
+	 * responding to an NLM_*_MSG call, so we check here if the export is
+	 * NULL and if so, handle the response.
+	 */
+	if (req_ctx->export == NULL) {
 		res->res_nlm4.stat.stat = NLM4_STALE_FH;
 		LogInfo(COMPONENT_NLM, "INVALID HANDLE: %s", proc_name);
 		return NFS_REQ_OK;

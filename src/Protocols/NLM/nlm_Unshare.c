@@ -58,7 +58,11 @@ int nlm4_Unshare(nfs_arg_t *args, exportlist_t *export,
 	int rc;
 	int grace = nfs_in_grace();
 
-	if (export == NULL) {
+	/* NLM doesn't have a BADHANDLE error, nor can rpc_execute deal with
+	 * responding to an NLM_*_MSG call, so we check here if the export is
+	 * NULL and if so, handle the response.
+	 */
+	if (req_ctx->export == NULL) {
 		res->res_nlm4share.stat = NLM4_STALE_FH;
 		LogInfo(COMPONENT_NLM, "INVALID HANDLE: nlm4_Unshare");
 		return NFS_REQ_OK;
