@@ -575,14 +575,14 @@ void state_export_release_nfs4_state(void);
 bool init_deleg_heuristics(cache_entry_t *entry);
 bool should_we_grant_deleg(cache_entry_t *entry, nfs_client_id_t *client,
 			   state_t *open_state);
-void init_new_deleg_state(state_data_t *deleg_state, state_t *open_state,
+void init_new_deleg_state(state_data_t *deleg_state,
 			  open_delegation_type4 sd_type,
 			  nfs_client_id_t *clientid);
 bool deleg_heuristics_recall(cache_entry_t *entry, nfs_client_id_t *client);
 void get_deleg_perm(cache_entry_t *entry, nfsace4 *permissions,
 		    open_delegation_type4 type);
 bool update_delegation_stats(cache_entry_t *entry, state_t *state);
-state_status_t delegrecall(cache_entry_t *entry, bool rwlocked);
+state_status_t delegrecall(cache_entry_t *entry);
 state_status_t deleg_revoke(state_lock_entry_t *deleg_entry);
 
 #ifdef DEBUG_SAL

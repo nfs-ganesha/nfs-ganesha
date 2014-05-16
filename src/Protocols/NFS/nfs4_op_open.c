@@ -912,7 +912,7 @@ static void get_delegation(compound_data_t *data, struct nfs_argop4 *op,
 	lock_desc.lock_length = 0;
 	lock_desc.lock_sle_type = FSAL_LEASE_LOCK;
 
-	init_new_deleg_state(&deleg_data, open_state, deleg_type, client);
+	init_new_deleg_state(&deleg_data, deleg_type, client);
 
 	/* Check for conflict. */
 	candidate_data.share.share_access =

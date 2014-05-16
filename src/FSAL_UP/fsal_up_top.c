@@ -1358,6 +1358,7 @@ static uint32_t delegrecall_one(state_lock_entry_t *deleg_entry)
 	nfs_cb_argop4 argop[1];
 	struct gsh_export *exp;
 	bool needs_revoke = FALSE;
+	struct delegrecall_context *p_cargs = NULL;
 	struct clientfile_deleg_heuristics *clfl_stats =
 			&deleg_entry->sle_state->state_data.deleg.clfile_stats;
 	struct client_deleg_heuristics *cl_stats =
@@ -1370,13 +1371,6 @@ static uint32_t delegrecall_one(state_lock_entry_t *deleg_entry)
 	atomic_inc_uint32_t(&cl_stats->tot_recalls);
 
 	exp = deleg_entry->sle_state->state_export;
-	struct delegrecall_context *p_cargs = NULL;
-
-	maxfh = gsh_malloc(NFS4_FHSIZE); /* free in cb_completion_func() */
-	if (maxfh == NULL) {
-		LogDebug(COMPONENT_FSAL_UP, "FSAL_UP_DELEG: no mem, failed.");
-		code = NFS_CB_CALL_ABORTED;
-	}
 	code =
 	    nfs_client_id_get_confirmed(deleg_entry->sle_owner->so_owner.
 					so_nfs4_owner.so_clientid, &clid);
@@ -1439,6 +1433,13 @@ static uint32_t delegrecall_one(state_lock_entry_t *deleg_entry)
 	       deleg_entry->sle_state->stateid_other, OTHERSIZE);
 	argop->nfs_cb_argop4_u.opcbrecall.truncate = FALSE;
 
+	maxfh = gsh_malloc(NFS4_FHSIZE); /* free in cb_completion_func() */
+	if (maxfh == NULL) {
+		LogDebug(COMPONENT_FSAL_UP, "FSAL_UP_DELEG: no mem, aborting.");
+		code = NFS_CB_CALL_ABORTED;
+		goto out;
+	}
+
 	/* Convert it to a file handle */
 	argop->nfs_cb_argop4_u.opcbrecall.fh.nfs_fh4_len = 0;
 	argop->nfs_cb_argop4_u.opcbrecall.fh.nfs_fh4_val = maxfh;
@@ -1472,6 +1473,10 @@ static uint32_t delegrecall_one(state_lock_entry_t *deleg_entry)
 	maxfh = NULL; /* avoid free */
 	call = NULL;
 out:
+	/* nfs_client_id_get_confirmed() increments a ref to the client id */
+	if (clid != NULL)
+                dec_client_id_ref(clid);
+
 	switch (code) {
 	case NFS_CB_CALL_FINISHED:
 		break;
@@ -1642,9 +1647,9 @@ static int schedule_delegrevoke_check(state_lock_entry_t *deleg_entry)
 	return rc;
 }
 
-
-
-state_status_t delegrecall(cache_entry_t *entry, bool rwlocked)
+/* entry->state_lock MUST be WRITE locked before calling this function!! 
+ * Is there a way we can limit this to a READ lock? */
+state_status_t delegrecall(cache_entry_t *entry)
 {
 	struct glist_head *glist, *glist_n;
 	state_lock_entry_t *deleg_entry = NULL;
@@ -1656,15 +1661,8 @@ state_status_t delegrecall(cache_entry_t *entry, bool rwlocked)
 		 "FSAL_UP_DELEG: Invalidate cache found entry %p type %u",
 		 entry, entry->type);
 
-	if (!rwlocked)
-		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
-
 	glist_for_each_safe(glist, glist_n, &entry->object.file.deleg_list) {
 		deleg_entry = glist_entry(glist, state_lock_entry_t, sle_list);
-
-		if (deleg_entry->sle_type != LEASE_LOCK || deleg_entry == NULL
-		    || deleg_entry->sle_state == NULL)
-			continue;
 
 		LogDebug(COMPONENT_NFS_CB, "deleg_entry %p", deleg_entry);
 		clfl_stats =
@@ -1687,10 +1685,6 @@ state_status_t delegrecall(cache_entry_t *entry, bool rwlocked)
 							OPEN_DELEGATE_WRITE)
 			break;
 	}
-
-	if (!rwlocked)
-		PTHREAD_RWLOCK_unlock(&entry->state_lock);
-
 	return rc;
 }
 
@@ -1721,7 +1715,15 @@ state_status_t delegrecall_upcall(struct fsal_module *fsal,
 		 * in cache in a cluster. */
 		return rc;
 	}
-	return delegrecall(entry, false);
+
+	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
+	rc = delegrecall(entry);
+	PTHREAD_RWLOCK_unlock(&entry->state_lock);
+
+	/* up_get() took a reference on the entry */
+	cache_inode_put(entry);
+
+	return rc;
 }
 
 

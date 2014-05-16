@@ -87,18 +87,16 @@ void init_clientfile_deleg(struct clientfile_deleg_heuristics *clfile_entry)
  * to state_add()
  *
  * @param[in/out] deleg_state Delegation state struct to be init. Can't be NULL.
- * @param[in] open_state Open state for the file this delegation is for.
  * @param[in] sd_type Type of delegation, READ or WRITE.
  * @param[in] client Client that will own this delegation.
  */
-void init_new_deleg_state(state_data_t *deleg_state, state_t *open_state,
+void init_new_deleg_state(state_data_t *deleg_state,
 			  open_delegation_type4 sd_type,
 			  nfs_client_id_t *client)
 {
 	struct clientfile_deleg_heuristics *clfile_entry =
 		&deleg_state->deleg.clfile_stats;
 
-	deleg_state->deleg.sd_open_state = open_state;
 	deleg_state->deleg.sd_type = sd_type;
 	deleg_state->deleg.grant_time = time(NULL);
 	deleg_state->deleg.deleg_state = DELEG_GRANTED;

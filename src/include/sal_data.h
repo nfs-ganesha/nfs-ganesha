@@ -310,7 +310,6 @@ typedef struct state_lock_t {
 typedef struct state_deleg__ {
 	open_delegation_type4 sd_type;
 	stateid4 sd_stateid;             /* unique delegation stateid */
-	state_t *sd_open_state;          /*  */
 	struct glist_head sd_deleg_list; /*  */
 	time_t grant_time;               /* time of successful delegation */
 	uint32_t deleg_state;
