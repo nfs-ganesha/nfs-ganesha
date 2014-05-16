@@ -1611,7 +1611,7 @@ bool init_export_root(struct gsh_export *export)
 	export->exp_root_cache_inode = entry;
 
 	glist_add_tail(&entry->object.dir.export_roots,
-		       &export->export.exp_root_list);
+		       &export->exp_root_list);
 
 	/* Protect this entry from removal (unlink) */
 	atomic_inc_int32_t(&entry->exp_root_refcount);
@@ -1646,7 +1646,7 @@ void release_export_root_locked(struct gsh_export *export)
 {
 	cache_entry_t *entry = NULL;
 
-	glist_del(&export->export.exp_root_list);
+	glist_del(&export->exp_root_list);
 	entry = export->exp_root_cache_inode;
 	export->exp_root_cache_inode = NULL;
 
@@ -1724,7 +1724,6 @@ void unexport(struct gsh_export *export)
 
 void kill_export_root_entry(cache_entry_t *entry)
 {
-	exportlist_t *exp;
 	struct gsh_export *export;
 	struct root_op_context root_op_context;
 
@@ -1738,16 +1737,15 @@ void kill_export_root_entry(cache_entry_t *entry)
 	while (true) {
 		PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
 
-		exp = glist_first_entry(&entry->object.dir.export_roots,
-					exportlist_t,
-					exp_root_list);
+		export = glist_first_entry(&entry->object.dir.export_roots,
+					   struct gsh_export,
+					   exp_root_list);
 
-		if (exp == NULL) {
+		if (export == NULL) {
 			PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 			return;
 		}
 
-		export = container_of(exp, struct gsh_export, export);
 		get_gsh_export_ref(export);
 		LogInfo(COMPONENT_CONFIG,
 			"Killing export_id %d because root entry went bad",

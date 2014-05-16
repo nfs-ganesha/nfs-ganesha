@@ -67,6 +67,8 @@ struct gsh_export {
 	struct glist_head exp_lock_list;
 	/** List of NLM shares belonging to this export */
 	struct glist_head exp_nlm_share_list;
+	/** List of exports rooted on the same inode */
+	struct glist_head exp_root_list;
 	/** Entry for the root of this export, protected by lock */
 	cache_entry_t *exp_root_cache_inode;
 	/** Entry for the junction of this export.  Protected by lock */

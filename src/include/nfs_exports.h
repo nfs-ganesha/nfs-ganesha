@@ -113,8 +113,6 @@ typedef struct exportlist_client_entry__ {
 typedef struct exportlist {
 	struct export_perms export_perms;	/*< available mount options */
 	struct glist_head clients;	/*< Allowed clients */
-	struct glist_head exp_root_list;	/*< List of exports rooted
-						    on the same inode */
 } exportlist_t;
 
 /* Constant for options masks */

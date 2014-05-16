@@ -586,7 +586,7 @@ void put_gsh_export(struct gsh_export *export)
 	assert(glist_empty(&export->exp_state_list));
 	assert(glist_empty(&export->exp_lock_list));
 	assert(glist_empty(&export->exp_nlm_share_list));
-	assert(glist_null(&export->export.exp_root_list));
+	assert(glist_null(&export->exp_root_list));
 
 	/* free resources */
 	free_export_resources(export);
