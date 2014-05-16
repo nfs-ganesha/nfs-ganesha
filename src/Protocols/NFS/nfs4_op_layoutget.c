@@ -247,7 +247,7 @@ void free_layouts(layout4 *layouts, uint32_t numlayouts)
  * @return NFS4_OK if successfull, other values show an error.
  */
 
-static nfsstat4 one_segment(cache_entry_t *entry, exportlist_t *export,
+static nfsstat4 one_segment(cache_entry_t *entry,
 			    struct req_op_context *req_ctx,
 			    state_t *layout_state,
 			    const struct fsal_layoutget_arg *arg,
@@ -458,7 +458,6 @@ int nfs4_op_layoutget(struct nfs_argop4 *op, compound_data_t *data,
 		res.fsal_seg_data = NULL;
 
 		nfs_status = one_segment(data->current_entry,
-					 data->export,
 					 data->req_ctx,
 					 layout_state,
 					 &arg,

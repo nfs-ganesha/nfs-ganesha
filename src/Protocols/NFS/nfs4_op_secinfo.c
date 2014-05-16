@@ -119,7 +119,6 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 		data->req_ctx->export = entry_src->object.dir.junction_export;
 		data->req_ctx->fsal_export =
 			data->req_ctx->export->fsal_export;
-		data->export = &data->req_ctx->export->export;
 
 		/* Release attr_lock */
 		PTHREAD_RWLOCK_unlock(&entry_src->attr_lock);
@@ -266,7 +265,6 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 			put_gsh_export(data->req_ctx->export);
 			data->req_ctx->export = NULL;
 			data->req_ctx->fsal_export = NULL;
-			data->export = NULL;
 		}
 
 		if (saved_gsh_export != NULL) {
@@ -289,7 +287,6 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 		data->req_ctx->export = saved_gsh_export;
 		data->req_ctx->fsal_export =
 			data->req_ctx->export->fsal_export;
-		data->export = &data->req_ctx->export->export;
 
 		/* Restore creds */
 		if (!get_req_creds(data->req, data->req_ctx)) {

@@ -253,10 +253,6 @@ typedef struct compound_data {
 	object_file_type_t saved_filetype;	/*< File type of saved entry */
 	struct req_op_context *req_ctx;	/*< the context including
 					   related, mapped creds */
-/** @todo these members need to be cleaned up to refer to the gsh_export
- * at some point.
- */
-	exportlist_t *export;	/*< Export entry related to the request */
 	struct gsh_export *saved_export; /*< Export entry related to the
 					     savedFH */
 	struct export_perms saved_export_perms; /*< Permissions for export for

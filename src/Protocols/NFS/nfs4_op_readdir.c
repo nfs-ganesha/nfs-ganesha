@@ -71,7 +71,6 @@ static void restore_data(struct nfs4_readdir_cb_data *tracker)
 	tracker->data->req_ctx->export = tracker->saved_gsh_export;
 	tracker->data->req_ctx->fsal_export =
 		tracker->data->req_ctx->export->fsal_export;
-	tracker->data->export = &tracker->data->req_ctx->export->export;
 	tracker->saved_gsh_export = NULL;
 
 	/* Restore creds */
@@ -165,7 +164,6 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 
 		data->req_ctx->fsal_export =
 			data->req_ctx->export->fsal_export;
-		data->export = &data->req_ctx->export->export;
 
 		/* Build the credentials */
 		rdattr_error = nfs4_MakeCred(data);

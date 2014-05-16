@@ -152,9 +152,7 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 		get_gsh_export_ref(parent_exp);
 
 		data->req_ctx->export = parent_exp;
-		data->req_ctx->fsal_export =
-			data->req_ctx->export->fsal_export;
-		data->export = &data->req_ctx->export->export;
+		data->req_ctx->fsal_export = data->req_ctx->export->fsal_export;
 
 		/* Now we are safely transitioned to the parent export and can
 		 * release the lock.
