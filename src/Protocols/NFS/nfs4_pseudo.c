@@ -308,10 +308,9 @@ retry:
  *
  * @return status as bool.
  */
-bool pseudo_mount_export(struct gsh_export *exp,
+bool pseudo_mount_export(struct gsh_export *export,
 			 struct req_op_context *req_ctx)
 {
-	exportlist_t *export = &exp->export;
 	struct pseudofs_state state;
 	char *tmp_pseudopath;
 	char *last_slash;
@@ -326,24 +325,24 @@ bool pseudo_mount_export(struct gsh_export *exp,
 	 * Also, nothing to actually do for Pseudo Root
 	 */
 	if ((export->export_perms.options & EXPORT_OPTION_NFSV4) == 0
-	    || exp->pseudopath == NULL
-	    || exp->export_id == 0
-	    || exp->pseudopath[1] == '\0')
+	    || export->pseudopath == NULL
+	    || export->export_id == 0
+	    || export->pseudopath[1] == '\0')
 		return true;
 
 	/* Initialize state and it's req_ctx.
 	 * Note that a zeroed creds works just fine as root creds.
 	 */
-	state.export = exp;
+	state.export = export;
 	state.req_ctx = req_ctx;
 
 	LogDebug(COMPONENT_EXPORT,
 		 "BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s",
-		 exp->export_id, exp->fullpath, exp->pseudopath);
+		 export->export_id, export->fullpath, export->pseudopath);
 
 	/* Make a copy of the path */
-	tmp_pseudopath = alloca(strlen(exp->pseudopath) + 1);
-	strcpy(tmp_pseudopath, exp->pseudopath);
+	tmp_pseudopath = alloca(strlen(export->pseudopath) + 1);
+	strcpy(tmp_pseudopath, export->pseudopath);
 
 	/* Find last '/' in path */
 	p = tmp_pseudopath;
@@ -368,7 +367,7 @@ bool pseudo_mount_export(struct gsh_export *exp,
 	if (state.req_ctx->export == NULL) {
 		LogFatal(COMPONENT_EXPORT,
 			 "Could not find mounted on export for %s, tmp=%s",
-			 exp->pseudopath, tmp_pseudopath);
+			 export->pseudopath, tmp_pseudopath);
 	}
 
 	state.req_ctx->fsal_export = req_ctx->export->fsal_export;
@@ -387,7 +386,8 @@ bool pseudo_mount_export(struct gsh_export *exp,
 
 	LogDebug(COMPONENT_EXPORT,
 		 "BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s Rest %s",
-		 exp->export_id, exp->fullpath, exp->pseudopath, rest);
+		 export->export_id, export->fullpath,
+		 export->pseudopath, rest);
 
 	/* Get the root inode of the mounted on export */
 	cache_status = nfs_export_get_root_entry(state.req_ctx->export,
@@ -396,7 +396,8 @@ bool pseudo_mount_export(struct gsh_export *exp,
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		LogCrit(COMPONENT_EXPORT,
 			"BUILDING PSEUDOFS: Could not get root entry for Export_Id %d Path %s Pseudo Path %s",
-			exp->export_id, exp->fullpath, exp->pseudopath);
+			export->export_id, export->fullpath,
+			export->pseudopath);
 
 		/* Release the reference on the mounted on export. */
 		put_gsh_export(state.req_ctx->export);
@@ -427,9 +428,9 @@ bool pseudo_mount_export(struct gsh_export *exp,
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		LogCrit(COMPONENT_EXPORT,
 			"BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s final GETATTR failed with %s",
-			exp->export_id,
-			exp->fullpath,
-			exp->pseudopath,
+			export->export_id,
+			export->fullpath,
+			export->pseudopath,
 			cache_inode_err_str(cache_status));
 
 		/* Release reference on mount point inode
@@ -451,9 +452,9 @@ bool pseudo_mount_export(struct gsh_export *exp,
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		LogCrit(COMPONENT_INIT,
 			"BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s final pin failed with %s",
-			exp->export_id,
-			exp->fullpath,
-			exp->pseudopath,
+			export->export_id,
+			export->fullpath,
+			export->pseudopath,
 			cache_inode_err_str(cache_status));
 
 		/* Release the LRU reference and return failure. */
@@ -464,17 +465,17 @@ bool pseudo_mount_export(struct gsh_export *exp,
 	/* Now that all entries are added to pseudofs tree, and we are pointing
 	 * to the final node, make it a proper junction.
 	 */
-	state.dirent->object.dir.junction_export = exp;
+	state.dirent->object.dir.junction_export = export;
 
 	/* And fill in the mounted on information for the export. */
-	PTHREAD_RWLOCK_wrlock(&exp->lock);
+	PTHREAD_RWLOCK_wrlock(&export->lock);
 
-	exp->exp_mounted_on_file_id =
+	export->exp_mounted_on_file_id =
 	    state.dirent->obj_handle->attributes.fileid;
-	exp->exp_junction_inode = state.dirent;
-	exp->exp_parent_exp = state.req_ctx->export;
+	export->exp_junction_inode = state.dirent;
+	export->exp_parent_exp = state.req_ctx->export;
 
-	PTHREAD_RWLOCK_unlock(&exp->lock);
+	PTHREAD_RWLOCK_unlock(&export->lock);
 
 	PTHREAD_RWLOCK_unlock(&state.dirent->attr_lock);
 
@@ -484,10 +485,10 @@ bool pseudo_mount_export(struct gsh_export *exp,
 	return true;
 }
 
-bool pseudo_mount_export_wrapper(struct gsh_export *exp, void *arg)
+bool pseudo_mount_export_wrapper(struct gsh_export *export, void *arg)
 {
 	struct root_op_context *root_op_context = arg;
-	return pseudo_mount_export(exp, &root_op_context->req_ctx);
+	return pseudo_mount_export(export, &root_op_context->req_ctx);
 }
 
 /**

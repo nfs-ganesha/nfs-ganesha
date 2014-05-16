@@ -111,8 +111,6 @@ typedef struct exportlist_client_entry__ {
 } exportlist_client_entry_t;
 
 typedef struct exportlist {
-	struct export_perms export_perms;	/*< available mount options */
-	struct glist_head clients;	/*< Allowed clients */
 } exportlist_t;
 
 /* Constant for options masks */

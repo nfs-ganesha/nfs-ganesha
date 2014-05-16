@@ -920,13 +920,13 @@ static void nfs_rpc_execute(request_data_t *req,
 				goto req_error;
 			}
 			req_ctx.fsal_export = req_ctx.export->fsal_export;
-			if ((req_ctx.export->export.export_perms.
+			if ((req_ctx.export->export_perms.
 			     options & EXPORT_OPTION_NFSV3) == 0)
 				goto handle_err;
 			/* privileged port only makes sense for V3.
 			 * V4 can go thru firewalls and so all bets are off
 			 */
-			if ((req_ctx.export->export.export_perms.
+			if ((req_ctx.export->export_perms.
 			     options & EXPORT_OPTION_PRIVILEGED_PORT)
 			    && (port >= IPPORT_RESERVED)) {
 				LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
@@ -1024,7 +1024,7 @@ static void nfs_rpc_execute(request_data_t *req,
 					 */
 					req_ctx.fsal_export = NULL;
 				} else {
-					if ((req_ctx.export->export.export_perms
+					if ((req_ctx.export->export_perms
 					     .options & EXPORT_OPTION_NFSV3)
 					    == 0)
 						goto handle_err;
@@ -1043,7 +1043,7 @@ static void nfs_rpc_execute(request_data_t *req,
 		progname = "MNT";
 	}
 
-	/* Only do access check if we have an export. */
+	/* Only do access check if we have an  */
 	if (req_ctx.export != NULL) {
 		xprt_type_t xprt_type = svc_get_xprt_type(xprt);
 

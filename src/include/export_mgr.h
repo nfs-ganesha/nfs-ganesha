@@ -71,6 +71,8 @@ struct gsh_export {
 	struct glist_head exp_root_list;
 	/** Entry for the root of this export, protected by lock */
 	cache_entry_t *exp_root_cache_inode;
+	/** Allowed clients */
+	struct glist_head clients;
 	/** Entry for the junction of this export.  Protected by lock */
 	cache_entry_t *exp_junction_inode;
 	/** The export this export sits on. Protected by lock */
@@ -105,6 +107,8 @@ struct gsh_export {
 	int64_t refcnt;
 	/** Read/Write lock protecting export */
 	pthread_rwlock_t lock;
+	/** available mount options */
+	struct export_perms export_perms;
 	/** The NFS server definition of the export */
 	exportlist_t export;
 	/** The last time the export stats were updated */

@@ -516,7 +516,7 @@ static fattr_xdr_result encode_fsid(XDR *xdr, struct xdr_attrs_args *args)
 	fsid4 fsid = {0, 0};
 
 	if (args->data != NULL && args->data->export != NULL &&
-	    (args->data->export->export_perms.set &
+	    (args->data->req_ctx->export->export_perms.set &
 	     EXPORT_OPTION_FSID_SET) != 0) {
 		fsid.major = args->data->req_ctx->export->filesystem_id.major;
 		fsid.minor = args->data->req_ctx->export->filesystem_id.minor;
@@ -730,9 +730,10 @@ static fattr_xdr_result decode_acl(XDR *xdr, struct xdr_attrs_args *args)
 				if (!name2gid(
 					&gname,
 					&ace->who.gid,
-					args->data ?
-					    args->data->export->export_perms
-					    .anonymous_gid : -1))
+					args->data
+					? args->data->req_ctx->export
+					  ->export_perms .anonymous_gid
+					: -1))
 					goto baderr;
 
 				LogFullDebug(COMPONENT_NFS_V4,
@@ -746,9 +747,10 @@ static fattr_xdr_result decode_acl(XDR *xdr, struct xdr_attrs_args *args)
 				if (!name2uid(
 					&uname,
 					&ace->who.uid,
-					args->data ?
-					    args->data->export->export_perms
-						.anonymous_uid : -1))
+					args->data
+					? args->data->req_ctx->export
+					  ->export_perms .anonymous_uid
+					: -1))
 					goto baderr;
 
 				LogFullDebug(COMPONENT_NFS_V4,
@@ -1410,10 +1412,11 @@ static fattr_xdr_result decode_owner(XDR *xdr, struct xdr_attrs_args *args)
 		return FATTR_XDR_FAILED;
 	}
 
-	if (!name2uid
-	    (&ownerdesc, &uid,
-	     (args->data ? args->data->export->export_perms.
-	      anonymous_uid : -1))) {
+	if (!name2uid(&ownerdesc,
+		      &uid,
+		      args->data ?
+			args->data->req_ctx->export->export_perms.anonymous_uid
+			: -1)) {
 		return FATTR_BADOWNER;
 	}
 
@@ -1456,10 +1459,11 @@ static fattr_xdr_result decode_group(XDR *xdr, struct xdr_attrs_args *args)
 		return FATTR_XDR_FAILED;
 	}
 
-	if (!name2gid
-	    (&groupdesc, &gid,
-	     (args->data ? args->data->export->export_perms.
-	      anonymous_gid : -1)))
+	if (!name2gid(&groupdesc,
+		      &gid,
+		      args->data ?
+			args->data->req_ctx->export->export_perms.anonymous_gid
+			: -1))
 		return FATTR_BADOWNER;
 
 	xdr_setpos(xdr, newpos);
@@ -3605,7 +3609,7 @@ bool nfs3_FSALattr_To_Fattr(struct gsh_export *export,
 			"attribute: missing %lx", want & ~got);
 	}
 
-	if ((export->export.export_perms.set & EXPORT_OPTION_FSID_SET) != 0) {
+	if ((export->export_perms.set & EXPORT_OPTION_FSID_SET) != 0) {
 		/* xor filesystem_id major and rotated minor to create unique
 		 * on-wire fsid.
 		 */

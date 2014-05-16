@@ -393,7 +393,7 @@ static int add_client(struct gsh_export *export,
 				continue;
 			cli->client_perms = *perms;
 			LogClientListEntry(COMPONENT_CONFIG, cli);
-			glist_add_tail(&export->export.clients,
+			glist_add_tail(&export->clients,
 				       &cli->cle_list);
 			cli = NULL; /* let go of it */
 		}
@@ -408,7 +408,7 @@ static int add_client(struct gsh_export *export,
 	}
 	cli->client_perms = *perms;
 	LogClientListEntry(COMPONENT_CONFIG, cli);
-	glist_add_tail(&export->export.clients,
+	glist_add_tail(&export->clients,
 		       &cli->cle_list);
 	cli = NULL;
 out:
@@ -443,8 +443,8 @@ static void *client_init(void *link_mem, void *self_struct)
 
 		cli_list = self_struct;
 		export = container_of(cli_list, struct gsh_export,
-				      export.clients);
-		glist_init(&export->export.clients);
+				      clients);
+		glist_init(&export->clients);
 		return self_struct;
 	} else if (self_struct == NULL) {
 		cli = gsh_calloc(sizeof(struct exportlist_client_entry__), 1);
@@ -489,7 +489,7 @@ static int client_commit(void *node, void *link_mem, void *self_struct,
 	int errcnt = 0;
 
 	cli_list = link_mem;
-	export = container_of(cli_list, struct gsh_export, export.clients);
+	export = container_of(cli_list, struct gsh_export, clients);
 	cli = self_struct;
 	assert(cli->type == RAW_CLIENT_LIST);
 
@@ -641,7 +641,7 @@ static int fsal_commit(void *node, void *link_mem, void *self_struct,
 					  &root_op_context.req_ctx,
 					  node,
 					  &fsal_up_top);
-	if (!(export->export.export_perms.set & EXPORT_OPTION_EXPIRE_SET)) {
+	if (!(export->export_perms.set & EXPORT_OPTION_EXPIRE_SET)) {
 		export->expire_type_attr =
 			nfs_param.cache_param.expire_type_attr;
 		export->expire_time_attr =
@@ -735,7 +735,7 @@ static int export_commit(void *node, void *link_mem, void *self_struct,
 	export = self_struct;
 
 	/* validate the export now */
-	if ((export->export.export_perms.options & EXPORT_OPTION_NFSV4)) {
+	if ((export->export_perms.options & EXPORT_OPTION_NFSV4)) {
 		if (export->pseudopath == NULL) {
 			LogCrit(COMPONENT_CONFIG,
 				"Exporting to NFSv4 but not Pseudo path defined");
@@ -771,7 +771,7 @@ static int export_commit(void *node, void *link_mem, void *self_struct,
 			err_type->invalid = true;
 			errcnt++;
 		}
-		if ((export->export.export_perms.options &
+		if ((export->export_perms.options &
 		     EXPORT_OPTION_PROTOCOLS) != EXPORT_OPTION_NFSV4) {
 			LogCrit(COMPONENT_CONFIG,
 				"Export id 0 must indicate Protocols=4");
@@ -850,7 +850,7 @@ static int export_commit(void *node, void *link_mem, void *self_struct,
 		goto err_out;
 	}
 
-	StrExportOptions(&export->export.export_perms, perms);
+	StrExportOptions(&export->export_perms, perms);
 
 	LogEvent(COMPONENT_CONFIG,
 		 "Export %d created at pseudo (%s) with path (%s) and tag (%s) perms (%s)",
@@ -877,7 +877,7 @@ static void export_display(const char *step, void *node,
 	struct gsh_export *export = self_struct;
 	char perms[1024];
 
-	StrExportOptions(&export->export.export_perms, perms);
+	StrExportOptions(&export->export_perms, perms);
 
 	LogMidDebug(COMPONENT_CONFIG,
 		    "%s %p Export %d pseudo (%s) with path (%s) and tag (%s) perms (%s)",
@@ -1169,7 +1169,7 @@ static struct config_item export_params[] = {
 		       gsh_export, PrefReaddir),
 	CONF_ITEM_FSID_SET("Filesystem_id", 666, 666,
 		       gsh_export, filesystem_id, /* major.minor */
-		       EXPORT_OPTION_FSID_SET, export.export_perms.set),
+		       EXPORT_OPTION_FSID_SET, export_perms.set),
 	CONF_ITEM_STR("Tag", 1, MAXPATHLEN, NULL,
 		      gsh_export, FS_tag),
 	CONF_ITEM_UI64("MaxOffsetWrite", 512, UINT64_MAX, UINT64_MAX,
@@ -1178,15 +1178,15 @@ static struct config_item export_params[] = {
 		       gsh_export, MaxOffsetRead),
 	CONF_ITEM_BOOL("UseCookieVerifier", true,
 		       gsh_export, UseCookieVerifier),
-	CONF_EXPORT_PERMS(gsh_export, export.export_perms),
+	CONF_EXPORT_PERMS(gsh_export, export_perms),
 	CONF_ITEM_BLOCK("Client", client_params,
 			client_init, client_commit,
-			gsh_export, export.clients),
+			gsh_export, clients),
 	CONF_ITEM_ENUM_SET("Attr_Expiration_Type",
 			   CACHE_INODE_EXPIRE_NEVER,
 			   expire_types,
 			   gsh_export, expire_type_attr,
-			   EXPORT_OPTION_EXPIRE_SET, export.export_perms.set),
+			   EXPORT_OPTION_EXPIRE_SET, export_perms.set),
 	CONF_ITEM_UI32("Attr_Expiration_Time", 0, 360, 60,
 		       gsh_export, expire_time_attr),
 	CONF_RELAX_BLOCK("FSAL", fsal_params,
@@ -1200,7 +1200,7 @@ static struct config_item export_params[] = {
  */
 
 struct config_block export_param = {
-	.dbus_interface_name = "org.ganesha.nfsd.config.export.%d",
+	.dbus_interface_name = "org.ganesha.nfsd.config.%d",
 	.blk_desc.name = "EXPORT",
 	.blk_desc.type = CONFIG_BLOCK,
 	.blk_desc.u.blk.init = export_init,
@@ -1214,7 +1214,7 @@ struct config_block export_param = {
  */
 
 struct config_block add_export_param = {
-	.dbus_interface_name = "org.ganesha.nfsd.config.export.%d",
+	.dbus_interface_name = "org.ganesha.nfsd.config.%d",
 	.blk_desc.name = "EXPORT",
 	.blk_desc.type = CONFIG_BLOCK,
 	.blk_desc.u.blk.init = export_init,
@@ -1229,7 +1229,7 @@ struct config_block add_export_param = {
  */
 
 struct config_block export_defaults_param = {
-	.dbus_interface_name = "org.ganesha.nfsd.config.export.defaults",
+	.dbus_interface_name = "org.ganesha.nfsd.config.defaults",
 	.blk_desc.name = "EXPORT_DEFAULTS",
 	.blk_desc.type = CONFIG_BLOCK,
 	.blk_desc.u.blk.init = export_defaults_init,
@@ -1302,24 +1302,24 @@ static int build_default_root(void)
 	glist_init(&export->exp_state_list);
 	glist_init(&export->exp_lock_list);
 	glist_init(&export->exp_nlm_share_list);
-	glist_init(&export->export.clients);
+	glist_init(&export->clients);
 
 	/* Default anonymous uid and gid */
-	export->export.export_perms.anonymous_uid = (uid_t) ANON_UID;
-	export->export.export_perms.anonymous_gid = (gid_t) ANON_GID;
+	export->export_perms.anonymous_uid = (uid_t) ANON_UID;
+	export->export_perms.anonymous_gid = (gid_t) ANON_GID;
 
 	/* Support only NFS v4 and TCP.
 	 * Root is allowed
 	 * MD Read Access
 	 * Allow use of default auth types
 	 */
-	export->export.export_perms.options = EXPORT_OPTION_ROOT |
+	export->export_perms.options = EXPORT_OPTION_ROOT |
 					EXPORT_OPTION_MD_READ_ACCESS |
 					EXPORT_OPTION_NFSV4 |
 					EXPORT_OPTION_AUTH_TYPES |
 					EXPORT_OPTION_TCP;
 
-	export->export.export_perms.set = EXPORT_OPTION_SQUASH_TYPES |
+	export->export_perms.set = EXPORT_OPTION_SQUASH_TYPES |
 				    EXPORT_OPTION_ACCESS_TYPE |
 				    EXPORT_OPTION_PROTOCOLS |
 				    EXPORT_OPTION_TRANSPORTS |
@@ -1364,7 +1364,7 @@ static int build_default_root(void)
 		export->fsal_export->ops->release(export->fsal_export);
 		fsal_put(fsal_hdl);
 		LogCrit(COMPONENT_CONFIG,
-			"Failed to insert pseudo root export.  In use??");
+			"Failed to insert pseudo root   In use??");
 		goto err_out;
 	}
 	set_gsh_export_state(export, EXPORT_READY);
@@ -1452,7 +1452,7 @@ static void FreeClientList(struct glist_head *clients)
 
 void free_export_resources(struct gsh_export *export)
 {
-	FreeClientList(&export->export.clients);
+	FreeClientList(&export->clients);
 	if (export->fsal_export != NULL) {
 		struct fsal_module *fsal = export->fsal_export->fsal;
 		export->fsal_export->ops->release(export->fsal_export);
@@ -1801,7 +1801,7 @@ static exportlist_client_entry_t *client_match(sockaddr_t *hostaddr,
 	char hostname[MAXHOSTNAMELEN + 1];
 	char ipstring[SOCK_NAME_MAX + 1];
 
-	glist_for_each(glist, &export->export.clients) {
+	glist_for_each(glist, &export->clients) {
 		exportlist_client_entry_t *client;
 
 		client = glist_entry(glist, exportlist_client_entry_t,
@@ -1941,7 +1941,7 @@ static exportlist_client_entry_t *client_matchv6(struct in6_addr *paddrv6,
 {
 	struct glist_head *glist;
 
-	glist_for_each(glist, &export->export.clients) {
+	glist_for_each(glist, &export->clients) {
 		exportlist_client_entry_t *client;
 
 		client = glist_entry(glist, exportlist_client_entry_t,
@@ -2201,23 +2201,23 @@ void export_check_access(struct req_op_context *req_ctx)
 
 	/* Any options not set by the client, take from the export */
 	req_ctx->export_perms->options |=
-				req_ctx->export->export.export_perms.options &
-				req_ctx->export->export.export_perms.set &
+				req_ctx->export->export_perms.options &
+				req_ctx->export->export_perms.set &
 				~req_ctx->export_perms->set;
 
 	if ((req_ctx->export_perms->set & EXPORT_OPTION_ANON_UID_SET) == 0 &&
-	    (req_ctx->export->export.export_perms.set &
+	    (req_ctx->export->export_perms.set &
 	     EXPORT_OPTION_ANON_UID_SET) != 0)
 		req_ctx->export_perms->anonymous_uid =
-			req_ctx->export->export.export_perms.anonymous_uid;
+			req_ctx->export->export_perms.anonymous_uid;
 
 	if ((req_ctx->export_perms->set & EXPORT_OPTION_ANON_GID_SET) == 0 &&
-	    (req_ctx->export->export.export_perms.set &
+	    (req_ctx->export->export_perms.set &
 	     EXPORT_OPTION_ANON_GID_SET) != 0)
 		req_ctx->export_perms->anonymous_gid =
-			req_ctx->export->export.export_perms.anonymous_gid;
+			req_ctx->export->export_perms.anonymous_gid;
 
-	req_ctx->export_perms->set |= req_ctx->export->export.export_perms.set;
+	req_ctx->export_perms->set |= req_ctx->export->export_perms.set;
 
 	/* Any options not set by the client or export, take from the
 	 *  EXPORT_DEFAULTS block.
@@ -2260,7 +2260,7 @@ void export_check_access(struct req_op_context *req_ctx)
 				    "CLIENT          (%s)",
 				    perms);
 		}
-		StrExportOptions(&req_ctx->export->export.export_perms, perms);
+		StrExportOptions(&req_ctx->export->export_perms, perms);
 		LogMidDebug(COMPONENT_EXPORT,
 			    "EXPORT          (%s)",
 			    perms);

@@ -775,7 +775,7 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 
 	retval = fsal_internal_version();
 	LogInfo(COMPONENT_FSAL, "GPFS get version is %d options 0x%X", retval,
-		req_ctx->export->export.export_perms.options);
+		req_ctx->export->export_perms.options);
 
 	retval = fsal_export_init(&myself->export);
 	if (retval != 0) {
