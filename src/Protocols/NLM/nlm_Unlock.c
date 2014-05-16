@@ -43,7 +43,7 @@
  * @param[out] res
  */
 
-int nlm4_Unlock(nfs_arg_t *args, exportlist_t *export,
+int nlm4_Unlock(nfs_arg_t *args,
 		struct req_op_context *req_ctx, nfs_worker_data_t *worker,
 		struct svc_req *req, nfs_res_t *res)
 {
@@ -180,7 +180,7 @@ static void nlm4_unlock_message_resp(state_async_queue_t *arg)
  * @param[out] res
  *
  */
-int nlm4_Unlock_Message(nfs_arg_t *args, exportlist_t *export,
+int nlm4_Unlock_Message(nfs_arg_t *args,
 			struct req_op_context *req_ctx,
 			nfs_worker_data_t *worker, struct svc_req *req,
 			nfs_res_t *res)
@@ -205,7 +205,7 @@ int nlm4_Unlock_Message(nfs_arg_t *args, exportlist_t *export,
 	if (nlm_client == NULL)
 		rc = NFS_REQ_DROP;
 	else
-		rc = nlm4_Unlock(args, export, req_ctx, worker, req, res);
+		rc = nlm4_Unlock(args, req_ctx, worker, req, res);
 
 	if (rc == NFS_REQ_OK)
 		rc = nlm_send_async_res_nlm4(nlm_client,

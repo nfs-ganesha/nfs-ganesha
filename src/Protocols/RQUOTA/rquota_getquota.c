@@ -51,7 +51,7 @@
  * @param[out] res    Ignored
  *
  */
-int rquota_getquota(nfs_arg_t *arg, exportlist_t *export,
+int rquota_getquota(nfs_arg_t *arg,
 		    struct req_op_context *req_ctx, nfs_worker_data_t *worker,
 		    struct svc_req *req, nfs_res_t *res)
 {

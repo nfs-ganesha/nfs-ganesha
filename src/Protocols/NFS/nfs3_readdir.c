@@ -116,7 +116,7 @@ nfsstat3 nfs_readdir_dot_entry(cache_entry_t *entry, const char *name,
  *
  */
 
-int nfs3_readdir(nfs_arg_t *arg, exportlist_t *export,
+int nfs3_readdir(nfs_arg_t *arg,
 		 struct req_op_context *req_ctx, nfs_worker_data_t *worker,
 		 struct svc_req *req, nfs_res_t *res)
 {

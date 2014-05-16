@@ -45,7 +45,7 @@
  *
  */
 
-int nlm4_Test(nfs_arg_t *args, exportlist_t *export,
+int nlm4_Test(nfs_arg_t *args,
 	      struct req_op_context *req_ctx, nfs_worker_data_t *worker,
 	      struct svc_req *req, nfs_res_t *res)
 {
@@ -201,7 +201,7 @@ static void nlm4_test_message_resp(state_async_queue_t *arg)
  *
  */
 
-int nlm4_Test_Message(nfs_arg_t *args, exportlist_t *export,
+int nlm4_Test_Message(nfs_arg_t *args,
 		      struct req_op_context *req_ctx,
 		      nfs_worker_data_t *worker, struct svc_req *req,
 		      nfs_res_t *res)
@@ -226,7 +226,7 @@ int nlm4_Test_Message(nfs_arg_t *args, exportlist_t *export,
 	if (nlm_client == NULL)
 		rc = NFS_REQ_DROP;
 	else
-		rc = nlm4_Test(args, export, req_ctx, worker, req, res);
+		rc = nlm4_Test(args, req_ctx, worker, req, res);
 
 	if (rc == NFS_REQ_OK)
 		rc = nlm_send_async_res_nlm4test(nlm_client,

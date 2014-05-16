@@ -48,8 +48,6 @@
 #include "nfs4.h"
 #include "fsal_types.h"
 
-struct exportlist;
-
 /**
  * @brief An enumeration of protocols in the NFS family
  */

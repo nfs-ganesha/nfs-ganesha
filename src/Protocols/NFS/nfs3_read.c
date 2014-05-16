@@ -48,7 +48,7 @@
 #include "server_stats.h"
 #include "export_mgr.h"
 
-static void nfs_read_ok(exportlist_t *export, struct svc_req *req,
+static void nfs_read_ok(struct svc_req *req,
 			struct req_op_context *req_ctx, nfs_res_t *res,
 			char *data, uint32_t read_size, cache_entry_t *entry,
 			int eof)
@@ -89,7 +89,7 @@ static void nfs_read_ok(exportlist_t *export, struct svc_req *req,
  *
  */
 
-int nfs3_read(nfs_arg_t *arg, exportlist_t *export,
+int nfs3_read(nfs_arg_t *arg,
 	      struct req_op_context *req_ctx, nfs_worker_data_t *worker,
 	      struct svc_req *req, nfs_res_t *res)
 {
@@ -209,7 +209,7 @@ int nfs3_read(nfs_arg_t *arg, exportlist_t *export,
 	}
 
 	if (size == 0) {
-		nfs_read_ok(export, req, req_ctx, res, NULL, 0, entry, 0);
+		nfs_read_ok(req, req_ctx, res, NULL, 0, entry, 0);
 		rc = NFS_REQ_OK;
 		goto out;
 	} else {
@@ -230,7 +230,7 @@ int nfs3_read(nfs_arg_t *arg, exportlist_t *export,
 						&sync);
 
 		if (cache_status == CACHE_INODE_SUCCESS) {
-			nfs_read_ok(export, req, req_ctx, res, data, read_size,
+			nfs_read_ok(req, req_ctx, res, data, read_size,
 				    entry, eof_met);
 			rc = NFS_REQ_OK;
 			goto out;
