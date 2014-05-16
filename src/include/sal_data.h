@@ -349,7 +349,7 @@ struct state_t {
 #ifdef DEBUG_SAL
 	struct glist_head state_list_all;    /*< Global list of all stateids */
 #endif
-	exportlist_t *state_export;	/*< Export this entry belongs to */
+	struct gsh_export *state_export; /*< Export this entry belongs to */
 	state_owner_t *state_owner;	/*< State Owner related to this state */
 	cache_entry_t *state_entry;	/*< Related entry */
 	state_type_t state_type;
@@ -788,7 +788,6 @@ typedef state_status_t(*granted_callback_t) (cache_entry_t *entry,
  */
 
 typedef struct state_nlm_block_data_t {
-	sockaddr_t sbd_nlm_hostaddr;	/*< Host waiting for blocked lock */
 	netobj sbd_nlm_fh;	/*< Filehandle */
 	char sbd_nlm_fh_buf[MAX_NETOBJ_SZ];	/*< Statically allocated
 						   FH buffer */
@@ -816,9 +815,9 @@ struct state_block_data_t {
 	state_cookie_entry_t *sbd_blocked_cookie; /*< Blocking lock cookie */
 	state_lock_entry_t *sbd_lock_entry;	/*< Details of lock */
 	union {
-		state_nlm_block_data_t sbd_nlm_block_data; /*< NLM block data */
-		void *sbd_v4_block_data;	/*< NFSv4 block data */
-	} sbd_block_data;
+		state_nlm_block_data_t sbd_nlm; /*< NLM block data */
+		void *sbd_v4;			/*< NFSv4 block data */
+	} sbd_prot;
 };
 
 typedef enum lock_type_t {
@@ -835,7 +834,7 @@ struct state_lock_entry_t {
 #endif				/* DEBUG_SAL */
 	struct glist_head sle_export_locks;	/*< Link on the export
 						   lock list */
-	exportlist_t *sle_export;
+	struct gsh_export *sle_export;
 	cache_entry_t *sle_entry;	/*< File being locked */
 	state_block_data_t *sle_block_data;	/*< Blocking lock data */
 	state_owner_t *sle_owner;	/* Lock owner */
@@ -1022,7 +1021,7 @@ struct state_nlm_share_t {
 	struct glist_head sns_share_per_export;	/*< Shares for this export */
 	state_owner_t *sns_owner;	/*< State owner */
 	cache_entry_t *sns_entry;	/*< File */
-	exportlist_t *sns_export;	/*< Export */
+	struct gsh_export *sns_export;	/*< Export */
 	int sns_access;		/*< Access mode */
 	int sns_deny;		/*< Deny mode */
 };

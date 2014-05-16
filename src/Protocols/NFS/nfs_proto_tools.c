@@ -437,8 +437,8 @@ static fattr_xdr_result encode_linksupport(XDR *xdr,
 	struct fsal_export *export;
 	int linksupport = FALSE;
 
-	if (args->data != NULL && args->data->export != NULL) {
-		export = args->data->export->export_hdl;
+	if (args->data != NULL) {
+		export = args->data->req_ctx->fsal_export;
 		linksupport =
 		    export->ops->fs_supports(export, fso_link_support);
 	}
@@ -463,8 +463,8 @@ static fattr_xdr_result encode_symlinksupport(XDR *xdr,
 	struct fsal_export *export;
 	int symlinksupport = FALSE;
 
-	if (args->data != NULL && args->data->export != NULL) {
-		export = args->data->export->export_hdl;
+	if (args->data != NULL) {
+		export = args->data->req_ctx->fsal_export;
 		symlinksupport =
 		    export->ops->fs_supports(export, fso_symlink_support);
 	}
@@ -491,8 +491,8 @@ static fattr_xdr_result encode_namedattrsupport(XDR *xdr,
 	struct fsal_export *export;
 	int namedattrsupport = FALSE;
 
-	if (args->data != NULL && args->data->export != NULL) {
-		export = args->data->export->export_hdl;
+	if (args->data != NULL) {
+		export = args->data->req_ctx->fsal_export;
 		namedattrsupport =
 		    export->ops->fs_supports(export, fso_named_attr);
 	}
@@ -515,11 +515,11 @@ static fattr_xdr_result encode_fsid(XDR *xdr, struct xdr_attrs_args *args)
 {
 	fsid4 fsid = {0, 0};
 
-	if (args->data != NULL && args->data->export != NULL &&
-	    (args->data->export->export_perms.set &
+	if (args->data != NULL &&
+	    (args->data->req_ctx->export->export_perms.set &
 	     EXPORT_OPTION_FSID_SET) != 0) {
-		fsid.major = args->data->export->filesystem_id.major;
-		fsid.minor = args->data->export->filesystem_id.minor;
+		fsid.major = args->data->req_ctx->export->filesystem_id.major;
+		fsid.minor = args->data->req_ctx->export->filesystem_id.minor;
 	} else {
 		fsid.major = args->attrs->fsid.major;
 		fsid.minor = args->attrs->fsid.minor;
@@ -551,8 +551,8 @@ static fattr_xdr_result encode_uniquehandles(XDR *xdr,
 	struct fsal_export *export;
 	int uniquehandles = FALSE;
 
-	if (args->data != NULL && args->data->export != NULL) {
-		export = args->data->export->export_hdl;
+	if (args->data != NULL) {
+		export = args->data->req_ctx->fsal_export;
 		uniquehandles =
 		    export->ops->fs_supports(export, fso_unique_handles);
 	}
@@ -730,9 +730,10 @@ static fattr_xdr_result decode_acl(XDR *xdr, struct xdr_attrs_args *args)
 				if (!name2gid(
 					&gname,
 					&ace->who.gid,
-					args->data ?
-					    args->data->export->export_perms
-					    .anonymous_gid : -1))
+					args->data
+					? args->data->req_ctx->export
+					  ->export_perms .anonymous_gid
+					: -1))
 					goto baderr;
 
 				LogFullDebug(COMPONENT_NFS_V4,
@@ -746,9 +747,10 @@ static fattr_xdr_result decode_acl(XDR *xdr, struct xdr_attrs_args *args)
 				if (!name2uid(
 					&uname,
 					&ace->who.uid,
-					args->data ?
-					    args->data->export->export_perms
-						.anonymous_uid : -1))
+					args->data
+					? args->data->req_ctx->export
+					  ->export_perms .anonymous_uid
+					: -1))
 					goto baderr;
 
 				LogFullDebug(COMPONENT_NFS_V4,
@@ -799,8 +801,8 @@ static fattr_xdr_result encode_aclsupport(XDR *xdr,
 	struct fsal_export *export;
 	uint32_t aclsupport = 0;
 
-	if (args->data != NULL && args->data->export != NULL) {
-		export = args->data->export->export_hdl;
+	if (args->data != NULL) {
+		export = args->data->req_ctx->fsal_export;
 		aclsupport = export->ops->fs_acl_support(export);
 	}
 	if (!inline_xdr_u_int32_t(xdr, &aclsupport))
@@ -845,8 +847,8 @@ static fattr_xdr_result encode_cansettime(XDR *xdr,
 	struct fsal_export *export;
 	uint32_t cansettime = FALSE;
 
-	if (args->data != NULL && args->data->export != NULL) {
-		export = args->data->export->export_hdl;
+	if (args->data != NULL) {
+		export = args->data->req_ctx->fsal_export;
 		cansettime = export->ops->fs_supports(export, fso_cansettime);
 	}
 	if (!inline_xdr_bool(xdr, &cansettime))
@@ -871,8 +873,8 @@ static fattr_xdr_result encode_case_insensitive(XDR *xdr,
 	struct fsal_export *export;
 	uint32_t caseinsensitive = FALSE;
 
-	if (args->data != NULL && args->data->export != NULL) {
-		export = args->data->export->export_hdl;
+	if (args->data != NULL) {
+		export = args->data->req_ctx->fsal_export;
 		caseinsensitive =
 		    export->ops->fs_supports(export, fso_case_insensitive);
 	}
@@ -898,8 +900,8 @@ static fattr_xdr_result encode_case_preserving(XDR *xdr,
 	struct fsal_export *export;
 	uint32_t casepreserving = FALSE;
 
-	if (args->data != NULL && args->data->export != NULL) {
-		export = args->data->export->export_hdl;
+	if (args->data != NULL) {
+		export = args->data->req_ctx->fsal_export;
 		casepreserving =
 		    export->ops->fs_supports(export, fso_case_preserving);
 	}
@@ -925,8 +927,8 @@ static fattr_xdr_result encode_chown_restricted(XDR *xdr,
 	struct fsal_export *export;
 	uint32_t chownrestricted = FALSE;
 
-	if (args->data != NULL && args->data->export != NULL) {
-		export = args->data->export->export_hdl;
+	if (args->data != NULL) {
+		export = args->data->req_ctx->fsal_export;
 		chownrestricted =
 		    export->ops->fs_supports(export, fso_chown_restricted);
 	}
@@ -1163,8 +1165,8 @@ static fattr_xdr_result encode_homogeneous(XDR *xdr,
 	struct fsal_export *export;
 	uint32_t homogeneous = FALSE;
 
-	if (args->data != NULL && args->data->export != NULL) {
-		export = args->data->export->export_hdl;
+	if (args->data != NULL) {
+		export = args->data->req_ctx->fsal_export;
 		homogeneous = export->ops->fs_supports(export, fso_homogenous);
 	}
 	if (!inline_xdr_bool(xdr, &homogeneous))
@@ -1188,8 +1190,8 @@ static fattr_xdr_result encode_maxfilesize(XDR *xdr,
 	struct fsal_export *export;
 	uint64_t maxfilesize = 0;
 
-	if (args->data != NULL && args->data->export != NULL) {
-		export = args->data->export->export_hdl;
+	if (args->data != NULL) {
+		export = args->data->req_ctx->fsal_export;
 		maxfilesize = export->ops->fs_maxfilesize(export);
 	}
 	if (!inline_xdr_u_int64_t(xdr, &maxfilesize))
@@ -1212,8 +1214,8 @@ static fattr_xdr_result encode_maxlink(XDR *xdr, struct xdr_attrs_args *args)
 	struct fsal_export *export;
 	uint32_t maxlink = 0;
 
-	if (args->data != NULL && args->data->export != NULL) {
-		export = args->data->export->export_hdl;
+	if (args->data != NULL) {
+		export = args->data->req_ctx->fsal_export;
 		maxlink = export->ops->fs_maxlink(export);
 	}
 	if (!inline_xdr_u_int32_t(xdr, &maxlink))
@@ -1235,8 +1237,8 @@ static fattr_xdr_result encode_maxname(XDR *xdr, struct xdr_attrs_args *args)
 	struct fsal_export *export;
 	uint32_t maxname = 0;
 
-	if (args->data != NULL && args->data->export != NULL) {
-		export = args->data->export->export_hdl;
+	if (args->data != NULL) {
+		export = args->data->req_ctx->fsal_export;
 		maxname = export->ops->fs_maxnamelen(export);
 	}
 	if (!inline_xdr_u_int32_t(xdr, &maxname))
@@ -1268,7 +1270,7 @@ static fattr_xdr_result decode_maxname(XDR *xdr, struct xdr_attrs_args *args)
 
 static fattr_xdr_result encode_maxread(XDR *xdr, struct xdr_attrs_args *args)
 {
-	if (!inline_xdr_u_int64_t(xdr, &args->data->export->MaxRead))
+	if (!inline_xdr_u_int64_t(xdr, &args->data->req_ctx->export->MaxRead))
 		return FATTR_XDR_FAILED;
 	return FATTR_XDR_SUCCESS;
 }
@@ -1284,7 +1286,7 @@ static fattr_xdr_result decode_maxread(XDR *xdr, struct xdr_attrs_args *args)
 
 static fattr_xdr_result encode_maxwrite(XDR *xdr, struct xdr_attrs_args *args)
 {
-	if (!inline_xdr_u_int64_t(xdr, &args->data->export->MaxWrite))
+	if (!inline_xdr_u_int64_t(xdr, &args->data->req_ctx->export->MaxWrite))
 		return FATTR_XDR_FAILED;
 	return FATTR_XDR_SUCCESS;
 }
@@ -1344,8 +1346,8 @@ static fattr_xdr_result encode_no_trunc(XDR *xdr, struct xdr_attrs_args *args)
 	struct fsal_export *export;
 	uint32_t no_trunc = FALSE;
 
-	if (args->data != NULL && args->data->export != NULL) {
-		export = args->data->export->export_hdl;
+	if (args->data != NULL) {
+		export = args->data->req_ctx->fsal_export;
 		no_trunc = export->ops->fs_supports(export, fso_no_trunc);
 	}
 	if (!inline_xdr_bool(xdr, &no_trunc))
@@ -1410,10 +1412,11 @@ static fattr_xdr_result decode_owner(XDR *xdr, struct xdr_attrs_args *args)
 		return FATTR_XDR_FAILED;
 	}
 
-	if (!name2uid
-	    (&ownerdesc, &uid,
-	     (args->data ? args->data->export->export_perms.
-	      anonymous_uid : -1))) {
+	if (!name2uid(&ownerdesc,
+		      &uid,
+		      args->data ?
+			args->data->req_ctx->export->export_perms.anonymous_uid
+			: -1)) {
 		return FATTR_BADOWNER;
 	}
 
@@ -1456,10 +1459,11 @@ static fattr_xdr_result decode_group(XDR *xdr, struct xdr_attrs_args *args)
 		return FATTR_XDR_FAILED;
 	}
 
-	if (!name2gid
-	    (&groupdesc, &gid,
-	     (args->data ? args->data->export->export_perms.
-	      anonymous_gid : -1)))
+	if (!name2gid(&groupdesc,
+		      &gid,
+		      args->data ?
+			args->data->req_ctx->export->export_perms.anonymous_gid
+			: -1))
 		return FATTR_BADOWNER;
 
 	xdr_setpos(xdr, newpos);
@@ -2015,9 +2019,9 @@ static fattr_xdr_result encode_fs_layout_types(XDR *xdr,
 	size_t typecount = 0;
 	size_t index = 0;
 
-	if (args->data == NULL || args->data->export == NULL)
+	if (args->data == NULL)
 		return FATTR_XDR_NOOP;
-	export = args->data->export->export_hdl;
+	export = args->data->req_ctx->fsal_export;
 	export->ops->fs_layouttypes(export, &typecount, &layouttypes);
 
 	if (!inline_xdr_u_int32_t(xdr, (uint32_t *) &typecount))
@@ -2078,10 +2082,10 @@ static fattr_xdr_result encode_layout_blocksize(XDR *xdr,
 						struct xdr_attrs_args *args)
 {
 
-	if (args->data == NULL || args->data->export == NULL) {
+	if (args->data == NULL) {
 		return FATTR_XDR_NOOP;
 	} else {
-		struct fsal_export *export = args->data->export->export_hdl;
+		struct fsal_export *export = args->data->req_ctx->fsal_export;
 		uint32_t blocksize = export->ops->fs_layout_blocksize(export);
 
 		if (!inline_xdr_u_int32_t(xdr, &blocksize))
@@ -3566,7 +3570,7 @@ bool cache_entry_to_nfs3_Fattr(cache_entry_t *entry,
 	bool rc = false;
 	if (entry && (cache_inode_lock_trust_attrs(entry, ctx, false)
 		      == CACHE_INODE_SUCCESS)) {
-		rc = nfs3_FSALattr_To_Fattr(&ctx->export->export,
+		rc = nfs3_FSALattr_To_Fattr(ctx->export,
 					    &entry->obj_handle->attributes,
 					    Fattr);
 		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
@@ -3590,7 +3594,7 @@ bool cache_entry_to_nfs3_Fattr(cache_entry_t *entry,
  * @retval false  otherwise.
  *
  */
-bool nfs3_FSALattr_To_Fattr(exportlist_t *export,
+bool nfs3_FSALattr_To_Fattr(struct gsh_export *export,
 			    const struct attrlist *FSAL_attr, fattr3 *Fattr)
 {
 	/* We want to override the FSAL fsid with the export's configured fsid
@@ -3609,7 +3613,8 @@ bool nfs3_FSALattr_To_Fattr(exportlist_t *export,
 		/* xor filesystem_id major and rotated minor to create unique
 		 * on-wire fsid.
 		 */
-		Fattr->fsid = (nfs3_uint64) squash_fsid(&export->filesystem_id);
+		Fattr->fsid = (nfs3_uint64) squash_fsid(
+					&export->filesystem_id);
 
 		LogFullDebug(COMPONENT_NFSPROTO,
 			     "Compressing export filesystem_id for NFS v3 from "

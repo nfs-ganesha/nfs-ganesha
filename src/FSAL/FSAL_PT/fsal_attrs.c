@@ -235,8 +235,8 @@ fsal_status_t PTFSAL_setattrs(struct fsal_obj_handle *dir_hdl,	/* IN */
 				     fsal_type2unix(current_attrs.type));
 				fsi_update_cache_stat(fsi_name,
 						      st_mode_in_cache,
-						      p_context->export->export
-						      .id);
+						      p_context->
+							  export->export_id);
 				FSI_TRACE(FSI_INFO,
 					  "Chmod SUCCEED with st_mode in cache being %o",
 					  st_mode_in_cache);

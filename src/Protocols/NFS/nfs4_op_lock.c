@@ -279,13 +279,15 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 		}
 
 		/* Check if lock state belongs to same export */
-		if (lock_state->state_export != data->export) {
+		if (lock_state->state_export != data->req_ctx->export) {
 			LogEvent(COMPONENT_STATE,
 				 "Lock Owner Export Conflict, Lock held "
 				 "for export %d (%s), request for "
-				 "export %d (%s)", lock_state->state_export->id,
+				 "export %d (%s)",
+				 lock_state->state_export->export_id,
 				 lock_state->state_export->fullpath,
-				 data->export->id, data->export->fullpath);
+				 data->req_ctx->export->export_id,
+				 data->req_ctx->export->fullpath);
 			res_LOCK4->status = STATE_INVALID_ARGUMENT;
 			return res_LOCK4->status;
 		}
@@ -496,14 +498,14 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 		glist_init(&lock_state->state_data.lock.state_locklist);
 
 		/* Attach this lock to an export */
-		lock_state->state_export = data->export;
+		lock_state->state_export = data->req_ctx->export;
 
-		export_writelock(data->export);
+		PTHREAD_RWLOCK_wrlock(&data->req_ctx->export->lock);
 
-		glist_add_tail(&data->export->exp_state_list,
+		glist_add_tail(&data->req_ctx->export->exp_state_list,
 			       &lock_state->state_export_list);
 
-		export_rwunlock(data->export);
+		PTHREAD_RWLOCK_unlock(&data->req_ctx->export->lock);
 
 		/* Add lock state to the list of lock states belonging
 		   to the open state */
@@ -519,7 +521,6 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 	/* Now we have a lock owner and a stateid.  Go ahead and push
 	   lock into SAL (and FSAL). */
 	state_status = state_lock(data->current_entry,
-				  data->export,
 				  data->req_ctx,
 				  lock_owner,
 				  lock_state,

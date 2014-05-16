@@ -710,7 +710,7 @@ static void nfs_rpc_execute(request_data_t *req,
 	int exportid = -1;
 	struct svc_req *svcreq = &reqnfs->req;
 	SVCXPRT *xprt = reqnfs->xprt;
-	export_perms_t export_perms;
+	struct export_perms export_perms;
 	int protocol_options = 0;
 	struct user_cred user_credentials;
 	struct req_op_context req_ctx;
@@ -733,6 +733,7 @@ static void nfs_rpc_execute(request_data_t *req,
 	req_ctx.caller_addr = &worker_data->hostaddr;
 	req_ctx.nfs_vers = svcreq->rq_vers;
 	req_ctx.req_type = req->rtype;
+	req_ctx.export_perms = &export_perms;
 
 	/* Initialized user_credentials */
 	init_credentials(&req_ctx);
@@ -918,14 +919,14 @@ static void nfs_rpc_execute(request_data_t *req,
 				rc = NFS_REQ_OK;
 				goto req_error;
 			}
-			req_ctx.fsal_export = req_ctx.export->export.export_hdl;
-			if ((req_ctx.export->export.export_perms.
+			req_ctx.fsal_export = req_ctx.export->fsal_export;
+			if ((req_ctx.export->export_perms.
 			     options & EXPORT_OPTION_NFSV3) == 0)
 				goto handle_err;
 			/* privileged port only makes sense for V3.
 			 * V4 can go thru firewalls and so all bets are off
 			 */
-			if ((req_ctx.export->export.export_perms.
+			if ((req_ctx.export->export_perms.
 			     options & EXPORT_OPTION_PRIVILEGED_PORT)
 			    && (port >= IPPORT_RESERVED)) {
 				LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
@@ -937,8 +938,8 @@ static void nfs_rpc_execute(request_data_t *req,
 
 			LogMidDebugAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 				    "Found export entry for path=%s as exportid=%d",
-				    req_ctx.export->export.fullpath,
-				    req_ctx.export->export.id);
+				    req_ctx.export->fullpath,
+				    req_ctx.export->export_id);
 		} else {	/* NFS V4 gets its own export id from the ops
 				 * in the compound */
 			protocol_options |= EXPORT_OPTION_NFSV4;
@@ -1023,26 +1024,26 @@ static void nfs_rpc_execute(request_data_t *req,
 					 */
 					req_ctx.fsal_export = NULL;
 				} else {
-					if ((req_ctx.export->export.export_perms
+					if ((req_ctx.export->export_perms
 					     .options & EXPORT_OPTION_NFSV3)
 					    == 0)
 						goto handle_err;
 					req_ctx.fsal_export =
-					    req_ctx.export->export.export_hdl;
+					    req_ctx.export->fsal_export;
 				}
 
 				LogMidDebugAlt(COMPONENT_DISPATCH,
 					       COMPONENT_EXPORT,
 					       "Found export entry for dirname=%s as exportid=%d",
-					       req_ctx.export->export.fullpath,
-					       req_ctx.export->export.id);
+					       req_ctx.export->fullpath,
+					       req_ctx.export->export_id);
 			}
 		}
 	} else if (svcreq->rq_prog == nfs_param.core_param.program[P_MNT]) {
 		progname = "MNT";
 	}
 
-	/* Only do access check if we have an export. */
+	/* Only do access check if we have an  */
 	if (req_ctx.export != NULL) {
 		xprt_type_t xprt_type = svc_get_xprt_type(xprt);
 
@@ -1050,15 +1051,14 @@ static void nfs_rpc_execute(request_data_t *req,
 			    "nfs_rpc_execute about to call nfs_export_check_access for client %s",
 			    req_ctx.client->hostaddr_str);
 
-		nfs_export_check_access(req_ctx.caller_addr,
-					&req_ctx.export->export, &export_perms);
+		export_check_access(&req_ctx);
 
 		if (export_perms.options == 0) {
 			LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 				"Client %s is not allowed to access Export_Id %d %s, vers=%d, proc=%d",
 				req_ctx.client->hostaddr_str,
-				req_ctx.export->export.id,
-				req_ctx.export->export.fullpath,
+				req_ctx.export->export_id,
+				req_ctx.export->fullpath,
 				(int)svcreq->rq_vers, (int)svcreq->rq_proc);
 
 			auth_rc = AUTH_TOOWEAK;
@@ -1078,8 +1078,8 @@ static void nfs_rpc_execute(request_data_t *req,
 			LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 				"%s Version %d not allowed on Export_Id %d %s for client %s",
 				progname, svcreq->rq_vers,
-				req_ctx.export->export.id,
-				req_ctx.export->export.fullpath,
+				req_ctx.export->export_id,
+				req_ctx.export->fullpath,
 				req_ctx.client->hostaddr_str);
 
 			auth_rc = AUTH_FAILED;
@@ -1095,8 +1095,8 @@ static void nfs_rpc_execute(request_data_t *req,
 				"%s Version %d over %s not allowed on Export_Id %d %s for client %s",
 				progname, svcreq->rq_vers,
 				xprt_type_to_str(xprt_type),
-				req_ctx.export->export.id,
-				req_ctx.export->export.fullpath,
+				req_ctx.export->export_id,
+				req_ctx.export->fullpath,
 				req_ctx.client->hostaddr_str);
 
 			auth_rc = AUTH_FAILED;
@@ -1104,18 +1104,14 @@ static void nfs_rpc_execute(request_data_t *req,
 		}
 
 		/* Test if export allows the authentication provided */
-		if (((reqnfs->funcdesc->dispatch_behaviour & SUPPORTS_GSS) !=
-		     0)
-		    &&
-		    (nfs_export_check_security(
-			    svcreq, &export_perms,
-		     &req_ctx.export->export)
-		     == false)) {
+		if (((reqnfs->funcdesc->dispatch_behaviour & SUPPORTS_GSS)
+		      != 0) &&
+		    !export_check_security(svcreq, &req_ctx)) {
 			LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 				"%s Version %d auth not allowed on Export_Id %d %s for client %s",
 				progname, svcreq->rq_vers,
-				req_ctx.export->export.id,
-				req_ctx.export->export.fullpath,
+				req_ctx.export->export_id,
+				req_ctx.export->fullpath,
 				req_ctx.client->hostaddr_str);
 
 			auth_rc = AUTH_TOOWEAK;
@@ -1129,8 +1125,8 @@ static void nfs_rpc_execute(request_data_t *req,
 			!= 0) && (port >= IPPORT_RESERVED)) {
 			LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 				"Non-reserved Port %d is not allowed on Export_Id %d %s for client %s",
-				port, req_ctx.export->export.id,
-				req_ctx.export->export.fullpath,
+				port, req_ctx.export->export_id,
+				req_ctx.export->fullpath,
 				req_ctx.client->hostaddr_str);
 
 			auth_rc = AUTH_TOOWEAK;
@@ -1204,8 +1200,8 @@ static void nfs_rpc_execute(request_data_t *req,
 				  EXPORT_OPTION_MD_READ_ACCESS)) == 0) {
 		LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 			"Client %s is not allowed to access Export_Id %d %s, vers=%d, proc=%d",
-			req_ctx.client->hostaddr_str, req_ctx.export->export.id,
-			req_ctx.export->export.fullpath, (int)svcreq->rq_vers,
+			req_ctx.client->hostaddr_str, req_ctx.export->export_id,
+			req_ctx.export->fullpath, (int)svcreq->rq_vers,
 			(int)svcreq->rq_proc);
 		auth_rc = AUTH_TOOWEAK;
 		goto auth_failure;
@@ -1220,9 +1216,7 @@ static void nfs_rpc_execute(request_data_t *req,
 				export_perms.options = EXPORT_OPTION_ROOT;
 			}
 
-			if (get_req_creds(svcreq,
-					  &req_ctx,
-					  &export_perms) == false) {
+			if (get_req_creds(svcreq, &req_ctx) == false) {
 				LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 					"could not get uid and gid, rejecting client %s",
 					req_ctx.client->hostaddr_str);
@@ -1258,8 +1252,7 @@ static void nfs_rpc_execute(request_data_t *req,
 
  null_op:
 		rc = reqnfs->funcdesc->service_function(arg_nfs,
-							&req_ctx.export->
-							export, &req_ctx,
+							&req_ctx,
 							worker_data, svcreq,
 							res_nfs);
 	}
@@ -1604,32 +1597,6 @@ int worker_shutdown(void)
 	} else if (rc != 0) {
 		LogMajor(COMPONENT_DISPATCH,
 			 "Failed shutting down worker threads: %d", rc);
-	}
-	return rc;
-}
-
-int worker_pause(void)
-{
-	int rc = fridgethr_sync_command(worker_fridge,
-					fridgethr_comm_pause,
-					120);
-
-	if (rc != 0) {
-		LogMajor(COMPONENT_DISPATCH,
-			 "Failed pausing worker threads: %d", rc);
-	}
-	return rc;
-}
-
-int worker_resume(void)
-{
-	int rc = fridgethr_sync_command(worker_fridge,
-					fridgethr_comm_run,
-					120);
-
-	if (rc != 0) {
-		LogMajor(COMPONENT_DISPATCH,
-			 "Failed resuming worker threads: %d", rc);
 	}
 	return rc;
 }

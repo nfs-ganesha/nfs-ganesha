@@ -169,32 +169,4 @@ state_status_t state_async_shutdown(void)
 	return rc == 0 ? STATE_SUCCESS : STATE_SIGNAL_ERROR;
 }
 
-state_status_t state_async_pause(void)
-{
-	int rc = fridgethr_sync_command(state_async_fridge,
-					fridgethr_comm_pause,
-					120);
-
-	if (rc != 0) {
-		LogMajor(COMPONENT_STATE,
-			 "Unable to pause state async thread fridge: %d", rc);
-	}
-
-	return rc == 0 ? STATE_SUCCESS : STATE_SIGNAL_ERROR;
-}
-
-state_status_t state_async_resume(void)
-{
-	int rc = fridgethr_sync_command(state_async_fridge,
-					fridgethr_comm_run,
-					120);
-
-	if (rc != 0) {
-		LogMajor(COMPONENT_STATE,
-			 "Unable to resume state async thread fridge: %d", rc);
-	}
-
-	return rc == 0 ? STATE_SUCCESS : STATE_SIGNAL_ERROR;
-}
-
 /** @} */

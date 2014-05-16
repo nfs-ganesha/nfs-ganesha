@@ -88,9 +88,8 @@ cache_inode_getattr(cache_entry_t *entry,
 
 	PTHREAD_RWLOCK_rdlock(&req_ctx->export->lock);
 
-	if (entry == req_ctx->export->export.exp_root_cache_inode)
-		mounted_on_fileid =
-		    req_ctx->export->export.exp_mounted_on_file_id;
+	if (entry == req_ctx->export->exp_root_cache_inode)
+		mounted_on_fileid = req_ctx->export->exp_mounted_on_file_id;
 	else
 		mounted_on_fileid = entry->obj_handle->attributes.fileid;
 
@@ -125,8 +124,8 @@ cache_inode_getattr(cache_entry_t *entry,
 		if (status != CACHE_INODE_SUCCESS) {
 			LogMajor(COMPONENT_CACHE_INODE,
 				 "Failed to get root for %s, id=%d, status = %s",
-				 junction_export->export.fullpath,
-				 junction_export->export.id,
+				 junction_export->fullpath,
+				 junction_export->export_id,
 				 cache_inode_err_str(status));
 			/* Need to signal problem to callback */
 			(void) cb(opaque, junction_entry, NULL, 0);
@@ -165,9 +164,9 @@ cache_inode_fileid(cache_entry_t *entry,
 
 	PTHREAD_RWLOCK_rdlock(&req_ctx->export->lock);
 
-	if (entry == req_ctx->export->export.exp_root_cache_inode) {
+	if (entry == req_ctx->export->exp_root_cache_inode) {
 
-		*fileid = req_ctx->export->export.exp_mounted_on_file_id;
+		*fileid = req_ctx->export->exp_mounted_on_file_id;
 		status = CACHE_INODE_SUCCESS;
 
 		PTHREAD_RWLOCK_unlock(&req_ctx->export->lock);

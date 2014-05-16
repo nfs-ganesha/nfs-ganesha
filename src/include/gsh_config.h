@@ -48,8 +48,6 @@
 #include "nfs4.h"
 #include "fsal_types.h"
 
-struct exportlist;
-
 /**
  * @brief An enumeration of protocols in the NFS family
  */
@@ -561,7 +559,7 @@ typedef struct cache_inode_parameter {
 	cache_inode_expire_type_t expire_type_attr;
 	/** Expiration time interval in seconds for attributes.  Settable with
 	    Attr_Expiration_Time. */
-	time_t  expire_time_attr;
+	uint32_t  expire_time_attr;
 	/** Use getattr for directory invalidation.  Defaults to
 	    false.  Settable with Use_Getattr_Directory_Invalidation. */
 	bool getattr_dir_invalidation;

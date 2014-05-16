@@ -39,6 +39,7 @@
 #include "config_parsing.h"
 #include "gluster_internal.h"
 #include "nfs_exports.h"
+#include "export_mgr.h"
 
 /**
  * @brief Implements GLUSTER FSAL exportoperation release
@@ -554,12 +555,9 @@ static struct config_block export_param = {
  */
 
 fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
-				      const char *export_path,
+				      struct req_op_context *req_ctx,
 				      void *parse_node,
-				      struct exportlist *exp_entry,
-				      struct fsal_module *next_fsal,
-				      const struct fsal_up_vector *up_ops,
-				      struct fsal_export **pub_export)
+				      const struct fsal_up_vector *up_ops)
 {
 	struct config_error_type err_type;
 	int rc;
@@ -574,21 +572,7 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 	int/*  oplen = 0, */ export_inited = 0;
 
 	LogDebug(COMPONENT_FSAL, "In args: export path = %s",
-		 export_path);
-
-	if ((NULL == export_path) || (strlen(export_path) == 0)) {
-		status.major = ERR_FSAL_INVAL;
-		LogCrit(COMPONENT_FSAL, "No path to export.");
-		goto out;
-	}
-
-	if (next_fsal != NULL) {
-		status.major = ERR_FSAL_INVAL;
-		LogCrit(COMPONENT_FSAL,
-			"Stacked FSALs unsupported. Export: %s",
-			export_path);
-		goto out;
-	}
+		 req_ctx->export->fullpath);
 
 	rc = load_config_from_node(parse_node,
 				   &export_param,
@@ -598,7 +582,7 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 	if (rc != 0) {
 		LogCrit(COMPONENT_FSAL,
 			"Incorrect or missing parameters for export %s",
-			export_path);
+			req_ctx->export->fullpath);
 		status.major = ERR_FSAL_INVAL;
 		goto out;
 	}
@@ -610,15 +594,15 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 		status.major = ERR_FSAL_NOMEM;
 		LogCrit(COMPONENT_FSAL,
 			"Unable to allocate export object.  Export: %s",
-			export_path);
+			req_ctx->export->fullpath);
 		goto out;
 	}
 
-	if (fsal_export_init(&glfsexport->export, exp_entry) != 0) {
+	if (fsal_export_init(&glfsexport->export) != 0) {
 		status.major = ERR_FSAL_NOMEM;
 		LogCrit(COMPONENT_FSAL,
 			"Unable to allocate export ops vectors.  Export: %s",
-			export_path);
+			req_ctx->export->fullpath);
 		goto out;
 	}
 
@@ -632,7 +616,7 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 		status.major = ERR_FSAL_SERVERFAULT;
 		LogCrit(COMPONENT_FSAL,
 			"Unable to create new glfs. Export: %s",
-			export_path);
+			req_ctx->export->fullpath);
 		goto out;
 	}
 
@@ -641,7 +625,7 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 		status.major = ERR_FSAL_SERVERFAULT;
 		LogCrit(COMPONENT_FSAL,
 			"Unable to set volume file. Export: %s",
-			export_path);
+			req_ctx->export->fullpath);
 		goto out;
 	}
 
@@ -650,7 +634,7 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 		status.major = ERR_FSAL_SERVERFAULT;
 		LogCrit(COMPONENT_FSAL,
 			"Unable to set logging. Export: %s",
-			export_path);
+			req_ctx->export->fullpath);
 		goto out;
 	}
 
@@ -659,7 +643,7 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 		status.major = ERR_FSAL_SERVERFAULT;
 		LogCrit(COMPONENT_FSAL,
 			"Unable to initialize volume. Export: %s",
-			export_path);
+			req_ctx->export->fullpath);
 		goto out;
 	}
 
@@ -667,21 +651,21 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 	     fsal_attach_export(fsal_hdl, &glfsexport->export.exports)) != 0) {
 		status.major = ERR_FSAL_SERVERFAULT;
 		LogCrit(COMPONENT_FSAL, "Unable to attach export. Export: %s",
-			export_path);
+			req_ctx->export->fullpath);
 		goto out;
 	}
 
-        glfsexport->mount_path = exp_entry->fullpath; // fullpath is the actual exported path
+	glfsexport->mount_path = req_ctx->export->fullpath;
 	glfsexport->export_path = params.glvolpath;
 	glfsexport->gl_fs = fs;
 	glfsexport->saveduid = geteuid();
 	glfsexport->savedgid = getegid();
 	glfsexport->export.fsal = fsal_hdl;
 	glfsexport->acl_enable =
-		((exp_entry->export_perms.options &
+		((req_ctx->export->export_perms.options &
 		  EXPORT_OPTION_DISABLE_ACL) ? 0 : 1);
 
-	*pub_export = &glfsexport->export;
+	req_ctx->fsal_export = &glfsexport->export;
 
  out:
 	if (params.glvolname)

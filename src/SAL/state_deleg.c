@@ -48,34 +48,7 @@
 #include "sal_functions.h"
 #include "nlm_util.h"
 #include "cache_inode_lru.h"
-
-/**
- * @brief Free a delegation while the lock state is locked.
- *
- * Free a delegation while the lock state is locked.
- * The caller must hold the state lock exclusively.
- *
- * @param[in] deleg_lock The delegation lock to remove.
- * @param[in] entry Inode entry that was delegated.
- * @param[in] export Export that the delegation and file are in.
- * @param[in] fake_req_ctx Fake request context when called from fsal_up
- */
-void free_deleg_locked(state_lock_entry_t *deleg_lock, cache_entry_t *entry,
-		      struct fsal_export *export,
-		      struct req_op_context *fake_req_ctx)
-{
-	nfs_client_id_t *clientid =
-		deleg_lock->sle_owner->so_owner.so_nfs4_owner.so_clientrec;
-
-	state_unlock(entry, deleg_lock->sle_export,
-		     fake_req_ctx,
-		     deleg_lock->sle_owner,
-		     deleg_lock->sle_state,
-		     &deleg_lock->sle_lock,
-		     deleg_lock->sle_type);
-	state_del_locked(deleg_lock->sle_state, entry);
-	deleg_heuristics_recall(entry, clientid);
-}
+#include "export_mgr.h"
 
 void init_clientfile_deleg(struct clientfile_deleg_heuristics *clfile_entry)
 {

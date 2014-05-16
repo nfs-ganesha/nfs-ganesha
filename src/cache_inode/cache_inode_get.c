@@ -312,7 +312,7 @@ cache_inode_get_keyed(cache_inode_key_t *key,
 		struct fsal_export *exp_hdl;
 		fsal_status_t fsal_status;
 
-		exp_hdl = req_ctx->export->export.export_hdl;
+		exp_hdl = req_ctx->fsal_export;
 		fsal_status =
 		    exp_hdl->ops->create_handle(exp_hdl, req_ctx, &key->kv,
 						&new_hdl);

@@ -45,7 +45,7 @@
  * @param[out] res
  *
  */
-int nlm4_Granted_Res(nfs_arg_t *args, exportlist_t *export,
+int nlm4_Granted_Res(nfs_arg_t *args,
 		     struct req_op_context *req_ctx,
 		     nfs_worker_data_t *worker, struct svc_req *req,
 		     nfs_res_t *res)
@@ -75,9 +75,7 @@ int nlm4_Granted_Res(nfs_arg_t *args, exportlist_t *export,
 	PTHREAD_RWLOCK_wrlock(&cookie_entry->sce_entry->state_lock);
 
 	if (cookie_entry->sce_lock_entry == NULL
-	    || cookie_entry->sce_lock_entry->sle_block_data == NULL
-	    || !nlm_block_data_to_export(cookie_entry->sce_lock_entry->
-					 sle_block_data)) {
+	    || cookie_entry->sce_lock_entry->sle_block_data == NULL) {
 		/* This must be an old NLM_GRANTED_RES */
 		PTHREAD_RWLOCK_unlock(&cookie_entry->sce_entry->state_lock);
 		LogFullDebug(COMPONENT_NLM,
@@ -89,10 +87,9 @@ int nlm4_Granted_Res(nfs_arg_t *args, exportlist_t *export,
 	PTHREAD_RWLOCK_unlock(&cookie_entry->sce_entry->state_lock);
 
 	/* Fill in req_ctx */
-	req_ctx->export = container_of(cookie_entry->sce_lock_entry->sle_export,
-				       struct gsh_export, export);
+	req_ctx->export = cookie_entry->sce_lock_entry->sle_export;
 	get_gsh_export_ref(req_ctx->export); /* nfs_rpc_execute will release */
-	req_ctx->fsal_export = req_ctx->export->export.export_hdl;
+	req_ctx->fsal_export = req_ctx->export->fsal_export;
 	if (arg->stat.stat != NLM4_GRANTED) {
 		LogMajor(COMPONENT_NLM,
 			 "Granted call failed due to client error, releasing lock");

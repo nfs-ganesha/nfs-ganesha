@@ -52,9 +52,7 @@ void fsal_detach_export(struct fsal_module *fsal_hdl,
 /* fsal_export common methods
  */
 
-struct exportlist;
-
-int fsal_export_init(struct fsal_export *, struct exportlist *);
+int fsal_export_init(struct fsal_export *export);
 
 void free_export_ops(struct fsal_export *exp_hdl);
 

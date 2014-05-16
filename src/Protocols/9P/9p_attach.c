@@ -64,8 +64,7 @@ int _9p_attach(struct _9p_request_data *req9p, void *worker_data,
 
 	struct _9p_fid *pfid = NULL;
 
-	struct gsh_export *exp;
-	exportlist_t *export = NULL;
+	struct gsh_export *export;
 	cache_inode_status_t cache_status;
 	char exppath[MAXPATHLEN];
 
@@ -88,25 +87,28 @@ int _9p_attach(struct _9p_request_data *req9p, void *worker_data,
 	snprintf(exppath, MAXPATHLEN, "%.*s", (int)*aname_len, aname_str);
 
 	if (exppath[0] == '/')
-		exp = get_gsh_export_by_path(exppath, false);
+		export = get_gsh_export_by_path(exppath, false);
 	else
-		exp = get_gsh_export_by_tag(exppath);
+		export = get_gsh_export_by_tag(exppath);
 
 	/* Did we find something ? */
-	if (exp == NULL)
-		return _9p_rerror(req9p, worker_data, msgtag, ENOENT, plenout,
-				  preply);
+	if (export == NULL) {
+		err = ENOENT;
+		goto errout;
+	}
 
-	if (*fid >= _9P_FID_PER_CONN)
-		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
-				  preply);
+	if (*fid >= _9P_FID_PER_CONN) {
+		err = ERANGE;
+		goto errout;
+	}
 
 	/* Set export and fid id in fid */
 	pfid = gsh_calloc(1, sizeof(struct _9p_fid));
-	if (pfid == NULL)
-		return _9p_rerror(req9p, worker_data, msgtag, ENOMEM, plenout,
-				  preply);
-	export = &exp->export;
+	if (pfid == NULL) {
+		err = ENOMEM;
+		goto errout;
+	}
+
 	pfid->fid = *fid;
 	req9p->pconn->fids[*fid] = pfid;
 
@@ -114,51 +116,46 @@ int _9p_attach(struct _9p_request_data *req9p, void *worker_data,
 	if (*n_uname != _9P_NONUNAME) {
 		/* Build the fid creds */
 		err = _9p_tools_get_req_context_by_uid(*n_uname, pfid);
-		if (err != 0)
-			return _9p_rerror(req9p, worker_data, msgtag, -err,
-					  plenout, preply);
+		if (err != 0) {
+			err = -err;
+			goto errout;
+		}
 	} else if (*uname_len != 0) {
 		/* Build the fid creds */
 		err = _9p_tools_get_req_context_by_name(*uname_len, uname_str,
 							pfid);
-		if (err != 0)
-			return _9p_rerror(req9p, worker_data, msgtag, -err,
-					  plenout, preply);
+		if (err != 0) {
+			err = -err;
+			goto errout;
+		}
 	} else {
 		/* No n_uname nor uname */
-		return _9p_rerror(req9p, worker_data, msgtag, EINVAL, plenout,
-				  preply);
+		err = EINVAL;
+		goto errout;
 	}
 
-	/* Check if root cache entry is correctly set */
-	/** @todo this needs more than just locking... */
-	PTHREAD_RWLOCK_rdlock(&exp->lock);
-	if (export->exp_root_cache_inode == NULL) {
-		PTHREAD_RWLOCK_unlock(&exp->lock);
-		return _9p_rerror(req9p, worker_data, msgtag, err, plenout,
-				  preply);
+	/* Check if root cache entry is correctly set, fetch it, and
+	 * take an LRU reference.
+	 */
+	cache_status = nfs_export_get_root_entry(export, &pfid->pentry);
+	if (cache_status != CACHE_INODE_SUCCESS) {
+		err = _9p_tools_errno(cache_status);
+		goto errout;
 	}
-
-	/* get the export information for this fid */
-	pfid->pentry = export->exp_root_cache_inode;
-	PTHREAD_RWLOCK_unlock(&exp->lock);
 
 	/* Keep track of the export in the req_ctx */
-	pfid->op_context.export = exp;
-	pfid->op_context.fsal_export = exp->export.export_hdl;
+	pfid->op_context.export = export;
+	pfid->op_context.fsal_export = export->fsal_export;
 
 	/* This fid is a special one: it comes from TATTACH */
 	pfid->from_attach = TRUE;
 
 	cache_status =
 	    cache_inode_fileid(pfid->pentry, &pfid->op_context, &fileid);
-	if (cache_status != CACHE_INODE_SUCCESS)
-		return _9p_rerror(req9p, worker_data, msgtag,
-				  _9p_tools_errno(cache_status), plenout,
-				  preply);
-
-	/* Do not forget to count the refs */
-	cache_inode_lru_ref(pfid->pentry, LRU_FLAG_NONE);
+	if (cache_status != CACHE_INODE_SUCCESS) {
+		err = _9p_tools_errno(cache_status);
+		goto errout;
+	}
 
 	/* Compute the qid */
 	pfid->qid.type = _9P_QTDIR;
@@ -181,4 +178,17 @@ int _9p_attach(struct _9p_request_data *req9p, void *worker_data,
 		 (unsigned long long)pfid->qid.path);
 
 	return 1;
+
+errout:
+
+	if (pfid != NULL) {
+		if (export != NULL)
+			put_gsh_export(export);
+		if (pfid->pentry != NULL)
+			cache_inode_put(pfid->pentry);
+		gsh_free(pfid);
+	}
+
+	return _9p_rerror(req9p, worker_data, msgtag, err, plenout, preply);
+
 }

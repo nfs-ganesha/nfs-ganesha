@@ -48,6 +48,7 @@
 #include "nfs_convert.h"
 #include "nfs_file_handle.h"
 #include "nfs_proto_tools.h"
+#include "export_mgr.h"
 
 /**
  *
@@ -68,7 +69,7 @@
  *
  */
 
-int nfs3_mkdir(nfs_arg_t *arg, exportlist_t *export,
+int nfs3_mkdir(nfs_arg_t *arg,
 	       struct req_op_context *req_ctx, nfs_worker_data_t *worker,
 	       struct svc_req *req, nfs_res_t *res)
 {
@@ -103,7 +104,6 @@ int nfs3_mkdir(nfs_arg_t *arg, exportlist_t *export,
 
 	parent_entry = nfs3_FhandleToCache(&arg->arg_mkdir3.where.dir,
 					   req_ctx,
-					   export,
 					   &res->res_mkdir3.status,
 					   &rc);
 
@@ -123,10 +123,10 @@ int nfs3_mkdir(nfs_arg_t *arg, exportlist_t *export,
 	/* if quota support is active, then we should check is the
 	   FSAL allows inode creation or not */
 	fsal_status =
-	    export->export_hdl->ops->check_quota(export->export_hdl,
-						 export->fullpath,
-						 FSAL_QUOTA_INODES,
-						 req_ctx);
+	    req_ctx->fsal_export->ops->check_quota(req_ctx->fsal_export,
+						   req_ctx->export->fullpath,
+						   FSAL_QUOTA_INODES,
+						   req_ctx);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		res->res_mkdir3.status = NFS3ERR_DQUOT;
@@ -161,7 +161,7 @@ int nfs3_mkdir(nfs_arg_t *arg, exportlist_t *export,
 	}
 
 	/*Set attributes if required */
-	squash_setattr(&export->export_perms, req_ctx, &sattr);
+	squash_setattr(req_ctx, &sattr);
 
 	if ((sattr.mask & (ATTR_ATIME | ATTR_MTIME | ATTR_CTIME))
 	    || ((sattr.mask & ATTR_OWNER)

@@ -44,6 +44,7 @@
 #include "cache_inode.h"
 #include "cache_inode_lru.h"
 #include "nfs_exports.h"
+#include "export_mgr.h"
 #include "nfs_proto_functions.h"
 #include "nfs_convert.h"
 #include "nfs_proto_tools.h"
@@ -115,7 +116,7 @@ nfsstat3 nfs_readdir_dot_entry(cache_entry_t *entry, const char *name,
  *
  */
 
-int nfs3_readdir(nfs_arg_t *arg, exportlist_t *export,
+int nfs3_readdir(nfs_arg_t *arg,
 		 struct req_op_context *req_ctx, nfs_worker_data_t *worker,
 		 struct svc_req *req, nfs_res_t *res)
 {
@@ -163,7 +164,6 @@ int nfs3_readdir(nfs_arg_t *arg, exportlist_t *export,
 	/* Look up cache entry for filehandle */
 	dir_entry = nfs3_FhandleToCache(&(arg->arg_readdir3.dir),
 					req_ctx,
-					export,
 					&(res->res_readdir3.status),
 					&rc);
 	if (dir_entry == NULL) {
@@ -210,7 +210,7 @@ int nfs3_readdir(nfs_arg_t *arg, exportlist_t *export,
 	 * unused (as in many NFS Servers) then only a set of zeros
 	 * is returned (trivial value).
 	 */
-	if (export->UseCookieVerifier)
+	if (req_ctx->export->UseCookieVerifier)
 		memcpy(cookie_verifier,
 		       &dir_entry->change_time,
 		       sizeof(dir_entry->change_time));
@@ -218,7 +218,7 @@ int nfs3_readdir(nfs_arg_t *arg, exportlist_t *export,
 	/* Nothing to do if != 0 because the area is already full of
 	 * zero
 	 */
-	if ((cookie != 0) && (export->UseCookieVerifier)) {
+	if ((cookie != 0) && (req_ctx->export->UseCookieVerifier)) {
 		/* Not the first call, so we have to check the cookie
 		 * verifier
 		 */

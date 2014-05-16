@@ -42,6 +42,7 @@
 #include "nfs_core.h"
 #include "cache_inode.h"
 #include "nfs_exports.h"
+#include "export_mgr.h"
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
 
@@ -65,7 +66,7 @@
  * @retval NFS_REQ_FAILED if failed and not retryable
  */
 
-int nfs3_fsinfo(nfs_arg_t *arg, exportlist_t *export,
+int nfs3_fsinfo(nfs_arg_t *arg,
 		struct req_op_context *req_ctx, nfs_worker_data_t *worker,
 		struct svc_req *req, nfs_res_t *res)
 {
@@ -86,7 +87,6 @@ int nfs3_fsinfo(nfs_arg_t *arg, exportlist_t *export,
 
 	entry = nfs3_FhandleToCache(&arg->arg_fsinfo3.fsroot,
 				    req_ctx,
-				    export,
 				    &res->res_fsinfo3.status,
 				    &rc);
 
@@ -101,17 +101,17 @@ int nfs3_fsinfo(nfs_arg_t *arg, exportlist_t *export,
 	FSINFO3resok * const FSINFO_FIELD =
 		&res->res_fsinfo3.FSINFO3res_u.resok;
 
-	FSINFO_FIELD->rtmax = export->MaxRead;
-	FSINFO_FIELD->rtpref = export->PrefRead;
+	FSINFO_FIELD->rtmax = req_ctx->export->MaxRead;
+	FSINFO_FIELD->rtpref = req_ctx->export->PrefRead;
 	/* This field is generally unused, it will be removed in V4 */
 	FSINFO_FIELD->rtmult = DEV_BSIZE;
 
-	FSINFO_FIELD->wtmax = export->MaxWrite;
-	FSINFO_FIELD->wtpref = export->PrefWrite;
+	FSINFO_FIELD->wtmax = req_ctx->export->MaxWrite;
+	FSINFO_FIELD->wtpref = req_ctx->export->PrefWrite;
 	/* This field is generally unused, it will be removed in V4 */
 	FSINFO_FIELD->wtmult = DEV_BSIZE;
 
-	FSINFO_FIELD->dtpref = export->PrefReaddir;
+	FSINFO_FIELD->dtpref = req_ctx->export->PrefReaddir;
 
 	FSINFO_FIELD->maxfilesize =
 	    req_ctx->fsal_export->ops->fs_maxfilesize(req_ctx->fsal_export);

@@ -120,7 +120,7 @@ static void fsal_detach_handle(struct fsal_module *fsal,
 	PTHREAD_RWLOCK_unlock(&fsal->lock);
 }
 
-int fsal_export_init(struct fsal_export *exp, struct exportlist *exp_entry)
+int fsal_export_init(struct fsal_export *exp)
 {
 	pthread_rwlockattr_t attrs;
 

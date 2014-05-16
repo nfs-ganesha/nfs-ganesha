@@ -66,7 +66,7 @@
  *
  */
 
-int nfs3_setattr(nfs_arg_t *arg, exportlist_t *export,
+int nfs3_setattr(nfs_arg_t *arg,
 		 struct req_op_context *req_ctx, nfs_worker_data_t *worker,
 		 struct svc_req *req, nfs_res_t *res)
 {
@@ -99,7 +99,6 @@ int nfs3_setattr(nfs_arg_t *arg, exportlist_t *export,
 
 	entry = nfs3_FhandleToCache(&arg->arg_setattr3.object,
 				    req_ctx,
-				    export,
 				    &res->res_setattr3.status,
 				    &rc);
 
@@ -146,7 +145,7 @@ int nfs3_setattr(nfs_arg_t *arg, exportlist_t *export,
 		/* If owner or owner_group are set, and the credential was
 		 * squashed, then we must squash the set owner and owner_group.
 		 */
-		squash_setattr(&export->export_perms, req_ctx, &setattr);
+		squash_setattr(req_ctx, &setattr);
 
 		cache_status = cache_inode_setattr(entry,
 						   &setattr,

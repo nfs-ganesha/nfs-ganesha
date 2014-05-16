@@ -245,7 +245,6 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 	bool has_hashkey = false;
 	int rc = 0;
 	cache_inode_key_t key;
-	exportlist_t *exp = NULL;
 
 	*entry = NULL;
 
@@ -390,14 +389,14 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 	}
 
 	nentry->obj_handle = new_obj;
-	exp = &opctx->export->export;
-	if (exp) {
-		nentry->expire_type_attr = exp->expire_type_attr;
-		if (nentry->expire_type_attr == CACHE_INODE_EXPIRE &&
-		    nentry->obj_handle->attributes.expire_time_attr == 0)
-			nentry->obj_handle->attributes.expire_time_attr =
-				(int)exp->expire_time_attr;
+
+	nentry->expire_type_attr = opctx->export->expire_type_attr;
+	if (nentry->expire_type_attr == CACHE_INODE_EXPIRE &&
+	    nentry->obj_handle->attributes.expire_time_attr == 0) {
+		nentry->obj_handle->attributes.expire_time_attr =
+					opctx->export->expire_time_attr;
 	}
+
 	cache_inode_fixup_md(nentry);
 
 	/* Everything ready and we are reaty to insert into hash table.

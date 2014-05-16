@@ -42,6 +42,7 @@
 #include "nfs_convert.h"
 #include "fsal_pnfs.h"
 #include "server_stats.h"
+#include "export_mgr.h"
 
 /**
  * @brief Write for a data server
@@ -193,9 +194,9 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* if quota support is active, then we should check is the FSAL
 	   allows inode creation or not */
-	fsal_status = data->export->export_hdl->ops->check_quota(
-						data->export->export_hdl,
-						data->export->fullpath,
+	fsal_status = data->req_ctx->fsal_export->ops->check_quota(
+						data->req_ctx->fsal_export,
+						data->req_ctx->export->fullpath,
 						FSAL_QUOTA_INODES,
 						data->req_ctx);
 
@@ -322,18 +323,18 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 		     "offset = %" PRIu64 "  length = %" PRIu64 "  stable = %d",
 		     offset, size, stable_how);
 
-	if (data->export->MaxOffsetWrite < UINT64_MAX) {
+	if (data->req_ctx->export->MaxOffsetWrite < UINT64_MAX) {
 		LogFullDebug(COMPONENT_NFS_V4,
 			     "Write offset=%" PRIu64 " count=%" PRIu64
 			     " MaxOffSet=%" PRIu64, offset, size,
-			     data->export->MaxOffsetWrite);
+			     data->req_ctx->export->MaxOffsetWrite);
 
-		if ((offset + size) > data->export->MaxOffsetWrite) {
+		if ((offset + size) > data->req_ctx->export->MaxOffsetWrite) {
 			LogEvent(COMPONENT_NFS_V4,
 				 "A client tryed to violate max "
 				 "file size %" PRIu64 " for exportid #%hu",
-				 data->export->MaxOffsetWrite,
-				 data->export->id);
+				 data->req_ctx->export->MaxOffsetWrite,
+				 data->req_ctx->export->export_id);
 
 			res_WRITE4->status = NFS4ERR_DQUOT;
 			if (anonymous)
@@ -342,7 +343,7 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 		}
 	}
 
-	if (size > data->export->MaxWrite) {
+	if (size > data->req_ctx->export->MaxWrite) {
 		/*
 		 * The client asked for too much data, we
 		 * must restrict him
@@ -353,8 +354,8 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 			LogFullDebug(COMPONENT_NFS_V4,
 				     "write requested size = %" PRIu64
 				     " write allowed size = %" PRIu64,
-				     size, data->export->MaxWrite);
-			size = data->export->MaxWrite;
+				     size, data->req_ctx->export->MaxWrite);
+			size = data->req_ctx->export->MaxWrite;
 		}
 	}
 
@@ -372,7 +373,8 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 
 		verf_desc.addr = res_WRITE4->WRITE4res_u.resok4.writeverf;
 		verf_desc.len = sizeof(verifier4);
-		data->export->export_hdl->ops->get_write_verifier(&verf_desc);
+		data->req_ctx->fsal_export->ops->get_write_verifier(
+			&verf_desc);
 
 		res_WRITE4->status = NFS4_OK;
 		if (anonymous)
@@ -425,7 +427,8 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 
 	verf_desc.addr = res_WRITE4->WRITE4res_u.resok4.writeverf;
 	verf_desc.len = sizeof(verifier4);
-	data->export->export_hdl->ops->get_write_verifier(&verf_desc);
+	data->req_ctx->fsal_export->ops->get_write_verifier(
+		&verf_desc);
 
 	res_WRITE4->status = NFS4_OK;
 

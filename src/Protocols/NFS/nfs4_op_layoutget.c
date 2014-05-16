@@ -195,11 +195,11 @@ static nfsstat4 acquire_layout_state(compound_data_t *data,
 		glist_init(&(*layout_state)->state_data.layout.state_segments);
 
 		/* Attach this open to an export */
-		(*layout_state)->state_export = data->export;
-		export_writelock(data->export);
-		glist_add_tail(&data->export->exp_state_list,
+		(*layout_state)->state_export = data->req_ctx->export;
+		PTHREAD_RWLOCK_wrlock(&data->req_ctx->export->lock);
+		glist_add_tail(&data->req_ctx->export->exp_state_list,
 			       &(*layout_state)->state_export_list);
-		export_rwunlock(data->export);
+		PTHREAD_RWLOCK_unlock(&data->req_ctx->export->lock);
 	} else {
 		/* A state eixsts but is of an invalid type. */
 		nfs_status = NFS4ERR_BAD_STATEID;
@@ -247,7 +247,7 @@ void free_layouts(layout4 *layouts, uint32_t numlayouts)
  * @return NFS4_OK if successfull, other values show an error.
  */
 
-static nfsstat4 one_segment(cache_entry_t *entry, exportlist_t *export,
+static nfsstat4 one_segment(cache_entry_t *entry,
 			    struct req_op_context *req_ctx,
 			    state_t *layout_state,
 			    const struct fsal_layoutget_arg *arg,
@@ -263,9 +263,9 @@ static nfsstat4 one_segment(cache_entry_t *entry, exportlist_t *export,
 	/* Return from state calls */
 	state_status_t state_status = 0;
 	/* Size of a loc_body buffer */
-	size_t loc_body_size =
-	    MIN(export->export_hdl->ops->fs_loc_body_size(export->export_hdl),
-		arg->maxcount);
+	size_t loc_body_size = MIN(
+	    req_ctx->fsal_export->ops->fs_loc_body_size(req_ctx->fsal_export),
+	    arg->maxcount);
 
 	if (loc_body_size == 0) {
 		LogCrit(COMPONENT_PNFS,
@@ -394,8 +394,8 @@ int nfs4_op_layoutget(struct nfs_argop4 *op, compound_data_t *data,
 		goto out;
 
 	/* max_segment_count is also an indication of if fsal supports pnfs */
-	max_segment_count = data->export->export_hdl->ops->
-			fs_maximum_segments(data->export->export_hdl);
+	max_segment_count = data->req_ctx->fsal_export->ops->
+			fs_maximum_segments(data->req_ctx->fsal_export);
 
 	if (max_segment_count == 0) {
 		LogWarn(COMPONENT_PNFS,
@@ -433,7 +433,7 @@ int nfs4_op_layoutget(struct nfs_argop4 *op, compound_data_t *data,
 
 	arg.type = arg_LAYOUTGET4->loga_layout_type;
 	arg.minlength = arg_LAYOUTGET4->loga_minlength;
-	arg.export_id = data->export->id;
+	arg.export_id = data->req_ctx->export->export_id;
 	arg.maxcount = arg_LAYOUTGET4->loga_maxcount;
 
 	/* Guaranteed on the first call */
@@ -458,7 +458,6 @@ int nfs4_op_layoutget(struct nfs_argop4 *op, compound_data_t *data,
 		res.fsal_seg_data = NULL;
 
 		nfs_status = one_segment(data->current_entry,
-					 data->export,
 					 data->req_ctx,
 					 layout_state,
 					 &arg,

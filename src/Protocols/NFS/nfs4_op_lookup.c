@@ -133,8 +133,7 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t *data,
 
 		data->req_ctx->export = file_entry->object.dir.junction_export;
 		data->req_ctx->fsal_export =
-			data->req_ctx->export->export.export_hdl;
-		data->export = &data->req_ctx->export->export;
+			data->req_ctx->export->fsal_export;
 
 		/* Release attr_lock */
 		PTHREAD_RWLOCK_unlock(&file_entry->attr_lock);
@@ -150,7 +149,8 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t *data,
 			 */
 			LogDebug(COMPONENT_EXPORT,
 				 "NFS4ERR_ACCESS Hiding Export_Id %d Path %s with NFS4ERR_NOENT",
-				 data->export->id, data->export->fullpath);
+				 data->req_ctx->export->export_id,
+				 data->req_ctx->export->fullpath);
 			res_LOOKUP4->status = NFS4ERR_NOENT;
 			goto out;
 		}
@@ -158,7 +158,8 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t *data,
 		if (res_LOOKUP4->status != NFS4_OK) {
 			LogMajor(COMPONENT_EXPORT,
 				 "PSEUDO FS JUNCTION TRAVERSAL: Failed to get FSAL credentials for %s, id=%d",
-				 data->export->fullpath, data->export->id);
+				 data->req_ctx->export->fullpath,
+				 data->req_ctx->export->export_id);
 			goto out;
 		}
 
@@ -168,8 +169,8 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t *data,
 		if (cache_status != CACHE_INODE_SUCCESS) {
 			LogMajor(COMPONENT_EXPORT,
 				 "PSEUDO FS JUNCTION TRAVERSAL: Failed to get root for %s, id=%d, status = %s",
-				 data->export->fullpath,
-				 data->export->id,
+				 data->req_ctx->export->fullpath,
+				 data->req_ctx->export->export_id,
 				 cache_inode_err_str(cache_status));
 
 			res_LOOKUP4->status = nfs4_Errno(cache_status);
@@ -178,7 +179,8 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t *data,
 
 		LogDebug(COMPONENT_EXPORT,
 			 "PSEUDO FS JUNCTION TRAVERSAL: Crossed to %s, id=%d for name=%s",
-			 data->export->fullpath, data->export->id, name);
+			 data->req_ctx->export->fullpath,
+			 data->req_ctx->export->export_id, name);
 
 		/* Swap in the entry on the other side of the junction. */
 		if (file_entry)

@@ -46,6 +46,8 @@
 #include "FSAL/fsal_config.h"
 #include "fsal_handle.h"
 #include "lustre_methods.h"
+#include "nfs_exports.h"
+#include "export_mgr.h"
 
 #ifdef HAVE_INCLUDE_LUSTREAPI_H
 #include <lustre/lustreapi.h>
@@ -638,28 +640,13 @@ void lustre_unexport_filesystems(struct lustre_fsal_export *exp)
  */
 
 fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
-				   const char *export_path,
+				   struct req_op_context *req_ctx,
 				   void *parse_node,
-				   struct exportlist *exp_entry,
-				   struct fsal_module *next_fsal,
-				   const struct fsal_up_vector *up_ops,
-				   struct fsal_export **export)
+				   const struct fsal_up_vector *up_ops)
 {
 	struct lustre_fsal_export *myself;
 	int retval = 0;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
-
-	*export = NULL;		/* poison it first */
-	if (export_path == NULL || strlen(export_path) == 0
-	    || strlen(export_path) > MAXPATHLEN) {
-		LogMajor(COMPONENT_FSAL,
-			 "lustre_create_export: export path empty or too big");
-		return fsalstat(ERR_FSAL_INVAL, 0);
-	}
-	if (next_fsal != NULL) {
-		LogCrit(COMPONENT_FSAL, "This module is not stackable");
-		return fsalstat(ERR_FSAL_INVAL, 0);
-	}
 
 	myself = gsh_malloc(sizeof(struct lustre_fsal_export));
 	if (myself == NULL) {
@@ -670,7 +657,7 @@ fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
 	memset(myself, 0, sizeof(struct lustre_fsal_export));
 	glist_init(&myself->filesystems);
 
-	retval = fsal_export_init(&myself->export, exp_entry);
+	retval = fsal_export_init(&myself->export);
 	if (retval != 0) {
 		LogMajor(COMPONENT_FSAL,
 			 "out of memory for object");
@@ -700,7 +687,7 @@ fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
 		goto errout;
 	}
 
-	retval = claim_posix_filesystems(export_path,
+	retval = claim_posix_filesystems(req_ctx->export->fullpath,
 					 fsal_hdl,
 					 &myself->export,
 					 lustre_claim_filesystem,
@@ -709,13 +696,14 @@ fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
 	if (retval != 0) {
 		LogCrit(COMPONENT_FSAL,
 			"claim_posix_filesystems(%s) returned %s (%d)",
-			export_path, strerror(retval), retval);
+			req_ctx->export->fullpath,
+			strerror(retval), retval);
 		fsal_error = posix2fsal_error(retval);
 		goto errout;
 	}
 
 
-	*export = &myself->export;
+	req_ctx->fsal_export = &myself->export;
 	PTHREAD_RWLOCK_unlock(&myself->export.lock);
 
 	myself->pnfs_enabled =
@@ -724,7 +712,7 @@ fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
 	if (myself->pnfs_enabled) {
 		LogInfo(COMPONENT_FSAL,
 			"lustre_fsal_create: pnfs was enabled for [%s]",
-			export_path);
+			req_ctx->export->fullpath);
 		export_ops_pnfs(myself->export.ops);
 		handle_ops_pnfs(myself->export.obj_ops);
 		ds_ops_init(myself->export.ds_ops);

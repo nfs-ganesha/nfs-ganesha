@@ -498,9 +498,9 @@ void state_del_locked(state_t *state, cache_entry_t *entry)
 		glist_del(&state->state_data.lock.state_sharelist);
 
 	/* Remove from list of states for a particular export */
-	export_writelock(state->state_export);
+	PTHREAD_RWLOCK_wrlock(&state->state_export->lock);
 	glist_del(&state->state_export_list);
-	export_rwunlock(state->state_export);
+	PTHREAD_RWLOCK_unlock(&state->state_export->lock);
 
 #ifdef DEBUG_SAL
 	pthread_mutex_lock(&all_state_v4_mutex);
@@ -619,13 +619,8 @@ void release_openstate(struct req_op_context *req_ctx,
 		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 
 		if (state_found->state_type == STATE_TYPE_SHARE) {
-			req_ctx->export =
-				container_of(state_found->state_export,
-					     struct gsh_export,
-					     export);
-
-			req_ctx->fsal_export =
-				state_found->state_export->export_hdl;
+			req_ctx->export = state_found->state_export;
+			req_ctx->fsal_export = req_ctx->export->fsal_export;
 
 			state_status =
 			    state_share_remove(state_found->state_entry,
@@ -657,20 +652,19 @@ void release_openstate(struct req_op_context *req_ctx,
  *
  * @param[in] export The export to release state for
  */
-void state_export_release_nfs4_state(struct req_op_context *req_ctx,
-				     exportlist_t *export)
+void state_export_release_nfs4_state(struct req_op_context *req_ctx)
 {
 	state_t *state;
 	state_status_t state_status;
 
 	while (1) {
-		export_writelock(export);
+		PTHREAD_RWLOCK_wrlock(&req_ctx->export->lock);
 
-		state = glist_first_entry(&export->exp_state_list,
+		state = glist_first_entry(&req_ctx->export->exp_state_list,
 					  state_t,
 					  state_export_list);
 
-		export_rwunlock(export);
+		PTHREAD_RWLOCK_unlock(&req_ctx->export->lock);
 
 		if (state == NULL)
 			break;

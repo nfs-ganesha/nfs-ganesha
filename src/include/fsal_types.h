@@ -93,6 +93,17 @@ struct user_cred {
 	gid_t *caller_garray;
 };
 
+struct export_perms {
+	uid_t anonymous_uid;	/* root uid when no root access is available
+				 * uid when access is available but all users
+				 * are being squashed. */
+	gid_t anonymous_gid;	/* root gid when no root access is available
+				 * gid when access is available but all users
+				 * are being squashed. */
+	uint32_t options;	/* avail. mnt options */
+	uint32_t set;		/* Options that have been set */
+};
+
 /* Define bit values for cred_flags */
 #define CREDS_LOADED	0x01
 #define CREDS_ANON	0x02
@@ -150,6 +161,7 @@ struct req_op_context {
 	struct gsh_client *client;	/*< client host info including stats */
 	struct gsh_export *export;	/*< current export */
 	struct fsal_export *fsal_export;	/*< current fsal export */
+	struct export_perms *export_perms;	/*< Effective export perms */
 	nsecs_elapsed_t start_time;	/*< start time of this op/request */
 	nsecs_elapsed_t queue_wait;	/*< time in wait queue */
 	void *fsal_private;		/*< private for FSAL use */
@@ -159,7 +171,12 @@ struct req_op_context {
 struct root_op_context {
 	struct req_op_context req_ctx;
 	struct user_cred creds;
+	struct export_perms export_perms;
 };
+
+/* Expor permissions for root op context, defined in protocol layer */
+uint32_t root_op_export_options;
+uint32_t root_op_export_set;
 
 static inline void init_root_op_context(struct root_op_context *ctx,
 					struct gsh_export *exp,
@@ -178,6 +195,9 @@ static inline void init_root_op_context(struct root_op_context *ctx,
 	ctx->req_ctx.req_type = req_type;
 	ctx->req_ctx.export = exp;
 	ctx->req_ctx.fsal_export = fsal_exp;
+	ctx->req_ctx.export_perms = &ctx->export_perms;
+	ctx->export_perms.set = root_op_export_set;
+	ctx->export_perms.options = root_op_export_options;
 }
 
 /** filesystem identifier */

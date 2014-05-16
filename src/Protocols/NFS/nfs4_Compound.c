@@ -420,7 +420,7 @@ static const struct nfs4_op_desc optabv4[] = {
  * @retval NFS_REQ_DROP if we pretend we never saw the request.
  */
 
-int nfs4_Compound(nfs_arg_t *arg, exportlist_t *export,
+int nfs4_Compound(nfs_arg_t *arg,
 		  struct req_op_context *req_ctx, nfs_worker_data_t *worker,
 		  struct svc_req *req, nfs_res_t *res)
 {
@@ -504,8 +504,6 @@ int nfs4_Compound(nfs_arg_t *arg, exportlist_t *export,
 	/* Initialisation of the compound request internal's data */
 	memset(&data, 0, sizeof(data));
 	data.req_ctx = req_ctx;
-	data.export_perms.anonymous_uid = (uid_t) ANON_UID;
-	data.export_perms.anonymous_gid = (gid_t) ANON_GID;
 	req_ctx->nfs_minorvers = compound4_minor;
 
 	/* Minor version related stuff */
@@ -644,11 +642,11 @@ int nfs4_Compound(nfs_arg_t *arg, exportlist_t *export,
 			 */
 			LogFullDebug(COMPONENT_NFS_V4,
 				     "Check export perms export = %08x req = %08x",
-				     data.export_perms.
-				     options & EXPORT_OPTION_ACCESS_TYPE,
+				     data.req_ctx->export_perms->options &
+						EXPORT_OPTION_ACCESS_TYPE,
 				     perm_flags);
-			if ((data.export_perms.options & perm_flags) !=
-			    perm_flags) {
+			if ((data.req_ctx->export_perms->options &
+			     perm_flags) != perm_flags) {
 				/* Export doesn't allow requested
 				 * access for this client.
 				 */
@@ -883,7 +881,6 @@ void compound_data_Free(compound_data_t *data)
 		put_gsh_export(data->req_ctx->export);
 		data->req_ctx->export = NULL;
 		data->req_ctx->fsal_export = NULL;
-		data->export = NULL;
 	}
 
 	/* Release SavedFH reference to export. */

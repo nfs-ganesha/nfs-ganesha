@@ -44,7 +44,7 @@
  * @param[out] res
  */
 
-int nlm4_Share(nfs_arg_t *args, exportlist_t *export,
+int nlm4_Share(nfs_arg_t *args,
 	       struct req_op_context *req_ctx, nfs_worker_data_t *worker,
 	       struct svc_req *req, nfs_res_t *res)
 {
@@ -58,7 +58,11 @@ int nlm4_Share(nfs_arg_t *args, exportlist_t *export,
 	int rc;
 	int grace = nfs_in_grace();
 
-	if (export == NULL) {
+	/* NLM doesn't have a BADHANDLE error, nor can rpc_execute deal with
+	 * responding to an NLM_*_MSG call, so we check here if the export is
+	 * NULL and if so, handle the response.
+	 */
+	if (req_ctx->export == NULL) {
 		res->res_nlm4share.stat = NLM4_STALE_FH;
 		LogInfo(COMPONENT_NLM, "INVALID HANDLE: nlm4_Share");
 		return NFS_REQ_OK;
@@ -100,7 +104,7 @@ int nlm4_Share(nfs_arg_t *args, exportlist_t *export,
 
 	rc = nlm_process_share_parms(req,
 				     &arg->share,
-				     export->export_hdl,
+				     req_ctx->fsal_export,
 				     req_ctx,
 				     &entry,
 				     CARE_NO_MONITOR,
@@ -119,7 +123,6 @@ int nlm4_Share(nfs_arg_t *args, exportlist_t *export,
 
 	state_status = state_nlm_share(entry,
 				       req_ctx,
-				       export,
 				       arg->share.access,
 				       arg->share.mode,
 				       nlm_owner,

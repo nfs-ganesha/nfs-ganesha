@@ -48,14 +48,12 @@
 #include "mount.h"
 
 bool get_req_creds(struct svc_req *req,
-		   struct req_op_context *req_ctx,
-		   export_perms_t *export_perms);
+		   struct req_op_context *req_ctx);
 
 void init_credentials(struct req_op_context *req_ctx);
 void clean_credentials(struct req_op_context *req_ctx);
 
-void squash_setattr(export_perms_t *export_perms,
-		    struct req_op_context *req_ctx,
+void squash_setattr(struct req_op_context *req_ctx,
 		    struct attrlist *attr);
 
 int nfs4_MakeCred(compound_data_t *);

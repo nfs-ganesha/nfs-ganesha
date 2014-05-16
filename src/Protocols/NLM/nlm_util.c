@@ -238,9 +238,7 @@ static void nlm4_send_grant_msg(state_async_queue_t *arg)
 
 	PTHREAD_RWLOCK_wrlock(&cookie_entry->sce_entry->state_lock);
 
-	if (cookie_entry->sce_lock_entry->sle_block_data == NULL
-	    || !nlm_block_data_to_export(
-				cookie_entry->sce_lock_entry->sle_block_data)) {
+	if (cookie_entry->sce_lock_entry->sle_block_data == NULL) {
 		/* Wow, we're not doing well... */
 		PTHREAD_RWLOCK_unlock(&cookie_entry->sce_entry->state_lock);
 		LogFullDebug(COMPONENT_NLM,
@@ -252,16 +250,17 @@ static void nlm4_send_grant_msg(state_async_queue_t *arg)
 	PTHREAD_RWLOCK_unlock(&cookie_entry->sce_entry->state_lock);
 
 	/* Initialize req_ctx */
-	export = container_of(cookie_entry->sce_lock_entry->sle_export,
-			      struct gsh_export,
-			      export);
+	export = cookie_entry->sce_lock_entry->sle_export;
+	get_gsh_export_ref(export);
 
 	init_root_op_context(&root_op_context,
-			     export, export->export.export_hdl,
+			     export, export->fsal_export,
 			     NFS_V3, 0, NFS_REQUEST);
 
 	state_status = state_release_grant(cookie_entry,
 					   &root_op_context.req_ctx);
+
+	put_gsh_export(export);
 
 	if (state_status != STATE_SUCCESS) {
 		/* Huh? */
@@ -277,11 +276,11 @@ static void nlm4_send_grant_msg(state_async_queue_t *arg)
 int nlm_process_parameters(struct svc_req *req, bool exclusive,
 			   nlm4_lock *alock, fsal_lock_param_t *plock,
 			   struct req_op_context *req_ctx,
-			   cache_entry_t **ppentry, exportlist_t *export,
+			   cache_entry_t **ppentry,
 			   care_t care, state_nsm_client_t **ppnsm_client,
 			   state_nlm_client_t **ppnlm_client,
 			   state_owner_t **ppowner,
-			   state_block_data_t **ppblock_data)
+			   state_block_data_t **block_data)
 {
 	nfsstat3 nfsstat3;
 	SVCXPRT *ptr_svc = req->rq_xprt;
@@ -294,7 +293,6 @@ int nlm_process_parameters(struct svc_req *req, bool exclusive,
 	/* Convert file handle into a cache entry */
 	*ppentry = nfs3_FhandleToCache((struct nfs_fh3 *)&alock->fh,
 				       req_ctx,
-				       export,
 				       &nfsstat3,
 				       &rc);
 
@@ -356,39 +354,23 @@ int nlm_process_parameters(struct svc_req *req, bool exclusive,
 		goto out_put;
 	}
 
-	if (ppblock_data != NULL) {
-		*ppblock_data = gsh_malloc(sizeof(**ppblock_data));
+	if (block_data != NULL) {
+		state_block_data_t *bdat = gsh_malloc(sizeof(*bdat));
+		*block_data = bdat;
 
 		/* Fill in the block data, if we don't get one, we will just
 		 * proceed without (which will mean the lock doesn't block.
 		 */
-		if (*ppblock_data != NULL) {
-			memset(*ppblock_data, 0, sizeof(**ppblock_data));
-			if (copy_xprt_addr(&(*ppblock_data)->sbd_block_data.
-					      sbd_nlm_block_data.
-					      sbd_nlm_hostaddr,
-					   ptr_svc) == 0) {
-				LogFullDebug(COMPONENT_NLM,
-					     "copy_xprt_addr failed for Program %d, Version %d, Function %d",
-					     (int)req->rq_prog,
-					     (int)req->rq_vers,
-					     (int)req->rq_proc);
-				gsh_free(*ppblock_data);
-				*ppblock_data = NULL;
-				rc = NLM4_FAILED;
-				goto out_put;
-			}
-			(*ppblock_data)->sbd_granted_callback =
-			    nlm_granted_callback;
-			(*ppblock_data)->sbd_block_data.sbd_nlm_block_data.
-			    sbd_nlm_fh.n_bytes =
-			    (*ppblock_data)->sbd_block_data.sbd_nlm_block_data.
-			    sbd_nlm_fh_buf;
-			(*ppblock_data)->sbd_block_data.sbd_nlm_block_data.
-			    sbd_nlm_fh.n_len = alock->fh.n_len;
-			memcpy((*ppblock_data)->sbd_block_data.
-			       sbd_nlm_block_data.sbd_nlm_fh_buf,
-			       alock->fh.n_bytes, alock->fh.n_len);
+		if (bdat != NULL) {
+			memset(bdat, 0, sizeof(*bdat));
+			bdat->sbd_granted_callback = nlm_granted_callback;
+			bdat->sbd_prot.sbd_nlm.sbd_nlm_fh.n_bytes =
+				bdat->sbd_prot.sbd_nlm.sbd_nlm_fh_buf;
+			bdat->sbd_prot.sbd_nlm.sbd_nlm_fh.n_len =
+				alock->fh.n_len;
+			memcpy(bdat->sbd_prot.sbd_nlm.sbd_nlm_fh_buf,
+			       alock->fh.n_bytes,
+			       alock->fh.n_len);
 		}
 	}
 	/* Fill in plock */
@@ -426,7 +408,6 @@ int nlm_process_share_parms(struct svc_req *req, nlm4_share *share,
 	/* Convert file handle into a cache entry */
 	*ppentry = nfs3_FhandleToCache((struct nfs_fh3 *)&share->fh,
 				       req_ctx,
-				       &req_ctx->export->export,
 				       &nfsstat3,
 				       &rc);
 
@@ -566,69 +547,12 @@ nlm4_stats nlm_convert_state_error(state_status_t status)
 	}
 }
 
-bool nlm_block_data_to_export(state_block_data_t *block_data)
-{
-	short exportid;
-	struct gsh_export *exp = NULL;
-	state_nlm_block_data_t *nlm_block_data =
-	    &block_data->sbd_block_data.sbd_nlm_block_data;
-	bool retval = false;
-
-	/* Get export ID from handle */
-	exportid = nlm4_FhandleToExportId(&nlm_block_data->sbd_nlm_fh);
-
-	/* Get export matching export ID */
-	if (exportid < 0)
-		goto err;
-
-	exp = get_gsh_export(exportid);
-	if (exp == NULL)
-		goto err;
-
-	if ((exp->export.export_perms.options & EXPORT_OPTION_NFSV3) != 0) {
-		retval = true;
-		LogFullDebug(COMPONENT_NLM,
-			     "Found export entry for dirname=%s as exportid=%d",
-			     exp->export.fullpath,
-			     exp->export.id);
-	}
-
- err:
-	if (!retval && isInfo(COMPONENT_NLM)) {
-		char addrbuf[SOCK_NAME_MAX + 1];
-
-		sprint_sockaddr(&nlm_block_data->sbd_nlm_hostaddr,
-				addrbuf,
-				sizeof(addrbuf));
-
-		if (exportid < 0) {
-			LogInfo(COMPONENT_NLM,
-				"NLM4 granted lock from client %s has badly formed handle",
-				addrbuf);
-		} else if (exp == NULL) {
-			LogInfo(COMPONENT_NLM,
-				"NLM4 granted lock from client %s has invalid export %d",
-				addrbuf, exportid);
-		} else {
-			LogInfo(COMPONENT_NLM,
-				"NLM4 granted lock from client %s V3 is not allowed on export %d",
-				addrbuf, exportid);
-		}
-	}
-
-	if (exp != NULL)
-		put_gsh_export(exp);
-
-	return retval;
-}
-
 state_status_t nlm_granted_callback(cache_entry_t *pentry,
 				    struct req_op_context *req_ctx,
 				    state_lock_entry_t *lock_entry)
 {
 	state_block_data_t *block_data = lock_entry->sle_block_data;
-	state_nlm_block_data_t *nlm_block_data =
-	    &block_data->sbd_block_data.sbd_nlm_block_data;
+	state_nlm_block_data_t *nlm_block_data = &block_data->sbd_prot.sbd_nlm;
 	state_cookie_entry_t *cookie_entry = NULL;
 	state_async_queue_t *arg;
 	nlm4_testargs *inarg;
@@ -638,11 +562,6 @@ state_status_t nlm_granted_callback(cache_entry_t *pentry,
 	struct granted_cookie nlm_grant_cookie;
 	state_status_t state_status;
 	state_status_t state_status_int;
-
-	if (nlm_block_data_to_export(block_data) != true) {
-		state_status = STATE_INCONSISTENT_ENTRY;
-		return state_status;
-	}
 
 	arg = gsh_malloc(sizeof(*arg));
 	if (arg == NULL) {

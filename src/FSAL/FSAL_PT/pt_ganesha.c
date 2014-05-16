@@ -756,7 +756,7 @@ int ptfsal_fsync(struct pt_fsal_obj_handle *p_file_descriptor,
 		return -1;
 
 	ccl_context.handle_index = p_file_descriptor->u.file.fd;
-	ccl_context.export_id = opctx->export->export.id;
+	ccl_context.export_id = opctx->export->export_id;
 	ccl_context.uid = opctx->creds->caller_uid;
 	ccl_context.gid = opctx->creds->caller_gid;
 
@@ -1187,7 +1187,7 @@ uint64_t ptfsal_read(struct pt_fsal_obj_handle *p_file_descriptor,
 	uint64_t max_readahead_offset = UINT64_MAX;
 
 	ccl_context.handle_index = p_file_descriptor->u.file.fd;
-	ccl_context.export_id = opctx->export->export.id;
+	ccl_context.export_id = opctx->export->export_id;
 	ccl_context.uid = opctx->creds->caller_uid;
 	ccl_context.gid = opctx->creds->caller_gid;
 
@@ -1242,7 +1242,7 @@ uint64_t ptfsal_write(struct pt_fsal_obj_handle *p_file_descriptor,
 	ccl_context_t ccl_context;
 
 	ccl_context.handle_index = p_file_descriptor->u.file.fd;
-	ccl_context.export_id = opctx->export->export.id;
+	ccl_context.export_id = opctx->export->export_id;
 	ccl_context.uid = opctx->creds->caller_uid;
 	ccl_context.gid = opctx->creds->caller_gid;
 
@@ -1490,7 +1490,7 @@ void ptfsal_set_fsi_handle_data(struct fsal_export *exp_hdl,
 				ccl_context_t *ccl_context) {
 	char *export_path = NULL;
 	if (p_context != NULL)
-		export_path = (char *)p_context->export->export.fullpath;
+		export_path = (char *)p_context->export->fullpath;
 	ptfsal_set_fsi_handle_data_path(exp_hdl,
 			p_context,
 			export_path,
@@ -1512,7 +1512,7 @@ void ptfsal_set_fsi_handle_data_path(struct fsal_export *exp_hdl,
 	ccl_context->uid = 0;
 	ccl_context->gid = 0;
 	if (p_context != NULL)
-		ccl_context->export_path = p_context->export->export.fullpath;
+		ccl_context->export_path = p_context->export->fullpath;
 	else
 		ccl_context->export_path = export_path;
 	memset(ccl_context->client_address, 0,

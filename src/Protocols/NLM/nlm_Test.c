@@ -45,7 +45,7 @@
  *
  */
 
-int nlm4_Test(nfs_arg_t *args, exportlist_t *export,
+int nlm4_Test(nfs_arg_t *args,
 	      struct req_op_context *req_ctx, nfs_worker_data_t *worker,
 	      struct svc_req *req, nfs_res_t *res)
 {
@@ -59,7 +59,11 @@ int nlm4_Test(nfs_arg_t *args, exportlist_t *export,
 	fsal_lock_param_t lock, conflict;
 	int rc;
 
-	if (export == NULL) {
+	/* NLM doesn't have a BADHANDLE error, nor can rpc_execute deal with
+	 * responding to an NLM_*_MSG call, so we check here if the export is
+	 * NULL and if so, handle the response.
+	 */
+	if (req_ctx->export == NULL) {
 		res->res_nlm4test.test_stat.stat = NLM4_STALE_FH;
 		LogInfo(COMPONENT_NLM, "INVALID HANDLE: nlm4_Test");
 		return NFS_REQ_OK;
@@ -104,7 +108,6 @@ int nlm4_Test(nfs_arg_t *args, exportlist_t *export,
 				    &lock,
 				    req_ctx,
 				    &pentry,
-				    export,
 				    CARE_NO_MONITOR,
 				    &nsm_client,
 				    &nlm_client,
@@ -121,7 +124,6 @@ int nlm4_Test(nfs_arg_t *args, exportlist_t *export,
 	}
 
 	state_status = state_test(pentry,
-				  export,
 				  req_ctx,
 				  nlm_owner,
 				  &lock,
@@ -199,7 +201,7 @@ static void nlm4_test_message_resp(state_async_queue_t *arg)
  *
  */
 
-int nlm4_Test_Message(nfs_arg_t *args, exportlist_t *export,
+int nlm4_Test_Message(nfs_arg_t *args,
 		      struct req_op_context *req_ctx,
 		      nfs_worker_data_t *worker, struct svc_req *req,
 		      nfs_res_t *res)
@@ -224,7 +226,7 @@ int nlm4_Test_Message(nfs_arg_t *args, exportlist_t *export,
 	if (nlm_client == NULL)
 		rc = NFS_REQ_DROP;
 	else
-		rc = nlm4_Test(args, export, req_ctx, worker, req, res);
+		rc = nlm4_Test(args, req_ctx, worker, req, res);
 
 	if (rc == NFS_REQ_OK)
 		rc = nlm_send_async_res_nlm4test(nlm_client,

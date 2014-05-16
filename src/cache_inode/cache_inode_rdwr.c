@@ -104,7 +104,7 @@ cache_inode_rdwr_plus(cache_entry_t *entry,
 		openflags = FSAL_O_READ;
 	} else {
 		openflags = FSAL_O_WRITE;
-		if (*sync || (req_ctx->export->export.export_perms.options &
+		if (*sync || (req_ctx->export->export_perms.options &
 			      EXPORT_OPTION_COMMIT))
 			openflags |= FSAL_O_SYNC;
 	}

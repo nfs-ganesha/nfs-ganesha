@@ -167,9 +167,6 @@ void pseudofs_handle_ops_init(struct fsal_obj_ops *ops);
  */
 
 fsal_status_t pseudofs_create_export(struct fsal_module *fsal_hdl,
-				     const char *export_path,
+				     struct req_op_context *req_ctx,
 				     void *parse_node,
-				     struct exportlist *exp_entry,
-				     struct fsal_module *next_fsal,
-				     const struct fsal_up_vector *up_ops,
-				     struct fsal_export **export);
+				     const struct fsal_up_vector *up_ops);

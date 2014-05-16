@@ -46,8 +46,9 @@
 #include "nfs_proto_tools.h"
 #include "nfs_convert.h"
 #include "server_stats.h"
+#include "export_mgr.h"
 
-static void nfs_read_ok(exportlist_t *export, struct svc_req *req,
+static void nfs_read_ok(struct svc_req *req,
 			struct req_op_context *req_ctx, nfs_res_t *res,
 			char *data, uint32_t read_size, cache_entry_t *entry,
 			int eof)
@@ -88,7 +89,7 @@ static void nfs_read_ok(exportlist_t *export, struct svc_req *req,
  *
  */
 
-int nfs3_read(nfs_arg_t *arg, exportlist_t *export,
+int nfs3_read(nfs_arg_t *arg,
 	      struct req_op_context *req_ctx, nfs_worker_data_t *worker,
 	      struct svc_req *req, nfs_res_t *res)
 {
@@ -124,9 +125,8 @@ int nfs3_read(nfs_arg_t *arg, exportlist_t *export,
 	res->res_read3.READ3res_u.resok.data.data_val = NULL;
 	res->res_read3.READ3res_u.resok.data.data_len = 0;
 	res->res_read3.status = NFS3_OK;
-	entry =
-	    nfs3_FhandleToCache(&arg->arg_read3.file, req_ctx, export,
-				&res->res_read3.status, &rc);
+	entry = nfs3_FhandleToCache(&arg->arg_read3.file, req_ctx,
+				    &res->res_read3.status, &rc);
 
 	if (entry == NULL) {
 		/* Status and rc have been set by nfs3_FhandleToCache */
@@ -175,17 +175,18 @@ int nfs3_read(nfs_arg_t *arg, exportlist_t *export,
 	size = arg->arg_read3.count;
 
 	/* do not exceed maxium READ offset if set */
-	if (export->MaxOffsetRead < UINT64_MAX) {
+	if (req_ctx->export->MaxOffsetRead < UINT64_MAX) {
 		LogFullDebug(COMPONENT_NFSPROTO,
 			     "Read offset=%" PRIu64 " count=%zd "
 			     "MaxOffSet=%" PRIu64, offset, size,
-			     export->MaxOffsetRead);
+			     req_ctx->export->MaxOffsetRead);
 
-		if ((offset + size) > export->MaxOffsetRead) {
+		if ((offset + size) > req_ctx->export->MaxOffsetRead) {
 			LogEvent(COMPONENT_NFSPROTO,
 				 "A client tryed to violate max "
 				 "file size %" PRIu64 " for exportid #%hu",
-				 export->MaxOffsetRead, export->id);
+				 req_ctx->export->MaxOffsetRead,
+				 req_ctx->export->export_id);
 
 			res->res_read3.status = NFS3ERR_INVAL;
 
@@ -199,16 +200,16 @@ int nfs3_read(nfs_arg_t *arg, exportlist_t *export,
 	}
 
 	/* We should not exceed the FSINFO rtmax field for the size */
-	if (size > export->MaxRead) {
+	if (size > req_ctx->export->MaxRead) {
 		/* The client asked for too much, normally this should
 		   not happen because the client is calling nfs_Fsinfo
 		   at mount time and so is aware of the server maximum
 		   write size */
-		size = export->MaxRead;
+		size = req_ctx->export->MaxRead;
 	}
 
 	if (size == 0) {
-		nfs_read_ok(export, req, req_ctx, res, NULL, 0, entry, 0);
+		nfs_read_ok(req, req_ctx, res, NULL, 0, entry, 0);
 		rc = NFS_REQ_OK;
 		goto out;
 	} else {
@@ -229,7 +230,7 @@ int nfs3_read(nfs_arg_t *arg, exportlist_t *export,
 						&sync);
 
 		if (cache_status == CACHE_INODE_SUCCESS) {
-			nfs_read_ok(export, req, req_ctx, res, data, read_size,
+			nfs_read_ok(req, req_ctx, res, data, read_size,
 				    entry, eof_met);
 			rc = NFS_REQ_OK;
 			goto out;

@@ -45,34 +45,32 @@
 struct proc_state {
 	exports head;
 	exports tail;
-	sockaddr_t req_client;
+	struct req_op_context *req_ctx;
 	int retval;
 };
 
-static bool proc_export(struct gsh_export *exp, void *arg)
+static bool proc_export(struct gsh_export *export, void *arg)
 {
-	struct proc_state *state = (struct proc_state *)arg;
-	exportlist_t *export = &exp->export;
+	struct proc_state *state = arg;
 	struct exportnode *new_expnode;
 	struct glist_head *glist_item;
 	exportlist_client_entry_t *client;
 	struct groupnode *group, *grp_tail = NULL;
 	const char *grp_name;
 	char addr_buf[INET6_ADDRSTRLEN + 1];
-	export_perms_t pexport_perms;
 
 	state->retval = 0;
 
 	/* If client does not have any access to the export,
 	 * don't add it to the list
 	 */
-	nfs_export_check_access(&state->req_client,
-				export,
-				&pexport_perms);
-	if (pexport_perms.options == 0) {
+	state->req_ctx->export = export;
+	state->req_ctx->fsal_export = export->fsal_export;
+	export_check_access(state->req_ctx);
+	if (state->req_ctx->export_perms->options == 0) {
 		LogFullDebug(COMPONENT_NFSPROTO,
 			     "Client is not allowed to access Export_Id %d %s",
-			     export->id, export->fullpath);
+			     export->export_id, export->fullpath);
 
 		return true;
 	}
@@ -162,7 +160,7 @@ static bool proc_export(struct gsh_export *exp, void *arg)
  *
  */
 
-int mnt_Export(nfs_arg_t *arg, exportlist_t *export,
+int mnt_Export(nfs_arg_t *arg,
 	       struct req_op_context *req_ctx, nfs_worker_data_t *worker,
 	       struct svc_req *req, nfs_res_t *res)
 {
@@ -171,7 +169,7 @@ int mnt_Export(nfs_arg_t *arg, exportlist_t *export,
 	/* init everything of interest to good state. */
 	memset(res, 0, sizeof(nfs_res_t));
 	memset(&proc_state, 0, sizeof(proc_state));
-	proc_state.req_client = worker->hostaddr;
+	proc_state.req_ctx = req_ctx;
 
 	(void)foreach_gsh_export(proc_export, &proc_state);
 	if (proc_state.retval != 0) {
@@ -179,6 +177,8 @@ int mnt_Export(nfs_arg_t *arg, exportlist_t *export,
 			"Processing exports failed. error = \"%s\" (%d)",
 			strerror(proc_state.retval), proc_state.retval);
 	}
+	req_ctx->export = NULL;
+	req_ctx->fsal_export = NULL;
 	res->res_mntexport = proc_state.head;
 	return NFS_REQ_OK;
 }				/* mnt_Export */

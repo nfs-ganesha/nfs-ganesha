@@ -88,7 +88,7 @@ cache_inode_lookupp_impl(cache_entry_t *entry,
 	if (entry->type == DIRECTORY) {
 		PTHREAD_RWLOCK_rdlock(&req_ctx->export->lock);
 
-		if (entry == req_ctx->export->export.exp_root_cache_inode) {
+		if (entry == req_ctx->export->exp_root_cache_inode) {
 			/* This entry is the root of the current export, so if
 			 * we get this far, return itself. Note that NFS v4
 			 * LOOKUPP will not come here, it catches the root entry

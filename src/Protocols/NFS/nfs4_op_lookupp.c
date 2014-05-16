@@ -87,18 +87,17 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 
 	PTHREAD_RWLOCK_rdlock(&original_export->lock);
 
-	if (data->current_entry ==
-	    original_export->export.exp_root_cache_inode) {
+	if (data->current_entry == original_export->exp_root_cache_inode) {
 		struct gsh_export *parent_exp;
 
 		/* Handle reverse junction */
 		LogDebug(COMPONENT_EXPORT,
 			 "Handling reverse junction from Export_Id %d Path %s Parent=%p",
-			 data->export->id,
-			 data->export->fullpath,
-			 data->export->exp_parent_exp);
+			 data->req_ctx->export->export_id,
+			 data->req_ctx->export->fullpath,
+			 original_export->exp_parent_exp);
 
-		if (data->export->exp_parent_exp == NULL) {
+		if (original_export->exp_parent_exp == NULL) {
 			/* lookupp on the root on the pseudofs should return
 			 * NFS4ERR_NOENT (RFC3530, page 166)
 			 */
@@ -126,17 +125,17 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 		/* Get the junction inode into dir_entry and parent_exp
 		 * for reference.
 		 */
-		dir_entry = data->export->exp_junction_inode;
-		parent_exp = data->export->exp_parent_exp;
+		dir_entry = original_export->exp_junction_inode;
+		parent_exp = original_export->exp_parent_exp;
 
 		/* Check if there is a problem with the export. */
 		if (dir_entry == NULL || parent_exp == NULL) {
 			/* Export is in the process of dying */
 			LogCrit(COMPONENT_EXPORT,
 				"Reverse junction from Export_Id %d Path %s Parent=%p is stale",
-				data->export->id,
-				data->export->fullpath,
-				data->export->exp_parent_exp);
+				data->req_ctx->export->export_id,
+				data->req_ctx->export->fullpath,
+				parent_exp);
 			PTHREAD_RWLOCK_unlock(&original_export->lock);
 			res_LOOKUPP4->status = NFS4ERR_STALE;
 			return res_LOOKUPP4->status;
@@ -153,9 +152,7 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 		get_gsh_export_ref(parent_exp);
 
 		data->req_ctx->export = parent_exp;
-		data->req_ctx->fsal_export =
-			data->req_ctx->export->export.export_hdl;
-		data->export = &data->req_ctx->export->export;
+		data->req_ctx->fsal_export = data->req_ctx->export->fsal_export;
 
 		/* Now we are safely transitioned to the parent export and can
 		 * release the lock.
@@ -177,7 +174,8 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 			 */
 			LogDebug(COMPONENT_EXPORT,
 				 "NFS4ERR_ACCESS Hiding Export_Id %d Path %s with NFS4ERR_NOENT",
-				 data->export->id, data->export->fullpath);
+				 data->req_ctx->export->export_id,
+				 data->req_ctx->export->fullpath);
 			res_LOOKUPP4->status = NFS4ERR_NOENT;
 			return res_LOOKUPP4->status;
 		}

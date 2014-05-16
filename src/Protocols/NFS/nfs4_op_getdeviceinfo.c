@@ -92,8 +92,7 @@ int nfs4_op_getdeviceinfo(struct nfs_argop4 *op, compound_data_t *data,
 	/* The FSAL's requested size for the da_addr_body opaque */
 	size_t da_addr_size = 0;
 	/* Pointer to the export appropriate to this deviceid */
-	struct gsh_export *exp = NULL;
-	exportlist_t *export;
+	struct gsh_export *export = NULL;
 
 	resp->resop = NFS4_OP_GETDEVICEINFO;
 
@@ -118,21 +117,19 @@ int nfs4_op_getdeviceinfo(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* Check that we have space */
 
-	exp = get_gsh_export(deviceid.export_id);
+	export = get_gsh_export(deviceid.export_id);
 
-	if (exp == NULL) {
+	if (export == NULL) {
 		nfs_status = NFS4ERR_NOENT;
 		goto out;
 	}
-
-	export = &exp->export;
 
 	mincount = sizeof(uint32_t) +	/* Count for the empty bitmap */
 	    sizeof(layouttype4) +	/* Type in the device_addr4 */
 	    sizeof(uint32_t);	/* Number of bytes in da_addr_body */
 
 	da_addr_size =
-	    MIN(export->export_hdl->ops->fs_da_addr_size(export->export_hdl),
+	    MIN(export->fsal_export->ops->fs_da_addr_size(export->fsal_export),
 		arg_GETDEVICEINFO4->gdia_maxcount - mincount);
 
 	if (da_addr_size == 0) {
@@ -158,8 +155,8 @@ int nfs4_op_getdeviceinfo(struct nfs_argop4 *op, compound_data_t *data,
 
 	da_beginning = xdr_getpos(&da_addr_body);
 
-	nfs_status = export->export_hdl->ops->getdeviceinfo(
-			export->export_hdl,
+	nfs_status = export->fsal_export->ops->getdeviceinfo(
+			export->fsal_export,
 			&da_addr_body,
 			arg_GETDEVICEINFO4->gdia_layout_type,
 			&deviceid);
@@ -184,8 +181,8 @@ int nfs4_op_getdeviceinfo(struct nfs_argop4 *op, compound_data_t *data,
 	nfs_status = NFS4_OK;
 
  out:
-	if (exp != NULL)
-		put_gsh_export(exp);
+	if (export != NULL)
+		put_gsh_export(export);
 
 	if ((nfs_status != NFS4_OK) && da_buffer)
 		gsh_free(da_buffer);

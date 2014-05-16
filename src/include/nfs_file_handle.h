@@ -143,8 +143,8 @@ static inline size_t nfs4_sizeof_handle(struct file_handle_v4 *hdl)
 #define LEN_FH_STR 1024
 
 /* File handle translation utility */
-cache_entry_t *nfs3_FhandleToCache(nfs_fh3 *, const struct req_op_context *,
-				   exportlist_t *, nfsstat3 *, int *);
+cache_entry_t *nfs3_FhandleToCache(nfs_fh3 *, struct req_op_context *,
+				   nfsstat3 *, int *);
 
 bool nfs4_FSALToFhandle(nfs_fh4 *fh4,
 			const struct fsal_obj_handle *fsalhandle,

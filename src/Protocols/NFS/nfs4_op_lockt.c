@@ -190,7 +190,6 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t *data,
 	 */
 
 	state_status = state_test(data->current_entry,
-				  data->export,
 				  data->req_ctx,
 				  lock_owner,
 				  &lock_desc,

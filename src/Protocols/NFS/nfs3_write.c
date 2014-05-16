@@ -48,6 +48,7 @@
 #include "nfs_convert.h"
 #include "nfs_proto_tools.h"
 #include "server_stats.h"
+#include "export_mgr.h"
 
 /**
  *
@@ -68,7 +69,7 @@
  *
  */
 
-int nfs3_write(nfs_arg_t *arg, exportlist_t *export,
+int nfs3_write(nfs_arg_t *arg,
 	       struct req_op_context *req_ctx, nfs_worker_data_t *worker,
 	       struct svc_req *req, nfs_res_t *res)
 {
@@ -125,7 +126,6 @@ int nfs3_write(nfs_arg_t *arg, exportlist_t *export,
 
 	entry = nfs3_FhandleToCache(&arg->arg_write3.file,
 				    req_ctx,
-				    export,
 				    &res->res_write3.status,
 				    &rc);
 
@@ -165,10 +165,10 @@ int nfs3_write(nfs_arg_t *arg, exportlist_t *export,
 	/* if quota support is active, then we should check is the
 	   FSAL allows inode creation or not */
 	fsal_status =
-	    export->export_hdl->ops->check_quota(export->export_hdl,
-						 export->fullpath,
-						 FSAL_QUOTA_BLOCKS,
-						 req_ctx);
+	    req_ctx->fsal_export->ops->check_quota(req_ctx->fsal_export,
+						   req_ctx->export->fullpath,
+						   FSAL_QUOTA_BLOCKS,
+						   req_ctx);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		res->res_write3.status = NFS3ERR_DQUOT;
@@ -189,17 +189,18 @@ int nfs3_write(nfs_arg_t *arg, exportlist_t *export,
 	data = arg->arg_write3.data.data_val;
 
 	/* Do not exceed maxium WRITE offset if set */
-	if (export->MaxOffsetWrite < UINT64_MAX) {
+	if (req_ctx->export->MaxOffsetWrite < UINT64_MAX) {
 		LogFullDebug(COMPONENT_NFSPROTO,
 			     "Write offset=%" PRIu64 " count=%" PRIu64
 			     " MaxOffSet=%" PRIu64, offset, size,
-			     export->MaxOffsetWrite);
+			     req_ctx->export->MaxOffsetWrite);
 
-		if ((offset + size) > export->MaxOffsetWrite) {
+		if ((offset + size) > req_ctx->export->MaxOffsetWrite) {
 			LogEvent(COMPONENT_NFSPROTO,
 				 "A client tryed to violate max "
 				 "file size %" PRIu64 " for exportid #%hu",
-				 export->MaxOffsetWrite, export->id);
+				 req_ctx->export->MaxOffsetWrite,
+				 req_ctx->export->export_id);
 
 			res->res_write3.status = NFS3ERR_INVAL;
 
@@ -215,9 +216,9 @@ int nfs3_write(nfs_arg_t *arg, exportlist_t *export,
 	}
 
 	/* We should take care not to exceed FSINFO wtmax field for the size */
-	if (size > export->MaxWrite) {
+	if (size > req_ctx->export->MaxWrite) {
 		/* The client asked for too much data, we must restrict him */
-		size = export->MaxWrite;
+		size = req_ctx->export->MaxWrite;
 	}
 
 	if (size == 0) {

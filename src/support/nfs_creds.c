@@ -58,17 +58,32 @@
 #include "uid2grp.h"
 #include "client_mgr.h"
 
-void squash_setattr(export_perms_t *export_perms,
-		    struct req_op_context *req_ctx,
+/* Expor permissions for root op context */
+uint32_t root_op_export_options = EXPORT_OPTION_ROOT |
+				  EXPORT_OPTION_ACCESS_TYPE |
+				  EXPORT_OPTION_AUTH_TYPES |
+				  EXPORT_OPTION_PROTOCOLS |
+				  EXPORT_OPTION_TRANSPORTS;
+
+uint32_t root_op_export_set = EXPORT_OPTION_SQUASH_TYPES |
+			      EXPORT_OPTION_ANON_UID_SET |
+			      EXPORT_OPTION_ANON_GID_SET |
+			      EXPORT_OPTION_ACCESS_TYPE |
+			      EXPORT_OPTION_AUTH_TYPES |
+			      EXPORT_OPTION_PROTOCOLS |
+			      EXPORT_OPTION_TRANSPORTS;
+
+void squash_setattr(struct req_op_context *req_ctx,
 		    struct attrlist *attr)
 {
 	if (attr->mask & ATTR_OWNER) {
-		if (export_perms->options & EXPORT_OPTION_ALL_ANONYMOUS)
-			attr->owner = export_perms->anonymous_uid;
-		else if (!(export_perms->options & EXPORT_OPTION_ROOT)
+		if (req_ctx->export_perms->options &
+		    EXPORT_OPTION_ALL_ANONYMOUS)
+			attr->owner = req_ctx->export_perms->anonymous_uid;
+		else if (!(req_ctx->export_perms->options & EXPORT_OPTION_ROOT)
 			 && (attr->owner == 0)
 			 && ((req_ctx->cred_flags & UID_SQUASHED) != 0))
-			attr->owner = export_perms->anonymous_uid;
+			attr->owner = req_ctx->export_perms->anonymous_uid;
 	}
 
 	if (attr->mask & ATTR_GROUP) {
@@ -78,13 +93,14 @@ void squash_setattr(export_perms_t *export_perms,
 		 * caller_gid has been squashed or one of the caller's
 		 * alternate groups has been squashed.
 		 */
-		if (export_perms->options & EXPORT_OPTION_ALL_ANONYMOUS)
-			attr->group = export_perms->anonymous_gid;
-		else if (!(export_perms->options & EXPORT_OPTION_ROOT)
+		if (req_ctx->export_perms->options &
+		    EXPORT_OPTION_ALL_ANONYMOUS)
+			attr->group = req_ctx->export_perms->anonymous_gid;
+		else if (!(req_ctx->export_perms->options & EXPORT_OPTION_ROOT)
 			 && (attr->group == 0)
 			 && ((req_ctx->cred_flags & (GID_SQUASHED |
 						     GARRAY_SQUASHED)) != 0))
-			attr->group = export_perms->anonymous_gid;
+			attr->group = req_ctx->export_perms->anonymous_gid;
 	}
 }
 
@@ -190,8 +206,7 @@ int nfs_rpc_req2client_cred(struct svc_req *req, nfs_client_cred_t *pcred)
  *
  */
 bool get_req_creds(struct svc_req *req,
-		   struct req_op_context *req_ctx,
-		   export_perms_t *export_perms)
+		   struct req_op_context *req_ctx)
 {
 	unsigned int i;
 	const char *auth_label = "UNKNOWN";
@@ -230,7 +245,7 @@ bool get_req_creds(struct svc_req *req,
 		*req_ctx->creds = req_ctx->original_creds;
 
 		/* Do we trust AUTH_SYS creds for groups or not ? */
-		if ((export_perms->options & EXPORT_OPTION_MANAGE_GIDS)
+		if ((req_ctx->export_perms->options & EXPORT_OPTION_MANAGE_GIDS)
 		    != 0) {
 			req_ctx->cred_flags |= MANAGED_GIDS;
 			garray_copy = &req_ctx->managed_garray_copy;
@@ -303,11 +318,14 @@ bool get_req_creds(struct svc_req *req,
 	/* Mow check for anon creds or id squashing			*/
 	/****************************************************************/
 	if ((req_ctx->cred_flags & CREDS_ANON) != 0 ||
-	    ((export_perms->options & EXPORT_OPTION_ALL_ANONYMOUS) != 0) ||
-	    ((export_perms->options & EXPORT_OPTION_ROOT) == 0 &&
+	    ((req_ctx->export_perms->options &
+	      EXPORT_OPTION_ALL_ANONYMOUS) != 0) ||
+	    ((req_ctx->export_perms->options & EXPORT_OPTION_ROOT) == 0 &&
 	      req_ctx->original_creds.caller_uid == 0)) {
-		req_ctx->creds->caller_uid = export_perms->anonymous_uid;
-		req_ctx->creds->caller_gid = export_perms->anonymous_gid;
+		req_ctx->creds->caller_uid =
+					req_ctx->export_perms->anonymous_uid;
+		req_ctx->creds->caller_gid =
+					req_ctx->export_perms->anonymous_gid;
 		req_ctx->creds->caller_glen = 0;
 		LogMidDebugAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 			    "%s creds squashed to uid=%u, gid=%u",
@@ -324,10 +342,11 @@ bool get_req_creds(struct svc_req *req,
 	/****************************************************************/
 	/* Now sqush group or use original_creds gid			*/
 	/****************************************************************/
-	if ((export_perms->options & EXPORT_OPTION_ROOT) == 0 &&
+	if ((req_ctx->export_perms->options & EXPORT_OPTION_ROOT) == 0 &&
 	    req_ctx->original_creds.caller_gid == 0) {
 		/* Squash gid */
-		req_ctx->creds->caller_gid = export_perms->anonymous_gid;
+		req_ctx->creds->caller_gid =
+					req_ctx->export_perms->anonymous_gid;
 		req_ctx->cred_flags |= GID_SQUASHED;
 	} else {
 		/* Use original_creds gid */
@@ -363,7 +382,7 @@ bool get_req_creds(struct svc_req *req,
 	/****************************************************************/
 
 	/* If no root squashing in caller_garray, return now */
-	if ((export_perms->options & EXPORT_OPTION_ROOT) != 0 ||
+	if ((req_ctx->export_perms->options & EXPORT_OPTION_ROOT) != 0 ||
 	    req_ctx->creds->caller_glen == 0)
 		goto out;
 
@@ -393,7 +412,8 @@ bool get_req_creds(struct svc_req *req,
 			 * the same place, so even if using a copy that had a
 			 * different anonymous_gid, we're fine.
 			 */
-			(*garray_copy)[i] = export_perms->anonymous_gid;
+			(*garray_copy)[i] =
+					req_ctx->export_perms->anonymous_gid;
 
 			/* Indicate we squashed the caller_garray */
 			req_ctx->cred_flags |= GARRAY_SQUASHED;
@@ -481,64 +501,70 @@ int nfs4_MakeCred(compound_data_t *data)
 
 	LogMidDebugAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
 		    "nfs4_MakeCred about to call nfs_export_check_access");
-	nfs_export_check_access(data->req_ctx->caller_addr, data->export,
-				&data->export_perms);
+	export_check_access(data->req_ctx);
 
 	/* Check if any access at all */
-	if ((data->export_perms.options & EXPORT_OPTION_ACCESS_TYPE) == 0) {
+	if ((data->req_ctx->export_perms->options &
+	     EXPORT_OPTION_ACCESS_TYPE) == 0) {
 		LogInfoAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
 			"Access not allowed on Export_Id %d %s for client %s",
-			data->export->id, data->export->fullpath,
+			data->req_ctx->export->export_id,
+			data->req_ctx->export->fullpath,
 			data->req_ctx->client->hostaddr_str);
 		return NFS4ERR_ACCESS;
 	}
 
 	/* Check protocol version */
-	if ((data->export_perms.options & EXPORT_OPTION_NFSV4) == 0) {
+	if ((data->req_ctx->export_perms->options & EXPORT_OPTION_NFSV4) == 0) {
 		LogInfoAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
 			"NFS4 not allowed on Export_Id %d %s for client %s",
-			data->export->id, data->export->fullpath,
+			data->req_ctx->export->export_id,
+			data->req_ctx->export->fullpath,
 			data->req_ctx->client->hostaddr_str);
 		return NFS4ERR_ACCESS;
 	}
 
 	/* Check transport type */
-	if (((xprt_type == XPRT_UDP)
-	     && ((data->export_perms.options & EXPORT_OPTION_UDP) == 0))
-	    || ((xprt_type == XPRT_TCP)
-		&& ((data->export_perms.options & EXPORT_OPTION_TCP) == 0))) {
+	if (((xprt_type == XPRT_UDP) &&
+	    ((data->req_ctx->export_perms->options &
+	      EXPORT_OPTION_UDP) == 0))
+	    ||
+	    ((xprt_type == XPRT_TCP) &&
+	    ((data->req_ctx->export_perms->options &
+	      EXPORT_OPTION_TCP) == 0))) {
 		LogInfoAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
 			"NFS4 over %s not allowed on Export_Id %d %s for client %s",
-			xprt_type_to_str(xprt_type), data->export->id,
-			data->export->fullpath,
+			xprt_type_to_str(xprt_type),
+			data->req_ctx->export->export_id,
+			data->req_ctx->export->fullpath,
 			data->req_ctx->client->hostaddr_str);
 		return NFS4ERR_ACCESS;
 	}
 
 	/* Check if client is using a privileged port. */
-	if (((data->export_perms.options & EXPORT_OPTION_PRIVILEGED_PORT) != 0)
+	if (((data->req_ctx->export_perms->options &
+	      EXPORT_OPTION_PRIVILEGED_PORT) != 0)
 	    && (port >= IPPORT_RESERVED)) {
 		LogInfoAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
 			"Non-reserved Port %d is not allowed on Export_Id %d %s for client %s",
-			port, data->export->id, data->export->fullpath,
+			port, data->req_ctx->export->export_id,
+			data->req_ctx->export->fullpath,
 			data->req_ctx->client->hostaddr_str);
 		return NFS4ERR_ACCESS;
 	}
 
 	/* Test if export allows the authentication provided */
-	if (nfs_export_check_security
-	    (data->req, &data->export_perms, data->export) == FALSE) {
+	if (export_check_security(data->req, data->req_ctx) == false) {
 		LogInfoAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
 			"NFS4 auth not allowed on Export_Id %d %s for client %s",
-			data->export->id, data->export->fullpath,
+			data->req_ctx->export->export_id,
+			data->req_ctx->export->fullpath,
 			data->req_ctx->client->hostaddr_str);
 		return NFS4ERR_WRONGSEC;
 	}
 
 	/* Get creds */
-	if (!get_req_creds(data->req,
-			   data->req_ctx,
-			   &data->export_perms))
+	if (!get_req_creds(data->req, data->req_ctx))
 		return NFS4ERR_ACCESS;
 
 	return NFS4_OK;

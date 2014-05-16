@@ -64,13 +64,13 @@
  * @retval NFS_REQ_FAILED if failed and not retryable
  */
 
-int nfs3_pathconf(nfs_arg_t *arg, exportlist_t *export,
+int nfs3_pathconf(nfs_arg_t *arg,
 		  struct req_op_context *req_ctx, nfs_worker_data_t *worker,
 		  struct svc_req *req, nfs_res_t *res)
 {
 	cache_entry_t *entry = NULL;
 	int rc = NFS_REQ_OK;
-	struct fsal_export *exp_hdl = export->export_hdl;
+	struct fsal_export *exp_hdl = req_ctx->fsal_export;
 
 	if (isDebug(COMPONENT_NFSPROTO)) {
 		char str[LEN_FH_STR];
@@ -87,7 +87,6 @@ int nfs3_pathconf(nfs_arg_t *arg, exportlist_t *export,
 	/* Convert file handle into a fsal_handle */
 	entry = nfs3_FhandleToCache(&arg->arg_pathconf3.object,
 				    req_ctx,
-				    export,
 				    &res->res_pathconf3.status,
 				    &rc);
 

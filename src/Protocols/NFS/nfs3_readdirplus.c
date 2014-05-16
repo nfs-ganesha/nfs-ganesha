@@ -115,7 +115,7 @@ nfsstat3 nfs_readdir_dot_entry(cache_entry_t *entry, const char *name,
  * @retval NFS_REQ_FAILED if failed and not retryable
  */
 
-int nfs3_readdirplus(nfs_arg_t *arg, exportlist_t *export,
+int nfs3_readdirplus(nfs_arg_t *arg,
 		     struct req_op_context *req_ctx, nfs_worker_data_t *worker,
 		     struct svc_req *req, nfs_res_t *res)
 {
@@ -182,7 +182,6 @@ int nfs3_readdirplus(nfs_arg_t *arg, exportlist_t *export,
 	/* Convert file handle into a vnode */
 	dir_entry = nfs3_FhandleToCache(&(arg->arg_readdirplus3.dir),
 					  req_ctx,
-					  export,
 					  &(res->res_readdirplus3.status),
 					  &rc);
 
@@ -209,12 +208,12 @@ int nfs3_readdirplus(nfs_arg_t *arg, exportlist_t *export,
 	   directory. If verifier is unused (as in many NFS Servers) then
 	   only a set of zeros is returned (trivial value) */
 
-	if (export->UseCookieVerifier)
+	if (req_ctx->export->UseCookieVerifier)
 		memcpy(cookie_verifier,
 		       &(dir_entry->change_time),
 		       sizeof(dir_entry->change_time));
 
-	if (export->UseCookieVerifier && (begin_cookie != 0)) {
+	if (req_ctx->export->UseCookieVerifier && (begin_cookie != 0)) {
 		/* Not the first call, so we have to check the cookie
 		   verifier */
 		if (memcmp(cookie_verifier,
@@ -475,7 +474,7 @@ cache_inode_status_t nfs3_readdirplus_callback(void *opaque,
 		    ep3->name_handle.post_op_fh3_u.handle.data.data_len + 12;
 
 		ep3->name_attributes.attributes_follow =
-		    nfs3_FSALattr_To_Fattr(&tracker->req_ctx->export->export,
+		    nfs3_FSALattr_To_Fattr(tracker->req_ctx->export,
 					   attr,
 					   &(ep3->name_attributes.
 					     post_op_attr_u.attributes));

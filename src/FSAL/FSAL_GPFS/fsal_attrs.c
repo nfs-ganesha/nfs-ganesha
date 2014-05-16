@@ -70,7 +70,7 @@ fsal_status_t GPFSFSAL_getattrs(struct fsal_export *export,	/* IN */
 	buffxstat.fsal_fsid.major = 0;
 	buffxstat.fsal_fsid.minor = 0;
 
-	if (p_context->export->export.expire_type_attr == CACHE_INODE_EXPIRE)
+	if (p_context->export->expire_type_attr == CACHE_INODE_EXPIRE)
 		expire = TRUE;
 
 	st = fsal_get_xstat_by_handle(gpfs_fs->root_fd, p_filehandle,

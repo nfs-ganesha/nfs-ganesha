@@ -57,7 +57,7 @@ struct nfs4_readdir_cb_data {
 	compound_data_t *data;	/*< The compound data, so we can produce
 				   nfs_fh4s. */
 	bool junction_cb;	/*< True if this is a callback for junction. */
-	export_perms_t save_export_perms;	/*< Saved export perms. */
+	struct export_perms save_export_perms;	/*< Saved export perms. */
 	struct gsh_export *saved_gsh_export;	/*< Saved export */
 };
 
@@ -67,17 +67,14 @@ static void restore_data(struct nfs4_readdir_cb_data *tracker)
 	if (tracker->data->req_ctx->export)
 		put_gsh_export(tracker->data->req_ctx->export);
 
-	tracker->data->export_perms = tracker->save_export_perms;
+	*tracker->data->req_ctx->export_perms = tracker->save_export_perms;
 	tracker->data->req_ctx->export = tracker->saved_gsh_export;
 	tracker->data->req_ctx->fsal_export =
-		tracker->data->req_ctx->export->export.export_hdl;
-	tracker->data->export = &tracker->data->req_ctx->export->export;
+		tracker->data->req_ctx->export->fsal_export;
 	tracker->saved_gsh_export = NULL;
 
 	/* Restore creds */
-	if (!get_req_creds(tracker->data->req,
-			   tracker->data->req_ctx,
-			   &tracker->data->export_perms)) {
+	if (!get_req_creds(tracker->data->req, tracker->data->req_ctx)) {
 		LogCrit(COMPONENT_EXPORT,
 			"Failure to restore creds");
 	}
@@ -149,11 +146,11 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 		LogMidDebug(COMPONENT_EXPORT,
 			    "Offspring DIR %s is a junction Export_id %d Path %s",
 			    cb_parms->name,
-			    entry->object.dir.junction_export->export.id,
-			    entry->object.dir.junction_export->export.fullpath);
+			    entry->object.dir.junction_export->export_id,
+			    entry->object.dir.junction_export->fullpath);
 
 		/* Save the compound data context */
-		tracker->save_export_perms = data->export_perms;
+		tracker->save_export_perms = *data->req_ctx->export_perms;
 		tracker->saved_gsh_export = data->req_ctx->export;
 
 		/* Get a reference to the export and stash it in
@@ -166,8 +163,7 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 		    entry->object.dir.junction_export;
 
 		data->req_ctx->fsal_export =
-			data->req_ctx->export->export.export_hdl;
-		data->export = &data->req_ctx->export->export;
+			data->req_ctx->export->fsal_export;
 
 		/* Build the credentials */
 		rdattr_error = nfs4_MakeCred(data);
@@ -179,8 +175,8 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 			 */
 			LogDebug(COMPONENT_EXPORT,
 				 "NFS4ERR_ACCESS Skipping Export_Id %d Path %s",
-				 data->export->id,
-				 data->export->fullpath);
+				 data->req_ctx->export->export_id,
+				 data->req_ctx->export->fullpath);
 
 			/* Restore export and creds */
 			restore_data(tracker);
@@ -208,8 +204,8 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 				 */
 				LogDebug(COMPONENT_EXPORT,
 					 "Ignoring NFS4ERR_WRONGSEC (only asked for MOUNTED_IN_FILEID) On ReadDir Export_Id %d Path %s",
-					 data->export->id,
-					 data->export->fullpath);
+					 data->req_ctx->export->export_id,
+					 data->req_ctx->export->fullpath);
 
 				/* Because we are not asking for any attributes
 				 * which are a property of the exported file
@@ -234,8 +230,8 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 				 */
 				LogDebug(COMPONENT_EXPORT,
 					 "NFS4ERR_WRONGSEC On ReadDir Export_Id %d Path %s",
-					 data->export->id,
-					 data->export->fullpath);
+					 data->req_ctx->export->export_id,
+					 data->req_ctx->export->fullpath);
 			}
 		} else if (rdattr_error == NFS4_OK) {
 			/* Now we must traverse the junction to get the
@@ -248,8 +244,8 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 			 */
 			LogMidDebug(COMPONENT_EXPORT,
 				    "Need to cross junction to Export_Id %d Path %s",
-				    data->export->id,
-				    data->export->fullpath);
+				    data->req_ctx->export->export_id,
+				    data->req_ctx->export->fullpath);
 			tracker->junction_cb = true;
 			return CACHE_INODE_CROSS_JUNCTION;
 		}
@@ -261,8 +257,8 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 		 */
 		LogMidDebug(COMPONENT_EXPORT,
 			    "Need to report error for junction to Export_Id %d Path %s",
-			    data->export->id,
-			    data->export->fullpath);
+			    data->req_ctx->export->export_id,
+			    data->req_ctx->export->fullpath);
 		restore_data(tracker);
 	}
 
@@ -573,7 +569,7 @@ int nfs4_op_readdir(struct nfs_argop4 *op, compound_data_t *data,
 	 * '.' and '..' are not returned, so all cookies will be offset by 2
 	 */
 
-	if ((cookie != 0) && (data->export->UseCookieVerifier == 1)) {
+	if ((cookie != 0) && (data->req_ctx->export->UseCookieVerifier == 1)) {
 		if (memcmp(cookie_verifier,
 			   arg_READDIR4->cookieverf,
 			   NFS4_VERIFIER_SIZE) != 0) {

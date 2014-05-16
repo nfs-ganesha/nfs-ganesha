@@ -77,21 +77,9 @@ typedef enum exportlist_client_type__ {
 	BAD_CLIENT = 8
 } exportlist_client_type_t;
 
-
-typedef struct export_perms__ {
-	uid_t anonymous_uid;	/* root uid when no root access is available
-				 * uid when access is available but all users
-				 * are being squashed. */
-	gid_t anonymous_gid;	/* root gid when no root access is available
-				 * gid when access is available but all users
-				 * are being squashed. */
-	uint32_t options;	/* avail. mnt options */
-	uint32_t set;		/* Options that have been set */
-} export_perms_t;
-
 struct global_export_perms {
-	struct export_perms__ def;
-	struct export_perms__ conf;
+	struct export_perms def;
+	struct export_perms conf;
 };
 
 #define GSS_DEFINE_LEN_TEMP 255
@@ -119,60 +107,8 @@ typedef struct exportlist_client_entry__ {
 			char *princname;
 		} gssprinc;
 	} client;
-	export_perms_t client_perms;	/*< Available mount options */
+	struct export_perms client_perms;	/*< Available mount options */
 } exportlist_client_entry_t;
-
-typedef struct exportlist {
-	struct glist_head exp_list;
-	uint32_t id;		/*< Entry identifier */
-	char *fullpath;		/*< The path from the root */
-	char *pseudopath;	/*< NFSv4 pseudo-filesystem 'virtual' path */
-	char *FS_tag;		/*< Filesystem "tag" string */
-
-	fsal_fsid_t filesystem_id;	/*< Filesystem ID */
-	export_perms_t export_perms;	/*< available mount options */
-	uint64_t MaxRead;	/*< Max Read for this entry */
-	uint64_t MaxWrite;	/*< Max Write for this entry */
-	uint64_t PrefRead;	/*< Preferred Read size */
-	uint64_t PrefWrite;	/*< Preferred Write size */
-	uint64_t PrefReaddir;	/*< Preferred Readdir size */
-	uint64_t MaxOffsetWrite;	/*< Maximum Offset allowed for write */
-	uint64_t MaxOffsetRead;	/*< Maximum Offset allowed for read */
-	uint64_t MaxCacheSize;	/*< Maximum Cache Size allowed */
-	bool UseCookieVerifier;	/*< Is Cookie verifier to be used? */
-	struct glist_head clients;	/*< Allowed clients */
-	struct fsal_export *export_hdl;	/*< Handle into our FSAL */
-
-	struct glist_head exp_state_list;	/*< List of NFS v4 state
-						    belonging to this export */
-	struct glist_head exp_lock_list;	/*< List of locks belonging
-						   to this export */
-	struct glist_head exp_nlm_share_list;	/*< List of NLM shares
-						   belonging to this export */
-	struct glist_head exp_root_list;	/*< List of exports rooted
-						    on the same inode */
-	uint64_t exp_mounted_on_file_id;	/*< Node id this is mounted on
-						    Protected by gsh_export lock
-						 */
-	cache_entry_t *exp_root_cache_inode;	/*< entry for root of this
-						    export
-						    Protected by gsh_export lock
-						 */
-	cache_entry_t *exp_junction_inode;	/*< entry for the junction of
-						    this export
-						    Protected by gsh_export lock
-						 */
-	struct gsh_export *exp_parent_exp;	/*< The export this export
-						    sits on.
-						    Protected by gsh_export lock
-						 */
-	/** Expiration type for attributes.  Defaults to never,
-	    settable with Attr_Expiration_Time. */
-	cache_inode_expire_type_t expire_type_attr;
-	/** Expiration time interval in seconds for attributes.  Settable with
-	    Attr_Expiration_Time. */
-	time_t expire_time_attr;
-} exportlist_t;
 
 /* Constant for options masks */
 #define EXPORT_OPTION_ROOT 0x00000001	/*< Allow root access as root uid */
@@ -314,14 +250,9 @@ typedef struct compound_data {
 	object_file_type_t saved_filetype;	/*< File type of saved entry */
 	struct req_op_context *req_ctx;	/*< the context including
 					   related, mapped creds */
-/** @todo these members need to be cleaned up to refer to the gsh_export
- * at some point.
- */
-	exportlist_t *export;	/*< Export entry related to the request */
 	struct gsh_export *saved_export; /*< Export entry related to the
 					     savedFH */
-	export_perms_t export_perms; /*< Permissions for export for currentFH */
-	export_perms_t saved_export_perms; /*< Permissions for export for
+	struct export_perms saved_export_perms; /*< Permissions for export for
 					       savedFH */
 	struct svc_req *req;	/*< RPC Request related to the compound */
 	struct nfs_worker_data *worker;	/*< Worker thread data */
@@ -375,18 +306,14 @@ static inline void set_current_entry(compound_data_t *data,
 }
 
 /* Export list related functions */
-sockaddr_t *check_convert_ipv6_to_ipv4(sockaddr_t *ipv6, sockaddr_t *ipv4);
-
 bool nfs_compare_clientcred(nfs_client_cred_t *cred1,
 			    nfs_client_cred_t *cred2);
 int nfs_rpc_req2client_cred(struct svc_req *req, nfs_client_cred_t *pcred);
 
-void nfs_export_check_access(sockaddr_t *hostaddr, exportlist_t *export,
-			     export_perms_t *export_perms);
+void export_check_access(struct req_op_context *req_ctx);
 
-bool nfs_export_check_security(struct svc_req *req,
-			       export_perms_t *export_perms,
-			       exportlist_t *export);
+bool export_check_security(struct svc_req *req,
+			   struct req_op_context *req_ctx);
 
 void LogClientListEntry(log_components_t component,
 			exportlist_client_entry_t *entry);
@@ -399,7 +326,7 @@ void unexport(struct gsh_export *export);
 void kill_export_root_entry(cache_entry_t *entry);
 
 int ReadExports(config_file_t in_config);
-void free_export_resources(exportlist_t *export);
+void free_export_resources(struct gsh_export *export);
 void exports_pkginit(void);
 
 #endif				/* !NFS_EXPORTS_H */

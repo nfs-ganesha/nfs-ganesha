@@ -100,7 +100,7 @@
  * taken.  The callee of the creating method must then either keep a
  * persistent reference to it or @c put it back.  For example, a @c
  * fsal_export gets created for each export in the configuration.  A
- * pointer to it gets saved in @c exportlist and it has a reference
+ * pointer to it gets saved in @c gsh_export and it has a reference
  * to reflect this.  It is now safe to use it to do a @c lookup which
  * will return a @c fsal_obj_handle which can then be kept in a cache
  * inode entry.  If we had done a @c put on the export, it could be
@@ -300,9 +300,7 @@ struct export_ops;
 struct fsal_obj_handle;
 struct fsal_obj_ops;
 struct fsal_filesystem;
-struct exportlist;		/* We just need a pointer, not all of
-				 * nfs_exports.h full def in
-				 * include/nfs_exports.h */
+struct gsh_export;
 struct fsal_ds_handle;
 struct fsal_ds_ops;
 
@@ -422,9 +420,7 @@ struct fsal_ops {
  * public portion like so:
  *
  * @code{.c}
- *         fsal_export_init(&private_export_handle->pub,
- *                          fsal_hdl->exp_ops,
- *                          exp_entry);
+ *         fsal_export_init(&private_export_handle->pub);
  * @endcode
  *
  * After doing other private initialization, it must attach the export
@@ -447,22 +443,20 @@ struct fsal_ops {
  * do. -- ACE.
  *
  * @param[in]     fsal_hdl    FSAL module
- * @param[in]     export_path Path to the root of the export
+ * @param[in,out] req_ctx     Request context to run in
+ *                            Provides reference to the gsh_export and
+ *                            thus the exported path
  * @param[in]     parse_node  opaque pointer to parse tree node for
- *                export options to be passed to load_config_from_node
- * @param[in,out] exp_entry   Entry in the Ganesha export list
- * @param[in]     next_fsal   Next FSAL in list, for stacking
- * @param[out]    export      Public export handle
+ *                            export options to be passed to
+ *                            load_config_from_node
+ * @param[in]     up_ops      Upcall ops
  *
  * @return FSAL status.
  */
 	 fsal_status_t(*create_export) (struct fsal_module *fsal_hdl,
-					const char *export_path,
+					struct req_op_context *req_ctx,
 					void *parse_node,
-					struct exportlist *exp_entry,
-					struct fsal_module *next_fsal,
-					const struct fsal_up_vector *up_ops,
-					struct fsal_export **export);
+					const struct fsal_up_vector *up_ops);
 
 /**
  * @brief Minimal emergency cleanup on error

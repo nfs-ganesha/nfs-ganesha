@@ -81,9 +81,8 @@ cache_inode_setattr(cache_entry_t *entry,
 	}
 
 	/* Is it allowed to change times ? */
-	if (!req_ctx->export->export.export_hdl->ops->
-	    fs_supports(req_ctx->export->export.export_hdl,
-			fso_cansettime)
+	if (!req_ctx->fsal_export->ops->fs_supports(req_ctx->fsal_export,
+						    fso_cansettime)
 	    &&
 	    (FSAL_TEST_MASK
 	     (attr->mask,

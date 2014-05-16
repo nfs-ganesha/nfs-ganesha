@@ -64,6 +64,7 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t *data,
 		  struct nfs_resop4 *resp)
 {
 	struct fsal_export *export;
+	struct gsh_export *last_export;
 	struct file_handle_v4 *v4_handle;
 	cache_entry_t *file_entry;
 
@@ -98,6 +99,8 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t *data,
 	if (data->req_ctx->export != NULL)
 		put_gsh_export(data->req_ctx->export);
 
+	last_export = data->req_ctx->export;
+
 	/* Clear out current entry for now */
 	set_current_entry(data, NULL, false);
 
@@ -107,8 +110,6 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t *data,
 	data->req_ctx->export = get_gsh_export(v4_handle->exportid);
 
 	if (data->req_ctx->export == NULL) {
-		data->export = NULL;
-
 		LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 			"NFS4 Request from client %s has invalid export %d",
 			data->req_ctx->client->hostaddr_str,
@@ -118,11 +119,9 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t *data,
 		return res_PUTFH4->status;
 	}
 
-	data->req_ctx->fsal_export = data->req_ctx->export->export.export_hdl;
+	data->req_ctx->fsal_export = data->req_ctx->export->fsal_export;
 
-	if (&data->req_ctx->export->export != data->export) {
-		data->export = &data->req_ctx->export->export;
-
+	if (data->req_ctx->export != last_export) {
 		res_PUTFH4->status = nfs4_MakeCred(data);
 
 		if (res_PUTFH4->status != NFS4_OK)

@@ -120,8 +120,8 @@ int nfs4_AllocateFH(nfs_fh4 *fh)
  *
  */
 cache_entry_t *nfs3_FhandleToCache(nfs_fh3 *fh3,
-				   const struct req_op_context *req_ctx,
-				   exportlist_t *exp_list, nfsstat3 *status,
+				   struct req_op_context *req_ctx,
+				   nfsstat3 *status,
 				   int *rc)
 {
 	fsal_status_t fsal_status;
@@ -143,9 +143,9 @@ cache_entry_t *nfs3_FhandleToCache(nfs_fh3 *fh3,
 	/* Cast the fh as a non opaque structure */
 	v3_handle = (file_handle_v3_t *) (fh3->data.data_val);
 
-	assert(v3_handle->exportid == req_ctx->export->export.id);
+	assert(v3_handle->exportid == req_ctx->export->export_id);
 
-	export = req_ctx->export->export.export_hdl;
+	export = req_ctx->fsal_export;
 
 	/* Give the export a crack at it */
 	fsal_data.export = export;
@@ -208,7 +208,7 @@ bool nfs4_FSALToFhandle(nfs_fh4 *fh4,
 	file_handle->fhversion = GANESHA_FH_VERSION;
 	file_handle->fs_len = fh_desc.len;	/* set the actual size */
 	/* keep track of the export id */
-	file_handle->exportid = exp->export.id;
+	file_handle->exportid = exp->export_id;
 
 	/* Set the len */
 	fh4->nfs_fh4_len = nfs4_sizeof_handle(file_handle);
@@ -259,7 +259,7 @@ bool nfs3_FSALToFhandle(nfs_fh3 *fh3,
 	file_handle->fhversion = GANESHA_FH_VERSION;
 	file_handle->fs_len = fh_desc.len;	/* set the actual size */
 	/* keep track of the export id */
-	file_handle->exportid = exp->export.id;
+	file_handle->exportid = exp->export_id;
 
 	/* Set the len */
 	/* re-adjust to as built */

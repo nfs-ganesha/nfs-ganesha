@@ -65,7 +65,7 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 	cache_entry_t *entry_src = NULL;
 	sec_oid4 v5oid = { krb5oid.length, (char *)krb5oid.elements };
 	int num_entry = 0;
-	export_perms_t save_export_perms;
+	struct export_perms save_export_perms;
 	struct gsh_export *saved_gsh_export = NULL;
 
 	resp->resop = NFS4_OP_SECINFO;
@@ -108,7 +108,7 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 		cache_entry_t *entry = NULL;
 
 		/* Save the compound data context */
-		save_export_perms = data->export_perms;
+		save_export_perms = *data->req_ctx->export_perms;
 		saved_gsh_export = data->req_ctx->export;
 
 		/* Get a reference to the export and stash it in
@@ -118,8 +118,7 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 
 		data->req_ctx->export = entry_src->object.dir.junction_export;
 		data->req_ctx->fsal_export =
-			data->req_ctx->export->export.export_hdl;
-		data->export = &data->req_ctx->export->export;
+			data->req_ctx->export->fsal_export;
 
 		/* Release attr_lock */
 		PTHREAD_RWLOCK_unlock(&entry_src->attr_lock);
@@ -135,7 +134,8 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 			 */
 			LogDebug(COMPONENT_EXPORT,
 				 "NFS4ERR_ACCESS Hiding Export_Id %d Path %s with NFS4ERR_NOENT",
-				 data->export->id, data->export->fullpath);
+				 data->req_ctx->export->export_id,
+				 data->req_ctx->export->fullpath);
 			res_SECINFO4->status = NFS4ERR_NOENT;
 			goto out;
 		}
@@ -150,8 +150,8 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 		if (cache_status != CACHE_INODE_SUCCESS) {
 			LogMajor(COMPONENT_EXPORT,
 				 "PSEUDO FS JUNCTION TRAVERSAL: Failed to get root for %s, id=%d, status = %s",
-				 data->export->fullpath,
-				 data->export->id,
+				 data->req_ctx->export->fullpath,
+				 data->req_ctx->export->export_id,
 				 cache_inode_err_str(cache_status));
 
 			res_SECINFO4->status = nfs4_Errno(cache_status);
@@ -160,8 +160,8 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 
 		LogMidDebug(COMPONENT_EXPORT,
 			    "PSEUDO FS JUNCTION TRAVERSAL: Crossed to %s, id=%d for name=%s",
-			    data->export->fullpath,
-			    data->export->id,
+			    data->req_ctx->export->fullpath,
+			    data->req_ctx->export->export_id,
 			    secinfo_fh_name);
 
 		/* Swap in the entry on the other side of the junction. */
@@ -175,19 +175,22 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	/* Get the number of entries */
-	if (data->export_perms.options & EXPORT_OPTION_AUTH_NONE)
+	if (data->req_ctx->export_perms->options & EXPORT_OPTION_AUTH_NONE)
 		num_entry++;
 
-	if (data->export_perms.options & EXPORT_OPTION_AUTH_UNIX)
+	if (data->req_ctx->export_perms->options & EXPORT_OPTION_AUTH_UNIX)
 		num_entry++;
 
-	if (data->export_perms.options & EXPORT_OPTION_RPCSEC_GSS_NONE)
+	if (data->req_ctx->export_perms->options &
+	    EXPORT_OPTION_RPCSEC_GSS_NONE)
 		num_entry++;
 
-	if (data->export_perms.options & EXPORT_OPTION_RPCSEC_GSS_INTG)
+	if (data->req_ctx->export_perms->options &
+	    EXPORT_OPTION_RPCSEC_GSS_INTG)
 		num_entry++;
 
-	if (data->export_perms.options & EXPORT_OPTION_RPCSEC_GSS_PRIV)
+	if (data->req_ctx->export_perms->options &
+	    EXPORT_OPTION_RPCSEC_GSS_PRIV)
 		num_entry++;
 
 	res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val =
@@ -205,15 +208,16 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 	 */
 	int idx = 0;
 
-	if (data->export_perms.options & EXPORT_OPTION_AUTH_NONE)
+	if (data->req_ctx->export_perms->options & EXPORT_OPTION_AUTH_NONE)
 		res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx++]
 		    .flavor = AUTH_NONE;
 
-	if (data->export_perms.options & EXPORT_OPTION_AUTH_UNIX)
+	if (data->req_ctx->export_perms->options & EXPORT_OPTION_AUTH_UNIX)
 		res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx++]
 		    .flavor = AUTH_UNIX;
 
-	if (data->export_perms.options & EXPORT_OPTION_RPCSEC_GSS_NONE) {
+	if (data->req_ctx->export_perms->options &
+	    EXPORT_OPTION_RPCSEC_GSS_NONE) {
 		res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx].
 		    flavor = RPCSEC_GSS;
 		res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx]
@@ -224,7 +228,8 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 		    .secinfo4_u.flavor_info.oid = v5oid;
 	}
 
-	if (data->export_perms.options & EXPORT_OPTION_RPCSEC_GSS_INTG) {
+	if (data->req_ctx->export_perms->options &
+	    EXPORT_OPTION_RPCSEC_GSS_INTG) {
 		res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx].
 		    flavor = RPCSEC_GSS;
 		res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx]
@@ -235,7 +240,8 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 		    .secinfo4_u.flavor_info.oid = v5oid;
 	}
 
-	if (data->export_perms.options & EXPORT_OPTION_RPCSEC_GSS_PRIV) {
+	if (data->req_ctx->export_perms->options &
+	    EXPORT_OPTION_RPCSEC_GSS_PRIV) {
 		res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx]
 		    .flavor = RPCSEC_GSS;
 		res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx]
@@ -259,7 +265,6 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 			put_gsh_export(data->req_ctx->export);
 			data->req_ctx->export = NULL;
 			data->req_ctx->fsal_export = NULL;
-			data->export = NULL;
 		}
 
 		if (saved_gsh_export != NULL) {
@@ -278,16 +283,13 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 		if (data->req_ctx->export)
 			put_gsh_export(data->req_ctx->export);
 
-		data->export_perms = save_export_perms;
+		*data->req_ctx->export_perms = save_export_perms;
 		data->req_ctx->export = saved_gsh_export;
 		data->req_ctx->fsal_export =
-			data->req_ctx->export->export.export_hdl;
-		data->export = &data->req_ctx->export->export;
+			data->req_ctx->export->fsal_export;
 
 		/* Restore creds */
-		if (!get_req_creds(data->req,
-				   data->req_ctx,
-				   &data->export_perms)) {
+		if (!get_req_creds(data->req, data->req_ctx)) {
 			LogCrit(COMPONENT_EXPORT,
 				"Failure to restore creds");
 		}

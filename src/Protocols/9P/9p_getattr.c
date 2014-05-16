@@ -137,7 +137,7 @@ int _9p_getattr(struct _9p_request_data *req9p, void *worker_data,
 	 *     0LL; */
 	rdev =
 	    (*request_mask & _9P_GETATTR_RDEV) ?
-		(u64) pfid->op_context.export->export.filesystem_id.major :
+		(u64) pfid->op_context.export->filesystem_id.major :
 		0LL;
 	size =
 	    (*request_mask & _9P_GETATTR_SIZE) ?
