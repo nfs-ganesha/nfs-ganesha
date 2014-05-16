@@ -642,9 +642,9 @@ static int fsal_commit(void *node, void *link_mem, void *self_struct,
 					  node,
 					  &fsal_up_top);
 	if (!(export->export.export_perms.set & EXPORT_OPTION_EXPIRE_SET)) {
-		export->export.expire_type_attr =
+		export->expire_type_attr =
 			nfs_param.cache_param.expire_type_attr;
-		export->export.expire_time_attr =
+		export->expire_time_attr =
 			nfs_param.cache_param.expire_time_attr;
 	}
 
@@ -1185,10 +1185,10 @@ static struct config_item export_params[] = {
 	CONF_ITEM_ENUM_SET("Attr_Expiration_Type",
 			   CACHE_INODE_EXPIRE_NEVER,
 			   expire_types,
-			   gsh_export, export.expire_type_attr,
+			   gsh_export, expire_type_attr,
 			   EXPORT_OPTION_EXPIRE_SET, export.export_perms.set),
 	CONF_ITEM_UI32("Attr_Expiration_Time", 0, 360, 60,
-		       gsh_export, export.expire_time_attr),
+		       gsh_export, expire_time_attr),
 	CONF_RELAX_BLOCK("FSAL", fsal_params,
 			 fsal_init, fsal_commit,
 			 gsh_export, fsal_export),
@@ -1298,8 +1298,7 @@ static int build_default_root(void)
 	export->PrefWrite = FSAL_MAXIOSIZE;
 	export->PrefRead = FSAL_MAXIOSIZE;
 	export->PrefReaddir = 16384;
-	export->export.expire_type_attr =
-		nfs_param.cache_param.expire_type_attr;
+	export->expire_type_attr = nfs_param.cache_param.expire_type_attr;
 	glist_init(&export->exp_state_list);
 	glist_init(&export->exp_lock_list);
 	glist_init(&export->exp_nlm_share_list);

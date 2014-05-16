@@ -109,6 +109,12 @@ struct gsh_export {
 	nsecs_elapsed_t last_update;
 	/** The condition the export is in */
 	export_state_t state;
+	/** Expiration type for attributes.  Defaults to never,
+	    settable with Attr_Expiration_Time. */
+	cache_inode_expire_type_t expire_type_attr;
+	/** Expiration time interval in seconds for attributes.  Settable with
+	    Attr_Expiration_Time. */
+	uint32_t expire_time_attr;
 	/** Export_Id for this export */
 	uint32_t export_id;
 	/** Is Cookie verifier to be used? */

@@ -115,12 +115,6 @@ typedef struct exportlist {
 	struct glist_head clients;	/*< Allowed clients */
 	struct glist_head exp_root_list;	/*< List of exports rooted
 						    on the same inode */
-	/** Expiration type for attributes.  Defaults to never,
-	    settable with Attr_Expiration_Time. */
-	cache_inode_expire_type_t expire_type_attr;
-	/** Expiration time interval in seconds for attributes.  Settable with
-	    Attr_Expiration_Time. */
-	time_t expire_time_attr;
 } exportlist_t;
 
 /* Constant for options masks */
