@@ -626,7 +626,7 @@ static int fsal_commit(void *node, void *link_mem, void *self_struct,
 	if (exp->fullpath[0] == '/') {
 		int pathlen;
 		pathlen = strlen(exp->fullpath);
-		while ((exp->fullpath[pathlen - 1] == '/') && (pathlen > 1)) 
+		while ((exp->fullpath[pathlen - 1] == '/') && (pathlen > 1))
 			pathlen--;
 		exp->fullpath[pathlen] = '\0';
 	}
