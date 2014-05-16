@@ -109,8 +109,6 @@ struct gsh_export {
 	pthread_rwlock_t lock;
 	/** available mount options */
 	struct export_perms export_perms;
-	/** The NFS server definition of the export */
-	exportlist_t export;
 	/** The last time the export stats were updated */
 	nsecs_elapsed_t last_update;
 	/** The condition the export is in */
@@ -126,30 +124,6 @@ struct gsh_export {
 	/** Is Cookie verifier to be used? */
 	bool UseCookieVerifier;
 };
-
-static inline void export_readlock(struct exportlist *export)
-{
-	struct gsh_export *exp;
-
-	exp = container_of(export, struct gsh_export, export);
-	pthread_rwlock_rdlock(&exp->lock);
-}
-
-static inline void export_writelock(struct exportlist *export)
-{
-	struct gsh_export *exp;
-
-	exp = container_of(export, struct gsh_export, export);
-	pthread_rwlock_wrlock(&exp->lock);
-}
-
-static inline void export_rwunlock(struct exportlist *export)
-{
-	struct gsh_export *exp;
-
-	exp = container_of(export, struct gsh_export, export);
-	pthread_rwlock_unlock(&exp->lock);
-}
 
 void export_pkginit(void);
 #ifdef USE_DBUS

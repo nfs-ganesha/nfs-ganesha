@@ -110,9 +110,6 @@ typedef struct exportlist_client_entry__ {
 	struct export_perms client_perms;	/*< Available mount options */
 } exportlist_client_entry_t;
 
-typedef struct exportlist {
-} exportlist_t;
-
 /* Constant for options masks */
 #define EXPORT_OPTION_ROOT 0x00000001	/*< Allow root access as root uid */
 #define EXPORT_OPTION_ROOT_SQUASH 0	/*< Disallow root access as root uid */
