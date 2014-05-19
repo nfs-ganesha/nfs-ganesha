@@ -569,6 +569,7 @@ int nfs_rpc_create_chan_v40(nfs_client_id_t *clientid, uint32_t flags)
 	}
 
 	if (!chan->clnt) {
+		close(fd);
 		code = EINVAL;
 		goto out;
 	}
