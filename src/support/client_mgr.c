@@ -130,6 +130,7 @@ struct gsh_client *get_gsh_client(sockaddr_t *client_ipaddr, bool lookup_only)
 	struct gsh_client *cl;
 	struct server_stats *server_st;
 	struct gsh_client v;
+	char hoststr[SOCK_NAME_MAX];
 	uint8_t *addr = NULL;
 	uint32_t ipaddr;
 	int addr_len = 0;
@@ -201,8 +202,8 @@ struct gsh_client *get_gsh_client(sockaddr_t *client_ipaddr, bool lookup_only)
 	cl->addr.addr = cl->addrbuf;
 	cl->addr.len = addr_len;
 	cl->refcnt = 0;		/* we will hold a ref starting out... */
-	sprint_sockaddr(client_ipaddr, cl->hostaddr_str,
-			sizeof(cl->hostaddr_str));
+	sprint_sockaddr(client_ipaddr, hoststr, SOCK_NAME_MAX);
+	cl->hostaddr_str = gsh_strdup(hoststr);
 
 	PTHREAD_RWLOCK_wrlock(&client_by_ip.lock);
 	node = avltree_insert(&cl->node_k, &client_by_ip.t);
@@ -300,6 +301,8 @@ bool remove_gsh_client(sockaddr_t *client_ipaddr)
 	if (removed && node) {
 		server_st = container_of(cl, struct server_stats, client);
 		server_stats_free(&server_st->st);
+		if (cl->hostaddr_str != NULL)
+			gsh_free(cl->hostaddr_str);
 		gsh_free(cl);
 	}
 	return removed;
