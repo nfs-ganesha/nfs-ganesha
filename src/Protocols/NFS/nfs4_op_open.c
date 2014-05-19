@@ -497,16 +497,13 @@ bool open4_open_owner(struct nfs_argop4 *op, compound_data_t *data,
 			 */
 			if (res_OPEN4->status == NFS4_OK) {
 				/* Check if filename is correct */
-				cache_status = nfs4_utf8string2dynamic(
+				res_OPEN4->status = nfs4_utf8string2dynamic(
 				     &arg_OPEN4->claim.open_claim4_u.file,
 				     UTF8_SCAN_ALL,
 				     &filename);
 
-				if (cache_status != CACHE_INODE_SUCCESS) {
-					res_OPEN4->status =
-					    nfs4_Errno(cache_status);
+				if (res_OPEN4->status != NFS4_OK)
 					return false;
-				}
 
 				cache_status =
 				    cache_inode_lookup(data->current_entry,
