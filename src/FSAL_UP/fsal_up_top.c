@@ -341,21 +341,16 @@ static state_status_t lock_avail(struct fsal_module *fsal,
 				 void *owner,
 				 fsal_lock_param_t *lock_param)
 {
-	cache_entry_t *entry = NULL;
-	int rc = 0;
+	cache_entry_t *entry;
+	cache_inode_status_t cache_status;
 
-	rc = up_get(fsal, file, &entry);
-	if (rc == 0) {
-		available_blocked_lock_upcall(entry, owner, lock_param);
+	cache_status = up_get(fsal, file, &entry);
+	if (cache_status != CACHE_INODE_SUCCESS)
+		return STATE_NOT_FOUND;
 
-		if (entry)
-			cache_inode_put(entry);
-
-	} else {
-		rc = STATE_NOT_FOUND;
-	}
-
-	return rc;
+	available_blocked_lock_upcall(entry, owner, lock_param);
+	cache_inode_put(entry);
+	return STATE_SUCCESS;
 }
 
 /**
