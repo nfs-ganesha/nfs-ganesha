@@ -357,7 +357,8 @@ static DBusHandlerResult dbus_message_entrypoint(DBusConnection *conn,
 	DBusMessage *reply = NULL;
 	DBusError error;
 	DBusMessageIter args, *argsp;
-	bool retval = false;
+	bool success = false;
+	DBusHandlerResult result = DBUS_HANDLER_RESULT_HANDLED;
 	static uint32_t serial = 1;
 
 	dbus_error_init(&error);
@@ -366,11 +367,17 @@ static DBusHandlerResult dbus_message_entrypoint(DBusConnection *conn,
 	reply = dbus_message_new_method_return(msg);
 	if ((!strcmp(interface, DBUS_INTERFACE_INTROSPECTABLE))
 	    || (method && (!strcmp(method, "Introspect")))) {
-		retval = dbus_reply_introspection(reply, interfaces);
-	} else if (!strcmp(interface, DBUS_INTERFACE_PROPERTIES)) {
-		retval = dbus_proc_property(method, msg,
+		success = dbus_reply_introspection(reply, interfaces);
+		goto done;
+	}
+	if (method == NULL) {
+		method = "No method arg";
+		goto done;
+	}
+	if (!strcmp(interface, DBUS_INTERFACE_PROPERTIES)) {
+		success = dbus_proc_property(method, msg,
 					    reply, &error, interfaces);
-	} else if (method != NULL) {
+	} else {
 		struct gsh_dbus_interface **iface;
 
 		if (dbus_message_iter_init(msg, &args))
@@ -383,28 +390,25 @@ static DBusHandlerResult dbus_message_entrypoint(DBusConnection *conn,
 
 				for (m = (*iface)->methods; *m; m++) {
 					if (strcmp(method, (*m)->name) == 0) {
-						retval =
-						    (*m)->method(argsp,
-								 reply,
-								 &error);
+						success = (*m)->method(argsp,
+								       reply,
+								       &error);
 						goto done;
 					}
 				}
 				LogMajor(COMPONENT_DBUS,
 					 "Unknown method (%s) on interface (%s)",
 					 method, interface);
+				result = DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 				goto done;
 			}
 		}
 		LogMajor(COMPONENT_DBUS, "Unknown interface (%s)", interface);
-	} else
-		method = "No method arg";
+	}
  done:
-	if (!retval) {
+	if (!success) {
 		const char *err_name, *err_text;
 
-		LogMajor(COMPONENT_DBUS, "Method (%s) on interface (%s) failed",
-			 method, interface);
 		if (dbus_error_is_set(&error)) {
 			err_name = error.name;
 			err_text = error.message;
@@ -412,25 +416,23 @@ static DBusHandlerResult dbus_message_entrypoint(DBusConnection *conn,
 			err_name = interface;
 			err_text = method;
 		}
+		LogMajor(COMPONENT_DBUS,
+			 "Method (%s) on (%s) failed: name = (%s), message = (%s)",
+			 method, interface, err_name, err_text);
 		dbus_message_unref(reply);
 		reply = dbus_message_new_error(msg, err_name, err_text);
-		retval = dbus_connection_send(conn, reply, NULL);
-		dbus_message_unref(reply);
-		dbus_error_free(&error);
-		return retval ?
-			DBUS_HANDLER_RESULT_HANDLED :
-			DBUS_HANDLER_RESULT_NEED_MEMORY;
 	}
-	if (!dbus_connection_send(conn, reply, &serial))
+	success = dbus_connection_send(conn, reply, &serial);
+	if (!success) {
 		LogCrit(COMPONENT_DBUS, "reply failed");
-	dbus_connection_flush(conn);
+		result = DBUS_HANDLER_RESULT_NEED_MEMORY;
+		dbus_connection_flush(conn);
+	}
 	if (reply)
 		dbus_message_unref(reply);
 	dbus_error_free(&error);
 	serial++;
-	return retval ?
-		DBUS_HANDLER_RESULT_HANDLED :
-		DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+	return result;
 }
 
 static void path_unregistered_func(DBusConnection *connection, void *user_data)
