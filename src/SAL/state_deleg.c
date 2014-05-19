@@ -76,10 +76,6 @@ void free_deleg_locked(state_lock_entry_t *deleg_lock, cache_entry_t *entry,
 	deleg_heuristics_recall(entry, clientid);
 }
 
-void init_clientfile_deleg(struct clientfile_deleg_heuristics *clfile_entry)
-{
-}
-
 /**
  * @brief Initialize new delegation state as argument for state_add()
  *
@@ -94,12 +90,12 @@ void init_new_deleg_state(state_data_t *deleg_state,
 			  open_delegation_type4 sd_type,
 			  nfs_client_id_t *client)
 {
-	struct clientfile_deleg_heuristics *clfile_entry =
-		&deleg_state->deleg.clfile_stats;
+	struct cf_deleg_stats *clfile_entry =
+		&deleg_state->deleg.sd_clfile_stats;
 
 	deleg_state->deleg.sd_type = sd_type;
-	deleg_state->deleg.grant_time = time(NULL);
-	deleg_state->deleg.deleg_state = DELEG_GRANTED;
+	deleg_state->deleg.sd_grant_time = time(NULL);
+	deleg_state->deleg.sd_state = DELEG_GRANTED;
 
 	clfile_entry->clientid = client;
 	clfile_entry->last_delegation = 0;
@@ -125,8 +121,8 @@ void init_new_deleg_state(state_data_t *deleg_state,
  */
 bool update_delegation_stats(cache_entry_t *entry, state_t *state)
 {
-	struct clientfile_deleg_heuristics *clfile_entry =
-		&state->state_data.deleg.clfile_stats;
+	struct cf_deleg_stats *clfile_entry =
+		&state->state_data.deleg.sd_clfile_stats;
 
 	/* Update delegation stats for file. */
 	struct file_deleg_heuristics *statistics =
@@ -368,7 +364,7 @@ state_status_t deleg_revoke(state_lock_entry_t *deleg_entry)
 			 state_status);
 	}
 	pthread_mutex_lock(&deleg_entry->sle_mutex);
-	deleg_entry->sle_state->state_data.deleg.deleg_state = DELEG_REVOKED;
+	deleg_entry->sle_state->state_data.deleg.sd_state = DELEG_REVOKED;
 	pthread_mutex_unlock(&deleg_entry->sle_mutex);
 	return STATE_SUCCESS;
 }

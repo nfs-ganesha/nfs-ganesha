@@ -1070,7 +1070,7 @@ state_status_t notify_device(notify_deviceid_type4 notify_type,
 bool eval_deleg_revoke(state_lock_entry_t *deleg_entry)
 {
 	bool rc = FALSE;
-	struct clientfile_deleg_heuristics *clfl_stats;
+	struct cf_deleg_stats *clfl_stats;
 	time_t curr_time;
 	time_t recall_success_time, first_recall_time;
 	uint32_t lease_lifetime = nfs_param.nfsv4_param.lease_lifetime;
@@ -1089,7 +1089,7 @@ bool eval_deleg_revoke(state_lock_entry_t *deleg_entry)
 		return FALSE;
 	}
 
-	clfl_stats = &deleg_entry->sle_state->state_data.deleg.clfile_stats;
+	clfl_stats = &deleg_entry->sle_state->state_data.deleg.sd_clfile_stats;
 
 	curr_time = time(NULL);
 	recall_success_time = clfl_stats->recall_success_time;
@@ -1125,7 +1125,7 @@ bool eval_deleg_revoke(state_lock_entry_t *deleg_entry)
 
 static bool handle_badhandle_response(state_lock_entry_t *deleg_entry,
 			     rpc_call_t *call,
-			     struct clientfile_deleg_heuristics *clfl_stats,
+			     struct cf_deleg_stats *clfl_stats,
 			     struct client_deleg_heuristics *cl_stats,
 			     struct delegrecall_context *p_cargs)
 {
@@ -1189,7 +1189,7 @@ static bool handle_badhandle_response(state_lock_entry_t *deleg_entry,
 
 static bool handle_recall_response(state_lock_entry_t *deleg_entry,
 			     rpc_call_t *call,
-			     struct clientfile_deleg_heuristics *clfl_stats,
+			     struct cf_deleg_stats *clfl_stats,
 			     struct client_deleg_heuristics *cl_stats,
 			     struct delegrecall_context *p_cargs)
 {
@@ -1238,7 +1238,7 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 	state_status_t rc = STATE_SUCCESS;
 	struct delegrecall_context *deleg_ctx =
 				(struct delegrecall_context *) arg;
-	struct clientfile_deleg_heuristics *clfl_stats = NULL;
+	struct cf_deleg_stats *clfl_stats = NULL;
 	struct client_deleg_heuristics *cl_stats = NULL;
 	state_lock_entry_t *deleg_entry = NULL;
 	cache_entry_t *entry = deleg_ctx->entry;
@@ -1274,7 +1274,7 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 	LogDebug(COMPONENT_NFS_CB, "deleg_entry %p",
 				 deleg_entry);
 
-	clfl_stats = &deleg_entry->sle_state->state_data.deleg.clfile_stats;
+	clfl_stats = &deleg_entry->sle_state->state_data.deleg.sd_clfile_stats;
 	cl_stats = &clfl_stats->clientid->deleg_heuristics;
 
 	switch (hook) {
@@ -1359,8 +1359,8 @@ static uint32_t delegrecall_one(state_lock_entry_t *deleg_entry)
 	struct gsh_export *exp;
 	bool needs_revoke = FALSE;
 	struct delegrecall_context *p_cargs = NULL;
-	struct clientfile_deleg_heuristics *clfl_stats =
-			&deleg_entry->sle_state->state_data.deleg.clfile_stats;
+	struct cf_deleg_stats *clfl_stats =
+			&deleg_entry->sle_state->state_data.deleg.sd_clfile_stats;
 	struct client_deleg_heuristics *cl_stats =
 			&clfl_stats->clientid->deleg_heuristics;
 	cache_entry_t *entry = deleg_entry->sle_entry;
@@ -1655,7 +1655,7 @@ state_status_t delegrecall(cache_entry_t *entry)
 	state_lock_entry_t *deleg_entry = NULL;
 	state_status_t rc = 0;
 	uint32_t *deleg_state = NULL;
-	struct clientfile_deleg_heuristics *clfl_stats = NULL;
+	struct cf_deleg_stats *clfl_stats = NULL;
 
 	LogDebug(COMPONENT_FSAL_UP,
 		 "FSAL_UP_DELEG: Invalidate cache found entry %p type %u",
@@ -1666,9 +1666,9 @@ state_status_t delegrecall(cache_entry_t *entry)
 
 		LogDebug(COMPONENT_NFS_CB, "deleg_entry %p", deleg_entry);
 		clfl_stats =
-			&deleg_entry->sle_state->state_data.deleg.clfile_stats;
+			&deleg_entry->sle_state->state_data.deleg.sd_clfile_stats;
 		deleg_state =
-			&deleg_entry->sle_state->state_data.deleg.deleg_state;
+			&deleg_entry->sle_state->state_data.deleg.sd_state;
 		if (*deleg_state != DELEG_GRANTED) {
 			pthread_mutex_unlock(&deleg_entry->sle_mutex);
 			LogDebug(COMPONENT_FSAL_UP,

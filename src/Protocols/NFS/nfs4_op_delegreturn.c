@@ -168,7 +168,7 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	pthread_mutex_lock(&found_entry->sle_mutex);
-	found_entry->sle_state->state_data.deleg.deleg_state = DELEG_RETURNED;
+	found_entry->sle_state->state_data.deleg.sd_state = DELEG_RETURNED;
 	pthread_mutex_unlock(&found_entry->sle_mutex);
 		
 	plock_owner = found_entry->sle_owner;
@@ -201,8 +201,7 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* Remove state entry and update stats */
 	deleg_heuristics_recall(data->current_entry,
-				pstate_found->state_data.deleg.clfile_stats
-					.clientid);
+				pstate_found->state_data.deleg.sd_clfile_stats.clientid);
 	state_del(pstate_found, false);
 
 	/* Successful exit */

@@ -272,7 +272,7 @@ struct client_deleg_heuristics {
 	uint32_t num_revokes;	    /* Num revokes for the client */
 };
 
-struct clientfile_deleg_heuristics {
+struct cf_deleg_stats {
 	struct nfs_client_id_t *clientid; /* client for this file. */
 	time_t last_delegation;           /* time of successful delegation */
 	uint32_t num_revokes;		  /* number of revokes for this file */
@@ -311,9 +311,9 @@ typedef struct state_deleg__ {
 	open_delegation_type4 sd_type;
 	stateid4 sd_stateid;             /* unique delegation stateid */
 	struct glist_head sd_deleg_list; /*  */
-	time_t grant_time;               /* time of successful delegation */
-	uint32_t deleg_state;
-	struct clientfile_deleg_heuristics clfile_stats;  /* client specific */
+	time_t sd_grant_time;               /* time of successful delegation */
+	uint32_t sd_state;
+	struct cf_deleg_stats sd_clfile_stats;  /* client specific */
 } state_deleg_t;
 
 /**
