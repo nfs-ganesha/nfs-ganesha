@@ -159,9 +159,8 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 		 */
 		PTHREAD_RWLOCK_unlock(&original_export->lock);
 
-		/* Release any old export reference */
-		if (original_export != NULL)
-			put_gsh_export(original_export);
+		/* Release old export reference */
+		put_gsh_export(original_export);
 
 		/* Build credentials */
 		res_LOOKUPP4->status = nfs4_MakeCred(data);
