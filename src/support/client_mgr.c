@@ -191,7 +191,7 @@ struct gsh_client *get_gsh_client(sockaddr_t *client_ipaddr, bool lookup_only)
 	}
 	PTHREAD_RWLOCK_unlock(&client_by_ip.lock);
 
-	server_st = gsh_calloc((sizeof(struct server_stats) + addr_len), 1);
+	server_st = gsh_calloc(1, (sizeof(struct server_stats) + addr_len));
 
 	if (server_st == NULL)
 		return NULL;
