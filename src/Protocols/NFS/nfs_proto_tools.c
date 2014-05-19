@@ -616,7 +616,7 @@ static fattr_xdr_result encode_acl(XDR *xdr, struct xdr_attrs_args *args)
 	if (args->attrs->acl) {
 		fsal_ace_t *ace;
 		int i;
-		char *name;
+		char *name = NULL;
 
 		LogFullDebug(COMPONENT_NFS_V4, "Number of ACEs = %u",
 			     args->attrs->acl->naces);
@@ -650,7 +650,8 @@ static fattr_xdr_result encode_acl(XDR *xdr, struct xdr_attrs_args *args)
 						break;
 					}
 				}
-				if (!xdr_string(xdr, &name, MAXNAMLEN))
+				if (name == NULL ||
+				    !xdr_string(xdr, &name, MAXNAMLEN))
 					return FATTR_XDR_FAILED;
 			} else {
 				if (!xdr_encode_nfs4_owner
