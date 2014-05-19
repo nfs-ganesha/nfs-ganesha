@@ -263,8 +263,8 @@ int nfs3_mknod(nfs_arg_t *arg,
 		&& (req_ctx->creds->caller_gid != sattr.group))) {
 		cache_status = cache_inode_setattr(node_entry,
 						   &sattr,
-						   req_ctx,
-						   false);
+						   false,
+						   req_ctx);
 
 		if (cache_status != CACHE_INODE_SUCCESS)
 			goto out_fail;
