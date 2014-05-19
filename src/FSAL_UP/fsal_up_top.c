@@ -1067,7 +1067,7 @@ state_status_t notify_device(notify_deviceid_type4 notify_type,
  * @return FALSE, if the delegation should not be revoked.
  */
 
-bool eval_revoke(state_lock_entry_t *deleg_entry)
+bool eval_deleg_revoke(state_lock_entry_t *deleg_entry)
 {
 	bool rc = FALSE;
 	struct clientfile_deleg_heuristics *clfl_stats;
@@ -1303,7 +1303,7 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 		break;
 	}
 	if (needs_revoke) {
-		if (eval_revoke(deleg_entry)) {
+		if (eval_deleg_revoke(deleg_entry)) {
 			LogCrit(COMPONENT_NFS_V4,
 			"Revoking delegation(%p)", deleg_entry);
 			atomic_inc_uint32_t(&clfl_stats->num_revokes);
@@ -1510,7 +1510,7 @@ out:
 		if (call)
 			free_rpc_call(call);
 
-		if (eval_revoke(deleg_entry)) {
+		if (eval_deleg_revoke(deleg_entry)) {
 			LogCrit(COMPONENT_STATE, "Delegation will be revoked");
 			atomic_inc_uint32_t(&clfl_stats->num_revokes);
 			atomic_inc_uint32_t(&cl_stats->num_revokes);
@@ -1550,7 +1550,7 @@ static void delegrevoke_check(struct fridgethr_context *ctx)
 				&deleg_entry->
 				       sle_state->state_data.deleg.sd_stateid,
 					sizeof(stateid4))) {
-			if (eval_revoke(deleg_ctx->deleg_entry)) {
+			if (eval_deleg_revoke(deleg_ctx->deleg_entry)) {
 				LogDebug(COMPONENT_STATE,
 					"Revoking delegation(%p)", deleg_entry);
 				/* Need to release the lock for state_unlock */
