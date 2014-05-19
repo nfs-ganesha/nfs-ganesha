@@ -714,6 +714,7 @@ static void nfs_rpc_execute(request_data_t *req,
 	int protocol_options = 0;
 	struct user_cred user_credentials;
 	struct req_op_context req_ctx;
+	const char * client_ip = "<unknown client>";
 	dupreq_status_t dpq_status;
 	struct timespec timer_start;
 	int port, rc = NFS_REQ_OK;
@@ -772,12 +773,13 @@ static void nfs_rpc_execute(request_data_t *req,
 	} else {
 		/* Set the Client IP for this thread */
 		SetClientIP(req_ctx.client->hostaddr_str);
+		client_ip = req_ctx.client->hostaddr_str;
+		LogDebug(COMPONENT_DISPATCH,
+			 "Request from %s for Program %d, Version %d, Function %d "
+			 "has xid=%u", client_ip,
+			 (int)svcreq->rq_prog, (int)svcreq->rq_vers,
+			 (int)svcreq->rq_proc, svcreq->rq_xid);
 	}
-	LogDebug(COMPONENT_DISPATCH,
-		 "Request from %s for Program %d, Version %d, Function %d "
-		 "has xid=%u", req_ctx.client->hostaddr_str,
-		 (int)svcreq->rq_prog, (int)svcreq->rq_vers,
-		 (int)svcreq->rq_proc, svcreq->rq_xid);
 
 	/* start the processing clock
 	 * we measure all time stats as intervals (elapsed nsecs) from
@@ -824,7 +826,7 @@ static void nfs_rpc_execute(request_data_t *req,
 					 "nfs version:%d proc:%d xid:%u errno: %d",
 					 svcreq->rq_xid, xprt->xp_fd,
 					 reqnfs->funcdesc->funcname,
-					 req_ctx.client->hostaddr_str,
+					 client_ip,
 					 (int)svcreq->rq_prog,
 					 (int)svcreq->rq_vers,
 					 (int)svcreq->rq_proc,
@@ -900,7 +902,7 @@ static void nfs_rpc_execute(request_data_t *req,
 			if (exportid < 0) {
 				LogInfo(COMPONENT_DISPATCH,
 					"NFS3 Request from client %s has badly formed handle",
-					req_ctx.client->hostaddr_str);
+					client_ip);
 
 				/* Bad handle, report to client */
 				res_nfs->res_getattr3.status =
@@ -912,7 +914,7 @@ static void nfs_rpc_execute(request_data_t *req,
 			if (req_ctx.export == NULL) {
 				LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 					"NFS3 Request from client %s has invalid export %d",
-					req_ctx.client->hostaddr_str, exportid);
+					client_ip, exportid);
 
 				/* Bad export, report to client */
 				res_nfs->res_getattr3.status = NFS3ERR_STALE;
@@ -994,7 +996,7 @@ static void nfs_rpc_execute(request_data_t *req,
 			if (exportid < 0) {
 				LogInfo(COMPONENT_DISPATCH,
 					"NLM4 Request from client %s has badly formed handle",
-					req_ctx.client->hostaddr_str);
+					client_ip);
 				req_ctx.export = NULL;
 				req_ctx.fsal_export = NULL;
 
@@ -1011,7 +1013,7 @@ static void nfs_rpc_execute(request_data_t *req,
 					LogInfoAlt(COMPONENT_DISPATCH,
 						   COMPONENT_EXPORT,
 						   "NLM4 Request from client %s has invalid export %d",
-						   req_ctx.client->hostaddr_str,
+						   client_ip,
 						   exportid);
 
 					/* We need to send a NLM4_STALE_FH
@@ -1030,13 +1032,13 @@ static void nfs_rpc_execute(request_data_t *req,
 						goto handle_err;
 					req_ctx.fsal_export =
 					    req_ctx.export->fsal_export;
-				}
 
-				LogMidDebugAlt(COMPONENT_DISPATCH,
-					       COMPONENT_EXPORT,
-					       "Found export entry for dirname=%s as exportid=%d",
-					       req_ctx.export->fullpath,
-					       req_ctx.export->export_id);
+					LogMidDebugAlt(COMPONENT_DISPATCH,
+						COMPONENT_EXPORT,
+						"Found export entry for dirname=%s as exportid=%d",
+						req_ctx.export->fullpath,
+						req_ctx.export->export_id);
+				}
 			}
 		}
 	} else if (svcreq->rq_prog == nfs_param.core_param.program[P_MNT]) {
@@ -1049,14 +1051,14 @@ static void nfs_rpc_execute(request_data_t *req,
 
 		LogMidDebugAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 			    "nfs_rpc_execute about to call nfs_export_check_access for client %s",
-			    req_ctx.client->hostaddr_str);
+			    client_ip);
 
 		export_check_access(&req_ctx);
 
 		if (export_perms.options == 0) {
 			LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 				"Client %s is not allowed to access Export_Id %d %s, vers=%d, proc=%d",
-				req_ctx.client->hostaddr_str,
+				client_ip,
 				req_ctx.export->export_id,
 				req_ctx.export->fullpath,
 				(int)svcreq->rq_vers, (int)svcreq->rq_proc);
@@ -1080,7 +1082,7 @@ static void nfs_rpc_execute(request_data_t *req,
 				progname, svcreq->rq_vers,
 				req_ctx.export->export_id,
 				req_ctx.export->fullpath,
-				req_ctx.client->hostaddr_str);
+				client_ip);
 
 			auth_rc = AUTH_FAILED;
 			goto auth_failure;
@@ -1097,7 +1099,7 @@ static void nfs_rpc_execute(request_data_t *req,
 				xprt_type_to_str(xprt_type),
 				req_ctx.export->export_id,
 				req_ctx.export->fullpath,
-				req_ctx.client->hostaddr_str);
+				client_ip);
 
 			auth_rc = AUTH_FAILED;
 			goto auth_failure;
@@ -1112,7 +1114,7 @@ static void nfs_rpc_execute(request_data_t *req,
 				progname, svcreq->rq_vers,
 				req_ctx.export->export_id,
 				req_ctx.export->fullpath,
-				req_ctx.client->hostaddr_str);
+				client_ip);
 
 			auth_rc = AUTH_TOOWEAK;
 			goto auth_failure;
@@ -1127,7 +1129,7 @@ static void nfs_rpc_execute(request_data_t *req,
 				"Non-reserved Port %d is not allowed on Export_Id %d %s for client %s",
 				port, req_ctx.export->export_id,
 				req_ctx.export->fullpath,
-				req_ctx.client->hostaddr_str);
+				client_ip);
 
 			auth_rc = AUTH_TOOWEAK;
 			goto auth_failure;
@@ -1200,7 +1202,7 @@ static void nfs_rpc_execute(request_data_t *req,
 				  EXPORT_OPTION_MD_READ_ACCESS)) == 0) {
 		LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 			"Client %s is not allowed to access Export_Id %d %s, vers=%d, proc=%d",
-			req_ctx.client->hostaddr_str, req_ctx.export->export_id,
+			client_ip, req_ctx.export->export_id,
 			req_ctx.export->fullpath, (int)svcreq->rq_vers,
 			(int)svcreq->rq_proc);
 		auth_rc = AUTH_TOOWEAK;
@@ -1219,7 +1221,7 @@ static void nfs_rpc_execute(request_data_t *req,
 			if (get_req_creds(svcreq, &req_ctx) == false) {
 				LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 					"could not get uid and gid, rejecting client %s",
-					req_ctx.client->hostaddr_str);
+					client_ip);
 
 				auth_rc = AUTH_TOOWEAK;
 				goto auth_failure;
@@ -1300,7 +1302,7 @@ static void nfs_rpc_execute(request_data_t *req,
 				 "nfs version:%d proc:%d xid:%u errno: %d",
 				 svcreq->rq_xid, xprt->xp_fd,
 				 reqnfs->funcdesc->funcname,
-				 req_ctx.client->hostaddr_str,
+				 client_ip,
 				 (int)svcreq->rq_prog, (int)svcreq->rq_vers,
 				 (int)svcreq->rq_proc, svcreq->rq_xid, errno);
 			if (xprt->xp_type != XPRT_UDP)
@@ -1326,7 +1328,7 @@ static void nfs_rpc_execute(request_data_t *req,
 		sprint_fhandle3(dumpfh, (nfs_fh3 *) arg_nfs);
 		LogInfo(COMPONENT_DISPATCH,
 			"%s Request from host %s V3 not allowed on this export, proc=%d, FH=%s",
-			progname, req_ctx.client->hostaddr_str,
+			progname, client_ip,
 			(int)svcreq->rq_proc, dumpfh);
 	}
 	auth_rc = AUTH_FAILED;
