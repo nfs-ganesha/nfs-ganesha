@@ -1043,7 +1043,7 @@ static void nfs_rpc_execute(request_data_t *req,
 		progname = "MNT";
 	}
 
-	/* Only do access check if we have an  */
+	/* Only do access check if we have an export. */
 	if (req_ctx.export != NULL) {
 		xprt_type_t xprt_type = svc_get_xprt_type(xprt);
 
