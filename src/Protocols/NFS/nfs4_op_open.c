@@ -1283,40 +1283,22 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 
 		gsh_free(filename);
 
-		if (cache_status != CACHE_INODE_NOT_FOUND) {
-			if (cache_status != CACHE_INODE_SUCCESS) {
-				res_OPEN4->status = nfs4_Errno(cache_status);
-				return res_OPEN4->status;
-			}
-
+		if (cache_status == CACHE_INODE_SUCCESS) {
 			PTHREAD_RWLOCK_wrlock(&entry_lookup->state_lock);
-
 			glist_for_each(glist,
 				       &entry_lookup->object.file.lock_list) {
 				found_entry = glist_entry(glist,
 							  state_lock_entry_t,
 							  sle_list);
 
-				if (found_entry != NULL) {
-					LogDebug(COMPONENT_NFS_CB,
-						 "found_entry %p",
-						 found_entry);
-					file_state = found_entry->sle_state;
-				} else {
-					LogDebug(COMPONENT_NFS_CB,
-						 "list is empty %p",
-						 found_entry);
-					PTHREAD_RWLOCK_unlock(&entry_lookup->
-							      state_lock);
-					res_OPEN4->status = NFS4ERR_BAD_STATEID;
-					return res_OPEN4->status;
-				}
+				LogDebug(COMPONENT_NFS_CB, "found_entry %p",
+						found_entry);
+				file_state = found_entry->sle_state;
 				break;
 			}
-
 			PTHREAD_RWLOCK_unlock(&entry_lookup->state_lock);
 
-			if (entry_lookup == NULL || file_state == NULL) {
+			if (file_state == NULL) {
 				res_OPEN4->status = nfs4_Errno(cache_status);
 				goto out;
 			}
@@ -1335,12 +1317,13 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 			LogDebug(COMPONENT_NFS_V4,
 				 "done with CLAIM_DELEGATE_CUR");
 			goto out;
-		} else
-			LogDebug(COMPONENT_NFS_CB,
-				 "did not find entry %p",
-				 entry_lookup);
-
-		break;
+		} else if (cache_status == CACHE_INODE_NOT_FOUND) {
+			LogDebug(COMPONENT_NFS_CB, "did not find entry");
+			break;
+		} else {
+			res_OPEN4->status = nfs4_Errno(cache_status);
+			return res_OPEN4->status;
+		}
 
 	default:
 		LogFatal(COMPONENT_STATE,
