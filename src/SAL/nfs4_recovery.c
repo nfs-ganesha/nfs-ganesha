@@ -473,7 +473,7 @@ void nfs4_chk_clid(nfs_client_id_t *clientid)
 		clid_ent = glist_entry(node, clid_entry_t, cl_list);
 		LogDebug(COMPONENT_CLIENTID, "compare %s to %s",
 			 clid_ent->cl_name, clientid->cid_recov_dir);
-		if (!strncmp(clid_ent->cl_name, clientid->cid_recov_dir, 256)) {
+		if (!strncmp(clid_ent->cl_name, clientid->cid_recov_dir, PATH_MAX)) {
 			if (isDebug(COMPONENT_CLIENTID)) {
 				char str[HASHTABLE_DISPLAY_STRLEN];
 
@@ -654,6 +654,14 @@ static int nfs4_read_recov_clids(DIR *dp,
 				 * to prevent getting incompleted strings that
 				 * might exist due to program crash.
 				 */
+				if (strlen(build_clid) >= PATH_MAX) {
+					LogEvent(COMPONENT_CLIENTID,
+						"invalid clid format: %s, too long",
+						build_clid);
+					free_heap(path, NULL, build_clid);
+					dentp = readdir(dp);
+					continue;
+				}
 				ptr = strchr(build_clid, '(');
 				if (ptr == NULL) {
 					LogEvent(COMPONENT_CLIENTID,
