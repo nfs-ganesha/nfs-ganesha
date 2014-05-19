@@ -890,8 +890,6 @@ static void get_delegation(compound_data_t *data, struct nfs_argop4 *op,
 		lock_desc.lock_type = FSAL_LOCK_R;
 		deleg_type = OPEN_DELEGATE_READ;
 	} else {
-		lock_desc.lock_type = FSAL_NO_LOCK;
-		deleg_type = OPEN_DELEGATE_NONE;
 		return;
 	}
 
@@ -981,7 +979,8 @@ static void get_delegation(compound_data_t *data, struct nfs_argop4 *op,
 				get_deleg_perm(data->current_entry,
 					       &writeres->permissions,
 					       deleg_type);
-			} else if (deleg_type == OPEN_DELEGATE_READ) {
+			} else {
+				assert(deleg_type == OPEN_DELEGATE_READ);
 				open_read_delegation4 *readres =
 				&resok->delegation.open_delegation4_u.read;
 				readres->stateid = saved_data->deleg.sd_stateid;
@@ -989,8 +988,6 @@ static void get_delegation(compound_data_t *data, struct nfs_argop4 *op,
 				get_deleg_perm(data->current_entry,
 					       &readres->permissions,
 					       deleg_type);
-			} else { /* NONE */
-				return;
 			}
 		}
 	}
