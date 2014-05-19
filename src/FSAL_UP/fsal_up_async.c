@@ -415,9 +415,9 @@ static void queue_notify_device(struct fridgethr_context *ctx)
 	struct notify_device_args *args = ctx->arg;
 	state_status_t status;
 
-	status = args->up_ops->notify_device(args->dev_exportid,
-					     args->notify_type,
-					     args->layout_type, args->devid,
+	status = args->up_ops->notify_device(args->notify_type,
+					     args->layout_type,
+					     args->dev_exportid, args->devid,
 					     args->immediate);
 
 	if (args->cb)
