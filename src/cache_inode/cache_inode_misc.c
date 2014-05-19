@@ -466,8 +466,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 	}
 
 	/* must free new_obj if no new entry was created to reference it. */
-	if (new_obj != NULL)
-		new_obj->ops->release(new_obj);
+	new_obj->ops->release(new_obj);
 
 	return status;
 }				/* cache_inode_new_entry */
