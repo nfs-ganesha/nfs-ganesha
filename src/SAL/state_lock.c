@@ -3219,7 +3219,7 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 		/* Remove all locks held by this NLM Client on the file */
 		status = state_unlock(entry, &root_op_context.req_ctx,
 				      owner, state,
-				      &lock, found_entry->sle_type);
+				      &lock, POSIX_LOCK);
 
 		put_gsh_export(root_op_context.req_ctx.export);
 
