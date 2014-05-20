@@ -3277,7 +3277,7 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 		 * Owner on the file (on all exports)
 		 */
 		status = state_nlm_unshare(entry,
-					   req_ctx,
+					   &root_op_context.req_ctx,
 					   OPEN4_SHARE_ACCESS_NONE,
 					   OPEN4_SHARE_DENY_NONE,
 					   owner);
