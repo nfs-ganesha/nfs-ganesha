@@ -3419,6 +3419,7 @@ void state_export_unlock_all(struct req_op_context *req_ctx)
 	state_status_t status = 0;
 	state_owner_t *owner;
 	state_t *state;
+	lock_type_t lock_type;
 
 	/* Only accept so many errors before giving up. */
 	while (errcnt < STATE_ERR_MAX) {
@@ -3454,6 +3455,7 @@ void state_export_unlock_all(struct req_op_context *req_ctx)
 		entry = found_entry->sle_entry;
 		owner = found_entry->sle_owner;
 		state = found_entry->sle_state;
+		lock_type = found_entry->sle_type;
 
 		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 
@@ -3471,7 +3473,7 @@ void state_export_unlock_all(struct req_op_context *req_ctx)
 
 		/* Remove all locks held by this owner on the file */
 		status = state_unlock(entry, req_ctx, owner, state,
-				      &lock, found_entry->sle_type);
+				      &lock, lock_type);
 
 		if (!state_unlock_err_ok(status)) {
 			/* Increment the error count and try the next lock,
