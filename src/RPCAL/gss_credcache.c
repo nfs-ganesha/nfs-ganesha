@@ -376,13 +376,15 @@ static struct gssd_k5_kt_princ *new_ple(krb5_context context,
 
 #ifdef HAVE_KRB5
 	ple->realm = gsh_malloc(princ->realm.length + 1);
+	if (ple->realm == NULL)
+		goto outerr;
 	strmaxcpy(ple->realm, princ->realm.data, princ->realm.length);
 	ple->realm[princ->realm.length] = '\0';
 #else
 	ple->realm = gsh_strdup(princ->realm);
-#endif
 	if (ple->realm == NULL)
 		goto outerr;
+#endif
 	code = krb5_copy_principal(context, princ, &ple->princ);
 	if (code)
 		goto outerr;
