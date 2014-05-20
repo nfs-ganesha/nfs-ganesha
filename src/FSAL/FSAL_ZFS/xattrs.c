@@ -440,6 +440,7 @@ fsal_status_t tank_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
 			xattrs_tab[out_index].xattr_id = index;
 			strncpy(xattr_list[index].xattr_name,
 				xattrs_tab[out_index].xattr_name, MAXNAMLEN);
+			xattr_list[index].xattr_name[MAXNAMLEN] = '\0';
 			xattrs_tab[out_index].xattr_cookie = index + 1;
 
 			/* set asked attributes (all supported) */
