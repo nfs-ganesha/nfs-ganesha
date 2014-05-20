@@ -1126,7 +1126,7 @@ bool eval_deleg_revoke(state_lock_entry_t *deleg_entry)
 static bool handle_badhandle_response(state_lock_entry_t *deleg_entry,
 			     rpc_call_t *call,
 			     struct cf_deleg_stats *clfl_stats,
-			     struct client_deleg_heuristics *cl_stats,
+			     struct c_deleg_stats *cl_stats,
 			     struct delegrecall_context *p_cargs)
 {
 	bool needs_revoke = TRUE;
@@ -1190,7 +1190,7 @@ static bool handle_badhandle_response(state_lock_entry_t *deleg_entry,
 static bool handle_recall_response(state_lock_entry_t *deleg_entry,
 			     rpc_call_t *call,
 			     struct cf_deleg_stats *clfl_stats,
-			     struct client_deleg_heuristics *cl_stats,
+			     struct c_deleg_stats *cl_stats,
 			     struct delegrecall_context *p_cargs)
 {
 	bool needs_revoke = FALSE;
@@ -1239,7 +1239,7 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 	struct delegrecall_context *deleg_ctx =
 				(struct delegrecall_context *) arg;
 	struct cf_deleg_stats *clfl_stats = NULL;
-	struct client_deleg_heuristics *cl_stats = NULL;
+	struct c_deleg_stats *cl_stats = NULL;
 	state_lock_entry_t *deleg_entry = NULL;
 	cache_entry_t *entry = deleg_ctx->entry;
 	struct glist_head *glist, *glist_n;
@@ -1275,7 +1275,7 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 				 deleg_entry);
 
 	clfl_stats = &deleg_entry->sle_state->state_data.deleg.sd_clfile_stats;
-	cl_stats = &clfl_stats->clientid->deleg_heuristics;
+	cl_stats = &clfl_stats->clientid->cid_deleg_stats;
 
 	switch (hook) {
 	case RPC_CALL_COMPLETE:
@@ -1361,8 +1361,8 @@ static uint32_t delegrecall_one(state_lock_entry_t *deleg_entry)
 	struct delegrecall_context *p_cargs = NULL;
 	struct cf_deleg_stats *clfl_stats =
 			&deleg_entry->sle_state->state_data.deleg.sd_clfile_stats;
-	struct client_deleg_heuristics *cl_stats =
-			&clfl_stats->clientid->deleg_heuristics;
+	struct c_deleg_stats *cl_stats =
+			&clfl_stats->clientid->cid_deleg_stats;
 	cache_entry_t *entry = deleg_entry->sle_entry;
 
 	LogDebug(COMPONENT_FSAL_UP, "Recalling delegation(%p)", deleg_entry);

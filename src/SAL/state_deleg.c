@@ -133,7 +133,7 @@ bool update_delegation_stats(cache_entry_t *entry, state_t *state)
 	statistics->last_delegation = time(NULL);
 
 	/* Update delegation stats for client. */
-	clfile_entry->clientid->deleg_heuristics.curr_deleg_grants++;
+	clfile_entry->clientid->cid_deleg_stats.curr_deleg_grants++;
 
 	/* Update delegation stats for client-file. */
 	clfile_entry->last_delegation = statistics->last_delegation;
@@ -167,7 +167,7 @@ bool deleg_heuristics_recall(cache_entry_t *entry, nfs_client_id_t *client)
 	statistics->recall_count++;
 
 	/* Update delegation stats for client. */
-	client->deleg_heuristics.curr_deleg_grants--;
+	client->cid_deleg_stats.curr_deleg_grants--;
 
 	/* Update delegation stats for client-file. */
 	statistics->avg_hold = advance_avg(statistics->avg_hold,
@@ -231,7 +231,7 @@ bool should_we_grant_deleg(cache_entry_t *entry, nfs_client_id_t *client,
 	struct file_deleg_heuristics *file_stats =
 		&entry->object.file.deleg_heuristics;
 	/* specific client, all files stats */
-	struct client_deleg_heuristics *cl_stats = &client->deleg_heuristics;
+	struct c_deleg_stats *cl_stats = &client->cid_deleg_stats;
 	/* specific client, specific file stats */
 	float ACCEPTABLE_FAILS = 0.1; /* 10% */
 	float ACCEPTABLE_OPEN_FREQUENCY = .01; /* per second */
