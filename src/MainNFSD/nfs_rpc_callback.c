@@ -1138,13 +1138,15 @@ static void free_single_call(rpc_call_t *call)
 	CB_SEQUENCE4args *sequence =
 	    (&call->cbt.v_u.v4.args.argarray.argarray_val[0].nfs_cb_argop4_u.
 	     opcbsequence);
-	if (sequence->csa_referring_call_lists.csa_referring_call_lists_val->
-	    rcl_referring_calls.rcl_referring_calls_val) {
-		gsh_free(sequence->csa_referring_call_lists.
-			 csa_referring_call_lists_val->rcl_referring_calls.
-			 rcl_referring_calls_val);
-	}
 	if (sequence->csa_referring_call_lists.csa_referring_call_lists_val) {
+		if (sequence->csa_referring_call_lists.
+		    csa_referring_call_lists_val->
+		    rcl_referring_calls.rcl_referring_calls_val) {
+			gsh_free(sequence->csa_referring_call_lists.
+				 csa_referring_call_lists_val->
+				 rcl_referring_calls.
+				 rcl_referring_calls_val);
+		}
 		gsh_free(sequence->csa_referring_call_lists.
 			 csa_referring_call_lists_val);
 	}
