@@ -535,7 +535,7 @@ fsal_status_t tank_getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
 {
 	unsigned int index;
 	int rc;
-	int found = FALSE;
+	bool found = false;
 	struct zfs_fsal_obj_handle *obj_handle = NULL;
 	creden_t cred;
 
@@ -551,7 +551,7 @@ fsal_status_t tank_getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
 
 	for (index = 0; index < XATTR_COUNT; index++) {
 		if (!strcmp(xattr_list[index].xattr_name, xattr_name)) {
-			found = TRUE;
+			found = true;
 			break;
 		}
 	}
@@ -565,15 +565,11 @@ fsal_status_t tank_getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
 			return fsalstat(posix2fsal_error(rc), rc);
 		else {
 			index = rc;
-			found = TRUE;
+			found = true;
 		}
 	}
-
-	if (found) {
-		*pxattr_id = index;
-		return fsalstat(ERR_FSAL_NO_ERROR, 0);
-	} else
-		return fsalstat(ERR_FSAL_NOENT, ENOENT);
+	*pxattr_id = index;
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 fsal_status_t tank_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
