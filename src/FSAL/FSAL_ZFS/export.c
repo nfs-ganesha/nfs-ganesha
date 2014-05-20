@@ -325,7 +325,6 @@ fsal_status_t zfs_create_export(struct fsal_module *fsal_hdl,
 				       true,
 				       &err_type);
 	if (retval != 0) {
-		return fsalstat(ERR_FSAL_INVAL, 0);
 		goto errout;
 	}
 	myself = gsh_calloc(1, sizeof(struct zfs_fsal_export));
@@ -349,7 +348,7 @@ fsal_status_t zfs_create_export(struct fsal_module *fsal_hdl,
 	PTHREAD_RWLOCK_wrlock(&myself->export.lock);
 	retval = fsal_attach_export(fsal_hdl, &myself->export.exports);
 	if (retval != 0)
-		goto errout;	/* seriously bad */
+		goto err_locked;	/* seriously bad */
 	myself->export.fsal = fsal_hdl;
 
 	if (p_zhd == NULL) {
@@ -358,7 +357,8 @@ fsal_status_t zfs_create_export(struct fsal_module *fsal_hdl,
 		if (p_zhd == NULL) {
 			LogMajor(COMPONENT_FSAL,
 				 "Could not init libzfswrap library");
-			goto errout;
+			libzfswrap_exit(p_zhd);
+			goto err_locked;
 		}
 
 	}
@@ -368,7 +368,9 @@ fsal_status_t zfs_create_export(struct fsal_module *fsal_hdl,
 		p_zfs = libzfswrap_mount(libargs.pool_path, "/tank", "");
 		if (p_zfs == NULL) {
 			LogMajor(COMPONENT_FSAL, "Could not mount libzfswrap");
-			goto errout;
+			libzfswrap_exit(p_zhd);
+			p_zhd = NULL;
+			goto err_locked;
 		}
 
 	  /** @todo: Place snapshot management here */
@@ -385,11 +387,14 @@ fsal_status_t zfs_create_export(struct fsal_module *fsal_hdl,
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
- errout:
+err_locked:
+	if (myself->export.fsal != NULL)
+		fsal_detach_export(fsal_hdl, &myself->export.exports);
+	PTHREAD_RWLOCK_unlock(&myself->export.lock);
+errout:
 	if (libargs.pool_path)
 		gsh_free(libargs.pool_path);
 	myself->export.ops = NULL;	/* poison myself */
-	PTHREAD_RWLOCK_unlock(&myself->export.lock);
 	pthread_rwlock_destroy(&myself->export.lock);
 	gsh_free(myself);		/* elvis has left the building */
 	return fsalstat(fsal_error, retval);
