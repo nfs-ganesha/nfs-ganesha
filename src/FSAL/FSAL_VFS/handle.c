@@ -1665,7 +1665,7 @@ fsal_status_t vfs_check_handle(struct fsal_export *exp_hdl,
 
 	if (retval == 0) {
 		*fs = lookup_fsid(&fsid, fsid_type);
-		if (fs == NULL) {
+		if (*fs == NULL) {
 			LogInfo(COMPONENT_FSAL,
 				"Could not map fsid %"PRIu64".%"PRIu64
 				" to filesytem",
