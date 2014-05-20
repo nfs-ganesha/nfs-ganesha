@@ -33,6 +33,7 @@
 #include <arpa/inet.h>
 #include <sys/poll.h>
 #include "ganesha_list.h"
+#include "abstract_atomic.h"
 #include "fsal_types.h"
 #include "FSAL/fsal_commonlib.h"
 #include "pxy_fsal_methods.h"
@@ -1184,8 +1185,8 @@ static fsal_status_t pxy_create(struct fsal_obj_handle *dir_hdl,
 		return fsalstat(ERR_FSAL_FAULT, EINVAL);
 
 	/* Create the owner */
-	snprintf(owner_val, sizeof(owner_val), "GANESHA/PROXY: pid=%u %ld",
-		 getpid(), __sync_add_and_fetch(&fcnt, 1));
+	snprintf(owner_val, sizeof(owner_val), "GANESHA/PROXY: pid=%u %" PRIu64,
+		 getpid(), atomic_inc_uint64_t(&fcnt));
 	owner_len = strnlen(owner_val, sizeof(owner_val));
 
 	attrib->mask &= ATTR_MODE | ATTR_OWNER | ATTR_GROUP;
