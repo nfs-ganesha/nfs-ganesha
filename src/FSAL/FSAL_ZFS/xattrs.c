@@ -637,8 +637,6 @@ fsal_status_t tank_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 						       .arg);
 		return fsalstat(retval, 0);
 	}
-
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 fsal_status_t tank_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
