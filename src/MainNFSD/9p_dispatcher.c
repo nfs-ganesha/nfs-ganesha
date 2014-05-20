@@ -128,7 +128,7 @@ void *_9p_socket_thread(void *Arg)
 	unsigned long sequence = 0;
 	unsigned int i = 0;
 	char *_9pmsg = NULL;
-	uint32_t *p_9pmsglen = NULL;
+	uint32_t msglen;
 
 	struct _9p_conn _9p_conn;
 
@@ -200,8 +200,8 @@ void *_9p_socket_thread(void *Arg)
 	    POLLIN | POLLPRI | POLLRDBAND | POLLRDNORM | POLLRDHUP | POLLHUP |
 	    POLLERR | POLLNVAL;
 
-	for (;;) {		/* Infinite loop */
-
+	for (;;) {
+		total_readlen = 0;  /* new message */
 		rc = poll(fds, fdcount, -1);
 		if (rc == -1) {
 			/* timeout = -1 => Wait indefinitely for events */
@@ -228,109 +228,105 @@ void *_9p_socket_thread(void *Arg)
 			goto end;
 		}
 
-		if (fds[0].revents & (POLLIN | POLLRDNORM)) {
-			/* Prepare to read the message */
-			_9pmsg = gsh_malloc(_9p_conn.msize);
-			if (_9pmsg == NULL) {
-				LogCrit(COMPONENT_9P,
-					"Could not allocate 9pmsg buffer for client %s on socket %lu",
-					strcaller, tcp_sock);
-				goto end;
+		if (!(fds[0].revents & (POLLIN | POLLRDNORM)))
+			continue;
+
+		/* Prepare to read the message */
+		_9pmsg = gsh_malloc(_9p_conn.msize);
+		if (_9pmsg == NULL) {
+			LogCrit(COMPONENT_9P,
+				"Could not allocate 9pmsg buffer for client %s on socket %lu",
+				strcaller, tcp_sock);
+			goto end;
+		}
+
+		/* An incoming 9P request: the msg has a 4 bytes header
+		   showing the size of the msg including the header */
+		readlen = recv(fds[0].fd, _9pmsg,
+			       _9P_HDR_SIZE, MSG_WAITALL);
+		if (readlen != _9P_HDR_SIZE)
+			goto badmsg;
+
+		msglen = *(uint32_t *) _9pmsg;
+		if (msglen > _9p_conn.msize) {
+			LogCrit(COMPONENT_9P,
+				"Message size too big! got %u, max = %u",
+				msglen, _9p_conn.msize);
+			goto end;
+		}
+
+		LogFullDebug(COMPONENT_9P,
+			     "Received 9P/TCP message of size %u from client %s on socket %lu",
+			     msglen, strcaller, tcp_sock);
+
+		total_readlen += readlen;
+		while (total_readlen < msglen) {
+			readlen = recv(fds[0].fd,
+				       _9pmsg + total_readlen,
+				       msglen - total_readlen,
+				       0);
+
+			if (readlen > 0) {
+				total_readlen += readlen;
+				continue;
 			}
+			if (readlen == 0 ||
+			    (readlen < 0 && errno != EINTR))
+				goto badmsg;
+		}	/* while */
 
-			/* An incoming 9P request: the msg has a 4 bytes header
-			   showing the size of the msg including the header */
-			readlen = recv(fds[0].fd, _9pmsg,
-				       _9P_HDR_SIZE, MSG_WAITALL);
-			if (readlen == _9P_HDR_SIZE) {
-				p_9pmsglen = (uint32_t *) _9pmsg;
+		server_stats_transport_done(_9p_conn.client,
+					    total_readlen, 1, 0,
+					    0, 0, 0);
 
-				LogFullDebug(COMPONENT_9P,
-					     "Received 9P/TCP message of size %u from client %s on socket %lu",
-					     *p_9pmsglen, strcaller, tcp_sock);
+		/* Message is good. */
+		req = pool_alloc(request_pool, NULL);
 
-				total_readlen = readlen;
-				while (total_readlen < *p_9pmsglen) {
-					readlen =
-					    recv(fds[0].fd,
-						 _9pmsg + total_readlen,
-						 *p_9pmsglen - total_readlen,
-						 0);
+		req->rtype = _9P_REQUEST;
+		req->r_u._9p._9pmsg = _9pmsg;
+		req->r_u._9p.pconn = &_9p_conn;
 
-					/* Signal management */
-					if (readlen < 0 && errno == EINTR)
-						continue;
+		/* Add this request to the request list,
+		 * should it be flushed later. */
+		tag = *(u16 *) (_9pmsg + _9P_HDR_SIZE +
+				_9P_TYPE_SIZE);
+		_9p_AddFlushHook(&req->r_u._9p, tag,
+				 sequence++);
+		LogFullDebug(COMPONENT_9P,
+			     "Request tag is %d\n", tag);
 
-					/* Error management */
-					if (readlen < 0) {
-						LogEvent(COMPONENT_9P,
-							 "Read error client %s on socket %lu errno=%d",
-							 strcaller, tcp_sock,
-							 errno);
-						goto end;
-					}
+		/* Message was OK push it */
+		DispatchWork9P(req);
 
-					/* Client quit */
-					if (readlen == 0) {
-						LogEvent(COMPONENT_9P,
-							 "Client %s closed on socket %lu",
-							 strcaller, tcp_sock);
-						goto end;
-					}
+		/* Not our buffer anymore */
+		_9pmsg = NULL;
+		continue;
 
-					/* After this point,
-					 * read() is supposed to be OK */
-					total_readlen += readlen;
-				}	/* while */
+badmsg:
+		if (readlen == 0)
+			LogEvent(COMPONENT_9P,
+				 "Premature end for Client %s on socket %lu, total read = %u",
+				 strcaller, tcp_sock, total_readlen);
+		else if (readlen < 0) {
+			LogEvent(COMPONENT_9P,
+				 "Read error client %s on socket %lu errno=%d, total read = %u",
+				 strcaller, tcp_sock,
+				 errno, total_readlen);
+		} else
+			LogEvent(COMPONENT_9P,
+				 "Header too small! for client %s on socket %lu: readlen=%u expected=%u",
+				 strcaller, tcp_sock, readlen,
+				 _9P_HDR_SIZE);
 
-				server_stats_transport_done(_9p_conn.client,
-							    total_readlen, 1, 0,
-							    0, 0, 0);
-
-				/* Message is good. */
-				req = pool_alloc(request_pool, NULL);
-
-				req->rtype = _9P_REQUEST;
-				req->r_u._9p._9pmsg = _9pmsg;
-				req->r_u._9p.pconn = &_9p_conn;
-
-				/* Add this request to the request list,
-				 * should it be flushed later. */
-				tag = *(u16 *) (_9pmsg + _9P_HDR_SIZE +
-						_9P_TYPE_SIZE);
-				_9p_AddFlushHook(&req->r_u._9p, tag,
-						 sequence++);
-				LogFullDebug(COMPONENT_9P,
-					     "Request tag is %d\n", tag);
-
-				/* Message was OK push it */
-				DispatchWork9P(req);
-
-				/* Not our buffer anymore */
-				_9pmsg = NULL;
-			} else {	/* readlen != _9P_HDR_SIZE */
-
-				if (readlen == 0)
-					LogEvent(COMPONENT_9P,
-						 "Client %s on socket %lu has shut down",
-						 strcaller, tcp_sock);
-				else
-					LogEvent(COMPONENT_9P,
-						 "Badly formed 9P/TCP message: Header is too small for client %s on socket %lu: readlen=%u expected=%u",
-						 strcaller, tcp_sock, readlen,
-						 _9P_HDR_SIZE);
-
-				/* Either way, we close the connection.
-				 * It is not possible to survive
-				 * once we get out of sync in the TCP stream
-				 * with the client
-				 */
-				goto end;
-			}
-		}		/* if( fds[0].revents & (POLLIN|POLLRDNORM) ) */
+		/* Either way, we close the connection.
+		 * It is not possible to survive
+		 * once we get out of sync in the TCP stream
+		 * with the client
+		 */
+		break; /* bail out */
 	}			/* for( ;; ) */
 
- end:
+end:
 	LogEvent(COMPONENT_9P, "Closing connection on socket %lu", tcp_sock);
 	close(tcp_sock);
 
