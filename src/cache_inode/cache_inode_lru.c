@@ -837,7 +837,7 @@ lru_run(struct fridgethr_context *ctx)
 					/* Acquire the content lock first; we
 					 * may need to look at fds and close
 					 * it. */
-					pthread_rwlock_wrlock(&entry->
+					PTHREAD_RWLOCK_wrlock(&entry->
 							      content_lock);
 					if (is_open(entry)) {
 						cache_status =
@@ -853,7 +853,7 @@ lru_run(struct fridgethr_context *ctx)
 							++closed;
 						}
 					}
-					pthread_rwlock_unlock(&entry->
+					PTHREAD_RWLOCK_unlock(&entry->
 							      content_lock);
 
 					QLOCK(qlane);	/* QLOCKED */
