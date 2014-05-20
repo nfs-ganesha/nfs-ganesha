@@ -1432,12 +1432,9 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* Update delegation open stats */
 	if (data->current_entry->type == REGULAR_FILE) {
-		if (data->current_entry->object.file.deleg_heuristics.num_opens
-		    == 0) {
-			data->current_entry->object.file.deleg_heuristics
-						.first_open = time(NULL);
-		}
-		data->current_entry->object.file.deleg_heuristics.num_opens++;
+		if (data->current_entry->object.file.fdeleg_stats.fds_num_opens == 0)
+			data->current_entry->object.file.fdeleg_stats.fds_first_open = time(NULL);
+		data->current_entry->object.file.fdeleg_stats.fds_num_opens++;
 	}
 
 	pthread_mutex_lock(&clientid->cid_mutex);
