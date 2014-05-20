@@ -151,6 +151,8 @@ static fsal_status_t tank_lookup(struct fsal_obj_handle *parent,
 	struct zfs_file_handle fh;
 	creden_t cred;
 	libzfswrap_vfs_t *p_vfs = NULL;
+	inogen_t object;
+	int type;
 
 	if (!path)
 		return fsalstat(ERR_FSAL_FAULT, 0);
@@ -165,9 +167,6 @@ static fsal_status_t tank_lookup(struct fsal_obj_handle *parent,
 
 	/* >> Call your filesystem lookup function here << */
 	/* >> Be carefull you don't traverse junction nor follow symlinks << */
-	inogen_t object;
-	int type;
-	char i_snap __attribute__ ((unused)) = parent_hdl->handle->i_snap;
 
 	p_vfs = ZFSFSAL_GetVFS(parent_hdl->handle);
 
@@ -200,12 +199,12 @@ static fsal_status_t tank_lookup(struct fsal_obj_handle *parent,
 		p_vfs = p_snapshots[i].p_vfs;
 
 		type = S_IFDIR;
-		i_snap = i + 1;
 		retval = 0;
 	} else {
 		/* Get the right VFS */
 		if (!p_vfs) {
 			retval = ENOENT;
+			goto errout;
 		} else {
 
 			cred.uid = opctx->creds->caller_uid;
@@ -221,10 +220,6 @@ static fsal_status_t tank_lookup(struct fsal_obj_handle *parent,
 
 		}
 
-/* FIXME!!! Hook to remove the i_snap bit when going up
- * from the .zfs directory */
-		if (object.inode == 3)
-			i_snap = 0;
 	}
 	cred.uid = opctx->creds->caller_uid;
 	cred.gid = opctx->creds->caller_gid;
