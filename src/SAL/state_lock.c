@@ -3614,7 +3614,6 @@ void state_lock_wipe(cache_entry_t *entry)
 
 void cancel_all_nlm_blocked()
 {
-	struct glist_head *glist, *glistn;
 	state_lock_entry_t *found_entry;
 	cache_entry_t *pentry;
 	state_block_data_t *pblock;
@@ -3627,23 +3626,17 @@ void cancel_all_nlm_blocked()
 
 	pthread_mutex_lock(&blocked_locks_mutex);
 
-	if (glist_empty(&state_blocked_locks)) {
+	pblock = glist_first_entry(&state_blocked_locks,
+				   state_block_data_t,
+				   sbd_list);
+
+	if (pblock == NULL) {
 		LogFullDebug(COMPONENT_STATE, "No blocked locks");
-		pthread_mutex_unlock(&blocked_locks_mutex);
-		return;
+		goto out;
 	}
 
-	glist_for_each_safe(glist, glistn, &state_blocked_locks) {
-		pblock = glist_entry(glist, state_block_data_t, sbd_list);
-
+	while (pblock != NULL) {
 		found_entry = pblock->sbd_lock_entry;
-
-		/* Check if got an entry */
-		if (found_entry == NULL) {
-			LogWarn(COMPONENT_STATE,
-				"Blocked lock without an state_lock_entry_t");
-			continue;
-		}
 
 		/* Remove lock from blocked list */
 		glist_del(&pblock->sbd_list);
@@ -3678,7 +3671,14 @@ void cancel_all_nlm_blocked()
 		lock_entry_dec_ref(found_entry);
 
 		pthread_mutex_lock(&blocked_locks_mutex);
-	}			/* glist_for_each_safe */
+
+		/* Get next item off list */
+		pblock = glist_first_entry(&state_blocked_locks,
+					   state_block_data_t,
+					   sbd_list);
+	}
+
+out:
 
 	pthread_mutex_unlock(&blocked_locks_mutex);
 	return;
