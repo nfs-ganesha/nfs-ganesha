@@ -999,7 +999,7 @@ static struct closefd vfs_fsal_open_and_stat(struct fsal_export *exp,
 					     fsal_errors_t *fsal_error)
 {
 	struct fsal_obj_handle *obj_hdl = &myself->obj_handle;
-	struct closefd cfd  = { .fd = -1, .close_fd = false };
+	struct closefd cfd = { .fd = -1, .close_fd = false };
 	int retval = 0;
 	vfs_file_handle_t *fh = NULL;
 	vfs_alloc_handle(fh);
@@ -1019,6 +1019,7 @@ static struct closefd vfs_fsal_open_and_stat(struct fsal_export *exp,
 				 strerror(-cfd.fd));
 			return cfd;
 		}
+		cfd.close_fd = true;
 		retval =
 		    fstatat(cfd.fd, myself->u.unopenable.name, stat,
 			    AT_SYMLINK_NOFOLLOW);
@@ -1048,6 +1049,7 @@ static struct closefd vfs_fsal_open_and_stat(struct fsal_export *exp,
 				 strerror(-cfd.fd));
 			return cfd;
 		}
+		cfd.close_fd = true;
 		retval =
 		    vfs_stat_by_handle(cfd.fd, myself->handle, stat,
 				       open_flags);
@@ -1067,6 +1069,7 @@ static struct closefd vfs_fsal_open_and_stat(struct fsal_export *exp,
 				 strerror(-cfd.fd));
 			return cfd;
 		}
+		cfd.close_fd = true;
 		retval =
 		    vfs_stat_by_handle(cfd.fd, myself->handle, stat,
 				       open_flags);
@@ -1075,16 +1078,16 @@ static struct closefd vfs_fsal_open_and_stat(struct fsal_export *exp,
 	}
 
 	if (retval < 0) {
-		if (obj_hdl->type != REGULAR_FILE
-		    || cfd.close_fd) {
-			cfd.close_fd = close(cfd.fd);
-			if (cfd.close_fd < 0) {
-				cfd.close_fd = errno;
+		retval = errno;
+		if (cfd.close_fd) {
+			int rc;
+			rc = close(cfd.fd);
+			if (rc < 0) {
+				rc = errno;
 				LogDebug(COMPONENT_FSAL, "close failed with %s",
-					 strerror(cfd.close_fd));
+					 strerror(rc));
 			}
 		}
-		retval = errno;
 		if (retval == ENOENT)
 			retval = ESTALE;
 		*fsal_error = posix2fsal_error(retval);
@@ -1101,7 +1104,7 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
 			      const struct req_op_context *opctx)
 {
 	struct vfs_fsal_obj_handle *myself;
-	struct closefd cfd;
+	struct closefd cfd = { .fd = -1, .close_fd = false };
 	struct stat stat;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	fsal_status_t st;
@@ -1123,7 +1126,7 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
 				     O_RDONLY, &fsal_error);
 	if (cfd.fd >= 0) {
 		st = posix2fsal_attributes(&stat, &obj_hdl->attributes);
-		if (obj_hdl->type != REGULAR_FILE || cfd.close_fd)
+		if (cfd.close_fd)
 			close(cfd.fd);
 		if (FSAL_IS_ERROR(st)) {
 			FSAL_CLEAR_MASK(obj_hdl->attributes.mask);
@@ -1136,11 +1139,11 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
 		}
 	} else {
 		LogDebug(COMPONENT_FSAL, "Failed with %s, fsal_error %s",
-			 strerror(-cfd.fd),
+			 strerror(-cfd.fd), 
 			 fsal_error ==
 			 ERR_FSAL_STALE ? "ERR_FSAL_STALE" : "other");
 		if (obj_hdl->type == SYMBOLIC_LINK
-		    && cfd.fd == -ERR_FSAL_PERM) {
+		    && cfd.fd == -EPERM) {
 			/* You cannot open_by_handle (XFS on linux) a symlink
 			 * and it throws an EPERM error for it.
 			 * open_by_handle_at does not throw that error for
@@ -1171,8 +1174,7 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 			      struct attrlist *attrs)
 {
 	struct vfs_fsal_obj_handle *myself;
-	struct closefd cfd;
-	int fd = -1;
+	struct closefd cfd = { .fd = -1, .close_fd = false };
 	struct stat stat;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval = 0;
@@ -1213,9 +1215,10 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 
 	cfd = vfs_fsal_open_and_stat(opctx->fsal_export, myself, &stat,
 				     open_flags, &fsal_error);
-	fd = cfd.fd;
-	if (fd < 0) {
-		if (obj_hdl->type == SYMBOLIC_LINK && fd == -ERR_FSAL_PERM) {
+
+	if (cfd.fd < 0) {
+		if (obj_hdl->type == SYMBOLIC_LINK &&
+		    cfd.fd == -EPERM) {
 			/* You cannot open_by_handle (XFS) a symlink and it
 			 * throws an EPERM error for it.  open_by_handle_at
 			 * does not throw that error for symlinks so we play a
@@ -1228,7 +1231,7 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 			fsal_error = ERR_FSAL_NO_ERROR;
 			goto out;
 		}
-		return fsalstat(fsal_error, -fd);
+		return fsalstat(fsal_error, cfd.fd);
 	}
 	/** TRUNCATE **/
 	if (FSAL_TEST_MASK(attrs->mask, ATTR_SIZE)) {
@@ -1236,7 +1239,7 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 			fsal_error = ERR_FSAL_INVAL;
 			goto fileerr;
 		}
-		retval = ftruncate(fd, attrs->filesize);
+		retval = ftruncate(cfd.fd, attrs->filesize);
 		if (retval != 0) {
 			/* XXX ESXi volume creation pattern reliably
 			 * reaches this point and reliably can successfully
@@ -1245,12 +1248,13 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 			 * I don't see a prior failed op in wireshark. */
 			if (retval == -1 /* bad fd */) {
 				vfs_close(obj_hdl);
+				if (cfd.close_fd)
+					close(cfd.fd);
 				cfd = vfs_fsal_open_and_stat(opctx->fsal_export,
 							     myself, &stat,
 							     open_flags,
 							     &fsal_error);
-				fd = cfd.fd;
-				retval = ftruncate(fd, attrs->filesize);
+				retval = ftruncate(cfd.fd, attrs->filesize);
 				if (retval != 0)
 					goto fileerr;
 			} else
@@ -1265,12 +1269,12 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 		 */
 		if (!S_ISLNK(stat.st_mode)) {
 			if (vfs_unopenable_type(obj_hdl->type))
-				retval = fchmodat(fd,
+				retval = fchmodat(cfd.fd,
 						  myself->u.unopenable.name,
 						  fsal2unix_mode(attrs->mode),
 						  0);
 			else
-				retval = fchmod(fd,
+				retval = fchmod(cfd.fd,
 						fsal2unix_mode(attrs->mode));
 
 			if (retval != 0)
@@ -1286,15 +1290,13 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 		    ? (int)attrs->group : -1;
 
 		if (vfs_unopenable_type(obj_hdl->type))
-			retval =
-			    fchownat(fd, myself->u.unopenable.name, user, group,
-				     AT_SYMLINK_NOFOLLOW);
+			retval = fchownat(cfd.fd, myself->u.unopenable.name,
+					  user, group, AT_SYMLINK_NOFOLLOW);
 		else if (obj_hdl->type == SYMBOLIC_LINK)
-			retval =
-			    fchownat(fd, "", user, group,
-				     AT_SYMLINK_NOFOLLOW | AT_EMPTY_PATH);
+			retval = fchownat(cfd.fd, "", user, group,
+					  AT_SYMLINK_NOFOLLOW | AT_EMPTY_PATH);
 		else
-			retval = fchown(fd, user, group);
+			retval = fchown(cfd.fd, user, group);
 
 		if (retval)
 			goto fileerr;
@@ -1330,11 +1332,10 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 			timebuf[1].tv_nsec = UTIME_OMIT;
 		}
 		if (vfs_unopenable_type(obj_hdl->type))
-			retval =
-			    vfs_utimesat(fd, myself->u.unopenable.name, timebuf,
-					 AT_SYMLINK_NOFOLLOW);
+			retval = vfs_utimesat(cfd.fd, myself->u.unopenable.name,
+					      timebuf, AT_SYMLINK_NOFOLLOW);
 		else
-			retval = vfs_utimes(fd, timebuf);
+			retval = vfs_utimes(cfd.fd, timebuf);
 		if (retval != 0)
 			goto fileerr;
 	}
@@ -1344,9 +1345,8 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 	retval = errno;
 	fsal_error = posix2fsal_error(retval);
  out:
-	if (obj_hdl->type != REGULAR_FILE
-	    || cfd.close_fd)
-		close(fd);
+	if (cfd.close_fd)
+		close(cfd.fd);
  hdlerr:
 	return fsalstat(fsal_error, retval);
 }
