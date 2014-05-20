@@ -76,7 +76,73 @@ struct export_by_id {
 
 static struct export_by_id export_by_id;
 
+/** List of all active exports,
+  * protected by export_by_id.lock
+  */
 static struct glist_head exportlist;
+
+/** List of exports to be mounted in PseudoFS,
+  * protected by export_by_id.lock
+  */
+static struct glist_head mount_work;
+
+/** List of exports to be cleaned up on unexport,
+  * protected by export_by_id.lock
+  */
+static struct glist_head unexport_work;
+
+void export_add_to_mount_work(struct gsh_export *export)
+{
+	PTHREAD_RWLOCK_wrlock(&export_by_id.lock);
+	glist_add_tail(&mount_work, &export->exp_work);
+	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
+}
+
+void export_add_to_unexport_work_locked(struct gsh_export *export)
+{
+	glist_add_tail(&unexport_work, &export->exp_work);
+}
+
+void export_add_to_unexport_work(struct gsh_export *export)
+{
+	PTHREAD_RWLOCK_wrlock(&export_by_id.lock);
+	export_add_to_unexport_work_locked(export);
+	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
+}
+
+struct gsh_export *export_take_mount_work(void)
+{
+	struct gsh_export *export;
+
+	PTHREAD_RWLOCK_wrlock(&export_by_id.lock);
+
+	export = glist_first_entry(&mount_work, struct gsh_export, exp_work);
+
+	if (export != NULL)
+		glist_del(&export->exp_work);
+
+	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
+
+	return export;
+}
+
+struct gsh_export *export_take_unexport_work(void)
+{
+	struct gsh_export *export;
+
+	PTHREAD_RWLOCK_wrlock(&export_by_id.lock);
+
+	export = glist_first_entry(&unexport_work, struct gsh_export, exp_work);
+
+	if (export != NULL) {
+		glist_del(&export->exp_work);
+		get_gsh_export_ref(export);
+	}
+
+	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
+
+	return export;
+}
 
 /**
  * @brief Compute cache slot for an entry
@@ -1470,6 +1536,8 @@ void export_pkginit(void)
 	export_by_id.cache =
 	    gsh_calloc(export_by_id.cache_sz, sizeof(struct avltree_node *));
 	glist_init(&exportlist);
+	glist_init(&mount_work);
+	glist_init(&unexport_work);
 }
 
 /** @} */
