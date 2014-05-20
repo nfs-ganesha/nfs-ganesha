@@ -153,6 +153,7 @@ static bool proc_export(struct gsh_export *export, void *arg)
 				gsh_free(group->gr_name);
 			gsh_free(group);
 		}
+		gsh_free(new_expnode);
 	}
 	state->retval = errno;
 	return false;
