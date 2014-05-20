@@ -735,7 +735,7 @@ static int export_commit(void *node, void *link_mem, void *self_struct,
 	export = self_struct;
 
 	/* validate the export now */
-	if ((export->export_perms.options & EXPORT_OPTION_NFSV4)) {
+	if (export->export_perms.options & EXPORT_OPTION_NFSV4) {
 		if (export->pseudopath == NULL) {
 			LogCrit(COMPONENT_CONFIG,
 				"Exporting to NFSv4 but not Pseudo path defined");
@@ -849,6 +849,10 @@ static int export_commit(void *node, void *link_mem, void *self_struct,
 		errcnt++;
 		goto err_out;
 	}
+
+	/* This export must be mounted to the PseudoFS if NFS v4 */
+	if (export->export_perms.options & EXPORT_OPTION_NFSV4)
+		export_add_to_mount_work(export);
 
 	StrExportOptions(&export->export_perms, perms);
 
@@ -1368,6 +1372,9 @@ static int build_default_root(void)
 		goto err_out;
 	}
 	set_gsh_export_state(export, EXPORT_READY);
+
+	/* This export must be mounted to the PseudoFS */
+	export_add_to_mount_work(export);
 
 	LogEvent(COMPONENT_CONFIG,
 		 "Export 0 (/) successfully created");

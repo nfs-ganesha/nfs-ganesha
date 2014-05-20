@@ -362,7 +362,7 @@ bool pseudo_mount_export(struct gsh_export *export,
 
 	/* Now find the export we are mounted on */
 	state.req_ctx->export =
-	    get_gsh_export_by_pseudo_locked(tmp_pseudopath, false);
+	    get_gsh_export_by_pseudo(tmp_pseudopath, false);
 
 	if (state.req_ctx->export == NULL) {
 		LogFatal(COMPONENT_EXPORT,
@@ -485,12 +485,6 @@ bool pseudo_mount_export(struct gsh_export *export,
 	return true;
 }
 
-bool pseudo_mount_export_wrapper(struct gsh_export *export, void *arg)
-{
-	struct root_op_context *root_op_context = arg;
-	return pseudo_mount_export(export, &root_op_context->req_ctx);
-}
-
 /**
  * @brief Build a pseudo fs from an exportlist
  *
@@ -502,14 +496,20 @@ bool pseudo_mount_export_wrapper(struct gsh_export *export, void *arg)
 void create_pseudofs(void)
 {
 	struct root_op_context root_op_context;
+	struct gsh_export *export;
 
 	/* Initialize req_ctx */
 	init_root_op_context(&root_op_context, NULL, NULL,
 			     NFS_V4, 0, NFS_REQUEST);
 
-	if (!foreach_gsh_export(pseudo_mount_export_wrapper, &root_op_context))
-		LogFatal(COMPONENT_INIT,
-			 "Error while initializing NFSv4 pseudo file system");
+	while (true) {
+		export = export_take_mount_work();
+		if (export == NULL)
+			break;
+		if (!pseudo_mount_export(export, &root_op_context.req_ctx))
+			LogFatal(COMPONENT_EXPORT,
+				 "Could not complete creating PseudoFS");
+	}
 }
 
 /**
