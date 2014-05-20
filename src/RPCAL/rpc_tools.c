@@ -347,7 +347,7 @@ int sockaddr_cmpf(sockaddr_t *addr1, sockaddr_t *addr2,
 		struct sockaddr_in6 *in2 = (struct sockaddr_in6 *)addr2;
 		int acmp = memcmp(in1->sin6_addr.s6_addr,
 				  in2->sin6_addr.s6_addr,
-				  sizeof(struct sockaddr_in6));
+				  sizeof(struct in6_addr));
 		if (acmp < 1)
 			return -1;
 		if (acmp == 0) {
