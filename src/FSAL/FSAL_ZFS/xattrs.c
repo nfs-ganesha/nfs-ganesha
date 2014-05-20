@@ -276,7 +276,7 @@ static int xattr_id_to_name(libzfswrap_vfs_t *p_vfs, creden_t *pcred,
 	if (retval)
 		return posix2fsal_error(retval);
 
-	if (namesize < 0)
+	if (namesize == 0)
 		return ERR_FSAL_NOENT;
 
 	errno = 0;
@@ -313,7 +313,7 @@ static int xattr_name_to_id(libzfswrap_vfs_t *p_vfs, creden_t *pcred,
 	if (retval)
 		return -posix2fsal_error(retval);
 
-	if (namesize < 0)
+	if (namesize == 0)
 		return -ERR_FSAL_NOENT;
 
 	for (ptr = names, i = 0; ptr < names + namesize;
