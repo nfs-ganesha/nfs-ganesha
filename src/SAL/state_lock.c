@@ -1868,9 +1868,10 @@ static void grant_blocked_locks(cache_entry_t *entry,
  *
  * @return State status.
  */
-state_status_t cancel_blocked_lock(cache_entry_t *entry,
-				   struct req_op_context *req_ctx,
-				   state_lock_entry_t *lock_entry)
+static
+void cancel_blocked_lock(cache_entry_t *entry,
+			 struct req_op_context *req_ctx,
+			 state_lock_entry_t *lock_entry)
 {
 	state_cookie_entry_t *cookie = NULL;
 	state_status_t state_status;
@@ -1890,9 +1891,9 @@ state_status_t cancel_blocked_lock(cache_entry_t *entry,
 		/* Cookie is attached, try to get it */
 		cookie = lock_entry->sle_block_data->sbd_blocked_cookie;
 
-		state_status =
-		    state_find_grant(cookie->sce_cookie,
-				     cookie->sce_cookie_size, &cookie);
+		state_status = state_find_grant(cookie->sce_cookie,
+						cookie->sce_cookie_size,
+						&cookie);
 
 		if (state_status == STATE_SUCCESS) {
 			/* We've got the cookie,
@@ -1930,15 +1931,13 @@ state_status_t cancel_blocked_lock(cache_entry_t *entry,
 			 */
 			LogEntry("Unable to cancel (grant upcall expected)",
 				 lock_entry);
-			return STATE_SUCCESS;
+			return;
 		}
 	}
 
 	/* Remove the lock from the lock list */
 	LogEntry("Removing", lock_entry);
 	remove_from_locklist(lock_entry);
-
-	return state_status;
 }
 
 /**
@@ -2003,7 +2002,7 @@ void cancel_blocked_locks_range(cache_entry_t *entry,
 		if ((found_entry_end >= lock->lock_start)
 		    && (found_entry->sle_lock.lock_start <= range_end)) {
 			/* lock overlaps, cancel it. */
-			(void)cancel_blocked_lock(entry, req_ctx, found_entry);
+			cancel_blocked_lock(entry, req_ctx, found_entry);
 		}
 	}
 }
@@ -3035,24 +3034,19 @@ state_status_t state_cancel(cache_entry_t *entry,
 	struct glist_head *glist;
 	state_lock_entry_t *found_entry;
 	cache_inode_status_t cache_status;
-	state_status_t status = 0;
 
 	if (entry->type != REGULAR_FILE) {
 		LogLock(COMPONENT_STATE, NIV_DEBUG,
 			"Bad Cancel",
 			entry, owner, lock);
-		status = STATE_BAD_TYPE;
-		return status;
+		return STATE_BAD_TYPE;
 	}
-
-	status = STATE_NOT_FOUND;
 
 	cache_status = cache_inode_inc_pin_ref(entry);
 
 	if (cache_status != CACHE_INODE_SUCCESS) {
-		status = cache_inode_status_to_state_status(cache_status);
 		LogDebug(COMPONENT_STATE, "Could not pin file");
-		return status;
+		return cache_inode_status_to_state_status(cache_status);
 	}
 
 	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
@@ -3065,8 +3059,7 @@ state_status_t state_cancel(cache_entry_t *entry,
 		LogDebug(COMPONENT_STATE,
 			 "Cancel success on file with no locks");
 
-		status = STATE_SUCCESS;
-		return status;
+		return STATE_SUCCESS;
 	}
 
 	glist_for_each(glist, &entry->object.file.lock_list) {
@@ -3083,7 +3076,7 @@ state_status_t state_cancel(cache_entry_t *entry,
 			continue;
 
 		/* Cancel the blocked lock */
-		status = cancel_blocked_lock(entry, req_ctx, found_entry);
+		cancel_blocked_lock(entry, req_ctx, found_entry);
 
 		/* Check to see if we can grant any blocked locks. */
 		grant_blocked_locks(entry, req_ctx);
@@ -3101,7 +3094,7 @@ state_status_t state_cancel(cache_entry_t *entry,
 
 	cache_inode_dec_pin_ref(entry, false);
 
-	return status;
+	return STATE_SUCCESS;
 }
 
 /**
@@ -3656,9 +3649,9 @@ void cancel_all_nlm_blocked()
 
 		pentry = found_entry->sle_entry;
 
-		(void) cancel_blocked_lock(pentry,
-					   &root_op_context.req_ctx,
-					   found_entry);
+		cancel_blocked_lock(pentry,
+				    &root_op_context.req_ctx,
+				    found_entry);
 
 		if (pblock->sbd_blocked_cookie != NULL)
 			gsh_free(pblock->sbd_blocked_cookie);
