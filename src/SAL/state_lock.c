@@ -3380,7 +3380,7 @@ state_status_t state_owner_unlock_all(state_owner_t *owner,
 		/* Remove all locks held by this owner on the file */
 		status =
 		    state_unlock(entry, req_ctx, owner, state, &lock,
-				 found_entry->sle_type);
+				 POSIX_LOCK);
 
 		if (!state_unlock_err_ok(status)) {
 			/* Increment the error count and try the next lock,
