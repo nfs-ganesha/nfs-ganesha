@@ -274,22 +274,10 @@ struct c_deleg_stats {
 
 /* @brief Per client, per file stats */
 struct cf_deleg_stats {
-	struct nfs_client_id_t *clientid; /* client for this file. */
-	time_t last_delegation;           /* time of successful delegation */
-	uint32_t num_revokes;		  /* number of revokes for this file */
-	uint32_t num_recalls;       /* total number of recalls on this
-				       file from this client
-				       badhandles + races + timeouts +
-				       aborts = tot number of failed recalls. */
-	uint32_t num_recall_races;        /* num of races detected */
-	uint32_t num_recall_timeouts;     /* num of recalls that timed out */
-	uint32_t num_recall_aborts;       /* num of recalls aborted */
-	time_t recall_success_time;       /* time when the client responsed
-					     NFS4_OK for a recall. */
-	time_t first_recall_time;       /* time of first recall attempt */
-	time_t last_write;               /* time when the last write was
-					     done by client. */
-
+	struct nfs_client_id_t *cfd_clientid; /* client for this file. */
+	time_t cfd_rs_time;                   /* time when the client responsed
+                                                 NFS4_OK for a recall. */
+	time_t cfd_r_time;               /* time of the recall attempt */
 };
 
 /**

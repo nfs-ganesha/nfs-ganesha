@@ -97,16 +97,9 @@ void init_new_deleg_state(state_data_t *deleg_state,
 	deleg_state->deleg.sd_grant_time = time(NULL);
 	deleg_state->deleg.sd_state = DELEG_GRANTED;
 
-	clfile_entry->clientid = client;
-	clfile_entry->last_delegation = 0;
-	clfile_entry->num_recalls = 0;
-	clfile_entry->num_recall_races = 0;
-	clfile_entry->num_recall_timeouts = 0;
-	clfile_entry->num_recall_aborts = 0;
-	clfile_entry->recall_success_time = 0;
-	clfile_entry->first_recall_time = 0;
-	clfile_entry->last_write = 0;
-
+	clfile_entry->cfd_clientid = client;
+	clfile_entry->cfd_rs_time = 0;
+	clfile_entry->cfd_r_time = 0;
 }
 
 /**
@@ -133,10 +126,7 @@ bool update_delegation_stats(cache_entry_t *entry, state_t *state)
 	statistics->last_delegation = time(NULL);
 
 	/* Update delegation stats for client. */
-	clfile_entry->clientid->cid_deleg_stats.curr_deleg_grants++;
-
-	/* Update delegation stats for client-file. */
-	clfile_entry->last_delegation = statistics->last_delegation;
+	clfile_entry->cfd_clientid->cid_deleg_stats.curr_deleg_grants++;
 
 	return true;
 }

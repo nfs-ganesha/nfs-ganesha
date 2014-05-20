@@ -201,7 +201,7 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* Remove state entry and update stats */
 	deleg_heuristics_recall(data->current_entry,
-				pstate_found->state_data.deleg.sd_clfile_stats.clientid);
+				pstate_found->state_data.deleg.sd_clfile_stats.cfd_clientid);
 	state_del(pstate_found, false);
 
 	/* Successful exit */

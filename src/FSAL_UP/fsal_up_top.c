@@ -1092,8 +1092,8 @@ bool eval_deleg_revoke(state_lock_entry_t *deleg_entry)
 	clfl_stats = &deleg_entry->sle_state->state_data.deleg.sd_clfile_stats;
 
 	curr_time = time(NULL);
-	recall_success_time = clfl_stats->recall_success_time;
-	first_recall_time = clfl_stats->first_recall_time;
+	recall_success_time = clfl_stats->cfd_rs_time;
+	first_recall_time = clfl_stats->cfd_r_time;
 
 	if ((recall_success_time > 0) &&
 	    (curr_time - recall_success_time) > lease_lifetime) {
@@ -1139,15 +1139,12 @@ static bool handle_badhandle_response(state_lock_entry_t *deleg_entry,
 		LogDebug(COMPONENT_NFS_CB, "Retrying recall(remaining %d)",
 					recall_retry_count);
 
-		atomic_inc_uint32_t(&clfl_stats->num_recall_races);
-
 		sleep(recall_retry_delay);
 		/* reuse the same call */
 		call->states = NFS_CB_CALL_NONE;
 		call->call_hook = NULL;
 
 		(void)nfs_rpc_submit_call(call, p_cargs, NFS_RPC_CALL_INLINE);
-		atomic_inc_uint32_t(&clfl_stats->num_recalls);
 		atomic_inc_uint32_t(&cl_stats->tot_recalls);
 
 		if (call->stat != RPC_SUCCESS) {
@@ -1155,20 +1152,17 @@ static bool handle_badhandle_response(state_lock_entry_t *deleg_entry,
 			pthread_mutex_lock(&p_cargs->clid->cid_mutex);
 			p_cargs->clid->cb_chan_down = TRUE;
 			pthread_mutex_unlock(&p_cargs->clid->cid_mutex);
-			atomic_inc_uint32_t(&clfl_stats->num_recall_timeouts);
 			needs_revoke = TRUE;
 			break;	/* do not retry if the channel is down */
 		} else {
 			if (call->cbt.v_u.v4.res.status == NFS4_OK) {
-				clfl_stats->recall_success_time = time(NULL);
+				clfl_stats->cfd_rs_time = time(NULL);
 				needs_revoke = FALSE;
 				break;
 			} else if (call->cbt.v_u.v4.res.status ==
 							NFS4ERR_BADHANDLE) {
 				continue;
 			} else {
-				atomic_inc_uint32_t(&clfl_stats->
-							num_recall_aborts);
 				needs_revoke = TRUE;
 				break;
 			}
@@ -1199,7 +1193,7 @@ static bool handle_recall_response(state_lock_entry_t *deleg_entry,
 	case NFS4_OK:
 		LogDebug(COMPONENT_NFS_CB,
 		"Delegation successfully recalled");
-		clfl_stats->recall_success_time =
+		clfl_stats->cfd_rs_time =
 					time(NULL);
 		break;
 	case NFS4ERR_BADHANDLE:
@@ -1211,7 +1205,6 @@ static bool handle_recall_response(state_lock_entry_t *deleg_entry,
 	default:
 		/* some other NFS error,
 		* consider the recall failed */
-		atomic_inc_uint32_t(&clfl_stats->num_recall_aborts);
 		needs_revoke = TRUE;
 		break;
 	}
@@ -1275,7 +1268,7 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 				 deleg_entry);
 
 	clfl_stats = &deleg_entry->sle_state->state_data.deleg.sd_clfile_stats;
-	cl_stats = &clfl_stats->clientid->cid_deleg_stats;
+	cl_stats = &clfl_stats->cfd_clientid->cid_deleg_stats;
 
 	switch (hook) {
 	case RPC_CALL_COMPLETE:
@@ -1287,7 +1280,6 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 			pthread_mutex_lock(&deleg_ctx->clid->cid_mutex);
 			deleg_ctx->clid->cb_chan_down = TRUE;
 			pthread_mutex_unlock(&deleg_ctx->clid->cid_mutex);
-			atomic_inc_uint32_t(&clfl_stats->num_recall_timeouts);
 			needs_revoke = TRUE;
 		} else
 			needs_revoke = handle_recall_response(deleg_entry,
@@ -1298,7 +1290,6 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 	default:
 		LogDebug(COMPONENT_NFS_CB, "%p unknown hook %d", call, hook);
 		/* Mark the recall as failed */
-		atomic_inc_uint32_t(&clfl_stats->num_recall_aborts);
 		needs_revoke = TRUE;
 		break;
 	}
@@ -1306,7 +1297,6 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 		if (eval_deleg_revoke(deleg_entry)) {
 			LogCrit(COMPONENT_NFS_V4,
 			"Revoking delegation(%p)", deleg_entry);
-			atomic_inc_uint32_t(&clfl_stats->num_revokes);
 			atomic_inc_uint32_t(&cl_stats->num_revokes);
 			PTHREAD_RWLOCK_unlock(&entry->state_lock);
 			rc = deleg_revoke(deleg_entry);
@@ -1362,12 +1352,11 @@ static uint32_t delegrecall_one(state_lock_entry_t *deleg_entry)
 	struct cf_deleg_stats *clfl_stats =
 			&deleg_entry->sle_state->state_data.deleg.sd_clfile_stats;
 	struct c_deleg_stats *cl_stats =
-			&clfl_stats->clientid->cid_deleg_stats;
+			&clfl_stats->cfd_clientid->cid_deleg_stats;
 	cache_entry_t *entry = deleg_entry->sle_entry;
 
 	LogDebug(COMPONENT_FSAL_UP, "Recalling delegation(%p)", deleg_entry);
 
-	atomic_inc_uint32_t(&clfl_stats->num_recalls);
 	atomic_inc_uint32_t(&cl_stats->tot_recalls);
 
 	exp = deleg_entry->sle_state->state_export;
@@ -1488,14 +1477,12 @@ out:
 		break;
 	case NFS_CB_CALL_ABORTED:
 		LogCrit(COMPONENT_NFS_CB, "Failed to recall, aborted!");
-		atomic_inc_uint32_t(&clfl_stats->num_recall_aborts);
 		atomic_inc_uint32_t(&cl_stats->failed_recalls);
 		needs_revoke = TRUE;
 		break;
 	case NFS_CB_CALL_TIMEDOUT: /* network or client trouble */
 		LogCrit(COMPONENT_NFS_CB,
 			"Failed to recall due to timeout!");
-		atomic_inc_uint32_t(&clfl_stats->num_recall_timeouts);
 		atomic_inc_uint32_t(&cl_stats->failed_recalls);
 		needs_revoke = TRUE;
 		break;
@@ -1512,7 +1499,6 @@ out:
 
 		if (eval_deleg_revoke(deleg_entry)) {
 			LogCrit(COMPONENT_STATE, "Delegation will be revoked");
-			atomic_inc_uint32_t(&clfl_stats->num_revokes);
 			atomic_inc_uint32_t(&cl_stats->num_revokes);
 			/* state_lock held, can not revoke here */
 			schedule_delegrevoke_check(deleg_entry);
@@ -1676,7 +1662,7 @@ state_status_t delegrecall(cache_entry_t *entry)
 			return rc;
 		}
 		*deleg_state = DELEG_RECALL_WIP;
-		clfl_stats->first_recall_time = time(NULL);
+		clfl_stats->cfd_r_time = time(NULL);
 
 		rc = delegrecall_one(deleg_entry);
 
