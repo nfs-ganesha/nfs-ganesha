@@ -480,7 +480,7 @@ fsal_status_t tank_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
 	if (retval)
 		return fsalstat(posix2fsal_error(retval), retval);
 
-	if (namesize >= 0) {
+	if (namesize > 0) {
 		size_t len = 0;
 
 		errno = 0;
