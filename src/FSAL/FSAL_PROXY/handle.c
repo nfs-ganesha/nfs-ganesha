@@ -2134,7 +2134,7 @@ fsal_status_t pxy_lookup_path(struct fsal_export *exp_hdl,
 		return fsalstat(ERR_FSAL_NOMEM, ENOMEM);
 
 	p = strtok_r(pcopy, "/", &saved);
-	do {
+	while (p) {
 		if (strcmp(p, "..") == 0) {
 			/* Don't allow lookup of ".." */
 			LogInfo(COMPONENT_FSAL,
@@ -2153,11 +2153,9 @@ fsal_status_t pxy_lookup_path(struct fsal_export *exp_hdl,
 			return st;
 		}
 
-		if (p) {
-			p = strtok_r(NULL, "/", &saved);
-			parent = next;
-		}
-	} while (p);
+		p = strtok_r(NULL, "/", &saved);
+		parent = next;
+	}
 	/* The final element could be a symlink, but either way we are called
 	 * will not work with a symlink, so no security exposure there.
 	 */
