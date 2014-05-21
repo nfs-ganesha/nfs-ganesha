@@ -218,17 +218,6 @@ int load_fsal(const char *name,
 		gsh_free(dl_error);
 		dl_error = NULL;
 	}
-#ifdef LINUX
-	/* recent linux/glibc can probe to see if it already there */
-	LogDebug(COMPONENT_INIT, "Probing to see if %s is already loaded",
-		 path);
-	dl = dlopen(path, RTLD_NOLOAD);
-	if (dl != NULL) {
-		retval = EEXIST;
-		LogDebug(COMPONENT_INIT, "Already exists ...");
-		goto errout;
-	}
-#endif
 
 	load_state = loading;
 	pthread_mutex_unlock(&fsal_lock);
