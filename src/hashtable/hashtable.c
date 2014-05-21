@@ -376,8 +376,10 @@ hashtable_init(struct hash_param *hparam)
 		pthread_rwlock_destroy(&(ht->partitions[completed - 1].lock));
 		completed--;
 	}
-	pool_destroy(ht->node_pool);
-	pool_destroy(ht->data_pool);
+	if (ht->node_pool)
+		pool_destroy(ht->node_pool);
+	if (ht->data_pool)
+		pool_destroy(ht->data_pool);
 
 	gsh_free(ht);
 	return ht = NULL;
