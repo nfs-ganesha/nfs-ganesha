@@ -79,11 +79,6 @@ struct lustre_file_handle {
 		memset((fh), 0, (sizeof(struct lustre_file_handle))); \
 	} while (0)
 
-static inline void lustre_malloc_handle(struct lustre_file_handle *fh)
-{
-	fh = gsh_calloc(1, sizeof(struct lustre_file_handle));
-}
-
 static inline int lustre_handle_to_path(char *mntpath,
 					struct lustre_file_handle *handle,
 					char *path)
