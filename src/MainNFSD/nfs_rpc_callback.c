@@ -762,16 +762,16 @@ rpc_call_channel_t *nfs_rpc_get_chan(nfs_client_id_t *clientid, uint32_t flags)
  */
 void nfs_rpc_destroy_v40_chan(rpc_call_channel_t *chan)
 {
+	/* clean up auth, if any */
+	if (chan->auth) {
+		AUTH_DESTROY(chan->auth);
+		chan->auth = NULL;
+	}
+
 	/* channel has a dedicated RPC client */
 	if (chan->clnt) {
-		/* clean up auth, if any */
-		if (chan->auth) {
-			AUTH_DESTROY(chan->auth);
-			chan->auth = NULL;
-		}
 		/* destroy it */
-		if (chan->clnt)
-			clnt_destroy(chan->clnt);
+		clnt_destroy(chan->clnt);
 	}
 }
 

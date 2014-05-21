@@ -1069,25 +1069,16 @@ state_status_t notify_device(notify_deviceid_type4 notify_type,
 
 bool eval_deleg_revoke(state_lock_entry_t *deleg_entry)
 {
-	bool rc = FALSE;
 	struct cf_deleg_stats *clfl_stats;
 	time_t curr_time;
 	time_t recall_success_time, first_recall_time;
 	uint32_t lease_lifetime = nfs_param.nfsv4_param.lease_lifetime;
+	open_delegation_type4 sd_type;
 
-	if (deleg_entry->sle_type != LEASE_LOCK) {
-		LogDebug(COMPONENT_NFS_V4,
-			"State does not represent a delegation");
-		return FALSE;
-	}
+	assert(deleg_entry->sle_type == LEASE_LOCK);
 
-	open_delegation_type4 sd_type =
-			deleg_entry->sle_state->state_data.deleg.sd_type;
-	if (sd_type != OPEN_DELEGATE_READ && sd_type != OPEN_DELEGATE_WRITE) {
-		LogDebug(COMPONENT_NFS_V4,
-			"State does not represent a READ or WRITE delegation");
-		return FALSE;
-	}
+	sd_type = deleg_entry->sle_state->state_data.deleg.sd_type;
+        assert(sd_type == OPEN_DELEGATE_READ || sd_type == OPEN_DELEGATE_WRITE);
 
 	clfl_stats = &deleg_entry->sle_state->state_data.deleg.sd_clfile_stats;
 
@@ -1097,19 +1088,19 @@ bool eval_deleg_revoke(state_lock_entry_t *deleg_entry)
 
 	if ((recall_success_time > 0) &&
 	    (curr_time - recall_success_time) > lease_lifetime) {
-		LogDebug(COMPONENT_STATE,
-			 "More than one lease time has passed since recall was sent");
-		rc = TRUE;
+		LogInfo(COMPONENT_STATE,
+			 "More than one lease time has passed since recall was successfully sent");
+		return TRUE;
 	}
 
 	if ((first_recall_time > 0) &&
 	    (curr_time - first_recall_time) > (2 * lease_lifetime)) {
-		LogDebug(COMPONENT_STATE,
-			 "More than two lease times have passed since first recall was tried");
-		rc = TRUE;
+		LogInfo(COMPONENT_STATE,
+			 "More than two lease times have passed since recall was attempted");
+		return TRUE;
 	}
 
-	return rc;
+	return FALSE;
 }
 
 /**
@@ -1203,8 +1194,7 @@ static bool handle_recall_response(state_lock_entry_t *deleg_entry,
 					clfl_stats, cl_stats, p_cargs);
 		break;
 	default:
-		/* some other NFS error,
-		* consider the recall failed */
+		/* some other NFS error, consider the recall failed */
 		needs_revoke = TRUE;
 		break;
 	}
