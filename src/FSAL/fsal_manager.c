@@ -388,6 +388,7 @@ int register_fsal(struct fsal_module *fsal_hdl, const char *name,
 {
 	pthread_rwlockattr_t attrs;
 
+	pthread_mutex_lock(&fsal_lock);
 	if ((major_version != FSAL_MAJOR_VERSION)
 	    || (minor_version > FSAL_MINOR_VERSION)) {
 		so_error = EINVAL;
@@ -397,9 +398,8 @@ int register_fsal(struct fsal_module *fsal_hdl, const char *name,
 			FSAL_MAJOR_VERSION, FSAL_MINOR_VERSION, major_version,
 			minor_version);
 		load_state = error;
-		return so_error;
+		goto errout;
 	}
-	pthread_mutex_lock(&fsal_lock);
 	so_error = 0;
 	if (!(load_state == loading || load_state == init)) {
 		so_error = EACCES;
