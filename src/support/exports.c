@@ -1708,17 +1708,8 @@ void release_export_root(struct gsh_export *export)
 
 void unexport(struct gsh_export *export)
 {
-	struct root_op_context root_op_context;
-
-	/* Initialize req_ctx */
-	init_root_op_context(&root_op_context, NULL, NULL,
-			     0, 0, UNKNOWN_REQUEST);
-
-	root_op_context.req_ctx.export = export;
-	root_op_context.req_ctx.fsal_export = export->fsal_export;
-
 	/* Make the export unreachable */
-	pseudo_unmount_export(export, &root_op_context.req_ctx);
+	pseudo_unmount_export(export);
 	remove_gsh_export(export->export_id);
 	release_export_root(export);
 }
@@ -1732,11 +1723,6 @@ void unexport(struct gsh_export *export)
 void kill_export_root_entry(cache_entry_t *entry)
 {
 	struct gsh_export *export;
-	struct root_op_context root_op_context;
-
-	/* Initialize req_ctx */
-	init_root_op_context(&root_op_context, NULL, NULL,
-			     0, 0, UNKNOWN_REQUEST);
 
 	if (entry->type != DIRECTORY)
 		return;
@@ -1767,9 +1753,7 @@ void kill_export_root_entry(cache_entry_t *entry)
 		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 
 		/* Make the export otherwise unreachable */
-		root_op_context.req_ctx.export = export;
-		root_op_context.req_ctx.fsal_export = export->fsal_export;
-		pseudo_unmount_export(export, &root_op_context.req_ctx);
+		pseudo_unmount_export(export);
 		remove_gsh_export(export->export_id);
 
 		put_gsh_export(export);

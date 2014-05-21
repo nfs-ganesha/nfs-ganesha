@@ -59,118 +59,104 @@ struct pseudofs_state {
 /**
  * @brief Delete the unecessary directories from pseudo FS
  *
- * @param token [IN] full path of the node
- * @param token [IN] cache entry for the last directory in the path
+ * @param req_ctx    [IN] request op context to run in
+ * @param pseudopath [IN] full path of the node
+ * @param entry [IN] cache entry for the last directory in the path
+ *
  * If this entry is present is pseudo FSAL, and is unnecessary, then remove it.
  * Check recursively if the parent entry is needed.
  *
- * Must be called with additional ref on the entry.
- * This routin will put one ref on entry.
+ * The pseudopath is deconstructed in place to create the subsequently shorter
+ * pseudo paths.
+ *
+ * When called the first time, entry is the mount point of an export that has
+ * been unmounted from the PseudoFS. By definition, it is NOT the root of a
+ * PseudoFS. Also, the PseudoFS root filesystem is NOT mounted and thus this
+ * function will not be called for it. The req_op_context references the
+ * export for the PseudoFS entry is within. Note that the caller is
+ * responsible for checking if it is an FSAL_PSEUDO export (we only clean up
+ * directories in FSAL_PSEUDO filesystems).
  */
-bool cleanup_pseudofs_node(const char *pseudopath, cache_entry_t *entry)
+void cleanup_pseudofs_node(struct req_op_context *req_ctx,
+			   char *pseudopath,
+			   cache_entry_t *entry)
 {
-	struct gsh_export *node_exp;
 	cache_entry_t *parent_entry;
-	char *parent_pseudopath;
-	char *last_slash;
-	char *p;
+	char *pos = pseudopath + strlen(pseudopath) - 1;
 	char *name;
-	struct root_op_context root_op_context;
-	int pseudopath_len = strlen(pseudopath);
 	cache_inode_status_t cache_status;
-	bool retval = true;
 
-	assert(entry->type == DIRECTORY);
+	/* Strip trailing / from pseudopath */
+	while (*pos == '/')
+		pos--;
 
-	if (pseudopath_len == 0)
-		goto out;
+	/* Replace first trailing / if any with NUL */
+	pos[1] = '\0';
 
-	node_exp = (struct gsh_export *)
-			atomic_fetch_voidptr(&entry->first_export);
-	if (strcmp(node_exp->fsal_export->fsal->name, "PSEUDO") != 0) {
-		/* Junction is NOT in FSAL_PSEUDO */
-		goto out;
-	}
+	/* Find the previous slash.
+	 * We will NEVER back up PAST the root, so no need to check
+	 * for walking off the beginning of the string.
+	 */
+	while (*pos != '/')
+		pos--;
 
-	/* Make a copy of the path */
-	parent_pseudopath = alloca(pseudopath_len + 1);
-	strcpy(parent_pseudopath, pseudopath);
-
-	/* Find last '/' in path */
-	p = parent_pseudopath;
-	last_slash = parent_pseudopath;
-	while (*p != '\0') {
-		if (*p == '/')
-			last_slash = p;
-		p++;
-	}
-	/* Terminate path leading to junction. */
-	*last_slash = '\0';
-	name = last_slash + 1;
+	/* Remember the element name for remove */
+	name = pos + 1;
 
 	LogDebug(COMPONENT_EXPORT,
-		 "Checking if pseudo node is needed: %s", pseudopath);
+		 "Checking if pseudo node %s is needed", pseudopath);
 
-	/* Get attr_lock for looking at junction_export */
-	PTHREAD_RWLOCK_rdlock(&entry->attr_lock);
-
-	/**
-	 * entry is needed if:
-	 * It has active children
-	 * OR is a junction
-	 * OR is pseudo root "/"
-	 */
-	if (entry->object.dir.nbactive > 0 ||
-	    entry->object.dir.junction_export != NULL ||
-	    entry == node_exp->exp_root_cache_inode) {
-		/* This node is needed */
-		LogInfo(COMPONENT_EXPORT,
-			 "Pseudo node is needed : %s", name);
-
-		/* Release attr_lock */
-		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
-		goto out;
-	}
-
-	/* Release attr_lock */
-	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
-
-	/* Delete the current entry */
-	LogInfo(COMPONENT_EXPORT,
-		 "Removing pseudo node: %s", name);
-
-	/* Initialize req_ctx */
-	init_root_op_context(&root_op_context, node_exp,
-				node_exp->fsal_export,
-				NFS_V4, 0, NFS_REQUEST);
-
-	parent_entry = cache_inode_get_keyed(&entry->object.dir.parent,
-					     &root_op_context.req_ctx,
-					     CIG_KEYED_FLAG_CACHED_ONLY,
-					     &cache_status);
+	cache_status = cache_inode_lookupp(entry, req_ctx, &parent_entry);
 
 	if (cache_status != CACHE_INODE_SUCCESS) {
-		retval = false;
-		goto out;
-	}
-
-	cache_status = cache_inode_remove(parent_entry, name,
-					  &root_op_context.req_ctx);
-	if (cache_status != CACHE_INODE_SUCCESS) {
+		/* Truncate the pseudopath to be the path to the parent */
+		*pos = '\0';
 		LogCrit(COMPONENT_EXPORT,
-			"Removing pseudo node failed for node name : %s",
-			name);
-		retval = false;
-		cache_inode_put(parent_entry);
+			"Could not find cache entry for parent directory %s",
+			pseudopath);
+		return;
+	}
+
+	cache_status = cache_inode_remove(parent_entry, name, req_ctx);
+
+	if (cache_status == CACHE_INODE_DIR_NOT_EMPTY) {
+		LogDebug(COMPONENT_EXPORT,
+			 "PseudoFS parent directory %s is not empty",
+			 pseudopath);
+		goto out;
+	} else if (cache_status != CACHE_INODE_SUCCESS) {
+		LogCrit(COMPONENT_EXPORT,
+			"Removing pseudo node %s failed with %s",
+			pseudopath, cache_inode_err_str(cache_status));
 		goto out;
 	}
 
-	/* check if its parent is needed */
-	retval = cleanup_pseudofs_node(parent_pseudopath, parent_entry);
+	/* Before recursing the check the parent, get export lock for looking at
+	 * exp_root_cache_inode so we can check if we have reached the root of
+	 * the mounted on export.
+	 */
+	PTHREAD_RWLOCK_rdlock(&req_ctx->export->lock);
+
+	if (parent_entry == req_ctx->export->exp_root_cache_inode) {
+		LogDebug(COMPONENT_EXPORT,
+			 "Reached root of PseudoFS %s",
+			 req_ctx->export->pseudopath);
+
+		PTHREAD_RWLOCK_unlock(&req_ctx->export->lock);
+		goto out;
+	}
+
+	PTHREAD_RWLOCK_unlock(&req_ctx->export->lock);
+
+	/* Truncate the pseudopath to be the path to the parent */
+	*pos = '\0';
+
+	/* check if the parent directory is needed */
+	cleanup_pseudofs_node(req_ctx, pseudopath, parent_entry);
 
 out:
-	cache_inode_put(entry);
-	return retval;
+
+	cache_inode_put(parent_entry);
 }
 
 bool make_pseudofs_node(char *name, void *arg)
@@ -516,53 +502,98 @@ void create_pseudofs(void)
  * @brief  Unmount an export from the Pseudo FS.
  *
  * @param exp     [IN] export in question
- * @param req_ctx [IN] req_op_context to operate in
  */
-void pseudo_unmount_export(struct gsh_export *export,
-			   struct req_op_context *req_ctx)
+void pseudo_unmount_export(struct gsh_export *export)
 {
 	struct gsh_export *mounted_on_export;
 	cache_entry_t *junction_inode;
+	struct root_op_context root_op_context;
 
-	/* Take the lock to clean out the junction information. */
+	LogDebug(COMPONENT_EXPORT,
+		 "Unmount %s",
+		 export->pseudopath);
+
+	/* Take the export read lock to get the junction inode */
+	PTHREAD_RWLOCK_rdlock(&export->lock);
+
+	junction_inode = export->exp_junction_inode;
+	if (junction_inode == NULL) {
+		/* Nothing to do, release the export lock and exit */
+		PTHREAD_RWLOCK_unlock(&export->lock);
+		return;
+	}
+
+	/* Take an LRU reference */
+	cache_inode_lru_ref(junction_inode, LRU_FLAG_NONE);
+
+	/* Release the export lock */
+	PTHREAD_RWLOCK_unlock(&export->lock);
+
+	/* Take the attr_lock so we can check if the export is still
+	 * connected to the junction_inode.
+	 */
+	PTHREAD_RWLOCK_wrlock(&junction_inode->attr_lock);
+
+	if (junction_inode->object.dir.junction_export != export) {
+		/* The junction has already been cleaned up,
+		 * nothing more to do.
+		 */
+		PTHREAD_RWLOCK_unlock(&junction_inode->attr_lock);
+		cache_inode_put(junction_inode);
+		return;
+	}
+
+	/* Take the export write lock to clean out the junction information. */
 	PTHREAD_RWLOCK_wrlock(&export->lock);
 
 	mounted_on_export = export->exp_parent_exp;
-	junction_inode = export->exp_junction_inode;
 
-	if (junction_inode) {
-		/* Make the node not accessible from the junction node */
-		PTHREAD_RWLOCK_wrlock(&junction_inode->attr_lock);
-		junction_inode->object.dir.junction_export = NULL;
-		PTHREAD_RWLOCK_unlock(&junction_inode->attr_lock);
-	} else {
-		/* The node is not mounted in the Pseudo FS, bail out. */
-		goto out;
-	}
+	/* Make the node not accessible from the junction node */
+	junction_inode->object.dir.junction_export = NULL;
 
 	/* Detach the export from the inode */
 	export->exp_junction_inode = NULL;
 	/* Detach the export from the export it's mounted on */
 	export->exp_parent_exp = NULL;
 
-	/* Remove the unused pseudofs nodes
-	 * Need to take addtional ref for cleanup_pseudofs_node
-	 */
-	cache_inode_lru_ref(junction_inode, LRU_FLAG_NONE);
-	if (!cleanup_pseudofs_node(export->pseudopath, junction_inode)) {
-		LogCrit(COMPONENT_EXPORT,
-			"pseudofs node cleanup failed for path: %s",
-			export->pseudopath);
+	/* Release the export lock */
+	PTHREAD_RWLOCK_unlock(&export->lock);
+
+	/* Release the attr_lock */
+	PTHREAD_RWLOCK_unlock(&junction_inode->attr_lock);
+
+	if (mounted_on_export != NULL) {
+		if (strcmp(mounted_on_export->fsal_export->fsal->name,
+		    "PSEUDO") == 0) {
+			char *pseudopath = gsh_strdup(export->pseudopath);
+			if (pseudopath != NULL) {
+				/* Initialize req_ctx */
+				init_root_op_context(
+					&root_op_context,
+					mounted_on_export,
+					mounted_on_export->fsal_export,
+					NFS_V4, 0, NFS_REQUEST);
+
+				/* Remove the unused PseudoFS nodes */
+				cleanup_pseudofs_node(&root_op_context.req_ctx,
+						      pseudopath,
+						      junction_inode);
+
+				gsh_free(pseudopath);
+			} else {
+				LogCrit(COMPONENT_EXPORT,
+					"Could not clean up PseudoFS for %s, out of memory",
+					export->pseudopath);
+			}
+		}
+
+		/* Release our reference to the export we are mounted on. */
+		put_gsh_export(mounted_on_export);
 	}
 
 	/* Release the pin reference */
 	cache_inode_dec_pin_ref(junction_inode, false);
 
-	/* Release our reference to the export we are mounted on. */
-	if (mounted_on_export != NULL)
-		put_gsh_export(mounted_on_export);
-
-out:
-
-	PTHREAD_RWLOCK_unlock(&export->lock);
+	/* Release the LRU reference */
+	cache_inode_put(junction_inode);
 }
