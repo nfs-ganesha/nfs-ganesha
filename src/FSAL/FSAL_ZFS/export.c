@@ -312,7 +312,7 @@ fsal_status_t zfs_create_export(struct fsal_module *fsal_hdl,
 				void *parse_node,
 				const struct fsal_up_vector *up_ops)
 {
-	struct zfs_fsal_export *myself;
+	struct zfs_fsal_export *myself = NULL;
 	struct config_error_type err_type;
 	int retval = 0;
 	fsal_errors_t fsal_error = ERR_FSAL_INVAL;
@@ -394,8 +394,10 @@ err_locked:
 errout:
 	if (libargs.pool_path)
 		gsh_free(libargs.pool_path);
-	myself->export.ops = NULL;	/* poison myself */
-	pthread_rwlock_destroy(&myself->export.lock);
-	gsh_free(myself);		/* elvis has left the building */
+	if (myself != NULL) {
+		myself->export.ops = NULL;	/* poison myself */
+		pthread_rwlock_destroy(&myself->export.lock);
+		gsh_free(myself);	/* elvis has left the building */
+	}
 	return fsalstat(fsal_error, retval);
 }
