@@ -56,7 +56,7 @@ typedef int (*xattr_setfunc_t) (struct fsal_obj_handle *, /* object handle */
 				void *arg);	/* optionnal argument */
 
 struct fsal_xattr_def {
-	char xattr_name[MAXNAMLEN];
+	char xattr_name[MAXNAMLEN + 1];
 	xattr_getfunc_t get_func;
 	xattr_setfunc_t set_func;
 	int flags;
