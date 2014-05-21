@@ -787,11 +787,6 @@ static int fridgethr_block(struct fridgethr *fr,
 			}
 		}
 	} while (!dispatched && (rc == 0));
-	if (rc != 0) {
-		/* Get the fridge lock so we can decrement the count
-		   of waiters.  Plus, the caller expects it. */
-		PTHREAD_MUTEX_lock(&fr->mtx);
-	}
 	--(fr->deferment.block.waiters);
 	/* We check here, too, in case we get around to falling out
 	   after the last thread exited. */
