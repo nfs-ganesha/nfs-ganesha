@@ -146,8 +146,8 @@ exportlist_t *nfs_Get_export_by_id(struct glist_head * pexportlist, unsigned sho
     }
 
   /* Something not right; we had cache miss */
-  LogCrit(COMPONENT_CONFIG,
-          "Cache miss, it should never happen");
+  LogInfo(COMPONENT_CONFIG,
+          "Cache miss, search the export list");
 
   glist_for_each(glist, pexportlist)
     {
