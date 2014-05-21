@@ -52,7 +52,7 @@ static pthread_t pxy_renewer_thread;
 static struct glist_head rpc_calls;
 static struct glist_head free_contexts;
 static int rpc_sock = -1;
-static unsigned int rpc_xid;
+static uint32_t rpc_xid;
 static pthread_mutex_t listlock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t sockless = PTHREAD_COND_INITIALIZER;
 static pthread_cond_t need_context = PTHREAD_COND_INITIALIZER;
@@ -944,8 +944,16 @@ int pxy_init_rpc(const struct pxy_fsal_module *pm)
 	glist_init(&rpc_calls);
 	glist_init(&free_contexts);
 
-	rpc_xid = getpid() ^ time(NULL);
-
+/**
+ * @todo this lock is not really necessary so long as we can
+ *       only do one export at a time.  This is a reminder that
+ *       there is work to do to get this fnctn to truely be
+ *       per export.
+ */
+	pthread_mutex_lock(&listlock);
+	if (rpc_xid == 0)
+		rpc_xid = getpid() ^ time(NULL);
+	pthread_mutex_unlock(&listlock);
 	if (gethostname(pxy_hostname, sizeof(pxy_hostname)))
 		strncpy(pxy_hostname, "NFS-GANESHA/Proxy",
 			sizeof(pxy_hostname));
