@@ -239,5 +239,11 @@ MODULE_INIT void pxy_init(void)
 
 MODULE_FINI void pxy_unload(void)
 {
-	unregister_fsal(&PROXY.module);
+	int retval;
+
+	retval = unregister_fsal(&PROXY.module);
+	if (retval != 0) {
+		fprintf(stderr, "PROXY module failed to unregister");
+		return;
+	}
 }
