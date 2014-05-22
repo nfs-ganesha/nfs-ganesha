@@ -820,18 +820,17 @@ static inline int data_is_equal(krb5_data d1, krb5_data d2)
  */
 static char *gssd_k5_err_msg(krb5_context context, krb5_error_code code)
 {
-	const char *origmsg __attribute__ ((unused));
-	char *msg = NULL;
-
 #if HAVE_KRB5_GET_ERROR_MESSAGE
 	if (context != NULL) {
+		const char *origmsg;
+		char *msg = NULL;
+
 		origmsg = krb5_get_error_message(context, code);
 		msg = gsh_strdup(origmsg);
 		krb5_free_error_message(context, origmsg);
+		return msg;
 	}
 #endif
-	if (msg != NULL)
-		return msg;
 #if HAVE_KRB5
 	return gsh_strdup(error_message(code));
 #else
