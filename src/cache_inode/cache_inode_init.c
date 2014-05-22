@@ -37,18 +37,8 @@
 #include "config.h"
 #include "log.h"
 #include "hashtable.h"
-#include "fsal.h"
 #include "cache_inode.h"
-#include "sal_data.h"
-#include "cache_inode_lru.h"
-#include "abstract_atomic.h"
 #include "cache_inode_hash.h"
-
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/param.h>
-#include <time.h>
-#include <pthread.h>
 
 /**
  *
@@ -77,5 +67,20 @@ cache_inode_init(void)
 
 	return status;
 }				/* cache_inode_init */
+
+/**
+ * @brief Destroy the cache inode avl tree and pool.
+ *
+ */
+
+void
+cache_inode_destroyer(void)
+{
+	/* Destroy the cache inode AVL tree */
+	cih_pkgdestroy();
+
+	/* Destroy the cache inode entry pool */
+	pool_destroy(cache_inode_entry_pool);
+}
 
 /** @} */

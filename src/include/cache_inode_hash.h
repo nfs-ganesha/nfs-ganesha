@@ -92,6 +92,11 @@ extern struct cih_lookup_table cih_fhcache;
 void cih_pkginit(void);
 
 /**
+ * @brief Destroy the package.
+ */
+void cih_pkgdestroy(void);
+
+/**
  * @brief Find the correct partition for a pointer
  *
  * To lower thread contention, the table is composed of multiple
