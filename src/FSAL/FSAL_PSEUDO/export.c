@@ -61,6 +61,20 @@ static void release(struct fsal_export *exp_hdl)
 
 	myself = container_of(exp_hdl, struct pseudofs_fsal_export, export);
 
+	if (myself->root_handle != NULL) {
+		fsal_obj_handle_uninit(&myself->root_handle->obj_handle);
+
+		LogDebug(COMPONENT_FSAL,
+			 "Releasing hdl=%p, name=%s",
+			 myself->root_handle, myself->root_handle->name);
+
+		if (myself->root_handle->name != NULL)
+			gsh_free(myself->root_handle->name);
+
+		gsh_free(myself->root_handle);
+		myself->root_handle = NULL;
+	}
+
 	PTHREAD_RWLOCK_wrlock(&exp_hdl->lock);
 
 	fsal_detach_export(exp_hdl->fsal, &exp_hdl->exports);
