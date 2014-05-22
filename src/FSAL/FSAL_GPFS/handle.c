@@ -428,24 +428,6 @@ static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
 	return status;
 }
 
-/* not defined in linux headers so we do it here
- */
-
-struct linux_dirent {
-	unsigned long d_ino;	/* Inode number */
-	unsigned long d_off;	/* Offset to next linux_dirent */
-	unsigned short d_reclen;	/* Length of this linux_dirent */
-	char d_name[];		/* Filename (null-terminated) */
-	/* length is actually (d_reclen - 2 -
-	 * offsetof(struct linux_dirent, d_name)
-	 */
-	/*
-	   char           pad;       // Zero padding byte
-	   char           d_type;    // File type (only since Linux 2.6.4;
-	   // offset is (d_reclen - 1))
-	 */
-};
-
 #define BUF_SIZE 1024
 /**
  * read_dirents
@@ -470,7 +452,7 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 	fsal_status_t status;
 	off_t seekloc = 0;
 	int bpos, cnt, nread;
-	struct linux_dirent *dentry;
+	struct dirent64 *dentry;
 	char buf[BUF_SIZE];
 	struct gpfs_filesystem *gpfs_fs;
 
@@ -493,7 +475,7 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 	}
 	cnt = 0;
 	do {
-		nread = syscall(SYS_getdents, dirfd, buf, BUF_SIZE);
+		nread = syscall(SYS_getdents64, dirfd, buf, BUF_SIZE);
 		if (nread < 0) {
 			retval = errno;
 			fsal_error = posix2fsal_error(retval);
@@ -502,7 +484,7 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 		if (nread == 0)
 			break;
 		for (bpos = 0; bpos < nread;) {
-			dentry = (struct linux_dirent *)(buf + bpos);
+			dentry = (struct dirent64 *)(buf + bpos);
 			if (strcmp(dentry->d_name, ".") == 0
 			    || strcmp(dentry->d_name, "..") == 0)
 				goto skip;	/* must skip '.' and '..' */

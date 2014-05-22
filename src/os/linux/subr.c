@@ -34,23 +34,6 @@
 #include <sys/syscall.h>
 #include "os/subr.h"
 
-/* not defined in linux headers so we do it here
- */
-struct linux_dirent {
-	unsigned long d_ino;	/* Inode number */
-	unsigned long d_off;	/* Offset to next linux_dirent */
-	unsigned short d_reclen;	/* Length of this linux_dirent */
-	char d_name[];		/* Filename (null-terminated) */
-	/* length is actually (d_reclen - 2 -
-	 * offsetof(struct linux_dirent, d_name)
-	 */
-	/*
-	   char           pad;       // Zero padding byte
-	   char           d_type;    // File type (only since Linux 2.6.4;
-	   // offset is (d_reclen - 1))
-	 */
-};
-
 /**
  * @brief Read system directory entries into the buffer
  *
@@ -63,7 +46,7 @@ int vfs_readents(int fd, char *buf, unsigned int bcount, off_t *basepp)
 {
 	int retval = 0;
 
-	retval = syscall(SYS_getdents, fd, buf, bcount);
+	retval = syscall(SYS_getdents64, fd, buf, bcount);
 	if (retval >= 0)
 		*basepp += retval;
 	return retval;
@@ -82,7 +65,7 @@ int vfs_readents(int fd, char *buf, unsigned int bcount, off_t *basepp)
 
 bool to_vfs_dirent(char *buf, int bpos, struct vfs_dirent *vd, off_t base)
 {
-	struct linux_dirent *dp = (struct linux_dirent *)(buf + bpos);
+	struct dirent64 *dp = (struct dirent64 *)(buf + bpos);
 	char type;
 
 	vd->vd_ino = dp->d_ino;
