@@ -2017,8 +2017,8 @@ static fattr_xdr_result encode_fs_layout_types(XDR *xdr,
 	struct fsal_export *export;
 	const layouttype4 *layouttypes = NULL;
 	layouttype4 layout_type;
-	size_t typecount = 0;
-	size_t index = 0;
+	int32_t typecount = 0;
+	int32_t index = 0;
 
 	if (args->data == NULL)
 		return FATTR_XDR_NOOP;

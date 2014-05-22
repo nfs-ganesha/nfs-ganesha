@@ -420,7 +420,7 @@ static nfsstat4 getdevicelist(struct fsal_export *exp_hdl, layouttype4 type,
  * @brief Support no layout types
  */
 
-static void fs_layouttypes(struct fsal_export *exp_hdl, size_t *count,
+static void fs_layouttypes(struct fsal_export *exp_hdl, int32_t *count,
 			   const layouttype4 **types)
 {
 	*count = 0;

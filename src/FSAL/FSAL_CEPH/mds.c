@@ -223,7 +223,7 @@ static nfsstat4 getdevicelist(struct fsal_export *export_pub, layouttype4 type,
  *                        after export reference is relinquished
  */
 
-static void fs_layouttypes(struct fsal_export *export_pub, size_t *count,
+static void fs_layouttypes(struct fsal_export *export_pub, int32_t *count,
 			   const layouttype4 **types)
 {
 	static const layouttype4 supported_layout_type = LAYOUT4_NFSV4_1_FILES;

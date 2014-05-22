@@ -146,7 +146,7 @@ nfsstat4 getdevicelist(struct fsal_export *exp_hdl, layouttype4 type,
 }
 
 static
-void fs_layouttypes(struct fsal_export *exp_hdl, size_t *count,
+void fs_layouttypes(struct fsal_export *exp_hdl, int32_t *count,
 		    const layouttype4 **types)
 {
 	static const layouttype4 supported_layout_type = LAYOUT4_OSD2_OBJECTS;

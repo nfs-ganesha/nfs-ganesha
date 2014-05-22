@@ -58,7 +58,7 @@
 
 static void
 lustre_fs_layouttypes(struct fsal_export *export_hdl,
-		      size_t *count,
+		      int32_t *count,
 		      const layouttype4 **types)
 {
 	static const layouttype4 supported_layout_type = LAYOUT4_NFSV4_1_FILES;

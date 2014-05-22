@@ -43,7 +43,7 @@
  *                        after export reference is relinquished
  */
 
-static void fs_layouttypes(struct fsal_export *export_hdl, size_t *count,
+static void fs_layouttypes(struct fsal_export *export_hdl, int32_t *count,
 			   const layouttype4 **types)
 {
 	int rc;

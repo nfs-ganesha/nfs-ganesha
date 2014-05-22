@@ -1021,7 +1021,7 @@ struct export_ops {
  *                     freed or modified and must not be dereferenced
  *                     after export reference is relinquished
  */
-	void (*fs_layouttypes) (struct fsal_export *exp_hdl, size_t *count,
+	void (*fs_layouttypes) (struct fsal_export *exp_hdl, int32_t *count,
 				const layouttype4 **types);
 
 /**
