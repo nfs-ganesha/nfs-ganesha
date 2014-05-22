@@ -735,6 +735,43 @@ bool foreach_gsh_export(bool(*cb) (struct gsh_export *exp, void *state),
 	return rc;
 }
 
+bool remove_one_export(struct gsh_export *export, void *state)
+{
+	export_add_to_unexport_work_locked(export);
+	return true;
+}
+
+/**
+ * @brief Bring down all exports in an orderly fashion.
+ */
+
+void remove_all_exports(void)
+{
+	struct gsh_export *export;
+
+	/* Get a reference to the PseudoFS Root Export */
+	export = get_gsh_export_by_pseudo("/", true);
+
+	/* Clean up the whole PseudoFS */
+	pseudo_unmount_export(export);
+
+	put_gsh_export(export);
+
+	/* Put all exports on the unexport work list.
+	 * Ignore return since remove_one_export can't fail.
+	 */
+	(void) foreach_gsh_export(remove_one_export, NULL);
+
+	/* Now process all the unexports */
+	while (true) {
+		export = export_take_unexport_work();
+		if (export == NULL)
+			break;
+		unexport(export);
+		put_gsh_export(export);
+	}
+}
+
 #ifdef USE_DBUS
 
 /* DBUS interfaces

@@ -166,5 +166,7 @@ struct gsh_export *export_take_unexport_work(void);
 
 extern struct config_block add_export_param;
 
+void remove_all_exports(void);
+
 #endif				/* !EXPORT_MGR_H */
 /** @} */

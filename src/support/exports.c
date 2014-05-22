@@ -1711,6 +1711,9 @@ void release_export_root(struct gsh_export *export)
 void unexport(struct gsh_export *export)
 {
 	/* Make the export unreachable */
+	LogDebug(COMPONENT_EXPORT,
+		 "Unexport %s, Pseduo %s",
+		 export->fullpath, export->pseudopath);
 	pseudo_unmount_export(export);
 	remove_gsh_export(export->export_id);
 	release_export_root(export);
