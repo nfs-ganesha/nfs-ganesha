@@ -103,9 +103,19 @@ cache_inode_rdwr_plus(cache_entry_t *entry,
 	    io_direction == CACHE_INODE_READ_PLUS) {
 		openflags = FSAL_O_READ;
 	} else {
+		struct export_perms *perms;
+
+		/* Pretent that the caller requested sync (stable write)
+		 * if the export has COMMIT option. Note that
+		 * FSAL_O_SYNC is not always honored, so just setting
+		 * FSAL_O_SYNC has no guaranty that this write will be
+		 * a stable write.
+		 */
+		perms = &req_ctx->export->export_perms;
+		if (perms->options & EXPORT_OPTION_COMMIT)
+			*sync = true;
 		openflags = FSAL_O_WRITE;
-		if (*sync || (req_ctx->export->export_perms.options &
-			      EXPORT_OPTION_COMMIT))
+		if (*sync)
 			openflags |= FSAL_O_SYNC;
 	}
 
