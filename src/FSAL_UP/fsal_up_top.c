@@ -1625,7 +1625,7 @@ static int schedule_delegrevoke_check(state_lock_entry_t *deleg_entry)
 
 /* entry->state_lock MUST be WRITE locked before calling this function!! 
  * Is there a way we can limit this to a READ lock? */
-state_status_t delegrecall(cache_entry_t *entry)
+state_status_t delegrecall_impl(cache_entry_t *entry)
 {
 	struct glist_head *glist, *glist_n;
 	state_lock_entry_t *deleg_entry = NULL;
@@ -1671,8 +1671,8 @@ state_status_t delegrecall(cache_entry_t *entry)
  *
  * @return STATE_SUCCESS or errors.
  */
-state_status_t delegrecall_upcall(struct fsal_module *fsal,
-				  struct gsh_buffdesc *handle)
+state_status_t delegrecall(struct fsal_module *fsal,
+			   struct gsh_buffdesc *handle)
 {
 	cache_entry_t *entry = NULL;
 	state_status_t rc = 0;
@@ -1693,7 +1693,7 @@ state_status_t delegrecall_upcall(struct fsal_module *fsal,
 	}
 
 	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
-	rc = delegrecall(entry);
+	rc = delegrecall_impl(entry);
 	PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
 	/* up_get() took a reference on the entry */
@@ -1715,7 +1715,7 @@ struct fsal_up_vector fsal_up_top = {
 	.update = update,
 	.layoutrecall = layoutrecall,
 	.notify_device = notify_device,
-	.delegrecall = delegrecall_upcall,
+	.delegrecall = delegrecall,
 	.invalidate_close = invalidate_close
 };
 
