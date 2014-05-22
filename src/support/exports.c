@@ -838,6 +838,7 @@ static int export_commit(void *node, void *link_mem, void *self_struct,
 	glist_init(&export->exp_state_list);
 	glist_init(&export->exp_lock_list);
 	glist_init(&export->exp_nlm_share_list);
+	glist_init(&export->mounted_exports_list);
 
 	/* now probe the fsal and init it */
 	/* pass along the block that is/was the FS_Specific */
@@ -1306,6 +1307,7 @@ static int build_default_root(void)
 	glist_init(&export->exp_state_list);
 	glist_init(&export->exp_lock_list);
 	glist_init(&export->exp_nlm_share_list);
+	glist_init(&export->mounted_exports_list);
 	glist_init(&export->clients);
 
 	/* Default anonymous uid and gid */

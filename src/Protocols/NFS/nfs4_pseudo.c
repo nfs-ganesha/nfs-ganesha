@@ -461,6 +461,12 @@ bool pseudo_mount_export(struct gsh_export *export,
 	export->exp_junction_inode = state.dirent;
 	export->exp_parent_exp = state.req_ctx->export;
 
+	/* Add ourselves to the list of exports mounted on parent */
+	PTHREAD_RWLOCK_wrlock(&state.req_ctx->export->lock);
+	glist_add_tail(&state.req_ctx->export->mounted_exports_list,
+		       &export->mounted_exports_node);
+	PTHREAD_RWLOCK_unlock(&state.req_ctx->export->lock);
+
 	PTHREAD_RWLOCK_unlock(&export->lock);
 
 	PTHREAD_RWLOCK_unlock(&state.dirent->attr_lock);
@@ -506,8 +512,36 @@ void create_pseudofs(void)
 void pseudo_unmount_export(struct gsh_export *export)
 {
 	struct gsh_export *mounted_on_export;
+	struct gsh_export *sub_mounted_export;
 	cache_entry_t *junction_inode;
 	struct root_op_context root_op_context;
+
+	/* Unmount any exports mounted on us */
+	while (true) {
+		PTHREAD_RWLOCK_rdlock(&export->lock);
+		/* Find a sub_mounted export */
+		sub_mounted_export =
+			glist_first_entry(&export->mounted_exports_list,
+					  struct gsh_export,
+					  mounted_exports_node);
+		if (sub_mounted_export == NULL) {
+			/* If none, break out of the loop */
+			PTHREAD_RWLOCK_unlock(&export->lock);
+			break;
+		}
+
+		/* Take a reference to that export */
+		get_gsh_export_ref(sub_mounted_export);
+
+		/* Drop the lock */
+		PTHREAD_RWLOCK_unlock(&export->lock);
+
+		/* And unmount it */
+		pseudo_unmount_export(sub_mounted_export);
+
+		/* And put the reference */
+		put_gsh_export(sub_mounted_export);
+	}
 
 	LogDebug(COMPONENT_EXPORT,
 		 "Unmount %s",
@@ -555,6 +589,15 @@ void pseudo_unmount_export(struct gsh_export *export)
 	export->exp_junction_inode = NULL;
 	/* Detach the export from the export it's mounted on */
 	export->exp_parent_exp = NULL;
+
+	if (mounted_on_export != NULL) {
+		/* Remove ourselves from the list of exports mounted on
+		 * parent
+		 */
+		PTHREAD_RWLOCK_wrlock(&mounted_on_export->lock);
+		glist_del(&export->mounted_exports_node);
+		PTHREAD_RWLOCK_unlock(&mounted_on_export->lock);
+	}
 
 	/* Release the export lock */
 	PTHREAD_RWLOCK_unlock(&export->lock);

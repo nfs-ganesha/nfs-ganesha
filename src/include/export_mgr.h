@@ -71,6 +71,10 @@ struct gsh_export {
 	struct glist_head exp_root_list;
 	/** List of exports to be mounted or cleaned up */
 	struct glist_head exp_work;
+	/** List of exports mounted on this export */
+	struct glist_head mounted_exports_list;
+	/** This export is a node in the list of mounted_exports */
+	struct glist_head mounted_exports_node;
 	/** Entry for the root of this export, protected by lock */
 	cache_entry_t *exp_root_cache_inode;
 	/** Allowed clients */
