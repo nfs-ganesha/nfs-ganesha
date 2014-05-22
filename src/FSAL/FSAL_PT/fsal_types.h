@@ -65,12 +65,12 @@
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
+#include "fsi_ipc_ccl.h"
 
 /* -------------------------------------------
  *      POSIX FS dependant definitions
  * ------------------------------------------- */
 
-#define OPENHANDLE_HANDLE_LEN 40
 #define OPENHANDLE_KEY_LEN 28
 #define OPENHANDLE_VERSION 1
 
@@ -80,7 +80,7 @@ struct file_handle {
 	u_int16_t handle_version;
 	u_int16_t handle_key_size;
 	/* file identifier */
-	unsigned char f_handle[OPENHANDLE_HANDLE_LEN];
+	unsigned char f_handle[FSI_CCL_PERSISTENT_HANDLE_N_BYTES];
 };
 
 /** end of open by handle structures */
@@ -126,7 +126,7 @@ typedef struct {
 	int fd;
 	/* credential for accessing the directory */
 	const struct req_op_context *context;
-	char path[1024];
+	char path[PATH_MAX];
 	unsigned int dir_offset;
 	ptfsal_handle_t *handle;
 } ptfsal_dir_t;

@@ -680,17 +680,14 @@ int ptfsal_opendir(const struct req_op_context *p_context,
 
 /* ------------------------------------------------------------------------- */
 int ptfsal_readdir(const struct req_op_context *p_context,
-		   struct fsal_export *export, ptfsal_dir_t *dir_desc,
+		   struct fsal_export *export, int dir_hnd_index,
 		   fsi_stat_struct *sbuf, char *fsi_dname)
 {
 
 	int readdir_rc;
-	int dir_hnd_index;
 
 	ccl_context_t ccl_context;
-	ptfsal_dir_t *p_dir_descriptor = dir_desc;
 
-	dir_hnd_index = p_dir_descriptor->fd;
 	ptfsal_set_fsi_handle_data(export, p_context, &ccl_context);
 
 	struct fsi_struct_dir_t *dirp = (struct fsi_struct_dir_t *)
@@ -865,6 +862,8 @@ int ptfsal_open_by_handle(const struct req_op_context *p_context,
 		handle_to_name_cache_data.handle_index = open_rc;
 		strncpy(handle_to_name_cache_data.m_name, fsi_filename,
 			sizeof(handle_to_name_cache_data.m_name));
+		handle_to_name_cache_data.m_name
+			[sizeof(handle_to_name_cache_data.m_name)-1] = '\0';
 		cacheEntry.key = p_fsi_handle->data.handle.f_handle;
 		cacheEntry.data = &handle_to_name_cache_data;
 		pthread_rwlock_wrlock(&g_fsi_cache_handle_rw_lock);

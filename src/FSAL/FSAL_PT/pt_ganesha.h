@@ -345,7 +345,7 @@ int ptfsal_opendir(const struct req_op_context *p_context,
 		   const char *mask, uint32_t attr);
 
 int ptfsal_readdir(const struct req_op_context *p_context,
-		   struct fsal_export *export, ptfsal_dir_t *dir_desc,
+		   struct fsal_export *export, int dir_hnd_index,
 		   fsi_stat_struct *sbuf, char *fsi_dname);
 
 int ptfsal_closedir(const struct req_op_context *p_context,

@@ -141,7 +141,7 @@ static fsal_status_t pt_lookup(struct fsal_obj_handle *parent,
 	if (!path)
 		return fsalstat(ERR_FSAL_FAULT, 0);
 	memset(fh, 0, sizeof(ptfsal_handle_t));
-	fh->data.handle.handle_size = OPENHANDLE_HANDLE_LEN;
+	fh->data.handle.handle_size = FSI_CCL_PERSISTENT_HANDLE_N_BYTES;
 	if (!parent->ops->handle_is(parent, DIRECTORY)) {
 		LogCrit(COMPONENT_FSAL,
 			"Parent handle is not a directory. hdl = 0x%p", parent);
@@ -190,7 +190,7 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 		return fsalstat(ERR_FSAL_NOTDIR, 0);
 	}
 	memset(fh, 0, sizeof(ptfsal_handle_t));
-	fh->data.handle.handle_size = OPENHANDLE_HANDLE_LEN;
+	fh->data.handle.handle_size = FSI_CCL_PERSISTENT_HANDLE_N_BYTES;
 
 	attrib->mask =
 	    opctx->fsal_export->ops->fs_supported_attrs(opctx->fsal_export);
@@ -231,7 +231,7 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 		return fsalstat(ERR_FSAL_NOTDIR, 0);
 	}
 	memset(fh, 0, sizeof(ptfsal_handle_t));
-	fh->data.handle.handle_size = OPENHANDLE_HANDLE_LEN;
+	fh->data.handle.handle_size = FSI_CCL_PERSISTENT_HANDLE_N_BYTES;
 
 	attrib->mask =
 	    opctx->fsal_export->ops->fs_supported_attrs(opctx->fsal_export);
@@ -277,7 +277,7 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 		return fsalstat(ERR_FSAL_NOTDIR, 0);
 	}
 	memset(fh, 0, sizeof(ptfsal_handle_t));
-	fh->data.handle.handle_size = OPENHANDLE_HANDLE_LEN;
+	fh->data.handle.handle_size = FSI_CCL_PERSISTENT_HANDLE_N_BYTES;
 
 	attrib->mask =
 	    opctx->fsal_export->ops->fs_supported_attrs(opctx->fsal_export);
@@ -376,7 +376,6 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 	int readdir_rc, rc;
 	int readdir_record = 0;
 	fsi_stat_struct buffstat;
-	ptfsal_dir_t dir_desc;
 	static fsal_status_t status;
 
 	if (whence != NULL)
@@ -406,19 +405,13 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 	fsi_parent_dir_path[sizeof(fsi_parent_dir_path) - 1] = '\0';
 	FSI_TRACE(FSI_DEBUG, "Parent dir path --- %s\n", fsi_parent_dir_path);
 
-	dir_desc.fd = dirfd;
-	dir_desc.context = opctx;
-	dir_desc.handle = myself->handle;
-	dir_desc.dir_offset = 0;
-	strncpy(dir_desc.path, fsi_parent_dir_path, sizeof(dir_desc.path));
-
 	*eof = 0;
 	while (*eof == 0) {
 		/***********************/
 		/* read the next entry */
 		/***********************/
 		readdir_rc = ptfsal_readdir(opctx, opctx->fsal_export,
-					    &dir_desc, &buffstat, fsi_dname);
+					    dirfd, &buffstat, fsi_dname);
 		memset(fsi_name, 0, sizeof(fsi_name));
 		fsi_get_whole_path(fsi_parent_dir_path, fsi_dname, fsi_name);
 		FSI_TRACE(FSI_DEBUG, "fsi_dname %s, whole path %s\n", fsi_dname,
@@ -743,7 +736,7 @@ fsal_status_t pt_lookup_path(struct fsal_export *exp_hdl,
 	ptfsal_handle_t *fh = alloca(sizeof(ptfsal_handle_t));
 
 	memset(fh, 0, sizeof(ptfsal_handle_t));
-	fh->data.handle.handle_size = OPENHANDLE_HANDLE_LEN;
+	fh->data.handle.handle_size = FSI_CCL_PERSISTENT_HANDLE_N_BYTES;
 	if (path == NULL || path[0] != '/' || strlen(path) > PATH_MAX
 	    || strlen(path) < 2) {
 		fsal_error = ERR_FSAL_INVAL;
