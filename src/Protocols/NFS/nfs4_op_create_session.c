@@ -34,10 +34,10 @@
 #include "log.h"
 #include "nfs4.h"
 #include "nfs_core.h"
-#include "nfs_exports.h"
 #include "nfs_rpc_callback.h"
 #include "nfs_proto_functions.h"
 #include "sal_functions.h"
+#include "nfs_creds.h"
 
 /**
  *

@@ -38,6 +38,7 @@
 #include "sal_functions.h"
 #include "nfs_proto_functions.h"
 #include "nfs_rpc_callback.h"
+#include "nfs_creds.h"
 
 /**
  *
