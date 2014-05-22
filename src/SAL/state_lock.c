@@ -2789,7 +2789,7 @@ state_status_t state_lock(cache_entry_t *entry,
 	if (status == STATE_SUCCESS && sle_type == LEASE_LOCK) {
 		/* Insert entry into delegation list */
 		LogEntry("New delegation", found_entry);
-		update_delegation_stats(entry, state);
+		update_delegation_stats(found_entry);
 		glist_add_tail(&entry->object.file.deleg_list,
 			       &found_entry->sle_list);
 	} else if (status == STATE_SUCCESS && sle_type == POSIX_LOCK) {

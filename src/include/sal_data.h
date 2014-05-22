@@ -274,7 +274,6 @@ struct c_deleg_stats {
 
 /* @brief Per client, per file stats */
 struct cf_deleg_stats {
-	struct nfs_client_id_t *cfd_clientid; /* client for this file. */
 	time_t cfd_rs_time;                   /* time when the client responsed
                                                  NFS4_OK for a recall. */
 	time_t cfd_r_time;               /* time of the recall attempt */

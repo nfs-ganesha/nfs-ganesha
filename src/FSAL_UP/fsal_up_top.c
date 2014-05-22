@@ -1258,7 +1258,8 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 				 deleg_entry);
 
 	clfl_stats = &deleg_entry->sle_state->state_data.deleg.sd_clfile_stats;
-	cl_stats = &clfl_stats->cfd_clientid->cid_deleg_stats;
+        cl_stats = &deleg_entry->sle_owner->so_owner.so_nfs4_owner.so_clientrec->cid_deleg_stats;
+
 
 	switch (hook) {
 	case RPC_CALL_COMPLETE:
@@ -1339,10 +1340,9 @@ static uint32_t delegrecall_one(state_lock_entry_t *deleg_entry)
 	struct gsh_export *exp;
 	bool needs_revoke = FALSE;
 	struct delegrecall_context *p_cargs = NULL;
-	struct cf_deleg_stats *clfl_stats =
-			&deleg_entry->sle_state->state_data.deleg.sd_clfile_stats;
-	struct c_deleg_stats *cl_stats =
-			&clfl_stats->cfd_clientid->cid_deleg_stats;
+	struct c_deleg_stats *cl_stats;
+        cl_stats = &deleg_entry->sle_owner->so_owner.so_nfs4_owner.so_clientrec->cid_deleg_stats;
+
 	cache_entry_t *entry = deleg_entry->sle_entry;
 
 	LogDebug(COMPONENT_FSAL_UP, "Recalling delegation(%p)", deleg_entry);
