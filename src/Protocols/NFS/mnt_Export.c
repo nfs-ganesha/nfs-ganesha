@@ -90,7 +90,7 @@ static bool proc_export(struct gsh_export *export, void *arg)
 		if (group == NULL)
 			goto nomem;
 
-		if (new_expnode->ex_groups == NULL)
+		if (grp_tail == NULL)
 			new_expnode->ex_groups = group;
 		else
 			grp_tail->gr_next = group;
