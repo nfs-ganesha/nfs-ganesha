@@ -963,10 +963,9 @@ static int32_t notifydev_completion(rpc_call_t *call, rpc_call_hook hook,
  */
 
 struct devnotify_cb_data {
-	uint64_t dev_exportid;
 	notify_deviceid_type4 notify_type;
 	layouttype4 layout_type;
-	uint64_t devid;
+	struct pnfs_deviceid devid;
 };
 
 /**
@@ -985,7 +984,6 @@ static bool devnotify_client_callback(nfs_client_id_t *clientid,
 	CB_NOTIFY_DEVICEID4args *cb_notify_dev;
 	struct cb_notify *arg;
 	struct devnotify_cb_data *devicenotify = devnotify;
-	uint64_t *quad;
 
 	if (clientid) {
 		LogFullDebug(COMPONENT_NFS_CB,
@@ -1014,10 +1012,9 @@ static bool devnotify_client_callback(nfs_client_id_t *clientid,
 
 	arg->notify.notify_vals.notifylist4_val = (char *)&arg->notify_del;
 	arg->notify_del.ndd_layouttype = devicenotify->layout_type;
-	quad = (uint64_t *) &arg->notify_del.ndd_deviceid;
-	*quad = nfs_htonl64(devicenotify->dev_exportid);
-	++quad;
-	*quad = nfs_htonl64(devicenotify->devid);
+	memcpy(arg->notify_del.ndd_deviceid,
+	       &devicenotify->devid,
+	       sizeof(arg->notify_del.ndd_deviceid));
 	code =
 	    nfs_rpc_v41_single(clientid, &arg->arg, NULL, notifydev_completion,
 			       &arg->arg, NULL);
@@ -1043,11 +1040,10 @@ static bool devnotify_client_callback(nfs_client_id_t *clientid,
 
 state_status_t notify_device(notify_deviceid_type4 notify_type,
 			     layouttype4 layout_type,
-			     uint64_t dev_exportid, uint64_t devid,
+			     struct pnfs_deviceid devid,
 			     bool immediate)
 {
 	struct devnotify_cb_data cb_data = {
-		.dev_exportid = dev_exportid,
 		.notify_type = notify_type,
 		.layout_type = layout_type,
 		.devid = devid

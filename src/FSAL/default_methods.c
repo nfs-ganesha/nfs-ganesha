@@ -156,6 +156,26 @@ static void emergency_cleanup(void)
 	return;
 }
 
+/**
+ * @brief Be uninformative about a device
+ */
+
+static nfsstat4 getdeviceinfo(struct fsal_module *fsal_hdl, XDR *da_addr_body,
+			      const layouttype4 type,
+			      const struct pnfs_deviceid *deviceid)
+{
+	return NFS4ERR_NOTSUPP;
+}
+
+/**
+ * No da_addr.
+ */
+
+static size_t fs_da_addr_size(struct fsal_module *fsal_hdl)
+{
+	return 0;
+}
+
 /* Default fsal module method vector.
  * copied to allocated vector at register time
  */
@@ -165,7 +185,9 @@ struct fsal_ops def_fsal_ops = {
 	.init_config = init_config,
 	.dump_config = dump_config,
 	.create_export = create_export,
-	.emergency_cleanup = emergency_cleanup
+	.emergency_cleanup = emergency_cleanup,
+	.getdeviceinfo = getdeviceinfo,
+	.fs_da_addr_size = fs_da_addr_size,
 };
 
 /* export_release
@@ -394,17 +416,6 @@ static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 }
 
 /**
- * @brief Be uninformative about a device
- */
-
-static nfsstat4 getdeviceinfo(struct fsal_export *exp_hdl, XDR *da_addr_body,
-			      const layouttype4 type,
-			      const struct pnfs_deviceid *deviceid)
-{
-	return NFS4ERR_NOTSUPP;
-}
-
-/**
  * @brief Be uninformative about all devices
  */
 
@@ -455,15 +466,6 @@ static size_t fs_loc_body_size(struct fsal_export *exp_hdl)
 }
 
 /**
- * No da_addr.
- */
-
-static size_t fs_da_addr_size(struct fsal_export *exp_hdl)
-{
-	return 0;
-}
-
-/**
  * @brief Get write verifier
  *
  * This function is called by write and commit to match the commit verifier
@@ -505,13 +507,11 @@ struct export_ops def_export_ops = {
 	.check_quota = check_quota,
 	.get_quota = get_quota,
 	.set_quota = set_quota,
-	.getdeviceinfo = getdeviceinfo,
 	.getdevicelist = getdevicelist,
 	.fs_layouttypes = fs_layouttypes,
 	.fs_layout_blocksize = fs_layout_blocksize,
 	.fs_maximum_segments = fs_maximum_segments,
 	.fs_loc_body_size = fs_loc_body_size,
-	.fs_da_addr_size = fs_da_addr_size,
 	.get_write_verifier = global_verifier
 };
 

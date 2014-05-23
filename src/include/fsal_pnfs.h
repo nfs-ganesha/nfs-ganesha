@@ -103,18 +103,44 @@ struct pnfs_segment {
 	uint64_t length;
 };
 
+enum fsal_id {
+	/** The following FSAL_ID implies no PNFS support. */
+	FSAL_ID_NO_PNFS = 0,
+	/** The following ID is to be used by out of tree implementations
+	  * during an experimental phase before we are able to add an
+	  * official FSAL_ID.
+	  */
+	FSAL_ID_EXPERIMENTAL = 1,
+	FSAL_ID_VFS = 2,
+	FSAL_ID_GPFS = 3,
+	FSAL_ID_CEPH = 4,
+	FSAL_ID_LUSTRE = 5,
+	FSAL_ID_GLUSTER = 6,
+	FSAL_ID_COUNT
+};
+
+struct fsal_module;
+
+struct fsal_module *pnfs_fsal[FSAL_ID_COUNT];
+
 /**
  * @brief FSAL view of the NFSv4.1 deviceid4.
+ *
+ * Note that this will be encoded as an opaque, thus the byte order on the wire
+ * will be host order NOT network order.
  */
 
 struct pnfs_deviceid {
-	/** Identifier for the given export.  Currently ganesha uses an
-	 *  unsigned short as the export identifier, but we want room for
-	 *  whatever the multi-FSAL work ends up needing. */
-	uint64_t export_id;
-	/** Low quad of the deviceid, must be unique within a given export. */
+	/** FSAL_ID - to dispatch getdeviceinfo based on */
+	uint8_t fsal_id;
+	/** Break up the remainder into useful chunks */
+	uint8_t device_id1;
+	uint16_t device_id2;
+	uint32_t device_id4;
 	uint64_t devid;
 };
+
+#define DEVICE_ID_INIT_ZERO(fsal_id) {fsal_id, 0, 0, 0, 0}
 
 /******************************************************
  *	   FSAL MDS function argument structs

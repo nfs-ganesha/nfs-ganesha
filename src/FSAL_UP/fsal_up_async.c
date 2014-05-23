@@ -402,8 +402,7 @@ struct notify_device_args {
 	const struct fsal_up_vector *up_ops;
 	notify_deviceid_type4 notify_type;
 	layouttype4 layout_type;
-	uint64_t dev_exportid;
-	uint64_t devid;
+	struct pnfs_deviceid devid;
 	bool immediate;
 	void (*cb) (void *, state_status_t);
 	void *cb_arg;
@@ -417,7 +416,7 @@ static void queue_notify_device(struct fridgethr_context *ctx)
 
 	status = args->up_ops->notify_device(args->notify_type,
 					     args->layout_type,
-					     args->dev_exportid, args->devid,
+					     args->devid,
 					     args->immediate);
 
 	if (args->cb)
@@ -430,7 +429,7 @@ int up_async_notify_device(struct fridgethr *fr,
 			   const struct fsal_up_vector *up_ops,
 			   notify_deviceid_type4 notify_type,
 			   layouttype4 layout_type,
-			   uint64_t dev_exportid, uint64_t devid,
+			   struct pnfs_deviceid *devid,
 			   bool immediate, void (*cb) (void *, state_status_t),
 			   void *cb_arg)
 {
@@ -448,8 +447,7 @@ int up_async_notify_device(struct fridgethr *fr,
 	args->cb_arg = cb_arg;
 	args->notify_type = notify_type;
 	args->layout_type = layout_type;
-	args->dev_exportid = dev_exportid;
-	args->devid = devid;
+	args->devid = *devid;
 	args->immediate = immediate;
 
 	rc = fridgethr_submit(fr, queue_notify_device, args);

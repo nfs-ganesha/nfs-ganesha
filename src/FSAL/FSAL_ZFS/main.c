@@ -171,7 +171,8 @@ MODULE_INIT void zfs_load(void)
 
 	retval = register_fsal(myself, myname,
 			       FSAL_MAJOR_VERSION,
-			       FSAL_MINOR_VERSION);
+			       FSAL_MINOR_VERSION,
+			       FSAL_ID_NO_PNFS);
 	if (retval != 0) {
 		fprintf(stderr, "ZFS module failed to register");
 		return;

@@ -280,15 +280,16 @@ MODULE_INIT void lustre_init(void)
 	int retval;
 	struct fsal_module *myself = &LUSTRE.fsal;
 
-	retval =
-	    register_fsal(myself, myname, FSAL_MAJOR_VERSION,
-			  FSAL_MINOR_VERSION);
+	retval = register_fsal(myself, myname, FSAL_MAJOR_VERSION,
+			       FSAL_MINOR_VERSION, FSAL_ID_LUSTRE);
 	if (retval != 0) {
 		fprintf(stderr, "LUSTRE module failed to register");
 		return;
 	}
 	myself->ops->create_export = lustre_create_export;
 	myself->ops->init_config = lustre_init_config;
+	myself->ops->getdeviceinfo = lustre_getdeviceinfo;
+	myself->ops->fs_da_addr_size = lustre_fs_da_addr_size;
 }
 
 MODULE_FINI void lustre_unload(void)

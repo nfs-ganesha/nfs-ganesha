@@ -229,9 +229,8 @@ static struct pxy_fsal_module PROXY;
 
 MODULE_INIT void pxy_init(void)
 {
-	if (register_fsal
-	    (&PROXY.module, "PROXY", FSAL_MAJOR_VERSION,
-	     FSAL_MINOR_VERSION) != 0)
+	if (register_fsal(&PROXY.module, "PROXY", FSAL_MAJOR_VERSION,
+			  FSAL_MINOR_VERSION, FSAL_ID_NO_PNFS) != 0)
 		return;
 	PROXY.module.ops->init_config = pxy_init_config;
 	PROXY.module.ops->create_export = pxy_create_export;

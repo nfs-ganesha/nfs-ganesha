@@ -312,3 +312,9 @@ fsal_status_t GPFSFSAL_unlink(struct fsal_obj_handle *dir_hdl,	/* IN */
 			      const struct req_op_context *p_context);	/* IN */
 
 void *GPFSFSAL_UP_Thread(void *Arg);
+
+size_t fs_da_addr_size(struct fsal_module *fsal_hdl);
+
+nfsstat4 getdeviceinfo(struct fsal_module *fsal_hdl,
+		       XDR *da_addr_body, const layouttype4 type,
+		       const struct pnfs_deviceid *deviceid);

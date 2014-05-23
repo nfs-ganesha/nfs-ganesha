@@ -337,7 +337,7 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_pub,
 	/* The last byte that can be accessed through pNFS */
 	uint64_t last_possible_byte = 0;
 	/* The deviceid for this layout */
-	struct pnfs_deviceid deviceid = { 0, 0 };
+	struct pnfs_deviceid deviceid = DEVICE_ID_INIT_ZERO(FSAL_ID_CEPH);
 	/* NFS Status */
 	nfsstat4 nfs_status = 0;
 	/* DS wire handle */
@@ -462,7 +462,6 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_pub,
 	   above, this lets us generate the device address on the fly
 	   from the deviceid rather than storing it. */
 
-	deviceid.export_id = arg->export_id;
 	deviceid.devid = handle->wire.vi.ino.val;
 
 	/* We return exactly one filehandle, filling in the necessary

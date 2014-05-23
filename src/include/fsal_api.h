@@ -494,6 +494,46 @@ struct fsal_ops {
  * initialization time.
  */
 	void (*emergency_cleanup) (void);
+
+/**
+ * pNFS functions
+ */
+
+/**
+ * @brief Get information about a pNFS device
+ *
+ * When this function is called, the FSAL should write device
+ * information to the @c da_addr_body stream.
+ *
+ * @param[in]  exp_hdl      Export handle
+ * @param[out] da_addr_body An XDR stream to which the FSAL is to
+ *                          write the layout type-specific information
+ *                          corresponding to the deviceid.
+ * @param[in]  type         The type of layout that specified the
+ *                          device
+ * @param[in]  deviceid     The device to look up
+ *
+ * @return Valid error codes in RFC 5661, p. 365.
+ */
+	 nfsstat4(*getdeviceinfo) (struct fsal_module *fsal_hdl,
+				   XDR * da_addr_body,
+				   const layouttype4 type,
+				   const struct pnfs_deviceid *deviceid);
+
+/**
+ * @brief Max Size of the buffer needed for da_addr_body in getdeviceinfo
+ *
+ * This function sets policy for XDR buffer allocation in getdeviceinfo.
+ * If FSAL has a const size, just return it here. If it is dependent on
+ * what the client can take return ~0UL. In any case the buffer allocated will
+ * not be bigger than client's requested maximum.
+ *
+ * @param[in] exp_hdl Filesystem to interrogate
+ *
+ * @return Max size of the buffer needed for a da_addr_body
+ */
+	 size_t(*fs_da_addr_size) (struct fsal_module *fsal_hdl);
+
 /**@}*/
 };
 
@@ -553,7 +593,8 @@ int load_fsal(const char *name,
  */
 
 int register_fsal(struct fsal_module *fsal_hdl, const char *name,
-		  uint32_t major_version, uint32_t minor_version);
+		  uint32_t major_version, uint32_t minor_version,
+		  uint8_t fsal_id);
 /**
  * @brief Unregister an FSAL
  *
@@ -963,27 +1004,6 @@ struct export_ops {
  */
 
 /**
- * @brief Get information about a pNFS device
- *
- * When this function is called, the FSAL should write device
- * information to the @c da_addr_body stream.
- *
- * @param[in]  exp_hdl      Export handle
- * @param[out] da_addr_body An XDR stream to which the FSAL is to
- *                          write the layout type-specific information
- *                          corresponding to the deviceid.
- * @param[in]  type         The type of layout that specified the
- *                          device
- * @param[in]  deviceid     The device to look up
- *
- * @return Valid error codes in RFC 5661, p. 365.
- */
-	 nfsstat4(*getdeviceinfo) (struct fsal_export *exp_hdl,
-				   XDR * da_addr_body,
-				   const layouttype4 type,
-				   const struct pnfs_deviceid *deviceid);
-
-/**
  * @brief Get list of available devices
  *
  * This function should populate calls @c cb @c values representing the
@@ -1067,20 +1087,6 @@ struct export_ops {
  * @return Max size of the buffer needed for a loc_body
  */
 	 size_t(*fs_loc_body_size) (struct fsal_export *exp_hdl);
-
-/**
- * @brief Max Size of the buffer needed for da_addr_body in getdeviceinfo
- *
- * This function sets policy for XDR buffer allocation in getdeviceinfo.
- * If FSAL has a const size, just return it here. If it is dependent on
- * what the client can take return ~0UL. In any case the buffer allocated will
- * not be bigger than client's requested maximum.
- *
- * @param[in] exp_hdl Filesystem to interrogate
- *
- * @return Max size of the buffer needed for a da_addr_body
- */
-	 size_t(*fs_da_addr_size) (struct fsal_export *exp_hdl);
 
 /**
  * @brief Get write verifier

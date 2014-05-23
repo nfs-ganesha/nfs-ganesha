@@ -373,7 +373,8 @@ struct fsal_module *lookup_fsal(const char *name)
  */
 
 int register_fsal(struct fsal_module *fsal_hdl, const char *name,
-		  uint32_t major_version, uint32_t minor_version)
+		  uint32_t major_version, uint32_t minor_version,
+		  uint8_t fsal_id)
 {
 	pthread_rwlockattr_t attrs;
 
@@ -426,6 +427,8 @@ int register_fsal(struct fsal_module *fsal_hdl, const char *name,
 	glist_add_tail(&fsal_list, &fsal_hdl->fsals);
 	if (load_state == loading)
 		load_state = registered;
+	if (fsal_id != FSAL_ID_NO_PNFS && fsal_id < FSAL_ID_COUNT)
+		pnfs_fsal[fsal_id] = fsal_hdl;
 	pthread_mutex_unlock(&fsal_lock);
 	return 0;
 
