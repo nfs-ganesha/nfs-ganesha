@@ -66,6 +66,8 @@ static void lustre_release(struct fsal_export *exp_hdl)
 
 	myself = container_of(exp_hdl, struct lustre_fsal_export, export);
 
+	PTHREAD_RWLOCK_wrlock(&exp_hdl->lock);
+	lustre_unexport_filesystem(myself);
 	fsal_detach_export(exp_hdl->fsal, &exp_hdl->exports);
 	free_export_ops(exp_hdl);
 

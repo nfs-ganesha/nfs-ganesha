@@ -57,6 +57,7 @@ static void release(struct fsal_export *exp_hdl)
 
 	myself = container_of(exp_hdl, struct gpfs_fsal_export, export);
 
+	gpfs_unexport_filesystems(myself);
 	fsal_detach_export(exp_hdl->fsal, &exp_hdl->exports);
 	free_export_ops(exp_hdl);
 
