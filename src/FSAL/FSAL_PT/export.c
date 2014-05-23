@@ -48,6 +48,7 @@
 #include "fsal_types.h"
 #include "nfs_exports.h"
 #include "export_mgr.h"
+#include "pt_ganesha.h"
 
 /* helpers to/from other PT objects
  */
