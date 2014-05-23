@@ -501,7 +501,7 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 		}
 	} while (nread > 0);
 
-	*eof = nread == 0 ? true : false;
+	*eof = true;
  done:
 	close(dirfd);
 
