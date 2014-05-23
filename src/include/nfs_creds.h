@@ -64,4 +64,9 @@ cache_inode_status_t nfs_access_op(cache_entry_t *entry,
 				   uint32_t *supported_access,
 				   struct req_op_context *req_ctx);
 
+bool nfs_compare_clientcred(nfs_client_cred_t *cred1,
+			    nfs_client_cred_t *cred2);
+
+int nfs_rpc_req2client_cred(struct svc_req *req, nfs_client_cred_t *pcred);
+
 #endif				/* _NFS_CREDS_H */

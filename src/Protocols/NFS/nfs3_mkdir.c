@@ -169,7 +169,7 @@ int nfs3_mkdir(nfs_arg_t *arg,
 	    || ((sattr.mask & ATTR_GROUP)
 		&& (req_ctx->creds->caller_gid != sattr.group))) {
 		cache_status =
-		    cache_inode_setattr(dir_entry, &sattr, req_ctx, false);
+		    cache_inode_setattr(dir_entry, &sattr, false, req_ctx);
 
 		if (cache_status != CACHE_INODE_SUCCESS)
 			goto out_fail;

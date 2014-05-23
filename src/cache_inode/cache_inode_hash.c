@@ -96,4 +96,27 @@ cih_pkginit(void)
 	initialized = true;
 }
 
+/**
+ * @brief Destroy the package.
+ */
+void
+cih_pkgdestroy(void)
+{
+	/* Index over partitions */
+	int ix = 0;
+
+	/* Destroy the partitions, warning if not empty */
+	for (ix = 0; ix < cih_fhcache.npart; ++ix) {
+		if (avltree_first(&cih_fhcache.partition[ix].t) != NULL)
+			LogMajor(COMPONENT_CACHE_INODE,
+				 "Cache inode AVL tree not empty");
+		pthread_rwlock_destroy(&cih_fhcache.partition[ix].lock);
+		gsh_free(cih_fhcache.partition[ix].cache);
+	}
+	/* Destroy the partition table */
+	gsh_free(cih_fhcache.partition);
+	cih_fhcache.partition = NULL;
+	initialized = false;
+}
+
 /** @} */

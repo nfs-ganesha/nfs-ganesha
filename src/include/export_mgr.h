@@ -69,6 +69,12 @@ struct gsh_export {
 	struct glist_head exp_nlm_share_list;
 	/** List of exports rooted on the same inode */
 	struct glist_head exp_root_list;
+	/** List of exports to be mounted or cleaned up */
+	struct glist_head exp_work;
+	/** List of exports mounted on this export */
+	struct glist_head mounted_exports_list;
+	/** This export is a node in the list of mounted_exports */
+	struct glist_head mounted_exports_node;
 	/** Entry for the root of this export, protected by lock */
 	cache_entry_t *exp_root_cache_inode;
 	/** Allowed clients */
@@ -152,7 +158,15 @@ static inline void get_gsh_export_ref(struct gsh_export *exp)
 	atomic_inc_int64_t(&exp->refcnt);
 }
 
+void export_add_to_mount_work(struct gsh_export *export);
+void export_add_to_unexport_work_locked(struct gsh_export *export);
+void export_add_to_unexport_work(struct gsh_export *export);
+struct gsh_export *export_take_mount_work(void);
+struct gsh_export *export_take_unexport_work(void);
+
 extern struct config_block add_export_param;
+
+void remove_all_exports(void);
 
 #endif				/* !EXPORT_MGR_H */
 /** @} */

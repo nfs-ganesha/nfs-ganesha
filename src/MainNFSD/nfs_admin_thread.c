@@ -40,6 +40,7 @@
 #include "cache_inode_lru.h"
 #include "idmapper.h"
 #include "delayed_exec.h"
+#include "export_mgr.h"
 #ifdef USE_DBUS
 #include "ganesha_dbus.h"
 #endif
@@ -382,6 +383,9 @@ static void do_shutdown(void)
 	} else {
 		LogEvent(COMPONENT_THREAD, "LRU thread system shut down.");
 	}
+
+	LogEvent(COMPONENT_MAIN, "Removing all exports.");
+	remove_all_exports();
 
 	if (disorderly) {
 		LogMajor(COMPONENT_MAIN,

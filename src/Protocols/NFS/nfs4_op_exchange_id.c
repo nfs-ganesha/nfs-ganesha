@@ -33,10 +33,10 @@
 #include <pthread.h>
 #include "log.h"
 #include "nfs4.h"
-#include "mount.h"
 #include "nfs_core.h"
 #include "nfs_proto_functions.h"
 #include "sal_functions.h"
+#include "nfs_creds.h"
 
 int get_raddr(SVCXPRT *xprt)
 {

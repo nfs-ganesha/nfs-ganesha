@@ -683,7 +683,6 @@ void compound_data_Free(compound_data_t *);
 bool pseudo_mount_export(struct gsh_export *exp,
 			 struct req_op_context *req_ctx);
 void create_pseudofs(void);
-void pseudo_unmount_export(struct gsh_export *exp,
-			   struct req_op_context *req_ctx);
+void pseudo_unmount_export(struct gsh_export *exp);
 
 #endif	/* NFS_PROTO_FUNCTIONS_H */

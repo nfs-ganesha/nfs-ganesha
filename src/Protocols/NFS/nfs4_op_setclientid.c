@@ -36,6 +36,7 @@
 #include "sal_functions.h"
 #include "nfs_proto_functions.h"
 #include "nfs_core.h"
+#include "nfs_creds.h"
 
 /**
  *

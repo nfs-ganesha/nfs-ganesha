@@ -58,7 +58,6 @@ int nfs4_op_secinfo_no_name(struct nfs_argop4 *op, compound_data_t *data,
 {
 	SECINFO_NO_NAME4res * const res_SECINFO_NO_NAME4 =
 	    &resp->nfs_resop4_u.opsecinfo_no_name;
-	cache_entry_t *entry_src = NULL;
 	sec_oid4 v5oid = { krb5oid.length, (char *)krb5oid.elements };
 	int num_entry = 0;
 
@@ -104,9 +103,6 @@ int nfs4_op_secinfo_no_name(struct nfs_argop4 *op, compound_data_t *data,
 	if (res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.SECINFO4resok_val
 	    == NULL) {
 		res_SECINFO_NO_NAME4->status = NFS4ERR_SERVERFAULT;
-
-		if (entry_src != NULL)
-			cache_inode_put(entry_src);
 		goto out;
 	}
 
@@ -171,9 +167,6 @@ int nfs4_op_secinfo_no_name(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.SECINFO4resok_len = idx;
-
-	if (entry_src != NULL)
-		cache_inode_put(entry_src);
 
 	/* Need to clear out CurrentFH */
 	set_current_entry(data, NULL, false);

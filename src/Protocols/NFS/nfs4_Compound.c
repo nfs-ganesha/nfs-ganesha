@@ -37,6 +37,7 @@
 #include "nfs_proto_tools.h"
 #include "server_stats.h"
 #include "export_mgr.h"
+#include "nfs_creds.h"
 
 struct nfs4_op_desc {
 	char *name;

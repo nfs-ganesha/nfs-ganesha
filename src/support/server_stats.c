@@ -917,7 +917,6 @@ void server_stats_nfs_done(struct req_op_context *req_ctx,
 			   request_data_t *reqdata, int rc, bool dup)
 {
 	struct gsh_client *client = req_ctx->client;
-	struct server_stats *server_st;
 	struct timespec current_time;
 	nsecs_elapsed_t stop_time;
 	struct svc_req *req = &reqdata->r_u.nfs->req;
@@ -937,11 +936,15 @@ void server_stats_nfs_done(struct req_op_context *req_ctx,
 
 	now(&current_time);
 	stop_time = timespec_diff(&ServerBootTime, &current_time);
-	server_st = container_of(client, struct server_stats, client);
-	record_stats(&server_st->st, &client->lock, reqdata,
-		     stop_time - req_ctx->start_time, req_ctx->queue_wait,
-		     rc == NFS_REQ_OK, dup, true);
-	(void)atomic_store_uint64_t(&client->last_update, stop_time);
+	if (client != NULL) {
+		struct server_stats *server_st;
+		server_st = container_of(client, struct server_stats, client);
+		record_stats(&server_st->st, &client->lock, reqdata,
+			     stop_time - req_ctx->start_time,
+			     req_ctx->queue_wait,
+			     rc == NFS_REQ_OK, dup, true);
+		(void)atomic_store_uint64_t(&client->last_update, stop_time);
+	}
 	if (!dup && req_ctx->export != NULL) {
 		struct export_stats *exp_st;
 
@@ -966,7 +969,6 @@ void server_stats_nfsv4_op_done(struct req_op_context *req_ctx, int proto_op,
 				nsecs_elapsed_t start_time, int status)
 {
 	struct gsh_client *client = req_ctx->client;
-	struct server_stats *server_st;
 	struct timespec current_time;
 	nsecs_elapsed_t stop_time;
 
@@ -976,13 +978,17 @@ void server_stats_nfsv4_op_done(struct req_op_context *req_ctx, int proto_op,
 	if (nfs_param.core_param.enable_FASTSTATS)
 		return;
 
-	if (client == NULL) {
-		/* we can have cases where we cannot find the client... */
-		return;
-	}
 	now(&current_time);
 	stop_time = timespec_diff(&ServerBootTime, &current_time);
-	server_st = container_of(client, struct server_stats, client);
+
+	if (client != NULL) {
+		struct server_stats *server_st;
+		server_st = container_of(client, struct server_stats, client);
+		record_nfsv4_op(&server_st->st, &client->lock, proto_op,
+				req_ctx->nfs_minorvers, stop_time - start_time,
+				req_ctx->queue_wait, status);
+		(void)atomic_store_uint64_t(&client->last_update, stop_time);
+	}
 
 	if (req_ctx->nfs_minorvers == 0)
 		record_op(&global_st.nfsv40.compounds, stop_time - start_time,
@@ -991,10 +997,6 @@ void server_stats_nfsv4_op_done(struct req_op_context *req_ctx, int proto_op,
 		record_op(&global_st.nfsv41.compounds, stop_time - start_time,
 			  req_ctx->queue_wait, status == NFS4_OK, false);
 
-	record_nfsv4_op(&server_st->st, &client->lock, proto_op,
-			req_ctx->nfs_minorvers, stop_time - start_time,
-			req_ctx->queue_wait, status);
-	(void)atomic_store_uint64_t(&client->last_update, stop_time);
 	if (req_ctx->export != NULL) {
 		struct export_stats *exp_st;
 
@@ -1019,17 +1021,20 @@ void server_stats_compound_done(struct req_op_context *req_ctx, int num_ops,
 				int status)
 {
 	struct gsh_client *client = req_ctx->client;
-	struct server_stats *server_st;
 	struct timespec current_time;
 	nsecs_elapsed_t stop_time;
 
 	now(&current_time);
 	stop_time = timespec_diff(&ServerBootTime, &current_time);
-	server_st = container_of(client, struct server_stats, client);
-	record_compound(&server_st->st, &client->lock, req_ctx->nfs_minorvers,
-			num_ops, stop_time - req_ctx->start_time,
-			req_ctx->queue_wait, status == NFS4_OK);
-	(void)atomic_store_uint64_t(&client->last_update, stop_time);
+	if (client != NULL) {
+		struct server_stats *server_st;
+		server_st = container_of(client, struct server_stats, client);
+		record_compound(&server_st->st, &client->lock,
+				req_ctx->nfs_minorvers,
+				num_ops, stop_time - req_ctx->start_time,
+				req_ctx->queue_wait, status == NFS4_OK);
+		(void)atomic_store_uint64_t(&client->last_update, stop_time);
+	}
 	if (req_ctx->export != NULL) {
 		struct export_stats *exp_st;
 
@@ -1055,11 +1060,15 @@ void server_stats_compound_done(struct req_op_context *req_ctx, int num_ops,
 void server_stats_io_done(struct req_op_context *req_ctx, size_t requested,
 			  size_t transferred, bool success, bool is_write)
 {
-	struct server_stats *server_st;
+	if (req_ctx->client != NULL) {
+		struct server_stats *server_st;
 
-	server_st = container_of(req_ctx->client, struct server_stats, client);
-	record_io_stats(&server_st->st, &req_ctx->client->lock, req_ctx,
-			requested, transferred, success, is_write);
+		server_st = container_of(req_ctx->client, struct server_stats,
+					 client);
+		record_io_stats(&server_st->st, &req_ctx->client->lock,
+				req_ctx, requested, transferred, success,
+				is_write);
+	}
 	if (req_ctx->export != NULL) {
 		struct export_stats *exp_st;
 

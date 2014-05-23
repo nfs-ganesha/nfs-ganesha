@@ -735,7 +735,7 @@ static int export_commit(void *node, void *link_mem, void *self_struct,
 	export = self_struct;
 
 	/* validate the export now */
-	if ((export->export_perms.options & EXPORT_OPTION_NFSV4)) {
+	if (export->export_perms.options & EXPORT_OPTION_NFSV4) {
 		if (export->pseudopath == NULL) {
 			LogCrit(COMPONENT_CONFIG,
 				"Exporting to NFSv4 but not Pseudo path defined");
@@ -838,6 +838,7 @@ static int export_commit(void *node, void *link_mem, void *self_struct,
 	glist_init(&export->exp_state_list);
 	glist_init(&export->exp_lock_list);
 	glist_init(&export->exp_nlm_share_list);
+	glist_init(&export->mounted_exports_list);
 
 	/* now probe the fsal and init it */
 	/* pass along the block that is/was the FS_Specific */
@@ -849,6 +850,10 @@ static int export_commit(void *node, void *link_mem, void *self_struct,
 		errcnt++;
 		goto err_out;
 	}
+
+	/* This export must be mounted to the PseudoFS if NFS v4 */
+	if (export->export_perms.options & EXPORT_OPTION_NFSV4)
+		export_add_to_mount_work(export);
 
 	StrExportOptions(&export->export_perms, perms);
 
@@ -1302,6 +1307,7 @@ static int build_default_root(void)
 	glist_init(&export->exp_state_list);
 	glist_init(&export->exp_lock_list);
 	glist_init(&export->exp_nlm_share_list);
+	glist_init(&export->mounted_exports_list);
 	glist_init(&export->clients);
 
 	/* Default anonymous uid and gid */
@@ -1368,6 +1374,9 @@ static int build_default_root(void)
 		goto err_out;
 	}
 	set_gsh_export_state(export, EXPORT_READY);
+
+	/* This export must be mounted to the PseudoFS */
+	export_add_to_mount_work(export);
 
 	LogEvent(COMPONENT_CONFIG,
 		 "Export 0 (/) successfully created");
@@ -1701,17 +1710,11 @@ void release_export_root(struct gsh_export *export)
 
 void unexport(struct gsh_export *export)
 {
-	struct root_op_context root_op_context;
-
-	/* Initialize req_ctx */
-	init_root_op_context(&root_op_context, NULL, NULL,
-			     0, 0, UNKNOWN_REQUEST);
-
-	root_op_context.req_ctx.export = export;
-	root_op_context.req_ctx.fsal_export = export->fsal_export;
-
 	/* Make the export unreachable */
-	pseudo_unmount_export(export, &root_op_context.req_ctx);
+	LogDebug(COMPONENT_EXPORT,
+		 "Unexport %s, Pseduo %s",
+		 export->fullpath, export->pseudopath);
+	pseudo_unmount_export(export);
 	remove_gsh_export(export->export_id);
 	release_export_root(export);
 }
@@ -1725,11 +1728,6 @@ void unexport(struct gsh_export *export)
 void kill_export_root_entry(cache_entry_t *entry)
 {
 	struct gsh_export *export;
-	struct root_op_context root_op_context;
-
-	/* Initialize req_ctx */
-	init_root_op_context(&root_op_context, NULL, NULL,
-			     0, 0, UNKNOWN_REQUEST);
 
 	if (entry->type != DIRECTORY)
 		return;
@@ -1760,9 +1758,7 @@ void kill_export_root_entry(cache_entry_t *entry)
 		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 
 		/* Make the export otherwise unreachable */
-		root_op_context.req_ctx.export = export;
-		root_op_context.req_ctx.fsal_export = export->fsal_export;
-		pseudo_unmount_export(export, &root_op_context.req_ctx);
+		pseudo_unmount_export(export);
 		remove_gsh_export(export->export_id);
 
 		put_gsh_export(export);
