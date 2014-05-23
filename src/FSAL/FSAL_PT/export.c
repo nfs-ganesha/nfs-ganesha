@@ -66,16 +66,6 @@ static void release(struct fsal_export *exp_hdl)
 	PTHREAD_RWLOCK_wrlock(&exp_hdl->lock);
 	fsal_detach_export(exp_hdl->fsal, &exp_hdl->exports);
 	free_export_ops(exp_hdl);
-	if (myself->root_fd >= 0)
-		PTFSAL_close(myself->root_fd);
-	if (myself->root_handle != NULL)
-		gsh_free(myself->root_handle);
-	if (myself->fstype != NULL)
-		gsh_free(myself->fstype);
-	if (myself->mntdir != NULL)
-		gsh_free(myself->mntdir);
-	if (myself->fs_spec != NULL)
-		gsh_free(myself->fs_spec);
 	PTHREAD_RWLOCK_unlock(&exp_hdl->lock);
 
 	pthread_rwlock_destroy(&exp_hdl->lock);
@@ -87,8 +77,7 @@ static fsal_status_t get_dynamic_info(struct fsal_obj_handle *obj_hdl,
 				      const struct req_op_context *opctx,
 				      fsal_dynamicfsinfo_t *infop)
 {
-	struct pt_fsal_export *myself;
-	struct statvfs buffstatpt;
+	struct pt_fsal_obj_handle *myself;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval = 0;
 
@@ -96,21 +85,15 @@ static fsal_status_t get_dynamic_info(struct fsal_obj_handle *obj_hdl,
 		fsal_error = ERR_FSAL_FAULT;
 		goto out;
 	}
-	myself = container_of(exp_hdl, struct pt_fsal_export, export);
-	retval = fstatvfs(myself->root_fd, &buffstatpt);
+	myself = container_of(obj_hdl, struct pt_fsal_obj_handle, obj_handle);
+
+	retval = ptfsal_dynamic_fsinfo(myself, opctx, infop);
+
 	if (retval < 0) {
 		fsal_error = posix2fsal_error(errno);
 		retval = errno;
 		goto out;
 	}
-	infop->total_bytes = buffstatpt.f_frsize * buffstatpt.f_blocks;
-	infop->free_bytes = buffstatpt.f_frsize * buffstatpt.f_bfree;
-	infop->avail_bytes = buffstatpt.f_frsize * buffstatpt.f_bavail;
-	infop->total_files = buffstatpt.f_files;
-	infop->free_files = buffstatpt.f_ffree;
-	infop->avail_files = buffstatpt.f_favail;
-	infop->time_delta.tv_sec = 1;
-	infop->time_delta.tv_nsec = 0;
 
  out:
 	return fsalstat(fsal_error, retval);
@@ -213,146 +196,6 @@ static uint32_t fs_xattr_access_rights(struct fsal_export *exp_hdl)
 	return fsal_xattr_access_rights(info);
 }
 
-/* get_quota
- * return quotas for this export.
- * path could cross a lower mount boundary which could
- * mask lower mount values with those of the export root
- * if this is a real issue, we can scan each time with setmntent()
- * better yet, compare st_dev of the file with st_dev of root_fd.
- * on linux, can map st_dev -> /proc/partitions name -> /dev/<name>
- */
-
-static fsal_status_t get_quota(struct fsal_export *exp_hdl,
-			       const char *filepath, int quota_type,
-			       struct req_op_context *req_ctx,
-			       fsal_quota_t *pquota)
-{
-	struct pt_fsal_export *myself;
-	struct dqblk fs_quota;
-	struct stat path_stat;
-	uid_t id;
-	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
-	int retval;
-
-	myself = container_of(exp_hdl, struct pt_fsal_export, export);
-	retval = stat(filepath, &path_stat);
-	if (retval < 0) {
-		LogMajor(COMPONENT_FSAL,
-			 "PT get_quota, fstat: root_path: %s, fd=%d, errno=(%d) %s",
-			 myself->mntdir, myself->root_fd, errno,
-			 strerror(errno));
-		fsal_error = posix2fsal_error(errno);
-		retval = errno;
-		goto out;
-	}
-	if (path_stat.st_dev != myself->root_dev) {
-		LogMajor(COMPONENT_FSAL,
-			 "PT get_quota: crossed mount boundary! root_path: %s, quota path: %s",
-			 myself->mntdir, filepath);
-		fsal_error = ERR_FSAL_FAULT;	/* maybe a better error? */
-		retval = 0;
-		goto out;
-	}
-	id = (quota_type ==
-	      USRQUOTA) ? req_ctx->creds->caller_uid : req_ctx->creds->
-	    caller_gid;
-	memset((char *)&fs_quota, 0, sizeof(struct dqblk));
-	retval =
-	    quotactl(QCMD(Q_GETQUOTA, quota_type), myself->fs_spec, id,
-		     (caddr_t) &fs_quota);
-	if (retval < 0) {
-		fsal_error = posix2fsal_error(errno);
-		retval = errno;
-		goto out;
-	}
-	pquota->bhardlimit = fs_quota.dqb_bhardlimit;
-	pquota->bsoftlimit = fs_quota.dqb_bsoftlimit;
-	pquota->curblocks = fs_quota.dqb_curspace;
-	pquota->fhardlimit = fs_quota.dqb_ihardlimit;
-	pquota->curfiles = fs_quota.dqb_curinodes;
-	pquota->btimeleft = fs_quota.dqb_btime;
-	pquota->ftimeleft = fs_quota.dqb_itime;
-	pquota->bsize = DEV_BSIZE;
-
- out:
-	return fsalstat(fsal_error, retval);
-}
-
-/* set_quota
- * same lower mount restriction applies
- */
-
-static fsal_status_t set_quota(struct fsal_export *exp_hdl,
-			       const char *filepath, int quota_type,
-			       struct req_op_context *req_ctx,
-			       fsal_quota_t *pquota, fsal_quota_t *presquota)
-{
-	struct pt_fsal_export *myself;
-	struct dqblk fs_quota;
-	struct stat path_stat;
-	uid_t id;
-	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
-	int retval;
-
-	myself = container_of(exp_hdl, struct pt_fsal_export, export);
-	retval = stat(filepath, &path_stat);
-	if (retval < 0) {
-		LogMajor(COMPONENT_FSAL,
-			 "PT set_quota, fstat: root_path: %s, fd=%d, errno=(%d) %s",
-			 myself->mntdir, myself->root_fd, errno,
-			 strerror(errno));
-		fsal_error = posix2fsal_error(errno);
-		retval = errno;
-		goto err;
-	}
-	if (path_stat.st_dev != myself->root_dev) {
-		LogMajor(COMPONENT_FSAL,
-			 "PT set_quota: crossed mount boundary! root_path: %s, quota path: %s",
-			 myself->mntdir, filepath);
-		fsal_error = ERR_FSAL_FAULT;	/* maybe a better error? */
-		retval = 0;
-		goto err;
-	}
-	id = (quota_type ==
-	      USRQUOTA) ? req_ctx->creds->caller_uid : req_ctx->creds->
-	    caller_gid;
-	memset((char *)&fs_quota, 0, sizeof(struct dqblk));
-	if (pquota->bhardlimit != 0) {
-		fs_quota.dqb_bhardlimit = pquota->bhardlimit;
-		fs_quota.dqb_valid |= QIF_BLIMITS;
-	}
-	if (pquota->bsoftlimit != 0) {
-		fs_quota.dqb_bsoftlimit = pquota->bsoftlimit;
-		fs_quota.dqb_valid |= QIF_BLIMITS;
-	}
-	if (pquota->fhardlimit != 0) {
-		fs_quota.dqb_ihardlimit = pquota->fhardlimit;
-		fs_quota.dqb_valid |= QIF_ILIMITS;
-	}
-	if (pquota->btimeleft != 0) {
-		fs_quota.dqb_btime = pquota->btimeleft;
-		fs_quota.dqb_valid |= QIF_BTIME;
-	}
-	if (pquota->ftimeleft != 0) {
-		fs_quota.dqb_itime = pquota->ftimeleft;
-		fs_quota.dqb_valid |= QIF_ITIME;
-	}
-	retval =
-	    quotactl(QCMD(Q_SETQUOTA, quota_type), myself->fs_spec, id,
-		     (caddr_t) &fs_quota);
-	if (retval < 0) {
-		fsal_error = posix2fsal_error(errno);
-		retval = errno;
-		goto err;
-	}
-	if (presquota != NULL) {
-		return get_quota(exp_hdl, filepath, quota_type, req_ctx,
-				 presquota);
-	}
- err:
-	return fsalstat(fsal_error, retval);
-}
-
 /* extract a file handle from a buffer.
  * do verification checks and flag any and all suspicious bits.
  * Return an updated fh_desc into whatever was passed.  The most
@@ -405,8 +248,6 @@ void pt_export_ops_init(struct export_ops *ops)
 	ops->fs_supported_attrs = fs_supported_attrs;
 	ops->fs_umask = fs_umask;
 	ops->fs_xattr_access_rights = fs_xattr_access_rights;
-	ops->get_quota = get_quota;
-	ops->set_quota = set_quota;
 }
 
 static struct config_item export_params[] = {
@@ -438,15 +279,8 @@ fsal_status_t pt_create_export(struct fsal_module *fsal_hdl,
 			       const struct fsal_up_vector *up_ops)
 {
 	struct pt_fsal_export *myself;
-	FILE *fp;
-	struct mntent *p_mnt;
-	size_t pathlen, outlen = 0;
-	char mntdir[MAXPATHLEN + 1];	/* there has got to be a better way */
-	char fs_spec[MAXPATHLEN + 1];
-	char type[MAXNAMLEN + 1];
 	int retval = 0;
 	struct config_error_type err_type;
-	fsal_status_t status;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 
 	myself = gsh_malloc(sizeof(struct pt_fsal_export));
@@ -456,7 +290,6 @@ fsal_status_t pt_create_export(struct fsal_module *fsal_hdl,
 		return fsalstat(posix2fsal_error(errno), errno);
 	}
 	memset(myself, 0, sizeof(struct pt_fsal_export));
-	myself->root_fd = -1;
 
 	retval = fsal_export_init(&myself->export);
 	if (retval != 0) {
@@ -478,114 +311,6 @@ fsal_status_t pt_create_export(struct fsal_module *fsal_hdl,
 		goto errout;	/* seriously bad */
 	myself->export.fsal = fsal_hdl;
 
-	/* start looking for the mount point */
-	fp = setmntent(MOUNTED, "r");
-	if (fp == NULL) {
-		retval = errno;
-		LogCrit(COMPONENT_FSAL, "Error %d in setmntent(%s): %s", retval,
-			MOUNTED, strerror(retval));
-		fsal_error = posix2fsal_error(retval);
-		goto errout;
-	}
-	while ((p_mnt = getmntent(fp)) != NULL) {
-		if (p_mnt->mnt_dir != NULL) {
-			pathlen = strlen(p_mnt->mnt_dir);
-			if (pathlen > outlen) {
-				if (strcmp(p_mnt->mnt_dir, "/") == 0) {
-					outlen = pathlen;
-					strncpy(mntdir, p_mnt->mnt_dir,
-						MAXPATHLEN);
-					strncpy(type, p_mnt->mnt_type,
-						MAXNAMLEN);
-					strncpy(fs_spec, p_mnt->mnt_fsname,
-						MAXPATHLEN);
-				} else
-				    if ((strncmp
-					 (req_ctx->export->fullpath,
-					  p_mnt->mnt_dir,
-					  pathlen) == 0)
-					&& ((req_ctx->export->fullpath[pathlen]
-					     == '/')
-					|| (req_ctx->export->fullpath[pathlen]
-					    == '\0'))) {
-					if (strcasecmp(p_mnt->mnt_type, "xfs")
-					    == 0) {
-						LogDebug(COMPONENT_FSAL,
-							 "Mount (%s) is XFS, skipping",
-							 p_mnt->mnt_dir);
-						continue;
-					}
-					outlen = pathlen;
-					strncpy(mntdir, p_mnt->mnt_dir,
-						MAXPATHLEN);
-					strncpy(type, p_mnt->mnt_type,
-						MAXNAMLEN);
-					strncpy(fs_spec, p_mnt->mnt_fsname,
-						MAXPATHLEN);
-				}
-			}
-		}
-	}
-	endmntent(fp);
-	if (outlen <= 0) {
-		LogCrit(COMPONENT_FSAL, "No mount entry matches '%s' in %s",
-			req_ctx->export->fullpath, MOUNTED);
-		fsal_error = ERR_FSAL_NOENT;
-		goto errout;
-	}
-	myself->root_fd = open(mntdir, O_RDONLY | O_DIRECTORY);
-	if (myself->root_fd < 0) {
-		LogMajor(COMPONENT_FSAL,
-			 "Could not open PT mount point %s: rc = %d", mntdir,
-			 errno);
-		fsal_error = posix2fsal_error(errno);
-		retval = errno;
-		goto errout;
-	} else {
-		struct stat root_stat;
-		ptfsal_handle_t *fh = alloca(sizeof(ptfsal_handle_t));
-
-		memset(fh, 0, sizeof(ptfsal_handle_t));
-		fh->data.handle.handle_size = OPENHANDLE_HANDLE_LEN;
-		retval = fstat(myself->root_fd, &root_stat);
-		if (retval < 0) {
-			LogMajor(COMPONENT_FSAL,
-				 "fstat: root_path: %s, fd=%d, errno=(%d) %s",
-				 mntdir, myself->root_fd, errno,
-				 strerror(errno));
-			fsal_error = posix2fsal_error(errno);
-			retval = errno;
-			goto errout;
-		}
-
-		myself->root_dev = root_stat.st_dev;
-		status =
-		    fsal_internal_get_handle_at(NULL, &myself->export,
-						myself->root_fd,
-						req_ctx->export->fullpath,
-						fh);
-		if (FSAL_IS_ERROR(status)) {
-			fsal_error = retval = status.major;
-			retval = errno;
-			LogMajor(COMPONENT_FSAL,
-				 "name_to_handle: root_path: %s, root_fd=%d, retval=%d",
-				 mntdir, myself->root_fd, retval);
-			goto errout;
-		}
-		myself->root_handle = gsh_malloc(sizeof(ptfsal_handle_t));
-		if (myself->root_handle == NULL) {
-			LogMajor(COMPONENT_FSAL,
-				 "memory for root handle, errno=(%d) %s", errno,
-				 strerror(errno));
-			fsal_error = posix2fsal_error(errno);
-			retval = errno;
-			goto errout;
-		}
-		memcpy(myself->root_handle, &fh, sizeof(ptfsal_handle_t));
-	}
-	myself->fstype = gsh_strdup(type);
-	myself->fs_spec = gsh_strdup(fs_spec);
-	myself->mntdir = gsh_strdup(mntdir);
 	retval = load_config_from_node(parse_node,
 				       &export_param,
 				       myself,
@@ -601,16 +326,6 @@ fsal_status_t pt_create_export(struct fsal_module *fsal_hdl,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
  errout:
-	if (myself->root_fd >= 0)
-		PTFSAL_close(myself->root_fd);
-	if (myself->root_handle != NULL)
-		gsh_free(myself->root_handle);
-	if (myself->fstype != NULL)
-		gsh_free(myself->fstype);
-	if (myself->mntdir != NULL)
-		gsh_free(myself->mntdir);
-	if (myself->fs_spec != NULL)
-		gsh_free(myself->fs_spec);
 	free_export_ops(&myself->export);
 	PTHREAD_RWLOCK_unlock(&myself->export.lock);
 	pthread_rwlock_destroy(&myself->export.lock);

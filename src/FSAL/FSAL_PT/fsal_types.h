@@ -107,12 +107,6 @@ static inline size_t pt_sizeof_handle(ptfsal_handle_t *fh)
 
 struct pt_fsal_export {
 	struct fsal_export export;
-	char *mntdir;
-	char *fs_spec;
-	char *fstype;
-	int root_fd;
-	dev_t root_dev;
-	ptfsal_handle_t *root_handle;
 	uint64_t pt_export_id;	/* This is PT side FS export ID */
 };
 
