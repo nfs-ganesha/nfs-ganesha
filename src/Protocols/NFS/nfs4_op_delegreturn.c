@@ -68,7 +68,7 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t *data,
 
 	state_status_t state_status;
 	state_t *pstate_found = NULL;
-	state_deleg_t *deleg_found = NULL;
+	state_t *deleg_state = NULL;
 	state_owner_t *plock_owner;
 	fsal_lock_param_t lock_desc;
 	unsigned int rc = 0;
@@ -142,15 +142,15 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t *data,
 			found_entry = NULL;
 			continue;
 		}
-		deleg_found = &found_entry->sle_state->state_data.deleg;
-		if (memcmp(&deleg_found->sd_stateid.other,
+		deleg_state = found_entry->sle_state;
+		if (memcmp(&deleg_state->stateid_other,
 			   &arg_DELEGRETURN4->deleg_stateid.other,
-			   sizeof(deleg_found->sd_stateid.other)) != 0) {
+			   OTHERSIZE) != 0) {
 			found_entry = NULL;
 			continue;
 		}
 		LogDebug(COMPONENT_NFS_V4_LOCK, "Matching state found!");
-		if (deleg_found->sd_stateid.seqid !=
+		if (deleg_state->state_seqid !=
 		    arg_DELEGRETURN4->deleg_stateid.seqid) {
 			LogFullDebug(COMPONENT_STATE, "But seqid doesn't match");
 			res_DELEGRETURN4->status = NFS4ERR_BAD_SEQID;

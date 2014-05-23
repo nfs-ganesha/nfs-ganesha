@@ -297,8 +297,6 @@ typedef struct state_lock_t {
 
 typedef struct state_deleg__ {
 	open_delegation_type4 sd_type;
-	stateid4 sd_stateid;             /* unique delegation stateid */
-	struct glist_head sd_deleg_list; /*  */
 	time_t sd_grant_time;               /* time of successful delegation */
 	uint32_t sd_state;
 	struct cf_deleg_stats sd_clfile_stats;  /* client specific */
@@ -366,6 +364,18 @@ struct state_t {
 					   call that created a
 					   state. */
 };
+
+/* Macros to compare and copy state_t to a struct stateid4 */
+#define SAME_STATEID(id4, state) \
+	((id4)->seqid == (state)->state_seqid && \
+	memcmp((id4)->other, (state)->stateid_other, OTHERSIZE) == 0)
+
+#define COPY_STATEID(id4, state) \
+	do { \
+		(id4)->seqid = (state)->state_seqid; \
+		(void)memcpy((id4)->other, (state)->stateid_other, OTHERSIZE); \
+	} while (0)
+
 
 /*****************************************************************************
  *

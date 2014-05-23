@@ -865,7 +865,7 @@ static void get_delegation(compound_data_t *data, struct nfs_argop4 *op,
 {
 	state_status_t state_status;
 	fsal_lock_param_t lock_desc;
-	state_data_t deleg_data, candidate_data, *saved_data;
+	state_data_t deleg_data, candidate_data;
 	open_delegation_type4 deleg_type;
 	state_owner_t *clientowner = &client->cid_owner;
 	OPEN4args *args = &op->nfs_argop4_u.opopen;
@@ -937,16 +937,12 @@ static void get_delegation(compound_data_t *data, struct nfs_argop4 *op,
 			 state_err_str(state_status));
 		return;
 	} else {
-		saved_data = &new_state->state_data;
-		saved_data->deleg.sd_stateid.seqid = ++new_state->state_seqid;
-		memcpy(saved_data->deleg.sd_stateid.other,
-		       new_state->stateid_other,
-		       sizeof(saved_data->deleg.sd_stateid.other));
+		new_state->state_seqid++;
 
 		LogFullDebugOpaque(COMPONENT_STATE,
 				   "delegation state added, stateid: %s",
-				   100, &saved_data->deleg.sd_stateid.other,
-				   sizeof(saved_data->deleg.sd_stateid.other));
+				   100, new_state->stateid_other,
+				   OTHERSIZE);
 
 		/* Attach this open to an export */
 		new_state->state_export = op_ctx->export;
@@ -983,8 +979,11 @@ static void get_delegation(compound_data_t *data, struct nfs_argop4 *op,
 				writeres->
 				space_limit.nfs_space_limit4_u.filesize =
 						DELEG_SPACE_LIMIT_FILESZ;
-				writeres->stateid =
-						saved_data->deleg.sd_stateid;
+				writeres->stateid.seqid =
+					new_state->state_seqid;
+				memcpy(writeres->stateid.other,
+				       new_state->stateid_other,
+				       OTHERSIZE);
 				writeres->recall = FALSE;
 				get_deleg_perm(data->current_entry,
 					       &writeres->permissions,
@@ -993,7 +992,10 @@ static void get_delegation(compound_data_t *data, struct nfs_argop4 *op,
 				assert(deleg_type == OPEN_DELEGATE_READ);
 				open_read_delegation4 *readres =
 				&resok->delegation.open_delegation4_u.read;
-				readres->stateid = saved_data->deleg.sd_stateid;
+				readres->stateid.seqid = new_state->state_seqid;
+				memcpy(readres->stateid.other,
+				       new_state->stateid_other,
+				       OTHERSIZE);
 				readres->recall = FALSE;
 				get_deleg_perm(data->current_entry,
 					       &readres->permissions,
