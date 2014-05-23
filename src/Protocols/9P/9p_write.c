@@ -133,16 +133,19 @@ int _9p_write(struct _9p_request_data *req9p, void *worker_data,
 		/* Get the handle, for stats */
 		struct gsh_client *client = req9p->pconn->client;
 
-		if (client == NULL)
+		if (client == NULL) {
 			LogDebug(COMPONENT_9P,
 				 "Cannot get client block for 9P request");
-		pfid->op_context.client = client;
+		} else {
+			pfid->op_context.client = client;
 
-		server_stats_io_done(&pfid->op_context, size, written_size,
-				     (cache_status ==
-				      CACHE_INODE_SUCCESS) ? true : false,
-				     true);
-
+			server_stats_io_done(&pfid->op_context, size,
+					     written_size,
+					     (cache_status ==
+					      CACHE_INODE_SUCCESS) ?
+					      true : false,
+					     true);
+		}
 
 		if (cache_status != CACHE_INODE_SUCCESS)
 			return _9p_rerror(req9p, worker_data, msgtag,

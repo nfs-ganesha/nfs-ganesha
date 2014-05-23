@@ -509,7 +509,7 @@ static fsal_status_t lustre_makenode(struct fsal_obj_handle *dir_hdl,
 	retval = lstat(dirpath, &stat);
 	if (retval < 0) {
 		retval = errno;
-		goto direrr;
+		goto errout;
 	}
 
 	/* create it with no access because we are root when we do this */
