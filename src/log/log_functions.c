@@ -677,12 +677,12 @@ int create_log_facility(char *name,
 			return -rc;
 		}
 	}
-	pthread_rwlock_wrlock(&log_rwlock);
+	PTHREAD_RWLOCK_wrlock(&log_rwlock);
 
 	facility = find_log_facility(name);
 
 	if (facility != NULL) {
-		pthread_rwlock_unlock(&log_rwlock);
+		PTHREAD_RWLOCK_unlock(&log_rwlock);
 
 		LogInfo(COMPONENT_LOG, "Facility %s already exists", name);
 
@@ -692,7 +692,7 @@ int create_log_facility(char *name,
 	facility = gsh_calloc(1, sizeof(*facility));
 
 	if (facility == NULL) {
-		pthread_rwlock_unlock(&log_rwlock);
+		PTHREAD_RWLOCK_unlock(&log_rwlock);
 
 		LogCrit(COMPONENT_LOG, "Can not allocate a facility for %s",
 			 name);
@@ -706,7 +706,7 @@ int create_log_facility(char *name,
 	if (log_func == log_to_file && private != NULL) {
 		facility->lf_private = gsh_strdup(private);
 		if (facility->lf_private == NULL) {
-			pthread_rwlock_unlock(&log_rwlock);
+			PTHREAD_RWLOCK_unlock(&log_rwlock);
 			gsh_free(facility);
 
 			return -ENOMEM;
@@ -715,7 +715,7 @@ int create_log_facility(char *name,
 		facility->lf_private = private;
 	glist_add_tail(&facility_list, &facility->lf_list);
 
-	pthread_rwlock_unlock(&log_rwlock);
+	PTHREAD_RWLOCK_unlock(&log_rwlock);
 
 	LogInfo(COMPONENT_LOG, "Created log facility %s",
 		facility->lf_name);
@@ -740,17 +740,17 @@ void release_log_facility(char *name)
 {
 	struct log_facility *facility;
 
-	pthread_rwlock_wrlock(&log_rwlock);
+	PTHREAD_RWLOCK_wrlock(&log_rwlock);
 	facility = find_log_facility(name);
 	if (facility == NULL) {
-		pthread_rwlock_unlock(&log_rwlock);
+		PTHREAD_RWLOCK_unlock(&log_rwlock);
 		LogCrit(COMPONENT_LOG,
 			 "Attempting release of non-existant log facility (%s)",
 			 name);
 		return;
 	}
 	if (facility == default_facility) {
-		pthread_rwlock_unlock(&log_rwlock);
+		PTHREAD_RWLOCK_unlock(&log_rwlock);
 		LogCrit(COMPONENT_LOG,
 			 "Attempting to release default log facility (%s)",
 			 name);
@@ -759,7 +759,7 @@ void release_log_facility(char *name)
 	if (!glist_null(&facility->lf_active))
 		glist_del(&facility->lf_active);
 	glist_del(&facility->lf_list);
-	pthread_rwlock_unlock(&log_rwlock);
+	PTHREAD_RWLOCK_unlock(&log_rwlock);
 	if (facility->lf_func == log_to_file &&
 	    facility->lf_private != NULL)
 		gsh_free(facility->lf_private);
@@ -785,15 +785,15 @@ int enable_log_facility(char *name)
 
 	if (name == NULL || *name == '\0')
 		return -EINVAL;
-	pthread_rwlock_wrlock(&log_rwlock);
+	PTHREAD_RWLOCK_wrlock(&log_rwlock);
 	facility = find_log_facility(name);
 	if (facility == NULL) {
-		pthread_rwlock_unlock(&log_rwlock);
+		PTHREAD_RWLOCK_unlock(&log_rwlock);
 		LogInfo(COMPONENT_LOG, "Facility %s does not exist", name);
 		return -EEXIST;
 	}
 	if (!glist_null(&facility->lf_active)) {
-		pthread_rwlock_unlock(&log_rwlock);
+		PTHREAD_RWLOCK_unlock(&log_rwlock);
 		LogCrit(COMPONENT_LOG,
 			 "Log facility (%s) is already enabled",
 			 name);
@@ -802,7 +802,7 @@ int enable_log_facility(char *name)
 	glist_add_tail(&active_facility_list, &facility->lf_active);
 	if (facility->lf_headers > max_headers)
 		max_headers = facility->lf_headers;
-	pthread_rwlock_unlock(&log_rwlock);
+	PTHREAD_RWLOCK_unlock(&log_rwlock);
 	return 0;
 }
 
@@ -824,22 +824,22 @@ int disable_log_facility(char *name)
 
 	if (name == NULL || *name == '\0')
 		return -EINVAL;
-	pthread_rwlock_wrlock(&log_rwlock);
+	PTHREAD_RWLOCK_wrlock(&log_rwlock);
 	facility = find_log_facility(name);
 	if (facility == NULL) {
-		pthread_rwlock_unlock(&log_rwlock);
+		PTHREAD_RWLOCK_unlock(&log_rwlock);
 		LogInfo(COMPONENT_LOG, "Facility %s already exists", name);
 		return -EEXIST;
 	}
 	if (glist_null(&facility->lf_active)) {
-		pthread_rwlock_unlock(&log_rwlock);
+		PTHREAD_RWLOCK_unlock(&log_rwlock);
 		LogCrit(COMPONENT_LOG,
 			 "Log facility (%s) is already disabled",
 			 name);
 		return -EINVAL;
 	}
 	if (facility == default_facility) {
-		pthread_rwlock_unlock(&log_rwlock);
+		PTHREAD_RWLOCK_unlock(&log_rwlock);
 		LogCrit(COMPONENT_LOG,
 			 "Cannot disable the default logger (%s)",
 			 default_facility->lf_name);
@@ -858,7 +858,7 @@ int disable_log_facility(char *name)
 				max_headers = found->lf_headers;
 		}
 	}
-	pthread_rwlock_unlock(&log_rwlock);
+	PTHREAD_RWLOCK_unlock(&log_rwlock);
 	return 0;
 }
 
@@ -880,10 +880,10 @@ static int set_default_log_facility(const char *name)
 	if (name == NULL || *name == '\0')
 		return -EINVAL;
 
-	pthread_rwlock_wrlock(&log_rwlock);
+	PTHREAD_RWLOCK_wrlock(&log_rwlock);
 	facility = find_log_facility(name);
 	if (facility == NULL) {
-		pthread_rwlock_unlock(&log_rwlock);
+		PTHREAD_RWLOCK_unlock(&log_rwlock);
 		LogCrit(COMPONENT_LOG, "Facility %s does not exist", name);
 		return -EEXIST;
 	}
@@ -911,7 +911,7 @@ static int set_default_log_facility(const char *name)
 		max_headers = facility->lf_headers;
 	default_facility = facility;
 out:
-	pthread_rwlock_unlock(&log_rwlock);
+	PTHREAD_RWLOCK_unlock(&log_rwlock);
 	return 0;
 }
 
@@ -940,10 +940,10 @@ int set_log_destination(char *name, char *dest)
 			 "New log file path empty or too long");
 		return -EINVAL;
 	}
-	pthread_rwlock_wrlock(&log_rwlock);
+	PTHREAD_RWLOCK_wrlock(&log_rwlock);
 	facility = find_log_facility(name);
 	if (facility == NULL) {
-		pthread_rwlock_unlock(&log_rwlock);
+		PTHREAD_RWLOCK_unlock(&log_rwlock);
 		LogCrit(COMPONENT_LOG,
 			 "No such log facility (%s)",
 			 name);
@@ -957,7 +957,7 @@ int set_log_destination(char *name, char *dest)
 		dir = dirname(dir);
 		rc = access(dir, W_OK);
 		if (rc != 0) {
-			pthread_rwlock_unlock(&log_rwlock);
+			PTHREAD_RWLOCK_unlock(&log_rwlock);
 			LogCrit(COMPONENT_LOG,
 				"Cannot create new log file (%s), because: %s",
 				dest, strerror(errno));
@@ -965,7 +965,7 @@ int set_log_destination(char *name, char *dest)
 		}
 		logfile = gsh_strdup(dest);
 		if (logfile == NULL) {
-			pthread_rwlock_unlock(&log_rwlock);
+			PTHREAD_RWLOCK_unlock(&log_rwlock);
 			LogCrit(COMPONENT_LOG,
 				"No memory for log file name (%s) for %s",
 				dest, facility->lf_name);
@@ -982,7 +982,7 @@ int set_log_destination(char *name, char *dest)
 		} else if (strcasecmp(dest, "stderr") == 0) {
 			out = stderr;
 		} else {
-			pthread_rwlock_unlock(&log_rwlock);
+			PTHREAD_RWLOCK_unlock(&log_rwlock);
 			LogCrit(COMPONENT_LOG,
 				"Expected STDERR or STDOUT, not (%s)",
 				dest);
@@ -990,13 +990,13 @@ int set_log_destination(char *name, char *dest)
 		}
 		facility->lf_private = out;
 	} else {
-		pthread_rwlock_unlock(&log_rwlock);
+		PTHREAD_RWLOCK_unlock(&log_rwlock);
 		LogCrit(COMPONENT_LOG,
 			 "Log facility %s destination is not changable",
 			facility->lf_name);
 		return -EINVAL;
 	}
-	pthread_rwlock_unlock(&log_rwlock);
+	PTHREAD_RWLOCK_unlock(&log_rwlock);
 	return 0;
 }
 
@@ -1018,17 +1018,17 @@ int set_log_level(char *name, log_levels_t max_level)
 		return -EINVAL;
 	if (max_level < NIV_NULL || max_level >= NB_LOG_LEVEL)
 		return -EINVAL;
-	pthread_rwlock_wrlock(&log_rwlock);
+	PTHREAD_RWLOCK_wrlock(&log_rwlock);
 	facility = find_log_facility(name);
 	if (facility == NULL) {
-		pthread_rwlock_unlock(&log_rwlock);
+		PTHREAD_RWLOCK_unlock(&log_rwlock);
 		LogCrit(COMPONENT_LOG,
 			 "No such log facility (%s)",
 			 name);
 		return -ENOENT;
 	}
 	facility->lf_max_level = max_level;
-	pthread_rwlock_unlock(&log_rwlock);
+	PTHREAD_RWLOCK_unlock(&log_rwlock);
 	return 0;
 }
 
@@ -1397,7 +1397,7 @@ void display_log_component_level(log_components_t component, char *file,
 	if (b_left > 0)
 		b_left = display_vprintf(&dsp_log, format, arguments);
 
-	pthread_rwlock_rdlock(&log_rwlock);
+	PTHREAD_RWLOCK_rdlock(&log_rwlock);
 
 	glist_for_each(glist, &active_facility_list) {
 		facility = glist_entry(glist, struct log_facility, lf_active);
@@ -1410,7 +1410,7 @@ void display_log_component_level(log_components_t component, char *file,
 					  compstr, message);
 	}
 
-	pthread_rwlock_unlock(&log_rwlock);
+	PTHREAD_RWLOCK_unlock(&log_rwlock);
 
 	if (level == NIV_FATAL)
 		Fatal();

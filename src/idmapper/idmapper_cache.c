@@ -676,8 +676,8 @@ void idmapper_clear_cache(void)
 {
 	struct avltree_node *node;
 
-	pthread_rwlock_wrlock(&idmapper_user_lock);
-	pthread_rwlock_wrlock(&idmapper_group_lock);
+	PTHREAD_RWLOCK_wrlock(&idmapper_user_lock);
+	PTHREAD_RWLOCK_wrlock(&idmapper_group_lock);
 
 	memset(uid_cache, 0, id_cache_size * sizeof(struct avltree_node *));
 	memset(gid_cache, 0, id_cache_size * sizeof(struct avltree_node *));
@@ -710,8 +710,8 @@ void idmapper_clear_cache(void)
 
 	assert(avltree_first(&gid_tree) == NULL);
 
-	pthread_rwlock_unlock(&idmapper_group_lock);
-	pthread_rwlock_unlock(&idmapper_user_lock);
+	PTHREAD_RWLOCK_unlock(&idmapper_group_lock);
+	PTHREAD_RWLOCK_unlock(&idmapper_user_lock);
 }
 
 /** @} */

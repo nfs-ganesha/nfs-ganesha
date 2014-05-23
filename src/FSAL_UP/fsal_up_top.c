@@ -341,21 +341,16 @@ static state_status_t lock_avail(struct fsal_module *fsal,
 				 void *owner,
 				 fsal_lock_param_t *lock_param)
 {
-	cache_entry_t *entry = NULL;
-	int rc = 0;
+	cache_entry_t *entry;
+	cache_inode_status_t cache_status;
 
-	rc = up_get(fsal, file, &entry);
-	if (rc == 0) {
-		available_blocked_lock_upcall(entry, owner, lock_param);
+	cache_status = up_get(fsal, file, &entry);
+	if (cache_status != CACHE_INODE_SUCCESS)
+		return STATE_NOT_FOUND;
 
-		if (entry)
-			cache_inode_put(entry);
-
-	} else {
-		rc = STATE_NOT_FOUND;
-	}
-
-	return rc;
+	available_blocked_lock_upcall(entry, owner, lock_param);
+	cache_inode_put(entry);
+	return STATE_SUCCESS;
 }
 
 /**
@@ -705,8 +700,8 @@ static int32_t layoutrec_completion(rpc_call_t *call, rpc_call_hook hook,
 	init_root_op_context(&root_op_context, NULL, NULL,
 			     0, 0, UNKNOWN_REQUEST);
 
-	LogFullDebug(COMPONENT_NFS_CB, "status %d arg %p",
-		     call->cbt.v_u.v4.res.status, arg);
+	LogFullDebug(COMPONENT_NFS_CB, "status %d cb_data %p",
+		     call->cbt.v_u.v4.res.status, cb_data);
 
 	/* Get this out of the way up front */
 	if (hook != RPC_CALL_COMPLETE)
@@ -726,9 +721,9 @@ static int32_t layoutrec_completion(rpc_call_t *call, rpc_call_hook hook,
 		 * above this point in the function, or we could stash
 		 * the clientid in cb_data.
 		 */
-		gsh_free(cb_data);
 		free_layoutrec(&call->cbt.v_u.v4.args.argarray.argarray_val[1]);
-		nfs41_complete_single(call, hook, arg, flags);
+		nfs41_complete_single(call, hook, cb_data, flags);
+		gsh_free(cb_data);
 		return 0;
 	} else if (call->cbt.v_u.v4.res.status == NFS4ERR_DELAY) {
 		struct timespec current;
@@ -752,7 +747,7 @@ static int32_t layoutrec_completion(rpc_call_t *call, rpc_call_hook hook,
 
 		/* We don't free the argument here, because we'll be
 		   re-using that to make the queued call. */
-		nfs41_complete_single(call, hook, arg, flags);
+		nfs41_complete_single(call, hook, cb_data, flags);
 		delayed_submit(layoutrecall_one_call, cb_data, delay);
 		return 0;
 	}
@@ -804,7 +799,7 @@ static int32_t layoutrec_completion(rpc_call_t *call, rpc_call_hook hook,
 		PTHREAD_RWLOCK_unlock(&state->state_entry->state_lock);
 	}
 	free_layoutrec(&call->cbt.v_u.v4.args.argarray.argarray_val[1]);
-	nfs41_complete_single(call, hook, arg, flags);
+	nfs41_complete_single(call, hook, cb_data, flags);
 	gsh_free(cb_data);
 	return 0;
 }

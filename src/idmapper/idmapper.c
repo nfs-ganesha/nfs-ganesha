@@ -111,7 +111,7 @@ static bool xdr_encode_nfs4_princ(XDR *xdrs, uint32_t id, bool group)
 	uint32_t not_a_size_t;
 	bool success = false;
 
-	pthread_rwlock_rdlock(group ? &idmapper_group_lock :
+	PTHREAD_RWLOCK_rdlock(group ? &idmapper_group_lock :
 			      &idmapper_user_lock);
 	if (group)
 		success = idmapper_lookup_by_gid(id, &found);
@@ -126,11 +126,11 @@ static bool xdr_encode_nfs4_princ(XDR *xdrs, uint32_t id, bool group)
 		success =
 		    inline_xdr_bytes(xdrs, (char **)&found->addr, &not_a_size_t,
 				     UINT32_MAX);
-		pthread_rwlock_unlock(group ? &idmapper_group_lock :
+		PTHREAD_RWLOCK_unlock(group ? &idmapper_group_lock :
 				      &idmapper_user_lock);
 		return success;
 	} else {
-		pthread_rwlock_unlock(group ? &idmapper_group_lock :
+		PTHREAD_RWLOCK_unlock(group ? &idmapper_group_lock :
 				      &idmapper_user_lock);
 		int rc;
 		bool looked_up = false;
@@ -220,14 +220,14 @@ static bool xdr_encode_nfs4_princ(XDR *xdrs, uint32_t id, bool group)
 		}
 
 		/* Add to the cache and encode the result. */
-		pthread_rwlock_wrlock(group ? &idmapper_group_lock :
+		PTHREAD_RWLOCK_wrlock(group ? &idmapper_group_lock :
 				      &idmapper_user_lock);
 		if (group)
 			success = idmapper_add_group(&new_name, id);
 		else
 			success = idmapper_add_user(&new_name, id, NULL, false);
 
-		pthread_rwlock_unlock(group ? &idmapper_group_lock :
+		PTHREAD_RWLOCK_unlock(group ? &idmapper_group_lock :
 				      &idmapper_user_lock);
 		if (unlikely(!success)) {
 			LogMajor(COMPONENT_IDMAPPER, "%s failed.",
@@ -455,13 +455,13 @@ static bool name2id(const struct gsh_buffdesc *name, uint32_t *id, bool group,
 {
 	bool success;
 
-	pthread_rwlock_rdlock(group ? &idmapper_group_lock :
+	PTHREAD_RWLOCK_rdlock(group ? &idmapper_group_lock :
 			      &idmapper_user_lock);
 	if (group)
 		success = idmapper_lookup_by_gname(name, id);
 	else
 		success = idmapper_lookup_by_uname(name, id, NULL, false);
-	pthread_rwlock_unlock(group ? &idmapper_group_lock :
+	PTHREAD_RWLOCK_unlock(group ? &idmapper_group_lock :
 			      &idmapper_user_lock);
 
 	if (success)
@@ -504,7 +504,7 @@ static bool name2id(const struct gsh_buffdesc *name, uint32_t *id, bool group,
 			*id = anon;
 		}
 
-		pthread_rwlock_wrlock(group ? &idmapper_group_lock :
+		PTHREAD_RWLOCK_wrlock(group ? &idmapper_group_lock :
 				      &idmapper_user_lock);
 		if (group)
 			success = idmapper_add_group(name, *id);
@@ -513,7 +513,7 @@ static bool name2id(const struct gsh_buffdesc *name, uint32_t *id, bool group,
 			    idmapper_add_user(name, *id, got_gid ? &gid : NULL,
 					      false);
 
-		pthread_rwlock_unlock(group ? &idmapper_group_lock :
+		PTHREAD_RWLOCK_unlock(group ? &idmapper_group_lock :
 				      &idmapper_user_lock);
 
 		if (!success)
@@ -594,12 +594,12 @@ bool principal2uid(char *principal, uid_t *uid, gid_t *gid)
 		return false;
 
 #ifdef USE_NFSIDMAP
-	pthread_rwlock_rdlock(&idmapper_user_lock);
+	PTHREAD_RWLOCK_rdlock(&idmapper_user_lock);
 	success =
 	    idmapper_lookup_by_uname(&princbuff, &gss_uid, &gss_gidres, true);
 	if (success && gss_gidres)
 		gss_gid = *gss_gidres;
-	pthread_rwlock_unlock(&idmapper_user_lock);
+	PTHREAD_RWLOCK_unlock(&idmapper_user_lock);
 	if (unlikely(!success)) {
 		if ((princbuff.len >= 4)
 		    && (!memcmp(princbuff.addr, "nfs/", 4)
@@ -695,10 +695,10 @@ bool principal2uid(char *principal, uid_t *uid, gid_t *gid)
  principal_found:
 #endif
 
-		pthread_rwlock_wrlock(&idmapper_user_lock);
+		PTHREAD_RWLOCK_wrlock(&idmapper_user_lock);
 		success =
 		    idmapper_add_user(&princbuff, gss_uid, &gss_gid, true);
-		pthread_rwlock_unlock(&idmapper_user_lock);
+		PTHREAD_RWLOCK_unlock(&idmapper_user_lock);
 
 		if (!success) {
 			LogMajor(COMPONENT_IDMAPPER,

@@ -497,16 +497,13 @@ bool open4_open_owner(struct nfs_argop4 *op, compound_data_t *data,
 			 */
 			if (res_OPEN4->status == NFS4_OK) {
 				/* Check if filename is correct */
-				cache_status = nfs4_utf8string2dynamic(
+				res_OPEN4->status = nfs4_utf8string2dynamic(
 				     &arg_OPEN4->claim.open_claim4_u.file,
 				     UTF8_SCAN_ALL,
 				     &filename);
 
-				if (cache_status != CACHE_INODE_SUCCESS) {
-					res_OPEN4->status =
-					    nfs4_Errno(cache_status);
+				if (res_OPEN4->status != NFS4_OK)
 					return false;
-				}
 
 				cache_status =
 				    cache_inode_lookup(data->current_entry,
@@ -893,8 +890,6 @@ static void get_delegation(compound_data_t *data, struct nfs_argop4 *op,
 		lock_desc.lock_type = FSAL_LOCK_R;
 		deleg_type = OPEN_DELEGATE_READ;
 	} else {
-		lock_desc.lock_type = FSAL_NO_LOCK;
-		deleg_type = OPEN_DELEGATE_NONE;
 		return;
 	}
 
@@ -984,7 +979,8 @@ static void get_delegation(compound_data_t *data, struct nfs_argop4 *op,
 				get_deleg_perm(data->current_entry,
 					       &writeres->permissions,
 					       deleg_type);
-			} else if (deleg_type == OPEN_DELEGATE_READ) {
+			} else {
+				assert(deleg_type == OPEN_DELEGATE_READ);
 				open_read_delegation4 *readres =
 				&resok->delegation.open_delegation4_u.read;
 				readres->stateid = saved_data->deleg.sd_stateid;
@@ -992,8 +988,6 @@ static void get_delegation(compound_data_t *data, struct nfs_argop4 *op,
 				get_deleg_perm(data->current_entry,
 					       &readres->permissions,
 					       deleg_type);
-			} else { /* NONE */
-				return;
 			}
 		}
 	}
@@ -1283,40 +1277,22 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 
 		gsh_free(filename);
 
-		if (cache_status != CACHE_INODE_NOT_FOUND) {
-			if (cache_status != CACHE_INODE_SUCCESS) {
-				res_OPEN4->status = nfs4_Errno(cache_status);
-				return res_OPEN4->status;
-			}
-
+		if (cache_status == CACHE_INODE_SUCCESS) {
 			PTHREAD_RWLOCK_wrlock(&entry_lookup->state_lock);
-
 			glist_for_each(glist,
 				       &entry_lookup->object.file.lock_list) {
 				found_entry = glist_entry(glist,
 							  state_lock_entry_t,
 							  sle_list);
 
-				if (found_entry != NULL) {
-					LogDebug(COMPONENT_NFS_CB,
-						 "found_entry %p",
-						 found_entry);
-					file_state = found_entry->sle_state;
-				} else {
-					LogDebug(COMPONENT_NFS_CB,
-						 "list is empty %p",
-						 found_entry);
-					PTHREAD_RWLOCK_unlock(&entry_lookup->
-							      state_lock);
-					res_OPEN4->status = NFS4ERR_BAD_STATEID;
-					return res_OPEN4->status;
-				}
+				LogDebug(COMPONENT_NFS_CB, "found_entry %p",
+						found_entry);
+				file_state = found_entry->sle_state;
 				break;
 			}
-
 			PTHREAD_RWLOCK_unlock(&entry_lookup->state_lock);
 
-			if (entry_lookup == NULL || file_state == NULL) {
+			if (file_state == NULL) {
 				res_OPEN4->status = nfs4_Errno(cache_status);
 				goto out;
 			}
@@ -1335,12 +1311,13 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 			LogDebug(COMPONENT_NFS_V4,
 				 "done with CLAIM_DELEGATE_CUR");
 			goto out;
-		} else
-			LogDebug(COMPONENT_NFS_CB,
-				 "did not find entry %p",
-				 entry_lookup);
-
-		break;
+		} else if (cache_status == CACHE_INODE_NOT_FOUND) {
+			LogDebug(COMPONENT_NFS_CB, "did not find entry");
+			break;
+		} else {
+			res_OPEN4->status = nfs4_Errno(cache_status);
+			return res_OPEN4->status;
+		}
 
 	default:
 		LogFatal(COMPONENT_STATE,

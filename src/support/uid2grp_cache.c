@@ -419,14 +419,14 @@ void uid2grp_remove_by_uname(const struct gsh_buffdesc *name)
 }
 
 /**
- * @brief Wipe out the idmapper cache
+ * @brief Wipe out the uid2grp cache
  */
 
 void uid2grp_clear_cache(void)
 {
 	struct avltree_node *node;
 
-	pthread_rwlock_wrlock(&uid2grp_user_lock);
+	PTHREAD_RWLOCK_wrlock(&uid2grp_user_lock);
 
 	while ((node = avltree_first(&uname_tree))) {
 		struct cache_info *info = avltree_container_of(node,
@@ -438,7 +438,7 @@ void uid2grp_clear_cache(void)
 
 	assert(avltree_first(&uid_tree) == NULL);
 
-	pthread_rwlock_unlock(&uid2grp_user_lock);
+	PTHREAD_RWLOCK_unlock(&uid2grp_user_lock);
 }
 
 /** @} */
