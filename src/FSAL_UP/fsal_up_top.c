@@ -1223,29 +1223,30 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 				(struct delegrecall_context *) arg;
 	struct cf_deleg_stats *clfl_stats = NULL;
 	struct c_deleg_stats *cl_stats = NULL;
-	state_lock_entry_t *deleg_entry = NULL;
+	state_lock_entry_t *deleg_entry, *tdentry;
 	cache_entry_t *entry = deleg_ctx->entry;
 	struct glist_head *glist, *glist_n;
 	stateid4 ctx_stateid;
+	nfs_client_id_t *clientid;
+
 
 	memcpy(&ctx_stateid, &deleg_ctx->sd_stateid, sizeof(stateid4));
 
 	LogDebug(COMPONENT_NFS_CB, "%p %s", call,
-		 (hook ==
-		  RPC_CALL_ABORT) ? "RPC_CALL_ABORT" : "RPC_CALL_COMPLETE");
+		 (hook == RPC_CALL_COMPLETE) ? "Success" : "Failed");
 
+	assert(entry != NULL);
 	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
+	deleg_entry = NULL;
 	glist_for_each_safe(glist, glist_n, &entry->object.file.deleg_list) {
-		deleg_entry = glist_entry(glist, state_lock_entry_t, sle_list);
-		if (deleg_ctx->deleg_entry == deleg_entry &&
-		    deleg_entry->sle_type == LEASE_LOCK &&
+		tdentry = glist_entry(glist, state_lock_entry_t, sle_list);
+		if (deleg_ctx->deleg_entry == tdentry &&
+		    tdentry->sle_type == LEASE_LOCK &&
 		    !memcmp(&ctx_stateid,
-			    &deleg_entry->
-					sle_state->state_data.deleg.sd_stateid,
+			    &tdentry-> sle_state->state_data.deleg.sd_stateid,
 			    sizeof(stateid4))) {
+			deleg_entry = tdentry;
 			break;
-		} else {
-			deleg_entry = NULL;
 		}
 	}
 
@@ -1254,16 +1255,16 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 		goto out_free;
 	}
 
-	LogDebug(COMPONENT_NFS_CB, "deleg_entry %p",
-				 deleg_entry);
+	LogDebug(COMPONENT_NFS_CB, "deleg_entry %p", deleg_entry);
 
 	clfl_stats = &deleg_entry->sle_state->state_data.deleg.sd_clfile_stats;
-        cl_stats = &deleg_entry->sle_owner->so_owner.so_nfs4_owner.so_clientrec->cid_deleg_stats;
+        clientid = deleg_entry->sle_owner->so_owner.so_nfs4_owner.so_clientrec;
+        cl_stats = &clientid->cid_deleg_stats;
 
 
 	switch (hook) {
 	case RPC_CALL_COMPLETE:
-		LogDebug(COMPONENT_NFS_CB, "call result: %d", call->stat);
+		LogMidDebug(COMPONENT_NFS_CB, "call result: %d", call->stat);
 		fh = call->cbt.v_u.v4.args.argarray.argarray_val->
 				nfs_cb_argop4_u.opcbrecall.fh.nfs_fh4_val;
 		if (call->stat != RPC_SUCCESS) {
@@ -1341,7 +1342,9 @@ static uint32_t delegrecall_one(state_lock_entry_t *deleg_entry)
 	bool needs_revoke = FALSE;
 	struct delegrecall_context *p_cargs = NULL;
 	struct c_deleg_stats *cl_stats;
-        cl_stats = &deleg_entry->sle_owner->so_owner.so_nfs4_owner.so_clientrec->cid_deleg_stats;
+	nfs_client_id_t *clientid;
+	clientid = deleg_entry->sle_owner->so_owner.so_nfs4_owner.so_clientrec;
+        cl_stats = &clientid->cid_deleg_stats;
 
 	cache_entry_t *entry = deleg_entry->sle_entry;
 

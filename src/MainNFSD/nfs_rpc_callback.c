@@ -1009,7 +1009,8 @@ int32_t nfs_rpc_dispatch_call(rpc_call_t *call, uint32_t flags)
 	}
 
 	call->stat = clnt_call(call->chan->clnt,
-			       call->chan->auth, CB_COMPOUND,
+			       call->chan->auth,
+			       CB_COMPOUND,
 			       (xdrproc_t) xdr_CB_COMPOUND4args,
 			       &call->cbt.v_u.v4.args,
 			       (xdrproc_t) xdr_CB_COMPOUND4res,

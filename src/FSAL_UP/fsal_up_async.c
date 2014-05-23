@@ -527,11 +527,11 @@ int up_async_delegrecall(struct fridgethr *fr,
 	args->fsal = fsal;
 
 	rc = fridgethr_submit(fr, up_queue_delegrecall, args);
- out:
 
-	if (rc != 0 && args)
+	if (rc != 0)
 		gsh_free(args);
 
+ out:
 	return rc;
 }
 
