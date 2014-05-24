@@ -67,14 +67,13 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t *data,
 	    &resp->nfs_resop4_u.opdelegreturn;
 
 	state_status_t state_status;
-	state_t *pstate_found = NULL;
-	state_t *deleg_state = NULL;
-	state_owner_t *plock_owner;
+	state_t *state_found;
+	state_owner_t *lock_owner;
 	fsal_lock_param_t lock_desc;
-	unsigned int rc = 0;
 	struct glist_head *glist, *glistn;
-	cache_entry_t *pentry = NULL;
-	state_lock_entry_t *found_entry = NULL;
+	cache_entry_t *entry;
+	state_lock_entry_t *found_lock;
+	state_lock_entry_t *iter_lock;
 	const char *tag = "DELEGRETURN";
 
 	LogDebug(COMPONENT_NFS_V4_LOCK,
@@ -83,105 +82,74 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t *data,
 	/* Initialize to sane default */
 	resp->resop = NFS4_OP_DELEGRETURN;
 
-	if (!op_ctx->fsal_export->ops->fs_supports(
-				op_ctx->fsal_export, fso_delegations)) {
-		res_DELEGRETURN4->status = NFS4_OK;
-		return res_DELEGRETURN4->status;
-	}
-
 	/* If the filehandle is invalid */
 	res_DELEGRETURN4->status = nfs4_Is_Fh_Invalid(&data->currentFH);
 
 	if (res_DELEGRETURN4->status != NFS4_OK)
 		return res_DELEGRETURN4->status;
 
-	/* Delegation is done only on a file */
-	if (data->current_filetype != REGULAR_FILE) {
-		/* Type of the entry is not correct */
-		switch (data->current_filetype) {
-		case DIRECTORY:
-			res_DELEGRETURN4->status = NFS4ERR_ISDIR;
-			return res_DELEGRETURN4->status;
-
-		default:
-			res_DELEGRETURN4->status = NFS4ERR_INVAL;
-			return res_DELEGRETURN4->status;
-		}
-	}
-
-	/* Only read delegations */
-	lock_desc.lock_type = FSAL_LOCK_R;
-	lock_desc.lock_start = 0;
-	lock_desc.lock_length = 0;
-	lock_desc.lock_sle_type = FSAL_LEASE_LOCK;
-
 	/* Check stateid correctness and get pointer to state */
-	rc = nfs4_Check_Stateid(&arg_DELEGRETURN4->deleg_stateid,
-				data->current_entry,
-				&pstate_found,
-				data,
-				STATEID_SPECIAL_FOR_LOCK,
-				0,
-				false,
-				tag);
+	res_DELEGRETURN4->status = nfs4_Check_Stateid(&arg_DELEGRETURN4->
+						      deleg_stateid,
+						      data->current_entry,
+						      &state_found,
+						      data,
+						      STATEID_SPECIAL_FOR_LOCK,
+						      0,
+						      false,
+						      tag);
 
-	if (rc != NFS4_OK) {
-		res_DELEGRETURN4->status = rc;
+	if (res_DELEGRETURN4->status != NFS4_OK)
 		return res_DELEGRETURN4->status;
+
+	entry = data->current_entry;
+
+	found_lock = NULL;
+	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
+	glist_for_each_safe(glist, glistn, &entry->object.file.deleg_list) {
+		iter_lock = glist_entry(glist, state_lock_entry_t, sle_list);
+		LogDebug(COMPONENT_NFS_V4_LOCK, "iter deleg entry %p",
+			 iter_lock);
+		assert(iter_lock->sle_state->state_type == STATE_TYPE_DELEG);
+		if (SAME_STATEID(&arg_DELEGRETURN4->deleg_stateid,
+				 iter_lock->sle_state)) {
+			found_lock = iter_lock;
+			break;
+		}
 	}
+	PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
-	pentry = data->current_entry;
-
-	PTHREAD_RWLOCK_wrlock(&pentry->state_lock);
-	glist_for_each_safe(glist, glistn, &pentry->object.file.deleg_list) {
-		found_entry = glist_entry(glist, state_lock_entry_t, sle_list);
-		if (found_entry == NULL)
-			continue;
-		LogDebug(COMPONENT_NFS_V4_LOCK, "found_entry %p", found_entry);
-		if (found_entry->sle_state->state_type != STATE_TYPE_DELEG) {
-			found_entry = NULL;
-			continue;
-		}
-		deleg_state = found_entry->sle_state;
-		if (memcmp(&deleg_state->stateid_other,
-			   &arg_DELEGRETURN4->deleg_stateid.other,
-			   OTHERSIZE) != 0) {
-			found_entry = NULL;
-			continue;
-		}
-		LogDebug(COMPONENT_NFS_V4_LOCK, "Matching state found!");
-		if (deleg_state->state_seqid !=
-		    arg_DELEGRETURN4->deleg_stateid.seqid) {
-			LogFullDebug(COMPONENT_STATE, "But seqid doesn't match");
-			res_DELEGRETURN4->status = NFS4ERR_BAD_SEQID;
-			return res_DELEGRETURN4->status;
-		}
-		break;
-	}
-	PTHREAD_RWLOCK_unlock(&pentry->state_lock);
-
-	if (found_entry == NULL) {
+	if (found_lock == NULL) {
 		LogDebug(COMPONENT_NFS_V4_LOCK,
 			 "We did not find a delegation in the delegation lock list.");
 		res_DELEGRETURN4->status = NFS4ERR_BAD_STATEID;
 		return res_DELEGRETURN4->status;
 	}
 
-	pthread_mutex_lock(&found_entry->sle_mutex);
-	found_entry->sle_state->state_data.deleg.sd_state = DELEG_RETURNED;
-	pthread_mutex_unlock(&found_entry->sle_mutex);
+	LogDebug(COMPONENT_NFS_V4_LOCK, "Matching delegation found!");
+
+	pthread_mutex_lock(&found_lock->sle_mutex);
+	found_lock->sle_state->state_data.deleg.sd_state = DELEG_RETURNED;
+	pthread_mutex_unlock(&found_lock->sle_mutex);
 		
-	plock_owner = found_entry->sle_owner;
+
+	lock_owner = found_lock->sle_owner;
+
+	/* lock_type doesn't matter as we are going to do unlock */
+	lock_desc.lock_type = FSAL_LOCK_R;
+	lock_desc.lock_start = 0;
+	lock_desc.lock_length = 0;
+	lock_desc.lock_sle_type = FSAL_LEASE_LOCK;
 
 	LogLock(COMPONENT_NFS_V4_LOCK, NIV_FULL_DEBUG, tag, data->current_entry,
-		plock_owner, &lock_desc);
+		lock_owner, &lock_desc);
 
 	/* Now we have a lock owner and a stateid.
 	 * Go ahead and push unlock into SAL (and FSAL).
 	 */
 	state_status = state_unlock(data->current_entry,
-				    plock_owner,
-				    pstate_found,
+				    lock_owner,
+				    state_found,
 				    &lock_desc,
 				    LEASE_LOCK);
 
@@ -189,7 +157,7 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t *data,
 		res_DELEGRETURN4->status = nfs4_Errno_state(state_status);
 
 		/* Save the response in the lock owner */
-		Copy_nfs4_state_req(plock_owner,
+		Copy_nfs4_state_req(lock_owner,
 				    arg_DELEGRETURN4->deleg_stateid.seqid,
 				    op,
 				    data->current_entry,
@@ -200,8 +168,8 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	/* Remove state entry and update stats */
-	deleg_heuristics_recall(found_entry);
-	state_del(pstate_found, false);
+	deleg_heuristics_recall(found_lock);
+	state_del(state_found, false);
 
 	/* Successful exit */
 	res_DELEGRETURN4->status = NFS4_OK;
@@ -209,7 +177,7 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t *data,
 	LogDebug(COMPONENT_NFS_V4_LOCK, "Successful exit");
 
 	/* Save the response in the lock owner */
-	Copy_nfs4_state_req(plock_owner,
+	Copy_nfs4_state_req(lock_owner,
 			    arg_DELEGRETURN4->deleg_stateid.seqid,
 			    op,
 			    data->current_entry,
