@@ -71,7 +71,6 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t *data,
 	state_owner_t *lock_owner;
 	fsal_lock_param_t lock_desc;
 	struct glist_head *glist, *glistn;
-	cache_entry_t *entry;
 	state_lock_entry_t *found_lock;
 	state_lock_entry_t *iter_lock;
 	const char *tag = "DELEGRETURN";
@@ -102,11 +101,10 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t *data,
 	if (res_DELEGRETURN4->status != NFS4_OK)
 		return res_DELEGRETURN4->status;
 
-	entry = data->current_entry;
-
 	found_lock = NULL;
-	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
-	glist_for_each_safe(glist, glistn, &entry->object.file.deleg_list) {
+	PTHREAD_RWLOCK_wrlock(&data->current_entry->state_lock);
+	glist_for_each_safe(glist, glistn,
+			    &data->current_entry->object.file.deleg_list) {
 		iter_lock = glist_entry(glist, state_lock_entry_t, sle_list);
 		LogDebug(COMPONENT_NFS_V4_LOCK, "iter deleg entry %p",
 			 iter_lock);
@@ -117,13 +115,12 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t *data,
 			break;
 		}
 	}
-	PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
 	if (found_lock == NULL) {
 		LogDebug(COMPONENT_NFS_V4_LOCK,
 			 "We did not find a delegation in the delegation lock list.");
 		res_DELEGRETURN4->status = NFS4ERR_BAD_STATEID;
-		return res_DELEGRETURN4->status;
+		goto unlock;
 	}
 
 	LogDebug(COMPONENT_NFS_V4_LOCK, "Matching delegation found!");
@@ -147,15 +144,13 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t *data,
 	/* Now we have a lock owner and a stateid.
 	 * Go ahead and push unlock into SAL (and FSAL).
 	 */
-	state_status = state_unlock(data->current_entry,
-				    lock_owner,
-				    state_found,
-				    &lock_desc,
-				    LEASE_LOCK);
+	state_status = state_unlock_locked(data->current_entry,
+					   lock_owner,
+					   state_found,
+					   &lock_desc,
+					   LEASE_LOCK);
 
 	if (state_status != STATE_SUCCESS) {
-		res_DELEGRETURN4->status = nfs4_Errno_state(state_status);
-
 		/* Save the response in the lock owner */
 		Copy_nfs4_state_req(lock_owner,
 				    arg_DELEGRETURN4->deleg_stateid.seqid,
@@ -163,13 +158,13 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t *data,
 				    data->current_entry,
 				    resp,
 				    tag);
-
-		return res_DELEGRETURN4->status;
+		res_DELEGRETURN4->status = nfs4_Errno_state(state_status);
+		goto unlock;
 	}
 
 	/* Remove state entry and update stats */
 	deleg_heuristics_recall(found_lock);
-	state_del(state_found, false);
+	state_del_locked(state_found, data->current_entry);
 
 	/* Successful exit */
 	res_DELEGRETURN4->status = NFS4_OK;
@@ -184,6 +179,8 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t *data,
 			    resp,
 			    tag);
 
+unlock:
+	PTHREAD_RWLOCK_unlock(&data->current_entry->state_lock);
 	return res_DELEGRETURN4->status;
 }				/* nfs4_op_delegreturn */
 
