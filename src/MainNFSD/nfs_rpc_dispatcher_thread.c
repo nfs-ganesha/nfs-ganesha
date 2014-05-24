@@ -809,11 +809,10 @@ void thr_stallq(struct fridgethr_context *thr_ctx)
 				glist_del(&xu->stallq);
 				--(nfs_req_st.stallq.stalled);
 				xu->flags &= ~XPRT_PRIVATE_FLAG_STALLED;
-				pthread_mutex_unlock(&xprt->xp_lock);
-				(void)svc_rqst_rearm_events(xprt,
-							    SVC_RQST_FLAG_NONE);
+				(void)svc_rqst_rearm_events(
+					xprt, SVC_RQST_FLAG_NONE);
 				/* drop stallq ref */
-				gsh_xprt_unref(xprt, XPRT_PRIVATE_FLAG_NONE,
+				gsh_xprt_unref(xprt, XPRT_PRIVATE_FLAG_LOCKED,
 					       __func__, __LINE__);
 				goto restart;
 			}
