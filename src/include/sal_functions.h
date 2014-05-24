@@ -504,10 +504,24 @@ state_status_t state_lock(cache_entry_t *entry,
 			  /* description of conflicting lock */
 			  fsal_lock_param_t *conflict,
 			  lock_type_t sle_type);
+state_status_t state_lock_locked(cache_entry_t *entry,
+				 state_owner_t *owner,
+				 state_t *state, state_blocking_t blocking,
+				 state_block_data_t *block_data,
+				 fsal_lock_param_t *lock,
+				 /* owner that holds conflicting lock */
+				 state_owner_t **holder,
+				 /* description of conflicting lock */
+				 fsal_lock_param_t *conflict,
+				 lock_type_t sle_type);
 
 state_status_t state_unlock(cache_entry_t *entry,
 			    state_owner_t *owner, state_t *state,
 			    fsal_lock_param_t *lock, lock_type_t sle_type);
+state_status_t state_unlock_locked(cache_entry_t *entry,
+				   state_owner_t *owner, state_t *state,
+				   fsal_lock_param_t *lock,
+				   lock_type_t sle_type);
 
 state_status_t state_cancel(cache_entry_t *entry,
 			    state_owner_t *owner, fsal_lock_param_t *lock);
