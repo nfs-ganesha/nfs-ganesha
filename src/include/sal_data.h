@@ -656,7 +656,7 @@ struct nfs_client_id_t {
 			struct glist_head cb_session_list;
 		} v41;		/*< v4.1 callback information */
 	} cid_cb;		/*< Version specific callback information */
-	bool_t cb_chan_down;    /* Callback channel state */
+	bool cb_chan_down;    /* Callback channel state */
 	time_t first_path_down_resp_time;  /* Time when the server first sent
 					       NFS4ERR_CB_PATH_DOWN */
 	char cid_server_owner[MAXNAMLEN + 1];	/*< Server owner.
