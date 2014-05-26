@@ -1617,8 +1617,6 @@ static int schedule_delegrevoke_check(state_lock_entry_t *deleg_entry)
 	return rc;
 }
 
-/* entry->state_lock MUST be WRITE locked before calling this function!! 
- * Is there a way we can limit this to a READ lock? */
 state_status_t delegrecall_impl(cache_entry_t *entry)
 {
 	struct glist_head *glist, *glist_n;
@@ -1631,6 +1629,8 @@ state_status_t delegrecall_impl(cache_entry_t *entry)
 		 "FSAL_UP_DELEG: Invalidate cache found entry %p type %u",
 		 entry, entry->type);
 
+	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
+
 	glist_for_each_safe(glist, glist_n, &entry->object.file.deleg_list) {
 		deleg_entry = glist_entry(glist, state_lock_entry_t, sle_list);
 
@@ -1640,21 +1640,17 @@ state_status_t delegrecall_impl(cache_entry_t *entry)
 		deleg_state =
 			&deleg_entry->sle_state->state_data.deleg.sd_state;
 		if (*deleg_state != DELEG_GRANTED) {
-			pthread_mutex_unlock(&deleg_entry->sle_mutex);
 			LogDebug(COMPONENT_FSAL_UP,
 				 "Delegation already being recalled, NOOP");
-			return rc;
+			continue;
 		}
 		*deleg_state = DELEG_RECALL_WIP;
 		clfl_stats->cfd_r_time = time(NULL);
 
 		rc = delegrecall_one(deleg_entry);
 
-		/* break in case of write delegation, there will be only one */
-		if (deleg_entry->sle_state->state_data.deleg.sd_type ==
-							OPEN_DELEGATE_WRITE)
-			break;
 	}
+	PTHREAD_RWLOCK_unlock(&entry->state_lock);
 	return rc;
 }
 
@@ -1686,9 +1682,7 @@ state_status_t delegrecall(struct fsal_module *fsal,
 		return rc;
 	}
 
-	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 	rc = delegrecall_impl(entry);
-	PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
 	/* up_get() took a reference on the entry */
 	cache_inode_put(entry);
