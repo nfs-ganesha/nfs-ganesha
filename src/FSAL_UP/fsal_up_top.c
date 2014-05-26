@@ -1140,7 +1140,7 @@ static bool handle_badhandle_response(state_lock_entry_t *deleg_entry,
 
 		if (call->stat != RPC_SUCCESS) {
 			LogEvent(COMPONENT_NFS_CB, "Callback channel down");
-			p_cargs->clid->cb_chan_down = TRUE;
+			set_cb_chan_down(p_cargs->clid, true);
 			needs_revoke = TRUE;
 			break;	/* do not retry if the channel is down */
 		} else {
@@ -1265,7 +1265,7 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 				nfs_cb_argop4_u.opcbrecall.fh.nfs_fh4_val;
 		if (call->stat != RPC_SUCCESS) {
 			LogEvent(COMPONENT_NFS_CB, "Callback channel down");
-			deleg_ctx->clid->cb_chan_down = TRUE;
+			set_cb_chan_down(deleg_ctx->clid, true);
 			needs_revoke = TRUE;
 		} else
 			needs_revoke = handle_recall_response(deleg_entry,
@@ -1357,7 +1357,7 @@ static uint32_t delegrecall_one(state_lock_entry_t *deleg_entry)
 	}
 
 	/* Attempt a recall only if channel state is UP */
-	if (clid->cb_chan_down == TRUE) {
+	if (get_cb_chan_down(clid)) {
 		LogCrit(COMPONENT_NFS_CB,
 			"Call back channel down, not issuing a recall");
 		code = NFS_CB_CALL_ABORTED;
@@ -1368,13 +1368,13 @@ static uint32_t delegrecall_one(state_lock_entry_t *deleg_entry)
 	if (!chan) {
 		LogCrit(COMPONENT_NFS_CB, "nfs_rpc_get_chan failed");
 		/* TODO: move this to nfs_rpc_get_chan ? */
-		clid->cb_chan_down = TRUE;
+		set_cb_chan_down(clid, true);
 		code = NFS_CB_CALL_ABORTED;
 		goto out;
 	}
 	if (!chan->clnt) {
 		LogCrit(COMPONENT_NFS_CB, "nfs_rpc_get_chan failed (no clnt)");
-		clid->cb_chan_down = TRUE;
+		set_cb_chan_down(clid, true);
 		code = NFS_CB_CALL_ABORTED;
 		goto out;
 	}

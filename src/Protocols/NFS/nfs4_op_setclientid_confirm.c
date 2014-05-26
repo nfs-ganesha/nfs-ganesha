@@ -368,13 +368,14 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op, compound_data_t *data,
 			LogDebug(COMPONENT_CLIENTID, "Updated %s", str);
 		}
 		/* Check and update call back channel state */
-		if (nfs_test_cb_chan(conf) != RPC_SUCCESS) {
-			conf->cb_chan_down = TRUE;
+		if (nfs_param.nfsv4_param.allow_delegations &&
+		    nfs_test_cb_chan(conf) != RPC_SUCCESS) {
+			set_cb_chan_down(conf, true);
 			LogCrit(COMPONENT_CLIENTID,
 				"setclid confirm: Callback channel is down");
 		} else {
-			conf->cb_chan_down = FALSE;
-			LogCrit(COMPONENT_CLIENTID,
+			set_cb_chan_down(conf, false);
+			LogDebug(COMPONENT_CLIENTID,
 				"setclid confirm: Callback channel is UP");
 		}
 
@@ -421,13 +422,14 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op, compound_data_t *data,
 		}
 
 		/* Check and update call back channel state */
-		if (nfs_test_cb_chan(unconf) != RPC_SUCCESS) {
-			unconf->cb_chan_down = TRUE;
+		if (nfs_param.nfsv4_param.allow_delegations &&
+		    nfs_test_cb_chan(unconf) != RPC_SUCCESS) {
+			set_cb_chan_down(unconf, true);
 			LogCrit(COMPONENT_CLIENTID,
 				"setclid confirm: Callback channel is down");
 		} else {
-			unconf->cb_chan_down = FALSE;
-			LogCrit(COMPONENT_CLIENTID,
+			set_cb_chan_down(unconf, false);
+			LogDebug(COMPONENT_CLIENTID,
 				"setclid confirm: Callback channel is UP");
 		}
 

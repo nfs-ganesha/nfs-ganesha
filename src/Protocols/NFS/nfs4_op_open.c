@@ -43,6 +43,7 @@
 #include "fsal_convert.h"
 #include "nfs_creds.h"
 #include "export_mgr.h"
+#include "nfs_rpc_callback.h"
 
 static const char *open_tag = "OPEN";
 
@@ -1448,7 +1449,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 	    && (op_ctx->export_perms->options &
 		EXPORT_OPTION_DELEGATIONS)
 	    && owner->so_owner.so_nfs4_owner.so_confirmed == TRUE
-	    && !clientid->cb_chan_down
+	    && !get_cb_chan_down(clientid)
 	    && claim != CLAIM_DELEGATE_CUR
 	    && should_we_grant_deleg(data->current_entry,
 				     clientid,
