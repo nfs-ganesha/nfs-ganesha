@@ -237,7 +237,7 @@ void *delayed_thread(void *arg)
 		}
 	}
 	LIST_REMOVE(thr, link);
-	if (thread_list.lh_first == NULL)
+	if (LIST_EMPTY(&thread_list))
 		pthread_cond_broadcast(&cv);
 
 	pthread_mutex_unlock(&mtx);
@@ -307,16 +307,16 @@ void delayed_shutdown(void)
 	pthread_mutex_lock(&mtx);
 	delayed_state = delayed_stopping;
 	pthread_cond_broadcast(&cv);
-	while ((rc != ETIMEDOUT) && (thread_list.lh_first != NULL))
+	while ((rc != ETIMEDOUT) && !LIST_EMPTY(&thread_list))
 		rc = pthread_cond_timedwait(&cv, &mtx, &then);
 
-	if (thread_list.lh_first != NULL) {
+	if (!LIST_EMPTY(&thread_list)) {
 		struct delayed_thread *thr;
 
 		LogMajor(COMPONENT_THREAD,
 			 "Delayed executor threads not shutting down cleanly, "
 			 "taking harsher measures.");
-		while ((thr = thread_list.lh_first) != NULL) {
+		while ((thr = LIST_FIRST(&thread_list)) != NULL) {
 			LIST_REMOVE(thr, link);
 			pthread_cancel(thr->id);
 			gsh_free(thr);
