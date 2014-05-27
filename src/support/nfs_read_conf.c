@@ -181,13 +181,26 @@ static struct config_item ip_name_params[] = {
 	CONFIG_EOL
 };
 
+static int ip_name_commit(void *node, void *link_mem, void *self_struct,
+			  struct config_error_type *err_type)
+{
+	struct nfs_param *params = self_struct;
+
+	if (!is_prime(params->ip_name_param.hash_param.index_size)) {
+		LogCrit(COMPONENT_CONFIG,
+			"IP name cache index size must be a prime.");
+		return 1;
+	}
+	return 0;
+}
+
 struct config_block nfs_ip_name = {
 	.dbus_interface_name = "org.ganesha.nfsd.config.ip_name",
 	.blk_desc.name = "NFS_IP_Name",
 	.blk_desc.type = CONFIG_BLOCK,
 	.blk_desc.u.blk.init = noop_conf_init,
 	.blk_desc.u.blk.params = ip_name_params,
-	.blk_desc.u.blk.commit = noop_conf_commit
+	.blk_desc.u.blk.commit = ip_name_commit
 };
 
 /**

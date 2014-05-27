@@ -473,69 +473,6 @@ int nfs_set_param_from_conf(config_file_t parse_tree,
 	return 0;
 }
 
-/**
- * @brief Check whether a given value is prime or not
- *
- * @param[in] v A given integer
- *
- * @return Whether it's prime or not.
- */
-static bool is_prime(int v)
-{
-	int i, m;
-
-	if (v <= 1)
-		return false;
-	if (v == 2)
-		return true;
-	if (v % 2 == 0)
-		return false;
-	/* dont link with libm just for this */
-#ifdef LINK_LIBM
-	m = (int)sqrt(v);
-#else
-	m = v - 1;
-#endif
-	for (i = 3; i <= m; i += 2) {
-		if (v % i == 0)
-			return false;
-	}
-	return true;
-}
-
-/**
- * @brief Checks parameters concistency (limits, ...)
- *
- * @return 1 on failure, 0 on success.
- */
-int nfs_check_param_consistency()
-{
-	if (nfs_param.core_param.nb_worker <= 0) {
-		LogCrit(COMPONENT_INIT,
-			"BAD PARAMETER: There must be more than %d workers",
-			nfs_param.core_param.nb_worker);
-		return 1;
-	}
-	/* check for parameters which need to be primes */
-	if (!is_prime(nfs_param.ip_name_param.hash_param.index_size)
-	    || !is_prime(nfs_param.client_id_param.cid_unconfirmed_hash_param.
-			 index_size)
-	    || !is_prime(nfs_param.client_id_param.cid_confirmed_hash_param.
-			 index_size)
-	    || !is_prime(nfs_param.client_id_param.cr_hash_param.index_size)
-	    || !is_prime(nfs_param.state_id_param.index_size)
-	    || !is_prime(nfs_param.session_id_param.index_size)
-	    || !is_prime(nfs_param.nfs4_owner_param.index_size)
-	    || !is_prime(nfs_param.nsm_client_hash_param.index_size)
-	    || !is_prime(nfs_param.nlm_client_hash_param.index_size)
-	    || !is_prime(nfs_param.nlm_owner_hash_param.index_size)
-	    || !is_prime(nfs_param.cache_param.cookie_param.index_size)) {
-		LogCrit(COMPONENT_INIT, "BAD PARAMETER(s) : expected primes");
-	}
-
-	return 0;
-}
-
 static void nfs_Start_threads(void)
 {
 	int rc = 0;

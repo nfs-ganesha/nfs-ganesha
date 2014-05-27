@@ -403,11 +403,6 @@ int main(int argc, char *argv[])
 			 "Error setting parameters from configuration file.");
 	}
 
-	if (nfs_check_param_consistency()) {
-		LogFatal(COMPONENT_INIT,
-			 "Inconsistent parameters found. Exiting...");
-	}
-
 	/* freeing syntax tree : */
 
 	config_Free(config_struct);

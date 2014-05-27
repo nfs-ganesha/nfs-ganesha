@@ -55,12 +55,6 @@ int nfs_set_param_from_conf(config_file_t config_struct,
 			    nfs_start_info_t *p_start_info);
 
 /**
- * nfs_check_param_consistency:
- * Checks parameters concistency (limits, ...)
- */
-int nfs_check_param_consistency();
-
-/**
  * nfs_start:
  * start NFS service
  */

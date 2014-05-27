@@ -770,7 +770,37 @@ struct config_block {
 	char *dbus_interface_name;
 	struct config_item blk_desc;
 };
-	
+
+/**
+ * @brief Check whether a given value is prime or not
+ *
+ * @param[in] v A given integer
+ *
+ * @return Whether it's prime or not.
+ */
+static inline bool is_prime(int v)
+{
+	int i, m;
+
+	if (v <= 1)
+		return false;
+	if (v == 2)
+		return true;
+	if (v % 2 == 0)
+		return false;
+	/* dont link with libm just for this */
+#ifdef LINK_LIBM
+	m = (int)sqrt(v);
+#else
+	m = v - 1;
+#endif
+	for (i = 3; i <= m; i += 2) {
+		if (v % i == 0)
+			return false;
+	}
+	return true;
+}
+
 /**
  * @brief Parse the content of a configuration file into a parse tree.
  *
