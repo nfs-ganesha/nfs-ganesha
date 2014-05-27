@@ -141,8 +141,6 @@ typedef enum request_type {
 typedef struct request_data {
 	struct glist_head req_q;	/* chaining of pending requests */
 	request_type_t rtype;
-	pthread_mutex_t mtx;
-	pthread_cond_t cv;
 	union request_content {
 		rpc_call_t *call;
 		nfs_request_data_t *nfs;
