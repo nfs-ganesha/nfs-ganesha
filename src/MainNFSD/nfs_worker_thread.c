@@ -1527,9 +1527,15 @@ static void worker_run(struct fridgethr_context *ctx)
 			gsh_xprt_unref(nfsreq->r_u.nfs->xprt,
 				       XPRT_PRIVATE_FLAG_DECREQ, __func__,
 				       __LINE__);
+			pool_free(request_data_pool, nfsreq->r_u.nfs);
 			break;
 		case NFS_CALL:
 			break;
+#ifdef _USE_9P
+		case _9P_REQUEST:
+			_9p_free_reqdata(&nfsreq->r_u._9p);
+			break;
+#endif
 		default:
 			break;
 		}
@@ -1537,19 +1543,6 @@ static void worker_run(struct fridgethr_context *ctx)
 		/* Free the req by releasing the entry */
 		LogFullDebug(COMPONENT_DISPATCH,
 			     "Invalidating processed entry");
-
-#ifdef _USE_9P
-		if (nfsreq->rtype == _9P_REQUEST)
-			_9p_free_reqdata(&nfsreq->r_u._9p);
-		else
-#endif
-			switch (nfsreq->rtype) {
-			case NFS_REQUEST:
-				pool_free(request_data_pool, nfsreq->r_u.nfs);
-				break;
-			default:
-				break;
-			}
 
 		pool_free(request_pool, nfsreq);
 	}
