@@ -175,18 +175,15 @@ static enum delayed_employment delayed_get_work(struct timespec *when,
 		return delayed_on_break;
 	}
 
-	if (mul->list.lh_first == NULL) {
-		avltree_remove(first, &tree);
-		gsh_free(mul);
-		return delayed_unemployed;
-	}
-	task = mul->list.lh_first;
-
+	task = LIST_FIRST(&mul->list);
 	*func = task->func;
 	*arg = task->arg;
 	LIST_REMOVE(task, link);
 	gsh_free(task);
-
+	if (LIST_EMPTY(&mul->list)) {
+		avltree_remove(first, &tree);
+		gsh_free(mul);
+	}
 
 	return delayed_employed;
 }
@@ -381,7 +378,7 @@ int delayed_submit(void (*func) (void *), void *arg, nsecs_elapsed_t delay)
 	task->func = func;
 	task->arg = arg;
 	LIST_INSERT_HEAD(&mul->list, task, link);
-	if (!first || comparator(&mul->node, first) <= 0)
+	if (!first || comparator(&mul->node, first) < 0)
 		pthread_cond_broadcast(&cv);
 
 	pthread_mutex_unlock(&mtx);
