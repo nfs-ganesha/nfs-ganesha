@@ -149,7 +149,6 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t *data,
 					   state_found,
 					   &lock_desc,
 					   LEASE_LOCK);
-
 	if (state_status != STATE_SUCCESS) {
 		/* Save the response in the lock owner */
 		Copy_nfs4_state_req(lock_owner,
