@@ -102,7 +102,7 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
                  *  then.
                  *  TODO: How do we handle symlinks if present in the path.
                  */
-                realpath = malloc(strlen(glfs_export->mount_path));
+                realpath = malloc(strlen(glfs_export->export_path)+ strlen(path) + 1);
                 if (realpath) {
                         /*
                          * Handle the case wherein glfs_export->export_path
