@@ -46,7 +46,7 @@
 #include "uid2grp.h"
 #include "export_mgr.h"
 
-int _9p_init(_9p_parameter_t *pparam)
+int _9p_init(void)
 {
 	uid2grp_cache_init();
 	return 0;

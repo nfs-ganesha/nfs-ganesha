@@ -682,7 +682,7 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 
 #ifdef _USE_9P
 	LogDebug(COMPONENT_INIT, "Now building 9P resources");
-	if (_9p_init(&nfs_param._9p_param)) {
+	if (_9p_init()) {
 		LogCrit(COMPONENT_INIT,
 			"Error while initializing 9P Resources");
 		exit(1);

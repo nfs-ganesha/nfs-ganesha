@@ -560,7 +560,7 @@ do {                                                   \
 extern struct config_block _9p_param;
 
 /* service functions */
-int _9p_init(_9p_parameter_t *pparam);
+int _9p_init(void);
 
 /* Tools functions */
 int _9p_tools_get_req_context_by_uid(u32 uid, struct _9p_fid *pfid);
