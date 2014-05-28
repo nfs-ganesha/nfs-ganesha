@@ -75,136 +75,7 @@
 
 
 /* global information exported to all layers (as extern vars) */
-nfs_parameter_t nfs_param = {
-
-	/*  Worker parameters : IP/name hash table */
-
-	/*  Worker parameters : NFSv4 Unconfirmed Client id table */
-	.client_id_param.cid_unconfirmed_hash_param.index_size = PRIME_STATE,
-	.client_id_param.cid_unconfirmed_hash_param.hash_func_key =
-	    client_id_value_hash_func,
-	.client_id_param.cid_unconfirmed_hash_param.hash_func_rbt =
-	    client_id_rbt_hash_func,
-	.client_id_param.cid_unconfirmed_hash_param.hash_func_both = NULL,
-	.client_id_param.cid_unconfirmed_hash_param.compare_key =
-	    compare_client_id,
-	.client_id_param.cid_unconfirmed_hash_param.key_to_str =
-	    display_client_id_key,
-	.client_id_param.cid_unconfirmed_hash_param.val_to_str =
-	    display_client_id_val,
-	.client_id_param.cid_unconfirmed_hash_param.ht_name =
-	    "Unconfirmed Client ID",
-	.client_id_param.cid_unconfirmed_hash_param.flags = HT_FLAG_CACHE,
-	.client_id_param.cid_unconfirmed_hash_param.ht_log_component =
-	    COMPONENT_CLIENTID,
-
-	/*  Worker parameters : NFSv4 Confirmed Client id table */
-	.client_id_param.cid_confirmed_hash_param.index_size = PRIME_STATE,
-	.client_id_param.cid_confirmed_hash_param.hash_func_key =
-	    client_id_value_hash_func,
-	.client_id_param.cid_confirmed_hash_param.hash_func_rbt =
-	    client_id_rbt_hash_func,
-	.client_id_param.cid_confirmed_hash_param.hash_func_both = NULL,
-	.client_id_param.cid_confirmed_hash_param.compare_key =
-	    compare_client_id,
-	.client_id_param.cid_confirmed_hash_param.key_to_str =
-	    display_client_id_key,
-	.client_id_param.cid_confirmed_hash_param.val_to_str =
-	    display_client_id_val,
-	.client_id_param.cid_confirmed_hash_param.ht_name =
-	    "Confirmed Client ID",
-	.client_id_param.cid_confirmed_hash_param.flags = HT_FLAG_CACHE,
-	.client_id_param.cid_confirmed_hash_param.ht_log_component =
-	    COMPONENT_CLIENTID,
-
-	/*  Worker parameters : NFSv4 Client Record table */
-	.client_id_param.cr_hash_param.index_size = PRIME_STATE,
-	.client_id_param.cr_hash_param.hash_func_key =
-	    client_record_value_hash_func,
-	.client_id_param.cr_hash_param.hash_func_rbt =
-	    client_record_rbt_hash_func,
-	.client_id_param.cr_hash_param.hash_func_both = NULL,
-	.client_id_param.cr_hash_param.compare_key = compare_client_record,
-	.client_id_param.cr_hash_param.key_to_str = display_client_record_key,
-	.client_id_param.cr_hash_param.val_to_str = display_client_record_val,
-	.client_id_param.cr_hash_param.ht_name = "Client Record",
-	.client_id_param.cr_hash_param.flags = HT_FLAG_CACHE,
-	.client_id_param.cr_hash_param.ht_log_component = COMPONENT_CLIENTID,
-
-	/* NFSv4 State Id hash */
-	.state_id_param.index_size = PRIME_STATE,
-	.state_id_param.hash_func_key = state_id_value_hash_func,
-	.state_id_param.hash_func_rbt = state_id_rbt_hash_func,
-	.state_id_param.compare_key = compare_state_id,
-	.state_id_param.key_to_str = display_state_id_key,
-	.state_id_param.val_to_str = display_state_id_val,
-	.state_id_param.flags = HT_FLAG_CACHE,
-
-	/* NFSv4 Session Id hash */
-	.session_id_param.index_size = PRIME_STATE,
-	.session_id_param.hash_func_key = session_id_value_hash_func,
-	.session_id_param.hash_func_rbt = session_id_rbt_hash_func,
-	.session_id_param.compare_key = compare_session_id,
-	.session_id_param.key_to_str = display_session_id_key,
-	.session_id_param.val_to_str = display_session_id_val,
-	.session_id_param.flags = HT_FLAG_CACHE,
-
-	/* NFSv4 Open Owner hash */
-	.nfs4_owner_param.index_size = PRIME_STATE,
-	.nfs4_owner_param.hash_func_key = nfs4_owner_value_hash_func,
-	.nfs4_owner_param.hash_func_rbt = nfs4_owner_rbt_hash_func,
-	.nfs4_owner_param.compare_key = compare_nfs4_owner_key,
-	.nfs4_owner_param.key_to_str = display_nfs4_owner_key,
-	.nfs4_owner_param.val_to_str = display_nfs4_owner_val,
-	.nfs4_owner_param.flags = HT_FLAG_CACHE,
-
-	/* NSM Client hash */
-	.nsm_client_hash_param.index_size = PRIME_STATE,
-	.nsm_client_hash_param.hash_func_key = nsm_client_value_hash_func,
-	.nsm_client_hash_param.hash_func_rbt = nsm_client_rbt_hash_func,
-	.nsm_client_hash_param.compare_key = compare_nsm_client_key,
-	.nsm_client_hash_param.key_to_str = display_nsm_client_key,
-	.nsm_client_hash_param.val_to_str = display_nsm_client_val,
-	.nsm_client_hash_param.flags = HT_FLAG_NONE,
-
-	/* NLM Client hash */
-	.nlm_client_hash_param.index_size = PRIME_STATE,
-	.nlm_client_hash_param.hash_func_key = nlm_client_value_hash_func,
-	.nlm_client_hash_param.hash_func_rbt = nlm_client_rbt_hash_func,
-	.nlm_client_hash_param.compare_key = compare_nlm_client_key,
-	.nlm_client_hash_param.key_to_str = display_nlm_client_key,
-	.nlm_client_hash_param.val_to_str = display_nlm_client_val,
-	.nlm_client_hash_param.flags = HT_FLAG_NONE,
-
-	/* NLM Owner hash */
-	.nlm_owner_hash_param.index_size = PRIME_STATE,
-	.nlm_owner_hash_param.hash_func_key = nlm_owner_value_hash_func,
-	.nlm_owner_hash_param.hash_func_rbt = nlm_owner_rbt_hash_func,
-	.nlm_owner_hash_param.compare_key = compare_nlm_owner_key,
-	.nlm_owner_hash_param.key_to_str = display_nlm_owner_key,
-	.nlm_owner_hash_param.val_to_str = display_nlm_owner_val,
-	.nlm_owner_hash_param.flags = HT_FLAG_NONE,
-
-#ifdef _USE_9P
-	/* 9P Owner hash */
-	._9p_owner_hash_param.index_size = PRIME_STATE,
-	._9p_owner_hash_param.hash_func_key = _9p_owner_value_hash_func,
-	._9p_owner_hash_param.hash_func_rbt = _9p_owner_rbt_hash_func,
-	._9p_owner_hash_param.compare_key = compare_9p_owner_key,
-	._9p_owner_hash_param.key_to_str = display_9p_owner_key,
-	._9p_owner_hash_param.val_to_str = display_9p_owner_val,
-	._9p_owner_hash_param.flags = HT_FLAG_NONE,
-#endif
-
-	/* Cache inode parameters : cookie hash table */
-	.cache_param.cookie_param.index_size = PRIME_STATE,
-	.cache_param.cookie_param.hash_func_key = lock_cookie_value_hash_func,
-	.cache_param.cookie_param.hash_func_rbt = lock_cookie_rbt_hash_func,
-	.cache_param.cookie_param.compare_key = compare_lock_cookie_key,
-	.cache_param.cookie_param.key_to_str = display_lock_cookie_key,
-	.cache_param.cookie_param.val_to_str = display_lock_cookie_val,
-	.cache_param.cookie_param.flags = HT_FLAG_NONE,
-};
+nfs_parameter_t nfs_param;
 
 /* ServerEpoch is ServerBootTime unless overriden by -E command line option */
 struct timespec ServerBootTime;
@@ -606,7 +477,7 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 			 cache_inode_err_str(cache_status));
 	}
 
-	state_status = state_lock_init(nfs_param.cache_param.cookie_param);
+	state_status = state_lock_init();
 	if (state_status != STATE_SUCCESS) {
 		LogFatal(COMPONENT_INIT,
 			 "State Lock Layer could not be initialized, status=%s",
@@ -740,7 +611,7 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 
 	/* Init the NFSv4 Clientid cache */
 	LogDebug(COMPONENT_INIT, "Now building NFSv4 clientid cache");
-	if (nfs_Init_client_id(&nfs_param.client_id_param) !=
+	if (nfs_Init_client_id() !=
 	    CLIENT_ID_SUCCESS) {
 		LogFatal(COMPONENT_INIT,
 			 "Error while initializing NFSv4 clientid cache");
@@ -763,7 +634,7 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 
 	/* Init The NFSv4 State id cache */
 	LogDebug(COMPONENT_INIT, "Now building NFSv4 State Id cache");
-	if (nfs4_Init_state_id(&nfs_param.state_id_param) != 0) {
+	if (nfs4_Init_state_id() != 0) {
 		LogFatal(COMPONENT_INIT,
 			 "Error while initializing NFSv4 State Id cache");
 	}
@@ -772,7 +643,7 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 
 	/* Init The NFSv4 Open Owner cache */
 	LogDebug(COMPONENT_INIT, "Now building NFSv4 Owner cache");
-	if (Init_nfs4_owner(&nfs_param.nfs4_owner_param) != 0) {
+	if (Init_nfs4_owner() != 0) {
 		LogFatal(COMPONENT_INIT,
 			 "Error while initializing NFSv4 Owner cache");
 	}
@@ -801,7 +672,7 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 #endif
 
 	LogDebug(COMPONENT_INIT, "Now building NFSv4 Session Id cache");
-	if (nfs41_Init_session_id(&nfs_param.session_id_param) != 0) {
+	if (nfs41_Init_session_id() != 0) {
 		LogFatal(COMPONENT_INIT,
 			 "Error while initializing NFSv4 Session Id cache");
 	}

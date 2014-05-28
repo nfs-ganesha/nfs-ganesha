@@ -61,11 +61,6 @@ typedef enum protos {
 } protos;
 
 /**
- * @brief Divisions in state and clientid tables.
- */
-#define PRIME_STATE 17
-
-/**
  * @defgroup config_core Structure and defaults for NFS_Core_Param
  *
  * @{
@@ -544,13 +539,6 @@ typedef enum cache_inode_expire_type {
  */
 
 typedef struct cache_inode_parameter {
-	/**
-	 * Parameters used for lock cookie hash table initialization.
-	 *
-	 * @todo Switch the cookie table to something else and get rid
-	 * of this.
-	 */
-	hash_parameter_t cookie_param;
 	/** Partitions in the Cache_Inode tree.  Defaults to 7,
 	 * settable with NParts. */
 	uint32_t nparts;
@@ -631,19 +619,6 @@ typedef struct cache_inode_parameter {
 
 /** @} */
 
-/**
- * @brief Client ID hash parameters
- */
-
-typedef struct nfs_client_id_param {
-	/** Parameters for confirmed client IDs */
-	hash_parameter_t cid_confirmed_hash_param;
-	/** Parameters for unconfirmed client IDs */
-	hash_parameter_t cid_unconfirmed_hash_param;
-	/** Parameters for client owner records */
-	hash_parameter_t cr_hash_param;
-} nfs_client_id_parameter_t;
-
 typedef struct nfs_param {
 	/** NFS Core parameters, settable in the NFS_Core_Param
 	    stanza. */
@@ -661,24 +636,6 @@ typedef struct nfs_param {
 	/** kerberos configuration.  Settable in the NFS_KRB5 stanza. */
 	nfs_krb5_parameter_t krb5_param;
 #endif				/* _HAVE_GSSAPI */
-	/** Client ID cache parameters  */
-	nfs_client_id_parameter_t client_id_param;
-	/** State ID cache parameters  */
-	hash_parameter_t state_id_param;
-	/** Session ID cache parameters  */
-	hash_parameter_t session_id_param;
-	/** NFS owner cache parameters  */
-	hash_parameter_t nfs4_owner_param;
-	/** NSM cache parameters  */
-	hash_parameter_t nsm_client_hash_param;
-	/** NLM client cache parameters  */
-	hash_parameter_t nlm_client_hash_param;
-	/** NLM owner cache parameters  */
-	hash_parameter_t nlm_owner_hash_param;
-#ifdef _USE_9P
-	/** 9P owner cache parameters  */
-	hash_parameter_t _9p_owner_hash_param;
-#endif				/* _USE_9P */
 } nfs_parameter_t;
 
 extern nfs_parameter_t nfs_param;

@@ -634,6 +634,36 @@ uint64_t nlm_owner_rbt_hash_func(hash_parameter_t *hparam,
 	return res;
 }				/* state_id_rbt_hash_func */
 
+static hash_parameter_t nsm_client_hash_param = {
+	.index_size = PRIME_STATE,
+	.hash_func_key = nsm_client_value_hash_func,
+	.hash_func_rbt = nsm_client_rbt_hash_func,
+	.compare_key = compare_nsm_client_key,
+	.key_to_str = display_nsm_client_key,
+	.val_to_str = display_nsm_client_val,
+	.flags = HT_FLAG_NONE,
+};
+
+static hash_parameter_t nlm_client_hash_param = {
+	.index_size = PRIME_STATE,
+	.hash_func_key = nlm_client_value_hash_func,
+	.hash_func_rbt = nlm_client_rbt_hash_func,
+	.compare_key = compare_nlm_client_key,
+	.key_to_str = display_nlm_client_key,
+	.val_to_str = display_nlm_client_val,
+	.flags = HT_FLAG_NONE,
+};
+
+static hash_parameter_t nlm_owner_hash_param = {
+	.index_size = PRIME_STATE,
+	.hash_func_key = nlm_owner_value_hash_func,
+	.hash_func_rbt = nlm_owner_rbt_hash_func,
+	.compare_key = compare_nlm_owner_key,
+	.key_to_str = display_nlm_owner_key,
+	.val_to_str = display_nlm_owner_val,
+	.flags = HT_FLAG_NONE,
+};
+
 /**
  * @brief Init the hashtables for NLM support
  *
@@ -641,21 +671,21 @@ uint64_t nlm_owner_rbt_hash_func(hash_parameter_t *hparam,
  */
 int Init_nlm_hash(void)
 {
-	ht_nsm_client = hashtable_init(&nfs_param.nsm_client_hash_param);
+	ht_nsm_client = hashtable_init(&nsm_client_hash_param);
 
 	if (ht_nsm_client == NULL) {
 		LogCrit(COMPONENT_STATE, "Cannot init NSM Client cache");
 		return -1;
 	}
 
-	ht_nlm_client = hashtable_init(&nfs_param.nlm_client_hash_param);
+	ht_nlm_client = hashtable_init(&nlm_client_hash_param);
 
 	if (ht_nlm_client == NULL) {
 		LogCrit(COMPONENT_STATE, "Cannot init NLM Client cache");
 		return -1;
 	}
 
-	ht_nlm_owner = hashtable_init(&nfs_param.nlm_owner_hash_param);
+	ht_nlm_owner = hashtable_init(&nlm_owner_hash_param);
 
 	if (ht_nlm_owner == NULL) {
 		LogCrit(COMPONENT_STATE, "Cannot init NLM Owner cache");

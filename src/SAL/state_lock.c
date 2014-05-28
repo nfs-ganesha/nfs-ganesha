@@ -113,16 +113,32 @@ state_owner_t unknown_owner;
 /**
  * @brief Blocking lock cookies
  */
-hash_table_t *ht_lock_cookies;
+
+/**
+ * Parameters used for lock cookie hash table initialization.
+ *
+ * @todo Switch the cookie table to something else and get rid
+ * of this.
+ */
+
+static hash_parameter_t cookie_param = {
+	.index_size = PRIME_STATE,
+	.hash_func_key = lock_cookie_value_hash_func,
+	.hash_func_rbt = lock_cookie_rbt_hash_func,
+	.compare_key = compare_lock_cookie_key,
+	.key_to_str = display_lock_cookie_key,
+	.val_to_str = display_lock_cookie_val,
+	.flags = HT_FLAG_NONE,
+};
+
+static hash_table_t *ht_lock_cookies;
 
 /**
  * @brief Initalize locking
  *
- * @param[in] cookie_param Hash parameters for cookie table
- *
  * @return State status.
  */
-state_status_t state_lock_init(hash_parameter_t cookie_param)
+state_status_t state_lock_init(void)
 {
 	state_status_t status = STATE_SUCCESS;
 

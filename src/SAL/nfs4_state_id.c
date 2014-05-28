@@ -198,21 +198,29 @@ uint64_t state_id_rbt_hash_func(hash_parameter_t *hparam,
 	return val;
 }
 
+static hash_parameter_t state_id_param = {
+	.index_size = PRIME_STATE,
+	.hash_func_key = state_id_value_hash_func,
+	.hash_func_rbt = state_id_rbt_hash_func,
+	.compare_key = compare_state_id,
+	.key_to_str = display_state_id_key,
+	.val_to_str = display_state_id_val,
+	.flags = HT_FLAG_CACHE,
+};
+
 /**
  * @brief Init the hashtable for stateids
- *
- * @param[in] param Parameter used to init the stateid table
  *
  * @retval 0 if successful.
  * @retval -1 on failure.
  */
-int nfs4_Init_state_id(hash_parameter_t *param)
+int nfs4_Init_state_id(void)
 {
 	/* Init  all_one */
 	memset(all_zero, 0, OTHERSIZE);
 	memset(all_ones, 0xFF, OTHERSIZE);
 
-	ht_state_id = hashtable_init(param);
+	ht_state_id = hashtable_init(&state_id_param);
 
 	if (ht_state_id == NULL) {
 		LogCrit(COMPONENT_STATE, "Cannot init State Id cache");

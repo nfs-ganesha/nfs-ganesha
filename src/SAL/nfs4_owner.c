@@ -302,17 +302,25 @@ void free_nfs4_owner(state_owner_t *owner)
 	dec_client_id_ref(owner->so_owner.so_nfs4_owner.so_clientrec);
 }
 
+static hash_parameter_t nfs4_owner_param = {
+	.index_size = PRIME_STATE,
+	.hash_func_key = nfs4_owner_value_hash_func,
+	.hash_func_rbt = nfs4_owner_rbt_hash_func,
+	.compare_key = compare_nfs4_owner_key,
+	.key_to_str = display_nfs4_owner_key,
+	.val_to_str = display_nfs4_owner_val,
+	.flags = HT_FLAG_CACHE,
+};
+
 /**
  * @brief Init the hashtable for NFSv4 owner cache
- *
- * @param[in] param Parameter to init the owner table
  *
  * @retval 0 if successful.
  * @retval -1 if we failed.
  */
-int Init_nfs4_owner(hash_parameter_t *param)
+int Init_nfs4_owner(void)
 {
-	ht_nfs4_owner = hashtable_init(param);
+	ht_nfs4_owner = hashtable_init(&nfs4_owner_param);
 
 	if (ht_nfs4_owner == NULL) {
 		LogCrit(COMPONENT_STATE, "Cannot init NFS Open Owner cache");

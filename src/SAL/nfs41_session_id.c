@@ -168,19 +168,27 @@ uint64_t session_id_rbt_hash_func(hash_parameter_t *hparam,
 	return *counter;
 }
 
+static hash_parameter_t session_id_param = {
+	.index_size = PRIME_STATE,
+	.hash_func_key = session_id_value_hash_func,
+	.hash_func_rbt = session_id_rbt_hash_func,
+	.compare_key = compare_session_id,
+	.key_to_str = display_session_id_key,
+	.val_to_str = display_session_id_val,
+	.flags = HT_FLAG_CACHE,
+};
+
 /**
  * @brief Init the hashtable for Session Id cache.
- *
- * @param[in] param Parameter used to init the session id cache
  *
  * @retval 0 if successful.
  * @retval -1 otherwise
  *
  */
 
-int nfs41_Init_session_id(hash_parameter_t *param)
+int nfs41_Init_session_id(void)
 {
-	ht_session_id = hashtable_init(param);
+	ht_session_id = hashtable_init(&session_id_param);
 
 	if (ht_session_id == NULL) {
 		LogCrit(COMPONENT_SESSIONS,

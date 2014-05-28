@@ -42,6 +42,11 @@
 #include "nfs_exports.h"
 #include "nfs_core.h"
 
+/**
+ * @brief Divisions in state and clientid tables.
+ */
+#define PRIME_STATE 17
+
 /*****************************************************************************
  *
  * Misc functions
@@ -191,7 +196,7 @@ const char *clientid_error_to_str(clientid_status_t err);
 state_status_t get_clientid_owner(clientid4 clientid,
 				  state_owner_t **clientid_owner);
 
-int nfs_Init_client_id(nfs_client_id_parameter_t *param);
+int nfs_Init_client_id(void);
 
 clientid_status_t nfs_client_id_get_unconfirmed(clientid4 clientid,
 						nfs_client_id_t **pclient_rec);
@@ -288,7 +293,7 @@ uint32_t session_id_value_hash_func(hash_parameter_t *hparam,
 uint64_t session_id_rbt_hash_func(hash_parameter_t *hparam,
 				  struct gsh_buffdesc *key);
 
-int nfs41_Init_session_id(hash_parameter_t *param);
+int nfs41_Init_session_id(void);
 
 int nfs41_Session_Set(nfs41_session_t *session_data);
 
@@ -340,7 +345,7 @@ void update_stateid(state_t *state, stateid4 *stateid, compound_data_t *data,
 nfsstat4 nfs4_check_special_stateid(cache_entry_t *entry, const char *tag,
 				    int access);
 
-int nfs4_Init_state_id(hash_parameter_t *param);
+int nfs4_Init_state_id(void);
 int nfs4_State_Set(char other[OTHERSIZE], state_t *state_data);
 int nfs4_State_Get_Pointer(char other[OTHERSIZE], state_t **state_data);
 void nfs4_State_Del(char other[OTHERSIZE]);
@@ -422,7 +427,7 @@ state_owner_t *create_nfs4_owner(state_nfs4_owner_name_t *name,
 				 unsigned int init_seqid, bool_t *pisnew,
 				 care_t care);
 
-int Init_nfs4_owner(hash_parameter_t *param);
+int Init_nfs4_owner(void);
 
 void Process_nfs4_conflict(/* NFS v4 Lock4denied structure to fill in */
 			   LOCK4denied * denied,
@@ -458,7 +463,7 @@ uint32_t lock_cookie_value_hash_func(hash_parameter_t *hparam,
 
 uint64_t lock_cookie_rbt_hash_func(hash_parameter_t *hparam,
 				   struct gsh_buffdesc *key);
-state_status_t state_lock_init(hash_parameter_t cookie_param);
+state_status_t state_lock_init(void);
 
 void LogLock(log_components_t component, log_levels_t debug, const char *reason,
 	     cache_entry_t *entry, state_owner_t *owner,

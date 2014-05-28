@@ -1107,19 +1107,56 @@ clientid_status_t nfs_client_id_get_confirmed(clientid4 clientid,
 	return nfs_client_id_get(ht_confirmed_client_id, clientid, client_rec);
 }
 
+static hash_parameter_t cid_confirmed_hash_param = {
+	.index_size = PRIME_STATE,
+	.hash_func_key = client_id_value_hash_func,
+	.hash_func_rbt = client_id_rbt_hash_func,
+	.hash_func_both = NULL,
+	.compare_key = compare_client_id,
+	.key_to_str = display_client_id_key,
+	.val_to_str = display_client_id_val,
+	.ht_name = "Confirmed Client ID",
+	.flags = HT_FLAG_CACHE,
+	.ht_log_component = COMPONENT_CLIENTID,
+};
+
+static hash_parameter_t cid_unconfirmed_hash_param = {
+	.index_size = PRIME_STATE,
+	.hash_func_key = client_id_value_hash_func,
+	.hash_func_rbt = client_id_rbt_hash_func,
+	.hash_func_both = NULL,
+	.compare_key = compare_client_id,
+	.key_to_str = display_client_id_key,
+	.val_to_str = display_client_id_val,
+	.ht_name = "Unconfirmed Client ID",
+	.flags = HT_FLAG_CACHE,
+	.ht_log_component = COMPONENT_CLIENTID,
+};
+
+static hash_parameter_t cr_hash_param = {
+	.index_size = PRIME_STATE,
+	.hash_func_key = client_record_value_hash_func,
+	.hash_func_rbt = client_record_rbt_hash_func,
+	.hash_func_both = NULL,
+	.compare_key = compare_client_record,
+	.key_to_str = display_client_record_key,
+	.val_to_str = display_client_record_val,
+	.ht_name = "Client Record",
+	.flags = HT_FLAG_CACHE,
+	.ht_log_component = COMPONENT_CLIENTID,
+};
+
 /**
  * @brief Init the hashtable for Client Id cache.
  *
  * Perform all the required initialization for hashtable Client Id cache
  *
- * @param[in] param Parameter used to init the duplicate request cache
- *
  * @return 0 if successful, -1 otherwise
  */
-int nfs_Init_client_id(nfs_client_id_parameter_t *param)
+int nfs_Init_client_id(void)
 {
 	ht_confirmed_client_id =
-		hashtable_init(&param->cid_confirmed_hash_param);
+		hashtable_init(&cid_confirmed_hash_param);
 
 	if (ht_confirmed_client_id == NULL) {
 		LogCrit(COMPONENT_INIT,
@@ -1128,7 +1165,7 @@ int nfs_Init_client_id(nfs_client_id_parameter_t *param)
 	}
 
 	ht_unconfirmed_client_id =
-		hashtable_init(&param->cid_unconfirmed_hash_param);
+		hashtable_init(&cid_unconfirmed_hash_param);
 
 	if (ht_unconfirmed_client_id == NULL) {
 		LogCrit(COMPONENT_INIT,
@@ -1136,7 +1173,7 @@ int nfs_Init_client_id(nfs_client_id_parameter_t *param)
 		return -1;
 	}
 
-	ht_client_record = hashtable_init(&param->cr_hash_param);
+	ht_client_record = hashtable_init(&cr_hash_param);
 
 	if (ht_client_record == NULL) {
 		LogCrit(COMPONENT_INIT,

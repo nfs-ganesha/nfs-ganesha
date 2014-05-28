@@ -239,6 +239,16 @@ uint64_t _9p_owner_rbt_hash_func(hash_parameter_t *hparam,
 	return res;
 }
 
+static hash_parameter_t _9p_owner_hash_param = {
+	.index_size = PRIME_STATE,
+	.hash_func_key = _9p_owner_value_hash_func,
+	.hash_func_rbt = _9p_owner_rbt_hash_func,
+	.compare_key = compare_9p_owner_key,
+	.key_to_str = display_9p_owner_key,
+	.val_to_str = display_9p_owner_val,
+	.flags = HT_FLAG_NONE,
+};
+
 /**
  * @brief Init the hashtable for 9P Owner cache
  *
@@ -248,7 +258,7 @@ uint64_t _9p_owner_rbt_hash_func(hash_parameter_t *hparam,
 
 int Init_9p_hash(void)
 {
-	ht_9p_owner = hashtable_init(&nfs_param._9p_owner_hash_param);
+	ht_9p_owner = hashtable_init(&_9p_owner_hash_param);
 
 	if (ht_9p_owner == NULL) {
 		LogCrit(COMPONENT_STATE, "Cannot init 9P Owner cache");
