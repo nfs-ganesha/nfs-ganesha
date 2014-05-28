@@ -77,11 +77,6 @@ typedef enum protos {
 #define RQUOTA_PORT 875
 
 /**
- * @brief Constant naming this block
- */
-#define CONF_LABEL_NFS_CORE "NFS_Core_Param"
-
-/**
  * @brief Default value for core_param.nb_worker
  */
 #define NB_WORKER_THREAD_DEFAULT 16
@@ -361,11 +356,6 @@ typedef struct nfs_core_param {
  */
 
 /**
- * @brief Label for NFSv4 config block
- */
-#define CONF_LABEL_NFS_VERSION4 "NFSv4"
-
-/**
  * @brief Default value for lease_lifetime
  */
 #define LEASE_LIFETIME_DEFAULT 60
@@ -379,11 +369,6 @@ typedef struct nfs_core_param {
  * @brief Default value of domainname.
  */
 #define DOMAINNAME_DEFAULT "localdomain"
-
-/**
- * @brief Default value of idmapconf.
- */
-#define IDMAPCONF_DEFAULT "/etc/idmapd.conf"
 
 typedef struct nfs_version4_parameter {
 	/** Whether to disable the NFSv4 grace period.  Defaults to
@@ -428,11 +413,6 @@ typedef struct nfs_version4_parameter {
  */
 
 #ifdef _USE_9P
-
-/**
- * @brief Label for 9p configuration block
- */
-#define CONF_LABEL_9P "_9P"
 
 /**
  * @brief Default value for _9p_tcp_port
@@ -515,12 +495,6 @@ typedef struct _9p_param {
  */
 
 /**
- * @brief Block label for Cache_Inode configuration
- */
-
-#define CONF_LABEL_CACHE_INODE "CacheInode"
-
-/**
  * @brief Determine whether inode data, such as attributes, expire.
  */
 
@@ -597,25 +571,6 @@ typedef struct cache_inode_parameter {
 	    Defaults to false, settable with Retry_Readdir */
 	bool retry_readdir;
 } cache_inode_parameter_t;
-
-/** @} */
-
-/**
- * @defgroup config_ipnamemap Structure and defaults for NFS_IP_Name
- *
- * @{
- */
-
-/**
- * @brief Block label for NFS_IP_Name
- */
-
-#define CONF_LABEL_NFS_IP_NAME "NFS_IP_Name"
-
-/**
- * @brief Label for host mapping stanza
- */
-#define CONF_LABEL_IP_NAME_HOSTS "Hosts"
 
 /** @} */
 
