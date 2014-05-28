@@ -1412,11 +1412,11 @@ out:
  * @param[in] entry File on which the delegation is held
  */
 
-static void delegrevoke_check(struct fridgethr_context *ctx)
+static void delegrevoke_check(void *ctx)
 {
 	uint32_t rc = 0;
 	struct glist_head *glist, *glist_n;
-	struct delegrecall_context *deleg_ctx = ctx->arg;
+	struct delegrecall_context *deleg_ctx = ctx;
 	cache_entry_t *entry = deleg_ctx->entry;
 	state_lock_entry_t *deleg_entry = NULL;
 
@@ -1465,10 +1465,10 @@ static void delegrevoke_check(struct fridgethr_context *ctx)
 	return;
 }
 
-static void delegrecall_task(struct fridgethr_context *ctx)
+static void delegrecall_task(void *ctx)
 {
 	struct glist_head *glist, *glist_n;
-	struct delegrecall_context *deleg_ctx = ctx->arg;
+	struct delegrecall_context *deleg_ctx = ctx;
 	cache_entry_t *entry = deleg_ctx->entry;
 	state_lock_entry_t *deleg_entry = NULL;
 
@@ -1501,7 +1501,7 @@ static int schedule_delegrecall_task(struct delegrecall_context *ctx,
 
 	assert(ctx);
 
-	rc = fridgethr_submit(general_fridge, delegrecall_task, ctx);
+	rc = delayed_submit(delegrecall_task, ctx, delay * NS_PER_SEC);
 	return rc;
 }
 
@@ -1512,7 +1512,7 @@ static int schedule_delegrevoke_check(struct delegrecall_context *ctx,
 
 	assert(ctx);
 
-	rc = fridgethr_submit(general_fridge, delegrevoke_check, ctx);
+	rc = delayed_submit(delegrevoke_check, ctx, delay * NS_PER_SEC);
 	return rc;
 }
 
