@@ -32,6 +32,9 @@
 #include "9p.h"
 #include "config_parsing.h"
 
+/* 9P parameters, settable in the 9P stanza. */
+struct _9p_param _9p_param;
+
 static struct config_item _9p_params[] = {
 	CONF_ITEM_UI16("_9P_TCP_Port", 1, 0xFFFF, _9P_TCP_PORT,
 		       _9p_param, _9p_tcp_port),
@@ -51,11 +54,19 @@ static struct config_item _9p_params[] = {
 	CONFIG_EOL
 };
 
-struct config_block _9p_param = {
+static void *_9p_param_init(void *link_mem, void *self_struct)
+{
+	if (self_struct == NULL)
+		return &_9p_param;
+	else
+		return NULL;
+}
+
+struct config_block _9p_param_blk = {
 	.dbus_interface_name = "org.ganesha.nfsd.config.9p",
 	.blk_desc.name = "_9P",
 	.blk_desc.type = CONFIG_BLOCK,
-	.blk_desc.u.blk.init = noop_conf_init,
+	.blk_desc.u.blk.init = _9p_param_init,
 	.blk_desc.u.blk.params = _9p_params,
 	.blk_desc.u.blk.commit = noop_conf_commit
 };

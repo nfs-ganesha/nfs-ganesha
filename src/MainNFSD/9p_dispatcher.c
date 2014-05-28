@@ -154,7 +154,7 @@ void *_9p_socket_thread(void *Arg)
 
 	/* Set initial msize.
 	 * Client may request a lower value during TVERSION */
-	_9p_conn.msize = nfs_param._9p_param._9p_tcp_msize;
+	_9p_conn.msize = _9p_param._9p_tcp_msize;
 
 	if (gettimeofday(&_9p_conn.birth, NULL) == -1)
 		LogFatal(COMPONENT_9P, "Cannot get connection's time of birth");
@@ -392,7 +392,7 @@ int _9p_create_socket(void)
 	sinaddr_tcp6.sin6_family = AF_INET6;
 	/* All the interfaces on the machine are used */
 	sinaddr_tcp6.sin6_addr = in6addr_any;
-	sinaddr_tcp6.sin6_port = htons(nfs_param._9p_param._9p_tcp_port);
+	sinaddr_tcp6.sin6_port = htons(_9p_param._9p_tcp_port);
 
 	netbuf_tcp6.maxlen = sizeof(sinaddr_tcp6);
 	netbuf_tcp6.len = sizeof(sinaddr_tcp6);

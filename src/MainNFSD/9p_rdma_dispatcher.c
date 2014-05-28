@@ -169,7 +169,7 @@ void *_9p_rdma_thread(void *Arg)
 
 	/* Set initial msize.
 	 * Client may request a lower value during TVERSION */
-	p_9p_conn->msize = nfs_param._9p_param._9p_rdma_msize;
+	p_9p_conn->msize = _9p_param._9p_rdma_msize;
 
 	if (gettimeofday(&p_9p_conn->birth, NULL) == -1)
 		LogMajor(COMPONENT_9P, "Cannot get connection's time of birth");
@@ -211,8 +211,8 @@ static void _9p_rdma_setup_pernic(msk_trans_t *trans, uint8_t *outrdmabuf)
 
 	/* register output buffers */
 	pernic->outmr = msk_reg_mr(trans, outrdmabuf,
-			nfs_param._9p_param._9p_rdma_outpool_size
-			* nfs_param._9p_param._9p_rdma_msize,
+			_9p_param._9p_rdma_outpool_size
+			* _9p_param._9p_rdma_msize,
 			IBV_ACCESS_LOCAL_WRITE);
 	if (pernic->outmr == NULL) {
 		rc = errno;
@@ -223,8 +223,8 @@ static void _9p_rdma_setup_pernic(msk_trans_t *trans, uint8_t *outrdmabuf)
 
 	/* register input buffers */
 	/* Alloc rdmabuf */
-	pernic->rdmabuf = gsh_malloc(nfs_param._9p_param._9p_rdma_inpool_size *
-				     nfs_param._9p_param._9p_rdma_msize);
+	pernic->rdmabuf = gsh_malloc(_9p_param._9p_rdma_inpool_size *
+				     _9p_param._9p_rdma_msize);
 	if (pernic->rdmabuf == NULL) {
 		LogFatal(COMPONENT_9P,
 			 "9P/RDMA: pernic setup could not malloc rdmabuf");
@@ -233,8 +233,8 @@ static void _9p_rdma_setup_pernic(msk_trans_t *trans, uint8_t *outrdmabuf)
 
 	/* Register rdmabuf */
 	pernic->inmr = msk_reg_mr(trans, pernic->rdmabuf,
-				  nfs_param._9p_param._9p_rdma_inpool_size
-					* nfs_param._9p_param._9p_rdma_msize,
+				  _9p_param._9p_rdma_inpool_size
+					* _9p_param._9p_rdma_msize,
 				  IBV_ACCESS_LOCAL_WRITE);
 	if (pernic->inmr == NULL) {
 		rc = errno;
@@ -246,20 +246,20 @@ static void _9p_rdma_setup_pernic(msk_trans_t *trans, uint8_t *outrdmabuf)
 
 	/* Get prepared to recv data */
 
-	pernic->rdata = gsh_malloc(nfs_param._9p_param._9p_rdma_inpool_size
+	pernic->rdata = gsh_malloc(_9p_param._9p_rdma_inpool_size
 					* sizeof(*pernic->rdata));
 	if (pernic->rdata == NULL) {
 		LogFatal(COMPONENT_9P,
 			 "9P/RDMA: trans handler could not malloc rdata");
 		goto error;
 	}
-	memset(pernic->rdata, 0, nfs_param._9p_param._9p_rdma_inpool_size
+	memset(pernic->rdata, 0, _9p_param._9p_rdma_inpool_size
 					* sizeof(*pernic->rdata));
 
-	for (i = 0; i < nfs_param._9p_param._9p_rdma_inpool_size; i++) {
+	for (i = 0; i < _9p_param._9p_rdma_inpool_size; i++) {
 		pernic->rdata[i].data = pernic->rdmabuf +
-					i * nfs_param._9p_param._9p_rdma_msize;
-		pernic->rdata[i].max_size = nfs_param._9p_param._9p_rdma_msize;
+					i * _9p_param._9p_rdma_msize;
+		pernic->rdata[i].max_size = _9p_param._9p_rdma_msize;
 		pernic->rdata[i].mr = pernic->inmr;
 
 		rc = msk_post_recv(trans, pernic->rdata + i,
@@ -299,8 +299,8 @@ static void _9p_rdma_setup_global(uint8_t **poutrdmabuf, msk_data_t **pwdata,
 	msk_data_t *wdata;
 	struct _9p_outqueue *outqueue;
 
-	outrdmabuf = gsh_malloc(nfs_param._9p_param._9p_rdma_outpool_size
-				* nfs_param._9p_param._9p_rdma_msize);
+	outrdmabuf = gsh_malloc(_9p_param._9p_rdma_outpool_size
+				* _9p_param._9p_rdma_msize);
 	if (outrdmabuf == NULL) {
 		LogFatal(COMPONENT_9P,
 			 "9P/RDMA: trans handler could not malloc rdmabuf");
@@ -308,7 +308,7 @@ static void _9p_rdma_setup_global(uint8_t **poutrdmabuf, msk_data_t **pwdata,
 	}
 	*poutrdmabuf = outrdmabuf;
 
-	wdata = gsh_malloc(nfs_param._9p_param._9p_rdma_outpool_size
+	wdata = gsh_malloc(_9p_param._9p_rdma_outpool_size
 			   * sizeof(*wdata));
 	if (wdata == NULL) {
 		LogFatal(COMPONENT_9P,
@@ -316,11 +316,11 @@ static void _9p_rdma_setup_global(uint8_t **poutrdmabuf, msk_data_t **pwdata,
 		return;
 	}
 
-	for (i = 0; i < nfs_param._9p_param._9p_rdma_outpool_size; i++) {
+	for (i = 0; i < _9p_param._9p_rdma_outpool_size; i++) {
 		wdata[i].data = outrdmabuf +
-				i * nfs_param._9p_param._9p_rdma_msize;
-		wdata[i].max_size = nfs_param._9p_param._9p_rdma_msize;
-		if (i != nfs_param._9p_param._9p_rdma_outpool_size - 1)
+				i * _9p_param._9p_rdma_msize;
+		wdata[i].max_size = _9p_param._9p_rdma_msize;
+		if (i != _9p_param._9p_rdma_outpool_size - 1)
 			wdata[i].next = &wdata[i+1];
 		else
 			wdata[i].next = NULL;
@@ -366,10 +366,10 @@ void *_9p_rdma_dispatcher_thread(void *Arg)
 
 	memset(&trans_attr, 0, sizeof(msk_trans_attr_t));
 
-	trans_attr.server = nfs_param._9p_param._9p_rdma_backlog;
-	trans_attr.rq_depth = nfs_param._9p_param._9p_rdma_inpool_size + 1;
-	trans_attr.sq_depth = nfs_param._9p_param._9p_rdma_outpool_size + 1;
-	snprintf(port, PORT_MAX_LEN, "%d", nfs_param._9p_param._9p_rdma_port);
+	trans_attr.server = _9p_param._9p_rdma_backlog;
+	trans_attr.rq_depth = _9p_param._9p_rdma_inpool_size + 1;
+	trans_attr.sq_depth = _9p_param._9p_rdma_outpool_size + 1;
+	snprintf(port, PORT_MAX_LEN, "%d", _9p_param._9p_rdma_port);
 	trans_attr.port = port;
 	trans_attr.node = "::";
 	trans_attr.use_srq = 1;

@@ -556,8 +556,90 @@ do {                                                   \
 #define _9P_LOCK_FLAGS_BLOCK 1
 #define _9P_LOCK_FLAGS_RECLAIM 2
 
+
+/**
+ * @defgroup config_9p Structure and defaults for _9P
+ *
+ * @{
+ */
+
+/**
+ * @brief Default value for _9p_tcp_port
+ */
+#define _9P_TCP_PORT 564
+
+/**
+ * @brief Default value for _9p_rdma_port
+ */
+#define _9P_RDMA_PORT 5640
+
+/**
+ * @brief Default value for _9p_tcp_msize
+ */
+#define _9P_TCP_MSIZE 65536
+
+/**
+ * @brief Default value for _9p_rdma_msize
+ */
+#define _9P_RDMA_MSIZE 1048576
+
+/**
+ * @brief Default number of receive buffer per nic
+ */
+#define _9P_RDMA_INPOOL_SIZE 64
+
+/**
+ * @brief Default number of send buffer (total, not per nic)
+ *
+ * shared pool for sends - optimal when set oh-so-slightly
+ * higher than the number of worker threads
+ */
+#define _9P_RDMA_OUTPOOL_SIZE 32
+
+/**
+ * @brief Default rdma connection backlog
+ * (number of pending connection requests)
+ */
+#define _9P_RDMA_BACKLOG 10
+
+
+/**
+ * @brief 9p configuration
+ */
+
+struct _9p_param {
+	/** TCP port for 9p operations.  Defaults to _9P_TCP_PORT,
+	    settable by _9P_TCP_Port */
+	uint16_t _9p_tcp_port;
+	/** RDMA port for 9p operations.  Defaults to _9P_RDMA_PORT,
+	    settable by _9P_RDMA_Port */
+	uint16_t _9p_rdma_port;
+	/** Msize for 9P operation on tcp.  Defaults to _9P_TCP_MSIZE,
+	    settable by _9P_TCP_Msize */
+	uint32_t _9p_tcp_msize;
+	/** Msize for 9P operation on rdma.  Defaults to _9P_RDMA_MSIZE,
+	    settable by _9P_RDMA_Msize */
+	uint32_t _9p_rdma_msize;
+	/** Backlog for 9P rdma connections.  Defaults to _9P_RDMA_BACKLOG,
+	    settable by _9P_RDMA_Backlog */
+	uint16_t _9p_rdma_backlog;
+	/** Input buffer pool size for 9P rdma connections.
+	    Defaults to _9P_RDMA_INPOOL_SIZE,
+	    settable by _9P_RDMA_Inpool_Size */
+	uint16_t _9p_rdma_inpool_size;
+	/** Output buffer pool size for 9P rdma connections.
+	    Defaults to _9P_RDMA_OUTPOOL_SIZE,
+	    settable by _9P_RDMA_OutPool_Size */
+	uint16_t _9p_rdma_outpool_size;
+
+};
+
+
+/** @} */
+
 /* protocol parameter tables */
-extern struct config_block _9p_param;
+extern struct _9p_param _9p_param;
+extern struct config_block _9p_param_blk;
 
 /* service functions */
 int _9p_init(void);
