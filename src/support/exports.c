@@ -643,9 +643,9 @@ static int fsal_commit(void *node, void *link_mem, void *self_struct,
 					  &fsal_up_top);
 	if (!(export->export_perms.set & EXPORT_OPTION_EXPIRE_SET)) {
 		export->expire_type_attr =
-			nfs_param.cache_param.expire_type_attr;
+			cache_param.expire_type_attr;
 		export->expire_time_attr =
-			nfs_param.cache_param.expire_time_attr;
+			cache_param.expire_time_attr;
 	}
 
 	if (FSAL_IS_ERROR(status)) {
@@ -1303,7 +1303,7 @@ static int build_default_root(void)
 	export->PrefWrite = FSAL_MAXIOSIZE;
 	export->PrefRead = FSAL_MAXIOSIZE;
 	export->PrefReaddir = 16384;
-	export->expire_type_attr = nfs_param.cache_param.expire_type_attr;
+	export->expire_type_attr = cache_param.expire_type_attr;
 	glist_init(&export->exp_state_list);
 	glist_init(&export->exp_lock_list);
 	glist_init(&export->exp_nlm_share_list);

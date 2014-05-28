@@ -311,8 +311,8 @@ int nfs_set_param_from_conf(config_file_t parse_tree,
 
 	/* Cache inode client parameters */
 	(void) load_config_from_parse(parse_tree,
-				    &cache_inode_param,
-				    &nfs_param.cache_param,
+				    &cache_inode_param_blk,
+				    NULL,
 				    true,
 				    &err_type);
 	if (!config_error_is_harmless(&err_type)) {

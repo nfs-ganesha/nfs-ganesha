@@ -82,7 +82,7 @@ cih_pkginit(void)
 		&rwlock_attr,
 		PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
 #endif
-	npart = nfs_param.cache_param.nparts;
+	npart = cache_param.nparts;
 	cih_fhcache.npart = npart;
 	cih_fhcache.partition = gsh_calloc(npart, sizeof(cih_partition_t));
 	for (ix = 0; ix < npart; ++ix) {

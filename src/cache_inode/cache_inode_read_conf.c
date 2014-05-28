@@ -47,6 +47,11 @@
 #include <pthread.h>
 #include <string.h>
 
+/** File cache configuration, settable in the CacheInode
+    stanza. */
+
+struct cache_inode_parameter cache_param;
+
 static struct config_item_list expire_types[] = {
 	CONFIG_LIST_TOK("Expire", CACHE_INODE_EXPIRE),
 	CONFIG_LIST_TOK("Never", CACHE_INODE_EXPIRE_NEVER),
@@ -89,11 +94,19 @@ static struct config_item cache_inode_params[] = {
 	CONFIG_EOL
 };
 
-struct config_block cache_inode_param = {
+static void *cache_inode_param_init(void *link_mem, void *self_struct)
+{
+	if (self_struct == NULL)
+		return &cache_param;
+	else
+		return NULL;
+}
+
+struct config_block cache_inode_param_blk = {
 	.dbus_interface_name = "org.ganesha.nfsd.config.cache_inode",
 	.blk_desc.name = "CacheInode",
 	.blk_desc.type = CONFIG_BLOCK,
-	.blk_desc.u.blk.init = noop_conf_init,
+	.blk_desc.u.blk.init = cache_inode_param_init,
 	.blk_desc.u.blk.params = cache_inode_params,
 	.blk_desc.u.blk.commit = noop_conf_commit
 };

@@ -403,7 +403,7 @@ populate_dirent(const struct req_op_context *opctx,
 		LogInfo(COMPONENT_CACHE_INODE,
 			"Lookup failed on %s in dir %p with %s",
 			name, dir_hdl, cache_inode_err_str(*state->status));
-		return !nfs_param.cache_param.retry_readdir;
+		return !cache_param.retry_readdir;
 	}
 
 	LogFullDebug(COMPONENT_NFS_READDIR, "Creating entry for %s", name);
@@ -520,7 +520,7 @@ cache_inode_readdir_populate(const struct req_op_context *req_ctx,
 	}
 
 	/* we were supposed to read to the end.... */
-	if (!eod && nfs_param.cache_param.retry_readdir) {
+	if (!eod && cache_param.retry_readdir) {
 		LogInfo(COMPONENT_NFS_READDIR,
 			"Readdir didn't reach eod on dir %p (status %s)",
 			directory->obj_handle, cache_inode_err_str(status));

@@ -55,6 +55,96 @@
 #include "ganesha_list.h"
 #include "nfs4_acls.h"
 
+
+/**
+ * @defgroup config_cache_inode Structure and defaults for Cache_Inode
+ *
+ * @{
+ */
+
+/**
+ * @brief Determine whether inode data, such as attributes, expire.
+ */
+
+typedef enum cache_inode_expire_type {
+	CACHE_INODE_EXPIRE = 0,	/*< Data expire when they have been
+				   refreshed less recently than grace
+				   period for their type allows. */
+	CACHE_INODE_EXPIRE_NEVER = 1,	/*< Data never expire based on
+					   time. */
+	CACHE_INODE_EXPIRE_IMMEDIATE = 2	/*< Data are always treated
+						   as expired. */
+} cache_inode_expire_type_t;
+
+/**
+ * @brief Structure to hold cache_inode paramaters
+ */
+
+struct cache_inode_parameter {
+	/** Partitions in the Cache_Inode tree.  Defaults to 7,
+	 * settable with NParts. */
+	uint32_t nparts;
+	/** Expiration type for attributes.  Defaults to never,
+	    settable with Attr_Expiration_Time. */
+	cache_inode_expire_type_t expire_type_attr;
+	/** Expiration time interval in seconds for attributes.  Settable with
+	    Attr_Expiration_Time. */
+	uint32_t  expire_time_attr;
+	/** Use getattr for directory invalidation.  Defaults to
+	    false.  Settable with Use_Getattr_Directory_Invalidation. */
+	bool getattr_dir_invalidation;
+	/** High water mark for cache entries.  Defaults to 100000,
+	    settable by Entries_HWMark. */
+	uint32_t entries_hwmark;
+	/** Base interval in seconds between runs of the LRU cleaner
+	    thread. Defaults to 60, settable with LRU_Run_Interval. */
+	time_t lru_run_interval;
+	/** Whether to cache open files.  Defaults to true, settable
+	    with Cache_FDs. */
+	bool use_fd_cache;
+	/** The percentage of the system-imposed maximum of file
+	    descriptors at which Ganesha will deny requests.
+	    Defaults to 99, settable with FD_Limit_Percent. */
+	uint32_t fd_limit_percent;
+	/** The percentage of the system-imposed maximum of file
+	    descriptors above which Ganesha will make greater efforts
+	    at reaping. Defaults to 90, settable with
+	    FD_HWMark_Percent. */
+	uint32_t fd_hwmark_percent;
+	/** The percentage of the system-imposed maximum of file
+	    descriptors below which Ganesha will not reap file
+	    descriptonot reap file descriptors.  Defaults to 50,
+	    settable with FD_LWMark_Percent. */
+	uint32_t fd_lwmark_percent;
+	/** Roughly, the amount of work to do on each pass through the
+	    thread under normal conditions.  (Ideally, a multiple of
+	    the number of lanes.)  Defaults to 1000, settable with
+	    Reaper_Work. */
+	uint32_t reaper_work;
+	/** The largest window (as a percentage of the system-imposed
+	    limit on FDs) of work that we will do in extremis.
+	    Defaults to 40, settable with Biggest_Window */
+	uint32_t biggest_window;
+	/** Percentage of progress toward the high water mark required
+	    in in a pass through the thread when in extremis.
+	    Defaults to 5, settable with Required_Progress. */
+	uint32_t required_progress;
+	/** Number of failures to approach the high watermark before
+	    we disable caching, when in extremis.  Defaults to 8,
+	    settable with Futility_Count */
+	uint32_t futility_count;
+	/** Behavior for when readdir fails for some reason:
+	    true will ask the client to retry later, false will give the
+	    client a partial reply based on what we have.
+	    Defaults to false, settable with Retry_Readdir */
+	bool retry_readdir;
+};
+
+/** @} */
+
+extern struct config_block cache_inode_param_blk;
+extern struct cache_inode_parameter cache_param;
+
 /* Forward references */
 typedef struct cache_entry_t cache_entry_t;
 struct gsh_export;
@@ -845,8 +935,6 @@ void cache_inode_kill_entry(cache_entry_t *entry);
 cache_inode_status_t cache_inode_invalidate(cache_entry_t *entry,
 					    uint32_t flags);
 
-extern struct config_block cache_inode_param;
-
 inline int cache_inode_set_time_current(struct timespec *time);
 
 void cache_inode_destroyer(void);
@@ -902,7 +990,7 @@ cache_inode_is_attrs_valid(const cache_entry_t *entry)
 		return false;
 
 	if (entry->type == DIRECTORY
-	    && nfs_param.cache_param.getattr_dir_invalidation)
+	    && cache_param.getattr_dir_invalidation)
 		return false;
 
 	if (entry->expire_type_attr == CACHE_INODE_EXPIRE_IMMEDIATE)
