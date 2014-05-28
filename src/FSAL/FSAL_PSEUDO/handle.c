@@ -1,5 +1,5 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
+ * vim:shiftwidth=8:tabstop=8:
  *
  * Copyright (C) Panasas Inc., 2011
  * Author: Jim Lieb jlieb@panasas.com
@@ -528,13 +528,13 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 				  bool *eof)
 {
 	struct pseudo_fsal_obj_handle *myself, *hdl;
-	struct pseudo_fsal_obj_handle key[1];
 	struct avltree_node *node;
-	fsal_cookie_t seekloc = 2;
-	fsal_cookie_t index = 2;
+	fsal_cookie_t seekloc;
 
 	if (whence != NULL)
 		seekloc = *whence;
+	else
+		seekloc = 2;    /* start from index 2, if no cookie */
 
 	*eof = true;
 
@@ -553,17 +553,17 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 	 */
 	((struct req_op_context *)opctx)->fsal_private = dir_hdl;
 
-	/* seek to seekloc */
-	key->index = seekloc;
-
-	for (node = avltree_inline_index_lookup(&key->avl_i,
-						&myself->avl_index);
+	for (node = avltree_first(&myself->avl_index);
 	     node != NULL;
 	     node = avltree_next(node)) {
 		hdl = avltree_container_of(node,
 					   struct pseudo_fsal_obj_handle,
 					   avl_i);
-		if (!cb(opctx, hdl->name, dir_state, index)) {
+		/* skip entries before seekloc */
+		if (hdl->index < seekloc)
+			continue;
+
+		if (!cb(opctx, hdl->name, dir_state, hdl->index)) {
 			*eof = false;
 			break;
 		}
