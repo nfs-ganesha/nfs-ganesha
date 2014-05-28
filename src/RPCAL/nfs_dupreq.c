@@ -1434,6 +1434,9 @@ void nfs_dupreq_rele(struct svc_req *req, const nfs_function_desc_t *func)
 
 out:
     /* dispose RPC header */
+    if (req->rq_auth)
+            SVCAUTH_RELEASE(req->rq_auth, req);
+
     (void) free_rpc_msg(req->rq_msg);
 
     return;
