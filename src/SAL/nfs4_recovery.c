@@ -54,6 +54,8 @@ static void nfs4_load_recov_clids_nolock(nfs_grace_start_t *gsp);
 static void nfs_release_nlm_state();
 static void nfs_release_v4_client(char *ip);
 
+extern struct fridgethr *state_async_fridge;
+
 /**
  * @brief Initialize grace/recovery
  */
@@ -966,6 +968,23 @@ void nfs4_create_recov_dir(void)
 }
 
 /**
+ * @brief Release NLM state
+ */
+static void nlm_releasecall(struct fridgethr_context *ctx)
+{
+	state_nsm_client_t *nsm_cp;
+	state_status_t err;
+
+	nsm_cp = ctx->arg;
+	err = state_nlm_notify(nsm_cp, NULL, NULL);
+	if (err != STATE_SUCCESS)
+		LogDebug(COMPONENT_STATE,
+			"state_nlm_notify failed with %d",
+			err);
+	dec_nsm_client_ref(nsm_cp);
+}
+
+/**
  * @brief Release all NLM state
  */
 static void nfs_release_nlm_state()
@@ -975,7 +994,7 @@ static void nfs_release_nlm_state()
 	struct rbt_head *head_rbt;
 	struct rbt_node *pn;
 	struct hash_data *pdata;
-	state_status_t err;
+	state_status_t state_status;
 	int i;
 
 	LogDebug(COMPONENT_STATE, "Release all NLM locks");
@@ -992,14 +1011,14 @@ static void nfs_release_nlm_state()
 
 			nsm_cp = (state_nsm_client_t *) pdata->val.addr;
 			inc_nsm_client_ref(nsm_cp);
-			PTHREAD_RWLOCK_unlock(&ht->partitions[i].lock);
-			err = state_nlm_notify(nsm_cp, NULL, NULL);
-			if (err != STATE_SUCCESS)
-				LogDebug(COMPONENT_STATE,
-					 "state_nlm_notify failed with %d",
-					 err);
-			dec_nsm_client_ref(nsm_cp);
-			PTHREAD_RWLOCK_wrlock(&ht->partitions[i].lock);
+			state_status = fridgethr_submit(state_async_fridge,
+							nlm_releasecall,
+							nsm_cp);
+			if (state_status != STATE_SUCCESS) {
+				dec_nsm_client_ref(nsm_cp);
+				LogCrit(COMPONENT_STATE,
+					"failed to submit nlm release thread ");
+			}
 			RBT_INCREMENT(pn);
 		}
 		PTHREAD_RWLOCK_unlock(&ht->partitions[i].lock);
