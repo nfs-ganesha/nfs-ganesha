@@ -170,40 +170,6 @@ struct config_block nfs_core = {
 };
 
 /**
- * @brief IP name cache parameters
- */
-
-static struct config_item ip_name_params[] = {
-	CONF_ITEM_UI32("Index_Size", 1, 51, PRIME_IP_NAME,
-		       nfs_ip_name_param, hash_param.index_size),
-	CONF_ITEM_UI32("Expiration_Time", 1, 60*60*24, IP_NAME_EXPIRATION,
-		       nfs_ip_name_param, expiration_time),
-	CONFIG_EOL
-};
-
-static int ip_name_commit(void *node, void *link_mem, void *self_struct,
-			  struct config_error_type *err_type)
-{
-	struct nfs_param *params = self_struct;
-
-	if (!is_prime(params->ip_name_param.hash_param.index_size)) {
-		LogCrit(COMPONENT_CONFIG,
-			"IP name cache index size must be a prime.");
-		return 1;
-	}
-	return 0;
-}
-
-struct config_block nfs_ip_name = {
-	.dbus_interface_name = "org.ganesha.nfsd.config.ip_name",
-	.blk_desc.name = "NFS_IP_Name",
-	.blk_desc.type = CONFIG_BLOCK,
-	.blk_desc.u.blk.init = noop_conf_init,
-	.blk_desc.u.blk.params = ip_name_params,
-	.blk_desc.u.blk.commit = ip_name_commit
-};
-
-/**
  * @brief Kerberos/GSSAPI parameters
  */
 #ifdef _HAVE_GSSAPI

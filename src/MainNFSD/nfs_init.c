@@ -78,12 +78,6 @@
 nfs_parameter_t nfs_param = {
 
 	/*  Worker parameters : IP/name hash table */
-	.ip_name_param.hash_param.hash_func_key = ip_name_value_hash_func,
-	.ip_name_param.hash_param.hash_func_rbt = ip_name_rbt_hash_func,
-	.ip_name_param.hash_param.compare_key = compare_ip_name,
-	.ip_name_param.hash_param.key_to_str = display_ip_name_key,
-	.ip_name_param.hash_param.val_to_str = display_ip_name_val,
-	.ip_name_param.hash_param.flags = HT_FLAG_NONE,
 
 	/*  Worker parameters : NFSv4 Unconfirmed Client id table */
 	.client_id_param.cid_unconfirmed_hash_param.index_size = PRIME_STATE,
@@ -396,7 +390,7 @@ int nfs_set_param_from_conf(config_file_t parse_tree,
 	/* Worker paramters: ip/name hash table and expiration for each entry */
 	(void) load_config_from_parse(parse_tree,
 				    &nfs_ip_name,
-				    &nfs_param.ip_name_param,
+				    NULL,
 				    true,
 				    &err_type);
 	if (!config_error_is_harmless(&err_type)) {
@@ -761,7 +755,7 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 
 	/* Init the IP/name cache */
 	LogDebug(COMPONENT_INIT, "Now building IP/name cache");
-	if (nfs_Init_ip_name(nfs_param.ip_name_param) != IP_NAME_SUCCESS) {
+	if (nfs_Init_ip_name() != IP_NAME_SUCCESS) {
 		LogFatal(COMPONENT_INIT,
 			 "Error while initializing IP/name cache");
 	}

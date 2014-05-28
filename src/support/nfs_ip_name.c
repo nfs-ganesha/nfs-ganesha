@@ -302,19 +302,101 @@ int nfs_ip_name_remove(sockaddr_t *ipaddr)
 }				/* nfs_ip_name_remove */
 
 /**
+ * @defgroup config_ipnamemap Structure and defaults for NFS_IP_Name
+ *
+ * @{
+ */
+
+/**
+ * @brief Default index size for IP-Name hash
+ */
+#define PRIME_IP_NAME 17
+
+/**
+ * @brief Default value for ip_name_param.expiration-time
+ */
+#define IP_NAME_EXPIRATION 36000
+
+
+/** @} */
+
+/**
+ * @brief NFS_IP_Name configuration stanza
+ */
+
+struct ip_name_cache {
+	/** Configuration for hash table for NFS Name/IP map.
+	    Defautl index size is PRIME_IP_NAME, settable with
+	    Index_Size. */
+	hash_parameter_t hash_param;
+	/** Expiration time for ip-name mappings.  Defautls to
+	    IP_NAME_Expiration, and settable with Expiration_Time. */
+	uint32_t expiration_time;
+};
+
+static struct ip_name_cache ip_name_cache = {
+	.hash_param.hash_func_key = ip_name_value_hash_func,
+	.hash_param.hash_func_rbt = ip_name_rbt_hash_func,
+	.hash_param.compare_key = compare_ip_name,
+	.hash_param.key_to_str = display_ip_name_key,
+	.hash_param.val_to_str = display_ip_name_val,
+	.hash_param.flags = HT_FLAG_NONE,
+};
+
+/**
+ * @brief IP name cache parameters
+ */
+
+static struct config_item ip_name_params[] = {
+	CONF_ITEM_UI32("Index_Size", 1, 51, PRIME_IP_NAME,
+		       ip_name_cache, hash_param.index_size),
+	CONF_ITEM_UI32("Expiration_Time", 1, 60*60*24, IP_NAME_EXPIRATION,
+		       ip_name_cache, expiration_time),
+	CONFIG_EOL
+};
+
+static void *ip_name_init(void *link_mem, void *self_struct)
+{
+	if (self_struct == NULL)
+		return &ip_name_cache;
+	else
+		return NULL;
+}
+
+static int ip_name_commit(void *node, void *link_mem, void *self_struct,
+			  struct config_error_type *err_type)
+{
+	struct ip_name_cache *params = self_struct;
+
+	if (!is_prime(params->hash_param.index_size)) {
+		LogCrit(COMPONENT_CONFIG,
+			"IP name cache index size must be a prime.");
+		return 1;
+	}
+	return 0;
+}
+
+struct config_block nfs_ip_name = {
+	.dbus_interface_name = "org.ganesha.nfsd.config.ip_name",
+	.blk_desc.name = "NFS_IP_Name",
+	.blk_desc.type = CONFIG_BLOCK,
+	.blk_desc.u.blk.init = ip_name_init,
+	.blk_desc.u.blk.params = ip_name_params,
+	.blk_desc.u.blk.commit = ip_name_commit
+};
+
+/**
  *
  * nfs_Init_ip_name: Init the hashtable for IP/name cache.
  *
  * Perform all the required initialization for hashtable IP/name cache
  *
- * @param param [IN] parameter used to init the ip name cache
- *
  * @return 0 if successful, -1 otherwise
  *
  */
-int nfs_Init_ip_name(nfs_ip_name_parameter_t param)
+int nfs_Init_ip_name(void)
 {
-	ht_ip_name = hashtable_init(&param.hash_param);
+	ht_ip_name = hashtable_init(&ip_name_cache.hash_param);
 
 	if (ht_ip_name == NULL) {
 		LogCrit(COMPONENT_INIT,
@@ -323,7 +405,7 @@ int nfs_Init_ip_name(nfs_ip_name_parameter_t param)
 	}
 
 	/* Set the expiration time */
-	expiration_time = param.expiration_time;
+	expiration_time = ip_name_cache.expiration_time;
 
 	return IP_NAME_SUCCESS;
 }				/* nfs_Init_ip_name */

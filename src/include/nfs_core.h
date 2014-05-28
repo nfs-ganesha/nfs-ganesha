@@ -294,7 +294,7 @@ int b64_pton(char const *src, u_char *target, size_t targsize);
 
 unsigned int nfs_core_select_worker_queue(unsigned int avoid_index);
 
-int nfs_Init_ip_name(nfs_ip_name_parameter_t param);
+int nfs_Init_ip_name(void);
 
 void nfs_rpc_destroy_chan(rpc_call_channel_t *chan);
 int32_t nfs_rpc_dispatch_call(rpc_call_t *call, uint32_t flags);

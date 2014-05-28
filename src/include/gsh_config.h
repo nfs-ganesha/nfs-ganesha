@@ -629,30 +629,6 @@ typedef struct cache_inode_parameter {
  */
 #define CONF_LABEL_IP_NAME_HOSTS "Hosts"
 
-/**
- * @brief Default index size for IP-Name hash
- */
-#define PRIME_IP_NAME 17
-
-/**
- * @brief Default value for ip_name_param.expiration-time
- */
-#define IP_NAME_EXPIRATION 36000
-
-/**
- * @brief NFS_IP_Name configuration stanza
- */
-
-typedef struct nfs_ip_name_param {
-	/** Configuration for hash table for NFS Name/IP map.
-	    Defautl index size is PRIME_IP_NAME, settable with
-	    Index_Size. */
-	hash_parameter_t hash_param;
-	/** Expiration time for ip-name mappings.  Defautls to
-	    IP_NAME_Expiration, and settable with Expiration_Time. */
-	uint32_t expiration_time;
-} nfs_ip_name_parameter_t;
-
 /** @} */
 
 /**
@@ -681,9 +657,6 @@ typedef struct nfs_param {
 	/** File cache configuration, settable in the CacheInode
 	    stanza. */
 	cache_inode_parameter_t cache_param;
-	/** IP-Name map configuration, settable in the NFS_IP_Name
-	    stanza. */
-	nfs_ip_name_parameter_t ip_name_param;
 #ifdef _HAVE_GSSAPI
 	/** kerberos configuration.  Settable in the NFS_KRB5 stanza. */
 	nfs_krb5_parameter_t krb5_param;
