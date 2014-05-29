@@ -250,7 +250,7 @@ void pt_export_ops_init(struct export_ops *ops)
 
 static struct config_item export_params[] = {
 	CONF_ITEM_NOOP("name"),
-	CONF_ITEM_I64("pt_export_id", LLONG_MIN, LLONG_MAX, 1,
+	CONF_ITEM_I64("pt_export_id", INT64_MIN, INT64_MAX, 1,
 		       pt_fsal_export, pt_export_id),
 	CONFIG_EOL
 };
