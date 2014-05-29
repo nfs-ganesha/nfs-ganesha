@@ -78,9 +78,9 @@ static struct fsal_staticfsinfo_t lustre_info = {
 static struct config_item ds_params[] = {
 	CONF_ITEM_IPV4_ADDR("DS_Addr", "127.0.0.1",
 			    lustre_pnfs_ds_parameter, ipaddr),
-	CONF_ITEM_INET_PORT("DS_Port", 1024, 0xffff, 3260,
+	CONF_ITEM_INET_PORT("DS_Port", 1024, UINT16_MAX, 3260,
 		       lustre_pnfs_ds_parameter, ipport), /* use iscsi port */
-	CONF_ITEM_UI32("DS_Id", 1, 0xffffffff, 1,
+	CONF_ITEM_UI32("DS_Id", 1, UINT32_MAX, 1,
 		       lustre_pnfs_ds_parameter, id),
 	CONFIG_EOL
 };
