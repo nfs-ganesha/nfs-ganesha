@@ -196,10 +196,8 @@ static fsal_status_t create_export(struct fsal_module *module,
 		export->cmount = NULL;
 	}
 
-	if (initialized) {
-		pthread_rwlock_destroy(&export->export.lock);
+	if (initialized)
 		initialized = false;
-	}
 
 	if (export != NULL) {
 		gsh_free(export);

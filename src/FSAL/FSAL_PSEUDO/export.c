@@ -75,14 +75,8 @@ static void release(struct fsal_export *exp_hdl)
 		myself->root_handle = NULL;
 	}
 
-	PTHREAD_RWLOCK_wrlock(&exp_hdl->lock);
-
 	fsal_detach_export(exp_hdl->fsal, &exp_hdl->exports);
 	free_export_ops(exp_hdl);
-
-	PTHREAD_RWLOCK_unlock(&exp_hdl->lock);
-
-	pthread_rwlock_destroy(&exp_hdl->lock);
 
 	if (myself->export_path != NULL)
 		gsh_free(myself->export_path);
@@ -324,12 +318,6 @@ fsal_status_t pseudofs_create_export(struct fsal_module *fsal_hdl,
 
 	myself->export.up_ops = up_ops;
 
-	/* lock myself before attaching to the fsal.
-	 * keep myself locked until done with creating myself.
-	 */
-
-	PTHREAD_RWLOCK_wrlock(&myself->export.lock);
-
 	retval = fsal_attach_export(fsal_hdl, &myself->export.exports);
 
 	if (retval != 0) {
@@ -353,8 +341,6 @@ fsal_status_t pseudofs_create_export(struct fsal_module *fsal_hdl,
 
 	req_ctx->fsal_export = &myself->export;
 
-	PTHREAD_RWLOCK_unlock(&myself->export.lock);
-
 	LogDebug(COMPONENT_FSAL,
 		 "Created exp %p - %s",
 		 myself, myself->export_path);
@@ -370,9 +356,6 @@ fsal_status_t pseudofs_create_export(struct fsal_module *fsal_hdl,
 		gsh_free(myself->root_handle);
 
 	free_export_ops(&myself->export);
-
-	PTHREAD_RWLOCK_unlock(&myself->export.lock);
-	pthread_rwlock_destroy(&myself->export.lock);
 
 	gsh_free(myself);	/* elvis has left the building */
 

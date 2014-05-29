@@ -629,8 +629,6 @@ struct fsal_module *lookup_fsal(const char *name);
 
 struct fsal_export {
 	struct fsal_module *fsal;	/*< Link back to the FSAL module */
-	pthread_rwlock_t lock;		/*< A lock, to be held when
-					    manipulating the export. */
 	struct glist_head exports;	/*< Link in list of exports from
 					   the same FSAL. */
 	struct export_ops *ops;	/*< Vector of operations */

@@ -77,7 +77,6 @@ static void release(struct fsal_export *exp_hdl)
 	myself = container_of(exp_hdl, struct vfs_fsal_export, export);
 
 	vfs_fini(myself);
-	PTHREAD_RWLOCK_wrlock(&exp_hdl->lock);
 
 	vfs_unexport_filesystems(myself);
 
@@ -86,9 +85,7 @@ static void release(struct fsal_export *exp_hdl)
 
 	if (myself->handle_lib != NULL)
 		gsh_free(myself->handle_lib);
-	PTHREAD_RWLOCK_unlock(&exp_hdl->lock);
 
-	pthread_rwlock_destroy(&exp_hdl->lock);
 	gsh_free(myself);	/* elvis has left the building */
 }
 
@@ -641,11 +638,6 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	vfs_init_export_ops(myself, req_ctx->export->fullpath);
 
-	/* lock myself before attaching to the fsal.
-	 * keep myself locked until done with creating myself.
-	 */
-
-	PTHREAD_RWLOCK_wrlock(&myself->export.lock);
 	retval = fsal_attach_export(fsal_hdl, &myself->export.exports);
 	if (retval != 0) {
 		fsal_error = posix2fsal_error(retval);
@@ -686,7 +678,6 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 	}
 
 	req_ctx->fsal_export = &myself->export;
-	PTHREAD_RWLOCK_unlock(&myself->export.lock);
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
  errout:
@@ -696,8 +687,6 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 	if (myself->handle_lib != NULL)
 		gsh_free(myself->handle_lib);
 	free_export_ops(&myself->export);
-	PTHREAD_RWLOCK_unlock(&myself->export.lock);
-	pthread_rwlock_destroy(&myself->export.lock);
 	gsh_free(myself);	/* elvis has left the building */
 	return fsalstat(fsal_error, retval);
 }

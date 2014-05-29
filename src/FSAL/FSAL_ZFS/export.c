@@ -78,13 +78,10 @@ static void release(struct fsal_export *exp_hdl)
 
 	myself = container_of(exp_hdl, struct zfs_fsal_export, export);
 
-	PTHREAD_RWLOCK_wrlock(&exp_hdl->lock);
 	fsal_detach_export(exp_hdl->fsal, &exp_hdl->exports);
 	free_export_ops(exp_hdl);
 	myself->export.ops = NULL;	/* poison myself */
-	PTHREAD_RWLOCK_unlock(&exp_hdl->lock);
 
-	pthread_rwlock_destroy(&exp_hdl->lock);
 	gsh_free(myself);		/* elvis has left the building */
 }
 
@@ -341,11 +338,7 @@ fsal_status_t zfs_create_export(struct fsal_module *fsal_hdl,
 	zfs_export_ops_init(myself->export.ops);
 	zfs_handle_ops_init(myself->export.obj_ops);
 	myself->export.up_ops = up_ops;
-	/* lock myself before attaching to the fsal.
-	 * keep myself locked until done with creating myself.
-	 */
 
-	PTHREAD_RWLOCK_wrlock(&myself->export.lock);
 	retval = fsal_attach_export(fsal_hdl, &myself->export.exports);
 	if (retval != 0)
 		goto err_locked;	/* seriously bad */
@@ -383,20 +376,17 @@ fsal_status_t zfs_create_export(struct fsal_module *fsal_hdl,
 		gsh_free(libargs.pool_path);
 	myself->p_vfs = p_snapshots[0].p_vfs;
 	req_ctx->fsal_export = &myself->export;
-	PTHREAD_RWLOCK_unlock(&myself->export.lock);
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
 err_locked:
 	if (myself->export.fsal != NULL)
 		fsal_detach_export(fsal_hdl, &myself->export.exports);
-	PTHREAD_RWLOCK_unlock(&myself->export.lock);
 errout:
 	if (libargs.pool_path)
 		gsh_free(libargs.pool_path);
 	if (myself != NULL) {
 		myself->export.ops = NULL;	/* poison myself */
-		pthread_rwlock_destroy(&myself->export.lock);
 		gsh_free(myself);	/* elvis has left the building */
 	}
 	return fsalstat(fsal_error, retval);
