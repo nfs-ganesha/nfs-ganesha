@@ -68,23 +68,12 @@ struct global_export_perms export_opt = {
 		       EXPORT_OPTION_UDP |
 		       EXPORT_OPTION_TCP |
 		       EXPORT_OPTION_NO_DELEGATIONS,
-	/* The only option not considered set is FSID */
-	.def.set = ~EXPORT_OPTION_FSID_SET
+	.def.set = UINT32_MAX
 };
 
 static void StrExportOptions(struct export_perms *p_perms, char *buffer)
 {
 	char *buf = buffer;
-
-	if ((p_perms->set & EXPORT_OPTION_FSID_SET) != 0)
-		buf += sprintf(buf, "FSID_SET ");
-	else
-		buf += sprintf(buf, "         ");
-
-	if ((p_perms->set & EXPORT_OPTION_EXPIRE_SET) != 0)
-		buf += sprintf(buf, "EXPIRE_SET ");
-	else
-		buf += sprintf(buf, "           ");
 
 	if ((p_perms->set & EXPORT_OPTION_SQUASH_TYPES) != 0) {
 		if ((p_perms->options & EXPORT_OPTION_ROOT) != 0)
@@ -641,7 +630,7 @@ static int fsal_commit(void *node, void *link_mem, void *self_struct,
 					  &root_op_context.req_ctx,
 					  node,
 					  &fsal_up_top);
-	if (!(export->export_perms.set & EXPORT_OPTION_EXPIRE_SET)) {
+	if ((export->options_set & EXPORT_OPTION_EXPIRE_SET) == 0) {
 		export->expire_type_attr =
 			nfs_param.cache_param.expire_type_attr;
 		export->expire_time_attr =
@@ -1174,15 +1163,16 @@ static struct config_item export_params[] = {
 		       gsh_export, PrefReaddir),
 	CONF_ITEM_FSID_SET("Filesystem_id", 666, 666,
 		       gsh_export, filesystem_id, /* major.minor */
-		       EXPORT_OPTION_FSID_SET, export_perms.set),
+		       EXPORT_OPTION_FSID_SET, options_set),
 	CONF_ITEM_STR("Tag", 1, MAXPATHLEN, NULL,
 		      gsh_export, FS_tag),
 	CONF_ITEM_UI64("MaxOffsetWrite", 512, UINT64_MAX, UINT64_MAX,
 		       gsh_export, MaxOffsetWrite),
 	CONF_ITEM_UI64("MaxOffsetRead", 512, UINT64_MAX, UINT64_MAX,
 		       gsh_export, MaxOffsetRead),
-	CONF_ITEM_BOOL("UseCookieVerifier", true,
-		       gsh_export, UseCookieVerifier),
+	CONF_ITEM_BOOLBIT_SET("UseCookieVerifier",
+		true, EXPORT_OPTION_USE_COOKIE_VERIFIER,
+		gsh_export, options, options_set),
 	CONF_EXPORT_PERMS(gsh_export, export_perms),
 	CONF_ITEM_BLOCK("Client", client_params,
 			client_init, client_commit,
@@ -1191,7 +1181,7 @@ static struct config_item export_params[] = {
 			   CACHE_INODE_EXPIRE_NEVER,
 			   expire_types,
 			   gsh_export, expire_type_attr,
-			   EXPORT_OPTION_EXPIRE_SET, export_perms.set),
+			   EXPORT_OPTION_EXPIRE_SET, options_set),
 	CONF_ITEM_UI32("Attr_Expiration_Time", 0, 360, 60,
 		       gsh_export, expire_time_attr),
 	CONF_RELAX_BLOCK("FSAL", fsal_params,
@@ -1295,7 +1285,6 @@ static int build_default_root(void)
 	init_root_op_context(&root_op_context, export, NULL, 0, 0,
 			     UNKNOWN_REQUEST);
 
-	export->UseCookieVerifier = true;
 	export->filesystem_id.major = 152;
 	export->filesystem_id.minor = 152;
 	export->MaxWrite = FSAL_MAXIOSIZE;
@@ -1329,8 +1318,11 @@ static int build_default_root(void)
 				    EXPORT_OPTION_ACCESS_TYPE |
 				    EXPORT_OPTION_PROTOCOLS |
 				    EXPORT_OPTION_TRANSPORTS |
-				    EXPORT_OPTION_AUTH_TYPES |
-				    EXPORT_OPTION_FSID_SET;
+				    EXPORT_OPTION_AUTH_TYPES;
+
+	export->options = EXPORT_OPTION_USE_COOKIE_VERIFIER;
+	export->options_set = EXPORT_OPTION_FSID_SET |
+			      EXPORT_OPTION_USE_COOKIE_VERIFIER;
 
 	/* Set the fullpath to "/" */
 	export->fullpath = gsh_strdup("/");

@@ -122,13 +122,15 @@ struct gsh_export {
 	/** Expiration type for attributes.  Defaults to never,
 	    settable with Attr_Expiration_Time. */
 	cache_inode_expire_type_t expire_type_attr;
+	/** Export non-permission options */
+	uint32_t options;
+	/** Export non-permission options set */
+	uint32_t options_set;
 	/** Expiration time interval in seconds for attributes.  Settable with
 	    Attr_Expiration_Time. */
 	uint32_t expire_time_attr;
 	/** Export_Id for this export */
 	uint32_t export_id;
-	/** Is Cookie verifier to be used? */
-	bool UseCookieVerifier;
 };
 
 void export_pkginit(void);

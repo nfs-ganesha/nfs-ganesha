@@ -110,7 +110,12 @@ typedef struct exportlist_client_entry__ {
 	struct export_perms client_perms;	/*< Available mount options */
 } exportlist_client_entry_t;
 
-/* Constant for options masks */
+/* Constants for export options masks */
+#define EXPORT_OPTION_FSID_SET 0x00000001 /* Set if Filesystem_id is set */
+#define EXPORT_OPTION_USE_COOKIE_VERIFIER 0x00000002 /* Use cookie verifier */
+#define EXPORT_OPTION_EXPIRE_SET 0x00000004	/*< Inode expire was set */
+
+/* Constants for export permissions masks */
 #define EXPORT_OPTION_ROOT 0x00000001	/*< Allow root access as root uid */
 #define EXPORT_OPTION_ROOT_SQUASH 0	/*< Disallow root access as root uid */
 #define EXPORT_OPTION_ALL_ANONYMOUS 0x00000002	/*< all users are squashed to
@@ -176,7 +181,6 @@ typedef struct exportlist_client_entry__ {
 #define EXPORT_OPTION_UDP 0x01000000	/*< UDP protocol is supported */
 #define EXPORT_OPTION_TCP 0x02000000	/*< TCP protocol is supported */
 #define EXPORT_OPTION_RDMA 0x04000000	/*< RDMA protocol is supported */
-#define EXPORT_OPTION_EXPIRE_SET 0x08000000	/*< Inode expire was set */
 #define EXPORT_OPTION_PROTOCOLS	      (EXPORT_OPTION_NFSV3	     | \
 				       EXPORT_OPTION_NFSV4	     | \
 				       EXPORT_OPTION_9P)
@@ -192,7 +196,6 @@ typedef struct exportlist_client_entry__ {
 
 #define EXPORT_OPTION_MANAGE_GIDS 0x40000000 /*< Do not trust
 						    altgrp in AUTH_SYS creds */
-#define EXPORT_OPTION_FSID_SET 0x80000000 /* Set if Filesystem_id is set */
 
 /* NFS4 specific structures */
 
