@@ -638,8 +638,8 @@ struct fsal_staticfsinfo_t {
 	attrmask_t supported_attrs;	/*< If the FS is homogenous, this
 					   indicates the set of
 					   supported attributes. */
-	uint32_t maxread;	/*< Max read size */
-	uint32_t maxwrite;	/*< Max write size */
+	uint64_t maxread;	/*< Max read size */
+	uint64_t maxwrite;	/*< Max write size */
 	uint32_t umask;		/*< This mask is applied to the mode of created
 				   objects */
 	bool auth_exportpath_xdev;	/*< This flag indicates weither

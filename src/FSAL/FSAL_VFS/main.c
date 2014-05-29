@@ -90,9 +90,9 @@ static struct config_item vfs_params[] = {
 		       fsal_staticfsinfo_t, symlink_support),
 	CONF_ITEM_BOOL("cansettime", true,
 		       fsal_staticfsinfo_t, cansettime),
-	CONF_ITEM_UI32("maxread", 512, 1024*1024, 1048576,
+	CONF_ITEM_UI64("maxread", 512, FSAL_MAXIOSIZE, FSAL_MAXIOSIZE,
 		       fsal_staticfsinfo_t, maxread),
-	CONF_ITEM_UI32("maxwrite", 512, 1024*1024, 1048576,
+	CONF_ITEM_UI64("maxwrite", 512, FSAL_MAXIOSIZE, FSAL_MAXIOSIZE,
 		       fsal_staticfsinfo_t, maxwrite),
 	CONF_ITEM_MODE("umask", 0, 0777, 0,
 		       fsal_staticfsinfo_t, umask),
@@ -184,9 +184,8 @@ MODULE_INIT void vfs_init(void)
 	int retval;
 	struct fsal_module *myself = &VFS.fsal;
 
-	retval =
-	    register_fsal(myself, myname, FSAL_MAJOR_VERSION,
-			  FSAL_MINOR_VERSION);
+	retval = register_fsal(myself, myname, FSAL_MAJOR_VERSION,
+			       FSAL_MINOR_VERSION, FSAL_ID_VFS);
 	if (retval != 0) {
 		fprintf(stderr, "VFS module failed to register");
 		return;

@@ -64,12 +64,9 @@ static void release(struct fsal_export *exp_hdl)
 
 	myself = container_of(exp_hdl, struct pt_fsal_export, export);
 
-	PTHREAD_RWLOCK_wrlock(&exp_hdl->lock);
 	fsal_detach_export(exp_hdl->fsal, &exp_hdl->exports);
 	free_export_ops(exp_hdl);
-	PTHREAD_RWLOCK_unlock(&exp_hdl->lock);
 
-	pthread_rwlock_destroy(&exp_hdl->lock);
 	gsh_free(myself);	/* elvis has left the building */
 }
 
@@ -253,7 +250,7 @@ void pt_export_ops_init(struct export_ops *ops)
 
 static struct config_item export_params[] = {
 	CONF_ITEM_NOOP("name"),
-	CONF_ITEM_I64("pt_export_id", LLONG_MIN, LLONG_MAX, 1,
+	CONF_ITEM_I64("pt_export_id", INT64_MIN, INT64_MAX, 1,
 		       pt_fsal_export, pt_export_id),
 	CONFIG_EOL
 };
@@ -302,11 +299,6 @@ fsal_status_t pt_create_export(struct fsal_module *fsal_hdl,
 	pt_handle_ops_init(myself->export.obj_ops);
 	myself->export.up_ops = up_ops;
 
-	/* lock myself before attaching to the fsal.
-	 * keep myself locked until done with creating myself.
-	 */
-
-	PTHREAD_RWLOCK_wrlock(&myself->export.lock);
 	retval = fsal_attach_export(fsal_hdl, &myself->export.exports);
 	if (retval != 0)
 		goto errout;	/* seriously bad */
@@ -323,13 +315,10 @@ fsal_status_t pt_create_export(struct fsal_module *fsal_hdl,
 	}
 	req_ctx->fsal_export = &myself->export;
 
-	PTHREAD_RWLOCK_unlock(&myself->export.lock);
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
  errout:
 	free_export_ops(&myself->export);
-	PTHREAD_RWLOCK_unlock(&myself->export.lock);
-	pthread_rwlock_destroy(&myself->export.lock);
 	gsh_free(myself);	/* elvis has left the building */
 	return fsalstat(fsal_error, retval);
 }

@@ -134,9 +134,9 @@ static struct config_item pt_params[] = {
 		       fsal_staticfsinfo_t, symlink_support),
 	CONF_ITEM_BOOL("cansettime", true,
 		       fsal_staticfsinfo_t, cansettime),
-	CONF_ITEM_UI32("maxread", 512, 1024*1024, 1048576,
+	CONF_ITEM_UI64("maxread", 512, FSAL_MAXIOSIZE, FSAL_MAXIOSIZE,
 		       fsal_staticfsinfo_t, maxread),
-	CONF_ITEM_UI32("maxwrite", 512, 1024*1024, 1048576,
+	CONF_ITEM_UI64("maxwrite", 512, FSAL_MAXIOSIZE, FSAL_MAXIOSIZE,
 		       fsal_staticfsinfo_t, maxwrite),
 	CONF_ITEM_MODE("umask", 0, 0777, 0,
 		       fsal_staticfsinfo_t, umask),
@@ -313,15 +313,15 @@ MODULE_INIT void pt_init(void)
 		return;
 	}
 
-	retval =
-	    register_fsal(myself, myname, FSAL_MAJOR_VERSION,
-			  FSAL_MINOR_VERSION);
+	retval = register_fsal(myself, myname, FSAL_MAJOR_VERSION,
+			       FSAL_MINOR_VERSION, FSAL_ID_NO_PNFS);
 	if (retval != 0) {
 		fprintf(stderr, "PT module failed to register");
 		return;
 	}
 	myself->ops->create_export = pt_create_export;
 	myself->ops->init_config = init_config;
+	pt_filesystem.fsal = myself;
 }
 
 MODULE_FINI void pt_unload(void)

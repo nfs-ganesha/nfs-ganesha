@@ -62,15 +62,12 @@ static void release(struct fsal_export *export_pub)
 	deconstruct_handle(export->root);
 	export->root = 0;
 
-	PTHREAD_RWLOCK_wrlock(&export->export.lock);
 	fsal_detach_export(export->export.fsal, &export->export.exports);
 	free_export_ops(&export->export);
-	PTHREAD_RWLOCK_unlock(&export->export.lock);
 
 	export->export.ops = NULL;
 	ceph_shutdown(export->cmount);
 	export->cmount = NULL;
-	pthread_rwlock_destroy(&export->export.lock);
 	gsh_free(export);
 	export = NULL;
 }

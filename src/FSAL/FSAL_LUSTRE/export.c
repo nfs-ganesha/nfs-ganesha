@@ -66,12 +66,9 @@ static void lustre_release(struct fsal_export *exp_hdl)
 
 	myself = container_of(exp_hdl, struct lustre_fsal_export, export);
 
-	PTHREAD_RWLOCK_wrlock(&exp_hdl->lock);
 	fsal_detach_export(exp_hdl->fsal, &exp_hdl->exports);
 	free_export_ops(exp_hdl);
-	PTHREAD_RWLOCK_unlock(&exp_hdl->lock);
 
-	pthread_rwlock_destroy(&exp_hdl->lock);
 	gsh_free(myself);		/* elvis has left the building */
 }
 
@@ -668,11 +665,6 @@ fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
 	lustre_handle_ops_init(myself->export.obj_ops);
 	myself->export.up_ops = up_ops;
 
-	/* lock myself before attaching to the fsal.
-	 * keep myself locked until done with creating myself.
-	 */
-
-	PTHREAD_RWLOCK_wrlock(&myself->export.lock);
 	retval = fsal_attach_export(fsal_hdl, &myself->export.exports);
 	if (retval != 0)
 		goto errout;	/* seriously bad */
@@ -704,7 +696,6 @@ fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
 
 
 	req_ctx->fsal_export = &myself->export;
-	PTHREAD_RWLOCK_unlock(&myself->export.lock);
 
 	myself->pnfs_enabled =
 	    myself->export.ops->fs_supports(&myself->export,
@@ -721,8 +712,6 @@ fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
 
  errout:
 	free_export_ops(&myself->export);
-	PTHREAD_RWLOCK_unlock(&myself->export.lock);
-	pthread_rwlock_destroy(&myself->export.lock);
 	gsh_free(myself);		/* elvis has left the building */
 	return fsalstat(fsal_error, retval);
 }

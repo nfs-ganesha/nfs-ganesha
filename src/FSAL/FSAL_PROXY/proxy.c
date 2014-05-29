@@ -78,13 +78,13 @@ static struct config_item proxy_client_params[] = {
 		       pxy_client_params, retry_sleeptime),
 	CONF_ITEM_IPV4_ADDR("Srv_Addr", "127.0.0.1",
 			    pxy_client_params, srv_addr),
-	CONF_ITEM_UI32("NFS_Service", 0, 0xffffffff, 100003,
+	CONF_ITEM_UI32("NFS_Service", 0, UINT32_MAX, 100003,
 		       pxy_client_params, srv_prognum),
-	CONF_ITEM_UI32("NFS_SendSize", 512, 128*1024, 32768,
+	CONF_ITEM_UI32("NFS_SendSize", 512, FSAL_MAXIOSIZE, 32768,
 		       pxy_client_params, srv_sendsize),
-	CONF_ITEM_UI32("NFS_RecvSize", 512, 128*1024, 32768,
+	CONF_ITEM_UI32("NFS_RecvSize", 512, FSAL_MAXIOSIZE, 32768,
 		       pxy_client_params, srv_recvsize),
-	CONF_ITEM_INET_PORT("NFS_Port", 0, 0xffff, 2049,
+	CONF_ITEM_INET_PORT("NFS_Port", 0, UINT16_MAX, 2049,
 			    pxy_client_params, srv_port),
 	CONF_ITEM_BOOL("Use_Privileged_Client_Port", false,
 		       pxy_client_params, use_privileged_client_port),
@@ -170,9 +170,9 @@ static struct config_item proxy_params[] = {
 		       fsal_staticfsinfo_t, symlink_support),
 	CONF_ITEM_BOOL("cansettime", true,
 		       fsal_staticfsinfo_t, cansettime),
-	CONF_ITEM_UI32("maxread", 512, 1024*1024, 1048576,
+	CONF_ITEM_UI64("maxread", 512, FSAL_MAXIOSIZE, FSAL_MAXIOSIZE,
 		       fsal_staticfsinfo_t, maxread),
-	CONF_ITEM_UI32("maxwrite", 512, 1024*1024, 1048576,
+	CONF_ITEM_UI64("maxwrite", 512, FSAL_MAXIOSIZE, FSAL_MAXIOSIZE,
 		       fsal_staticfsinfo_t, maxwrite),
 	CONF_ITEM_MODE("umask", 0, 0777, 0,
 		       fsal_staticfsinfo_t, umask),
@@ -229,9 +229,8 @@ static struct pxy_fsal_module PROXY;
 
 MODULE_INIT void pxy_init(void)
 {
-	if (register_fsal
-	    (&PROXY.module, "PROXY", FSAL_MAJOR_VERSION,
-	     FSAL_MINOR_VERSION) != 0)
+	if (register_fsal(&PROXY.module, "PROXY", FSAL_MAJOR_VERSION,
+			  FSAL_MINOR_VERSION, FSAL_ID_NO_PNFS) != 0)
 		return;
 	PROXY.module.ops->init_config = pxy_init_config;
 	PROXY.module.ops->create_export = pxy_create_export;

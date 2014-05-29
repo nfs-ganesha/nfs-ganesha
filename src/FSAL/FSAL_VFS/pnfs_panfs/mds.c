@@ -103,11 +103,11 @@ static inline int _get_obj_fd(struct fsal_obj_handle *obj_hdl)
 	else
 		return -1;
 }
-
-/*================================= export ops ===============================*/
+/*================================= fsal ops ===============================*/
 /*
  * @return ~0UL means client's maximum
  */
+#if 0
 static
 size_t fs_da_addr_size(struct fsal_export *exp_hdl)
 {
@@ -129,11 +129,14 @@ nfsstat4 getdeviceinfo(struct fsal_export *exp_hdl, XDR *da_addr_body,
 	if (!ret)
 		_XDR_2_ioctlxdr_read_end(da_addr_body, &pixdr);
 	LogFullDebug(COMPONENT_FSAL,
-		 "deviceid(%lx,%lx) ret => %d", deviceid->export_id,
-		 deviceid->devid, ret);
+		     "deviceid(%"PRIx64",%"PRIx64") ret => %d",
+		     deviceid->export_id,
+		     deviceid->devid, ret);
 	return ret;
 }
+#endif
 
+/*================================= export ops ===============================*/
 static
 nfsstat4 getdevicelist(struct fsal_export *exp_hdl, layouttype4 type,
 		       void *opaque, bool(*cb) (void *opaque,
@@ -357,13 +360,11 @@ static void _stop_callback_thread(void *td)
 /*============================== initialization ==============================*/
 void export_ops_pnfs(struct export_ops *ops)
 {
-	ops->getdeviceinfo = getdeviceinfo;
 	ops->getdevicelist = getdevicelist;
 	ops->fs_layouttypes = fs_layouttypes;
 	ops->fs_layout_blocksize = fs_layout_blocksize;
 	ops->fs_maximum_segments = fs_maximum_segments;
 	ops->fs_loc_body_size = fs_loc_body_size;
-	ops->fs_da_addr_size = fs_da_addr_size;
 	LogFullDebug(COMPONENT_FSAL, "Init'd export vector");
 }
 

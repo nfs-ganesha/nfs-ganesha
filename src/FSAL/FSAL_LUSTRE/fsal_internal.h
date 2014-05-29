@@ -112,4 +112,14 @@ void lustre_export_ops_init(struct export_ops *ops);
 void lustre_handle_ops_init(struct fsal_obj_ops *ops);
 extern struct lustre_pnfs_parameter pnfs_param;
 
+/* LUSTRE methods for pnfs
+ */
+
+nfsstat4 lustre_getdeviceinfo(struct fsal_module *fsal_hdl,
+			      XDR *da_addr_body,
+			      const layouttype4 type,
+			      const struct pnfs_deviceid *deviceid);
+
+size_t lustre_fs_da_addr_size(struct fsal_module *fsal_hdl);
+
 #endif

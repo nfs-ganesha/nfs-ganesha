@@ -45,6 +45,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 	char thr_name[16];
 	int rc = 0;
 	struct nfsd4_pnfs_deviceid dev_id;
+	struct pnfs_deviceid devid;
 	struct stat buf;
 	struct glock fl;
 	struct callback_arg callback;
@@ -255,12 +256,15 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 				 flags, callback.buf->st_ino, dev_id.sbid,
 				 dev_id.devid);
 
+			memset(&devid, 0, sizeof(devid));
+			devid.fsal_id = FSAL_ID_GPFS;
+			devid.devid = dev_id.devid;
+
 			rc = up_async_notify_device(general_fridge,
 						event_func,
 						NOTIFY_DEVICEID4_DELETE_MASK,
 						LAYOUT4_NFSV4_1_FILES,
-						dev_id.sbid,
-						dev_id.devid,
+						&devid,
 						true, NULL,
 						NULL);
 			break;

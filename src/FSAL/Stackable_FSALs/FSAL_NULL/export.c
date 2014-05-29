@@ -69,12 +69,9 @@ static void release(struct fsal_export *exp_hdl)
 	myself->sub_export->ops->release(myself->sub_export);
 	fsal_put(sub_fsal);
 
-	PTHREAD_RWLOCK_wrlock(&exp_hdl->lock);
 	fsal_detach_export(exp_hdl->fsal, &exp_hdl->exports);
 	free_export_ops(exp_hdl);
-	PTHREAD_RWLOCK_unlock(&exp_hdl->lock);
 
-	pthread_rwlock_destroy(&exp_hdl->lock);
 	gsh_free(myself);	/* elvis has left the building */
 }
 

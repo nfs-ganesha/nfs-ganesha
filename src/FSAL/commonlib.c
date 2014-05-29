@@ -122,8 +122,6 @@ static void fsal_detach_handle(struct fsal_module *fsal,
 
 int fsal_export_init(struct fsal_export *exp)
 {
-	pthread_rwlockattr_t attrs;
-
 	exp->ops = gsh_malloc(sizeof(struct export_ops));
 	if (exp->ops == NULL)
 		goto errout;
@@ -138,14 +136,6 @@ int fsal_export_init(struct fsal_export *exp)
 	if (exp->ds_ops == NULL)
 		goto errout;
 	memcpy(exp->ds_ops, &def_ds_ops, sizeof(struct fsal_ds_ops));
-
-	pthread_rwlockattr_init(&attrs);
-#ifdef GLIBC
-	pthread_rwlockattr_setkind_np(
-		&attrs,
-		PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
-#endif
-	pthread_rwlock_init(&exp->lock, &attrs);
 
 	return 0;
 
@@ -388,8 +378,8 @@ void display_fsinfo(struct fsal_staticfsinfo_t *info)
 	LogDebug(COMPONENT_FSAL, "  homogenous  = %d  ", info->homogenous);
 	LogDebug(COMPONENT_FSAL, "  supported_attrs  = %" PRIX64,
 		 info->supported_attrs);
-	LogDebug(COMPONENT_FSAL, "  maxread  = %" PRIu32, info->maxread);
-	LogDebug(COMPONENT_FSAL, "  maxwrite  = %" PRIu32, info->maxwrite);
+	LogDebug(COMPONENT_FSAL, "  maxread  = %" PRIu64, info->maxread);
+	LogDebug(COMPONENT_FSAL, "  maxwrite  = %" PRIu64, info->maxwrite);
 	LogDebug(COMPONENT_FSAL, "  umask  = %X ", info->umask);
 	LogDebug(COMPONENT_FSAL, "  auth_exportpath_xdev  = %d  ",
 		 info->auth_exportpath_xdev);

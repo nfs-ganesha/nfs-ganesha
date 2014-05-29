@@ -516,7 +516,7 @@ static fattr_xdr_result encode_fsid(XDR *xdr, struct xdr_attrs_args *args)
 	fsid4 fsid = {0, 0};
 
 	if (args->data != NULL &&
-	    (args->data->req_ctx->export->export_perms.set &
+	    (args->data->req_ctx->export->options_set &
 	     EXPORT_OPTION_FSID_SET) != 0) {
 		fsid.major = args->data->req_ctx->export->filesystem_id.major;
 		fsid.minor = args->data->req_ctx->export->filesystem_id.minor;
@@ -3610,7 +3610,7 @@ bool nfs3_FSALattr_To_Fattr(struct gsh_export *export,
 			"attribute: missing %lx", want & ~got);
 	}
 
-	if ((export->export_perms.set & EXPORT_OPTION_FSID_SET) != 0) {
+	if ((export->options_set & EXPORT_OPTION_FSID_SET) != 0) {
 		/* xor filesystem_id major and rotated minor to create unique
 		 * on-wire fsid.
 		 */

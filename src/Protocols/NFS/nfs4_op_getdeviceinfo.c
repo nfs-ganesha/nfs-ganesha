@@ -76,7 +76,7 @@ int nfs4_op_getdeviceinfo(struct nfs_argop4 *op, compound_data_t *data,
 	GETDEVICEINFO4res * const res_GETDEVICEINFO4 =
 	    &resp->nfs_resop4_u.opgetdeviceinfo;
 	/* The separated deviceid passed to the FSAL */
-	struct pnfs_deviceid deviceid = { 0, 0 };
+	struct pnfs_deviceid *deviceid;
 	/* NFS4 return code */
 	nfsstat4 nfs_status = 0;
 	/* XDR stream into which the FSAl shall encode the da_addr_body */
@@ -91,46 +91,41 @@ int nfs4_op_getdeviceinfo(struct nfs_argop4 *op, compound_data_t *data,
 	count4 mincount = 0;
 	/* The FSAL's requested size for the da_addr_body opaque */
 	size_t da_addr_size = 0;
-	/* Pointer to the export appropriate to this deviceid */
-	struct gsh_export *export = NULL;
+	/* Pointer to the fsal appropriate to this deviceid */
+	struct fsal_module *fsal = NULL;
 
 	resp->resop = NFS4_OP_GETDEVICEINFO;
 
 	if (data->minorversion == 0)
 		return res_GETDEVICEINFO4->gdir_status = NFS4ERR_INVAL;
 
-	/* Disassemble and fix byte order of the deviceid halves.  Do
-	   memcpy then byte swap to avoid potential problems with
-	   unaligned/misaligned access. */
+	/* Overlay Ganesha's pnfs_deviceid on arg */
+	deviceid = (struct pnfs_deviceid *) arg_GETDEVICEINFO4->gdia_device_id;
 
-	memcpy(&deviceid.export_id,
-	       arg_GETDEVICEINFO4->gdia_device_id,
-	       sizeof(uint64_t));
+	if (deviceid->fsal_id >= FSAL_ID_COUNT) {
+		LogInfo(COMPONENT_PNFS,
+			"GETDEVICEINFO with invalid fsal id %c",
+			deviceid->fsal_id);
+		return res_GETDEVICEINFO4->gdir_status = NFS4ERR_INVAL;
+	}
 
-	deviceid.export_id = nfs_ntohl64(deviceid.export_id);
+	fsal = pnfs_fsal[deviceid->fsal_id];
 
-	memcpy(&deviceid.devid,
-	       arg_GETDEVICEINFO4->gdia_device_id + sizeof(uint64_t),
-	       sizeof(uint64_t));
-
-	deviceid.devid = nfs_ntohl64(deviceid.devid);
+	if (fsal == NULL) {
+		LogInfo(COMPONENT_PNFS,
+			"GETDEVICEINFO with inactive fsal id %c",
+			deviceid->fsal_id);
+		return res_GETDEVICEINFO4->gdir_status = NFS4ERR_INVAL;
+	}
 
 	/* Check that we have space */
-
-	export = get_gsh_export(deviceid.export_id);
-
-	if (export == NULL) {
-		nfs_status = NFS4ERR_NOENT;
-		goto out;
-	}
 
 	mincount = sizeof(uint32_t) +	/* Count for the empty bitmap */
 	    sizeof(layouttype4) +	/* Type in the device_addr4 */
 	    sizeof(uint32_t);	/* Number of bytes in da_addr_body */
 
-	da_addr_size =
-	    MIN(export->fsal_export->ops->fs_da_addr_size(export->fsal_export),
-		arg_GETDEVICEINFO4->gdia_maxcount - mincount);
+	da_addr_size = MIN(fsal->ops->fs_da_addr_size(fsal),
+			   arg_GETDEVICEINFO4->gdia_maxcount - mincount);
 
 	if (da_addr_size == 0) {
 		LogCrit(COMPONENT_PNFS,
@@ -155,11 +150,11 @@ int nfs4_op_getdeviceinfo(struct nfs_argop4 *op, compound_data_t *data,
 
 	da_beginning = xdr_getpos(&da_addr_body);
 
-	nfs_status = export->fsal_export->ops->getdeviceinfo(
-			export->fsal_export,
+	nfs_status = fsal->ops->getdeviceinfo(
+			fsal,
 			&da_addr_body,
 			arg_GETDEVICEINFO4->gdia_layout_type,
-			&deviceid);
+			deviceid);
 
 	da_length = xdr_getpos(&da_addr_body) - da_beginning;
 
@@ -181,8 +176,6 @@ int nfs4_op_getdeviceinfo(struct nfs_argop4 *op, compound_data_t *data,
 	nfs_status = NFS4_OK;
 
  out:
-	if (export != NULL)
-		put_gsh_export(export);
 
 	if ((nfs_status != NFS4_OK) && da_buffer)
 		gsh_free(da_buffer);

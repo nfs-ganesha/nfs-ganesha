@@ -196,10 +196,8 @@ static fsal_status_t create_export(struct fsal_module *module,
 		export->cmount = NULL;
 	}
 
-	if (initialized) {
-		pthread_rwlock_destroy(&export->export.lock);
+	if (initialized)
 		initialized = false;
-	}
 
 	if (export != NULL) {
 		gsh_free(export);
@@ -229,9 +227,8 @@ MODULE_INIT void init(void)
 		return;
 	}
 
-	if (register_fsal
-	    (module, module_name, FSAL_MAJOR_VERSION,
-	     FSAL_MINOR_VERSION) != 0) {
+	if (register_fsal(module, module_name, FSAL_MAJOR_VERSION,
+			  FSAL_MINOR_VERSION, FSAL_ID_CEPH) != 0) {
 		/* The register_fsal function prints its own log
 		   message if it fails */
 		gsh_free(module);

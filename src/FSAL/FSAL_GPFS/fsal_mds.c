@@ -121,7 +121,7 @@ static size_t fs_loc_body_size(struct fsal_export *export_pub)
  *
  * @return Size of the buffer needed for a ds_addr
  */
-static size_t fs_da_addr_size(struct fsal_export *export_pub)
+size_t fs_da_addr_size(struct fsal_module *fsal_hdl)
 {
 	return 0x1400;
 }
@@ -140,10 +140,11 @@ static size_t fs_da_addr_size(struct fsal_export *export_pub)
  * @return Valid error codes in RFC 5661, p. 365.
  */
 
-static nfsstat4 getdeviceinfo(struct fsal_export *export_hdl,
-			      XDR *da_addr_body, const layouttype4 type,
-			      const struct pnfs_deviceid *deviceid)
+nfsstat4 getdeviceinfo(struct fsal_module *fsal_hdl,
+		       XDR *da_addr_body, const layouttype4 type,
+		       const struct pnfs_deviceid *deviceid)
 {
+#if 0
 	/* The position before any bytes are sent to the stream */
 	size_t da_beginning = 0;
 	/* The total length of the XDR-encoded da_addr_body */
@@ -154,6 +155,8 @@ static nfsstat4 getdeviceinfo(struct fsal_export *export_hdl,
 	struct gpfs_filesystem *gpfs_fs;
 	struct gpfs_fsal_export *myself;
 
+	/** @todo needs to hook up to correct filesystem somehow */
+
 	/** @todo FSF: needs real getdeviceinfo that gets to the correct
 	 * filesystem, this will not work for sub-mounted filesystems.
 	 */
@@ -162,7 +165,8 @@ static nfsstat4 getdeviceinfo(struct fsal_export *export_hdl,
 
 	darg.mountdirfd = gpfs_fs->root_fd;
 	darg.type = LAYOUT4_NFSV4_1_FILES;
-	darg.devid.sbid = deviceid->export_id;
+	/** @todo not sure what to do for sbid yet */
+	darg.devid.sbid = 0;
 	darg.devid.devid = deviceid->devid;
 
 	ds_buffer = fs_da_addr_size(export_hdl);
@@ -189,6 +193,8 @@ static nfsstat4 getdeviceinfo(struct fsal_export *export_hdl,
 		 da_length);
 
 	return NFS4_OK;
+#endif
+	return NFS4ERR_INVAL;
 }
 
 /**
@@ -216,13 +222,11 @@ static nfsstat4 getdevicelist(struct fsal_export *export_pub, layouttype4 type,
 
 void export_ops_pnfs(struct export_ops *ops)
 {
-	ops->getdeviceinfo = getdeviceinfo;
 	ops->getdevicelist = getdevicelist;
 	ops->fs_layouttypes = fs_layouttypes;
 	ops->fs_layout_blocksize = fs_layout_blocksize;
 	ops->fs_maximum_segments = fs_maximum_segments;
 	ops->fs_loc_body_size = fs_loc_body_size;
-	ops->fs_da_addr_size = fs_da_addr_size;
 }
 
 /**
@@ -263,7 +267,7 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_hdl,
 	/* The last byte that can be accessed through pNFS */
 	/* uint64_t last_possible_byte = 0; strict. set but unused */
 	/* The deviceid for this layout */
-	struct pnfs_deviceid deviceid = { 0, 0 };
+	struct pnfs_deviceid deviceid =  DEVICE_ID_INIT_ZERO(FSAL_ID_GPFS);
 	/* NFS Status */
 	nfsstat4 nfs_status = 0;
 	/* Descriptor for DS handle */
@@ -324,12 +328,11 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_hdl,
 	stripe_width = file_layout.lg_stripe_unit;
 	util |= stripe_width | NFL4_UFLG_COMMIT_THRU_MDS;
 
-	deviceid.export_id = arg->export_id;
 	deviceid.devid = file_layout.device_id.devid;
 	/* last_possible_byte = NFS4_UINT64_MAX; strict. set but unused */
 
-	LogDebug(COMPONENT_PNFS, "devid expid-nodeAddr %ld-%016lx\n",
-		 deviceid.export_id, deviceid.devid);
+	LogDebug(COMPONENT_PNFS, "devid nodeAddr %016"PRIx64,
+		 deviceid.devid);
 
 	ds_desc.addr = &gpfs_ds_handle;
 	ds_desc.len = sizeof(struct gpfs_file_handle);

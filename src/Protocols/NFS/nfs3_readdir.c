@@ -210,7 +210,7 @@ int nfs3_readdir(nfs_arg_t *arg,
 	 * unused (as in many NFS Servers) then only a set of zeros
 	 * is returned (trivial value).
 	 */
-	if (req_ctx->export->UseCookieVerifier)
+	if (req_ctx->export->options & EXPORT_OPTION_USE_COOKIE_VERIFIER)
 		memcpy(cookie_verifier,
 		       &dir_entry->change_time,
 		       sizeof(dir_entry->change_time));
@@ -218,7 +218,8 @@ int nfs3_readdir(nfs_arg_t *arg,
 	/* Nothing to do if != 0 because the area is already full of
 	 * zero
 	 */
-	if ((cookie != 0) && (req_ctx->export->UseCookieVerifier)) {
+	if ((cookie != 0) &&
+	    (req_ctx->export->options & EXPORT_OPTION_USE_COOKIE_VERIFIER)) {
 		/* Not the first call, so we have to check the cookie
 		 * verifier
 		 */

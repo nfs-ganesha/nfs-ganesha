@@ -46,6 +46,21 @@
 #include "pt_methods.h"
 #include "pt_ganesha.h"
 
+/* PT is effectively a single filesystem, describe it and assign all
+ * PT handles to it.
+ */
+struct fsal_filesystem pt_filesystem = {
+	.children = GLIST_HEAD_INIT(pt_filesystem.children),
+	.exported = true,
+	/** @todo fill in the following
+	.dev = xxxxx,
+	.fsid_tyoe = xxxx,
+	.fsid = xxxx,
+	*/
+	.path = "/PT",
+	.type = "PT",
+};
+
 /* helpers
  */
 
@@ -72,6 +87,7 @@ static struct pt_fsal_obj_handle *alloc_handle(ptfsal_handle_t *fh,
 	hdl->handle = (ptfsal_handle_t *) &hdl[1];
 	memcpy(hdl->handle, fh, sizeof(ptfsal_handle_t));
 	hdl->obj_handle.type = attributes->type;
+	hdl->obj_handle.fs = &pt_filesystem;
 	if (hdl->obj_handle.type == REGULAR_FILE) {
 		hdl->u.file.fd = -1;	/* no open on this yet */
 		hdl->u.file.openflags = FSAL_O_CLOSED;

@@ -221,15 +221,16 @@ MODULE_INIT void gpfs_init(void)
 	int retval;
 	struct fsal_module *myself = &GPFS.fsal;
 
-	retval =
-	    register_fsal(myself, myname, FSAL_MAJOR_VERSION,
-			  FSAL_MINOR_VERSION);
+	retval = register_fsal(myself, myname, FSAL_MAJOR_VERSION,
+			       FSAL_MINOR_VERSION, FSAL_ID_GPFS);
 	if (retval != 0) {
 		fprintf(stderr, "GPFS module failed to register");
 		return;
 	}
 	myself->ops->create_export = gpfs_create_export;
 	myself->ops->init_config = init_config;
+	myself->ops->getdeviceinfo = getdeviceinfo;
+	myself->ops->fs_da_addr_size = fs_da_addr_size;
 }
 
 MODULE_FINI void gpfs_unload(void)

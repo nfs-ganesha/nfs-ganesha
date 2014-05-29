@@ -46,6 +46,8 @@
 #include "nfs_file_handle.h"
 #include "nfs_proto_functions.h"
 
+struct fsal_module *pnfs_fsal[FSAL_ID_COUNT];
+
 /**
  * @file   common_pnfs.c
  * @author Adam C. Emerson <aemerson@linuxbox.com>
@@ -79,9 +81,7 @@
 
 bool xdr_fsal_deviceid(XDR *xdrs, struct pnfs_deviceid *deviceid)
 {
-	if (!xdr_uint64_t(xdrs, &deviceid->export_id))
-		return false;
-	if (!xdr_uint64_t(xdrs, &deviceid->devid))
+	if (!xdr_opaque(xdrs, (char *)deviceid, NFS4_DEVICEID4_SIZE))
 		return false;
 	return true;
 }

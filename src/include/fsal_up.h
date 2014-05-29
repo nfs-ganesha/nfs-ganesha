@@ -200,10 +200,7 @@ struct fsal_up_vector {
 	state_status_t(*notify_device)(
 		notify_deviceid_type4 notify_type, /*< Change or remove */
 		layouttype4 layout_type, /*< The layout type affected */
-		uint64_t dev_exportid, /*< Export responsible for the device
-					   ID */
-		uint64_t devid,	 /*< The lower quad of the device id, unique
-				     within this export. */
+		struct pnfs_deviceid devid, /*< The deviceid */
 		bool immediate /*< Whether the change is immediate
 				   (in the case of a change.) */
 		);
@@ -272,7 +269,7 @@ int up_async_notify_device(struct fridgethr *fr,
 			   const struct fsal_up_vector *up_ops,
 			   notify_deviceid_type4 notify_type,
 			   layouttype4 layout_type,
-			   uint64_t dev_exportid, uint64_t devid,
+			   struct pnfs_deviceid *devid,
 			   bool immediate, void (*cb) (void *, state_status_t),
 			   void *cb_arg);
 int up_async_delegrecall(struct fridgethr *fr,

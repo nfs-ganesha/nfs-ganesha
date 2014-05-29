@@ -38,12 +38,9 @@ static void pxy_release(struct fsal_export *exp_hdl)
 	struct pxy_export *pxy_exp =
 	    container_of(exp_hdl, struct pxy_export, exp);
 
-	PTHREAD_RWLOCK_wrlock(&exp_hdl->lock);
 	fsal_detach_export(exp_hdl->fsal, &exp_hdl->exports);
 	free_export_ops(exp_hdl);
-	PTHREAD_RWLOCK_unlock(&exp_hdl->lock);
 
-	pthread_rwlock_destroy(&exp_hdl->lock);
 	gsh_free(pxy_exp);
 }
 

@@ -123,7 +123,7 @@ lustre_fs_loc_body_size(struct fsal_export *export_pub)
  *
  * @return Size of the buffer needed for a ds_addr
  */
-static size_t lustre_fs_da_addr_size(struct fsal_export *export_pub)
+size_t lustre_fs_da_addr_size(struct fsal_module *fsal_hdl)
 {
 	return 0x1400;
 }
@@ -137,10 +137,10 @@ static size_t lustre_fs_da_addr_size(struct fsal_export *export_pub)
  */
 
 
-static nfsstat4 lustre_getdeviceinfo(struct fsal_export *export_pub,
-				     XDR *da_addr_body,
-				     const layouttype4 type,
-				     const struct pnfs_deviceid *deviceid)
+nfsstat4 lustre_getdeviceinfo(struct fsal_module *fsal_hdl,
+			      XDR *da_addr_body,
+			      const layouttype4 type,
+			      const struct pnfs_deviceid *deviceid)
 {
 	/* The number of OSSs  */
 	unsigned num_osds = 0; /** @todo To be set via a call to llapi */
@@ -273,13 +273,11 @@ lustre_getdevicelist(struct fsal_export *export_pub,
 void
 export_ops_pnfs(struct export_ops *ops)
 {
-	ops->getdeviceinfo = lustre_getdeviceinfo;
 	ops->getdevicelist = lustre_getdevicelist;
 	ops->fs_layouttypes = lustre_fs_layouttypes;
 	ops->fs_layout_blocksize = lustre_fs_layout_blocksize;
 	ops->fs_maximum_segments = lustre_fs_maximum_segments;
 	ops->fs_loc_body_size = lustre_fs_loc_body_size;
-	ops->fs_da_addr_size = lustre_fs_da_addr_size;
 }
 
 /**
@@ -316,7 +314,7 @@ lustre_layoutget(struct fsal_obj_handle *obj_hdl,
 	/* The last byte that can be accessed through pNFS */
 	/* uint64_t last_possible_byte = 0; strict. set but unused */
 	/* The deviceid for this layout */
-	struct pnfs_deviceid deviceid = {0, 0};
+	struct pnfs_deviceid deviceid = DEVICE_ID_INIT_ZERO(FSAL_ID_LUSTRE);
 	/* NFS Status */
 	nfsstat4 nfs_status = 0;
 	/* Descriptor for DS handle */
@@ -357,8 +355,7 @@ lustre_layoutget(struct fsal_obj_handle *obj_hdl,
 	/* util |= stripe_width | NFL4_UFLG_COMMIT_THRU_MDS; */
 	util |= stripe_width;
 
-	deviceid.export_id = arg->export_id;
-	/* @todo: several DSs not handled yet */
+	/** @todo: several DSs not handled yet */
 	/* deviceid.devid =  pnfs_param.ds_param[0].id; */
 	ds = glist_first_entry(&pnfs_param.ds_list,
 			       struct lustre_pnfs_ds_parameter,
@@ -368,8 +365,8 @@ lustre_layoutget(struct fsal_obj_handle *obj_hdl,
 	/* last_possible_byte = NFS4_UINT64_MAX; strict. set but unused */
 
 	LogDebug(COMPONENT_PNFS,
-		 "devid expid-nodeAddr %ld-%016lx\n",
-		 deviceid.export_id, deviceid.devid);
+		 "devid nodeAddr %016"PRIx64,
+		 deviceid.devid);
 
 	ds_desc.addr = &lustre_ds_handle;
 	ds_desc.len = sizeof(struct lustre_file_handle);
