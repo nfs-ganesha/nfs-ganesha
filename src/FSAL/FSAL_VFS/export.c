@@ -83,9 +83,6 @@ static void release(struct fsal_export *exp_hdl)
 	fsal_detach_export(exp_hdl->fsal, &exp_hdl->exports);
 	free_export_ops(exp_hdl);
 
-	if (myself->handle_lib != NULL)
-		gsh_free(myself->handle_lib);
-
 	gsh_free(myself);	/* elvis has left the building */
 }
 
@@ -420,8 +417,6 @@ static struct config_item export_params[] = {
 	CONF_ITEM_NOOP("name"),
 	CONF_ITEM_BOOL("pnfs_panfs", false,
 		       vfs_fsal_export, pnfs_panfs_enabled),
-	CONF_ITEM_PATH("handle_lib", 1, MAXPATHLEN, NULL,
-		       vfs_fsal_export, handle_lib),
 	CONF_ITEM_ENUM("fsid_type", -1,
 		       fsid_types,
 		       vfs_fsal_export, fsid_type),
@@ -684,8 +679,6 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 
 	vfs_unexport_filesystems(myself);
 
-	if (myself->handle_lib != NULL)
-		gsh_free(myself->handle_lib);
 	free_export_ops(&myself->export);
 	gsh_free(myself);	/* elvis has left the building */
 	return fsalstat(fsal_error, retval);

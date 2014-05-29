@@ -40,7 +40,6 @@ struct vfs_filesystem;
 struct vfs_fsal_export {
 	struct fsal_export export;
 	bool pnfs_panfs_enabled;
-	char *handle_lib;
 	void *pnfs_data;
 	struct fsal_filesystem *root_fs;
 	struct glist_head filesystems;
