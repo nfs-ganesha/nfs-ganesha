@@ -378,8 +378,8 @@ void display_fsinfo(struct fsal_staticfsinfo_t *info)
 	LogDebug(COMPONENT_FSAL, "  homogenous  = %d  ", info->homogenous);
 	LogDebug(COMPONENT_FSAL, "  supported_attrs  = %" PRIX64,
 		 info->supported_attrs);
-	LogDebug(COMPONENT_FSAL, "  maxread  = %" PRIu32, info->maxread);
-	LogDebug(COMPONENT_FSAL, "  maxwrite  = %" PRIu32, info->maxwrite);
+	LogDebug(COMPONENT_FSAL, "  maxread  = %" PRIu64, info->maxread);
+	LogDebug(COMPONENT_FSAL, "  maxwrite  = %" PRIu64, info->maxwrite);
 	LogDebug(COMPONENT_FSAL, "  umask  = %X ", info->umask);
 	LogDebug(COMPONENT_FSAL, "  auth_exportpath_xdev  = %d  ",
 		 info->auth_exportpath_xdev);
