@@ -48,7 +48,7 @@
 #include "sal_functions.h"
 #include "fridgethr.h"
 
-static struct fridgethr *state_async_fridge;
+struct fridgethr *state_async_fridge;
 
 /**
  * @brief Process a blocked lock request

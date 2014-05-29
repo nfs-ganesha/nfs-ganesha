@@ -175,18 +175,15 @@ static enum delayed_employment delayed_get_work(struct timespec *when,
 		return delayed_on_break;
 	}
 
-	if (mul->list.lh_first == NULL) {
-		avltree_remove(first, &tree);
-		gsh_free(mul);
-		return delayed_unemployed;
-	}
-	task = mul->list.lh_first;
-
+	task = LIST_FIRST(&mul->list);
 	*func = task->func;
 	*arg = task->arg;
 	LIST_REMOVE(task, link);
 	gsh_free(task);
-
+	if (LIST_EMPTY(&mul->list)) {
+		avltree_remove(first, &tree);
+		gsh_free(mul);
+	}
 
 	return delayed_employed;
 }
@@ -240,7 +237,7 @@ void *delayed_thread(void *arg)
 		}
 	}
 	LIST_REMOVE(thr, link);
-	if (thread_list.lh_first == NULL)
+	if (LIST_EMPTY(&thread_list))
 		pthread_cond_broadcast(&cv);
 
 	pthread_mutex_unlock(&mtx);
@@ -310,16 +307,16 @@ void delayed_shutdown(void)
 	pthread_mutex_lock(&mtx);
 	delayed_state = delayed_stopping;
 	pthread_cond_broadcast(&cv);
-	while ((rc != ETIMEDOUT) && (thread_list.lh_first != NULL))
+	while ((rc != ETIMEDOUT) && !LIST_EMPTY(&thread_list))
 		rc = pthread_cond_timedwait(&cv, &mtx, &then);
 
-	if (thread_list.lh_first != NULL) {
+	if (!LIST_EMPTY(&thread_list)) {
 		struct delayed_thread *thr;
 
 		LogMajor(COMPONENT_THREAD,
 			 "Delayed executor threads not shutting down cleanly, "
 			 "taking harsher measures.");
-		while ((thr = thread_list.lh_first) != NULL) {
+		while ((thr = LIST_FIRST(&thread_list)) != NULL) {
 			LIST_REMOVE(thr, link);
 			pthread_cancel(thr->id);
 			gsh_free(thr);
@@ -381,7 +378,7 @@ int delayed_submit(void (*func) (void *), void *arg, nsecs_elapsed_t delay)
 	task->func = func;
 	task->arg = arg;
 	LIST_INSERT_HEAD(&mul->list, task, link);
-	if (!first || comparator(&mul->node, first) <= 0)
+	if (!first || comparator(&mul->node, first) < 0)
 		pthread_cond_broadcast(&cv);
 
 	pthread_mutex_unlock(&mtx);
