@@ -321,6 +321,7 @@ MODULE_INIT void pt_init(void)
 	}
 	myself->ops->create_export = pt_create_export;
 	myself->ops->init_config = init_config;
+	pt_filesystem.fsal = myself;
 }
 
 MODULE_FINI void pt_unload(void)

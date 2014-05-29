@@ -4,6 +4,11 @@
 #ifndef PT_METHODS_H
 #define PT_METHODS_H
 
+/* PT is effectively a single filesystem, describe it and assign all
+ * PT handles to it.
+ */
+struct fsal_filesystem pt_filesystem;
+
 /* method proto linkage to handle.c for export
  */
 
