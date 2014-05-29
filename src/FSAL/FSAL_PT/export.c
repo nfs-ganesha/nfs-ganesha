@@ -296,7 +296,7 @@ fsal_status_t pt_create_export(struct fsal_module *fsal_hdl,
 	if (retval != 0) {
 		LogMajor(COMPONENT_FSAL,
 			 "pt_fsal_create: out of memory for object");
-		return fsalstat(posix2fsal_error(retval), retval);
+		goto errout;
 	}
 	pt_export_ops_init(myself->export.ops);
 	pt_handle_ops_init(myself->export.obj_ops);

@@ -260,7 +260,7 @@ int fsi_get_name_from_handle(const struct req_op_context *p_context, /* IN */
 				sizeof(handle_entry.m_name));
 			name[sizeof(handle_entry.m_name) - 1] = '\0';
 
-			if (g_ptfsal_context_flag) {
+			if (g_ptfsal_context_flag && p_cur_context != NULL) {
 				/* store current index in context cache */
 				FSI_TRACE(FSI_DEBUG,
 					  "FSI - name = %s cache index %d\n",
@@ -335,7 +335,7 @@ int fsi_get_name_from_handle(const struct req_op_context *p_context, /* IN */
 			FSI_TRACE(FSI_DEBUG,
 				  "FSI - added %s to name cache entry %d\n",
 				  name, g_fsi_name_handle_cache.m_count);
-			if (g_ptfsal_context_flag) {
+			if (g_ptfsal_context_flag && p_cur_context != NULL) {
 				/* store current index in context cache */
 				p_cur_context->cur_namecache_handle_index =
 				    g_fsi_name_handle_cache.m_count;

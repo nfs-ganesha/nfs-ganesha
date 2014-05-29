@@ -124,10 +124,11 @@ fsal_status_t fsal_internal_handle2fd_at(const struct req_op_context *
 	char fsi_name[PATH_MAX];
 
 	FSI_TRACE(FSI_DEBUG, "FSI - handle2fd_at\n");
-	ptfsal_print_handle(myself->handle->data.handle.f_handle);
 
 	if (!myself || !pfd)
 		return fsalstat(ERR_FSAL_FAULT, 0);
+
+        ptfsal_print_handle(myself->handle->data.handle.f_handle);
 
 	FSI_TRACE(FSI_DEBUG, "Handle Type: %d",
 		  myself->handle->data.handle.handle_type);
@@ -347,10 +348,6 @@ fsal_status_t fsal_internal_testAccess(const struct req_op_context *p_context,
 	return fsal_internal_testAccess_no_acl(p_context,
 					       FSAL_MODE_MASK(access_type),
 					       p_object_attributes);
-
-	LogDebug(COMPONENT_FSAL, "invalid access_type = 0X%x", access_type);
-
-	return fsalstat(ERR_FSAL_ACCESS, 0);
 }
 
 /* Check the access at the file system. It is called when Use_Test_Access

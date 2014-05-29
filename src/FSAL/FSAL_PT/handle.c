@@ -731,7 +731,6 @@ fsal_status_t pt_lookup_path(struct fsal_export *exp_hdl,
 	char *basepart;
 	char *link_content = NULL;
 	ssize_t retlink;
-	ptfsal_handle_t *dir_fh = NULL;
 	struct attrlist attributes;
 	ptfsal_handle_t *fh = alloca(sizeof(ptfsal_handle_t));
 
@@ -807,8 +806,6 @@ fsal_status_t pt_lookup_path(struct fsal_export *exp_hdl,
 	hdl = alloc_handle(fh, &attributes, NULL, NULL, NULL, exp_hdl);
 	if (link_content != NULL)
 		gsh_free(link_content);
-	if (dir_fh != NULL)
-		gsh_free(dir_fh);
 	if (hdl == NULL) {
 		fsal_error = ERR_FSAL_NOMEM;
 		*handle = NULL;	/* poison it */
@@ -822,8 +819,6 @@ fsal_status_t pt_lookup_path(struct fsal_export *exp_hdl,
  linkerr:
 	if (link_content != NULL)
 		gsh_free(link_content);
-	if (dir_fh != NULL)
-		gsh_free(dir_fh);
 	ptfsal_closedir_fd(opctx, exp_hdl, dir_fd);
 	fsal_error = posix2fsal_error(retval);
 
