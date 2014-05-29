@@ -1248,6 +1248,8 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 
 	if (!deleg_entry) {
 		LogDebug(COMPONENT_NFS_CB, "Delegation is already returned");
+		cache_inode_put(deleg_ctx->entry);
+		dec_client_id_ref(deleg_ctx->clid);
 		goto out_free;
 	}
 
@@ -1288,11 +1290,13 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 			if (rc != STATE_SUCCESS) {
 				LogCrit(COMPONENT_NFS_V4,
 					"Delegation could not be revoked(%p)",
-				deleg_entry);
+					deleg_entry);
 			} else {
 				LogDebug(COMPONENT_NFS_V4,
 					 "Delegation revoked(%p)", deleg_entry);
 			}
+			cache_inode_put(deleg_ctx->entry);
+			dec_client_id_ref(clientid);
 		} else
 			schedule_delegrecall_task(deleg_entry);
 	} else {
@@ -1325,14 +1329,16 @@ static uint32_t delegrecall_one(state_lock_entry_t *deleg_entry)
 	uint32_t code = 0;
 	rpc_call_channel_t *chan;
 	rpc_call_t *call = NULL;
-	nfs_client_id_t *clid = NULL;
 	nfs_cb_argop4 argop[1];
 	struct gsh_export *exp;
 	struct delegrecall_context *p_cargs = NULL;
 	struct c_deleg_stats *cl_stats;
+	struct cf_deleg_stats *clfl_stats = NULL;
 	nfs_client_id_t *clientid;
 	clientid = deleg_entry->sle_owner->so_owner.so_nfs4_owner.so_clientrec;
         cl_stats = &clientid->cid_deleg_stats;
+	clfl_stats = &deleg_entry->sle_state->state_data.deleg.sd_clfile_stats;
+	clfl_stats->cfd_r_time = time(NULL);
 
 	cache_entry_t *entry = deleg_entry->sle_entry;
 
@@ -1341,31 +1347,24 @@ static uint32_t delegrecall_one(state_lock_entry_t *deleg_entry)
 	atomic_inc_uint32_t(&cl_stats->tot_recalls);
 
 	exp = deleg_entry->sle_state->state_export;
-	code =
-	    nfs_client_id_get_confirmed(deleg_entry->sle_owner->so_owner.
-					so_nfs4_owner.so_clientid, &clid);
-	if (code != CLIENT_ID_SUCCESS) {
-		LogCrit(COMPONENT_NFS_CB, "No clid record, code %d", code);
-		goto out;
-	}
 
 	/* Attempt a recall only if channel state is UP */
-	if (get_cb_chan_down(clid)) {
+	if (get_cb_chan_down(clientid)) {
 		LogCrit(COMPONENT_NFS_CB,
 			"Call back channel down, not issuing a recall");
 		goto out;
 	}
 
-	chan = nfs_rpc_get_chan(clid, NFS_RPC_FLAG_NONE);
+	chan = nfs_rpc_get_chan(clientid, NFS_RPC_FLAG_NONE);
 	if (!chan) {
 		LogCrit(COMPONENT_NFS_CB, "nfs_rpc_get_chan failed");
 		/* TODO: move this to nfs_rpc_get_chan ? */
-		set_cb_chan_down(clid, true);
+		set_cb_chan_down(clientid, true);
 		goto out;
 	}
 	if (!chan->clnt) {
 		LogCrit(COMPONENT_NFS_CB, "nfs_rpc_get_chan failed (no clnt)");
-		set_cb_chan_down(clid, true);
+		set_cb_chan_down(clientid, true);
 		goto out;
 	}
 	/* allocate a new call--freed in completion hook */
@@ -1380,8 +1379,8 @@ static uint32_t delegrecall_one(state_lock_entry_t *deleg_entry)
 
 	/* setup a compound */
 	cb_compound_init_v4(&call->cbt, 1, 0,
-			    clid->cid_cb.v40.cb_callback_ident, "brrring!!!",
-			    10);
+			    clientid->cid_cb.v40.cb_callback_ident,
+			    "brrring!!!", 10);
 
 	argop->argop = NFS4_OP_CB_RECALL;
 	argop->nfs_cb_argop4_u.opcbrecall.stateid.seqid =
@@ -1420,7 +1419,7 @@ static uint32_t delegrecall_one(state_lock_entry_t *deleg_entry)
 	p_cargs = gsh_malloc(sizeof(struct delegrecall_context));
 	assert(p_cargs);
 
-	p_cargs->clid = clid;
+	p_cargs->clid = clientid;
 	p_cargs->entry = entry;
 	p_cargs->deleg_entry = deleg_entry;
 	COPY_STATEID(&p_cargs->sd_stateid, deleg_entry->sle_state);
@@ -1430,10 +1429,6 @@ static uint32_t delegrecall_one(state_lock_entry_t *deleg_entry)
 		return code;
 
 out:
-	/* nfs_client_id_get_confirmed() increments a ref to the client id */
-	if (clid != NULL)
-                dec_client_id_ref(clid);
-
 	atomic_inc_uint32_t(&cl_stats->failed_recalls);
 	if (maxfh)
 		gsh_free(maxfh);
@@ -1452,6 +1447,8 @@ out:
 				 "Delegation revoked(%p)",
 				 deleg_entry);
 		}
+		cache_inode_put(entry);
+		dec_client_id_ref(clientid);
 		code = 0;
 	} else
 		code = schedule_delegrecall_task(deleg_entry);
@@ -1495,6 +1492,8 @@ static void delegrevoke_check(struct fridgethr_context *ctx)
 						 "Delegation revoked(%p)",
 						 deleg_entry);
 				}
+				cache_inode_put(entry);
+				dec_client_id_ref(deleg_ctx->clid);
 			} else {
 				LogFullDebug(COMPONENT_STATE,
 					     "Not revoking the delegation(%p)",
@@ -1507,9 +1506,14 @@ static void delegrevoke_check(struct fridgethr_context *ctx)
 		}
 	}
 	PTHREAD_RWLOCK_unlock(&entry->state_lock);
-	if (!deleg_entry)
+
+	if (!deleg_entry) {
 		LogDebug(COMPONENT_NFS_CB, "Delgation is already returned");
-	gsh_free(ctx->arg);
+		cache_inode_put(entry);
+		dec_client_id_ref(deleg_ctx->clid);
+	}
+	gsh_free(deleg_ctx);
+
 	return;
 }
 
@@ -1535,9 +1539,12 @@ static void delegrecall_task(struct fridgethr_context *ctx)
 		}
 	}
 	PTHREAD_RWLOCK_unlock(&entry->state_lock);
-	if (!deleg_entry)
+	if (!deleg_entry) {
 		LogDebug(COMPONENT_NFS_CB, "Delgation is already returned");
-	gsh_free(ctx->arg);
+		cache_inode_put(entry);
+		dec_client_id_ref(deleg_ctx->clid);
+	}
+	gsh_free(deleg_ctx);
 	return;
 }
 
@@ -1550,6 +1557,7 @@ static int schedule_delegrecall_task(state_lock_entry_t *deleg_entry)
 
 	ctx->entry = deleg_entry->sle_entry;
 	ctx->deleg_entry = deleg_entry;
+	ctx->clid = deleg_entry->sle_owner->so_owner.so_nfs4_owner.so_clientrec;
 	COPY_STATEID(&ctx->sd_stateid, deleg_entry->sle_state);
 
 	rc = fridgethr_submit(general_fridge, delegrecall_task, ctx);
@@ -1565,6 +1573,7 @@ static int schedule_delegrevoke_check(state_lock_entry_t *deleg_entry)
 
 	ctx->entry = deleg_entry->sle_entry;
 	ctx->deleg_entry = deleg_entry;
+	ctx->clid = deleg_entry->sle_owner->so_owner.so_nfs4_owner.so_clientrec;
 	COPY_STATEID(&ctx->sd_stateid, deleg_entry->sle_state);
 
 	rc = fridgethr_submit(general_fridge, delegrevoke_check, ctx);
@@ -1577,7 +1586,7 @@ state_status_t delegrecall_impl(cache_entry_t *entry)
 	state_lock_entry_t *deleg_entry = NULL;
 	state_status_t rc = 0;
 	uint32_t *deleg_state = NULL;
-	struct cf_deleg_stats *clfl_stats = NULL;
+	nfs_client_id_t *clid = NULL;
 
 	LogDebug(COMPONENT_FSAL_UP,
 		 "FSAL_UP_DELEG: Invalidate cache found entry %p type %u",
@@ -1589,8 +1598,6 @@ state_status_t delegrecall_impl(cache_entry_t *entry)
 		deleg_entry = glist_entry(glist, state_lock_entry_t, sle_list);
 
 		LogDebug(COMPONENT_NFS_CB, "deleg_entry %p", deleg_entry);
-		clfl_stats =
-			&deleg_entry->sle_state->state_data.deleg.sd_clfile_stats;
 		deleg_state =
 			&deleg_entry->sle_state->state_data.deleg.sd_state;
 		if (*deleg_state != DELEG_GRANTED) {
@@ -1599,7 +1606,18 @@ state_status_t delegrecall_impl(cache_entry_t *entry)
 			continue;
 		}
 		*deleg_state = DELEG_RECALL_WIP;
-		clfl_stats->cfd_r_time = time(NULL);
+
+		if (nfs_client_id_get_confirmed(deleg_entry->
+						    sle_owner->so_owner.
+						    so_nfs4_owner.so_clientid,
+						    &clid) !=
+						    CLIENT_ID_SUCCESS) {
+			LogCrit(COMPONENT_NFS_CB,
+				"No clid record, code %d", rc);
+			continue;
+		}
+
+		cache_inode_lru_ref(entry, LRU_FLAG_NONE);
 
 		rc = delegrecall_one(deleg_entry);
 
