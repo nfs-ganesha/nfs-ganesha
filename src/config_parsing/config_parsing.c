@@ -1742,7 +1742,13 @@ int load_config_from_parse(config_file_t config,
 			}
 		}
 	}
-	if (param != NULL && found == 0) {
+	if (found == 0) {
+		/* Found nothing but we have to do the allocate and init
+		 * at least. Use a fake, not NULL link_mem */
+		blk_mem = param != NULL ?
+			param : conf_blk->blk_desc.u.blk.init((void *)~0UL,
+							      NULL);
+		assert(blk_mem != NULL);
 		LogWarn(COMPONENT_CONFIG,
 			 "Block %s not found. Using defaults", blkname);
 		rc = do_block_init(conf_blk->blk_desc.u.blk.params,
