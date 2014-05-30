@@ -269,8 +269,13 @@ struct readlink_fh_arg
 };
 
 struct nfsd4_pnfs_deviceid {
-	uint64_t sbid;      /* per-superblock unique ID */
-	uint64_t devid;     /* filesystem-wide unique device ID */
+	/** FSAL_ID - to dispatch getdeviceinfo based on */
+	uint8_t fsal_id;
+	/** Break up the remainder into useful chunks */
+	uint8_t device_id1;
+	uint16_t device_id2;
+	uint32_t device_id4;
+	uint64_t devid;
 };
 
 struct gpfs_exp_xdr_stream {
@@ -576,7 +581,7 @@ struct callback_arg
     struct glock *fl;
     int *flags;
     struct stat *buf;
-    struct nfsd4_pnfs_deviceid *dev_id;
+    struct pnfs_deviceid *dev_id;
     uint32_t *expire_attr;
 };
 #define GPFS_INTERFACE_VERSION 10000
