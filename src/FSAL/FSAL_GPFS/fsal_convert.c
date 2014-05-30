@@ -192,6 +192,10 @@ int posix2fsal_error(int posix_errorcode)
     case EINTR:
       return ERR_FSAL_INTERRUPT;
 
+    case EUNATCH:
+      LogFatal(COMPONENT_FSAL, "GPFS Returned EUNATCH");
+      return ERR_FSAL_SERVERFAULT;
+
     default:
       LogCrit(COMPONENT_FSAL, "Mapping %d(default) to ERR_FSAL_SERVERFAULT",
                         posix_errorcode);

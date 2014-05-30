@@ -476,7 +476,11 @@ fsal_status_t fsal_internal_handle2fd_at(int dirfd,
   LogFullDebug(COMPONENT_FSAL, "OPENHANDLE_OPEN_BY_HANDLE returned: rc %d", rc);
 
   if(rc < 0)
+  {
+    if (errno == EUNATCH)
+      LogFatal(COMPONENT_FSAL, "GPFS Returned EUNATCH");
     ReturnCode(posix2fsal_error(errno), errno);
+  }
 
   *pfd = rc;
 
@@ -526,7 +530,11 @@ fsal_status_t fsal_internal_get_handle(fsal_op_context_t * p_context,   /* IN */
   rc = gpfs_ganesha(OPENHANDLE_NAME_TO_HANDLE, &harg);
 
   if(rc < 0)
+  {
+    if (errno == EUNATCH)
+      LogFatal(COMPONENT_FSAL, "GPFS Returned EUNATCH");
     ReturnCode(posix2fsal_error(errno), errno);
+  }
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
@@ -575,7 +583,11 @@ fsal_status_t fsal_internal_get_handle_at(int dfd,      /* IN */
   rc = gpfs_ganesha(OPENHANDLE_NAME_TO_HANDLE, &harg);
 
   if(rc < 0)
+  {
+    if (errno == EUNATCH)
+      LogFatal(COMPONENT_FSAL, "GPFS Returned EUNATCH");
     ReturnCode(posix2fsal_error(errno), errno);
+  }
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
@@ -630,7 +642,11 @@ fsal_status_t fsal_internal_get_handle_at(int dfd,      /* IN */
   rc = gpfs_ganesha(OPENHANDLE_GET_HANDLE, &harg);
 
   if(rc < 0)
+  {
+    if (errno == EUNATCH)
+      LogFatal(COMPONENT_FSAL, "GPFS Returned EUNATCH");
     ReturnCode(posix2fsal_error(errno), errno);
+  }
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
@@ -679,7 +695,11 @@ fsal_status_t fsal_internal_fd2handle(int fd, fsal_handle_t * handle)
   rc = gpfs_ganesha(OPENHANDLE_NAME_TO_HANDLE, &harg);
 
   if(rc < 0)
+  {
+    if (errno == EUNATCH)
+      LogFatal(COMPONENT_FSAL, "GPFS Returned EUNATCH");
     ReturnCode(posix2fsal_error(errno), errno);
+  }
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
@@ -722,7 +742,12 @@ fsal_status_t fsal_internal_link_fh(fsal_op_context_t * p_context,
   rc = gpfs_ganesha(OPENHANDLE_LINK_BY_FH, &linkarg);
 
   if(rc < 0)
+  {
+    if (errno == EUNATCH)
+      LogFatal(COMPONENT_FSAL, "GPFS Returned EUNATCH");
     ReturnCode(posix2fsal_error(errno), errno);
+  }
+
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 
@@ -768,7 +793,11 @@ fsal_status_t fsal_internal_stat_name(fsal_op_context_t * p_context,
   rc = gpfs_ganesha(OPENHANDLE_STAT_BY_NAME, &statarg);
 
   if(rc < 0)
+  {
+    if (errno == EUNATCH)
+      LogFatal(COMPONENT_FSAL, "GPFS Returned EUNATCH");
     ReturnCode(posix2fsal_error(errno), errno);
+  }
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 
@@ -810,7 +839,11 @@ fsal_status_t fsal_internal_unlink(fsal_op_context_t * p_context,
   rc = gpfs_ganesha(OPENHANDLE_UNLINK_BY_NAME, &statarg);
 
   if(rc < 0)
+  {
+    if (errno == EUNATCH)
+      LogFatal(COMPONENT_FSAL, "GPFS Returned EUNATCH");
     ReturnCode(posix2fsal_error(errno), errno);
+  }
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 
@@ -871,8 +904,11 @@ fsal_status_t fsal_internal_create(fsal_op_context_t * p_context,
   rc = gpfs_ganesha(OPENHANDLE_CREATE_BY_NAME, &crarg);
 
   if(rc < 0)
+  {
+    if (errno == EUNATCH)
+      LogFatal(COMPONENT_FSAL, "GPFS Returned EUNATCH");
     ReturnCode(posix2fsal_error(errno), errno);
-
+  }
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
@@ -923,7 +959,11 @@ fsal_status_t fsal_internal_rename_fh(fsal_op_context_t * p_context,
   rc = gpfs_ganesha(OPENHANDLE_RENAME_BY_FH, &renamearg);
 
   if(rc < 0)
+  {
+    if (errno == EUNATCH)
+      LogFatal(COMPONENT_FSAL, "GPFS Returned EUNATCH");
     ReturnCode(posix2fsal_error(errno), errno);
+  }
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 
@@ -959,7 +999,12 @@ fsal_status_t fsal_readlink_by_handle(fsal_op_context_t * p_context,
   rc = gpfs_ganesha(OPENHANDLE_READLINK_BY_FH, &readlinkarg);
 
   if(rc < 0)
-      Return(rc, 0, INDEX_FSAL_readlink);
+  {
+    if (errno == EUNATCH)
+      LogFatal(COMPONENT_FSAL, "GPFS Returned EUNATCH");
+    Return(rc, 0, INDEX_FSAL_readlink);
+  }
+
 
   if(rc < maxlen)
     __buf[rc] = '\0';
@@ -981,6 +1026,7 @@ fsal_status_t fsal_get_xstat_by_handle(fsal_op_context_t * p_context,
                                        fsal_handle_t * p_handle, gpfsfsal_xstat_t *p_buffxstat)
 {
   int rc;
+  int errsv;
   int dirfd = 0;
   struct xstat_arg xstatarg;
 #ifdef _USE_NFS4_ACL
@@ -1021,11 +1067,15 @@ xstatarg.attr_valid = XATTR_STAT;
   xstatarg.buf = &p_buffxstat->buffstat;
 
   rc = gpfs_ganesha(OPENHANDLE_GET_XSTAT, &xstatarg);
+  errsv = errno;
   LogDebug(COMPONENT_FSAL, "gpfs_ganesha: GET_XSTAT returned, rc = %d", rc);
 
   if(rc < 0)
     {
-      if(errno == ENODATA)
+      if (errsv == EUNATCH)
+        LogFatal(COMPONENT_FSAL, "GPFS Returned EUNATCH");
+
+      if(errsv == ENODATA)
         {
           /* For the special file that do not have ACL, GPFS returns ENODATA.
            * In this case, return okay with stat. */
@@ -1037,8 +1087,8 @@ xstatarg.attr_valid = XATTR_STAT;
         {
           /* Handle other errors. */
           LogFullDebug(COMPONENT_FSAL, "fsal_get_xstat_by_handle returned errno:%d -- %s",
-                       errno, strerror(errno));
-          ReturnCode(posix2fsal_error(errno), errno);
+                       errsv, strerror(errsv));
+          ReturnCode(posix2fsal_error(errsv), errsv);
         }
     }
 
@@ -1083,7 +1133,12 @@ fsal_status_t fsal_set_xstat_by_handle(fsal_op_context_t * p_context,
   LogDebug(COMPONENT_FSAL, "gpfs_ganesha: SET_XSTAT returned, rc = %d", rc);
 
   if(rc < 0)
+  {
+    if (errno == EUNATCH)
+      LogFatal(COMPONENT_FSAL, "GPFS Returned EUNATCH");
     ReturnCode(posix2fsal_error(errsv), errsv);
+  }
+
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
@@ -1187,10 +1242,14 @@ int fsal_internal_version()
  
   rc = gpfs_ganesha(OPENHANDLE_GET_VERSION, &rc); 
  
-  if(rc < 0) 
-      LogDebug(COMPONENT_FSAL, "GPFS get version failed with rc %d", rc); 
+  if(rc < 0)
+    {
+      if (errno == EUNATCH)
+        LogFatal(COMPONENT_FSAL, "GPFS Returned EUNATCH");
+      LogDebug(COMPONENT_FSAL, "GPFS get version failed with rc %d", rc);
+    }
   else 
-      LogDebug(COMPONENT_FSAL, "GPFS get version %d", rc); 
+    LogDebug(COMPONENT_FSAL, "GPFS get version %d", rc);
  
   return rc; 
 } 
@@ -1230,7 +1289,11 @@ GPFSFSAL_start_grace(fsal_op_context_t *p_context,      /* IN */
                 "OPENHANDLE_GRACE_PERIOD returned: rc = %d", rc);
 
         if (rc < 0)
-                ReturnCode(posix2fsal_error(errno), errno);
+        {
+          if (errno == EUNATCH)
+            LogFatal(COMPONENT_FSAL, "GPFS Returned EUNATCH");
+          ReturnCode(posix2fsal_error(errno), errno);
+        }
 
         ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }

@@ -155,6 +155,9 @@ fsal_status_t GPFSFSAL_lock_op( fsal_file_t       * p_file_descriptor, /* IN */
     {
       int errsv = errno;
 
+      if (errsv == EUNATCH)
+        LogFatal(COMPONENT_FSAL, "GPFS Returned EUNATCH");
+
       if((conflicting_lock != NULL) &&
          (lock_op == FSAL_OP_LOCK || lock_op == FSAL_OP_LOCKB))
         {
@@ -163,6 +166,9 @@ fsal_status_t GPFSFSAL_lock_op( fsal_file_t       * p_file_descriptor, /* IN */
           retval2 = gpfs_ganesha(OPENHANDLE_GET_LOCK, &gpfs_sg_arg);
           if(retval2)
             {
+              if (errno == EUNATCH)
+                LogFatal(COMPONENT_FSAL, "GPFS Returned EUNATCH");
+
               LogCrit(COMPONENT_FSAL,
                       "After failing a set lock request, An attempt to get the current owner details also failed.");
             }

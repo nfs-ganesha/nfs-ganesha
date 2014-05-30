@@ -45,17 +45,29 @@ fsal_status_t GPFSFSAL_dynamic_fsinfo(fsal_handle_t * p_filehandle, /* IN */
 {
   struct statvfs buffstatvfs;
   int rc, errsv;
+  int mrootfd;
   /* sanity checks. */
   if(!p_filehandle || !p_dynamicinfo || !p_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_dynamic_fsinfo);
 
   TakeTokenFSCall();
-  rc = fstatvfs(((gpfsfsal_op_context_t *)p_context)->export_context->mount_root_fd,
-		&buffstatvfs);
+  mrootfd = ((gpfsfsal_op_context_t *)p_context)->export_context->mount_root_fd;
+  rc = fstatvfs(mrootfd, &buffstatvfs);
   errsv = errno;
   ReleaseTokenFSCall();
   if(rc)
-    Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_dynamic_fsinfo);
+    {
+      if (errsv == ESTALE)
+        {
+          /* Check if this a result of flesystem goign away */
+          struct grace_period_arg gpa;
+          gpa.mountdirfd = mrootfd;
+          if (gpfs_ganesha(OPENHANDLE_GET_NODEID, &gpa) == -49)
+            LogFatal(COMPONENT_FSAL, "GPFS Returned -49");
+        }
+
+      Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_dynamic_fsinfo);
+    }
 
   p_dynamicinfo->total_bytes = buffstatvfs.f_frsize * buffstatvfs.f_blocks;
   p_dynamicinfo->free_bytes = buffstatvfs.f_frsize * buffstatvfs.f_bfree;

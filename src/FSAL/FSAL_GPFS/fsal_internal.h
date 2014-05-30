@@ -118,6 +118,17 @@ extern fsal_staticfsinfo_t global_fs_info;
 
 #endif
 
+static inline void gpfs_healthcheck(int fd, int errsv)
+{
+  struct grace_period_arg gpa;
+
+  if (errsv != ESTALE)
+    return;
+  gpa.mountdirfd = fd;
+  if ((gpfs_ganesha(OPENHANDLE_GET_NODEID, &gpa) < 0) && errno == EUNATCH)
+     LogFatal(COMPONENT_FSAL, "GPFS Returned EUNATCH");
+}
+
 /**
  *  This function initializes shared variables of the FSAL.
  */

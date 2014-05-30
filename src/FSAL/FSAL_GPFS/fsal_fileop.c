@@ -276,6 +276,8 @@ fsal_status_t GPFSFSAL_read(fsal_file_t * file_desc,        /* IN */
 
       if(rc)
         {
+          gpfs_healthcheck(p_file_descriptor->fd, errsv);
+
           LogFullDebug(COMPONENT_FSAL,
                        "Error in posix fseek operation (whence=%s, offset=%lld)",
 		       format_seek_whence(p_seek_descriptor->whence),
@@ -300,14 +302,16 @@ fsal_status_t GPFSFSAL_read(fsal_file_t * file_desc,        /* IN */
   /** @todo: manage ssize_t to fsal_size_t convertion */
 
   if(nb_read == -1)
-    Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_read);
+    {
+      gpfs_healthcheck(p_file_descriptor->fd, errsv);
+      Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_read);
+    }
   else if(nb_read == 0)
     *p_end_of_file = 1;
 
   *p_read_amount = nb_read;
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_read);
-
 }
 
 /**
@@ -397,6 +401,8 @@ fsal_status_t GPFSFSAL_write(fsal_file_t * file_desc,       /* IN */
 
       if(rc)
         {
+          gpfs_healthcheck(p_file_descriptor->fd, errsv);
+
           LogFullDebug(COMPONENT_FSAL,
                        "Error in posix fseek operation (whence=%s, offset=%lld)",
 		       format_seek_whence(p_seek_descriptor->whence),
@@ -430,6 +436,8 @@ fsal_status_t GPFSFSAL_write(fsal_file_t * file_desc,       /* IN */
   /** @todo: manage ssize_t to fsal_size_t convertion */
   if(nb_written <= 0)
     {
+      gpfs_healthcheck(p_file_descriptor->fd, errsv);
+
       if (p_seek_descriptor)
         LogDebug(COMPONENT_FSAL,
                  "Write operation of size %llu at offset %lld failed. fd=%d, errno=%d.",
@@ -488,7 +496,10 @@ fsal_status_t GPFSFSAL_close(fsal_file_t * p_file_descriptor,        /* IN */
   ReleaseTokenFSCall();
 
   if(rc)
-    Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_close);
+    {
+      gpfs_healthcheck(p_file_descriptor->fd, errsv);
+      Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_close);
+    }
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_close);
 
@@ -534,7 +545,10 @@ fsal_status_t GPFSFSAL_commit( fsal_file_t * p_file_descriptor,
   ReleaseTokenFSCall();
 
   if(rc)
-    Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_commit);
+    {
+      gpfs_healthcheck(p_file_descriptor->fd, errsv);
+      Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_commit);
+    }
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_commit);
 }

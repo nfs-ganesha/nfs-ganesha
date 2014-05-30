@@ -72,6 +72,9 @@ fsal_status_t GPFSFSAL_share_op( fsal_file_t        * p_file_descriptor, /* IN *
 
   if(rc < 0)
     {
+      if (errno == EUNATCH)
+        LogFatal(COMPONENT_FSAL, "GPFS Returned EUNATCH");
+
       LogDebug(COMPONENT_FSAL,
                "gpfs_ganesha: OPENHANDLE_SHARE_RESERVE returned error, rc=%d, errno=%d",
                rc, errno);

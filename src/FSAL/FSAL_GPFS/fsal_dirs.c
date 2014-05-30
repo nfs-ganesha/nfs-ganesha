@@ -189,7 +189,10 @@ fsal_status_t GPFSFSAL_readdir(fsal_dir_t * dir_desc,       /* IN */
     }
 
   if(rc)
-    Return(posix2fsal_error(rc), rc, INDEX_FSAL_readdir);
+    {
+      gpfs_healthcheck(p_dir_descriptor->fd, rc);
+      Return(posix2fsal_error(rc), rc, INDEX_FSAL_readdir);
+    }
 
   /************************/
   /* browse the directory */
@@ -207,6 +210,7 @@ fsal_status_t GPFSFSAL_readdir(fsal_dir_t * dir_desc,       /* IN */
       if(rc < 0)
         {
           rc = errno;
+          gpfs_healthcheck(p_dir_descriptor->fd, rc);
           Return(posix2fsal_error(rc), rc, INDEX_FSAL_readdir);
         }
       /* End of directory */
@@ -284,7 +288,11 @@ fsal_status_t GPFSFSAL_closedir(fsal_dir_t * p_dir_descriptor,       /* IN */
 
   rc = close(((gpfsfsal_dir_t *)p_dir_descriptor)->fd);
   if(rc != 0)
-    Return(posix2fsal_error(errno), errno, INDEX_FSAL_closedir);
+    {
+      rc = errno;
+      gpfs_healthcheck(p_dir_descriptor->fd, rc);
+      Return(posix2fsal_error(errno), errno, INDEX_FSAL_closedir);
+    }
 
   /* fill dir_descriptor with zeros */
   memset(p_dir_descriptor, 0, sizeof(gpfsfsal_dir_t));
