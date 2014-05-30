@@ -1,0 +1,20 @@
+This directory contains some example config files for various FSALs. It also
+contains a few files to help document config options.
+
+config.txt  - this file documents all the config options
+logging.txt - this file documents the LOG config in more detail
+export.txt  - this file documents the export config in more detail
+
+The sample FSAL files:
+
+ceph.conf
+gpfs.conf
+lustre.conf
+pt.conf
+vfs.conf
+xfs.conf
+zfs.conf
+
+The most readily used FSAL for experimentation with Ganesha given a recent
+kernel is FSAL_VFS using vfs.conf.
+
