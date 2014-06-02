@@ -1749,8 +1749,8 @@ int load_config_from_parse(config_file_t config,
 			param : conf_blk->blk_desc.u.blk.init((void *)~0UL,
 							      NULL);
 		assert(blk_mem != NULL);
-		LogWarn(COMPONENT_CONFIG,
-			 "Block %s not found. Using defaults", blkname);
+		LogEvent(COMPONENT_CONFIG,
+			 "Using defaults for %s", blkname);
 		rc = do_block_init(conf_blk->blk_desc.u.blk.params,
 				   blk_mem);
 		if (rc != 0) {
