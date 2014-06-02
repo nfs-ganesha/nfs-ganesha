@@ -1073,6 +1073,8 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 	open_claim_type4 claim = arg_OPEN4->claim.claim;
 	/* The open state for the file */
 	state_t *file_state = NULL;
+	state_t *found_state = NULL;
+	stateid4 *rcurr_state = NULL;
 	/* True if the state was newly created */
 	bool new_state = false;
 	cache_inode_status_t cache_status;
@@ -1265,13 +1267,15 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 		if (utfname == NULL) {
 			utfname =
 			&arg_OPEN4->claim.open_claim4_u.delegate_cur_info.file;
+			rcurr_state =
+			&arg_OPEN4->claim.open_claim4_u.delegate_cur_info.delegate_stateid;
 		}
 		if (!op_ctx->fsal_export->ops->fs_supports(
 				op_ctx->fsal_export, fso_delegations)) {
 			res_OPEN4->status = NFS4ERR_NOTSUPP;
 			LogDebug(COMPONENT_STATE,
 				 "NFS4 OPEN returning NFS4ERR_NOTSUPP for CLAIM_DELEGATE");
-			return res_OPEN4->status;
+			goto out;
 		}
 
 		/* Check for name length */
@@ -1279,21 +1283,13 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 			res_OPEN4->status = NFS4ERR_NAMETOOLONG;
 			LogDebug(COMPONENT_STATE,
 				 "NFS4 OPEN returning NFS4ERR_NAMETOOLONG for CLAIM_DELEGATE");
-			return res_OPEN4->status;
+			goto out;
 		}
 
 		/* get the filename from the argument, it should not be empty */
 		if (utfname->utf8string_len == 0) {
 			res_OPEN4->status = NFS4ERR_INVAL;
-			LogDebug(COMPONENT_STATE,
-				 "NFS4 OPEN returning NFS4ERR_INVAL for CLAIM_DELEGATE");
-			return res_OPEN4->status;
-		}
-
-		/* get the filename from the argument, it should not be empty */
-		if (utfname->utf8string_len == 0) {
-			res_OPEN4->status = NFS4ERR_INVAL;
-			LogDebug(COMPONENT_NFS_V4, "Invalid filename");
+			LogDebug(COMPONENT_NFS_V4, "zero length filename");
 			goto out;
 		}
 
@@ -1320,15 +1316,16 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 						  filename,
 						  &entry_lookup);
 
+
+		if (cache_status != CACHE_INODE_SUCCESS) {
+			res_OPEN4->status = nfs4_Errno(cache_status);
+			LogDebug(COMPONENT_NFS_CB, "%s lookup failed.",
+				filename);
+			gsh_free(filename);
+			goto out;
+		}
 		gsh_free(filename);
 
-		if (cache_status == CACHE_INODE_NOT_FOUND) {
-			LogDebug(COMPONENT_NFS_CB, "did not find entry");
-			break;
-		} else if (cache_status != CACHE_INODE_SUCCESS) {
-			res_OPEN4->status = nfs4_Errno(cache_status);
-			return res_OPEN4->status;
-		}
 		/* cache_status == CACHE_INODE_SUCCESS */
 		res_OPEN4->status = open4_create_fh(data, entry_lookup);
 		if (res_OPEN4->status != NFS4_OK) {
@@ -1343,24 +1340,29 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 				found_entry = glist_entry(glist,
 							  state_lock_entry_t,
 							  sle_list);
+				if (found_entry == NULL) {
+					LogDebug(COMPONENT_NFS_V4,
+						"Could not find stateid for CLAIM_DELEGATE_CUR");
+					res_OPEN4->status = NFS4ERR_BAD_STATEID;
+					goto out;
+				}
 
-				LogDebug(COMPONENT_NFS_CB, "found_entry %p",
+				found_state = found_entry->sle_state;
+				/* Check if the supplied state and found state
+				 * match. If so we found the match. */
+				if ((found_state->state_seqid ==
+					rcurr_state->seqid) &&
+				    (!memcmp(found_state->stateid_other,
+						rcurr_state->other,
+						OTHERSIZE))) {
+					LogDebug(COMPONENT_NFS_V4, "found matching entry %p",
 						found_entry);
-				file_state = found_entry->sle_state;
-				break;
+					break;
+				}
 			}
 			PTHREAD_RWLOCK_unlock(&entry_lookup->state_lock);
-
-			if (file_state == NULL) {
-				res_OPEN4->status = nfs4_Errno(cache_status);
-				goto out;
-			}
-			COPY_STATEID(&res_OPEN4->OPEN4res_u.resok4.stateid,
-				     file_state);
-
 			LogDebug(COMPONENT_NFS_V4,
 				 "done with CLAIM_DELEGATE_CUR");
-			goto out;
 		} else { /* We are in CLAIM_DELEGATE_PREV case */
 			if (!nfs_in_grace()) {
 				/* We don't supprt CLAIM_DELEGATE_PREV
