@@ -33,6 +33,7 @@ struct lustre_fsal_export {
  * LUSTRE internal filesystem
  */
 struct lustre_filesystem {
+	char *fsname;
 	struct fsal_filesystem *fs;
 	struct glist_head exports;
 };
