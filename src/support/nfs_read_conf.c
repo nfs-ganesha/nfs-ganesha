@@ -228,9 +228,6 @@ static struct config_item version4_params[] = {
 	CONF_ITEM_UI32("Deleg_Recall_Retry_Delay", 0, 10,
 			DELEG_RECALL_RETRY_DELAY_DEFAULT,
 			nfs_version4_parameter, deleg_recall_retry_delay),
-	CONF_ITEM_UI32("Deleg_Recall_Retries", 0, 10,
-			DELEG_RECALL_RETRY_COUNT_DEFAULT,
-			nfs_version4_parameter, deleg_recall_retry_count),
 	CONFIG_EOL
 };
 

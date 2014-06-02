@@ -372,11 +372,6 @@ typedef struct nfs_core_param {
 #define IDMAPCONF_DEFAULT "/etc/idmapd.conf"
 
 /**
- * @brief Default value of deleg_recall_retry_count.
- */
-#define DELEG_RECALL_RETRY_COUNT_DEFAULT 3
-
-/**
  * @brief Default value of deleg_recall_retry_delay.
  */
 #define DELEG_RECALL_RETRY_DELAY_DEFAULT 1
@@ -413,8 +408,6 @@ typedef struct nfs_version4_parameter {
 	/** Whether to allow delegations. Defaults to false and settable
 	    with Delegations */
 	bool allow_delegations;
-	/** Number of times the server will retry a recall */
-	uint32_t deleg_recall_retry_count;
 	/** Delay after which server will retry a recall in case of failures */
 	uint32_t deleg_recall_retry_delay;
 } nfs_version4_parameter_t;
