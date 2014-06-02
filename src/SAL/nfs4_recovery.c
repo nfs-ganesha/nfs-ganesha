@@ -499,6 +499,74 @@ static void free_heap(char *path, char *new_path, char *build_clid)
 }
 
 /**
+ * @brief Populate revoked delegations for this client.
+ *
+ * Even after delegation revoke, it is possible for the client to
+ * contiue its leas and other operatoins. Sever saves revoked delegations
+ * in the memory so client will not be granted same delegation with
+ * DELEG_CUR ; but it is possible that the server might reboot and has
+ * no record of the delegatin. This list helps to reject delegations
+ * client is obtaining through DELEG_PREV.
+ *
+ * @param[in] clientid Clientid that is being created.
+ * @param[in] path Path of the directory structure.
+ */
+
+void nfs4_populate_revoked_delegs(clid_entry_t *clid_ent, char *path)
+{
+	struct dirent *dentp;
+	DIR *dp;
+	rdel_fh_t *new_ent;
+	char *clid_str;
+	int len;
+
+	glist_init(&clid_ent->cl_rfh_list);
+	/* Read the contents from recov dir of this clientid. */
+	dp = opendir(path);
+	if (dp == NULL) {
+		LogEvent(COMPONENT_CLIENTID, "opendir %s failed errno=%d",
+			path, errno);
+		return;
+	}
+
+	dentp = readdir(dp);
+	while (dentp != NULL) {
+		if (!strcmp(dentp->d_name, ".") || !strcmp(dentp->d_name, ".."))
+			goto read_next;
+		/* All the revoked filehandles stored as hidden files */
+		if (dentp->d_name[0] != '.') {
+			/* Something wrong; it should not happen */
+			LogMidDebug(COMPONENT_CLIENTID,
+				"%s showed up along with revoked FHs. Skipping",
+				dentp->d_name);
+			goto read_next;
+		}
+		new_ent = gsh_malloc(sizeof(rdel_fh_t));
+		if (new_ent == NULL) {
+			LogEvent(COMPONENT_CLIENTID, "Alloc Failed: rdel_fh_t");
+			goto read_next;
+		}
+
+		len = strlen(dentp->d_name);
+		/* Use the first . space for terminating NULL */
+		new_ent->rdfh_handle_str = gsh_malloc(len);
+		if (new_ent->rdfh_handle_str == NULL) {
+			gsh_free(new_ent);
+			LogEvent(COMPONENT_CLIENTID,
+				"Alloc Failed: rdel_fh_t->rdfh_handle_str");
+			goto read_next;
+		}
+		clid_str = dentp->d_name + 1;
+		strcpy(new_ent->rdfh_handle_str, clid_str);
+		glist_init(&new_ent->rdfh_list);
+		glist_add(&clid_ent->cl_rfh_list, &new_ent->rdfh_list);
+read_next:
+		dentp = readdir(dp);
+	}
+}
+
+
+/**
  * @brief Create the client reclaim list
  *
  * When not doing a take over, first open the old state dir and read
@@ -702,6 +770,8 @@ static int nfs4_read_recov_clids(DIR *dp,
 							  build_clid);
 						continue;
 					}
+					nfs4_populate_revoked_delegs(new_ent,
+									path);
 					strcpy(new_ent->cl_name, build_clid);
 					glist_add(&grace.g_clid_list,
 						  &new_ent->cl_list);

@@ -216,10 +216,19 @@ typedef struct grace {
 } grace_t;
 
 /**
+ * @brief Revoked filehandle list
+ */
+typedef struct rdel_fh {
+	struct glist_head rdfh_list;
+	char *rdfh_handle_str;
+} rdel_fh_t;
+
+/**
  * @brief A client entry
  */
 typedef struct clid_entry {
 	struct glist_head cl_list;	/*< Link in the list */
+	struct glist_head cl_rfh_list;
 	char cl_name[PATH_MAX];	/*< Client name */
 } clid_entry_t;
 
