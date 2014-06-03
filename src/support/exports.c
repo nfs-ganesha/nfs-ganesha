@@ -1643,25 +1643,40 @@ bool init_export_root(struct gsh_export *export)
  * @param exp [IN] the export
  */
 
-void release_export_root_locked(struct gsh_export *export)
+#define RELEASE_EXP_ROOT_FLAG_NONE		0x0000
+#define RELEASE_EXP_ROOT_FLAG_ULOCK_ATTR	0x0001
+#define RELEASE_EXP_ROOT_FLAG_ULOCK_LOCK	0x0002
+#define RELEASE_EXP_ROOT_FLAG_ULOCK_BOTH \
+	(RELEASE_EXP_ROOT_FLAG_ULOCK_ATTR|RELEASE_EXP_ROOT_FLAG_ULOCK_LOCK)
+
+static inline void
+release_export_root_locked(struct gsh_export *export,
+			   cache_entry_t *entry, uint32_t flags)
 {
-	cache_entry_t *entry = NULL;
+	cache_entry_t *root_entry = NULL;
 
 	glist_del(&export->exp_root_list);
-	entry = export->exp_root_cache_inode;
+	root_entry = export->exp_root_cache_inode;
 	export->exp_root_cache_inode = NULL;
 
-	if (entry != NULL) {
+	if (root_entry != NULL) {
 		/* Allow this entry to be removed (unlink) */
 		(void)atomic_dec_int32_t(&entry->exp_root_refcount);
 
+		/* We must not hold entry->attr_lock across
+		 * cache_inode_dec_pin_ref (LRU lane lock order) */
+		if (flags & RELEASE_EXP_ROOT_FLAG_ULOCK_BOTH) {
+			PTHREAD_RWLOCK_unlock(&export->lock);
+			PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+		}
+
 		/* Release the pin reference */
-		cache_inode_dec_pin_ref(entry, false);
+		cache_inode_dec_pin_ref(root_entry, false);
 	}
 
 	LogDebug(COMPONENT_EXPORT,
 		 "Released root entry %p for path %s on export_id=%d",
-		 entry, export->fullpath, export->export_id);
+		 root_entry, export->fullpath, export->export_id);
 }
 
 /**
@@ -1692,10 +1707,8 @@ void release_export_root(struct gsh_export *export)
 	PTHREAD_RWLOCK_wrlock(&export->lock);
 
 	/* Make the export unreachable as a root cache inode */
-	release_export_root_locked(export);
-
-	PTHREAD_RWLOCK_unlock(&export->lock);
-	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+	release_export_root_locked(export, entry,
+				   RELEASE_EXP_ROOT_FLAG_ULOCK_BOTH);
 
 	cache_inode_put(entry);
 }
@@ -1744,10 +1757,8 @@ void kill_export_root_entry(cache_entry_t *entry)
 		PTHREAD_RWLOCK_wrlock(&export->lock);
 
 		/* Make the export unreachable as a root cache inode */
-		release_export_root_locked(export);
-
-		PTHREAD_RWLOCK_unlock(&export->lock);
-		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+		release_export_root_locked(
+			export, entry, RELEASE_EXP_ROOT_FLAG_ULOCK_BOTH);
 
 		/* Make the export otherwise unreachable */
 		pseudo_unmount_export(export);
