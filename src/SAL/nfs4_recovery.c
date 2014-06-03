@@ -441,7 +441,7 @@ void nfs4_rm_clid(const char *recov_dir, char *parent_path, int position)
  *
  * @param[in] clientid Client record
  */
-void nfs4_chk_clid(nfs_client_id_t *clientid)
+void  nfs4_chk_clid_impl(nfs_client_id_t *clientid, clid_entry_t **clid_ent_arg)
 {
 	struct glist_head *node;
 	clid_entry_t *clid_ent;
@@ -450,15 +450,8 @@ void nfs4_chk_clid(nfs_client_id_t *clientid)
 	if (clientid->cid_recov_dir == NULL)
 		return;
 
-	/* If we aren't in grace period, then reclaim is not possible */
-	if (!nfs_in_grace())
-		return;
-
-	pthread_mutex_lock(&grace.g_mutex);
-
 	/* If there were no clients at time of restart, we're done */
 	if (glist_empty(&grace.g_clid_list)) {
-		pthread_mutex_unlock(&grace.g_mutex);
 		return;
 	}
 
@@ -482,11 +475,23 @@ void nfs4_chk_clid(nfs_client_id_t *clientid)
 					     str);
 			}
 			clientid->cid_allow_reclaim = 1;
-			pthread_mutex_unlock(&grace.g_mutex);
-			return;
+			*clid_ent_arg = clid_ent;
+			return ;
 		}
 	}
+}
+
+void  nfs4_chk_clid(nfs_client_id_t *clientid)
+{
+	clid_entry_t *dummy_clid_ent;
+
+	/* If we aren't in grace period, then reclaim is not possible */
+	if (!nfs_in_grace())
+		return;
+	pthread_mutex_lock(&grace.g_mutex);
+	nfs4_chk_clid_impl(clientid, &dummy_clid_ent);
 	pthread_mutex_unlock(&grace.g_mutex);
+	return;
 }
 
 static void free_heap(char *path, char *new_path, char *build_clid)
@@ -1080,9 +1085,45 @@ void nfs4_record_revoke(nfs_client_id_t *delr_clid, nfs_fh4 *delr_handle)
 	}
 }
 
-bool nfs4_can_deleg_reclaim_prev(nfs_client_id_t *clid, nfs_fh4 *handle)
+bool nfs4_can_deleg_reclaim_prev(nfs_client_id_t *clid, nfs_fh4 *fhandle)
 {
-	return TRUE;
+	char cidstr[NAME_MAX];
+	struct glist_head *node;
+	rdel_fh_t *rfh_entry;
+	clid_entry_t *clid_ent;
+	struct display_buffer       dspbuf = {sizeof(cidstr), cidstr, cidstr};
+
+	/* Make sure that handle size is not greather than NAME_MAX */
+	assert(2 * fhandle->nfs_fh4_len < NAME_MAX);
+
+	/* If we aren't in grace period, then reclaim is not possible */
+	if (!nfs_in_grace())
+		return false;
+
+	/* Convert nfs_fh4_val into a human readable string */
+	(void)convert_opaque_value_max_for_dir(&dspbuf,
+					fhandle->nfs_fh4_val,
+					fhandle->nfs_fh4_len,
+					NAME_MAX);
+
+	pthread_mutex_lock(&grace.g_mutex);
+	nfs4_chk_clid_impl(clid, &clid_ent);
+	if (clid_ent == NULL || glist_empty(&clid_ent->cl_rfh_list)) {
+		pthread_mutex_unlock(&grace.g_mutex);
+		return true;
+	}
+
+	glist_for_each(node, &clid_ent->cl_rfh_list) {
+		rfh_entry = glist_entry(node, rdel_fh_t, rdfh_list);
+		assert(rfh_entry != NULL);
+		if (!strcmp(cidstr, rfh_entry->rdfh_handle_str)) {
+			pthread_mutex_unlock(&grace.g_mutex);
+			return true;
+		}
+	}
+
+	pthread_mutex_unlock(&grace.g_mutex);
+	return false;
 }
 
 
