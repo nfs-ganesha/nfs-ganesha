@@ -666,8 +666,8 @@ int re_index_fs_fsid(struct fsal_filesystem *fs,
 	enum fsid_type old_fsid_type = fs->fsid_type;
 
 	LogDebug(COMPONENT_FSAL,
-		 "Reindex %s from %"PRIu64".%"PRIu64
-		 " to %"PRIu64".%"PRIu64,
+		 "Reindex %s from 0x%016"PRIx64".0x%016"PRIx64
+		 " to 0x%016"PRIx64".0x%016"PRIx64,
 		 fs->path,
 		 fs->fsid.major, fs->fsid.minor,
 		 major, minor);
@@ -984,8 +984,9 @@ static void posix_create_file_system(struct mntent *mnt)
 					   avl_fsid);
 
 		LogDebug(COMPONENT_FSAL,
-			 "Skipped duplicate %s namelen=%d fsid=%016"
-			 PRIx64".%016"PRIx64" %"PRIu64".%"PRIu64,
+			 "Skipped duplicate %s namelen=%d "
+			 "fsid=0x%016"PRIx64".0x%016"PRIx64
+			 " %"PRIu64".%"PRIu64,
 			 fs->path, (int) fs->namelen,
 			 fs->fsid.major, fs->fsid.minor,
 			 fs->fsid.major, fs->fsid.minor);
@@ -1050,7 +1051,7 @@ static void posix_create_file_system(struct mntent *mnt)
 
 	LogInfo(COMPONENT_FSAL,
 		"Added filesystem %s namelen=%d dev=%"PRIu64".%"PRIu64
-		"fsid=%016"PRIx64".%016"PRIx64" %"PRIu64".%"PRIu64,
+		" fsid=0x%016"PRIx64".0x%016"PRIx64" %"PRIu64".%"PRIu64,
 		fs->path, (int) fs->namelen,
 		fs->dev.major, fs->dev.minor,
 		fs->fsid.major, fs->fsid.minor,

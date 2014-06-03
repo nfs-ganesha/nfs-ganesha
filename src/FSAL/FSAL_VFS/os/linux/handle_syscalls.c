@@ -71,7 +71,7 @@ int display_vfs_handle(struct display_buffer *dspbuf,
 	uint8_t handle_cursor = 1;
 	int b_left;
 
-	b_left = display_printf(dspbuf, "Handle len %hhu %02hhx: ",
+	b_left = display_printf(dspbuf, "Handle len %hhu 0x%02hhx: ",
 				fh->handle_len, fh->handle_data[0]);
 
 	if (b_left <= 0)
@@ -88,8 +88,9 @@ int display_vfs_handle(struct display_buffer *dspbuf,
 		       fh->handle_data + handle_cursor,
 		       sizeof(u64[0]));
 		handle_cursor += sizeof(u64[0]);
-		b_left = display_printf(dspbuf, "fsid=%016"PRIx64,
-					u64[0]);
+		b_left = display_printf(dspbuf,
+					"fsid=0x%016"PRIx64".0x%016"PRIx64,
+					u64[0], (uint64_t) 0);
 		break;
 
 	case FSID_TWO_UINT64:
@@ -97,8 +98,8 @@ int display_vfs_handle(struct display_buffer *dspbuf,
 		       fh->handle_data + handle_cursor,
 		       sizeof(u64));
 		handle_cursor += sizeof(u64);
-		b_left = display_printf(dspbuf, "fsid=%016"PRIx64
-					":%016"PRIx64,
+		b_left = display_printf(dspbuf,
+					"fsid=0x%016"PRIx64".0x%016"PRIx64,
 					u64[0], u64[1]);
 		break;
 
@@ -108,8 +109,8 @@ int display_vfs_handle(struct display_buffer *dspbuf,
 		       fh->handle_data + handle_cursor,
 		       sizeof(u32));
 		handle_cursor += sizeof(u32);
-		b_left = display_printf(dspbuf, "fsid=%08"PRIx64
-					":%08"PRIx64,
+		b_left = display_printf(dspbuf,
+					"fsid=0x%016"PRIx64".0x%016"PRIx64,
 					u32[0], u32[1]);
 		break;
 	}
@@ -126,7 +127,7 @@ int display_vfs_handle(struct display_buffer *dspbuf,
 		break;
 
 	case HANDLE_TYPE_8:
-		b_left = display_printf(dspbuf, ", type %02hhx",
+		b_left = display_printf(dspbuf, ", type 0x%02hhx",
 					fh->handle_data[handle_cursor]);
 		handle_cursor++;
 		break;
@@ -135,14 +136,14 @@ int display_vfs_handle(struct display_buffer *dspbuf,
 		       fh->handle_data + handle_cursor,
 		       sizeof(i16));
 		handle_cursor += sizeof(i16);
-		b_left = display_printf(dspbuf, ", type %04h"PRIx16, i16);
+		b_left = display_printf(dspbuf, ", type 0x%04h"PRIx16, i16);
 		break;
 	case HANDLE_TYPE_32:
 		memcpy(&i32,
 		       fh->handle_data + handle_cursor,
 		       sizeof(i32));
 		handle_cursor += sizeof(i32);
-		b_left = display_printf(dspbuf, ", type %04"PRIx32, i32);
+		b_left = display_printf(dspbuf, ", type 0x%04"PRIx32, i32);
 		break;
 	}
 
