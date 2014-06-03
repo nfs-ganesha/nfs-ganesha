@@ -36,6 +36,7 @@
 #include "sal_functions.h"
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <fcntl.h>
 #include <ctype.h>
 
 #define NFS_V4_RECOV_ROOT "/var/lib/nfs/ganesha"
@@ -1034,10 +1035,49 @@ void nfs4_create_recov_dir(void)
 
 /**
  * @brief Record revoked filehandle under the client.
+ *
+ * @param[in] clientid Client record
+ * @param[in] filehandle of the revoked file.
  */
 void nfs4_record_revoke(nfs_client_id_t *delr_clid, nfs_fh4 *delr_handle)
 {
-	/*NULL*/
+	char cidstr[NAME_MAX];
+	struct display_buffer       dspbuf = {sizeof(cidstr), cidstr, cidstr};
+	char path[PATH_MAX + 1] = {0}, segment[NAME_MAX + 1] = {0};
+	int length, position = 0;
+
+	/* Make sure that handle size is not greather than NAME_MAX */
+	assert(2 * delr_handle->nfs_fh4_len < NAME_MAX);
+	/* Convert nfs_fh4_val into a human readable string */
+	(void)convert_opaque_value_max_for_dir(&dspbuf,
+					delr_handle->nfs_fh4_val,
+					delr_handle->nfs_fh4_len,
+					NAME_MAX);
+
+	/* Parse through the clientid direstory structure */
+	assert(delr_clid->cid_recov_dir != NULL);
+
+	snprintf(path, sizeof(path), "%s", v4_recov_dir);
+	length = strlen(delr_clid->cid_recov_dir);
+	while (position < length) {
+		int len = strlen(&delr_clid->cid_recov_dir[position]);
+		if (len <= NAME_MAX) {
+			strcat(path, "/");
+			strncat(path, &delr_clid->cid_recov_dir[position], len);
+			strcat(path, "/.");
+			strncat(path, cidstr, strlen(cidstr));
+			if (creat(path, 0700) < 0) {
+				LogEvent(COMPONENT_CLIENTID,
+					"Failed to record revoke errno:%d\n",
+					errno);
+			}
+			return;
+		}
+		strncpy(segment, &delr_clid->cid_recov_dir[position], NAME_MAX);
+		strcat(path, "/");
+		strncat(path, segment, NAME_MAX);
+		position += NAME_MAX;
+	}
 }
 
 bool nfs4_can_deleg_reclaim_prev(nfs_client_id_t *clid, nfs_fh4 *handle)
