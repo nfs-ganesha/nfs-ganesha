@@ -1757,6 +1757,55 @@ void kill_export_root_entry(cache_entry_t *entry)
 	}
 }
 
+/**
+ * @brief Handle killing a cache inode entry that is a junction to an export.
+ *
+ * @param entry [IN] the cache inode entry
+ */
+
+void kill_export_junction_entry(cache_entry_t *entry)
+{
+	struct gsh_export *export;
+
+	if (entry->type != DIRECTORY)
+		return;
+
+	PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
+
+	export = entry->object.dir.junction_export;
+
+	if (export == NULL) {
+		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+		return;
+	}
+
+	/* Detach the export from the inode */
+	entry->object.dir.junction_export = NULL;
+
+	get_gsh_export_ref(export);
+
+	LogInfo(COMPONENT_CONFIG,
+		"Unmounting export_id %d because junction entry went bad",
+		export->export_id);
+
+	PTHREAD_RWLOCK_wrlock(&export->lock);
+
+	/* Detach the export */
+	export->exp_junction_inode = NULL;
+
+	PTHREAD_RWLOCK_unlock(&export->lock);
+	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+
+	/* Finish unmounting the export */
+	pseudo_unmount_export(export);
+
+	/* Don't remove the export (if export root is still valid, the
+	 * export is still accessible via NFS v3.
+	 */
+
+	put_gsh_export(export);
+}
+
 static char *client_types[] = {
 	[RAW_CLIENT_LIST] = "RAW_CLIENT_LIST",
 	[HOSTIF_CLIENT] = "HOSTIF_CLIENT",

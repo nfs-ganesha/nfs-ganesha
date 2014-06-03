@@ -1479,6 +1479,7 @@ cache_inode_lru_unref(cache_entry_t *entry, uint32_t flags)
 				 entry);
 			state_wipe_file(entry);
 			kill_export_root_entry(entry);
+			kill_export_junction_entry(entry);
 		}
 
 		cache_inode_lru_clean(entry);
