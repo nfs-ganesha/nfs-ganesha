@@ -58,7 +58,6 @@
  *
  * @param[in]  arg     NFS argument union
  * @param[in]  export  NFS export list
- * @param[in]  req_ctx Credentials to be used for this request
  * @param[in]  worker  Worker thread data
  * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call
@@ -70,7 +69,7 @@
  */
 
 int nfs3_write(nfs_arg_t *arg,
-	       struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+	       nfs_worker_data_t *worker,
 	       struct svc_req *req, nfs_res_t *res)
 {
 	cache_entry_t *entry;
@@ -125,7 +124,7 @@ int nfs3_write(nfs_arg_t *arg,
 	    false;
 
 	entry = nfs3_FhandleToCache(&arg->arg_write3.file,
-				    req_ctx,
+				    op_ctx,
 				    &res->res_write3.status,
 				    &rc);
 
@@ -134,15 +133,15 @@ int nfs3_write(nfs_arg_t *arg,
 		goto out;
 	}
 
-	nfs_SetPreOpAttr(entry, req_ctx, &pre_attr);
+	nfs_SetPreOpAttr(entry, op_ctx, &pre_attr);
 
 	/** @todo this is racy, use cache_inode_lock_trust_attrs and
 	 *        cache_inode_access_no_mutex
 	 */
-	if (entry->obj_handle->attributes.owner != req_ctx->creds->caller_uid) {
+	if (entry->obj_handle->attributes.owner != op_ctx->creds->caller_uid) {
 		cache_status = cache_inode_access(entry,
 						  FSAL_WRITE_ACCESS,
-						  req_ctx);
+						  op_ctx);
 
 		if (cache_status != CACHE_INODE_SUCCESS) {
 			res->res_write3.status = nfs3_Errno(cache_status);
@@ -165,10 +164,10 @@ int nfs3_write(nfs_arg_t *arg,
 	/* if quota support is active, then we should check is the
 	   FSAL allows inode creation or not */
 	fsal_status =
-	    req_ctx->fsal_export->ops->check_quota(req_ctx->fsal_export,
-						   req_ctx->export->fullpath,
+	    op_ctx->fsal_export->ops->check_quota(op_ctx->fsal_export,
+						   op_ctx->export->fullpath,
 						   FSAL_QUOTA_BLOCKS,
-						   req_ctx);
+						   op_ctx);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		res->res_write3.status = NFS3ERR_DQUOT;
@@ -189,24 +188,24 @@ int nfs3_write(nfs_arg_t *arg,
 	data = arg->arg_write3.data.data_val;
 
 	/* Do not exceed maxium WRITE offset if set */
-	if (req_ctx->export->MaxOffsetWrite < UINT64_MAX) {
+	if (op_ctx->export->MaxOffsetWrite < UINT64_MAX) {
 		LogFullDebug(COMPONENT_NFSPROTO,
 			     "Write offset=%" PRIu64 " count=%" PRIu64
 			     " MaxOffSet=%" PRIu64, offset, size,
-			     req_ctx->export->MaxOffsetWrite);
+			     op_ctx->export->MaxOffsetWrite);
 
-		if ((offset + size) > req_ctx->export->MaxOffsetWrite) {
+		if ((offset + size) > op_ctx->export->MaxOffsetWrite) {
 			LogEvent(COMPONENT_NFSPROTO,
 				 "A client tryed to violate max "
 				 "file size %" PRIu64 " for exportid #%hu",
-				 req_ctx->export->MaxOffsetWrite,
-				 req_ctx->export->export_id);
+				 op_ctx->export->MaxOffsetWrite,
+				 op_ctx->export->export_id);
 
 			res->res_write3.status = NFS3ERR_INVAL;
 
 			res->res_write3.status = nfs3_Errno(cache_status);
 
-			nfs_SetWccData(NULL, entry, req_ctx,
+			nfs_SetWccData(NULL, entry, op_ctx,
 				       &res->res_write3.WRITE3res_u.resfail.
 				       file_wcc);
 
@@ -216,9 +215,9 @@ int nfs3_write(nfs_arg_t *arg,
 	}
 
 	/* We should take care not to exceed FSINFO wtmax field for the size */
-	if (size > req_ctx->export->MaxWrite) {
+	if (size > op_ctx->export->MaxWrite) {
 		/* The client asked for too much data, we must restrict him */
-		size = req_ctx->export->MaxWrite;
+		size = op_ctx->export->MaxWrite;
 	}
 
 	if (size == 0) {
@@ -228,11 +227,11 @@ int nfs3_write(nfs_arg_t *arg,
 		/* An actual write is to be made, prepare it */
 		cache_status =
 		    cache_inode_rdwr(entry, CACHE_INODE_WRITE, offset, size,
-				     &written_size, data, &eof_met, req_ctx,
+				     &written_size, data, &eof_met, op_ctx,
 				     &sync);
 		if (cache_status == CACHE_INODE_SUCCESS) {
 			/* Build Weak Cache Coherency data */
-			nfs_SetWccData(NULL, entry, req_ctx,
+			nfs_SetWccData(NULL, entry, op_ctx,
 				       &res->res_write3.WRITE3res_u.resok.
 				       file_wcc);
 
@@ -271,7 +270,7 @@ int nfs3_write(nfs_arg_t *arg,
 
 	res->res_write3.status = nfs3_Errno(cache_status);
 
-	nfs_SetWccData(NULL, entry, req_ctx,
+	nfs_SetWccData(NULL, entry, op_ctx,
 		       &res->res_write3.WRITE3res_u.resfail.file_wcc);
 
 	rc = NFS_REQ_OK;
@@ -281,7 +280,7 @@ int nfs3_write(nfs_arg_t *arg,
 	if (entry)
 		cache_inode_put(entry);
 
-	server_stats_io_done(req_ctx, size, written_size,
+	server_stats_io_done(op_ctx, size, written_size,
 			     (rc == NFS_REQ_OK) ? true : false, true);
 	return rc;
 

@@ -39,14 +39,12 @@
  *
  * @param[in]  arg
  * @param[in]  export
- * @param[in]  req_ctx
  * @param[in]  worker
  * @param[in]  req
  * @param[out] res
  *
  */
 int nlm4_Granted_Res(nfs_arg_t *args,
-		     struct req_op_context *req_ctx,
 		     nfs_worker_data_t *worker, struct svc_req *req,
 		     nfs_res_t *res)
 {
@@ -86,20 +84,20 @@ int nlm4_Granted_Res(nfs_arg_t *args,
 
 	PTHREAD_RWLOCK_unlock(&cookie_entry->sce_entry->state_lock);
 
-	/* Fill in req_ctx */
-	req_ctx->export = cookie_entry->sce_lock_entry->sle_export;
-	get_gsh_export_ref(req_ctx->export); /* nfs_rpc_execute will release */
-	req_ctx->fsal_export = req_ctx->export->fsal_export;
+	/* Fill in op_ctx */
+	op_ctx->export = cookie_entry->sce_lock_entry->sle_export;
+	get_gsh_export_ref(op_ctx->export); /* nfs_rpc_execute will release */
+	op_ctx->fsal_export = op_ctx->export->fsal_export;
 	if (arg->stat.stat != NLM4_GRANTED) {
 		LogMajor(COMPONENT_NLM,
 			 "Granted call failed due to client error, releasing lock");
-		state_status = state_release_grant(cookie_entry, req_ctx);
+		state_status = state_release_grant(cookie_entry, op_ctx);
 		if (state_status != STATE_SUCCESS) {
 			LogDebug(COMPONENT_NLM,
 				 "cache_inode_release_grant failed");
 		}
 	} else {
-		state_complete_grant(cookie_entry, req_ctx);
+		state_complete_grant(cookie_entry, op_ctx);
 		nlm_signal_async_resp(cookie_entry);
 	}
 

@@ -55,7 +55,6 @@
  *
  * @param[in]  arg     NFS arguments union
  * @param[in]  export  NFS export list
- * @param[in]  req_ctx Request context
  * @param[in]  worker  Worker thread data
  * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call
@@ -67,7 +66,7 @@
  */
 
 int nfs3_lookup(nfs_arg_t *arg,
-		struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+		nfs_worker_data_t *worker,
 		struct svc_req *req, nfs_res_t *res)
 {
 	cache_entry_t *entry_dir = NULL;
@@ -93,7 +92,7 @@ int nfs3_lookup(nfs_arg_t *arg,
 	    FALSE;
 
 	entry_dir = nfs3_FhandleToCache(&arg->arg_lookup3.what.dir,
-					req_ctx,
+					op_ctx,
 					&res->res_lookup3.status,
 					&rc);
 
@@ -106,7 +105,7 @@ int nfs3_lookup(nfs_arg_t *arg,
 
 	cache_status = cache_inode_lookup(entry_dir,
 					  name,
-					  req_ctx,
+					  op_ctx,
 					  &entry_file);
 
 	if (entry_file && (cache_status == CACHE_INODE_SUCCESS)) {
@@ -121,15 +120,15 @@ int nfs3_lookup(nfs_arg_t *arg,
 			if (nfs3_FSALToFhandle(
 				    &res->res_lookup3.LOOKUP3res_u.resok.object,
 				    entry_file->obj_handle,
-				    req_ctx->export)) {
+				    op_ctx->export)) {
 				/* Build entry attributes */
-				nfs_SetPostOpAttr(entry_file, req_ctx,
+				nfs_SetPostOpAttr(entry_file, op_ctx,
 						  &(res->res_lookup3.
 						    LOOKUP3res_u.resok.
 						    obj_attributes));
 
 				/* Build directory attributes */
-				nfs_SetPostOpAttr(entry_dir, req_ctx,
+				nfs_SetPostOpAttr(entry_dir, op_ctx,
 						  &(res->res_lookup3.
 						    LOOKUP3res_u.resok.
 						    dir_attributes));
@@ -144,7 +143,7 @@ int nfs3_lookup(nfs_arg_t *arg,
 		}
 
 		res->res_lookup3.status = nfs3_Errno(cache_status);
-		nfs_SetPostOpAttr(entry_dir, req_ctx,
+		nfs_SetPostOpAttr(entry_dir, op_ctx,
 				  &res->res_lookup3.LOOKUP3res_u.resfail.
 				  dir_attributes);
 	}

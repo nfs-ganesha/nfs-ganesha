@@ -58,7 +58,6 @@
  *
  * @param[in]  arg     NFS arguments union
  * @param[in]  export  NFS export list
- * @param[in]  req_ctx Request context
  * @param[in]  worker  Worker thread data
  * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call
@@ -69,7 +68,7 @@
  */
 
 int nfs3_mknod(nfs_arg_t *arg,
-	       struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+	       nfs_worker_data_t *worker,
 	       struct svc_req *req, nfs_res_t *res)
 {
 	cache_entry_t *parent_entry = NULL;
@@ -107,7 +106,7 @@ int nfs3_mknod(nfs_arg_t *arg,
 
 	/* retrieve parent entry */
 	parent_entry = nfs3_FhandleToCache(&arg->arg_mknod3.where.dir,
-					   req_ctx,
+					   op_ctx,
 					   &res->res_mknod3.status,
 					   &rc);
 
@@ -116,7 +115,7 @@ int nfs3_mknod(nfs_arg_t *arg,
 		goto out;
 	}
 
-	nfs_SetPreOpAttr(parent_entry, req_ctx, &pre_parent);
+	nfs_SetPreOpAttr(parent_entry, op_ctx, &pre_parent);
 
 	/* Sanity checks: new node name must be non-null; parent must
 	   be a directory. */
@@ -209,10 +208,10 @@ int nfs3_mknod(nfs_arg_t *arg,
 	/* if quota support is active, then we should check is the
 	   FSAL allows inode creation or not */
 	fsal_status =
-	    req_ctx->fsal_export->ops->check_quota(req_ctx->fsal_export,
-						   req_ctx->export->fullpath,
+	    op_ctx->fsal_export->ops->check_quota(op_ctx->fsal_export,
+						   op_ctx->export->fullpath,
 						   FSAL_QUOTA_INODES,
-						   req_ctx);
+						   op_ctx);
 	if (FSAL_IS_ERROR(fsal_status)) {
 		res->res_mknod3.status = NFS3ERR_DQUOT;
 		return NFS_REQ_OK;
@@ -224,7 +223,7 @@ int nfs3_mknod(nfs_arg_t *arg,
 					  nodetype,
 					  mode,
 					  &create_arg,
-					  req_ctx,
+					  op_ctx,
 					  &node_entry);
 
 	if (cache_status != CACHE_INODE_SUCCESS)
@@ -243,7 +242,7 @@ int nfs3_mknod(nfs_arg_t *arg,
 
 	if (nfs3_FSALToFhandle(&rok->obj.post_op_fh3_u.handle,
 			       node_entry->obj_handle,
-			       req_ctx->export) == 0) {
+			       op_ctx->export) == 0) {
 		gsh_free(rok->obj.post_op_fh3_u.handle.data.data_val);
 		res->res_mknod3.status = NFS3ERR_BADHANDLE;
 		rc = NFS_REQ_OK;
@@ -254,27 +253,27 @@ int nfs3_mknod(nfs_arg_t *arg,
 	rok->obj.handle_follows = TRUE;
 
 	/*Set attributes if required */
-	squash_setattr(req_ctx, &sattr);
+	squash_setattr(op_ctx, &sattr);
 
 	if ((sattr.mask & (ATTR_ATIME | ATTR_MTIME | ATTR_CTIME))
 	    || ((sattr.mask & ATTR_OWNER)
-		&& (req_ctx->creds->caller_uid != sattr.owner))
+		&& (op_ctx->creds->caller_uid != sattr.owner))
 	    || ((sattr.mask & ATTR_GROUP)
-		&& (req_ctx->creds->caller_gid != sattr.group))) {
+		&& (op_ctx->creds->caller_gid != sattr.group))) {
 		cache_status = cache_inode_setattr(node_entry,
 						   &sattr,
 						   false,
-						   req_ctx);
+						   op_ctx);
 
 		if (cache_status != CACHE_INODE_SUCCESS)
 			goto out_fail;
 	}
 
 	/* Build entry attributes */
-	nfs_SetPostOpAttr(node_entry, req_ctx, &rok->obj_attributes);
+	nfs_SetPostOpAttr(node_entry, op_ctx, &rok->obj_attributes);
 
 	/* Build Weak Cache Coherency data */
-	nfs_SetWccData(&pre_parent, parent_entry, req_ctx, &rok->dir_wcc);
+	nfs_SetWccData(&pre_parent, parent_entry, op_ctx, &rok->dir_wcc);
 
 	res->res_mknod3.status = NFS3_OK;
 
@@ -283,7 +282,7 @@ int nfs3_mknod(nfs_arg_t *arg,
 
  out_fail:
 	res->res_mknod3.status = nfs3_Errno(cache_status);
-	nfs_SetWccData(&pre_parent, parent_entry, req_ctx,
+	nfs_SetWccData(&pre_parent, parent_entry, op_ctx,
 		       &res->res_mknod3.MKNOD3res_u.resfail.dir_wcc);
 
 	if (nfs_RetryableError(cache_status))

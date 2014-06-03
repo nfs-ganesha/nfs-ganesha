@@ -38,14 +38,13 @@
  *
  * @param[in]  arg
  * @param[in]  export
- * @param[in]  req_ctx
  * @param[in]  worker
  * @param[in]  req
  * @param[out] res
  */
 
 int nlm4_Share(nfs_arg_t *args,
-	       struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+	       nfs_worker_data_t *worker,
 	       struct svc_req *req, nfs_res_t *res)
 {
 	nlm4_shareargs *arg = &args->arg_nlm4_share;
@@ -62,7 +61,7 @@ int nlm4_Share(nfs_arg_t *args,
 	 * responding to an NLM_*_MSG call, so we check here if the export is
 	 * NULL and if so, handle the response.
 	 */
-	if (req_ctx->export == NULL) {
+	if (op_ctx->export == NULL) {
 		res->res_nlm4share.stat = NLM4_STALE_FH;
 		LogInfo(COMPONENT_NLM, "INVALID HANDLE: nlm4_Share");
 		return NFS_REQ_OK;
@@ -104,8 +103,8 @@ int nlm4_Share(nfs_arg_t *args,
 
 	rc = nlm_process_share_parms(req,
 				     &arg->share,
-				     req_ctx->fsal_export,
-				     req_ctx,
+				     op_ctx->fsal_export,
+				     op_ctx,
 				     &entry,
 				     CARE_NO_MONITOR,
 				     &nsm_client,
@@ -122,7 +121,7 @@ int nlm4_Share(nfs_arg_t *args,
 	}
 
 	state_status = state_nlm_share(entry,
-				       req_ctx,
+				       op_ctx,
 				       arg->share.access,
 				       arg->share.mode,
 				       nlm_owner,

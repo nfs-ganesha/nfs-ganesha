@@ -54,7 +54,6 @@
  *
  * @param[in]  arg     NFS arguments union
  * @param[in]  export  NFS export list
- * @param[in]  req_ctx Request context
  * @param[in]  worker  Worker thread data
  * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call
@@ -66,7 +65,7 @@
  */
 
 int nfs3_remove(nfs_arg_t *arg,
-		struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+		nfs_worker_data_t *worker,
 		struct svc_req *req, nfs_res_t *res)
 {
 	cache_entry_t *parent_entry = NULL;
@@ -99,7 +98,7 @@ int nfs3_remove(nfs_arg_t *arg,
 	    FALSE;
 
 	parent_entry = nfs3_FhandleToCache(&arg->arg_remove3.object.dir,
-					   req_ctx,
+					   op_ctx,
 					   &res->res_remove3.status,
 					   &rc);
 
@@ -108,7 +107,7 @@ int nfs3_remove(nfs_arg_t *arg,
 		goto out;
 	}
 
-	nfs_SetPreOpAttr(parent_entry, req_ctx, &pre_parent);
+	nfs_SetPreOpAttr(parent_entry, op_ctx, &pre_parent);
 
 	/* Sanity checks: file name must be non-null; parent must be a
 	 * directory.
@@ -127,7 +126,7 @@ int nfs3_remove(nfs_arg_t *arg,
 	/* Lookup the child entry to verify that it is not a directory */
 	cache_status = cache_inode_lookup(parent_entry,
 					  name,
-					  req_ctx,
+					  op_ctx,
 					  &child_entry);
 
 	if (child_entry != NULL) {
@@ -145,13 +144,13 @@ int nfs3_remove(nfs_arg_t *arg,
 		     "==== NFS REMOVE ====> Trying to remove" " file %s", name);
 
 	/* Remove the entry. */
-	cache_status = cache_inode_remove(parent_entry, name, req_ctx);
+	cache_status = cache_inode_remove(parent_entry, name, op_ctx);
 
 	if (cache_status != CACHE_INODE_SUCCESS)
 		goto out_fail;
 
 	/* Build Weak Cache Coherency data */
-	nfs_SetWccData(&pre_parent, parent_entry, req_ctx,
+	nfs_SetWccData(&pre_parent, parent_entry, op_ctx,
 		       &res->res_remove3.REMOVE3res_u.resok.dir_wcc);
 
 	res->res_remove3.status = NFS3_OK;
@@ -161,7 +160,7 @@ int nfs3_remove(nfs_arg_t *arg,
 
  out_fail:
 	res->res_remove3.status = nfs3_Errno(cache_status);
-	nfs_SetWccData(&pre_parent, parent_entry, req_ctx,
+	nfs_SetWccData(&pre_parent, parent_entry, op_ctx,
 		       &res->res_remove3.REMOVE3res_u.resfail.dir_wcc);
 
 	if (nfs_RetryableError(cache_status))

@@ -55,7 +55,6 @@
  *
  * @param[in]  arg     NFS arguments union
  * @param[in]  export  NFS export list
- * @param[in]  req_ctx Request context
  * @param[in]  worker  Data for worker thread
  * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call
@@ -67,7 +66,7 @@
  */
 
 int nfs3_setattr(nfs_arg_t *arg,
-		 struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+		 nfs_worker_data_t *worker,
 		 struct svc_req *req, nfs_res_t *res)
 {
 	struct attrlist setattr;
@@ -98,7 +97,7 @@ int nfs3_setattr(nfs_arg_t *arg,
 	    attributes_follow = FALSE;
 
 	entry = nfs3_FhandleToCache(&arg->arg_setattr3.object,
-				    req_ctx,
+				    op_ctx,
 				    &res->res_setattr3.status,
 				    &rc);
 
@@ -107,7 +106,7 @@ int nfs3_setattr(nfs_arg_t *arg,
 		goto out;
 	}
 
-	nfs_SetPreOpAttr(entry, req_ctx, &pre_attr);
+	nfs_SetPreOpAttr(entry, op_ctx, &pre_attr);
 
 	if (arg->arg_setattr3.guard.check) {
 		/* This pack of lines implements the "guard check" setattr. This
@@ -145,12 +144,12 @@ int nfs3_setattr(nfs_arg_t *arg,
 		/* If owner or owner_group are set, and the credential was
 		 * squashed, then we must squash the set owner and owner_group.
 		 */
-		squash_setattr(req_ctx, &setattr);
+		squash_setattr(op_ctx, &setattr);
 
 		cache_status = cache_inode_setattr(entry,
 						   &setattr,
 						   false,
-						   req_ctx);
+						   op_ctx);
 
 		if (cache_status != CACHE_INODE_SUCCESS)
 			goto out_fail;
@@ -166,7 +165,7 @@ int nfs3_setattr(nfs_arg_t *arg,
 		res->res_setattr3.SETATTR3res_u.resfail.obj_wcc.after.
 		    attributes_follow = FALSE;
 	} else {
-		nfs_SetWccData(&pre_attr, entry, req_ctx,
+		nfs_SetWccData(&pre_attr, entry, op_ctx,
 			       &res->res_setattr3.SETATTR3res_u.resok.obj_wcc);
 	}
 
@@ -185,7 +184,7 @@ int nfs3_setattr(nfs_arg_t *arg,
 	/* Set the NFS return */
 	res->res_setattr3.status = nfs3_Errno(cache_status);
 
-	nfs_SetWccData(&pre_attr, entry, req_ctx,
+	nfs_SetWccData(&pre_attr, entry, op_ctx,
 		       &res->res_setattr3.SETATTR3res_u.resfail.obj_wcc);
 
 	if (nfs_RetryableError(cache_status)) {

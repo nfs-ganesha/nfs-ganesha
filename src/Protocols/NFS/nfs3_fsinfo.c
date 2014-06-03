@@ -56,7 +56,6 @@
  *
  * @param[in]  arg     NFS arguments union
  * @param[in]  export  NFS export list
- * @param[in]  req_ctx Credentials to be used for this request
  * @param[in]  worker  Worker thread data
  * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call
@@ -67,7 +66,7 @@
  */
 
 int nfs3_fsinfo(nfs_arg_t *arg,
-		struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+		nfs_worker_data_t *worker,
 		struct svc_req *req, nfs_res_t *res)
 {
 	cache_entry_t *entry = NULL;
@@ -86,7 +85,7 @@ int nfs3_fsinfo(nfs_arg_t *arg,
 	    FALSE;
 
 	entry = nfs3_FhandleToCache(&arg->arg_fsinfo3.fsroot,
-				    req_ctx,
+				    op_ctx,
 				    &res->res_fsinfo3.status,
 				    &rc);
 
@@ -101,20 +100,20 @@ int nfs3_fsinfo(nfs_arg_t *arg,
 	FSINFO3resok * const FSINFO_FIELD =
 		&res->res_fsinfo3.FSINFO3res_u.resok;
 
-	FSINFO_FIELD->rtmax = req_ctx->export->MaxRead;
-	FSINFO_FIELD->rtpref = req_ctx->export->PrefRead;
+	FSINFO_FIELD->rtmax = op_ctx->export->MaxRead;
+	FSINFO_FIELD->rtpref = op_ctx->export->PrefRead;
 	/* This field is generally unused, it will be removed in V4 */
 	FSINFO_FIELD->rtmult = DEV_BSIZE;
 
-	FSINFO_FIELD->wtmax = req_ctx->export->MaxWrite;
-	FSINFO_FIELD->wtpref = req_ctx->export->PrefWrite;
+	FSINFO_FIELD->wtmax = op_ctx->export->MaxWrite;
+	FSINFO_FIELD->wtpref = op_ctx->export->PrefWrite;
 	/* This field is generally unused, it will be removed in V4 */
 	FSINFO_FIELD->wtmult = DEV_BSIZE;
 
-	FSINFO_FIELD->dtpref = req_ctx->export->PrefReaddir;
+	FSINFO_FIELD->dtpref = op_ctx->export->PrefReaddir;
 
 	FSINFO_FIELD->maxfilesize =
-	    req_ctx->fsal_export->ops->fs_maxfilesize(req_ctx->fsal_export);
+	    op_ctx->fsal_export->ops->fs_maxfilesize(op_ctx->fsal_export);
 	FSINFO_FIELD->time_delta.tv_sec = 1;
 	FSINFO_FIELD->time_delta.tv_nsec = 0;
 
@@ -134,7 +133,7 @@ int nfs3_fsinfo(nfs_arg_t *arg,
 	FSINFO_FIELD->properties =
 	    FSF3_LINK | FSF3_SYMLINK | FSF3_HOMOGENEOUS | FSF3_CANSETTIME;
 
-	nfs_SetPostOpAttr(entry, req_ctx,
+	nfs_SetPostOpAttr(entry, op_ctx,
 			  &(res->res_fsinfo3.FSINFO3res_u.resok.
 			    obj_attributes));
 	res->res_fsinfo3.status = NFS3_OK;

@@ -49,7 +49,7 @@
 #include "export_mgr.h"
 
 static void nfs_read_ok(struct svc_req *req,
-			struct req_op_context *req_ctx, nfs_res_t *res,
+			nfs_res_t *res,
 			char *data, uint32_t read_size, cache_entry_t *entry,
 			int eof)
 {
@@ -59,7 +59,7 @@ static void nfs_read_ok(struct svc_req *req,
 	}
 
 	/* Build Post Op Attributes */
-	nfs_SetPostOpAttr(entry, req_ctx,
+	nfs_SetPostOpAttr(entry, op_ctx,
 			  &res->res_read3.READ3res_u.resok.file_attributes);
 
 	res->res_read3.READ3res_u.resok.eof = eof;
@@ -78,7 +78,6 @@ static void nfs_read_ok(struct svc_req *req,
  *
  * @param[in]  arg     NFS arguments union
  * @param[in]  export  NFS export list
- * @param[in]  req_ctx Request context
  * @param[in]  worker  Worker thread data
  * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call
@@ -90,7 +89,7 @@ static void nfs_read_ok(struct svc_req *req,
  */
 
 int nfs3_read(nfs_arg_t *arg,
-	      struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+	      nfs_worker_data_t *worker,
 	      struct svc_req *req, nfs_res_t *res)
 {
 	cache_entry_t *entry;
@@ -125,7 +124,7 @@ int nfs3_read(nfs_arg_t *arg,
 	res->res_read3.READ3res_u.resok.data.data_val = NULL;
 	res->res_read3.READ3res_u.resok.data.data_len = 0;
 	res->res_read3.status = NFS3_OK;
-	entry = nfs3_FhandleToCache(&arg->arg_read3.file, req_ctx,
+	entry = nfs3_FhandleToCache(&arg->arg_read3.file, op_ctx,
 				    &res->res_read3.status, &rc);
 
 	if (entry == NULL) {
@@ -133,14 +132,14 @@ int nfs3_read(nfs_arg_t *arg,
 		goto out;
 	}
 
-	nfs_SetPreOpAttr(entry, req_ctx, &pre_attr);
+	nfs_SetPreOpAttr(entry, op_ctx, &pre_attr);
 
 	/** @todo this is racy, use cache_inode_lock_trust_attrs and
 	 *        cache_inode_access_no_mutex
 	 */
-	if (entry->obj_handle->attributes.owner != req_ctx->creds->caller_uid) {
+	if (entry->obj_handle->attributes.owner != op_ctx->creds->caller_uid) {
 		cache_status =
-		    cache_inode_access(entry, FSAL_READ_ACCESS, req_ctx);
+		    cache_inode_access(entry, FSAL_READ_ACCESS, op_ctx);
 
 		if (cache_status == CACHE_INODE_FSAL_EACCESS) {
 			/* Test for execute permission */
@@ -149,7 +148,7 @@ int nfs3_read(nfs_arg_t *arg,
 					       FSAL_MODE_MASK_SET(FSAL_X_OK) |
 					       FSAL_ACE4_MASK_SET
 					       (FSAL_ACE_PERM_EXECUTE),
-					       req_ctx);
+					       op_ctx);
 		}
 
 		if (cache_status != CACHE_INODE_SUCCESS) {
@@ -175,22 +174,22 @@ int nfs3_read(nfs_arg_t *arg,
 	size = arg->arg_read3.count;
 
 	/* do not exceed maxium READ offset if set */
-	if (req_ctx->export->MaxOffsetRead < UINT64_MAX) {
+	if (op_ctx->export->MaxOffsetRead < UINT64_MAX) {
 		LogFullDebug(COMPONENT_NFSPROTO,
 			     "Read offset=%" PRIu64 " count=%zd "
 			     "MaxOffSet=%" PRIu64, offset, size,
-			     req_ctx->export->MaxOffsetRead);
+			     op_ctx->export->MaxOffsetRead);
 
-		if ((offset + size) > req_ctx->export->MaxOffsetRead) {
+		if ((offset + size) > op_ctx->export->MaxOffsetRead) {
 			LogEvent(COMPONENT_NFSPROTO,
 				 "A client tryed to violate max "
 				 "file size %" PRIu64 " for exportid #%hu",
-				 req_ctx->export->MaxOffsetRead,
-				 req_ctx->export->export_id);
+				 op_ctx->export->MaxOffsetRead,
+				 op_ctx->export->export_id);
 
 			res->res_read3.status = NFS3ERR_INVAL;
 
-			nfs_SetPostOpAttr(entry, req_ctx,
+			nfs_SetPostOpAttr(entry, op_ctx,
 					  &res->res_read3.READ3res_u.resfail.
 					  file_attributes);
 
@@ -200,16 +199,16 @@ int nfs3_read(nfs_arg_t *arg,
 	}
 
 	/* We should not exceed the FSINFO rtmax field for the size */
-	if (size > req_ctx->export->MaxRead) {
+	if (size > op_ctx->export->MaxRead) {
 		/* The client asked for too much, normally this should
 		   not happen because the client is calling nfs_Fsinfo
 		   at mount time and so is aware of the server maximum
 		   write size */
-		size = req_ctx->export->MaxRead;
+		size = op_ctx->export->MaxRead;
 	}
 
 	if (size == 0) {
-		nfs_read_ok(req, req_ctx, res, NULL, 0, entry, 0);
+		nfs_read_ok(req, res, NULL, 0, entry, 0);
 		rc = NFS_REQ_OK;
 		goto out;
 	} else {
@@ -226,11 +225,11 @@ int nfs3_read(nfs_arg_t *arg,
 						&read_size,
 						data,
 						&eof_met,
-						req_ctx,
+						op_ctx,
 						&sync);
 
 		if (cache_status == CACHE_INODE_SUCCESS) {
-			nfs_read_ok(req, req_ctx, res, data, read_size,
+			nfs_read_ok(req, res, data, read_size,
 				    entry, eof_met);
 			rc = NFS_REQ_OK;
 			goto out;
@@ -246,7 +245,7 @@ int nfs3_read(nfs_arg_t *arg,
 
 	res->res_read3.status = nfs3_Errno(cache_status);
 
-	nfs_SetPostOpAttr(entry, req_ctx,
+	nfs_SetPostOpAttr(entry, op_ctx,
 			  &res->res_read3.READ3res_u.resfail.file_attributes);
 
 	rc = NFS_REQ_OK;
@@ -256,7 +255,7 @@ int nfs3_read(nfs_arg_t *arg,
 	if (entry)
 		cache_inode_put(entry);
 
-	server_stats_io_done(req_ctx, size, read_size,
+	server_stats_io_done(op_ctx, size, read_size,
 			     (rc == NFS_REQ_OK) ? true : false, false);
 	return rc;
 }				/* nfs3_read */

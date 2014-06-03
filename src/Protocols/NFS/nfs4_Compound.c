@@ -409,7 +409,6 @@ static const struct nfs4_op_desc optabv4[] = {
  *
  *  @param[in]  arg        Generic nfs arguments
  *  @param[in]  export     The full export list
- *  @param[in]  req_ctx    Context for the FSAL
  *  @param[in]  worker     Worker thread data
  *  @param[in]  req        NFSv4 request structure
  *  @param[out] res        NFSv4 reply structure
@@ -422,7 +421,7 @@ static const struct nfs4_op_desc optabv4[] = {
  */
 
 int nfs4_Compound(nfs_arg_t *arg,
-		  struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+		  nfs_worker_data_t *worker,
 		  struct svc_req *req, nfs_res_t *res)
 {
 	unsigned int i = 0;
@@ -504,8 +503,8 @@ int nfs4_Compound(nfs_arg_t *arg,
 
 	/* Initialisation of the compound request internal's data */
 	memset(&data, 0, sizeof(data));
-	data.req_ctx = req_ctx;
-	req_ctx->nfs_minorvers = compound4_minor;
+	data.req_ctx = op_ctx;
+	op_ctx->nfs_minorvers = compound4_minor;
 
 	/* Minor version related stuff */
 	data.minorversion = compound4_minor;
@@ -729,7 +728,7 @@ int nfs4_Compound(nfs_arg_t *arg,
 		}
 	}			/* for */
 
-	server_stats_compound_done(req_ctx, argarray_len, status);
+	server_stats_compound_done(op_ctx, argarray_len, status);
 
 	/* Complete the reply, in particular, tell where you stopped if
 	 * unsuccessfull COMPOUD

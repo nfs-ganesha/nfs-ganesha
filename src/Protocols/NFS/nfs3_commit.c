@@ -55,7 +55,6 @@
  *
  * @param[in]  arg     NFS arguments union
  * @param[in]  export  NFS export list
- * @param[in]  req_ctx Request context
  * @param[in]  worker  Worker thread data
  * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call
@@ -67,7 +66,7 @@
  */
 
 int nfs3_commit(nfs_arg_t *arg,
-		struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+		nfs_worker_data_t *worker,
 		struct svc_req *req, nfs_res_t *res)
 {
 	cache_inode_status_t cache_status;
@@ -89,7 +88,7 @@ int nfs3_commit(nfs_arg_t *arg,
 	    FALSE;
 
 	entry = nfs3_FhandleToCache(&arg->arg_commit3.file,
-				    req_ctx,
+				    op_ctx,
 				    &res->res_commit3.status,
 				    &rc);
 
@@ -101,12 +100,12 @@ int nfs3_commit(nfs_arg_t *arg,
 	cache_status = cache_inode_commit(entry,
 					  arg->arg_commit3.offset,
 					  arg->arg_commit3.count,
-					  req_ctx);
+					  op_ctx);
 
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		res->res_commit3.status = nfs3_Errno(cache_status);
 
-		nfs_SetWccData(NULL, entry, req_ctx,
+		nfs_SetWccData(NULL, entry, op_ctx,
 			       &(res->res_commit3.COMMIT3res_u.resfail.
 				 file_wcc));
 
@@ -114,7 +113,7 @@ int nfs3_commit(nfs_arg_t *arg,
 		goto out;
 	}
 
-	nfs_SetWccData(NULL, entry, req_ctx,
+	nfs_SetWccData(NULL, entry, op_ctx,
 		       &(res->res_commit3.COMMIT3res_u.resok.file_wcc));
 
 	/* Set the write verifier */

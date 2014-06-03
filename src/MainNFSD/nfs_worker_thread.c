@@ -1255,7 +1255,6 @@ static void nfs_rpc_execute(request_data_t *req,
 
  null_op:
 		rc = reqnfs->funcdesc->service_function(arg_nfs,
-							op_ctx,
 							worker_data, svcreq,
 							res_nfs);
 	}

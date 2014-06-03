@@ -54,7 +54,6 @@
  *
  * @param[in]  arg     NFS argument union
  * @param[in]  export  NFS export list
- * @param[in]  req_ctx Requestcontext
  * @param[in]  worker  Client resource to be used
  * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call
@@ -67,7 +66,7 @@
  */
 
 int nfs3_readlink(nfs_arg_t *arg,
-		  struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+		  nfs_worker_data_t *worker,
 		  struct svc_req *req, nfs_res_t *res)
 {
 	cache_entry_t *entry = NULL;
@@ -95,7 +94,7 @@ int nfs3_readlink(nfs_arg_t *arg,
 	    attributes_follow = false;
 
 	entry = nfs3_FhandleToCache(&arg->arg_readlink3.symlink,
-				    req_ctx,
+				    op_ctx,
 				    &res->res_readlink3.status,
 				    &rc);
 
@@ -111,11 +110,11 @@ int nfs3_readlink(nfs_arg_t *arg,
 		goto out;
 	}
 
-	cache_status = cache_inode_readlink(entry, &link_buffer, req_ctx);
+	cache_status = cache_inode_readlink(entry, &link_buffer, op_ctx);
 
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		res->res_readlink3.status = nfs3_Errno(cache_status);
-		nfs_SetPostOpAttr(entry, req_ctx,
+		nfs_SetPostOpAttr(entry, op_ctx,
 				  &res->res_readlink3.READLINK3res_u.resfail.
 				  symlink_attributes);
 
@@ -128,7 +127,7 @@ int nfs3_readlink(nfs_arg_t *arg,
 	/* Reply to the client */
 	res->res_readlink3.READLINK3res_u.resok.data = link_buffer.addr;
 
-	nfs_SetPostOpAttr(entry, req_ctx,
+	nfs_SetPostOpAttr(entry, op_ctx,
 			  &res->res_readlink3.READLINK3res_u.
 			  resok.symlink_attributes);
 	res->res_readlink3.status = NFS3_OK;

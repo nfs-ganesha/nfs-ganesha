@@ -45,7 +45,6 @@
 struct proc_state {
 	exports head;
 	exports tail;
-	struct req_op_context *req_ctx;
 	int retval;
 };
 
@@ -64,10 +63,10 @@ static bool proc_export(struct gsh_export *export, void *arg)
 	/* If client does not have any access to the export,
 	 * don't add it to the list
 	 */
-	state->req_ctx->export = export;
-	state->req_ctx->fsal_export = export->fsal_export;
-	export_check_access(state->req_ctx);
-	if (state->req_ctx->export_perms->options == 0) {
+	op_ctx->export = export;
+	op_ctx->fsal_export = export->fsal_export;
+	export_check_access(op_ctx);
+	if (op_ctx->export_perms->options == 0) {
 		LogFullDebug(COMPONENT_NFSPROTO,
 			     "Client is not allowed to access Export_Id %d %s",
 			     export->export_id, export->fullpath);
@@ -166,7 +165,6 @@ static bool proc_export(struct gsh_export *export, void *arg)
  *
  * @param[in]  arg     Ignored
  * @param[in]  export  The export list to be return to the client.
- * @param[in]  req_ctx  Ignored
  * @param[in]  worker  Ignored
  * @param[in]  req     Ignored
  * @param[out] res     Pointer to the export list
@@ -174,7 +172,7 @@ static bool proc_export(struct gsh_export *export, void *arg)
  */
 
 int mnt_Export(nfs_arg_t *arg,
-	       struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+	       nfs_worker_data_t *worker,
 	       struct svc_req *req, nfs_res_t *res)
 {
 	struct proc_state proc_state;
@@ -182,7 +180,6 @@ int mnt_Export(nfs_arg_t *arg,
 	/* init everything of interest to good state. */
 	memset(res, 0, sizeof(nfs_res_t));
 	memset(&proc_state, 0, sizeof(proc_state));
-	proc_state.req_ctx = req_ctx;
 
 	(void)foreach_gsh_export(proc_export, &proc_state);
 	if (proc_state.retval != 0) {
@@ -190,8 +187,8 @@ int mnt_Export(nfs_arg_t *arg,
 			"Processing exports failed. error = \"%s\" (%d)",
 			strerror(proc_state.retval), proc_state.retval);
 	}
-	req_ctx->export = NULL;
-	req_ctx->fsal_export = NULL;
+	op_ctx->export = NULL;
+	op_ctx->fsal_export = NULL;
 	res->res_mntexport = proc_state.head;
 	return NFS_REQ_OK;
 }				/* mnt_Export */

@@ -58,7 +58,6 @@
  *
  * @param[in]  arg     NFS arguments union
  * @param[in]  export  NFS export list
- * @param[in]  req_ctx Request context
  * @param[in]  worker  Worker thread data
  * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call
@@ -70,7 +69,7 @@
  */
 
 int nfs3_mkdir(nfs_arg_t *arg,
-	       struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+	       nfs_worker_data_t *worker,
 	       struct svc_req *req, nfs_res_t *res)
 {
 	const char *dir_name = arg->arg_mkdir3.where.name;
@@ -103,7 +102,7 @@ int nfs3_mkdir(nfs_arg_t *arg,
 	    FALSE;
 
 	parent_entry = nfs3_FhandleToCache(&arg->arg_mkdir3.where.dir,
-					   req_ctx,
+					   op_ctx,
 					   &res->res_mkdir3.status,
 					   &rc);
 
@@ -123,10 +122,10 @@ int nfs3_mkdir(nfs_arg_t *arg,
 	/* if quota support is active, then we should check is the
 	   FSAL allows inode creation or not */
 	fsal_status =
-	    req_ctx->fsal_export->ops->check_quota(req_ctx->fsal_export,
-						   req_ctx->export->fullpath,
+	    op_ctx->fsal_export->ops->check_quota(op_ctx->fsal_export,
+						   op_ctx->export->fullpath,
 						   FSAL_QUOTA_INODES,
-						   req_ctx);
+						   op_ctx);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		res->res_mkdir3.status = NFS3ERR_DQUOT;
@@ -148,7 +147,7 @@ int nfs3_mkdir(nfs_arg_t *arg,
 	/* Try to create the directory */
 	cache_status =
 	    cache_inode_create(parent_entry, dir_name, DIRECTORY, mode, NULL,
-			       req_ctx, &dir_entry);
+			       op_ctx, &dir_entry);
 
 	if (cache_status != CACHE_INODE_SUCCESS)
 		goto out_fail;
@@ -161,15 +160,15 @@ int nfs3_mkdir(nfs_arg_t *arg,
 	}
 
 	/*Set attributes if required */
-	squash_setattr(req_ctx, &sattr);
+	squash_setattr(op_ctx, &sattr);
 
 	if ((sattr.mask & (ATTR_ATIME | ATTR_MTIME | ATTR_CTIME))
 	    || ((sattr.mask & ATTR_OWNER)
-		&& (req_ctx->creds->caller_uid != sattr.owner))
+		&& (op_ctx->creds->caller_uid != sattr.owner))
 	    || ((sattr.mask & ATTR_GROUP)
-		&& (req_ctx->creds->caller_gid != sattr.group))) {
+		&& (op_ctx->creds->caller_gid != sattr.group))) {
 		cache_status =
-		    cache_inode_setattr(dir_entry, &sattr, false, req_ctx);
+		    cache_inode_setattr(dir_entry, &sattr, false, op_ctx);
 
 		if (cache_status != CACHE_INODE_SUCCESS)
 			goto out_fail;
@@ -188,7 +187,7 @@ int nfs3_mkdir(nfs_arg_t *arg,
 
 	if (!nfs3_FSALToFhandle(&d3ok->obj.post_op_fh3_u.handle,
 				dir_entry->obj_handle,
-				 req_ctx->export)) {
+				 op_ctx->export)) {
 		gsh_free(d3ok->obj.post_op_fh3_u.handle.data.data_val);
 		res->res_mkdir3.status = NFS3ERR_BADHANDLE;
 		rc = NFS_REQ_OK;
@@ -199,10 +198,10 @@ int nfs3_mkdir(nfs_arg_t *arg,
 	d3ok->obj.handle_follows = true;
 
 	/* Build entry attributes */
-	nfs_SetPostOpAttr(dir_entry, req_ctx, &d3ok->obj_attributes);
+	nfs_SetPostOpAttr(dir_entry, op_ctx, &d3ok->obj_attributes);
 
 	/* Build Weak Cache Coherency data */
-	nfs_SetWccData(&pre_parent, parent_entry, req_ctx, &d3ok->dir_wcc);
+	nfs_SetWccData(&pre_parent, parent_entry, op_ctx, &d3ok->dir_wcc);
 
 	res->res_mkdir3.status = NFS3_OK;
 	rc = NFS_REQ_OK;
@@ -211,7 +210,7 @@ int nfs3_mkdir(nfs_arg_t *arg,
 
  out_fail:
 	res->res_mkdir3.status = nfs3_Errno(cache_status);
-	nfs_SetWccData(&pre_parent, parent_entry, req_ctx,
+	nfs_SetWccData(&pre_parent, parent_entry, op_ctx,
 		       &res->res_mkdir3.MKDIR3res_u.resfail.dir_wcc);
 
 	if (nfs_RetryableError(cache_status))
