@@ -1559,9 +1559,9 @@ bool init_export_root(struct gsh_export *export)
 			     0, 0, UNKNOWN_REQUEST);
 
 	/* Lookup for the FSAL Path */
-	LogFullDebug(COMPONENT_EXPORT,
-		     "About to lookup_path for ExportId=%u Path=%s",
-		     export->export_id, export->fullpath);
+	LogDebug(COMPONENT_EXPORT,
+		 "About to lookup_path for ExportId=%u Path=%s",
+		 export->export_id, export->fullpath);
 	fsal_status =
 	    export->fsal_export->ops->lookup_path(export->fsal_export,
 						  &root_op_context.req_ctx,

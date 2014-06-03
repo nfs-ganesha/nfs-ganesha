@@ -158,11 +158,11 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 			goto out;
 		}
 
-		LogMidDebug(COMPONENT_EXPORT,
-			    "PSEUDO FS JUNCTION TRAVERSAL: Crossed to %s, id=%d for name=%s",
-			    data->req_ctx->export->fullpath,
-			    data->req_ctx->export->export_id,
-			    secinfo_fh_name);
+		LogDebug(COMPONENT_EXPORT,
+			 "PSEUDO FS JUNCTION TRAVERSAL: Crossed to %s, id=%d for name=%s",
+			 data->req_ctx->export->fullpath,
+			 data->req_ctx->export->export_id,
+			 secinfo_fh_name);
 
 		/* Swap in the entry on the other side of the junction. */
 		if (entry_src)

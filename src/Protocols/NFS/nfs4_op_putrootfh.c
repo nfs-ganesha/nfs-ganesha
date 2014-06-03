@@ -121,8 +121,8 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op, compound_data_t *data,
 		return res_PUTROOTFH4->status;
 	}
 
-	LogFullDebug(COMPONENT_EXPORT,
-		     "Root node %p", data->current_entry);
+	LogMidDebug(COMPONENT_EXPORT,
+		    "Root node %p", data->current_entry);
 
 	/* Set the current entry using the ref from get */
 	set_current_entry(data, file_entry, false);

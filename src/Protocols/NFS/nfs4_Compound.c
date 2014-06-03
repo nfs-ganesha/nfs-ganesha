@@ -641,11 +641,11 @@ int nfs4_Compound(nfs_arg_t *arg,
 			 * perms. Perms should even be set reasonably for pseudo
 			 * file system.
 			 */
-			LogFullDebug(COMPONENT_NFS_V4,
-				     "Check export perms export = %08x req = %08x",
-				     data.req_ctx->export_perms->options &
+			LogMidDebugAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
+				       "Check export perms export = %08x req = %08x",
+				       data.req_ctx->export_perms->options &
 						EXPORT_OPTION_ACCESS_TYPE,
-				     perm_flags);
+				       perm_flags);
 			if ((data.req_ctx->export_perms->options &
 			     perm_flags) != perm_flags) {
 				/* Export doesn't allow requested
@@ -657,10 +657,10 @@ int nfs4_Compound(nfs_arg_t *arg,
 				else
 					status = NFS4ERR_ACCESS;
 
-				LogDebug(COMPONENT_NFS_V4,
-					 "Status of %s due to export permissions in position %d = %s",
-					 optabv4[opcode].name, i,
-					 nfsstat4_to_str(status));
+				LogDebugAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
+					    "Status of %s due to export permissions in position %d = %s",
+					    optabv4[opcode].name, i,
+					    nfsstat4_to_str(status));
  bad_op_state:
 				/* All the operation, like NFS4_OP_ACESS, have
 				 * a first replied field called .status
