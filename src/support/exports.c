@@ -1581,7 +1581,7 @@ bool init_export_root(struct gsh_export *export)
 
 	/* Get the cache inode entry (and an LRU reference */
 	cache_status = cache_inode_new_entry(root_handle, CACHE_INODE_FLAG_NONE,
-					     &entry, &root_op_context.req_ctx);
+					     &entry);
 
 	if (entry == NULL) {
 		LogCrit(COMPONENT_EXPORT,

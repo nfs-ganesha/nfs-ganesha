@@ -89,11 +89,12 @@ int _9p_mkdir(struct _9p_request_data *req9p, void *worker_data,
 
 	snprintf(dir_name, MAXNAMLEN, "%.*s", *name_len, name_str);
 
+	op_ctx = &pfid->op_context;
 	/* Create the directory */
 	/* BUGAZOMEU: @todo : the gid parameter is not used yet */
 	cache_status =
 	    cache_inode_create(pfid->pentry, dir_name, DIRECTORY, *mode, NULL,
-			       &pfid->op_context, &pentry_newdir);
+			       &pentry_newdir);
 	if (pentry_newdir == NULL)
 		return _9p_rerror(req9p, worker_data, msgtag,
 				  _9p_tools_errno(cache_status), plenout,
@@ -102,8 +103,7 @@ int _9p_mkdir(struct _9p_request_data *req9p, void *worker_data,
 	/* This is not a TATTACH fid */
 	pfid->from_attach = FALSE;
 
-	cache_status =
-	    cache_inode_fileid(pentry_newdir, &pfid->op_context, &fileid);
+	cache_status = cache_inode_fileid(pentry_newdir, &fileid);
 
 	/* put the entry:
 	 * we don't want to remember it even if cache_inode_fileid fails. */

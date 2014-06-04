@@ -52,15 +52,13 @@
  *
  * @param[in]     entry   Entry whose attributes are to be set
  * @param[in,out] attr    Attributes to set/result of set
- * @param[in]     req_ctx FSAL credentials
  *
  * @retval CACHE_INODE_SUCCESS if operation is a success
  */
 cache_inode_status_t
 cache_inode_setattr(cache_entry_t *entry,
 		    struct attrlist *attr,
-		    bool is_open_write,
-		    struct req_op_context *req_ctx)
+		    bool is_open_write)
 {
 	struct fsal_obj_handle *obj_handle = entry->obj_handle;
 	fsal_status_t fsal_status = { 0, 0 };
@@ -81,7 +79,7 @@ cache_inode_setattr(cache_entry_t *entry,
 	}
 
 	/* Is it allowed to change times ? */
-	if (!req_ctx->fsal_export->ops->fs_supports(req_ctx->fsal_export,
+	if (!op_ctx->fsal_export->ops->fs_supports(op_ctx->fsal_export,
 						    fso_cansettime)
 	    &&
 	    (FSAL_TEST_MASK
@@ -92,14 +90,12 @@ cache_inode_setattr(cache_entry_t *entry,
 	}
 
 	/* Get wrlock on attr_lock and verify attrs */
-	status = cache_inode_lock_trust_attrs(entry, req_ctx, true);
+	status = cache_inode_lock_trust_attrs(entry, true);
 	if (status != CACHE_INODE_SUCCESS)
 		return status;
 
 	/* Do permission checks */
-	status =
-	    cache_inode_check_setattr_perms(entry, attr, is_open_write,
-					    req_ctx);
+	status = cache_inode_check_setattr_perms(entry, attr, is_open_write);
 	if (status != CACHE_INODE_SUCCESS)
 		goto unlock;
 
@@ -110,7 +106,7 @@ cache_inode_setattr(cache_entry_t *entry,
 
 	saved_acl = obj_handle->attributes.acl;
 	before = obj_handle->attributes.change;
-	fsal_status = obj_handle->ops->setattrs(obj_handle, req_ctx, attr);
+	fsal_status = obj_handle->ops->setattrs(obj_handle, op_ctx, attr);
 	if (FSAL_IS_ERROR(fsal_status)) {
 		status = cache_inode_error_convert(fsal_status);
 		if (fsal_status.major == ERR_FSAL_STALE) {
@@ -120,7 +116,7 @@ cache_inode_setattr(cache_entry_t *entry,
 		}
 		goto unlock;
 	}
-	fsal_status = obj_handle->ops->getattrs(obj_handle, req_ctx);
+	fsal_status = obj_handle->ops->getattrs(obj_handle, op_ctx);
 	*attr = obj_handle->attributes;
 	if (FSAL_IS_ERROR(fsal_status)) {
 		status = cache_inode_error_convert(fsal_status);

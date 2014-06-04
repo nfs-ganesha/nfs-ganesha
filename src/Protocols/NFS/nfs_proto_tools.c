@@ -94,7 +94,7 @@ void nfs_SetPostOpAttr(cache_entry_t *entry, struct req_op_context *ctx,
 void nfs_SetPreOpAttr(cache_entry_t *entry, struct req_op_context *ctx,
 		      pre_op_attr *attr)
 {
-	if ((entry == NULL) || (cache_inode_lock_trust_attrs(entry, ctx, false)
+	if ((entry == NULL) || (cache_inode_lock_trust_attrs(entry, false)
 				!= CACHE_INODE_SUCCESS)) {
 		attr->attributes_follow = false;
 	} else {
@@ -1012,7 +1012,7 @@ static fattr_xdr_result encode_fetch_fsinfo(struct xdr_attrs_args *args)
 	if (args->data != NULL && args->data->current_entry != NULL) {
 		cache_status =
 		    cache_inode_statfs(args->data->current_entry,
-				       args->dynamicinfo, args->data->req_ctx);
+				       args->dynamicinfo);
 	} else {
 		args->dynamicinfo->avail_files = 512;
 		args->dynamicinfo->free_files = 512;
@@ -3144,7 +3144,7 @@ nfsstat4 cache_entry_To_Fattr(cache_entry_t *entry, fattr4 *Fattr,
 		status =
 		    cache_inode_access(entry,
 				       FSAL_ACE4_MASK_SET
-				       (FSAL_ACE_PERM_READ_ACL), data->req_ctx);
+				       (FSAL_ACE_PERM_READ_ACL));
 
 		if (status != CACHE_INODE_SUCCESS) {
 			LogDebug(COMPONENT_NFS_V4_ACL,
@@ -3158,8 +3158,7 @@ nfsstat4 cache_entry_To_Fattr(cache_entry_t *entry, fattr4 *Fattr,
 	}
 
 	return
-	    nfs4_Errno(cache_inode_getattr
-		       (entry, data->req_ctx, &f, Fattr_filler));
+	    nfs4_Errno(cache_inode_getattr(entry, &f, Fattr_filler));
 }
 
 int nfs4_Fattr_Fill_Error(fattr4 *Fattr, nfsstat4 rdattr_error)
@@ -3569,7 +3568,7 @@ bool cache_entry_to_nfs3_Fattr(cache_entry_t *entry,
 			       struct req_op_context *ctx, fattr3 *Fattr)
 {
 	bool rc = false;
-	if (entry && (cache_inode_lock_trust_attrs(entry, ctx, false)
+	if (entry && (cache_inode_lock_trust_attrs(entry, false)
 		      == CACHE_INODE_SUCCESS)) {
 		rc = nfs3_FSALattr_To_Fattr(ctx->export,
 					    &entry->obj_handle->attributes,

@@ -96,8 +96,7 @@ int nfs4_op_commit(struct nfs_argop4 *op, compound_data_t *data,
 
 	cache_status = cache_inode_commit(data->current_entry,
 					  arg_COMMIT4->offset,
-					  arg_COMMIT4->count,
-					  data->req_ctx);
+					  arg_COMMIT4->count);
 
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		res_COMMIT4->status = nfs4_Errno(cache_status);

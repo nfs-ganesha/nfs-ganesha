@@ -167,8 +167,7 @@ int nfs3_link(nfs_arg_t *arg,
 		else {
 			cache_status = cache_inode_link(target_entry,
 							parent_entry,
-							link_name,
-							op_ctx);
+							link_name);
 
 			if (cache_status == CACHE_INODE_SUCCESS) {
 				nfs_SetPostOpAttr(target_entry,

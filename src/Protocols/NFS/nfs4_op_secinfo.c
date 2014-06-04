@@ -91,7 +91,6 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 
 	cache_status = cache_inode_lookup(data->current_entry,
 					  secinfo_fh_name,
-					  data->req_ctx,
 					  &entry_src);
 
 	if (entry_src == NULL) {

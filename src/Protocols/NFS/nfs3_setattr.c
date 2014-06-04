@@ -148,8 +148,7 @@ int nfs3_setattr(nfs_arg_t *arg,
 
 		cache_status = cache_inode_setattr(entry,
 						   &setattr,
-						   false,
-						   op_ctx);
+						   false);
 
 		if (cache_status != CACHE_INODE_SUCCESS)
 			goto out_fail;

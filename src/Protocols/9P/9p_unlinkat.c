@@ -80,11 +80,12 @@ int _9p_unlinkat(struct _9p_request_data *req9p, void *worker_data,
 				  preply);
 	}
 
+	op_ctx = &pdfid->op_context;
+
 	/* Let's do the job */
 	snprintf(name, MAXNAMLEN, "%.*s", *name_len, name_str);
 
-	cache_status =
-	    cache_inode_remove(pdfid->pentry, name, &pdfid->op_context);
+	cache_status = cache_inode_remove(pdfid->pentry, name);
 	if (cache_status != CACHE_INODE_SUCCESS)
 		return _9p_rerror(req9p, worker_data, msgtag,
 				  _9p_tools_errno(cache_status), plenout,

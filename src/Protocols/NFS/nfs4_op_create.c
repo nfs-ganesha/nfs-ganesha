@@ -152,7 +152,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	res_CREATE4->CREATE4res_u.resok4.cinfo.before =
-	    cache_inode_get_changeid4(entry_parent, data->req_ctx);
+	    cache_inode_get_changeid4(entry_parent);
 
 	/* Convert the incoming fattr4 to a vattr structure,
 	 * if such arguments are supplied
@@ -192,7 +192,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 						  SYMBOLIC_LINK,
 						  mode,
 						  &create_arg,
-						  data->req_ctx, &entry_new);
+						  &entry_new);
 
 		if (entry_new == NULL) {
 			res_CREATE4->status = nfs4_Errno(cache_status);
@@ -218,7 +218,6 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 						  DIRECTORY,
 						  mode,
 						  NULL,
-						  data->req_ctx,
 						  &entry_new);
 
 		if (entry_new == NULL) {
@@ -244,7 +243,6 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 						  SOCKET_FILE,
 						  mode,
 						  NULL,
-						  data->req_ctx,
 						  &entry_new);
 
 		if (entry_new == NULL) {
@@ -270,7 +268,6 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 						  FIFO_FILE,
 						  mode,
 						  NULL,
-						  data->req_ctx,
 						  &entry_new);
 
 		if (entry_new == NULL) {
@@ -301,7 +298,6 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 						  CHARACTER_FILE,
 						  mode,
 						  &create_arg,
-						  data->req_ctx,
 						  &entry_new);
 
 		if (entry_new == NULL) {
@@ -332,7 +328,6 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 						  BLOCK_FILE,
 						  mode,
 						  &create_arg,
-						  data->req_ctx,
 						  &entry_new);
 
 		if (entry_new == NULL) {
@@ -410,8 +405,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 			&& (data->req_ctx->creds->caller_gid != sattr.group))) {
 			cache_status = cache_inode_setattr(entry_new,
 							   &sattr,
-							   false,
-							   data->req_ctx);
+							   false);
 
 			if (cache_status != CACHE_INODE_SUCCESS) {
 				res_CREATE4->status = nfs4_Errno(cache_status);
@@ -430,7 +424,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 	       sizeof(changeid4));
 
 	res_CREATE4->CREATE4res_u.resok4.cinfo.after =
-	    cache_inode_get_changeid4(entry_parent, data->req_ctx);
+	    cache_inode_get_changeid4(entry_parent);
 
 	/* Operation is supposed to be atomic .... */
 	res_CREATE4->CREATE4res_u.resok4.cinfo.atomic = FALSE;

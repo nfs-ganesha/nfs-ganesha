@@ -98,6 +98,8 @@ int _9p_write(struct _9p_request_data *req9p, void *worker_data,
 				  preply);
 	}
 
+	op_ctx = &pfid->op_context;
+
 	/* Do the job */
 	size = *count;
 
@@ -128,7 +130,7 @@ int _9p_write(struct _9p_request_data *req9p, void *worker_data,
 		cache_status =
 		    cache_inode_rdwr(pfid->pentry, CACHE_INODE_WRITE, *offset,
 				     size, &written_size, databuffer, &eof_met,
-				     &pfid->op_context, &sync);
+				     &sync);
 
 		/* Get the handle, for stats */
 		struct gsh_client *client = req9p->pconn->client;

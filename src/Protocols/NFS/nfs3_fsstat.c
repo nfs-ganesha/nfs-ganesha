@@ -99,8 +99,7 @@ int nfs3_fsstat(nfs_arg_t *arg,
 
 	/* Get statistics and convert from cache */
 	cache_status = cache_inode_statfs(entry,
-					  &dynamicinfo,
-					  op_ctx);
+					  &dynamicinfo);
 
 	if (cache_status == CACHE_INODE_SUCCESS) {
 		LogFullDebug(COMPONENT_NFSPROTO,

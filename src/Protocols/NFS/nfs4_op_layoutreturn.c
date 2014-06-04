@@ -190,7 +190,7 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op, compound_data_t *data,
 		}
 
 		cache_status =
-		    cache_inode_fsid(data->current_entry, data->req_ctx, &fsid);
+		    cache_inode_fsid(data->current_entry, &fsid);
 
 		if (cache_status != CACHE_INODE_SUCCESS) {
 			res_LAYOUTRETURN4->lorr_status =
@@ -235,7 +235,6 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op, compound_data_t *data,
 				fsal_fsid_t this_fsid;
 				cache_status =
 				    cache_inode_fsid(layout_state->state_entry,
-						     data->req_ctx,
 						     &this_fsid);
 
 				if (cache_status != CACHE_INODE_SUCCESS) {

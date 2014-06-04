@@ -174,7 +174,6 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t *data,
 		}
 		/* Build the pentry.  Refcount +1. */
 		cache_status = cache_inode_get(&fsal_data,
-					       data->req_ctx,
 					       &file_entry);
 
 		if (cache_status != CACHE_INODE_SUCCESS) {

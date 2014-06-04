@@ -304,8 +304,7 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 	    && entry->obj_handle->attributes.owner !=
 	    data->req_ctx->creds->caller_uid) {
 		cache_status = cache_inode_access(entry,
-						  FSAL_WRITE_ACCESS,
-						  data->req_ctx);
+						  FSAL_WRITE_ACCESS);
 
 		if (cache_status != CACHE_INODE_SUCCESS) {
 			res_WRITE4->status = nfs4_Errno(cache_status);
@@ -400,7 +399,6 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 					&written_size,
 					bufferdata,
 					&eof_met,
-					data->req_ctx,
 					&sync,
 					info);
 

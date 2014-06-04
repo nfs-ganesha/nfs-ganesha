@@ -98,9 +98,9 @@ int nfs4_op_remove(struct nfs_argop4 *op, compound_data_t *data,
 	       sizeof(changeid4));
 
 	res_REMOVE4->REMOVE4res_u.resok4.cinfo.before =
-	    cache_inode_get_changeid4(parent_entry, data->req_ctx);
+	    cache_inode_get_changeid4(parent_entry);
 
-	cache_status = cache_inode_remove(parent_entry, name, data->req_ctx);
+	cache_status = cache_inode_remove(parent_entry, name);
 
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		res_REMOVE4->status = nfs4_Errno(cache_status);
@@ -108,7 +108,7 @@ int nfs4_op_remove(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	res_REMOVE4->REMOVE4res_u.resok4.cinfo.after =
-	    cache_inode_get_changeid4(parent_entry, data->req_ctx);
+	    cache_inode_get_changeid4(parent_entry);
 
 	/* Operation was not atomic .... */
 	res_REMOVE4->REMOVE4res_u.resok4.cinfo.atomic = FALSE;

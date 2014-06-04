@@ -107,7 +107,7 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t *data,
 	/* Sanity check: dir_entry should be ACTUALLY a directory */
 
 	cache_status =
-	    cache_inode_lookup(dir_entry, name, data->req_ctx, &file_entry);
+	    cache_inode_lookup(dir_entry, name, &file_entry);
 
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		res_LOOKUP4->status = nfs4_Errno(cache_status);

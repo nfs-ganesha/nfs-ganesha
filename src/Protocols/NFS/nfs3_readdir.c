@@ -269,7 +269,6 @@ int nfs3_readdir(nfs_arg_t *arg,
 	if ((cookie <= 1) && (estimated_num_entries > 1)) {
 		/* Get parent pentry */
 		cache_status_gethandle = cache_inode_lookupp(dir_entry,
-							     op_ctx,
 							     &parent_dir_entry);
 
 		if (parent_dir_entry == NULL) {
@@ -300,7 +299,6 @@ int nfs3_readdir(nfs_arg_t *arg,
 					   cache_inode_cookie,
 					   &num_entries,
 					   &eod_met,
-					   op_ctx,
 					   0,	/* no attr */
 					   nfs3_readdir_callback,
 					   &tracker);

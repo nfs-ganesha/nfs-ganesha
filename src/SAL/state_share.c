@@ -253,7 +253,7 @@ state_status_t state_share_remove(cache_entry_t *entry,
 	}
 
 	/* state has been removed, so adjust open flags */
-	cache_inode_adjust_openflags(entry, req_ctx);
+	cache_inode_adjust_openflags(entry);
 
 	LogFullDebug(COMPONENT_STATE,
 		     "state %p: removed share_access %u, " "share_deny %u",
@@ -435,7 +435,7 @@ state_status_t state_share_downgrade(struct req_op_context *req_ctx,
 	state->state_data.share.share_deny = new_share_deny;
 
 	/* state is downgraded, so adjust open flags */
-	cache_inode_adjust_openflags(entry, req_ctx);
+	cache_inode_adjust_openflags(entry);
 
 	LogFullDebug(COMPONENT_STATE,
 		     "state %p: downgraded share_access %u, " "share_deny %u",
@@ -732,7 +732,7 @@ state_status_t state_nlm_share(cache_entry_t *entry,
 		openflags = FSAL_O_RDWR;
 	if (reclaim)
 		openflags |= FSAL_O_RECLAIM;
-	cache_status = cache_inode_open(entry, openflags, req_ctx, 0);
+	cache_status = cache_inode_open(entry, openflags, 0);
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		cache_inode_dec_pin_ref(entry, true);
 

@@ -139,7 +139,7 @@ int nfs3_read(nfs_arg_t *arg,
 	 */
 	if (entry->obj_handle->attributes.owner != op_ctx->creds->caller_uid) {
 		cache_status =
-		    cache_inode_access(entry, FSAL_READ_ACCESS, op_ctx);
+		    cache_inode_access(entry, FSAL_READ_ACCESS);
 
 		if (cache_status == CACHE_INODE_FSAL_EACCESS) {
 			/* Test for execute permission */
@@ -147,8 +147,7 @@ int nfs3_read(nfs_arg_t *arg,
 			    cache_inode_access(entry,
 					       FSAL_MODE_MASK_SET(FSAL_X_OK) |
 					       FSAL_ACE4_MASK_SET
-					       (FSAL_ACE_PERM_EXECUTE),
-					       op_ctx);
+					       (FSAL_ACE_PERM_EXECUTE));
 		}
 
 		if (cache_status != CACHE_INODE_SUCCESS) {
@@ -225,7 +224,6 @@ int nfs3_read(nfs_arg_t *arg,
 						&read_size,
 						data,
 						&eof_met,
-						op_ctx,
 						&sync);
 
 		if (cache_status == CACHE_INODE_SUCCESS) {

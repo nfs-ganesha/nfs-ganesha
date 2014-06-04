@@ -185,8 +185,7 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 
 not_junction:
 
-	cache_status =
-	    cache_inode_lookupp(dir_entry, data->req_ctx, &file_entry);
+	cache_status = cache_inode_lookupp(dir_entry, &file_entry);
 
 	if (file_entry != NULL) {
 		/* Convert it to a file handle */

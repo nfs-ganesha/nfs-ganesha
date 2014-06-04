@@ -692,7 +692,7 @@ cache_inode_status_t nfs_access_op(cache_entry_t *entry,
 
 	status =
 	    cache_inode_access_sw(entry, access_mask, &access_allowed,
-				  &access_denied, req_ctx, true);
+				  &access_denied, true);
 
 	if (status == CACHE_INODE_SUCCESS ||
 	    status == CACHE_INODE_FSAL_EACCESS) {

@@ -106,7 +106,7 @@ void cleanup_pseudofs_node(struct req_op_context *req_ctx,
 	LogDebug(COMPONENT_EXPORT,
 		 "Checking if pseudo node %s is needed", pseudopath);
 
-	cache_status = cache_inode_lookupp(entry, req_ctx, &parent_entry);
+	cache_status = cache_inode_lookupp(entry, &parent_entry);
 
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		/* Truncate the pseudopath to be the path to the parent */
@@ -117,7 +117,7 @@ void cleanup_pseudofs_node(struct req_op_context *req_ctx,
 		return;
 	}
 
-	cache_status = cache_inode_remove(parent_entry, name, req_ctx);
+	cache_status = cache_inode_remove(parent_entry, name);
 
 	if (cache_status == CACHE_INODE_DIR_NOT_EMPTY) {
 		LogDebug(COMPONENT_EXPORT,
@@ -171,7 +171,6 @@ retry:
 	/* First, try to lookup the entry */
 	cache_status = cache_inode_lookup(state->dirent,
 					  name,
-					  state->req_ctx,
 					  &new_node);
 
 	if (cache_status == CACHE_INODE_SUCCESS) {
@@ -231,7 +230,6 @@ retry:
 					  DIRECTORY,
 					  0755,
 					  NULL,
-					  state->req_ctx,
 					  &new_node);
 
 	if (cache_status == CACHE_INODE_ENTRY_EXISTS && !retried) {
@@ -256,7 +254,7 @@ retry:
 
 	/* Lock (and refresh if necessary) the attributes */
 	cache_status =
-	    cache_inode_lock_trust_attrs(state->dirent, state->req_ctx, true);
+	    cache_inode_lock_trust_attrs(state->dirent, true);
 
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		LogCrit(COMPONENT_EXPORT,
@@ -409,7 +407,7 @@ bool pseudo_mount_export(struct gsh_export *export,
 
 	/* Lock (and refresh if necessary) the attributes */
 	cache_status =
-	    cache_inode_lock_trust_attrs(state.dirent, state.req_ctx, true);
+	    cache_inode_lock_trust_attrs(state.dirent, true);
 
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		LogCrit(COMPONENT_EXPORT,

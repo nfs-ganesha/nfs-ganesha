@@ -92,6 +92,8 @@ int _9p_read(struct _9p_request_data *req9p, void *worker_data,
 				  preply);
 	}
 
+	op_ctx = &pfid->op_context;
+
 	/* Start building the reply already
 	 * So we don't need to use an intermediate data buffer
 	 */
@@ -111,7 +113,7 @@ int _9p_read(struct _9p_request_data *req9p, void *worker_data,
 		cache_status =
 		    cache_inode_rdwr(pfid->pentry, CACHE_INODE_READ, *offset,
 				     *count, &read_size, databuffer, &eof_met,
-				     &pfid->op_context, &sync);
+				     &sync);
 
 		/* Get the handle, for stats */
 		struct gsh_client *client = req9p->pconn->client;

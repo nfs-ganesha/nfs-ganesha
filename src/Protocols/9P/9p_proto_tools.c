@@ -295,8 +295,7 @@ int _9p_tools_clunk(struct _9p_fid *pfid)
 				return _9p_tools_errno(cache_status);
 			}
 			cache_status =
-			    cache_inode_refresh_attrs_locked(pfid->pentry,
-							     &pfid->op_context);
+			    cache_inode_refresh_attrs_locked(pfid->pentry);
 			if (cache_status != CACHE_INODE_SUCCESS
 			    && cache_status != CACHE_INODE_FSAL_ESTALE) {
 				free_fid(pfid);

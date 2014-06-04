@@ -90,7 +90,7 @@ int _9p_walk(struct _9p_request_data *req9p, void *worker_data,
 		return _9p_rerror(req9p, worker_data, msgtag, EIO, plenout,
 				  preply);
 	}
-
+	op_ctx = &pfid->op_context;
 	pnewfid = gsh_calloc(1, sizeof(struct _9p_fid));
 	if (pnewfid == NULL)
 		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
@@ -128,8 +128,7 @@ int _9p_walk(struct _9p_request_data *req9p, void *worker_data,
 
 			/* refcount +1 */
 			cache_status =
-			    cache_inode_lookup(pentry, name, &pfid->op_context,
-					       &pnewfid->pentry);
+			    cache_inode_lookup(pentry, name, &pnewfid->pentry);
 
 			if (pnewfid->pentry == NULL) {
 				gsh_free(pnewfid);
@@ -157,9 +156,7 @@ int _9p_walk(struct _9p_request_data *req9p, void *worker_data,
 		/* This is not a TATTACH fid */
 		pnewfid->from_attach = FALSE;
 
-		cache_status =
-		    cache_inode_fileid(pnewfid->pentry, &pfid->op_context,
-				       &fileid);
+		cache_status = cache_inode_fileid(pnewfid->pentry, &fileid);
 		if (cache_status != CACHE_INODE_SUCCESS) {
 			gsh_free(pnewfid);
 			return _9p_rerror(req9p, worker_data, msgtag,

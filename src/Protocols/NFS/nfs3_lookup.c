@@ -105,7 +105,6 @@ int nfs3_lookup(nfs_arg_t *arg,
 
 	cache_status = cache_inode_lookup(entry_dir,
 					  name,
-					  op_ctx,
 					  &entry_file);
 
 	if (entry_file && (cache_status == CACHE_INODE_SUCCESS)) {

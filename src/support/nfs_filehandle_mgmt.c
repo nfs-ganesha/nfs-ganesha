@@ -160,7 +160,7 @@ cache_entry_t *nfs3_FhandleToCache(nfs_fh3 *fh3,
 	if (FSAL_IS_ERROR(fsal_status))
 		cache_status = cache_inode_error_convert(fsal_status);
 	else
-		cache_status = cache_inode_get(&fsal_data, req_ctx, &entry);
+		cache_status = cache_inode_get(&fsal_data, &entry);
 
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		*status = nfs3_Errno(cache_status);

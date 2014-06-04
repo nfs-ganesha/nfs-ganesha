@@ -235,8 +235,7 @@ cache_inode_set_time_current(struct timespec *time)
 cache_inode_status_t
 cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 		      uint32_t flags,
-		      cache_entry_t **entry,
-		      const struct req_op_context *opctx)
+		      cache_entry_t **entry)
 {
 	cache_inode_status_t status;
 	cache_entry_t *oentry, *nentry = NULL;
@@ -251,7 +250,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 	/* Get FSAL-specific key */
 	new_obj->ops->handle_to_key(new_obj, &fh_desc);
 
-	(void) cih_hash_key(&key, opctx->fsal_export->fsal, &fh_desc,
+	(void) cih_hash_key(&key, op_ctx->fsal_export->fsal, &fh_desc,
 			    CIH_HASH_KEY_PROTOTYPE);
 
 	/* Check if the entry already exists.  We allow the following race
@@ -318,7 +317,8 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 
 	/* Set cache key */
 
-	has_hashkey = cih_hash_key(&nentry->fh_hk.key, opctx->fsal_export->fsal,
+	has_hashkey = cih_hash_key(&nentry->fh_hk.key,
+				   op_ctx->fsal_export->fsal,
 				   &fh_desc, CIH_HASH_NONE);
 
 	if (!has_hashkey) {
@@ -390,11 +390,11 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 
 	nentry->obj_handle = new_obj;
 
-	nentry->expire_type_attr = opctx->export->expire_type_attr;
+	nentry->expire_type_attr = op_ctx->export->expire_type_attr;
 	if (nentry->expire_type_attr == CACHE_INODE_EXPIRE &&
 	    nentry->obj_handle->attributes.expire_time_attr == 0) {
 		nentry->obj_handle->attributes.expire_time_attr =
-					opctx->export->expire_time_attr;
+					op_ctx->export->expire_time_attr;
 	}
 
 	cache_inode_fixup_md(nentry);
@@ -406,7 +406,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 
 	/* Hash and insert entry */
 	rc = cih_set_latched(nentry, &latch,
-			     opctx->fsal_export->fsal, &fh_desc,
+			     op_ctx->fsal_export->fsal, &fh_desc,
 			     CIH_SET_UNLOCK | CIH_SET_HASHED);
 	if (unlikely(rc)) {
 		LogCrit(COMPONENT_CACHE_INODE,
@@ -418,7 +418,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 	}
 
 	/* Map this new entry and the active export */
-	if (!check_mapping(nentry, opctx->export)) {
+	if (!check_mapping(nentry, op_ctx->export)) {
 		LogCrit(COMPONENT_CACHE_INODE,
 			"Unable to create export mapping on new entry");
 		/* Release the LRU reference and return error.
@@ -440,7 +440,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
  out:
 
 	if (status == CACHE_INODE_ENTRY_EXISTS) {
-		if (!check_mapping(*entry, opctx->export)) {
+		if (!check_mapping(*entry, op_ctx->export)) {
 			LogCrit(COMPONENT_CACHE_INODE,
 				"Unable to create export mapping on existing entry");
 			status = CACHE_INODE_MALLOC_ERROR;
@@ -861,7 +861,6 @@ cache_inode_release_dirents(cache_entry_t *entry,
  * for relatively short periods of time.
  *
  * @param[in,out] entry         The entry to lock and check
- * @param[in]     opctx         The FSAL operation context
  * @param[in]     need_wr_lock  Need to take write lock?
  *
  * @return CACHE_INODE_SUCCESS if the attributes are locked and
@@ -870,8 +869,7 @@ cache_inode_release_dirents(cache_entry_t *entry,
 
 cache_inode_status_t
 cache_inode_lock_trust_attrs(cache_entry_t *entry,
-			     const struct req_op_context
-			     *opctx, bool need_wr_lock)
+			     bool need_wr_lock)
 {
 	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
 	time_t oldmtime = 0;
@@ -896,7 +894,7 @@ cache_inode_lock_trust_attrs(cache_entry_t *entry,
 
 	oldmtime = entry->obj_handle->attributes.mtime.tv_sec;
 
-	cache_status = cache_inode_refresh_attrs(entry, opctx);
+	cache_status = cache_inode_refresh_attrs(entry);
 	if (cache_status != CACHE_INODE_SUCCESS)
 		goto unlock;
 

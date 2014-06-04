@@ -127,7 +127,6 @@ bool is_open_for_read(cache_entry_t *entry)
  *
  * @param[in]  entry     Cache entry representing the file to open
  * @param[in]  openflags The type of access for which to open
- * @param[in]  req_ctx   FSAL operation context
  * @param[in]  flags     Flags indicating lock status
  *
  * @return CACHE_INODE_SUCCESS if successful, errors otherwise
@@ -136,7 +135,6 @@ bool is_open_for_read(cache_entry_t *entry)
 cache_inode_status_t
 cache_inode_open(cache_entry_t *entry,
 		 fsal_openflags_t openflags,
-		 struct req_op_context *req_ctx,
 		 uint32_t flags)
 {
 	/* Error return from FSAL */
@@ -174,11 +172,11 @@ cache_inode_open(cache_entry_t *entry,
 		 * of closing and opening the file again. This avoids
 		 * losing any lock state due to closing the file!
 		 */
-		fsal_export = req_ctx->fsal_export;
+		fsal_export = op_ctx->fsal_export;
 		if (fsal_export->ops->fs_supports(fsal_export,
 						  fso_reopen_method)) {
 			fsal_status = obj_hdl->ops->reopen(obj_hdl,
-							   req_ctx,
+							   op_ctx,
 							   openflags);
 			closed = false;
 		} else {
@@ -210,7 +208,7 @@ cache_inode_open(cache_entry_t *entry,
 	}
 
 	if ((current_flags == FSAL_O_CLOSED)) {
-		fsal_status = obj_hdl->ops->open(obj_hdl, req_ctx, openflags);
+		fsal_status = obj_hdl->ops->open(obj_hdl, op_ctx, openflags);
 		if (FSAL_IS_ERROR(fsal_status)) {
 			status = cache_inode_error_convert(fsal_status);
 			LogDebug(COMPONENT_CACHE_INODE,
@@ -337,17 +335,15 @@ out:
  * will do reopen and remove the write open flag by calling FSAL's
  * reopen method if present.
  *
- * @param[in]  entry  Cache entry to adjust open flags @param[in]
- * req_ctx Current request context.
+ * @param[in]  entry  Cache entry to adjust open flags
  *
  * entry->state_lock should be held while calling this.
  *
  * NOTE: This currently adjusts only the write mode open flag!
  */
-void cache_inode_adjust_openflags(cache_entry_t *entry,
-				  struct req_op_context *req_ctx)
+void cache_inode_adjust_openflags(cache_entry_t *entry)
 {
-	struct fsal_export *fsal_export = req_ctx->fsal_export;
+	struct fsal_export *fsal_export = op_ctx->fsal_export;
 	struct fsal_obj_handle *obj_hdl;
 	fsal_openflags_t openflags;
 	fsal_status_t fsal_status;
@@ -384,7 +380,7 @@ void cache_inode_adjust_openflags(cache_entry_t *entry,
 		goto unlock;
 
 	openflags &= ~FSAL_O_WRITE;
-	fsal_status = obj_hdl->ops->reopen(obj_hdl, req_ctx, openflags);
+	fsal_status = obj_hdl->ops->reopen(obj_hdl, op_ctx, openflags);
 	if (FSAL_IS_ERROR(fsal_status)) {
 		LogWarn(COMPONENT_CACHE_INODE,
 			"fsal reopen method returned: %d(%d)",

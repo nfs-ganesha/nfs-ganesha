@@ -183,7 +183,6 @@ int nfs3_create(nfs_arg_t *arg,
 					  REGULAR_FILE,
 					  mode,
 					  NULL,
-					  op_ctx,
 					  &file_entry);
 
 	/* Complete failure */
@@ -198,7 +197,6 @@ int nfs3_create(nfs_arg_t *arg,
 			goto out_fail;
 		} else if (arg->arg_create3.how.mode == EXCLUSIVE
 			   && !cache_inode_create_verify(file_entry,
-							 op_ctx,
 							 verf_hi,
 							 verf_lo)) {
 			goto out_fail;
@@ -224,8 +222,7 @@ int nfs3_create(nfs_arg_t *arg,
 			/* A call to cache_inode_setattr is required */
 			cache_status = cache_inode_setattr(file_entry,
 							   &sattr,
-							   false,
-							   op_ctx);
+							   false);
 
 			if (cache_status != CACHE_INODE_SUCCESS)
 				goto out_fail;

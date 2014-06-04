@@ -68,7 +68,6 @@
  * @param[in,out] buffer       Where in memory to read or write data
  * @param[out]    eof          Whether a READ encountered the end of file.  May
  *                             be NULL for writes.
- * @param[in]     req_ctx      FSAL credentials
  * @param[in]     sync         Whether the write is synchronous or not
  *
  * @return CACHE_INODE_SUCCESS or various errors
@@ -80,7 +79,6 @@ cache_inode_rdwr_plus(cache_entry_t *entry,
 		      uint64_t offset, size_t io_size,
 		      size_t *bytes_moved, void *buffer,
 		      bool *eof,
-		      struct req_op_context *req_ctx,
 		      bool *sync, struct io_info *info)
 {
 	/* Error return from FSAL calls */
@@ -111,7 +109,7 @@ cache_inode_rdwr_plus(cache_entry_t *entry,
 		 * FSAL_O_SYNC has no guaranty that this write will be
 		 * a stable write.
 		 */
-		perms = &req_ctx->export->export_perms;
+		perms = &op_ctx->export->export_perms;
 		if (perms->options & EXPORT_OPTION_COMMIT)
 			*sync = true;
 		openflags = FSAL_O_WRITE;
@@ -144,7 +142,7 @@ cache_inode_rdwr_plus(cache_entry_t *entry,
 		    || (loflags && loflags != FSAL_O_RDWR
 			&& loflags != openflags)) {
 			status =
-			    cache_inode_open(entry, openflags, req_ctx,
+			    cache_inode_open(entry, openflags,
 					     (CACHE_INODE_FLAG_CONTENT_HAVE |
 					      CACHE_INODE_FLAG_CONTENT_HOLD));
 			if (status != CACHE_INODE_SUCCESS)
@@ -159,22 +157,22 @@ cache_inode_rdwr_plus(cache_entry_t *entry,
 	/* Call FSAL_read or FSAL_write */
 	if (io_direction == CACHE_INODE_READ) {
 		fsal_status =
-		    obj_hdl->ops->read(obj_hdl, req_ctx, offset, io_size,
+		    obj_hdl->ops->read(obj_hdl, op_ctx, offset, io_size,
 				       buffer, bytes_moved, eof);
 	} else if (io_direction == CACHE_INODE_READ_PLUS) {
 		fsal_status =
-		    obj_hdl->ops->read_plus(obj_hdl, req_ctx, offset, io_size,
+		    obj_hdl->ops->read_plus(obj_hdl, op_ctx, offset, io_size,
 					    buffer, bytes_moved, eof, info);
 	} else {
 		bool fsal_sync = *sync;
 		if (io_direction == CACHE_INODE_WRITE)
 			fsal_status =
-			  obj_hdl->ops->write(obj_hdl, req_ctx, offset,
+			  obj_hdl->ops->write(obj_hdl, op_ctx, offset,
 					      io_size, buffer, bytes_moved,
 					      &fsal_sync);
 		else
 			fsal_status =
-			  obj_hdl->ops->write_plus(obj_hdl, req_ctx, offset,
+			  obj_hdl->ops->write_plus(obj_hdl, op_ctx, offset,
 						   io_size, buffer,
 						   bytes_moved, &fsal_sync,
 						   info);
@@ -184,7 +182,7 @@ cache_inode_rdwr_plus(cache_entry_t *entry,
 
 		if (*sync && !(obj_hdl->ops->status(obj_hdl) & FSAL_O_SYNC)
 		    && !fsal_sync && !FSAL_IS_ERROR(fsal_status)) {
-			fsal_status = obj_hdl->ops->commit(obj_hdl, req_ctx,
+			fsal_status = obj_hdl->ops->commit(obj_hdl, op_ctx,
 							   offset, io_size);
 		} else {
 			*sync = fsal_sync;
@@ -270,7 +268,7 @@ cache_inode_rdwr_plus(cache_entry_t *entry,
 	attributes_locked = true;
 	if (io_direction == CACHE_INODE_WRITE ||
 	    io_direction == CACHE_INODE_WRITE_PLUS) {
-		status = cache_inode_refresh_attrs(entry, req_ctx);
+		status = cache_inode_refresh_attrs(entry);
 		if (status != CACHE_INODE_SUCCESS)
 			goto out;
 	} else
@@ -301,12 +299,10 @@ cache_inode_rdwr(cache_entry_t *entry,
 		 uint64_t offset, size_t io_size,
 		 size_t *bytes_moved, void *buffer,
 		 bool *eof,
-		 struct req_op_context *req_ctx,
 		 bool *sync)
 {
 	return cache_inode_rdwr_plus(entry, io_direction, offset, io_size,
-				bytes_moved, buffer, eof, req_ctx,
-				sync, NULL);
+				     bytes_moved, buffer, eof, sync, NULL);
 }
 
 /** @} */

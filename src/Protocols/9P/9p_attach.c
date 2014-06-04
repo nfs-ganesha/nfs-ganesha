@@ -147,11 +147,11 @@ int _9p_attach(struct _9p_request_data *req9p, void *worker_data,
 	pfid->op_context.export = export;
 	pfid->op_context.fsal_export = export->fsal_export;
 
+	op_ctx =  &pfid->op_context;
 	/* This fid is a special one: it comes from TATTACH */
 	pfid->from_attach = TRUE;
 
-	cache_status =
-	    cache_inode_fileid(pfid->pentry, &pfid->op_context, &fileid);
+	cache_status = cache_inode_fileid(pfid->pentry, &fileid);
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		err = _9p_tools_errno(cache_status);
 		goto errout;

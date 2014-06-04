@@ -259,7 +259,6 @@ int nfs3_readdirplus(nfs_arg_t *arg,
 	if (begin_cookie <= 1) {
 		cache_entry_t *parent_dir_entry = NULL;
 		cache_status_gethandle = cache_inode_lookupp(dir_entry,
-							     op_ctx,
 							     &parent_dir_entry);
 
 		if (parent_dir_entry == NULL) {
@@ -289,7 +288,6 @@ int nfs3_readdirplus(nfs_arg_t *arg,
 					   cache_inode_cookie,
 					   &num_entries,
 					   &eod_met,
-					   op_ctx,
 					   ATTRS_NFS3,
 					   nfs3_readdirplus_callback,
 					   &tracker);

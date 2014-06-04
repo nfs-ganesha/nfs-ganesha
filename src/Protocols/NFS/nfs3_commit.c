@@ -99,8 +99,7 @@ int nfs3_commit(nfs_arg_t *arg,
 
 	cache_status = cache_inode_commit(entry,
 					  arg->arg_commit3.offset,
-					  arg->arg_commit3.count,
-					  op_ctx);
+					  arg->arg_commit3.count);
 
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		res->res_commit3.status = nfs3_Errno(cache_status);

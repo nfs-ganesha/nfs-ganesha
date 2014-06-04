@@ -344,7 +344,7 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 	 * so we need to do access check with no mutex.
 	 */
 	attr_status =
-	    cache_inode_access_no_mutex(entry, access_mask_attr, data->req_ctx);
+	    cache_inode_access_no_mutex(entry, access_mask_attr);
 
 	if (attr_status != CACHE_INODE_SUCCESS) {
 		LogFullDebug(COMPONENT_NFS_READDIR,
@@ -605,7 +605,6 @@ int nfs4_op_readdir(struct nfs_argop4 *op, compound_data_t *data,
 					   cookie,
 					   &num_entries,
 					   &eod_met,
-					   data->req_ctx,
 					   attrmask,
 					   nfs4_readdir_callback,
 					   &tracker);

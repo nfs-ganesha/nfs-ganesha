@@ -119,7 +119,7 @@ static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t *data,
 		access_mask |= FSAL_READ_ACCESS;
 
 	cache_status =
-	    cache_inode_access(data->current_entry, access_mask, data->req_ctx);
+	    cache_inode_access(data->current_entry, access_mask);
 
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		/* If non-permission error, return it. */
@@ -144,8 +144,7 @@ static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t *data,
 		cache_status = cache_inode_access(
 			data->current_entry,
 			FSAL_MODE_MASK_SET(FSAL_X_OK) |
-				FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_EXECUTE),
-			data->req_ctx);
+				FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_EXECUTE));
 
 		if (cache_status != CACHE_INODE_SUCCESS) {
 			LogDebug(COMPONENT_STATE,
@@ -246,8 +245,7 @@ static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t *data,
 		    &owner->so_owner.so_nfs4_owner.so_clientid;
 	}
 
-	cache_status =
-	    cache_inode_open(data->current_entry, openflags, data->req_ctx, 0);
+	cache_status = cache_inode_open(data->current_entry, openflags, 0);
 
 	if (cache_status != CACHE_INODE_SUCCESS)
 		return nfs4_Errno(cache_status);
@@ -508,7 +506,6 @@ bool open4_open_owner(struct nfs_argop4 *op, compound_data_t *data,
 				cache_status =
 				    cache_inode_lookup(data->current_entry,
 						       filename,
-						       data->req_ctx,
 						       &entry_lookup);
 				if (filename) {
 					gsh_free(filename);
@@ -686,7 +683,6 @@ static nfsstat4 open4_create(OPEN4args *arg, compound_data_t *data,
 					  REGULAR_FILE,
 					  mode,
 					  NULL,
-					  data->req_ctx,
 					  &entry_newfile);
 
 	/* Complete failure */
@@ -702,7 +698,6 @@ static nfsstat4 open4_create(OPEN4args *arg, compound_data_t *data,
 			return nfs4_Errno(cache_status);
 		} else if (verf_provided
 			   && !cache_inode_create_verify(entry_newfile,
-							 data->req_ctx,
 							 verf_hi,
 							 verf_lo)) {
 			cache_inode_put(entry_newfile);
@@ -744,9 +739,8 @@ static nfsstat4 open4_create(OPEN4args *arg, compound_data_t *data,
 
 			cache_status =
 			    cache_inode_setattr(entry_newfile, &sattr,
-						(arg->share_access &
-						 OPEN4_SHARE_ACCESS_WRITE) != 0,
-						data->req_ctx);
+					(arg->share_access &
+					 OPEN4_SHARE_ACCESS_WRITE) != 0);
 
 			if (cache_status != CACHE_INODE_SUCCESS)
 				return nfs4_Errno(cache_status);
@@ -814,7 +808,7 @@ static nfsstat4 open4_claim_null(OPEN4args *arg, compound_data_t *data,
 
 	case OPEN4_NOCREATE:
 		cache_status =
-		    cache_inode_lookup(parent, filename, data->req_ctx, entry);
+		    cache_inode_lookup(parent, filename, entry);
 
 		if (cache_status != CACHE_INODE_SUCCESS)
 			nfs_status = nfs4_Errno(cache_status);
@@ -1171,7 +1165,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 	cache_inode_lru_ref(entry_change, LRU_FLAG_NONE);
 
 	res_OPEN4->OPEN4res_u.resok4.cinfo.before =
-	    cache_inode_get_changeid4(entry_change, data->req_ctx);
+	    cache_inode_get_changeid4(entry_change);
 
 	/* Check if share_access does not have any access set, or has
 	 * invalid bits that are set.  check that share_deny doesn't
@@ -1272,7 +1266,6 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 		/* Does a file with this name already exist ? */
 		cache_status = cache_inode_lookup(entry_parent,
 						  filename,
-						  data->req_ctx,
 						  &entry_lookup);
 
 		gsh_free(filename);
@@ -1402,7 +1395,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* Update change_info4 */
 	res_OPEN4->OPEN4res_u.resok4.cinfo.after =
-		cache_inode_get_changeid4(entry_change, data->req_ctx);
+		cache_inode_get_changeid4(entry_change);
 	cache_inode_put(entry_change);
 	entry_change = NULL;
 	res_OPEN4->OPEN4res_u.resok4.cinfo.atomic = FALSE;

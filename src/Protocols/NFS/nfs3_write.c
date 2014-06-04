@@ -140,8 +140,7 @@ int nfs3_write(nfs_arg_t *arg,
 	 */
 	if (entry->obj_handle->attributes.owner != op_ctx->creds->caller_uid) {
 		cache_status = cache_inode_access(entry,
-						  FSAL_WRITE_ACCESS,
-						  op_ctx);
+						  FSAL_WRITE_ACCESS);
 
 		if (cache_status != CACHE_INODE_SUCCESS) {
 			res->res_write3.status = nfs3_Errno(cache_status);
@@ -227,8 +226,7 @@ int nfs3_write(nfs_arg_t *arg,
 		/* An actual write is to be made, prepare it */
 		cache_status =
 		    cache_inode_rdwr(entry, CACHE_INODE_WRITE, offset, size,
-				     &written_size, data, &eof_met, op_ctx,
-				     &sync);
+				     &written_size, data, &eof_met, &sync);
 		if (cache_status == CACHE_INODE_SUCCESS) {
 			/* Build Weak Cache Coherency data */
 			nfs_SetWccData(NULL, entry, op_ctx,

@@ -72,12 +72,13 @@ int _9p_fsync(struct _9p_request_data *req9p, void *worker_data,
 				  preply);
 	}
 
+	op_ctx = &pfid->op_context;
+
 	cache_status =
 	    cache_inode_commit(pfid->pentry,
 			       0LL,	/* start at beginning of file */
-			       0LL,	/* Mimic sync_file_range's behavior:
-					 * count=0 means "whole file" */
-			       &pfid->op_context);
+			       0LL);	/* Mimic sync_file_range's behavior: */
+					/* count=0 means "whole file" */
 
 	if (cache_status != CACHE_INODE_SUCCESS)
 		return _9p_rerror(req9p, worker_data, msgtag,

@@ -129,7 +129,6 @@ int nfs3_rmdir(nfs_arg_t *arg,
 	 */
 	cache_status = cache_inode_lookup(parent_entry,
 					  name,
-					  op_ctx,
 					  &child_entry);
 
 	if (child_entry != NULL) {
@@ -143,7 +142,7 @@ int nfs3_rmdir(nfs_arg_t *arg,
 		}
 	}
 
-	cache_status = cache_inode_remove(parent_entry, name, op_ctx);
+	cache_status = cache_inode_remove(parent_entry, name);
 
 	if (cache_status != CACHE_INODE_SUCCESS)
 		goto out_fail;

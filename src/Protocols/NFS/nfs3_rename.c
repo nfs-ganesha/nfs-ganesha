@@ -171,8 +171,7 @@ int nfs3_rename(nfs_arg_t *arg,
 	cache_status = cache_inode_rename(parent_entry,
 					  entry_name,
 					  new_parent_entry,
-					  new_entry_name,
-					  op_ctx);
+					  new_entry_name);
 
 	if (cache_status != CACHE_INODE_SUCCESS)
 		goto out_fail;

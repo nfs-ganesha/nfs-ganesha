@@ -2410,7 +2410,7 @@ state_status_t state_test(cache_entry_t *entry,
 		return status;
 	}
 
-	cache_status = cache_inode_open(entry, FSAL_O_READ, req_ctx, 0);
+	cache_status = cache_inode_open(entry, FSAL_O_READ, 0);
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		status = cache_inode_status_to_state_status(cache_status);
 		LogFullDebug(COMPONENT_STATE, "Could not open file");
@@ -2520,7 +2520,6 @@ state_status_t state_lock(cache_entry_t *entry,
 		openflags = FSAL_O_RDWR;
 	cache_status = cache_inode_open(entry,
 					openflags,
-					req_ctx,
 					(lock->lock_reclaim) ?
 						CACHE_INODE_FLAG_RECLAIM : 0);
 

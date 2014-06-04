@@ -147,7 +147,7 @@ int nfs3_mkdir(nfs_arg_t *arg,
 	/* Try to create the directory */
 	cache_status =
 	    cache_inode_create(parent_entry, dir_name, DIRECTORY, mode, NULL,
-			       op_ctx, &dir_entry);
+			       &dir_entry);
 
 	if (cache_status != CACHE_INODE_SUCCESS)
 		goto out_fail;
@@ -168,7 +168,7 @@ int nfs3_mkdir(nfs_arg_t *arg,
 	    || ((sattr.mask & ATTR_GROUP)
 		&& (op_ctx->creds->caller_gid != sattr.group))) {
 		cache_status =
-		    cache_inode_setattr(dir_entry, &sattr, false, op_ctx);
+		    cache_inode_setattr(dir_entry, &sattr, false);
 
 		if (cache_status != CACHE_INODE_SUCCESS)
 			goto out_fail;

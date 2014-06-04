@@ -380,7 +380,7 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 	    data->req_ctx->creds->caller_uid) {
 		/* Need to permission check the read. */
 		cache_status =
-		    cache_inode_access(entry, FSAL_READ_ACCESS, data->req_ctx);
+		    cache_inode_access(entry, FSAL_READ_ACCESS);
 
 		if (cache_status == CACHE_INODE_FSAL_EACCESS) {
 			/* Test for execute permission */
@@ -388,8 +388,7 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 			    cache_inode_access(entry,
 					       FSAL_MODE_MASK_SET(FSAL_X_OK) |
 					       FSAL_ACE4_MASK_SET
-					       (FSAL_ACE_PERM_EXECUTE),
-					       data->req_ctx);
+					       (FSAL_ACE_PERM_EXECUTE));
 		}
 
 		if (cache_status != CACHE_INODE_SUCCESS) {
@@ -463,8 +462,7 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 
 	cache_status =
 	    cache_inode_rdwr_plus(entry, io, offset, size, &read_size,
-				  bufferdata, &eof_met, data->req_ctx,
-				  &sync, info);
+				  bufferdata, &eof_met, &sync, info);
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		res_READ4->status = nfs4_Errno(cache_status);
 		gsh_free(bufferdata);
@@ -472,7 +470,7 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 		goto done;
 	}
 
-	if (cache_inode_size(entry, data->req_ctx, &file_size) !=
+	if (cache_inode_size(entry, &file_size) !=
 	    CACHE_INODE_SUCCESS) {
 		res_READ4->status = nfs4_Errno(cache_status);
 		gsh_free(bufferdata);
