@@ -1784,6 +1784,7 @@ void try_to_grant_lock(state_lock_entry_t *lock_entry)
 
 		put_gsh_export(export);
 
+		release_root_op_context();
 		if (status == STATE_LOCK_BLOCKED) {
 			/* The lock is still blocked,
 			 * restore it's type and leave it in the list
@@ -3313,6 +3314,7 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 	pthread_mutex_unlock(&nsmclient->ssc_mutex);
 	LogFullDebug(COMPONENT_STATE, "DONE");
 
+	release_root_op_context();
 	return status;
 }
 
@@ -3692,6 +3694,7 @@ void cancel_all_nlm_blocked()
 out:
 
 	pthread_mutex_unlock(&blocked_locks_mutex);
+	release_root_op_context();
 	return;
 }
 

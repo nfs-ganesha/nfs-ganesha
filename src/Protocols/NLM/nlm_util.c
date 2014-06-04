@@ -260,6 +260,7 @@ static void nlm4_send_grant_msg(state_async_queue_t *arg)
 	state_status = state_release_grant(cookie_entry,
 					   &root_op_context.req_ctx);
 
+	release_root_op_context();
 	put_gsh_export(export);
 
 	if (state_status != STATE_SUCCESS) {

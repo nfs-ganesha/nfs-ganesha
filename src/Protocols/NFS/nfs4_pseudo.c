@@ -502,6 +502,7 @@ void create_pseudofs(void)
 			LogFatal(COMPONENT_EXPORT,
 				 "Could not complete creating PseudoFS");
 	}
+	release_root_op_context();
 }
 
 /**
@@ -623,6 +624,7 @@ void pseudo_unmount_export(struct gsh_export *export)
 						      junction_inode);
 
 				gsh_free(pseudopath);
+				release_root_op_context();
 			} else {
 				LogCrit(COMPONENT_EXPORT,
 					"Could not clean up PseudoFS for %s, out of memory",

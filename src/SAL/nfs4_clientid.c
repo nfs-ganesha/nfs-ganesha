@@ -821,6 +821,7 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid)
 		}
 
 		pthread_mutex_unlock(&clientid->cid_mutex);
+		release_root_op_context();
 		return false;
 	}
 
@@ -1012,6 +1013,7 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid)
 	/* Release the hash table reference to the clientid. */
 	(void)dec_client_id_ref(clientid);
 
+	release_root_op_context();
 	return true;
 }
 

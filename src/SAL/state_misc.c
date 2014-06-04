@@ -1340,6 +1340,7 @@ void state_release_export(struct gsh_export *export)
 	state_export_unlock_all(&root_op_context.req_ctx);
 	state_export_release_nfs4_state(&root_op_context.req_ctx);
 	state_export_unshare_all(&root_op_context.req_ctx);
+	release_root_op_context();
 }
 
 /** @} */

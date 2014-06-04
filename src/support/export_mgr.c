@@ -609,7 +609,7 @@ bool mount_gsh_export(struct gsh_export *exp)
 
 	if (!pseudo_mount_export(exp, &root_op_context.req_ctx))
 		rc = false;
-
+	release_root_op_context();
 	return rc;
 }
 

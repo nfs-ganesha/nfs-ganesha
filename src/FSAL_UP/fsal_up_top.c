@@ -719,7 +719,7 @@ static int32_t layoutrec_completion(rpc_call_t *call, rpc_call_hook hook,
 		free_layoutrec(&call->cbt.v_u.v4.args.argarray.argarray_val[1]);
 		nfs41_complete_single(call, hook, cb_data, flags);
 		gsh_free(cb_data);
-		return 0;
+		goto out;
 	} else if (call->cbt.v_u.v4.res.status == NFS4ERR_DELAY) {
 		struct timespec current;
 		nsecs_elapsed_t delay;
@@ -744,7 +744,7 @@ static int32_t layoutrec_completion(rpc_call_t *call, rpc_call_hook hook,
 		   re-using that to make the queued call. */
 		nfs41_complete_single(call, hook, cb_data, flags);
 		delayed_submit(layoutrecall_one_call, cb_data, delay);
-		return 0;
+		goto out;
 	}
 
 	/**
@@ -796,6 +796,9 @@ static int32_t layoutrec_completion(rpc_call_t *call, rpc_call_hook hook,
 	free_layoutrec(&call->cbt.v_u.v4.args.argarray.argarray_val[1]);
 	nfs41_complete_single(call, hook, cb_data, flags);
 	gsh_free(cb_data);
+
+out:
+	release_root_op_context();
 	return 0;
 }
 
@@ -838,6 +841,7 @@ static void return_one_async(void *arg)
 				      true);
 		PTHREAD_RWLOCK_unlock(&s->state_entry->state_lock);
 	}
+	release_root_op_context();
 	gsh_free(cb_data);
 }
 
@@ -925,6 +929,7 @@ static void layoutrecall_one_call(void *arg)
 	} else {
 		gsh_free(cb_data);
 	}
+	release_root_op_context();
 }
 
 /**

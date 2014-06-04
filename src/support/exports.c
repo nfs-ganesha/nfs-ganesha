@@ -1553,6 +1553,7 @@ bool init_export_root(struct gsh_export *export)
 	struct fsal_obj_handle *root_handle;
 	cache_entry_t *entry = NULL;
 	struct root_op_context root_op_context;
+	bool my_status = false;
 
 	/* Initialize req_ctx */
 	init_root_op_context(&root_op_context, export, export->fsal_export,
@@ -1573,7 +1574,7 @@ bool init_export_root(struct gsh_export *export)
 			"Lookup failed on path, ExportId=%u Path=%s FSAL_ERROR=(%s,%u)",
 			export->export_id, export->fullpath,
 			msg_fsal_err(fsal_status.major), fsal_status.minor);
-		return false;
+		goto out;
 	}
 
 	/* Add this entry to the Cache Inode as a "root" entry */
@@ -1588,7 +1589,7 @@ bool init_export_root(struct gsh_export *export)
 			export->fullpath,
 			export->export_id,
 			cache_inode_err_str(cache_status));
-		return false;
+		goto out;
 	}
 
 	/* Instead of an LRU reference, we must hold a pin reference */
@@ -1603,7 +1604,7 @@ bool init_export_root(struct gsh_export *export)
 
 		/* Release the LRU reference and return failure. */
 		cache_inode_put(entry);
-		return false;
+		goto out;
 	}
 
 	PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
@@ -1634,7 +1635,10 @@ bool init_export_root(struct gsh_export *export)
 
 	/* Release the LRU reference and return success. */
 	cache_inode_put(entry);
-	return true;
+	my_status = true;
+out:
+	release_root_op_context();
+	return my_status;
 }
 
 /**
