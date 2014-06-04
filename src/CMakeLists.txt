@@ -549,7 +549,7 @@ if(USE_FSAL_ZFS)
   check_library_exists(
     zfswrap
     libzfswrap_init
-    ""
+    ${ZFS_PREFIX}/lib
     HAVE_ZFS_LIB
     )
   check_include_files("unistd.h;libzfswrap.h" HAVE_LIBZFSWRAP_H)
