@@ -134,7 +134,7 @@ int nfs4_op_release_lockowner(struct nfs_argop4 *op, compound_data_t *data,
 		/* found the lock owner and it doesn't have any locks,
 		 * release it
 		 */
-		release_lockstate(data->req_ctx, lock_owner);
+		release_lockstate(lock_owner);
 
 		res_RELEASE_LOCKOWNER4->status = NFS4_OK;
 	}

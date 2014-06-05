@@ -567,8 +567,7 @@ void state_nfs4_state_wipe(cache_entry_t *entry)
  *
  * @param[in] lock_owner Lock owner to release
  */
-void release_lockstate(struct req_op_context *req_ctx,
-		       state_owner_t *lock_owner)
+void release_lockstate(state_owner_t *lock_owner)
 {
 	struct glist_head *glist, *glistn;
 
@@ -598,8 +597,7 @@ void release_lockstate(struct req_op_context *req_ctx,
  *
  * @param[in,out] open_owner Open owner
  */
-void release_openstate(struct req_op_context *req_ctx,
-		       state_owner_t *open_owner)
+void release_openstate(state_owner_t *open_owner)
 {
 	state_status_t state_status;
 	struct glist_head *glist, *glistn;
@@ -619,12 +617,11 @@ void release_openstate(struct req_op_context *req_ctx,
 		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 
 		if (state_found->state_type == STATE_TYPE_SHARE) {
-			req_ctx->export = state_found->state_export;
-			req_ctx->fsal_export = req_ctx->export->fsal_export;
+			op_ctx->export = state_found->state_export;
+			op_ctx->fsal_export = op_ctx->export->fsal_export;
 
 			state_status =
 			    state_share_remove(state_found->state_entry,
-					       req_ctx,
 					       open_owner, state_found);
 			if (!state_unlock_err_ok(state_status)) {
 				LogEvent(COMPONENT_CLIENTID,
@@ -650,28 +647,27 @@ void release_openstate(struct req_op_context *req_ctx,
 /**
  * @brief Remove all state belonging to an export.
  *
- * @param[in] export The export to release state for
  */
-void state_export_release_nfs4_state(struct req_op_context *req_ctx)
+
+void state_export_release_nfs4_state(void)
 {
 	state_t *state;
 	state_status_t state_status;
 
 	while (1) {
-		PTHREAD_RWLOCK_wrlock(&req_ctx->export->lock);
+		PTHREAD_RWLOCK_wrlock(&op_ctx->export->lock);
 
-		state = glist_first_entry(&req_ctx->export->exp_state_list,
+		state = glist_first_entry(&op_ctx->export->exp_state_list,
 					  state_t,
 					  state_export_list);
 
-		PTHREAD_RWLOCK_unlock(&req_ctx->export->lock);
+		PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
 
 		if (state == NULL)
 			break;
 
 		if (state->state_type == STATE_TYPE_SHARE) {
 			state_status = state_share_remove(state->state_entry,
-							  req_ctx,
 							  state->state_owner,
 							  state);
 

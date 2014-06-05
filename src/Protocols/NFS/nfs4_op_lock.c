@@ -521,7 +521,6 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 	/* Now we have a lock owner and a stateid.  Go ahead and push
 	   lock into SAL (and FSAL). */
 	state_status = state_lock(data->current_entry,
-				  data->req_ctx,
 				  lock_owner,
 				  lock_state,
 				  blocking,

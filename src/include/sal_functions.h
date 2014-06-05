@@ -472,7 +472,6 @@ void LogLock(log_components_t component, log_levels_t debug, const char *reason,
 void dump_all_locks(const char *label);
 
 state_status_t state_add_grant_cookie(cache_entry_t *entry,
-				      struct req_op_context *req_ctx,
 				      void *cookie, int cookie_size,
 				      state_lock_entry_t *lock_entry,
 				      state_cookie_entry_t **cookie_entry);
@@ -480,16 +479,13 @@ state_status_t state_add_grant_cookie(cache_entry_t *entry,
 state_status_t state_find_grant(void *cookie, int cookie_size,
 				state_cookie_entry_t **cookie_entry);
 
-void state_complete_grant(state_cookie_entry_t *cookie_entry,
-			  struct req_op_context *req_ctx);
+void state_complete_grant(state_cookie_entry_t *cookie_entry);
 
-state_status_t state_cancel_grant(state_cookie_entry_t *cookie_entry,
-				  struct req_op_context *req_ctx);
+state_status_t state_cancel_grant(state_cookie_entry_t *cookie_entry);
 
-state_status_t state_release_grant(state_cookie_entry_t *cookie_entry,
-				   struct req_op_context *req_ctx);
+state_status_t state_release_grant(state_cookie_entry_t *cookie_entry);
 state_status_t state_test(cache_entry_t *entry,
-			  struct req_op_context *req_ctx, state_owner_t *owner,
+			  state_owner_t *owner,
 			  fsal_lock_param_t *lock,
 			  /* owner that holds conflicting lock */
 			  state_owner_t **holder,
@@ -497,7 +493,7 @@ state_status_t state_test(cache_entry_t *entry,
 			  fsal_lock_param_t *conflict);
 
 state_status_t state_lock(cache_entry_t *entry,
-			  struct req_op_context *req_ctx, state_owner_t *owner,
+			  state_owner_t *owner,
 			  state_t *state, state_blocking_t blocking,
 			  state_block_data_t *block_data,
 			  fsal_lock_param_t *lock,
@@ -508,23 +504,20 @@ state_status_t state_lock(cache_entry_t *entry,
 			  lock_type_t sle_type);
 
 state_status_t state_unlock(cache_entry_t *entry,
-			    struct req_op_context *req_ctx,
 			    state_owner_t *owner, state_t *state,
 			    fsal_lock_param_t *lock, lock_type_t sle_type);
 
 state_status_t state_cancel(cache_entry_t *entry,
-			    struct req_op_context *req_ctx,
 			    state_owner_t *owner, fsal_lock_param_t *lock);
 
 state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
-				struct req_op_context *req_ctx,
+				bool from_client,
 				state_t *state);
 
 state_status_t state_owner_unlock_all(state_owner_t *owner,
-				      struct req_op_context *req_ctx,
 				      state_t *state);
 
-void state_export_unlock_all(struct req_op_context *req_ctx);
+void state_export_unlock_all(void);
 
 void state_lock_wipe(cache_entry_t *entry);
 
@@ -572,11 +565,9 @@ state_status_t state_lookup_layout_state(cache_entry_t *entry,
 					 layouttype4 type, state_t **state);
 void state_nfs4_state_wipe(cache_entry_t *entry);
 
-void release_lockstate(struct req_op_context *req_ctx,
-		       state_owner_t *lock_owner);
-void release_openstate(struct req_op_context *req_ctx,
-		       state_owner_t *open_owner);
-void state_export_release_nfs4_state(struct req_op_context *req_ctx);
+void release_lockstate(state_owner_t *lock_owner);
+void release_openstate(state_owner_t *open_owner);
+void state_export_release_nfs4_state(void);
 
 /* Specifically for delegations */
 bool init_deleg_heuristics(cache_entry_t *entry);
@@ -604,28 +595,24 @@ void dump_all_states(void);
 #define OPEN4_SHARE_ACCESS_NONE 0
 
 state_status_t state_share_add(cache_entry_t *entry,
-			       struct req_op_context *req_ctx,
 			       state_owner_t *owner,
 			       /* state that holds share bits to be added */
 			       state_t *state, bool reclaim);
 
 state_status_t state_share_remove(cache_entry_t *entry,
-				  struct req_op_context *req_ctx,
 				  state_owner_t *owner,
 				  /* state that holds share bits to be removed
 				   */
 				  state_t *state);
 
-state_status_t state_share_upgrade(struct req_op_context *req_ctx,
-				   cache_entry_t *entry,
+state_status_t state_share_upgrade(cache_entry_t *entry,
 				   /* new share bits */
 				   state_data_t *state_data,
 				   state_owner_t *owner,
 				   /* state that holds current share bits */
 				   state_t *state, bool reclaim);
 
-state_status_t state_share_downgrade(struct req_op_context *req_ctx,
-				     cache_entry_t *entry,
+state_status_t state_share_downgrade(cache_entry_t *entry,
 				     /* new share bits */
 				     state_data_t *state_data,
 				     state_owner_t *owner,
@@ -645,17 +632,16 @@ state_status_t state_share_anonymous_io_start(cache_entry_t *entry,
 
 void state_share_anonymous_io_done(cache_entry_t *entry, int share_access);
 
-state_status_t state_nlm_share(cache_entry_t *, struct req_op_context *,
+state_status_t state_nlm_share(cache_entry_t *,
 			       int, int, state_owner_t *, bool);
 
 state_status_t state_nlm_unshare(cache_entry_t *entry,
-				 struct req_op_context *req_ctx,
 				 int share_access,
 				 int share_deny,
 				 state_owner_t *owner);
 
 void state_share_wipe(cache_entry_t *entry);
-void state_export_unshare_all(struct req_op_context *req_ctx);
+void state_export_unshare_all(void);
 
 /******************************************************************************
  *

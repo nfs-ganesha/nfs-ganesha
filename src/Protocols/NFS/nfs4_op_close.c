@@ -254,7 +254,6 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 	/* File is closed, release the share state */
 	if (state_found->state_type == STATE_TYPE_SHARE) {
 		state_status = state_share_remove(state_found->state_entry,
-						  data->req_ctx,
 						  open_owner,
 						  state_found);
 

@@ -91,13 +91,13 @@ int nlm4_Granted_Res(nfs_arg_t *args,
 	if (arg->stat.stat != NLM4_GRANTED) {
 		LogMajor(COMPONENT_NLM,
 			 "Granted call failed due to client error, releasing lock");
-		state_status = state_release_grant(cookie_entry, op_ctx);
+		state_status = state_release_grant(cookie_entry);
 		if (state_status != STATE_SUCCESS) {
 			LogDebug(COMPONENT_NLM,
 				 "cache_inode_release_grant failed");
 		}
 	} else {
-		state_complete_grant(cookie_entry, op_ctx);
+		state_complete_grant(cookie_entry);
 		nlm_signal_async_resp(cookie_entry);
 	}
 

@@ -976,7 +976,7 @@ static void nlm_releasecall(struct fridgethr_context *ctx)
 	state_status_t err;
 
 	nsm_cp = ctx->arg;
-	err = state_nlm_notify(nsm_cp, NULL, NULL);
+	err = state_nlm_notify(nsm_cp, false, NULL);
 	if (err != STATE_SUCCESS)
 		LogDebug(COMPONENT_STATE,
 			"state_nlm_notify failed with %d",

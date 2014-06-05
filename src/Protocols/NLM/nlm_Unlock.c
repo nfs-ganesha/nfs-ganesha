@@ -95,7 +95,6 @@ int nlm4_Unlock(nfs_arg_t *args,
 				    false,	/* exlcusive doesn't matter */
 				    &arg->alock,
 				    &lock,
-				    op_ctx,
 				    &pentry,
 				    CARE_NOT,
 				    &nsm_client,
@@ -113,7 +112,6 @@ int nlm4_Unlock(nfs_arg_t *args,
 	}
 
 	state_status = state_unlock(pentry,
-				    op_ctx,
 				    nlm_owner,
 				    NULL,
 				    &lock,

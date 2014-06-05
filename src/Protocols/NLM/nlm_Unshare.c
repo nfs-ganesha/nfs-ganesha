@@ -101,7 +101,6 @@ int nlm4_Unshare(nfs_arg_t *args,
 	rc = nlm_process_share_parms(req,
 				     &arg->share,
 				     op_ctx->fsal_export,
-				     op_ctx,
 				     &pentry,
 				     CARE_NOT,
 				     &nsm_client,
@@ -118,7 +117,6 @@ int nlm4_Unshare(nfs_arg_t *args,
 	}
 
 	state_status = state_nlm_unshare(pentry,
-					 op_ctx,
 					 arg->share.access,
 					 arg->share.mode,
 					 nlm_owner);

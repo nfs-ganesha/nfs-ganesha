@@ -260,7 +260,6 @@ static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (*new_state) {
 		state_status = state_share_add(data->current_entry,
-					       data->req_ctx,
 					       owner,
 					       file_state,
 					       (openflags & FSAL_O_RECLAIM));
@@ -284,7 +283,7 @@ static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t *data,
 		    && (file_state->state_type == STATE_TYPE_SHARE)) {
 			LogFullDebug(COMPONENT_STATE,
 				     "Update existing share state");
-			state_status = state_share_upgrade(data->req_ctx,
+			state_status = state_share_upgrade(
 						   data->current_entry,
 						   &candidate_data,
 						   owner,
@@ -941,7 +940,6 @@ static void get_delegation(compound_data_t *data, struct nfs_argop4 *op,
 
 		/* PTHREAD_RWLOCK_unlock(&data->current_entry->state_lock); */
 		state_status = state_lock(data->current_entry,
-					  data->req_ctx,
 					  clientowner,
 					  new_state,
 					  STATE_NON_BLOCKING,

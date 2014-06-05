@@ -780,7 +780,6 @@ typedef enum state_blocking_t {
  * the lock entry if needed.
  */
 typedef state_status_t(*granted_callback_t) (cache_entry_t *entry,
-					     struct req_op_context *req_ctx,
 					     state_lock_entry_t *lock_entry);
 
 /**

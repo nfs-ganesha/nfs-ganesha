@@ -1337,9 +1337,9 @@ void state_release_export(struct gsh_export *export)
 	init_root_op_context(&root_op_context, export, export->fsal_export,
 			     0, 0, UNKNOWN_REQUEST);
 
-	state_export_unlock_all(&root_op_context.req_ctx);
-	state_export_release_nfs4_state(&root_op_context.req_ctx);
-	state_export_unshare_all(&root_op_context.req_ctx);
+	state_export_unlock_all();
+	state_export_release_nfs4_state();
+	state_export_unshare_all();
 	release_root_op_context();
 }
 

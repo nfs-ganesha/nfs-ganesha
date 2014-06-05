@@ -110,7 +110,6 @@ int nlm4_Lock(nfs_arg_t *args,
 				    arg->exclusive,
 				    &arg->alock,
 				    &lock,
-				    op_ctx,
 				    &entry,
 				    care,
 				    &nsm_client,
@@ -133,7 +132,6 @@ int nlm4_Lock(nfs_arg_t *args,
 	 * that will release old locks
 	 */
 	state_status = state_lock(entry,
-				  op_ctx,
 				  nlm_owner,
 				  (void *)(ptrdiff_t) arg->state,
 				  arg->block ? STATE_NLM_BLOCKING :
