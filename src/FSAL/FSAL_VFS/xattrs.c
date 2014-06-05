@@ -449,8 +449,9 @@ fsal_status_t vfs_getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
 		errno = 0;
 		rc = xattr_name_to_id(fd, xattr_name);
 		if (rc < 0) {
+			int minor = errno;
 			close(fd);
-			return fsalstat(-rc, errno);
+			return fsalstat(-rc, minor);
 		} else {
 			index = rc;
 			found = true;
@@ -494,14 +495,16 @@ fsal_status_t vfs_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 		/* get the name for this attr */
 		rc = xattr_id_to_name(fd, xattr_id, attr_name);
 		if (rc) {
+			int minor = errno;
 			close(fd);
-			return fsalstat(rc, errno);
+			return fsalstat(-rc, minor);
 		}
 
 		rc = fgetxattr(fd, attr_name, buffer_addr, buffer_size);
 		if (rc < 0) {
+			rc = errno;
 			close(fd);
-			return fsalstat(posix2fsal_error(errno), errno);
+			return fsalstat(posix2fsal_error(rc), rc);
 		}
 
 		/* the xattr value can be a binary, or a string.
@@ -564,8 +567,9 @@ fsal_status_t vfs_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
 	/* is it an xattr? */
 	rc = fgetxattr(fd, xattr_name, buffer_addr, buffer_size);
 	if (rc < 0) {
+		rc = errno;
 		close(fd);
-		return fsalstat(posix2fsal_error(errno), errno);
+		return fsalstat(posix2fsal_error(rc), rc);
 	}
 	/* the xattr value can be a binary, or a string.
 	 * trying to determine its type...
@@ -603,13 +607,15 @@ fsal_status_t vfs_setextattr_value(struct fsal_obj_handle *obj_hdl,
 		rc = fsetxattr(fd, xattr_name, (char *)buffer_addr, buffer_size,
 			       create ? XATTR_CREATE : XATTR_REPLACE);
 
+	if (rc != 0) {
+		rc = errno;
+		close(fd);
+		return fsalstat(posix2fsal_error(rc), rc);
+	}
+
 	close(fd);
 
-	if (rc != 0)
-		return fsalstat(posix2fsal_error(errno), errno);
-	else
-		return fsalstat(ERR_FSAL_NO_ERROR, 0);
-
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 fsal_status_t vfs_setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
@@ -639,9 +645,13 @@ fsal_status_t vfs_setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 		return fsalstat(fe, -fd);
 
 	rc = xattr_id_to_name(fd, xattr_id, name);
+	if (rc) {
+		int minor = errno;
+		close(fd);
+		return fsalstat(-rc, minor);
+	}
+
 	close(fd);
-	if (rc)
-		return fsalstat(rc, errno);
 
 	return vfs_setextattr_value(obj_hdl, opctx, name, buffer_addr,
 				    buffer_size, FALSE);
@@ -693,15 +703,20 @@ fsal_status_t vfs_remove_extattr_by_id(struct fsal_obj_handle *obj_hdl,
 
 	rc = xattr_id_to_name(fd, xattr_id, name);
 	if (rc) {
+		int minor = errno;
 		close(fd);
-		return fsalstat(rc, errno);
+		return fsalstat(-rc, minor);
 	}
+
 	rc = fremovexattr(fd, name);
+	if (rc) {
+		rc = errno;
+		close(fd);
+		return fsalstat(posix2fsal_error(rc), rc);
+	}
+
 
 	close(fd);
-
-	if (rc != 0)
-		return fsalstat(posix2fsal_error(errno), errno);
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -725,12 +740,13 @@ fsal_status_t vfs_remove_extattr_by_name(struct fsal_obj_handle *obj_hdl,
 		return fsalstat(fe, -fd);
 
 	rc = fremovexattr(fd, xattr_name);
+	if (rc) {
+		rc = errno;
+		close(fd);
+		return fsalstat(posix2fsal_error(rc), rc);
+	}
 
 	close(fd);
-
-	if (rc != 0)
-		return fsalstat(posix2fsal_error(errno), errno);
-
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
 }
