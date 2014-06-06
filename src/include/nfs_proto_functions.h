@@ -679,8 +679,7 @@ void nfs4_op_reclaim_complete_Free(nfs_resop4 *);
 void compound_data_Free(compound_data_t *);
 
 /* Pseudo FS functions */
-bool pseudo_mount_export(struct gsh_export *exp,
-			 struct req_op_context *req_ctx);
+bool pseudo_mount_export(struct gsh_export *exp);
 void create_pseudofs(void);
 void pseudo_unmount_export(struct gsh_export *exp);
 

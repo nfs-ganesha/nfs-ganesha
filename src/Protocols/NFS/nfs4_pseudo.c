@@ -53,13 +53,11 @@
 struct pseudofs_state {
 	struct gsh_export *export;
 	cache_entry_t *dirent;
-	struct req_op_context *req_ctx;
 };
 
 /**
  * @brief Delete the unecessary directories from pseudo FS
  *
- * @param req_ctx    [IN] request op context to run in
  * @param pseudopath [IN] full path of the node
  * @param entry [IN] cache entry for the last directory in the path
  *
@@ -77,8 +75,7 @@ struct pseudofs_state {
  * responsible for checking if it is an FSAL_PSEUDO export (we only clean up
  * directories in FSAL_PSEUDO filesystems).
  */
-void cleanup_pseudofs_node(struct req_op_context *req_ctx,
-			   char *pseudopath,
+void cleanup_pseudofs_node(char *pseudopath,
 			   cache_entry_t *entry)
 {
 	cache_entry_t *parent_entry;
@@ -135,24 +132,24 @@ void cleanup_pseudofs_node(struct req_op_context *req_ctx,
 	 * exp_root_cache_inode so we can check if we have reached the root of
 	 * the mounted on export.
 	 */
-	PTHREAD_RWLOCK_rdlock(&req_ctx->export->lock);
+	PTHREAD_RWLOCK_rdlock(&op_ctx->export->lock);
 
-	if (parent_entry == req_ctx->export->exp_root_cache_inode) {
+	if (parent_entry == op_ctx->export->exp_root_cache_inode) {
 		LogDebug(COMPONENT_EXPORT,
 			 "Reached root of PseudoFS %s",
-			 req_ctx->export->pseudopath);
+			 op_ctx->export->pseudopath);
 
-		PTHREAD_RWLOCK_unlock(&req_ctx->export->lock);
+		PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
 		goto out;
 	}
 
-	PTHREAD_RWLOCK_unlock(&req_ctx->export->lock);
+	PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
 
 	/* Truncate the pseudopath to be the path to the parent */
 	*pos = '\0';
 
 	/* check if the parent directory is needed */
-	cleanup_pseudofs_node(req_ctx, pseudopath, parent_entry);
+	cleanup_pseudofs_node(pseudopath, parent_entry);
 
 out:
 
@@ -211,7 +208,7 @@ retry:
 		return false;
 	}
 
-	if (strcmp(state->req_ctx->export->fsal_export->fsal->name,
+	if (strcmp(op_ctx->export->fsal_export->fsal->name,
 		   "PSEUDO") != 0) {
 		/* Only allowed to create directories on FSAL_PSEUDO */
 		LogCrit(COMPONENT_EXPORT,
@@ -288,12 +285,10 @@ retry:
  * @brief  Mount an export in the new Pseudo FS.
  *
  * @param exp     [IN] export in question
- * @param req_ctx [IN] req_op_context to operate in
  *
  * @return status as bool.
  */
-bool pseudo_mount_export(struct gsh_export *export,
-			 struct req_op_context *req_ctx)
+bool pseudo_mount_export(struct gsh_export *export)
 {
 	struct pseudofs_state state;
 	char *tmp_pseudopath;
@@ -318,7 +313,6 @@ bool pseudo_mount_export(struct gsh_export *export,
 	 * Note that a zeroed creds works just fine as root creds.
 	 */
 	state.export = export;
-	state.req_ctx = req_ctx;
 
 	LogDebug(COMPONENT_EXPORT,
 		 "BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s",
@@ -345,16 +339,16 @@ bool pseudo_mount_export(struct gsh_export *export,
 		 tmp_pseudopath);
 
 	/* Now find the export we are mounted on */
-	state.req_ctx->export =
+	op_ctx->export =
 	    get_gsh_export_by_pseudo(tmp_pseudopath, false);
 
-	if (state.req_ctx->export == NULL) {
+	if (op_ctx->export == NULL) {
 		LogFatal(COMPONENT_EXPORT,
 			 "Could not find mounted on export for %s, tmp=%s",
 			 export->pseudopath, tmp_pseudopath);
 	}
 
-	state.req_ctx->fsal_export = req_ctx->export->fsal_export;
+	op_ctx->fsal_export = op_ctx->export->fsal_export;
 
 	/* Put the slash back in */
 	*last_slash = '/';
@@ -362,11 +356,11 @@ bool pseudo_mount_export(struct gsh_export *export,
 	/* Point to the portion of this export's pseudo path that is beyond the
 	 * mounted on export's pseudo path.
 	 */
-	if (state.req_ctx->export->pseudopath[1] == '\0')
+	if (op_ctx->export->pseudopath[1] == '\0')
 		rest = tmp_pseudopath + 1;
 	else
 		rest = tmp_pseudopath +
-		       strlen(state.req_ctx->export->pseudopath) + 1;
+		       strlen(op_ctx->export->pseudopath) + 1;
 
 	LogDebug(COMPONENT_EXPORT,
 		 "BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s Rest %s",
@@ -374,7 +368,7 @@ bool pseudo_mount_export(struct gsh_export *export,
 		 export->pseudopath, rest);
 
 	/* Get the root inode of the mounted on export */
-	cache_status = nfs_export_get_root_entry(state.req_ctx->export,
+	cache_status = nfs_export_get_root_entry(op_ctx->export,
 						 &state.dirent);
 
 	if (cache_status != CACHE_INODE_SUCCESS) {
@@ -384,7 +378,7 @@ bool pseudo_mount_export(struct gsh_export *export,
 			export->pseudopath);
 
 		/* Release the reference on the mounted on export. */
-		put_gsh_export(state.req_ctx->export);
+		put_gsh_export(op_ctx->export);
 		return false;
 	}
 
@@ -400,7 +394,7 @@ bool pseudo_mount_export(struct gsh_export *export,
 			 * and the mounted on export
 			 */
 			cache_inode_put(state.dirent);
-			put_gsh_export(state.req_ctx->export);
+			put_gsh_export(op_ctx->export);
 			return false;
 		}
 	}
@@ -421,7 +415,7 @@ bool pseudo_mount_export(struct gsh_export *export,
 		 * and the mounted on export
 		 */
 		cache_inode_put(state.dirent);
-		put_gsh_export(state.req_ctx->export);
+		put_gsh_export(op_ctx->export);
 		return false;
 	}
 
@@ -457,13 +451,13 @@ bool pseudo_mount_export(struct gsh_export *export,
 	export->exp_mounted_on_file_id =
 	    state.dirent->obj_handle->attributes.fileid;
 	export->exp_junction_inode = state.dirent;
-	export->exp_parent_exp = state.req_ctx->export;
+	export->exp_parent_exp = op_ctx->export;
 
 	/* Add ourselves to the list of exports mounted on parent */
-	PTHREAD_RWLOCK_wrlock(&state.req_ctx->export->lock);
-	glist_add_tail(&state.req_ctx->export->mounted_exports_list,
+	PTHREAD_RWLOCK_wrlock(&op_ctx->export->lock);
+	glist_add_tail(&op_ctx->export->mounted_exports_list,
 		       &export->mounted_exports_node);
-	PTHREAD_RWLOCK_unlock(&state.req_ctx->export->lock);
+	PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
 
 	PTHREAD_RWLOCK_unlock(&export->lock);
 
@@ -488,7 +482,7 @@ void create_pseudofs(void)
 	struct root_op_context root_op_context;
 	struct gsh_export *export;
 
-	/* Initialize req_ctx */
+	/* Initialize a root context */
 	init_root_op_context(&root_op_context, NULL, NULL,
 			     NFS_V4, 0, NFS_REQUEST);
 
@@ -496,7 +490,7 @@ void create_pseudofs(void)
 		export = export_take_mount_work();
 		if (export == NULL)
 			break;
-		if (!pseudo_mount_export(export, &root_op_context.req_ctx))
+		if (!pseudo_mount_export(export))
 			LogFatal(COMPONENT_EXPORT,
 				 "Could not complete creating PseudoFS");
 	}
@@ -617,8 +611,7 @@ void pseudo_unmount_export(struct gsh_export *export)
 					NFS_V4, 0, NFS_REQUEST);
 
 				/* Remove the unused PseudoFS nodes */
-				cleanup_pseudofs_node(&root_op_context.req_ctx,
-						      pseudopath,
+				cleanup_pseudofs_node(pseudopath,
 						      junction_inode);
 
 				gsh_free(pseudopath);
