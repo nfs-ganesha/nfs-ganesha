@@ -176,7 +176,7 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t *data,
 		data->current_entry, lock_owner, &lock_desc);
 
 	if (data->minorversion == 0) {
-		data->req_ctx->clientid =
+		op_ctx->clientid =
 		    &lock_owner->so_owner.so_nfs4_owner.so_clientid;
 	}
 
@@ -194,7 +194,7 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	if (data->minorversion == 0)
-		data->req_ctx->clientid = NULL;
+		op_ctx->clientid = NULL;
 
 	/* Successful exit */
 	res_LOCKU4->status = NFS4_OK;

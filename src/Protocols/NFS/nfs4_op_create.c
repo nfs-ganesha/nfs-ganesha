@@ -94,12 +94,12 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* if quota support is active, then we should check is the FSAL allows
 	 * inode creation or not */
-	exp_hdl = data->req_ctx->fsal_export;
+	exp_hdl = op_ctx->fsal_export;
 
 	fsal_status = exp_hdl->ops->check_quota(exp_hdl,
-						data->req_ctx->export->fullpath,
+						op_ctx->export->fullpath,
 						FSAL_QUOTA_INODES,
-						data->req_ctx);
+						op_ctx);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		res_CREATE4->status = NFS4ERR_DQUOT;
@@ -363,7 +363,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 	/* Building the new file handle */
 	if (!nfs4_FSALToFhandle(&newfh4,
 				entry_new->obj_handle,
-				data->req_ctx->export)) {
+				op_ctx->export)) {
 		res_CREATE4->status = NFS4ERR_SERVERFAULT;
 		cache_inode_put(entry_new);
 		goto out;
@@ -400,9 +400,9 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 		if ((sattr.mask &
 		     (ATTR_ACL | ATTR_ATIME | ATTR_MTIME | ATTR_CTIME))
 		    || ((sattr.mask & ATTR_OWNER)
-			&& (data->req_ctx->creds->caller_uid != sattr.owner))
+			&& (op_ctx->creds->caller_uid != sattr.owner))
 		    || ((sattr.mask & ATTR_GROUP)
-			&& (data->req_ctx->creds->caller_gid != sattr.group))) {
+			&& (op_ctx->creds->caller_gid != sattr.group))) {
 			cache_status = cache_inode_setattr(entry_new,
 							   &sattr,
 							   false);

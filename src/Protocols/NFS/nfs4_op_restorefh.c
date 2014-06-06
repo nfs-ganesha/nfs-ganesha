@@ -100,21 +100,21 @@ int nfs4_op_restorefh(struct nfs_argop4 *op, compound_data_t *data,
 
 	data->currentFH.nfs_fh4_len = data->savedFH.nfs_fh4_len;
 
-	if (data->req_ctx->export != NULL)
-		put_gsh_export(data->req_ctx->export);
+	if (op_ctx->export != NULL)
+		put_gsh_export(op_ctx->export);
 
 	/* Restore the export information */
-	data->req_ctx->export = data->saved_export;
-	if (data->req_ctx->export != NULL) {
-		data->req_ctx->fsal_export = data->req_ctx->export->fsal_export;
+	op_ctx->export = data->saved_export;
+	if (op_ctx->export != NULL) {
+		op_ctx->fsal_export = op_ctx->export->fsal_export;
 
 		/* Get a reference to the export for the new CurrentFH
 		 * independent of SavedFH if appropriate.
 		 */
-		get_gsh_export_ref(data->req_ctx->export);
+		get_gsh_export_ref(op_ctx->export);
 	}
 
-	*data->req_ctx->export_perms = data->saved_export_perms;
+	*op_ctx->export_perms = data->saved_export_perms;
 
 	/* No need to call nfs4_SetCompoundExport or nfs4_MakeCred
 	 * because we are restoring saved information, and the

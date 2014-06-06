@@ -274,7 +274,7 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* Fill in the clientid for NFSv4.0 */
 	if (data->minorversion == 0) {
-		data->req_ctx->clientid =
+		op_ctx->clientid =
 		    &open_owner->so_owner.so_nfs4_owner.so_clientid;
 	}
 
@@ -289,7 +289,7 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	if (data->minorversion == 0)
-		data->req_ctx->clientid = NULL;
+		op_ctx->clientid = NULL;
 
 	PTHREAD_RWLOCK_unlock(&data->current_entry->state_lock);
 	res_CLOSE4->status = NFS4_OK;

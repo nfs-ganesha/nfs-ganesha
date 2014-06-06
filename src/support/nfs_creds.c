@@ -494,59 +494,59 @@ void clean_credentials(void)
 int nfs4_MakeCred(compound_data_t *data)
 {
 	xprt_type_t xprt_type = svc_get_xprt_type(data->req->rq_xprt);
-	int port = get_port(data->req_ctx->caller_addr);
+	int port = get_port(op_ctx->caller_addr);
 
 	LogMidDebugAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
 		    "nfs4_MakeCred about to call nfs_export_check_access");
 	export_check_access();
 
 	/* Check if any access at all */
-	if ((data->req_ctx->export_perms->options &
+	if ((op_ctx->export_perms->options &
 	     EXPORT_OPTION_ACCESS_TYPE) == 0) {
 		LogInfoAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
 			"Access not allowed on Export_Id %d %s for client %s",
-			data->req_ctx->export->export_id,
-			data->req_ctx->export->fullpath,
-			data->req_ctx->client->hostaddr_str);
+			op_ctx->export->export_id,
+			op_ctx->export->fullpath,
+			op_ctx->client->hostaddr_str);
 		return NFS4ERR_ACCESS;
 	}
 
 	/* Check protocol version */
-	if ((data->req_ctx->export_perms->options & EXPORT_OPTION_NFSV4) == 0) {
+	if ((op_ctx->export_perms->options & EXPORT_OPTION_NFSV4) == 0) {
 		LogInfoAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
 			"NFS4 not allowed on Export_Id %d %s for client %s",
-			data->req_ctx->export->export_id,
-			data->req_ctx->export->fullpath,
-			data->req_ctx->client->hostaddr_str);
+			op_ctx->export->export_id,
+			op_ctx->export->fullpath,
+			op_ctx->client->hostaddr_str);
 		return NFS4ERR_ACCESS;
 	}
 
 	/* Check transport type */
 	if (((xprt_type == XPRT_UDP) &&
-	    ((data->req_ctx->export_perms->options &
+	    ((op_ctx->export_perms->options &
 	      EXPORT_OPTION_UDP) == 0))
 	    ||
 	    ((xprt_type == XPRT_TCP) &&
-	    ((data->req_ctx->export_perms->options &
+	    ((op_ctx->export_perms->options &
 	      EXPORT_OPTION_TCP) == 0))) {
 		LogInfoAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
 			"NFS4 over %s not allowed on Export_Id %d %s for client %s",
 			xprt_type_to_str(xprt_type),
-			data->req_ctx->export->export_id,
-			data->req_ctx->export->fullpath,
-			data->req_ctx->client->hostaddr_str);
+			op_ctx->export->export_id,
+			op_ctx->export->fullpath,
+			op_ctx->client->hostaddr_str);
 		return NFS4ERR_ACCESS;
 	}
 
 	/* Check if client is using a privileged port. */
-	if (((data->req_ctx->export_perms->options &
+	if (((op_ctx->export_perms->options &
 	      EXPORT_OPTION_PRIVILEGED_PORT) != 0)
 	    && (port >= IPPORT_RESERVED)) {
 		LogInfoAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
 			"Non-reserved Port %d is not allowed on Export_Id %d %s for client %s",
-			port, data->req_ctx->export->export_id,
-			data->req_ctx->export->fullpath,
-			data->req_ctx->client->hostaddr_str);
+			port, op_ctx->export->export_id,
+			op_ctx->export->fullpath,
+			op_ctx->client->hostaddr_str);
 		return NFS4ERR_ACCESS;
 	}
 
@@ -554,9 +554,9 @@ int nfs4_MakeCred(compound_data_t *data)
 	if (export_check_security(data->req) == false) {
 		LogInfoAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
 			"NFS4 auth not allowed on Export_Id %d %s for client %s",
-			data->req_ctx->export->export_id,
-			data->req_ctx->export->fullpath,
-			data->req_ctx->client->hostaddr_str);
+			op_ctx->export->export_id,
+			op_ctx->export->fullpath,
+			op_ctx->client->hostaddr_str);
 		return NFS4ERR_WRONGSEC;
 	}
 

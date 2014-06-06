@@ -221,27 +221,27 @@ static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t *data,
 		glist_init(&(file_state->state_data.share.share_lockstates));
 
 		/* Attach this open to an export */
-		file_state->state_export = data->req_ctx->export;
-		PTHREAD_RWLOCK_wrlock(&data->req_ctx->export->lock);
-		glist_add_tail(&data->req_ctx->export->exp_state_list,
+		file_state->state_export = op_ctx->export;
+		PTHREAD_RWLOCK_wrlock(&op_ctx->export->lock);
+		glist_add_tail(&op_ctx->export->exp_state_list,
 			       &file_state->state_export_list);
-		PTHREAD_RWLOCK_unlock(&data->req_ctx->export->lock);
+		PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
 	} else {
 		/* Check if open from another export */
-		if (file_state->state_export != data->req_ctx->export) {
+		if (file_state->state_export != op_ctx->export) {
 			LogEvent(COMPONENT_STATE,
 				 "Lock Owner Export Conflict, Lock held for export %d (%s), request for export %d (%s)",
 				 file_state->state_export->export_id,
 				 file_state->state_export->fullpath,
-				 data->req_ctx->export->export_id,
-				 data->req_ctx->export->fullpath);
+				 op_ctx->export->export_id,
+				 op_ctx->export->fullpath);
 			return STATE_INVALID_ARGUMENT;
 		}
 	}
 
 	/* Fill in the clientid for NFSv4.0 */
 	if (data->minorversion == 0) {
-		data->req_ctx->clientid =
+		op_ctx->clientid =
 		    &owner->so_owner.so_nfs4_owner.so_clientid;
 	}
 
@@ -253,7 +253,7 @@ static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t *data,
 	/* Clear the clientid for NFSv4.0 */
 
 	if (data->minorversion == 0)
-		data->req_ctx->clientid = NULL;
+		op_ctx->clientid = NULL;
 
 	/* Push share state to SAL (and FSAL) and update the union of
 	   file share state. */
@@ -335,7 +335,7 @@ static nfsstat4 open4_create_fh(compound_data_t *data, cache_entry_t *entry)
 	/* Building a new fh */
 	if (!nfs4_FSALToFhandle(&newfh4,
 				entry->obj_handle,
-				data->req_ctx->export))
+				op_ctx->export))
 		return NFS4ERR_SERVERFAULT;
 
 	/* This new fh replaces the current FH */
@@ -568,11 +568,11 @@ static nfsstat4 open4_create(OPEN4args *arg, compound_data_t *data,
 
 	/* if quota support is active, then we should check is
 	   the FSAL allows inode creation or not */
-	fsal_status = data->req_ctx->fsal_export->ops->check_quota(
-						data->req_ctx->fsal_export,
-						data->req_ctx->export->fullpath,
+	fsal_status = op_ctx->fsal_export->ops->check_quota(
+						op_ctx->fsal_export,
+						op_ctx->export->fullpath,
 						FSAL_QUOTA_INODES,
-						data->req_ctx);
+						op_ctx);
 
 	if (FSAL_IS_ERROR(fsal_status))
 		return NFS4ERR_DQUOT;
@@ -732,9 +732,9 @@ static nfsstat4 open4_create(OPEN4args *arg, compound_data_t *data,
 		     (ATTR_ACL | ATTR_ATIME | ATTR_MTIME | ATTR_CTIME |
 		      ATTR_SIZE)) ||
 		    ((sattr.mask & ATTR_OWNER)
-			&& (data->req_ctx->creds->caller_uid != sattr.owner))
+			&& (op_ctx->creds->caller_uid != sattr.owner))
 		    || ((sattr.mask & ATTR_GROUP)
-			&& (data->req_ctx->creds->caller_gid != sattr.group))) {
+			&& (op_ctx->creds->caller_gid != sattr.group))) {
 
 			cache_status =
 			    cache_inode_setattr(entry_newfile, &sattr,
@@ -865,7 +865,7 @@ static void get_delegation(compound_data_t *data, struct nfs_argop4 *op,
 	}
 
 	if (args->share_access & OPEN4_SHARE_ACCESS_WRITE) {
-		if (!(data->req_ctx->export_perms->options &
+		if (!(op_ctx->export_perms->options &
 		      EXPORT_OPTION_WRITE_DELEG)) {
 			LogDebug(COMPONENT_STATE,
 				 "WRITE delegs not allowed by export.");
@@ -874,7 +874,7 @@ static void get_delegation(compound_data_t *data, struct nfs_argop4 *op,
 		lock_desc.lock_type = FSAL_LOCK_W;
 		deleg_type = OPEN_DELEGATE_WRITE;
 	} else if (args->share_access & OPEN4_SHARE_ACCESS_READ) {
-		if (!(data->req_ctx->export_perms->options &
+		if (!(op_ctx->export_perms->options &
 		      EXPORT_OPTION_READ_DELEG)) {
 			LogDebug(COMPONENT_STATE,
 				 "READ delegs not allowed by export.");
@@ -930,12 +930,12 @@ static void get_delegation(compound_data_t *data, struct nfs_argop4 *op,
 				   sizeof(saved_data->deleg.sd_stateid.other));
 
 		/* Attach this open to an export */
-		new_state->state_export = data->req_ctx->export;
+		new_state->state_export = op_ctx->export;
 
-		PTHREAD_RWLOCK_wrlock(&data->req_ctx->export->lock);
-		glist_add_tail(&data->req_ctx->export->exp_state_list,
+		PTHREAD_RWLOCK_wrlock(&op_ctx->export->lock);
+		glist_add_tail(&op_ctx->export->exp_state_list,
 			       &new_state->state_export_list);
-		PTHREAD_RWLOCK_unlock(&data->req_ctx->export->lock);
+		PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
 
 
 		/* PTHREAD_RWLOCK_unlock(&data->current_entry->state_lock); */
@@ -1057,7 +1057,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* Check export permissions if OPEN4_CREATE */
 	if ((arg_OPEN4->openhow.opentype == OPEN4_CREATE) &&
-	    ((data->req_ctx->export_perms->options &
+	    ((op_ctx->export_perms->options &
 	      EXPORT_OPTION_MD_WRITE_ACCESS) == 0)) {
 		res_OPEN4->status = NFS4ERR_ROFS;
 
@@ -1069,7 +1069,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* Check export permissions if OPEN4_SHARE_ACCESS_WRITE */
 	if (((arg_OPEN4->share_access & OPEN4_SHARE_ACCESS_WRITE) != 0) &&
-	    ((data->req_ctx->export_perms->options &
+	    ((op_ctx->export_perms->options &
 	      EXPORT_OPTION_WRITE_ACCESS) == 0)) {
 		res_OPEN4->status = NFS4ERR_ROFS;
 
@@ -1209,8 +1209,8 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 
 	case CLAIM_DELEGATE_CUR:
 
-		if (!data->req_ctx->fsal_export->ops->fs_supports(
-				data->req_ctx->fsal_export, fso_delegations)) {
+		if (!op_ctx->fsal_export->ops->fs_supports(
+				op_ctx->fsal_export, fso_delegations)) {
 			res_OPEN4->status = NFS4ERR_NOTSUPP;
 			LogDebug(COMPONENT_STATE,
 				 "NFS4 OPEN returning NFS4ERR_NOTSUPP for CLAIM_DELEGATE");
@@ -1422,10 +1422,10 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 	/* Decide if we should delegate, then add it. */
 	if (nfs_param.nfsv4_param.allow_delegations &&
 	    data->current_entry->type != DIRECTORY
-	    && data->req_ctx->fsal_export->ops->fs_supports(
-						data->req_ctx->fsal_export,
+	    && op_ctx->fsal_export->ops->fs_supports(
+						op_ctx->fsal_export,
 						fso_delegations)
-	    && (data->req_ctx->export_perms->options &
+	    && (op_ctx->export_perms->options &
 		EXPORT_OPTION_DELEGATIONS)
 	    && owner->so_owner.so_nfs4_owner.so_confirmed == TRUE
 	    && !clientid->cb_chan_down

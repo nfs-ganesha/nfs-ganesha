@@ -128,7 +128,7 @@ int nfs4_op_getdevicelist(struct nfs_argop4 *op, compound_data_t *data,
 
 	cb_opaque.count = 0;
 	cb_opaque.max = 32;
-	cb_opaque.swexport = nfs_htonl64(data->req_ctx->export->export_id);
+	cb_opaque.swexport = nfs_htonl64(op_ctx->export->export_id);
 
 	res_GETDEVICELIST4->GETDEVICELIST4res_u.gdlr_resok4.
 	     gdlr_deviceid_list.gdlr_deviceid_list_val =
@@ -144,8 +144,8 @@ int nfs4_op_getdevicelist(struct nfs_argop4 *op, compound_data_t *data,
 	    res_GETDEVICELIST4->GETDEVICELIST4res_u.gdlr_resok4.
 	    gdlr_deviceid_list.gdlr_deviceid_list_val;
 
-	nfs_status = data->req_ctx->fsal_export->ops->getdevicelist(
-					data->req_ctx->fsal_export,
+	nfs_status = op_ctx->fsal_export->ops->getdevicelist(
+					op_ctx->fsal_export,
 					arg_GETDEVICELIST4->gdla_layout_type,
 					&cb_opaque, cb,
 					&res);

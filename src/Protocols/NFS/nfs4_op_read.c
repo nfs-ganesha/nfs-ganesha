@@ -98,7 +98,7 @@ static int op_dsread(struct nfs_argop4 *op, compound_data_t *data,
 
 	nfs_status = data->current_ds->ops->read(
 				data->current_ds,
-				data->req_ctx,
+				op_ctx,
 				&arg_READ4->stateid,
 				arg_READ4->offset,
 				arg_READ4->count,
@@ -173,7 +173,7 @@ static int op_dsread_plus(struct nfs_argop4 *op, compound_data_t *data,
 
 	nfs_status = data->current_ds->ops->read_plus(
 				data->current_ds,
-				data->req_ctx,
+				op_ctx,
 				&arg_READ4->stateid,
 				arg_READ4->offset,
 				arg_READ4->count,
@@ -377,7 +377,7 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 	 */
 	if (state_open == NULL
 	    && entry->obj_handle->attributes.owner !=
-	    data->req_ctx->creds->caller_uid) {
+	    op_ctx->creds->caller_uid) {
 		/* Need to permission check the read. */
 		cache_status =
 		    cache_inode_access(entry, FSAL_READ_ACCESS);
@@ -401,25 +401,25 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 	offset = arg_READ4->offset;
 	size = arg_READ4->count;
 
-	if (data->req_ctx->export->MaxOffsetRead < UINT64_MAX) {
+	if (op_ctx->export->MaxOffsetRead < UINT64_MAX) {
 		LogFullDebug(COMPONENT_NFS_V4,
 			     "Read offset=%" PRIu64 " count=%zd "
 			     "MaxOffSet=%" PRIu64, offset, size,
-			     data->req_ctx->export->MaxOffsetRead);
+			     op_ctx->export->MaxOffsetRead);
 
-		if ((offset + size) > data->req_ctx->export->MaxOffsetRead) {
+		if ((offset + size) > op_ctx->export->MaxOffsetRead) {
 			LogEvent(COMPONENT_NFS_V4,
 				 "A client tryed to violate max "
 				 "file size %" PRIu64 " for exportid #%hu",
-				 data->req_ctx->export->MaxOffsetRead,
-				 data->req_ctx->export->export_id);
+				 op_ctx->export->MaxOffsetRead,
+				 op_ctx->export->export_id);
 
 			res_READ4->status = NFS4ERR_DQUOT;
 			goto done;
 		}
 	}
 
-	if (size > data->req_ctx->export->MaxRead) {
+	if (size > op_ctx->export->MaxRead) {
 		/* the client asked for too much data, this should normally
 		   not happen because client will get FATTR4_MAXREAD value
 		   at mount time */
@@ -429,8 +429,8 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 			LogFullDebug(COMPONENT_NFS_V4,
 				     "read requested size = %"PRIu64
 				     " read allowed size = %" PRIu64,
-				     size, data->req_ctx->export->MaxRead);
-			size = data->req_ctx->export->MaxRead;
+				     size, op_ctx->export->MaxRead);
+			size = op_ctx->export->MaxRead;
 		}
 	}
 
@@ -455,7 +455,7 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	if (!anonymous && data->minorversion == 0) {
-		data->req_ctx->clientid =
+		op_ctx->clientid =
 		    &state_found->state_owner->so_owner.so_nfs4_owner.
 		    so_clientid;
 	}
@@ -479,7 +479,7 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	if (!anonymous && data->minorversion == 0)
-		data->req_ctx->clientid = NULL;
+		op_ctx->clientid = NULL;
 
 	res_READ4->READ4res_u.resok4.data.data_len = read_size;
 	res_READ4->READ4res_u.resok4.data.data_val = bufferdata;
@@ -674,7 +674,7 @@ int nfs4_op_io_advise(struct nfs_argop4 *op, compound_data_t *data,
 
 		fsal_status = entry->obj_handle->ops->io_advise(
 					entry->obj_handle,
-					data->req_ctx,	&hints);
+					op_ctx,	&hints);
 		if (FSAL_IS_ERROR(fsal_status)) {
 			res_IO_ADVISE->iar_status = NFS4ERR_NOTSUPP;
 			goto done;
@@ -758,7 +758,7 @@ int nfs4_op_seek(struct nfs_argop4 *op, compound_data_t *data,
 
 		fsal_status = entry->obj_handle->ops->seek(
 					entry->obj_handle,
-					data->req_ctx,	&info);
+					op_ctx,	&info);
 		if (FSAL_IS_ERROR(fsal_status)) {
 			res_SEEK->sr_status = NFS4ERR_NXIO;
 			goto done;

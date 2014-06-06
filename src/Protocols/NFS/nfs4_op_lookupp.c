@@ -64,7 +64,7 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 	cache_entry_t *dir_entry;
 	cache_entry_t *file_entry;
 	cache_inode_status_t cache_status;
-	struct gsh_export *original_export = data->req_ctx->export;
+	struct gsh_export *original_export = op_ctx->export;
 
 	resp->resop = NFS4_OP_LOOKUPP;
 	res_LOOKUPP4->status = NFS4_OK;
@@ -93,8 +93,8 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 		/* Handle reverse junction */
 		LogDebug(COMPONENT_EXPORT,
 			 "Handling reverse junction from Export_Id %d Path %s Parent=%p",
-			 data->req_ctx->export->export_id,
-			 data->req_ctx->export->fullpath,
+			 op_ctx->export->export_id,
+			 op_ctx->export->fullpath,
 			 original_export->exp_parent_exp);
 
 		if (original_export->exp_parent_exp == NULL) {
@@ -133,8 +133,8 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 			/* Export is in the process of dying */
 			LogCrit(COMPONENT_EXPORT,
 				"Reverse junction from Export_Id %d Path %s Parent=%p is stale",
-				data->req_ctx->export->export_id,
-				data->req_ctx->export->fullpath,
+				op_ctx->export->export_id,
+				op_ctx->export->fullpath,
 				parent_exp);
 			PTHREAD_RWLOCK_unlock(&original_export->lock);
 			res_LOOKUPP4->status = NFS4ERR_STALE;
@@ -151,8 +151,8 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 		 */
 		get_gsh_export_ref(parent_exp);
 
-		data->req_ctx->export = parent_exp;
-		data->req_ctx->fsal_export = data->req_ctx->export->fsal_export;
+		op_ctx->export = parent_exp;
+		op_ctx->fsal_export = op_ctx->export->fsal_export;
 
 		/* Now we are safely transitioned to the parent export and can
 		 * release the lock.
@@ -173,8 +173,8 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 			 */
 			LogDebug(COMPONENT_EXPORT,
 				 "NFS4ERR_ACCESS Hiding Export_Id %d Path %s with NFS4ERR_NOENT",
-				 data->req_ctx->export->export_id,
-				 data->req_ctx->export->fullpath);
+				 op_ctx->export->export_id,
+				 op_ctx->export->fullpath);
 			res_LOOKUPP4->status = NFS4ERR_NOENT;
 			return res_LOOKUPP4->status;
 		}
@@ -191,7 +191,7 @@ not_junction:
 		/* Convert it to a file handle */
 		if (!nfs4_FSALToFhandle(&data->currentFH,
 					file_entry->obj_handle,
-					data->req_ctx->export)) {
+					op_ctx->export)) {
 			res_LOOKUPP4->status = NFS4ERR_SERVERFAULT;
 			cache_inode_put(file_entry);
 			return res_LOOKUPP4->status;

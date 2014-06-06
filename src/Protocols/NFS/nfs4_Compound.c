@@ -503,7 +503,6 @@ int nfs4_Compound(nfs_arg_t *arg,
 
 	/* Initialisation of the compound request internal's data */
 	memset(&data, 0, sizeof(data));
-	data.req_ctx = op_ctx;
 	op_ctx->nfs_minorvers = compound4_minor;
 
 	/* Minor version related stuff */
@@ -642,10 +641,10 @@ int nfs4_Compound(nfs_arg_t *arg,
 			 */
 			LogFullDebug(COMPONENT_NFS_V4,
 				     "Check export perms export = %08x req = %08x",
-				     data.req_ctx->export_perms->options &
+				     op_ctx->export_perms->options &
 						EXPORT_OPTION_ACCESS_TYPE,
 				     perm_flags);
-			if ((data.req_ctx->export_perms->options &
+			if ((op_ctx->export_perms->options &
 			     perm_flags) != perm_flags) {
 				/* Export doesn't allow requested
 				 * access for this client.
@@ -877,10 +876,10 @@ void compound_data_Free(compound_data_t *data)
 	}
 
 	/* Release CurrentFH reference to export. */
-	if (data->req_ctx->export) {
-		put_gsh_export(data->req_ctx->export);
-		data->req_ctx->export = NULL;
-		data->req_ctx->fsal_export = NULL;
+	if (op_ctx->export) {
+		put_gsh_export(op_ctx->export);
+		op_ctx->export = NULL;
+		op_ctx->fsal_export = NULL;
 	}
 
 	/* Release SavedFH reference to export. */

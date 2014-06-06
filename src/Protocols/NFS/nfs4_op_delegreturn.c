@@ -83,8 +83,8 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t *data,
 	/* Initialize to sane default */
 	resp->resop = NFS4_OP_DELEGRETURN;
 
-	if (!data->req_ctx->fsal_export->ops->fs_supports(
-				data->req_ctx->fsal_export, fso_delegations)) {
+	if (!op_ctx->fsal_export->ops->fs_supports(
+				op_ctx->fsal_export, fso_delegations)) {
 		res_DELEGRETURN4->status = NFS4_OK;
 		return res_DELEGRETURN4->status;
 	}

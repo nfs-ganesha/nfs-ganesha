@@ -251,8 +251,6 @@ typedef struct compound_data {
 	object_file_type_t current_filetype;	/*< File type of current entry
 						 */
 	object_file_type_t saved_filetype;	/*< File type of saved entry */
-	struct req_op_context *req_ctx;	/*< the context including
-					   related, mapped creds */
 	struct gsh_export *saved_export; /*< Export entry related to the
 					     savedFH */
 	struct export_perms saved_export_perms; /*< Permissions for export for

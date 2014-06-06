@@ -161,7 +161,7 @@ int nfs4_op_layoutcommit(struct nfs_argop4 *op, compound_data_t *data,
 
 		nfs_status = data->current_entry->obj_handle->ops->layoutcommit(
 						data->current_entry->obj_handle,
-						data->req_ctx,
+						op_ctx,
 						&lou_body,
 						&arg,
 						&res);

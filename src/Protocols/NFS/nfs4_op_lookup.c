@@ -123,17 +123,17 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t *data,
 		cache_entry_t *entry = NULL;
 
 		/* Release any old export reference */
-		if (data->req_ctx->export != NULL)
-			put_gsh_export(data->req_ctx->export);
+		if (op_ctx->export != NULL)
+			put_gsh_export(op_ctx->export);
 
 		/* Get a reference to the export and stash it in
 		 * compound data.
 		 */
 		get_gsh_export_ref(file_entry->object.dir.junction_export);
 
-		data->req_ctx->export = file_entry->object.dir.junction_export;
-		data->req_ctx->fsal_export =
-			data->req_ctx->export->fsal_export;
+		op_ctx->export = file_entry->object.dir.junction_export;
+		op_ctx->fsal_export =
+			op_ctx->export->fsal_export;
 
 		/* Release attr_lock */
 		PTHREAD_RWLOCK_unlock(&file_entry->attr_lock);
@@ -149,8 +149,8 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t *data,
 			 */
 			LogDebug(COMPONENT_EXPORT,
 				 "NFS4ERR_ACCESS Hiding Export_Id %d Path %s with NFS4ERR_NOENT",
-				 data->req_ctx->export->export_id,
-				 data->req_ctx->export->fullpath);
+				 op_ctx->export->export_id,
+				 op_ctx->export->fullpath);
 			res_LOOKUP4->status = NFS4ERR_NOENT;
 			goto out;
 		}
@@ -158,19 +158,19 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t *data,
 		if (res_LOOKUP4->status != NFS4_OK) {
 			LogMajor(COMPONENT_EXPORT,
 				 "PSEUDO FS JUNCTION TRAVERSAL: Failed to get FSAL credentials for %s, id=%d",
-				 data->req_ctx->export->fullpath,
-				 data->req_ctx->export->export_id);
+				 op_ctx->export->fullpath,
+				 op_ctx->export->export_id);
 			goto out;
 		}
 
 		cache_status =
-		    nfs_export_get_root_entry(data->req_ctx->export, &entry);
+		    nfs_export_get_root_entry(op_ctx->export, &entry);
 
 		if (cache_status != CACHE_INODE_SUCCESS) {
 			LogMajor(COMPONENT_EXPORT,
 				 "PSEUDO FS JUNCTION TRAVERSAL: Failed to get root for %s, id=%d, status = %s",
-				 data->req_ctx->export->fullpath,
-				 data->req_ctx->export->export_id,
+				 op_ctx->export->fullpath,
+				 op_ctx->export->export_id,
 				 cache_inode_err_str(cache_status));
 
 			res_LOOKUP4->status = nfs4_Errno(cache_status);
@@ -179,8 +179,8 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t *data,
 
 		LogDebug(COMPONENT_EXPORT,
 			 "PSEUDO FS JUNCTION TRAVERSAL: Crossed to %s, id=%d for name=%s",
-			 data->req_ctx->export->fullpath,
-			 data->req_ctx->export->export_id, name);
+			 op_ctx->export->fullpath,
+			 op_ctx->export->export_id, name);
 
 		/* Swap in the entry on the other side of the junction. */
 		if (file_entry)
@@ -195,7 +195,7 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t *data,
 	/* Convert it to a file handle */
 	if (!nfs4_FSALToFhandle(&data->currentFH,
 				file_entry->obj_handle,
-				data->req_ctx->export)) {
+				op_ctx->export)) {
 		res_LOOKUP4->status = NFS4ERR_SERVERFAULT;
 		goto out;
 	}
