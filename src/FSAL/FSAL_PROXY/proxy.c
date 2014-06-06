@@ -119,39 +119,32 @@ static struct config_item proxy_client_params[] = {
 	CONFIG_EOL
 };
 
-/* parent init is a NOP
- */
-
-void proxy_init(void *parent)
-{
-	return;
-}
-
 /**
  * @brief Manage the memory allocated for the remote server sub-block
  *
- * This is pretty simple.  We just get the container of the parent
- * within the fsal_module and return a reference to the child, aka
+ * This is pretty simple.  We just get the container of the link_mem
+ * within the fsal_module and return a reference to the self_struct, aka
  * the special struct.
  *
  * The release part is a NOP since this is a member within fsal_module.
  *
- * @param parent - pointer to the parent struct memory.
- * @param child - NULL for dereference/allocate, not NULL for release
+ * @param link_mem - pointer to the link_mem struct memory.
+ * @param self_struct - NULL for dereference/allocate, not NULL for release
  */
 
-static void *proxy_client_init(void *parent, void *child)
+static void *proxy_client_init(void *link_mem, void *self_struct)
 {
 	struct fsal_staticfsinfo_t *fsinfo
-		= (struct fsal_staticfsinfo_t *)parent;
+		= (struct fsal_staticfsinfo_t *)link_mem;
 	struct pxy_fsal_module *pxy;
 
-	if (child != NULL) {
+	if (link_mem == NULL)
+		return self_struct; /* NOP */
+	else if (self_struct != NULL) {
 		pxy = container_of(fsinfo, struct pxy_fsal_module, fsinfo);
 		return (void *)&pxy->special;
-	} else {
+	} else
 		return NULL;
-	}
 }
 
 /**
@@ -159,8 +152,8 @@ static void *proxy_client_init(void *parent, void *child)
  *
  * This is also pretty simple.  Just a NOP in both cases.
  *
- * @param parent - pointer to the parent struct memory.
- * @param child - NULL for init parent, not NULL for attaching
+ * @param link_mem - pointer to the link_mem struct memory.
+ * @param self_struct - NULL for init parent, not NULL for attaching
  */
 
 static struct config_item proxy_params[] = {
@@ -190,7 +183,7 @@ struct config_block proxy_param = {
 	.dbus_interface_name = "org.ganesha.nfsd.config.fsal.proxy",
 	.blk_desc.name = "PROXY",
 	.blk_desc.type = CONFIG_BLOCK,
-	.blk_desc.u.blk.init = noop_conf_init,
+	.blk_desc.u.blk.init = proxy_client_init,
 	.blk_desc.u.blk.params = proxy_params,
 	.blk_desc.u.blk.commit = noop_conf_commit
 };
