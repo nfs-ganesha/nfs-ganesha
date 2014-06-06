@@ -138,7 +138,6 @@ int nfs3_rename(nfs_arg_t *arg,
 
 	/* Convert fromdir file handle into a cache_entry */
 	parent_entry = nfs3_FhandleToCache(&arg->arg_rename3.from.dir,
-					   op_ctx,
 					   &res->res_create3.status,
 					   &rc);
 
@@ -151,7 +150,6 @@ int nfs3_rename(nfs_arg_t *arg,
 
 	/* Convert todir file handle into a cache_entry */
 	new_parent_entry = nfs3_FhandleToCache(&arg->arg_rename3.to.dir,
-					       op_ctx,
 					       &res->res_create3.status,
 					       &rc);
 

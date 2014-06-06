@@ -102,7 +102,6 @@ int nfs3_mkdir(nfs_arg_t *arg,
 	    FALSE;
 
 	parent_entry = nfs3_FhandleToCache(&arg->arg_mkdir3.where.dir,
-					   op_ctx,
 					   &res->res_mkdir3.status,
 					   &rc);
 

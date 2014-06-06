@@ -92,7 +92,6 @@ int nfs3_lookup(nfs_arg_t *arg,
 	    FALSE;
 
 	entry_dir = nfs3_FhandleToCache(&arg->arg_lookup3.what.dir,
-					op_ctx,
 					&res->res_lookup3.status,
 					&rc);
 

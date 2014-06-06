@@ -80,7 +80,6 @@ int nfs3_getattr(nfs_arg_t *arg,
 	}
 
 	entry = nfs3_FhandleToCache(&arg->arg_getattr3.object,
-				    op_ctx,
 				    &res->res_getattr3.status,
 				    &rc);
 

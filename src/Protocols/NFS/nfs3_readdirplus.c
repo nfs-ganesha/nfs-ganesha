@@ -178,7 +178,6 @@ int nfs3_readdirplus(nfs_arg_t *arg,
 
 	/* Convert file handle into a vnode */
 	dir_entry = nfs3_FhandleToCache(&(arg->arg_readdirplus3.dir),
-					  op_ctx,
 					  &(res->res_readdirplus3.status),
 					  &rc);
 

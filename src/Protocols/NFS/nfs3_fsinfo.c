@@ -85,7 +85,6 @@ int nfs3_fsinfo(nfs_arg_t *arg,
 	    FALSE;
 
 	entry = nfs3_FhandleToCache(&arg->arg_fsinfo3.fsroot,
-				    op_ctx,
 				    &res->res_fsinfo3.status,
 				    &rc);
 

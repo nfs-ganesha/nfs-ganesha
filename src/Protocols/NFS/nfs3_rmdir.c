@@ -99,7 +99,6 @@ int nfs3_rmdir(nfs_arg_t *arg,
 	    FALSE;
 
 	parent_entry = nfs3_FhandleToCache(&arg->arg_rmdir3.object.dir,
-					   op_ctx,
 					   &res->res_rmdir3.status,
 					   &rc);
 

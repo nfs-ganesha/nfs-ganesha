@@ -106,7 +106,6 @@ int nfs3_symlink(nfs_arg_t *arg,
 	    attributes_follow = false;
 
 	parent_entry = nfs3_FhandleToCache(&arg->arg_symlink3.where.dir,
-					   op_ctx,
 					   &res->res_symlink3.status,
 					   &rc);
 

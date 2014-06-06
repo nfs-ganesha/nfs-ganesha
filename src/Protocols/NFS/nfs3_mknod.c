@@ -106,7 +106,6 @@ int nfs3_mknod(nfs_arg_t *arg,
 
 	/* retrieve parent entry */
 	parent_entry = nfs3_FhandleToCache(&arg->arg_mknod3.where.dir,
-					   op_ctx,
 					   &res->res_mknod3.status,
 					   &rc);
 

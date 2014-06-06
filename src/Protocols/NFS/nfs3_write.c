@@ -124,7 +124,6 @@ int nfs3_write(nfs_arg_t *arg,
 	    false;
 
 	entry = nfs3_FhandleToCache(&arg->arg_write3.file,
-				    op_ctx,
 				    &res->res_write3.status,
 				    &rc);
 

@@ -162,7 +162,6 @@ int nfs3_readdir(nfs_arg_t *arg,
 
 	/* Look up cache entry for filehandle */
 	dir_entry = nfs3_FhandleToCache(&(arg->arg_readdir3.dir),
-					op_ctx,
 					&(res->res_readdir3.status),
 					&rc);
 	if (dir_entry == NULL) {

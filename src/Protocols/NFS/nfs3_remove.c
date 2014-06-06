@@ -98,7 +98,6 @@ int nfs3_remove(nfs_arg_t *arg,
 	    FALSE;
 
 	parent_entry = nfs3_FhandleToCache(&arg->arg_remove3.object.dir,
-					   op_ctx,
 					   &res->res_remove3.status,
 					   &rc);
 

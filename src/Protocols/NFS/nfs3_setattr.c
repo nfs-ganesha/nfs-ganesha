@@ -97,7 +97,6 @@ int nfs3_setattr(nfs_arg_t *arg,
 	    attributes_follow = FALSE;
 
 	entry = nfs3_FhandleToCache(&arg->arg_setattr3.object,
-				    op_ctx,
 				    &res->res_setattr3.status,
 				    &rc);
 

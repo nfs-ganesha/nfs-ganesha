@@ -291,7 +291,6 @@ int nlm_process_parameters(struct svc_req *req, bool exclusive,
 
 	/* Convert file handle into a cache entry */
 	*ppentry = nfs3_FhandleToCache((struct nfs_fh3 *)&alock->fh,
-				       op_ctx,
 				       &nfsstat3,
 				       &rc);
 
@@ -405,7 +404,6 @@ int nlm_process_share_parms(struct svc_req *req, nlm4_share *share,
 
 	/* Convert file handle into a cache entry */
 	*ppentry = nfs3_FhandleToCache((struct nfs_fh3 *)&share->fh,
-				       op_ctx,
 				       &nfsstat3,
 				       &rc);
 

@@ -88,7 +88,6 @@ int nfs3_commit(nfs_arg_t *arg,
 	    FALSE;
 
 	entry = nfs3_FhandleToCache(&arg->arg_commit3.file,
-				    op_ctx,
 				    &res->res_commit3.status,
 				    &rc);
 

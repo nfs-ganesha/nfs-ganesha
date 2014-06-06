@@ -94,7 +94,6 @@ int nfs3_readlink(nfs_arg_t *arg,
 	    attributes_follow = false;
 
 	entry = nfs3_FhandleToCache(&arg->arg_readlink3.symlink,
-				    op_ctx,
 				    &res->res_readlink3.status,
 				    &rc);
 

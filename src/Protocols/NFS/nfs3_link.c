@@ -130,7 +130,6 @@ int nfs3_link(nfs_arg_t *arg,
 
 	/* Get entry for parent directory */
 	parent_entry = nfs3_FhandleToCache(&arg->arg_link3.link.dir,
-					   op_ctx,
 					   &res->res_link3.status,
 					   &rc);
 
@@ -142,7 +141,6 @@ int nfs3_link(nfs_arg_t *arg,
 	nfs_SetPreOpAttr(parent_entry, &pre_parent);
 
 	target_entry = nfs3_FhandleToCache(&arg->arg_link3.file,
-					   op_ctx,
 					   &res->res_link3.status,
 					   &rc);
 

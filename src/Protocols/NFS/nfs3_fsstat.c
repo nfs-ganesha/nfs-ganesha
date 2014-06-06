@@ -88,7 +88,6 @@ int nfs3_fsstat(nfs_arg_t *arg,
 	    FALSE;
 
 	entry = nfs3_FhandleToCache(&arg->arg_fsstat3.fsroot,
-				    op_ctx,
 				    &res->res_fsstat3.status,
 				    &rc);
 
