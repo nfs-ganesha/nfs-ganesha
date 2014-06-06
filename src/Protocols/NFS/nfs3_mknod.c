@@ -115,7 +115,7 @@ int nfs3_mknod(nfs_arg_t *arg,
 		goto out;
 	}
 
-	nfs_SetPreOpAttr(parent_entry, op_ctx, &pre_parent);
+	nfs_SetPreOpAttr(parent_entry, &pre_parent);
 
 	/* Sanity checks: new node name must be non-null; parent must
 	   be a directory. */
@@ -268,10 +268,10 @@ int nfs3_mknod(nfs_arg_t *arg,
 	}
 
 	/* Build entry attributes */
-	nfs_SetPostOpAttr(node_entry, op_ctx, &rok->obj_attributes);
+	nfs_SetPostOpAttr(node_entry, &rok->obj_attributes);
 
 	/* Build Weak Cache Coherency data */
-	nfs_SetWccData(&pre_parent, parent_entry, op_ctx, &rok->dir_wcc);
+	nfs_SetWccData(&pre_parent, parent_entry, &rok->dir_wcc);
 
 	res->res_mknod3.status = NFS3_OK;
 
@@ -280,7 +280,7 @@ int nfs3_mknod(nfs_arg_t *arg,
 
  out_fail:
 	res->res_mknod3.status = nfs3_Errno(cache_status);
-	nfs_SetWccData(&pre_parent, parent_entry, op_ctx,
+	nfs_SetWccData(&pre_parent, parent_entry,
 		       &res->res_mknod3.MKNOD3res_u.resfail.dir_wcc);
 
 	if (nfs_RetryableError(cache_status))

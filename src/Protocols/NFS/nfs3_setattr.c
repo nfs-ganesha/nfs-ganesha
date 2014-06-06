@@ -106,7 +106,7 @@ int nfs3_setattr(nfs_arg_t *arg,
 		goto out;
 	}
 
-	nfs_SetPreOpAttr(entry, op_ctx, &pre_attr);
+	nfs_SetPreOpAttr(entry, &pre_attr);
 
 	if (arg->arg_setattr3.guard.check) {
 		/* This pack of lines implements the "guard check" setattr. This
@@ -164,7 +164,7 @@ int nfs3_setattr(nfs_arg_t *arg,
 		res->res_setattr3.SETATTR3res_u.resfail.obj_wcc.after.
 		    attributes_follow = FALSE;
 	} else {
-		nfs_SetWccData(&pre_attr, entry, op_ctx,
+		nfs_SetWccData(&pre_attr, entry,
 			       &res->res_setattr3.SETATTR3res_u.resok.obj_wcc);
 	}
 
@@ -183,7 +183,7 @@ int nfs3_setattr(nfs_arg_t *arg,
 	/* Set the NFS return */
 	res->res_setattr3.status = nfs3_Errno(cache_status);
 
-	nfs_SetWccData(&pre_attr, entry, op_ctx,
+	nfs_SetWccData(&pre_attr, entry,
 		       &res->res_setattr3.SETATTR3res_u.resfail.obj_wcc);
 
 	if (nfs_RetryableError(cache_status)) {

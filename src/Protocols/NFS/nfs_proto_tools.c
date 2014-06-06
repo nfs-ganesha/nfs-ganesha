@@ -68,15 +68,13 @@ static struct {
  * structure.
  *
  * @param[in]  entry Cache entry
- * @param[in]  ctx   Operation context
  * @param[out] attr  NFSv3 PostOp structure attributes.
  *
  */
-void nfs_SetPostOpAttr(cache_entry_t *entry, struct req_op_context *ctx,
-		       post_op_attr *attr)
+void nfs_SetPostOpAttr(cache_entry_t *entry, post_op_attr *attr)
 {
 	attr->attributes_follow =
-	    cache_entry_to_nfs3_Fattr(entry, ctx,
+	    cache_entry_to_nfs3_Fattr(entry,
 				      &(attr->post_op_attr_u.attributes));
 }				/* nfs_SetPostOpAttr */
 
@@ -87,12 +85,10 @@ void nfs_SetPostOpAttr(cache_entry_t *entry, struct req_op_context *ctx,
  * structure.
  *
  * @param[in]  entry Cache entry
- * @param[in]  ctx   Operation context
  * @param[out] attr  NFSv3 PreOp structure attributes.
  */
 
-void nfs_SetPreOpAttr(cache_entry_t *entry, struct req_op_context *ctx,
-		      pre_op_attr *attr)
+void nfs_SetPreOpAttr(cache_entry_t *entry, pre_op_attr *attr)
 {
 	if ((entry == NULL) || (cache_inode_lock_trust_attrs(entry, false)
 				!= CACHE_INODE_SUCCESS)) {
@@ -120,19 +116,18 @@ void nfs_SetPreOpAttr(cache_entry_t *entry, struct req_op_context *ctx,
  *
  * @param[in]  before_attr Pre-op attrs for before state
  * @param[in]  entry       The cache entry after operation
- * @param[in]  ctx         Request context
  * @param[out] wcc_data    the Weak Cache Coherency structure
  *
  */
 void nfs_SetWccData(const struct pre_op_attr *before_attr,
-		    cache_entry_t *entry, struct req_op_context *ctx,
+		    cache_entry_t *entry,
 		    wcc_data *wcc_data)
 {
 	if (before_attr == NULL)
 		wcc_data->before.attributes_follow = false;
 
 	/* Build directory post operation attributes */
-	nfs_SetPostOpAttr(entry, ctx, &(wcc_data->after));
+	nfs_SetPostOpAttr(entry, &(wcc_data->after));
 }				/* nfs_SetWccData */
 
 /**
@@ -3557,20 +3552,18 @@ static void nfs3_FSALattr_To_PartialFattr(const struct attrlist *FSAL_attr,
  * fill the Fattr.
  *
  * @param[in]  entry The cache entry
- * @param[in]  ctx   The request context
  * @param[out] Fattr NFSv3 Fattr
  *
  * @retval true on success.
  * @retval false on failure.
  */
 
-bool cache_entry_to_nfs3_Fattr(cache_entry_t *entry,
-			       struct req_op_context *ctx, fattr3 *Fattr)
+bool cache_entry_to_nfs3_Fattr(cache_entry_t *entry, fattr3 *Fattr)
 {
 	bool rc = false;
 	if (entry && (cache_inode_lock_trust_attrs(entry, false)
 		      == CACHE_INODE_SUCCESS)) {
-		rc = nfs3_FSALattr_To_Fattr(ctx->export,
+		rc = nfs3_FSALattr_To_Fattr(op_ctx->export,
 					    &entry->obj_handle->attributes,
 					    Fattr);
 		PTHREAD_RWLOCK_unlock(&entry->attr_lock);

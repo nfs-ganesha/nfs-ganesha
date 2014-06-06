@@ -104,7 +104,7 @@ int nfs3_access(nfs_arg_t *arg,
 	if (cache_status == CACHE_INODE_SUCCESS
 	    || cache_status == CACHE_INODE_FSAL_EACCESS) {
 		/* Build Post Op Attributes */
-		nfs_SetPostOpAttr(entry, op_ctx,
+		nfs_SetPostOpAttr(entry,
 				  &(res->res_access3.ACCESS3res_u.resok.
 				    obj_attributes));
 
@@ -120,7 +120,7 @@ int nfs3_access(nfs_arg_t *arg,
 	}
 
 	res->res_access3.status = nfs3_Errno(cache_status);
-	nfs_SetPostOpAttr(entry, op_ctx,
+	nfs_SetPostOpAttr(entry,
 			  &(res->res_access3.ACCESS3res_u.resfail.
 			    obj_attributes));
  out:

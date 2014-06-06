@@ -121,13 +121,13 @@ int nfs3_lookup(nfs_arg_t *arg,
 				    entry_file->obj_handle,
 				    op_ctx->export)) {
 				/* Build entry attributes */
-				nfs_SetPostOpAttr(entry_file, op_ctx,
+				nfs_SetPostOpAttr(entry_file,
 						  &(res->res_lookup3.
 						    LOOKUP3res_u.resok.
 						    obj_attributes));
 
 				/* Build directory attributes */
-				nfs_SetPostOpAttr(entry_dir, op_ctx,
+				nfs_SetPostOpAttr(entry_dir,
 						  &(res->res_lookup3.
 						    LOOKUP3res_u.resok.
 						    dir_attributes));
@@ -142,7 +142,7 @@ int nfs3_lookup(nfs_arg_t *arg,
 		}
 
 		res->res_lookup3.status = nfs3_Errno(cache_status);
-		nfs_SetPostOpAttr(entry_dir, op_ctx,
+		nfs_SetPostOpAttr(entry_dir,
 				  &res->res_lookup3.LOOKUP3res_u.resfail.
 				  dir_attributes);
 	}

@@ -310,7 +310,7 @@ int nfs3_readdir(nfs_arg_t *arg,
 		}
 
 		res->res_readdir3.status = nfs3_Errno(cache_status);
-		nfs_SetPostOpAttr(dir_entry, op_ctx,
+		nfs_SetPostOpAttr(dir_entry,
 				  &res->res_readdir3.READDIR3res_u.resfail.
 				  dir_attributes);
 		goto out;
@@ -318,7 +318,7 @@ int nfs3_readdir(nfs_arg_t *arg,
 
 	if (tracker.error != NFS3_OK) {
 		res->res_readdir3.status = tracker.error;
-		nfs_SetPostOpAttr(dir_entry, op_ctx,
+		nfs_SetPostOpAttr(dir_entry,
 				  &res->res_readdir3.READDIR3res_u.resfail.
 				  dir_attributes);
 		goto out;
@@ -331,7 +331,7 @@ int nfs3_readdir(nfs_arg_t *arg,
 
 	RES_READDIR3_OK->reply.entries = tracker.entries;
 	RES_READDIR3_OK->reply.eof = eod_met;
-	nfs_SetPostOpAttr(dir_entry, op_ctx, &RES_READDIR3_OK->dir_attributes);
+	nfs_SetPostOpAttr(dir_entry, &RES_READDIR3_OK->dir_attributes);
 	memcpy(RES_READDIR3_OK->cookieverf, cookie_verifier,
 	       sizeof(cookieverf3));
 	res->res_readdir3.status = NFS3_OK;

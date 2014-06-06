@@ -94,7 +94,6 @@ int nfs3_getattr(nfs_arg_t *arg,
 
 	if (!cache_entry_to_nfs3_Fattr(
 		       entry,
-		       op_ctx,
 		       &res->res_getattr3.GETATTR3res_u.resok.obj_attributes)) {
 		res->res_getattr3.status =
 		    nfs3_Errno(CACHE_INODE_INVALID_ARGUMENT);

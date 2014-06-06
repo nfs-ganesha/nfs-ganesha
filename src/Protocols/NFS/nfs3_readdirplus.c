@@ -300,7 +300,7 @@ int nfs3_readdirplus(nfs_arg_t *arg,
 		}
 
 		res->res_readdirplus3.status = nfs3_Errno(cache_status);
-		nfs_SetPostOpAttr(dir_entry, op_ctx,
+		nfs_SetPostOpAttr(dir_entry,
 				  &res->res_readdirplus3.READDIRPLUS3res_u.
 				  resfail.dir_attributes);
 
@@ -309,7 +309,7 @@ int nfs3_readdirplus(nfs_arg_t *arg,
 
 	if (tracker.error != NFS3_OK) {
 		res->res_readdir3.status = tracker.error;
-		nfs_SetPostOpAttr(dir_entry, op_ctx,
+		nfs_SetPostOpAttr(dir_entry,
 				  &res->res_readdir3.READDIR3res_u.resfail.
 				  dir_attributes);
 		goto out;
@@ -326,7 +326,7 @@ int nfs3_readdirplus(nfs_arg_t *arg,
 		    NULL;
 		res->res_readdirplus3.READDIRPLUS3res_u.resok.reply.eof = TRUE;
 
-		nfs_SetPostOpAttr(dir_entry, op_ctx,
+		nfs_SetPostOpAttr(dir_entry,
 				  &res->res_readdirplus3.READDIRPLUS3res_u.
 				  resok.dir_attributes);
 
@@ -340,7 +340,7 @@ int nfs3_readdirplus(nfs_arg_t *arg,
 		    eod_met;
 	}
 
-	nfs_SetPostOpAttr(dir_entry, op_ctx,
+	nfs_SetPostOpAttr(dir_entry,
 			  &res->res_readdirplus3.READDIRPLUS3res_u.resok.
 			  dir_attributes);
 

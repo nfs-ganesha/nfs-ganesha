@@ -147,7 +147,7 @@ int nfs3_rename(nfs_arg_t *arg,
 		goto out;
 	}
 
-	nfs_SetPreOpAttr(parent_entry, op_ctx, &pre_parent);
+	nfs_SetPreOpAttr(parent_entry, &pre_parent);
 
 	/* Convert todir file handle into a cache_entry */
 	new_parent_entry = nfs3_FhandleToCache(&arg->arg_rename3.to.dir,
@@ -160,7 +160,7 @@ int nfs3_rename(nfs_arg_t *arg,
 		goto out;
 	}
 
-	nfs_SetPreOpAttr(new_parent_entry, op_ctx, &pre_new_parent);
+	nfs_SetPreOpAttr(new_parent_entry, &pre_new_parent);
 
 	if (entry_name == NULL || *entry_name == '\0' || new_entry_name == NULL
 	    || *new_entry_name == '\0') {
@@ -178,10 +178,10 @@ int nfs3_rename(nfs_arg_t *arg,
 
 	res->res_rename3.status = NFS3_OK;
 
-	nfs_SetWccData(&pre_parent, parent_entry, op_ctx,
+	nfs_SetWccData(&pre_parent, parent_entry,
 		       &res->res_rename3.RENAME3res_u.resok.fromdir_wcc);
 
-	nfs_SetWccData(&pre_new_parent, new_parent_entry, op_ctx,
+	nfs_SetWccData(&pre_new_parent, new_parent_entry,
 		       &res->res_rename3.RENAME3res_u.resok.todir_wcc);
 
 	rc = NFS_REQ_OK;
@@ -191,10 +191,10 @@ int nfs3_rename(nfs_arg_t *arg,
  out_fail:
 	res->res_rename3.status = nfs3_Errno(cache_status);
 
-	nfs_SetWccData(&pre_parent, parent_entry, op_ctx,
+	nfs_SetWccData(&pre_parent, parent_entry,
 		       &res->res_rename3.RENAME3res_u.resfail.fromdir_wcc);
 
-	nfs_SetWccData(&pre_new_parent, new_parent_entry, op_ctx,
+	nfs_SetWccData(&pre_new_parent, new_parent_entry,
 		       &res->res_rename3.RENAME3res_u.resfail.todir_wcc);
 
 	/* If we are here, there was an error */

@@ -114,7 +114,7 @@ int nfs3_readlink(nfs_arg_t *arg,
 
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		res->res_readlink3.status = nfs3_Errno(cache_status);
-		nfs_SetPostOpAttr(entry, op_ctx,
+		nfs_SetPostOpAttr(entry,
 				  &res->res_readlink3.READLINK3res_u.resfail.
 				  symlink_attributes);
 
@@ -127,7 +127,7 @@ int nfs3_readlink(nfs_arg_t *arg,
 	/* Reply to the client */
 	res->res_readlink3.READLINK3res_u.resok.data = link_buffer.addr;
 
-	nfs_SetPostOpAttr(entry, op_ctx,
+	nfs_SetPostOpAttr(entry,
 			  &res->res_readlink3.READLINK3res_u.
 			  resok.symlink_attributes);
 	res->res_readlink3.status = NFS3_OK;

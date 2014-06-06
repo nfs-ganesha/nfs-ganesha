@@ -107,7 +107,7 @@ int nfs3_remove(nfs_arg_t *arg,
 		goto out;
 	}
 
-	nfs_SetPreOpAttr(parent_entry, op_ctx, &pre_parent);
+	nfs_SetPreOpAttr(parent_entry, &pre_parent);
 
 	/* Sanity checks: file name must be non-null; parent must be a
 	 * directory.
@@ -149,7 +149,7 @@ int nfs3_remove(nfs_arg_t *arg,
 		goto out_fail;
 
 	/* Build Weak Cache Coherency data */
-	nfs_SetWccData(&pre_parent, parent_entry, op_ctx,
+	nfs_SetWccData(&pre_parent, parent_entry,
 		       &res->res_remove3.REMOVE3res_u.resok.dir_wcc);
 
 	res->res_remove3.status = NFS3_OK;
@@ -159,7 +159,7 @@ int nfs3_remove(nfs_arg_t *arg,
 
  out_fail:
 	res->res_remove3.status = nfs3_Errno(cache_status);
-	nfs_SetWccData(&pre_parent, parent_entry, op_ctx,
+	nfs_SetWccData(&pre_parent, parent_entry,
 		       &res->res_remove3.REMOVE3res_u.resfail.dir_wcc);
 
 	if (nfs_RetryableError(cache_status))

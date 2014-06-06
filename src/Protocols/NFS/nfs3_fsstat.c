@@ -115,7 +115,7 @@ int nfs3_fsstat(nfs_arg_t *arg,
 			     dynamicinfo.total_files, dynamicinfo.free_files,
 			     dynamicinfo.avail_files);
 
-		nfs_SetPostOpAttr(entry, op_ctx,
+		nfs_SetPostOpAttr(entry,
 				  &(res->res_fsstat3.FSSTAT3res_u.resok.
 				    obj_attributes));
 

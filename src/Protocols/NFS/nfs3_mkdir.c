@@ -198,10 +198,10 @@ int nfs3_mkdir(nfs_arg_t *arg,
 	d3ok->obj.handle_follows = true;
 
 	/* Build entry attributes */
-	nfs_SetPostOpAttr(dir_entry, op_ctx, &d3ok->obj_attributes);
+	nfs_SetPostOpAttr(dir_entry, &d3ok->obj_attributes);
 
 	/* Build Weak Cache Coherency data */
-	nfs_SetWccData(&pre_parent, parent_entry, op_ctx, &d3ok->dir_wcc);
+	nfs_SetWccData(&pre_parent, parent_entry, &d3ok->dir_wcc);
 
 	res->res_mkdir3.status = NFS3_OK;
 	rc = NFS_REQ_OK;
@@ -210,7 +210,7 @@ int nfs3_mkdir(nfs_arg_t *arg,
 
  out_fail:
 	res->res_mkdir3.status = nfs3_Errno(cache_status);
-	nfs_SetWccData(&pre_parent, parent_entry, op_ctx,
+	nfs_SetWccData(&pre_parent, parent_entry,
 		       &res->res_mkdir3.MKDIR3res_u.resfail.dir_wcc);
 
 	if (nfs_RetryableError(cache_status))

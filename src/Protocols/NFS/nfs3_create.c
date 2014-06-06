@@ -115,7 +115,7 @@ int nfs3_create(nfs_arg_t *arg,
 	}
 
 	/* get directory attributes before action (for V3 reply) */
-	nfs_SetPreOpAttr(parent_entry, op_ctx, &pre_parent);
+	nfs_SetPreOpAttr(parent_entry, &pre_parent);
 
 	/* Sanity checks: new file name must be non-null; parent must
 	   be a directory. */
@@ -256,10 +256,10 @@ int nfs3_create(nfs_arg_t *arg,
 	res->res_create3.CREATE3res_u.resok.obj.handle_follows = TRUE;
 
 	/* Build entry attributes */
-	nfs_SetPostOpAttr(file_entry, op_ctx,
+	nfs_SetPostOpAttr(file_entry,
 			  &res->res_create3.CREATE3res_u.resok.obj_attributes);
 
-	nfs_SetWccData(&pre_parent, parent_entry, op_ctx,
+	nfs_SetWccData(&pre_parent, parent_entry,
 		       &res->res_create3.CREATE3res_u.resok.dir_wcc);
 
 	res->res_create3.status = NFS3_OK;
@@ -282,7 +282,7 @@ int nfs3_create(nfs_arg_t *arg,
 	} else {
 		res->res_create3.status = nfs3_Errno(cache_status);
 
-		nfs_SetWccData(&pre_parent, parent_entry, op_ctx,
+		nfs_SetWccData(&pre_parent, parent_entry,
 			       &res->res_create3.CREATE3res_u.resfail.dir_wcc);
 	}
 	goto out;

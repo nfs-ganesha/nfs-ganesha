@@ -104,7 +104,7 @@ int nfs3_commit(nfs_arg_t *arg,
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		res->res_commit3.status = nfs3_Errno(cache_status);
 
-		nfs_SetWccData(NULL, entry, op_ctx,
+		nfs_SetWccData(NULL, entry,
 			       &(res->res_commit3.COMMIT3res_u.resfail.
 				 file_wcc));
 
@@ -112,7 +112,7 @@ int nfs3_commit(nfs_arg_t *arg,
 		goto out;
 	}
 
-	nfs_SetWccData(NULL, entry, op_ctx,
+	nfs_SetWccData(NULL, entry,
 		       &(res->res_commit3.COMMIT3res_u.resok.file_wcc));
 
 	/* Set the write verifier */

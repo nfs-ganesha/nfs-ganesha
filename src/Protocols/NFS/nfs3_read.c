@@ -59,7 +59,7 @@ static void nfs_read_ok(struct svc_req *req,
 	}
 
 	/* Build Post Op Attributes */
-	nfs_SetPostOpAttr(entry, op_ctx,
+	nfs_SetPostOpAttr(entry,
 			  &res->res_read3.READ3res_u.resok.file_attributes);
 
 	res->res_read3.READ3res_u.resok.eof = eof;
@@ -132,7 +132,7 @@ int nfs3_read(nfs_arg_t *arg,
 		goto out;
 	}
 
-	nfs_SetPreOpAttr(entry, op_ctx, &pre_attr);
+	nfs_SetPreOpAttr(entry, &pre_attr);
 
 	/** @todo this is racy, use cache_inode_lock_trust_attrs and
 	 *        cache_inode_access_no_mutex
@@ -188,7 +188,7 @@ int nfs3_read(nfs_arg_t *arg,
 
 			res->res_read3.status = NFS3ERR_INVAL;
 
-			nfs_SetPostOpAttr(entry, op_ctx,
+			nfs_SetPostOpAttr(entry,
 					  &res->res_read3.READ3res_u.resfail.
 					  file_attributes);
 
@@ -243,7 +243,7 @@ int nfs3_read(nfs_arg_t *arg,
 
 	res->res_read3.status = nfs3_Errno(cache_status);
 
-	nfs_SetPostOpAttr(entry, op_ctx,
+	nfs_SetPostOpAttr(entry,
 			  &res->res_read3.READ3res_u.resfail.file_attributes);
 
 	rc = NFS_REQ_OK;

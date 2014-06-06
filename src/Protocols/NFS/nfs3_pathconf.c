@@ -108,7 +108,7 @@ int nfs3_pathconf(nfs_arg_t *arg,
 	    exp_hdl->ops->fs_supports(exp_hdl, fso_case_preserving);
 
 	/* Build post op file attributes */
-	nfs_SetPostOpAttr(entry, op_ctx,
+	nfs_SetPostOpAttr(entry,
 			  &(res->res_pathconf3.PATHCONF3res_u.resok.
 			    obj_attributes));
 

@@ -115,7 +115,7 @@ int nfs3_symlink(nfs_arg_t *arg,
 		goto out;
 	}
 
-	nfs_SetPreOpAttr(parent_entry, op_ctx, &pre_parent);
+	nfs_SetPreOpAttr(parent_entry, &pre_parent);
 
 	if (parent_entry->type != DIRECTORY) {
 		res->res_symlink3.status = NFS3ERR_NOTDIR;
@@ -215,12 +215,12 @@ int nfs3_symlink(nfs_arg_t *arg,
 	res->res_symlink3.SYMLINK3res_u.resok.obj.handle_follows = TRUE;
 
 	/* Build entry attributes */
-	nfs_SetPostOpAttr(symlink_entry, op_ctx,
+	nfs_SetPostOpAttr(symlink_entry,
 			  &res->res_symlink3.SYMLINK3res_u.resok.
 			  obj_attributes);
 
 	/* Build Weak Cache Coherency data */
-	nfs_SetWccData(&pre_parent, parent_entry, op_ctx,
+	nfs_SetWccData(&pre_parent, parent_entry,
 		       &res->res_symlink3.SYMLINK3res_u.resok.dir_wcc);
 
 	res->res_symlink3.status = NFS3_OK;
@@ -231,7 +231,7 @@ int nfs3_symlink(nfs_arg_t *arg,
  out_fail:
 	res->res_symlink3.status = nfs3_Errno(cache_status);
 
-	nfs_SetWccData(&pre_parent, parent_entry, op_ctx,
+	nfs_SetWccData(&pre_parent, parent_entry,
 		       &res->res_symlink3.SYMLINK3res_u.resfail.dir_wcc);
 
 	if (nfs_RetryableError(cache_status))

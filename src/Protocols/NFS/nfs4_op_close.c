@@ -83,7 +83,6 @@ void cleanup_layouts(compound_data_t *data)
 		      == data->session->clientid_record) &&
 		    state->state_data.layout.state_return_on_close) {
 			nfs4_return_one_state(data->current_entry,
-					      data->req_ctx,
 					      LAYOUTRETURN4_FILE,
 					      circumstance_roc,
 					      state,

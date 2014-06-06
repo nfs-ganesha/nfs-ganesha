@@ -152,7 +152,6 @@ static nfsstat4 acquire_layout_state(compound_data_t *data,
 
 			nfs_status =
 			     nfs4_return_one_state(data->current_entry,
-						   data->req_ctx,
 						   0,
 						   circumstance_forgotten,
 						   condemned_state,

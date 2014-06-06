@@ -223,13 +223,13 @@ static inline bool clear_attribute_in_bitmap(struct bitmap4 *bits, int attr)
 }
 
 void nfs_SetWccData(const struct pre_op_attr *before_attr,
-		    cache_entry_t *entry, struct req_op_context *ctx,
+		    cache_entry_t *entry,
 		    wcc_data * pwcc_data);
 
-void nfs_SetPostOpAttr(cache_entry_t *entry, struct req_op_context *ctx,
+void nfs_SetPostOpAttr(cache_entry_t *entry,
 		       post_op_attr *attr);
 
-void nfs_SetPreOpAttr(cache_entry_t *entry, struct req_op_context *ctx,
+void nfs_SetPreOpAttr(cache_entry_t *entry,
 		      pre_op_attr *attr);
 
 bool nfs_RetryableError(cache_inode_status_t cache_status);
@@ -239,7 +239,6 @@ int nfs3_Sattr_To_FSAL_attr(struct attrlist *pFSALattr, sattr3 *psattr);
 void nfs4_Fattr_Free(fattr4 *fattr);
 
 nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
-			       struct req_op_context *req_ctx,
 			       layoutreturn_type4 return_type,
 			       enum fsal_layoutreturn_circumstance circumstance,
 			       state_t *layout_state,
@@ -276,8 +275,7 @@ int nfs4_Fattr_cmp(fattr4 *, fattr4 *);
 bool nfs3_FSALattr_To_Fattr(struct gsh_export *, const struct attrlist *,
 			    fattr3 *);
 
-bool cache_entry_to_nfs3_Fattr(cache_entry_t *, struct req_op_context *,
-			       fattr3 *);
+bool cache_entry_to_nfs3_Fattr(cache_entry_t *, fattr3 *);
 
 bool nfs3_Sattr_To_FSALattr(struct attrlist *, sattr3 *);
 

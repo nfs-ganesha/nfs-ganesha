@@ -108,7 +108,7 @@ int nfs3_rmdir(nfs_arg_t *arg,
 		goto out;
 	}
 
-	nfs_SetPreOpAttr(parent_entry, op_ctx, &pre_parent);
+	nfs_SetPreOpAttr(parent_entry, &pre_parent);
 
 	/* Sanity checks: directory name must be non-null; parent
 	 * must be a directory.
@@ -147,7 +147,7 @@ int nfs3_rmdir(nfs_arg_t *arg,
 	if (cache_status != CACHE_INODE_SUCCESS)
 		goto out_fail;
 
-	nfs_SetWccData(&pre_parent, parent_entry, op_ctx,
+	nfs_SetWccData(&pre_parent, parent_entry,
 		       &res->res_rmdir3.RMDIR3res_u.resok.dir_wcc);
 
 	res->res_rmdir3.status = NFS3_OK;
@@ -158,7 +158,7 @@ int nfs3_rmdir(nfs_arg_t *arg,
 
  out_fail:
 	res->res_rmdir3.status = nfs3_Errno(cache_status);
-	nfs_SetWccData(&pre_parent, parent_entry, op_ctx,
+	nfs_SetWccData(&pre_parent, parent_entry,
 		       &res->res_rmdir3.RMDIR3res_u.resfail.dir_wcc);
 
 	/* If we are here, there was an error */

@@ -133,7 +133,7 @@ int nfs3_write(nfs_arg_t *arg,
 		goto out;
 	}
 
-	nfs_SetPreOpAttr(entry, op_ctx, &pre_attr);
+	nfs_SetPreOpAttr(entry, &pre_attr);
 
 	/** @todo this is racy, use cache_inode_lock_trust_attrs and
 	 *        cache_inode_access_no_mutex
@@ -204,7 +204,7 @@ int nfs3_write(nfs_arg_t *arg,
 
 			res->res_write3.status = nfs3_Errno(cache_status);
 
-			nfs_SetWccData(NULL, entry, op_ctx,
+			nfs_SetWccData(NULL, entry,
 				       &res->res_write3.WRITE3res_u.resfail.
 				       file_wcc);
 
@@ -229,7 +229,7 @@ int nfs3_write(nfs_arg_t *arg,
 				     &written_size, data, &eof_met, &sync);
 		if (cache_status == CACHE_INODE_SUCCESS) {
 			/* Build Weak Cache Coherency data */
-			nfs_SetWccData(NULL, entry, op_ctx,
+			nfs_SetWccData(NULL, entry,
 				       &res->res_write3.WRITE3res_u.resok.
 				       file_wcc);
 
@@ -268,7 +268,7 @@ int nfs3_write(nfs_arg_t *arg,
 
 	res->res_write3.status = nfs3_Errno(cache_status);
 
-	nfs_SetWccData(NULL, entry, op_ctx,
+	nfs_SetWccData(NULL, entry,
 		       &res->res_write3.WRITE3res_u.resfail.file_wcc);
 
 	rc = NFS_REQ_OK;

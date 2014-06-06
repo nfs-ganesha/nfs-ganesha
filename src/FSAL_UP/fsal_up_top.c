@@ -787,7 +787,6 @@ static int32_t layoutrec_completion(rpc_call_t *call, rpc_call_hook hook,
 			root_op_context.req_ctx.export->fsal_export;
 
 		nfs4_return_one_state(state->state_entry,
-				      &root_op_context.req_ctx,
 				      LAYOUTRETURN4_FILE, circumstance,
 				      state, cb_data->segment, 0, NULL,
 				      &deleted, true);
@@ -835,7 +834,6 @@ static void return_one_async(void *arg)
 			root_op_context.req_ctx.export->fsal_export;
 
 		nfs4_return_one_state(s->state_entry,
-				      &root_op_context.req_ctx,
 				      LAYOUTRETURN4_FILE, circumstance_revoke,
 				      s, cb_data->segment, 0, NULL, &deleted,
 				      true);
@@ -915,7 +913,6 @@ static void layoutrecall_one_call(void *arg)
 				    root_op_context.req_ctx.export->fsal_export;
 
 				nfs4_return_one_state(s->state_entry,
-						      &root_op_context.req_ctx,
 						      LAYOUTRETURN4_FILE,
 						      circumstance_revoke, s,
 						      cb_data->segment, 0, NULL,
