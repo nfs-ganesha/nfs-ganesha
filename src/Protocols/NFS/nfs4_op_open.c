@@ -723,7 +723,7 @@ static nfsstat4 open4_create(OPEN4args *arg, compound_data_t *data,
 		/* If owner or owner_group are set, and the credential was
 		 * squashed, then we must squash the set owner and owner_group.
 		 */
-		squash_setattr(data->req_ctx, &sattr);
+		squash_setattr(&sattr);
 
 		/* Skip setting attributes if all asked attributes
 		 * are handled by create

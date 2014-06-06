@@ -252,7 +252,7 @@ int nfs3_mknod(nfs_arg_t *arg,
 	rok->obj.handle_follows = TRUE;
 
 	/*Set attributes if required */
-	squash_setattr(op_ctx, &sattr);
+	squash_setattr(&sattr);
 
 	if ((sattr.mask & (ATTR_ATIME | ATTR_MTIME | ATTR_CTIME))
 	    || ((sattr.mask & ATTR_OWNER)

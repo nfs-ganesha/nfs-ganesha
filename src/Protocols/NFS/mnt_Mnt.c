@@ -114,7 +114,7 @@ int mnt_Mnt(nfs_arg_t *arg,
 	/* Check access based on client. Don't bother checking TCP/UDP as some
 	 * clients use UDP for MOUNT even when they will use TCP for NFS.
 	 */
-	export_check_access(op_ctx);
+	export_check_access();
 
 	if ((op_ctx->export_perms->options & EXPORT_OPTION_NFSV3) == 0) {
 		LogInfo(COMPONENT_NFSPROTO,

@@ -177,7 +177,7 @@ int nfs3_symlink(nfs_arg_t *arg,
 	/* If owner or owner_group are set, and the credential was
 	 * squashed, then we must squash the set owner and owner_group.
 	 */
-	squash_setattr(op_ctx, &sattr);
+	squash_setattr(&sattr);
 
 	if ((sattr.mask & (ATTR_ATIME | ATTR_MTIME | ATTR_CTIME))
 	    || ((sattr.mask & ATTR_OWNER)

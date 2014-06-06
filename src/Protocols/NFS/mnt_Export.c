@@ -65,7 +65,7 @@ static bool proc_export(struct gsh_export *export, void *arg)
 	 */
 	op_ctx->export = export;
 	op_ctx->fsal_export = export->fsal_export;
-	export_check_access(op_ctx);
+	export_check_access();
 	if (op_ctx->export_perms->options == 0) {
 		LogFullDebug(COMPONENT_NFSPROTO,
 			     "Client is not allowed to access Export_Id %d %s",

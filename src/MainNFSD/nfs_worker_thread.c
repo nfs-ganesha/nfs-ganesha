@@ -738,7 +738,7 @@ static void nfs_rpc_execute(request_data_t *req,
 	op_ctx->export_perms = &export_perms;
 
 	/* Initialized user_credentials */
-	init_credentials(&req_ctx);
+	init_credentials();
 
 	/* XXX must hold lock when calling any TI-RPC channel function,
 	 * including svc_sendreply2 and the svcerr_* calls */
@@ -1054,7 +1054,7 @@ static void nfs_rpc_execute(request_data_t *req,
 			    "nfs_rpc_execute about to call nfs_export_check_access for client %s",
 			    client_ip);
 
-		export_check_access(&req_ctx);
+		export_check_access();
 
 		if (export_perms.options == 0) {
 			LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
@@ -1109,7 +1109,7 @@ static void nfs_rpc_execute(request_data_t *req,
 		/* Test if export allows the authentication provided */
 		if (((reqnfs->funcdesc->dispatch_behaviour & SUPPORTS_GSS)
 		      != 0) &&
-		    !export_check_security(svcreq, &req_ctx)) {
+		    !export_check_security(svcreq)) {
 			LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 				"%s Version %d auth not allowed on Export_Id %d %s for client %s",
 				progname, svcreq->rq_vers,
@@ -1219,7 +1219,7 @@ static void nfs_rpc_execute(request_data_t *req,
 				export_perms.options = EXPORT_OPTION_ROOT;
 			}
 
-			if (get_req_creds(svcreq, &req_ctx) == false) {
+			if (get_req_creds(svcreq) == false) {
 				LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 					"could not get uid and gid, rejecting client %s",
 					client_ip);
@@ -1344,7 +1344,7 @@ static void nfs_rpc_execute(request_data_t *req,
 	}
 
  freeargs:
-	clean_credentials(&req_ctx);
+	clean_credentials();
 	/* XXX no need for xprt slock across SVC_FREEARGS */
 	DISP_SUNLOCK(xprt);
 

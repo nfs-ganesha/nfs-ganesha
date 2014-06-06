@@ -288,7 +288,7 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 			data->req_ctx->export->fsal_export;
 
 		/* Restore creds */
-		if (!get_req_creds(data->req, data->req_ctx)) {
+		if (!get_req_creds(data->req)) {
 			LogCrit(COMPONENT_EXPORT,
 				"Failure to restore creds");
 		}

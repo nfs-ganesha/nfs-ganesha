@@ -99,8 +99,7 @@ int nfs3_access(nfs_arg_t *arg,
 	/* Perform the 'access' call */
 	cache_status =
 	    nfs_access_op(entry, arg->arg_access3.access,
-			  &res->res_access3.ACCESS3res_u.resok.access, NULL,
-			  op_ctx);
+			  &res->res_access3.ACCESS3res_u.resok.access, NULL);
 
 	if (cache_status == CACHE_INODE_SUCCESS
 	    || cache_status == CACHE_INODE_FSAL_EACCESS) {

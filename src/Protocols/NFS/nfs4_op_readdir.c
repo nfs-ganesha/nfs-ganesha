@@ -74,7 +74,7 @@ static void restore_data(struct nfs4_readdir_cb_data *tracker)
 	tracker->saved_gsh_export = NULL;
 
 	/* Restore creds */
-	if (!get_req_creds(tracker->data->req, tracker->data->req_ctx)) {
+	if (!get_req_creds(tracker->data->req)) {
 		LogCrit(COMPONENT_EXPORT,
 			"Failure to restore creds");
 	}

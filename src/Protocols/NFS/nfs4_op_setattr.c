@@ -202,7 +202,7 @@ int nfs4_op_setattr(struct nfs_argop4 *op, compound_data_t *data,
 	/* If owner or owner_group are set, and the credential was
 	 * squashed, then we must squash the set owner and owner_group.
 	 */
-	squash_setattr(data->req_ctx, &sattr);
+	squash_setattr(&sattr);
 
 	/* If a SETATTR comes with an open stateid, and size is being
 	 * set, then the open MUST be for write (checked above), so

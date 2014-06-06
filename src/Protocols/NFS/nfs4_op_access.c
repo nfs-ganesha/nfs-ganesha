@@ -92,8 +92,7 @@ int nfs4_op_access(struct nfs_argop4 *op, compound_data_t *data,
 	cache_status =
 	    nfs_access_op(data->current_entry, arg_ACCESS4->access,
 			  &res_ACCESS4->ACCESS4res_u.resok4.access,
-			  &res_ACCESS4->ACCESS4res_u.resok4.supported,
-			  data->req_ctx);
+			  &res_ACCESS4->ACCESS4res_u.resok4.supported);
 
 	if (cache_status == CACHE_INODE_SUCCESS
 	    || cache_status == CACHE_INODE_FSAL_EACCESS)

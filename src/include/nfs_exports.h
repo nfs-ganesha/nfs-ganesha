@@ -309,10 +309,9 @@ static inline void set_current_entry(compound_data_t *data,
 }
 
 /* Export list related functions */
-void export_check_access(struct req_op_context *req_ctx);
+void export_check_access(void);
 
-bool export_check_security(struct svc_req *req,
-			   struct req_op_context *req_ctx);
+bool export_check_security(struct svc_req *req);
 
 void LogClientListEntry(log_components_t component,
 			exportlist_client_entry_t *entry);
