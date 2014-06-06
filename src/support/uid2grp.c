@@ -90,7 +90,7 @@ static bool my_getgrouplist_alloc(char *user,
 				  struct group_data *gdata)
 {
 	int ngroups = 0;
-	gid_t *groups = NULL;
+	gid_t *groups, *groups2;
 
 	/* We call getgrouplist() with 0 ngroups first. This should always
 	 * return -1, and ngroups should be set to the actual number of
@@ -109,18 +109,38 @@ static bool my_getgrouplist_alloc(char *user,
 	/* Allocate gdata->groups with the right size then call
 	 * getgrouplist() a second time to get the actual group list
 	 */
-	groups = (gid_t *) gsh_malloc(ngroups * sizeof(gid_t));
+	groups = gsh_malloc(ngroups * sizeof(gid_t));
 	if (groups == NULL)
 		return false;
 
-	gdata->nbgroups = ngroups;
-	if (getgrouplist(user, gid, groups, &gdata->nbgroups) == -1) {
-		LogEvent(COMPONENT_IDMAPPER, "getgrouplist %s failed", user);
+	if (getgrouplist(user, gid, groups, &ngroups) == -1) {
+		LogEvent(COMPONENT_IDMAPPER,
+			 "getgrouplist for user: %s failed retrying", user);
+
 		gsh_free(groups);
-		return false;
+
+		/* Try with the largest ngroups we support */
+		ngroups = 1000;
+		groups2 = gsh_malloc(ngroups * sizeof(gid_t));
+		if (groups2 == NULL)
+			return false;
+
+		if (getgrouplist(user, gid, groups2, &ngroups) == -1) {
+			LogWarn(COMPONENT_IDMAPPER,
+				"getgrouplist for user:%s failed, ngroups: %d",
+				user, ngroups);
+			gsh_free(groups2);
+			return false;
+		}
+
+		/* Resize the buffer */
+		groups = gsh_realloc(groups2, ngroups * sizeof(gid_t));
+		if (groups == NULL) /* Use the large buffer! */
+			groups = groups2;
 	}
 
 	gdata->groups = groups;
+	gdata->nbgroups = ngroups;
 
 	return true;
 }
