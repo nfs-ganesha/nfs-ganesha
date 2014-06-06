@@ -124,7 +124,7 @@ int _9p_read(struct _9p_request_data *req9p, void *worker_data,
 		} else {
 			pfid->op_context.client = client;
 
-			server_stats_io_done(&pfid->op_context, *count,
+			server_stats_io_done(*count,
 					     read_size,
 					     (cache_status ==
 					      CACHE_INODE_SUCCESS) ?

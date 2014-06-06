@@ -688,7 +688,7 @@ int nfs4_Compound(nfs_arg_t *arg,
 		 */
 		resarray[i].nfs_resop4_u.opaccess.status = status;
 
-		server_stats_nfsv4_op_done(data.req_ctx, opcode,
+		server_stats_nfsv4_op_done(opcode,
 					   op_start_time, status == NFS4_OK);
 
 		if (status != NFS4_OK) {
@@ -728,7 +728,7 @@ int nfs4_Compound(nfs_arg_t *arg,
 		}
 	}			/* for */
 
-	server_stats_compound_done(op_ctx, argarray_len, status);
+	server_stats_compound_done(argarray_len, status);
 
 	/* Complete the reply, in particular, tell where you stopped if
 	 * unsuccessfull COMPOUD

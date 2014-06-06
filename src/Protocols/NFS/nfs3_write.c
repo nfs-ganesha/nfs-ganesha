@@ -277,8 +277,9 @@ int nfs3_write(nfs_arg_t *arg,
 	if (entry)
 		cache_inode_put(entry);
 
-	server_stats_io_done(op_ctx, size, written_size,
-			     (rc == NFS_REQ_OK) ? true : false, true);
+	server_stats_io_done(size, written_size,
+			     (rc == NFS_REQ_OK) ? true : false,
+			     true);
 	return rc;
 
 }				/* nfs3_write */

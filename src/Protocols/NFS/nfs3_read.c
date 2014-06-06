@@ -253,8 +253,9 @@ int nfs3_read(nfs_arg_t *arg,
 	if (entry)
 		cache_inode_put(entry);
 
-	server_stats_io_done(op_ctx, size, read_size,
-			     (rc == NFS_REQ_OK) ? true : false, false);
+	server_stats_io_done(size, read_size,
+			     (rc == NFS_REQ_OK) ? true : false,
+			     false);
 	return rc;
 }				/* nfs3_read */
 

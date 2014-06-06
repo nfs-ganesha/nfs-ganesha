@@ -433,7 +433,7 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 	if (anonymous)
 		PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
-	server_stats_io_done(data->req_ctx, size, written_size,
+	server_stats_io_done(size, written_size,
 			     (res_WRITE4->status == NFS4_OK) ? true : false,
 			     true);
 	return res_WRITE4->status;

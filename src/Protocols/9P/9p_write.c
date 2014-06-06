@@ -141,7 +141,7 @@ int _9p_write(struct _9p_request_data *req9p, void *worker_data,
 		} else {
 			pfid->op_context.client = client;
 
-			server_stats_io_done(&pfid->op_context, size,
+			server_stats_io_done(size,
 					     written_size,
 					     (cache_status ==
 					      CACHE_INODE_SUCCESS) ?
