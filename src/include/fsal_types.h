@@ -168,6 +168,27 @@ struct req_op_context {
 	/* add new context members here */
 };
 
+/**
+ * @brief Thread private storage.
+ *
+ * TLS variables look like globals but since they are global only in the
+ * context of a single thread, they do not require locks.  This is true
+ * of all thread either within or separate from a/the fridge.
+ *
+ * All thread local storage is declared extern here.  The actual
+ * storage declaration is in fridgethr.c.
+ */
+
+/**
+ * @brief Operation context.
+ *
+ * This carries everything relevant to a protocol operation
+ * Space for the struct itself is allocated elsewhere.
+ * Test/assert opctx != NULL first (or let the SEGV kill you)
+ */
+
+extern __thread struct req_op_context *op_ctx;
+
 struct root_op_context {
 	struct req_op_context req_ctx;
 	struct user_cred creds;
