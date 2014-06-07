@@ -138,7 +138,6 @@ static void dump_config(struct fsal_module *fsal_hdl, int log_fd)
  */
 
 static fsal_status_t create_export(struct fsal_module *fsal_hdl,
-				   struct req_op_context *req_ctx,
 				   void *parse_node,
 				   const struct fsal_up_vector *up_ops)
 {
@@ -385,8 +384,7 @@ static uint32_t fs_xattr_access_rights(struct fsal_export *exp_hdl)
  */
 
 static fsal_status_t check_quota(struct fsal_export *exp_hdl,
-				 const char *filepath, int quota_type,
-				 struct req_op_context *req_ctx)
+				 const char *filepath, int quota_type)
 {
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -397,7 +395,6 @@ static fsal_status_t check_quota(struct fsal_export *exp_hdl,
 
 static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 			       const char *filepath, int quota_type,
-			       struct req_op_context *req_ctx,
 			       fsal_quota_t *pquota)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
@@ -409,7 +406,6 @@ static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 
 static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 			       const char *filepath, int quota_type,
-			       struct req_op_context *req_ctx,
 			       fsal_quota_t *pquota, fsal_quota_t *presquota)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);

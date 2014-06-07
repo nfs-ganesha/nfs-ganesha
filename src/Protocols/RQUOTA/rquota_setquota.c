@@ -95,7 +95,7 @@ int rquota_setquota(nfs_arg_t *arg,
 
 	fsal_status = exp->fsal_export->ops->set_quota(exp->fsal_export,
 						       quota_path, quota_type,
-						       op_ctx, &fsal_quota_in,
+						       &fsal_quota_in,
 						       &fsal_quota_out);
 	if (FSAL_IS_ERROR(fsal_status)) {
 		if (fsal_status.major == ERR_FSAL_NO_QUOTA)

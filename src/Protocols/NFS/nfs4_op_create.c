@@ -98,8 +98,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 
 	fsal_status = exp_hdl->ops->check_quota(exp_hdl,
 						op_ctx->export->fullpath,
-						FSAL_QUOTA_INODES,
-						op_ctx);
+						FSAL_QUOTA_INODES);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		res_CREATE4->status = NFS4ERR_DQUOT;

@@ -627,7 +627,6 @@ static int fsal_commit(void *node, void *link_mem, void *self_struct,
 		export->fullpath[pathlen] = '\0';
 	}
 	status = fsal->ops->create_export(fsal,
-					  &root_op_context.req_ctx,
 					  node,
 					  &fsal_up_top);
 	if ((export->options_set & EXPORT_OPTION_EXPIRE_SET) == 0) {
@@ -1341,7 +1340,6 @@ static int build_default_root(void)
 		fsal_status_t rc;
 
 		rc = fsal_hdl->ops->create_export(fsal_hdl,
-						  &root_op_context.req_ctx,
 						  NULL,
 						  &fsal_up_top);
 

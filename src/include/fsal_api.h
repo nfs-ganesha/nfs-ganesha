@@ -145,7 +145,7 @@
  * have different operations vectors, but they should all be derived
  * from the module operations vector.
  *
- *	This vector is used to access methodsm e.g.:
+ *	This vector is used to access methods e.g.:
  *
  * @code{.c}
  * exp_hdl->ops->lookup(exp_hdl, name, ...);
@@ -154,6 +154,24 @@
  * Note that exp_hdl is used to dereference the method and it is also
  * *always* the first argument to the method/function.  Think of it as
  * the 'this' argument.
+ *
+ * @section Operation Context
+ *
+ * Protocol operations have lots of state such as user creds, the
+ * export currently in use etc.  Rather than pass all this down the
+ * stack we take advantage of the design decision that a protocol
+ * operation runs to completion in the thread that dequeued the
+ * request from the RPC.  All of the operation state (other than
+ * some intermediate results passed as function args) are pointed
+ * to by the thread local 'op_ctx'.  This will always point to a
+ * valid and initialized 'struct req_op_contest'.
+ *
+ *	Method code can reference through 'op_ctx' e.g.
+ *
+ * @code{.c}
+ * if (op_ctx->req_type == 9P) { ... }
+ * @endcode
+ *
  */
 
 /**
@@ -443,9 +461,6 @@ struct fsal_ops {
  * do. -- ACE.
  *
  * @param[in]     fsal_hdl    FSAL module
- * @param[in,out] req_ctx     Request context to run in
- *                            Provides reference to the gsh_export and
- *                            thus the exported path
  * @param[in]     parse_node  opaque pointer to parse tree node for
  *                            export options to be passed to
  *                            load_config_from_node
@@ -454,7 +469,6 @@ struct fsal_ops {
  * @return FSAL status.
  */
 	 fsal_status_t(*create_export) (struct fsal_module *fsal_hdl,
-					struct req_op_context *req_ctx,
 					void *parse_node,
 					const struct fsal_up_vector *up_ops);
 
@@ -949,13 +963,11 @@ struct export_ops {
  * @param[in] exp_hdl    The export to interrogate
  * @param[in] filepath   The path within the export to check
  * @param[in] quota_type Whether we are checking inodes or blocks
- * @param[in] req_ctx    Request context, giving credentials
  *
  * @return FSAL types.
  */
 	 fsal_status_t(*check_quota) (struct fsal_export *exp_hdl,
-				      const char *filepath, int quota_type,
-				      struct req_op_context *req_ctx);
+				      const char *filepath, int quota_type);
 
 /**
  * @brief Get a user's quota
@@ -965,14 +977,12 @@ struct export_ops {
  * @param[in]  exp_hdl    The export to interrogate
  * @param[in]  filepath   The path within the export to check
  * @param[in]  quota_type Whether we are checking inodes or blocks
- * @param[in]  req_ctx    Request context, giving credentials
  * @param[out] quota      The user's quota
  *
  * @return FSAL types.
  */
 	 fsal_status_t(*get_quota) (struct fsal_export *exp_hdl,
 				    const char *filepath, int quota_type,
-				    struct req_op_context *req_ctx,
 				    fsal_quota_t *quota);
 
 /**
@@ -983,7 +993,6 @@ struct export_ops {
  * @param[in]  exp_hdl    The export to interrogate
  * @param[in]  filepath   The path within the export to check
  * @param[in]  quota_type Whether we are checking inodes or blocks
- * @param[in]  req_ctx    Request context, giving credentials
  * @param[in]  quota      The values to set for the quota
  * @param[out] resquota   New values set (optional)
  *
@@ -991,7 +1000,6 @@ struct export_ops {
  */
 	 fsal_status_t(*set_quota) (struct fsal_export *exp_hdl,
 				    const char *filepath, int quota_type,
-				    struct req_op_context *req_ctx,
 				    fsal_quota_t *quota,
 				    fsal_quota_t *resquota);
 /**@}*/

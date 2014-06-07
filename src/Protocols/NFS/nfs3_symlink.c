@@ -128,8 +128,7 @@ int nfs3_symlink(nfs_arg_t *arg,
 	fsal_status =
 	    op_ctx->fsal_export->ops->check_quota(op_ctx->fsal_export,
 						   op_ctx->export->fullpath,
-						   FSAL_QUOTA_INODES,
-						   op_ctx);
+						   FSAL_QUOTA_INODES);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		res->res_symlink3.status = NFS3ERR_DQUOT;

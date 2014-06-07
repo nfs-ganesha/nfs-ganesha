@@ -154,7 +154,6 @@ void pxy_export_ops_init(struct export_ops *ops)
  * but we also need access to pxy_exp_ops - I'd rather
  * keep the later static then the former */
 fsal_status_t pxy_create_export(struct fsal_module *fsal_hdl,
-				struct req_op_context *req_ctx,
 				void *parse_node,
 				const struct fsal_up_vector *up_ops)
 {
@@ -173,6 +172,6 @@ fsal_status_t pxy_create_export(struct fsal_module *fsal_hdl,
 	exp->exp.up_ops = up_ops;
 	exp->info = &pxy->special;
 	exp->exp.fsal = fsal_hdl;
-	req_ctx->fsal_export = &exp->exp;
+	op_ctx->fsal_export = &exp->exp;
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }

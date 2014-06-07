@@ -305,7 +305,6 @@ static struct config_block export_param = {
  */
 
 fsal_status_t zfs_create_export(struct fsal_module *fsal_hdl,
-				struct req_op_context *req_ctx,
 				void *parse_node,
 				const struct fsal_up_vector *up_ops)
 {
@@ -375,7 +374,7 @@ fsal_status_t zfs_create_export(struct fsal_module *fsal_hdl,
 	if (libargs.pool_path)
 		gsh_free(libargs.pool_path);
 	myself->p_vfs = p_snapshots[0].p_vfs;
-	req_ctx->fsal_export = &myself->export;
+	op_ctx->fsal_export = &myself->export;
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 

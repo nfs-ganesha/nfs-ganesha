@@ -164,8 +164,7 @@ int nfs3_write(nfs_arg_t *arg,
 	fsal_status =
 	    op_ctx->fsal_export->ops->check_quota(op_ctx->fsal_export,
 						   op_ctx->export->fullpath,
-						   FSAL_QUOTA_BLOCKS,
-						   op_ctx);
+						   FSAL_QUOTA_BLOCKS);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		res->res_write3.status = NFS3ERR_DQUOT;
