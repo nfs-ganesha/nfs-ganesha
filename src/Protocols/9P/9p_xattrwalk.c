@@ -257,6 +257,9 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, void *worker_data,
 	/* Increments refcount as we're manually making a new copy */
 	cache_inode_lru_ref(pfid->pentry, LRU_FLAG_NONE);
 
+	/* fid doesn't come from attach, don't put export on clunk... */
+	pxattrfid->from_attach = FALSE;
+
 	/* hold reference on gdata */
 	uid2grp_hold_group_data(pxattrfid->gdata);
 

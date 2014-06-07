@@ -44,6 +44,11 @@
 #include "fsal_handle.h"
 #include <stdbool.h>
 
+#ifdef USE_FSAL_SHOOK
+#include "shook_svr.h"
+#endif
+
+
 /** lustre_open
  * called with appropriate locks taken at the cache inode level
  */
@@ -55,7 +60,7 @@ fsal_status_t lustre_open(struct fsal_obj_handle *obj_hdl,
 	struct lustre_fsal_obj_handle *myself;
 	int fd;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
-	int retval = 0;
+	int rc = 0;
 	int posix_flags = 0;
 
 	myself =
@@ -67,6 +72,18 @@ fsal_status_t lustre_open(struct fsal_obj_handle *obj_hdl,
 	fsal2posix_openflags(openflags, &posix_flags);
 	LogFullDebug(COMPONENT_FSAL, "open_by_handle_at flags from %x to %x",
 		     openflags, posix_flags);
+
+#ifdef USE_FSAL_SHOOK
+	/* Do Shook Magic */
+	fsal_status_t st;
+	st = lustre_shook_restore(obj_hdl,
+				  posix_flags & O_TRUNC,
+				  NULL);
+	if (FSAL_IS_ERROR(st))
+		return st;
+
+	/* now, we can open file directly */
+#endif
 
 	fd = CRED_WRAP(opctx->creds, int, lustre_open_by_handle,
 		       obj_hdl->fs->path, myself->handle,
@@ -91,12 +108,12 @@ fsal_status_t lustre_open(struct fsal_obj_handle *obj_hdl,
 					myself->handle, posix_flags);
 			if (fd < 0) {
 				fsal_error = posix2fsal_error(errno);
-				retval = errno;
+				rc = errno;
 				goto out;
 			}
 		} else {
 			fsal_error = posix2fsal_error(errno);
-			retval = errno;
+			rc = errno;
 			goto out;
 		}
 	}
@@ -104,7 +121,7 @@ fsal_status_t lustre_open(struct fsal_obj_handle *obj_hdl,
 	myself->u.file.openflags = openflags;
 
  out:
-	return fsalstat(fsal_error, retval);
+	return fsalstat(fsal_error, rc);
 }
 
 /* lustre_status
@@ -132,7 +149,7 @@ fsal_status_t lustre_read(struct fsal_obj_handle *obj_hdl,
 	struct lustre_fsal_obj_handle *myself;
 	ssize_t nb_read;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
-	int retval = 0;
+	int rc = 0;
 
 	myself =
 	    container_of(obj_hdl, struct lustre_fsal_obj_handle, obj_handle);
@@ -143,14 +160,14 @@ fsal_status_t lustre_read(struct fsal_obj_handle *obj_hdl,
 	nb_read = pread(myself->u.file.fd, buffer, buffer_size, offset);
 
 	if (offset == -1 || nb_read == -1) {
-		retval = errno;
-		fsal_error = posix2fsal_error(retval);
+		rc = errno;
+		fsal_error = posix2fsal_error(rc);
 		goto out;
 	}
 	*end_of_file = nb_read == 0 ? true : false;
 	*read_amount = nb_read;
  out:
-	return fsalstat(fsal_error, retval);
+	return fsalstat(fsal_error, rc);
 }
 
 /* lustre_write
@@ -165,7 +182,7 @@ fsal_status_t lustre_write(struct fsal_obj_handle *obj_hdl,
 	struct lustre_fsal_obj_handle *myself;
 	ssize_t nb_written;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
-	int retval = 0;
+	int rc = 0;
 
 	myself =
 	    container_of(obj_hdl, struct lustre_fsal_obj_handle, obj_handle);
@@ -178,15 +195,15 @@ fsal_status_t lustre_write(struct fsal_obj_handle *obj_hdl,
 		      buffer_size, offset);
 
 	if (offset == -1 || nb_written == -1) {
-		retval = errno;
-		fsal_error = posix2fsal_error(retval);
+		rc = errno;
+		fsal_error = posix2fsal_error(rc);
 		goto out;
 	}
 	*write_amount = nb_written;
 	*fsal_stable = false;
 
  out:
-	return fsalstat(fsal_error, retval);
+	return fsalstat(fsal_error, rc);
 }
 
 /* lustre_commit
@@ -200,7 +217,7 @@ fsal_status_t lustre_commit(struct fsal_obj_handle *obj_hdl,	/* sync */
 {
 	struct lustre_fsal_obj_handle *myself;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
-	int retval = 0;
+	int rc = 0;
 
 	myself =
 	    container_of(obj_hdl, struct lustre_fsal_obj_handle, obj_handle);
@@ -208,12 +225,12 @@ fsal_status_t lustre_commit(struct fsal_obj_handle *obj_hdl,	/* sync */
 	assert(myself->u.file.fd >= 0
 	       && myself->u.file.openflags != FSAL_O_CLOSED);
 
-	retval = fsync(myself->u.file.fd);
-	if (retval == -1) {
-		retval = errno;
-		fsal_error = posix2fsal_error(retval);
+	rc = fsync(myself->u.file.fd);
+	if (rc == -1) {
+		rc = errno;
+		fsal_error = posix2fsal_error(rc);
 	}
-	return fsalstat(fsal_error, retval);
+	return fsalstat(fsal_error, rc);
 }
 
 /* lustre_lock_op
@@ -233,7 +250,7 @@ fsal_status_t lustre_lock_op(struct fsal_obj_handle *obj_hdl,
 	struct flock lock_args;
 	int fcntl_comm;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
-	int retval = 0;
+	int rc = 0;
 
 	myself =
 	    container_of(obj_hdl, struct lustre_fsal_obj_handle, obj_handle);
@@ -289,19 +306,19 @@ fsal_status_t lustre_lock_op(struct fsal_obj_handle *obj_hdl,
 	lock_args.l_whence = SEEK_SET;
 
 	errno = 0;
-	retval = fcntl(myself->u.file.fd, fcntl_comm, &lock_args);
-	if (retval && lock_op == FSAL_OP_LOCK) {
-		retval = errno;
+	rc = fcntl(myself->u.file.fd, fcntl_comm, &lock_args);
+	if (rc && lock_op == FSAL_OP_LOCK) {
+		rc = errno;
 		if (conflicting_lock != NULL) {
 			fcntl_comm = F_GETLK;
-			retval =
+			rc =
 			    fcntl(myself->u.file.fd, fcntl_comm, &lock_args);
-			if (retval) {
-				retval = errno;	/* we lose the inital error */
+			if (rc) {
+				rc = errno;	/* we lose the inital error */
 				LogCrit(COMPONENT_FSAL,
 					"After failing a lock request, I couldn't even"
 					" get the details of who owns the lock.");
-				fsal_error = posix2fsal_error(retval);
+				fsal_error = posix2fsal_error(rc);
 				goto out;
 			}
 			if (conflicting_lock != NULL) {
@@ -311,7 +328,7 @@ fsal_status_t lustre_lock_op(struct fsal_obj_handle *obj_hdl,
 				conflicting_lock->lock_type = lock_args.l_type;
 			}
 		}
-		fsal_error = posix2fsal_error(retval);
+		fsal_error = posix2fsal_error(rc);
 		goto out;
 	}
 
@@ -328,7 +345,7 @@ fsal_status_t lustre_lock_op(struct fsal_obj_handle *obj_hdl,
 		}
 	}
  out:
-	return fsalstat(fsal_error, retval);
+	return fsalstat(fsal_error, rc);
 }
 
 /* lustre_close
@@ -341,18 +358,18 @@ fsal_status_t lustre_close(struct fsal_obj_handle *obj_hdl)
 {
 	struct lustre_fsal_obj_handle *myself;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
-	int retval = 0;
+	int rc = 0;
 
 	myself =
 	    container_of(obj_hdl, struct lustre_fsal_obj_handle, obj_handle);
-	retval = close(myself->u.file.fd);
-	if (retval < 0) {
-		retval = errno;
-		fsal_error = posix2fsal_error(retval);
+	rc = close(myself->u.file.fd);
+	if (rc < 0) {
+		rc = errno;
+		fsal_error = posix2fsal_error(rc);
 	}
 	myself->u.file.fd = -1;
 	myself->u.file.openflags = FSAL_O_CLOSED;
-	return fsalstat(fsal_error, retval);
+	return fsalstat(fsal_error, rc);
 }
 
 /* lustre_lru_cleanup
@@ -366,18 +383,18 @@ fsal_status_t lustre_lru_cleanup(struct fsal_obj_handle *obj_hdl,
 {
 	struct lustre_fsal_obj_handle *myself;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
-	int retval = 0;
+	int rc = 0;
 
 	myself =
 	    container_of(obj_hdl, struct lustre_fsal_obj_handle, obj_handle);
 	if (myself->u.file.fd >= 0) {
-		retval = close(myself->u.file.fd);
+		rc = close(myself->u.file.fd);
 		myself->u.file.fd = -1;
 		myself->u.file.openflags = FSAL_O_CLOSED;
 	}
-	if (retval == -1) {
-		retval = errno;
-		fsal_error = posix2fsal_error(retval);
+	if (rc == -1) {
+		rc = errno;
+		fsal_error = posix2fsal_error(rc);
 	}
-	return fsalstat(fsal_error, retval);
+	return fsalstat(fsal_error, rc);
 }

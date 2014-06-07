@@ -174,6 +174,7 @@ int posix2fsal_error(int posix_errorcode)
 		/* Error code that needs a retry */
 	case EAGAIN:
 	case EBUSY:
+	case ETIME:
 		LogInfo(COMPONENT_FSAL, "Mapping %d to ERR_FSAL_DELAY",
 			posix_errorcode);
 		return ERR_FSAL_DELAY;

@@ -87,6 +87,15 @@ extern int open_by_handle_fd;
 
 #endif
 
+#ifdef USE_FSAL_SHOOK
+/*
+ * Shook related stuff
+ */
+fsal_status_t lustre_shook_restore(struct fsal_obj_handle *obj_hdl,
+				   bool do_truncate,
+				   int *trunc_done);
+#endif
+
 
 /**
  *  Increments the number of calls for a function.

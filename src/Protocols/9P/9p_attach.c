@@ -181,9 +181,9 @@ int _9p_attach(struct _9p_request_data *req9p, void *worker_data,
 
 errout:
 
+	if (export != NULL)
+		put_gsh_export(export);
 	if (pfid != NULL) {
-		if (export != NULL)
-			put_gsh_export(export);
 		if (pfid->pentry != NULL)
 			cache_inode_put(pfid->pentry);
 		gsh_free(pfid);

@@ -25,7 +25,7 @@ install(TARGETS fsallustre COMPONENT fsal DESTINATION  ${FSAL_DESTINATION} )
 
 if(USE_FSAL_SHOOK)
   SET(fsalshook_LIB_SRCS
-     fsal_internal.c
+    fsal_internal.c
     fsal_internal.h
     lustre_extended_types.h
     main.c
@@ -33,13 +33,14 @@ if(USE_FSAL_SHOOK)
     handle.c
     file.c
     xattrs.c
-   mds.c
-   ds.c
+    shook_glue.c
+    mds.c
+    ds.c
     )
 
   add_library(fsalshook SHARED ${fsalshook_LIB_SRCS})
 
-  target_link_libraries(fsalshook lustreapi ${SYSTEM_LIBRARIES})
+  target_link_libraries(fsalshook lustreapi shook ${SYSTEM_LIBRARIES})
 
   set_target_properties(fsalshook PROPERTIES VERSION 4.2.0 SOVERSION 4)
   install(TARGETS fsalshook COMPONENT fsal DESTINATION  ${FSAL_DESTINATION} )

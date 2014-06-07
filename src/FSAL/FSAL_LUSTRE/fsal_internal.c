@@ -51,7 +51,6 @@
 #include "fsal_convert.h"
 #include "lustre_extended_types.h"
 
-
 /** get (name+parent_id) for an entry
  * \param linkno hardlink index
  * \retval -ENODATA after last link
