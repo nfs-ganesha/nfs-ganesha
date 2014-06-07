@@ -55,6 +55,7 @@ struct cache_user {
 	bool gid_set;		/*< if the GID has been set */
 	struct avltree_node uname_node;	/*< Node in the name tree */
 	struct avltree_node uid_node;	/*< Node in the UID tree */
+	bool in_uidtree;		/* true iff this is in uid_tree */
 };
 
 /**
@@ -297,8 +298,9 @@ void idmapper_cache_init(void)
 bool idmapper_add_user(const struct gsh_buffdesc *name, uid_t uid,
 		       const gid_t *gid, bool gss_princ)
 {
-	struct avltree_node *found_name = NULL;
-	struct avltree_node *found_id = NULL;
+	struct avltree_node *found_name;
+	struct avltree_node *found_id;
+	struct cache_user *tmp;
 	struct cache_user *new =
 	    gsh_malloc(sizeof(struct cache_user) + name->len);
 
@@ -320,62 +322,55 @@ bool idmapper_add_user(const struct gsh_buffdesc *name, uid_t uid,
 		new->gid_set = false;
 	}
 
+	/*
+	 * The threads that lookup by-name or by-id use the read lock. If
+	 * they don't find an entry, then they release the read lock,
+	 * acquire the write lock and then add the entry. So it is
+	 * possible that multiple threads may fail to find an entry at
+	 * one point and they all try to add. In this case, we will be
+	 * trying to insert same name,id mapping. It is also possible
+	 * that name got a different id or an id got a different name
+	 * causing us to find an existing entry when we are trying to
+	 * add an entry!
+	 *
+	 * If we find an existing entry, we remove it from both the name
+	 * and the id AVL trees, and then add the new entry.
+	 */
 	found_name = avltree_insert(&new->uname_node, &uname_tree);
-	if (!gss_princ)
-		found_id = avltree_insert(&new->uid_node, &uid_tree);
-
-	if (unlikely(found_name || found_id)) {
-		/* Obnoxious complexity.  And we can't even reuse the
-		   code because the types are different.  Foo. */
-		struct cache_user *coll_name =
-		    (found_name ? avltree_container_of(found_name,
-						       struct cache_user,
-						       uname_node) : NULL);
-		struct cache_user *coll_id =
-		    (found_id ? avltree_container_of(found_id,
-						     struct cache_user,
-						     uid_node) : NULL);
-
-		LogWarn(COMPONENT_IDMAPPER,
-			"Collision found in user cache.  This likely "
-			"indicates a bug in ganesha or a screwy host "
-			"configuration.");
-
-		if (coll_name) {
-			avltree_remove(found_name, &uname_tree);
-			if (!gss_princ) {
-				if (coll_name != coll_id) {
-					uid_cache[coll_name->uid %
-						  id_cache_size] = NULL;
-					avltree_remove(&coll_name->uid_node,
-						       &uid_tree);
-				}
-			}
+	if (unlikely(found_name)) {
+		tmp = avltree_container_of(found_name, struct cache_user,
+					   uname_node);
+		avltree_remove(found_name, &uname_tree);
+		if (tmp->in_uidtree) {
+			uid_cache[tmp->uid % id_cache_size] = NULL;
+			avltree_remove(&tmp->uid_node, &uid_tree);
 		}
-		if (coll_id) {
-			avltree_remove(found_id, &uid_tree);
-			if (coll_id != coll_name) {
-				avltree_remove(&coll_id->uname_node,
-					       &uname_tree);
-			}
-		}
-		if (coll_id == coll_name) {
-			gsh_free(coll_id);
-		} else if (!coll_name) {
-			gsh_free(coll_id);
-		} else if (!coll_id) {
-			gsh_free(coll_name);
-		} else {
-			gsh_free(coll_id);
-			gsh_free(coll_name);
-		}
-		avltree_insert(&new->uname_node, &uname_tree);
-		if (!gss_princ)
-			avltree_insert(&new->uid_node, &uid_tree);
+		gsh_free(tmp);
+		found_name = avltree_insert(&new->uname_node, &uname_tree);
+		assert(found_name == NULL);
 	}
-	if (!gss_princ)
-		uid_cache[uid % id_cache_size] = &new->uid_node;
 
+	/* If this is gss principal, we don't add to uid_tree */
+	if (gss_princ) {
+		new->in_uidtree = false;
+		goto out;
+	}
+
+	new->in_uidtree = true; /* we will sure insert it! */
+	found_id = avltree_insert(&new->uid_node, &uid_tree);
+	if (unlikely(found_id)) {
+		tmp = avltree_container_of(found_id, struct cache_user,
+					   uid_node);
+		uid_cache[tmp->uid % id_cache_size] = NULL;
+		avltree_remove(found_id, &uid_tree);
+		avltree_remove(&tmp->uname_node, &uname_tree);
+		gsh_free(tmp);
+		found_id = avltree_insert(&new->uid_node, &uid_tree);
+		assert(found_id == NULL);
+	}
+	uid_cache[uid % id_cache_size] = &new->uid_node;
+
+out:
 	return true;
 }
 
@@ -393,8 +388,9 @@ bool idmapper_add_user(const struct gsh_buffdesc *name, uid_t uid,
 
 bool idmapper_add_group(const struct gsh_buffdesc *name, const gid_t gid)
 {
-	struct avltree_node *found_name = NULL;
-	struct avltree_node *found_id = NULL;
+	struct avltree_node *found_name;
+	struct avltree_node *found_id;
+	struct cache_group *tmp;
 	struct cache_group *new =
 	    gsh_malloc(sizeof(struct cache_group) + name->len);
 
@@ -409,54 +405,43 @@ bool idmapper_add_group(const struct gsh_buffdesc *name, const gid_t gid)
 	new->gid = gid;
 	memcpy(new->gname.addr, name->addr, name->len);
 
+	/*
+	 * The threads that lookup by-name or by-id use the read lock. If
+	 * they don't find an entry, then they release the read lock,
+	 * acquire the write lock and then add the entry. So it is
+	 * possible that multiple threads may fail to find an entry at
+	 * one point and they all try to add. In this case, we will be
+	 * trying to insert same name,id mapping. It is also possible
+	 * that name got a different id or an id got a different name
+	 * causing us to find an existing entry when we are trying to
+	 * add an entry!
+	 *
+	 * If we find an existing entry, we remove it from both the name
+	 * and the id AVL trees, and then add the new entry.
+	 */
 	found_name = avltree_insert(&new->gname_node, &gname_tree);
+	if (unlikely(found_name)) {
+		tmp = avltree_container_of(found_name, struct cache_group,
+					   gname_node);
+		avltree_remove(found_name, &gname_tree);
+		avltree_remove(&tmp->gid_node, &gid_tree);
+		gid_cache[tmp->gid % id_cache_size] = NULL;
+		gsh_free(tmp);
+		found_name = avltree_insert(&new->gname_node, &gname_tree);
+		assert(found_name == NULL);
+	}
+
 	found_id = avltree_insert(&new->gid_node, &gid_tree);
+	if (unlikely(found_id)) {
+		tmp = avltree_container_of(found_id, struct cache_group,
+					   gid_node);
 
-	if (unlikely(found_name || found_id)) {
-		/* Obnoxious complexity.  And we couldn't even reuse the
-		   code because the types were different.  Confound it. */
-		struct cache_group *coll_name =
-		    (found_name ? avltree_container_of(found_name,
-						       struct cache_group,
-						       gname_node) : NULL);
-		struct cache_group *coll_id =
-		    (found_id ? avltree_container_of(found_id,
-						     struct cache_group,
-						     gid_node) : NULL);
-
-		LogWarn(COMPONENT_IDMAPPER,
-			"Collision found in group cache.  This likely "
-			"indicates a bug in ganesha or a screwy host "
-			"configuration.");
-
-		if (coll_name) {
-			avltree_remove(found_name, &gname_tree);
-			if (coll_name != coll_id) {
-				uid_cache[coll_name->gid %
-					  id_cache_size] = NULL;
-				avltree_remove(&coll_name->gid_node,
-					       &gid_tree);
-			}
-		}
-		if (coll_id) {
-			avltree_remove(found_id, &gid_tree);
-			if (coll_id != coll_name) {
-				avltree_remove(&coll_id->gname_node,
-					       &gname_tree);
-			}
-		}
-		if (coll_id == coll_name) {
-			gsh_free(coll_id);
-		} else if (!coll_name) {
-			gsh_free(coll_id);
-		} else if (!coll_id) {
-			gsh_free(coll_name);
-		} else {
-			gsh_free(coll_id);
-			gsh_free(coll_name);
-		}
-		avltree_insert(&new->gname_node, &gname_tree);
-		avltree_insert(&new->gid_node, &gid_tree);
+		gid_cache[tmp->gid % id_cache_size] = NULL;
+		avltree_remove(found_id, &gid_tree);
+		avltree_remove(&tmp->gname_node, &gname_tree);
+		gsh_free(tmp);
+		found_id = avltree_insert(&new->gid_node, &gid_tree);
+		assert(found_id == NULL);
 	}
 	gid_cache[gid % id_cache_size] = &new->gid_node;
 
