@@ -1423,7 +1423,8 @@ fsal_status_t lustre_create_handle(struct fsal_export *exp_hdl,
 		fs = lookup_fsid(&fsid, fsid_type);
 		if (fs == NULL) {
 			LogInfo(COMPONENT_FSAL,
-				"Could not map fsid %"PRIu64".%"PRIu64
+				"Could not map "
+				"fsid=0x%016"PRIx64".0x%016"PRIx64
 				" to filesytem",
 				fsid.major, fsid.minor);
 			retval = ESTALE;
@@ -1431,7 +1432,7 @@ fsal_status_t lustre_create_handle(struct fsal_export *exp_hdl,
 		}
 		if (fs->fsal != exp_hdl->fsal) {
 			LogInfo(COMPONENT_FSAL,
-				"fsid %"PRIu64".%"PRIu64
+				"fsid=0x%016"PRIx64".0x%016"PRIx64
 				" in handle not a %s filesystem",
 				fsid.major, fsid.minor,
 				exp_hdl->fsal->name);

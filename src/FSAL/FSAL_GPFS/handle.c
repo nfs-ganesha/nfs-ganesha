@@ -792,7 +792,8 @@ fsal_status_t gpfs_lookup_path(struct fsal_export *exp_hdl,
 	if (FSAL_IS_ERROR(fsal_status))
 		goto fileerr;
 	fsal_status = gpfsfsal_xstat_2_fsal_attributes(&buffxstat, &attributes);
-	LogFullDebug(COMPONENT_FSAL, "fsid major = %lu, minor = %lu",
+	LogFullDebug(COMPONENT_FSAL,
+		     "fsid=0x%016"PRIx64".0x%016"PRIx64,
 		     attributes.fsid.major,
 		     attributes.fsid.minor);
 	if (FSAL_IS_ERROR(fsal_status))
@@ -886,7 +887,8 @@ fsal_status_t gpfs_create_handle(struct fsal_export *exp_hdl,
 
 	if (fs == NULL) {
 		LogInfo(COMPONENT_FSAL,
-			"Could not find filesystem for fsid %"PRIu64".%"PRIu64
+			"Could not find filesystem for "
+			"fsid=0x%016"PRIx64".0x%016"PRIx64
 			" from handle",
 			fsid.major, fsid.minor);
 		return fsalstat(ERR_FSAL_STALE, ESTALE);
@@ -894,7 +896,8 @@ fsal_status_t gpfs_create_handle(struct fsal_export *exp_hdl,
 
 	if (fs->fsal != exp_hdl->fsal) {
 		LogInfo(COMPONENT_FSAL,
-			"Non GPFS filesystem fsid %"PRIu64".%"PRIu64
+			"Non GPFS filesystem "
+			"fsid=0x%016"PRIx64".0x%016"PRIx64
 			" from handle",
 			fsid.major, fsid.minor);
 		return fsalstat(ERR_FSAL_STALE, ESTALE);

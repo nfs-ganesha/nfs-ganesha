@@ -164,6 +164,7 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 	vfs_alloc_handle(fh);
 	fsal_dev_t dev;
 	struct fsal_filesystem *fs;
+	bool xfsal = false;
 
 	*handle = NULL;		/* poison it first */
 	parent_hdl =
@@ -214,6 +215,7 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 		}
 
 		if (fs->fsal != parent->fsal) {
+			xfsal = true;
 			LogDebug(COMPONENT_FSAL,
 				 "Lookup of %s crosses filesystem boundary to file system %s into FSAL %s",
 				 path, fs->path,
@@ -227,17 +229,13 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 		}
 	}
 
-	retval = vfs_name_to_handle(dirfd, fs, path, fh);
-
-	if (retval < 0) {
+	if (xfsal || vfs_name_to_handle(dirfd, fs, path, fh) < 0) {
 		retval = errno;
 		if (((retval == ENOTTY) ||
 		     (retval == EOPNOTSUPP) ||
-		     (retval == ENOTSUP)) &&
+		     (retval == ENOTSUP) ||
+		     xfsal) &&
 		    (fs != parent->fs)) {
-			LogDebug(COMPONENT_FSAL,
-				 "vfs_name_to_handle failed for %s",
-				 path);
 			/* Crossed device into territory not handled by
 			 * this FSAL (XFS or VFS). Need to invent a handle.
 			 * The made up handle will be JUST the fsid, we
@@ -246,7 +244,9 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 			 * FSAL.
 			 */
 			LogDebug(COMPONENT_FSAL,
-				 "vfs_name_to_handle failed, inventing FSAL %s handle for %s",
+				 "vfs_name_to_handle %s, inventing FSAL %s handle for FSAL %s filesystem %s",
+				 xfsal ? "skipped" : "failed",
+				 parent->fsal->name,
 				 fs->fsal != NULL
 					? fs->fsal->name
 					: "(none)",
@@ -1667,7 +1667,8 @@ fsal_status_t vfs_check_handle(struct fsal_export *exp_hdl,
 		*fs = lookup_fsid(&fsid, fsid_type);
 		if (*fs == NULL) {
 			LogInfo(COMPONENT_FSAL,
-				"Could not map fsid %"PRIu64".%"PRIu64
+				"Could not map "
+				"fsid=0x%016"PRIx64".0x%016"PRIx64
 				" to filesytem",
 				fsid.major, fsid.minor);
 			retval = ESTALE;
@@ -1676,7 +1677,7 @@ fsal_status_t vfs_check_handle(struct fsal_export *exp_hdl,
 		}
 		if (((*fs)->fsal != exp_hdl->fsal) && !(*dummy)) {
 			LogInfo(COMPONENT_FSAL,
-				"fsid %"PRIu64".%"PRIu64
+				"fsid=0x%016"PRIx64".0x%016"PRIx64
 				" in handle not a %s filesystem",
 				fsid.major, fsid.minor,
 				exp_hdl->fsal->name);

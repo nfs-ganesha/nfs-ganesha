@@ -1,5 +1,0 @@
-/var/log/nfs-ganesha.log {
-    copytruncate
-    dateext
-    compress
-}

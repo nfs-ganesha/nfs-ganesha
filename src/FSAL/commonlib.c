@@ -663,10 +663,11 @@ int re_index_fs_fsid(struct fsal_filesystem *fs,
 {
 	struct avltree_node *node;
 	struct fsal_fsid__ old_fsid = fs->fsid;
+	enum fsid_type old_fsid_type = fs->fsid_type;
 
 	LogDebug(COMPONENT_FSAL,
-		 "Reindex %s from %"PRIu64".%"PRIu64
-		 " to %"PRIu64".%"PRIu64,
+		 "Reindex %s from 0x%016"PRIx64".0x%016"PRIx64
+		 " to 0x%016"PRIx64".0x%016"PRIx64,
 		 fs->path,
 		 fs->fsid.major, fs->fsid.minor,
 		 major, minor);
@@ -682,12 +683,14 @@ int re_index_fs_fsid(struct fsal_filesystem *fs,
 
 	fs->fsid.major = major;
 	fs->fsid.minor = minor;
+	fs->fsid_type = fsid_type;
 
 	node = avltree_insert(&fs->avl_fsid, &avl_fsid);
 
 	if (node != NULL) {
 		/* This is a duplicate file system. */
 		fs->fsid = old_fsid;
+		fs->fsid_type = old_fsid_type;
 		if (fs->in_fsid_avl) {
 			/* Put it back where it was */
 			node = avltree_insert(&fs->avl_fsid, &avl_fsid);
@@ -701,7 +704,6 @@ int re_index_fs_fsid(struct fsal_filesystem *fs,
 	}
 
 	fs->in_fsid_avl = true;
-	fs->fsid_type = fsid_type;
 
 	return 0;
 }
@@ -922,8 +924,8 @@ static bool posix_get_fsid(struct fsal_filesystem *fs)
 #endif
 
 	fs->fsid_type = FSID_TWO_UINT32;
-	fs->fsid.major = stat_fs.f_fsid.__val[0];
-	fs->fsid.minor = stat_fs.f_fsid.__val[1];
+	fs->fsid.major = (unsigned) stat_fs.f_fsid.__val[0];
+	fs->fsid.minor = (unsigned) stat_fs.f_fsid.__val[1];
 
 	if ((fs->fsid.major == 0) && (fs->fsid.minor == 0)) {
 		fs->fsid.major = fs->dev.major;
@@ -982,8 +984,9 @@ static void posix_create_file_system(struct mntent *mnt)
 					   avl_fsid);
 
 		LogDebug(COMPONENT_FSAL,
-			 "Skipped duplicate %s namelen=%d fsid=%016"
-			 PRIx64".%016"PRIx64" %"PRIu64".%"PRIu64,
+			 "Skipped duplicate %s namelen=%d "
+			 "fsid=0x%016"PRIx64".0x%016"PRIx64
+			 " %"PRIu64".%"PRIu64,
 			 fs->path, (int) fs->namelen,
 			 fs->fsid.major, fs->fsid.minor,
 			 fs->fsid.major, fs->fsid.minor);
@@ -1048,7 +1051,7 @@ static void posix_create_file_system(struct mntent *mnt)
 
 	LogInfo(COMPONENT_FSAL,
 		"Added filesystem %s namelen=%d dev=%"PRIu64".%"PRIu64
-		"fsid=%016"PRIx64".%016"PRIx64" %"PRIu64".%"PRIu64,
+		" fsid=0x%016"PRIx64".0x%016"PRIx64" %"PRIu64".%"PRIu64,
 		fs->path, (int) fs->namelen,
 		fs->dev.major, fs->dev.minor,
 		fs->fsid.major, fs->fsid.minor,

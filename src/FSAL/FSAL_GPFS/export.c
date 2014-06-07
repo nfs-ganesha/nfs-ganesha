@@ -401,7 +401,8 @@ nfsstat4 gpfs_create_ds_handle(struct fsal_export * const export_pub,
 
 	if (fs == NULL) {
 		LogInfo(COMPONENT_FSAL,
-			"Could not find filesystem for fsid %"PRIu64".%"PRIu64
+			"Could not find filesystem for "
+			"fsid=0x%016"PRIx64".0x%016"PRIx64
 			" from handle",
 			fsid.major, fsid.minor);
 		return NFS4ERR_STALE;
@@ -409,7 +410,8 @@ nfsstat4 gpfs_create_ds_handle(struct fsal_export * const export_pub,
 
 	if (fs->fsal != export_pub->fsal) {
 		LogInfo(COMPONENT_FSAL,
-			"Non GPFS filesystem fsid %"PRIu64".%"PRIu64
+			"Non GPFS filesystem "
+			"fsid=0x%016"PRIx64".0x%016"PRIx64
 			" from handle",
 			fsid.major, fsid.minor);
 		return NFS4ERR_STALE;

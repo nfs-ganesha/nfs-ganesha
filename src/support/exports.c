@@ -1559,9 +1559,9 @@ bool init_export_root(struct gsh_export *export)
 			     0, 0, UNKNOWN_REQUEST);
 
 	/* Lookup for the FSAL Path */
-	LogFullDebug(COMPONENT_EXPORT,
-		     "About to lookup_path for ExportId=%u Path=%s",
-		     export->export_id, export->fullpath);
+	LogDebug(COMPONENT_EXPORT,
+		 "About to lookup_path for ExportId=%u Path=%s",
+		 export->export_id, export->fullpath);
 	fsal_status =
 	    export->fsal_export->ops->lookup_path(export->fsal_export,
 						  &root_op_context.req_ctx,
@@ -1643,25 +1643,40 @@ bool init_export_root(struct gsh_export *export)
  * @param exp [IN] the export
  */
 
-void release_export_root_locked(struct gsh_export *export)
+#define RELEASE_EXP_ROOT_FLAG_NONE		0x0000
+#define RELEASE_EXP_ROOT_FLAG_ULOCK_ATTR	0x0001
+#define RELEASE_EXP_ROOT_FLAG_ULOCK_LOCK	0x0002
+#define RELEASE_EXP_ROOT_FLAG_ULOCK_BOTH \
+	(RELEASE_EXP_ROOT_FLAG_ULOCK_ATTR|RELEASE_EXP_ROOT_FLAG_ULOCK_LOCK)
+
+static inline void
+release_export_root_locked(struct gsh_export *export,
+			   cache_entry_t *entry, uint32_t flags)
 {
-	cache_entry_t *entry = NULL;
+	cache_entry_t *root_entry = NULL;
 
 	glist_del(&export->exp_root_list);
-	entry = export->exp_root_cache_inode;
+	root_entry = export->exp_root_cache_inode;
 	export->exp_root_cache_inode = NULL;
 
-	if (entry != NULL) {
+	if (root_entry != NULL) {
 		/* Allow this entry to be removed (unlink) */
 		(void)atomic_dec_int32_t(&entry->exp_root_refcount);
 
+		/* We must not hold entry->attr_lock across
+		 * cache_inode_dec_pin_ref (LRU lane lock order) */
+		if (flags & RELEASE_EXP_ROOT_FLAG_ULOCK_BOTH) {
+			PTHREAD_RWLOCK_unlock(&export->lock);
+			PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+		}
+
 		/* Release the pin reference */
-		cache_inode_dec_pin_ref(entry, false);
+		cache_inode_dec_pin_ref(root_entry, false);
 	}
 
 	LogDebug(COMPONENT_EXPORT,
 		 "Released root entry %p for path %s on export_id=%d",
-		 entry, export->fullpath, export->export_id);
+		 root_entry, export->fullpath, export->export_id);
 }
 
 /**
@@ -1692,10 +1707,8 @@ void release_export_root(struct gsh_export *export)
 	PTHREAD_RWLOCK_wrlock(&export->lock);
 
 	/* Make the export unreachable as a root cache inode */
-	release_export_root_locked(export);
-
-	PTHREAD_RWLOCK_unlock(&export->lock);
-	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+	release_export_root_locked(export, entry,
+				   RELEASE_EXP_ROOT_FLAG_ULOCK_BOTH);
 
 	cache_inode_put(entry);
 }
@@ -1744,10 +1757,8 @@ void kill_export_root_entry(cache_entry_t *entry)
 		PTHREAD_RWLOCK_wrlock(&export->lock);
 
 		/* Make the export unreachable as a root cache inode */
-		release_export_root_locked(export);
-
-		PTHREAD_RWLOCK_unlock(&export->lock);
-		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+		release_export_root_locked(
+			export, entry, RELEASE_EXP_ROOT_FLAG_ULOCK_BOTH);
 
 		/* Make the export otherwise unreachable */
 		pseudo_unmount_export(export);
@@ -1755,6 +1766,55 @@ void kill_export_root_entry(cache_entry_t *entry)
 
 		put_gsh_export(export);
 	}
+}
+
+/**
+ * @brief Handle killing a cache inode entry that is a junction to an export.
+ *
+ * @param entry [IN] the cache inode entry
+ */
+
+void kill_export_junction_entry(cache_entry_t *entry)
+{
+	struct gsh_export *export;
+
+	if (entry->type != DIRECTORY)
+		return;
+
+	PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
+
+	export = entry->object.dir.junction_export;
+
+	if (export == NULL) {
+		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+		return;
+	}
+
+	/* Detach the export from the inode */
+	entry->object.dir.junction_export = NULL;
+
+	get_gsh_export_ref(export);
+
+	LogInfo(COMPONENT_CONFIG,
+		"Unmounting export_id %d because junction entry went bad",
+		export->export_id);
+
+	PTHREAD_RWLOCK_wrlock(&export->lock);
+
+	/* Detach the export */
+	export->exp_junction_inode = NULL;
+
+	PTHREAD_RWLOCK_unlock(&export->lock);
+	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+
+	/* Finish unmounting the export */
+	pseudo_unmount_export(export);
+
+	/* Don't remove the export (if export root is still valid, the
+	 * export is still accessible via NFS v3.
+	 */
+
+	put_gsh_export(export);
 }
 
 static char *client_types[] = {

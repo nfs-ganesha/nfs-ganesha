@@ -201,6 +201,31 @@ cache_inode_rename(cache_entry_t *dir_src,
 		goto out;
 	}
 
+	/* Do not rename a junction node or an export root. */
+	if (lookup_src->type == DIRECTORY) {
+		/* Get attr_lock for looking at junction_export */
+		PTHREAD_RWLOCK_rdlock(&lookup_src->attr_lock);
+
+		if (lookup_src->object.dir.junction_export != NULL ||
+		    atomic_fetch_int32_t(&lookup_src->exp_root_refcount)
+		    != 0) {
+			/* Trying to rename an export mount point */
+			LogCrit(COMPONENT_CACHE_INODE,
+				 "Attempt to rename export %s",
+				 oldname);
+
+			/* Release attr_lock */
+			PTHREAD_RWLOCK_unlock(&lookup_src->attr_lock);
+
+			status = CACHE_INODE_DIR_NOT_EMPTY;
+			goto out;
+		}
+
+		/* Release attr_lock */
+		PTHREAD_RWLOCK_unlock(&lookup_src->attr_lock);
+	}
+
+
 	/* Check if an object with the new name exists in the destination
 	   directory */
 	status =

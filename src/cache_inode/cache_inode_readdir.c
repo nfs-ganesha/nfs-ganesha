@@ -739,6 +739,10 @@ cache_inode_readdir(cache_entry_t *directory,
 					 node_hk);
 
  estale_retry:
+		LogFullDebug(COMPONENT_NFS_READDIR,
+			     "Lookup direct %s",
+			     dirent->name);
+
 		entry =
 		    cache_inode_get_keyed(&dirent->ckey, req_ctx,
 					  CIG_KEYED_FLAG_NONE, &tmp_status);

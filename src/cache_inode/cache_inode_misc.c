@@ -576,6 +576,10 @@ void cache_inode_unexport(struct gsh_export *export)
 		if (expmap == NULL) {
 			/* Clear out first export pointer */
 			atomic_store_voidptr(&entry->first_export, NULL);
+			/* We must not hold entry->attr_lock across
+			 * try_cleanup_push (LRU lane lock order) */
+			PTHREAD_RWLOCK_unlock(&export->lock);
+			PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 
 			/* If there are no exports referencing this
 			 * entry, attempt to push it to cleanup queue.
@@ -585,10 +589,12 @@ void cache_inode_unexport(struct gsh_export *export)
 			/* Make sure first export pointer is still valid */
 			atomic_store_voidptr(&entry->first_export,
 					     expmap->export);
+
+			PTHREAD_RWLOCK_unlock(&export->lock);
+			PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 		}
 
-		PTHREAD_RWLOCK_unlock(&export->lock);
-		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+
 
 		gsh_free(parms.expmap);
 

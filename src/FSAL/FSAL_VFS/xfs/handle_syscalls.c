@@ -48,7 +48,7 @@ void display_xfs_handle(struct display_buffer *dspbuf,
 
 	display_printf(dspbuf,
 		       "Handle len %hhu:"
-		       " fsid=%"PRIu32".%"PRIu32
+		       " fsid=0x%016"PRIx32".0x%016"PRIx32
 		       " fid_len=%"PRIu16
 		       " fid_pad=%"PRIu16
 		       " fid_gen=%"PRIu32
@@ -327,7 +327,7 @@ bool vfs_valid_handle(struct gsh_buffdesc *desc)
 
 		display_printf(&dspbuf,
 			       "Handle len %d: "
-			       " fsid=%"PRIu32".%"PRIu32
+			       " fsid=0x%016"PRIx32".0x%016"PRIx32
 			       " fid_len=%"PRIu16
 			       " fid_pad=%"PRIu16
 			       " fid_gen=%"PRIu32

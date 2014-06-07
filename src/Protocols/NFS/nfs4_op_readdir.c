@@ -143,11 +143,11 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 		 * this. Now we go to the junction to get the
 		 * attributes.
 		 */
-		LogMidDebug(COMPONENT_EXPORT,
-			    "Offspring DIR %s is a junction Export_id %d Path %s",
-			    cb_parms->name,
-			    entry->object.dir.junction_export->export_id,
-			    entry->object.dir.junction_export->fullpath);
+		LogDebug(COMPONENT_EXPORT,
+			 "Offspring DIR %s is a junction Export_id %d Path %s",
+			 cb_parms->name,
+			 entry->object.dir.junction_export->export_id,
+			 entry->object.dir.junction_export->fullpath);
 
 		/* Save the compound data context */
 		tracker->save_export_perms = *data->req_ctx->export_perms;
@@ -242,10 +242,10 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 			 * signal to ourselves that the call back will be
 			 * across the junction.
 			 */
-			LogMidDebug(COMPONENT_EXPORT,
-				    "Need to cross junction to Export_Id %d Path %s",
-				    data->req_ctx->export->export_id,
-				    data->req_ctx->export->fullpath);
+			LogDebug(COMPONENT_EXPORT,
+				 "Need to cross junction to Export_Id %d Path %s",
+				 data->req_ctx->export->export_id,
+				 data->req_ctx->export->fullpath);
 			tracker->junction_cb = true;
 			return CACHE_INODE_CROSS_JUNCTION;
 		}
@@ -255,10 +255,10 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 		 *
 		 * Restore export and creds.
 		 */
-		LogMidDebug(COMPONENT_EXPORT,
-			    "Need to report error for junction to Export_Id %d Path %s",
-			    data->req_ctx->export->export_id,
-			    data->req_ctx->export->fullpath);
+		LogDebug(COMPONENT_EXPORT,
+			 "Need to report error for junction to Export_Id %d Path %s",
+			 data->req_ctx->export->export_id,
+			 data->req_ctx->export->fullpath);
 		restore_data(tracker);
 	}
 
