@@ -1002,7 +1002,7 @@ cache_inode_refresh_attrs(cache_entry_t *entry)
 	}
 
 	fsal_status =
-	    entry->obj_handle->ops->getattrs(entry->obj_handle, op_ctx);
+	    entry->obj_handle->ops->getattrs(entry->obj_handle);
 	if (FSAL_IS_ERROR(fsal_status)) {
 		cache_inode_kill_entry(entry);
 		cache_status = cache_inode_error_convert(fsal_status);

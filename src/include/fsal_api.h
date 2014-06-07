@@ -164,7 +164,7 @@
  * request from the RPC.  All of the operation state (other than
  * some intermediate results passed as function args) are pointed
  * to by the thread local 'op_ctx'.  This will always point to a
- * valid and initialized 'struct req_op_contest'.
+ * valid and initialized 'struct req_op_context'.
  *
  *	Method code can reference through 'op_ctx' e.g.
  *
@@ -1207,8 +1207,7 @@ struct fsal_filesystem {
 
 typedef uint64_t fsal_cookie_t;
 
-typedef bool(*fsal_readdir_cb) (const struct req_op_context *opctx,
-				const char *name, void *dir_state,
+typedef bool(*fsal_readdir_cb) (const char *name, void *dir_state,
 				fsal_cookie_t cookie);
 /**
  * @brief FSAL objectoperations vector
@@ -1252,14 +1251,12 @@ struct fsal_obj_ops {
  * special case is no longer supported and should not be implemented.
  *
  * @param[in]  dir_hdl Directory to search
- * @param[in]  opctx   Request context (user creds, client address)
  * @param[in]  path    Name to look up
  * @param[out] handle  Object found
  *
  * @return FSAL status.
  */
 	 fsal_status_t(*lookup) (struct fsal_obj_handle *dir_hdl,
-				 const struct req_op_context *opctx,
 				 const char *path,
 				 struct fsal_obj_handle **handle);
 
@@ -1270,7 +1267,6 @@ struct fsal_obj_ops {
  * them to a callback.
  *
  * @param[in]  dir_hdl   Directory to read
- * @param[in]  opctx     Request context (user creds, client address etc)
  * @param[in]  whence    Point at which to start reading.  NULL to
  *                       start at beginning.
  * @param[in]  dir_state Opaque pointer to be passed to callback
@@ -1282,7 +1278,6 @@ struct fsal_obj_ops {
  *               has not been consumed)
  */
 	 fsal_status_t(*readdir) (struct fsal_obj_handle *dir_hdl,
-				  const struct req_op_context *opctx,
 				  fsal_cookie_t *whence,
 				  void *dir_state,
 				  fsal_readdir_cb cb,
@@ -1301,7 +1296,6 @@ struct fsal_obj_ops {
  * This function creates a new regular file.
  *
  * @param[in]     dir_hdl Directory in which to create the file
- * @param[in]     opctx   Request context (user creds, client address etc)
  * @param[in]     name    Name of file to create
  * @param[in,out] attrib  Attributes to set on newly created
  *                        object/attributes you actually got.
@@ -1310,7 +1304,6 @@ struct fsal_obj_ops {
  * @return FSAL status.
  */
 	 fsal_status_t(*create) (struct fsal_obj_handle *dir_hdl,
-				 const struct req_op_context *opctx,
 				 const char *name, struct attrlist *attrib,
 				 struct fsal_obj_handle **new_obj);
 
@@ -1320,7 +1313,6 @@ struct fsal_obj_ops {
  * This function creates a new directory.
  *
  * @param[in]     dir_hdl Directory in which to create the directory
- * @param[in]     opctx   Request context (user creds, client address etc)
  * @param[in]     name    Name of directory to create
  * @param[in,out] attrib  Attributes to set on newly created
  *                        object/attributes you actually got.
@@ -1329,7 +1321,6 @@ struct fsal_obj_ops {
  * @return FSAL status.
  */
 	 fsal_status_t(*mkdir) (struct fsal_obj_handle *dir_hdl,
-				const struct req_op_context *opctx,
 				const char *name, struct attrlist *attrib,
 				struct fsal_obj_handle **new_obj);
 
@@ -1339,7 +1330,6 @@ struct fsal_obj_ops {
  * This function creates a new special file.
  *
  * @param[in]     dir_hdl  Directory in which to create the object
- * @param[in]     opctx    Request context (user creds, client address etc)
  * @param[in]     name     Name of object to create
  * @param[in]     nodetype Type of special file to create
  * @param[in]     dev      Major and minor device numbers for block or
@@ -1351,7 +1341,6 @@ struct fsal_obj_ops {
  * @return FSAL status.
  */
 	 fsal_status_t(*mknode) (struct fsal_obj_handle *dir_hdl,
-				 const struct req_op_context *opctx,
 				 const char *name,
 				 object_file_type_t nodetype,
 				 fsal_dev_t *dev,
@@ -1364,7 +1353,6 @@ struct fsal_obj_ops {
  * This function creates a new symbolic link.
  *
  * @param[in]     dir_hdl   Directory in which to create the object
- * @param[in]     opctx     Request context (user creds, client address etc)
  * @param[in]     name      Name of object to create
  * @param[in]     link_path Content of symbolic link
  * @param[in,out] attrib    Attributes to set on newly created
@@ -1374,7 +1362,6 @@ struct fsal_obj_ops {
  * @return FSAL status.
  */
 	 fsal_status_t(*symlink) (struct fsal_obj_handle *dir_hdl,
-				  const struct req_op_context *opctx,
 				  const char *name,
 				  const char *link_path,
 				  struct attrlist *attrib,
@@ -1400,7 +1387,6 @@ struct fsal_obj_ops {
  * terminator.
  *
  * @param[in]  obj_hdl      Link to read
- * @param[in]  opctx        Request context (user creds, client address etc)
  * @param[out] link_content Buffdesc to which the FSAL will store
  *                          the address of the buffer holding the
  *                          link and the link length.
@@ -1411,7 +1397,6 @@ struct fsal_obj_ops {
  * @return FSAL status.
  */
 	 fsal_status_t(*readlink) (struct fsal_obj_handle *obj_hdl,
-				   const struct req_op_context *opctx,
 				   struct gsh_buffdesc *link_content,
 				   bool refresh);
 
@@ -1443,12 +1428,10 @@ struct fsal_obj_ops {
  * public filehandle, they are not copied out.
  *
  * @param[in]  obj_hdl  Object to query
- * @param[in]  opctx    Request context, includes credentials
  *
  * @return FSAL status.
  */
-	 fsal_status_t(*getattrs) (struct fsal_obj_handle *obj_hdl,
-				   const struct req_op_context *opctx);
+	 fsal_status_t(*getattrs) (struct fsal_obj_handle *obj_hdl);
 
 /**
  * @brief Set attributes on an object
@@ -1457,13 +1440,11 @@ struct fsal_obj_ops {
  * set is determined by @c attrib_set->mask.
  *
  * @param[in] obj_hdl    The object to modify
- * @param[in] opctx      Request context, includes credentials
  * @param[in] attrib_set Attributes to set
  *
  * @return FSAL status.
  */
 	 fsal_status_t(*setattrs) (struct fsal_obj_handle *obj_hdl,
-				   const struct req_op_context *opctx,
 				   struct attrlist *attrib_set);
 
 /**
@@ -1472,14 +1453,12 @@ struct fsal_obj_ops {
  * This function creates a new name for an existing object.
  *
  * @param[in] obj_hdl     Object to be linked to
- * @param[in] opctx       Request context, includes credentials
  * @param[in] destdir_hdl Directory in which to create the link
  * @param[in] name        Name for link
  *
  * @return FSAL status
  */
 	 fsal_status_t(*link) (struct fsal_obj_handle *obj_hdl,
-			       const struct req_op_context *opctx,
 			       struct fsal_obj_handle *destdir_hdl,
 			       const char *name);
 
@@ -1490,7 +1469,6 @@ struct fsal_obj_ops {
  * one link, which may be the only link to the file.)
  *
  * @param[in] olddir_hdl Old parent directory
- * @param[in] opctx      Request context, includes credentials
  * @param[in] old_name   Old name
  * @param[in] newdir_hdl New parent directory
  * @param[in] new_name   New name
@@ -1498,7 +1476,6 @@ struct fsal_obj_ops {
  * @return FSAL status
  */
 	 fsal_status_t(*rename) (struct fsal_obj_handle *olddir_hdl,
-				 const struct req_op_context *opctx,
 				 const char *old_name,
 				 struct fsal_obj_handle *newdir_hdl,
 				 const char *new_name);
@@ -1509,13 +1486,11 @@ struct fsal_obj_ops {
  * the file so named.
  *
  * @param[in] obj_hdl The directory from which to remove the name
- * @param[in] opctx   Request context, includes credentials
  * @param[in] name    The name to remove
  *
  * @return FSAL status.
  */
 	 fsal_status_t(*unlink) (struct fsal_obj_handle *obj_hdl,
-				 const struct req_op_context *opctx,
 				 const char *name);
 
 /**@}*/

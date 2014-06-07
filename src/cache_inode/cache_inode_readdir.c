@@ -363,7 +363,6 @@ struct cache_inode_populate_cb_state {
  * This callback serves to populate a single dir entry from the
  * readdir.
  *
- * @param[in]     opctx     Request context
  * @param[in]     name      Name of the directory entry
  * @param[in,out] dir_state Callback state
  * @param[in]     cookie    Directory cookie
@@ -373,8 +372,7 @@ struct cache_inode_populate_cb_state {
  */
 
 static bool
-populate_dirent(const struct req_op_context *opctx,
-		const char *name, void *dir_state,
+populate_dirent(const char *name, void *dir_state,
 		fsal_cookie_t cookie)
 {
 	struct cache_inode_populate_cb_state *state =
@@ -385,7 +383,7 @@ populate_dirent(const struct req_op_context *opctx,
 	fsal_status_t fsal_status = { 0, 0 };
 	struct fsal_obj_handle *dir_hdl = state->directory->obj_handle;
 
-	fsal_status = dir_hdl->ops->lookup(dir_hdl, opctx, name, &entry_hdl);
+	fsal_status = dir_hdl->ops->lookup(dir_hdl, name, &entry_hdl);
 	if (FSAL_IS_ERROR(fsal_status)) {
 		*state->status = cache_inode_error_convert(fsal_status);
 		if (*state->status == CACHE_INODE_FSAL_XDEV) {
@@ -494,7 +492,7 @@ cache_inode_readdir_populate(cache_entry_t *directory)
 
 	fsal_status =
 		directory->obj_handle->ops->readdir(directory->obj_handle,
-						    op_ctx, NULL,
+						    NULL,
 						    (void *)&state,
 						    populate_dirent,
 						    &eod);

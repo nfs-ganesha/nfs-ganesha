@@ -106,7 +106,7 @@ cache_inode_setattr(cache_entry_t *entry,
 
 	saved_acl = obj_handle->attributes.acl;
 	before = obj_handle->attributes.change;
-	fsal_status = obj_handle->ops->setattrs(obj_handle, op_ctx, attr);
+	fsal_status = obj_handle->ops->setattrs(obj_handle, attr);
 	if (FSAL_IS_ERROR(fsal_status)) {
 		status = cache_inode_error_convert(fsal_status);
 		if (fsal_status.major == ERR_FSAL_STALE) {
@@ -116,7 +116,7 @@ cache_inode_setattr(cache_entry_t *entry,
 		}
 		goto unlock;
 	}
-	fsal_status = obj_handle->ops->getattrs(obj_handle, op_ctx);
+	fsal_status = obj_handle->ops->getattrs(obj_handle);
 	*attr = obj_handle->attributes;
 	if (FSAL_IS_ERROR(fsal_status)) {
 		status = cache_inode_error_convert(fsal_status);

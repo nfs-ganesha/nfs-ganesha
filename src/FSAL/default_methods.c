@@ -536,7 +536,6 @@ static void handle_release(struct fsal_obj_handle *obj_hdl)
  */
 
 static fsal_status_t lookup(struct fsal_obj_handle *parent,
-			    const struct req_op_context *opctx,
 			    const char *path, struct fsal_obj_handle **handle)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
@@ -547,7 +546,6 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
  */
 
 static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
-				  const struct req_op_context *opctx,
 				  fsal_cookie_t *whence, void *dir_state,
 				  fsal_readdir_cb cb, bool *eof)
 {
@@ -559,7 +557,6 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
  */
 
 static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
-			    const struct req_op_context *opctx,
 			    const char *name, struct attrlist *attrib,
 			    struct fsal_obj_handle **handle)
 {
@@ -571,7 +568,6 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
  */
 
 static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
-			     const struct req_op_context *opctx,
 			     const char *name, struct attrlist *attrib,
 			     struct fsal_obj_handle **handle)
 {
@@ -583,7 +579,6 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
  */
 
 static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
-			      const struct req_op_context *opctx,
 			      const char *name, object_file_type_t nodetype,
 			      fsal_dev_t *dev, struct attrlist *attrib,
 			      struct fsal_obj_handle **handle)
@@ -596,7 +591,6 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
  */
 
 static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
-				 const struct req_op_context *opctx,
 				 const char *name, const char *link_path,
 				 struct attrlist *attrib,
 				 struct fsal_obj_handle **handle)
@@ -609,7 +603,6 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
  */
 
 static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
-				 const struct req_op_context *opctx,
 				 struct gsh_buffdesc *link_content,
 				 bool refresh)
 {
@@ -620,8 +613,7 @@ static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
  * default case not supported
  */
 
-static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
-			      const struct req_op_context *opctx)
+static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
@@ -631,7 +623,6 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
-			      const struct req_op_context *opctx,
 			      struct attrlist *attrs)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
@@ -642,7 +633,6 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
-			      const struct req_op_context *opctx,
 			      struct fsal_obj_handle *destdir_hdl,
 			      const char *name)
 {
@@ -654,7 +644,6 @@ static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t renamefile(struct fsal_obj_handle *olddir_hdl,
-				const struct req_op_context *opctx,
 				const char *old_name,
 				struct fsal_obj_handle *newdir_hdl,
 				const char *new_name)
@@ -667,7 +656,6 @@ static fsal_status_t renamefile(struct fsal_obj_handle *olddir_hdl,
  */
 
 static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
-				 const struct req_op_context *opctx,
 				 const char *name)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);

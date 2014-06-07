@@ -162,7 +162,7 @@ cache_inode_lookup_impl(cache_entry_t *parent,
 
 	dir_handle = parent->obj_handle;
 	fsal_status =
-	    dir_handle->ops->lookup(dir_handle, op_ctx, name, &object_handle);
+	    dir_handle->ops->lookup(dir_handle, name, &object_handle);
 	if (FSAL_IS_ERROR(fsal_status)) {
 		if (fsal_status.major == ERR_FSAL_STALE) {
 			LogEvent(COMPONENT_CACHE_INODE,
