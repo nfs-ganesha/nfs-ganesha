@@ -641,7 +641,7 @@ int nfs4_Compound(nfs_arg_t *arg,
 			 */
 			LogMidDebugAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
 				       "Check export perms export = %08x req = %08x",
-				       data.req_ctx->export_perms->options &
+				       op_ctx->export_perms->options &
 						EXPORT_OPTION_ACCESS_TYPE,
 				       perm_flags);
 			if ((op_ctx->export_perms->options &
