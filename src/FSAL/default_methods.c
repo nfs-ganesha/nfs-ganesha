@@ -808,7 +808,6 @@ static fsal_status_t file_close(struct fsal_obj_handle *obj_hdl)
  */
 
 static fsal_status_t list_ext_attrs(struct fsal_obj_handle *obj_hdl,
-				    const struct req_op_context *opctx,
 				    unsigned int cookie,
 				    fsal_xattrent_t *xattrs_tab,
 				    unsigned int xattrs_tabsize,
@@ -823,7 +822,6 @@ static fsal_status_t list_ext_attrs(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
-					   const struct req_op_context *opctx,
 					   const char *xattr_name,
 					   unsigned int *pxattr_id)
 {
@@ -835,8 +833,7 @@ static fsal_status_t getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
-					      const struct req_op_context
-					      *opctx, const char *xattr_name,
+					      const char *xattr_name,
 					      caddr_t buffer_addr,
 					      size_t buffer_size,
 					      size_t *p_output_size)
@@ -849,7 +846,6 @@ static fsal_status_t getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
-					    const struct req_op_context *opctx,
 					    unsigned int xattr_id,
 					    caddr_t buffer_addr,
 					    size_t buffer_size,
@@ -863,7 +859,6 @@ static fsal_status_t getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t setextattr_value(struct fsal_obj_handle *obj_hdl,
-				      const struct req_op_context *opctx,
 				      const char *xattr_name,
 				      caddr_t buffer_addr, size_t buffer_size,
 				      int create)
@@ -876,7 +871,6 @@ static fsal_status_t setextattr_value(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
-					    const struct req_op_context *opctx,
 					    unsigned int xattr_id,
 					    caddr_t buffer_addr,
 					    size_t buffer_size)
@@ -889,7 +883,6 @@ static fsal_status_t setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t getextattr_attrs(struct fsal_obj_handle *obj_hdl,
-				      const struct req_op_context *opctx,
 				      unsigned int xattr_id,
 				      struct attrlist *p_attrs)
 {
@@ -901,7 +894,6 @@ static fsal_status_t getextattr_attrs(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t remove_extattr_by_id(struct fsal_obj_handle *obj_hdl,
-					  const struct req_op_context *opctx,
 					  unsigned int xattr_id)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
@@ -912,7 +904,6 @@ static fsal_status_t remove_extattr_by_id(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t remove_extattr_by_name(struct fsal_obj_handle *obj_hdl,
-					    const struct req_op_context *opctx,
 					    const char *xattr_name)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);

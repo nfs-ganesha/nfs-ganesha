@@ -254,7 +254,6 @@ int _9p_tools_clunk(struct _9p_fid *pfid)
 			fsal_status =
 			    pfid->pentry->obj_handle->ops->setextattr_value(
 				    pfid->pentry->obj_handle,
-				    &pfid->op_context,
 				    "system.posix_acl_access",
 				    pfid->specdata.xattr.xattr_content,
 				    pfid->specdata.xattr.xattr_size,
@@ -264,7 +263,6 @@ int _9p_tools_clunk(struct _9p_fid *pfid)
 			fsal_status =
 			    pfid->pentry->obj_handle->ops->
 				setextattr_value_by_id(pfid->pentry->obj_handle,
-						       &pfid->op_context,
 						       pfid->specdata.xattr.
 						       xattr_id,
 						       pfid->specdata.xattr.
