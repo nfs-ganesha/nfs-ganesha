@@ -1686,7 +1686,6 @@ struct fsal_obj_ops {
  * file.
  *
  * @param[in]  obj_hdl          File on which to operate
- * @param[in]  req_ctx          The request context
  * @param[in]  owner            Lock owner (Not yet implemented)
  * @param[in]  lock_op          Operation to perform
  * @param[in]  request_lock     Lock to take/release/test
@@ -1695,7 +1694,6 @@ struct fsal_obj_ops {
  * @return FSAL status.
  */
 	 fsal_status_t(*lock_op) (struct fsal_obj_handle *obj_hdl,
-				  const struct req_op_context *opctx,
 				  void *owner,
 				  fsal_lock_op_t lock_op,
 				  fsal_lock_param_t *request_lock,
@@ -1714,7 +1712,6 @@ struct fsal_obj_ops {
  * @return FSAL status.
  */
 	 fsal_status_t(*share_op) (struct fsal_obj_handle *obj_hdl,
-				   const struct req_op_context *opctx,
 				   void *owner,
 				   fsal_share_param_t request_share);
 /**

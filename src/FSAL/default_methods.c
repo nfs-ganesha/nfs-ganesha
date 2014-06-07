@@ -775,7 +775,7 @@ static fsal_status_t commit(struct fsal_obj_handle *obj_hdl,	/* sync */
  */
 
 static fsal_status_t lock_op(struct fsal_obj_handle *obj_hdl,
-			     const struct req_op_context *opctx, void *p_owner,
+			     void *p_owner,
 			     fsal_lock_op_t lock_op,
 			     fsal_lock_param_t *request_lock,
 			     fsal_lock_param_t *conflicting_lock)
@@ -788,7 +788,6 @@ static fsal_status_t lock_op(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t share_op(struct fsal_obj_handle *obj_hdl,
-			      const struct req_op_context *opctx,
 			      void *p_owner,
 			      fsal_share_param_t request_share)
 {

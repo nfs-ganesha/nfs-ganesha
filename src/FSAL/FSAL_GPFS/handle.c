@@ -684,7 +684,6 @@ static void release(struct fsal_obj_handle *obj_hdl)
  */
 
 static fsal_status_t share_op(struct fsal_obj_handle *obj_hdl,
-			      const struct req_op_context *opctx,
 			      void *p_owner,
 			      fsal_share_param_t request_share)
 {

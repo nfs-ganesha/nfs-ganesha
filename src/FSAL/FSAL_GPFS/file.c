@@ -221,7 +221,7 @@ fsal_status_t gpfs_write(struct fsal_obj_handle *obj_hdl,
 
 static
 fsal_status_t gpfs_clear(struct fsal_obj_handle *obj_hdl,
-			 const struct req_op_context *opctx, uint64_t offset,
+			 uint64_t offset,
 			 size_t buffer_size, void *buffer,
 			 size_t *write_amount, bool *fsal_stable,
 			 bool allocated)
@@ -236,7 +236,7 @@ fsal_status_t gpfs_clear(struct fsal_obj_handle *obj_hdl,
 
 	status =
 	    GPFSFSAL_clear(myself->u.file.fd, offset, buffer_size, buffer,
-			   write_amount, fsal_stable, opctx, allocated);
+			   write_amount, fsal_stable, op_ctx, allocated);
 	return status;
 }
 
@@ -254,7 +254,7 @@ fsal_status_t gpfs_write_plus(struct fsal_obj_handle *obj_hdl,
 				buffer, write_amount, fsal_stable);
 	}
 	if (info->io_content.what == NFS4_CONTENT_HOLE) {
-		return gpfs_clear(obj_hdl, op_ctx,
+		return gpfs_clear(obj_hdl,
 				  seek_descriptor, buffer_size,
 				  buffer, write_amount, fsal_stable,
 				  info->io_content.hole.di_allocated);
@@ -377,7 +377,7 @@ fsal_status_t gpfs_commit(struct fsal_obj_handle *obj_hdl,	/* sync */
  */
 
 fsal_status_t gpfs_lock_op(struct fsal_obj_handle *obj_hdl,
-			   const struct req_op_context *opctx, void *p_owner,
+			   void *p_owner,
 			   fsal_lock_op_t lock_op,
 			   fsal_lock_param_t *request_lock,
 			   fsal_lock_param_t *conflicting_lock)
@@ -410,7 +410,7 @@ fsal_status_t gpfs_lock_op(struct fsal_obj_handle *obj_hdl,
 		request_lock->lock_start,
 		request_lock->lock_length);
 
-	status = GPFSFSAL_lock_op(opctx->fsal_export, obj_hdl,
+	status = GPFSFSAL_lock_op(op_ctx->fsal_export, obj_hdl,
 				  p_owner, lock_op, *request_lock,
 				  conflicting_lock);
 	return status;

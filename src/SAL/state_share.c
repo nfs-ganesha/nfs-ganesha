@@ -83,7 +83,6 @@ static state_status_t do_share_op(cache_entry_t *entry,
 		return STATE_SUCCESS;
 
 	fsal_status = entry->obj_handle->ops->share_op(entry->obj_handle,
-						       op_ctx,
 						       NULL,
 						       *share);
 

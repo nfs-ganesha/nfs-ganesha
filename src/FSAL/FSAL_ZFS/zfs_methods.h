@@ -112,7 +112,7 @@ fsal_status_t tank_remove_extattr_by_name(struct fsal_obj_handle *obj_hdl,
 					  const struct req_op_context *opctx,
 					  const char *xattr_name);
 fsal_status_t tank_lock_op(struct fsal_obj_handle *obj_hdl,
-			   const struct req_op_context *opctx, void *p_owner,
+			   void *p_owner,
 			   fsal_lock_op_t lock_op,
 			   fsal_lock_param_t *request_lock,
 			   fsal_lock_param_t *conflicting_lock);

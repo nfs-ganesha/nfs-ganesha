@@ -2184,7 +2184,7 @@ state_status_t do_unlock_no_owner(cache_entry_t *entry,
 		LogEntry("FSAL Unlock", found_entry);
 
 		fsal_status =
-		    entry->obj_handle->ops->lock_op(entry->obj_handle, op_ctx,
+		    entry->obj_handle->ops->lock_op(entry->obj_handle,
 						    NULL, FSAL_OP_UNLOCK,
 						    punlock, NULL);
 
@@ -2278,7 +2278,6 @@ static state_status_t do_lock_op(cache_entry_t *entry,
 
 		fsal_status = entry->obj_handle->ops->lock_op(
 			entry->obj_handle,
-			op_ctx,
 			fsal_export->ops->fs_supports(
 				fsal_export,
 				fso_lock_support_owner)
