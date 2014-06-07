@@ -63,9 +63,8 @@ static void release(struct fsal_export *exp_hdl)
 	gsh_free(myself);		/* elvis has left the building */
 }
 
-static fsal_status_t get_dynamic_info(struct fsal_obj_handle *obj_hdl,
-				      struct fsal_export *exp_hdl,
-				      const struct req_op_context *opctx,
+static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
+				      struct fsal_obj_handle *obj_hdl,
 				      fsal_dynamicfsinfo_t *infop)
 {
 	fsal_status_t status;

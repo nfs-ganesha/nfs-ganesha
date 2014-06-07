@@ -827,7 +827,6 @@ void pseudofs_handle_ops_init(struct fsal_obj_ops *ops)
  */
 
 fsal_status_t pseudofs_lookup_path(struct fsal_export *exp_hdl,
-				 const struct req_op_context *opctx,
 				 const char *path,
 				 struct fsal_obj_handle **handle)
 {
@@ -849,7 +848,7 @@ fsal_status_t pseudofs_lookup_path(struct fsal_export *exp_hdl,
 					       myself->export_path,
 					       exp_hdl,
 					       0755,
-					       opctx);
+					       op_ctx);
 
 		if (myself->root_handle == NULL) {
 			/* alloc handle failed. */
@@ -875,7 +874,6 @@ fsal_status_t pseudofs_lookup_path(struct fsal_export *exp_hdl,
  */
 
 fsal_status_t pseudofs_create_handle(struct fsal_export *exp_hdl,
-				   const struct req_op_context *opctx,
 				   struct gsh_buffdesc *hdl_desc,
 				   struct fsal_obj_handle **handle)
 {

@@ -1558,7 +1558,6 @@ void vfs_handle_ops_init(struct fsal_obj_ops *ops)
  */
 
 fsal_status_t vfs_lookup_path(struct fsal_export *exp_hdl,
-			      const struct req_op_context *opctx,
 			      const char *path, struct fsal_obj_handle **handle)
 {
 	int dir_fd = -1;
@@ -1713,7 +1712,6 @@ fsal_status_t vfs_check_handle(struct fsal_export *exp_hdl,
  */
 
 fsal_status_t vfs_create_handle(struct fsal_export *exp_hdl,
-				const struct req_op_context *opctx,
 				struct gsh_buffdesc *hdl_desc,
 				struct fsal_obj_handle **handle)
 {

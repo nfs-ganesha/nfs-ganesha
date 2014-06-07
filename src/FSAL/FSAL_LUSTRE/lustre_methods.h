@@ -52,12 +52,10 @@ struct lustre_filesystem_export_map {
  */
 
 fsal_status_t lustre_lookup_path(struct fsal_export *exp_hdl,
-				 const struct req_op_context *opctx,
 				 const char *path,
 				 struct fsal_obj_handle **handle);
 
 fsal_status_t lustre_create_handle(struct fsal_export *exp_hdl,
-				   const struct req_op_context *opctx,
 				   struct gsh_buffdesc *hdl_desc,
 				   struct fsal_obj_handle **handle);
 

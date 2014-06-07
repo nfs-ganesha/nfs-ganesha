@@ -72,7 +72,6 @@ static void export_release(struct fsal_export *exp_hdl)
  */
 
 static fsal_status_t lookup_path(struct fsal_export *export_pub,
-				 const struct req_op_context *opctx,
 				 const char *path,
 				 struct fsal_obj_handle **pub_handle)
 {
@@ -201,7 +200,6 @@ static fsal_status_t extract_handle(struct fsal_export *exp_hdl,
  */
 
 static fsal_status_t create_handle(struct fsal_export *export_pub,
-				   const struct req_op_context *opctx,
 				   struct gsh_buffdesc *fh_desc,
 				   struct fsal_obj_handle **pub_handle)
 {
@@ -227,8 +225,8 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 		goto out;
 	}
 
-	// First 16bytes contain volume UUID. globjhdl is stored in the second
-	// half(16bytes) of the fs_desc->addr. 
+	/* First 16bytes contain volume UUID. globjhdl is in the second */
+	/* half(16bytes) of the fs_desc->addr.  */
 	memcpy(globjhdl, fh_desc->addr+GLAPI_UUID_LENGTH, GFAPI_HANDLE_LENGTH);
 
 	glhandle =
@@ -268,9 +266,8 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
  * @brief Implements GLUSTER FSAL exportoperation get_fs_dynamic_info
  */
 
-static fsal_status_t get_dynamic_info(struct fsal_obj_handle *obj_hdl,
-				      struct fsal_export *exp_hdl,
-				      const struct req_op_context *opctx,
+static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
+				      struct fsal_obj_handle *obj_hdl,
 				      fsal_dynamicfsinfo_t * infop)
 {
 	int rc = 0;

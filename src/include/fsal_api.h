@@ -688,14 +688,12 @@ struct export_ops {
  * used to get a handle for the root directory of the export.
  *
  * @param[in]  exp_hdl The export in which to look up
- * @param[in]  opctx   Request context (user creds, client address)
  * @param[in]  path    The path to look up
  * @param[out] handle  The object found
  *
  * @return FSAL status.
  */
 	 fsal_status_t(*lookup_path) (struct fsal_export *exp_hdl,
-				      const struct req_op_context *opctx,
 				      const char *path,
 				      struct fsal_obj_handle **handle);
 
@@ -753,14 +751,12 @@ struct export_ops {
  * still remembers the nandle).
  *
  * @param[in]  exp_hdl  The export in which to create the handle
- * @param[in]  opctx    Request context (user creds, client address)
  * @param[in]  hdl_desc Buffer descriptor for the "wire" handle
  * @param[out] handle   FSAL object handle
  *
  * @return FSAL status.
  */
 	 fsal_status_t(*create_handle) (struct fsal_export *exp_hdl,
-					const struct req_op_context *opctx,
 					struct gsh_buffdesc *hdl_desc,
 					struct fsal_obj_handle **handle);
 
@@ -794,17 +790,14 @@ struct export_ops {
  * for a filesystem.  See @c fsal_dynamicinfo_t for details of what to
  * fill out.
  *
- * @param[in]  obj_hdl Directory
  * @param[in]  exp_hdl Export handle to interrogate
- * @param[in]  opctx   Request context (user creds, client address)
+ * @param[in]  obj_hdl Directory
  * @param[out] info    Buffer to fill with information
  *
  * @retval FSAL status.
  */
-	 fsal_status_t(*get_fs_dynamic_info) (struct fsal_obj_handle *obj_hdl,
-					      struct fsal_export *exp_hdl,
-					      const struct req_op_context *
-					      opctx,
+	 fsal_status_t(*get_fs_dynamic_info) (struct fsal_export *exp_hdl,
+					      struct fsal_obj_handle *obj_hdl,
 					      fsal_dynamicfsinfo_t *info);
 /**
  * @brief Export feature test

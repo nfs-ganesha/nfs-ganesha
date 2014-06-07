@@ -140,7 +140,6 @@ int mnt_Mnt(nfs_arg_t *arg,
 
 		if (FSAL_IS_ERROR(op_ctx->fsal_export->ops->lookup_path(
 						op_ctx->fsal_export,
-						op_ctx,
 						arg->arg_mnt,
 						&pfsal_handle))) {
 			res->res_mnt3.fhs_status = MNT3ERR_ACCES;

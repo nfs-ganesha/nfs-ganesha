@@ -204,7 +204,7 @@ static void export_release(struct fsal_export *exp_hdl)
  */
 
 fsal_status_t lookup_path(struct fsal_export *exp_hdl,
-			  const struct req_op_context *opctx, const char *path,
+			  const char *path,
 			  struct fsal_obj_handle **handle)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
@@ -233,7 +233,6 @@ static fsal_status_t extract_handle(struct fsal_export *exp_hdl,
  */
 
 static fsal_status_t create_handle(struct fsal_export *exp_hdl,
-				   const struct req_op_context *opctx,
 				   struct gsh_buffdesc *hdl_desc,
 				   struct fsal_obj_handle **handle)
 {
@@ -260,9 +259,8 @@ static nfsstat4 create_ds_handle(struct fsal_export *const exp_hdl,
  * default case is not supported
  */
 
-static fsal_status_t get_dynamic_info(struct fsal_obj_handle *obj_hdl,
-				      struct fsal_export *exp_hdl,
-				      const struct req_op_context *opctx,
+static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
+				      struct fsal_obj_handle *obj_hdl,
 				      fsal_dynamicfsinfo_t *infop)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);

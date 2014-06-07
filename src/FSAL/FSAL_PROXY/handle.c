@@ -2115,7 +2115,6 @@ static struct pxy_obj_handle *pxy_alloc_handle(struct fsal_export *exp,
  */
 
 fsal_status_t pxy_lookup_path(struct fsal_export *exp_hdl,
-			      const struct req_op_context *opctx,
 			      const char *path,
 			      struct fsal_obj_handle **handle)
 {
@@ -2124,7 +2123,7 @@ fsal_status_t pxy_lookup_path(struct fsal_export *exp_hdl,
 	char *saved;
 	char *pcopy;
 	char *p;
-	struct user_cred *creds = opctx ? opctx->creds : NULL;
+	struct user_cred *creds = op_ctx->creds;
 
 	if (!path || path[0] != '/')
 		return fsalstat(ERR_FSAL_INVAL, EINVAL);
@@ -2171,7 +2170,6 @@ fsal_status_t pxy_lookup_path(struct fsal_export *exp_hdl,
  * 'extracted' by .extract_handle.
  */
 fsal_status_t pxy_create_handle(struct fsal_export *exp_hdl,
-				const struct req_op_context *opctx,
 				struct gsh_buffdesc *hdl_desc,
 				struct fsal_obj_handle **handle)
 {
@@ -2181,10 +2179,6 @@ fsal_status_t pxy_create_handle(struct fsal_export *exp_hdl,
 	struct pxy_obj_handle *ph;
 	struct pxy_handle_blob *blob;
 
-	if (!exp_hdl || !hdl_desc || !handle || !opctx
-	    || (hdl_desc->len > NFS4_FHSIZE) || (hdl_desc->len < sizeof(*blob)))
-		return fsalstat(ERR_FSAL_INVAL, 0);
-
 	blob = (struct pxy_handle_blob *)hdl_desc->addr;
 	if (blob->len != hdl_desc->len)
 		return fsalstat(ERR_FSAL_INVAL, 0);
@@ -2192,7 +2186,7 @@ fsal_status_t pxy_create_handle(struct fsal_export *exp_hdl,
 	fh4.nfs_fh4_val = blob->bytes;
 	fh4.nfs_fh4_len = blob->len - sizeof(*blob);
 
-	st = pxy_getattrs_impl(opctx->creds, exp_hdl, &fh4, &attr);
+	st = pxy_getattrs_impl(op_ctx->creds, exp_hdl, &fh4, &attr);
 	if (FSAL_IS_ERROR(st))
 		return st;
 
@@ -2204,9 +2198,8 @@ fsal_status_t pxy_create_handle(struct fsal_export *exp_hdl,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-fsal_status_t pxy_get_dynamic_info(struct fsal_obj_handle *obj_hdl,
-				   struct fsal_export *exp_hdl,
-				   const struct req_op_context *opctx,
+fsal_status_t pxy_get_dynamic_info(struct fsal_export *exp_hdl,
+				   struct fsal_obj_handle *obj_hdl,
 				   fsal_dynamicfsinfo_t *infop)
 {
 	int rc;
@@ -2219,9 +2212,6 @@ fsal_status_t pxy_get_dynamic_info(struct fsal_obj_handle *obj_hdl,
 	char fattr_blob[48];	/* 6 values, 8 bytes each */
 	struct pxy_obj_handle *ph;
 
-	if (!exp_hdl || !infop || !opctx)
-		return fsalstat(ERR_FSAL_FAULT, EINVAL);
-
 	ph = container_of(obj_hdl, struct pxy_obj_handle, obj);
 
 	COMPOUNDV4_ARG_ADD_OP_PUTFH(opcnt, argoparray, ph->fh4);
@@ -2230,7 +2220,7 @@ fsal_status_t pxy_get_dynamic_info(struct fsal_obj_handle *obj_hdl,
 				   sizeof(fattr_blob));
 	COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, argoparray, pxy_bitmap_fsinfo);
 
-	rc = pxy_nfsv4_call(exp_hdl, opctx->creds, opcnt, argoparray,
+	rc = pxy_nfsv4_call(exp_hdl, op_ctx->creds, opcnt, argoparray,
 			    resoparray);
 	if (rc != NFS4_OK)
 		return nfsstat4_to_fsal(rc);

@@ -1563,7 +1563,6 @@ bool init_export_root(struct gsh_export *export)
 		     export->export_id, export->fullpath);
 	fsal_status =
 	    export->fsal_export->ops->lookup_path(export->fsal_export,
-						  &root_op_context.req_ctx,
 						  export->fullpath,
 						  &root_handle);
 

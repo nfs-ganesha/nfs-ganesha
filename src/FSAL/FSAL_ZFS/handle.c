@@ -253,7 +253,6 @@ static fsal_status_t tank_lookup(struct fsal_obj_handle *parent,
  * should not be used for "/" only is exported */
 
 fsal_status_t tank_lookup_path(struct fsal_export *exp_hdl,
-			       const struct req_op_context *opctx,
 			       const char *path,
 			       struct fsal_obj_handle **handle)
 {
@@ -270,13 +269,8 @@ fsal_status_t tank_lookup_path(struct fsal_export *exp_hdl,
 	rc = libzfswrap_getroot(tank_get_root_pvfs(exp_hdl), &object);
 	if (rc != 0)
 		return fsalstat(posix2fsal_error(rc), rc);
-	if (opctx) {
-		cred.uid = opctx->creds->caller_uid;
-		cred.gid = opctx->creds->caller_gid;
-	} else {
-		cred.uid = 0;
-		cred.gid = 0;
-	}
+	cred.uid = op_ctx->creds->caller_uid;
+	cred.gid = op_ctx->creds->caller_gid;
 
 	rc = libzfswrap_getattr(tank_get_root_pvfs(exp_hdl), &cred,
 				object, &stat, &type);
@@ -1057,7 +1051,6 @@ void zfs_handle_ops_init(struct fsal_obj_ops *ops)
  */
 
 fsal_status_t tank_create_handle(struct fsal_export *exp_hdl,
-				 const struct req_op_context *opctx,
 				 struct gsh_buffdesc *hdl_desc,
 				 struct fsal_obj_handle **handle)
 {
@@ -1077,8 +1070,8 @@ fsal_status_t tank_create_handle(struct fsal_export *exp_hdl,
 
 	memcpy(&fh, hdl_desc->addr, hdl_desc->len);  /* struct aligned copy */
 
-	cred.uid = opctx->creds->caller_uid;
-	cred.gid = opctx->creds->caller_gid;
+	cred.uid = op_ctx->creds->caller_uid;
+	cred.gid = op_ctx->creds->caller_gid;
 
 	retval = libzfswrap_getattr(tank_get_root_pvfs(exp_hdl), &cred,
 				    fh.zfs_handle, &stat, &type);

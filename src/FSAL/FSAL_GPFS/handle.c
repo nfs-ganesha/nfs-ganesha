@@ -751,7 +751,6 @@ void gpfs_handle_ops_init(struct fsal_obj_ops *ops)
  */
 
 fsal_status_t gpfs_lookup_path(struct fsal_export *exp_hdl,
-			       const struct req_op_context *opctx,
 			       const char *path,
 			       struct fsal_obj_handle **handle)
 {
@@ -855,7 +854,6 @@ fsal_status_t gpfs_lookup_path(struct fsal_export *exp_hdl,
  */
 
 fsal_status_t gpfs_create_handle(struct fsal_export *exp_hdl,
-				 const struct req_op_context *opctx,
 				 struct gsh_buffdesc *hdl_desc,
 				 struct fsal_obj_handle **handle)
 {
@@ -903,7 +901,7 @@ fsal_status_t gpfs_create_handle(struct fsal_export *exp_hdl,
 	gpfs_fs = fs->private;
 
 	attrib.mask = exp_hdl->ops->fs_supported_attrs(exp_hdl);
-	status = GPFSFSAL_getattrs(exp_hdl, gpfs_fs, opctx, fh, &attrib);
+	status = GPFSFSAL_getattrs(exp_hdl, gpfs_fs, op_ctx, fh, &attrib);
 	if (FSAL_IS_ERROR(status))
 		return status;
 

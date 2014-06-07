@@ -264,12 +264,11 @@ void nullfs_handle_ops_init(struct fsal_obj_ops *ops)
  */
 
 fsal_status_t nullfs_lookup_path(struct fsal_export *exp_hdl,
-				 const struct req_op_context *opctx,
 				 const char *path,
 				 struct fsal_obj_handle **handle)
 {
 	printf("Called %p\n", nullfs_lookup_path);
-	return next_ops.exp_ops->lookup_path(exp_hdl, opctx, path, handle);
+	return next_ops.exp_ops->lookup_path(exp_hdl, path, handle);
 }
 
 /* create_handle
@@ -285,10 +284,9 @@ fsal_status_t nullfs_lookup_path(struct fsal_export *exp_hdl,
  */
 
 fsal_status_t nullfs_create_handle(struct fsal_export *exp_hdl,
-				   const struct req_op_context *opctx,
 				   struct gsh_buffdesc *hdl_desc,
 				   struct fsal_obj_handle **handle)
 {
-	return next_ops.exp_ops->create_handle(exp_hdl, opctx, hdl_desc,
+	return next_ops.exp_ops->create_handle(exp_hdl, hdl_desc,
 					       handle);
 }
