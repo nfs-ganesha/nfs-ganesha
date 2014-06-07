@@ -666,7 +666,6 @@ static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
  */
 
 static fsal_status_t file_open(struct fsal_obj_handle *obj_hdl,
-			       const struct req_op_context *opctx,
 			       fsal_openflags_t openflags)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
@@ -677,7 +676,6 @@ static fsal_status_t file_open(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t file_reopen(struct fsal_obj_handle *obj_hdl,
-				 const struct req_op_context *opctx,
 				 fsal_openflags_t openflags)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
@@ -697,7 +695,6 @@ static fsal_openflags_t file_status(struct fsal_obj_handle *obj_hdl)
  */
 
 static fsal_status_t file_read(struct fsal_obj_handle *obj_hdl,
-			       const struct req_op_context *opctx,
 			       uint64_t seek_descriptor, size_t buffer_size,
 			       void *buffer, size_t *read_amount,
 			       bool *end_of_file)
@@ -710,7 +707,6 @@ static fsal_status_t file_read(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t file_read_plus(struct fsal_obj_handle *obj_hdl,
-			       const struct req_op_context *opctx,
 			       uint64_t seek_descriptor, size_t buffer_size,
 			       void *buffer, size_t *read_amount,
 			       bool *end_of_file, struct io_info *info)
@@ -723,7 +719,6 @@ static fsal_status_t file_read_plus(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t file_write(struct fsal_obj_handle *obj_hdl,
-				const struct req_op_context *opctx,
 				uint64_t seek_descriptor, size_t buffer_size,
 				void *buffer, size_t *write_amount,
 				bool *fsal_stable)
@@ -736,7 +731,6 @@ static fsal_status_t file_write(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t file_write_plus(struct fsal_obj_handle *obj_hdl,
-				const struct req_op_context *opctx,
 				uint64_t seek_descriptor, size_t buffer_size,
 				void *buffer, size_t *write_amount,
 				bool *fsal_stable, struct io_info *info)
@@ -749,7 +743,6 @@ static fsal_status_t file_write_plus(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t file_seek(struct fsal_obj_handle *obj_hdl,
-				const struct req_op_context *opctx,
 				struct io_info *info)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
@@ -760,7 +753,6 @@ static fsal_status_t file_seek(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t file_io_advise(struct fsal_obj_handle *obj_hdl,
-				const struct req_op_context *opctx,
 				struct io_hints *hints)
 {
 	hints->hints = 0;
@@ -773,7 +765,6 @@ static fsal_status_t file_io_advise(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t commit(struct fsal_obj_handle *obj_hdl,	/* sync */
-			    const struct req_op_context *opctx,
 			    off_t offset, size_t len)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);

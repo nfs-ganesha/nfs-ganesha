@@ -1837,7 +1837,6 @@ static void pxy_hdl_release(struct fsal_obj_handle *obj_hdl)
  * the fact that file has been 'opened' and be done.
  */
 static fsal_status_t pxy_open(struct fsal_obj_handle *obj_hdl,
-			      const struct req_op_context *opctx,
 			      fsal_openflags_t openflags)
 {
 	struct pxy_obj_handle *ph;
@@ -1853,7 +1852,6 @@ static fsal_status_t pxy_open(struct fsal_obj_handle *obj_hdl,
 }
 
 static fsal_status_t pxy_read(struct fsal_obj_handle *obj_hdl,
-			      const struct req_op_context *opctx,
 			      uint64_t offset, size_t buffer_size, void *buffer,
 			      size_t *read_amount, bool *end_of_file)
 {
@@ -1864,9 +1862,6 @@ static fsal_status_t pxy_read(struct fsal_obj_handle *obj_hdl,
 	nfs_argop4 argoparray[FSAL_READ_NB_OP_ALLOC];
 	nfs_resop4 resoparray[FSAL_READ_NB_OP_ALLOC];
 	READ4resok *rok;
-
-	if (!obj_hdl || !read_amount || !end_of_file || !opctx)
-		return fsalstat(ERR_FSAL_FAULT, EINVAL);
 
 	if (!buffer_size) {
 		*read_amount = 0;
@@ -1881,9 +1876,9 @@ static fsal_status_t pxy_read(struct fsal_obj_handle *obj_hdl,
 #endif
 
 	if (buffer_size >
-	    opctx->fsal_export->ops->fs_maxread(opctx->fsal_export))
+	    op_ctx->fsal_export->ops->fs_maxread(op_ctx->fsal_export))
 		buffer_size =
-		    opctx->fsal_export->ops->fs_maxread(opctx->fsal_export);
+		    op_ctx->fsal_export->ops->fs_maxread(op_ctx->fsal_export);
 
 	COMPOUNDV4_ARG_ADD_OP_PUTFH(opcnt, argoparray, ph->fh4);
 	rok = &resoparray[opcnt].nfs_resop4_u.opread.READ4res_u.resok4;
@@ -1891,7 +1886,7 @@ static fsal_status_t pxy_read(struct fsal_obj_handle *obj_hdl,
 	rok->data.data_len = buffer_size;
 	COMPOUNDV4_ARG_ADD_OP_READ(opcnt, argoparray, offset, buffer_size);
 
-	rc = pxy_nfsv4_call(opctx->fsal_export, opctx->creds,
+	rc = pxy_nfsv4_call(op_ctx->fsal_export, op_ctx->creds,
 			    opcnt, argoparray, resoparray);
 	if (rc != NFS4_OK)
 		return nfsstat4_to_fsal(rc);
@@ -1902,7 +1897,6 @@ static fsal_status_t pxy_read(struct fsal_obj_handle *obj_hdl,
 }
 
 static fsal_status_t pxy_write(struct fsal_obj_handle *obj_hdl,
-			       const struct req_op_context *opctx,
 			       uint64_t offset, size_t size, void *buffer,
 			       size_t *write_amount, bool *fsal_stable)
 {
@@ -1913,9 +1907,6 @@ static fsal_status_t pxy_write(struct fsal_obj_handle *obj_hdl,
 	nfs_resop4 resoparray[FSAL_WRITE_NB_OP_ALLOC];
 	WRITE4resok *wok;
 	struct pxy_obj_handle *ph;
-
-	if (!obj_hdl || !write_amount || !opctx)
-		return fsalstat(ERR_FSAL_FAULT, EINVAL);
 
 	if (!size) {
 		*write_amount = 0;
@@ -1931,14 +1922,14 @@ static fsal_status_t pxy_write(struct fsal_obj_handle *obj_hdl,
 #endif
 
 	if (size >
-	    opctx->fsal_export->ops->fs_maxwrite(opctx->fsal_export))
+	    op_ctx->fsal_export->ops->fs_maxwrite(op_ctx->fsal_export))
 		size =
-		    opctx->fsal_export->ops->fs_maxwrite(opctx->fsal_export);
+		    op_ctx->fsal_export->ops->fs_maxwrite(op_ctx->fsal_export);
 	COMPOUNDV4_ARG_ADD_OP_PUTFH(opcnt, argoparray, ph->fh4);
 	wok = &resoparray[opcnt].nfs_resop4_u.opwrite.WRITE4res_u.resok4;
 	COMPOUNDV4_ARG_ADD_OP_WRITE(opcnt, argoparray, offset, buffer, size);
 
-	rc = pxy_nfsv4_call(opctx->fsal_export, opctx->creds,
+	rc = pxy_nfsv4_call(op_ctx->fsal_export, op_ctx->creds,
 			    opcnt, argoparray, resoparray);
 	if (rc != NFS4_OK)
 		return nfsstat4_to_fsal(rc);
@@ -1951,7 +1942,6 @@ static fsal_status_t pxy_write(struct fsal_obj_handle *obj_hdl,
 
 /* We send all out writes as DATA_SYNC, commit becomes a NO-OP */
 static fsal_status_t pxy_commit(struct fsal_obj_handle *obj_hdl,
-				const struct req_op_context *opctx,
 				off_t offset,
 				size_t len)
 {

@@ -45,10 +45,9 @@
  */
 
 fsal_status_t nullfs_open(struct fsal_obj_handle *obj_hdl,
-			  const struct req_op_context *opctx,
 			  fsal_openflags_t openflags)
 {
-	return next_ops.obj_ops->open(obj_hdl, opctx, openflags);
+	return next_ops.obj_ops->open(obj_hdl, openflags);
 }
 
 /* nullfs_status
@@ -65,13 +64,12 @@ fsal_openflags_t nullfs_status(struct fsal_obj_handle *obj_hdl)
  */
 
 fsal_status_t nullfs_read(struct fsal_obj_handle *obj_hdl,
-			  const struct req_op_context *opctx,
 			  uint64_t offset,
 			  size_t buffer_size, void *buffer,
 			  size_t *read_amount,
 			  bool *end_of_file)
 {
-	return next_ops.obj_ops->read(obj_hdl, opctx, offset, buffer_size,
+	return next_ops.obj_ops->read(obj_hdl, offset, buffer_size,
 				      buffer, read_amount, end_of_file);
 }
 
@@ -80,11 +78,11 @@ fsal_status_t nullfs_read(struct fsal_obj_handle *obj_hdl,
  */
 
 fsal_status_t nullfs_write(struct fsal_obj_handle *obj_hdl,
-			   const struct req_op_context *opctx, uint64_t offset,
+			   uint64_t offset,
 			   size_t buffer_size, void *buffer,
 			   size_t *write_amount, bool *fsal_stable)
 {
-	return next_ops.obj_ops->write(obj_hdl, opctx, offset, buffer_size,
+	return next_ops.obj_ops->write(obj_hdl, offset, buffer_size,
 				       buffer, write_amount, fsal_stable);
 }
 
@@ -94,10 +92,9 @@ fsal_status_t nullfs_write(struct fsal_obj_handle *obj_hdl,
  */
 
 fsal_status_t nullfs_commit(struct fsal_obj_handle *obj_hdl,	/* sync */
-			    const struct req_op_context *opctx,
 			    off_t offset, size_t len)
 {
-	return next_ops.obj_ops->commit(obj_hdl, opctx, offset, len);
+	return next_ops.obj_ops->commit(obj_hdl, offset, len);
 }
 
 /* nullfs_lock_op

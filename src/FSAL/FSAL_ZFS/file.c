@@ -49,7 +49,6 @@ libzfswrap_vfs_t *ZFSFSAL_GetVFS(zfs_file_handle_t *handle);
  */
 
 fsal_status_t tank_open(struct fsal_obj_handle *obj_hdl,
-			const struct req_op_context *opctx,
 			fsal_openflags_t openflags)
 {
 	struct zfs_fsal_obj_handle *myself;
@@ -59,8 +58,8 @@ fsal_status_t tank_open(struct fsal_obj_handle *obj_hdl,
 	libzfswrap_vnode_t *p_vnode;
 	creden_t cred;
 
-	cred.uid = opctx->creds->caller_uid;
-	cred.gid = opctx->creds->caller_gid;
+	cred.uid = op_ctx->creds->caller_uid;
+	cred.gid = op_ctx->creds->caller_gid;
 
 	myself = container_of(obj_hdl, struct zfs_fsal_obj_handle, obj_handle);
 
@@ -108,7 +107,7 @@ fsal_openflags_t tank_status(struct fsal_obj_handle *obj_hdl)
  */
 
 fsal_status_t tank_read(struct fsal_obj_handle *obj_hdl,
-			const struct req_op_context *opctx, uint64_t offset,
+			uint64_t offset,
 			size_t buffer_size, void *buffer, size_t *read_amount,
 			bool *end_of_file)
 {
@@ -117,8 +116,8 @@ fsal_status_t tank_read(struct fsal_obj_handle *obj_hdl,
 	creden_t cred;
 	int behind = 0;
 
-	cred.uid = opctx->creds->caller_uid;
-	cred.gid = opctx->creds->caller_gid;
+	cred.uid = op_ctx->creds->caller_uid;
+	cred.gid = op_ctx->creds->caller_gid;
 
 	myself = container_of(obj_hdl, struct zfs_fsal_obj_handle, obj_handle);
 
@@ -146,7 +145,7 @@ fsal_status_t tank_read(struct fsal_obj_handle *obj_hdl,
  */
 
 fsal_status_t tank_write(struct fsal_obj_handle *obj_hdl,
-			 const struct req_op_context *opctx, uint64_t offset,
+			 uint64_t offset,
 			 size_t buffer_size, void *buffer,
 			 size_t *write_amount, bool *fsal_stable)
 {
@@ -155,8 +154,8 @@ fsal_status_t tank_write(struct fsal_obj_handle *obj_hdl,
 	int retval = 0;
 	int behind = 0;
 
-	cred.uid = opctx->creds->caller_uid;
-	cred.gid = opctx->creds->caller_gid;
+	cred.uid = op_ctx->creds->caller_uid;
+	cred.gid = op_ctx->creds->caller_gid;
 
 	myself = container_of(obj_hdl, struct zfs_fsal_obj_handle, obj_handle);
 
@@ -180,7 +179,6 @@ fsal_status_t tank_write(struct fsal_obj_handle *obj_hdl,
  */
 
 fsal_status_t tank_commit(struct fsal_obj_handle *obj_hdl,	/* sync */
-			  const struct req_op_context *opctx,
 			  off_t offset, size_t len)
 {
 	/* ZFS is a COW based FS, commit are not needed */

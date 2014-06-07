@@ -176,7 +176,6 @@ cache_inode_open(cache_entry_t *entry,
 		if (fsal_export->ops->fs_supports(fsal_export,
 						  fso_reopen_method)) {
 			fsal_status = obj_hdl->ops->reopen(obj_hdl,
-							   op_ctx,
 							   openflags);
 			closed = false;
 		} else {
@@ -208,7 +207,7 @@ cache_inode_open(cache_entry_t *entry,
 	}
 
 	if ((current_flags == FSAL_O_CLOSED)) {
-		fsal_status = obj_hdl->ops->open(obj_hdl, op_ctx, openflags);
+		fsal_status = obj_hdl->ops->open(obj_hdl, openflags);
 		if (FSAL_IS_ERROR(fsal_status)) {
 			status = cache_inode_error_convert(fsal_status);
 			LogDebug(COMPONENT_CACHE_INODE,
@@ -380,7 +379,7 @@ void cache_inode_adjust_openflags(cache_entry_t *entry)
 		goto unlock;
 
 	openflags &= ~FSAL_O_WRITE;
-	fsal_status = obj_hdl->ops->reopen(obj_hdl, op_ctx, openflags);
+	fsal_status = obj_hdl->ops->reopen(obj_hdl, openflags);
 	if (FSAL_IS_ERROR(fsal_status)) {
 		LogWarn(COMPONENT_CACHE_INODE,
 			"fsal reopen method returned: %d(%d)",

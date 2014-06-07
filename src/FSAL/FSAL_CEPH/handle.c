@@ -639,14 +639,13 @@ static fsal_status_t fsal_unlink(struct fsal_obj_handle *dir_pub,
  */
 
 static fsal_status_t fsal_open(struct fsal_obj_handle *handle_pub,
-			       const struct req_op_context *opctx,
 			       fsal_openflags_t openflags)
 {
 	/* Generic status return */
 	int rc = 0;
 	/* The private 'full' export */
 	struct export *export =
-	    container_of(opctx->fsal_export, struct export, export);
+	    container_of(op_ctx->fsal_export, struct export, export);
 	/* The private 'full' object handle */
 	struct handle *handle = container_of(handle_pub, struct handle, handle);
 	/* Posix open flags */
@@ -705,7 +704,6 @@ static fsal_openflags_t status(struct fsal_obj_handle *handle_pub)
  * Cache inode content lock.
  *
  * @param[in]  handle_pub  File to read
- * @param[in]  opctx       Request context, includes credentials
  * @param[in]  offset      Point at which to begin read
  * @param[in]  buffer_size Maximum number of bytes to read
  * @param[out] buffer      Buffer to store data read
@@ -716,14 +714,13 @@ static fsal_openflags_t status(struct fsal_obj_handle *handle_pub)
  */
 
 static fsal_status_t fsal_read(struct fsal_obj_handle *handle_pub,
-			       const struct req_op_context *opctx,
 			       uint64_t offset, size_t buffer_size,
 			       void *buffer, size_t *read_amount,
 			       bool *end_of_file)
 {
 	/* The private 'full' export */
 	struct export *export =
-	    container_of(opctx->fsal_export, struct export, export);
+	    container_of(op_ctx->fsal_export, struct export, export);
 	/* The private 'full' object handle */
 	struct handle *handle = container_of(handle_pub, struct handle, handle);
 	/* Signed, so we can pick up on errors */
@@ -753,7 +750,6 @@ static fsal_status_t fsal_read(struct fsal_obj_handle *handle_pub,
  * inode content lock.
  *
  * @param[in]  handle_pub   File to write
- * @param[in]  opctx        Request context, includes credentials
  * @param[in]  offset       Position at which to write
  * @param[in]  buffer_size  Number of bytes to write
  * @param[in]  buffer       Data to write
@@ -763,14 +759,13 @@ static fsal_status_t fsal_read(struct fsal_obj_handle *handle_pub,
  */
 
 static fsal_status_t fsal_write(struct fsal_obj_handle *handle_pub,
-				const struct req_op_context *opctx,
 				uint64_t offset, size_t buffer_size,
 				void *buffer, size_t *write_amount,
 				bool *fsal_stable)
 {
 	/* The private 'full' export */
 	struct export *export =
-	    container_of(opctx->fsal_export, struct export, export);
+	    container_of(op_ctx->fsal_export, struct export, export);
 	/* The private 'full' object handle */
 	struct handle *handle = container_of(handle_pub, struct handle, handle);
 	/* Signed, so we can pick up on errors */
@@ -804,7 +799,6 @@ static fsal_status_t fsal_write(struct fsal_obj_handle *handle_pub,
  */
 
 static fsal_status_t commit(struct fsal_obj_handle *handle_pub,
-			    const struct req_op_context *opctx,
 			    off_t offset,
 			    size_t len)
 {
@@ -812,7 +806,7 @@ static fsal_status_t commit(struct fsal_obj_handle *handle_pub,
 	int rc = 0;
 	/* The private 'full' export */
 	struct export *export =
-	    container_of(opctx->fsal_export, struct export, export);
+	    container_of(op_ctx->fsal_export, struct export, export);
 	/* The private 'full' object handle */
 	struct handle *handle = container_of(handle_pub, struct handle, handle);
 

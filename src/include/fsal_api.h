@@ -1515,7 +1515,6 @@ struct fsal_obj_ops {
  * @return FSAL status.
  */
 	 fsal_status_t(*open) (struct fsal_obj_handle *obj_hdl,
-			       const struct req_op_context *opctx,
 			       fsal_openflags_t openflags);
 
 /**
@@ -1528,7 +1527,6 @@ struct fsal_obj_ops {
  * already placed. May not be supported by all FSALs.
  */
 	 fsal_status_t(*reopen) (struct fsal_obj_handle *obj_hdl,
-				 const struct req_op_context *opctx,
 				 fsal_openflags_t openflags);
 
 /**
@@ -1554,7 +1552,6 @@ struct fsal_obj_ops {
  * the remote server.) -- ACE
  *
  * @param[in]  obj_hdl     File to read
- * @param[in]  opctx       Request context, includes credentials
  * @param[in]  offset      Position from which to read
  * @param[in]  buffer_size Amount of data to read
  * @param[out] buffer      Buffer to which data are to be copied
@@ -1564,7 +1561,6 @@ struct fsal_obj_ops {
  * @return FSAL status.
  */
 	 fsal_status_t(*read) (struct fsal_obj_handle *obj_hdl,
-			       const struct req_op_context *opctx,
 			       uint64_t offset,
 			       size_t buffer_size,
 			       void *buffer,
@@ -1582,7 +1578,6 @@ struct fsal_obj_ops {
  * the remote server.) -- ACE
  *
  * @param[in]  obj_hdl     File to read
- * @param[in]  opctx       Request context, includes credentials
  * @param[in]  offset      Position from which to read
  * @param[in]  buffer_size Amount of data to read
  * @param[out] buffer      Buffer to which data are to be copied
@@ -1593,7 +1588,6 @@ struct fsal_obj_ops {
  * @return FSAL status.
  */
 	fsal_status_t(*read_plus) (struct fsal_obj_handle *obj_hdl,
-				   const struct req_op_context *opctx,
 				   uint64_t offset,
 				   size_t buffer_size,
 				   void *buffer,
@@ -1609,7 +1603,6 @@ struct fsal_obj_ops {
  * @note Should buffer be const? -- ACE
  *
  * @param[in]  obj_hdl      File to be written
- * @param[in]  opctx        Request context, includes credentials
  * @param[in]  offset       Position at which to write
  * @param[in]  buffer       Data to be written
  * @param[in,out] fsal_stable In, if on, the fsal is requested to write data
@@ -1619,7 +1612,6 @@ struct fsal_obj_ops {
  * @return FSAL status.
  */
 	 fsal_status_t(*write) (struct fsal_obj_handle *obj_hdl,
-				const struct req_op_context *opctx,
 				uint64_t offset,
 				size_t buffer_size,
 				void *buffer,
@@ -1633,7 +1625,6 @@ struct fsal_obj_ops {
  * @note Should buffer be const? -- ACE
  *
  * @param[in]  obj_hdl      File to be written
- * @param[in]  opctx        Request context, includes credentials
  * @param[in]  offset       Position at which to write
  * @param[in]  buffer       Data to be written
  * @param[in,out] fsal_stable In, if on, the fsal is requested to write data
@@ -1644,7 +1635,6 @@ struct fsal_obj_ops {
  * @return FSAL status.
  */
 	 fsal_status_t(*write_plus) (struct fsal_obj_handle *obj_hdl,
-				const struct req_op_context *opctx,
 				uint64_t offset,
 				size_t buffer_size,
 				void *buffer,
@@ -1657,13 +1647,11 @@ struct fsal_obj_ops {
  * This function seek to data or hole in a file.
  *
  * @param[in]  obj_hdl      File to be written
- * @param[in]  opctx        Request context, includes credentials
  * @param[in,out] info      Information about the data
  *
  * @return FSAL status.
  */
 	 fsal_status_t(*seek) (struct fsal_obj_handle *obj_hdl,
-				const struct req_op_context *opctx,
 				struct io_info *info);
 /**
  * @brief IO Advise
@@ -1671,13 +1659,11 @@ struct fsal_obj_ops {
  * This function give hints to fs.
  *
  * @param[in]  obj_hdl      File to be written
- * @param[in]  opctx        Request context, includes credentials
  * @param[in,out] info      Information about the data
  *
  * @return FSAL status.
  */
 	 fsal_status_t(*io_advise) (struct fsal_obj_handle *obj_hdl,
-				const struct req_op_context *opctx,
 				struct io_hints *hints);
 /**
  * @brief Commit written data
@@ -1691,7 +1677,6 @@ struct fsal_obj_ops {
  * @return FSAL status.
  */
 	 fsal_status_t(*commit) (struct fsal_obj_handle *obj_hdl,  /* sync */
-				 const struct req_op_context *opctx,
 				 off_t offset, size_t len);
 
 /**

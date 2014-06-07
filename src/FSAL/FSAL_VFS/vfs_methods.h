@@ -193,19 +193,17 @@ static inline bool vfs_unopenable_type(object_file_type_t type)
 
 	/* I/O management */
 fsal_status_t vfs_open(struct fsal_obj_handle *obj_hdl,
-		       const struct req_op_context *opctx,
 		       fsal_openflags_t openflags);
 fsal_openflags_t vfs_status(struct fsal_obj_handle *obj_hdl);
 fsal_status_t vfs_read(struct fsal_obj_handle *obj_hdl,
-		       const struct req_op_context *opctx, uint64_t offset,
+		       uint64_t offset,
 		       size_t buffer_size, void *buffer, size_t *read_amount,
 		       bool *end_of_file);
 fsal_status_t vfs_write(struct fsal_obj_handle *obj_hdl,
-			const struct req_op_context *opctx, uint64_t offset,
+			uint64_t offset,
 			size_t buffer_size, void *buffer, size_t *write_amount,
 			bool *fsal_stable);
 fsal_status_t vfs_commit(struct fsal_obj_handle *obj_hdl,	/* sync */
-			 const struct req_op_context *opctx,
 			 off_t offset, size_t len);
 fsal_status_t vfs_lock_op(struct fsal_obj_handle *obj_hdl,
 			  const struct req_op_context *opctx, void *p_owner,

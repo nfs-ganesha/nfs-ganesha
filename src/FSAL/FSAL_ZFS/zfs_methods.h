@@ -50,18 +50,16 @@ struct zfs_fsal_obj_handle {
 
 	/* I/O management */
 fsal_status_t tank_open(struct fsal_obj_handle *obj_hdl,
-			const struct req_op_context *opctx,
 			fsal_openflags_t openflags);
 fsal_status_t tank_commit(struct fsal_obj_handle *obj_hdl,	/* sync */
-			  const struct req_op_context *opctx,
 			  off_t offset, size_t len);
 fsal_openflags_t tank_status(struct fsal_obj_handle *obj_hdl);
 fsal_status_t tank_read(struct fsal_obj_handle *obj_hdl,
-			const struct req_op_context *opctx, uint64_t offset,
+			uint64_t offset,
 			size_t buffer_size, void *buffer, size_t *read_amount,
 			bool *end_of_file);
 fsal_status_t tank_write(struct fsal_obj_handle *obj_hdl,
-			 const struct req_op_context *opctx, uint64_t offset,
+			 uint64_t offset,
 			 size_t buffer_size, void *buffer,
 			 size_t *write_amount, bool *fsal_stable);
 fsal_status_t tank_share_op(struct fsal_obj_handle *obj_hdl, void *p_owner,

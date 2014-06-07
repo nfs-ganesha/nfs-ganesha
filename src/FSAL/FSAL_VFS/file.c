@@ -46,7 +46,6 @@
  */
 
 fsal_status_t vfs_open(struct fsal_obj_handle *obj_hdl,
-		       const struct req_op_context *opctx,
 		       fsal_openflags_t openflags)
 {
 	struct vfs_fsal_obj_handle *myself;
@@ -100,7 +99,7 @@ fsal_openflags_t vfs_status(struct fsal_obj_handle *obj_hdl)
  */
 
 fsal_status_t vfs_read(struct fsal_obj_handle *obj_hdl,
-		       const struct req_op_context *opctx, uint64_t offset,
+		       uint64_t offset,
 		       size_t buffer_size, void *buffer, size_t *read_amount,
 		       bool *end_of_file)
 {
@@ -147,7 +146,7 @@ fsal_status_t vfs_read(struct fsal_obj_handle *obj_hdl,
  */
 
 fsal_status_t vfs_write(struct fsal_obj_handle *obj_hdl,
-			const struct req_op_context *opctx, uint64_t offset,
+			uint64_t offset,
 			size_t buffer_size, void *buffer, size_t *write_amount,
 			bool *fsal_stable)
 {
@@ -170,7 +169,7 @@ fsal_status_t vfs_write(struct fsal_obj_handle *obj_hdl,
 	assert(myself->u.file.fd >= 0
 	       && myself->u.file.openflags != FSAL_O_CLOSED);
 
-	fsal_set_credentials(opctx->creds);
+	fsal_set_credentials(op_ctx->creds);
 	nb_written = pwrite(myself->u.file.fd, buffer, buffer_size, offset);
 
 	if (offset == -1 || nb_written == -1) {
@@ -202,7 +201,6 @@ fsal_status_t vfs_write(struct fsal_obj_handle *obj_hdl,
  */
 
 fsal_status_t vfs_commit(struct fsal_obj_handle *obj_hdl,	/* sync */
-			 const struct req_op_context *opctx,
 			 off_t offset, size_t len)
 {
 	struct vfs_fsal_obj_handle *myself;

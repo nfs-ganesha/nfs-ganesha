@@ -157,22 +157,22 @@ cache_inode_rdwr_plus(cache_entry_t *entry,
 	/* Call FSAL_read or FSAL_write */
 	if (io_direction == CACHE_INODE_READ) {
 		fsal_status =
-		    obj_hdl->ops->read(obj_hdl, op_ctx, offset, io_size,
+		    obj_hdl->ops->read(obj_hdl, offset, io_size,
 				       buffer, bytes_moved, eof);
 	} else if (io_direction == CACHE_INODE_READ_PLUS) {
 		fsal_status =
-		    obj_hdl->ops->read_plus(obj_hdl, op_ctx, offset, io_size,
+		    obj_hdl->ops->read_plus(obj_hdl, offset, io_size,
 					    buffer, bytes_moved, eof, info);
 	} else {
 		bool fsal_sync = *sync;
 		if (io_direction == CACHE_INODE_WRITE)
 			fsal_status =
-			  obj_hdl->ops->write(obj_hdl, op_ctx, offset,
+			  obj_hdl->ops->write(obj_hdl, offset,
 					      io_size, buffer, bytes_moved,
 					      &fsal_sync);
 		else
 			fsal_status =
-			  obj_hdl->ops->write_plus(obj_hdl, op_ctx, offset,
+			  obj_hdl->ops->write_plus(obj_hdl, offset,
 						   io_size, buffer,
 						   bytes_moved, &fsal_sync,
 						   info);
@@ -182,7 +182,7 @@ cache_inode_rdwr_plus(cache_entry_t *entry,
 
 		if (*sync && !(obj_hdl->ops->status(obj_hdl) & FSAL_O_SYNC)
 		    && !fsal_sync && !FSAL_IS_ERROR(fsal_status)) {
-			fsal_status = obj_hdl->ops->commit(obj_hdl, op_ctx,
+			fsal_status = obj_hdl->ops->commit(obj_hdl,
 							   offset, io_size);
 		} else {
 			*sync = fsal_sync;

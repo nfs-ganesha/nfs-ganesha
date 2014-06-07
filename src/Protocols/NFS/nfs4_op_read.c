@@ -674,7 +674,7 @@ int nfs4_op_io_advise(struct nfs_argop4 *op, compound_data_t *data,
 
 		fsal_status = entry->obj_handle->ops->io_advise(
 					entry->obj_handle,
-					op_ctx,	&hints);
+					&hints);
 		if (FSAL_IS_ERROR(fsal_status)) {
 			res_IO_ADVISE->iar_status = NFS4ERR_NOTSUPP;
 			goto done;
@@ -758,7 +758,7 @@ int nfs4_op_seek(struct nfs_argop4 *op, compound_data_t *data,
 
 		fsal_status = entry->obj_handle->ops->seek(
 					entry->obj_handle,
-					op_ctx,	&info);
+					&info);
 		if (FSAL_IS_ERROR(fsal_status)) {
 			res_SEEK->sr_status = NFS4ERR_NXIO;
 			goto done;

@@ -49,7 +49,6 @@
  */
 
 fsal_status_t lustre_open(struct fsal_obj_handle *obj_hdl,
-			  const struct req_op_context *opctx,
 			  fsal_openflags_t openflags)
 {
 	struct lustre_fsal_obj_handle *myself;
@@ -68,7 +67,7 @@ fsal_status_t lustre_open(struct fsal_obj_handle *obj_hdl,
 	LogFullDebug(COMPONENT_FSAL, "open_by_handle_at flags from %x to %x",
 		     openflags, posix_flags);
 
-	fd = CRED_WRAP(opctx->creds, int, lustre_open_by_handle,
+	fd = CRED_WRAP(op_ctx->creds, int, lustre_open_by_handle,
 		       obj_hdl->fs->path, myself->handle,
 		       posix_flags);
 
@@ -77,7 +76,7 @@ fsal_status_t lustre_open(struct fsal_obj_handle *obj_hdl,
 		    && (((obj_hdl->attributes.mode & 0700) == 0400)
 			|| ((obj_hdl->attributes.mode & 0200) == 0000))
 		    && (obj_hdl->attributes.owner ==
-			opctx->creds->caller_uid)) {
+			op_ctx->creds->caller_uid)) {
 			/* If the file is r-xYYYYYY or --xYYYYYY (a binary c
 			 * copied from another FS it is not writable (because
 			 * no W flag) but it should be opened because POSIX
@@ -125,7 +124,7 @@ fsal_openflags_t lustre_status(struct fsal_obj_handle *obj_hdl)
  */
 
 fsal_status_t lustre_read(struct fsal_obj_handle *obj_hdl,
-			  const struct req_op_context *opctx, uint64_t offset,
+			  uint64_t offset,
 			  size_t buffer_size, void *buffer,
 			  size_t *read_amount, bool *end_of_file)
 {
@@ -158,7 +157,7 @@ fsal_status_t lustre_read(struct fsal_obj_handle *obj_hdl,
  */
 
 fsal_status_t lustre_write(struct fsal_obj_handle *obj_hdl,
-			   const struct req_op_context *opctx, uint64_t offset,
+			   uint64_t offset,
 			   size_t buffer_size, void *buffer,
 			   size_t *write_amount, bool *fsal_stable)
 {
@@ -174,7 +173,7 @@ fsal_status_t lustre_write(struct fsal_obj_handle *obj_hdl,
 	       && myself->u.file.openflags != FSAL_O_CLOSED);
 
 	nb_written =
-	    CRED_WRAP(opctx->creds, int, pwrite, myself->u.file.fd, buffer,
+	    CRED_WRAP(op_ctx->creds, int, pwrite, myself->u.file.fd, buffer,
 		      buffer_size, offset);
 
 	if (offset == -1 || nb_written == -1) {
@@ -195,7 +194,6 @@ fsal_status_t lustre_write(struct fsal_obj_handle *obj_hdl,
  */
 
 fsal_status_t lustre_commit(struct fsal_obj_handle *obj_hdl,	/* sync */
-			    const struct req_op_context *opctx,
 			    off_t offset, size_t len)
 {
 	struct lustre_fsal_obj_handle *myself;

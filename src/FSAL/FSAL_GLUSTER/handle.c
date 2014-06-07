@@ -1011,7 +1011,6 @@ static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
  */
 
 static fsal_status_t file_open(struct fsal_obj_handle *obj_hdl,
-			       const struct req_op_context *opctx,
 			       fsal_openflags_t openflags)
 {
 	int rc = 0;
@@ -1019,7 +1018,7 @@ static fsal_status_t file_open(struct fsal_obj_handle *obj_hdl,
 	struct glfs_fd *glfd = NULL;
 	int p_flags = 0;
 	struct glusterfs_export *glfs_export =
-	    container_of(opctx->fsal_export, struct glusterfs_export, export);
+	    container_of(op_ctx->fsal_export, struct glusterfs_export, export);
 	struct glusterfs_handle *objhandle =
 	    container_of(obj_hdl, struct glusterfs_handle, handle);
 #ifdef GLTIMING
@@ -1072,7 +1071,6 @@ static fsal_openflags_t file_status(struct fsal_obj_handle *obj_hdl)
  */
 
 static fsal_status_t file_read(struct fsal_obj_handle *obj_hdl,
-			       const struct req_op_context *opctx,
 			       uint64_t seek_descriptor, size_t buffer_size,
 			       void *buffer, size_t * read_amount,
 			       bool * end_of_file)
@@ -1113,7 +1111,6 @@ static fsal_status_t file_read(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t file_write(struct fsal_obj_handle *obj_hdl,
-				const struct req_op_context *opctx,
 				uint64_t seek_descriptor, size_t buffer_size,
 				void *buffer, size_t * write_amount,
 				bool * fsal_stable)
@@ -1154,7 +1151,6 @@ static fsal_status_t file_write(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t commit(struct fsal_obj_handle *obj_hdl,	/* sync */
-			    const struct req_op_context *opctx,
 			    off_t offset, size_t len)
 {
 	int rc = 0;
