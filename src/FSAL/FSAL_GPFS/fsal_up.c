@@ -44,7 +44,6 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 	const struct fsal_up_vector *event_func;
 	char thr_name[16];
 	int rc = 0;
-	struct nfsd4_pnfs_deviceid dev_id;
 	struct pnfs_deviceid devid;
 	struct stat buf;
 	struct glock fl;
@@ -98,7 +97,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 		callback.flags = &flags;
 		callback.buf = &buf;
 		callback.fl = &fl;
-		callback.dev_id = &dev_id;
+		callback.dev_id = &devid;
 		callback.expire_attr = &expire_time_attr;
 
 #ifdef _VALGRIND_MEMCHECK
@@ -252,13 +251,13 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 
 		case LAYOUT_NOTIFY_DEVICEID:	/* Device update Event */
 			LogDebug(COMPONENT_FSAL_UP,
-				 "layout device update: flags:%x ino %ld devid %ld-%016lx",
-				 flags, callback.buf->st_ino, dev_id.sbid,
-				 dev_id.devid);
+				"layout dev update: flags:%x ino %ld seq %d fd %d fsid 0x%lx",
+				flags, callback.buf->st_ino, devid.device_id2,
+				devid.device_id4, devid.devid);
 
 			memset(&devid, 0, sizeof(devid));
 			devid.fsal_id = FSAL_ID_GPFS;
-			devid.devid = dev_id.devid;
+			devid.devid = devid.devid;
 
 			rc = up_async_notify_device(general_fridge,
 						event_func,
