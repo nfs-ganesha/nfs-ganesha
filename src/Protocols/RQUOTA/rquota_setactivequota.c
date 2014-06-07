@@ -41,14 +41,12 @@
  *
  * @param[in]  arg     Ignored
  * @param[in]  export  Ignored
- * @param[in]  req_ctx Ignored
  * @param[in]  worker  Ignored
  * @param[in]  req     Ignored
  * @param[out] res     Ignored
  */
 
 int rquota_setactivequota(nfs_arg_t *arg,
-			  struct req_op_context *req_ctx,
 			  nfs_worker_data_t *worker, struct svc_req *req,
 			  nfs_res_t *res)
 {

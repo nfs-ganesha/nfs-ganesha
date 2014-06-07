@@ -489,6 +489,28 @@ static bool fridgethr_freeze(struct fridgethr *fr,
 	   there's nothing more to do than: */
 	return true;
 }
+/**
+ * @brief Operation context.
+ *
+ * This carries everything relevant to a protocol operation
+ * Since it is a thread local, it is exclusively in the thread context
+ * and cannot be shared with another thread.
+ *
+ * This will always point to a valid structure.  When its contents go out
+ * of scope this is set to NULL but since dereferencing with this expectation,
+ * a SEGV will result.  This will point to one of three structures:
+ *
+ * 1. The req_ctx declared in rpc_execute().  This is the state for any NFS op.
+ *
+ * 2. The op_context declared/referenced in a 9P fid.
+ *    Same as req_ctx but for 9P operations.
+ *
+ * 3. A root context which is used for upcalls, exports bashing, and async
+ *    events that call functions that expect a context set up.
+ */
+
+__thread struct req_op_context *op_ctx;
+
 
 /**
  * @brief Initialization of a new thread in the fridge

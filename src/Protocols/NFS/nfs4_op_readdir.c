@@ -64,17 +64,16 @@ struct nfs4_readdir_cb_data {
 static void restore_data(struct nfs4_readdir_cb_data *tracker)
 {
 	/* Restore export stuff */
-	if (tracker->data->req_ctx->export)
-		put_gsh_export(tracker->data->req_ctx->export);
+	if (op_ctx->export)
+		put_gsh_export(op_ctx->export);
 
-	*tracker->data->req_ctx->export_perms = tracker->save_export_perms;
-	tracker->data->req_ctx->export = tracker->saved_gsh_export;
-	tracker->data->req_ctx->fsal_export =
-		tracker->data->req_ctx->export->fsal_export;
+	*op_ctx->export_perms = tracker->save_export_perms;
+	op_ctx->export = tracker->saved_gsh_export;
+	op_ctx->fsal_export = op_ctx->export->fsal_export;
 	tracker->saved_gsh_export = NULL;
 
 	/* Restore creds */
-	if (!get_req_creds(tracker->data->req, tracker->data->req_ctx)) {
+	if (!get_req_creds(tracker->data->req)) {
 		LogCrit(COMPONENT_EXPORT,
 			"Failure to restore creds");
 	}
@@ -150,8 +149,8 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 			 entry->object.dir.junction_export->fullpath);
 
 		/* Save the compound data context */
-		tracker->save_export_perms = *data->req_ctx->export_perms;
-		tracker->saved_gsh_export = data->req_ctx->export;
+		tracker->save_export_perms = *op_ctx->export_perms;
+		tracker->saved_gsh_export = op_ctx->export;
 
 		/* Get a reference to the export and stash it in
 		 * compound data.
@@ -159,11 +158,9 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 		get_gsh_export_ref(entry->object.dir.junction_export);
 
 		/* Cross the junction */
-		data->req_ctx->export =
-		    entry->object.dir.junction_export;
+		op_ctx->export = entry->object.dir.junction_export;
 
-		data->req_ctx->fsal_export =
-			data->req_ctx->export->fsal_export;
+		op_ctx->fsal_export = op_ctx->export->fsal_export;
 
 		/* Build the credentials */
 		rdattr_error = nfs4_MakeCred(data);
@@ -175,8 +172,8 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 			 */
 			LogDebug(COMPONENT_EXPORT,
 				 "NFS4ERR_ACCESS Skipping Export_Id %d Path %s",
-				 data->req_ctx->export->export_id,
-				 data->req_ctx->export->fullpath);
+				 op_ctx->export->export_id,
+				 op_ctx->export->fullpath);
 
 			/* Restore export and creds */
 			restore_data(tracker);
@@ -204,8 +201,8 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 				 */
 				LogDebug(COMPONENT_EXPORT,
 					 "Ignoring NFS4ERR_WRONGSEC (only asked for MOUNTED_IN_FILEID) On ReadDir Export_Id %d Path %s",
-					 data->req_ctx->export->export_id,
-					 data->req_ctx->export->fullpath);
+					 op_ctx->export->export_id,
+					 op_ctx->export->fullpath);
 
 				/* Because we are not asking for any attributes
 				 * which are a property of the exported file
@@ -230,8 +227,8 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 				 */
 				LogDebug(COMPONENT_EXPORT,
 					 "NFS4ERR_WRONGSEC On ReadDir Export_Id %d Path %s",
-					 data->req_ctx->export->export_id,
-					 data->req_ctx->export->fullpath);
+					 op_ctx->export->export_id,
+					 op_ctx->export->fullpath);
 			}
 		} else if (rdattr_error == NFS4_OK) {
 			/* Now we must traverse the junction to get the
@@ -244,8 +241,8 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 			 */
 			LogDebug(COMPONENT_EXPORT,
 				 "Need to cross junction to Export_Id %d Path %s",
-				 data->req_ctx->export->export_id,
-				 data->req_ctx->export->fullpath);
+				 op_ctx->export->export_id,
+				 op_ctx->export->fullpath);
 			tracker->junction_cb = true;
 			return CACHE_INODE_CROSS_JUNCTION;
 		}
@@ -257,8 +254,8 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 		 */
 		LogDebug(COMPONENT_EXPORT,
 			 "Need to report error for junction to Export_Id %d Path %s",
-			 data->req_ctx->export->export_id,
-			 data->req_ctx->export->fullpath);
+			 op_ctx->export->export_id,
+			 op_ctx->export->fullpath);
 		restore_data(tracker);
 	}
 
@@ -318,7 +315,7 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 	    && attribute_is_set(tracker->req_attr, FATTR4_FILEHANDLE)) {
 		if (!nfs4_FSALToFhandle(&entryFH,
 					entry->obj_handle,
-					data->req_ctx->export))
+					op_ctx->export))
 			goto server_fault;
 	}
 
@@ -344,7 +341,7 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 	 * so we need to do access check with no mutex.
 	 */
 	attr_status =
-	    cache_inode_access_no_mutex(entry, access_mask_attr, data->req_ctx);
+	    cache_inode_access_no_mutex(entry, access_mask_attr);
 
 	if (attr_status != CACHE_INODE_SUCCESS) {
 		LogFullDebug(COMPONENT_NFS_READDIR,
@@ -570,7 +567,7 @@ int nfs4_op_readdir(struct nfs_argop4 *op, compound_data_t *data,
 	 */
 
 	if ((cookie != 0) &&
-	    (data->req_ctx->export->options & EXPORT_OPTION_USE_COOKIE_VERIFIER)) {
+	    (op_ctx->export->options & EXPORT_OPTION_USE_COOKIE_VERIFIER)) {
 		if (memcmp(cookie_verifier,
 			   arg_READDIR4->cookieverf,
 			   NFS4_VERIFIER_SIZE) != 0) {
@@ -605,7 +602,6 @@ int nfs4_op_readdir(struct nfs_argop4 *op, compound_data_t *data,
 					   cookie,
 					   &num_entries,
 					   &eod_met,
-					   data->req_ctx,
 					   attrmask,
 					   nfs4_readdir_callback,
 					   &tracker);

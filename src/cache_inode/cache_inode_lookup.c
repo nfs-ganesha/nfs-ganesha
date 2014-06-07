@@ -63,7 +63,6 @@
  *
  * @param[in]  parent  The directory to search
  * @param[in]  name    The name to be looked up
- * @param[in]  req_ctx Request context
  * @param[out] entry   Found entry
  *
  * @return CACHE_INDOE_SUCCESS or error.
@@ -71,7 +70,6 @@
 cache_inode_status_t
 cache_inode_lookup_impl(cache_entry_t *parent,
 			const char *name,
-			struct req_op_context *req_ctx,
 			cache_entry_t **entry)
 {
 	cache_inode_dir_entry_t *dirent = NULL;
@@ -102,7 +100,7 @@ cache_inode_lookup_impl(cache_entry_t *parent,
 		 * of this, the parent list is always limited to one element for
 		 * a dir.  Clients SHOULD never 'lookup( .. )' in something that
 		 * is no dir. */
-		status = cache_inode_lookupp_impl(parent, req_ctx, entry);
+		status = cache_inode_lookupp_impl(parent, entry);
 		goto out;
 	} else {
 		int write_locked = 0;
@@ -120,7 +118,6 @@ cache_inode_lookup_impl(cache_entry_t *parent,
 					*entry =
 					    cache_inode_get_keyed(
 						    &dirent->ckey,
-						    req_ctx,
 						    CIG_KEYED_FLAG_NONE,
 						    &status);
 					if (*entry) {
@@ -165,7 +162,7 @@ cache_inode_lookup_impl(cache_entry_t *parent,
 
 	dir_handle = parent->obj_handle;
 	fsal_status =
-	    dir_handle->ops->lookup(dir_handle, req_ctx, name, &object_handle);
+	    dir_handle->ops->lookup(dir_handle, name, &object_handle);
 	if (FSAL_IS_ERROR(fsal_status)) {
 		if (fsal_status.major == ERR_FSAL_STALE) {
 			LogEvent(COMPONENT_CACHE_INODE,
@@ -175,8 +172,8 @@ cache_inode_lookup_impl(cache_entry_t *parent,
 		status = cache_inode_error_convert(fsal_status);
 		LogFullDebug(COMPONENT_CACHE_INODE,
 			     "FSAL %d %s returned %s",
-			     (int) req_ctx->export->export_id,
-			     req_ctx->export->fullpath,
+			     (int) op_ctx->export->export_id,
+			     op_ctx->export->fullpath,
 			     cache_inode_err_str(status));
 		*entry = NULL;
 		goto out;
@@ -186,7 +183,7 @@ cache_inode_lookup_impl(cache_entry_t *parent,
 
 	/* Allocation of a new entry in the cache */
 	status = cache_inode_new_entry(object_handle, CACHE_INODE_FLAG_NONE,
-				       entry, req_ctx);
+				       entry);
 
 	if (unlikely(!*entry))
 		goto out;
@@ -224,7 +221,6 @@ cache_inode_lookup_impl(cache_entry_t *parent,
  *
  * @param[in]  parent  Entry for the parent directory to be managed.
  * @param[in]  name    Name of the entry that we are looking up.
- * @param[in]  req_ctx Request context
  * @param[out] entry   Found entry
  *
  * @return CACHE_INODE_SUCCESS or error.
@@ -233,7 +229,6 @@ cache_inode_lookup_impl(cache_entry_t *parent,
 cache_inode_status_t
 cache_inode_lookup(cache_entry_t *parent,
 		   const char *name,
-		   struct req_op_context *req_ctx,
 		   cache_entry_t **entry)
 {
 	fsal_accessflags_t access_mask =
@@ -241,14 +236,14 @@ cache_inode_lookup(cache_entry_t *parent,
 	     FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_EXECUTE));
 	cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
-	status = cache_inode_access(parent, access_mask, req_ctx);
+	status = cache_inode_access(parent, access_mask);
 
 	if (status != CACHE_INODE_SUCCESS) {
 		*entry = NULL;
 		return status;
 	}
 
-	status = cache_inode_lookup_impl(parent, name, req_ctx, entry);
+	status = cache_inode_lookup_impl(parent, name, entry);
 
 	return status;
 }

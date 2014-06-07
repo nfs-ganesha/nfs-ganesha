@@ -93,6 +93,7 @@ int _9p_lcreate(struct _9p_request_data *req9p, void *worker_data,
 		return _9p_rerror(req9p, worker_data, msgtag, EIO, plenout,
 				  preply);
 	}
+	op_ctx = &pfid->op_context;
 	snprintf(file_name, MAXNAMLEN, "%.*s", *name_len, name_str);
 
 	/* Create the file */
@@ -101,14 +102,14 @@ int _9p_lcreate(struct _9p_request_data *req9p, void *worker_data,
 	 * flags is not yet used */
 	cache_status =
 	    cache_inode_create(pfid->pentry, file_name, REGULAR_FILE, *mode,
-			       NULL, &pfid->op_context, &pentry_newfile);
+			       NULL, &pentry_newfile);
 	if (pentry_newfile == NULL)
 		return _9p_rerror(req9p, worker_data, msgtag,
 				  _9p_tools_errno(cache_status), plenout,
 				  preply);
 
 	cache_status =
-	    cache_inode_fileid(pentry_newfile, &pfid->op_context, &fileid);
+	    cache_inode_fileid(pentry_newfile, &fileid);
 	if (cache_status != CACHE_INODE_SUCCESS)
 		return _9p_rerror(req9p, worker_data, msgtag,
 				  _9p_tools_errno(cache_status), plenout,
@@ -116,8 +117,7 @@ int _9p_lcreate(struct _9p_request_data *req9p, void *worker_data,
 
 	_9p_openflags2FSAL(flags, &openflags);
 
-	cache_status =
-	    cache_inode_open(pentry_newfile, openflags, &pfid->op_context, 0);
+	cache_status = cache_inode_open(pentry_newfile, openflags, 0);
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		/* Owner override..
 		 * deal with this stupid 04xy mode corner case */
@@ -143,8 +143,7 @@ int _9p_lcreate(struct _9p_request_data *req9p, void *worker_data,
 
 			/* Do the job as root */
 			cache_status =
-			    cache_inode_open(pentry_newfile, openflags,
-					     &pfid->op_context, 0);
+			    cache_inode_open(pentry_newfile, openflags, 0);
 
 			/* Back to standard user */
 			pfid->op_context.creds->caller_uid = saved_uid;

@@ -80,6 +80,8 @@ int _9p_rename(struct _9p_request_data *req9p, void *worker_data,
 				  preply);
 	}
 
+	op_ctx = &pfid->op_context;
+
 	if (*dfid >= _9P_FID_PER_CONN)
 		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
 				  preply);
@@ -97,7 +99,7 @@ int _9p_rename(struct _9p_request_data *req9p, void *worker_data,
 
 	cache_status =
 	    cache_inode_rename(pfid->ppentry, pfid->name, pdfid->pentry,
-			       newname, &pfid->op_context);
+			       newname);
 	if (cache_status != CACHE_INODE_SUCCESS)
 		return _9p_rerror(req9p, worker_data, msgtag,
 				  _9p_tools_errno(cache_status), plenout,

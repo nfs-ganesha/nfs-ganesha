@@ -68,7 +68,7 @@ static int op_dswrite(struct nfs_argop4 *op, compound_data_t *data,
 
 	nfs_status = data->current_ds->ops->write(
 				data->current_ds,
-				data->req_ctx,
+				op_ctx,
 				&arg_WRITE4->stateid,
 				arg_WRITE4->offset,
 				arg_WRITE4->data.data_len,
@@ -107,7 +107,7 @@ static int op_dswrite_plus(struct nfs_argop4 *op, compound_data_t *data,
 	if (info->io_content.what == NFS4_CONTENT_DATA)
 		nfs_status = data->current_ds->ops->write(
 				data->current_ds,
-				data->req_ctx,
+				op_ctx,
 				&arg_WRITE4->stateid,
 				arg_WRITE4->offset,
 				arg_WRITE4->data.data_len,
@@ -119,7 +119,7 @@ static int op_dswrite_plus(struct nfs_argop4 *op, compound_data_t *data,
 	else
 		nfs_status = data->current_ds->ops->write_plus(
 				data->current_ds,
-				data->req_ctx,
+				op_ctx,
 				&arg_WRITE4->stateid,
 				arg_WRITE4->offset,
 				arg_WRITE4->data.data_len,
@@ -194,11 +194,10 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* if quota support is active, then we should check is the FSAL
 	   allows inode creation or not */
-	fsal_status = data->req_ctx->fsal_export->ops->check_quota(
-						data->req_ctx->fsal_export,
-						data->req_ctx->export->fullpath,
-						FSAL_QUOTA_INODES,
-						data->req_ctx);
+	fsal_status = op_ctx->fsal_export->ops->check_quota(
+						op_ctx->fsal_export,
+						op_ctx->export->fullpath,
+						FSAL_QUOTA_INODES);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		res_WRITE4->status = NFS4ERR_DQUOT;
@@ -302,10 +301,9 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 	 */
 	if (state_open == NULL
 	    && entry->obj_handle->attributes.owner !=
-	    data->req_ctx->creds->caller_uid) {
+	    op_ctx->creds->caller_uid) {
 		cache_status = cache_inode_access(entry,
-						  FSAL_WRITE_ACCESS,
-						  data->req_ctx);
+						  FSAL_WRITE_ACCESS);
 
 		if (cache_status != CACHE_INODE_SUCCESS) {
 			res_WRITE4->status = nfs4_Errno(cache_status);
@@ -323,18 +321,18 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 		     "offset = %" PRIu64 "  length = %" PRIu64 "  stable = %d",
 		     offset, size, stable_how);
 
-	if (data->req_ctx->export->MaxOffsetWrite < UINT64_MAX) {
+	if (op_ctx->export->MaxOffsetWrite < UINT64_MAX) {
 		LogFullDebug(COMPONENT_NFS_V4,
 			     "Write offset=%" PRIu64 " count=%" PRIu64
 			     " MaxOffSet=%" PRIu64, offset, size,
-			     data->req_ctx->export->MaxOffsetWrite);
+			     op_ctx->export->MaxOffsetWrite);
 
-		if ((offset + size) > data->req_ctx->export->MaxOffsetWrite) {
+		if ((offset + size) > op_ctx->export->MaxOffsetWrite) {
 			LogEvent(COMPONENT_NFS_V4,
 				 "A client tryed to violate max "
 				 "file size %" PRIu64 " for exportid #%hu",
-				 data->req_ctx->export->MaxOffsetWrite,
-				 data->req_ctx->export->export_id);
+				 op_ctx->export->MaxOffsetWrite,
+				 op_ctx->export->export_id);
 
 			res_WRITE4->status = NFS4ERR_DQUOT;
 			if (anonymous)
@@ -343,7 +341,7 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 		}
 	}
 
-	if (size > data->req_ctx->export->MaxWrite) {
+	if (size > op_ctx->export->MaxWrite) {
 		/*
 		 * The client asked for too much data, we
 		 * must restrict him
@@ -354,8 +352,8 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 			LogFullDebug(COMPONENT_NFS_V4,
 				     "write requested size = %" PRIu64
 				     " write allowed size = %" PRIu64,
-				     size, data->req_ctx->export->MaxWrite);
-			size = data->req_ctx->export->MaxWrite;
+				     size, op_ctx->export->MaxWrite);
+			size = op_ctx->export->MaxWrite;
 		}
 	}
 
@@ -373,7 +371,7 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 
 		verf_desc.addr = res_WRITE4->WRITE4res_u.resok4.writeverf;
 		verf_desc.len = sizeof(verifier4);
-		data->req_ctx->fsal_export->ops->get_write_verifier(
+		op_ctx->fsal_export->ops->get_write_verifier(
 			&verf_desc);
 
 		res_WRITE4->status = NFS4_OK;
@@ -388,7 +386,7 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 		sync = true;
 
 	if (!anonymous && data->minorversion == 0) {
-		data->req_ctx->clientid =
+		op_ctx->clientid =
 		    &state_found->state_owner->so_owner.so_nfs4_owner.
 		    so_clientid;
 	}
@@ -400,7 +398,6 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 					&written_size,
 					bufferdata,
 					&eof_met,
-					data->req_ctx,
 					&sync,
 					info);
 
@@ -415,7 +412,7 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	if (!anonymous && data->minorversion == 0)
-		data->req_ctx->clientid = NULL;
+		op_ctx->clientid = NULL;
 
 	/* Set the returned value */
 	if (sync)
@@ -427,7 +424,7 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 
 	verf_desc.addr = res_WRITE4->WRITE4res_u.resok4.writeverf;
 	verf_desc.len = sizeof(verifier4);
-	data->req_ctx->fsal_export->ops->get_write_verifier(
+	op_ctx->fsal_export->ops->get_write_verifier(
 		&verf_desc);
 
 	res_WRITE4->status = NFS4_OK;
@@ -435,7 +432,7 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 	if (anonymous)
 		PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
-	server_stats_io_done(data->req_ctx, size, written_size,
+	server_stats_io_done(size, written_size,
 			     (res_WRITE4->status == NFS4_OK) ? true : false,
 			     true);
 	return res_WRITE4->status;

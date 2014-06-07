@@ -38,7 +38,6 @@
  *
  * @param[in]  args
  * @param[in]  export
- * @param[in]  req_ctx
  * @param[in]  worker
  * @param[in]  req
  * @param[out] res
@@ -46,7 +45,7 @@
  */
 
 int nlm4_Test(nfs_arg_t *args,
-	      struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+	      nfs_worker_data_t *worker,
 	      struct svc_req *req, nfs_res_t *res)
 {
 	nlm4_testargs *arg = &args->arg_nlm4_test;
@@ -63,7 +62,7 @@ int nlm4_Test(nfs_arg_t *args,
 	 * responding to an NLM_*_MSG call, so we check here if the export is
 	 * NULL and if so, handle the response.
 	 */
-	if (req_ctx->export == NULL) {
+	if (op_ctx->export == NULL) {
 		res->res_nlm4test.test_stat.stat = NLM4_STALE_FH;
 		LogInfo(COMPONENT_NLM, "INVALID HANDLE: nlm4_Test");
 		return NFS_REQ_OK;
@@ -106,7 +105,6 @@ int nlm4_Test(nfs_arg_t *args,
 				    arg->exclusive,
 				    &arg->alock,
 				    &lock,
-				    req_ctx,
 				    &pentry,
 				    CARE_NO_MONITOR,
 				    &nsm_client,
@@ -124,7 +122,6 @@ int nlm4_Test(nfs_arg_t *args,
 	}
 
 	state_status = state_test(pentry,
-				  req_ctx,
 				  nlm_owner,
 				  &lock,
 				  &holder,
@@ -194,7 +191,6 @@ static void nlm4_test_message_resp(state_async_queue_t *arg)
  *
  * @param[in]  args
  * @param[in]  export
- * @param[in]  req_ctx
  * @param[in]  worker
  * @param[in]  req
  * @param[out] res
@@ -202,7 +198,6 @@ static void nlm4_test_message_resp(state_async_queue_t *arg)
  */
 
 int nlm4_Test_Message(nfs_arg_t *args,
-		      struct req_op_context *req_ctx,
 		      nfs_worker_data_t *worker, struct svc_req *req,
 		      nfs_res_t *res)
 {
@@ -226,7 +221,7 @@ int nlm4_Test_Message(nfs_arg_t *args,
 	if (nlm_client == NULL)
 		rc = NFS_REQ_DROP;
 	else
-		rc = nlm4_Test(args, req_ctx, worker, req, res);
+		rc = nlm4_Test(args, worker, req, res);
 
 	if (rc == NFS_REQ_OK)
 		rc = nlm_send_async_res_nlm4test(nlm_client,

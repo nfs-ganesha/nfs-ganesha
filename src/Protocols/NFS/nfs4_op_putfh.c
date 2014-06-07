@@ -96,10 +96,10 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t *data,
 	       arg_PUTFH4->object.nfs_fh4_len);
 
 	/* If old CurrentFH had a related export, release reference. */
-	if (data->req_ctx->export != NULL)
-		put_gsh_export(data->req_ctx->export);
+	if (op_ctx->export != NULL)
+		put_gsh_export(op_ctx->export);
 
-	last_export = data->req_ctx->export;
+	last_export = op_ctx->export;
 
 	/* Clear out current entry for now */
 	set_current_entry(data, NULL, false);
@@ -107,28 +107,28 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t *data,
 	v4_handle = (struct file_handle_v4 *)data->currentFH.nfs_fh4_val;
 
 	/* Get the exportid from the handle. */
-	data->req_ctx->export = get_gsh_export(v4_handle->exportid);
+	op_ctx->export = get_gsh_export(v4_handle->exportid);
 
-	if (data->req_ctx->export == NULL) {
+	if (op_ctx->export == NULL) {
 		LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 			"NFS4 Request from client %s has invalid export %d",
-			data->req_ctx->client->hostaddr_str,
+			op_ctx->client->hostaddr_str,
 			v4_handle->exportid);
 
 		res_PUTFH4->status = NFS4ERR_STALE;
 		return res_PUTFH4->status;
 	}
 
-	data->req_ctx->fsal_export = data->req_ctx->export->fsal_export;
+	op_ctx->fsal_export = op_ctx->export->fsal_export;
 
-	if (data->req_ctx->export != last_export) {
+	if (op_ctx->export != last_export) {
 		res_PUTFH4->status = nfs4_MakeCred(data);
 
 		if (res_PUTFH4->status != NFS4_OK)
 			return res_PUTFH4->status;
 	}
 
-	export = data->req_ctx->fsal_export;
+	export = op_ctx->fsal_export;
 
 	/* The export and fsalid should be updated, but DS handles
 	 * don't support metdata operations.  Thus, we can't call into
@@ -174,7 +174,6 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t *data,
 		}
 		/* Build the pentry.  Refcount +1. */
 		cache_status = cache_inode_get(&fsal_data,
-					       data->req_ctx,
 					       &file_entry);
 
 		if (cache_status != CACHE_INODE_SUCCESS) {

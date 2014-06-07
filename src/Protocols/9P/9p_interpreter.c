@@ -178,7 +178,7 @@ int _9p_process_buffer(struct _9p_request_data *req9p,
 	rc = _9pfuncdesc[msgtype].service_function(req9p,
 						   (void *)worker_data,
 						   poutlen, replydata);
-
+	op_ctx = NULL; /* poison the op context to disgard it */
 	if (rc < 0)
 		LogDebug(COMPONENT_9P, "%s: Error",
 			 _9pfuncdesc[msgtype].funcname);

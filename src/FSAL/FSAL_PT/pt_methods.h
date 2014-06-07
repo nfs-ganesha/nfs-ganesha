@@ -13,11 +13,9 @@ struct fsal_filesystem pt_filesystem;
  */
 
 fsal_status_t pt_lookup_path(struct fsal_export *exp_hdl,
-			     const struct req_op_context *opctx,
 			     const char *path, struct fsal_obj_handle **handle);
 
 fsal_status_t pt_create_handle(struct fsal_export *exp_hdl,
-			       const struct req_op_context *opctx,
 			       struct gsh_buffdesc *hdl_desc,
 			       struct fsal_obj_handle **handle);
 
@@ -68,21 +66,19 @@ static inline bool pt_unopenable_type(object_file_type_t type)
 
 	/* I/O management */
 fsal_status_t pt_open(struct fsal_obj_handle *obj_hdl,
-		      const struct req_op_context *opctx,
 		      fsal_openflags_t openflags);
 fsal_openflags_t pt_status(struct fsal_obj_handle *obj_hdl);
 fsal_status_t pt_read(struct fsal_obj_handle *obj_hdl,
-		      const struct req_op_context *opctx, uint64_t offset,
+		      uint64_t offset,
 		      size_t buffer_size, void *buffer, size_t *read_amount,
 		      bool *end_of_file);
 
 fsal_status_t pt_write(struct fsal_obj_handle *obj_hdl,
-		       const struct req_op_context *opctx, uint64_t offset,
+		       uint64_t offset,
 		       size_t buffer_size, void *buffer, size_t *wrote_amount,
 		       bool *fsal_stable);
 
 fsal_status_t pt_commit(struct fsal_obj_handle *obj_hdl,	/* sync */
-			const struct req_op_context *opctx,
 			off_t offset, size_t len);
 
 fsal_status_t pt_lock_op(struct fsal_obj_handle *obj_hdl,

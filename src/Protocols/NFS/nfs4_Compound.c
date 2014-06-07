@@ -409,7 +409,6 @@ static const struct nfs4_op_desc optabv4[] = {
  *
  *  @param[in]  arg        Generic nfs arguments
  *  @param[in]  export     The full export list
- *  @param[in]  req_ctx    Context for the FSAL
  *  @param[in]  worker     Worker thread data
  *  @param[in]  req        NFSv4 request structure
  *  @param[out] res        NFSv4 reply structure
@@ -422,7 +421,7 @@ static const struct nfs4_op_desc optabv4[] = {
  */
 
 int nfs4_Compound(nfs_arg_t *arg,
-		  struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+		  nfs_worker_data_t *worker,
 		  struct svc_req *req, nfs_res_t *res)
 {
 	unsigned int i = 0;
@@ -504,8 +503,7 @@ int nfs4_Compound(nfs_arg_t *arg,
 
 	/* Initialisation of the compound request internal's data */
 	memset(&data, 0, sizeof(data));
-	data.req_ctx = req_ctx;
-	req_ctx->nfs_minorvers = compound4_minor;
+	op_ctx->nfs_minorvers = compound4_minor;
 
 	/* Minor version related stuff */
 	data.minorversion = compound4_minor;
@@ -646,7 +644,7 @@ int nfs4_Compound(nfs_arg_t *arg,
 				       data.req_ctx->export_perms->options &
 						EXPORT_OPTION_ACCESS_TYPE,
 				       perm_flags);
-			if ((data.req_ctx->export_perms->options &
+			if ((op_ctx->export_perms->options &
 			     perm_flags) != perm_flags) {
 				/* Export doesn't allow requested
 				 * access for this client.
@@ -689,7 +687,7 @@ int nfs4_Compound(nfs_arg_t *arg,
 		 */
 		resarray[i].nfs_resop4_u.opaccess.status = status;
 
-		server_stats_nfsv4_op_done(data.req_ctx, opcode,
+		server_stats_nfsv4_op_done(opcode,
 					   op_start_time, status == NFS4_OK);
 
 		if (status != NFS4_OK) {
@@ -729,7 +727,7 @@ int nfs4_Compound(nfs_arg_t *arg,
 		}
 	}			/* for */
 
-	server_stats_compound_done(req_ctx, argarray_len, status);
+	server_stats_compound_done(argarray_len, status);
 
 	/* Complete the reply, in particular, tell where you stopped if
 	 * unsuccessfull COMPOUD
@@ -878,10 +876,10 @@ void compound_data_Free(compound_data_t *data)
 	}
 
 	/* Release CurrentFH reference to export. */
-	if (data->req_ctx->export) {
-		put_gsh_export(data->req_ctx->export);
-		data->req_ctx->export = NULL;
-		data->req_ctx->fsal_export = NULL;
+	if (op_ctx->export) {
+		put_gsh_export(op_ctx->export);
+		op_ctx->export = NULL;
+		op_ctx->fsal_export = NULL;
 	}
 
 	/* Release SavedFH reference to export. */

@@ -75,12 +75,11 @@ static void release(struct fsal_export *exp_hdl)
 	gsh_free(myself);	/* elvis has left the building */
 }
 
-static fsal_status_t get_dynamic_info(struct fsal_obj_handle *obj_hdl,
-				      struct fsal_export *exp_hdl,
-				      const struct req_op_context *opctx,
+static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
+				      struct fsal_obj_handle *obj_hdl,
 				      fsal_dynamicfsinfo_t *infop)
 {
-	return next_ops.exp_ops->get_fs_dynamic_info(obj_hdl, exp_hdl, opctx,
+	return next_ops.exp_ops->get_fs_dynamic_info(exp_hdl, obj_hdl,
 						     infop);
 }
 
@@ -156,11 +155,10 @@ static uint32_t fs_xattr_access_rights(struct fsal_export *exp_hdl)
 
 static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 			       const char *filepath, int quota_type,
-			       struct req_op_context *req_ctx,
 			       fsal_quota_t *pquota)
 {
 	return next_ops.exp_ops->get_quota(exp_hdl, filepath, quota_type,
-					   req_ctx, pquota);
+					   pquota);
 }
 
 /* set_quota
@@ -169,11 +167,10 @@ static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 
 static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 			       const char *filepath, int quota_type,
-			       struct req_op_context *req_ctx,
 			       fsal_quota_t *pquota, fsal_quota_t *presquota)
 {
 	return next_ops.exp_ops->set_quota(exp_hdl, filepath, quota_type,
-					   req_ctx, pquota, presquota);
+					   pquota, presquota);
 }
 
 /* extract a file handle from a buffer.
@@ -253,7 +250,6 @@ static struct config_block export_param = {
  */
 
 fsal_status_t nullfs_create_export(struct fsal_module *fsal_hdl,
-				   struct req_op_context *req_ctx,
 				   void *parse_node,
 				   const struct fsal_up_vector *up_ops)
 {
@@ -286,12 +282,11 @@ fsal_status_t nullfs_create_export(struct fsal_module *fsal_hdl,
 	if (myself == NULL) {
 		LogMajor(COMPONENT_FSAL,
 			 "Could not allocate memory for export %s",
-			 req_ctx->export->fullpath);
+			 op_ctx->export->fullpath);
 		return fsalstat(ERR_FSAL_NOMEM, ENOMEM);
 	}
 
 	expres = fsal_stack->ops->create_export(fsal_stack,
-						req_ctx,
 						subfsal.fsal_node,
 						up_ops);
 	fsal_put(fsal_stack);
@@ -303,7 +298,7 @@ fsal_status_t nullfs_create_export(struct fsal_module *fsal_hdl,
 		return expres;
 	}
 
-	myself->sub_export = req_ctx->fsal_export;
+	myself->sub_export = op_ctx->fsal_export;
 	/* Init next_ops structure */
 	next_ops.exp_ops = gsh_malloc(sizeof(struct export_ops));
 	next_ops.obj_ops = gsh_malloc(sizeof(struct fsal_obj_ops));
@@ -328,6 +323,6 @@ fsal_status_t nullfs_create_export(struct fsal_module *fsal_hdl,
 	/* lock myself before attaching to the fsal.
 	 * keep myself locked until done with creating myself.
 	 */
-	req_ctx->fsal_export = &myself->export;
+	op_ctx->fsal_export = &myself->export;
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }

@@ -138,7 +138,6 @@ static void dump_config(struct fsal_module *fsal_hdl, int log_fd)
  */
 
 static fsal_status_t create_export(struct fsal_module *fsal_hdl,
-				   struct req_op_context *req_ctx,
 				   void *parse_node,
 				   const struct fsal_up_vector *up_ops)
 {
@@ -205,7 +204,7 @@ static void export_release(struct fsal_export *exp_hdl)
  */
 
 fsal_status_t lookup_path(struct fsal_export *exp_hdl,
-			  const struct req_op_context *opctx, const char *path,
+			  const char *path,
 			  struct fsal_obj_handle **handle)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
@@ -234,7 +233,6 @@ static fsal_status_t extract_handle(struct fsal_export *exp_hdl,
  */
 
 static fsal_status_t create_handle(struct fsal_export *exp_hdl,
-				   const struct req_op_context *opctx,
 				   struct gsh_buffdesc *hdl_desc,
 				   struct fsal_obj_handle **handle)
 {
@@ -261,9 +259,8 @@ static nfsstat4 create_ds_handle(struct fsal_export *const exp_hdl,
  * default case is not supported
  */
 
-static fsal_status_t get_dynamic_info(struct fsal_obj_handle *obj_hdl,
-				      struct fsal_export *exp_hdl,
-				      const struct req_op_context *opctx,
+static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
+				      struct fsal_obj_handle *obj_hdl,
 				      fsal_dynamicfsinfo_t *infop)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
@@ -385,8 +382,7 @@ static uint32_t fs_xattr_access_rights(struct fsal_export *exp_hdl)
  */
 
 static fsal_status_t check_quota(struct fsal_export *exp_hdl,
-				 const char *filepath, int quota_type,
-				 struct req_op_context *req_ctx)
+				 const char *filepath, int quota_type)
 {
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -397,7 +393,6 @@ static fsal_status_t check_quota(struct fsal_export *exp_hdl,
 
 static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 			       const char *filepath, int quota_type,
-			       struct req_op_context *req_ctx,
 			       fsal_quota_t *pquota)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
@@ -409,7 +404,6 @@ static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 
 static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 			       const char *filepath, int quota_type,
-			       struct req_op_context *req_ctx,
 			       fsal_quota_t *pquota, fsal_quota_t *presquota)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
@@ -542,7 +536,6 @@ static void handle_release(struct fsal_obj_handle *obj_hdl)
  */
 
 static fsal_status_t lookup(struct fsal_obj_handle *parent,
-			    const struct req_op_context *opctx,
 			    const char *path, struct fsal_obj_handle **handle)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
@@ -553,7 +546,6 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
  */
 
 static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
-				  const struct req_op_context *opctx,
 				  fsal_cookie_t *whence, void *dir_state,
 				  fsal_readdir_cb cb, bool *eof)
 {
@@ -565,7 +557,6 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
  */
 
 static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
-			    const struct req_op_context *opctx,
 			    const char *name, struct attrlist *attrib,
 			    struct fsal_obj_handle **handle)
 {
@@ -577,7 +568,6 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
  */
 
 static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
-			     const struct req_op_context *opctx,
 			     const char *name, struct attrlist *attrib,
 			     struct fsal_obj_handle **handle)
 {
@@ -589,7 +579,6 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
  */
 
 static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
-			      const struct req_op_context *opctx,
 			      const char *name, object_file_type_t nodetype,
 			      fsal_dev_t *dev, struct attrlist *attrib,
 			      struct fsal_obj_handle **handle)
@@ -602,7 +591,6 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
  */
 
 static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
-				 const struct req_op_context *opctx,
 				 const char *name, const char *link_path,
 				 struct attrlist *attrib,
 				 struct fsal_obj_handle **handle)
@@ -615,7 +603,6 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
  */
 
 static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
-				 const struct req_op_context *opctx,
 				 struct gsh_buffdesc *link_content,
 				 bool refresh)
 {
@@ -626,8 +613,7 @@ static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
  * default case not supported
  */
 
-static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
-			      const struct req_op_context *opctx)
+static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
@@ -637,7 +623,6 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
-			      const struct req_op_context *opctx,
 			      struct attrlist *attrs)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
@@ -648,7 +633,6 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
-			      const struct req_op_context *opctx,
 			      struct fsal_obj_handle *destdir_hdl,
 			      const char *name)
 {
@@ -660,7 +644,6 @@ static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t renamefile(struct fsal_obj_handle *olddir_hdl,
-				const struct req_op_context *opctx,
 				const char *old_name,
 				struct fsal_obj_handle *newdir_hdl,
 				const char *new_name)
@@ -673,7 +656,6 @@ static fsal_status_t renamefile(struct fsal_obj_handle *olddir_hdl,
  */
 
 static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
-				 const struct req_op_context *opctx,
 				 const char *name)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
@@ -684,7 +666,6 @@ static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
  */
 
 static fsal_status_t file_open(struct fsal_obj_handle *obj_hdl,
-			       const struct req_op_context *opctx,
 			       fsal_openflags_t openflags)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
@@ -695,7 +676,6 @@ static fsal_status_t file_open(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t file_reopen(struct fsal_obj_handle *obj_hdl,
-				 const struct req_op_context *opctx,
 				 fsal_openflags_t openflags)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
@@ -715,7 +695,6 @@ static fsal_openflags_t file_status(struct fsal_obj_handle *obj_hdl)
  */
 
 static fsal_status_t file_read(struct fsal_obj_handle *obj_hdl,
-			       const struct req_op_context *opctx,
 			       uint64_t seek_descriptor, size_t buffer_size,
 			       void *buffer, size_t *read_amount,
 			       bool *end_of_file)
@@ -728,7 +707,6 @@ static fsal_status_t file_read(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t file_read_plus(struct fsal_obj_handle *obj_hdl,
-			       const struct req_op_context *opctx,
 			       uint64_t seek_descriptor, size_t buffer_size,
 			       void *buffer, size_t *read_amount,
 			       bool *end_of_file, struct io_info *info)
@@ -741,7 +719,6 @@ static fsal_status_t file_read_plus(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t file_write(struct fsal_obj_handle *obj_hdl,
-				const struct req_op_context *opctx,
 				uint64_t seek_descriptor, size_t buffer_size,
 				void *buffer, size_t *write_amount,
 				bool *fsal_stable)
@@ -754,7 +731,6 @@ static fsal_status_t file_write(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t file_write_plus(struct fsal_obj_handle *obj_hdl,
-				const struct req_op_context *opctx,
 				uint64_t seek_descriptor, size_t buffer_size,
 				void *buffer, size_t *write_amount,
 				bool *fsal_stable, struct io_info *info)
@@ -767,7 +743,6 @@ static fsal_status_t file_write_plus(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t file_seek(struct fsal_obj_handle *obj_hdl,
-				const struct req_op_context *opctx,
 				struct io_info *info)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
@@ -778,7 +753,6 @@ static fsal_status_t file_seek(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t file_io_advise(struct fsal_obj_handle *obj_hdl,
-				const struct req_op_context *opctx,
 				struct io_hints *hints)
 {
 	hints->hints = 0;
@@ -791,7 +765,6 @@ static fsal_status_t file_io_advise(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t commit(struct fsal_obj_handle *obj_hdl,	/* sync */
-			    const struct req_op_context *opctx,
 			    off_t offset, size_t len)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
@@ -802,7 +775,7 @@ static fsal_status_t commit(struct fsal_obj_handle *obj_hdl,	/* sync */
  */
 
 static fsal_status_t lock_op(struct fsal_obj_handle *obj_hdl,
-			     const struct req_op_context *opctx, void *p_owner,
+			     void *p_owner,
 			     fsal_lock_op_t lock_op,
 			     fsal_lock_param_t *request_lock,
 			     fsal_lock_param_t *conflicting_lock)
@@ -815,7 +788,6 @@ static fsal_status_t lock_op(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t share_op(struct fsal_obj_handle *obj_hdl,
-			      const struct req_op_context *opctx,
 			      void *p_owner,
 			      fsal_share_param_t request_share)
 {
@@ -836,7 +808,6 @@ static fsal_status_t file_close(struct fsal_obj_handle *obj_hdl)
  */
 
 static fsal_status_t list_ext_attrs(struct fsal_obj_handle *obj_hdl,
-				    const struct req_op_context *opctx,
 				    unsigned int cookie,
 				    fsal_xattrent_t *xattrs_tab,
 				    unsigned int xattrs_tabsize,
@@ -851,7 +822,6 @@ static fsal_status_t list_ext_attrs(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
-					   const struct req_op_context *opctx,
 					   const char *xattr_name,
 					   unsigned int *pxattr_id)
 {
@@ -863,8 +833,7 @@ static fsal_status_t getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
-					      const struct req_op_context
-					      *opctx, const char *xattr_name,
+					      const char *xattr_name,
 					      caddr_t buffer_addr,
 					      size_t buffer_size,
 					      size_t *p_output_size)
@@ -877,7 +846,6 @@ static fsal_status_t getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
-					    const struct req_op_context *opctx,
 					    unsigned int xattr_id,
 					    caddr_t buffer_addr,
 					    size_t buffer_size,
@@ -891,7 +859,6 @@ static fsal_status_t getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t setextattr_value(struct fsal_obj_handle *obj_hdl,
-				      const struct req_op_context *opctx,
 				      const char *xattr_name,
 				      caddr_t buffer_addr, size_t buffer_size,
 				      int create)
@@ -904,7 +871,6 @@ static fsal_status_t setextattr_value(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
-					    const struct req_op_context *opctx,
 					    unsigned int xattr_id,
 					    caddr_t buffer_addr,
 					    size_t buffer_size)
@@ -917,7 +883,6 @@ static fsal_status_t setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t getextattr_attrs(struct fsal_obj_handle *obj_hdl,
-				      const struct req_op_context *opctx,
 				      unsigned int xattr_id,
 				      struct attrlist *p_attrs)
 {
@@ -929,7 +894,6 @@ static fsal_status_t getextattr_attrs(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t remove_extattr_by_id(struct fsal_obj_handle *obj_hdl,
-					  const struct req_op_context *opctx,
 					  unsigned int xattr_id)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
@@ -940,7 +904,6 @@ static fsal_status_t remove_extattr_by_id(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t remove_extattr_by_name(struct fsal_obj_handle *obj_hdl,
-					    const struct req_op_context *opctx,
 					    const char *xattr_name)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);

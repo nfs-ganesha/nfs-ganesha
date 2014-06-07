@@ -207,6 +207,8 @@ int _9p_readdir(struct _9p_request_data *req9p, void *worker_data,
 				  preply);
 	}
 
+	op_ctx = &pfid->op_context;
+
 	/* For each entry, returns:
 	 * qid     = 13 bytes
 	 * offset  = 8 bytes
@@ -231,8 +233,7 @@ int _9p_readdir(struct _9p_request_data *req9p, void *worker_data,
 	if (*offset == 0LL) {
 		/* compute the parent entry */
 		cache_status =
-		    cache_inode_lookupp(pfid->pentry, &pfid->op_context,
-					&pentry_dot_dot);
+		    cache_inode_lookupp(pfid->pentry, &pentry_dot_dot);
 		if (pentry_dot_dot == NULL)
 			return _9p_rerror(req9p, worker_data, msgtag,
 					  _9p_tools_errno(cache_status),
@@ -258,8 +259,7 @@ int _9p_readdir(struct _9p_request_data *req9p, void *worker_data,
 	} else if (*offset == 1LL) {
 		/* compute the parent entry */
 		cache_status =
-		    cache_inode_lookupp(pfid->pentry, &pfid->op_context,
-					&pentry_dot_dot);
+		    cache_inode_lookupp(pfid->pentry, &pentry_dot_dot);
 		if (pentry_dot_dot == NULL)
 			return _9p_rerror(req9p, worker_data, msgtag,
 					  _9p_tools_errno(cache_status),
@@ -286,7 +286,7 @@ int _9p_readdir(struct _9p_request_data *req9p, void *worker_data,
 	tracker.max = *count;
 
 	cache_status = cache_inode_readdir(pfid->pentry, cookie, &num_entries,
-					   &eod_met, &pfid->op_context,
+					   &eod_met,
 					   0,	/* no attr */
 					   _9p_readdir_callback, &tracker);
 	if (cache_status != CACHE_INODE_SUCCESS) {

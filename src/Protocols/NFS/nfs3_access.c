@@ -55,7 +55,6 @@
  *
  * @param[in]  arg     NFS arguments union
  * @param[in]  export  NFS export list
- * @param[in]  req_ctx Request context
  * @param[in]  worker  Worker thread data
  * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call
@@ -67,7 +66,7 @@
  */
 
 int nfs3_access(nfs_arg_t *arg,
-		struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+		nfs_worker_data_t *worker,
 		struct svc_req *req, nfs_res_t *res)
 {
 	cache_inode_status_t cache_status;
@@ -88,7 +87,6 @@ int nfs3_access(nfs_arg_t *arg,
 
 	/* Convert file handle into a vnode */
 	entry = nfs3_FhandleToCache(&(arg->arg_access3.object),
-				    req_ctx,
 				    &(res->res_access3.status),
 				    &rc);
 
@@ -100,13 +98,12 @@ int nfs3_access(nfs_arg_t *arg,
 	/* Perform the 'access' call */
 	cache_status =
 	    nfs_access_op(entry, arg->arg_access3.access,
-			  &res->res_access3.ACCESS3res_u.resok.access, NULL,
-			  req_ctx);
+			  &res->res_access3.ACCESS3res_u.resok.access, NULL);
 
 	if (cache_status == CACHE_INODE_SUCCESS
 	    || cache_status == CACHE_INODE_FSAL_EACCESS) {
 		/* Build Post Op Attributes */
-		nfs_SetPostOpAttr(entry, req_ctx,
+		nfs_SetPostOpAttr(entry,
 				  &(res->res_access3.ACCESS3res_u.resok.
 				    obj_attributes));
 
@@ -122,7 +119,7 @@ int nfs3_access(nfs_arg_t *arg,
 	}
 
 	res->res_access3.status = nfs3_Errno(cache_status);
-	nfs_SetPostOpAttr(entry, req_ctx,
+	nfs_SetPostOpAttr(entry,
 			  &(res->res_access3.ACCESS3res_u.resfail.
 			    obj_attributes));
  out:

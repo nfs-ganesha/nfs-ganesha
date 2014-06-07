@@ -55,18 +55,17 @@
 
 cache_inode_status_t
 cache_inode_statfs(cache_entry_t *entry,
-		   fsal_dynamicfsinfo_t *dynamicinfo,
-		   const struct req_op_context *req_ctx)
+		   fsal_dynamicfsinfo_t *dynamicinfo)
 {
 	fsal_status_t fsal_status;
 	struct fsal_export *export;
 	cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
-	export = req_ctx->export->fsal_export;
+	export = op_ctx->export->fsal_export;
 	/* Get FSAL to get dynamic info */
 	fsal_status =
-	    export->ops->get_fs_dynamic_info(entry->obj_handle, export,
-					     req_ctx, dynamicinfo);
+	    export->ops->get_fs_dynamic_info(export, entry->obj_handle,
+					     dynamicinfo);
 	if (FSAL_IS_ERROR(fsal_status)) {
 		status = cache_inode_error_convert(fsal_status);
 		if (fsal_status.major == ERR_FSAL_STALE) {

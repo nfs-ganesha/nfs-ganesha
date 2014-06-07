@@ -55,7 +55,6 @@
  *
  * @param[in]  arg     NFS argument union
  * @param[in]  export  NFS export list
- * @param[in]  req_ctx Credentials to be used for this request
  * @param[in]  worker  Worker thread data
  * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call
@@ -67,7 +66,7 @@
  */
 
 int nfs3_fsstat(nfs_arg_t *arg,
-		struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+		nfs_worker_data_t *worker,
 		struct svc_req *req, nfs_res_t *res)
 {
 	fsal_dynamicfsinfo_t dynamicinfo;
@@ -89,7 +88,6 @@ int nfs3_fsstat(nfs_arg_t *arg,
 	    FALSE;
 
 	entry = nfs3_FhandleToCache(&arg->arg_fsstat3.fsroot,
-				    req_ctx,
 				    &res->res_fsstat3.status,
 				    &rc);
 
@@ -100,8 +98,7 @@ int nfs3_fsstat(nfs_arg_t *arg,
 
 	/* Get statistics and convert from cache */
 	cache_status = cache_inode_statfs(entry,
-					  &dynamicinfo,
-					  req_ctx);
+					  &dynamicinfo);
 
 	if (cache_status == CACHE_INODE_SUCCESS) {
 		LogFullDebug(COMPONENT_NFSPROTO,
@@ -117,7 +114,7 @@ int nfs3_fsstat(nfs_arg_t *arg,
 			     dynamicinfo.total_files, dynamicinfo.free_files,
 			     dynamicinfo.avail_files);
 
-		nfs_SetPostOpAttr(entry, req_ctx,
+		nfs_SetPostOpAttr(entry,
 				  &(res->res_fsstat3.FSSTAT3res_u.resok.
 				    obj_attributes));
 

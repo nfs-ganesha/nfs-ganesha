@@ -58,14 +58,12 @@
  * @param[in] entry        File whose data should be committed
  * @param[in] offset       Start of region to commit
  * @param[in] count        Number of bytes to commit
- * @param[in] req_ctx      Request context
  *
  * @return CACHE_INODE_SUCCESS or various errors
  */
 
 cache_inode_status_t
-cache_inode_commit(cache_entry_t *entry, uint64_t offset,
-		   size_t count, struct req_op_context *req_ctx)
+cache_inode_commit(cache_entry_t *entry, uint64_t offset, size_t count)
 {
 	/* Error return from FSAL operations */
 	fsal_status_t fsal_status = { 0, 0 };
@@ -87,7 +85,7 @@ cache_inode_commit(cache_entry_t *entry, uint64_t offset,
 		PTHREAD_RWLOCK_wrlock(&entry->content_lock);
 		if (!is_open_for_write(entry)) {
 			status =
-			    cache_inode_open(entry, FSAL_O_WRITE, req_ctx,
+			    cache_inode_open(entry, FSAL_O_WRITE,
 					     CACHE_INODE_FLAG_CONTENT_HAVE |
 					     CACHE_INODE_FLAG_CONTENT_HOLD);
 			if (status != CACHE_INODE_SUCCESS)
@@ -98,7 +96,7 @@ cache_inode_commit(cache_entry_t *entry, uint64_t offset,
 		PTHREAD_RWLOCK_rdlock(&entry->content_lock);
 	}
 
-	fsal_status = entry->obj_handle->ops->commit(entry->obj_handle, req_ctx,
+	fsal_status = entry->obj_handle->ops->commit(entry->obj_handle,
 						     offset, count);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
@@ -150,7 +148,7 @@ cache_inode_commit(cache_entry_t *entry, uint64_t offset,
 
 	/* In other case cache_inode_rdwr call FSAL_Commit */
 	PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
-	cstatus = cache_inode_refresh_attrs(entry, req_ctx);
+	cstatus = cache_inode_refresh_attrs(entry);
 	if (cstatus != CACHE_INODE_SUCCESS) {
 		LogMajor(COMPONENT_CACHE_INODE,
 			 "cache_inode_refresh_attrs = %s",

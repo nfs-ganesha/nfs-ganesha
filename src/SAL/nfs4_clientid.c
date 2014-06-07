@@ -821,6 +821,7 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid)
 		}
 
 		pthread_mutex_unlock(&clientid->cid_mutex);
+		release_root_op_context();
 		return false;
 	}
 
@@ -876,7 +877,6 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid)
 							   state_owner_list);
 
 			state_owner_unlock_all(plock_owner,
-					       &root_op_context.req_ctx,
 					       plock_state);
 		}
 	}
@@ -889,7 +889,7 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid)
 							 so_owner.so_nfs4_owner.
 							 so_perclient);
 		inc_state_owner_ref(plock_owner);
-		release_lockstate(&root_op_context.req_ctx, plock_owner);
+		release_lockstate(plock_owner);
 
 		if (isFullDebug(COMPONENT_CLIENTID)) {
 			int32_t refcount =
@@ -915,7 +915,7 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid)
 							 so_owner.so_nfs4_owner.
 							 so_perclient);
 		inc_state_owner_ref(popen_owner);
-		release_openstate(&root_op_context.req_ctx, popen_owner);
+		release_openstate(popen_owner);
 
 		if (isFullDebug(COMPONENT_CLIENTID)) {
 			int32_t refcount =
@@ -1012,6 +1012,7 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid)
 	/* Release the hash table reference to the clientid. */
 	(void)dec_client_id_ref(clientid);
 
+	release_root_op_context();
 	return true;
 }
 

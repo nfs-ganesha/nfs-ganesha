@@ -607,9 +607,9 @@ bool mount_gsh_export(struct gsh_export *exp)
 	init_root_op_context(&root_op_context, NULL, NULL,
 				NFS_V4, 0, NFS_REQUEST);
 
-	if (!pseudo_mount_export(exp, &root_op_context.req_ctx))
+	if (!pseudo_mount_export(exp))
 		rc = false;
-
+	release_root_op_context();
 	return rc;
 }
 

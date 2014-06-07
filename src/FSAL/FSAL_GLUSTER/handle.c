@@ -84,7 +84,6 @@ static void handle_release(struct fsal_obj_handle *obj_hdl)
  */
 
 static fsal_status_t lookup(struct fsal_obj_handle *parent,
-			    const struct req_op_context *opctx,
 			    const char *path, struct fsal_obj_handle **handle)
 {
 	int rc = 0;
@@ -95,7 +94,7 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
         char vol_uuid[GLAPI_UUID_LENGTH] = {'\0'};
 	struct glusterfs_handle *objhandle = NULL;
 	struct glusterfs_export *glfs_export =
-	    container_of(opctx->fsal_export, struct glusterfs_export, export);
+	    container_of(op_ctx->fsal_export, struct glusterfs_export, export);
 	struct glusterfs_handle *parenthandle =
 	    container_of(parent, struct glusterfs_handle, handle);
 #ifdef GLTIMING
@@ -150,7 +149,6 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
  */
 
 static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
-				  const struct req_op_context *opctx,
 				  fsal_cookie_t * whence, void *dir_state,
 				  fsal_readdir_cb cb, bool * eof)
 {
@@ -160,7 +158,7 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 	long offset = 0;
 	struct dirent *pde = NULL;
 	struct glusterfs_export *glfs_export =
-	    container_of(opctx->fsal_export, struct glusterfs_export, export);
+	    container_of(op_ctx->fsal_export, struct glusterfs_export, export);
 	struct glusterfs_handle *objhandle =
 	    container_of(dir_hdl, struct glusterfs_handle, handle);
 #ifdef GLTIMING
@@ -191,8 +189,7 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 				continue;
 			}
 
-			if (!cb
-			    (opctx, de.d_name, dir_state, glfs_telldir(glfd))) {
+			if (!cb(de.d_name, dir_state, glfs_telldir(glfd))) {
 				goto out;
 			}
 		} else if (rc == 0 && pde == NULL) {
@@ -223,7 +220,6 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
  */
 
 static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
-			    const struct req_op_context *opctx,
 			    const char *name, struct attrlist *attrib,
 			    struct fsal_obj_handle **handle)
 {
@@ -235,7 +231,7 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
         char vol_uuid[GLAPI_UUID_LENGTH] = {'\0'};
 	struct glusterfs_handle *objhandle = NULL;
 	struct glusterfs_export *glfs_export =
-	    container_of(opctx->fsal_export, struct glusterfs_export, export);
+	    container_of(op_ctx->fsal_export, struct glusterfs_export, export);
 	struct glusterfs_handle *parenthandle =
 	    container_of(dir_hdl, struct glusterfs_handle, handle);
 #ifdef GLTIMING
@@ -244,10 +240,10 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 	now(&s_time);
 #endif
 
-	rc = setglustercreds(glfs_export, &opctx->creds->caller_uid,
-			     &opctx->creds->caller_gid,
-			     opctx->creds->caller_glen,
-			     opctx->creds->caller_garray);
+	rc = setglustercreds(glfs_export, &op_ctx->creds->caller_uid,
+			     &op_ctx->creds->caller_gid,
+			     op_ctx->creds->caller_glen,
+			     op_ctx->creds->caller_garray);
 	if (rc != 0) {
 		status = gluster2fsal_error(EPERM);
 		LogFatal(COMPONENT_FSAL, "Could not set Ganesha credentials");
@@ -310,7 +306,6 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
  */
 
 static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
-			     const struct req_op_context *opctx,
 			     const char *name, struct attrlist *attrib,
 			     struct fsal_obj_handle **handle)
 {
@@ -322,7 +317,7 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
         char vol_uuid[GLAPI_UUID_LENGTH] = {'\0'};
 	struct glusterfs_handle *objhandle = NULL;
 	struct glusterfs_export *glfs_export =
-	    container_of(opctx->fsal_export, struct glusterfs_export, export);
+	    container_of(op_ctx->fsal_export, struct glusterfs_export, export);
 	struct glusterfs_handle *parenthandle =
 	    container_of(dir_hdl, struct glusterfs_handle, handle);
 #ifdef GLTIMING
@@ -331,10 +326,10 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 	now(&s_time);
 #endif
 
-	rc = setglustercreds(glfs_export, &opctx->creds->caller_uid,
-			     &opctx->creds->caller_gid,
-			     opctx->creds->caller_glen,
-			     opctx->creds->caller_garray);
+	rc = setglustercreds(glfs_export, &op_ctx->creds->caller_uid,
+			     &op_ctx->creds->caller_gid,
+			     op_ctx->creds->caller_glen,
+			     op_ctx->creds->caller_garray);
 	if (rc != 0) {
 		status = gluster2fsal_error(EPERM);
 		LogFatal(COMPONENT_FSAL, "Could not set Ganesha credentials");
@@ -396,7 +391,6 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
  */
 
 static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
-			      const struct req_op_context *opctx,
 			      const char *name, object_file_type_t nodetype,
 			      fsal_dev_t * dev, struct attrlist *attrib,
 			      struct fsal_obj_handle **handle)
@@ -410,7 +404,7 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 	struct glusterfs_handle *objhandle = NULL;
 	dev_t ndev = { 0, };
 	struct glusterfs_export *glfs_export =
-	    container_of(opctx->fsal_export, struct glusterfs_export, export);
+	    container_of(op_ctx->fsal_export, struct glusterfs_export, export);
 	struct glusterfs_handle *parenthandle =
 	    container_of(dir_hdl, struct glusterfs_handle, handle);
 	mode_t create_mode;
@@ -446,10 +440,10 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	}
 
-	rc = setglustercreds(glfs_export, &opctx->creds->caller_uid,
-			     &opctx->creds->caller_gid,
-			     opctx->creds->caller_glen,
-			     opctx->creds->caller_garray);
+	rc = setglustercreds(glfs_export, &op_ctx->creds->caller_uid,
+			     &op_ctx->creds->caller_gid,
+			     op_ctx->creds->caller_glen,
+			     op_ctx->creds->caller_garray);
 	if (rc != 0) {
 		status = gluster2fsal_error(EPERM);
 		LogFatal(COMPONENT_FSAL, "Could not set Ganesha credentials");
@@ -511,7 +505,6 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
  */
 
 static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
-				 const struct req_op_context *opctx,
 				 const char *name, const char *link_path,
 				 struct attrlist *attrib,
 				 struct fsal_obj_handle **handle)
@@ -524,7 +517,7 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
         char vol_uuid[GLAPI_UUID_LENGTH] = {'\0'};
 	struct glusterfs_handle *objhandle = NULL;
 	struct glusterfs_export *glfs_export =
-	    container_of(opctx->fsal_export, struct glusterfs_export, export);
+	    container_of(op_ctx->fsal_export, struct glusterfs_export, export);
 	struct glusterfs_handle *parenthandle =
 	    container_of(dir_hdl, struct glusterfs_handle, handle);
 #ifdef GLTIMING
@@ -533,10 +526,10 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 	now(&s_time);
 #endif
 
-	rc = setglustercreds(glfs_export, &opctx->creds->caller_uid,
-			     &opctx->creds->caller_gid,
-			     opctx->creds->caller_glen,
-			     opctx->creds->caller_garray);
+	rc = setglustercreds(glfs_export, &op_ctx->creds->caller_uid,
+			     &op_ctx->creds->caller_gid,
+			     op_ctx->creds->caller_glen,
+			     op_ctx->creds->caller_garray);
 	if (rc != 0) {
 		status = gluster2fsal_error(EPERM);
 		LogFatal(COMPONENT_FSAL, "Could not set Ganesha credentials");
@@ -599,14 +592,13 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
  */
 
 static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
-				 const struct req_op_context *opctx,
 				 struct gsh_buffdesc *link_content,
 				 bool refresh)
 {
 	int rc = 0;
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	struct glusterfs_export *glfs_export =
-	    container_of(opctx->fsal_export, struct glusterfs_export, export);
+	    container_of(op_ctx->fsal_export, struct glusterfs_export, export);
 	struct glusterfs_handle *objhandle =
 	    container_of(obj_hdl, struct glusterfs_handle, handle);
 #ifdef GLTIMING
@@ -650,14 +642,13 @@ static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
  * @brief Implements GLUSTER FSAL objectoperation getattrs
  */
 
-static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
-			      const struct req_op_context *opctx)
+static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl)
 {
 	int rc = 0;
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	glusterfs_fsal_xstat_t buffxstat;
 	struct glusterfs_export *glfs_export =
-	    container_of(opctx->fsal_export, struct glusterfs_export, export);
+	    container_of(op_ctx->fsal_export, struct glusterfs_export, export);
 	struct glusterfs_handle *objhandle =
 	    container_of(obj_hdl, struct glusterfs_handle, handle);
 	struct attrlist *fsalattr;
@@ -704,7 +695,6 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
-			      const struct req_op_context *opctx,
 			      struct attrlist *attrs)
 {
 	int rc = 0;
@@ -714,7 +704,7 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 	int attr_valid = 0;
 	bool is_dir = 0;
 	struct glusterfs_export *glfs_export =
-	    container_of(opctx->fsal_export, struct glusterfs_export, export);
+	    container_of(op_ctx->fsal_export, struct glusterfs_export, export);
 	struct glusterfs_handle *objhandle =
 	    container_of(obj_hdl, struct glusterfs_handle, handle);
 #ifdef GLTIMING
@@ -727,9 +717,6 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 	/* sanity checks.
 	 * note : object_attributes is optional.
 	 */
-	if (!obj_hdl || !opctx || !attrs)
-		return fsalstat(ERR_FSAL_FAULT, 0);
-
 	if (FSAL_TEST_MASK(attrs->mask, ATTR_SIZE)) {
 		rc = glfs_h_truncate(glfs_export->gl_fs, objhandle->glhandle,
 				     attrs->filesize);
@@ -857,14 +844,13 @@ out:
  */
 
 static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
-			      const struct req_op_context *opctx,
 			      struct fsal_obj_handle *destdir_hdl,
 			      const char *name)
 {
 	int rc = 0, credrc = 0;
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	struct glusterfs_export *glfs_export =
-	    container_of(opctx->fsal_export, struct glusterfs_export, export);
+	    container_of(op_ctx->fsal_export, struct glusterfs_export, export);
 	struct glusterfs_handle *objhandle =
 	    container_of(obj_hdl, struct glusterfs_handle, handle);
 	struct glusterfs_handle *dstparenthandle =
@@ -876,10 +862,10 @@ static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
 #endif
 
 	credrc =
-	    setglustercreds(glfs_export, &opctx->creds->caller_uid,
-			    &opctx->creds->caller_gid,
-			    opctx->creds->caller_glen,
-			    opctx->creds->caller_garray);
+	    setglustercreds(glfs_export, &op_ctx->creds->caller_uid,
+			    &op_ctx->creds->caller_gid,
+			    op_ctx->creds->caller_glen,
+			    op_ctx->creds->caller_garray);
 	if (credrc != 0) {
 		status = gluster2fsal_error(EPERM);
 		LogFatal(COMPONENT_FSAL, "Could not set Ganesha credentials");
@@ -915,7 +901,6 @@ static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t renamefile(struct fsal_obj_handle *olddir_hdl,
-				const struct req_op_context *opctx,
 				const char *old_name,
 				struct fsal_obj_handle *newdir_hdl,
 				const char *new_name)
@@ -923,7 +908,7 @@ static fsal_status_t renamefile(struct fsal_obj_handle *olddir_hdl,
 	int rc = 0, credrc = 0;
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	struct glusterfs_export *glfs_export =
-	    container_of(opctx->fsal_export, struct glusterfs_export,
+	    container_of(op_ctx->fsal_export, struct glusterfs_export,
 			 export);
 	struct glusterfs_handle *srcparenthandle =
 	    container_of(olddir_hdl, struct glusterfs_handle, handle);
@@ -936,10 +921,10 @@ static fsal_status_t renamefile(struct fsal_obj_handle *olddir_hdl,
 #endif
 
 	credrc =
-	    setglustercreds(glfs_export, &opctx->creds->caller_uid,
-			    &opctx->creds->caller_gid,
-			    opctx->creds->caller_glen,
-			    opctx->creds->caller_garray);
+	    setglustercreds(glfs_export, &op_ctx->creds->caller_uid,
+			    &op_ctx->creds->caller_gid,
+			    op_ctx->creds->caller_glen,
+			    op_ctx->creds->caller_garray);
 	if (credrc != 0) {
 		status = gluster2fsal_error(EPERM);
 		LogFatal(COMPONENT_FSAL, "Could not set Ganesha credentials");
@@ -975,13 +960,12 @@ static fsal_status_t renamefile(struct fsal_obj_handle *olddir_hdl,
  */
 
 static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
-				 const struct req_op_context *opctx,
 				 const char *name)
 {
 	int rc = 0, credrc = 0;
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	struct glusterfs_export *glfs_export =
-	    container_of(opctx->fsal_export, struct glusterfs_export, export);
+	    container_of(op_ctx->fsal_export, struct glusterfs_export, export);
 	struct glusterfs_handle *parenthandle =
 	    container_of(dir_hdl, struct glusterfs_handle, handle);
 #ifdef GLTIMING
@@ -991,10 +975,10 @@ static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
 #endif
 
 	credrc =
-	    setglustercreds(glfs_export, &opctx->creds->caller_uid,
-			    &opctx->creds->caller_gid,
-			    opctx->creds->caller_glen,
-			    opctx->creds->caller_garray);
+	    setglustercreds(glfs_export, &op_ctx->creds->caller_uid,
+			    &op_ctx->creds->caller_gid,
+			    op_ctx->creds->caller_glen,
+			    op_ctx->creds->caller_garray);
 	if (credrc != 0) {
 		status = gluster2fsal_error(EPERM);
 		LogFatal(COMPONENT_FSAL, "Could not set Ganesha credentials");
@@ -1027,7 +1011,6 @@ static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
  */
 
 static fsal_status_t file_open(struct fsal_obj_handle *obj_hdl,
-			       const struct req_op_context *opctx,
 			       fsal_openflags_t openflags)
 {
 	int rc = 0;
@@ -1035,7 +1018,7 @@ static fsal_status_t file_open(struct fsal_obj_handle *obj_hdl,
 	struct glfs_fd *glfd = NULL;
 	int p_flags = 0;
 	struct glusterfs_export *glfs_export =
-	    container_of(opctx->fsal_export, struct glusterfs_export, export);
+	    container_of(op_ctx->fsal_export, struct glusterfs_export, export);
 	struct glusterfs_handle *objhandle =
 	    container_of(obj_hdl, struct glusterfs_handle, handle);
 #ifdef GLTIMING
@@ -1088,7 +1071,6 @@ static fsal_openflags_t file_status(struct fsal_obj_handle *obj_hdl)
  */
 
 static fsal_status_t file_read(struct fsal_obj_handle *obj_hdl,
-			       const struct req_op_context *opctx,
 			       uint64_t seek_descriptor, size_t buffer_size,
 			       void *buffer, size_t * read_amount,
 			       bool * end_of_file)
@@ -1129,7 +1111,6 @@ static fsal_status_t file_read(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t file_write(struct fsal_obj_handle *obj_hdl,
-				const struct req_op_context *opctx,
 				uint64_t seek_descriptor, size_t buffer_size,
 				void *buffer, size_t * write_amount,
 				bool * fsal_stable)
@@ -1170,7 +1151,6 @@ static fsal_status_t file_write(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t commit(struct fsal_obj_handle *obj_hdl,	/* sync */
-			    const struct req_op_context *opctx,
 			    off_t offset, size_t len)
 {
 	int rc = 0;
@@ -1204,7 +1184,6 @@ static fsal_status_t commit(struct fsal_obj_handle *obj_hdl,	/* sync */
  */
 
 static fsal_status_t lock_op(struct fsal_obj_handle *obj_hdl,
-			     const struct req_op_context *opctx,
 			     void * p_owner,
 			     fsal_lock_op_t lock_op,
 			     fsal_lock_param_t *request_lock,

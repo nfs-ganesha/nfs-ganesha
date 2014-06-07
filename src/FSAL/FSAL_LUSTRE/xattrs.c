@@ -312,7 +312,6 @@ static int xattr_name_to_id(char *lustre_path, const char *name)
 }
 
 fsal_status_t lustre_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
-				    const struct req_op_context *opctx,
 				    unsigned int argcookie,
 				    fsal_xattrent_t *xattrs_tab,
 				    unsigned int xattrs_tabsize,
@@ -436,7 +435,6 @@ fsal_status_t lustre_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
 }
 
 fsal_status_t lustre_getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
-					   const struct req_op_context *opctx,
 					   const char *xattr_name,
 					   unsigned int *pxattr_id)
 {
@@ -478,7 +476,6 @@ fsal_status_t lustre_getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
 }
 
 fsal_status_t lustre_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
-					    const struct req_op_context *opctx,
 					    unsigned int xattr_id,
 					    caddr_t buffer_addr,
 					    size_t buffer_size,
@@ -532,7 +529,6 @@ fsal_status_t lustre_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 }
 
 fsal_status_t lustre_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
-				      const struct req_op_context *opctx,
 				      const char *xattr_name,
 				      caddr_t buffer_addr,
 				      size_t buffer_size,
@@ -555,7 +551,7 @@ fsal_status_t lustre_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
 		if (do_match_type
 		    (xattr_list[index].flags, obj_hdl->attributes.type)
 		    && !strcmp(xattr_list[index].xattr_name, xattr_name)) {
-			return lustre_getextattr_value_by_id(obj_hdl, opctx,
+			return lustre_getextattr_value_by_id(obj_hdl,
 							     index, buffer_addr,
 							     buffer_size,
 							     p_output_size);
@@ -578,7 +574,6 @@ fsal_status_t lustre_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
 }
 
 fsal_status_t lustre_setextattr_value(struct fsal_obj_handle *obj_hdl,
-				      const struct req_op_context *opctx,
 				      const char *xattr_name,
 				      caddr_t buffer_addr, size_t buffer_size,
 				      int create)
@@ -614,7 +609,6 @@ fsal_status_t lustre_setextattr_value(struct fsal_obj_handle *obj_hdl,
 }
 
 fsal_status_t lustre_setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
-					    const struct req_op_context *opctx,
 					    unsigned int xattr_id,
 					    caddr_t buffer_addr,
 					    size_t buffer_size)
@@ -640,12 +634,11 @@ fsal_status_t lustre_setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 	if (rc)
 		return fsalstat(rc, errno);
 
-	return lustre_setextattr_value(obj_hdl, opctx, name, buffer_addr,
+	return lustre_setextattr_value(obj_hdl, name, buffer_addr,
 				       buffer_size, FALSE);
 }
 
 fsal_status_t lustre_getextattr_attrs(struct fsal_obj_handle *obj_hdl,
-				      const struct req_op_context *opctx,
 				      unsigned int xattr_id,
 				      struct attrlist *p_attrs)
 {
@@ -676,7 +669,6 @@ fsal_status_t lustre_getextattr_attrs(struct fsal_obj_handle *obj_hdl,
 }
 
 fsal_status_t lustre_remove_extattr_by_id(struct fsal_obj_handle *obj_hdl,
-					  const struct req_op_context *opctx,
 					  unsigned int xattr_id)
 {
 	int rc;
@@ -701,7 +693,6 @@ fsal_status_t lustre_remove_extattr_by_id(struct fsal_obj_handle *obj_hdl,
 }
 
 fsal_status_t lustre_remove_extattr_by_name(struct fsal_obj_handle *obj_hdl,
-					    const struct req_op_context *opctx,
 					    const char *xattr_name)
 {
 	struct lustre_fsal_obj_handle *obj_handle = NULL;

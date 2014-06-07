@@ -58,7 +58,6 @@
  * calling a user supplied function to process them.
  *
  * @param[in]     entry   Entry to be managed.
- * @param[in]     req_ctx Request context(user creds, client address etc)
  * @param[in,out] opaque  Opaque pointer passed to callback
  * @param[in]     cb      User supplied callback
  *
@@ -68,7 +67,6 @@
  */
 cache_inode_status_t
 cache_inode_getattr(cache_entry_t *entry,
-		    const struct req_op_context *req_ctx,
 		    void *opaque,
 		    cache_inode_getattr_cb_t cb)
 {
@@ -79,21 +77,21 @@ cache_inode_getattr(cache_entry_t *entry,
 
 	/* Lock (and refresh if necessary) the attributes, copy them
 	   out, and unlock. */
-	status = cache_inode_lock_trust_attrs(entry, req_ctx, false);
+	status = cache_inode_lock_trust_attrs(entry, false);
 	if (status != CACHE_INODE_SUCCESS) {
 		LogDebug(COMPONENT_CACHE_INODE, "Failed %s",
 			 cache_inode_err_str(status));
 		return status;
 	}
 
-	PTHREAD_RWLOCK_rdlock(&req_ctx->export->lock);
+	PTHREAD_RWLOCK_rdlock(&op_ctx->export->lock);
 
-	if (entry == req_ctx->export->exp_root_cache_inode)
-		mounted_on_fileid = req_ctx->export->exp_mounted_on_file_id;
+	if (entry == op_ctx->export->exp_root_cache_inode)
+		mounted_on_fileid = op_ctx->export->exp_mounted_on_file_id;
 	else
 		mounted_on_fileid = entry->obj_handle->attributes.fileid;
 
-	PTHREAD_RWLOCK_unlock(&req_ctx->export->lock);
+	PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
 
 	status = cb(opaque,
 		    entry,
@@ -101,14 +99,14 @@ cache_inode_getattr(cache_entry_t *entry,
 		    mounted_on_fileid);
 
 	if (status == CACHE_INODE_CROSS_JUNCTION) {
-		PTHREAD_RWLOCK_rdlock(&req_ctx->export->lock);
+		PTHREAD_RWLOCK_rdlock(&op_ctx->export->lock);
 
 		junction_export = entry->object.dir.junction_export;
 
 		if (junction_export != NULL)
 			get_gsh_export_ref(entry->object.dir.junction_export);
 
-		PTHREAD_RWLOCK_unlock(&req_ctx->export->lock);
+		PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
 	}
 
 	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
@@ -134,7 +132,7 @@ cache_inode_getattr(cache_entry_t *entry,
 
 		/* Now call the callback again with that. */
 		status =
-		    cache_inode_getattr(junction_entry, req_ctx, opaque, cb);
+		    cache_inode_getattr(junction_entry, opaque, cb);
 
 		cache_inode_put(junction_entry);
 		put_gsh_export(junction_export);
@@ -149,7 +147,6 @@ cache_inode_getattr(cache_entry_t *entry,
  * Gets the filied for a cached entry.
  *
  * @param[in]  entry   Entry to be managed.
- * @param[in]  req_ctx Request context(user creds, client address etc)
  * @param[out] fileid  The file ID.
  *
  * @return Errors from cache_inode_lock_trust_attributes.
@@ -157,25 +154,24 @@ cache_inode_getattr(cache_entry_t *entry,
  */
 cache_inode_status_t
 cache_inode_fileid(cache_entry_t *entry,
-		   const struct req_op_context *req_ctx,
 		   uint64_t *fileid)
 {
 	cache_inode_status_t status;
 
-	PTHREAD_RWLOCK_rdlock(&req_ctx->export->lock);
+	PTHREAD_RWLOCK_rdlock(&op_ctx->export->lock);
 
-	if (entry == req_ctx->export->exp_root_cache_inode) {
+	if (entry == op_ctx->export->exp_root_cache_inode) {
 
-		*fileid = req_ctx->export->exp_mounted_on_file_id;
+		*fileid = op_ctx->export->exp_mounted_on_file_id;
 		status = CACHE_INODE_SUCCESS;
 
-		PTHREAD_RWLOCK_unlock(&req_ctx->export->lock);
+		PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
 	} else {
-		PTHREAD_RWLOCK_unlock(&req_ctx->export->lock);
+		PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
 
 		/* Lock (and refresh if necessary) the attributes, copy them
 		   out, and unlock. */
-		status = cache_inode_lock_trust_attrs(entry, req_ctx, false);
+		status = cache_inode_lock_trust_attrs(entry, false);
 
 		if (status == CACHE_INODE_SUCCESS) {
 			*fileid = entry->obj_handle->attributes.fileid;
@@ -193,7 +189,6 @@ cache_inode_fileid(cache_entry_t *entry,
  * This function gets the filied for a cached entry.
  *
  * @param[in]  entry   Entry to be managed.
- * @param[in]  req_ctx Request context(user creds, client address etc)
  * @param[out] fsid    The FS ID.
  *
  * @return Errors from cache_inode_lock_trust_attributes.
@@ -201,7 +196,6 @@ cache_inode_fileid(cache_entry_t *entry,
  */
 cache_inode_status_t
 cache_inode_fsid(cache_entry_t *entry,
-		 const struct req_op_context *req_ctx,
 		 fsal_fsid_t *fsid)
 {
 	cache_inode_status_t status = 0;
@@ -211,7 +205,7 @@ cache_inode_fsid(cache_entry_t *entry,
 
 	/* Lock (and refresh if necessary) the attributes, copy them
 	   out, and unlock. */
-	status = cache_inode_lock_trust_attrs(entry, req_ctx, false);
+	status = cache_inode_lock_trust_attrs(entry, false);
 	if (status != CACHE_INODE_SUCCESS)
 		goto out;
 
@@ -230,7 +224,6 @@ cache_inode_fsid(cache_entry_t *entry,
  * This function gets the file size for a cached entry.
  *
  * @param[in]  entry   Entry to be managed.
- * @param[in]  req_ctx Request context(user creds, client address etc)
  * @param[out] size    The file ID.
  *
  * @return Errors from cache_inode_lock_trust_attributes.
@@ -238,7 +231,6 @@ cache_inode_fsid(cache_entry_t *entry,
  */
 cache_inode_status_t
 cache_inode_size(cache_entry_t *entry,
-		 const struct req_op_context *req_ctx,
 		 uint64_t *size)
 {
 	cache_inode_status_t status = 0;
@@ -248,7 +240,7 @@ cache_inode_size(cache_entry_t *entry,
 
 	/* Lock (and refresh if necessary) the attributes, copy them
 	   out, and unlock. */
-	status = cache_inode_lock_trust_attrs(entry, req_ctx, false);
+	status = cache_inode_lock_trust_attrs(entry, false);
 	if (status != CACHE_INODE_SUCCESS)
 		goto out;
 

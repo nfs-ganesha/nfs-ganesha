@@ -54,7 +54,6 @@
  *
  * @param[in]  arg     NFS arguments union
  * @param[in]  export  NFS export list
- * @param[in]  req_ctx Request context
  * @param[in]  worker  Worker thread data
  * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call
@@ -65,12 +64,12 @@
  */
 
 int nfs3_pathconf(nfs_arg_t *arg,
-		  struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+		  nfs_worker_data_t *worker,
 		  struct svc_req *req, nfs_res_t *res)
 {
 	cache_entry_t *entry = NULL;
 	int rc = NFS_REQ_OK;
-	struct fsal_export *exp_hdl = req_ctx->fsal_export;
+	struct fsal_export *exp_hdl = op_ctx->fsal_export;
 
 	if (isDebug(COMPONENT_NFSPROTO)) {
 		char str[LEN_FH_STR];
@@ -86,7 +85,6 @@ int nfs3_pathconf(nfs_arg_t *arg,
 
 	/* Convert file handle into a fsal_handle */
 	entry = nfs3_FhandleToCache(&arg->arg_pathconf3.object,
-				    req_ctx,
 				    &res->res_pathconf3.status,
 				    &rc);
 
@@ -109,7 +107,7 @@ int nfs3_pathconf(nfs_arg_t *arg,
 	    exp_hdl->ops->fs_supports(exp_hdl, fso_case_preserving);
 
 	/* Build post op file attributes */
-	nfs_SetPostOpAttr(entry, req_ctx,
+	nfs_SetPostOpAttr(entry,
 			  &(res->res_pathconf3.PATHCONF3res_u.resok.
 			    obj_attributes));
 

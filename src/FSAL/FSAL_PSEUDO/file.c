@@ -45,7 +45,6 @@
  */
 
 fsal_status_t pseudofs_open(struct fsal_obj_handle *obj_hdl,
-			  const struct req_op_context *opctx,
 			  fsal_openflags_t openflags)
 {
 	/* PSEUDOFS doesn't support non-directory inodes */
@@ -71,7 +70,7 @@ fsal_openflags_t pseudofs_status(struct fsal_obj_handle *obj_hdl)
  */
 
 fsal_status_t pseudofs_read(struct fsal_obj_handle *obj_hdl,
-			  const struct req_op_context *opctx, uint64_t offset,
+			  uint64_t offset,
 			  size_t buffer_size, void *buffer,
 			  size_t *read_amount, bool *end_of_file)
 {
@@ -86,7 +85,7 @@ fsal_status_t pseudofs_read(struct fsal_obj_handle *obj_hdl,
  */
 
 fsal_status_t pseudofs_write(struct fsal_obj_handle *obj_hdl,
-			   const struct req_op_context *opctx, uint64_t offset,
+			   uint64_t offset,
 			   size_t buffer_size, void *buffer,
 			   size_t *write_amount, bool *fsal_stable)
 {
@@ -102,7 +101,6 @@ fsal_status_t pseudofs_write(struct fsal_obj_handle *obj_hdl,
  */
 
 fsal_status_t pseudofs_commit(struct fsal_obj_handle *obj_hdl,	/* sync */
-			    const struct req_op_context *opctx,
 			    off_t offset, size_t len)
 {
 	/* PSEUDOFS doesn't support non-directory inodes */
@@ -118,7 +116,7 @@ fsal_status_t pseudofs_commit(struct fsal_obj_handle *obj_hdl,	/* sync */
  */
 
 fsal_status_t pseudofs_lock_op(struct fsal_obj_handle *obj_hdl,
-			     const struct req_op_context *opctx, void *p_owner,
+			     void *p_owner,
 			     fsal_lock_op_t lock_op,
 			     fsal_lock_param_t *request_lock,
 			     fsal_lock_param_t *conflicting_lock)

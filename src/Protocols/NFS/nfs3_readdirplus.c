@@ -74,7 +74,6 @@ struct nfs3_readdirplus_cb_data {
 				   the array. */
 	nfsstat3 error;		/*< Set to a value other than NFS_OK if the
 				   callback function finds a fatal error. */
-	struct req_op_context *req_ctx;	/*< The req_ctx */
 };
 
 static
@@ -105,7 +104,6 @@ nfsstat3 nfs_readdir_dot_entry(cache_entry_t *entry, const char *name,
  *
  * @param[in]  arg     NFS argument union
  * @param[in]  export  NFS export list
- * @param[in]  req_ctx Request context
  * @param[in]  worker  Worker thread
  * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call
@@ -116,7 +114,7 @@ nfsstat3 nfs_readdir_dot_entry(cache_entry_t *entry, const char *name,
  */
 
 int nfs3_readdirplus(nfs_arg_t *arg,
-		     struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+		     nfs_worker_data_t *worker,
 		     struct svc_req *req, nfs_res_t *res)
 {
 	cache_entry_t *dir_entry = NULL;
@@ -135,7 +133,6 @@ int nfs3_readdirplus(nfs_arg_t *arg,
 		.mem_left = 0,
 		.count = 0,
 		.error = NFS3_OK,
-		.req_ctx = req_ctx
 	};
 
 	if (isDebug(COMPONENT_NFSPROTO) || isDebug(COMPONENT_NFS_READDIR)) {
@@ -181,7 +178,6 @@ int nfs3_readdirplus(nfs_arg_t *arg,
 
 	/* Convert file handle into a vnode */
 	dir_entry = nfs3_FhandleToCache(&(arg->arg_readdirplus3.dir),
-					  req_ctx,
 					  &(res->res_readdirplus3.status),
 					  &rc);
 
@@ -208,12 +204,12 @@ int nfs3_readdirplus(nfs_arg_t *arg,
 	   directory. If verifier is unused (as in many NFS Servers) then
 	   only a set of zeros is returned (trivial value) */
 
-	if (req_ctx->export->options & EXPORT_OPTION_USE_COOKIE_VERIFIER)
+	if (op_ctx->export->options & EXPORT_OPTION_USE_COOKIE_VERIFIER)
 		memcpy(cookie_verifier,
 		       &(dir_entry->change_time),
 		       sizeof(dir_entry->change_time));
 
-	if (req_ctx->export->options & EXPORT_OPTION_USE_COOKIE_VERIFIER
+	if (op_ctx->export->options & EXPORT_OPTION_USE_COOKIE_VERIFIER
 	    && (begin_cookie != 0)) {
 		/* Not the first call, so we have to check the cookie
 		   verifier */
@@ -262,7 +258,6 @@ int nfs3_readdirplus(nfs_arg_t *arg,
 	if (begin_cookie <= 1) {
 		cache_entry_t *parent_dir_entry = NULL;
 		cache_status_gethandle = cache_inode_lookupp(dir_entry,
-							     req_ctx,
 							     &parent_dir_entry);
 
 		if (parent_dir_entry == NULL) {
@@ -292,7 +287,6 @@ int nfs3_readdirplus(nfs_arg_t *arg,
 					   cache_inode_cookie,
 					   &num_entries,
 					   &eod_met,
-					   req_ctx,
 					   ATTRS_NFS3,
 					   nfs3_readdirplus_callback,
 					   &tracker);
@@ -305,7 +299,7 @@ int nfs3_readdirplus(nfs_arg_t *arg,
 		}
 
 		res->res_readdirplus3.status = nfs3_Errno(cache_status);
-		nfs_SetPostOpAttr(dir_entry, req_ctx,
+		nfs_SetPostOpAttr(dir_entry,
 				  &res->res_readdirplus3.READDIRPLUS3res_u.
 				  resfail.dir_attributes);
 
@@ -314,7 +308,7 @@ int nfs3_readdirplus(nfs_arg_t *arg,
 
 	if (tracker.error != NFS3_OK) {
 		res->res_readdir3.status = tracker.error;
-		nfs_SetPostOpAttr(dir_entry, req_ctx,
+		nfs_SetPostOpAttr(dir_entry,
 				  &res->res_readdir3.READDIR3res_u.resfail.
 				  dir_attributes);
 		goto out;
@@ -331,7 +325,7 @@ int nfs3_readdirplus(nfs_arg_t *arg,
 		    NULL;
 		res->res_readdirplus3.READDIRPLUS3res_u.resok.reply.eof = TRUE;
 
-		nfs_SetPostOpAttr(dir_entry, req_ctx,
+		nfs_SetPostOpAttr(dir_entry,
 				  &res->res_readdirplus3.READDIRPLUS3res_u.
 				  resok.dir_attributes);
 
@@ -345,7 +339,7 @@ int nfs3_readdirplus(nfs_arg_t *arg,
 		    eod_met;
 	}
 
-	nfs_SetPostOpAttr(dir_entry, req_ctx,
+	nfs_SetPostOpAttr(dir_entry,
 			  &res->res_readdirplus3.READDIRPLUS3res_u.resok.
 			  dir_attributes);
 
@@ -461,7 +455,7 @@ cache_inode_status_t nfs3_readdirplus_callback(void *opaque,
 
 		if (!nfs3_FSALToFhandle(&ep3->name_handle.post_op_fh3_u.handle,
 					entry->obj_handle,
-					tracker->req_ctx->export)) {
+					op_ctx->export)) {
 			tracker->error = NFS3ERR_SERVERFAULT;
 			gsh_free(ep3->name);
 			gsh_free(ep3->name_handle.post_op_fh3_u.handle.data.
@@ -475,7 +469,7 @@ cache_inode_status_t nfs3_readdirplus_callback(void *opaque,
 		    ep3->name_handle.post_op_fh3_u.handle.data.data_len + 12;
 
 		ep3->name_attributes.attributes_follow =
-		    nfs3_FSALattr_To_Fattr(tracker->req_ctx->export,
+		    nfs3_FSALattr_To_Fattr(op_ctx->export,
 					   attr,
 					   &(ep3->name_attributes.
 					     post_op_attr_u.attributes));

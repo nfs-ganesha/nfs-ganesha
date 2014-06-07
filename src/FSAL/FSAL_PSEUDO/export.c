@@ -84,9 +84,8 @@ static void release(struct fsal_export *exp_hdl)
 	gsh_free(myself);
 }
 
-static fsal_status_t get_dynamic_info(struct fsal_obj_handle *obj_hdl,
-				      struct fsal_export *exp_hdl,
-				      const struct req_op_context *opctx,
+static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
+				      struct fsal_obj_handle *obj_hdl,
 				      fsal_dynamicfsinfo_t *infop)
 {
 	infop->total_bytes = 0;
@@ -209,7 +208,6 @@ static uint32_t fs_xattr_access_rights(struct fsal_export *exp_hdl)
 
 static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 			       const char *filepath, int quota_type,
-			       struct req_op_context *req_ctx,
 			       fsal_quota_t *pquota)
 {
 	/* PSEUDOFS doesn't support quotas */
@@ -222,7 +220,6 @@ static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 
 static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 			       const char *filepath, int quota_type,
-			       struct req_op_context *req_ctx,
 			       fsal_quota_t *pquota, fsal_quota_t *presquota)
 {
 	/* PSEUDOFS doesn't support quotas */
@@ -289,7 +286,6 @@ void pseudofs_export_ops_init(struct export_ops *ops)
  */
 
 fsal_status_t pseudofs_create_export(struct fsal_module *fsal_hdl,
-				     struct req_op_context *req_ctx,
 				     void *parse_node,
 				     const struct fsal_up_vector *up_ops)
 {
@@ -330,7 +326,7 @@ fsal_status_t pseudofs_create_export(struct fsal_module *fsal_hdl,
 	myself->export.fsal = fsal_hdl;
 
 	/* Save the export path. */
-	myself->export_path = gsh_strdup(req_ctx->export->fullpath);
+	myself->export_path = gsh_strdup(op_ctx->export->fullpath);
 
 	if (myself->export_path == NULL) {
 		LogCrit(COMPONENT_FSAL,
@@ -339,7 +335,7 @@ fsal_status_t pseudofs_create_export(struct fsal_module *fsal_hdl,
 		goto errout;
 	}
 
-	req_ctx->fsal_export = &myself->export;
+	op_ctx->fsal_export = &myself->export;
 
 	LogDebug(COMPONENT_FSAL,
 		 "Created exp %p - %s",

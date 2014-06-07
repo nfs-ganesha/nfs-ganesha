@@ -433,7 +433,6 @@ int construct_handle(struct glusterfs_export *glexport, const struct stat *st,
 		     int len, struct glusterfs_handle **obj, const char *vol_uuid);
 
 fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
-				      struct req_op_context *req_ctx,
 				      void *parse_node,
 				      const struct fsal_up_vector *up_ops);
 

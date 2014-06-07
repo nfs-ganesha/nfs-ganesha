@@ -71,7 +71,6 @@ static unsigned int state_share_get_share_deny(cache_entry_t *entry);
  * @return State status.
  */
 static state_status_t do_share_op(cache_entry_t *entry,
-				  struct req_op_context *req_ctx,
 				  state_owner_t *owner,
 				  fsal_share_param_t *share)
 {
@@ -79,12 +78,11 @@ static state_status_t do_share_op(cache_entry_t *entry,
 	state_status_t status = STATE_SUCCESS;
 
 	/* Quick exit if share reservation is not supported by FSAL */
-	if (!req_ctx->fsal_export->ops->
-	    fs_supports(req_ctx->fsal_export, fso_share_support))
+	if (!op_ctx->fsal_export->ops->
+	    fs_supports(op_ctx->fsal_export, fso_share_support))
 		return STATE_SUCCESS;
 
 	fsal_status = entry->obj_handle->ops->share_op(entry->obj_handle,
-						       req_ctx,
 						       NULL,
 						       *share);
 
@@ -111,7 +109,6 @@ static state_status_t do_share_op(cache_entry_t *entry,
  * @return State status.
  */
 state_status_t state_share_add(cache_entry_t *entry,
-			       struct req_op_context *req_ctx,
 			       state_owner_t *owner,
 			       state_t *state, bool reclaim)
 {
@@ -163,7 +160,7 @@ state_status_t state_share_add(cache_entry_t *entry,
 		share_param.share_deny = new_entry_share_deny;
 		share_param.share_reclaim = reclaim;
 
-		status = do_share_op(entry, req_ctx, owner, &share_param);
+		status = do_share_op(entry, owner, &share_param);
 
 		if (status != STATE_SUCCESS) {
 			/* Revert the ref counted share state of this file. */
@@ -198,7 +195,6 @@ state_status_t state_share_add(cache_entry_t *entry,
  * @return State status.
  */
 state_status_t state_share_remove(cache_entry_t *entry,
-				  struct req_op_context *req_ctx,
 				  state_owner_t *owner,
 				  state_t *state)
 {
@@ -238,7 +234,7 @@ state_status_t state_share_remove(cache_entry_t *entry,
 		share_param.share_deny = new_entry_share_deny;
 		share_param.share_reclaim = false;
 
-		status = do_share_op(entry, req_ctx, owner, &share_param);
+		status = do_share_op(entry, owner, &share_param);
 
 		if (status != STATE_SUCCESS) {
 			/* Revert the ref counted share state of this file. */
@@ -253,7 +249,7 @@ state_status_t state_share_remove(cache_entry_t *entry,
 	}
 
 	/* state has been removed, so adjust open flags */
-	cache_inode_adjust_openflags(entry, req_ctx);
+	cache_inode_adjust_openflags(entry);
 
 	LogFullDebug(COMPONENT_STATE,
 		     "state %p: removed share_access %u, " "share_deny %u",
@@ -274,8 +270,7 @@ state_status_t state_share_remove(cache_entry_t *entry,
  *
  * @return State status.
  */
-state_status_t state_share_upgrade(struct req_op_context *req_ctx,
-				   cache_entry_t *entry,
+state_status_t state_share_upgrade(cache_entry_t *entry,
 				   state_data_t *state_data,
 				   state_owner_t *owner, state_t *state,
 				   bool reclaim)
@@ -332,7 +327,7 @@ state_status_t state_share_upgrade(struct req_op_context *req_ctx,
 		share_param.share_deny = new_entry_share_deny;
 		share_param.share_reclaim = reclaim;
 
-		status = do_share_op(entry, req_ctx, owner, &share_param);
+		status = do_share_op(entry, owner, &share_param);
 
 		if (status != STATE_SUCCESS) {
 			/* Revert the ref counted share state of this file. */
@@ -371,8 +366,7 @@ state_status_t state_share_upgrade(struct req_op_context *req_ctx,
  *
  * @return State status.
  */
-state_status_t state_share_downgrade(struct req_op_context *req_ctx,
-				     cache_entry_t *entry,
+state_status_t state_share_downgrade(cache_entry_t *entry,
 				     state_data_t *state_data,
 				     state_owner_t *owner, state_t *state)
 {
@@ -417,7 +411,7 @@ state_status_t state_share_downgrade(struct req_op_context *req_ctx,
 		share_param.share_deny = new_entry_share_deny;
 		share_param.share_reclaim = false;
 
-		status = do_share_op(entry, req_ctx, owner, &share_param);
+		status = do_share_op(entry, owner, &share_param);
 
 		if (status != STATE_SUCCESS) {
 			/* Revert the ref counted share state of this file. */
@@ -435,7 +429,7 @@ state_status_t state_share_downgrade(struct req_op_context *req_ctx,
 	state->state_data.share.share_deny = new_share_deny;
 
 	/* state is downgraded, so adjust open flags */
-	cache_inode_adjust_openflags(entry, req_ctx);
+	cache_inode_adjust_openflags(entry);
 
 	LogFullDebug(COMPONENT_STATE,
 		     "state %p: downgraded share_access %u, " "share_deny %u",
@@ -686,7 +680,6 @@ void state_share_anonymous_io_done(cache_entry_t *entry, int share_access)
  * @brief Implement NLM share call
  *
  * @param[in,out] entry        File on which to operate
- * @param[in]     req_ctx      Request context
  * @param[in]     export       Export through which file is accessed
  * @param[in]     share_access Share mode requested
  * @param[in]     share_deny   Deny mode requested
@@ -695,7 +688,6 @@ void state_share_anonymous_io_done(cache_entry_t *entry, int share_access)
  * @return State status.
  */
 state_status_t state_nlm_share(cache_entry_t *entry,
-			       struct req_op_context *req_ctx,
 			       int share_access,
 			       int share_deny, state_owner_t *owner,
 			       bool reclaim)
@@ -709,7 +701,7 @@ state_status_t state_nlm_share(cache_entry_t *entry,
 	cache_inode_status_t cache_status;
 	fsal_openflags_t openflags;
 	state_status_t status = 0;
-	struct fsal_export *fsal_export = req_ctx->fsal_export;
+	struct fsal_export *fsal_export = op_ctx->fsal_export;
 
 	cache_status = cache_inode_inc_pin_ref(entry);
 
@@ -732,7 +724,7 @@ state_status_t state_nlm_share(cache_entry_t *entry,
 		openflags = FSAL_O_RDWR;
 	if (reclaim)
 		openflags |= FSAL_O_RECLAIM;
-	cache_status = cache_inode_open(entry, openflags, req_ctx, 0);
+	cache_status = cache_inode_open(entry, openflags, 0);
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		cache_inode_dec_pin_ref(entry, true);
 
@@ -776,7 +768,7 @@ state_status_t state_nlm_share(cache_entry_t *entry,
 	nlm_share->sns_entry = entry;
 	nlm_share->sns_access = share_access;
 	nlm_share->sns_deny = share_deny;
-	nlm_share->sns_export = req_ctx->export;
+	nlm_share->sns_export = op_ctx->export;
 
 	/* Add share to list for NLM Owner */
 	inc_state_owner_ref(owner);
@@ -813,10 +805,10 @@ state_status_t state_nlm_share(cache_entry_t *entry,
 		       &nlm_share->sns_share_per_file);
 
 	/* Add to share list for export */
-	PTHREAD_RWLOCK_wrlock(&req_ctx->export->lock);
-	glist_add_tail(&req_ctx->export->exp_nlm_share_list,
+	PTHREAD_RWLOCK_wrlock(&op_ctx->export->lock);
+	glist_add_tail(&op_ctx->export->exp_nlm_share_list,
 		       &nlm_share->sns_share_per_export);
-	PTHREAD_RWLOCK_unlock(&req_ctx->export->lock);
+	PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
 
 	/* Get the current union of share states of this file. */
 	old_entry_share_access = state_share_get_share_access(entry);
@@ -841,7 +833,7 @@ state_status_t state_nlm_share(cache_entry_t *entry,
 		share_param.share_deny = new_entry_share_deny;
 		share_param.share_reclaim = reclaim;
 
-		status = do_share_op(entry, req_ctx, owner, &share_param);
+		status = do_share_op(entry, owner, &share_param);
 
 		if (status != STATE_SUCCESS) {
 			/* Revert the ref counted share state of this file. */
@@ -851,9 +843,9 @@ state_status_t state_nlm_share(cache_entry_t *entry,
 						   OPEN4_SHARE_DENY_NONE, true);
 
 			/* Remove from share list for export */
-			PTHREAD_RWLOCK_wrlock(&req_ctx->export->lock);
+			PTHREAD_RWLOCK_wrlock(&op_ctx->export->lock);
 			glist_del(&nlm_share->sns_share_per_export);
-			PTHREAD_RWLOCK_unlock(&req_ctx->export->lock);
+			PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
 
 			/* Remove the share from the list for the file. If the
 			 * list is now empty also remove the extra pin ref.
@@ -913,8 +905,6 @@ state_status_t state_nlm_share(cache_entry_t *entry,
  * @brief Implement NLM unshare procedure
  *
  * @param[in,out] entry        File on which to opwerate
- * @param[in]     export       Export share is associated with
- *                             NULL matches any export
  * @param[in]     share_access Access mode to relinquish
  * @param[in]     share_deny   Deny mode to relinquish
  * @param[in]     owner        Share owner
@@ -922,7 +912,6 @@ state_status_t state_nlm_share(cache_entry_t *entry,
  * @return State status.
  */
 state_status_t state_nlm_unshare(cache_entry_t *entry,
-				 struct req_op_context *req_ctx,
 				 int share_access,
 				 int share_deny,
 				 state_owner_t *owner)
@@ -956,8 +945,8 @@ state_status_t state_nlm_unshare(cache_entry_t *entry,
 		if (different_owners(owner, nlm_share->sns_owner))
 			continue;
 
-		if ((req_ctx->export != NULL) &&
-		    (req_ctx->export != nlm_share->sns_export))
+		if ((op_ctx->export != NULL) &&
+		    (op_ctx->export != nlm_share->sns_export))
 			continue;
 
 		/* share_access == OPEN4_SHARE_ACCESS_NONE indicates that
@@ -996,7 +985,7 @@ state_status_t state_nlm_unshare(cache_entry_t *entry,
 			share_param.share_deny = new_entry_share_deny;
 			share_param.share_reclaim = false;
 
-			status = do_share_op(entry, req_ctx, owner,
+			status = do_share_op(entry, owner,
 					     &share_param);
 
 			if (status != STATE_SUCCESS) {
@@ -1127,7 +1116,7 @@ void state_share_wipe(cache_entry_t *entry)
 	}
 }
 
-void state_export_unshare_all(struct req_op_context *req_ctx)
+void state_export_unshare_all(void)
 {
 	int errcnt = 0;
 	state_nlm_share_t *nlm_share;
@@ -1136,15 +1125,15 @@ void state_export_unshare_all(struct req_op_context *req_ctx)
 	state_status_t status;
 
 	while (errcnt < STATE_ERR_MAX) {
-		PTHREAD_RWLOCK_wrlock(&req_ctx->export->lock);
+		PTHREAD_RWLOCK_wrlock(&op_ctx->export->lock);
 
 		nlm_share =
-		    glist_first_entry(&req_ctx->export->exp_nlm_share_list,
+		    glist_first_entry(&op_ctx->export->exp_nlm_share_list,
 				      state_nlm_share_t,
 				      sns_share_per_export);
 
 		if (nlm_share == NULL) {
-			PTHREAD_RWLOCK_unlock(&req_ctx->export->lock);
+			PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
 			break;
 		}
 
@@ -1157,11 +1146,10 @@ void state_export_unshare_all(struct req_op_context *req_ctx)
 		cache_inode_lru_ref(entry, LRU_FLAG_NONE);
 
 		/* Drop the export mutex to call unshare */
-		PTHREAD_RWLOCK_unlock(&req_ctx->export->lock);
+		PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
 
 		/* Remove all shares held by this Owner on this export */
 		status = state_nlm_unshare(entry,
-					   req_ctx,
 					   OPEN4_SHARE_ACCESS_NONE,
 					   OPEN4_SHARE_DENY_NONE,
 					   owner);

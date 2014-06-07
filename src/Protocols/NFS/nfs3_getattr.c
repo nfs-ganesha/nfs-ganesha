@@ -54,7 +54,6 @@
  *
  * @param[in]  arg     NFS arguments union
  * @param[in]  export  NFS export list
- * @param[in]  req_ctx Request context
  * @param[in]  worker  Data belonging to the worker thread
  * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call
@@ -65,7 +64,7 @@
  */
 
 int nfs3_getattr(nfs_arg_t *arg,
-		 struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+		 nfs_worker_data_t *worker,
 		 struct svc_req *req, nfs_res_t *res)
 {
 	cache_entry_t *entry = NULL;
@@ -81,7 +80,6 @@ int nfs3_getattr(nfs_arg_t *arg,
 	}
 
 	entry = nfs3_FhandleToCache(&arg->arg_getattr3.object,
-				    req_ctx,
 				    &res->res_getattr3.status,
 				    &rc);
 
@@ -95,7 +93,6 @@ int nfs3_getattr(nfs_arg_t *arg,
 
 	if (!cache_entry_to_nfs3_Fattr(
 		       entry,
-		       req_ctx,
 		       &res->res_getattr3.GETATTR3res_u.resok.obj_attributes)) {
 		res->res_getattr3.status =
 		    nfs3_Errno(CACHE_INODE_INVALID_ARGUMENT);

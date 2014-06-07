@@ -190,14 +190,12 @@ void clean_mapping(cache_entry_t *entry)
  * If a cache entry is returned, its refcount is incremented by one.
  *
  * @param[in]  fsdata     File system data
- * @param[in]  req_ctx    Request context (user creds, client address etc)
  * @param[out] entry      The entry
  *
  * @return CACHE_INODE_SUCCESS or errors.
  */
 cache_inode_status_t
 cache_inode_get(cache_inode_fsal_data_t *fsdata,
-		const struct req_op_context *req_ctx,
 		cache_entry_t **entry)
 {
 	fsal_status_t fsal_status = { 0, 0 };
@@ -223,7 +221,7 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
 		cache_inode_lru_ref(*entry, LRU_REQ_INITIAL);
 		cih_latch_rele(&latch);
 
-		if (!check_mapping(*entry, req_ctx->export)) {
+		if (!check_mapping(*entry, op_ctx->export)) {
 			/* Return error instead of entry */
 			cache_inode_put(*entry);
 			*entry = NULL;
@@ -237,7 +235,7 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
 	/* Cache miss, allocate a new entry */
 	exp_hdl = fsdata->export;
 	fsal_status =
-	    exp_hdl->ops->create_handle(exp_hdl, req_ctx, &fsdata->fh_desc,
+	    exp_hdl->ops->create_handle(exp_hdl, &fsdata->fh_desc,
 					&new_hdl);
 	if (FSAL_IS_ERROR(fsal_status)) {
 		status = cache_inode_error_convert(fsal_status);
@@ -250,7 +248,7 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
 	LogFullDebug(COMPONENT_CACHE_INODE, "Creating entry");
 
 	status = cache_inode_new_entry(new_hdl, CACHE_INODE_FLAG_NONE,
-				       entry, req_ctx);
+				       entry);
 
 	if (*entry == NULL)
 		return status;
@@ -267,14 +265,12 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
  * same export (e.g..
  *
  * @param[in] key     [in] Cache key to use for lookup
- * @param[in] req_ctx FSAL operation context
  * @param[in] flags   flags
  *
  * @return Pointer to a ref'd entry if found, else NULL.
  */
 cache_entry_t *
 cache_inode_get_keyed(cache_inode_key_t *key,
-		      const struct req_op_context *req_ctx,
 		      uint32_t flags,
 		      cache_inode_status_t *status)
 {
@@ -298,7 +294,7 @@ cache_inode_get_keyed(cache_inode_key_t *key,
 		/* Release the subtree hash table lock */
 		cih_latch_rele(&latch);
 
-		if (!check_mapping(entry, req_ctx->export)) {
+		if (!check_mapping(entry, op_ctx->export)) {
 			/* Return error instead of entry */
 			cache_inode_put(entry);
 			return NULL;
@@ -312,9 +308,9 @@ cache_inode_get_keyed(cache_inode_key_t *key,
 		struct fsal_export *exp_hdl;
 		fsal_status_t fsal_status;
 
-		exp_hdl = req_ctx->fsal_export;
+		exp_hdl = op_ctx->fsal_export;
 		fsal_status =
-		    exp_hdl->ops->create_handle(exp_hdl, req_ctx, &key->kv,
+		    exp_hdl->ops->create_handle(exp_hdl, &key->kv,
 						&new_hdl);
 
 		if (unlikely(FSAL_IS_ERROR(fsal_status))) {
@@ -330,13 +326,12 @@ cache_inode_get_keyed(cache_inode_key_t *key,
 		/* if all else fails, create a new entry */
 		*status =
 		    cache_inode_new_entry(new_hdl, CACHE_INODE_FLAG_NONE,
-					  &entry, req_ctx);
+					  &entry);
 
 		if (unlikely(!entry))
 			goto out;
 
-		*status =
-			cache_inode_lock_trust_attrs(entry, req_ctx, false);
+		*status = cache_inode_lock_trust_attrs(entry, false);
 		if (unlikely(*status != CACHE_INODE_SUCCESS)) {
 			cache_inode_put(entry);
 			entry = NULL;

@@ -41,7 +41,6 @@
  *
  * @param[in]  parg     Arguments (ignored)
  * @param[in]  pexport  Ignored
- * @param[in]  req_ctx  Ignored
  * @param[in]  pworker  Ignored
  * @param[in]  preq     Ignored
  * @param[out] pres     Pointer to results
@@ -49,7 +48,7 @@
  */
 
 int mnt_Dump(nfs_arg_t *arg,
-	     struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+	     nfs_worker_data_t *worker,
 	     struct svc_req *req, nfs_res_t *res)
 {
 	LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling mnt_Dump");

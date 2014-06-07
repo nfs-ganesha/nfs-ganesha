@@ -58,7 +58,6 @@
  *
  * @param[in]  arg     NFS argument union
  * @param[in]  export  NFS export list
- * @param[in]  req_ctx Credentials to be used for this request
  * @param[in]  worker  Worker thread data
  * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call
@@ -70,7 +69,7 @@
  */
 
 int nfs3_symlink(nfs_arg_t *arg,
-		 struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+		 nfs_worker_data_t *worker,
 		 struct svc_req *req, nfs_res_t *res)
 {
 	const char *symlink_name = arg->arg_symlink3.where.name;
@@ -107,7 +106,6 @@ int nfs3_symlink(nfs_arg_t *arg,
 	    attributes_follow = false;
 
 	parent_entry = nfs3_FhandleToCache(&arg->arg_symlink3.where.dir,
-					   req_ctx,
 					   &res->res_symlink3.status,
 					   &rc);
 
@@ -116,7 +114,7 @@ int nfs3_symlink(nfs_arg_t *arg,
 		goto out;
 	}
 
-	nfs_SetPreOpAttr(parent_entry, req_ctx, &pre_parent);
+	nfs_SetPreOpAttr(parent_entry, &pre_parent);
 
 	if (parent_entry->type != DIRECTORY) {
 		res->res_symlink3.status = NFS3ERR_NOTDIR;
@@ -128,10 +126,9 @@ int nfs3_symlink(nfs_arg_t *arg,
 	 * FSAL allows inode creation or not
 	 */
 	fsal_status =
-	    req_ctx->fsal_export->ops->check_quota(req_ctx->fsal_export,
-						   req_ctx->export->fullpath,
-						   FSAL_QUOTA_INODES,
-						   req_ctx);
+	    op_ctx->fsal_export->ops->check_quota(op_ctx->fsal_export,
+						   op_ctx->export->fullpath,
+						   FSAL_QUOTA_INODES);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		res->res_symlink3.status = NFS3ERR_DQUOT;
@@ -157,7 +154,6 @@ int nfs3_symlink(nfs_arg_t *arg,
 					  SYMBOLIC_LINK,
 					  mode,
 					  &create_arg,
-					  req_ctx,
 					  &symlink_entry);
 
 	if (cache_status != CACHE_INODE_SUCCESS)
@@ -179,18 +175,17 @@ int nfs3_symlink(nfs_arg_t *arg,
 	/* If owner or owner_group are set, and the credential was
 	 * squashed, then we must squash the set owner and owner_group.
 	 */
-	squash_setattr(req_ctx, &sattr);
+	squash_setattr(&sattr);
 
 	if ((sattr.mask & (ATTR_ATIME | ATTR_MTIME | ATTR_CTIME))
 	    || ((sattr.mask & ATTR_OWNER)
-		&& (req_ctx->creds->caller_uid != sattr.owner))
+		&& (op_ctx->creds->caller_uid != sattr.owner))
 	    || ((sattr.mask & ATTR_GROUP)
-		&& (req_ctx->creds->caller_gid != sattr.group))) {
+		&& (op_ctx->creds->caller_gid != sattr.group))) {
 		/* A call to cache_inode_setattr is required */
 		cache_status = cache_inode_setattr(symlink_entry,
 						   &sattr,
-						   false,
-						   req_ctx);
+						   false);
 
 		if (cache_status != CACHE_INODE_SUCCESS)
 			goto out_fail;
@@ -207,7 +202,7 @@ int nfs3_symlink(nfs_arg_t *arg,
 	if (!nfs3_FSALToFhandle(
 	     &res->res_symlink3.SYMLINK3res_u.resok.obj.post_op_fh3_u.handle,
 	     symlink_entry->obj_handle,
-	     req_ctx->export)) {
+	     op_ctx->export)) {
 		gsh_free(res->res_symlink3.SYMLINK3res_u.resok.obj.
 			 post_op_fh3_u.handle.data.data_val);
 		res->res_symlink3.status = NFS3ERR_BADHANDLE;
@@ -218,12 +213,12 @@ int nfs3_symlink(nfs_arg_t *arg,
 	res->res_symlink3.SYMLINK3res_u.resok.obj.handle_follows = TRUE;
 
 	/* Build entry attributes */
-	nfs_SetPostOpAttr(symlink_entry, req_ctx,
+	nfs_SetPostOpAttr(symlink_entry,
 			  &res->res_symlink3.SYMLINK3res_u.resok.
 			  obj_attributes);
 
 	/* Build Weak Cache Coherency data */
-	nfs_SetWccData(&pre_parent, parent_entry, req_ctx,
+	nfs_SetWccData(&pre_parent, parent_entry,
 		       &res->res_symlink3.SYMLINK3res_u.resok.dir_wcc);
 
 	res->res_symlink3.status = NFS3_OK;
@@ -234,7 +229,7 @@ int nfs3_symlink(nfs_arg_t *arg,
  out_fail:
 	res->res_symlink3.status = nfs3_Errno(cache_status);
 
-	nfs_SetWccData(&pre_parent, parent_entry, req_ctx,
+	nfs_SetWccData(&pre_parent, parent_entry,
 		       &res->res_symlink3.SYMLINK3res_u.resfail.dir_wcc);
 
 	if (nfs_RetryableError(cache_status))

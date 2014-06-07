@@ -44,7 +44,6 @@
  */
 
 fsal_status_t pt_open(struct fsal_obj_handle *obj_hdl,
-		      const struct req_op_context *opctx,
 		      fsal_openflags_t openflags)
 {
 	struct pt_fsal_obj_handle *myself;
@@ -58,7 +57,7 @@ fsal_status_t pt_open(struct fsal_obj_handle *obj_hdl,
 	assert(myself->u.file.fd == -1
 	       && myself->u.file.openflags == FSAL_O_CLOSED);
 
-	status = PTFSAL_open(obj_hdl, opctx, openflags, &fd, NULL);
+	status = PTFSAL_open(obj_hdl, op_ctx, openflags, &fd, NULL);
 	if (FSAL_IS_ERROR(status))
 		return status;
 
@@ -85,7 +84,7 @@ fsal_openflags_t pt_status(struct fsal_obj_handle *obj_hdl)
  */
 
 fsal_status_t pt_read(struct fsal_obj_handle *obj_hdl,
-		      const struct req_op_context *opctx, uint64_t offset,
+		      uint64_t offset,
 		      size_t buffer_size, void *buffer, size_t *read_amount,
 		      bool *end_of_file)
 {
@@ -99,7 +98,8 @@ fsal_status_t pt_read(struct fsal_obj_handle *obj_hdl,
 	       && myself->u.file.openflags != FSAL_O_CLOSED);
 
 	status =
-	    PTFSAL_read(myself, opctx, offset, buffer_size, buffer, read_amount,
+	    PTFSAL_read(myself, op_ctx, offset, buffer_size,
+			buffer, read_amount,
 			end_of_file);
 	if (FSAL_IS_ERROR(status))
 		return status;
@@ -114,7 +114,7 @@ fsal_status_t pt_read(struct fsal_obj_handle *obj_hdl,
  */
 
 fsal_status_t pt_write(struct fsal_obj_handle *obj_hdl,
-		       const struct req_op_context *opctx, uint64_t offset,
+		       uint64_t offset,
 		       size_t buffer_size, void *buffer, size_t *wrote_amount,
 		       bool *fsal_stable)
 {
@@ -127,7 +127,7 @@ fsal_status_t pt_write(struct fsal_obj_handle *obj_hdl,
 	       && myself->u.file.openflags != FSAL_O_CLOSED);
 
 	status =
-	    PTFSAL_write(myself, opctx, offset, buffer_size, buffer,
+	    PTFSAL_write(myself, op_ctx, offset, buffer_size, buffer,
 			 wrote_amount, fsal_stable);
 	return status;
 }
@@ -137,7 +137,6 @@ fsal_status_t pt_write(struct fsal_obj_handle *obj_hdl,
  * for right now, fsync will have to do.
  */
 fsal_status_t pt_commit(struct fsal_obj_handle *obj_hdl,	/* sync */
-			const struct req_op_context *opctx,
 			off_t offset, size_t len)
 {
 	struct pt_fsal_obj_handle *myself;
@@ -148,7 +147,7 @@ fsal_status_t pt_commit(struct fsal_obj_handle *obj_hdl,	/* sync */
 	assert(myself->u.file.fd >= 0
 	       && myself->u.file.openflags != FSAL_O_CLOSED);
 
-	fsal_error = PTFSAL_commit(myself, opctx, offset, len);
+	fsal_error = PTFSAL_commit(myself, op_ctx, offset, len);
 
 	return fsal_error;
 }

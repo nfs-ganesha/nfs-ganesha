@@ -56,7 +56,6 @@
  *
  * @param[in]  arg     NFS argument union
  * @param[in]  export  NFS export list
- * @param[in]  req_ctx Request context
  * @param[in]  worker  Worker thread data
  * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call
@@ -68,7 +67,7 @@
  */
 
 int nfs3_rename(nfs_arg_t *arg,
-		struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+		nfs_worker_data_t *worker,
 		struct svc_req *req, nfs_res_t *res)
 {
 	const char *entry_name = arg->arg_rename3.from.name;
@@ -124,7 +123,7 @@ int nfs3_rename(nfs_arg_t *arg,
 	if (to_exportid < 0 || from_exportid < 0) {
 		LogInfo(COMPONENT_DISPATCH,
 			"NFS%d RENAME Request from client %s has badly formed handle for to dir",
-			req->rq_vers, req_ctx->client->hostaddr_str);
+			req->rq_vers, op_ctx->client->hostaddr_str);
 
 		/* Bad handle, report to client */
 		res->res_rename3.status = NFS3ERR_BADHANDLE;
@@ -139,7 +138,6 @@ int nfs3_rename(nfs_arg_t *arg,
 
 	/* Convert fromdir file handle into a cache_entry */
 	parent_entry = nfs3_FhandleToCache(&arg->arg_rename3.from.dir,
-					   req_ctx,
 					   &res->res_create3.status,
 					   &rc);
 
@@ -148,11 +146,10 @@ int nfs3_rename(nfs_arg_t *arg,
 		goto out;
 	}
 
-	nfs_SetPreOpAttr(parent_entry, req_ctx, &pre_parent);
+	nfs_SetPreOpAttr(parent_entry, &pre_parent);
 
 	/* Convert todir file handle into a cache_entry */
 	new_parent_entry = nfs3_FhandleToCache(&arg->arg_rename3.to.dir,
-					       req_ctx,
 					       &res->res_create3.status,
 					       &rc);
 
@@ -161,7 +158,7 @@ int nfs3_rename(nfs_arg_t *arg,
 		goto out;
 	}
 
-	nfs_SetPreOpAttr(new_parent_entry, req_ctx, &pre_new_parent);
+	nfs_SetPreOpAttr(new_parent_entry, &pre_new_parent);
 
 	if (entry_name == NULL || *entry_name == '\0' || new_entry_name == NULL
 	    || *new_entry_name == '\0') {
@@ -172,18 +169,17 @@ int nfs3_rename(nfs_arg_t *arg,
 	cache_status = cache_inode_rename(parent_entry,
 					  entry_name,
 					  new_parent_entry,
-					  new_entry_name,
-					  req_ctx);
+					  new_entry_name);
 
 	if (cache_status != CACHE_INODE_SUCCESS)
 		goto out_fail;
 
 	res->res_rename3.status = NFS3_OK;
 
-	nfs_SetWccData(&pre_parent, parent_entry, req_ctx,
+	nfs_SetWccData(&pre_parent, parent_entry,
 		       &res->res_rename3.RENAME3res_u.resok.fromdir_wcc);
 
-	nfs_SetWccData(&pre_new_parent, new_parent_entry, req_ctx,
+	nfs_SetWccData(&pre_new_parent, new_parent_entry,
 		       &res->res_rename3.RENAME3res_u.resok.todir_wcc);
 
 	rc = NFS_REQ_OK;
@@ -193,10 +189,10 @@ int nfs3_rename(nfs_arg_t *arg,
  out_fail:
 	res->res_rename3.status = nfs3_Errno(cache_status);
 
-	nfs_SetWccData(&pre_parent, parent_entry, req_ctx,
+	nfs_SetWccData(&pre_parent, parent_entry,
 		       &res->res_rename3.RENAME3res_u.resfail.fromdir_wcc);
 
-	nfs_SetWccData(&pre_new_parent, new_parent_entry, req_ctx,
+	nfs_SetWccData(&pre_new_parent, new_parent_entry,
 		       &res->res_rename3.RENAME3res_u.resfail.todir_wcc);
 
 	/* If we are here, there was an error */

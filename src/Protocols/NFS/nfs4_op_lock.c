@@ -279,15 +279,15 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 		}
 
 		/* Check if lock state belongs to same export */
-		if (lock_state->state_export != data->req_ctx->export) {
+		if (lock_state->state_export != op_ctx->export) {
 			LogEvent(COMPONENT_STATE,
 				 "Lock Owner Export Conflict, Lock held "
 				 "for export %d (%s), request for "
 				 "export %d (%s)",
 				 lock_state->state_export->export_id,
 				 lock_state->state_export->fullpath,
-				 data->req_ctx->export->export_id,
-				 data->req_ctx->export->fullpath);
+				 op_ctx->export->export_id,
+				 op_ctx->export->fullpath);
 			res_LOCK4->status = STATE_INVALID_ARGUMENT;
 			return res_LOCK4->status;
 		}
@@ -498,14 +498,14 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 		glist_init(&lock_state->state_data.lock.state_locklist);
 
 		/* Attach this lock to an export */
-		lock_state->state_export = data->req_ctx->export;
+		lock_state->state_export = op_ctx->export;
 
-		PTHREAD_RWLOCK_wrlock(&data->req_ctx->export->lock);
+		PTHREAD_RWLOCK_wrlock(&op_ctx->export->lock);
 
-		glist_add_tail(&data->req_ctx->export->exp_state_list,
+		glist_add_tail(&op_ctx->export->exp_state_list,
 			       &lock_state->state_export_list);
 
-		PTHREAD_RWLOCK_unlock(&data->req_ctx->export->lock);
+		PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
 
 		/* Add lock state to the list of lock states belonging
 		   to the open state */
@@ -514,14 +514,13 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	if (data->minorversion == 0) {
-		data->req_ctx->clientid =
+		op_ctx->clientid =
 		    &lock_owner->so_owner.so_nfs4_owner.so_clientid;
 	}
 
 	/* Now we have a lock owner and a stateid.  Go ahead and push
 	   lock into SAL (and FSAL). */
 	state_status = state_lock(data->current_entry,
-				  data->req_ctx,
 				  lock_owner,
 				  lock_state,
 				  blocking,
@@ -565,7 +564,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	if (data->minorversion == 0)
-		data->req_ctx->clientid = NULL;
+		op_ctx->clientid = NULL;
 
 	res_LOCK4->status = NFS4_OK;
 

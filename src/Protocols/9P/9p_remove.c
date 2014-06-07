@@ -79,8 +79,9 @@ int _9p_remove(struct _9p_request_data *req9p, void *worker_data,
 				  preply);
 	}
 
-	cache_status =
-	    cache_inode_remove(pfid->ppentry, pfid->name, &pfid->op_context);
+	op_ctx = &pfid->op_context;
+
+	cache_status = cache_inode_remove(pfid->ppentry, pfid->name);
 	if (cache_status != CACHE_INODE_SUCCESS)
 		return _9p_rerror(req9p, worker_data, msgtag,
 				  _9p_tools_errno(cache_status), plenout,

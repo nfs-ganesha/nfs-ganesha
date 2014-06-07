@@ -123,6 +123,7 @@ int _9p_lock(struct _9p_request_data *req9p, void *worker_data,
 		return _9p_rerror(req9p, worker_data, msgtag, EIO, plenout,
 				  preply);
 	}
+	op_ctx = &pfid->op_context;
 
 	/* Tmp hook to avoid lock issue when compiling kernels.
 	 * This should not impact ONE client only
@@ -157,7 +158,7 @@ int _9p_lock(struct _9p_request_data *req9p, void *worker_data,
 		}
 
 		state_status = state_lock(pfid->pentry,
-					  &pfid->op_context, powner, &state,
+					  powner, &state,
 					  STATE_NON_BLOCKING, NULL, &lock,
 					  &holder, &conflict, POSIX_LOCK);
 
@@ -172,7 +173,7 @@ int _9p_lock(struct _9p_request_data *req9p, void *worker_data,
 
 	case _9P_LOCK_TYPE_UNLCK:
 		if (state_unlock(pfid->pentry,
-				 &pfid->op_context, powner, NULL, &lock,
+				 powner, NULL, &lock,
 				 POSIX_LOCK)
 			    != STATE_SUCCESS)
 			status = _9P_LOCK_ERROR;

@@ -85,9 +85,8 @@ static void release(struct fsal_export *exp_hdl)
 	gsh_free(myself);		/* elvis has left the building */
 }
 
-static fsal_status_t get_dynamic_info(struct fsal_obj_handle *obj_hdl,
-				      struct fsal_export *exp_hdl,
-				      const struct req_op_context *opctx,
+static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
+				      struct fsal_obj_handle *obj_hdl,
 				      fsal_dynamicfsinfo_t *infop)
 {
 	struct zfs_fsal_export *myself;
@@ -305,7 +304,6 @@ static struct config_block export_param = {
  */
 
 fsal_status_t zfs_create_export(struct fsal_module *fsal_hdl,
-				struct req_op_context *req_ctx,
 				void *parse_node,
 				const struct fsal_up_vector *up_ops)
 {
@@ -375,7 +373,7 @@ fsal_status_t zfs_create_export(struct fsal_module *fsal_hdl,
 	if (libargs.pool_path)
 		gsh_free(libargs.pool_path);
 	myself->p_vfs = p_snapshots[0].p_vfs;
-	req_ctx->fsal_export = &myself->export;
+	op_ctx->fsal_export = &myself->export;
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 

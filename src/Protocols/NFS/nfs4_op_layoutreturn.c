@@ -142,7 +142,6 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op, compound_data_t *data,
 
 		res_LAYOUTRETURN4->lorr_status = nfs4_return_one_state(
 			data->current_entry,
-			data->req_ctx,
 			arg_LAYOUTRETURN4->lora_layoutreturn.lr_returntype,
 			arg_LAYOUTRETURN4->lora_reclaim ?
 				circumstance_reclaim :
@@ -190,7 +189,7 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op, compound_data_t *data,
 		}
 
 		cache_status =
-		    cache_inode_fsid(data->current_entry, data->req_ctx, &fsid);
+		    cache_inode_fsid(data->current_entry, &fsid);
 
 		if (cache_status != CACHE_INODE_SUCCESS) {
 			res_LAYOUTRETURN4->lorr_status =
@@ -235,7 +234,6 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op, compound_data_t *data,
 				fsal_fsid_t this_fsid;
 				cache_status =
 				    cache_inode_fsid(layout_state->state_entry,
-						     data->req_ctx,
 						     &this_fsid);
 
 				if (cache_status != CACHE_INODE_SUCCESS) {
@@ -252,7 +250,6 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op, compound_data_t *data,
 
 			res_LAYOUTRETURN4->lorr_status = nfs4_return_one_state(
 			    layout_state->state_entry,
-			    data->req_ctx,
 			    arg_LAYOUTRETURN4->lora_layoutreturn.lr_returntype,
 			    arg_LAYOUTRETURN4->lora_reclaim ?
 				circumstance_reclaim : circumstance_client,
@@ -381,7 +378,6 @@ void handle_recalls(struct fsal_layoutreturn_arg *arg, state_t *state,
  * it deletes the state.
  *
  * @param[in]     entry        Cache entry whose layouts we return
- * @param[in]     req_ctx      Request context
  * @param[in]     return_type  Whether this is a file, fs, or server return
  * @param[in]     circumstance Why the layout is being returned
  * @param[in,out] layout_state State whose segments we return
@@ -395,7 +391,6 @@ void handle_recalls(struct fsal_layoutreturn_arg *arg, state_t *state,
  */
 
 nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
-			       struct req_op_context *req_ctx,
 			       layoutreturn_type4 return_type,
 			       enum fsal_layoutreturn_circumstance circumstance,
 			       state_t *layout_state,
@@ -494,7 +489,7 @@ nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
 
 			nfs_status = entry->obj_handle->ops->layoutreturn(
 						entry->obj_handle,
-						req_ctx,
+						op_ctx,
 						body_val ? &lrf_body : NULL,
 						arg);
 
@@ -544,7 +539,7 @@ nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
 
 		nfs_status = entry->obj_handle->ops->layoutreturn(
 					entry->obj_handle,
-					req_ctx, body_val ? &lrf_body : NULL,
+					op_ctx, body_val ? &lrf_body : NULL,
 					arg);
 
 		if (nfs_status != NFS4_OK)

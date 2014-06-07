@@ -44,7 +44,6 @@
 #include "pseudofs_methods.h"
 
 fsal_status_t pseudofs_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
-				    const struct req_op_context *opctx,
 				    unsigned int argcookie,
 				    fsal_xattrent_t *xattrs_tab,
 				    unsigned int xattrs_tabsize,
@@ -58,7 +57,6 @@ fsal_status_t pseudofs_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
 }
 
 fsal_status_t pseudofs_getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
-					   const struct req_op_context *opctx,
 					   const char *xattr_name,
 					   unsigned int *pxattr_id)
 {
@@ -69,7 +67,6 @@ fsal_status_t pseudofs_getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
 }
 
 fsal_status_t pseudofs_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
-					    const struct req_op_context *opctx,
 					    unsigned int xattr_id,
 					    caddr_t buffer_addr,
 					    size_t buffer_size,
@@ -82,8 +79,7 @@ fsal_status_t pseudofs_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 }
 
 fsal_status_t pseudofs_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
-					      const struct req_op_context *
-					      opctx, const char *xattr_name,
+					      const char *xattr_name,
 					      caddr_t buffer_addr,
 					      size_t buffer_size,
 					      size_t *p_output_size)
@@ -95,7 +91,6 @@ fsal_status_t pseudofs_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
 }
 
 fsal_status_t pseudofs_setextattr_value(struct fsal_obj_handle *obj_hdl,
-				      const struct req_op_context *opctx,
 				      const char *xattr_name,
 				      caddr_t buffer_addr, size_t buffer_size,
 				      int create)
@@ -107,7 +102,6 @@ fsal_status_t pseudofs_setextattr_value(struct fsal_obj_handle *obj_hdl,
 }
 
 fsal_status_t pseudofs_setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
-					    const struct req_op_context *opctx,
 					    unsigned int xattr_id,
 					    caddr_t buffer_addr,
 					    size_t buffer_size)
@@ -119,7 +113,6 @@ fsal_status_t pseudofs_setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 }
 
 fsal_status_t pseudofs_getextattr_attrs(struct fsal_obj_handle *obj_hdl,
-				      const struct req_op_context *opctx,
 				      unsigned int xattr_id,
 				      struct attrlist *attrs)
 {
@@ -130,7 +123,6 @@ fsal_status_t pseudofs_getextattr_attrs(struct fsal_obj_handle *obj_hdl,
 }
 
 fsal_status_t pseudofs_remove_extattr_by_id(struct fsal_obj_handle *obj_hdl,
-					  const struct req_op_context *opctx,
 					  unsigned int xattr_id)
 {
 	/* PSEUDOFS doesn't support xattr */
@@ -140,7 +132,6 @@ fsal_status_t pseudofs_remove_extattr_by_id(struct fsal_obj_handle *obj_hdl,
 }
 
 fsal_status_t pseudofs_remove_extattr_by_name(struct fsal_obj_handle *obj_hdl,
-					    const struct req_op_context *opctx,
 					    const char *xattr_name)
 {
 	/* PSEUDOFS doesn't support xattr */

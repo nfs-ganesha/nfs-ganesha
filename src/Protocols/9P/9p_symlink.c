@@ -94,6 +94,7 @@ int _9p_symlink(struct _9p_request_data *req9p, void *worker_data,
 				  preply);
 	}
 
+	op_ctx = &pfid->op_context;
 	snprintf(symlink_name, MAXNAMLEN, "%.*s", *name_len, name_str);
 
 	create_arg.link_content = gsh_malloc(MAXPATHLEN);
@@ -109,7 +110,7 @@ int _9p_symlink(struct _9p_request_data *req9p, void *worker_data,
 	 * flags is not yet used */
 	cache_status =
 	    cache_inode_create(pfid->pentry, symlink_name, SYMBOLIC_LINK, mode,
-			       &create_arg, &pfid->op_context, &pentry_symlink);
+			       &create_arg, &pentry_symlink);
 
 	if (create_arg.link_content != NULL)
 		gsh_free(create_arg.link_content);
@@ -122,8 +123,7 @@ int _9p_symlink(struct _9p_request_data *req9p, void *worker_data,
 	/* This is not a TATTACH fid */
 	pfid->from_attach = FALSE;
 
-	cache_status =
-	    cache_inode_fileid(pentry_symlink, &pfid->op_context, &fileid);
+	cache_status = cache_inode_fileid(pentry_symlink, &fileid);
 
 	/* put the entry:
 	 * we don't want to remember it even if cache_inode_fileid fails. */

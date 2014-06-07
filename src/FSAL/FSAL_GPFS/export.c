@@ -63,9 +63,8 @@ static void release(struct fsal_export *exp_hdl)
 	gsh_free(myself);		/* elvis has left the building */
 }
 
-static fsal_status_t get_dynamic_info(struct fsal_obj_handle *obj_hdl,
-				      struct fsal_export *exp_hdl,
-				      const struct req_op_context *opctx,
+static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
+				      struct fsal_obj_handle *obj_hdl,
 				      fsal_dynamicfsinfo_t *infop)
 {
 	fsal_status_t status;
@@ -204,7 +203,6 @@ static uint32_t fs_xattr_access_rights(struct fsal_export *exp_hdl)
 
 static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 			       const char *filepath, int quota_type,
-			       struct req_op_context *req_ctx,
 			       fsal_quota_t *pquota)
 {
 	struct gpfs_fsal_export *myself;
@@ -235,7 +233,7 @@ static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 		goto out;
 	}
 	id = (quota_type ==
-	      USRQUOTA) ? req_ctx->creds->caller_uid : req_ctx->creds->
+	      USRQUOTA) ? op_ctx->creds->caller_uid : op_ctx->creds->
 	    caller_gid;
 	memset((char *)&fs_quota, 0, sizeof(struct dqblk));
 	retval = quotactl(QCMD(Q_GETQUOTA, quota_type), myself->root_fs->device,
@@ -264,7 +262,6 @@ static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 
 static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 			       const char *filepath, int quota_type,
-			       struct req_op_context *req_ctx,
 			       fsal_quota_t *pquota, fsal_quota_t *presquota)
 {
 	struct gpfs_fsal_export *myself;
@@ -295,7 +292,7 @@ static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 		goto err;
 	}
 	id = (quota_type ==
-	      USRQUOTA) ? req_ctx->creds->caller_uid : req_ctx->creds->
+	      USRQUOTA) ? op_ctx->creds->caller_uid : op_ctx->creds->
 	    caller_gid;
 	memset((char *)&fs_quota, 0, sizeof(struct dqblk));
 	if (pquota->bhardlimit != 0) {
@@ -326,8 +323,7 @@ static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 		goto err;
 	}
 	if (presquota != NULL) {
-		return get_quota(exp_hdl, filepath, quota_type, req_ctx,
-				 presquota);
+		return get_quota(exp_hdl, filepath, quota_type, presquota);
 	}
  err:
 	return fsalstat(fsal_error, retval);
@@ -755,7 +751,6 @@ void gpfs_unexport_filesystems(struct gpfs_fsal_export *exp)
  */
 
 fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
-				 struct req_op_context *req_ctx,
 				 void *parse_node,
 				 const struct fsal_up_vector *up_ops)
 {
@@ -774,7 +769,7 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 
 	retval = fsal_internal_version();
 	LogInfo(COMPONENT_FSAL, "GPFS get version is %d options 0x%X", retval,
-		req_ctx->export->export_perms.options);
+		op_ctx->export->export_perms.options);
 
 	retval = fsal_export_init(&myself->export);
 	if (retval != 0) {
@@ -802,7 +797,7 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 		goto errout;
 	}
 
-	retval = claim_posix_filesystems(req_ctx->export->fullpath,
+	retval = claim_posix_filesystems(op_ctx->export->fullpath,
 					 fsal_hdl,
 					 &myself->export,
 					 gpfs_claim_filesystem,
@@ -812,13 +807,13 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 	if (retval != 0) {
 		LogCrit(COMPONENT_FSAL,
 			"claim_posix_filesystems(%s) returned %s (%d)",
-			req_ctx->export->fullpath,
+			op_ctx->export->fullpath,
 			strerror(retval), retval);
 		fsal_error = posix2fsal_error(retval);
 		goto errout;
 	}
 
-	req_ctx->fsal_export = &myself->export;
+	op_ctx->fsal_export = &myself->export;
 
 	gpfs_ganesha(OPENHANDLE_GET_VERIFIER, &GPFS_write_verifier);
 
@@ -828,7 +823,7 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 	if (myself->pnfs_enabled) {
 		LogInfo(COMPONENT_FSAL,
 			"gpfs_fsal_create: pnfs was enabled for [%s]",
-			req_ctx->export->fullpath);
+			op_ctx->export->fullpath);
 		export_ops_pnfs(myself->export.ops);
 		handle_ops_pnfs(myself->export.obj_ops);
 		ds_ops_init(myself->export.ds_ops);

@@ -96,6 +96,7 @@ int _9p_mknod(struct _9p_request_data *req9p, void *worker_data,
 				  preply);
 	}
 
+	op_ctx = &pfid->op_context;
 	snprintf(obj_name, MAXNAMLEN, "%.*s", *name_len, name_str);
 
 	/* Set the nodetype */
@@ -118,7 +119,7 @@ int _9p_mknod(struct _9p_request_data *req9p, void *worker_data,
    /**  @todo  BUGAZOMEU the gid parameter is not used yet */
 	cache_status =
 	    cache_inode_create(pfid->pentry, obj_name, nodetype, *mode,
-			       &create_arg, &pfid->op_context, &pentry_newobj);
+			       &create_arg, &pentry_newobj);
 	if (pentry_newobj == NULL)
 		return _9p_rerror(req9p, worker_data, msgtag,
 				  _9p_tools_errno(cache_status), plenout,

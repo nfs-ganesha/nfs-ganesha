@@ -43,7 +43,6 @@
 
 /* common code gpfs_open and gpfs_reopen */
 fsal_status_t gpfs_open2(struct fsal_obj_handle *obj_hdl,
-			 const struct req_op_context *opctx,
 			 fsal_openflags_t openflags, bool reopen)
 {
 	struct gpfs_fsal_obj_handle *myself;
@@ -61,7 +60,7 @@ fsal_status_t gpfs_open2(struct fsal_obj_handle *obj_hdl,
 		       myself->u.file.openflags == FSAL_O_CLOSED);
 	}
 
-	status = GPFSFSAL_open(obj_hdl, opctx, openflags, &fd, NULL, reopen);
+	status = GPFSFSAL_open(obj_hdl, op_ctx, openflags, &fd, NULL, reopen);
 	if (FSAL_IS_ERROR(status))
 		return status;
 
@@ -76,10 +75,9 @@ fsal_status_t gpfs_open2(struct fsal_obj_handle *obj_hdl,
  */
 
 fsal_status_t gpfs_open(struct fsal_obj_handle *obj_hdl,
-			const struct req_op_context *opctx,
 			fsal_openflags_t openflags)
 {
-	return gpfs_open2(obj_hdl, opctx, openflags, 0);
+	return gpfs_open2(obj_hdl, openflags, 0);
 }
 
 /** gpfs_reopen
@@ -90,10 +88,9 @@ fsal_status_t gpfs_open(struct fsal_obj_handle *obj_hdl,
  */
 
 fsal_status_t gpfs_reopen(struct fsal_obj_handle *obj_hdl,
-			  const struct req_op_context *opctx,
 			  fsal_openflags_t openflags)
 {
-	return gpfs_open2(obj_hdl, opctx, openflags, 1);
+	return gpfs_open2(obj_hdl, openflags, 1);
 }
 
 /* gpfs_status
@@ -113,7 +110,7 @@ fsal_openflags_t gpfs_status(struct fsal_obj_handle *obj_hdl)
  */
 
 fsal_status_t gpfs_read(struct fsal_obj_handle *obj_hdl,
-			const struct req_op_context *opctx, uint64_t offset,
+			uint64_t offset,
 			size_t buffer_size, void *buffer, size_t *read_amount,
 			bool *end_of_file)
 {
@@ -140,7 +137,7 @@ fsal_status_t gpfs_read(struct fsal_obj_handle *obj_hdl,
 }
 
 fsal_status_t gpfs_read_plus(struct fsal_obj_handle *obj_hdl,
-			const struct req_op_context *opctx, uint64_t offset,
+			uint64_t offset,
 			size_t buffer_size, void *buffer, size_t *read_amount,
 			bool *end_of_file, struct io_info *info)
 {
@@ -200,7 +197,7 @@ fsal_status_t gpfs_read_plus(struct fsal_obj_handle *obj_hdl,
  */
 
 fsal_status_t gpfs_write(struct fsal_obj_handle *obj_hdl,
-			 const struct req_op_context *opctx, uint64_t offset,
+			 uint64_t offset,
 			 size_t buffer_size, void *buffer,
 			 size_t *write_amount, bool *fsal_stable)
 {
@@ -214,7 +211,7 @@ fsal_status_t gpfs_write(struct fsal_obj_handle *obj_hdl,
 
 	status =
 	    GPFSFSAL_write(myself->u.file.fd, offset, buffer_size, buffer,
-			   write_amount, fsal_stable, opctx);
+			   write_amount, fsal_stable, op_ctx);
 	return status;
 }
 
@@ -224,7 +221,7 @@ fsal_status_t gpfs_write(struct fsal_obj_handle *obj_hdl,
 
 static
 fsal_status_t gpfs_clear(struct fsal_obj_handle *obj_hdl,
-			 const struct req_op_context *opctx, uint64_t offset,
+			 uint64_t offset,
 			 size_t buffer_size, void *buffer,
 			 size_t *write_amount, bool *fsal_stable,
 			 bool allocated)
@@ -239,7 +236,7 @@ fsal_status_t gpfs_clear(struct fsal_obj_handle *obj_hdl,
 
 	status =
 	    GPFSFSAL_clear(myself->u.file.fd, offset, buffer_size, buffer,
-			   write_amount, fsal_stable, opctx, allocated);
+			   write_amount, fsal_stable, op_ctx, allocated);
 	return status;
 }
 
@@ -248,17 +245,17 @@ fsal_status_t gpfs_clear(struct fsal_obj_handle *obj_hdl,
  */
 
 fsal_status_t gpfs_write_plus(struct fsal_obj_handle *obj_hdl,
-				const struct req_op_context *opctx,
 				uint64_t seek_descriptor, size_t buffer_size,
 				void *buffer, size_t *write_amount,
 				bool *fsal_stable, struct io_info *info)
 {
 	if (info->io_content.what == NFS4_CONTENT_DATA) {
-		return gpfs_write(obj_hdl, opctx, seek_descriptor, buffer_size,
+		return gpfs_write(obj_hdl, seek_descriptor, buffer_size,
 				buffer, write_amount, fsal_stable);
 	}
 	if (info->io_content.what == NFS4_CONTENT_HOLE) {
-		return gpfs_clear(obj_hdl, opctx, seek_descriptor, buffer_size,
+		return gpfs_clear(obj_hdl,
+				  seek_descriptor, buffer_size,
 				  buffer, write_amount, fsal_stable,
 				  info->io_content.hole.di_allocated);
 	}
@@ -270,7 +267,6 @@ fsal_status_t gpfs_write_plus(struct fsal_obj_handle *obj_hdl,
  */
 
 fsal_status_t gpfs_seek(struct fsal_obj_handle *obj_hdl,
-				const struct req_op_context *opctx,
 				struct io_info *info)
 {
 	struct fseek_arg arg;
@@ -312,7 +308,6 @@ fsal_status_t gpfs_seek(struct fsal_obj_handle *obj_hdl,
  */
 
 fsal_status_t gpfs_io_advise(struct fsal_obj_handle *obj_hdl,
-				const struct req_op_context *opctx,
 				struct io_hints *hints)
 {
 	struct fadvise_arg arg;
@@ -346,7 +341,6 @@ fsal_status_t gpfs_io_advise(struct fsal_obj_handle *obj_hdl,
  */
 
 fsal_status_t gpfs_commit(struct fsal_obj_handle *obj_hdl,	/* sync */
-			  const struct req_op_context *opctx,
 			  off_t offset, size_t len)
 {
 	struct fsync_arg arg;
@@ -383,7 +377,7 @@ fsal_status_t gpfs_commit(struct fsal_obj_handle *obj_hdl,	/* sync */
  */
 
 fsal_status_t gpfs_lock_op(struct fsal_obj_handle *obj_hdl,
-			   const struct req_op_context *opctx, void *p_owner,
+			   void *p_owner,
 			   fsal_lock_op_t lock_op,
 			   fsal_lock_param_t *request_lock,
 			   fsal_lock_param_t *conflicting_lock)
@@ -416,7 +410,7 @@ fsal_status_t gpfs_lock_op(struct fsal_obj_handle *obj_hdl,
 		request_lock->lock_start,
 		request_lock->lock_length);
 
-	status = GPFSFSAL_lock_op(opctx->fsal_export, obj_hdl,
+	status = GPFSFSAL_lock_op(op_ctx->fsal_export, obj_hdl,
 				  p_owner, lock_op, *request_lock,
 				  conflicting_lock);
 	return status;

@@ -47,22 +47,19 @@
 #include "nfs4.h"
 #include "mount.h"
 
-bool get_req_creds(struct svc_req *req,
-		   struct req_op_context *req_ctx);
+bool get_req_creds(struct svc_req *req);
 
-void init_credentials(struct req_op_context *req_ctx);
-void clean_credentials(struct req_op_context *req_ctx);
+void init_credentials(void);
+void clean_credentials(void);
 
-void squash_setattr(struct req_op_context *req_ctx,
-		    struct attrlist *attr);
+void squash_setattr(struct attrlist *attr);
 
 int nfs4_MakeCred(compound_data_t *);
 
 cache_inode_status_t nfs_access_op(cache_entry_t *entry,
 				   uint32_t requested_access,
 				   uint32_t *granted_access,
-				   uint32_t *supported_access,
-				   struct req_op_context *req_ctx);
+				   uint32_t *supported_access);
 
 bool nfs_compare_clientcred(nfs_client_cred_t *cred1,
 			    nfs_client_cred_t *cred2);

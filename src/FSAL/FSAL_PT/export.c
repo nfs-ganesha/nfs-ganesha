@@ -70,9 +70,8 @@ static void release(struct fsal_export *exp_hdl)
 	gsh_free(myself);	/* elvis has left the building */
 }
 
-static fsal_status_t get_dynamic_info(struct fsal_obj_handle *obj_hdl,
-				      struct fsal_export *exp_hdl,
-				      const struct req_op_context *opctx,
+static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
+				      struct fsal_obj_handle *obj_hdl,
 				      fsal_dynamicfsinfo_t *infop)
 {
 	struct pt_fsal_obj_handle *myself;
@@ -85,7 +84,7 @@ static fsal_status_t get_dynamic_info(struct fsal_obj_handle *obj_hdl,
 	}
 	myself = container_of(obj_hdl, struct pt_fsal_obj_handle, obj_handle);
 
-	retval = ptfsal_dynamic_fsinfo(myself, opctx, infop);
+	retval = ptfsal_dynamic_fsinfo(myself, op_ctx, infop);
 
 	if (retval < 0) {
 		fsal_error = posix2fsal_error(errno);
@@ -272,7 +271,6 @@ static struct config_block export_param = {
  */
 
 fsal_status_t pt_create_export(struct fsal_module *fsal_hdl,
-			       struct req_op_context *req_ctx,
 			       void *parse_node,
 			       const struct fsal_up_vector *up_ops)
 {
@@ -313,7 +311,7 @@ fsal_status_t pt_create_export(struct fsal_module *fsal_hdl,
 		retval = EINVAL;
 		goto errout;
 	}
-	req_ctx->fsal_export = &myself->export;
+	op_ctx->fsal_export = &myself->export;
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 

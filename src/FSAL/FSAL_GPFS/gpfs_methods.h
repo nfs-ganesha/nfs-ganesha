@@ -12,12 +12,10 @@ struct fsal_staticfsinfo_t *gpfs_staticinfo(struct fsal_module *hdl);
  */
 
 fsal_status_t gpfs_lookup_path(struct fsal_export *exp_hdl,
-			       const struct req_op_context *opctx,
 			       const char *path,
 			       struct fsal_obj_handle **handle);
 
 fsal_status_t gpfs_create_handle(struct fsal_export *exp_hdl,
-				 const struct req_op_context *opctx,
 				 struct gsh_buffdesc *hdl_desc,
 				 struct fsal_obj_handle **handle);
 
@@ -105,40 +103,35 @@ struct gpfs_fsal_obj_handle {
 
 	/* I/O management */
 fsal_status_t gpfs_open(struct fsal_obj_handle *obj_hdl,
-			const struct req_op_context *opctx,
 			fsal_openflags_t openflags);
 fsal_status_t gpfs_reopen(struct fsal_obj_handle *obj_hdl,
-			  const struct req_op_context *opctx,
 			  fsal_openflags_t openflags);
 fsal_openflags_t gpfs_status(struct fsal_obj_handle *obj_hdl);
 fsal_status_t gpfs_read(struct fsal_obj_handle *obj_hdl,
-			const struct req_op_context *opctx, uint64_t offset,
+			uint64_t offset,
 			size_t buffer_size, void *buffer, size_t *read_amount,
 			bool *end_of_file);
 fsal_status_t gpfs_read_plus(struct fsal_obj_handle *obj_hdl,
-			const struct req_op_context *opctx, uint64_t offset,
+			uint64_t offset,
 			size_t buffer_size, void *buffer, size_t *read_amount,
 			bool *end_of_file, struct io_info *info);
 fsal_status_t gpfs_write(struct fsal_obj_handle *obj_hdl,
-			 const struct req_op_context *opctx, uint64_t offset,
+			 uint64_t offset,
 			 size_t buffer_size, void *buffer,
 			 size_t *write_amount, bool *fsal_stable);
 fsal_status_t gpfs_write_plus(struct fsal_obj_handle *obj_hdl,
-			 const struct req_op_context *opctx, uint64_t offset,
+			 uint64_t offset,
 			 size_t buffer_size, void *buffer,
 			 size_t *write_amount, bool *fsal_stable,
 			 struct io_info *info);
 fsal_status_t gpfs_seek(struct fsal_obj_handle *obj_hdl,
-			 const struct req_op_context *opctx,
 			 struct io_info *info);
 fsal_status_t gpfs_io_advise(struct fsal_obj_handle *obj_hdl,
-			 const struct req_op_context *opctx,
 			 struct io_hints *hints);
 fsal_status_t gpfs_commit(struct fsal_obj_handle *obj_hdl,	/* sync */
-			  const struct req_op_context *opctx,
 			  off_t offset, size_t len);
 fsal_status_t gpfs_lock_op(struct fsal_obj_handle *obj_hdl,
-			   const struct req_op_context *opctx, void *p_owner,
+			   void *p_owner,
 			   fsal_lock_op_t lock_op,
 			   fsal_lock_param_t *request_lock,
 			   fsal_lock_param_t *conflicting_lock);

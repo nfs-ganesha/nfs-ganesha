@@ -41,14 +41,12 @@
 
 #include <sys/types.h>
 
-void server_stats_nfs_done(struct req_op_context *req_ctx,
-			   request_data_t *reqdata, int rc, bool dup);
+void server_stats_nfs_done(request_data_t *reqdata, int rc, bool dup);
 
-void server_stats_io_done(struct req_op_context *req_ctx, size_t requested,
+void server_stats_io_done(size_t requested,
 			  size_t transferred, bool success, bool is_write);
-void server_stats_compound_done(struct req_op_context *req_ctx, int num_ops,
-				int status);
-void server_stats_nfsv4_op_done(struct req_op_context *req_ctx, int proto_op,
+void server_stats_compound_done(int num_ops, int status);
+void server_stats_nfsv4_op_done(int proto_op,
 				nsecs_elapsed_t start_time, int status);
 void server_stats_transport_done(struct gsh_client *client,
 				uint64_t rx_bytes, uint64_t rx_pkt,

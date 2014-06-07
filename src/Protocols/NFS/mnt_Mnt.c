@@ -46,7 +46,6 @@
  *
  * @param[in]  arg     The export path to be mounted
  * @param[in]  export  The export list
- * @param[in]  req_ctx  ignored
  * @param[in]  worker  ignored
  * @param[in]  req     ignored
  * @param[out] res     Result structure.
@@ -54,7 +53,7 @@
  */
 
 int mnt_Mnt(nfs_arg_t *arg,
-	    struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+	    nfs_worker_data_t *worker,
 	    struct svc_req *req, nfs_res_t *res)
 {
 	struct gsh_export *export = NULL;
@@ -109,19 +108,19 @@ int mnt_Mnt(nfs_arg_t *arg,
 	}
 
 	/* set the export in the context */
-	req_ctx->export = export;
-	req_ctx->fsal_export = req_ctx->export->fsal_export;
+	op_ctx->export = export;
+	op_ctx->fsal_export = op_ctx->export->fsal_export;
 
 	/* Check access based on client. Don't bother checking TCP/UDP as some
 	 * clients use UDP for MOUNT even when they will use TCP for NFS.
 	 */
-	export_check_access(req_ctx);
+	export_check_access();
 
-	if ((req_ctx->export_perms->options & EXPORT_OPTION_NFSV3) == 0) {
+	if ((op_ctx->export_perms->options & EXPORT_OPTION_NFSV3) == 0) {
 		LogInfo(COMPONENT_NFSPROTO,
 			"MOUNT: Export entry %s does not support NFS v3 for client %s",
 			export->fullpath,
-			req_ctx->client->hostaddr_str);
+			op_ctx->client->hostaddr_str);
 		res->res_mnt3.fhs_status = MNT3ERR_ACCES;
 		goto out;
 	}
@@ -139,9 +138,8 @@ int mnt_Mnt(nfs_arg_t *arg,
 		LogEvent(COMPONENT_NFSPROTO,
 			 "MOUNT: Performance warning: Export entry is not cached");
 
-		if (FSAL_IS_ERROR(req_ctx->fsal_export->ops->lookup_path(
-						req_ctx->fsal_export,
-						req_ctx,
+		if (FSAL_IS_ERROR(op_ctx->fsal_export->ops->lookup_path(
+						op_ctx->fsal_export,
 						arg->arg_mnt,
 						&pfsal_handle))) {
 			res->res_mnt3.fhs_status = MNT3ERR_ACCES;
@@ -177,19 +175,19 @@ int mnt_Mnt(nfs_arg_t *arg,
 	/* Return the supported authentication flavor in V3 based
 	 * on the client's export permissions.
 	 */
-	if (req_ctx->export_perms->options & EXPORT_OPTION_AUTH_NONE)
+	if (op_ctx->export_perms->options & EXPORT_OPTION_AUTH_NONE)
 		auth_flavor[index_auth++] = AUTH_NONE;
-	if (req_ctx->export_perms->options & EXPORT_OPTION_AUTH_UNIX)
+	if (op_ctx->export_perms->options & EXPORT_OPTION_AUTH_UNIX)
 		auth_flavor[index_auth++] = AUTH_UNIX;
 #ifdef _HAVE_GSSAPI
 	if (nfs_param.krb5_param.active_krb5 == TRUE) {
-		if (req_ctx->export_perms->options &
+		if (op_ctx->export_perms->options &
 		    EXPORT_OPTION_RPCSEC_GSS_NONE)
 			auth_flavor[index_auth++] = MNT_RPC_GSS_NONE;
-		if (req_ctx->export_perms->options &
+		if (op_ctx->export_perms->options &
 		    EXPORT_OPTION_RPCSEC_GSS_INTG)
 			auth_flavor[index_auth++] = MNT_RPC_GSS_INTEGRITY;
-		if (req_ctx->export_perms->options &
+		if (op_ctx->export_perms->options &
 		    EXPORT_OPTION_RPCSEC_GSS_PRIV)
 			auth_flavor[index_auth++] = MNT_RPC_GSS_PRIVACY;
 	}
@@ -197,7 +195,7 @@ int mnt_Mnt(nfs_arg_t *arg,
 
 	LogDebug(COMPONENT_NFSPROTO,
 		 "MOUNT: Entry supports %d different flavours handle=%s for client %s",
-		 index_auth, dumpfh, req_ctx->client->hostaddr_str);
+		 index_auth, dumpfh, op_ctx->client->hostaddr_str);
 
 	mountres3_ok * const RES_MOUNTINFO =
 	    &res->res_mnt3.mountres3_u.mountinfo;
@@ -217,8 +215,8 @@ int mnt_Mnt(nfs_arg_t *arg,
 
  out:
 	if (export != NULL) {
-		req_ctx->export = NULL;
-		req_ctx->fsal_export = NULL;
+		op_ctx->export = NULL;
+		op_ctx->fsal_export = NULL;
 		put_gsh_export(export);
 	}
 	return retval;

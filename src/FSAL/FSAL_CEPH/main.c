@@ -76,7 +76,6 @@ static const char *module_name = "Ceph";
  */
 
 static fsal_status_t create_export(struct fsal_module *module,
-				   struct req_op_context *req_ctx,
 				   void *parse_node,
 				   const struct fsal_up_vector *up_ops)
 {
@@ -87,7 +86,7 @@ static fsal_status_t create_export(struct fsal_module *module,
 	/* The internal export object */
 	struct export *export = NULL;
 	/* A fake argument list for Ceph */
-	const char *argv[] = { "FSAL_CEPH", req_ctx->export->fullpath };
+	const char *argv[] = { "FSAL_CEPH", op_ctx->export->fullpath };
 	/* Return code from Ceph calls */
 	int ceph_status = 0;
 	/* Root inode */
@@ -106,7 +105,7 @@ static fsal_status_t create_export(struct fsal_module *module,
 		status.major = ERR_FSAL_NOMEM;
 		LogCrit(COMPONENT_FSAL,
 			"Unable to allocate export object for %s.",
-			req_ctx->export->fullpath);
+			op_ctx->export->fullpath);
 		goto error;
 	}
 
@@ -114,7 +113,7 @@ static fsal_status_t create_export(struct fsal_module *module,
 		status.major = ERR_FSAL_NOMEM;
 		LogCrit(COMPONENT_FSAL,
 			"Unable to allocate export ops vectors for %s.",
-			req_ctx->export->fullpath);
+			op_ctx->export->fullpath);
 		goto error;
 	}
 	export_ops_init(export->export.ops);
@@ -181,7 +180,7 @@ static fsal_status_t create_export(struct fsal_module *module,
 	}
 
 	export->root = handle;
-	req_ctx->fsal_export = &export->export;
+	op_ctx->fsal_export = &export->export;
 	return status;
 
  error:

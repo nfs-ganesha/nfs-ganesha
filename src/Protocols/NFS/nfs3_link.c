@@ -56,7 +56,6 @@
  *
  * @param[in]  arg     NFS argument union
  * @param[in]  export  NFS export list
- * @param[in]  req_ctx Request context
  * @param[in]  worker  Worker thread data
  * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call
@@ -68,7 +67,7 @@
  */
 
 int nfs3_link(nfs_arg_t *arg,
-	      struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+	      nfs_worker_data_t *worker,
 	      struct svc_req *req, nfs_res_t *res)
 {
 	const char *link_name = arg->arg_link3.link.name;
@@ -116,7 +115,7 @@ int nfs3_link(nfs_arg_t *arg,
 	if (to_exportid < 0 || from_exportid < 0) {
 		LogInfo(COMPONENT_DISPATCH,
 			"NFS%d LINK Request from client %s has badly formed handle for link dir",
-			req->rq_vers, req_ctx->client->hostaddr_str);
+			req->rq_vers, op_ctx->client->hostaddr_str);
 
 		/* Bad handle, report to client */
 		res->res_link3.status = NFS3ERR_BADHANDLE;
@@ -131,7 +130,6 @@ int nfs3_link(nfs_arg_t *arg,
 
 	/* Get entry for parent directory */
 	parent_entry = nfs3_FhandleToCache(&arg->arg_link3.link.dir,
-					   req_ctx,
 					   &res->res_link3.status,
 					   &rc);
 
@@ -140,10 +138,9 @@ int nfs3_link(nfs_arg_t *arg,
 		goto out;
 	}
 
-	nfs_SetPreOpAttr(parent_entry, req_ctx, &pre_parent);
+	nfs_SetPreOpAttr(parent_entry, &pre_parent);
 
 	target_entry = nfs3_FhandleToCache(&arg->arg_link3.file,
-					   req_ctx,
 					   &res->res_link3.status,
 					   &rc);
 
@@ -168,18 +165,15 @@ int nfs3_link(nfs_arg_t *arg,
 		else {
 			cache_status = cache_inode_link(target_entry,
 							parent_entry,
-							link_name,
-							req_ctx);
+							link_name);
 
 			if (cache_status == CACHE_INODE_SUCCESS) {
 				nfs_SetPostOpAttr(target_entry,
-						  req_ctx,
 						  &(res->res_link3.LINK3res_u.
 						    resok.file_attributes));
 
 				nfs_SetWccData(&pre_parent,
 					       parent_entry,
-					       req_ctx,
 					       &(res->res_link3.LINK3res_u.
 						 resok.linkdir_wcc));
 				res->res_link3.status = NFS3_OK;
@@ -196,10 +190,10 @@ int nfs3_link(nfs_arg_t *arg,
 	}
 
 	res->res_link3.status = nfs3_Errno(cache_status);
-	nfs_SetPostOpAttr(target_entry, req_ctx,
+	nfs_SetPostOpAttr(target_entry,
 			  &(res->res_link3.LINK3res_u.resfail.file_attributes));
 
-	nfs_SetWccData(&pre_parent, parent_entry, req_ctx,
+	nfs_SetWccData(&pre_parent, parent_entry,
 		       &res->res_link3.LINK3res_u.resfail.linkdir_wcc);
 
 	rc = NFS_REQ_OK;

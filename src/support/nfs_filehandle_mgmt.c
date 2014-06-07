@@ -111,7 +111,6 @@ int nfs4_AllocateFH(nfs_fh4 *fh)
  * Validates and Converts a V3 file handle and then gets the cache entry.
  *
  * @param fh3 [IN] pointer to the file handle to be converted
- * @param req_ctx [IN] request context
  * @param exp_list [IN] export fsal to use
  * @param status [OUT] protocol status
  * @param rc [OUT] operation status
@@ -120,7 +119,6 @@ int nfs4_AllocateFH(nfs_fh4 *fh)
  *
  */
 cache_entry_t *nfs3_FhandleToCache(nfs_fh3 *fh3,
-				   struct req_op_context *req_ctx,
 				   nfsstat3 *status,
 				   int *rc)
 {
@@ -143,9 +141,9 @@ cache_entry_t *nfs3_FhandleToCache(nfs_fh3 *fh3,
 	/* Cast the fh as a non opaque structure */
 	v3_handle = (file_handle_v3_t *) (fh3->data.data_val);
 
-	assert(v3_handle->exportid == req_ctx->export->export_id);
+	assert(v3_handle->exportid == op_ctx->export->export_id);
 
-	export = req_ctx->fsal_export;
+	export = op_ctx->fsal_export;
 
 	/* Give the export a crack at it */
 	fsal_data.export = export;
@@ -160,7 +158,7 @@ cache_entry_t *nfs3_FhandleToCache(nfs_fh3 *fh3,
 	if (FSAL_IS_ERROR(fsal_status))
 		cache_status = cache_inode_error_convert(fsal_status);
 	else
-		cache_status = cache_inode_get(&fsal_data, req_ctx, &entry);
+		cache_status = cache_inode_get(&fsal_data, &entry);
 
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		*status = nfs3_Errno(cache_status);

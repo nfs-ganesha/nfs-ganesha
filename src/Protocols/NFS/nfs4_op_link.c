@@ -103,13 +103,13 @@ int nfs4_op_link(struct nfs_argop4 *op, compound_data_t *data,
 	dir_entry = data->current_entry;
 
 	res_LINK4->LINK4res_u.resok4.cinfo.before =
-	    cache_inode_get_changeid4(dir_entry, data->req_ctx);
+	    cache_inode_get_changeid4(dir_entry);
 
 	file_entry = data->saved_entry;
 
 	/* make the link */
 	cache_status =
-	    cache_inode_link(file_entry, dir_entry, newname, data->req_ctx);
+	    cache_inode_link(file_entry, dir_entry, newname);
 
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		res_LINK4->status = nfs4_Errno(cache_status);
@@ -117,7 +117,7 @@ int nfs4_op_link(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	res_LINK4->LINK4res_u.resok4.cinfo.after =
-	    cache_inode_get_changeid4(dir_entry, data->req_ctx);
+	    cache_inode_get_changeid4(dir_entry);
 	res_LINK4->LINK4res_u.resok4.cinfo.atomic = FALSE;
 
 	res_LINK4->status = NFS4_OK;

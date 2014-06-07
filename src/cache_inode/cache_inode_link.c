@@ -57,7 +57,6 @@
  *                      not be a directory.
  * @param[in]  dest_dir The directory in which to create the new name
  * @param[in]  name     The new name to add to the file
- * @param[in]  req_ctx  FSAL credentials
  *
  * @retval CACHE_INODE_SUCCESS if operation is a success
  * @retval CACHE_INODE_BAD_TYPE either source or destination have
@@ -68,8 +67,7 @@
 cache_inode_status_t
 cache_inode_link(cache_entry_t *entry,
 		 cache_entry_t *dest_dir,
-		 const char *name,
-		 struct req_op_context *req_ctx)
+		 const char *name)
 {
 	fsal_status_t fsal_status = { 0, 0 };
 	cache_inode_status_t status = CACHE_INODE_SUCCESS;
@@ -91,11 +89,11 @@ cache_inode_link(cache_entry_t *entry,
 	/* Rather than performing a lookup first, just try to make the
 	   link and return the FSAL's error if it fails. */
 	fsal_status =
-	    entry->obj_handle->ops->link(entry->obj_handle, req_ctx,
+	    entry->obj_handle->ops->link(entry->obj_handle,
 					 dest_dir->obj_handle, name);
-	status_ref_entry = cache_inode_refresh_attrs_locked(entry, req_ctx);
+	status_ref_entry = cache_inode_refresh_attrs_locked(entry);
 	status_ref_dest_dir =
-	    cache_inode_refresh_attrs_locked(dest_dir, req_ctx);
+	    cache_inode_refresh_attrs_locked(dest_dir);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		status = cache_inode_error_convert(fsal_status);

@@ -257,7 +257,6 @@ static fsal_status_t lustre_init_config(struct fsal_module *fsal_hdl,
  */
 
 fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
-				   struct req_op_context *req_ctx,
 				   void *parse_node,
 				   const struct fsal_up_vector *up_ops);
 

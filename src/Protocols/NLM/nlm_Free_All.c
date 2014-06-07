@@ -37,14 +37,13 @@
  *
  * @param[in]  arg
  * @param[in]  export
- * @param[in]  req_ctx
  * @param[in]  worker
  * @param[in]  req
  * @param[out] res
  */
 
 int nlm4_Free_All(nfs_arg_t *args,
-		  struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+		  nfs_worker_data_t *worker,
 		  struct svc_req *req, nfs_res_t *res)
 {
 	nlm4_free_allargs *arg = &args->arg_nlm4_free_allargs;
@@ -64,7 +63,7 @@ int nlm4_Free_All(nfs_arg_t *args,
 		 * by this NLM_FREE_ALL.
 		 */
 		state_status =
-		    state_nlm_notify(nsm_client, req_ctx,
+		    state_nlm_notify(nsm_client, true,
 				     (void *)(ptrdiff_t) arg->state);
 		if (state_status != STATE_SUCCESS) {
 			/* NLM_FREE_ALL has void result so all we can do is

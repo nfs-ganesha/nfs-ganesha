@@ -58,7 +58,6 @@
  *
  * @param[in]  arg     NFS arguments union
  * @param[in]  export  NFS export list
- * @param[in]  req_ctx Request context
  * @param[in]  worker  Worker thread data
  * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call
@@ -70,7 +69,7 @@
  */
 
 int nfs3_create(nfs_arg_t *arg,
-		struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+		nfs_worker_data_t *worker,
 		struct svc_req *req, nfs_res_t *res)
 {
 	const char *file_name = arg->arg_create3.where.name;
@@ -106,7 +105,6 @@ int nfs3_create(nfs_arg_t *arg,
 	    FALSE;
 
 	parent_entry = nfs3_FhandleToCache(&arg->arg_create3.where.dir,
-					   req_ctx,
 					   &res->res_create3.status,
 					   &rc);
 
@@ -116,7 +114,7 @@ int nfs3_create(nfs_arg_t *arg,
 	}
 
 	/* get directory attributes before action (for V3 reply) */
-	nfs_SetPreOpAttr(parent_entry, req_ctx, &pre_parent);
+	nfs_SetPreOpAttr(parent_entry, &pre_parent);
 
 	/* Sanity checks: new file name must be non-null; parent must
 	   be a directory. */
@@ -129,10 +127,9 @@ int nfs3_create(nfs_arg_t *arg,
 	/* if quota support is active, then we should check is the
 	   FSAL allows inode creation or not */
 	fsal_status =
-	    req_ctx->fsal_export->ops->check_quota(req_ctx->fsal_export,
-						   req_ctx->export->fullpath,
-						   FSAL_QUOTA_INODES,
-						   req_ctx);
+	    op_ctx->fsal_export->ops->check_quota(op_ctx->fsal_export,
+						   op_ctx->export->fullpath,
+						   FSAL_QUOTA_INODES);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		res->res_create3.status = NFS3ERR_DQUOT;
@@ -184,7 +181,6 @@ int nfs3_create(nfs_arg_t *arg,
 					  REGULAR_FILE,
 					  mode,
 					  NULL,
-					  req_ctx,
 					  &file_entry);
 
 	/* Complete failure */
@@ -199,7 +195,6 @@ int nfs3_create(nfs_arg_t *arg,
 			goto out_fail;
 		} else if (arg->arg_create3.how.mode == EXCLUSIVE
 			   && !cache_inode_create_verify(file_entry,
-							 req_ctx,
 							 verf_hi,
 							 verf_lo)) {
 			goto out_fail;
@@ -214,19 +209,18 @@ int nfs3_create(nfs_arg_t *arg,
 		/* If owner or owner_group are set, and the credential was
 		 * squashed, then we must squash the set owner and owner_group.
 		 */
-		squash_setattr(req_ctx, &sattr);
+		squash_setattr(&sattr);
 
 		if ((sattr.mask & (ATTR_ATIME | ATTR_MTIME | ATTR_CTIME))
 		    || ((sattr.mask & ATTR_SIZE) && sattr.filesize != 0)
 		    || ((sattr.mask & ATTR_OWNER)
-			&& (req_ctx->creds->caller_uid != sattr.owner))
+			&& (op_ctx->creds->caller_uid != sattr.owner))
 		    || ((sattr.mask & ATTR_GROUP)
-			&& (req_ctx->creds->caller_gid != sattr.group))) {
+			&& (op_ctx->creds->caller_gid != sattr.group))) {
 			/* A call to cache_inode_setattr is required */
 			cache_status = cache_inode_setattr(file_entry,
 							   &sattr,
-							   false,
-							   req_ctx);
+							   false);
 
 			if (cache_status != CACHE_INODE_SUCCESS)
 				goto out_fail;
@@ -247,7 +241,7 @@ int nfs3_create(nfs_arg_t *arg,
 	if (!nfs3_FSALToFhandle(
 	     &(res->res_create3.CREATE3res_u.resok.obj.post_op_fh3_u.handle),
 	     file_entry->obj_handle,
-	     req_ctx->export)) {
+	     op_ctx->export)) {
 		gsh_free(res->res_create3.CREATE3res_u.resok.obj.post_op_fh3_u.
 			 handle.data.data_val);
 
@@ -260,10 +254,10 @@ int nfs3_create(nfs_arg_t *arg,
 	res->res_create3.CREATE3res_u.resok.obj.handle_follows = TRUE;
 
 	/* Build entry attributes */
-	nfs_SetPostOpAttr(file_entry, req_ctx,
+	nfs_SetPostOpAttr(file_entry,
 			  &res->res_create3.CREATE3res_u.resok.obj_attributes);
 
-	nfs_SetWccData(&pre_parent, parent_entry, req_ctx,
+	nfs_SetWccData(&pre_parent, parent_entry,
 		       &res->res_create3.CREATE3res_u.resok.dir_wcc);
 
 	res->res_create3.status = NFS3_OK;
@@ -286,7 +280,7 @@ int nfs3_create(nfs_arg_t *arg,
 	} else {
 		res->res_create3.status = nfs3_Errno(cache_status);
 
-		nfs_SetWccData(&pre_parent, parent_entry, req_ctx,
+		nfs_SetWccData(&pre_parent, parent_entry,
 			       &res->res_create3.CREATE3res_u.resfail.dir_wcc);
 	}
 	goto out;

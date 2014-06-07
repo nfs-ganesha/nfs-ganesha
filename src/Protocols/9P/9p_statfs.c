@@ -82,10 +82,9 @@ int _9p_statfs(struct _9p_request_data *req9p, void *worker_data,
 	if (pfid == NULL)
 		return _9p_rerror(req9p, worker_data, msgtag, EINVAL, plenout,
 				  preply);
-
+	op_ctx = &pfid->op_context;
 	/* Get the FS's stats */
-	cache_status = cache_inode_statfs(pfid->pentry, &dynamicinfo,
-					  &pfid->op_context);
+	cache_status = cache_inode_statfs(pfid->pentry, &dynamicinfo);
 	if (cache_status != CACHE_INODE_SUCCESS)
 		return _9p_rerror(req9p, worker_data, msgtag,
 				  _9p_tools_errno(cache_status), plenout,

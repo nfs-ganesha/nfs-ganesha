@@ -249,7 +249,7 @@ static void nlm4_send_grant_msg(state_async_queue_t *arg)
 
 	PTHREAD_RWLOCK_unlock(&cookie_entry->sce_entry->state_lock);
 
-	/* Initialize req_ctx */
+	/* Initialize a context */
 	export = cookie_entry->sce_lock_entry->sle_export;
 	get_gsh_export_ref(export);
 
@@ -257,9 +257,9 @@ static void nlm4_send_grant_msg(state_async_queue_t *arg)
 			     export, export->fsal_export,
 			     NFS_V3, 0, NFS_REQUEST);
 
-	state_status = state_release_grant(cookie_entry,
-					   &root_op_context.req_ctx);
+	state_status = state_release_grant(cookie_entry);
 
+	release_root_op_context();
 	put_gsh_export(export);
 
 	if (state_status != STATE_SUCCESS) {
@@ -275,7 +275,6 @@ static void nlm4_send_grant_msg(state_async_queue_t *arg)
 
 int nlm_process_parameters(struct svc_req *req, bool exclusive,
 			   nlm4_lock *alock, fsal_lock_param_t *plock,
-			   struct req_op_context *req_ctx,
 			   cache_entry_t **ppentry,
 			   care_t care, state_nsm_client_t **ppnsm_client,
 			   state_nlm_client_t **ppnlm_client,
@@ -292,7 +291,6 @@ int nlm_process_parameters(struct svc_req *req, bool exclusive,
 
 	/* Convert file handle into a cache entry */
 	*ppentry = nfs3_FhandleToCache((struct nfs_fh3 *)&alock->fh,
-				       req_ctx,
 				       &nfsstat3,
 				       &rc);
 
@@ -391,7 +389,6 @@ int nlm_process_parameters(struct svc_req *req, bool exclusive,
 
 int nlm_process_share_parms(struct svc_req *req, nlm4_share *share,
 			    struct fsal_export *exp_hdl,
-			    struct req_op_context *req_ctx,
 			    cache_entry_t **ppentry, care_t care,
 			    state_nsm_client_t **ppnsm_client,
 			    state_nlm_client_t **ppnlm_client,
@@ -407,7 +404,6 @@ int nlm_process_share_parms(struct svc_req *req, nlm4_share *share,
 
 	/* Convert file handle into a cache entry */
 	*ppentry = nfs3_FhandleToCache((struct nfs_fh3 *)&share->fh,
-				       req_ctx,
 				       &nfsstat3,
 				       &rc);
 
@@ -548,7 +544,6 @@ nlm4_stats nlm_convert_state_error(state_status_t status)
 }
 
 state_status_t nlm_granted_callback(cache_entry_t *pentry,
-				    struct req_op_context *req_ctx,
 				    state_lock_entry_t *lock_entry)
 {
 	state_block_data_t *block_data = lock_entry->sle_block_data;
@@ -583,7 +578,6 @@ state_status_t nlm_granted_callback(cache_entry_t *pentry,
 	 * Could return STATE_LOCK_BLOCKED because FSAL would have had to block.
 	 */
 	state_status = state_add_grant_cookie(pentry,
-					      req_ctx,
 					      &nlm_grant_cookie,
 					      sizeof(nlm_grant_cookie),
 					      lock_entry,
@@ -661,7 +655,7 @@ state_status_t nlm_granted_callback(cache_entry_t *pentry,
 	free_grant_arg(arg);
 
 	/* Cancel the pending grant to release the cookie */
-	state_status_int = state_cancel_grant(cookie_entry, req_ctx);
+	state_status_int = state_cancel_grant(cookie_entry);
 
 	if (state_status_int != STATE_SUCCESS) {
 		/* Not much we can do other than log that something

@@ -55,7 +55,6 @@
  *
  * @param[in]  arg     NFS arguments union
  * @param[in]  export  NFS export list
- * @param[in]  req_ctx Request context
  * @param[in]  worker  Worker thread data
  * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call
@@ -67,7 +66,7 @@
  */
 
 int nfs3_rmdir(nfs_arg_t *arg,
-	       struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+	       nfs_worker_data_t *worker,
 	       struct svc_req *req, nfs_res_t *res)
 {
 	cache_entry_t *parent_entry = NULL;
@@ -100,7 +99,6 @@ int nfs3_rmdir(nfs_arg_t *arg,
 	    FALSE;
 
 	parent_entry = nfs3_FhandleToCache(&arg->arg_rmdir3.object.dir,
-					   req_ctx,
 					   &res->res_rmdir3.status,
 					   &rc);
 
@@ -109,7 +107,7 @@ int nfs3_rmdir(nfs_arg_t *arg,
 		goto out;
 	}
 
-	nfs_SetPreOpAttr(parent_entry, req_ctx, &pre_parent);
+	nfs_SetPreOpAttr(parent_entry, &pre_parent);
 
 	/* Sanity checks: directory name must be non-null; parent
 	 * must be a directory.
@@ -130,7 +128,6 @@ int nfs3_rmdir(nfs_arg_t *arg,
 	 */
 	cache_status = cache_inode_lookup(parent_entry,
 					  name,
-					  req_ctx,
 					  &child_entry);
 
 	if (child_entry != NULL) {
@@ -144,12 +141,12 @@ int nfs3_rmdir(nfs_arg_t *arg,
 		}
 	}
 
-	cache_status = cache_inode_remove(parent_entry, name, req_ctx);
+	cache_status = cache_inode_remove(parent_entry, name);
 
 	if (cache_status != CACHE_INODE_SUCCESS)
 		goto out_fail;
 
-	nfs_SetWccData(&pre_parent, parent_entry, req_ctx,
+	nfs_SetWccData(&pre_parent, parent_entry,
 		       &res->res_rmdir3.RMDIR3res_u.resok.dir_wcc);
 
 	res->res_rmdir3.status = NFS3_OK;
@@ -160,7 +157,7 @@ int nfs3_rmdir(nfs_arg_t *arg,
 
  out_fail:
 	res->res_rmdir3.status = nfs3_Errno(cache_status);
-	nfs_SetWccData(&pre_parent, parent_entry, req_ctx,
+	nfs_SetWccData(&pre_parent, parent_entry,
 		       &res->res_rmdir3.RMDIR3res_u.resfail.dir_wcc);
 
 	/* If we are here, there was an error */

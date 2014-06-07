@@ -66,14 +66,12 @@ static void release(struct fsal_obj_handle *obj_pub)
  * This function looks up an object by name in a directory.
  *
  * @param[in]  dir_pub The directory in which to look up the object.
- * @param[in]  opctx   Request context (user creds, client address)
  * @param[in]  path    The name to look up.
  * @param[out] obj_pub The looked up object.
  *
  * @return FSAL status codes.
  */
 static fsal_status_t lookup(struct fsal_obj_handle *dir_pub,
-			    const struct req_op_context *opctx,
 			    const char *path, struct fsal_obj_handle **obj_pub)
 {
 	/* Generic status return */
@@ -82,7 +80,7 @@ static fsal_status_t lookup(struct fsal_obj_handle *dir_pub,
 	struct stat st;
 	/* The private 'full' export */
 	struct export *export =
-	    container_of(opctx->fsal_export, struct export, export);
+	    container_of(op_ctx->fsal_export, struct export, export);
 	struct handle *dir = container_of(dir_pub, struct handle, handle);
 	struct handle *obj = NULL;
 	struct Inode *i = NULL;
@@ -113,7 +111,6 @@ static fsal_status_t lookup(struct fsal_obj_handle *dir_pub,
  * callback.
  *
  * @param[in]  dir_pub     The directory to read
- * @param[in]  opctx        Request context (user creds, client address etc)
  * @param[in]  whence      The cookie indicating resumption, NULL to start
  * @param[in]  dir_state   Opaque, passed to cb
  * @param[in]  cb          Callback that receives directory entries
@@ -123,7 +120,6 @@ static fsal_status_t lookup(struct fsal_obj_handle *dir_pub,
  */
 
 static fsal_status_t fsal_readdir(struct fsal_obj_handle *dir_pub,
-				  const struct req_op_context *opctx,
 				  fsal_cookie_t *whence, void *dir_state,
 				  fsal_readdir_cb cb, bool *eof)
 {
@@ -131,7 +127,7 @@ static fsal_status_t fsal_readdir(struct fsal_obj_handle *dir_pub,
 	int rc = 0;
 	/* The private 'full' export */
 	struct export *export =
-	    container_of(opctx->fsal_export, struct export, export);
+	    container_of(op_ctx->fsal_export, struct export, export);
 	/* The private 'full' directory handle */
 	struct handle *dir = container_of(dir_pub, struct handle, handle);
 	/* The director descriptor */
@@ -167,7 +163,7 @@ static fsal_status_t fsal_readdir(struct fsal_obj_handle *dir_pub,
 				continue;
 			}
 
-			if (!cb(opctx, de.d_name, dir_state, de.d_off))
+			if (!cb(de.d_name, dir_state, de.d_off))
 				goto closedir;
 
 		} else if (rc == 0) {
@@ -194,7 +190,6 @@ static fsal_status_t fsal_readdir(struct fsal_obj_handle *dir_pub,
  * This function creates an empty, regular file.
  *
  * @param[in]  dir_pub Directory in which to create the file
- * @param[in]  opctx   Request context (user creds, client address etc)
  * @param[in]  name    Name of file to create
  * @param[out] attrib  Attributes of newly created file
  * @param[out] obj_pub Handle for newly created file
@@ -203,7 +198,6 @@ static fsal_status_t fsal_readdir(struct fsal_obj_handle *dir_pub,
  */
 
 static fsal_status_t fsal_create(struct fsal_obj_handle *dir_pub,
-				 const struct req_op_context *opctx,
 				 const char *name, struct attrlist *attrib,
 				 struct fsal_obj_handle **obj_pub)
 {
@@ -211,7 +205,7 @@ static fsal_status_t fsal_create(struct fsal_obj_handle *dir_pub,
 	int rc = 0;
 	/* The private 'full' export */
 	struct export *export =
-	    container_of(opctx->fsal_export, struct export, export);
+	    container_of(op_ctx->fsal_export, struct export, export);
 	/* The private 'full' directory handle */
 	struct handle *dir = container_of(dir_pub, struct handle, handle);
 	/* Newly opened file descriptor */
@@ -222,8 +216,8 @@ static fsal_status_t fsal_create(struct fsal_obj_handle *dir_pub,
 	struct handle *obj;
 
 	rc = ceph_ll_create(export->cmount, dir->i, name, 0600, O_CREAT, &st,
-			    &i, NULL, opctx->creds->caller_uid,
-			    opctx->creds->caller_gid);
+			    &i, NULL, op_ctx->creds->caller_uid,
+			    op_ctx->creds->caller_gid);
 	if (rc < 0)
 		return ceph2fsal_error(rc);
 
@@ -246,7 +240,6 @@ static fsal_status_t fsal_create(struct fsal_obj_handle *dir_pub,
  * This funcion creates a new directory.
  *
  * @param[in]  dir_pub The parent in which to create
- * @param[in]  opctx   Request context (user creds, client address etc)
  * @param[in]  name    Name of the directory to create
  * @param[out] attrib  Attributes of the newly created directory
  * @param[out] obj_pub Handle of the newly created directory
@@ -255,7 +248,6 @@ static fsal_status_t fsal_create(struct fsal_obj_handle *dir_pub,
  */
 
 static fsal_status_t fsal_mkdir(struct fsal_obj_handle *dir_pub,
-				const struct req_op_context *opctx,
 				const char *name, struct attrlist *attrib,
 				struct fsal_obj_handle **obj_pub)
 {
@@ -263,7 +255,7 @@ static fsal_status_t fsal_mkdir(struct fsal_obj_handle *dir_pub,
 	int rc = 0;
 	/* The private 'full' export */
 	struct export *export =
-	    container_of(opctx->fsal_export, struct export, export);
+	    container_of(op_ctx->fsal_export, struct export, export);
 	/* The private 'full' directory handle */
 	struct handle *dir = container_of(dir_pub, struct handle, handle);
 	/* Stat result */
@@ -273,7 +265,8 @@ static fsal_status_t fsal_mkdir(struct fsal_obj_handle *dir_pub,
 	struct Inode *i = NULL;
 
 	rc = ceph_ll_mkdir(export->cmount, dir->i, name, 0700, &st, &i,
-			   opctx->creds->caller_uid, opctx->creds->caller_gid);
+			   op_ctx->creds->caller_uid,
+			   op_ctx->creds->caller_gid);
 
 	if (rc < 0)
 		return ceph2fsal_error(rc);
@@ -297,7 +290,6 @@ static fsal_status_t fsal_mkdir(struct fsal_obj_handle *dir_pub,
  * This function creates a new symlink with the given content.
  *
  * @param[in]  dir_pub   Parent directory
- * @param[in]  opctx   Request context (user creds, client address etc)
  * @param[in]  name      Name of the link
  * @param[in]  link_path Path linked to
  * @param[out] attrib    Attributes of the new symlink
@@ -307,7 +299,6 @@ static fsal_status_t fsal_mkdir(struct fsal_obj_handle *dir_pub,
  */
 
 static fsal_status_t fsal_symlink(struct fsal_obj_handle *dir_pub,
-				  const struct req_op_context *opctx,
 				  const char *name, const char *link_path,
 				  struct attrlist *attrib,
 				  struct fsal_obj_handle **obj_pub)
@@ -316,7 +307,7 @@ static fsal_status_t fsal_symlink(struct fsal_obj_handle *dir_pub,
 	int rc = 0;
 	/* The private 'full' export */
 	struct export *export =
-	    container_of(opctx->fsal_export, struct export, export);
+	    container_of(op_ctx->fsal_export, struct export, export);
 	/* The private 'full' directory handle */
 	struct handle *dir = container_of(dir_pub, struct handle, handle);
 	/* Stat result */
@@ -326,8 +317,8 @@ static fsal_status_t fsal_symlink(struct fsal_obj_handle *dir_pub,
 	struct handle *obj = NULL;
 
 	rc = ceph_ll_symlink(export->cmount, dir->i, name, link_path, &st, &i,
-			     opctx->creds->caller_uid,
-			     opctx->creds->caller_gid);
+			     op_ctx->creds->caller_uid,
+			     op_ctx->creds->caller_gid);
 	if (rc < 0)
 		return ceph2fsal_error(rc);
 
@@ -350,7 +341,6 @@ static fsal_status_t fsal_symlink(struct fsal_obj_handle *dir_pub,
  * it.
  *
  * @param[in]  link_pub    The handle for the link
- * @param[in]  opctx       Request context (user creds, client address etc)
  * @param[out] content_buf Buffdesc for symbolic link
  * @param[in]  refresh     true if the underlying content should be
  *                         refreshed.
@@ -359,7 +349,6 @@ static fsal_status_t fsal_symlink(struct fsal_obj_handle *dir_pub,
  */
 
 static fsal_status_t fsal_readlink(struct fsal_obj_handle *link_pub,
-				   const struct req_op_context *opctx,
 				   struct gsh_buffdesc *content_buf,
 				   bool refresh)
 {
@@ -367,7 +356,7 @@ static fsal_status_t fsal_readlink(struct fsal_obj_handle *link_pub,
 	int rc = 0;
 	/* The private 'full' export */
 	struct export *export =
-	    container_of(opctx->fsal_export, struct export, export);
+	    container_of(op_ctx->fsal_export, struct export, export);
 	/* The private 'full' directory handle */
 	struct handle *link = container_of(link_pub, struct handle, handle);
 	/* Pointer to the Ceph link content */
@@ -397,19 +386,17 @@ static fsal_status_t fsal_readlink(struct fsal_obj_handle *link_pub,
  * file.
  *
  * @param[in]  handle_pub Object to interrogate
- * @param[in]  opctx     Request context (user creds, client address etc)
  *
  * @return FSAL status.
  */
 
-static fsal_status_t getattrs(struct fsal_obj_handle *handle_pub,
-			      const struct req_op_context *opctx)
+static fsal_status_t getattrs(struct fsal_obj_handle *handle_pub)
 {
 	/* Generic status return */
 	int rc = 0;
 	/* The private 'full' export */
 	struct export *export =
-	    container_of(opctx->fsal_export, struct export, export);
+	    container_of(op_ctx->fsal_export, struct export, export);
 	/* The private 'full' directory handle */
 	struct handle *handle = container_of(handle_pub, struct handle, handle);
 	/* Stat buffer */
@@ -431,21 +418,19 @@ static fsal_status_t getattrs(struct fsal_obj_handle *handle_pub,
  * This function sets attributes on a file.
  *
  * @param[in] handle_pub File to modify.
- * @param[in] opctx      Request context, includes credentials
  * @param[in] attrs      Attributes to set.
  *
  * @return FSAL status.
  */
 
 static fsal_status_t setattrs(struct fsal_obj_handle *handle_pub,
-			      const struct req_op_context *opctx,
 			      struct attrlist *attrs)
 {
 	/* Generic status return */
 	int rc = 0;
 	/* The private 'full' export */
 	struct export *export =
-	    container_of(opctx->fsal_export, struct export, export);
+	    container_of(op_ctx->fsal_export, struct export, export);
 	/* The private 'full' directory handle */
 	struct handle *handle = container_of(handle_pub, struct handle, handle);
 	/* Stat buffer */
@@ -530,7 +515,6 @@ static fsal_status_t setattrs(struct fsal_obj_handle *handle_pub,
  * in a new directory.
  *
  * @param[in] handle_pub  File to link
- * @param[in] opctx      Request context, includes credentials
  * @param[in] destdir_pub Directory in which to create link
  * @param[in] name        Name of link
  *
@@ -538,7 +522,6 @@ static fsal_status_t setattrs(struct fsal_obj_handle *handle_pub,
  */
 
 static fsal_status_t fsal_link(struct fsal_obj_handle *handle_pub,
-			       const struct req_op_context *opctx,
 			       struct fsal_obj_handle *destdir_pub,
 			       const char *name)
 {
@@ -546,7 +529,7 @@ static fsal_status_t fsal_link(struct fsal_obj_handle *handle_pub,
 	int rc = 0;
 	/* The private 'full' export */
 	struct export *export =
-	    container_of(opctx->fsal_export, struct export, export);
+	    container_of(op_ctx->fsal_export, struct export, export);
 	/* The private 'full' object handle */
 	struct handle *handle = container_of(handle_pub, struct handle, handle);
 	/* The private 'full' destination directory handle */
@@ -555,7 +538,8 @@ static fsal_status_t fsal_link(struct fsal_obj_handle *handle_pub,
 	struct stat st;
 
 	rc = ceph_ll_link(export->cmount, handle->i, destdir->i, name, &st,
-			  opctx->creds->caller_uid, opctx->creds->caller_gid);
+			  op_ctx->creds->caller_uid,
+			  op_ctx->creds->caller_gid);
 
 	if (rc < 0)
 		return ceph2fsal_error(rc);
@@ -570,7 +554,6 @@ static fsal_status_t fsal_link(struct fsal_obj_handle *handle_pub,
  * directory.  We assume most checks are done by the caller.
  *
  * @param[in] olddir_pub Source directory
- * @param[in] opctx      Request context, includes credentials
  * @param[in] old_name   Original name
  * @param[in] newdir_pub Destination directory
  * @param[in] new_name   New name
@@ -579,7 +562,6 @@ static fsal_status_t fsal_link(struct fsal_obj_handle *handle_pub,
  */
 
 static fsal_status_t fsal_rename(struct fsal_obj_handle *olddir_pub,
-				 const struct req_op_context *opctx,
 				 const char *old_name,
 				 struct fsal_obj_handle *newdir_pub,
 				 const char *new_name)
@@ -588,15 +570,15 @@ static fsal_status_t fsal_rename(struct fsal_obj_handle *olddir_pub,
 	int rc = 0;
 	/* The private 'full' export */
 	struct export *export =
-	    container_of(opctx->fsal_export, struct export, export);
+	    container_of(op_ctx->fsal_export, struct export, export);
 	/* The private 'full' object handle */
 	struct handle *olddir = container_of(olddir_pub, struct handle, handle);
 	/* The private 'full' destination directory handle */
 	struct handle *newdir = container_of(newdir_pub, struct handle, handle);
 
 	rc = ceph_ll_rename(export->cmount, olddir->i, old_name, newdir->i,
-			    new_name, opctx->creds->caller_uid,
-			    opctx->creds->caller_gid);
+			    new_name, op_ctx->creds->caller_uid,
+			    op_ctx->creds->caller_gid);
 
 	if (rc < 0)
 		return ceph2fsal_error(rc);
@@ -612,30 +594,29 @@ static fsal_status_t fsal_rename(struct fsal_obj_handle *olddir_pub,
  * removed.
  *
  * @param[in] dir_pub Parent directory
- * @param[in] opctx      Request context, includes credentials
  * @param[in] name    Name to remove
  *
  * @return FSAL status.
  */
 
 static fsal_status_t fsal_unlink(struct fsal_obj_handle *dir_pub,
-				 const struct req_op_context *opctx,
 				 const char *name)
 {
 	/* Generic status return */
 	int rc = 0;
 	/* The private 'full' export */
 	struct export *export =
-	    container_of(opctx->fsal_export, struct export, export);
+	    container_of(op_ctx->fsal_export, struct export, export);
 	/* The private 'full' object handle */
 	struct handle *dir = container_of(dir_pub, struct handle, handle);
 
 	rc = ceph_ll_unlink(export->cmount, dir->i, name,
-			    opctx->creds->caller_uid, opctx->creds->caller_gid);
+			    op_ctx->creds->caller_uid,
+			    op_ctx->creds->caller_gid);
 	if (rc == -EISDIR) {
 		rc = ceph_ll_rmdir(export->cmount, dir->i, name,
-				   opctx->creds->caller_uid,
-				   opctx->creds->caller_gid);
+				   op_ctx->creds->caller_uid,
+				   op_ctx->creds->caller_gid);
 	}
 
 	if (rc < 0)
@@ -658,14 +639,13 @@ static fsal_status_t fsal_unlink(struct fsal_obj_handle *dir_pub,
  */
 
 static fsal_status_t fsal_open(struct fsal_obj_handle *handle_pub,
-			       const struct req_op_context *opctx,
 			       fsal_openflags_t openflags)
 {
 	/* Generic status return */
 	int rc = 0;
 	/* The private 'full' export */
 	struct export *export =
-	    container_of(opctx->fsal_export, struct export, export);
+	    container_of(op_ctx->fsal_export, struct export, export);
 	/* The private 'full' object handle */
 	struct handle *handle = container_of(handle_pub, struct handle, handle);
 	/* Posix open flags */
@@ -724,7 +704,6 @@ static fsal_openflags_t status(struct fsal_obj_handle *handle_pub)
  * Cache inode content lock.
  *
  * @param[in]  handle_pub  File to read
- * @param[in]  opctx       Request context, includes credentials
  * @param[in]  offset      Point at which to begin read
  * @param[in]  buffer_size Maximum number of bytes to read
  * @param[out] buffer      Buffer to store data read
@@ -735,14 +714,13 @@ static fsal_openflags_t status(struct fsal_obj_handle *handle_pub)
  */
 
 static fsal_status_t fsal_read(struct fsal_obj_handle *handle_pub,
-			       const struct req_op_context *opctx,
 			       uint64_t offset, size_t buffer_size,
 			       void *buffer, size_t *read_amount,
 			       bool *end_of_file)
 {
 	/* The private 'full' export */
 	struct export *export =
-	    container_of(opctx->fsal_export, struct export, export);
+	    container_of(op_ctx->fsal_export, struct export, export);
 	/* The private 'full' object handle */
 	struct handle *handle = container_of(handle_pub, struct handle, handle);
 	/* Signed, so we can pick up on errors */
@@ -772,7 +750,6 @@ static fsal_status_t fsal_read(struct fsal_obj_handle *handle_pub,
  * inode content lock.
  *
  * @param[in]  handle_pub   File to write
- * @param[in]  opctx        Request context, includes credentials
  * @param[in]  offset       Position at which to write
  * @param[in]  buffer_size  Number of bytes to write
  * @param[in]  buffer       Data to write
@@ -782,14 +759,13 @@ static fsal_status_t fsal_read(struct fsal_obj_handle *handle_pub,
  */
 
 static fsal_status_t fsal_write(struct fsal_obj_handle *handle_pub,
-				const struct req_op_context *opctx,
 				uint64_t offset, size_t buffer_size,
 				void *buffer, size_t *write_amount,
 				bool *fsal_stable)
 {
 	/* The private 'full' export */
 	struct export *export =
-	    container_of(opctx->fsal_export, struct export, export);
+	    container_of(op_ctx->fsal_export, struct export, export);
 	/* The private 'full' object handle */
 	struct handle *handle = container_of(handle_pub, struct handle, handle);
 	/* Signed, so we can pick up on errors */
@@ -823,7 +799,6 @@ static fsal_status_t fsal_write(struct fsal_obj_handle *handle_pub,
  */
 
 static fsal_status_t commit(struct fsal_obj_handle *handle_pub,
-			    const struct req_op_context *opctx,
 			    off_t offset,
 			    size_t len)
 {
@@ -831,7 +806,7 @@ static fsal_status_t commit(struct fsal_obj_handle *handle_pub,
 	int rc = 0;
 	/* The private 'full' export */
 	struct export *export =
-	    container_of(opctx->fsal_export, struct export, export);
+	    container_of(op_ctx->fsal_export, struct export, export);
 	/* The private 'full' object handle */
 	struct handle *handle = container_of(handle_pub, struct handle, handle);
 

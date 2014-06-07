@@ -208,8 +208,7 @@ static struct pseudo_fsal_obj_handle
 *alloc_directory_handle(struct pseudo_fsal_obj_handle *parent,
 			const char *name,
 			struct fsal_export *exp_hdl,
-			mode_t unix_mode,
-			const struct req_op_context *opctx)
+			mode_t unix_mode)
 {
 	struct pseudo_fsal_obj_handle *hdl;
 	char path[MAXPATHLEN];
@@ -274,13 +273,11 @@ static struct pseudo_fsal_obj_handle
 	hdl->numlinks = 2;
 	FSAL_SET_MASK(hdl->obj_handle.attributes.mask, ATTR_NUMLINKS);
 
-	if (opctx != NULL)
-		hdl->obj_handle.attributes.owner = opctx->creds->caller_uid;
+	hdl->obj_handle.attributes.owner = op_ctx->creds->caller_uid;
 
 	FSAL_SET_MASK(hdl->obj_handle.attributes.mask, ATTR_OWNER);
 
-	if (opctx != NULL)
-		hdl->obj_handle.attributes.group = opctx->creds->caller_gid;
+	hdl->obj_handle.attributes.group = op_ctx->creds->caller_gid;
 
 	FSAL_SET_MASK(hdl->obj_handle.attributes.mask, ATTR_GROUP);
 
@@ -336,7 +333,6 @@ static struct pseudo_fsal_obj_handle
  */
 
 static fsal_status_t lookup(struct fsal_obj_handle *parent,
-			    const struct req_op_context *opctx,
 			    const char *path,
 			    struct fsal_obj_handle **handle)
 {
@@ -352,7 +348,7 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 	/* Check if this context already holds the lock on
 	 * this directory.
 	 */
-	if (opctx->fsal_private != parent)
+	if (op_ctx->fsal_private != parent)
 		PTHREAD_RWLOCK_rdlock(&parent->lock);
 	else
 		LogFullDebug(COMPONENT_FSAL,
@@ -387,14 +383,13 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 
 out:
 
-	if (opctx->fsal_private != parent)
+	if (op_ctx->fsal_private != parent)
 		PTHREAD_RWLOCK_unlock(&parent->lock);
 
 	return fsalstat(error, 0);
 }
 
 static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
-			    const struct req_op_context *opctx,
 			    const char *name,
 			    struct attrlist *attrib,
 			    struct fsal_obj_handle **handle)
@@ -406,7 +401,6 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 }
 
 static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
-			     const struct req_op_context *opctx,
 			     const char *name,
 			     struct attrlist *attrib,
 			     struct fsal_obj_handle **handle)
@@ -431,14 +425,13 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 			      obj_handle);
 
 	unix_mode = fsal2unix_mode(attrib->mode)
-	    & ~opctx->fsal_export->ops->fs_umask(opctx->fsal_export);
+	    & ~op_ctx->fsal_export->ops->fs_umask(op_ctx->fsal_export);
 
 	/* allocate an obj_handle and fill it up */
 	hdl = alloc_directory_handle(myself,
 				     name,
-				     opctx->fsal_export,
-				     unix_mode,
-				     opctx);
+				     op_ctx->fsal_export,
+				     unix_mode);
 
 	if (hdl == NULL)
 		return fsalstat(ERR_FSAL_NOMEM, ENOMEM);
@@ -455,7 +448,6 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 }
 
 static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
-			      const struct req_op_context *opctx,
 			      const char *name,
 			      object_file_type_t nodetype,
 			      fsal_dev_t *dev,
@@ -475,7 +467,6 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
  */
 
 static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
-				 const struct req_op_context *opctx,
 				 const char *name,
 				 const char *link_path,
 				 struct attrlist *attrib,
@@ -488,7 +479,6 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 }
 
 static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
-				 const struct req_op_context *opctx,
 				 struct gsh_buffdesc *link_content,
 				 bool refresh)
 {
@@ -499,7 +489,6 @@ static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
 }
 
 static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
-			      const struct req_op_context *opctx,
 			      struct fsal_obj_handle *destdir_hdl,
 			      const char *name)
 {
@@ -521,7 +510,6 @@ static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
-				  const struct req_op_context *opctx,
 				  fsal_cookie_t *whence,
 				  void *dir_state,
 				  fsal_readdir_cb cb,
@@ -551,7 +539,7 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 	/* Use fsal_private to signal to lookup that we hold
 	 * the lock.
 	 */
-	((struct req_op_context *)opctx)->fsal_private = dir_hdl;
+	op_ctx->fsal_private = dir_hdl;
 
 	for (node = avltree_first(&myself->avl_index);
 	     node != NULL;
@@ -563,13 +551,13 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 		if (hdl->index < seekloc)
 			continue;
 
-		if (!cb(opctx, hdl->name, dir_state, hdl->index)) {
+		if (!cb(hdl->name, dir_state, hdl->index)) {
 			*eof = false;
 			break;
 		}
 	}
 
-	((struct req_op_context *)opctx)->fsal_private = NULL;
+	op_ctx->fsal_private = NULL;
 
 	PTHREAD_RWLOCK_unlock(&dir_hdl->lock);
 
@@ -577,7 +565,6 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 }
 
 static fsal_status_t renamefile(struct fsal_obj_handle *olddir_hdl,
-				const struct req_op_context *opctx,
 				const char *old_name,
 				struct fsal_obj_handle *newdir_hdl,
 				const char *new_name)
@@ -588,8 +575,7 @@ static fsal_status_t renamefile(struct fsal_obj_handle *olddir_hdl,
 	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
-static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
-			      const struct req_op_context *opctx)
+static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl)
 {
 	struct pseudo_fsal_obj_handle *myself;
 
@@ -624,7 +610,6 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
-			      const struct req_op_context *opctx,
 			      struct attrlist *attrs)
 {
 	LogCrit(COMPONENT_FSAL,
@@ -637,7 +622,6 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
-				 const struct req_op_context *opctx,
 				 const char *name)
 {
 	struct pseudo_fsal_obj_handle *myself, *hdl;
@@ -827,7 +811,6 @@ void pseudofs_handle_ops_init(struct fsal_obj_ops *ops)
  */
 
 fsal_status_t pseudofs_lookup_path(struct fsal_export *exp_hdl,
-				 const struct req_op_context *opctx,
 				 const char *path,
 				 struct fsal_obj_handle **handle)
 {
@@ -848,8 +831,7 @@ fsal_status_t pseudofs_lookup_path(struct fsal_export *exp_hdl,
 			alloc_directory_handle(NULL,
 					       myself->export_path,
 					       exp_hdl,
-					       0755,
-					       opctx);
+					       0755);
 
 		if (myself->root_handle == NULL) {
 			/* alloc handle failed. */
@@ -875,7 +857,6 @@ fsal_status_t pseudofs_lookup_path(struct fsal_export *exp_hdl,
  */
 
 fsal_status_t pseudofs_create_handle(struct fsal_export *exp_hdl,
-				   const struct req_op_context *opctx,
 				   struct gsh_buffdesc *hdl_desc,
 				   struct fsal_obj_handle **handle)
 {

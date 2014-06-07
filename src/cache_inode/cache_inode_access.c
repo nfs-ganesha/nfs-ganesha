@@ -78,7 +78,6 @@
  *
  * @param[in]  entry       The object to be checked
  * @param[in]  access_type The kind of access to be checked
- * @param[in]  req_ctx     Request context
  * @param[in]  use_mutex   Whether to acquire a read lock
  *
  * @return CACHE_INODE_SUCCESS if operation is a success
@@ -89,7 +88,6 @@ cache_inode_access_sw(cache_entry_t *entry,
 		      fsal_accessflags_t access_type,
 		      fsal_accessflags_t *allowed,
 		      fsal_accessflags_t *denied,
-		      struct req_op_context *req_ctx,
 		      bool use_mutex)
 {
 	fsal_status_t fsal_status;
@@ -106,12 +104,12 @@ cache_inode_access_sw(cache_entry_t *entry,
 	   the attribute cache, so get it if the caller didn't
 	   acquire it.  */
 	if (use_mutex) {
-		status = cache_inode_lock_trust_attrs(entry, req_ctx, false);
+		status = cache_inode_lock_trust_attrs(entry, false);
 		if (status != CACHE_INODE_SUCCESS)
 			goto out;
 	}
 	fsal_status =
-	    pfsal_handle->ops->test_access(pfsal_handle, req_ctx, access_type,
+	    pfsal_handle->ops->test_access(pfsal_handle, access_type,
 					   allowed, denied);
 	if (use_mutex)
 		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
@@ -132,10 +130,9 @@ cache_inode_access_sw(cache_entry_t *entry,
 	return status;
 }
 
-bool
-not_in_group_list(gid_t gid, struct req_op_context *req_ctx)
+static bool not_in_group_list(gid_t gid)
 {
-	const struct user_cred *creds = req_ctx->creds;
+	const struct user_cred *creds = op_ctx->creds;
 	int i;
 	if (creds->caller_gid == gid) {
 
@@ -169,21 +166,19 @@ not_in_group_list(gid_t gid, struct req_op_context *req_ctx)
  *
  * @param[in] entry   The object to be checked
  * @param[in] attr    Attributes to set/result of set
- * @param[in] req_ctx FSAL credentials
  *
  * @return CACHE_INODE_SUCCESS if operation is a success
  */
 cache_inode_status_t
 cache_inode_check_setattr_perms(cache_entry_t *entry,
 				struct attrlist *attr,
-				bool is_open_write,
-				struct req_op_context *req_ctx)
+				bool is_open_write)
 {
 	cache_inode_status_t status = CACHE_INODE_SUCCESS;
 	fsal_accessflags_t access_check = 0;
 	bool not_owner;
 	char *note = "";
-	const struct user_cred *creds = req_ctx->creds;
+	const struct user_cred *creds = op_ctx->creds;
 
 	if (isDebug(COMPONENT_CACHE_INODE) || isDebug(COMPONENT_NFS_V4_ACL)) {
 		char *setattr_size = "";
@@ -255,7 +250,7 @@ cache_inode_check_setattr_perms(cache_entry_t *entry,
 	if (FSAL_TEST_MASK(attr->mask, ATTR_GROUP)) {
 		/* non-root is only allowed to change group_owner to a group
 		 * user is a member of. */
-		int not_in_group = not_in_group_list(attr->group, req_ctx);
+		int not_in_group = not_in_group_list(attr->group);
 
 		if (not_in_group) {
 			status = CACHE_INODE_FSAL_EPERM;
@@ -355,7 +350,7 @@ cache_inode_check_setattr_perms(cache_entry_t *entry,
 
 	if (entry->obj_handle->attributes.acl) {
 		status =
-		    cache_inode_access_no_mutex(entry, access_check, req_ctx);
+		    cache_inode_access_no_mutex(entry, access_check);
 
 		note = " (checked ACL)";
 		goto out;
@@ -368,7 +363,7 @@ cache_inode_check_setattr_perms(cache_entry_t *entry,
 		goto out;
 	}
 
-	status = cache_inode_access_no_mutex(entry, FSAL_W_OK, req_ctx);
+	status = cache_inode_access_no_mutex(entry, FSAL_W_OK);
 
 	note = " (checked mode)";
 

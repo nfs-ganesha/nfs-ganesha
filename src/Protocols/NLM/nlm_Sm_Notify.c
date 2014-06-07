@@ -37,14 +37,13 @@
  *
  * @param[in]  args
  * @param[in]  export
- * @param[in]  req_ctx
  * @param[in]  worker
  * @param[in]  req
  * @param[out] res
  */
 
 int nlm4_Sm_Notify(nfs_arg_t *args,
-		   struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+		   nfs_worker_data_t *worker,
 		   struct svc_req *req, nfs_res_t *res)
 {
 	nlm4_sm_notifyargs *arg = &args->arg_nlm4_sm_notify;
@@ -63,7 +62,7 @@ int nlm4_Sm_Notify(nfs_arg_t *args,
 		 * by this SM_NOTIFY.
 		 */
 		state_status = state_nlm_notify(nsm_client,
-						req_ctx,
+						true,
 						(void *)(ptrdiff_t) arg->state);
 
 		if (state_status != STATE_SUCCESS) {

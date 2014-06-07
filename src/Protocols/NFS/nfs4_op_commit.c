@@ -96,8 +96,7 @@ int nfs4_op_commit(struct nfs_argop4 *op, compound_data_t *data,
 
 	cache_status = cache_inode_commit(data->current_entry,
 					  arg_COMMIT4->offset,
-					  arg_COMMIT4->count,
-					  data->req_ctx);
+					  arg_COMMIT4->count);
 
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		res_COMMIT4->status = nfs4_Errno(cache_status);
@@ -107,7 +106,7 @@ int nfs4_op_commit(struct nfs_argop4 *op, compound_data_t *data,
 	verf_desc.addr = &res_COMMIT4->COMMIT4res_u.resok4.writeverf;
 	verf_desc.len = sizeof(verifier4);
 
-	data->req_ctx->fsal_export->ops->get_write_verifier(&verf_desc);
+	op_ctx->fsal_export->ops->get_write_verifier(&verf_desc);
 
 	LogFullDebug(COMPONENT_NFS_V4,
 		     "Commit verifier %d-%d",
@@ -159,7 +158,7 @@ static int op_dscommit(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* Call the commit operation */
 	nfs_status =
-	    data->current_ds->ops->commit(data->current_ds, data->req_ctx,
+	    data->current_ds->ops->commit(data->current_ds, op_ctx,
 					  arg_COMMIT4->offset,
 					  arg_COMMIT4->count,
 					  &res_COMMIT4->COMMIT4res_u.resok4.

@@ -72,9 +72,8 @@ static void lustre_release(struct fsal_export *exp_hdl)
 	gsh_free(myself);		/* elvis has left the building */
 }
 
-static fsal_status_t lustre_get_dynamic_info(struct fsal_obj_handle *obj_hdl,
-					     struct fsal_export *exp_hdl,
-					     const struct req_op_context *opctx,
+static fsal_status_t lustre_get_dynamic_info(struct fsal_export *exp_hdl,
+					     struct fsal_obj_handle *obj_hdl,
 					     fsal_dynamicfsinfo_t *infop)
 {
 	struct statvfs buffstatvfs;
@@ -216,7 +215,6 @@ static uint32_t lustre_fs_xattr_access_rights(struct fsal_export *exp_hdl)
 static fsal_status_t lustre_get_quota(struct fsal_export *exp_hdl,
 				      const char *filepath,
 				      int quota_type,
-				      struct req_op_context *req_ctx,
 				      fsal_quota_t *pquota)
 {
 	struct lustre_fsal_export *myself;
@@ -252,7 +250,7 @@ static fsal_status_t lustre_get_quota(struct fsal_export *exp_hdl,
 	dataquota.qc_type = quota_type;
 	dataquota.qc_id =
 	    (quota_type ==
-	     USRQUOTA) ? req_ctx->creds->caller_uid : req_ctx->creds->
+	     USRQUOTA) ? op_ctx->creds->caller_uid : op_ctx->creds->
 	    caller_gid;
 
 	retval = llapi_quotactl((char *)filepath, &dataquota);
@@ -296,7 +294,6 @@ static fsal_status_t lustre_get_quota(struct fsal_export *exp_hdl,
 static fsal_status_t lustre_set_quota(struct fsal_export *exp_hdl,
 			       const char *filepath,
 			       int quota_type,
-			       struct req_op_context *req_ctx,
 			       fsal_quota_t *pquota, fsal_quota_t *presquota)
 {
 	struct lustre_fsal_export *myself;
@@ -331,7 +328,7 @@ static fsal_status_t lustre_set_quota(struct fsal_export *exp_hdl,
 	dataquota.qc_type = quota_type;
 	dataquota.qc_id =
 	    (quota_type ==
-	     USRQUOTA) ? req_ctx->creds->caller_uid : req_ctx->creds->
+	     USRQUOTA) ? op_ctx->creds->caller_uid : op_ctx->creds->
 	    caller_gid;
 
 	/* Convert FSAL structure to FS one */
@@ -369,7 +366,7 @@ static fsal_status_t lustre_set_quota(struct fsal_export *exp_hdl,
 	}
 	if (presquota != NULL)
 		return lustre_get_quota(exp_hdl, filepath, quota_type,
-				 req_ctx, presquota);
+					presquota);
  err:
 	return fsalstat(fsal_error, retval);
 }
@@ -658,7 +655,6 @@ void lustre_unexport_filesystems(struct lustre_fsal_export *exp)
  */
 
 fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
-				   struct req_op_context *req_ctx,
 				   void *parse_node,
 				   const struct fsal_up_vector *up_ops)
 {
@@ -700,7 +696,7 @@ fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
 		goto errout;
 	}
 
-	retval = claim_posix_filesystems(req_ctx->export->fullpath,
+	retval = claim_posix_filesystems(op_ctx->export->fullpath,
 					 fsal_hdl,
 					 &myself->export,
 					 lustre_claim_filesystem,
@@ -709,14 +705,14 @@ fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
 	if (retval != 0) {
 		LogCrit(COMPONENT_FSAL,
 			"claim_posix_filesystems(%s) returned %s (%d)",
-			req_ctx->export->fullpath,
+			op_ctx->export->fullpath,
 			strerror(retval), retval);
 		fsal_error = posix2fsal_error(retval);
 		goto errout;
 	}
 
 
-	req_ctx->fsal_export = &myself->export;
+	op_ctx->fsal_export = &myself->export;
 
 	myself->pnfs_enabled =
 	    myself->export.ops->fs_supports(&myself->export,
@@ -724,7 +720,7 @@ fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
 	if (myself->pnfs_enabled) {
 		LogInfo(COMPONENT_FSAL,
 			"lustre_fsal_create: pnfs was enabled for [%s]",
-			req_ctx->export->fullpath);
+			op_ctx->export->fullpath);
 		export_ops_pnfs(myself->export.ops);
 		handle_ops_pnfs(myself->export.obj_ops);
 		ds_ops_init(myself->export.ds_ops);

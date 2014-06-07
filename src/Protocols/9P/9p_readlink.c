@@ -77,9 +77,11 @@ int _9p_readlink(struct _9p_request_data *req9p, void *worker_data,
 				  preply);
 	}
 
+	op_ctx = &pfid->op_context;
+
 	/* let's do the job */
 	cache_status =
-	    cache_inode_readlink(pfid->pentry, &link_buffer, &pfid->op_context);
+	    cache_inode_readlink(pfid->pentry, &link_buffer);
 
 	if (cache_status != CACHE_INODE_SUCCESS)
 		return _9p_rerror(req9p, worker_data, msgtag,

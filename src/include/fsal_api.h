@@ -145,7 +145,7 @@
  * have different operations vectors, but they should all be derived
  * from the module operations vector.
  *
- *	This vector is used to access methodsm e.g.:
+ *	This vector is used to access methods e.g.:
  *
  * @code{.c}
  * exp_hdl->ops->lookup(exp_hdl, name, ...);
@@ -154,6 +154,24 @@
  * Note that exp_hdl is used to dereference the method and it is also
  * *always* the first argument to the method/function.  Think of it as
  * the 'this' argument.
+ *
+ * @section Operation Context
+ *
+ * Protocol operations have lots of state such as user creds, the
+ * export currently in use etc.  Rather than pass all this down the
+ * stack we take advantage of the design decision that a protocol
+ * operation runs to completion in the thread that dequeued the
+ * request from the RPC.  All of the operation state (other than
+ * some intermediate results passed as function args) are pointed
+ * to by the thread local 'op_ctx'.  This will always point to a
+ * valid and initialized 'struct req_op_context'.
+ *
+ *	Method code can reference through 'op_ctx' e.g.
+ *
+ * @code{.c}
+ * if (op_ctx->req_type == 9P) { ... }
+ * @endcode
+ *
  */
 
 /**
@@ -443,9 +461,6 @@ struct fsal_ops {
  * do. -- ACE.
  *
  * @param[in]     fsal_hdl    FSAL module
- * @param[in,out] req_ctx     Request context to run in
- *                            Provides reference to the gsh_export and
- *                            thus the exported path
  * @param[in]     parse_node  opaque pointer to parse tree node for
  *                            export options to be passed to
  *                            load_config_from_node
@@ -454,7 +469,6 @@ struct fsal_ops {
  * @return FSAL status.
  */
 	 fsal_status_t(*create_export) (struct fsal_module *fsal_hdl,
-					struct req_op_context *req_ctx,
 					void *parse_node,
 					const struct fsal_up_vector *up_ops);
 
@@ -674,14 +688,12 @@ struct export_ops {
  * used to get a handle for the root directory of the export.
  *
  * @param[in]  exp_hdl The export in which to look up
- * @param[in]  opctx   Request context (user creds, client address)
  * @param[in]  path    The path to look up
  * @param[out] handle  The object found
  *
  * @return FSAL status.
  */
 	 fsal_status_t(*lookup_path) (struct fsal_export *exp_hdl,
-				      const struct req_op_context *opctx,
 				      const char *path,
 				      struct fsal_obj_handle **handle);
 
@@ -739,14 +751,12 @@ struct export_ops {
  * still remembers the nandle).
  *
  * @param[in]  exp_hdl  The export in which to create the handle
- * @param[in]  opctx    Request context (user creds, client address)
  * @param[in]  hdl_desc Buffer descriptor for the "wire" handle
  * @param[out] handle   FSAL object handle
  *
  * @return FSAL status.
  */
 	 fsal_status_t(*create_handle) (struct fsal_export *exp_hdl,
-					const struct req_op_context *opctx,
 					struct gsh_buffdesc *hdl_desc,
 					struct fsal_obj_handle **handle);
 
@@ -780,17 +790,14 @@ struct export_ops {
  * for a filesystem.  See @c fsal_dynamicinfo_t for details of what to
  * fill out.
  *
- * @param[in]  obj_hdl Directory
  * @param[in]  exp_hdl Export handle to interrogate
- * @param[in]  opctx   Request context (user creds, client address)
+ * @param[in]  obj_hdl Directory
  * @param[out] info    Buffer to fill with information
  *
  * @retval FSAL status.
  */
-	 fsal_status_t(*get_fs_dynamic_info) (struct fsal_obj_handle *obj_hdl,
-					      struct fsal_export *exp_hdl,
-					      const struct req_op_context *
-					      opctx,
+	 fsal_status_t(*get_fs_dynamic_info) (struct fsal_export *exp_hdl,
+					      struct fsal_obj_handle *obj_hdl,
 					      fsal_dynamicfsinfo_t *info);
 /**
  * @brief Export feature test
@@ -949,13 +956,11 @@ struct export_ops {
  * @param[in] exp_hdl    The export to interrogate
  * @param[in] filepath   The path within the export to check
  * @param[in] quota_type Whether we are checking inodes or blocks
- * @param[in] req_ctx    Request context, giving credentials
  *
  * @return FSAL types.
  */
 	 fsal_status_t(*check_quota) (struct fsal_export *exp_hdl,
-				      const char *filepath, int quota_type,
-				      struct req_op_context *req_ctx);
+				      const char *filepath, int quota_type);
 
 /**
  * @brief Get a user's quota
@@ -965,14 +970,12 @@ struct export_ops {
  * @param[in]  exp_hdl    The export to interrogate
  * @param[in]  filepath   The path within the export to check
  * @param[in]  quota_type Whether we are checking inodes or blocks
- * @param[in]  req_ctx    Request context, giving credentials
  * @param[out] quota      The user's quota
  *
  * @return FSAL types.
  */
 	 fsal_status_t(*get_quota) (struct fsal_export *exp_hdl,
 				    const char *filepath, int quota_type,
-				    struct req_op_context *req_ctx,
 				    fsal_quota_t *quota);
 
 /**
@@ -983,7 +986,6 @@ struct export_ops {
  * @param[in]  exp_hdl    The export to interrogate
  * @param[in]  filepath   The path within the export to check
  * @param[in]  quota_type Whether we are checking inodes or blocks
- * @param[in]  req_ctx    Request context, giving credentials
  * @param[in]  quota      The values to set for the quota
  * @param[out] resquota   New values set (optional)
  *
@@ -991,7 +993,6 @@ struct export_ops {
  */
 	 fsal_status_t(*set_quota) (struct fsal_export *exp_hdl,
 				    const char *filepath, int quota_type,
-				    struct req_op_context *req_ctx,
 				    fsal_quota_t *quota,
 				    fsal_quota_t *resquota);
 /**@}*/
@@ -1206,8 +1207,7 @@ struct fsal_filesystem {
 
 typedef uint64_t fsal_cookie_t;
 
-typedef bool(*fsal_readdir_cb) (const struct req_op_context *opctx,
-				const char *name, void *dir_state,
+typedef bool(*fsal_readdir_cb) (const char *name, void *dir_state,
 				fsal_cookie_t cookie);
 /**
  * @brief FSAL objectoperations vector
@@ -1251,14 +1251,12 @@ struct fsal_obj_ops {
  * special case is no longer supported and should not be implemented.
  *
  * @param[in]  dir_hdl Directory to search
- * @param[in]  opctx   Request context (user creds, client address)
  * @param[in]  path    Name to look up
  * @param[out] handle  Object found
  *
  * @return FSAL status.
  */
 	 fsal_status_t(*lookup) (struct fsal_obj_handle *dir_hdl,
-				 const struct req_op_context *opctx,
 				 const char *path,
 				 struct fsal_obj_handle **handle);
 
@@ -1269,7 +1267,6 @@ struct fsal_obj_ops {
  * them to a callback.
  *
  * @param[in]  dir_hdl   Directory to read
- * @param[in]  opctx     Request context (user creds, client address etc)
  * @param[in]  whence    Point at which to start reading.  NULL to
  *                       start at beginning.
  * @param[in]  dir_state Opaque pointer to be passed to callback
@@ -1281,7 +1278,6 @@ struct fsal_obj_ops {
  *               has not been consumed)
  */
 	 fsal_status_t(*readdir) (struct fsal_obj_handle *dir_hdl,
-				  const struct req_op_context *opctx,
 				  fsal_cookie_t *whence,
 				  void *dir_state,
 				  fsal_readdir_cb cb,
@@ -1300,7 +1296,6 @@ struct fsal_obj_ops {
  * This function creates a new regular file.
  *
  * @param[in]     dir_hdl Directory in which to create the file
- * @param[in]     opctx   Request context (user creds, client address etc)
  * @param[in]     name    Name of file to create
  * @param[in,out] attrib  Attributes to set on newly created
  *                        object/attributes you actually got.
@@ -1309,7 +1304,6 @@ struct fsal_obj_ops {
  * @return FSAL status.
  */
 	 fsal_status_t(*create) (struct fsal_obj_handle *dir_hdl,
-				 const struct req_op_context *opctx,
 				 const char *name, struct attrlist *attrib,
 				 struct fsal_obj_handle **new_obj);
 
@@ -1319,7 +1313,6 @@ struct fsal_obj_ops {
  * This function creates a new directory.
  *
  * @param[in]     dir_hdl Directory in which to create the directory
- * @param[in]     opctx   Request context (user creds, client address etc)
  * @param[in]     name    Name of directory to create
  * @param[in,out] attrib  Attributes to set on newly created
  *                        object/attributes you actually got.
@@ -1328,7 +1321,6 @@ struct fsal_obj_ops {
  * @return FSAL status.
  */
 	 fsal_status_t(*mkdir) (struct fsal_obj_handle *dir_hdl,
-				const struct req_op_context *opctx,
 				const char *name, struct attrlist *attrib,
 				struct fsal_obj_handle **new_obj);
 
@@ -1338,7 +1330,6 @@ struct fsal_obj_ops {
  * This function creates a new special file.
  *
  * @param[in]     dir_hdl  Directory in which to create the object
- * @param[in]     opctx    Request context (user creds, client address etc)
  * @param[in]     name     Name of object to create
  * @param[in]     nodetype Type of special file to create
  * @param[in]     dev      Major and minor device numbers for block or
@@ -1350,7 +1341,6 @@ struct fsal_obj_ops {
  * @return FSAL status.
  */
 	 fsal_status_t(*mknode) (struct fsal_obj_handle *dir_hdl,
-				 const struct req_op_context *opctx,
 				 const char *name,
 				 object_file_type_t nodetype,
 				 fsal_dev_t *dev,
@@ -1363,7 +1353,6 @@ struct fsal_obj_ops {
  * This function creates a new symbolic link.
  *
  * @param[in]     dir_hdl   Directory in which to create the object
- * @param[in]     opctx     Request context (user creds, client address etc)
  * @param[in]     name      Name of object to create
  * @param[in]     link_path Content of symbolic link
  * @param[in,out] attrib    Attributes to set on newly created
@@ -1373,7 +1362,6 @@ struct fsal_obj_ops {
  * @return FSAL status.
  */
 	 fsal_status_t(*symlink) (struct fsal_obj_handle *dir_hdl,
-				  const struct req_op_context *opctx,
 				  const char *name,
 				  const char *link_path,
 				  struct attrlist *attrib,
@@ -1399,7 +1387,6 @@ struct fsal_obj_ops {
  * terminator.
  *
  * @param[in]  obj_hdl      Link to read
- * @param[in]  opctx        Request context (user creds, client address etc)
  * @param[out] link_content Buffdesc to which the FSAL will store
  *                          the address of the buffer holding the
  *                          link and the link length.
@@ -1410,7 +1397,6 @@ struct fsal_obj_ops {
  * @return FSAL status.
  */
 	 fsal_status_t(*readlink) (struct fsal_obj_handle *obj_hdl,
-				   const struct req_op_context *opctx,
 				   struct gsh_buffdesc *link_content,
 				   bool refresh);
 
@@ -1423,7 +1409,6 @@ struct fsal_obj_ops {
  * metadata.
  *
  * @param[in] obj_hdl     Handle to check
- * @param[in] req_ctx     Request context, includes credentials
  * @param[in] access_type Access requested
  * @param[out] allowed    Returned access that could be granted
  * @param[out] denied     Returned access that would be granted
@@ -1431,7 +1416,6 @@ struct fsal_obj_ops {
  * @return FSAL status.
  */
 	 fsal_status_t(*test_access) (struct fsal_obj_handle *obj_hdl,
-				      struct req_op_context *req_ctx,
 				      fsal_accessflags_t access_type,
 				      fsal_accessflags_t *allowed,
 				      fsal_accessflags_t *denied);
@@ -1444,12 +1428,10 @@ struct fsal_obj_ops {
  * public filehandle, they are not copied out.
  *
  * @param[in]  obj_hdl  Object to query
- * @param[in]  opctx    Request context, includes credentials
  *
  * @return FSAL status.
  */
-	 fsal_status_t(*getattrs) (struct fsal_obj_handle *obj_hdl,
-				   const struct req_op_context *opctx);
+	 fsal_status_t(*getattrs) (struct fsal_obj_handle *obj_hdl);
 
 /**
  * @brief Set attributes on an object
@@ -1458,13 +1440,11 @@ struct fsal_obj_ops {
  * set is determined by @c attrib_set->mask.
  *
  * @param[in] obj_hdl    The object to modify
- * @param[in] opctx      Request context, includes credentials
  * @param[in] attrib_set Attributes to set
  *
  * @return FSAL status.
  */
 	 fsal_status_t(*setattrs) (struct fsal_obj_handle *obj_hdl,
-				   const struct req_op_context *opctx,
 				   struct attrlist *attrib_set);
 
 /**
@@ -1473,14 +1453,12 @@ struct fsal_obj_ops {
  * This function creates a new name for an existing object.
  *
  * @param[in] obj_hdl     Object to be linked to
- * @param[in] opctx       Request context, includes credentials
  * @param[in] destdir_hdl Directory in which to create the link
  * @param[in] name        Name for link
  *
  * @return FSAL status
  */
 	 fsal_status_t(*link) (struct fsal_obj_handle *obj_hdl,
-			       const struct req_op_context *opctx,
 			       struct fsal_obj_handle *destdir_hdl,
 			       const char *name);
 
@@ -1491,7 +1469,6 @@ struct fsal_obj_ops {
  * one link, which may be the only link to the file.)
  *
  * @param[in] olddir_hdl Old parent directory
- * @param[in] opctx      Request context, includes credentials
  * @param[in] old_name   Old name
  * @param[in] newdir_hdl New parent directory
  * @param[in] new_name   New name
@@ -1499,7 +1476,6 @@ struct fsal_obj_ops {
  * @return FSAL status
  */
 	 fsal_status_t(*rename) (struct fsal_obj_handle *olddir_hdl,
-				 const struct req_op_context *opctx,
 				 const char *old_name,
 				 struct fsal_obj_handle *newdir_hdl,
 				 const char *new_name);
@@ -1510,13 +1486,11 @@ struct fsal_obj_ops {
  * the file so named.
  *
  * @param[in] obj_hdl The directory from which to remove the name
- * @param[in] opctx   Request context, includes credentials
  * @param[in] name    The name to remove
  *
  * @return FSAL status.
  */
 	 fsal_status_t(*unlink) (struct fsal_obj_handle *obj_hdl,
-				 const struct req_op_context *opctx,
 				 const char *name);
 
 /**@}*/
@@ -1541,7 +1515,6 @@ struct fsal_obj_ops {
  * @return FSAL status.
  */
 	 fsal_status_t(*open) (struct fsal_obj_handle *obj_hdl,
-			       const struct req_op_context *opctx,
 			       fsal_openflags_t openflags);
 
 /**
@@ -1554,7 +1527,6 @@ struct fsal_obj_ops {
  * already placed. May not be supported by all FSALs.
  */
 	 fsal_status_t(*reopen) (struct fsal_obj_handle *obj_hdl,
-				 const struct req_op_context *opctx,
 				 fsal_openflags_t openflags);
 
 /**
@@ -1580,7 +1552,6 @@ struct fsal_obj_ops {
  * the remote server.) -- ACE
  *
  * @param[in]  obj_hdl     File to read
- * @param[in]  opctx       Request context, includes credentials
  * @param[in]  offset      Position from which to read
  * @param[in]  buffer_size Amount of data to read
  * @param[out] buffer      Buffer to which data are to be copied
@@ -1590,7 +1561,6 @@ struct fsal_obj_ops {
  * @return FSAL status.
  */
 	 fsal_status_t(*read) (struct fsal_obj_handle *obj_hdl,
-			       const struct req_op_context *opctx,
 			       uint64_t offset,
 			       size_t buffer_size,
 			       void *buffer,
@@ -1608,7 +1578,6 @@ struct fsal_obj_ops {
  * the remote server.) -- ACE
  *
  * @param[in]  obj_hdl     File to read
- * @param[in]  opctx       Request context, includes credentials
  * @param[in]  offset      Position from which to read
  * @param[in]  buffer_size Amount of data to read
  * @param[out] buffer      Buffer to which data are to be copied
@@ -1619,7 +1588,6 @@ struct fsal_obj_ops {
  * @return FSAL status.
  */
 	fsal_status_t(*read_plus) (struct fsal_obj_handle *obj_hdl,
-				   const struct req_op_context *opctx,
 				   uint64_t offset,
 				   size_t buffer_size,
 				   void *buffer,
@@ -1635,7 +1603,6 @@ struct fsal_obj_ops {
  * @note Should buffer be const? -- ACE
  *
  * @param[in]  obj_hdl      File to be written
- * @param[in]  opctx        Request context, includes credentials
  * @param[in]  offset       Position at which to write
  * @param[in]  buffer       Data to be written
  * @param[in,out] fsal_stable In, if on, the fsal is requested to write data
@@ -1645,7 +1612,6 @@ struct fsal_obj_ops {
  * @return FSAL status.
  */
 	 fsal_status_t(*write) (struct fsal_obj_handle *obj_hdl,
-				const struct req_op_context *opctx,
 				uint64_t offset,
 				size_t buffer_size,
 				void *buffer,
@@ -1659,7 +1625,6 @@ struct fsal_obj_ops {
  * @note Should buffer be const? -- ACE
  *
  * @param[in]  obj_hdl      File to be written
- * @param[in]  opctx        Request context, includes credentials
  * @param[in]  offset       Position at which to write
  * @param[in]  buffer       Data to be written
  * @param[in,out] fsal_stable In, if on, the fsal is requested to write data
@@ -1670,7 +1635,6 @@ struct fsal_obj_ops {
  * @return FSAL status.
  */
 	 fsal_status_t(*write_plus) (struct fsal_obj_handle *obj_hdl,
-				const struct req_op_context *opctx,
 				uint64_t offset,
 				size_t buffer_size,
 				void *buffer,
@@ -1683,13 +1647,11 @@ struct fsal_obj_ops {
  * This function seek to data or hole in a file.
  *
  * @param[in]  obj_hdl      File to be written
- * @param[in]  opctx        Request context, includes credentials
  * @param[in,out] info      Information about the data
  *
  * @return FSAL status.
  */
 	 fsal_status_t(*seek) (struct fsal_obj_handle *obj_hdl,
-				const struct req_op_context *opctx,
 				struct io_info *info);
 /**
  * @brief IO Advise
@@ -1697,13 +1659,11 @@ struct fsal_obj_ops {
  * This function give hints to fs.
  *
  * @param[in]  obj_hdl      File to be written
- * @param[in]  opctx        Request context, includes credentials
  * @param[in,out] info      Information about the data
  *
  * @return FSAL status.
  */
 	 fsal_status_t(*io_advise) (struct fsal_obj_handle *obj_hdl,
-				const struct req_op_context *opctx,
 				struct io_hints *hints);
 /**
  * @brief Commit written data
@@ -1717,7 +1677,6 @@ struct fsal_obj_ops {
  * @return FSAL status.
  */
 	 fsal_status_t(*commit) (struct fsal_obj_handle *obj_hdl,  /* sync */
-				 const struct req_op_context *opctx,
 				 off_t offset, size_t len);
 
 /**
@@ -1727,7 +1686,6 @@ struct fsal_obj_ops {
  * file.
  *
  * @param[in]  obj_hdl          File on which to operate
- * @param[in]  req_ctx          The request context
  * @param[in]  owner            Lock owner (Not yet implemented)
  * @param[in]  lock_op          Operation to perform
  * @param[in]  request_lock     Lock to take/release/test
@@ -1736,7 +1694,6 @@ struct fsal_obj_ops {
  * @return FSAL status.
  */
 	 fsal_status_t(*lock_op) (struct fsal_obj_handle *obj_hdl,
-				  const struct req_op_context *opctx,
 				  void *owner,
 				  fsal_lock_op_t lock_op,
 				  fsal_lock_param_t *request_lock,
@@ -1755,7 +1712,6 @@ struct fsal_obj_ops {
  * @return FSAL status.
  */
 	 fsal_status_t(*share_op) (struct fsal_obj_handle *obj_hdl,
-				   const struct req_op_context *opctx,
 				   void *owner,
 				   fsal_share_param_t request_share);
 /**
@@ -1791,7 +1747,6 @@ struct fsal_obj_ops {
  * @return FSAL status.
  */
 	 fsal_status_t(*list_ext_attrs) (struct fsal_obj_handle *obj_hdl,
-					 const struct req_op_context *opctx,
 					 unsigned int cookie,
 					 struct fsal_xattrent *xattrs_tab,
 					 unsigned int xattrs_tabsize,
@@ -1812,8 +1767,7 @@ struct fsal_obj_ops {
  * @return FSAL status.
  */
 	 fsal_status_t(*getextattr_id_by_name) (struct fsal_obj_handle *obj_hdl,
-						const struct req_op_context *
-						opctx, const char *xattr_name,
+						const char *xattr_name,
 						unsigned int *xattr_id);
 /**
  * @brief Get content of an attribute by name
@@ -1831,8 +1785,6 @@ struct fsal_obj_ops {
  */
 	 fsal_status_t(*getextattr_value_by_name) (struct fsal_obj_handle *
 						   obj_hdl,
-						   const struct req_op_context *
-						   opctx,
 						   const char *xattr_name,
 						   caddr_t buffer_addr,
 						   size_t buffer_size,
@@ -1854,8 +1806,6 @@ struct fsal_obj_ops {
  */
 	 fsal_status_t(*getextattr_value_by_id) (struct fsal_obj_handle *
 						 obj_hdl,
-						 const struct req_op_context *
-						 opctx,
 						 unsigned int xattr_id,
 						 caddr_t buffer_addr,
 						 size_t buffer_size,
@@ -1875,7 +1825,6 @@ struct fsal_obj_ops {
  * @return FSAL status.
  */
 	 fsal_status_t(*setextattr_value) (struct fsal_obj_handle *obj_hdl,
-					   const struct req_op_context *opctx,
 					   const char *xattr_name,
 					   caddr_t buffer_addr,
 					   size_t buffer_size, int create);
@@ -1894,8 +1843,6 @@ struct fsal_obj_ops {
  */
 	 fsal_status_t(*setextattr_value_by_id) (struct fsal_obj_handle *
 						 obj_hdl,
-						 const struct req_op_context *
-						 opctx,
 						 unsigned int xattr_id,
 						 caddr_t buffer_addr,
 						 size_t buffer_size);
@@ -1912,7 +1859,6 @@ struct fsal_obj_ops {
  * @return FSAL status.
  */
 	 fsal_status_t(*getextattr_attrs) (struct fsal_obj_handle *obj_hdl,
-					   const struct req_op_context *opctx,
 					   unsigned int xattr_id,
 					   struct attrlist *attrs);
 
@@ -1927,8 +1873,6 @@ struct fsal_obj_ops {
  * @return FSAL status.
  */
 	 fsal_status_t(*remove_extattr_by_id) (struct fsal_obj_handle *obj_hdl,
-					       const struct req_op_context *
-					       opctx,
 					       unsigned int xattr_id);
 
 /**
@@ -1943,8 +1887,6 @@ struct fsal_obj_ops {
  */
 	 fsal_status_t(*remove_extattr_by_name) (struct fsal_obj_handle *
 						 obj_hdl,
-						 const struct req_op_context *
-						 opctx,
 						 const char *xattr_name);
 /**@}*/
 

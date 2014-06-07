@@ -37,7 +37,6 @@
  *
  * @param[in]  arg
  * @param[in]  export
- * @param[in]  req_ctx
  * @param[in]  worker
  * @param[in]  req
  * @param[out] res
@@ -45,7 +44,7 @@
  */
 
 int nlm4_Lock(nfs_arg_t *args,
-	      struct req_op_context *req_ctx, nfs_worker_data_t *worker,
+	      nfs_worker_data_t *worker,
 	      struct svc_req *req, nfs_res_t *res)
 {
 	nlm4_lockargs *arg = &args->arg_nlm4_lock;
@@ -74,7 +73,7 @@ int nlm4_Lock(nfs_arg_t *args,
 	 * responding to an NLM_*_MSG call, so we check here if the export is
 	 * NULL and if so, handle the response.
 	 */
-	if (req_ctx->export == NULL) {
+	if (op_ctx->export == NULL) {
 		res->res_nlm4.stat.stat = NLM4_STALE_FH;
 		LogInfo(COMPONENT_NLM, "INVALID HANDLE: %s", proc_name);
 		return NFS_REQ_OK;
@@ -111,7 +110,6 @@ int nlm4_Lock(nfs_arg_t *args,
 				    arg->exclusive,
 				    &arg->alock,
 				    &lock,
-				    req_ctx,
 				    &entry,
 				    care,
 				    &nsm_client,
@@ -134,7 +132,6 @@ int nlm4_Lock(nfs_arg_t *args,
 	 * that will release old locks
 	 */
 	state_status = state_lock(entry,
-				  req_ctx,
 				  nlm_owner,
 				  (void *)(ptrdiff_t) arg->state,
 				  arg->block ? STATE_NLM_BLOCKING :
@@ -219,14 +216,12 @@ static void nlm4_lock_message_resp(state_async_queue_t *arg)
  *
  * @param[in]  arg
  * @param[in]  export
- * @param[in]  req_ctx
  * @param[in]  worker
  * @param[in]  req
  * @param[out] res
  *
  */
 int nlm4_Lock_Message(nfs_arg_t *args,
-		      struct req_op_context *req_ctx,
 		      nfs_worker_data_t *worker, struct svc_req *req,
 		      nfs_res_t *res)
 {
@@ -250,7 +245,7 @@ int nlm4_Lock_Message(nfs_arg_t *args,
 	if (nlm_client == NULL)
 		rc = NFS_REQ_DROP;
 	else
-		rc = nlm4_Lock(args, req_ctx, worker, req, res);
+		rc = nlm4_Lock(args, worker, req, res);
 
 	if (rc == NFS_REQ_OK)
 		rc = nlm_send_async_res_nlm4(nlm_client,
