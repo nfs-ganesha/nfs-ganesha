@@ -1431,7 +1431,6 @@ struct fsal_obj_ops {
  * metadata.
  *
  * @param[in] obj_hdl     Handle to check
- * @param[in] req_ctx     Request context, includes credentials
  * @param[in] access_type Access requested
  * @param[out] allowed    Returned access that could be granted
  * @param[out] denied     Returned access that would be granted
@@ -1439,7 +1438,6 @@ struct fsal_obj_ops {
  * @return FSAL status.
  */
 	 fsal_status_t(*test_access) (struct fsal_obj_handle *obj_hdl,
-				      struct req_op_context *req_ctx,
 				      fsal_accessflags_t access_type,
 				      fsal_accessflags_t *allowed,
 				      fsal_accessflags_t *denied);

@@ -109,7 +109,7 @@ cache_inode_access_sw(cache_entry_t *entry,
 			goto out;
 	}
 	fsal_status =
-	    pfsal_handle->ops->test_access(pfsal_handle, op_ctx, access_type,
+	    pfsal_handle->ops->test_access(pfsal_handle, access_type,
 					   allowed, denied);
 	if (use_mutex)
 		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
