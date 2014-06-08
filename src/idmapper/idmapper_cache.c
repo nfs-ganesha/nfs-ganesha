@@ -474,7 +474,7 @@ bool idmapper_lookup_by_uname(const struct gsh_buffdesc *name, uid_t *uid,
 	struct avltree_node *found_node = avltree_lookup(&prototype.uname_node,
 							 &uname_tree);
 	struct cache_user *found_user;
-	struct avltree_node **cache_entry;
+	void **cache_slot;
 
 	if (unlikely(!found_node))
 		return false;
@@ -489,9 +489,9 @@ bool idmapper_lookup_by_uname(const struct gsh_buffdesc *name, uid_t *uid,
 		   If the name is gss principal it does not have entry
 		   in uid tree */
 
-		cache_entry = uid_cache + (found_user->uid % id_cache_size);
-		atomic_store_uint64_t((uint64_t *)cache_entry,
-				      (uint64_t) &found_user->uid_node);
+		cache_slot = (void **)
+			&uid_cache[found_user->uid % id_cache_size];
+		atomic_store_voidptr(cache_slot, &found_user->uid_node);
 	}
 
 	if (likely(uid))
@@ -525,10 +525,8 @@ bool idmapper_lookup_by_uid(const uid_t uid, const struct gsh_buffdesc **name,
 	struct cache_user prototype = {
 		.uid = uid
 	};
-	struct avltree_node **cache_entry = uid_cache + uid % id_cache_size;
-	struct avltree_node *found_node = ((struct avltree_node *)
-					   atomic_fetch_uint64_t((uint64_t *)
-								 cache_entry));
+	void **cache_slot = (void **)&uid_cache[uid % id_cache_size];
+	struct avltree_node *found_node = atomic_fetch_voidptr(cache_slot);
 	struct cache_user *found_user;
 	bool found = false;
 
@@ -545,8 +543,7 @@ bool idmapper_lookup_by_uid(const uid_t uid, const struct gsh_buffdesc **name,
 		if (unlikely(!found_node))
 			return false;
 
-		atomic_store_uint64_t((uintptr_t *)cache_entry,
-				      (uintptr_t) found_node);
+		atomic_store_voidptr(cache_slot, found_node);
 		found_user = avltree_container_of(found_node,
 						  struct cache_user,
 						  uid_node);
@@ -584,7 +581,7 @@ bool idmapper_lookup_by_gname(const struct gsh_buffdesc *name, uid_t *gid)
 	struct avltree_node *found_node = avltree_lookup(&prototype.gname_node,
 							 &gname_tree);
 	struct cache_group *found_group;
-	struct avltree_node **cache_entry;
+	void **cache_slot;
 
 	if (unlikely(!found_node))
 		return false;
@@ -596,9 +593,8 @@ bool idmapper_lookup_by_gname(const struct gsh_buffdesc *name, uid_t *gid)
 	   up by name, they'll like it enough to look it up by ID
 	   later. */
 
-	cache_entry = gid_cache + (found_group->gid % id_cache_size);
-	atomic_store_uint64_t((uint64_t *)cache_entry,
-			      (uint64_t) &found_group->gid_node);
+	cache_slot = (void **)&gid_cache[found_group->gid % id_cache_size];
+	atomic_store_voidptr(cache_slot, &found_group->gid_node);
 
 	if (likely(gid))
 		*gid = found_group->gid;
@@ -626,10 +622,8 @@ bool idmapper_lookup_by_gid(const gid_t gid, const struct gsh_buffdesc **name)
 	struct cache_group prototype = {
 		.gid = gid
 	};
-	struct avltree_node **cache_entry = gid_cache + gid % id_cache_size;
-	struct avltree_node *found_node = ((struct avltree_node *)
-					   atomic_fetch_uint64_t((uint64_t *)
-								 cache_entry));
+	void **cache_slot = (void **)&gid_cache[gid % id_cache_size];
+	struct avltree_node *found_node = atomic_fetch_voidptr(cache_slot);
 	struct cache_group *found_group;
 	bool found = false;
 
@@ -646,8 +640,7 @@ bool idmapper_lookup_by_gid(const gid_t gid, const struct gsh_buffdesc **name)
 		if (unlikely(!found_node))
 			return false;
 
-		atomic_store_uint64_t((uint64_t *)cache_entry,
-				      (uint64_t) found_node);
+		atomic_store_voidptr(cache_slot, found_node);
 		found_group = avltree_container_of(found_node,
 						   struct cache_group,
 						   gid_node);
