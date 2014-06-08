@@ -525,27 +525,31 @@ bool idmapper_lookup_by_uid(const uid_t uid, const struct gsh_buffdesc **name,
 	struct cache_user prototype = {
 		.uid = uid
 	};
-	struct avltree_node **cache_entry =
-	    uid_cache + (prototype.uid % id_cache_size);
+	struct avltree_node **cache_entry = uid_cache + uid % id_cache_size;
 	struct avltree_node *found_node = ((struct avltree_node *)
 					   atomic_fetch_uint64_t((uint64_t *)
 								 cache_entry));
 	struct cache_user *found_user;
+	bool found = false;
 
 	if (likely(found_node)) {
-		found_user =
-		    avltree_container_of(found_node, struct cache_user,
-					 uid_node);
-	} else {
+		found_user = avltree_container_of(found_node,
+						  struct cache_user,
+						  uid_node);
+		if (found_user->uid == uid)
+			found = true;
+	}
+
+	if (unlikely(!found)) {
 		found_node = avltree_lookup(&prototype.uid_node, &uid_tree);
 		if (unlikely(!found_node))
 			return false;
 
 		atomic_store_uint64_t((uintptr_t *)cache_entry,
 				      (uintptr_t) found_node);
-		found_user =
-		    avltree_container_of(found_node, struct cache_user,
-					 uid_node);
+		found_user = avltree_container_of(found_node,
+						  struct cache_user,
+						  uid_node);
 	}
 
 	if (likely(name))
@@ -622,27 +626,31 @@ bool idmapper_lookup_by_gid(const gid_t gid, const struct gsh_buffdesc **name)
 	struct cache_group prototype = {
 		.gid = gid
 	};
-	struct avltree_node **cache_entry =
-	    gid_cache + (prototype.gid % id_cache_size);
+	struct avltree_node **cache_entry = gid_cache + gid % id_cache_size;
 	struct avltree_node *found_node = ((struct avltree_node *)
 					   atomic_fetch_uint64_t((uint64_t *)
 								 cache_entry));
 	struct cache_group *found_group;
+	bool found = false;
 
 	if (likely(found_node)) {
-		found_group =
-		    avltree_container_of(found_node, struct cache_group,
-					 gid_node);
-	} else {
+		found_group = avltree_container_of(found_node,
+						   struct cache_group,
+						   gid_node);
+		if (found_group->gid == gid)
+			found = true;
+	}
+
+	if (unlikely(!found)) {
 		found_node = avltree_lookup(&prototype.gid_node, &gid_tree);
 		if (unlikely(!found_node))
 			return false;
 
 		atomic_store_uint64_t((uint64_t *)cache_entry,
 				      (uint64_t) found_node);
-		found_group =
-		    avltree_container_of(found_node, struct cache_group,
-					 gid_node);
+		found_group = avltree_container_of(found_node,
+						   struct cache_group,
+						   gid_node);
 	}
 
 	if (likely(name))
