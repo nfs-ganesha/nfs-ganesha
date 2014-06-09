@@ -412,20 +412,6 @@ static bool idmapname2id(char *name, size_t len, uint32_t *id,
 		rc = nfs4_name_to_uid(name, id);
 
 	if (rc == 0) {
-		if (!group) {
-#ifdef _HAVE_GSSAPI
-			/* nfs4_gss_princ_to_ids takes the unqualified
-			   name. */
-			*at = '\0';
-			rc = nfs4_gss_princ_to_ids("krb5", name, id, gid);
-			if (rc == 0)
-				*got_gid = true;
-			else
-				LogMajor(COMPONENT_IDMAPPER,
-					 "nfs4_gss_princ_to_ids %s failed %d",
-					 name, -rc);
-		}
-#endif				/* _HAVE_GSSAPI */
 		return true;
 	} else {
 		LogInfo(COMPONENT_IDMAPPER,
