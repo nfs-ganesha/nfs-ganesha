@@ -860,7 +860,7 @@ static nfsstat4 open4_claim_null(OPEN4args *arg, compound_data_t *data,
  * @param[in] client Client that will own the delegation.
  * @param[in/out] resok Delegation attempt result to be returned to client.
  */
-static void get_delegation(compound_data_t *data, struct nfs_argop4 *op,
+static void get_delegation(compound_data_t *data, OPEN4args *args,
 			   state_t *open_state, state_owner_t *openowner,
 			   nfs_client_id_t *client, OPEN4resok *resok)
 {
@@ -869,7 +869,6 @@ static void get_delegation(compound_data_t *data, struct nfs_argop4 *op,
 	state_data_t deleg_data, candidate_data;
 	open_delegation_type4 deleg_type;
 	state_owner_t *clientowner = &client->cid_owner;
-	OPEN4args *args = &op->nfs_argop4_u.opopen;
 	struct state_refer refer;
 	state_t *new_state;
 
@@ -953,22 +952,21 @@ static void get_delegation(compound_data_t *data, struct nfs_argop4 *op,
 			       &new_state->state_export_list);
 		PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
 
-		/* PTHREAD_RWLOCK_unlock(&data->current_entry->state_lock); */
-		state_status = state_lock(data->current_entry,
-					  clientowner,
-					  new_state,
-					  STATE_NON_BLOCKING,
-					  NULL,	/* No block data */
-					  &lock_desc,
-					  NULL,
-					  NULL,
-					  LEASE_LOCK);
+		state_status = state_lock_locked(data->current_entry,
+						 clientowner,
+						 new_state,
+						 STATE_NON_BLOCKING,
+						 NULL,	/* No block data */
+						 &lock_desc,
+						 NULL,
+						 NULL,
+						 LEASE_LOCK);
 		if (state_status != STATE_SUCCESS) {
 			LogDebug(COMPONENT_NFS_V4_LOCK,
 				 "get_delegation call added state but failed to"
 				 " lock with status %s",
 				 state_err_str(state_status));
-			state_del(new_state, false);
+			state_del_locked(new_state, new_state->state_entry);
 			return;
 		} else {
 			resok->delegation.delegation_type = deleg_type;
@@ -1008,6 +1006,48 @@ static void get_delegation(compound_data_t *data, struct nfs_argop4 *op,
 	LogDebug(COMPONENT_NFS_V4_LOCK,
 		 "get_delegation openowner %p clientowner %p status %s",
 		 openowner, clientowner, state_err_str(state_status));
+}
+
+static void do_delegation(OPEN4args *arg_OPEN4, OPEN4res *res_OPEN4,
+			  compound_data_t *data, state_owner_t *owner,
+			  state_t *open_state, nfs_client_id_t *clientid)
+{
+	open_claim_type4 claim = arg_OPEN4->claim.claim;
+	OPEN4resok *resok = &res_OPEN4->OPEN4res_u.resok4;
+	struct file_deleg_stats *fdeleg_stats =
+				&data->current_entry->object.file.fdeleg_stats;
+
+	/* This will be updated later if we actually delegate */
+	resok->delegation.delegation_type = OPEN_DELEGATE_NONE;
+
+	/* Update delegation open stats */
+	if (data->current_entry->type == REGULAR_FILE) {
+		if (fdeleg_stats->fds_num_opens == 0)
+			fdeleg_stats->fds_first_open = time(NULL);
+		fdeleg_stats->fds_num_opens++;
+	}
+
+	/* Decide if we should delegate, then add it. */
+	if (nfs_param.nfsv4_param.allow_delegations &&
+	    data->current_entry->type != DIRECTORY
+	    && op_ctx->fsal_export->ops->fs_supports(
+						op_ctx->fsal_export,
+						fso_delegations)
+	    && (op_ctx->export_perms->options &
+		EXPORT_OPTION_DELEGATIONS)
+	    && owner->so_owner.so_nfs4_owner.so_confirmed == TRUE
+	    && !get_cb_chan_down(clientid)
+	    && claim != CLAIM_DELEGATE_CUR
+	    && should_we_grant_deleg(data->current_entry,
+				     clientid,
+				     open_state)) {
+		LogDebug(COMPONENT_STATE, "Attempting to grant delegation");
+		get_delegation(data, arg_OPEN4, open_state, owner, clientid,
+			       resok);
+	} else {
+		resok->delegation.open_delegation4_u.
+			od_whynone.ond_why = WND4_NOT_WANTED;
+	}
 }
 
 /**
@@ -1391,6 +1431,9 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 					  openflags,
 					  created);
 
+	if (res_OPEN4->status == NFS4_OK)
+		do_delegation(arg_OPEN4, res_OPEN4, data, owner, file_state,
+			      clientid);
 	PTHREAD_RWLOCK_unlock(&data->current_entry->state_lock);
 
 	if (res_OPEN4->status != NFS4_OK) {
@@ -1423,44 +1466,13 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 	entry_change = NULL;
 	res_OPEN4->OPEN4res_u.resok4.cinfo.atomic = FALSE;
 
-	/* This will be updated laster if we actually delegate */
-	res_OPEN4->OPEN4res_u.resok4.delegation.delegation_type =
-		OPEN_DELEGATE_NONE;
-
 	/* Handle open stateid/seqid for success */
 	update_stateid(file_state,
 		       &res_OPEN4->OPEN4res_u.resok4.stateid,
 		       data,
 		       open_tag);
 
-	/* Update delegation open stats */
-	if (data->current_entry->type == REGULAR_FILE) {
-		if (data->current_entry->object.file.fdeleg_stats.fds_num_opens == 0)
-			data->current_entry->object.file.fdeleg_stats.fds_first_open = time(NULL);
-		data->current_entry->object.file.fdeleg_stats.fds_num_opens++;
-	}
 
-	/* Decide if we should delegate, then add it. */
-	if (nfs_param.nfsv4_param.allow_delegations &&
-	    data->current_entry->type != DIRECTORY
-	    && op_ctx->fsal_export->ops->fs_supports(
-						op_ctx->fsal_export,
-						fso_delegations)
-	    && (op_ctx->export_perms->options &
-		EXPORT_OPTION_DELEGATIONS)
-	    && owner->so_owner.so_nfs4_owner.so_confirmed == TRUE
-	    && !get_cb_chan_down(clientid)
-	    && claim != CLAIM_DELEGATE_CUR
-	    && should_we_grant_deleg(data->current_entry,
-				     clientid,
-				     file_state)) {
-		LogDebug(COMPONENT_STATE, "Attempting to grant delegation");
-		get_delegation(data, op, file_state, owner, clientid,
-			       &res_OPEN4->OPEN4res_u.resok4);
-	} else {
-		res_OPEN4->OPEN4res_u.resok4.delegation.open_delegation4_u.
-			od_whynone.ond_why = WND4_NOT_WANTED;
-	}
 
  out:
 
