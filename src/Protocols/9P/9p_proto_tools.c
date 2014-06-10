@@ -235,6 +235,9 @@ int _9p_tools_clunk(struct _9p_fid *pfid)
 	fsal_status_t fsal_status;
 	cache_inode_status_t cache_status;
 
+	/* Set op_ctx */
+	op_ctx = &pfid->op_context;
+
 	/* unref the related group list */
 	uid2grp_unref(pfid->gdata);
 
