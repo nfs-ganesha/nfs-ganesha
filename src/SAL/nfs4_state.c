@@ -75,35 +75,19 @@ static bool check_deleg_conflict(state_lock_entry_t *deleg_entry,
 				 state_data_t *candidate_data,
 				 state_owner_t *candidate_owner)
 {
-	clientid4 candidate_clientid, deleg_clientid;
-
 	LogDebug(COMPONENT_STATE, "Checking for conflict!!");
 
 	if (deleg_entry == NULL || candidate_data == NULL)
 		return true;
 
-	deleg_clientid =
-		deleg_entry->sle_owner->so_owner.so_nfs4_owner.so_clientrec->cid_clientid;
-	candidate_clientid =
-		candidate_owner->so_owner.so_nfs4_owner.so_clientid;
-
 	/* We are getting a new share, checking if delegations conflict. */
 	switch (candidate_type) {
 	case STATE_TYPE_DELEG:
-		if ((deleg_entry->sle_state->state_data.deleg.sd_type ==
-			OPEN_DELEGATE_WRITE) &&
-		    (deleg_clientid != candidate_clientid)) {
-			LogDebug(COMPONENT_STATE, "Getting a delegation when "
-				 "write delegation exists on different client"
-				 " conflict");
-			return true;
-		}
-		if (candidate_data->deleg.sd_type
-		    == OPEN_DELEGATE_WRITE) {
-			LogDebug(COMPONENT_STATE,
-				 "Getting a write delegation  when delegation exists on different client conflict");
-			return true;
-		}
+		/* All open conflicts and delegation recalls are handled
+		 * while adding open state (STATE_TYPE_SHARE). There
+		 * should NOT be any conflicts while adding delegation
+		 * state.
+		 */
 		break;
 	case STATE_TYPE_SHARE:
 		if (deleg_entry->sle_state->state_data.deleg.sd_type == OPEN_DELEGATE_READ
@@ -154,6 +138,9 @@ bool state_conflict(state_t *state, state_type_t candidate_type,
 		return false;	/* STATE_NONE conflicts with nobody */
 
 	case STATE_TYPE_SHARE:
+		/* Delegation recalls are handled with check_deleg_conflict.
+		 * So just check existing open state conflicts here.
+		 */
 		if (state->state_type == STATE_TYPE_SHARE) {
 			if ((state->state_data.share.share_access &
 			     candidate_data->share.share_deny)
@@ -174,27 +161,12 @@ bool state_conflict(state_t *state, state_type_t candidate_type,
 		return false;
 
 	case STATE_TYPE_DELEG:
-		/* This will appear during new OPEN share state
-		 * We are getting a delegation and found a diff share entry.
+		/* All open conflicts and delegation recalls are handled
+		 * while adding open state (STATE_TYPE_SHARE). There
+		 * should NOT be any conflicts while adding delegation
+		 * state.
 		 */
-		if (state->state_type == STATE_TYPE_SHARE) {
-			/* */
-			if (candidate_data->deleg.sd_type
-			    == OPEN_DELEGATE_READ
-			    && state->state_data.share.share_access
-			    & OPEN4_SHARE_ACCESS_WRITE)
-				return true;
-			if (candidate_data->deleg.sd_type
-			    == OPEN_DELEGATE_WRITE
-			    && state->state_data.share.share_access
-			    & OPEN4_SHARE_ACCESS_READ)
-				return true;
-			if (candidate_data->deleg.sd_type
-			    == OPEN_DELEGATE_WRITE
-			    && state->state_data.share.share_access
-			    & OPEN4_SHARE_ACCESS_WRITE)
-				return true;
-		}
+		return false;
 	}
 	return false;
 }
@@ -220,14 +192,13 @@ state_status_t state_add_impl(cache_entry_t *entry, state_type_t state_type,
 			      state_owner_t *owner_input, state_t **state,
 			      struct state_refer *refer)
 {
-	state_t *pnew_state, *piter_state = NULL;
+	state_t *pnew_state, *piter_state;
 	state_lock_entry_t *piter_lock;
 	char debug_str[OTHERSIZE * 2 + 1];
-	struct glist_head *glist = NULL, *glistn = NULL;
+	struct glist_head *glist;
 	cache_inode_status_t cache_status;
 	bool got_pinned = false;
 	state_status_t status = 0;
-	struct gsh_export *export_entry = NULL;
 
 	if (glist_empty(&entry->state_list)) {
 		cache_status = cache_inode_inc_pin_ref(entry);
@@ -257,41 +228,6 @@ state_status_t state_add_impl(cache_entry_t *entry, state_type_t state_type,
 		return status;
 	}
 
-	/* Check conflicting delegations and recall if necessary */
-	export_entry = atomic_fetch_voidptr(&entry->first_export);
-	
-	if (entry->type == REGULAR_FILE
-	    && (export_entry->export_perms.options & EXPORT_OPTION_DELEGATIONS)
-	    && export_entry->fsal_export->ops->fs_supports(
-			export_entry->fsal_export, fso_delegations) == false
-	    && (!glist_empty(&entry->object.file.deleg_list))) {
-		glist_for_each_safe(glist, glistn,
-				    &entry->object.file.deleg_list) {
-			piter_lock = glist_entry(glist, state_lock_entry_t,
-						 sle_list);
-			piter_state = piter_lock->sle_state;
-			if (piter_lock->sle_type != LEASE_LOCK) {
-				LogDebug(COMPONENT_STATE, "Wrong lock type");
-				continue;
-			}
-			if (piter_state->state_type != STATE_TYPE_DELEG) {
-				LogDebug(COMPONENT_STATE, "Wrong state type");
-				continue;
-			}
-			if (check_deleg_conflict(piter_lock, state_type,
-						 state_data, owner_input)) {
-				int rc = async_delegrecall(general_fridge, entry);
-				if (rc != 0) {
-					LogDebug(COMPONENT_STATE,
-						 "Failed to recall delegation");
-				} else {
-					status = STATE_FSAL_DELAY;
-					return status;
-				}
-			}
-		}
-	}
-
 	/* Browse the state's list */
 	glist_for_each(glist, &entry->state_list) {
 		piter_state = glist_entry(glist, state_t, state_list);
@@ -310,6 +246,29 @@ state_status_t state_add_impl(cache_entry_t *entry, state_type_t state_type,
 				cache_inode_dec_pin_ref(entry, false);
 
 			return status;
+		}
+	}
+
+	/* Check conflicting delegations and recall if necessary */
+	if (entry->type == REGULAR_FILE) {
+		glist_for_each(glist, &entry->object.file.deleg_list) {
+			piter_lock = glist_entry(glist, state_lock_entry_t,
+						 sle_list);
+			piter_state = piter_lock->sle_state;
+			assert(piter_lock->sle_type == LEASE_LOCK);
+			assert(piter_state->state_type == STATE_TYPE_DELEG);
+
+			if (check_deleg_conflict(piter_lock, state_type,
+						 state_data, owner_input)) {
+				(void)async_delegrecall(general_fridge, entry);
+
+				pool_free(state_v4_pool, pnew_state);
+				if (got_pinned)
+					cache_inode_dec_pin_ref(entry, false);
+
+				status = STATE_FSAL_DELAY;
+				return status;
+			}
 		}
 	}
 

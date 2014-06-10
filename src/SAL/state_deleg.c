@@ -84,13 +84,13 @@ void free_deleg_locked(state_lock_entry_t *deleg_lock, cache_entry_t *entry,
  * @param[in] client Client that will own this delegation.
  */
 void init_new_deleg_state(state_data_t *deleg_state,
-			  open_delegation_type4 sd_type,
+			  open_delegation_type4 deleg_type,
 			  nfs_client_id_t *client)
 {
 	struct cf_deleg_stats *clfile_entry =
 		&deleg_state->deleg.sd_clfile_stats;
 
-	deleg_state->deleg.sd_type = sd_type;
+	deleg_state->deleg.sd_type = deleg_type;
 	deleg_state->deleg.sd_grant_time = time(NULL);
 	deleg_state->deleg.sd_state = DELEG_GRANTED;
 
