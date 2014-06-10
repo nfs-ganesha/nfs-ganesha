@@ -717,7 +717,7 @@ static fattr_xdr_result decode_acl(XDR *xdr, struct xdr_attrs_args *args)
 		} else {
 			utf8buffer.utf8string_val = buffer;
 			utf8buffer.utf8string_len = strlen(buffer);
-			if (ace->flag == FSAL_ACE_FLAG_GROUP_ID) {
+			if (IS_FSAL_ACE_GROUP_ID(*ace)) {
 				/* Decode group. */
 				struct gsh_buffdesc gname = {
 					.addr = utf8buffer.utf8string_val,
@@ -758,9 +758,8 @@ static fattr_xdr_result decode_acl(XDR *xdr, struct xdr_attrs_args *args)
 		/* Check if we can map a name string to uid or gid. If we
 		 * can't, do cleanup and bubble up NFS4ERR_BADOWNER.
 		 */
-		if ((ace->flag ==
-		     FSAL_ACE_FLAG_GROUP_ID ? ace->who.gid : ace->who.uid) ==
-		    -1) {
+		if ((IS_FSAL_ACE_GROUP_ID(*ace) ?
+		     ace->who.gid : ace->who.uid) == -1) {
 			LogFullDebug(COMPONENT_NFS_V4, "ACE bad owner");
 			args->nfs_status = NFS4ERR_BADOWNER;
 			goto baderr;
