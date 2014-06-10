@@ -630,11 +630,7 @@ static fattr_xdr_result encode_acl(XDR *xdr, struct xdr_attrs_args *args)
 				return FATTR_XDR_FAILED;
 			if (!inline_xdr_u_int32_t(xdr, &ace->perm))
 				return FATTR_XDR_FAILED;
-			if (IS_FSAL_ACE_GROUP_ID(*ace)) {
-				/* Encode group name. */
-				if (!xdr_encode_nfs4_group(xdr, ace->who.gid))
-					return FATTR_XDR_FAILED;
-			} else if (IS_FSAL_ACE_SPECIAL_ID(*ace)) {
+			if (IS_FSAL_ACE_SPECIAL_ID(*ace)) {
 				for (i = 0;
 				     i < FSAL_ACE_SPECIAL_EVERYONE;
 				     i++) {
@@ -647,6 +643,10 @@ static fattr_xdr_result encode_acl(XDR *xdr, struct xdr_attrs_args *args)
 				}
 				if (name == NULL ||
 				    !xdr_string(xdr, &name, MAXNAMLEN))
+					return FATTR_XDR_FAILED;
+			} else if (IS_FSAL_ACE_GROUP_ID(*ace)) {
+				/* Encode group name. */
+				if (!xdr_encode_nfs4_group(xdr, ace->who.gid))
 					return FATTR_XDR_FAILED;
 			} else {
 				if (!xdr_encode_nfs4_owner
