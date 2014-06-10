@@ -146,6 +146,8 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t *data,
 	LogLock(COMPONENT_NFS_V4_LOCK, NIV_FULL_DEBUG, tag, data->current_entry,
 		lock_owner, &lock_desc);
 
+	deleg_heuristics_recall(found_lock);
+
 	/* Now we have a lock owner and a stateid.
 	 * Go ahead and push unlock into SAL (and FSAL).
 	 */
@@ -166,8 +168,6 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t *data,
 		goto unlock;
 	}
 
-	/* Remove state entry and update stats */
-	deleg_heuristics_recall(found_lock);
 	state_del_locked(state_found, data->current_entry);
 
 	/* Successful exit */
