@@ -101,6 +101,12 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t *data,
 	if (res_DELEGRETURN4->status != NFS4_OK)
 		return res_DELEGRETURN4->status;
 
+	/* Delegations are only supported on regular files at the moment */
+	if (data->current_filetype != REGULAR_FILE) {
+		res_DELEGRETURN4->status = NFS4ERR_INVAL;
+		return NFS4ERR_INVAL;
+	}
+
 	found_lock = NULL;
 	PTHREAD_RWLOCK_wrlock(&data->current_entry->state_lock);
 	glist_for_each_safe(glist, glistn,
