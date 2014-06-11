@@ -453,11 +453,13 @@ static void __attribute__((constructor)) umem_malloc_init_hook(void)
 	}
 }
 
+/* Deal with RHEL 6 and below glibc versions */
+#if !__GLIBC_PREREQ(2, 14)
 void (*__malloc_initialize_hook)(void) = umem_malloc_init_hook;
-/*
+#else
 void (*__MALLOC_HOOK_VOLATILE __malloc_initialize_hook) (void) =
 umem_malloc_init_hook;
-*/
+#endif
 
 #else
 void __attribute__((constructor))
