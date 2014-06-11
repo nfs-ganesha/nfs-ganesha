@@ -32,7 +32,7 @@
 /* We can at most support 40 byte handles, which are the largest known.
  * We also expect handles to be at least 4 bytes.
  */
-#define VFS_MAX_HANDLE 40
+#define VFS_MAX_HANDLE 48
 #define VFS_MIN_HANDLE_SIZE 4
 
 /* Visual handle format
@@ -195,8 +195,14 @@ int vfs_map_name_to_handle_at(int fd,
 
 	rc = name_to_handle_at(fd, path, kernel_fh, &mnt_id, flags);
 
-	if (rc < 0)
+	if (rc < 0) {
+		int err = errno;
+		LogDebug(COMPONENT_FSAL,
+			 "Error %s (%d) bytes = %d",
+			 strerror(err), err, (int) kernel_fh->handle_bytes);
+		errno = err;
 		return rc;
+	}
 
 	/* Init flags with fsid type */
 	fh->handle_data[0] = fs->fsid_type;
