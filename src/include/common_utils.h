@@ -53,10 +53,6 @@ extern int __build_bug_on_failed;
 /* Most machines have mntent.h. */
 #define HAVE_MNTENT_H 1
 
-int s_read_int(const char *str);
-int s_read_octal(const char *str);
-bool s_read_uint64(const char *str, uint64_t *out64);
-int str_to_bool(const char *str);
 int snprintmem(char *target, size_t tgt_size, const void *source,
 	       size_t mem_size);
 int sscanmem(void *target, size_t tgt_size, const char *str_source);
