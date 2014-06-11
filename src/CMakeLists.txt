@@ -762,7 +762,6 @@ set(GANESHA_CORE
   string_utils
   hash
   log
-  common_utils
   uid2grp
   fsalpseudo
   )
@@ -802,7 +801,6 @@ Alternatively, if you are not using git, get the current version at
 ENDIF( NOT EXISTS ${PROJECT_SOURCE_DIR}/libntirpc/CMakeLists.txt )
 
 add_subdirectory(log)
-add_subdirectory(common)
 add_subdirectory(config_parsing)
 add_subdirectory(cidr)
 add_subdirectory(test)

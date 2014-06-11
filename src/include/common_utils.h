@@ -53,10 +53,6 @@ extern int __build_bug_on_failed;
 /* Most machines have mntent.h. */
 #define HAVE_MNTENT_H 1
 
-int snprintmem(char *target, size_t tgt_size, const void *source,
-	       size_t mem_size);
-int sscanmem(void *target, size_t tgt_size, const char *str_source);
-
 /* String parsing functions */
 
 #ifndef HAVE_STRLCPY
