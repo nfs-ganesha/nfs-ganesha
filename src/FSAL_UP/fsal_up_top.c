@@ -1322,10 +1322,8 @@ static uint32_t delegrecall_one(state_lock_entry_t *deleg_entry,
 			    "brrring!!!", 10);
 
 	argop->argop = NFS4_OP_CB_RECALL;
-	argop->nfs_cb_argop4_u.opcbrecall.stateid.seqid =
-	    deleg_entry->sle_state->state_seqid;
-	memcpy(argop->nfs_cb_argop4_u.opcbrecall.stateid.other,
-	       deleg_entry->sle_state->stateid_other, OTHERSIZE);
+	COPY_STATEID(&argop->nfs_cb_argop4_u.opcbrecall.stateid,
+			deleg_entry->sle_state);
 	argop->nfs_cb_argop4_u.opcbrecall.truncate = false;
 
 	maxfh = gsh_malloc(NFS4_FHSIZE); /* free in cb_completion_func() */

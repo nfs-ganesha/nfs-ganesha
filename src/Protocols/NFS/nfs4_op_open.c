@@ -866,13 +866,11 @@ static void get_delegation(compound_data_t *data, OPEN4args *args,
 {
 	state_status_t state_status;
 	fsal_lock_param_t lock_desc;
-	state_data_t deleg_data, candidate_data;
+	state_data_t deleg_data;
 	open_delegation_type4 deleg_type;
 	state_owner_t *clientowner = &client->cid_owner;
 	struct state_refer refer;
 	state_t *new_state;
-
-	resok->delegation.delegation_type = OPEN_DELEGATE_NONE;
 
 	/* Record the sequence info */
 	if (data->minorversion > 0) {
@@ -892,7 +890,8 @@ static void get_delegation(compound_data_t *data, OPEN4args *args,
 		}
 		lock_desc.lock_type = FSAL_LOCK_W;
 		deleg_type = OPEN_DELEGATE_WRITE;
-	} else if (args->share_access & OPEN4_SHARE_ACCESS_READ) {
+	} else {
+		assert(args->share_access & OPEN4_SHARE_ACCESS_READ);
 		if (!(op_ctx->export_perms->options &
 		      EXPORT_OPTION_READ_DELEG)) {
 			LogDebug(COMPONENT_STATE,
@@ -901,8 +900,6 @@ static void get_delegation(compound_data_t *data, OPEN4args *args,
 		}
 		lock_desc.lock_type = FSAL_LOCK_R;
 		deleg_type = OPEN_DELEGATE_READ;
-	} else {
-		return;
 	}
 
 	LogDebug(COMPONENT_STATE, "Attempting to grant %s delegation",
@@ -913,18 +910,6 @@ static void get_delegation(compound_data_t *data, OPEN4args *args,
 	lock_desc.lock_sle_type = FSAL_LEASE_LOCK;
 
 	init_new_deleg_state(&deleg_data, deleg_type, client);
-
-	/* Check for conflict. */
-	candidate_data.share.share_access =
-	    args->share_access & OPEN4_SHARE_ACCESS_BOTH;
-	candidate_data.share.share_deny = args->share_deny;
-	candidate_data.share.share_access_prev = 0;
-	candidate_data.share.share_deny_prev = 0;
-
-	state_status =
-	    state_share_check_conflict(data->current_entry,
-				       candidate_data.share.share_access,
-				       candidate_data.share.share_deny);
 
 	/* Add the delegation state */
 	state_status = state_add_impl(data->current_entry, STATE_TYPE_DELEG,
@@ -978,12 +963,8 @@ static void get_delegation(compound_data_t *data, OPEN4args *args,
 				writeres->
 				space_limit.nfs_space_limit4_u.filesize =
 						DELEG_SPACE_LIMIT_FILESZ;
-				writeres->stateid.seqid =
-					new_state->state_seqid;
-				memcpy(writeres->stateid.other,
-				       new_state->stateid_other,
-				       OTHERSIZE);
-				writeres->recall = FALSE;
+				COPY_STATEID(&writeres->stateid, new_state);
+				writeres->recall = false;
 				get_deleg_perm(data->current_entry,
 					       &writeres->permissions,
 					       deleg_type);
@@ -991,11 +972,8 @@ static void get_delegation(compound_data_t *data, OPEN4args *args,
 				assert(deleg_type == OPEN_DELEGATE_READ);
 				open_read_delegation4 *readres =
 				&resok->delegation.open_delegation4_u.read;
-				readres->stateid.seqid = new_state->state_seqid;
-				memcpy(readres->stateid.other,
-				       new_state->stateid_other,
-				       OTHERSIZE);
-				readres->recall = FALSE;
+				COPY_STATEID(&readres->stateid, new_state);
+				readres->recall = false;
 				get_deleg_perm(data->current_entry,
 					       &readres->permissions,
 					       deleg_type);
@@ -1351,10 +1329,8 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 				res_OPEN4->status = nfs4_Errno(cache_status);
 				goto out;
 			}
-			res_OPEN4->OPEN4res_u.resok4.stateid.seqid =
-			    file_state->state_seqid;
-			memcpy(res_OPEN4->OPEN4res_u.resok4.stateid.other,
-			       file_state->stateid_other, OTHERSIZE);
+			COPY_STATEID(&res_OPEN4->OPEN4res_u.resok4.stateid,
+				     file_state);
 
 			res_OPEN4->status = open4_create_fh(data, entry_lookup);
 			if (res_OPEN4->status != NFS4_OK) {

@@ -762,15 +762,12 @@ void update_stateid(state_t *state, stateid4 *resp, compound_data_t *data,
 
 	/* Copy stateid into current for later use */
 	if (data) {
-		data->current_stateid.seqid = state->state_seqid;
-		memcpy(data->current_stateid.other, state->stateid_other,
-		       OTHERSIZE);
+		COPY_STATEID(&data->current_stateid, state);
 		data->current_stateid_valid = true;
 	}
 
 	/* Copy stateid into response */
-	resp->seqid = state->state_seqid;
-	memcpy(resp->other, state->stateid_other, OTHERSIZE);
+	COPY_STATEID(resp, state);
 
 	if (isFullDebug(COMPONENT_STATE)) {
 		char str[OTHERSIZE * 2 + 1 + 6];
