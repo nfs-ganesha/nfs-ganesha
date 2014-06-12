@@ -70,7 +70,7 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t *data,
 	state_t *state_found;
 	state_owner_t *lock_owner;
 	fsal_lock_param_t lock_desc;
-	struct glist_head *glist, *glistn;
+	struct glist_head *glist;
 	state_lock_entry_t *found_lock;
 	state_lock_entry_t *iter_lock;
 	const char *tag = "DELEGRETURN";
@@ -109,8 +109,7 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t *data,
 
 	found_lock = NULL;
 	PTHREAD_RWLOCK_wrlock(&data->current_entry->state_lock);
-	glist_for_each_safe(glist, glistn,
-			    &data->current_entry->object.file.deleg_list) {
+	glist_for_each(glist, &data->current_entry->object.file.deleg_list) {
 		iter_lock = glist_entry(glist, state_lock_entry_t, sle_list);
 		LogDebug(COMPONENT_NFS_V4_LOCK, "iter deleg entry %p",
 			 iter_lock);
@@ -123,8 +122,8 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	if (found_lock == NULL) {
-		LogDebug(COMPONENT_NFS_V4_LOCK,
-			 "We did not find a delegation in the delegation lock list.");
+		LogWarn(COMPONENT_NFS_V4_LOCK,
+			"Found state, but not deleg lock!");
 		res_DELEGRETURN4->status = NFS4ERR_BAD_STATEID;
 		goto unlock;
 	}
