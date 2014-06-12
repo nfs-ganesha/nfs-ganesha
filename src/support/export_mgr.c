@@ -613,9 +613,6 @@ bool mount_gsh_export(struct gsh_export *exp)
 	return rc;
 }
 
-
-pthread_mutex_t release_export_serializer = PTHREAD_MUTEX_INITIALIZER;
-
 /**
  * @brief Release the export management struct
  *
@@ -633,9 +630,6 @@ void put_gsh_export(struct gsh_export *export)
 
 	if (refcount != 0)
 		return;
-
-	/* Make sure only one thread is in here at a time. */
-	pthread_mutex_lock(&release_export_serializer);
 
 	/* Releasing last reference */
 
@@ -660,8 +654,6 @@ void put_gsh_export(struct gsh_export *export)
 	export_st = container_of(export, struct export_stats, export);
 	server_stats_free(&export_st->st);
 	gsh_free(export_st);
-
-	pthread_mutex_unlock(&release_export_serializer);
 }
 
 /**
