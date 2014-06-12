@@ -1030,59 +1030,37 @@ static state_status_t subtract_lock_from_entry(cache_entry_t *entry,
 }
 
 /**
- * @brief Subtract a delegation from a list of delegations
+ * @brief Remove a delegation from a list of delegations
  *
- * Subtract a delegation from a list of delegations
+ * Remove a delegation from a list of delegations
  *
  * @param[in,out] entry   Cache entry on which to operate
  * @param[in]     owner   Client owner of delegation
  * @param[in]     state   Associated lock state
- * @param[in]     lock    Delegation to remove
- * @param[out]    removed True if an entry was removed
- * @param[in,out] list    List of locks to modify
  *
- * @return State status.
+ * entry's state_lock needs to be held in readwrite mode
+ *
+ * @return true iff the lock is removed.
  */
-static state_status_t subtract_deleg_from_list(cache_entry_t *entry,
-					       state_owner_t *owner,
-					       state_t *state,
-					       bool *removed,
-					       struct glist_head *list)
+static bool remove_deleg_lock(cache_entry_t *entry,
+			      state_owner_t *owner,
+			      state_t *state)
 {
-	state_lock_entry_t *found_entry;
-	struct glist_head *glist, *glistn, remove_list;;
-	state_status_t status = STATE_SUCCESS;
+	state_lock_entry_t *deleg_lock;
+	struct glist_head *glist;
 
-	*removed = false;
-	glist_init(&remove_list);
-
-	glist_for_each_safe(glist, glistn, list) {
-		found_entry = glist_entry(glist, state_lock_entry_t, sle_list);
-		if (owner != NULL
-		    && different_owners(found_entry->sle_owner, owner))
-			continue;
-
-		if (found_entry->sle_type != LEASE_LOCK)
-			continue;
-
-		if (state != NULL && found_entry->sle_state == state)
-			continue;
-
-		/* Make a list of all matching delegation locks. Should be
-		 * only one? */
-		glist_add_tail(&remove_list, &(found_entry->sle_list));
-		*removed = true;
+	glist_for_each(glist, &entry->object.file.deleg_list) {
+		deleg_lock = glist_entry(glist, state_lock_entry_t, sle_list);
+		assert(deleg_lock->sle_type == LEASE_LOCK);
+		if (deleg_lock->sle_state == state) {
+			assert(deleg_lock->sle_owner == owner);
+			assert(state->state_owner == owner);
+			remove_from_locklist(deleg_lock);
+			return true;
+		}
 	}
-	glist_for_each_safe(glist, glistn, &remove_list) {
-		found_entry =
-			glist_entry(glist, state_lock_entry_t, sle_list);
-		/* Remove each deleg lock entry from deleg_list. */
-		glist_del(&found_entry->sle_list);
 
-		/* Then free the lock entry */
-		lock_entry_dec_ref(found_entry);
-	}
-	return status;
+	return false;
 }
 
 /**
@@ -2893,28 +2871,20 @@ state_status_t state_unlock_locked(cache_entry_t *entry,
 	if (entry->type != REGULAR_FILE) {
 		LogLock(COMPONENT_STATE, NIV_DEBUG, "Bad Unlock", entry, owner,
 			lock);
+		cache_inode_dec_pin_ref(entry, FALSE);
 		status = STATE_BAD_TYPE;
 		return status;
 	}
 
-	/* We need to iterate over the full lock list and remove any mapping
-	 * entry. And sle_lock.lock_start = 0 and sle_lock.lock_length = 0
-	 * nlm_lock implies remove all entries
-	 */
-	if (sle_type == LEASE_LOCK &&
-	    glist_empty(&entry->object.file.deleg_list)) {
-		cache_inode_dec_pin_ref(entry, FALSE);
-		LogDebug(COMPONENT_STATE,
-			"Unlock success on file with no delegations");
-		return STATE_SUCCESS;
-	}
-
-	if ((owner->so_type != STATE_LOCK_OWNER_9P) &&
-	    state && (state->state_type == STATE_TYPE_DELEG)) {
+	if (sle_type == LEASE_LOCK) {
 		LogFullDebug(COMPONENT_STATE, "Removing delegation from list");
-		status =
-			subtract_deleg_from_list(entry, owner, state, &removed,
-						&entry->object.file.deleg_list);
+		removed = remove_deleg_lock(entry, owner, state);
+		if (!removed) { /* Not found */
+			cache_inode_dec_pin_ref(entry, FALSE);
+			LogDebug(COMPONENT_STATE,
+				 "Unlock success on delegation not found");
+			return STATE_SUCCESS;
+		}
 	} else {
 	/* If lock list is empty, there really isn't any work for us to do. */
 		if (glist_empty(&entry->object.file.lock_list)) {
