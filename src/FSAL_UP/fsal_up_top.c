@@ -1243,12 +1243,14 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 		if (eval_deleg_revoke(deleg_entry))
 			goto out_revoke;
 		else {
-			schedule_delegrecall_task(deleg_ctx, 1);
+			if (schedule_delegrecall_task(deleg_ctx, 1))
+				goto out_revoke;
 			goto out_free;
 		}
 		break;
 	case DELEG_RET_WAIT:
-		schedule_delegrevoke_check(deleg_ctx, 1);
+		if (schedule_delegrevoke_check(deleg_ctx, 1))
+			goto out_revoke;
 		goto out_free;
 		break;
 	case REVOKE:
@@ -1287,14 +1289,14 @@ out_free:
  * cache_entry->state_lock before calling this function.
  *
  * @param[in] deleg_entry Lock entry covering the delegation
- * @param[in] entry       File on which the delegation is held
+ * @param[in] delegrecall_context
  */
 
 static uint32_t delegrecall_one(state_lock_entry_t *deleg_entry,
 				struct delegrecall_context *p_cargs)
 {
 	char *maxfh = NULL;
-	uint32_t code = 1;
+	uint32_t ret = 1;
 	rpc_call_channel_t *chan;
 	rpc_call_t *call = NULL;
 	nfs_cb_argop4 argop[1];
@@ -1397,10 +1399,10 @@ static uint32_t delegrecall_one(state_lock_entry_t *deleg_entry,
 	}
 
 	/* call it (here, in current thread context)
-	   code is always 0 for async calls, might change in future */
-	code = nfs_rpc_submit_call(call, p_cargs, NFS_RPC_CALL_NONE);
-	if (!code)
-		return code;
+	   ret is always 0 for async calls, might change in future */
+	ret = nfs_rpc_submit_call(call, p_cargs, NFS_RPC_CALL_NONE);
+	if (!ret)
+		return ret;
 
 out:
 	atomic_inc_uint32_t(&cl_stats->failed_recalls);
@@ -1410,28 +1412,36 @@ out:
 		free_rpc_call(call);
 
 	if (eval_deleg_revoke(deleg_entry)) {
-		LogCrit(COMPONENT_STATE, "Delegation will be revoked");
-		atomic_inc_uint32_t(&cl_stats->num_revokes);
-		if (deleg_revoke(deleg_entry) != STATE_SUCCESS) {
-			LogDebug(COMPONENT_FSAL_UP,
-				 "Failed to revoke delegation(%p).",
-				 deleg_entry);
-		} else {
-			LogDebug(COMPONENT_FSAL_UP,
-				 "Delegation revoked(%p)",
-				 deleg_entry);
-		}
-		cache_inode_put(entry);
-		dec_client_id_ref(clientid);
-		if (p_cargs)
-			gsh_free(p_cargs);
-		code = 0;
+		ret = 0;
+		goto out_revoke;
 	} else {
-		if (p_cargs)
-			code = schedule_delegrecall_task(p_cargs, 1);
+		if (!p_cargs || schedule_delegrecall_task(p_cargs, 1)) {
+			ret = 1;
+			goto out_revoke;
+		}
+		ret = 0;
 	}
 
-	return code;
+	/* Keep the delegation in p_cargs */
+	return ret;
+
+out_revoke:
+	LogCrit(COMPONENT_STATE, "Delegation(%p) will be revoked", deleg_entry);
+	atomic_inc_uint32_t(&cl_stats->num_revokes);
+	if (deleg_revoke(deleg_entry) != STATE_SUCCESS) {
+		LogDebug(COMPONENT_FSAL_UP,
+			 "Failed to revoke delegation(%p).", deleg_entry);
+	} else {
+		LogDebug(COMPONENT_FSAL_UP,
+			 "Delegation revoked(%p)", deleg_entry);
+	}
+	cache_inode_put(entry);
+	dec_client_id_ref(clientid);
+	if (p_cargs)
+		gsh_free(p_cargs);
+
+	return ret;
+
 }
 
 /**
@@ -1531,6 +1541,10 @@ static int schedule_delegrecall_task(struct delegrecall_context *ctx,
 	assert(ctx);
 
 	rc = delayed_submit(delegrecall_task, ctx, delay * NS_PER_SEC);
+	if (rc)
+		LogDebug(COMPONENT_THREAD,
+			 "delayed_submit failed with rc = %d", rc);
+
 	return rc;
 }
 
@@ -1542,6 +1556,10 @@ static int schedule_delegrevoke_check(struct delegrecall_context *ctx,
 	assert(ctx);
 
 	rc = delayed_submit(delegrevoke_check, ctx, delay * NS_PER_SEC);
+	if (rc)
+		LogDebug(COMPONENT_THREAD,
+			 "delayed_submit failed with rc = %d", rc);
+
 	return rc;
 }
 
@@ -1587,7 +1605,8 @@ state_status_t delegrecall_impl(cache_entry_t *entry)
 		rc = delegrecall_one(deleg_entry, NULL);
 
 		if (rc)
-			LogCrit(COMPONENT_FSAL_UP, "delegrecall_one failed");
+			LogCrit(COMPONENT_FSAL_UP,
+				"delegrecall_one(%p) failed", deleg_entry);
 
 	}
 	PTHREAD_RWLOCK_unlock(&entry->state_lock);
