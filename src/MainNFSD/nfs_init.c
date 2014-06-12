@@ -221,9 +221,6 @@ void nfs_print_param_config()
 		printf("\tDrop_Delay_Errors = false ;\n");
 
 	printf("}\n\n");
-
-	printf("NFS_Worker_Param\n{\n");
-	printf("}\n\n");
 }
 
 /**
