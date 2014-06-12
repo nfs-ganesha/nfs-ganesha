@@ -1116,10 +1116,11 @@ bool eval_deleg_revoke(state_lock_entry_t *deleg_entry)
  *
  */
 
-static bool handle_recall_response(struct delegrecall_context *p_cargs,
-				   rpc_call_t *call)
+static enum recall_resp_action handle_recall_response(
+				struct delegrecall_context *p_cargs,
+				rpc_call_t *call)
 {
-	bool needs_recall;
+	enum recall_resp_action resp_action;
 	state_lock_entry_t *deleg_entry = p_cargs->deleg_entry;
 
 	struct cf_deleg_stats *clfl_stats =
@@ -1129,21 +1130,38 @@ static bool handle_recall_response(struct delegrecall_context *p_cargs,
 	case NFS4_OK:
 		LogDebug(COMPONENT_NFS_CB,
 		"Delegation successfully recalled");
-		needs_recall = false;
+		resp_action = DELEG_RET_WAIT;
 		clfl_stats->cfd_rs_time =
 					time(NULL);
 		break;
 	case NFS4ERR_BADHANDLE:
 		LogDebug(COMPONENT_NFS_CB,
-			 "NFS4ERR_BADHANDLE response, retrying");
-		needs_recall = true;
+			 "Client sent NFS4ERR_BADHANDLE response, retrying recall for(%p)",
+			 p_cargs->deleg_entry);
+		resp_action = DELEG_RECALL_SCHED;
+		break;
+	case NFS4ERR_DELAY:
+		LogDebug(COMPONENT_NFS_CB,
+			 "Client sent NFS4ERR_DELAY response, retrying recall for(%p)",
+			 p_cargs->deleg_entry);
+		resp_action = DELEG_RECALL_SCHED;
+		break;
+	case  NFS4ERR_BAD_STATEID:
+		LogDebug(COMPONENT_NFS_CB,
+			 "Client sent NFS4ERR_BAD_STATEID response, retrying recall for (%p)",
+			 p_cargs->deleg_entry);
+		resp_action = DELEG_RECALL_SCHED;
 		break;
 	default:
 		/* some other NFS error, consider the recall failed */
-		needs_recall = true;
+		LogDebug(COMPONENT_NFS_CB,
+			 "Client sent %d response, retrying recall for (%p)",
+			 call->cbt.v_u.v4.res.status,
+			 p_cargs->deleg_entry);
+		resp_action = DELEG_RECALL_SCHED;
 		break;
 	}
-	return needs_recall;
+	return resp_action;
 }
 
 /**
@@ -1162,7 +1180,7 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 					   uint32_t flags)
 {
 	char *fh = NULL;
-	bool needs_recall;
+	enum recall_resp_action resp_act;
 	state_status_t rc = STATE_SUCCESS;
 	struct delegrecall_context *deleg_ctx =
 				(struct delegrecall_context *) arg;
@@ -1210,39 +1228,49 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 		if (call->stat != RPC_SUCCESS) {
 			LogEvent(COMPONENT_NFS_CB, "Callback channel down");
 			set_cb_chan_down(deleg_ctx->clid, true);
-			needs_recall = true;
+			resp_act = DELEG_RECALL_SCHED;
 		} else
-			needs_recall = handle_recall_response(deleg_ctx, call);
+			resp_act = handle_recall_response(deleg_ctx, call);
 		break;
 	default:
 		LogDebug(COMPONENT_NFS_CB, "%p unknown hook %d", call, hook);
 		/* Mark the recall as failed */
-		needs_recall = true;
+		resp_act = DELEG_RECALL_SCHED;
 		break;
 	}
-	if (needs_recall) {
-		if (eval_deleg_revoke(deleg_entry)) {
-			LogCrit(COMPONENT_NFS_V4,
-			"Revoking delegation(%p)", deleg_entry);
-			atomic_inc_uint32_t(&cl_stats->num_revokes);
-			rc = deleg_revoke(deleg_entry);
-			if (rc != STATE_SUCCESS) {
-				LogCrit(COMPONENT_NFS_V4,
-					"Delegation could not be revoked(%p)",
-					deleg_entry);
-			} else {
-				LogDebug(COMPONENT_NFS_V4,
-					 "Delegation revoked(%p)", deleg_entry);
-			}
-			cache_inode_put(deleg_ctx->entry);
-			dec_client_id_ref(clientid);
-			gsh_free(deleg_ctx);
-		} else
+	switch (resp_act) {
+	case DELEG_RECALL_SCHED:
+		if (eval_deleg_revoke(deleg_entry))
+			goto out_revoke;
+		else {
 			schedule_delegrecall_task(deleg_ctx, 1);
-	} else {
-	/* recall was successful, we wait for delegreturn now or a timeout */
+			goto out_free;
+		}
+		break;
+	case DELEG_RET_WAIT:
 		schedule_delegrevoke_check(deleg_ctx, 1);
+		goto out_free;
+		break;
+	case REVOKE:
+		goto out_revoke;
 	}
+out_revoke:
+	LogCrit(COMPONENT_NFS_V4,
+		"Revoking delegation(%p)", deleg_entry);
+	atomic_inc_uint32_t(&cl_stats->num_revokes);
+	rc = deleg_revoke(deleg_entry);
+	if (rc != STATE_SUCCESS) {
+		LogCrit(COMPONENT_NFS_V4,
+			"Delegation could not be revoked(%p)",
+			deleg_entry);
+	} else {
+		LogDebug(COMPONENT_NFS_V4,
+			 "Delegation revoked(%p)", deleg_entry);
+	}
+	cache_inode_put(deleg_ctx->entry);
+	dec_client_id_ref(clientid);
+	gsh_free(deleg_ctx);
+
 out_free:
 	PTHREAD_RWLOCK_unlock(&entry->state_lock);
 	fh = call->cbt.v_u.v4.args.argarray.argarray_val->
