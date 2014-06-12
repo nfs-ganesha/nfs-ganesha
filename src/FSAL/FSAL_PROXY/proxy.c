@@ -119,33 +119,6 @@ static struct config_item proxy_client_params[] = {
 	CONFIG_EOL
 };
 
-/**
- * @brief Manage the memory allocated for the remote server sub-block
- *
- * This is pretty simple.  We just get the container of the link_mem
- * within the fsal_module and return a reference to the self_struct, aka
- * the special struct.
- *
- * The release part is a NOP since this is a member within fsal_module.
- *
- * @param link_mem - pointer to the link_mem struct memory.
- * @param self_struct - NULL for dereference/allocate, not NULL for release
- */
-
-static void *proxy_client_init(void *link_mem, void *self_struct)
-{
-	struct fsal_staticfsinfo_t *fsinfo
-		= (struct fsal_staticfsinfo_t *)link_mem;
-	struct pxy_fsal_module *pxy;
-
-	if (link_mem == NULL)
-		return self_struct; /* NOP */
-	else if (self_struct != NULL) {
-		pxy = container_of(fsinfo, struct pxy_fsal_module, fsinfo);
-		return (void *)&pxy->special;
-	} else
-		return NULL;
-}
 
 /**
  * @brief Validate and commit the proxy params
@@ -158,24 +131,24 @@ static void *proxy_client_init(void *link_mem, void *self_struct)
 
 static struct config_item proxy_params[] = {
 	CONF_ITEM_BOOL("link_support", true,
-		       fsal_staticfsinfo_t, link_support),
+		       pxy_fsal_module, fsinfo.link_support),
 	CONF_ITEM_BOOL("symlink_support", true,
-		       fsal_staticfsinfo_t, symlink_support),
+		       pxy_fsal_module, fsinfo.symlink_support),
 	CONF_ITEM_BOOL("cansettime", true,
-		       fsal_staticfsinfo_t, cansettime),
+		       pxy_fsal_module, fsinfo.cansettime),
 	CONF_ITEM_UI64("maxread", 512, FSAL_MAXIOSIZE, FSAL_MAXIOSIZE,
-		       fsal_staticfsinfo_t, maxread),
+		       pxy_fsal_module, fsinfo.maxread),
 	CONF_ITEM_UI64("maxwrite", 512, FSAL_MAXIOSIZE, FSAL_MAXIOSIZE,
-		       fsal_staticfsinfo_t, maxwrite),
+		       pxy_fsal_module, fsinfo.maxwrite),
 	CONF_ITEM_MODE("umask", 0, 0777, 0,
-		       fsal_staticfsinfo_t, umask),
+		       pxy_fsal_module, fsinfo.umask),
 	CONF_ITEM_BOOL("auth_xdev_export", false,
-		       fsal_staticfsinfo_t, auth_exportpath_xdev),
+		       pxy_fsal_module, fsinfo.auth_exportpath_xdev),
 	CONF_ITEM_MODE("xattr_access_rights", 0, 0777, 0400,
-		       fsal_staticfsinfo_t, xattr_access_rights),
+		       pxy_fsal_module, fsinfo.xattr_access_rights),
 	CONF_ITEM_BLOCK("remote_server", proxy_client_params,
-			proxy_client_init, noop_conf_commit,
-			pxy_client_params, retry_sleeptime), /*fake filler */
+			noop_conf_init, noop_conf_commit,
+			pxy_fsal_module, special), /*fake filler */
 	CONFIG_EOL
 };
 
@@ -183,7 +156,7 @@ struct config_block proxy_param = {
 	.dbus_interface_name = "org.ganesha.nfsd.config.fsal.proxy",
 	.blk_desc.name = "PROXY",
 	.blk_desc.type = CONFIG_BLOCK,
-	.blk_desc.u.blk.init = proxy_client_init,
+	.blk_desc.u.blk.init = noop_conf_init,
 	.blk_desc.u.blk.params = proxy_params,
 	.blk_desc.u.blk.commit = noop_conf_commit
 };
@@ -200,7 +173,7 @@ static fsal_status_t pxy_init_config(struct fsal_module *fsal_hdl,
 	pxy->fsinfo = proxy_info;
 	(void) load_config_from_parse(config_struct,
 				      &proxy_param,
-				      &pxy->fsinfo,
+				      pxy,
 				      true,
 				      &err_type);
 	if (!config_error_is_harmless(&err_type))

@@ -40,10 +40,10 @@
 /* parameters for Handle Map module */
 typedef struct handle_map_param__ {
 	/* path where database files are located */
-	char databases_directory[MAXPATHLEN + 1];
+	char *databases_directory;
 
 	/* temp dir for database work */
-	char temp_directory[MAXPATHLEN + 1];
+	char *temp_directory;
 
 	/* number of databases */
 	unsigned int database_count;
