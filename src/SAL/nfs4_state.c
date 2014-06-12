@@ -75,7 +75,7 @@ static bool check_deleg_conflict(state_lock_entry_t *deleg_entry,
 				 state_data_t *candidate_data,
 				 state_owner_t *candidate_owner)
 {
-	LogDebug(COMPONENT_STATE, "Checking for conflict!!");
+	LogFullDebug(COMPONENT_STATE, "Checking for conflict!!");
 
 	if (deleg_entry == NULL || candidate_data == NULL)
 		return true;

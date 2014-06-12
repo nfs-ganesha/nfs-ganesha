@@ -352,5 +352,6 @@ state_status_t deleg_revoke(state_lock_entry_t *deleg_entry)
 	state_del_locked(deleg_state, pentry);
 	gsh_free(fhandle.nfs_fh4_val);
 
+	gsh_free(fhandle.nfs_fh4_val);
 	return STATE_SUCCESS;
 }

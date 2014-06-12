@@ -1314,7 +1314,7 @@ static uint32_t delegrecall_one(state_lock_entry_t *deleg_entry,
 
 	cache_entry_t *entry = deleg_entry->sle_entry;
 
-	LogDebug(COMPONENT_FSAL_UP, "Recalling delegation(%p)", deleg_entry);
+	LogFullDebug(COMPONENT_FSAL_UP, "Recalling delegation:%p", deleg_entry);
 
 	atomic_inc_uint32_t(&cl_stats->tot_recalls);
 
@@ -1572,7 +1572,7 @@ state_status_t delegrecall_impl(cache_entry_t *entry)
 	nfs_client_id_t *clid = NULL;
 
 	LogDebug(COMPONENT_FSAL_UP,
-		 "FSAL_UP_DELEG: Invalidate cache found entry %p type %u",
+		 "FSAL_UP_DELEG: entry %p type %u",
 		 entry, entry->type);
 
 	PTHREAD_RWLOCK_wrlock(&entry->state_lock);

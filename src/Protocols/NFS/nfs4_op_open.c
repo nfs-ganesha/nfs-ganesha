@@ -1259,12 +1259,13 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 		break;
 
 	case CLAIM_DELEGATE_PREV:
-		/* Read and validate oldname and newname from uft8 strings. */
-		utfname = &arg_OPEN4->claim.open_claim4_u.file_delegate_prev;
-
 	case CLAIM_DELEGATE_CUR:
-		/* Check we are not falling thorugh CLAIM_DELEGATE_PREV */
-		if (utfname == NULL) {
+		if (claim == CLAIM_DELEGATE_PREV) {
+			/* Read and validate oldname and newname from
+			 * uft8 strings. */
+			utfname =
+			&arg_OPEN4->claim.open_claim4_u.file_delegate_prev;
+		} else {
 			utfname =
 			&arg_OPEN4->claim.open_claim4_u.delegate_cur_info.file;
 			rcurr_state =

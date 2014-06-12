@@ -445,6 +445,7 @@ void  nfs4_chk_clid_impl(nfs_client_id_t *clientid, clid_entry_t **clid_ent_arg)
 {
 	struct glist_head *node;
 	clid_entry_t *clid_ent;
+	*clid_ent_arg = NULL;
 
 	LogDebug(COMPONENT_CLIENTID, "chk for %s", clientid->cid_recov_dir);
 	if (clientid->cid_recov_dir == NULL)
@@ -566,6 +567,9 @@ void nfs4_populate_revoked_delegs(clid_entry_t *clid_ent, char *path)
 		strcpy(new_ent->rdfh_handle_str, clid_str);
 		glist_init(&new_ent->rdfh_list);
 		glist_add(&clid_ent->cl_rfh_list, &new_ent->rdfh_list);
+		LogFullDebug(COMPONENT_CLIENTID,
+			"revoked handle: %s",
+			new_ent->rdfh_handle_str);
 read_next:
 		dentp = readdir(dp);
 	}
@@ -1118,12 +1122,16 @@ bool nfs4_can_deleg_reclaim_prev(nfs_client_id_t *clid, nfs_fh4 *fhandle)
 		assert(rfh_entry != NULL);
 		if (!strcmp(cidstr, rfh_entry->rdfh_handle_str)) {
 			pthread_mutex_unlock(&grace.g_mutex);
-			return true;
+			LogFullDebug(COMPONENT_CLIENTID,
+				"Can't reclaim revoked fh:%s",
+				rfh_entry->rdfh_handle_str);
+			return false;
 		}
 	}
 
 	pthread_mutex_unlock(&grace.g_mutex);
-	return false;
+	LogFullDebug(COMPONENT_CLIENTID, "Returning TRUE");
+	return true;
 }
 
 
