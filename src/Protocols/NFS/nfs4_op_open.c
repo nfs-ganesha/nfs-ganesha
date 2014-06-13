@@ -499,11 +499,26 @@ bool open4_open_owner(struct nfs_argop4 *op, compound_data_t *data,
 			 * and update currentFH
 			 */
 			if (res_OPEN4->status == NFS4_OK) {
+				utf8string *utfile;
+				open_claim4 *oc = &arg_OPEN4->claim;
+				switch (oc->claim) {
+				case CLAIM_NULL:
+					utfile =
+					&oc->open_claim4_u.file;
+					break;
+				case CLAIM_DELEGATE_PREV:
+					utfile =
+					&oc->open_claim4_u.file_delegate_prev;
+					break;
+				case CLAIM_DELEGATE_CUR:
+					utfile =
+					&oc->open_claim4_u.delegate_cur_info.file;
+				default:
+					return false;
+				}
 				/* Check if filename is correct */
 				res_OPEN4->status = nfs4_utf8string2dynamic(
-				     &arg_OPEN4->claim.open_claim4_u.file,
-				     UTF8_SCAN_ALL,
-				     &filename);
+				     utfile, UTF8_SCAN_ALL, &filename);
 
 				if (res_OPEN4->status != NFS4_OK)
 					return false;
