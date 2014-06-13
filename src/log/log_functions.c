@@ -57,6 +57,40 @@
 #include "nfs_core.h"
 #include "config_parsing.h"
 
+/*
+ * The usual PTHREAD_RWLOCK_xxx macros log messages for tracing if FULL
+ * DEBUG is enabled. If such a macro is called from this logging file as
+ * part of logging a message, it generates endless loop of lock tracing
+ * messages. The following code redefines these lock macros to avoid the
+ * loop.
+ */
+#ifdef PTHREAD_RWLOCK_wrlock
+#undef PTHREAD_RWLOCK_wrlock
+#endif
+#define PTHREAD_RWLOCK_wrlock(_lock)					\
+	do {								\
+		if (pthread_rwlock_wrlock(_lock) != 0)			\
+			assert(0);					\
+	} while (0)
+
+#ifdef PTHREAD_RWLOCK_rdlock
+#undef PTHREAD_RWLOCK_rdlock
+#endif
+#define PTHREAD_RWLOCK_rdlock(_lock)					\
+	do {								\
+		if (pthread_rwlock_rdlock(_lock) != 0)			\
+			assert(0);					\
+	} while (0)
+
+#ifdef PTHREAD_RWLOCK_unlock
+#undef PTHREAD_RWLOCK_unlock
+#endif
+#define PTHREAD_RWLOCK_unlock(_lock)					\
+	do {								\
+		if (pthread_rwlock_unlock(_lock) != 0)			\
+			assert(0);					\
+	} while (0)
+
 pthread_rwlock_t log_rwlock = PTHREAD_RWLOCK_INITIALIZER;
 
 /* Variables to control log fields */

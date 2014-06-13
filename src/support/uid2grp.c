@@ -89,36 +89,58 @@ static bool my_getgrouplist_alloc(char *user,
 				  gid_t gid,
 				  struct group_data *gdata)
 {
-	int nbgrp = 0;
-	gid_t *groups = NULL;
+	int ngroups = 0;
+	gid_t *groups, *groups2;
 
-	/* Step 1 : call getgrouplist with a 0 size
-	 * getgrouplist() will return the needed size.
-	 * This call WILL fail (see manpages), but errno
-	 * won't be set and nbgrp will contain the right value */
-	getgrouplist(user, gid, NULL, &nbgrp);
-	if (errno != 0) {
-		/* This case is actually an error */
-		LogEvent(COMPONENT_IDMAPPER, "getgrouplist %s failed",
-			 user);
-		return false;
-	}
-	gdata->nbgroups = nbgrp;
+	/* We call getgrouplist() with 0 ngroups first. This should always
+	 * return -1, and ngroups should be set to the actual number of
+	 * groups the user is in.  The manpage doesn't say anything
+	 * about errno value, it was usually zero but was set to 34
+	 * (ERANGE) under some environments. ngroups was set correctly
+	 * no matter what the errno value is!
+	 *
+	 * We assume that ngroups is correctly set, no matter what the
+	 * errno value is. The man page says, "The ngroups argument
+	 * is a value-result argument: on  return  it always contains
+	 * the  number  of  groups found for user."
+	 */
+	(void)getgrouplist(user, gid, NULL, &ngroups);
 
-	/* Step 2: allocate gdata->groups with the right size then
-	 * call getgrouplist() a second time to get the actual group list */
-	groups = (gid_t *) gsh_malloc(nbgrp * sizeof(gid_t));
+	/* Allocate gdata->groups with the right size then call
+	 * getgrouplist() a second time to get the actual group list
+	 */
+	groups = gsh_malloc(ngroups * sizeof(gid_t));
 	if (groups == NULL)
 		return false;
 
-	if (getgrouplist
-	    (user, gid, groups, &gdata->nbgroups) == -1) {
-		LogEvent(COMPONENT_IDMAPPER, "getgrouplist %s failed", user);
+	if (getgrouplist(user, gid, groups, &ngroups) == -1) {
+		LogEvent(COMPONENT_IDMAPPER,
+			 "getgrouplist for user: %s failed retrying", user);
+
 		gsh_free(groups);
-		return false;
+
+		/* Try with the largest ngroups we support */
+		ngroups = 1000;
+		groups2 = gsh_malloc(ngroups * sizeof(gid_t));
+		if (groups2 == NULL)
+			return false;
+
+		if (getgrouplist(user, gid, groups2, &ngroups) == -1) {
+			LogWarn(COMPONENT_IDMAPPER,
+				"getgrouplist for user:%s failed, ngroups: %d",
+				user, ngroups);
+			gsh_free(groups2);
+			return false;
+		}
+
+		/* Resize the buffer */
+		groups = gsh_realloc(groups2, ngroups * sizeof(gid_t));
+		if (groups == NULL) /* Use the large buffer! */
+			groups = groups2;
 	}
 
 	gdata->groups = groups;
+	gdata->nbgroups = ngroups;
 
 	return true;
 }

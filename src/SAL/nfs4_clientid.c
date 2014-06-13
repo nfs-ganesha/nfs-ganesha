@@ -80,6 +80,8 @@ uint64_t clientid_verifier;
  */
 pool_t *client_id_pool;
 
+extern struct fridgethr *state_async_fridge;
+
 /**
  * @brief Return the NFSv4 status for the client id error code
  *
@@ -1586,6 +1588,25 @@ nfs_client_record_t *get_client_record(const char *const value,
 	return record;
 }
 
+struct client_callback_arg {
+	void *state;
+	nfs_client_id_t *pclientid;
+	bool (*cb)(nfs_client_id_t *, void *);
+};
+
+/**
+ * @brief client callback
+ */
+static void client_cb(struct fridgethr_context *ctx)
+{
+	struct client_callback_arg *cb_arg;
+
+	cb_arg = ctx->arg;
+	cb_arg->cb(cb_arg->pclientid, cb_arg->state);
+	dec_client_id_ref(cb_arg->pclientid);
+	gsh_free(cb_arg);
+}
+
 /**
  * @brief Walk the client tree and do the callback on each 4.1 nodes
  *
@@ -1603,6 +1624,8 @@ nfs41_foreach_client_callback(bool(*cb) (nfs_client_id_t *cl, void *state),
 	struct hash_data *pdata = NULL;
 	struct rbt_node *pn;
 	nfs_client_id_t *pclientid;
+	struct client_callback_arg *cb_arg;
+	int rc;
 
 	/* For each bucket of the hashtable */
 	for (i = 0; i < ht->parameter.index_size; i++) {
@@ -1617,15 +1640,31 @@ nfs41_foreach_client_callback(bool(*cb) (nfs_client_id_t *cl, void *state),
 			pclientid = pdata->val.addr;
 			RBT_INCREMENT(pn);
 
-			inc_client_id_ref(pclientid);
 			if (pclientid->cid_minorversion > 0) {
-				PTHREAD_RWLOCK_unlock(&
-						      (ht->partitions[i].lock));
-				cb(pclientid, state);
-				PTHREAD_RWLOCK_wrlock(&
-						      (ht->partitions[i].lock));
+				cb_arg = gsh_malloc(
+						sizeof(struct
+							client_callback_arg));
+				if (cb_arg == NULL) {
+					LogCrit(COMPONENT_CLIENTID,
+						"malloc failed for %p",
+						pclientid);
+					continue;
+				}
+				cb_arg->cb = cb;
+				cb_arg->state = state;
+				cb_arg->pclientid = pclientid;
+				inc_client_id_ref(pclientid);
+				rc = fridgethr_submit(state_async_fridge,
+						 client_cb,
+						 cb_arg);
+				if (rc != 0) {
+					LogCrit(COMPONENT_CLIENTID,
+						"unable to start client cb thread %d",
+						rc);
+					gsh_free(cb_arg);
+					dec_client_id_ref(pclientid);
+				}
 			}
-			dec_client_id_ref(pclientid);
 		}
 		PTHREAD_RWLOCK_unlock(&(ht->partitions[i].lock));
 	}

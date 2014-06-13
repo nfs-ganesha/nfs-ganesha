@@ -280,7 +280,7 @@ static bool lookup_by_uname(const struct gsh_buffdesc *name,
 	struct avltree_node *found_node = avltree_lookup(&prototype.uname_node,
 							 &uname_tree);
 	struct cache_info *found_info;
-	struct avltree_node **cache_entry;
+	void **cache_slot;
 
 	if (unlikely(!found_node))
 		return false;
@@ -293,9 +293,9 @@ static bool lookup_by_uname(const struct gsh_buffdesc *name,
 	   up by name, they'll like it enough to look it up by ID
 	   later. */
 
-	cache_entry = uid_grplist_cache + (found_info->uid % id_cache_size);
-	atomic_store_uint64_t((uint64_t *) cache_entry,
-			      (uint64_t) &found_info->uid_node);
+	cache_slot = (void **)
+		&uid_grplist_cache[found_info->uid % id_cache_size];
+	atomic_store_voidptr(cache_slot, &found_info->uid_node);
 
 	*info = found_info;
 
@@ -307,11 +307,9 @@ static bool lookup_by_uid(const uid_t uid, struct cache_info **info)
 	struct cache_info prototype = {
 		.uid = uid
 	};
-	struct avltree_node **cache_entry =
-	    uid_grplist_cache + (prototype.uid % id_cache_size);
-	struct avltree_node *found_node = ((struct avltree_node *)
-					   atomic_fetch_uint64_t((uint64_t *)
-								 cache_entry));
+	void **cache_slot = (void **)
+	    &uid_grplist_cache[prototype.uid % id_cache_size];
+	struct avltree_node *found_node = atomic_fetch_voidptr(cache_slot);
 	struct cache_info *found_info;
 	bool found = false;
 
@@ -331,8 +329,7 @@ static bool lookup_by_uid(const uid_t uid, struct cache_info **info)
 		if (unlikely(!found_node))
 			return false;
 
-		atomic_store_uint64_t((uintptr_t *) cache_entry,
-				      (uintptr_t) found_node);
+		atomic_store_voidptr(cache_slot, found_node);
 		found_info =
 		    avltree_container_of(found_node, struct cache_info,
 					 uid_node);
