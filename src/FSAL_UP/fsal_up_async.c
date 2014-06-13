@@ -475,9 +475,7 @@ static void queue_delegrecall(struct fridgethr_context *ctx)
 {
 	cache_entry_t *entry = ctx->arg;
 
-	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 	(void)delegrecall_impl(entry);
-	PTHREAD_RWLOCK_unlock(&entry->state_lock);
 }
 
 int async_delegrecall(struct fridgethr *fr, cache_entry_t *entry)
