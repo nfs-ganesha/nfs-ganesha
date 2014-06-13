@@ -36,7 +36,7 @@ LOGFILE=/pt_work/log/ganesha/nfs-ganesha.log
 #LOGFILE=STDERR
 #LOGFILE=STDOUT
 
-CONFFILE=/etc/ganesha/pt_config.conf
+CONFFILE=/etc/ganesha/pt.conf
 
 # Remote quota server
 [ -z "$RQUOTAD" ] && RQUOTAD=`type -path rpc.rquotad`
