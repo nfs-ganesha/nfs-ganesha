@@ -94,7 +94,7 @@ int main(int argc, char *argv[])
 {
 	char *tempo_exec_name = NULL;
 	char localmachine[MAXHOSTNAMELEN + 1];
-	int c;
+	int c, rc;
 	int pidfile;
 #ifndef HAVE_DAEMON
 	int dev_null_fd = 0;
@@ -402,6 +402,22 @@ int main(int argc, char *argv[])
 		LogFatal(COMPONENT_INIT,
 			 "Error setting parameters from configuration file.");
 	}
+
+	/* initialize core subsystems and data structures */
+	if (init_server_pkgs() != 0)
+		LogFatal(COMPONENT_INIT,
+			 "Failed to initialize server packages");
+
+	/* Load export entries from parsed file
+	 * returns the number of export entries.
+	 */
+	rc = ReadExports(config_struct);
+	if (rc < 0)
+		LogFatal(COMPONENT_INIT,
+			  "Error while parsing export entries");
+	else if (rc == 0)
+		LogWarn(COMPONENT_INIT,
+			"No export entries found in configuration file !!!");
 
 	/* freeing syntax tree : */
 

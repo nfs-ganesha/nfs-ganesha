@@ -48,7 +48,6 @@
 
 int _9p_init(void)
 {
-	uid2grp_cache_init();
 	return 0;
 }				/* _9p_init */
 

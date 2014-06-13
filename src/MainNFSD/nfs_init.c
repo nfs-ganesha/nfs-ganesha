@@ -234,7 +234,6 @@ void nfs_print_param_config()
 int nfs_set_param_from_conf(config_file_t parse_tree,
 			    nfs_start_info_t *p_start_info)
 {
-	int rc;
 	struct config_error_type err_type;
 
 	/*
@@ -319,20 +318,52 @@ int nfs_set_param_from_conf(config_file_t parse_tree,
 		return -1;
 	}
 
-	/* Load export entries from parsed file
-	 * returns the number of export entries.
-	 */
-	rc = ReadExports(parse_tree);
-	if (rc < 0) {
-		LogCrit(COMPONENT_INIT, "Error while parsing export entries");
-		return -1;
-	} else if (rc == 0) {
-		LogWarn(COMPONENT_INIT,
-			"No export entries found in configuration file !!!");
-	}
-
 	LogEvent(COMPONENT_INIT, "Configuration file successfully parsed");
 
+	return 0;
+}
+
+int init_server_pkgs(void)
+{
+	cache_inode_status_t cache_status;
+	state_status_t state_status;
+
+	/* init uid2grp cache */
+	uid2grp_cache_init();
+
+	/* Cache Inode Initialisation */
+	cache_status = cache_inode_init();
+	if (cache_status != CACHE_INODE_SUCCESS) {
+		LogCrit(COMPONENT_INIT,
+			"Cache Inode Layer could not be initialized, status=%s",
+			cache_inode_err_str(cache_status));
+		return -1;
+	}
+
+	state_status = state_lock_init();
+	if (state_status != STATE_SUCCESS) {
+		LogCrit(COMPONENT_INIT,
+			"State Lock Layer could not be initialized, status=%s",
+			state_err_str(state_status));
+		return -1;
+	}
+	LogInfo(COMPONENT_INIT, "Cache Inode library successfully initialized");
+
+	/* Init the IP/name cache */
+	LogDebug(COMPONENT_INIT, "Now building IP/name cache");
+	if (nfs_Init_ip_name() != IP_NAME_SUCCESS) {
+		LogCrit(COMPONENT_INIT,
+			"Error while initializing IP/name cache");
+		return -1;
+	}
+	LogInfo(COMPONENT_INIT, "IP/name cache successfully initialized");
+
+	LogEvent(COMPONENT_INIT, "Initializing ID Mapper.");
+	if (!idmapper_init()) {
+		LogCrit(COMPONENT_INIT, "Failed initializing ID Mapper.");
+		return -1;
+	}
+	LogEvent(COMPONENT_INIT, "ID Mapper successfully initialized.");
 	return 0;
 }
 
@@ -449,8 +480,6 @@ static void nfs_Start_threads(void)
 
 static void nfs_Init(const nfs_start_info_t *p_start_info)
 {
-	cache_inode_status_t cache_status;
-	state_status_t state_status;
 	int rc = 0;
 #ifdef _HAVE_GSSAPI
 	gss_buffer_desc gss_service_buf;
@@ -464,24 +493,6 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 	dbus_export_init();
 	dbus_client_init();
 #endif
-	/* init uid2grp cache */
-	uid2grp_cache_init();
-
-	/* Cache Inode Initialisation */
-	cache_status = cache_inode_init();
-	if (cache_status != CACHE_INODE_SUCCESS) {
-		LogFatal(COMPONENT_INIT,
-			 "Cache Inode Layer could not be initialized, status=%s",
-			 cache_inode_err_str(cache_status));
-	}
-
-	state_status = state_lock_init();
-	if (state_status != STATE_SUCCESS) {
-		LogFatal(COMPONENT_INIT,
-			 "State Lock Layer could not be initialized, status=%s",
-			 state_err_str(state_status));
-	}
-	LogInfo(COMPONENT_INIT, "Cache Inode library successfully initialized");
 
 	/* Cache Inode LRU (call this here, rather than as part of
 	   cache_inode_init() so the GC policy has been set */
@@ -601,12 +612,6 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 	/* Admin initialisation */
 	nfs_Init_admin_thread();
 
-	LogEvent(COMPONENT_INIT, "Initializing ID Mapper.");
-	if (!idmapper_init())
-		LogFatal(COMPONENT_INIT, "Failed initializing ID Mapper.");
-	else
-		LogEvent(COMPONENT_INIT, "ID Mapper successfully initialized.");
-
 	/* Init the NFSv4 Clientid cache */
 	LogDebug(COMPONENT_INIT, "Now building NFSv4 clientid cache");
 	if (nfs_Init_client_id() !=
@@ -621,14 +626,6 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 	dupreq2_pkginit();
 	LogInfo(COMPONENT_INIT,
 		"duplicate request hash table cache successfully initialized");
-
-	/* Init the IP/name cache */
-	LogDebug(COMPONENT_INIT, "Now building IP/name cache");
-	if (nfs_Init_ip_name() != IP_NAME_SUCCESS) {
-		LogFatal(COMPONENT_INIT,
-			 "Error while initializing IP/name cache");
-	}
-	LogInfo(COMPONENT_INIT, "IP/name cache successfully initialized");
 
 	/* Init The NFSv4 State id cache */
 	LogDebug(COMPONENT_INIT, "Now building NFSv4 State Id cache");
