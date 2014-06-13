@@ -1666,10 +1666,11 @@ release_export_root_locked(struct gsh_export *export,
 
 		/* We must not hold entry->attr_lock across
 		 * cache_inode_dec_pin_ref (LRU lane lock order) */
-		if (flags & RELEASE_EXP_ROOT_FLAG_ULOCK_BOTH) {
-			PTHREAD_RWLOCK_unlock(&export->lock);
+		if (flags & RELEASE_EXP_ROOT_FLAG_ULOCK_ATTR)
 			PTHREAD_RWLOCK_unlock(&entry->attr_lock);
-		}
+
+		if (flags & RELEASE_EXP_ROOT_FLAG_ULOCK_LOCK)
+			PTHREAD_RWLOCK_unlock(&export->lock);
 
 		/* Release the pin reference */
 		cache_inode_dec_pin_ref(root_entry, false);
