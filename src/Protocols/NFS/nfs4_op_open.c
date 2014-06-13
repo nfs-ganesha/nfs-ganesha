@@ -1432,7 +1432,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	if (arg_OPEN4->claim.claim)
-		openflags = FSAL_O_RECLAIM;
+		openflags |= FSAL_O_RECLAIM;
 
 	PTHREAD_RWLOCK_wrlock(&data->current_entry->state_lock);
 

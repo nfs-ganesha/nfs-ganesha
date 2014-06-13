@@ -164,6 +164,10 @@ cache_inode_open(cache_entry_t *entry,
 
 	obj_hdl = entry->obj_handle;
 	current_flags = obj_hdl->ops->status(obj_hdl);
+
+	/* Filter out overloaded FSAL_O_RECLAIM */
+	openflags &= ~FSAL_O_RECLAIM;
+
 	/* Open file need to be closed, unless it is already open as
 	 * read/write */
 	if ((current_flags != FSAL_O_RDWR) && (current_flags != FSAL_O_CLOSED)
