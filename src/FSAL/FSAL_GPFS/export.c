@@ -639,6 +639,7 @@ int gpfs_claim_filesystem(struct fsal_filesystem *fs, struct fsal_export *exp)
 			LogCrit(COMPONENT_THREAD,
 				"can't set pthread's stack size");
 
+		gpfs_fs->up_ops = exp->up_ops;
 		retval = pthread_create(&gpfs_fs->up_thread,
 					&attr_thr,
 					GPFSFSAL_UP_Thread,
@@ -651,8 +652,6 @@ int gpfs_claim_filesystem(struct fsal_filesystem *fs, struct fsal_export *exp)
 				retval, strerror(retval));
 			goto errout;
 		}
-
-		gpfs_fs->up_ops = exp->up_ops;
 	}
 
 	fs->private = gpfs_fs;
