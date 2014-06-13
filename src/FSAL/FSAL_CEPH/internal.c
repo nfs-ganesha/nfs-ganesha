@@ -270,8 +270,6 @@ int construct_handle(const struct stat *st, struct Inode *i,
 {
 	/* Poitner to the handle under construction */
 	struct handle *constructing = NULL;
-	/* Return code */
-	int rc = 0;
 
 	assert(i);
 	*obj = NULL;
@@ -284,11 +282,6 @@ int construct_handle(const struct stat *st, struct Inode *i,
 	constructing->vi.snapid.val = st->st_dev;
 	constructing->i = i;
 	constructing->up_ops = export->export.up_ops;
-
-	if (rc < 0) {
-		gsh_free(constructing);
-		return rc;
-	}
 
 	ceph2fsal_attributes(st, &constructing->handle.attributes);
 
