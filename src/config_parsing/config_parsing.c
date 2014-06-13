@@ -1418,10 +1418,10 @@ static char *parse_block(char *str, struct expr_parse **node)
 	if (isspace(*sp))
 		*sp++ = '\0';
 	sp = skip_white(sp);
-	if (*sp == '(') {
-		*sp++ = '\0';	/* name ( ... */
-		sp = parse_args(sp, &arg);
-	}
+	if (*sp != '(')
+		return NULL;
+	*sp++ = '\0';	/* name ( ... */
+	sp = parse_args(sp, &arg);
 	if (sp == NULL)
 		goto errout;
 	sp = skip_white(sp);
@@ -1465,13 +1465,13 @@ static char *parse_expr(char *expr, struct expr_parse **expr_node)
 	sp = lexpr;
 	while (sp != NULL && *sp != '\0') {
 		sp = parse_block(sp, &node);	/* block is name ( ... ) */
-		if (sp == NULL)
-			break;
 		if (root_node == NULL)
 			root_node = node;
 		else
 			prev_node->next = node;
 		prev_node = node;
+		if (sp == NULL)
+			break;
 		sp = skip_white(sp);
 		if (*sp == '.') {
 			sp++;		/* boock '.' block ... */
@@ -1481,7 +1481,10 @@ static char *parse_expr(char *expr, struct expr_parse **expr_node)
 		}
 	}
 	*expr_node = root_node;
-	return expr + (sp - lexpr);
+	if (sp != NULL)
+		return expr + (sp - lexpr);
+	else
+		return NULL;
 }
 
 /**
