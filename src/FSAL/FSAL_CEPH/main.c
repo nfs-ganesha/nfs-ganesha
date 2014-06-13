@@ -184,24 +184,17 @@ static fsal_status_t create_export(struct fsal_module *module,
 	return status;
 
  error:
-
-	if (i) {
+	if (i)
 		ceph_ll_put(export->cmount, i);
-		i = NULL;
-	}
 
-	if (export->cmount != NULL) {
-		ceph_shutdown(export->cmount);
-		export->cmount = NULL;
+	if (export) {
+		if (export->cmount)
+			ceph_shutdown(export->cmount);
+		gsh_free(export);
 	}
 
 	if (initialized)
 		initialized = false;
-
-	if (export != NULL) {
-		gsh_free(export);
-		export = NULL;
-	}
 
 	return status;
 }

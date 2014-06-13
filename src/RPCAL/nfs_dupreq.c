@@ -681,22 +681,24 @@ void nfs_dupreq_put_drc(SVCXPRT *xprt, drc_t *drc, uint32_t flags)
 				/* note t's lock order wrt drc->mtx is
 				 * the opposite of drc->xt[*].lock */
 				drc->d_u.tcp.recycle_time = time(NULL);
+				drc->flags |= DRC_FLAG_RECYCLE;
+				pthread_mutex_unlock(&drc->mtx); /* !LOCKED */
 				DRC_ST_LOCK();
 				TAILQ_INSERT_TAIL(&drc_st->tcp_drc_recycle_q,
 						  drc, d_u.tcp.recycle_q);
 				++(drc_st->tcp_drc_recycle_qlen);
-				drc->flags |= DRC_FLAG_RECYCLE;
 				LogFullDebug(COMPONENT_DUPREQ,
 					     "enqueue drc %p for recycle", drc);
 				DRC_ST_UNLOCK();
+				goto out;
 			}
 		}
 	default:
 		break;
 	};
 
-	pthread_mutex_unlock(&drc->mtx);	/* !LOCKED */
-
+	pthread_mutex_unlock(&drc->mtx); /* !LOCKED */
+out:
 	return;
 }
 
