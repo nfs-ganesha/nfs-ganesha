@@ -257,7 +257,6 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 
 			memset(&devid, 0, sizeof(devid));
 			devid.fsal_id = FSAL_ID_GPFS;
-			devid.devid = devid.devid;
 
 			rc = up_async_notify_device(general_fridge,
 						event_func,
