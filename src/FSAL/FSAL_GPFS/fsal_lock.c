@@ -147,9 +147,13 @@ fsal_status_t GPFSFSAL_lock_op(struct fsal_export *export,
 			glock_args.cmd = F_GETLK;
 			retval2 =
 			    gpfs_ganesha(OPENHANDLE_GET_LOCK, &gpfs_sg_arg);
+			int errsv2 = errno;
 			if (retval2) {
 				LogCrit(COMPONENT_FSAL,
 					"After failing a set lock request, An attempt to get the current owner details also failed.");
+				if (errsv2 == EUNATCH)
+					LogFatal(COMPONENT_FSAL,
+						"GPFS Returned EUNATCH");
 			} else {
 				conflicting_lock->lock_length =
 				    glock_args.flock.l_len;
@@ -167,6 +171,9 @@ fsal_status_t GPFSFSAL_lock_op(struct fsal_export *export,
 			LogFullDebug(COMPONENT_FSAL,
 				     "GPFS lock operation failed error %d %d (%s)",
 				     retval, errsv, strerror(errsv));
+			if (errsv == EUNATCH)
+				LogFatal(COMPONENT_FSAL,
+					"GPFS Returned EUNATCH");
 			if (errsv == EGRACE)
 				return fsalstat(ERR_FSAL_IN_GRACE, 0);
 			return fsalstat(posix2fsal_error(errsv), errsv);

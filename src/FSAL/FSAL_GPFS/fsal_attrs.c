@@ -114,6 +114,7 @@ fsal_status_t GPFSFSAL_statfs(int mountdirfd,			/* IN */
 	int rc;
 	struct statfs_arg sarg;
 	struct gpfs_fsal_obj_handle *myself;
+	int errsv;
 
 	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
 
@@ -122,12 +123,16 @@ fsal_status_t GPFSFSAL_statfs(int mountdirfd,			/* IN */
 	sarg.buf = buf;
 
 	rc = gpfs_ganesha(OPENHANDLE_STATFS_BY_FH, &sarg);
+	errsv = errno;
 
 	LogFullDebug(COMPONENT_FSAL,
 		     "OPENHANDLE_STATFS_BY_FH returned: rc %d", rc);
 
-	if (rc < 0)
-		return fsalstat(posix2fsal_error(errno), errno);
+	if (rc < 0) {
+		if (errsv == EUNATCH)
+			LogFatal(COMPONENT_FSAL, "GPFS Returned EUNATCH");
+		return fsalstat(posix2fsal_error(errsv), errsv);
+	}
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
