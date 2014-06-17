@@ -1277,7 +1277,10 @@ static uint32_t delegrecall_one(state_lock_entry_t *deleg_entry,
 	clientid = deleg_entry->sle_owner->so_owner.so_nfs4_owner.so_clientrec;
         cl_stats = &clientid->cid_deleg_stats;
 	clfl_stats = &deleg_entry->sle_state->state_data.deleg.sd_clfile_stats;
-	clfl_stats->cfd_r_time = time(NULL);
+
+	/* record the first attempt to recall this delegation */
+	if (clfl_stats->cfd_r_time == 0)
+		clfl_stats->cfd_r_time = time(NULL);
 
 	cache_entry_t *entry = deleg_entry->sle_entry;
 
