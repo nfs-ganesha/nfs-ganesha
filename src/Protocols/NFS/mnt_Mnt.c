@@ -120,7 +120,9 @@ int mnt_Mnt(nfs_arg_t *arg,
 		LogInfo(COMPONENT_NFSPROTO,
 			"MOUNT: Export entry %s does not support NFS v3 for client %s",
 			export->fullpath,
-			op_ctx->client->hostaddr_str);
+			op_ctx->client
+				? op_ctx->client->hostaddr_str
+				: "unknown client");
 		res->res_mnt3.fhs_status = MNT3ERR_ACCES;
 		goto out;
 	}
@@ -195,7 +197,10 @@ int mnt_Mnt(nfs_arg_t *arg,
 
 	LogDebug(COMPONENT_NFSPROTO,
 		 "MOUNT: Entry supports %d different flavours handle=%s for client %s",
-		 index_auth, dumpfh, op_ctx->client->hostaddr_str);
+		 index_auth, dumpfh,
+			op_ctx->client
+				? op_ctx->client->hostaddr_str
+				: "unknown client");
 
 	mountres3_ok * const RES_MOUNTINFO =
 	    &res->res_mnt3.mountres3_u.mountinfo;

@@ -115,7 +115,10 @@ int nfs3_link(nfs_arg_t *arg,
 	if (to_exportid < 0 || from_exportid < 0) {
 		LogInfo(COMPONENT_DISPATCH,
 			"NFS%d LINK Request from client %s has badly formed handle for link dir",
-			req->rq_vers, op_ctx->client->hostaddr_str);
+			req->rq_vers,
+			op_ctx->client
+				? op_ctx->client->hostaddr_str
+				: "unknown client");
 
 		/* Bad handle, report to client */
 		res->res_link3.status = NFS3ERR_BADHANDLE;
