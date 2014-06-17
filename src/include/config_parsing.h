@@ -647,7 +647,13 @@ struct config_item {
 	  .u.ipv4.def = _def_,			    \
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
-
+#define CONF_MAND_IPV4_ADDR(_name_, _def_, _struct_, _mem_) \
+	{ .name = _name_,			    \
+	  .type = CONFIG_IPV4_ADDR,		    \
+	  .flags = CONFIG_UNIQUE|CONFIG_MANDATORY,  \
+	  .u.ipv4.def = _def_,			    \
+	  .off = offsetof(struct _struct_, _mem_)   \
+	}
 #define CONF_ITEM_IPV6_ADDR(_name_, _def_, _struct_, _mem_) \
 	{ .name = _name_,			    \
 	  .type = CONFIG_IPV6_ADDR,		    \
@@ -658,6 +664,16 @@ struct config_item {
 #define CONF_ITEM_INET_PORT(_name_, _min_, _max_, _def_, _struct_, _mem_) \
 	{ .name = _name_,			    \
 	  .type = CONFIG_INET_PORT,		    \
+	  .u.i16.minval = _min_,		    \
+	  .u.i16.maxval = _max_,		    \
+	  .u.i16.def = _def_,			    \
+	  .off = offsetof(struct _struct_, _mem_)   \
+	}
+
+#define CONF_MAND_INET_PORT(_name_, _min_, _max_, _def_, _struct_, _mem_) \
+	{ .name = _name_,			    \
+	  .type = CONFIG_INET_PORT,		    \
+	  .flags = CONFIG_UNIQUE|CONFIG_MANDATORY,  \
 	  .u.i16.minval = _min_,		    \
 	  .u.i16.maxval = _max_,		    \
 	  .u.i16.def = _def_,			    \
