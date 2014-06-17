@@ -49,15 +49,18 @@
 /* this needs to be refactored to put ipport inside sockaddr_in */
 struct lustre_pnfs_ds_parameter {
 	struct glist_head ds_list;
-	struct sockaddr_storage ipaddr; /* sockaddr_storage would be better */
+	struct sockaddr_in ipaddr;
 	unsigned short ipport;
 	unsigned int id;
 };
 
 struct lustre_pnfs_parameter {
-	unsigned int stripe_size; /* unused */
-	unsigned int stripe_width;
 	struct glist_head ds_list;
+};
+
+struct lustre_exp_pnfs_parameter {
+	unsigned int stripe_unit;
+	bool pnfs_enabled;
 };
 
 /* defined the set of attributes supported with POSIX */
@@ -113,13 +116,11 @@ struct lustre_ds {
 };
 
 void lustre_handle_ops_init(struct fsal_obj_ops *ops);
-extern bool pnfs_enabled;
 
 /* Add missing prototype in vfs.h */
 int fd_to_handle(int fd, void **hanp, size_t *hlen);
 void lustre_export_ops_init(struct export_ops *ops);
 void lustre_handle_ops_init(struct fsal_obj_ops *ops);
-extern struct lustre_pnfs_parameter pnfs_param;
 
 /* LUSTRE methods for pnfs
  */
