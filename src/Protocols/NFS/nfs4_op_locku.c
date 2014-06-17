@@ -104,6 +104,11 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t *data,
 	case WRITEW_LT:
 		lock_desc.lock_type = FSAL_LOCK_W;
 		break;
+	default:
+		LogDebug(COMPONENT_NFS_V4_LOCK,
+			 "Invalid lock type");
+		res_LOCKU4->status = NFS4ERR_INVAL;
+		return res_LOCKU4->status;
 	}
 
 	lock_desc.lock_start = arg_LOCKU4->offset;
