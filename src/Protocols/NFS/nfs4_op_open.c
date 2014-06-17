@@ -908,6 +908,10 @@ static void get_delegation(compound_data_t *data, OPEN4args *args,
 	lock_desc.lock_start = 0;
 	lock_desc.lock_length = 0;
 	lock_desc.lock_sle_type = FSAL_LEASE_LOCK;
+	if (args->claim.claim == CLAIM_DELEGATE_PREV)
+		lock_desc.lock_reclaim = true;
+	else
+		lock_desc.lock_reclaim = false;
 
 	init_new_deleg_state(&deleg_data, deleg_type, client);
 
