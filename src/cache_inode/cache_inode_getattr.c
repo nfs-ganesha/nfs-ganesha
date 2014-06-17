@@ -113,18 +113,24 @@ cache_inode_getattr(cache_entry_t *entry,
 
 	if (status == CACHE_INODE_CROSS_JUNCTION) {
 		/* Get the root of the export across the junction. */
-		if (junction_export != NULL)
+		if (junction_export != NULL) {
 			status = nfs_export_get_root_entry(junction_export,
 							   &junction_entry);
-		else
-			status = CACHE_INODE_FSAL_ESTALE;
 
-		if (status != CACHE_INODE_SUCCESS) {
+			if (status != CACHE_INODE_SUCCESS) {
+				LogMajor(COMPONENT_CACHE_INODE,
+					 "Failed to get root for %s, id=%d, status = %s",
+					 junction_export->fullpath,
+					 junction_export->export_id,
+					 cache_inode_err_str(status));
+				/* Need to signal problem to callback */
+				(void) cb(opaque, junction_entry, NULL, 0);
+				return status;
+			}
+		} else {
 			LogMajor(COMPONENT_CACHE_INODE,
-				 "Failed to get root for %s, id=%d, status = %s",
-				 junction_export->fullpath,
-				 junction_export->export_id,
-				 cache_inode_err_str(status));
+				 "A junction became stale");
+			status = CACHE_INODE_FSAL_ESTALE;
 			/* Need to signal problem to callback */
 			(void) cb(opaque, junction_entry, NULL, 0);
 			return status;
