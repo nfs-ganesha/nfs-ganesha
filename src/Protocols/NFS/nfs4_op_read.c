@@ -264,6 +264,7 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 	   stateid is all-0 or all-1 */
 
 	if (state_found != NULL) {
+		state_deleg_t *sdeleg;
 		if (info)
 			info->io_advise = state_found->state_data.io_advise;
 		switch (state_found->state_type) {
@@ -283,6 +284,20 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 			break;
 
 		case STATE_TYPE_DELEG:
+			/* Check if the delegation state allows READ */
+			sdeleg = &state_found->state_data.deleg;
+			if (!(sdeleg->sd_type & OPEN_DELEGATE_READ) ||
+				(sdeleg->sd_state != DELEG_GRANTED)) {
+				/* Invalid delegation for this operation. */
+				LogDebug(COMPONENT_STATE,
+					"Delegation type:%d state:%d",
+					sdeleg->sd_type,
+					sdeleg->sd_state);
+				res_READ4->status = NFS4ERR_BAD_STATEID;
+				return res_READ4->status;
+			}
+
+			state_open = NULL;
 			break;
 
 		default:
@@ -295,8 +310,7 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 
 		/* This is a read operation, this means that the file
 		   MUST have been opened for reading */
-		if (state_found->state_type != STATE_TYPE_DELEG
-		    && state_open != NULL
+		if (state_open != NULL
 		    && (state_open->state_data.share.
 			share_access & OPEN4_SHARE_ACCESS_READ) == 0) {
 			/* Even if file is open for write, the client
@@ -370,9 +384,8 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 	/** @todo this is racy, use cache_inode_lock_trust_attrs and
 	 *        cache_inode_access_no_mutex
 	 */
-	if (state_found->state_type != STATE_TYPE_DELEG
-	    && state_open == NULL
-	    && entry->obj_handle->attributes.owner !=
+	if (state_open == NULL &&
+	    entry->obj_handle->attributes.owner !=
 	    op_ctx->creds->caller_uid) {
 		/* Need to permission check the read. */
 		cache_status =

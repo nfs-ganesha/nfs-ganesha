@@ -227,6 +227,7 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 	 * the stateid is all-0 or all-1
 	 */
 	if (state_found != NULL) {
+		state_deleg_t *sdeleg;
 		if (info)
 			info->io_advise = state_found->state_data.io_advise;
 		switch (state_found->state_type) {
@@ -244,10 +245,22 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 			break;
 
 		case STATE_TYPE_DELEG:
-			/**
-			 * @todo FSF: should check that this is a write
-			 * delegation?
-			 */
+			/* Check if the delegation state allows READ */
+			sdeleg = &state_found->state_data.deleg;
+			if (!(sdeleg->sd_type & OPEN_DELEGATE_WRITE) ||
+				(sdeleg->sd_state != DELEG_GRANTED)) {
+				/* Invalid delegation for this operation. */
+				LogDebug(COMPONENT_STATE,
+					"Delegation type:%d state:%d",
+					sdeleg->sd_type,
+					sdeleg->sd_state);
+				res_WRITE4->status = NFS4ERR_BAD_STATEID;
+				return res_WRITE4->status;
+			}
+
+			state_open = NULL;
+			break;
+
 		case STATE_TYPE_LAYOUT:
 			state_open = NULL;
 			break;
