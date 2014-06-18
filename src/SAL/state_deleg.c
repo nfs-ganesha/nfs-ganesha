@@ -98,7 +98,7 @@ bool update_delegation_stats(state_lock_entry_t *deleg_entry)
 	statistics->fds_last_delegation = time(NULL);
 
 	/* Update delegation stats for client. */
-	cl_stats->curr_deleg_grants++;
+	atomic_inc_uint32_t(&cl_stats->curr_deleg_grants);
 
 	return true;
 }
@@ -130,7 +130,7 @@ bool deleg_heuristics_recall(state_lock_entry_t *deleg_entry)
 	statistics->fds_recall_count++;
 
 	/* Update delegation stats for client. */
-	client->cid_deleg_stats.curr_deleg_grants--;
+	atomic_dec_uint32_t(&client->cid_deleg_stats.curr_deleg_grants);
 
 	/* Update delegation stats for client-file. */
 	statistics->fds_avg_hold = advance_avg(statistics->fds_avg_hold,
