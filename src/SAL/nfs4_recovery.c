@@ -368,6 +368,41 @@ void nfs4_add_clid(nfs_client_id_t *clientid)
 }
 
 /**
+ * @brief Remove the revoked file handles created under a specific
+ * client-id path on the stable storage.
+ *
+ * @param[in] path Path of the client-id on the stable storage.
+ */
+
+void nfs4_rm_revoked_handles(char *path)
+{
+	DIR *dp;
+	struct dirent *dentp;
+	char del_path[PATH_MAX];
+
+	dp = opendir(path);
+	if (dp == NULL) {
+		LogEvent(COMPONENT_CLIENTID, "opendir %s failed errno=%d",
+			path, errno);
+		return;
+	}
+	for (dentp = readdir(dp); dentp != NULL; dentp = readdir(dp)) {
+		if (!strcmp(dentp->d_name, ".") ||
+				!strcmp(dentp->d_name, "..") ||
+				dentp->d_name[0] != '.') {
+			continue;
+		}
+		sprintf(del_path, "%s/%s", path, dentp->d_name);
+		if (unlink(del_path) < 0) {
+			LogEvent(COMPONENT_CLIENTID,
+					"unlink of %s failed errno: %d",
+					del_path,
+					errno);
+		}
+	}
+}
+
+/**
  * @brief Remove a client entry from the recovery directory
  *
  * This function would be called when a client expires.
@@ -386,9 +421,13 @@ void nfs4_rm_clid(const char *recov_dir, char *parent_path, int position)
 		return;
 
 	len = strlen(recov_dir);
-	if (position == len)
+	if (position == len) {
+		/* We are at the tail directory of the clid,
+		 * remove revoked handles, if any.
+		 */
+		nfs4_rm_revoked_handles(parent_path);
 		return;
-
+	}
 	segment = gsh_malloc(NAME_MAX+1);
 	if (segment == NULL) {
 		LogEvent(COMPONENT_CLIENTID,
@@ -426,7 +465,7 @@ void nfs4_rm_clid(const char *recov_dir, char *parent_path, int position)
 	err = rmdir(path);
 	if (err == -1) {
 		LogEvent(COMPONENT_CLIENTID,
-			 "Failed to remove client in recovery dir (%s), errno=%d",
+			 "Failed to remove client recovery dir (%s), errno=%d",
 			 path, errno);
 	} else {
 		LogDebug(COMPONENT_CLIENTID, "Removed client dir [%s]", path);
@@ -506,7 +545,7 @@ static void free_heap(char *path, char *new_path, char *build_clid)
 }
 
 /**
- * @brief Populate revoked delegations for this client.
+ * @brief Copy and Populate revoked delegations for this client.
  *
  * Even after delegation revoke, it is possible for the client to
  * contiue its leas and other operatoins. Sever saves revoked delegations
@@ -517,9 +556,14 @@ static void free_heap(char *path, char *new_path, char *build_clid)
  *
  * @param[in] clientid Clientid that is being created.
  * @param[in] path Path of the directory structure.
+ * @param[in] Target dir to copy.
+ * @param[in] del Delete after populating
  */
 
-void nfs4_populate_revoked_delegs(clid_entry_t *clid_ent, char *path)
+void nfs4_cp_pop_revoked_delegs(clid_entry_t *clid_ent,
+				char *path,
+				char *tgtdir,
+				bool del)
 {
 	struct dirent *dentp;
 	DIR *dp;
@@ -548,6 +592,16 @@ void nfs4_populate_revoked_delegs(clid_entry_t *clid_ent, char *path)
 				dentp->d_name);
 			goto read_next;
 		}
+		if (tgtdir) {
+			char lopath[PATH_MAX + 1];
+			sprintf(lopath, "%s/", tgtdir);
+			strncat(lopath, dentp->d_name, strlen(dentp->d_name));
+			if (creat(lopath, 0700) < 0) {
+				LogEvent(COMPONENT_CLIENTID,
+					"Failed to copy revoked handle file %s to %s errno:%d\n",
+				dentp->d_name, tgtdir, errno);
+			}
+		}
 		new_ent = gsh_malloc(sizeof(rdel_fh_t));
 		if (new_ent == NULL) {
 			LogEvent(COMPONENT_CLIENTID, "Alloc Failed: rdel_fh_t");
@@ -571,6 +625,19 @@ void nfs4_populate_revoked_delegs(clid_entry_t *clid_ent, char *path)
 			"revoked handle: %s",
 			new_ent->rdfh_handle_str);
 read_next:
+		/* Since the handle is loaded into memory, go ahead and
+		 * delete it from the stable storage.
+		 */
+		if (del) {
+			char del_path[PATH_MAX];
+			sprintf(del_path, "%s/%s", path, dentp->d_name);
+			if (unlink(del_path) < 0) {
+				LogEvent(COMPONENT_CLIENTID,
+						"unlink of %s failed errno: %d",
+						del_path,
+						errno);
+			}
+		}
 		dentp = readdir(dp);
 	}
 }
@@ -617,7 +684,10 @@ static int nfs4_read_recov_clids(DIR *dp,
 
 	dentp = readdir(dp);
 	while (dentp != NULL) {
-		/* don't add '.' and '..', or any '.*' entry */
+		/* don't add '.' and '..' entry */
+		if (!strcmp(dentp->d_name, ".") || !strcmp(dentp->d_name, ".."))
+			continue;
+
 		if (dentp->d_name[0] != '.') {
 			num++;
 			new_path = NULL;
@@ -780,8 +850,10 @@ static int nfs4_read_recov_clids(DIR *dp,
 							  build_clid);
 						continue;
 					}
-					nfs4_populate_revoked_delegs(new_ent,
-									path);
+					nfs4_cp_pop_revoked_delegs(new_ent,
+								path,
+								tgtdir,
+								!takeover);
 					strcpy(new_ent->cl_name, build_clid);
 					glist_add(&grace.g_clid_list,
 						  &new_ent->cl_list);
@@ -956,10 +1028,24 @@ void nfs4_clean_old_recov_dir(char *parent_path)
 	}
 
 	for (dentp = readdir(dp); dentp != NULL; dentp = readdir(dp)) {
-		/* don't remove '.' and '..', or any '.*' entry */
-		if (dentp->d_name[0] == '.')
+		/* don't remove '.' and '..' entry */
+		if (!strcmp(dentp->d_name, ".") || !strcmp(dentp->d_name, ".."))
 			continue;
 
+		/* If there is a .<file name> then it is a revoked handle
+		 * go ahead and remove it.
+		 */
+		if (dentp->d_name[0] == '.') {
+			char del_path[PATH_MAX];
+
+			sprintf(del_path, "%s/%s", parent_path, dentp->d_name);
+			if (unlink(del_path) < 0) {
+				LogEvent(COMPONENT_CLIENTID,
+						"unlink of %s failed errno: %d",
+						del_path,
+						errno);
+			}
+		}
 		segment_len = strlen(dentp->d_name);
 		total_len = strlen(parent_path) + 2 + segment_len;
 		path = gsh_malloc(total_len);
