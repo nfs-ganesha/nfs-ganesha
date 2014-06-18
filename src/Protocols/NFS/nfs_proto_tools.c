@@ -4014,6 +4014,7 @@ static int Fattr4_To_FSAL_attr(struct attrlist *attrs, fattr4 *Fattr,
 int nfs4_Fattr_To_FSAL_attr(struct attrlist *FSAL_attr, fattr4 *Fattr,
 			    compound_data_t *data)
 {
+	memset(FSAL_attr, 0, sizeof(struct attrlist));
 	return Fattr4_To_FSAL_attr(FSAL_attr, Fattr, NULL, NULL, data);
 }
 

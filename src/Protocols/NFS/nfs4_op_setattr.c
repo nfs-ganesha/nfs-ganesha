@@ -68,7 +68,6 @@ int nfs4_op_setattr(struct nfs_argop4 *op, compound_data_t *data,
 	state_t *state_open = NULL;
 	cache_entry_t *entry = NULL;
 
-	memset(&sattr, 0, sizeof(sattr));
 	resp->resop = NFS4_OP_SETATTR;
 	res_SETATTR4->status = NFS4_OK;
 

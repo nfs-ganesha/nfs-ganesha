@@ -564,8 +564,6 @@ static nfsstat4 open4_create(OPEN4args *arg, compound_data_t *data,
 
 	*entry = NULL;
 
-	memset(&sattr, 0, sizeof(struct attrlist));
-
 	/* if quota support is active, then we should check is
 	   the FSAL allows inode creation or not */
 	fsal_status = op_ctx->fsal_export->ops->check_quota(
