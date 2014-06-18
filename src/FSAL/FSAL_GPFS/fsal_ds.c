@@ -126,7 +126,7 @@ static nfsstat4 ds_read(struct fsal_ds_handle *const ds_pub,
 	if (amount_read < 0) {
 		if (errsv == EUNATCH)
 			LogFatal(COMPONENT_PNFS, "GPFS Returned EUNATCH");
-		return posix2nfs4_error(-amount_read);
+		return posix2nfs4_error(errsv);
 	}
 
 	*supplied_length = amount_read;
@@ -286,7 +286,7 @@ static nfsstat4 ds_write(struct fsal_ds_handle *const ds_pub,
 	if (amount_written < 0) {
 		if (errsv == EUNATCH)
 			LogFatal(COMPONENT_PNFS, "GPFS Returned EUNATCH");
-		return posix2nfs4_error(-amount_written);
+		return posix2nfs4_error(errsv);
 	}
 
 	LogDebug(COMPONENT_PNFS, "write verifier %d-%d\n", warg.verifier4[0],
@@ -381,7 +381,7 @@ static nfsstat4 ds_write_plus(struct fsal_ds_handle *const ds_pub,
 	if (amount_written < 0) {
 		if (errsv == EUNATCH)
 			LogFatal(COMPONENT_PNFS, "GPFS Returned EUNATCH");
-		return posix2nfs4_error(-amount_written);
+		return posix2nfs4_error(errsv);
 	}
 
 	LogDebug(COMPONENT_PNFS, "write verifier %d-%d\n",
