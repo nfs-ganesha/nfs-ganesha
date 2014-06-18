@@ -348,6 +348,11 @@ static fsal_status_t lustre_set_quota(struct fsal_export *exp_hdl,
 		dataquota.qc_dqblk.dqb_valid |= QIF_ILIMITS;
 	}
 
+	if (pquota->fsoftlimit != 0) {
+		dataquota.qc_dqblk.dqb_isoftlimit = pquota->fsoftlimit;
+		dataquota.qc_dqblk.dqb_valid |= QIF_ILIMITS;
+	}
+
 	if (pquota->btimeleft != 0) {
 		dataquota.qc_dqblk.dqb_btime = pquota->btimeleft;
 		dataquota.qc_dqblk.dqb_valid |= QIF_BTIME;

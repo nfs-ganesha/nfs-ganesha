@@ -267,6 +267,7 @@ static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 	pquota->bsoftlimit = fs_quota.dqb_bsoftlimit;
 	pquota->curblocks = fs_quota.dqb_curspace;
 	pquota->fhardlimit = fs_quota.dqb_ihardlimit;
+	pquota->fsoftlimit = fs_quota.dqb_isoftlimit;
 	pquota->curfiles = fs_quota.dqb_curinodes;
 	pquota->btimeleft = fs_quota.dqb_btime;
 	pquota->ftimeleft = fs_quota.dqb_itime;
@@ -309,6 +310,8 @@ static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 		fs_quota.dqb_bsoftlimit = pquota->bsoftlimit;
 	if (pquota->fhardlimit != 0)
 		fs_quota.dqb_ihardlimit = pquota->fhardlimit;
+	if (pquota->fsoftlimit != 0)
+		fs_quota.dqb_isoftlimit = pquota->fsoftlimit;
 	if (pquota->btimeleft != 0)
 		fs_quota.dqb_btime = pquota->btimeleft;
 	if (pquota->ftimeleft != 0)

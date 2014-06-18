@@ -507,7 +507,9 @@ int nfs4_MakeCred(compound_data_t *data)
 			"Access not allowed on Export_Id %d %s for client %s",
 			op_ctx->export->export_id,
 			op_ctx->export->fullpath,
-			op_ctx->client->hostaddr_str);
+			op_ctx->client
+				? op_ctx->client->hostaddr_str
+				: "unknown client");
 		return NFS4ERR_ACCESS;
 	}
 
@@ -517,7 +519,9 @@ int nfs4_MakeCred(compound_data_t *data)
 			"NFS4 not allowed on Export_Id %d %s for client %s",
 			op_ctx->export->export_id,
 			op_ctx->export->fullpath,
-			op_ctx->client->hostaddr_str);
+			op_ctx->client
+				? op_ctx->client->hostaddr_str
+				: "unknown client");
 		return NFS4ERR_ACCESS;
 	}
 
@@ -534,7 +538,9 @@ int nfs4_MakeCred(compound_data_t *data)
 			xprt_type_to_str(xprt_type),
 			op_ctx->export->export_id,
 			op_ctx->export->fullpath,
-			op_ctx->client->hostaddr_str);
+			op_ctx->client
+				? op_ctx->client->hostaddr_str
+				: "unknown client");
 		return NFS4ERR_ACCESS;
 	}
 
@@ -546,7 +552,9 @@ int nfs4_MakeCred(compound_data_t *data)
 			"Non-reserved Port %d is not allowed on Export_Id %d %s for client %s",
 			port, op_ctx->export->export_id,
 			op_ctx->export->fullpath,
-			op_ctx->client->hostaddr_str);
+			op_ctx->client
+				? op_ctx->client->hostaddr_str
+				: "unknown client");
 		return NFS4ERR_ACCESS;
 	}
 
@@ -556,7 +564,9 @@ int nfs4_MakeCred(compound_data_t *data)
 			"NFS4 auth not allowed on Export_Id %d %s for client %s",
 			op_ctx->export->export_id,
 			op_ctx->export->fullpath,
-			op_ctx->client->hostaddr_str);
+			op_ctx->client
+				? op_ctx->client->hostaddr_str
+				: "unknown client");
 		return NFS4ERR_WRONGSEC;
 	}
 

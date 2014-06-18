@@ -55,6 +55,7 @@ struct nlmv4_stats;
 struct rquota_stats;
 struct nfsv40_stats;
 struct nfsv41_stats;
+struct nfsv42_stats;
 struct _9p_stats;
 
 struct gsh_stats {
@@ -64,6 +65,7 @@ struct gsh_stats {
 	struct rquota_stats *rquota;
 	struct nfsv40_stats *nfsv40;
 	struct nfsv41_stats *nfsv41;
+	struct nfsv41_stats *nfsv42;
 	struct _9p_stats *_9p;
 };
 
@@ -200,6 +202,8 @@ void server_dbus_v3_iostats(struct nfsv3_stats *v3p, DBusMessageIter *iter);
 void server_dbus_v40_iostats(struct nfsv40_stats *v40p, DBusMessageIter *iter);
 void server_dbus_v41_iostats(struct nfsv41_stats *v41p, DBusMessageIter *iter);
 void server_dbus_v41_layouts(struct nfsv41_stats *v41p, DBusMessageIter *iter);
+void server_dbus_v42_iostats(struct nfsv41_stats *v42p, DBusMessageIter *iter);
+void server_dbus_v42_layouts(struct nfsv41_stats *v42p, DBusMessageIter *iter);
 void server_dbus_total_ops(struct export_stats *export_st,
 			   DBusMessageIter *iter);
 void global_dbus_total_ops(DBusMessageIter *iter);

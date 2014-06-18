@@ -60,14 +60,15 @@
 #include "server_stats.h"
 #include <abstract_atomic.h>
 
-#define NFS_V3_NB_COMMAND 22
+#define NFS_V3_NB_COMMAND (NFSPROC3_COMMIT + 1)
 #define NFS_V4_NB_COMMAND 2
-#define MNT_V1_NB_COMMAND 6
-#define MNT_V3_NB_COMMAND 6
-#define NLM_V4_NB_OPERATION 5
-#define RQUOTA_NB_COMMAND 5
-#define NFS_V40_NB_OPERATION 39
-#define NFS_V41_NB_OPERATION 58
+#define MNT_V1_NB_COMMAND (MOUNTPROC3_EXPORT + 1)
+#define MNT_V3_NB_COMMAND (MOUNTPROC3_EXPORT + 1)
+#define NLM_V4_NB_OPERATION (NLMPROC4_FREE_ALL + 1)
+#define RQUOTA_NB_COMMAND (RQUOTAPROC_SETACTIVEQUOTA + 1)
+#define NFS_V40_NB_OPERATION (NFS4_OP_RELEASE_LOCKOWNER + 1)
+#define NFS_V41_NB_OPERATION (NFS4_OP_RECLAIM_COMPLETE + 1)
+#define NFS_V42_NB_OPERATION (NFS4_OP_IO_ADVISE + 1)
 #define _9P_NB_COMMAND 33
 
 struct op_name {
@@ -241,6 +242,18 @@ static const uint32_t nfsv41_optype[NFS_V41_NB_OPERATION] = {
 	[NFS4_OP_LAYOUTRETURN] = LAYOUT_OP,
 };
 
+static const uint32_t nfsv42_optype[NFS_V42_NB_OPERATION] = {
+	[NFS4_OP_READ] = READ_OP,
+	[NFS4_OP_WRITE] = WRITE_OP,
+	[NFS4_OP_GETDEVICEINFO] = LAYOUT_OP,
+	[NFS4_OP_GETDEVICELIST] = LAYOUT_OP,
+	[NFS4_OP_LAYOUTCOMMIT] = LAYOUT_OP,
+	[NFS4_OP_LAYOUTGET] = LAYOUT_OP,
+	[NFS4_OP_LAYOUTRETURN] = LAYOUT_OP,
+	[NFS4_OP_WRITE_PLUS] = WRITE_OP,
+	[NFS4_OP_READ_PLUS] = READ_OP,
+};
+
 /* latency stats
  */
 struct op_latency {
@@ -382,6 +395,7 @@ struct global_stats {
 	struct rquota_stats rquota;
 	struct nfsv40_stats nfsv40;
 	struct nfsv41_stats nfsv41;
+	struct nfsv41_stats nfsv42; /* Uses v41 stats */
 	struct nfsv3_ops v3;
 	struct nfsv4_ops v4;
 	struct nlm_ops lm;
@@ -486,6 +500,19 @@ static struct nfsv41_stats *get_v41(struct gsh_stats *stats,
 		PTHREAD_RWLOCK_unlock(lock);
 	}
 	return stats->nfsv41;
+}
+
+static struct nfsv41_stats *get_v42(struct gsh_stats *stats,
+				    pthread_rwlock_t *lock)
+{
+	if (unlikely(stats->nfsv42 == NULL)) {
+		PTHREAD_RWLOCK_wrlock(lock);
+		if (stats->nfsv42 == NULL)
+			stats->nfsv42 =
+			    gsh_calloc(sizeof(struct nfsv41_stats), 1);
+		PTHREAD_RWLOCK_unlock(lock);
+	}
+	return stats->nfsv42;
 }
 
 #ifdef _USE_9P
@@ -594,14 +621,20 @@ static void record_io_stats(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
 				if (sp == NULL)
 					return;
 				iop = is_write ? &sp->write : &sp->read;
-			} else if (op_ctx->nfs_minorvers > 0) {
+			} else if (op_ctx->nfs_minorvers == 1) {
 				struct nfsv41_stats *sp = get_v41(gsh_st, lock);
 
 				if (sp == NULL)
 					return;
 				iop = is_write ? &sp->write : &sp->read;
+			} else if (op_ctx->nfs_minorvers == 2) {
+				struct nfsv41_stats *sp = get_v42(gsh_st, lock);
+
+				if (sp == NULL)
+					return;
+				iop = is_write ? &sp->write : &sp->read;
 			}
-			/* the frightening thought is someday minor == 2 */
+			/* the frightening thought is someday minor == 3 */
 		} else {
 			return;
 		}
@@ -705,13 +738,35 @@ static void record_nfsv4_op(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
 			record_op(&sp->compounds, request_time, qwait_time,
 				  status == NFS4_OK, false);
 		}
-	} else {		/* assume minor == 1 this low in stack */
+	} else if (minorversion == 1) {
 		struct nfsv41_stats *sp = get_v41(gsh_st, lock);
 
 		if (sp == NULL)
 			return;
 		/* record stuff */
 		switch (nfsv41_optype[proto_op]) {
+		case READ_OP:
+			record_latency(&sp->read.cmd, request_time, qwait_time,
+				       false);
+			break;
+		case WRITE_OP:
+			record_latency(&sp->write.cmd, request_time, qwait_time,
+				       false);
+			break;
+		case LAYOUT_OP:
+			record_layout(sp, proto_op, status);
+			break;
+		default:
+			record_op(&sp->compounds, request_time, qwait_time,
+				  status == NFS4_OK, false);
+		}
+	} else if (minorversion == 2) {
+		struct nfsv41_stats *sp = get_v42(gsh_st, lock);
+
+		if (sp == NULL)
+			return;
+		/* record stuff */
+		switch (nfsv42_optype[proto_op]) {
 		case READ_OP:
 			record_latency(&sp->read.cmd, request_time, qwait_time,
 				       false);
@@ -750,8 +805,17 @@ static void record_compound(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
 		record_op(&sp->compounds, request_time, qwait_time, success,
 			  false);
 		(void)atomic_add_uint64_t(&sp->ops_per_compound, num_ops);
-	} else {		/* assume minor == 1 this low in stack */
+	} else if (minorversion == 1) {
 		struct nfsv41_stats *sp = get_v41(gsh_st, lock);
+
+		if (sp == NULL)
+			return;
+		/* record stuff */
+		record_op(&sp->compounds, request_time, qwait_time, success,
+			  false);
+		(void)atomic_add_uint64_t(&sp->ops_per_compound, num_ops);
+	} else if (minorversion == 2) {
+		struct nfsv41_stats *sp = get_v42(gsh_st, lock);
 
 		if (sp == NULL)
 			return;
@@ -992,8 +1056,11 @@ void server_stats_nfsv4_op_done(int proto_op,
 	if (op_ctx->nfs_minorvers == 0)
 		record_op(&global_st.nfsv40.compounds, stop_time - start_time,
 			  op_ctx->queue_wait, status == NFS4_OK, false);
-	else
+	else if (op_ctx->nfs_minorvers == 1)
 		record_op(&global_st.nfsv41.compounds, stop_time - start_time,
+			  op_ctx->queue_wait, status == NFS4_OK, false);
+	else if (op_ctx->nfs_minorvers == 2)
+		record_op(&global_st.nfsv42.compounds, stop_time - start_time,
 			  op_ctx->queue_wait, status == NFS4_OK, false);
 
 	if (op_ctx->export != NULL) {
@@ -1094,6 +1161,7 @@ void server_stats_io_done(size_t requested,
  *	bool rquota;
  *	bool nfsv40;
  *	bool nfsv41;
+ *	bool nfsv42;
  *	bool _9p;
  *      ...
  * }
@@ -1124,6 +1192,9 @@ void server_stats_summary(DBusMessageIter *iter, struct gsh_stats *st)
 	dbus_message_iter_append_basic(iter, DBUS_TYPE_BOOLEAN,
 				       &stats_available);
 	stats_available = st->nfsv41 != 0;
+	dbus_message_iter_append_basic(iter, DBUS_TYPE_BOOLEAN,
+				       &stats_available);
+	stats_available = st->nfsv42 != 0;
 	dbus_message_iter_append_basic(iter, DBUS_TYPE_BOOLEAN,
 				       &stats_available);
 	stats_available = st->_9p != 0;
@@ -1226,6 +1297,15 @@ void server_dbus_total(struct export_stats *export_st, DBusMessageIter *iter)
 	else
 		dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
 				&export_st->st.nfsv41->compounds.total);
+	version = "NFSv42";
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING,
+				       &version);
+	if (export_st->st.nfsv42 == NULL)
+		dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
+				&total);
+	else
+		dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
+				&export_st->st.nfsv42->compounds.total);
 	dbus_message_iter_close_container(iter, &struct_iter);
 }
 
@@ -1252,6 +1332,11 @@ void global_dbus_total(DBusMessageIter *iter)
 				       &version);
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
 					&global_st.nfsv41.compounds.total);
+	version = "NFSv42";
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING,
+				       &version);
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
+					&global_st.nfsv42.compounds.total);
 	version = "NLM4";
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING,
 				       &version);
@@ -1376,6 +1461,16 @@ void server_dbus_v41_iostats(struct nfsv41_stats *v41p, DBusMessageIter *iter)
 	dbus_append_timestamp(iter, &timestamp);
 	server_dbus_iostats(&v41p->read, iter);
 	server_dbus_iostats(&v41p->write, iter);
+}
+
+void server_dbus_v42_iostats(struct nfsv41_stats *v42p, DBusMessageIter *iter)
+{
+	struct timespec timestamp;
+
+	now(&timestamp);
+	dbus_append_timestamp(iter, &timestamp);
+	server_dbus_iostats(&v42p->read, iter);
+	server_dbus_iostats(&v42p->write, iter);
 }
 
 void server_dbus_total_ops(struct export_stats *export_st,
@@ -1505,6 +1600,19 @@ void server_dbus_v41_layouts(struct nfsv41_stats *v41p, DBusMessageIter *iter)
 	server_dbus_layouts(&v41p->recall, iter);
 }
 
+void server_dbus_v42_layouts(struct nfsv41_stats *v42p, DBusMessageIter *iter)
+{
+	struct timespec timestamp;
+
+	now(&timestamp);
+	dbus_append_timestamp(iter, &timestamp);
+	server_dbus_layouts(&v42p->getdevinfo, iter);
+	server_dbus_layouts(&v42p->layout_get, iter);
+	server_dbus_layouts(&v42p->layout_commit, iter);
+	server_dbus_layouts(&v42p->layout_return, iter);
+	server_dbus_layouts(&v42p->recall, iter);
+}
+
 #endif				/* USE_DBUS */
 
 /**
@@ -1541,6 +1649,10 @@ void server_stats_free(struct gsh_stats *statsp)
 	if (statsp->nfsv41 != NULL) {
 		gsh_free(statsp->nfsv41);
 		statsp->nfsv41 = NULL;
+	}
+	if (statsp->nfsv42 != NULL) {
+		gsh_free(statsp->nfsv42);
+		statsp->nfsv42 = NULL;
 	}
 	if (statsp->_9p != NULL) {
 		gsh_free(statsp->_9p);

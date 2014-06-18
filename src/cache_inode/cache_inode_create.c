@@ -148,7 +148,8 @@ cache_inode_create(cache_entry_t *parent,
 					    &object_attributes, &object_handle);
 		break;
 
-	default:
+	case NO_FILE_TYPE:
+	case EXTENDED_ATTR:
 		/* we should never go there */
 		status = CACHE_INODE_INCONSISTENT_ENTRY;
 		*entry = NULL;

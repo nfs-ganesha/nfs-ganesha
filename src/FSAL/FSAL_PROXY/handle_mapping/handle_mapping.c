@@ -181,10 +181,16 @@ int handle_mapping_hash_add(hash_table_t *p_hash, uint64_t object_id,
 		return HANDLEMAP_INVALID_PARAM;
 
 	digest = digest_alloc();
+
+	if (!digest)
+		return HANDLEMAP_SYSTEM_ERROR;
+
 	handle = handle_alloc();
 
-	if (!digest || !handle)
+	if (!handle) {
+		digest_free(digest);
 		return HANDLEMAP_SYSTEM_ERROR;
+	}
 
 	digest->nfs23_digest.object_id = object_id;
 	digest->nfs23_digest.handle_hash = handle_hash;

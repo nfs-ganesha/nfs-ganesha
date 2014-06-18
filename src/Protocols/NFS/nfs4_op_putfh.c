@@ -112,7 +112,9 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t *data,
 	if (op_ctx->export == NULL) {
 		LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 			"NFS4 Request from client %s has invalid export %d",
-			op_ctx->client->hostaddr_str,
+			op_ctx->client
+				? op_ctx->client->hostaddr_str
+				: "unknown client",
 			v4_handle->exportid);
 
 		res_PUTFH4->status = NFS4ERR_STALE;
