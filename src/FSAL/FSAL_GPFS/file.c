@@ -165,8 +165,11 @@ fsal_status_t gpfs_read_plus(struct fsal_obj_handle *obj_hdl,
 	nb_read = gpfs_ganesha(OPENHANDLE_READ_BY_FD, &rarg);
 	errsv = errno;
 
-	if (nb_read == -1 && errsv != ENODATA)
+	if (nb_read == -1 && errsv != ENODATA) {
+		if (errsv == EUNATCH)
+			LogFatal(COMPONENT_FSAL, "GPFS Returned EUNATCH");
 		return fsalstat(posix2fsal_error(errsv), errsv);
+	}
 
 	if (errsv == ENODATA) {
 		info->io_content.what = NFS4_CONTENT_HOLE;
@@ -294,6 +297,8 @@ fsal_status_t gpfs_seek(struct fsal_obj_handle *obj_hdl,
 	retval = gpfs_ganesha(OPENHANDLE_SEEK_BY_FD, &arg);
 	if (retval == -1) {
 		retval = errno;
+		if (retval == EUNATCH)
+			LogFatal(COMPONENT_FSAL, "GPFS Returned EUNATCH");
 		fsal_error = posix2fsal_error(retval);
 	} else {
 		info->io_eof = io_info.io_eof;
@@ -329,6 +334,8 @@ fsal_status_t gpfs_io_advise(struct fsal_obj_handle *obj_hdl,
 	retval = gpfs_ganesha(OPENHANDLE_FADVISE_BY_FD, &arg);
 	if (retval == -1) {
 		retval = errno;
+		if (retval == EUNATCH)
+			LogFatal(COMPONENT_FSAL, "GPFS Returned EUNATCH");
 		fsal_error = posix2fsal_error(retval);
 		hints->hints = 0;
 	}
@@ -363,6 +370,8 @@ fsal_status_t gpfs_commit(struct fsal_obj_handle *obj_hdl,	/* sync */
 	retval = gpfs_ganesha(OPENHANDLE_FSYNC, &arg);
 	if (retval == -1) {
 		retval = errno;
+		if (retval == EUNATCH)
+			LogFatal(COMPONENT_FSAL, "GPFS Returned EUNATCH");
 		fsal_error = posix2fsal_error(retval);
 	}
 	set_gpfs_verifier(&writeverf);

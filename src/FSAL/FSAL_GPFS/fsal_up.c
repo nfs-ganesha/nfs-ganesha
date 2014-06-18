@@ -56,6 +56,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 	struct gsh_buffdesc key;
 	uint32_t expire_time_attr = 0;
 	uint32_t upflags = 0;
+	int errsv = 0;
 
 	snprintf(thr_name, sizeof(thr_name),
 		 "fsal_up_%"PRIu64".%"PRIu64,
@@ -106,6 +107,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 #endif
 
 		rc = gpfs_ganesha(OPENHANDLE_INODE_UPDATE, &callback);
+		errsv = errno;
 
 		if (rc != 0) {
 			if (rc == ENOSYS) {
@@ -116,8 +118,8 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 			LogCrit(COMPONENT_FSAL_UP,
 				"OPENHANDLE_INODE_UPDATE failed for %d."
 				" rc %d, errno %d (%s) reason %d",
-				gpfs_fs->root_fd, rc, errno,
-				strerror(errno), reason);
+				gpfs_fs->root_fd, rc, errsv,
+				strerror(errsv), reason);
 
 			rc = -(rc);
 			if (rc > GPFS_INTERFACE_VERSION) {
@@ -131,7 +133,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 				continue;
 			}
 
-			if (errno == EUNATCH)
+			if (errsv == EUNATCH)
 				LogFatal(COMPONENT_FSAL_UP,
 					 "GPFS file system %d has gone away.",
 					 gpfs_fs->root_fd);

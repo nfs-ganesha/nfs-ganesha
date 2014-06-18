@@ -322,16 +322,12 @@ make %{?_smp_mflags} || make %{?_smp_mflags} || make
 mkdir -p %{buildroot}%{_sysconfdir}/ganesha/
 mkdir -p %{buildroot}%{_sysconfdir}/dbus-1/system.d
 mkdir -p %{buildroot}%{_sysconfdir}/sysconfig
-mkdir -p %{buildroot}%{_sysconfdir}/logrotate.d
 mkdir -p %{buildroot}%{_bindir}
 mkdir -p %{buildroot}%{_sbindir}
 mkdir -p %{buildroot}%{_libdir}/ganesha
-install -m 644 config_samples/logrotate_ganesha		%{buildroot}%{_sysconfdir}/logrotate.d/ganesha
 install -m 644 scripts/ganeshactl/org.ganesha.nfsd.conf	%{buildroot}%{_sysconfdir}/dbus-1/system.d
 install -m 755 ganesha.sysconfig			%{buildroot}%{_sysconfdir}/sysconfig/ganesha
 install -m 755 tools/mount.9P				%{buildroot}%{_sbindir}/mount.9P
-
-install -m 644 config_samples/ganesha.conf		%{buildroot}%{_sysconfdir}/ganesha
 
 %if 0%{?fedora}
 mkdir -p %{buildroot}%{_unitdir}
@@ -350,8 +346,7 @@ install -m 755 ganesha.init				%{buildroot}%{_sysconfdir}/init.d/nfs-ganesha
 
 %if %{with_fsal_pt}
 install -m 755 ganesha.pt.init                            %{buildroot}%{_sysconfdir}/init.d/nfs-ganesha-pt
-install -m 644 config_samples/pt_config.conf              %{buildroot}%{_sysconfdir}/ganesha
-install -m 644 config_samples/export_pt.conf              %{buildroot}%{_sysconfdir}/ganesha
+install -m 644 config_samples/pt.conf                     %{buildroot}%{_sysconfdir}/ganesha
 %endif
 
 make DESTDIR=%{buildroot} install
@@ -362,9 +357,7 @@ make DESTDIR=%{buildroot} install
 %{_bindir}/*
 %config %{_sysconfdir}/dbus-1/system.d/org.ganesha.nfsd.conf
 %config(noreplace) %{_sysconfdir}/sysconfig/ganesha
-%config(noreplace) %{_sysconfdir}/logrotate.d/ganesha
 %dir %{_sysconfdir}/ganesha/
-%config(noreplace) %{_sysconfdir}/ganesha/ganesha.conf
 
 %if 0%{?fedora}
 %config %{_unitdir}/nfs-ganesha.service
@@ -451,8 +444,7 @@ make DESTDIR=%{buildroot} install
 %defattr(-,root,root,-)
 %{_libdir}/ganesha/libfsalpt*
 %config(noreplace) %{_sysconfdir}/init.d/nfs-ganesha-pt
-%config(noreplace) %{_sysconfdir}/ganesha/pt_config.conf
-%config(noreplace) %{_sysconfdir}/ganesha/export_pt.conf
+%config(noreplace) %{_sysconfdir}/ganesha/pt.conf
 %endif
 
 

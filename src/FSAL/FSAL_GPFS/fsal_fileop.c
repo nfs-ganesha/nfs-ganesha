@@ -175,8 +175,11 @@ fsal_status_t GPFSFSAL_read(int fd,	/* IN */
 	nb_read = gpfs_ganesha(OPENHANDLE_READ_BY_FD, &rarg);
 	errsv = errno;
 
-	if (nb_read == -1)
+	if (nb_read == -1) {
+		if (errsv == EUNATCH)
+			LogFatal(COMPONENT_FSAL, "GPFS Returned EUNATCH");
 		return fsalstat(posix2fsal_error(errsv), errsv);
+	}
 	else if (nb_read == 0 || nb_read < buffer_size)
 		*p_end_of_file = TRUE;
 
@@ -239,8 +242,11 @@ fsal_status_t GPFSFSAL_write(int fd,	/* IN */
 
 	fsal_restore_ganesha_credentials();
 
-	if (nb_write == -1)
+	if (nb_write == -1) {
+		if (errsv == EUNATCH)
+			LogFatal(COMPONENT_FSAL, "GPFS Returned EUNATCH");
 		return fsalstat(posix2fsal_error(errsv), errsv);
+	}
 
 	*p_write_amount = nb_write;
 	*fsal_stable = (stability_got) ? true : false;
@@ -301,8 +307,11 @@ fsal_status_t GPFSFSAL_clear(int fd,	/* IN */
 
 	fsal_restore_ganesha_credentials();
 
-	if (nb_write == -1)
+	if (nb_write == -1) {
+		if (errsv == EUNATCH)
+			LogFatal(COMPONENT_FSAL, "GPFS Returned EUNATCH");
 		return fsalstat(posix2fsal_error(errsv), errsv);
+	}
 
 	*p_write_amount = buffer_size;
 
