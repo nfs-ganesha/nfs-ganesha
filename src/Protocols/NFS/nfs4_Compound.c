@@ -491,7 +491,7 @@ int nfs4_Compound(nfs_arg_t *arg,
 	}
 
 	/* Check for too long request */
-	if (argarray_len > 30) {
+	if (argarray_len > 100) {
 		LogMajor(COMPONENT_NFS_V4,
 			 "A COMPOUND with too many operations (%d) was received",
 			 argarray_len);
