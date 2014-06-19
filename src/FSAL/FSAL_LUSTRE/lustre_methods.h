@@ -49,6 +49,8 @@ struct lustre_filesystem_export_map {
 	struct glist_head on_filesystems;
 };
 
+void lustre_unexport_filesystems(struct lustre_fsal_export *exp);
+
 /* method proto linkage to handle.c for export
  */
 
