@@ -226,6 +226,13 @@ option(DISTNAME_HAS_GIT_DATA "Distribution package's name carries git data" OFF 
 # Build and package Python admin scripts for managing via DBus
 option(USE_ADMIN_TOOLS "Package Admin scripts" OFF)
 
+# Final location for server modules such as FSAL shared objects
+# We do this separately because packaging (RPM) installs in a
+# "build root" but installs somewhere else (/usr)
+set(MODULES_PATH ${CMAKE_INSTALL_PREFIX}
+  CACHE PATH
+  "Path prefix for dlopen loaded modules")
+
 # Enable GCC Thread-sanitizer
 option(USE_TSAN "Enable GCC Thread-Sanitizer" OFF)
 
@@ -883,6 +890,7 @@ message(STATUS "GOLD_LINKER = ${GOLD_LINKER}")
 message(STATUS "CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX}")
 message(STATUS "FSAL_DESTINATION = ${FSAL_DESTINATION}")
 message(STATUS "USE_ADMIN_TOOLS = ${USE_ADMIN_TOOLS}")
+message(STATUS "MODULES_PATH = ${MODULES_PATH}")
 message(STATUS "USE_TSAN = ${USE_TSAN}")
 
 #force command line options to be stored in cache
@@ -1012,7 +1020,7 @@ set(USE_ADMIN_TOOLS ${USE_ADMIN_TOOLS}
   "Package Admin Scripts"
   FORCE)
 
-set(USE_ADMIN_TOOLS ${USE_TSAN}
+set(USE_TSAN ${USE_TSAN}
   CACHE BOOL
   "Enable GCC Thread-Sanitizer"
   FORCE)
