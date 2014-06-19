@@ -415,7 +415,7 @@ static struct config_item_list fsid_types[] = {
 
 static struct config_item export_params[] = {
 	CONF_ITEM_NOOP("name"),
-	CONF_ITEM_BOOL("pnfs_panfs", false,
+	CONF_ITEM_BOOL("pnfs", false,
 		       vfs_fsal_export, pnfs_panfs_enabled),
 	CONF_ITEM_ENUM("fsid_type", -1,
 		       fsid_types,

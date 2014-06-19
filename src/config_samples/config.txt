@@ -290,7 +290,7 @@ EXPORT { FSAL {} }
 	FSAL_VFS:
 	---------
 
-	pnfs_panfs(bool, default false)
+	pnfs(bool, default false)
 
 	fsid_type(enum, values [None, One64, Major64, Two64, uuid, Two32, Dev,
 			        Device], no default)
