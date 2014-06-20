@@ -51,29 +51,6 @@
 #include "export_mgr.h"
 
 /**
- * @brief Free a delegation while the lock state is locked.
- *
- * Free a delegation while the lock state is locked.
- * The caller must hold the state lock exclusively.
- *
- * @param[in] deleg_lock The delegation lock to remove.
- * @param[in] entry Inode entry that was delegated.
- * @param[in] export Export that the delegation and file are in.
- * @param[in] fake_req_ctx Fake request context when called from fsal_up
- */
-void free_deleg_locked(state_lock_entry_t *deleg_lock, cache_entry_t *entry,
-		      struct fsal_export *export)
-{
-	state_unlock(entry,
-		     deleg_lock->sle_owner,
-		     deleg_lock->sle_state,
-		     &deleg_lock->sle_lock,
-		     deleg_lock->sle_type);
-	state_del_locked(deleg_lock->sle_state, entry);
-	deleg_heuristics_recall(deleg_lock);
-}
-
-/**
  * @brief Initialize new delegation state as argument for state_add()
  *
  * Initialize delegation state struct. This is then given as an argument

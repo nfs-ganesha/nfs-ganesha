@@ -595,8 +595,6 @@ void init_new_deleg_state(state_data_t *deleg_state,
 bool deleg_heuristics_recall(state_lock_entry_t *deleg_entry);
 void get_deleg_perm(cache_entry_t *entry, nfsace4 *permissions,
 		    open_delegation_type4 type);
-void free_deleg_locked(state_lock_entry_t *deleg_lock, cache_entry_t *entry,
-		       struct fsal_export *export);
 bool update_delegation_stats(state_lock_entry_t *deleg_entry);
 state_status_t delegrecall_impl(cache_entry_t *entry);
 state_status_t deleg_revoke(state_lock_entry_t *deleg_entry);
