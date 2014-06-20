@@ -135,6 +135,8 @@ static struct config_item core_params[] = {
 	CONF_ITEM_UI32("MaxRPCRecvBufferSize", 1, 1048576*9,
 		       NFS_DEFAULT_RECV_BUFFER_SIZE,
 		       nfs_core_param, rpc.max_recv_buffer_size),
+	CONF_ITEM_UI32("RPC_Ioq_ThrdMax", 1, 1024*128, 200,
+		       nfs_core_param, rpc.max_recv_buffer_size),
 	CONF_ITEM_UI64("Long_Processing_Threshold", 1, 60, 10,
 		       nfs_core_param, long_processing_threshold),
 	CONF_ITEM_I64("Decoder_Fridge_Expiration_Delay", -1, 60*5, -1,

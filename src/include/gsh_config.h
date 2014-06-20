@@ -306,6 +306,9 @@ typedef struct nfs_core_param {
 		uint32_t max_recv_buffer_size;
 		/** Idle timeout (seconds).  Defaults to 5m */
 		uint32_t idle_timeout_s;
+		/** TIRPC ioq max simultaneous io threads.  Defaults to
+		    200 and settable by RPC_Ioq_ThrdMax. */
+		uint32_t ioq_thrd_max;
 	} rpc;
 	/** Interval (in seconds) at which to report an unusually
 	    long.  Defaults to 10.  Settable by

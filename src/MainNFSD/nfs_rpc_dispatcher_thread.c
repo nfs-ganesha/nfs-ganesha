@@ -447,6 +447,8 @@ void nfs_Init_svc()
 	svc_params.gss_ctx_hash_partitions = 17;
 	svc_params.gss_max_idle_gen = 1024;	/* GSS ctx cache expiration */
 	svc_params.gss_max_gc = 200;
+	svc_params.ioq_thrd_max = /* max ioq worker threads */
+		nfs_param.core_param.rpc.ioq_thrd_max;
 
 	svc_init(&svc_params);
 

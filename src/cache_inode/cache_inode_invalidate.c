@@ -95,12 +95,14 @@ cache_inode_invalidate(cache_entry_t *entry, uint32_t flags)
 					   CACHE_INODE_TRUST_CONTENT |
 					   CACHE_INODE_DIR_POPULATED);
 
+	/* lock order requires that we release entry->attr_lock before
+	 * calling cache_inode_close! */
+	if (!(flags & CACHE_INODE_INVALIDATE_GOT_LOCK))
+		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+
 	if (((flags & CACHE_INODE_INVALIDATE_CLOSE) != 0)
 	    && (entry->type == REGULAR_FILE))
 		status = cache_inode_close(entry, CACHE_INODE_FLAG_REALLYCLOSE);
-
-	if (!(flags & CACHE_INODE_INVALIDATE_GOT_LOCK))
-		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 
 	/* Memory copying attributes with every call is expensive.
 	   Let's not do it.  */
