@@ -72,7 +72,8 @@ static struct fsal_staticfsinfo_t lustre_info = {
 	.acl_support = FSAL_ACLSUPPORT_ALLOW,
 	.homogenous = true,
 	.supported_attrs = LUSTRE_SUPPORTED_ATTRIBUTES,
-	.pnfs_file = true,
+	.maxread = FSAL_MAXIOSIZE,
+	.maxwrite = FSAL_MAXIOSIZE,
 };
 
 static struct config_item ds_params[] = {
