@@ -200,6 +200,17 @@ int nfs3_create(nfs_arg_t *arg,
 			goto out_fail;
 		}
 
+		/* If the object exists already size is the only attribute we
+		 * set.
+		 */
+		if (FSAL_TEST_MASK(sattr.mask, ATTR_SIZE)
+		    && (sattr.filesize == 0)) {
+			FSAL_CLEAR_MASK(sattr.mask);
+			FSAL_SET_MASK(sattr.mask, ATTR_SIZE);
+		} else {
+			FSAL_CLEAR_MASK(sattr.mask);
+		}
+
 		/* Clear error code */
 		cache_status = CACHE_INODE_SUCCESS;
 	}
@@ -211,8 +222,8 @@ int nfs3_create(nfs_arg_t *arg,
 		 */
 		squash_setattr(&sattr);
 
-		if ((sattr.mask & (ATTR_ATIME | ATTR_MTIME | ATTR_CTIME))
-		    || ((sattr.mask & ATTR_SIZE) && sattr.filesize != 0)
+		if ((sattr.mask & (ATTR_ATIME | ATTR_MTIME | ATTR_CTIME |
+				   ATTR_SIZE))
 		    || ((sattr.mask & ATTR_OWNER)
 			&& (op_ctx->creds->caller_uid != sattr.owner))
 		    || ((sattr.mask & ATTR_GROUP)
