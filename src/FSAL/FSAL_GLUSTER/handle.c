@@ -194,12 +194,9 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 			}
 		} else if (rc == 0 && pde == NULL) {
 			*eof = true;
-		} else if (rc != 0) {
+		} else {
 			status = gluster2fsal_error(errno);
 			goto out;
-		} else {
-			/* Can't happen */
-			abort();
 		}
 	}
 
