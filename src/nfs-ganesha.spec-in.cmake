@@ -71,7 +71,7 @@
 %define sourcename @CPACK_SOURCE_PACKAGE_FILE_NAME@
 
 Name:		nfs-ganesha
-Version:	2.0
+Version:	@GANESHA_BASE_VERSION@
 Release:	1%{?dist}
 Summary:	NFS-Ganesha is a NFS Server running in user space
 Group:		Applications/System
@@ -108,8 +108,8 @@ Summary: a 9p mount helper
 Group: Applications/System
 
 %description mount-9P
-This package contains the mount.9P script
-This is a 9p mount help
+This package contains the mount.9P script that clients can use
+to simplify mounting to NFS-GANESHA. This is a 9p mount helper.
 
 %package vfs
 Summary: The NFS-GANESHA's VFS FSAL
@@ -130,7 +130,7 @@ This package contains a Stackble FSAL shared object to
 be used with NFS-Ganesha. This is mostly a template for future (more sophisticated) stackable FSALs
 
 %package proxy
-Summary: The NFS-GANESHA'snfs-ganesha-2.0-0.1.1-Source. PROXY FSAL
+Summary: The NFS-GANESHA's PROXY FSAL
 Group: Applications/System
 BuildRequires: libattr-devel
 Requires: nfs-ganesha
@@ -263,11 +263,6 @@ cmake .	-DCMAKE_BUILD_TYPE=Debug			\
 	-DCMAKE_BUILD_TYPE=Debug			\
 	-DBUILD_CONFIG=rpmbuild				\
 %if %{with_fsal_zfs}
-	-DUSE_FSAL_XFS=ON				\
-%else
-	-DUSE_FSAL_XFS=OFF				\
-%endif
-%if %{with_fsal_zfs}
 	-DUSE_FSAL_ZFS=ON				\
 %else
 	-DUSE_FSAL_ZFS=OFF				\
@@ -307,6 +302,11 @@ cmake .	-DCMAKE_BUILD_TYPE=Debug			\
 %else
 	-DUSE_FSAL_PT=OFF				\
 %endif
+%if %{with_fsal_gluster}
+	-DUSE_FSAL_GLUSTER=ON				\
+%else
+	-DUSE_FSAL_GLUSTER=OFF				\
+%endif
 %if %{with_rdma}
 	-DUSE_9P_RDMA=ON				\
 %endif
@@ -322,12 +322,16 @@ make %{?_smp_mflags} || make %{?_smp_mflags} || make
 mkdir -p %{buildroot}%{_sysconfdir}/ganesha/
 mkdir -p %{buildroot}%{_sysconfdir}/dbus-1/system.d
 mkdir -p %{buildroot}%{_sysconfdir}/sysconfig
+mkdir -p %{buildroot}%{_sysconfdir}/logrotate.d
 mkdir -p %{buildroot}%{_bindir}
 mkdir -p %{buildroot}%{_sbindir}
 mkdir -p %{buildroot}%{_libdir}/ganesha
+install -m 644 config_samples/logrotate_ganesha         %{buildroot}%{_sysconfdir}/logrotate.d/ganesha
 install -m 644 scripts/ganeshactl/org.ganesha.nfsd.conf	%{buildroot}%{_sysconfdir}/dbus-1/system.d
 install -m 755 ganesha.sysconfig			%{buildroot}%{_sysconfdir}/sysconfig/ganesha
 install -m 755 tools/mount.9P				%{buildroot}%{_sbindir}/mount.9P
+
+install -m 644 config_samples/vfs.conf             %{buildroot}%{_sysconfdir}/ganesha
 
 %if 0%{?fedora}
 mkdir -p %{buildroot}%{_unitdir}
@@ -349,6 +353,26 @@ install -m 755 ganesha.pt.init                            %{buildroot}%{_sysconf
 install -m 644 config_samples/pt.conf                     %{buildroot}%{_sysconfdir}/ganesha
 %endif
 
+%if %{with_fsal_xfs}
+install -m 755 config_samples/xfs.conf			%{buildroot}%{_sysconfdir}/ganesha
+%endif
+
+%if %{with_fsal_zfs}
+install -m 755 config_samples/zfs.conf			%{buildroot}%{_sysconfdir}/ganesha
+%endif
+
+%if %{with_fsal_ceph}
+install -m 755 config_samples/ceph.conf			%{buildroot}%{_sysconfdir}/ganesha
+%endif
+
+%if %{with_fsal_lustre}
+install -m 755 config_samples/lustre.conf		%{buildroot}%{_sysconfdir}/ganesha
+%endif
+
+%if %{with_fsal_gpfs}
+install -m 755 config_samples/gpfs.conf			%{buildroot}%{_sysconfdir}/ganesha
+%endif
+
 make DESTDIR=%{buildroot} install
 
 
@@ -357,6 +381,7 @@ make DESTDIR=%{buildroot} install
 %{_bindir}/*
 %config %{_sysconfdir}/dbus-1/system.d/org.ganesha.nfsd.conf
 %config(noreplace) %{_sysconfdir}/sysconfig/ganesha
+%config(noreplace) %{_sysconfdir}/logrotate.d/ganesha
 %dir %{_sysconfdir}/ganesha/
 
 %if 0%{?fedora}
@@ -379,6 +404,7 @@ make DESTDIR=%{buildroot} install
 %files vfs
 %defattr(-,root,root,-)
 %{_libdir}/ganesha/libfsalvfs*
+%config(noreplace) %{_sysconfdir}/ganesha/vfs.conf
 
 
 %files nullfs
@@ -395,29 +421,34 @@ make DESTDIR=%{buildroot} install
 %files gpfs
 %defattr(-,root,root,-)
 %{_libdir}/ganesha/libfsalgpfs*
+%config(noreplace) %{_sysconfdir}/ganesha/gpfs.conf
 %endif
 
 %if %{with_fsal_zfs}
 %files zfs
 %defattr(-,root,root,-)
 %{_libdir}/ganesha/libfsalzfs*
+%config(noreplace) %{_sysconfdir}/ganesha/zfs.conf
 %endif
 
 %if %{with_fsal_xfs}
 %files xfs
 %defattr(-,root,root,-)
 %{_libdir}/ganesha/libfsalxfs*
+%config(noreplace) %{_sysconfdir}/ganesha/xfs.conf
 %endif
 
 %if %{with_fsal_ceph}
 %files ceph
 %defattr(-,root,root,-)
 %{_libdir}/ganesha/libfsalceph*
+%config(noreplace) %{_sysconfdir}/ganesha/ceph.conf
 %endif
 
 %if %{with_fsal_lustre}
 %files lustre
 %defattr(-,root,root,-)
+%config(noreplace) %{_sysconfdir}/ganesha/lustre.conf
 %{_libdir}/ganesha/libfsallustre*
 %endif
 
