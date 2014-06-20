@@ -112,6 +112,8 @@ NFS_CORE_PARAM {}
 
 	MaxRPCRecvBufferSize(uint32, range 1 to 1048576*9, default 1048576)
 
+	RPC_Ioq_ThrdMax(uint32, range 1 to 1024*128 default 200)
+
 	Long_Processing_Threshold(uint64, range 1 to 60 default 10)
 
 	* Dead option...
