@@ -194,13 +194,13 @@ static nfsstat4 ds_read_plus(struct fsal_ds_handle *const ds_pub,
 
 	amount_read = gpfs_ganesha(OPENHANDLE_DS_READ, &rarg);
 	errsv = errno;
-	if (amount_read < 0 && errsv != ENODATA) {
+	if (amount_read < 0) {
 		if (errsv == EUNATCH)
 			LogFatal(COMPONENT_PNFS, "GPFS Returned EUNATCH");
-		return posix2nfs4_error(errsv);
-	}
+		if (errsv != ENODATA)
+			return posix2nfs4_error(errsv);
 
-	if (errsv == ENODATA) {
+		/* errsv == ENODATA */
 		info->io_content.what = NFS4_CONTENT_HOLE;
 		info->io_content.hole.di_offset = offset;     /*offset of hole*/
 		info->io_content.hole.di_length = requested_length;/*hole len*/
@@ -211,9 +211,9 @@ static nfsstat4 ds_read_plus(struct fsal_ds_handle *const ds_pub,
 		info->io_content.data.d_allocated = TRUE;
 		info->io_content.data.d_data.data_len = amount_read;
 		info->io_content.data.d_data.data_val = buffer;
+		if (amount_read == 0 || amount_read < requested_length)
+			*end_of_file = TRUE;
 	}
-	if (amount_read == 0 || amount_read < requested_length)
-		*end_of_file = TRUE;
 
 	return NFS4_OK;
 }
