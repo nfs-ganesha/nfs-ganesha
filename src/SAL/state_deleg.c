@@ -305,13 +305,7 @@ state_status_t deleg_revoke(state_lock_entry_t *deleg_entry)
 	struct nfs_client_id_t *clid = NULL;
 	nfs_fh4 fhandle;
 
-	uint32_t code =
-		nfs_client_id_get_confirmed(deleg_entry->sle_owner->so_owner.
-					    so_nfs4_owner.so_clientid, &clid);
-	if (code != CLIENT_ID_SUCCESS) {
-		LogCrit(COMPONENT_NFS_V4_LOCK, "No clid record  code %d", code);
-		return STATE_NOT_FOUND;
-	}
+	clid = deleg_entry->sle_owner->so_owner.so_nfs4_owner.so_clientrec;
 
 	deleg_state = deleg_entry->sle_state;
 	clientowner = deleg_entry->sle_owner;
