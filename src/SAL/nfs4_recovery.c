@@ -279,11 +279,6 @@ void nfs4_create_clid_name41(nfs_client_record_t *cl_rec,
 	char                         cidstr_len[10];
 	int total_len;
 
-	clientid->cid_recov_dir = gsh_malloc(PATH_MAX);
-	if (clientid->cid_recov_dir == NULL) {
-		LogEvent(COMPONENT_CLIENTID, "Mem_Alloc FAILED");
-		return;
-	}
 	/* get the caller's IP addr */
 	sprint_sockip(&clientid->cid_client_addr, buf, sizeof(buf));
 
