@@ -400,6 +400,7 @@ void nfs4_rm_revoked_handles(char *path)
 					errno);
 		}
 	}
+	(void)closedir(dp);
 }
 
 /**
@@ -640,6 +641,7 @@ read_next:
 		}
 		dentp = readdir(dp);
 	}
+	(void)closedir(dp);
 }
 
 
@@ -1060,7 +1062,7 @@ void nfs4_clean_old_recov_dir(char *parent_path)
 		}
 		gsh_free(path);
 	}
-	closedir(dp);
+	(void)closedir(dp);
 }
 
 /**
