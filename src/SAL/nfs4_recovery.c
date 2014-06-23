@@ -1133,6 +1133,7 @@ void nfs4_record_revoke(nfs_client_id_t *delr_clid, nfs_fh4 *delr_handle)
 	struct display_buffer       dspbuf = {sizeof(cidstr), cidstr, cidstr};
 	char path[PATH_MAX + 1] = {0}, segment[NAME_MAX + 1] = {0};
 	int length, position = 0;
+	int fd;
 
 	/* Make sure that handle size is not greather than NAME_MAX */
 	assert(2 * delr_handle->nfs_fh4_len < NAME_MAX);
@@ -1154,10 +1155,13 @@ void nfs4_record_revoke(nfs_client_id_t *delr_clid, nfs_fh4 *delr_handle)
 			strncat(path, &delr_clid->cid_recov_dir[position], len);
 			strcat(path, "/.");
 			strncat(path, cidstr, strlen(cidstr));
-			if (creat(path, 0700) < 0) {
+			fd = creat(path, 0700);
+			if (fd < 0) {
 				LogEvent(COMPONENT_CLIENTID,
 					"Failed to record revoke errno:%d\n",
 					errno);
+			} else {
+				close(fd);
 			}
 			return;
 		}
