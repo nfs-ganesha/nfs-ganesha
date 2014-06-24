@@ -1131,8 +1131,8 @@ void nfs4_create_recov_dir(void)
  */
 void nfs4_record_revoke(nfs_client_id_t *delr_clid, nfs_fh4 *delr_handle)
 {
-	char cidstr[NAME_MAX];
-	struct display_buffer       dspbuf = {sizeof(cidstr), cidstr, cidstr};
+	char rhdlstr[NAME_MAX];
+	struct display_buffer dspbuf = {sizeof(rhdlstr), rhdlstr, rhdlstr};
 	char path[PATH_MAX + 1] = {0}, segment[NAME_MAX + 1] = {0};
 	int length, position = 0;
 	int fd;
@@ -1145,7 +1145,7 @@ void nfs4_record_revoke(nfs_client_id_t *delr_clid, nfs_fh4 *delr_handle)
 					delr_handle->nfs_fh4_len,
 					NAME_MAX);
 
-	/* Parse through the clientid direstory structure */
+	/* Parse through the clientid directory structure */
 	assert(delr_clid->cid_recov_dir != NULL);
 
 	snprintf(path, sizeof(path), "%s", v4_recov_dir);
@@ -1156,7 +1156,7 @@ void nfs4_record_revoke(nfs_client_id_t *delr_clid, nfs_fh4 *delr_handle)
 			strcat(path, "/");
 			strncat(path, &delr_clid->cid_recov_dir[position], len);
 			strcat(path, "/.");
-			strncat(path, cidstr, strlen(cidstr));
+			strncat(path, rhdlstr, strlen(rhdlstr));
 			fd = creat(path, 0700);
 			if (fd < 0) {
 				LogEvent(COMPONENT_CLIENTID,
@@ -1176,11 +1176,11 @@ void nfs4_record_revoke(nfs_client_id_t *delr_clid, nfs_fh4 *delr_handle)
 
 bool nfs4_can_deleg_reclaim_prev(nfs_client_id_t *clid, nfs_fh4 *fhandle)
 {
-	char cidstr[NAME_MAX];
+	char rhdlstr[NAME_MAX];
 	struct glist_head *node;
 	rdel_fh_t *rfh_entry;
 	clid_entry_t *clid_ent;
-	struct display_buffer       dspbuf = {sizeof(cidstr), cidstr, cidstr};
+	struct display_buffer dspbuf = {sizeof(rhdlstr), rhdlstr, rhdlstr};
 
 	/* Make sure that handle size is not greather than NAME_MAX */
 	assert(2 * fhandle->nfs_fh4_len < NAME_MAX);
@@ -1205,7 +1205,7 @@ bool nfs4_can_deleg_reclaim_prev(nfs_client_id_t *clid, nfs_fh4 *fhandle)
 	glist_for_each(node, &clid_ent->cl_rfh_list) {
 		rfh_entry = glist_entry(node, rdel_fh_t, rdfh_list);
 		assert(rfh_entry != NULL);
-		if (!strcmp(cidstr, rfh_entry->rdfh_handle_str)) {
+		if (!strcmp(rhdlstr, rfh_entry->rdfh_handle_str)) {
 			pthread_mutex_unlock(&grace.g_mutex);
 			LogFullDebug(COMPONENT_CLIENTID,
 				"Can't reclaim revoked fh:%s",
