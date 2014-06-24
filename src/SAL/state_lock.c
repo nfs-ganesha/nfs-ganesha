@@ -2886,7 +2886,8 @@ state_status_t state_unlock(cache_entry_t *entry,
 	 */
 	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 
-	if (state && state->state_type == STATE_TYPE_DELEG) {
+	if (sle_type == LEASE_LOCK) {
+		assert(state && (state->state_type == STATE_TYPE_DELEG));
 		if (glist_empty(&entry->object.file.deleg_list)) {
 			PTHREAD_RWLOCK_unlock(&entry->state_lock);
 			cache_inode_dec_pin_ref(entry, FALSE);
