@@ -595,12 +595,16 @@ void nfs4_cp_pop_revoked_delegs(clid_entry_t *clid_ent,
 		}
 		if (tgtdir) {
 			char lopath[PATH_MAX + 1];
+			int fd;
 			sprintf(lopath, "%s/", tgtdir);
 			strncat(lopath, dentp->d_name, strlen(dentp->d_name));
-			if (creat(lopath, 0700) < 0) {
+			fd = creat(lopath, 0700);
+			if (fd < 0) {
 				LogEvent(COMPONENT_CLIENTID,
 					"Failed to copy revoked handle file %s to %s errno:%d\n",
 				dentp->d_name, tgtdir, errno);
+			} else {
+				close(fd);
 			}
 		}
 		new_ent = gsh_malloc(sizeof(rdel_fh_t));
