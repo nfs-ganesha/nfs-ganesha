@@ -584,6 +584,7 @@ void state_nfs4_state_wipe(cache_entry_t *entry);
 void release_lockstate(state_owner_t *lock_owner);
 void release_openstate(state_owner_t *open_owner);
 void state_export_release_nfs4_state(void);
+void revoke_owner_delegs(state_owner_t *client_owner);
 
 /* Specifically for delegations */
 bool init_deleg_heuristics(cache_entry_t *entry);
@@ -598,6 +599,7 @@ void get_deleg_perm(cache_entry_t *entry, nfsace4 *permissions,
 bool update_delegation_stats(state_lock_entry_t *deleg_entry);
 state_status_t delegrecall_impl(cache_entry_t *entry);
 state_status_t deleg_revoke(state_lock_entry_t *deleg_entry);
+void state_deleg_revoke(state_t *state, cache_entry_t *entry);
 
 #ifdef DEBUG_SAL
 void dump_all_states(void);

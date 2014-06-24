@@ -1149,6 +1149,22 @@ void nfs4_record_revoke(nfs_client_id_t *delr_clid, nfs_fh4 *delr_handle)
 					delr_handle->nfs_fh4_len,
 					NAME_MAX);
 
+	/* A client's lease is reserved while recalling or revoking a
+	 * delegation which means the client will not expire until we
+	 * complete this revoke operation. The only exception is when
+	 * the reaper thread revokes delegations of an already expired
+	 * client!
+	 */
+	pthread_mutex_lock(&delr_clid->cid_mutex);
+	if (delr_clid->cid_confirmed == EXPIRED_CLIENT_ID) {
+		/* Called from reaper thread, no need to record
+		 * revoked file handles for an expired client.
+		 */
+		pthread_mutex_unlock(&delr_clid->cid_mutex);
+		return;
+	}
+	pthread_mutex_unlock(&delr_clid->cid_mutex);
+
 	/* Parse through the clientid directory structure */
 	assert(delr_clid->cid_recov_dir != NULL);
 

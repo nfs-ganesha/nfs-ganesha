@@ -573,6 +573,45 @@ void release_openstate(state_owner_t *open_owner)
 }
 
 /**
+ * @brief Revoke delagtions belonging to the client owner.
+ *
+ * @param[in,out] client owner
+ */
+void revoke_owner_delegs(state_owner_t *client_owner)
+{
+	struct glist_head *glist, *glistn;
+	state_t *state;
+	cache_entry_t *entry;
+
+	glist_for_each_safe(glist, glistn,
+			&client_owner->so_owner.so_nfs4_owner.so_state_list) {
+		state = glist_entry(glist, state_t, state_owner_list);
+		entry = state->state_entry;
+
+		if (state->state_type != STATE_TYPE_DELEG)
+			continue;
+
+		/* state_deleg_revoke will remove the delegation state.
+		 * If that happens to be the last state on the cache
+		 * inode entry, a ref is decremented on it. So entry may
+		 * cease to exist after the call to state_deleg_revoke.
+		 * To prevent this, we place a ref count on the entry
+		 * here.
+		 */
+		cache_inode_lru_ref(entry, LRU_FLAG_NONE);
+
+		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
+		state_deleg_revoke(state, entry);
+		PTHREAD_RWLOCK_unlock(&entry->state_lock);
+
+		/* Close the file in FSAL through the cache inode */
+		cache_inode_close(entry, 0);
+
+		cache_inode_lru_unref(entry, LRU_FLAG_NONE);
+	}
+}
+
+/**
  * @brief Remove all state belonging to an export.
  *
  */

@@ -346,3 +346,38 @@ state_status_t deleg_revoke(state_lock_entry_t *deleg_entry)
 	gsh_free(fhandle.nfs_fh4_val);
 	return STATE_SUCCESS;
 }
+
+/**
+ * @brief Mark the delegation revoked
+ *
+ * Mark the delegation state revoked, further ops on this state should
+ * return NFS4ERR_REVOKED or NFS4ERR_EXPIRED
+ *
+ * @param[in] cache inode entry
+ * @param[in] delegation state
+ *
+ * Must be called with cache inode entry's state lock held in read-write
+ * mode.
+ */
+void state_deleg_revoke(state_t *state, cache_entry_t *entry)
+{
+	struct glist_head *glist;
+	state_lock_entry_t *deleg_lock;
+
+	/* If we are already in the process of recalling or revoking
+	 * this delegation from elsewhere, skip it here.
+	 */
+	if (state->state_data.deleg.sd_state != DELEG_GRANTED)
+		return;
+
+	state->state_data.deleg.sd_state = DELEG_RECALL_WIP;
+
+	/* Find the delegation lock and revoke it */
+	glist_for_each(glist, &entry->object.file.deleg_list) {
+		deleg_lock = glist_entry(glist, state_lock_entry_t, sle_list);
+		if (deleg_lock->sle_state == state) {
+			(void)deleg_revoke(deleg_lock);
+			return;
+		}
+	}
+}
