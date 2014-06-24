@@ -193,8 +193,6 @@ void nfs_print_param_config()
 	printf("\tDRC_UDP_Hiwat = %u ;\n", nfs_param.core_param.drc.udp.hiwat);
 	printf("\tDRC_UDP_Checksum = %u ;\n",
 	       nfs_param.core_param.drc.udp.checksum);
-	printf("\tCore_Dump_Size = %ld ;\n",
-	       nfs_param.core_param.core_dump_size);
 	printf("\tLong_Processing_Threshold = %" PRIu64 " ;\n",
 	       nfs_param.core_param.long_processing_threshold);
 	printf("\tDecoder_Fridge_Expiration_Delay = %" PRIu64 " ;\n",
@@ -792,38 +790,12 @@ static void lower_my_caps(void)
  */
 void nfs_start(nfs_start_info_t *p_start_info)
 {
-	struct rlimit ulimit_data;
-
 	/* store the start info so it is available for all layers */
 	nfs_start_info = *p_start_info;
 
 	if (p_start_info->dump_default_config == true) {
 		nfs_print_param_config();
 		exit(0);
-	}
-
-	/* Set the Core dump size if set */
-	if (nfs_param.core_param.core_dump_size != -1) {
-		LogInfo(COMPONENT_INIT, "core size rlimit set to %ld",
-			nfs_param.core_param.core_dump_size);
-		ulimit_data.rlim_cur = nfs_param.core_param.core_dump_size;
-		ulimit_data.rlim_max = nfs_param.core_param.core_dump_size;
-
-		if (setrlimit(RLIMIT_CORE, &ulimit_data) != 0) {
-			LogCrit(COMPONENT_INIT,
-				"setrlimit() returned error on RLIMIT_CORE, core dump size: %ld, error %s(%d)",
-				nfs_param.core_param.core_dump_size,
-				strerror(errno), errno);
-		}
-	} else {
-		if (getrlimit(RLIMIT_CORE, &ulimit_data) != 0) {
-			LogCrit(COMPONENT_INIT,
-				"getrlimit() returned error on RLIMIT_CORE, error %s(%d)",
-				strerror(errno), errno);
-		} else {
-			LogInfo(COMPONENT_INIT, "core size rlimit is %ld",
-				ulimit_data.rlim_cur);
-		}
 	}
 
 	/* Make sure Ganesha runs with a 0000 umask. */

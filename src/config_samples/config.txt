@@ -60,10 +60,6 @@ NFS_CORE_PARAM {}
 	* Is that a reasonable range?
 	* Is that a reasonable default?
 
-	Core_Dump_Size(int64, range -1 to 1<<36, default -1)
-
-	* Is that a reasonable range?
-
 	Drop_IO_Errors(bool, default true)
 
 	Drop_Inval_Errors(bool, default true)

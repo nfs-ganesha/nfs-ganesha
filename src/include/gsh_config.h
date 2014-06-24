@@ -188,9 +188,6 @@ typedef struct nfs_core_param {
 	/** Number of worker threads.  Set to NB_WORKER_DEFAULT by
 	    default and changed with the Nb_Worker option. */
 	uint32_t nb_worker;
-	/** Maximum core dump size for Ganesha.  Set to -1 by default
-	    and configured with the Core_Dump_Size option. */
-	size_t core_dump_size;
 	/** For NFSv3, whether to drop rather than reply to requests
 	    yielding I/O errors.  True by default and settable with
 	    Drop_IO_Errors.  As this generally results in client

@@ -85,8 +85,6 @@ static struct config_item core_params[] = {
 		       nfs_core_param, program[P_RQUOTA]),
 	CONF_ITEM_UI32("Nb_Worker", 1, 4096, NB_WORKER_THREAD_DEFAULT,
 		       nfs_core_param, nb_worker),
-	CONF_ITEM_I64("Core_Dump_Size", -1, 1L<<36, -1,
-		      nfs_core_param, core_dump_size),
 	CONF_ITEM_BOOL("Drop_IO_Errors", true,
 		       nfs_core_param, drop_io_errors),
 	CONF_ITEM_BOOL("Drop_Inval_Errors", true,
