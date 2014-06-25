@@ -281,9 +281,11 @@ struct config_item {
 			uint16_t def;
 		} ui16;
 		struct { /* CONFIG_INT32 */
-			int64_t minval;
-			int64_t maxval;
-			int64_t def;
+			int32_t minval;
+			int32_t maxval;
+			int32_t def;
+			uint32_t bit;
+			size_t set_off;
 		} i32;
 		struct { /* CONFIG_UINT32 */
 			uint32_t minval;
@@ -499,7 +501,7 @@ struct config_item {
 	  .type = CONFIG_BOOLBIT,		    \
 	  .u.bit.def = _def_,			    \
 	  .u.bit.bit = _bit_,			    \
-	  .u.lst.set_off = UINT32_MAX,		    \
+	  .u.bit.set_off = UINT32_MAX,		    \
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
 
@@ -537,7 +539,6 @@ struct config_item {
 	  .type = CONFIG_ENUM_SET,		    \
 	  .u.lst.def = _def_,			    \
 	  .u.lst.mask = UINT32_MAX,		    \
-	  .u.lst.set_off = UINT32_MAX,		    \
 	  .u.lst.tokens = _tokens_,		    \
 	  .u.lst.bit = _bit_,			    \
 	  .u.lst.set_off = offsetof(struct _struct_, _set_),   \
@@ -700,12 +701,25 @@ struct config_item {
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
 
+#define CONF_ITEM_I32_SET(_name_, _min_, _max_, _def_, _struct_, _mem_, \
+			  _bit_, _set_) \
+	{ .name = _name_,			    \
+	  .type = CONFIG_INT32,		    \
+	  .u.i32.minval = _min_,		    \
+	  .u.i32.maxval = _max_,		    \
+	  .u.i32.def = _def_,			    \
+	  .u.i32.bit = _bit_,		   	    \
+	  .u.i32.set_off = offsetof(struct _struct_, _set_),   \
+	  .off = offsetof(struct _struct_, _mem_)   \
+	}
+
 #define CONF_INDEX_I32(_name_, _min_, _max_, _def_, _idx_, _struct_, _mem_) \
 	{ .name = _name_,			    \
 	  .type = CONFIG_INT32,		    \
 	  .u.i32.minval = _min_,		    \
 	  .u.i32.maxval = _max_,		    \
 	  .u.i32.def = _def_,			    \
+	  .u.i32.set_off = UINT32_MAX,   \
 	  .off = (sizeof(struct _struct_) * _idx_)	\
 		  + offsetof(struct _struct_, _mem_)	\
 	}

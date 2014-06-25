@@ -808,6 +808,14 @@ static int do_block_load(struct config_node *blk,
 						item->u.i32.maxval,
 						&val))
 					*(int32_t *)param_addr = (int32_t)val;
+					if (item->u.i32.set_off < UINT32_MAX) {
+						caddr_t *mask_addr;
+						mask_addr = (caddr_t *)
+							((uint64_t)param_struct
+							+ item->u.i32.set_off);
+						*(uint32_t *)mask_addr
+							|= item->u.i32.bit;
+					}
 				else {
 					err_type->invalid = true;
 					errors++;
