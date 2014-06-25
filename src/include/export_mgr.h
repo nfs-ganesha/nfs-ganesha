@@ -130,7 +130,7 @@ struct gsh_export {
 	    Attr_Expiration_Time. */
 	uint32_t expire_time_attr;
 	/** Export_Id for this export */
-	uint32_t export_id;
+	uint16_t export_id;
 };
 
 void export_pkginit(void);
@@ -140,7 +140,7 @@ void dbus_export_init(void);
 struct gsh_export *alloc_export(void);
 void free_export(struct gsh_export *export);
 bool insert_gsh_export(struct gsh_export *export);
-struct gsh_export *get_gsh_export(int export_id);
+struct gsh_export *get_gsh_export(uint16_t export_id);
 struct gsh_export *get_gsh_export_by_path(char *path, bool exact_match);
 struct gsh_export *get_gsh_export_by_path_locked(char *path,
 						 bool exact_match);
@@ -151,7 +151,7 @@ struct gsh_export *get_gsh_export_by_tag(char *tag);
 bool mount_gsh_export(struct gsh_export *exp);
 void set_gsh_export_state(struct gsh_export *export, export_state_t state);
 void put_gsh_export(struct gsh_export *export);
-void remove_gsh_export(int export_id);
+void remove_gsh_export(uint16_t export_id);
 bool foreach_gsh_export(bool(*cb) (struct gsh_export *exp, void *state),
 			void *state);
 

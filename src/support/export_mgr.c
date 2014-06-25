@@ -263,7 +263,7 @@ bool insert_gsh_export(struct gsh_export *export)
  *
  * @return pointer to ref locked export
  */
-struct gsh_export *get_gsh_export(int export_id)
+struct gsh_export *get_gsh_export(uint16_t export_id)
 {
 	struct avltree_node *node = NULL;
 	struct gsh_export *exp;
@@ -662,7 +662,7 @@ void put_gsh_export(struct gsh_export *export)
  * Remove it from the AVL tree.
  */
 
-void remove_gsh_export(int export_id)
+void remove_gsh_export(uint16_t export_id)
 {
 	struct avltree_node *node = NULL;
 	struct avltree_node *cnode = NULL;
@@ -769,10 +769,10 @@ void remove_all_exports(void)
 /* DBUS interfaces
  */
 
-/* parse the ipaddr string in args
+/* parse the export_id in args
  */
 
-static bool arg_export_id(DBusMessageIter *args, int32_t *export_id,
+static bool arg_export_id(DBusMessageIter *args, uint16_t *export_id,
 			  char **errormsg)
 {
 	bool success = true;
@@ -780,21 +780,21 @@ static bool arg_export_id(DBusMessageIter *args, int32_t *export_id,
 	if (args == NULL) {
 		success = false;
 		*errormsg = "message has no arguments";
-	} else if (DBUS_TYPE_INT32 != dbus_message_iter_get_arg_type(args)) {
+	} else if (DBUS_TYPE_UINT16 != dbus_message_iter_get_arg_type(args)) {
 		success = false;
-		*errormsg = "arg not a 32 bit integer";
+		*errormsg = "arg not a 16 bit integer";
 	} else {
 		dbus_message_iter_get_basic(args, export_id);
 	}
 	return success;
 }
 
-/* DBUS client manager stats helpers
+/* DBUS export manager stats helpers
  */
 
 static struct gsh_export *lookup_export(DBusMessageIter *args, char **errormsg)
 {
-	int32_t export_id;
+	uint16_t export_id;
 	struct gsh_export *export = NULL;
 	bool success = true;
 

@@ -1144,7 +1144,7 @@ static struct config_item fsal_params[] = {
  */
 
 static struct config_item export_params[] = {
-	CONF_MAND_UI32("Export_id", 0, 0xffff, 1,
+	CONF_MAND_UI16("Export_id", 0, UINT16_MAX, 1,
 		       gsh_export, export_id),
 	CONF_MAND_PATH("Path", 1, MAXPATHLEN, NULL,
 		       gsh_export, fullpath), /* must chomp '/' */
