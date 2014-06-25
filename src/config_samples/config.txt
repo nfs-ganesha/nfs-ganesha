@@ -411,9 +411,9 @@ CACHEINODE
 
 	Use_Getattr_Directory_Invalidation(bool, default false)
 
-	Entries_HWMark(uint32, range 1 to 200000, default 100000)
+	Entries_HWMark(uint32, range 1 to UINT32_MAX, default 100000)
 
-	LRU_Run_Interval(uint32, range 1 to 30*60, default 10*60)
+	LRU_Run_Interval(uint32, range 1 to 24 * 3600, default 90)
 
 	Cache_FDs(bool, default true)
 
