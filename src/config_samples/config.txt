@@ -103,10 +103,6 @@ NFS_CORE_PARAM {}
 
 	RPC_Ioq_ThrdMax(uint32, range 1 to 1024*128 default 200)
 
-	Long_Processing_Threshold(uint64, range 1 to 60 default 10)
-
-	* Dead option...
-
 	Decoder_Fridge_Expiration_Delay(int64, range 0 to 7200, default 600)
 
 	Decoder_Fridge_Block_Timeout(int64, range 0 to 7200, default 600)

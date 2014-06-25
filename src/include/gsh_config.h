@@ -307,10 +307,6 @@ typedef struct nfs_core_param {
 		    200 and settable by RPC_Ioq_ThrdMax. */
 		uint32_t ioq_thrd_max;
 	} rpc;
-	/** Interval (in seconds) at which to report an unusually
-	    long.  Defaults to 10.  Settable by
-	    Long_Processing_Threshold. */
-	uint64_t long_processing_threshold;
 	/** How long (in seconds) to let unused decoder threads wait before
 	    exiting.  Settable with Decoder_Fridge_Expiration_Delay. */
 	time_t decoder_fridge_expiration_delay;

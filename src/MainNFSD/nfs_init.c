@@ -193,8 +193,6 @@ void nfs_print_param_config()
 	printf("\tDRC_UDP_Hiwat = %u ;\n", nfs_param.core_param.drc.udp.hiwat);
 	printf("\tDRC_UDP_Checksum = %u ;\n",
 	       nfs_param.core_param.drc.udp.checksum);
-	printf("\tLong_Processing_Threshold = %" PRIu64 " ;\n",
-	       nfs_param.core_param.long_processing_threshold);
 	printf("\tDecoder_Fridge_Expiration_Delay = %" PRIu64 " ;\n",
 	       nfs_param.core_param.decoder_fridge_expiration_delay);
 	printf("\tDecoder_Fridge_Block_Timeout = %" PRIu64 " ;\n",
