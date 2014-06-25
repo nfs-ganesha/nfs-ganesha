@@ -315,7 +315,7 @@ int nfs_ip_name_remove(sockaddr_t *ipaddr)
 /**
  * @brief Default value for ip_name_param.expiration-time
  */
-#define IP_NAME_EXPIRATION 36000
+#define IP_NAME_EXPIRATION 3600
 
 
 /** @} */

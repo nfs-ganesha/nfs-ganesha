@@ -128,7 +128,7 @@ NFS_IP_NAME {}
 
 	Index_Size(uint32, range 1 to 51, default 17)
 
-	Expiration_Time(uint32, range 1 to 60*60*24, default 36000)
+	Expiration_Time(uint32, range 1 to 60*60*24, default 3600)
 
 NFS_KRB5 {}
 -----------
