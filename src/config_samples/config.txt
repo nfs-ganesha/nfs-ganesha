@@ -33,42 +33,35 @@ PSEUDO, CEPH, PROXY, NULL, GLUSTER
 NFS_CORE_PARAM {}
 -----------------
 
-	NFS_Port (uint16, range 1024 to 65535, default 2049)
+	NFS_Port (uint16, range 0 to UINT16_MAX, default 2049)
 
-	MNT_Port (uint16, range 1024 to 65535, default 0)
+	MNT_Port (uint16, range 0 to UINT16_MAX, default 0)
 
-	NLM_Port (uint16, range 1024 to 65535, default 0)
+	NLM_Port (uint16, range 0 to UINT16_MAX, default 0)
 
-	Rquota_Port (uint16, range 1024 to 65535, default 0)
-
-	* Should the range on these be 0 to 65535?
+	Rquota_Port (uint16, range 0 to UINT16_MAX, default 0)
 
 	Bind_addr(IP4 addr, default 0.0.0.0)
 
 	* This eventually needs to support IPv6
 
-	NFS_Program(uint32, range 1 to 200499999, default  100003)
+	NFS_Program(uint32, range 1 to INT32_MAX, default  100003)
 
-	MNT_Program(uint32, range 1 to 200499999, default  100005)
+	MNT_Program(uint32, range 1 to INT32_MAX, default  100005)
 
-	NLM_Program(uint32, range 1 to 200499999, default  100021)
+	NLM_Program(uint32, range 1 to INT32_MAX, default  100021)
 
-	Rquota_Program(uint32, range 1 to 200499999, default  100011)
+	Rquota_Program(uint32, range 1 to INT32_MAX, default  100011)
 
-	Nb_Worker(uint32, range 1 to 4096, default 16)
+	Nb_Worker(uint32, range 1 to 1024*128, default 16)
 
-	* Is that a reasonable range?
-	* Is that a reasonable default?
+	Drop_IO_Errors(bool, default false)
 
-	Drop_IO_Errors(bool, default true)
+	Drop_Inval_Errors(bool, default false)
 
-	Drop_Inval_Errors(bool, default true)
+	Drop_Delay_Errors(bool, default false)
 
-	Drop_Delay_Errors(bool, default true)
-
-	* Not sure why these default to true?
-
-	Dispatch_Max_Reqs(uint32, range 1 to 10000, default 5000)
+	Dispatch_Max_Reqs(uint32, range 1 to 1024*128*16, default 5000)
 
 	Dispatch_Max_Reqs_Xprt(uint32, range 1 to 2048, default 512)
 
@@ -96,9 +89,9 @@ NFS_CORE_PARAM {}
 
 	DRC_UDP_Hiwat(uint32, range 1 to 32768, default 16384)
 
-	DRC_UDP_Checksum(bool, true,
+	DRC_UDP_Checksum(bool, default true)
 
-	RPC_Debug_Flags(uint32, range 0 to 0xFFFFFFFF, default 0)
+	RPC_Debug_Flags(uint32, range 0 to UINT32_MAX, default 0)
 
 	RPC_Max_Connections(uint32, range 1 to 10000, default 1024)
 
@@ -114,12 +107,9 @@ NFS_CORE_PARAM {}
 
 	* Dead option...
 
-	Decoder_Fridge_Expiration_Delay(int64, range -1 to 60*5, default -1)
+	Decoder_Fridge_Expiration_Delay(int64, range 0 to 7200, default 600)
 
-	Decoder_Fridge_Block_Timeout(int64, range -1 to 60*5, default -1)
-
-	* Why are these int64 with such a small range?
-	* The default translates into 600...
+	Decoder_Fridge_Block_Timeout(int64, range 0 to 7200, default 600)
 
 	NFS_Protocols(list, valid values [3, 4], default 3,4)
 
