@@ -134,7 +134,7 @@ static struct config_item core_params[] = {
 		       NFS_DEFAULT_RECV_BUFFER_SIZE,
 		       nfs_core_param, rpc.max_recv_buffer_size),
 	CONF_ITEM_UI32("RPC_Ioq_ThrdMax", 1, 1024*128, 200,
-		       nfs_core_param, rpc.max_recv_buffer_size),
+		       nfs_core_param, rpc.ioq_thrd_max),
 	CONF_ITEM_I64("Decoder_Fridge_Expiration_Delay", 0, 7200, 600,
 		      nfs_core_param, decoder_fridge_expiration_delay),
 	CONF_ITEM_I64("Decoder_Fridge_Block_Timeout", 0, 7200, 600,
