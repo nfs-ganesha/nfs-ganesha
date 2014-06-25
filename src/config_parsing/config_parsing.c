@@ -806,7 +806,7 @@ static int do_block_load(struct config_node *blk,
 			case CONFIG_INT32:
 				if (convert_int(node, item->u.i32.minval,
 						item->u.i32.maxval,
-						&val))
+						&val)) {
 					*(int32_t *)param_addr = (int32_t)val;
 					if (item->u.i32.set_off < UINT32_MAX) {
 						caddr_t *mask_addr;
@@ -816,7 +816,7 @@ static int do_block_load(struct config_node *blk,
 						*(uint32_t *)mask_addr
 							|= item->u.i32.bit;
 					}
-				else {
+				} else {
 					err_type->invalid = true;
 					errors++;
 				}
