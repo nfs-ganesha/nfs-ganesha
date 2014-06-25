@@ -901,14 +901,10 @@ void nfs_rpc_queue_init(void)
 	reqparams.thr_max = 0;
 	reqparams.thr_min = 1;
 	reqparams.thread_delay =
-	    ((nfs_param.core_param.decoder_fridge_expiration_delay >= 0) ?
-	     nfs_param.core_param.decoder_fridge_expiration_delay :
-	     600);
+		nfs_param.core_param.decoder_fridge_expiration_delay;
 	reqparams.deferment = fridgethr_defer_block;
 	reqparams.block_delay =
-	    ((nfs_param.core_param.decoder_fridge_block_timeout >= 0) ?
-	     nfs_param.core_param.decoder_fridge_block_timeout :
-	     600);
+		nfs_param.core_param.decoder_fridge_block_timeout;
 
 	/* decoder thread pool */
 	rc = fridgethr_init(&req_fridge, "decoder", &reqparams);
