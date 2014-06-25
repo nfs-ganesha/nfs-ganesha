@@ -549,7 +549,7 @@ struct attrlist {
 	uint64_t spaceused;	/*< Space used on underlying filesystem */
 	uint64_t change;	/*< A 'change id' */
 	uint64_t generation;	/*< Generation number for this file */
-	uint32_t expire_time_attr;	/*< Expiration time interval in seconds
+	int32_t expire_time_attr;	/*< Expiration time interval in seconds
 					   for attributes. Settable by FSAL. */
 };
 

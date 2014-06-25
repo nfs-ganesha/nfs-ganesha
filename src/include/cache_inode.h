@@ -63,20 +63,6 @@
  */
 
 /**
- * @brief Determine whether inode data, such as attributes, expire.
- */
-
-typedef enum cache_inode_expire_type {
-	CACHE_INODE_EXPIRE = 0,	/*< Data expire when they have been
-				   refreshed less recently than grace
-				   period for their type allows. */
-	CACHE_INODE_EXPIRE_NEVER = 1,	/*< Data never expire based on
-					   time. */
-	CACHE_INODE_EXPIRE_IMMEDIATE = 2	/*< Data are always treated
-						   as expired. */
-} cache_inode_expire_type_t;
-
-/**
  * @brief Structure to hold cache_inode paramaters
  */
 
@@ -84,12 +70,9 @@ struct cache_inode_parameter {
 	/** Partitions in the Cache_Inode tree.  Defaults to 7,
 	 * settable with NParts. */
 	uint32_t nparts;
-	/** Expiration type for attributes.  Defaults to never,
-	    settable with Attr_Expiration_Time. */
-	cache_inode_expire_type_t expire_type_attr;
 	/** Expiration time interval in seconds for attributes.  Settable with
 	    Attr_Expiration_Time. */
-	uint32_t  expire_time_attr;
+	int32_t  expire_time_attr;
 	/** Use getattr for directory invalidation.  Defaults to
 	    false.  Settable with Use_Getattr_Directory_Invalidation. */
 	bool getattr_dir_invalidation;
@@ -470,8 +453,6 @@ struct cache_entry_t {
 	time_t change_time;
 	/** Time at which we last refreshed attributes. */
 	time_t attr_time;
-	/** Expiration type for attributes. */
-	cache_inode_expire_type_t expire_type_attr;
 	/** New style LRU link */
 	cache_inode_lru_t lru;
 	/** There is one export root reference counted for each export
@@ -916,7 +897,7 @@ static inline void
 cache_inode_fixup_md(cache_entry_t *entry)
 {
 	/* Set the refresh time for the cache entry */
-	if (entry->expire_type_attr == CACHE_INODE_EXPIRE)
+	if (entry->obj_handle->attributes.expire_time_attr > 0)
 		entry->attr_time = time(NULL);
 	else
 		entry->attr_time = 0;
@@ -956,11 +937,10 @@ cache_inode_is_attrs_valid(const cache_entry_t *entry)
 	    && cache_param.getattr_dir_invalidation)
 		return false;
 
-	if (entry->expire_type_attr == CACHE_INODE_EXPIRE_IMMEDIATE)
+	if (entry->obj_handle->attributes.expire_time_attr == 0)
 		return false;
 
-	if (entry->expire_type_attr == CACHE_INODE_EXPIRE &&
-	    entry->obj_handle->attributes.expire_time_attr != 0) {
+	if (entry->obj_handle->attributes.expire_time_attr > 0) {
 		time_t current_time = time(NULL);
 		if (current_time - entry->attr_time >
 		    entry->obj_handle->attributes.expire_time_attr)

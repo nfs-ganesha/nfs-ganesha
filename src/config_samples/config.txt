@@ -235,10 +235,7 @@ EXPORT {}
 
 	UseCookieVerifier(bool, default true)
 
-	Attr_Expiration_Type(enum, values [Expire, Never, Immediate],
-			     default Never)
-
-	Attr_Expiration_Time(uint32, range 0 to 360, default 60)
+	Attr_Expiration_Time(int32, range -1 to INT32_MAX, default 60)
 
 
 EXPORT { CLIENT  {} }
@@ -404,10 +401,7 @@ CACHEINODE
 
 	NParts(uint32, range 1 to 20, default 7)
 
-	Attr_Expiration_Type(enum, values [Expire, Never, Immediate],
-			     default Never)
-
-	Attr_Expiration_Time(uint32, range 0 to 120, default 60)
+	Attr_Expiration_Time(int32, range -1 to INT32_MAX, default 60)
 
 	Use_Getattr_Directory_Invalidation(bool, default false)
 

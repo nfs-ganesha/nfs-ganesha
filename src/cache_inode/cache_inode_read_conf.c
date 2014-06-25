@@ -52,20 +52,10 @@
 
 struct cache_inode_parameter cache_param;
 
-static struct config_item_list expire_types[] = {
-	CONFIG_LIST_TOK("Expire", CACHE_INODE_EXPIRE),
-	CONFIG_LIST_TOK("Never", CACHE_INODE_EXPIRE_NEVER),
-	CONFIG_LIST_TOK("Immediate", CACHE_INODE_EXPIRE_IMMEDIATE),
-	CONFIG_LIST_EOL
-};
-
 static struct config_item cache_inode_params[] = {
 	CONF_ITEM_UI32("NParts", 1, 20, 7,
 		       cache_inode_parameter, nparts),
-	CONF_ITEM_ENUM("Attr_Expiration_Type", CACHE_INODE_EXPIRE_NEVER,
-		       expire_types,
-		       cache_inode_parameter, expire_type_attr),
-	CONF_ITEM_UI32("Attr_Expiration_Time", 0, 120, 60,
+	CONF_ITEM_I32("Attr_Expiration_Time", -1, INT32_MAX, 60,
 		       cache_inode_parameter, expire_time_attr),
 	CONF_ITEM_BOOL("Use_Getattr_Directory_Invalidation", false,
 		       cache_inode_parameter, getattr_dir_invalidation),

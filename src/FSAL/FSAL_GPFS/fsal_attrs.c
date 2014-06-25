@@ -63,15 +63,14 @@ fsal_status_t GPFSFSAL_getattrs(struct fsal_export *export,	/* IN */
 {				/* IN/OUT */
 	fsal_status_t st;
 	gpfsfsal_xstat_t buffxstat;
-	bool expire = FALSE;
+	bool expire;
 	uint32_t expire_time_attr = 0;	/*< Expiration time for attributes. */
 
 	/* Initialize fsal_fsid to 0.0 in case older GPFS */
 	buffxstat.fsal_fsid.major = 0;
 	buffxstat.fsal_fsid.minor = 0;
 
-	if (p_context->export->expire_type_attr == CACHE_INODE_EXPIRE)
-		expire = TRUE;
+	expire = p_context->export->expire_time_attr > 0;
 
 	st = fsal_get_xstat_by_handle(gpfs_fs->root_fd, p_filehandle,
 				      &buffxstat, &expire_time_attr, expire);

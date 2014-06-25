@@ -629,12 +629,8 @@ static int fsal_commit(void *node, void *link_mem, void *self_struct,
 	status = fsal->ops->create_export(fsal,
 					  node,
 					  &fsal_up_top);
-	if ((export->options_set & EXPORT_OPTION_EXPIRE_SET) == 0) {
-		export->expire_type_attr =
-			cache_param.expire_type_attr;
-		export->expire_time_attr =
-			cache_param.expire_time_attr;
-	}
+	if ((export->options_set & EXPORT_OPTION_EXPIRE_SET) == 0)
+		export->expire_time_attr = cache_param.expire_time_attr;
 
 	if (FSAL_IS_ERROR(status)) {
 		fsal_put(fsal);
@@ -1047,13 +1043,6 @@ static struct config_item_list delegations[] = {
 	CONFIG_LIST_EOL
 };
 
-static struct config_item_list expire_types[] = {
-	CONFIG_LIST_TOK("Expire", CACHE_INODE_EXPIRE),
-	CONFIG_LIST_TOK("Never", CACHE_INODE_EXPIRE_NEVER),
-	CONFIG_LIST_TOK("Immediate", CACHE_INODE_EXPIRE_IMMEDIATE),
-	CONFIG_LIST_EOL
-};
-
 #define CONF_EXPORT_PERMS(_struct_, _perms_)				\
 	/* Note: Access_Type defaults to None on purpose */		\
 	CONF_ITEM_ENUM_BITS_SET("Access_Type",				\
@@ -1176,13 +1165,9 @@ static struct config_item export_params[] = {
 	CONF_ITEM_BLOCK("Client", client_params,
 			client_init, client_commit,
 			gsh_export, clients),
-	CONF_ITEM_ENUM_SET("Attr_Expiration_Type",
-			   CACHE_INODE_EXPIRE_NEVER,
-			   expire_types,
-			   gsh_export, expire_type_attr,
-			   EXPORT_OPTION_EXPIRE_SET, options_set),
-	CONF_ITEM_UI32("Attr_Expiration_Time", 0, 360, 60,
-		       gsh_export, expire_time_attr),
+	CONF_ITEM_I32_SET("Attr_Expiration_Time", -1, INT32_MAX, 60,
+		       gsh_export, expire_time_attr,
+		       EXPORT_OPTION_EXPIRE_SET,  options_set),
 	CONF_RELAX_BLOCK("FSAL", fsal_params,
 			 fsal_init, fsal_commit,
 			 gsh_export, fsal_export),
@@ -1291,7 +1276,6 @@ static int build_default_root(void)
 	export->PrefWrite = FSAL_MAXIOSIZE;
 	export->PrefRead = FSAL_MAXIOSIZE;
 	export->PrefReaddir = 16384;
-	export->expire_type_attr = cache_param.expire_type_attr;
 	glist_init(&export->exp_state_list);
 	glist_init(&export->exp_lock_list);
 	glist_init(&export->exp_nlm_share_list);
