@@ -89,11 +89,6 @@ void freenetconfigent(struct netconfig *);
  */
 
 /**
- * @brief Stanza label for krb5_param
- */
-#define CONF_LABEL_NFS_KRB5 "NFS_KRB5"
-
-/**
  * @brief Default value for krb5_param.gss.principal
  */
 #define DEFAULT_NFS_PRINCIPAL "nfs"

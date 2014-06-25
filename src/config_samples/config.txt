@@ -132,7 +132,6 @@ NFS_IP_NAME {}
 
 NFS_KRB5 {}
 -----------
-	* see unused CONF_LABEL_NFS_KRB5...
 
 	PrincipalName(string, default "nfs")
 
