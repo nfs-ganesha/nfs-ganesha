@@ -1086,6 +1086,11 @@ if(USE_9P_RDMA)
     set( WITH_ARG "${WITH_ARG} --with rdma")
 endif(USE_9P_RDMA)
 
+if(USE_ADMIN_TOOLS)
+    set( WITH_ARG "${WITH_ARG} --with utils")
+endif(USE_ADMIN_TOOLS)
+
+
 add_custom_target( rpm DEPENDS dist)
 add_custom_command(TARGET rpm
                   COMMAND sh -c "rpmbuild ${WITH_ARG} -ta ${PKG_NAME}"

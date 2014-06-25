@@ -17,6 +17,17 @@ set(GANESHA_SRCS
 
 # Command line scripts
 set(SCRIPT_SRC
+  fake_recall.py
+  get_clientids.py
+  grace_period.py
+  purge_gids.py
+  stats_fast.py
+  stats_global.py
+  stats_inode.py
+  stats_io.py
+  stats_pnfs.py
+  stats.py
+  stats_total.py
   ganeshactl.py
   ganesha-admin.py
   manage_clients.py

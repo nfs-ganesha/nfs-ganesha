@@ -66,6 +66,11 @@
 %global with_rdma 0
 %endif
 
+%if %{?_with_utils:1}%{!?_with_utils:0}
+%global with_utils 1
+%else
+%global with_utils 0
+%endif
 
 #%define sourcename nfs-ganesha-2.0-RC5-0.1.1-Source
 %define sourcename @CPACK_SOURCE_PACKAGE_FILE_NAME@
@@ -138,6 +143,15 @@ Requires: nfs-ganesha
 %description proxy
 This package contains a FSAL shared object to
 be used with NFS-Ganesha to support PROXY based filesystems
+
+%package utils
+Summary: The NFS-GANESHA's util scripts
+Group: Applications/System
+BuildRequires: PyQt4-devel
+Requires: nfs-ganesha python
+
+%description utils
+This package contains utility scripts for managing the NFS-GANESHA server
 
 # Option packages start here. use "rpmbuild --with lustre" (or equivalent)
 # for activating this part of the spec file
@@ -310,6 +324,9 @@ cmake .	-DCMAKE_BUILD_TYPE=Debug			\
 %if %{with_rdma}
 	-DUSE_9P_RDMA=ON				\
 %endif
+%if %{with_utils}
+        -DUSE_ADMIN_TOOLS=ON                            \
+%endif
 	-DUSE_FSAL_VFS=ON				\
 	-DUSE_FSAL_PROXY=ON				\
 	-DUSE_DBUS=ON					\
@@ -343,6 +360,12 @@ mkdir -p %{buildroot}%{_sysconfdir}/init.d
 install -m 755 ganesha.init				%{buildroot}%{_sysconfdir}/init.d/nfs-ganesha
 %endif
 
+%if %{with_utils} && 0%{?rhel} && 0%{?rhel} <= 6
+%{!?__python2: %global __python2 /usr/bin/python2}
+%{!?python2_sitelib: %global python2_sitelib %(%{__python2} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")}
+%{!?python2_sitearch: %global python2_sitearch %(%{__python2} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib(1))")}
+%endif
+
 %if 0%{?bl6}
 mkdir -p %{buildroot}%{_sysconfdir}/init.d
 install -m 755 ganesha.init				%{buildroot}%{_sysconfdir}/init.d/nfs-ganesha
@@ -372,6 +395,14 @@ install -m 755 config_samples/lustre.conf		%{buildroot}%{_sysconfdir}/ganesha
 %if %{with_fsal_gpfs}
 install -m 755 config_samples/gpfs.conf			%{buildroot}%{_sysconfdir}/ganesha
 %endif
+
+%if %{with_utils}
+pushd .
+cd scripts/ganeshactl/
+python setup.py --quiet install --root=%{buildroot}
+popd
+%endif
+
 
 make DESTDIR=%{buildroot} install
 
@@ -476,6 +507,29 @@ make DESTDIR=%{buildroot} install
 %{_libdir}/ganesha/libfsalpt*
 %config(noreplace) %{_sysconfdir}/init.d/nfs-ganesha-pt
 %config(noreplace) %{_sysconfdir}/ganesha/pt.conf
+%endif
+
+%if %{with_utils}
+%files utils
+%defattr(-,root,root,-)
+%{python2_sitelib}/Ganesha/*
+%{python2_sitelib}/ganeshactl-*-info
+/usr/bin/ganesha-admin
+/usr/bin/manage_clients
+/usr/bin/manage_exports
+/usr/bin/manage_logger
+/usr/bin/ganeshactl
+/usr/bin/fake_recall
+/usr/bin/get_clientids
+/usr/bin/grace_period
+/usr/bin/purge_gids
+/usr/bin/stats_fast
+/usr/bin/stats_global
+/usr/bin/stats_inode
+/usr/bin/stats_io
+/usr/bin/stats_pnfs
+/usr/bin/stats
+/usr/bin/stats_total
 %endif
 
 
