@@ -549,3 +549,20 @@
 	style.  Changes are checked and validated with the kernel's
 	checkpatch.pl script.  The script and our configuration file for it
 	are supplied in the source.
+
+2.1.0 - Thurs 26 Jun 2014
+      - Exports are now dynamic.  They can be added or removed via DBus
+	commands. The manage_exports python script has been updated to
+	support the feature.
+      - The Pseudo filesystem has been re-written as a FSAL.  This enables
+        dynamic exports.  Submounted filesystems also work base on this
+	change.
+      - The configuration file processing has been rewritten to improve
+	error checking and logging.  All parameters are consistently
+	checked for range.  The validation of the whole configuration blocks
+	are also checked.
+      - GIDs can now be managed to use external authentication sources.  This
+	fixes the protocol limitation of AUTH_SYS which restricted the
+	number of alternate gids to 16.
+      -	RPM packaging has been restructured and updated.  The DBus tools
+	are now packaged.
