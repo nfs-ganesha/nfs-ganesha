@@ -534,6 +534,23 @@ make DESTDIR=%{buildroot} install
 
 
 %changelog
+* Fri Jun 27 2014  Philippe DENIEL <philippe.deniel@cea.fr> 2.1
+- Exports are now dynamic.  They can be added or removed via DBus commands.
+- The Pseudo filesystem has been re-written as a FSAL
+- The configuration file processing has been rewritten to improve error checking and logging.
+- GIDs can now be managed to use external authentication sources. Altgroups with AUTH_SYS can be larger than 16.
+- RPM packaging has been restructured and updated.  The DBus tools are now packaged.
+
 * Thu Nov 21 2013  Philippe DENIEL <philippe.deniel@cea.fr> 2.O
-- bunches of cool new stuff
+- FSALs (filesystem backends) are now loadable shared objects.
+- The server can support multiple backends at runtime.
+- NFSv4.1 pNFS is supported.
+- DBus is now the administration tool.
+- All the significant bugfixes from the 1.5.x branch have been backported
+- The server passes all of the cthonv4 and pynfs 4.0 tests.
+-  All of the significant (non-delegation) pynfs 4.1 tests also pass.
+- NFSv2 support has been deprecated.
+- NFSv3 still supports the older version of the MNT protocol for compatibility
+- The build process has been converted to Cmake
+- The codebase has been reformatted to conform to Linux kernel coding style.
 
