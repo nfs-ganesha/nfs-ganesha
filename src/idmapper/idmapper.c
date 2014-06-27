@@ -133,14 +133,28 @@ static bool xdr_encode_nfs4_princ(XDR *xdrs, uint32_t id, bool group)
 		PTHREAD_RWLOCK_unlock(group ? &idmapper_group_lock :
 				      &idmapper_user_lock);
 		int rc;
+		int size;
 		bool looked_up = false;
-		char *namebuff =
-		    alloca(nfs_param.nfsv4_param.
-			   use_getpwnam ? (PWENT_MAX_LEN + owner_domain.len +
-					   2) : (NFS4_MAX_DOMAIN_LEN + 2));
-		struct gsh_buffdesc new_name = {
-			.addr = namebuff
-		};
+		char *namebuff = NULL;
+		struct gsh_buffdesc new_name;
+
+		if (nfs_param.nfsv4_param.use_getpwnam) {
+			if (group)
+				size = sysconf(_SC_GETGR_R_SIZE_MAX);
+			else
+				size = sysconf(_SC_GETPW_R_SIZE_MAX);
+			if (size == -1)
+				size = PWENT_BEST_GUESS_LEN;
+			new_name.len = size;
+			size += owner_domain.len + 2;
+		} else {
+			size = NFS4_MAX_DOMAIN_LEN + 2;
+		}
+
+		namebuff = alloca(size);
+
+		new_name.addr = namebuff;
+
 		if (nfs_param.nfsv4_param.use_getpwnam) {
 			char *cursor;
 			bool nulled;
@@ -149,14 +163,14 @@ static bool xdr_encode_nfs4_princ(XDR *xdrs, uint32_t id, bool group)
 				struct group g;
 				struct group *gres;
 
-				rc = getgrgid_r(id, &g, namebuff, PWENT_MAX_LEN,
+				rc = getgrgid_r(id, &g, namebuff, new_name.len,
 						&gres);
 				nulled = (gres == NULL);
 			} else {
 				struct passwd p;
 				struct passwd *pres;
 
-				rc = getpwuid_r(id, &p, namebuff, PWENT_MAX_LEN,
+				rc = getpwuid_r(id, &p, namebuff, new_name.len,
 						&pres);
 				nulled = (pres == NULL);
 			}
@@ -207,7 +221,7 @@ static bool xdr_encode_nfs4_princ(XDR *xdrs, uint32_t id, bool group)
 					"Lookup for %d failed, "
 					"using numeric %s", id,
 					(group ? "group" : "owner"));
-				/* 2³² is 10 digits long in decimal */
+				/* 2**32 is 10 digits long in decimal */
 				sprintf(namebuff, "%u", id);
 				new_name.len = strlen(namebuff);
 			} else {
@@ -327,9 +341,15 @@ static bool pwentname2id(char *name, size_t len, uint32_t *id,
 	if (group) {
 		struct group g;
 		struct group *gres;
-		char *gbuf = alloca(PWENT_MAX_LEN);
+		int size = sysconf(_SC_GETGR_R_SIZE_MAX);
+		char *gbuf;
 
-		if (getgrnam_r(name, &g, gbuf, PWENT_MAX_LEN, &gres) != 0) {
+		if (size == -1)
+			size = PWENT_BEST_GUESS_LEN;
+
+		gbuf = alloca(size);
+
+		if (getgrnam_r(name, &g, gbuf, size, &gres) != 0) {
 			LogMajor(COMPONENT_IDMAPPER, "getpwnam_r %s failed",
 				 name);
 			return false;
@@ -353,9 +373,15 @@ static bool pwentname2id(char *name, size_t len, uint32_t *id,
 	} else {
 		struct passwd p;
 		struct passwd *pres;
-		char *buf = alloca(PWENT_MAX_LEN);
+		int size = sysconf(_SC_GETPW_R_SIZE_MAX);
+		char *buf;
 
-		if (getpwnam_r(name, &p, buf, PWENT_MAX_LEN, &pres) != 0) {
+		if (size == -1)
+			size = PWENT_BEST_GUESS_LEN;
+
+		buf = alloca(size);
+
+		if (getpwnam_r(name, &p, buf, size, &pres) != 0) {
 			LogInfo(COMPONENT_IDMAPPER, "getpwnam_r %s failed",
 				name);
 			return false;
