@@ -1209,6 +1209,9 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 	if (!deleg_entry) {
 		LogDebug(COMPONENT_NFS_CB, "Delegation is already returned");
 		cache_inode_put(deleg_ctx->entry);
+		pthread_mutex_lock(&deleg_ctx->clid->cid_mutex);
+		update_lease(deleg_ctx->clid);
+		pthread_mutex_unlock(&deleg_ctx->clid->cid_mutex);
 		dec_client_id_ref(deleg_ctx->clid);
 		gsh_free(deleg_ctx);
 		goto out_free;
@@ -1272,6 +1275,9 @@ out_revoke:
 			 "Delegation revoked(%p)", deleg_entry);
 	}
 	cache_inode_put(deleg_ctx->entry);
+	pthread_mutex_lock(&clientid->cid_mutex);
+	update_lease(clientid);
+	pthread_mutex_unlock(&clientid->cid_mutex);
 	dec_client_id_ref(clientid);
 	gsh_free(deleg_ctx);
 
@@ -1438,6 +1444,9 @@ out_revoke:
 			 "Delegation revoked(%p)", deleg_entry);
 	}
 	cache_inode_put(entry);
+	pthread_mutex_lock(&clientid->cid_mutex);
+	update_lease(clientid);
+	pthread_mutex_unlock(&clientid->cid_mutex);
 	dec_client_id_ref(clientid);
 	if (p_cargs)
 		gsh_free(p_cargs);
@@ -1481,6 +1490,10 @@ static void delegrevoke_check(void *ctx)
 						 deleg_entry);
 				}
 				cache_inode_put(entry);
+				pthread_mutex_lock(&deleg_ctx->clid->cid_mutex);
+				update_lease(deleg_ctx->clid);
+				pthread_mutex_unlock(
+						&deleg_ctx->clid->cid_mutex);
 				dec_client_id_ref(deleg_ctx->clid);
 				gsh_free(deleg_ctx);
 			} else {
@@ -1499,6 +1512,9 @@ static void delegrevoke_check(void *ctx)
 	if (!deleg_entry) {
 		LogDebug(COMPONENT_NFS_CB, "Delgation is already returned");
 		cache_inode_put(entry);
+		pthread_mutex_lock(&deleg_ctx->clid->cid_mutex);
+		update_lease(deleg_ctx->clid);
+		pthread_mutex_unlock(&deleg_ctx->clid->cid_mutex);
 		dec_client_id_ref(deleg_ctx->clid);
 		gsh_free(deleg_ctx);
 	}
@@ -1529,6 +1545,9 @@ static void delegrecall_task(void *ctx)
 	if (!deleg_entry) {
 		LogDebug(COMPONENT_NFS_CB, "Delgation is already returned");
 		cache_inode_put(entry);
+		pthread_mutex_lock(&deleg_ctx->clid->cid_mutex);
+		update_lease(deleg_ctx->clid);
+		pthread_mutex_unlock(&deleg_ctx->clid->cid_mutex);
 		dec_client_id_ref(deleg_ctx->clid);
 		gsh_free(deleg_ctx);
 	}
@@ -1601,6 +1620,20 @@ state_status_t delegrecall_impl(cache_entry_t *entry)
 				"No clid record, code %d", rc);
 			continue;
 		}
+
+		/* Prevent client's lease expiring until we complete
+		 * this recall/revoke operation. If the client's lease
+		 * has already expired, let the reaper thread handling
+		 * expired clients revoke this delegation, and we just
+		 * skip it here.
+		 */
+		pthread_mutex_lock(&clid->cid_mutex);
+		if (!reserve_lease(clid)) {
+			pthread_mutex_unlock(&clid->cid_mutex);
+			dec_client_id_ref(clid);
+			continue;
+		}
+		pthread_mutex_unlock(&clid->cid_mutex);
 
 		cache_inode_lru_ref(entry, LRU_FLAG_NONE);
 
