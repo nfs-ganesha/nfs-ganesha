@@ -298,15 +298,15 @@ void get_deleg_perm(cache_entry_t *entry, nfsace4 *permissions,
 state_status_t deleg_revoke(state_lock_entry_t *deleg_entry)
 {
 	state_status_t state_status;
-	cache_entry_t *pentry = NULL;
-	state_owner_t *clientowner = NULL;
+	cache_entry_t *pentry;
+	state_owner_t *clientowner;
 	fsal_lock_param_t lock_desc;
-	state_t *deleg_state = NULL;
-	struct nfs_client_id_t *clid = NULL;
+	state_t *deleg_state;
+	struct nfs_client_id_t *clid;
 	nfs_fh4 fhandle;
+	struct root_op_context root_op_context;
 
 	clid = deleg_entry->sle_owner->so_owner.so_nfs4_owner.so_clientrec;
-
 	deleg_state = deleg_entry->sle_state;
 	clientowner = deleg_entry->sle_owner;
 	pentry = deleg_entry->sle_entry;
@@ -327,12 +327,21 @@ state_status_t deleg_revoke(state_lock_entry_t *deleg_entry)
 	lock_desc.lock_length = 0;
 	lock_desc.lock_sle_type = FSAL_LEASE_LOCK;
 
-	deleg_state = deleg_entry->sle_state;
-
 	deleg_heuristics_recall(deleg_entry);
+
+	/* Build op_context for state_unlock_locked */
+	init_root_op_context(&root_op_context, NULL, NULL, 0, 0,
+			     UNKNOWN_REQUEST);
+	root_op_context.req_ctx.clientid = &deleg_entry->sle_owner->
+				so_owner.so_nfs4_owner.so_clientid;
+	root_op_context.req_ctx.export = deleg_state->state_export;
+	root_op_context.req_ctx.fsal_export =
+			deleg_state->state_export->fsal_export;
 
 	state_status = state_unlock_locked(pentry, clientowner, deleg_state,
 					   &lock_desc, deleg_entry->sle_type);
+
+	release_root_op_context();
 
 	if (state_status != STATE_SUCCESS) {
 		LogDebug(COMPONENT_NFS_V4_LOCK, "state unlock failed: %d",
