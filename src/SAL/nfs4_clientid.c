@@ -940,6 +940,11 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid)
 	/* revoke delegations for this client*/
 	revoke_owner_delegs(&clientid->cid_owner);
 
+	/* Destroy v4 callback channel */
+	if (clientid->cid_minorversion == 0 && 
+	    clientid->cid_cb.v40.cb_chan.clnt)
+		nfs_rpc_destroy_chan(&clientid->cid_cb.v40.cb_chan);
+
 	/* For NFSv4.1 clientids, destroy all associated sessions */
 	if (clientid->cid_minorversion > 0) {
 		struct glist_head *glist = NULL;
