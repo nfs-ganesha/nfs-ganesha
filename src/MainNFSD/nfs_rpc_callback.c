@@ -562,6 +562,11 @@ int nfs_rpc_create_chan_v40(nfs_client_id_t *clientid, uint32_t flags)
 					    clientid->cid_cb.v40.cb_program,
 					    NFS_CB /* Errata ID: 2291 */,
 					    0, 0);
+		/* Mark the fd to be closed on clnt_destroy */
+		if (chan->clnt) {
+			chan->clnt->cl_ops->cl_control(chan->clnt,
+							CLSET_FD_CLOSE, NULL);
+		}
 		break;
 	case IPPROTO_UDP:
 		raddr.maxlen = raddr.len = sizeof(struct sockaddr_in6);
