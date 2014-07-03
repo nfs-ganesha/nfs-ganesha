@@ -532,6 +532,20 @@ nfs_client_id_t *create_client_id(clientid4 clientid,
 		return NULL;
 	}
 
+	/* initialize the chan mutex for v4 */
+	if (minorversion == 0) {
+		if (pthread_mutex_init(&client_rec->cid_cb.v40.cb_chan.mtx,
+				       NULL) == -1) {
+			LogDebug(COMPONENT_CLIENTID,
+				 "Unable to init chan mutex for clientid %"
+				 PRIx64, clientid);
+			pool_free(client_id_pool, client_rec);
+			return NULL;
+		}
+		client_rec->cid_cb.v40.cb_chan_down = true;
+		client_rec->first_path_down_resp_time = 0;
+	}
+
 	if (clientid == 0)
 		clientid = new_clientid();
 
@@ -542,8 +556,6 @@ nfs_client_id_t *create_client_id(clientid4 clientid,
 	client_rec->cid_client_addr = *client_addr;
 	client_rec->cid_credential = *credential;
 	client_rec->cid_minorversion = minorversion;
-	client_rec->cid_cb.v40.cb_chan_down = true;
-	client_rec->first_path_down_resp_time = 0;
 
 	/* need to init the list_head */
 	glist_init(&client_rec->cid_openowners);
