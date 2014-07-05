@@ -389,4 +389,18 @@ void state_deleg_revoke(state_t *state, cache_entry_t *entry)
 			return;
 		}
 	}
+
+	/* delegation states and delegation locks have a one-to-one
+	 * correspondence. They get created and destroyed at the same
+	 * time. The exception is, while removing an export all locks
+	 * including delegation locks are removed without their
+	 * corresponding delegation states. So we get here, for sure,
+	 * when an export is removed! Since the delegation lock is
+	 * already removed, just remove the delegation state here!
+	 *
+	 * TODO:
+	 * There is no reason for delegation lock structures. They can
+	 * be completely abstracted out inside delegation state itself.
+	 */
+	state_del_locked(state, entry);
 }

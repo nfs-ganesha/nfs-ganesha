@@ -620,6 +620,7 @@ void state_export_release_nfs4_state(void)
 {
 	state_t *state;
 	state_status_t state_status;
+	cache_entry_t *entry;
 
 	while (1) {
 		PTHREAD_RWLOCK_wrlock(&op_ctx->export->lock);
@@ -645,7 +646,14 @@ void state_export_release_nfs4_state(void)
 			}
 		}
 
-		state_del(state, false);
+		entry = state->state_entry;
+		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
+		if (state->state_type == STATE_TYPE_DELEG)
+			/* this deletes the state too */
+			state_deleg_revoke(state, entry);
+		else
+			state_del_locked(state, entry);
+		PTHREAD_RWLOCK_unlock(&entry->state_lock);
 	}
 }
 
