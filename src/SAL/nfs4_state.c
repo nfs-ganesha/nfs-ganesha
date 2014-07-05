@@ -335,6 +335,10 @@ state_status_t state_add_impl(cache_entry_t *entry, state_type_t state_type,
 	pthread_mutex_unlock(&all_state_v4_mutex);
 #endif
 
+	if (pnew_state->state_type == STATE_TYPE_DELEG &&
+	    pnew_state->state_data.deleg.sd_type == OPEN_DELEGATE_WRITE)
+		entry->object.file.write_delegated = true;
+
 	/* Copy the result */
 	*state = pnew_state;
 
@@ -424,6 +428,11 @@ void state_del_locked(state_t *state, cache_entry_t *entry)
 	/* Remove from the list of lock states for a particular open state */
 	if (state->state_type == STATE_TYPE_LOCK)
 		glist_del(&state->state_data.lock.state_sharelist);
+
+	/* Reset write delegated if this is a write delegation */
+	if (state->state_type == STATE_TYPE_DELEG &&
+	    state->state_data.deleg.sd_type == OPEN_DELEGATE_WRITE)
+		entry->object.file.write_delegated = false;
 
 	/* Remove from list of states for a particular export */
 	PTHREAD_RWLOCK_wrlock(&state->state_export->lock);

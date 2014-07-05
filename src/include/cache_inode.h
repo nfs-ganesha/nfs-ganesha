@@ -490,6 +490,7 @@ struct cache_entry_t {
 			struct glist_head nlm_share_list;
 			/** Share reservation state for this file. */
 			cache_inode_share_t share_state;
+			bool write_delegated; /* true iff write delegated */
 			/** Delegation statistics */
 			struct file_deleg_stats fdeleg_stats;
 		} file;		/*< REGULAR_FILE data */
