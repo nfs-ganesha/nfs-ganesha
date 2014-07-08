@@ -1006,8 +1006,11 @@ out_prev:
                nfsstat4_to_str(res_OPEN4.status),
                cause, cause2, cause3, cause4);
 
-      /* Clean up if we have an error exit */
-      if(pfile_state != NULL && !ReuseState)
+      /* Clean up if we have an error exit
+       * but not when entry is STALE which
+       * will clean up all its states
+       */
+      if(pfile_state != NULL && !ReuseState && (res_OPEN4.status != NFS4ERR_STALE))
         {
           /* Need to destroy open owner and state */
           if(state_del(pfile_state,
