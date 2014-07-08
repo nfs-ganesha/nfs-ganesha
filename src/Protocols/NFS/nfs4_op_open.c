@@ -78,7 +78,8 @@ void nfs4_op_open_CopyRes(OPEN4res *res_dst, OPEN4res *res_src)
 
 static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t *data,
 			      state_owner_t *owner, state_t **state,
-			      bool *new_state, fsal_openflags_t openflags)
+			      bool *new_state, fsal_openflags_t openflags,
+			      bool skip_permission)
 {
 	/* The arguments to the open operation */
 	OPEN4args *args = &op->nfs_argop4_u.opopen;
@@ -118,39 +119,43 @@ static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t *data,
 	if (args->share_access & OPEN4_SHARE_ACCESS_READ)
 		access_mask |= FSAL_READ_ACCESS;
 
-	cache_status =
-	    cache_inode_access(data->current_entry, access_mask);
-
-	if (cache_status != CACHE_INODE_SUCCESS) {
-		/* If non-permission error, return it. */
-		if (cache_status != CACHE_INODE_FSAL_EACCESS) {
-			LogDebug(COMPONENT_STATE,
-				 "cache_inode_access returned %s",
-				 cache_inode_err_str(cache_status));
-			return nfs4_Errno(cache_status);
-		}
-
-		/* If WRITE access is requested, return permission error */
-		if (args->share_access & OPEN4_SHARE_ACCESS_WRITE) {
-			LogDebug(COMPONENT_STATE,
-				 "cache_inode_access returned %s with ACCESS_WRITE",
-				 cache_inode_err_str(cache_status));
-			return nfs4_Errno(cache_status);
-		}
-
-		/* If just a permission error and file was opend read only,
-		 * try execute permission.
-		 */
-		cache_status = cache_inode_access(
-			data->current_entry,
-			FSAL_MODE_MASK_SET(FSAL_X_OK) |
-				FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_EXECUTE));
+	if (!skip_permission) {
+		cache_status = cache_inode_access(data->current_entry,
+						  access_mask);
 
 		if (cache_status != CACHE_INODE_SUCCESS) {
-			LogDebug(COMPONENT_STATE,
-				 "cache_inode_access returned %s after checking for executer permission",
-				 cache_inode_err_str(cache_status));
-			return nfs4_Errno(cache_status);
+			/* If non-permission error, return it. */
+			if (cache_status != CACHE_INODE_FSAL_EACCESS) {
+				LogDebug(COMPONENT_STATE,
+					 "cache_inode_access returned %s",
+					 cache_inode_err_str(cache_status));
+				return nfs4_Errno(cache_status);
+			}
+
+			/* If WRITE access is requested, return permission
+			 * error
+			 */
+			if (args->share_access & OPEN4_SHARE_ACCESS_WRITE) {
+				LogDebug(COMPONENT_STATE,
+					 "cache_inode_access returned %s with ACCESS_WRITE",
+					 cache_inode_err_str(cache_status));
+				return nfs4_Errno(cache_status);
+			}
+
+			/* If just a permission error and file was opened read
+			 * only, try execute permission.
+			 */
+			cache_status = cache_inode_access(
+				data->current_entry,
+				FSAL_MODE_MASK_SET(FSAL_X_OK) |
+				FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_EXECUTE));
+
+			if (cache_status != CACHE_INODE_SUCCESS) {
+				LogDebug(COMPONENT_STATE,
+					 "cache_inode_access returned %s after checking for executer permission",
+					 cache_inode_err_str(cache_status));
+				return nfs4_Errno(cache_status);
+			}
 		}
 	}
 
@@ -543,7 +548,8 @@ bool open4_open_owner(struct nfs_argop4 *op, compound_data_t *data,
 
 static nfsstat4 open4_create(OPEN4args *arg, compound_data_t *data,
 			     OPEN4res *res, cache_entry_t *parent,
-			     cache_entry_t **entry, const char *filename)
+			     cache_entry_t **entry, const char *filename,
+			     bool *created)
 {
 	/* Newly created file */
 	cache_entry_t *entry_newfile = NULL;
@@ -563,6 +569,7 @@ static nfsstat4 open4_create(OPEN4args *arg, compound_data_t *data,
 	uint32_t verf_hi = 0, verf_lo = 0;
 
 	*entry = NULL;
+	*created = false;
 
 	/* if quota support is active, then we should check is
 	   the FSAL allows inode creation or not */
@@ -692,13 +699,18 @@ static nfsstat4 open4_create(OPEN4args *arg, compound_data_t *data,
 			cache_inode_put(entry_newfile);
 			entry_newfile = NULL;
 			return nfs4_Errno(cache_status);
-		} else if (verf_provided
-			   && !cache_inode_create_verify(entry_newfile,
-							 verf_hi,
-							 verf_lo)) {
-			cache_inode_put(entry_newfile);
-			entry_newfile = NULL;
-			return nfs4_Errno(cache_status);
+		} else if (verf_provided) {
+			if (!cache_inode_create_verify(entry_newfile,
+						       verf_hi,
+						       verf_lo)) {
+				cache_inode_put(entry_newfile);
+				entry_newfile = NULL;
+				return nfs4_Errno(cache_status);
+			}
+			/* The verifier matches so consider this a case
+			 * of successful creation.
+			 */
+			*created = true;
 		}
 
 		/* If the object exists already size is the only attribute we
@@ -714,6 +726,9 @@ static nfsstat4 open4_create(OPEN4args *arg, compound_data_t *data,
 
 		/* Clear error code */
 		cache_status = CACHE_INODE_SUCCESS;
+	} else {
+		/* Successful creation */
+		*created = true;
 	}
 
 	if (sattr_provided) {
@@ -762,7 +777,8 @@ static nfsstat4 open4_create(OPEN4args *arg, compound_data_t *data,
  */
 
 static nfsstat4 open4_claim_null(OPEN4args *arg, compound_data_t *data,
-				 OPEN4res *res, cache_entry_t **entry)
+				 OPEN4res *res, cache_entry_t **entry,
+				 bool *created)
 {
 	/* Parent directory in which to open the file. */
 	cache_entry_t *parent = NULL;
@@ -798,8 +814,8 @@ static nfsstat4 open4_claim_null(OPEN4args *arg, compound_data_t *data,
 
 	switch (arg->openhow.opentype) {
 	case OPEN4_CREATE:
-		nfs_status =
-		    open4_create(arg, data, res, parent, entry, filename);
+		nfs_status = open4_create(arg, data, res, parent, entry,
+					  filename, created);
 		break;
 
 	case OPEN4_NOCREATE:
@@ -1036,6 +1052,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 	struct glist_head *glist;
 	state_lock_entry_t *found_entry = NULL;
 	int retval;
+	bool created = false;
 
 	LogDebug(COMPONENT_STATE,
 		 "Entering NFS v4 OPEN handler -----------------------------");
@@ -1184,9 +1201,11 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 	case CLAIM_NULL:
 		{
 			cache_entry_t *entry = NULL;
-			res_OPEN4->status =
-			    open4_claim_null(arg_OPEN4, data, res_OPEN4,
-					     &entry);
+			res_OPEN4->status = open4_claim_null(arg_OPEN4,
+							     data,
+							     res_OPEN4,
+							     &entry,
+							     &created);
 			if (res_OPEN4->status == NFS4_OK) {
 				/* Decrement the current entry here, because
 				 * nfs4_create_fh replaces the current fh.
@@ -1361,7 +1380,8 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 					  owner,
 					  &file_state,
 					  &new_state,
-					  openflags);
+					  openflags,
+					  created);
 
 	PTHREAD_RWLOCK_unlock(&data->current_entry->state_lock);
 
