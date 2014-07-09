@@ -956,15 +956,8 @@ static void get_delegation(compound_data_t *data, OPEN4args *args,
 			       &new_state->state_export_list);
 		PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
 
-		state_status = state_lock_locked(data->current_entry,
-						 clientowner,
-						 new_state,
-						 STATE_NON_BLOCKING,
-						 NULL,	/* No block data */
-						 &lock_desc,
-						 NULL,
-						 NULL,
-						 LEASE_LOCK);
+		state_status = acquire_lease(data->current_entry, clientowner,
+					     new_state, &lock_desc);
 		if (state_status != STATE_SUCCESS) {
 			LogDebug(COMPONENT_NFS_V4_LOCK,
 				 "get_delegation call added state but failed to"

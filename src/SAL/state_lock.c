@@ -2419,6 +2419,81 @@ state_status_t state_test(cache_entry_t *entry,
 }
 
 /**
+ * @brief Attempt to acquire a lease lock
+ *
+ * @param[in]  entry      Entry to lock
+ * @param[in]  owner      Lock owner
+ * @param[in]  state      Associated state for the lock
+ * @param[in]  lock       Lock description
+ *
+ * state_lock must be held while calling this function
+ */
+state_status_t acquire_lease(cache_entry_t *entry, state_owner_t *owner,
+			     state_t *state, fsal_lock_param_t *lock)
+{
+	state_lock_entry_t *deleg_lock;
+	state_status_t status;
+
+	/* Create a new deleg lock entry */
+	deleg_lock = create_state_lock_entry(entry, op_ctx->export,
+					     STATE_NON_BLOCKING, owner,
+					     state, lock, LEASE_LOCK);
+	if (!deleg_lock)
+		return STATE_MALLOC_ERROR;
+
+	status = do_lock_op(entry, FSAL_OP_LOCK, owner, lock, NULL, NULL, false,
+			    LEASE_LOCK);
+
+	if (status == STATE_SUCCESS) {
+		/* Insert deleg lock into delegation list */
+		update_delegation_stats(deleg_lock);
+		glist_add_tail(&entry->object.file.deleg_list,
+			       &deleg_lock->sle_list);
+	} else {
+		LogDebug(COMPONENT_STATE, "Could not set lease, error=%s",
+			 state_err_str(status));
+		glist_init(&deleg_lock->sle_list); /* work around */
+		remove_from_locklist(deleg_lock);
+	}
+
+	return status;
+}
+
+/**
+ * @brief Release a lease lock
+ *
+ * @param[in] entry    File to unlock
+ * @param[in] owner    Owner of lock
+ * @param[in] state    Associated state
+ * @param[in] lock     Lock description
+ *
+ * state_lock must be held while calling this function
+ */
+state_status_t release_lease(cache_entry_t *entry, state_owner_t *owner,
+			     state_t *state, fsal_lock_param_t *lock)
+{
+	state_status_t status;
+	bool removed;
+
+	assert(state && state->state_type == STATE_TYPE_DELEG);
+	removed = remove_deleg_lock(entry, owner, state);
+	if (!removed) { /* Not found */
+		LogDebug(COMPONENT_STATE,
+				"Unlock success on delegation not found");
+		return STATE_SUCCESS;
+	}
+
+	status = do_lock_op(entry, FSAL_OP_UNLOCK, owner, lock, NULL, NULL,
+			    false, LEASE_LOCK);
+
+	if (status != STATE_SUCCESS)
+		LogMajor(COMPONENT_STATE, "Unable to unlock FSAL, error=%s",
+			 state_err_str(status));
+
+	return status;
+}
+
+/**
  * @brief Attempt to acquire a lock
  *
  * @param[in]  entry      Entry to lock
@@ -2454,6 +2529,8 @@ state_status_t state_lock_locked(cache_entry_t *entry,
 	fsal_lock_op_t lock_op;
 	state_status_t status = 0;
 	fsal_openflags_t openflags;
+
+	assert(sle_type == POSIX_LOCK);
 
 	cache_status = cache_inode_inc_pin_ref(entry);
 
@@ -2545,16 +2622,6 @@ state_status_t state_lock_locked(cache_entry_t *entry,
 
 	glist_for_each(glist, &entry->object.file.lock_list) {
 		found_entry = glist_entry(glist, state_lock_entry_t, sle_list);
-
-		/* Delegations owned by a client won't conflict with delegations
-		   to that same client, but maybe we should just return
-		   success. */
-		if (found_entry->sle_type == LEASE_LOCK &&
-		    lock->lock_sle_type == FSAL_LEASE_LOCK &&
-		    owner->so_owner.so_nfs4_owner.so_clientid ==
-		    found_entry->sle_owner->so_owner.so_nfs4_owner.so_clientid)
-			continue;
-
 		/* Need to reject lock request if this lock owner already has
 		 * a lock on this file via a different export.
 		 */
@@ -2664,7 +2731,7 @@ state_status_t state_lock_locked(cache_entry_t *entry,
 		lock_op = FSAL_OP_LOCK;
 	} else {
 		/* Can't do async blocking lock in FSAL and have a conflict.
-		 * Return it. This is true for conflicting delegations as well.
+		 * Return it.
 		 */
 		cache_inode_dec_pin_ref(entry, false);
 
@@ -2751,13 +2818,7 @@ state_status_t state_lock_locked(cache_entry_t *entry,
 	} else
 		status = STATE_LOCK_BLOCKED;
 
-	if (status == STATE_SUCCESS && sle_type == LEASE_LOCK) {
-		/* Insert entry into delegation list */
-		LogEntry("New delegation", found_entry);
-		update_delegation_stats(found_entry);
-		glist_add_tail(&entry->object.file.deleg_list,
-			       &found_entry->sle_list);
-	} else if (status == STATE_SUCCESS && sle_type == POSIX_LOCK) {
+	if (status == STATE_SUCCESS && sle_type == POSIX_LOCK) {
 		/* Merge any touching or overlapping locks into this one */
 		LogEntry("FSAL lock acquired, merging locks for",
 			 found_entry);
@@ -2860,6 +2921,8 @@ state_status_t state_unlock_locked(cache_entry_t *entry,
 	cache_inode_status_t cache_status;
 	state_status_t status = 0;
 
+	assert(sle_type == POSIX_LOCK);
+
 	cache_status = cache_inode_inc_pin_ref(entry);
 
 	if (cache_status != CACHE_INODE_SUCCESS) {
@@ -2876,25 +2939,14 @@ state_status_t state_unlock_locked(cache_entry_t *entry,
 		return status;
 	}
 
-	if (sle_type == LEASE_LOCK) {
-		LogFullDebug(COMPONENT_STATE, "Removing delegation from list");
-		removed = remove_deleg_lock(entry, owner, state);
-		if (!removed) { /* Not found */
-			cache_inode_dec_pin_ref(entry, FALSE);
-			LogDebug(COMPONENT_STATE,
-				 "Unlock success on delegation not found");
-			return STATE_SUCCESS;
-		}
-	} else {
 	/* If lock list is empty, there really isn't any work for us to do. */
-		if (glist_empty(&entry->object.file.lock_list)) {
-			cache_inode_dec_pin_ref(entry, false);
-			LogDebug(COMPONENT_STATE,
-				 "Unlock success on file with no locks");
+	if (glist_empty(&entry->object.file.lock_list)) {
+		cache_inode_dec_pin_ref(entry, false);
+		LogDebug(COMPONENT_STATE,
+			 "Unlock success on file with no locks");
 
-			status = STATE_SUCCESS;
-			return status;
-		}
+		status = STATE_SUCCESS;
+		return status;
 	}
 
 	LogFullDebug(COMPONENT_STATE,

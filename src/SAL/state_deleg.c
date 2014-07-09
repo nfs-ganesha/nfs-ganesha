@@ -338,8 +338,8 @@ state_status_t deleg_revoke(state_lock_entry_t *deleg_entry)
 	root_op_context.req_ctx.fsal_export =
 			deleg_state->state_export->fsal_export;
 
-	state_status = state_unlock_locked(pentry, clientowner, deleg_state,
-					   &lock_desc, deleg_entry->sle_type);
+	state_status = release_lease(pentry, clientowner, deleg_state,
+				     &lock_desc);
 
 	release_root_op_context();
 
