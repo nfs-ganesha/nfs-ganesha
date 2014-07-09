@@ -204,6 +204,8 @@ EXPORT_DEFAULTS {}
 
 	Disable_ACL(bool, default false)
 
+	Trust_Readdir_Negative_Cache(bool, default false)
+
 EXPORT {}
 ---------
 

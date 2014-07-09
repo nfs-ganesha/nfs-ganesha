@@ -114,6 +114,9 @@ typedef struct exportlist_client_entry__ {
 #define EXPORT_OPTION_FSID_SET 0x00000001 /* Set if Filesystem_id is set */
 #define EXPORT_OPTION_USE_COOKIE_VERIFIER 0x00000002 /* Use cookie verifier */
 #define EXPORT_OPTION_EXPIRE_SET 0x00000004	/*< Inode expire was set */
+/** Controls whether a directory's dirent cache is trusted for
+    negative results. */
+#define EXPORT_OPTION_TRUST_READIR_NEGATIVE_CACHE 0x00000008
 
 /* Constants for export permissions masks */
 #define EXPORT_OPTION_ROOT 0x00000001	/*< Allow root access as root uid */
