@@ -229,7 +229,11 @@ fsal_status_t GPFSFSAL_symlink(fsal_handle_t * p_parent_directory_handle,   /* I
           FSAL_CLEAR_MASK(p_link_attributes->asked_attributes);
           FSAL_SET_MASK(p_link_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
         }
-
+      /* if the object is not of link type return EEXIST */
+      else if (p_link_attributes->type != FSAL_TYPE_LNK)
+        {
+          Return(ERR_FSAL_EXIST, 0, INDEX_FSAL_symlink);
+        } 
     }
 
   /* OK */
