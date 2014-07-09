@@ -956,10 +956,10 @@ int cache_inode_fsal_rbt_both(hash_parameter_t *p_hparam,
   pthread_rwlock_wrlock(_rwlock_)
 
 #define PTHREAD_RWLOCK_UNLOCK(_rwlock_) \
-  assert(((_rwlock_)->__data.__nr_readers > 0) || \
-         ((_rwlock_)->__data.__writer != 0)); \
-  pthread_rwlock_unlock(_rwlock_)
-
+  do {                                                            \
+        if (pthread_rwlock_unlock(_rwlock_) != 0)                  \
+           assert(0);                                      \
+  } while (0)
 
 /**
  * @brief Update cache_entry metadata from its attributes
