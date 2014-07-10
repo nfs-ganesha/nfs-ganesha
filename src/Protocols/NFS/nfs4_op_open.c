@@ -695,6 +695,12 @@ static nfsstat4 open4_create(OPEN4args *arg, compound_data_t *data,
 	}
 
 	if (cache_status == CACHE_INODE_ENTRY_EXISTS) {
+		if (entry_newfile == NULL) {
+			/* File existed but was not a REGULAR_FILE,
+			 * return EEXIST error.
+			 */
+			return nfs4_Errno(cache_status);
+		}
 		if (arg->openhow.openflag4_u.how.mode == GUARDED4) {
 			cache_inode_put(entry_newfile);
 			entry_newfile = NULL;
