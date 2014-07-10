@@ -190,7 +190,7 @@ bool init_deleg_heuristics(cache_entry_t *entry)
  * @param[in] open_state The open state for the inode to be delegated.
  */
 bool should_we_grant_deleg(cache_entry_t *entry, nfs_client_id_t *client,
-			   state_t *open_state)
+			   state_t *open_state, OPEN4args *args)
 {
 	/* specific file, all clients, stats */
 	struct file_deleg_stats *file_stats =
@@ -201,9 +201,19 @@ bool should_we_grant_deleg(cache_entry_t *entry, nfs_client_id_t *client,
 	float ACCEPTABLE_FAILS = 0.1; /* 10% */
 	float ACCEPTABLE_OPEN_FREQUENCY = .01; /* per second */
 	time_t spread;
+	open_claim_type4 claim = args->claim.claim;
+	open_delegation_type4 dtype = args->claim.open_claim4_u.delegate_type;
 
 	LogDebug(COMPONENT_STATE, "Checking if we should grant delegation.");
-	return true;
+
+	 if ((claim == CLAIM_PREVIOUS || claim == CLAIM_DELEGATE_PREV) &&
+	     dtype != OPEN_DELEGATE_NONE) {
+		return true;
+	}
+
+	if (claim == CLAIM_DELEGATE_CUR)
+		return false;
+
 	if (open_state->state_type != STATE_TYPE_SHARE) {
 		LogDebug(COMPONENT_STATE,
 			 "expects a SHARE open state and no other.");
