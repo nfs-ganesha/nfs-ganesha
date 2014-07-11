@@ -401,6 +401,7 @@ pushd .
 cd scripts/ganeshactl/
 python setup.py --quiet install --root=%{buildroot}
 popd
+install -m 755 Protocols/NLM/sm_notify.ganesha		%{buildroot}%{_bindir}/sm_notify.ganesha
 %endif
 
 
@@ -530,6 +531,7 @@ make DESTDIR=%{buildroot} install
 /usr/bin/stats_pnfs
 /usr/bin/stats
 /usr/bin/stats_total
+/usr/bin/sm_notify.ganesha
 %endif
 
 

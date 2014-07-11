@@ -1130,7 +1130,7 @@ static bool gsh_export_showexports(DBusMessageIter *args,
 	dbus_message_iter_init_append(reply, &iter);
 	dbus_append_timestamp(&iter, &timestamp);
 	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
-					 "(isbbbbbbb(tt))",
+					 "(isbbbbbbbb(tt))",
 					 &iter_state.export_iter);
 
 	(void)foreach_gsh_export(export_to_dbus, (void *)&iter_state);
@@ -1145,7 +1145,7 @@ static struct gsh_dbus_method export_show_exports = {
 	.args = {TIMESTAMP_REPLY,
 		 {
 		  .name = "exports",
-		  .type = "a(isbbbbbbb(tt))",
+		  .type = "a(isbbbbbbbb(tt))",
 		  .direction = "out"},
 		 END_ARG_LIST}
 };

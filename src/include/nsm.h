@@ -20,6 +20,7 @@ extern "C" {
 #define SM_MON 2
 #define SM_UNMON 3
 #define SM_UNMON_ALL 4
+#define SM_NOTIFY 6
 
 	enum res {
 		STAT_SUCC = 0,
@@ -57,9 +58,18 @@ extern "C" {
 		char priv[16];
 	};
 	typedef struct mon mon;
+
+
+	struct notify {
+		char *my_name;
+		int state;
+	};
+	typedef struct notify notify;
+
 	extern bool nsm_monitor(state_nsm_client_t *host);
 	extern bool nsm_unmonitor(state_nsm_client_t *host);
 	extern void nsm_unmonitor_all(void);
+	extern int nsm_notify(char *host, int state);
 
 /* the xdr functions */
 
@@ -70,6 +80,7 @@ extern "C" {
 	extern bool xdr_my_id(XDR *, my_id *);
 	extern bool xdr_mon_id(XDR *, mon_id *);
 	extern bool xdr_mon(XDR *, mon *);
+	extern bool xdr_notify (XDR *, notify*);
 
 #else				/* K&R C */
 	extern bool xdr_res();
@@ -78,6 +89,7 @@ extern "C" {
 	extern bool xdr_my_id();
 	extern bool xdr_mon_id();
 	extern bool xdr_mon();
+	extern bool xdr_notify ();
 
 #endif				/* K&R C */
 

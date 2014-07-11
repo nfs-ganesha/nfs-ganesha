@@ -74,7 +74,6 @@ fsal_status_t GPFSFSAL_open(struct fsal_obj_handle *obj_hdl,	/* IN */
 			    struct attrlist *p_file_attributes, /* IN/OUT */
 			    bool reopen) /* IN */
 {
-
 	int rc;
 	fsal_status_t status;
 	int posix_flags = 0;
@@ -102,21 +101,17 @@ fsal_status_t GPFSFSAL_open(struct fsal_obj_handle *obj_hdl,	/* IN */
 	status = fsal_internal_handle2fd(gpfs_fs->root_fd, myself->handle,
 					 file_desc, posix_flags, reopen);
 
-	if (FSAL_IS_ERROR(status)) {
-		*file_desc = 0;
+	if (FSAL_IS_ERROR(status))
 		return status;
-	}
 
 	/* output attributes */
 	if (p_file_attributes) {
-
 		p_file_attributes->mask = GPFS_SUPPORTED_ATTRIBUTES;
 		status = GPFSFSAL_getattrs(p_context->fsal_export,
 					   gpfs_fs,
 					   p_context, myself->handle,
 					   p_file_attributes);
 		if (FSAL_IS_ERROR(status)) {
-			*file_desc = 0;
 			close(*file_desc);
 			return status;
 		}

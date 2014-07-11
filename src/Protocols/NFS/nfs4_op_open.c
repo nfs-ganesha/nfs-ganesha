@@ -1265,8 +1265,8 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 			goto out;
 		}
 
-		LogDebug(COMPONENT_NFS_CB,
-			 "name len %d %s",
+		LogDebug(COMPONENT_NFS_V4,
+			 "file name: %.*s",
 			 arg_OPEN4->claim.open_claim4_u.delegate_cur_info.file.
 			 utf8string_len,
 			 arg_OPEN4->claim.open_claim4_u.delegate_cur_info.file.
