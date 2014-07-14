@@ -1081,7 +1081,7 @@ bool eval_deleg_revoke(state_lock_entry_t *deleg_entry)
 	assert(deleg_entry->sle_type == LEASE_LOCK);
 
 	sd_type = deleg_entry->sle_state->state_data.deleg.sd_type;
-        assert(sd_type == OPEN_DELEGATE_READ || sd_type == OPEN_DELEGATE_WRITE);
+	assert(sd_type == OPEN_DELEGATE_READ || sd_type == OPEN_DELEGATE_WRITE);
 
 	clfl_stats = &deleg_entry->sle_state->state_data.deleg.sd_clfile_stats;
 
@@ -1219,8 +1219,8 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 
 	LogDebug(COMPONENT_NFS_CB, "deleg_entry %p", deleg_entry);
 
-        clientid = deleg_entry->sle_owner->so_owner.so_nfs4_owner.so_clientrec;
-        cl_stats = &clientid->cid_deleg_stats;
+	clientid = deleg_entry->sle_owner->so_owner.so_nfs4_owner.so_clientrec;
+	cl_stats = &clientid->cid_deleg_stats;
 
 
 	switch (hook) {
@@ -1313,7 +1313,7 @@ static uint32_t delegrecall_one(state_lock_entry_t *deleg_entry,
 	struct cf_deleg_stats *clfl_stats = NULL;
 	nfs_client_id_t *clientid;
 	clientid = deleg_entry->sle_owner->so_owner.so_nfs4_owner.so_clientrec;
-        cl_stats = &clientid->cid_deleg_stats;
+	cl_stats = &clientid->cid_deleg_stats;
 	clfl_stats = &deleg_entry->sle_state->state_data.deleg.sd_clfile_stats;
 
 	/* record the first attempt to recall this delegation */

@@ -503,16 +503,15 @@ bool open4_open_owner(struct nfs_argop4 *op, compound_data_t *data,
 				open_claim4 *oc = &arg_OPEN4->claim;
 				switch (oc->claim) {
 				case CLAIM_NULL:
-					utfile =
-					&oc->open_claim4_u.file;
+					utfile = &oc->open_claim4_u.file;
 					break;
 				case CLAIM_DELEGATE_PREV:
-					utfile =
-					&oc->open_claim4_u.file_delegate_prev;
+					utfile = &oc->open_claim4_u.
+							file_delegate_prev;
 					break;
 				case CLAIM_DELEGATE_CUR:
-					utfile =
-					&oc->open_claim4_u.delegate_cur_info.file;
+					utfile = &oc->open_claim4_u.
+							delegate_cur_info.file;
 				default:
 					return false;
 				}
@@ -1271,13 +1270,13 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 		if (claim == CLAIM_DELEGATE_PREV) {
 			/* Read and validate oldname and newname from
 			 * uft8 strings. */
-			utfname =
-			&arg_OPEN4->claim.open_claim4_u.file_delegate_prev;
+			utfname = &arg_OPEN4->claim.open_claim4_u.
+					file_delegate_prev;
 		} else {
-			utfname =
-			&arg_OPEN4->claim.open_claim4_u.delegate_cur_info.file;
-			rcurr_state =
-			&arg_OPEN4->claim.open_claim4_u.delegate_cur_info.delegate_stateid;
+			utfname = &arg_OPEN4->claim.open_claim4_u.
+					delegate_cur_info.file;
+			rcurr_state = &arg_OPEN4->claim.open_claim4_u.
+					delegate_cur_info.delegate_stateid;
 		}
 		if (!op_ctx->fsal_export->ops->fs_supports(
 				op_ctx->fsal_export, fso_delegations)) {
@@ -1364,8 +1363,9 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 				    (!memcmp(found_state->stateid_other,
 						rcurr_state->other,
 						OTHERSIZE))) {
-					LogDebug(COMPONENT_NFS_V4, "found matching entry %p",
-						found_entry);
+					LogDebug(COMPONENT_NFS_V4,
+						 "found matching entry %p",
+						 found_entry);
 					break;
 				}
 			}

@@ -75,10 +75,9 @@ static bool check_deleg_conflict(state_lock_entry_t *deleg_entry,
 				 state_data_t *candidate_data,
 				 state_owner_t *candidate_owner)
 {
-	LogFullDebug(COMPONENT_STATE, "Checking for conflict!!");
+	state_deleg_t *deleg_data = &deleg_entry->sle_state->state_data.deleg;
 
-	if (deleg_entry == NULL || candidate_data == NULL)
-		return true;
+	LogFullDebug(COMPONENT_STATE, "Checking for conflict!!");
 
 	/* We are getting a new share, checking if delegations conflict. */
 	switch (candidate_type) {
@@ -90,16 +89,16 @@ static bool check_deleg_conflict(state_lock_entry_t *deleg_entry,
 		 */
 		break;
 	case STATE_TYPE_SHARE:
-		if (deleg_entry->sle_state->state_data.deleg.sd_type == OPEN_DELEGATE_READ
-		    && candidate_data->share.share_access
-		    & OPEN4_SHARE_ACCESS_WRITE) {
+		if (deleg_data->sd_type == OPEN_DELEGATE_READ &&
+		    candidate_data->share.share_access &
+			    OPEN4_SHARE_ACCESS_WRITE) {
 			LogDebug(COMPONENT_STATE,
-				 "Read delegation exists. New share is WRITE on different client. conflict");
+				 "Write access requested but a read delegation exists.");
 			return true;
 		}
-		if (deleg_entry->sle_state->state_data.deleg.sd_type == OPEN_DELEGATE_WRITE) {
-			LogDebug(COMPONENT_STATE, "Write delegation exists. "
-				 " New share is with diff client. conflict.");
+		if (deleg_data->sd_type == OPEN_DELEGATE_WRITE) {
+			LogDebug(COMPONENT_STATE,
+				 "Write delegation exists.");
 			return true;
 		}
 		break;

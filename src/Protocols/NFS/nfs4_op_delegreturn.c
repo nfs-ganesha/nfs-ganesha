@@ -133,7 +133,6 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t *data,
 	pthread_mutex_lock(&found_lock->sle_mutex);
 	found_lock->sle_state->state_data.deleg.sd_state = DELEG_RETURNED;
 	pthread_mutex_unlock(&found_lock->sle_mutex);
-		
 
 	lock_owner = found_lock->sle_owner;
 

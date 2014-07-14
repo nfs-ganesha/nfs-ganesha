@@ -517,7 +517,7 @@ void  nfs4_chk_clid_impl(nfs_client_id_t *clientid, clid_entry_t **clid_ent_arg)
 			}
 			clientid->cid_allow_reclaim = 1;
 			*clid_ent_arg = clid_ent;
-			return ;
+			return;
 		}
 	}
 }

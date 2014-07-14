@@ -87,18 +87,19 @@ void init_new_deleg_state(state_data_t *deleg_state,
 bool update_delegation_stats(state_lock_entry_t *deleg_entry)
 {
 	cache_entry_t *entry = deleg_entry->sle_entry;
-	struct c_deleg_stats *cl_stats = &deleg_entry->sle_owner->so_owner.so_nfs4_owner.so_clientrec->cid_deleg_stats;
+	nfs_client_id_t *client = deleg_entry->sle_owner->so_owner.
+					so_nfs4_owner.so_clientrec;
 
 	/* Update delegation stats for file. */
-	struct file_deleg_stats *statistics =
-		&entry->object.file.fdeleg_stats;
+	struct file_deleg_stats *statistics = &entry->object.file.fdeleg_stats;
+
 	statistics->fds_curr_delegations++;
 	statistics->fds_disabled = false;
 	statistics->fds_delegation_count++;
 	statistics->fds_last_delegation = time(NULL);
 
 	/* Update delegation stats for client. */
-	atomic_inc_uint32_t(&cl_stats->curr_deleg_grants);
+	atomic_inc_uint32_t(&client->cid_deleg_stats.curr_deleg_grants);
 
 	return true;
 }
@@ -121,10 +122,11 @@ static int advance_avg(time_t prev_avg, time_t new_time,
 bool deleg_heuristics_recall(state_lock_entry_t *deleg_entry)
 {
 	cache_entry_t *entry = deleg_entry->sle_entry;
-        nfs_client_id_t *client = deleg_entry->sle_owner->so_owner.so_nfs4_owner.so_clientrec;
+	nfs_client_id_t *client = deleg_entry->sle_owner->so_owner.
+					so_nfs4_owner.so_clientrec;
 	/* Update delegation stats for file. */
-	struct file_deleg_stats *statistics =
-		&entry->object.file.fdeleg_stats;
+	struct file_deleg_stats *statistics = &entry->object.file.fdeleg_stats;
+
 	statistics->fds_curr_delegations--;
 	statistics->fds_disabled = false;
 	statistics->fds_recall_count++;
@@ -132,7 +134,7 @@ bool deleg_heuristics_recall(state_lock_entry_t *deleg_entry)
 	/* Update delegation stats for client. */
 	atomic_dec_uint32_t(&client->cid_deleg_stats.curr_deleg_grants);
 
-	/* Update delegation stats for client-file. */
+	/* Update delegation stats for file. */
 	statistics->fds_avg_hold = advance_avg(statistics->fds_avg_hold,
 					   time(NULL)
 					   - statistics->fds_last_delegation,
@@ -212,8 +214,8 @@ bool should_we_grant_deleg(cache_entry_t *entry, nfs_client_id_t *client,
 	spread = time(NULL) - file_stats->fds_first_open;
 	if (spread != 0 &&
 	     (file_stats->fds_num_opens / spread) > ACCEPTABLE_OPEN_FREQUENCY) {
-		LogDebug(COMPONENT_STATE, "This file is opened too frequently"
-			 " to delegate.");
+		LogDebug(COMPONENT_STATE,
+			 "This file is opened too frequently to delegate.");
 		return false;
 	}
 
@@ -250,8 +252,8 @@ bool should_we_grant_deleg(cache_entry_t *entry, nfs_client_id_t *client,
 #define MIN_AVG_HOLD 1500
 	if (file_stats->fds_avg_hold < MIN_AVG_HOLD
 	    && file_stats->fds_avg_hold != 0) {
-		LogDebug(COMPONENT_STATE, "Average length of delegation (%lld) "
-			 "is less than minimum avg (%lld). Denying delegation.",
+		LogDebug(COMPONENT_STATE,
+			 "Average length of delegation (%lld) is less than minimum avg (%lld). Denying delegation.",
 			 (long long) file_stats->fds_avg_hold,
 			 (long long) MIN_AVG_HOLD);
 		return false;

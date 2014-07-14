@@ -361,7 +361,7 @@ struct entry_export_map {
 
 struct file_deleg_stats {
 	uint32_t fds_curr_delegations;    /* number of delegations on file */
-	open_delegation_type4 fds_deleg_type; /* if delegated is it read or write */
+	open_delegation_type4 fds_deleg_type; /* delegation type */
 	bool fds_disabled;              /* deleg disabled for this file */
 	uint32_t fds_delegation_count;  /* times file has been delegated */
 	uint32_t fds_recall_count;      /* times file has been recalled */
@@ -370,7 +370,7 @@ struct file_deleg_stats {
 	time_t fds_last_recall;
 	uint32_t fds_num_opens;         /* total num of opens so far. */
 	time_t fds_first_open;          /* time that we started recording
-				           num_opens */
+					   num_opens */
 };
 
 /**

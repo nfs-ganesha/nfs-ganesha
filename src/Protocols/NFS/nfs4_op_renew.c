@@ -103,8 +103,7 @@ int nfs4_op_renew(struct nfs_argop4 *op, compound_data_t *data,
 			if (clientid->first_path_down_resp_time == 0)
 				clientid->first_path_down_resp_time =
 								time(NULL);
-		}
-		else {
+		} else {
 			res_RENEW4->status = NFS4_OK;
 			/* Reset */
 			clientid->first_path_down_resp_time = 0;

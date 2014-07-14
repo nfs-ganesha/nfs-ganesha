@@ -953,7 +953,7 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid)
 	revoke_owner_delegs(&clientid->cid_owner);
 
 	/* Destroy v4 callback channel */
-	if (clientid->cid_minorversion == 0 && 
+	if (clientid->cid_minorversion == 0 &&
 	    clientid->cid_cb.v40.cb_chan.clnt)
 		nfs_rpc_destroy_chan(&clientid->cid_cb.v40.cb_chan);
 
