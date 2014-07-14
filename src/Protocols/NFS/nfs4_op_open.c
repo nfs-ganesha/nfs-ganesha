@@ -512,6 +512,7 @@ bool open4_open_owner(struct nfs_argop4 *op, compound_data_t *data,
 				case CLAIM_DELEGATE_CUR:
 					utfile = &oc->open_claim4_u.
 							delegate_cur_info.file;
+					break;
 				default:
 					return false;
 				}
