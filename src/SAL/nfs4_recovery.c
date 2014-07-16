@@ -54,8 +54,6 @@ static void nfs4_load_recov_clids_nolock(nfs_grace_start_t *gsp);
 static void nfs_release_nlm_state();
 static void nfs_release_v4_client(char *ip);
 
-extern struct fridgethr *state_async_fridge;
-
 /**
  * @brief Initialize grace/recovery
  */
@@ -470,7 +468,9 @@ void nfs4_chk_clid(nfs_client_id_t *clientid)
 		clid_ent = glist_entry(node, clid_entry_t, cl_list);
 		LogDebug(COMPONENT_CLIENTID, "compare %s to %s",
 			 clid_ent->cl_name, clientid->cid_recov_dir);
-		if (!strncmp(clid_ent->cl_name, clientid->cid_recov_dir, PATH_MAX)) {
+		if (!strncmp(clid_ent->cl_name,
+			     clientid->cid_recov_dir,
+			     PATH_MAX)) {
 			if (isDebug(COMPONENT_CLIENTID)) {
 				char str[HASHTABLE_DISPLAY_STRLEN];
 

@@ -128,7 +128,7 @@ fsal_status_t fsal_internal_handle2fd_at(const struct req_op_context *
 	if (!myself || !pfd)
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
-        ptfsal_print_handle(myself->handle->data.handle.f_handle);
+	ptfsal_print_handle(myself->handle->data.handle.f_handle);
 
 	FSI_TRACE(FSI_DEBUG, "Handle Type: %d",
 		  myself->handle->data.handle.handle_type);

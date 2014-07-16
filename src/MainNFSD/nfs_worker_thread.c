@@ -714,7 +714,7 @@ static void nfs_rpc_execute(request_data_t *req,
 	int protocol_options = 0;
 	struct user_cred user_credentials;
 	struct req_op_context req_ctx;
-	const char * client_ip = "<unknown client>";
+	const char *client_ip = "<unknown client>";
 	dupreq_status_t dpq_status;
 	struct timespec timer_start;
 	int port, rc = NFS_REQ_OK;

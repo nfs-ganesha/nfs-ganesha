@@ -80,8 +80,6 @@ uint64_t clientid_verifier;
  */
 pool_t *client_id_pool;
 
-extern struct fridgethr *state_async_fridge;
-
 /**
  * @brief Return the NFSv4 status for the client id error code
  *

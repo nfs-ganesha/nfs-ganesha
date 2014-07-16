@@ -865,7 +865,7 @@ static bool gsh_export_addexport(DBusMessageIter *args,
 	if (!config_error_is_harmless(&err_type)) {
 		err_detail = err_type_str(&err_type);
 		LogCrit(COMPONENT_EXPORT,
-			"Error while parsing %s", file_path); 
+			"Error while parsing %s", file_path);
 		dbus_set_error(error, DBUS_ERROR_INVALID_FILE_CONTENT,
 			       "Error while parsing %s because of %s errors",
 			       file_path,

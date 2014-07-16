@@ -319,9 +319,9 @@ fsal_status_t zfs_create_export(struct fsal_module *fsal_hdl,
 				       &libargs,
 				       true,
 				       &err_type);
-	if (retval != 0) {
+	if (retval != 0)
 		goto errout;
-	}
+
 	myself = gsh_calloc(1, sizeof(struct zfs_fsal_export));
 	if (myself == NULL) {
 		LogMajor(COMPONENT_FSAL,

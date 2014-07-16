@@ -1129,7 +1129,7 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl)
 		}
 	} else {
 		LogDebug(COMPONENT_FSAL, "Failed with %s, fsal_error %s",
-			 strerror(-cfd.fd), 
+			 strerror(-cfd.fd),
 			 fsal_error ==
 			 ERR_FSAL_STALE ? "ERR_FSAL_STALE" : "other");
 		if (obj_hdl->type == SYMBOLIC_LINK
