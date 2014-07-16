@@ -269,12 +269,18 @@ int vfs_open_by_handle(struct vfs_filesystem *vfs_fs,
 	int32_t i32;
 	int fd;
 
+	LogDebug(COMPONENT_FSAL,
+		 "vfs_fs = %s root_fd = %d",
+		 vfs_fs->fs->path, vfs_fs->root_fd);
+
 	LogVFSHandle(fh);
 
 	kernel_fh = alloca(sizeof(struct file_handle) + VFS_MAX_HANDLE);
 
 	switch (fh->handle_data[0] & HANDLE_TYPE_MASK) {
 	case 0:
+		LogDebug(COMPONENT_FSAL,
+			 "Invaliid handle type = 0");
 		errno = EINVAL;
 		return -1;
 	case HANDLE_TYPE_8:
@@ -309,7 +315,8 @@ int vfs_open_by_handle(struct vfs_filesystem *vfs_fs,
 		if (fd == -ENOENT)
 			fd = -ESTALE;
 		*fsal_error = posix2fsal_error(-fd);
-		LogDebug(COMPONENT_FSAL, "Failed with %s", strerror(-fd));
+		LogDebug(COMPONENT_FSAL, "Failed with %s openflags 0x%08x",
+			 strerror(-fd), openflags);
 	}
 	return fd;
 }

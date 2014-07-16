@@ -1006,8 +1006,9 @@ static struct closefd vfs_fsal_open_and_stat(struct fsal_export *exp,
 					    O_PATH | O_NOACCESS,
 					    fsal_error);
 		if (cfd.fd < 0) {
-			LogDebug(COMPONENT_FSAL, "Failed with %s",
-				 strerror(-cfd.fd));
+			LogDebug(COMPONENT_FSAL,
+				 "Failed with %s open_flags 0x%08x",
+				 strerror(-cfd.fd), O_PATH | O_NOACCESS);
 			return cfd;
 		}
 		cfd.close_fd = true;
@@ -1022,8 +1023,9 @@ static struct closefd vfs_fsal_open_and_stat(struct fsal_export *exp,
 			/* no file open at the moment */
 			cfd.fd = vfs_fsal_open(myself, open_flags, fsal_error);
 			if (cfd.fd < 0) {
-				LogDebug(COMPONENT_FSAL, "Failed with %s",
-					 strerror(-cfd.fd));
+				LogDebug(COMPONENT_FSAL,
+					 "Failed with %s open_flags 0x%08x",
+					 strerror(-cfd.fd), open_flags);
 				return cfd;
 			}
 			cfd.close_fd = true;
@@ -1036,8 +1038,9 @@ static struct closefd vfs_fsal_open_and_stat(struct fsal_export *exp,
 	case DIRECTORY:
 		cfd.fd = vfs_fsal_open(myself, open_flags, fsal_error);
 		if (cfd.fd < 0) {
-			LogDebug(COMPONENT_FSAL, "Failed with %s",
-				 strerror(-cfd.fd));
+			LogDebug(COMPONENT_FSAL,
+				 "Failed with %s open_flags 0x%08x",
+				 strerror(-cfd.fd), open_flags);
 			return cfd;
 		}
 		cfd.close_fd = true;
@@ -1056,8 +1059,9 @@ static struct closefd vfs_fsal_open_and_stat(struct fsal_export *exp,
  vfos_open:
 		cfd.fd = vfs_fsal_open(myself, open_flags, fsal_error);
 		if (cfd.fd < 0) {
-			LogDebug(COMPONENT_FSAL, "Failed with %s",
-				 strerror(-cfd.fd));
+			LogDebug(COMPONENT_FSAL,
+				 "Failed with %s open_flags 0x%08x",
+				 strerror(-cfd.fd), open_flags);
 			return cfd;
 		}
 		cfd.close_fd = true;
@@ -1742,6 +1746,10 @@ fsal_status_t vfs_create_handle(struct fsal_export *exp_hdl,
 	/* Test the result of stat */
 	if (retval != 0) {
 		retval = errno;
+		LogDebug(COMPONENT_FSAL,
+			 "%s failed with %s",
+			 dummy ? "stat" : "vfs_stat_by_handle",
+			 strerror(retval));
 		fsal_error = posix2fsal_error(retval);
 		if (fd >= 0)
 			close(fd);
@@ -1754,6 +1762,8 @@ fsal_status_t vfs_create_handle(struct fsal_export *exp_hdl,
 		close(fd);
 
 	if (hdl == NULL) {
+		LogDebug(COMPONENT_FSAL,
+			 "Could not allocate handle");
 		fsal_error = ERR_FSAL_NOMEM;
 		goto errout;
 	}
