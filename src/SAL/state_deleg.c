@@ -95,7 +95,6 @@ bool update_delegation_stats(state_lock_entry_t *deleg_entry)
 	struct file_deleg_stats *statistics = &entry->object.file.fdeleg_stats;
 
 	statistics->fds_curr_delegations++;
-	statistics->fds_disabled = false;
 	statistics->fds_delegation_count++;
 	statistics->fds_last_delegation = time(NULL);
 
@@ -129,7 +128,6 @@ bool deleg_heuristics_recall(state_lock_entry_t *deleg_entry)
 	struct file_deleg_stats *statistics = &entry->object.file.fdeleg_stats;
 
 	statistics->fds_curr_delegations--;
-	statistics->fds_disabled = false;
 	statistics->fds_recall_count++;
 
 	/* Update delegation stats for client. */
@@ -165,7 +163,6 @@ bool init_deleg_heuristics(cache_entry_t *entry)
 	statistics = &entry->object.file.fdeleg_stats;
 	statistics->fds_curr_delegations = 0;
 	statistics->fds_deleg_type = OPEN_DELEGATE_NONE;
-	statistics->fds_disabled = false;
 	statistics->fds_delegation_count = 0;
 	statistics->fds_recall_count = 0;
 	statistics->fds_last_delegation = 0;
