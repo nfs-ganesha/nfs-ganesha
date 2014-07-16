@@ -186,11 +186,6 @@ int vfs_map_name_to_handle_at(int fd,
 
 	kernel_fh = alloca(sizeof(struct file_handle) + VFS_MAX_HANDLE);
 
-	if (kernel_fh == NULL) {
-		errno = ENOMEM;
-		return -1;
-	}
-
 	kernel_fh->handle_bytes = VFS_MAX_HANDLE;
 
 	rc = name_to_handle_at(fd, path, kernel_fh, &mnt_id, flags);
@@ -277,11 +272,6 @@ int vfs_open_by_handle(struct vfs_filesystem *vfs_fs,
 	LogVFSHandle(fh);
 
 	kernel_fh = alloca(sizeof(struct file_handle) + VFS_MAX_HANDLE);
-
-	if (kernel_fh == NULL) {
-		errno = ENOMEM;
-		return -1;
-	}
 
 	switch (fh->handle_data[0] & HANDLE_TYPE_MASK) {
 	case 0:

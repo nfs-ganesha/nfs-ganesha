@@ -415,13 +415,6 @@ int open_dir_by_path_walk(int first_fd, const char *path, struct stat *stat)
 	/* Allocate space for duplicate */
 	name = alloca(len + 1);
 
-	if (name == NULL) {
-		LogCrit(COMPONENT_FSAL,
-			"No memory for path duplicate of %s",
-			path);
-		return -ENOMEM;
-	}
-
 	/* Copy the string */
 	memcpy(name, path, len);
 	/* Terminate it */
