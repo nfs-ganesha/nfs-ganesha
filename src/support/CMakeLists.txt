@@ -33,7 +33,7 @@ set( uid2grp_SRCS
      uid2grp_cache.c
 )
 
-add_library( uid2grp ${uid2grp_SRCS} )
+add_library( uid2grp STATIC ${uid2grp_SRCS} )
 
 ########### next target ###############
 
