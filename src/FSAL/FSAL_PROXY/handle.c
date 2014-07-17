@@ -1124,7 +1124,6 @@ static fsal_status_t pxy_do_close(const struct user_cred *creds,
 	rc = pxy_nfsv4_call(exp, creds, opcnt, argoparray, resoparray);
 	if (rc != NFS4_OK)
 		return nfsstat4_to_fsal(rc);
-	sid->seqid++;
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
