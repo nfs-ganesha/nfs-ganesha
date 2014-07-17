@@ -1151,7 +1151,7 @@ static fsal_status_t pxy_open_confirm(const struct user_cred *cred,
 	op->nfs_argop4_u.opopen_confirm.open_stateid.seqid = stateid->seqid;
 	memcpy(op->nfs_argop4_u.opopen_confirm.open_stateid.other,
 	       stateid->other, 12);
-	op->nfs_argop4_u.opopen_confirm.seqid = stateid->seqid + 1;
+	op->nfs_argop4_u.opopen_confirm.seqid = stateid->seqid;
 
 	rc = pxy_nfsv4_call(export, cred, opcnt, argoparray, resoparray);
 	if (rc != NFS4_OK)
