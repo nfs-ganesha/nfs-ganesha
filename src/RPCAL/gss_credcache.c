@@ -604,9 +604,13 @@ static int gssd_search_krb5_keytab(krb5_context context, krb5_keytab kt,
 			 * Return, don't free, keytab entry if
 			 * we were successful!
 			 */
-			if (ple == NULL) {
+			if (unlikely(ple == NULL)) {
 				retval = ENOMEM;
 				k5_free_kt_entry(context, kte);
+				k5_free_unparsed_name(context, pname);
+				(void) krb5_kt_end_seq_get(
+					context, kt, &cursor);
+				goto out;
 			} else {
 				retval = 0;
 				*found = 1;
