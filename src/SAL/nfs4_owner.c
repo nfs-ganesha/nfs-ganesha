@@ -706,31 +706,4 @@ bool Check_nfs4_seqid(state_owner_t *owner, seqid4 seqid, nfs_argop4 *args,
 	return false;
 }
 
-/**
- * @brief Get the per-clientid state owner
- *
- * @todo FSF: I'm not really sure about the refcounting here...
- *
- * @param[in]  clientid       The clientid to look up
- * @param[out] clientid_owner Matching state owner
- *
- * @return State status.
- */
-state_status_t get_clientid_owner(clientid4 clientid,
-				  state_owner_t **clientid_owner)
-{
-	/* Pointer to client record, retrieved by ID and in which the
-	   client state owner is stored */
-	nfs_client_id_t *pclientid = NULL;
-
-	if ((nfs_client_id_get_confirmed(clientid, &pclientid))
-	    != CLIENT_ID_SUCCESS) {
-		return STATE_NOT_FOUND;
-	} else {
-		*clientid_owner = &pclientid->cid_owner;
-		dec_client_id_ref(pclientid);
-		return STATE_SUCCESS;
-	}
-}
-
 /** @} */
