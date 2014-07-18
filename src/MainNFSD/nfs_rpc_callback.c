@@ -594,7 +594,6 @@ int nfs_rpc_create_chan_v40(nfs_client_id_t *clientid, uint32_t flags)
 		chan->auth = authunix_create_default();
 		if (!chan->auth)
 			code = EINVAL;
-		code = 0;
 		break;
 	case AUTH_NONE:
 		chan->auth = authnone_ncreate();
