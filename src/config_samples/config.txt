@@ -18,8 +18,7 @@ LOG { FORMAT {} }
 CACHEINODE
 GPFS {}
 LUSTRE {}
-LUSTRE_PNFS {}
-LUSTRE_PNFS { DATASERVER {} }
+LUSTRE { PNFS { DATASERVER {} } }
 VFS {}
 XFS {}
 PT {}
@@ -300,7 +299,16 @@ EXPORT { FSAL {} }
 	FSAL_LUSTRE:
 	------------
 
-	EXPORT { FSAL { PNFS {} } }
+	LUSTRE { PNFS { DATASERVER {} } }
+	------------
+
+		DS_Addr(ipv4addr, default "127.0.0.1")
+
+		DS_Port(inet_port, range 1024 to UINT16_MAX, default 3260)
+
+		DS_Id(uint32, range 1 to UINT32_MAX, default 1)
+
+	EXPORT { FSAL { PNFS { } } }
 	---------------------------
 		Stripe_Unit(uint32, range 1024 to 1024*1024, default 8192)
 
@@ -496,17 +504,6 @@ LUSTRE {}
 
 	xattr_access_rights(mode, range 0 to 0777, default 0400)
 
-LUSTRE_PNFS {}
---------------
-
-	LUSTRE_PNFS { DATASERVER {} }
-	-----------------------------
-
-		DS_Addr(ipv4addr, default "127.0.0.1")
-
-		DS_Port(inet_port, range 1024 to UINT16_MAX, default 3260)
-
-		DS_Id(uint32, range 1 to UINT32_MAX, default 1)
 
 VFS {}
 ------

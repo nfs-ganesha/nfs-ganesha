@@ -123,6 +123,18 @@ static struct config_item ds_params[] = {
 	CONFIG_EOL
 };
 
+static int lustre_conf_pnfs_commit(void *node,
+				   void *link_mem,
+				   void *self_struct,
+				   struct config_error_type *err_type)
+{
+	struct lustre_pnfs_param *lpp = self_struct;
+
+	/* Verifications/parameter checking to be added here */
+
+	return 0;
+}
+
 static struct config_item pnfs_params[] = {
 	CONF_ITEM_BLOCK("DataServer", ds_params,
 			dataserver_init, dataserver_commit,
@@ -130,32 +142,26 @@ static struct config_item pnfs_params[] = {
 	CONFIG_EOL
 };
 
-struct config_block lustre_pnfs_param = {
-	.dbus_interface_name = "org.ganesha.nfsd.config.fsal.lustre_pnfs",
-	.blk_desc.name = "LUSTRE_PNFS",
-	.blk_desc.type = CONFIG_BLOCK,
-	.blk_desc.u.blk.init = noop_conf_init,
-	.blk_desc.u.blk.params = pnfs_params,
-	.blk_desc.u.blk.commit = noop_conf_commit
-};
-
 static struct config_item lustre_params[] = {
 	CONF_ITEM_BOOL("link_support", true,
-		       fsal_staticfsinfo_t, link_support),
+		       lustre_fsal_module, fs_info.link_support),
 	CONF_ITEM_BOOL("symlink_support", true,
-		       fsal_staticfsinfo_t, symlink_support),
+		       lustre_fsal_module, fs_info.symlink_support),
 	CONF_ITEM_BOOL("cansettime", true,
-		       fsal_staticfsinfo_t, cansettime),
+		       lustre_fsal_module, fs_info.cansettime),
 	CONF_ITEM_UI64("maxread", 512, FSAL_MAXIOSIZE, FSAL_MAXIOSIZE,
-		       fsal_staticfsinfo_t, maxread),
+		       lustre_fsal_module, fs_info.maxread),
 	CONF_ITEM_UI64("maxwrite", 512, FSAL_MAXIOSIZE, FSAL_MAXIOSIZE,
-		       fsal_staticfsinfo_t, maxwrite),
+		       lustre_fsal_module, fs_info.maxwrite),
 	CONF_ITEM_MODE("umask", 0, 0777, 0,
-		       fsal_staticfsinfo_t, umask),
+		       lustre_fsal_module, fs_info.umask),
 	CONF_ITEM_BOOL("auth_xdev_export", false,
-		       fsal_staticfsinfo_t, auth_exportpath_xdev),
+		       lustre_fsal_module, fs_info.auth_exportpath_xdev),
 	CONF_ITEM_MODE("xattr_access_rights", 0, 0777, 0400,
-		       fsal_staticfsinfo_t, xattr_access_rights),
+		       lustre_fsal_module, fs_info.xattr_access_rights),
+	CONF_ITEM_BLOCK("PNFS", pnfs_params,
+			noop_conf_init, lustre_conf_pnfs_commit,
+			lustre_fsal_module, pnfs_param),
 	CONFIG_EOL
 };
 
@@ -197,21 +203,12 @@ static fsal_status_t lustre_init_config(struct fsal_module *fsal_hdl,
 	/* Read FS parameter for this FSAL */
 	(void) load_config_from_parse(config_struct,
 				      &lustre_param,
-				      &lustre_me->fs_info,
+				      lustre_me,
 				      true,
 				      &err_type);
 	if (!config_error_is_harmless(&err_type))
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	display_fsinfo(&lustre_me->fs_info);
-
-	/* Read PNFS parameter for this FSAL (specific to thos FSAL) */
-	(void) load_config_from_parse(config_struct,
-				      &lustre_pnfs_param,
-				      &lustre_me->pnfs_param,
-				      true,
-				      &err_type);
-	if (!config_error_is_harmless(&err_type))
-		return fsalstat(ERR_FSAL_INVAL, 0);
 
 	LogFullDebug(COMPONENT_FSAL,
 		     "Supported attributes constant = 0x%" PRIx64,
