@@ -76,6 +76,7 @@ cache_inode_setattr(cache_entry_t *entry,
 			"Attempt to truncate non-regular file: type=%d",
 			entry->type);
 		status = CACHE_INODE_BAD_TYPE;
+		goto out;
 	}
 
 	/* Is it allowed to change times ? */

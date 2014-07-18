@@ -100,6 +100,8 @@ typedef struct state_cookie_entry_t state_cookie_entry_t;
 typedef struct state_block_data_t state_block_data_t;
 typedef struct state_layout_segment state_layout_segment_t;
 
+extern struct fridgethr *state_async_fridge;
+
 /*****************************************************************************
  *
  * NFSv4.1 Session data

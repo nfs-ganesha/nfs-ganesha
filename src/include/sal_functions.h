@@ -195,9 +195,6 @@ nfsstat4 clientid_error_to_nfsstat(clientid_status_t err);
 
 const char *clientid_error_to_str(clientid_status_t err);
 
-state_status_t get_clientid_owner(clientid4 clientid,
-				  state_owner_t **clientid_owner);
-
 int nfs_Init_client_id(void);
 
 clientid_status_t nfs_client_id_get_unconfirmed(clientid4 clientid,

@@ -130,17 +130,8 @@ int vfs_get_root_handle(struct vfs_filesystem *vfs_fs,
 			vfs_fs->fs->fsid.minor);
 	}
 
-	if (retval != 0) {
-		retval = errno;
-		LogMajor(COMPONENT_FSAL,
-			 "Get root handle for %s failed with %s (%d)",
-			 vfs_fs->fs->path, strerror(retval), retval);
-	} else {
-		/* May reindex for some platforms */
-		retval = vfs_re_index(vfs_fs, exp);
-	}
-
-	return retval;
+	/* May reindex for some platforms */
+	return vfs_re_index(vfs_fs, exp);
 }
 
 void vfs_fini(struct vfs_fsal_export *myself)

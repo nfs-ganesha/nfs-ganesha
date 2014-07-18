@@ -328,9 +328,9 @@ static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 		retval = errno;
 		goto err;
 	}
-	if (presquota != NULL) {
+	if (presquota != NULL)
 		return get_quota(exp_hdl, filepath, quota_type, presquota);
-	}
+
  err:
 	return fsalstat(fsal_error, retval);
 }

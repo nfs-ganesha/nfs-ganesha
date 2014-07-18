@@ -352,7 +352,7 @@ static int add_client(struct gsh_export *export,
 				if (cli == NULL) {
 					LogMajor(COMPONENT_CONFIG,
 						 "Allocate of client space failed");
-					goto out;
+					break;
 				}
 				glist_init(&cli->cle_list);
 			}
@@ -386,6 +386,7 @@ static int add_client(struct gsh_export *export,
 				       &cli->cle_list);
 			cli = NULL; /* let go of it */
 		}
+		freeaddrinfo(info);
 		goto out;
 	} else {  /* does gsspric decode go here? */
 		LogMajor(COMPONENT_CONFIG,

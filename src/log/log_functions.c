@@ -547,14 +547,16 @@ void set_const_log_str()
 	if (b_left > 0
 	    && (logfields->disp_prog || logfields->disp_pid)
 	    && !logfields->disp_threadname)
-		b_left = display_cat(&dspbuf, " ");
+		(void) display_cat(&dspbuf, " ");
 
 	b_left = display_start(&tdfbuf);
 
+	if (b_left <= 0)
+		return;
+
 	if (logfields->datefmt == TD_LOCAL
 	    && logfields->timefmt == TD_LOCAL) {
-		if (b_left > 0)
-			b_left = display_cat(&tdfbuf, "%c ");
+		b_left = display_cat(&tdfbuf, "%c ");
 	} else {
 		switch (logfields->datefmt) {
 		case TD_GANESHA:
@@ -582,6 +584,9 @@ void set_const_log_str()
 		default:
 			break;
 		}
+
+		if (b_left <= 0)
+			return;
 
 		switch (logfields->timefmt) {
 		case TD_GANESHA:
