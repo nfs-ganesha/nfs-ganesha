@@ -108,7 +108,7 @@ struct export_stats {
 #define EXPORT_ID_ARG    \
 {                        \
 	.name = "exp_id",\
-	.type = "i",     \
+	.type = "q",     \
 	.direction = "in"\
 }
 

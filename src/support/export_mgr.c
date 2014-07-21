@@ -1107,7 +1107,7 @@ static bool export_to_dbus(struct gsh_export *exp_node, void *state)
 	timespec_add_nsecs(exp_node->last_update, &last_as_ts);
 	dbus_message_iter_open_container(&iter_state->export_iter,
 					 DBUS_TYPE_STRUCT, NULL, &struct_iter);
-	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_INT32,
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT16,
 				       &exp_node->export_id);
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &path);
 	server_stats_summary(&struct_iter, &exp->st);
@@ -1130,7 +1130,7 @@ static bool gsh_export_showexports(DBusMessageIter *args,
 	dbus_message_iter_init_append(reply, &iter);
 	dbus_append_timestamp(&iter, &timestamp);
 	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
-					 "(isbbbbbbbb(tt))",
+					 "(qsbbbbbbbb(tt))",
 					 &iter_state.export_iter);
 
 	(void)foreach_gsh_export(export_to_dbus, (void *)&iter_state);
@@ -1145,7 +1145,7 @@ static struct gsh_dbus_method export_show_exports = {
 	.args = {TIMESTAMP_REPLY,
 		 {
 		  .name = "exports",
-		  .type = "a(isbbbbbbbb(tt))",
+		  .type = "a(qsbbbbbbbb(tt))",
 		  .direction = "out"},
 		 END_ARG_LIST}
 };
