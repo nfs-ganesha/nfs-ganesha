@@ -46,20 +46,20 @@ void display_xfs_handle(struct display_buffer *dspbuf,
 {
 	xfs_handle_t *hdl = (xfs_handle_t *) fh->handle_data;
 
-	display_printf(dspbuf,
-		       "Handle len %hhu:"
-		       " fsid=0x%016"PRIx32".0x%016"PRIx32
-		       " fid_len=%"PRIu16
-		       " fid_pad=%"PRIu16
-		       " fid_gen=%"PRIu32
-		       " fid_ino=%"PRIu64,
-		       fh->handle_len,
-		       hdl->ha_fsid.val[0],
-		       hdl->ha_fsid.val[1],
-		       hdl->ha_fid.fid_len,
-		       hdl->ha_fid.fid_pad,
-		       hdl->ha_fid.fid_gen,
-		       hdl->ha_fid.fid_ino);
+	(void) display_printf(dspbuf,
+			      "Handle len %hhu:"
+			      " fsid=0x%016"PRIx32".0x%016"PRIx32
+			      " fid_len=%"PRIu16
+			      " fid_pad=%"PRIu16
+			      " fid_gen=%"PRIu32
+			      " fid_ino=%"PRIu64,
+			      fh->handle_len,
+			      hdl->ha_fsid.val[0],
+			      hdl->ha_fsid.val[1],
+			      hdl->ha_fid.fid_len,
+			      hdl->ha_fid.fid_pad,
+			      hdl->ha_fid.fid_gen,
+			      hdl->ha_fid.fid_ino);
 }
 
 #define LogXFSHandle(fh)						\
@@ -325,20 +325,20 @@ bool vfs_valid_handle(struct gsh_buffdesc *desc)
 		char buf[256];
 		struct display_buffer dspbuf = {sizeof(buf), buf, buf};
 
-		display_printf(&dspbuf,
-			       "Handle len %d: "
-			       " fsid=0x%016"PRIx32".0x%016"PRIx32
-			       " fid_len=%"PRIu16
-			       " fid_pad=%"PRIu16
-			       " fid_gen=%"PRIu32
-			       " fid_ino=%"PRIu64,
-			       (int) desc->len,
-			       hdl->ha_fsid.val[0],
-			       hdl->ha_fsid.val[1],
-			       hdl->ha_fid.fid_len,
-			       hdl->ha_fid.fid_pad,
-			       hdl->ha_fid.fid_gen,
-			       hdl->ha_fid.fid_ino);
+		(void) display_printf(&dspbuf,
+				      "Handle len %d: "
+				      " fsid=0x%016"PRIx32".0x%016"PRIx32
+				      " fid_len=%"PRIu16
+				      " fid_pad=%"PRIu16
+				      " fid_gen=%"PRIu32
+				      " fid_ino=%"PRIu64,
+				      (int) desc->len,
+				      hdl->ha_fsid.val[0],
+				      hdl->ha_fsid.val[1],
+				      hdl->ha_fid.fid_len,
+				      hdl->ha_fid.fid_pad,
+				      hdl->ha_fid.fid_gen,
+				      hdl->ha_fid.fid_ino);
 
 		LogMidDebug(COMPONENT_FSAL, "%s", buf);
 	}
