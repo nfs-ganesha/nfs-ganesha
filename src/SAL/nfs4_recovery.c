@@ -569,8 +569,6 @@ void nfs4_cp_pop_revoked_delegs(clid_entry_t *clid_ent,
 	struct dirent *dentp;
 	DIR *dp;
 	rdel_fh_t *new_ent;
-	char *clid_str;
-	int len;
 
 	glist_init(&clid_ent->cl_rfh_list);
 	/* Read the contents from recov dir of this clientid. */
@@ -613,18 +611,14 @@ void nfs4_cp_pop_revoked_delegs(clid_entry_t *clid_ent,
 			goto read_next;
 		}
 
-		len = strlen(dentp->d_name);
-		/* Use the first . space for terminating NULL */
-		new_ent->rdfh_handle_str = gsh_malloc(len);
+		/* Ignore the beginning dot and copy the rest (file handle) */
+		new_ent->rdfh_handle_str = gsh_strdup(dentp->d_name+1);
 		if (new_ent->rdfh_handle_str == NULL) {
 			gsh_free(new_ent);
 			LogEvent(COMPONENT_CLIENTID,
 				"Alloc Failed: rdel_fh_t->rdfh_handle_str");
 			goto read_next;
 		}
-		clid_str = dentp->d_name + 1;
-		strcpy(new_ent->rdfh_handle_str, clid_str);
-		glist_init(&new_ent->rdfh_list);
 		glist_add(&clid_ent->cl_rfh_list, &new_ent->rdfh_list);
 		LogFullDebug(COMPONENT_CLIENTID,
 			"revoked handle: %s",
