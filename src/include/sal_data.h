@@ -83,7 +83,6 @@
  */
 #define DELEG_GRANTED          0x00000001  /* Granted               */
 #define DELEG_RECALL_WIP       0x00000002  /* Recall in progress    */
-#define DELEG_REVOKED          0x00000004  /* Revoked               */
 #define DELEG_RETURNED         0x00000010  /* Delegation returned   */
 
 /* Forward references to types */
