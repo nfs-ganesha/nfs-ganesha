@@ -122,7 +122,7 @@ static struct config_item proxy_remote_params[] = {
 static int remote_commit(void *node, void *link_mem, void *self_struct,
 		       struct config_error_type *err_type)
 {
-	struct pxy_client_params *pcp = self_struct;
+	/* struct pxy_client_params *pcpi = self_struct; */
 
 	/* Verifications/parameter checking to be added here */
 

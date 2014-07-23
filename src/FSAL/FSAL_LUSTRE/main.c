@@ -128,7 +128,7 @@ static int lustre_conf_pnfs_commit(void *node,
 				   void *self_struct,
 				   struct config_error_type *err_type)
 {
-	struct lustre_pnfs_param *lpp = self_struct;
+	/* struct lustre_pnfs_param *lpp = self_struct; */
 
 	/* Verifications/parameter checking to be added here */
 
