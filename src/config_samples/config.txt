@@ -192,6 +192,7 @@ EXPORT_DEFAULTS {}
 
 	Squash(enum, values [root, root_squash, rootsquash,
 			     all, all_squash, allsquash,
+			     all_anomnymous, allanonymous,
 			     no_root_squash, none, noidsquash],
 	       default root_squash)
 
