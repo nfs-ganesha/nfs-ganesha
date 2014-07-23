@@ -130,10 +130,6 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t *data,
 
 	LogDebug(COMPONENT_NFS_V4_LOCK, "Matching delegation found!");
 
-	pthread_mutex_lock(&found_lock->sle_mutex);
-	found_lock->sle_state->state_data.deleg.sd_state = DELEG_RETURNED;
-	pthread_mutex_unlock(&found_lock->sle_mutex);
-
 	lock_owner = found_lock->sle_owner;
 
 	/* lock_type doesn't matter as we are going to do unlock */
