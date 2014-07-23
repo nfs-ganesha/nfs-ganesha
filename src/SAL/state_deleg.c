@@ -203,11 +203,7 @@ bool should_we_grant_deleg(cache_entry_t *entry, nfs_client_id_t *client,
 	/* specific file, all clients, stats */
 	struct file_deleg_stats *file_stats = &entry->object.file.fdeleg_stats;
 	/* specific client, all files stats */
-	struct c_deleg_stats *cl_stats = &client->cid_deleg_stats;
-	/* specific client, specific file stats */
-	float ACCEPTABLE_FAILS = 0.1; /* 10% */
-	float ACCEPTABLE_OPEN_FREQUENCY = .01; /* per second */
-	time_t spread;
+	struct c_deleg_stats *client_stats = &client->cid_deleg_stats;
 	open_claim_type4 claim = args->claim.claim;
 
 	LogDebug(COMPONENT_STATE, "Checking if we should grant delegation.");
@@ -261,40 +257,9 @@ bool should_we_grant_deleg(cache_entry_t *entry, nfs_client_id_t *client,
 	    time(NULL) - file_stats->fds_last_recall < RECALL2DELEG_TIME)
 		return false;
 
-	return true;
-
-	/* Check if this file is opened too frequently to delegate. */
-	spread = time(NULL) - file_stats->fds_first_open;
-	if (spread != 0 &&
-	     (file_stats->fds_num_opens / spread) > ACCEPTABLE_OPEN_FREQUENCY) {
-		LogDebug(COMPONENT_STATE,
-			 "This file is opened too frequently to delegate.");
-		return false;
-	}
-
 	/* Check if this is a misbehaving or unreliable client */
-	if (cl_stats->tot_recalls > 0 &&
-	    ((1.0 - (cl_stats->failed_recalls / cl_stats->tot_recalls))
-	     > ACCEPTABLE_FAILS)) {
-		LogDebug(COMPONENT_STATE,
-			 "Client is %.0f unreliable during recalls. Allowed failure rate is %.0f. Denying delegation.",
-			 1.0 - (cl_stats->failed_recalls
-				/ cl_stats->tot_recalls),
-			 ACCEPTABLE_FAILS);
+	if (client_stats->num_revokes > 2) /* more than 2 revokes */
 		return false;
-	}
-
-	/* minimum average milliseconds that delegations should be held on a
-	   file. if less, then this is not a good file for delegations. */
-#define MIN_AVG_HOLD 1500
-	if (file_stats->fds_avg_hold < MIN_AVG_HOLD
-	    && file_stats->fds_avg_hold != 0) {
-		LogDebug(COMPONENT_STATE,
-			 "Average length of delegation (%lld) is less than minimum avg (%lld). Denying delegation.",
-			 (long long) file_stats->fds_avg_hold,
-			 (long long) MIN_AVG_HOLD);
-		return false;
-	}
 
 	LogDebug(COMPONENT_STATE, "Let's delegate!!");
 	return true;
