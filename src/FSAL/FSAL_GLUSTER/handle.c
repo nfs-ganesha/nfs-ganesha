@@ -16,7 +16,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * -------------
  */
@@ -91,7 +91,7 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 	struct stat sb;
 	struct glfs_object *glhandle = NULL;
 	unsigned char globjhdl[GFAPI_HANDLE_LENGTH] = {'\0'};
-        char vol_uuid[GLAPI_UUID_LENGTH] = {'\0'};
+	char vol_uuid[GLAPI_UUID_LENGTH] = {'\0'};
 	struct glusterfs_handle *objhandle = NULL;
 	struct glusterfs_export *glfs_export =
 	    container_of(op_ctx->fsal_export, struct glusterfs_export, export);
@@ -133,9 +133,8 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 	*handle = &objhandle->handle;
 
  out:
-	if (status.major != ERR_FSAL_NO_ERROR) {
+	if (status.major != ERR_FSAL_NO_ERROR)
 		gluster_cleanup_vars(glhandle);
-	}
 #ifdef GLTIMING
 	now(&e_time);
 	latency_update(&s_time, &e_time, lat_lookup);
@@ -149,8 +148,8 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
  */
 
 static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
-				  fsal_cookie_t * whence, void *dir_state,
-				  fsal_readdir_cb cb, bool * eof)
+				  fsal_cookie_t *whence, void *dir_state,
+				  fsal_readdir_cb cb, bool *eof)
 {
 	int rc = 0;
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
@@ -168,13 +167,11 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 #endif
 
 	glfd = glfs_h_opendir(glfs_export->gl_fs, objhandle->glhandle);
-	if (glfd == NULL) {
+	if (glfd == NULL)
 		return gluster2fsal_error(errno);
-	}
 
-	if (whence != NULL) {
+	if (whence != NULL)
 		offset = *whence;
-	}
 
 	glfs_seekdir(glfd, offset);
 
@@ -188,10 +185,8 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 			    || (strcmp(de.d_name, "..") == 0)) {
 				continue;
 			}
-
-			if (!cb(de.d_name, dir_state, glfs_telldir(glfd))) {
+			if (!cb(de.d_name, dir_state, glfs_telldir(glfd)))
 				goto out;
-			}
 		} else if (rc == 0 && pde == NULL) {
 			*eof = true;
 		} else {
@@ -202,9 +197,8 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 
  out:
 	rc = glfs_closedir(glfd);
-	if (rc < 0) {
+	if (rc < 0)
 		status = gluster2fsal_error(errno);
-	}
 #ifdef GLTIMING
 	now(&e_time);
 	latency_update(&s_time, &e_time, lat_read_dirents);
@@ -225,7 +219,7 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 	struct stat sb;
 	struct glfs_object *glhandle = NULL;
 	unsigned char globjhdl[GFAPI_HANDLE_LENGTH] = {'\0'};
-        char vol_uuid[GLAPI_UUID_LENGTH] = {'\0'};
+	char vol_uuid[GLAPI_UUID_LENGTH] = {'\0'};
 	struct glusterfs_handle *objhandle = NULL;
 	struct glusterfs_export *glfs_export =
 	    container_of(op_ctx->fsal_export, struct glusterfs_export, export);
@@ -287,9 +281,9 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 	*attrib = objhandle->handle.attributes;
 
  out:
-	if (status.major != ERR_FSAL_NO_ERROR) {
+	if (status.major != ERR_FSAL_NO_ERROR)
 		gluster_cleanup_vars(glhandle);
-	}
+
 #ifdef GLTIMING
 	now(&e_time);
 	latency_update(&s_time, &e_time, lat_create);
@@ -311,7 +305,7 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 	struct stat sb;
 	struct glfs_object *glhandle = NULL;
 	unsigned char globjhdl[GFAPI_HANDLE_LENGTH] = {'\0'};
-        char vol_uuid[GLAPI_UUID_LENGTH] = {'\0'};
+	char vol_uuid[GLAPI_UUID_LENGTH] = {'\0'};
 	struct glusterfs_handle *objhandle = NULL;
 	struct glusterfs_export *glfs_export =
 	    container_of(op_ctx->fsal_export, struct glusterfs_export, export);
@@ -373,9 +367,9 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 	*attrib = objhandle->handle.attributes;
 
  out:
-	if (status.major != ERR_FSAL_NO_ERROR) {
+	if (status.major != ERR_FSAL_NO_ERROR)
 		gluster_cleanup_vars(glhandle);
-	}
+
 #ifdef GLTIMING
 	now(&e_time);
 	latency_update(&s_time, &e_time, lat_makedir);
@@ -389,7 +383,7 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 
 static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 			      const char *name, object_file_type_t nodetype,
-			      fsal_dev_t * dev, struct attrlist *attrib,
+			      fsal_dev_t *dev, struct attrlist *attrib,
 			      struct fsal_obj_handle **handle)
 {
 	int rc = 0;
@@ -397,7 +391,7 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 	struct stat sb;
 	struct glfs_object *glhandle = NULL;
 	unsigned char globjhdl[GFAPI_HANDLE_LENGTH] = {'\0'};
-        char vol_uuid[GLAPI_UUID_LENGTH] = {'\0'};
+	char vol_uuid[GLAPI_UUID_LENGTH] = {'\0'};
 	struct glusterfs_handle *objhandle = NULL;
 	dev_t ndev = { 0, };
 	struct glusterfs_export *glfs_export =
@@ -487,9 +481,8 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 	*attrib = objhandle->handle.attributes;
 
  out:
-	if (status.major != ERR_FSAL_NO_ERROR) {
+	if (status.major != ERR_FSAL_NO_ERROR)
 		gluster_cleanup_vars(glhandle);
-	}
 #ifdef GLTIMING
 	now(&e_time);
 	latency_update(&s_time, &e_time, lat_makenode);
@@ -511,7 +504,7 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 	struct stat sb;
 	struct glfs_object *glhandle = NULL;
 	unsigned char globjhdl[GFAPI_HANDLE_LENGTH] = {'\0'};
-        char vol_uuid[GLAPI_UUID_LENGTH] = {'\0'};
+	char vol_uuid[GLAPI_UUID_LENGTH] = {'\0'};
 	struct glusterfs_handle *objhandle = NULL;
 	struct glusterfs_export *glfs_export =
 	    container_of(op_ctx->fsal_export, struct glusterfs_export, export);
@@ -573,9 +566,9 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 	*attrib = objhandle->handle.attributes;
 
  out:
-	if (status.major != ERR_FSAL_NO_ERROR) {
+	if (status.major != ERR_FSAL_NO_ERROR)
 		gluster_cleanup_vars(glhandle);
-	}
+
 #ifdef GLTIMING
 	now(&e_time);
 	latency_update(&s_time, &e_time, lat_makesymlink);
@@ -604,7 +597,7 @@ static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
 	now(&s_time);
 #endif
 
-	link_content->len = 1024;	// bad bad!!! need to determine size
+	link_content->len = 1024;	/* bad bad!!! need to determine size */
 	link_content->addr = gsh_malloc(link_content->len);
 	if (link_content->addr == NULL) {
 		status = gluster2fsal_error(rc);
@@ -657,12 +650,11 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl)
 
 	/* FIXME: Should we hold the fd so that any async op does
 	 * not close it */
-	if (objhandle->openflags != FSAL_O_CLOSED) {
+	if (objhandle->openflags != FSAL_O_CLOSED)
 		rc = glfs_fstat(objhandle->glfd, &buffxstat.buffstat);
-	} else {
-		rc = glfs_h_stat(glfs_export->gl_fs, objhandle->glhandle, &buffxstat.buffstat);
-	}
-
+	else
+		rc = glfs_h_stat(glfs_export->gl_fs,
+				objhandle->glhandle, &buffxstat.buffstat);
 	if (rc != 0) {
 		if (errno == ENOENT)
 			status = gluster2fsal_error(ESTALE);
@@ -771,29 +763,30 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 		buffxstat.buffstat.st_mtim = timestamp;
 	}
 
-	// TODO: Check for attributes not supported and return
-	// EATTRNOTSUPP error.
-	
+	/* TODO: Check for attributes not supported and return */
+	/* EATTRNOTSUPP error.  */
+
 	if (NFSv4_ACL_SUPPORT) {
 		if (FSAL_TEST_MASK(attrs->mask, ATTR_ACL)) {
 			attr_valid |= XATTR_ACL;
-			status = 
+			status =
 			  glusterfs_process_acl(glfs_export->gl_fs,
-					        objhandle->glhandle,
+						objhandle->glhandle,
 						attrs, &buffxstat);
 
 			if (FSAL_IS_ERROR(status))
 				goto out;
-			/* setting the ACL will set the mode-bits too if not already passed */
+			/* setting the ACL will set the */
+			/* mode-bits too if not already passed */
 			mask |= GLAPI_SET_ATTR_MODE;
 		} else if (mask & GLAPI_SET_ATTR_MODE) {
 			switch (obj_hdl->type) {
-				case REGULAR_FILE:
-					is_dir = 0; break;
-				case DIRECTORY:
-					is_dir = 1; break;
-				default :
-					break;
+			case REGULAR_FILE:
+				is_dir = 0; break;
+			case DIRECTORY:
+				is_dir = 1; break;
+			default:
+				break;
 			}
 			status =
 			 mode_bits_to_acl(glfs_export->gl_fs, objhandle,
@@ -803,28 +796,26 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 			if (FSAL_IS_ERROR(status))
 				goto out;
 		}
-	} else if (FSAL_TEST_MASK(attrs->mask, ATTR_ACL)) { 
+	} else if (FSAL_TEST_MASK(attrs->mask, ATTR_ACL)) {
 		status = fsalstat(ERR_FSAL_ATTRNOTSUPP, 0);
 		goto out;
 	}
 
 	/* If any stat changed, indicate that */
-	if (mask != 0) {
+	if (mask != 0)
 		attr_valid |= XATTR_STAT;
-	}
-
 	if (attr_valid & XATTR_STAT) {
-		// Only if there is any change in attributes send them down to fs
+		/*Only if there is any change in attrs send them down to fs */
 		rc = glfs_h_setattrs(glfs_export->gl_fs,
 				     objhandle->glhandle,
 				     &buffxstat.buffstat,
 				     mask);
-		GLUSTER_VALIDATE_RETURN_STATUS (rc);
+		GLUSTER_VALIDATE_RETURN_STATUS(rc);
 	}
 
 	if (attr_valid & XATTR_ACL) {
 		status = glusterfs_set_acl(glfs_export,
-				           objhandle, &buffxstat);
+					   objhandle, &buffxstat);
 		if (FSAL_IS_ERROR(status))
 			goto out;
 	}
@@ -991,9 +982,8 @@ static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
 		goto out;
 	}
 
-	if (rc != 0) {
+	if (rc != 0)
 		status = gluster2fsal_error(errno);
-	}
 
  out:
 #ifdef GLTIMING
@@ -1024,9 +1014,8 @@ static fsal_status_t file_open(struct fsal_obj_handle *obj_hdl,
 	now(&s_time);
 #endif
 
-	if (objhandle->openflags != FSAL_O_CLOSED) {
+	if (objhandle->openflags != FSAL_O_CLOSED)
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
-	}
 
 	rc = fsal2posix_openflags(openflags, &p_flags);
 	if (rc != 0) {
@@ -1069,8 +1058,8 @@ static fsal_openflags_t file_status(struct fsal_obj_handle *obj_hdl)
 
 static fsal_status_t file_read(struct fsal_obj_handle *obj_hdl,
 			       uint64_t seek_descriptor, size_t buffer_size,
-			       void *buffer, size_t * read_amount,
-			       bool * end_of_file)
+			       void *buffer, size_t *read_amount,
+			       bool *end_of_file)
 {
 	int rc = 0;
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
@@ -1083,15 +1072,14 @@ static fsal_status_t file_read(struct fsal_obj_handle *obj_hdl,
 #endif
 
 	rc = glfs_pread(objhandle->glfd, buffer, buffer_size, seek_descriptor,
-			0 /*TODO: flags is unused, so pass in something */ );
+			0 /*TODO: flags is unused, so pass in something */);
 	if (rc < 0) {
 		status = gluster2fsal_error(errno);
 		goto out;
 	}
 
-	if (rc < buffer_size) {
+	if (rc < buffer_size)
 		*end_of_file = true;
-	}
 
 	*read_amount = rc;
 
@@ -1109,8 +1097,8 @@ static fsal_status_t file_read(struct fsal_obj_handle *obj_hdl,
 
 static fsal_status_t file_write(struct fsal_obj_handle *obj_hdl,
 				uint64_t seek_descriptor, size_t buffer_size,
-				void *buffer, size_t * write_amount,
-				bool * fsal_stable)
+				void *buffer, size_t *write_amount,
+				bool *fsal_stable)
 {
 	int rc = 0;
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
@@ -1162,9 +1150,8 @@ static fsal_status_t commit(struct fsal_obj_handle *obj_hdl,	/* sync */
 
 	/* TODO: Everybody pretty much ignores the range sent */
 	rc = glfs_fsync(objhandle->glfd);
-	if (rc < 0) {
+	if (rc < 0)
 		status = gluster2fsal_error(errno);
-	}
 #ifdef GLTIMING
 	now(&e_time);
 	latency_update(&s_time, &e_time, lat_commit);
@@ -1181,7 +1168,7 @@ static fsal_status_t commit(struct fsal_obj_handle *obj_hdl,	/* sync */
  */
 
 static fsal_status_t lock_op(struct fsal_obj_handle *obj_hdl,
-			     void * p_owner,
+			     void *p_owner,
 			     fsal_lock_op_t lock_op,
 			     fsal_lock_param_t *request_lock,
 			     fsal_lock_param_t *conflicting_lock)
@@ -1236,13 +1223,13 @@ static fsal_status_t lock_op(struct fsal_obj_handle *obj_hdl,
 	flock.l_start = request_lock->lock_start;
 	flock.l_whence = SEEK_SET;
 
-	rc = glfs_posix_lock (objhandle->glfd, cmd, &flock);
+	rc = glfs_posix_lock(objhandle->glfd, cmd, &flock);
 	if (rc != 0 && lock_op == FSAL_OP_LOCK
 	    && conflicting_lock && (errno == EACCES || errno == EAGAIN)) {
 		/* process conflicting lock */
 		saverrno = errno;
 		cmd = F_GETLK;
-		rc = glfs_posix_lock (objhandle->glfd, cmd, &flock);
+		rc = glfs_posix_lock(objhandle->glfd, cmd, &flock);
 		if (rc) {
 			LogCrit(COMPONENT_FSAL,
 				"Failed to get conflicting lock post lock"
@@ -1358,7 +1345,8 @@ static fsal_status_t getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
  */
 /*
 static fsal_status_t getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
-					      const struct req_op_context *opctx,
+					      const struct
+					      req_op_context *opctx,
 					      const char *xattr_name,
 					      caddr_t buffer_addr,
 					      size_t buffer_size,
@@ -1448,7 +1436,7 @@ static fsal_status_t remove_extattr_by_name(struct fsal_obj_handle *obj_hdl,
  * For now this function closed the fd if open as a part of the lru_cleanup.
  */
 
-fsal_status_t lru_cleanup(struct fsal_obj_handle * obj_hdl,
+fsal_status_t lru_cleanup(struct fsal_obj_handle *obj_hdl,
 			  lru_actions_t requests)
 {
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
@@ -1460,9 +1448,8 @@ fsal_status_t lru_cleanup(struct fsal_obj_handle * obj_hdl,
 	now(&s_time);
 #endif
 
-	if (objhandle->glfd != NULL) {
+	if (objhandle->glfd != NULL)
 		status = file_close(obj_hdl);
-	}
 #ifdef GLTIMING
 	now(&e_time);
 	latency_update(&s_time, &e_time, lat_lru_cleanup);
