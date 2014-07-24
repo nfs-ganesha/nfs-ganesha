@@ -874,10 +874,12 @@ static nfsstat4 open4_claim_null(OPEN4args *arg, compound_data_t *data,
  * @param[in] openowner Open owner of the open state.
  * @param[in] client Client that will own the delegation.
  * @param[in/out] resok Delegation attempt result to be returned to client.
+ * @param[in] prerecall flag for reclaims.
  */
 static void get_delegation(compound_data_t *data, OPEN4args *args,
 			   state_t *open_state, state_owner_t *openowner,
-			   nfs_client_id_t *client, OPEN4resok *resok)
+			   nfs_client_id_t *client, OPEN4resok *resok,
+			   bool prerecall)
 {
 	state_status_t state_status;
 	fsal_lock_param_t lock_desc;
@@ -976,7 +978,7 @@ static void get_delegation(compound_data_t *data, OPEN4args *args,
 				space_limit.nfs_space_limit4_u.filesize =
 						DELEG_SPACE_LIMIT_FILESZ;
 				COPY_STATEID(&writeres->stateid, new_state);
-				writeres->recall = false;
+				writeres->recall = prerecall;
 				get_deleg_perm(data->current_entry,
 					       &writeres->permissions,
 					       deleg_type);
@@ -985,7 +987,7 @@ static void get_delegation(compound_data_t *data, OPEN4args *args,
 				open_read_delegation4 *readres =
 				&resok->delegation.open_delegation4_u.read;
 				COPY_STATEID(&readres->stateid, new_state);
-				readres->recall = false;
+				readres->recall = prerecall;
 				get_deleg_perm(data->current_entry,
 					       &readres->permissions,
 					       deleg_type);
@@ -1003,6 +1005,7 @@ static void do_delegation(OPEN4args *arg_OPEN4, OPEN4res *res_OPEN4,
 			  state_t *open_state, nfs_client_id_t *clientid)
 {
 	OPEN4resok *resok = &res_OPEN4->OPEN4res_u.resok4;
+	bool prerecall;
 	struct file_deleg_stats *fdeleg_stats =
 				&data->current_entry->object.file.fdeleg_stats;
 
@@ -1017,22 +1020,14 @@ static void do_delegation(OPEN4args *arg_OPEN4, OPEN4res *res_OPEN4,
 	}
 
 	/* Decide if we should delegate, then add it. */
-	if (nfs_param.nfsv4_param.allow_delegations
-	    && data->current_entry->type == REGULAR_FILE
-	    && op_ctx->fsal_export->ops->fs_supports(
-						op_ctx->fsal_export,
-						fso_delegations)
-	    && (op_ctx->export_perms->options &
-		EXPORT_OPTION_DELEGATIONS)
-	    && owner->so_owner.so_nfs4_owner.so_confirmed == TRUE
-	    && !get_cb_chan_down(clientid)
+	if (data->current_entry->type == REGULAR_FILE
 	    && should_we_grant_deleg(data->current_entry,
 				     clientid,
 				     open_state,
-				     arg_OPEN4)) {
+				     arg_OPEN4, owner, &prerecall)) {
 		LogDebug(COMPONENT_STATE, "Attempting to grant delegation");
 		get_delegation(data, arg_OPEN4, open_state, owner, clientid,
-			       resok);
+			       resok, prerecall);
 	} else {
 		resok->delegation.open_delegation4_u.
 			od_whynone.ond_why = WND4_NOT_WANTED;

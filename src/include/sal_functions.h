@@ -590,7 +590,8 @@ void revoke_owner_delegs(state_owner_t *client_owner);
 /* Specifically for delegations */
 bool init_deleg_heuristics(cache_entry_t *entry);
 bool should_we_grant_deleg(cache_entry_t *entry, nfs_client_id_t *client,
-			   state_t *open_state, OPEN4args *args);
+			   state_t *open_state, OPEN4args *args,
+			   state_owner_t *owner, bool *prerecall);
 void init_new_deleg_state(state_data_t *deleg_state,
 			  open_delegation_type4 sd_type,
 			  nfs_client_id_t *clientid);

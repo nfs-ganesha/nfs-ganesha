@@ -49,6 +49,7 @@
 #include "nlm_util.h"
 #include "cache_inode_lru.h"
 #include "export_mgr.h"
+#include "nfs_rpc_callback.h"
 
 /**
  * @brief Initialize new delegation state as argument for state_add()
@@ -188,9 +189,11 @@ bool init_deleg_heuristics(cache_entry_t *entry)
  * @param[in] entry Inode entry the delegation will be on.
  * @param[in] client Client that would own the delegation.
  * @param[in] open_state The open state for the inode to be delegated.
+ * @param[out] prerecall flag for reclaims.
  */
 bool should_we_grant_deleg(cache_entry_t *entry, nfs_client_id_t *client,
-			   state_t *open_state, OPEN4args *args)
+			   state_t *open_state, OPEN4args *args,
+			   state_owner_t *owner, bool *prerecall)
 {
 	/* specific file, all clients, stats */
 	struct file_deleg_stats *file_stats =
@@ -202,17 +205,46 @@ bool should_we_grant_deleg(cache_entry_t *entry, nfs_client_id_t *client,
 	float ACCEPTABLE_OPEN_FREQUENCY = .01; /* per second */
 	time_t spread;
 	open_claim_type4 claim = args->claim.claim;
-	open_delegation_type4 dtype = args->claim.open_claim4_u.delegate_type;
 
 	LogDebug(COMPONENT_STATE, "Checking if we should grant delegation.");
 
-	 if ((claim == CLAIM_PREVIOUS || claim == CLAIM_DELEGATE_PREV) &&
-	     dtype != OPEN_DELEGATE_NONE) {
-		return true;
-	}
-
-	if (claim == CLAIM_DELEGATE_CUR)
+	*prerecall = false;
+	if (!nfs_param.nfsv4_param.allow_delegations
+	    || !op_ctx->fsal_export->ops->fs_supports(
+					op_ctx->fsal_export,
+					fso_delegations)
+	    || !(op_ctx->export_perms->options & EXPORT_OPTION_DELEGATIONS)
+	    || (!owner->so_owner.so_nfs4_owner.so_confirmed
+		&& claim == CLAIM_NULL)
+	    || claim == CLAIM_DELEGATE_CUR)
 		return false;
+
+	/* set the pre-recall flag for reclaims if the server does not want the
+	 * delegation to remain in force */
+	if (get_cb_chan_down(client)) {
+		switch (claim) {
+		case CLAIM_PREVIOUS:
+			*prerecall = true;
+			return args->claim.open_claim4_u.delegate_type
+					== OPEN_DELEGATE_NONE ? false : true;
+		case CLAIM_DELEGATE_PREV:
+			*prerecall = true;
+			return true;
+		default:
+			return false;
+		}
+	} else {
+		*prerecall = false;
+		switch (claim) {
+		case CLAIM_PREVIOUS:
+			return args->claim.open_claim4_u.delegate_type
+					== OPEN_DELEGATE_NONE ? false : true;
+		case CLAIM_DELEGATE_PREV:
+			return true;
+		default:
+			break;
+		}
+	}
 
 	if (open_state->state_type != STATE_TYPE_SHARE) {
 		LogDebug(COMPONENT_STATE,
