@@ -8,6 +8,7 @@ SET(fsallustre_LIB_SRCS
    export.c
    handle.c
    file.c
+   lustre_specific.c
    xattrs.c
    mds.c
    ds.c
@@ -33,7 +34,7 @@ if(USE_FSAL_SHOOK)
     handle.c
     file.c
     xattrs.c
-    shook_glue.c
+    shook_specific.c
     mds.c
     ds.c
     )

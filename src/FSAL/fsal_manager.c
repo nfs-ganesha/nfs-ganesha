@@ -245,6 +245,7 @@ int load_fsal(const char *name,
 
 /* now it is the module's turn to register itself */
 
+
 	if (load_state == loading) {	/* constructor didn't fire */
 		void (*module_init) (void);
 		char *sym_error;

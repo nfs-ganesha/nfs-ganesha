@@ -41,6 +41,9 @@
 #include "fsal_pnfs.h"
 #include "lustre_extended_types.h"
 
+extern const char myname[];
+extern bool is_fsal_shook;
+
 #define min(a, b)          \
 	({ typeof(a) _a = (a);     \
 	typeof(b) _b = (b);        \
