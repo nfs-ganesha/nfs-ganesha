@@ -334,7 +334,9 @@ static int add_client(struct gsh_export *export,
 		cli->client.wildcard.wildcard = gsh_strdup(client_tok);
 		cli->type = WILDCARDHOST_CLIENT;
 	} else if (getaddrinfo(client_tok, NULL, NULL, &info) == 0) {
-		struct addrinfo *ap;
+		struct addrinfo *ap, *ap_last = NULL;
+		struct in_addr in_addr_last;
+		struct in6_addr in6_addr_last;
 
 		for (ap = info; ap != NULL; ap = ap->ai_next) {
 			LogFullDebug(COMPONENT_CONFIG,
@@ -362,10 +364,17 @@ static int add_client(struct gsh_export *export,
 				struct in_addr infoaddr =
 					((struct sockaddr_in *)ap->ai_addr)->
 					sin_addr;
-
+				if (ap_last != NULL &&
+				    ap_last->ai_family == ap->ai_family &&
+				    memcmp(&infoaddr,
+					   &in_addr_last,
+					   sizeof(struct in_addr)) == 0)
+					continue;
 				memcpy(&(cli->client.hostif.clientaddr),
 				       &infoaddr, sizeof(struct in_addr));
 				cli->type = HOSTIF_CLIENT;
+				ap_last = ap;
+				in_addr_last = infoaddr;
 
 			} else if (ap->ai_family == AF_INET6 &&
 				   (ap->ai_socktype == SOCK_STREAM ||
@@ -374,10 +383,18 @@ static int add_client(struct gsh_export *export,
 				    ((struct sockaddr_in6 *)ap->ai_addr)->
 				    sin6_addr;
 
+				if (ap_last != NULL &&
+				    ap_last->ai_family == ap->ai_family &&
+				    memcmp(&infoaddr,
+					   &in6_addr_last,
+					   sizeof(struct in6_addr)) == 0)
+					continue;
 				/* IPv6 address */
 				memcpy(&(cli->client.hostif.clientaddr6),
 				       &infoaddr, sizeof(struct in6_addr));
 				cli->type = HOSTIF_CLIENT_V6;
+				ap_last = ap;
+				in6_addr_last = infoaddr;
 			} else
 				continue;
 			cli->client_perms = *perms;
