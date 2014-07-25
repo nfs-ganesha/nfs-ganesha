@@ -452,7 +452,7 @@ static void pxy_new_socket_ready(void)
 	}
 }
 
-static int pxy_connect(const proxyfs_specific_initinfo_t *info,
+static int pxy_connect(struct pxy_client_params *info,
 		       struct sockaddr_in *dest)
 {
 	int sock;
@@ -487,7 +487,7 @@ static int pxy_connect(const proxyfs_specific_initinfo_t *info,
  */
 static void *pxy_rpc_recv(void *arg)
 {
-	const proxyfs_specific_initinfo_t *info = arg;
+	struct pxy_client_params *info = arg;
 	struct sockaddr_in addr_rpc;
 	struct sockaddr_in *info_sock = (struct sockaddr_in *)&info->srv_addr;
 	char addr[INET_ADDRSTRLEN];

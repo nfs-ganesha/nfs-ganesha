@@ -437,7 +437,11 @@ static fsal_status_t lustre_makedir(struct fsal_obj_handle *dir_hdl,
 
  fileerr:
 	fsal_error = posix2fsal_error(rc);
-	rmdir(newpath);		/* remove the evidence on errors */
+	if (rmdir(newpath))		/* remove the evidence on errors */
+		LogFullDebug(COMPONENT_FSAL,
+			     "lustre_makedir failed, calling rmdir to "
+			     "remove evidence of failure returned error=%d",
+			     errno);
  errout:
 	return fsalstat(fsal_error, rc);
 }

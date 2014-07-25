@@ -73,10 +73,10 @@ static struct config_item_list sec_types[] = {
 };
 #endif
 
-static struct config_item proxy_client_params[] = {
+static struct config_item proxy_remote_params[] = {
 	CONF_ITEM_UI32("Retry_SleepTime", 0, 60, 10,
 		       pxy_client_params, retry_sleeptime),
-	CONF_ITEM_IPV4_ADDR("Srv_Addr", "127.0.0.1",
+	CONF_MAND_IPV4_ADDR("Srv_Addr", "127.0.0.1",
 			    pxy_client_params, srv_addr),
 	CONF_ITEM_UI32("NFS_Service", 0, UINT32_MAX, 100003,
 		       pxy_client_params, srv_prognum),
@@ -119,6 +119,15 @@ static struct config_item proxy_client_params[] = {
 	CONFIG_EOL
 };
 
+static int remote_commit(void *node, void *link_mem, void *self_struct,
+		       struct config_error_type *err_type)
+{
+	/* struct pxy_client_params *pcpi = self_struct; */
+
+	/* Verifications/parameter checking to be added here */
+
+	return 0;
+}
 
 /**
  * @brief Validate and commit the proxy params
@@ -146,9 +155,10 @@ static struct config_item proxy_params[] = {
 		       pxy_fsal_module, fsinfo.auth_exportpath_xdev),
 	CONF_ITEM_MODE("xattr_access_rights", 0, 0777, 0400,
 		       pxy_fsal_module, fsinfo.xattr_access_rights),
-	CONF_ITEM_BLOCK("remote_server", proxy_client_params,
-			noop_conf_init, noop_conf_commit,
-			pxy_fsal_module, special), /*fake filler */
+	CONF_ITEM_BLOCK("Remote_Server", proxy_remote_params,
+		       noop_conf_init, remote_commit,
+		       pxy_fsal_module, special),
+
 	CONFIG_EOL
 };
 
@@ -160,7 +170,6 @@ struct config_block proxy_param = {
 	.blk_desc.u.blk.params = proxy_params,
 	.blk_desc.u.blk.commit = noop_conf_commit
 };
-
 
 static fsal_status_t pxy_init_config(struct fsal_module *fsal_hdl,
 				     config_file_t config_struct)
