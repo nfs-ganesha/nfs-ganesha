@@ -49,6 +49,7 @@
 #include "nlm_util.h"
 #include "cache_inode_lru.h"
 #include "export_mgr.h"
+#include "nfs_rpc_callback.h"
 
 /**
  * @brief Initialize new delegation state as argument for state_add()
@@ -94,7 +95,6 @@ bool update_delegation_stats(state_lock_entry_t *deleg_entry)
 	struct file_deleg_stats *statistics = &entry->object.file.fdeleg_stats;
 
 	statistics->fds_curr_delegations++;
-	statistics->fds_disabled = false;
 	statistics->fds_delegation_count++;
 	statistics->fds_last_delegation = time(NULL);
 
@@ -128,7 +128,6 @@ bool deleg_heuristics_recall(state_lock_entry_t *deleg_entry)
 	struct file_deleg_stats *statistics = &entry->object.file.fdeleg_stats;
 
 	statistics->fds_curr_delegations--;
-	statistics->fds_disabled = false;
 	statistics->fds_recall_count++;
 
 	/* Update delegation stats for client. */
@@ -164,7 +163,6 @@ bool init_deleg_heuristics(cache_entry_t *entry)
 	statistics = &entry->object.file.fdeleg_stats;
 	statistics->fds_curr_delegations = 0;
 	statistics->fds_deleg_type = OPEN_DELEGATE_NONE;
-	statistics->fds_disabled = false;
 	statistics->fds_delegation_count = 0;
 	statistics->fds_recall_count = 0;
 	statistics->fds_last_delegation = 0;
@@ -175,6 +173,11 @@ bool init_deleg_heuristics(cache_entry_t *entry)
 
 	return true;
 }
+
+/* Most clients retry NFS operations after 5 seconds. The following
+ * should be good enough to avoid starving a client's open
+ */
+#define RECALL2DELEG_TIME 10
 
 /**
  * @brief Decide if a delegation should be granted based on heuristics.
@@ -188,76 +191,72 @@ bool init_deleg_heuristics(cache_entry_t *entry)
  * @param[in] entry Inode entry the delegation will be on.
  * @param[in] client Client that would own the delegation.
  * @param[in] open_state The open state for the inode to be delegated.
+ * @param[out] prerecall flag for reclaims.
  */
 bool should_we_grant_deleg(cache_entry_t *entry, nfs_client_id_t *client,
-			   state_t *open_state)
+			   state_t *open_state, OPEN4args *args,
+			   state_owner_t *owner, bool *prerecall)
 {
 	/* specific file, all clients, stats */
-	struct file_deleg_stats *file_stats =
-		&entry->object.file.fdeleg_stats;
+	struct file_deleg_stats *file_stats = &entry->object.file.fdeleg_stats;
 	/* specific client, all files stats */
-	struct c_deleg_stats *cl_stats = &client->cid_deleg_stats;
-	/* specific client, specific file stats */
-	float ACCEPTABLE_FAILS = 0.1; /* 10% */
-	float ACCEPTABLE_OPEN_FREQUENCY = .01; /* per second */
-	time_t spread;
+	struct c_deleg_stats *client_stats = &client->cid_deleg_stats;
+	open_claim_type4 claim = args->claim.claim;
 
 	LogDebug(COMPONENT_STATE, "Checking if we should grant delegation.");
-	return true;
-	if (open_state->state_type != STATE_TYPE_SHARE) {
-		LogDebug(COMPONENT_STATE,
-			 "expects a SHARE open state and no other.");
-		return false;
-	}
 
-	/* Check if this file is opened too frequently to delegate. */
-	spread = time(NULL) - file_stats->fds_first_open;
-	if (spread != 0 &&
-	     (file_stats->fds_num_opens / spread) > ACCEPTABLE_OPEN_FREQUENCY) {
-		LogDebug(COMPONENT_STATE,
-			 "This file is opened too frequently to delegate.");
-		return false;
-	}
+	assert(open_state->state_type == STATE_TYPE_SHARE);
 
-	/* Check if open state and requested delegation agree. */
-	if (file_stats->fds_curr_delegations > 0) {
-		if (file_stats->fds_deleg_type == OPEN_DELEGATE_READ &&
-		    open_state->state_data.share.share_access &
-		    OPEN4_SHARE_ACCESS_WRITE) {
-			LogMidDebug(COMPONENT_STATE,
-				    "READ delegate requested, but file is opened for WRITE.");
+	*prerecall = false;
+	if (!nfs_param.nfsv4_param.allow_delegations
+	    || !op_ctx->fsal_export->ops->fs_supports(
+					op_ctx->fsal_export,
+					fso_delegations)
+	    || !(op_ctx->export_perms->options & EXPORT_OPTION_DELEGATIONS)
+	    || (!owner->so_owner.so_nfs4_owner.so_confirmed
+		&& claim == CLAIM_NULL)
+	    || claim == CLAIM_DELEGATE_CUR)
+		return false;
+
+	/* set the pre-recall flag for reclaims if the server does not want the
+	 * delegation to remain in force */
+	if (get_cb_chan_down(client)) {
+		switch (claim) {
+		case CLAIM_PREVIOUS:
+			*prerecall = true;
+			return args->claim.open_claim4_u.delegate_type
+					== OPEN_DELEGATE_NONE ? false : true;
+		case CLAIM_DELEGATE_PREV:
+			*prerecall = true;
+			return true;
+		default:
 			return false;
 		}
-		if (file_stats->fds_deleg_type == OPEN_DELEGATE_WRITE &&
-		    !(open_state->state_data.share.share_access &
-		      OPEN4_SHARE_ACCESS_WRITE)) {
-			LogMidDebug(COMPONENT_STATE,
-				    "WRITE delegate requested, but file is not opened for WRITE.");
+	} else {
+		*prerecall = false;
+		switch (claim) {
+		case CLAIM_PREVIOUS:
+			return args->claim.open_claim4_u.delegate_type
+					== OPEN_DELEGATE_NONE ? false : true;
+		case CLAIM_DELEGATE_PREV:
+			return true;
+		default:
+			break;
 		}
 	}
 
+	/* If there is a recent recall on this file, the client that made
+	 * the conflicting open may retry the open later. Don't give out
+	 * delegation to avoid starving the client's open that caused
+	 * the recall.
+	 */
+	if (file_stats->fds_last_recall != 0 &&
+	    time(NULL) - file_stats->fds_last_recall < RECALL2DELEG_TIME)
+		return false;
+
 	/* Check if this is a misbehaving or unreliable client */
-	if (cl_stats->tot_recalls > 0 &&
-	    ((1.0 - (cl_stats->failed_recalls / cl_stats->tot_recalls))
-	     > ACCEPTABLE_FAILS)) {
-		LogDebug(COMPONENT_STATE,
-			 "Client is %.0f unreliable during recalls. Allowed failure rate is %.0f. Denying delegation.",
-			 1.0 - (cl_stats->failed_recalls
-				/ cl_stats->tot_recalls),
-			 ACCEPTABLE_FAILS);
+	if (client_stats->num_revokes > 2) /* more than 2 revokes */
 		return false;
-	}
-	/* minimum average milliseconds that delegations should be held on a
-	   file. if less, then this is not a good file for delegations. */
-#define MIN_AVG_HOLD 1500
-	if (file_stats->fds_avg_hold < MIN_AVG_HOLD
-	    && file_stats->fds_avg_hold != 0) {
-		LogDebug(COMPONENT_STATE,
-			 "Average length of delegation (%lld) is less than minimum avg (%lld). Denying delegation.",
-			 (long long) file_stats->fds_avg_hold,
-			 (long long) MIN_AVG_HOLD);
-		return false;
-	}
 
 	LogDebug(COMPONENT_STATE, "Let's delegate!!");
 	return true;

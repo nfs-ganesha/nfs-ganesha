@@ -81,10 +81,10 @@
  *
  * Different states a delegation can be in during its lifetime
  */
-#define DELEG_GRANTED          0x00000001  /* Granted               */
-#define DELEG_RECALL_WIP       0x00000002  /* Recall in progress    */
-#define DELEG_REVOKED          0x00000004  /* Revoked               */
-#define DELEG_RETURNED         0x00000010  /* Delegation returned   */
+enum deleg_state {
+	DELEG_GRANTED =  1,	/* Granted               */
+	DELEG_RECALL_WIP,	/* Recall in progress    */
+};
 
 /* Forward references to types */
 typedef struct state_nfs4_owner_t state_nfs4_owner_t;
@@ -309,7 +309,7 @@ typedef struct state_lock_t {
 typedef struct state_deleg__ {
 	open_delegation_type4 sd_type;
 	time_t sd_grant_time;               /* time of successful delegation */
-	uint32_t sd_state;
+	enum deleg_state sd_state;
 	struct cf_deleg_stats sd_clfile_stats;  /* client specific */
 } state_deleg_t;
 

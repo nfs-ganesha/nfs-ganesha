@@ -362,7 +362,6 @@ struct entry_export_map {
 struct file_deleg_stats {
 	uint32_t fds_curr_delegations;    /* number of delegations on file */
 	open_delegation_type4 fds_deleg_type; /* delegation type */
-	bool fds_disabled;              /* deleg disabled for this file */
 	uint32_t fds_delegation_count;  /* times file has been delegated */
 	uint32_t fds_recall_count;      /* times file has been recalled */
 	time_t fds_avg_hold;            /* avg amount of time deleg held */

@@ -569,8 +569,6 @@ void nfs4_cp_pop_revoked_delegs(clid_entry_t *clid_ent,
 	struct dirent *dentp;
 	DIR *dp;
 	rdel_fh_t *new_ent;
-	char *clid_str;
-	int len;
 
 	glist_init(&clid_ent->cl_rfh_list);
 	/* Read the contents from recov dir of this clientid. */
@@ -581,18 +579,18 @@ void nfs4_cp_pop_revoked_delegs(clid_entry_t *clid_ent,
 		return;
 	}
 
-	dentp = readdir(dp);
-	while (dentp != NULL) {
+	for (dentp = readdir(dp); dentp != NULL; dentp = readdir(dp)) {
 		if (!strcmp(dentp->d_name, ".") || !strcmp(dentp->d_name, ".."))
-			goto read_next;
+			continue;
 		/* All the revoked filehandles stored as hidden files */
 		if (dentp->d_name[0] != '.') {
 			/* Something wrong; it should not happen */
 			LogMidDebug(COMPONENT_CLIENTID,
 				"%s showed up along with revoked FHs. Skipping",
 				dentp->d_name);
-			goto read_next;
+			continue;
 		}
+
 		if (tgtdir) {
 			char lopath[PATH_MAX + 1];
 			int fd;
@@ -607,29 +605,26 @@ void nfs4_cp_pop_revoked_delegs(clid_entry_t *clid_ent,
 				close(fd);
 			}
 		}
+
 		new_ent = gsh_malloc(sizeof(rdel_fh_t));
 		if (new_ent == NULL) {
 			LogEvent(COMPONENT_CLIENTID, "Alloc Failed: rdel_fh_t");
-			goto read_next;
+			continue;
 		}
 
-		len = strlen(dentp->d_name);
-		/* Use the first . space for terminating NULL */
-		new_ent->rdfh_handle_str = gsh_malloc(len);
+		/* Ignore the beginning dot and copy the rest (file handle) */
+		new_ent->rdfh_handle_str = gsh_strdup(dentp->d_name+1);
 		if (new_ent->rdfh_handle_str == NULL) {
 			gsh_free(new_ent);
 			LogEvent(COMPONENT_CLIENTID,
 				"Alloc Failed: rdel_fh_t->rdfh_handle_str");
-			goto read_next;
+			continue;
 		}
-		clid_str = dentp->d_name + 1;
-		strcpy(new_ent->rdfh_handle_str, clid_str);
-		glist_init(&new_ent->rdfh_list);
 		glist_add(&clid_ent->cl_rfh_list, &new_ent->rdfh_list);
 		LogFullDebug(COMPONENT_CLIENTID,
 			"revoked handle: %s",
 			new_ent->rdfh_handle_str);
-read_next:
+
 		/* Since the handle is loaded into memory, go ahead and
 		 * delete it from the stable storage.
 		 */
@@ -643,8 +638,8 @@ read_next:
 						errno);
 			}
 		}
-		dentp = readdir(dp);
 	}
+
 	(void)closedir(dp);
 }
 

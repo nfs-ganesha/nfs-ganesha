@@ -1611,6 +1611,8 @@ state_status_t delegrecall_impl(cache_entry_t *entry)
 		}
 		*deleg_state = DELEG_RECALL_WIP;
 
+		entry->object.file.fdeleg_stats.fds_last_recall = time(NULL);
+
 		if (nfs_client_id_get_confirmed(deleg_entry->
 						    sle_owner->so_owner.
 						    so_nfs4_owner.so_clientid,

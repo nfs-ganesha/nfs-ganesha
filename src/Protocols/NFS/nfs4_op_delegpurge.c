@@ -68,7 +68,7 @@ int nfs4_op_delegpurge(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* Lock are not supported */
 	resp->resop = NFS4_OP_DELEGPURGE;
-	res_DELEGPURGE4->status = NFS4_OK;
+	res_DELEGPURGE4->status = NFS4ERR_NOTSUPP;
 
 	return res_DELEGPURGE4->status;
 }				/* nfs4_op_delegpurge */

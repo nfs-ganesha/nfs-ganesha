@@ -90,7 +90,7 @@
 #define ID_ARG			\
 {				\
 	.name = "id",		\
-	.type = "i",		\
+	.type = "q",		\
 	.direction = "in"	\
 }
 
