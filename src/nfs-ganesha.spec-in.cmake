@@ -144,6 +144,7 @@ Requires: nfs-ganesha
 This package contains a FSAL shared object to
 be used with NFS-Ganesha to support PROXY based filesystems
 
+%if %{with_utils}
 %package utils
 Summary: The NFS-GANESHA's util scripts
 Group: Applications/System
@@ -152,6 +153,7 @@ Requires: nfs-ganesha python
 
 %description utils
 This package contains utility scripts for managing the NFS-GANESHA server
+%endif
 
 # Option packages start here. use "rpmbuild --with lustre" (or equivalent)
 # for activating this part of the spec file
