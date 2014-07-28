@@ -874,26 +874,15 @@ static nfsstat4 open4_claim_deleg(OPEN4args *arg, compound_data_t *data,
 {
 	open_claim_type4 claim = arg->claim.claim;
 	state_t *found_state = NULL;
-	stateid4 *rcurr_state = NULL;
+	stateid4 *rcurr_state;
 	state_lock_entry_t *found_entry = NULL;
-	cache_entry_t *entry_lookup = NULL;
-	const utf8string *utfname = NULL;
+	cache_entry_t *entry_lookup;
+	const utf8string *utfname;
 	char *filename;
 	struct glist_head *glist;
 	cache_inode_status_t cache_status;
 	nfsstat4 status;
 
-	if (claim == CLAIM_DELEGATE_PREV) {
-		/* Read and validate oldname and newname from
-		 * uft8 strings. */
-		utfname = &arg->claim.open_claim4_u.
-				file_delegate_prev;
-	} else {
-		utfname = &arg->claim.open_claim4_u.
-				delegate_cur_info.file;
-		rcurr_state = &arg->claim.open_claim4_u.
-				delegate_cur_info.delegate_stateid;
-	}
 	if (!op_ctx->fsal_export->ops->fs_supports(
 			op_ctx->fsal_export, fso_delegations)) {
 		LogDebug(COMPONENT_STATE,
@@ -901,17 +890,14 @@ static nfsstat4 open4_claim_deleg(OPEN4args *arg, compound_data_t *data,
 		return NFS4ERR_NOTSUPP;
 	}
 
-	/* Check for name length */
-	if (utfname->utf8string_len > MAXNAMLEN) {
-		LogDebug(COMPONENT_STATE,
-			 "NFS4 OPEN returning NFS4ERR_NAMETOOLONG for CLAIM_DELEGATE");
-		return NFS4ERR_NAMETOOLONG;
-	}
-
-	/* get the filename from the argument, it should not be empty */
-	if (utfname->utf8string_len == 0) {
-		LogDebug(COMPONENT_NFS_V4, "zero length filename");
-		return NFS4ERR_INVAL;
+	assert(claim == CLAIM_DELEGATE_PREV || claim == CLAIM_DELEGATE_CUR);
+	if (claim == CLAIM_DELEGATE_PREV) {
+		utfname = &arg->claim.open_claim4_u.file_delegate_prev;
+	} else {
+		utfname = &arg->claim.open_claim4_u.
+				delegate_cur_info.file;
+		rcurr_state = &arg->claim.open_claim4_u.
+				delegate_cur_info.delegate_stateid;
 	}
 
 	LogDebug(COMPONENT_NFS_V4,
@@ -922,9 +908,7 @@ static nfsstat4 open4_claim_deleg(OPEN4args *arg, compound_data_t *data,
 		 utf8string_val);
 
 	/* Check if filename is correct */
-	status = nfs4_utf8string2dynamic(utfname, UTF8_SCAN_ALL,
-					 &filename);
-
+	status = nfs4_utf8string2dynamic(utfname, UTF8_SCAN_ALL, &filename);
 	if (status != NFS4_OK) {
 		LogDebug(COMPONENT_NFS_V4, "Invalid filename");
 		return status;
@@ -936,8 +920,7 @@ static nfsstat4 open4_claim_deleg(OPEN4args *arg, compound_data_t *data,
 					  &entry_lookup);
 
 	if (cache_status != CACHE_INODE_SUCCESS) {
-		LogDebug(COMPONENT_NFS_CB, "%s lookup failed.",
-			filename);
+		LogDebug(COMPONENT_NFS_V4, "%s lookup failed.", filename);
 		gsh_free(filename);
 		return nfs4_Errno(cache_status);
 	}
@@ -952,25 +935,14 @@ static nfsstat4 open4_claim_deleg(OPEN4args *arg, compound_data_t *data,
 
 	if (claim == CLAIM_DELEGATE_CUR) {
 		PTHREAD_RWLOCK_wrlock(&entry_lookup->state_lock);
-		glist_for_each(glist,
-			       &entry_lookup->object.file.deleg_list) {
+		glist_for_each(glist, &entry_lookup->object.file.deleg_list) {
 			found_entry = glist_entry(glist,
 						  state_lock_entry_t,
 						  sle_list);
-			if (found_entry == NULL) {
-				LogDebug(COMPONENT_NFS_V4,
-					"Could not find stateid for CLAIM_DELEGATE_CUR");
-				return NFS4ERR_BAD_STATEID;
-			}
-
 			found_state = found_entry->sle_state;
 			/* Check if the supplied state and found state
 			 * match. If so we found the match. */
-			if ((found_state->state_seqid ==
-				rcurr_state->seqid) &&
-			    (!memcmp(found_state->stateid_other,
-					rcurr_state->other,
-					OTHERSIZE))) {
+			if (SAME_STATEID(rcurr_state, found_state)) {
 				LogDebug(COMPONENT_NFS_V4,
 					 "found matching entry %p",
 					 found_entry);
