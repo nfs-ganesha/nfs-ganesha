@@ -859,6 +859,140 @@ static nfsstat4 open4_claim_null(OPEN4args *arg, compound_data_t *data,
 	return nfs_status;
 }
 
+/**
+ * @brief Check delegation claims while opening a file
+ *
+ * This function implements the CLAIM_DELEGATE_CUR and
+ * CLAIM_DELEGATE_PREV claim types.
+ *
+ * @param[in]     arg   OPEN4 arguments
+ * @param[in,out] data  Comopund's data
+ * @param[out]    res   OPEN4 rsponse
+ */
+static nfsstat4 open4_claim_deleg(OPEN4args *arg, compound_data_t *data,
+				  nfs_client_id_t *clientid)
+{
+	open_claim_type4 claim = arg->claim.claim;
+	state_t *found_state = NULL;
+	stateid4 *rcurr_state = NULL;
+	state_lock_entry_t *found_entry = NULL;
+	cache_entry_t *entry_lookup = NULL;
+	const utf8string *utfname = NULL;
+	char *filename;
+	struct glist_head *glist;
+	cache_inode_status_t cache_status;
+	nfsstat4 status;
+
+	if (claim == CLAIM_DELEGATE_PREV) {
+		/* Read and validate oldname and newname from
+		 * uft8 strings. */
+		utfname = &arg->claim.open_claim4_u.
+				file_delegate_prev;
+	} else {
+		utfname = &arg->claim.open_claim4_u.
+				delegate_cur_info.file;
+		rcurr_state = &arg->claim.open_claim4_u.
+				delegate_cur_info.delegate_stateid;
+	}
+	if (!op_ctx->fsal_export->ops->fs_supports(
+			op_ctx->fsal_export, fso_delegations)) {
+		LogDebug(COMPONENT_STATE,
+			 "NFS4 OPEN returning NFS4ERR_NOTSUPP for CLAIM_DELEGATE");
+		return NFS4ERR_NOTSUPP;
+	}
+
+	/* Check for name length */
+	if (utfname->utf8string_len > MAXNAMLEN) {
+		LogDebug(COMPONENT_STATE,
+			 "NFS4 OPEN returning NFS4ERR_NAMETOOLONG for CLAIM_DELEGATE");
+		return NFS4ERR_NAMETOOLONG;
+	}
+
+	/* get the filename from the argument, it should not be empty */
+	if (utfname->utf8string_len == 0) {
+		LogDebug(COMPONENT_NFS_V4, "zero length filename");
+		return NFS4ERR_INVAL;
+	}
+
+	LogDebug(COMPONENT_NFS_V4,
+		 "file name: %.*s",
+		 arg->claim.open_claim4_u.delegate_cur_info.file.
+		 utf8string_len,
+		 arg->claim.open_claim4_u.delegate_cur_info.file.
+		 utf8string_val);
+
+	/* Check if filename is correct */
+	status = nfs4_utf8string2dynamic(utfname, UTF8_SCAN_ALL,
+					 &filename);
+
+	if (status != NFS4_OK) {
+		LogDebug(COMPONENT_NFS_V4, "Invalid filename");
+		return status;
+	}
+
+	/* Does a file with this name already exist ? */
+	cache_status = cache_inode_lookup(data->current_entry,
+					  filename,
+					  &entry_lookup);
+
+	if (cache_status != CACHE_INODE_SUCCESS) {
+		LogDebug(COMPONENT_NFS_CB, "%s lookup failed.",
+			filename);
+		gsh_free(filename);
+		return nfs4_Errno(cache_status);
+	}
+	gsh_free(filename);
+
+	/* cache_status == CACHE_INODE_SUCCESS */
+	status = open4_create_fh(data, entry_lookup);
+	if (status != NFS4_OK) {
+		LogDebug(COMPONENT_NFS_V4, "open4_create_fh failed");
+		return status;
+	}
+
+	if (claim == CLAIM_DELEGATE_CUR) {
+		PTHREAD_RWLOCK_wrlock(&entry_lookup->state_lock);
+		glist_for_each(glist,
+			       &entry_lookup->object.file.deleg_list) {
+			found_entry = glist_entry(glist,
+						  state_lock_entry_t,
+						  sle_list);
+			if (found_entry == NULL) {
+				LogDebug(COMPONENT_NFS_V4,
+					"Could not find stateid for CLAIM_DELEGATE_CUR");
+				return NFS4ERR_BAD_STATEID;
+			}
+
+			found_state = found_entry->sle_state;
+			/* Check if the supplied state and found state
+			 * match. If so we found the match. */
+			if ((found_state->state_seqid ==
+				rcurr_state->seqid) &&
+			    (!memcmp(found_state->stateid_other,
+					rcurr_state->other,
+					OTHERSIZE))) {
+				LogDebug(COMPONENT_NFS_V4,
+					 "found matching entry %p",
+					 found_entry);
+				break;
+			}
+		}
+		PTHREAD_RWLOCK_unlock(&entry_lookup->state_lock);
+		LogDebug(COMPONENT_NFS_V4,
+			 "done with CLAIM_DELEGATE_CUR");
+	} else { /* We are in CLAIM_DELEGATE_PREV case */
+		if (!nfs4_can_deleg_reclaim_prev(clientid,
+						&data->currentFH)) {
+			/* It must have been revoked hence
+			 * the client can't reclaim.
+			 */
+			LogInfo(COMPONENT_NFS_V4, "Can't reclaim prev");
+			return NFS4ERR_RECLAIM_BAD;
+		}
+	}
+
+	return NFS4_OK;
+}
 
 /**
  * @brief Create a new delegation state then get the delegation.
@@ -1075,17 +1209,9 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 	open_claim_type4 claim = arg_OPEN4->claim.claim;
 	/* The open state for the file */
 	state_t *file_state = NULL;
-	state_t *found_state = NULL;
-	stateid4 *rcurr_state = NULL;
 	/* True if the state was newly created */
 	bool new_state = false;
-	cache_inode_status_t cache_status;
-	const utf8string *utfname = NULL;
-	char *filename;
 	cache_entry_t *entry_parent = data->current_entry;
-	cache_entry_t *entry_lookup = NULL;
-	struct glist_head *glist;
-	state_lock_entry_t *found_entry = NULL;
 	int retval;
 	bool created = false;
 
@@ -1274,125 +1400,10 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 		break;
 
 	case CLAIM_DELEGATE_CUR:
-		if (claim == CLAIM_DELEGATE_PREV) {
-			/* Read and validate oldname and newname from
-			 * uft8 strings. */
-			utfname = &arg_OPEN4->claim.open_claim4_u.
-					file_delegate_prev;
-		} else {
-			utfname = &arg_OPEN4->claim.open_claim4_u.
-					delegate_cur_info.file;
-			rcurr_state = &arg_OPEN4->claim.open_claim4_u.
-					delegate_cur_info.delegate_stateid;
-		}
-		if (!op_ctx->fsal_export->ops->fs_supports(
-				op_ctx->fsal_export, fso_delegations)) {
-			res_OPEN4->status = NFS4ERR_NOTSUPP;
-			LogDebug(COMPONENT_STATE,
-				 "NFS4 OPEN returning NFS4ERR_NOTSUPP for CLAIM_DELEGATE");
-			goto out;
-		}
-
-		/* Check for name length */
-		if (utfname->utf8string_len > MAXNAMLEN) {
-			res_OPEN4->status = NFS4ERR_NAMETOOLONG;
-			LogDebug(COMPONENT_STATE,
-				 "NFS4 OPEN returning NFS4ERR_NAMETOOLONG for CLAIM_DELEGATE");
-			goto out;
-		}
-
-		/* get the filename from the argument, it should not be empty */
-		if (utfname->utf8string_len == 0) {
-			res_OPEN4->status = NFS4ERR_INVAL;
-			LogDebug(COMPONENT_NFS_V4, "zero length filename");
-			goto out;
-		}
-
-		LogDebug(COMPONENT_NFS_V4,
-			 "file name: %.*s",
-			 arg_OPEN4->claim.open_claim4_u.delegate_cur_info.file.
-			 utf8string_len,
-			 arg_OPEN4->claim.open_claim4_u.delegate_cur_info.file.
-			 utf8string_val);
-
-		/* Check if filename is correct */
-		res_OPEN4->status = nfs4_utf8string2dynamic(
-			utfname,
-			UTF8_SCAN_ALL,
-			&filename);
-
-		if (res_OPEN4->status != NFS4_OK) {
-			LogDebug(COMPONENT_NFS_V4, "Invalid filename");
-			goto out;
-		}
-
-		/* Does a file with this name already exist ? */
-		cache_status = cache_inode_lookup(entry_parent,
-						  filename,
-						  &entry_lookup);
-
-
-		if (cache_status != CACHE_INODE_SUCCESS) {
-			res_OPEN4->status = nfs4_Errno(cache_status);
-			LogDebug(COMPONENT_NFS_CB, "%s lookup failed.",
-				filename);
-			gsh_free(filename);
-			goto out;
-		}
-		gsh_free(filename);
-
-		/* cache_status == CACHE_INODE_SUCCESS */
-		res_OPEN4->status = open4_create_fh(data, entry_lookup);
-		if (res_OPEN4->status != NFS4_OK) {
-			LogDebug(COMPONENT_NFS_V4, "open4_create_fh failed");
-			goto out;
-		}
-
-		if (claim == CLAIM_DELEGATE_CUR) {
-			PTHREAD_RWLOCK_wrlock(&entry_lookup->state_lock);
-			glist_for_each(glist,
-				       &entry_lookup->object.file.deleg_list) {
-				found_entry = glist_entry(glist,
-							  state_lock_entry_t,
-							  sle_list);
-				if (found_entry == NULL) {
-					LogDebug(COMPONENT_NFS_V4,
-						"Could not find stateid for CLAIM_DELEGATE_CUR");
-					res_OPEN4->status = NFS4ERR_BAD_STATEID;
-					goto out;
-				}
-
-				found_state = found_entry->sle_state;
-				/* Check if the supplied state and found state
-				 * match. If so we found the match. */
-				if ((found_state->state_seqid ==
-					rcurr_state->seqid) &&
-				    (!memcmp(found_state->stateid_other,
-						rcurr_state->other,
-						OTHERSIZE))) {
-					LogDebug(COMPONENT_NFS_V4,
-						 "found matching entry %p",
-						 found_entry);
-					break;
-				}
-			}
-			PTHREAD_RWLOCK_unlock(&entry_lookup->state_lock);
-			LogDebug(COMPONENT_NFS_V4,
-				 "done with CLAIM_DELEGATE_CUR");
-		} else { /* We are in CLAIM_DELEGATE_PREV case */
-			if (!nfs4_can_deleg_reclaim_prev(clientid,
-							&data->currentFH)) {
-				/* It must have been revoked hence
-				 * the client can't reclaim.
-				 */
-				LogInfo(COMPONENT_NFS_V4, "Can't reclaim prev");
-				res_OPEN4->status = NFS4ERR_RECLAIM_BAD;
-				goto out;
-			}
-
-		}
-
+		res_OPEN4->status = open4_claim_deleg(arg_OPEN4, data,
+						      clientid);
 		break;
+
 	default:
 		LogFatal(COMPONENT_STATE,
 			 "Programming error.  Invalid claim after check.");
