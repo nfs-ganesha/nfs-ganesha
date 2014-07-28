@@ -900,12 +900,8 @@ static nfsstat4 open4_claim_deleg(OPEN4args *arg, compound_data_t *data,
 				delegate_cur_info.delegate_stateid;
 	}
 
-	LogDebug(COMPONENT_NFS_V4,
-		 "file name: %.*s",
-		 arg->claim.open_claim4_u.delegate_cur_info.file.
-		 utf8string_len,
-		 arg->claim.open_claim4_u.delegate_cur_info.file.
-		 utf8string_val);
+	LogDebug(COMPONENT_NFS_V4, "file name: %.*s",
+		 utfname->utf8string_len, utfname->utf8string_val);
 
 	/* Check if filename is correct */
 	status = nfs4_utf8string2dynamic(utfname, UTF8_SCAN_ALL, &filename);
