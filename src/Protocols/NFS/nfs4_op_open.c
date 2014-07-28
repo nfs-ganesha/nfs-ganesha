@@ -873,9 +873,7 @@ static nfsstat4 open4_claim_deleg(OPEN4args *arg, compound_data_t *data,
 				  nfs_client_id_t *clientid)
 {
 	open_claim_type4 claim = arg->claim.claim;
-	state_t *found_state = NULL;
 	stateid4 *rcurr_state;
-	state_lock_entry_t *found_entry = NULL;
 	cache_entry_t *entry_lookup;
 	const utf8string *utfname;
 	char *filename;
@@ -930,24 +928,32 @@ static nfsstat4 open4_claim_deleg(OPEN4args *arg, compound_data_t *data,
 	}
 
 	if (claim == CLAIM_DELEGATE_CUR) {
+		state_lock_entry_t *iter_lock;
+		state_t *iter_state;
+		state_t *found_state = NULL;
+
 		PTHREAD_RWLOCK_wrlock(&entry_lookup->state_lock);
 		glist_for_each(glist, &entry_lookup->object.file.deleg_list) {
-			found_entry = glist_entry(glist,
-						  state_lock_entry_t,
-						  sle_list);
-			found_state = found_entry->sle_state;
-			/* Check if the supplied state and found state
-			 * match. If so we found the match. */
-			if (SAME_STATEID(rcurr_state, found_state)) {
-				LogDebug(COMPONENT_NFS_V4,
-					 "found matching entry %p",
-					 found_entry);
+			iter_lock = glist_entry(glist,
+						state_lock_entry_t,
+						sle_list);
+			iter_state = iter_lock->sle_state;
+			if (SAME_STATEID(rcurr_state, iter_state)) {
+				found_state = iter_state;
+				LogFullDebug(COMPONENT_NFS_V4,
+					     "found matching state %p",
+					     found_state);
 				break;
 			}
 		}
 		PTHREAD_RWLOCK_unlock(&entry_lookup->state_lock);
-		LogDebug(COMPONENT_NFS_V4,
-			 "done with CLAIM_DELEGATE_CUR");
+
+		if (found_state == NULL) {
+			LogDebug(COMPONENT_NFS_V4,
+				 "state not found with CLAIM_DELEGATE_CUR");
+			return NFS4ERR_BAD_STATEID;
+		}
+		LogFullDebug(COMPONENT_NFS_V4, "done with CLAIM_DELEGATE_CUR");
 	} else { /* We are in CLAIM_DELEGATE_PREV case */
 		if (!nfs4_can_deleg_reclaim_prev(clientid,
 						&data->currentFH)) {
