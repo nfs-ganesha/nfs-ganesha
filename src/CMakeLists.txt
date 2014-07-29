@@ -237,6 +237,13 @@ set(MODULES_PATH ${CMAKE_INSTALL_PREFIX}
 # Enable GCC Thread-sanitizer
 option(USE_TSAN "Enable GCC Thread-Sanitizer" OFF)
 
+# Enable LTTng tracing
+option(USE_LTTNG "Enable LTTng tracing" OFF)
+
+#
+# End build options
+#
+
 # Choose a shortcut build config
 
 IF(BUILD_CONFIG)
@@ -638,6 +645,17 @@ if(_MSPAC_SUPPORT)
   endif(WBCLIENT_FOUND AND WBCLIENT4_H)
 endif(_MSPAC_SUPPORT)
 
+if(USE_LTTNG)
+  # Set LTTNG_PATH_HINT on the command line
+  # if your LTTng is not in a standard place
+  find_package(LTTng)
+  if(LTTNG_FOUND)
+  else(LTTNG_FOUND)
+    message(WARNING "LTTng libraries not found. Disabling USE_LTTNG")
+    set(USE_LTTNG OFF)
+  endif(LTTNG_FOUND)
+endif(USE_LTTNG)
+
 # Cmake 2.6 has issue in managing BISON and FLEX
 if( "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_LESS "2.8" )
    message( status "CMake 2.6 detected, using portability hooks" )
@@ -832,6 +850,11 @@ add_subdirectory(tools)
 if(USE_DBUS)
   add_subdirectory(dbus)
 endif(USE_DBUS)
+
+if(USE_LTTNG)
+  add_subdirectory(tracing)
+endif(USE_LTTNG)
+
 add_subdirectory(scripts)
 
 # display configuration vars
@@ -893,6 +916,7 @@ message(STATUS "FSAL_DESTINATION = ${FSAL_DESTINATION}")
 message(STATUS "USE_ADMIN_TOOLS = ${USE_ADMIN_TOOLS}")
 message(STATUS "MODULES_PATH = ${MODULES_PATH}")
 message(STATUS "USE_TSAN = ${USE_TSAN}")
+message(STATUS "USE_LTTNG = ${USE_LTTNG}")
 
 #force command line options to be stored in cache
 set(USE_FSAL_VFS ${USE_FSAL_VFS}
@@ -1024,6 +1048,11 @@ set(USE_ADMIN_TOOLS ${USE_ADMIN_TOOLS}
 set(USE_TSAN ${USE_TSAN}
   CACHE BOOL
   "Enable GCC Thread-Sanitizer"
+  FORCE)
+
+set(USE_LTTNG ${USE_LTTNG}
+  CACHE BOOL
+  "Enable LTTng tracing"
   FORCE)
 
 # Now create a useable config.h

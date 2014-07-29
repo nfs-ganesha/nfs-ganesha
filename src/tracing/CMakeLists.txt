@@ -1,0 +1,14 @@
+include_directories(
+  ${LTTNG_INCLUDE_DIR}
+)
+
+set(ganesha_trace_LIB_SRCS
+)
+
+add_library(ganesha_trace SHARED ${ganesha_trace_LIB_SRCS})
+
+target_link_libraries(ganesha_trace
+  ${LTTNG_LIBRARIES}
+)
+
+install(TARGETS ganesha_trace COMPONENT tracing DESTINATION ${FSAL_DESTINATION} )
