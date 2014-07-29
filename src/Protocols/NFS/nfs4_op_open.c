@@ -1066,8 +1066,11 @@ static void get_delegation(compound_data_t *data, OPEN4args *args,
 			       &new_state->state_export_list);
 		PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
 
-		state_status = acquire_lease(data->current_entry, clientowner,
-					     new_state, &lock_desc);
+		/* acquire_lease_lock() gets the delegation from FSAL */
+		state_status = acquire_lease_lock(data->current_entry,
+						  clientowner,
+						  new_state,
+						  &lock_desc);
 		if (state_status != STATE_SUCCESS) {
 			LogDebug(COMPONENT_NFS_V4_LOCK,
 				 "get_delegation call added state but failed to"

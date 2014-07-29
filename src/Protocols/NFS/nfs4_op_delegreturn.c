@@ -144,10 +144,11 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t *data,
 	deleg_heuristics_recall(found_lock);
 
 	/* Now we have a lock owner and a stateid.
-	 * Go ahead and push unlock into SAL (and FSAL).
+	 * Go ahead and push unlock into SAL (and FSAL) to return
+	 * the delegation.
 	 */
-	state_status = release_lease(data->current_entry, lock_owner,
-				     state_found, &lock_desc);
+	state_status = release_lease_lock(data->current_entry, lock_owner,
+					  state_found, &lock_desc);
 	if (state_status != STATE_SUCCESS) {
 		/* Save the response in the lock owner */
 		Copy_nfs4_state_req(lock_owner,

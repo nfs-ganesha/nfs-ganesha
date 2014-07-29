@@ -2419,7 +2419,7 @@ state_status_t state_test(cache_entry_t *entry,
 }
 
 /**
- * @brief Attempt to acquire a lease lock
+ * @brief Attempt to acquire a lease lock (delegation)
  *
  * @param[in]  entry      Entry to lock
  * @param[in]  owner      Lock owner
@@ -2428,8 +2428,8 @@ state_status_t state_test(cache_entry_t *entry,
  *
  * state_lock must be held while calling this function
  */
-state_status_t acquire_lease(cache_entry_t *entry, state_owner_t *owner,
-			     state_t *state, fsal_lock_param_t *lock)
+state_status_t acquire_lease_lock(cache_entry_t *entry, state_owner_t *owner,
+				  state_t *state, fsal_lock_param_t *lock)
 {
 	state_lock_entry_t *deleg_lock;
 	state_status_t status;
@@ -2460,7 +2460,7 @@ state_status_t acquire_lease(cache_entry_t *entry, state_owner_t *owner,
 }
 
 /**
- * @brief Release a lease lock
+ * @brief Release a lease lock (delegation)
  *
  * @param[in] entry    File to unlock
  * @param[in] owner    Owner of lock
@@ -2469,8 +2469,8 @@ state_status_t acquire_lease(cache_entry_t *entry, state_owner_t *owner,
  *
  * state_lock must be held while calling this function
  */
-state_status_t release_lease(cache_entry_t *entry, state_owner_t *owner,
-			     state_t *state, fsal_lock_param_t *lock)
+state_status_t release_lease_lock(cache_entry_t *entry, state_owner_t *owner,
+				  state_t *state, fsal_lock_param_t *lock)
 {
 	state_status_t status;
 	bool removed;
