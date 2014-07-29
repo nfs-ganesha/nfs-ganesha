@@ -212,21 +212,6 @@ state_status_t state_add_impl(cache_entry_t *entry, state_type_t state_type,
 		got_pinned = true;
 	}
 
-	pnew_state = pool_alloc(state_v4_pool, NULL);
-
-	if (pnew_state == NULL) {
-		LogCrit(COMPONENT_STATE,
-			"Can't allocate a new file state from cache pool");
-
-		/* stat */
-		status = STATE_MALLOC_ERROR;
-
-		if (got_pinned)
-			cache_inode_dec_pin_ref(entry, false);
-
-		return status;
-	}
-
 	/* Browse the state's list */
 	glist_for_each(glist, &entry->state_list) {
 		piter_state = glist_entry(glist, state_t, state_list);
@@ -235,9 +220,6 @@ state_status_t state_add_impl(cache_entry_t *entry, state_type_t state_type,
 			LogDebug(COMPONENT_STATE,
 				 "new state conflicts with another state for entry %p",
 				 entry);
-
-			/* stat */
-			pool_free(state_v4_pool, pnew_state);
 
 			status = STATE_STATE_CONFLICT;
 
@@ -261,7 +243,6 @@ state_status_t state_add_impl(cache_entry_t *entry, state_type_t state_type,
 						 state_data, owner_input)) {
 				(void)async_delegrecall(general_fridge, entry);
 
-				pool_free(state_v4_pool, pnew_state);
 				if (got_pinned)
 					cache_inode_dec_pin_ref(entry, false);
 
@@ -270,6 +251,22 @@ state_status_t state_add_impl(cache_entry_t *entry, state_type_t state_type,
 			}
 		}
 	}
+
+	pnew_state = pool_alloc(state_v4_pool, NULL);
+
+	if (pnew_state == NULL) {
+		LogCrit(COMPONENT_STATE,
+			"Can't allocate a new file state from cache pool");
+
+		/* stat */
+		status = STATE_MALLOC_ERROR;
+
+		if (got_pinned)
+			cache_inode_dec_pin_ref(entry, false);
+
+		return status;
+	}
+
 
 	/* Add the stateid.other, this will increment cid_stateid_counter */
 	nfs4_BuildStateId_Other(owner_input->so_owner.so_nfs4_owner.
