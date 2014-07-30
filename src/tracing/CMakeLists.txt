@@ -3,6 +3,7 @@ include_directories(
 )
 
 set(ganesha_trace_LIB_SRCS
+  logger.c
 )
 
 add_library(ganesha_trace SHARED ${ganesha_trace_LIB_SRCS})

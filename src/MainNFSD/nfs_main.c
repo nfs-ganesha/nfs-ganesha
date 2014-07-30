@@ -42,6 +42,13 @@
 #include <errno.h>
 #include "fsal_pnfs.h"
 
+#ifdef USE_LTTNG
+#define TRACEPOINT_DEFINE
+#define TRACEPOINT_PROBE_DYNAMIC_LINKAGE
+
+#include "ganesha_lttng/logger.h"
+#endif
+
 /* parameters for NFSd startup and default values */
 
 nfs_start_info_t my_nfs_start_info = {
