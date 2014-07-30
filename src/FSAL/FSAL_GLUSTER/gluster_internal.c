@@ -583,8 +583,7 @@ fsal_status_t fsal_acl_2_glusterfs_acl(fsal_acl_t *p_fsalacl,
 		}
 
 		LogMidDebug(COMPONENT_FSAL,
-			 "fsal_acl_2_glusterfs_acl:glusterfs ace:type = 0x%x," \
-			 "flag = 0x%x, perm = 0x%x, special = %d, %s = 0x%x",
+			 "fsal_acl_2_glusterfs_acl:glusterfs ace:type = 0x%x, flag = 0x%x, perm = 0x%x, special = %d, %s = 0x%x",
 			 p_glusterfsacl->ace_v4[i].aceType,
 			 p_glusterfsacl->ace_v4[i].aceFlags,
 			 p_glusterfsacl->ace_v4[i].aceMask,
@@ -641,8 +640,7 @@ int glusterfs_acl_2_fsal_acl(struct attrlist *p_object_attributes,
 		}
 
 		LogMidDebug(COMPONENT_FSAL,
-			 "glusterfs_acl_2_fsal_acl: fsal ace: type = 0x%x," \
-			 "flag = 0x%x, perm = 0x%x, special = %d, %s = 0x%x",
+			 "glusterfs_acl_2_fsal_acl: fsal ace: type = 0x%x, flag = 0x%x, perm = 0x%x, special = %d, %s = 0x%x",
 			 pace->type, pace->flag, pace->perm,
 			 IS_FSAL_ACE_SPECIAL_ID(*pace),
 			 GET_FSAL_ACE_WHO_TYPE(*pace), GET_FSAL_ACE_WHO(*pace));
@@ -655,8 +653,7 @@ int glusterfs_acl_2_fsal_acl(struct attrlist *p_object_attributes,
 
 	if (pacl == NULL) {
 		LogCrit(COMPONENT_FSAL,
-			"glusterfs_acl_2_fsal_acl: failed to create a new" \
-			"acl entry");
+			"glusterfs_acl_2_fsal_acl: failed to create a new acl entry");
 		return ERR_FSAL_FAULT;
 	}
 
