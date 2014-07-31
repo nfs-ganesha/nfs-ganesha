@@ -33,11 +33,12 @@
 #define GLUSTER_VOLNAME_KEY  "volume"
 #define GLUSTER_HOSTNAME_KEY "hostname"
 #define GLUSTER_VOLPATH_KEY  "volpath"
-#define GLUSTER_VALIDATE_RETURN_STATUS(rc) do {	\
-	if (rc != 0) {					\
-		status = gluster2fsal_error(errno);	\
-		goto out;				\
-	}						\
+#define GLUSTER_VALIDATE_RETURN_STATUS(rc) \
+	do {	\
+		if (rc != 0) {					\
+			status = gluster2fsal_error(errno);	\
+			goto out;				\
+		}						\
 	} while (0)
 
 /* defined the set of attributes supported with POSIX */
@@ -232,34 +233,35 @@ ATTR_SIZE     | ATTR_MTIME_SERVER | ATTR_ATIME_SERVER)   \
 #define IS_ACE4_EXECUTE(mask)  (mask & ACE4_MASK_EXECUTE)
 
 /* Conversion from ACE to mode-bits */
-#define CHANGE_MODE_BITS(ACE) do {			\
-	if (IS_FSAL_ACE_SPECIAL_OWNER(ACE)) {	\
-		*st_mode |= \
-			IS_ACE4_READ(GET_FSAL_ACE_PERM(ACE)) ? S_IRUSR : 0; \
-		*st_mode |= \
-			IS_ACE4_WRITE(GET_FSAL_ACE_PERM(ACE)) ? S_IWUSR : 0; \
-		*st_mode |= \
-			IS_ACE4_EXECUTE(GET_FSAL_ACE_PERM(ACE)) ? S_IXUSR : 0; \
-	}					\
-	else if (IS_FSAL_ACE_SPECIAL_GROUP(ACE)) {	\
-		*st_mode |= \
-			IS_ACE4_READ(GET_FSAL_ACE_PERM(ACE)) ? S_IRGRP : 0; \
-		*st_mode |= \
-			IS_ACE4_WRITE(GET_FSAL_ACE_PERM(ACE)) ? S_IWGRP : 0; \
-		*st_mode |= \
-			IS_ACE4_EXECUTE(GET_FSAL_ACE_PERM(ACE)) ? S_IXGRP : 0; \
-	}					\
-	else if (IS_FSAL_ACE_SPECIAL_EVERYONE(ACE)) {	\
-		*st_mode |= \
-			IS_ACE4_READ(GET_FSAL_ACE_PERM(ACE)) ? S_IROTH : 0; \
-		*st_mode |= \
-			IS_ACE4_WRITE(GET_FSAL_ACE_PERM(ACE)) ? S_IWOTH : 0; \
-		*st_mode |= \
-			IS_ACE4_EXECUTE(GET_FSAL_ACE_PERM(ACE)) ? S_IXOTH : 0; \
-	}					\
-	else { \
-		/* Code shouldn't reach here */ \
-	}	\
+#define CHANGE_MODE_BITS(ACE) \
+	do {			\
+		if (IS_FSAL_ACE_SPECIAL_OWNER(ACE)) {	\
+			*st_mode |= IS_ACE4_READ(GET_FSAL_ACE_PERM(ACE)) \
+				? S_IRUSR : 0; \
+			*st_mode |= IS_ACE4_WRITE(GET_FSAL_ACE_PERM(ACE)) \
+				? S_IWUSR : 0; \
+			*st_mode |= IS_ACE4_EXECUTE(GET_FSAL_ACE_PERM(ACE)) \
+				? S_IXUSR : 0; \
+		}					\
+		else if (IS_FSAL_ACE_SPECIAL_GROUP(ACE)) {	\
+			*st_mode |= IS_ACE4_READ(GET_FSAL_ACE_PERM(ACE)) \
+				? S_IRGRP : 0; \
+			*st_mode |= IS_ACE4_WRITE(GET_FSAL_ACE_PERM(ACE)) \
+				? S_IWGRP : 0; \
+			*st_mode |= IS_ACE4_EXECUTE(GET_FSAL_ACE_PERM(ACE)) \
+				? S_IXGRP : 0; \
+		}					\
+		else if (IS_FSAL_ACE_SPECIAL_EVERYONE(ACE)) {	\
+			*st_mode |= IS_ACE4_READ(GET_FSAL_ACE_PERM(ACE)) \
+				? S_IROTH : 0; \
+			*st_mode |= IS_ACE4_WRITE(GET_FSAL_ACE_PERM(ACE)) \
+				? S_IWOTH : 0; \
+			*st_mode |= IS_ACE4_EXECUTE(GET_FSAL_ACE_PERM(ACE)) \
+				? S_IXOTH : 0; \
+		}					\
+		else { \
+			/* Code shouldn't reach here */ \
+		}	\
 	} while (0)
 
 /* Values for glusterfs_uid_t (ACL_VERSION_NFS4) */
