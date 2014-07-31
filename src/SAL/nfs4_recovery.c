@@ -490,9 +490,8 @@ void  nfs4_chk_clid_impl(nfs_client_id_t *clientid, clid_entry_t **clid_ent_arg)
 		return;
 
 	/* If there were no clients at time of restart, we're done */
-	if (glist_empty(&grace.g_clid_list)) {
+	if (glist_empty(&grace.g_clid_list))
 		return;
-	}
 
 	/*
 	 * loop through the list and try to find this client.  if we
