@@ -86,9 +86,9 @@ Source:		%{sourcename}.tar.gz
 BuildRequires:	initscripts
 BuildRequires:	cmake
 BuildRequires:	bison flex
-BuildRequires:	dbus-devel  libcap-devel krb5-devel libgssglue-devel
+BuildRequires:	dbus-devel  libcap-devel krb5-devel
 BuildRequires:	libblkid-devel libuuid-devel
-Requires:	dbus-libs libcap krb5-libs libgssglue libblkid libuuid
+Requires:	dbus-libs libcap krb5-libs libblkid libuuid
 %if %{with_nfsidmap}
 BuildRequires:	libnfsidmap-devel
 Requires:	libnfsidmap
