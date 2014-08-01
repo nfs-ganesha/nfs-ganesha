@@ -66,7 +66,10 @@ int _9p_attach(struct _9p_request_data *req9p, void *worker_data,
 
 	struct gsh_export *export;
 	cache_inode_status_t cache_status;
+	fsal_status_t fsal_status;
 	char exppath[MAXPATHLEN];
+	cache_inode_fsal_data_t fsal_data;
+	struct fsal_obj_handle *pfsal_handle;
 
 	/* Get data */
 	_9p_getptr(cursor, msgtag, u16);
@@ -134,20 +137,44 @@ int _9p_attach(struct _9p_request_data *req9p, void *worker_data,
 		goto errout;
 	}
 
-	/* Check if root cache entry is correctly set, fetch it, and
-	 * take an LRU reference.
-	 */
-	cache_status = nfs_export_get_root_entry(export, &pfid->pentry);
-	if (cache_status != CACHE_INODE_SUCCESS) {
-		err = _9p_tools_errno(cache_status);
-		goto errout;
-	}
-
 	/* Keep track of the export in the req_ctx */
 	pfid->op_context.export = export;
 	pfid->op_context.fsal_export = export->fsal_export;
 
 	op_ctx =  &pfid->op_context;
+
+	if (exppath[0] != '/' ||
+	    !strcmp(exppath, export->fullpath)) {
+		/* Check if root cache entry is correctly set, fetch it, and
+		 * take an LRU reference.
+		 */
+		cache_status = nfs_export_get_root_entry(export, &pfid->pentry);
+		if (cache_status != CACHE_INODE_SUCCESS) {
+			err = _9p_tools_errno(cache_status);
+			goto errout;
+		}
+	} else {
+		fsal_status = op_ctx->fsal_export->ops->lookup_path(
+						op_ctx->fsal_export,
+						exppath,
+						&pfsal_handle);
+		if (FSAL_IS_ERROR(fsal_status)) {
+			err = _9p_tools_errno(
+				cache_inode_error_convert(fsal_status));
+			goto errout;
+		}
+
+		pfsal_handle->ops->handle_to_key(pfsal_handle,
+						 &fsal_data.fh_desc);
+		fsal_data.export = export->fsal_export;
+
+		cache_status = cache_inode_get(&fsal_data, &pfid->pentry);
+		if (cache_status != CACHE_INODE_SUCCESS) {
+			err = _9p_tools_errno(cache_status);
+			goto errout;
+		}
+	}
+
 	/* This fid is a special one: it comes from TATTACH */
 	pfid->from_attach = TRUE;
 
@@ -190,5 +217,4 @@ errout:
 	}
 
 	return _9p_rerror(req9p, worker_data, msgtag, err, plenout, preply);
-
 }

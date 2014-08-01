@@ -237,6 +237,16 @@ int _9p_tools_clunk(struct _9p_fid *pfid)
 	/* Set op_ctx */
 	op_ctx = &pfid->op_context;
 
+
+	/* pentry may be null in the case of an aborted TATTACH
+	 * this would happens when trying to mount a non-existing
+	 * or non-authorized directory */
+	if (pfid->pentry == NULL) {
+		LogEvent(COMPONENT_9P,
+			 "Trying to clunk a fid with NULL pentry. Bad mount ?");
+		return 0;
+	}
+
 	/* unref the related group list */
 	uid2grp_unref(pfid->gdata);
 
