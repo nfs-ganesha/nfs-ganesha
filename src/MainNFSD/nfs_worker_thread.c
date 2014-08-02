@@ -65,6 +65,10 @@
 #include "server_stats.h"
 #include "uid2grp.h"
 
+#ifdef USE_LTTNG
+#include "ganesha_lttng/nfs_rpc.h"
+#endif
+
 pool_t *request_pool;
 pool_t *request_data_pool;
 pool_t *dupreq_pool;
@@ -722,6 +726,10 @@ static void nfs_rpc_execute(request_data_t *req,
 	bool slocked = false;
 	const char *progname = "unknown";
 
+#ifdef USE_LTTNG
+	tracepoint(nfs_rpc, start, req);
+#endif
+
 	/* Initialize permissions to allow nothing */
 	export_perms.options = 0;
 	export_perms.anonymous_uid = (uid_t) ANON_UID;
@@ -1372,6 +1380,11 @@ out:
 	if (op_ctx->export != NULL)
 		put_gsh_export(op_ctx->export);
 	op_ctx = NULL;
+
+#ifdef USE_LTTNG
+	tracepoint(nfs_rpc, end, req);
+#endif
+
 	return;
 }
 
