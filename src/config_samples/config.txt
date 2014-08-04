@@ -295,7 +295,7 @@ EXPORT { FSAL {} }
 	FSAL_ZFS:
 	---------
 
-	pool_path(path, no default, must be supplied)
+	zpool(string, default "tank", must be supplied)
 
 	FSAL_LUSTRE:
 	------------

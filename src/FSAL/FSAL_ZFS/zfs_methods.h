@@ -22,6 +22,24 @@ fsal_status_t tank_create_handle(struct fsal_export *exp_hdl,
 				 struct gsh_buffdesc *hdl_desc,
 				 struct fsal_obj_handle **handle);
 
+/* ZFS FSAL module private storage
+ */
+
+struct zfs_fsal_module {
+	struct fsal_module fsal;
+	struct fsal_staticfsinfo_t fs_info;
+};
+
+/*
+ * ZFS internal export
+ */
+
+struct zfs_fsal_export {
+	struct fsal_export export;
+	char *zpool;
+	libzfswrap_vfs_t *p_vfs;
+};
+
 /*
  * ZFS internal object handle
  * handle is a pointer because
