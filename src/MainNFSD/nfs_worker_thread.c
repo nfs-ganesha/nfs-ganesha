@@ -1262,9 +1262,21 @@ static void nfs_rpc_execute(request_data_t *req,
 #endif
 
  null_op:
+
+#ifdef USE_LTTNG
+		tracepoint(nfs_rpc, op_start, req,
+			   reqnfs->funcdesc->funcname,
+			   (op_ctx->export != NULL
+			    ? op_ctx->export->export_id : -1));
+#endif
 		rc = reqnfs->funcdesc->service_function(arg_nfs,
 							worker_data, svcreq,
 							res_nfs);
+
+#ifdef USE_LTTNG
+		tracepoint(nfs_rpc, op_end, req);
+#endif
+
 	}
 
  req_error:
