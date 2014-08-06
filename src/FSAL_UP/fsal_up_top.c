@@ -1646,10 +1646,9 @@ state_status_t delegrecall_impl(cache_entry_t *entry)
 		}
 
 		if (nfs_client_id_get_confirmed(deleg_entry->
-						    sle_owner->so_owner.
-						    so_nfs4_owner.so_clientid,
-						    &clid) !=
-						    CLIENT_ID_SUCCESS) {
+						sle_owner->so_owner.
+						so_nfs4_owner.so_clientid,
+						&clid) != CLIENT_ID_SUCCESS) {
 			LogCrit(COMPONENT_NFS_CB,
 				"No clid record, code %d", rc);
 			put_gsh_export(probe_exp);
