@@ -290,10 +290,10 @@ cache_inode_status_t up_get(struct fsal_module *fsal,
 			    cache_entry_t **entry);
 
 struct delegrecall_context {
-	cache_entry_t *entry;
-	nfs_client_id_t *clid;
-	state_lock_entry_t *deleg_entry;
-	stateid4 sd_stateid;
+	cache_entry_t *drc_entry;
+	nfs_client_id_t *drc_clid;
+	state_lock_entry_t *drc_deleg_entry;
+	stateid4 drc_stateid;
 };
 
 enum recall_resp_action {
