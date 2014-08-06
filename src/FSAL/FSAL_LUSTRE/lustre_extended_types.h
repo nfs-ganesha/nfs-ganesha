@@ -93,8 +93,8 @@ typedef void *lnet_nid_t;
 typedef time_t cfs_time_t;
 
 /* Workaround for lustre 2.6.0 (waiting for LU-3613 to land):
- *  * definitions and structures to handle link EA.
- *   */
+ * definitions and structures to handle link EA.
+ */
 #ifndef XATTR_NAME_LINK
 #define XATTR_NAME_LINK "trusted.link"
 #endif
@@ -108,11 +108,11 @@ struct link_ea_header {
 	__u32 padding2;
 };
 
-/** Hardlink data is name and parent fid.
- *  * Stored in this crazy struct for maximum packing and endian-neutrality
- *   */
+/* Hardlink data is name and parent fid.
+ * Stored in this crazy struct for maximum packing and endian-neutrality
+ */
 struct link_ea_entry {
-	/** __u16 stored big-endian, unaligned */
+	/* __u16 stored big-endian, unaligned */
 	unsigned char      lee_reclen[2];
 	unsigned char      lee_parent_fid[sizeof(struct lu_fid)];
 	char               lee_name[0];
@@ -188,13 +188,13 @@ struct lu_buf {
 };
 
 struct linkea_data {
-	/**
-	 ** Buffer to keep link EA body.
-	 **/
+	/*
+	 * Buffer to keep link EA body.
+	 */
 	struct lu_buf           *ld_buf;
-	/**
-	 ** The matched header, entry and its lenght in the EA
-	 **/
+	/*
+	 * The matched header, entry and its lenght in the EA
+	 */
 	struct link_ea_header   *ld_leh;
 	struct link_ea_entry    *ld_lee;
 	int                     ld_reclen;
