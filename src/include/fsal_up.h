@@ -294,6 +294,7 @@ struct delegrecall_context {
 	nfs_client_id_t *drc_clid;
 	state_lock_entry_t *drc_deleg_entry;
 	stateid4 drc_stateid;
+	struct gsh_export *drc_exp;
 };
 
 enum recall_resp_action {

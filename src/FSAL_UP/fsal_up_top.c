@@ -1212,6 +1212,7 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 		pthread_mutex_lock(&deleg_ctx->drc_clid->cid_mutex);
 		update_lease(deleg_ctx->drc_clid);
 		pthread_mutex_unlock(&deleg_ctx->drc_clid->cid_mutex);
+		put_gsh_export(deleg_ctx->drc_exp);
 		dec_client_id_ref(deleg_ctx->drc_clid);
 		gsh_free(deleg_ctx);
 		goto out_free;
@@ -1278,6 +1279,7 @@ out_revoke:
 	pthread_mutex_lock(&clientid->cid_mutex);
 	update_lease(clientid);
 	pthread_mutex_unlock(&clientid->cid_mutex);
+	put_gsh_export(deleg_ctx->drc_exp);
 	dec_client_id_ref(clientid);
 	gsh_free(deleg_ctx);
 
@@ -1403,6 +1405,7 @@ static uint32_t delegrecall_one(state_lock_entry_t *deleg_entry,
 		p_cargs->drc_clid = clientid;
 		p_cargs->drc_entry = entry;
 		p_cargs->drc_deleg_entry = deleg_entry;
+		p_cargs->drc_exp = exp;
 		COPY_STATEID(&p_cargs->drc_stateid, deleg_entry->sle_state);
 	}
 
@@ -1447,6 +1450,7 @@ out_revoke:
 	pthread_mutex_lock(&clientid->cid_mutex);
 	update_lease(clientid);
 	pthread_mutex_unlock(&clientid->cid_mutex);
+	put_gsh_export(exp);
 	dec_client_id_ref(clientid);
 	if (p_cargs)
 		gsh_free(p_cargs);
@@ -1494,6 +1498,7 @@ static void delegrevoke_check(void *ctx)
 				pthread_mutex_lock(&clid->cid_mutex);
 				update_lease(clid);
 				pthread_mutex_unlock(&clid->cid_mutex);
+				put_gsh_export(deleg_ctx->drc_exp);
 				dec_client_id_ref(clid);
 				gsh_free(deleg_ctx);
 			} else {
@@ -1515,6 +1520,7 @@ static void delegrevoke_check(void *ctx)
 		pthread_mutex_lock(&clid->cid_mutex);
 		update_lease(clid);
 		pthread_mutex_unlock(&clid->cid_mutex);
+		put_gsh_export(deleg_ctx->drc_exp);
 		dec_client_id_ref(clid);
 		gsh_free(deleg_ctx);
 	}
@@ -1549,6 +1555,7 @@ static void delegrecall_task(void *ctx)
 		update_lease(deleg_ctx->drc_clid);
 		pthread_mutex_unlock(&deleg_ctx->drc_clid->cid_mutex);
 		dec_client_id_ref(deleg_ctx->drc_clid);
+		put_gsh_export(deleg_ctx->drc_exp);
 		gsh_free(deleg_ctx);
 	}
 	return;
@@ -1591,6 +1598,7 @@ state_status_t delegrecall_impl(cache_entry_t *entry)
 	state_status_t rc = 0;
 	uint32_t *deleg_state = NULL;
 	nfs_client_id_t *clid = NULL;
+	struct gsh_export *probe_exp;
 
 	LogDebug(COMPONENT_FSAL_UP,
 		 "FSAL_UP_DELEG: entry %p type %u",
@@ -1613,6 +1621,30 @@ state_status_t delegrecall_impl(cache_entry_t *entry)
 
 		entry->object.file.fdeleg_stats.fds_last_recall = time(NULL);
 
+		/* Recall is an asynchrons operation, hence keep a hold on
+		 * the export to prevent racing with remove_gsh_expor()
+		 */
+		probe_exp = get_gsh_export(deleg_entry->sle_export_id);
+		if (probe_exp == NULL) {
+			/* Remove export is underway, which will
+			 * do the actual work, no need to do anything.
+			 */
+			LogDebug(COMPONENT_FSAL_UP,
+				 "Racing with delete export. Do nothing");
+			continue;
+		}
+		if (probe_exp != deleg_entry->sle_export) {
+			/* Whole world changed under us and a new export
+			 * with same old export-id has been added.
+			 * Do nothing.
+			 */
+			LogWarn(COMPONENT_FSAL_UP,
+				"Export changed prebe_exp:%p sle_exp: %p\n",
+				probe_exp, deleg_entry->sle_export);
+			put_gsh_export(probe_exp);
+			continue;
+		}
+
 		if (nfs_client_id_get_confirmed(deleg_entry->
 						    sle_owner->so_owner.
 						    so_nfs4_owner.so_clientid,
@@ -1620,6 +1652,7 @@ state_status_t delegrecall_impl(cache_entry_t *entry)
 						    CLIENT_ID_SUCCESS) {
 			LogCrit(COMPONENT_NFS_CB,
 				"No clid record, code %d", rc);
+			put_gsh_export(probe_exp);
 			continue;
 		}
 
@@ -1632,6 +1665,7 @@ state_status_t delegrecall_impl(cache_entry_t *entry)
 		pthread_mutex_lock(&clid->cid_mutex);
 		if (!reserve_lease(clid)) {
 			pthread_mutex_unlock(&clid->cid_mutex);
+			put_gsh_export(probe_exp);
 			dec_client_id_ref(clid);
 			continue;
 		}
