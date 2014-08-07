@@ -42,13 +42,28 @@
 #include <errno.h>
 #include "fsal_pnfs.h"
 
+/**
+ * @brief LTTng trace enabling magic
+ *
+ * Every trace include file must be added here regardless whether it
+ * is actually used in this source file.  The file must also be
+ * included ONLY ONCE.  Failure to do so will create interesting
+ * build time failure messages.  The key bit is the definitions of
+ * TRACEPOINT_DEFINE and TRACEPOINT_PROBE_DYNAMIC_LINKAGE that are here
+ * to trigger the global definitions as a shared object with the right
+ * (weak) symbols to make the module loading optional.
+ *
+ * If and when this file gets some tracepoints of its own, the include
+ * here is necessary and sufficient.
+ */
+
 #ifdef USE_LTTNG
 #define TRACEPOINT_DEFINE
 #define TRACEPOINT_PROBE_DYNAMIC_LINKAGE
 
 #include "ganesha_lttng/logger.h"
 #include "ganesha_lttng/nfs_rpc.h"
-#endif
+#endif /* USE_LTTNG */
 
 /* parameters for NFSd startup and default values */
 
