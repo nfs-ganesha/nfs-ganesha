@@ -57,6 +57,10 @@
 #include "nfs_core.h"
 #include "config_parsing.h"
 
+#ifdef USE_LTTNG
+#include "ganesha_lttng/logger.h"
+#endif
+
 /*
  * The usual PTHREAD_RWLOCK_xxx macros log messages for tracing if FULL
  * DEBUG is enabled. If such a macro is called from this logging file as
@@ -1435,6 +1439,11 @@ void display_log_component_level(log_components_t component, char *file,
 
 	if (b_left > 0)
 		b_left = display_vprintf(&dsp_log, format, arguments);
+
+#ifdef USE_LTTNG
+	tracepoint(ganesha_logger, log,
+		   component, level, file, line, function, message);
+#endif
 
 	PTHREAD_RWLOCK_rdlock(&log_rwlock);
 
