@@ -98,7 +98,7 @@ extern int portable_clock_gettime(struct timespec *ts);
 				     __FILE__, __LINE__);		\
 		} else {						\
 			LogCrit(COMPONENT_RW_LOCK,			\
-				"Error %d, write lockiing %p (%s) "	\
+				"Error %d, write locking %p (%s) "	\
 				"at %s:%d", rc, _lock, #_lock,		\
 				__FILE__, __LINE__);			\
 		}							\

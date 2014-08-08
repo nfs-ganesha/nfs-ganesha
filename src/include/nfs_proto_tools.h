@@ -290,4 +290,10 @@ int nfs4_FSALattr_To_Fattr(struct xdr_attrs_args *, struct bitmap4 *,
 
 void nfs4_bitmap4_Remove_Unsupported(struct bitmap4 *);
 
+enum nfs4_minor_vers {
+	NFS4_MINOR_VERS_0,
+	NFS4_MINOR_VERS_1,
+	NFS4_MINOR_VERS_2
+};
+
 #endif				/* _NFS_PROTO_TOOLS_H */
