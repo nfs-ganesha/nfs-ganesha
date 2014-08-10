@@ -880,7 +880,6 @@ struct state_lock_entry_t {
 	struct glist_head sle_export_locks;	/*< Link on the export
 						   lock list */
 	struct gsh_export *sle_export;
-	uint16_t sle_export_id; /* used to get a ref on export for async ops */
 	cache_entry_t *sle_entry;	/*< File being locked */
 	state_block_data_t *sle_block_data;	/*< Blocking lock data */
 	state_owner_t *sle_owner;	/* Lock owner */

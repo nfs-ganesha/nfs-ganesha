@@ -557,7 +557,6 @@ static state_lock_entry_t *create_state_lock_entry(cache_entry_t *entry,
 	new_entry->sle_state = state;
 	new_entry->sle_lock = *lock;
 	new_entry->sle_export = export;
-	new_entry->sle_export_id = export->export_id;
 
 	if (owner->so_type == STATE_LOCK_OWNER_NLM) {
 		/* Add to list of locks owned by client that owner belongs to */
@@ -2589,7 +2588,7 @@ state_status_t state_lock_locked(cache_entry_t *entry,
 
 				LogEvent(COMPONENT_STATE,
 					 "Lock Owner Export Conflict, Lock held for export %d (%s), request for export %d (%s)",
-					 found_entry->sle_export_id,
+					 found_entry->sle_export->export_id,
 					 found_entry->sle_export->fullpath,
 					 op_ctx->export->export_id,
 					 op_ctx->export->fullpath);
@@ -2629,7 +2628,7 @@ state_status_t state_lock_locked(cache_entry_t *entry,
 
 			LogEvent(COMPONENT_STATE,
 				 "Lock Owner Export Conflict, Lock held for export %d (%s), request for export %d (%s)",
-				 found_entry->sle_export_id,
+				 found_entry->sle_export->export_id,
 				 found_entry->sle_export->fullpath,
 				 op_ctx->export->export_id,
 				 op_ctx->export->fullpath);
