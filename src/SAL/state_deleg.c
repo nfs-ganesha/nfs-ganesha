@@ -98,6 +98,112 @@ void destroy_deleg_data(struct deleg_data *deleg_data)
 }
 
 /**
+ * @brief Remove a delegation from a list of delegations
+ *
+ * Remove a delegation from a list of delegations
+ *
+ * @param[in,out] entry   Cache entry on which to operate
+ * @param[in]     owner   Client owner of delegation
+ * @param[in]     state   Associated lock state
+ *
+ * entry's state_lock needs to be held in readwrite mode
+ *
+ * @return true iff the lock is removed.
+ */
+static bool remove_deleg_data(cache_entry_t *entry,
+			      state_owner_t *owner,
+			      state_t *state)
+{
+	struct deleg_data *deleg_data;
+	struct glist_head *glist;
+
+	glist_for_each(glist, &entry->object.file.deleg_list) {
+		deleg_data = glist_entry(glist, struct deleg_data, dd_list);
+		if (deleg_data->dd_state == state) {
+			assert(deleg_data->dd_owner == owner);
+			assert(state->state_owner == owner);
+			glist_del(&deleg_data->dd_list);
+			destroy_deleg_data(deleg_data);
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/**
+ * @brief Attempt to acquire a lease lock (delegation)
+ *
+ * @param[in]  entry      Entry to lock
+ * @param[in]  owner      Lock owner
+ * @param[in]  state      Associated state for the lock
+ * @param[in]  lock       Lock description
+ *
+ * state_lock must be held while calling this function
+ */
+state_status_t acquire_lease_lock(cache_entry_t *entry, state_owner_t *owner,
+				  state_t *state, fsal_lock_param_t *lock)
+{
+	struct deleg_data *deleg_data;
+	state_status_t status;
+
+	/* Create a new deleg data object */
+	deleg_data = create_deleg_data(entry, state, owner, op_ctx->export);
+	if (!deleg_data)
+		return STATE_MALLOC_ERROR;
+
+	status = do_lock_op(entry, FSAL_OP_LOCK, owner, lock, NULL, NULL, false,
+			    LEASE_LOCK);
+
+	if (status == STATE_SUCCESS) {
+		/* Insert deleg data into delegation list */
+		update_delegation_stats(deleg_data);
+		glist_add_tail(&entry->object.file.deleg_list,
+			       &deleg_data->dd_list);
+	} else {
+		LogDebug(COMPONENT_STATE, "Could not set lease, error=%s",
+			 state_err_str(status));
+		destroy_deleg_data(deleg_data);
+	}
+
+	return status;
+}
+
+/**
+ * @brief Release a lease lock (delegation)
+ *
+ * @param[in] entry    File to unlock
+ * @param[in] owner    Owner of lock
+ * @param[in] state    Associated state
+ * @param[in] lock     Lock description
+ *
+ * state_lock must be held while calling this function
+ */
+state_status_t release_lease_lock(cache_entry_t *entry, state_owner_t *owner,
+				  state_t *state, fsal_lock_param_t *lock)
+{
+	state_status_t status;
+	bool removed;
+
+	assert(state && state->state_type == STATE_TYPE_DELEG);
+	removed = remove_deleg_data(entry, owner, state);
+	if (!removed) { /* Not found */
+		LogDebug(COMPONENT_STATE,
+				"Unlock success on delegation not found");
+		return STATE_SUCCESS;
+	}
+
+	status = do_lock_op(entry, FSAL_OP_UNLOCK, owner, lock, NULL, NULL,
+			    false, LEASE_LOCK);
+
+	if (status != STATE_SUCCESS)
+		LogMajor(COMPONENT_STATE, "Unable to unlock FSAL, error=%s",
+			 state_err_str(status));
+
+	return status;
+}
+
+/**
  * @brief Update statistics on successfully granted delegation.
  *
  * Update statistics on successfully granted delegation.

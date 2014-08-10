@@ -515,7 +515,14 @@ state_status_t acquire_lease_lock(cache_entry_t *entry, state_owner_t *owner,
 			     state_t *state, fsal_lock_param_t *lock);
 state_status_t release_lease_lock(cache_entry_t *entry, state_owner_t *owner,
 			     state_t *state, fsal_lock_param_t *lock);
-
+state_status_t do_lock_op(cache_entry_t *entry,
+			  fsal_lock_op_t lock_op,
+			  state_owner_t *owner,
+			  fsal_lock_param_t *lock,
+			  state_owner_t **holder,
+			  fsal_lock_param_t *conflict,
+			  bool_t overlap,
+			  lock_type_t sle_type);
 state_status_t state_unlock(cache_entry_t *entry,
 			    state_owner_t *owner, state_t *state,
 			    fsal_lock_param_t *lock, lock_type_t sle_type);
