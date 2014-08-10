@@ -1043,20 +1043,20 @@ static state_status_t subtract_lock_from_entry(cache_entry_t *entry,
  *
  * @return true iff the lock is removed.
  */
-static bool remove_deleg_lock(cache_entry_t *entry,
+static bool remove_deleg_data(cache_entry_t *entry,
 			      state_owner_t *owner,
 			      state_t *state)
 {
-	state_lock_entry_t *deleg_lock;
+	struct deleg_data *deleg_data;
 	struct glist_head *glist;
 
 	glist_for_each(glist, &entry->object.file.deleg_list) {
-		deleg_lock = glist_entry(glist, state_lock_entry_t, sle_list);
-		assert(deleg_lock->sle_type == LEASE_LOCK);
-		if (deleg_lock->sle_state == state) {
-			assert(deleg_lock->sle_owner == owner);
+		deleg_data = glist_entry(glist, struct deleg_data, dd_list);
+		if (deleg_data->dd_state == state) {
+			assert(deleg_data->dd_owner == owner);
 			assert(state->state_owner == owner);
-			remove_from_locklist(deleg_lock);
+			glist_del(&deleg_data->dd_list);
+			destroy_deleg_data(deleg_data);
 			return true;
 		}
 	}
@@ -2432,29 +2432,26 @@ state_status_t state_test(cache_entry_t *entry,
 state_status_t acquire_lease_lock(cache_entry_t *entry, state_owner_t *owner,
 				  state_t *state, fsal_lock_param_t *lock)
 {
-	state_lock_entry_t *deleg_lock;
+	struct deleg_data *deleg_data;
 	state_status_t status;
 
-	/* Create a new deleg lock entry */
-	deleg_lock = create_state_lock_entry(entry, op_ctx->export,
-					     STATE_NON_BLOCKING, owner,
-					     state, lock, LEASE_LOCK);
-	if (!deleg_lock)
+	/* Create a new deleg data object */
+	deleg_data = create_deleg_data(entry, state, owner, op_ctx->export);
+	if (!deleg_data)
 		return STATE_MALLOC_ERROR;
 
 	status = do_lock_op(entry, FSAL_OP_LOCK, owner, lock, NULL, NULL, false,
 			    LEASE_LOCK);
 
 	if (status == STATE_SUCCESS) {
-		/* Insert deleg lock into delegation list */
-		update_delegation_stats(deleg_lock);
+		/* Insert deleg data into delegation list */
+		update_delegation_stats(deleg_data);
 		glist_add_tail(&entry->object.file.deleg_list,
-			       &deleg_lock->sle_list);
+			       &deleg_data->dd_list);
 	} else {
 		LogDebug(COMPONENT_STATE, "Could not set lease, error=%s",
 			 state_err_str(status));
-		glist_init(&deleg_lock->sle_list); /* work around */
-		remove_from_locklist(deleg_lock);
+		destroy_deleg_data(deleg_data);
 	}
 
 	return status;
@@ -2477,7 +2474,7 @@ state_status_t release_lease_lock(cache_entry_t *entry, state_owner_t *owner,
 	bool removed;
 
 	assert(state && state->state_type == STATE_TYPE_DELEG);
-	removed = remove_deleg_lock(entry, owner, state);
+	removed = remove_deleg_data(entry, owner, state);
 	if (!removed) { /* Not found */
 		LogDebug(COMPONENT_STATE,
 				"Unlock success on delegation not found");

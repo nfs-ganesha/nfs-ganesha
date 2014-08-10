@@ -71,8 +71,8 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t *data,
 	state_owner_t *lock_owner;
 	fsal_lock_param_t lock_desc;
 	struct glist_head *glist;
-	state_lock_entry_t *found_lock;
-	state_lock_entry_t *iter_lock;
+	struct deleg_data *found_deleg;
+	struct deleg_data *iter_deleg;
 	const char *tag = "DELEGRETURN";
 
 	LogDebug(COMPONENT_NFS_V4_LOCK,
@@ -107,21 +107,21 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t *data,
 		return NFS4ERR_INVAL;
 	}
 
-	found_lock = NULL;
+	found_deleg = NULL;
 	PTHREAD_RWLOCK_wrlock(&data->current_entry->state_lock);
 	glist_for_each(glist, &data->current_entry->object.file.deleg_list) {
-		iter_lock = glist_entry(glist, state_lock_entry_t, sle_list);
+		iter_deleg = glist_entry(glist, struct deleg_data, dd_list);
 		LogDebug(COMPONENT_NFS_V4_LOCK, "iter deleg entry %p",
-			 iter_lock);
-		assert(iter_lock->sle_state->state_type == STATE_TYPE_DELEG);
+			 iter_deleg);
+		assert(iter_deleg->dd_state->state_type == STATE_TYPE_DELEG);
 		if (SAME_STATEID(&arg_DELEGRETURN4->deleg_stateid,
-				 iter_lock->sle_state)) {
-			found_lock = iter_lock;
+				 iter_deleg->dd_state)) {
+			found_deleg = iter_deleg;
 			break;
 		}
 	}
 
-	if (found_lock == NULL) {
+	if (found_deleg == NULL) {
 		LogWarn(COMPONENT_NFS_V4_LOCK,
 			"Found state, but not deleg lock!");
 		res_DELEGRETURN4->status = NFS4ERR_BAD_STATEID;
@@ -130,7 +130,7 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t *data,
 
 	LogDebug(COMPONENT_NFS_V4_LOCK, "Matching delegation found!");
 
-	lock_owner = found_lock->sle_owner;
+	lock_owner = found_deleg->dd_owner;
 
 	/* lock_type doesn't matter as we are going to do unlock */
 	lock_desc.lock_type = FSAL_LOCK_R;
@@ -141,7 +141,7 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t *data,
 	LogLock(COMPONENT_NFS_V4_LOCK, NIV_FULL_DEBUG, tag, data->current_entry,
 		lock_owner, &lock_desc);
 
-	deleg_heuristics_recall(found_lock);
+	deleg_heuristics_recall(found_deleg);
 
 	/* Now we have a lock owner and a stateid.
 	 * Go ahead and push unlock into SAL (and FSAL) to return

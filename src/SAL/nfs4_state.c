@@ -70,12 +70,12 @@ pthread_mutex_t all_state_v4_mutex = PTHREAD_MUTEX_INITIALIZER;
  * @retval true if there is a conflict.
  * @retval false if no conflict has been found
  */
-static bool check_deleg_conflict(state_lock_entry_t *deleg_entry,
+static bool check_deleg_conflict(struct deleg_data *deleg_entry,
 				 state_type_t candidate_type,
 				 state_data_t *candidate_data,
 				 state_owner_t *candidate_owner)
 {
-	state_deleg_t *deleg_data = &deleg_entry->sle_state->state_data.deleg;
+	state_deleg_t *deleg_data = &deleg_entry->dd_state->state_data.deleg;
 
 	LogFullDebug(COMPONENT_STATE, "Checking for conflict!!");
 
@@ -192,7 +192,7 @@ state_status_t state_add_impl(cache_entry_t *entry, state_type_t state_type,
 			      struct state_refer *refer)
 {
 	state_t *pnew_state, *piter_state;
-	state_lock_entry_t *piter_lock;
+	struct deleg_data *iter_deleg;
 	char debug_str[OTHERSIZE * 2 + 1];
 	struct glist_head *glist;
 	cache_inode_status_t cache_status;
@@ -233,13 +233,12 @@ state_status_t state_add_impl(cache_entry_t *entry, state_type_t state_type,
 	/* Check conflicting delegations and recall if necessary */
 	if (entry->type == REGULAR_FILE) {
 		glist_for_each(glist, &entry->object.file.deleg_list) {
-			piter_lock = glist_entry(glist, state_lock_entry_t,
-						 sle_list);
-			piter_state = piter_lock->sle_state;
-			assert(piter_lock->sle_type == LEASE_LOCK);
+			iter_deleg = glist_entry(glist, struct deleg_data,
+						 dd_list);
+			piter_state = iter_deleg->dd_state;
 			assert(piter_state->state_type == STATE_TYPE_DELEG);
 
-			if (check_deleg_conflict(piter_lock, state_type,
+			if (check_deleg_conflict(iter_deleg, state_type,
 						 state_data, owner_input)) {
 				(void)async_delegrecall(general_fridge, entry);
 

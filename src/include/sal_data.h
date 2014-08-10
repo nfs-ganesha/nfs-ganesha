@@ -387,6 +387,24 @@ struct state_t {
 		(void)memcpy((id4)->other, (state)->stateid_other, OTHERSIZE); \
 	} while (0)
 
+/**
+ * @brief Delegation state data object
+ *
+ * We could potentially put all the delegation data in state_deleg_t
+ * itself but that would add storage for other state types. So we
+ * allocate memory for storing delegation related state data in this
+ * object.
+ */
+struct deleg_data {
+	struct glist_head dd_list;
+	cache_entry_t *dd_entry;
+	state_t *dd_state;
+	state_owner_t *dd_owner;
+	struct gsh_export *dd_export;
+	uint16_t dd_export_id;
+};
+
+
 
 /*****************************************************************************
  *

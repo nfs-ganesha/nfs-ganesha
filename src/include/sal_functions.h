@@ -595,12 +595,17 @@ bool should_we_grant_deleg(cache_entry_t *entry, nfs_client_id_t *client,
 void init_new_deleg_state(state_data_t *deleg_state,
 			  open_delegation_type4 sd_type,
 			  nfs_client_id_t *clientid);
-bool deleg_heuristics_recall(state_lock_entry_t *deleg_entry);
+struct deleg_data *create_deleg_data(cache_entry_t *entry, state_t *state,
+				     state_owner_t *owner,
+				     struct gsh_export *export);
+void destroy_deleg_data(struct deleg_data *deleg_data);
+
+bool deleg_heuristics_recall(struct deleg_data *deleg_data);
 void get_deleg_perm(cache_entry_t *entry, nfsace4 *permissions,
 		    open_delegation_type4 type);
-bool update_delegation_stats(state_lock_entry_t *deleg_entry);
+bool update_delegation_stats(struct deleg_data *deleg_data);
 state_status_t delegrecall_impl(cache_entry_t *entry);
-state_status_t deleg_revoke(state_lock_entry_t *deleg_entry);
+state_status_t deleg_revoke(struct deleg_data *deleg_data);
 void state_deleg_revoke(state_t *state, cache_entry_t *entry);
 
 #ifdef DEBUG_SAL

@@ -1070,7 +1070,7 @@ state_status_t notify_device(notify_deviceid_type4 notify_type,
  * @return false, if the delegation should not be revoked.
  */
 
-bool eval_deleg_revoke(state_lock_entry_t *deleg_entry)
+bool eval_deleg_revoke(struct deleg_data *deleg_entry)
 {
 	struct cf_deleg_stats *clfl_stats;
 	time_t curr_time;
@@ -1078,12 +1078,10 @@ bool eval_deleg_revoke(state_lock_entry_t *deleg_entry)
 	uint32_t lease_lifetime = nfs_param.nfsv4_param.lease_lifetime;
 	open_delegation_type4 sd_type;
 
-	assert(deleg_entry->sle_type == LEASE_LOCK);
-
-	sd_type = deleg_entry->sle_state->state_data.deleg.sd_type;
+	sd_type = deleg_entry->dd_state->state_data.deleg.sd_type;
 	assert(sd_type == OPEN_DELEGATE_READ || sd_type == OPEN_DELEGATE_WRITE);
 
-	clfl_stats = &deleg_entry->sle_state->state_data.deleg.sd_clfile_stats;
+	clfl_stats = &deleg_entry->dd_state->state_data.deleg.sd_clfile_stats;
 
 	curr_time = time(NULL);
 	recall_success_time = clfl_stats->cfd_rs_time;
@@ -1121,10 +1119,10 @@ static enum recall_resp_action handle_recall_response(
 				rpc_call_t *call)
 {
 	enum recall_resp_action resp_action;
-	state_lock_entry_t *deleg_entry = p_cargs->drc_deleg_entry;
+	struct deleg_data *deleg_entry = p_cargs->drc_deleg_entry;
 
 	struct cf_deleg_stats *clfl_stats =
-		&deleg_entry->sle_state->state_data.deleg.sd_clfile_stats;
+		&deleg_entry->dd_state->state_data.deleg.sd_clfile_stats;
 
 	switch (call->cbt.v_u.v4.res.status) {
 	case NFS4_OK:
@@ -1185,7 +1183,7 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 	struct delegrecall_context *deleg_ctx =
 				(struct delegrecall_context *) arg;
 	struct c_deleg_stats *cl_stats = NULL;
-	state_lock_entry_t *deleg_entry, *tdentry;
+	struct deleg_data *deleg_entry, *tdentry;
 	cache_entry_t *entry = deleg_ctx->drc_entry;
 	struct glist_head *glist, *glist_n;
 	nfs_client_id_t *clientid;
@@ -1198,9 +1196,9 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 	deleg_entry = NULL;
 	glist_for_each_safe(glist, glist_n, &entry->object.file.deleg_list) {
-		tdentry = glist_entry(glist, state_lock_entry_t, sle_list);
+		tdentry = glist_entry(glist, struct deleg_data, dd_list);
 		if (deleg_ctx->drc_deleg_entry == tdentry &&
-		    SAME_STATEID(&deleg_ctx->drc_stateid, tdentry->sle_state)) {
+		    SAME_STATEID(&deleg_ctx->drc_stateid, tdentry->dd_state)) {
 			deleg_entry = tdentry;
 			break;
 		}
@@ -1220,7 +1218,7 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 
 	LogDebug(COMPONENT_NFS_CB, "deleg_entry %p", deleg_entry);
 
-	clientid = deleg_entry->sle_owner->so_owner.so_nfs4_owner.so_clientrec;
+	clientid = deleg_entry->dd_owner->so_owner.so_nfs4_owner.so_clientrec;
 	cl_stats = &clientid->cid_deleg_stats;
 
 
@@ -1302,7 +1300,7 @@ out_free:
  * @param[in] delegrecall_context
  */
 
-static uint32_t delegrecall_one(state_lock_entry_t *deleg_entry,
+static uint32_t delegrecall_one(struct deleg_data *deleg_entry,
 				struct delegrecall_context *p_cargs)
 {
 	char *maxfh = NULL;
@@ -1314,21 +1312,21 @@ static uint32_t delegrecall_one(state_lock_entry_t *deleg_entry,
 	struct c_deleg_stats *cl_stats;
 	struct cf_deleg_stats *clfl_stats = NULL;
 	nfs_client_id_t *clientid;
-	clientid = deleg_entry->sle_owner->so_owner.so_nfs4_owner.so_clientrec;
+	clientid = deleg_entry->dd_owner->so_owner.so_nfs4_owner.so_clientrec;
 	cl_stats = &clientid->cid_deleg_stats;
-	clfl_stats = &deleg_entry->sle_state->state_data.deleg.sd_clfile_stats;
+	clfl_stats = &deleg_entry->dd_state->state_data.deleg.sd_clfile_stats;
 
 	/* record the first attempt to recall this delegation */
 	if (clfl_stats->cfd_r_time == 0)
 		clfl_stats->cfd_r_time = time(NULL);
 
-	cache_entry_t *entry = deleg_entry->sle_entry;
+	cache_entry_t *entry = deleg_entry->dd_entry;
 
 	LogFullDebug(COMPONENT_FSAL_UP, "Recalling delegation:%p", deleg_entry);
 
 	atomic_inc_uint32_t(&cl_stats->tot_recalls);
 
-	exp = deleg_entry->sle_state->state_export;
+	exp = deleg_entry->dd_state->state_export;
 
 	/* Attempt a recall only if channel state is UP */
 	if (get_cb_chan_down(clientid)) {
@@ -1366,7 +1364,7 @@ static uint32_t delegrecall_one(state_lock_entry_t *deleg_entry,
 
 	argop->argop = NFS4_OP_CB_RECALL;
 	COPY_STATEID(&argop->nfs_cb_argop4_u.opcbrecall.stateid,
-			deleg_entry->sle_state);
+			deleg_entry->dd_state);
 	argop->nfs_cb_argop4_u.opcbrecall.truncate = false;
 
 	maxfh = gsh_malloc(NFS4_FHSIZE); /* free in cb_completion_func() */
@@ -1406,7 +1404,7 @@ static uint32_t delegrecall_one(state_lock_entry_t *deleg_entry,
 		p_cargs->drc_entry = entry;
 		p_cargs->drc_deleg_entry = deleg_entry;
 		p_cargs->drc_exp = exp;
-		COPY_STATEID(&p_cargs->drc_stateid, deleg_entry->sle_state);
+		COPY_STATEID(&p_cargs->drc_stateid, deleg_entry->dd_state);
 	}
 
 	/* call it (here, in current thread context)
@@ -1472,15 +1470,15 @@ static void delegrevoke_check(void *ctx)
 	struct glist_head *glist, *glist_n;
 	struct delegrecall_context *deleg_ctx = ctx;
 	cache_entry_t *entry = deleg_ctx->drc_entry;
-	state_lock_entry_t *deleg_entry = NULL;
+	struct deleg_data *deleg_entry = NULL;
 	nfs_client_id_t *clid = deleg_ctx->drc_clid;
 
 	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 	glist_for_each_safe(glist, glist_n, &entry->object.file.deleg_list) {
-		deleg_entry = glist_entry(glist, state_lock_entry_t, sle_list);
+		deleg_entry = glist_entry(glist, struct deleg_data, dd_list);
 		if (deleg_ctx->drc_deleg_entry == deleg_entry &&
 			SAME_STATEID(&deleg_ctx->drc_stateid,
-				     deleg_entry->sle_state)) {
+				     deleg_entry->dd_state)) {
 			if (eval_deleg_revoke(deleg_ctx->drc_deleg_entry)) {
 				LogDebug(COMPONENT_STATE,
 					"Revoking delegation(%p)", deleg_entry);
@@ -1533,14 +1531,14 @@ static void delegrecall_task(void *ctx)
 	struct glist_head *glist, *glist_n;
 	struct delegrecall_context *deleg_ctx = ctx;
 	cache_entry_t *entry = deleg_ctx->drc_entry;
-	state_lock_entry_t *deleg_entry = NULL;
+	struct deleg_data *deleg_entry = NULL;
 
 	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 	glist_for_each_safe(glist, glist_n, &entry->object.file.deleg_list) {
-		deleg_entry = glist_entry(glist, state_lock_entry_t, sle_list);
+		deleg_entry = glist_entry(glist, struct deleg_data, dd_list);
 		if (deleg_ctx->drc_deleg_entry == deleg_entry &&
 			SAME_STATEID(&deleg_ctx->drc_stateid,
-				     deleg_entry->sle_state)) {
+				     deleg_entry->dd_state)) {
 			delegrecall_one(deleg_entry, deleg_ctx);
 			break;
 		} else {
@@ -1594,7 +1592,7 @@ static int schedule_delegrevoke_check(struct delegrecall_context *ctx,
 state_status_t delegrecall_impl(cache_entry_t *entry)
 {
 	struct glist_head *glist, *glist_n;
-	state_lock_entry_t *deleg_entry = NULL;
+	struct deleg_data *deleg_entry = NULL;
 	state_status_t rc = 0;
 	uint32_t *deleg_state = NULL;
 	nfs_client_id_t *clid = NULL;
@@ -1607,11 +1605,11 @@ state_status_t delegrecall_impl(cache_entry_t *entry)
 	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 
 	glist_for_each_safe(glist, glist_n, &entry->object.file.deleg_list) {
-		deleg_entry = glist_entry(glist, state_lock_entry_t, sle_list);
+		deleg_entry = glist_entry(glist, struct deleg_data, dd_list);
 
 		LogDebug(COMPONENT_NFS_CB, "deleg_entry %p", deleg_entry);
 		deleg_state =
-			&deleg_entry->sle_state->state_data.deleg.sd_state;
+			&deleg_entry->dd_state->state_data.deleg.sd_state;
 		if (*deleg_state != DELEG_GRANTED) {
 			LogDebug(COMPONENT_FSAL_UP,
 				 "Delegation already being recalled, NOOP");
@@ -1624,7 +1622,7 @@ state_status_t delegrecall_impl(cache_entry_t *entry)
 		/* Recall is an asynchrons operation, hence keep a hold on
 		 * the export to prevent racing with remove_gsh_expor()
 		 */
-		probe_exp = get_gsh_export(deleg_entry->sle_export_id);
+		probe_exp = get_gsh_export(deleg_entry->dd_export_id);
 		if (probe_exp == NULL) {
 			/* Remove export is underway, which will
 			 * do the actual work, no need to do anything.
@@ -1633,20 +1631,20 @@ state_status_t delegrecall_impl(cache_entry_t *entry)
 				 "Racing with delete export. Do nothing");
 			continue;
 		}
-		if (probe_exp != deleg_entry->sle_export) {
+		if (probe_exp != deleg_entry->dd_export) {
 			/* Whole world changed under us and a new export
 			 * with same old export-id has been added.
 			 * Do nothing.
 			 */
 			LogWarn(COMPONENT_FSAL_UP,
 				"Export changed prebe_exp:%p sle_exp: %p\n",
-				probe_exp, deleg_entry->sle_export);
+				probe_exp, deleg_entry->dd_export);
 			put_gsh_export(probe_exp);
 			continue;
 		}
 
 		if (nfs_client_id_get_confirmed(deleg_entry->
-						sle_owner->so_owner.
+						dd_owner->so_owner.
 						so_nfs4_owner.so_clientid,
 						&clid) != CLIENT_ID_SUCCESS) {
 			LogCrit(COMPONENT_NFS_CB,
