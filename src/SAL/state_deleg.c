@@ -188,8 +188,8 @@ state_status_t release_lease_lock(cache_entry_t *entry, state_owner_t *owner,
 	assert(state && state->state_type == STATE_TYPE_DELEG);
 	removed = remove_deleg_data(entry, owner, state);
 	if (!removed) { /* Not found */
-		LogDebug(COMPONENT_STATE,
-				"Unlock success on delegation not found");
+		LogWarn(COMPONENT_STATE,
+			"Unlock success on delegation not found");
 		return STATE_SUCCESS;
 	}
 
@@ -518,18 +518,6 @@ void state_deleg_revoke(state_t *state, cache_entry_t *entry)
 			return;
 		}
 	}
-
-	/* delegation states and delegation locks have a one-to-one
-	 * correspondence. They get created and destroyed at the same
-	 * time. The exception is, while removing an export all locks
-	 * including delegation locks are removed without their
-	 * corresponding delegation states. So we get here, for sure,
-	 * when an export is removed! Since the delegation lock is
-	 * already removed, just remove the delegation state here!
-	 *
-	 * TODO:
-	 * There is no reason for delegation lock structures. They can
-	 * be completely abstracted out inside delegation state itself.
-	 */
-	state_del_locked(state, entry);
+	LogFatal(COMPONENT_STATE,
+		"Delegation state exists but not the delegation data object");
 }
