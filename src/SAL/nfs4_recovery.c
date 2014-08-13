@@ -106,6 +106,7 @@ nfs4_start_grace(nfs_grace_start_array_t *gsap)
          * is doing a take over.  read in the client ids from the failing node
          */
         if (gsap) {
+                nfs4_create_recov_dir();
                 iend = gsap->num_elements;
                 assert(iend);
                 gsp = gsap->nfs_grace_start;
