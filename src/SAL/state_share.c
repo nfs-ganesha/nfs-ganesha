@@ -121,18 +121,6 @@ state_status_t state_share_add(cache_entry_t *entry,
 	unsigned int new_share_deny = 0;
 	fsal_share_param_t share_param;
 
-	/* Check if new share state has conflicts. */
-	status =
-	    state_share_check_conflict(entry,
-				       state->state_data.share.share_access,
-				       state->state_data.share.share_deny);
-	if (status != STATE_SUCCESS) {
-		LogEvent(COMPONENT_STATE,
-			 "Share conflicts detected during add");
-		status = STATE_STATE_CONFLICT;
-		return status;
-	}
-
 	/* Get the current union of share states of this file. */
 	old_entry_share_access = state_share_get_share_access(entry);
 	old_entry_share_deny = state_share_get_share_deny(entry);
@@ -285,17 +273,6 @@ state_status_t state_share_upgrade(cache_entry_t *entry,
 	unsigned int new_share_access = 0;
 	unsigned int new_share_deny = 0;
 	fsal_share_param_t share_param;
-
-	/* Check if new share state has conflicts. */
-	status =
-	    state_share_check_conflict(entry, state_data->share.share_access,
-				       state_data->share.share_deny);
-	if (status != STATE_SUCCESS) {
-		LogEvent(COMPONENT_STATE,
-			 "Share conflicts detected during upgrade");
-		status = STATE_STATE_CONFLICT;
-		return status;
-	}
 
 	/* Get the current union of share states of this file. */
 	old_entry_share_access = state_share_get_share_access(entry);
@@ -638,6 +615,11 @@ static unsigned int state_share_get_share_deny(cache_entry_t *entry)
 state_status_t state_share_anonymous_io_start(cache_entry_t *entry,
 					      int share_access)
 {
+	/** @todo FSF: This is currently unused, but I think there is
+	 *             some additional work to make the conflict check
+	 *             work for v3 and v4, and in fact, this function
+	 *             should be called indicating v3 or v4...
+	 */
 	state_status_t status = 0;
 	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 

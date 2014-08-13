@@ -546,9 +546,6 @@ void cancel_all_nlm_blocked();
  *
  ******************************************************************************/
 
-bool state_conflict(state_t *state, state_type_t state_type,
-		    state_data_t *state_data);
-
 state_status_t state_add_impl(cache_entry_t *entry, state_type_t state_type,
 			      state_data_t *state_data,
 			      state_owner_t *owner_input, state_t **state,
