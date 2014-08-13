@@ -49,6 +49,7 @@
 #include "nfs_proto_tools.h"
 #include "server_stats.h"
 #include "export_mgr.h"
+#include "sal_functions.h"
 
 /**
  *
@@ -222,9 +223,24 @@ int nfs3_write(nfs_arg_t *arg,
 		written_size = 0;
 	} else {
 		/* An actual write is to be made, prepare it */
+
+		res->res_write3.status = nfs3_Errno_state(
+				state_share_anonymous_io_start(
+					entry,
+					OPEN4_SHARE_ACCESS_WRITE,
+					SHARE_BYPASS_V3_WRITE));
+
+		if (res->res_write3.status != NFS3_OK) {
+			rc = NFS_REQ_OK;
+			goto out;
+		}
+
 		cache_status =
 		    cache_inode_rdwr(entry, CACHE_INODE_WRITE, offset, size,
 				     &written_size, data, &eof_met, &sync);
+
+		state_share_anonymous_io_done(entry, OPEN4_SHARE_ACCESS_WRITE);
+
 		if (cache_status == CACHE_INODE_SUCCESS) {
 			/* Build Weak Cache Coherency data */
 			nfs_SetWccData(NULL, entry,

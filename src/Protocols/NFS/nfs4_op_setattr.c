@@ -67,6 +67,7 @@ int nfs4_op_setattr(struct nfs_argop4 *op, compound_data_t *data,
 	state_t *state_found = NULL;
 	state_t *state_open = NULL;
 	cache_entry_t *entry = NULL;
+	bool anonymous_started = false;
 
 	resp->resop = NFS4_OP_SETATTR;
 	res_SETATTR4->status = NFS4_OK;
@@ -174,13 +175,16 @@ int nfs4_op_setattr(struct nfs_argop4 *op, compound_data_t *data,
 			/* Special stateid, no open state, check to see if
 			 * any share conflicts The stateid is all-0 or all-1
 			 */
-			res_SETATTR4->status =
-			    nfs4_check_special_stateid(entry,
-						       "SETATTR(size)",
-						       FATTR4_ATTR_WRITE);
+			res_SETATTR4->status = nfs4_Errno_state(
+				state_share_anonymous_io_start(
+					entry,
+					OPEN4_SHARE_ACCESS_WRITE,
+					SHARE_BYPASS_NONE));
 
 			if (res_SETATTR4->status != NFS4_OK)
 				return res_SETATTR4->status;
+
+			anonymous_started = true;
 		}
 	}
 
@@ -190,12 +194,12 @@ int nfs4_op_setattr(struct nfs_argop4 *op, compound_data_t *data,
 	/* A carry into seconds considered invalid */
 	if (sattr.atime.tv_nsec >= S_NSECS) {
 		res_SETATTR4->status = NFS4ERR_INVAL;
-		return res_SETATTR4->status;
+		goto done;
 	}
 
 	if (sattr.mtime.tv_nsec >= S_NSECS) {
 		res_SETATTR4->status = NFS4ERR_INVAL;
-		return res_SETATTR4->status;
+		goto done;
 	}
 
 	/* If owner or owner_group are set, and the credential was
@@ -214,7 +218,7 @@ int nfs4_op_setattr(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		res_SETATTR4->status = nfs4_Errno(cache_status);
-		return res_SETATTR4->status;
+		goto done;
 	}
 
 	/* Set the replyed structure */
@@ -222,6 +226,11 @@ int nfs4_op_setattr(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* Exit with no error */
 	res_SETATTR4->status = NFS4_OK;
+
+ done:
+
+	if (anonymous_started)
+		state_share_anonymous_io_done(entry, OPEN4_SHARE_ACCESS_WRITE);
 
 	return res_SETATTR4->status;
 }				/* nfs4_op_setattr */

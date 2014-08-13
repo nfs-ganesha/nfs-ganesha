@@ -467,22 +467,28 @@ state_status_t state_share_check_prev(state_t *state,
  * @param[in] entry        File to query
  * @param[in] share_access Desired access mode
  * @param[in] share_deny   Desired deny mode
+ * @param[in] bypass       Indicates if any bypass is to be used
  *
  * @return State status.
  */
 state_status_t state_share_check_conflict(cache_entry_t *entry,
-					  int share_access, int share_deny)
+					  int share_access,
+					  int share_deny,
+					  enum share_bypass_modes bypass)
 {
 	char *cause = "";
 
 	if ((share_access & OPEN4_SHARE_ACCESS_READ) != 0
-	    && entry->object.file.share_state.share_deny_read > 0) {
+	    && entry->object.file.share_state.share_deny_read > 0
+	    && bypass != SHARE_BYPASS_READ) {
 		cause = "access read denied by existing deny read";
 		goto out_conflict;
 	}
 
 	if ((share_access & OPEN4_SHARE_ACCESS_WRITE) != 0
-	    && entry->object.file.share_state.share_deny_write > 0) {
+	    && (entry->object.file.share_state.share_deny_write_v4 > 0 ||
+		(bypass != SHARE_BYPASS_V3_WRITE &&
+		 entry->object.file.share_state.share_deny_write > 0))) {
 		cause = "access write denied by existing deny write";
 		goto out_conflict;
 	}
@@ -607,13 +613,15 @@ static unsigned int state_share_get_share_deny(cache_entry_t *entry)
  * This function checks for conflicts with existing deny modes and
  * marks the I/O as in process to conflicting shares won't be granted.
  *
- * @brief[in,out] entry        File on which to operate
+ * @brief[in]     entry        File on which to operate
  * @brief[in]     share_access Access matching I/O done
+ * @brief[in]     bypass       Indicates if any bypass is to be used
  *
  * @return State status.
  */
 state_status_t state_share_anonymous_io_start(cache_entry_t *entry,
-					      int share_access)
+					      int share_access,
+					      enum share_bypass_modes bypass)
 {
 	/** @todo FSF: This is currently unused, but I think there is
 	 *             some additional work to make the conflict check
@@ -623,7 +631,11 @@ state_status_t state_share_anonymous_io_start(cache_entry_t *entry,
 	state_status_t status = 0;
 	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 
-	status = state_share_check_conflict(entry, share_access, 0);
+	status = state_share_check_conflict(entry,
+					    share_access,
+					    OPEN4_SHARE_DENY_NONE,
+					    bypass);
+
 	if (status == STATE_SUCCESS) {
 		/* Temporarily bump the access counters, v4 mode doesn't matter
 		 * since there is no deny mode associated with anonymous I/O.
@@ -631,6 +643,9 @@ state_status_t state_share_anonymous_io_start(cache_entry_t *entry,
 		state_share_update_counter(entry, OPEN4_SHARE_ACCESS_NONE,
 					   OPEN4_SHARE_DENY_NONE, share_access,
 					   OPEN4_SHARE_DENY_NONE, false);
+	} else {
+		/* Need to convert the error from STATE_SHARE_CONFLICT */
+		status = STATE_LOCKED;
 	}
 
 	PTHREAD_RWLOCK_unlock(&entry->state_lock);
@@ -719,7 +734,11 @@ state_status_t state_nlm_share(cache_entry_t *entry,
 	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 
 	/* Check if new share state has conflicts. */
-	status = state_share_check_conflict(entry, share_access, share_deny);
+	status = state_share_check_conflict(entry,
+					    share_access,
+					    share_deny,
+					    SHARE_BYPASS_NONE);
+
 	if (status != STATE_SUCCESS) {
 		PTHREAD_RWLOCK_unlock(&entry->state_lock);
 

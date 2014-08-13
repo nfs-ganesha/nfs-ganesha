@@ -136,6 +136,8 @@ const char *state_err_str(state_status_t err)
 		return "STATE_NAME_TOO_LONG";
 	case STATE_LOCK_CONFLICT:
 		return "STATE_LOCK_CONFLICT";
+	case STATE_LOCKED:
+		return "STATE_LOCKED";
 	case STATE_LOCK_BLOCKED:
 		return "STATE_LOCK_BLOCKED";
 	case STATE_LOCK_DEADLOCK:
@@ -500,6 +502,10 @@ nfsstat4 nfs4_Errno_state(state_status_t error)
 		nfserror = NFS4ERR_SHARE_DENIED;
 		break;
 
+	case STATE_LOCKED:
+		nfserror = NFS4ERR_LOCKED;
+		break;
+
 	case STATE_QUOTA_EXCEEDED:
 		nfserror = NFS4ERR_DQUOT;
 		break;
@@ -636,6 +642,7 @@ nfsstat3 nfs3_Errno_state(state_status_t error)
 		nfserror = NFS3ERR_ACCES;
 		break;
 
+	case STATE_LOCKED:
 	case STATE_FSAL_EPERM:
 	case STATE_FSAL_ERR_SEC:
 		nfserror = NFS3ERR_PERM;
@@ -721,9 +728,9 @@ nfsstat3 nfs3_Errno_state(state_status_t error)
 	case STATE_CACHE_INODE_ERR:
 	case STATE_INCONSISTENT_ENTRY:
 	case STATE_HASH_TABLE_ERROR:
-	case STATE_STATE_CONFLICT:
 	case STATE_ASYNC_POST_ERROR:
 	case STATE_STATE_ERROR:
+	case STATE_STATE_CONFLICT:
 	case STATE_LOCK_CONFLICT:
 	case STATE_LOCK_BLOCKED:
 	case STATE_LOCK_DEADLOCK:
