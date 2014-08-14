@@ -169,9 +169,6 @@ int main(int argc, char *argv[])
 			printf("Release comment = %s\n", VERSION_COMMENT);
 			printf("Git HEAD = %s\n", _GIT_HEAD_COMMIT);
 			printf("Git Describe = %s\n", _GIT_DESCRIBE);
-			if (strcmp(GANESHA_VERSION, _GIT_DESCRIBE) != 0)
-				printf(
-				    "This is a sandbox, not a tagged branch\n");
 			exit(0);
 			break;
 
