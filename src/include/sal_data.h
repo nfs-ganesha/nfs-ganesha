@@ -387,6 +387,24 @@ struct state_t {
 		(void)memcpy((id4)->other, (state)->stateid_other, OTHERSIZE); \
 	} while (0)
 
+/**
+ * @brief Delegation state data object
+ *
+ * We could potentially put all the delegation data in state_deleg_t
+ * itself but that would add storage for other state types. So we
+ * allocate memory for storing delegation related state data in this
+ * object.
+ */
+struct deleg_data {
+	struct glist_head dd_list;
+	cache_entry_t *dd_entry;
+	state_t *dd_state;
+	state_owner_t *dd_owner;
+	struct gsh_export *dd_export;
+	uint16_t dd_export_id;
+};
+
+
 
 /*****************************************************************************
  *
@@ -862,7 +880,6 @@ struct state_lock_entry_t {
 	struct glist_head sle_export_locks;	/*< Link on the export
 						   lock list */
 	struct gsh_export *sle_export;
-	uint16_t sle_export_id; /* used to get a ref on export for async ops */
 	cache_entry_t *sle_entry;	/*< File being locked */
 	state_block_data_t *sle_block_data;	/*< Blocking lock data */
 	state_owner_t *sle_owner;	/* Lock owner */

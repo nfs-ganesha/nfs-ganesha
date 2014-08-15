@@ -76,6 +76,133 @@ void init_new_deleg_state(state_data_t *deleg_state,
 	clfile_entry->cfd_r_time = 0;
 }
 
+struct deleg_data *create_deleg_data(cache_entry_t *entry, state_t *state,
+		state_owner_t *owner, struct gsh_export *export)
+{
+	struct deleg_data *deleg_data;
+
+	deleg_data = gsh_malloc(sizeof(*deleg_data));
+	memset(&deleg_data->dd_list, 0, sizeof(deleg_data->dd_list));
+	deleg_data->dd_entry = entry;
+	deleg_data->dd_state = state;
+	deleg_data->dd_owner = owner;
+	deleg_data->dd_export = export;
+	deleg_data->dd_export_id = export->export_id;
+	return deleg_data;
+}
+
+void destroy_deleg_data(struct deleg_data *deleg_data)
+{
+	assert(glist_null(&deleg_data->dd_list));
+	gsh_free(deleg_data);
+}
+
+/**
+ * @brief Remove a delegation from a list of delegations
+ *
+ * Remove a delegation from a list of delegations
+ *
+ * @param[in,out] entry   Cache entry on which to operate
+ * @param[in]     owner   Client owner of delegation
+ * @param[in]     state   Associated lock state
+ *
+ * entry's state_lock needs to be held in readwrite mode
+ *
+ * @return true iff the lock is removed.
+ */
+static bool remove_deleg_data(cache_entry_t *entry,
+			      state_owner_t *owner,
+			      state_t *state)
+{
+	struct deleg_data *deleg_data;
+	struct glist_head *glist;
+
+	glist_for_each(glist, &entry->object.file.deleg_list) {
+		deleg_data = glist_entry(glist, struct deleg_data, dd_list);
+		if (deleg_data->dd_state == state) {
+			assert(deleg_data->dd_owner == owner);
+			assert(state->state_owner == owner);
+			glist_del(&deleg_data->dd_list);
+			destroy_deleg_data(deleg_data);
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/**
+ * @brief Attempt to acquire a lease lock (delegation)
+ *
+ * @param[in]  entry      Entry to lock
+ * @param[in]  owner      Lock owner
+ * @param[in]  state      Associated state for the lock
+ * @param[in]  lock       Lock description
+ *
+ * state_lock must be held while calling this function
+ */
+state_status_t acquire_lease_lock(cache_entry_t *entry, state_owner_t *owner,
+				  state_t *state, fsal_lock_param_t *lock)
+{
+	struct deleg_data *deleg_data;
+	state_status_t status;
+
+	/* Create a new deleg data object */
+	deleg_data = create_deleg_data(entry, state, owner, op_ctx->export);
+	if (!deleg_data)
+		return STATE_MALLOC_ERROR;
+
+	status = do_lock_op(entry, FSAL_OP_LOCK, owner, lock, NULL, NULL, false,
+			    LEASE_LOCK);
+
+	if (status == STATE_SUCCESS) {
+		/* Insert deleg data into delegation list */
+		update_delegation_stats(deleg_data);
+		glist_add_tail(&entry->object.file.deleg_list,
+			       &deleg_data->dd_list);
+	} else {
+		LogDebug(COMPONENT_STATE, "Could not set lease, error=%s",
+			 state_err_str(status));
+		destroy_deleg_data(deleg_data);
+	}
+
+	return status;
+}
+
+/**
+ * @brief Release a lease lock (delegation)
+ *
+ * @param[in] entry    File to unlock
+ * @param[in] owner    Owner of lock
+ * @param[in] state    Associated state
+ * @param[in] lock     Lock description
+ *
+ * state_lock must be held while calling this function
+ */
+state_status_t release_lease_lock(cache_entry_t *entry, state_owner_t *owner,
+				  state_t *state, fsal_lock_param_t *lock)
+{
+	state_status_t status;
+	bool removed;
+
+	assert(state && state->state_type == STATE_TYPE_DELEG);
+	removed = remove_deleg_data(entry, owner, state);
+	if (!removed) { /* Not found */
+		LogWarn(COMPONENT_STATE,
+			"Unlock success on delegation not found");
+		return STATE_SUCCESS;
+	}
+
+	status = do_lock_op(entry, FSAL_OP_UNLOCK, owner, lock, NULL, NULL,
+			    false, LEASE_LOCK);
+
+	if (status != STATE_SUCCESS)
+		LogMajor(COMPONENT_STATE, "Unable to unlock FSAL, error=%s",
+			 state_err_str(status));
+
+	return status;
+}
+
 /**
  * @brief Update statistics on successfully granted delegation.
  *
@@ -85,10 +212,10 @@ void init_new_deleg_state(state_data_t *deleg_state,
  *
  * @param[in] Delegation Entry
  */
-bool update_delegation_stats(state_lock_entry_t *deleg_entry)
+bool update_delegation_stats(struct deleg_data *deleg_entry)
 {
-	cache_entry_t *entry = deleg_entry->sle_entry;
-	nfs_client_id_t *client = deleg_entry->sle_owner->so_owner.
+	cache_entry_t *entry = deleg_entry->dd_entry;
+	nfs_client_id_t *client = deleg_entry->dd_owner->so_owner.
 					so_nfs4_owner.so_clientrec;
 
 	/* Update delegation stats for file. */
@@ -119,10 +246,10 @@ static int advance_avg(time_t prev_avg, time_t new_time,
  *
  * @param[in] Delegation Lock Entry
  */
-bool deleg_heuristics_recall(state_lock_entry_t *deleg_entry)
+bool deleg_heuristics_recall(struct deleg_data *deleg_entry)
 {
-	cache_entry_t *entry = deleg_entry->sle_entry;
-	nfs_client_id_t *client = deleg_entry->sle_owner->so_owner.
+	cache_entry_t *entry = deleg_entry->dd_entry;
+	nfs_client_id_t *client = deleg_entry->dd_owner->so_owner.
 					so_nfs4_owner.so_clientrec;
 	/* Update delegation stats for file. */
 	struct file_deleg_stats *statistics = &entry->object.file.fdeleg_stats;
@@ -296,7 +423,7 @@ void get_deleg_perm(cache_entry_t *entry, nfsace4 *permissions,
  * @param[in] deleg state lock entry.
  * Should be called with state lock held.
  */
-state_status_t deleg_revoke(state_lock_entry_t *deleg_entry)
+state_status_t deleg_revoke(struct deleg_data *deleg_entry)
 {
 	state_status_t state_status;
 	cache_entry_t *pentry;
@@ -307,10 +434,10 @@ state_status_t deleg_revoke(state_lock_entry_t *deleg_entry)
 	nfs_fh4 fhandle;
 	struct root_op_context root_op_context;
 
-	clid = deleg_entry->sle_owner->so_owner.so_nfs4_owner.so_clientrec;
-	deleg_state = deleg_entry->sle_state;
-	clientowner = deleg_entry->sle_owner;
-	pentry = deleg_entry->sle_entry;
+	clid = deleg_entry->dd_owner->so_owner.so_nfs4_owner.so_clientrec;
+	deleg_state = deleg_entry->dd_state;
+	clientowner = deleg_entry->dd_owner;
+	pentry = deleg_entry->dd_entry;
 
 	/* Allocation of a new file handle */
 	if (nfs4_AllocateFH(&fhandle) != NFS4_OK) {
@@ -333,7 +460,7 @@ state_status_t deleg_revoke(state_lock_entry_t *deleg_entry)
 	/* Build op_context for state_unlock_locked */
 	init_root_op_context(&root_op_context, NULL, NULL, 0, 0,
 			     UNKNOWN_REQUEST);
-	root_op_context.req_ctx.clientid = &deleg_entry->sle_owner->
+	root_op_context.req_ctx.clientid = &deleg_entry->dd_owner->
 				so_owner.so_nfs4_owner.so_clientid;
 	root_op_context.req_ctx.export = deleg_state->state_export;
 	root_op_context.req_ctx.fsal_export =
@@ -373,7 +500,7 @@ state_status_t deleg_revoke(state_lock_entry_t *deleg_entry)
 void state_deleg_revoke(state_t *state, cache_entry_t *entry)
 {
 	struct glist_head *glist;
-	state_lock_entry_t *deleg_lock;
+	struct deleg_data *deleg_data;
 
 	/* If we are already in the process of recalling or revoking
 	 * this delegation from elsewhere, skip it here.
@@ -385,24 +512,12 @@ void state_deleg_revoke(state_t *state, cache_entry_t *entry)
 
 	/* Find the delegation lock and revoke it */
 	glist_for_each(glist, &entry->object.file.deleg_list) {
-		deleg_lock = glist_entry(glist, state_lock_entry_t, sle_list);
-		if (deleg_lock->sle_state == state) {
-			(void)deleg_revoke(deleg_lock);
+		deleg_data = glist_entry(glist, struct deleg_data, dd_list);
+		if (deleg_data->dd_state == state) {
+			(void)deleg_revoke(deleg_data);
 			return;
 		}
 	}
-
-	/* delegation states and delegation locks have a one-to-one
-	 * correspondence. They get created and destroyed at the same
-	 * time. The exception is, while removing an export all locks
-	 * including delegation locks are removed without their
-	 * corresponding delegation states. So we get here, for sure,
-	 * when an export is removed! Since the delegation lock is
-	 * already removed, just remove the delegation state here!
-	 *
-	 * TODO:
-	 * There is no reason for delegation lock structures. They can
-	 * be completely abstracted out inside delegation state itself.
-	 */
-	state_del_locked(state, entry);
+	LogFatal(COMPONENT_STATE,
+		"Delegation state exists but not the delegation data object");
 }

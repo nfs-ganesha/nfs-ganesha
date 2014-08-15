@@ -928,16 +928,16 @@ static nfsstat4 open4_claim_deleg(OPEN4args *arg, compound_data_t *data,
 	}
 
 	if (claim == CLAIM_DELEGATE_CUR) {
-		state_lock_entry_t *iter_lock;
+		struct deleg_data *iter_deleg;
 		state_t *iter_state;
 		state_t *found_state = NULL;
 
 		PTHREAD_RWLOCK_wrlock(&entry_lookup->state_lock);
 		glist_for_each(glist, &entry_lookup->object.file.deleg_list) {
-			iter_lock = glist_entry(glist,
-						state_lock_entry_t,
-						sle_list);
-			iter_state = iter_lock->sle_state;
+			iter_deleg = glist_entry(glist,
+						struct deleg_data,
+						dd_list);
+			iter_state = iter_deleg->dd_state;
 			if (SAME_STATEID(rcurr_state, iter_state)) {
 				found_state = iter_state;
 				LogFullDebug(COMPONENT_NFS_V4,

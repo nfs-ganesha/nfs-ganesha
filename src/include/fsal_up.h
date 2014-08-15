@@ -292,7 +292,7 @@ cache_inode_status_t up_get(struct fsal_module *fsal,
 struct delegrecall_context {
 	cache_entry_t *drc_entry;
 	nfs_client_id_t *drc_clid;
-	state_lock_entry_t *drc_deleg_entry;
+	struct deleg_data *drc_deleg_entry;
 	stateid4 drc_stateid;
 	struct gsh_export *drc_exp;
 };
