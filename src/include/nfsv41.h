@@ -161,7 +161,7 @@ extern "C" {
 		NFS4ERR_OFFLOAD_DENIED = 10091,
 		NFS4ERR_WRONG_LFS = 10092,
 		NFS4ERR_BADLABEL = 10093,
-		NFS4ERR_OFFLOAD_NO_REQS= 10094,
+		NFS4ERR_OFFLOAD_NO_REQS = 10094,
 
 		NFS4ERR_REPLAY = 11001,
 	};
@@ -2491,13 +2491,13 @@ extern "C" {
 		NL4_NETADDR     = 2
 	};
 	typedef enum netloc_type4 netloc_type4;
-	
+
 	enum data_content4 {
 		NFS4_CONTENT_DATA = 0,
 		NFS4_CONTENT_HOLE = 1
 	};
 	typedef enum data_content4 data_content4;
-	
+
 	typedef struct {
 		offset4         d_offset;
 		bool_t          d_allocated;
