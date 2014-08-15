@@ -53,6 +53,12 @@ void server_stats_transport_done(struct gsh_client *client,
 				uint64_t rx_err, uint64_t tx_bytes,
 				uint64_t tx_pkt, uint64_t tx_err);
 
+/* For delegations */
+void inc_grants(struct gsh_client *client);
+void dec_grants(struct gsh_client *client);
+void inc_revokes(struct gsh_client *client);
+void inc_recalls(struct gsh_client *client);
+void inc_failed_recalls(struct gsh_client *client);
 
 #endif				/* !SERVER_STATS_H */
 /** @} */

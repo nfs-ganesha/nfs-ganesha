@@ -490,6 +490,7 @@ nfs_client_id_t *create_client_id(clientid4 clientid,
 				  nfs_client_record_t *client_record,
 				  sockaddr_t *client_addr,
 				  nfs_client_cred_t *credential,
+				  struct gsh_client *gsh_client,
 				  uint32_t minorversion)
 {
 	nfs_client_id_t *client_rec = pool_alloc(client_id_pool, NULL);
@@ -554,6 +555,7 @@ nfs_client_id_t *create_client_id(clientid4 clientid,
 	client_rec->cid_client_addr = *client_addr;
 	client_rec->cid_credential = *credential;
 	client_rec->cid_minorversion = minorversion;
+	client_rec->gsh_client = gsh_client;
 
 	/* need to init the list_head */
 	glist_init(&client_rec->cid_openowners);

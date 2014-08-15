@@ -271,17 +271,8 @@ typedef struct state_share__ {
 } state_share_t;
 
 /**
- * @brief Stats for client and client-file delegation heuristics
+ * @brief Stats for client-file delegation heuristics
  */
-
-struct c_deleg_stats {
-	uint32_t curr_deleg_grants; /* current num of delegations owned by
-				       this client */
-	uint32_t tot_recalls;       /* total num of times client was asked to
-				       recall */
-	uint32_t failed_recalls;    /* times client failed to process recall */
-	uint32_t num_revokes;	    /* Num revokes for the client */
-};
 
 /* @brief Per client, per file stats */
 struct cf_deleg_stats {
@@ -704,7 +695,10 @@ struct nfs_client_id_t {
 	uint32_t cid_minorversion;
 	uint32_t cid_stateid_counter;
 
-	struct c_deleg_stats cid_deleg_stats;
+	uint32_t curr_deleg_grants; /* current num of delegations owned by
+				       this client */
+	uint32_t num_revokes;       /* Num revokes for the client */
+	struct gsh_client *gsh_client; /* for client specific statistics. */
 };
 
 /**

@@ -40,6 +40,8 @@
 #ifndef SERVER_STATS_PRIVATE_H
 #define SERVER_STATS_PRIVATE_H
 
+#include "sal_data.h"
+
 /**
  * @brief Server request statistics
  *
@@ -56,6 +58,7 @@ struct rquota_stats;
 struct nfsv40_stats;
 struct nfsv41_stats;
 struct nfsv42_stats;
+struct deleg_stats;
 struct _9p_stats;
 
 struct gsh_stats {
@@ -66,6 +69,7 @@ struct gsh_stats {
 	struct nfsv40_stats *nfsv40;
 	struct nfsv41_stats *nfsv41;
 	struct nfsv41_stats *nfsv42;
+	struct deleg_stats *deleg;
 	struct _9p_stats *_9p;
 };
 
@@ -195,7 +199,16 @@ struct export_stats {
 	.name = "layout_recall",\
 	.type = "(ttt)",	\
 	.direction = "out"	\
-}				\
+}
+
+/* number of delegations, number of sent recalls,
+ * number of failed recalls, number of revokes */
+#define DELEG_REPLY		       \
+{				       \
+	.name = "delegation_stats",    \
+	.type = "(tttt)",	       \
+	.direction = "out"	       \
+}
 
 void server_stats_summary(DBusMessageIter *iter, struct gsh_stats *st);
 void server_dbus_v3_iostats(struct nfsv3_stats *v3p, DBusMessageIter *iter);
@@ -204,6 +217,7 @@ void server_dbus_v41_iostats(struct nfsv41_stats *v41p, DBusMessageIter *iter);
 void server_dbus_v41_layouts(struct nfsv41_stats *v41p, DBusMessageIter *iter);
 void server_dbus_v42_iostats(struct nfsv41_stats *v42p, DBusMessageIter *iter);
 void server_dbus_v42_layouts(struct nfsv41_stats *v42p, DBusMessageIter *iter);
+void server_dbus_delegations(struct deleg_stats *ds, DBusMessageIter *iter);
 void server_dbus_total_ops(struct export_stats *export_st,
 			   DBusMessageIter *iter);
 void global_dbus_total_ops(DBusMessageIter *iter);
