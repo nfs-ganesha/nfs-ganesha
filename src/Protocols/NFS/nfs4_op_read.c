@@ -224,11 +224,7 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 	uint64_t file_size = 0;
 	cache_entry_t *entry = NULL;
 	bool sync = false;
-	/* This flag is set to true in the case of an anonymous read
-	   so that we know to release the state lock afterward.  The
-	   state lock does not need to be held during a non-anonymous
-	   read, since the open state itself prevents a conflict. */
-	bool anonymous = false;
+	bool anonymous_started = false;
 
 	/* Say we are managing NFS4_OP_READ */
 	resp->resop = NFS4_OP_READ;
@@ -366,17 +362,21 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 		/* Special stateid, no open state, check to see if any
 		   share conflicts */
 		state_open = NULL;
-		PTHREAD_RWLOCK_rdlock(&entry->state_lock);
-		anonymous = true;
 
 		/* Special stateid, no open state, check to see if any share
 		   conflicts The stateid is all-0 or all-1 */
-		res_READ4->status =
-		    nfs4_check_special_stateid(entry, "READ", FATTR4_ATTR_READ);
-		if (res_READ4->status != NFS4_OK) {
-			PTHREAD_RWLOCK_unlock(&entry->state_lock);
+		res_READ4->status = nfs4_Errno_state(
+				state_share_anonymous_io_start(
+					entry,
+					OPEN4_SHARE_ACCESS_READ,
+					arg_READ4->stateid.seqid != 0
+						? SHARE_BYPASS_READ
+						: SHARE_BYPASS_NONE));
+
+		if (res_READ4->status != NFS4_OK)
 			return res_READ4->status;
-		}
+
+		anonymous_started = true;
 	}
 
 	/** @todo this is racy, use cache_inode_lock_trust_attrs and
@@ -461,7 +461,7 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 		goto done;
 	}
 
-	if (!anonymous && data->minorversion == 0) {
+	if (!anonymous_started && data->minorversion == 0) {
 		op_ctx->clientid =
 		    &state_found->state_owner->so_owner.so_nfs4_owner.
 		    so_clientid;
@@ -485,7 +485,7 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 		goto done;
 	}
 
-	if (!anonymous && data->minorversion == 0)
+	if (!anonymous_started && data->minorversion == 0)
 		op_ctx->clientid = NULL;
 
 	res_READ4->READ4res_u.resok4.data.data_len = read_size;
@@ -504,8 +504,10 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 	res_READ4->status = NFS4_OK;
 
  done:
-	if (anonymous)
-		PTHREAD_RWLOCK_unlock(&entry->state_lock);
+
+	if (anonymous_started)
+		state_share_anonymous_io_done(entry, OPEN4_SHARE_ACCESS_READ);
+
 	server_stats_io_done(size, read_size,
 			     (res_READ4->status == NFS4_OK) ? true : false,
 			     false);

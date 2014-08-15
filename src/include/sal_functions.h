@@ -341,9 +341,6 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, cache_entry_t *entry,
 void update_stateid(state_t *state, stateid4 *stateid, compound_data_t *data,
 		    const char *tag);
 
-nfsstat4 nfs4_check_special_stateid(cache_entry_t *entry, const char *tag,
-				    int access);
-
 int nfs4_Init_state_id(void);
 int nfs4_State_Set(char other[OTHERSIZE], state_t *state_data);
 int nfs4_State_Get_Pointer(char other[OTHERSIZE], state_t **state_data);
@@ -539,9 +536,6 @@ void cancel_all_nlm_blocked();
  *
  ******************************************************************************/
 
-bool state_conflict(state_t *state, state_type_t state_type,
-		    state_data_t *state_data);
-
 state_status_t state_add_impl(cache_entry_t *entry, state_type_t state_type,
 			      state_data_t *state_data,
 			      state_owner_t *owner_input, state_t **state,
@@ -643,11 +637,20 @@ state_status_t state_share_set_prev(state_t *state, state_data_t *state_data);
 state_status_t state_share_check_prev(state_t *state,
 				      state_data_t *state_data);
 
+enum share_bypass_modes {
+	SHARE_BYPASS_NONE,
+	SHARE_BYPASS_READ,
+	SHARE_BYPASS_V3_WRITE
+};
+
 state_status_t state_share_check_conflict(cache_entry_t *entry,
-					  int share_acccess, int share_deny);
+					  int share_acccess,
+					  int share_deny,
+					  enum share_bypass_modes bypass);
 
 state_status_t state_share_anonymous_io_start(cache_entry_t *entry,
-					      int share_access);
+					      int share_access,
+					      enum share_bypass_modes bypass);
 
 void state_share_anonymous_io_done(cache_entry_t *entry, int share_access);
 

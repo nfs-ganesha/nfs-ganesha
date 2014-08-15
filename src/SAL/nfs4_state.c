@@ -117,60 +117,6 @@ static bool check_deleg_conflict(struct deleg_data *deleg_entry,
 }
 
 /**
- * @brief Checks for a conflict between an existing state and a candidate state.
- *
- * @param[in] state      Existing state
- * @param[in] state_type Type of candidate state
- * @param[in] state_data Data for the candidate state
- *
- * @retval true if there is a conflict.
- * @retval false if no conflict has been found
- */
-bool state_conflict(state_t *state, state_type_t candidate_type,
-		    state_data_t *candidate_data)
-{
-	if (state == NULL || candidate_data == NULL)
-		return true;
-
-	switch (candidate_type) {
-	case STATE_TYPE_NONE:
-		return false;	/* STATE_NONE conflicts with nobody */
-
-	case STATE_TYPE_SHARE:
-		/* Delegation recalls are handled with check_deleg_conflict.
-		 * So just check existing open state conflicts here.
-		 */
-		if (state->state_type == STATE_TYPE_SHARE) {
-			if ((state->state_data.share.share_access &
-			     candidate_data->share.share_deny)
-			    || (state->state_data.share.share_deny &
-				candidate_data->share.share_access)) {
-				/* Conflicting share reservation */
-				return true;
-			}
-		}
-		return false;
-
-	case STATE_TYPE_LOCK:
-		/* lock conflict is managed in the NFS request */
-		return false;
-
-	case STATE_TYPE_LAYOUT:
-		/** layout conflict is managed by the FSAL */
-		return false;
-
-	case STATE_TYPE_DELEG:
-		/* All open conflicts and delegation recalls are handled
-		 * while adding open state (STATE_TYPE_SHARE). There
-		 * should NOT be any conflicts while adding delegation
-		 * state.
-		 */
-		return false;
-	}
-	return false;
-}
-
-/**
  * @brief adds a new state to a cache entry
  *
  * This version of the function does not take the state lock on the
@@ -210,24 +156,6 @@ state_status_t state_add_impl(cache_entry_t *entry, state_type_t state_type,
 		}
 
 		got_pinned = true;
-	}
-
-	/* Browse the state's list */
-	glist_for_each(glist, &entry->state_list) {
-		piter_state = glist_entry(glist, state_t, state_list);
-
-		if (state_conflict(piter_state, state_type, state_data)) {
-			LogDebug(COMPONENT_STATE,
-				 "new state conflicts with another state for entry %p",
-				 entry);
-
-			status = STATE_STATE_CONFLICT;
-
-			if (got_pinned)
-				cache_inode_dec_pin_ref(entry, false);
-
-			return status;
-		}
 	}
 
 	/* Check conflicting delegations and recall if necessary */

@@ -169,7 +169,8 @@ static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t *data,
 	state_status =
 	    state_share_check_conflict(data->current_entry,
 				       candidate_data.share.share_access,
-				       candidate_data.share.share_deny);
+				       candidate_data.share.share_deny,
+				       SHARE_BYPASS_NONE);
 
 	/* Quick exit if there is any share conflict */
 	if (state_status != STATE_SUCCESS)
