@@ -68,7 +68,7 @@
 #define RQUOTA_NB_COMMAND (RQUOTAPROC_SETACTIVEQUOTA + 1)
 #define NFS_V40_NB_OPERATION (NFS4_OP_RELEASE_LOCKOWNER + 1)
 #define NFS_V41_NB_OPERATION (NFS4_OP_RECLAIM_COMPLETE + 1)
-#define NFS_V42_NB_OPERATION (NFS4_OP_IO_ADVISE + 1)
+#define NFS_V42_NB_OPERATION (NFS4_OP_WRITE_SAME + 1)
 #define _9P_NB_COMMAND 33
 
 struct op_name {
@@ -201,15 +201,17 @@ static const struct op_name optabv4[] = {
 	[NFS4_OP_DESTROY_CLIENTID] = {.name = "DESTROY_CLIENTID",},
 	[NFS4_OP_RECLAIM_COMPLETE] = {.name = "RECLAIM_COMPLETE",},
 	/* NFSv4.2 */
+	[NFS4_OP_ALLOCATE] = {.name = "ALLOCATE",},
 	[NFS4_OP_COPY] = {.name = "COPY",},
-	[NFS4_OP_OFFLOAD_ABORT] = {.name = "OFFLOAD_ABORT",},
 	[NFS4_OP_COPY_NOTIFY] = {.name = "COPY_NOTIFY",},
-	[NFS4_OP_OFFLOAD_REVOKE] = {.name = "OFFLOAD_REVOKE",},
+	[NFS4_OP_DEALLOCATE] = {.name = "DEALLOCATE",},
+	[NFS4_OP_IO_ADVISE] = {.name = "IO_ADVISE",},
+	[NFS4_OP_LAYOUTERROR] = {.name = "LAYOUTERROR",},
+	[NFS4_OP_OFFLOAD_CANCEL] = {.name = "OFFLOAD_CANCEL",},
 	[NFS4_OP_OFFLOAD_STATUS] = {.name = "OFFLOAD_STATUS",},
-	[NFS4_OP_WRITE_PLUS] = {.name = "WRITE_PLUS",},
 	[NFS4_OP_READ_PLUS] = {.name = "READ_PLUS",},
 	[NFS4_OP_SEEK] = {.name = "SEEK",},
-	[NFS4_OP_IO_ADVISE] = {.name = "IO_ADVISE",},
+	[NFS4_OP_WRITE_SAME] = {.name = "WRITE_SAME",},
 };
 
 /* Classify protocol ops for stats purposes
@@ -250,7 +252,7 @@ static const uint32_t nfsv42_optype[NFS_V42_NB_OPERATION] = {
 	[NFS4_OP_LAYOUTCOMMIT] = LAYOUT_OP,
 	[NFS4_OP_LAYOUTGET] = LAYOUT_OP,
 	[NFS4_OP_LAYOUTRETURN] = LAYOUT_OP,
-	[NFS4_OP_WRITE_PLUS] = WRITE_OP,
+	[NFS4_OP_WRITE_SAME] = WRITE_OP,
 	[NFS4_OP_READ_PLUS] = READ_OP,
 };
 

@@ -350,13 +350,13 @@ static const struct nfs4_op_desc optabv4[] = {
 		.exp_perm_flags = 0},
 
 	/* NFSv4.2 */
-	[NFS4_OP_COPY] = {
-				.name = "OP_COPY",
+	[NFS4_OP_ALLOCATE] = {
+				.name = "OP_ALLOCATE",
 				.funct = nfs4_op_notsupp,
 				.free_res = nfs4_op_notsupp_Free,
 				.exp_perm_flags = 0},
-	[NFS4_OP_OFFLOAD_ABORT] = {
-				.name = "OP_OFFLOAD_ABORT",
+	[NFS4_OP_COPY] = {
+				.name = "OP_COPY",
 				.funct = nfs4_op_notsupp,
 				.free_res = nfs4_op_notsupp_Free,
 				.exp_perm_flags = 0},
@@ -365,8 +365,23 @@ static const struct nfs4_op_desc optabv4[] = {
 				.funct = nfs4_op_notsupp,
 				.free_res = nfs4_op_notsupp_Free,
 				.exp_perm_flags = 0},
-	[NFS4_OP_OFFLOAD_REVOKE] = {
-				.name = "OP_OFFLOAD_REVOKE",
+	[NFS4_OP_DEALLOCATE] = {
+				.name = "OP_DEALLOCATE",
+				.funct = nfs4_op_notsupp,
+				.free_res = nfs4_op_notsupp_Free,
+				.exp_perm_flags = 0},
+	[NFS4_OP_IO_ADVISE] = {
+				.name = "OP_IO_ADVISE",
+				.funct = nfs4_op_io_advise,
+				.free_res = nfs4_op_io_advise_Free,
+				.exp_perm_flags = 0},
+	[NFS4_OP_LAYOUTERROR] = {
+				.name = "OP_LAYOUTERROR",
+				.funct = nfs4_op_notsupp,
+				.free_res = nfs4_op_notsupp_Free,
+				.exp_perm_flags = 0},
+	[NFS4_OP_OFFLOAD_CANCEL] = {
+				.name = "OP_OFFLOAD_CANCEL",
 				.funct = nfs4_op_notsupp,
 				.free_res = nfs4_op_notsupp_Free,
 				.exp_perm_flags = 0},
@@ -374,11 +389,6 @@ static const struct nfs4_op_desc optabv4[] = {
 				.name = "OP_OFFLOAD_STATUS",
 				.funct = nfs4_op_notsupp,
 				.free_res = nfs4_op_notsupp_Free,
-				.exp_perm_flags = 0},
-	[NFS4_OP_WRITE_PLUS] = {
-				.name = "OP_WRITE_PLUS",
-				.funct = nfs4_op_write_plus,
-				.free_res = nfs4_op_write_Free,
 				.exp_perm_flags = 0},
 	[NFS4_OP_READ_PLUS] = {
 				.name = "OP_READ_PLUS",
@@ -390,11 +400,11 @@ static const struct nfs4_op_desc optabv4[] = {
 				.funct = nfs4_op_seek,
 				.free_res = nfs4_op_write_Free,
 				.exp_perm_flags = 0},
-	[NFS4_OP_IO_ADVISE] = {
-				.name = "OP_IO_ADVISE",
-				.funct = nfs4_op_io_advise,
-				.free_res = nfs4_op_io_advise_Free,
-				.exp_perm_flags = 0}
+	[NFS4_OP_WRITE_SAME] = {
+				.name = "OP_WRITE_SAME",
+				.funct = nfs4_op_write_plus,
+				.free_res = nfs4_op_write_Free,
+				.exp_perm_flags = 0},
 };
 
 /**
@@ -1016,15 +1026,17 @@ void nfs4_Compound_CopyResOne(nfs_resop4 *res_dst, nfs_resop4 *res_src)
 	case NFS4_OP_RECLAIM_COMPLETE:
 
 	/* NFSv4.2 */
+	case NFS4_OP_ALLOCATE:
 	case NFS4_OP_COPY:
-	case NFS4_OP_OFFLOAD_ABORT:
 	case NFS4_OP_COPY_NOTIFY:
-	case NFS4_OP_OFFLOAD_REVOKE:
+	case NFS4_OP_DEALLOCATE:
+	case NFS4_OP_IO_ADVISE:
+	case NFS4_OP_LAYOUTERROR:
+	case NFS4_OP_OFFLOAD_CANCEL:
 	case NFS4_OP_OFFLOAD_STATUS:
-	case NFS4_OP_WRITE_PLUS:
 	case NFS4_OP_READ_PLUS:
 	case NFS4_OP_SEEK:
-	case NFS4_OP_IO_ADVISE:
+	case NFS4_OP_WRITE_SAME:
 		break;
 
 	case NFS4_OP_ILLEGAL:

@@ -490,9 +490,9 @@ void nfs4_op_write_Free(nfs_resop4 *resp)
 }				/* nfs4_op_write_Free */
 
 /**
- * @brief The NFS4_OP_WRITE_PLUS operation
+ * @brief The NFS4_OP_WRITE_SAME operation
  *
- * This functions handles the NFS4_OP_WRITE_PLUS operation in NFSv4.2. This
+ * This functions handles the NFS4_OP_WRITE_SAME operation in NFSv4.2. This
  * function can be called only from nfs4_Compound.
  *
  * @param[in]     op    Arguments for nfs4_op
@@ -508,33 +508,21 @@ int nfs4_op_write_plus(struct nfs_argop4 *op, compound_data_t *data,
 	struct nfs_resop4 res;
 	struct nfs_argop4 arg;
 	struct io_info info;
-	WRITE_PLUS4args * const arg_WPLUS = &op->nfs_argop4_u.opwrite_plus;
-	WRITE_PLUS4res * const res_WPLUS = &resp->nfs_resop4_u.opwrite_plus;
+	WRITE_SAME4args * const arg_WPLUS = &op->nfs_argop4_u.opwrite_plus;
+	WRITE_SAME4res * const res_WPLUS = &resp->nfs_resop4_u.opwrite_plus;
 
-	resp->resop = NFS4_OP_WRITE_PLUS;
+	resp->resop = NFS4_OP_WRITE_SAME;
 	res_WPLUS->wpr_status = NFS4_OK;
 
 	arg.nfs_argop4_u.opwrite.stateid = arg_WPLUS->wp_stateid;
 	arg.nfs_argop4_u.opwrite.stable = arg_WPLUS->wp_stable;
-	info.io_content.what = arg_WPLUS->wp_what;
 
-	if (info.io_content.what == NFS4_CONTENT_DATA) {
-		info.io_content.data = arg_WPLUS->wp_data;
-		arg.nfs_argop4_u.opwrite.offset = arg_WPLUS->wp_data.d_offset;
-		arg.nfs_argop4_u.opwrite.data.data_len =
-					arg_WPLUS->wp_data.d_data.data_len;
-		arg.nfs_argop4_u.opwrite.data.data_val =
-					arg_WPLUS->wp_data.d_data.data_val;
-	} else if (info.io_content.what == NFS4_CONTENT_HOLE) {
-		info.io_content.hole = arg_WPLUS->wp_hole;
-		arg.nfs_argop4_u.opwrite.offset = arg_WPLUS->wp_hole.di_offset;
-		arg.nfs_argop4_u.opwrite.data.data_len =
-					arg_WPLUS->wp_hole.di_length;
-		arg.nfs_argop4_u.opwrite.data.data_val = NULL;
-	} else {
-		res_WPLUS->wpr_status = NFS4ERR_UNION_NOTSUPP;
-		return res_WPLUS->wpr_status;
-	}
+	info.io_content.data = arg_WPLUS->wp_data;
+	arg.nfs_argop4_u.opwrite.offset = arg_WPLUS->wp_data.d_offset;
+	arg.nfs_argop4_u.opwrite.data.data_len =
+				arg_WPLUS->wp_data.d_data.data_len;
+	arg.nfs_argop4_u.opwrite.data.data_val =
+				arg_WPLUS->wp_data.d_data.data_val;
 	info.io_advise = 0;
 
 	res_WPLUS->wpr_status = nfs4_write(&arg, data, &res,

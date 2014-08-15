@@ -194,8 +194,6 @@ static int op_dsread_plus(struct nfs_argop4 *op, compound_data_t *data,
 	if (info->io_content.what == NFS4_CONTENT_HOLE) {
 		contentp->hole.di_offset = info->io_content.hole.di_offset;
 		contentp->hole.di_length = info->io_content.hole.di_length;
-		contentp->hole.di_allocated =
-					info->io_content.hole.di_allocated;
 	}
 	if (info->io_content.what == NFS4_CONTENT_DATA) {
 		contentp->data.d_offset = info->io_content.data.d_offset;
@@ -593,7 +591,6 @@ int nfs4_op_read_plus(struct nfs_argop4 *op, compound_data_t *data,
 	if (info.io_content.what == NFS4_CONTENT_HOLE) {
 		contentp->hole.di_offset = info.io_content.hole.di_offset;
 		contentp->hole.di_length = info.io_content.hole.di_length;
-		contentp->hole.di_allocated = info.io_content.hole.di_allocated;
 	}
 	if (info.io_content.what == NFS4_CONTENT_DATA) {
 		contentp->data.d_offset = info.io_content.data.d_offset;
@@ -614,11 +611,6 @@ void nfs4_op_read_plus_Free(nfs_resop4 *res)
 	if (resp->rpr_status == NFS4_OK && conp->what == NFS4_CONTENT_DATA)
 		if (conp->data.d_data.data_val != NULL)
 			gsh_free(conp->data.d_data.data_val);
-
-	if (resp->rpr_status == NFS4_OK &&
-				conp->what == NFS4_CONTENT_APP_DATA_HOLE)
-		if (conp->adh.adh_data.data_val != NULL)
-			gsh_free(conp->adh.adh_data.data_val);
 
 	return;
 }				/* nfs4_op_read_Free */
@@ -647,61 +639,61 @@ int nfs4_op_io_advise(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* Say we are managing NFS4_OP_IO_ADVISE */
 	resp->resop = NFS4_OP_IO_ADVISE;
-	res_IO_ADVISE->iar_status = NFS4_OK;
+	res_IO_ADVISE->iaa_status = NFS4_OK;
 
 	hints.hints = 0;
 	hints.offset = 0;
 	hints.count = 0;
 
 	if (data->minorversion < 2) {
-		res_IO_ADVISE->iar_status = NFS4ERR_NOTSUPP;
+		res_IO_ADVISE->iaa_status = NFS4ERR_NOTSUPP;
 		goto done;
 	}
 
 	/* Do basic checks on a filehandle Only files can be set */
 
-	res_IO_ADVISE->iar_status = nfs4_sanity_check_FH(data, REGULAR_FILE,
+	res_IO_ADVISE->iaa_status = nfs4_sanity_check_FH(data, REGULAR_FILE,
 							 true);
-	if (res_IO_ADVISE->iar_status != NFS4_OK)
+	if (res_IO_ADVISE->iaa_status != NFS4_OK)
 		goto done;
 
 	entry = data->current_entry;
 	/* Check stateid correctness and get pointer to state (also
 	   checks for special stateids) */
 
-	res_IO_ADVISE->iar_status =
-	    nfs4_Check_Stateid(&arg_IO_ADVISE->iar_stateid, entry,
+	res_IO_ADVISE->iaa_status =
+	    nfs4_Check_Stateid(&arg_IO_ADVISE->iaa_stateid, entry,
 				&state_found, data,  STATEID_SPECIAL_ANY,
 				0, FALSE, "IO_ADVISE");
-	if (res_IO_ADVISE->iar_status != NFS4_OK)
+	if (res_IO_ADVISE->iaa_status != NFS4_OK)
 		goto done;
 
 	if (state_found && entry) {
-		hints.hints = arg_IO_ADVISE->iar_hints.map[0];
-		hints.offset = arg_IO_ADVISE->iar_offset;
-		hints.count = arg_IO_ADVISE->iar_count;
+		hints.hints = arg_IO_ADVISE->iaa_hints.map[0];
+		hints.offset = arg_IO_ADVISE->iaa_offset;
+		hints.count = arg_IO_ADVISE->iaa_count;
 
 		fsal_status = entry->obj_handle->ops->io_advise(
 					entry->obj_handle,
 					&hints);
 		if (FSAL_IS_ERROR(fsal_status)) {
-			res_IO_ADVISE->iar_status = NFS4ERR_NOTSUPP;
+			res_IO_ADVISE->iaa_status = NFS4ERR_NOTSUPP;
 			goto done;
 		}
 		/* save hints to use with other operations */
 		state_found->state_data.io_advise = hints.hints;
 
-		res_IO_ADVISE->iar_status = NFS4_OK;
-		res_IO_ADVISE->iar_hints.bitmap4_len = 1;
-		res_IO_ADVISE->iar_hints.map[0] = hints.hints;
+		res_IO_ADVISE->iaa_status = NFS4_OK;
+		res_IO_ADVISE->iaa_hints.bitmap4_len = 1;
+		res_IO_ADVISE->iaa_hints.map[0] = hints.hints;
 	}
 done:
 	LogDebug(COMPONENT_NFS_V4,
 		 "Status  %s hints 0x%X offset %ld count %ld ",
-		 nfsstat4_to_str(res_IO_ADVISE->iar_status),
+		 nfsstat4_to_str(res_IO_ADVISE->iaa_status),
 		 hints.hints, hints.offset, hints.count);
 
-	return res_IO_ADVISE->iar_status;
+	return res_IO_ADVISE->iaa_status;
 }				/* nfs4_op_io_advise */
 
 /**
@@ -763,7 +755,7 @@ int nfs4_op_seek(struct nfs_argop4 *op, compound_data_t *data,
 			info.io_content.hole.di_offset = arg_SEEK->sa_offset;
 }
 		else
-			info.io_content.adh.adh_offset = arg_SEEK->sa_offset;
+			info.io_content.adb.adb_offset = arg_SEEK->sa_offset;
 
 		fsal_status = entry->obj_handle->ops->seek(
 					entry->obj_handle,
@@ -773,7 +765,7 @@ int nfs4_op_seek(struct nfs_argop4 *op, compound_data_t *data,
 			goto done;
 		}
 		res_SEEK->sr_resok4.sr_eof = info.io_eof;
-		res_SEEK->sr_resok4.sr_contents = info.io_content;
+		res_SEEK->sr_resok4.sr_offset = info.io_content.hole.di_offset;
 	}
 done:
 	LogDebug(COMPONENT_NFS_V4,

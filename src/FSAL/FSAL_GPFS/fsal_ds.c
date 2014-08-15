@@ -204,7 +204,6 @@ static nfsstat4 ds_read_plus(struct fsal_ds_handle *const ds_pub,
 		info->io_content.what = NFS4_CONTENT_HOLE;
 		info->io_content.hole.di_offset = offset;     /*offset of hole*/
 		info->io_content.hole.di_length = requested_length;/*hole len*/
-		info->io_content.hole.di_allocated = FALSE;
 	} else {
 		info->io_content.what = NFS4_CONTENT_DATA;
 		info->io_content.data.d_offset = offset + amount_read;
@@ -372,9 +371,6 @@ static nfsstat4 ds_write_plus(struct fsal_ds_handle *const ds_pub,
 		 gpfs_handle->handle_size, gpfs_handle->handle_type,
 		 gpfs_handle->handle_key_size, fh[0], fh[1], fh[2], fh[3],
 		 fh[4], fh[5], fh[6], fh[7], fh[8], fh[9]);
-
-	if (info->io_content.what == NFS4_CONTENT_APP_DATA_HOLE)
-		return NFS4ERR_UNION_NOTSUPP;
 
 	amount_written = gpfs_ganesha(OPENHANDLE_DS_WRITE, &warg);
 	errsv = errno;
