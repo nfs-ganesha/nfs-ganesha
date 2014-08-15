@@ -387,7 +387,7 @@ void nfs4_rm_revoked_handles(char *path)
 	for (dentp = readdir(dp); dentp != NULL; dentp = readdir(dp)) {
 		if (!strcmp(dentp->d_name, ".") ||
 				!strcmp(dentp->d_name, "..") ||
-				dentp->d_name[0] != '.') {
+				dentp->d_name[0] != '\x1') {
 			continue;
 		}
 		sprintf(del_path, "%s/%s", path, dentp->d_name);
@@ -581,8 +581,8 @@ void nfs4_cp_pop_revoked_delegs(clid_entry_t *clid_ent,
 	for (dentp = readdir(dp); dentp != NULL; dentp = readdir(dp)) {
 		if (!strcmp(dentp->d_name, ".") || !strcmp(dentp->d_name, ".."))
 			continue;
-		/* All the revoked filehandles stored as hidden files */
-		if (dentp->d_name[0] != '.') {
+		/* All the revoked filehandles stored with \x1 prefix */
+		if (dentp->d_name[0] != '\x1') {
 			/* Something wrong; it should not happen */
 			LogMidDebug(COMPONENT_CLIENTID,
 				"%s showed up along with revoked FHs. Skipping",
@@ -611,7 +611,7 @@ void nfs4_cp_pop_revoked_delegs(clid_entry_t *clid_ent,
 			continue;
 		}
 
-		/* Ignore the beginning dot and copy the rest (file handle) */
+		/* Ignore the beginning \x1 and copy the rest (file handle) */
 		new_ent->rdfh_handle_str = gsh_strdup(dentp->d_name+1);
 		if (new_ent->rdfh_handle_str == NULL) {
 			gsh_free(new_ent);
@@ -687,7 +687,10 @@ static int nfs4_read_recov_clids(DIR *dp,
 		if (!strcmp(dentp->d_name, ".") || !strcmp(dentp->d_name, ".."))
 			continue;
 
-		if (dentp->d_name[0] != '.') {
+		/* Skip names that start with '\x1' as they are files
+		 * representing file handles
+		 */
+		if (dentp->d_name[0] != '\x1') {
 			num++;
 			new_path = NULL;
 
@@ -1009,7 +1012,6 @@ void nfs4_clean_old_recov_dir(char *parent_path)
 	struct dirent *dentp;
 	char *path = NULL;
 	int rc;
-	int segment_len;
 	int total_len;
 
 	dp = opendir(parent_path);
@@ -1025,10 +1027,10 @@ void nfs4_clean_old_recov_dir(char *parent_path)
 		if (!strcmp(dentp->d_name, ".") || !strcmp(dentp->d_name, ".."))
 			continue;
 
-		/* If there is a .<file name> then it is a revoked handle
-		 * go ahead and remove it.
+		/* If there is a filename starting with '\x1', then it is
+		 * a revoked handle, go ahead and remove it.
 		 */
-		if (dentp->d_name[0] == '.') {
+		if (dentp->d_name[0] == '\x1') {
 			char del_path[PATH_MAX];
 
 			sprintf(del_path, "%s/%s", parent_path, dentp->d_name);
@@ -1038,19 +1040,20 @@ void nfs4_clean_old_recov_dir(char *parent_path)
 						del_path,
 						errno);
 			}
+
+			continue;
 		}
-		segment_len = strlen(dentp->d_name);
-		total_len = strlen(parent_path) + 2 + segment_len;
+
+		/* This is a directory, we need process files in it! */
+		total_len = strlen(parent_path) + strlen(dentp->d_name) + 2;
 		path = gsh_malloc(total_len);
 		if (path == NULL) {
 			LogEvent(COMPONENT_CLIENTID,
 				 "Unable to allocate memory.");
 			continue;
 		}
-		memset(path, 0, total_len);
 
-		snprintf(path, total_len, "%s/%s", parent_path,
-			 dentp->d_name);
+		snprintf(path, total_len, "%s/%s", parent_path, dentp->d_name);
 
 		nfs4_clean_old_recov_dir(path);
 		rc = rmdir(path);
@@ -1169,7 +1172,7 @@ void nfs4_record_revoke(nfs_client_id_t *delr_clid, nfs_fh4 *delr_handle)
 		if (len <= NAME_MAX) {
 			strcat(path, "/");
 			strncat(path, &delr_clid->cid_recov_dir[position], len);
-			strcat(path, "/.");
+			strcat(path, "/\x1"); /* Prefix 1 to converted fh */
 			strncat(path, rhdlstr, strlen(rhdlstr));
 			fd = creat(path, 0700);
 			if (fd < 0) {
