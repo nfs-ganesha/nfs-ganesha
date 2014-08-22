@@ -154,4 +154,9 @@ static inline size_t lustre_sizeof_handle(struct lustre_file_handle *hdl)
 	return (size_t) sizeof(struct lustre_file_handle);
 }
 
+
+int lustre_extract_fsid(struct lustre_file_handle *fh,
+			enum fsid_type *fsid_type,
+			struct fsal_fsid__ *fsid);
+
 #endif				/* LUSTRE_HANDLE_H */

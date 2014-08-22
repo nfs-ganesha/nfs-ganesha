@@ -41,6 +41,9 @@
 #include "fsal_pnfs.h"
 #include "lustre_extended_types.h"
 
+extern const char myname[];
+extern bool is_fsal_shook;
+
 #define min(a, b)          \
 	({ typeof(a) _a = (a);     \
 	typeof(b) _b = (b);        \
@@ -131,5 +134,8 @@ nfsstat4 lustre_getdeviceinfo(struct fsal_module *fsal_hdl,
 			      const struct pnfs_deviceid *deviceid);
 
 size_t lustre_fs_da_addr_size(struct fsal_module *fsal_hdl);
+void export_ops_pnfs(struct export_ops *ops);
+void handle_ops_pnfs(struct fsal_obj_ops *ops);
+void ds_ops_init(struct fsal_ds_ops *ops);
 
 #endif

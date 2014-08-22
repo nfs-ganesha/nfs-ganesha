@@ -66,6 +66,12 @@
 %global with_rdma 0
 %endif
 
+%if %{?_with_lttng:1}%{!?_with_lttng:0}
+%global with_lttng 1
+%else
+%global with_lttng 0
+%endif
+
 %if %{?_with_utils:1}%{!?_with_utils:0}
 %global with_utils 1
 %else
@@ -153,6 +159,18 @@ Requires: nfs-ganesha python
 
 %description utils
 This package contains utility scripts for managing the NFS-GANESHA server
+%endif
+
+%if %{with_lttng}
+%package lttng
+Summary: The NFS-GANESHA's library for use with LTTng
+Group: Applications/System
+BuildRequires: lttng-ust-devel >= 2.3
+Requires: nfs-ganesha, lttng-tools >= 2.3,  lttng-ust >= 2.3
+
+%description lttng
+This package contains the libganesha_trace.so library. When preloaded
+to the ganesha.nfsd server, it makes it possible to trace using LTTng.
 %endif
 
 # Option packages start here. use "rpmbuild --with lustre" (or equivalent)
@@ -326,6 +344,9 @@ cmake .	-DCMAKE_BUILD_TYPE=Debug			\
 %if %{with_rdma}
 	-DUSE_9P_RDMA=ON				\
 %endif
+%if %{with_lttng}
+	-DUSE_LTTNG=ON				\
+%endif
 %if %{with_utils}
         -DUSE_ADMIN_TOOLS=ON                            \
 %endif
@@ -405,7 +426,6 @@ python setup.py --quiet install --root=%{buildroot}
 popd
 install -m 755 Protocols/NLM/sm_notify.ganesha		%{buildroot}%{_bindir}/sm_notify.ganesha
 %endif
-
 
 make DESTDIR=%{buildroot} install
 
@@ -510,6 +530,12 @@ make DESTDIR=%{buildroot} install
 %{_libdir}/ganesha/libfsalpt*
 %config(noreplace) %{_sysconfdir}/init.d/nfs-ganesha-pt
 %config(noreplace) %{_sysconfdir}/ganesha/pt.conf
+%endif
+
+%if %{with_lttng}
+%files lttng
+%defattr(-,root,root,-)
+%{_libdir}/ganesha/libganesha_trace*
 %endif
 
 %if %{with_utils}

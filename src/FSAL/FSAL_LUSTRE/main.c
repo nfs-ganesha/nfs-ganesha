@@ -42,7 +42,6 @@
 #include "lustre_methods.h"
 #include "FSAL/fsal_init.h"
 
-const char myname[] = "LUSTRE";
 bool pnfs_enabled;
 
 /* filesystem info for LUSTRE */
