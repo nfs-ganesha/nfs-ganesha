@@ -487,7 +487,6 @@ void nfs4_op_write_Free(nfs_resop4 *resp)
  * @param[in,out] data  Compound request's data
  * @param[out]    resp  Results for nfs4_op
  *
- * @return per RFC5661, p. 376
  */
 
 int nfs4_op_write_plus(struct nfs_argop4 *op, compound_data_t *data,
@@ -500,17 +499,12 @@ int nfs4_op_write_plus(struct nfs_argop4 *op, compound_data_t *data,
 	WRITE_SAME4res * const res_WPLUS = &resp->nfs_resop4_u.opwrite_plus;
 
 	resp->resop = NFS4_OP_WRITE_SAME;
-	res_WPLUS->wpr_status = NFS4_OK;
+	res_WPLUS->wpr_status =  NFS4ERR_NOTSUPP;
+	return res_WPLUS->wpr_status;
 
 	arg.nfs_argop4_u.opwrite.stateid = arg_WPLUS->wp_stateid;
 	arg.nfs_argop4_u.opwrite.stable = arg_WPLUS->wp_stable;
 
-	info.io_content.data = arg_WPLUS->wp_data;
-	arg.nfs_argop4_u.opwrite.offset = arg_WPLUS->wp_data.d_offset;
-	arg.nfs_argop4_u.opwrite.data.data_len =
-				arg_WPLUS->wp_data.d_data.data_len;
-	arg.nfs_argop4_u.opwrite.data.data_val =
-				arg_WPLUS->wp_data.d_data.data_val;
 	info.io_advise = 0;
 
 	res_WPLUS->wpr_status = nfs4_write(&arg, data, &res,
@@ -526,4 +520,82 @@ int nfs4_op_write_plus(struct nfs_argop4 *op, compound_data_t *data,
 		       sizeof(NFS4_VERIFIER_SIZE));
 	}
 	return res_WPLUS->wpr_status;
+}
+
+/**
+ * @brief The NFS4_OP_ALLOCATE
+ * This functions handles the NFS4_OP_ALLOCATE operation in NFSv4.2. This
+ * function can be called only from nfs4_Compound.
+ *
+ * @param[in]     op    Arguments for nfs4_op
+ * @param[in,out] data  Compound request's data
+ * @param[out]    resp  Results for nfs4_op
+ *
+ */
+
+int nfs4_op_allocate(struct nfs_argop4 *op, compound_data_t *data,
+		  struct nfs_resop4 *resp)
+{
+	struct nfs_resop4 res;
+	struct nfs_argop4 arg;
+	struct io_info info;
+	ALLOCATE4args * const arg_ALLOC = &op->nfs_argop4_u.opallocate;
+	ALLOCATE4res * const res_ALLOC = &resp->nfs_resop4_u.opallocate;
+
+	resp->resop = NFS4_OP_ALLOCATE;
+	res_ALLOC->ar_status = NFS4_OK;
+
+	arg.nfs_argop4_u.opwrite.stateid = arg_ALLOC->aa_stateid;
+	arg.nfs_argop4_u.opwrite.stable = true;
+
+	info.io_content.what = NFS4_CONTENT_ALLOCATE;
+	info.io_content.hole.di_offset = arg_ALLOC->aa_offset;
+	info.io_content.hole.di_length = arg_ALLOC->aa_length;
+	arg.nfs_argop4_u.opwrite.offset = arg_ALLOC->aa_offset;
+	arg.nfs_argop4_u.opwrite.data.data_len = arg_ALLOC->aa_length;
+	arg.nfs_argop4_u.opwrite.data.data_val = NULL;
+	info.io_advise = 0;
+
+	res_ALLOC->ar_status = nfs4_write(&arg, data, &res,
+					   CACHE_INODE_WRITE_PLUS, &info);
+	return res_ALLOC->ar_status;
+}
+
+/**
+ * @brief The NFS4_OP_DEALLOCATE
+ * This functions handles the NFS4_OP_DEALLOCATE operation in NFSv4.2. This
+ * function can be called only from nfs4_Compound.
+ *
+ * @param[in]     op    Arguments for nfs4_op
+ * @param[in,out] data  Compound request's data
+ * @param[out]    resp  Results for nfs4_op
+ *
+ */
+
+int nfs4_op_deallocate(struct nfs_argop4 *op, compound_data_t *data,
+		  struct nfs_resop4 *resp)
+{
+	struct nfs_resop4 res;
+	struct nfs_argop4 arg;
+	struct io_info info;
+	DEALLOCATE4args * const arg_DEALLOC = &op->nfs_argop4_u.opdeallocate;
+	DEALLOCATE4res * const res_DEALLOC = &resp->nfs_resop4_u.opdeallocate;
+
+	resp->resop = NFS4_OP_DEALLOCATE;
+	res_DEALLOC->dr_status = NFS4_OK;
+
+	arg.nfs_argop4_u.opwrite.stateid = arg_DEALLOC->da_stateid;
+	arg.nfs_argop4_u.opwrite.stable = true;
+
+	info.io_content.what = NFS4_CONTENT_DEALLOCATE;
+	info.io_content.hole.di_offset = arg_DEALLOC->da_offset;
+	info.io_content.hole.di_length = arg_DEALLOC->da_length;
+	arg.nfs_argop4_u.opwrite.offset = arg_DEALLOC->da_offset;
+	arg.nfs_argop4_u.opwrite.data.data_len = arg_DEALLOC->da_length;
+	arg.nfs_argop4_u.opwrite.data.data_val = NULL;
+	info.io_advise = 0;
+
+	res_DEALLOC->dr_status = nfs4_write(&arg, data, &res,
+					   CACHE_INODE_WRITE_PLUS, &info);
+	return res_DEALLOC->dr_status;
 }

@@ -68,7 +68,7 @@
 #define RQUOTA_NB_COMMAND (RQUOTAPROC_SETACTIVEQUOTA + 1)
 #define NFS_V40_NB_OPERATION (NFS4_OP_RELEASE_LOCKOWNER + 1)
 #define NFS_V41_NB_OPERATION (NFS4_OP_RECLAIM_COMPLETE + 1)
-#define NFS_V42_NB_OPERATION (NFS4_OP_WRITE_SAME + 1)
+#define NFS_V42_NB_OPERATION (NFS4_OP_LAST_ONE)
 #define _9P_NB_COMMAND 33
 
 struct op_name {
@@ -291,7 +291,7 @@ struct mnt_ops {
 /* v4 ops
  */
 struct nfsv4_ops {
-	uint64_t op[NFS4_OP_IO_ADVISE+1];
+	uint64_t op[NFS4_OP_LAST_ONE];
 };
 
 /* basic op counter
@@ -1387,7 +1387,7 @@ void global_dbus_fast(DBusMessageIter *iter)
 	version = "\nNFSv4:";
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING,
 				       &version);
-	for (i = 0; i < NFS4_OP_IO_ADVISE; i++) {
+	for (i = 0; i < NFS4_OP_LAST_ONE; i++) {
 		if (global_st.v4.op[i] > 0) {
 			op = optabv4[i].name;
 			dbus_message_iter_append_basic(&struct_iter,

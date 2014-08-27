@@ -85,7 +85,7 @@ struct flock
 #define OPENHANDLE_WRITE_BY_FD    136
 #define OPENHANDLE_CREATE_BY_NAME_ATTR 137
 #define OPENHANDLE_GRACE_PERIOD   138
-#define OPENHANDLE_CLEAR_BY_FD    139
+#define OPENHANDLE_ALLOCATE_BY_FD 139
 #define OPENHANDLE_REOPEN_BY_FD   140
 #define OPENHANDLE_FADVISE_BY_FD  141
 #define OPENHANDLE_SEEK_BY_FD     142
@@ -460,9 +460,10 @@ struct dsread_arg
 };
 
 /* define flags for options */
-#define IO_SKIP_HOLE      (1 << 0) //  01
-#define IO_SKIP_DATA      (1 << 1) //  02
-#define IO_ALLOCATE       (1 << 2) //  04
+#define IO_SKIP_HOLE      (1 << 0) /* 01 */
+#define IO_SKIP_DATA      (1 << 1) /* 02 */
+#define IO_ALLOCATE       (1 << 2) /* 04 */
+#define IO_DEALLOCATE     (1 << 3) /* 08 */
 
 struct dswrite_arg
 {
@@ -500,6 +501,14 @@ struct write_arg
   uint32_t stability_wanted;
   uint32_t *stability_got;
   uint32_t *verifier4;
+  int options;
+};
+
+struct alloc_arg
+{
+  int fd;
+  uint64_t offset;
+  uint64_t length;
   int options;
 };
 
@@ -581,7 +590,7 @@ struct callback_arg
     struct glock *fl;
     int *flags;
     struct stat *buf;
-	struct pnfs_deviceid *dev_id;
+    struct pnfs_deviceid *dev_id;
     uint32_t *expire_attr;
 };
 #define GPFS_INTERFACE_VERSION 10000
