@@ -165,10 +165,10 @@ void do_open(struct response *resp)
 	struct flock lock;
 
 	if (fno[resp->r_fpos] != 0) {
-		strcpy(errdetail, "fpos in use");
-		sprintf(badtoken, "%ld", resp->r_fpos);
 		resp->r_status = STATUS_ERRNO;
 		resp->r_errno = EINVAL;
+		strcpy(errdetail, "fpos in use");
+		sprintf(badtoken, "%ld", resp->r_fpos);
 		return;
 	}
 
@@ -199,10 +199,10 @@ void do_open(struct response *resp)
 		rc = fcntl(fd, F_OFD_GETLK, &lock);
 
 		if (rc == -1) {
+			resp->r_status = STATUS_ERRNO;
 			resp->r_errno = errno;
 			strcpy(errdetail, "Open verify OFD locks failed");
 			sprintf(badtoken, "%s", resp->r_data);
-			resp->r_status = STATUS_ERRNO;
 			close(fd);
 			return;
 		}
@@ -220,27 +220,28 @@ void do_write(struct response *resp)
 	long long int rc;
 
 	if (resp->r_fpos != 0 && fno[resp->r_fpos] == 0) {
-		strcpy(errdetail, "Invalid file number");
-		sprintf(badtoken, "%ld", resp->r_fpos);
 		resp->r_status = STATUS_ERRNO;
 		resp->r_errno = EBADF;
+		strcpy(errdetail, "Invalid file number");
+		sprintf(badtoken, "%ld", resp->r_fpos);
 		return;
 	}
 
 	rc = write(fno[resp->r_fpos], resp->r_data, resp->r_length);
 
 	if (rc == -1) {
+		resp->r_status = STATUS_ERRNO;
+		resp->r_errno = errno;
 		strcpy(errdetail, "Write failed");
 		sprintf(badtoken, "%lld", resp->r_length);
-		resp->r_status = STATUS_ERRNO;
 		return;
 	}
 
 	if (rc != resp->r_length) {
-		strcpy(errdetail, "Short write");
-		sprintf(badtoken, "%lld", rc);
 		resp->r_status = STATUS_ERRNO;
 		resp->r_errno = EIO;
+		strcpy(errdetail, "Short write");
+		sprintf(badtoken, "%lld", rc);
 		return;
 	}
 
@@ -252,10 +253,10 @@ void do_read(struct response *resp)
 	long long int rc;
 
 	if (resp->r_fpos != 0 && fno[resp->r_fpos] == 0) {
-		strcpy(errdetail, "Invalid file number");
-		sprintf(badtoken, "%ld", resp->r_fpos);
 		resp->r_status = STATUS_ERRNO;
 		resp->r_errno = EBADF;
+		strcpy(errdetail, "Invalid file number");
+		sprintf(badtoken, "%ld", resp->r_fpos);
 		return;
 	}
 
@@ -265,9 +266,10 @@ void do_read(struct response *resp)
 	rc = read(fno[resp->r_fpos], resp->r_data, resp->r_length);
 
 	if (rc == -1) {
+		resp->r_status = STATUS_ERRNO;
+		resp->r_errno = errno;
 		strcpy(errdetail, "Read failed");
 		sprintf(badtoken, "%lld", resp->r_length);
-		resp->r_status = STATUS_ERRNO;
 		return;
 	}
 
@@ -281,19 +283,20 @@ void do_seek(struct response *resp)
 	int rc;
 
 	if (resp->r_fpos != 0 && fno[resp->r_fpos] == 0) {
-		strcpy(errdetail, "Invalid file number");
-		sprintf(badtoken, "%ld", resp->r_fpos);
 		resp->r_status = STATUS_ERRNO;
 		resp->r_errno = EBADF;
+		strcpy(errdetail, "Invalid file number");
+		sprintf(badtoken, "%ld", resp->r_fpos);
 		return;
 	}
 
 	rc = lseek(fno[resp->r_fpos], resp->r_start, SEEK_SET);
 
 	if (rc == -1) {
+		resp->r_status = STATUS_ERRNO;
+		resp->r_errno = errno;
 		strcpy(errdetail, "Seek failed");
 		sprintf(badtoken, "%lld", resp->r_start);
-		resp->r_status = STATUS_ERRNO;
 		return;
 	}
 
@@ -307,10 +310,10 @@ void do_lock(struct response *resp)
 	int cmd = -1;
 
 	if (resp->r_fpos != 0 && fno[resp->r_fpos] == 0) {
-		strcpy(errdetail, "Invalid file number");
-		sprintf(badtoken, "%ld", resp->r_fpos);
 		resp->r_status = STATUS_ERRNO;
 		resp->r_errno = EBADF;
+		strcpy(errdetail, "Invalid file number");
+		sprintf(badtoken, "%ld", resp->r_fpos);
 		return;
 	}
 
@@ -355,12 +358,12 @@ void do_lock(struct response *resp)
 		} else if (errno == EDEADLK) {
 			resp->r_status = STATUS_DEADLOCK;
 		} else {
+			resp->r_status = STATUS_ERRNO;
+			resp->r_errno = errno;
 			strcpy(errdetail, "Lock failed");
 			sprintf(badtoken, "%s %lld %lld",
 				str_lock_type(lock.l_type), resp->r_start,
 				resp->r_length);
-			resp->r_status = STATUS_ERRNO;
-			resp->r_errno = errno;
 		}
 	} else
 		resp->r_status = STATUS_GRANTED;
@@ -381,10 +384,10 @@ void do_hop(struct response *resp)
 	int cmd = -1;
 
 	if (resp->r_fpos != 0 && fno[resp->r_fpos] == 0) {
-		strcpy(errdetail, "Invalid file number");
-		sprintf(badtoken, "%ld", resp->r_fpos);
 		resp->r_status = STATUS_ERRNO;
 		resp->r_errno = EBADF;
+		strcpy(errdetail, "Invalid file number");
+		sprintf(badtoken, "%ld", resp->r_fpos);
 		return;
 	}
 
@@ -420,11 +423,12 @@ void do_hop(struct response *resp)
 				resp->r_status = STATUS_DENIED;
 				break;
 			} else {
+				resp->r_status = STATUS_ERRNO;
+				resp->r_errno = errno;
 				strcpy(errdetail, "Hop failed");
 				sprintf(badtoken, "%s %ld",
 					str_lock_type(resp->r_lock_type),
 					lock.l_start);
-				resp->r_status = STATUS_ERRNO;
 				break;
 			}
 		} else
@@ -439,10 +443,11 @@ void do_hop(struct response *resp)
 		lock.l_pid = 0;
 		rc = fcntl(fno[resp->r_fpos], cmd, &lock);
 		if (rc == -1) {
+			resp->r_status = STATUS_ERRNO;
+			resp->r_errno = errno;
 			strcpy(errdetail, "Hop Unlock failed");
 			sprintf(badtoken, "%lld %lld", resp->r_start,
 				resp->r_length);
-			resp->r_status = STATUS_ERRNO;
 		}
 	}
 }
@@ -455,10 +460,10 @@ void do_unhop(struct response *resp)
 	int cmd = -1;
 
 	if (resp->r_fpos != 0 && fno[resp->r_fpos] == 0) {
-		strcpy(errdetail, "Invalid file number");
-		sprintf(badtoken, "%ld", resp->r_fpos);
 		resp->r_status = STATUS_ERRNO;
 		resp->r_errno = EBADF;
+		strcpy(errdetail, "Invalid file number");
+		sprintf(badtoken, "%ld", resp->r_fpos);
 		return;
 	}
 
@@ -488,10 +493,11 @@ void do_unhop(struct response *resp)
 		rc = fcntl(fno[resp->r_fpos], cmd, &lock);
 
 		if (rc == -1) {
+			resp->r_status = STATUS_ERRNO;
+			resp->r_errno = errno;
 			strcpy(errdetail, "Unhop failed");
 			sprintf(badtoken, "%s %ld",
 				str_lock_type(resp->r_lock_type), lock.l_start);
-			resp->r_status = STATUS_ERRNO;
 			break;
 		} else
 			resp->r_status = STATUS_GRANTED;
@@ -505,10 +511,11 @@ void do_unhop(struct response *resp)
 		lock.l_pid = 0;
 		rc = fcntl(fno[resp->r_fpos], cmd, &lock);
 		if (rc == -1) {
+			resp->r_status = STATUS_ERRNO;
+			resp->r_errno = errno;
 			strcpy(errdetail, "Unhop Unlock failed");
 			sprintf(badtoken, "%lld %lld", resp->r_start,
 				resp->r_length);
-			resp->r_status = STATUS_ERRNO;
 		}
 	}
 }
@@ -520,10 +527,10 @@ void do_unlock(struct response *resp)
 	int cmd = -1;
 
 	if (resp->r_fpos != 0 && fno[resp->r_fpos] == 0) {
-		strcpy(errdetail, "Invalid file number");
-		sprintf(badtoken, "%ld", resp->r_fpos);
 		resp->r_status = STATUS_ERRNO;
 		resp->r_errno = EBADF;
+		strcpy(errdetail, "Invalid file number");
+		sprintf(badtoken, "%ld", resp->r_fpos);
 		return;
 	}
 
@@ -546,9 +553,10 @@ void do_unlock(struct response *resp)
 	rc = fcntl(fno[resp->r_fpos], cmd, &lock);
 
 	if (rc == -1) {
+		resp->r_status = STATUS_ERRNO;
+		resp->r_errno = errno;
 		strcpy(errdetail, "Unlock failed");
 		sprintf(badtoken, "%lld %lld", resp->r_start, resp->r_length);
-		resp->r_status = STATUS_ERRNO;
 		return;
 	}
 
@@ -562,10 +570,10 @@ void do_test(struct response *resp)
 	int cmd = -1;
 
 	if (resp->r_fpos != 0 && fno[resp->r_fpos] == 0) {
-		strcpy(errdetail, "Invalid file number");
-		sprintf(badtoken, "%ld", resp->r_fpos);
 		resp->r_status = STATUS_ERRNO;
 		resp->r_errno = EBADF;
+		strcpy(errdetail, "Invalid file number");
+		sprintf(badtoken, "%ld", resp->r_fpos);
 		return;
 	}
 
@@ -590,10 +598,11 @@ void do_test(struct response *resp)
 	rc = fcntl(fno[resp->r_fpos], cmd, &lock);
 
 	if (rc == -1) {
+		resp->r_status = STATUS_ERRNO;
+		resp->r_errno = errno;
 		strcpy(errdetail, "Test failed");
 		sprintf(badtoken, "%s %lld %lld", str_lock_type(lock.l_type),
 			resp->r_start, resp->r_length);
-		resp->r_status = STATUS_ERRNO;
 		return;
 	}
 
@@ -615,10 +624,10 @@ void do_close(struct response *resp)
 	int rc;
 
 	if (resp->r_fpos != 0 && fno[resp->r_fpos] == 0) {
-		strcpy(errdetail, "Invalid file number");
-		sprintf(badtoken, "%ld", resp->r_fpos);
 		resp->r_status = STATUS_ERRNO;
 		resp->r_errno = EBADF;
+		strcpy(errdetail, "Invalid file number");
+		sprintf(badtoken, "%ld", resp->r_fpos);
 		return;
 	}
 
@@ -626,9 +635,10 @@ void do_close(struct response *resp)
 	fno[resp->r_fpos] = 0;
 
 	if (rc == -1) {
+		resp->r_status = STATUS_ERRNO;
+		resp->r_errno = errno;
 		strcpy(errdetail, "Close failed");
 		sprintf(badtoken, "%ld", resp->r_fpos);
-		resp->r_status = STATUS_ERRNO;
 		return;
 	}
 
@@ -706,11 +716,11 @@ int list_locks(long long int start, long long int end, struct response *resp)
 	rc = fcntl(fno[resp->r_fpos], F_GETLK, &lock);
 
 	if (rc == -1) {
+		resp->r_status = STATUS_ERRNO;
+		resp->r_errno = errno;
 		strcpy(errdetail, "Test failed");
 		sprintf(badtoken, "%s %lld %lld", str_lock_type(lock.l_type),
 			resp->r_start, resp->r_length);
-		resp->r_errno = errno;
-		resp->r_status = STATUS_ERRNO;
 		respond(resp);
 		return false;
 	}
@@ -745,10 +755,10 @@ void do_list(struct response *resp)
 	int conflict = false;
 
 	if (resp->r_fpos != 0 && fno[resp->r_fpos] == 0) {
-		strcpy(errdetail, "Invalid file number");
-		sprintf(badtoken, "%ld", resp->r_fpos);
 		resp->r_status = STATUS_ERRNO;
 		resp->r_errno = EBADF;
+		strcpy(errdetail, "Invalid file number");
+		sprintf(badtoken, "%ld", resp->r_fpos);
 		return;
 	}
 
