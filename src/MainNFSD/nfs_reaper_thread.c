@@ -32,6 +32,7 @@
 
 #include <pthread.h>
 #include <unistd.h>
+#include <malloc.h>
 #include "log.h"
 #include "nfs4.h"
 #include "sal_functions.h"
@@ -40,8 +41,10 @@
 #include "log.h"
 
 #define REAPER_DELAY 10
+#define TRIM_DELAY 6
 
 unsigned int reaper_delay = REAPER_DELAY;
+unsigned int trim_delay = TRIM_DELAY;
 extern char v4_old_dir[PATH_MAX];
 
 static int reap_hash_table(hash_table_t * ht_reap)
@@ -133,6 +136,83 @@ static int reap_hash_table(hash_table_t * ht_reap)
   return count;
 }
 
+/*
+ * getMemFromProc
+ */
+size_t getMemFromProc(const char *path, char *inputlabel)
+{
+  char line[240];
+  char unit[10];
+  char label[100];
+  size_t number = 0;
+  char *ptr = NULL;
+
+  FILE *fp = fopen(path,"r");
+  if(!fp) {
+    LogWarn(COMPONENT_MEMALLOC,
+          "failed to open %s errno=%d", path, errno);
+    return 0;
+  }
+  while (1) {
+    ptr = fgets(line, sizeof(line), fp);
+    if (ptr == NULL) {
+      LogWarn(COMPONENT_MEMALLOC,
+          "failed to fget errno=%d", errno);
+      break;
+    }
+    if (strncmp(inputlabel, line, strlen(inputlabel)) == 0) {
+      int rc;
+      rc = sscanf(line, "%s %lu %s", label, &number, unit);
+      if (rc != 3) {
+        LogWarn(COMPONENT_MEMALLOC,
+                 "sscanf failed rc=%d errno=%d", rc, errno);
+        number = 0;
+        break;
+      }
+      if (strcmp("kB", unit) != 0) {
+        LogWarn(COMPONENT_MEMALLOC,
+                 "incorrect status format %s, expecting kB", line);
+        number = 0;
+        break;
+      }
+      break;
+    }
+  }
+  fclose(fp);
+  return number;
+}
+
+void trim_memory(void)
+{
+  const char* proc_status = "/proc/self/status";
+  const char* meminfo = "/proc/meminfo";
+
+  size_t rss = 0;
+  size_t totalmem = 0;
+  size_t freemem = 0;
+
+  /* 
+   * extract the specific information from:
+   * 1.  VmRss from /proc/self/status
+   * 2.  MemFree from /proc/meminfo
+   */
+  rss = getMemFromProc(proc_status, "VmRSS:");
+  totalmem = getMemFromProc(meminfo, "MemTotal:");
+  freemem = getMemFromProc(meminfo, "MemFree:");
+
+  /* trim if rss size is greater than 40% of total mem 
+   * or freemem is less than 10% of total
+   */
+  if ((rss >= ((totalmem << 1) / 5)) ||
+      (freemem <= (totalmem / 10)))
+  {
+     LogEvent(COMPONENT_MEMALLOC,
+                 "trim ganesha memory. rss=%lu total=%lu free=%lu",
+                  rss, totalmem, freemem);
+     malloc_trim(0);
+  }
+}
+
 void *reaper_thread(void *UnusedArg)
 {
   int    old_state_cleaned = 0;
@@ -182,6 +262,13 @@ void *reaper_thread(void *UnusedArg)
 
       count = reap_hash_table(ht_confirmed_client_id) +
               reap_hash_table(ht_unconfirmed_client_id);
+
+      /* trim every 6 iterations of REAPER_DELAY (10s) */
+      if (--trim_delay > 0)
+        continue;
+      trim_delay = TRIM_DELAY;
+
+      trim_memory();
     }                           /* while ( 1 ) */
 
   return NULL;
