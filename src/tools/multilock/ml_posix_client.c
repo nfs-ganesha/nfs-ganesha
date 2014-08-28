@@ -51,6 +51,7 @@ int port;
 char line[MAXSTR * 2 + 3];
 long int alarmtag;
 int fno[MAXFPOS + 1];
+enum lock_mode lock_mode[MAXFPOS + 1];
 
 void openserver()
 {
@@ -160,7 +161,8 @@ void do_alarm(struct response *resp)
 
 void do_open(struct response *resp)
 {
-	int fd;
+	int fd, rc;
+	struct flock lock;
 
 	if (fno[resp->r_fpos] != 0) {
 		strcpy(errdetail, "fpos in use");
@@ -179,11 +181,38 @@ void do_open(struct response *resp)
 		resp->r_status = STATUS_ERRNO;
 		resp->r_errno = errno;
 		sprintf(badtoken, "%s", resp->r_data);
-	} else {
-		fno[resp->r_fpos] = fd;
-		resp->r_fno = fd;
-		resp->r_status = STATUS_OK;
+		return;
 	}
+
+	/* Test lock mode */
+	switch ((enum lock_mode) resp->r_lock_type) {
+	case LOCK_MODE_POSIX:
+		break;
+
+	case LOCK_MODE_OFD:
+		lock.l_whence = SEEK_SET;
+		lock.l_type = F_RDLCK;
+		lock.l_start = 0;
+		lock.l_len = 0;
+		lock.l_pid = 0;
+
+		rc = fcntl(fd, F_OFD_GETLK, &lock);
+
+		if (rc == -1) {
+			resp->r_errno = errno;
+			strcpy(errdetail, "Open verify OFD locks failed");
+			sprintf(badtoken, "%s", resp->r_data);
+			resp->r_status = STATUS_ERRNO;
+			close(fd);
+			return;
+		}
+		break;
+	}
+
+	fno[resp->r_fpos] = fd;
+	lock_mode[resp->r_fpos] = (enum lock_mode) resp->r_lock_type;
+	resp->r_fno = fd;
+	resp->r_status = STATUS_OK;
 }
 
 void do_write(struct response *resp)
@@ -275,12 +304,7 @@ void do_lock(struct response *resp)
 {
 	int rc;
 	struct flock lock;
-	int cmd;
-
-	if (resp->r_cmd == CMD_LOCKW)
-		cmd = F_SETLKW;
-	else
-		cmd = F_SETLK;
+	int cmd = -1;
 
 	if (resp->r_fpos != 0 && fno[resp->r_fpos] == 0) {
 		strcpy(errdetail, "Invalid file number");
@@ -290,12 +314,29 @@ void do_lock(struct response *resp)
 		return;
 	}
 
+	switch (lock_mode[resp->r_fpos]) {
+	case LOCK_MODE_POSIX:
+		if (resp->r_cmd == CMD_LOCKW)
+			cmd = F_SETLKW;
+		else
+			cmd = F_SETLK;
+		break;
+
+	case LOCK_MODE_OFD:
+		if (resp->r_cmd == CMD_LOCKW)
+			cmd = F_OFD_SETLKW;
+		else
+			cmd = F_OFD_SETLK;
+		break;
+	}
+
 	lock.l_whence = SEEK_SET;
 	lock.l_type = resp->r_lock_type;
 	lock.l_start = resp->r_start;
 	lock.l_len = resp->r_length;
+	lock.l_pid = 0;
 
-	if (cmd == F_SETLKW && alarmtag == 0) {
+	if ((cmd == F_SETLKW || cmd == F_OFD_SETLKW) && alarmtag == 0) {
 		/* Don't let a blocking lock block hang us
 		 * Test case can set an alarm before LOCKW to specify
 		 * a different time
@@ -324,7 +365,8 @@ void do_lock(struct response *resp)
 	} else
 		resp->r_status = STATUS_GRANTED;
 
-	if (cmd == F_SETLKW && alarmtag == resp->r_tag) {
+	if ((cmd == F_SETLKW || cmd == F_OFD_SETLKW) &&
+	    alarmtag == resp->r_tag) {
 		/* cancel the alarm we set */
 		alarm(0);
 		alarmtag = 0;
@@ -336,9 +378,7 @@ void do_hop(struct response *resp)
 	int rc;
 	int pos;
 	struct flock lock;
-	int cmd;
-
-	cmd = F_SETLK;
+	int cmd = -1;
 
 	if (resp->r_fpos != 0 && fno[resp->r_fpos] == 0) {
 		strcpy(errdetail, "Invalid file number");
@@ -346,6 +386,16 @@ void do_hop(struct response *resp)
 		resp->r_status = STATUS_ERRNO;
 		resp->r_errno = EBADF;
 		return;
+	}
+
+	switch (lock_mode[resp->r_fpos]) {
+	case LOCK_MODE_POSIX:
+		cmd = F_SETLK;
+		break;
+
+	case LOCK_MODE_OFD:
+		cmd = F_OFD_SETLK;
+		break;
 	}
 
 	for (pos = resp->r_start; pos < resp->r_start + resp->r_length; pos++) {
@@ -359,6 +409,7 @@ void do_hop(struct response *resp)
 		lock.l_whence = SEEK_SET;
 		lock.l_type = resp->r_lock_type;
 		lock.l_len = 1;
+		lock.l_pid = 0;
 
 		rc = fcntl(fno[resp->r_fpos], cmd, &lock);
 
@@ -385,6 +436,7 @@ void do_hop(struct response *resp)
 		lock.l_type = F_UNLCK;
 		lock.l_start = resp->r_start;
 		lock.l_len = resp->r_length;
+		lock.l_pid = 0;
 		rc = fcntl(fno[resp->r_fpos], cmd, &lock);
 		if (rc == -1) {
 			strcpy(errdetail, "Hop Unlock failed");
@@ -400,9 +452,7 @@ void do_unhop(struct response *resp)
 	int rc;
 	int pos;
 	struct flock lock;
-	int cmd;
-
-	cmd = F_SETLK;
+	int cmd = -1;
 
 	if (resp->r_fpos != 0 && fno[resp->r_fpos] == 0) {
 		strcpy(errdetail, "Invalid file number");
@@ -410,6 +460,16 @@ void do_unhop(struct response *resp)
 		resp->r_status = STATUS_ERRNO;
 		resp->r_errno = EBADF;
 		return;
+	}
+
+	switch (lock_mode[resp->r_fpos]) {
+	case LOCK_MODE_POSIX:
+		cmd = F_SETLK;
+		break;
+
+	case LOCK_MODE_OFD:
+		cmd = F_OFD_SETLK;
+		break;
 	}
 
 	for (pos = resp->r_start; pos < resp->r_start + resp->r_length; pos++) {
@@ -423,6 +483,7 @@ void do_unhop(struct response *resp)
 		lock.l_whence = SEEK_SET;
 		lock.l_type = resp->r_lock_type;
 		lock.l_len = 1;
+		lock.l_pid = 0;
 
 		rc = fcntl(fno[resp->r_fpos], cmd, &lock);
 
@@ -441,6 +502,7 @@ void do_unhop(struct response *resp)
 		lock.l_type = F_UNLCK;
 		lock.l_start = resp->r_start;
 		lock.l_len = resp->r_length;
+		lock.l_pid = 0;
 		rc = fcntl(fno[resp->r_fpos], cmd, &lock);
 		if (rc == -1) {
 			strcpy(errdetail, "Unhop Unlock failed");
@@ -455,9 +517,7 @@ void do_unlock(struct response *resp)
 {
 	int rc;
 	struct flock lock;
-	int cmd;
-
-	cmd = F_SETLK;
+	int cmd = -1;
 
 	if (resp->r_fpos != 0 && fno[resp->r_fpos] == 0) {
 		strcpy(errdetail, "Invalid file number");
@@ -467,10 +527,21 @@ void do_unlock(struct response *resp)
 		return;
 	}
 
+	switch (lock_mode[resp->r_fpos]) {
+	case LOCK_MODE_POSIX:
+		cmd = F_SETLK;
+		break;
+
+	case LOCK_MODE_OFD:
+		cmd = F_OFD_SETLK;
+		break;
+	}
+
 	lock.l_whence = SEEK_SET;
 	lock.l_type = resp->r_lock_type;
 	lock.l_start = resp->r_start;
 	lock.l_len = resp->r_length;
+	lock.l_pid = 0;
 
 	rc = fcntl(fno[resp->r_fpos], cmd, &lock);
 
@@ -488,7 +559,7 @@ void do_test(struct response *resp)
 {
 	int rc;
 	struct flock lock;
-	int cmd = F_GETLK;
+	int cmd = -1;
 
 	if (resp->r_fpos != 0 && fno[resp->r_fpos] == 0) {
 		strcpy(errdetail, "Invalid file number");
@@ -498,10 +569,21 @@ void do_test(struct response *resp)
 		return;
 	}
 
+	switch (lock_mode[resp->r_fpos]) {
+	case LOCK_MODE_POSIX:
+		cmd = F_GETLK;
+		break;
+
+	case LOCK_MODE_OFD:
+		cmd = F_OFD_GETLK;
+		break;
+	}
+
 	lock.l_whence = SEEK_SET;
 	lock.l_type = resp->r_lock_type;
 	lock.l_start = resp->r_start;
 	lock.l_len = resp->r_length;
+	lock.l_pid = 0;
 
 	fprintf(stdout, "TEST lock type %s\n", str_lock_type(lock.l_type));
 
@@ -614,6 +696,7 @@ int list_locks(long long int start, long long int end, struct response *resp)
 	lock.l_whence = SEEK_SET;
 	lock.l_type = F_WRLCK;
 	lock.l_start = start;
+	lock.l_pid = 0;
 
 	if (end == INT64_MAX)
 		lock.l_len = 0;
