@@ -104,7 +104,7 @@ int nfs4_op_getdeviceinfo(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (deviceid->fsal_id >= FSAL_ID_COUNT) {
 		LogInfo(COMPONENT_PNFS,
-			"GETDEVICEINFO with invalid fsal id %c",
+			"GETDEVICEINFO with invalid fsal id %0hhx",
 			deviceid->fsal_id);
 		return res_GETDEVICEINFO4->gdir_status = NFS4ERR_INVAL;
 	}
@@ -113,7 +113,7 @@ int nfs4_op_getdeviceinfo(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (fsal == NULL) {
 		LogInfo(COMPONENT_PNFS,
-			"GETDEVICEINFO with inactive fsal id %c",
+			"GETDEVICEINFO with inactive fsal id %0hhx",
 			deviceid->fsal_id);
 		return res_GETDEVICEINFO4->gdir_status = NFS4ERR_INVAL;
 	}
