@@ -136,6 +136,24 @@ int sprintf_open_flags(char *line, int flags)
 	return rest - line;
 }
 
+struct token lock_modes[] = {
+	{"POSIX", 5, LOCK_MODE_POSIX},
+	{"OFD", 3, LOCK_MODE_OFD},
+	{"", 0, 0}
+};
+
+const char *str_lock_mode(int lock_mode)
+{
+	switch ((enum lock_mode) lock_mode) {
+	case LOCK_MODE_POSIX:
+		return "POSIX";
+	case LOCK_MODE_OFD:
+		return "OFD";
+	}
+
+	return "unknown";
+}
+
 int readln(FILE *in, char *buf, int buflen)
 {
 	int len;
@@ -492,7 +510,8 @@ char *get_str(char *line, char *str, long long int *len,
 	return SkipWhite(c, requires_more, "get_str 2");
 }
 
-char *get_open_opts(char *line, long int *fpos, int *flags, int *mode)
+char *get_open_opts(char *line, long int *fpos, int *flags, int *mode,
+		    int *lock_mode)
 {
 	char *c;
 	int flag2 = -1;
@@ -520,6 +539,14 @@ char *get_open_opts(char *line, long int *fpos, int *flags, int *mode)
 			return c;
 		*flags |= flag2;
 	}
+
+	/* Check optional lock mode, default to POSIX */
+	*lock_mode = LOCK_MODE_POSIX;
+
+	c = get_token_value(c, lock_mode, lock_modes, true, REQUIRES_MORE,
+			    "Invalid optional lock mode");
+	if (c == NULL)
+		return c;
 
 	return SkipWhite(c, REQUIRES_MORE, "get_open_opts");
 }
@@ -1248,8 +1275,8 @@ char *parse_alarm(char *line, struct response *req)
 
 char *parse_open(char *line, struct response *req)
 {
-	char *more =
-	    get_open_opts(line, &req->r_fpos, &req->r_flags, &req->r_mode);
+	char *more = get_open_opts(line, &req->r_fpos, &req->r_flags,
+				   &req->r_mode, &req->r_lock_type);
 
 	if (more == NULL)
 		return more;
