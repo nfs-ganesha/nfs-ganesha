@@ -352,8 +352,8 @@ static const struct nfs4_op_desc optabv4[] = {
 	/* NFSv4.2 */
 	[NFS4_OP_ALLOCATE] = {
 				.name = "OP_ALLOCATE",
-				.funct = nfs4_op_notsupp,
-				.free_res = nfs4_op_notsupp_Free,
+				.funct = nfs4_op_allocate,
+				.free_res = nfs4_op_write_Free,
 				.exp_perm_flags = 0},
 	[NFS4_OP_COPY] = {
 				.name = "OP_COPY",
@@ -367,8 +367,8 @@ static const struct nfs4_op_desc optabv4[] = {
 				.exp_perm_flags = 0},
 	[NFS4_OP_DEALLOCATE] = {
 				.name = "OP_DEALLOCATE",
-				.funct = nfs4_op_notsupp,
-				.free_res = nfs4_op_notsupp_Free,
+				.funct = nfs4_op_deallocate,
+				.free_res = nfs4_op_write_Free,
 				.exp_perm_flags = 0},
 	[NFS4_OP_IO_ADVISE] = {
 				.name = "OP_IO_ADVISE",
@@ -377,8 +377,13 @@ static const struct nfs4_op_desc optabv4[] = {
 				.exp_perm_flags = 0},
 	[NFS4_OP_LAYOUTERROR] = {
 				.name = "OP_LAYOUTERROR",
-				.funct = nfs4_op_notsupp,
-				.free_res = nfs4_op_notsupp_Free,
+				.funct = nfs4_op_layouterror,
+				.free_res = nfs4_op_layouterror_Free,
+				.exp_perm_flags = 0},
+	[NFS4_OP_LAYOUTSTATS] = {
+				.name = "OP_LAYOUTSTATS",
+				.funct = nfs4_op_layoutstats,
+				.free_res = nfs4_op_layoutstats_Free,
 				.exp_perm_flags = 0},
 	[NFS4_OP_OFFLOAD_CANCEL] = {
 				.name = "OP_OFFLOAD_CANCEL",
@@ -626,7 +631,7 @@ int nfs4_Compound(nfs_arg_t *arg,
 				}
 			}
 
-			if (opcode > NFS4_OP_IO_ADVISE)
+			if (opcode >= NFS4_OP_LAST_ONE)
 				opcode = 0;
 		}
 		LogDebug(COMPONENT_NFS_V4, "Request %d: opcode %d is %s", i,
@@ -1032,11 +1037,13 @@ void nfs4_Compound_CopyResOne(nfs_resop4 *res_dst, nfs_resop4 *res_src)
 	case NFS4_OP_DEALLOCATE:
 	case NFS4_OP_IO_ADVISE:
 	case NFS4_OP_LAYOUTERROR:
+	case NFS4_OP_LAYOUTSTATS:
 	case NFS4_OP_OFFLOAD_CANCEL:
 	case NFS4_OP_OFFLOAD_STATUS:
 	case NFS4_OP_READ_PLUS:
 	case NFS4_OP_SEEK:
 	case NFS4_OP_WRITE_SAME:
+	case NFS4_OP_LAST_ONE:
 		break;
 
 	case NFS4_OP_ILLEGAL:

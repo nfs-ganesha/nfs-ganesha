@@ -524,3 +524,68 @@ void nfs4_op_layoutget_Free(nfs_resop4 *res)
 					logr_layout_len);
 
 }				/* nfs41_op_layoutget_Free */
+
+int nfs4_op_layouterror(struct nfs_argop4 *op, compound_data_t *data,
+		      struct nfs_resop4 *resp)
+{
+	/* Convenience alias for arguments */
+	LAYOUTERROR4args * const arg_LAYOUTERROR4 =
+					&op->nfs_argop4_u.oplayouterror;
+	/* Convenience alias for response */
+	LAYOUTERROR4res * const res_LAYOUTERROR4 =
+					&resp->nfs_resop4_u.oplayouterror;
+	/* NFSv4.2 status code */
+	nfsstat4 nfs_status = 0;
+
+	LogEvent(COMPONENT_PNFS,
+		 "LAYOUTERROR OP %d status %d offset: %lu length: %lu",
+		 arg_LAYOUTERROR4->lea_errors.de_opnum,
+		 arg_LAYOUTERROR4->lea_errors.de_status,
+		 arg_LAYOUTERROR4->lea_offset,
+		 arg_LAYOUTERROR4->lea_length);
+
+	/** @todo: what else do we want to do with this error ???  */
+
+	res_LAYOUTERROR4->ler_status = nfs_status;
+
+	return res_LAYOUTERROR4->ler_status;
+}
+
+void nfs4_op_layouterror_Free(nfs_resop4 *res)
+{
+}
+
+int nfs4_op_layoutstats(struct nfs_argop4 *op, compound_data_t *data,
+		      struct nfs_resop4 *resp)
+{
+	/* Convenience alias for arguments */
+	LAYOUTSTATS4args * const arg_LAYOUTSTATS4 =
+					&op->nfs_argop4_u.oplayoutstats;
+	/* Convenience alias for response */
+	LAYOUTSTATS4res * const res_LAYOUTSTATS4 =
+					&resp->nfs_resop4_u.oplayoutstats;
+	/* NFSv4.2 status code */
+	nfsstat4 nfs_status = 0;
+
+	LogEvent(COMPONENT_PNFS,
+		 "LAYOUTSTATS offset %lu length %lu",
+		 arg_LAYOUTSTATS4->lsa_offset,
+		 arg_LAYOUTSTATS4->lsa_length);
+
+	LogEvent(COMPONENT_PNFS,
+		 "LAYOUTSTATS read count %u bytes %lu write count %u bytes %lu",
+		 arg_LAYOUTSTATS4->lsa_read.ii_count,
+		 arg_LAYOUTSTATS4->lsa_read.ii_bytes,
+		 arg_LAYOUTSTATS4->lsa_write.ii_count,
+		 arg_LAYOUTSTATS4->lsa_write.ii_bytes);
+
+	/** @todo: what else do we want to do with the stats ???  */
+
+	res_LAYOUTSTATS4->lsr_status = nfs_status;
+
+	return res_LAYOUTSTATS4->lsr_status;
+}
+
+void nfs4_op_layoutstats_Free(nfs_resop4 *res)
+{
+}

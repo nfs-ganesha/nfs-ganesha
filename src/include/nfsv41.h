@@ -2493,8 +2493,10 @@ extern "C" {
 	typedef enum netloc_type4 netloc_type4;
 
 	enum data_content4 {
-		NFS4_CONTENT_DATA = 0,
-		NFS4_CONTENT_HOLE = 1
+		NFS4_CONTENT_DATA       = 0,
+		NFS4_CONTENT_HOLE       = 1,
+		NFS4_CONTENT_ALLOCATE   = 2,
+		NFS4_CONTENT_DEALLOCATE = 4
 	};
 	typedef enum data_content4 data_content4;
 
@@ -2646,11 +2648,7 @@ extern "C" {
 	struct WRITE_SAME4args {
 		stateid4        wp_stateid;
 		stable_how4     wp_stable;
-		union {
-			data4           wp_data;
-			app_data_block4 wp_adb;
-			data_info4      wp_hole;
-		};
+		app_data_block4 wp_adb;
 	};
 	typedef struct WRITE_SAME4args WRITE_SAME4args;
 
@@ -2676,6 +2674,30 @@ extern "C" {
 		};
 	};
 	typedef struct READ_PLUS4res READ_PLUS4res;
+
+	struct ALLOCATE4args {
+		stateid4        aa_stateid;
+		offset4         aa_offset;
+		length4         aa_length;
+	};
+	typedef struct ALLOCATE4args ALLOCATE4args;
+
+	struct ALLOCATE4res {
+		nfsstat4 ar_status;
+	};
+	typedef struct ALLOCATE4res ALLOCATE4res;
+
+	struct DEALLOCATE4args {
+		stateid4        da_stateid;
+		offset4         da_offset;
+		length4         da_length;
+	};
+	typedef struct DEALLOCATE4args DEALLOCATE4args;
+
+	struct DEALLOCATE4res {
+		nfsstat4 dr_status;
+	};
+	typedef struct DEALLOCATE4res DEALLOCATE4res;
 
 	struct SEEK4args {
 		stateid4        sa_stateid;
@@ -2789,15 +2811,58 @@ extern "C" {
 		NFS4_OP_DEALLOCATE = 62,
 		NFS4_OP_IO_ADVISE = 63,
 		NFS4_OP_LAYOUTERROR = 64,
+		NFS4_OP_LAYOUTSTATS = 65,
 		NFS4_OP_OFFLOAD_CANCEL = 66,
 		NFS4_OP_OFFLOAD_STATUS = 67,
 		NFS4_OP_READ_PLUS = 68,
 		NFS4_OP_SEEK = 69,
 		NFS4_OP_WRITE_SAME = 70,
+		NFS4_OP_LAST_ONE = 71,
 
 		NFS4_OP_ILLEGAL = 10044,
 	};
 	typedef enum nfs_opnum4 nfs_opnum4;
+
+	typedef struct {
+		deviceid4       de_deviceid;
+		nfsstat4        de_status;
+		nfs_opnum4      de_opnum;
+	} device_error4;
+
+	struct LAYOUTERROR4args {
+		offset4         lea_offset;
+		length4         lea_length;
+		stateid4        lea_stateid;
+		device_error4   lea_errors;
+	};
+	typedef struct LAYOUTERROR4args LAYOUTERROR4args;
+
+	struct LAYOUTERROR4res {
+		nfsstat4 ler_status;
+	};
+	typedef struct LAYOUTERROR4res LAYOUTERROR4res;
+
+	typedef struct {
+		uint32_t      ii_count;
+		uint64_t      ii_bytes;
+	} io_info4;
+
+	struct LAYOUTSTATS4args {
+		offset4         lsa_offset;
+		length4         lsa_length;
+		stateid4        lsa_stateid;
+		io_info4        lsa_read;
+		io_info4        lsa_write;
+		layoutupdate4   lsa_layoutupdate;
+	};
+	typedef struct LAYOUTSTATS4args LAYOUTSTATS4args;
+
+	struct LAYOUTSTATS4res {
+		nfsstat4 lsr_status;
+	};
+	typedef struct LAYOUTSTATS4res LAYOUTSTATS4res;
+
+
 
 	struct nfs_argop4 {
 		nfs_opnum4 argop;
@@ -2859,9 +2924,13 @@ extern "C" {
 			OFFLOAD_ABORT4args opoffload_abort;
 			OFFLOAD_STATUS4args opoffload_status;
 			WRITE_SAME4args opwrite_plus;
+			ALLOCATE4args opallocate;
+			DEALLOCATE4args opdeallocate;
 			READ_PLUS4args opread_plus;
 			SEEK4args opseek;
 			IO_ADVISE4args opio_advise;
+			LAYOUTERROR4args oplayouterror;
+			LAYOUTSTATS4args oplayoutstats;
 		} nfs_argop4_u;
 	};
 	typedef struct nfs_argop4 nfs_argop4;
@@ -2933,9 +3002,13 @@ extern "C" {
 			OFFLOAD_ABORT4res opoffload_abort;
 			OFFLOAD_STATUS4res opoffload_status;
 			WRITE_SAME4res opwrite_plus;
+			ALLOCATE4res opallocate;
+			DEALLOCATE4res opdeallocate;
 			READ_PLUS4res opread_plus;
 			SEEK4res opseek;
 			IO_ADVISE4res opio_advise;
+			LAYOUTERROR4res oplayouterror;
+			LAYOUTSTATS4res oplayoutstats;
 
 			ILLEGAL4res opillegal;
 		} nfs_resop4_u;
@@ -7561,6 +7634,29 @@ extern "C" {
 		return true;
 	}
 
+	static inline bool xdr_ALLOCATE4args(XDR * xdrs, ALLOCATE4args *objp)
+	{
+		if (!xdr_stateid4(xdrs, &objp->aa_stateid))
+			return false;
+		if (!xdr_offset4(xdrs, &objp->aa_offset))
+			return false;
+		if (!xdr_length4(xdrs, &objp->aa_length))
+			return false;
+		return true;
+	}
+
+	static inline bool xdr_DEALLOCATE4args(XDR * xdrs,
+						DEALLOCATE4args *objp)
+	{
+		if (!xdr_stateid4(xdrs, &objp->da_stateid))
+			return false;
+		if (!xdr_offset4(xdrs, &objp->da_offset))
+			return false;
+		if (!xdr_length4(xdrs, &objp->da_length))
+			return false;
+		return true;
+	}
+
 	static inline bool xdr_data_contents(XDR * xdrs, contents *objp)
 	{
 		if (!inline_xdr_enum(xdrs, (enum_t *)&objp->what))
@@ -7611,6 +7707,20 @@ extern "C" {
 		return true;
 	}
 
+	static inline bool xdr_ALLOCATE4res(XDR * xdrs, ALLOCATE4res *objp)
+	{
+		if (!xdr_nfsstat4(xdrs, &objp->ar_status))
+			return false;
+		return true;
+	}
+
+	static inline bool xdr_DEALLOCATE4res(XDR * xdrs, DEALLOCATE4res *objp)
+	{
+		if (!xdr_nfsstat4(xdrs, &objp->dr_status))
+			return false;
+		return true;
+	}
+
 	static inline bool xdr_IO_ADVISE4args(XDR * xdrs, IO_ADVISE4args *objp)
 	{
 		if (!xdr_stateid4(xdrs, &objp->iaa_stateid))
@@ -7637,6 +7747,62 @@ extern "C" {
 		default:
 			break;
 		}
+		return true;
+	}
+
+	static inline bool xdr_LAYOUTERROR4args(XDR * xdrs,
+						LAYOUTERROR4args *objp)
+	{
+		if (!xdr_offset4(xdrs, &objp->lea_offset))
+			return false;
+		if (!xdr_length4(xdrs, &objp->lea_length))
+			return false;
+		if (!xdr_stateid4(xdrs, &objp->lea_stateid))
+			return false;
+		if (!xdr_deviceid4(xdrs, objp->lea_errors.de_deviceid))
+			return false;
+		if (!xdr_nfsstat4(xdrs, &objp->lea_errors.de_status))
+			return false;
+		if (!inline_xdr_enum(xdrs, (enum_t *)objp->lea_errors.de_opnum))
+			return false;
+		return true;
+	}
+
+	static inline bool xdr_LAYOUTERROR4res(XDR * xdrs,
+						LAYOUTERROR4res *objp)
+	{
+		if (!xdr_nfsstat4(xdrs, &objp->ler_status))
+			return false;
+		return true;
+	}
+
+	static inline bool xdr_LAYOUTSTATS4args(XDR * xdrs,
+						LAYOUTSTATS4args *objp)
+	{
+		if (!xdr_offset4(xdrs, &objp->lsa_offset))
+			return false;
+		if (!xdr_length4(xdrs, &objp->lsa_length))
+			return false;
+		if (!xdr_stateid4(xdrs, &objp->lsa_stateid))
+			return false;
+		if (!inline_xdr_u_int32_t(xdrs, &objp->lsa_read.ii_count))
+			return false;
+		if (!inline_xdr_u_int64_t(xdrs, &objp->lsa_read.ii_bytes))
+			return false;
+		if (!inline_xdr_u_int32_t(xdrs, &objp->lsa_write.ii_count))
+			return false;
+		if (!inline_xdr_u_int64_t(xdrs, &objp->lsa_write.ii_bytes))
+			return false;
+		if (!xdr_layoutupdate4(xdrs, &objp->lsa_layoutupdate))
+			return false;
+		return true;
+	}
+
+	static inline bool xdr_LAYOUTSTATS4res(XDR * xdrs,
+						LAYOUTSTATS4res *objp)
+	{
+		if (!xdr_nfsstat4(xdrs, &objp->lsr_status))
+			return false;
 		return true;
 	}
 
@@ -7958,14 +8124,35 @@ extern "C" {
 					&objp->nfs_argop4_u.opseek))
 				return false;
 			break;
+		case NFS4_OP_ALLOCATE:
+			if (!xdr_ALLOCATE4args(xdrs,
+					&objp->nfs_argop4_u.opallocate))
+				return false;
+			break;
+		case NFS4_OP_DEALLOCATE:
+			if (!xdr_DEALLOCATE4args(xdrs,
+					&objp->nfs_argop4_u.opdeallocate))
+				return false;
+			break;
 		case NFS4_OP_IO_ADVISE:
 			if (!xdr_IO_ADVISE4args(xdrs,
 					&objp->nfs_argop4_u.opio_advise))
 				return false;
 			break;
+		case NFS4_OP_LAYOUTERROR:
+			if (!xdr_LAYOUTERROR4args(xdrs,
+					&objp->nfs_argop4_u.oplayouterror))
+				return false;
+			break;
+		case NFS4_OP_LAYOUTSTATS:
+			if (!xdr_LAYOUTSTATS4args(xdrs,
+					&objp->nfs_argop4_u.oplayoutstats))
+				return false;
+			break;
 
 		case NFS4_OP_COPY:
 		case NFS4_OP_COPY_NOTIFY:
+		case NFS4_OP_OFFLOAD_CANCEL:
 		case NFS4_OP_OFFLOAD_STATUS:
 			break;
 
@@ -8264,14 +8451,35 @@ extern "C" {
 			    (xdrs, &objp->nfs_resop4_u.opseek))
 				return false;
 			break;
+		case NFS4_OP_ALLOCATE:
+			if (!xdr_ALLOCATE4res
+			    (xdrs, &objp->nfs_resop4_u.opallocate))
+				return false;
+			break;
+		case NFS4_OP_DEALLOCATE:
+			if (!xdr_DEALLOCATE4res
+			    (xdrs, &objp->nfs_resop4_u.opdeallocate))
+				return false;
+			break;
 		case NFS4_OP_IO_ADVISE:
 			if (!xdr_IO_ADVISE4res
 			    (xdrs, &objp->nfs_resop4_u.opio_advise))
 				return false;
 			break;
+		case NFS4_OP_LAYOUTERROR:
+			if (!xdr_LAYOUTERROR4res(xdrs,
+					&objp->nfs_resop4_u.oplayouterror))
+				return false;
+			break;
+		case NFS4_OP_LAYOUTSTATS:
+			if (!xdr_LAYOUTSTATS4res(xdrs,
+					&objp->nfs_resop4_u.oplayoutstats))
+				return false;
+			break;
 
 		case NFS4_OP_COPY:
 		case NFS4_OP_COPY_NOTIFY:
+		case NFS4_OP_OFFLOAD_CANCEL:
 		case NFS4_OP_OFFLOAD_STATUS:
 
 		case NFS4_OP_ILLEGAL:

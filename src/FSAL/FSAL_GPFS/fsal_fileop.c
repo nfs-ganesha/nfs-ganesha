@@ -227,7 +227,6 @@ fsal_status_t GPFSFSAL_write(int fd,	/* IN */
 	warg.stability_wanted = *fsal_stable;
 	warg.stability_got = &stability_got;
 	warg.options = 0;
-	/* read operation */
 
 	fsal_set_credentials(p_context->creds);
 
@@ -250,61 +249,39 @@ fsal_status_t GPFSFSAL_write(int fd,	/* IN */
 }
 
 /**
- * FSAL_clear:
- * Perform a write operation on an opened file.
- *
- * \param file_descriptor (input):
- *        The file descriptor returned by FSAL_open.
- * \param buffer_size (input):
- *        Amount (in bytes) of data to be written.
- * \param buffer (output):
- *        Address where the data is in memory.
- * \param write_amount (output):
- *        Pointer to the amount of data (in bytes) that have been written
- *        during this call.
+ * FSAL_alloc:
+ * Perform a de/allocc operation on an opened file.
  *
  * \return Major error codes:
  *      - ERR_FSAL_NO_ERROR: no error.
  *      - Another error code if an error occured during this call.
  */
-fsal_status_t GPFSFSAL_clear(int fd,	/* IN */
-			     uint64_t offset,	/* IN */
-			     size_t buffer_size,	/* IN */
-			     caddr_t buffer,	/* IN */
-			     size_t *p_write_amount,	/* OUT */
-			     bool *fsal_stable,	/* IN/OUT */
-			     const struct req_op_context *p_context)
+fsal_status_t GPFSFSAL_alloc(int fd,			/* IN */
+			     uint64_t offset,		/* IN */
+			     uint64_t length,		/* IN */
+			     bool allocate)		/* IN */
 {
-	struct write_arg warg;
-	ssize_t nb_write;
+	struct alloc_arg aarg;
+	int rc;
 	int errsv = 0;
 
-	warg.mountdirfd = fd;
-	warg.fd = fd;
-	warg.bufP = buffer;
-	warg.offset = offset;
-	warg.length = buffer_size;
-	warg.stability_wanted = *fsal_stable;
-	warg.stability_got = (uint32_t *) fsal_stable;
-	warg.options = 0;
+	aarg.fd = fd;
+	aarg.offset = offset;
+	aarg.length = length;
+	if (allocate)
+		aarg.options = IO_ALLOCATE;
+	else
+		aarg.options = IO_DEALLOCATE;
 
-	/* read operation */
-
-	fsal_set_credentials(p_context->creds);
-
-	nb_write = gpfs_ganesha(OPENHANDLE_CLEAR_BY_FD, &warg);
+	rc = gpfs_ganesha(OPENHANDLE_ALLOCATE_BY_FD, &aarg);
 	errsv = errno;
 
 	fsal_restore_ganesha_credentials();
 
-	if (nb_write == -1) {
+	if (rc == -1) {
 		if (errsv == EUNATCH)
 			LogFatal(COMPONENT_FSAL, "GPFS Returned EUNATCH");
 		return fsalstat(posix2fsal_error(errsv), errsv);
 	}
-
-	*p_write_amount = buffer_size;
-
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
-
 }
