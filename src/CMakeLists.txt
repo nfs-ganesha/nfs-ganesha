@@ -145,12 +145,16 @@ if (MSVC)
    add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 endif(MSVC)
 
-# Library destination, 32 bits / 64 bits switch is done here
-if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-    set( FSAL_DESTINATION "lib64/ganesha" )
-else( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-    set( FSAL_DESTINATION "lib/ganesha" )
-endif( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+IF(FSAL_DESTINATION)
+    set( FSAL_DESTINATION ${FSAL_DESTINATION} )
+ELSE()
+    # Library destination, 32 bits / 64 bits switch is done here
+    if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+        set( FSAL_DESTINATION "lib64/ganesha" )
+    else( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+        set( FSAL_DESTINATION "lib/ganesha" )
+    endif( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+ENDIF()
 
 # FSAL selection
 # FSALs which are enabled by default but could be disabled
