@@ -1,0 +1,32 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+#
+# Expected debian/rules file that is used by the dpkg build procedure
+#
+#   $ git clone <nfs-ganesha>
+#   $ cd nfs-ganesha/src
+#   $ dpkg-buildpackage -uc -us
+#
+export PREFIX=/usr
+export DESTDIR=$(CURDIR)/debian/tmp
+
+DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
+
+%:
+	 dh --with python2 --with quilt $@
+
+override_dh_auto_configure:
+	 dh_auto_configure -- -DBUILD_CONFIG=debian -DFSAL_DESTINATION=lib/${DEB_HOST_MULTIARCH}/ganesha
+
+override_dh_auto_test:
+
+override_dh_install:
+	 mkdir -p debian/tmp/etc/ganesha/
+	 mkdir -p debian/tmp/etc/init.d/
+	 mkdir -p debian/tmp/etc/logrotate.d/
+	 mkdir -p debian/tmp/etc/dbus-1/system.d/
+	 cp config_samples/vfs.conf debian/tmp/etc/ganesha/ganesha.conf; \
+	 cp config_samples/logrotate_ganesha debian/tmp/etc/logrotate.d/nfs-ganesha; \
+	 cp ganesha.init debian/tmp/etc/init.d/nfs-ganesha; \
+	 cp scripts/ganeshactl/org.ganesha.nfsd.conf debian/tmp/etc/dbus-1/system.d/nfs-ganesha-dbus.conf; \
+	 dh_install --sourcedir=debian/tmp
