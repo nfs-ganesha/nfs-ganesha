@@ -1851,6 +1851,14 @@ static fsal_status_t pxy_open(struct fsal_obj_handle *obj_hdl,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
+static fsal_openflags_t pxy_status(struct fsal_obj_handle *obj_hdl)
+{
+	struct pxy_obj_handle *ph;
+
+	ph = container_of(obj_hdl, struct pxy_obj_handle, obj);
+	return ph->openflags;
+}
+
 static fsal_status_t pxy_read(struct fsal_obj_handle *obj_hdl,
 			      uint64_t offset, size_t buffer_size, void *buffer,
 			      size_t *read_amount, bool *end_of_file)
@@ -1978,6 +1986,7 @@ void pxy_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->rename = pxy_rename;
 	ops->unlink = pxy_unlink;
 	ops->open = pxy_open;
+	ops->status = pxy_status;
 	ops->read = pxy_read;
 	ops->write = pxy_write;
 	ops->commit = pxy_commit;
