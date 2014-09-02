@@ -1103,7 +1103,9 @@ static fsal_status_t pxy_lookup(struct fsal_obj_handle *parent,
 }
 
 static fsal_status_t pxy_do_close(const struct user_cred *creds,
-				  const nfs_fh4 *fh4, stateid4 *sid,
+				  const nfs_fh4 *fh4,
+				  seqid4 open_owner_seqid,
+				  stateid4 *sid,
 				  struct fsal_export *exp)
 {
 	int rc;
@@ -1119,7 +1121,7 @@ static fsal_status_t pxy_do_close(const struct user_cred *creds,
 		return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
 	COMPOUNDV4_ARG_ADD_OP_PUTFH(opcnt, argoparray, *fh4);
-	COMPOUNDV4_ARG_ADD_OP_CLOSE(opcnt, argoparray, sid);
+	COMPOUNDV4_ARG_ADD_OP_CLOSE(opcnt, argoparray, sid, open_owner_seqid);
 
 	rc = pxy_nfsv4_call(exp, creds, opcnt, argoparray, resoparray);
 	if (rc != NFS4_OK)
@@ -1128,7 +1130,9 @@ static fsal_status_t pxy_do_close(const struct user_cred *creds,
 }
 
 static fsal_status_t pxy_open_confirm(const struct user_cred *cred,
-				      const nfs_fh4 *fh4, stateid4 *stateid,
+				      const nfs_fh4 *fh4,
+				      seqid4 open_owner_seqid,
+				      stateid4 *stateid,
 				      struct fsal_export *export)
 {
 	int rc;
@@ -1150,7 +1154,7 @@ static fsal_status_t pxy_open_confirm(const struct user_cred *cred,
 	op->nfs_argop4_u.opopen_confirm.open_stateid.seqid = stateid->seqid;
 	memcpy(op->nfs_argop4_u.opopen_confirm.open_stateid.other,
 	       stateid->other, 12);
-	op->nfs_argop4_u.opopen_confirm.seqid = stateid->seqid;
+	op->nfs_argop4_u.opopen_confirm.seqid = open_owner_seqid;
 
 	rc = pxy_nfsv4_call(export, cred, opcnt, argoparray, resoparray);
 	if (rc != NFS4_OK)
@@ -1178,6 +1182,7 @@ static fsal_status_t pxy_create(struct fsal_obj_handle *dir_hdl,
 	nfs_resop4 resoparray[FSAL_CREATE_NB_OP_ALLOC];
 	char owner_val[128];
 	unsigned int owner_len = 0;
+	seqid4 open_owner_seqid = 0;
 	GETFH4resok *fhok;
 	GETATTR4resok *atok;
 	OPEN4resok *opok;
@@ -1202,7 +1207,7 @@ static fsal_status_t pxy_create(struct fsal_obj_handle *dir_hdl,
 	pxy_get_clientid(&cid);
 	COMPOUNDV4_ARG_ADD_OP_OPEN_CREATE(opcnt, argoparray, (char *)name,
 					  input_attr, cid, owner_val,
-					  owner_len);
+					  owner_len, open_owner_seqid);
 
 	fhok = &resoparray[opcnt].nfs_resop4_u.opgetfh.GETFH4res_u.resok4;
 	fhok->object.nfs_fh4_val = padfilehandle;
@@ -1223,7 +1228,7 @@ static fsal_status_t pxy_create(struct fsal_obj_handle *dir_hdl,
 	/* See if a OPEN_CONFIRM is required */
 	if (opok->rflags & OPEN4_RESULT_CONFIRM) {
 		st = pxy_open_confirm(op_ctx->creds, &fhok->object,
-				      &opok->stateid,
+				      ++open_owner_seqid, &opok->stateid,
 				      op_ctx->fsal_export);
 		if (FSAL_IS_ERROR(st))
 			return st;
@@ -1231,8 +1236,8 @@ static fsal_status_t pxy_create(struct fsal_obj_handle *dir_hdl,
 
 	/* The created file is still opened, to preserve the correct
 	 * seqid for later use, we close it */
-	st = pxy_do_close(op_ctx->creds, &fhok->object, &opok->stateid,
-			  op_ctx->fsal_export);
+	st = pxy_do_close(op_ctx->creds, &fhok->object, ++open_owner_seqid,
+			  &opok->stateid, op_ctx->fsal_export);
 	if (FSAL_IS_ERROR(st))
 		return st;
 	st = pxy_make_object(op_ctx->fsal_export,
