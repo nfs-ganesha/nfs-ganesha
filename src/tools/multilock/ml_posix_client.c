@@ -23,7 +23,10 @@
  *
  */
 
+#include <pthread.h>
+#include <assert.h>
 #include "multilock.h"
+#include "../../include/ganesha_list.h"
 
 /* command line syntax */
 
@@ -44,6 +47,26 @@ char usage[] =
 	"  -d        - specify dup errors mode (errors are sent to stdout and stderr)\n"
 	"  -c path   - chdir\n";
 
+#define NUM_WORKER 4
+#define POLL_DELAY 10
+
+enum thread_type {
+	THREAD_NONE,
+	THREAD_MAIN,
+	THREAD_WORKER,
+	THREAD_POLL,
+	THREAD_CANCEL
+};
+
+struct work_item {
+	struct glist_head queue;
+	struct glist_head fno_work;
+	struct response resp;
+	enum thread_type work_owner;
+	pthread_t work_thread;
+	time_t next_poll;
+};
+
 char server[MAXSTR];
 char name[MAXSTR];
 char portstr[MAXSTR];
@@ -52,6 +75,17 @@ char line[MAXSTR * 2 + 3];
 long int alarmtag;
 int fno[MAXFPOS + 1];
 enum lock_mode lock_mode[MAXFPOS + 1];
+
+/* Global variables to manage work list */
+struct glist_head fno_work[MAXFPOS + 1];
+struct glist_head work_queue = GLIST_HEAD_INIT(work_queue);
+struct glist_head poll_queue = GLIST_HEAD_INIT(poll_queue);
+pthread_t threads[NUM_WORKER + 1];
+pthread_mutex_t work_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t work_cond = PTHREAD_COND_INITIALIZER;
+
+enum thread_type a_worker = THREAD_WORKER;
+enum thread_type a_poller = THREAD_POLL;
 
 void openserver()
 {
@@ -131,6 +165,7 @@ void sighandler(int sig)
 		break;
 
 	case SIGPIPE:
+	case SIGIO:
 		break;
 	}
 }
@@ -303,33 +338,143 @@ void do_seek(struct response *resp)
 	resp->r_status = STATUS_OK;
 }
 
-void do_lock(struct response *resp)
+void free_work(struct work_item *work)
+{
+	/* Make sure the item isn't on any queues */
+	glist_del(&work->fno_work);
+	glist_del(&work->queue);
+
+	free(work);
+}
+
+void cancel_work_item(struct work_item *work)
+{
+	switch (work->work_owner) {
+	case THREAD_NONE:
+	case THREAD_MAIN:
+	case THREAD_CANCEL:
+		/* nothing special to do */
+		break;
+
+	case THREAD_WORKER:
+	case THREAD_POLL:
+		/* Mark the work item to be canceled */
+		work->work_owner = THREAD_CANCEL;
+
+		pthread_kill(work->work_thread, SIGIO);
+
+		/* Wait for thread to be done or cancel the work */
+		while (work->work_owner != THREAD_NONE)
+			pthread_cond_wait(&work_cond, &work_mutex);
+	}
+
+	/* Done with the work item, free the memory. */
+	free_work(work);
+}
+
+static inline long long int lock_end(struct response *req)
+{
+	if (req->r_length == 0)
+		return LLONG_MAX;
+
+	return req->r_start + req->r_length;
+}
+
+void cancel_work(struct response *req)
+{
+	struct glist_head cancel_work = GLIST_HEAD_INIT(cancel_work);
+	struct glist_head *glist;
+	struct work_item *work;
+	bool start_over = true;
+
+	pthread_mutex_lock(&work_mutex);
+
+	while (start_over) {
+		start_over = false;
+
+		glist_for_each(glist, fno_work + req->r_fpos) {
+			work = glist_entry(glist, struct work_item, fno_work);
+			if (work->resp.r_start >= req->r_start &&
+			    lock_end(&work->resp) <= lock_end(req)) {
+				/* Do something */
+				cancel_work_item(work);
+
+				/* List may be messed up */
+				start_over = true;
+				break;
+			}
+		}
+	}
+
+	pthread_mutex_unlock(&work_mutex);
+}
+
+/* Must only be called from main thread...*/
+int schedule_work(struct response *resp)
+{
+	struct work_item *work = calloc(1, sizeof(*work));
+
+	if (work == NULL) {
+		errno = ENOMEM;
+		return -1;
+	}
+
+	pthread_mutex_lock(&work_mutex);
+
+	memcpy(&work->resp, resp, sizeof(*resp));
+
+	work->work_owner = THREAD_NONE;
+	glist_add_tail(&work_queue, &work->queue);
+	glist_add_tail(fno_work + resp->r_fpos, &work->fno_work);
+
+	/* Signal to the worker and polling threads there is new work */
+	pthread_cond_broadcast(&work_cond);
+
+	pthread_mutex_unlock(&work_mutex);
+
+	return 0;
+}
+
+bool do_lock(struct response *resp, enum thread_type thread_type)
 {
 	int rc;
 	struct flock lock;
 	int cmd = -1;
+	bool retry = false;
 
 	if (resp->r_fpos != 0 && fno[resp->r_fpos] == 0) {
 		resp->r_status = STATUS_ERRNO;
 		resp->r_errno = EBADF;
 		strcpy(errdetail, "Invalid file number");
 		sprintf(badtoken, "%ld", resp->r_fpos);
-		return;
+		return true;
 	}
 
 	switch (lock_mode[resp->r_fpos]) {
 	case LOCK_MODE_POSIX:
-		if (resp->r_cmd == CMD_LOCKW)
-			cmd = F_SETLKW;
-		else
+		if (resp->r_cmd == CMD_LOCKW) {
+			if (thread_type != THREAD_WORKER) {
+				cmd = F_SETLK;
+				retry = true;
+			} else {
+				cmd = F_SETLKW;
+			}
+		} else {
 			cmd = F_SETLK;
+		}
 		break;
 
 	case LOCK_MODE_OFD:
-		if (resp->r_cmd == CMD_LOCKW)
-			cmd = F_OFD_SETLKW;
-		else
+		if (resp->r_cmd == CMD_LOCKW) {
+			if (thread_type != THREAD_WORKER) {
+				cmd = F_OFD_SETLK;
+				retry = true;
+			} else {
+				cmd = F_OFD_SETLKW;
+			}
+		} else {
 			cmd = F_OFD_SETLK;
+		}
 		break;
 	}
 
@@ -339,19 +484,24 @@ void do_lock(struct response *resp)
 	lock.l_len = resp->r_length;
 	lock.l_pid = 0;
 
-	if ((cmd == F_SETLKW || cmd == F_OFD_SETLKW) && alarmtag == 0) {
-		/* Don't let a blocking lock block hang us
-		 * Test case can set an alarm before LOCKW to specify
-		 * a different time
-		 */
-		resp->r_secs = 30;
-		do_alarm(resp);
-	}
-
 	rc = fcntl(fno[resp->r_fpos], cmd, &lock);
+
+	if (rc == -1 && errno == EAGAIN &&
+	    retry && thread_type == THREAD_MAIN) {
+		/* We need to schedule OFD blocked lock */
+		rc = schedule_work(resp);
+
+		/* Check for scheduling success */
+		if (rc == 0)
+			return false;
+	}
 
 	if (rc == -1) {
 		if (errno == EAGAIN) {
+			if (retry) {
+				/* Let caller know we didn't complete */
+				return false;
+			}
 			resp->r_status = STATUS_DENIED;
 		} else if (errno == EINTR) {
 			resp->r_status = STATUS_CANCELED;
@@ -368,12 +518,7 @@ void do_lock(struct response *resp)
 	} else
 		resp->r_status = STATUS_GRANTED;
 
-	if ((cmd == F_SETLKW || cmd == F_OFD_SETLKW) &&
-	    alarmtag == resp->r_tag) {
-		/* cancel the alarm we set */
-		alarm(0);
-		alarmtag = 0;
-	}
+	return true;
 }
 
 void do_hop(struct response *resp)
@@ -534,6 +679,9 @@ void do_unlock(struct response *resp)
 		return;
 	}
 
+	/* If this fpos has a blocking lock, cancel it. */
+	cancel_work(resp);
+
 	switch (lock_mode[resp->r_fpos]) {
 	case LOCK_MODE_POSIX:
 		cmd = F_SETLK;
@@ -645,14 +793,6 @@ void do_close(struct response *resp)
 	resp->r_status = STATUS_OK;
 }
 
-static inline long long int lock_end(long long int start, long long int length)
-{
-	if (length == 0)
-		return INT64_MAX;
-	else
-		return start + length;
-}
-
 struct test_list {
 	struct test_list *tl_next;
 	long long int tl_start;
@@ -737,7 +877,7 @@ int list_locks(long long int start, long long int end, struct response *resp)
 
 	respond(resp);
 
-	conf_end = lock_end(lock.l_start, lock.l_len);
+	conf_end = lock_end(resp);
 
 	if (lock.l_start > start)
 		make_test_item(start, lock.l_start);
@@ -764,7 +904,7 @@ void do_list(struct response *resp)
 
 	resp->r_lock_type = F_WRLCK;
 
-	make_test_item(start, lock_end(start, length));
+	make_test_item(start, lock_end(resp));
 
 	while (tl_head != NULL) {
 		conflict |=
@@ -782,15 +922,163 @@ void do_list(struct response *resp)
 	resp->r_length = length;
 }
 
+struct work_item *get_work(enum thread_type thread_type)
+{
+	struct work_item *work, *poll;
+
+	while (true) {
+		/* Check poll list first */
+		poll = glist_first_entry(&poll_queue, struct work_item, queue);
+		work = poll;
+
+		/* If we didn't find work on the poll list or this is a polling
+		 * thread and the work on the poll list isn't due for polling
+		 * yet, then look for work on the work list.
+		 */
+		if (work == NULL ||
+		    (thread_type == THREAD_POLL &&
+		     work->next_poll > time(NULL))) {
+			/* Check work list now */
+			work = glist_first_entry(&work_queue,
+						 struct work_item,
+						 queue);
+		}
+
+		/* Assign the work to ourself and remove from the queue and
+		 * return to the caller.
+		 */
+		if (work != NULL) {
+			work->work_owner = thread_type;
+			work->work_thread = pthread_self();
+			glist_del(&work->queue);
+			return work;
+		}
+
+		/* No work, decide what kind of wait to do. */
+		if (thread_type == THREAD_POLL && poll != NULL) {
+			/* Since there is polling work to do, determine next
+			 * time to poll and wait that long for signal.
+			 */
+			struct timespec twait = {poll->next_poll - time(NULL),
+						 0};
+
+			pthread_cond_timedwait(&work_cond,
+					       &work_mutex,
+					       &twait);
+		} else {
+			/* Wait for signal */
+			pthread_cond_wait(&work_cond, &work_mutex);
+		}
+	}
+}
+
+void *worker(void *t_type)
+{
+	struct work_item *work = NULL;
+	bool complete, cancelled = false;
+	enum thread_type thread_type = *((enum thread_type *) t_type);
+
+	pthread_mutex_lock(&work_mutex);
+
+	while (true) {
+		/* Look for work */
+		work = get_work(thread_type);
+
+		pthread_mutex_unlock(&work_mutex);
+
+		assert(work != NULL);
+
+		/* Do the work */
+		switch (work->resp.r_cmd) {
+		case CMD_LOCKW:
+			complete = do_lock(&work->resp, thread_type);
+			break;
+		default:
+			work->resp.r_status = STATUS_ERRNO;
+			work->resp.r_errno = EINVAL;
+			complete = true;
+			break;
+		}
+
+		if (complete)
+			respond(&work->resp);
+
+		pthread_mutex_lock(&work_mutex);
+
+		if (complete) {
+			/* Remember if the main thread was trying to cancel
+			 * the work.
+			 */
+			cancelled = work->work_owner == THREAD_CANCEL;
+
+			/* Indicate this work is complete */
+			work->work_owner = THREAD_NONE;
+			work->work_thread = 0;
+
+			if (cancelled) {
+				/* Signal that work has been canceled or
+				 * completed.
+				 */
+				pthread_cond_broadcast(&work_cond);
+			} else {
+				/* The work is done, and may be freed, except
+				 * that if the work was beeing cancelled by
+				 * cancel_work, then the main thread is waiting
+				 * for this thread to be done with the work
+				 * item, and thus we can not free it,
+				 * cancel_work_item will be responsible to free
+				 * the work item. This assures that the request
+				 * that caused the cancellation is blocked until
+				 * the cancellation has completed.
+				 */
+				free_work(work);
+			}
+		} else {
+			/* This can ONLY happen for a polling thread.
+			 * Put this work back in the queue, with a new
+			 * next polling time.
+			 */
+			work->work_owner = THREAD_NONE;
+			work->work_thread = 0;
+			work->next_poll = time(NULL) + POLL_DELAY;
+			glist_add_tail(&poll_queue, &work->queue);
+
+			/* And let worker threads know there may be
+			 * more work to do.
+			 */
+			pthread_cond_broadcast(&work_cond);
+		}
+	}
+}
+
 int main(int argc, char **argv)
 {
 	int opt;
-	int len, rc;
+	int len, rc, i;
 	struct sigaction sigact;
 	char *rest;
 	int oflags = 0;
 	int no_tag;
 
+	/* Init the lists of work for each fno */
+	for (i = 0; i <= MAXFPOS; i++)
+		glist_init(fno_work + i);
+
+	/* Start the worker and polling threads */
+	for (i = 0; i <= NUM_WORKER; i++) {
+		rc = pthread_create(&threads[i],
+				    NULL,
+				    worker,
+				    i == 0 ? &a_poller : &a_worker);
+		if (rc == -1) {
+			fprintf(stderr,
+				"pthread_create failed %s\n",
+				strerror(errno));
+			exit(1);
+		}
+	}
+
+	/* Initialize the signal handling */
 	memset(&sigact, 0, sizeof(sigact));
 	sigact.sa_handler = sighandler;
 
@@ -800,8 +1088,12 @@ int main(int argc, char **argv)
 	if (sigaction(SIGPIPE, &sigact, NULL) == -1)
 		return 1;
 
+	if (sigaction(SIGIO, &sigact, NULL) == -1)
+		return 1;
+
 	input = stdin;
 	output = stdout;
+
 	/* now parsing options with getopt */
 	while ((opt = getopt(argc, argv, options)) != EOF) {
 		switch (opt) {
@@ -885,6 +1177,7 @@ int main(int argc, char **argv)
 				break;
 		} else {
 			struct response resp;
+			bool complete = true;
 
 			lno++;
 			memset(&resp, 0, sizeof(resp));
@@ -924,10 +1217,10 @@ int main(int argc, char **argv)
 					do_close(&resp);
 					break;
 				case CMD_LOCKW:
-					do_lock(&resp);
+					complete = do_lock(&resp, THREAD_MAIN);
 					break;
 				case CMD_LOCK:
-					do_lock(&resp);
+					complete = do_lock(&resp, THREAD_MAIN);
 					break;
 				case CMD_UNLOCK:
 					do_unlock(&resp);
@@ -970,7 +1263,8 @@ int main(int argc, char **argv)
 				}
 			}
 
-			respond(&resp);
+			if (complete)
+				respond(&resp);
 
 			if (resp.r_cmd == CMD_QUIT)
 				exit(0);
