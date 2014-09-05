@@ -492,33 +492,11 @@ void nfs4_op_write_Free(nfs_resop4 *resp)
 int nfs4_op_write_plus(struct nfs_argop4 *op, compound_data_t *data,
 		  struct nfs_resop4 *resp)
 {
-	struct nfs_resop4 res;
-	struct nfs_argop4 arg;
-	struct io_info info;
-	WRITE_SAME4args * const arg_WPLUS = &op->nfs_argop4_u.opwrite_plus;
 	WRITE_SAME4res * const res_WPLUS = &resp->nfs_resop4_u.opwrite_plus;
 
 	resp->resop = NFS4_OP_WRITE_SAME;
 	res_WPLUS->wpr_status =  NFS4ERR_NOTSUPP;
-	return res_WPLUS->wpr_status;
 
-	arg.nfs_argop4_u.opwrite.stateid = arg_WPLUS->wp_stateid;
-	arg.nfs_argop4_u.opwrite.stable = arg_WPLUS->wp_stable;
-
-	info.io_advise = 0;
-
-	res_WPLUS->wpr_status = nfs4_write(&arg, data, &res,
-					   CACHE_INODE_WRITE_PLUS, &info);
-	if (res_WPLUS->wpr_status == NFS4_OK) {
-		res_WPLUS->wpr_resok4.wr_ids = 0;
-		res_WPLUS->wpr_resok4.wr_committed =
-			res.nfs_resop4_u.opwrite.WRITE4res_u.resok4.committed;
-		res_WPLUS->wpr_resok4.wr_count =
-			res.nfs_resop4_u.opwrite.WRITE4res_u.resok4.count;
-		memcpy(res_WPLUS->wpr_resok4.wr_writeverf,
-		       res.nfs_resop4_u.opwrite.WRITE4res_u.resok4.writeverf,
-		       sizeof(NFS4_VERIFIER_SIZE));
-	}
 	return res_WPLUS->wpr_status;
 }
 
