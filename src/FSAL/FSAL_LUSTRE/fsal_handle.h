@@ -94,10 +94,10 @@ static inline int lustre_handle_to_path(char *mntpath,
 }
 
 static inline int lustre_path_to_handle(const char *path,
+					struct fsal_fsid__ fsdev,
 					struct lustre_file_handle *out_handle)
 {
 	lustre_fid fid;
-	struct stat ino;
 
 	if (!path || !out_handle)
 		return -1;
@@ -107,35 +107,30 @@ static inline int lustre_path_to_handle(const char *path,
 		return -1;
 
 	out_handle->fid = fid;
-
-	/* Get the inode number */
-	if (lstat(path, &ino) != 0)
-		return -1;
-
-	out_handle->fsdev = ino.st_dev;
+	out_handle->fsdev = makedev(fsdev.major, fsdev.minor);
 
 	return 1;
 }
 
-static inline int lustre_name_to_handle_at(char *mntpath,
-					   struct lustre_file_handle *at_handle,
-					   const char *name,
-					   struct lustre_file_handle
-					   *out_handle, int flags)
+static inline int
+lustre_name_to_handle_at(struct fsal_filesystem *fs,
+			 struct lustre_file_handle *at_handle,
+			 const char *name,
+			 struct lustre_file_handle *out_handle, int flags)
 {
 	char path[MAXPATHLEN + 2];
 
-	if (!mntpath || !at_handle || !name || !out_handle)
+	if (!fs || !at_handle || !name || !out_handle)
 		return -1;
 
-	lustre_handle_to_path(mntpath, at_handle, path);
+	lustre_handle_to_path(fs->path, at_handle, path);
 
 	if (flags != AT_EMPTY_PATH) {
 		strncat(path, "/", MAXPATHLEN);
 		strncat(path, name, MAXPATHLEN);
 	}
 
-	return lustre_path_to_handle(path, out_handle);
+	return lustre_path_to_handle(path, fs->fsid, out_handle);
 }
 
 static inline int lustre_open_by_handle(char *mntpath,
