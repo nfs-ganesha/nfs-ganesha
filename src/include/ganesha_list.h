@@ -35,6 +35,21 @@ struct glist_head {
 	struct glist_head *prev;
 };
 
+/*
+ * @brief Compare routine that is used by glist_insert_sorted
+ *
+ * This routine can be defined by the calling function
+ * to enable a sorted insert
+ *
+ * @param struct glist_head *: The first element to compare
+ * @param struct glist_head *: The second element to compare
+ *
+ * @return  negative if the 1st element should appear before the 2nd element
+ *          0 if the 1st and 2nd element are equal
+ *          positive if the 1st element should appear after the 2nd element
+ */
+typedef int (*glist_compare) (struct glist_head *, struct glist_head *);
+
 /**
  * @brief List head initialization
  *
@@ -179,4 +194,20 @@ static inline size_t glist_length(struct glist_head *head)
 	     node != (head);				\
 	     node = noden, noden = node->next)
 
+static inline void glist_insert_sorted(struct glist_head *head,
+				       struct glist_head *new,
+				       glist_compare compare)
+{
+	struct glist_head *next = NULL;
+	if (glist_empty(head)) {
+		glist_add_tail(head, new);
+		return;
+	}
+	glist_for_each(next, head) {
+		if (compare(next, new) >= 0)
+			break;
+	}
+
+	__glist_add(next->prev, next, new);
+}
 #endif				/* _GANESHA_LIST_H */
