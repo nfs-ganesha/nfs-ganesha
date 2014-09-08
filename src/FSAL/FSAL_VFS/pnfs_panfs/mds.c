@@ -83,8 +83,11 @@ static void _XDR_2_ioctlxdr_write(XDR *xdr, struct pan_ioctl_xdr *pixdr)
 /*
  * Given a PanFS fsal_export. Return the export's root directory file-descriptor
  */
-static inline int _get_root_fd(struct fsal_export *exp_hdl)
+static inline int _get_root_fd(struct fsal_module *fsal_hdl)
 {
+	struct fsal_export *exp_hdl;
+
+	exp_hdl = glist_first_entry(&fsal_hdl->exports, struct fsal_export, exports);
 	return vfs_get_root_fd(exp_hdl);
 }
 
@@ -103,25 +106,22 @@ static inline int _get_obj_fd(struct fsal_obj_handle *obj_hdl)
 	else
 		return -1;
 }
+
 /*================================= fsal ops ===============================*/
-/*
- * @return ~0UL means client's maximum
- */
-#if 0
 static
-size_t fs_da_addr_size(struct fsal_export *exp_hdl)
+size_t fs_da_addr_size(struct fsal_module *fsal_hdl)
 {
 	LogFullDebug(COMPONENT_FSAL, "Ret => ~0UL");
 	return ~0UL;
 }
 
 static
-nfsstat4 getdeviceinfo(struct fsal_export *exp_hdl, XDR *da_addr_body,
+nfsstat4 getdeviceinfo(struct fsal_module *fsal_hdl, XDR *da_addr_body,
 		       const layouttype4 type,
 		       const struct pnfs_deviceid *deviceid)
 {
 	struct pan_ioctl_xdr pixdr;
-	int fd = _get_root_fd(exp_hdl);
+	int fd = _get_root_fd(fsal_hdl);
 	nfsstat4 ret;
 
 	_XDR_2_ioctlxdr_read_begin(da_addr_body, &pixdr);
@@ -129,12 +129,10 @@ nfsstat4 getdeviceinfo(struct fsal_export *exp_hdl, XDR *da_addr_body,
 	if (!ret)
 		_XDR_2_ioctlxdr_read_end(da_addr_body, &pixdr);
 	LogFullDebug(COMPONENT_FSAL,
-		     "deviceid(%"PRIx64",%"PRIx64") ret => %d",
-		     deviceid->export_id,
+		     "deviceid(%"PRIx64") ret => %d",
 		     deviceid->devid, ret);
 	return ret;
 }
-#endif
 
 /*================================= export ops ===============================*/
 static
@@ -374,6 +372,13 @@ void handle_ops_pnfs(struct fsal_obj_ops *ops)
 	ops->layoutreturn = layoutreturn;
 	ops->layoutcommit = layoutcommit;
 	LogDebug(COMPONENT_FSAL, "Init'd handle vector");
+}
+
+void fsal_ops_pnfs(struct fsal_ops *ops)
+{
+	ops->getdeviceinfo = getdeviceinfo;
+	ops->fs_da_addr_size = fs_da_addr_size;
+	LogDebug(COMPONENT_FSAL, "Init'd fsal vector");
 }
 
 int pnfs_panfs_init(int root_fd, void **pnfs_data /*OUT*/)

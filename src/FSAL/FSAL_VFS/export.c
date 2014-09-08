@@ -630,6 +630,7 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 				       &err_type);
 	if (retval != 0)
 		return fsalstat(ERR_FSAL_INVAL, 0);
+	myself->export.fsal = fsal_hdl;
 	vfs_init_export_ops(myself, op_ctx->export->fullpath);
 
 	retval = fsal_attach_export(fsal_hdl, &myself->export.exports);
@@ -637,7 +638,6 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 		fsal_error = posix2fsal_error(retval);
 		goto errout;	/* seriously bad */
 	}
-	myself->export.fsal = fsal_hdl;
 
 	retval = populate_posix_file_systems();
 

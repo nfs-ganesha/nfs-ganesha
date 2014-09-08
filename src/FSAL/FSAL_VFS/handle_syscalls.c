@@ -148,6 +148,7 @@ void vfs_init_export_ops(struct vfs_fsal_export *myself,
 			export_path);
 		export_ops_pnfs(myself->export.ops);
 		handle_ops_pnfs(myself->export.obj_ops);
+		fsal_ops_pnfs(myself->export.fsal->ops);
 	}
 }
 
