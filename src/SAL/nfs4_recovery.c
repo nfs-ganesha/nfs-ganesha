@@ -38,6 +38,7 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <ctype.h>
+#include "bsd-base64.h"
 
 #define NFS_V4_RECOV_ROOT "/var/lib/nfs/ganesha"
 #define NFS_V4_RECOV_DIR "v4recov"
@@ -1134,18 +1135,16 @@ void nfs4_create_recov_dir(void)
 void nfs4_record_revoke(nfs_client_id_t *delr_clid, nfs_fh4 *delr_handle)
 {
 	char rhdlstr[NAME_MAX];
-	struct display_buffer dspbuf = {sizeof(rhdlstr), rhdlstr, rhdlstr};
 	char path[PATH_MAX + 1] = {0}, segment[NAME_MAX + 1] = {0};
 	int length, position = 0;
 	int fd;
+	int retval;
 
-	/* Make sure that handle size is not greather than NAME_MAX */
-	assert(2 * delr_handle->nfs_fh4_len < NAME_MAX);
-	/* Convert nfs_fh4_val into a human readable string */
-	(void)convert_opaque_value_max_for_dir(&dspbuf,
-					delr_handle->nfs_fh4_val,
-					delr_handle->nfs_fh4_len,
-					NAME_MAX);
+	/* Convert nfs_fh4_val into base64 encoded string */
+	retval = base64url_encode(delr_handle->nfs_fh4_val,
+				  delr_handle->nfs_fh4_len,
+				  rhdlstr, sizeof(rhdlstr));
+	assert(retval != -1);
 
 	/* A client's lease is reserved while recalling or revoking a
 	 * delegation which means the client will not expire until we
@@ -1198,20 +1197,16 @@ bool nfs4_can_deleg_reclaim_prev(nfs_client_id_t *clid, nfs_fh4 *fhandle)
 	struct glist_head *node;
 	rdel_fh_t *rfh_entry;
 	clid_entry_t *clid_ent;
-	struct display_buffer dspbuf = {sizeof(rhdlstr), rhdlstr, rhdlstr};
-
-	/* Make sure that handle size is not greather than NAME_MAX */
-	assert(2 * fhandle->nfs_fh4_len < NAME_MAX);
+	int retval;
 
 	/* If we aren't in grace period, then reclaim is not possible */
 	if (!nfs_in_grace())
 		return false;
 
-	/* Convert nfs_fh4_val into a human readable string */
-	(void)convert_opaque_value_max_for_dir(&dspbuf,
-					fhandle->nfs_fh4_val,
-					fhandle->nfs_fh4_len,
-					NAME_MAX);
+	/* Convert nfs_fh4_val into base64 encoded string */
+	retval = base64url_encode(fhandle->nfs_fh4_val, fhandle->nfs_fh4_len,
+				  rhdlstr, sizeof(rhdlstr));
+	assert(retval != -1);
 
 	pthread_mutex_lock(&grace.g_mutex);
 	nfs4_chk_clid_impl(clid, &clid_ent);
