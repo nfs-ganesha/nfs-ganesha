@@ -250,26 +250,38 @@ extern hash_table_t *ht_state_id;
  * @brief Type of state
  */
 
-typedef enum state_type_t {
+enum state_type {
 	STATE_TYPE_NONE = 0,
 	STATE_TYPE_SHARE = 1,
 	STATE_TYPE_DELEG = 2,
 	STATE_TYPE_LOCK = 4,
 	STATE_TYPE_LAYOUT = 5
-} state_type_t;
+};
 
 /**
  * @brief Data for a share reservation/open
  */
 
-typedef struct state_share__ {
-	unsigned int share_access;	/*< The NFSv4 Share Access state */
-	unsigned int share_deny;	/*< The NFSv4 Share Deny state */
+struct state_share {
 	struct glist_head share_lockstates;	/*< Lock states for this
 						   open state */
+	unsigned int share_access;	/*< The NFSv4 Share Access state */
+	unsigned int share_deny;	/*< The NFSv4 Share Deny state */
 	unsigned int share_access_prev;	/*< Previous share access state */
 	unsigned int share_deny_prev;	/*< Previous share deny state   */
-} state_share_t;
+};
+
+/**
+ * @brief Data for a set of locks
+ */
+
+struct state_lock {
+	struct glist_head state_locklist;	/*< List of locks owned by
+						   this stateid */
+	struct glist_head state_sharelist;	/*< List of states related
+						   to a share */
+	state_t *openstate;	/*< The related open-state */
+};
 
 /**
  * @brief Stats for client-file delegation heuristics
@@ -281,18 +293,6 @@ struct cf_deleg_stats {
 						 NFS4_OK for a recall. */
 	time_t cfd_r_time;               /* time of the recall attempt */
 };
-
-/**
- * @brief Data for a set of locks
- */
-
-typedef struct state_lock_t {
-	state_t *openstate;	/*< The related open-state */
-	struct glist_head state_locklist;	/*< List of locks owned by
-						   this stateid */
-	struct glist_head state_sharelist;	/*< List of states related
-						   to a share */
-} state_lock_t;
 
 /**
  * @brief States of a delegation
@@ -308,37 +308,37 @@ enum deleg_state {
  * @brief Data for a delegation
  */
 
-typedef struct state_deleg__ {
+struct state_deleg {
 	open_delegation_type4 sd_type;
 	time_t sd_grant_time;               /* time of successful delegation */
 	enum deleg_state sd_state;
 	struct cf_deleg_stats sd_clfile_stats;  /* client specific */
-} state_deleg_t;
+};
 
 /**
  * @brief Data for a set of layouts of a given type
  */
 
-typedef struct state_layout__ {
+struct state_layout {
+	struct glist_head state_segments;	/*< List of segments */
 	layouttype4 state_layout_type;	/*< The type of layout this state
 					   represents */
+	uint32_t granting;	/*< Number of LAYOUTGETs in progress */
 	bool state_return_on_close;	/*< Whether this layout should be
 					   returned on last close. */
-	uint32_t granting;	/*< Number of LAYOUTGETs in progress */
-	struct glist_head state_segments;	/*< List of segments */
-} state_layout_t;
+};
 
 /**
  * @brief Type specific state data
  */
 
-typedef union state_data_t {
-	state_share_t share;
-	state_lock_t lock;
-	state_deleg_t deleg;
-	state_layout_t layout;
+union state_data {
+	struct state_share share;
+	struct state_lock lock;
+	struct state_deleg deleg;
+	struct state_layout layout;
 	uint32_t io_advise;
-} state_data_t;
+};
 
 /**
  * @brief The number of bytes in the stateid.other
@@ -368,8 +368,8 @@ struct state_t {
 	struct gsh_export *state_export; /*< Export this entry belongs to */
 	state_owner_t *state_owner;	/*< State Owner related to this state */
 	cache_entry_t *state_entry;	/*< Related entry */
-	state_type_t state_type;
-	state_data_t state_data;
+	union state_data state_data;
+	enum state_type state_type;
 	u_int32_t state_seqid;		/*< The NFSv4 Sequence id */
 	char stateid_other[OTHERSIZE];	/*< "Other" part of state id,
 					   used as hash key */
@@ -392,7 +392,7 @@ struct state_t {
 /**
  * @brief Delegation state data object
  *
- * We could potentially put all the delegation data in state_deleg_t
+ * We could potentially put all the delegation data in struct state_deleg
  * itself but that would add storage for other state types. So we
  * allocate memory for storing delegation related state data in this
  * object.

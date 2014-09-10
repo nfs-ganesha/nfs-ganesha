@@ -115,8 +115,8 @@ static nfsstat4 acquire_layout_state(compound_data_t *data,
 		   || (supplied_state->state_type == STATE_TYPE_LOCK)) {
 		/* For share, delegation, and lock states, create a
 		   new layout state. */
-		state_data_t layout_data;
-		memset(&layout_data, 0, sizeof(state_data_t));
+		union state_data layout_data;
+		memset(&layout_data, 0, sizeof(layout_data));
 
 		/* See if a layout state already exists */
 		state_status =

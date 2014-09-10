@@ -257,7 +257,7 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 	   stateid is all-0 or all-1 */
 
 	if (state_found != NULL) {
-		state_deleg_t *sdeleg;
+		struct state_deleg *sdeleg;
 		if (info)
 			info->io_advise = state_found->state_data.io_advise;
 		switch (state_found->state_type) {

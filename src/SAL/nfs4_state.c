@@ -75,8 +75,8 @@ pthread_mutex_t all_state_v4_mutex = PTHREAD_MUTEX_INITIALIZER;
  *
  * @return Operation status
  */
-state_status_t state_add_impl(cache_entry_t *entry, state_type_t state_type,
-			      state_data_t *state_data,
+state_status_t state_add_impl(cache_entry_t *entry, enum state_type state_type,
+			      union state_data *state_data,
 			      state_owner_t *owner_input, state_t **state,
 			      struct state_refer *refer)
 {
@@ -120,7 +120,7 @@ state_status_t state_add_impl(cache_entry_t *entry, state_type_t state_type,
 				so_clientrec, pnew_state->stateid_other);
 
 	/* Set the type and data for this state */
-	memcpy(&(pnew_state->state_data), state_data, sizeof(state_data_t));
+	memcpy(&(pnew_state->state_data), state_data, sizeof(*state_data));
 	pnew_state->state_type = state_type;
 	pnew_state->state_seqid = 0;	/* will be incremented to 1 later */
 	pnew_state->state_entry = entry;
@@ -204,8 +204,9 @@ state_status_t state_add_impl(cache_entry_t *entry, state_type_t state_type,
  *
  * @return Operation status
  */
-state_status_t state_add(cache_entry_t *entry, state_type_t state_type,
-			 state_data_t *state_data, state_owner_t *owner_input,
+state_status_t state_add(cache_entry_t *entry, enum state_type state_type,
+			 union state_data *state_data,
+			 state_owner_t *owner_input,
 			 state_t **state, struct state_refer *refer)
 {
 	state_status_t status = 0;

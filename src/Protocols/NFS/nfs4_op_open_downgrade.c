@@ -221,7 +221,7 @@ static nfsstat4 nfs4_do_open_downgrade(struct nfs_argop4 *op,
 				       state_owner_t *owner, state_t *state,
 				       char **cause)
 {
-	state_data_t candidate_data;
+	union state_data candidate_data;
 	state_status_t state_status;
 	OPEN_DOWNGRADE4args *args = &op->nfs_argop4_u.opopen_downgrade;
 
