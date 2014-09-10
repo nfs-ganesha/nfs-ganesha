@@ -69,7 +69,7 @@
  */
 bool state_open_deleg_conflict(cache_entry_t *entry, const state_t *open_state)
 {
-	const state_share_t *share = &open_state->state_data.share;
+	const struct state_share *share = &open_state->state_data.share;
 
 	assert(open_state->state_type == STATE_TYPE_SHARE);
 
@@ -117,7 +117,7 @@ bool state_open_deleg_conflict(cache_entry_t *entry, const state_t *open_state)
  * @param[in] sd_type Type of delegation, READ or WRITE.
  * @param[in] client Client that will own this delegation.
  */
-void init_new_deleg_state(state_data_t *deleg_state,
+void init_new_deleg_state(union state_data *deleg_state,
 			  open_delegation_type4 deleg_type,
 			  nfs_client_id_t *client)
 {
@@ -655,7 +655,7 @@ bool can_we_grant_deleg(cache_entry_t *entry, state_t *open_state)
 {
 	struct glist_head *glist;
 	state_lock_entry_t *lock_entry;
-	const state_share_t *share = &open_state->state_data.share;
+	const struct state_share *share = &open_state->state_data.share;
 
 	/* Can't grant delegation if there is an anonymous operation
 	 * in progress
