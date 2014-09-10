@@ -112,7 +112,7 @@ cache_inode_setattr(cache_entry_t *entry,
 		status = cache_inode_error_convert(fsal_status);
 		if (fsal_status.major == ERR_FSAL_STALE) {
 			LogEvent(COMPONENT_CACHE_INODE,
-				 "FSAL returned STALE from truncate");
+				 "FSAL returned STALE from setattrs");
 			cache_inode_kill_entry(entry);
 		}
 		goto unlock;
@@ -123,7 +123,7 @@ cache_inode_setattr(cache_entry_t *entry,
 		status = cache_inode_error_convert(fsal_status);
 		if (fsal_status.major == ERR_FSAL_STALE) {
 			LogEvent(COMPONENT_CACHE_INODE,
-				 "FSAL returned STALE from setattrs");
+				 "FSAL returned STALE from getattrs");
 			cache_inode_kill_entry(entry);
 		}
 		goto unlock;
