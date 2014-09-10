@@ -44,8 +44,8 @@
 #define NFS_V4_RECOV_DIR "v4recov"
 #define NFS_V4_OLD_DIR "v4old"
 
-char v4_recov_dir[PATH_MAX + 1];
-char v4_old_dir[PATH_MAX + 1];
+char v4_recov_dir[PATH_MAX];
+char v4_old_dir[PATH_MAX];
 
 /**
  * @brief Grace period control data
@@ -319,7 +319,7 @@ void nfs4_create_clid_name41(nfs_client_record_t *cl_rec,
 void nfs4_add_clid(nfs_client_id_t *clientid)
 {
 	int err = 0;
-	char path[PATH_MAX + 1] = {0}, segment[NAME_MAX + 1] = {0};
+	char path[PATH_MAX] = {0}, segment[NAME_MAX + 1] = {0};
 	int length, position = 0;
 
 	if (clientid->cid_minorversion > 0)
@@ -592,7 +592,7 @@ void nfs4_cp_pop_revoked_delegs(clid_entry_t *clid_ent,
 		}
 
 		if (tgtdir) {
-			char lopath[PATH_MAX + 1];
+			char lopath[PATH_MAX];
 			int fd;
 			sprintf(lopath, "%s/", tgtdir);
 			strncat(lopath, dentp->d_name, strlen(dentp->d_name));
@@ -891,7 +891,7 @@ static void nfs4_load_recov_clids_nolock(nfs_grace_start_t *gsp)
 	struct glist_head *node;
 	clid_entry_t *clid_entry;
 	int rc;
-	char path[PATH_MAX + 1];
+	char path[PATH_MAX];
 
 	LogDebug(COMPONENT_STATE, "Load recovery cli %p", gsp);
 
@@ -1135,7 +1135,7 @@ void nfs4_create_recov_dir(void)
 void nfs4_record_revoke(nfs_client_id_t *delr_clid, nfs_fh4 *delr_handle)
 {
 	char rhdlstr[NAME_MAX];
-	char path[PATH_MAX + 1] = {0}, segment[NAME_MAX + 1] = {0};
+	char path[PATH_MAX] = {0}, segment[NAME_MAX + 1] = {0};
 	int length, position = 0;
 	int fd;
 	int retval;

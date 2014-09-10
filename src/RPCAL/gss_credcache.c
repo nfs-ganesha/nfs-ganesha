@@ -132,7 +132,7 @@ struct gssd_k5_kt_princ {
 typedef void (*gssd_err_func_t)(const char *, ...);
 
 
-static char keytabfile[PATH_MAX + 1] = GSSD_DEFAULT_KEYTAB_FILE;
+static char keytabfile[PATH_MAX] = GSSD_DEFAULT_KEYTAB_FILE;
 static int use_memcache;
 static struct gssd_k5_kt_princ *gssd_k5_kt_princ_list;
 static pthread_mutex_t ple_mtx = PTHREAD_MUTEX_INITIALIZER;

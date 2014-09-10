@@ -178,7 +178,7 @@ static fsal_status_t lustre_lookup(struct fsal_obj_handle *parent,
 	const char *sock_name = NULL;
 	ssize_t retlink;
 	char fidpath[MAXPATHLEN];
-	char link_buff[PATH_MAX+1];
+	char link_buff[PATH_MAX];
 	struct lustre_file_handle *fh =
 	    alloca(sizeof(struct lustre_file_handle));
 	struct fsal_filesystem *fs;
@@ -660,7 +660,7 @@ static fsal_status_t lustre_readsymlink(struct fsal_obj_handle *obj_hdl,
 	    container_of(obj_hdl, struct lustre_fsal_obj_handle, obj_handle);
 	if (refresh) {		/* lazy load or LRU'd storage */
 		ssize_t retlink;
-		char link_buff[PATH_MAX+1];
+		char link_buff[PATH_MAX];
 
 		if (myself->u.symlink.link_content != NULL) {
 			gsh_free(myself->u.symlink.link_content);
@@ -1409,7 +1409,7 @@ fsal_status_t lustre_create_handle(struct fsal_export *exp_hdl,
 	char objpath[MAXPATHLEN];
 	char *link_content = NULL;
 	ssize_t retlink;
-	char link_buff[PATH_MAX+1];
+	char link_buff[PATH_MAX];
 	struct fsal_fsid__ fsid;
 	enum fsid_type fsid_type;
 	struct fsal_filesystem *fs;
