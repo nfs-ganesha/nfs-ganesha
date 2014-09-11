@@ -127,6 +127,19 @@ int nlm4_Lock(nfs_arg_t *args,
 		return NFS_REQ_OK;
 	}
 
+	/* Check if v4 delegations conflict with v3 op */
+	PTHREAD_RWLOCK_rdlock(&entry->state_lock);
+	if (deleg_conflict(entry, lock.lock_type == FSAL_LOCK_W)) {
+		PTHREAD_RWLOCK_unlock(&entry->state_lock);
+		LogDebug(COMPONENT_NLM,
+			 "NLM lock request DROPPED due to delegation conflict");
+		return NFS_REQ_DROP;
+	} else {
+		atomic_inc_uint32_t(&entry->object.file.anon_ops);
+		PTHREAD_RWLOCK_unlock(&entry->state_lock);
+	}
+
+
 	/* Cast the state number into a state pointer to protect
 	 * locks from a client that has rebooted from the SM_NOTIFY
 	 * that will release old locks
@@ -141,6 +154,12 @@ int nlm4_Lock(nfs_arg_t *args,
 				  &holder,
 				  &conflict,
 				  POSIX_LOCK);
+
+	/* We prevented delegations from being granted while trying to acquire
+	 * the lock. However, when attempting to get a delegation in the
+	 * future existing locks will result in a conflict. Thus, we can
+	 * decrement the anonymous operations counter now. */
+	atomic_dec_uint32_t(&entry->object.file.anon_ops);
 
 	if (state_status != STATE_SUCCESS) {
 		res->res_nlm4test.test_stat.stat =

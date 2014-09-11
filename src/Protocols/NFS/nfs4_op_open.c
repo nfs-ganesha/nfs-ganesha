@@ -995,22 +995,10 @@ static void get_delegation(compound_data_t *data, OPEN4args *args,
 	}
 
 	if (args->share_access & OPEN4_SHARE_ACCESS_WRITE) {
-		if (!(op_ctx->export_perms->options &
-		      EXPORT_OPTION_WRITE_DELEG)) {
-			LogDebug(COMPONENT_STATE,
-				 "WRITE delegs not allowed by export.");
-			return;
-		}
 		lock_desc.lock_type = FSAL_LOCK_W;
 		deleg_type = OPEN_DELEGATE_WRITE;
 	} else {
 		assert(args->share_access & OPEN4_SHARE_ACCESS_READ);
-		if (!(op_ctx->export_perms->options &
-		      EXPORT_OPTION_READ_DELEG)) {
-			LogDebug(COMPONENT_STATE,
-				 "READ delegs not allowed by export.");
-			return;
-		}
 		lock_desc.lock_type = FSAL_LOCK_R;
 		deleg_type = OPEN_DELEGATE_READ;
 	}
@@ -1120,25 +1108,17 @@ static void do_delegation(OPEN4args *arg_OPEN4, OPEN4res *res_OPEN4,
 		return;
 	}
 
-	if ((arg_OPEN4->share_access & OPEN4_SHARE_ACCESS_WRITE &&
-	    (!op_ctx->fsal_export->ops->fs_supports(op_ctx->fsal_export,
-						    fso_delegations_w)))
-	    ||
-	    (arg_OPEN4->share_access & OPEN4_SHARE_ACCESS_READ &&
-	     (!op_ctx->fsal_export->ops->fs_supports(op_ctx->fsal_export,
-						     fso_delegations_r)))) {
+	/* Check if delegations are supported */
+	if (!deleg_supported(data->current_entry, op_ctx->fsal_export,
+			     op_ctx->export_perms, arg_OPEN4->share_access)) {
 		LogFullDebug(COMPONENT_STATE, "Delegation type not supported.");
 		return;
 	}
 
 	/* Decide if we should delegate, then add it. */
-	if (data->current_entry->type == REGULAR_FILE
-	    && atomic_fetch_uint32_t(&data->current_entry->object.file.anon_ops)
-		== 0
-	    && should_we_grant_deleg(data->current_entry,
-				     clientid,
-				     open_state,
-				     arg_OPEN4, owner, &prerecall)) {
+	if (can_we_grant_deleg(data->current_entry, open_state) &&
+	    should_we_grant_deleg(data->current_entry, clientid, open_state,
+				  arg_OPEN4, owner, &prerecall)) {
 		/* Update delegation open stats */
 		if (fdeleg_stats->fds_num_opens == 0)
 			fdeleg_stats->fds_first_open = time(NULL);
