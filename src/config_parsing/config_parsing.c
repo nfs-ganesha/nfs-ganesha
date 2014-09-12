@@ -759,6 +759,14 @@ static int do_block_load(struct config_node *blk,
 		bool bval;
 
 		node = lookup_node(&blk->u.blk.sub_nodes, item->name);
+		if ((item->flags & CONFIG_MANDATORY) && (node == NULL)) {
+			err_type->missing = true;
+			errors++;
+			LogCrit(COMPONENT_CONFIG,
+				"Mandatory field, %s is missing from config\n",
+				item->name);
+			return errors;
+		}
 		while (node != NULL) {
 			next_node = lookup_next_node(&blk->u.blk.sub_nodes,
 						     &node->node, item->name);
