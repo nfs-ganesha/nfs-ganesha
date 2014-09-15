@@ -53,16 +53,33 @@ struct file_handle {
 	unsigned char f_handle[0];
 };
 
+#ifdef HAVE_LINUX_UNISTD_H
+#include <linux/unistd.h>
+#endif /* HAVE_LINUX_UNISTD_H */
+
+#ifndef __NR_name_to_handle_at
 #if defined(__i386__)
 #define __NR_name_to_handle_at  341
-#define __NR_open_by_handle_at  342
 #elif defined(__x86_64__)
 #define __NR_name_to_handle_at  303
-#define __NR_open_by_handle_at  304
 #elif defined(__PPC64__)
 #define __NR_name_to_handle_at  345
-#define __NR_open_by_handle_at  346
+#else
+#error "missing __NR_name_to_handle_at definition"
 #endif
+#endif /* !__NR_name_to_handle_at */
+
+#ifndef __NR_open_by_handle_at
+#if defined(__i386__)
+#define __NR_open_by_handle_at  342
+#elif defined(__x86_64__)
+#define __NR_open_by_handle_at  304
+#elif defined(__PPC64__)
+#define __NR_open_by_handle_at  346
+#else
+#error "missing __NR_open_by_handle_at definition"
+#endif
+#endif /* !__NR_open_by_handle_at */
 
 static inline int name_to_handle_at(int mdirfd, const char *name,
 				    struct file_handle *handle, int *mnt_id,

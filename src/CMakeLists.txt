@@ -417,6 +417,10 @@ if(HAVE_STRING_H AND HAVE_STRINGS_H)
   set(HAVE_STRNLEN ON)
 endif(HAVE_STRING_H AND HAVE_STRINGS_H)
 
+if(LINUX)
+  check_include_files(linux/unistd.h HAVE_LINUX_UNISTD_H)
+endif(LINUX)
+
 # PROXY handle mapping needs sqlite3
 IF(PROXY_HANDLE_MAPPING)
   check_include_files(sqlite3.h, HAVE_SQLITE3_H)
