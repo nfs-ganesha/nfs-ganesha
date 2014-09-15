@@ -78,7 +78,8 @@ static cache_inode_status_t invalidate_close(struct fsal_module *fsal,
 						 handle,
 						 CACHE_INODE_INVALIDATE_CLOSE,
 						 NULL, NULL);
-		(void) cache_inode_invalidate(entry, flags);
+		else
+			(void) cache_inode_invalidate(entry, flags);
 		cache_inode_put(entry);
 	}
 
