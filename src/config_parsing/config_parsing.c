@@ -566,7 +566,7 @@ static int do_block_init(struct config_item *params,
 	int errors = 0;
 
 	for (item = params; item->name != NULL; item++) {
-		param_addr = (caddr_t *)((uint64_t)param_struct + item->off);
+		param_addr = (caddr_t *)((uintptr_t)param_struct + item->off);
 		LogFullDebug(COMPONENT_CONFIG,
 			     "%p name=%s type=%s",
 			     param_addr, item->name, config_type_str(item->type));
@@ -784,7 +784,7 @@ static int do_block_load(struct config_node *blk,
 				node = next_node;
 				continue;
 			}
-			param_addr = (caddr_t *)((uint64_t)param_struct
+			param_addr = (caddr_t *)((uintptr_t)param_struct
 						 + item->off);
 			LogFullDebug(COMPONENT_CONFIG,
 				     "%p name=%s type=%s",
@@ -821,7 +821,7 @@ static int do_block_load(struct config_node *blk,
 					if (item->u.i32.set_off < UINT32_MAX) {
 						caddr_t *mask_addr;
 						mask_addr = (caddr_t *)
-							((uint64_t)param_struct
+							((uintptr_t)param_struct
 							+ item->u.i32.set_off);
 						*(uint32_t *)mask_addr
 							|= item->u.i32.bit;
@@ -870,7 +870,7 @@ static int do_block_load(struct config_node *blk,
 					if (item->u.fsid.set_off < UINT32_MAX) {
 						caddr_t *mask_addr;
 						mask_addr = (caddr_t *)
-							((uint64_t)param_struct
+							((uintptr_t)param_struct
 							+ item->u.fsid.set_off);
 						*(uint32_t *)mask_addr
 							|= item->u.fsid.bit;
@@ -885,7 +885,7 @@ static int do_block_load(struct config_node *blk,
 				if (rc != 0) {
 					caddr_t *mask_addr;
 					mask_addr = (caddr_t *)
-						((uint64_t)param_struct
+						((uintptr_t)param_struct
 						+ item->u.anonid.set_off);
 					*(uint32_t *)mask_addr
 						|= item->u.anonid.bit;
@@ -937,7 +937,7 @@ static int do_block_load(struct config_node *blk,
 					if (item->u.bit.set_off < UINT32_MAX) {
 						caddr_t *mask_addr;
 						mask_addr = (caddr_t *)
-							((uint64_t)param_struct
+							((uintptr_t)param_struct
 							+ item->u.bit.set_off);
 						*(uint32_t *)mask_addr
 							|= item->u.bit.bit;
@@ -958,7 +958,7 @@ static int do_block_load(struct config_node *blk,
 					if (item->u.lst.set_off < UINT32_MAX) {
 						caddr_t *mask_addr;
 						mask_addr = (caddr_t *)
-							((uint64_t)param_struct
+							((uintptr_t)param_struct
 							+ item->u.lst.set_off);
 						*(uint32_t *)mask_addr
 							|= item->u.lst.mask;
@@ -986,7 +986,7 @@ static int do_block_load(struct config_node *blk,
 					if (item->u.lst.set_off < UINT32_MAX) {
 						caddr_t *mask_addr;
 						mask_addr = (caddr_t *)
-							((uint64_t)param_struct
+							((uintptr_t)param_struct
 							+ item->u.lst.set_off);
 						*(uint32_t *)mask_addr
 							|= item->u.lst.mask;
@@ -1013,7 +1013,7 @@ static int do_block_load(struct config_node *blk,
 					if (item->u.lst.set_off < UINT32_MAX) {
 						caddr_t *mask_addr;
 						mask_addr = (caddr_t *)
-							((uint64_t)param_struct
+							((uintptr_t)param_struct
 							+ item->u.lst.set_off);
 						*(uint32_t *)mask_addr
 							|= item->u.lst.bit;
