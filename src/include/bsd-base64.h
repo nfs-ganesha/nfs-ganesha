@@ -52,6 +52,8 @@
 int b64_ntop(u_char const *src, size_t srclength, char *target,
 	     size_t targsize);
 int b64_pton(char const *src, u_char *target, size_t targsize);
+int base64url_encode(u_char const *src, size_t srclength, char *target,
+		     size_t targsize);
 #define __b64_ntop b64_ntop
 #define __b64_pton b64_pton
 

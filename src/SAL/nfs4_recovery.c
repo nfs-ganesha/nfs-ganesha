@@ -38,6 +38,7 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <ctype.h>
+#include "bsd-base64.h"
 
 #define NFS_V4_RECOV_ROOT "/var/lib/nfs/ganesha"
 #define NFS_V4_RECOV_DIR "v4recov"
@@ -387,7 +388,7 @@ void nfs4_rm_revoked_handles(char *path)
 	for (dentp = readdir(dp); dentp != NULL; dentp = readdir(dp)) {
 		if (!strcmp(dentp->d_name, ".") ||
 				!strcmp(dentp->d_name, "..") ||
-				dentp->d_name[0] != '.') {
+				dentp->d_name[0] != '\x1') {
 			continue;
 		}
 		sprintf(del_path, "%s/%s", path, dentp->d_name);
@@ -581,8 +582,8 @@ void nfs4_cp_pop_revoked_delegs(clid_entry_t *clid_ent,
 	for (dentp = readdir(dp); dentp != NULL; dentp = readdir(dp)) {
 		if (!strcmp(dentp->d_name, ".") || !strcmp(dentp->d_name, ".."))
 			continue;
-		/* All the revoked filehandles stored as hidden files */
-		if (dentp->d_name[0] != '.') {
+		/* All the revoked filehandles stored with \x1 prefix */
+		if (dentp->d_name[0] != '\x1') {
 			/* Something wrong; it should not happen */
 			LogMidDebug(COMPONENT_CLIENTID,
 				"%s showed up along with revoked FHs. Skipping",
@@ -611,7 +612,7 @@ void nfs4_cp_pop_revoked_delegs(clid_entry_t *clid_ent,
 			continue;
 		}
 
-		/* Ignore the beginning dot and copy the rest (file handle) */
+		/* Ignore the beginning \x1 and copy the rest (file handle) */
 		new_ent->rdfh_handle_str = gsh_strdup(dentp->d_name+1);
 		if (new_ent->rdfh_handle_str == NULL) {
 			gsh_free(new_ent);
@@ -687,189 +688,193 @@ static int nfs4_read_recov_clids(DIR *dp,
 		if (!strcmp(dentp->d_name, ".") || !strcmp(dentp->d_name, ".."))
 			continue;
 
-		if (dentp->d_name[0] != '.') {
-			num++;
-			new_path = NULL;
+		/* Skip names that start with '\x1' as they are files
+		 * representing revoked file handles
+		 */
+		if (dentp->d_name[0] == '\x1')
+			continue;
 
-			/* construct the path by appending the subdir for the
-			 * next readdir. This recursion keeps reading the
-			 * subdirectory until reaching the end.
-			 */
-			segment_len = strlen(dentp->d_name);
-			total_len = segment_len + 2 + strlen(parent_path);
-			path = gsh_malloc(total_len);
-			/* if failed on this subdirectory, move to next */
-			/* we might be lucky */
-			if (path == NULL) {
-				LogEvent(COMPONENT_CLIENTID,
-					 "malloc faied errno=%d", errno);
-				continue;
-			}
-			memset(path, 0, total_len);
+		num++;
+		new_path = NULL;
 
-			strcpy(path, parent_path);
-			strcat(path, "/");
-			strncat(path, dentp->d_name, segment_len);
-			/* if tgtdir is not NULL, we need to build
-			 * nfs4old/currentnode
-			 */
-			if (tgtdir) {
-				total_tgt_len = segment_len + 2 +
-						strlen(tgtdir);
-				new_path = gsh_malloc(total_tgt_len);
-				if (new_path == NULL) {
-					LogEvent(COMPONENT_CLIENTID,
-						 "malloc faied errno=%d",
-						 errno);
-					gsh_free(path);
-					continue;
-				}
-				memset(new_path, 0, total_tgt_len);
-				strcpy(new_path, tgtdir);
-				strcat(new_path, "/");
-				strncat(new_path, dentp->d_name, segment_len);
-				rc = mkdir(new_path, 0700);
-				if ((rc == -1) && (errno != EEXIST)) {
-					LogEvent(COMPONENT_CLIENTID,
-						 "mkdir %s faied errno=%d",
-						 new_path, errno);
-				}
-			}
-			/* keep building the clientid str by cursively */
-			/* reading the directory structure */
-			if (clid_str)
-				total_clid_len = segment_len + 1 +
-						 strlen(clid_str);
-			else
-				total_clid_len = segment_len + 1;
-			build_clid = gsh_malloc(total_clid_len);
-			if (build_clid == NULL) {
-				LogEvent(COMPONENT_CLIENTID,
-					 "malloc faied errno=%d", errno);
-				free_heap(path, new_path, NULL);
-				continue;
-			}
-			memset(build_clid, 0, total_clid_len);
-			if (clid_str)
-				strcpy(build_clid, clid_str);
-			strncat(build_clid, dentp->d_name, segment_len);
-			subdp = opendir(path);
-			if (subdp == NULL) {
-				LogEvent(COMPONENT_CLIENTID,
-					 "opendir %s failed errno=%d",
-					 dentp->d_name, errno);
-				free_heap(path, new_path, build_clid);
-				/* this shouldn't happen, but we should skip
-				 * the entry to avoid infinite loops
-				 */
-				continue;
-			}
-
-			if (tgtdir)
-				rc = nfs4_read_recov_clids(subdp,
-							   path,
-							   build_clid,
-							   new_path,
-							   takeover);
-			else
-				rc = nfs4_read_recov_clids(subdp,
-							   path,
-							   build_clid,
-							   NULL,
-							   takeover);
-
-			/* close the sub directory */
-			(void)closedir(subdp);
-
-			if (new_path)
-				gsh_free(new_path);
-
-			/* after recursion, if the subdir has no non-hidden
-			 * directory this is the end of this clientid str. Add
-			 * the clientstr to the list.
-			 */
-			if (rc == 0) {
-				/* the clid format is
-				 * <IP>-(clid-len:long-form-clid-in-string-form)
-				 * make sure this reconstructed string is valid
-				 * by comparing clid-len and the actual
-				 * long-form-clid length in the string. This is
-				 * to prevent getting incompleted strings that
-				 * might exist due to program crash.
-				 */
-				if (strlen(build_clid) >= PATH_MAX) {
-					LogEvent(COMPONENT_CLIENTID,
-						"invalid clid format: %s, too long",
-						build_clid);
-					free_heap(path, NULL, build_clid);
-					continue;
-				}
-				ptr = strchr(build_clid, '(');
-				if (ptr == NULL) {
-					LogEvent(COMPONENT_CLIENTID,
-						 "invalid clid format: %s",
-						 build_clid);
-					free_heap(path, NULL, build_clid);
-					continue;
-				}
-				ptr2 = strchr(ptr, ':');
-				if (ptr2 == NULL) {
-					LogEvent(COMPONENT_CLIENTID,
-						 "invalid clid format: %s",
-						 build_clid);
-					free_heap(path, NULL, build_clid);
-					continue;
-				}
-				len = ptr2-ptr-1;
-				if (len >= 9) {
-					LogEvent(COMPONENT_CLIENTID,
-						 "invalid clid format: %s",
-						 build_clid);
-					free_heap(path, NULL, build_clid);
-					continue;
-				}
-				strncpy(temp, ptr+1, len);
-				temp[len] = 0;
-				cid_len = atoi(temp);
-				len = strlen(ptr2);
-				if ((len == (cid_len+2)) &&
-				    (ptr2[len-1] == ')')) {
-					new_ent =
-					    gsh_malloc(sizeof(clid_entry_t));
-					if (new_ent == NULL) {
-						LogEvent(COMPONENT_CLIENTID,
-							 "Unable to allocate memory.");
-						free_heap(path,
-							  NULL,
-							  build_clid);
-						continue;
-					}
-					nfs4_cp_pop_revoked_delegs(new_ent,
-								path,
-								tgtdir,
-								!takeover);
-					strcpy(new_ent->cl_name, build_clid);
-					glist_add(&grace.g_clid_list,
-						  &new_ent->cl_list);
-					LogDebug(COMPONENT_CLIENTID,
-						 "added %s to clid list",
-						 new_ent->cl_name);
-				}
-			}
-			gsh_free(build_clid);
-			/* If this is not for takeover, remove the directory
-			 * hierarchy  that represent the current clientid
-			 */
-			if (!takeover) {
-				rc = rmdir(path);
-				if (rc == -1) {
-					LogEvent(COMPONENT_CLIENTID,
-						 "Failed to rmdir (%s), errno=%d",
-						 path, errno);
-				}
-			}
-			gsh_free(path);
+		/* construct the path by appending the subdir for the
+		 * next readdir. This recursion keeps reading the
+		 * subdirectory until reaching the end.
+		 */
+		segment_len = strlen(dentp->d_name);
+		total_len = segment_len + 2 + strlen(parent_path);
+		path = gsh_malloc(total_len);
+		/* if failed on this subdirectory, move to next */
+		/* we might be lucky */
+		if (path == NULL) {
+			LogEvent(COMPONENT_CLIENTID,
+				 "malloc faied errno=%d", errno);
+			continue;
 		}
+		memset(path, 0, total_len);
+
+		strcpy(path, parent_path);
+		strcat(path, "/");
+		strncat(path, dentp->d_name, segment_len);
+		/* if tgtdir is not NULL, we need to build
+		 * nfs4old/currentnode
+		 */
+		if (tgtdir) {
+			total_tgt_len = segment_len + 2 +
+					strlen(tgtdir);
+			new_path = gsh_malloc(total_tgt_len);
+			if (new_path == NULL) {
+				LogEvent(COMPONENT_CLIENTID,
+					 "malloc faied errno=%d",
+					 errno);
+				gsh_free(path);
+				continue;
+			}
+			memset(new_path, 0, total_tgt_len);
+			strcpy(new_path, tgtdir);
+			strcat(new_path, "/");
+			strncat(new_path, dentp->d_name, segment_len);
+			rc = mkdir(new_path, 0700);
+			if ((rc == -1) && (errno != EEXIST)) {
+				LogEvent(COMPONENT_CLIENTID,
+					 "mkdir %s faied errno=%d",
+					 new_path, errno);
+			}
+		}
+		/* keep building the clientid str by cursively */
+		/* reading the directory structure */
+		if (clid_str)
+			total_clid_len = segment_len + 1 +
+					 strlen(clid_str);
+		else
+			total_clid_len = segment_len + 1;
+		build_clid = gsh_malloc(total_clid_len);
+		if (build_clid == NULL) {
+			LogEvent(COMPONENT_CLIENTID,
+				 "malloc faied errno=%d", errno);
+			free_heap(path, new_path, NULL);
+			continue;
+		}
+		memset(build_clid, 0, total_clid_len);
+		if (clid_str)
+			strcpy(build_clid, clid_str);
+		strncat(build_clid, dentp->d_name, segment_len);
+		subdp = opendir(path);
+		if (subdp == NULL) {
+			LogEvent(COMPONENT_CLIENTID,
+				 "opendir %s failed errno=%d",
+				 dentp->d_name, errno);
+			free_heap(path, new_path, build_clid);
+			/* this shouldn't happen, but we should skip
+			 * the entry to avoid infinite loops
+			 */
+			continue;
+		}
+
+		if (tgtdir)
+			rc = nfs4_read_recov_clids(subdp,
+						   path,
+						   build_clid,
+						   new_path,
+						   takeover);
+		else
+			rc = nfs4_read_recov_clids(subdp,
+						   path,
+						   build_clid,
+						   NULL,
+						   takeover);
+
+		/* close the sub directory */
+		(void)closedir(subdp);
+
+		if (new_path)
+			gsh_free(new_path);
+
+		/* after recursion, if the subdir has no non-hidden
+		 * directory this is the end of this clientid str. Add
+		 * the clientstr to the list.
+		 */
+		if (rc == 0) {
+			/* the clid format is
+			 * <IP>-(clid-len:long-form-clid-in-string-form)
+			 * make sure this reconstructed string is valid
+			 * by comparing clid-len and the actual
+			 * long-form-clid length in the string. This is
+			 * to prevent getting incompleted strings that
+			 * might exist due to program crash.
+			 */
+			if (strlen(build_clid) >= PATH_MAX) {
+				LogEvent(COMPONENT_CLIENTID,
+					"invalid clid format: %s, too long",
+					build_clid);
+				free_heap(path, NULL, build_clid);
+				continue;
+			}
+			ptr = strchr(build_clid, '(');
+			if (ptr == NULL) {
+				LogEvent(COMPONENT_CLIENTID,
+					 "invalid clid format: %s",
+					 build_clid);
+				free_heap(path, NULL, build_clid);
+				continue;
+			}
+			ptr2 = strchr(ptr, ':');
+			if (ptr2 == NULL) {
+				LogEvent(COMPONENT_CLIENTID,
+					 "invalid clid format: %s",
+					 build_clid);
+				free_heap(path, NULL, build_clid);
+				continue;
+			}
+			len = ptr2-ptr-1;
+			if (len >= 9) {
+				LogEvent(COMPONENT_CLIENTID,
+					 "invalid clid format: %s",
+					 build_clid);
+				free_heap(path, NULL, build_clid);
+				continue;
+			}
+			strncpy(temp, ptr+1, len);
+			temp[len] = 0;
+			cid_len = atoi(temp);
+			len = strlen(ptr2);
+			if ((len == (cid_len+2)) &&
+			    (ptr2[len-1] == ')')) {
+				new_ent =
+				    gsh_malloc(sizeof(clid_entry_t));
+				if (new_ent == NULL) {
+					LogEvent(COMPONENT_CLIENTID,
+						 "Unable to allocate memory.");
+					free_heap(path,
+						  NULL,
+						  build_clid);
+					continue;
+				}
+				nfs4_cp_pop_revoked_delegs(new_ent,
+							path,
+							tgtdir,
+							!takeover);
+				strcpy(new_ent->cl_name, build_clid);
+				glist_add(&grace.g_clid_list,
+					  &new_ent->cl_list);
+				LogDebug(COMPONENT_CLIENTID,
+					 "added %s to clid list",
+					 new_ent->cl_name);
+			}
+		}
+		gsh_free(build_clid);
+		/* If this is not for takeover, remove the directory
+		 * hierarchy  that represent the current clientid
+		 */
+		if (!takeover) {
+			rc = rmdir(path);
+			if (rc == -1) {
+				LogEvent(COMPONENT_CLIENTID,
+					 "Failed to rmdir (%s), errno=%d",
+					 path, errno);
+			}
+		}
+		gsh_free(path);
 	}
 
 	return num;
@@ -1009,7 +1014,6 @@ void nfs4_clean_old_recov_dir(char *parent_path)
 	struct dirent *dentp;
 	char *path = NULL;
 	int rc;
-	int segment_len;
 	int total_len;
 
 	dp = opendir(parent_path);
@@ -1025,10 +1029,10 @@ void nfs4_clean_old_recov_dir(char *parent_path)
 		if (!strcmp(dentp->d_name, ".") || !strcmp(dentp->d_name, ".."))
 			continue;
 
-		/* If there is a .<file name> then it is a revoked handle
-		 * go ahead and remove it.
+		/* If there is a filename starting with '\x1', then it is
+		 * a revoked handle, go ahead and remove it.
 		 */
-		if (dentp->d_name[0] == '.') {
+		if (dentp->d_name[0] == '\x1') {
 			char del_path[PATH_MAX];
 
 			sprintf(del_path, "%s/%s", parent_path, dentp->d_name);
@@ -1038,19 +1042,20 @@ void nfs4_clean_old_recov_dir(char *parent_path)
 						del_path,
 						errno);
 			}
+
+			continue;
 		}
-		segment_len = strlen(dentp->d_name);
-		total_len = strlen(parent_path) + 2 + segment_len;
+
+		/* This is a directory, we need process files in it! */
+		total_len = strlen(parent_path) + strlen(dentp->d_name) + 2;
 		path = gsh_malloc(total_len);
 		if (path == NULL) {
 			LogEvent(COMPONENT_CLIENTID,
 				 "Unable to allocate memory.");
 			continue;
 		}
-		memset(path, 0, total_len);
 
-		snprintf(path, total_len, "%s/%s", parent_path,
-			 dentp->d_name);
+		snprintf(path, total_len, "%s/%s", parent_path, dentp->d_name);
 
 		nfs4_clean_old_recov_dir(path);
 		rc = rmdir(path);
@@ -1130,18 +1135,16 @@ void nfs4_create_recov_dir(void)
 void nfs4_record_revoke(nfs_client_id_t *delr_clid, nfs_fh4 *delr_handle)
 {
 	char rhdlstr[NAME_MAX];
-	struct display_buffer dspbuf = {sizeof(rhdlstr), rhdlstr, rhdlstr};
 	char path[PATH_MAX + 1] = {0}, segment[NAME_MAX + 1] = {0};
 	int length, position = 0;
 	int fd;
+	int retval;
 
-	/* Make sure that handle size is not greather than NAME_MAX */
-	assert(2 * delr_handle->nfs_fh4_len < NAME_MAX);
-	/* Convert nfs_fh4_val into a human readable string */
-	(void)convert_opaque_value_max_for_dir(&dspbuf,
-					delr_handle->nfs_fh4_val,
-					delr_handle->nfs_fh4_len,
-					NAME_MAX);
+	/* Convert nfs_fh4_val into base64 encoded string */
+	retval = base64url_encode(delr_handle->nfs_fh4_val,
+				  delr_handle->nfs_fh4_len,
+				  rhdlstr, sizeof(rhdlstr));
+	assert(retval != -1);
 
 	/* A client's lease is reserved while recalling or revoking a
 	 * delegation which means the client will not expire until we
@@ -1169,7 +1172,7 @@ void nfs4_record_revoke(nfs_client_id_t *delr_clid, nfs_fh4 *delr_handle)
 		if (len <= NAME_MAX) {
 			strcat(path, "/");
 			strncat(path, &delr_clid->cid_recov_dir[position], len);
-			strcat(path, "/.");
+			strcat(path, "/\x1"); /* Prefix 1 to converted fh */
 			strncat(path, rhdlstr, strlen(rhdlstr));
 			fd = creat(path, 0700);
 			if (fd < 0) {
@@ -1194,20 +1197,16 @@ bool nfs4_can_deleg_reclaim_prev(nfs_client_id_t *clid, nfs_fh4 *fhandle)
 	struct glist_head *node;
 	rdel_fh_t *rfh_entry;
 	clid_entry_t *clid_ent;
-	struct display_buffer dspbuf = {sizeof(rhdlstr), rhdlstr, rhdlstr};
-
-	/* Make sure that handle size is not greather than NAME_MAX */
-	assert(2 * fhandle->nfs_fh4_len < NAME_MAX);
+	int retval;
 
 	/* If we aren't in grace period, then reclaim is not possible */
 	if (!nfs_in_grace())
 		return false;
 
-	/* Convert nfs_fh4_val into a human readable string */
-	(void)convert_opaque_value_max_for_dir(&dspbuf,
-					fhandle->nfs_fh4_val,
-					fhandle->nfs_fh4_len,
-					NAME_MAX);
+	/* Convert nfs_fh4_val into base64 encoded string */
+	retval = base64url_encode(fhandle->nfs_fh4_val, fhandle->nfs_fh4_len,
+				  rhdlstr, sizeof(rhdlstr));
+	assert(retval != -1);
 
 	pthread_mutex_lock(&grace.g_mutex);
 	nfs4_chk_clid_impl(clid, &clid_ent);
