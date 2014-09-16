@@ -2824,7 +2824,7 @@ state_status_t state_unlock(cache_entry_t *entry,
 	if (entry->type != REGULAR_FILE) {
 		LogLock(COMPONENT_STATE, NIV_DEBUG, "Bad Unlock", entry, owner,
 			lock);
-		cache_inode_dec_pin_ref(entry, FALSE);
+		cache_inode_dec_pin_ref(entry, false);
 		status = STATE_BAD_TYPE;
 		return status;
 	}

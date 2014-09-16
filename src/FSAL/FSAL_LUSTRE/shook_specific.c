@@ -111,7 +111,7 @@ fsal_status_t lustre_shook_restore(struct fsal_obj_handle *obj_hdl,
 					 * => return err jukebox */
 					rc = shook_get_status(fsal_path,
 								  &state,
-								  FALSE);
+								  false);
 
 					if (rc) {
 						LogEvent(COMPONENT_FSAL,
@@ -154,7 +154,7 @@ fsal_status_t lustre_shook_restore(struct fsal_obj_handle *obj_hdl,
 				 * in progress: return err jukebox */
 				rc = shook_get_status(fsal_path,
 							  &state,
-							  FALSE);
+							  false);
 				if (rc) {
 					LogEvent(COMPONENT_FSAL,
 						 "Error retrieving shook status of %s: %s",

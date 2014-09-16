@@ -150,7 +150,7 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, void *worker_data,
 
 		/* if all xattrent are not read,
 		 * returns ERANGE as listxattr does */
-		if (eod_met != TRUE) {
+		if (eod_met != true) {
 			gsh_free(pxattrfid->specdata.xattr.xattr_content);
 			gsh_free(pxattrfid);
 			return _9p_rerror(req9p, worker_data, msgtag, ERANGE,
@@ -261,7 +261,7 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, void *worker_data,
 	cache_inode_lru_ref(pfid->pentry, LRU_FLAG_NONE);
 
 	/* fid doesn't come from attach, don't put export on clunk... */
-	pxattrfid->from_attach = FALSE;
+	pxattrfid->from_attach = false;
 
 	/* hold reference on gdata */
 	uid2grp_hold_group_data(pxattrfid->gdata);

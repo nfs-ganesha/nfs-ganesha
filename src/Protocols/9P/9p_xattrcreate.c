@@ -144,9 +144,9 @@ int _9p_xattrcreate(struct _9p_request_data *req9p, void *worker_data,
 
 		/* try to create if flag doesn't have REPLACE bit */
 		if ((*flag & XATTR_REPLACE) == 0)
-			create = TRUE;
+			create = true;
 		else
-			create = FALSE;
+			create = false;
 
 		fsal_status =
 		    pfid->pentry->obj_handle->obj_ops.setextattr_value(
@@ -164,7 +164,7 @@ int _9p_xattrcreate(struct _9p_request_data *req9p, void *worker_data,
 			    setextattr_value(pfid->pentry->obj_handle,
 					     name,
 					     pfid->specdata.xattr.xattr_content,
-					     *size, FALSE);
+					     *size, false);
 		}
 
 		if (FSAL_IS_ERROR(fsal_status))
