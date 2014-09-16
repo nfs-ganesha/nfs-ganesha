@@ -990,7 +990,7 @@ void dec_state_owner_ref(state_owner_t *owner)
 	buffkey.len = sizeof(*owner);
 
 	/* Get the hash table entry and hold latch */
-	rc = hashtable_getlatch(ht_owner, &buffkey, &old_value, TRUE, &latch);
+	rc = hashtable_getlatch(ht_owner, &buffkey, &old_value, true, &latch);
 
 	if (rc != HASHTABLE_SUCCESS) {
 		if (rc == HASHTABLE_ERROR_NO_SUCH_KEY)
@@ -1059,7 +1059,7 @@ state_owner_t *get_state_owner(care_t care, state_owner_t *key,
 	hash_table_t *ht_owner;
 
 	if (isnew != NULL)
-		*isnew = FALSE;
+		*isnew = false;
 
 	if (isFullDebug(COMPONENT_STATE)) {
 		DisplayOwner(key, str);
@@ -1080,7 +1080,7 @@ state_owner_t *get_state_owner(care_t care, state_owner_t *key,
 	buffkey.addr = key;
 	buffkey.len = sizeof(*key);
 
-	rc = hashtable_getlatch(ht_owner, &buffkey, &buffval, TRUE, &latch);
+	rc = hashtable_getlatch(ht_owner, &buffkey, &buffval, true, &latch);
 
 	/* If we found it, return it */
 	if (rc == HASHTABLE_SUCCESS) {
@@ -1184,7 +1184,7 @@ state_owner_t *get_state_owner(care_t care, state_owner_t *key,
 	buffval.addr = owner;
 	buffval.len = sizeof(*owner);
 
-	rc = hashtable_setlatched(ht_owner, &buffval, &buffval, &latch, FALSE,
+	rc = hashtable_setlatched(ht_owner, &buffval, &buffval, &latch, false,
 				  NULL, NULL);
 
 	/* An error occurred, return NULL */
@@ -1200,7 +1200,7 @@ state_owner_t *get_state_owner(care_t care, state_owner_t *key,
 	}
 
 	if (isnew != NULL)
-		*isnew = TRUE;
+		*isnew = true;
 
 	return owner;
 }

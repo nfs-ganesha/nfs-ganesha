@@ -285,7 +285,7 @@ int nfs41_Session_Set(nfs41_session_t *session_data)
 		 * session records */
 		code =
 		    hashtable_setlatched(ht_session_id, &key, &val, &latch,
-					 FALSE, NULL, NULL);
+					 false, NULL, NULL);
 		if (code == HASHTABLE_SUCCESS)
 			rc = 1;
 	}

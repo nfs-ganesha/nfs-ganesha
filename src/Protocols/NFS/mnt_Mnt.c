@@ -183,7 +183,7 @@ int mnt_Mnt(nfs_arg_t *arg,
 	if (op_ctx->export_perms->options & EXPORT_OPTION_AUTH_UNIX)
 		auth_flavor[index_auth++] = AUTH_UNIX;
 #ifdef _HAVE_GSSAPI
-	if (nfs_param.krb5_param.active_krb5 == TRUE) {
+	if (nfs_param.krb5_param.active_krb5 == true) {
 		if (op_ctx->export_perms->options &
 		    EXPORT_OPTION_RPCSEC_GSS_NONE)
 			auth_flavor[index_auth++] = MNT_RPC_GSS_NONE;

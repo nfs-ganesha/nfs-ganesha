@@ -123,7 +123,7 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op, compound_data_t *data,
 				data,
 				STATEID_SPECIAL_CURRENT,
 				0,
-				FALSE,
+				false,
 				tag);
 
 			if (nfs_status != NFS4_OK) {

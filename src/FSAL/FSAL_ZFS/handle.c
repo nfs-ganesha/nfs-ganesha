@@ -600,7 +600,7 @@ static fsal_status_t tank_readdir(struct fsal_obj_handle *dir_hdl,
 				    &pvnode);
 	if (retval)
 		goto out;
-	*eof = FALSE;
+	*eof = false;
 	do {
 		retval = libzfswrap_readdir(p_vfs, &cred, pvnode, dirents,
 					    MAX_ENTRIES, &seekloc);
@@ -610,7 +610,7 @@ static fsal_status_t tank_readdir(struct fsal_obj_handle *dir_hdl,
 			/* If psz_filename is NULL,
 			 * that's the end of the list */
 			if (dirents[index].psz_filename[0] == '\0') {
-				*eof = TRUE;
+				*eof = true;
 				break;
 			}
 
@@ -628,7 +628,7 @@ static fsal_status_t tank_readdir(struct fsal_obj_handle *dir_hdl,
 
 		seekloc += MAX_ENTRIES;
 
-	} while (*eof == FALSE);
+	} while (*eof == false);
 
  done:
 	/* Close the directory */

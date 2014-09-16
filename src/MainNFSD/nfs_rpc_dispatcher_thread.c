@@ -946,7 +946,7 @@ void thr_stallq(struct fridgethr_context *thr_ctx)
 		pthread_mutex_lock(&nfs_req_st.stallq.mtx);
  restart:
 		if (nfs_req_st.stallq.stalled == 0) {
-			nfs_req_st.stallq.active = FALSE;
+			nfs_req_st.stallq.active = false;
 			pthread_mutex_unlock(&nfs_req_st.stallq.mtx);
 			break;
 		}
@@ -989,7 +989,7 @@ void thr_stallq(struct fridgethr_context *thr_ctx)
 static bool nfs_rpc_cond_stall_xprt(SVCXPRT *xprt)
 {
 	gsh_xprt_private_t *xu;
-	bool activate = FALSE;
+	bool activate = false;
 	uint32_t nreqs;
 
 	pthread_mutex_lock(&xprt->xp_lock);
@@ -1005,7 +1005,7 @@ static bool nfs_rpc_cond_stall_xprt(SVCXPRT *xprt)
 	/* check per-xprt quota */
 	if (likely(nreqs < nfs_param.core_param.dispatch_max_reqs_xprt)) {
 		pthread_mutex_unlock(&xprt->xp_lock);
-		return FALSE;
+		return false;
 	}
 
 	/* XXX can't happen */
@@ -1013,7 +1013,7 @@ static bool nfs_rpc_cond_stall_xprt(SVCXPRT *xprt)
 		pthread_mutex_unlock(&xprt->xp_lock);
 		LogDebug(COMPONENT_DISPATCH, "xprt %p already stalled (oops)",
 			 xprt);
-		return TRUE;
+		return true;
 	}
 
 	LogDebug(COMPONENT_DISPATCH, "xprt %p has %u reqs, marking stalled",
@@ -1029,8 +1029,8 @@ static bool nfs_rpc_cond_stall_xprt(SVCXPRT *xprt)
 
 	/* if no thread is servicing the stallq, start one */
 	if (!nfs_req_st.stallq.active) {
-		nfs_req_st.stallq.active = TRUE;
-		activate = TRUE;
+		nfs_req_st.stallq.active = true;
+		activate = true;
 	}
 	pthread_mutex_unlock(&nfs_req_st.stallq.mtx);
 
@@ -1045,7 +1045,7 @@ static bool nfs_rpc_cond_stall_xprt(SVCXPRT *xprt)
 	}
 
 	/* stalled */
-	return TRUE;
+	return true;
 }
 
 void nfs_rpc_queue_init(void)
@@ -1090,7 +1090,7 @@ void nfs_rpc_queue_init(void)
 	/* stallq */
 	gsh_mutex_init(&nfs_req_st.stallq.mtx, NULL);
 	glist_init(&nfs_req_st.stallq.q);
-	nfs_req_st.stallq.active = FALSE;
+	nfs_req_st.stallq.active = false;
 	nfs_req_st.stallq.stalled = 0;
 }
 
@@ -1434,8 +1434,8 @@ static inline enum auth_stat AuthenticateRequest(struct fridgethr_context
 	struct rpc_msg *msg = req->rq_msg;
 	SVCXPRT *xprt = nfsreq->xprt;
 	enum auth_stat why;
-	bool rlocked = TRUE;
-	bool slocked = FALSE;
+	bool rlocked = true;
+	bool slocked = false;
 
 	/* A few words of explanation are required here:
 	 * In authentication is AUTH_NONE or AUTH_UNIX, then the value of
@@ -1532,11 +1532,11 @@ static inline enum xprt_stat nfs_rpc_continue_decoding(SVCXPRT *xprt,
 static bool is_rpc_call_valid(nfs_request_data_t *reqnfs)
 {
 	struct svc_req *req = &reqnfs->req;
-	bool slocked = FALSE;
+	bool slocked = false;
 	/* This function is only ever called from one point, and the
 	   read-lock is always held at that call.  If this changes,
 	   we'll have to pass in the value of rlocked. */
-	bool rlocked = TRUE;
+	bool rlocked = true;
 	int lo_vers, hi_vers;
 
 	if (req->rq_prog == nfs_param.core_param.program[P_NFS]) {
@@ -1662,9 +1662,9 @@ enum xprt_stat thr_decode_rpc_request(struct fridgethr_context
 {
 	request_data_t *nfsreq;
 	enum xprt_stat stat = XPRT_IDLE;
-	bool no_dispatch = TRUE;
-	bool rlocked = FALSE;
-	bool enqueued = FALSE;
+	bool no_dispatch = true;
+	bool rlocked = false;
+	bool enqueued = false;
 	bool recv_status;
 
 	LogDebug(COMPONENT_DISPATCH, "enter");
@@ -1676,7 +1676,7 @@ enum xprt_stat thr_decode_rpc_request(struct fridgethr_context
 
 	LogFullDebug(COMPONENT_DISPATCH,
 		     "SVC_RECV on socket %d returned %s, xid=%u", xprt->xp_fd,
-		     (recv_status) ? "TRUE" : "FALSE",
+		     (recv_status) ? "true" : "false",
 		     (nfsreq->r_u.nfs->req.rq_msg) ? nfsreq->r_u.nfs->req.
 		     rq_msg->rm_xid : 0);
 
@@ -1752,7 +1752,7 @@ enum xprt_stat thr_decode_rpc_request(struct fridgethr_context
 		/* XXX as above, the call has already passed is_rpc_call_valid,
 		 * the former check here is removed. */
 		nfs_rpc_enqueue_req(nfsreq);
-		enqueued = TRUE;
+		enqueued = true;
 	}
 
  finish:
@@ -1786,7 +1786,7 @@ static inline bool thr_continue_decoding(SVCXPRT *xprt, enum xprt_stat stat)
 	pthread_mutex_unlock(&xprt->xp_lock);
 
 	if (unlikely(nreqs > nfs_param.core_param.dispatch_max_reqs_xprt))
-		return FALSE;
+		return false;
 
 	return (stat == XPRT_MOREREQS);
 }
@@ -1962,7 +1962,7 @@ static bool nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */)
 	LogFullDebug(COMPONENT_DISPATCH, "after fridgethr_get");
 
  out:
-	return TRUE;
+	return true;
 }
 
 /**
@@ -1999,8 +1999,8 @@ int nfs_rpc_get_args(struct fridgethr_context *thr_ctx,
 	SVCXPRT *xprt = reqnfs->xprt;
 	nfs_arg_t *arg_nfs = &reqnfs->arg_nfs;
 	struct svc_req *req = &reqnfs->req;
-	bool rlocked = TRUE;
-	bool slocked = FALSE;
+	bool rlocked = true;
+	bool slocked = false;
 
 	memset(arg_nfs, 0, sizeof(nfs_arg_t));
 

@@ -249,7 +249,7 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 
 	res_READ4->status =
 	    nfs4_Check_Stateid(&arg_READ4->stateid, entry, &state_found, data,
-			       STATEID_SPECIAL_ANY, 0, FALSE, "READ");
+			       STATEID_SPECIAL_ANY, 0, false, "READ");
 	if (res_READ4->status != NFS4_OK)
 		return res_READ4->status;
 
@@ -664,7 +664,7 @@ int nfs4_op_io_advise(struct nfs_argop4 *op, compound_data_t *data,
 	res_IO_ADVISE->iaa_status =
 	    nfs4_Check_Stateid(&arg_IO_ADVISE->iaa_stateid, entry,
 				&state_found, data,  STATEID_SPECIAL_ANY,
-				0, FALSE, "IO_ADVISE");
+				0, false, "IO_ADVISE");
 	if (res_IO_ADVISE->iaa_status != NFS4_OK)
 		goto done;
 
@@ -742,7 +742,7 @@ int nfs4_op_seek(struct nfs_argop4 *op, compound_data_t *data,
 	res_SEEK->sr_status =
 	    nfs4_Check_Stateid(&arg_SEEK->sa_stateid, entry,
 				&state_found, data,  STATEID_SPECIAL_ANY,
-				0, FALSE, "SEEK");
+				0, false, "SEEK");
 	if (res_SEEK->sr_status != NFS4_OK)
 		goto done;
 

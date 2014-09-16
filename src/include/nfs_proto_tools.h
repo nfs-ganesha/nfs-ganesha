@@ -192,7 +192,7 @@ static inline bool attribute_is_set(struct bitmap4 *bits, int attr)
 	int offset = attr / 32;
 
 	if (offset >= bits->bitmap4_len)
-		return FALSE;
+		return false;
 	return (bits->map[offset] & (1 << (attr % 32))) != 0;
 }
 
@@ -201,11 +201,11 @@ static inline bool set_attribute_in_bitmap(struct bitmap4 *bits, int attr)
 	int offset = attr / 32;
 
 	if (offset >= 3)
-		return FALSE;	/* over upper bound */
+		return false;	/* over upper bound */
 	if (offset >= bits->bitmap4_len)
 		bits->bitmap4_len = offset + 1;	/* roll into the next word */
 	bits->map[offset] |= (1 << (attr % 32));
-	return TRUE;
+	return true;
 }
 
 static inline bool clear_attribute_in_bitmap(struct bitmap4 *bits, int attr)
@@ -213,9 +213,9 @@ static inline bool clear_attribute_in_bitmap(struct bitmap4 *bits, int attr)
 	int offset = attr / 32;
 
 	if (offset >= bits->bitmap4_len)
-		return FALSE;
+		return false;
 	bits->map[offset] &= ~(1 << (attr % 32));
-	return TRUE;
+	return true;
 }
 
 void nfs_SetWccData(const struct pre_op_attr *before_attr,

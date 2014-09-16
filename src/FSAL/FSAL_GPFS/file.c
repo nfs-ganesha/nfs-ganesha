@@ -179,7 +179,7 @@ fsal_status_t gpfs_read_plus(struct fsal_obj_handle *obj_hdl,
 	} else {
 		info->io_content.what = NFS4_CONTENT_DATA;
 		info->io_content.data.d_offset = offset + nb_read;
-		info->io_content.data.d_allocated = TRUE;   /* ??? */
+		info->io_content.data.d_allocated = true;   /* ??? */
 		info->io_content.data.d_data.data_len = nb_read;
 		info->io_content.data.d_data.data_val = buffer;
 		*read_amount = nb_read;
@@ -187,9 +187,9 @@ fsal_status_t gpfs_read_plus(struct fsal_obj_handle *obj_hdl,
 	if (nb_read != -1 &&
 		(nb_read == 0 || nb_read < buffer_size ||
 		((offset + nb_read) >= obj_hdl->attributes.filesize)))
-		*end_of_file = TRUE;
+		*end_of_file = true;
 	else
-		*end_of_file = FALSE;
+		*end_of_file = false;
 
 	return status;
 }
