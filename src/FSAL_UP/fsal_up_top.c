@@ -416,7 +416,6 @@ static state_status_t create_file_recall(cache_entry_t *entry,
 		goto out;
 	}
 
-	glist_init(&recall->entry_link);
 	glist_init(&recall->state_list);
 	recall->entry = entry;
 	recall->type = type;
@@ -495,7 +494,6 @@ static state_status_t create_file_recall(cache_entry_t *entry,
 				rc = STATE_MALLOC_ERROR;
 				goto out;
 			}
-			glist_init(&list_entry->link);
 			list_entry->state = s;
 			glist_add_tail(&recall->state_list, &list_entry->link);
 			none = false;
