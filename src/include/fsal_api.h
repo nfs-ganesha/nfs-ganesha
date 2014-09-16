@@ -364,7 +364,7 @@ struct fsal_module {
 	struct glist_head fsals;	/*< link in list of loaded fsals */
 	pthread_rwlock_t lock;		/*< Lock to be held when
 					    manipulating the list of exports. */
-	uint32_t refcount;		/*< Reference count */
+	int32_t refcount;		/*< Reference count */
 	struct glist_head exports;	/*< Head of list of exports from
 					   this FSAL */
 	struct glist_head handles;	/*< Head of list of object handles */
