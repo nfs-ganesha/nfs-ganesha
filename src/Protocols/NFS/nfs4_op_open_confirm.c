@@ -91,14 +91,7 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op, compound_data_t *data,
 				 data->minorversion == 0,
 				 tag);
 
-	if (rc != NFS4_OK) {
-		if ((rc == NFS4ERR_REPLAY) && (state_found != NULL)
-		    && (state_found->state_owner != NULL)) {
-			open_owner = state_found->state_owner;
-			inc_state_owner_ref(open_owner);
-			goto check_seqid;
-		}
-
+	if (rc != NFS4_OK && rc != NFS4ERR_REPLAY) {
 		res_OPEN_CONFIRM4->status = rc;
 		return res_OPEN_CONFIRM4->status;
 	}
@@ -107,8 +100,6 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op, compound_data_t *data,
 	inc_state_owner_ref(open_owner);
 
 	pthread_mutex_lock(&open_owner->so_mutex);
-
- check_seqid:
 
 	/* Check seqid */
 	if (!Check_nfs4_seqid(open_owner,
