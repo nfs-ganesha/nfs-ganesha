@@ -163,7 +163,7 @@ state_status_t state_lookup_layout_state(cache_entry_t *entry,
 	/* The state found, if one exists */
 	state_t *state_found = NULL;
 
-	glist_for_each(glist_iter, &entry->state_list) {
+	glist_for_each(glist_iter, &entry->list_of_states) {
 		state_iter = glist_entry(glist_iter, state_t, state_list);
 		if ((state_iter->state_type == STATE_TYPE_LAYOUT)
 		    && (state_iter->state_owner == owner)

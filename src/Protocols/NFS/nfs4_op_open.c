@@ -188,7 +188,7 @@ static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t *data,
 	/* Try to find if the same open_owner already has acquired a
 	 * stateid for this file
 	 */
-	glist_for_each(glist, &data->current_entry->state_list) {
+	glist_for_each(glist, &data->current_entry->list_of_states) {
 		state_iterate = glist_entry(glist, state_t, state_list);
 
 		if (state_iterate->state_type != STATE_TYPE_SHARE)
