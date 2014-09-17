@@ -470,7 +470,7 @@ struct cache_entry_t {
 	    that should not see changes in state. */
 	pthread_rwlock_t state_lock;
 	/** States on this cache entry */
-	struct glist_head state_list;
+	struct glist_head list_of_states;
 	/** Exports per entry (protected by attr_lock) */
 	struct glist_head export_list;
 	/** Atomic pointer to the first mapped export for fast path */

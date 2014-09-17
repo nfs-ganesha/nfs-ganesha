@@ -429,7 +429,7 @@ static state_status_t create_file_recall(cache_entry_t *entry,
 		goto out;
 	}
 
-	glist_for_each(state_iter, &entry->state_list) {
+	glist_for_each(state_iter, &entry->list_of_states) {
 		/* Entry in the state list */
 		struct recall_state_list *list_entry = NULL;
 		/* Iterator over segments on this state */

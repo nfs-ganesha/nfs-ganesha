@@ -55,7 +55,7 @@ void cleanup_layouts(compound_data_t *data)
 	 * return_on_close.
 	 */
 
-	glist_for_each(glist, &data->current_entry->state_list) {
+	glist_for_each(glist, &data->current_entry->list_of_states) {
 		state_t *state = glist_entry(glist, state_t,
 					     state_list);
 
@@ -69,7 +69,7 @@ void cleanup_layouts(compound_data_t *data)
 
 	glist_for_each_safe(glist,
 			    glistn,
-			    &data->current_entry->state_list) {
+			    &data->current_entry->list_of_states) {
 		state_t *state = glist_entry(glist, state_t,
 					     state_list);
 		bool deleted = false;
