@@ -882,8 +882,11 @@ static nfsstat4 open4_claim_deleg(OPEN4args *arg, compound_data_t *data,
 	cache_inode_status_t cache_status;
 	nfsstat4 status;
 
-	if (!op_ctx->fsal_export->ops->fs_supports(
-			op_ctx->fsal_export, fso_delegations)) {
+	if (!(op_ctx->fsal_export->ops->fs_supports(
+			op_ctx->fsal_export, fso_delegations_w)
+	      || op_ctx->fsal_export->ops->fs_supports(
+			op_ctx->fsal_export, fso_delegations_r))
+	      ) {
 		LogDebug(COMPONENT_STATE,
 			 "NFS4 OPEN returning NFS4ERR_NOTSUPP for CLAIM_DELEGATE");
 		return NFS4ERR_NOTSUPP;
@@ -1131,6 +1134,17 @@ static void do_delegation(OPEN4args *arg_OPEN4, OPEN4res *res_OPEN4,
 
 	/* This will be updated later if we actually delegate */
 	resok->delegation.delegation_type = OPEN_DELEGATE_NONE;
+
+	if ((arg_OPEN4->share_access & OPEN4_SHARE_ACCESS_WRITE &&
+	    (!op_ctx->fsal_export->ops->fs_supports(op_ctx->fsal_export,
+						    fso_delegations_w)))
+	    ||
+	    (arg_OPEN4->share_access & OPEN4_SHARE_ACCESS_READ &&
+	     (!op_ctx->fsal_export->ops->fs_supports(op_ctx->fsal_export,
+						     fso_delegations_r)))) {
+		LogFullDebug(COMPONENT_STATE, "Delegation type not supported.");
+		return;
+	}
 
 	/* Decide if we should delegate, then add it. */
 	if (data->current_entry->type == REGULAR_FILE

@@ -482,7 +482,7 @@ GPFS {}
 
 	xattr_access_rights(mode, range 0 to 0777, default 0400)
 
-	delegations(bool, default false)
+	Delegations(enum, values [None, read, r], default None)
 
 	pnfs_file(bool, default false)
 

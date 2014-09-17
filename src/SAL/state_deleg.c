@@ -390,7 +390,7 @@ bool should_we_grant_deleg(cache_entry_t *entry, nfs_client_id_t *client,
 	if (!nfs_param.nfsv4_param.allow_delegations
 	    || !op_ctx->fsal_export->ops->fs_supports(
 					op_ctx->fsal_export,
-					fso_delegations)
+					fso_delegations_r)
 	    || !(op_ctx->export_perms->options & EXPORT_OPTION_DELEGATIONS)
 	    || (!owner->so_owner.so_nfs4_owner.so_confirmed
 		&& claim == CLAIM_NULL)

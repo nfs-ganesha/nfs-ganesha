@@ -1072,6 +1072,17 @@ static struct config_item_list delegations[] = {
 	CONFIG_LIST_EOL
 };
 
+struct config_item_list deleg_types[] =  {
+	CONFIG_LIST_TOK("NONE", FSAL_OPTION_NO_DELEGATIONS),
+	CONFIG_LIST_TOK("Read", FSAL_OPTION_READ_DELEG),
+	CONFIG_LIST_TOK("Write", FSAL_OPTION_WRITE_DELEG),
+	CONFIG_LIST_TOK("Readwrite", FSAL_OPTION_DELEGATIONS),
+	CONFIG_LIST_TOK("R", FSAL_OPTION_READ_DELEG),
+	CONFIG_LIST_TOK("W", FSAL_OPTION_WRITE_DELEG),
+	CONFIG_LIST_TOK("RW", FSAL_OPTION_DELEGATIONS),
+	CONFIG_LIST_EOL
+};
+
 #define CONF_EXPORT_PERMS(_struct_, _perms_)				\
 	/* Note: Access_Type defaults to None on purpose */		\
 	CONF_ITEM_ENUM_BITS_SET("Access_Type",				\
