@@ -240,7 +240,7 @@ nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
 			       state_t *layout_state,
 			       struct pnfs_segment spec_segment,
 			       size_t body_len, const void *body_val,
-			       bool *deleted, bool hold_lock);
+			       bool *deleted);
 
 typedef enum {
 	UTF8_SCAN_NONE = 0,	/* do no validation other than size */

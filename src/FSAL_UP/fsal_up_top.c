@@ -808,7 +808,7 @@ static int32_t layoutrec_completion(rpc_call_t *call, rpc_call_hook hook,
 		nfs4_return_one_state(state->state_entry,
 				      LAYOUTRETURN4_FILE, circumstance,
 				      state, cb_data->segment, 0, NULL,
-				      &deleted, true);
+				      &deleted);
 		PTHREAD_RWLOCK_unlock(&state->state_entry->state_lock);
 	}
 	free_layoutrec(&call->cbt.v_u.v4.args.argarray.argarray_val[1]);
@@ -854,8 +854,7 @@ static void return_one_async(void *arg)
 
 		nfs4_return_one_state(s->state_entry,
 				      LAYOUTRETURN4_FILE, circumstance_revoke,
-				      s, cb_data->segment, 0, NULL, &deleted,
-				      true);
+				      s, cb_data->segment, 0, NULL, &deleted);
 		PTHREAD_RWLOCK_unlock(&s->state_entry->state_lock);
 	}
 	release_root_op_context();
@@ -935,7 +934,7 @@ static void layoutrecall_one_call(void *arg)
 						      LAYOUTRETURN4_FILE,
 						      circumstance_revoke, s,
 						      cb_data->segment, 0, NULL,
-						      &deleted, true);
+						      &deleted);
 				gsh_free(cb_data);
 			}
 		} else {
