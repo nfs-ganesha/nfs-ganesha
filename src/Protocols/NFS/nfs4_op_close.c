@@ -90,8 +90,7 @@ void cleanup_layouts(compound_data_t *data)
 					      entire,
 					      0,
 					      NULL,
-					      &deleted,
-					      true);
+					      &deleted);
 			if (!deleted) {
 				LogCrit(COMPONENT_PNFS,
 					"Layout state not destroyed on last close return.");

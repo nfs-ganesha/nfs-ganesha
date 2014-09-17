@@ -84,6 +84,7 @@ static nfsstat4 acquire_layout_state(compound_data_t *data,
 	state_t *condemned_state = NULL;
 	/* Tracking data for the layout state */
 	struct state_refer refer;
+	bool lock_held = false;
 
 	memcpy(refer.session, data->session->session_id, sizeof(sessionid4));
 	refer.sequence = data->sequence;
@@ -117,6 +118,9 @@ static nfsstat4 acquire_layout_state(compound_data_t *data,
 		   new layout state. */
 		union state_data layout_data;
 		memset(&layout_data, 0, sizeof(layout_data));
+
+		PTHREAD_RWLOCK_wrlock(&data->current_entry->state_lock);
+		lock_held = true;
 
 		/* See if a layout state already exists */
 		state_status =
@@ -154,8 +158,7 @@ static nfsstat4 acquire_layout_state(compound_data_t *data,
 						   entire,
 						   0,
 						   NULL,
-						   &deleted,
-						   false);
+						   &deleted);
 
 			if (nfs_status != NFS4_OK)
 				goto out;
@@ -166,11 +169,13 @@ static nfsstat4 acquire_layout_state(compound_data_t *data,
 			}
 
 			condemned_state = NULL;
-
 		} else if (state_status != STATE_NOT_FOUND) {
 			nfs_status = nfs4_Errno_state(state_status);
 			goto out;
 		}
+
+		PTHREAD_RWLOCK_unlock(&data->current_entry->state_lock);
+		lock_held = false;
 
 		layout_data.layout.state_layout_type = layout_type;
 		layout_data.layout.state_return_on_close = false;
@@ -202,6 +207,9 @@ static nfsstat4 acquire_layout_state(compound_data_t *data,
 	}
 
  out:
+
+	if (lock_held)
+		PTHREAD_RWLOCK_unlock(&data->current_entry->state_lock);
 
 	return nfs_status;
 }
