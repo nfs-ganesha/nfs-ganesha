@@ -161,6 +161,31 @@ static inline uint32_t eid_cache_offsetof(struct export_by_id *eid, uint64_t k)
 }
 
 /**
+ * @brief Revert export_commit()
+ *
+ * @param export [in] the export just inserted/committed
+ */
+void export_revert(struct gsh_export *export)
+{
+	void **cache_slot;
+	struct avltree_node *cnode = NULL;
+
+	PTHREAD_RWLOCK_wrlock(&export_by_id.lock);
+
+	cache_slot = (void **) &(export_by_id.
+		cache[eid_cache_offsetof(&export_by_id, export->export_id)]);
+	cnode = (struct avltree_node *)atomic_fetch_voidptr(cache_slot);
+	if (&export->node_k == cnode)
+		atomic_store_voidptr(cache_slot, NULL);
+	avltree_remove(&export->node_k, &export_by_id.t);
+	glist_del(&export->exp_list);
+	glist_del(&export->exp_work);
+
+	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
+	put_gsh_export(export); /* Release sentinel ref */
+}
+
+/**
  * @brief Export id comparator for AVL tree walk
  *
  */

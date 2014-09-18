@@ -909,12 +909,14 @@ static int add_export_commit(void *node, void *link_mem, void *self_struct,
 		goto err_out;
 
 	if (!init_export_root(export)) {
+		export_revert(export);
 		err_type->resource = true;
 		errcnt++;
 		goto err_out;
 	}
 
 	if (!mount_gsh_export(export)) {
+		export_revert(export);
 		err_type->resource = true;
 		errcnt++;
 	}
