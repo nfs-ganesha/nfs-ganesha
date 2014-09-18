@@ -903,15 +903,22 @@ static int add_export_commit(void *node, void *link_mem, void *self_struct,
 {
 	struct gsh_export *export = self_struct;
 	int errcnt = 0;
+	int status;
 
 	errcnt = export_commit(node, link_mem, self_struct, err_type);
 	if (errcnt != 0)
 		goto err_out;
 
-	if (!init_export_root(export)) {
+	status = init_export_root(export);
+	if (status) {
 		export_revert(export);
-		err_type->resource = true;
 		errcnt++;
+		if (status == EINVAL)
+			err_type->invalid = true;
+		else if (status == EFAULT)
+			err_type->internal = true;
+		else
+			err_type->resource = true;
 		goto err_out;
 	}
 
@@ -1480,11 +1487,12 @@ void free_export_resources(struct gsh_export *export)
  * @brief pkginit callback to initialize exports from nfs_init
  *
  * Assumes being called with the export_by_id.lock held.
+ * true on success
  */
 
 static bool init_export_cb(struct gsh_export *exp, void *state)
 {
-	return init_export_root(exp);
+	return !(init_export_root(exp));
 }
 
 /**
@@ -1550,17 +1558,17 @@ cache_inode_status_t nfs_export_get_root_entry(struct gsh_export *export,
  *
  * @param exp [IN] the export
  *
- * @return true if successful.
+ * @return 0 if successful otherwise err.
  */
 
-bool init_export_root(struct gsh_export *export)
+int init_export_root(struct gsh_export *export)
 {
 	fsal_status_t fsal_status;
 	cache_inode_status_t cache_status;
 	struct fsal_obj_handle *root_handle;
 	cache_entry_t *entry = NULL;
 	struct root_op_context root_op_context;
-	bool my_status = false;
+	int my_status;
 
 	/* Initialize req_ctx */
 	init_root_op_context(&root_op_context, export, export->fsal_export,
@@ -1576,6 +1584,8 @@ bool init_export_root(struct gsh_export *export)
 						  &root_handle);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
+		my_status = EINVAL;
+
 		LogCrit(COMPONENT_EXPORT,
 			"Lookup failed on path, ExportId=%u Path=%s FSAL_ERROR=(%s,%u)",
 			export->export_id, export->fullpath,
@@ -1590,6 +1600,9 @@ bool init_export_root(struct gsh_export *export)
 					     &entry);
 
 	if (entry == NULL) {
+		/* EFAULT for any internal error */
+		my_status = EFAULT;
+
 		LogCrit(COMPONENT_EXPORT,
 			"Error when creating root cached entry for %s, export_id=%d, cache_status=%s",
 			export->fullpath,
@@ -1602,6 +1615,9 @@ bool init_export_root(struct gsh_export *export)
 	cache_status = cache_inode_inc_pin_ref(entry);
 
 	if (cache_status != CACHE_INODE_SUCCESS) {
+
+		my_status = EFAULT;
+
 		LogCrit(COMPONENT_EXPORT,
 			"Error when creating root cached entry for %s, export_id=%d, cache_status=%s",
 			export->fullpath,
@@ -1641,7 +1657,7 @@ bool init_export_root(struct gsh_export *export)
 
 	/* Release the LRU reference and return success. */
 	cache_inode_put(entry);
-	my_status = true;
+	my_status = 0;
 out:
 	release_root_op_context();
 	return my_status;
