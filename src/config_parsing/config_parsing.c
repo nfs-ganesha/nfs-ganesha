@@ -1206,8 +1206,7 @@ static int proc_block(struct config_node *node,
 		     node->filename,
 		     node->linenumber,
 		     item->name);
-	errors = item->u.blk.commit(node, link_mem, param_struct,
-				err_type);
+	errors = item->u.blk.commit(node, link_mem, param_struct, err_type);
 	if (errors > 0 && !config_error_is_harmless(err_type)) {
 		LogCrit(COMPONENT_CONFIG,
 			"At (%s:%d): %d validation errors in block %s",
