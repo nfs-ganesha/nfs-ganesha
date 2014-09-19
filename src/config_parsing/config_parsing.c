@@ -135,6 +135,8 @@ char *err_type_str(struct config_error_type *err_type)
 		fputs("block exists, ", fp);
 	if (err_type->empty)
 		fputs("block empty, ", fp);
+	if (err_type->internal)
+		fputs("internal error, ", fp);
 	if (err_type->bogus)
 		fputs("unknown param, ", fp);
 	if (ferror(fp))
