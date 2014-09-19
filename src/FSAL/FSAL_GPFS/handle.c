@@ -365,9 +365,9 @@ static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
 	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
 	if (refresh) {		/* lazy load or LRU'd storage */
 		size_t retlink;
-		char link_buff[PATH_MAX + 1];
+		char link_buff[PATH_MAX];
 
-		retlink = PATH_MAX;
+		retlink = PATH_MAX - 1;
 
 		if (myself->u.symlink.link_content != NULL) {
 			gsh_free(myself->u.symlink.link_content);
@@ -857,8 +857,8 @@ fsal_status_t gpfs_create_handle(struct fsal_export *exp_hdl,
 	struct gpfs_file_handle *fh;
 	struct attrlist attrib;
 	char *link_content = NULL;
-	ssize_t retlink = PATH_MAX;
-	char link_buff[PATH_MAX + 1];
+	ssize_t retlink = PATH_MAX - 1;
+	char link_buff[PATH_MAX];
 	enum fsid_type fsid_type;
 	struct fsal_fsid__ fsid;
 	struct fsal_filesystem *fs;

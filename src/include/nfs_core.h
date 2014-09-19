@@ -238,6 +238,9 @@ extern ushort g_nodeid;
 request_data_t *nfs_rpc_get_nfsreq(uint32_t flags);
 void nfs_rpc_enqueue_req(request_data_t *req);
 
+uint32_t get_enqueue_count();
+uint32_t get_dequeue_count();
+
 /*
  * Thread entry functions
  */

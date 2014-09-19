@@ -48,6 +48,7 @@
 #include "nfs_convert.h"
 #include "delayed_exec.h"
 #include "export_mgr.h"
+#include "server_stats.h"
 
 static int schedule_delegrevoke_check(struct delegrecall_context *ctx,
 				      uint32_t delay);
@@ -1110,7 +1111,6 @@ bool eval_deleg_revoke(struct deleg_data *deleg_entry)
  *
  * @param[in] call  The RPC call being completed
  * @param[in] clfl_stats  client-file deleg heuristics
- * @param[in] cl_stats client deleg heuristics
  * @param[in] p_cargs deleg recall context
  *
  */
@@ -1183,12 +1183,10 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 	state_status_t rc = STATE_SUCCESS;
 	struct delegrecall_context *deleg_ctx =
 				(struct delegrecall_context *) arg;
-	struct c_deleg_stats *cl_stats = NULL;
 	struct deleg_data *deleg_entry, *tdentry;
 	cache_entry_t *entry = deleg_ctx->drc_entry;
 	struct glist_head *glist, *glist_n;
 	nfs_client_id_t *clientid;
-
 
 	LogDebug(COMPONENT_NFS_CB, "%p %s", call,
 		 (hook == RPC_CALL_COMPLETE) ? "Success" : "Failed");
@@ -1220,8 +1218,6 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 	LogDebug(COMPONENT_NFS_CB, "deleg_entry %p", deleg_entry);
 
 	clientid = deleg_entry->dd_owner->so_owner.so_nfs4_owner.so_clientrec;
-	cl_stats = &clientid->cid_deleg_stats;
-
 
 	switch (hook) {
 	case RPC_CALL_COMPLETE:
@@ -1264,7 +1260,9 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 out_revoke:
 	LogCrit(COMPONENT_NFS_V4,
 		"Revoking delegation(%p)", deleg_entry);
-	atomic_inc_uint32_t(&cl_stats->num_revokes);
+	clientid->num_revokes++;
+	inc_revokes(clientid->gsh_client);
+
 	rc = deleg_revoke(deleg_entry);
 	if (rc != STATE_SUCCESS) {
 		LogCrit(COMPONENT_NFS_V4,
@@ -1310,11 +1308,9 @@ static uint32_t delegrecall_one(struct deleg_data *deleg_entry,
 	rpc_call_t *call = NULL;
 	nfs_cb_argop4 argop[1];
 	struct gsh_export *exp;
-	struct c_deleg_stats *cl_stats;
-	struct cf_deleg_stats *clfl_stats = NULL;
+	struct cf_deleg_stats *clfl_stats;
 	nfs_client_id_t *clientid;
 	clientid = deleg_entry->dd_owner->so_owner.so_nfs4_owner.so_clientrec;
-	cl_stats = &clientid->cid_deleg_stats;
 	clfl_stats = &deleg_entry->dd_state->state_data.deleg.sd_clfile_stats;
 
 	/* record the first attempt to recall this delegation */
@@ -1325,7 +1321,7 @@ static uint32_t delegrecall_one(struct deleg_data *deleg_entry,
 
 	LogFullDebug(COMPONENT_FSAL_UP, "Recalling delegation:%p", deleg_entry);
 
-	atomic_inc_uint32_t(&cl_stats->tot_recalls);
+	inc_recalls(clientid->gsh_client);
 
 	exp = deleg_entry->dd_state->state_export;
 
@@ -1415,7 +1411,7 @@ static uint32_t delegrecall_one(struct deleg_data *deleg_entry,
 		return ret;
 
 out:
-	atomic_inc_uint32_t(&cl_stats->failed_recalls);
+	inc_failed_recalls(clientid->gsh_client);
 	if (maxfh)
 		gsh_free(maxfh);
 	if (call)
@@ -1437,7 +1433,9 @@ out:
 
 out_revoke:
 	LogCrit(COMPONENT_STATE, "Delegation(%p) will be revoked", deleg_entry);
-	atomic_inc_uint32_t(&cl_stats->num_revokes);
+	clientid->num_revokes++;
+	inc_revokes(clientid->gsh_client);
+
 	if (deleg_revoke(deleg_entry) != STATE_SUCCESS) {
 		LogDebug(COMPONENT_FSAL_UP,
 			 "Failed to revoke delegation(%p).", deleg_entry);

@@ -278,6 +278,7 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op, compound_data_t *data,
 				  client_record,
 				  &client_addr,
 				  &data->credential,
+				  op_ctx->client,
 				  data->minorversion);
 
 	if (unconf == NULL) {

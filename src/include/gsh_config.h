@@ -341,6 +341,8 @@ typedef struct nfs_core_param {
 	/** Path to the directory containing server specific
 	    modules.  In particular, this is where FSALs live. */
 	char *ganesha_modules_loc;
+	/* Frequency of dbus health heartbeat in ms. Set to 0 to disable */
+	uint32_t heartbeat_freq;
 } nfs_core_parameter_t;
 
 /** @} */

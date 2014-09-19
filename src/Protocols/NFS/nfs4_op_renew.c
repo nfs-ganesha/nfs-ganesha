@@ -38,6 +38,7 @@
 #include "nfs_proto_functions.h"
 #include "nfs_core.h"
 #include "nfs_rpc_callback.h"
+#include "server_stats.h"
 
 /**
  * @brief The NFS4_OP_RENEW operation.
@@ -95,9 +96,7 @@ int nfs4_op_renew(struct nfs_argop4 *op, compound_data_t *data,
 		/* update the lease, check the state of callback
 		 * path and return correct error */
 		if (nfs_param.nfsv4_param.allow_delegations &&
-		   get_cb_chan_down(clientid) &&
-		   atomic_fetch_uint32_t(
-			&clientid->cid_deleg_stats.curr_deleg_grants)) {
+		    get_cb_chan_down(clientid) && clientid->curr_deleg_grants) {
 			res_RENEW4->status =  NFS4ERR_CB_PATH_DOWN;
 			/* Set the time for first PATH_DOWN response */
 			if (clientid->first_path_down_resp_time == 0)

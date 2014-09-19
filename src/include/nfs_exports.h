@@ -317,7 +317,7 @@ bool export_check_security(struct svc_req *req);
 void LogClientListEntry(log_components_t component,
 			exportlist_client_entry_t *entry);
 
-bool init_export_root(struct gsh_export *exp);
+int init_export_root(struct gsh_export *exp);
 
 cache_inode_status_t nfs_export_get_root_entry(struct gsh_export *exp,
 					       cache_entry_t **entry);

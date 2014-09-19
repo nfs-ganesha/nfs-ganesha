@@ -123,6 +123,8 @@ NFS_CORE_PARAM {}
 
 	Plugins_Dir(path, default "/usr/lib64/ganesha")
 
+	heartbeat_freq(uint32, range 0 to 5000 default 1000)
+
 NFS_IP_NAME {}
 --------------
 

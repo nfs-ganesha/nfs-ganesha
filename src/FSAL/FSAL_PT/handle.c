@@ -743,7 +743,7 @@ fsal_status_t pt_lookup_path(struct fsal_export *exp_hdl,
 
 	memset(fh, 0, sizeof(ptfsal_handle_t));
 	fh->data.handle.handle_size = FSI_CCL_PERSISTENT_HANDLE_N_BYTES;
-	if (path == NULL || path[0] != '/' || strlen(path) > PATH_MAX
+	if (path == NULL || path[0] != '/' || strlen(path) >= PATH_MAX
 	    || strlen(path) < 2) {
 		fsal_error = ERR_FSAL_INVAL;
 		goto errout;
