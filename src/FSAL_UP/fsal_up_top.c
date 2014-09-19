@@ -528,6 +528,26 @@ static state_status_t create_file_recall(cache_entry_t *entry,
 	return rc;
 }
 
+static void destroy_recall(struct state_layout_recall_file *recall)
+{
+	if (recall == NULL)
+		return;
+
+	while (!glist_empty(&recall->state_list)) {
+		struct recall_state_list *list_entry;
+		/* The first entry in the queue */
+		list_entry = glist_first_entry(&recall->state_list,
+					       struct recall_state_list,
+					       link);
+		glist_del(&list_entry->link);
+		gsh_free(list_entry);
+	}
+
+	/* Remove from entry->layoutrecall_list */
+	glist_del(&recall->entry_link);
+	gsh_free(recall);
+}
+
 static void layoutrecall_one_call(void *arg);
 
 /**
@@ -665,7 +685,15 @@ state_status_t layoutrecall(struct fsal_module *fsal,
 	}
 
  out:
+
+	/* Free the recall list resources */
+	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
+	destroy_recall(recall);
+	PTHREAD_RWLOCK_unlock(&entry->state_lock);
+
+	/* Release the cache entry */
 	cache_inode_put(entry);
+
 	return rc;
 }
 
