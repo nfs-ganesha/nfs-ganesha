@@ -233,6 +233,8 @@ void free_export(struct gsh_export *export)
 {
 	struct export_stats *export_st;
 
+	if (!export->refcnt)
+		return;
 	free_export_resources(export);
 	export_st = container_of(export, struct export_stats, export);
 	gsh_free(export_st);
