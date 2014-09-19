@@ -255,9 +255,6 @@ typedef enum {
 nfsstat4 nfs4_utf8string2dynamic(const utf8string *input, utf8_scantype_t scan,
 				 char **obj_name);
 
-void handle_recalls(struct fsal_layoutreturn_arg *arg, state_t *state,
-		    const struct pnfs_segment *segment);
-
 nfsstat4 cache_entry_To_Fattr(cache_entry_t *, fattr4 *,
 			      compound_data_t *, nfs_fh4 *,
 			      struct bitmap4 *);

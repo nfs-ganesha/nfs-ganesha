@@ -354,6 +354,7 @@ void handle_recalls(struct fsal_layoutreturn_arg *arg, state_t *state,
 			if (satisfaction
 			    && glist_length(&s->state->state_data.layout.
 					    state_segments) == 1) {
+				dec_state_t_ref(s->state);
 				glist_del(&s->link);
 				arg->recall_cookies[arg->ncookies++]
 				    = r->recall_cookie;
@@ -362,6 +363,7 @@ void handle_recalls(struct fsal_layoutreturn_arg *arg, state_t *state,
 		}
 
 		if (glist_empty(&r->state_list)) {
+			/* Remove from entry->layoutrecall_list */
 			glist_del(&r->entry_link);
 			gsh_free(r);
 		}
