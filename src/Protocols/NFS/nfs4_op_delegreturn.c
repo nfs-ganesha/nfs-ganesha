@@ -82,11 +82,18 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t *data,
 	/* Initialize to sane default */
 	resp->resop = NFS4_OP_DELEGRETURN;
 
-	/* If the filehandle is invalid */
-	res_DELEGRETURN4->status = nfs4_Is_Fh_Invalid(&data->currentFH);
+	/* If the filehandle is invalid. Delegations are only supported on
+	 * regular files at the moment.
+	 */
+	res_DELEGRETURN4->status = nfs4_sanity_check_FH(data,
+							REGULAR_FILE,
+							false);
 
-	if (res_DELEGRETURN4->status != NFS4_OK)
+	if (res_DELEGRETURN4->status != NFS4_OK) {
+		if (res_DELEGRETURN4->status == NFS4ERR_ISDIR)
+			res_DELEGRETURN4->status = NFS4ERR_INVAL;
 		return res_DELEGRETURN4->status;
+	}
 
 	/* Check stateid correctness and get pointer to state */
 	res_DELEGRETURN4->status = nfs4_Check_Stateid(&arg_DELEGRETURN4->
@@ -101,12 +108,6 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (res_DELEGRETURN4->status != NFS4_OK)
 		return res_DELEGRETURN4->status;
-
-	/* Delegations are only supported on regular files at the moment */
-	if (data->current_filetype != REGULAR_FILE) {
-		res_DELEGRETURN4->status = NFS4ERR_INVAL;
-		return NFS4ERR_INVAL;
-	}
 
 	found_deleg = NULL;
 	PTHREAD_RWLOCK_wrlock(&data->current_entry->state_lock);
