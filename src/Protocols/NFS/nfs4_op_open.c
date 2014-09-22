@@ -399,8 +399,11 @@ static nfsstat4 open4_validate_claim(compound_data_t *data,
 			status = NFS4ERR_GRACE;
 		break;
 
-	case CLAIM_PREVIOUS:
 	case CLAIM_DELEGATE_PREV:
+		status = NFS4ERR_NOTSUPP;
+		break;
+
+	case CLAIM_PREVIOUS:
 		if ((clientid->cid_allow_reclaim != 1) || !nfs_in_grace()
 		    || ((data->minorversion > 0)
 		    && clientid->cid_cb.v41.cid_reclaim_complete))
@@ -506,14 +509,11 @@ bool open4_open_owner(struct nfs_argop4 *op, compound_data_t *data,
 				case CLAIM_NULL:
 					utfile = &oc->open_claim4_u.file;
 					break;
-				case CLAIM_DELEGATE_PREV:
-					utfile = &oc->open_claim4_u.
-							file_delegate_prev;
-					break;
 				case CLAIM_DELEGATE_CUR:
 					utfile = &oc->open_claim4_u.
 							delegate_cur_info.file;
 					break;
+				case CLAIM_DELEGATE_PREV:
 				default:
 					return false;
 				}
@@ -863,8 +863,7 @@ static nfsstat4 open4_claim_null(OPEN4args *arg, compound_data_t *data,
 /**
  * @brief Check delegation claims while opening a file
  *
- * This function implements the CLAIM_DELEGATE_CUR and
- * CLAIM_DELEGATE_PREV claim types.
+ * This function implements the CLAIM_DELEGATE_CUR claim.
  *
  * @param[in]     arg   OPEN4 arguments
  * @param[in,out] data  Comopund's data
@@ -881,6 +880,9 @@ static nfsstat4 open4_claim_deleg(OPEN4args *arg, compound_data_t *data,
 	struct glist_head *glist;
 	cache_inode_status_t cache_status;
 	nfsstat4 status;
+	struct deleg_data *iter_deleg;
+	state_t *iter_state;
+	state_t *found_state = NULL;
 
 	if (!op_ctx->fsal_export->ops->fs_supports(
 			op_ctx->fsal_export, fso_delegations)) {
@@ -889,15 +891,10 @@ static nfsstat4 open4_claim_deleg(OPEN4args *arg, compound_data_t *data,
 		return NFS4ERR_NOTSUPP;
 	}
 
-	assert(claim == CLAIM_DELEGATE_PREV || claim == CLAIM_DELEGATE_CUR);
-	if (claim == CLAIM_DELEGATE_PREV) {
-		utfname = &arg->claim.open_claim4_u.file_delegate_prev;
-	} else {
-		utfname = &arg->claim.open_claim4_u.
-				delegate_cur_info.file;
-		rcurr_state = &arg->claim.open_claim4_u.
-				delegate_cur_info.delegate_stateid;
-	}
+	assert(claim == CLAIM_DELEGATE_CUR);
+	utfname = &arg->claim.open_claim4_u.delegate_cur_info.file;
+	rcurr_state = &arg->claim.open_claim4_u.
+			delegate_cur_info.delegate_stateid;
 
 	LogDebug(COMPONENT_NFS_V4, "file name: %.*s",
 		 utfname->utf8string_len, utfname->utf8string_val);
@@ -928,42 +925,26 @@ static nfsstat4 open4_claim_deleg(OPEN4args *arg, compound_data_t *data,
 		return status;
 	}
 
-	if (claim == CLAIM_DELEGATE_CUR) {
-		struct deleg_data *iter_deleg;
-		state_t *iter_state;
-		state_t *found_state = NULL;
-
-		PTHREAD_RWLOCK_wrlock(&entry_lookup->state_lock);
-		glist_for_each(glist, &entry_lookup->object.file.deleg_list) {
-			iter_deleg = glist_entry(glist,
-						struct deleg_data,
-						dd_list);
-			iter_state = iter_deleg->dd_state;
-			if (SAME_STATEID(rcurr_state, iter_state)) {
-				found_state = iter_state;
-				LogFullDebug(COMPONENT_NFS_V4,
-					     "found matching state %p",
-					     found_state);
-				break;
-			}
-		}
-		PTHREAD_RWLOCK_unlock(&entry_lookup->state_lock);
-
-		if (found_state == NULL) {
-			LogDebug(COMPONENT_NFS_V4,
-				 "state not found with CLAIM_DELEGATE_CUR");
-			return NFS4ERR_BAD_STATEID;
-		}
-		LogFullDebug(COMPONENT_NFS_V4, "done with CLAIM_DELEGATE_CUR");
-	} else { /* We are in CLAIM_DELEGATE_PREV case */
-		if (!nfs4_check_deleg_reclaim(clientid, &data->currentFH)) {
-			/* It must have been revoked hence
-			 * the client can't reclaim.
-			 */
-			LogInfo(COMPONENT_NFS_V4, "Can't reclaim prev");
-			return NFS4ERR_RECLAIM_BAD;
+	PTHREAD_RWLOCK_wrlock(&entry_lookup->state_lock);
+	glist_for_each(glist, &entry_lookup->object.file.deleg_list) {
+		iter_deleg = glist_entry(glist, struct deleg_data, dd_list);
+		iter_state = iter_deleg->dd_state;
+		if (SAME_STATEID(rcurr_state, iter_state)) {
+			found_state = iter_state;
+			LogFullDebug(COMPONENT_NFS_V4,
+					"found matching state %p",
+					found_state);
+			break;
 		}
 	}
+	PTHREAD_RWLOCK_unlock(&entry_lookup->state_lock);
+
+	if (found_state == NULL) {
+		LogDebug(COMPONENT_NFS_V4,
+				"state not found with CLAIM_DELEGATE_CUR");
+		return NFS4ERR_BAD_STATEID;
+	}
+	LogFullDebug(COMPONENT_NFS_V4, "done with CLAIM_DELEGATE_CUR");
 
 	return NFS4_OK;
 }
@@ -1037,10 +1018,7 @@ static void get_delegation(compound_data_t *data, OPEN4args *args,
 	lock_desc.lock_start = 0;
 	lock_desc.lock_length = 0;
 	lock_desc.lock_sle_type = FSAL_LEASE_LOCK;
-	if (args->claim.claim == CLAIM_DELEGATE_PREV)
-		lock_desc.lock_reclaim = true;
-	else
-		lock_desc.lock_reclaim = false;
+	lock_desc.lock_reclaim = false;
 
 	init_new_deleg_state(&deleg_data, deleg_type, client);
 
