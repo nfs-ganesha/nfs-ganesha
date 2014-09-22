@@ -712,7 +712,7 @@ void nfs4_load_recov_clids(nfs_grace_start_t *gsp);
 void nfs4_clean_old_recov_dir(char *);
 void nfs4_create_recov_dir(void);
 void nfs4_record_revoke(nfs_client_id_t *, nfs_fh4 *);
-bool nfs4_can_deleg_reclaim_prev(nfs_client_id_t *, nfs_fh4 *);
+bool nfs4_check_deleg_reclaim(nfs_client_id_t *, nfs_fh4 *);
 
 
 #endif				/* SAL_FUNCTIONS_H */

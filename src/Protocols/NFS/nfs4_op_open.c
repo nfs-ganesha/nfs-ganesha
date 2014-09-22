@@ -956,8 +956,7 @@ static nfsstat4 open4_claim_deleg(OPEN4args *arg, compound_data_t *data,
 		}
 		LogFullDebug(COMPONENT_NFS_V4, "done with CLAIM_DELEGATE_CUR");
 	} else { /* We are in CLAIM_DELEGATE_PREV case */
-		if (!nfs4_can_deleg_reclaim_prev(clientid,
-						&data->currentFH)) {
+		if (!nfs4_check_deleg_reclaim(clientid, &data->currentFH)) {
 			/* It must have been revoked hence
 			 * the client can't reclaim.
 			 */
@@ -1363,7 +1362,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 		/* Both of these just use the current filehandle. */
 	case CLAIM_PREVIOUS:
 		owner->so_owner.so_nfs4_owner.so_confirmed = true;
-		if (!nfs4_can_deleg_reclaim_prev(clientid, &data->currentFH)) {
+		if (!nfs4_check_deleg_reclaim(clientid, &data->currentFH)) {
 			/* It must have been revoked. Can't reclaim.*/
 			LogInfo(COMPONENT_NFS_V4, "Can't reclaim delegation");
 			res_OPEN4->status = NFS4ERR_RECLAIM_BAD;

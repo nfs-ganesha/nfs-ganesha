@@ -1191,7 +1191,15 @@ void nfs4_record_revoke(nfs_client_id_t *delr_clid, nfs_fh4 *delr_handle)
 	}
 }
 
-bool nfs4_can_deleg_reclaim_prev(nfs_client_id_t *clid, nfs_fh4 *fhandle)
+/**
+ * @brief Decides if it is allowed to reclaim a given delegation
+ *
+ * @param[in] clientid Client record
+ * @param[in] filehandle of the revoked file.
+ * @retval true if allowed and false if not.
+ *
+ */
+bool nfs4_check_deleg_reclaim(nfs_client_id_t *clid, nfs_fh4 *fhandle)
 {
 	char rhdlstr[NAME_MAX];
 	struct glist_head *node;
