@@ -831,8 +831,11 @@ set(SYSTEM_LIBRARIES
   ${LIBRT}
 )
 
+# Config file; make sure it doesn't clobber an existing one
 include(${CMAKE_SOURCE_DIR}/cmake/modules/InstallPackageConfigFile.cmake)
 InstallPackageConfigFile(${CMAKE_SOURCE_DIR}/config_samples/vfs.conf ${SYSCONFDIR}/ganesha ganesha.conf)
+# Sample config files
+install(DIRECTORY config_samples DESTINATION share/doc/ganesha)
 
 IF( NOT EXISTS ${PROJECT_SOURCE_DIR}/libntirpc/CMakeLists.txt )
 message( FATAL_ERROR
