@@ -385,6 +385,7 @@ include(CheckIncludeFiles)
 include(CheckLibraryExists)
 include(CheckCSourceCompiles)
 include(TestBigEndian)
+include(CheckFileOffsetBits)
 
 check_include_files(stdbool.h HAVE_STDBOOL_H)
 check_include_files(strings.h HAVE_STRINGS_H)
@@ -425,6 +426,8 @@ if(${BIGENDIAN})
 else()
   set(LITTLEEND ON)
 endif(${BIGENDIAN})
+
+CHECK_FILE_OFFSET_BITS()
 
 if( "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_GREATER "2.6" )
   find_package(Threads REQUIRED)

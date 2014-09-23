@@ -49,6 +49,10 @@
 #cmakedefine HAVE_INCLUDE_LIBLUSTREAPI_H 1
 #cmakedefine HAVE_DAEMON 1
 
+/* Handle some of the 64-bit offset changes when settable */
+#cmakedefine _FILE_OFFSET_BITS @_FILE_OFFSET_BITS@
+#cmakedefine _LARGEFILE_SOURCE 1
+
 #define NFS_GANESHA 1
 
 #endif /* CONFIG_H */
