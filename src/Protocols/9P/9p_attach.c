@@ -140,8 +140,11 @@ int _9p_attach(struct _9p_request_data *req9p, void *worker_data,
 	/* Keep track of the export in the req_ctx */
 	pfid->op_context.export = export;
 	pfid->op_context.fsal_export = export->fsal_export;
+	pfid->op_context.caller_addr = &req9p->pconn->addrpeer;
+	pfid->op_context.export_perms = &req9p->pconn->export_perms;
 
 	op_ctx =  &pfid->op_context;
+	export_check_access();
 
 	if (exppath[0] != '/' ||
 	    !strcmp(exppath, export->fullpath)) {

@@ -1410,6 +1410,14 @@ out:
 static void _9p_execute(request_data_t *req, nfs_worker_data_t *worker_data)
 {
 	struct _9p_request_data *req9p = &req->r_u._9p;
+	struct req_op_context req_ctx;
+	struct export_perms export_perms;
+
+	memset(&req_ctx, 0, sizeof(struct req_op_context));
+	op_ctx = &req_ctx;
+	op_ctx->caller_addr = &worker_data->hostaddr;
+	op_ctx->req_type = req->rtype;
+	op_ctx->export_perms = &export_perms;
 
 	if (req9p->pconn->trans_type == _9P_TCP)
 		_9p_tcp_process_request(req9p, worker_data);
