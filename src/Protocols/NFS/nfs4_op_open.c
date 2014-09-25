@@ -234,22 +234,14 @@ static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t *data,
 			return nfs4_Errno_state(state_status);
 
 		glist_init(&(file_state->state_data.share.share_lockstates));
-
-		/* Attach this open to an export */
-		file_state->state_export = op_ctx->export;
-		PTHREAD_RWLOCK_wrlock(&op_ctx->export->lock);
-		glist_add_tail(&op_ctx->export->exp_state_list,
-			       &file_state->state_export_list);
-		PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
 	} else {
 		/* Check if open from another export */
 		if (file_state->state_export != op_ctx->export) {
 			LogEvent(COMPONENT_STATE,
-				 "Lock Owner Export Conflict, Lock held for export %d (%s), request for export %d (%s)",
+				 "Lock Owner Export Conflict, Lock held for export %"
+				 PRIu16" request for export %"PRIu16,
 				 file_state->state_export->export_id,
-				 file_state->state_export->fullpath,
-				 op_ctx->export->export_id,
-				 op_ctx->export->fullpath);
+				 op_ctx->export->export_id);
 			dec_state_t_ref(file_state);
 			return STATE_INVALID_ARGUMENT;
 		}
@@ -1029,14 +1021,6 @@ static void get_delegation(compound_data_t *data, OPEN4args *args,
 				   "delegation state added, stateid: %s",
 				   100, new_state->stateid_other,
 				   OTHERSIZE);
-
-		/* Attach this open to an export */
-		new_state->state_export = op_ctx->export;
-
-		PTHREAD_RWLOCK_wrlock(&op_ctx->export->lock);
-		glist_add_tail(&op_ctx->export->exp_state_list,
-			       &new_state->state_export_list);
-		PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
 
 		/* acquire_lease_lock() gets the delegation from FSAL */
 		state_status = acquire_lease_lock(new_state, false);

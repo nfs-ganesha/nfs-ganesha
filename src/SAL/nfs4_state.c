@@ -158,6 +158,13 @@ state_status_t state_add_impl(cache_entry_t *entry, enum state_type state_type,
 		return status;
 	}
 
+	/* Attach this to an export */
+	pnew_state->state_export = op_ctx->export;
+	PTHREAD_RWLOCK_wrlock(&op_ctx->export->lock);
+	glist_add_tail(&op_ctx->export->exp_state_list,
+		       &pnew_state->state_export_list);
+	PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
+
 	/* Add state to list for cache entry */
 	glist_add_tail(&entry->list_of_states, &pnew_state->state_list);
 
