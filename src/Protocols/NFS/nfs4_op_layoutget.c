@@ -201,13 +201,6 @@ static nfsstat4 acquire_layout_state(compound_data_t *data,
 		}
 
 		glist_init(&(*layout_state)->state_data.layout.state_segments);
-
-		/* Attach this open to an export */
-		(*layout_state)->state_export = op_ctx->export;
-		PTHREAD_RWLOCK_wrlock(&op_ctx->export->lock);
-		glist_add_tail(&op_ctx->export->exp_state_list,
-			       &(*layout_state)->state_export_list);
-		PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
 	} else {
 		/* A state eixsts but is of an invalid type. */
 		nfs_status = NFS4ERR_BAD_STATEID;

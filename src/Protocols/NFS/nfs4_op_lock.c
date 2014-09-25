@@ -284,13 +284,10 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 		/* Check if lock state belongs to same export */
 		if (lock_state->state_export != op_ctx->export) {
 			LogEvent(COMPONENT_STATE,
-				 "Lock Owner Export Conflict, Lock held "
-				 "for export %d (%s), request for "
-				 "export %d (%s)",
+				 "Lock Owner Export Conflict, Lock held for export %"
+				 PRIu16" request for export %"PRIu16,
 				 lock_state->state_export->export_id,
-				 lock_state->state_export->fullpath,
-				 op_ctx->export->export_id,
-				 op_ctx->export->fullpath);
+				 op_ctx->export->export_id);
 			res_LOCK4->status = STATE_INVALID_ARGUMENT;
 			goto out2;
 		}
@@ -504,16 +501,6 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 		}
 
 		glist_init(&lock_state->state_data.lock.state_locklist);
-
-		/* Attach this lock to an export */
-		lock_state->state_export = op_ctx->export;
-
-		PTHREAD_RWLOCK_wrlock(&op_ctx->export->lock);
-
-		glist_add_tail(&op_ctx->export->exp_state_list,
-			       &lock_state->state_export_list);
-
-		PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
 
 		/* Add lock state to the list of lock states belonging
 		   to the open state */
