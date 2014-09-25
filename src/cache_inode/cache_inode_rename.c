@@ -40,7 +40,7 @@
 #include "log.h"
 #include "hashtable.h"
 #include "fsal.h"
-#include "cache_inode.h"
+#include "cache_inode_lru.h"
 
 #include <unistd.h>
 #include <sys/types.h>

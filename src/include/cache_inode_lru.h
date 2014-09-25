@@ -148,6 +148,27 @@ bool cache_inode_is_pinned(cache_entry_t *entry);
 void cache_inode_lru_kill_for_shutdown(cache_entry_t *entry);
 
 /**
+ *
+ * @brief Release logical reference to a cache entry
+ *
+ * This function releases a logical reference to a cache entry
+ * acquired by a previous call to cache_inode_get.
+ *
+ * The result is typically to decrement the reference count on entry,
+ * but additional side effects include LRU adjustment, movement
+ * to/from the protected LRU partition, or recyling if the caller has
+ * raced an operation which made entry unreachable (and this current
+ * caller has the last reference).  Caller MUST NOT make further
+ * accesses to the memory pointed to by entry.
+ *
+ * @param[in] entry Cache entry being returned
+ */
+static inline void cache_inode_put(cache_entry_t *entry)
+{
+	cache_inode_lru_unref(entry, LRU_FLAG_NONE);
+}
+
+/**
  * Return true if there are FDs available to serve open requests,
  * false otherwise.  This function also wakes the LRU thread if the
  * current FD count is above the high water mark.
