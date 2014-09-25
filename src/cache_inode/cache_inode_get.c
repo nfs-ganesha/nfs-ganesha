@@ -422,26 +422,4 @@ cache_inode_get_protected(cache_entry_t **entry,
 	return CACHE_INODE_SUCCESS;
 }
 
-/**
- *
- * @brief Release logical reference to a cache entry
- *
- * This function releases a logical reference to a cache entry
- * acquired by a previous call to cache_inode_get.
- *
- * The result is typically to decrement the reference count on entry,
- * but additional side effects include LRU adjustment, movement
- * to/from the protected LRU partition, or recyling if the caller has
- * raced an operation which made entry unreachable (and this current
- * caller has the last reference).  Caller MUST NOT make further
- * accesses to the memory pointed to by entry.
- *
- * @param[in] entry Cache entry being returned
- */
-void
-cache_inode_put(cache_entry_t *entry)
-{
-	cache_inode_lru_unref(entry, LRU_FLAG_NONE);
-}
-
 /** @} */

@@ -665,7 +665,7 @@ cache_inode_get_protected(cache_entry_t **entry,
 			  cache_inode_status_t get_entry(cache_entry_t **,
 							 void *),
 			  void *source);
-void cache_inode_put(cache_entry_t *entry);
+
 void cache_inode_unexport(struct gsh_export *export);
 
 cache_inode_status_t cache_inode_access_sw(cache_entry_t *entry,
