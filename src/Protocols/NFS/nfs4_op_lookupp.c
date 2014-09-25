@@ -198,7 +198,7 @@ not_junction:
 		}
 
 		/* Keep the pointer within the compound data */
-		set_current_entry(data, file_entry, true);
+		set_current_entry(data, file_entry, false);
 
 		/* Return successfully */
 		res_LOOKUPP4->status = NFS4_OK;

@@ -351,8 +351,10 @@ static nfsstat4 open4_create_fh(compound_data_t *data, cache_entry_t *entry)
 	/* Building a new fh */
 	if (!nfs4_FSALToFhandle(&newfh4,
 				entry->obj_handle,
-				op_ctx->export))
+				op_ctx->export)) {
+		cache_inode_put(entry);
 		return NFS4ERR_SERVERFAULT;
+	}
 
 	/* This new fh replaces the current FH */
 	data->currentFH.nfs_fh4_len = newfh4.nfs_fh4_len;
@@ -361,7 +363,7 @@ static nfsstat4 open4_create_fh(compound_data_t *data, cache_entry_t *entry)
 	       newfh4.nfs_fh4_len);
 
 	/* Update the current entry */
-	set_current_entry(data, entry, true);
+	set_current_entry(data, entry, false);
 
 	return NFS4_OK;
 }
