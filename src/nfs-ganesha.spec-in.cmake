@@ -293,8 +293,6 @@ be used with NFS-Ganesha to support Gluster
 
 %build
 cmake .	-DCMAKE_BUILD_TYPE=Debug			\
-	-DCMAKE_INSTALL_PREFIX=/usr			\
-	-DCMAKE_BUILD_TYPE=Debug			\
 	-DBUILD_CONFIG=rpmbuild				\
 %if %{with_fsal_zfs}
 	-DUSE_FSAL_ZFS=ON				\
@@ -437,6 +435,9 @@ make DESTDIR=%{buildroot} install
 %config(noreplace) %{_sysconfdir}/sysconfig/ganesha
 %config(noreplace) %{_sysconfdir}/logrotate.d/ganesha
 %dir %{_sysconfdir}/ganesha/
+%config(noreplace) %{_sysconfdir}/ganesha/ganesha.conf
+%dir %{_defaultdocdir}/ganesha/
+%{_defaultdocdir}/ganesha/*
 
 %if 0%{?fedora}
 %config %{_unitdir}/nfs-ganesha.service
