@@ -150,6 +150,12 @@ int nfs3_readdirplus(nfs_arg_t *arg,
 			 "REQUEST PROCESSING: Calling nfs3_readdirplus handle: %s",
 			 str);
 	}
+	if (op_ctx->export->options & EXPORT_OPTION_NO_READDIR_PLUS) {
+		res->res_readdirplus3.status = NFS3ERR_NOTSUPP;
+		LogFullDebug(COMPONENT_NFS_READDIR,
+			     "Request not supported");
+		goto out;
+	}
 
 	/* to avoid setting it on each error case */
 	res->res_readdir3.READDIR3res_u.resfail.dir_attributes.

@@ -199,6 +199,7 @@ typedef struct exportlist_client_entry__ {
 
 #define EXPORT_OPTION_MANAGE_GIDS 0x40000000 /*< Do not trust
 						    altgrp in AUTH_SYS creds */
+#define EXPORT_OPTION_NO_READDIR_PLUS 0x80000000 /*< Disallow readdir plus */
 
 /* NFS4 specific structures */
 
