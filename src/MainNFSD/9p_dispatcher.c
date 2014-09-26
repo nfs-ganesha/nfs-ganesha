@@ -120,8 +120,6 @@ void *_9p_socket_thread(void *Arg)
 	struct pollfd fds[1];
 	int fdcount = 1;
 	static char my_name[MAXNAMLEN + 1];
-	socklen_t addrpeerlen = 0;
-	struct sockaddr_storage addrpeer;
 	char strcaller[INET6_ADDRSTRLEN];
 	request_data_t *req = NULL;
 	int tag;
@@ -159,9 +157,9 @@ void *_9p_socket_thread(void *Arg)
 	if (gettimeofday(&_9p_conn.birth, NULL) == -1)
 		LogFatal(COMPONENT_9P, "Cannot get connection's time of birth");
 
-	addrpeerlen = sizeof(addrpeer);
-	rc = getpeername(tcp_sock, (struct sockaddr *)&addrpeer,
-			 &addrpeerlen);
+	_9p_conn.addrpeerlen = sizeof(_9p_conn.addrpeer);
+	rc = getpeername(tcp_sock, (struct sockaddr *)&_9p_conn.addrpeer,
+			 &_9p_conn.addrpeerlen);
 	if (rc == -1) {
 		LogMajor(COMPONENT_9P,
 			 "Cannot get peername to tcp socket for 9p, error %d (%s)",
@@ -170,15 +168,15 @@ void *_9p_socket_thread(void *Arg)
 		strncpy(strcaller, "(unresolved)", INET6_ADDRSTRLEN);
 		strcaller[12] = '\0';
 	} else {
-		switch (addrpeer.ss_family) {
+		switch (_9p_conn.addrpeer.ss_family) {
 		case AF_INET:
-			inet_ntop(addrpeer.ss_family,
-				  &((struct sockaddr_in *)&addrpeer)->
+			inet_ntop(_9p_conn.addrpeer.ss_family,
+				  &((struct sockaddr_in *)&_9p_conn.addrpeer)->
 				  sin_addr, strcaller, INET6_ADDRSTRLEN);
 			break;
 		case AF_INET6:
-			inet_ntop(addrpeer.ss_family,
-				  &((struct sockaddr_in6 *)&addrpeer)->
+			inet_ntop(_9p_conn.addrpeer.ss_family,
+				  &((struct sockaddr_in6 *)&_9p_conn.addrpeer)->
 				  sin6_addr, strcaller, INET6_ADDRSTRLEN);
 			break;
 		default:
@@ -191,7 +189,7 @@ void *_9p_socket_thread(void *Arg)
 		printf("9p socket #%ld is connected to %s\n", tcp_sock,
 		       strcaller);
 	}
-	_9p_conn.client = get_gsh_client(&addrpeer, false);
+	_9p_conn.client = get_gsh_client(&_9p_conn.addrpeer, false);
 
 	/* Set up the structure used by poll */
 	memset((char *)fds, 0, sizeof(struct pollfd));
