@@ -437,7 +437,7 @@ int ipstring_to_sockaddr(const char *str, sockaddr_t *addr)
 				p = p->ai_next;
 			}
 		}
-		memcpy(addr, info->ai_addr, SIZE_AI_ADDR);
+		memcpy(addr, info->ai_addr, info->ai_addrlen);
 		freeaddrinfo(info);
 	} else {
 		switch (rc) {
