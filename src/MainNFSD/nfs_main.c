@@ -98,9 +98,9 @@ char usage[] =
 	"SIGUSR1    : Enable/Disable File Content Cache forced flush\n"
 	"SIGTERM    : Cleanly terminate the program\n"
 	"------------- Default Values -------------\n"
-	"LogFile    : /tmp/nfs-ganesha.log\n"
-	"PidFile    : /var/run/ganesha.pid\n"
-	"DebugLevel : NIV_EVENT\n" "ConfigFile : /etc/ganesha/ganesha.conf\n";
+	"LogFile    : SYSLOG\n"
+	"PidFile    : "GANESHA_PIDFILE_PATH"\n"
+	"DebugLevel : NIV_EVENT\n" "ConfigFile : "GANESHA_CONFIG_PATH"\n";
 
 /**
  * main: simply the main function.
