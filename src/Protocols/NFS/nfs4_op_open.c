@@ -1098,6 +1098,8 @@ static void get_delegation(compound_data_t *data, OPEN4args *args,
 				get_deleg_perm(data->current_entry,
 					       &writeres->permissions,
 					       deleg_type);
+				data->current_entry->object.file.fdeleg_stats.
+					fds_deleg_type = OPEN_DELEGATE_WRITE;
 			} else {
 				assert(deleg_type == OPEN_DELEGATE_READ);
 				open_read_delegation4 *readres =
@@ -1107,6 +1109,8 @@ static void get_delegation(compound_data_t *data, OPEN4args *args,
 				get_deleg_perm(data->current_entry,
 					       &readres->permissions,
 					       deleg_type);
+				data->current_entry->object.file.fdeleg_stats.
+					fds_deleg_type = OPEN_DELEGATE_READ;
 			}
 		}
 	}
@@ -1144,9 +1148,6 @@ static void do_delegation(OPEN4args *arg_OPEN4, OPEN4res *res_OPEN4,
 		LogDebug(COMPONENT_STATE, "Attempting to grant delegation");
 		get_delegation(data, arg_OPEN4, open_state, owner, clientid,
 			       resok, prerecall);
-	} else {
-		resok->delegation.open_delegation4_u.
-			od_whynone.ond_why = WND4_NOT_WANTED;
 	}
 }
 
