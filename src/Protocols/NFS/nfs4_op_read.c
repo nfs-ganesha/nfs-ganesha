@@ -347,7 +347,6 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 			break;
 		case STATE_TYPE_LOCK:
 		case STATE_TYPE_DELEG:
-			/* Nothing to do */
 			break;
 		default:
 			/* Sanity check: all other types are illegal.

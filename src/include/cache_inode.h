@@ -492,6 +492,10 @@ struct cache_entry_t {
 			bool write_delegated; /* true iff write delegated */
 			/** Delegation statistics */
 			struct file_deleg_stats fdeleg_stats;
+			uint32_t anon_ops;   /* number of anonymous operations
+					      * happening at the moment which
+					      * prevents delegations from being
+					      * granted */
 		} file;		/*< REGULAR_FILE data */
 
 		struct {
