@@ -53,6 +53,58 @@
 #include "server_stats.h"
 
 /**
+ * @brief Check if exiting OPENs would conflict granting a delegation.
+ *
+ * cache_entry_t state lock must be held at least in read mode while
+ * calling this function.
+ *
+ * @param[in] entry	Cache inode entry
+ * @param[in] state     Open state of current OPEN operation.
+ *
+ * @return true if granting delegation would conflict with outstanding
+ * OPENs.
+ */
+bool state_open_deleg_conflict(cache_entry_t *entry, const state_t *open_state)
+{
+	const state_share_t *share = &open_state->state_data.share;
+
+	assert(open_state->state_type == STATE_TYPE_SHARE);
+
+	switch (share->share_access & OPEN4_SHARE_ACCESS_BOTH) {
+	case OPEN4_SHARE_ACCESS_BOTH:
+		/* We would be granting a write delegation. If this is
+		 * the only outstanding OPEN, then we can grant
+		 * write delegation without a conflict.
+		 */
+		if (entry->object.file.share_state.share_access_read == 1 &&
+		    entry->object.file.share_state.share_access_write == 1) {
+			return false;
+		}
+		break;
+	case OPEN4_SHARE_ACCESS_WRITE:
+		/* We would be granting a write delegation. If this is
+		 * the only outstanding OPEN, then we can grant
+		 * write delegation without a conflict.
+		 */
+		if (entry->object.file.share_state.share_access_read == 0 &&
+		    entry->object.file.share_state.share_access_write == 1) {
+			return false;
+		}
+		break;
+	case OPEN4_SHARE_ACCESS_READ:
+		/* We would be granting a read delegation. If there is
+		 * no write OPEN, then we can grant read delegation
+		 * without a conflict.
+		 */
+		if (entry->object.file.share_state.share_access_write == 0)
+			return false;
+		break;
+	}
+
+	return true;
+}
+
+/**
  * @brief Initialize new delegation state as argument for state_add()
  *
  * Initialize delegation state struct. This is then given as an argument
@@ -314,10 +366,6 @@ bool init_deleg_heuristics(cache_entry_t *entry)
  * @brief Decide if a delegation should be granted based on heuristics.
  *
  * Decide if a delegation should be granted based on heuristics.
- * Note: Whether the export supports delegations should be checked before
- * calling this function.
- * The open_state->state_type will decide whether we attempt to get a READ or
- * WRITE delegation.
  *
  * @param[in] entry Inode entry the delegation will be on.
  * @param[in] client Client that would own the delegation.

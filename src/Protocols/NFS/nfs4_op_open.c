@@ -998,6 +998,10 @@ static void get_delegation(compound_data_t *data, OPEN4args *args,
 	struct state_refer refer;
 	state_t *new_state;
 
+	/* Check if any prior OPENs conflict with granting a delegation */
+	if (state_open_deleg_conflict(data->current_entry, open_state))
+		return;
+
 	/* Record the sequence info */
 	if (data->minorversion > 0) {
 		memcpy(refer.session,

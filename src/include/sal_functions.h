@@ -648,6 +648,7 @@ state_status_t state_share_check_conflict(cache_entry_t *entry,
 					  int share_acccess,
 					  int share_deny,
 					  enum share_bypass_modes bypass);
+bool state_open_deleg_conflict(cache_entry_t *entry, const state_t *open_state);
 
 state_status_t state_share_anonymous_io_start(cache_entry_t *entry,
 					      int share_access,
