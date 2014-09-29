@@ -185,7 +185,7 @@ static bool xdr_encode_nfs4_princ(XDR *xdrs, uint32_t id, bool group)
 				new_name.len += owner_domain.len;
 				looked_up = true;
 			} else {
-				LogWarn(COMPONENT_IDMAPPER,
+				LogInfo(COMPONENT_IDMAPPER,
 					"%s failed with code %d.",
 					(group ? "getgrgid_r" : "getpwuid_r"),
 					rc);
@@ -205,10 +205,10 @@ static bool xdr_encode_nfs4_princ(XDR *xdrs, uint32_t id, bool group)
 				new_name.len = strlen(namebuff);
 				looked_up = true;
 			} else {
-				LogWarn(COMPONENT_IDMAPPER,
+				LogInfo(COMPONENT_IDMAPPER,
 					"%s failed with code %d.",
 					(group ? "nfs4_gid_to_name" :
-					 "nfs4_uid_to_name"), rc);
+					"nfs4_uid_to_name"), rc);
 			}
 #else				/* USE_NFSIDMAP */
 			looked_up = false;
@@ -217,7 +217,7 @@ static bool xdr_encode_nfs4_princ(XDR *xdrs, uint32_t id, bool group)
 
 		if (!looked_up) {
 			if (nfs_param.nfsv4_param.allow_numeric_owners) {
-				LogWarn(COMPONENT_IDMAPPER,
+				LogInfo(COMPONENT_IDMAPPER,
 					"Lookup for %d failed, "
 					"using numeric %s", id,
 					(group ? "group" : "owner"));
@@ -225,7 +225,7 @@ static bool xdr_encode_nfs4_princ(XDR *xdrs, uint32_t id, bool group)
 				sprintf(namebuff, "%u", id);
 				new_name.len = strlen(namebuff);
 			} else {
-				LogWarn(COMPONENT_IDMAPPER,
+				LogInfo(COMPONENT_IDMAPPER,
 					"Lookup for %d failed, using nobody.",
 					id);
 				memcpy(new_name.addr, "nobody", 6);
