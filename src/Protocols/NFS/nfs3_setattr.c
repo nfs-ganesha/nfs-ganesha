@@ -106,6 +106,17 @@ int nfs3_setattr(nfs_arg_t *arg,
 		goto out;
 	}
 
+	/* Don't allow attribute change while we are in grace period.
+	 * Required for delegation reclaims and may be needed for other
+	 * reclaimable states as well. No NFS4ERR_GRACE in NFS v3, so
+	 * send jukebox error.
+	 */
+	if (nfs_in_grace()) {
+		res->res_setattr3.status = NFS3ERR_JUKEBOX;
+		rc = NFS_REQ_OK;
+		goto out;
+	}
+
 	nfs_SetPreOpAttr(entry, &pre_attr);
 
 	if (arg->arg_setattr3.guard.check) {

@@ -78,6 +78,15 @@ int nfs4_op_setattr(struct nfs_argop4 *op, compound_data_t *data,
 	if (res_SETATTR4->status != NFS4_OK)
 		return res_SETATTR4->status;
 
+	/* Don't allow attribute change while we are in grace period.
+	 * Required for delegation reclaims and may be needed for other
+	 * reclaimable states as well.
+	 */
+	if (nfs_in_grace()) {
+		res_SETATTR4->status = NFS4ERR_GRACE;
+		return res_SETATTR4->status;
+	}
+
 	/* Get only attributes that are allowed to be read */
 	if (!nfs4_Fattr_Check_Access
 	    (&arg_SETATTR4->obj_attributes, FATTR4_ATTR_WRITE)) {
