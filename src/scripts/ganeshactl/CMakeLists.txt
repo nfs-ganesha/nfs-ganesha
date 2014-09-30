@@ -13,6 +13,7 @@ set(GANESHA_SRCS
   Ganesha/log_mgr.py
   Ganesha/QtUI/log_settings.py
   Ganesha/io_stats.py
+  Ganesha/glib_dbus_stats.py
   )
 
 # Command line scripts
@@ -23,6 +24,7 @@ set(SCRIPT_SRC
   purge_gids.py
   ganeshactl.py
   ganesha-admin.py
+  ganesha_stats.py
   manage_clients.py
   manage_logger.py
   manage_exports.py

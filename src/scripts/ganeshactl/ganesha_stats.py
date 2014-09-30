@@ -10,7 +10,7 @@ import gobject
 import sys
 import time
 import re
-import glib_dbus_stats
+import Ganesha.glib_dbus_stats
 
 def usage():
     message = "Command requires one specific option from this list:\n"
@@ -47,8 +47,8 @@ elif command == "help":
     usage()
 
 # retrieve and print stats
-exp_interface = glib_dbus_stats.RetrieveExportStats()
-cl_interface = glib_dbus_stats.RetrieveClientStats()
+exp_interface = Ganesha.glib_dbus_stats.RetrieveExportStats()
+cl_interface = Ganesha.glib_dbus_stats.RetrieveClientStats()
 if command == "global":
     print exp_interface.global_stats()
 elif command == "export":

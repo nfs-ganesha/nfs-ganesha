@@ -552,13 +552,7 @@ make DESTDIR=%{buildroot} install
 /usr/bin/get_clientids
 /usr/bin/grace_period
 /usr/bin/purge_gids
-/usr/bin/stats_fast
-/usr/bin/stats_global
-/usr/bin/stats_inode
-/usr/bin/stats_io
-/usr/bin/stats_pnfs
-/usr/bin/stats
-/usr/bin/stats_total
+/usr/bin/ganesha_stats
 /usr/bin/sm_notify.ganesha
 %endif
 
