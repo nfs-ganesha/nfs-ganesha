@@ -151,34 +151,18 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t *data,
 	 */
 	state_status = release_lease_lock(data->current_entry, lock_owner,
 					  state_found, &lock_desc);
-	if (state_status != STATE_SUCCESS) {
-		/* Save the response in the lock owner */
-		Copy_nfs4_state_req(lock_owner,
-				    arg_DELEGRETURN4->deleg_stateid.seqid,
-				    op,
-				    data->current_entry,
-				    resp,
-				    tag);
-		res_DELEGRETURN4->status = nfs4_Errno_state(state_status);
-		goto unlock;
+
+	res_DELEGRETURN4->status = nfs4_Errno_state(state_status);
+
+	if (state_status == STATE_SUCCESS) {
+		/* Successful exit */
+		LogDebug(COMPONENT_NFS_V4_LOCK, "Successful exit");
+
+		state_del_locked(state_found, data->current_entry);
 	}
 
-	state_del_locked(state_found, data->current_entry);
-
-	/* Successful exit */
-	res_DELEGRETURN4->status = NFS4_OK;
-
-	LogDebug(COMPONENT_NFS_V4_LOCK, "Successful exit");
-
-	/* Save the response in the lock owner */
-	Copy_nfs4_state_req(lock_owner,
-			    arg_DELEGRETURN4->deleg_stateid.seqid,
-			    op,
-			    data->current_entry,
-			    resp,
-			    tag);
-
 unlock:
+
 	PTHREAD_RWLOCK_unlock(&data->current_entry->state_lock);
 	return res_DELEGRETURN4->status;
 }				/* nfs4_op_delegreturn */
@@ -196,10 +180,3 @@ void nfs4_op_delegreturn_Free(nfs_resop4 *resp)
 	/* Nothing to be done */
 	return;
 }				/* nfs4_op_delegreturn_Free */
-
-void nfs4_op_delegreturn_CopyRes(DELEGRETURN4res *resp_dst,
-				 DELEGRETURN4res *resp_src)
-{
-	/* Nothing to deep copy */
-	return;
-}
