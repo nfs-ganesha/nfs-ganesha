@@ -510,8 +510,6 @@ void nfs4_op_open_confirm_CopyRes(OPEN_CONFIRM4res *,
 				  OPEN_CONFIRM4res *);
 void nfs4_op_open_downgrade_CopyRes(OPEN_DOWNGRADE4res *,
 				    OPEN_DOWNGRADE4res *);
-void nfs4_op_delegreturn_CopyRes(DELEGRETURN4res *,
-				 DELEGRETURN4res *);
 
 void nfs4_op_exchange_id_Free(nfs_resop4 *);
 void nfs4_op_close_Free(nfs_resop4 *);
