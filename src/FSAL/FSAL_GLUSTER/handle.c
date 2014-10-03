@@ -597,10 +597,10 @@ static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
 	now(&s_time);
 #endif
 
-	link_content->len = 1024;	/* bad bad!!! need to determine size */
+	link_content->len = MAXPATHLEN; /* Max link path */
 	link_content->addr = gsh_malloc(link_content->len);
 	if (link_content->addr == NULL) {
-		status = gluster2fsal_error(rc);
+		status = gluster2fsal_error(ENOMEM);
 		goto out;
 	}
 
@@ -611,8 +611,15 @@ static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
 		goto out;
 	}
 
-	/* Check if return buffer overflowed, it is still '\0' terminated */
-	link_content->len = (strlen(link_content->addr) + 1);
+	if (rc >= MAXPATHLEN) {
+		status = gluster2fsal_error(EINVAL);
+		goto out;
+	}
+
+	/* rc is the number of bytes copied into link_content->addr
+	 * without including '\0' character. */
+	*(char *)(link_content->addr + rc) = '\0';
+	link_content->len = rc + 1;
 
  out:
 	if (status.major != ERR_FSAL_NO_ERROR) {
