@@ -1670,12 +1670,19 @@ static bool dbus_prop_get(log_components_t component, DBusMessageIter *reply)
 static bool dbus_prop_set(log_components_t component, DBusMessageIter *arg)
 {
 	char *level_code;
-	long log_level;
+	int log_level;
 
 	if (dbus_message_iter_get_arg_type(arg) != DBUS_TYPE_STRING)
 		return false;
 	dbus_message_iter_get_basic(arg, &level_code);
 	log_level = ReturnLevelAscii(level_code);
+	if (log_level == -1) {
+		LogDebug(COMPONENT_DBUS,
+			 "Invalid log level: '%s' given for component %s",
+			 level_code, LogComponents[component].comp_name);
+		return false;
+	}
+
 	if (component == COMPONENT_ALL) {
 		_SetLevelDebug(log_level);
 		LogChanges("Dbus set log level for all components to %s",
