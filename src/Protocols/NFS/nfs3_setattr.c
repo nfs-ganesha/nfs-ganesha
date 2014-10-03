@@ -55,7 +55,6 @@
  * Implements the NFSPROC3_SETATTR function.
  *
  * @param[in]  arg     NFS arguments union
- * @param[in]  export  NFS export list
  * @param[in]  worker  Data for worker thread
  * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call
@@ -176,8 +175,10 @@ int nfs3_setattr(nfs_arg_t *arg,
 			state_share_anonymous_io_done(entry,
 						      OPEN4_SHARE_ACCESS_WRITE);
 
-		if (cache_status != CACHE_INODE_SUCCESS)
+		if (cache_status != CACHE_INODE_SUCCESS) {
+			res->res_setattr3.status = nfs3_Errno(cache_status);
 			goto out_fail;
+		}
 	}
 
 	/* Set the NFS return */
@@ -203,11 +204,7 @@ int nfs3_setattr(nfs_arg_t *arg,
 	return rc;
 
  out_fail:
-
 	LogFullDebug(COMPONENT_NFSPROTO, "nfs_Setattr: failed");
-
-	/* Set the NFS return */
-	res->res_setattr3.status = nfs3_Errno(cache_status);
 
 	nfs_SetWccData(&pre_attr, entry,
 		       &res->res_setattr3.SETATTR3res_u.resfail.obj_wcc);

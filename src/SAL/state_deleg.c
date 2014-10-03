@@ -51,6 +51,7 @@
 #include "export_mgr.h"
 #include "nfs_rpc_callback.h"
 #include "server_stats.h"
+#include "fsal_up.h"
 
 /**
  * @brief Check if exiting OPENs would conflict granting a delegation.
@@ -389,7 +390,7 @@ bool should_we_grant_deleg(cache_entry_t *entry, nfs_client_id_t *client,
 	if (!nfs_param.nfsv4_param.allow_delegations
 	    || !op_ctx->fsal_export->ops->fs_supports(
 					op_ctx->fsal_export,
-					fso_delegations)
+					fso_delegations_r)
 	    || !(op_ctx->export_perms->options & EXPORT_OPTION_DELEGATIONS)
 	    || (!owner->so_owner.so_nfs4_owner.so_confirmed
 		&& claim == CLAIM_NULL)
@@ -571,4 +572,50 @@ void state_deleg_revoke(state_t *state, cache_entry_t *entry)
 	}
 	LogFatal(COMPONENT_STATE,
 		"Delegation state exists but not the delegation data object");
+}
+
+/**
+ * @brief Check if an operation is conflicting with delegations.
+ *
+ * Check if an operation will conflict with current delegations on a file.
+ * Return TRUE if there is a conflict and the delegations have been recalled.
+ * Return FALSE if there is no conflict.
+ *
+ * @param[in] entry cache inode entry
+ * @param[in] write a boolean indicating whether the operation will read or
+ *            change the file.
+ *
+ * @retval true if there is a conflict and the delegations have been recalled.
+ * @retval false if there is no delegation conflict.
+ *
+ * Must be called with cache inode entry's state lock held in read or read-write
+ * mode.
+ */
+bool deleg_conflict(cache_entry_t *entry, bool write)
+{
+	struct file_deleg_stats *deleg_stats;
+
+	if (entry->type != REGULAR_FILE)
+		return false;
+
+	deleg_stats = &entry->object.file.fdeleg_stats;
+	if (deleg_stats->fds_curr_delegations > 0
+	    && ((deleg_stats->fds_deleg_type == OPEN_DELEGATE_READ
+		 && write)
+		|| (deleg_stats->fds_deleg_type == OPEN_DELEGATE_WRITE))
+	    ) {
+		LogDebug(COMPONENT_STATE,
+			 "While trying to perform a %s op, found a "
+			 "conflicting %s delegation",
+			 write ? "write" : "read",
+			 (deleg_stats->fds_deleg_type
+			  == OPEN_DELEGATE_WRITE) ? "WRITE" : "READ");
+		if (async_delegrecall(general_fridge, entry) != 0)
+			LogCrit(COMPONENT_STATE,
+				"Failed to start thread to recall "
+				"delegation from conflicting "
+				"operation.");
+		return true;
+	}
+	return false;
 }
