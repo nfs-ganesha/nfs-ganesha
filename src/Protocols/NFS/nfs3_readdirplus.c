@@ -103,7 +103,6 @@ nfsstat3 nfs_readdir_dot_entry(cache_entry_t *entry, const char *name,
  * Implements the NFSPROC3_READDIRPLUS function
  *
  * @param[in]  arg     NFS argument union
- * @param[in]  export  NFS export list
  * @param[in]  worker  Worker thread
  * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call

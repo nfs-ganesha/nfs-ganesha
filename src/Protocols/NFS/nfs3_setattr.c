@@ -55,7 +55,6 @@
  * Implements the NFSPROC3_SETATTR function.
  *
  * @param[in]  arg     NFS arguments union
- * @param[in]  export  NFS export list
  * @param[in]  worker  Data for worker thread
  * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call
