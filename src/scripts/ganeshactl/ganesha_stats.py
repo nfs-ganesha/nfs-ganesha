@@ -13,16 +13,16 @@ import re
 import Ganesha.glib_dbus_stats
 
 def usage():
-    message = "Command requires one specific option from this list:\n"
+    message = "Command gives global stats by default.\n"
     message += "%s [list_clients | deleg <ip address> | " % (sys.argv[0])
-    message += "global | inode | iov3 [export id] | iov4 [export id] | export |"
-    message += " total | fast | pnfs [export id] ]"
+    message += "inode | iov3 [export id] | iov4 [export id] | export |"
+    message += " total [export id] | fast | pnfs [export id] ]"
     sys.exit(message)
 
 if len(sys.argv) < 2:
-    usage()
-
-command = sys.argv[1]
+    command = 'global'
+else:
+    command = sys.argv[1]
 
 # check arguments
 commands = ('help', 'list_clients', 'deleg', 'global', 'inode', 'iov3', 'iov4',
@@ -38,10 +38,11 @@ elif command in ('deleg'):
     command_arg = sys.argv[2]
 # optionally accepts an export id
 elif command in ('iov3', 'iov4', 'total', 'pnfs'):
-    if (len(sys.argv) >= 3) and sys.argv[2].isdigit():
+    if (len(sys.argv) == 2):
+        command_arg = -1
+    elif (len(sys.argv) == 3) and sys.argv[2].isdigit():
         command_arg = sys.argv[2]
     else:
-        print "Option \"%s\" requires an export id or no argument." % (command)
         usage()
 elif command == "help":
     usage()

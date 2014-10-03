@@ -94,7 +94,7 @@ static int reap_hash_table(hash_table_t *ht_reap)
 				/* Take cr_mutex and expire clientid */
 				pthread_mutex_lock(&precord->cr_mutex);
 
-				rc = nfs_client_id_expire(pclientid);
+				rc = nfs_client_id_expire(pclientid, false);
 
 				pthread_mutex_unlock(&precord->cr_mutex);
 

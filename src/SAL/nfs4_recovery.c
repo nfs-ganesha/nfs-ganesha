@@ -1191,7 +1191,15 @@ void nfs4_record_revoke(nfs_client_id_t *delr_clid, nfs_fh4 *delr_handle)
 	}
 }
 
-bool nfs4_can_deleg_reclaim_prev(nfs_client_id_t *clid, nfs_fh4 *fhandle)
+/**
+ * @brief Decides if it is allowed to reclaim a given delegation
+ *
+ * @param[in] clientid Client record
+ * @param[in] filehandle of the revoked file.
+ * @retval true if allowed and false if not.
+ *
+ */
+bool nfs4_check_deleg_reclaim(nfs_client_id_t *clid, nfs_fh4 *fhandle)
 {
 	char rhdlstr[NAME_MAX];
 	struct glist_head *node;
@@ -1341,7 +1349,8 @@ static void nfs_release_v4_client(char *ip)
 
 			cp = (nfs_client_id_t *) pdata->val.addr;
 			pthread_mutex_lock(&cp->cid_mutex);
-			if (ip_match(ip, cp)) {
+			if ((cp->cid_confirmed == CONFIRMED_CLIENT_ID)
+			     && ip_match(ip, cp)) {
 				inc_client_id_ref(cp);
 
 				/* Take a reference to the client record */
@@ -1354,7 +1363,7 @@ static void nfs_release_v4_client(char *ip)
 
 				pthread_mutex_lock(&recp->cr_mutex);
 
-				nfs_client_id_expire(cp);
+				nfs_client_id_expire(cp, true);
 
 				pthread_mutex_unlock(&recp->cr_mutex);
 

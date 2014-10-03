@@ -319,7 +319,7 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op, compound_data_t *data,
 		}
 
 		/* Expire clientid and release our reference. */
-		nfs_client_id_expire(conf);
+		nfs_client_id_expire(conf, false);
 
 		dec_client_id_ref(conf);
 

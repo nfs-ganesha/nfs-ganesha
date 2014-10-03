@@ -152,6 +152,8 @@ const char *clientid_confirm_state_to_str(nfs_clientid_confirm_state_t
 		return "UNCONFIRMED";
 	case EXPIRED_CLIENT_ID:
 		return "EXPIRED";
+	case STALE_CLIENT_ID:
+		return "STALE";
 	}
 	return "UNKNOWN STATE";
 }
@@ -808,10 +810,11 @@ clientid_status_t nfs_client_id_confirm(nfs_client_id_t *clientid,
  * reference to record also.
  *
  * @param[in] clientid The client id to expire
+ * @param[in] make_stale  Set if client id expire is due to ip move.
  *
  * @return true if the clientid is successfully expired.
  */
-bool nfs_client_id_expire(nfs_client_id_t *clientid)
+bool nfs_client_id_expire(nfs_client_id_t *clientid, bool make_stale)
 {
 	struct glist_head *glist, *glistn;
 	struct glist_head *glist2, *glistn2;
@@ -846,36 +849,49 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid)
 		LogDebug(COMPONENT_CLIENTID, "Expiring {%s}", str);
 	}
 
-	if (clientid->cid_confirmed == CONFIRMED_CLIENT_ID)
+	if ((clientid->cid_confirmed == CONFIRMED_CLIENT_ID) ||
+	    (clientid->cid_confirmed == STALE_CLIENT_ID))
 		ht_expire = ht_confirmed_client_id;
 	else
 		ht_expire = ht_unconfirmed_client_id;
 
-	clientid->cid_confirmed = EXPIRED_CLIENT_ID;
+	if (make_stale) {
+		clientid->cid_confirmed = STALE_CLIENT_ID;
+		pthread_mutex_unlock(&clientid->cid_mutex);
+	} else {
+		clientid->cid_confirmed = EXPIRED_CLIENT_ID;
+		/* Need to clean up the client record. */
+		record = clientid->cid_client_record;
 
-	/* Need to clean up the client record. */
-	record = clientid->cid_client_record;
+		pthread_mutex_unlock(&clientid->cid_mutex);
 
-	pthread_mutex_unlock(&clientid->cid_mutex);
+		/* Detach the clientid record from the client record */
+		if (record->cr_confirmed_rec == clientid)
+			record->cr_confirmed_rec = NULL;
 
-	/* Detach the clientid record from the client record */
-	if (record->cr_confirmed_rec == clientid)
-		record->cr_confirmed_rec = NULL;
+		if (record->cr_unconfirmed_rec == clientid)
+			record->cr_unconfirmed_rec = NULL;
 
-	if (record->cr_unconfirmed_rec == clientid)
-		record->cr_unconfirmed_rec = NULL;
+		buffkey.addr = &clientid->cid_clientid;
+		buffkey.len = sizeof(clientid->cid_clientid);
 
-	buffkey.addr = &clientid->cid_clientid;
-	buffkey.len = sizeof(clientid->cid_clientid);
+		rc = HashTable_Del(ht_expire, &buffkey, &old_key, &old_value);
+		if ((rc != HASHTABLE_SUCCESS) &&
+		    (clientid->cid_confirmed == STALE_CLIENT_ID)) {
+			/* Try in the unconfirmed hash table */
+			rc = HashTable_Del(ht_unconfirmed_client_id,
+					   &buffkey,
+					   &old_key,
+					   &old_value);
+		}
 
-	rc = HashTable_Del(ht_expire, &buffkey, &old_key, &old_value);
-
-	if (rc != HASHTABLE_SUCCESS) {
-		LogCrit(COMPONENT_CLIENTID,
-			"Could not remove expired clientid %" PRIx64
-			" error=%s", clientid->cid_clientid,
-			hash_table_err_to_str(rc));
-		assert(rc == HASHTABLE_SUCCESS);
+		if (rc != HASHTABLE_SUCCESS) {
+			LogCrit(COMPONENT_CLIENTID,
+				"Could not remove expired clientid %" PRIx64
+				" error=%s", clientid->cid_clientid,
+				hash_table_err_to_str(rc));
+			assert(rc == HASHTABLE_SUCCESS);
+		}
 	}
 
 	/* traverse the client's lock owners, and release all locks */
@@ -1034,7 +1050,8 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid)
 	}
 
 	/* Release the hash table reference to the clientid. */
-	(void)dec_client_id_ref(clientid);
+	if (!make_stale)
+		(void)dec_client_id_ref(clientid);
 
 	release_root_op_context();
 	return true;
@@ -1057,6 +1074,8 @@ clientid_status_t nfs_client_id_get(hash_table_t *ht, clientid4 clientid,
 	clientid_status_t status;
 	uint64_t epoch_low = ServerEpoch & 0xFFFFFFFF;
 	uint64_t cid_epoch = (uint64_t) (clientid >> (clientid4) 32);
+	nfs_client_id_t *pclientid;
+
 
 	/* Don't even bother to look up clientid if epochs don't match */
 	if (cid_epoch != epoch_low) {
@@ -1088,8 +1107,22 @@ clientid_status_t nfs_client_id_get(hash_table_t *ht, clientid4 clientid,
 		if (isDebug(COMPONENT_HASHTABLE))
 			LogFullDebug(COMPONENT_CLIENTID, "%s FOUND",
 				     ht->parameter.ht_name);
-		*client_rec = buffval.addr;
-		status = CLIENT_ID_SUCCESS;
+		pclientid = buffval.addr;
+
+		if (pclientid->cid_confirmed == STALE_CLIENT_ID) {
+			/* Stale client becuse of ip detach and attach to
+			 * same node */
+			status = CLIENT_ID_STALE;
+			dec_client_id_ref(pclientid);
+			pclientid->cid_confirmed = EXPIRED_CLIENT_ID;
+			HashTable_Del(ht, &buffkey, NULL, NULL);
+			dec_client_id_ref(pclientid);
+			*client_rec = NULL;
+		} else {
+			*client_rec = pclientid;
+			status = CLIENT_ID_SUCCESS;
+		}
+
 	} else {
 		if (isDebug(COMPONENT_HASHTABLE))
 			LogFullDebug(COMPONENT_CLIENTID,

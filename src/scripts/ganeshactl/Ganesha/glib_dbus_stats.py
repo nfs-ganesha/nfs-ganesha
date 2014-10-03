@@ -262,9 +262,9 @@ class ExportIOv3Stats():
         output = ""
         for key in self.stats:
             if self.stats[key][1] != "OK":
-                output += "EXPORT %s: %s" % (key, self.stats[key][1])
+                output += "EXPORT %s: %s\n" % (key, self.stats[key][1])
                 continue
-            output += ( "\nStats for EXPORT %s" % (key) +
+            output += ( "\nEXPORT %s:" % (key) +
                         "\n\t\trequested\ttransferred\t     total\t    errors\t   latency\tqueue wait" +
                         "\nREADv3: " )
             for stat in self.stats[key][3]:
@@ -281,9 +281,9 @@ class ExportIOv4Stats():
         output = ""
         for key in self.stats:
             if self.stats[key][1] != "OK":
-                output += "\nEXPORT %s: %s" % (key, self.stats[key][1])
+                output += "\nEXPORT %s: %s\n" % (key, self.stats[key][1])
                 continue
-            output += ("stats for EXPORT %s" % (key) +
+            output += ("EXPORT %s:" % (key) +
                        "\n\t\trequested\ttransferred\t     total\t    errors\t   latency\tqueue wait" +
                        "\nREADv4: ")
             for stat in self.stats[key][3]:
@@ -301,9 +301,9 @@ class TotalStats():
         for key in self.stats:
             if self.stats[key][1] != "OK":
                 return "No NFS activity, GANESHA RESPONSE STATUS: " + self.stats[key][1]
-            output = ("Total stats for export id" + str(key) +
+            output = ("Total stats for export id: " + str(key) +
                       "\nTimestamp: " + time.ctime(self.stats[key][2][0]) +
-                      str(self.stats[key][2][1]) + " nsecs")
+                      str(self.stats[key][2][1]) + " nsecs\n")
             for i in range(0,len(self.stats[key][3])-1, 2):
                 output += "%s: %s\n" % (self.stats[key][3][i], self.stats[key][3][i+1])
         return output
@@ -314,7 +314,7 @@ class PNFSStats():
     def __str__(self):
         for key in self.stats:
             if self.stats[key][1] != "OK":
-                return "No NFS activity, GANESHA RESPONSE STATUS: " + self.stats[key][1]
+                return "No NFS activity, GANESHA RESPONSE STATUS: \n" + self.stats[key][1]
             output = ("Total stats for export id" + str(key) +
                       "\nTimestamp: " + time.ctime(self.stats[key][2][0]) +
                       str(self.stats[key][2][1]) + " nsecs" +
