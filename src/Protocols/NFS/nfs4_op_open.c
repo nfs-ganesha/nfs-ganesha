@@ -1135,6 +1135,14 @@ static void do_delegation(OPEN4args *arg_OPEN4, OPEN4res *res_OPEN4,
 	/* This will be updated later if we actually delegate */
 	resok->delegation.delegation_type = OPEN_DELEGATE_NONE;
 
+	/* Client doesn't want a delegation. */
+	if (arg_OPEN4->share_access & OPEN4_SHARE_ACCESS_WANT_NO_DELEG) {
+		resok->delegation.open_delegation4_u.
+			od_whynone.ond_why = WND4_NOT_WANTED;
+		LogFullDebug(COMPONENT_STATE, "Client didn't want delegation.");
+		return;
+	}
+
 	if ((arg_OPEN4->share_access & OPEN4_SHARE_ACCESS_WRITE &&
 	    (!op_ctx->fsal_export->ops->fs_supports(op_ctx->fsal_export,
 						    fso_delegations_w)))
