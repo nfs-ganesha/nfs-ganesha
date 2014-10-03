@@ -96,16 +96,45 @@ cache_inode_rename_cached_dirent(cache_entry_t *parent,
 static inline void
 src_dest_lock(cache_entry_t *src, cache_entry_t *dest)
 {
+	int rc;
 
+	/*
+	 * A problem found in this order
+	 * 1. cache_inode_readdir holds A's content_lock, and tries to
+	 * grab B's attr_lock.
+	 * 2. cache_inode_remove holds B's attr_lock, and tries to grab B's
+	 * content_lock
+	 * 3. cache_inode_rename holds B's content_lock, and tries to grab the
+	 * A's content_lock (which is held by thread 1).
+	 * This change is to avoid this deadlock.
+	 */
+
+retry_lock:
 	if (src == dest)
 		PTHREAD_RWLOCK_wrlock(&src->content_lock);
 	else {
 		if (src < dest) {
 			PTHREAD_RWLOCK_wrlock(&src->content_lock);
-			PTHREAD_RWLOCK_wrlock(&dest->content_lock);
+			rc = pthread_rwlock_trywrlock(&dest->content_lock);
+			if (rc) {
+				LogDebug(COMPONENT_CACHE_INODE,
+						"retry dest %p lock, src %p",
+						dest, src);
+				PTHREAD_RWLOCK_unlock(&src->content_lock);
+				sleep(1);
+				goto retry_lock;
+			}
 		} else {
 			PTHREAD_RWLOCK_wrlock(&dest->content_lock);
-			PTHREAD_RWLOCK_wrlock(&src->content_lock);
+			rc = pthread_rwlock_trywrlock(&src->content_lock);
+			if (rc) {
+				LogDebug(COMPONENT_CACHE_INODE,
+						"retry src %p lock, dest %p",
+						src, dest);
+				PTHREAD_RWLOCK_unlock(&dest->content_lock);
+				sleep(1);
+				goto retry_lock;
+			}
 		}
 	}
 }
