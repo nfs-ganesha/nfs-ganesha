@@ -52,4 +52,7 @@
 
 #define NFS_GANESHA 1
 
+#define GANESHA_CONFIG_PATH "@SYSCONFDIR@/ganesha/ganesha.conf"
+#define GANESHA_PIDFILE_PATH "@SYSSTATEDIR@/run/ganesha.pid"
+
 #endif /* CONFIG_H */

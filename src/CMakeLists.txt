@@ -19,6 +19,17 @@ project(nfs-ganesha C)
 set(GANESHA_MAJOR_VERSION 2)
 set(GANESHA_MINOR_VERSION 2)
 
+# needs to come after project()
+IF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+	SET(CMAKE_INSTALL_PREFIX "/usr" CACHE PATH "Install prefix for common files" FORCE)
+	message(STATUS "override default CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX}")
+	SET(SYSCONFDIR "/etc" CACHE PATH "Install prefix for common files" FORCE)
+	SET(SYSSTATEDIR "/var" CACHE PATH "Install prefix for common files" FORCE)
+ELSE()
+	message(STATUS "was set CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX}")
+	SET(SYSCONFDIR "${CMAKE_INSTALL_PREFIX}/etc" CACHE PATH "Install prefix for common files" FORCE)
+	SET(SYSSTATEDIR "${CMAKE_INSTALL_PREFIX}/var" CACHE PATH "Install prefix for common files" FORCE)
+ENDIF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 # Patch level is always ".0" for mainline (master).  It is blank for development.
 # When starting a stable maintenance branch, this becomes ".N"
 # where N is monotonically increasing starting at 1. Remember to include the "." !!
@@ -819,6 +830,12 @@ set(SYSTEM_LIBRARIES
   ${CMAKE_THREAD_LIBS_INIT}
   ${LIBRT}
 )
+
+# Config file; make sure it doesn't clobber an existing one
+include(${CMAKE_SOURCE_DIR}/cmake/modules/InstallPackageConfigFile.cmake)
+InstallPackageConfigFile(${CMAKE_SOURCE_DIR}/config_samples/vfs.conf ${SYSCONFDIR}/ganesha ganesha.conf)
+# Sample config files
+install(DIRECTORY config_samples DESTINATION share/doc/ganesha)
 
 IF( NOT EXISTS ${PROJECT_SOURCE_DIR}/libntirpc/CMakeLists.txt )
 message( FATAL_ERROR
