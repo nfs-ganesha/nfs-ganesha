@@ -886,11 +886,10 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid, bool make_stale)
 		}
 
 		if (rc != HASHTABLE_SUCCESS) {
-			LogCrit(COMPONENT_CLIENTID,
+			LogFatal(COMPONENT_CLIENTID,
 				"Could not remove expired clientid %" PRIx64
 				" error=%s", clientid->cid_clientid,
 				hash_table_err_to_str(rc));
-			assert(rc == HASHTABLE_SUCCESS);
 		}
 	}
 
@@ -1075,6 +1074,7 @@ clientid_status_t nfs_client_id_get(hash_table_t *ht, clientid4 clientid,
 	uint64_t epoch_low = ServerEpoch & 0xFFFFFFFF;
 	uint64_t cid_epoch = (uint64_t) (clientid >> (clientid4) 32);
 	nfs_client_id_t *pclientid;
+	int rc;
 
 
 	/* Don't even bother to look up clientid if epochs don't match */
@@ -1115,7 +1115,14 @@ clientid_status_t nfs_client_id_get(hash_table_t *ht, clientid4 clientid,
 			status = CLIENT_ID_STALE;
 			dec_client_id_ref(pclientid);
 			pclientid->cid_confirmed = EXPIRED_CLIENT_ID;
-			HashTable_Del(ht, &buffkey, NULL, NULL);
+			rc = HashTable_Del(ht, &buffkey, NULL, NULL);
+			if (rc != HASHTABLE_SUCCESS) {
+				LogWarn(COMPONENT_CLIENTID,
+				"Could not remove unconfirmed clientid %" PRIx64
+				" error=%s", pclientid->cid_clientid,
+				hash_table_err_to_str(rc));
+			}
+
 			dec_client_id_ref(pclientid);
 			*client_rec = NULL;
 		} else {
