@@ -146,7 +146,7 @@ void del_dbus_broadcast(struct dbus_bcast_item *to_remove)
 {
 	pthread_mutex_lock(&dbus_bcast_lock);
 	glist_del(&to_remove->dbus_bcast_q);
-	pthread_mutex_lock(&dbus_bcast_lock);
+	pthread_mutex_unlock(&dbus_bcast_lock);
 
 	gsh_free(to_remove);
 }
