@@ -60,6 +60,13 @@ static const char Base64[] =
 	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 static const char Pad64 = '=';
 
+/*
+ * URL or file name safe encoding, see
+ * http://tools.ietf.org/html/rfc4648 for mapping details
+ */
+static const char Base64url[] =
+	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+
 /* (From RFC1521 and draft-ietf-dnssec-secext-03.txt)
    The following encoding technique is taken from RFC 1521 by Borenstein
    and Freed.  It is reproduced here in a slightly edited form for
@@ -123,7 +130,8 @@ static const char Pad64 = '=';
 	    characters followed by one "=" padding character.
 */
 
-int b64_ntop(u_char const *src, size_t srclength, char *target, size_t targsize)
+int b64_enc(u_char const *src, size_t srclength, char *target, size_t targsize,
+	    const char *map)
 {
 	size_t datalength = 0;
 	u_char input[3];
@@ -147,10 +155,10 @@ int b64_ntop(u_char const *src, size_t srclength, char *target, size_t targsize)
 
 		if (datalength + 4 > targsize)
 			return -1;
-		target[datalength++] = Base64[output[0]];
-		target[datalength++] = Base64[output[1]];
-		target[datalength++] = Base64[output[2]];
-		target[datalength++] = Base64[output[3]];
+		target[datalength++] = map[output[0]];
+		target[datalength++] = map[output[1]];
+		target[datalength++] = map[output[2]];
+		target[datalength++] = map[output[3]];
 	}
 
 	/* Now we worry about padding. */
@@ -169,12 +177,12 @@ int b64_ntop(u_char const *src, size_t srclength, char *target, size_t targsize)
 
 		if (datalength + 4 > targsize)
 			return -1;
-		target[datalength++] = Base64[output[0]];
-		target[datalength++] = Base64[output[1]];
+		target[datalength++] = map[output[0]];
+		target[datalength++] = map[output[1]];
 		if (srclength == 1)
 			target[datalength++] = Pad64;
 		else
-			target[datalength++] = Base64[output[2]];
+			target[datalength++] = map[output[2]];
 		target[datalength++] = Pad64;
 	}
 	if (datalength >= targsize)
@@ -182,6 +190,18 @@ int b64_ntop(u_char const *src, size_t srclength, char *target, size_t targsize)
 	target[datalength] = '\0';	/* Returned value doesn't count \0. */
 	return datalength;
 }
+
+int b64_ntop(u_char const *src, size_t srclength, char *target, size_t targsize)
+{
+	return b64_enc(src, srclength, target, targsize, Base64);
+}
+
+int base64url_encode(u_char const *src, size_t srclength, char *target,
+		     size_t targsize)
+{
+	return b64_enc(src, srclength, target, targsize, Base64url);
+}
+
 
 /* skips all whitespace anywhere.
    converts characters, four at a time, starting at (or after)

@@ -73,6 +73,7 @@ static void lustre_release(struct fsal_export *exp_hdl)
 	gsh_free(myself);		/* elvis has left the building */
 }
 
+
 static fsal_status_t lustre_get_dynamic_info(struct fsal_export *exp_hdl,
 					     struct fsal_obj_handle *obj_hdl,
 					     fsal_dynamicfsinfo_t *infop)
@@ -427,8 +428,37 @@ nfsstat4 lustre_create_ds_handle(struct fsal_export *const export_pub,
 {
 	/* Handle to be created */
 	struct lustre_ds *ds = NULL;
+	struct lustre_file_handle *lustre_fh;
+	struct fsal_filesystem *fs;
+	enum fsid_type fsid_type;
+	struct fsal_fsid__ fsid;
 
 	*ds_pub = NULL;
+
+
+	/* Get the related Lustre FS */
+	lustre_fh = (struct lustre_file_handle *) desc->addr;
+
+	lustre_extract_fsid(lustre_fh, &fsid_type, &fsid);
+
+	fs = lookup_fsid(&fsid, fsid_type);
+	if (fs == NULL) {
+		LogInfo(COMPONENT_FSAL,
+			"Could not find filesystem for "
+			"fsid=0x%016"PRIx64".0x%016"PRIx64
+			" from handle",
+			fsid.major, fsid.minor);
+		return NFS4ERR_STALE;
+	}
+
+	if (fs->fsal != export_pub->fsal) {
+		LogInfo(COMPONENT_FSAL,
+			"Non LUSTRE filesystem "
+			"fsid=0x%016"PRIx64".0x%016"PRIx64
+			" from handle",
+			fsid.major, fsid.minor);
+		return NFS4ERR_STALE;
+	}
 
 	if (desc->len != sizeof(struct lustre_file_handle))
 		return NFS4ERR_BADHANDLE;
@@ -441,6 +471,8 @@ nfsstat4 lustre_create_ds_handle(struct fsal_export *const export_pub,
 	 *            here. */
 
 	ds->connected = false;
+
+	ds->lustre_fs = fs->private;
 
 	memcpy(&ds->wire, desc->addr, desc->len);
 
@@ -653,6 +685,36 @@ void lustre_unexport_filesystems(struct lustre_fsal_export *exp)
 	PTHREAD_RWLOCK_unlock(&fs_lock);
 }
 
+/*********************************************/
+
+static struct config_item pnfs_params[] = {
+	CONF_MAND_UI32("Stripe_Unit", 8192, 1024*1024, 1024,
+		       lustre_exp_pnfs_parameter, stripe_unit),
+	CONF_ITEM_BOOL("pnfs_enabled", false,
+		       lustre_exp_pnfs_parameter, pnfs_enabled),
+	CONFIG_EOL
+};
+
+static struct config_item export_params[] = {
+	CONF_ITEM_NOOP("name"),
+	CONF_ITEM_BLOCK("PNFS", pnfs_params,
+			noop_conf_init, noop_conf_commit,
+			lustre_fsal_export, pnfs_param),
+	CONFIG_EOL
+};
+
+
+static struct config_block export_param = {
+	.dbus_interface_name = "org.ganesha.nfsd.config.fsal.lustre",
+	.blk_desc.name = "FSAL",
+	.blk_desc.type = CONFIG_BLOCK,
+	.blk_desc.u.blk.init = noop_conf_init,
+	.blk_desc.u.blk.params = export_params,
+	.blk_desc.u.blk.commit = noop_conf_commit
+};
+
+
+
 /* create_export
  * Create an export point and return a handle to it to be kept
  * in the export list.
@@ -666,6 +728,7 @@ fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
 {
 	struct lustre_fsal_export *myself;
 	int retval = 0;
+	struct config_error_type err_type;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 
 	myself = gsh_malloc(sizeof(struct lustre_fsal_export));
@@ -687,6 +750,14 @@ fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
 	lustre_export_ops_init(myself->export.ops);
 	lustre_handle_ops_init(myself->export.obj_ops);
 	myself->export.up_ops = up_ops;
+
+	retval = load_config_from_node(parse_node,
+				       &export_param,
+				       myself,
+				       true,
+				       &err_type);
+	if (!config_error_is_harmless(&err_type))
+		return fsalstat(ERR_FSAL_INVAL, 0);
 
 	retval = fsal_attach_export(fsal_hdl, &myself->export.exports);
 	if (retval != 0)
@@ -717,12 +788,13 @@ fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
 		goto errout;
 	}
 
-
 	op_ctx->fsal_export = &myself->export;
 
 	myself->pnfs_enabled =
 	    myself->export.ops->fs_supports(&myself->export,
-					    fso_pnfs_ds_supported);
+					    fso_pnfs_ds_supported) &&
+	    myself->pnfs_param.pnfs_enabled;
+
 	if (myself->pnfs_enabled) {
 		LogInfo(COMPONENT_FSAL,
 			"lustre_fsal_create: pnfs was enabled for [%s]",

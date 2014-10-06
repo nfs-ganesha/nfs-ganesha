@@ -135,6 +135,8 @@ char *err_type_str(struct config_error_type *err_type)
 		fputs("block exists, ", fp);
 	if (err_type->empty)
 		fputs("block empty, ", fp);
+	if (err_type->internal)
+		fputs("internal error, ", fp);
 	if (err_type->bogus)
 		fputs("unknown param, ", fp);
 	if (ferror(fp))
@@ -564,7 +566,7 @@ static int do_block_init(struct config_item *params,
 	int errors = 0;
 
 	for (item = params; item->name != NULL; item++) {
-		param_addr = (caddr_t *)((uint64_t)param_struct + item->off);
+		param_addr = (caddr_t *)((uintptr_t)param_struct + item->off);
 		LogFullDebug(COMPONENT_CONFIG,
 			     "%p name=%s type=%s",
 			     param_addr, item->name, config_type_str(item->type));
@@ -759,6 +761,14 @@ static int do_block_load(struct config_node *blk,
 		bool bval;
 
 		node = lookup_node(&blk->u.blk.sub_nodes, item->name);
+		if ((item->flags & CONFIG_MANDATORY) && (node == NULL)) {
+			err_type->missing = true;
+			errors++;
+			LogCrit(COMPONENT_CONFIG,
+				"Mandatory field, %s is missing from config\n",
+				item->name);
+			return errors;
+		}
 		while (node != NULL) {
 			next_node = lookup_next_node(&blk->u.blk.sub_nodes,
 						     &node->node, item->name);
@@ -774,7 +784,7 @@ static int do_block_load(struct config_node *blk,
 				node = next_node;
 				continue;
 			}
-			param_addr = (caddr_t *)((uint64_t)param_struct
+			param_addr = (caddr_t *)((uintptr_t)param_struct
 						 + item->off);
 			LogFullDebug(COMPONENT_CONFIG,
 				     "%p name=%s type=%s",
@@ -811,7 +821,7 @@ static int do_block_load(struct config_node *blk,
 					if (item->u.i32.set_off < UINT32_MAX) {
 						caddr_t *mask_addr;
 						mask_addr = (caddr_t *)
-							((uint64_t)param_struct
+							((uintptr_t)param_struct
 							+ item->u.i32.set_off);
 						*(uint32_t *)mask_addr
 							|= item->u.i32.bit;
@@ -860,7 +870,7 @@ static int do_block_load(struct config_node *blk,
 					if (item->u.fsid.set_off < UINT32_MAX) {
 						caddr_t *mask_addr;
 						mask_addr = (caddr_t *)
-							((uint64_t)param_struct
+							((uintptr_t)param_struct
 							+ item->u.fsid.set_off);
 						*(uint32_t *)mask_addr
 							|= item->u.fsid.bit;
@@ -875,7 +885,7 @@ static int do_block_load(struct config_node *blk,
 				if (rc != 0) {
 					caddr_t *mask_addr;
 					mask_addr = (caddr_t *)
-						((uint64_t)param_struct
+						((uintptr_t)param_struct
 						+ item->u.anonid.set_off);
 					*(uint32_t *)mask_addr
 						|= item->u.anonid.bit;
@@ -927,7 +937,7 @@ static int do_block_load(struct config_node *blk,
 					if (item->u.bit.set_off < UINT32_MAX) {
 						caddr_t *mask_addr;
 						mask_addr = (caddr_t *)
-							((uint64_t)param_struct
+							((uintptr_t)param_struct
 							+ item->u.bit.set_off);
 						*(uint32_t *)mask_addr
 							|= item->u.bit.bit;
@@ -948,7 +958,7 @@ static int do_block_load(struct config_node *blk,
 					if (item->u.lst.set_off < UINT32_MAX) {
 						caddr_t *mask_addr;
 						mask_addr = (caddr_t *)
-							((uint64_t)param_struct
+							((uintptr_t)param_struct
 							+ item->u.lst.set_off);
 						*(uint32_t *)mask_addr
 							|= item->u.lst.mask;
@@ -976,7 +986,7 @@ static int do_block_load(struct config_node *blk,
 					if (item->u.lst.set_off < UINT32_MAX) {
 						caddr_t *mask_addr;
 						mask_addr = (caddr_t *)
-							((uint64_t)param_struct
+							((uintptr_t)param_struct
 							+ item->u.lst.set_off);
 						*(uint32_t *)mask_addr
 							|= item->u.lst.mask;
@@ -1003,7 +1013,7 @@ static int do_block_load(struct config_node *blk,
 					if (item->u.lst.set_off < UINT32_MAX) {
 						caddr_t *mask_addr;
 						mask_addr = (caddr_t *)
-							((uint64_t)param_struct
+							((uintptr_t)param_struct
 							+ item->u.lst.set_off);
 						*(uint32_t *)mask_addr
 							|= item->u.lst.bit;
@@ -1196,8 +1206,7 @@ static int proc_block(struct config_node *node,
 		     node->filename,
 		     node->linenumber,
 		     item->name);
-	errors = item->u.blk.commit(node, link_mem, param_struct,
-				err_type);
+	errors = item->u.blk.commit(node, link_mem, param_struct, err_type);
 	if (errors > 0 && !config_error_is_harmless(err_type)) {
 		LogCrit(COMPONENT_CONFIG,
 			"At (%s:%d): %d validation errors in block %s",

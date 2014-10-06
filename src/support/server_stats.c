@@ -68,7 +68,7 @@
 #define RQUOTA_NB_COMMAND (RQUOTAPROC_SETACTIVEQUOTA + 1)
 #define NFS_V40_NB_OPERATION (NFS4_OP_RELEASE_LOCKOWNER + 1)
 #define NFS_V41_NB_OPERATION (NFS4_OP_RECLAIM_COMPLETE + 1)
-#define NFS_V42_NB_OPERATION (NFS4_OP_IO_ADVISE + 1)
+#define NFS_V42_NB_OPERATION (NFS4_OP_LAST_ONE)
 #define _9P_NB_COMMAND 33
 
 struct op_name {
@@ -201,15 +201,17 @@ static const struct op_name optabv4[] = {
 	[NFS4_OP_DESTROY_CLIENTID] = {.name = "DESTROY_CLIENTID",},
 	[NFS4_OP_RECLAIM_COMPLETE] = {.name = "RECLAIM_COMPLETE",},
 	/* NFSv4.2 */
+	[NFS4_OP_ALLOCATE] = {.name = "ALLOCATE",},
 	[NFS4_OP_COPY] = {.name = "COPY",},
-	[NFS4_OP_OFFLOAD_ABORT] = {.name = "OFFLOAD_ABORT",},
 	[NFS4_OP_COPY_NOTIFY] = {.name = "COPY_NOTIFY",},
-	[NFS4_OP_OFFLOAD_REVOKE] = {.name = "OFFLOAD_REVOKE",},
+	[NFS4_OP_DEALLOCATE] = {.name = "DEALLOCATE",},
+	[NFS4_OP_IO_ADVISE] = {.name = "IO_ADVISE",},
+	[NFS4_OP_LAYOUTERROR] = {.name = "LAYOUTERROR",},
+	[NFS4_OP_OFFLOAD_CANCEL] = {.name = "OFFLOAD_CANCEL",},
 	[NFS4_OP_OFFLOAD_STATUS] = {.name = "OFFLOAD_STATUS",},
-	[NFS4_OP_WRITE_PLUS] = {.name = "WRITE_PLUS",},
 	[NFS4_OP_READ_PLUS] = {.name = "READ_PLUS",},
 	[NFS4_OP_SEEK] = {.name = "SEEK",},
-	[NFS4_OP_IO_ADVISE] = {.name = "IO_ADVISE",},
+	[NFS4_OP_WRITE_SAME] = {.name = "WRITE_SAME",},
 };
 
 /* Classify protocol ops for stats purposes
@@ -250,7 +252,7 @@ static const uint32_t nfsv42_optype[NFS_V42_NB_OPERATION] = {
 	[NFS4_OP_LAYOUTCOMMIT] = LAYOUT_OP,
 	[NFS4_OP_LAYOUTGET] = LAYOUT_OP,
 	[NFS4_OP_LAYOUTRETURN] = LAYOUT_OP,
-	[NFS4_OP_WRITE_PLUS] = WRITE_OP,
+	[NFS4_OP_WRITE_SAME] = WRITE_OP,
 	[NFS4_OP_READ_PLUS] = READ_OP,
 };
 
@@ -289,7 +291,7 @@ struct mnt_ops {
 /* v4 ops
  */
 struct nfsv4_ops {
-	uint64_t op[NFS4_OP_IO_ADVISE+1];
+	uint64_t op[NFS4_OP_LAST_ONE];
 };
 
 /* basic op counter
@@ -403,8 +405,16 @@ struct global_stats {
 	struct qta_ops qt;
 };
 
-static struct global_stats global_st;
+struct deleg_stats {
+	uint32_t curr_deleg_grants; /* current num of delegations owned by
+				       this client */
+	uint32_t tot_recalls;       /* total num of times client was asked to
+				       recall */
+	uint32_t failed_recalls;    /* times client failed to process recall */
+	uint32_t num_revokes;	    /* Num revokes for the client */
+};
 
+static struct global_stats global_st;
 struct cache_stats cache_st;
 struct cache_stats *cache_stp = &cache_st;
 
@@ -1145,6 +1155,67 @@ void server_stats_io_done(size_t requested,
 	return;
 }
 
+/**
+ * @brief record Delegation stats
+ *
+ * Called from a bunch of places.
+ */
+void check_deleg_struct(struct gsh_stats *stats, pthread_rwlock_t *lock)
+{
+	if (unlikely(stats->deleg == NULL)) {
+		PTHREAD_RWLOCK_wrlock(lock);
+		if (stats->deleg == NULL)
+			stats->deleg = gsh_calloc(
+					sizeof(struct deleg_stats), 1);
+		PTHREAD_RWLOCK_unlock(lock);
+	}
+}
+void inc_grants(struct gsh_client *client)
+{
+	if (client != NULL) {
+		struct server_stats *server_st;
+		server_st = container_of(client, struct server_stats, client);
+		check_deleg_struct(&server_st->st, &client->lock);
+		server_st->st.deleg->curr_deleg_grants++;
+	}
+}
+void dec_grants(struct gsh_client *client)
+{
+	if (client != NULL) {
+		struct server_stats *server_st;
+		server_st = container_of(client, struct server_stats, client);
+		check_deleg_struct(&server_st->st, &client->lock);
+		server_st->st.deleg->curr_deleg_grants++;
+	}
+}
+void inc_revokes(struct gsh_client *client)
+{
+	if (client != NULL) {
+		struct server_stats *server_st;
+		server_st = container_of(client, struct server_stats, client);
+		check_deleg_struct(&server_st->st, &client->lock);
+		server_st->st.deleg->num_revokes++;
+	}
+}
+void inc_recalls(struct gsh_client *client)
+{
+	if (client != NULL) {
+		struct server_stats *server_st;
+		server_st = container_of(client, struct server_stats, client);
+		check_deleg_struct(&server_st->st, &client->lock);
+		server_st->st.deleg->tot_recalls++;
+	}
+}
+void inc_failed_recalls(struct gsh_client *client)
+{
+	if (client != NULL) {
+		struct server_stats *server_st;
+		server_st = container_of(client, struct server_stats, client);
+		check_deleg_struct(&server_st->st, &client->lock);
+		server_st->st.deleg->failed_recalls++;
+	}
+}
+
 #ifdef USE_DBUS
 
 /* Functions for marshalling statistics to DBUS
@@ -1385,7 +1456,7 @@ void global_dbus_fast(DBusMessageIter *iter)
 	version = "\nNFSv4:";
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING,
 				       &version);
-	for (i = 0; i < NFS4_OP_IO_ADVISE; i++) {
+	for (i = 0; i < NFS4_OP_LAST_ONE; i++) {
 		if (global_st.v4.op[i] > 0) {
 			op = optabv4[i].name;
 			dbus_message_iter_append_basic(&struct_iter,
@@ -1611,6 +1682,32 @@ void server_dbus_v42_layouts(struct nfsv41_stats *v42p, DBusMessageIter *iter)
 	server_dbus_layouts(&v42p->layout_commit, iter);
 	server_dbus_layouts(&v42p->layout_return, iter);
 	server_dbus_layouts(&v42p->recall, iter);
+}
+
+/**
+ * @brief Report delegation statistics as a struct
+ *
+ * @param iop   [IN] pointer to xfer op sub-structure of interest
+ * @param iter  [IN] interator in reply stream to fill
+ */
+void server_dbus_delegations(struct deleg_stats *ds, DBusMessageIter *iter)
+{
+	struct timespec timestamp;
+	DBusMessageIter struct_iter;
+
+	now(&timestamp);
+	dbus_append_timestamp(iter, &timestamp);
+	dbus_message_iter_open_container(iter, DBUS_TYPE_STRUCT, NULL,
+					 &struct_iter);
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT32,
+				       &ds->curr_deleg_grants);
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT32,
+				       &ds->tot_recalls);
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT32,
+				       &ds->failed_recalls);
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT32,
+				       &ds->num_revokes);
+	dbus_message_iter_close_container(iter, &struct_iter);
 }
 
 #endif				/* USE_DBUS */

@@ -47,6 +47,7 @@
 #include "nfs_convert.h"
 #include "server_stats.h"
 #include "export_mgr.h"
+#include "sal_functions.h"
 
 static void nfs_read_ok(struct svc_req *req,
 			nfs_res_t *res,
@@ -77,7 +78,6 @@ static void nfs_read_ok(struct svc_req *req,
  * Implements the NFSPROC3_READ function.
  *
  * @param[in]  arg     NFS arguments union
- * @param[in]  export  NFS export list
  * @param[in]  worker  Worker thread data
  * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call
@@ -217,6 +217,17 @@ int nfs3_read(nfs_arg_t *arg,
 			goto out;
 		}
 
+		res->res_read3.status = nfs3_Errno_state(
+				state_share_anonymous_io_start(
+					entry,
+					OPEN4_SHARE_ACCESS_READ,
+					SHARE_BYPASS_READ));
+
+		if (res->res_read3.status != NFS3_OK) {
+			rc = NFS_REQ_OK;
+			goto out;
+		}
+
 		cache_status = cache_inode_rdwr(entry,
 						CACHE_INODE_READ,
 						offset,
@@ -225,6 +236,8 @@ int nfs3_read(nfs_arg_t *arg,
 						data,
 						&eof_met,
 						&sync);
+
+		state_share_anonymous_io_done(entry, OPEN4_SHARE_ACCESS_READ);
 
 		if (cache_status == CACHE_INODE_SUCCESS) {
 			nfs_read_ok(req, res, data, read_size,

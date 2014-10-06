@@ -73,13 +73,9 @@ int lustre_extract_fsid(struct lustre_file_handle *fh,
 			enum fsid_type *fsid_type,
 			struct fsal_fsid__ *fsid)
 {
-	struct fsal_dev__ dev;
-
-	dev = posix2fsal_devt(fh->fsdev);
-
 	*fsid_type = FSID_TWO_UINT64;
-	fsid->major = dev.major;
-	fsid->minor = dev.minor;
+	fsid->major = major(fh->fsdev);
+	fsid->minor = minor(fh->fsdev);
 	return 0;
 }
 
@@ -182,7 +178,7 @@ static fsal_status_t lustre_lookup(struct fsal_obj_handle *parent,
 	const char *sock_name = NULL;
 	ssize_t retlink;
 	char fidpath[MAXPATHLEN];
-	char link_buff[PATH_MAX+1];
+	char link_buff[PATH_MAX];
 	struct lustre_file_handle *fh =
 	    alloca(sizeof(struct lustre_file_handle));
 	struct fsal_filesystem *fs;
@@ -210,8 +206,8 @@ static fsal_status_t lustre_lookup(struct fsal_obj_handle *parent,
 		return fsalstat(posix2fsal_error(rc), rc);
 	}
 
-	rc = lustre_name_to_handle_at(fs->path,
-					  parent_hdl->handle, path, fh, 0);
+	rc = lustre_name_to_handle_at(fs,
+				      parent_hdl->handle, path, fh, 0);
 	if (rc < 0) {
 		rc = errno;
 		fsal_error = posix2fsal_error(rc);
@@ -259,7 +255,7 @@ static fsal_status_t lustre_lookup(struct fsal_obj_handle *parent,
 	return fsalstat(fsal_error, rc);
 }
 
-static inline int get_stat_by_handle_at(char *mntpath,
+static inline int get_stat_by_handle_at(struct fsal_filesystem *fs,
 					struct lustre_file_handle *infh,
 					const char *name,
 					struct lustre_file_handle *fh,
@@ -269,7 +265,7 @@ static inline int get_stat_by_handle_at(char *mntpath,
 	char lustre_path[MAXPATHLEN];
 	char filepath[MAXPATHLEN];
 
-	rc = lustre_handle_to_path(mntpath, infh, lustre_path);
+	rc = lustre_handle_to_path(fs->path, infh, lustre_path);
 	if (rc < 0) {
 		rc = errno;
 		goto fileerr;
@@ -278,7 +274,7 @@ static inline int get_stat_by_handle_at(char *mntpath,
 
 	/* now that it is owned properly, set accessible mode */
 
-	rc = lustre_name_to_handle_at(mntpath, infh, name, fh, 0);
+	rc = lustre_name_to_handle_at(fs, infh, name, fh, 0);
 	if (rc < 0)
 		goto fileerr;
 
@@ -348,7 +344,7 @@ static fsal_status_t lustre_create(struct fsal_obj_handle *dir_hdl,
 	close(fd);		/* not needed anymore */
 
 	rc =
-	    get_stat_by_handle_at(dir_hdl->fs->path,
+	    get_stat_by_handle_at(dir_hdl->fs,
 				  myself->handle, name, fh, &stat);
 	if (rc < 0)
 		goto fileerr;
@@ -413,7 +409,7 @@ static fsal_status_t lustre_makedir(struct fsal_obj_handle *dir_hdl,
 		goto direrr;
 	}
 	rc =
-	    get_stat_by_handle_at(dir_hdl->fs->path,
+	    get_stat_by_handle_at(dir_hdl->fs,
 				  myself->handle, name, fh, &stat);
 	if (rc < 0)
 		goto fileerr;
@@ -437,7 +433,11 @@ static fsal_status_t lustre_makedir(struct fsal_obj_handle *dir_hdl,
 
  fileerr:
 	fsal_error = posix2fsal_error(rc);
-	rmdir(newpath);		/* remove the evidence on errors */
+	if (rmdir(newpath))		/* remove the evidence on errors */
+		LogFullDebug(COMPONENT_FSAL,
+			     "lustre_makedir failed, calling rmdir to "
+			     "remove evidence of failure returned error=%d",
+			     errno);
  errout:
 	return fsalstat(fsal_error, rc);
 }
@@ -524,7 +524,7 @@ static fsal_status_t lustre_makenode(struct fsal_obj_handle *dir_hdl,
 		goto direrr;
 	}
 	rc =
-	    get_stat_by_handle_at(dir_hdl->fs->path,
+	    get_stat_by_handle_at(dir_hdl->fs,
 				  myself->handle, name, fh, &stat);
 	if (rc < 0)
 		goto direrr;
@@ -606,7 +606,7 @@ static fsal_status_t lustre_makesymlink(struct fsal_obj_handle *dir_hdl,
 		goto linkerr;
 
 	rc =
-	    lustre_name_to_handle_at(dir_hdl->fs->path,
+	    lustre_name_to_handle_at(dir_hdl->fs,
 				     myself->handle, name, fh, 0);
 	if (rc < 0)
 		goto linkerr;
@@ -660,7 +660,7 @@ static fsal_status_t lustre_readsymlink(struct fsal_obj_handle *obj_hdl,
 	    container_of(obj_hdl, struct lustre_fsal_obj_handle, obj_handle);
 	if (refresh) {		/* lazy load or LRU'd storage */
 		ssize_t retlink;
-		char link_buff[PATH_MAX+1];
+		char link_buff[PATH_MAX];
 
 		if (myself->u.symlink.link_content != NULL) {
 			gsh_free(myself->u.symlink.link_content);
@@ -1366,7 +1366,7 @@ fsal_status_t lustre_lookup_path(struct fsal_export *exp_hdl,
 		fs->path, path);
 
 	/* Get a lustre handle for the requested path */
-	rc = lustre_path_to_handle(path, fh);
+	rc = lustre_path_to_handle(path, fs->fsid, fh);
 	if (rc < 0) {
 		rc = errno;
 		goto errout;
@@ -1409,7 +1409,7 @@ fsal_status_t lustre_create_handle(struct fsal_export *exp_hdl,
 	char objpath[MAXPATHLEN];
 	char *link_content = NULL;
 	ssize_t retlink;
-	char link_buff[PATH_MAX+1];
+	char link_buff[PATH_MAX];
 	struct fsal_fsid__ fsid;
 	enum fsid_type fsid_type;
 	struct fsal_filesystem *fs;

@@ -76,8 +76,6 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op, compound_data_t *data,
 	    &resp->nfs_resop4_u.oplayoutreturn;
 	/* Return code from cache_inode operations */
 	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
-	/* Return code from state operations */
-	state_status_t state_status = STATE_SUCCESS;
 	/* NFS4 status code */
 	nfsstat4 nfs_status = 0;
 	/* FSID of candidate file to return */
@@ -203,14 +201,7 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op, compound_data_t *data,
 		spec.offset = 0;
 		spec.length = NFS4_UINT64_MAX;
 
-		state_status = get_clientid_owner(data->session->clientid,
-						  &clientid_owner);
-
-		if (state_status != STATE_SUCCESS) {
-			res_LAYOUTRETURN4->lorr_status =
-			    nfs4_Errno_state(state_status);
-			return res_LAYOUTRETURN4->lorr_status;
-		}
+		clientid_owner = &data->session->clientid_record->cid_owner;
 
 		/* We need the safe version because return_one_state
 		   can delete the current state. */

@@ -13,6 +13,7 @@ set(GANESHA_SRCS
   Ganesha/log_mgr.py
   Ganesha/QtUI/log_settings.py
   Ganesha/io_stats.py
+  Ganesha/glib_dbus_stats.py
   )
 
 # Command line scripts
@@ -21,15 +22,9 @@ set(SCRIPT_SRC
   get_clientids.py
   grace_period.py
   purge_gids.py
-  stats_fast.py
-  stats_global.py
-  stats_inode.py
-  stats_io.py
-  stats_pnfs.py
-  stats.py
-  stats_total.py
   ganeshactl.py
   ganesha-admin.py
+  ganesha_stats.py
   manage_clients.py
   manage_logger.py
   manage_exports.py
@@ -97,6 +92,6 @@ if(PYTHON)
 
   install(
     CODE
-    "execute_process(WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR} COMMAND ${PYTHON} ${SETUP_PY} install --skip-build --prefix=${CMAKE_INSTALL_PREFIX})"
+    "execute_process(WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR} COMMAND ${PYTHON} ${SETUP_PY} install --skip-build --prefix=$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX})"
     )
 endif(PYTHON)

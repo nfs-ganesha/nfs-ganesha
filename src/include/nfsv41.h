@@ -161,6 +161,7 @@ extern "C" {
 		NFS4ERR_OFFLOAD_DENIED = 10091,
 		NFS4ERR_WRONG_LFS = 10092,
 		NFS4ERR_BADLABEL = 10093,
+		NFS4ERR_OFFLOAD_NO_REQS = 10094,
 
 		NFS4ERR_REPLAY = 11001,
 	};
@@ -821,11 +822,9 @@ extern "C" {
 #define FATTR4_FS_CHARSET_CAP 76
 
 /* NFSv4.2 */
-#define FATTR4_SPACE_RESERVED 77
-#define FATTR4_SPACE_FREED 78
-#define FATTR4_CHANGE_ATTR_TYPE 79
-#define FATTR4_SEC_LABEL 80
-#define FATTR4_CHANGE_SEC_LABEL 81
+#define FATTR4_SPACE_FREED 77
+#define FATTR4_CHANGE_ATTR_TYPE 78
+#define FATTR4_SEC_LABEL 79
 
 	struct fattr4 {
 		struct bitmap4 attrmask;
@@ -2494,9 +2493,10 @@ extern "C" {
 	typedef enum netloc_type4 netloc_type4;
 
 	enum data_content4 {
-		NFS4_CONTENT_DATA = 0,
-		NFS4_CONTENT_APP_DATA_HOLE = 1,
-		NFS4_CONTENT_HOLE = 2
+		NFS4_CONTENT_DATA       = 0,
+		NFS4_CONTENT_HOLE       = 1,
+		NFS4_CONTENT_ALLOCATE   = 2,
+		NFS4_CONTENT_DEALLOCATE = 4
 	};
 	typedef enum data_content4 data_content4;
 
@@ -2510,22 +2510,21 @@ extern "C" {
 	} data4;
 
 	typedef struct {
-		offset4         adh_offset;
-		length4         adh_block_size;
-		length4         adh_block_count;
-		length4         adh_reloff_blocknum;
-		count4          adh_block_num;
-		length4         adh_reloff_pattern;
+		offset4         adb_offset;
+		length4         adb_block_size;
+		length4         adb_block_count;
+		length4         adb_reloff_blocknum;
+		count4          adb_block_num;
+		length4         adb_reloff_pattern;
 		struct {
 			u_int data_len;
 			char *data_val;
-		} adh_data;
-	} app_data_hole4;
+		} adb_data;
+	} app_data_block4;
 
 	typedef struct {
 		offset4         di_offset;
 		length4         di_length;
-		bool_t          di_allocated;
 	} data_info4;
 
 	typedef struct {
@@ -2540,7 +2539,7 @@ extern "C" {
 		data_content4   what;
 		union {
 			data4           data;
-			app_data_hole4  adh;
+			app_data_block4 adb;
 			data_info4      hole;
 		};
 	} contents;
@@ -2553,7 +2552,7 @@ extern "C" {
 
 	typedef struct {
 		bool_t          sr_eof;
-		contents        sr_contents;
+		offset4         sr_offset;
 	} seek_res4;
 
 	typedef struct OFFLOAD_STATUS4resok {
@@ -2646,25 +2645,20 @@ extern "C" {
 	};
 	typedef struct OFFLOAD_STATUS4res OFFLOAD_STATUS4res;
 
-	struct WRITE_PLUS4args {
+	struct WRITE_SAME4args {
 		stateid4        wp_stateid;
 		stable_how4     wp_stable;
-		data_content4   wp_what;
-		union {
-			data4           wp_data;
-			app_data_hole4  wp_adh;
-			data_info4      wp_hole;
-		};
+		app_data_block4 wp_adb;
 	};
-	typedef struct WRITE_PLUS4args WRITE_PLUS4args;
+	typedef struct WRITE_SAME4args WRITE_SAME4args;
 
-	struct WRITE_PLUS4res {
+	struct WRITE_SAME4res {
 		nfsstat4 wpr_status;
 		union {
 			write_response4 wpr_resok4;
 		};
 	};
-	typedef struct WRITE_PLUS4res WRITE_PLUS4res;
+	typedef struct WRITE_SAME4res WRITE_SAME4res;
 
 	struct READ_PLUS4args {
 		stateid4        rpa_stateid;
@@ -2680,6 +2674,30 @@ extern "C" {
 		};
 	};
 	typedef struct READ_PLUS4res READ_PLUS4res;
+
+	struct ALLOCATE4args {
+		stateid4        aa_stateid;
+		offset4         aa_offset;
+		length4         aa_length;
+	};
+	typedef struct ALLOCATE4args ALLOCATE4args;
+
+	struct ALLOCATE4res {
+		nfsstat4 ar_status;
+	};
+	typedef struct ALLOCATE4res ALLOCATE4res;
+
+	struct DEALLOCATE4args {
+		stateid4        da_stateid;
+		offset4         da_offset;
+		length4         da_length;
+	};
+	typedef struct DEALLOCATE4args DEALLOCATE4args;
+
+	struct DEALLOCATE4res {
+		nfsstat4 dr_status;
+	};
+	typedef struct DEALLOCATE4res DEALLOCATE4res;
 
 	struct SEEK4args {
 		stateid4        sa_stateid;
@@ -2711,17 +2729,17 @@ extern "C" {
 	};
 
 	struct IO_ADVISE4args {
-		stateid4        iar_stateid;
-		offset4         iar_offset;
-		length4         iar_count;
-		bitmap4         iar_hints;
+		stateid4        iaa_stateid;
+		offset4         iaa_offset;
+		length4         iaa_count;
+		bitmap4         iaa_hints;
 	};
 	typedef struct IO_ADVISE4args IO_ADVISE4args;
 
 	struct IO_ADVISE4res {
-		nfsstat4 iar_status;
+		nfsstat4 iaa_status;
 		union {
-			bitmap4  iar_hints;
+			bitmap4  iaa_hints;
 		};
 	};
 	typedef struct IO_ADVISE4res IO_ADVISE4res;
@@ -2787,19 +2805,64 @@ extern "C" {
 		NFS4_OP_RECLAIM_COMPLETE = 58,
 
 		/* NFSv4.2 */
-		NFS4_OP_COPY = 59,
-		NFS4_OP_OFFLOAD_ABORT = 60,
+		NFS4_OP_ALLOCATE = 59,
+		NFS4_OP_COPY = 60,
 		NFS4_OP_COPY_NOTIFY = 61,
-		NFS4_OP_OFFLOAD_REVOKE = 62,
-		NFS4_OP_OFFLOAD_STATUS = 63,
-		NFS4_OP_WRITE_PLUS = 64,
-		NFS4_OP_READ_PLUS = 65,
-		NFS4_OP_SEEK = 66,
-		NFS4_OP_IO_ADVISE = 67,
+		NFS4_OP_DEALLOCATE = 62,
+		NFS4_OP_IO_ADVISE = 63,
+		NFS4_OP_LAYOUTERROR = 64,
+		NFS4_OP_LAYOUTSTATS = 65,
+		NFS4_OP_OFFLOAD_CANCEL = 66,
+		NFS4_OP_OFFLOAD_STATUS = 67,
+		NFS4_OP_READ_PLUS = 68,
+		NFS4_OP_SEEK = 69,
+		NFS4_OP_WRITE_SAME = 70,
+		NFS4_OP_LAST_ONE = 71,
 
 		NFS4_OP_ILLEGAL = 10044,
 	};
 	typedef enum nfs_opnum4 nfs_opnum4;
+
+	typedef struct {
+		deviceid4       de_deviceid;
+		nfsstat4        de_status;
+		nfs_opnum4      de_opnum;
+	} device_error4;
+
+	struct LAYOUTERROR4args {
+		offset4         lea_offset;
+		length4         lea_length;
+		stateid4        lea_stateid;
+		device_error4   lea_errors;
+	};
+	typedef struct LAYOUTERROR4args LAYOUTERROR4args;
+
+	struct LAYOUTERROR4res {
+		nfsstat4 ler_status;
+	};
+	typedef struct LAYOUTERROR4res LAYOUTERROR4res;
+
+	typedef struct {
+		uint32_t      ii_count;
+		uint64_t      ii_bytes;
+	} io_info4;
+
+	struct LAYOUTSTATS4args {
+		offset4         lsa_offset;
+		length4         lsa_length;
+		stateid4        lsa_stateid;
+		io_info4        lsa_read;
+		io_info4        lsa_write;
+		layoutupdate4   lsa_layoutupdate;
+	};
+	typedef struct LAYOUTSTATS4args LAYOUTSTATS4args;
+
+	struct LAYOUTSTATS4res {
+		nfsstat4 lsr_status;
+	};
+	typedef struct LAYOUTSTATS4res LAYOUTSTATS4res;
+
+
 
 	struct nfs_argop4 {
 		nfs_opnum4 argop;
@@ -2860,10 +2923,14 @@ extern "C" {
 			COPY4args opcopy;
 			OFFLOAD_ABORT4args opoffload_abort;
 			OFFLOAD_STATUS4args opoffload_status;
-			WRITE_PLUS4args opwrite_plus;
+			WRITE_SAME4args opwrite_plus;
+			ALLOCATE4args opallocate;
+			DEALLOCATE4args opdeallocate;
 			READ_PLUS4args opread_plus;
 			SEEK4args opseek;
 			IO_ADVISE4args opio_advise;
+			LAYOUTERROR4args oplayouterror;
+			LAYOUTSTATS4args oplayoutstats;
 		} nfs_argop4_u;
 	};
 	typedef struct nfs_argop4 nfs_argop4;
@@ -2934,10 +3001,14 @@ extern "C" {
 			COPY4res opcopy;
 			OFFLOAD_ABORT4res opoffload_abort;
 			OFFLOAD_STATUS4res opoffload_status;
-			WRITE_PLUS4res opwrite_plus;
+			WRITE_SAME4res opwrite_plus;
+			ALLOCATE4res opallocate;
+			DEALLOCATE4res opdeallocate;
 			READ_PLUS4res opread_plus;
 			SEEK4res opseek;
 			IO_ADVISE4res opio_advise;
+			LAYOUTERROR4res oplayouterror;
+			LAYOUTSTATS4res oplayoutstats;
 
 			ILLEGAL4res opillegal;
 		} nfs_resop4_u;
@@ -7418,75 +7489,41 @@ extern "C" {
 	}
 
 	/* NFSv4.2 */
-	static inline bool xdr_WRITE_PLUS4args(XDR * xdrs,
-						WRITE_PLUS4args *objp)
+	static inline bool xdr_WRITE_SAME4args(XDR * xdrs,
+						WRITE_SAME4args *objp)
 	{
 		if (!xdr_stateid4(xdrs, &objp->wp_stateid))
 			return false;
 		if (!xdr_stable_how4(xdrs, &objp->wp_stable))
 			return false;
-		if (!inline_xdr_enum(xdrs, (enum_t *)&objp->wp_what))
+		if (!xdr_offset4(xdrs,
+				&objp->wp_adb.adb_offset))
 			return false;
-		if (objp->wp_what == NFS4_CONTENT_DATA) {
-			if (!xdr_offset4(xdrs,
-					&objp->wp_data.d_offset))
-				return false;
-			if (!inline_xdr_bool(xdrs,
-					&objp->wp_data.d_allocated))
-				return false;
-			if (!inline_xdr_bytes
-			    (xdrs,
-			      (char **)&objp->wp_data.d_data.data_val,
-			      (u_int *)&objp->wp_data.d_data.data_len,
-			       ~0))
-				return false;
-			return true;
-		}
-		if (objp->wp_what == NFS4_CONTENT_APP_DATA_HOLE) {
-			if (!xdr_offset4(xdrs,
-					&objp->wp_adh.adh_offset))
-				return false;
-			if (!xdr_length4(xdrs,
-				  &objp->wp_adh.adh_block_size))
-				return false;
-			if (!xdr_length4(xdrs,
-				  &objp->wp_adh.adh_block_count))
-				return false;
-			if (!xdr_length4(xdrs,
-				  &objp->wp_adh.adh_reloff_blocknum))
-				return false;
-			if (!xdr_count4(xdrs,
-				  &objp->wp_adh.adh_block_num))
-				return false;
-			if (!xdr_length4(xdrs,
-				&objp->wp_adh.adh_reloff_pattern))
-				return false;
-			if (!inline_xdr_bytes
-			    (xdrs,
-			     (char **)&objp->wp_adh.adh_data.data_val,
-			     (u_int *)&objp->wp_adh.adh_data.data_len,
-			      ~0))
-				return false;
-			return true;
-		}
-		if (objp->wp_what == NFS4_CONTENT_HOLE) {
-			if (!xdr_offset4(xdrs,
-					&objp->wp_hole.di_offset))
-				return false;
-			if (!xdr_length4(xdrs,
-				  &objp->wp_hole.di_length))
-				return false;
-			if (!inline_xdr_bool(xdrs,
-				  &objp->wp_hole.di_allocated))
-				return false;
-			return true;
-		} else
+		if (!xdr_length4(xdrs,
+			  &objp->wp_adb.adb_block_size))
 			return false;
-
+		if (!xdr_length4(xdrs,
+			  &objp->wp_adb.adb_block_count))
+			return false;
+		if (!xdr_length4(xdrs,
+			  &objp->wp_adb.adb_reloff_blocknum))
+			return false;
+		if (!xdr_count4(xdrs,
+			  &objp->wp_adb.adb_block_num))
+			return false;
+		if (!xdr_length4(xdrs,
+			&objp->wp_adb.adb_reloff_pattern))
+			return false;
+		if (!inline_xdr_bytes
+		    (xdrs,
+		     (char **)&objp->wp_adb.adb_data.data_val,
+		     (u_int *)&objp->wp_adb.adb_data.data_len,
+		      ~0))
+			return false;
 		return true;
 	}
 
-	static inline bool xdr_WRITE_PLUS4resok(XDR * xdrs,
+	static inline bool xdr_WRITE_SAME4resok(XDR * xdrs,
 						write_response4 *objp)
 	{
 		if (!xdr_count4(xdrs, &objp->wr_ids))
@@ -7542,42 +7579,12 @@ extern "C" {
 				return false;
 			return true;
 		}
-		if (objp->rpr_contents.what == NFS4_CONTENT_APP_DATA_HOLE) {
-			if (!xdr_offset4(xdrs,
-					&objp->rpr_contents.adh.adh_offset))
-				return false;
-			if (!xdr_length4(xdrs,
-				  &objp->rpr_contents.adh.adh_block_size))
-				return false;
-			if (!xdr_length4(xdrs,
-				  &objp->rpr_contents.adh.adh_block_count))
-				return false;
-			if (!xdr_length4(xdrs,
-				  &objp->rpr_contents.adh.adh_reloff_blocknum))
-				return false;
-			if (!xdr_count4(xdrs,
-				  &objp->rpr_contents.adh.adh_block_num))
-				return false;
-			if (!xdr_length4(xdrs,
-				&objp->rpr_contents.adh.adh_reloff_pattern))
-				return false;
-			if (!inline_xdr_bytes
-			    (xdrs,
-			     (char **)&objp->rpr_contents.adh.adh_data.data_val,
-			     (u_int *)&objp->rpr_contents.adh.adh_data.data_len,
-			      ~0))
-				return false;
-			return true;
-		}
 		if (objp->rpr_contents.what == NFS4_CONTENT_HOLE) {
 			if (!xdr_offset4(xdrs,
 					&objp->rpr_contents.hole.di_offset))
 				return false;
 			if (!xdr_length4(xdrs,
 				  &objp->rpr_contents.hole.di_length))
-				return false;
-			if (!inline_xdr_bool(xdrs,
-				  &objp->rpr_contents.hole.di_allocated))
 				return false;
 			return true;
 		} else
@@ -7600,13 +7607,13 @@ extern "C" {
 		return true;
 	}
 
-	static inline bool xdr_WRITE_PLUS4res(XDR * xdrs, WRITE_PLUS4res *objp)
+	static inline bool xdr_WRITE_SAME4res(XDR * xdrs, WRITE_SAME4res *objp)
 	{
 		if (!xdr_nfsstat4(xdrs, &objp->wpr_status))
 			return false;
 		switch (objp->wpr_status) {
 		case NFS4_OK:
-			if (!xdr_WRITE_PLUS4resok(xdrs,
+			if (!xdr_WRITE_SAME4resok(xdrs,
 					&objp->wpr_resok4))
 				return false;
 			break;
@@ -7627,6 +7634,29 @@ extern "C" {
 		return true;
 	}
 
+	static inline bool xdr_ALLOCATE4args(XDR * xdrs, ALLOCATE4args *objp)
+	{
+		if (!xdr_stateid4(xdrs, &objp->aa_stateid))
+			return false;
+		if (!xdr_offset4(xdrs, &objp->aa_offset))
+			return false;
+		if (!xdr_length4(xdrs, &objp->aa_length))
+			return false;
+		return true;
+	}
+
+	static inline bool xdr_DEALLOCATE4args(XDR * xdrs,
+						DEALLOCATE4args *objp)
+	{
+		if (!xdr_stateid4(xdrs, &objp->da_stateid))
+			return false;
+		if (!xdr_offset4(xdrs, &objp->da_offset))
+			return false;
+		if (!xdr_length4(xdrs, &objp->da_length))
+			return false;
+		return true;
+	}
+
 	static inline bool xdr_data_contents(XDR * xdrs, contents *objp)
 	{
 		if (!inline_xdr_enum(xdrs, (enum_t *)&objp->what))
@@ -7638,36 +7668,6 @@ extern "C" {
 			if (!xdr_length4(xdrs,
 					&objp->hole.di_length))
 				return false;
-			if (!inline_xdr_bool(xdrs,
-					&objp->hole.di_allocated))
-				return false;
-			return true;
-		}
-		if (objp->what == NFS4_CONTENT_APP_DATA_HOLE) {
-			if (!xdr_offset4(xdrs,
-					&objp->adh.adh_offset))
-				return false;
-			if (!xdr_length4(xdrs,
-				  &objp->adh.adh_block_size))
-				return false;
-			if (!xdr_length4(xdrs,
-				  &objp->adh.adh_block_count))
-				return false;
-			if (!xdr_length4(xdrs,
-				  &objp->adh.adh_reloff_blocknum))
-				return false;
-			if (!xdr_count4(xdrs,
-				  &objp->adh.adh_block_num))
-				return false;
-			if (!xdr_length4(xdrs,
-				&objp->adh.adh_reloff_pattern))
-				return false;
-			if (!inline_xdr_bytes
-			    (xdrs,
-			     (char **)&objp->adh.adh_data.data_val,
-			     (u_int *)&objp->adh.adh_data.data_len,
-			      ~0))
-				return false;
 			return true;
 		}
 		if (objp->what == NFS4_CONTENT_HOLE) {
@@ -7676,9 +7676,6 @@ extern "C" {
 				return false;
 			if (!xdr_length4(xdrs,
 				  &objp->hole.di_length))
-				return false;
-			if (!inline_xdr_bool(xdrs,
-				  &objp->hole.di_allocated))
 				return false;
 			return true;
 		} else
@@ -7689,7 +7686,7 @@ extern "C" {
 	{
 		if (!inline_xdr_bool(xdrs, &objp->sr_eof))
 			return false;
-		if (!xdr_data_contents(xdrs, &objp->sr_contents))
+		if (!xdr_offset4(xdrs, &objp->sr_offset))
 			return false;
 		return true;
 	}
@@ -7710,32 +7707,102 @@ extern "C" {
 		return true;
 	}
 
+	static inline bool xdr_ALLOCATE4res(XDR * xdrs, ALLOCATE4res *objp)
+	{
+		if (!xdr_nfsstat4(xdrs, &objp->ar_status))
+			return false;
+		return true;
+	}
+
+	static inline bool xdr_DEALLOCATE4res(XDR * xdrs, DEALLOCATE4res *objp)
+	{
+		if (!xdr_nfsstat4(xdrs, &objp->dr_status))
+			return false;
+		return true;
+	}
+
 	static inline bool xdr_IO_ADVISE4args(XDR * xdrs, IO_ADVISE4args *objp)
 	{
-		if (!xdr_stateid4(xdrs, &objp->iar_stateid))
+		if (!xdr_stateid4(xdrs, &objp->iaa_stateid))
 			return false;
-		if (!xdr_offset4(xdrs, &objp->iar_offset))
+		if (!xdr_offset4(xdrs, &objp->iaa_offset))
 			return false;
-		if (!xdr_length4(xdrs, &objp->iar_count))
+		if (!xdr_length4(xdrs, &objp->iaa_count))
 			return false;
-		if (!xdr_bitmap4(xdrs, &objp->iar_hints))
+		if (!xdr_bitmap4(xdrs, &objp->iaa_hints))
 			return false;
 		return true;
 	}
 
 	static inline bool xdr_IO_ADVISE4res(XDR * xdrs, IO_ADVISE4res *objp)
 	{
-		if (!xdr_nfsstat4(xdrs, &objp->iar_status))
+		if (!xdr_nfsstat4(xdrs, &objp->iaa_status))
 			return false;
-		switch (objp->iar_status) {
+		switch (objp->iaa_status) {
 		case NFS4_OK:
 			if (!xdr_bitmap4(xdrs,
-					&objp->iar_hints))
+					&objp->iaa_hints))
 				return false;
 			break;
 		default:
 			break;
 		}
+		return true;
+	}
+
+	static inline bool xdr_LAYOUTERROR4args(XDR * xdrs,
+						LAYOUTERROR4args *objp)
+	{
+		if (!xdr_offset4(xdrs, &objp->lea_offset))
+			return false;
+		if (!xdr_length4(xdrs, &objp->lea_length))
+			return false;
+		if (!xdr_stateid4(xdrs, &objp->lea_stateid))
+			return false;
+		if (!xdr_deviceid4(xdrs, objp->lea_errors.de_deviceid))
+			return false;
+		if (!xdr_nfsstat4(xdrs, &objp->lea_errors.de_status))
+			return false;
+		if (!inline_xdr_enum(xdrs, (enum_t *)objp->lea_errors.de_opnum))
+			return false;
+		return true;
+	}
+
+	static inline bool xdr_LAYOUTERROR4res(XDR * xdrs,
+						LAYOUTERROR4res *objp)
+	{
+		if (!xdr_nfsstat4(xdrs, &objp->ler_status))
+			return false;
+		return true;
+	}
+
+	static inline bool xdr_LAYOUTSTATS4args(XDR * xdrs,
+						LAYOUTSTATS4args *objp)
+	{
+		if (!xdr_offset4(xdrs, &objp->lsa_offset))
+			return false;
+		if (!xdr_length4(xdrs, &objp->lsa_length))
+			return false;
+		if (!xdr_stateid4(xdrs, &objp->lsa_stateid))
+			return false;
+		if (!inline_xdr_u_int32_t(xdrs, &objp->lsa_read.ii_count))
+			return false;
+		if (!inline_xdr_u_int64_t(xdrs, &objp->lsa_read.ii_bytes))
+			return false;
+		if (!inline_xdr_u_int32_t(xdrs, &objp->lsa_write.ii_count))
+			return false;
+		if (!inline_xdr_u_int64_t(xdrs, &objp->lsa_write.ii_bytes))
+			return false;
+		if (!xdr_layoutupdate4(xdrs, &objp->lsa_layoutupdate))
+			return false;
+		return true;
+	}
+
+	static inline bool xdr_LAYOUTSTATS4res(XDR * xdrs,
+						LAYOUTSTATS4res *objp)
+	{
+		if (!xdr_nfsstat4(xdrs, &objp->lsr_status))
+			return false;
 		return true;
 	}
 
@@ -8038,8 +8105,8 @@ extern "C" {
 			break;
 
 		/* NFSv4.2 */
-		case NFS4_OP_WRITE_PLUS:
-			if (!xdr_WRITE_PLUS4args(xdrs,
+		case NFS4_OP_WRITE_SAME:
+			if (!xdr_WRITE_SAME4args(xdrs,
 					&objp->nfs_argop4_u.opwrite_plus))
 				return false;
 			lkhd->flags |= NFS_LOOKAHEAD_WRITE;
@@ -8057,16 +8124,35 @@ extern "C" {
 					&objp->nfs_argop4_u.opseek))
 				return false;
 			break;
+		case NFS4_OP_ALLOCATE:
+			if (!xdr_ALLOCATE4args(xdrs,
+					&objp->nfs_argop4_u.opallocate))
+				return false;
+			break;
+		case NFS4_OP_DEALLOCATE:
+			if (!xdr_DEALLOCATE4args(xdrs,
+					&objp->nfs_argop4_u.opdeallocate))
+				return false;
+			break;
 		case NFS4_OP_IO_ADVISE:
 			if (!xdr_IO_ADVISE4args(xdrs,
 					&objp->nfs_argop4_u.opio_advise))
 				return false;
 			break;
+		case NFS4_OP_LAYOUTERROR:
+			if (!xdr_LAYOUTERROR4args(xdrs,
+					&objp->nfs_argop4_u.oplayouterror))
+				return false;
+			break;
+		case NFS4_OP_LAYOUTSTATS:
+			if (!xdr_LAYOUTSTATS4args(xdrs,
+					&objp->nfs_argop4_u.oplayoutstats))
+				return false;
+			break;
 
 		case NFS4_OP_COPY:
-		case NFS4_OP_OFFLOAD_ABORT:
 		case NFS4_OP_COPY_NOTIFY:
-		case NFS4_OP_OFFLOAD_REVOKE:
+		case NFS4_OP_OFFLOAD_CANCEL:
 		case NFS4_OP_OFFLOAD_STATUS:
 			break;
 
@@ -8350,8 +8436,8 @@ extern "C" {
 			break;
 
 		/* NFSv4.2 */
-		case NFS4_OP_WRITE_PLUS:
-			if (!xdr_WRITE_PLUS4res
+		case NFS4_OP_WRITE_SAME:
+			if (!xdr_WRITE_SAME4res
 			    (xdrs, &objp->nfs_resop4_u.opwrite_plus))
 				return false;
 			break;
@@ -8365,16 +8451,35 @@ extern "C" {
 			    (xdrs, &objp->nfs_resop4_u.opseek))
 				return false;
 			break;
+		case NFS4_OP_ALLOCATE:
+			if (!xdr_ALLOCATE4res
+			    (xdrs, &objp->nfs_resop4_u.opallocate))
+				return false;
+			break;
+		case NFS4_OP_DEALLOCATE:
+			if (!xdr_DEALLOCATE4res
+			    (xdrs, &objp->nfs_resop4_u.opdeallocate))
+				return false;
+			break;
 		case NFS4_OP_IO_ADVISE:
 			if (!xdr_IO_ADVISE4res
 			    (xdrs, &objp->nfs_resop4_u.opio_advise))
 				return false;
 			break;
+		case NFS4_OP_LAYOUTERROR:
+			if (!xdr_LAYOUTERROR4res(xdrs,
+					&objp->nfs_resop4_u.oplayouterror))
+				return false;
+			break;
+		case NFS4_OP_LAYOUTSTATS:
+			if (!xdr_LAYOUTSTATS4res(xdrs,
+					&objp->nfs_resop4_u.oplayoutstats))
+				return false;
+			break;
 
 		case NFS4_OP_COPY:
-		case NFS4_OP_OFFLOAD_ABORT:
 		case NFS4_OP_COPY_NOTIFY:
-		case NFS4_OP_OFFLOAD_REVOKE:
+		case NFS4_OP_OFFLOAD_CANCEL:
 		case NFS4_OP_OFFLOAD_STATUS:
 
 		case NFS4_OP_ILLEGAL:

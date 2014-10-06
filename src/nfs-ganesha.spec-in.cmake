@@ -66,6 +66,12 @@
 %global with_rdma 0
 %endif
 
+%if %{?_with_lttng:1}%{!?_with_lttng:0}
+%global with_lttng 1
+%else
+%global with_lttng 0
+%endif
+
 %if %{?_with_utils:1}%{!?_with_utils:0}
 %global with_utils 1
 %else
@@ -86,9 +92,9 @@ Source:		%{sourcename}.tar.gz
 BuildRequires:	initscripts
 BuildRequires:	cmake
 BuildRequires:	bison flex
-BuildRequires:	dbus-devel  libcap-devel krb5-devel libgssglue-devel
+BuildRequires:	dbus-devel  libcap-devel krb5-devel
 BuildRequires:	libblkid-devel libuuid-devel
-Requires:	dbus-libs libcap krb5-libs libgssglue libblkid libuuid
+Requires:	dbus-libs libcap krb5-libs libblkid libuuid
 %if %{with_nfsidmap}
 BuildRequires:	libnfsidmap-devel
 Requires:	libnfsidmap
@@ -144,6 +150,7 @@ Requires: nfs-ganesha
 This package contains a FSAL shared object to
 be used with NFS-Ganesha to support PROXY based filesystems
 
+%if %{with_utils}
 %package utils
 Summary: The NFS-GANESHA's util scripts
 Group: Applications/System
@@ -152,6 +159,19 @@ Requires: nfs-ganesha python
 
 %description utils
 This package contains utility scripts for managing the NFS-GANESHA server
+%endif
+
+%if %{with_lttng}
+%package lttng
+Summary: The NFS-GANESHA's library for use with LTTng
+Group: Applications/System
+BuildRequires: lttng-ust-devel >= 2.3
+Requires: nfs-ganesha, lttng-tools >= 2.3,  lttng-ust >= 2.3
+
+%description lttng
+This package contains the libganesha_trace.so library. When preloaded
+to the ganesha.nfsd server, it makes it possible to trace using LTTng.
+%endif
 
 # Option packages start here. use "rpmbuild --with lustre" (or equivalent)
 # for activating this part of the spec file
@@ -273,8 +293,6 @@ be used with NFS-Ganesha to support Gluster
 
 %build
 cmake .	-DCMAKE_BUILD_TYPE=Debug			\
-	-DCMAKE_INSTALL_PREFIX=/usr			\
-	-DCMAKE_BUILD_TYPE=Debug			\
 	-DBUILD_CONFIG=rpmbuild				\
 %if %{with_fsal_zfs}
 	-DUSE_FSAL_ZFS=ON				\
@@ -323,6 +341,9 @@ cmake .	-DCMAKE_BUILD_TYPE=Debug			\
 %endif
 %if %{with_rdma}
 	-DUSE_9P_RDMA=ON				\
+%endif
+%if %{with_lttng}
+	-DUSE_LTTNG=ON				\
 %endif
 %if %{with_utils}
         -DUSE_ADMIN_TOOLS=ON                            \
@@ -401,8 +422,8 @@ pushd .
 cd scripts/ganeshactl/
 python setup.py --quiet install --root=%{buildroot}
 popd
+install -m 755 Protocols/NLM/sm_notify.ganesha		%{buildroot}%{_bindir}/sm_notify.ganesha
 %endif
-
 
 make DESTDIR=%{buildroot} install
 
@@ -414,6 +435,9 @@ make DESTDIR=%{buildroot} install
 %config(noreplace) %{_sysconfdir}/sysconfig/ganesha
 %config(noreplace) %{_sysconfdir}/logrotate.d/ganesha
 %dir %{_sysconfdir}/ganesha/
+%config(noreplace) %{_sysconfdir}/ganesha/ganesha.conf
+%dir %{_defaultdocdir}/ganesha/
+%{_defaultdocdir}/ganesha/*
 
 %if 0%{?fedora}
 %config %{_unitdir}/nfs-ganesha.service
@@ -509,6 +533,12 @@ make DESTDIR=%{buildroot} install
 %config(noreplace) %{_sysconfdir}/ganesha/pt.conf
 %endif
 
+%if %{with_lttng}
+%files lttng
+%defattr(-,root,root,-)
+%{_libdir}/ganesha/libganesha_trace*
+%endif
+
 %if %{with_utils}
 %files utils
 %defattr(-,root,root,-)
@@ -523,17 +553,29 @@ make DESTDIR=%{buildroot} install
 /usr/bin/get_clientids
 /usr/bin/grace_period
 /usr/bin/purge_gids
-/usr/bin/stats_fast
-/usr/bin/stats_global
-/usr/bin/stats_inode
-/usr/bin/stats_io
-/usr/bin/stats_pnfs
-/usr/bin/stats
-/usr/bin/stats_total
+/usr/bin/ganesha_stats
+/usr/bin/sm_notify.ganesha
 %endif
 
 
 %changelog
+* Fri Jun 27 2014  Philippe DENIEL <philippe.deniel@cea.fr> 2.1
+- Exports are now dynamic.  They can be added or removed via DBus commands.
+- The Pseudo filesystem has been re-written as a FSAL
+- The configuration file processing has been rewritten to improve error checking and logging.
+- GIDs can now be managed to use external authentication sources. Altgroups with AUTH_SYS can be larger than 16.
+- RPM packaging has been restructured and updated.  The DBus tools are now packaged.
+
 * Thu Nov 21 2013  Philippe DENIEL <philippe.deniel@cea.fr> 2.O
-- bunches of cool new stuff
+- FSALs (filesystem backends) are now loadable shared objects.
+- The server can support multiple backends at runtime.
+- NFSv4.1 pNFS is supported.
+- DBus is now the administration tool.
+- All the significant bugfixes from the 1.5.x branch have been backported
+- The server passes all of the cthonv4 and pynfs 4.0 tests.
+-  All of the significant (non-delegation) pynfs 4.1 tests also pass.
+- NFSv2 support has been deprecated.
+- NFSv3 still supports the older version of the MNT protocol for compatibility
+- The build process has been converted to Cmake
+- The codebase has been reformatted to conform to Linux kernel coding style.
 

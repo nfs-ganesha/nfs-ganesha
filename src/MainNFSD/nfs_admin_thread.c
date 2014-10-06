@@ -231,11 +231,23 @@ static struct gsh_dbus_method *admin_methods[] = {
 	NULL
 };
 
+static struct gsh_dbus_signal heartbeat_signal = {
+	.name = HEARTBEAT_NAME,
+	.signal = NULL,
+	.args = {HEARTBEAT_ARG,
+		 END_ARG_LIST}
+};
+
+static struct gsh_dbus_signal *admin_signals[] = {
+	&heartbeat_signal,
+	NULL
+};
+
 static struct gsh_dbus_interface admin_interface = {
-	.name = "org.ganesha.nfsd.admin",
+	.name = DBUS_ADMIN_IFACE,
 	.props = NULL,
 	.methods = admin_methods,
-	.signals = NULL
+	.signals = admin_signals
 };
 
 static struct gsh_dbus_interface *admin_interfaces[] = {

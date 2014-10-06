@@ -196,7 +196,15 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 					.lock_start = fl.flock.l_start,
 					.lock_length = fl.flock.l_len
 				};
-				rc = up_async_lock_grant(general_fridge,
+				if (reason == INODE_LOCK_AGAIN)
+					rc = up_async_lock_avail(general_fridge,
+							 event_func,
+							 gpfs_fs->fs->fsal,
+							 &key,
+							 fl.lock_owner,
+							 &lockdesc, NULL, NULL);
+				else
+					rc = up_async_lock_grant(general_fridge,
 							 event_func,
 							 gpfs_fs->fs->fsal,
 							 &key,

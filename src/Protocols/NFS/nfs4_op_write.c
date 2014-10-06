@@ -165,11 +165,7 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
 	cache_entry_t *entry = NULL;
 	fsal_status_t fsal_status;
-	/* This flag is set to true in the case of an anonymous read so that
-	   we know to release the state lock afterward.  The state lock does
-	   not need to be held during a non-anonymous read, since the open
-	   state itself prevents a conflict. */
-	bool anonymous = false;
+	bool anonymous_started = false;
 	struct gsh_buffdesc verf_desc;
 
 	/* Lock are not supported */
@@ -227,6 +223,7 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 	 * the stateid is all-0 or all-1
 	 */
 	if (state_found != NULL) {
+		state_deleg_t *sdeleg;
 		if (info)
 			info->io_advise = state_found->state_data.io_advise;
 		switch (state_found->state_type) {
@@ -244,10 +241,22 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 			break;
 
 		case STATE_TYPE_DELEG:
-			/**
-			 * @todo FSF: should check that this is a write
-			 * delegation?
-			 */
+			/* Check if the delegation state allows READ */
+			sdeleg = &state_found->state_data.deleg;
+			if (!(sdeleg->sd_type & OPEN_DELEGATE_WRITE) ||
+				(sdeleg->sd_state != DELEG_GRANTED)) {
+				/* Invalid delegation for this operation. */
+				LogDebug(COMPONENT_STATE,
+					"Delegation type:%d state:%d",
+					sdeleg->sd_type,
+					sdeleg->sd_state);
+				res_WRITE4->status = NFS4ERR_BAD_STATEID;
+				return res_WRITE4->status;
+			}
+
+			state_open = NULL;
+			break;
+
 		case STATE_TYPE_LAYOUT:
 			state_open = NULL;
 			break;
@@ -279,21 +288,19 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 		 */
 		state_open = NULL;
 
-		PTHREAD_RWLOCK_rdlock(&entry->state_lock);
-		anonymous = true;
-
 		/* Special stateid, no open state, check to see if any share
 		 * conflicts The stateid is all-0 or all-1
 		 */
-		res_WRITE4->status =
-		    nfs4_check_special_stateid(entry,
-					       "WRITE",
-					       FATTR4_ATTR_WRITE);
+		res_WRITE4->status = nfs4_Errno_state(
+				state_share_anonymous_io_start(
+					entry,
+					OPEN4_SHARE_ACCESS_WRITE,
+					SHARE_BYPASS_NONE));
 
-		if (res_WRITE4->status != NFS4_OK) {
-			PTHREAD_RWLOCK_unlock(&entry->state_lock);
+		if (res_WRITE4->status != NFS4_OK)
 			return res_WRITE4->status;
-		}
+
+		anonymous_started = true;
 	}
 
 	/** @todo this is racy, use cache_inode_lock_trust_attrs and
@@ -307,9 +314,7 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 
 		if (cache_status != CACHE_INODE_SUCCESS) {
 			res_WRITE4->status = nfs4_Errno(cache_status);
-			if (anonymous)
-				PTHREAD_RWLOCK_unlock(&entry->state_lock);
-			return res_WRITE4->status;
+			goto done;
 		}
 	}
 
@@ -335,9 +340,7 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 				 op_ctx->export->export_id);
 
 			res_WRITE4->status = NFS4ERR_DQUOT;
-			if (anonymous)
-				PTHREAD_RWLOCK_unlock(&entry->state_lock);
-			return res_WRITE4->status;
+			goto done;
 		}
 	}
 
@@ -375,9 +378,7 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 			&verf_desc);
 
 		res_WRITE4->status = NFS4_OK;
-		if (anonymous)
-			PTHREAD_RWLOCK_unlock(&entry->state_lock);
-		return res_WRITE4->status;
+		goto done;
 	}
 
 	if (arg_WRITE4->stable == UNSTABLE4)
@@ -385,7 +386,7 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 	else
 		sync = true;
 
-	if (!anonymous && data->minorversion == 0) {
+	if (!anonymous_started && data->minorversion == 0) {
 		op_ctx->clientid =
 		    &state_found->state_owner->so_owner.so_nfs4_owner.
 		    so_clientid;
@@ -406,12 +407,10 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 			 "cache_inode_rdwr returned %s",
 			 cache_inode_err_str(cache_status));
 		res_WRITE4->status = nfs4_Errno(cache_status);
-		if (anonymous)
-			PTHREAD_RWLOCK_unlock(&entry->state_lock);
-		return res_WRITE4->status;
+		goto done;
 	}
 
-	if (!anonymous && data->minorversion == 0)
+	if (!anonymous_started && data->minorversion == 0)
 		op_ctx->clientid = NULL;
 
 	/* Set the returned value */
@@ -429,8 +428,10 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 
 	res_WRITE4->status = NFS4_OK;
 
-	if (anonymous)
-		PTHREAD_RWLOCK_unlock(&entry->state_lock);
+ done:
+
+	if (anonymous_started)
+		state_share_anonymous_io_done(entry, OPEN4_SHARE_ACCESS_WRITE);
 
 	server_stats_io_done(size, written_size,
 			     (res_WRITE4->status == NFS4_OK) ? true : false,
@@ -477,64 +478,102 @@ void nfs4_op_write_Free(nfs_resop4 *resp)
 }				/* nfs4_op_write_Free */
 
 /**
- * @brief The NFS4_OP_WRITE_PLUS operation
+ * @brief The NFS4_OP_WRITE_SAME operation
  *
- * This functions handles the NFS4_OP_WRITE_PLUS operation in NFSv4.2. This
+ * This functions handles the NFS4_OP_WRITE_SAME operation in NFSv4.2. This
  * function can be called only from nfs4_Compound.
  *
  * @param[in]     op    Arguments for nfs4_op
  * @param[in,out] data  Compound request's data
  * @param[out]    resp  Results for nfs4_op
  *
- * @return per RFC5661, p. 376
  */
 
 int nfs4_op_write_plus(struct nfs_argop4 *op, compound_data_t *data,
 		  struct nfs_resop4 *resp)
 {
+	WRITE_SAME4res * const res_WPLUS = &resp->nfs_resop4_u.opwrite_plus;
+
+	resp->resop = NFS4_OP_WRITE_SAME;
+	res_WPLUS->wpr_status =  NFS4ERR_NOTSUPP;
+
+	return res_WPLUS->wpr_status;
+}
+
+/**
+ * @brief The NFS4_OP_ALLOCATE
+ * This functions handles the NFS4_OP_ALLOCATE operation in NFSv4.2. This
+ * function can be called only from nfs4_Compound.
+ *
+ * @param[in]     op    Arguments for nfs4_op
+ * @param[in,out] data  Compound request's data
+ * @param[out]    resp  Results for nfs4_op
+ *
+ */
+
+int nfs4_op_allocate(struct nfs_argop4 *op, compound_data_t *data,
+		  struct nfs_resop4 *resp)
+{
 	struct nfs_resop4 res;
 	struct nfs_argop4 arg;
 	struct io_info info;
-	WRITE_PLUS4args * const arg_WPLUS = &op->nfs_argop4_u.opwrite_plus;
-	WRITE_PLUS4res * const res_WPLUS = &resp->nfs_resop4_u.opwrite_plus;
+	ALLOCATE4args * const arg_ALLOC = &op->nfs_argop4_u.opallocate;
+	ALLOCATE4res * const res_ALLOC = &resp->nfs_resop4_u.opallocate;
 
-	resp->resop = NFS4_OP_WRITE_PLUS;
-	res_WPLUS->wpr_status = NFS4_OK;
+	resp->resop = NFS4_OP_ALLOCATE;
+	res_ALLOC->ar_status = NFS4_OK;
 
-	arg.nfs_argop4_u.opwrite.stateid = arg_WPLUS->wp_stateid;
-	arg.nfs_argop4_u.opwrite.stable = arg_WPLUS->wp_stable;
-	info.io_content.what = arg_WPLUS->wp_what;
+	arg.nfs_argop4_u.opwrite.stateid = arg_ALLOC->aa_stateid;
+	arg.nfs_argop4_u.opwrite.stable = true;
 
-	if (info.io_content.what == NFS4_CONTENT_DATA) {
-		info.io_content.data = arg_WPLUS->wp_data;
-		arg.nfs_argop4_u.opwrite.offset = arg_WPLUS->wp_data.d_offset;
-		arg.nfs_argop4_u.opwrite.data.data_len =
-					arg_WPLUS->wp_data.d_data.data_len;
-		arg.nfs_argop4_u.opwrite.data.data_val =
-					arg_WPLUS->wp_data.d_data.data_val;
-	} else if (info.io_content.what == NFS4_CONTENT_HOLE) {
-		info.io_content.hole = arg_WPLUS->wp_hole;
-		arg.nfs_argop4_u.opwrite.offset = arg_WPLUS->wp_hole.di_offset;
-		arg.nfs_argop4_u.opwrite.data.data_len =
-					arg_WPLUS->wp_hole.di_length;
-		arg.nfs_argop4_u.opwrite.data.data_val = NULL;
-	} else {
-		res_WPLUS->wpr_status = NFS4ERR_UNION_NOTSUPP;
-		return res_WPLUS->wpr_status;
-	}
+	info.io_content.what = NFS4_CONTENT_ALLOCATE;
+	info.io_content.hole.di_offset = arg_ALLOC->aa_offset;
+	info.io_content.hole.di_length = arg_ALLOC->aa_length;
+	arg.nfs_argop4_u.opwrite.offset = arg_ALLOC->aa_offset;
+	arg.nfs_argop4_u.opwrite.data.data_len = arg_ALLOC->aa_length;
+	arg.nfs_argop4_u.opwrite.data.data_val = NULL;
 	info.io_advise = 0;
 
-	res_WPLUS->wpr_status = nfs4_write(&arg, data, &res,
+	res_ALLOC->ar_status = nfs4_write(&arg, data, &res,
 					   CACHE_INODE_WRITE_PLUS, &info);
-	if (res_WPLUS->wpr_status == NFS4_OK) {
-		res_WPLUS->wpr_resok4.wr_ids = 0;
-		res_WPLUS->wpr_resok4.wr_committed =
-			res.nfs_resop4_u.opwrite.WRITE4res_u.resok4.committed;
-		res_WPLUS->wpr_resok4.wr_count =
-			res.nfs_resop4_u.opwrite.WRITE4res_u.resok4.count;
-		memcpy(res_WPLUS->wpr_resok4.wr_writeverf,
-		       res.nfs_resop4_u.opwrite.WRITE4res_u.resok4.writeverf,
-		       sizeof(NFS4_VERIFIER_SIZE));
-	}
-	return res_WPLUS->wpr_status;
+	return res_ALLOC->ar_status;
+}
+
+/**
+ * @brief The NFS4_OP_DEALLOCATE
+ * This functions handles the NFS4_OP_DEALLOCATE operation in NFSv4.2. This
+ * function can be called only from nfs4_Compound.
+ *
+ * @param[in]     op    Arguments for nfs4_op
+ * @param[in,out] data  Compound request's data
+ * @param[out]    resp  Results for nfs4_op
+ *
+ */
+
+int nfs4_op_deallocate(struct nfs_argop4 *op, compound_data_t *data,
+		  struct nfs_resop4 *resp)
+{
+	struct nfs_resop4 res;
+	struct nfs_argop4 arg;
+	struct io_info info;
+	DEALLOCATE4args * const arg_DEALLOC = &op->nfs_argop4_u.opdeallocate;
+	DEALLOCATE4res * const res_DEALLOC = &resp->nfs_resop4_u.opdeallocate;
+
+	resp->resop = NFS4_OP_DEALLOCATE;
+	res_DEALLOC->dr_status = NFS4_OK;
+
+	arg.nfs_argop4_u.opwrite.stateid = arg_DEALLOC->da_stateid;
+	arg.nfs_argop4_u.opwrite.stable = true;
+
+	info.io_content.what = NFS4_CONTENT_DEALLOCATE;
+	info.io_content.hole.di_offset = arg_DEALLOC->da_offset;
+	info.io_content.hole.di_length = arg_DEALLOC->da_length;
+	arg.nfs_argop4_u.opwrite.offset = arg_DEALLOC->da_offset;
+	arg.nfs_argop4_u.opwrite.data.data_len = arg_DEALLOC->da_length;
+	arg.nfs_argop4_u.opwrite.data.data_val = NULL;
+	info.io_advise = 0;
+
+	res_DEALLOC->dr_status = nfs4_write(&arg, data, &res,
+					   CACHE_INODE_WRITE_PLUS, &info);
+	return res_DEALLOC->dr_status;
 }

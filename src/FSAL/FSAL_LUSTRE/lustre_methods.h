@@ -27,6 +27,7 @@ struct lustre_fsal_export {
 	struct fsal_filesystem *root_fs;
 	struct glist_head filesystems;
 	bool pnfs_enabled;
+	struct lustre_exp_pnfs_parameter pnfs_param;
 };
 
 /*
@@ -36,6 +37,16 @@ struct lustre_filesystem {
 	char *fsname;
 	struct fsal_filesystem *fs;
 	struct glist_head exports;
+};
+
+
+/* LUSTRE FSAL module private storage
+ *  */
+
+struct lustre_fsal_module {
+	struct fsal_module fsal;
+	struct fsal_staticfsinfo_t fs_info;
+	struct lustre_pnfs_parameter pnfs_param;
 };
 
 /*

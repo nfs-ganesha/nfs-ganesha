@@ -220,8 +220,10 @@ fsal_status_t GPFSFSAL_symlink(struct fsal_obj_handle *dir_hdl,	/* IN */
 		if (FSAL_IS_ERROR(status)) {
 			FSAL_CLEAR_MASK(p_link_attributes->mask);
 			FSAL_SET_MASK(p_link_attributes->mask, ATTR_RDATTR_ERR);
+		} else if (p_link_attributes->type != SYMBOLIC_LINK) {
+			close(fd);
+			return fsalstat(ERR_FSAL_EXIST, 0);
 		}
-
 	}
 
 	/* OK */

@@ -90,6 +90,7 @@ struct config_error_type {
 	bool validate:1;	/*< commit param validation */
 	bool exists:1;		/*< block already exists */
 	bool empty:1;		/*< block is empty */
+	bool internal:1;        /*< internal error */
 	bool bogus:1;		/*< bogus (deprecated?) param */
 };
 
@@ -112,8 +113,8 @@ static inline bool config_error_is_fatal(struct config_error_type *err_type)
 
 static inline bool config_error_is_crit(struct config_error_type *err_type)
 {
-	return config_error_is_fatal(err_type) ||
-		(err_type->invalid || err_type->export || err_type->missing);
+	return config_error_is_fatal(err_type) || err_type->internal ||
+		err_type->invalid || err_type->export || err_type->missing;
 }
 
 /**
@@ -647,7 +648,13 @@ struct config_item {
 	  .u.ipv4.def = _def_,			    \
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
-
+#define CONF_MAND_IPV4_ADDR(_name_, _def_, _struct_, _mem_) \
+	{ .name = _name_,			    \
+	  .type = CONFIG_IPV4_ADDR,		    \
+	  .flags = CONFIG_UNIQUE|CONFIG_MANDATORY,  \
+	  .u.ipv4.def = _def_,			    \
+	  .off = offsetof(struct _struct_, _mem_)   \
+	}
 #define CONF_ITEM_IPV6_ADDR(_name_, _def_, _struct_, _mem_) \
 	{ .name = _name_,			    \
 	  .type = CONFIG_IPV6_ADDR,		    \
@@ -658,6 +665,16 @@ struct config_item {
 #define CONF_ITEM_INET_PORT(_name_, _min_, _max_, _def_, _struct_, _mem_) \
 	{ .name = _name_,			    \
 	  .type = CONFIG_INET_PORT,		    \
+	  .u.i16.minval = _min_,		    \
+	  .u.i16.maxval = _max_,		    \
+	  .u.i16.def = _def_,			    \
+	  .off = offsetof(struct _struct_, _mem_)   \
+	}
+
+#define CONF_MAND_INET_PORT(_name_, _min_, _max_, _def_, _struct_, _mem_) \
+	{ .name = _name_,			    \
+	  .type = CONFIG_INET_PORT,		    \
+	  .flags = CONFIG_UNIQUE|CONFIG_MANDATORY,  \
 	  .u.i16.minval = _min_,		    \
 	  .u.i16.maxval = _max_,		    \
 	  .u.i16.def = _def_,			    \

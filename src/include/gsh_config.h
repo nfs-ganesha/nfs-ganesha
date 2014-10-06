@@ -341,6 +341,8 @@ typedef struct nfs_core_param {
 	/** Path to the directory containing server specific
 	    modules.  In particular, this is where FSALs live. */
 	char *ganesha_modules_loc;
+	/* Frequency of dbus health heartbeat in ms. Set to 0 to disable */
+	uint32_t heartbeat_freq;
 } nfs_core_parameter_t;
 
 /** @} */
@@ -365,6 +367,16 @@ typedef struct nfs_core_param {
  * @brief Default value of domainname.
  */
 #define DOMAINNAME_DEFAULT "localdomain"
+
+/**
+ * @brief Default value of idmapconf.
+ */
+#define IDMAPCONF_DEFAULT "/etc/idmapd.conf"
+
+/**
+ * @brief Default value of deleg_recall_retry_delay.
+ */
+#define DELEG_RECALL_RETRY_DELAY_DEFAULT 1
 
 typedef struct nfs_version4_parameter {
 	/** Whether to disable the NFSv4 grace period.  Defaults to
@@ -398,6 +410,8 @@ typedef struct nfs_version4_parameter {
 	/** Whether to allow delegations. Defaults to false and settable
 	    with Delegations */
 	bool allow_delegations;
+	/** Delay after which server will retry a recall in case of failures */
+	uint32_t deleg_recall_retry_delay;
 } nfs_version4_parameter_t;
 
 /** @} */

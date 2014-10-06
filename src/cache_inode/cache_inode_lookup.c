@@ -51,6 +51,13 @@
 #include <pthread.h>
 #include <assert.h>
 
+static inline bool trust_negative_cache(cache_entry_t *parent)
+{
+	return ((op_ctx->export->options &
+		 EXPORT_OPTION_TRUST_READIR_NEGATIVE_CACHE) != 0) &&
+	       ((parent->flags & CACHE_INODE_DIR_POPULATED) != 0);
+}
+
 /**
  *
  * @brief Do the work of looking up a name in a directory.
@@ -128,8 +135,7 @@ cache_inode_lookup_impl(cache_entry_t *parent,
 						goto out;
 					}
 				} else {	/* ! dirent */
-					if (parent->
-					    flags & CACHE_INODE_DIR_POPULATED) {
+					if (trust_negative_cache(parent)) {
 						/* If the dirent cache is both
 						 * fully populated and valid,
 						 * it can serve negative

@@ -276,6 +276,7 @@ int nfs4_op_setclientid(struct nfs_argop4 *op, compound_data_t *data,
 				  client_record,
 				  &client_addr,
 				  &data->credential,
+				  op_ctx->client,
 				  0);
 
 	if (unconf == NULL) {

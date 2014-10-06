@@ -57,6 +57,10 @@
 #include "nfs_core.h"
 #include "config_parsing.h"
 
+#ifdef USE_LTTNG
+#include "ganesha_lttng/logger.h"
+#endif
+
 /*
  * The usual PTHREAD_RWLOCK_xxx macros log messages for tracing if FULL
  * DEBUG is enabled. If such a macro is called from this logging file as
@@ -547,14 +551,16 @@ void set_const_log_str()
 	if (b_left > 0
 	    && (logfields->disp_prog || logfields->disp_pid)
 	    && !logfields->disp_threadname)
-		b_left = display_cat(&dspbuf, " ");
+		(void) display_cat(&dspbuf, " ");
 
 	b_left = display_start(&tdfbuf);
 
+	if (b_left <= 0)
+		return;
+
 	if (logfields->datefmt == TD_LOCAL
 	    && logfields->timefmt == TD_LOCAL) {
-		if (b_left > 0)
-			b_left = display_cat(&tdfbuf, "%c ");
+		b_left = display_cat(&tdfbuf, "%c ");
 	} else {
 		switch (logfields->datefmt) {
 		case TD_GANESHA:
@@ -582,6 +588,9 @@ void set_const_log_str()
 		default:
 			break;
 		}
+
+		if (b_left <= 0)
+			return;
 
 		switch (logfields->timefmt) {
 		case TD_GANESHA:
@@ -1431,6 +1440,11 @@ void display_log_component_level(log_components_t component, char *file,
 	if (b_left > 0)
 		b_left = display_vprintf(&dsp_log, format, arguments);
 
+#ifdef USE_LTTNG
+	tracepoint(ganesha_logger, log,
+		   component, level, file, line, function, message);
+#endif
+
 	PTHREAD_RWLOCK_rdlock(&log_rwlock);
 
 	glist_for_each(glist, &active_facility_list) {
@@ -1656,12 +1670,19 @@ static bool dbus_prop_get(log_components_t component, DBusMessageIter *reply)
 static bool dbus_prop_set(log_components_t component, DBusMessageIter *arg)
 {
 	char *level_code;
-	long log_level;
+	int log_level;
 
 	if (dbus_message_iter_get_arg_type(arg) != DBUS_TYPE_STRING)
 		return false;
 	dbus_message_iter_get_basic(arg, &level_code);
 	log_level = ReturnLevelAscii(level_code);
+	if (log_level == -1) {
+		LogDebug(COMPONENT_DBUS,
+			 "Invalid log level: '%s' given for component %s",
+			 level_code, LogComponents[component].comp_name);
+		return false;
+	}
+
 	if (component == COMPONENT_ALL) {
 		_SetLevelDebug(log_level);
 		LogChanges("Dbus set log level for all components to %s",

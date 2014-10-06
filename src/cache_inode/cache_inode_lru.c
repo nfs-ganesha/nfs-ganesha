@@ -581,11 +581,12 @@ void cache_inode_lru_cleanup_try_push(cache_entry_t *entry)
 	struct lru_q_lane *qlane = &LRU[lru->lane];
 	cih_latch_t latch;
 
-	QLOCK(qlane);
-
 	if (cih_latch_entry(entry, &latch, CIH_GET_WLOCK,
 			    __func__, __LINE__)) {
 		uint32_t refcnt;
+
+		QLOCK(qlane);
+
 		refcnt = atomic_fetch_int32_t(&entry->lru.refcnt);
 		/* there are two cases which permit reclaim,
 		 * entry is:
@@ -602,10 +603,10 @@ void cache_inode_lru_cleanup_try_push(cache_entry_t *entry)
 			entry->lru.qid = LRU_ENTRY_CLEANUP;
 		}
 
+		QUNLOCK(qlane);
+
 		cih_latch_rele(&latch);
 	}
-
-	QUNLOCK(qlane);
 }
 
 /**

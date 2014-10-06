@@ -473,6 +473,20 @@ struct delegrecall_args {
 
 static void queue_delegrecall(struct fridgethr_context *ctx)
 {
+	cache_entry_t *entry = ctx->arg;
+
+	(void)delegrecall_impl(entry);
+}
+
+int async_delegrecall(struct fridgethr *fr, cache_entry_t *entry)
+{
+	int rc = fridgethr_submit(fr, queue_delegrecall, entry);
+	return rc;
+}
+
+static void up_queue_delegrecall(struct fridgethr_context *ctx)
+{
+
 	struct delegrecall_args *args = ctx->arg;
 	state_status_t status;
 
@@ -510,12 +524,12 @@ int up_async_delegrecall(struct fridgethr *fr,
 
 	args->fsal = fsal;
 
-	rc = fridgethr_submit(fr, queue_delegrecall, args);
- out:
+	rc = fridgethr_submit(fr, up_queue_delegrecall, args);
 
-	if (rc != 0 && args)
+	if (rc != 0)
 		gsh_free(args);
 
+ out:
 	return rc;
 }
 

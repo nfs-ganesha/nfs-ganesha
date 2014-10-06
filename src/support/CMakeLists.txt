@@ -33,7 +33,7 @@ set( uid2grp_SRCS
      uid2grp_cache.c
 )
 
-add_library( uid2grp ${uid2grp_SRCS} )
+add_library( uid2grp STATIC ${uid2grp_SRCS} )
 
 ########### next target ###############
 
@@ -51,6 +51,7 @@ SET(support_STAT_SRCS
    bsd-base64.c
    server_stats.c
    export_mgr.c
+   atomic.c
 )
 
 if(ERROR_INJECTION)

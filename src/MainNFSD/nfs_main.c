@@ -42,6 +42,29 @@
 #include <errno.h>
 #include "fsal_pnfs.h"
 
+/**
+ * @brief LTTng trace enabling magic
+ *
+ * Every trace include file must be added here regardless whether it
+ * is actually used in this source file.  The file must also be
+ * included ONLY ONCE.  Failure to do so will create interesting
+ * build time failure messages.  The key bit is the definitions of
+ * TRACEPOINT_DEFINE and TRACEPOINT_PROBE_DYNAMIC_LINKAGE that are here
+ * to trigger the global definitions as a shared object with the right
+ * (weak) symbols to make the module loading optional.
+ *
+ * If and when this file gets some tracepoints of its own, the include
+ * here is necessary and sufficient.
+ */
+
+#ifdef USE_LTTNG
+#define TRACEPOINT_DEFINE
+#define TRACEPOINT_PROBE_DYNAMIC_LINKAGE
+
+#include "ganesha_lttng/logger.h"
+#include "ganesha_lttng/nfs_rpc.h"
+#endif /* USE_LTTNG */
+
 /* parameters for NFSd startup and default values */
 
 nfs_start_info_t my_nfs_start_info = {
@@ -58,10 +81,11 @@ int detach_flag = false;
 
 /* command line syntax */
 
-char options[] = "h@RTdS:F:S:P:f:L:N:E:p:";
+char options[] = "h@vRTdS:F:S:P:f:L:N:E:p:";
 char usage[] =
 	"Usage: %s [-hd][-L <logfile>][-N <dbg_lvl>][-f <config_file>]\n"
 	"\t[-h]                display this help\n"
+	"\t[-v]                display version information\n"
 	"\t[-L <logfile>]      set the default logfile for the daemon\n"
 	"\t[-N <dbg_lvl>]      set the verbosity level\n"
 	"\t[-f <config_file>]  set the config file to be used\n"
@@ -74,9 +98,9 @@ char usage[] =
 	"SIGUSR1    : Enable/Disable File Content Cache forced flush\n"
 	"SIGTERM    : Cleanly terminate the program\n"
 	"------------- Default Values -------------\n"
-	"LogFile    : /tmp/nfs-ganesha.log\n"
-	"PidFile    : /var/run/ganesha.pid\n"
-	"DebugLevel : NIV_EVENT\n" "ConfigFile : /etc/ganesha/ganesha.conf\n";
+	"LogFile    : SYSLOG\n"
+	"PidFile    : "GANESHA_PIDFILE_PATH"\n"
+	"DebugLevel : NIV_EVENT\n" "ConfigFile : "GANESHA_CONFIG_PATH"\n";
 
 /**
  * main: simply the main function.
@@ -136,11 +160,12 @@ int main(int argc, char *argv[])
 	/* now parsing options with getopt */
 	while ((c = getopt(argc, argv, options)) != EOF) {
 		switch (c) {
+		case 'v':
 		case '@':
 			/* A litlle backdoor to keep track of binary versions */
 			printf("%s compiled on %s at %s\n", exec_name, __DATE__,
 			       __TIME__);
-			printf("Release = %s\n", VERSION);
+			printf("Release = V%s\n", GANESHA_VERSION);
 			printf("Release comment = %s\n", VERSION_COMMENT);
 			printf("Git HEAD = %s\n", _GIT_HEAD_COMMIT);
 			printf("Git Describe = %s\n", _GIT_DESCRIBE);
@@ -230,8 +255,10 @@ int main(int argc, char *argv[])
 	/* initialize memory and logging */
 	nfs_prereq_init(exec_name, host_name, debug_level, log_path);
 	LogEvent(COMPONENT_MAIN,
-		 "%s Starting: Version %s, built at %s %s on %s",
-		 exec_name, GANESHA_VERSION, __DATE__, __TIME__, BUILD_HOST);
+		 "%s Starting: %s",
+		 exec_name,
+		 "Ganesha Version " _GIT_DESCRIBE ", built at "
+		 __DATE__ " " __TIME__ " on " BUILD_HOST);
 
 	/* Start in background, if wanted */
 	if (detach_flag) {

@@ -38,15 +38,8 @@
 #include <sys/types.h>
 #include "ganesha_list.h"
 #include "fsal_internal.h"
+#include "zfs_methods.h"
 #include "FSAL/fsal_init.h"
-
-/* ZFS FSAL module private storage
- */
-
-struct zfs_fsal_module {
-	struct fsal_module fsal;
-	struct fsal_staticfsinfo_t fs_info;
-};
 
 const char myname[] = "ZFS";
 
@@ -73,21 +66,21 @@ static struct fsal_staticfsinfo_t default_zfs_info = {
 
 static struct config_item zfs_params[] = {
 	CONF_ITEM_BOOL("link_support", true,
-		       fsal_staticfsinfo_t, link_support),
+		       zfs_fsal_module, fs_info.link_support),
 	CONF_ITEM_BOOL("symlink_support", true,
-		       fsal_staticfsinfo_t, symlink_support),
+		       zfs_fsal_module, fs_info.symlink_support),
 	CONF_ITEM_BOOL("cansettime", true,
-		       fsal_staticfsinfo_t, cansettime),
+		       zfs_fsal_module, fs_info.cansettime),
 	CONF_ITEM_UI32("maxread", 512, FSAL_MAXIOSIZE, FSAL_MAXIOSIZE,
-		       fsal_staticfsinfo_t, maxread),
+		       zfs_fsal_module, fs_info.maxread),
 	CONF_ITEM_UI32("maxwrite", 512, FSAL_MAXIOSIZE, FSAL_MAXIOSIZE,
-		       fsal_staticfsinfo_t, maxwrite),
+		       zfs_fsal_module, fs_info.maxwrite),
 	CONF_ITEM_MODE("umask", 0, 0777, 0,
-		       fsal_staticfsinfo_t, umask),
+		       zfs_fsal_module, fs_info.umask),
 	CONF_ITEM_BOOL("auth_xdev_export", false,
-		       fsal_staticfsinfo_t, auth_exportpath_xdev),
+		       zfs_fsal_module, fs_info.auth_exportpath_xdev),
 	CONF_ITEM_MODE("xattr_access_rights", 0, 0777, 0400,
-		       fsal_staticfsinfo_t, xattr_access_rights),
+		       zfs_fsal_module, fs_info.xattr_access_rights),
 	CONFIG_EOL
 };
 
@@ -114,11 +107,11 @@ struct fsal_staticfsinfo_t *zfs_staticinfo(struct fsal_module *hdl)
 /* Module methods
  */
 
-/* init_config
+/* zfs_init_config
  * must be called with a reference taken (via lookup_fsal)
  */
 
-static fsal_status_t init_config(struct fsal_module *fsal_hdl,
+static fsal_status_t zfs_init_config(struct fsal_module *fsal_hdl,
 				 config_file_t config_struct)
 {
 	struct zfs_fsal_module *zfs_me =
@@ -128,7 +121,7 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 	zfs_me->fs_info = default_zfs_info;	/* copy the consts */
 	(void) load_config_from_parse(config_struct,
 				      &zfs_param,
-				      &zfs_me->fs_info,
+				      &zfs_me,
 				      true,
 				      &err_type);
 	if (!config_error_is_harmless(&err_type))
@@ -178,7 +171,7 @@ MODULE_INIT void zfs_load(void)
 	}
 
 	myself->ops->create_export = zfs_create_export;
-	myself->ops->init_config = init_config;
+	myself->ops->init_config = zfs_init_config;
 }
 
 MODULE_FINI void zfs_unload(void)

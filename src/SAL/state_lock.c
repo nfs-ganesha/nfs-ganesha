@@ -52,16 +52,6 @@
 #include "cache_inode_lru.h"
 #include "export_mgr.h"
 
-/* Forward declaration */
-static state_status_t do_lock_op(cache_entry_t *entry,
-				 fsal_lock_op_t lock_op,
-				 state_owner_t *owner,
-				 fsal_lock_param_t *lock,
-				 state_owner_t **holder,
-				 fsal_lock_param_t *conflict,
-				 bool_t overlap,
-				 lock_type_t sle_type);
-
 /**
  * @page state_lock_entry_locking state_lock_entry_t locking rule
  *
@@ -1026,48 +1016,6 @@ static state_status_t subtract_lock_from_entry(cache_entry_t *entry,
 	glist_add_tail(remove_list, &(found_entry->sle_list));
 
 	*removed = true;
-	return status;
-}
-
-/**
- * @brief Subtract a delegation from a list of delegations
- *
- * Subtract a delegation from a list of delegations
- *
- * @param[in,out] entry   Cache entry on which to operate
- * @param[in]     owner   Client owner of delegation
- * @param[in]     state   Associated lock state
- * @param[in]     lock    Delegation to remove
- * @param[out]    removed True if an entry was removed
- * @param[in,out] list    List of locks to modify
- *
- * @return State status.
- */
-static state_status_t subtract_deleg_from_list(cache_entry_t *entry,
-					       state_owner_t *owner,
-					       state_t *state,
-					       bool *removed,
-					       struct glist_head *list)
-{
-	state_lock_entry_t *found_entry;
-	struct glist_head *glist, *glistn;
-	state_status_t status = STATE_SUCCESS;
-
-	*removed = false;
-
-	glist_for_each_safe(glist, glistn, list) {
-		found_entry = glist_entry(glist, state_lock_entry_t, sle_list);
-		if (owner != NULL
-		    && different_owners(found_entry->sle_owner, owner))
-			continue;
-
-		if (found_entry->sle_type != LEASE_LOCK)
-			continue;
-
-		/* Tell GPFS delegation is returned then remove from list. */
-		glist_del(&found_entry->sle_list);
-		*removed = true;
-	}
 	return status;
 }
 
@@ -2228,14 +2176,14 @@ state_status_t do_unlock_no_owner(cache_entry_t *entry,
  *
  * @return State status.
  */
-static state_status_t do_lock_op(cache_entry_t *entry,
-				 fsal_lock_op_t lock_op,
-				 state_owner_t *owner,
-				 fsal_lock_param_t *lock,
-				 state_owner_t **holder,
-				 fsal_lock_param_t *conflict,
-				 bool_t overlap,
-				 lock_type_t sle_type)
+state_status_t do_lock_op(cache_entry_t *entry,
+			  fsal_lock_op_t lock_op,
+			  state_owner_t *owner,
+			  fsal_lock_param_t *lock,
+			  state_owner_t **holder,
+			  fsal_lock_param_t *conflict,
+			  bool_t overlap,
+			  lock_type_t sle_type)
 {
 	fsal_status_t fsal_status;
 	state_status_t status = STATE_SUCCESS;
@@ -2276,16 +2224,28 @@ static state_status_t do_lock_op(cache_entry_t *entry,
 				fso_lock_support_async_block))
 			lock_op = FSAL_OP_LOCK;
 
-		fsal_status = entry->obj_handle->ops->lock_op(
-			entry->obj_handle,
-			fsal_export->ops->fs_supports(
-				fsal_export,
-				fso_lock_support_owner)
-				? owner : NULL, lock_op,
-			lock,
-			&conflicting_lock);
+		/* In the case of ip move the source node may be still
+		 * releasing the state that we need to acquire.
+		 * So let us be little patient to STATE_LOCK_CONFLICT errors
+		 * if the lock is a reclaim and we are in grace.
+		 */
+		do {
+			if (status == STATE_LOCK_CONFLICT)
+				sleep(1); /* Don't bombard the filesystem. */
 
-		status = state_error_convert(fsal_status);
+			fsal_status = entry->obj_handle->ops->lock_op(
+					entry->obj_handle,
+					fsal_export->ops->fs_supports(
+						fsal_export,
+						fso_lock_support_owner)
+					? owner : NULL, lock_op,
+					lock,
+					&conflicting_lock);
+
+			status = state_error_convert(fsal_status);
+
+		} while (lock->lock_reclaim &&
+			 status == STATE_LOCK_CONFLICT && nfs_in_grace());
 
 		LogFullDebug(COMPONENT_STATE, "FSAL_lock_op returned %s",
 			     state_err_str(status));
@@ -2443,11 +2403,14 @@ state_status_t state_test(cache_entry_t *entry,
  * @return State status.
  */
 state_status_t state_lock(cache_entry_t *entry,
-			  state_owner_t *owner, state_t *state,
+			  state_owner_t *owner,
+			  state_t *state,
 			  state_blocking_t blocking,
 			  state_block_data_t *block_data,
-			  fsal_lock_param_t *lock, state_owner_t **holder,
-			  fsal_lock_param_t *conflict, lock_type_t sle_type)
+			  fsal_lock_param_t *lock,
+			  state_owner_t **holder,
+			  fsal_lock_param_t *conflict,
+			  lock_type_t sle_type)
 {
 	bool allow = true, overlap = false;
 	struct glist_head *glist;
@@ -2459,6 +2422,8 @@ state_status_t state_lock(cache_entry_t *entry,
 	fsal_lock_op_t lock_op;
 	state_status_t status = 0;
 	fsal_openflags_t openflags;
+
+	assert(sle_type == POSIX_LOCK);
 
 	cache_status = cache_inode_inc_pin_ref(entry);
 
@@ -2518,7 +2483,6 @@ state_status_t state_lock(cache_entry_t *entry,
 			 */
 			if (found_entry->sle_export != op_ctx->export) {
 				PTHREAD_RWLOCK_unlock(&entry->state_lock);
-
 				cache_inode_dec_pin_ref(entry, false);
 
 				LogEvent(COMPONENT_STATE,
@@ -2541,7 +2505,6 @@ state_status_t state_lock(cache_entry_t *entry,
 				continue;
 
 			PTHREAD_RWLOCK_unlock(&entry->state_lock);
-
 			cache_inode_dec_pin_ref(entry, false);
 
 			/* We have matched all atribute of the existing lock.
@@ -2556,23 +2519,12 @@ state_status_t state_lock(cache_entry_t *entry,
 
 	glist_for_each(glist, &entry->object.file.lock_list) {
 		found_entry = glist_entry(glist, state_lock_entry_t, sle_list);
-
-		/* Delegations owned by a client won't conflict with delegations
-		   to that same client, but maybe we should just return
-		   success. */
-		if (found_entry->sle_type == LEASE_LOCK &&
-		    lock->lock_sle_type == FSAL_LEASE_LOCK &&
-		    owner->so_owner.so_nfs4_owner.so_clientid ==
-		    found_entry->sle_owner->so_owner.so_nfs4_owner.so_clientid)
-			continue;
-
 		/* Need to reject lock request if this lock owner already has
 		 * a lock on this file via a different export.
 		 */
 		if (found_entry->sle_export != op_ctx->export
 		    && !different_owners(found_entry->sle_owner, owner)) {
 			PTHREAD_RWLOCK_unlock(&entry->state_lock);
-
 			cache_inode_dec_pin_ref(entry, false);
 
 			LogEvent(COMPONENT_STATE,
@@ -2592,7 +2544,8 @@ state_status_t state_lock(cache_entry_t *entry,
 		/* Don't skip blocked locks for fairness */
 		found_entry_end = lock_end(&found_entry->sle_lock);
 
-		if ((found_entry_end >= lock->lock_start)
+		if (!(lock->lock_reclaim)
+		    && (found_entry_end >= lock->lock_start)
 		    && (found_entry->sle_lock.lock_start <= range_end)) {
 			/* lock overlaps see if we can allow:
 			 * allow if neither lock is exclusive or
@@ -2646,7 +2599,6 @@ state_status_t state_lock(cache_entry_t *entry,
 				}
 
 				PTHREAD_RWLOCK_unlock(&entry->state_lock);
-
 				cache_inode_dec_pin_ref(entry, false);
 
 				LogEntry("Found existing", found_entry);
@@ -2679,10 +2631,9 @@ state_status_t state_lock(cache_entry_t *entry,
 		lock_op = FSAL_OP_LOCK;
 	} else {
 		/* Can't do async blocking lock in FSAL and have a conflict.
-		 * Return it. This is true for conflicting delegations as well.
+		 * Return it.
 		 */
 		PTHREAD_RWLOCK_unlock(&entry->state_lock);
-
 		cache_inode_dec_pin_ref(entry, false);
 
 		status = STATE_LOCK_CONFLICT;
@@ -2745,7 +2696,6 @@ state_status_t state_lock(cache_entry_t *entry,
 					      sle_type);
 	if (!found_entry) {
 		PTHREAD_RWLOCK_unlock(&entry->state_lock);
-
 		cache_inode_dec_pin_ref(entry, false);
 
 		status = STATE_MALLOC_ERROR;
@@ -2770,13 +2720,7 @@ state_status_t state_lock(cache_entry_t *entry,
 	} else
 		status = STATE_LOCK_BLOCKED;
 
-	if (status == STATE_SUCCESS && sle_type == LEASE_LOCK) {
-		/* Insert entry into delegation list */
-		LogEntry("New delegation", found_entry);
-		update_delegation_stats(entry, state);
-		glist_add_tail(&entry->object.file.deleg_list,
-			       &found_entry->sle_list);
-	} else if (status == STATE_SUCCESS && sle_type == POSIX_LOCK) {
+	if (status == STATE_SUCCESS && sle_type == POSIX_LOCK) {
 		/* Merge any touching or overlapping locks into this one */
 		LogEntry("FSAL lock acquired, merging locks for",
 			 found_entry);
@@ -2822,7 +2766,6 @@ state_status_t state_lock(cache_entry_t *entry,
 			       &found_entry->sle_list);
 
 		PTHREAD_RWLOCK_unlock(&entry->state_lock);
-
 		cache_inode_dec_pin_ref(entry, false);
 
 		pthread_mutex_lock(&blocked_locks_mutex);
@@ -2841,7 +2784,6 @@ state_status_t state_lock(cache_entry_t *entry,
 	}
 
 	PTHREAD_RWLOCK_unlock(&entry->state_lock);
-
 	cache_inode_dec_pin_ref(entry, false);
 
 	return status;
@@ -2857,13 +2799,17 @@ state_status_t state_lock(cache_entry_t *entry,
  * @param[in] sle_type Lock type
  */
 state_status_t state_unlock(cache_entry_t *entry,
-			    state_owner_t *owner, state_t *state,
-			    fsal_lock_param_t *lock, lock_type_t sle_type)
+			    state_owner_t *owner,
+			    state_t *state,
+			    fsal_lock_param_t *lock,
+			    lock_type_t sle_type)
 {
 	bool empty = false;
 	bool removed = false;
 	cache_inode_status_t cache_status;
 	state_status_t status = 0;
+
+	assert(sle_type == POSIX_LOCK);
 
 	cache_status = cache_inode_inc_pin_ref(entry);
 
@@ -2876,43 +2822,22 @@ state_status_t state_unlock(cache_entry_t *entry,
 	if (entry->type != REGULAR_FILE) {
 		LogLock(COMPONENT_STATE, NIV_DEBUG, "Bad Unlock", entry, owner,
 			lock);
+		cache_inode_dec_pin_ref(entry, FALSE);
 		status = STATE_BAD_TYPE;
 		return status;
 	}
 
-	/* We need to iterate over the full lock list and remove any mapping
-	 * entry. And sle_lock.lock_start = 0 and sle_lock.lock_length = 0
-	 * nlm_lock implies remove all entries
-	 */
 	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 
-	if (state && state->state_type == STATE_TYPE_DELEG) {
-		if (glist_empty(&entry->object.file.deleg_list)) {
-			PTHREAD_RWLOCK_unlock(&entry->state_lock);
-			cache_inode_dec_pin_ref(entry, FALSE);
-			LogDebug(COMPONENT_STATE,
-				 "Unlock success on file with no delegations");
-			status = STATE_SUCCESS;
-			return status;
-		} else {
-			LogFullDebug(COMPONENT_STATE,
-				     "Removing delegation from list");
-			status = subtract_deleg_from_list(entry, owner, state,
-					&removed,
-					&entry->object.file.deleg_list);
-		}
-	} else {
 	/* If lock list is empty, there really isn't any work for us to do. */
-		if (glist_empty(&entry->object.file.lock_list)) {
-			PTHREAD_RWLOCK_unlock(&entry->state_lock);
+	if (glist_empty(&entry->object.file.lock_list)) {
+		PTHREAD_RWLOCK_unlock(&entry->state_lock);
+		cache_inode_dec_pin_ref(entry, false);
+		LogDebug(COMPONENT_STATE,
+			 "Unlock success on file with no locks");
 
-			cache_inode_dec_pin_ref(entry, false);
-			LogDebug(COMPONENT_STATE,
-				 "Unlock success on file with no locks");
-
-			status = STATE_SUCCESS;
-			return status;
-		}
+		status = STATE_SUCCESS;
+		return status;
 	}
 
 	LogFullDebug(COMPONENT_STATE,
@@ -2940,14 +2865,14 @@ state_status_t state_unlock(cache_entry_t *entry,
 		cache_inode_dec_pin_ref(entry, false);
 
 	if (status != STATE_SUCCESS) {
+		PTHREAD_RWLOCK_unlock(&entry->state_lock);
+
 		/* The unlock has not taken affect (other than canceling any
 		 * blocking locks.
 		 */
 		LogMajor(COMPONENT_STATE,
 			 "Unable to remove lock from list for unlock, error=%s",
 			 state_err_str(status));
-
-		PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
 		cache_inode_dec_pin_ref(entry, false);
 

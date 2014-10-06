@@ -103,7 +103,6 @@ nfsstat3 nfs_readdir_dot_entry(cache_entry_t *entry, const char *name,
  * Implements the NFSPROC3_READDIRPLUS function
  *
  * @param[in]  arg     NFS argument union
- * @param[in]  export  NFS export list
  * @param[in]  worker  Worker thread
  * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call
@@ -149,6 +148,12 @@ int nfs3_readdirplus(nfs_arg_t *arg,
 		LogDebug(component,
 			 "REQUEST PROCESSING: Calling nfs3_readdirplus handle: %s",
 			 str);
+	}
+	if (op_ctx->export->options & EXPORT_OPTION_NO_READDIR_PLUS) {
+		res->res_readdirplus3.status = NFS3ERR_NOTSUPP;
+		LogFullDebug(COMPONENT_NFS_READDIR,
+			     "Request not supported");
+		goto out;
 	}
 
 	/* to avoid setting it on each error case */

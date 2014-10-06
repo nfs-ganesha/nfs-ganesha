@@ -76,6 +76,16 @@
  */
 #define STATE_LOCK_OFFSET_EOF 0xFFFFFFFFFFFFFFFFLL
 
+/**
+ * @brief States of a delegation
+ *
+ * Different states a delegation can be in during its lifetime
+ */
+enum deleg_state {
+	DELEG_GRANTED =  1,	/* Granted               */
+	DELEG_RECALL_WIP,	/* Recall in progress    */
+};
+
 /* Forward references to types */
 typedef struct state_nfs4_owner_t state_nfs4_owner_t;
 typedef struct state_owner_t state_owner_t;
@@ -89,6 +99,8 @@ typedef struct state_nlm_share_t state_nlm_share_t;
 typedef struct state_cookie_entry_t state_cookie_entry_t;
 typedef struct state_block_data_t state_block_data_t;
 typedef struct state_layout_segment state_layout_segment_t;
+
+extern struct fridgethr *state_async_fridge;
 
 /*****************************************************************************
  *
@@ -206,15 +218,24 @@ typedef struct grace {
 } grace_t;
 
 /**
+ * @brief Revoked filehandle list
+ */
+typedef struct rdel_fh {
+	struct glist_head rdfh_list;
+	char *rdfh_handle_str;
+} rdel_fh_t;
+
+/**
  * @brief A client entry
  */
 typedef struct clid_entry {
 	struct glist_head cl_list;	/*< Link in the list */
+	struct glist_head cl_rfh_list;
 	char cl_name[PATH_MAX];	/*< Client name */
 } clid_entry_t;
 
-extern char v4_old_dir[PATH_MAX+1];
-extern char v4_recov_dir[PATH_MAX + 1];
+extern char v4_old_dir[PATH_MAX];
+extern char v4_recov_dir[PATH_MAX];
 
 /******************************************************************************
  *
@@ -250,28 +271,14 @@ typedef struct state_share__ {
 } state_share_t;
 
 /**
- * @brief Stats for client and client-file delegation heuristics
+ * @brief Stats for client-file delegation heuristics
  */
 
-struct client_deleg_heuristics {
-	uint32_t curr_deleg_grants; /* current num of delegations owned by
-				       this client */
-	uint32_t tot_recalls;       /* total num of times client was asked to
-				       recall */
-	uint32_t failed_recalls;    /* times client failed to process recall */
-};
-
-struct clientfile_deleg_heuristics {
-	struct nfs_client_id_t *clientid; /* client for this file. */
-	time_t last_delegation;           /* time of successful delegation */
-	uint32_t num_recalls;       /* total number of recalls on this file from
-				       this client
-				       badhandles + races + timeouts +
-				       aborts = tot number of failed recalls. */
-	uint32_t num_recall_badhandles;   /* num of badhandle replies */
-	uint32_t num_recall_races;        /* num of races detected */
-	uint32_t num_recall_timeouts;     /* num of recalls that timed out */
-	uint32_t num_recall_aborts;       /* num of recalls aborted */
+/* @brief Per client, per file stats */
+struct cf_deleg_stats {
+	time_t cfd_rs_time;                   /* time when the client responsed
+						 NFS4_OK for a recall. */
+	time_t cfd_r_time;               /* time of the recall attempt */
 };
 
 /**
@@ -292,11 +299,9 @@ typedef struct state_lock_t {
 
 typedef struct state_deleg__ {
 	open_delegation_type4 sd_type;
-	stateid4 sd_stateid;             /* unique delegation stateid */
-	state_t *sd_open_state;          /*  */
-	struct glist_head sd_deleg_list; /*  */
-	time_t grant_time;               /* time of successful delegation */
-	struct clientfile_deleg_heuristics clfile_stats;  /* client specific */
+	time_t sd_grant_time;               /* time of successful delegation */
+	enum deleg_state sd_state;
+	struct cf_deleg_stats sd_clfile_stats;  /* client specific */
 } state_deleg_t;
 
 /**
@@ -361,6 +366,36 @@ struct state_t {
 					   call that created a
 					   state. */
 };
+
+/* Macros to compare and copy state_t to a struct stateid4 */
+#define SAME_STATEID(id4, state) \
+	((id4)->seqid == (state)->state_seqid && \
+	memcmp((id4)->other, (state)->stateid_other, OTHERSIZE) == 0)
+
+#define COPY_STATEID(id4, state) \
+	do { \
+		(id4)->seqid = (state)->state_seqid; \
+		(void)memcpy((id4)->other, (state)->stateid_other, OTHERSIZE); \
+	} while (0)
+
+/**
+ * @brief Delegation state data object
+ *
+ * We could potentially put all the delegation data in state_deleg_t
+ * itself but that would add storage for other state types. So we
+ * allocate memory for storing delegation related state data in this
+ * object.
+ */
+struct deleg_data {
+	struct glist_head dd_list;
+	cache_entry_t *dd_entry;
+	state_t *dd_state;
+	state_owner_t *dd_owner;
+	struct gsh_export *dd_export;
+	uint16_t dd_export_id;
+};
+
+
 
 /*****************************************************************************
  *
@@ -576,7 +611,8 @@ extern state_owner_t unknown_owner;
 typedef enum nfs_clientid_confirm_state__ {
 	UNCONFIRMED_CLIENT_ID,
 	CONFIRMED_CLIENT_ID,
-	EXPIRED_CLIENT_ID
+	EXPIRED_CLIENT_ID,
+	STALE_CLIENT_ID
 } nfs_clientid_confirm_state_t;
 
 /**
@@ -633,6 +669,7 @@ struct nfs_client_id_t {
 			char cb_client_r_addr[SOCK_NAME_MAX + 1];
 			/** Callback program */
 			uint32_t cb_program;
+			bool cb_chan_down;    /* Callback channel state */
 		} v40;		/*< v4.0 callback information */
 		struct {
 			bool cid_reclaim_complete; /*< reclaim complete
@@ -641,7 +678,8 @@ struct nfs_client_id_t {
 			struct glist_head cb_session_list;
 		} v41;		/*< v4.1 callback information */
 	} cid_cb;		/*< Version specific callback information */
-	bool_t cb_chan_down;
+	time_t first_path_down_resp_time;  /* Time when the server first sent
+					       NFS4ERR_CB_PATH_DOWN */
 	char cid_server_owner[MAXNAMLEN + 1];	/*< Server owner.
 						 * @note Why is this
 						 * stored per-client? */
@@ -658,7 +696,10 @@ struct nfs_client_id_t {
 	uint32_t cid_minorversion;
 	uint32_t cid_stateid_counter;
 
-	struct client_deleg_heuristics deleg_heuristics;
+	uint32_t curr_deleg_grants; /* current num of delegations owned by
+				       this client */
+	uint32_t num_revokes;       /* Num revokes for the client */
+	struct gsh_client *gsh_client; /* for client specific statistics. */
 };
 
 /**
@@ -729,6 +770,7 @@ typedef enum state_status_t {
 	STATE_FSAL_ESTALE,
 	STATE_FSAL_ERR_SEC,
 	STATE_STATE_CONFLICT,
+	STATE_LOCKED,
 	STATE_QUOTA_EXCEEDED,
 	STATE_DEAD_ENTRY,
 	STATE_ASYNC_POST_ERROR,

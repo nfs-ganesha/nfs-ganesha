@@ -11,6 +11,7 @@ const SM_VERS = 1;
 const SM_MON  = 2;
 const SM_UNMON = 3;
 const SM_UNMON_ALL = 4;
+const SM_NOTIFY = 6;
 
 enum res {
   STAT_SUCC = 0,   /*  NSM agrees to monitor.  */
@@ -45,8 +46,14 @@ struct mon {
   opaque    priv[16];        /*  private information  */
 };
 
+struct notify {
+  string my_name<SM_MAXSTRLEN>;  /* hostname */
+  int	state;			 /* state */
+};
+
 #ifdef RPC_HDR
 %extern int nsm_monitor(char *host);
 %extern int nsm_unmonitor(char *host);
 %extern int nsm_unmonitor_all(void);
+%extern int nsm_notify(char *host, int state);
 #endif

@@ -194,8 +194,6 @@ static int op_dsread_plus(struct nfs_argop4 *op, compound_data_t *data,
 	if (info->io_content.what == NFS4_CONTENT_HOLE) {
 		contentp->hole.di_offset = info->io_content.hole.di_offset;
 		contentp->hole.di_length = info->io_content.hole.di_length;
-		contentp->hole.di_allocated =
-					info->io_content.hole.di_allocated;
 	}
 	if (info->io_content.what == NFS4_CONTENT_DATA) {
 		contentp->data.d_offset = info->io_content.data.d_offset;
@@ -226,11 +224,7 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 	uint64_t file_size = 0;
 	cache_entry_t *entry = NULL;
 	bool sync = false;
-	/* This flag is set to true in the case of an anonymous read
-	   so that we know to release the state lock afterward.  The
-	   state lock does not need to be held during a non-anonymous
-	   read, since the open state itself prevents a conflict. */
-	bool anonymous = false;
+	bool anonymous_started = false;
 
 	/* Say we are managing NFS4_OP_READ */
 	resp->resop = NFS4_OP_READ;
@@ -264,6 +258,7 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 	   stateid is all-0 or all-1 */
 
 	if (state_found != NULL) {
+		state_deleg_t *sdeleg;
 		if (info)
 			info->io_advise = state_found->state_data.io_advise;
 		switch (state_found->state_type) {
@@ -283,11 +278,20 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 			break;
 
 		case STATE_TYPE_DELEG:
+			/* Check if the delegation state allows READ */
+			sdeleg = &state_found->state_data.deleg;
+			if (!(sdeleg->sd_type & OPEN_DELEGATE_READ) ||
+				(sdeleg->sd_state != DELEG_GRANTED)) {
+				/* Invalid delegation for this operation. */
+				LogDebug(COMPONENT_STATE,
+					"Delegation type:%d state:%d",
+					sdeleg->sd_type,
+					sdeleg->sd_state);
+				res_READ4->status = NFS4ERR_BAD_STATEID;
+				return res_READ4->status;
+			}
+
 			state_open = NULL;
-			/**
-			 * @todo FSF: should check that this is a read
-			 * delegation?
-			 */
 			break;
 
 		default:
@@ -341,11 +345,9 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 				return res_READ4->status;
 			}
 			break;
-
 		case STATE_TYPE_LOCK:
-			/* Nothing to do */
+		case STATE_TYPE_DELEG:
 			break;
-
 		default:
 			/* Sanity check: all other types are illegal.
 			 * we should not got that place (similar check
@@ -359,24 +361,28 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 		/* Special stateid, no open state, check to see if any
 		   share conflicts */
 		state_open = NULL;
-		PTHREAD_RWLOCK_rdlock(&entry->state_lock);
-		anonymous = true;
 
 		/* Special stateid, no open state, check to see if any share
 		   conflicts The stateid is all-0 or all-1 */
-		res_READ4->status =
-		    nfs4_check_special_stateid(entry, "READ", FATTR4_ATTR_READ);
-		if (res_READ4->status != NFS4_OK) {
-			PTHREAD_RWLOCK_unlock(&entry->state_lock);
+		res_READ4->status = nfs4_Errno_state(
+				state_share_anonymous_io_start(
+					entry,
+					OPEN4_SHARE_ACCESS_READ,
+					arg_READ4->stateid.seqid != 0
+						? SHARE_BYPASS_READ
+						: SHARE_BYPASS_NONE));
+
+		if (res_READ4->status != NFS4_OK)
 			return res_READ4->status;
-		}
+
+		anonymous_started = true;
 	}
 
 	/** @todo this is racy, use cache_inode_lock_trust_attrs and
 	 *        cache_inode_access_no_mutex
 	 */
-	if (state_open == NULL
-	    && entry->obj_handle->attributes.owner !=
+	if (state_open == NULL &&
+	    entry->obj_handle->attributes.owner !=
 	    op_ctx->creds->caller_uid) {
 		/* Need to permission check the read. */
 		cache_status =
@@ -454,7 +460,7 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 		goto done;
 	}
 
-	if (!anonymous && data->minorversion == 0) {
+	if (!anonymous_started && data->minorversion == 0) {
 		op_ctx->clientid =
 		    &state_found->state_owner->so_owner.so_nfs4_owner.
 		    so_clientid;
@@ -478,7 +484,7 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 		goto done;
 	}
 
-	if (!anonymous && data->minorversion == 0)
+	if (!anonymous_started && data->minorversion == 0)
 		op_ctx->clientid = NULL;
 
 	res_READ4->READ4res_u.resok4.data.data_len = read_size;
@@ -497,8 +503,10 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 	res_READ4->status = NFS4_OK;
 
  done:
-	if (anonymous)
-		PTHREAD_RWLOCK_unlock(&entry->state_lock);
+
+	if (anonymous_started)
+		state_share_anonymous_io_done(entry, OPEN4_SHARE_ACCESS_READ);
+
 	server_stats_io_done(size, read_size,
 			     (res_READ4->status == NFS4_OK) ? true : false,
 			     false);
@@ -584,7 +592,6 @@ int nfs4_op_read_plus(struct nfs_argop4 *op, compound_data_t *data,
 	if (info.io_content.what == NFS4_CONTENT_HOLE) {
 		contentp->hole.di_offset = info.io_content.hole.di_offset;
 		contentp->hole.di_length = info.io_content.hole.di_length;
-		contentp->hole.di_allocated = info.io_content.hole.di_allocated;
 	}
 	if (info.io_content.what == NFS4_CONTENT_DATA) {
 		contentp->data.d_offset = info.io_content.data.d_offset;
@@ -605,11 +612,6 @@ void nfs4_op_read_plus_Free(nfs_resop4 *res)
 	if (resp->rpr_status == NFS4_OK && conp->what == NFS4_CONTENT_DATA)
 		if (conp->data.d_data.data_val != NULL)
 			gsh_free(conp->data.d_data.data_val);
-
-	if (resp->rpr_status == NFS4_OK &&
-				conp->what == NFS4_CONTENT_APP_DATA_HOLE)
-		if (conp->adh.adh_data.data_val != NULL)
-			gsh_free(conp->adh.adh_data.data_val);
 
 	return;
 }				/* nfs4_op_read_Free */
@@ -638,61 +640,61 @@ int nfs4_op_io_advise(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* Say we are managing NFS4_OP_IO_ADVISE */
 	resp->resop = NFS4_OP_IO_ADVISE;
-	res_IO_ADVISE->iar_status = NFS4_OK;
+	res_IO_ADVISE->iaa_status = NFS4_OK;
 
 	hints.hints = 0;
 	hints.offset = 0;
 	hints.count = 0;
 
 	if (data->minorversion < 2) {
-		res_IO_ADVISE->iar_status = NFS4ERR_NOTSUPP;
+		res_IO_ADVISE->iaa_status = NFS4ERR_NOTSUPP;
 		goto done;
 	}
 
 	/* Do basic checks on a filehandle Only files can be set */
 
-	res_IO_ADVISE->iar_status = nfs4_sanity_check_FH(data, REGULAR_FILE,
+	res_IO_ADVISE->iaa_status = nfs4_sanity_check_FH(data, REGULAR_FILE,
 							 true);
-	if (res_IO_ADVISE->iar_status != NFS4_OK)
+	if (res_IO_ADVISE->iaa_status != NFS4_OK)
 		goto done;
 
 	entry = data->current_entry;
 	/* Check stateid correctness and get pointer to state (also
 	   checks for special stateids) */
 
-	res_IO_ADVISE->iar_status =
-	    nfs4_Check_Stateid(&arg_IO_ADVISE->iar_stateid, entry,
+	res_IO_ADVISE->iaa_status =
+	    nfs4_Check_Stateid(&arg_IO_ADVISE->iaa_stateid, entry,
 				&state_found, data,  STATEID_SPECIAL_ANY,
 				0, FALSE, "IO_ADVISE");
-	if (res_IO_ADVISE->iar_status != NFS4_OK)
+	if (res_IO_ADVISE->iaa_status != NFS4_OK)
 		goto done;
 
 	if (state_found && entry) {
-		hints.hints = arg_IO_ADVISE->iar_hints.map[0];
-		hints.offset = arg_IO_ADVISE->iar_offset;
-		hints.count = arg_IO_ADVISE->iar_count;
+		hints.hints = arg_IO_ADVISE->iaa_hints.map[0];
+		hints.offset = arg_IO_ADVISE->iaa_offset;
+		hints.count = arg_IO_ADVISE->iaa_count;
 
 		fsal_status = entry->obj_handle->ops->io_advise(
 					entry->obj_handle,
 					&hints);
 		if (FSAL_IS_ERROR(fsal_status)) {
-			res_IO_ADVISE->iar_status = NFS4ERR_NOTSUPP;
+			res_IO_ADVISE->iaa_status = NFS4ERR_NOTSUPP;
 			goto done;
 		}
 		/* save hints to use with other operations */
 		state_found->state_data.io_advise = hints.hints;
 
-		res_IO_ADVISE->iar_status = NFS4_OK;
-		res_IO_ADVISE->iar_hints.bitmap4_len = 1;
-		res_IO_ADVISE->iar_hints.map[0] = hints.hints;
+		res_IO_ADVISE->iaa_status = NFS4_OK;
+		res_IO_ADVISE->iaa_hints.bitmap4_len = 1;
+		res_IO_ADVISE->iaa_hints.map[0] = hints.hints;
 	}
 done:
 	LogDebug(COMPONENT_NFS_V4,
 		 "Status  %s hints 0x%X offset %ld count %ld ",
-		 nfsstat4_to_str(res_IO_ADVISE->iar_status),
+		 nfsstat4_to_str(res_IO_ADVISE->iaa_status),
 		 hints.hints, hints.offset, hints.count);
 
-	return res_IO_ADVISE->iar_status;
+	return res_IO_ADVISE->iaa_status;
 }				/* nfs4_op_io_advise */
 
 /**
@@ -754,7 +756,7 @@ int nfs4_op_seek(struct nfs_argop4 *op, compound_data_t *data,
 			info.io_content.hole.di_offset = arg_SEEK->sa_offset;
 }
 		else
-			info.io_content.adh.adh_offset = arg_SEEK->sa_offset;
+			info.io_content.adb.adb_offset = arg_SEEK->sa_offset;
 
 		fsal_status = entry->obj_handle->ops->seek(
 					entry->obj_handle,
@@ -764,7 +766,7 @@ int nfs4_op_seek(struct nfs_argop4 *op, compound_data_t *data,
 			goto done;
 		}
 		res_SEEK->sr_resok4.sr_eof = info.io_eof;
-		res_SEEK->sr_resok4.sr_contents = info.io_content;
+		res_SEEK->sr_resok4.sr_offset = info.io_content.hole.di_offset;
 	}
 done:
 	LogDebug(COMPONENT_NFS_V4,

@@ -51,7 +51,7 @@ struct gpfs_fsal_module {
 const char myname[] = "GPFS";
 
 /* filesystem info for GPFS */
-static struct fsal_staticfsinfo_t default_posix_info = {
+static struct fsal_staticfsinfo_t default_gpfs_info = {
 	.maxfilesize = UINT64_MAX,
 	.maxlink = _POSIX_LINK_MAX,
 	.maxnamelen = 1024,
@@ -80,7 +80,7 @@ static struct fsal_staticfsinfo_t default_posix_info = {
 	.accesscheck_support = true,
 	.share_support = true,
 	.share_support_owner = false,
-	.delegations = false,	/* not working with pNFS */
+	.delegations = FSAL_OPTION_READ_DELEG,	/* not working with pNFS */
 	.pnfs_file = true,
 	.fsal_trace = true,
 	.reopen_method = true,
@@ -99,8 +99,11 @@ static struct config_item gpfs_params[] = {
 		       fsal_staticfsinfo_t, auth_exportpath_xdev),
 	CONF_ITEM_MODE("xattr_access_rights", 0, 0777, 0400,
 		       fsal_staticfsinfo_t, xattr_access_rights),
-	CONF_ITEM_BOOL("delegations", false,
-		       fsal_staticfsinfo_t, delegations),
+	/* At the moment GPFS doesn't support WRITE delegations */
+	CONF_ITEM_ENUM_BITS("Delegations",
+			    FSAL_OPTION_NO_DELEGATIONS,
+			    FSAL_OPTION_READ_DELEG,
+			    deleg_types, fsal_staticfsinfo_t, delegations),
 	CONF_ITEM_BOOL("pnfs_file", false,
 		       fsal_staticfsinfo_t, pnfs_file),
 	CONF_ITEM_BOOL("fsal_trace", true,
@@ -122,7 +125,9 @@ struct config_block gpfs_param = {
 
 struct fsal_staticfsinfo_t *gpfs_staticinfo(struct fsal_module *hdl)
 {
-	return &default_posix_info;
+	struct gpfs_fsal_module *gpfs_me =
+		container_of(hdl, struct gpfs_fsal_module, fsal);
+	return &gpfs_me->fs_info;
 }
 
 /* Module methods
@@ -157,7 +162,7 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 	struct config_error_type err_type;
 	int rc;
 
-	gpfs_me->fs_info = default_posix_info; /* get a copy of the defaults */
+	gpfs_me->fs_info = default_gpfs_info; /* get a copy of the defaults */
 
 	(void) load_config_from_parse(config_struct,
 				      &gpfs_param,
@@ -172,7 +177,7 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 		     (uint64_t) GPFS_SUPPORTED_ATTRIBUTES);
 	LogFullDebug(COMPONENT_FSAL,
 		     "Supported attributes default = 0x%" PRIx64,
-		     default_posix_info.supported_attrs);
+		     default_gpfs_info.supported_attrs);
 	LogDebug(COMPONENT_FSAL,
 		 "FSAL INIT: Supported attributes mask = 0x%" PRIx64,
 		 gpfs_me->fs_info.supported_attrs);

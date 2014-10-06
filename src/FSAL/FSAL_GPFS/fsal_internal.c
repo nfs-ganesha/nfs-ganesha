@@ -741,8 +741,7 @@ int fsal_internal_version()
 			LogFatal(COMPONENT_FSAL, "GPFS Returned EUNATCH");
 		LogDebug(COMPONENT_FSAL, "GPFS get version failed with rc %d",
 			 rc);
-	}
-	else
+	} else
 		LogDebug(COMPONENT_FSAL, "GPFS get version %d", rc);
 
 	return rc;

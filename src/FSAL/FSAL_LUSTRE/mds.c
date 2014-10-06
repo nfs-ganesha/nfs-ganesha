@@ -44,6 +44,7 @@
 #include "nfs_exports.h"
 #include "export_mgr.h"
 
+
 /**
  * @brief Get layout types supported by export
  *
@@ -142,20 +143,21 @@ nfsstat4 lustre_getdeviceinfo(struct fsal_module *fsal_hdl,
 			      const layouttype4 type,
 			      const struct pnfs_deviceid *deviceid)
 {
-	/* The number of OSSs  */
-	unsigned num_osds = 0; /** @todo To be set via a call to llapi */
+	/* The number of DSs  */
+	unsigned num_ds = 0; /** @todo To be set via a call to llapi */
 
 	/* Currently, all layouts have the same number of stripes */
-	uint32_t stripes = 1;
-
-	/* Index for iterating over stripes */
-	size_t stripe  = 0;
+	uint32_t stripe_count = 0;
+	uint32_t stripe = 0;
 
 	/* NFSv4 status code */
 	nfsstat4 nfs_status = 0;
 	/* ds list iterator */
 	struct glist_head *entry;
 	struct lustre_pnfs_ds_parameter *ds;
+	struct lustre_pnfs_parameter *pnfs_param;
+	struct lustre_fsal_module *lustre_me =
+		container_of(fsal_hdl, struct lustre_fsal_module, fsal);
 
 	/* Sanity check on type */
 	if (type != LAYOUT4_NFSV4_1_FILES) {
@@ -164,75 +166,58 @@ nfsstat4 lustre_getdeviceinfo(struct fsal_module *fsal_hdl,
 			type);
 		return NFS4ERR_UNKNOWN_LAYOUTTYPE;
 	}
+	pnfs_param = &lustre_me->pnfs_param;
 
 	/* Retrieve and calculate storage parameters of layout */
-	/** @todo This is to be done by a call to llapi */
+	stripe_count = glist_length(&pnfs_param->ds_list);
 
-	/* As this is large, we encode as we go rather than building a
-	 * structure and encoding it all at once. */
+	LogDebug(COMPONENT_PNFS, "device_id %u/%u/%u %lu",
+		 deviceid->device_id1, deviceid->device_id2,
+		 deviceid->device_id4, deviceid->devid);
 
-	/* The first entry in the nfsv4_1_file_ds_addr4 is the array
-	 * of stripe indices. First we encode the count of stripes.
-	 * Since our pattern doesn't repeat, we have as many indices
-	 * as we do stripes. */
-
-	if (!inline_xdr_u_int32_t(da_addr_body, &stripes)) {
+	if (!inline_xdr_u_int32_t(da_addr_body, &stripe_count)) {
 		LogCrit(COMPONENT_PNFS,
 			"Failed to encode length of "
 			"stripe_indices array: %" PRIu32 ".",
-			stripes);
+			stripe_count);
 		return NFS4ERR_SERVERFAULT;
 	}
 
-	for (stripe = 0; stripe < stripes; stripe++) {
-		uint32_t stripe_osd = 0;
-
-		/** @todo use llapi or configuration file
-		 * to get this information */
-
-		if (stripe_osd < 0) {
+	for (stripe = 0; stripe < stripe_count; stripe++) {
+		if (!inline_xdr_u_int32_t(da_addr_body, &stripe)) {
 			LogCrit(COMPONENT_PNFS,
-				"Failed to retrieve OSD for "
-				"stripe %lu of file %" PRIu64 ".  Error: %u",
-				stripe, deviceid->devid, -stripe_osd);
-			return NFS4ERR_SERVERFAULT;
-		}
-
-		if (!inline_xdr_u_int32_t(da_addr_body, &stripe_osd)) {
-			LogCrit(COMPONENT_PNFS,
-				"Failed to encode OSD for stripe %lu.",
-				stripe);
+				"Failed to encode OSD for stripe %u.", stripe);
 			return NFS4ERR_SERVERFAULT;
 		}
 	}
 
-	/* The number of OSDs in our cluster is the length of our
-	 * multipath_lists */
-	num_osds = glist_length(&pnfs_param.ds_list);
-	if (!inline_xdr_u_int32_t(da_addr_body, &num_osds)) {
+	num_ds = stripe_count; /* aka glist_length(&pnfs_param->ds_list) */
+	if (!inline_xdr_u_int32_t(da_addr_body, &num_ds)) {
 		LogCrit(COMPONENT_PNFS,
 			"Failed to encode length of multipath_ds_list array: %u",
-			num_osds);
+			num_ds);
 		return NFS4ERR_SERVERFAULT;
 	}
 
-	/* Since our index is the OSD number itself, we have only one
-	 * host per multipath_list. */
-
-	glist_for_each(entry, &pnfs_param.ds_list) {
+	/* lookup for the right DS in the ds_list */
+	glist_for_each(entry, &pnfs_param->ds_list) {
 		fsal_multipath_member_t host;
-		struct sockaddr_in *sock;
 
 		ds = glist_entry(entry,
 				 struct lustre_pnfs_ds_parameter,
 				 ds_list);
-		memset(&host, 0, sizeof(fsal_multipath_member_t));
-		host.proto = 6;
-		sock = (struct sockaddr_in *)&ds->ipaddr;
-		memcpy(&host.addr,
-		       &sock->sin_addr,
-		       sizeof(struct in_addr));
-		host.port = ds->ipport;
+
+		LogDebug(COMPONENT_PNFS,
+			"advertises DS addr=%u.%u.%u.%u port=%u id=%u",
+			(ntohl(ds->ipaddr.sin_addr.s_addr) & 0xFF000000) >> 24,
+			(ntohl(ds->ipaddr.sin_addr.s_addr) & 0x00FF0000) >> 16,
+			(ntohl(ds->ipaddr.sin_addr.s_addr) & 0x0000FF00) >> 8,
+			ntohl(ds->ipaddr.sin_addr.s_addr) & 0x000000FF,
+			ntohs(ds->ipport), ds->id);
+
+		host.proto = IPPROTO_TCP;
+		host.addr = ntohl(ds->ipaddr.sin_addr.s_addr);
+		host.port = ntohs(ds->ipport);
 		nfs_status = FSAL_encode_v4_multipath(
 				da_addr_body,
 				1,
@@ -298,6 +283,7 @@ export_ops_pnfs(struct export_ops *ops)
  * @return Valid error codes in RFC 5661, pp. 366-7.
  */
 
+
 static nfsstat4
 lustre_layoutget(struct fsal_obj_handle *obj_hdl,
 		 struct req_op_context *req_ctx,
@@ -306,23 +292,28 @@ lustre_layoutget(struct fsal_obj_handle *obj_hdl,
 		 struct fsal_layoutget_res *res)
 {
 	struct lustre_fsal_obj_handle *myself;
-	struct lustre_file_handle lustre_ds_handle;
-	/* Width of each stripe on the file */
-	uint32_t stripe_width = 0;
-	/* Utility parameter */
-	nfl_util4 util = 0;
-	/* The last byte that can be accessed through pNFS */
-	/* uint64_t last_possible_byte = 0; strict. set but unused */
-	/* The deviceid for this layout */
-	struct pnfs_deviceid deviceid = DEVICE_ID_INIT_ZERO(FSAL_ID_LUSTRE);
-	/* NFS Status */
-	nfsstat4 nfs_status = 0;
-	/* Descriptor for DS handle */
-	struct gsh_buffdesc ds_desc;
+	struct lustre_exp_pnfs_parameter *pnfs_exp_param;
+	struct lustre_pnfs_parameter *pnfs_param;
 	struct lustre_pnfs_ds_parameter *ds;
+	struct lustre_fsal_export *myexport;
+	struct lustre_file_handle lustre_ds_handle;
+	uint32_t stripe_unit = 0;
+	nfl_util4 util = 0;
+	struct pnfs_deviceid deviceid = DEVICE_ID_INIT_ZERO(FSAL_ID_LUSTRE);
+	nfsstat4 nfs_status = 0;
+	struct gsh_buffdesc ds_desc;
+	struct lustre_fsal_module *lustre_me;
 
-	myself = container_of(obj_hdl, struct lustre_fsal_obj_handle,
-			      obj_handle);
+	/* Get pnfs parameters */
+	lustre_me = container_of(obj_hdl->fsal,
+				 struct lustre_fsal_module,
+				 fsal);
+	pnfs_param = &lustre_me->pnfs_param;
+
+	myexport = container_of(req_ctx->fsal_export,
+				struct lustre_fsal_export,
+				export);
+	pnfs_exp_param = &myexport->pnfs_param;
 
 	/* We support only LAYOUT4_NFSV4_1_FILES layouts */
 
@@ -336,6 +327,9 @@ lustre_layoutget(struct fsal_obj_handle *obj_hdl,
 	/* Get basic information on the file and calculate the dimensions
 	 *of the layout we can support. */
 
+	myself = container_of(obj_hdl,
+			      struct lustre_fsal_obj_handle,
+			      obj_handle);
 	memcpy(&lustre_ds_handle,
 	       myself->handle, sizeof(struct lustre_file_handle));
 
@@ -351,13 +345,18 @@ lustre_layoutget(struct fsal_obj_handle *obj_hdl,
 	res->segment.offset = 0;
 	res->segment.length = NFS4_UINT64_MAX;
 
-	stripe_width = pnfs_param.stripe_width;
-	/* util |= stripe_width | NFL4_UFLG_COMMIT_THRU_MDS; */
-	util |= stripe_width;
+	stripe_unit = pnfs_exp_param->stripe_unit;
+	/* util |= stripe_unit | NFL4_UFLG_COMMIT_THRU_MDS; */
+	util |= stripe_unit & ~NFL4_UFLG_MASK;
+
+	if (util != stripe_unit)
+		LogEvent(COMPONENT_PNFS,
+			 "Invalid stripe_unit %u, truncated to %u",
+			 stripe_unit, util);
 
 	/** @todo: several DSs not handled yet */
 	/* deviceid.devid =  pnfs_param.ds_param[0].id; */
-	ds = glist_first_entry(&pnfs_param.ds_list,
+	ds = glist_first_entry(&pnfs_param->ds_list,
 			       struct lustre_pnfs_ds_parameter,
 			       ds_list);
 	deviceid.devid = ds->id;

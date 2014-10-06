@@ -144,6 +144,7 @@ int fridgethr_init(struct fridgethr **frout, const char *s,
 		LogMajor(COMPONENT_THREAD,
 			 "Unable to allocate memory in fridge %s", s);
 		rc = ENOMEM;
+		goto out;
 	}
 
 	frobj->command = fridgethr_comm_run;

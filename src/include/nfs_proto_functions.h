@@ -531,6 +531,16 @@ int nfs4_op_read_plus(struct nfs_argop4 *, compound_data_t *,
 
 void nfs4_op_read_plus_Free(nfs_resop4 *resp);
 
+int nfs4_op_allocate(struct nfs_argop4 *, compound_data_t *,
+		      struct nfs_resop4 *);
+
+void nfs4_op_allocate_Free(nfs_resop4 *resp);
+
+int nfs4_op_deallocate(struct nfs_argop4 *, compound_data_t *,
+		      struct nfs_resop4 *);
+
+void nfs4_op_deallocate_Free(nfs_resop4 *resp);
+
 int nfs4_op_seek(struct nfs_argop4 *, compound_data_t *,
 		      struct nfs_resop4 *);
 
@@ -540,6 +550,16 @@ int nfs4_op_io_advise(struct nfs_argop4 *, compound_data_t *,
 		      struct nfs_resop4 *);
 
 void nfs4_op_io_advise_Free(nfs_resop4 *resp);
+
+int nfs4_op_layouterror(struct nfs_argop4 *, compound_data_t *,
+		      struct nfs_resop4 *);
+
+void nfs4_op_layouterror_Free(nfs_resop4 *resp);
+
+int nfs4_op_layoutstats(struct nfs_argop4 *, compound_data_t *,
+		      struct nfs_resop4 *);
+
+void nfs4_op_layoutstats_Free(nfs_resop4 *resp);
 
 /* @}
  * -- End of NFS protocols functions. --

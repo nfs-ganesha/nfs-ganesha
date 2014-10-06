@@ -808,14 +808,19 @@ void thr_stallq(struct fridgethr_context *thr_ctx)
 					 "unstalling stalled xprt %p", xprt);
 				pthread_mutex_lock(&xprt->xp_lock);
 				pthread_mutex_lock(&nfs_req_st.stallq.mtx);
-				glist_del(&xu->stallq);
-				--(nfs_req_st.stallq.stalled);
-				xu->flags &= ~XPRT_PRIVATE_FLAG_STALLED;
-				(void)svc_rqst_rearm_events(
-					xprt, SVC_RQST_FLAG_NONE);
-				/* drop stallq ref */
-				gsh_xprt_unref(xprt, XPRT_PRIVATE_FLAG_LOCKED,
-					       __func__, __LINE__);
+				/* check that we're still stalled */
+				if (xu->flags & XPRT_PRIVATE_FLAG_STALLED) {
+					glist_del(&xu->stallq);
+					--(nfs_req_st.stallq.stalled);
+					xu->flags &=
+						~XPRT_PRIVATE_FLAG_STALLED;
+					(void)svc_rqst_rearm_events(
+						xprt, SVC_RQST_FLAG_NONE);
+					/* drop stallq ref */
+					gsh_xprt_unref(
+						xprt, XPRT_PRIVATE_FLAG_LOCKED,
+						__func__, __LINE__);
+				}
 				goto restart;
 			}
 		}
@@ -935,6 +940,16 @@ void nfs_rpc_queue_init(void)
 
 static uint32_t enqueued_reqs;
 static uint32_t dequeued_reqs;
+
+uint32_t get_enqueue_count()
+{
+	return enqueued_reqs;
+}
+
+uint32_t get_dequeue_count()
+{
+	return dequeued_reqs;
+}
 
 void nfs_rpc_enqueue_req(request_data_t *req)
 {

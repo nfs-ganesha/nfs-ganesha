@@ -354,6 +354,9 @@ struct _9p_conn {
 	struct _9p_flush_bucket flush_buckets[FLUSH_BUCKETS];
 	unsigned long sequence;
 	pthread_mutex_t sock_lock;
+	struct sockaddr_storage addrpeer;
+	socklen_t addrpeerlen;
+	struct export_perms export_perms;
 	unsigned int msize;
 };
 

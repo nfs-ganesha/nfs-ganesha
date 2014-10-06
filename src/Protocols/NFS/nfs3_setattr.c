@@ -47,6 +47,7 @@
 #include "nfs_proto_functions.h"
 #include "nfs_convert.h"
 #include "nfs_proto_tools.h"
+#include "sal_functions.h"
 
 /**
  * @brief The NFSPROC3_SETATTR
@@ -54,7 +55,6 @@
  * Implements the NFSPROC3_SETATTR function.
  *
  * @param[in]  arg     NFS arguments union
- * @param[in]  export  NFS export list
  * @param[in]  worker  Data for worker thread
  * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call
@@ -105,6 +105,17 @@ int nfs3_setattr(nfs_arg_t *arg,
 		goto out;
 	}
 
+	/* Don't allow attribute change while we are in grace period.
+	 * Required for delegation reclaims and may be needed for other
+	 * reclaimable states as well. No NFS4ERR_GRACE in NFS v3, so
+	 * send jukebox error.
+	 */
+	if (nfs_in_grace()) {
+		res->res_setattr3.status = NFS3ERR_JUKEBOX;
+		rc = NFS_REQ_OK;
+		goto out;
+	}
+
 	nfs_SetPreOpAttr(entry, &pre_attr);
 
 	if (arg->arg_setattr3.guard.check) {
@@ -145,12 +156,29 @@ int nfs3_setattr(nfs_arg_t *arg,
 		 */
 		squash_setattr(&setattr);
 
+		if (arg->arg_setattr3.new_attributes.size.set_it) {
+			res->res_setattr3.status = nfs3_Errno_state(
+					state_share_anonymous_io_start(
+						entry,
+						OPEN4_SHARE_ACCESS_WRITE,
+						SHARE_BYPASS_V3_WRITE));
+
+			if (res->res_setattr3.status != NFS3_OK)
+				goto out_fail;
+		}
+
 		cache_status = cache_inode_setattr(entry,
 						   &setattr,
 						   false);
 
-		if (cache_status != CACHE_INODE_SUCCESS)
+		if (arg->arg_setattr3.new_attributes.size.set_it)
+			state_share_anonymous_io_done(entry,
+						      OPEN4_SHARE_ACCESS_WRITE);
+
+		if (cache_status != CACHE_INODE_SUCCESS) {
+			res->res_setattr3.status = nfs3_Errno(cache_status);
 			goto out_fail;
+		}
 	}
 
 	/* Set the NFS return */
@@ -176,11 +204,7 @@ int nfs3_setattr(nfs_arg_t *arg,
 	return rc;
 
  out_fail:
-
 	LogFullDebug(COMPONENT_NFSPROTO, "nfs_Setattr: failed");
-
-	/* Set the NFS return */
-	res->res_setattr3.status = nfs3_Errno(cache_status);
 
 	nfs_SetWccData(&pre_attr, entry,
 		       &res->res_setattr3.SETATTR3res_u.resfail.obj_wcc);

@@ -9,6 +9,12 @@ if(USE_DBUS)
     )
 endif(USE_DBUS)
 
+if(USE_LTTNG)
+  include_directories(
+    ${LTTNG_INCLUDE_DIR}
+  )
+endif(USE_LTTNG)
+
 ########### next target ###############
 
 SET(log_STAT_SRCS

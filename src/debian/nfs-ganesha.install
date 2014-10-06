@@ -1,0 +1,5 @@
+etc/ganesha/ganesha.conf
+etc/logrotate.d/nfs-ganesha
+etc/init.d/nfs-ganesha
+etc/dbus-1/system.d/nfs-ganesha-dbus.conf
+usr/bin/ganesha.nfsd
