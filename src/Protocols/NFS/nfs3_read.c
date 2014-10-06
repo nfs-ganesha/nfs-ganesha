@@ -225,6 +225,7 @@ int nfs3_read(nfs_arg_t *arg,
 
 		if (res->res_read3.status != NFS3_OK) {
 			rc = NFS_REQ_OK;
+			gsh_free(data);
 			goto out;
 		}
 
