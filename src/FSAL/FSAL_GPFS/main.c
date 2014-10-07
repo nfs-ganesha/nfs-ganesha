@@ -101,8 +101,8 @@ static struct config_item gpfs_params[] = {
 		       fsal_staticfsinfo_t, xattr_access_rights),
 	/* At the moment GPFS doesn't support WRITE delegations */
 	CONF_ITEM_ENUM_BITS("Delegations",
-			    FSAL_OPTION_NO_DELEGATIONS,
 			    FSAL_OPTION_FILE_READ_DELEG,
+			    FSAL_OPTION_FILE_DELEGATIONS,
 			    deleg_types, fsal_staticfsinfo_t, delegations),
 	CONF_ITEM_BOOL("pnfs_file", false,
 		       fsal_staticfsinfo_t, pnfs_file),
