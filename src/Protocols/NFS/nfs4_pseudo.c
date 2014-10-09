@@ -436,6 +436,8 @@ bool pseudo_mount_export(struct gsh_export *export)
 			export->pseudopath,
 			cache_inode_err_str(cache_status));
 
+		PTHREAD_RWLOCK_unlock(&state.dirent->attr_lock);
+
 		/* Release the LRU reference and return failure. */
 		cache_inode_put(state.dirent);
 		return false;
