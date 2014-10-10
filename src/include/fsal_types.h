@@ -691,7 +691,7 @@ struct fsal_staticfsinfo_t {
 	bool share_support;	/*< FS supports share reservation? */
 	bool share_support_owner;	/*< FS supports share reservation
 					   with open owners ? */
-	bool delegations;	/*< fsal supports delegations */
+	uint32_t delegations;	/*< fsal supports delegations */
 	bool pnfs_file;		/*< fsal supports file pnfs */
 	bool reopen_method;	/* fsal supports reopen method */
 	bool fsal_trace;	/*< fsal trace supports */

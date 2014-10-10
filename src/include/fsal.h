@@ -122,10 +122,10 @@ typedef struct fsal_xattrent {
 #define XATTR_RW_COOKIE ~0
 
 /* Flags representing if an FSAL supports read or write delegations */
-#define FSAL_OPTION_READ_DELEG 0x10000000	/*< Enable read delegations */
-#define FSAL_OPTION_WRITE_DELEG 0x20000000	/*< Using write delegations */
-#define FSAL_OPTION_DELEGATIONS (FSAL_OPTION_READ_DELEG | \
-				   FSAL_OPTION_WRITE_DELEG)
+#define FSAL_OPTION_FILE_READ_DELEG 0x00000001	/*< File read delegations */
+#define FSAL_OPTION_FILE_WRITE_DELEG 0x00000002	/*< File write delegations */
+#define FSAL_OPTION_FILE_DELEGATIONS (FSAL_OPTION_FILE_READ_DELEG | \
+					   FSAL_OPTION_FILE_WRITE_DELEG)
 #define FSAL_OPTION_NO_DELEGATIONS 0
 
 /**
