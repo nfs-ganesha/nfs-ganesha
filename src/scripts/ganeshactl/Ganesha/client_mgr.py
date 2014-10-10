@@ -30,6 +30,7 @@ Client = namedtuple('Client',
                      'HasRQUOTA',
                      'HasNFSv40',
                      'HasNFSv41',
+                     'HasNFSv42',
                      'Has9P',
                      'LastTime'])
 
@@ -85,7 +86,7 @@ class ClientMgr(QtDBus.QDBusAbstractInterface):
             clients = []
             for client in reply.argumentAt(1).toPyObject():
                 cl = client.toPyObject()
-                lasttime = cl[8].toPyObject()
+                lasttime = cl[9].toPyObject()
                 clt = Client(ClientIP = str(cl[0].toString()),
                              HasNFSv3 = cl[1].toBool(),
                              HasMNT = cl[2].toBool(),
@@ -93,7 +94,8 @@ class ClientMgr(QtDBus.QDBusAbstractInterface):
                              HasRQUOTA = cl[4].toBool(),
                              HasNFSv40 = cl[5].toBool(),
                              HasNFSv41 = cl[6].toBool(),
-                             Has9P = cl[7].toBool(),
+                             HasNFSv42 = cl[7].toBool(),
+                             Has9P = cl[8].toBool(),
                              LastTime = (lasttime[0].toPyObject(),
                                          lasttime[1].toPyObject()))
                 clients.append(clt)

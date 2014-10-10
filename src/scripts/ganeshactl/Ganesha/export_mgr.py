@@ -33,6 +33,7 @@ Export = namedtuple('Export',
                      'HasRQUOTA',
                      'HasNFSv40',
                      'HasNFSv41',
+                     'HasNFSv42',
                      'Has9P',
                      'LastTime'])
 
@@ -112,7 +113,7 @@ class ExportMgr(QtDBus.QDBusAbstractInterface):
             exports = []
             for export in reply.argumentAt(1).toPyObject():
                 ex = export.toPyObject()
-                lasttime = ex[9].toPyObject()
+                lasttime = ex[10].toPyObject()
                 exp = Export(ExportID = ex[0].toInt()[0],
                              ExportPath = str(ex[1].toString()),
                              HasNFSv3 = ex[2].toBool(),
@@ -121,7 +122,8 @@ class ExportMgr(QtDBus.QDBusAbstractInterface):
                              HasRQUOTA = ex[5].toBool(),
                              HasNFSv40 = ex[6].toBool(),
                              HasNFSv41 = ex[7].toBool(),
-                             Has9P = ex[8].toBool(),
+                             HasNFSv42 = ex[8].toBool(),
+                             Has9P = ex[9].toBool(),
                              LastTime = (lasttime[0].toPyObject(),
                                          lasttime[1].toPyObject()))
                 exports.append(exp)
