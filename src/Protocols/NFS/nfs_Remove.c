@@ -97,6 +97,7 @@ int nfs_Remove(nfs_arg_t *parg,
   cache_inode_file_type_t filetype;
   cache_inode_file_type_t childtype;
   cache_inode_status_t cache_status;
+  cache_inode_status_t tmp_cache_status;
   char *file_name = NULL;
   fsal_name_t name;
   int rc = NFS_REQ_OK;
@@ -261,6 +262,19 @@ int nfs_Remove(nfs_arg_t *parg,
                       break;
                     }
                   rc = NFS_REQ_OK;
+                  if(childtype == REGULAR_FILE)
+                    {
+                    cache_inode_close(pentry_child,
+                            pcontext,
+                            CACHE_INODE_FLAG_REALLYCLOSE,
+                            &tmp_cache_status);
+                    if (tmp_cache_status != CACHE_INODE_SUCCESS)
+                      {
+                      LogWarn(COMPONENT_NFSPROTO,
+                            "Error closing file %s in nfs_Remove",
+                            name.name);
+                      }
+                    }
                   goto out;
                 }
             }
