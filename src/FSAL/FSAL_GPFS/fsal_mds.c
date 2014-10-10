@@ -127,7 +127,7 @@ static size_t fs_loc_body_size(struct fsal_export *export_pub)
  */
 size_t fs_da_addr_size(struct fsal_module *fsal_hdl)
 {
-	return 0x1400;
+	return 0x20000;
 }
 
 /**
@@ -169,7 +169,7 @@ nfsstat4 getdeviceinfo(struct fsal_module *fsal_hdl,
 
 	darg.xdr.p = (int *)da_addr_body->x_base;
 	da_beginning = xdr_getpos(da_addr_body);
-	darg.xdr.end = (int *)(darg.xdr.p + (ds_buffer - da_beginning));
+	darg.xdr.end = (int *)(darg.xdr.p + ((ds_buffer - da_beginning)>>2));
 
 	LogDebug(COMPONENT_PNFS,
 		"getdeviceinfo p %p end %p da_length %ld seq %d fd %d fsid 0x%lx\n",
