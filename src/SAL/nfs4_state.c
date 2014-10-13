@@ -98,17 +98,6 @@ state_status_t state_add_impl(cache_entry_t *entry, state_type_t state_type,
 		got_pinned = true;
 	}
 
-	/* Check for delegations that conflict with this candidate state and
-	 * recall if necessary */
-	if (deleg_conflict(entry,
-			   (state_data->share.share_access &
-			    OPEN4_SHARE_ACCESS_WRITE))) {
-		if (got_pinned)
-			cache_inode_dec_pin_ref(entry, false);
-		status = STATE_FSAL_DELAY;
-		return status;
-	}
-
 	pnew_state = pool_alloc(state_v4_pool, NULL);
 
 	if (pnew_state == NULL) {

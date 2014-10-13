@@ -591,7 +591,7 @@ void state_deleg_revoke(state_t *state, cache_entry_t *entry)
  * Must be called with cache inode entry's state lock held in read or read-write
  * mode.
  */
-bool deleg_conflict(cache_entry_t *entry, bool write)
+bool state_deleg_conflict(cache_entry_t *entry, bool write)
 {
 	struct file_deleg_stats *deleg_stats;
 

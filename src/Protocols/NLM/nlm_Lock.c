@@ -129,7 +129,7 @@ int nlm4_Lock(nfs_arg_t *args,
 
 	/* Check if v4 delegations conflict with v3 op */
 	PTHREAD_RWLOCK_rdlock(&entry->state_lock);
-	if (deleg_conflict(entry, lock.lock_type == FSAL_LOCK_W)) {
+	if (state_deleg_conflict(entry, lock.lock_type == FSAL_LOCK_W)) {
 		PTHREAD_RWLOCK_unlock(&entry->state_lock);
 		LogDebug(COMPONENT_NLM,
 			 "NLM lock request DROPPED due to delegation conflict");

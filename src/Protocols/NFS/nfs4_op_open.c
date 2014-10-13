@@ -176,6 +176,14 @@ static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t *data,
 	if (state_status != STATE_SUCCESS)
 		return nfs4_Errno_state(state_status);
 
+	/* Check if any existing delegations conflict with this open.
+	 * Delegation recalls will be scheduled if there is a conflict.
+	 */
+	if (state_deleg_conflict(data->current_entry, candidate_data.share.
+				 share_access & OPEN4_SHARE_ACCESS_WRITE)) {
+		return NFS4ERR_DELAY;
+	}
+
 	/* Try to find if the same open_owner already has acquired a
 	 * stateid for this file
 	 */
