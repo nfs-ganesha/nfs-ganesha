@@ -364,6 +364,7 @@ mkdir -p %{buildroot}%{_sysconfdir}/logrotate.d
 mkdir -p %{buildroot}%{_bindir}
 mkdir -p %{buildroot}%{_sbindir}
 mkdir -p %{buildroot}%{_libdir}/ganesha
+mkdir -p %{buildroot}%{_localstatedir}/run/ganesha
 install -m 644 config_samples/logrotate_ganesha         %{buildroot}%{_sysconfdir}/logrotate.d/ganesha
 install -m 644 scripts/ganeshactl/org.ganesha.nfsd.conf	%{buildroot}%{_sysconfdir}/dbus-1/system.d
 install -m 755 ganesha.sysconfig			%{buildroot}%{_sysconfdir}/sysconfig/ganesha
@@ -438,6 +439,7 @@ make DESTDIR=%{buildroot} install
 %config(noreplace) %{_sysconfdir}/ganesha/ganesha.conf
 %dir %{_defaultdocdir}/ganesha/
 %{_defaultdocdir}/ganesha/*
+%dir %{_localstatedir}/run/ganesha
 
 %if 0%{?fedora}
 %config %{_unitdir}/nfs-ganesha.service
