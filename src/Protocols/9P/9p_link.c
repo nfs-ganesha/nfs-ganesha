@@ -74,12 +74,18 @@ int _9p_link(struct _9p_request_data *req9p, void *worker_data,
 				  preply);
 
 	pdfid = req9p->pconn->fids[*dfid];
+
 	/* Check that it is a valid fid */
 	if (pdfid == NULL || pdfid->pentry == NULL) {
 		LogDebug(COMPONENT_9P, "request on invalid dfid=%u", *dfid);
 		return _9p_rerror(req9p, worker_data, msgtag, EIO, plenout,
 				  preply);
 	}
+
+	if ((pdfid->op_context.export_perms->options &
+				 EXPORT_OPTION_WRITE_ACCESS) == 0)
+		return _9p_rerror(req9p, worker_data, msgtag, EROFS, plenout,
+				  preply);
 
 	op_ctx = &pdfid->op_context;
 

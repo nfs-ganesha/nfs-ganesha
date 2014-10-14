@@ -88,6 +88,11 @@ int _9p_xattrcreate(struct _9p_request_data *req9p, void *worker_data,
 				  preply);
 	}
 
+	if ((pfid->op_context.export_perms->options &
+				 EXPORT_OPTION_WRITE_ACCESS) == 0)
+		return _9p_rerror(req9p, worker_data, msgtag, EROFS, plenout,
+				  preply);
+
 	snprintf(name, MAXNAMLEN, "%.*s", *name_len, name_str);
 
 	/* set op_ctx, it will be useful if FSAL is later called */
