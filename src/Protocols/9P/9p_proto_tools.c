@@ -157,8 +157,7 @@ int _9p_tools_errno(cache_inode_status_t cache_status)
 		rc = EROFS;
 		break;
 
-	case CACHE_INODE_FSAL_ESTALE:
-	case CACHE_INODE_DEAD_ENTRY:
+	case CACHE_INODE_ESTALE:
 		rc = ESTALE;
 		break;
 
@@ -303,7 +302,7 @@ int _9p_tools_clunk(struct _9p_fid *pfid)
 			cache_status =
 			    cache_inode_refresh_attrs_locked(pfid->pentry);
 			if (cache_status != CACHE_INODE_SUCCESS
-			    && cache_status != CACHE_INODE_FSAL_ESTALE) {
+			    && cache_status != CACHE_INODE_ESTALE) {
 				free_fid(pfid);
 				return _9p_tools_errno(cache_status);
 			}

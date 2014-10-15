@@ -1456,7 +1456,7 @@ void exports_pkginit(void)
  * @param source [IN] void pointer to the export
  *
  * @return cache inode status code
- * @retval CACHE_INODE_FSAL_ESTALE indicates this export no longer has a root
+ * @retval CACHE_INODE_ESTALE indicates this export no longer has a root
  * entry
  */
 
@@ -1467,7 +1467,7 @@ cache_inode_status_t export_get_root_entry(cache_entry_t **entry, void *source)
 	*entry = export->exp_root_cache_inode;
 
 	if (unlikely((*entry) == NULL))
-		return CACHE_INODE_FSAL_ESTALE;
+		return CACHE_INODE_ESTALE;
 	else
 		return CACHE_INODE_SUCCESS;
 }
