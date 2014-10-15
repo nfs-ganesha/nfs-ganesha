@@ -382,7 +382,8 @@ static inline void set_current_entry(compound_data_t *data,
 
 	/* Take reference for the entry. */
 	if (data->current_entry && need_ref)
-		cache_inode_lru_ref(data->current_entry, LRU_FLAG_NONE);
+		(void) cache_inode_lru_ref(data->current_entry,
+					   LRU_REQ_STALE_OK);
 }
 
 #endif				/* NFS_PROTO_DATA_H */

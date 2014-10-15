@@ -368,7 +368,8 @@ void release_lockstate(state_owner_t *lock_owner)
 
 		/* Make sure we hold an lru ref to the cache inode while calling
 		 * state_del */
-		cache_inode_lru_ref(state_found->state_entry, LRU_FLAG_NONE);
+		(void) cache_inode_lru_ref(state_found->state_entry,
+					   LRU_REQ_STALE_OK);
 
 		state_del(state_found, false);
 
@@ -399,7 +400,7 @@ void release_openstate(state_owner_t *open_owner)
 
 		/* Make sure we hold an lru ref to the cache inode while calling
 		 * state_del */
-		cache_inode_lru_ref(entry, LRU_FLAG_NONE);
+		(void) cache_inode_lru_ref(entry, LRU_REQ_STALE_OK);
 
 		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 
@@ -457,7 +458,7 @@ void revoke_owner_delegs(state_owner_t *client_owner)
 		 * To prevent this, we place a ref count on the entry
 		 * here.
 		 */
-		cache_inode_lru_ref(entry, LRU_FLAG_NONE);
+		(void) cache_inode_lru_ref(entry, LRU_REQ_STALE_OK);
 
 		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 		state_deleg_revoke(state);

@@ -556,7 +556,7 @@ void pseudo_unmount_export(struct gsh_export *export)
 		/* Clean up the junction inode */
 
 		/* Take an LRU reference */
-		cache_inode_lru_ref(junction_inode, LRU_FLAG_NONE);
+		(void) cache_inode_lru_ref(junction_inode, LRU_REQ_STALE_OK);
 
 		/* Release the export lock so we can take attr_lock */
 		PTHREAD_RWLOCK_unlock(&export->lock);

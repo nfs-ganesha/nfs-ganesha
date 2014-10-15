@@ -1361,17 +1361,25 @@ cache_inode_is_pinned(cache_entry_t *entry)
  *
  * @retval CACHE_INODE_SUCCESS if the reference was acquired
  */
-void
-cache_inode_lru_ref(cache_entry_t *entry, uint32_t flags)
+cache_inode_status_t cache_inode_lru_ref(cache_entry_t *entry, uint32_t flags)
 {
+	cache_inode_lru_t *lru = &entry->lru;
+	struct lru_q_lane *qlane = &LRU[lru->lane];
+	struct lru_q *q;
+
+	if ((flags & (LRU_REQ_INITIAL | LRU_REQ_STALE_OK)) == 0) {
+		QLOCK(qlane);
+		if (lru->qid == LRU_ENTRY_CLEANUP) {
+			QUNLOCK(qlane);
+			return CACHE_INODE_ESTALE;
+		}
+		QUNLOCK(qlane);
+	}
+
 	atomic_inc_int32_t(&entry->lru.refcnt);
 
 	/* adjust LRU on initial refs */
-	if (flags & (LRU_REQ_INITIAL | LRU_REQ_SCAN)) {
-
-		cache_inode_lru_t *lru = &entry->lru;
-		struct lru_q_lane *qlane = &LRU[lru->lane];
-		struct lru_q *q;
+	if (flags & LRU_REQ_INITIAL) {
 
 		/* do it less */
 		if ((atomic_inc_int32_t(&entry->lru.cf) % 3) != 0)
@@ -1415,7 +1423,7 @@ cache_inode_lru_ref(cache_entry_t *entry, uint32_t flags)
 		QUNLOCK(qlane);
 	}			/* initial ref */
  out:
-	return;
+	return CACHE_INODE_SUCCESS;
 }
 
 /**
@@ -1451,6 +1459,7 @@ cache_inode_lru_unref(cache_entry_t *entry, uint32_t flags)
 		/* we MUST recheck that refcount is still 0 */
 		if (!qlocked)
 			QLOCK(qlane);
+
 		refcnt = atomic_fetch_int32_t(&entry->lru.refcnt);
 
 		if (unlikely(refcnt > 0)) {
