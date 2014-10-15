@@ -1445,15 +1445,34 @@ void
 cache_inode_lru_unref(cache_entry_t *entry, uint32_t flags)
 {
 	int32_t refcnt;
-	enum lru_q_id qid;
+	bool do_cleanup = false;
+	uint32_t lane = entry->lru.lane;
+	struct lru_q_lane *qlane = &LRU[lane];
+	bool qlocked = flags & LRU_UNREF_QLOCKED;
+
+	if (!qlocked) {
+		QLOCK(qlane);
+		if (((entry->lru.flags & LRU_CLEANED) == 0) &&
+		    (entry->lru.qid == LRU_ENTRY_CLEANUP)) {
+			do_cleanup = true;
+			entry->lru.flags |= LRU_CLEANED;
+		}
+		QUNLOCK(qlane);
+
+		if (do_cleanup) {
+			LogDebug(COMPONENT_CACHE_INODE,
+				 "LRU_ENTRY_CLEANUP of entry %p",
+				 entry);
+			state_wipe_file(entry);
+			kill_export_root_entry(entry);
+			kill_export_junction_entry(entry);
+		}
+	}
 
 	refcnt = atomic_dec_int32_t(&entry->lru.refcnt);
 
 	if (unlikely(refcnt == 0)) {
 
-		uint32_t lane = entry->lru.lane;
-		struct lru_q_lane *qlane = &LRU[lane];
-		bool qlocked = flags & LRU_UNREF_QLOCKED;
 		struct lru_q *q;
 
 		/* we MUST recheck that refcount is still 0 */
@@ -1468,9 +1487,6 @@ cache_inode_lru_unref(cache_entry_t *entry, uint32_t flags)
 			goto out;
 		}
 
-		/* save qid */
-		qid = entry->lru.qid;
-
 		/* Really zero.  Remove entry and mark it as dead. */
 		q = lru_queue_of(entry);
 		if (q) {
@@ -1481,16 +1497,6 @@ cache_inode_lru_unref(cache_entry_t *entry, uint32_t flags)
 
 		if (!qlocked)
 			QUNLOCK(qlane);
-
-		/* inline cleanup */
-		if (qid == LRU_ENTRY_CLEANUP) {
-			LogDebug(COMPONENT_CACHE_INODE,
-				 "LRU_ENTRY_CLEANUP of entry %p",
-				 entry);
-			state_wipe_file(entry);
-			kill_export_root_entry(entry);
-			kill_export_junction_entry(entry);
-		}
 
 		cache_inode_lru_clean(entry);
 		pool_free(cache_inode_entry_pool, entry);
