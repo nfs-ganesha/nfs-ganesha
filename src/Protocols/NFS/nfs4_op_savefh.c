@@ -143,7 +143,7 @@ int nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t *data,
 	 * have a pseudofs handle.
 	 */
 	if (data->saved_entry)
-		cache_inode_lru_ref(data->saved_entry, LRU_FLAG_NONE);
+		(void) cache_inode_lru_ref(data->saved_entry, LRU_REQ_STALE_OK);
 
  out:
 

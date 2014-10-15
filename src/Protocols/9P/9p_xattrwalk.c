@@ -258,7 +258,7 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, void *worker_data,
 	req9p->pconn->fids[*attrfid] = pxattrfid;
 
 	/* Increments refcount as we're manually making a new copy */
-	cache_inode_lru_ref(pfid->pentry, LRU_FLAG_NONE);
+	(void) cache_inode_lru_ref(pfid->pentry, LRU_REQ_STALE_OK);
 
 	/* fid doesn't come from attach, don't put export on clunk... */
 	pxattrfid->from_attach = false;

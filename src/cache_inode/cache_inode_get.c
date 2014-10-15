@@ -218,7 +218,7 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
 				  __func__, __LINE__);
 	if (*entry) {
 		/* take an extra reference within the critical section */
-		cache_inode_lru_ref(*entry, LRU_REQ_INITIAL);
+		(void) cache_inode_lru_ref(*entry, LRU_REQ_INITIAL);
 		cih_latch_rele(&latch);
 
 		if (!check_mapping(*entry, op_ctx->export)) {
@@ -290,7 +290,7 @@ cache_inode_get_keyed(cache_inode_key_t *key,
 				   __func__, __LINE__);
 	if (likely(entry)) {
 		/* Ref entry */
-		cache_inode_lru_ref(entry, LRU_FLAG_NONE);
+		(void) cache_inode_lru_ref(entry, LRU_REQ_INITIAL);
 		/* Release the subtree hash table lock */
 		cih_latch_rele(&latch);
 
@@ -414,12 +414,12 @@ cache_inode_get_protected(cache_entry_t **entry,
 	}
 
 	/* Ref entry */
-	cache_inode_lru_ref(*entry, LRU_FLAG_NONE);
+	status = cache_inode_lru_ref(*entry, LRU_FLAG_NONE);
 
 	/* Release the subtree hash table lock */
 	cih_latch_rele(&latch);
 
-	return CACHE_INODE_SUCCESS;
+	return status;
 }
 
 /** @} */

@@ -104,9 +104,9 @@ extern struct lru_state lru_state;
 #define LRU_REQ_INITIAL  0x0002
 
 /**
- * The caller is scanning the entry (READDIR)
+ * The caller is doing something that doesn't care if entry is dead
  */
-#define LRU_REQ_SCAN  0x0004
+#define LRU_REQ_STALE_OK  0x0004
 
 /**
  * qlane is locked
@@ -131,7 +131,7 @@ extern int cache_inode_lru_pkgshutdown(void);
 extern size_t open_fd_count;
 
 cache_inode_status_t cache_inode_lru_get(struct cache_entry_t **entry);
-void cache_inode_lru_ref(cache_entry_t *entry, uint32_t flags);
+cache_inode_status_t cache_inode_lru_ref(cache_entry_t *entry, uint32_t flags);
 
 /* XXX */
 void cache_inode_lru_kill(cache_entry_t *entry);

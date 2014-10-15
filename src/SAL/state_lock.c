@@ -3101,7 +3101,7 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 
 		lock_entry_dec_ref(found_entry);
-		cache_inode_lru_ref(entry, LRU_FLAG_NONE);
+		(void) cache_inode_lru_ref(entry, LRU_REQ_STALE_OK);
 
 		PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
@@ -3260,7 +3260,7 @@ state_status_t state_owner_unlock_all(state_owner_t *owner,
 		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 
 		lock_entry_dec_ref(found_entry);
-		cache_inode_lru_ref(entry, LRU_FLAG_NONE);
+		(void) cache_inode_lru_ref(entry, LRU_REQ_STALE_OK);
 
 		PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
@@ -3353,7 +3353,7 @@ void state_export_unlock_all(void)
 		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 
 		lock_entry_dec_ref(found_entry);
-		cache_inode_lru_ref(entry, LRU_FLAG_NONE);
+		(void) cache_inode_lru_ref(entry, LRU_REQ_STALE_OK);
 
 		PTHREAD_RWLOCK_unlock(&entry->state_lock);
 

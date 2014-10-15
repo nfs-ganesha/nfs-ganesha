@@ -97,9 +97,9 @@ cache_inode_lookupp_impl(cache_entry_t *entry,
 			 * below the sentinel count)
 			 */
 			PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
-			cache_inode_lru_ref(entry, LRU_FLAG_NONE);
+			status = cache_inode_lru_ref(entry, LRU_FLAG_NONE);
 			*parent = entry;
-			return CACHE_INODE_SUCCESS;
+			return status;
 		}
 
 		PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);

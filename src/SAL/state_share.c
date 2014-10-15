@@ -1161,7 +1161,7 @@ void state_export_unshare_all(void)
 		/* get a reference to the owner */
 		inc_state_owner_ref(owner);
 
-		cache_inode_lru_ref(entry, LRU_FLAG_NONE);
+		(void) cache_inode_lru_ref(entry, LRU_REQ_STALE_OK);
 
 		/* Drop the export mutex to call unshare */
 		PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);

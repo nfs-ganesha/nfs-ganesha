@@ -1280,7 +1280,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 	 * current FH.
 	 */
 	entry_change = data->current_entry;
-	cache_inode_lru_ref(entry_change, LRU_FLAG_NONE);
+	(void) cache_inode_lru_ref(entry_change, LRU_REQ_STALE_OK);
 
 	res_OPEN4->OPEN4res_u.resok4.cinfo.before =
 	    cache_inode_get_changeid4(entry_change);

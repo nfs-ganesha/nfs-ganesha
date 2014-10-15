@@ -258,16 +258,18 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 				  __func__, __LINE__);
 	if (oentry) {
 		/* Entry is already in the cache, do not add it */
-		status = CACHE_INODE_ENTRY_EXISTS;
 		LogDebug(COMPONENT_CACHE_INODE,
 			 "Trying to add an already existing "
 			 "entry 1. Found entry %p type: %d, New type: %d",
 			 oentry, oentry->type, new_obj->type);
-		cache_inode_lru_ref(oentry, LRU_FLAG_NONE);
+		status = cache_inode_lru_ref(oentry, LRU_FLAG_NONE);
+		if (status == CACHE_INODE_SUCCESS) {
+			status = CACHE_INODE_ENTRY_EXISTS;
+			*entry = oentry;
+			(void)atomic_inc_uint64_t(&cache_stp->inode_conf);
+		}
 		/* Release the subtree hash table lock */
 		cih_latch_rele(&latch);
-		*entry = oentry;
-		(void)atomic_inc_uint64_t(&cache_stp->inode_conf);
 		goto out;
 	}
 	/* !LATCHED */
@@ -297,16 +299,18 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 				  __LINE__);
 	if (oentry) {
 		/* Entry is already in the cache, do not add it. */
-		status = CACHE_INODE_ENTRY_EXISTS;
 		LogDebug(COMPONENT_CACHE_INODE,
 			 "lost race to add entry %p type: %d, New type: %d",
 			 oentry, oentry->obj_handle->type, new_obj->type);
 		/* Ref it */
-		cache_inode_lru_ref(oentry, LRU_FLAG_NONE);
+		status = cache_inode_lru_ref(oentry, LRU_FLAG_NONE);
+		if (status == CACHE_INODE_SUCCESS) {
+			status = CACHE_INODE_ENTRY_EXISTS;
+			*entry = oentry;
+			(void)atomic_inc_uint64_t(&cache_stp->inode_conf);
+		}
 		/* Release the subtree hash table lock */
 		cih_latch_rele(&latch);
-		*entry = oentry;
-		(void)atomic_inc_uint64_t(&cache_stp->inode_conf);
 		goto out;
 	}
 
