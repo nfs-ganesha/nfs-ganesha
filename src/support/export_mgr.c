@@ -315,7 +315,8 @@ struct gsh_export *get_gsh_export(uint16_t export_id)
 			exp =
 			    avltree_container_of(node, struct gsh_export,
 						 node_k);
-			if (exp->state == EXPORT_READY)
+			if (atomic_fetch_uint32_t(&exp->exp_state) ==
+			    EXPORT_READY)
 				goto out;
 		}
 	}
@@ -324,7 +325,7 @@ struct gsh_export *get_gsh_export(uint16_t export_id)
 	node = avltree_lookup(&v.node_k, &export_by_id.t);
 	if (node) {
 		exp = avltree_container_of(node, struct gsh_export, node_k);
-		if (exp->state != EXPORT_READY) {
+		if (atomic_fetch_uint32_t(&exp->exp_state) == EXPORT_READY) {
 			PTHREAD_RWLOCK_unlock(&export_by_id.lock);
 			return NULL;
 		}
@@ -340,34 +341,6 @@ struct gsh_export *get_gsh_export(uint16_t export_id)
 	get_gsh_export_ref(exp);
 	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
 	return exp;
-}
-
-/**
- * @brief Set export entry's state
- *
- * Set the state under the global write lock to keep it safe
- * from scan/lookup races.
- * We assert state transitions because errors here are BAD.
- *
- * @param export [IN] The export to change state
- * @param state  [IN] the state to set
- */
-
-void set_gsh_export_state(struct gsh_export *export, export_state_t state)
-{
-	PTHREAD_RWLOCK_wrlock(&export_by_id.lock);
-	if (state == EXPORT_READY) {
-		assert(export->state == EXPORT_INIT
-		       || export->state == EXPORT_BLOCKED);
-	} else if (state == EXPORT_BLOCKED) {
-		assert(export->state == EXPORT_READY);
-	} else if (state == EXPORT_RELEASE) {
-		assert(export->state == EXPORT_BLOCKED && export->refcnt == 0);
-	} else {
-		assert(0);
-	}
-	export->state = state;
-	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
 }
 
 /**
@@ -400,7 +373,7 @@ struct gsh_export *get_gsh_export_by_path_locked(char *path,
 	glist_for_each(glist, &exportlist) {
 		export = glist_entry(glist, struct gsh_export, exp_list);
 
-		if (export->state != EXPORT_READY)
+		if (atomic_fetch_uint32_t(&export->exp_state) == EXPORT_READY)
 			continue;
 
 		len_export = strlen(export->fullpath);
@@ -506,7 +479,7 @@ struct gsh_export *get_gsh_export_by_pseudo_locked(char *path,
 	glist_for_each(glist, &exportlist) {
 		export = glist_entry(glist, struct gsh_export, exp_list);
 
-		if (export->state != EXPORT_READY)
+		if (atomic_fetch_uint32_t(&export->exp_state) != EXPORT_READY)
 			continue;
 
 		if (export->pseudopath == NULL)
@@ -607,7 +580,7 @@ struct gsh_export *get_gsh_export_by_tag(char *tag)
 	PTHREAD_RWLOCK_rdlock(&export_by_id.lock);
 	glist_for_each(glist, &exportlist) {
 		export = glist_entry(glist, struct gsh_export, exp_list);
-		if (export->state != EXPORT_READY)
+		if (atomic_fetch_uint32_t(&export->exp_state) == EXPORT_READY)
 			continue;
 		if (export->FS_tag != NULL &&
 		    !strcmp(export->FS_tag, tag))
