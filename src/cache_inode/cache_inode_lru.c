@@ -1243,8 +1243,7 @@ cache_inode_lru_get(cache_entry_t **entry)
  * @param[in] entry  The entry to be moved
  *
  * @retval CACHE_INODE_SUCCESS if the entry was moved.
- * @retval CACHE_INODE_DEAD_ENTRY if the entry is in the process of
- *                                disposal
+ * @retval CACHE_INODE_ESTALE  if the entry is in the process of disposal
  */
 cache_inode_status_t
 cache_inode_inc_pin_ref(cache_entry_t *entry)
@@ -1257,7 +1256,7 @@ cache_inode_inc_pin_ref(cache_entry_t *entry)
 	QLOCK(qlane);
 	if (entry->lru.qid == LRU_ENTRY_CLEANUP) {
 		QUNLOCK(qlane);
-		return CACHE_INODE_DEAD_ENTRY;
+		return CACHE_INODE_ESTALE;
 	}
 
 	/* Pin if not pinned already */

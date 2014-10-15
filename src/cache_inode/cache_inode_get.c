@@ -409,8 +409,8 @@ cache_inode_get_protected(cache_entry_t **entry,
 
 	if (unlikely((*entry) == NULL)) {
 		LogDebug(COMPONENT_CACHE_INODE,
-			 "cih_get_by_key_latched failed returning CACHE_INODE_FSAL_ESTALE");
-		return CACHE_INODE_FSAL_ESTALE;
+			 "cih_get_by_key_latched failed returning CACHE_INODE_ESTALE");
+		return CACHE_INODE_ESTALE;
 	}
 
 	/* Ref entry */
