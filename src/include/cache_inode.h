@@ -173,17 +173,17 @@ enum lru_q_id {
 	LRU_ENTRY_CLEANUP
 };
 
+#define LRU_CLEANED 0x00000001
+
 typedef struct cache_inode_lru__ {
-	enum lru_q_id qid;	/*< Queue identifier */
 	struct glist_head q;	/*< Link in the physical deque
 				   impelmenting a portion of the logical
 				   LRU. */
+	enum lru_q_id qid;	/*< Queue identifier */
 	int32_t refcnt;		/*< Reference count.  This is signed to make
 				   mistakes easy to see. */
 	int32_t pin_refcnt;	/*< Unpin it only if this goes down to zero */
-	uint32_t flags;		/*< Flags for details of this entry's status,
-				 *< such as whether it is pinned and whether
-				 *< it's in L1 or L2. */
+	uint32_t flags;		/*< Flags for details of this entry's status */
 	uint32_t lane;		/*< The lane in which an entry currently
 				 *< resides, so we can lock the deque and
 				 *< decrement the correct counter when moving
