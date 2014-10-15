@@ -533,7 +533,7 @@ nlm4_stats nlm_convert_state_error(state_status_t status)
 		return NLM4_ROFS;
 	case STATE_NOT_FOUND:
 		return NLM4_STALE_FH;
-	case STATE_FSAL_ESTALE:
+	case STATE_ESTALE:
 		return NLM4_STALE_FH;
 	case STATE_FILE_BIG:
 		return NLM4_FBIG;
