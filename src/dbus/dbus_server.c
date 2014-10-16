@@ -510,7 +510,7 @@ static DBusHandlerResult dbus_message_entrypoint(DBusConnection *conn,
 			if (strcmp(interface, (*iface)->name) == 0) {
 				struct gsh_dbus_method **m;
 
-				for (m = (*iface)->methods; *m; m++) {
+				for (m = (*iface)->methods; m && *m; m++) {
 					if (strcmp(method, (*m)->name) == 0) {
 						success = (*m)->method(argsp,
 								       reply,
