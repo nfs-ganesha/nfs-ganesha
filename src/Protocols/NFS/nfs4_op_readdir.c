@@ -56,7 +56,6 @@ struct nfs4_readdir_cb_data {
 	struct bitmap4 *req_attr;	/*< The requested attributes */
 	compound_data_t *data;	/*< The compound data, so we can produce
 				   nfs_fh4s. */
-	bool junction_cb;	/*< True if this is a callback for junction. */
 	struct export_perms save_export_perms;	/*< Saved export perms. */
 	struct gsh_export *saved_gsh_export;	/*< Saved export */
 };
@@ -98,7 +97,8 @@ static void restore_data(struct nfs4_readdir_cb_data *tracker)
 cache_inode_status_t nfs4_readdir_callback(void *opaque,
 					   cache_entry_t *entry,
 					   const struct attrlist *attr,
-					   uint64_t mounted_on_fileid)
+					   uint64_t mounted_on_fileid,
+					   enum cb_state cb_state)
 {
 	struct cache_inode_readdir_cb_parms *cb_parms = opaque;
 	struct nfs4_readdir_cb_data *tracker = cb_parms->opaque;
@@ -115,9 +115,12 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 	cache_inode_status_t attr_status;
 	fsal_accessflags_t access_mask_attr = 0;
 
-	/* If being called on error regarding junction, go cleanup. */
-	if (attr == NULL)
-		goto out;
+	/* Cleanup after problem with junction processing. */
+	if (cb_state == CB_PROBLEM) {
+		/* Restore the export. */
+		restore_data(tracker);
+		return CACHE_INODE_SUCCESS;
+	}
 
 	if (tracker->total_entries == tracker->count)
 		goto not_inresult;
@@ -127,14 +130,14 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 	 * NOTE: If there is a junction within a file system (perhaps setting
 	 *       up different permissions for part of the file system), the
 	 *       junction inode will ALSO be the root of the nested export.
-	 *       By testing junction_cb, we allow the call back to process
+	 *       By testing cb_state, we allow the call back to process
 	 *       that root inode to proceed rather than getting stuck in a
 	 *       junction crossing infinite loop.
 	 */
 	if (cb_parms->attr_allowed &&
 	    entry->type == DIRECTORY &&
 	    entry->object.dir.junction_export != NULL &&
-	    !tracker->junction_cb) {
+	    cb_state == CB_ORIGINAL) {
 		/* This is a junction. Code used to not recognize this
 		 * which resulted in readdir giving different attributes
 		 * (including FH, FSid, etc...) to clients from a
@@ -159,7 +162,6 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 
 		/* Cross the junction */
 		op_ctx->export = entry->object.dir.junction_export;
-
 		op_ctx->fsal_export = op_ctx->export->fsal_export;
 
 		/* Build the credentials */
@@ -180,7 +182,7 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 
 			/* Indicate success without adding another entry */
 			cb_parms->in_result = true;
-			goto out;
+			return CACHE_INODE_SUCCESS;
 		}
 
 		if (rdattr_error == NFS4ERR_WRONGSEC) {
@@ -243,7 +245,6 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 				 "Need to cross junction to Export_Id %d Path %s",
 				 op_ctx->export->export_id,
 				 op_ctx->export->fullpath);
-			tracker->junction_cb = true;
 			return CACHE_INODE_CROSS_JUNCTION;
 		}
 
@@ -431,11 +432,6 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 	cb_parms->in_result = false;
 
  out:
-
-	if (tracker->junction_cb) {
-		tracker->junction_cb = false;
-		restore_data(tracker);
-	}
 
 	return CACHE_INODE_SUCCESS;
 }

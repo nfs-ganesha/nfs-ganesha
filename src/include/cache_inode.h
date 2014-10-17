@@ -600,6 +600,12 @@ static const uint32_t CACHE_INODE_INVALIDATE_CONTENT = 0x02;
 static const uint32_t CACHE_INODE_INVALIDATE_CLOSE = 0x04;
 static const uint32_t CACHE_INODE_INVALIDATE_GOT_LOCK = 0x08;
 
+enum cb_state {
+	CB_ORIGINAL,
+	CB_JUNCTION,
+	CB_PROBLEM,
+};
+
 /**
  * @brief Type of callback for cache_inode_readdir
  *
@@ -637,7 +643,8 @@ typedef cache_inode_status_t (*cache_inode_getattr_cb_t)
 	(void *opaque,
 	 cache_entry_t *entry,
 	 const struct attrlist *attr,
-	 uint64_t mounted_on_fileid);
+	 uint64_t mounted_on_fileid,
+	 enum cb_state cb_state);
 
 const char *cache_inode_err_str(cache_inode_status_t err);
 
@@ -735,7 +742,8 @@ cache_inode_status_t cache_inode_create(cache_entry_t *entry_parent,
 
 cache_inode_status_t cache_inode_getattr(cache_entry_t *entry,
 					 void *opaque,
-					 cache_inode_getattr_cb_t cb);
+					 cache_inode_getattr_cb_t cb,
+					 enum cb_state cb_state);
 
 cache_inode_status_t cache_inode_fileid(cache_entry_t *entry,
 					uint64_t *fileid);
