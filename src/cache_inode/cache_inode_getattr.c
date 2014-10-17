@@ -68,7 +68,8 @@
 cache_inode_status_t
 cache_inode_getattr(cache_entry_t *entry,
 		    void *opaque,
-		    cache_inode_getattr_cb_t cb)
+		    cache_inode_getattr_cb_t cb,
+		    enum cb_state cb_state)
 {
 	cache_inode_status_t status;
 	struct gsh_export *junction_export = NULL;
@@ -96,7 +97,8 @@ cache_inode_getattr(cache_entry_t *entry,
 	status = cb(opaque,
 		    entry,
 		    &entry->obj_handle->attributes,
-		    mounted_on_fileid);
+		    mounted_on_fileid,
+		    cb_state);
 
 	if (status == CACHE_INODE_CROSS_JUNCTION) {
 		PTHREAD_RWLOCK_rdlock(&op_ctx->export->lock);
@@ -124,7 +126,11 @@ cache_inode_getattr(cache_entry_t *entry,
 					 junction_export->export_id,
 					 cache_inode_err_str(status));
 				/* Need to signal problem to callback */
-				(void) cb(opaque, junction_entry, NULL, 0);
+				(void) cb(opaque,
+					  junction_entry,
+					  NULL,
+					  0,
+					  CB_PROBLEM);
 				return status;
 			}
 		} else {
@@ -132,13 +138,15 @@ cache_inode_getattr(cache_entry_t *entry,
 				 "A junction became stale");
 			status = CACHE_INODE_ESTALE;
 			/* Need to signal problem to callback */
-			(void) cb(opaque, junction_entry, NULL, 0);
+			(void) cb(opaque, junction_entry, NULL, 0, CB_PROBLEM);
 			return status;
 		}
 
 		/* Now call the callback again with that. */
-		status =
-		    cache_inode_getattr(junction_entry, opaque, cb);
+		status = cache_inode_getattr(junction_entry,
+					     opaque,
+					     cb,
+					     CB_JUNCTION);
 
 		cache_inode_put(junction_entry);
 		put_gsh_export(junction_export);
