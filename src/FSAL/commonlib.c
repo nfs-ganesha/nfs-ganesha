@@ -1369,25 +1369,25 @@ int claim_posix_filesystems(const char *path,
 	int retval = 0;
 	struct fsal_filesystem *fs, *root = NULL;
 	struct glist_head *glist;
-	int pathlen = strlen(path), outlen = 0;
-
-	*root_fs = NULL;
+	struct stat statbuf;
+	struct fsal_dev__ dev;
 
 	PTHREAD_RWLOCK_wrlock(&fs_lock);
+
+	if (stat(path, &statbuf) != 0) {
+		retval = errno;
+		LogCrit(COMPONENT_FSAL,
+			"Could not stat directory for path %s", path);
+		goto out;
+	}
+	dev = posix2fsal_devt(statbuf.st_dev);
 
 	/* Scan POSIX file systems to find export root fs */
 	glist_for_each(glist, &posix_file_systems) {
 		fs = glist_entry(glist, struct fsal_filesystem, filesystems);
-		if (fs->pathlen > outlen) {
-			if (strcmp(fs->path, "/") == 0) {
-				outlen = fs->pathlen;
-				root = fs;
-			} else if ((strncmp(path, fs->path, fs->pathlen) == 0)
-				   && ((path[fs->pathlen] == '/') ||
-				       (path[fs->pathlen] == '\0'))) {
-				outlen = fs->pathlen;
-				root = fs;
-			}
+		if (fs->dev.major == dev.major && fs->dev.minor == dev.minor) {
+			root = fs;
+			break;
 		}
 	}
 
@@ -1401,7 +1401,7 @@ int claim_posix_filesystems(const char *path,
 	}
 
 	/* Claim this file system and it's children */
-	retval = process_claim(path, pathlen, root, fsal,
+	retval = process_claim(path, strlen(path), root, fsal,
 			       exp, claim, unclaim);
 
 	if (retval == 0) {
