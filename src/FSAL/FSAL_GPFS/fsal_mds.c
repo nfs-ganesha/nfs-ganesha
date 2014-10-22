@@ -336,15 +336,17 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_hdl,
 	deviceid.devid = file_layout.device_id.devid;
 	/* last_possible_byte = NFS4_UINT64_MAX; strict. set but unused */
 
-	LogDebug(COMPONENT_PNFS, "fsal_id %d seq %d fd %d fsid 0x%lx",
+	LogDebug(COMPONENT_PNFS, "fsal_id %d seq %d fd %d fsid 0x%lx index %d",
 		deviceid.fsal_id, deviceid.device_id2,
-		deviceid.device_id4, deviceid.devid);
+		deviceid.device_id4, deviceid.devid,
+		file_layout.lg_first_stripe_index);
 
 	ds_desc.addr = &gpfs_ds_handle;
 	ds_desc.len = sizeof(struct gpfs_file_handle);
 
 	nfs_status =
-	     FSAL_encode_file_layout(loc_body, &deviceid, util, 0, 0,
+	     FSAL_encode_file_layout(loc_body, &deviceid, util,
+				     file_layout.lg_first_stripe_index, 0,
 				     req_ctx->export->export_id, 1,
 				     &ds_desc);
 	if (nfs_status) {
