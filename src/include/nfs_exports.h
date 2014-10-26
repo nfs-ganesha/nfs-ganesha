@@ -329,5 +329,8 @@ void kill_export_junction_entry(cache_entry_t *entry);
 int ReadExports(config_file_t in_config);
 void free_export_resources(struct gsh_export *export);
 void exports_pkginit(void);
+int fsal_load_init(void *node, const char *name,
+		   struct fsal_module **fsal_hdl_p,
+		   struct config_error_type *err_type);
 
 #endif				/* !NFS_EXPORTS_H */
