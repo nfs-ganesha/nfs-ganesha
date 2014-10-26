@@ -214,9 +214,8 @@ void nullfs_export_ops_init(struct export_ops *ops)
 	ops->set_quota = set_quota;
 }
 
-struct subfsal_args {
-	char *name;
-	void *fsal_node;
+struct nullfsal_args {
+	struct subfsal_args subfsal;
 };
 
 static struct config_item sub_fsal_params[] = {
@@ -228,8 +227,8 @@ static struct config_item sub_fsal_params[] = {
 static struct config_item export_params[] = {
 	CONF_ITEM_NOOP("name"),
 	CONF_RELAX_BLOCK("FSAL", sub_fsal_params,
-			 noop_conf_init, noop_conf_commit,
-			 subfsal_args, fsal_node),
+			 noop_conf_init, subfsal_commit,
+			 nullfsal_args, subfsal),
 	CONFIG_EOL
 };
 
@@ -256,7 +255,7 @@ fsal_status_t nullfs_create_export(struct fsal_module *fsal_hdl,
 	fsal_status_t expres;
 	struct fsal_module *fsal_stack;
 	struct nullfs_fsal_export *myself;
-	struct subfsal_args subfsal;
+	struct nullfsal_args nullfsal;
 	struct config_error_type err_type;
 	int retval;
 
@@ -265,16 +264,16 @@ fsal_status_t nullfs_create_export(struct fsal_module *fsal_hdl,
 	 */
 	retval = load_config_from_node(parse_node,
 				       &export_param,
-				       &subfsal,
+				       &nullfsal,
 				       true,
 				       &err_type);
 	if (retval != 0)
 		return fsalstat(ERR_FSAL_INVAL, 0);
-	fsal_stack = lookup_fsal(subfsal.name);
+	fsal_stack = lookup_fsal(nullfsal.subfsal.name);
 	if (fsal_stack == NULL) {
 		LogMajor(COMPONENT_FSAL,
 			 "nullfs_create_export: failed to lookup for FSAL %s",
-			 subfsal.name);
+			 nullfsal.subfsal.name);
 		return fsalstat(ERR_FSAL_INVAL, EINVAL);
 	}
 
@@ -287,13 +286,13 @@ fsal_status_t nullfs_create_export(struct fsal_module *fsal_hdl,
 	}
 
 	expres = fsal_stack->ops->create_export(fsal_stack,
-						subfsal.fsal_node,
+						nullfsal.subfsal.fsal_node,
 						up_ops);
 	fsal_put(fsal_stack);
 	if (FSAL_IS_ERROR(expres)) {
 		LogMajor(COMPONENT_FSAL,
 			 "Failed to call create_export on underlying FSAL %s",
-			 subfsal.name);
+			 nullfsal.subfsal.name);
 		gsh_free(myself);
 		return expres;
 	}
@@ -315,10 +314,15 @@ fsal_status_t nullfs_create_export(struct fsal_module *fsal_hdl,
 	       sizeof(struct fsal_ds_ops));
 	next_ops.up_ops = up_ops;
 
-	/*	End of tmp code */
-
+	retval = fsal_export_init(&myself->export);
+	if (retval) {
+		gsh_free(myself);
+		return fsalstat(posix2fsal_error(retval), retval);
+	}
 	nullfs_export_ops_init(myself->export.ops);
 	nullfs_handle_ops_init(myself->export.obj_ops);
+	myself->export.up_ops = up_ops;
+	myself->export.fsal = fsal_hdl;
 
 	/* lock myself before attaching to the fsal.
 	 * keep myself locked until done with creating myself.

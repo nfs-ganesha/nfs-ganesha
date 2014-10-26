@@ -63,6 +63,7 @@
 #include "FSAL/fsal_commonlib.h"
 #include "fsal_private.h"
 #include "fsal_convert.h"
+#include "nfs_exports.h"
 
 /* fsal_module to fsal_export helpers
  */
@@ -1496,6 +1497,30 @@ int decode_fsid(char *buf,
 	}
 
 	return sizeof_fsid(fsid_type);
+}
+
+int subfsal_commit(void *node, void *link_mem, void *self_struct,
+		   struct config_error_type *err_type)
+{
+	struct fsal_module *fsal_next;
+	struct subfsal_args *subfsal = (struct subfsal_args *)self_struct;
+	int errcnt = 0;
+
+	if (subfsal->name == NULL || strlen(subfsal->name) == 0) {
+		LogCrit(COMPONENT_FSAL, "Name of FSAL is empty");
+		err_type->missing = true;
+		errcnt++;
+		goto err;
+	}
+
+	errcnt += fsal_load_init(node, subfsal->name, &fsal_next, err_type);
+	if (errcnt > 0)
+		goto err;
+
+	subfsal->fsal_node = node;
+
+err:
+	return errcnt;
 }
 
 /** @} */
