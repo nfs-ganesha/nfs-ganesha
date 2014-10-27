@@ -81,7 +81,8 @@ static struct fsal_staticfsinfo_t default_gpfs_info = {
 	.share_support = true,
 	.share_support_owner = false,
 	.delegations = FSAL_OPTION_FILE_READ_DELEG, /* not working with pNFS */
-	.pnfs_file = true,
+	.pnfs_mds = true,
+	.pnfs_ds = true,
 	.fsal_trace = true,
 	.reopen_method = true,
 };
@@ -104,8 +105,10 @@ static struct config_item gpfs_params[] = {
 			    FSAL_OPTION_FILE_READ_DELEG,
 			    FSAL_OPTION_FILE_DELEGATIONS,
 			    deleg_types, fsal_staticfsinfo_t, delegations),
-	CONF_ITEM_BOOL("pnfs_file", false,
-		       fsal_staticfsinfo_t, pnfs_file),
+	CONF_ITEM_BOOL("PNFS_MDS", true,
+		       fsal_staticfsinfo_t, pnfs_mds),
+	CONF_ITEM_BOOL("PNFS_DS", true,
+		       fsal_staticfsinfo_t, pnfs_ds),
 	CONF_ITEM_BOOL("fsal_trace", true,
 		       fsal_staticfsinfo_t, fsal_trace),
 	CONFIG_EOL

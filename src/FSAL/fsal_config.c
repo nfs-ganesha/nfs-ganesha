@@ -90,8 +90,10 @@ bool fsal_supports(struct fsal_staticfsinfo_t *info,
 		return !!(info->delegations & FSAL_OPTION_FILE_READ_DELEG);
 	case fso_delegations_w:
 		return !!(info->delegations & FSAL_OPTION_FILE_WRITE_DELEG);
+	case fso_pnfs_mds_supported:
+		return !!info->pnfs_mds;
 	case fso_pnfs_ds_supported:
-		return !!info->pnfs_file;
+		return !!info->pnfs_ds;
 	case fso_accesscheck_support:
 		return !!info->accesscheck_support;
 	case fso_share_support:

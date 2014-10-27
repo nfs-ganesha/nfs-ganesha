@@ -822,16 +822,24 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 
 	gpfs_ganesha(OPENHANDLE_GET_VERIFIER, &GPFS_write_verifier);
 
-	myself->pnfs_enabled =
+	myself->pnfs_ds_enabled =
 	    myself->export.ops->fs_supports(&myself->export,
 					    fso_pnfs_ds_supported);
-	if (myself->pnfs_enabled) {
+	myself->pnfs_mds_enabled =
+	    myself->export.ops->fs_supports(&myself->export,
+					    fso_pnfs_mds_supported);
+	if (myself->pnfs_ds_enabled) {
 		LogInfo(COMPONENT_FSAL,
-			"gpfs_fsal_create: pnfs was enabled for [%s]",
+			"gpfs_fsal_create: pnfs ds was enabled for [%s]",
+			op_ctx->export->fullpath);
+		ds_ops_init(myself->export.ds_ops);
+	}
+	if (myself->pnfs_mds_enabled) {
+		LogInfo(COMPONENT_FSAL,
+			"gpfs_fsal_create: pnfs mds was enabled for [%s]",
 			op_ctx->export->fullpath);
 		export_ops_pnfs(myself->export.ops);
 		handle_ops_pnfs(myself->export.obj_ops);
-		ds_ops_init(myself->export.ds_ops);
 	}
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 

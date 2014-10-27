@@ -790,18 +790,27 @@ fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
 
 	op_ctx->fsal_export = &myself->export;
 
-	myself->pnfs_enabled =
+	myself->pnfs_ds_enabled =
 	    myself->export.ops->fs_supports(&myself->export,
 					    fso_pnfs_ds_supported) &&
 	    myself->pnfs_param.pnfs_enabled;
+	myself->pnfs_mds_enabled =
+	    myself->export.ops->fs_supports(&myself->export,
+					    fso_pnfs_mds_supported) &&
+	    myself->pnfs_param.pnfs_enabled;
 
-	if (myself->pnfs_enabled) {
+	if (myself->pnfs_ds_enabled) {
 		LogInfo(COMPONENT_FSAL,
-			"lustre_fsal_create: pnfs was enabled for [%s]",
+			"lustre_fsal_create: pnfs DS was enabled for [%s]",
+			op_ctx->export->fullpath);
+		ds_ops_init(myself->export.ds_ops);
+	}
+	if (myself->pnfs_mds_enabled) {
+		LogInfo(COMPONENT_FSAL,
+			"lustre_fsal_create: pnfs MDS was enabled for [%s]",
 			op_ctx->export->fullpath);
 		export_ops_pnfs(myself->export.ops);
 		handle_ops_pnfs(myself->export.obj_ops);
-		ds_ops_init(myself->export.ds_ops);
 	}
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 

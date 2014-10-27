@@ -408,6 +408,7 @@ static bool fs_supports(struct fsal_export *export_pub,
 		return false;
 
 	case fso_pnfs_ds_supported:
+	case fso_pnfs_mds_supported:
 		return false;
 
 	case fso_delegations_r:
