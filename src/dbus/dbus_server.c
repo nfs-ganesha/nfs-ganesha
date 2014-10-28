@@ -455,12 +455,17 @@ void dbus_append_timestamp(DBusMessageIter *iterp, struct timespec *timestamp)
 {
 	DBusMessageIter ts_iter;
 
+	/* tv_sec and tv_nsec may not be same size as dbus_uint64_t on
+	 * 32 bit systems, so copy them here to dbus_uint64_t sized
+	 * symbols.
+	 */
+	dbus_uint64_t sec = timestamp->tv_sec;
+	dbus_uint64_t nsec = timestamp->tv_nsec;
+
 	dbus_message_iter_open_container(iterp, DBUS_TYPE_STRUCT, NULL,
 					 &ts_iter);
-	dbus_message_iter_append_basic(&ts_iter, DBUS_TYPE_UINT64,
-				       &timestamp->tv_sec);
-	dbus_message_iter_append_basic(&ts_iter, DBUS_TYPE_UINT64,
-				       &timestamp->tv_nsec);
+	dbus_message_iter_append_basic(&ts_iter, DBUS_TYPE_UINT64, &sec);
+	dbus_message_iter_append_basic(&ts_iter, DBUS_TYPE_UINT64, &nsec);
 	dbus_message_iter_close_container(iterp, &ts_iter);
 }
 
