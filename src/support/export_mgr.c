@@ -161,6 +161,31 @@ static inline uint32_t eid_cache_offsetof(struct export_by_id *eid, uint64_t k)
 }
 
 /**
+ * @brief Revert export_commit()
+ *
+ * @param export [in] the export just inserted/committed
+ */
+void export_revert(struct gsh_export *export)
+{
+	void **cache_slot;
+	struct avltree_node *cnode = NULL;
+
+	PTHREAD_RWLOCK_wrlock(&export_by_id.lock);
+
+	cache_slot = (void **) &(export_by_id.
+		cache[eid_cache_offsetof(&export_by_id, export->export_id)]);
+	cnode = (struct avltree_node *)atomic_fetch_voidptr(cache_slot);
+	if (&export->node_k == cnode)
+		atomic_store_voidptr(cache_slot, NULL);
+	avltree_remove(&export->node_k, &export_by_id.t);
+	glist_del(&export->exp_list);
+	glist_del(&export->exp_work);
+
+	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
+	put_gsh_export(export); /* Release sentinel ref */
+}
+
+/**
  * @brief Export id comparator for AVL tree walk
  *
  */
@@ -208,6 +233,8 @@ void free_export(struct gsh_export *export)
 {
 	struct export_stats *export_st;
 
+	if (!export->refcnt)
+		return;
 	free_export_resources(export);
 	export_st = container_of(export, struct export_stats, export);
 	gsh_free(export_st);
@@ -865,7 +892,7 @@ static bool gsh_export_addexport(DBusMessageIter *args,
 	if (!config_error_is_harmless(&err_type)) {
 		err_detail = err_type_str(&err_type);
 		LogCrit(COMPONENT_EXPORT,
-			"Error while parsing %s", file_path); 
+			"Error while parsing %s", file_path);
 		dbus_set_error(error, DBUS_ERROR_INVALID_FILE_CONTENT,
 			       "Error while parsing %s because of %s errors",
 			       file_path,
@@ -1107,7 +1134,7 @@ static bool export_to_dbus(struct gsh_export *exp_node, void *state)
 	timespec_add_nsecs(exp_node->last_update, &last_as_ts);
 	dbus_message_iter_open_container(&iter_state->export_iter,
 					 DBUS_TYPE_STRUCT, NULL, &struct_iter);
-	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_INT32,
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT16,
 				       &exp_node->export_id);
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &path);
 	server_stats_summary(&struct_iter, &exp->st);
@@ -1130,7 +1157,7 @@ static bool gsh_export_showexports(DBusMessageIter *args,
 	dbus_message_iter_init_append(reply, &iter);
 	dbus_append_timestamp(&iter, &timestamp);
 	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
-					 "(isbbbbbbb(tt))",
+					 "(qsbbbbbbbb(tt))",
 					 &iter_state.export_iter);
 
 	(void)foreach_gsh_export(export_to_dbus, (void *)&iter_state);
@@ -1145,7 +1172,7 @@ static struct gsh_dbus_method export_show_exports = {
 	.args = {TIMESTAMP_REPLY,
 		 {
 		  .name = "exports",
-		  .type = "a(isbbbbbbb(tt))",
+		  .type = "a(qsbbbbbbbb(tt))",
 		  .direction = "out"},
 		 END_ARG_LIST}
 };

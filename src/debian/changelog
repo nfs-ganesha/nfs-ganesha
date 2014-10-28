@@ -1,3 +1,9 @@
+nfs-ganesha (2.1.0-1) stable; urgency=log
+
+  * Updates for the debian packaging using the cmake build system
+
+ -- Charles Hardin <ckhardin@gmail.com>  Fri, 29 Aug 2014 20:18:45 +0000
+
 nfs-ganesha (1.5.0-1) stable; urgency=low
   * TIRPC library was significantly refurbished with bi-directional RPC support (required for NFSv4.1 backchannels)
   * Multiple RPC dispatch is now supported

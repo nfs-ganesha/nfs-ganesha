@@ -72,7 +72,7 @@ class LogManager(QtDBus.QDBusAbstractInterface):
     def Get_done(self, call):
         reply = QtDBus.QDBusPendingReply(call)
         if reply.isError():
-            self.show_status.emit(FALSE,
+            self.show_status.emit(False,
                                   "DBUS error:" + str(reply.error().message()))
         else:
             level = str(reply.value().toPyObject().toString())

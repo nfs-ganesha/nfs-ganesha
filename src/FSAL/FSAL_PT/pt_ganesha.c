@@ -412,7 +412,7 @@ void fsi_remove_cache_by_fullpath(char *path)
 	int index;
 	int len = strlen(path);
 
-	if (len > PATH_MAX)
+	if (len >= PATH_MAX)
 		return;
 
 	/* TBD. The error return from pthread_mutex_lock will be handled

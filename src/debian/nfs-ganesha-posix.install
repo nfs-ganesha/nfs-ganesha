@@ -1,4 +1,0 @@
-etc/ganesha/posix.ganesha.nfsd.conf
-etc/init.d/nfs-ganesha.posix
-usr/bin/posix.ganesha.nfsd
-usr/bin/posix.ganeshell

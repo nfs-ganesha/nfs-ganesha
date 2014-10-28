@@ -155,6 +155,8 @@ static struct config_item core_params[] = {
 			nfs_core_param, manage_gids_expiration),
 	CONF_ITEM_PATH("Plugins_Dir", 1, MAXPATHLEN, FSAL_MODULE_LOC,
 		       nfs_core_param, ganesha_modules_loc),
+	CONF_ITEM_UI32("heartbeat_freq", 0, 5000, 1000,
+		       nfs_core_param, heartbeat_freq),
 	CONFIG_EOL
 };
 
@@ -225,6 +227,9 @@ static struct config_item version4_params[] = {
 		       nfs_version4_parameter, allow_numeric_owners),
 	CONF_ITEM_BOOL("Delegations", false,
 		       nfs_version4_parameter, allow_delegations),
+	CONF_ITEM_UI32("Deleg_Recall_Retry_Delay", 0, 10,
+			DELEG_RECALL_RETRY_DELAY_DEFAULT,
+			nfs_version4_parameter, deleg_recall_retry_delay),
 	CONFIG_EOL
 };
 

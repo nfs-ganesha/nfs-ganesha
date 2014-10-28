@@ -48,7 +48,11 @@
 #cmakedefine HAVE_INCLUDE_LUSTREAPI_H 1
 #cmakedefine HAVE_INCLUDE_LIBLUSTREAPI_H 1
 #cmakedefine HAVE_DAEMON 1
+#cmakedefine USE_LTTNG 1
 
 #define NFS_GANESHA 1
+
+#define GANESHA_CONFIG_PATH "@SYSCONFDIR@/ganesha/ganesha.conf"
+#define GANESHA_PIDFILE_PATH "@SYSSTATEDIR@/run/ganesha.pid"
 
 #endif /* CONFIG_H */

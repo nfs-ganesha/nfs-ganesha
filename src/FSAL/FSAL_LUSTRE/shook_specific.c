@@ -44,6 +44,8 @@
  *
  */
 
+const char myname[] = "SHOOK";
+
 fsal_status_t lustre_shook_restore(struct fsal_obj_handle *obj_hdl,
 				   bool do_truncate,
 				   int *trunc_done)

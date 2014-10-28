@@ -105,11 +105,11 @@ do {  \
 	argcompound.argarray.argarray_len += 1;			\
 } while (0)
 
-#define COMPOUNDV4_ARG_ADD_OP_CLOSE(opcnt, argarray, __stateid)	\
+#define COMPOUNDV4_ARG_ADD_OP_CLOSE(opcnt, argarray, __stateid, oo_seqid) \
 do { \
 	nfs_argop4 *op = argarray + opcnt; opcnt++;		\
 	op->argop = NFS4_OP_CLOSE;				\
-	op->nfs_argop4_u.opclose.seqid = __stateid->seqid + 1;	\
+	op->nfs_argop4_u.opclose.seqid = oo_seqid;		\
 	op->nfs_argop4_u.opclose.open_stateid.seqid		\
 		= __stateid->seqid;				\
 	memcpy(op->nfs_argop4_u.opclose.open_stateid.other,	\
@@ -214,11 +214,11 @@ do { \
 
 #define COMPOUNDV4_ARG_ADD_OP_OPEN_CREATE(opcnt, args, inname, inattrs, \
 					  inclientid, __owner_val, \
-					  __owner_len)		   \
+					  __owner_len, oo_seqid)	\
 do { \
 	nfs_argop4 *op = args + opcnt; opcnt++;				\
 	op->argop = NFS4_OP_OPEN;					\
-	op->nfs_argop4_u.opopen.seqid = 0;				\
+	op->nfs_argop4_u.opopen.seqid = oo_seqid;			\
 	op->nfs_argop4_u.opopen.share_access = OPEN4_SHARE_ACCESS_BOTH;	\
 	op->nfs_argop4_u.opopen.share_deny = OPEN4_SHARE_DENY_NONE;	\
 	op->nfs_argop4_u.opopen.owner.clientid = inclientid;		\

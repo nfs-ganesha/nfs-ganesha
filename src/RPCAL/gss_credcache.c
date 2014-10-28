@@ -132,7 +132,7 @@ struct gssd_k5_kt_princ {
 typedef void (*gssd_err_func_t)(const char *, ...);
 
 
-static char keytabfile[PATH_MAX + 1] = GSSD_DEFAULT_KEYTAB_FILE;
+static char keytabfile[PATH_MAX] = GSSD_DEFAULT_KEYTAB_FILE;
 static int use_memcache;
 static struct gssd_k5_kt_princ *gssd_k5_kt_princ_list;
 static pthread_mutex_t ple_mtx = PTHREAD_MUTEX_INITIALIZER;
@@ -604,9 +604,13 @@ static int gssd_search_krb5_keytab(krb5_context context, krb5_keytab kt,
 			 * Return, don't free, keytab entry if
 			 * we were successful!
 			 */
-			if (ple == NULL) {
+			if (unlikely(ple == NULL)) {
 				retval = ENOMEM;
 				k5_free_kt_entry(context, kte);
+				k5_free_unparsed_name(context, pname);
+				(void) krb5_kt_end_seq_get(
+					context, kt, &cursor);
+				goto out;
 			} else {
 				retval = 0;
 				*found = 1;

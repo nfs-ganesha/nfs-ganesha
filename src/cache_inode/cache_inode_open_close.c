@@ -164,6 +164,10 @@ cache_inode_open(cache_entry_t *entry,
 
 	obj_hdl = entry->obj_handle;
 	current_flags = obj_hdl->ops->status(obj_hdl);
+
+	/* Filter out overloaded FSAL_O_RECLAIM */
+	openflags &= ~FSAL_O_RECLAIM;
+
 	/* Open file need to be closed, unless it is already open as
 	 * read/write */
 	if ((current_flags != FSAL_O_RDWR) && (current_flags != FSAL_O_CLOSED)
@@ -356,8 +360,12 @@ void cache_inode_adjust_openflags(cache_entry_t *entry)
 	/*
 	 * If the file needs to be in write mode, we shouldn't downgrage.
 	 * If the fsal doesn't support reopen method, we can't downgrade.
+	 *
+	 * Also, if we have an outstanding write delegation, we shouldn't
+	 * downgrade!
 	 */
 	if (entry->object.file.share_state.share_access_write > 0 ||
+	    entry->object.file.write_delegated ||
 	    !fsal_export->ops->fs_supports(fsal_export, fso_reopen_method))
 		return;
 

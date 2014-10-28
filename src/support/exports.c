@@ -334,7 +334,9 @@ static int add_client(struct gsh_export *export,
 		cli->client.wildcard.wildcard = gsh_strdup(client_tok);
 		cli->type = WILDCARDHOST_CLIENT;
 	} else if (getaddrinfo(client_tok, NULL, NULL, &info) == 0) {
-		struct addrinfo *ap;
+		struct addrinfo *ap, *ap_last = NULL;
+		struct in_addr in_addr_last;
+		struct in6_addr in6_addr_last;
 
 		for (ap = info; ap != NULL; ap = ap->ai_next) {
 			LogFullDebug(COMPONENT_CONFIG,
@@ -352,7 +354,7 @@ static int add_client(struct gsh_export *export,
 				if (cli == NULL) {
 					LogMajor(COMPONENT_CONFIG,
 						 "Allocate of client space failed");
-					goto out;
+					break;
 				}
 				glist_init(&cli->cle_list);
 			}
@@ -362,10 +364,17 @@ static int add_client(struct gsh_export *export,
 				struct in_addr infoaddr =
 					((struct sockaddr_in *)ap->ai_addr)->
 					sin_addr;
-
+				if (ap_last != NULL &&
+				    ap_last->ai_family == ap->ai_family &&
+				    memcmp(&infoaddr,
+					   &in_addr_last,
+					   sizeof(struct in_addr)) == 0)
+					continue;
 				memcpy(&(cli->client.hostif.clientaddr),
 				       &infoaddr, sizeof(struct in_addr));
 				cli->type = HOSTIF_CLIENT;
+				ap_last = ap;
+				in_addr_last = infoaddr;
 
 			} else if (ap->ai_family == AF_INET6 &&
 				   (ap->ai_socktype == SOCK_STREAM ||
@@ -374,10 +383,18 @@ static int add_client(struct gsh_export *export,
 				    ((struct sockaddr_in6 *)ap->ai_addr)->
 				    sin6_addr;
 
+				if (ap_last != NULL &&
+				    ap_last->ai_family == ap->ai_family &&
+				    memcmp(&infoaddr,
+					   &in6_addr_last,
+					   sizeof(struct in6_addr)) == 0)
+					continue;
 				/* IPv6 address */
 				memcpy(&(cli->client.hostif.clientaddr6),
 				       &infoaddr, sizeof(struct in6_addr));
 				cli->type = HOSTIF_CLIENT_V6;
+				ap_last = ap;
+				in6_addr_last = infoaddr;
 			} else
 				continue;
 			cli->client_perms = *perms;
@@ -386,6 +403,7 @@ static int add_client(struct gsh_export *export,
 				       &cli->cle_list);
 			cli = NULL; /* let go of it */
 		}
+		freeaddrinfo(info);
 		goto out;
 	} else {  /* does gsspric decode go here? */
 		LogMajor(COMPONENT_CONFIG,
@@ -885,19 +903,28 @@ static int add_export_commit(void *node, void *link_mem, void *self_struct,
 {
 	struct gsh_export *export = self_struct;
 	int errcnt = 0;
+	int status;
 
 	errcnt = export_commit(node, link_mem, self_struct, err_type);
 	if (errcnt != 0)
 		goto err_out;
 
-	if (!init_export_root(export)) {
-		err_type->resource = true;
+	status = init_export_root(export);
+	if (status) {
+		export_revert(export);
 		errcnt++;
+		if (status == EINVAL)
+			err_type->invalid = true;
+		else if (status == EFAULT)
+			err_type->internal = true;
+		else
+			err_type->resource = true;
 		goto err_out;
 	}
 
 	if (!mount_gsh_export(export)) {
-		err_type->resource = true;
+		export_revert(export);
+		err_type->internal = true;
 		errcnt++;
 	}
 
@@ -1022,6 +1049,8 @@ static struct config_item_list squash_types[] = {
 	CONFIG_LIST_TOK("All", EXPORT_OPTION_ALL_ANONYMOUS),
 	CONFIG_LIST_TOK("All_Squash", EXPORT_OPTION_ALL_ANONYMOUS),
 	CONFIG_LIST_TOK("AllSquash", EXPORT_OPTION_ALL_ANONYMOUS),
+	CONFIG_LIST_TOK("All_Anonymous", EXPORT_OPTION_ALL_ANONYMOUS),
+	CONFIG_LIST_TOK("AllAnonymous", EXPORT_OPTION_ALL_ANONYMOUS),
 	CONFIG_LIST_TOK("No_Root_Squash", EXPORT_OPTION_ROOT),
 	CONFIG_LIST_TOK("None", EXPORT_OPTION_ROOT),
 	CONFIG_LIST_TOK("NoIdSquash", EXPORT_OPTION_ROOT),
@@ -1040,6 +1069,17 @@ static struct config_item_list delegations[] = {
 	CONFIG_LIST_TOK("R", EXPORT_OPTION_READ_DELEG),
 	CONFIG_LIST_TOK("W", EXPORT_OPTION_WRITE_DELEG),
 	CONFIG_LIST_TOK("RW", EXPORT_OPTION_DELEGATIONS),
+	CONFIG_LIST_EOL
+};
+
+struct config_item_list deleg_types[] =  {
+	CONFIG_LIST_TOK("NONE", FSAL_OPTION_NO_DELEGATIONS),
+	CONFIG_LIST_TOK("Read", FSAL_OPTION_FILE_READ_DELEG),
+	CONFIG_LIST_TOK("Write", FSAL_OPTION_FILE_WRITE_DELEG),
+	CONFIG_LIST_TOK("Readwrite", FSAL_OPTION_FILE_DELEGATIONS),
+	CONFIG_LIST_TOK("R", FSAL_OPTION_FILE_READ_DELEG),
+	CONFIG_LIST_TOK("W", FSAL_OPTION_FILE_WRITE_DELEG),
+	CONFIG_LIST_TOK("RW", FSAL_OPTION_FILE_DELEGATIONS),
 	CONFIG_LIST_EOL
 };
 
@@ -1160,6 +1200,12 @@ static struct config_item export_params[] = {
 		       gsh_export, MaxOffsetRead),
 	CONF_ITEM_BOOLBIT_SET("UseCookieVerifier",
 		true, EXPORT_OPTION_USE_COOKIE_VERIFIER,
+		gsh_export, options, options_set),
+	CONF_ITEM_BOOLBIT_SET("DisableReaddirPlus",
+		false, EXPORT_OPTION_NO_READDIR_PLUS,
+		gsh_export, options, options_set),
+	CONF_ITEM_BOOLBIT_SET("Trust_Readdir_Negative_Cache",
+		false, EXPORT_OPTION_TRUST_READIR_NEGATIVE_CACHE,
 		gsh_export, options, options_set),
 	CONF_EXPORT_PERMS(gsh_export, export_perms),
 	CONF_ITEM_BLOCK("Client", client_params,
@@ -1455,11 +1501,12 @@ void free_export_resources(struct gsh_export *export)
  * @brief pkginit callback to initialize exports from nfs_init
  *
  * Assumes being called with the export_by_id.lock held.
+ * true on success
  */
 
 static bool init_export_cb(struct gsh_export *exp, void *state)
 {
-	return init_export_root(exp);
+	return !(init_export_root(exp));
 }
 
 /**
@@ -1525,17 +1572,17 @@ cache_inode_status_t nfs_export_get_root_entry(struct gsh_export *export,
  *
  * @param exp [IN] the export
  *
- * @return true if successful.
+ * @return 0 if successful otherwise err.
  */
 
-bool init_export_root(struct gsh_export *export)
+int init_export_root(struct gsh_export *export)
 {
 	fsal_status_t fsal_status;
 	cache_inode_status_t cache_status;
 	struct fsal_obj_handle *root_handle;
 	cache_entry_t *entry = NULL;
 	struct root_op_context root_op_context;
-	bool my_status = false;
+	int my_status;
 
 	/* Initialize req_ctx */
 	init_root_op_context(&root_op_context, export, export->fsal_export,
@@ -1551,6 +1598,8 @@ bool init_export_root(struct gsh_export *export)
 						  &root_handle);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
+		my_status = EINVAL;
+
 		LogCrit(COMPONENT_EXPORT,
 			"Lookup failed on path, ExportId=%u Path=%s FSAL_ERROR=(%s,%u)",
 			export->export_id, export->fullpath,
@@ -1565,6 +1614,9 @@ bool init_export_root(struct gsh_export *export)
 					     &entry);
 
 	if (entry == NULL) {
+		/* EFAULT for any internal error */
+		my_status = EFAULT;
+
 		LogCrit(COMPONENT_EXPORT,
 			"Error when creating root cached entry for %s, export_id=%d, cache_status=%s",
 			export->fullpath,
@@ -1577,6 +1629,9 @@ bool init_export_root(struct gsh_export *export)
 	cache_status = cache_inode_inc_pin_ref(entry);
 
 	if (cache_status != CACHE_INODE_SUCCESS) {
+
+		my_status = EFAULT;
+
 		LogCrit(COMPONENT_EXPORT,
 			"Error when creating root cached entry for %s, export_id=%d, cache_status=%s",
 			export->fullpath,
@@ -1616,7 +1671,7 @@ bool init_export_root(struct gsh_export *export)
 
 	/* Release the LRU reference and return success. */
 	cache_inode_put(entry);
-	my_status = true;
+	my_status = 0;
 out:
 	release_root_op_context();
 	return my_status;

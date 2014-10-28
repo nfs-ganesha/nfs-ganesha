@@ -135,6 +135,8 @@ char *err_type_str(struct config_error_type *err_type)
 		fputs("block exists, ", fp);
 	if (err_type->empty)
 		fputs("block empty, ", fp);
+	if (err_type->internal)
+		fputs("internal error, ", fp);
 	if (err_type->bogus)
 		fputs("unknown param, ", fp);
 	if (ferror(fp))
@@ -759,6 +761,14 @@ static int do_block_load(struct config_node *blk,
 		bool bval;
 
 		node = lookup_node(&blk->u.blk.sub_nodes, item->name);
+		if ((item->flags & CONFIG_MANDATORY) && (node == NULL)) {
+			err_type->missing = true;
+			errors++;
+			LogCrit(COMPONENT_CONFIG,
+				"Mandatory field, %s is missing from config\n",
+				item->name);
+			return errors;
+		}
 		while (node != NULL) {
 			next_node = lookup_next_node(&blk->u.blk.sub_nodes,
 						     &node->node, item->name);
@@ -1196,8 +1206,7 @@ static int proc_block(struct config_node *node,
 		     node->filename,
 		     node->linenumber,
 		     item->name);
-	errors = item->u.blk.commit(node, link_mem, param_struct,
-				err_type);
+	errors = item->u.blk.commit(node, link_mem, param_struct, err_type);
 	if (errors > 0 && !config_error_is_harmless(err_type)) {
 		LogCrit(COMPONENT_CONFIG,
 			"At (%s:%d): %d validation errors in block %s",
@@ -1567,7 +1576,7 @@ int find_config_nodes(config_file_t config, char *expr_str,
 	struct config_node *sub_node;
 	struct config_node *top;
 	struct expr_parse *expr, *expr_head;
-	struct config_node_list *list = NULL, *list_tail;
+	struct config_node_list *list = NULL, *list_tail = NULL;
 	char *ep;
 	int rc = EINVAL;
 	bool found = false;

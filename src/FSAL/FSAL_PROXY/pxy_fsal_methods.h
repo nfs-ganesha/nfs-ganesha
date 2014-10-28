@@ -5,7 +5,7 @@
 #include "handle_mapping/handle_mapping.h"
 #endif
 
-typedef struct pxy_client_params {
+struct pxy_client_params {
 	unsigned int retry_sleeptime;
 	struct sockaddr srv_addr;
 	unsigned int srv_prognum;
@@ -31,13 +31,12 @@ typedef struct pxy_client_params {
 struct pxy_fsal_module {
 	struct fsal_module module;
 	struct fsal_staticfsinfo_t fsinfo;
-	proxyfs_specific_initinfo_t special;
-/*       struct fsal_ops pxy_ops; */
+	struct pxy_client_params special;
 };
 
 struct pxy_export {
 	struct fsal_export exp;
-	const proxyfs_specific_initinfo_t *info;
+	struct pxy_client_params *info;
 };
 
 void pxy_handle_ops_init(struct fsal_obj_ops *ops);

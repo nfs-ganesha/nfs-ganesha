@@ -124,9 +124,25 @@ static bool proc_export(struct gsh_export *export, void *arg)
 		case MATCH_ANY_CLIENT:
 			grp_name = "*";
 			break;
+		case WILDCARDHOST_CLIENT:
+			grp_name = client->client.wildcard.wildcard;
+			break;
+		case HOSTIF_CLIENT_V6:
+			grp_name =
+			    inet_ntop(AF_INET6,
+				      &client->client.hostif.clientaddr6,
+				      addr_buf, INET6_ADDRSTRLEN);
+			if (grp_name == NULL) {
+				state->retval = errno;
+				grp_name = "Invalid Host Address";
+			}
+			break;
 		default:
 			grp_name = "<unknown>";
 		}
+		LogFullDebug(COMPONENT_NFSPROTO,
+			     "Export %s client %s",
+			     export->fullpath, grp_name);
 		group->gr_name = gsh_strdup(grp_name);
 		if (group->gr_name == NULL)
 			goto nomem;

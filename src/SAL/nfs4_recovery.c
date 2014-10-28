@@ -36,14 +36,16 @@
 #include "sal_functions.h"
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <fcntl.h>
 #include <ctype.h>
+#include "bsd-base64.h"
 
 #define NFS_V4_RECOV_ROOT "/var/lib/nfs/ganesha"
 #define NFS_V4_RECOV_DIR "v4recov"
 #define NFS_V4_OLD_DIR "v4old"
 
-char v4_recov_dir[PATH_MAX + 1];
-char v4_old_dir[PATH_MAX + 1];
+char v4_recov_dir[PATH_MAX];
+char v4_old_dir[PATH_MAX];
 
 /**
  * @brief Grace period control data
@@ -53,8 +55,6 @@ static grace_t grace;
 static void nfs4_load_recov_clids_nolock(nfs_grace_start_t *gsp);
 static void nfs_release_nlm_state();
 static void nfs_release_v4_client(char *ip);
-
-extern struct fridgethr *state_async_fridge;
 
 /**
  * @brief Initialize grace/recovery
@@ -319,7 +319,7 @@ void nfs4_create_clid_name41(nfs_client_record_t *cl_rec,
 void nfs4_add_clid(nfs_client_id_t *clientid)
 {
 	int err = 0;
-	char path[PATH_MAX + 1] = {0}, segment[NAME_MAX + 1] = {0};
+	char path[PATH_MAX] = {0}, segment[NAME_MAX + 1] = {0};
 	int length, position = 0;
 
 	if (clientid->cid_minorversion > 0)
@@ -367,6 +367,42 @@ void nfs4_add_clid(nfs_client_id_t *clientid)
 }
 
 /**
+ * @brief Remove the revoked file handles created under a specific
+ * client-id path on the stable storage.
+ *
+ * @param[in] path Path of the client-id on the stable storage.
+ */
+
+void nfs4_rm_revoked_handles(char *path)
+{
+	DIR *dp;
+	struct dirent *dentp;
+	char del_path[PATH_MAX];
+
+	dp = opendir(path);
+	if (dp == NULL) {
+		LogEvent(COMPONENT_CLIENTID, "opendir %s failed errno=%d",
+			path, errno);
+		return;
+	}
+	for (dentp = readdir(dp); dentp != NULL; dentp = readdir(dp)) {
+		if (!strcmp(dentp->d_name, ".") ||
+				!strcmp(dentp->d_name, "..") ||
+				dentp->d_name[0] != '\x1') {
+			continue;
+		}
+		sprintf(del_path, "%s/%s", path, dentp->d_name);
+		if (unlink(del_path) < 0) {
+			LogEvent(COMPONENT_CLIENTID,
+					"unlink of %s failed errno: %d",
+					del_path,
+					errno);
+		}
+	}
+	(void)closedir(dp);
+}
+
+/**
  * @brief Remove a client entry from the recovery directory
  *
  * This function would be called when a client expires.
@@ -385,9 +421,13 @@ void nfs4_rm_clid(const char *recov_dir, char *parent_path, int position)
 		return;
 
 	len = strlen(recov_dir);
-	if (position == len)
+	if (position == len) {
+		/* We are at the tail directory of the clid,
+		 * remove revoked handles, if any.
+		 */
+		nfs4_rm_revoked_handles(parent_path);
 		return;
-
+	}
 	segment = gsh_malloc(NAME_MAX+1);
 	if (segment == NULL) {
 		LogEvent(COMPONENT_CLIENTID,
@@ -425,7 +465,7 @@ void nfs4_rm_clid(const char *recov_dir, char *parent_path, int position)
 	err = rmdir(path);
 	if (err == -1) {
 		LogEvent(COMPONENT_CLIENTID,
-			 "Failed to remove client in recovery dir (%s), errno=%d",
+			 "Failed to remove client recovery dir (%s), errno=%d",
 			 path, errno);
 	} else {
 		LogDebug(COMPONENT_CLIENTID, "Removed client dir [%s]", path);
@@ -440,26 +480,19 @@ void nfs4_rm_clid(const char *recov_dir, char *parent_path, int position)
  *
  * @param[in] clientid Client record
  */
-void nfs4_chk_clid(nfs_client_id_t *clientid)
+void  nfs4_chk_clid_impl(nfs_client_id_t *clientid, clid_entry_t **clid_ent_arg)
 {
 	struct glist_head *node;
 	clid_entry_t *clid_ent;
+	*clid_ent_arg = NULL;
 
 	LogDebug(COMPONENT_CLIENTID, "chk for %s", clientid->cid_recov_dir);
 	if (clientid->cid_recov_dir == NULL)
 		return;
 
-	/* If we aren't in grace period, then reclaim is not possible */
-	if (!nfs_in_grace())
-		return;
-
-	pthread_mutex_lock(&grace.g_mutex);
-
 	/* If there were no clients at time of restart, we're done */
-	if (glist_empty(&grace.g_clid_list)) {
-		pthread_mutex_unlock(&grace.g_mutex);
+	if (glist_empty(&grace.g_clid_list))
 		return;
-	}
 
 	/*
 	 * loop through the list and try to find this client.  if we
@@ -470,7 +503,9 @@ void nfs4_chk_clid(nfs_client_id_t *clientid)
 		clid_ent = glist_entry(node, clid_entry_t, cl_list);
 		LogDebug(COMPONENT_CLIENTID, "compare %s to %s",
 			 clid_ent->cl_name, clientid->cid_recov_dir);
-		if (!strncmp(clid_ent->cl_name, clientid->cid_recov_dir, PATH_MAX)) {
+		if (!strncmp(clid_ent->cl_name,
+			     clientid->cid_recov_dir,
+			     PATH_MAX)) {
 			if (isDebug(COMPONENT_CLIENTID)) {
 				char str[HASHTABLE_DISPLAY_STRLEN];
 
@@ -481,11 +516,23 @@ void nfs4_chk_clid(nfs_client_id_t *clientid)
 					     str);
 			}
 			clientid->cid_allow_reclaim = 1;
-			pthread_mutex_unlock(&grace.g_mutex);
+			*clid_ent_arg = clid_ent;
 			return;
 		}
 	}
+}
+
+void  nfs4_chk_clid(nfs_client_id_t *clientid)
+{
+	clid_entry_t *dummy_clid_ent;
+
+	/* If we aren't in grace period, then reclaim is not possible */
+	if (!nfs_in_grace())
+		return;
+	pthread_mutex_lock(&grace.g_mutex);
+	nfs4_chk_clid_impl(clientid, &dummy_clid_ent);
 	pthread_mutex_unlock(&grace.g_mutex);
+	return;
 }
 
 static void free_heap(char *path, char *new_path, char *build_clid)
@@ -497,6 +544,105 @@ static void free_heap(char *path, char *new_path, char *build_clid)
 	if (build_clid)
 		gsh_free(build_clid);
 }
+
+/**
+ * @brief Copy and Populate revoked delegations for this client.
+ *
+ * Even after delegation revoke, it is possible for the client to
+ * contiue its leas and other operatoins. Sever saves revoked delegations
+ * in the memory so client will not be granted same delegation with
+ * DELEG_CUR ; but it is possible that the server might reboot and has
+ * no record of the delegatin. This list helps to reject delegations
+ * client is obtaining through DELEG_PREV.
+ *
+ * @param[in] clientid Clientid that is being created.
+ * @param[in] path Path of the directory structure.
+ * @param[in] Target dir to copy.
+ * @param[in] del Delete after populating
+ */
+
+void nfs4_cp_pop_revoked_delegs(clid_entry_t *clid_ent,
+				char *path,
+				char *tgtdir,
+				bool del)
+{
+	struct dirent *dentp;
+	DIR *dp;
+	rdel_fh_t *new_ent;
+
+	glist_init(&clid_ent->cl_rfh_list);
+	/* Read the contents from recov dir of this clientid. */
+	dp = opendir(path);
+	if (dp == NULL) {
+		LogEvent(COMPONENT_CLIENTID, "opendir %s failed errno=%d",
+			path, errno);
+		return;
+	}
+
+	for (dentp = readdir(dp); dentp != NULL; dentp = readdir(dp)) {
+		if (!strcmp(dentp->d_name, ".") || !strcmp(dentp->d_name, ".."))
+			continue;
+		/* All the revoked filehandles stored with \x1 prefix */
+		if (dentp->d_name[0] != '\x1') {
+			/* Something wrong; it should not happen */
+			LogMidDebug(COMPONENT_CLIENTID,
+				"%s showed up along with revoked FHs. Skipping",
+				dentp->d_name);
+			continue;
+		}
+
+		if (tgtdir) {
+			char lopath[PATH_MAX];
+			int fd;
+			sprintf(lopath, "%s/", tgtdir);
+			strncat(lopath, dentp->d_name, strlen(dentp->d_name));
+			fd = creat(lopath, 0700);
+			if (fd < 0) {
+				LogEvent(COMPONENT_CLIENTID,
+					"Failed to copy revoked handle file %s to %s errno:%d\n",
+				dentp->d_name, tgtdir, errno);
+			} else {
+				close(fd);
+			}
+		}
+
+		new_ent = gsh_malloc(sizeof(rdel_fh_t));
+		if (new_ent == NULL) {
+			LogEvent(COMPONENT_CLIENTID, "Alloc Failed: rdel_fh_t");
+			continue;
+		}
+
+		/* Ignore the beginning \x1 and copy the rest (file handle) */
+		new_ent->rdfh_handle_str = gsh_strdup(dentp->d_name+1);
+		if (new_ent->rdfh_handle_str == NULL) {
+			gsh_free(new_ent);
+			LogEvent(COMPONENT_CLIENTID,
+				"Alloc Failed: rdel_fh_t->rdfh_handle_str");
+			continue;
+		}
+		glist_add(&clid_ent->cl_rfh_list, &new_ent->rdfh_list);
+		LogFullDebug(COMPONENT_CLIENTID,
+			"revoked handle: %s",
+			new_ent->rdfh_handle_str);
+
+		/* Since the handle is loaded into memory, go ahead and
+		 * delete it from the stable storage.
+		 */
+		if (del) {
+			char del_path[PATH_MAX];
+			sprintf(del_path, "%s/%s", path, dentp->d_name);
+			if (unlink(del_path) < 0) {
+				LogEvent(COMPONENT_CLIENTID,
+						"unlink of %s failed errno: %d",
+						del_path,
+						errno);
+			}
+		}
+	}
+
+	(void)closedir(dp);
+}
+
 
 /**
  * @brief Create the client reclaim list
@@ -537,194 +683,198 @@ static int nfs4_read_recov_clids(DIR *dp,
 	int total_tgt_len;
 	int total_clid_len;
 
-	dentp = readdir(dp);
-	while (dentp != NULL) {
-		/* don't add '.' and '..', or any '.*' entry */
-		if (dentp->d_name[0] != '.') {
-			num++;
-			new_path = NULL;
+	for (dentp = readdir(dp); dentp != NULL; dentp = readdir(dp)) {
+		/* don't add '.' and '..' entry */
+		if (!strcmp(dentp->d_name, ".") || !strcmp(dentp->d_name, ".."))
+			continue;
 
-			/* construct the path by appending the subdir for the
-			 * next readdir. This recursion keeps reading the
-			 * subdirectory until reaching the end.
-			 */
-			segment_len = strlen(dentp->d_name);
-			total_len = segment_len + 2 + strlen(parent_path);
-			path = gsh_malloc(total_len);
-			/* if failed on this subdirectory, move to next */
-			/* we might be lucky */
-			if (path == NULL) {
-				LogEvent(COMPONENT_CLIENTID,
-					 "malloc faied errno=%d", errno);
-				continue;
-			}
-			memset(path, 0, total_len);
+		/* Skip names that start with '\x1' as they are files
+		 * representing revoked file handles
+		 */
+		if (dentp->d_name[0] == '\x1')
+			continue;
 
-			strcpy(path, parent_path);
-			strcat(path, "/");
-			strncat(path, dentp->d_name, segment_len);
-			/* if tgtdir is not NULL, we need to build
-			 * nfs4old/currentnode
-			 */
-			if (tgtdir) {
-				total_tgt_len = segment_len + 2 +
-						strlen(tgtdir);
-				new_path = gsh_malloc(total_tgt_len);
-				if (new_path == NULL) {
-					LogEvent(COMPONENT_CLIENTID,
-						 "malloc faied errno=%d",
-						 errno);
-					gsh_free(path);
-					continue;
-				}
-				memset(new_path, 0, total_tgt_len);
-				strcpy(new_path, tgtdir);
-				strcat(new_path, "/");
-				strncat(new_path, dentp->d_name, segment_len);
-				rc = mkdir(new_path, 0700);
-				if ((rc == -1) && (errno != EEXIST)) {
-					LogEvent(COMPONENT_CLIENTID,
-						 "mkdir %s faied errno=%d",
-						 new_path, errno);
-				}
-			}
-			/* keep building the clientid str by cursively */
-			/* reading the directory structure */
-			if (clid_str)
-				total_clid_len = segment_len + 1 +
-						 strlen(clid_str);
-			else
-				total_clid_len = segment_len + 1;
-			build_clid = gsh_malloc(total_clid_len);
-			if (build_clid == NULL) {
-				LogEvent(COMPONENT_CLIENTID,
-					 "malloc faied errno=%d", errno);
-				free_heap(path, new_path, NULL);
-				continue;
-			}
-			memset(build_clid, 0, total_clid_len);
-			if (clid_str)
-				strcpy(build_clid, clid_str);
-			strncat(build_clid, dentp->d_name, segment_len);
-			subdp = opendir(path);
-			if (subdp == NULL) {
-				LogEvent(COMPONENT_CLIENTID,
-					 "opendir %s failed errno=%d",
-					 dentp->d_name, errno);
-				free_heap(path, new_path, build_clid);
-				/* this shouldn't happen, but we should skip
-				 * the entry to avoid infinite loops
-				 */
-				dentp = readdir(dp);
-				continue;
-			}
+		num++;
+		new_path = NULL;
 
-			if (tgtdir)
-				rc = nfs4_read_recov_clids(subdp,
-							   path,
-							   build_clid,
-							   new_path,
-							   takeover);
-			else
-				rc = nfs4_read_recov_clids(subdp,
-							   path,
-							   build_clid,
-							   NULL,
-							   takeover);
-
-			/* close the sub directory */
-			(void)closedir(subdp);
-
-			if (new_path)
-				gsh_free(new_path);
-
-			/* after recursion, if the subdir has no non-hidden
-			 * directory this is the end of this clientid str. Add
-			 * the clientstr to the list.
-			 */
-			if (rc == 0) {
-				/* the clid format is
-				 * <IP>-(clid-len:long-form-clid-in-string-form)
-				 * make sure this reconstructed string is valid
-				 * by comparing clid-len and the actual
-				 * long-form-clid length in the string. This is
-				 * to prevent getting incompleted strings that
-				 * might exist due to program crash.
-				 */
-				if (strlen(build_clid) >= PATH_MAX) {
-					LogEvent(COMPONENT_CLIENTID,
-						"invalid clid format: %s, too long",
-						build_clid);
-					free_heap(path, NULL, build_clid);
-					dentp = readdir(dp);
-					continue;
-				}
-				ptr = strchr(build_clid, '(');
-				if (ptr == NULL) {
-					LogEvent(COMPONENT_CLIENTID,
-						 "invalid clid format: %s",
-						 build_clid);
-					free_heap(path, NULL, build_clid);
-					dentp = readdir(dp);
-					continue;
-				}
-				ptr2 = strchr(ptr, ':');
-				if (ptr2 == NULL) {
-					LogEvent(COMPONENT_CLIENTID,
-						 "invalid clid format: %s",
-						 build_clid);
-					free_heap(path, NULL, build_clid);
-					dentp = readdir(dp);
-					continue;
-				}
-				len = ptr2-ptr-1;
-				if (len >= 9) {
-					LogEvent(COMPONENT_CLIENTID,
-						 "invalid clid format: %s",
-						 build_clid);
-					free_heap(path, NULL, build_clid);
-					dentp = readdir(dp);
-					continue;
-				}
-				strncpy(temp, ptr+1, len);
-				temp[len] = 0;
-				cid_len = atoi(temp);
-				len = strlen(ptr2);
-				if ((len == (cid_len+2)) &&
-				    (ptr2[len-1] == ')')) {
-					new_ent =
-					    gsh_malloc(sizeof(clid_entry_t));
-					if (new_ent == NULL) {
-						LogEvent(COMPONENT_CLIENTID,
-							 "Unable to allocate memory.");
-						free_heap(path,
-							  NULL,
-							  build_clid);
-						continue;
-					}
-					strcpy(new_ent->cl_name, build_clid);
-					glist_add(&grace.g_clid_list,
-						  &new_ent->cl_list);
-					LogDebug(COMPONENT_CLIENTID,
-						 "added %s to clid list",
-						 new_ent->cl_name);
-				}
-			}
-			gsh_free(build_clid);
-			/* If this is not for takeover, remove the directory
-			 * hierarchy  that represent the current clientid
-			 */
-			if (!takeover) {
-				rc = rmdir(path);
-				if (rc == -1) {
-					LogEvent(COMPONENT_CLIENTID,
-						 "Failed to rmdir (%s), errno=%d",
-						 path, errno);
-				}
-			}
-			gsh_free(path);
+		/* construct the path by appending the subdir for the
+		 * next readdir. This recursion keeps reading the
+		 * subdirectory until reaching the end.
+		 */
+		segment_len = strlen(dentp->d_name);
+		total_len = segment_len + 2 + strlen(parent_path);
+		path = gsh_malloc(total_len);
+		/* if failed on this subdirectory, move to next */
+		/* we might be lucky */
+		if (path == NULL) {
+			LogEvent(COMPONENT_CLIENTID,
+				 "malloc faied errno=%d", errno);
+			continue;
 		}
-		dentp = readdir(dp);
+		memset(path, 0, total_len);
+
+		strcpy(path, parent_path);
+		strcat(path, "/");
+		strncat(path, dentp->d_name, segment_len);
+		/* if tgtdir is not NULL, we need to build
+		 * nfs4old/currentnode
+		 */
+		if (tgtdir) {
+			total_tgt_len = segment_len + 2 +
+					strlen(tgtdir);
+			new_path = gsh_malloc(total_tgt_len);
+			if (new_path == NULL) {
+				LogEvent(COMPONENT_CLIENTID,
+					 "malloc faied errno=%d",
+					 errno);
+				gsh_free(path);
+				continue;
+			}
+			memset(new_path, 0, total_tgt_len);
+			strcpy(new_path, tgtdir);
+			strcat(new_path, "/");
+			strncat(new_path, dentp->d_name, segment_len);
+			rc = mkdir(new_path, 0700);
+			if ((rc == -1) && (errno != EEXIST)) {
+				LogEvent(COMPONENT_CLIENTID,
+					 "mkdir %s faied errno=%d",
+					 new_path, errno);
+			}
+		}
+		/* keep building the clientid str by cursively */
+		/* reading the directory structure */
+		if (clid_str)
+			total_clid_len = segment_len + 1 +
+					 strlen(clid_str);
+		else
+			total_clid_len = segment_len + 1;
+		build_clid = gsh_malloc(total_clid_len);
+		if (build_clid == NULL) {
+			LogEvent(COMPONENT_CLIENTID,
+				 "malloc faied errno=%d", errno);
+			free_heap(path, new_path, NULL);
+			continue;
+		}
+		memset(build_clid, 0, total_clid_len);
+		if (clid_str)
+			strcpy(build_clid, clid_str);
+		strncat(build_clid, dentp->d_name, segment_len);
+		subdp = opendir(path);
+		if (subdp == NULL) {
+			LogEvent(COMPONENT_CLIENTID,
+				 "opendir %s failed errno=%d",
+				 dentp->d_name, errno);
+			free_heap(path, new_path, build_clid);
+			/* this shouldn't happen, but we should skip
+			 * the entry to avoid infinite loops
+			 */
+			continue;
+		}
+
+		if (tgtdir)
+			rc = nfs4_read_recov_clids(subdp,
+						   path,
+						   build_clid,
+						   new_path,
+						   takeover);
+		else
+			rc = nfs4_read_recov_clids(subdp,
+						   path,
+						   build_clid,
+						   NULL,
+						   takeover);
+
+		/* close the sub directory */
+		(void)closedir(subdp);
+
+		if (new_path)
+			gsh_free(new_path);
+
+		/* after recursion, if the subdir has no non-hidden
+		 * directory this is the end of this clientid str. Add
+		 * the clientstr to the list.
+		 */
+		if (rc == 0) {
+			/* the clid format is
+			 * <IP>-(clid-len:long-form-clid-in-string-form)
+			 * make sure this reconstructed string is valid
+			 * by comparing clid-len and the actual
+			 * long-form-clid length in the string. This is
+			 * to prevent getting incompleted strings that
+			 * might exist due to program crash.
+			 */
+			if (strlen(build_clid) >= PATH_MAX) {
+				LogEvent(COMPONENT_CLIENTID,
+					"invalid clid format: %s, too long",
+					build_clid);
+				free_heap(path, NULL, build_clid);
+				continue;
+			}
+			ptr = strchr(build_clid, '(');
+			if (ptr == NULL) {
+				LogEvent(COMPONENT_CLIENTID,
+					 "invalid clid format: %s",
+					 build_clid);
+				free_heap(path, NULL, build_clid);
+				continue;
+			}
+			ptr2 = strchr(ptr, ':');
+			if (ptr2 == NULL) {
+				LogEvent(COMPONENT_CLIENTID,
+					 "invalid clid format: %s",
+					 build_clid);
+				free_heap(path, NULL, build_clid);
+				continue;
+			}
+			len = ptr2-ptr-1;
+			if (len >= 9) {
+				LogEvent(COMPONENT_CLIENTID,
+					 "invalid clid format: %s",
+					 build_clid);
+				free_heap(path, NULL, build_clid);
+				continue;
+			}
+			strncpy(temp, ptr+1, len);
+			temp[len] = 0;
+			cid_len = atoi(temp);
+			len = strlen(ptr2);
+			if ((len == (cid_len+2)) &&
+			    (ptr2[len-1] == ')')) {
+				new_ent =
+				    gsh_malloc(sizeof(clid_entry_t));
+				if (new_ent == NULL) {
+					LogEvent(COMPONENT_CLIENTID,
+						 "Unable to allocate memory.");
+					free_heap(path,
+						  NULL,
+						  build_clid);
+					continue;
+				}
+				nfs4_cp_pop_revoked_delegs(new_ent,
+							path,
+							tgtdir,
+							!takeover);
+				strcpy(new_ent->cl_name, build_clid);
+				glist_add(&grace.g_clid_list,
+					  &new_ent->cl_list);
+				LogDebug(COMPONENT_CLIENTID,
+					 "added %s to clid list",
+					 new_ent->cl_name);
+			}
+		}
+		gsh_free(build_clid);
+		/* If this is not for takeover, remove the directory
+		 * hierarchy  that represent the current clientid
+		 */
+		if (!takeover) {
+			rc = rmdir(path);
+			if (rc == -1) {
+				LogEvent(COMPONENT_CLIENTID,
+					 "Failed to rmdir (%s), errno=%d",
+					 path, errno);
+			}
+		}
+		gsh_free(path);
 	}
 
 	return num;
@@ -741,7 +891,7 @@ static void nfs4_load_recov_clids_nolock(nfs_grace_start_t *gsp)
 	struct glist_head *node;
 	clid_entry_t *clid_entry;
 	int rc;
-	char path[PATH_MAX + 1];
+	char path[PATH_MAX];
 
 	LogDebug(COMPONENT_STATE, "Load recovery cli %p", gsp);
 
@@ -864,7 +1014,6 @@ void nfs4_clean_old_recov_dir(char *parent_path)
 	struct dirent *dentp;
 	char *path = NULL;
 	int rc;
-	int segment_len;
 	int total_len;
 
 	dp = opendir(parent_path);
@@ -876,22 +1025,37 @@ void nfs4_clean_old_recov_dir(char *parent_path)
 	}
 
 	for (dentp = readdir(dp); dentp != NULL; dentp = readdir(dp)) {
-		/* don't remove '.' and '..', or any '.*' entry */
-		if (dentp->d_name[0] == '.')
+		/* don't remove '.' and '..' entry */
+		if (!strcmp(dentp->d_name, ".") || !strcmp(dentp->d_name, ".."))
 			continue;
 
-		segment_len = strlen(dentp->d_name);
-		total_len = strlen(parent_path) + 2 + segment_len;
+		/* If there is a filename starting with '\x1', then it is
+		 * a revoked handle, go ahead and remove it.
+		 */
+		if (dentp->d_name[0] == '\x1') {
+			char del_path[PATH_MAX];
+
+			sprintf(del_path, "%s/%s", parent_path, dentp->d_name);
+			if (unlink(del_path) < 0) {
+				LogEvent(COMPONENT_CLIENTID,
+						"unlink of %s failed errno: %d",
+						del_path,
+						errno);
+			}
+
+			continue;
+		}
+
+		/* This is a directory, we need process files in it! */
+		total_len = strlen(parent_path) + strlen(dentp->d_name) + 2;
 		path = gsh_malloc(total_len);
 		if (path == NULL) {
 			LogEvent(COMPONENT_CLIENTID,
 				 "Unable to allocate memory.");
 			continue;
 		}
-		memset(path, 0, total_len);
 
-		snprintf(path, total_len, "%s/%s", parent_path,
-			 dentp->d_name);
+		snprintf(path, total_len, "%s/%s", parent_path, dentp->d_name);
 
 		nfs4_clean_old_recov_dir(path);
 		rc = rmdir(path);
@@ -901,7 +1065,7 @@ void nfs4_clean_old_recov_dir(char *parent_path)
 		}
 		gsh_free(path);
 	}
-	closedir(dp);
+	(void)closedir(dp);
 }
 
 /**
@@ -961,6 +1125,121 @@ void nfs4_create_recov_dir(void)
 		}
 	}
 }
+
+/**
+ * @brief Record revoked filehandle under the client.
+ *
+ * @param[in] clientid Client record
+ * @param[in] filehandle of the revoked file.
+ */
+void nfs4_record_revoke(nfs_client_id_t *delr_clid, nfs_fh4 *delr_handle)
+{
+	char rhdlstr[NAME_MAX];
+	char path[PATH_MAX] = {0}, segment[NAME_MAX + 1] = {0};
+	int length, position = 0;
+	int fd;
+	int retval;
+
+	/* Convert nfs_fh4_val into base64 encoded string */
+	retval = base64url_encode(delr_handle->nfs_fh4_val,
+				  delr_handle->nfs_fh4_len,
+				  rhdlstr, sizeof(rhdlstr));
+	assert(retval != -1);
+
+	/* A client's lease is reserved while recalling or revoking a
+	 * delegation which means the client will not expire until we
+	 * complete this revoke operation. The only exception is when
+	 * the reaper thread revokes delegations of an already expired
+	 * client!
+	 */
+	pthread_mutex_lock(&delr_clid->cid_mutex);
+	if (delr_clid->cid_confirmed == EXPIRED_CLIENT_ID) {
+		/* Called from reaper thread, no need to record
+		 * revoked file handles for an expired client.
+		 */
+		pthread_mutex_unlock(&delr_clid->cid_mutex);
+		return;
+	}
+	pthread_mutex_unlock(&delr_clid->cid_mutex);
+
+	/* Parse through the clientid directory structure */
+	assert(delr_clid->cid_recov_dir != NULL);
+
+	snprintf(path, sizeof(path), "%s", v4_recov_dir);
+	length = strlen(delr_clid->cid_recov_dir);
+	while (position < length) {
+		int len = strlen(&delr_clid->cid_recov_dir[position]);
+		if (len <= NAME_MAX) {
+			strcat(path, "/");
+			strncat(path, &delr_clid->cid_recov_dir[position], len);
+			strcat(path, "/\x1"); /* Prefix 1 to converted fh */
+			strncat(path, rhdlstr, strlen(rhdlstr));
+			fd = creat(path, 0700);
+			if (fd < 0) {
+				LogEvent(COMPONENT_CLIENTID,
+					"Failed to record revoke errno:%d\n",
+					errno);
+			} else {
+				close(fd);
+			}
+			return;
+		}
+		strncpy(segment, &delr_clid->cid_recov_dir[position], NAME_MAX);
+		strcat(path, "/");
+		strncat(path, segment, NAME_MAX);
+		position += NAME_MAX;
+	}
+}
+
+/**
+ * @brief Decides if it is allowed to reclaim a given delegation
+ *
+ * @param[in] clientid Client record
+ * @param[in] filehandle of the revoked file.
+ * @retval true if allowed and false if not.
+ *
+ */
+bool nfs4_check_deleg_reclaim(nfs_client_id_t *clid, nfs_fh4 *fhandle)
+{
+	char rhdlstr[NAME_MAX];
+	struct glist_head *node;
+	rdel_fh_t *rfh_entry;
+	clid_entry_t *clid_ent;
+	int retval;
+
+	/* If we aren't in grace period, then reclaim is not possible */
+	if (!nfs_in_grace())
+		return false;
+
+	/* Convert nfs_fh4_val into base64 encoded string */
+	retval = base64url_encode(fhandle->nfs_fh4_val, fhandle->nfs_fh4_len,
+				  rhdlstr, sizeof(rhdlstr));
+	assert(retval != -1);
+
+	pthread_mutex_lock(&grace.g_mutex);
+	nfs4_chk_clid_impl(clid, &clid_ent);
+	if (clid_ent == NULL || glist_empty(&clid_ent->cl_rfh_list)) {
+		pthread_mutex_unlock(&grace.g_mutex);
+		return true;
+	}
+
+	glist_for_each(node, &clid_ent->cl_rfh_list) {
+		rfh_entry = glist_entry(node, rdel_fh_t, rdfh_list);
+		assert(rfh_entry != NULL);
+		if (!strcmp(rhdlstr, rfh_entry->rdfh_handle_str)) {
+			pthread_mutex_unlock(&grace.g_mutex);
+			LogFullDebug(COMPONENT_CLIENTID,
+				"Can't reclaim revoked fh:%s",
+				rfh_entry->rdfh_handle_str);
+			return false;
+		}
+	}
+
+	pthread_mutex_unlock(&grace.g_mutex);
+	LogFullDebug(COMPONENT_CLIENTID, "Returning TRUE");
+	return true;
+}
+
 
 /**
  * @brief Release NLM state
@@ -1070,7 +1349,8 @@ static void nfs_release_v4_client(char *ip)
 
 			cp = (nfs_client_id_t *) pdata->val.addr;
 			pthread_mutex_lock(&cp->cid_mutex);
-			if (ip_match(ip, cp)) {
+			if ((cp->cid_confirmed == CONFIRMED_CLIENT_ID)
+			     && ip_match(ip, cp)) {
 				inc_client_id_ref(cp);
 
 				/* Take a reference to the client record */
@@ -1083,7 +1363,7 @@ static void nfs_release_v4_client(char *ip)
 
 				pthread_mutex_lock(&recp->cr_mutex);
 
-				nfs_client_id_expire(cp);
+				nfs_client_id_expire(cp, true);
 
 				pthread_mutex_unlock(&recp->cr_mutex);
 

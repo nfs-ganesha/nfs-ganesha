@@ -39,19 +39,10 @@
 #include "ganesha_list.h"
 #include "fsal_handle.h"
 #include "fsal_internal.h"
+#include "lustre_methods.h"
 #include "FSAL/fsal_init.h"
 
-/* LUSTRE FSAL module private storage
- */
-
-struct lustre_fsal_module {
-	struct fsal_module fsal;
-	struct fsal_staticfsinfo_t fs_info;
-};
-
-const char myname[] = "LUSTRE";
 bool pnfs_enabled;
-struct lustre_pnfs_parameter pnfs_param;
 
 /* filesystem info for LUSTRE */
 static struct fsal_staticfsinfo_t lustre_info = {
@@ -74,35 +65,32 @@ static struct fsal_staticfsinfo_t lustre_info = {
 	.supported_attrs = LUSTRE_SUPPORTED_ATTRIBUTES,
 	.maxread = FSAL_MAXIOSIZE,
 	.maxwrite = FSAL_MAXIOSIZE,
-};
-
-static struct config_item ds_params[] = {
-	CONF_ITEM_IPV4_ADDR("DS_Addr", "127.0.0.1",
-			    lustre_pnfs_ds_parameter, ipaddr),
-	CONF_ITEM_INET_PORT("DS_Port", 1024, UINT16_MAX, 3260,
-		       lustre_pnfs_ds_parameter, ipport), /* use iscsi port */
-	CONF_ITEM_UI32("DS_Id", 1, UINT32_MAX, 1,
-		       lustre_pnfs_ds_parameter, id),
-	CONFIG_EOL
+	.pnfs_file = true,
 };
 
 static void *dataserver_init(void *link_mem, void *self_struct)
 {
-	struct lustre_pnfs_parameter *child_param
-		= (struct lustre_pnfs_parameter *)self_struct;
+	struct lustre_pnfs_ds_parameter *child_param
+		= (struct lustre_pnfs_ds_parameter *)self_struct;
 
 	assert(link_mem != NULL || self_struct != NULL);
 
 	if (link_mem == NULL) {
 		struct glist_head *dslist = (struct glist_head *)self_struct;
+		struct lustre_pnfs_parameter *pnfs_param;
 
-		glist_init(dslist);
+		pnfs_param = container_of(dslist,
+					  struct lustre_pnfs_parameter,
+					  ds_list);
+		glist_init(&pnfs_param->ds_list);
 		return self_struct;
 	} else if (self_struct == NULL) {
 		child_param = gsh_calloc(1,
-					 sizeof(struct lustre_pnfs_parameter));
-		if (child_param != NULL)
-			glist_init(&child_param->ds_list);
+				 sizeof(struct lustre_pnfs_ds_parameter));
+		if (child_param == NULL)
+			return NULL;
+
+		glist_init(&child_param->ds_list);
 		return (void *)child_param;
 	} else {
 		assert(glist_empty(&child_param->ds_list));
@@ -117,83 +105,62 @@ static int dataserver_commit(void *node, void *link_mem, void *self_struct,
 {
 	struct glist_head *ds_head
 		= (struct glist_head *)link_mem;
-	struct lustre_pnfs_parameter *child_param
-		= (struct lustre_pnfs_parameter *)self_struct;
+	struct lustre_pnfs_ds_parameter *child_param
+		= (struct lustre_pnfs_ds_parameter *)self_struct;
 
 	glist_add_tail(ds_head, &child_param->ds_list);
 	return 0;
 }
 
+static struct config_item ds_params[] = {
+	CONF_MAND_IPV4_ADDR("DS_Addr", "127.0.0.1",
+			    lustre_pnfs_ds_parameter, ipaddr),
+	CONF_MAND_INET_PORT("DS_Port", 1024, UINT16_MAX, 3260,
+		       lustre_pnfs_ds_parameter, ipport), /* use iscsi port */
+	CONF_MAND_UI32("DS_Id", 1, UINT32_MAX, 1,
+		       lustre_pnfs_ds_parameter, id),
+	CONFIG_EOL
+};
+
+static int lustre_conf_pnfs_commit(void *node,
+				   void *link_mem,
+				   void *self_struct,
+				   struct config_error_type *err_type)
+{
+	/* struct lustre_pnfs_param *lpp = self_struct; */
+
+	/* Verifications/parameter checking to be added here */
+
+	return 0;
+}
+
 static struct config_item pnfs_params[] = {
-	CONF_ITEM_UI32("Stripe_Size", 0, 1024*1024, 64*1024,
-		       lustre_pnfs_parameter, stripe_size),
-	CONF_ITEM_UI32("Stripe_Width", 0, 128, 8,
-		       lustre_pnfs_parameter, stripe_width),
 	CONF_ITEM_BLOCK("DataServer", ds_params,
 			dataserver_init, dataserver_commit,
 			lustre_pnfs_parameter, ds_list),
 	CONFIG_EOL
 };
 
-/* Just return the static pointer.  No linkage to init
- */
-
-static void *pnfs_init(void *link_mem, void *self_struct)
-{
-	assert(link_mem != NULL || self_struct != NULL);
-
-	if (link_mem == NULL)
-		return self_struct; /* NOP */
-	else if (self_struct == NULL)
-		return &pnfs_param;
-	else
-		return NULL;
-}
-
-/* Just set the flag. linkage attach is a NOP
- */
-static int pnfs_commit(void *node, void *link_mem, void *self_struct,
-		       struct config_error_type *err_type)
-{
-	if (self_struct == NULL)
-		pnfs_enabled = false;
-	else
-		pnfs_enabled = true;
-	return 0;
-}
-
-static void *lustre_config_init(void *link_mem, void *self_struct)
-{
-	assert(link_mem != NULL || self_struct != NULL);
-
-	if (link_mem == NULL)
-		return self_struct; /* NOP */
-	else if (self_struct == NULL)
-		return &pnfs_param;
-	else
-		return NULL;
-}
-
 static struct config_item lustre_params[] = {
 	CONF_ITEM_BOOL("link_support", true,
-		       fsal_staticfsinfo_t, link_support),
+		       lustre_fsal_module, fs_info.link_support),
 	CONF_ITEM_BOOL("symlink_support", true,
-		       fsal_staticfsinfo_t, symlink_support),
+		       lustre_fsal_module, fs_info.symlink_support),
 	CONF_ITEM_BOOL("cansettime", true,
-		       fsal_staticfsinfo_t, cansettime),
+		       lustre_fsal_module, fs_info.cansettime),
 	CONF_ITEM_UI64("maxread", 512, FSAL_MAXIOSIZE, FSAL_MAXIOSIZE,
-		       fsal_staticfsinfo_t, maxread),
+		       lustre_fsal_module, fs_info.maxread),
 	CONF_ITEM_UI64("maxwrite", 512, FSAL_MAXIOSIZE, FSAL_MAXIOSIZE,
-		       fsal_staticfsinfo_t, maxwrite),
+		       lustre_fsal_module, fs_info.maxwrite),
 	CONF_ITEM_MODE("umask", 0, 0777, 0,
-		       fsal_staticfsinfo_t, umask),
+		       lustre_fsal_module, fs_info.umask),
 	CONF_ITEM_BOOL("auth_xdev_export", false,
-		       fsal_staticfsinfo_t, auth_exportpath_xdev),
+		       lustre_fsal_module, fs_info.auth_exportpath_xdev),
 	CONF_ITEM_MODE("xattr_access_rights", 0, 0777, 0400,
-		       fsal_staticfsinfo_t, xattr_access_rights),
-	CONF_ITEM_BLOCK("pnfs", pnfs_params,
-			pnfs_init, pnfs_commit,
-			lustre_pnfs_parameter, ds_list),
+		       lustre_fsal_module, fs_info.xattr_access_rights),
+	CONF_ITEM_BLOCK("PNFS", pnfs_params,
+			noop_conf_init, lustre_conf_pnfs_commit,
+			lustre_fsal_module, pnfs_param),
 	CONFIG_EOL
 };
 
@@ -201,7 +168,7 @@ struct config_block lustre_param = {
 	.dbus_interface_name = "org.ganesha.nfsd.config.fsal.lustre",
 	.blk_desc.name = "LUSTRE",
 	.blk_desc.type = CONFIG_BLOCK,
-	.blk_desc.u.blk.init = lustre_config_init,
+	.blk_desc.u.blk.init = noop_conf_init,
 	.blk_desc.u.blk.params = lustre_params,
 	.blk_desc.u.blk.commit = noop_conf_commit
 };
@@ -231,11 +198,11 @@ static fsal_status_t lustre_init_config(struct fsal_module *fsal_hdl,
 	    container_of(fsal_hdl, struct lustre_fsal_module, fsal);
 	struct config_error_type err_type;
 
-	memset(&pnfs_param, 0, sizeof(pnfs_param));
 	lustre_me->fs_info = lustre_info; /* get a copy of the defaults */
+	/* Read FS parameter for this FSAL */
 	(void) load_config_from_parse(config_struct,
 				      &lustre_param,
-				      &lustre_me->fs_info,
+				      lustre_me,
 				      true,
 				      &err_type);
 	if (!config_error_is_harmless(&err_type))

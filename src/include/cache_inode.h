@@ -359,18 +359,17 @@ struct entry_export_map {
  * @brief Stats for file-specific and client-file delegation heuristics
  */
 
-struct file_deleg_heuristics {
-	uint32_t curr_delegations;        /* number of delegations on file */
-	open_delegation_type4 deleg_type; /* if delegated is it read or write */
-	bool disabled;                    /* deleg disabled for this file */
-	uint32_t delegation_count;        /* times file has been delegated */
-	uint32_t recall_count;            /* times file has been recalled */
-	time_t avg_hold;                  /* avg amount of time deleg held */
-	time_t last_delegation;
-	time_t last_recall;
-	uint32_t num_opens;               /* total num of opens so far. */
-	time_t first_open;                /* time that we started recording
-					     num_opens */
+struct file_deleg_stats {
+	uint32_t fds_curr_delegations;    /* number of delegations on file */
+	open_delegation_type4 fds_deleg_type; /* delegation type */
+	uint32_t fds_delegation_count;  /* times file has been delegated */
+	uint32_t fds_recall_count;      /* times file has been recalled */
+	time_t fds_avg_hold;            /* avg amount of time deleg held */
+	time_t fds_last_delegation;
+	time_t fds_last_recall;
+	uint32_t fds_num_opens;         /* total num of opens so far. */
+	time_t fds_first_open;          /* time that we started recording
+					   num_opens */
 };
 
 /**
@@ -490,8 +489,13 @@ struct cache_entry_t {
 			struct glist_head nlm_share_list;
 			/** Share reservation state for this file. */
 			cache_inode_share_t share_state;
+			bool write_delegated; /* true iff write delegated */
 			/** Delegation statistics */
-			struct file_deleg_heuristics deleg_heuristics;
+			struct file_deleg_stats fdeleg_stats;
+			uint32_t anon_ops;   /* number of anonymous operations
+					      * happening at the moment which
+					      * prevents delegations from being
+					      * granted */
 		} file;		/*< REGULAR_FILE data */
 
 		struct {

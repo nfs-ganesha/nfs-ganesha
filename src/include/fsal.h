@@ -121,6 +121,19 @@ typedef struct fsal_xattrent {
 /* function for getting an attribute value */
 #define XATTR_RW_COOKIE ~0
 
+/* Flags representing if an FSAL supports read or write delegations */
+#define FSAL_OPTION_FILE_READ_DELEG 0x00000001	/*< File read delegations */
+#define FSAL_OPTION_FILE_WRITE_DELEG 0x00000002	/*< File write delegations */
+#define FSAL_OPTION_FILE_DELEGATIONS (FSAL_OPTION_FILE_READ_DELEG | \
+					   FSAL_OPTION_FILE_WRITE_DELEG)
+#define FSAL_OPTION_NO_DELEGATIONS 0
+
+/**
+ * @brief Delegations types list for the Delegations parameter in FSAL.
+ * This is actually defined in exports.c
+ */
+extern struct config_item_list deleg_types[];
+
 /******************************************************
  *                Structure used to define a fsal
  ******************************************************/

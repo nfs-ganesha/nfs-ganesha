@@ -1095,6 +1095,7 @@ static nfsstat4 ds_read(struct fsal_ds_handle *const ds_hdl,
 			count4 * const supplied_length,
 			bool * const end_of_file)
 {
+	LogCrit(COMPONENT_PNFS, "Unimplemented DS read!");
 	return NFS4ERR_NOTSUPP;
 }
 
@@ -1106,6 +1107,7 @@ static nfsstat4 ds_read_plus(struct fsal_ds_handle *const ds_hdl,
 			bool * const end_of_file,
 			struct io_info *info)
 {
+	LogCrit(COMPONENT_PNFS, "Unimplemented DS read_plus!");
 	return NFS4ERR_NOTSUPP;
 }
 
@@ -1136,6 +1138,7 @@ static nfsstat4 ds_write(struct fsal_ds_handle *const ds_hdl,
 			 verifier4 * const writeverf,
 			 stable_how4 * const stability_got)
 {
+	LogCrit(COMPONENT_PNFS, "Unimplemented DS write!");
 	return NFS4ERR_NOTSUPP;
 }
 
@@ -1149,6 +1152,7 @@ static nfsstat4 ds_write_plus(struct fsal_ds_handle *const ds_hdl,
 			 stable_how4 * const stability_got,
 			 struct io_info *info)
 {
+	LogCrit(COMPONENT_PNFS, "Unimplemented DS write_plus!");
 	return NFS4ERR_NOTSUPP;
 }
 
@@ -1168,6 +1172,7 @@ static nfsstat4 ds_commit(struct fsal_ds_handle *const ds_hdl,
 			  const offset4 offset, const count4 count,
 			  verifier4 * const writeverf)
 {
+	LogCrit(COMPONENT_PNFS, "Unimplemented DS commit!");
 	return NFS4ERR_NOTSUPP;
 }
 

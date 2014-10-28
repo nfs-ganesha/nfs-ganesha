@@ -16,7 +16,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * -------------
  */
@@ -28,7 +28,7 @@
  * @author Shyamsundar R     <srangana@redhat.com>
  *
  * @brief Module core functions for FSAL_GLUSTER functionality, init etc.
- * 
+ *
  */
 
 #include "fsal.h"
@@ -69,7 +69,7 @@ static struct fsal_staticfsinfo_t default_gluster_info = {
 	.xattr_access_rights = 0400,	/* root=RW, owner=R */
 };
 
-static struct glusterfs_fsal_module *glfsal_module = NULL;
+static struct glusterfs_fsal_module *glfsal_module;
 
 /* Module methods
  */

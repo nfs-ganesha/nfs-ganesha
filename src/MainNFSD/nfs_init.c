@@ -101,9 +101,9 @@ pthread_t _9p_dispatcher_thrid;
 pthread_t _9p_rdma_dispatcher_thrid;
 #endif
 
-char *config_path = "/etc/ganesha/ganesha.conf";
+char *config_path = GANESHA_CONFIG_PATH;
 
-char *pidfile_path = "/var/run/ganesha.pid";
+char *pidfile_path = GANESHA_PIDFILE_PATH;
 
 /**
  * @brief This thread is in charge of signal management

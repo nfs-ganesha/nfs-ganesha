@@ -48,6 +48,12 @@
 #include "nfs_convert.h"
 #include "delayed_exec.h"
 #include "export_mgr.h"
+#include "server_stats.h"
+
+static int schedule_delegrevoke_check(struct delegrecall_context *ctx,
+				      uint32_t delay);
+static int schedule_delegrecall_task(struct delegrecall_context *ctx,
+				     uint32_t delay);
 
 /**
  * @brief Invalidate a cached entry
@@ -73,7 +79,8 @@ static cache_inode_status_t invalidate_close(struct fsal_module *fsal,
 						 handle,
 						 CACHE_INODE_INVALIDATE_CLOSE,
 						 NULL, NULL);
-		rc = cache_inode_invalidate(entry, flags);
+		else
+			(void) cache_inode_invalidate(entry, flags);
 		cache_inode_put(entry);
 	}
 
@@ -1057,7 +1064,107 @@ state_status_t notify_device(notify_deviceid_type4 notify_type,
 }
 
 /**
- * @brief Handle the reply to a DELEGRECALL
+ * @brief Check if the delegation needs to be revoked.
+ *
+ * @param[in] deleg_entry SLE entry for the delegaion
+ *
+ * @return true, if the delegation need to be revoked.
+ * @return false, if the delegation should not be revoked.
+ */
+
+bool eval_deleg_revoke(struct deleg_data *deleg_entry)
+{
+	struct cf_deleg_stats *clfl_stats;
+	time_t curr_time;
+	time_t recall_success_time, first_recall_time;
+	uint32_t lease_lifetime = nfs_param.nfsv4_param.lease_lifetime;
+	open_delegation_type4 sd_type;
+
+	sd_type = deleg_entry->dd_state->state_data.deleg.sd_type;
+	assert(sd_type == OPEN_DELEGATE_READ || sd_type == OPEN_DELEGATE_WRITE);
+
+	clfl_stats = &deleg_entry->dd_state->state_data.deleg.sd_clfile_stats;
+
+	curr_time = time(NULL);
+	recall_success_time = clfl_stats->cfd_rs_time;
+	first_recall_time = clfl_stats->cfd_r_time;
+
+	if ((recall_success_time > 0) &&
+	    (curr_time - recall_success_time) > lease_lifetime) {
+		LogInfo(COMPONENT_STATE,
+			 "More than one lease time has passed since recall was successfully sent");
+		return true;
+	}
+
+	if ((first_recall_time > 0) &&
+	    (curr_time - first_recall_time) > (2 * lease_lifetime)) {
+		LogInfo(COMPONENT_STATE,
+			 "More than two lease times have passed since recall was attempted");
+		return true;
+	}
+
+	return false;
+}
+
+/**
+ * @brief Handle recall response
+ *
+ * @param[in] call  The RPC call being completed
+ * @param[in] clfl_stats  client-file deleg heuristics
+ * @param[in] p_cargs deleg recall context
+ *
+ */
+
+static enum recall_resp_action handle_recall_response(
+				struct delegrecall_context *p_cargs,
+				rpc_call_t *call)
+{
+	enum recall_resp_action resp_action;
+	struct deleg_data *deleg_entry = p_cargs->drc_deleg_entry;
+
+	struct cf_deleg_stats *clfl_stats =
+		&deleg_entry->dd_state->state_data.deleg.sd_clfile_stats;
+
+	switch (call->cbt.v_u.v4.res.status) {
+	case NFS4_OK:
+		LogDebug(COMPONENT_NFS_CB,
+		"Delegation successfully recalled");
+		resp_action = DELEG_RET_WAIT;
+		clfl_stats->cfd_rs_time =
+					time(NULL);
+		break;
+	case NFS4ERR_BADHANDLE:
+		LogDebug(COMPONENT_NFS_CB,
+			 "Client sent NFS4ERR_BADHANDLE response, retrying recall for(%p)",
+			 p_cargs->drc_deleg_entry);
+		resp_action = DELEG_RECALL_SCHED;
+		break;
+	case NFS4ERR_DELAY:
+		LogDebug(COMPONENT_NFS_CB,
+			 "Client sent NFS4ERR_DELAY response, retrying recall for(%p)",
+			 p_cargs->drc_deleg_entry);
+		resp_action = DELEG_RECALL_SCHED;
+		break;
+	case  NFS4ERR_BAD_STATEID:
+		LogDebug(COMPONENT_NFS_CB,
+			 "Client sent NFS4ERR_BAD_STATEID response, retrying recall for (%p)",
+			 p_cargs->drc_deleg_entry);
+		resp_action = DELEG_RECALL_SCHED;
+		break;
+	default:
+		/* some other NFS error, consider the recall failed */
+		LogDebug(COMPONENT_NFS_CB,
+			 "Client sent %d response, retrying recall for (%p)",
+			 call->cbt.v_u.v4.res.status,
+			 p_cargs->drc_deleg_entry);
+		resp_action = DELEG_RECALL_SCHED;
+		break;
+	}
+	return resp_action;
+}
+
+/**
+ * @brief Handle the reply to a CB_RECALL
  *
  * @param[in] call  The RPC call being completed
  * @param[in] hook  The hook itself
@@ -1071,117 +1178,197 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 					   rpc_call_hook hook, void *arg,
 					   uint32_t flags)
 {
-	char *fh;
-	nfs_client_id_t *clid;
+	char *fh = NULL;
+	enum recall_resp_action resp_act;
+	state_status_t rc = STATE_SUCCESS;
+	struct delegrecall_context *deleg_ctx =
+				(struct delegrecall_context *) arg;
+	struct deleg_data *deleg_entry, *tdentry;
+	cache_entry_t *entry = deleg_ctx->drc_entry;
+	struct glist_head *glist, *glist_n;
+	nfs_client_id_t *clientid;
 
 	LogDebug(COMPONENT_NFS_CB, "%p %s", call,
-		 (hook ==
-		  RPC_CALL_ABORT) ? "RPC_CALL_ABORT" : "RPC_CALL_COMPLETE");
-	clid = (nfs_client_id_t *)arg;
+		 (hook == RPC_CALL_COMPLETE) ? "Success" : "Failed");
+
+	assert(entry != NULL);
+	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
+	deleg_entry = NULL;
+	glist_for_each_safe(glist, glist_n, &entry->object.file.deleg_list) {
+		tdentry = glist_entry(glist, struct deleg_data, dd_list);
+		if (deleg_ctx->drc_deleg_entry == tdentry &&
+		    SAME_STATEID(&deleg_ctx->drc_stateid, tdentry->dd_state)) {
+			deleg_entry = tdentry;
+			break;
+		}
+	}
+
+	if (!deleg_entry) {
+		LogDebug(COMPONENT_NFS_CB, "Delegation is already returned");
+		cache_inode_put(deleg_ctx->drc_entry);
+		pthread_mutex_lock(&deleg_ctx->drc_clid->cid_mutex);
+		update_lease(deleg_ctx->drc_clid);
+		pthread_mutex_unlock(&deleg_ctx->drc_clid->cid_mutex);
+		put_gsh_export(deleg_ctx->drc_exp);
+		dec_client_id_ref(deleg_ctx->drc_clid);
+		gsh_free(deleg_ctx);
+		goto out_free;
+	}
+
+	LogDebug(COMPONENT_NFS_CB, "deleg_entry %p", deleg_entry);
+
+	clientid = deleg_entry->dd_owner->so_owner.so_nfs4_owner.so_clientrec;
+
 	switch (hook) {
 	case RPC_CALL_COMPLETE:
-		/* potentially, do something more interesting here */
-		LogDebug(COMPONENT_NFS_CB, "call result: %d", call->stat);
+		LogMidDebug(COMPONENT_NFS_CB, "call result: %d", call->stat);
 		fh = call->cbt.v_u.v4.args.argarray.argarray_val->
-		    nfs_cb_argop4_u.opcbrecall.fh.nfs_fh4_val;
-		/* Mark the channel down if the rpc call failed */
-		/** @todo: what to do about server issues which made the RPC
-		 *         call fail?
-		 */
+				nfs_cb_argop4_u.opcbrecall.fh.nfs_fh4_val;
 		if (call->stat != RPC_SUCCESS) {
-			pthread_mutex_lock(&clid->cid_mutex);
-			clid->cb_chan_down = true;
-			pthread_mutex_unlock(&clid->cid_mutex);
-		}
-		gsh_free(fh);
-		cb_compound_free(&call->cbt);
+			LogEvent(COMPONENT_NFS_CB, "Callback channel down");
+			set_cb_chan_down(deleg_ctx->drc_clid, true);
+			resp_act = DELEG_RECALL_SCHED;
+		} else
+			resp_act = handle_recall_response(deleg_ctx, call);
 		break;
 	default:
 		LogDebug(COMPONENT_NFS_CB, "%p unknown hook %d", call, hook);
+
+		set_cb_chan_down(clientid, true);
+		/* Mark the recall as failed */
+		resp_act = DELEG_RECALL_SCHED;
 		break;
 	}
-	return 0;
+	switch (resp_act) {
+	case DELEG_RECALL_SCHED:
+		if (eval_deleg_revoke(deleg_entry))
+			goto out_revoke;
+		else {
+			if (schedule_delegrecall_task(deleg_ctx, 1))
+				goto out_revoke;
+			goto out_free;
+		}
+		break;
+	case DELEG_RET_WAIT:
+		if (schedule_delegrevoke_check(deleg_ctx, 1))
+			goto out_revoke;
+		goto out_free;
+		break;
+	case REVOKE:
+		goto out_revoke;
+	}
+out_revoke:
+	LogCrit(COMPONENT_NFS_V4,
+		"Revoking delegation(%p)", deleg_entry);
+	clientid->num_revokes++;
+	inc_revokes(clientid->gsh_client);
+
+	rc = deleg_revoke(deleg_entry);
+	if (rc != STATE_SUCCESS) {
+		LogCrit(COMPONENT_NFS_V4,
+			"Delegation could not be revoked(%p)",
+			deleg_entry);
+	} else {
+		LogDebug(COMPONENT_NFS_V4,
+			 "Delegation revoked(%p)", deleg_entry);
+	}
+	cache_inode_put(deleg_ctx->drc_entry);
+	pthread_mutex_lock(&clientid->cid_mutex);
+	update_lease(clientid);
+	pthread_mutex_unlock(&clientid->cid_mutex);
+	put_gsh_export(deleg_ctx->drc_exp);
+	dec_client_id_ref(clientid);
+	gsh_free(deleg_ctx);
+
+out_free:
+	PTHREAD_RWLOCK_unlock(&entry->state_lock);
+	fh = call->cbt.v_u.v4.args.argarray.argarray_val->
+				nfs_cb_argop4_u.opcbrecall.fh.nfs_fh4_val;
+	gsh_free(fh);
+	free_rpc_call(call);
+	return 0; /*Always return zero, the delegation is recalled or revoked */
 }
 
 /**
- * @brief Send one delegation recall to one client
+ * @brief Send one delegation recall to one client.
  *
- * @param[in] found_entry Lock entry covering the delegation
- * @param[in] entry       File on which the delegation is held
+ * This function sends a cb_recall for one delegation, the caller has to lock
+ * cache_entry->state_lock before calling this function.
+ *
+ * @param[in] deleg_entry Lock entry covering the delegation
+ * @param[in] delegrecall_context
  */
 
-static uint32_t delegrecall_one(state_lock_entry_t *found_entry,
-				cache_entry_t *entry)
+static uint32_t delegrecall_one(struct deleg_data *deleg_entry,
+				struct delegrecall_context *p_cargs)
 {
-	char *maxfh;
-	int32_t code = 0;
+	char *maxfh = NULL;
+	uint32_t ret = 1;
 	rpc_call_channel_t *chan;
-	rpc_call_t *call;
-	nfs_client_id_t *clid = NULL;
+	rpc_call_t *call = NULL;
 	nfs_cb_argop4 argop[1];
-	struct gsh_export *exp = found_entry->sle_state->state_export;
+	struct gsh_export *exp;
+	struct cf_deleg_stats *clfl_stats;
+	nfs_client_id_t *clientid;
+	clientid = deleg_entry->dd_owner->so_owner.so_nfs4_owner.so_clientrec;
+	clfl_stats = &deleg_entry->dd_state->state_data.deleg.sd_clfile_stats;
 
-	maxfh = gsh_malloc(NFS4_FHSIZE); /* free in cb_completion_func() */
-	if (maxfh == NULL) {
-		LogDebug(COMPONENT_FSAL_UP, "FSAL_UP_DELEG: no mem, failed.");
-		/* Not an error. Expecting some nodes will not have it
-		 * in cache in a cluster. */
-		return NFS_CB_CALL_ABORTED;
-	}
-	code =
-	    nfs_client_id_get_confirmed(found_entry->sle_owner->so_owner.
-					so_nfs4_owner.so_clientid, &clid);
-	if (code != CLIENT_ID_SUCCESS) {
-		LogCrit(COMPONENT_NFS_CB, "No clid record  code %d", code);
-		gsh_free(maxfh);
-		return NFS_CB_CALL_ABORTED;
-	}
+	/* record the first attempt to recall this delegation */
+	if (clfl_stats->cfd_r_time == 0)
+		clfl_stats->cfd_r_time = time(NULL);
+
+	cache_entry_t *entry = deleg_entry->dd_entry;
+
+	LogFullDebug(COMPONENT_FSAL_UP, "Recalling delegation:%p", deleg_entry);
+
+	inc_recalls(clientid->gsh_client);
+
+	exp = deleg_entry->dd_state->state_export;
 
 	/* Attempt a recall only if channel state is UP */
-	pthread_mutex_lock(&clid->cid_mutex);
-	if (clid->cb_chan_down) {
-		pthread_mutex_unlock(&clid->cid_mutex);
+	if (get_cb_chan_down(clientid)) {
 		LogCrit(COMPONENT_NFS_CB,
 			"Call back channel down, not issuing a recall");
-		gsh_free(maxfh);
-		return NFS_CB_CALL_ABORTED;
+		goto out;
 	}
-	pthread_mutex_unlock(&clid->cid_mutex);
 
-	chan = nfs_rpc_get_chan(clid, NFS_RPC_FLAG_NONE);
+	chan = nfs_rpc_get_chan(clientid, NFS_RPC_FLAG_NONE);
 	if (!chan) {
 		LogCrit(COMPONENT_NFS_CB, "nfs_rpc_get_chan failed");
 		/* TODO: move this to nfs_rpc_get_chan ? */
-		pthread_mutex_lock(&clid->cid_mutex);
-		clid->cb_chan_down = true;
-		pthread_mutex_unlock(&clid->cid_mutex);
-		gsh_free(maxfh);
-		return NFS_CB_CALL_ABORTED;
+		set_cb_chan_down(clientid, true);
+		goto out;
 	}
 	if (!chan->clnt) {
 		LogCrit(COMPONENT_NFS_CB, "nfs_rpc_get_chan failed (no clnt)");
-		pthread_mutex_lock(&clid->cid_mutex);
-		clid->cb_chan_down = true;
-		pthread_mutex_unlock(&clid->cid_mutex);
-		gsh_free(maxfh);
-		return NFS_CB_CALL_ABORTED;
+		set_cb_chan_down(clientid, true);
+		goto out;
 	}
 	/* allocate a new call--freed in completion hook */
 	call = alloc_rpc_call();
+
+	if (!call) {
+		LogCrit(COMPONENT_NFS_CB, "Could not allocate rpc call");
+		goto out;
+	}
+
 	call->chan = chan;
 
 	/* setup a compound */
-	cb_compound_init_v4(&call->cbt, 6, 0,
-			    clid->cid_cb.v40.cb_callback_ident, "brrring!!!",
-			    10);
+	cb_compound_init_v4(&call->cbt, 1, 0,
+			    clientid->cid_cb.v40.cb_callback_ident,
+			    "brrring!!!", 10);
 
-	memset(argop, 0, sizeof(nfs_cb_argop4));
 	argop->argop = NFS4_OP_CB_RECALL;
-	argop->nfs_cb_argop4_u.opcbrecall.stateid.seqid =
-	    found_entry->sle_state->state_seqid;
-	memcpy(argop->nfs_cb_argop4_u.opcbrecall.stateid.other,
-	       found_entry->sle_state->stateid_other, OTHERSIZE);
-	argop->nfs_cb_argop4_u.opcbrecall.truncate = TRUE;
+	COPY_STATEID(&argop->nfs_cb_argop4_u.opcbrecall.stateid,
+			deleg_entry->dd_state);
+	argop->nfs_cb_argop4_u.opcbrecall.truncate = false;
+
+	maxfh = gsh_malloc(NFS4_FHSIZE); /* free in cb_completion_func() */
+	if (maxfh == NULL) {
+		LogDebug(COMPONENT_FSAL_UP, "FSAL_UP_DELEG: no mem, aborting.");
+		goto out;
+	}
 
 	/* Convert it to a file handle */
 	argop->nfs_cb_argop4_u.opcbrecall.fh.nfs_fh4_len = 0;
@@ -1191,80 +1378,305 @@ static uint32_t delegrecall_one(state_lock_entry_t *found_entry,
 	if (!nfs4_FSALToFhandle(&argop->nfs_cb_argop4_u.opcbrecall.fh,
 				entry->obj_handle,
 				exp)) {
-		gsh_free(call);
-		return NFS_CB_CALL_ABORTED;
+		LogCrit(COMPONENT_FSAL_UP,
+			"nfs4_FSALToFhandle failed, can not process recall");
+		goto out;
 	}
 
-	/* add ops, till finished (dont exceed count) */
+	/* add ops, till finished */
 	cb_compound_add_op(&call->cbt, argop);
 
 	/* set completion hook */
 	call->call_hook = delegrecall_completion_func;
 
-	/* call it (here, in current thread context)
-	 * nfs_rpc_submit_call() always returns zero. ignore it. */
-	nfs_rpc_submit_call(call, clid, NFS_RPC_FLAG_NONE);
-	return call->states;
-};
-
-state_status_t delegrecall(cache_entry_t *entry, bool rwlocked)
-{
-	struct glist_head *glist, *glist_n;
-	state_lock_entry_t *found_entry = NULL;
-	state_status_t rc = 0;
-	struct clientfile_deleg_heuristics *clfl_stats;
-	struct client_deleg_heuristics *cl_stats;
-
-	LogDebug(COMPONENT_FSAL_UP,
-		 "FSAL_UP_DELEG: Invalidate cache found entry %p type %u",
-		 entry, entry->type);
-
-	if (!rwlocked)
-		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
-
-	glist_for_each_safe(glist, glist_n, &entry->object.file.deleg_list) {
-		found_entry = glist_entry(glist, state_lock_entry_t, sle_list);
-		if (found_entry->sle_type != LEASE_LOCK ||
-		    found_entry->sle_state == NULL)
-			continue;
-
-		LogDebug(COMPONENT_NFS_CB, "found_entry %p", found_entry);
-
-		clfl_stats =
-			&found_entry->sle_state->state_data.deleg.clfile_stats;
-		cl_stats = &clfl_stats->clientid->deleg_heuristics;
-		clfl_stats->num_recalls++;
-		cl_stats->tot_recalls++;
-
-		switch (delegrecall_one(found_entry, entry)) {
-		case NFS_CB_CALL_FINISHED:
-			break;
-		case NFS_CB_CALL_NONE:
-			break;
-		case NFS_CB_CALL_QUEUED:
-			break;
-		case NFS_CB_CALL_DISPATCH:
-			break;
-		case NFS_CB_CALL_ABORTED:
-			LogCrit(COMPONENT_NFS_CB, "Failed to recall, aborted!");
-			clfl_stats->num_recall_aborts++;
-			cl_stats->failed_recalls++;
-			break;
-		case NFS_CB_CALL_TIMEDOUT: /* network or client trouble */
-			LogCrit(COMPONENT_NFS_CB,
-				"Failed to recall due to timeout!");
-			clfl_stats->num_recall_timeouts++;
-			cl_stats->failed_recalls++;
-			break;
-		default:
-			LogCrit(COMPONENT_NFS_CB, "delegrecall_one() failed.");
-			break;
+	if (!p_cargs) {
+		p_cargs = gsh_malloc(sizeof(struct delegrecall_context));
+		if (!p_cargs) {
+			LogDebug(COMPONENT_FSAL_UP,
+				 "FSAL_UP_DELEG: no mem, aborting.");
+			goto out;
 		}
+
+		p_cargs->drc_clid = clientid;
+		p_cargs->drc_entry = entry;
+		p_cargs->drc_deleg_entry = deleg_entry;
+		p_cargs->drc_exp = exp;
+		COPY_STATEID(&p_cargs->drc_stateid, deleg_entry->dd_state);
 	}
 
-	if (!rwlocked)
-		PTHREAD_RWLOCK_unlock(&entry->state_lock);
+	/* call it (here, in current thread context)
+	   ret is always 0 for async calls, might change in future */
+	ret = nfs_rpc_submit_call(call, p_cargs, NFS_RPC_CALL_NONE);
+	if (!ret)
+		return ret;
 
+out:
+	inc_failed_recalls(clientid->gsh_client);
+	if (maxfh)
+		gsh_free(maxfh);
+	if (call)
+		free_rpc_call(call);
+
+	if (eval_deleg_revoke(deleg_entry)) {
+		ret = 0;
+		goto out_revoke;
+	} else {
+		if (!p_cargs || schedule_delegrecall_task(p_cargs, 1)) {
+			ret = 1;
+			goto out_revoke;
+		}
+		ret = 0;
+	}
+
+	/* Keep the delegation in p_cargs */
+	return ret;
+
+out_revoke:
+	LogCrit(COMPONENT_STATE, "Delegation(%p) will be revoked", deleg_entry);
+	clientid->num_revokes++;
+	inc_revokes(clientid->gsh_client);
+
+	if (deleg_revoke(deleg_entry) != STATE_SUCCESS) {
+		LogDebug(COMPONENT_FSAL_UP,
+			 "Failed to revoke delegation(%p).", deleg_entry);
+	} else {
+		LogDebug(COMPONENT_FSAL_UP,
+			 "Delegation revoked(%p)", deleg_entry);
+	}
+	cache_inode_put(entry);
+	pthread_mutex_lock(&clientid->cid_mutex);
+	update_lease(clientid);
+	pthread_mutex_unlock(&clientid->cid_mutex);
+	put_gsh_export(exp);
+	dec_client_id_ref(clientid);
+	if (p_cargs)
+		gsh_free(p_cargs);
+
+	return ret;
+
+}
+
+/**
+ * @brief Check if the delegation needs to be revoked.
+ *
+ * @param[in] found_entry Lock entry covering the delegation
+ * @param[in] entry File on which the delegation is held
+ */
+
+static void delegrevoke_check(void *ctx)
+{
+	uint32_t rc = 0;
+	struct glist_head *glist, *glist_n;
+	struct delegrecall_context *deleg_ctx = ctx;
+	cache_entry_t *entry = deleg_ctx->drc_entry;
+	struct deleg_data *deleg_entry = NULL;
+	nfs_client_id_t *clid = deleg_ctx->drc_clid;
+
+	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
+	glist_for_each_safe(glist, glist_n, &entry->object.file.deleg_list) {
+		deleg_entry = glist_entry(glist, struct deleg_data, dd_list);
+		if (deleg_ctx->drc_deleg_entry == deleg_entry &&
+			SAME_STATEID(&deleg_ctx->drc_stateid,
+				     deleg_entry->dd_state)) {
+			if (eval_deleg_revoke(deleg_ctx->drc_deleg_entry)) {
+				LogDebug(COMPONENT_STATE,
+					"Revoking delegation(%p)", deleg_entry);
+				rc = deleg_revoke(deleg_entry);
+				if (rc != STATE_SUCCESS) {
+					LogCrit(COMPONENT_NFS_V4,
+					  "Delegation could not be revoked(%p)",
+						deleg_entry);
+				} else {
+					LogDebug(COMPONENT_NFS_V4,
+						 "Delegation revoked(%p)",
+						 deleg_entry);
+				}
+				cache_inode_put(entry);
+				pthread_mutex_lock(&clid->cid_mutex);
+				update_lease(clid);
+				pthread_mutex_unlock(&clid->cid_mutex);
+				put_gsh_export(deleg_ctx->drc_exp);
+				dec_client_id_ref(clid);
+				gsh_free(deleg_ctx);
+			} else {
+				LogFullDebug(COMPONENT_STATE,
+					     "Not revoking the delegation(%p)",
+					     deleg_entry);
+				schedule_delegrevoke_check(deleg_ctx, 1);
+			}
+			break;
+		} else {
+			deleg_entry = NULL;
+		}
+	}
+	PTHREAD_RWLOCK_unlock(&entry->state_lock);
+
+	if (!deleg_entry) {
+		LogDebug(COMPONENT_NFS_CB, "Delgation is already returned");
+		cache_inode_put(entry);
+		pthread_mutex_lock(&clid->cid_mutex);
+		update_lease(clid);
+		pthread_mutex_unlock(&clid->cid_mutex);
+		put_gsh_export(deleg_ctx->drc_exp);
+		dec_client_id_ref(clid);
+		gsh_free(deleg_ctx);
+	}
+
+	return;
+}
+
+static void delegrecall_task(void *ctx)
+{
+	struct glist_head *glist, *glist_n;
+	struct delegrecall_context *deleg_ctx = ctx;
+	cache_entry_t *entry = deleg_ctx->drc_entry;
+	struct deleg_data *deleg_entry = NULL;
+
+	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
+	glist_for_each_safe(glist, glist_n, &entry->object.file.deleg_list) {
+		deleg_entry = glist_entry(glist, struct deleg_data, dd_list);
+		if (deleg_ctx->drc_deleg_entry == deleg_entry &&
+			SAME_STATEID(&deleg_ctx->drc_stateid,
+				     deleg_entry->dd_state)) {
+			delegrecall_one(deleg_entry, deleg_ctx);
+			break;
+		} else {
+			deleg_entry = NULL;
+		}
+	}
+	PTHREAD_RWLOCK_unlock(&entry->state_lock);
+	if (!deleg_entry) {
+		LogDebug(COMPONENT_NFS_CB, "Delgation is already returned");
+		cache_inode_put(entry);
+		pthread_mutex_lock(&deleg_ctx->drc_clid->cid_mutex);
+		update_lease(deleg_ctx->drc_clid);
+		pthread_mutex_unlock(&deleg_ctx->drc_clid->cid_mutex);
+		dec_client_id_ref(deleg_ctx->drc_clid);
+		put_gsh_export(deleg_ctx->drc_exp);
+		gsh_free(deleg_ctx);
+	}
+	return;
+}
+
+static int schedule_delegrecall_task(struct delegrecall_context *ctx,
+				     uint32_t delay)
+{
+	int rc = 0;
+
+	assert(ctx);
+
+	rc = delayed_submit(delegrecall_task, ctx, delay * NS_PER_SEC);
+	if (rc)
+		LogDebug(COMPONENT_THREAD,
+			 "delayed_submit failed with rc = %d", rc);
+
+	return rc;
+}
+
+static int schedule_delegrevoke_check(struct delegrecall_context *ctx,
+				      uint32_t delay)
+{
+	int rc = 0;
+
+	assert(ctx);
+
+	rc = delayed_submit(delegrevoke_check, ctx, delay * NS_PER_SEC);
+	if (rc)
+		LogDebug(COMPONENT_THREAD,
+			 "delayed_submit failed with rc = %d", rc);
+
+	return rc;
+}
+
+state_status_t delegrecall_impl(cache_entry_t *entry)
+{
+	struct glist_head *glist, *glist_n;
+	struct deleg_data *deleg_entry = NULL;
+	state_status_t rc = 0;
+	uint32_t *deleg_state = NULL;
+	nfs_client_id_t *clid = NULL;
+	struct gsh_export *probe_exp;
+
+	LogDebug(COMPONENT_FSAL_UP,
+		 "FSAL_UP_DELEG: entry %p type %u",
+		 entry, entry->type);
+
+	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
+
+	glist_for_each_safe(glist, glist_n, &entry->object.file.deleg_list) {
+		deleg_entry = glist_entry(glist, struct deleg_data, dd_list);
+
+		LogDebug(COMPONENT_NFS_CB, "deleg_entry %p", deleg_entry);
+		deleg_state =
+			&deleg_entry->dd_state->state_data.deleg.sd_state;
+		if (*deleg_state != DELEG_GRANTED) {
+			LogDebug(COMPONENT_FSAL_UP,
+				 "Delegation already being recalled, NOOP");
+			continue;
+		}
+		*deleg_state = DELEG_RECALL_WIP;
+
+		entry->object.file.fdeleg_stats.fds_last_recall = time(NULL);
+
+		/* Recall is an asynchrons operation, hence keep a hold on
+		 * the export to prevent racing with remove_gsh_expor()
+		 */
+		probe_exp = get_gsh_export(deleg_entry->dd_export_id);
+		if (probe_exp == NULL) {
+			/* Remove export is underway, which will
+			 * do the actual work, no need to do anything.
+			 */
+			LogDebug(COMPONENT_FSAL_UP,
+				 "Racing with delete export. Do nothing");
+			continue;
+		}
+		if (probe_exp != deleg_entry->dd_export) {
+			/* Whole world changed under us and a new export
+			 * with same old export-id has been added.
+			 * Do nothing.
+			 */
+			LogWarn(COMPONENT_FSAL_UP,
+				"Export changed prebe_exp:%p sle_exp: %p\n",
+				probe_exp, deleg_entry->dd_export);
+			put_gsh_export(probe_exp);
+			continue;
+		}
+
+		if (nfs_client_id_get_confirmed(deleg_entry->
+						dd_owner->so_owner.
+						so_nfs4_owner.so_clientid,
+						&clid) != CLIENT_ID_SUCCESS) {
+			LogCrit(COMPONENT_NFS_CB,
+				"No clid record, code %d", rc);
+			put_gsh_export(probe_exp);
+			continue;
+		}
+
+		/* Prevent client's lease expiring until we complete
+		 * this recall/revoke operation. If the client's lease
+		 * has already expired, let the reaper thread handling
+		 * expired clients revoke this delegation, and we just
+		 * skip it here.
+		 */
+		pthread_mutex_lock(&clid->cid_mutex);
+		if (!reserve_lease(clid)) {
+			pthread_mutex_unlock(&clid->cid_mutex);
+			put_gsh_export(probe_exp);
+			dec_client_id_ref(clid);
+			continue;
+		}
+		pthread_mutex_unlock(&clid->cid_mutex);
+
+		cache_inode_lru_ref(entry, LRU_FLAG_NONE);
+
+		rc = delegrecall_one(deleg_entry, NULL);
+
+		if (rc)
+			LogCrit(COMPONENT_FSAL_UP,
+				"delegrecall_one(%p) failed", deleg_entry);
+
+	}
+	PTHREAD_RWLOCK_unlock(&entry->state_lock);
 	return rc;
 }
 
@@ -1275,8 +1687,8 @@ state_status_t delegrecall(cache_entry_t *entry, bool rwlocked)
  *
  * @return STATE_SUCCESS or errors.
  */
-state_status_t delegrecall_upcall(struct fsal_module *fsal,
-				  struct gsh_buffdesc *handle)
+state_status_t delegrecall(struct fsal_module *fsal,
+			   struct gsh_buffdesc *handle)
 {
 	cache_entry_t *entry = NULL;
 	state_status_t rc = 0;
@@ -1295,7 +1707,13 @@ state_status_t delegrecall_upcall(struct fsal_module *fsal,
 		 * in cache in a cluster. */
 		return rc;
 	}
-	return delegrecall(entry, false);
+
+	rc = delegrecall_impl(entry);
+
+	/* up_get() took a reference on the entry */
+	cache_inode_put(entry);
+
+	return rc;
 }
 
 
@@ -1311,7 +1729,7 @@ struct fsal_up_vector fsal_up_top = {
 	.update = update,
 	.layoutrecall = layoutrecall,
 	.notify_device = notify_device,
-	.delegrecall = delegrecall_upcall,
+	.delegrecall = delegrecall,
 	.invalidate_close = invalidate_close
 };
 

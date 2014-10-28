@@ -34,6 +34,7 @@
 #include "log.h"
 #include "cache_inode.h"
 #include "wait_queue.h"
+#include "sal_data.h"
 
 /**
  * @file nfs_rpc_callback.h
@@ -99,6 +100,16 @@ static inline void free_cb_argop(nfs_cb_argop4 *ptr)
 static inline void free_cb_resop(nfs_cb_resop4 *ptr)
 {
 	gsh_free(ptr);
+}
+
+static inline bool get_cb_chan_down(struct nfs_client_id_t *clid)
+{
+	return clid->cid_cb.v40.cb_chan_down;
+}
+
+static inline void set_cb_chan_down(struct nfs_client_id_t *clid, bool down)
+{
+	clid->cid_cb.v40.cb_chan_down = down;
 }
 
 rpc_call_channel_t *nfs_rpc_get_chan(nfs_client_id_t *pclientid,

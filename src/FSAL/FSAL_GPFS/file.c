@@ -175,7 +175,6 @@ fsal_status_t gpfs_read_plus(struct fsal_obj_handle *obj_hdl,
 		info->io_content.what = NFS4_CONTENT_HOLE;
 		info->io_content.hole.di_offset = offset;     /*offset of hole*/
 		info->io_content.hole.di_length = buffer_size;/*length of hole*/
-		info->io_content.hole.di_allocated = TRUE;    /*maybe ??? */
 		*read_amount = buffer_size;
 	} else {
 		info->io_content.what = NFS4_CONTENT_DATA;
@@ -218,16 +217,13 @@ fsal_status_t gpfs_write(struct fsal_obj_handle *obj_hdl,
 	return status;
 }
 
-/* gpfs_clear
+/* gpfs_deallocate
  * concurrency (locks) is managed in cache_inode_*
  */
 
 static
-fsal_status_t gpfs_clear(struct fsal_obj_handle *obj_hdl,
-			 uint64_t offset,
-			 size_t buffer_size, void *buffer,
-			 size_t *write_amount, bool *fsal_stable,
-			 bool allocated)
+fsal_status_t gpfs_deallocate(struct fsal_obj_handle *obj_hdl,
+			 uint64_t offset, uint64_t length)
 {
 	struct gpfs_fsal_obj_handle *myself;
 	fsal_status_t status;
@@ -238,8 +234,28 @@ fsal_status_t gpfs_clear(struct fsal_obj_handle *obj_hdl,
 	       && myself->u.file.openflags != FSAL_O_CLOSED);
 
 	status =
-	    GPFSFSAL_clear(myself->u.file.fd, offset, buffer_size, buffer,
-			   write_amount, fsal_stable, op_ctx, allocated);
+	    GPFSFSAL_alloc(myself->u.file.fd, offset, length, false);
+	return status;
+}
+
+/* gpfs_allocate
+ * concurrency (locks) is managed in cache_inode_*
+ */
+
+static
+fsal_status_t gpfs_allocate(struct fsal_obj_handle *obj_hdl,
+			 uint64_t offset, uint64_t length)
+{
+	struct gpfs_fsal_obj_handle *myself;
+	fsal_status_t status;
+
+	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
+
+	assert(myself->u.file.fd >= 0
+	       && myself->u.file.openflags != FSAL_O_CLOSED);
+
+	status =
+	    GPFSFSAL_alloc(myself->u.file.fd, offset, length, true);
 	return status;
 }
 
@@ -248,20 +264,20 @@ fsal_status_t gpfs_clear(struct fsal_obj_handle *obj_hdl,
  */
 
 fsal_status_t gpfs_write_plus(struct fsal_obj_handle *obj_hdl,
-				uint64_t seek_descriptor, size_t buffer_size,
+				uint64_t offset, size_t buffer_size,
 				void *buffer, size_t *write_amount,
 				bool *fsal_stable, struct io_info *info)
 {
-	if (info->io_content.what == NFS4_CONTENT_DATA) {
-		return gpfs_write(obj_hdl, seek_descriptor, buffer_size,
+	if (info->io_content.what == NFS4_CONTENT_DATA)
+		return gpfs_write(obj_hdl, offset, buffer_size,
 				buffer, write_amount, fsal_stable);
-	}
-	if (info->io_content.what == NFS4_CONTENT_HOLE) {
-		return gpfs_clear(obj_hdl,
-				  seek_descriptor, buffer_size,
-				  buffer, write_amount, fsal_stable,
-				  info->io_content.hole.di_allocated);
-	}
+
+	if (info->io_content.what == NFS4_CONTENT_DEALLOCATE)
+		return gpfs_deallocate(obj_hdl, offset, buffer_size);
+
+	if (info->io_content.what == NFS4_CONTENT_ALLOCATE)
+		return gpfs_allocate(obj_hdl, offset, buffer_size);
+
 	return fsalstat(ERR_FSAL_UNION_NOTSUPP, 0);
 }
 
@@ -303,7 +319,6 @@ fsal_status_t gpfs_seek(struct fsal_obj_handle *obj_hdl,
 	} else {
 		info->io_eof = io_info.io_eof;
 		info->io_content.hole.di_offset = io_info.io_offset;
-		info->io_content.hole.di_allocated = io_info.io_alloc;
 		info->io_content.hole.di_length = io_info.io_len;
 	}
 	return fsalstat(fsal_error, 0);

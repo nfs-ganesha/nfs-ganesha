@@ -17,17 +17,28 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules/")
 project(nfs-ganesha C)
 # Project versioning
 set(GANESHA_MAJOR_VERSION 2)
-set(GANESHA_MINOR_VERSION 1)
+set(GANESHA_MINOR_VERSION 2)
 
+# needs to come after project()
+IF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+	SET(CMAKE_INSTALL_PREFIX "/usr" CACHE PATH "Install prefix for common files" FORCE)
+	message(STATUS "override default CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX}")
+	SET(SYSCONFDIR "/etc" CACHE PATH "Install prefix for common files" FORCE)
+	SET(SYSSTATEDIR "/var" CACHE PATH "Install prefix for common files" FORCE)
+ELSE()
+	message(STATUS "was set CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX}")
+	SET(SYSCONFDIR "${CMAKE_INSTALL_PREFIX}/etc" CACHE PATH "Install prefix for common files" FORCE)
+	SET(SYSSTATEDIR "${CMAKE_INSTALL_PREFIX}/var" CACHE PATH "Install prefix for common files" FORCE)
+ENDIF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 # Patch level is always ".0" for mainline (master).  It is blank for development.
 # When starting a stable maintenance branch, this becomes ".N"
 # where N is monotonically increasing starting at 1. Remember to include the "." !!
-set(GANESHA_PATCH_LEVEL .0)
+set(GANESHA_PATCH_LEVEL )
 
 # Extra version is for naming development/RC.  It is blank in master/stable branches
 # so it can be available to end-users to name local variants/versions
 # If used, it is always of the form "-whateveryouwant"
-set(GANESHA_EXTRA_VERSION )
+set(GANESHA_EXTRA_VERSION -dev-14)
 
 set(GANESHA_VERSION ${GANESHA_MAJOR_VERSION}.${GANESHA_MINOR_VERSION}${GANESHA_PATCH_LEVEL}${GANESHA_EXTRA_VERSION})
 set(GANESHA_BASE_VERSION ${GANESHA_MAJOR_VERSION}.${GANESHA_MINOR_VERSION}${GANESHA_PATCH_LEVEL})
@@ -145,12 +156,16 @@ if (MSVC)
    add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 endif(MSVC)
 
-# Library destination, 32 bits / 64 bits switch is done here
-if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-    set( FSAL_DESTINATION "lib64/ganesha" )
-else( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-    set( FSAL_DESTINATION "lib/ganesha" )
-endif( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+IF(FSAL_DESTINATION)
+    set( FSAL_DESTINATION ${FSAL_DESTINATION} )
+ELSE()
+    # Library destination, 32 bits / 64 bits switch is done here
+    if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+        set( FSAL_DESTINATION "lib64/ganesha" )
+    else( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+        set( FSAL_DESTINATION "lib/ganesha" )
+    endif( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+ENDIF()
 
 # FSAL selection
 # FSALs which are enabled by default but could be disabled
@@ -236,6 +251,13 @@ set(MODULES_PATH ${CMAKE_INSTALL_PREFIX}
 
 # Enable GCC Thread-sanitizer
 option(USE_TSAN "Enable GCC Thread-Sanitizer" OFF)
+
+# Enable LTTng tracing
+option(USE_LTTNG "Enable LTTng tracing" OFF)
+
+#
+# End build options
+#
 
 # Choose a shortcut build config
 
@@ -638,6 +660,17 @@ if(_MSPAC_SUPPORT)
   endif(WBCLIENT_FOUND AND WBCLIENT4_H)
 endif(_MSPAC_SUPPORT)
 
+if(USE_LTTNG)
+  # Set LTTNG_PATH_HINT on the command line
+  # if your LTTng is not in a standard place
+  find_package(LTTng)
+  if(LTTNG_FOUND)
+  else(LTTNG_FOUND)
+    message(WARNING "LTTng libraries not found. Disabling USE_LTTNG")
+    set(USE_LTTNG OFF)
+  endif(LTTNG_FOUND)
+endif(USE_LTTNG)
+
 # Cmake 2.6 has issue in managing BISON and FLEX
 if( "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_LESS "2.8" )
    message( status "CMake 2.6 detected, using portability hooks" )
@@ -798,6 +831,12 @@ set(SYSTEM_LIBRARIES
   ${LIBRT}
 )
 
+# Config file; make sure it doesn't clobber an existing one
+include(${CMAKE_SOURCE_DIR}/cmake/modules/InstallPackageConfigFile.cmake)
+InstallPackageConfigFile(${CMAKE_SOURCE_DIR}/config_samples/vfs.conf ${SYSCONFDIR}/ganesha ganesha.conf)
+# Sample config files
+install(DIRECTORY config_samples DESTINATION share/doc/ganesha)
+
 IF( NOT EXISTS ${PROJECT_SOURCE_DIR}/libntirpc/CMakeLists.txt )
 message( FATAL_ERROR
 "No CMakeLists.txt found in libntirpc
@@ -832,6 +871,11 @@ add_subdirectory(tools)
 if(USE_DBUS)
   add_subdirectory(dbus)
 endif(USE_DBUS)
+
+if(USE_LTTNG)
+  add_subdirectory(tracing)
+endif(USE_LTTNG)
+
 add_subdirectory(scripts)
 
 # display configuration vars
@@ -893,6 +937,7 @@ message(STATUS "FSAL_DESTINATION = ${FSAL_DESTINATION}")
 message(STATUS "USE_ADMIN_TOOLS = ${USE_ADMIN_TOOLS}")
 message(STATUS "MODULES_PATH = ${MODULES_PATH}")
 message(STATUS "USE_TSAN = ${USE_TSAN}")
+message(STATUS "USE_LTTNG = ${USE_LTTNG}")
 
 #force command line options to be stored in cache
 set(USE_FSAL_VFS ${USE_FSAL_VFS}
@@ -1024,6 +1069,11 @@ set(USE_ADMIN_TOOLS ${USE_ADMIN_TOOLS}
 set(USE_TSAN ${USE_TSAN}
   CACHE BOOL
   "Enable GCC Thread-Sanitizer"
+  FORCE)
+
+set(USE_LTTNG ${USE_LTTNG}
+  CACHE BOOL
+  "Enable LTTng tracing"
   FORCE)
 
 # Now create a useable config.h

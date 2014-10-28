@@ -562,6 +562,11 @@ int nfs_rpc_create_chan_v40(nfs_client_id_t *clientid, uint32_t flags)
 					    clientid->cid_cb.v40.cb_program,
 					    NFS_CB /* Errata ID: 2291 */,
 					    0, 0);
+		/* Mark the fd to be closed on clnt_destroy */
+		if (chan->clnt) {
+			chan->clnt->cl_ops->cl_control(chan->clnt,
+							CLSET_FD_CLOSE, NULL);
+		}
 		break;
 	case IPPROTO_UDP:
 		raddr.maxlen = raddr.len = sizeof(struct sockaddr_in6);
@@ -589,7 +594,6 @@ int nfs_rpc_create_chan_v40(nfs_client_id_t *clientid, uint32_t flags)
 		chan->auth = authunix_create_default();
 		if (!chan->auth)
 			code = EINVAL;
-		code = 0;
 		break;
 	case AUTH_NONE:
 		chan->auth = authnone_ncreate();
@@ -762,16 +766,16 @@ rpc_call_channel_t *nfs_rpc_get_chan(nfs_client_id_t *clientid, uint32_t flags)
  */
 void nfs_rpc_destroy_v40_chan(rpc_call_channel_t *chan)
 {
+	/* clean up auth, if any */
+	if (chan->auth) {
+		AUTH_DESTROY(chan->auth);
+		chan->auth = NULL;
+	}
+
 	/* channel has a dedicated RPC client */
 	if (chan->clnt) {
-		/* clean up auth, if any */
-		if (chan->auth) {
-			AUTH_DESTROY(chan->auth);
-			chan->auth = NULL;
-		}
 		/* destroy it */
-		if (chan->clnt)
-			clnt_destroy(chan->clnt);
+		clnt_destroy(chan->clnt);
 	}
 }
 
@@ -934,7 +938,7 @@ void free_rpc_call(rpc_call_t *call)
 static inline void RPC_CALL_HOOK(rpc_call_t *call, rpc_call_hook hook,
 				 void *arg, uint32_t flags)
 {
-	if (call)
+	if (call && call->call_hook)
 		call->call_hook(call, hook, arg, flags);
 }
 
@@ -1009,7 +1013,8 @@ int32_t nfs_rpc_dispatch_call(rpc_call_t *call, uint32_t flags)
 	}
 
 	call->stat = clnt_call(call->chan->clnt,
-			       call->chan->auth, CB_COMPOUND,
+			       call->chan->auth,
+			       CB_COMPOUND,
 			       (xdrproc_t) xdr_CB_COMPOUND4args,
 			       &call->cbt.v_u.v4.args,
 			       (xdrproc_t) xdr_CB_COMPOUND4res,

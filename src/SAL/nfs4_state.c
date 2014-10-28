@@ -49,6 +49,7 @@
 #include "sal_functions.h"
 #include "cache_inode_lru.h"
 #include "export_mgr.h"
+#include "fsal_up.h"
 
 pool_t *state_v4_pool;		/*< Pool for NFSv4 files's states */
 
@@ -56,189 +57,6 @@ pool_t *state_v4_pool;		/*< Pool for NFSv4 files's states */
 struct glist_head state_v4_all;
 pthread_mutex_t all_state_v4_mutex = PTHREAD_MUTEX_INITIALIZER;
 #endif
-
-/**
- * @brief Checks for a conflict between an existing delegation state and a
- * candidate state.
- *
- * @param[in] state      Existing state
- * @param[in] state_type Type of candidate state
- * @param[in] state_data Data for the candidate state
- *
- * @retval true if there is a conflict.
- * @retval false if no conflict has been found
- */
-static bool check_deleg_conflict(state_t *state, state_type_t candidate_type,
-				 state_data_t *candidate_data,
-				 state_owner_t *candidate_owner)
-{
-	struct glist_head *glist;
-	clientid4 candidate_clientid, deleg_clientid;
-	state_lock_entry_t *found_lock;
-
-	LogDebug(COMPONENT_STATE, "Checking for conflict!!");
-
-	if (state == NULL || candidate_data == NULL)
-		return true;
-
-	deleg_clientid =
-		state->state_data.deleg.clfile_stats.clientid->cid_clientid;
-	candidate_clientid =
-		candidate_owner->so_owner.so_nfs4_owner.so_clientid;
-
-	if (state->state_type != STATE_TYPE_DELEG) {
-		LogDebug(COMPONENT_STATE,
-			 "ERROR: Non-delegation state found in delegation list!");
-		return false;
-	}
-
-	/* We are getting a new share, checking if delegations conflict. */
-	switch (candidate_type) {
-	case STATE_TYPE_DELEG:
-		/* This should not happen, but we'll see. */
-		if (deleg_clientid == candidate_clientid) {
-			LogDebug(COMPONENT_STATE,
-				 "Requesting delegation for client that has a delegation on this file. no conflict");
-			return false;
-		}
-		if (state->state_data.deleg.sd_type == OPEN_DELEGATE_WRITE) {
-			LogDebug(COMPONENT_STATE,
-				 "Getting a delegation when write delegation exists on different client conflict");
-			return true;
-		}
-		if (candidate_data->deleg.sd_type
-		    == OPEN_DELEGATE_WRITE) {
-			LogDebug(COMPONENT_STATE,
-				 "Getting a write delegation  when delegation exists on different client conflict");
-			return true;
-		}
-		break;
-	case STATE_TYPE_SHARE:
-		if (deleg_clientid == candidate_clientid) {
-			LogDebug(COMPONENT_STATE,
-				 "New share state is for same client that owns delegation. no conflict.");
-			return false;
-		}
-
-		if (state->state_data.deleg.sd_type == OPEN_DELEGATE_READ
-		    && candidate_data->share.share_access
-		    & OPEN4_SHARE_ACCESS_WRITE) {
-			LogDebug(COMPONENT_STATE,
-				 "Read delegation exists. New share is WRITE on different client. conflict");
-			return true;
-		}
-		if (state->state_data.deleg.sd_type == OPEN_DELEGATE_WRITE) {
-			LogDebug(COMPONENT_STATE,
-				 "Write delegation exists. New share is with diff client. conflict.");
-			return true;
-		}
-		break;
-	case STATE_TYPE_LOCK:
-		if (deleg_clientid == candidate_clientid) {
-			LogDebug(COMPONENT_STATE,
-				 "Creating lock for client that owns the delegation. no conflict.");
-			return false;
-		}
-
-		/* Search for a posix lock that conflicts with delegation */
-		glist_for_each(glist, &candidate_data->lock.state_locklist) {
-			found_lock = glist_entry(glist, state_lock_entry_t,
-						 sle_state_locks);
-			if (found_lock->sle_type != POSIX_LOCK) {
-				LogDebug(COMPONENT_STATE,
-					 "non posix lock in lock list");
-				continue;
-			}
-			if (found_lock->sle_lock.lock_type == FSAL_LOCK_R
-			    && state->state_data.deleg.sd_type
-			    == OPEN_DELEGATE_WRITE) {
-				LogDebug(COMPONENT_STATE,
-					 "Trying to get read lock. write delegation exists. conflict");
-				return true; /*recall delegation*/
-			}
-			if (found_lock->sle_lock.lock_type == FSAL_LOCK_W) {
-				LogDebug(COMPONENT_STATE,
-					 "Trying to get write lock. delegation exists. conflict");
-				return true;
-			}
-		}
-	case STATE_TYPE_LAYOUT:
-		return false;
-		break;
-	case STATE_TYPE_NONE:
-	default:
-		LogDebug(COMPONENT_STATE, "Shouldn't be here.");
-		break;
-	}
-
-	return false;
-}
-
-/**
- * @brief Checks for a conflict between an existing state and a candidate state.
- *
- * @param[in] state      Existing state
- * @param[in] state_type Type of candidate state
- * @param[in] state_data Data for the candidate state
- *
- * @retval true if there is a conflict.
- * @retval false if no conflict has been found
- */
-bool state_conflict(state_t *state, state_type_t state_type,
-		    state_data_t *candidate_data)
-{
-	if (state == NULL || candidate_data == NULL)
-		return true;
-
-	switch (state_type) {
-	case STATE_TYPE_NONE:
-		return false;	/* STATE_NONE conflicts with nobody */
-
-	case STATE_TYPE_SHARE:
-		if (state->state_type == STATE_TYPE_SHARE) {
-			if ((state->state_data.share.share_access &
-			     candidate_data->share.share_deny)
-			    || (state->state_data.share.share_deny &
-				candidate_data->share.share_access)) {
-				/* Conflicting share reservation */
-				return true;
-			}
-		}
-		return false;
-
-	case STATE_TYPE_LOCK:
-		/* lock conflict is managed in the NFS request */
-		return false;
-
-	case STATE_TYPE_LAYOUT:
-		/** layout conflict is managed by the FSAL */
-		return false;
-
-	case STATE_TYPE_DELEG:
-		/* This will appear during new OPEN share state
-		 * We are getting a delegation and found a diff share entry.
-		 */
-		if (state->state_type == STATE_TYPE_SHARE) {
-			/* */
-			if (candidate_data->deleg.sd_type
-			    == OPEN_DELEGATE_READ
-			    && state->state_data.share.share_access
-			    & OPEN4_SHARE_ACCESS_WRITE)
-				return true;
-			if (candidate_data->deleg.sd_type
-			    == OPEN_DELEGATE_WRITE
-			    && state->state_data.share.share_access
-			    & OPEN4_SHARE_ACCESS_READ)
-				return true;
-			if (candidate_data->deleg.sd_type
-			    == OPEN_DELEGATE_WRITE
-			    && state->state_data.share.share_access
-			    & OPEN4_SHARE_ACCESS_WRITE)
-				return true;
-		}
-	}
-	return false;
-}
 
 /**
  * @brief adds a new state to a cache entry
@@ -261,10 +79,8 @@ state_status_t state_add_impl(cache_entry_t *entry, state_type_t state_type,
 			      state_owner_t *owner_input, state_t **state,
 			      struct state_refer *refer)
 {
-	state_t *pnew_state, *piter_state = NULL;
-	state_lock_entry_t *piter_lock;
+	state_t *pnew_state;
 	char debug_str[OTHERSIZE * 2 + 1];
-	struct glist_head *glist = NULL, *glistn = NULL;
 	cache_inode_status_t cache_status;
 	bool got_pinned = false;
 	state_status_t status = 0;
@@ -282,6 +98,17 @@ state_status_t state_add_impl(cache_entry_t *entry, state_type_t state_type,
 		got_pinned = true;
 	}
 
+	/* Check for delegations that conflict with this candidate state and
+	 * recall if necessary */
+	if (deleg_conflict(entry,
+			   (state_data->share.share_access &
+			    OPEN4_SHARE_ACCESS_WRITE))) {
+		if (got_pinned)
+			cache_inode_dec_pin_ref(entry, false);
+		status = STATE_FSAL_DELAY;
+		return status;
+	}
+
 	pnew_state = pool_alloc(state_v4_pool, NULL);
 
 	if (pnew_state == NULL) {
@@ -297,52 +124,6 @@ state_status_t state_add_impl(cache_entry_t *entry, state_type_t state_type,
 		return status;
 	}
 
-	/* Check conflicting delegations and recall if necessary */
-	if (entry->type == REGULAR_FILE
-	    && (!glist_empty(&entry->object.file.deleg_list)))
-		glist_for_each_safe(glist, glistn,
-				    &entry->object.file.deleg_list) {
-			piter_lock = glist_entry(glist, state_lock_entry_t,
-						 sle_list);
-			piter_state = piter_lock->sle_state;
-			if (piter_lock->sle_type != LEASE_LOCK) {
-				LogDebug(COMPONENT_STATE, "Wrong lock type");
-				continue;
-			}
-			if (piter_state->state_type != STATE_TYPE_DELEG) {
-				LogDebug(COMPONENT_STATE, "Wrong state type");
-				continue;
-			}
-			if (check_deleg_conflict(piter_state, state_type,
-						 state_data, owner_input)) {
-				status = delegrecall(entry, true);
-				if (status != STATE_SUCCESS) {
-					LogDebug(COMPONENT_STATE,
-						 "Failed to recall delegation");
-				}
-			}
-		}
-
-	/* Browse the state's list */
-	glist_for_each(glist, &entry->state_list) {
-		piter_state = glist_entry(glist, state_t, state_list);
-
-		if (state_conflict(piter_state, state_type, state_data)) {
-			LogDebug(COMPONENT_STATE,
-				 "new state conflicts with another state for entry %p",
-				 entry);
-
-			/* stat */
-			pool_free(state_v4_pool, pnew_state);
-
-			status = STATE_STATE_CONFLICT;
-
-			if (got_pinned)
-				cache_inode_dec_pin_ref(entry, false);
-
-			return status;
-		}
-	}
 
 	/* Add the stateid.other, this will increment cid_stateid_counter */
 	nfs4_BuildStateId_Other(owner_input->so_owner.so_nfs4_owner.
@@ -406,6 +187,10 @@ state_status_t state_add_impl(cache_entry_t *entry, state_type_t state_type,
 
 	pthread_mutex_unlock(&all_state_v4_mutex);
 #endif
+
+	if (pnew_state->state_type == STATE_TYPE_DELEG &&
+	    pnew_state->state_data.deleg.sd_type == OPEN_DELEGATE_WRITE)
+		entry->object.file.write_delegated = true;
 
 	/* Copy the result */
 	*state = pnew_state;
@@ -496,6 +281,11 @@ void state_del_locked(state_t *state, cache_entry_t *entry)
 	/* Remove from the list of lock states for a particular open state */
 	if (state->state_type == STATE_TYPE_LOCK)
 		glist_del(&state->state_data.lock.state_sharelist);
+
+	/* Reset write delegated if this is a write delegation */
+	if (state->state_type == STATE_TYPE_DELEG &&
+	    state->state_data.deleg.sd_type == OPEN_DELEGATE_WRITE)
+		entry->object.file.write_delegated = false;
 
 	/* Remove from list of states for a particular export */
 	PTHREAD_RWLOCK_wrlock(&state->state_export->lock);
@@ -645,6 +435,45 @@ void release_openstate(state_owner_t *open_owner)
 }
 
 /**
+ * @brief Revoke delagtions belonging to the client owner.
+ *
+ * @param[in,out] client owner
+ */
+void revoke_owner_delegs(state_owner_t *client_owner)
+{
+	struct glist_head *glist, *glistn;
+	state_t *state;
+	cache_entry_t *entry;
+
+	glist_for_each_safe(glist, glistn,
+			&client_owner->so_owner.so_nfs4_owner.so_state_list) {
+		state = glist_entry(glist, state_t, state_owner_list);
+		entry = state->state_entry;
+
+		if (state->state_type != STATE_TYPE_DELEG)
+			continue;
+
+		/* state_deleg_revoke will remove the delegation state.
+		 * If that happens to be the last state on the cache
+		 * inode entry, a ref is decremented on it. So entry may
+		 * cease to exist after the call to state_deleg_revoke.
+		 * To prevent this, we place a ref count on the entry
+		 * here.
+		 */
+		cache_inode_lru_ref(entry, LRU_FLAG_NONE);
+
+		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
+		state_deleg_revoke(state, entry);
+		PTHREAD_RWLOCK_unlock(&entry->state_lock);
+
+		/* Close the file in FSAL through the cache inode */
+		cache_inode_close(entry, 0);
+
+		cache_inode_lru_unref(entry, LRU_FLAG_NONE);
+	}
+}
+
+/**
  * @brief Remove all state belonging to an export.
  *
  */
@@ -653,6 +482,7 @@ void state_export_release_nfs4_state(void)
 {
 	state_t *state;
 	state_status_t state_status;
+	cache_entry_t *entry;
 
 	while (1) {
 		PTHREAD_RWLOCK_wrlock(&op_ctx->export->lock);
@@ -678,7 +508,14 @@ void state_export_release_nfs4_state(void)
 			}
 		}
 
-		state_del(state, false);
+		entry = state->state_entry;
+		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
+		if (state->state_type == STATE_TYPE_DELEG)
+			/* this deletes the state too */
+			state_deleg_revoke(state, entry);
+		else
+			state_del_locked(state, entry);
+		PTHREAD_RWLOCK_unlock(&entry->state_lock);
 	}
 }
 

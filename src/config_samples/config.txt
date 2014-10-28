@@ -9,6 +9,7 @@ EXPORT {}
 EXPORT { CLIENT  {} }
 EXPORT { FSAL {} }
 EXPORT { FSAL { FSAL {} } }
+EXPORT { FSAL { PNFS {} } }
 LOG {}
 LOG { COMPONENTS {} }
 LOG { FACILITY {} }
@@ -17,7 +18,6 @@ LOG { FORMAT {} }
 CACHEINODE
 GPFS {}
 LUSTRE {}
-LUSTRE { PNFS {} }
 LUSTRE { PNFS { DATASERVER {} } }
 VFS {}
 XFS {}
@@ -123,6 +123,8 @@ NFS_CORE_PARAM {}
 
 	Plugins_Dir(path, default "/usr/lib64/ganesha")
 
+	heartbeat_freq(uint32, range 0 to 5000 default 1000)
+
 NFS_IP_NAME {}
 --------------
 
@@ -192,6 +194,7 @@ EXPORT_DEFAULTS {}
 
 	Squash(enum, values [root, root_squash, rootsquash,
 			     all, all_squash, allsquash,
+			     all_anomnymous, allanonymous,
 			     no_root_squash, none, noidsquash],
 	       default root_squash)
 
@@ -203,6 +206,8 @@ EXPORT_DEFAULTS {}
 		    default None)
 
 	Disable_ACL(bool, default false)
+
+	Trust_Readdir_Negative_Cache(bool, default false)
 
 EXPORT {}
 ---------
@@ -292,7 +297,25 @@ EXPORT { FSAL {} }
 	FSAL_ZFS:
 	---------
 
-	pool_path(path, no default, must be supplied)
+	zpool(string, default "tank", must be supplied)
+
+	FSAL_LUSTRE:
+	------------
+
+	LUSTRE { PNFS { DATASERVER {} } }
+	------------
+
+		DS_Addr(ipv4addr, default "127.0.0.1")
+
+		DS_Port(inet_port, range 1024 to UINT16_MAX, default 3260)
+
+		DS_Id(uint32, range 1 to UINT32_MAX, default 1)
+
+	EXPORT { FSAL { PNFS { } } }
+	---------------------------
+		Stripe_Unit(uint32, range 1024 to 1024*1024, default 8192)
+
+		pnfs_enabled(bool, default false)
 
 	FSAL_NULL:
 	----------
@@ -459,7 +482,7 @@ GPFS {}
 
 	xattr_access_rights(mode, range 0 to 0777, default 0400)
 
-	delegations(bool, default false)
+	Delegations(enum, values [None, read, r], default None)
 
 	pnfs_file(bool, default false)
 
@@ -484,21 +507,6 @@ LUSTRE {}
 
 	xattr_access_rights(mode, range 0 to 0777, default 0400)
 
-LUSTRE { PNFS {} }
-------------------
-
-	Stripe_Size(uint32, range 0 to 1024*1024, default 64*1024)
-
-	Stripe_Width(uint32, range 0 to 128, default 8)
-
-LUSTRE { PNFS { DATASERVER {} } }
----------------------------------
-
-	DS_Addr(ipv4addr, default "127.0.0.1")
-
-	DS_Port(inet_port, range 1024 to UINT16_MAX, default 3260)
-
-	DS_Id(uint32, range 1 to UINT32_MAX, default 1)
 
 VFS {}
 ------

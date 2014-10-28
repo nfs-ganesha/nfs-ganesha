@@ -12,6 +12,7 @@ SET(gshdbus_STAT_SRCS
    dbus_server.c
    properties_handler.c
    signal_handler.c
+   dbus_heartbeat.c
    ${FBSD_SUBR}
 )
 
