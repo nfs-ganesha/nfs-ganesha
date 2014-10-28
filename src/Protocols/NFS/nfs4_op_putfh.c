@@ -135,12 +135,19 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t *data,
 			put_gsh_export(op_ctx->export);
 		}
 
-		op_ctx->export = pds->related;
-		if (op_ctx->export != NULL) {
-			get_gsh_export_ref(op_ctx->export);
+		if (pds->related != NULL) {
+			if (!get_gsh_export_ref(pds->related, false)) {
+				op_ctx->export = NULL;
+				op_ctx->fsal_export = NULL;
+				res_PUTFH4->status = NFS4ERR_STALE;
+				return res_PUTFH4->status;
+			}
+			op_ctx->export = pds->related;
 			op_ctx->fsal_export = op_ctx->export->fsal_export;
-		} else
+		} else {
+			op_ctx->export = NULL;
 			op_ctx->fsal_export = NULL;
+		}
 
 		/* Clear out current entry for now */
 		set_current_entry(data, NULL, false);

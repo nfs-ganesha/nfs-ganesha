@@ -526,8 +526,11 @@ void pseudo_unmount_export(struct gsh_export *export)
 			break;
 		}
 
-		/* Take a reference to that export */
-		get_gsh_export_ref(sub_mounted_export);
+		/* Take a reference to that export. Export may be dead
+		 * already, but we should see if we can speed along its
+		 * unmounting.
+		 */
+		(void) get_gsh_export_ref(sub_mounted_export, true);
 
 		/* Drop the lock */
 		PTHREAD_RWLOCK_unlock(&export->lock);

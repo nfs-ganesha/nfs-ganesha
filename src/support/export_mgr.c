@@ -138,7 +138,7 @@ struct gsh_export *export_take_unexport_work(void)
 
 	if (export != NULL) {
 		glist_del(&export->exp_work);
-		get_gsh_export_ref(export);
+		(void) get_gsh_export_ref(export, true);
 	}
 
 	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
@@ -275,7 +275,7 @@ bool insert_gsh_export(struct gsh_export *export)
 							export->export_id)]);
 	atomic_store_voidptr(cache_slot, &export->node_k);
 	glist_add_tail(&exportlist, &export->exp_list);
-	get_gsh_export_ref(export);
+	(void) get_gsh_export_ref(export, true);
 	glist_init(&export->entry_list);
 	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
 	return true;
@@ -338,7 +338,8 @@ struct gsh_export *get_gsh_export(uint16_t export_id)
 	}
 
  out:
-	get_gsh_export_ref(exp);
+	if (!get_gsh_export_ref(exp, false))
+		exp = NULL;
 	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
 	return exp;
 }
@@ -417,8 +418,8 @@ struct gsh_export *get_gsh_export_by_path_locked(char *path,
 		}
 	}
 
-	if (ret_exp != NULL)
-		get_gsh_export_ref(ret_exp);
+	if (ret_exp == NULL || !get_gsh_export_ref(ret_exp, false))
+		ret_exp = NULL;
 
 	return ret_exp;
 }
@@ -532,8 +533,8 @@ struct gsh_export *get_gsh_export_by_pseudo_locked(char *path,
 		}
 	}
 
-	if (ret_exp != NULL)
-		get_gsh_export_ref(ret_exp);
+	if (ret_exp == NULL || !get_gsh_export_ref(ret_exp, false))
+		ret_exp = NULL;
 
 	return ret_exp;
 }
@@ -590,7 +591,8 @@ struct gsh_export *get_gsh_export_by_tag(char *tag)
 	return NULL;
 
  out:
-	get_gsh_export_ref(export);
+	if (!get_gsh_export_ref(export, false))
+		export = NULL;
 	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
 	return export;
 }

@@ -1691,10 +1691,18 @@ void try_to_grant_lock(state_lock_entry_t *lock_entry)
 	state_status_t status;
 	struct root_op_context root_op_context;
 	struct gsh_export *export = lock_entry->sle_export;
+	const char *reason;
 
-	/* Try to grant if not cancelled and has block data */
-	if (lock_entry->sle_blocked != STATE_CANCELED
-	    && lock_entry->sle_block_data != NULL) {
+	/* Try to grant if not cancelled and has block data and we are able
+	 * to get an export reference.
+	 */
+	if (lock_entry->sle_blocked == STATE_CANCELED) {
+		reason = "Removing canceled blocked lock entry";
+	} else if (lock_entry->sle_block_data == NULL) {
+		reason = "Removing blocked lock entry with no block data";
+	} else if (!get_gsh_export_ref(export, false)) {
+		reason = "Removing blocked lock entry due to stale export";
+	} else {
 		call_back = lock_entry->sle_block_data->sbd_granted_callback;
 		/* Mark the lock_entry as provisionally granted and make the
 		 * granted call back. The granted call back is responsible
@@ -1707,9 +1715,7 @@ void try_to_grant_lock(state_lock_entry_t *lock_entry)
 			lock_entry->sle_block_data->sbd_grant_type =
 			    STATE_GRANT_INTERNAL;
 
-		/* Initialize a root context */
-		get_gsh_export_ref(export);
-
+		/* Initialize a root context, need to get a valid export. */
 		init_root_op_context(&root_op_context,
 				     export, export->fsal_export,
 				     0, 0, UNKNOWN_REQUEST);
@@ -1720,6 +1726,7 @@ void try_to_grant_lock(state_lock_entry_t *lock_entry)
 		put_gsh_export(export);
 
 		release_root_op_context();
+
 		if (status == STATE_LOCK_BLOCKED) {
 			/* The lock is still blocked,
 			 * restore it's type and leave it in the list
@@ -1730,13 +1737,15 @@ void try_to_grant_lock(state_lock_entry_t *lock_entry)
 
 		if (status == STATE_SUCCESS)
 			return;
+
+		reason = "Removing unsucessfully granted blocked lock";
 	}
 
 	/* There was no call back data, the call back failed,
 	 * or the block was cancelled.
 	 * Remove lock from list.
 	 */
-	LogEntry("Removing blocked entry", lock_entry);
+	LogEntry(reason, lock_entry);
 	remove_from_locklist(lock_entry);
 }
 
@@ -3096,7 +3105,7 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 		root_op_context.req_ctx.export = found_entry->sle_export;
 		root_op_context.req_ctx.fsal_export =
 			root_op_context.req_ctx.export->fsal_export;
-		get_gsh_export_ref(root_op_context.req_ctx.export);
+		(void) get_gsh_export_ref(root_op_context.req_ctx.export, true);
 
 		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 
@@ -3162,7 +3171,9 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 		root_op_context.req_ctx.export = found_share->sns_export;
 		root_op_context.req_ctx.fsal_export =
 			root_op_context.req_ctx.export->fsal_export;
-		get_gsh_export_ref(root_op_context.req_ctx.export);
+
+		(void) get_gsh_export_ref(root_op_context.req_ctx.export, true);
+		/** @todo also look at the entry LRU ref... */
 
 		/* get a reference to the owner */
 		inc_state_owner_ref(owner);
@@ -3543,7 +3554,9 @@ void cancel_all_nlm_blocked()
 		root_op_context.req_ctx.export = found_entry->sle_export;
 		root_op_context.req_ctx.fsal_export =
 			root_op_context.req_ctx.export->fsal_export;
-		get_gsh_export_ref(root_op_context.req_ctx.export);
+
+		(void) get_gsh_export_ref(root_op_context.req_ctx.export, true);
+		/** @todo also look at the LRU ref for pentry */
 
 		LogEntry("Blocked Lock found", found_entry);
 

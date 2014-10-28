@@ -105,18 +105,28 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 		/* Handle junction */
 		cache_entry_t *entry = NULL;
 
+		/* Try to get a reference to the export. */
+		if (!get_gsh_export_ref(entry_src->object.dir.junction_export,
+					false)) {
+			/* Export has gone bad. */
+			/* Release attr_lock */
+			PTHREAD_RWLOCK_unlock(&entry_src->attr_lock);
+			LogDebug(NFS4ERR_STALE,
+				 "NFS4ERR_STALE On Export_Id %d Path %s",
+				 entry_src->object.dir
+					.junction_export->export_id,
+				 entry_src->object.dir
+					.junction_export->fullpath);
+			res_SECINFO4->status = NFS4ERR_STALE;
+			goto out;
+		}
+
 		/* Save the compound data context */
 		save_export_perms = *op_ctx->export_perms;
 		saved_gsh_export = op_ctx->export;
 
-		/* Get a reference to the export and stash it in
-		 * compound data.
-		 */
-		get_gsh_export_ref(entry_src->object.dir.junction_export);
-
 		op_ctx->export = entry_src->object.dir.junction_export;
-		op_ctx->fsal_export =
-			op_ctx->export->fsal_export;
+		op_ctx->fsal_export = op_ctx->export->fsal_export;
 
 		/* Release attr_lock */
 		PTHREAD_RWLOCK_unlock(&entry_src->attr_lock);
@@ -283,8 +293,7 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 
 		*op_ctx->export_perms = save_export_perms;
 		op_ctx->export = saved_gsh_export;
-		op_ctx->fsal_export =
-			op_ctx->export->fsal_export;
+		op_ctx->fsal_export = op_ctx->export->fsal_export;
 
 		/* Restore creds */
 		if (nfs_req_creds(data->req) != NFS4_OK) {

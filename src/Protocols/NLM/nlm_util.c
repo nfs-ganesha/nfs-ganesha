@@ -248,9 +248,11 @@ static void nlm4_send_grant_msg(state_async_queue_t *arg)
 
 	PTHREAD_RWLOCK_unlock(&cookie_entry->sce_entry->state_lock);
 
-	/* Initialize a context */
+	/* Initialize a context, it is ok if the export is stale because
+	 * we must clean up the cookie_entry.
+	 */
 	export = cookie_entry->sce_lock_entry->sle_export;
-	get_gsh_export_ref(export);
+	(void) get_gsh_export_ref(export, true);
 
 	init_root_op_context(&root_op_context,
 			     export, export->fsal_export,

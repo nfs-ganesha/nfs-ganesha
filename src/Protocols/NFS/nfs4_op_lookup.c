@@ -122,18 +122,28 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t *data,
 		/* Handle junction */
 		cache_entry_t *entry = NULL;
 
+		/* Attempt to get a reference to the export across the
+		 * junction.
+		 */
+		if (!get_gsh_export_ref(file_entry->object.dir.junction_export,
+					false)) {
+			/* If we could not get a reference, return stale.
+			 * Release attr_lock
+			 */
+			PTHREAD_RWLOCK_unlock(&file_entry->attr_lock);
+			LogDebug(COMPONENT_EXPORT,
+				 "NFS4ERR_STALE on LOOKUP of %s", name);
+			res_LOOKUP4->status = NFS4ERR_STALE;
+			goto out;
+		}
+
 		/* Release any old export reference */
 		if (op_ctx->export != NULL)
 			put_gsh_export(op_ctx->export);
 
-		/* Get a reference to the export and stash it in
-		 * compound data.
-		 */
-		get_gsh_export_ref(file_entry->object.dir.junction_export);
-
+		/* Stash the new export in the compound data. */
 		op_ctx->export = file_entry->object.dir.junction_export;
-		op_ctx->fsal_export =
-			op_ctx->export->fsal_export;
+		op_ctx->fsal_export = op_ctx->export->fsal_export;
 
 		/* Release attr_lock */
 		PTHREAD_RWLOCK_unlock(&file_entry->attr_lock);

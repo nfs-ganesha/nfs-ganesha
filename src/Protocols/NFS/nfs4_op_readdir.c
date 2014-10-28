@@ -151,14 +151,20 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 			 entry->object.dir.junction_export->export_id,
 			 entry->object.dir.junction_export->fullpath);
 
-		/* Save the compound data context */
-		tracker->save_export_perms = *op_ctx->export_perms;
-		tracker->saved_gsh_export = op_ctx->export;
-
 		/* Get a reference to the export and stash it in
 		 * compound data.
 		 */
-		get_gsh_export_ref(entry->object.dir.junction_export);
+		if (!get_gsh_export_ref(entry->object.dir.junction_export,
+					false)) {
+			/* Export is in the process of being released.
+			 * Pretend it's not actually a junction.
+			 */
+			goto not_junction;
+		}
+
+		/* Save the compound data context */
+		tracker->save_export_perms = *op_ctx->export_perms;
+		tracker->saved_gsh_export = op_ctx->export;
 
 		/* Cross the junction */
 		op_ctx->export = entry->object.dir.junction_export;
@@ -259,6 +265,8 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 			 op_ctx->export->fullpath);
 		restore_data(tracker);
 	}
+
+not_junction:
 
 	/* Now process the entry */
 	memset(val_fh, 0, NFS4_FHSIZE);

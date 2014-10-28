@@ -103,10 +103,12 @@ cache_inode_getattr(cache_entry_t *entry,
 	if (status == CACHE_INODE_CROSS_JUNCTION) {
 		PTHREAD_RWLOCK_rdlock(&op_ctx->export->lock);
 
-		junction_export = entry->object.dir.junction_export;
-
-		if (junction_export != NULL)
-			get_gsh_export_ref(entry->object.dir.junction_export);
+		/* Get a reference to the junction_export and remember it
+		 * only if the junction export is valid.
+		 */
+		if (get_gsh_export_ref(entry->object.dir.junction_export,
+				       false))
+			junction_export = entry->object.dir.junction_export;
 
 		PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
 	}
