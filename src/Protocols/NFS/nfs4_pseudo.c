@@ -340,8 +340,7 @@ bool pseudo_mount_export(struct gsh_export *export)
 		 tmp_pseudopath);
 
 	/* Now find the export we are mounted on */
-	op_ctx->export =
-	    get_gsh_export_by_pseudo(tmp_pseudopath, false);
+	op_ctx->export = get_gsh_export_by_pseudo(tmp_pseudopath, false);
 
 	if (op_ctx->export == NULL) {
 		LogFatal(COMPONENT_EXPORT,
@@ -401,8 +400,7 @@ bool pseudo_mount_export(struct gsh_export *export)
 	}
 
 	/* Lock (and refresh if necessary) the attributes */
-	cache_status =
-	    cache_inode_lock_trust_attrs(state.dirent, true);
+	cache_status = cache_inode_lock_trust_attrs(state.dirent, true);
 
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		LogCrit(COMPONENT_EXPORT,
