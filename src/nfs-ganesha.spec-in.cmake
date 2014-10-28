@@ -66,6 +66,12 @@
 %global with_rdma 0
 %endif
 
+%if %{?_with_lustre_up:1}%{!?_with_lustre_up:0}
+%global with_lustre_up 1
+%else
+%global with_lustre_up 0
+%endif
+
 %if %{?_with_lttng:1}%{!?_with_lttng:0}
 %global with_lttng 1
 %else
@@ -105,6 +111,10 @@ Requires:	nfs-utils-lib
 %if %{with_rdma}
 BuildRequires:	libmooshika-devel >= 0.6-0
 Requires:	libmooshika >= 0.6-0
+%endif
+%if %{with_lustre_up}
+BuildRequires: lcap-devel >= 0.1-0
+Requires:	lcap >= 0.1-0
 %endif
 
 # Use CMake variables
@@ -341,6 +351,9 @@ cmake .	-DCMAKE_BUILD_TYPE=Debug			\
 %endif
 %if %{with_rdma}
 	-DUSE_9P_RDMA=ON				\
+%endif
+%if %{with_lustre_up}
+	-DUSE_FSAL_LUSTRE_UP=ON				\
 %endif
 %if %{with_lttng}
 	-DUSE_LTTNG=ON				\

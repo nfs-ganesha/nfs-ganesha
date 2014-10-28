@@ -186,6 +186,9 @@ option(USE_FSAL_HPSS "build HPSS FSAL" OFF)
 # SHOOK is a variant of Lustre FSAL
 option(USE_FSAL_SHOOK "build SHOOK FSAL" ON)
 
+# Activate FSAL Upcalls for FSAL_LUSTRE
+option(USE_FSAL_LUSTRE_UP "add Upcalls support for LUSTRE FSAL" OFF)
+
 # From TI-RPC
 option (USE_GSS "enable RPCSEC_GSS support" ON)
 option(TIRPC_EPOLL "platform supports EPOLL or emulation" ON)
@@ -376,6 +379,8 @@ IF(USE_9P_RDMA)
   ENDIF()
 ENDIF()
 
+
+
 if(USE_CB_SIMULATOR AND NOT USE_DBUS)
   message(WARNING "The callback simulator needs DBUS.  Enabling DBUS")
   set(USE_DBUS ON)
@@ -556,6 +561,18 @@ if(USE_FSAL_LUSTRE AND USE_FSAL_SHOOK)
     endif(STRICT_PACKAGE)
   endif((NOT HAVE_SHOOK) OR (NOT HAVE_SHOOK_XATTRS))
 endif(USE_FSAL_LUSTRE AND USE_FSAL_SHOOK)
+
+IF(USE_FSAL_LUSTRE_UP)
+  find_library(HAVE_LCAP lcap)
+  check_include_files("lcap_client.h" HAVE_LCAP_CLIENT_H)
+  IF(NOT HAVE_LCAP OR NOT HAVE_LCAP_CLIENT_H)
+    message(WARNING "liblcap is to be installed to use Lustre upcalls")
+    set(USE_FSAL_LUSTRE_UP OFF)
+  ENDIF(NOT HAVE_LCAP OR NOT HAVE_LCAP_CLIENT_H)
+  IF(NOT HAVE_FSAL_LUSTRE)
+    message(WARNING "You must trigger Lustre FSAL ON to use Lustre upcalls")
+  ENDIF(NOT HAVE_FSAL_LUSTRE)
+ENDIF(USE_FSAL_LUSTRE_UP)
 
 if(USE_FSAL_XFS)
   check_library_exists(
@@ -898,6 +915,7 @@ message(STATUS "USE_FSAL_PT = ${USE_FSAL_PT}")
 message(STATUS "USE_FSAL_ZFS = ${USE_FSAL_ZFS}")
 message(STATUS "USE_FSAL_LUSTRE = ${USE_FSAL_LUSTRE}")
 message(STATUS "USE_FSAL_SHOOK = ${USE_FSAL_SHOOK}")
+message(STATUS "USE_FSAL_LUSTRE_UP = ${USE_FSAL_LUSTRE_UP}")
 message(STATUS "USE_FSAL_GLUSTER = ${USE_FSAL_GLUSTER}")
 message(STATUS "USE_DBUS = ${USE_DBUS}")
 message(STATUS "USE_CB_SIMULATOR = ${USE_CB_SIMULATOR}")

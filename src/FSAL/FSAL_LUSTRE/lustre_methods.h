@@ -2,6 +2,7 @@
  * vim:noexpandtab:shiftwidth=8:tabstop=8:
  */
 
+extern char *exec_name;
 
 /* LUSTRE methods for handles
  */
@@ -38,6 +39,9 @@ struct lustre_filesystem {
 	char *fsname;
 	struct fsal_filesystem *fs;
 	struct glist_head exports;
+	bool up_thread_started;
+	const struct fsal_up_vector *up_ops;
+	pthread_t up_thread; /* upcall thread */
 };
 
 

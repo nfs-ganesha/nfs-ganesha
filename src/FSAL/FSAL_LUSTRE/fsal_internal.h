@@ -40,6 +40,9 @@
 #include <sys/stat.h>
 #include "fsal_pnfs.h"
 #include "lustre_extended_types.h"
+#ifdef USE_FSAL_LUSTRE_UP
+#include "lcap_client.h"
+#endif
 
 extern const char myname[];
 extern bool is_fsal_shook;
@@ -119,6 +122,9 @@ struct lustre_ds {
 };
 
 void lustre_handle_ops_init(struct fsal_obj_ops *ops);
+
+/* Upcalls thread for FSAL_LUSTRE */
+void *LUSTREFSAL_UP_Thread(void *Arg);
 
 /* Add missing prototype in vfs.h */
 int fd_to_handle(int fd, void **hanp, size_t *hlen);

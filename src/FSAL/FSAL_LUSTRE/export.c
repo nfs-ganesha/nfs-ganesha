@@ -598,6 +598,46 @@ int lustre_claim_filesystem(struct fsal_filesystem *fs, struct fsal_export *exp)
 	/* Lustre_fs is ready, store it in the FS */
 	fs->private = lustre_fs;
 
+#ifdef USE_FSAL_LUSTRE_UP
+	if (lustre_fs->up_ops == NULL) {
+		pthread_attr_t attr_thr;
+
+		memset(&attr_thr, 0, sizeof(attr_thr));
+
+		/* Initialization of thread attributes from nfs_init.c */
+		if (pthread_attr_init(&attr_thr) != 0)
+			LogCrit(COMPONENT_THREAD,
+				"can't init pthread's attributes");
+
+		if (pthread_attr_setscope(&attr_thr, PTHREAD_SCOPE_SYSTEM) != 0)
+			LogCrit(COMPONENT_THREAD, "can't set pthread's scope");
+
+		if (pthread_attr_setdetachstate(&attr_thr,
+						PTHREAD_CREATE_JOINABLE) != 0)
+			LogCrit(COMPONENT_THREAD,
+				"can't set pthread's join state");
+
+		if (pthread_attr_setstacksize(&attr_thr, 2116488) != 0)
+			LogCrit(COMPONENT_THREAD,
+				"can't set pthread's stack size");
+
+		lustre_fs->up_ops = exp->up_ops;
+		retval = pthread_create(&lustre_fs->up_thread,
+					&attr_thr,
+					LUSTREFSAL_UP_Thread,
+					lustre_fs);
+
+		if (retval != 0) {
+			retval = errno;
+			LogCrit(COMPONENT_THREAD,
+				"Could not create LUSTREFSAL_UP_Thread, error = %d (%s)",
+				retval, strerror(retval));
+			goto errout;
+		}
+	}
+
+#endif
+
 already_claimed:
 
 	/* Now map the file system and export */

@@ -7,6 +7,7 @@ SET(fsallustre_LIB_SRCS
    main.c
    export.c
    handle.c
+   fsal_up.c
    file.c
    lustre_specific.c
    xattrs.c
@@ -16,7 +17,11 @@ SET(fsallustre_LIB_SRCS
 
 add_library(fsallustre SHARED ${fsallustre_LIB_SRCS})
 
-target_link_libraries(fsallustre lustreapi ${SYSTEM_LIBRARIES})
+if(USE_FSAL_LUSTRE_UP)
+  target_link_libraries(fsallustre lustreapi lcap ${SYSTEM_LIBRARIES})
+else(USE_FSAL_LUSTRE_UP)
+  target_link_libraries(fsallustre lustreapi ${SYSTEM_LIBRARIES})
+endif(USE_FSAL_LUSTRE_UP)
 
 set_target_properties(fsallustre PROPERTIES VERSION 4.2.0 SOVERSION 4)
 install(TARGETS fsallustre COMPONENT fsal DESTINATION  ${FSAL_DESTINATION} )
@@ -34,6 +39,7 @@ if(USE_FSAL_SHOOK)
     handle.c
     file.c
     xattrs.c
+    fsal_up.c
     shook_specific.c
     mds.c
     ds.c
@@ -41,7 +47,11 @@ if(USE_FSAL_SHOOK)
 
   add_library(fsalshook SHARED ${fsalshook_LIB_SRCS})
 
-  target_link_libraries(fsalshook lustreapi shook ${SYSTEM_LIBRARIES})
+  if(USE_FSAL_LUSTRE_UP)
+    target_link_libraries(fsalshook lustreapi shook lcap ${SYSTEM_LIBRARIES})
+  else(USE_FSAL_LUSTRE_UP)
+    target_link_libraries(fsalshook lustreapi shook ${SYSTEM_LIBRARIES})
+  endif(USE_FSAL_LUSTRE_UP)
 
   set_target_properties(fsalshook PROPERTIES VERSION 4.2.0 SOVERSION 4)
   install(TARGETS fsalshook COMPONENT fsal DESTINATION  ${FSAL_DESTINATION} )
