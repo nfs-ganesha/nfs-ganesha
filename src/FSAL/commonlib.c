@@ -745,7 +745,7 @@ int re_index_fs_dev(struct fsal_filesystem *fs,
 int change_fsid_type(struct fsal_filesystem *fs,
 		     enum fsid_type fsid_type)
 {
-	uint64_t major, minor;
+	uint64_t major = 0, minor = 0;
 	bool valid = false;
 
 	if (fs->fsid_type == fsid_type)

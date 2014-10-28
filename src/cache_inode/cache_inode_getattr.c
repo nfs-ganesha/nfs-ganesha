@@ -71,7 +71,7 @@ cache_inode_getattr(cache_entry_t *entry,
 		    cache_inode_getattr_cb_t cb)
 {
 	cache_inode_status_t status;
-	struct gsh_export *junction_export;
+	struct gsh_export *junction_export = NULL;
 	cache_entry_t *junction_entry;
 	uint64_t mounted_on_fileid;
 

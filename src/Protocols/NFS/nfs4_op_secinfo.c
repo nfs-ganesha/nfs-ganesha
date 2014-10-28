@@ -65,7 +65,7 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 	cache_entry_t *entry_src = NULL;
 	sec_oid4 v5oid = { krb5oid.length, (char *)krb5oid.elements };
 	int num_entry = 0;
-	struct export_perms save_export_perms;
+	struct export_perms save_export_perms = { 0, };
 	struct gsh_export *saved_gsh_export = NULL;
 
 	resp->resop = NFS4_OP_SECINFO;
