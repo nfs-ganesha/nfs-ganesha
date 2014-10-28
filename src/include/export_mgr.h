@@ -170,10 +170,21 @@ void remove_gsh_export(uint16_t export_id);
 bool foreach_gsh_export(bool(*cb) (struct gsh_export *exp, void *state),
 			void *state);
 
-static inline void get_gsh_export_ref(struct gsh_export *exp)
+static inline bool export_ready(struct gsh_export *export)
 {
-	atomic_inc_int64_t(&exp->refcnt);
+	return atomic_fetch_uint32_t(&export->exp_state) == EXPORT_READY;
 }
+
+static inline bool
+get_gsh_export_ref(struct gsh_export *export, bool export_release_ok)
+{
+	if (export && (export_release_ok || export_ready(export))) {
+		atomic_inc_int64_t(&export->refcnt);
+		return true;
+	}
+	return false;
+}
+
 void export_revert(struct gsh_export *export);
 void export_add_to_mount_work(struct gsh_export *export);
 void export_add_to_unexport_work_locked(struct gsh_export *export);

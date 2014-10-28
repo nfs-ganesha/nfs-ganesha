@@ -1722,7 +1722,7 @@ void kill_export_root_entry(cache_entry_t *entry)
 			return;
 		}
 
-		get_gsh_export_ref(export);
+		(void) get_gsh_export_ref(export, true);
 		LogInfo(COMPONENT_CONFIG,
 			"Killing export_id %d because root entry went bad",
 			export->export_id);
@@ -1766,7 +1766,7 @@ void kill_export_junction_entry(cache_entry_t *entry)
 	/* Detach the export from the inode */
 	entry->object.dir.junction_export = NULL;
 
-	get_gsh_export_ref(export);
+	(void) get_gsh_export_ref(export, true);
 
 	LogInfo(COMPONENT_CONFIG,
 		"Unmounting export_id %d because junction entry went bad",
