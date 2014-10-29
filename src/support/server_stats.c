@@ -1245,7 +1245,7 @@ void inc_failed_recalls(struct gsh_client *client)
 
 void server_stats_summary(DBusMessageIter *iter, struct gsh_stats *st)
 {
-	int stats_available;
+	dbus_bool_t stats_available;
 
 	stats_available = st->nfsv3 != 0;
 	dbus_message_iter_append_basic(iter, DBUS_TYPE_BOOLEAN,

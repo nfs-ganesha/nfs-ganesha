@@ -441,7 +441,7 @@ static bool dbus_reply_introspection(DBusMessage *reply,
 void dbus_status_reply(DBusMessageIter *iter, bool success, char *errormsg)
 {
 	char *error;
-	int retcode = success;
+	dbus_bool_t retcode = success;
 
 	dbus_message_iter_append_basic(iter, DBUS_TYPE_BOOLEAN, &retcode);
 	if (errormsg == NULL)
