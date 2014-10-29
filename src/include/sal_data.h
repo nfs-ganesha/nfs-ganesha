@@ -814,7 +814,7 @@ struct state_lock_entry_t {
 	state_owner_t *sle_owner;	/* Lock owner */
 	state_t *sle_state;	/*< Associated lock state */
 	state_blocking_t sle_blocked;	/*< Blocking status */
-	int sle_ref_count;	/*< Reference count */
+	int32_t sle_ref_count;	/*< Reference count */
 	fsal_lock_param_t sle_lock;	/*< Lock description */
 	pthread_mutex_t sle_mutex;	/*< Mutex to protect the structure */
 	lock_type_t sle_type;	/*< Type of lock */

@@ -302,13 +302,15 @@ static inline bool different_lock(fsal_lock_param_t *lock1,
  * Functions to log locks in various ways
  *
  ******************************************************************************/
+
 /**
- * @brief Log a lock entry
+ * @brief Log a lock entry with a passed refcount
  *
  * @param[in] reason Arbitrary string
  * @param[in] le     Entry to log
  */
-static void LogEntry(const char *reason, state_lock_entry_t *le)
+static void
+LogEntryRefCount(const char *reason, state_lock_entry_t *le, int32_t refcount)
 {
 	if (isFullDebug(COMPONENT_STATE)) {
 		char owner[HASHTABLE_DISPLAY_STRLEN];
@@ -317,17 +319,30 @@ static void LogEntry(const char *reason, state_lock_entry_t *le)
 
 		LogFullDebug(COMPONENT_STATE,
 			     "%s Entry: %p entry=%p, fileid=%" PRIu64
-			     ", export=%u, type=%s, start=0x%llx, end=0x%llx, blocked=%s/%p, state=%p, refcount=%d, type %d owner={%s}",
+			     ", export=%u, type=%s, "
+			     "start=0x%"PRIx64", end=0x%"PRIx64
+			     ", blocked=%s/%p, state=%p, refcount=%"PRIu32
+			     ", type %d owner={%s}",
 			     reason, le, le->sle_entry,
 			     (uint64_t) le->sle_entry->obj_handle->attributes.
 			     fileid, (unsigned int)le->sle_export->export_id,
 			     str_lockt(le->sle_lock.lock_type),
-			     (unsigned long long)le->sle_lock.lock_start,
-			     (unsigned long long)lock_end(&le->sle_lock),
+			     le->sle_lock.lock_start,
+			     lock_end(&le->sle_lock),
 			     str_blocked(le->sle_blocked), le->sle_block_data,
-			     le->sle_state, le->sle_ref_count, le->sle_type,
-			     owner);
+			     le->sle_state, refcount, le->sle_type, owner);
 	}
+}
+
+/**
+ * @brief Log a lock entry
+ *
+ * @param[in] reason Arbitrary string
+ * @param[in] le     Entry to log
+ */
+static inline void LogEntry(const char *reason, state_lock_entry_t *le)
+{
+	LogEntryRefCount(reason, le, atomic_fetch_int32_t(&le->sle_ref_count));
 }
 
 /**
@@ -620,10 +635,9 @@ inline state_lock_entry_t *state_lock_entry_t_dup(state_lock_entry_t *
  */
 void lock_entry_inc_ref(state_lock_entry_t *lock_entry)
 {
-	pthread_mutex_lock(&lock_entry->sle_mutex);
-	lock_entry->sle_ref_count++;
-	LogEntry("Increment refcount", lock_entry);
-	pthread_mutex_unlock(&lock_entry->sle_mutex);
+	int32_t refcount = atomic_inc_int32_t(&lock_entry->sle_ref_count);
+
+	LogEntryRefCount("Increment refcount", lock_entry, refcount);
 }
 
 /**
@@ -633,27 +647,14 @@ void lock_entry_inc_ref(state_lock_entry_t *lock_entry)
  */
 void lock_entry_dec_ref(state_lock_entry_t *lock_entry)
 {
-	bool to_free = false;
+	int32_t refcount = atomic_dec_int32_t(&lock_entry->sle_ref_count);
 
-	pthread_mutex_lock(&lock_entry->sle_mutex);
+	LogEntryRefCount(refcount != 0
+			 ? "Decrement refcount"
+			 : "Decrement refcount and freeing",
+			 lock_entry, refcount);
 
-	lock_entry->sle_ref_count--;
-
-	LogEntry("Decrement refcount", lock_entry);
-
-	if (!lock_entry->sle_ref_count) {
-		/*
-		 * We should already be removed from the lock_list
-		 * So we can free the lock_entry without any locking
-		 */
-		to_free = true;
-	}
-
-	pthread_mutex_unlock(&lock_entry->sle_mutex);
-
-	if (to_free) {
-		LogEntry("Freeing", lock_entry);
-
+	if (refcount == 0) {
 		/* Release block data if present */
 		if (lock_entry->sle_block_data != NULL) {
 			/* need to remove from the state_blocked_locks list */
