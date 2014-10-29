@@ -779,7 +779,7 @@ void gsh_dbus_wake_thread(uint32_t flags)
  *                  Ex: DBUS_TYPE_STRING, DBUS_TYPE_UINT32, etc...
  *
  * @param ... :     An alternating list of types and data
- *                  All data args must be passed by refrence
+ *                  All data args must be passed by reference
  *                  Ex: &my_int,
  *                      DBUS_TYPE_STRING, &charPtr,
  *                      DBUS_TYPE_BOOLEAN, &my_bool

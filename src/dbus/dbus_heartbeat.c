@@ -1,6 +1,4 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
- *
  * Copyright (C) IBM Inc., 2014
  * Author: Jeremy Bongio <jbongio@us.ibm.com>
  *
@@ -51,12 +49,11 @@ struct _ganesha_health {
 	int old_dequeue;
 	int enqueue_diff;
 	int dequeue_diff;
-	int ishealthy;
 };
 
 struct _ganesha_health healthstats;
 
-void get_ganesha_health(struct _ganesha_health *hstats)
+bool get_ganesha_health(struct _ganesha_health *hstats)
 {
 	int newenq, newdeq;
 
@@ -71,9 +68,8 @@ void get_ganesha_health(struct _ganesha_health *hstats)
 	 * health state indicates if we are making progress draining the
 	 * request queue.
 	 */
-	hstats->ishealthy =
-	   ((hstats->enqueue_diff > 0 && hstats->dequeue_diff > 0) ||
-	    (hstats->enqueue_diff == 0));
+	return (hstats->enqueue_diff > 0 && hstats->dequeue_diff > 0) ||
+		(hstats->enqueue_diff == 0);
 }
 
 int dbus_heartbeat_cb(void *arg)
@@ -81,16 +77,15 @@ int dbus_heartbeat_cb(void *arg)
 	SetNameFunction("dbus_heartbeat");
 	int err = 0;
 	int rc = BCAST_STATUS_OK;
+	dbus_bool_t ishealthy = get_ganesha_health(&healthstats);
 
-	get_ganesha_health(&healthstats);
-
-	if (healthstats.ishealthy) {
+	if (ishealthy) {
 		/* send the heartbeat pulse */
 		err = gsh_dbus_broadcast(DBUS_PATH HEARTBEAT_NAME,
 					 DBUS_ADMIN_IFACE,
 					 HEARTBEAT_NAME,
 					 DBUS_TYPE_BOOLEAN,
-					 &healthstats.ishealthy,
+					 &ishealthy,
 					 DBUS_TYPE_INVALID);
 		if (err) {
 			LogCrit(COMPONENT_DBUS,
@@ -115,5 +110,3 @@ void init_heartbeat()
 			   nfs_param.core_param.heartbeat_freq*NS_PER_MSEC,
 			   BCAST_FOREVER);
 }
-
-
