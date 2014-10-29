@@ -28,6 +28,43 @@
  * This file provides inline functions that provide atomic operations
  * appropriate to the compiler being used.  (Someone can add support
  * for an appropriate library later on.)
+ *
+ * The types functions are provided for are:
+ *
+ * ptrdiff_t (fetch and store only)
+ * void* (fetch and store only)
+ * uintptr_t (fetch and store only)
+ * int64_t
+ * uint64_t
+ * int32_t
+ * uint21_t
+ * int16_t
+ * uint16_t
+ * int8_t
+ * uint8_t
+ * size_t
+ *
+ * The functions provided are (using int64_t for example):
+ *
+ * int64_t atomic_add_int64_t(int64_t *augend, int64_t addend)
+ * int64_t atomic_inc_int64_t(int64_t *var)
+ * int64_t atomic_sub_int64_t(int64_t *minuend, int64_t subtrahend)
+ * int64_t atomic_dec_int64_t(int64_t *var)
+ * int64_t atomic_postadd_int64_t(int64_t *augend, int64_t addend)
+ * int64_t atomic_postinc_int64_t(int64_t *var)
+ * int64_t atomic_postsub_int64_t(int64_t *minuend, int64_t subtrahend)
+ * int64_t atomic_postdec_int64_t(int64_t *var)
+ * int64_t atomic_fetch_int64_t(int64_t *var)
+ * void atomic_store_int64_t(int64_t *var, int64_t val)
+ *
+ * The following bit mask operations are provided for
+ * uint64_t, uint32_t, uint_16t, and uint8_t:
+ *
+ * uint64_t atomic_clear_uint64_t_bits(uint64_t *var, uint64_t bits)
+ * uint64_t atomic_set_uint64_t_bits(uint64_t *var, uint64_t bits)
+ * uint64_t atomic_postclear_uint64_t_bits(uint64_t *var,
+ * uint64_t atomic_postset_uint64_t_bits(uint64_t *var,
+ *
  */
 
 #ifndef _ABSTRACT_ATOMIC_H
