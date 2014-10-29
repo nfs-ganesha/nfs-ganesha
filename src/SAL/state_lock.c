@@ -583,6 +583,7 @@ static state_lock_entry_t *create_state_lock_entry(cache_entry_t *entry,
 	glist_add_tail(&export->exp_lock_list,
 		       &new_entry->sle_export_locks);
 	PTHREAD_RWLOCK_unlock(&export->lock);
+	(void) get_gsh_export_ref(export, true);
 
 	/* Add to list of locks owned by owner */
 	inc_state_owner_ref(owner);
@@ -667,6 +668,7 @@ void lock_entry_dec_ref(state_lock_entry_t *lock_entry)
 		pthread_mutex_unlock(&all_locks_mutex);
 #endif
 
+		put_gsh_export(lock_entry->sle_export);
 		gsh_free(lock_entry);
 	}
 }
