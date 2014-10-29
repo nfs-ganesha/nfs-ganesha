@@ -1449,8 +1449,9 @@ cache_inode_lru_unref(cache_entry_t *entry, uint32_t flags)
 	uint32_t lane = entry->lru.lane;
 	struct lru_q_lane *qlane = &LRU[lane];
 	bool qlocked = flags & LRU_UNREF_QLOCKED;
+	bool other_lock_held = flags & LRU_UNREF_STATE_LOCK_HELD;
 
-	if (!qlocked) {
+	if (!qlocked && !other_lock_held) {
 		QLOCK(qlane);
 		if (((entry->lru.flags & LRU_CLEANED) == 0) &&
 		    (entry->lru.qid == LRU_ENTRY_CLEANUP)) {
