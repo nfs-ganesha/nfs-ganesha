@@ -61,7 +61,6 @@
 #include "server_stats.h"
 #include "abstract_atomic.h"
 #include "gsh_intrinsic.h"
-#include "sal_functions.h"
 #include "nfs_exports.h"
 #include "nfs_proto_functions.h"
 
@@ -634,21 +633,6 @@ void put_gsh_export(struct gsh_export *export)
 	}
 
 	/* Releasing last reference */
-
-	/* Release state belonging to this export */
-	state_release_export(export);
-
-	/* Flush cache inodes belonging to this export */
-	cache_inode_unexport(export);
-
-	/* can we really let go or do we have unfinished business? */
-	assert(glist_empty(&export->entry_list));
-	assert(glist_empty(&export->exp_state_list));
-	assert(glist_empty(&export->exp_lock_list));
-	assert(glist_empty(&export->exp_nlm_share_list));
-	assert(glist_empty(&export->mounted_exports_list));
-	assert(glist_null(&export->exp_root_list));
-	assert(glist_null(&export->mounted_exports_node));
 
 	/* free resources */
 	free_export_resources(export);
