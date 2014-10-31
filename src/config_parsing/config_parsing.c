@@ -1214,7 +1214,7 @@ static int proc_block(struct config_node *node,
 			node->linenumber,
 			errors,
 			item->name);
-		goto err_out;
+		return errors;
 	}
 	if (item->u.blk.display != NULL)
 		item->u.blk.display("RESULT", node, link_mem, param_struct);
