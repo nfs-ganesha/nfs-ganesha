@@ -645,6 +645,7 @@ typedef enum enum_fsal_fsinfo_options {
 	fso_share_support,
 	fso_share_support_owner,
 	fso_pnfs_ds_supported,
+	fso_pnfs_mds_supported,
 	fso_reopen_method
 } fsal_fsinfo_options_t;
 
@@ -692,7 +693,8 @@ struct fsal_staticfsinfo_t {
 	bool share_support_owner;	/*< FS supports share reservation
 					   with open owners ? */
 	uint32_t delegations;	/*< fsal supports delegations */
-	bool pnfs_file;		/*< fsal supports file pnfs */
+	bool pnfs_mds;		/*< fsal supports file pnfs MDS */
+	bool pnfs_ds;		/*< fsal supports file pnfs DS */
 	bool reopen_method;	/* fsal supports reopen method */
 	bool fsal_trace;	/*< fsal trace supports */
 };

@@ -393,8 +393,10 @@ void display_fsinfo(struct fsal_staticfsinfo_t *info)
 		 info->share_support_owner);
 	LogDebug(COMPONENT_FSAL, "  delegations = %d  ",
 		 info->delegations);
-	LogDebug(COMPONENT_FSAL, "  pnfs_file = %d  ",
-		 info->pnfs_file);
+	LogDebug(COMPONENT_FSAL, "  pnfs_mds = %d  ",
+		 info->pnfs_mds);
+	LogDebug(COMPONENT_FSAL, "  pnfs_ds = %d  ",
+		 info->pnfs_ds);
 	LogDebug(COMPONENT_FSAL, "  fsal_trace = %d  ",
 		 info->fsal_trace);
 	LogDebug(COMPONENT_FSAL, "}");
