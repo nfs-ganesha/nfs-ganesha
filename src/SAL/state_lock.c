@@ -3046,6 +3046,7 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 	state_nlm_share_t *found_share;
 	state_status_t status = 0;
 	struct root_op_context root_op_context;
+	struct gsh_export *export;
 
 	/* Initialize a context */
 	init_root_op_context(&root_op_context, NULL, NULL,
@@ -3056,7 +3057,7 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 
 		display_nsm_client(nsmclient, client);
 
-		LogFullDebug(COMPONENT_STATE, "state_nlm_notify for %s",
+		LogFullDebug(COMPONENT_STATE, "Notify for %s",
 			     client);
 	}
 
@@ -3071,9 +3072,9 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 		/* We just need to find any file this client has locks on.
 		 * We pick the first lock the client holds, and use it's file.
 		 */
-		found_entry =
-		    glist_first_entry(&nsmclient->ssc_lock_list,
-				      state_lock_entry_t, sle_client_locks);
+		found_entry = glist_first_entry(&nsmclient->ssc_lock_list,
+						state_lock_entry_t,
+						sle_client_locks);
 
 		/* If we don't find any entries, then we are done. */
 		if (found_entry == NULL) {
@@ -3081,17 +3082,29 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 			break;
 		}
 
-		/* Get a reference so the lock entry will still be valid when
-		 * we release the ssc_mutex
-		 */
-		lock_entry_inc_ref(found_entry);
-
 		/* Remove from the client lock list */
 		glist_del(&found_entry->sle_client_locks);
 
 		if (found_entry->sle_state == state && from_client) {
 			/* This is a new lock acquired since the client
 			 * rebooted, retain it.
+			 *
+			 * Note that although this entry is temporarily
+			 * not on the ssc_lock_list, we don't need to hold
+			 * an extra refrence to the entry since the list
+			 * still effectively protected by the ssc_mutex.
+			 * If something happens to remove this entry, it will
+			 * actually be removed from the newlocks list, which
+			 * in the end is correct. So we don't need to do
+			 * anything special.
+			 */
+			/** @todo FSF: vulnerability - if a SECOND SM_NOTIFY
+			 * comes in while this one is still being processed
+			 * the locks put on the newlocks list would not be
+			 * cleaned up. This list REALLY should be attached
+			 * to the nsm_client in some way, or we should block
+			 * handling of the 2nd SM_NOTIFY until this one is
+			 * complete.
 			 */
 			LogEntry("Don't release new lock", found_entry);
 			glist_add_tail(&newlocks,
@@ -3102,30 +3115,47 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 
 		LogEntry("Release client locks based on", found_entry);
 
+		/* Extract the bits from the lock entry that we will need
+		 * to proceed with the operation (cache entry, owner, and
+		 * export).
+		 */
+		entry = found_entry->sle_entry;
+		owner = found_entry->sle_owner;
+		export = found_entry->sle_export;
+
+		root_op_context.req_ctx.export = export;
+		root_op_context.req_ctx.fsal_export = export->fsal_export;
+
+		/* Get a reference to the cache inode while we still hold
+		 * the ssc_mutex (since we hold this mutex, any other function
+		 * that might be cleaning up this lock CAN NOT have released
+		 * the last LRU reference, thus it is safe to grab another.
+		 *
+		 * Note we don't bother checking for stale here, state_unlock
+		 * will check soon enough, and we can handle error better at
+		 * that point.
+		 */
+		(void) cache_inode_lru_ref(entry, LRU_REQ_STALE_OK);
+
+		/* Get a reference to the export while we still hold the
+		 * ssc_mutex. This assures that the export definitely can
+		 * not have had it's last refcount released. We will check
+		 * later to see if the export is being removed.
+		 */
+		(void) get_gsh_export_ref(export, true);
+
+		/* Get a reference to the owner */
+		inc_state_owner_ref(owner);
+
 		/* Move this entry to the end of the list
 		 * (this will help if errors occur)
 		 */
 		glist_add_tail(&nsmclient->ssc_lock_list,
 			       &found_entry->sle_client_locks);
 
-		pthread_mutex_unlock(&nsmclient->ssc_mutex);
-
-		/* Extract the cache inode entry from the lock entry and
-		 * release the lock entry
+		/* Now we are done with this specific entry, release the mutex.
 		 */
-		entry = found_entry->sle_entry;
-		owner = found_entry->sle_owner;
-		root_op_context.req_ctx.export = found_entry->sle_export;
-		root_op_context.req_ctx.fsal_export =
-			root_op_context.req_ctx.export->fsal_export;
-		(void) get_gsh_export_ref(root_op_context.req_ctx.export, true);
-
-		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
-
-		lock_entry_dec_ref(found_entry);
-		(void) cache_inode_lru_ref(entry, LRU_REQ_STALE_OK);
-
-		PTHREAD_RWLOCK_unlock(&entry->state_lock);
+		pthread_mutex_unlock(&nsmclient->ssc_mutex);
 
 		/* Make lock that covers the whole file.
 		 * type doesn't matter for unlock
@@ -3134,12 +3164,27 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 		lock.lock_start = 0;
 		lock.lock_length = 0;
 
-		/* Remove all locks held by this NLM Client on the file */
-		status = state_unlock(entry,
-				      owner, state,
-				      &lock, POSIX_LOCK);
+		if (export_ready(export)) {
+			/* Remove all locks held by this NLM Client on
+			 * the file.
+			 */
+			status = state_unlock(entry,
+					      owner, state,
+					      &lock, POSIX_LOCK);
+		} else {
+			/* The export is being removed, we didn't bother
+			 * calling state_unlock() because export cleanup
+			 * will remove all the state. This is assured by
+			 * the call to put_gsh_export immediately following.
+			 * Pretend succes.
+			 */
+			status = STATE_SUCCESS;
+		}
 
-		put_gsh_export(root_op_context.req_ctx.export);
+		/* Release the refcounts we took above. */
+		put_gsh_export(export);
+		dec_state_owner_ref(owner);
+		cache_inode_lru_unref(entry, LRU_FLAG_NONE);
 
 		if (!state_unlock_err_ok(status)) {
 			/* Increment the error count and try the next lock,
@@ -3149,13 +3194,7 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 			LogFullDebug(COMPONENT_STATE,
 				     "state_unlock returned %s",
 				     state_err_str(status));
-			errcnt++;
 		}
-
-		/* Release the lru ref to the cache inode we held while
-		 * calling unlock
-		 */
-		cache_inode_lru_unref(entry, LRU_FLAG_NONE);
 	}
 
 	/* Now remove NLM_SHARE reservations.
@@ -3167,9 +3206,9 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 		/* We just need to find any file this client has locks on.
 		 * We pick the first lock the client holds, and use it's file.
 		 */
-		found_share =
-		    glist_first_entry(&nsmclient->ssc_share_list,
-				      state_nlm_share_t, sns_share_per_client);
+		found_share = glist_first_entry(&nsmclient->ssc_share_list,
+						state_nlm_share_t,
+						sns_share_per_client);
 
 		/* If we don't find any entries, then we are done. */
 		if (found_share == NULL) {
@@ -3177,31 +3216,68 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 			break;
 		}
 
-		/* Extract the cache inode entry from the share */
+		/* Extract the bits from the lock entry that we will need
+		 * to proceed with the operation (cache entry, owner, and
+		 * export).
+		 */
 		entry = found_share->sns_entry;
 		owner = found_share->sns_owner;
+		export = found_share->sns_export;
 
-		root_op_context.req_ctx.export = found_share->sns_export;
-		root_op_context.req_ctx.fsal_export =
-			root_op_context.req_ctx.export->fsal_export;
+		root_op_context.req_ctx.export = export;
+		root_op_context.req_ctx.fsal_export = export->fsal_export;
 
-		(void) get_gsh_export_ref(root_op_context.req_ctx.export, true);
-		/** @todo also look at the entry LRU ref... */
+		/* Get a reference to the cache inode while we still hold
+		 * the ssc_mutex (since we hold this mutex, any other function
+		 * that might be cleaning up this lock CAN NOT have released
+		 * the last LRU reference, thus it is safe to grab another.
+		 *
+		 * Note we don't bother checking for stale here, state_unlock
+		 * will check soon enough, and we can handle error better at
+		 * that point.
+		 */
+		(void) cache_inode_lru_ref(entry, LRU_REQ_STALE_OK);
 
-		/* get a reference to the owner */
+		/* Get a reference to the export while we still hold the
+		 * ssc_mutex. This assures that the export definitely can
+		 * not have had it's last refcount released. We will check
+		 * later to see if the export is being removed.
+		 */
+		(void) get_gsh_export_ref(export, true);
+
+		/* Get a reference to the owner */
 		inc_state_owner_ref(owner);
+
+		/* Move this entry to the end of the list
+		 * (this will help if errors occur)
+		 */
+		glist_add_tail(&nsmclient->ssc_share_list,
+			       &found_share->sns_share_per_client);
 
 		pthread_mutex_unlock(&nsmclient->ssc_mutex);
 
-		/* Remove all shares held by this NSM Client and
-		 * Owner on the file (on all exports)
-		 */
-		status = state_nlm_unshare(entry,
-					   OPEN4_SHARE_ACCESS_NONE,
-					   OPEN4_SHARE_DENY_NONE,
-					   owner);
+		if (export_ready(export)) {
+			/* Remove all shares held by this NSM Client and
+			 * Owner on the file (on all exports)
+			 */
+			status = state_nlm_unshare(entry,
+						   OPEN4_SHARE_ACCESS_NONE,
+						   OPEN4_SHARE_DENY_NONE,
+						   owner);
+		} else {
+			/* The export is being removed, we didn't bother
+			 * calling state_unlock() because export cleanup
+			 * will remove all the state. This is assured by
+			 * the call to put_gsh_export immediately following.
+			 * Pretend succes.
+			 */
+			status = STATE_SUCCESS;
+		}
 
-		put_gsh_export(root_op_context.req_ctx.export);
+		/* Release the refcounts we took above. */
+		put_gsh_export(export);
+		dec_state_owner_ref(owner);
+		cache_inode_lru_unref(entry, LRU_FLAG_NONE);
 
 		if (!state_unlock_err_ok(status)) {
 			/* Increment the error count and try the next share,
@@ -3211,13 +3287,27 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 			LogFullDebug(COMPONENT_STATE,
 				     "state_nlm_unshare returned %s",
 				     state_err_str(status));
-			errcnt++;
 		}
-
-		dec_state_owner_ref(owner);
 	}
 
-	/* Put locks from current client incarnation onto end of list */
+	if (errcnt == STATE_ERR_MAX) {
+		char client[HASHTABLE_DISPLAY_STRLEN];
+
+		display_nsm_client(nsmclient, client);
+
+		LogFatal(COMPONENT_STATE,
+			 "Could not complete NLM notify for %s",
+			 client);
+	}
+
+	/* Put locks from current client incarnation onto end of list.
+	 *
+	 * Note that it's possible one or more of the locks we originally
+	 * put on the newlocks list have been removed. This is actually
+	 * just fine. Since everything is protected by the ssc_mutex,
+	 * even the fact that the newlocks list head is a stack local
+	 * variable is local will actually work just fine.
+	 */
 	pthread_mutex_lock(&nsmclient->ssc_mutex);
 	glist_add_list_tail(&nsmclient->ssc_lock_list, &newlocks);
 	pthread_mutex_unlock(&nsmclient->ssc_mutex);
@@ -3252,9 +3342,9 @@ state_status_t state_owner_unlock_all(state_owner_t *owner,
 		/* We just need to find any file this owner has locks on.
 		 * We pick the first lock the owner holds, and use it's file.
 		 */
-		found_entry =
-		    glist_first_entry(&owner->so_lock_list, state_lock_entry_t,
-				      sle_owner_locks);
+		found_entry = glist_first_entry(&owner->so_lock_list,
+						state_lock_entry_t,
+						sle_owner_locks);
 
 		/* If we don't find any entries, then we are done. */
 		if ((found_entry == NULL) ||
