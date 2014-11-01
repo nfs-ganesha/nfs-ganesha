@@ -40,7 +40,6 @@
 #include <ctype.h>
 #include "bsd-base64.h"
 
-#define NFS_V4_RECOV_ROOT "/var/lib/nfs/ganesha"
 #define NFS_V4_RECOV_DIR "v4recov"
 #define NFS_V4_OLD_DIR "v4old"
 

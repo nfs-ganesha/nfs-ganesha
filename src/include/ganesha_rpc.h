@@ -100,11 +100,6 @@ void freenetconfigent(struct netconfig *);
 #define DEFAULT_NFS_KEYTAB ""
 
 /**
- * @brief Default value for krb5_param.ccache_dir
- */
-#define DEFAULT_NFS_CCACHE_DIR "/var/run/ganesha"
-
-/**
  * @brief Kerberos 5 parameters
  */
 typedef struct nfs_krb5_param {
