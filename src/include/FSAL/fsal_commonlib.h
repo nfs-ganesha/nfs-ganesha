@@ -124,4 +124,12 @@ int decode_fsid(char *buf,
 		struct fsal_fsid__ *fsid,
 		enum fsid_type fsid_type);
 
+struct subfsal_args {
+	void *fsal_node;
+	char *name;
+};
+
+int subfsal_commit(void *node, void *link_mem, void *self_struct,
+		   struct config_error_type *err_type);
+
 #endif				/* FSAL_COMMONLIB_H */

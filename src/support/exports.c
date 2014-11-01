@@ -603,33 +603,9 @@ static int fsal_commit(void *node, void *link_mem, void *self_struct,
 	init_root_op_context(&root_op_context, export, NULL, 0, 0,
 			     UNKNOWN_REQUEST);
 
-	fsal = lookup_fsal(fp->name);
-	if (fsal == NULL) {
-		int retval;
-		config_file_t myconfig;
-
-		retval = load_fsal(fp->name, &fsal);
-		if (retval != 0) {
-			LogCrit(COMPONENT_CONFIG,
-				"Failed to load FSAL (%s)"
-				" because: %s", fp->name,
-				strerror(retval));
-			err_type->fsal = true;
-			errcnt++;
-			goto err;
-		}
-		myconfig = get_parse_root(node);
-		status = fsal->ops->init_config(fsal, myconfig);
-		if (FSAL_IS_ERROR(status)) {
-			LogCrit(COMPONENT_CONFIG,
-				"Failed to initialize FSAL (%s)",
-				fp->name);
-			fsal_put(fsal);
-			err_type->fsal = true;
-			errcnt++;
-			goto err;
-		}
-	}
+	errcnt += fsal_load_init(node, fp->name, &fsal, err_type);
+	if (errcnt > 0)
+		goto err;
 
 	/* Some admins stuff a '/' at  the end for some reason.
 	 * chomp it so we have a /dir/path/basename to work
@@ -2362,3 +2338,56 @@ void export_check_access(void)
 			    perms);
 	}
 }				/* nfs_export_check_access */
+
+/**
+ * @brief Load and initialize FSAL module
+ *
+ * Use the name parameter to lookup the fsal. If the fsal is not
+ * loaded (yet), load it and call its init. This will trigger the
+ * processing of a top level block of the same name as the fsal, i.e.
+ * the VFS fsal will look for a VFS block and process it (if found).
+ *
+ * @param[in]  node       parse node of FSAL block
+ * @param[in]  name       name of the FSAL to load and initialize (if
+ *                        not already loaded)
+ * @param[out] fsal_hdl   Pointer to FSAL module or NULL if not found
+ * @param[out] err_type   pointer to error type
+ *
+ * @retval 0 on success, error count on errors
+ */
+
+int fsal_load_init(void *node, const char *name, struct fsal_module **fsal_hdl,
+		   struct config_error_type *err_type)
+{
+	fsal_status_t status;
+	int errcnt = 0;
+
+	*fsal_hdl = lookup_fsal(name);
+	if (*fsal_hdl == NULL) {
+		int retval;
+		config_file_t myconfig;
+
+		retval = load_fsal(name, fsal_hdl);
+		if (retval != 0) {
+			LogCrit(COMPONENT_CONFIG,
+				"Failed to load FSAL (%s) because: %s", name,
+				strerror(retval));
+			err_type->fsal = true;
+			errcnt++;
+			goto err;
+		}
+		myconfig = get_parse_root(node);
+		status = (*fsal_hdl)->ops->init_config(*fsal_hdl, myconfig);
+		if (FSAL_IS_ERROR(status)) {
+			LogCrit(COMPONENT_CONFIG,
+				"Failed to initialize FSAL (%s)", name);
+			fsal_put(*fsal_hdl);
+			err_type->fsal = true;
+			errcnt++;
+			goto err;
+		}
+	}
+
+err:
+	return errcnt;
+}
