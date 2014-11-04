@@ -5,7 +5,7 @@
 #
 # processname: /usr/bin/ganesha.nfsd
 # config: /etc/ganesha/ganesha.nfsd.conf
-# pidfile: /var/run/ganesha.pid
+# pidfile: /var/run/ganesha.nfsd.pid
 #
 ### BEGIN INIT INFO
 # Provides: ganesha
