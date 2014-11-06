@@ -453,7 +453,7 @@ void revoke_owner_delegs(state_owner_t *client_owner)
 		cache_inode_lru_ref(entry, LRU_FLAG_NONE);
 
 		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
-		state_deleg_revoke(state, entry);
+		state_deleg_revoke(state);
 		PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
 		/* Close the file in FSAL through the cache inode */
@@ -472,7 +472,6 @@ void state_export_release_nfs4_state(void)
 {
 	state_t *state;
 	state_status_t state_status;
-	cache_entry_t *entry;
 
 	while (1) {
 		PTHREAD_RWLOCK_wrlock(&op_ctx->export->lock);
@@ -502,14 +501,13 @@ void state_export_release_nfs4_state(void)
 			}
 		}
 
-		entry = state->state_entry;
-		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
+		PTHREAD_RWLOCK_wrlock(&state->state_entry->state_lock);
 		if (state->state_type == STATE_TYPE_DELEG)
 			/* this deletes the state too */
-			state_deleg_revoke(state, entry);
+			state_deleg_revoke(state);
 		else
 			state_del_locked(state);
-		PTHREAD_RWLOCK_unlock(&entry->state_lock);
+		PTHREAD_RWLOCK_unlock(&state->state_entry->state_lock);
 
 		dec_state_t_ref(state);
 	}

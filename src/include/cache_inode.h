@@ -487,8 +487,6 @@ struct cache_entry_t {
 		struct cache_inode_file {
 			/** Pointers for lock list */
 			struct glist_head lock_list;
-			/** Pointers for delegation list */
-			struct glist_head deleg_list;
 			/** Pointers for NLM share list */
 			struct glist_head nlm_share_list;
 			/** Share reservation state for this file. */

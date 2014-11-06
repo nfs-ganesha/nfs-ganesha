@@ -891,11 +891,8 @@ static nfsstat4 open4_claim_deleg(OPEN4args *arg, compound_data_t *data,
 	cache_entry_t *entry_lookup;
 	const utf8string *utfname;
 	char *filename;
-	struct glist_head *glist;
 	cache_inode_status_t cache_status;
 	nfsstat4 status;
-	struct deleg_data *iter_deleg;
-	state_t *iter_state;
 	state_t *found_state = NULL;
 
 	if (!(op_ctx->fsal_export->exp_ops.
@@ -942,24 +939,17 @@ static nfsstat4 open4_claim_deleg(OPEN4args *arg, compound_data_t *data,
 		return status;
 	}
 
-	PTHREAD_RWLOCK_wrlock(&entry_lookup->state_lock);
-	glist_for_each(glist, &entry_lookup->object.file.deleg_list) {
-		iter_deleg = glist_entry(glist, struct deleg_data, dd_list);
-		iter_state = iter_deleg->dd_state;
-		if (SAME_STATEID(rcurr_state, iter_state)) {
-			found_state = iter_state;
-			LogFullDebug(COMPONENT_NFS_V4,
-					"found matching state %p",
-					found_state);
-			break;
-		}
-	}
-	PTHREAD_RWLOCK_unlock(&entry_lookup->state_lock);
+	found_state = nfs4_State_Get_Pointer(rcurr_state->other);
 
 	if (found_state == NULL) {
 		LogDebug(COMPONENT_NFS_V4,
-				"state not found with CLAIM_DELEGATE_CUR");
+			 "state not found with CLAIM_DELEGATE_CUR");
 		return NFS4ERR_BAD_STATEID;
+	} else {
+		LogFullDebug(COMPONENT_NFS_V4,
+			     "found matching state %p",
+			     found_state);
+		dec_state_t_ref(found_state);
 	}
 
 	LogFullDebug(COMPONENT_NFS_V4, "done with CLAIM_DELEGATE_CUR");
@@ -989,8 +979,7 @@ static void get_delegation(compound_data_t *data, OPEN4args *args,
 			   bool prerecall)
 {
 	state_status_t state_status;
-	fsal_lock_param_t lock_desc;
-	union state_data deleg_data;
+	union state_data state_data;
 	open_delegation_type4 deleg_type;
 	state_owner_t *clientowner = &client->cid_owner;
 	struct state_refer refer;
@@ -1010,27 +999,20 @@ static void get_delegation(compound_data_t *data, OPEN4args *args,
 	}
 
 	if (args->share_access & OPEN4_SHARE_ACCESS_WRITE) {
-		lock_desc.lock_type = FSAL_LOCK_W;
 		deleg_type = OPEN_DELEGATE_WRITE;
 	} else {
 		assert(args->share_access & OPEN4_SHARE_ACCESS_READ);
-		lock_desc.lock_type = FSAL_LOCK_R;
 		deleg_type = OPEN_DELEGATE_READ;
 	}
 
 	LogDebug(COMPONENT_STATE, "Attempting to grant %s delegation",
-		 lock_desc.lock_type == FSAL_LOCK_W ? "WRITE" : "READ");
+		 deleg_type == OPEN_DELEGATE_WRITE ? "WRITE" : "READ");
 
-	lock_desc.lock_start = 0;
-	lock_desc.lock_length = 0;
-	lock_desc.lock_sle_type = FSAL_LEASE_LOCK;
-	lock_desc.lock_reclaim = false;
-
-	init_new_deleg_state(&deleg_data, deleg_type, client);
+	init_new_deleg_state(&state_data, deleg_type, client);
 
 	/* Add the delegation state */
 	state_status = state_add_impl(data->current_entry, STATE_TYPE_DELEG,
-				      &deleg_data,
+				      &state_data,
 				      clientowner, &new_state,
 				      data->minorversion > 0 ? &refer : NULL);
 	if (state_status != STATE_SUCCESS) {
@@ -1055,10 +1037,7 @@ static void get_delegation(compound_data_t *data, OPEN4args *args,
 		PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
 
 		/* acquire_lease_lock() gets the delegation from FSAL */
-		state_status = acquire_lease_lock(data->current_entry,
-						  clientowner,
-						  new_state,
-						  &lock_desc);
+		state_status = acquire_lease_lock(new_state, false);
 		if (state_status != STATE_SUCCESS) {
 			LogDebug(COMPONENT_NFS_V4_LOCK,
 				 "get_delegation call added state but failed to"

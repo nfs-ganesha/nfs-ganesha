@@ -312,6 +312,7 @@ struct state_deleg {
 	open_delegation_type4 sd_type;
 	time_t sd_grant_time;               /* time of successful delegation */
 	enum deleg_state sd_state;
+	uint16_t dd_export_id;
 	struct cf_deleg_stats sd_clfile_stats;  /* client specific */
 };
 
@@ -389,25 +390,6 @@ struct state_t {
 		(id4)->seqid = (state)->state_seqid; \
 		(void)memcpy((id4)->other, (state)->stateid_other, OTHERSIZE); \
 	} while (0)
-
-/**
- * @brief Delegation state data object
- *
- * We could potentially put all the delegation data in struct state_deleg
- * itself but that would add storage for other state types. So we
- * allocate memory for storing delegation related state data in this
- * object.
- */
-struct deleg_data {
-	struct glist_head dd_list;
-	cache_entry_t *dd_entry;
-	state_t *dd_state;
-	state_owner_t *dd_owner;
-	struct gsh_export *dd_export;
-	uint16_t dd_export_id;
-};
-
-
 
 /*****************************************************************************
  *
