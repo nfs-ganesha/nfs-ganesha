@@ -29,9 +29,6 @@
  *
  */
 #include "config.h"
-#include "nfs_init.h"
-#include "fsal.h"
-#include "log.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -40,7 +37,11 @@
 #include <pthread.h>
 #include <signal.h>		/* for sigaction */
 #include <errno.h>
-#include "fsal_pnfs.h"
+#include "fsal.h"
+#include "log.h"
+#include "nfs_init.h"
+#include "nfs_exports.h"
+#include "pnfs_utils.h"
 
 /**
  * @brief LTTng trace enabling magic
@@ -392,25 +393,28 @@ int main(int argc, char *argv[])
 
 	/* Parse the configuration file so we all know what is going on. */
 
-	if (config_path == NULL) {
-		LogFatal(COMPONENT_INIT,
-			 "start_fsals: No configuration file named.");
-		return 1;
-	}
-	config_struct = config_ParseFile(config_path, &err_type);
+	if (config_path == NULL || config_path[0] == '\0') {
+		LogWarn(COMPONENT_INIT,
+			"No configuration file named.");
+		clear_error_type(&err_type);
+		config_struct = NULL;
+	} else
+		config_struct = config_ParseFile(config_path, &err_type);
 
 	if (!config_error_no_error(&err_type)) {
 		char *errstr = err_type_str(&err_type);
 
 		if (!config_error_is_harmless(&err_type))
 			LogFatal(COMPONENT_INIT,
-				 "Fatal error while parsing %s because of %s errors",
-				 config_path,
-				 errstr != NULL ? errstr : "unknown");
+				 "Error %s while parsing (%s)",
+				 errstr != NULL ? errstr : "unknown",
+				 config_path);
 			/* NOT REACHED */
-		LogCrit(COMPONENT_INIT,
-			"Minor parse errors found %s in %s",
-			errstr != NULL ? errstr : "unknown", config_path);
+		else
+			LogWarn(COMPONENT_INIT,
+				"Error %s while parsing (%s)",
+				errstr != NULL ? errstr : "unknown",
+				config_path);
 		if (errstr != NULL)
 			gsh_free(errstr);
 	}
@@ -418,6 +422,7 @@ int main(int argc, char *argv[])
 	if (read_log_config(config_struct) < 0)
 		LogFatal(COMPONENT_INIT,
 			 "Error while parsing log configuration");
+
 	/* We need all the fsal modules loaded so we can have
 	 * the list available at exports parsing time.
 	 */
