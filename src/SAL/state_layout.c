@@ -179,6 +179,7 @@ state_status_t state_lookup_layout_state(cache_entry_t *entry,
 	} else if (state_found->state_entry != entry) {
 		return STATE_INCONSISTENT_ENTRY;
 	} else {
+		inc_state_t_ref(state_found);
 		*state = state_found;
 		return STATE_SUCCESS;
 	}

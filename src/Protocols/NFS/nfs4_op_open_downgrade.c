@@ -116,7 +116,7 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op, compound_data_t *data,
 		/* Response is all setup for us and LogDebug told what was wrong
 		 */
 		pthread_mutex_unlock(&open_owner->so_mutex);
-		return res_OPEN_DOWNGRADE4->status;
+		goto out;
 	}
 
 	pthread_mutex_unlock(&open_owner->so_mutex);
@@ -136,7 +136,7 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op, compound_data_t *data,
 			 * downgrade share access
 			 */
 			res_OPEN_DOWNGRADE4->status = NFS4ERR_INVAL;
-			return res_OPEN_DOWNGRADE4->status;
+			goto out;
 		}
 
 		if ((state_found->state_data.share.share_deny &
@@ -146,7 +146,7 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op, compound_data_t *data,
 			 * downgrade share deny
 			 */
 			res_OPEN_DOWNGRADE4->status = NFS4ERR_INVAL;
-			return res_OPEN_DOWNGRADE4->status;
+			goto out;
 		}
 
 		state_found->state_data.share.share_access =
@@ -169,7 +169,7 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op, compound_data_t *data,
 				 "Failed to open downgrade: %s",
 				 cause);
 			res_OPEN_DOWNGRADE4->status = status4;
-			return res_OPEN_DOWNGRADE4->status;
+			goto out;
 		}
 	}
 
@@ -190,6 +190,10 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op, compound_data_t *data,
 			    data->current_entry,
 			    resp,
 			    tag);
+
+ out:
+
+	dec_state_t_ref(state_found);
 
 	return res_OPEN_DOWNGRADE4->status;
 }				/* nfs4_op_opendowngrade */

@@ -91,6 +91,7 @@ int nfs4_op_free_stateid(struct nfs_argop4 *op, compound_data_t *data,
 		return res_FREE_STATEID4->fsr_status;
 
 	state_del(state, false);
+	dec_state_t_ref(state);
 
 	return res_FREE_STATEID4->fsr_status;
 

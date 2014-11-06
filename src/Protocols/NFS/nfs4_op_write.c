@@ -228,11 +228,16 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 		switch (state_found->state_type) {
 		case STATE_TYPE_SHARE:
 			state_open = state_found;
+			/* Note this causes an extra refcount, but it
+			 * simplifies logic below.
+			 */
+			inc_state_t_ref(state_open);
 			/** @todo FSF: need to check against existing locks */
 			break;
 
 		case STATE_TYPE_LOCK:
 			state_open = state_found->state_data.lock.openstate;
+			inc_state_t_ref(state_open);
 			/**
 			 * @todo FSF: should check that write is in range of an
 			 * exclusive lock...
@@ -279,7 +284,7 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 			LogDebug(COMPONENT_NFS_V4_LOCK,
 				 "WRITE state %p doesn't have OPEN4_SHARE_ACCESS_WRITE",
 				 state_found);
-			return res_WRITE4->status;
+			goto out;
 		}
 	} else {
 		/* Special stateid, no open state, check to see if any
@@ -297,7 +302,7 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 					SHARE_BYPASS_NONE));
 
 		if (res_WRITE4->status != NFS4_OK)
-			return res_WRITE4->status;
+			goto out;
 
 		anonymous_started = true;
 	}
@@ -433,6 +438,15 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 	server_stats_io_done(size, written_size,
 			     (res_WRITE4->status == NFS4_OK) ? true : false,
 			     true);
+
+ out:
+
+	if (state_found != NULL)
+		dec_state_t_ref(state_found);
+
+	if (state_open != NULL)
+		dec_state_t_ref(state_open);
+
 	return res_WRITE4->status;
 }				/* nfs4_op_write */
 

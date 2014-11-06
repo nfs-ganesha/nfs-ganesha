@@ -112,9 +112,7 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op, compound_data_t *data,
 		}
 
 		/* Retrieve state corresponding to supplied ID */
-		if (arg_LAYOUTRETURN4->lora_reclaim) {
-			layout_state = NULL;
-		} else {
+		if (!arg_LAYOUTRETURN4->lora_reclaim) {
 			nfs_status = nfs4_Check_Stateid(
 				&arg_LAYOUTRETURN4->lora_layoutreturn.
 					layoutreturn4_u.lr_layout.lrf_stateid,
@@ -179,6 +177,10 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op, compound_data_t *data,
 					       tag);
 			}
 		}
+
+		if (layout_state != NULL)
+			dec_state_t_ref(layout_state);
+
 		break;
 
 	case LAYOUTRETURN4_FSID:

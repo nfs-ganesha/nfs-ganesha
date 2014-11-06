@@ -104,13 +104,18 @@ static nfsstat4 acquire_layout_state(compound_data_t *data,
 					false,
 					tag);
 
-	if (nfs_status != NFS4_OK)
-		goto out;
+	if (nfs_status != NFS4_OK) {
+		/* The supplied stateid was invalid */
+		return nfs_status;
+	}
 
 	if (supplied_state->state_type == STATE_TYPE_LAYOUT) {
 		/* If the state supplied is a layout state, we can
-		 * simply use it */
+		 * simply use it, return with the reference we just
+		 * acquired.
+		 */
 		*layout_state = supplied_state;
+		return nfs_status;
 	} else if ((supplied_state->state_type == STATE_TYPE_SHARE)
 		   || (supplied_state->state_type == STATE_TYPE_DELEG)
 		   || (supplied_state->state_type == STATE_TYPE_LOCK)) {
@@ -147,6 +152,7 @@ static nfsstat4 acquire_layout_state(compound_data_t *data,
 
 			if (condemned_state->state_data.layout.granting) {
 				nfs_status = NFS4ERR_DELAY;
+				dec_state_t_ref(condemned_state);
 				goto out;
 			}
 
@@ -159,6 +165,8 @@ static nfsstat4 acquire_layout_state(compound_data_t *data,
 						   0,
 						   NULL,
 						   &deleted);
+
+			dec_state_t_ref(condemned_state);
 
 			if (nfs_status != NFS4_OK)
 				goto out;
@@ -207,6 +215,9 @@ static nfsstat4 acquire_layout_state(compound_data_t *data,
 	}
 
  out:
+
+	/* We are done with the supplied_state, release the reference. */
+	dec_state_t_ref(supplied_state);
 
 	if (lock_held)
 		PTHREAD_RWLOCK_unlock(&data->current_entry->state_lock);
@@ -507,6 +518,9 @@ int nfs4_op_layoutget(struct nfs_argop4 *op, compound_data_t *data,
 		/* Poison the current stateid */
 		data->current_stateid_valid = false;
 	}
+
+	if (layout_state != NULL)
+		dec_state_t_ref(layout_state);
 
 	res_LAYOUTGET4->logr_status = nfs_status;
 

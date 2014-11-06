@@ -125,6 +125,7 @@ state_status_t state_add_impl(cache_entry_t *entry, enum state_type state_type,
 	pnew_state->state_seqid = 0;	/* will be incremented to 1 later */
 	pnew_state->state_entry = entry;
 	pnew_state->state_owner = owner_input;
+	pnew_state->state_refcount = 2; /* sentinel plus returned ref */
 
 	if (refer)
 		pnew_state->state_refer = *refer;
@@ -134,10 +135,9 @@ state_status_t state_add_impl(cache_entry_t *entry, enum state_type state_type,
 			   OTHERSIZE);
 
 	glist_init(&pnew_state->state_list);
-	glist_init(&pnew_state->state_owner_list);
 
 	/* Add the state to the related hashtable */
-	if (!nfs4_State_Set(pnew_state->stateid_other, pnew_state)) {
+	if (!nfs4_State_Set(pnew_state)) {
 		sprint_mem(debug_str, (char *)pnew_state->stateid_other,
 			   OTHERSIZE);
 
@@ -244,9 +244,10 @@ state_status_t state_add(cache_entry_t *entry, enum state_type state_type,
  *
  */
 
-void state_del_locked(state_t *state, cache_entry_t *entry)
+void state_del_locked(state_t *state)
 {
 	char debug_str[OTHERSIZE * 2 + 1];
+	cache_entry_t *entry = state->state_entry;
 
 	if (isDebug(COMPONENT_STATE))
 		sprint_mem(debug_str, (char *)state->stateid_other, OTHERSIZE);
@@ -291,12 +292,10 @@ void state_del_locked(state_t *state, cache_entry_t *entry)
 	pthread_mutex_unlock(&all_state_v4_mutex);
 #endif
 
-	pool_free(state_v4_pool, state);
-
-	LogFullDebug(COMPONENT_STATE, "Deleted state %s", debug_str);
-
 	if (glist_empty(&entry->list_of_states))
 		cache_inode_dec_pin_ref(entry, false);
+
+	dec_state_t_ref(state);
 }
 
 /**
@@ -313,7 +312,7 @@ void state_del(state_t *state, bool hold_lock)
 	if (!hold_lock)
 		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 
-	state_del_locked(state, state->state_entry);
+	state_del_locked(state);
 
 	if (!hold_lock)
 		PTHREAD_RWLOCK_unlock(&entry->state_lock);
@@ -337,7 +336,7 @@ void state_nfs4_state_wipe(cache_entry_t *entry)
 
 	glist_for_each_safe(glist, glistn, &entry->list_of_states) {
 		state = glist_entry(glist, state_t, state_list);
-		state_del_locked(state, entry);
+		state_del_locked(state);
 	}
 
 	return;
@@ -411,7 +410,7 @@ void release_openstate(state_owner_t *open_owner)
 			}
 		}
 
-		state_del_locked(state_found, entry);
+		state_del_locked(state_found);
 
 		/* Close the file in FSAL through the cache inode */
 		cache_inode_close(entry, 0);
@@ -482,10 +481,14 @@ void state_export_release_nfs4_state(void)
 					  state_t,
 					  state_export_list);
 
-		PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
+		if (state == NULL) {
+			PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
+			return;
+		}
 
-		if (state == NULL)
-			break;
+		inc_state_t_ref(state);
+
+		PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
 
 		if (state->state_type == STATE_TYPE_SHARE) {
 			state_status = state_share_remove(state->state_entry,
@@ -505,8 +508,10 @@ void state_export_release_nfs4_state(void)
 			/* this deletes the state too */
 			state_deleg_revoke(state, entry);
 		else
-			state_del_locked(state, entry);
+			state_del_locked(state);
 		PTHREAD_RWLOCK_unlock(&entry->state_lock);
+
+		dec_state_t_ref(state);
 	}
 }
 

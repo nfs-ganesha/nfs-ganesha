@@ -342,9 +342,11 @@ void update_stateid(state_t *state, stateid4 *stateid, compound_data_t *data,
 		    const char *tag);
 
 int nfs4_Init_state_id(void);
-int nfs4_State_Set(char other[OTHERSIZE], state_t *state_data);
-int nfs4_State_Get_Pointer(char other[OTHERSIZE], state_t **state_data);
-void nfs4_State_Del(char other[OTHERSIZE]);
+void inc_state_t_ref(struct state_t *state);
+void dec_state_t_ref(struct state_t *state);
+int nfs4_State_Set(state_t *state_data);
+struct state_t *nfs4_State_Get_Pointer(char *other);
+void nfs4_State_Del(char *other);
 void nfs_State_PrintAll(void);
 
 int display_state_id_val(struct gsh_buffdesc *buff, char *str);
@@ -548,7 +550,7 @@ state_status_t state_add(cache_entry_t *entry, enum state_type state_type,
 
 state_status_t state_set(state_t *state);
 
-void state_del_locked(state_t *state, cache_entry_t *entry);
+void state_del_locked(state_t *state);
 
 void state_del(state_t *state, bool hold_lock);
 

@@ -773,7 +773,9 @@ static int32_t layoutrec_completion(rpc_call_t *call, rpc_call_hook hook,
 
  revoke:
 	/* If we don't find the state, there's nothing to return. */
-	if (nfs4_State_Get_Pointer(cb_data->stateid_other, &state)) {
+	state = nfs4_State_Get_Pointer(cb_data->stateid_other);
+
+	if (state != NULL) {
 		enum fsal_layoutreturn_circumstance circumstance;
 
 		if (hook == RPC_CALL_COMPLETE &&
@@ -810,6 +812,8 @@ static int32_t layoutrec_completion(rpc_call_t *call, rpc_call_hook hook,
 				      state, cb_data->segment, 0, NULL,
 				      &deleted);
 		PTHREAD_RWLOCK_unlock(&state->state_entry->state_lock);
+
+		dec_state_t_ref(state);
 	}
 	free_layoutrec(&call->cbt.v_u.v4.args.argarray.argarray_val[1]);
 	nfs41_complete_single(call, hook, cb_data, flags);
@@ -843,7 +847,9 @@ static void return_one_async(void *arg)
 	init_root_op_context(&root_op_context, NULL, NULL,
 			     0, 0, UNKNOWN_REQUEST);
 
-	if (nfs4_State_Get_Pointer(cb_data->stateid_other, &s)) {
+	s = nfs4_State_Get_Pointer(cb_data->stateid_other);
+
+	if (s != NULL) {
 		PTHREAD_RWLOCK_wrlock(&s->state_entry->state_lock);
 
 		root_op_context.req_ctx.clientid = &s->state_owner
@@ -856,6 +862,8 @@ static void return_one_async(void *arg)
 				      LAYOUTRETURN4_FILE, circumstance_revoke,
 				      s, cb_data->segment, 0, NULL, &deleted);
 		PTHREAD_RWLOCK_unlock(&s->state_entry->state_lock);
+
+		dec_state_t_ref(s);
 	}
 	release_root_op_context();
 	gsh_free(cb_data);
@@ -882,7 +890,9 @@ static void layoutrecall_one_call(void *arg)
 	if (cb_data->attempts == 0)
 		now(&cb_data->first_recall);
 
-	if (nfs4_State_Get_Pointer(cb_data->stateid_other, &s)) {
+	s = nfs4_State_Get_Pointer(cb_data->stateid_other);
+
+	if (s != NULL) {
 		PTHREAD_RWLOCK_wrlock(&s->state_entry->state_lock);
 		code =
 		    nfs_rpc_v41_single(cb_data->client, &cb_data->arg,
@@ -941,6 +951,8 @@ static void layoutrecall_one_call(void *arg)
 			++cb_data->attempts;
 		}
 		PTHREAD_RWLOCK_unlock(&s->state_entry->state_lock);
+
+		dec_state_t_ref(s);
 	} else {
 		gsh_free(cb_data);
 	}
