@@ -112,16 +112,14 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op, compound_data_t *data,
 		 * told what was wrong
 		 */
 		pthread_mutex_unlock(&open_owner->so_mutex);
-		dec_state_owner_ref(open_owner);
-		return res_OPEN_CONFIRM4->status;
+		goto out;
 	}
 
 	/* If opened file is already confirmed, retrun NFS4ERR_BAD_STATEID */
 	if (open_owner->so_owner.so_nfs4_owner.so_confirmed) {
 		pthread_mutex_unlock(&open_owner->so_mutex);
-		dec_state_owner_ref(open_owner);
 		res_OPEN_CONFIRM4->status = NFS4ERR_BAD_STATEID;
-		return res_OPEN_CONFIRM4->status;
+		goto out;
 	}
 
 	/* Set the state as confirmed */
@@ -141,7 +139,10 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op, compound_data_t *data,
 			    resp,
 			    tag);
 
+ out:
+
 	dec_state_owner_ref(open_owner);
+	dec_state_t_ref(state_found);
 
 	return res_OPEN_CONFIRM4->status;
 }				/* nfs4_op_open_confirm */

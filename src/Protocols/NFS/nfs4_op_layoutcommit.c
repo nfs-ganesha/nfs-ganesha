@@ -201,6 +201,9 @@ int nfs4_op_layoutcommit(struct nfs_argop4 *op, compound_data_t *data,
 
  out:
 
+	if (layout_state != NULL)
+		dec_state_t_ref(layout_state);
+
 	xdr_destroy(&lou_body);
 
 	res_LAYOUTCOMMIT4->locr_status = nfs_status;

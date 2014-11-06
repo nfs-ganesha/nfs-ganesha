@@ -371,6 +371,7 @@ struct state_t {
 	union state_data state_data;
 	enum state_type state_type;
 	u_int32_t state_seqid;		/*< The NFSv4 Sequence id */
+	int32_t state_refcount;		/*< Refcount for state_t objects */
 	char stateid_other[OTHERSIZE];	/*< "Other" part of state id,
 					   used as hash key */
 	struct state_refer state_refer;	/*< For NFSv4.1, track the

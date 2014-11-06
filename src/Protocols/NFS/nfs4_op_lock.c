@@ -292,7 +292,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 				 op_ctx->export->export_id,
 				 op_ctx->export->fullpath);
 			res_LOCK4->status = STATE_INVALID_ARGUMENT;
-			return res_LOCK4->status;
+			goto out2;
 		}
 
 		/* A lock state has been found. Check its type */
@@ -301,7 +301,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 			LogDebug(COMPONENT_NFS_V4_LOCK,
 				 "LOCK failed existing lock owner, "
 				 "state type is not LOCK");
-			return res_LOCK4->status;
+			goto out2;
 		}
 
 		/* Get the old lockowner. We can do the following
@@ -312,6 +312,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 		open_owner =
 			lock_owner->so_owner.so_nfs4_owner.so_related_owner;
 		state_open = lock_state->state_data.lock.openstate;
+		inc_state_t_ref(state_open);
 		resp_owner = lock_owner;
 		seqid = arg_LOCK4->locker.locker4_u.lock_owner.lock_seqid;
 
@@ -612,6 +613,12 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
  out2:
+
+	if (state_open != NULL)
+		dec_state_t_ref(state_open);
+
+	if (lock_state != NULL)
+		dec_state_t_ref(lock_state);
 
 	if (release_open_owner)
 		dec_state_owner_ref(open_owner);

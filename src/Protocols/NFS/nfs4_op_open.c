@@ -212,6 +212,7 @@ static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t *data,
 			/* We'll be re-using the found state */
 			file_state = state_iterate;
 			*new_state = false;
+			inc_state_t_ref(file_state);
 
 			/* If we are re-using stateid, then release
 			 * extra reference to open owner
@@ -249,6 +250,7 @@ static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t *data,
 				 file_state->state_export->fullpath,
 				 op_ctx->export->export_id,
 				 op_ctx->export->fullpath);
+			dec_state_t_ref(file_state);
 			return STATE_INVALID_ARGUMENT;
 		}
 	}
@@ -315,6 +317,7 @@ static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t *data,
 				}
 				LogEvent(COMPONENT_STATE,
 					 "Failed to update existing share state");
+				dec_state_t_ref(file_state);
 				return nfs4_Errno_state(state_status);
 			}
 		}
@@ -958,6 +961,7 @@ static nfsstat4 open4_claim_deleg(OPEN4args *arg, compound_data_t *data,
 				"state not found with CLAIM_DELEGATE_CUR");
 		return NFS4ERR_BAD_STATEID;
 	}
+
 	LogFullDebug(COMPONENT_NFS_V4, "done with CLAIM_DELEGATE_CUR");
 
 	return NFS4_OK;
@@ -1060,7 +1064,8 @@ static void get_delegation(compound_data_t *data, OPEN4args *args,
 				 "get_delegation call added state but failed to"
 				 " lock with status %s",
 				 state_err_str(state_status));
-			state_del_locked(new_state, new_state->state_entry);
+			state_del_locked(new_state);
+			dec_state_t_ref(new_state);
 			return;
 		} else {
 			resok->delegation.delegation_type = deleg_type;
@@ -1097,6 +1102,8 @@ static void get_delegation(compound_data_t *data, OPEN4args *args,
 	LogDebug(COMPONENT_NFS_V4_LOCK,
 		 "get_delegation openowner %p clientowner %p status %s",
 		 openowner, clientowner, state_err_str(state_status));
+
+	dec_state_t_ref(new_state);
 }
 
 static void do_delegation(OPEN4args *arg_OPEN4, OPEN4res *res_OPEN4,
@@ -1511,6 +1518,9 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (clientid != NULL)
 		dec_client_id_ref(clientid);
+
+	if (file_state != NULL)
+		dec_state_t_ref(file_state);
 
 	/* Clean up if we have an error exit */
 	if ((file_state != NULL) && new_state &&

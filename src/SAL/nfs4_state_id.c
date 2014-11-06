@@ -253,6 +253,44 @@ void nfs4_BuildStateId_Other(nfs_client_id_t *clientid, char *other)
 }
 
 /**
+ * @brief Take a reference on state_t
+ *
+ * @param[in] state The state_t to ref
+ */
+void inc_state_t_ref(struct state_t *state)
+{
+	atomic_inc_int32_t(&state->state_refcount);
+}
+
+/**
+ * @brief Relinquish a reference on a state_t
+ *
+ * @param[in] state The state_t to release
+ */
+void dec_state_t_ref(struct state_t *state)
+{
+	char debug_str[OTHERSIZE * 2 + 1];
+	int32_t refcount;
+
+	if (isFullDebug(COMPONENT_STATE))
+		sprint_mem(debug_str, (char *)state->stateid_other, OTHERSIZE);
+
+	refcount = atomic_dec_int32_t(&state->state_refcount);
+
+	if (refcount > 0) {
+		LogFullDebug(COMPONENT_STATE,
+			     "Decrement refcount now=%" PRId32 " {%s}",
+			     refcount, debug_str);
+
+		return;
+	}
+
+	pool_free(state_v4_pool, state);
+
+	LogFullDebug(COMPONENT_STATE, "Deleted state %s", debug_str);
+}
+
+/**
  * @brief Set a state into the stateid hashtable.
  *
  * @param[in] other stateid4.other
@@ -261,20 +299,12 @@ void nfs4_BuildStateId_Other(nfs_client_id_t *clientid, char *other)
  * @retval 1 if ok.
  * @retval 0 if not ok.
  */
-int nfs4_State_Set(char other[OTHERSIZE], state_t *state)
+int nfs4_State_Set(state_t *state)
 {
 	struct gsh_buffdesc buffkey;
 	struct gsh_buffdesc buffval;
 
-	buffkey.addr = gsh_malloc(OTHERSIZE);
-
-	if (buffkey.addr == NULL)
-		return 0;
-
-	LogFullDebug(COMPONENT_STATE, "Allocating stateid key %p",
-		     buffkey.addr);
-
-	memcpy(buffkey.addr, other, OTHERSIZE);
+	buffkey.addr = state->stateid_other;
 	buffkey.len = OTHERSIZE;
 
 	buffval.addr = state;
@@ -286,7 +316,6 @@ int nfs4_State_Set(char other[OTHERSIZE], state_t *state)
 		LogCrit(COMPONENT_STATE,
 			"hashtable_test_and_set failed for key %p",
 			buffkey.addr);
-		gsh_free(buffkey.addr);
 		return 0;
 	}
 
@@ -297,29 +326,38 @@ int nfs4_State_Set(char other[OTHERSIZE], state_t *state)
  * @brief Get the state from the stateid
  *
  * @param[in]  other      stateid4.other
- * @param[out] state_data State found
  *
- * @retval 1 if ok.
- * @retval 0 if not ok.
+ * @returns The found state_t or NULL if not found.
  */
-int nfs4_State_Get_Pointer(char other[OTHERSIZE], state_t **state_data)
+struct state_t *nfs4_State_Get_Pointer(char *other)
 {
 	struct gsh_buffdesc buffkey;
 	struct gsh_buffdesc buffval;
-	int rc;
+	hash_error_t rc;
+	struct hash_latch latch;
+	struct state_t *state;
 
-	buffkey.addr = (caddr_t) other;
+	buffkey.addr = other;
 	buffkey.len = OTHERSIZE;
 
-	rc = HashTable_Get(ht_state_id, &buffkey, &buffval);
+	rc = hashtable_getlatch(ht_state_id, &buffkey, &buffval, true, &latch);
+
 	if (rc != HASHTABLE_SUCCESS) {
+		if (rc == HASHTABLE_ERROR_NO_SUCH_KEY)
+			hashtable_releaselatched(ht_state_id, &latch);
 		LogDebug(COMPONENT_STATE, "HashTable_Get returned %d", rc);
-		return 0;
+		return NULL;
 	}
 
-	*state_data = buffval.addr;
+	state = buffval.addr;
 
-	return 1;
+	/* Take a reference under latch */
+	inc_state_t_ref(state);
+
+	/* Release latch */
+	hashtable_releaselatched(ht_state_id, &latch);
+
+	return state;
 }
 
 /**
@@ -329,7 +367,7 @@ int nfs4_State_Get_Pointer(char other[OTHERSIZE], state_t **state_data)
  *
  * This really can't fail.
  */
-void nfs4_State_Del(char other[OTHERSIZE])
+void nfs4_State_Del(char *other)
 {
 	struct gsh_buffdesc buffkey, old_key, old_value;
 	hash_error_t err;
@@ -341,9 +379,14 @@ void nfs4_State_Del(char other[OTHERSIZE])
 
 	if (err == HASHTABLE_SUCCESS) {
 		/* free the key that was stored in hash table */
-		LogFullDebug(COMPONENT_STATE, "Freeing stateid key %p",
-			     old_key.addr);
-		gsh_free(old_key.addr);
+		if (isFullDebug(COMPONENT_STATE)) {
+			char debug_str[OTHERSIZE * 2 + 1];
+
+			sprint_mem(debug_str, other, OTHERSIZE);
+
+			LogFullDebug(COMPONENT_STATE, "Freeing stateid key %s",
+				     debug_str);
+		}
 
 		/* State is managed in stuff alloc, no free is needed for
 		 * old_value.addr
@@ -488,7 +531,9 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, cache_entry_t *entry,
 	}
 
 	/* Try to get the related state */
-	if (!nfs4_State_Get_Pointer(stateid->other, &state2)) {
+	state2 = nfs4_State_Get_Pointer(stateid->other);
+
+	if (state2 == NULL) {
 		/* We matched this server's epoch, but could not find the
 		 * stateid. Chances are, the client was expired and the state
 		 * has all been freed.
@@ -721,6 +766,8 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, cache_entry_t *entry,
 	return NFS4_OK;
 
  failure:
+	if (state2 != NULL)
+		dec_state_t_ref(state2);
 
 	*state = NULL;
 

@@ -158,12 +158,15 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t *data,
 		/* Successful exit */
 		LogDebug(COMPONENT_NFS_V4_LOCK, "Successful exit");
 
-		state_del_locked(state_found, data->current_entry);
+		state_del_locked(state_found);
 	}
 
 unlock:
 
 	PTHREAD_RWLOCK_unlock(&data->current_entry->state_lock);
+
+	dec_state_t_ref(state_found);
+
 	return res_DELEGRETURN4->status;
 }				/* nfs4_op_delegreturn */
 

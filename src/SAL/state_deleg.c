@@ -533,7 +533,7 @@ state_status_t deleg_revoke(struct deleg_data *deleg_entry)
 
 	/* Put the revoked delegation on the stable storage. */
 	nfs4_record_revoke(clid, &fhandle);
-	state_del_locked(deleg_state, pentry);
+	state_del_locked(deleg_state);
 
 	gsh_free(fhandle.nfs_fh4_val);
 	return STATE_SUCCESS;

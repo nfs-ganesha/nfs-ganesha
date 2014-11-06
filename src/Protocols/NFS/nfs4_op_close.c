@@ -188,6 +188,8 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 
 	open_owner = state_found->state_owner;
 
+	inc_state_owner_ref(open_owner);
+
 	pthread_mutex_lock(&open_owner->so_mutex);
 
 	/* Check seqid */
@@ -202,13 +204,11 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 			 * told what was wrong
 			 */
 			pthread_mutex_unlock(&open_owner->so_mutex);
-			return res_CLOSE4->status;
+			goto out2;
 		}
 	}
 
 	pthread_mutex_unlock(&open_owner->so_mutex);
-
-	inc_state_owner_ref(open_owner);
 
 	PTHREAD_RWLOCK_wrlock(&data->current_entry->state_lock);
 
@@ -247,7 +247,7 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 						  state_data.lock.
 						  state_sharelist);
 
-		state_del_locked(lock_state, data->current_entry);
+		state_del_locked(lock_state);
 	}
 
 	/* File is closed, release the share state */
@@ -264,7 +264,7 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	/* File is closed, release the corresponding state */
-	state_del_locked(state_found, data->current_entry);
+	state_del_locked(state_found);
 
 	/* Poison the current stateid */
 	data->current_stateid_valid = false;
@@ -307,7 +307,10 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 				    data->current_entry, resp, close_tag);
 	}
 
+ out2:
+
 	dec_state_owner_ref(open_owner);
+	dec_state_t_ref(state_found);
 
 	return res_CLOSE4->status;
 }				/* nfs4_op_close */

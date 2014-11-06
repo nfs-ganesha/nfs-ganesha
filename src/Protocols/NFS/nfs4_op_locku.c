@@ -145,9 +145,9 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t *data,
 				      resp,
 				      locku_tag)) {
 			/* Response is all setup for us and LogDebug
-			   told what was wrong */
-			dec_state_owner_ref(lock_owner);
-			return res_LOCKU4->status;
+			 * told what was wrong
+			 */
+			goto out2;
 		}
 	}
 
@@ -210,7 +210,10 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t *data,
 				    locku_tag);
 	}
 
+ out2:
+
 	dec_state_owner_ref(lock_owner);
+	dec_state_t_ref(state_found);
 
 	return res_LOCKU4->status;
 }				/* nfs4_op_locku */
