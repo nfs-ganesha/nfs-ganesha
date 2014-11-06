@@ -1279,6 +1279,8 @@ static int build_default_root(void)
 	}
 
 	/* allocate and initialize the exportlist part with the id */
+	LogDebug(COMPONENT_CONFIG,
+		 "Allocating Pseudo root export");
 	export = alloc_export();
 
 	if (export == NULL) {
