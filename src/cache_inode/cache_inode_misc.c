@@ -332,7 +332,6 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 			 "Adding a REGULAR_FILE, entry=%p", nentry);
 
 		/* No shares or locks, yet. */
-		glist_init(&nentry->object.file.deleg_list);
 		glist_init(&nentry->object.file.lock_list);
 		glist_init(&nentry->object.file.nlm_share_list);
 		memset(&nentry->object.file.share_state, 0,

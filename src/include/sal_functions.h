@@ -311,6 +311,7 @@ int display_session_id(char *session_id, char *str);
  *
  ******************************************************************************/
 
+int display_stateid_other(char *other, char *str);
 void nfs4_BuildStateId_Other(nfs_client_id_t *clientid, char *other);
 
 #define STATEID_NO_SPECIAL 0	/*< No special stateids */
@@ -500,10 +501,8 @@ state_status_t state_lock(cache_entry_t *entry,
 			  /* description of conflicting lock */
 			  fsal_lock_param_t *conflict,
 			  lock_type_t sle_type);
-state_status_t acquire_lease_lock(cache_entry_t *entry, state_owner_t *owner,
-			     state_t *state, fsal_lock_param_t *lock);
-state_status_t release_lease_lock(cache_entry_t *entry, state_owner_t *owner,
-			     state_t *state, fsal_lock_param_t *lock);
+state_status_t acquire_lease_lock(state_t *state, bool reclaim);
+state_status_t release_lease_lock(state_t *state);
 state_status_t do_lock_op(cache_entry_t *entry,
 			  fsal_lock_op_t lock_op,
 			  state_owner_t *owner,
@@ -588,18 +587,14 @@ bool should_we_grant_deleg(cache_entry_t *entry, nfs_client_id_t *client,
 void init_new_deleg_state(union state_data *deleg_state,
 			  open_delegation_type4 sd_type,
 			  nfs_client_id_t *clientid);
-struct deleg_data *create_deleg_data(cache_entry_t *entry, state_t *state,
-				     state_owner_t *owner,
-				     struct gsh_export *export);
-void destroy_deleg_data(struct deleg_data *deleg_data);
 
-bool deleg_heuristics_recall(struct deleg_data *deleg_data);
+void deleg_heuristics_recall(struct state_t *deleg);
 void get_deleg_perm(cache_entry_t *entry, nfsace4 *permissions,
 		    open_delegation_type4 type);
-bool update_delegation_stats(struct deleg_data *deleg_data);
+bool update_delegation_stats(struct state_t *deleg);
 state_status_t delegrecall_impl(cache_entry_t *entry);
-state_status_t deleg_revoke(struct deleg_data *deleg_data);
-void state_deleg_revoke(state_t *state, cache_entry_t *entry);
+state_status_t deleg_revoke(struct state_t *deleg_state);
+void state_deleg_revoke(state_t *state);
 bool state_deleg_conflict(cache_entry_t *entry, bool write);
 
 #ifdef DEBUG_SAL
