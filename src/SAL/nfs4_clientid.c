@@ -817,7 +817,6 @@ clientid_status_t nfs_client_id_confirm(nfs_client_id_t *clientid,
 bool nfs_client_id_expire(nfs_client_id_t *clientid, bool make_stale)
 {
 	struct glist_head *glist, *glistn;
-	struct glist_head *glist2, *glistn2;
 	int rc;
 	struct gsh_buffdesc buffkey;
 	struct gsh_buffdesc old_key;
@@ -893,34 +892,20 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid, bool make_stale)
 		}
 	}
 
-	/* traverse the client's lock owners, and release all locks */
-	glist_for_each_safe(glist, glistn, &clientid->cid_lockowners) {
-		state_owner_t *plock_owner = glist_entry(glist,
-							 state_owner_t,
-							 so_owner.so_nfs4_owner.
-							 so_perclient);
+	/* traverse the client's lock owners, and release all
+	 * locks and owners
+	 */
+	while (!glist_empty(&clientid->cid_lockowners)) {
+		state_owner_t *plock_owner;
 
-		glist_for_each_safe(glist2, glistn2,
-				    &plock_owner->so_owner.so_nfs4_owner.
-				    so_state_list) {
-			state_t *plock_state = glist_entry(glist2,
-							   state_t,
-							   state_owner_list);
+		plock_owner =
+		    glist_first_entry(&clientid->cid_lockowners,
+				      state_owner_t,
+				      so_owner.so_nfs4_owner.so_perclient);
 
-			state_owner_unlock_all(plock_owner,
-					       plock_state);
-		}
-	}
-
-	/* traverse the client's lock owners, and release all locks
-	   states and owners */
-	glist_for_each_safe(glist, glistn, &clientid->cid_lockowners) {
-		state_owner_t *plock_owner = glist_entry(glist,
-							 state_owner_t,
-							 so_owner.so_nfs4_owner.
-							 so_perclient);
 		inc_state_owner_ref(plock_owner);
-		release_lockstate(plock_owner);
+
+		state_nfs4_owner_unlock_all(plock_owner);
 
 		if (isFullDebug(COMPONENT_CLIENTID)) {
 			int32_t refcount =
@@ -936,6 +921,7 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid, bool make_stale)
 				LogFullDebug(COMPONENT_CLIENTID,
 					     "Expired State for {%s}", str);
 		}
+
 		dec_state_owner_ref(plock_owner);
 	}
 
