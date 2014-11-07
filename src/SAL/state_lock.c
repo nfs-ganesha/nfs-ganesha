@@ -3318,22 +3318,21 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 }
 
 /**
- * @brief Release all locks held by a lock owner
+ * @brief Release all locks held by an NFS v4 lock owner
  *
  * @param[in] owner Lock owner
- * @param[in] state Associated state
  *
- * @return State status.
  */
-state_status_t state_owner_unlock_all(state_owner_t *owner,
-				      state_t *state)
+void state_nfs4_owner_unlock_all(state_owner_t *owner)
 {
-	state_lock_entry_t *found_entry;
 	fsal_lock_param_t lock;
 	cache_entry_t *entry;
 	int errcnt = 0;
 	state_status_t status = 0;
 	struct gsh_export *saved_export = op_ctx->export;
+	struct gsh_export *export;
+	state_t *state;
+	bool ok;
 
 	/* Only accept so many errors before giving up. */
 	while (errcnt < STATE_ERR_MAX) {
@@ -3342,41 +3341,44 @@ state_status_t state_owner_unlock_all(state_owner_t *owner,
 		/* We just need to find any file this owner has locks on.
 		 * We pick the first lock the owner holds, and use it's file.
 		 */
-		found_entry = glist_first_entry(&owner->so_lock_list,
-						state_lock_entry_t,
-						sle_owner_locks);
+		state = glist_first_entry(
+				&owner->so_owner.so_nfs4_owner.so_state_list,
+				state_t,
+				state_owner_list);
 
 		/* If we don't find any entries, then we are done. */
-		if ((found_entry == NULL) ||
-		    (found_entry->sle_state != state)) {
+		if (state == NULL) {
 			pthread_mutex_unlock(&owner->so_mutex);
 			break;
 		}
 
-		lock_entry_inc_ref(found_entry);
+		inc_state_t_ref(state);
 
-		/* Move this entry to the end of the list
+		/* Move this state to the end of the list
 		 * (this will help if errors occur)
 		 */
-		glist_del(&found_entry->sle_owner_locks);
-		glist_add_tail(&owner->so_lock_list,
-			       &found_entry->sle_owner_locks);
+		glist_del(&state->state_owner_list);
+		glist_add_tail(&owner->so_owner.so_nfs4_owner.so_state_list,
+			       &state->state_owner_list);
+
+		/* Get references to the cache entry and export */
+		ok = get_state_entry_export_owner_refs(state,
+						       &entry,
+						       &export,
+						       NULL);
 
 		pthread_mutex_unlock(&owner->so_mutex);
 
-		/* Extract the cache inode entry from the lock entry and
-		 * release the lock entry
-		 */
-		entry = found_entry->sle_entry;
-		op_ctx->export = found_entry->sle_export;
-		op_ctx->fsal_export = op_ctx->export->fsal_export;
+		if (!ok) {
+			/* Entry and/or export is dying, skip this state,
+			 * it will be cleaned up soon enough.
+			 */
+			continue;
+		}
 
-		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
-
-		lock_entry_dec_ref(found_entry);
-		(void) cache_inode_lru_ref(entry, LRU_REQ_STALE_OK);
-
-		PTHREAD_RWLOCK_unlock(&entry->state_lock);
+		/* Set up the op_context with the proper export */
+		op_ctx->export = export;
+		op_ctx->fsal_export = export->fsal_export;
 
 		/* Make lock that covers the whole file.
 		 * type doesn't matter for unlock
@@ -3386,30 +3388,42 @@ state_status_t state_owner_unlock_all(state_owner_t *owner,
 		lock.lock_length = 0;
 
 		/* Remove all locks held by this owner on the file */
-		status =
-		    state_unlock(entry, owner, state, &lock,
-				 POSIX_LOCK);
+		status = state_unlock(entry, owner, state, &lock, POSIX_LOCK);
 
 		if (!state_unlock_err_ok(status)) {
 			/* Increment the error count and try the next lock,
 			 * with any luck the memory pressure which is causing
 			 * the problem will resolve itself.
 			 */
-			LogDebug(COMPONENT_STATE, "state_unlock failed %s",
-				 state_err_str(status));
+			LogCrit(COMPONENT_STATE, "state_unlock failed %s",
+				state_err_str(status));
 			errcnt++;
+		} else if (status == STATE_SUCCESS) {
+			/* Delete the state_t */
+			state_del(state, false);
 		}
 
-		/* Release the lru ref to the cache inode we held while
-		 * calling unlock
-		 */
+		dec_state_t_ref(state);
+
+		/* Release the lru ref and export ref. */
 		cache_inode_lru_unref(entry, LRU_FLAG_NONE);
+		put_gsh_export(export);
+	}
+
+	if (errcnt == STATE_ERR_MAX) {
+		char owner_str[HASHTABLE_DISPLAY_STRLEN];
+
+		DisplayOwner(owner, owner_str);
+
+		LogFatal(COMPONENT_STATE,
+			 "Could not complete cleanup of lock state for lock owner %s",
+			 owner_str);
 	}
 
 	op_ctx->export = saved_export;
+
 	if (saved_export != NULL)
 		op_ctx->fsal_export = op_ctx->export->fsal_export;
-	return status;
 }
 
 /**

@@ -520,8 +520,7 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 				bool from_client,
 				state_t *state);
 
-state_status_t state_owner_unlock_all(state_owner_t *owner,
-				      state_t *state);
+void state_nfs4_owner_unlock_all(state_owner_t *owner);
 
 void state_export_unlock_all(void);
 
