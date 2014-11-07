@@ -3400,7 +3400,7 @@ void state_nfs4_owner_unlock_all(state_owner_t *owner)
 			errcnt++;
 		} else if (status == STATE_SUCCESS) {
 			/* Delete the state_t */
-			state_del(state, false);
+			state_del(state);
 		}
 
 		dec_state_t_ref(state);

@@ -553,7 +553,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 
 		if (arg_LOCK4->locker.new_lock_owner) {
 			/* Need to destroy new state */
-			state_del(lock_state, false);
+			state_del(lock_state);
 		}
 		goto out2;
 	}

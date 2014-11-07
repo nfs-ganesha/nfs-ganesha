@@ -548,7 +548,7 @@ state_status_t state_set(state_t *state);
 
 void state_del_locked(state_t *state);
 
-void state_del(state_t *state, bool hold_lock);
+void state_del(state_t *state);
 
 static inline cache_entry_t *get_state_entry_ref(state_t *state)
 {

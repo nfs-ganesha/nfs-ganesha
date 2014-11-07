@@ -504,7 +504,7 @@ int nfs4_op_layoutget(struct nfs_argop4 *op, compound_data_t *data,
 			free_layouts(layouts, numlayouts);
 
 		if ((layout_state) && (layout_state->state_seqid == 0)) {
-			state_del(layout_state, false);
+			state_del(layout_state);
 			layout_state = NULL;
 		}
 
