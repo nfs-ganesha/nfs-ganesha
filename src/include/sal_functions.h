@@ -66,8 +66,6 @@ bool different_owners(state_owner_t *owner1, state_owner_t *owner2);
 int DisplayOwner(state_owner_t *owner, char *buf);
 void inc_state_owner_ref(state_owner_t *owner);
 void dec_state_owner_ref(state_owner_t *owner);
-void lock_entry_inc_ref(state_lock_entry_t *lock_entry);
-void lock_entry_dec_ref(state_lock_entry_t *lock_entry);
 
 state_owner_t *get_state_owner(care_t care, state_owner_t *pkey,
 			       state_owner_init_t init_owner, bool_t *isnew);
