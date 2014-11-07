@@ -402,20 +402,25 @@ void state_del_locked(state_t *state)
  * @brief Delete a state
  *
  * @param[in] state     State to delete
- * @param[in] hold_lock If we already hold the lock
  *
  */
-void state_del(state_t *state, bool hold_lock)
+void state_del(state_t *state)
 {
-	cache_entry_t *entry = state->state_entry;
+	cache_entry_t *entry = get_state_entry_ref(state);
 
-	if (!hold_lock)
-		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
+	if (entry == NULL) {
+		LogDebug(COMPONENT_STATE,
+			 "Entry for state is stale");
+		return;
+	}
+
+	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 
 	state_del_locked(state);
 
-	if (!hold_lock)
-		PTHREAD_RWLOCK_unlock(&entry->state_lock);
+	PTHREAD_RWLOCK_unlock(&entry->state_lock);
+
+	cache_inode_lru_unref(entry, LRU_FLAG_NONE);
 }
 
 /**
@@ -554,7 +559,7 @@ void release_lockstate(state_owner_t *lock_owner)
 		(void) cache_inode_lru_ref(state_found->state_entry,
 					   LRU_REQ_STALE_OK);
 
-		state_del(state_found, false);
+		state_del(state_found);
 
 		/* Release the lru ref to the cache inode we held while
 		 * calling state_del

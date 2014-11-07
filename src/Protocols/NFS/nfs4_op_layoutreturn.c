@@ -524,7 +524,7 @@ nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
 
 		if (glist_empty
 		    (&layout_state->state_data.layout.state_segments)) {
-			state_del(layout_state, true);
+			state_del_locked(layout_state);
 			*deleted = true;
 		} else
 			*deleted = false;

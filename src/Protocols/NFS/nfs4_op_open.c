@@ -1491,7 +1491,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 	if ((file_state != NULL) && new_state &&
 	    (res_OPEN4->status != NFS4_OK)) {
 		/* Need to destroy open owner and state */
-		state_del(file_state, false);
+		state_del(file_state);
 	}
 
 	if (entry_change)
