@@ -542,29 +542,39 @@ void state_nfs4_state_wipe(cache_entry_t *entry)
  *
  * @param[in] lock_owner Lock owner to release
  */
-void release_lockstate(state_owner_t *lock_owner)
+enum nfsstat4 release_lock_owner(state_owner_t *owner)
 {
-	struct glist_head *glist, *glistn;
+	pthread_mutex_lock(&owner->so_mutex);
 
-	glist_for_each_safe(glist, glistn,
-			    &lock_owner->so_owner.so_nfs4_owner.so_state_list) {
-		state_t *state_found = glist_entry(glist,
-						   state_t,
-						   state_owner_list);
+	if (!glist_empty(&owner->so_lock_list)) {
+		pthread_mutex_unlock(&owner->so_mutex);
 
-		cache_entry_t *entry = state_found->state_entry;
+		return NFS4ERR_LOCKS_HELD;
+	}
 
-		/* Make sure we hold an lru ref to the cache inode while calling
-		 * state_del */
-		(void) cache_inode_lru_ref(state_found->state_entry,
-					   LRU_REQ_STALE_OK);
+	while (true) {
+		state_t *state;
 
-		state_del(state_found);
+		state = glist_first_entry(&owner->so_owner.so_nfs4_owner
+								.so_state_list,
+					  state_t,
+					  state_owner_list);
 
-		/* Release the lru ref to the cache inode we held while
-		 * calling state_del
-		 */
-		cache_inode_lru_unref(entry, LRU_FLAG_NONE);
+		if (state == NULL) {
+			pthread_mutex_unlock(&owner->so_mutex);
+			return NFS4_OK;
+		}
+
+		/* Make sure the state doesn't go away on us... */
+		inc_state_t_ref(state);
+
+		pthread_mutex_unlock(&owner->so_mutex);
+
+		state_del(state);
+
+		dec_state_t_ref(state);
+
+		pthread_mutex_lock(&owner->so_mutex);
 	}
 }
 
