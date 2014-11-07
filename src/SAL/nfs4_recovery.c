@@ -52,7 +52,7 @@ char v4_old_dir[PATH_MAX];
 static grace_t grace;
 
 static void nfs4_load_recov_clids_nolock(nfs_grace_start_t *gsp);
-static void nfs_release_nlm_state();
+static void nfs_release_nlm_state(char *release_ip);
 static void nfs_release_v4_client(char *ip);
 
 /**
@@ -99,7 +99,7 @@ void nfs4_start_grace(nfs_grace_start_t *gsp)
 		if (gsp->event == EVENT_CLEAR_BLOCKED)
 			cancel_all_nlm_blocked();
 		else {
-			nfs_release_nlm_state();
+			nfs_release_nlm_state(gsp->ipaddr);
 			if (gsp->event == EVENT_RELEASE_IP)
 				nfs_release_v4_client(gsp->ipaddr);
 			else
@@ -1257,17 +1257,64 @@ static void nlm_releasecall(struct fridgethr_context *ctx)
 	dec_nsm_client_ref(nsm_cp);
 }
 
+void extractv4(char *ipv6, char *ipv4)
+{
+	char *token, *saveptr;
+	char *delim = ":";
+	token = strtok_r(ipv6, delim, &saveptr);
+	while (token != NULL) {
+		/* IPv4 delimiter is '.' */
+		if (strchr(token, '.') != NULL) {
+			(void)strcpy(ipv4, token);
+			return;
+		}
+		token = strtok_r(NULL, delim, &saveptr);
+	}
+	/* failed, copy a null string */
+	(void)strcpy(ipv4, "");
+}
+
+bool ip_str_match(char *release_ip, char *server_ip)
+{
+	bool ripv6, sipv6;
+	char ipv4[SOCK_NAME_MAX + 1];
+
+	/* IPv6 delimiter is ':' */
+	ripv6 = (strchr(release_ip, ':') != NULL);
+	sipv6 = (strchr(server_ip, ':') != NULL);
+
+	if (ripv6) {
+		if (sipv6)
+			return !strcmp(release_ip, server_ip);
+		else {
+			/* extract v4 addr from release_ip*/
+			extractv4(release_ip, ipv4);
+			return !strcmp(ipv4, server_ip);
+		}
+	} else {
+		if (sipv6) {
+			/* extract v4 addr from server_ip*/
+			extractv4(server_ip, ipv4);
+			return !strcmp(ipv4, release_ip);
+		}
+	}
+	/* Both are ipv4 addresses */
+	return !strcmp(release_ip, server_ip);
+}
+
 /**
  * @brief Release all NLM state
  */
-static void nfs_release_nlm_state()
+static void nfs_release_nlm_state(char *release_ip)
 {
-	hash_table_t *ht = ht_nsm_client;
+	hash_table_t *ht = ht_nlm_client;
+	state_nlm_client_t *nlm_cp;
 	state_nsm_client_t *nsm_cp;
 	struct rbt_head *head_rbt;
 	struct rbt_node *pn;
 	struct hash_data *pdata;
 	state_status_t state_status;
+	char serverip[SOCK_NAME_MAX + 1];
 	int i;
 
 	LogDebug(COMPONENT_STATE, "Release all NLM locks");
@@ -1281,16 +1328,22 @@ static void nfs_release_nlm_state()
 		/* go through all entries in the red-black-tree */
 		RBT_LOOP(head_rbt, pn) {
 			pdata = RBT_OPAQ(pn);
-
-			nsm_cp = (state_nsm_client_t *) pdata->val.addr;
-			inc_nsm_client_ref(nsm_cp);
-			state_status = fridgethr_submit(state_async_fridge,
-							nlm_releasecall,
-							nsm_cp);
-			if (state_status != STATE_SUCCESS) {
-				dec_nsm_client_ref(nsm_cp);
-				LogCrit(COMPONENT_STATE,
-					"failed to submit nlm release thread ");
+			nlm_cp = (state_nlm_client_t *) pdata->val.addr;
+			sprint_sockip(&(nlm_cp->slc_server_addr),
+					serverip,
+					SOCK_NAME_MAX + 1);
+			if (ip_str_match(release_ip, serverip)) {
+				nsm_cp = nlm_cp->slc_nsm_client;
+				inc_nsm_client_ref(nsm_cp);
+				state_status = fridgethr_submit(
+						state_async_fridge,
+						nlm_releasecall,
+						nsm_cp);
+				if (state_status != STATE_SUCCESS) {
+					dec_nsm_client_ref(nsm_cp);
+					LogCrit(COMPONENT_STATE,
+						"failed to submit nlm release thread ");
+				}
 			}
 			RBT_INCREMENT(pn);
 		}

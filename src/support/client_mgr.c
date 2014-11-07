@@ -304,7 +304,7 @@ bool remove_gsh_client(sockaddr_t *client_ipaddr)
 		server_stats_free(&server_st->st);
 		if (cl->hostaddr_str != NULL)
 			gsh_free(cl->hostaddr_str);
-		gsh_free(cl);
+		gsh_free(server_st);
 	}
 	return removed;
 }

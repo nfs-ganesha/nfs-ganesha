@@ -577,6 +577,9 @@ void revoke_owner_delegs(state_owner_t *client_owner);
 
 /* Specifically for delegations */
 bool init_deleg_heuristics(cache_entry_t *entry);
+bool deleg_supported(cache_entry_t *entry, struct fsal_export *fsal_export,
+		     struct export_perms *export_perms, uint32_t share_access);
+bool can_we_grant_deleg(cache_entry_t *entry, state_t *open_state);
 bool should_we_grant_deleg(cache_entry_t *entry, nfs_client_id_t *client,
 			   state_t *open_state, OPEN4args *args,
 			   state_owner_t *owner, bool *prerecall);
@@ -595,7 +598,7 @@ bool update_delegation_stats(struct deleg_data *deleg_data);
 state_status_t delegrecall_impl(cache_entry_t *entry);
 state_status_t deleg_revoke(struct deleg_data *deleg_data);
 void state_deleg_revoke(state_t *state, cache_entry_t *entry);
-bool deleg_conflict(cache_entry_t *entry, bool write);
+bool state_deleg_conflict(cache_entry_t *entry, bool write);
 
 #ifdef DEBUG_SAL
 void dump_all_states(void);

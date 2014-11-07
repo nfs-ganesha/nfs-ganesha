@@ -38,6 +38,10 @@ target_link_libraries(sm_notify.ganesha
 
 #target_link_libraries(sm_notify.ganesha ${CMAKE_THREAD_LIBS_INIT})
 
-install(TARGETS sm_notify.ganesha COMPONENT daemon DESTINATION bin)
+if( USE_ADMIN_TOOLS )
+  install(TARGETS sm_notify.ganesha DESTINATION bin)
+endif( USE_ADMIN_TOOLS )
+
+install(TARGETS COMPONENT daemon DESTINATION bin)
 
 ########### install files ###############

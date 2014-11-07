@@ -1041,7 +1041,7 @@ static struct gsh_dbus_method export_remove_export = {
 #define DISP_EXP_REPLY		\
 {				\
 	.name = "id",		\
-	.type = "i",		\
+	.type = "q",		\
 	.direction = "out"	\
 },				\
 {				\
@@ -1092,7 +1092,7 @@ static bool gsh_export_displayexport(DBusMessageIter *args,
 	/* create a reply from the message */
 	dbus_message_iter_init_append(reply, &iter);
 	dbus_message_iter_append_basic(&iter,
-				       DBUS_TYPE_INT32,
+				       DBUS_TYPE_UINT16,
 				       &export->export_id);
 	path = (export->fullpath != NULL) ? export->fullpath : "";
 	dbus_message_iter_append_basic(&iter,

@@ -642,8 +642,8 @@ state_status_t state_share_anonymous_io_start(cache_entry_t *entry,
 		return status;
 	}
 
-	if (deleg_conflict(entry,
-			   (share_access & OPEN4_SHARE_ACCESS_WRITE))) {
+	if (state_deleg_conflict(entry,
+				 share_access & OPEN4_SHARE_ACCESS_WRITE)) {
 		/* Delegations are being recalled. Delay client until that
 		 * process finishes. */
 		PTHREAD_RWLOCK_unlock(&entry->state_lock);

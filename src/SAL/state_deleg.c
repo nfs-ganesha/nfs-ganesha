@@ -591,7 +591,7 @@ void state_deleg_revoke(state_t *state, cache_entry_t *entry)
  * Must be called with cache inode entry's state lock held in read or read-write
  * mode.
  */
-bool deleg_conflict(cache_entry_t *entry, bool write)
+bool state_deleg_conflict(cache_entry_t *entry, bool write)
 {
 	struct file_deleg_stats *deleg_stats;
 
@@ -618,4 +618,76 @@ bool deleg_conflict(cache_entry_t *entry, bool write)
 		return true;
 	}
 	return false;
+}
+
+bool deleg_supported(cache_entry_t *entry, struct fsal_export *fsal_export,
+		     struct export_perms *export_perms, uint32_t share_access)
+{
+	if (!nfs_param.nfsv4_param.allow_delegations)
+		return false;
+	if (entry->type != REGULAR_FILE)
+		return false;
+
+	/* In a read-write case, we handle write delegation. So we should
+	 * check for OPEN4_SHARE_ACCESS_WRITE bit first!
+	 */
+	if (share_access & OPEN4_SHARE_ACCESS_WRITE) {
+		if (!fsal_export->ops->fs_supports(fsal_export,
+						   fso_delegations_w))
+			return false;
+		if (!(export_perms->options & EXPORT_OPTION_WRITE_DELEG))
+			return false;
+	} else {
+		assert(share_access & OPEN4_SHARE_ACCESS_READ);
+		if (!fsal_export->ops->fs_supports(fsal_export,
+						   fso_delegations_r))
+			return false;
+		if (!(export_perms->options & EXPORT_OPTION_READ_DELEG))
+			return false;
+	}
+
+	return true;
+}
+
+bool can_we_grant_deleg(cache_entry_t *entry, state_t *open_state)
+{
+	struct glist_head *glist;
+	state_lock_entry_t *lock_entry;
+	const state_share_t *share = &open_state->state_data.share;
+
+	/* Can't grant delegation if there is an anonymous operation
+	 * in progress
+	 */
+	if (atomic_fetch_uint32_t(&entry->object.file.anon_ops) != 0) {
+		LogFullDebug(COMPONENT_STATE,
+			     "Anonymous op in progress, not granting delegation");
+		return false;
+	}
+
+	/* Check for outstanding open state that may conflict with granting
+	 * the delegation
+	 */
+	if (state_open_deleg_conflict(entry, open_state)) {
+		LogFullDebug(COMPONENT_STATE,
+			     "Conflicting exiting open state, not granting delegation");
+		return false;
+	}
+
+	/* Check for conflicting NLM locks. Write delegation would conflict
+	 * with any kind of NLM lock, and NLM write lock would conflict
+	 * with any kind of delegation.
+	 */
+	glist_for_each(glist, &entry->object.file.lock_list) {
+		lock_entry = glist_entry(glist, state_lock_entry_t, sle_list);
+		if (lock_entry->sle_lock.lock_type == FSAL_NO_LOCK)
+			continue; /* no lock, skip */
+		if (share->share_access & OPEN4_SHARE_ACCESS_WRITE ||
+		    lock_entry->sle_lock.lock_type == FSAL_LOCK_W) {
+			LogFullDebug(COMPONENT_STATE,
+				     "Conflicting NLM lock. Not granting delegation");
+			return false;
+		}
+	}
+
+	return true;
 }

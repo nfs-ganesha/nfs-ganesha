@@ -441,7 +441,7 @@ static bool dbus_reply_introspection(DBusMessage *reply,
 void dbus_status_reply(DBusMessageIter *iter, bool success, char *errormsg)
 {
 	char *error;
-	int retcode = success;
+	dbus_bool_t retcode = success;
 
 	dbus_message_iter_append_basic(iter, DBUS_TYPE_BOOLEAN, &retcode);
 	if (errormsg == NULL)
@@ -455,12 +455,17 @@ void dbus_append_timestamp(DBusMessageIter *iterp, struct timespec *timestamp)
 {
 	DBusMessageIter ts_iter;
 
+	/* tv_sec and tv_nsec may not be same size as dbus_uint64_t on
+	 * 32 bit systems, so copy them here to dbus_uint64_t sized
+	 * symbols.
+	 */
+	dbus_uint64_t sec = timestamp->tv_sec;
+	dbus_uint64_t nsec = timestamp->tv_nsec;
+
 	dbus_message_iter_open_container(iterp, DBUS_TYPE_STRUCT, NULL,
 					 &ts_iter);
-	dbus_message_iter_append_basic(&ts_iter, DBUS_TYPE_UINT64,
-				       &timestamp->tv_sec);
-	dbus_message_iter_append_basic(&ts_iter, DBUS_TYPE_UINT64,
-				       &timestamp->tv_nsec);
+	dbus_message_iter_append_basic(&ts_iter, DBUS_TYPE_UINT64, &sec);
+	dbus_message_iter_append_basic(&ts_iter, DBUS_TYPE_UINT64, &nsec);
 	dbus_message_iter_close_container(iterp, &ts_iter);
 }
 
@@ -505,7 +510,7 @@ static DBusHandlerResult dbus_message_entrypoint(DBusConnection *conn,
 			if (strcmp(interface, (*iface)->name) == 0) {
 				struct gsh_dbus_method **m;
 
-				for (m = (*iface)->methods; *m; m++) {
+				for (m = (*iface)->methods; m && *m; m++) {
 					if (strcmp(method, (*m)->name) == 0) {
 						success = (*m)->method(argsp,
 								       reply,
@@ -774,7 +779,7 @@ void gsh_dbus_wake_thread(uint32_t flags)
  *                  Ex: DBUS_TYPE_STRING, DBUS_TYPE_UINT32, etc...
  *
  * @param ... :     An alternating list of types and data
- *                  All data args must be passed by refrence
+ *                  All data args must be passed by reference
  *                  Ex: &my_int,
  *                      DBUS_TYPE_STRING, &charPtr,
  *                      DBUS_TYPE_BOOLEAN, &my_bool

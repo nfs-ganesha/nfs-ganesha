@@ -853,9 +853,9 @@ static void record_compound(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
  */
 
 static void record_stats(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
-			 request_data_t *reqdata, bool success,
-			 nsecs_elapsed_t request_time,
-			 nsecs_elapsed_t qwait_time, bool dup, bool global)
+			 request_data_t *reqdata, nsecs_elapsed_t request_time,
+			 nsecs_elapsed_t qwait_time, bool success, bool dup,
+			 bool global)
 {
 	struct svc_req *req = &reqdata->r_u.nfs->req;
 	uint32_t proto_op = req->rq_proc;
@@ -1245,7 +1245,7 @@ void inc_failed_recalls(struct gsh_client *client)
 
 void server_stats_summary(DBusMessageIter *iter, struct gsh_stats *st)
 {
-	int stats_available;
+	dbus_bool_t stats_available;
 
 	stats_available = st->nfsv3 != 0;
 	dbus_message_iter_append_basic(iter, DBUS_TYPE_BOOLEAN,
