@@ -40,6 +40,7 @@
 #include <time.h>
 #include <pthread.h>
 #include <string.h>
+#include <assert.h>
 
 #include "log.h"
 #include "hashtable.h"
@@ -80,11 +81,34 @@ state_status_t state_add_impl(cache_entry_t *entry, enum state_type state_type,
 			      state_owner_t *owner_input, state_t **state,
 			      struct state_refer *refer)
 {
-	state_t *pnew_state;
+	state_t *pnew_state = NULL;
 	char debug_str[OTHERSIZE * 2 + 1];
 	cache_inode_status_t cache_status;
 	bool got_pinned = false;
+	bool got_export_ref = false;
 	state_status_t status = 0;
+	bool mutex_init = false;
+
+	/* Take a cache inode reference for the state */
+	cache_status = cache_inode_lru_ref(entry, LRU_FLAG_NONE);
+
+	if (cache_status != CACHE_INODE_SUCCESS) {
+		status = cache_inode_status_to_state_status(cache_status);
+		LogDebug(COMPONENT_STATE, "Could not ref file");
+		return status;
+	}
+
+	/* Attempt to get a reference to the export. */
+	if (!get_gsh_export_ref(op_ctx->export, false)) {
+		/* If we could not get a reference, return stale.
+		 * Release attr_lock
+		 */
+		LogDebug(COMPONENT_STATE, "Stale export");
+		status = STATE_ESTALE;
+		goto errout;
+	}
+
+	got_export_ref = true;
 
 	if (glist_empty(&entry->list_of_states)) {
 		cache_status = cache_inode_inc_pin_ref(entry);
@@ -93,7 +117,7 @@ state_status_t state_add_impl(cache_entry_t *entry, enum state_type state_type,
 			status =
 			    cache_inode_status_to_state_status(cache_status);
 			LogDebug(COMPONENT_STATE, "Could not pin file");
-			return status;
+			goto errout;
 		}
 
 		got_pinned = true;
@@ -107,13 +131,12 @@ state_status_t state_add_impl(cache_entry_t *entry, enum state_type state_type,
 
 		/* stat */
 		status = STATE_MALLOC_ERROR;
-
-		if (got_pinned)
-			cache_inode_dec_pin_ref(entry, false);
-
-		return status;
+		goto errout;
 	}
 
+	assert(pthread_mutex_init(&pnew_state->state_mutex, NULL) == 0);
+
+	mutex_init = true;
 
 	/* Add the stateid.other, this will increment cid_stateid_counter */
 	nfs4_BuildStateId_Other(owner_input->so_owner.so_nfs4_owner.
@@ -123,8 +146,6 @@ state_status_t state_add_impl(cache_entry_t *entry, enum state_type state_type,
 	memcpy(&(pnew_state->state_data), state_data, sizeof(*state_data));
 	pnew_state->state_type = state_type;
 	pnew_state->state_seqid = 0;	/* will be incremented to 1 later */
-	pnew_state->state_entry = entry;
-	pnew_state->state_owner = owner_input;
 	pnew_state->state_refcount = 2; /* sentinel plus returned ref */
 
 	if (refer)
@@ -145,37 +166,48 @@ state_status_t state_add_impl(cache_entry_t *entry, enum state_type state_type,
 			"Can't create a new state id %s for the entry %p (F)",
 			debug_str, entry);
 
-		pool_free(state_v4_pool, pnew_state);
-
 		/* Return STATE_MALLOC_ERROR since most likely the
 		 * nfs4_State_Set failed to allocate memory.
 		 */
 		status = STATE_MALLOC_ERROR;
-
-		if (got_pinned)
-			cache_inode_dec_pin_ref(entry, false);
-
-		return status;
+		goto errout;
 	}
 
+	/* Each of the following blocks takes the state_mutex and releases it
+	 * because we always want state_mutex to be the last lock taken.
+	 *
+	 * NOTE: We don't have to worry about state_del/state_del_locked being
+	 *       called in the midst of things because the state_lock is held.
+	 */
+
 	/* Attach this to an export */
-	pnew_state->state_export = op_ctx->export;
 	PTHREAD_RWLOCK_wrlock(&op_ctx->export->lock);
+	pthread_mutex_lock(&pnew_state->state_mutex);
+	pnew_state->state_export = op_ctx->export;
 	glist_add_tail(&op_ctx->export->exp_state_list,
 		       &pnew_state->state_export_list);
+	pthread_mutex_unlock(&pnew_state->state_mutex);
 	PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
 
 	/* Add state to list for cache entry */
+	pthread_mutex_lock(&pnew_state->state_mutex);
 	glist_add_tail(&entry->list_of_states, &pnew_state->state_list);
+	pnew_state->state_entry = entry;
+	pthread_mutex_unlock(&pnew_state->state_mutex);
 
-	inc_state_owner_ref(owner_input);
-
+	/* Add state to list for owner */
 	pthread_mutex_lock(&owner_input->so_mutex);
+	pthread_mutex_lock(&pnew_state->state_mutex);
+
+	pnew_state->state_owner = owner_input;
+	inc_state_owner_ref(owner_input);
 
 	glist_add_tail(&owner_input->so_owner.so_nfs4_owner.so_state_list,
 		       &pnew_state->state_owner_list);
 
+	pthread_mutex_unlock(&pnew_state->state_mutex);
 	pthread_mutex_unlock(&owner_input->so_mutex);
+
 
 #ifdef DEBUG_SAL
 	pthread_mutex_lock(&all_state_v4_mutex);
@@ -196,6 +228,24 @@ state_status_t state_add_impl(cache_entry_t *entry, enum state_type state_type,
 
 	/* Regular exit */
 	status = STATE_SUCCESS;
+	return status;
+
+errout:
+
+	if (mutex_init)
+		assert(pthread_mutex_destroy(&pnew_state->state_mutex) == 0);
+
+	if (pnew_state != NULL)
+		pool_free(state_v4_pool, pnew_state);
+
+	if (got_pinned)
+		cache_inode_dec_pin_ref(entry, false);
+
+	if (got_export_ref)
+		put_gsh_export(op_ctx->export);
+
+	cache_inode_lru_unref(entry, LRU_UNREF_STATE_LOCK_HELD);
+
 	return status;
 }				/* state_add */
 
@@ -254,30 +304,63 @@ state_status_t state_add(cache_entry_t *entry, enum state_type state_type,
 void state_del_locked(state_t *state)
 {
 	char debug_str[OTHERSIZE * 2 + 1];
-	cache_entry_t *entry = state->state_entry;
+	cache_entry_t *entry;
+	struct gsh_export *export;
+	state_owner_t *owner;
 
 	if (isDebug(COMPONENT_STATE))
 		sprint_mem(debug_str, (char *)state->stateid_other, OTHERSIZE);
 
+	/* Remove the entry from the HashTable. If it fails, we have lost the
+	 * race with another caller of state_del/state_del_locked.
+	 */
+	if (!nfs4_State_Del(state->stateid_other)) {
+		LogDebug(COMPONENT_STATE,
+			 "Racing to delete state %s", debug_str);
+		return;
+	}
+
 	LogFullDebug(COMPONENT_STATE, "Deleting state %s", debug_str);
 
-	/* Remove the entry from the HashTable, which can't fail */
-	nfs4_State_Del(state->stateid_other);
+	/* Protect extraction of all the referenced objects, we don't
+	 * actually need to test them or take references because we assure
+	 * that there is exactly one state_del_locked call that proceeds
+	 * this far, and thus if the refereces were non-NULL, they must still
+	 * be good. Holding the mutex is not strictly necessary for this
+	 * reason, however, static and dynamic code analysis have no way of
+	 * knowing this reference is safe.
+	 */
+	pthread_mutex_lock(&state->state_mutex);
+	entry = state->state_entry;
+	export = state->state_export;
+	owner = state->state_owner;
+	pthread_mutex_unlock(&state->state_mutex);
 
-	/* Remove from list of states owned by owner */
-
-	/* Release the state owner reference */
-	if (state->state_owner != NULL) {
-		pthread_mutex_lock(&state->state_owner->so_mutex);
+	if (owner != NULL) {
+		/* Remove from list of states owned by owner and
+		 * release the state owner reference.
+		 */
+		pthread_mutex_lock(&owner->so_mutex);
+		pthread_mutex_lock(&state->state_mutex);
 		glist_del(&state->state_owner_list);
-		pthread_mutex_unlock(&state->state_owner->so_mutex);
-		dec_state_owner_ref(state->state_owner);
+		state->state_owner = NULL;
+		pthread_mutex_unlock(&state->state_mutex);
+		pthread_mutex_unlock(&owner->so_mutex);
+		dec_state_owner_ref(owner);
 	}
 
 	/* Remove from the list of states for a particular cache entry */
+	pthread_mutex_lock(&state->state_mutex);
 	glist_del(&state->state_list);
+	state->state_entry = NULL;
+	pthread_mutex_unlock(&state->state_mutex);
+	cache_inode_lru_unref(entry, LRU_UNREF_STATE_LOCK_HELD);
 
-	/* Remove from the list of lock states for a particular open state */
+	/* Remove from the list of lock states for a particular open state.
+	 * This is safe to do without any special checks. If we are not on
+	 * the list, glist_del does nothing, and the state_lock protects the
+	 * open state's state_sharelist.
+	 */
 	if (state->state_type == STATE_TYPE_LOCK)
 		glist_del(&state->state_data.lock.state_sharelist);
 
@@ -286,10 +369,19 @@ void state_del_locked(state_t *state)
 	    state->state_data.deleg.sd_type == OPEN_DELEGATE_WRITE)
 		entry->object.file.write_delegated = false;
 
-	/* Remove from list of states for a particular export */
-	PTHREAD_RWLOCK_wrlock(&state->state_export->lock);
+	/* Remove from list of states for a particular export.
+	 * In this case, it is safe to look at state_export without yet
+	 * holding the state_mutex because this is the only place where it
+	 * is removed, and we have guaranteed we are the only thread
+	 * proceeding with state deletion.
+	 */
+	PTHREAD_RWLOCK_wrlock(&export->lock);
+	pthread_mutex_lock(&state->state_mutex);
 	glist_del(&state->state_export_list);
-	PTHREAD_RWLOCK_unlock(&state->state_export->lock);
+	state->state_export = NULL;
+	pthread_mutex_unlock(&state->state_mutex);
+	PTHREAD_RWLOCK_unlock(&export->lock);
+	put_gsh_export(export);
 
 #ifdef DEBUG_SAL
 	pthread_mutex_lock(&all_state_v4_mutex);
@@ -302,6 +394,7 @@ void state_del_locked(state_t *state)
 	if (glist_empty(&entry->list_of_states))
 		cache_inode_dec_pin_ref(entry, false);
 
+	/* Remove the sentinel reference */
 	dec_state_t_ref(state);
 }
 
@@ -323,6 +416,96 @@ void state_del(state_t *state, bool hold_lock)
 
 	if (!hold_lock)
 		PTHREAD_RWLOCK_unlock(&entry->state_lock);
+}
+
+/**
+ * @brief Get references to the various objects a state_t points to.
+ *
+ * @param[in] state The state_t to get references from
+ * @param[in,out] entry Place to return the cache entry (NULL if not desired)
+ * @param[in,out] export Place to return the export (NULL if not desired)
+ * @param[in,out] owner Place to return the owner (NULL if not desired)
+ *
+ * @retval true if all desired references were taken
+ * @retval flase otherwise (in which case no references are taken)
+ *
+ * For convenience, returns false if state is NULL which helps simplify
+ * code for some callers.
+ */
+bool get_state_entry_export_owner_refs(state_t *state,
+				       cache_entry_t **entry,
+				       struct gsh_export **export,
+				       state_owner_t **owner)
+{
+	if (entry != NULL)
+		*entry = NULL;
+
+	if (export != NULL)
+		*export = NULL;
+
+	if (owner != NULL)
+		*owner = NULL;
+
+	if (state == NULL)
+		return false;
+
+	pthread_mutex_lock(&state->state_mutex);
+
+	LogFullDebug(COMPONENT_STATE,
+		     "state %p state_entry %p state_export %p state_owner %p",
+		     state, state->state_entry, state->state_export,
+		     state->state_owner);
+
+	if (entry != NULL) {
+		if (state->state_entry != NULL &&
+		    cache_inode_lru_ref(state->state_entry,
+					LRU_FLAG_NONE) == CACHE_INODE_SUCCESS)
+			*entry = state->state_entry;
+		else
+			goto fail;
+	}
+
+	if (export != NULL) {
+		if (state->state_export != NULL &&
+		    get_gsh_export_ref(state->state_export, false))
+			*export = state->state_export;
+		else
+			goto fail;
+	}
+
+	if (owner != NULL) {
+		if (state->state_owner != NULL) {
+			*owner = state->state_owner;
+			inc_state_owner_ref(*owner);
+		} else {
+			goto fail;
+		}
+	}
+
+	pthread_mutex_unlock(&state->state_mutex);
+
+	return true;
+
+fail:
+
+	pthread_mutex_unlock(&state->state_mutex);
+
+	if (entry != NULL && *entry != NULL) {
+		cache_inode_lru_unref(*entry, LRU_FLAG_NONE);
+		*entry = NULL;
+	}
+
+	if (export != NULL && *export != NULL) {
+		put_gsh_export(*export);
+		*export = NULL;
+	}
+
+	if (owner != NULL && *owner != NULL) {
+		dec_state_owner_ref(*owner);
+		*owner = NULL;
+	}
+
+	return false;
 }
 
 /**
@@ -524,6 +707,9 @@ void state_export_release_nfs4_state(void)
 #ifdef DEBUG_SAL
 void dump_all_states(void)
 {
+	state_t *state;
+	state_owner_t *owner;
+
 	if (!isDebug(COMPONENT_STATE))
 		return;
 
@@ -536,12 +722,13 @@ void dump_all_states(void)
 			 " =State List= ");
 
 		glist_for_each(glist, &state_v4_all) {
-			state_t *pstate =
-			    glist_entry(glist, state_t, state_list_all);
 			char *state_type = "unknown";
 			char str[HASHTABLE_DISPLAY_STRLEN];
 
-			switch (pstate->state_type) {
+			state = glist_entry(glist, state_t, state_list_all);
+			owner = get_state_owner_ref(state);
+
+			switch (state->state_type) {
 			case STATE_TYPE_NONE:
 				state_type = "NONE";
 				break;
@@ -559,9 +746,12 @@ void dump_all_states(void)
 				break;
 			}
 
-			DisplayOwner(pstate->state_owner, str);
+			DisplayOwner(owner, str);
 			LogDebug(COMPONENT_STATE, "State %p type %s owner {%s}",
-				 pstate, state_type, str);
+				 state, state_type, str);
+
+			if (owner != NULL)
+				dec_state_owner_ref(owner);
 		}
 
 		LogDebug(COMPONENT_STATE,

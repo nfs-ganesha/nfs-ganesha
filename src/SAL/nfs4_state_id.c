@@ -285,6 +285,8 @@ void dec_state_t_ref(struct state_t *state)
 		return;
 	}
 
+	assert(pthread_mutex_destroy(&state->state_mutex) == 0);
+
 	pool_free(state_v4_pool, state);
 
 	LogFullDebug(COMPONENT_STATE, "Deleted state %s", debug_str);
@@ -365,9 +367,10 @@ struct state_t *nfs4_State_Get_Pointer(char *other)
  *
  * @param[in] other stateid4.other
  *
- * This really can't fail.
+ * @retval true if success
+ * @retval false if failure
  */
-void nfs4_State_Del(char *other)
+bool nfs4_State_Del(char *other)
 {
 	struct gsh_buffdesc buffkey, old_key, old_value;
 	hash_error_t err;
@@ -377,25 +380,13 @@ void nfs4_State_Del(char *other)
 
 	err = HashTable_Del(ht_state_id, &buffkey, &old_key, &old_value);
 
-	if (err == HASHTABLE_SUCCESS) {
-		/* free the key that was stored in hash table */
-		if (isFullDebug(COMPONENT_STATE)) {
-			char debug_str[OTHERSIZE * 2 + 1];
-
-			sprint_mem(debug_str, other, OTHERSIZE);
-
-			LogFullDebug(COMPONENT_STATE, "Freeing stateid key %s",
-				     debug_str);
-		}
-
-		/* State is managed in stuff alloc, no free is needed for
-		 * old_value.addr
-		 */
-	} else {
-		LogCrit(COMPONENT_STATE,
-			"Failure to delete state %s",
-			hash_table_err_to_str(err));
+	if (err != HASHTABLE_SUCCESS) {
+		LogDebug(COMPONENT_STATE,
+			 "Failure to delete state %s",
+			 hash_table_err_to_str(err));
 	}
+
+	return err == HASHTABLE_SUCCESS;
 }
 
 /**

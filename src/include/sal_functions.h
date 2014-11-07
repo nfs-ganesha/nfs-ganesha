@@ -347,7 +347,7 @@ void inc_state_t_ref(struct state_t *state);
 void dec_state_t_ref(struct state_t *state);
 int nfs4_State_Set(state_t *state_data);
 struct state_t *nfs4_State_Get_Pointer(char *other);
-void nfs4_State_Del(char *other);
+bool nfs4_State_Del(char *other);
 void nfs_State_PrintAll(void);
 
 int display_state_id_val(struct gsh_buffdesc *buff, char *str);
@@ -552,6 +552,116 @@ state_status_t state_set(state_t *state);
 void state_del_locked(state_t *state);
 
 void state_del(state_t *state, bool hold_lock);
+
+static inline cache_entry_t *get_state_entry_ref(state_t *state)
+{
+	cache_entry_t *entry = NULL;
+
+	pthread_mutex_lock(&state->state_mutex);
+
+	if (state->state_entry != NULL &&
+	    cache_inode_lru_ref(state->state_entry,
+				LRU_FLAG_NONE) == CACHE_INODE_SUCCESS)
+		entry = state->state_entry;
+
+	pthread_mutex_unlock(&state->state_mutex);
+
+	return entry;
+}
+
+static inline struct gsh_export *get_state_export_ref(state_t *state)
+{
+	struct gsh_export *export = NULL;
+
+	pthread_mutex_lock(&state->state_mutex);
+
+	if (state->state_export != NULL &&
+	    !get_gsh_export_ref(state->state_export, false))
+		export = state->state_export;
+
+	pthread_mutex_unlock(&state->state_mutex);
+
+	return export;
+}
+
+static inline bool state_same_export(state_t *state, struct gsh_export *export)
+{
+	bool same = false;
+
+	pthread_mutex_lock(&state->state_mutex);
+
+	if (state->state_export != NULL)
+		same = state->state_export == export;
+
+	pthread_mutex_unlock(&state->state_mutex);
+
+	return same;
+}
+
+static inline uint16_t state_export_id(state_t *state)
+{
+	uint16_t export_id = UINT16_MAX;
+
+	pthread_mutex_lock(&state->state_mutex);
+
+	if (state->state_export != NULL)
+		export_id = state->state_export->export_id;
+
+	pthread_mutex_unlock(&state->state_mutex);
+
+	return export_id;
+}
+
+static inline state_owner_t *get_state_owner_ref(state_t *state)
+{
+	state_owner_t *owner = NULL;
+
+	pthread_mutex_lock(&state->state_mutex);
+
+	if (state->state_owner != NULL) {
+		owner = state->state_owner;
+		inc_state_owner_ref(owner);
+	}
+
+	pthread_mutex_unlock(&state->state_mutex);
+
+	return owner;
+}
+
+static inline bool state_owner_confirmed(state_t *state)
+{
+	bool confirmed = false;
+
+	pthread_mutex_lock(&state->state_mutex);
+
+	if (state->state_owner != NULL) {
+		confirmed =
+			state->state_owner->so_owner.so_nfs4_owner.so_confirmed;
+	}
+
+	pthread_mutex_unlock(&state->state_mutex);
+
+	return confirmed;
+}
+
+static inline bool state_same_owner(state_t *state, state_owner_t *owner)
+{
+	bool same = false;
+
+	pthread_mutex_lock(&state->state_mutex);
+
+	if (state->state_owner != NULL)
+		same = state->state_owner == owner;
+
+	pthread_mutex_unlock(&state->state_mutex);
+
+	return same;
+}
+
+bool get_state_entry_export_owner_refs(state_t *state,
+				       cache_entry_t **entry,
+				       struct gsh_export **export,
+				       state_owner_t **owner);
 
 int display_lock_cookie_key(struct gsh_buffdesc *buff, char *str);
 int display_lock_cookie_val(struct gsh_buffdesc *buff, char *str);
