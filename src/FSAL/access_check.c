@@ -338,7 +338,7 @@ static fsal_status_t fsal_check_access_acl(struct user_cred *creds,
 	missing_access = v4mask & ~FSAL_ACE4_PERM_CONTINUE;
 	if (!missing_access) {
 		LogFullDebug(COMPONENT_NFS_V4_ACL, "Nothing was requested");
-		fsalstat(ERR_FSAL_NO_ERROR, 0);
+		return fsalstat(ERR_FSAL_NO_ERROR, 0);
 	}
 
 	/* Get file ownership information. */
@@ -356,7 +356,7 @@ static fsal_status_t fsal_check_access_acl(struct user_cred *creds,
 			/* On a directory, allow root anything. */
 			LogFullDebug(COMPONENT_NFS_V4_ACL,
 				     "Met root privileges on directory");
-			fsalstat(ERR_FSAL_NO_ERROR, 0);
+			return fsalstat(ERR_FSAL_NO_ERROR, 0);
 		}
 
 		/* Otherwise, allow root anything but execute. */
@@ -368,7 +368,7 @@ static fsal_status_t fsal_check_access_acl(struct user_cred *creds,
 		if (!missing_access) {
 			LogFullDebug(COMPONENT_NFS_V4_ACL,
 				     "Met root privileges");
-			fsalstat(ERR_FSAL_NO_ERROR, 0);
+			return fsalstat(ERR_FSAL_NO_ERROR, 0);
 		}
 	}
 
@@ -408,7 +408,7 @@ static fsal_status_t fsal_check_access_acl(struct user_cred *creds,
 		if (!missing_access) {
 			LogFullDebug(COMPONENT_NFS_V4_ACL,
 				     "Met owner privileges");
-			fsalstat(ERR_FSAL_NO_ERROR, 0);
+			return fsalstat(ERR_FSAL_NO_ERROR, 0);
 		}
 	}
 	/** @TODO@ Even if user is admin, audit/alarm checks should be done. */
@@ -565,7 +565,7 @@ fsal_check_access_no_acl(struct user_cred *creds,
 
 	if (!access_type) {
 		LogFullDebug(COMPONENT_NFS_V4_ACL, "Nothing was requested");
-		fsalstat(ERR_FSAL_NO_ERROR, 0);
+		return fsalstat(ERR_FSAL_NO_ERROR, 0);
 	}
 
 	uid = p_object_attributes->owner;

@@ -1,0 +1,10 @@
+1- you need to have LCAP installed and running on your machine (even a 'NULL'
+   which translates changelog to lcap records)
+2- you need to run Lustre with the 'jobid' patch (this patch is part of
+   Lustre 2.7)
+3- Once the FS is mounted, you should add a changelog reader:
+        #lctl  --device lustre-MDT0000 changelog_register
+4 - See changelogs (outside lcap) wit a lfs command:
+        # lfs changelog lustre-MDT0000
+5- Clear changelogs manually
+        #  lfs changelog_clear lustre-MDT0000 cl1 3

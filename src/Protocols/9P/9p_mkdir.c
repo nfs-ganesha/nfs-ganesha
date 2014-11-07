@@ -87,6 +87,11 @@ int _9p_mkdir(struct _9p_request_data *req9p, void *worker_data,
 				  preply);
 	}
 
+	if ((pfid->op_context.export_perms->options &
+				 EXPORT_OPTION_WRITE_ACCESS) == 0)
+		return _9p_rerror(req9p, worker_data, msgtag, EROFS, plenout,
+				  preply);
+
 	snprintf(dir_name, MAXNAMLEN, "%.*s", *name_len, name_str);
 
 	op_ctx = &pfid->op_context;
