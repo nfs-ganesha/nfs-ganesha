@@ -366,6 +366,7 @@ struct state_t {
 #ifdef DEBUG_SAL
 	struct glist_head state_list_all;    /*< Global list of all stateids */
 #endif
+	pthread_mutex_t state_mutex; /*< Mutex protecting following pointers */
 	struct gsh_export *state_export; /*< Export this entry belongs to */
 	state_owner_t *state_owner;	/*< State Owner related to this state */
 	cache_entry_t *state_entry;	/*< Related entry */
