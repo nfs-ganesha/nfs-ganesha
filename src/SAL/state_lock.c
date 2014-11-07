@@ -634,7 +634,7 @@ inline state_lock_entry_t *state_lock_entry_t_dup(state_lock_entry_t *
  *
  * @param[in,out] lock_entry Entry to reference
  */
-void lock_entry_inc_ref(state_lock_entry_t *lock_entry)
+static inline void lock_entry_inc_ref(state_lock_entry_t *lock_entry)
 {
 	int32_t refcount = atomic_inc_int32_t(&lock_entry->sle_ref_count);
 
@@ -646,7 +646,7 @@ void lock_entry_inc_ref(state_lock_entry_t *lock_entry)
  *
  * @param[in,out] lock_entry Entry to release
  */
-void lock_entry_dec_ref(state_lock_entry_t *lock_entry)
+static void lock_entry_dec_ref(state_lock_entry_t *lock_entry)
 {
 	int32_t refcount = atomic_dec_int32_t(&lock_entry->sle_ref_count);
 
