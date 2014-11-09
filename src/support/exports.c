@@ -528,52 +528,12 @@ static int client_commit(void *node, void *link_mem, void *self_struct,
 }
 
 /**
- * @brief Init and commit for FSAL sub-block of an export
- */
-
-struct fsal_params {
-	char *name;
-};
-
-/**
- * @brief Initialize space for an FSAL sub-block.
- *
- * We allocate space to hold the name parameter so that
- * is available in the commit phase.
- */
-
-static void *fsal_init(void *link_mem, void *self_struct)
-{
-	struct fsal_params *fp;
-
-	assert(link_mem != NULL || self_struct != NULL);
-
-	if (link_mem == NULL) {
-		return self_struct; /* NOP */
-	} else if (self_struct == NULL) {
-		fp = gsh_calloc(sizeof(struct fsal_params), 1);
-		if (fp == NULL)
-			return NULL;
-		return fp;
-	} else {
-		fp = self_struct;
-		if (fp->name != NULL)
-			gsh_free(fp->name);
-		gsh_free(fp);
-		return NULL;
-	}
-}
-
-/**
  * @brief Commit a FSAL sub-block
  *
  * Use the Name parameter passed in via the link_mem to lookup the
  * fsal.  If the fsal is not loaded (yet), load it and call its init.
- * This will trigger the processing of a top level block of the same
- * name as the fsal, i.e. the VFS fsal will look for a VFS block
- * and process it (if found).
  *
- * Create an export and pass it the FSAL sub-block to it so that the
+ * Create an export and pass the FSAL sub-block to it so that the
  * fsal method can process the rest of the parameters in the block
  */
 
@@ -581,29 +541,20 @@ static int fsal_commit(void *node, void *link_mem, void *self_struct,
 		       struct config_error_type *err_type)
 {
 	struct fsal_export **exp_hdl = link_mem;
-	struct fsal_params *fp = self_struct;
+	struct gsh_export *export =
+	    container_of(exp_hdl, struct gsh_export, fsal_export);
+	struct fsal_args *fp = self_struct;
 	struct fsal_module *fsal;
-	struct gsh_export *export;
-	fsal_status_t status;
-	int errcnt = 0;
 	struct root_op_context root_op_context;
 	uint64_t MaxRead, MaxWrite;
-
-	if (fp->name == NULL || strlen(fp->name) == 0) {
-		LogCrit(COMPONENT_CONFIG,
-			"Name of FSAL is empty");
-		err_type->missing = true;
-		errcnt++;
-		goto err;
-	}
-
-	export = container_of(exp_hdl, struct gsh_export, fsal_export);
+	fsal_status_t status;
+	int errcnt;
 
 	/* Initialize req_ctx */
 	init_root_op_context(&root_op_context, export, NULL, 0, 0,
 			     UNKNOWN_REQUEST);
 
-	errcnt += fsal_load_init(node, fp->name, &fsal, err_type);
+	errcnt = fsal_load_init(node, fp->name, &fsal, err_type);
 	if (errcnt > 0)
 		goto err;
 
@@ -662,6 +613,7 @@ static int fsal_commit(void *node, void *link_mem, void *self_struct,
 	}
 
 err:
+	release_root_op_context();
 	return errcnt;
 }
 
@@ -1135,7 +1087,7 @@ static struct config_item export_defaults_params[] = {
 
 static struct config_item fsal_params[] = {
 	CONF_ITEM_STR("Name", 1, 10, NULL,
-		      fsal_params, name), /* cheater union */
+		      fsal_args, name), /* cheater union */
 	CONFIG_EOL
 };
 
@@ -1143,7 +1095,7 @@ static struct config_item fsal_params[] = {
  * @brief Table of EXPORT block parameters
  *
  * NOTE: the Client and FSAL sub-blocks must be the *last*
- * two entries in the list.  This is so all other export
+ * two entries in the list.  This is so all other
  * parameters have been processed before these sub-blocks
  * are processed.
  */
@@ -1200,7 +1152,7 @@ static struct config_item export_params[] = {
  * @brief Top level definition for an EXPORT block
  */
 
-struct config_block export_param = {
+static struct config_block export_param = {
 	.dbus_interface_name = "org.ganesha.nfsd.config.%d",
 	.blk_desc.name = "EXPORT",
 	.blk_desc.type = CONFIG_BLOCK,
@@ -1380,11 +1332,12 @@ static int build_default_root(void)
 		 "Export 0 (/) successfully created");
 
 	put_gsh_export(export);	/* all done, let go */
-
+	release_root_op_context();
 	return 1;
 
 err_out:
 	free_export(export);
+	release_root_op_context();
 	return -1;
 }
 
@@ -2340,56 +2293,3 @@ void export_check_access(void)
 			    perms);
 	}
 }				/* nfs_export_check_access */
-
-/**
- * @brief Load and initialize FSAL module
- *
- * Use the name parameter to lookup the fsal. If the fsal is not
- * loaded (yet), load it and call its init. This will trigger the
- * processing of a top level block of the same name as the fsal, i.e.
- * the VFS fsal will look for a VFS block and process it (if found).
- *
- * @param[in]  node       parse node of FSAL block
- * @param[in]  name       name of the FSAL to load and initialize (if
- *                        not already loaded)
- * @param[out] fsal_hdl   Pointer to FSAL module or NULL if not found
- * @param[out] err_type   pointer to error type
- *
- * @retval 0 on success, error count on errors
- */
-
-int fsal_load_init(void *node, const char *name, struct fsal_module **fsal_hdl,
-		   struct config_error_type *err_type)
-{
-	fsal_status_t status;
-	int errcnt = 0;
-
-	*fsal_hdl = lookup_fsal(name);
-	if (*fsal_hdl == NULL) {
-		int retval;
-		config_file_t myconfig;
-
-		retval = load_fsal(name, fsal_hdl);
-		if (retval != 0) {
-			LogCrit(COMPONENT_CONFIG,
-				"Failed to load FSAL (%s) because: %s", name,
-				strerror(retval));
-			err_type->fsal = true;
-			errcnt++;
-			goto err;
-		}
-		myconfig = get_parse_root(node);
-		status = (*fsal_hdl)->ops->init_config(*fsal_hdl, myconfig);
-		if (FSAL_IS_ERROR(status)) {
-			LogCrit(COMPONENT_CONFIG,
-				"Failed to initialize FSAL (%s)", name);
-			fsal_put(*fsal_hdl);
-			err_type->fsal = true;
-			errcnt++;
-			goto err;
-		}
-	}
-
-err:
-	return errcnt;
-}
