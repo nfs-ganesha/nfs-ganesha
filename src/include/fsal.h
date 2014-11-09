@@ -150,6 +150,24 @@ void display_fsinfo(struct fsal_staticfsinfo_t *info);
 
 static const size_t fsal_default_linksize = 4096;
 
+int fsal_load_init(void *node, const char *name,
+		   struct fsal_module **fsal_hdl_p,
+		   struct config_error_type *err_type);
+
+struct fsal_args {
+	char *name;
+};
+
+void *fsal_init(void *link_mem, void *self_struct);
+
+struct subfsal_args {
+	char *name;
+	void *fsal_node;
+};
+
+int subfsal_commit(void *node, void *link_mem, void *self_struct,
+		   struct config_error_type *err_type);
+
 void destroy_fsals(void);
 void emergency_cleanup_fsals(void);
 

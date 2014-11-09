@@ -480,4 +480,109 @@ int unregister_fsal(struct fsal_module *fsal_hdl)
 	return 0;
 }
 
+/**
+ * @brief Init and commit for FSAL sub-block
+ */
+
+/**
+ * @brief Initialize space for an FSAL sub-block.
+ *
+ * We allocate space to hold the name parameter so that
+ * is available in the commit phase.
+ */
+
+void *fsal_init(void *link_mem, void *self_struct)
+{
+	struct fsal_args *fp;
+
+	assert(link_mem != NULL || self_struct != NULL);
+
+	if (link_mem == NULL) {
+		return self_struct; /* NOP */
+	} else if (self_struct == NULL) {
+		return gsh_calloc(sizeof(struct fsal_args), 1);
+	} else {
+		fp = self_struct;
+		if (fp->name != NULL)
+			gsh_free(fp->name);
+		gsh_free(fp);
+		return NULL;
+	}
+}
+
+/**
+ * @brief Load and initialize FSAL module
+ *
+ * Use the name parameter to lookup the fsal. If the fsal is not
+ * loaded (yet), load it and call its init. This will trigger the
+ * processing of a top level block of the same name as the fsal, i.e.
+ * the VFS fsal will look for a VFS block and process it (if found).
+ *
+ * @param[in]  node       parse node of FSAL block
+ * @param[in]  name       name of the FSAL to load and initialize (if
+ *                        not already loaded)
+ * @param[out] fsal_hdl   Pointer to FSAL module or NULL if not found
+ * @param[out] err_type   pointer to error type
+ *
+ * @retval 0 on success, error count on errors
+ */
+
+int fsal_load_init(void *node, const char *name, struct fsal_module **fsal_hdl,
+		   struct config_error_type *err_type)
+{
+	fsal_status_t status;
+
+	if (name == NULL || strlen(name) == 0) {
+		LogCrit(COMPONENT_CONFIG,
+			"Name of FSAL is missing");
+		err_type->missing = true;
+		return 1;
+	}
+
+	*fsal_hdl = lookup_fsal(name);
+	if (*fsal_hdl == NULL) {
+		int retval;
+		config_file_t myconfig;
+
+		retval = load_fsal(name, fsal_hdl);
+		if (retval != 0) {
+			LogCrit(COMPONENT_CONFIG,
+				"Failed to load FSAL (%s) because: %s", name,
+				strerror(retval));
+			err_type->fsal = true;
+			return 1;
+		}
+		myconfig = get_parse_root(node);
+		status = (*fsal_hdl)->ops->init_config(*fsal_hdl, myconfig);
+		if (FSAL_IS_ERROR(status)) {
+			LogCrit(COMPONENT_CONFIG,
+				"Failed to initialize FSAL (%s)", name);
+			fsal_put(*fsal_hdl);
+			err_type->fsal = true;
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
+/**
+ * @brief Load and initialize sub-FSAL module
+ *
+ * @retval 0 on success, error count on errors
+ */
+
+int subfsal_commit(void *node, void *link_mem, void *self_struct,
+		   struct config_error_type *err_type)
+{
+	struct fsal_module *fsal_next;
+	struct subfsal_args *subfsal = (struct subfsal_args *)self_struct;
+	int errcnt = fsal_load_init(node, subfsal->name, &fsal_next, err_type);
+
+	if (errcnt == 0)
+		subfsal->fsal_node = node;
+
+	return errcnt;
+}
+
 /** @} */
