@@ -948,6 +948,8 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid, bool make_stale)
 				LogFullDebug(COMPONENT_CLIENTID,
 					     "Expired State for {%s}", str);
 		}
+
+		dec_state_owner_ref(popen_owner);
 	}
 
 	/* revoke delegations for this client*/

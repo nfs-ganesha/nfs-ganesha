@@ -583,43 +583,76 @@ enum nfsstat4 release_lock_owner(state_owner_t *owner)
  *
  * @param[in,out] open_owner Open owner
  */
-void release_openstate(state_owner_t *open_owner)
+void release_openstate(state_owner_t *owner)
 {
 	state_status_t state_status;
-	struct glist_head *glist, *glistn;
+	int errcnt = 0;
+	bool ok;
 
-	glist_for_each_safe(glist, glistn,
-			    &open_owner->so_owner.so_nfs4_owner.so_state_list) {
-		state_t *state_found = glist_entry(glist,
-						   state_t,
-						   state_owner_list);
+	/* Only accept so many errors before giving up. */
+	while (errcnt < STATE_ERR_MAX) {
+		state_t *state;
+		cache_entry_t *entry = NULL;
+		struct gsh_export *export = NULL;
 
-		cache_entry_t *entry = state_found->state_entry;
+		pthread_mutex_lock(&owner->so_mutex);
 
-		/* Make sure we hold an lru ref to the cache inode while calling
-		 * state_del */
-		(void) cache_inode_lru_ref(entry, LRU_REQ_STALE_OK);
+		state = glist_first_entry(&owner->so_owner.so_nfs4_owner
+								.so_state_list,
+					  state_t,
+					  state_owner_list);
+
+		if (state == NULL) {
+			pthread_mutex_unlock(&owner->so_mutex);
+			return;
+		}
+
+		/* Move to end of list in case of error to ease retries */
+		glist_del(&state->state_owner_list);
+		glist_add_tail(&owner->so_owner.so_nfs4_owner.so_state_list,
+			       &state->state_owner_list);
+
+		/* Get references to the cache entry and export */
+		ok = get_state_entry_export_owner_refs(state,
+						       &entry,
+						       &export,
+						       NULL);
+
+		if (!ok) {
+			/* The cache entry, export, or state must be about to
+			 * die, skip for now.
+			 */
+			pthread_mutex_unlock(&owner->so_mutex);
+			continue;
+		}
+
+		/* Make sure the state doesn't go away on us... */
+		inc_state_t_ref(state);
+
+		pthread_mutex_unlock(&owner->so_mutex);
 
 		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 
-		if (state_found->state_type == STATE_TYPE_SHARE) {
-			op_ctx->export = state_found->state_export;
-			op_ctx->fsal_export = op_ctx->export->fsal_export;
+		if (state->state_type == STATE_TYPE_SHARE) {
+			op_ctx->export = export;
+			op_ctx->fsal_export = export->fsal_export;
 
-			state_status =
-			    state_share_remove(state_found->state_entry,
-					       open_owner, state_found);
+			state_status = state_share_remove(entry, owner, state);
+
 			if (!state_unlock_err_ok(state_status)) {
+				errcnt++;
 				LogEvent(COMPONENT_CLIENTID,
 					 "EXPIRY failed to release share stateid error %s",
 					 state_err_str(state_status));
 			}
 		}
 
-		state_del_locked(state_found);
+		state_del_locked(state);
+
+		dec_state_t_ref(state);
 
 		/* Close the file in FSAL through the cache inode */
-		cache_inode_close(entry, 0);
+		cache_inode_close(entry, CACHE_INODE_FLAG_NONE);
 
 		PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
@@ -627,6 +660,16 @@ void release_openstate(state_owner_t *open_owner)
 		 * calling state_del
 		 */
 		cache_inode_lru_unref(entry, LRU_FLAG_NONE);
+	}
+
+	if (errcnt == STATE_ERR_MAX) {
+		char owner_str[HASHTABLE_DISPLAY_STRLEN];
+
+		DisplayOwner(owner, owner_str);
+
+		LogFatal(COMPONENT_STATE,
+			 "Could not complete cleanup of lock state for lock owner %s",
+			 owner_str);
 	}
 }
 
