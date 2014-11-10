@@ -1,6 +1,9 @@
 /*
- * Copyright © 2012, CohortFS, LLC.
+ * Copyright © 2012-2014, CohortFS, LLC.
  * Author: Adam C. Emerson <aemerson@linuxbox.com>
+ *
+ * contributeur : William Allen Simpson <bill@cohortfs.com>
+ *		  Marcus Watts <mdw@cohortfs.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -23,9 +26,10 @@
 /**
  * @file FSAL_CEPH/main.c
  * @author Adam C. Emerson <aemerson@linuxbox.com>
- * @date Thu Jul  5 14:48:33 2012
+ * @author William Allen Simpson <bill@cohortfs.com>
+ * @date Wed Oct 22 13:24:33 2014
  *
- * @brief Impelmentation of FSAL module founctions for Ceph
+ * @brief Implementation of FSAL module founctions for Ceph
  *
  * This file implements the module functions for the Ceph FSAL, for
  * initialization, teardown, configuration, and creation of exports.
@@ -44,15 +48,77 @@
 #include "export_mgr.h"
 
 /**
- * A local copy of the handle for this module, so it can be disposed
- * of.
+ * Ceph global module object.
  */
-static struct fsal_module *module;
+struct ceph_fsal_module CephFSM;
 
 /**
  * The name of this module.
  */
 static const char *module_name = "Ceph";
+
+static fsal_staticfsinfo_t default_ceph_info = {
+	/* settable */
+#if 0
+	.umask = 0,
+	.xattr_access_rights = 0,
+#endif
+	/* fixed */
+	.symlink_support = true,
+	.link_support = true,
+	.cansettime = true,
+	.no_trunc = true,
+	.chown_restricted = true,
+	.case_preserving = true,
+	.unique_handles = true,
+	.homogenous = true,
+};
+
+static struct config_item ceph_items[] = {
+	CONF_ITEM_MODE("umask", 0, 0777, 0,
+			ceph_fsal_module, fs_info.umask),
+	CONF_ITEM_MODE("xattr_access_rights", 0, 0777, 0,
+			ceph_fsal_module, fs_info.xattr_access_rights),
+	CONFIG_EOL
+};
+
+static struct config_block ceph_block = {
+	.dbus_interface_name = "org.ganesha.nfsd.config.fsal.ceph",
+	.blk_desc.name = "Ceph",
+	.blk_desc.type = CONFIG_BLOCK,
+	.blk_desc.u.blk.init = noop_conf_init,
+	.blk_desc.u.blk.params = ceph_items,
+	.blk_desc.u.blk.commit = noop_conf_commit
+};
+
+/* Module methods
+ */
+
+/* init_config
+ * must be called with a reference taken (via lookup_fsal)
+ */
+
+static fsal_status_t init_config(struct fsal_module *module_in,
+				 config_file_t config_struct)
+{
+	struct ceph_fsal_module *myself =
+	    container_of(module_in, struct ceph_fsal_module, fsal);
+	struct config_error_type err_type;
+
+	LogDebug(COMPONENT_FSAL,
+		 "Ceph module setup.");
+
+	myself->fs_info = default_ceph_info;
+	(void) load_config_from_parse(config_struct,
+				      &ceph_block,
+				      myself,
+				      true,
+				      &err_type);
+	if (!config_error_is_harmless(&err_type))
+		return fsalstat(ERR_FSAL_INVAL, 0);
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
 
 /**
  * @brief Create a new export under this FSAL
@@ -75,32 +141,31 @@ static const char *module_name = "Ceph";
  * @return FSAL status.
  */
 
-static fsal_status_t create_export(struct fsal_module *module,
+static fsal_status_t create_export(struct fsal_module *module_in,
 				   void *parse_node,
 				   const struct fsal_up_vector *up_ops)
 {
 	/* The status code to return */
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
-	/* True if we have called fsal_export_init */
-	bool initialized = false;
-	/* The internal export object */
-	struct export *export = NULL;
 	/* A fake argument list for Ceph */
 	const char *argv[] = { "FSAL_CEPH", op_ctx->export->fullpath };
-	/* Return code from Ceph calls */
-	int ceph_status = 0;
+	/* The internal export object */
+	struct export *export = gsh_calloc(1, sizeof(struct export));
+	/* The 'private' root handle */
+	struct handle *handle = NULL;
 	/* Root inode */
 	struct Inode *i = NULL;
-	/* Root vindoe */
+	/* Root vinode */
 	vinodeno_t root;
 	/* Stat for root */
 	struct stat st;
 	/* Return code */
-	int rc = 0;
-	/* The 'private' root handle */
-	struct handle *handle = NULL;
+	int rc;
+	/* Return code from Ceph calls */
+	int ceph_status;
+	/* True if we have called fsal_export_init */
+	bool initialized = false;
 
-	export = gsh_calloc(1, sizeof(struct export));
 	if (export == NULL) {
 		status.major = ERR_FSAL_NOMEM;
 		LogCrit(COMPONENT_FSAL,
@@ -129,35 +194,52 @@ static fsal_status_t create_export(struct fsal_module *module,
 	ceph_status = ceph_create(&export->cmount, NULL);
 	if (ceph_status != 0) {
 		status.major = ERR_FSAL_SERVERFAULT;
-		LogCrit(COMPONENT_FSAL, "Unable to create Ceph handle");
+		LogCrit(COMPONENT_FSAL,
+			"Unable to create Ceph handle for %s.",
+			op_ctx->export->fullpath);
 		goto error;
 	}
 
 	ceph_status = ceph_conf_read_file(export->cmount, NULL);
-	if (ceph_status == 0)
-		ceph_status = ceph_conf_parse_argv(export->cmount, 2, argv);
-
 	if (ceph_status != 0) {
 		status.major = ERR_FSAL_SERVERFAULT;
-		LogCrit(COMPONENT_FSAL, "Unable to read Ceph configuration");
+		LogCrit(COMPONENT_FSAL,
+			"Unable to read Ceph configuration for %s.",
+			op_ctx->export->fullpath);
+		goto error;
+	}
+
+	ceph_status = ceph_conf_parse_argv(export->cmount, 2, argv);
+	if (ceph_status != 0) {
+		status.major = ERR_FSAL_SERVERFAULT;
+		LogCrit(COMPONENT_FSAL,
+			"Unable to parse Ceph configuration for %s.",
+			op_ctx->export->fullpath);
 		goto error;
 	}
 
 	ceph_status = ceph_mount(export->cmount, NULL);
 	if (ceph_status != 0) {
 		status.major = ERR_FSAL_SERVERFAULT;
-		LogCrit(COMPONENT_FSAL, "Unable to mount Ceph cluster.");
+		LogCrit(COMPONENT_FSAL,
+			"Unable to mount Ceph cluster for %s.",
+			op_ctx->export->fullpath);
 		goto error;
 	}
 
-	if (fsal_attach_export(module, &export->export.exports) != 0) {
+	if (fsal_attach_export(module_in, &export->export.exports) != 0) {
 		status.major = ERR_FSAL_SERVERFAULT;
-		LogCrit(COMPONENT_FSAL, "Unable to attach export.");
+		LogCrit(COMPONENT_FSAL,
+			"Unable to attach export for %s.",
+			op_ctx->export->fullpath);
 		goto error;
 	}
 
-	export->export.fsal = module;
-	export->export.fsal = module;
+	export->export.fsal = module_in;
+
+	LogDebug(COMPONENT_FSAL,
+		 "Ceph module export %s.",
+		 op_ctx->export->fullpath);
 
 	root.ino.val = CEPH_INO_ROOT;
 	root.snapid.val = CEPH_NOSNAP;
@@ -205,30 +287,30 @@ static fsal_status_t create_export(struct fsal_module *module,
  * This function initializes the FSAL module handle, being called
  * before any configuration or even mounting of a Ceph cluster.  It
  * exists solely to produce a properly constructed FSAL module
- * handle.  Currently, we have no private, per-module data or
- * initialization.
+ * handle.
  */
 
 MODULE_INIT void init(void)
 {
-	/* register_fsal seems to expect zeroed memory. */
-	module = gsh_calloc(1, sizeof(struct fsal_module));
-	if (module == NULL) {
-		LogCrit(COMPONENT_FSAL,
-			"Unable to allocate memory for Ceph FSAL module.");
-		return;
-	}
+	struct fsal_module *myself = &CephFSM.fsal;
 
-	if (register_fsal(module, module_name, FSAL_MAJOR_VERSION,
+	LogDebug(COMPONENT_FSAL,
+		 "Ceph module registering.");
+
+	/* register_fsal seems to expect zeroed memory. */
+	memset(myself, 0, sizeof(*myself));
+
+	if (register_fsal(myself, module_name, FSAL_MAJOR_VERSION,
 			  FSAL_MINOR_VERSION, FSAL_ID_CEPH) != 0) {
 		/* The register_fsal function prints its own log
 		   message if it fails */
-		gsh_free(module);
-		LogCrit(COMPONENT_FSAL, "Ceph module failed to register.");
+		LogCrit(COMPONENT_FSAL,
+			"Ceph module failed to register.");
 	}
 
 	/* Set up module operations */
-	module->ops->create_export = create_export;
+	myself->ops->create_export = create_export;
+	myself->ops->init_config = init_config;
 }
 
 /**
@@ -241,13 +323,13 @@ MODULE_INIT void init(void)
 
 MODULE_FINI void finish(void)
 {
-	if (unregister_fsal(module) != 0) {
+	LogDebug(COMPONENT_FSAL,
+		 "Ceph module finishing.");
+
+	if (unregister_fsal(&CephFSM.fsal) != 0) {
 		LogCrit(COMPONENT_FSAL,
-			"Unable to unload FSAL.  Dying with extreme "
+			"Unable to unload Ceph FSAL.  Dying with extreme "
 			"prejudice.");
 		abort();
 	}
-
-	gsh_free(module);
-	module = NULL;
 }

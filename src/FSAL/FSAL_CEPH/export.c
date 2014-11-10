@@ -1,6 +1,9 @@
 /*
- * Copyright © 2012, CohortFS, LLC.
+ * Copyright © 2012-2014, CohortFS, LLC.
  * Author: Adam C. Emerson <aemerson@linuxbox.com>
+ *
+ * contributeur : William Allen Simpson <bill@cohortfs.com>
+ *		  Marcus Watts <mdw@cohortfs.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -23,7 +26,8 @@
 /**
  * @file FSAL_CEPH/export.c
  * @author Adam C. Emerson <aemerson@linuxbox.com>
- * @date Thu Jul  5 16:37:47 2012
+ * @author William Allen Simpson <bill@cohortfs.com>
+ * @date Wed Oct 22 13:24:33 2014
  *
  * @brief Implementation of FSAL export functions for Ceph
  *
@@ -40,6 +44,7 @@
 #include "fsal_types.h"
 #include "fsal_api.h"
 #include "FSAL/fsal_commonlib.h"
+#include "FSAL/fsal_config.h"
 #include "internal.h"
 
 /**
@@ -56,8 +61,9 @@
 
 static void release(struct fsal_export *export_pub)
 {
-	/* The priate, expanded export */
-	struct export *export = container_of(export_pub, struct export, export);
+	/* The private, expanded export */
+	struct export *export =
+	    container_of(export_pub, struct export, export);
 
 	deconstruct_handle(export->root);
 	export->root = 0;
@@ -93,30 +99,30 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 				 struct fsal_obj_handle **pub_handle)
 {
 	/* The 'private' full export handle */
-	struct export *export = container_of(export_pub,
-					     struct export,
-					     export);
+	struct export *export =
+	    container_of(export_pub, struct export, export);
 	/* The 'private' full object handle */
 	struct handle *handle = NULL;
-	/* The buffer in which to store stat info */
-	struct stat st;
+	/* Inode pointer */
+	struct Inode *i = NULL;
 	/* FSAL status structure */
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
+	/* The buffer in which to store stat info */
+	struct stat st;
 	/* Return code from Ceph */
-	int rc = 0;
+	int rc;
 	/* Find the actual path in the supplied path */
 	const char *realpath;
-	struct Inode *i = NULL;
 
 	if (*path != '/') {
 		realpath = strchr(path, ':');
 		if (realpath == NULL) {
 			status.major = ERR_FSAL_INVAL;
-			goto out;
+			return status;
 		}
 		if (*(++realpath) != '/') {
 			status.major = ERR_FSAL_INVAL;
-			goto out;
+			return status;
 		}
 	} else {
 		realpath = path;
@@ -127,25 +133,21 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 	if (strcmp(realpath, "/") == 0) {
 		assert(export->root);
 		*pub_handle = &export->root->handle;
-		goto out;
+		return status;
 	}
 
 	rc = ceph_ll_walk(export->cmount, realpath, &i, &st);
 	if (rc < 0) {
-		status = ceph2fsal_error(rc);
-		goto out;
+		return ceph2fsal_error(rc);
 	}
 
 	rc = construct_handle(&st, i, export, &handle);
 	if (rc < 0) {
 		ceph_ll_put(export->cmount, i);
-		status = ceph2fsal_error(rc);
-		goto out;
+		return ceph2fsal_error(rc);
 	}
 
 	*pub_handle = &handle->handle;
-
- out:
 	return status;
 }
 
@@ -197,11 +199,10 @@ nfsstat4 create_ds_handle(struct fsal_export * const export_pub,
 			  struct fsal_ds_handle ** const ds_pub)
 {
 	/* Full 'private' export structure */
-	struct export *export = container_of(export_pub,
-					     struct export,
-					     export);
+	struct export *export =
+	    container_of(export_pub, struct export, export);
 	/* Handle to be created */
-	struct ds *ds = NULL;
+	struct ds *ds;
 
 	*ds_pub = NULL;
 
@@ -225,7 +226,7 @@ nfsstat4 create_ds_handle(struct fsal_export * const export_pub,
 		return NFS4ERR_BADHANDLE;
 	}
 
-	fsal_ds_handle_init(&ds->ds, export->export.ds_ops, export->fsal);
+	fsal_ds_handle_init(&ds->ds, export->export.ds_ops, export_pub->fsal);
 
 	*ds_pub = &ds->ds;
 
@@ -251,9 +252,8 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 				   struct fsal_obj_handle **pub_handle)
 {
 	/* Full 'private' export structure */
-	struct export *export = container_of(export_pub,
-					     struct export,
-					     export);
+	struct export *export =
+	    container_of(export_pub, struct export, export);
 	/* FSAL status to return */
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	/* The FSAL specific portion of the handle received by the
@@ -266,13 +266,13 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 	/* Handle to be created */
 	struct handle *handle = NULL;
 	/* Inode pointer */
-	struct Inode *i = NULL;
+	struct Inode *i;
 
 	*pub_handle = NULL;
 
 	if (desc->len != sizeof(vinodeno_t)) {
 		status.major = ERR_FSAL_INVAL;
-		goto out;
+		return status;
 	}
 
 	i = ceph_ll_get_inode(export->cmount, *vi);
@@ -285,17 +285,13 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 	if (rc < 0)
 		return ceph2fsal_error(rc);
 
-
 	rc = construct_handle(&st, i, export, &handle);
 	if (rc < 0) {
 		ceph_ll_put(export->cmount, i);
-		status = ceph2fsal_error(rc);
-		goto out;
+		return ceph2fsal_error(rc);
 	}
 
 	*pub_handle = &handle->handle;
-
- out:
 	return status;
 }
 
@@ -316,7 +312,8 @@ static fsal_status_t get_fs_dynamic_info(struct fsal_export *export_pub,
 					 fsal_dynamicfsinfo_t *info)
 {
 	/* Full 'private' export */
-	struct export *export = container_of(export_pub, struct export, export);
+	struct export *export =
+	    container_of(export_pub, struct export, export);
 	/* Return value from Ceph calls */
 	int rc = 0;
 	/* Filesystem stat */
@@ -355,72 +352,8 @@ static fsal_status_t get_fs_dynamic_info(struct fsal_export *export_pub,
 static bool fs_supports(struct fsal_export *export_pub,
 			fsal_fsinfo_options_t option)
 {
-	switch (option) {
-	case fso_no_trunc:
-		return true;
-
-	case fso_chown_restricted:
-		return true;
-
-	case fso_case_insensitive:
-		return false;
-
-	case fso_case_preserving:
-		return true;
-
-	case fso_link_support:
-		return true;
-
-	case fso_symlink_support:
-		return true;
-
-	case fso_lock_support:
-		return false;
-
-	case fso_lock_support_owner:
-		return false;
-
-	case fso_lock_support_async_block:
-		return false;
-
-	case fso_named_attr:
-		return false;
-
-	case fso_unique_handles:
-		return true;
-
-	case fso_cansettime:
-		return true;
-
-	case fso_homogenous:
-		return true;
-
-	case fso_auth_exportpath_xdev:
-		return false;
-
-	case fso_accesscheck_support:
-		return false;
-
-	case fso_share_support:
-		return false;
-
-	case fso_share_support_owner:
-		return false;
-
-	case fso_pnfs_ds_supported:
-	case fso_pnfs_mds_supported:
-		return false;
-
-	case fso_delegations_r:
-	case fso_delegations_w:
-		return false;
-
-	case fso_grace_method:
-	case fso_reopen_method:
-		return false;
-	}
-
-	return false;
+	struct fsal_staticfsinfo_t *info = ceph_staticinfo(export_pub->fsal);
+	return fsal_supports(info, option);
 }
 
 /**
@@ -571,23 +504,23 @@ static attrmask_t fs_supported_attrs(struct fsal_export *export_pub)
 /**
  * @brief Return the mode under which the FSAL will create files
  *
- * This function returns the default mode on any new file created.
+ * This function modifies the default mode on any new file created.
  *
  * @param[in] export_pub The public export
  *
- * @return 0600.
+ * @return 0 (usually).  Bits set here turn off bits in created files.
  */
 
 static uint32_t fs_umask(struct fsal_export *export_pub)
 {
-	return 0600;
+	return fsal_umask(ceph_staticinfo(export_pub->fsal));
 }
 
 /**
  * @brief Return the mode for extended attributes
  *
  * This function returns the access mode applied to extended
- * attributes.  This seems a bit dubious
+ * attributes.  Dubious.
  *
  * @param[in] export_pub The public export
  *
@@ -596,7 +529,7 @@ static uint32_t fs_umask(struct fsal_export *export_pub)
 
 static uint32_t fs_xattr_access_rights(struct fsal_export *export_pub)
 {
-	return 0644;
+	return fsal_xattr_access_rights(ceph_staticinfo(export_pub->fsal));
 }
 
 /**

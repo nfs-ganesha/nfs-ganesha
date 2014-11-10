@@ -1,6 +1,9 @@
 /*
- * Copyright © 2012, CohortFS, LLC.
+ * Copyright © 2012-2014, CohortFS, LLC.
  * Author: Adam C. Emerson <aemerson@linuxbox.com>
+ *
+ * contributeur : William Allen Simpson <bill@cohortfs.com>
+ *		  Marcus Watts <mdw@cohortfs.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -23,7 +26,8 @@
 /**
  * @file   internal.c
  * @author Adam C. Emerson <aemerson@linuxbox.com>
- * @date   Mon Jul  9 13:31:59 2012
+ * @author William Allen Simpson <bill@cohortfs.com>
+ * @date Wed Oct 22 13:24:33 2014
  *
  * @brief Internal definitions for the Ceph FSAL
  *
@@ -61,136 +65,6 @@ const attrmask_t settable_attributes = (
 	ATTR_ATIME_SERVER);
 
 /**
- * @brief FSAL status from Ceph error
- *
- * This function returns a fsal_status_t with the FSAL error as the
- * major, and the posix error as minor.	 (Ceph's error codes are just
- * negative signed versions of POSIX error codes.)
- *
- * @param[in] ceph_errorcode Ceph error (negative Posix)
- *
- * @return FSAL status.
- */
-
-fsal_status_t ceph2fsal_error(const int ceph_errorcode)
-{
-	fsal_status_t status;
-	status.minor = -ceph_errorcode;
-
-	switch (-ceph_errorcode) {
-
-	case 0:
-		status.major = ERR_FSAL_NO_ERROR;
-		break;
-
-	case EPERM:
-		status.major = ERR_FSAL_PERM;
-		break;
-
-	case ENOENT:
-		status.major = ERR_FSAL_NOENT;
-		break;
-
-	case ECONNREFUSED:
-	case ECONNABORTED:
-	case ECONNRESET:
-	case EIO:
-	case ENFILE:
-	case EMFILE:
-	case EPIPE:
-		status.major = ERR_FSAL_IO;
-		break;
-
-	case ENODEV:
-	case ENXIO:
-		status.major = ERR_FSAL_NXIO;
-		break;
-
-	case EBADF:
-		/**
-		 * @todo: The EBADF error also happens when file is
-		 *	  opened for reading, and we try writting in
-		 *	  it.  In this case, we return
-		 *	  ERR_FSAL_NOT_OPENED, but it doesn't seems to
-		 *	  be a correct error translation.
-		 */
-		status.major = ERR_FSAL_NOT_OPENED;
-		break;
-
-	case ENOMEM:
-		status.major = ERR_FSAL_NOMEM;
-		break;
-
-	case EACCES:
-		status.major = ERR_FSAL_ACCESS;
-		break;
-
-	case EFAULT:
-		status.major = ERR_FSAL_FAULT;
-		break;
-
-	case EEXIST:
-		status.major = ERR_FSAL_EXIST;
-		break;
-
-	case EXDEV:
-		status.major = ERR_FSAL_XDEV;
-		break;
-
-	case ENOTDIR:
-		status.major = ERR_FSAL_NOTDIR;
-		break;
-
-	case EISDIR:
-		status.major = ERR_FSAL_ISDIR;
-		break;
-
-	case EINVAL:
-		status.major = ERR_FSAL_INVAL;
-		break;
-
-	case EFBIG:
-		status.major = ERR_FSAL_FBIG;
-		break;
-
-	case ENOSPC:
-		status.major = ERR_FSAL_NOSPC;
-		break;
-
-	case EMLINK:
-		status.major = ERR_FSAL_MLINK;
-		break;
-
-	case EDQUOT:
-		status.major = ERR_FSAL_DQUOT;
-		break;
-
-	case ENAMETOOLONG:
-		status.major = ERR_FSAL_NAMETOOLONG;
-		break;
-
-	case ENOTEMPTY:
-		status.major = ERR_FSAL_NOTEMPTY;
-		break;
-
-	case ESTALE:
-		status.major = ERR_FSAL_STALE;
-		break;
-
-	case EAGAIN:
-	case EBUSY:
-		status.major = ERR_FSAL_DELAY;
-		break;
-
-	default:
-		status.major = ERR_FSAL_SERVERFAULT;
-		break;
-	}
-
-	return status;
-}
-
-/**
  * @brief Convert a struct stat from Ceph to a struct attrlist
  *
  * This function writes the content of the supplied struct stat to the
@@ -201,7 +75,7 @@ fsal_status_t ceph2fsal_error(const int ceph_errorcode)
  */
 
 void ceph2fsal_attributes(const struct stat *buffstat,
-			  struct attrlist *fsalattr)
+			    struct attrlist *fsalattr)
 {
 	FSAL_CLEAR_MASK(fsalattr->mask);
 
@@ -268,7 +142,7 @@ void ceph2fsal_attributes(const struct stat *buffstat,
 int construct_handle(const struct stat *st, struct Inode *i,
 		     struct export *export, struct handle **obj)
 {
-	/* Poitner to the handle under construction */
+	/* Pointer to the handle under construction */
 	struct handle *constructing = NULL;
 
 	assert(i);

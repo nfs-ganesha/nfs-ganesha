@@ -1,5 +1,5 @@
 /*
- * Copyright © 2012 CohortFS, LLC.
+ * Copyright © 2012-2014, CohortFS, LLC.
  * Author: Adam C. Emerson <aemerson@linuxbox.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@
 /**
  * @file   FSAL_CEPH/mds.c
  * @author Adam C. Emerson <aemerson@linuxbox.com>
- * @date   Wed Aug 22 14:13:16 2012
+ * @date Wed Oct 22 13:24:33 2014
  *
  * @brief pNFS Metadata Server Operations for the Ceph FSAL
  *
@@ -420,11 +420,14 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_pub,
 
 	PTHREAD_RWLOCK_wrlock(&handle->handle.lock);
 	if (res->segment.io_mode == LAYOUTIOMODE4_READ) {
-		uint32_t r = 0;
+		int32_t r = 0;
 		if (handle->rd_issued == 0) {
+#if 0
+			/* (ceph part might be here: thunderbeast mbarrier1) */
 			r = ceph_ll_hold_rw(export->cmount, handle->wire.vi,
 					    false, initiate_recall, handle,
 					    &handle->rd_serial, NULL);
+#endif
 			if (r < 0) {
 				PTHREAD_RWLOCK_unlock(&handle->handle.lock);
 				return posix2nfs4_error(-r);
@@ -432,12 +435,14 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_pub,
 		}
 		++handle->rd_issued;
 	} else {
-		uint32_t r = 0;
+		int32_t r = 0;
 		if (handle->rw_issued == 0) {
+#if 0
 			r = ceph_ll_hold_rw(export->cmount, handle->wire.vi,
 					    true, initiate_recall, handle,
 					    &handle->rw_serial,
 					    &handle->rw_max_len);
+#endif
 			if (r < 0) {
 				PTHREAD_RWLOCK_unlock(&handle->handle.lock);
 				return posix2nfs4_error(-r);
@@ -507,10 +512,12 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_pub,
 		}
 	}
 
+#if 0
 	ceph_ll_return_rw(export->cmount, handle->wire.vi,
 			  res->segment.io_mode ==
 			  LAYOUTIOMODE4_READ ? handle->rd_serial : handle->
 			  rw_serial);
+#endif
 
 	PTHREAD_RWLOCK_unlock(&handle->handle.lock);
 
@@ -562,10 +569,12 @@ static nfsstat4 layoutreturn(struct fsal_obj_handle *obj_pub,
 			}
 		}
 
+#if 0
 		ceph_ll_return_rw(export->cmount, handle->wire.vi,
 				  arg->cur_segment.io_mode ==
 				  LAYOUTIOMODE4_READ ? handle->
 				  rd_serial : handle->rw_serial);
+#endif
 
 		PTHREAD_RWLOCK_unlock(&handle->handle.lock);
 	}
