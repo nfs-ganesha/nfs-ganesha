@@ -679,7 +679,7 @@ state_status_t state_lookup_layout_state(cache_entry_t *entry,
 void state_nfs4_state_wipe(cache_entry_t *entry);
 
 enum nfsstat4 release_lock_owner(state_owner_t *owner);
-void release_openstate(state_owner_t *open_owner);
+void release_openstate(state_owner_t *owner);
 void state_export_release_nfs4_state(void);
 void revoke_owner_delegs(state_owner_t *client_owner);
 
