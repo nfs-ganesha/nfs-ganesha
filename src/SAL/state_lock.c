@@ -1436,7 +1436,7 @@ state_status_t state_add_grant_cookie(cache_entry_t *entry,
 		status = do_lock_op(entry, FSAL_OP_LOCKB,
 				    lock_entry->sle_owner,
 				    &lock_entry->sle_lock,
-				    NULL, NULL, false, POSIX_LOCK);
+				    NULL, NULL, false, FSAL_POSIX_LOCK);
 		break;
 
 	case STATE_GRANT_INTERNAL:
@@ -1446,7 +1446,7 @@ state_status_t state_add_grant_cookie(cache_entry_t *entry,
 		status = do_lock_op(entry, FSAL_OP_LOCK,
 				    lock_entry->sle_owner,
 				    &lock_entry->sle_lock,
-				    NULL, NULL, false, POSIX_LOCK);
+				    NULL, NULL, false, FSAL_POSIX_LOCK);
 		break;
 
 	case STATE_GRANT_FSAL:
@@ -1504,7 +1504,7 @@ state_status_t state_cancel_grant(state_cookie_entry_t *cookie_entry)
 			    NULL,	/* no conflict expected */
 			    NULL,
 			    false,
-			    POSIX_LOCK);
+			    FSAL_POSIX_LOCK);
 
 	if (status != STATE_SUCCESS)
 		LogMajor(COMPONENT_STATE,
@@ -1881,7 +1881,7 @@ void cancel_blocked_lock(cache_entry_t *entry,
 					  NULL,	/* no conflict expected */
 					  NULL,
 					  false, /* overlap not relevant */
-					  POSIX_LOCK);
+					  FSAL_POSIX_LOCK);
 
 		if (state_status != STATE_SUCCESS) {
 			/* Unable to cancel,
@@ -2003,7 +2003,7 @@ state_status_t state_release_grant(state_cookie_entry_t *cookie_entry)
 				    NULL, /* no conflict expected */
 				    NULL,
 				    false,
-				    POSIX_LOCK);
+				    FSAL_POSIX_LOCK);
 
 		if (status != STATE_SUCCESS)
 			LogMajor(COMPONENT_STATE,
@@ -2195,7 +2195,7 @@ state_status_t do_lock_op(cache_entry_t *entry,
 			  state_owner_t **holder,
 			  fsal_lock_param_t *conflict,
 			  bool_t overlap,
-			  lock_type_t sle_type)
+			  enum fsal_sle_type sle_type)
 {
 	fsal_status_t fsal_status;
 	state_status_t status = STATE_SUCCESS;
@@ -2277,7 +2277,7 @@ state_status_t do_lock_op(cache_entry_t *entry,
 		 * This CAN'T be right for 9P...
 		 * This WON'T be right for LEASE_LOCK...
 		 */
-		assert(sle_type == POSIX_LOCK);
+		assert(sle_type == FSAL_POSIX_LOCK);
 		if (!LOCK_OWNER_9P(owner))
 			status = do_unlock_no_owner(entry, lock);
 	}
@@ -2377,7 +2377,8 @@ state_status_t state_test(cache_entry_t *entry,
 	} else {
 		/* Prepare to make call to FSAL for this lock */
 		status = do_lock_op(entry, FSAL_OP_LOCKT, owner,
-				    lock, holder, conflict, false, POSIX_LOCK);
+				    lock, holder, conflict, false,
+				    FSAL_POSIX_LOCK);
 
 		if (status != STATE_SUCCESS && status != STATE_LOCK_CONFLICT) {
 			LogMajor(COMPONENT_STATE,
@@ -2722,7 +2723,7 @@ state_status_t state_lock(cache_entry_t *entry,
 				    allow ? holder : NULL,
 				    allow ? conflict : NULL,
 				    overlap,
-				    POSIX_LOCK);
+				    FSAL_POSIX_LOCK);
 	} else
 		status = STATE_LOCK_BLOCKED;
 
@@ -2897,7 +2898,7 @@ state_status_t state_unlock(cache_entry_t *entry,
 			    NULL, /* no conflict expected */
 			    NULL,
 			    false,
-			    POSIX_LOCK);
+			    FSAL_POSIX_LOCK);
 
 	if (status != STATE_SUCCESS)
 		LogMajor(COMPONENT_STATE, "Unable to unlock FSAL, error=%s",

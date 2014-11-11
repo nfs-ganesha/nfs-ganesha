@@ -795,11 +795,6 @@ struct state_block_data_t {
 	} sbd_prot;
 };
 
-typedef enum lock_type_t {
-	POSIX_LOCK,		/*< Byte-range lock */
-	LEASE_LOCK		/*< Delegation */
-} lock_type_t;
-
 struct state_lock_entry_t {
 	struct glist_head sle_list;	/*< Locks on this file */
 	struct glist_head sle_owner_locks; /*< Link on the owner lock list */
