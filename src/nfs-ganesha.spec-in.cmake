@@ -84,37 +84,41 @@
 %global with_utils 0
 %endif
 
-#%define sourcename nfs-ganesha-2.0-RC5-0.1.1-Source
+%global dev_version %{lua: extraver = string.gsub('@GANESHA_EXTRA_VERSION@', '%-', '_'); print(extraver) }
+
 %define sourcename @CPACK_SOURCE_PACKAGE_FILE_NAME@
 
 Name:		nfs-ganesha
-Version:	@GANESHA_BASE_VERSION@
+Version:	@GANESHA_BASE_VERSION@%{dev_version}
 Release:	1%{?dist}
 Summary:	NFS-Ganesha is a NFS Server running in user space
 Group:		Applications/System
-License:	LGPLv3
-Url:		http://nfs-ganesha.sourceforge.net
+License:	LGPLv3+
+Url:               https://github.com/nfs-ganesha/nfs-ganesha/wiki
+
 Source:		%{sourcename}.tar.gz
+
 BuildRequires:	initscripts
-BuildRequires:	cmake
+BuildRequires:	cmake >= 2.8.3
 BuildRequires:	bison flex
-BuildRequires:	dbus-devel  libcap-devel krb5-devel
-BuildRequires:	libblkid-devel libuuid-devel
-Requires:	dbus-libs libcap krb5-libs libblkid libuuid
+BuildRequires:	flex
+BuildRequires:	pkgconfig
+BuildRequires:	krb5-devel
+BuildRequires:	dbus-devel
+BuildRequires:	libcap-devel
+BuildRequires:	libblkid-devel
+BuildRequires:	libuuid-devel
+Requires:	dbus
 %if %{with_nfsidmap}
 BuildRequires:	libnfsidmap-devel
-Requires:	libnfsidmap
 %else
 BuildRequires:	nfs-utils-lib-devel
-Requires:	nfs-utils-lib
 %endif
 %if %{with_rdma}
 BuildRequires:	libmooshika-devel >= 0.6-0
-Requires:	libmooshika >= 0.6-0
 %endif
 %if %{with_lustre_up}
 BuildRequires: lcap-devel >= 0.1-0
-Requires:	lcap >= 0.1-0
 %endif
 
 # Use CMake variables
@@ -164,7 +168,8 @@ be used with NFS-Ganesha to support PROXY based filesystems
 %package utils
 Summary: The NFS-GANESHA's util scripts
 Group: Applications/System
-BuildRequires: PyQt4-devel
+BuildRequires:	PyQt4-devel
+Requires:	PyQt4
 Requires: nfs-ganesha python
 
 %description utils
@@ -202,8 +207,8 @@ be used with NFS-Ganesha to support GPFS backend
 %package zfs
 Summary: The NFS-GANESHA's ZFS FSAL
 Group: Applications/System
-Requires: libzfswrap nfs-ganesha
-BuildRequires: libzfswrap-devel
+Requires:	nfs-ganesha
+BuildRequires:	libzfswrap-devel
 
 %description zfs
 This package contains a FSAL shared object to
@@ -215,6 +220,8 @@ be used with NFS-Ganesha to support ZFS
 %package ceph
 Summary: The NFS-GANESHA's CEPH FSAL
 Group: Applications/System
+Requires:	ceph >= 0.78
+BuildRequires:	ceph-devel >= 0.78
 
 %description ceph
 This package contains a FSAL shared object to
@@ -226,8 +233,8 @@ be used with NFS-Ganesha to support CEPH
 %package lustre
 Summary: The NFS-GANESHA's LUSTRE FSAL
 Group: Applications/System
-Requires: libattr lustre nfs-ganesha
-BuildRequires: libattr-devel lustre
+Requires:	lustre nfs-ganesha
+BuildRequires:	libattr-devel lustre
 
 %description lustre
 This package contains a FSAL shared object to
@@ -239,8 +246,8 @@ be used with NFS-Ganesha to support LUSTRE
 %package shook
 Summary: The NFS-GANESHA's LUSTRE/SHOOK FSAL
 Group: Applications/System
-Requires: libattr lustre shook-client nfs-ganesha
-BuildRequires: libattr-devel lustre shook-devel
+Requires:	lustre shook-client nfs-ganesha
+BuildRequires:	libattr-devel lustre shook-devel
 
 %description shook
 This package contains a FSAL shared object to
@@ -252,8 +259,8 @@ be used with NFS-Ganesha to support LUSTRE via SHOOK
 %package xfs
 Summary: The NFS-GANESHA's XFS FSAL
 Group: Applications/System
-Requires: libattr xfsprogs nfs-ganesha
-BuildRequires: libattr-devel xfsprogs-devel
+Requires:	nfs-ganesha
+BuildRequires:	libattr-devel xfsprogs-devel
 
 %description xfs
 This package contains a shared object to be used with FSAL_VFS
@@ -265,8 +272,8 @@ to support XFS correctly
 %package hpss
 Summary: The NFS-GANESHA's HPSS FSAL
 Group: Applications/System
-Requires: nfs-ganesha
-#BuildRequires:
+Requires:	nfs-ganesha
+#BuildRequires:	hpssfs
 
 %description hpss
 This package contains a FSAL shared object to
@@ -278,7 +285,7 @@ be used with NFS-Ganesha to support HPSS
 %package pt
 Summary: The NFS-GANESHA's PT FSAL
 Group: Applications/System
-Requires: nfs-ganesha
+Requires:	nfs-ganesha
 
 %description pt
 This package contains a FSAL shared object to
@@ -290,8 +297,8 @@ be used with NFS-Ganesha to support PT
 %package gluster
 Summary: The NFS-GANESHA's GLUSTER FSAL
 Group: Applications/System
-Requires: nfs-ganesha
-#BuildRequires:
+Requires:	nfs-ganesha
+BuildRequires:	glusterfs-api-devel >= 3.5.1
 
 %description gluster
 This package contains a FSAL shared object to
