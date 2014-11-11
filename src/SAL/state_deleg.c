@@ -160,7 +160,7 @@ state_status_t acquire_lease_lock(state_t *state, bool reclaim)
 
 	status = do_lock_op(state->state_entry, FSAL_OP_LOCK,
 			    state->state_owner, &lock_desc,
-			    NULL, NULL, false, LEASE_LOCK);
+			    NULL, NULL, false, FSAL_LEASE_LOCK);
 
 	if (status == STATE_SUCCESS) {
 		update_delegation_stats(state);
@@ -195,7 +195,7 @@ state_status_t release_lease_lock(state_t *state)
 
 	status = do_lock_op(state->state_entry, FSAL_OP_UNLOCK,
 			    state->state_owner, &lock_desc, NULL, NULL,
-			    false, LEASE_LOCK);
+			    false, FSAL_LEASE_LOCK);
 
 	if (status != STATE_SUCCESS)
 		LogMajor(COMPONENT_STATE, "Unable to unlock FSAL, error=%s",
