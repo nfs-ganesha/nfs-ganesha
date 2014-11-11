@@ -179,8 +179,7 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t *data,
 	state_status = state_unlock(data->current_entry,
 				    lock_owner,
 				    state_found,
-				    &lock_desc,
-				    POSIX_LOCK);
+				    &lock_desc);
 
 	if (state_status != STATE_SUCCESS) {
 		res_LOCKU4->status = nfs4_Errno_state(state_status);

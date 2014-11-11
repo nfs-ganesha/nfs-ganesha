@@ -514,7 +514,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	/* Now we have a lock owner and a stateid.  Go ahead and push
-	   lock into SAL (and FSAL). */
+	 * lock into SAL (and FSAL). */
 	state_status = state_lock(data->current_entry,
 				  lock_owner,
 				  lock_state,
@@ -522,8 +522,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 				  NULL,	/* No block data for now */
 				  &lock_desc,
 				  &conflict_owner,
-				  &conflict_desc,
-				  POSIX_LOCK);
+				  &conflict_desc);
 
 	if (state_status != STATE_SUCCESS) {
 		if (state_status == STATE_LOCK_CONFLICT) {

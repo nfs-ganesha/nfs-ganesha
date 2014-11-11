@@ -497,8 +497,7 @@ state_status_t state_lock(cache_entry_t *entry,
 			  /* owner that holds conflicting lock */
 			  state_owner_t **holder,
 			  /* description of conflicting lock */
-			  fsal_lock_param_t *conflict,
-			  lock_type_t sle_type);
+			  fsal_lock_param_t *conflict);
 state_status_t acquire_lease_lock(state_t *state, bool reclaim);
 state_status_t release_lease_lock(state_t *state);
 state_status_t do_lock_op(cache_entry_t *entry,
@@ -511,7 +510,7 @@ state_status_t do_lock_op(cache_entry_t *entry,
 			  lock_type_t sle_type);
 state_status_t state_unlock(cache_entry_t *entry,
 			    state_owner_t *owner, state_t *state,
-			    fsal_lock_param_t *lock, lock_type_t sle_type);
+			    fsal_lock_param_t *lock);
 
 state_status_t state_cancel(cache_entry_t *entry,
 			    state_owner_t *owner, fsal_lock_param_t *lock);

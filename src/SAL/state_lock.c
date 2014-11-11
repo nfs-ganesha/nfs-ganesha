@@ -322,7 +322,7 @@ LogEntryRefCount(const char *reason, state_lock_entry_t *le, int32_t refcount)
 			     ", export=%u, type=%s, "
 			     "start=0x%"PRIx64", end=0x%"PRIx64
 			     ", blocked=%s/%p, state=%p, refcount=%"PRIu32
-			     ", type %d owner={%s}",
+			     ", owner={%s}",
 			     reason, le, le->sle_entry,
 			     (uint64_t) le->sle_entry->obj_handle->attributes.
 			     fileid, (unsigned int)le->sle_export->export_id,
@@ -330,7 +330,7 @@ LogEntryRefCount(const char *reason, state_lock_entry_t *le, int32_t refcount)
 			     le->sle_lock.lock_start,
 			     lock_end(&le->sle_lock),
 			     str_blocked(le->sle_blocked), le->sle_block_data,
-			     le->sle_state, refcount, le->sle_type, owner);
+			     le->sle_state, refcount, owner);
 	}
 }
 
@@ -524,7 +524,6 @@ void dump_all_locks(const char *label)
  * @param[in] owner    Lock owner
  * @param[in] state    State associated with lock
  * @param[in] lock     Lock description
- * @param[in] sle_type Lock type
  *
  * @return The new entry or NULL.
  */
@@ -533,8 +532,7 @@ static state_lock_entry_t *create_state_lock_entry(cache_entry_t *entry,
 						   state_blocking_t blocked,
 						   state_owner_t *owner,
 						   state_t *state,
-						   fsal_lock_param_t *lock,
-						   lock_type_t sle_type)
+						   fsal_lock_param_t *lock)
 {
 	state_lock_entry_t *new_entry;
 
@@ -556,7 +554,6 @@ static state_lock_entry_t *create_state_lock_entry(cache_entry_t *entry,
 	new_entry->sle_block_data = NULL;
 	new_entry->sle_ref_count = 1;
 	new_entry->sle_entry = entry;
-	new_entry->sle_type = sle_type;
 	new_entry->sle_blocked = blocked;
 	new_entry->sle_owner = owner;
 	new_entry->sle_state = state;
@@ -625,8 +622,7 @@ inline state_lock_entry_t *state_lock_entry_t_dup(state_lock_entry_t *
 				       orig_entry->sle_blocked,
 				       orig_entry->sle_owner,
 				       orig_entry->sle_state,
-				       &orig_entry->sle_lock,
-				       orig_entry->sle_type);
+				       &orig_entry->sle_lock);
 }
 
 /**
@@ -2100,8 +2096,7 @@ inline const char *fsal_lock_op_str(fsal_lock_op_t op)
  * @param[in] sle_type Lock type
  */
 state_status_t do_unlock_no_owner(cache_entry_t *entry,
-				  fsal_lock_param_t *lock,
-				  lock_type_t sle_type)
+				  fsal_lock_param_t *lock)
 {
 	state_lock_entry_t *unlock_entry;
 	struct glist_head fsal_unlock_list;
@@ -2116,8 +2111,7 @@ state_status_t do_unlock_no_owner(cache_entry_t *entry,
 					       STATE_NON_BLOCKING,
 					       &unknown_owner,
 					       NULL, /* no real state */
-					       lock,
-					       sle_type);
+					       lock);
 
 	if (unlock_entry == NULL)
 		return STATE_MALLOC_ERROR;
@@ -2279,8 +2273,13 @@ state_status_t do_lock_op(cache_entry_t *entry,
 			status = STATE_FSAL_ERROR;
 		}
 	} else {
+		/** @todo FSF: there is lots of bad here...
+		 * This CAN'T be right for 9P...
+		 * This WON'T be right for LEASE_LOCK...
+		 */
+		assert(sle_type == POSIX_LOCK);
 		if (!LOCK_OWNER_9P(owner))
-			status = do_unlock_no_owner(entry, lock, sle_type);
+			status = do_unlock_no_owner(entry, lock);
 	}
 
 	if (status == STATE_LOCK_CONFLICT) {
@@ -2417,7 +2416,6 @@ state_status_t state_test(cache_entry_t *entry,
  * @param[in]  lock       Lock description
  * @param[out] holder     Holder of conflicting lock
  * @param[out] conflict   Conflicting lock description
- * @param[in]  sle_type   Lock type
  *
  * @return State status.
  */
@@ -2428,8 +2426,7 @@ state_status_t state_lock(cache_entry_t *entry,
 			  state_block_data_t *block_data,
 			  fsal_lock_param_t *lock,
 			  state_owner_t **holder,
-			  fsal_lock_param_t *conflict,
-			  lock_type_t sle_type)
+			  fsal_lock_param_t *conflict)
 {
 	bool allow = true, overlap = false;
 	struct glist_head *glist;
@@ -2443,8 +2440,6 @@ state_status_t state_lock(cache_entry_t *entry,
 	fsal_openflags_t openflags;
 	bool unpin = true;
 	bool release_state_lock = true;
-
-	assert(sle_type == POSIX_LOCK);
 
 	cache_status = cache_inode_lru_ref(entry, LRU_FLAG_NONE);
 
@@ -2707,8 +2702,7 @@ state_status_t state_lock(cache_entry_t *entry,
 					      STATE_NON_BLOCKING,
 					      owner,
 					      state,
-					      lock,
-					      sle_type);
+					      lock);
 	if (!found_entry) {
 		status = STATE_MALLOC_ERROR;
 		goto out_unlock;
@@ -2728,11 +2722,11 @@ state_status_t state_lock(cache_entry_t *entry,
 				    allow ? holder : NULL,
 				    allow ? conflict : NULL,
 				    overlap,
-				    sle_type);
+				    POSIX_LOCK);
 	} else
 		status = STATE_LOCK_BLOCKED;
 
-	if (status == STATE_SUCCESS && sle_type == POSIX_LOCK) {
+	if (status == STATE_SUCCESS) {
 		/* Merge any touching or overlapping locks into this one */
 		LogEntry("FSAL lock acquired, merging locks for",
 			 found_entry);
@@ -2818,20 +2812,16 @@ state_status_t state_lock(cache_entry_t *entry,
  * @param[in] owner    Owner of lock
  * @param[in] state    Associated state
  * @param[in] lock     Lock description
- * @param[in] sle_type Lock type
  */
 state_status_t state_unlock(cache_entry_t *entry,
 			    state_owner_t *owner,
 			    state_t *state,
-			    fsal_lock_param_t *lock,
-			    lock_type_t sle_type)
+			    fsal_lock_param_t *lock)
 {
 	bool empty = false;
 	bool removed = false;
 	cache_inode_status_t cache_status;
 	state_status_t status = 0;
-
-	assert(sle_type == POSIX_LOCK);
 
 	cache_status = cache_inode_inc_pin_ref(entry);
 
@@ -2907,7 +2897,7 @@ state_status_t state_unlock(cache_entry_t *entry,
 			    NULL, /* no conflict expected */
 			    NULL,
 			    false,
-			    sle_type);
+			    POSIX_LOCK);
 
 	if (status != STATE_SUCCESS)
 		LogMajor(COMPONENT_STATE, "Unable to unlock FSAL, error=%s",
@@ -3168,9 +3158,7 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 			/* Remove all locks held by this NLM Client on
 			 * the file.
 			 */
-			status = state_unlock(entry,
-					      owner, state,
-					      &lock, POSIX_LOCK);
+			status = state_unlock(entry, owner, state, &lock);
 		} else {
 			/* The export is being removed, we didn't bother
 			 * calling state_unlock() because export cleanup
@@ -3388,7 +3376,7 @@ void state_nfs4_owner_unlock_all(state_owner_t *owner)
 		lock.lock_length = 0;
 
 		/* Remove all locks held by this owner on the file */
-		status = state_unlock(entry, owner, state, &lock, POSIX_LOCK);
+		status = state_unlock(entry, owner, state, &lock);
 
 		if (!state_unlock_err_ok(status)) {
 			/* Increment the error count and try the next lock,
@@ -3505,9 +3493,7 @@ void state_export_unlock_all(void)
 		/* Remove all locks held by this NLM Client on
 		 * the file.
 		 */
-		status = state_unlock(entry,
-				      owner, state,
-				      &lock, POSIX_LOCK);
+		status = state_unlock(entry, owner, state, &lock);
 
 		/* Release the refcounts we took above. */
 		if (owner->so_type == STATE_LOCK_OWNER_NFSV4)

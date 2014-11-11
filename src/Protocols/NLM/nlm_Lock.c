@@ -165,8 +165,7 @@ int nlm4_Lock(nfs_arg_t *args,
 				  pblock_data,
 				  &lock,
 				  &holder,
-				  &conflict,
-				  POSIX_LOCK);
+				  &conflict);
 
 	/* We prevented delegations from being granted while trying to acquire
 	 * the lock. However, when attempting to get a delegation in the
