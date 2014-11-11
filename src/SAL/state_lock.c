@@ -3440,7 +3440,6 @@ void state_export_unlock_all(void)
 	state_status_t status = 0;
 	state_owner_t *owner;
 	state_t *state;
-	lock_type_t lock_type;
 
 	/* Only accept so many errors before giving up. */
 	while (errcnt < STATE_ERR_MAX) {
@@ -3459,7 +3458,31 @@ void state_export_unlock_all(void)
 			break;
 		}
 
-		lock_entry_inc_ref(found_entry);
+		/* Extract the bits from the lock entry that we will need
+		 * to proceed with the operation (cache entry, owner, and
+		 * export).
+		 */
+		entry = found_entry->sle_entry;
+		owner = found_entry->sle_owner;
+		state = found_entry->sle_state;
+
+		/* If it's an NFS v4 lock, take a reference on the state_t */
+		if (owner->so_type == STATE_LOCK_OWNER_NFSV4)
+			inc_state_t_ref(state);
+
+		/* Get a reference to the cache inode while we still hold
+		 * the ssc_mutex (since we hold this mutex, any other function
+		 * that might be cleaning up this lock CAN NOT have released
+		 * the last LRU reference, thus it is safe to grab another.
+		 *
+		 * Note we don't bother checking for stale here, state_unlock
+		 * will check soon enough, and we can handle error better at
+		 * that point.
+		 */
+		(void) cache_inode_lru_ref(entry, LRU_REQ_STALE_OK);
+
+		/* Get a reference to the owner */
+		inc_state_owner_ref(owner);
 
 		/* Move this entry to the end of the list
 		 * (this will help if errors occur)
@@ -3468,22 +3491,9 @@ void state_export_unlock_all(void)
 		glist_add_tail(&op_ctx->export->exp_lock_list,
 			       &found_entry->sle_export_locks);
 
-		PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
-
-		/* Extract the cache inode entry from the lock entry and
-		 * release the lock entry
+		/* Now we are done with this specific entry, release the lock.
 		 */
-		entry = found_entry->sle_entry;
-		owner = found_entry->sle_owner;
-		state = found_entry->sle_state;
-		lock_type = found_entry->sle_type;
-
-		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
-
-		lock_entry_dec_ref(found_entry);
-		(void) cache_inode_lru_ref(entry, LRU_REQ_STALE_OK);
-
-		PTHREAD_RWLOCK_unlock(&entry->state_lock);
+		PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
 
 		/* Make lock that covers the whole file.
 		 * type doesn't matter for unlock
@@ -3492,9 +3502,18 @@ void state_export_unlock_all(void)
 		lock.lock_start = 0;
 		lock.lock_length = 0;
 
-		/* Remove all locks held by this owner on the file */
-		status = state_unlock(entry, owner, state,
-				      &lock, lock_type);
+		/* Remove all locks held by this NLM Client on
+		 * the file.
+		 */
+		status = state_unlock(entry,
+				      owner, state,
+				      &lock, POSIX_LOCK);
+
+		/* Release the refcounts we took above. */
+		if (owner->so_type == STATE_LOCK_OWNER_NFSV4)
+			dec_state_t_ref(state);
+		dec_state_owner_ref(owner);
+		cache_inode_lru_unref(entry, LRU_FLAG_NONE);
 
 		if (!state_unlock_err_ok(status)) {
 			/* Increment the error count and try the next lock,
@@ -3503,13 +3522,13 @@ void state_export_unlock_all(void)
 			 */
 			LogDebug(COMPONENT_STATE, "state_unlock failed %s",
 				 state_err_str(status));
-			errcnt++;
 		}
+	}
 
-		/* Release the lru ref to the cache inode we held while
-		 * calling unlock
-		 */
-		cache_inode_put(entry);
+	if (errcnt == STATE_ERR_MAX) {
+		LogFatal(COMPONENT_STATE,
+			 "Could not complete cleanup of locks for %s",
+			 op_ctx->export->fullpath);
 	}
 }
 
