@@ -818,7 +818,6 @@ struct state_lock_entry_t {
 	int32_t sle_ref_count;	/*< Reference count */
 	fsal_lock_param_t sle_lock;	/*< Lock description */
 	pthread_mutex_t sle_mutex;	/*< Mutex to protect the structure */
-	lock_type_t sle_type;	/*< Type of lock */
 };
 
 /**
