@@ -470,43 +470,6 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 	return status;
 }				/* cache_inode_new_entry */
 
-struct export_get_first_entry_parms {
-	struct gsh_export *export;
-	struct entry_export_map *expmap;
-};
-
-/**
- * @brief Function to be called from cache_inode_get_protected to get the
- * first cache inode entry associated with an export.
- *
- * Also returns the expmap in the source parms for use by cache_inode_unexport.
- * This is safe due to the assumptions made by cache_inode_unexport.
- *
- * @param entry  [IN/OUT] call by ref pointer to store cache entry
- * @param source [IN/OUT] void pointer to parms structure
- *
- * @return cache inode status code
- @ @retval CACHE_INODE_NOT_FOUND indicates there are associated entries
- */
-
-cache_inode_status_t export_get_first_entry(cache_entry_t **entry, void *source)
-{
-	struct export_get_first_entry_parms *parms = source;
-
-	*entry = NULL;
-
-	parms->expmap = glist_first_entry(&parms->export->entry_list,
-					  struct entry_export_map,
-					  entry_per_export);
-
-	if (unlikely(parms->expmap == NULL))
-		return CACHE_INODE_NOT_FOUND;
-
-	*entry = parms->expmap->entry;
-
-	return CACHE_INODE_SUCCESS;
-}
-
 /**
  * @brief Cleans up cache inode entries on unexport.
  *
@@ -524,35 +487,34 @@ cache_inode_status_t export_get_first_entry(cache_entry_t **entry, void *source)
 
 void cache_inode_unexport(struct gsh_export *export)
 {
-	struct export_get_first_entry_parms parms;
 	cache_entry_t *entry;
-	int errcnt = 0;
 	cache_inode_status_t status;
 	struct entry_export_map *expmap;
 
-	parms.export = export;
+	while (true) {
+		PTHREAD_RWLOCK_rdlock(&export->lock);
 
-	while (errcnt < 10) {
-		status = cache_inode_get_protected(&entry,
-						   &export->lock,
-						   export_get_first_entry,
-						   &parms);
+		expmap = glist_first_entry(&export->entry_list,
+					   struct entry_export_map,
+					   entry_per_export);
 
-		/* If we ran out of entries, we are done. */
-		if (status == CACHE_INODE_NOT_FOUND)
-			break;
+		if (unlikely(expmap == NULL)) {
+			/* No more cache entries for this export */
+			PTHREAD_RWLOCK_unlock(&export->lock);
+			return;
+		}
 
-		/* For any other failure skip, we might busy wait.
-		 * For out of memory errors, we will limit our
-		 * retries. CACHE_INODE_ESTALE should eventually
-		 * result in CACHE_INODE_NOT_FOUND as the mapping for
-		 * the stale inode gets cleaned up.
-		 */
+		entry = expmap->entry;
+
+		status = cache_inode_lru_ref(entry, LRU_FLAG_NONE);
+
 		if (status != CACHE_INODE_SUCCESS) {
-			if (status == CACHE_INODE_MALLOC_ERROR)
-				errcnt++;
+			/* This entry was going stale, skip it. */
+			PTHREAD_RWLOCK_unlock(&export->lock);
 			continue;
 		}
+
+		PTHREAD_RWLOCK_unlock(&export->lock);
 
 		/*
 		 * Now with the appropriate locks, remove this entry from the
@@ -563,10 +525,13 @@ void cache_inode_unexport(struct gsh_export *export)
 		PTHREAD_RWLOCK_wrlock(&export->lock);
 
 		/* Remove from list of exports for this entry */
-		glist_del(&parms.expmap->export_per_entry);
+		glist_del(&expmap->export_per_entry);
 
 		/* Remove from list of entries for this export */
-		glist_del(&parms.expmap->entry_per_export);
+		glist_del(&expmap->entry_per_export);
+
+		/* And now free the map */
+		gsh_free(expmap);
 
 		expmap = glist_first_entry(&entry->export_list,
 					   struct entry_export_map,
@@ -593,15 +558,11 @@ void cache_inode_unexport(struct gsh_export *export)
 			PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 		}
 
-
-
-		gsh_free(parms.expmap);
-
 		/* Done with entry, it may be cleaned up at this point.
 		 * If other exports reference this entry then the entry
 		 * will still be alive.
 		 */
-		cache_inode_put(entry);
+		cache_inode_lru_unref(entry, LRU_FLAG_NONE);
 	}
 }
 

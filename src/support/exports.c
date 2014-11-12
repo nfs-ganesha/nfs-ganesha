@@ -1452,30 +1452,6 @@ void exports_pkginit(void)
 }
 
 /**
- * @brief Function to be called from cache_inode_get_protected to get an
- * export's root entry.
- *
- * @param entry  [IN/OUT] call by ref pointer to store cache entry
- * @param source [IN] void pointer to the export
- *
- * @return cache inode status code
- * @retval CACHE_INODE_ESTALE indicates this export no longer has a root
- * entry
- */
-
-cache_inode_status_t export_get_root_entry(cache_entry_t **entry, void *source)
-{
-	struct gsh_export *export = source;
-
-	*entry = export->exp_root_cache_inode;
-
-	if (unlikely((*entry) == NULL))
-		return CACHE_INODE_ESTALE;
-	else
-		return CACHE_INODE_SUCCESS;
-}
-
-/**
  * @brief Return a reference to the root cache inode entry of the export
  *
  * Must be called with the caller holding a reference to the export.
@@ -1492,10 +1468,19 @@ cache_inode_status_t export_get_root_entry(cache_entry_t **entry, void *source)
 cache_inode_status_t nfs_export_get_root_entry(struct gsh_export *export,
 					       cache_entry_t **entry)
 {
-	return cache_inode_get_protected(entry,
-					 &export->lock,
-					 export_get_root_entry,
-					 export);
+	cache_inode_status_t status;
+
+	PTHREAD_RWLOCK_rdlock(&export->lock);
+
+	status =
+	    cache_inode_lru_ref(export->exp_root_cache_inode, LRU_FLAG_NONE);
+
+	if (status == CACHE_INODE_SUCCESS)
+		*entry = export->exp_root_cache_inode;
+
+	PTHREAD_RWLOCK_unlock(&export->lock);
+
+	return status;
 }
 
 /**
