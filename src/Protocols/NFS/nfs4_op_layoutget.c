@@ -177,9 +177,6 @@ static nfsstat4 acquire_layout_state(compound_data_t *data,
 			}
 
 			condemned_state = NULL;
-		} else if (state_status != STATE_NOT_FOUND) {
-			nfs_status = nfs4_Errno_state(state_status);
-			goto out;
 		}
 
 		PTHREAD_RWLOCK_unlock(&data->current_entry->state_lock);

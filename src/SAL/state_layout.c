@@ -154,35 +154,26 @@ state_status_t state_delete_segment(state_layout_segment_t *segment)
 
 state_status_t state_lookup_layout_state(cache_entry_t *entry,
 					 state_owner_t *owner,
-					 layouttype4 type, state_t **state)
+					 layouttype4 type,
+					 state_t **state)
 {
 	/* Pointer for iterating over the list of states on the file */
 	struct glist_head *glist_iter = NULL;
 	/* The state under inspection in the loop */
 	state_t *state_iter = NULL;
-	/* The state found, if one exists */
-	state_t *state_found = NULL;
 
 	glist_for_each(glist_iter, &entry->list_of_states) {
 		state_iter = glist_entry(glist_iter, state_t, state_list);
-		if ((state_iter->state_type == STATE_TYPE_LAYOUT)
-		    && (state_iter->state_owner == owner)
-		    && (state_iter->state_data.layout.state_layout_type ==
-			type)) {
-			state_found = state_iter;
-			break;
+		if (state_iter->state_type == STATE_TYPE_LAYOUT &&
+		    state_same_owner(state_iter, owner) &&
+		    state_iter->state_data.layout.state_layout_type == type) {
+			inc_state_t_ref(state_iter);
+			*state = state_iter;
+			return STATE_SUCCESS;
 		}
 	}
 
-	if (!state_found) {
-		return STATE_NOT_FOUND;
-	} else if (state_found->state_entry != entry) {
-		return STATE_INCONSISTENT_ENTRY;
-	} else {
-		inc_state_t_ref(state_found);
-		*state = state_found;
-		return STATE_SUCCESS;
-	}
+	return STATE_NOT_FOUND;
 }
 
 /** @} */
