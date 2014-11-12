@@ -664,12 +664,6 @@ cache_inode_status_t cache_inode_get(cache_inode_fsal_data_t *fsdata,
 cache_entry_t *cache_inode_get_keyed(cache_inode_key_t *key,
 				     uint32_t flags,
 				     cache_inode_status_t *status);
-cache_inode_status_t
-cache_inode_get_protected(cache_entry_t **entry,
-			  pthread_rwlock_t *lock,
-			  cache_inode_status_t get_entry(cache_entry_t **,
-							 void *),
-			  void *source);
 
 void cache_inode_unexport(struct gsh_export *export);
 
