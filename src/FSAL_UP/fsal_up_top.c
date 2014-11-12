@@ -462,21 +462,28 @@ static state_status_t create_file_recall(cache_entry_t *entry,
 					 state_list);
 		/* Does this state have a matching segment? */
 		bool match = false;
+		/* referenced owner */
+		state_owner_t *owner = get_state_owner_ref(s);
+
+		if (owner == NULL) {
+			/* This state is going stale, skip */
+			continue;
+		}
 
 		if (spec) {
 			switch (spec->how) {
 			case layoutrecall_howspec_exactly:
 				if (spec->u.client !=
-				    s->state_owner->so_owner.so_nfs4_owner.
-				    so_clientid) {
+				    owner->so_owner.so_nfs4_owner.so_clientid) {
+					dec_state_owner_ref(owner);
 					continue;
 				}
 				break;
 
 			case layoutrecall_howspec_complement:
 				if (spec->u.client ==
-				    s->state_owner->so_owner.so_nfs4_owner.
-				    so_clientid) {
+				    owner->so_owner.so_nfs4_owner.so_clientid) {
+					dec_state_owner_ref(owner);
 					continue;
 				}
 				break;
@@ -485,6 +492,8 @@ static state_status_t create_file_recall(cache_entry_t *entry,
 				break;
 			}
 		}
+
+		dec_state_owner_ref(owner);
 
 		if ((s->state_type != STATE_TYPE_LAYOUT)
 		    || (s->state_data.layout.state_layout_type != type)) {
@@ -746,6 +755,10 @@ static int32_t layoutrec_completion(rpc_call_t *call, rpc_call_hook hook,
 	bool deleted = false;
 	state_t *state = NULL;
 	struct root_op_context root_op_context;
+	cache_entry_t *entry = NULL;
+	struct gsh_export *export = NULL;
+	state_owner_t *owner = NULL;
+	bool ok = false;
 
 	/* Initialize req_ctx */
 	init_root_op_context(&root_op_context, NULL, NULL,
@@ -812,7 +825,9 @@ static int32_t layoutrec_completion(rpc_call_t *call, rpc_call_hook hook,
 	/* If we don't find the state, there's nothing to return. */
 	state = nfs4_State_Get_Pointer(cb_data->stateid_other);
 
-	if (state != NULL) {
+	ok = get_state_entry_export_owner_refs(state, &entry, &export, &owner);
+
+	if (ok) {
 		enum fsal_layoutreturn_circumstance circumstance;
 
 		if (hook == RPC_CALL_COMPLETE &&
@@ -826,7 +841,7 @@ static int32_t layoutrec_completion(rpc_call_t *call, rpc_call_hook hook,
 		 * @todo This is where you would record that a
 		 * recall was completed, one way or the other.
 		 * The clientid is specified in
-		 * state->state_owner->so_owner.so_nfs4_owner.so_clientid
+		 * owner->so_owner.so_nfs4_owner.so_clientid
 		 * The number of times we retried the call is
 		 * specified in cb_data->attempts and the time we
 		 * specified the first call is in
@@ -836,28 +851,44 @@ static int32_t layoutrec_completion(rpc_call_t *call, rpc_call_hook hook,
 		 * return, otherwise we count it as an error.
 		 */
 
-		PTHREAD_RWLOCK_wrlock(&state->state_entry->state_lock);
+		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 
-		root_op_context.req_ctx.clientid = &state->state_owner
-			->so_owner.so_nfs4_owner.so_clientid;
-		root_op_context.req_ctx.export = state->state_export;
-		root_op_context.req_ctx.fsal_export =
-			root_op_context.req_ctx.export->fsal_export;
+		root_op_context.req_ctx.clientid =
+			&owner->so_owner.so_nfs4_owner.so_clientid;
+		root_op_context.req_ctx.export = export;
+		root_op_context.req_ctx.fsal_export = export->fsal_export;
 
-		nfs4_return_one_state(state->state_entry,
+		nfs4_return_one_state(entry,
 				      LAYOUTRETURN4_FILE, circumstance,
 				      state, cb_data->segment, 0, NULL,
 				      &deleted);
-		PTHREAD_RWLOCK_unlock(&state->state_entry->state_lock);
 
+		PTHREAD_RWLOCK_unlock(&entry->state_lock);
+	}
+
+	if (state != NULL) {
+		/* Release the reference taken above */
 		dec_state_t_ref(state);
 	}
+
 	free_layoutrec(&call->cbt.v_u.v4.args.argarray.argarray_val[1]);
 	nfs41_complete_single(call, hook, cb_data, flags);
 	gsh_free(cb_data);
 
 out:
 	release_root_op_context();
+
+	if (ok) {
+		/* Release the export */
+		put_gsh_export(export);
+
+		/* Release the cache entry */
+		cache_inode_lru_unref(entry, LRU_FLAG_NONE);
+
+		/* Release the owner */
+		dec_state_owner_ref(owner);
+	}
+
 	return 0;
 }
 
@@ -876,34 +907,55 @@ out:
 static void return_one_async(void *arg)
 {
 	struct layoutrecall_cb_data *cb_data = arg;
-	state_t *s;
+	state_t *state;
 	bool deleted = false;
 	struct root_op_context root_op_context;
+	cache_entry_t *entry = NULL;
+	struct gsh_export *export = NULL;
+	state_owner_t *owner = NULL;
+	bool ok = false;
 
 	/* Initialize req_ctx */
 	init_root_op_context(&root_op_context, NULL, NULL,
 			     0, 0, UNKNOWN_REQUEST);
 
-	s = nfs4_State_Get_Pointer(cb_data->stateid_other);
+	state = nfs4_State_Get_Pointer(cb_data->stateid_other);
 
-	if (s != NULL) {
-		PTHREAD_RWLOCK_wrlock(&s->state_entry->state_lock);
+	ok = get_state_entry_export_owner_refs(state, &entry, &export, &owner);
 
-		root_op_context.req_ctx.clientid = &s->state_owner
-			->so_owner.so_nfs4_owner.so_clientid;
-		root_op_context.req_ctx.export = s->state_export;
-		root_op_context.req_ctx.fsal_export =
-			root_op_context.req_ctx.export->fsal_export;
+	if (ok) {
+		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 
-		nfs4_return_one_state(s->state_entry,
-				      LAYOUTRETURN4_FILE, circumstance_revoke,
-				      s, cb_data->segment, 0, NULL, &deleted);
-		PTHREAD_RWLOCK_unlock(&s->state_entry->state_lock);
+		root_op_context.req_ctx.clientid =
+			&owner->so_owner.so_nfs4_owner.so_clientid;
+		root_op_context.req_ctx.export = export;
+		root_op_context.req_ctx.fsal_export = export->fsal_export;
 
-		dec_state_t_ref(s);
+		nfs4_return_one_state(entry, LAYOUTRETURN4_FILE,
+				      circumstance_revoke, state,
+				      cb_data->segment, 0, NULL, &deleted);
+
+		PTHREAD_RWLOCK_unlock(&entry->state_lock);
 	}
+
 	release_root_op_context();
 	gsh_free(cb_data);
+
+	if (state != NULL) {
+		/* Release the reference taken above */
+		dec_state_t_ref(state);
+	}
+
+	if (ok) {
+		/* Release the export */
+		put_gsh_export(export);
+
+		/* Release the cache entry */
+		cache_inode_lru_unref(entry, LRU_FLAG_NONE);
+
+		/* Release the owner */
+		dec_state_owner_ref(owner);
+	}
 }
 
 /**
@@ -916,9 +968,13 @@ static void return_one_async(void *arg)
 static void layoutrecall_one_call(void *arg)
 {
 	struct layoutrecall_cb_data *cb_data = arg;
-	state_t *s;
+	state_t *state;
 	int code;
 	struct root_op_context root_op_context;
+	cache_entry_t *entry = NULL;
+	struct gsh_export *export = NULL;
+	state_owner_t *owner = NULL;
+	bool ok = false;
 
 	/* Initialize req_ctx */
 	init_root_op_context(&root_op_context, NULL, NULL,
@@ -927,14 +983,23 @@ static void layoutrecall_one_call(void *arg)
 	if (cb_data->attempts == 0)
 		now(&cb_data->first_recall);
 
-	s = nfs4_State_Get_Pointer(cb_data->stateid_other);
+	state = nfs4_State_Get_Pointer(cb_data->stateid_other);
 
-	if (s != NULL) {
-		PTHREAD_RWLOCK_wrlock(&s->state_entry->state_lock);
-		code =
-		    nfs_rpc_v41_single(cb_data->client, &cb_data->arg,
-				       &s->state_refer, layoutrec_completion,
-				       cb_data, free_layoutrec);
+	ok = get_state_entry_export_owner_refs(state, &entry, &export, &owner);
+
+	if (ok) {
+		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
+
+		root_op_context.req_ctx.clientid =
+		    &owner->so_owner.so_nfs4_owner.so_clientid;
+		root_op_context.req_ctx.export = export;
+		root_op_context.req_ctx.fsal_export = export->fsal_export;
+
+		code = nfs_rpc_v41_single(cb_data->client, &cb_data->arg,
+					  &state->state_refer,
+					  layoutrec_completion,
+					  cb_data, free_layoutrec);
+
 		if (code != 0) {
 			/**
 			 * @todo On failure to submit a callback, we
@@ -969,31 +1034,40 @@ static void layoutrecall_one_call(void *arg)
 			} else {
 				bool deleted = false;
 
-				root_op_context.req_ctx.clientid =
-					&s->state_owner->so_owner.so_nfs4_owner
-					.so_clientid;
-				root_op_context.req_ctx.export =
-					s->state_export;
-				root_op_context.req_ctx.fsal_export =
-				    root_op_context.req_ctx.export->fsal_export;
-
-				nfs4_return_one_state(s->state_entry,
+				nfs4_return_one_state(entry,
 						      LAYOUTRETURN4_FILE,
-						      circumstance_revoke, s,
-						      cb_data->segment, 0, NULL,
-						      &deleted);
+						      circumstance_revoke,
+						      state, cb_data->segment,
+						      0, NULL, &deleted);
 				gsh_free(cb_data);
 			}
 		} else {
 			++cb_data->attempts;
 		}
-		PTHREAD_RWLOCK_unlock(&s->state_entry->state_lock);
 
-		dec_state_t_ref(s);
+		PTHREAD_RWLOCK_unlock(&entry->state_lock);
+
 	} else {
 		gsh_free(cb_data);
 	}
+
 	release_root_op_context();
+
+	if (state != NULL) {
+		/* Release the reference taken above */
+		dec_state_t_ref(state);
+	}
+
+	if (ok) {
+		/* Release the export */
+		put_gsh_export(export);
+
+		/* Release the cache entry */
+		cache_inode_lru_unref(entry, LRU_FLAG_NONE);
+
+		/* Release the owner */
+		dec_state_owner_ref(owner);
+	}
 }
 
 /**
