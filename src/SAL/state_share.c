@@ -1174,6 +1174,15 @@ void state_export_unshare_all(void)
 		/* get a reference to the owner */
 		inc_state_owner_ref(owner);
 
+		/* Get a reference to the cache inode while we still hold
+		 * the export lock (since we hold this lock, any other function
+		 * that might be cleaning up this share CAN NOT have released
+		 * the last LRU reference, thus it is safe to grab another.
+		 *
+		 * Note we don't bother checking for stale here,
+		 * state_nlm_unshare will check soon enough, and we can handle
+		 * error better at that point.
+		 */
 		(void) cache_inode_lru_ref(entry, LRU_REQ_STALE_OK);
 
 		/* Drop the export mutex to call unshare */
@@ -1186,18 +1195,24 @@ void state_export_unshare_all(void)
 					   owner);
 
 		dec_state_owner_ref(owner);
-		cache_inode_put(entry);
+		cache_inode_lru_unref(entry, LRU_FLAG_NONE);
 
 		if (!state_unlock_err_ok(status)) {
 			/* Increment the error count and try the next share,
 			 * with any luck the memory pressure which is causing
 			 * the problem will resolve itself.
 			 */
-			LogFullDebug(COMPONENT_STATE,
-				     "state_unlock returned %s",
-				     state_err_str(status));
+			LogCrit(COMPONENT_STATE,
+				"state_unlock failed %s",
+				state_err_str(status));
 			errcnt++;
 		}
+	}
+
+	if (errcnt == STATE_ERR_MAX) {
+		LogFatal(COMPONENT_STATE,
+			 "Could not complete cleanup of NLM shares for %s",
+			 op_ctx->export->fullpath);
 	}
 }
 
