@@ -716,12 +716,22 @@ state_status_t state_nlm_share(cache_entry_t *entry,
 	fsal_openflags_t openflags;
 	state_status_t status = 0;
 	struct fsal_export *fsal_export = op_ctx->fsal_export;
+	bool unpin = true;
+
+	cache_status = cache_inode_lru_ref(entry, LRU_FLAG_NONE);
+
+	if (cache_status != CACHE_INODE_SUCCESS) {
+		status = cache_inode_status_to_state_status(cache_status);
+		LogDebug(COMPONENT_STATE, "Could not ref file");
+		return status;
+	}
 
 	cache_status = cache_inode_inc_pin_ref(entry);
 
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		LogDebug(COMPONENT_STATE, "Could not pin file");
 		status = cache_inode_status_to_state_status(cache_status);
+		cache_inode_lru_unref(entry, LRU_FLAG_NONE);
 		return status;
 	}
 
@@ -736,16 +746,16 @@ state_status_t state_nlm_share(cache_entry_t *entry,
 		openflags = FSAL_O_READ;
 	else
 		openflags = FSAL_O_RDWR;
+
 	if (reclaim)
 		openflags |= FSAL_O_RECLAIM;
+
 	cache_status = cache_inode_open(entry, openflags, 0);
+
 	if (cache_status != CACHE_INODE_SUCCESS) {
-		cache_inode_dec_pin_ref(entry, true);
-
 		LogFullDebug(COMPONENT_STATE, "Could not open file");
-
 		status = cache_inode_status_to_state_status(cache_status);
-		return status;
+		goto out;
 	}
 
 	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
@@ -757,29 +767,18 @@ state_status_t state_nlm_share(cache_entry_t *entry,
 					    SHARE_BYPASS_NONE);
 
 	if (status != STATE_SUCCESS) {
-		PTHREAD_RWLOCK_unlock(&entry->state_lock);
-
-		cache_inode_dec_pin_ref(entry, true);
-
 		LogEvent(COMPONENT_STATE,
 			 "Share conflicts detected during add");
-
-		return status;
+		goto out_unlock;
 	}
 
 	/* Create a new NLM Share object */
 	nlm_share = gsh_calloc(1, sizeof(state_nlm_share_t));
 
 	if (nlm_share == NULL) {
-		PTHREAD_RWLOCK_unlock(&entry->state_lock);
-
-		cache_inode_dec_pin_ref(entry, true);
-
 		LogEvent(COMPONENT_STATE, "Can not allocate memory for share");
-
 		status = STATE_MALLOC_ERROR;
-
-		return status;
+		goto out_unlock;
 	}
 
 	nlm_share->sns_owner = owner;
@@ -813,12 +812,14 @@ state_status_t state_nlm_share(cache_entry_t *entry,
 	pthread_mutex_unlock(&owner->so_owner.so_nlm_owner.so_client
 			     ->slc_nsm_client->ssc_mutex);
 
-	/* Add share to list for file, if list was empty take a pin ref to
-	 * keep this file pinned in the inode cache.
-	 */
 	if (glist_empty(&entry->object.file.nlm_share_list))
-		cache_inode_inc_pin_ref(entry);
+		unpin = false;
+	if (glist_empty(&entry->object.file.lock_list)) {
+		/* List was empty so we must retain the pin reference. */
+		unpin = false;
+	}
 
+	/* Add share to list for file. */
 	glist_add_tail(&entry->object.file.nlm_share_list,
 		       &nlm_share->sns_share_per_file);
 
@@ -865,13 +866,15 @@ state_status_t state_nlm_share(cache_entry_t *entry,
 			glist_del(&nlm_share->sns_share_per_export);
 			PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
 
-			/* Remove the share from the list for the file. If the
-			 * list is now empty also remove the extra pin ref.
-			 */
+			/* Remove the share from the list for the file. */
 			glist_del(&nlm_share->sns_share_per_file);
 
-			if (glist_empty(&entry->object.file.nlm_share_list))
-				cache_inode_dec_pin_ref(entry, true);
+			if (glist_empty(&entry->object.file.nlm_share_list)) {
+				/* List is now empty so we must drop the pin
+				 * reference.
+				 */
+				unpin = true;
+			}
 
 			/* Remove the share from the NSM Client list */
 			pthread_mutex_lock(&owner->so_owner.so_nlm_owner
@@ -899,22 +902,29 @@ state_status_t state_nlm_share(cache_entry_t *entry,
 			/* Free the NLM Share and exit */
 			gsh_free(nlm_share);
 
-			PTHREAD_RWLOCK_unlock(&entry->state_lock);
-
-			cache_inode_dec_pin_ref(entry, true);
-
 			LogDebug(COMPONENT_STATE, "do_share_op failed");
 
-			return status;
+			goto out_unlock;
 		}
 	}
 
 	LogFullDebug(COMPONENT_STATE, "added share_access %u, " "share_deny %u",
 		     share_access, share_deny);
 
+ out_unlock:
+
 	PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
-	cache_inode_dec_pin_ref(entry, true);
+ out:
+
+	if (unpin) {
+		/* We don't need to retain the pin and LRU ref we took at the
+		 * top because the file was already pinned for locks or we
+		 * did not add locks to the file.
+		 */
+		cache_inode_dec_pin_ref(entry, false);
+		cache_inode_lru_unref(entry, LRU_FLAG_NONE);
+	}
 
 	return status;
 }
@@ -1018,13 +1028,8 @@ state_status_t state_nlm_unshare(cache_entry_t *entry,
 					removed_share_deny,
 					true);
 
-				PTHREAD_RWLOCK_unlock(&entry->state_lock);
-
-				cache_inode_dec_pin_ref(entry, true);
-
 				LogDebug(COMPONENT_STATE, "do_share_op failed");
-
-				return status;
+				goto out;
 			}
 		}
 
@@ -1037,13 +1042,16 @@ state_status_t state_nlm_unshare(cache_entry_t *entry,
 		glist_del(&nlm_share->sns_share_per_export);
 		PTHREAD_RWLOCK_unlock(&nlm_share->sns_export->lock);
 
-		/* Remove the share from the list for the file. If the list
-		 * is now empty also remove the extra pin ref.
-		 */
+		/* Remove the share from the list for the file. */
 		glist_del(&nlm_share->sns_share_per_file);
 
-		if (glist_empty(&entry->object.file.nlm_share_list))
-			cache_inode_dec_pin_ref(entry, true);
+		if (glist_empty(&entry->object.file.nlm_share_list)) {
+			/* The list is now empty, remove the pin ref and
+			 * the extra LRU ref.
+			 */
+			cache_inode_dec_pin_ref(entry, false);
+			cache_inode_lru_unref(entry, LRU_FLAG_NONE);
+		}
 
 		/* Remove the share from the NSM Client list */
 		pthread_mutex_lock(&owner->so_owner.so_nlm_owner.so_client
@@ -1069,6 +1077,8 @@ state_status_t state_nlm_unshare(cache_entry_t *entry,
 		/* Free the NLM Share (and continue to look for more) */
 		gsh_free(nlm_share);
 	}
+
+ out:
 
 	PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
@@ -1100,13 +1110,16 @@ void state_share_wipe(cache_entry_t *entry)
 		glist_del(&nlm_share->sns_share_per_export);
 		PTHREAD_RWLOCK_unlock(&nlm_share->sns_export->lock);
 
-		/* Remove the share from the list for the file. If the list
-		 * is now empty also remove the extra pin ref.
-		 */
+		/* Remove the share from the list for the file. */
 		glist_del(&nlm_share->sns_share_per_file);
 
-		if (glist_empty(&entry->object.file.nlm_share_list))
+		if (glist_empty(&entry->object.file.nlm_share_list)) {
+			/* The list is now empty, remove the pin ref and
+			 * the extra LRU ref.
+			 */
 			cache_inode_dec_pin_ref(entry, false);
+			cache_inode_lru_unref(entry, LRU_FLAG_NONE);
+		}
 
 		/* Remove the share from the NSM Client list */
 		pthread_mutex_lock(&owner->so_owner.so_nlm_owner.so_client
