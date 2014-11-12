@@ -445,6 +445,8 @@ struct cache_entry_t {
 	object_file_type_t type;
 	/** Flags for this entry */
 	uint32_t flags;
+	/** refcount for number of active icreate */
+	int32_t icreate_refcnt;
 	/** The time of the last operation ganesha knows about.  We
 	    can ue this for change_info4, but atomic MUST be set to
 	    false.  Don't use it for anything else (servicing getattr,
