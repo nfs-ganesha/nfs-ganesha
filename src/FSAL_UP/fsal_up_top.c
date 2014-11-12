@@ -370,6 +370,27 @@ static state_status_t lock_avail(struct fsal_module *fsal,
 	return STATE_SUCCESS;
 }
 
+static void destroy_recall(struct state_layout_recall_file *recall)
+{
+	if (recall == NULL)
+		return;
+
+	while (!glist_empty(&recall->state_list)) {
+		struct recall_state_list *list_entry;
+		/* The first entry in the queue */
+		list_entry = glist_first_entry(&recall->state_list,
+					       struct recall_state_list,
+					       link);
+		dec_state_t_ref(list_entry->state);
+		glist_del(&list_entry->link);
+		gsh_free(list_entry);
+	}
+
+	/* Remove from entry->layoutrecall_list */
+	glist_del(&recall->entry_link);
+	gsh_free(recall);
+}
+
 /**
  * @brief Create layout recall state
  *
@@ -497,6 +518,7 @@ static state_status_t create_file_recall(cache_entry_t *entry,
 			}
 			list_entry->state = s;
 			glist_add_tail(&recall->state_list, &list_entry->link);
+			inc_state_t_ref(s);
 			none = false;
 		}
 	}
@@ -507,45 +529,14 @@ static state_status_t create_file_recall(cache_entry_t *entry,
  out:
 
 	if ((rc != STATE_SUCCESS) && recall) {
-		/* Iterator over work queue, for disposing of it. */
-		struct glist_head *wi = NULL;
-		/* Preserved next over work queue. */
-		struct glist_head *wn = NULL;
-
-		glist_for_each_safe(wi, wn, &recall->state_list) {
-			struct recall_state_list *list_entry
-				= glist_entry(wi, struct recall_state_list,
-					      link);
-			glist_del(&list_entry->link);
-			gsh_free(list_entry);
-		}
-		gsh_free(recall);
+		/* Destroy the recall list constructed so far. */
+		destroy_recall(recall);
 	} else {
 		glist_add_tail(&entry->layoutrecall_list, &recall->entry_link);
 		*recout = recall;
 	}
 
 	return rc;
-}
-
-static void destroy_recall(struct state_layout_recall_file *recall)
-{
-	if (recall == NULL)
-		return;
-
-	while (!glist_empty(&recall->state_list)) {
-		struct recall_state_list *list_entry;
-		/* The first entry in the queue */
-		list_entry = glist_first_entry(&recall->state_list,
-					       struct recall_state_list,
-					       link);
-		glist_del(&list_entry->link);
-		gsh_free(list_entry);
-	}
-
-	/* Remove from entry->layoutrecall_list */
-	glist_del(&recall->entry_link);
-	gsh_free(recall);
 }
 
 static void layoutrecall_one_call(void *arg);
@@ -600,6 +591,8 @@ state_status_t layoutrecall(struct fsal_module *fsal,
 	struct state_layout_recall_file *recall = NULL;
 	/* Iterator over the work list */
 	struct glist_head *wi = NULL;
+	struct gsh_export *exp = NULL;
+	state_owner_t *owner = NULL;
 
 	rc = cache_inode_status_to_state_status(up_get(fsal, handle, &entry));
 	if (rc != STATE_SUCCESS)
@@ -616,7 +609,8 @@ state_status_t layoutrecall(struct fsal_module *fsal,
 
 	/**
 	 * @todo This leaves us open to a race if a return comes in
-	 * while we're traversing the work list.
+	 * while we're traversing the work list. However, the race may now
+	 * be harmless since everything is refcounted.
 	 */
 	glist_for_each(wi, &recall->state_list) {
 		/* The current entry in the queue */
@@ -626,60 +620,74 @@ state_status_t layoutrecall(struct fsal_module *fsal,
 							  link);
 		struct state_t *s = g->state;
 		struct layoutrecall_cb_data *cb_data;
-		struct gsh_export *exp = s->state_export;
-		cache_entry_t *entry = s->state_entry;
 		nfs_cb_argop4 *arg;
 		CB_LAYOUTRECALL4args *cb_layoutrec;
+		layoutrecall_file4 *layout;
 
 		cb_data = gsh_malloc(sizeof(struct layoutrecall_cb_data));
 		if (cb_data == NULL) {
 			rc = STATE_MALLOC_ERROR;
 			goto out;
 		}
+
 		arg = &cb_data->arg;
 		arg->argop = NFS4_OP_CB_LAYOUTRECALL;
 		cb_layoutrec = &arg->nfs_cb_argop4_u.opcblayoutrecall;
+		layout = &cb_layoutrec->clora_recall.layoutrecall4_u.lor_layout;
+
 		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
+
 		cb_layoutrec->clora_type = layout_type;
 		cb_layoutrec->clora_iomode = segment->io_mode;
 		cb_layoutrec->clora_changed = changed;
 		cb_layoutrec->clora_recall.lor_recalltype = LAYOUTRECALL4_FILE;
-		cb_layoutrec->clora_recall.layoutrecall4_u.lor_layout.
-		    lor_offset = segment->offset;
-		cb_layoutrec->clora_recall.layoutrecall4_u.lor_layout.
-		    lor_length = segment->length;
-		cb_layoutrec->clora_recall.layoutrecall4_u.lor_layout.lor_fh.
-		    nfs_fh4_len = sizeof(struct alloc_file_handle_v4);
-		cb_layoutrec->clora_recall.layoutrecall4_u.lor_layout.lor_fh.
-		    nfs_fh4_val =
-		    gsh_malloc(sizeof(struct alloc_file_handle_v4));
-		if (cb_layoutrec->clora_recall.layoutrecall4_u.lor_layout.
-				lor_fh.nfs_fh4_val == NULL) {
+		layout->lor_offset = segment->offset;
+		layout->lor_length = segment->length;
+
+		if (nfs4_AllocateFH(&layout->lor_fh) != NFS4_OK) {
 			PTHREAD_RWLOCK_unlock(&entry->state_lock);
 			gsh_free(cb_data);
 			rc = STATE_MALLOC_ERROR;
 			goto out;
 		}
+
+		if (!get_state_entry_export_owner_refs(s,
+						       NULL,
+						       &exp,
+						       &owner)) {
+			/* The export, owner, or state_t has gone stale,
+			 * skip this entry
+			 */
+			PTHREAD_RWLOCK_unlock(&entry->state_lock);
+			gsh_free(layout->lor_fh.nfs_fh4_val);
+			gsh_free(cb_data);
+			continue;
+		}
+
 		if (!nfs4_FSALToFhandle(
-				&cb_layoutrec->clora_recall.layoutrecall4_u
-				.lor_layout.lor_fh,
+				&layout->lor_fh,
 				entry->obj_handle,
 				exp)) {
 			PTHREAD_RWLOCK_unlock(&entry->state_lock);
+			gsh_free(layout->lor_fh.nfs_fh4_val);
 			gsh_free(cb_data);
-			gsh_free(cb_layoutrec->clora_recall.layoutrecall4_u.
-						lor_layout.lor_fh.nfs_fh4_val);
+			put_gsh_export(exp);
+			dec_state_owner_ref(owner);
 			rc = STATE_MALLOC_ERROR;
 			goto out;
 		}
-		update_stateid(s,
-			       &cb_layoutrec->clora_recall.layoutrecall4_u.
-			       lor_layout.lor_stateid, NULL, "LAYOUTRECALL");
+
+		put_gsh_export(exp);
+
+		update_stateid(s, &layout->lor_stateid, NULL, "LAYOUTRECALL");
+
 		memcpy(cb_data->stateid_other, s->stateid_other, OTHERSIZE);
 		cb_data->segment = *segment;
-		cb_data->client =
-		    s->state_owner->so_owner.so_nfs4_owner.so_clientrec;
+		cb_data->client = owner->so_owner.so_nfs4_owner.so_clientrec;
 		cb_data->attempts = 0;
+
+		dec_state_owner_ref(owner);
+
 		PTHREAD_RWLOCK_unlock(&entry->state_lock);
 		layoutrecall_one_call(cb_data);
 	}
@@ -692,7 +700,7 @@ state_status_t layoutrecall(struct fsal_module *fsal,
 	PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
 	/* Release the cache entry */
-	cache_inode_put(entry);
+	cache_inode_lru_unref(entry, LRU_FLAG_NONE);
 
 	return rc;
 }
