@@ -413,6 +413,8 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, cache_entry_t *entry,
 	uint32_t epoch = 0;
 	uint64_t epoch_low = ServerEpoch & 0xFFFFFFFF;
 	state_t *state2 = NULL;
+	cache_entry_t *entry2 = NULL;
+	state_owner_t *owner2 = NULL;
 
 	/* string str has to accomodate stateid->other(OTHERSIZE * 2 ),
 	 * stateid->seqid(max 10 bytes),
@@ -524,7 +526,15 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, cache_entry_t *entry,
 	/* Try to get the related state */
 	state2 = nfs4_State_Get_Pointer(stateid->other);
 
-	if (state2 == NULL) {
+	/* We also need a reference to the state_entry and state_owner.
+	 * If we can't get them, we will check below for lease invalidity.
+	 * Note that calling get_state_entry_export_owner_refs with a NULL
+	 * state2 returns false.
+	 */
+	if (!get_state_entry_export_owner_refs(state2,
+					       &entry2,
+					       NULL,
+					       &owner2)) {
 		/* We matched this server's epoch, but could not find the
 		 * stateid. Chances are, the client was expired and the state
 		 * has all been freed.
@@ -594,16 +604,50 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, cache_entry_t *entry,
 			goto success;
 		}
 
+		if (state2 == NULL)
+			status = NFS4ERR_BAD_STATEID;
+		else {
+			/* We had a valid stateid, but the entry was stale.
+			 * Check if lease is expired and reserve it so we
+			 * can distinguish betwen the state_t being in the
+			 * midst of tear down due to expired lease or if
+			 * in fact the entry is actually stale.
+			 */
+			pthread_mutex_lock(&pclientid->cid_mutex);
+
+			if (!reserve_lease(pclientid)) {
+				LogDebug(COMPONENT_STATE,
+					 "Returning NFS4ERR_EXPIRED");
+				pthread_mutex_unlock(&pclientid->cid_mutex);
+
+				/* Release the clientid reference we just
+				 * acquired.
+				 */
+				dec_client_id_ref(pclientid);
+				status = NFS4ERR_EXPIRED;
+				goto failure;
+			}
+
+			/* Just update the lease and leave the reserved
+			 * clientid NULL.
+			 */
+			update_lease(pclientid);
+			pthread_mutex_unlock(&pclientid->cid_mutex);
+
+			/* The lease was valid, so this must be a stale
+			 * entry.
+			 */
+			status = NFS4ERR_STALE;
+		}
+
 		/* Release the clientid reference we just acquired. */
 		dec_client_id_ref(pclientid);
-
-		status = NFS4ERR_BAD_STATEID;
 		goto failure;
 	}
 
 	/* Now, if this lease is not already reserved, reserve it */
 	if (data->preserved_clientid !=
-	    state2->state_owner->so_owner.so_nfs4_owner.so_clientrec) {
+	    owner2->so_owner.so_nfs4_owner.so_clientrec) {
 		if (data->preserved_clientid != NULL) {
 			/* We don't expect this to happen, but, just in case...
 			 * Update and release already reserved lease.
@@ -620,31 +664,29 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, cache_entry_t *entry,
 		}
 
 		/* Check if lease is expired and reserve it */
-		pthread_mutex_lock(&state2->state_owner->so_owner
-				   .so_nfs4_owner.so_clientrec->cid_mutex);
+		pthread_mutex_lock(
+		    &owner2->so_owner.so_nfs4_owner.so_clientrec->cid_mutex);
 
-		if (!reserve_lease
-		    (state2->state_owner->so_owner.so_nfs4_owner.
-		     so_clientrec)) {
+		if (!reserve_lease(
+				owner2->so_owner.so_nfs4_owner.so_clientrec)) {
 			LogDebug(COMPONENT_STATE, "Returning NFS4ERR_EXPIRED");
 
-			pthread_mutex_unlock(&state2->state_owner->so_owner
-					     .so_nfs4_owner.so_clientrec
-					     ->cid_mutex);
+			pthread_mutex_unlock(&owner2->so_owner.so_nfs4_owner
+					     .so_clientrec->cid_mutex);
 
 			status = NFS4ERR_EXPIRED;
 			goto failure;
 		}
 
 		data->preserved_clientid =
-		    state2->state_owner->so_owner.so_nfs4_owner.so_clientrec;
+		    owner2->so_owner.so_nfs4_owner.so_clientrec;
 
-		pthread_mutex_unlock(&state2->state_owner->so_owner
-				     .so_nfs4_owner.so_clientrec->cid_mutex);
+		pthread_mutex_unlock(
+		    &owner2->so_owner.so_nfs4_owner.so_clientrec->cid_mutex);
 	}
 
 	/* Sanity check : Is this the right file ? */
-	if ((entry != NULL) && (state2->state_entry != entry)) {
+	if ((entry != NULL) && (entry2 != entry)) {
 		LogDebug(COMPONENT_STATE,
 			 "Check %s stateid found stateid %s has wrong file",
 			 tag, str);
@@ -674,8 +716,7 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, cache_entry_t *entry,
 				|| ((state2->state_seqid == 1)
 				    && (stateid->seqid == seqid_all_one)))
 			    && (owner_seqid ==
-				state2->state_owner->so_owner.so_nfs4_owner.
-				so_seqid)) {
+				owner2->so_owner.so_nfs4_owner.so_seqid)) {
 				LogDebug(COMPONENT_STATE, "possible replay?");
 				*state = state2;
 				status = NFS4ERR_REPLAY;
@@ -696,8 +737,7 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, cache_entry_t *entry,
 		 */
 		else if ((diff == 0) && (check_seqid)
 			 && (owner_seqid ==
-			     state2->state_owner->so_owner.so_nfs4_owner.
-			     so_seqid)) {
+			     owner2->so_owner.so_nfs4_owner.so_seqid)) {
 			LogDebug(COMPONENT_STATE, "possible replay?");
 			*state = state2;
 			status = NFS4ERR_REPLAY;
@@ -715,17 +755,16 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, cache_entry_t *entry,
 	if ((flags & STATEID_SPECIAL_FREE) != 0) {
 		switch (state2->state_type) {
 		case STATE_TYPE_LOCK:
-			PTHREAD_RWLOCK_rdlock(&state2->state_entry->state_lock);
+			PTHREAD_RWLOCK_rdlock(&entry2->state_lock);
 			if (glist_empty
 			    (&state2->state_data.lock.state_locklist)) {
 				LogFullDebug(COMPONENT_STATE,
 					     "Check %s stateid %s has no locks, ok to free",
 					     tag, str);
-				PTHREAD_RWLOCK_unlock(&state2->state_entry->
-						      state_lock);
+				PTHREAD_RWLOCK_unlock(&entry2->state_lock);
 				break;
 			}
-			PTHREAD_RWLOCK_unlock(&state2->state_entry->state_lock);
+			PTHREAD_RWLOCK_unlock(&entry2->state_lock);
 			/* Fall through for failure */
 
 		case STATE_TYPE_NONE:
@@ -753,16 +792,27 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, cache_entry_t *entry,
 
  success:
 
+	if (entry2 != NULL) {
+		cache_inode_lru_unref(entry2, LRU_FLAG_NONE);
+		dec_state_owner_ref(owner2);
+	}
+
 	*state = state2;
 	return NFS4_OK;
 
  failure:
+
 	if (state2 != NULL)
 		dec_state_t_ref(state2);
 
 	*state = NULL;
 
  replay:
+
+	if (entry2 != NULL) {
+		cache_inode_lru_unref(entry2, LRU_FLAG_NONE);
+		dec_state_owner_ref(owner2);
+	}
 
 	data->current_stateid_valid = false;
 	return status;
