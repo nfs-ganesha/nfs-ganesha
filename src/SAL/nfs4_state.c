@@ -721,8 +721,12 @@ void state_export_release_nfs4_state(void)
 {
 	state_t *state;
 	state_status_t state_status;
+	int errcnt = 0;
 
-	while (1) {
+	while (errcnt < STATE_ERR_MAX) {
+		cache_entry_t *entry = NULL;
+		state_owner_t *owner = NULL;
+
 		PTHREAD_RWLOCK_wrlock(&op_ctx->export->lock);
 
 		state = glist_first_entry(&op_ctx->export->exp_state_list,
@@ -731,34 +735,72 @@ void state_export_release_nfs4_state(void)
 
 		if (state == NULL) {
 			PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
-			return;
+			break;
+		}
+
+		/* Move state to the end of the list in case an error
+		 * occurs or the state is going stale.
+		 */
+		glist_del(&state->state_export_list);
+		glist_add_tail(&op_ctx->export->exp_state_list,
+			       &state->state_export_list);
+
+		if (!get_state_entry_export_owner_refs(state,
+						       &entry,
+						       NULL,
+						       &owner)) {
+			/* This state_t is in the process of being destroyed,
+			 * skip it.
+			 */
+
+			PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
+			continue;
 		}
 
 		inc_state_t_ref(state);
 
 		PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
 
+		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
+
 		if (state->state_type == STATE_TYPE_SHARE) {
-			state_status = state_share_remove(state->state_entry,
-							  state->state_owner,
-							  state);
+			state_status = state_share_remove(entry, owner, state);
 
 			if (!state_unlock_err_ok(state_status)) {
+				PTHREAD_RWLOCK_unlock(&entry->state_lock);
+
 				LogEvent(COMPONENT_CLIENTID,
 					 "EXPIRY failed to release share stateid error %s",
 					 state_err_str(state_status));
+				errcnt++;
+
+				/* Release the references taken above */
+				cache_inode_lru_unref(entry, LRU_FLAG_NONE);
+				dec_state_owner_ref(owner);
+				dec_state_t_ref(state);
+				continue;
 			}
 		}
 
-		PTHREAD_RWLOCK_wrlock(&state->state_entry->state_lock);
-		if (state->state_type == STATE_TYPE_DELEG)
+		if (state->state_type == STATE_TYPE_DELEG) {
 			/* this deletes the state too */
 			state_deleg_revoke(state);
-		else
+		} else {
 			state_del_locked(state);
-		PTHREAD_RWLOCK_unlock(&state->state_entry->state_lock);
+		}
 
+		PTHREAD_RWLOCK_unlock(&entry->state_lock);
+
+		/* Release the references taken above */
+		cache_inode_lru_unref(entry, LRU_FLAG_NONE);
+		dec_state_owner_ref(owner);
 		dec_state_t_ref(state);
+	}
+
+	if (errcnt == STATE_ERR_MAX) {
+		LogFatal(COMPONENT_STATE,
+			 "Could not complete cleanup of layouts for export %s",
+			 op_ctx->export->fullpath);
 	}
 }
 
