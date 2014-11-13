@@ -117,11 +117,15 @@ int display_state_id_key(struct gsh_buffdesc *buff, char *str)
 int display_state_id_val(struct gsh_buffdesc *buff, char *str)
 {
 	state_t *state = buff->addr;
+	cache_entry_t *entry;
+
+	pthread_mutex_lock(&state->state_mutex);
+	entry = state->state_entry;
+	pthread_mutex_unlock(&state->state_mutex);
 
 	return sprintf(str,
 		       "state %p is associated with entry=%p type=%u seqid=%u",
-		       state, state->state_entry, state->state_type,
-		       state->state_seqid);
+		       state, entry, state->state_type, state->state_seqid);
 }
 
 /**
