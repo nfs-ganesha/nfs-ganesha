@@ -124,7 +124,8 @@ program:
 | blocklist
 {
   DEBUG_YACK(stderr,$1);
-  glist_add_tail(&($1)->node, &st->root_node->root.u.blk.sub_nodes);
+  if ($1 != NULL)
+    glist_add_tail(&($1)->node, &st->root_node->root.u.blk.sub_nodes);
   link_node(&st->root_node->root);
 }
 ;
