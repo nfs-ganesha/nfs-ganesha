@@ -344,6 +344,7 @@ struct cache_entry_t
                           can be easily stashed somewhere. */
   cache_inode_file_type_t type; /*< The type of the entry */
   uint32_t flags; /*< Flags for this entry */
+  int32_t icreate_refcnt; /*< refcount for number of active icreate */
   time_t change_time; /*< The time of the last operation ganesha knows
                           about.  We can ue this for change_info4, but
                           atomic MUST BE SET TO FALSE.  Don't use it

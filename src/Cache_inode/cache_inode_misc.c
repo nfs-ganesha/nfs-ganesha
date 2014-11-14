@@ -386,6 +386,7 @@ cache_inode_new_entry(cache_inode_fsal_data_t *fsdata,
      /* Initialize common fields */
 
      entry->type = type;
+     entry->icreate_refcnt = 0;
      entry->flags = 0;
      init_glist(&entry->state_list);
 

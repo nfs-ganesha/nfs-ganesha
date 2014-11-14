@@ -91,6 +91,7 @@ cache_inode_create(cache_entry_t *parent,
      fsal_attrib_list_t object_attributes;
      cache_inode_fsal_data_t fsal_data;
      cache_inode_create_arg_t zero_create_arg;
+     bool needdec = false;
 
      memset(&zero_create_arg, 0, sizeof(zero_create_arg));
      memset(&fsal_data, 0, sizeof(fsal_data));
@@ -137,6 +138,10 @@ cache_inode_create(cache_entry_t *parent,
      /* Permission checking will be done by the FSAL operation. */
 
      /* The entry doesn't exist, so we can create it. */
+
+     /* increase the refcount to ensure forced lookup in FSAL */
+     atomic_inc_uint32_t(&parent->icreate_refcnt);
+     needdec = true;
 
      object_attributes.asked_attributes = cache_inode_params.attrmask;
      switch (type) {
@@ -287,6 +292,9 @@ cache_inode_create(cache_entry_t *parent,
      *status = CACHE_INODE_SUCCESS;
 
 out:
+     if (needdec == true) {
+          atomic_dec_uint32_t(&parent->icreate_refcnt);
+     }
 
      LogFullDebug(COMPONENT_CACHE_INODE,
                   "Returning entry=%p status=%s",

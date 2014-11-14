@@ -170,6 +170,7 @@ cache_inode_lookup_impl(cache_entry_t *parent,
                     /* If the dirent cache is both fully populated and
                        valid, it can serve negative lookups. */
                     if (!dirent &&
+                        (parent->icreate_refcnt == 0) && 
                         (parent->flags & CACHE_INODE_DIR_POPULATED)) {
                          entry = NULL;
                          *status = CACHE_INODE_NOT_FOUND;
