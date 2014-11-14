@@ -382,9 +382,6 @@ typedef struct nfs_version4_parameter {
 	/** Whether to disable the NFSv4 grace period.  Defaults to
 	    false and settable with Graceless. */
 	bool graceless;
-	/** Whether to grace period handled by FSAL.  Defaults to
-	    false and settable with FSAL_Grace. */
-	bool fsal_grace;
 	/** The NFSv4 lease lifetime.  Defaults to
 	    LEASE_LIFETIME_DEFAULT and is settable with
 	    Lease_Lifetime. */

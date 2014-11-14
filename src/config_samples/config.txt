@@ -147,8 +147,6 @@ NFS_KRB5 {}
 NFSV4 {}
 --------
 
-	FSAL_Grace(bool, default false)
-
 	Graceless(bool, default false)
 
 	Lease_Lifetime(uint32, range 0 to 120, default 60)
@@ -487,6 +485,8 @@ GPFS {}
 	pnfs_file(bool, default false)
 
 	fsal_trace(bool, default true)
+
+	fsal_grace(bool, default false)
 
 LUSTRE {}
 ---------

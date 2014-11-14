@@ -400,6 +400,8 @@ void display_fsinfo(struct fsal_staticfsinfo_t *info)
 		 info->pnfs_ds);
 	LogDebug(COMPONENT_FSAL, "  fsal_trace = %d  ",
 		 info->fsal_trace);
+	LogDebug(COMPONENT_FSAL, "  fsal_grace = %d  ",
+		 info->fsal_grace);
 	LogDebug(COMPONENT_FSAL, "}");
 }
 

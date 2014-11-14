@@ -85,6 +85,7 @@ static struct fsal_staticfsinfo_t default_gpfs_info = {
 	.pnfs_ds = true,
 	.fsal_trace = true,
 	.reopen_method = true,
+	.fsal_grace = false,
 };
 
 static struct config_item gpfs_params[] = {
@@ -111,6 +112,8 @@ static struct config_item gpfs_params[] = {
 		       fsal_staticfsinfo_t, pnfs_ds),
 	CONF_ITEM_BOOL("fsal_trace", true,
 		       fsal_staticfsinfo_t, fsal_trace),
+	CONF_ITEM_BOOL("fsal_grace", false,
+		       fsal_staticfsinfo_t, fsal_grace),
 	CONFIG_EOL
 };
 

@@ -646,7 +646,8 @@ typedef enum enum_fsal_fsinfo_options {
 	fso_share_support_owner,
 	fso_pnfs_ds_supported,
 	fso_pnfs_mds_supported,
-	fso_reopen_method
+	fso_reopen_method,
+	fso_grace_method
 } fsal_fsinfo_options_t;
 
 /* The largest maxread and maxwrite value */
@@ -697,6 +698,7 @@ struct fsal_staticfsinfo_t {
 	bool pnfs_ds;		/*< fsal supports file pnfs DS */
 	bool reopen_method;	/* fsal supports reopen method */
 	bool fsal_trace;	/*< fsal trace supports */
+	bool fsal_grace;	/*< fsal will handle grace */
 };
 
 /**

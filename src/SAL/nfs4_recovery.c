@@ -142,17 +142,6 @@ int nfs_in_grace(void)
 }
 
 /**
- * @brief Check if FSAL will handle grace period
- *
- * @retval true if so.
- * @retval false if not.
- */
-int fsal_grace(void)
-{
-	return nfs_param.nfsv4_param.fsal_grace;
-}
-
-/**
  * @brief convert clientid opaque bytes as a hex string for mkdir purpose.
  *
  * @param[in,out] dspbuf The buffer.

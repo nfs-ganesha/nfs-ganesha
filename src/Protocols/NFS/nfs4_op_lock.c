@@ -100,6 +100,8 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 	bool_t release_lock_owner = FALSE;
 	/* Indicate if we have a open owner that must be released. */
 	bool_t release_open_owner = FALSE;
+	/* Indicate if we let FSAL to handle requests during grace. */
+	bool_t fsal_grace = false;
 	int rc;
 
 	LogDebug(COMPONENT_NFS_V4_LOCK,
@@ -394,30 +396,34 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	/* Do grace period checking */
-	if (!fsal_grace() && nfs_in_grace() && !arg_LOCK4->reclaim) {
-		LogLock(COMPONENT_NFS_V4_LOCK, NIV_DEBUG,
+	if (nfs_in_grace()) {
+		if (op_ctx->fsal_export->ops->
+			fs_supports(op_ctx->fsal_export, fso_grace_method))
+				fsal_grace = true;
+
+		if (!fsal_grace && !arg_LOCK4->reclaim) {
+			LogLock(COMPONENT_NFS_V4_LOCK, NIV_DEBUG,
 			"LOCK failed, non-reclaim while in grace",
-			data->current_entry, lock_owner, &lock_desc);
-		res_LOCK4->status = NFS4ERR_GRACE;
-		goto out;
-	}
-
-	if (!fsal_grace() && nfs_in_grace()
-	    && arg_LOCK4->reclaim
-	    && !clientid->cid_allow_reclaim) {
-		LogLock(COMPONENT_NFS_V4_LOCK, NIV_DEBUG,
-			"LOCK failed, invalid reclaim while in grace",
-			data->current_entry, lock_owner, &lock_desc);
-		res_LOCK4->status = NFS4ERR_NO_GRACE;
-		goto out;
-	}
-
-	if (!fsal_grace() && !nfs_in_grace() && arg_LOCK4->reclaim) {
-		LogLock(COMPONENT_NFS_V4_LOCK, NIV_DEBUG,
-			"LOCK failed, reclaim while not in grace",
-			data->current_entry, lock_owner, &lock_desc);
-		res_LOCK4->status = NFS4ERR_NO_GRACE;
-		goto out;
+				data->current_entry, lock_owner, &lock_desc);
+			res_LOCK4->status = NFS4ERR_GRACE;
+			goto out;
+		}
+		if (!fsal_grace && arg_LOCK4->reclaim
+		    && !clientid->cid_allow_reclaim) {
+			LogLock(COMPONENT_NFS_V4_LOCK, NIV_DEBUG,
+				"LOCK failed, invalid reclaim while in grace",
+				data->current_entry, lock_owner, &lock_desc);
+			res_LOCK4->status = NFS4ERR_NO_GRACE;
+			goto out;
+		}
+	} else {
+		if (arg_LOCK4->reclaim) {
+			LogLock(COMPONENT_NFS_V4_LOCK, NIV_DEBUG,
+				"LOCK failed, reclaim while not in grace",
+				data->current_entry, lock_owner, &lock_desc);
+			res_LOCK4->status = NFS4ERR_NO_GRACE;
+			goto out;
+		}
 	}
 
 	if (arg_LOCK4->locker.new_lock_owner) {
