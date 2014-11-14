@@ -233,8 +233,6 @@ log_header_t max_headers = LH_COMPONENT;
 
 char const_log_str[LOG_BUFF_LEN];
 char date_time_fmt[MAX_TD_FMT_LEN];
-char user_date_fmt[MAX_TD_USER_LEN];
-char user_time_fmt[MAX_TD_USER_LEN];
 
 typedef struct loglev {
 	char *str;
@@ -582,7 +580,8 @@ void set_const_log_str()
 				b_left = display_cat(&tdfbuf, "%F ");
 			break;
 		case TD_USER:
-			b_left = display_printf(&tdfbuf, "%s ", user_date_fmt);
+			b_left = display_printf(&tdfbuf, "%s ",
+				logfields->user_date_fmt);
 			break;
 		case TD_NONE:
 		default:
@@ -605,7 +604,8 @@ void set_const_log_str()
 			b_left = display_cat(&tdfbuf, "T%H:%M:%S.%%06u%z ");
 			break;
 		case TD_USER:
-			b_left = display_printf(&tdfbuf, "%s ", user_time_fmt);
+			b_left = display_printf(&tdfbuf, "%s ",
+				logfields->user_time_fmt);
 			break;
 		case TD_NONE:
 		default:
