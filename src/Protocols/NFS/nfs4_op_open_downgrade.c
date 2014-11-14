@@ -53,7 +53,6 @@
  */
 static nfsstat4 nfs4_do_open_downgrade(struct nfs_argop4 *op,
 				       compound_data_t *data,
-				       cache_entry_t *entry_file,
 				       state_owner_t *owner, state_t *state,
 				       char **cause);
 
@@ -68,6 +67,7 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op, compound_data_t *data,
 	state_owner_t *open_owner;
 	int rc;
 	const char *tag = "OPEN_DOWNGRADE";
+	char *cause = "";
 
 	resp->resop = NFS4_OP_OPEN_DOWNGRADE;
 	res_OPEN_DOWNGRADE4->status = NFS4_OK;
@@ -102,7 +102,13 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op, compound_data_t *data,
 		return res_OPEN_DOWNGRADE4->status;
 	}
 
-	open_owner = state_found->state_owner;
+	open_owner = get_state_owner_ref(state_found);
+
+	if (open_owner == NULL) {
+		/* Unexpected, but something just went stale. */
+		res_OPEN_DOWNGRADE4->status = NFS4ERR_STALE;
+		goto out2;
+	}
 
 	pthread_mutex_lock(&open_owner->so_mutex);
 
@@ -127,50 +133,17 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op, compound_data_t *data,
 		     arg_OPEN_DOWNGRADE4->share_deny,
 		     arg_OPEN_DOWNGRADE4->share_access);
 
-	if (data->minorversion > 0) {	/* NFSv4.1 or NFSv4.2 */
-		/* NFSv4.1 */
-		if ((state_found->state_data.share.share_access &
-		     arg_OPEN_DOWNGRADE4->share_access) !=
-		    arg_OPEN_DOWNGRADE4->share_access) {
-			/* Open share access is not a superset of
-			 * downgrade share access
-			 */
-			res_OPEN_DOWNGRADE4->status = NFS4ERR_INVAL;
-			goto out;
-		}
+	res_OPEN_DOWNGRADE4->status = nfs4_do_open_downgrade(op,
+							     data,
+							     open_owner,
+							     state_found,
+							     &cause);
 
-		if ((state_found->state_data.share.share_deny &
-		     arg_OPEN_DOWNGRADE4->share_deny) !=
-		    arg_OPEN_DOWNGRADE4->share_deny) {
-			/* Open share deny is not a superset of
-			 * downgrade share deny
-			 */
-			res_OPEN_DOWNGRADE4->status = NFS4ERR_INVAL;
-			goto out;
-		}
-
-		state_found->state_data.share.share_access =
-		    arg_OPEN_DOWNGRADE4->share_access;
-		state_found->state_data.share.share_deny =
-		    arg_OPEN_DOWNGRADE4->share_deny;
-	} else {
-		/* NFSv4.0 */
-		nfsstat4 status4;
-		char *cause = "";
-		status4 = nfs4_do_open_downgrade(op,
-						 data,
-						 state_found->state_entry,
-						 state_found->state_owner,
-						 state_found,
-						 &cause);
-
-		if (status4 != NFS4_OK) {
-			LogEvent(COMPONENT_STATE,
-				 "Failed to open downgrade: %s",
-				 cause);
-			res_OPEN_DOWNGRADE4->status = status4;
-			goto out;
-		}
+	if (res_OPEN_DOWNGRADE4->status != NFS4_OK) {
+		LogEvent(COMPONENT_STATE,
+			 "Failed to open downgrade: %s",
+			 cause);
+		goto out;
 	}
 
 	/* Successful exit */
@@ -184,7 +157,7 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op, compound_data_t *data,
 		       tag);
 
 	/* Save the response in the open owner */
-	Copy_nfs4_state_req(state_found->state_owner,
+	Copy_nfs4_state_req(open_owner,
 			    arg_OPEN_DOWNGRADE4->seqid,
 			    op,
 			    data->current_entry,
@@ -192,6 +165,10 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op, compound_data_t *data,
 			    tag);
 
  out:
+
+	dec_state_owner_ref(open_owner);
+
+ out2:
 
 	dec_state_t_ref(state_found);
 
@@ -221,7 +198,6 @@ void nfs4_op_open_downgrade_CopyRes(OPEN_DOWNGRADE4res *res_dst,
 
 static nfsstat4 nfs4_do_open_downgrade(struct nfs_argop4 *op,
 				       compound_data_t *data,
-				       cache_entry_t *entry_file,
 				       state_owner_t *owner, state_t *state,
 				       char **cause)
 {
@@ -263,7 +239,7 @@ static nfsstat4 nfs4_do_open_downgrade(struct nfs_argop4 *op,
 		return NFS4ERR_INVAL;
 	}
 
-	state_status = state_share_downgrade(entry_file,
+	state_status = state_share_downgrade(data->current_entry,
 					     &candidate_data, owner, state);
 
 	if (state_status != STATE_SUCCESS) {
