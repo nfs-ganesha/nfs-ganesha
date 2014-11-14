@@ -210,6 +210,15 @@ struct export_stats {
 	.direction = "out"	       \
 }
 
+#define NFS_ALL_IO_REPLY_ARRAY_TYPE "(qs(tttttt)(tttttt))"
+#define NFS_ALL_IO_REPLY			\
+{						\
+	.name = "iostats",			\
+	.type = DBUS_TYPE_ARRAY_AS_STRING	\
+		NFS_ALL_IO_REPLY_ARRAY_TYPE,	\
+	.direction = "out"			\
+}						\
+
 void server_stats_summary(DBusMessageIter *iter, struct gsh_stats *st);
 void server_dbus_v3_iostats(struct nfsv3_stats *v3p, DBusMessageIter *iter);
 void server_dbus_v40_iostats(struct nfsv40_stats *v40p, DBusMessageIter *iter);
@@ -218,6 +227,8 @@ void server_dbus_v41_layouts(struct nfsv41_stats *v41p, DBusMessageIter *iter);
 void server_dbus_v42_iostats(struct nfsv41_stats *v42p, DBusMessageIter *iter);
 void server_dbus_v42_layouts(struct nfsv41_stats *v42p, DBusMessageIter *iter);
 void server_dbus_delegations(struct deleg_stats *ds, DBusMessageIter *iter);
+void server_dbus_all_iostats(struct export_stats *export_statistics,
+			     DBusMessageIter *iter);
 void server_dbus_total_ops(struct export_stats *export_st,
 			   DBusMessageIter *iter);
 void global_dbus_total_ops(DBusMessageIter *iter);

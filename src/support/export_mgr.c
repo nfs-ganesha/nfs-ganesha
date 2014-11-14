@@ -796,6 +796,26 @@ void remove_all_exports(void)
 /* DBUS interfaces
  */
 
+/**
+ * @brief Return all IO stats of an export
+ * DBUS_TYPE_ARRAY, "qs(tttttt)(tttttt)"
+ */
+
+static bool get_all_export_io(struct gsh_export *export_node, void *array_iter)
+{
+	struct export_stats *export_statistics;
+
+	LogFullDebug(COMPONENT_DBUS, "export id: %i, path: %s",
+		     export_node->export_id, export_node->fullpath);
+
+	export_statistics = container_of(export_node, struct export_stats,
+					 export);
+	server_dbus_all_iostats(export_statistics,
+				(DBusMessageIter *) array_iter);
+
+	return true;
+}
+
 /* parse the export_id in args
  */
 
@@ -1055,7 +1075,7 @@ static struct gsh_dbus_method export_remove_export = {
 	.direction = "out"	\
 },				\
 {				\
-	.name = "tag",	\
+	.name = "tag",		\
 	.type = "s",		\
 	.direction = "out"	\
 }
@@ -1539,6 +1559,60 @@ static struct gsh_dbus_method cache_inode_show = {
 		 END_ARG_LIST}
 };
 
+/**
+ * @brief Report all IO stats of all exports in one call
+ *
+ * @return
+ *	status
+ *	error message
+ *	time
+ *	array of (
+ *		export id
+ *		string containing the protocol version
+ *		read statistics structure
+ *			(requested, transferred, total, errors, latency,
+ *			queue wait)
+ *		write statistics structure
+ *			(requested, transferred, total, errors, latency,
+ *			queue wait)
+ *	)
+ */
+static bool get_nfs_io(DBusMessageIter *args,
+				DBusMessage *message,
+				DBusError *error)
+{
+	bool success = true;
+	char *errormsg = "OK";
+	DBusMessageIter reply_iter, array_iter;
+	struct timespec timestamp;
+
+	/* create a reply iterator from the message */
+	dbus_message_iter_init_append(message, &reply_iter);
+
+	/* status and timestamp reply */
+	dbus_status_reply(&reply_iter, success, errormsg);
+	now(&timestamp);
+	dbus_append_timestamp(&reply_iter, &timestamp);
+
+	/* create an array container iterator and loop over all exports */
+	dbus_message_iter_open_container(&reply_iter, DBUS_TYPE_ARRAY,
+					 NFS_ALL_IO_REPLY_ARRAY_TYPE,
+					 &array_iter);
+	(void) foreach_gsh_export(&get_all_export_io, (void *) &array_iter);
+	dbus_message_iter_close_container(&reply_iter, &array_iter);
+
+	return true;
+}
+
+static struct gsh_dbus_method export_show_all_io = {
+	.name = "GetNFSIO",
+	.method = get_nfs_io,
+	.args = {STATUS_REPLY,
+		 TIMESTAMP_REPLY,
+		 NFS_ALL_IO_REPLY,
+		 END_ARG_LIST}
+};
+
 static struct gsh_dbus_method *export_stats_methods[] = {
 	&export_show_v3_io,
 	&export_show_v40_io,
@@ -1549,6 +1623,7 @@ static struct gsh_dbus_method *export_stats_methods[] = {
 	&global_show_total_ops,
 	&global_show_fast_ops,
 	&cache_inode_show,
+	&export_show_all_io,
 	NULL
 };
 
