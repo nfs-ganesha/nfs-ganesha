@@ -58,13 +58,22 @@ void cleanup_layouts(compound_data_t *data)
 	glist_for_each(glist, &data->current_entry->list_of_states) {
 		state_t *state = glist_entry(glist, state_t,
 					     state_list);
+		state_owner_t *owner = get_state_owner_ref(state);
+
+		if (owner == NULL) {
+			/* Skip states that have gone stale. */
+			continue;
+		}
 
 		if ((state->state_type == STATE_TYPE_SHARE) &&
-		    (state->state_owner->so_type == STATE_OPEN_OWNER_NFSV4) &&
-		    (state->state_owner->so_owner.so_nfs4_owner.so_clientid
+		    (owner->so_type == STATE_OPEN_OWNER_NFSV4) &&
+		    (owner->so_owner.so_nfs4_owner.so_clientid
 		     == data->session->clientid)) {
+			dec_state_owner_ref(owner);
 			return;
 		}
+
+		dec_state_owner_ref(owner);
 	}
 
 	glist_for_each_safe(glist,
@@ -78,9 +87,15 @@ void cleanup_layouts(compound_data_t *data)
 			.offset = 0,
 			.length = NFS4_UINT64_MAX
 		};
+		state_owner_t *owner = get_state_owner_ref(state);
+
+		if (owner == NULL) {
+			/* Skip states that have gone stale. */
+			continue;
+		}
 
 		if ((state->state_type == STATE_TYPE_LAYOUT) &&
-		    (state->state_owner->so_owner.so_nfs4_owner.so_clientrec
+		    (owner->so_owner.so_nfs4_owner.so_clientrec
 		      == data->session->clientid_record) &&
 		    state->state_data.layout.state_return_on_close) {
 			nfs4_return_one_state(data->current_entry,
@@ -96,6 +111,8 @@ void cleanup_layouts(compound_data_t *data)
 					"Layout state not destroyed on last close return.");
 			}
 		}
+
+		dec_state_owner_ref(owner);
 	}
 }
 
@@ -186,9 +203,13 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 		return res_CLOSE4->status;
 	}
 
-	open_owner = state_found->state_owner;
+	open_owner = get_state_owner_ref(state_found);
 
-	inc_state_owner_ref(open_owner);
+	if (open_owner == NULL) {
+		/* Unexpected, but something just went stale. */
+		res_CLOSE4->status = NFS4ERR_STALE;
+		goto out3;
+	}
 
 	pthread_mutex_lock(&open_owner->so_mutex);
 
@@ -252,7 +273,7 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* File is closed, release the share state */
 	if (state_found->state_type == STATE_TYPE_SHARE) {
-		state_status = state_share_remove(state_found->state_entry,
+		state_status = state_share_remove(data->current_entry,
 						  open_owner,
 						  state_found);
 
@@ -310,6 +331,9 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
  out2:
 
 	dec_state_owner_ref(open_owner);
+
+ out3:
+
 	dec_state_t_ref(state_found);
 
 	return res_CLOSE4->status;
