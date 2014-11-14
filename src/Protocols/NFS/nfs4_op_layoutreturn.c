@@ -411,7 +411,9 @@ void nfs4_op_layoutreturn_Free(nfs_resop4 *resp)
 	return;
 }				/* nfs41_op_layoutreturn_Free */
 
-void handle_recalls(struct fsal_layoutreturn_arg *arg, state_t *state,
+void handle_recalls(struct fsal_layoutreturn_arg *arg,
+		    cache_entry_t *entry,
+		    state_t *state,
 		    const struct pnfs_segment *segment)
 {
 	/* Iterator over the recall list */
@@ -419,8 +421,9 @@ void handle_recalls(struct fsal_layoutreturn_arg *arg, state_t *state,
 	/* Next recall for safe iteration */
 	struct glist_head *recall_next = NULL;
 
-	glist_for_each_safe(recall_iter, recall_next,
-			    &state->state_entry->layoutrecall_list) {
+	glist_for_each_safe(recall_iter,
+			    recall_next,
+			    &entry->layoutrecall_list) {
 		/* The current recall state */
 		struct state_layout_recall_file *r;
 		/* Iteration on states */
@@ -448,27 +451,28 @@ void handle_recalls(struct fsal_layoutreturn_arg *arg, state_t *state,
 				continue;
 
 			glist_for_each(seg_iter,
-				       &s->state->state_data.layout.
+				       &state->state_data.layout.
 				       state_segments) {
-				/** @todo this code looks very suspicieous */
+				struct state_layout_segment *g;
+
+				g = glist_entry(seg_iter,
+						struct state_layout_segment,
+						sls_state_segments);
+
+				if (!pnfs_segments_overlap(&g->sls_segment,
+							   segment)) {
+					/* We don't even touch this */
+					break;
+				} else if (!pnfs_segment_contains(
+							segment,
+							&g->sls_segment)) {
+					/* Not satisfied completely */
+				} else
+					satisfaction = true;
 			}
-			struct state_layout_segment *g;
-
-			g = glist_entry(seg_iter,
-					struct state_layout_segment,
-					sls_state_segments);
-
-			if (!pnfs_segments_overlap(&g->sls_segment, segment)) {
-				/* We don't even touch this */
-				break;
-			} else if (!pnfs_segment_contains(segment,
-							  &g->sls_segment)) {
-				/* Not satisfied completely */
-			} else
-				satisfaction = true;
 
 			if (satisfaction
-			    && glist_length(&s->state->state_data.layout.
+			    && glist_length(&state->state_data.layout.
 					    state_segments) == 1) {
 				dec_state_t_ref(s->state);
 				glist_del(&s->link);
@@ -603,7 +607,8 @@ nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
 				continue;
 			}
 
-			handle_recalls(arg, layout_state, &g->sls_segment);
+			handle_recalls(arg, entry, layout_state,
+				       &g->sls_segment);
 
 			nfs_status = entry->obj_handle->obj_ops.layoutreturn(
 						entry->obj_handle,
