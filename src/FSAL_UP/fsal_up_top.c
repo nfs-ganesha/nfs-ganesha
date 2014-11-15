@@ -1052,13 +1052,18 @@ state_status_t notify_device(notify_deviceid_type4 notify_type,
 			     struct pnfs_deviceid devid,
 			     bool immediate)
 {
-	struct devnotify_cb_data cb_data = {
-		.notify_type = notify_type,
-		.layout_type = layout_type,
-		.devid = devid
-	};
+	struct devnotify_cb_data *cb_data;
 
-	nfs41_foreach_client_callback(devnotify_client_callback, &cb_data);
+	cb_data = gsh_malloc(sizeof(struct devnotify_cb_data));
+	if (cb_data == NULL) {
+		LogCrit(COMPONENT_NFS_CB, "malloc failed for notify_device");
+		return STATE_MALLOC_ERROR;
+	}
+	cb_data->notify_type = notify_type;
+	cb_data->layout_type = layout_type;
+	cb_data->devid = devid;
+
+	nfs41_foreach_client_callback(devnotify_client_callback, cb_data);
 
 	return STATE_SUCCESS;
 }
