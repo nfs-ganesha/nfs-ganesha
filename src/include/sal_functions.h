@@ -32,6 +32,7 @@
 /**
  * @file  sal_functions.h
  * @brief Routines in the state abstraction layer
+ * @note  not called by other header files.
  */
 
 #ifndef SAL_FUNCTIONS_H
@@ -39,7 +40,6 @@
 
 #include <stdint.h>
 #include "sal_data.h"
-#include "nfs_exports.h"
 #include "nfs_core.h"
 
 /**

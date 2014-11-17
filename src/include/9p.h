@@ -33,7 +33,9 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <sys/select.h>
-#include "fsal.h"
+
+#include "9p_types.h"
+#include "fsal_types.h"
 #include "cache_inode.h"
 
 #ifdef _USE_9P_RDMA
@@ -41,11 +43,6 @@
 #include <rdma/rdma_cma.h>
 #include "mooshika.h"
 #endif
-
-typedef uint8_t u8;
-typedef uint16_t u16;
-typedef uint32_t u32;
-typedef uint64_t u64;
 
 #define NB_PREALLOC_HASH_9P 100
 #define NB_PREALLOC_FID_9P  100

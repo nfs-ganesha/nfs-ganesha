@@ -27,7 +27,7 @@
 
 #include "ganesha_list.h"
 #include "nlm4.h"
-#include "sal_functions.h"
+#include "sal_data.h"
 
 extern const char *lock_result_str(int rc);
 extern netobj *copy_netobj(netobj *dst, netobj *src);

@@ -28,7 +28,7 @@
 #include "log.h"
 #include "ganesha_rpc.h"
 #include "nlm4.h"
-#include "sal_data.h"
+#include "sal_functions.h"
 #include "cache_inode.h"
 #include "nlm_util.h"
 #include "nlm_async.h"
