@@ -34,7 +34,7 @@
 #ifndef _FSAL_TYPES_H
 #define _FSAL_TYPES_H
 
-/* other includes */
+#include <stddef.h>
 #include <sys/types.h>
 #include <sys/param.h>
 #include <dirent.h>		/* for MAXNAMLEN */
@@ -550,6 +550,64 @@ struct attrlist {
 					   for attributes. Settable by FSAL. */
 };
 
+/******************************************************
+ *            Attribute mask management.
+ ******************************************************/
+
+/** this macro tests if an attribute is set
+ *  example :
+ *  FSAL_TEST_MASK( attrib_list.mask, FSAL_ATTR_CREATION )
+ */
+#define FSAL_TEST_MASK(_attrib_mask_ , _attr_const_) \
+	((_attrib_mask_) & (_attr_const_))
+
+/** this macro sets an attribute
+ *  example :
+ *  FSAL_SET_MASK( attrib_list.mask, FSAL_ATTR_CREATION )
+ */
+#define FSAL_SET_MASK(_attrib_mask_ , _attr_const_) \
+	((_attrib_mask_) |= (_attr_const_))
+
+#define FSAL_UNSET_MASK(_attrib_mask_ , _attr_const_) \
+	((_attrib_mask_) &= ~(_attr_const_))
+
+/** this macro clears the attribute mask
+ *  example :
+ *  FSAL_CLEAR_MASK( attrib_list.asked_attributes )
+ */
+#define FSAL_CLEAR_MASK(_attrib_mask_) \
+	((_attrib_mask_) = 0LL)
+
+/******************************************************
+ *          FSAL extended attributes management.
+ ******************************************************/
+
+/** An extented attribute entry */
+typedef struct fsal_xattrent {
+	uint64_t xattr_id;	/*< xattr index */
+	uint64_t xattr_cookie;	/*< cookie for the next entry */
+	struct attrlist attributes;	/*< entry attributes (if supported) */
+	char xattr_name[MAXNAMLEN + 1];	/*< attribute name  */
+} fsal_xattrent_t;
+
+/* generic definitions for extended attributes */
+
+#define XATTR_FOR_FILE     0x00000001
+#define XATTR_FOR_DIR      0x00000002
+#define XATTR_FOR_SYMLINK  0x00000004
+#define XATTR_FOR_ALL      0x0000000F
+#define XATTR_RO           0x00000100
+#define XATTR_RW           0x00000200
+/* function for getting an attribute value */
+#define XATTR_RW_COOKIE ~0
+
+/* Flags representing if an FSAL supports read or write delegations */
+#define FSAL_OPTION_FILE_READ_DELEG 0x00000001	/*< File read delegations */
+#define FSAL_OPTION_FILE_WRITE_DELEG 0x00000002	/*< File write delegations */
+#define FSAL_OPTION_FILE_DELEGATIONS (FSAL_OPTION_FILE_READ_DELEG | \
+					   FSAL_OPTION_FILE_WRITE_DELEG)
+#define FSAL_OPTION_NO_DELEGATIONS 0
+
 /** Mask for permission testing. Both mode and ace4 mask are encoded. */
 
 typedef enum {
@@ -759,6 +817,33 @@ typedef struct fsal_status__ {
 	fsal_errors_t major;	/*< FSAL status code */
 	int minor;		/*< Other error code (usually POSIX) */
 } fsal_status_t;
+
+/******************************************************
+ *              FSAL Returns macros
+ ******************************************************/
+
+/**
+ *  fsalstat (was ReturnCode) :
+ *  Macro for returning a fsal_status_t without trace nor stats increment.
+ */
+static inline fsal_status_t fsalstat(fsal_errors_t major, uint32_t minor)
+{
+	fsal_status_t status = {major, minor};
+	return status;
+}
+
+/******************************************************
+ *              FSAL Errors handling.
+ ******************************************************/
+
+/** Tests whether the returned status is erroneous.
+ *  Example :
+ *  if (FSAL_IS_ERROR(status = FSAL_call(...))) {
+ *     printf("ERROR status = %d, %d\n", status.major,status.minor);
+ *  }
+ */
+#define FSAL_IS_ERROR(_status_) \
+	(!((_status_).major == ERR_FSAL_NO_ERROR))
 
 /**
  * @brief File system dynamic info.
