@@ -12,9 +12,11 @@
 
 #include <time.h>
 #include <assert.h>
+#include <pthread.h>
 #include <string.h>
 #include <stdbool.h>
 #include <stdint.h>
+
 #include "ganesha_types.h"
 #include "log.h"
 

@@ -38,10 +38,6 @@
 #include <time.h>
 #include <sys/time.h>
 
-#include "ganesha_rpc.h"
-#include "fsal.h"
-#include "cache_inode.h"
-
 #include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"

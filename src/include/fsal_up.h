@@ -47,11 +47,9 @@
 #ifndef FSAL_UP_H
 #define FSAL_UP_H
 
-#include "fsal_types.h"
+#include "ganesha_status.h"
 #include "fsal_api.h"
 #include "cache_inode.h"
-#include "nfs_exports.h"
-#include "sal_data.h"
 
 /**
  * Empty flags.
@@ -288,20 +286,6 @@ cache_inode_status_t fsal_invalidate(struct fsal_module *fsal,
 cache_inode_status_t up_get(struct fsal_module *fsal,
 			    struct gsh_buffdesc *handle,
 			    cache_entry_t **entry);
-
-struct delegrecall_context {
-	cache_entry_t *drc_entry;
-	nfs_client_id_t *drc_clid;
-	struct deleg_data *drc_deleg_entry;
-	stateid4 drc_stateid;
-	struct gsh_export *drc_exp;
-};
-
-enum recall_resp_action {
-	DELEG_RECALL_SCHED,
-	DELEG_RET_WAIT,
-	REVOKE
-};
 
 #endif /* FSAL_UP_H */
 /** @} */

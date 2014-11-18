@@ -339,6 +339,7 @@ struct fsal_module *lookup_fsal(const char *name)
 		if (strcasecmp(name, fsal->name) == 0) {
 			atomic_inc_int32_t(&fsal->refcount);
 			pthread_mutex_unlock(&fsal_lock);
+			op_ctx->fsal_module = fsal;
 			return fsal;
 		}
 	}
@@ -552,6 +553,7 @@ int fsal_load_init(void *node, const char *name, struct fsal_module **fsal_hdl,
 			err_type->fsal = true;
 			return 1;
 		}
+		op_ctx->fsal_module = *fsal_hdl;
 		myconfig = get_parse_root(node);
 		status = (*fsal_hdl)->ops->init_config(*fsal_hdl, myconfig);
 		if (FSAL_IS_ERROR(status)) {

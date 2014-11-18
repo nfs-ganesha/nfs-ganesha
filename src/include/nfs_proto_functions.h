@@ -41,8 +41,6 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-#include "fsal.h"
-#include "cache_inode.h"
 #include "nfs_exports.h"
 #include "nfs_file_handle.h"
 
