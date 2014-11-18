@@ -1576,7 +1576,7 @@ int find_config_nodes(config_file_t config, char *expr_str,
 	struct config_node *sub_node;
 	struct config_node *top;
 	struct expr_parse *expr, *expr_head;
-	struct config_node_list *list = NULL, *list_tail;
+	struct config_node_list *list = NULL, *list_tail = NULL;
 	char *ep;
 	int rc = EINVAL;
 	bool found = false;

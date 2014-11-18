@@ -297,7 +297,7 @@ bool pseudo_mount_export(struct gsh_export *export)
 	char *rest;
 	cache_inode_status_t cache_status;
 	char *tok;
-	char *saveptr;
+	char *saveptr = NULL;
 	int rc;
 
 	/* skip exports that aren't for NFS v4

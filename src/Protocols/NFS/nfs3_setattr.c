@@ -74,7 +74,7 @@ int nfs3_setattr(nfs_arg_t *arg,
 	pre_op_attr pre_attr = {
 		.attributes_follow = false
 	};
-	cache_inode_status_t cache_status;
+	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
 	int rc = NFS_REQ_OK;
 
 	if (isDebug(COMPONENT_NFSPROTO)) {

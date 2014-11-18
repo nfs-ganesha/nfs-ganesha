@@ -41,7 +41,7 @@ int main(int argc, char **argv)
 {
 	int c;
 	int port = 0;
-	int state, sflag = 0;
+	int state = 0, sflag = 0;
 	char mon_client[STR_SIZE], mflag = 0;
 	char remote_addr_s[STR_SIZE], rflag = 0;
 	char local_addr_s[STR_SIZE], lflag = 0;
