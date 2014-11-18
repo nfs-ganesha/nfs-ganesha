@@ -70,6 +70,7 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t *data,
 	state_status_t state_status;
 	state_t *state_found;
 	const char *tag = "DELEGRETURN";
+	state_owner_t *owner;
 
 	LogDebug(COMPONENT_NFS_V4_LOCK,
 		 "Entering NFS v4 DELEGRETURN handler -----------------------------------------------------");
@@ -106,13 +107,25 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t *data,
 
 	PTHREAD_RWLOCK_wrlock(&data->current_entry->state_lock);
 
-	deleg_heuristics_recall(state_found);
+	owner = get_state_owner_ref(state_found);
+
+	if (owner == NULL) {
+		/* Something has gone stale. */
+		LogDebug(COMPONENT_NFS_V4_LOCK, "Stale state");
+		res_DELEGRETURN4->status = NFS4ERR_STALE;
+		goto out_unlock;
+	}
+
+	deleg_heuristics_recall(data->current_entry, owner, state_found);
+
+	/* Release reference taken above. */
+	dec_state_owner_ref(owner);
 
 	/* Now we have a lock owner and a stateid.
 	 * Go ahead and push unlock into SAL (and FSAL) to return
 	 * the delegation.
 	 */
-	state_status = release_lease_lock(state_found);
+	state_status = release_lease_lock(data->current_entry, state_found);
 
 	res_DELEGRETURN4->status = nfs4_Errno_state(state_status);
 
@@ -122,6 +135,8 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t *data,
 
 		state_del_locked(state_found);
 	}
+
+ out_unlock:
 
 	PTHREAD_RWLOCK_unlock(&data->current_entry->state_lock);
 

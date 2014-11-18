@@ -498,8 +498,6 @@ state_status_t state_lock(cache_entry_t *entry,
 			  state_owner_t **holder,
 			  /* description of conflicting lock */
 			  fsal_lock_param_t *conflict);
-state_status_t acquire_lease_lock(state_t *state, bool reclaim);
-state_status_t release_lease_lock(state_t *state);
 state_status_t do_lock_op(cache_entry_t *entry,
 			  fsal_lock_op_t lock_op,
 			  state_owner_t *owner,
@@ -682,7 +680,21 @@ void release_openstate(state_owner_t *owner);
 void state_export_release_nfs4_state(void);
 void revoke_owner_delegs(state_owner_t *client_owner);
 
-/* Specifically for delegations */
+#ifdef DEBUG_SAL
+void dump_all_states(void);
+#endif
+
+/******************************************************************************
+ *
+ * Delegations functions
+ *
+ ******************************************************************************/
+
+state_status_t acquire_lease_lock(cache_entry_t *entry,
+				  state_owner_t *owner,
+				  state_t *state);
+state_status_t release_lease_lock(cache_entry_t *entry, state_t *state);
+
 bool init_deleg_heuristics(cache_entry_t *entry);
 bool deleg_supported(cache_entry_t *entry, struct fsal_export *fsal_export,
 		     struct export_perms *export_perms, uint32_t share_access);
@@ -694,18 +706,18 @@ void init_new_deleg_state(union state_data *deleg_state,
 			  open_delegation_type4 sd_type,
 			  nfs_client_id_t *clientid);
 
-void deleg_heuristics_recall(struct state_t *deleg);
+void deleg_heuristics_recall(cache_entry_t *entry,
+			     state_owner_t *owner,
+			     struct state_t *deleg);
 void get_deleg_perm(cache_entry_t *entry, nfsace4 *permissions,
 		    open_delegation_type4 type);
-bool update_delegation_stats(struct state_t *deleg);
+void update_delegation_stats(cache_entry_t *entry,
+			     state_owner_t *owner,
+			     struct state_t *deleg);
 state_status_t delegrecall_impl(cache_entry_t *entry);
-state_status_t deleg_revoke(struct state_t *deleg_state);
-void state_deleg_revoke(state_t *state);
+state_status_t deleg_revoke(cache_entry_t *entry, struct state_t *deleg_state);
+void state_deleg_revoke(cache_entry_t *entry, state_t *state);
 bool state_deleg_conflict(cache_entry_t *entry, bool write);
-
-#ifdef DEBUG_SAL
-void dump_all_states(void);
-#endif
 
 /******************************************************************************
  *

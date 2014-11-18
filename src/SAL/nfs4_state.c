@@ -683,33 +683,60 @@ void revoke_owner_delegs(state_owner_t *client_owner)
 	struct glist_head *glist, *glistn;
 	state_t *state;
 	cache_entry_t *entry;
+	bool so_mutex_held;
+
+ again:
+
+	pthread_mutex_lock(&client_owner->so_mutex);
+	so_mutex_held = true;
 
 	glist_for_each_safe(glist, glistn,
 			&client_owner->so_owner.so_nfs4_owner.so_state_list) {
 		state = glist_entry(glist, state_t, state_owner_list);
-		entry = state->state_entry;
 
+		/* Move entry to end of list to handle errors and skipping of
+		 * non-delegation states.
+		 */
+		glist_del(&state->state_owner_list);
+		glist_add_tail(
+			&client_owner->so_owner.so_nfs4_owner.so_state_list,
+			&state->state_owner_list);
+
+		/* Skip non-delegation states. */
 		if (state->state_type != STATE_TYPE_DELEG)
 			continue;
 
-		/* state_deleg_revoke will remove the delegation state.
-		 * If that happens to be the last state on the cache
-		 * inode entry, a ref is decremented on it. So entry may
-		 * cease to exist after the call to state_deleg_revoke.
-		 * To prevent this, we place a ref count on the entry
-		 * here.
+		/* Safely access the cache inode associated with the state.
+		 * This will get an LRU reference protecting our access
+		 * even after state_deleg_revoke releases the reference it
+		 * holds.
 		 */
-		(void) cache_inode_lru_ref(entry, LRU_REQ_STALE_OK);
+		entry = get_state_entry_ref(state);
+
+		if (entry == NULL) {
+			LogDebug(COMPONENT_STATE,
+				 "Stale state or cache entry");
+			continue;
+		}
+
+		pthread_mutex_unlock(&client_owner->so_mutex);
+		so_mutex_held = false;
 
 		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
-		state_deleg_revoke(state);
+		state_deleg_revoke(entry, state);
 		PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
 		/* Close the file in FSAL through the cache inode */
 		cache_inode_close(entry, 0);
 
 		cache_inode_lru_unref(entry, LRU_FLAG_NONE);
+
+		/* Since we dropped so_mutex, we must restart the loop. */
+		goto again;
 	}
+
+	if (so_mutex_held)
+		pthread_mutex_unlock(&client_owner->so_mutex);
 }
 
 /**
@@ -784,7 +811,7 @@ void state_export_release_nfs4_state(void)
 
 		if (state->state_type == STATE_TYPE_DELEG) {
 			/* this deletes the state too */
-			state_deleg_revoke(state);
+			state_deleg_revoke(entry, state);
 		} else {
 			state_del_locked(state);
 		}
