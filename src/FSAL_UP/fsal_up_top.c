@@ -50,6 +50,20 @@
 #include "export_mgr.h"
 #include "server_stats.h"
 
+struct delegrecall_context {
+	cache_entry_t *drc_entry;
+	nfs_client_id_t *drc_clid;
+	struct deleg_data *drc_deleg_entry;
+	stateid4 drc_stateid;
+	struct gsh_export *drc_exp;
+};
+
+enum recall_resp_action {
+	DELEG_RECALL_SCHED,
+	DELEG_RET_WAIT,
+	REVOKE
+};
+
 static int schedule_delegrevoke_check(struct delegrecall_context *ctx,
 				      uint32_t delay);
 static int schedule_delegrecall_task(struct delegrecall_context *ctx,

@@ -40,9 +40,18 @@
 #ifndef FSAL_API
 #define FSAL_API
 
+#include "fsal_types.h"
 #include "fsal_pnfs.h"
+#include "config_parsing.h"
 #include "avltree.h"
 #include "abstract_atomic.h"
+
+/**
+** Forward declarations to resolve circular dependency conflicts
+*/
+struct gsh_client;
+struct gsh_export;
+struct fsal_up_vector;		/* From fsal_up.h */
 
 /**
  * @page newapi New FSAL API
@@ -318,12 +327,8 @@ struct export_ops;
 struct fsal_obj_handle;
 struct fsal_obj_ops;
 struct fsal_filesystem;
-struct gsh_export;
 struct fsal_ds_handle;
 struct fsal_ds_ops;
-
-struct fsal_up_vector;		/* From fsal_up.h */
-struct fsal_xattrent;
 
 #ifndef SEEK_SET
 #define SEEK_SET 0
@@ -351,6 +356,63 @@ struct io_hints {
 	offset4  offset;
 	length4  count;
 	uint32_t hints;
+};
+
+/**
+ * @brief request op context
+ *
+ * This is created early in the operation with the context of the
+ * operation.  The difference between "context" and request parameters
+ * or arguments is that the context is derived information such as
+ * the resolved credentials, socket (network and client host) data
+ * and other bits of environment associated with the request.  It gets
+ * passed down the call chain only as far as it needs to go for the op
+ * i.e. don't put it in the function/method proto "just because".
+ *
+ * The lifetime of this structure and all the data it points to is the
+ * operation for V2,3 and the compound for V4+.  All elements and what
+ * they point to are invariant for the lifetime.
+ *
+ * NOTE: This is an across-the-api shared structure.  It must survive with
+ *       older consumers of its contents.  Future development can change
+ *       this struct so long as it follows the rules:
+ *
+ *       1. New elements are appended at the end, never inserted in the middle.
+ *
+ *       2. This structure _only_ contains pointers and simple scalar values.
+ *
+ *       3. Changing an already defined struct pointer is strictly not allowed.
+ *
+ *       4. This struct is always passed by reference, never by value.
+ *
+ *       5. This struct is never copied/saved.
+ *
+ *       6. Code changes are first introduced in the core.  Assume the fsal
+ *          module does not know and the code will still do the right thing.
+ */
+
+struct req_op_context {
+	struct user_cred *creds;	/*< resolved user creds from request */
+	struct user_cred original_creds;	/*< Saved creds */
+	struct group_data *caller_gdata;
+	gid_t *caller_garray_copy;	/*< Copied garray from AUTH_SYS */
+	gid_t *managed_garray_copy;	/*< Copied garray from managed gids */
+	int	cred_flags;		/* Various cred flags */
+	sockaddr_t *caller_addr;	/*< IP connection info */
+	const uint64_t *clientid;	/*< Client ID of caller, NULL if
+					   unknown/not applicable. */
+	uint32_t nfs_vers;	/*< NFS protocol version of request */
+	uint32_t nfs_minorvers;	/*< NFSv4 minor version */
+	uint32_t req_type;	/*< request_type NFS | 9P */
+	struct gsh_client *client;	/*< client host info including stats */
+	struct gsh_export *export;	/*< current export */
+	struct fsal_export *fsal_export;	/*< current fsal export */
+	struct export_perms *export_perms;	/*< Effective export perms */
+	nsecs_elapsed_t start_time;	/*< start time of this op/request */
+	nsecs_elapsed_t queue_wait;	/*< time in wait queue */
+	void *fsal_private;		/*< private for FSAL use */
+	struct fsal_module *fsal_module;	/*< current fsal module */
+	/* add new context members here */
 };
 
 /**
@@ -574,63 +636,6 @@ static inline void fsal_put(struct fsal_module *fsal_hdl)
 			fsal_hdl->name);
 	}
 }
-
-/**
- * Global fsal manager functions
- * used by nfs_main to initialize fsal modules.
- */
-
-void start_fsals(void);
-int load_fsal(const char *name,
-	      struct fsal_module **fsal_hdl);
-
-/* Called only within MODULE_INIT and MODULE_FINI functions of a fsal
- * module
- */
-
-/**
- * @brief Register a FSAL
- *
- * This function registers an FSAL with ganesha and initializes the
- * public portion of the FSAL data structure, including providing
- * default operation vectors.
- *
- * @param[in,out] fsal_hdl      The FSAL module to register.
- * @param[in]     name          The FSAL's name
- * @param[in]     major_version Major version fo the API against which
- *                              the FSAL was written
- * @param[in]     minor_version Minor version of the API against which
- *                              the FSAL was written.
- *
- * @return 0 on success.
- * @return EINVAL on version mismatch.
- */
-
-int register_fsal(struct fsal_module *fsal_hdl, const char *name,
-		  uint32_t major_version, uint32_t minor_version,
-		  uint8_t fsal_id);
-/**
- * @brief Unregister an FSAL
- *
- * This function unregisters an FSAL from Ganesha.  It should be
- * called from the module finalizer as part of unloading.
- *
- * @param[in] fsal_hdl The FSAL to unregister
- *
- * @return 0 on success.
- * @return EBUSY if outstanding references or exports exist.
- */
-
-int unregister_fsal(struct fsal_module *fsal_hdl);
-
-/**
- * @brief Find and take a reference on an FSAL
- *
- * This function finds an FSAL by name and increments its reference
- * count.  It is used as part of export setup.  The @c put method
- * should be used  to release the reference before unloading.
- */
-struct fsal_module *lookup_fsal(const char *name);
 
 /**
  * @brief Export object
@@ -2282,6 +2287,13 @@ static inline void ds_put(struct fsal_ds_handle *const ds_hdl)
 	if (refcount == 0)
 		ds_hdl->ops->release(ds_hdl);
 }
+
+/**
+** Resolve forward declarations
+*/
+#include "client_mgr.h"
+#include "export_mgr.h"
+#include "fsal_up.h"
 
 #endif				/* !FSAL_API */
 /** @} */

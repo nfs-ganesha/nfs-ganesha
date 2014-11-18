@@ -39,6 +39,12 @@
 #ifndef CLIENT_MGR_H
 #define CLIENT_MGR_H
 
+#include <pthread.h>
+#include <sys/types.h>
+
+#include "avltree.h"
+#include "ganesha_types.h"
+
 struct gsh_client {
 	struct avltree_node node_k;
 	pthread_rwlock_t lock;

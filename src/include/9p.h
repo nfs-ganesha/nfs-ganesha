@@ -29,6 +29,8 @@
 
 #ifndef _9P_H
 #define _9P_H
+
+#include <stdint.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>

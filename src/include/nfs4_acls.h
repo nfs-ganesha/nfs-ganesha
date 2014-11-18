@@ -25,6 +25,8 @@
 #ifndef _NFS4_ACLS_H
 #define _NFS4_ACLS_H
 
+#include "fsal_types.h"
+
 /* Define the return value of ACL operation. */
 
 typedef int fsal_acl_status_t;

@@ -40,7 +40,6 @@
  */
 #include "config.h"
 
-#include "fsal.h"
 #include <libgen.h>		/* used for 'dirname' */
 #include <pthread.h>
 #include <sys/stat.h>
@@ -49,17 +48,20 @@
 #include <string.h>
 #include <fcntl.h>
 #include <sys/types.h>
-#ifdef HAVE_MNTENT_H
-#include <mntent.h>
-#endif
 #include <sys/statvfs.h>
 #include <sys/vfs.h>
 #include <os/quota.h>
+
+#include "common_utils.h"
+#ifdef HAVE_MNTENT_H
+#include <mntent.h>
+#endif
 #include "ganesha_list.h"
 #ifdef USE_BLKID
 #include <blkid/blkid.h>
 #include <uuid/uuid.h>
 #endif
+#include "fsal_api.h"
 #include "FSAL/fsal_commonlib.h"
 #include "fsal_private.h"
 #include "fsal_convert.h"

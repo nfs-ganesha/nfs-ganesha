@@ -35,12 +35,12 @@
 #ifndef FSAL_CONVERT_H
 #define FSAL_CONVERT_H
 
-#include "fsal.h"
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <time.h>
 #include <unistd.h>
+
+#include "fsal_types.h"
 
 /* convert error codes */
 int posix2fsal_error(int posix_errorcode);

@@ -32,17 +32,20 @@
 
 #include "config.h"
 
-#include "fsal.h"
 #include <libgen.h>		/* used for 'dirname' */
 #include <pthread.h>
 #include <string.h>
 #include <sys/types.h>
 #include <os/xattr.h>
 #include <ctype.h>
+
 #include "ganesha_list.h"
+#include "fsal_api.h"
 #include "fsal_convert.h"
 #include "FSAL/fsal_commonlib.h"
 #include "vfs_methods.h"
+#include "common_utils.h"
+
 typedef int (*xattr_getfunc_t) (struct fsal_obj_handle *, /* object handle */
 				caddr_t,	/* output buff */
 				size_t,	/* output buff size */

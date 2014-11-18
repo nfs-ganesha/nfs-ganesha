@@ -39,8 +39,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-#include "ganesha_rpc.h"
-#include "fsal.h"
+#include "fsal_types.h"
 #include "cache_inode.h"
 
 #include "nfs23.h"
