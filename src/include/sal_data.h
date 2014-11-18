@@ -312,7 +312,6 @@ struct state_deleg {
 	open_delegation_type4 sd_type;
 	time_t sd_grant_time;               /* time of successful delegation */
 	enum deleg_state sd_state;
-	uint16_t dd_export_id;
 	struct cf_deleg_stats sd_clfile_stats;  /* client specific */
 };
 

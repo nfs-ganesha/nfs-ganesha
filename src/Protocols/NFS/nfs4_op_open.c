@@ -1023,7 +1023,9 @@ static void get_delegation(compound_data_t *data, OPEN4args *args,
 				   OTHERSIZE);
 
 		/* acquire_lease_lock() gets the delegation from FSAL */
-		state_status = acquire_lease_lock(new_state, false);
+		state_status = acquire_lease_lock(data->current_entry,
+						  clientowner,
+						  new_state);
 		if (state_status != STATE_SUCCESS) {
 			LogDebug(COMPONENT_NFS_V4_LOCK,
 				 "get_delegation call added state but failed to"
