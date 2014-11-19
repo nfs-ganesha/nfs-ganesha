@@ -224,6 +224,7 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 	cache_entry_t *entry = NULL;
 	bool sync = false;
 	bool anonymous_started = false;
+	state_owner_t *owner = NULL;
 
 	/* Say we are managing NFS4_OP_READ */
 	resp->resop = NFS4_OP_READ;
@@ -341,10 +342,8 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 		 */
 		switch (state_found->state_type) {
 		case STATE_TYPE_SHARE:
-			if ((data->minorversion == 0)
-			    &&
-			    (!(state_found->state_owner->so_owner.so_nfs4_owner.
-			       so_confirmed))) {
+			if (data->minorversion == 0 &&
+			    !state_owner_confirmed(state_found)) {
 				res_READ4->status = NFS4ERR_BAD_STATEID;
 				goto out;
 			}
@@ -465,9 +464,11 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	if (!anonymous_started && data->minorversion == 0) {
-		op_ctx->clientid =
-		    &state_found->state_owner->so_owner.so_nfs4_owner.
-		    so_clientid;
+		owner = get_state_owner_ref(state_found);
+		if (owner != NULL) {
+			op_ctx->clientid =
+				&owner->so_owner.so_nfs4_owner.so_clientid;
+		}
 	}
 
 	cache_status =
@@ -516,6 +517,9 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 			     false);
 
  out:
+
+	if (owner != NULL)
+		dec_state_owner_ref(owner);
 
 	if (state_found != NULL)
 		dec_state_t_ref(state_found);

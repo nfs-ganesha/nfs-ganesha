@@ -96,8 +96,15 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op, compound_data_t *data,
 		return res_OPEN_CONFIRM4->status;
 	}
 
-	open_owner = state_found->state_owner;
-	inc_state_owner_ref(open_owner);
+	open_owner = get_state_owner_ref(state_found);
+
+	if (open_owner == NULL) {
+		/* State is going stale. */
+		res_OPEN_CONFIRM4->status = NFS4ERR_STALE;
+		LogDebug(COMPONENT_NFS_V4,
+			 "OPEN CONFIRM failed nfs4_Check_Stateid, stale open owner");
+		goto out2;
+	}
 
 	pthread_mutex_lock(&open_owner->so_mutex);
 
@@ -142,6 +149,9 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op, compound_data_t *data,
  out:
 
 	dec_state_owner_ref(open_owner);
+
+ out2:
+
 	dec_state_t_ref(state_found);
 
 	return res_OPEN_CONFIRM4->status;
