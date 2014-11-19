@@ -283,11 +283,11 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 		}
 
 		/* Check if lock state belongs to same export */
-		if (lock_state->state_export != op_ctx->export) {
+		if (!state_same_export(lock_state, op_ctx->export)) {
 			LogEvent(COMPONENT_STATE,
 				 "Lock Owner Export Conflict, Lock held for export %"
 				 PRIu16" request for export %"PRIu16,
-				 lock_state->state_export->export_id,
+				 state_export_id(lock_state),
 				 op_ctx->export->export_id);
 			res_LOCK4->status = STATE_INVALID_ARGUMENT;
 			goto out2;

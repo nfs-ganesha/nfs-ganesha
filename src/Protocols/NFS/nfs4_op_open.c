@@ -246,11 +246,11 @@ static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t *data,
 		glist_init(&(file_state->state_data.share.share_lockstates));
 	} else {
 		/* Check if open from another export */
-		if (file_state->state_export != op_ctx->export) {
+		if (!state_same_export(file_state, op_ctx->export)) {
 			LogEvent(COMPONENT_STATE,
 				 "Lock Owner Export Conflict, Lock held for export %"
 				 PRIu16" request for export %"PRIu16,
-				 file_state->state_export->export_id,
+				 state_export_id(file_state),
 				 op_ctx->export->export_id);
 			dec_state_t_ref(file_state);
 			return STATE_INVALID_ARGUMENT;
