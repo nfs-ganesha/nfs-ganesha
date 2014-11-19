@@ -48,7 +48,7 @@ ATTR_FSID     | ATTR_FILEID   |		  \
 ATTR_MODE     | ATTR_NUMLINKS | ATTR_OWNER     | \
 ATTR_GROUP    | ATTR_ATIME    | ATTR_RAWDEV    | \
 ATTR_CTIME    | ATTR_MTIME    | ATTR_SPACEUSED | \
-ATTR_CHGTIME)
+ATTR_CHGTIME  | ATTR_ACL)
 
 /**
  * The attributes this FSAL can set.
@@ -57,7 +57,8 @@ ATTR_CHGTIME)
 #define GLUSTERFS_SETTABLE_ATTRIBUTES (		  \
 ATTR_MODE     | ATTR_OWNER	  | ATTR_GROUP	      |  \
 ATTR_ATIME    | ATTR_CTIME	  | ATTR_MTIME	      |  \
-ATTR_SIZE     | ATTR_MTIME_SERVER | ATTR_ATIME_SERVER)   \
+ATTR_SIZE     | ATTR_MTIME_SERVER | ATTR_ATIME_SERVER |  \
+ATTR_ACL)
 
 /**
  * Override internal Gluster defines for the time being.

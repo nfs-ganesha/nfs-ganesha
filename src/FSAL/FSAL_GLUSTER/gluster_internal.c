@@ -25,6 +25,8 @@
  * Module core functions
  */
 
+#include <sys/types.h>
+#include <attr/xattr.h> /* ENOATTR */
 #include "gluster_internal.h"
 #include "fsal_convert.h"
 #include "nfs4_acls.h"
@@ -172,52 +174,51 @@ fsal_status_t gluster2fsal_error(const int gluster_errorcode)
 void stat2fsal_attributes(const struct stat *buffstat,
 			  struct attrlist *fsalattr)
 {
-	FSAL_CLEAR_MASK(fsalattr->mask);
-
 	/* Fills the output struct */
-	fsalattr->type = posix2fsal_type(buffstat->st_mode);
-	FSAL_SET_MASK(fsalattr->mask, ATTR_TYPE);
+	if (FSAL_TEST_MASK(fsalattr->mask, ATTR_TYPE))
+		fsalattr->type = posix2fsal_type(buffstat->st_mode);
 
-	fsalattr->filesize = buffstat->st_size;
-	FSAL_SET_MASK(fsalattr->mask, ATTR_SIZE);
+	if (FSAL_TEST_MASK(fsalattr->mask, ATTR_SIZE))
+		fsalattr->filesize = buffstat->st_size;
 
-	fsalattr->fsid = posix2fsal_fsid(buffstat->st_dev);
-	FSAL_SET_MASK(fsalattr->mask, ATTR_FSID);
+	if (FSAL_TEST_MASK(fsalattr->mask, ATTR_FSID))
+		fsalattr->fsid = posix2fsal_fsid(buffstat->st_dev);
 
-	fsalattr->fileid = buffstat->st_ino;
-	FSAL_SET_MASK(fsalattr->mask, ATTR_FILEID);
+	if (FSAL_TEST_MASK(fsalattr->mask, ATTR_FILEID))
+		fsalattr->fileid = buffstat->st_ino;
 
-	fsalattr->mode = unix2fsal_mode(buffstat->st_mode);
-	FSAL_SET_MASK(fsalattr->mask, ATTR_MODE);
+	if (FSAL_TEST_MASK(fsalattr->mask, ATTR_MODE))
+		fsalattr->mode = unix2fsal_mode(buffstat->st_mode);
 
-	fsalattr->numlinks = buffstat->st_nlink;
-	FSAL_SET_MASK(fsalattr->mask, ATTR_NUMLINKS);
+	if (FSAL_TEST_MASK(fsalattr->mask, ATTR_NUMLINKS))
+		fsalattr->numlinks = buffstat->st_nlink;
 
-	fsalattr->owner = buffstat->st_uid;
-	FSAL_SET_MASK(fsalattr->mask, ATTR_OWNER);
+	if (FSAL_TEST_MASK(fsalattr->mask, ATTR_OWNER))
+		fsalattr->owner = buffstat->st_uid;
 
-	fsalattr->group = buffstat->st_gid;
-	FSAL_SET_MASK(fsalattr->mask, ATTR_GROUP);
+	if (FSAL_TEST_MASK(fsalattr->mask, ATTR_GROUP))
+		fsalattr->group = buffstat->st_gid;
 
-	fsalattr->atime = posix2fsal_time(buffstat->st_atime, 0);
-	FSAL_SET_MASK(fsalattr->mask, ATTR_ATIME);
+	if (FSAL_TEST_MASK(fsalattr->mask, ATTR_ATIME))
+		fsalattr->atime = posix2fsal_time(buffstat->st_atime, 0);
 
-	fsalattr->ctime = posix2fsal_time(buffstat->st_ctime, 0);
-	FSAL_SET_MASK(fsalattr->mask, ATTR_CTIME);
+	if (FSAL_TEST_MASK(fsalattr->mask, ATTR_CTIME))
+		fsalattr->ctime = posix2fsal_time(buffstat->st_ctime, 0);
 
-	fsalattr->mtime = posix2fsal_time(buffstat->st_mtime, 0);
-	FSAL_SET_MASK(fsalattr->mask, ATTR_MTIME);
+	if (FSAL_TEST_MASK(fsalattr->mask, ATTR_MTIME))
+		fsalattr->mtime = posix2fsal_time(buffstat->st_mtime, 0);
 
-	fsalattr->chgtime =
-	    posix2fsal_time(MAX(buffstat->st_mtime, buffstat->st_ctime), 0);
-	fsalattr->change = fsalattr->chgtime.tv_sec;
-	FSAL_SET_MASK(fsalattr->mask, ATTR_CHGTIME);
+	if (FSAL_TEST_MASK(fsalattr->mask, ATTR_CHGTIME)) {
+		fsalattr->chgtime = posix2fsal_time(MAX(buffstat->st_mtime,
+						buffstat->st_ctime), 0);
+		fsalattr->change = fsalattr->chgtime.tv_sec;
+	}
 
-	fsalattr->spaceused = buffstat->st_blocks * S_BLKSIZE;
-	FSAL_SET_MASK(fsalattr->mask, ATTR_SPACEUSED);
+	if (FSAL_TEST_MASK(fsalattr->mask, ATTR_SPACEUSED))
+		fsalattr->spaceused = buffstat->st_blocks * S_BLKSIZE;
 
-	fsalattr->rawdev = posix2fsal_devt(buffstat->st_rdev);
-	FSAL_SET_MASK(fsalattr->mask, ATTR_RAWDEV);
+	if (FSAL_TEST_MASK(fsalattr->mask, ATTR_RAWDEV))
+		fsalattr->rawdev = posix2fsal_devt(buffstat->st_rdev);
 }
 
 struct fsal_staticfsinfo_t *gluster_staticinfo(struct fsal_module *hdl)
@@ -259,6 +260,9 @@ int construct_handle(struct glusterfs_export *glexport, const struct stat *sb,
 		errno = ENOMEM;
 		return -1;
 	}
+
+	constructing->handle.attributes.mask =
+		glexport->export.ops->fs_supported_attrs(&glexport->export);
 
 	stat2fsal_attributes(sb, &constructing->handle.attributes);
 
@@ -473,20 +477,36 @@ fsal_status_t glusterfs_get_acl(struct glusterfs_export *glfs_export,
 				struct attrlist *fsalattr)
 {
 	int rc = 0;
+	const char *acl_key = "user.nfsv4_acls";
+	glusterfs_acl_t *acl = NULL;
+
 	fsalattr->acl = NULL;
-	char *acl_key = "user.nfsv4_acls";
-	if (NFSv4_ACL_SUPPORT) {
+
+	if (NFSv4_ACL_SUPPORT && FSAL_TEST_MASK(fsalattr->mask, ATTR_ACL)) {
 		rc = glfs_h_getxattrs(glfs_export->gl_fs,
 				      glhandle,
 				      acl_key, buffxstat->buffacl,
 				      GLFS_ACL_BUF_SIZE);
-		/* TODO: Return error incase of errors other than
-		   ENOTFOUND */
-		if (rc >= 0)
-			glusterfs_acl_2_fsal_acl(fsalattr,
-				(glusterfs_acl_t *) buffxstat->buffacl);
+		if (rc > 0) {
+			/* rc is the size of buffacl */
+			acl = (glusterfs_acl_t *) buffxstat->buffacl;
+			FSAL_SET_MASK(buffxstat->attr_valid, XATTR_ACL);
+			LogFullDebug(COMPONENT_FSAL, "acl = %p", fsalattr->acl);
+		} else if (rc == 0 || (rc == -1 && errno == ENOATTR)) {
+			/* ACL is empty, or no ACL has been set */
+			FSAL_SET_MASK(buffxstat->attr_valid, XATTR_ACL);
+			LogFullDebug(COMPONENT_FSAL, "no ACL-xattr set");
+		} else {
+			/* some real error occurred */
+			LogMajor(COMPONENT_FSAL, "failed to fetch ACL");
+			return fsalstat(ERR_FSAL_SERVERFAULT, errno);
+		}
 
-		LogFullDebug(COMPONENT_FSAL, "acl = %p", fsalattr->acl);
+		rc = glusterfs_acl_2_fsal_acl(fsalattr, acl);
+		if (rc != ERR_FSAL_NO_ERROR) {
+			LogMajor(COMPONENT_FSAL, "failed to convert ACL");
+			return fsalstat(ERR_FSAL_SERVERFAULT, errno);
+		}
 	}
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
@@ -611,14 +631,20 @@ int glusterfs_acl_2_fsal_acl(struct attrlist *p_object_attributes,
 	glusterfs_ace_v4_t *pace_glusterfs;
 
 	/* sanity checks */
-	if (!p_object_attributes || !p_glusterfsacl)
+	if (!p_object_attributes)
 		return ERR_FSAL_FAULT;
 
+	if (!FSAL_TEST_MASK(p_object_attributes->mask, ATTR_ACL))
+		return ERR_FSAL_ATTRNOTSUPP;
+
 	/* Create fsal acl data. */
-	acldata.naces = p_glusterfsacl->acl_nace;
+	acldata.naces = (p_glusterfsacl ? p_glusterfsacl->acl_nace : 0);
 	acldata.aces = (fsal_ace_t *) nfs4_ace_alloc(acldata.naces);
 
-	/* return if ACL not present */
+	/* return if ACL not present
+	 *
+	 * TODO: should the ACL be built from the p_object_attributes->mode?
+	 */
 	if (!acldata.naces)
 		return ERR_FSAL_NO_ERROR;
 
@@ -699,14 +725,19 @@ fsal_status_t mode_bits_to_acl(struct glfs *fs,
 	rc = glfs_h_getxattrs(fs, objhandle->glhandle,
 			      acl_key, buffxstat->buffacl,
 			      GLFS_ACL_BUF_SIZE);
-	if (rc <= 0) {
+	if (rc == 0 || (rc == -1 && errno == ENOATTR)) {
 		/* No ACL found
 		   TODO : Do we need to construct aces?
 		   TODO: check for failure conditions */
+		LogFullDebug(COMPONENT_FSAL, "no ACL-xattr set");
+		goto out;
+	} else if (rc == -1) {
+		LogMajor(COMPONENT_FSAL, "failed to fetch ACL");
+		status = fsalstat(ERR_FSAL_SERVERFAULT, errno);
 		goto out;
 	}
 	/* there is an existing acl. modify it */
-	*attrs_valid |= XATTR_ACL;
+	FSAL_SET_MASK(*attrs_valid, XATTR_ACL);
 
 	p_glusterfsacl = (glusterfs_acl_t *)buffxstat->buffacl;
 

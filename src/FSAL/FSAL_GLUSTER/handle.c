@@ -723,27 +723,27 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 	}
 
 	if (FSAL_TEST_MASK(attrs->mask, ATTR_MODE)) {
-		mask |= GLAPI_SET_ATTR_MODE;
+		FSAL_SET_MASK(mask, GLAPI_SET_ATTR_MODE);
 		buffxstat.buffstat.st_mode = fsal2unix_mode(attrs->mode);
 	}
 
 	if (FSAL_TEST_MASK(attrs->mask, ATTR_OWNER)) {
-		mask |= GLAPI_SET_ATTR_UID;
+		FSAL_SET_MASK(mask, GLAPI_SET_ATTR_UID);
 		buffxstat.buffstat.st_uid = attrs->owner;
 	}
 
 	if (FSAL_TEST_MASK(attrs->mask, ATTR_GROUP)) {
-		mask |= GLAPI_SET_ATTR_GID;
+		FSAL_SET_MASK(mask, GLAPI_SET_ATTR_GID);
 		buffxstat.buffstat.st_gid = attrs->group;
 	}
 
 	if (FSAL_TEST_MASK(attrs->mask, ATTR_ATIME)) {
-		mask |= GLAPI_SET_ATTR_ATIME;
+		FSAL_SET_MASK(mask, GLAPI_SET_ATTR_ATIME);
 		buffxstat.buffstat.st_atim = attrs->atime;
 	}
 
 	if (FSAL_TEST_MASK(attrs->mask, ATTR_ATIME_SERVER)) {
-		mask |= GLAPI_SET_ATTR_ATIME;
+		FSAL_SET_MASK(mask, GLAPI_SET_ATTR_ATIME);
 		struct timespec timestamp;
 
 		rc = clock_gettime(CLOCK_REALTIME, &timestamp);
@@ -755,11 +755,11 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 	}
 
 	if (FSAL_TEST_MASK(attrs->mask, ATTR_MTIME)) {
-		mask |= GLAPI_SET_ATTR_MTIME;
+		FSAL_SET_MASK(mask, GLAPI_SET_ATTR_MTIME);
 		buffxstat.buffstat.st_mtim = attrs->mtime;
 	}
 	if (FSAL_TEST_MASK(attrs->mask, ATTR_MTIME_SERVER)) {
-		mask |= GLAPI_SET_ATTR_MTIME;
+		FSAL_SET_MASK(mask, GLAPI_SET_ATTR_MTIME);
 		struct timespec timestamp;
 
 		rc = clock_gettime(CLOCK_REALTIME, &timestamp);
@@ -775,7 +775,7 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 
 	if (NFSv4_ACL_SUPPORT) {
 		if (FSAL_TEST_MASK(attrs->mask, ATTR_ACL)) {
-			attr_valid |= XATTR_ACL;
+			FSAL_SET_MASK(attr_valid, XATTR_ACL);
 			status =
 			  glusterfs_process_acl(glfs_export->gl_fs,
 						objhandle->glhandle,
@@ -785,7 +785,7 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 				goto out;
 			/* setting the ACL will set the */
 			/* mode-bits too if not already passed */
-			mask |= GLAPI_SET_ATTR_MODE;
+			FSAL_SET_MASK(mask, GLAPI_SET_ATTR_MODE);
 		} else if (mask & GLAPI_SET_ATTR_MODE) {
 			switch (obj_hdl->type) {
 			case REGULAR_FILE:
@@ -810,8 +810,8 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 
 	/* If any stat changed, indicate that */
 	if (mask != 0)
-		attr_valid |= XATTR_STAT;
-	if (attr_valid & XATTR_STAT) {
+		FSAL_SET_MASK(attr_valid, XATTR_STAT);
+	if (FSAL_TEST_MASK(attr_valid, XATTR_STAT)) {
 		/*Only if there is any change in attrs send them down to fs */
 		rc = glfs_h_setattrs(glfs_export->gl_fs,
 				     objhandle->glhandle,
@@ -820,7 +820,7 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 		GLUSTER_VALIDATE_RETURN_STATUS(rc);
 	}
 
-	if (attr_valid & XATTR_ACL) {
+	if (FSAL_TEST_MASK(attr_valid, XATTR_ACL)) {
 		status = glusterfs_set_acl(glfs_export,
 					   objhandle, &buffxstat);
 		if (FSAL_IS_ERROR(status))
