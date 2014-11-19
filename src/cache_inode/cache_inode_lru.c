@@ -54,6 +54,7 @@
 #include "cache_inode_hash.h"
 #include "gsh_intrinsic.h"
 #include "sal_functions.h"
+#include "nfs_exports.h"
 
 /**
  *

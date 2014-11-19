@@ -41,6 +41,7 @@
 #include <fcntl.h>
 #include "nfs_core.h"
 #include "log.h"
+#include "fsal.h"
 #include "9p.h"
 #include "idmapper.h"
 #include "uid2grp.h"

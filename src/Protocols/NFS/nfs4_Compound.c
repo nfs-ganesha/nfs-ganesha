@@ -32,8 +32,12 @@
  *
  */
 #include "config.h"
+#include "fsal.h"
 #include "sal_functions.h"
 #include "nfs_convert.h"
+#include "nfs_core.h"
+#include "nfs_exports.h"
+#include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
 #include "server_stats.h"
 #include "export_mgr.h"

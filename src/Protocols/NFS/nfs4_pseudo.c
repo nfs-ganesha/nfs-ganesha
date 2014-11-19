@@ -32,7 +32,8 @@
  */
 #include "config.h"
 #include "log.h"
-#include "nfs4.h"
+#include "fsal.h"
+#include "nfs_core.h"
 #include "nfs_proto_tools.h"
 #include "nfs_exports.h"
 #include "cache_inode.h"

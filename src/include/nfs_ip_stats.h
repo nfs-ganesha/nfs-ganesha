@@ -5,7 +5,6 @@
 #include <sys/param.h>
 
 #include "ganesha_rpc.h"
-#include <dirent.h>		/* for having MAXNAMLEN */
 #include <netdb.h>		/* for having MAXHOSTNAMELEN */
 #include "hashtable.h"
 

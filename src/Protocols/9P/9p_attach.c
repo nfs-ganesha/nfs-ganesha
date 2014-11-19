@@ -43,6 +43,7 @@
 #include "cache_inode.h"
 #include "cache_inode_lru.h"
 #include "fsal.h"
+#include "nfs_exports.h"
 #include "9p.h"
 
 int _9p_attach(struct _9p_request_data *req9p, void *worker_data,

@@ -34,7 +34,7 @@
 #include "config.h"
 #include "hashtable.h"
 #include "log.h"
-#include "nfs4.h"
+#include "fsal.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
 #include "nfs_exports.h"
@@ -44,6 +44,7 @@
 #include "export_mgr.h"
 #include "client_mgr.h"
 #include "fsal_convert.h"
+#include "nfs_file_handle.h"
 
 /**
  * @brief The NFS4_OP_PUTFH operation

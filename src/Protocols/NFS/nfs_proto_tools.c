@@ -31,9 +31,12 @@
  * A set of functions used to managed NFS.
  */
 #include "log.h"
+#include "fsal.h"
 #include "cache_inode.h"
 #include "fsal_convert.h"
+#include "nfs_core.h"
 #include "nfs_convert.h"
+#include "nfs_exports.h"
 #include "nfs_proto_tools.h"
 #include "idmapper.h"
 #include "export_mgr.h"

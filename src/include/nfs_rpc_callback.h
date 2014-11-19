@@ -34,7 +34,7 @@
 #include "log.h"
 #include "cache_inode.h"
 #include "wait_queue.h"
-#include "sal_data.h"
+#include "nfs_core.h"
 
 /**
  * @file nfs_rpc_callback.h

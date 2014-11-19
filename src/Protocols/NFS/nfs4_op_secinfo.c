@@ -31,8 +31,7 @@
  * Routines used for managing the NFS4 COMPOUND functions.
  */
 #include "config.h"
-#include "ganesha_rpc.h"
-#include "nfs4.h"
+#include "fsal.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
 #include "nfs_exports.h"

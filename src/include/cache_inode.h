@@ -58,7 +58,6 @@ typedef struct cache_entry_t cache_entry_t;
 #include "abstract_mem.h"
 #include "hashtable.h"
 #include "avltree.h"
-#include "fsal.h"
 #include "log.h"
 #include "gsh_config.h"
 #include "common_utils.h"
