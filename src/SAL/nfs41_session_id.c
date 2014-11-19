@@ -35,6 +35,7 @@
  */
 
 #include "config.h"
+#include "nfs_core.h"
 #include "sal_functions.h"
 
 /**

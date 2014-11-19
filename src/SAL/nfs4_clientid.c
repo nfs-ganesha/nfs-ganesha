@@ -44,7 +44,7 @@
 #include <string.h>
 #include <pthread.h>
 #include "nfs4.h"
-#include "sal_data.h"
+#include "fsal.h"
 #include "sal_functions.h"
 #include "cache_inode_lru.h"
 #include "abstract_atomic.h"

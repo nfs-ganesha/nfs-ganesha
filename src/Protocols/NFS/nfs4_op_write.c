@@ -33,8 +33,7 @@
 
 #include "config.h"
 #include "log.h"
-#include "ganesha_rpc.h"
-#include "nfs4.h"
+#include "fsal.h"
 #include "nfs_core.h"
 #include "sal_functions.h"
 #include "nfs_proto_functions.h"

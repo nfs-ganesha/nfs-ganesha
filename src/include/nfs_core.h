@@ -38,13 +38,9 @@
 #include <time.h>
 #include <sys/time.h>
 
-#include "nfs23.h"
-#include "nfs4.h"
-#include "mount.h"
-#include "nfs_proto_functions.h"
-#include "wait_queue.h"
+#include "sal_data.h"
 #include "gsh_config.h"
-#include "cache_inode.h"
+
 #ifdef _USE_9P
 #include "9p.h"
 #endif
@@ -64,34 +60,6 @@ char *host_name;
  * Bind protocol family, pending a richer interface model.
  */
 #define P_FAMILY AF_INET6
-
-typedef struct nfs_request_data {
-	SVCXPRT *xprt;
-	struct svc_req req;
-	struct nfs_request_lookahead lookahead;
-	nfs_arg_t arg_nfs;
-	nfs_res_t *res_nfs;
-	const nfs_function_desc_t *funcdesc;
-} nfs_request_data_t;
-
-enum rpc_chan_type {
-	RPC_CHAN_V40,
-	RPC_CHAN_V41
-};
-
-typedef struct rpc_call_channel {
-	enum rpc_chan_type type;
-	pthread_mutex_t mtx;
-	uint32_t states;
-	union {
-		nfs_client_id_t *clientid;
-		nfs41_session_t *session;
-	} source;
-	time_t last_called;
-	CLIENT *clnt;
-	AUTH *auth;
-	struct rpc_gss_sec gss_sec;
-} rpc_call_channel_t;
 
 typedef struct __nfs4_compound {
 	union {
@@ -152,69 +120,9 @@ typedef struct request_data {
 					 */
 } request_data_t;
 
-/**
- * @todo Matt: this is automatically redundant, but in fact upstream
- * TI-RPC is not up-to-date with RFC 5665, will fix (Matt)
- *
- * @copyright 2012, Linux Box Corp
-*/
-enum rfc_5665_nc_type {
-	_NC_ERR,
-	_NC_TCP,
-	_NC_TCP6,
-	_NC_RDMA,
-	_NC_RDMA6,
-	_NC_SCTP,
-	_NC_SCTP6,
-	_NC_UDP,
-	_NC_UDP6,
-};
-typedef enum rfc_5665_nc_type nc_type;
-
-static const struct __netid_nc_table {
-	const char *netid;
-	int netid_len;
-	const nc_type nc;
-	int af;
-} netid_nc_table[] = {
-	{
-	"-", 1, _NC_ERR, 0}, {
-	"tcp", 3, _NC_TCP, AF_INET}, {
-	"tcp6", 4, _NC_TCP6, AF_INET6}, {
-	"rdma", 4, _NC_RDMA, AF_INET}, {
-	"rdma6", 5, _NC_RDMA6, AF_INET6}, {
-	"sctp", 4, _NC_SCTP, AF_INET}, {
-	"sctp6", 5, _NC_SCTP6, AF_INET6}, {
-	"udp", 3, _NC_UDP, AF_INET}, {
-	"udp6", 4, _NC_UDP6, AF_INET6},};
-
-nc_type nfs_netid_to_nc(const char *netid);
-void nfs_set_client_location(nfs_client_id_t *pclientid,
-			     const clientaddr4 *addr4);
-
-/* end TI-RPC */
-
-typedef struct gsh_addr {
-	nc_type nc;
-	struct sockaddr_storage ss;
-	uint32_t port;
-} gsh_addr_t;
-
 extern pool_t *request_pool;
 extern pool_t *request_data_pool;
 extern pool_t *dupreq_pool;	/* XXX hide */
-
-/**
- * @brief Per-worker data.  Some of this will be destroyed.
- */
-
-struct nfs_worker_data {
-	unsigned int worker_index;	/*< Index for log messages */
-	wait_q_entry_t wqe;	/*< Queue for coordinating with decoder */
-
-	sockaddr_t hostaddr;	/*< Client address */
-	struct fridgethr_context *ctx;	/*< Link back to thread context */
-};
 
 /* ServerEpoch is ServerBootTime unless overriden by -E command line option */
 extern struct timespec ServerBootTime;

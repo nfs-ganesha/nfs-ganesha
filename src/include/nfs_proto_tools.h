@@ -40,10 +40,6 @@
 #include <sys/file.h>		/* for having FNDELAY */
 #include "hashtable.h"
 #include "log.h"
-#include "ganesha_rpc.h"
-#include "nfs23.h"
-#include "nfs4.h"
-#include "mount.h"
 #include "cache_inode.h"
 #include "nfs_file_handle.h"
 #include "sal_data.h"

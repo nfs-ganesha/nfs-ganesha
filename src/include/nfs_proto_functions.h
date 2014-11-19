@@ -26,163 +26,17 @@
 /**
  * @file    nfs_proto_functions.h
  * @brief   Prototypes for NFS protocol functions.
+ * @note    not called by other header files.
  */
 
 #ifndef NFS_PROTO_FUNCTIONS_H
 #define NFS_PROTO_FUNCTIONS_H
 
-#include "nfs23.h"
-#include "mount.h"
-#include "nfs4.h"
-#include "nlm4.h"
-#include "rquota.h"
-
 #include <pthread.h>
 #include <sys/types.h>
 #include <sys/param.h>
 
-#include "nfs_exports.h"
-#include "nfs_file_handle.h"
-
-/* ------------------------------ Typedefs and structs----------------------- */
-
-typedef union nfs_arg__ {
-	GETATTR3args arg_getattr3;
-	SETATTR3args arg_setattr3;
-	LOOKUP3args arg_lookup3;
-	ACCESS3args arg_access3;
-	READLINK3args arg_readlink3;
-	READ3args arg_read3;
-	WRITE3args arg_write3;
-	CREATE3args arg_create3;
-	MKDIR3args arg_mkdir3;
-	SYMLINK3args arg_symlink3;
-	MKNOD3args arg_mknod3;
-	REMOVE3args arg_remove3;
-	RMDIR3args arg_rmdir3;
-	RENAME3args arg_rename3;
-	LINK3args arg_link3;
-	READDIR3args arg_readdir3;
-	READDIRPLUS3args arg_readdirplus3;
-	FSSTAT3args arg_fsstat3;
-	FSINFO3args arg_fsinfo3;
-	PATHCONF3args arg_pathconf3;
-	COMMIT3args arg_commit3;
-	COMPOUND4args arg_compound4;
-
-	/* mnt */
-	dirpath arg_mnt;
-
-	/* nlm */
-	nlm4_testargs arg_nlm4_test;
-	nlm4_lockargs arg_nlm4_lock;
-	nlm4_cancargs arg_nlm4_cancel;
-	nlm4_shareargs arg_nlm4_share;
-	nlm4_unlockargs arg_nlm4_unlock;
-	nlm4_sm_notifyargs arg_nlm4_sm_notify;
-	nlm4_free_allargs arg_nlm4_free_allargs;
-	nlm4_res arg_nlm4_res;
-
-	/* Rquota */
-	getquota_args arg_rquota_getquota;
-	getquota_args arg_rquota_getactivequota;
-	setquota_args arg_rquota_setquota;
-	setquota_args arg_rquota_setactivequota;
-
-	/* Rquota */
-	ext_getquota_args arg_ext_rquota_getquota;
-	ext_getquota_args arg_ext_rquota_getactivequota;
-	ext_setquota_args arg_ext_rquota_setquota;
-	ext_setquota_args arg_ext_rquota_setactivequota;
-} nfs_arg_t;
-
-struct COMPOUND4res_extended {
-	COMPOUND4res res_compound4;
-	bool res_cached;
-};
-
-typedef union nfs_res__ {
-	GETATTR3res res_getattr3;
-	SETATTR3res res_setattr3;
-	LOOKUP3res res_lookup3;
-	ACCESS3res res_access3;
-	READLINK3res res_readlink3;
-	READ3res res_read3;
-	WRITE3res res_write3;
-	CREATE3res res_create3;
-	MKDIR3res res_mkdir3;
-	SYMLINK3res res_symlink3;
-	MKNOD3res res_mknod3;
-	REMOVE3res res_remove3;
-	RMDIR3res res_rmdir3;
-	RENAME3res res_rename3;
-	LINK3res res_link3;
-	READDIR3res res_readdir3;
-	READDIRPLUS3res res_readdirplus3;
-	FSSTAT3res res_fsstat3;
-	FSINFO3res res_fsinfo3;
-	PATHCONF3res res_pathconf3;
-	COMMIT3res res_commit3;
-	COMPOUND4res res_compound4;
-	COMPOUND4res_extended res_compound4_extended;
-
-	/* mount */
-	fhstatus2 res_mnt1;
-	exports res_mntexport;
-	mountres3 res_mnt3;
-	mountlist res_dump;
-
-	/* nlm4 */
-	nlm4_testres res_nlm4test;
-	nlm4_res res_nlm4;
-	nlm4_shareres res_nlm4share;
-
-	/* Ext Rquota */
-	getquota_rslt res_rquota_getquota;
-	getquota_rslt res_rquota_getactivequota;
-	setquota_rslt res_rquota_setquota;
-	setquota_rslt res_rquota_setactivequota;
-	/* Rquota */
-	getquota_rslt res_ext_rquota_getquota;
-	getquota_rslt res_ext_rquota_getactivequota;
-	setquota_rslt res_ext_rquota_setquota;
-	setquota_rslt res_ext_rquota_setactivequota;
-} nfs_res_t;
-
-/* flags related to the behaviour of the requests (to be stored in the dispatch
- * behaviour field)
- */
-#define NOTHING_SPECIAL 0x0000	/* Nothing to be done for this kind of
-				   request */
-#define MAKES_WRITE	0x0001	/* The function modifyes the FSAL (not
-				   permitted for RO FS) */
-#define NEEDS_CRED	0x0002	/* A credential is needed for this
-				   operation */
-#define CAN_BE_DUP	0x0004	/* Handling of dup request can be done
-				   for this request */
-#define SUPPORTS_GSS	0x0008	/* Request may be authenticated by
-				   RPCSEC_GSS */
-#define MAKES_IO	0x0010	/* Request may do I/O (not allowed on
-				   MD ONLY exports */
-#define NEEDS_EXPORT	0x0020	/* Request needs an export */
-
-typedef int (*nfs_protocol_function_t) (nfs_arg_t *,
-					nfs_worker_data_t *, struct svc_req *,
-					nfs_res_t *);
-
-typedef int (*nfsremote_protocol_function_t) (CLIENT *, nfs_arg_t *,
-					      nfs_res_t *);
-
-typedef void (*nfs_protocol_free_t) (nfs_res_t *);
-
-typedef struct nfs_function_desc__ {
-	nfs_protocol_function_t service_function;
-	nfs_protocol_free_t free_function;
-	xdrproc_t xdr_decode_func;
-	xdrproc_t xdr_encode_func;
-	char *funcname;
-	unsigned int dispatch_behaviour;
-} nfs_function_desc_t;
+#include "sal_data.h"
 
 extern const nfs_function_desc_t nfs3_func_desc[];
 extern const nfs_function_desc_t nfs4_func_desc[];
@@ -349,9 +203,6 @@ int nfs3_mknod(nfs_arg_t *,
 
 int nfs4_Compound(nfs_arg_t *,
 		  nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
-
-typedef int (*nfs4_op_function_t) (struct nfs_argop4 *, compound_data_t *,
-				   struct nfs_resop4 *);
 
 int nfs4_op_access(struct nfs_argop4 *, compound_data_t *,
 		   struct nfs_resop4 *);

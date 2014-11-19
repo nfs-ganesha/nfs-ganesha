@@ -40,7 +40,6 @@
 
 #include <stdint.h>
 #include "sal_data.h"
-#include "nfs_core.h"
 
 /**
  * @brief Divisions in state and clientid tables.

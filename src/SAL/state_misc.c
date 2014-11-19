@@ -47,8 +47,8 @@
 #include "log.h"
 #include "hashtable.h"
 #include "fsal.h"
+#include "nfs_core.h"
 #include "sal_functions.h"
-#include "export_mgr.h"
 
 pool_t *state_owner_pool;	/*< Pool for NFSv4 files's open owner */
 

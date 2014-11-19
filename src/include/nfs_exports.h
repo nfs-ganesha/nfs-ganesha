@@ -27,6 +27,7 @@
 /**
  * @file nfs_exports.h
  * @brief Prototypes for what's related to export list management.
+ * @note  not called by other header files.
  *
  * This file contains prototypes and data structures for related to
  * export list management and the NFSv4 compound.
@@ -35,24 +36,19 @@
 #ifndef NFS_EXPORTS_H
 #define NFS_EXPORTS_H
 
-#include <pthread.h>
 #include <sys/types.h>
 #include <sys/param.h>
 
-#include "ganesha_rpc.h"
 #ifdef _HAVE_GSSAPI
 #include <gssapi/gssapi.h>
 #include <gssapi/gssapi_krb5.h>
 #endif
-#include <dirent.h>		/* For having MAXNAMLEN */
-#include <netdb.h>		/* For having MAXHOSTNAMELEN */
-#include "hashtable.h"
-#include "nfs23.h"
-#include "nfs4.h"
-#include "mount.h"
+
+#include "config_parsing.h"
+#include "export_mgr.h"
+#include "fsal_types.h"
 #include "cache_inode.h"
-#include "cache_inode_lru.h"
-#include "nfs_ip_stats.h"
+#include "log.h"
 
 /*
  * Export List structure
@@ -200,115 +196,6 @@ typedef struct exportlist_client_entry__ {
 #define EXPORT_OPTION_MANAGE_GIDS 0x40000000 /*< Do not trust
 						    altgrp in AUTH_SYS creds */
 #define EXPORT_OPTION_NO_READDIR_PLUS 0x80000000 /*< Disallow readdir plus */
-
-/* NFS4 specific structures */
-
-typedef struct nfs_client_cred_gss {
-	unsigned int svc;
-	unsigned int qop;
-#ifdef _HAVE_GSSAPI
-	gss_ctx_id_t gss_context_id;
-#endif
-} nfs_client_cred_gss_t;
-
-typedef struct nfs_client_cred__ {
-	unsigned int flavor;
-	unsigned int length;
-	union {
-		struct authunix_parms auth_unix;
-		nfs_client_cred_gss_t auth_gss;
-	} auth_union;
-} nfs_client_cred_t;
-
-typedef struct nfs_worker_data nfs_worker_data_t;
-
-/**
- * @brief NFS v4 Compound Data
- *
- * This structure contains the necessary stuff for keeping the state
- * of a V4 compound request.
- */
-/* Forward references to SAL types */
-typedef struct nfs41_session nfs41_session_t;
-typedef struct nfs_client_id_t nfs_client_id_t;
-typedef struct COMPOUND4res_extended COMPOUND4res_extended;
-
-/**
- * @brief Compound data
- *
- * This structure contains the necessary stuff for keeping the state
- * of a V4 compound request.
- */
-typedef struct compound_data {
-	nfs_fh4 currentFH;	/*< Current filehandle */
-	nfs_fh4 savedFH;	/*< Saved filehandle */
-	stateid4 current_stateid;	/*< Current stateid */
-	bool current_stateid_valid;	/*< Current stateid is valid */
-	stateid4 saved_stateid;	/*< Saved stateid */
-	bool saved_stateid_valid;	/*< Saved stateid is valid */
-	unsigned int minorversion;	/*< NFSv4 minor version */
-	cache_entry_t *current_entry;	/*< Cache entry for current filehandle
-					 */
-	cache_entry_t *saved_entry;	/*< Cache entry for saved filehandle */
-	struct fsal_ds_handle *current_ds;	/*< current ds handle */
-	struct fsal_ds_handle *saved_ds;	/*< Saved DS handle */
-	object_file_type_t current_filetype;	/*< File type of current entry
-						 */
-	object_file_type_t saved_filetype;	/*< File type of saved entry */
-	struct gsh_export *saved_export; /*< Export entry related to the
-					     savedFH */
-	struct export_perms saved_export_perms; /*< Permissions for export for
-					       savedFH */
-	struct svc_req *req;	/*< RPC Request related to the compound */
-	struct nfs_worker_data *worker;	/*< Worker thread data */
-	nfs_client_cred_t credential;	/*< Raw RPC credentials */
-	nfs_client_id_t *preserved_clientid;	/*< clientid that has lease
-						   reserved, if any */
-	COMPOUND4res_extended *cached_res;	/*< NFv41: pointer to
-						   cached RPC res in a
-						   session's slot */
-	bool use_drc;		/*< Set to true if session DRC is to be used */
-	uint32_t oppos;		/*< Position of the operation within the
-				    request processed  */
-	nfs41_session_t *session;	/*< Related session (found by
-					   OP_SEQUENCE) */
-	sequenceid4 sequence;	/*< Sequence ID of the current compound
-				   (if applicable) */
-	slotid4 slot;		/*< Slot ID of the current compound (if
-				   applicable) */
-} compound_data_t;
-
-static inline void set_current_entry(compound_data_t *data,
-				     cache_entry_t *entry,
-				     bool need_ref)
-{
-	/* Mark current_stateid as invalid */
-	data->current_stateid_valid = false;
-
-	/* Release the reference to the old entry */
-	if (data->current_entry)
-		cache_inode_put(data->current_entry);
-
-	/* Clear out the current_ds */
-	if (data->current_ds) {
-		ds_put(data->current_ds);
-		data->current_ds = NULL;
-	}
-
-	data->current_entry = entry;
-
-	if (entry == NULL) {
-		data->current_filetype = NO_FILE_TYPE;
-		return;
-	}
-
-	/* Set the current file type */
-	data->current_filetype = entry->type;
-
-	/* Take reference for the entry. */
-	if (data->current_entry && need_ref)
-		cache_inode_lru_ref(data->current_entry, LRU_FLAG_NONE);
-}
 
 /* Export list related functions */
 void export_check_access(void);

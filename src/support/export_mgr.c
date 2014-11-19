@@ -62,6 +62,8 @@
 #include "abstract_atomic.h"
 #include "gsh_intrinsic.h"
 #include "sal_functions.h"
+#include "nfs_exports.h"
+#include "nfs_proto_functions.h"
 
 /**
  * @brief Exports are stored in an AVL tree with front-end cache.

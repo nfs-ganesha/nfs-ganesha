@@ -36,10 +36,9 @@
 #include <sys/param.h>
 
 #include "log.h"
-#include "nfs23.h"
-#include "nlm4.h"
-#include "nfs_exports.h"
+#include "sal_data.h"
 #include "cache_inode.h"
+#include "export_mgr.h"
 
 /*
  * Structure of the filehandle

@@ -32,12 +32,14 @@
 #include <pthread.h>
 #include <arpa/inet.h>
 #include <sys/poll.h>
+#include <netdb.h>
 #include "ganesha_list.h"
 #include "abstract_atomic.h"
 #include "fsal_types.h"
 #include "FSAL/fsal_commonlib.h"
 #include "pxy_fsal_methods.h"
 #include "fsal_nfsv4_macros.h"
+#include "nfs_core.h"
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
 #include "export_mgr.h"

@@ -37,6 +37,24 @@
 #ifndef SAL_DATA_H
 #define SAL_DATA_H
 
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/param.h>
+#include <time.h>
+#include <pthread.h>
+#include <dirent.h>		/* For having MAXNAMLEN */
+
+#include "abstract_atomic.h"
+#include "abstract_mem.h"
+#include "hashtable.h"
+#include "fsal_pnfs.h"
+#include "config_parsing.h"
+
+#ifdef _USE_9P
+/* define u32 and related types independent of SAL and 9P */
+#include "9p_types.h"
+#endif				/* _USE_9P */
+
 /**
 ** Forward declarations to avoid circular dependency conflicts
 */
@@ -47,32 +65,10 @@ typedef struct nfs_client_id_t		nfs_client_id_t;
 typedef struct nfs41_session		nfs41_session_t;
 
 /**
-** Includes after forward declarations
+** Consolidated circular dependencies
 */
 
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/param.h>
-#include <time.h>
-#include <pthread.h>
-
-#include "cache_inode.h"
-#include "abstract_atomic.h"
-#include "abstract_mem.h"
-#include "hashtable.h"
-#include "fsal_api.h"
-#include "fsal_pnfs.h"
-#include "log.h"
-#include "config_parsing.h"
-#include "nfs_core.h"
-#include "nfs23.h"
-#include "nfs4.h"
-#include "nlm4.h"
-
-#ifdef _USE_9P
-/* define u32 and related types independent of SAL and 9P */
-#include "9p_types.h"
-#endif				/* _USE_9P */
+#include "nfs_proto_data.h"
 
 /**
  ** Forward references to types
@@ -102,16 +98,6 @@ typedef struct state_t			state_t;
  * This is true no matter what the beginning of the lock range is.
  */
 #define STATE_LOCK_OFFSET_EOF 0xFFFFFFFFFFFFFFFFLL
-
-/**
- * @brief States of a delegation
- *
- * Different states a delegation can be in during its lifetime
- */
-enum deleg_state {
-	DELEG_GRANTED =  1,	/* Granted               */
-	DELEG_RECALL_WIP,	/* Recall in progress    */
-};
 
 extern struct fridgethr *state_async_fridge;
 
@@ -144,7 +130,9 @@ extern hash_table_t *ht_session_id;
 typedef struct nfs41_session_slot__ {
 	sequenceid4 sequence;	/*< Sequence number of this operation */
 	pthread_mutex_t lock;	/*< Lock on the slot */
-	COMPOUND4res_extended cached_result;	/*< The cached result */
+	struct COMPOUND4res_extended cached_result;	/*< NFv41: pointer to
+							   cached RPC result in
+							   a session's slot */
 	unsigned int cache_used;	/*< If we cached the result */
 } nfs41_session_slot_t;
 
@@ -305,6 +293,16 @@ typedef struct state_lock_t {
 	struct glist_head state_sharelist;	/*< List of states related
 						   to a share */
 } state_lock_t;
+
+/**
+ * @brief States of a delegation
+ *
+ * Different states a delegation can be in during its lifetime
+ */
+enum deleg_state {
+	DELEG_GRANTED =  1,	/* Granted               */
+	DELEG_RECALL_WIP,	/* Recall in progress    */
+};
 
 /**
  * @brief Data for a delegation

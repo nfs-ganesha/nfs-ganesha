@@ -33,6 +33,7 @@
 #include "config.h"
 #include <pthread.h>
 #include "log.h"
+#include "fsal.h"
 #include "nfs4.h"
 #include "sal_functions.h"
 #include "nfs_proto_tools.h"

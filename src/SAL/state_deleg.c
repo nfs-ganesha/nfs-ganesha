@@ -44,6 +44,7 @@
 
 #include "fsal.h"
 #include "nfs_core.h"
+#include "nfs_exports.h"
 #include "nfs4.h"
 #include "sal_functions.h"
 #include "nlm_util.h"
@@ -52,6 +53,7 @@
 #include "nfs_rpc_callback.h"
 #include "server_stats.h"
 #include "fsal_up.h"
+#include "nfs_file_handle.h"
 
 /**
  * @brief Check if exiting OPENs would conflict granting a delegation.

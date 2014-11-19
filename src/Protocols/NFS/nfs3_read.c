@@ -35,10 +35,7 @@
 #include <sys/file.h>		/* for having FNDELAY */
 #include "hashtable.h"
 #include "log.h"
-#include "ganesha_rpc.h"
-#include "nfs23.h"
-#include "nfs4.h"
-#include "mount.h"
+#include "fsal.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
 #include "nfs_exports.h"

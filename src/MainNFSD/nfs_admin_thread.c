@@ -41,6 +41,7 @@
 #include "idmapper.h"
 #include "delayed_exec.h"
 #include "export_mgr.h"
+#include "fsal.h"
 #ifdef USE_DBUS
 #include "ganesha_dbus.h"
 #endif

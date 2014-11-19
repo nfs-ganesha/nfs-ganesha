@@ -27,9 +27,11 @@
 #include <pthread.h>
 #include <rpc/types.h>
 #include <rpc/nettype.h>
+#include <netdb.h>
 
+#include "nfs_core.h"
+#include "nfs_proto_functions.h"
 #include "sal_functions.h"
-#include "nlm4.h"
 #include "nlm_util.h"
 #include "nlm_async.h"
 
