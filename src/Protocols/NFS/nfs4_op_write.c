@@ -166,6 +166,7 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 	fsal_status_t fsal_status;
 	bool anonymous_started = false;
 	struct gsh_buffdesc verf_desc;
+	state_owner_t *owner = NULL;
 
 	/* Lock are not supported */
 	resp->resop = NFS4_OP_WRITE;
@@ -390,9 +391,11 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 		sync = true;
 
 	if (!anonymous_started && data->minorversion == 0) {
-		op_ctx->clientid =
-		    &state_found->state_owner->so_owner.so_nfs4_owner.
-		    so_clientid;
+		owner = get_state_owner_ref(state_found);
+		if (owner != NULL) {
+			op_ctx->clientid =
+				&owner->so_owner.so_nfs4_owner.so_clientid;
+		}
 	}
 
 	cache_status = cache_inode_rdwr_plus(entry,
@@ -440,6 +443,9 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 			     true);
 
  out:
+
+	if (owner != NULL)
+		dec_state_owner_ref(owner);
 
 	if (state_found != NULL)
 		dec_state_t_ref(state_found);

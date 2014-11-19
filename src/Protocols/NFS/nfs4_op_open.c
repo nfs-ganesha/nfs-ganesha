@@ -188,15 +188,23 @@ static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t *data,
 	 */
 	glist_for_each(glist, &data->current_entry->list_of_states) {
 		state_iterate = glist_entry(glist, state_t, state_list);
+		state_owner_t *si_owner;
 
 		if (state_iterate->state_type != STATE_TYPE_SHARE)
 			continue;
+
+		si_owner = get_state_owner_ref(state_iterate);
+
+		if (si_owner == NULL) {
+			/* This state is going stale, can't be same owner. */
+			continue;
+		}
 
 		if (isFullDebug(COMPONENT_STATE)) {
 			char str1[HASHTABLE_DISPLAY_STRLEN];
 			char str2[HASHTABLE_DISPLAY_STRLEN];
 
-			DisplayOwner(state_iterate->state_owner, str1);
+			DisplayOwner(si_owner, str1);
 			DisplayOwner(owner, str2);
 
 			LogFullDebug(COMPONENT_STATE,
@@ -208,17 +216,19 @@ static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t *data,
 		 * created/looked up we should be able to just
 		 * compare pointers.
 		 */
-		if (state_iterate->state_owner == owner) {
+		if (si_owner == owner) {
 			/* We'll be re-using the found state */
 			file_state = state_iterate;
 			*new_state = false;
 			inc_state_t_ref(file_state);
 
-			/* If we are re-using stateid, then release
-			 * extra reference to open owner
-			 */
+			/* Release the owner ref taken above */
+			dec_state_owner_ref(si_owner);
 			break;
 		}
+
+		/* Release the owner ref taken above */
+		dec_state_owner_ref(si_owner);
 	}
 
 	if (*new_state) {

@@ -132,9 +132,15 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t *data,
 		return res_LOCKU4->status;
 	}
 
-	lock_owner = state_found->state_owner;
+	lock_owner = get_state_owner_ref(state_found);
 
-	inc_state_owner_ref(lock_owner);
+	if (lock_owner == NULL) {
+		/* State is going stale. */
+		res_LOCKU4->status = NFS4ERR_STALE;
+		LogDebug(COMPONENT_NFS_V4_LOCK,
+			 "UNLOCK failed nfs4_Check_Stateid, stale lock owner");
+		goto out3;
+	}
 
 	/* Check seqid (lock_seqid or open_seqid) */
 	if (data->minorversion == 0) {
@@ -212,6 +218,9 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t *data,
  out2:
 
 	dec_state_owner_ref(lock_owner);
+
+ out3:
+
 	dec_state_t_ref(state_found);
 
 	return res_LOCKU4->status;
