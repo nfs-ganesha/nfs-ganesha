@@ -408,6 +408,7 @@ install -m 644 config_samples/vfs.conf             %{buildroot}%{_sysconfdir}/ga
 %if %{with_systemd}
 mkdir -p %{buildroot}%{_unitdir}
 install -m 644 scripts/systemd/nfs-ganesha.service	%{buildroot}%{_unitdir}/nfs-ganesha.service
+install -m 644 scripts/systemd/nfs-ganesha-lock.service	%{buildroot}%{_unitdir}/nfs-ganesha-lock.service
 %else
 mkdir -p %{buildroot}%{_sysconfdir}/init.d
 install -m 755 ganesha.init				%{buildroot}%{_sysconfdir}/init.d/nfs-ganesha
@@ -444,10 +445,6 @@ install -m 755 config_samples/lustre.conf		%{buildroot}%{_sysconfdir}/ganesha
 install -m 755 config_samples/gpfs.conf			%{buildroot}%{_sysconfdir}/ganesha
 %endif
 
-%if %{with_fsal_gluster}
-install -m 755 config_samples/gluster.conf		%{buildroot}%{_sysconfdir}/ganesha
-%endif
-
 %if %{with_utils}
 pushd .
 cd scripts/ganeshactl/
@@ -461,16 +458,17 @@ make DESTDIR=%{buildroot} install
 %post
 %if %{with_systemd}
 %systemd_post nfs-ganesha.service
+%systemd_post nfs-ganesha-lock.service
 %endif
 
 %preun
 %if %{with_systemd}
-%systemd_preun nfs-ganesha.service
+%systemd_preun nfs-ganesha-lock.service
 %endif
 
 %postun
 %if %{with_systemd}
-%systemd_postun_with_restart nfs-ganesha.service
+%systemd_postun_with_restart nfs-ganesha-lock.service
 %endif
 
 %files
@@ -487,9 +485,10 @@ make DESTDIR=%{buildroot} install
 %dir %{_localstatedir}/run/ganesha
 
 %if %{with_systemd}
-%config %{_unitdir}/nfs-ganesha.service
+%{_unitdir}/nfs-ganesha.service
+%{_unitdir}/nfs-ganesha-lock.service
 %else
-%config %{_sysconfdir}/init.d/nfs-ganesha
+%{_sysconfdir}/init.d/nfs-ganesha
 %endif
 
 %files mount-9P
@@ -602,6 +601,7 @@ make DESTDIR=%{buildroot} install
 %changelog
 * Thu Nov 20 2014 Niels de Vos <ndevos@redhat.com>
 - Include the systemd unit in RHEL7.
+- Include the nfs-ganesha-lock systemd unit.
 
 * Fri Jun 27 2014  Philippe DENIEL <philippe.deniel@cea.fr> 2.1
 - Exports are now dynamic.  They can be added or removed via DBus commands.
