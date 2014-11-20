@@ -826,7 +826,6 @@ clientid_status_t nfs_client_id_confirm(nfs_client_id_t *clientid,
  */
 bool nfs_client_id_expire(nfs_client_id_t *clientid, bool make_stale)
 {
-	struct glist_head *glist, *glistn;
 	int rc;
 	struct gsh_buffdesc buffkey;
 	struct gsh_buffdesc old_key;
@@ -902,26 +901,46 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid, bool make_stale)
 		}
 	}
 
-	/* traverse the client's lock owners, and release all
-	 * locks and owners
+	/* Traverse the client's lock owners, and release all
+	 * locks and owners.
+	 *
+	 * Note: If there is an owner refcount bug, this COULD infinite loop,
+	 * and it will spam the log with warnings... Such a refcount bug will
+	 * be quickly fixed :-).
 	 */
-	while (!glist_empty(&clientid->cid_lockowners)) {
-		state_owner_t *plock_owner;
+	while (true) {
+		state_owner_t *owner;
 
-		plock_owner =
-		    glist_first_entry(&clientid->cid_lockowners,
-				      state_owner_t,
-				      so_owner.so_nfs4_owner.so_perclient);
+		pthread_mutex_lock(&clientid->cid_mutex);
 
-		inc_state_owner_ref(plock_owner);
+		owner = glist_first_entry(&clientid->cid_lockowners,
+					  state_owner_t,
+					  so_owner.so_nfs4_owner.so_perclient);
 
-		state_nfs4_owner_unlock_all(plock_owner);
+		if (owner == NULL) {
+			pthread_mutex_unlock(&clientid->cid_mutex);
+			break;
+		}
+
+		/* Move owner to end of list in case it doesn't get
+		 * freed when we decrement the refcount.
+		 */
+		glist_del(&owner->so_owner.so_nfs4_owner.so_perclient);
+		glist_add_tail(&clientid->cid_lockowners,
+			       &owner->so_owner.so_nfs4_owner.so_perclient);
+
+		/* Hold a reference to the owner while we drop the cid_mutex. */
+		inc_state_owner_ref(owner);
+
+		pthread_mutex_unlock(&clientid->cid_mutex);
+
+		state_nfs4_owner_unlock_all(owner);
 
 		if (isFullDebug(COMPONENT_CLIENTID)) {
 			int32_t refcount =
-			    atomic_fetch_int32_t(&plock_owner->so_refcount);
+			    atomic_fetch_int32_t(&owner->so_refcount);
 
-			DisplayOwner(plock_owner, str);
+			DisplayOwner(owner, str);
 
 			if (refcount > 1)
 				LogWarn(COMPONENT_CLIENTID,
@@ -932,26 +951,51 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid, bool make_stale)
 					     "Expired State for {%s}", str);
 		}
 
-		dec_state_owner_ref(plock_owner);
+		dec_state_owner_ref(owner);
 	}
 
 	/* revoke layouts for this client*/
 	revoke_owner_layouts(&clientid->cid_owner);
 
-	/* release the corresponding open states , close files */
-	glist_for_each_safe(glist, glistn, &clientid->cid_openowners) {
-		state_owner_t *popen_owner = glist_entry(glist,
-							 state_owner_t,
-							 so_owner.so_nfs4_owner.
-							 so_perclient);
-		inc_state_owner_ref(popen_owner);
-		release_openstate(popen_owner);
+	/* release the corresponding open states , close files.
+	 *
+	 * Note: If there is an owner refcount bug, this COULD infinite loop,
+	 * and it will spam the log with warnings... Such a refcount bug will
+	 * be quickly fixed :-).
+	 */
+	while (true) {
+		state_owner_t *owner;
+
+		pthread_mutex_lock(&clientid->cid_mutex);
+
+		owner = glist_first_entry(&clientid->cid_openowners,
+					  state_owner_t,
+					  so_owner.so_nfs4_owner.so_perclient);
+
+		if (owner == NULL) {
+			pthread_mutex_unlock(&clientid->cid_mutex);
+			break;
+		}
+
+		/* Move owner to end of list in case it doesn't get
+		 * freed when we decrement the refcount.
+		 */
+		glist_del(&owner->so_owner.so_nfs4_owner.so_perclient);
+		glist_add_tail(&clientid->cid_openowners,
+			       &owner->so_owner.so_nfs4_owner.so_perclient);
+
+		/* Hold a reference to the owner while we drop the cid_mutex. */
+		inc_state_owner_ref(owner);
+
+		pthread_mutex_unlock(&clientid->cid_mutex);
+
+		release_openstate(owner);
 
 		if (isFullDebug(COMPONENT_CLIENTID)) {
 			int32_t refcount =
-			    atomic_fetch_int32_t(&popen_owner->so_refcount);
+			    atomic_fetch_int32_t(&owner->so_refcount);
 
-			DisplayOwner(popen_owner, str);
+			DisplayOwner(owner, str);
 
 			if (refcount > 1)
 				LogWarn(COMPONENT_CLIENTID,
@@ -962,7 +1006,7 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid, bool make_stale)
 					     "Expired State for {%s}", str);
 		}
 
-		dec_state_owner_ref(popen_owner);
+		dec_state_owner_ref(owner);
 	}
 
 	/* revoke delegations for this client*/
