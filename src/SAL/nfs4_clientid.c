@@ -289,9 +289,19 @@ bool client_id_has_nfs41_sessions(nfs_client_id_t *clientid)
 
 bool client_id_has_state(nfs_client_id_t *clientid)
 {
-	return !(glist_empty(&clientid->cid_openowners)
-		 || glist_empty(&clientid->cid_owner.so_owner.so_nfs4_owner.
-				so_state_list));
+	bool result;
+
+	if (glist_empty(&clientid->cid_openowners))
+		return false;
+
+	pthread_mutex_lock(&clientid->cid_owner.so_mutex);
+
+	result = !glist_empty(
+		&clientid->cid_owner.so_owner.so_nfs4_owner.so_state_list);
+
+	pthread_mutex_unlock(&clientid->cid_owner.so_mutex);
+
+	return result;
 }
 
 /**
