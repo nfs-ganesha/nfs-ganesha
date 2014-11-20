@@ -6,6 +6,12 @@
 %global with_nfsidmap 0
 %endif
 
+%if ( 0%{?fedora} >= 18 || 0%{?rhel} >= 7 ) && ! %{!?bl6:0}
+%global with_systemd 1
+%else
+%global with_systemd 0
+%endif
+
 %if %{?_with_gpfs:1}%{!?_with_gpfs:0}
 %global with_fsal_gpfs 1
 %else
@@ -98,7 +104,6 @@ Url:               https://github.com/nfs-ganesha/nfs-ganesha/wiki
 
 Source:		%{sourcename}.tar.gz
 
-BuildRequires:	initscripts
 BuildRequires:	cmake >= 2.8.3
 BuildRequires:	bison flex
 BuildRequires:	flex
@@ -119,6 +124,14 @@ BuildRequires:	libmooshika-devel >= 0.6-0
 %endif
 %if %{with_lustre_up}
 BuildRequires: lcap-devel >= 0.1-0
+%endif
+%if %{with_systemd}
+BuildRequires: systemd
+Requires(post): systemd
+Requires(preun): systemd
+Requires(postun): systemd
+%else
+BuildRequires:	initscripts
 %endif
 
 # Use CMake variables
@@ -392,12 +405,10 @@ install -m 755 tools/mount.9P				%{buildroot}%{_sbindir}/mount.9P
 
 install -m 644 config_samples/vfs.conf             %{buildroot}%{_sysconfdir}/ganesha
 
-%if 0%{?fedora}
+%if %{with_systemd}
 mkdir -p %{buildroot}%{_unitdir}
 install -m 644 scripts/systemd/nfs-ganesha.service	%{buildroot}%{_unitdir}/nfs-ganesha.service
-%endif
-
-%if 0%{?rhel}
+%else
 mkdir -p %{buildroot}%{_sysconfdir}/init.d
 install -m 755 ganesha.init				%{buildroot}%{_sysconfdir}/init.d/nfs-ganesha
 %endif
@@ -406,11 +417,6 @@ install -m 755 ganesha.init				%{buildroot}%{_sysconfdir}/init.d/nfs-ganesha
 %{!?__python2: %global __python2 /usr/bin/python2}
 %{!?python2_sitelib: %global python2_sitelib %(%{__python2} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")}
 %{!?python2_sitearch: %global python2_sitearch %(%{__python2} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib(1))")}
-%endif
-
-%if 0%{?bl6}
-mkdir -p %{buildroot}%{_sysconfdir}/init.d
-install -m 755 ganesha.init				%{buildroot}%{_sysconfdir}/init.d/nfs-ganesha
 %endif
 
 %if %{with_fsal_pt}
@@ -438,6 +444,10 @@ install -m 755 config_samples/lustre.conf		%{buildroot}%{_sysconfdir}/ganesha
 install -m 755 config_samples/gpfs.conf			%{buildroot}%{_sysconfdir}/ganesha
 %endif
 
+%if %{with_fsal_gluster}
+install -m 755 config_samples/gluster.conf		%{buildroot}%{_sysconfdir}/ganesha
+%endif
+
 %if %{with_utils}
 pushd .
 cd scripts/ganeshactl/
@@ -448,6 +458,20 @@ install -m 755 Protocols/NLM/sm_notify.ganesha		%{buildroot}%{_bindir}/sm_notify
 
 make DESTDIR=%{buildroot} install
 
+%post
+%if %{with_systemd}
+%systemd_post nfs-ganesha.service
+%endif
+
+%preun
+%if %{with_systemd}
+%systemd_preun nfs-ganesha.service
+%endif
+
+%postun
+%if %{with_systemd}
+%systemd_postun_with_restart nfs-ganesha.service
+%endif
 
 %files
 %defattr(-,root,root,-)
@@ -462,15 +486,9 @@ make DESTDIR=%{buildroot} install
 %{_defaultdocdir}/ganesha/*
 %dir %{_localstatedir}/run/ganesha
 
-%if 0%{?fedora}
+%if %{with_systemd}
 %config %{_unitdir}/nfs-ganesha.service
-%endif
-
-%if 0%{?rhel}
-%config %{_sysconfdir}/init.d/nfs-ganesha
-%endif
-
-%if 0%{?bl6}
+%else
 %config %{_sysconfdir}/init.d/nfs-ganesha
 %endif
 
@@ -582,6 +600,9 @@ make DESTDIR=%{buildroot} install
 
 
 %changelog
+* Thu Nov 20 2014 Niels de Vos <ndevos@redhat.com>
+- Include the systemd unit in RHEL7.
+
 * Fri Jun 27 2014  Philippe DENIEL <philippe.deniel@cea.fr> 2.1
 - Exports are now dynamic.  They can be added or removed via DBus commands.
 - The Pseudo filesystem has been re-written as a FSAL
