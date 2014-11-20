@@ -45,6 +45,7 @@
 #include "fsal.h"
 #include "sal_functions.h"
 #include "nfs_core.h"
+#include "nfs_proto_tools.h"
 
 /**
  * @brief Add a segment to an existing layout state
@@ -174,6 +175,109 @@ state_status_t state_lookup_layout_state(cache_entry_t *entry,
 	}
 
 	return STATE_NOT_FOUND;
+}
+
+/**
+ * @brief Revoke layouts belonging to the client owner.
+ *
+ * @param[in,out] client owner
+ */
+void revoke_owner_layouts(state_owner_t *client_owner)
+{
+	state_t *state;
+	cache_entry_t *entry;
+	int errcnt = 0;
+	struct glist_head *glist, *glistn;
+	bool so_mutex_held;
+
+ again:
+
+	pthread_mutex_lock(&client_owner->so_mutex);
+	so_mutex_held = true;
+
+	glist_for_each_safe(glist, glistn,
+			&client_owner->so_owner.so_nfs4_owner.so_state_list) {
+		bool deleted = false;
+		struct pnfs_segment entire = {
+			.io_mode = LAYOUTIOMODE4_ANY,
+			.offset = 0,
+			.length = NFS4_UINT64_MAX
+		};
+
+		state = glist_entry(glist, state_t, state_owner_list);
+
+		/* Move entry to end of list to handle errors and skipping of
+		 * non-layout states.
+		 */
+		glist_del(&state->state_owner_list);
+		glist_add_tail(
+			&client_owner->so_owner.so_nfs4_owner.so_state_list,
+			&state->state_owner_list);
+
+		/* Skip non-layout states. */
+		if (state->state_type != STATE_TYPE_LAYOUT)
+			continue;
+
+		/* Safely access the cache inode associated with the state.
+		 * This will get an LRU reference protecting our access
+		 * even after state_deleg_revoke releases the reference it
+		 * holds.
+		 */
+		entry = get_state_entry_ref(state);
+
+		if (entry == NULL) {
+			LogDebug(COMPONENT_STATE,
+				 "Stale state or cache entry");
+			continue;
+		}
+
+		pthread_mutex_unlock(&client_owner->so_mutex);
+		so_mutex_held = false;
+
+		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
+
+		(void) nfs4_return_one_state(entry,
+					     LAYOUTRETURN4_FILE,
+					     circumstance_revoke,
+					     state,
+					     entire,
+					     0,
+					     NULL,
+					     &deleted);
+
+		if (!deleted) {
+			errcnt++;
+			LogCrit(COMPONENT_PNFS,
+				"Layout state not destroyed during lease expiry.");
+		}
+
+		PTHREAD_RWLOCK_unlock(&entry->state_lock);
+
+		cache_inode_lru_unref(entry, LRU_FLAG_NONE);
+
+		if (errcnt < STATE_ERR_MAX) {
+			/* Loop again, but since we droped the so_mutex, we
+			 * must restart.
+			 */
+			goto again;
+		}
+
+		/* Too many errors, quit. */
+		break;
+	}
+
+	if (so_mutex_held)
+		pthread_mutex_unlock(&client_owner->so_mutex);
+
+	if (errcnt == STATE_ERR_MAX) {
+		char owner_str[HASHTABLE_DISPLAY_STRLEN];
+
+		DisplayOwner(client_owner, owner_str);
+
+		LogFatal(COMPONENT_STATE,
+			 "Could not complete cleanup of layouts for client owner %s",
+			 owner_str);
+	}
 }
 
 /** @} */
