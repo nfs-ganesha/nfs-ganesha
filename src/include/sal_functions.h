@@ -666,13 +666,6 @@ uint32_t lock_cookie_value_hash_func(hash_parameter_t *hparam,
 uint64_t lock_cookie_rbt_hash_func(hash_parameter_t *hparam,
 				   struct gsh_buffdesc *key);
 
-state_status_t state_add_segment(state_t *state, struct pnfs_segment *segment,
-				 void *fsal_data, bool return_on_close);
-
-state_status_t state_delete_segment(state_layout_segment_t *segment);
-state_status_t state_lookup_layout_state(cache_entry_t *entry,
-					 state_owner_t *owner,
-					 layouttype4 type, state_t **state);
 void state_nfs4_state_wipe(cache_entry_t *entry);
 
 enum nfsstat4 release_lock_owner(state_owner_t *owner);
@@ -718,6 +711,22 @@ state_status_t delegrecall_impl(cache_entry_t *entry);
 state_status_t deleg_revoke(cache_entry_t *entry, struct state_t *deleg_state);
 void state_deleg_revoke(cache_entry_t *entry, state_t *state);
 bool state_deleg_conflict(cache_entry_t *entry, bool write);
+
+/******************************************************************************
+ *
+ * Layout functions
+ *
+ ******************************************************************************/
+
+state_status_t state_add_segment(state_t *state, struct pnfs_segment *segment,
+				 void *fsal_data, bool return_on_close);
+
+state_status_t state_delete_segment(state_layout_segment_t *segment);
+state_status_t state_lookup_layout_state(cache_entry_t *entry,
+					 state_owner_t *owner,
+					 layouttype4 type, state_t **state);
+void revoke_owner_layouts(state_owner_t *client_owner);
+
 
 /******************************************************************************
  *

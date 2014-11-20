@@ -925,6 +925,9 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid, bool make_stale)
 		dec_state_owner_ref(plock_owner);
 	}
 
+	/* revoke layouts for this client*/
+	revoke_owner_layouts(&clientid->cid_owner);
+
 	/* release the corresponding open states , close files */
 	glist_for_each_safe(glist, glistn, &clientid->cid_openowners) {
 		state_owner_t *popen_owner = glist_entry(glist,
