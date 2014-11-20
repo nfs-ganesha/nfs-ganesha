@@ -354,8 +354,7 @@ typedef int (*nfs4_op_function_t) (struct nfs_argop4 *, compound_data_t *,
 				   struct nfs_resop4 *);
 
 static inline void set_current_entry(compound_data_t *data,
-				     cache_entry_t *entry,
-				     bool need_ref)
+				     cache_entry_t *entry)
 {
 	/* Mark current_stateid as invalid */
 	data->current_stateid_valid = false;
@@ -379,11 +378,6 @@ static inline void set_current_entry(compound_data_t *data,
 
 	/* Set the current file type */
 	data->current_filetype = entry->type;
-
-	/* Take reference for the entry. */
-	if (data->current_entry && need_ref)
-		(void) cache_inode_lru_ref(data->current_entry,
-					   LRU_REQ_STALE_OK);
 }
 
 #endif				/* NFS_PROTO_DATA_H */

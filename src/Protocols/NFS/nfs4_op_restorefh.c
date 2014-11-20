@@ -107,6 +107,14 @@ int nfs4_op_restorefh(struct nfs_argop4 *op, compound_data_t *data,
 
 	data->currentFH.nfs_fh4_len = data->savedFH.nfs_fh4_len;
 
+	if (cache_inode_lru_ref(data->saved_entry, LRU_FLAG_NONE) !=
+	    CACHE_INODE_SUCCESS) {
+		/* SavedFH has gone stale. Return the export reference. */
+		put_gsh_export(data->saved_export);
+		res_RESTOREFH->status = NFS4ERR_STALE;
+		return res_RESTOREFH->status;
+	}
+
 	if (op_ctx->export != NULL)
 		put_gsh_export(op_ctx->export);
 
@@ -123,7 +131,7 @@ int nfs4_op_restorefh(struct nfs_argop4 *op, compound_data_t *data,
 	 */
 
 	/* Update the current entry */
-	set_current_entry(data, data->saved_entry, true);
+	set_current_entry(data, data->saved_entry);
 
 	/* Restore the saved stateid */
 	data->current_stateid = data->saved_stateid;

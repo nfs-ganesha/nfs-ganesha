@@ -150,7 +150,7 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t *data,
 		}
 
 		/* Clear out current entry for now */
-		set_current_entry(data, NULL, false);
+		set_current_entry(data, NULL);
 
 		/* update _ctx fields */
 		op_ctx->fsal_pnfs_ds = pds;
@@ -213,7 +213,7 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t *data,
 		}
 
 		/* Clear out current entry for now */
-		set_current_entry(data, NULL, false);
+		set_current_entry(data, NULL);
 
 		/* update _ctx fields needed by nfs4_export_check_access */
 		op_ctx->export = exporting;
@@ -250,7 +250,7 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t *data,
 		}
 
 		/* Set the current entry using the ref from get */
-		set_current_entry(data, file_entry, false);
+		set_current_entry(data, file_entry);
 
 		LogFullDebug(COMPONENT_FILEHANDLE,
 			     "File handle is of type %s(%d)",
