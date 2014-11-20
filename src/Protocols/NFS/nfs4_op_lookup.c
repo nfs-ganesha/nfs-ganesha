@@ -211,7 +211,7 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	/* Keep the pointer within the compound data */
-	set_current_entry(data, file_entry, false);
+	set_current_entry(data, file_entry);
 	file_entry = NULL;
 
 	/* Return successfully */

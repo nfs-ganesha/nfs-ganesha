@@ -112,7 +112,7 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 		 * so if it cascades into cleanup, we aren't holding
 		 * an export lock that would cause trouble.
 		 */
-		set_current_entry(data, NULL, false);
+		set_current_entry(data, NULL);
 
 		/* We need to protect accessing the parent information
 		 * with the export lock. We use the current export's lock
@@ -144,10 +144,23 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 			return res_LOOKUPP4->status;
 		}
 
+		if (cache_inode_lru_ref(dir_entry, LRU_FLAG_NONE) !=
+		    CACHE_INODE_SUCCESS) {
+			/* junction inode has gone stale. */
+			PTHREAD_RWLOCK_unlock(&original_export->lock);
+			LogCrit(COMPONENT_EXPORT,
+				"Reverse junction from Export_Id %d Path %s Parent=%p is stale",
+				original_export->export_id,
+				original_export->fullpath,
+				parent_exp);
+			res_LOOKUPP4->status = NFS4ERR_STALE;
+			return res_LOOKUPP4->status;
+		}
+
 		/* Set up dir_entry as current entry with an LRU reference
 		 * while still holding the lock.
 		 */
-		set_current_entry(data, dir_entry, true);
+		set_current_entry(data, dir_entry);
 
 		/* Stash parent export in opctx while still holding the lock.
 		 */
@@ -198,7 +211,7 @@ not_junction:
 		}
 
 		/* Keep the pointer within the compound data */
-		set_current_entry(data, file_entry, false);
+		set_current_entry(data, file_entry);
 
 		/* Return successfully */
 		res_LOOKUPP4->status = NFS4_OK;
@@ -206,7 +219,7 @@ not_junction:
 		/* Unable to look up parent for some reason.
 		 * Return error.
 		 */
-		set_current_entry(data, NULL, false);
+		set_current_entry(data, NULL);
 		res_LOOKUPP4->status = nfs4_Errno(cache_status);
 	}
 

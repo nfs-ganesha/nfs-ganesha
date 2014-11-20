@@ -365,7 +365,7 @@ static nfsstat4 open4_create_fh(compound_data_t *data, cache_entry_t *entry)
 	       newfh4.nfs_fh4_len);
 
 	/* Update the current entry */
-	set_current_entry(data, entry, false);
+	set_current_entry(data, entry);
 
 	return NFS4_OK;
 }
@@ -1328,7 +1328,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 				/* Decrement the current entry here, because
 				 * nfs4_create_fh replaces the current fh.
 				 */
-				set_current_entry(data, NULL, false);
+				set_current_entry(data, NULL);
 				res_OPEN4->status =
 				    open4_create_fh(data, entry);
 			}

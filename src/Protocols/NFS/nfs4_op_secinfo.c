@@ -264,7 +264,7 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (data->minorversion != 0) {
 		/* Need to clear out CurrentFH */
-		set_current_entry(data, NULL, false);
+		set_current_entry(data, NULL);
 
 		data->currentFH.nfs_fh4_len = 0;
 
