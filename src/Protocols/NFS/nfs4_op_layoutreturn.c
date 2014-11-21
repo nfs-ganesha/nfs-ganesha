@@ -411,6 +411,18 @@ void nfs4_op_layoutreturn_Free(nfs_resop4 *resp)
 	return;
 }				/* nfs41_op_layoutreturn_Free */
 
+/**
+ * @brief Handle recalls corresponding to one stateid
+ *
+ * Must hold the state_lock in write mode.
+ *
+ * @param[in]     args         Layout return args
+ * @param[in]     entry        Cache entry whose layouts we return
+ * @param[in]     state        The state in question
+ * @param[in]     segment      Segment specified in return
+ *
+ */
+
 void handle_recalls(struct fsal_layoutreturn_arg *arg,
 		    cache_entry_t *entry,
 		    state_t *state,
