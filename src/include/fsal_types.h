@@ -1,6 +1,4 @@
 /*
- *
- *
  * Copyright CEA/DAM/DIF  (2008)
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
  *                Thomas LEIBOVICI  thomas.leibovici@cea.fr
@@ -46,7 +44,6 @@
 #include "uid2grp.h"
 
 /* Forward declarations */
-struct fsal_staticfsinfo_t;
 struct fsal_export;
 
 /* Cookie to be used in FSAL_ListXAttrs() to bypass RO xattr */
@@ -653,7 +650,7 @@ typedef enum enum_fsal_fsinfo_options {
 /* The largest maxread and maxwrite value */
 #define FSAL_MAXIOSIZE (64*1024*1024)
 
-struct fsal_staticfsinfo_t {
+typedef struct fsal_staticfsinfo_t {
 	uint64_t maxfilesize;	/*< maximum allowed filesize     */
 	uint32_t maxlink;	/*< maximum hard links on a file */
 	uint32_t maxnamelen;	/*< maximum name length */
@@ -699,7 +696,7 @@ struct fsal_staticfsinfo_t {
 	bool reopen_method;	/* fsal supports reopen method */
 	bool fsal_trace;	/*< fsal trace supports */
 	bool fsal_grace;	/*< fsal will handle grace */
-};
+} fsal_staticfsinfo_t;
 
 /**
  * @brief The return error values of FSAL calls.

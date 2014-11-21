@@ -1,6 +1,9 @@
 /*
- * Copyright © 2012, CohortFS, LLC.
+ * Copyright © 2012-2014, CohortFS, LLC.
  * Author: Adam C. Emerson <aemerson@linuxbox.com>
+ *
+ * contributeur : William Allen Simpson <bill@cohortfs.com>
+ *		  Marcus Watts <mdw@cohortfs.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -23,7 +26,8 @@
 /**
  * @file   internal.h
  * @author Adam C. Emerson <aemerson@linuxbox.com>
- * @date   Mon Jul  9 13:33:32 2012
+ * @author William Allen Simpson <bill@cohortfs.com>
+ * @date Wed Oct 22 13:24:33 2014
  *
  * @brief Internal declarations for the Ceph FSAL
  *
@@ -38,32 +42,44 @@
 #include "fsal.h"
 #include "fsal_types.h"
 #include "fsal_api.h"
+#include "fsal_convert.h"
 #include <stdbool.h>
+#include <uuid/uuid.h>
+
+/**
+ * Ceph Main (global) module object
+ */
+
+struct ceph_fsal_module {
+	struct fsal_module fsal;
+	fsal_staticfsinfo_t fs_info;
+};
+extern struct ceph_fsal_module CephFSM;
 
 /**
  * Ceph private export object
  */
 
 struct export {
+	struct fsal_export export;	/*< The public export object */
 	struct ceph_mount_info *cmount;	/*< The mount object used to
 					   access all Ceph methods on
 					   this export. */
-	struct fsal_export export;	/*< The public export object */
 	struct handle *root;	/*< The root handle */
 };
 
 /**
- * The 'private' the Ceph FSAL handle
+ * The 'private' Ceph FSAL handle
  */
 
 struct handle {
-	vinodeno_t vi;		/*< The object identifier */
 	struct fsal_obj_handle handle;	/*< The public handle */
 	Fh *fd;
 	struct Inode *i;	/*< The Ceph inode */
-	fsal_openflags_t openflags;
 	const struct fsal_up_vector *up_ops;	/*< Upcall operations */
 	struct export *export;	/*< The first export this handle belongs to */
+	vinodeno_t vi;		/*< The object identifier */
+	fsal_openflags_t openflags;
 #ifdef CEPH_PNFS
 	uint64_t rd_issued;
 	uint64_t rd_serial;
@@ -113,14 +129,39 @@ extern attrmask_t settable_attributes;
 
 static const size_t BIGGEST_PATTERN = 1024;
 
+/* private helper for export object */
+
+static inline fsal_staticfsinfo_t *ceph_staticinfo(struct fsal_module *hdl)
+{
+	struct ceph_fsal_module *myself =
+	    container_of(hdl, struct ceph_fsal_module, fsal);
+	return &myself->fs_info;
+}
+
 /* Prototypes */
 
 int construct_handle(const struct stat *st, struct Inode *i,
 		     struct export *export, struct handle **obj);
 void deconstruct_handle(struct handle *obj);
-fsal_status_t ceph2fsal_error(const int ceph_errorcode);
+
+/**
+ * @brief FSAL status from Ceph error
+ *
+ * This function returns a fsal_status_t with the FSAL error as the
+ * major, and the posix error as minor. (Ceph's error codes are just
+ * negative signed versions of POSIX error codes.)
+ *
+ * @param[in] ceph_errorcode Ceph error (negative Posix)
+ *
+ * @return FSAL status.
+ */
+static inline fsal_status_t ceph2fsal_error(const int ceph_errorcode)
+{
+	return fsalstat(posix2fsal_error(-ceph_errorcode), -ceph_errorcode);
+}
 void ceph2fsal_attributes(const struct stat *buffstat,
 			  struct attrlist *fsalattr);
+
 void export_ops_init(struct export_ops *ops);
 void handle_ops_init(struct fsal_obj_ops *ops);
 #ifdef CEPH_PNFS
