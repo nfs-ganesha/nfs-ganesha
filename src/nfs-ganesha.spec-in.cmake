@@ -104,7 +104,7 @@ Url:               https://github.com/nfs-ganesha/nfs-ganesha/wiki
 
 Source:		%{sourcename}.tar.gz
 
-BuildRequires:	cmake >= 2.8.3
+BuildRequires:	cmake
 BuildRequires:	bison flex
 BuildRequires:	flex
 BuildRequires:	pkgconfig
