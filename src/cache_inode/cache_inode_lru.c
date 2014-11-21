@@ -179,7 +179,6 @@ size_t open_fd_count = 0;
  * independent partition of the LRU queue.
  */
 
-static pthread_mutex_t lru_mtx;
 static struct fridgethr *lru_fridge;
 
 enum lru_edge {
@@ -236,8 +235,6 @@ static inline void
 lru_init_queues(void)
 {
 	int ix;
-
-	pthread_mutex_init(&lru_mtx, NULL);
 
 	for (ix = 0; ix < LRU_N_Q_LANES; ++ix) {
 		struct lru_q_lane *qlane = &LRU[ix];
