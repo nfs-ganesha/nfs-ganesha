@@ -1501,7 +1501,7 @@ static bool is_rpc_call_valid(nfs_request_data_t *reqnfs)
 	return false;
 }				/* is_rpc_call_valid */
 
-static inline enum xprt_stat thr_decode_rpc_request(struct fridgethr_context
+enum xprt_stat thr_decode_rpc_request(struct fridgethr_context
 						    *thr_ctx, SVCXPRT *xprt)
 {
 	request_data_t *nfsreq;

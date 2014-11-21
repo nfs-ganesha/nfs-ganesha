@@ -267,6 +267,10 @@ void _9p_rdma_process_request(struct _9p_request_data *req9p,
 void _9p_rdma_cleanup_conn(msk_trans_t *trans);
 #endif
 
+#ifdef _USE_NFS_MSK
+void *nfs_msk_dispatcher_thread(void *UnusedArg);
+#endif
+
 void nfs_Init_svc(void);
 int nfs_Init_worker_data(nfs_worker_data_t *pdata);
 int nfs_Init_request_data(nfs_request_data_t *pdata);
