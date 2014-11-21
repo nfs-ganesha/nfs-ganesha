@@ -350,7 +350,7 @@ static bool pwentname2id(char *name, size_t len, uint32_t *id,
 		gbuf = alloca(size);
 
 		if (getgrnam_r(name, &g, gbuf, size, &gres) != 0) {
-			LogMajor(COMPONENT_IDMAPPER, "getpwnam_r %s failed",
+			LogInfo(COMPONENT_IDMAPPER, "getgrnam_r %s failed",
 				 name);
 			return false;
 		} else if (gres != NULL) {

@@ -290,6 +290,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 	/* Initialize common fields */
 	nentry->type = new_obj->type;
 	nentry->flags = 0;
+	nentry->icreate_refcnt = 0;
 	glist_init(&nentry->state_list);
 	glist_init(&nentry->export_list);
 	glist_init(&nentry->layoutrecall_list);

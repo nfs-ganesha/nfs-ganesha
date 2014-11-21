@@ -78,6 +78,7 @@ cache_inode_create(cache_entry_t *parent,
 	struct attrlist object_attributes;
 	struct fsal_obj_handle *dir_handle;
 	cache_inode_create_arg_t zero_create_arg;
+	bool needdec = false;
 
 	memset(&zero_create_arg, 0, sizeof(zero_create_arg));
 	memset(&object_attributes, 0, sizeof(object_attributes));
@@ -109,6 +110,10 @@ cache_inode_create(cache_entry_t *parent,
 	object_attributes.group = op_ctx->creds->caller_gid; /* be more
 							       * selective? */
 	object_attributes.mode = mode;
+
+	/* increase the refcount to ensure forced lookup in FSAL */
+	atomic_inc_uint32_t(&parent->icreate_refcnt);
+	needdec = true;
 
 	switch (type) {
 	case REGULAR_FILE:
@@ -228,6 +233,10 @@ cache_inode_create(cache_entry_t *parent,
 	}
 
  out:
+	if (needdec == true) {
+		/* decrease refcnt to allow negative cache lookup */
+		atomic_dec_uint32_t(&parent->icreate_refcnt);
+	}
 	LogFullDebug(COMPONENT_CACHE_INODE,
 		     "Returning entry=%p status=%s for %s FSAL=%s", *entry,
 		     cache_inode_err_str(status), name,
