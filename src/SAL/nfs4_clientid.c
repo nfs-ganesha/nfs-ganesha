@@ -317,11 +317,6 @@ void free_client_id(nfs_client_id_t *clientid)
 	if (clientid->cid_client_record != NULL)
 		dec_client_record_ref(clientid->cid_client_record);
 
-	if (pthread_mutex_destroy(&clientid->cid_mutex) != 0)
-		LogDebug(COMPONENT_CLIENTID,
-			 "pthread_mutex_destroy returned errno %d (%s)", errno,
-			 strerror(errno));
-
 	/* For NFSv4.1 clientids, destroy all associated sessions */
 	if (clientid->cid_minorversion > 0) {
 		struct glist_head *glist = NULL;
@@ -335,6 +330,14 @@ void free_client_id(nfs_client_id_t *clientid)
 			nfs41_Session_Del(session->session_id);
 		}
 	}
+
+	assert(pthread_mutex_destroy(&clientid->cid_mutex) == 0);
+	assert(pthread_mutex_destroy(&clientid->cid_owner.so_mutex) == 0);
+	if (clientid->cid_minorversion == 0) {
+		assert(pthread_mutex_destroy(&clientid->cid_cb.v40.cb_chan.mtx)
+								== 0);
+	}
+
 	pool_free(client_id_pool, clientid);
 }
 
@@ -515,44 +518,16 @@ nfs_client_id_t *create_client_id(clientid4 clientid,
 		return NULL;
 	}
 
-	if (pthread_mutex_init(&client_rec->cid_mutex, NULL) == -1) {
-		char str_client[NFS4_OPAQUE_LIMIT * 2 + 1];
-		display_clientid_name(client_rec, str_client);
-
-		LogCrit(COMPONENT_CLIENTID,
-			"Could not init mutex for clientid %" PRIx64 "->%s",
-			clientid, str_client);
-
-		/* Directly free the clientid record since we failed
-		   to initialize it */
-		pool_free(client_id_pool, client_rec);
-
-		return NULL;
-	}
+	assert(pthread_mutex_init(&client_rec->cid_mutex, NULL) == 0);
 
 	owner = &client_rec->cid_owner;
 
-	if (pthread_mutex_init(&owner->so_mutex, NULL) == -1) {
-		LogDebug(COMPONENT_CLIENTID,
-			 "Unable to create clientid owner for clientid %"
-			 PRIx64, clientid);
-
-		/* Free the clientid record since we failed to initialize it */
-		pool_free(client_id_pool, client_rec);
-
-		return NULL;
-	}
+	assert(pthread_mutex_init(&owner->so_mutex, NULL) == 0);
 
 	/* initialize the chan mutex for v4 */
 	if (minorversion == 0) {
-		if (pthread_mutex_init(&client_rec->cid_cb.v40.cb_chan.mtx,
-				       NULL) == -1) {
-			LogDebug(COMPONENT_CLIENTID,
-				 "Unable to init chan mutex for clientid %"
-				 PRIx64, clientid);
-			pool_free(client_id_pool, client_rec);
-			return NULL;
-		}
+		assert(pthread_mutex_init(&client_rec->cid_cb.v40.cb_chan.mtx,
+					  NULL) == 0);
 		client_rec->cid_cb.v40.cb_chan_down = true;
 		client_rec->first_path_down_resp_time = 0;
 	}
@@ -1395,10 +1370,8 @@ int32_t inc_client_record_ref(nfs_client_record_t *record)
  */
 void free_client_record(nfs_client_record_t *record)
 {
-	if (pthread_mutex_destroy(&record->cr_mutex) != 0)
-		LogCrit(COMPONENT_CLIENTID,
-			"pthread_mutex_destroy returned errno %d(%s)", errno,
-			strerror(errno));
+	assert(pthread_mutex_destroy(&record->cr_mutex) == 0);
+
 	gsh_free(record);
 }
 
@@ -1665,17 +1638,7 @@ nfs_client_record_t *get_client_record(const char *const value,
 		return NULL;
 	}
 
-	if (pthread_mutex_init(&record->cr_mutex, NULL) == -1) {
-		/* Mutex initialization failed, directly free the
-		 * record since we failed to initialize it. Also
-		 * release hash latch since we failed to add record.
-		 */
-		hashtable_releaselatched(ht_client_record, &latch);
-		LogFatal(COMPONENT_CLIENTID,
-			 "Unable to initialize mutex in client record.");
-		gsh_free(record);
-		return NULL;
-	}
+	assert(pthread_mutex_init(&record->cr_mutex, NULL) == 0);
 
 	/* Use same record for record and key */
 	buffval.addr = record;
