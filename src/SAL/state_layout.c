@@ -54,6 +54,8 @@
  * each segment returned by FSAL_layoutget to an existing state of
  * type STATE_TYPE_LAYOUT.
  *
+ * Must hold the state_lock in write mode.
+ *
  * @param[in] state           The layout state.
  * @param[in] segment         Layout segment itself granted by the FSAL
  * @param[in] fsal_data       Pointer to FSAL-specific data for this segment.
