@@ -53,7 +53,7 @@
 pool_t *state_owner_pool;	/*< Pool for NFSv4 files's open owner */
 
 #ifdef DEBUG_SAL
-struct glist_head state_owners_all;
+struct glist_head state_owners_all = GLIST_HEAD_INIT(state_owners_all);
 pthread_mutex_t all_state_owners_mutex = PTHREAD_MUTEX_INITIALIZER;
 #endif
 

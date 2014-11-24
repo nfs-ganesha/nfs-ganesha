@@ -77,7 +77,7 @@
 /**
  * @brief All locks.
  */
-static struct glist_head state_all_locks;
+static struct glist_head state_all_locks = GLIST_HEAD_INIT(state_all_locks);
 /**
  * @brief All locks mutex
  */
@@ -87,7 +87,7 @@ pthread_mutex_t all_locks_mutex = PTHREAD_MUTEX_INITIALIZER;
 /**
  * @brief All locks blocked in FSAL
  */
-struct glist_head state_blocked_locks;
+struct glist_head state_blocked_locks = GLIST_HEAD_INIT(state_blocked_locks);
 
 /**
  * @brief Mutex to protect lock lists
@@ -144,13 +144,6 @@ state_status_t state_lock_init(void)
 		status = STATE_INIT_ENTRY_FAILED;
 		return status;
 	}
-#ifdef DEBUG_SAL
-	glist_init(&state_all_locks);
-	glist_init(&state_owners_all);
-	glist_init(&state_v4_all);
-#endif
-
-	glist_init(&state_blocked_locks);
 
 	status = state_async_init();
 

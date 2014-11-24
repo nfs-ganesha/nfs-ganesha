@@ -57,7 +57,7 @@
 pool_t *state_v4_pool;		/*< Pool for NFSv4 files's states */
 
 #ifdef DEBUG_SAL
-struct glist_head state_v4_all;
+struct glist_head state_v4_all = GLIST_HEAD_INIT(state_v4_all);
 pthread_mutex_t all_state_v4_mutex = PTHREAD_MUTEX_INITIALIZER;
 #endif
 
