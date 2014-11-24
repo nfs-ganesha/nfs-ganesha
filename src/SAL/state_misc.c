@@ -902,7 +902,7 @@ void free_state_owner(state_owner_t *owner)
 	if (owner->so_owner_val != NULL)
 		gsh_free(owner->so_owner_val);
 
-	pthread_mutex_destroy(&owner->so_mutex);
+	assert(pthread_mutex_destroy(&owner->so_mutex) == 0);
 
 #ifdef DEBUG_SAL
 	pthread_mutex_lock(&all_state_owners_mutex);
@@ -1137,14 +1137,8 @@ state_owner_t *get_state_owner(care_t care, state_owner_t *key,
 	/* Copy everything over */
 	memcpy(owner, key, sizeof(*key));
 
-	if (pthread_mutex_init(&owner->so_mutex, NULL) == -1) {
-		/* Mutex initialization failed, free the created owner */
-		DisplayOwner(key, str);
-		LogCrit(COMPONENT_STATE, "Could not init mutex for {%s}", str);
+	assert(pthread_mutex_init(&owner->so_mutex, NULL) == 0);
 
-		gsh_free(owner);
-		return NULL;
-	}
 #ifdef DEBUG_SAL
 	pthread_mutex_lock(&all_state_owners_mutex);
 
