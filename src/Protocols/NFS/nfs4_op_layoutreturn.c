@@ -546,8 +546,6 @@ nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
 	XDR lrf_body;
 	/* The beginning of the stream */
 	unsigned int beginning = 0;
-	/* If we have a lock on the segment */
-	bool seg_locked = false;
 	/* Number of recalls currently on the entry */
 	size_t recalls = 0;
 	/* The current segment in iteration */
@@ -599,9 +597,6 @@ nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
 			g = glist_entry(seg_iter, state_layout_segment_t,
 					sls_state_segments);
 
-			pthread_mutex_lock(&g->sls_mutex);
-			seg_locked = true;
-
 			arg->cur_segment = g->sls_segment;
 			arg->fsal_seg_data = g->sls_fsal_data;
 			/* TODO: why this check does not work */
@@ -611,13 +606,10 @@ nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
 			    (&spec_segment, &g->sls_segment)) {
 				arg->dispose = true;
 			} else if (pnfs_segments_overlap(&spec_segment,
-							 &g->sls_segment)) {
+							 &g->sls_segment))
 				arg->dispose = false;
-			} else {
-				seg_locked = false;
-				pthread_mutex_unlock(&g->sls_mutex);
+			else
 				continue;
-			}
 
 			handle_recalls(arg, entry, layout_state,
 				       &g->sls_segment);
@@ -633,7 +625,6 @@ nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
 
 			if (arg->dispose) {
 				state_status = state_delete_segment(g);
-				seg_locked = false;
 				if (state_status != STATE_SUCCESS) {
 					nfs_status =
 					    nfs4_Errno_state(state_status);
@@ -643,8 +634,6 @@ nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
 				g->sls_segment =
 				    pnfs_segment_difference(&spec_segment,
 							    &g->sls_segment);
-				seg_locked = false;
-				pthread_mutex_unlock(&g->sls_mutex);
 			}
 		}
 
@@ -688,9 +677,6 @@ nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
  out:
 	if (body_val)
 		xdr_destroy(&lrf_body);
-
-	if (seg_locked)
-		pthread_mutex_unlock(&g->sls_mutex);
 
 	return nfs_status;
 }

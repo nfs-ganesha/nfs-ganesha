@@ -69,7 +69,6 @@ state_status_t state_add_segment(state_t *state, struct pnfs_segment *segment,
 {
 	/* Pointer to the new segment being added to the state */
 	state_layout_segment_t *new_segment = NULL;
-	pthread_mutexattr_t mattr;
 
 	if (state->state_type != STATE_TYPE_LAYOUT) {
 		LogCrit(COMPONENT_PNFS,
@@ -81,30 +80,6 @@ state_status_t state_add_segment(state_t *state, struct pnfs_segment *segment,
 	new_segment = gsh_calloc(1, sizeof(*new_segment));
 	if (!new_segment)
 		return STATE_MALLOC_ERROR;
-
-	if (pthread_mutexattr_init(&mattr) != 0) {
-		gsh_free(new_segment);
-		return STATE_INIT_ENTRY_FAILED;
-	}
-#if defined(__linux__)
-	if (pthread_mutexattr_settype(&mattr,
-				      PTHREAD_MUTEX_RECURSIVE_NP) != 0) {
-		gsh_free(new_segment);
-		return STATE_INIT_ENTRY_FAILED;
-	}
-#else
-	if (pthread_mutexattr_settype(&mattr, PTHREAD_MUTEX_RECURSIVE) != 0) {
-		gsh_free(new_segment);
-		return STATE_INIT_ENTRY_FAILED;
-	}
-#endif
-
-	if (pthread_mutex_init(&new_segment->sls_mutex, &mattr) != 0) {
-		gsh_free(new_segment);
-		return STATE_INIT_ENTRY_FAILED;
-	}
-
-	pthread_mutexattr_destroy(&mattr);
 
 	new_segment->sls_fsal_data = fsal_data;
 	new_segment->sls_state = state;
@@ -134,8 +109,6 @@ state_status_t state_add_segment(state_t *state, struct pnfs_segment *segment,
 state_status_t state_delete_segment(state_layout_segment_t *segment)
 {
 	glist_del(&segment->sls_state_segments);
-	pthread_mutex_unlock(&segment->sls_mutex);
-	pthread_mutex_destroy(&segment->sls_mutex);
 	gsh_free(segment);
 	return STATE_SUCCESS;
 }
