@@ -724,7 +724,7 @@ void free_nsm_client(state_nsm_client_t *client)
 	if (client->ssc_nlm_caller_name != NULL)
 		gsh_free(client->ssc_nlm_caller_name);
 
-	pthread_mutex_destroy(&client->ssc_mutex);
+	assert(pthread_mutex_destroy(&client->ssc_mutex) == 0);
 
 	gsh_free(client);
 }
@@ -958,19 +958,13 @@ state_nsm_client_t *get_nsm_client(care_t care, SVCXPRT *xprt,
 	/* Copy everything over */
 	memcpy(pclient, &key, sizeof(key));
 
-	if (pthread_mutex_init(&pclient->ssc_mutex, NULL) == -1) {
-		/* Mutex initialization failed, free the created client */
-		display_nsm_client(&key, str);
-		LogCrit(COMPONENT_STATE, "Could not init mutex for {%s}", str);
-
-		gsh_free(pclient);
-		return NULL;
-	}
+	assert(pthread_mutex_init(&pclient->ssc_mutex, NULL) == 0);
 
 	pclient->ssc_nlm_caller_name = gsh_strdup(key.ssc_nlm_caller_name);
 
 	if (pclient->ssc_nlm_caller_name == NULL) {
 		/* Discard the created client */
+		assert(pthread_mutex_destroy(&pclient->ssc_mutex) == 0);
 		free_nsm_client(pclient);
 		return NULL;
 	}
@@ -999,6 +993,7 @@ state_nsm_client_t *get_nsm_client(care_t care, SVCXPRT *xprt,
 		LogCrit(COMPONENT_STATE, "Error %s, inserting {%s}",
 			hash_table_err_to_str(rc), str);
 
+		assert(pthread_mutex_destroy(&pclient->ssc_mutex) == 0);
 		free_nsm_client(pclient);
 
 		return NULL;
