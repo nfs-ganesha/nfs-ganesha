@@ -97,7 +97,14 @@ pthread_mutex_t blocked_locks_mutex = PTHREAD_MUTEX_INITIALIZER;
 /**
  * @brief Owner of state with no defined owner
  */
-state_owner_t unknown_owner;
+state_owner_t unknown_owner = {
+	.so_owner_val = "ganesha_unknown_owner",
+	.so_type = STATE_LOCK_OWNER_UNKNOWN,
+	.so_refcount = 1,
+	.so_owner_len = 21,
+	.so_lock_list = GLIST_HEAD_INIT(unknown_owner.so_lock_list),
+	.so_mutex = PTHREAD_MUTEX_INITIALIZER
+};
 
 /**
  * @brief Blocking lock cookies
@@ -130,19 +137,6 @@ static hash_table_t *ht_lock_cookies;
 state_status_t state_lock_init(void)
 {
 	state_status_t status = STATE_SUCCESS;
-
-	memset(&unknown_owner, 0, sizeof(unknown_owner));
-	unknown_owner.so_owner_val = "ganesha_unknown_owner";
-	unknown_owner.so_type = STATE_LOCK_OWNER_UNKNOWN;
-	unknown_owner.so_refcount = 1;
-	unknown_owner.so_owner_len = strlen(unknown_owner.so_owner_val);
-
-	glist_init(&unknown_owner.so_lock_list);
-
-	if (pthread_mutex_init(&unknown_owner.so_mutex, NULL) == -1) {
-		status = STATE_INIT_ENTRY_FAILED;
-		return status;
-	}
 
 	ht_lock_cookies = hashtable_init(&cookie_param);
 	if (ht_lock_cookies == NULL) {
