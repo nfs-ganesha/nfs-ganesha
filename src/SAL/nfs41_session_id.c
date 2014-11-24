@@ -226,7 +226,9 @@ int32_t inc_session_ref(nfs41_session_t *session)
 
 int32_t dec_session_ref(nfs41_session_t *session)
 {
+	int i;
 	int32_t refcnt = atomic_dec_int32_t(&session->refcount);
+
 	if (refcnt == 0) {
 
 		/* Unlink the session from the client's list of
@@ -237,6 +239,14 @@ int32_t dec_session_ref(nfs41_session_t *session)
 
 		/* Decrement our reference to the clientid record */
 		dec_client_id_ref(session->clientid_record);
+		/* Destroy this session's mutexes and condition variable */
+
+		for (i = 0; i < NFS41_NB_SLOTS; i++)
+			assert(pthread_mutex_destroy(&session->slots[i].lock)
+					== 0);
+
+		assert(pthread_cond_destroy(&session->cb_cond) == 0);
+		assert(pthread_mutex_destroy(&session->cb_mutex) == 0);
 
 		/* Destroy the session's back channel (if any) */
 		if (session->flags & session_bc_up)
@@ -363,9 +373,9 @@ int nfs41_Session_Del(char sessionid[NFS4_SESSIONID_SIZE])
 		/* unref session */
 		dec_session_ref(session);
 
-		return 1;
+		return true;
 	} else {
-		return 0;
+		return false;
 	}
 }
 

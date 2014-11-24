@@ -1002,52 +1002,10 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid, bool make_stale)
 			nfs41_session_t *session = glist_entry(glist,
 							       nfs41_session_t,
 							       session_link);
-			struct gsh_buffdesc key = {
-				.addr = session->session_id,
-				.len = NFS4_SESSIONID_SIZE
-			};
-			struct gsh_buffdesc old_key, old_value;
 
-			if (HashTable_Del(ht_session_id,
-					  &key,
-					  &old_key,
-					  &old_value) == HASHTABLE_SUCCESS) {
-				nfs41_session_t *session = old_value.addr;
-
-				/* unref session */
-				int32_t refcnt =
-				    atomic_dec_int32_t(&session->refcount);
-				if (refcnt == 0) {
-					/* Unlink the session from the client's
-					 * list of sessions
-					 */
-					LogFullDebug(COMPONENT_SESSIONS,
-						     "Destroying session %p",
-						     session);
-					glist_del(&session->session_link);
-
-					/* Decrement our reference to the
-					 * clientid record
-					 */
-					dec_client_id_ref(session->
-							  clientid_record);
-
-					/* Destroy the session's back channel
-					 * (if any)
-					 */
-					if (session->flags & session_bc_up) {
-						nfs_rpc_destroy_chan(&session->
-								     cb_chan);
-					}
-
-					/* Free the memory for the session */
-					pool_free(nfs41_session_pool, session);
-				}
-
-			} else {
+			if (!nfs41_Session_Del(session->session_id))
 				LogCrit(COMPONENT_SESSIONS,
 					"Expire session failed");
-			}
 		}
 	}
 

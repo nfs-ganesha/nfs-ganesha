@@ -31,6 +31,7 @@
 
 #include "config.h"
 #include <pthread.h>
+#include <assert.h>
 #include "log.h"
 #include "nfs4.h"
 #include "nfs_core.h"
@@ -77,7 +78,7 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 	/* The client name, for gratuitous logging */
 	char str_client[NFS4_OPAQUE_LIMIT * 2 + 1];
 	/* Return code from clientid calls */
-	int rc = 0;
+	int i, rc = 0;
 	/* Component for logging */
 	log_components_t component = COMPONENT_CLIENTID;
 	/* Abbreviated alias for arguments */
@@ -310,10 +311,13 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 	nfs41_session->xprt = data->req->rq_xprt;
 	nfs41_session->flags = false;
 	nfs41_session->cb_program = 0;
-	pthread_mutex_init(&nfs41_session->cb_mutex, NULL);
-	pthread_cond_init(&nfs41_session->cb_cond, NULL);
+	assert(pthread_mutex_init(&nfs41_session->cb_mutex, NULL) == 0);
+	assert(pthread_cond_init(&nfs41_session->cb_cond, NULL) == 0);
+	for (i = 0; i < NFS41_NB_SLOTS; i++)
+		assert(pthread_mutex_init(&nfs41_session->slots[i].lock,
+					  NULL) == 0);
 
-	/* Take reference to clientid record */
+	/* Take reference to clientid record on behalf the session. */
 	inc_client_id_ref(found);
 
 	/* add to head of session list (encapsulate?) */
@@ -350,17 +354,14 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 	if (!nfs41_Session_Set(nfs41_session)) {
 		LogDebug(component, "Could not insert session into table");
 
-		pthread_mutex_lock(&found->cid_mutex);
-		glist_del(&nfs41_session->session_link);
-		pthread_mutex_unlock(&found->cid_mutex);
+		/* Release the session resources by dropping our reference
+		 * and the sentinel reference.
+		 */
+		dec_session_ref(nfs41_session);
+		dec_session_ref(nfs41_session);
 
-		/* Decrement our reference to the clientid record and
-		   the one for the session */
+		/* Decrement our reference to the clientid record */
 		dec_client_id_ref(found);
-		dec_client_id_ref(found);
-
-		/* Free the memory for the session */
-		pool_free(nfs41_session_pool, nfs41_session);
 
 		/* Maybe a more precise status would be better */
 		res_CREATE_SESSION4->csr_status = NFS4ERR_SERVERFAULT;
