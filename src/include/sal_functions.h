@@ -462,9 +462,19 @@ uint64_t lock_cookie_rbt_hash_func(hash_parameter_t *hparam,
 				   struct gsh_buffdesc *key);
 state_status_t state_lock_init(void);
 
-void LogLock(log_components_t component, log_levels_t debug, const char *reason,
-	     cache_entry_t *entry, state_owner_t *owner,
-	     fsal_lock_param_t *lock);
+void log_lock(log_components_t component,
+	      log_levels_t debug,
+	      const char *reason,
+	      cache_entry_t *entry,
+	      state_owner_t *owner,
+	      fsal_lock_param_t *lock,
+	      char *file,
+	      int line,
+	      char *function);
+
+#define LogLock(component, debug, reason, entry, owner, lock) \
+	log_lock(component, debug, reason, entry, owner, lock, \
+		 (char *) __FILE__, __LINE__, (char *) __func__)
 
 void dump_all_locks(const char *label);
 

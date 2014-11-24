@@ -425,9 +425,15 @@ static bool LogBlockedList(const char *reason, cache_entry_t *entry,
  * @param[in] owner     Lock owner
  * @param[in] lock      Lock description
  */
-void LogLock(log_components_t component, log_levels_t debug, const char *reason,
-	     cache_entry_t *entry, state_owner_t *owner,
-	     fsal_lock_param_t *lock)
+void log_lock(log_components_t component,
+	      log_levels_t debug,
+	      const char *reason,
+	      cache_entry_t *entry,
+	      state_owner_t *owner,
+	      fsal_lock_param_t *lock,
+	      char *file,
+	      int line,
+	      char *function)
 {
 	if (isLevel(component, debug)) {
 		char owner_str[HASHTABLE_DISPLAY_STRLEN];
@@ -437,14 +443,15 @@ void LogLock(log_components_t component, log_levels_t debug, const char *reason,
 		else
 			sprintf(owner_str, "NONE");
 
-		LogAtLevel(component, debug,
-			   "%s Lock: entry=%p, fileid=%" PRIu64
-			   ", type=%s, start=0x%llx, end=0x%llx, owner={%s}",
-			   reason, entry,
-			   (uint64_t) entry->obj_handle->attributes.fileid,
-			   str_lockt(lock->lock_type),
-			   (unsigned long long)lock->lock_start,
-			   (unsigned long long)lock_end(lock), owner_str);
+		DisplayLogComponentLevel(component, file, line, function, debug,
+			"%s Lock: entry=%p, fileid=%" PRIu64
+			", type=%s, start=0x%"PRIx64", end=0x%"PRIx64
+			", owner={%s}",
+			reason, entry,
+			(uint64_t) entry->obj_handle->attributes.fileid,
+			str_lockt(lock->lock_type),
+			lock->lock_start,
+			lock_end(lock), owner_str);
 	}
 }
 
