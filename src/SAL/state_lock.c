@@ -539,10 +539,7 @@ static state_lock_entry_t *create_state_lock_entry(cache_entry_t *entry,
 
 	memset(new_entry, 0, sizeof(*new_entry));
 
-	if (pthread_mutex_init(&new_entry->sle_mutex, NULL) == -1) {
-		gsh_free(new_entry);
-		return NULL;
-	}
+	assert(pthread_mutex_init(&new_entry->sle_mutex, NULL) == 0);
 
 	/* sle_block_data will be filled in later if necessary */
 	new_entry->sle_block_data = NULL;
@@ -659,6 +656,7 @@ static void lock_entry_dec_ref(state_lock_entry_t *lock_entry)
 #endif
 
 		put_gsh_export(lock_entry->sle_export);
+		assert(pthread_mutex_destroy(&lock_entry->sle_mutex) == 0);
 		gsh_free(lock_entry);
 	}
 }
