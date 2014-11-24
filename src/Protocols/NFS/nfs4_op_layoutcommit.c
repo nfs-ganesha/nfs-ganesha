@@ -155,10 +155,8 @@ int nfs4_op_layoutcommit(struct nfs_argop4 *op, compound_data_t *data,
 				      state_layout_segment_t,
 				      sls_state_segments);
 
-		pthread_mutex_lock(&segment->sls_mutex);
 		arg.segment = segment->sls_segment;
 		arg.fsal_seg_data = segment->sls_fsal_data;
-		pthread_mutex_unlock(&segment->sls_mutex);
 
 		nfs_status = data->current_entry->obj_handle->
 			   obj_ops.layoutcommit(data->current_entry->obj_handle,

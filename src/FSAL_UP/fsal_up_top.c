@@ -505,10 +505,8 @@ static state_status_t create_file_recall(cache_entry_t *entry,
 				seg_iter,
 				state_layout_segment_t,
 				sls_state_segments);
-			pthread_mutex_lock(&g->sls_mutex);
 			if (pnfs_segments_overlap(segment, &g->sls_segment))
 				match = true;
-			pthread_mutex_unlock(&g->sls_mutex);
 		}
 		if (match) {
 			/**

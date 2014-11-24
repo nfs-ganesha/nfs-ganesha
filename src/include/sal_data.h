@@ -824,7 +824,6 @@ typedef struct state_layout_segment {
 	state_t *sls_state;	/*< Associated layout state */
 	struct pnfs_segment sls_segment;	/*< Segment descriptor */
 	void *sls_fsal_data;	/*< FSAL data */
-	pthread_mutex_t sls_mutex;	/*< Mutex */
 } state_layout_segment_t;
 
 /**
