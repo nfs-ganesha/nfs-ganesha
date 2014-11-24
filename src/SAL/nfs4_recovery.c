@@ -49,20 +49,14 @@ char v4_old_dir[PATH_MAX];
 /**
  * @brief Grace period control data
  */
-static grace_t grace;
+static grace_t grace = {
+	.g_clid_list = GLIST_HEAD_INIT(grace.g_clid_list),
+	.g_mutex = PTHREAD_MUTEX_INITIALIZER
+};
 
 static void nfs4_load_recov_clids_nolock(nfs_grace_start_t *gsp);
 static void nfs_release_nlm_state(char *release_ip);
 static void nfs_release_v4_client(char *ip);
-
-/**
- * @brief Initialize grace/recovery
- */
-void nfs4_init_grace()
-{
-	glist_init(&grace.g_clid_list);
-	pthread_mutex_init(&grace.g_mutex, NULL);
-}
 
 /**
  * @brief Start grace period
