@@ -216,7 +216,7 @@ struct gsh_client *get_gsh_client(sockaddr_t *client_ipaddr, bool lookup_only)
 	}
 
  out:
-	atomic_inc_int64_t(&cl->refcnt);
+	inc_gsh_client_refcount(cl);
 	PTHREAD_RWLOCK_unlock(&client_by_ip.lock);
 	return cl;
 }
@@ -240,10 +240,12 @@ void put_gsh_client(struct gsh_client *client)
  *
  * @param client_ipaddr [IN] sockaddr (key) to remove
  *
- * @return true if removed or was not found, false if busy.
+ * @retval 0 if removed
+ * @retval ENOENT if not found
+ * @retval EBUSY if in use
  */
 
-bool remove_gsh_client(sockaddr_t *client_ipaddr)
+int remove_gsh_client(sockaddr_t *client_ipaddr)
 {
 	struct avltree_node *node = NULL;
 	struct avltree_node *cnode = NULL;
@@ -253,7 +255,7 @@ bool remove_gsh_client(sockaddr_t *client_ipaddr)
 	uint8_t *addr = NULL;
 	uint32_t ipaddr;
 	int addr_len = 0;
-	bool removed = true;
+	int removed = 0;
 	void **cache_slot;
 
 	switch (client_ipaddr->ss_family) {
@@ -285,8 +287,8 @@ bool remove_gsh_client(sockaddr_t *client_ipaddr)
 	node = avltree_lookup(&v.node_k, &client_by_ip.t);
 	if (node) {
 		cl = avltree_container_of(node, struct gsh_client, node_k);
-		if (cl->refcnt > 0) {
-			removed = false;
+		if (atomic_fetch_int64_t(&cl->refcnt) > 0) {
+			removed = EBUSY;
 			goto out;
 		}
 		cache_slot = (void **)
@@ -296,10 +298,12 @@ bool remove_gsh_client(sockaddr_t *client_ipaddr)
 		if (node == cnode)
 			atomic_store_voidptr(cache_slot, NULL);
 		avltree_remove(node, &client_by_ip.t);
+	} else {
+		removed = ENOENT;
 	}
  out:
 	PTHREAD_RWLOCK_unlock(&client_by_ip.lock);
-	if (removed && node) {
+	if (removed == 0) {
 		server_st = container_of(cl, struct server_stats, client);
 		server_stats_free(&server_st->st);
 		if (cl->hostaddr_str != NULL)
@@ -427,15 +431,27 @@ static bool gsh_client_removeclient(DBusMessageIter *args,
 				    DBusError *error)
 {
 	sockaddr_t sockaddr;
-	bool success = true;
-	char *errormsg;
+	bool success = false;
+	char *errormsg = "OK";
 	DBusMessageIter iter;
 
 	dbus_message_iter_init_append(reply, &iter);
-	success = arg_ipaddr(args, &sockaddr, &errormsg);
-	if (success)
-		success = remove_gsh_client(&sockaddr);
-	errormsg = success ? "OK" : "Client with that address not found";
+	if (arg_ipaddr(args, &sockaddr, &errormsg)) {
+		switch (remove_gsh_client(&sockaddr)) {
+		case 0:
+			errormsg = "OK";
+			success = true;
+			break;
+		case ENOENT:
+			errormsg = "Client with that address not found";
+			break;
+		case EBUSY:
+			errormsg = "Client with that address is in use (busy)";
+			break;
+		default:
+			errormsg = "Unexpected error";
+		}
+	}
 	dbus_status_reply(&iter, success, errormsg);
 	return true;
 }
