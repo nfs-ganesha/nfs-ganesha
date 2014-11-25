@@ -39,6 +39,8 @@
 #include <fcntl.h>
 #include <ctype.h>
 #include "bsd-base64.h"
+#include "client_mgr.h"
+#include "fsal.h"
 
 #define NFS_V4_RECOV_DIR "v4recov"
 #define NFS_V4_OLD_DIR "v4old"
@@ -203,18 +205,15 @@ int convert_opaque_value_max_for_dir(struct display_buffer *dspbuf,
 void nfs4_create_clid_name(nfs_client_record_t *cl_rec,
 			   nfs_client_id_t *clientid, struct svc_req *svc)
 {
-	sockaddr_t sa;
-	char buf[SOCK_NAME_MAX + 1];
+	const char *str_client_addr = "(unknown)";
 	char cidstr[PATH_MAX];
-	struct display_buffer       dspbuf = {sizeof(cidstr), cidstr, cidstr};
-	char                         cidstr_len[10];
+	struct display_buffer dspbuf = {sizeof(cidstr), cidstr, cidstr};
+	char cidstr_len[10];
 	int total_len;
 
 	/* get the caller's IP addr */
-	if (copy_xprt_addr(&sa, svc->rq_xprt))
-		sprint_sockip(&sa, buf, SOCK_NAME_MAX);
-	else
-		strmaxcpy(buf, "Unknown", SOCK_NAME_MAX);
+	if (op_ctx->client != NULL)
+		str_client_addr = op_ctx->client->hostaddr_str;
 
 	if (convert_opaque_value_max_for_dir(&dspbuf,
 					     cl_rec->cr_client_val,
@@ -223,7 +222,7 @@ void nfs4_create_clid_name(nfs_client_record_t *cl_rec,
 		/* convert_opaque_value_max_for_dir does not prefix
 		 * the "(<length>:". So we need to do it here */
 		sprintf(cidstr_len, "%ld", strlen(cidstr));
-		total_len = strlen(cidstr) + strlen(buf) + 5 +
+		total_len = strlen(cidstr) + strlen(str_client_addr) + 5 +
 			    strlen(cidstr_len);
 		/* hold both long form clientid and IP */
 		clientid->cid_recov_dir = gsh_malloc(total_len);
@@ -235,7 +234,7 @@ void nfs4_create_clid_name(nfs_client_record_t *cl_rec,
 
 		(void) snprintf(clientid->cid_recov_dir, total_len,
 				"%s-(%s:%s)",
-				buf, cidstr_len, cidstr);
+				str_client_addr, cidstr_len, cidstr);
 	}
 
 	LogDebug(COMPONENT_CLIENTID, "Created client name [%s]",
@@ -489,9 +488,11 @@ void  nfs4_chk_clid_impl(nfs_client_id_t *clientid, clid_entry_t **clid_ent_arg)
 			     clientid->cid_recov_dir,
 			     PATH_MAX)) {
 			if (isDebug(COMPONENT_CLIENTID)) {
-				char str[HASHTABLE_DISPLAY_STRLEN];
+				char str[LOG_BUFF_LEN];
+				struct display_buffer dspbuf = {
+					sizeof(str), str, str};
 
-				display_client_id_rec(clientid, str);
+				display_client_id_rec(&dspbuf, clientid);
 
 				LogFullDebug(COMPONENT_CLIENTID,
 					     "Allowed to reclaim ClientId %s",

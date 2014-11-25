@@ -68,15 +68,24 @@ int display_nfs4_owner_key(struct gsh_buffdesc *buff, char *str)
 int display_nfs4_owner(state_owner_t *owner, char *str)
 {
 	char *strtmp = str;
+	struct display_buffer dspbuf;
 
 	strtmp +=
 	    sprintf(strtmp, "%s %p:", state_owner_type_to_str(owner->so_type),
 		    owner);
 
 	strtmp += sprintf(strtmp, " clientid={");
-	strtmp +=
-	    display_client_id_rec(owner->so_owner.so_nfs4_owner.so_clientrec,
-				  strtmp);
+
+	/* Temporary display buffer until display_owner gets converted. */
+	dspbuf.b_size = 1024;
+	dspbuf.b_start = strtmp;
+	dspbuf.b_current = strtmp;
+
+	display_client_id_rec(&dspbuf,
+			      owner->so_owner.so_nfs4_owner.so_clientrec);
+
+	strtmp += display_buffer_len(&dspbuf);
+
 	strtmp += sprintf(strtmp, "} owner=");
 
 	strtmp +=

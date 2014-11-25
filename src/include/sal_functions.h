@@ -217,6 +217,8 @@ clientid_status_t nfs_client_id_confirm(nfs_client_id_t *clientid,
 
 bool nfs_client_id_expire(nfs_client_id_t *clientid, bool make_stale);
 
+#define DISPLAY_CLIENTID_SIZE 36
+int display_clientid(struct display_buffer *dspbuf, clientid4 clientid);
 clientid4 new_clientid(void);
 void new_clientid_verifier(char *verf);
 
@@ -231,8 +233,12 @@ uint64_t client_id_rbt_hash_func(hash_parameter_t *hparam,
 uint32_t client_id_value_hash_func(hash_parameter_t *hparam,
 				   struct gsh_buffdesc *key);
 
-int display_client_id_rec(nfs_client_id_t *clientid, char *str);
-int display_clientid_name(nfs_client_id_t *clientid, char *str);
+int display_client_id_rec(struct display_buffer *dspbuf,
+			  nfs_client_id_t *clientid);
+
+#define CLIENTNAME_BUFSIZE (NFS4_OPAQUE_LIMIT * 2 + 1)
+int display_clientid_name(struct display_buffer *dspbuf,
+			  nfs_client_id_t *clientid);
 
 void free_client_id(nfs_client_id_t *clientid);
 
@@ -250,7 +256,8 @@ int32_t dec_client_id_ref(nfs_client_id_t *clientid);
 int32_t inc_session_ref(nfs41_session_t *session);
 int32_t dec_session_ref(nfs41_session_t *session);
 
-int display_client_record(nfs_client_record_t *record, char *str);
+int display_client_record(struct display_buffer *dspbuf,
+			  nfs_client_record_t *record);
 
 void free_client_record(nfs_client_record_t *record);
 

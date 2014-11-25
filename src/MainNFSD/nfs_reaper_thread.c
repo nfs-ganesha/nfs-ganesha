@@ -82,9 +82,12 @@ static int reap_hash_table(hash_table_t *ht_reap)
 						      lock);
 
 				if (isDebug(COMPONENT_CLIENTID)) {
-					char str[HASHTABLE_DISPLAY_STRLEN];
+					char str[LOG_BUFF_LEN];
+					struct display_buffer
+					    dspbuf = {sizeof(str), str, str};
 
-					display_client_id_rec(pclientid, str);
+					display_client_id_rec(&dspbuf,
+							      pclientid);
 
 					LogFullDebug(COMPONENT_CLIENTID,
 						     "Expire index %d %s", i,

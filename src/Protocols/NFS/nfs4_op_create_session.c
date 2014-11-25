@@ -39,6 +39,8 @@
 #include "nfs_proto_functions.h"
 #include "sal_functions.h"
 #include "nfs_creds.h"
+#include "client_mgr.h"
+#include "fsal.h"
 
 /**
  *
@@ -74,9 +76,17 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 	/* The client's network address */
 	sockaddr_t client_addr;
 	/* The client address as a string, for gratuitous logging */
-	char str_client_addr[SOCK_NAME_MAX + 1];
+	const char *str_client_addr = "(unknown)";
 	/* The client name, for gratuitous logging */
-	char str_client[NFS4_OPAQUE_LIMIT * 2 + 1];
+	char str_client[CLIENTNAME_BUFSIZE];
+	/* Display buffer for client name */
+	struct display_buffer dspbuf_client = {
+		sizeof(str_client), str_client, str_client};
+	/* The clientid4 broken down into fields */
+	char str_clientid4[DISPLAY_CLIENTID_SIZE];
+	/* Display buffer for clientid4 */
+	struct display_buffer dspbuf_clientid4 = {
+		sizeof(str_clientid4), str_clientid4, str_clientid4};
 	/* Return code from clientid calls */
 	int i, rc = 0;
 	/* Component for logging */
@@ -91,6 +101,15 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 	CREATE_SESSION4resok * const res_CREATE_SESSION4ok =
 	    &res_CREATE_SESSION4->CREATE_SESSION4res_u.csr_resok4;
 
+	/* Make sure str_client is always printable even
+	 * if log level changes midstream.
+	 */
+	display_printf(&dspbuf_client, "(unknown)");
+	display_reset_buffer(&dspbuf_client);
+
+	if (op_ctx->client != NULL)
+		str_client_addr = op_ctx->client->hostaddr_str;
+
 	if (isDebug(COMPONENT_SESSIONS))
 		component = COMPONENT_SESSIONS;
 
@@ -98,19 +117,16 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 	res_CREATE_SESSION4->csr_status = NFS4_OK;
 	clientid = arg_CREATE_SESSION4->csa_clientid;
 
+	display_clientid(&dspbuf_clientid4, clientid);
+
 	if (data->minorversion == 0)
 		return res_CREATE_SESSION4->csr_status = NFS4ERR_INVAL;
 
 	copy_xprt_addr(&client_addr, data->req->rq_xprt);
 
-	if (isDebug(component))
-		sprint_sockip(&client_addr, str_client_addr,
-			      sizeof(str_client_addr));
-
 	LogDebug(component,
-		 "CREATE_SESSION client addr=%s clientid=%" PRIx64
-		 " -------------------",
-		 str_client_addr, clientid);
+		 "CREATE_SESSION client addr=%s clientid=%s -------------------",
+		 str_client_addr, str_clientid4);
 
 	/* First try to look up unconfirmed record */
 	rc = nfs_client_id_get_unconfirmed(clientid, &unconf);
@@ -123,8 +139,8 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 		if (rc != CLIENT_ID_SUCCESS) {
 			/* No record whatsoever of this clientid */
 			LogDebug(component,
-				 "%s clientid = %" PRIx64,
-				 clientid_error_to_str(rc), clientid);
+				 "%s clientid=%s",
+				 clientid_error_to_str(rc), str_clientid4);
 
 			if (rc == CLIENT_ID_EXPIRED)
 				rc = CLIENT_ID_STALE;
@@ -144,9 +160,10 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 	inc_client_record_ref(client_record);
 
 	if (isFullDebug(component)) {
-		char str[HASHTABLE_DISPLAY_STRLEN];
+		char str[LOG_BUFF_LEN];
+		struct display_buffer dspbuf = {sizeof(str), str, str};
 
-		display_client_record(client_record, str);
+		display_client_record(&dspbuf, client_record);
 
 		LogFullDebug(component,
 			     "Client Record %s cr_confirmed_rec=%p "
@@ -162,16 +179,17 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 	 */
 
 	LogDebug(component,
-		 "CREATE_SESSION clientid=%" PRIx64 " csa_sequence=%" PRIu32
+		 "CREATE_SESSION clientid=%s csa_sequence=%" PRIu32
 		 " clientid_cs_seq=%" PRIu32 " data_oppos=%d data_use_drc=%d",
-		 clientid, arg_CREATE_SESSION4->csa_sequence,
+		 str_clientid4, arg_CREATE_SESSION4->csa_sequence,
 		 found->cid_create_session_sequence, data->oppos,
 		 data->use_drc);
 
 	if (isFullDebug(component)) {
-		char str[HASHTABLE_DISPLAY_STRLEN];
+		char str[LOG_BUFF_LEN];
+		struct display_buffer dspbuf = {sizeof(str), str, str};
 
-		display_client_id_rec(found, str);
+		display_client_id_rec(&dspbuf, found);
 		LogFullDebug(component, "Found %s", str);
 	}
 
@@ -224,9 +242,8 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 					      sizeof(unconfirmed_addr));
 
 				LogDebug(component,
-					 "Unconfirmed ClientId %" PRIx64
-					 "->'%s': Principals do not match... unconfirmed addr=%s Return NFS4ERR_CLID_INUSE",
-					 clientid,
+					 "Unconfirmed ClientId %s->'%s': Principals do not match... unconfirmed addr=%s Return NFS4ERR_CLID_INUSE",
+					 str_clientid4,
 					 str_client_addr,
 					 unconfirmed_addr);
 			}
@@ -239,7 +256,7 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (conf != NULL) {
 		if (isDebug(component) && conf != NULL)
-			display_clientid_name(conf, str_client);
+			display_clientid_name(&dspbuf_client, conf);
 
 		/* First must match principal */
 		if (!nfs_compare_clientcred(&conf->cid_credential,
@@ -252,9 +269,8 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 					      sizeof(confirmed_addr));
 
 				LogDebug(component,
-					 "Confirmed ClientId %" PRIx64 "->%s "
-					 "addr=%s: Principals do not match... confirmed addr=%s Return NFS4ERR_CLID_INUSE",
-					 clientid, str_client,
+					 "Confirmed ClientId %s->%s addr=%s: Principals do not match... confirmed addr=%s Return NFS4ERR_CLID_INUSE",
+					 str_clientid4, str_client,
 					 str_client_addr, confirmed_addr);
 			}
 
@@ -374,7 +390,7 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 		conf = client_record->cr_confirmed_rec;
 
 		if (isDebug(component) && conf != NULL)
-			display_clientid_name(conf, str_client);
+			display_clientid_name(&dspbuf_client, conf);
 
 		/* Need a reference to the confirmed record for below */
 		if (conf != NULL)
@@ -384,9 +400,10 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 	if (conf != NULL && conf->cid_clientid != clientid) {
 		/* Old confirmed record - need to expire it */
 		if (isDebug(component)) {
-			char str[HASHTABLE_DISPLAY_STRLEN];
+			char str[LOG_BUFF_LEN];
+			struct display_buffer dspbuf = {sizeof(str), str, str};
 
-			display_client_id_rec(conf, str);
+			display_client_id_rec(&dspbuf, conf);
 			LogDebug(component, "Expiring %s", str);
 		}
 
@@ -401,9 +418,10 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 		 * clientid.  Update the confirmed record from the
 		 * unconfirmed record.
 		 */
+		display_clientid(&dspbuf_clientid4, conf->cid_clientid);
 		LogDebug(component,
-			 "Updating clientid %" PRIx64 "->%s cb_program=%u",
-			 conf->cid_clientid, str_client,
+			 "Updating clientid %s->%s cb_program=%u",
+			 str_clientid4, str_client,
 			 arg_CREATE_SESSION4->csa_cb_program);
 
 		if (unconf != NULL) {
@@ -414,17 +432,19 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 		}
 
 		if (isDebug(component)) {
-			char str[HASHTABLE_DISPLAY_STRLEN];
+			char str[LOG_BUFF_LEN];
+			struct display_buffer dspbuf = {sizeof(str), str, str};
 
-			display_client_id_rec(conf, str);
+			display_client_id_rec(&dspbuf, conf);
 			LogDebug(component, "Updated %s", str);
 		}
 	} else {
 		/* This is a new clientid */
 		if (isFullDebug(component)) {
-			char str[HASHTABLE_DISPLAY_STRLEN];
+			char str[LOG_BUFF_LEN];
+			struct display_buffer dspbuf = {sizeof(str), str, str};
 
-			display_client_id_rec(unconf, str);
+			display_client_id_rec(&dspbuf, unconf);
 			LogFullDebug(component, "Confirming new %s", str);
 		}
 
@@ -449,9 +469,10 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 		unconf = NULL;
 
 		if (isDebug(component)) {
-			char str[HASHTABLE_DISPLAY_STRLEN];
+			char str[LOG_BUFF_LEN];
+			struct display_buffer dspbuf = {sizeof(str), str, str};
 
-			display_client_id_rec(conf, str);
+			display_client_id_rec(&dspbuf, conf);
 			LogDebug(component, "Confirmed %s", str);
 		}
 	}
@@ -467,9 +488,10 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 	dec_session_ref(nfs41_session);
 
 	if (isFullDebug(component)) {
-		char str[HASHTABLE_DISPLAY_STRLEN];
+		char str[LOG_BUFF_LEN];
+		struct display_buffer dspbuf = {sizeof(str), str, str};
 
-		display_client_record(client_record, str);
+		display_client_record(&dspbuf, client_record);
 		LogFullDebug(component,
 			     "Client Record %s cr_confirmed_rec=%p cr_unconfirmed_rec=%p",
 			     str,
