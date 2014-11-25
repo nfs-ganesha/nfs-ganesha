@@ -71,9 +71,16 @@ int nfs4_op_destroy_clientid(struct nfs_argop4 *op, compound_data_t *data,
 
 	clientid = arg_DESTROY_CLIENTID4->dca_clientid;
 
-	LogDebug(COMPONENT_CLIENTID,
-		 "DESTROY_CLIENTID clientid=%" PRIx64,
-		 clientid);
+	if (isDebug(COMPONENT_CLIENTID)) {
+		char str[LOG_BUFF_LEN];
+		struct display_buffer dspbuf = {sizeof(str), str, str};
+
+		display_clientid(&dspbuf, clientid);
+
+		LogDebug(COMPONENT_CLIENTID,
+			 "DESTROY_CLIENTID clientid=%s",
+			 str);
+	}
 
 	res_DESTROY_CLIENTID4->dcr_status = NFS4_OK;
 
@@ -112,9 +119,10 @@ int nfs4_op_destroy_clientid(struct nfs_argop4 *op, compound_data_t *data,
 	pthread_mutex_lock(&client_record->cr_mutex);
 
 	if (isFullDebug(COMPONENT_CLIENTID)) {
-		char str[HASHTABLE_DISPLAY_STRLEN];
+		char str[LOG_BUFF_LEN];
+		struct display_buffer dspbuf = {sizeof(str), str, str};
 
-		display_client_record(client_record, str);
+		display_client_record(&dspbuf, client_record);
 
 		LogFullDebug(COMPONENT_CLIENTID,
 			     "Client Record %s cr_confirmed_rec=%p "
@@ -150,9 +158,10 @@ int nfs4_op_destroy_clientid(struct nfs_argop4 *op, compound_data_t *data,
 		 * with this clientid record.
 		 */
 		if (isFullDebug(COMPONENT_CLIENTID)) {
-			char str[HASHTABLE_DISPLAY_STRLEN];
+			char str[LOG_BUFF_LEN];
+			struct display_buffer dspbuf = {sizeof(str), str, str};
 
-			display_client_id_rec(conf, str);
+			display_client_id_rec(&dspbuf, conf);
 
 			LogDebug(COMPONENT_CLIENTID,
 				 "Removing confirmed clientid %s", str);
@@ -169,9 +178,10 @@ int nfs4_op_destroy_clientid(struct nfs_argop4 *op, compound_data_t *data,
 		 * with this clientid record.
 		 */
 		if (isFullDebug(COMPONENT_CLIENTID)) {
-			char str[HASHTABLE_DISPLAY_STRLEN];
+			char str[LOG_BUFF_LEN];
+			struct display_buffer dspbuf = {sizeof(str), str, str};
 
-			display_client_id_rec(unconf, str);
+			display_client_id_rec(&dspbuf, unconf);
 
 			LogDebug(COMPONENT_CLIENTID,
 				 "Removing unconfirmed clientid %s", str);

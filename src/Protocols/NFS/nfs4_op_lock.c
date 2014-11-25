@@ -211,13 +211,17 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 
 		if (isDebug(COMPONENT_CLIENTID) && (clientid !=
 		    open_owner->so_owner.so_nfs4_owner.so_clientrec)) {
-			char str_open[HASHTABLE_DISPLAY_STRLEN];
-			char str_lock[HASHTABLE_DISPLAY_STRLEN];
+			char str_open[LOG_BUFF_LEN / 2];
+			struct display_buffer dspbuf_open = {
+				sizeof(str_open), str_open, str_open};
+			char str_lock[LOG_BUFF_LEN / 2];
+			struct display_buffer dspbuf_lock = {
+				sizeof(str_lock), str_lock, str_lock};
 
-			display_client_id_rec(open_owner->so_owner.
-					      so_nfs4_owner.so_clientrec,
-					      str_open);
-			display_client_id_rec(clientid, str_lock);
+			display_client_id_rec(&dspbuf_open,
+					      open_owner->so_owner
+					      .so_nfs4_owner.so_clientrec);
+			display_client_id_rec(&dspbuf_lock, clientid);
 
 			LogDebug(COMPONENT_CLIENTID,
 				 "Unexpected, new lock owner clientid {%s} "
