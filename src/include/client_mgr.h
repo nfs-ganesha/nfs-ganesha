@@ -55,6 +55,11 @@ struct gsh_client {
 	unsigned char addrbuf[];
 };
 
+static inline int64_t inc_gsh_client_refcount(struct gsh_client *client)
+{
+	return atomic_inc_int64_t(&client->refcnt);
+}
+
 void client_pkginit(void);
 #ifdef USE_DBUS
 void dbus_client_init(void);

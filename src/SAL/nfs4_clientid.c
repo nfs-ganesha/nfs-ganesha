@@ -49,6 +49,7 @@
 #include "cache_inode_lru.h"
 #include "abstract_atomic.h"
 #include "city.h"
+#include "client_mgr.h"
 
 /**
  * @brief Hashtable used to cache NFSv4 clientids
@@ -353,6 +354,8 @@ void free_client_id(nfs_client_id_t *clientid)
 								== 0);
 	}
 
+	put_gsh_client(clientid->gsh_client);
+
 	pool_free(client_id_pool, clientid);
 }
 
@@ -563,6 +566,7 @@ nfs_client_id_t *create_client_id(clientid4 clientid,
 	client_rec->cid_credential = *credential;
 	client_rec->cid_minorversion = minorversion;
 	client_rec->gsh_client = gsh_client;
+	inc_gsh_client_refcount(gsh_client);
 
 	/* need to init the list_head */
 	glist_init(&client_rec->cid_openowners);
