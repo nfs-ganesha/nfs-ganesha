@@ -52,30 +52,35 @@ hash_table_t *ht_9p_owner;
  * @param[in]  key The 9P owner
  * @param[out] str Output buffer
  *
- * @return Length of display string.
+ * @return the bytes remaining in the buffer.
  */
 
-int display_9p_owner(state_owner_t *key, char *str)
+int display_9p_owner(struct display_buffer *dspbuf, state_owner_t *owner)
 {
-	char *strtmp = str;
+	int b_left;
 
-	if (key == NULL)
-		return sprintf(str, "<NULL>");
+	if (owner == NULL)
+		return display_printf(dspbuf, "<NULL>");
 
-	strtmp += sprintf(strtmp, "STATE_LOCK_OWNER_9P %p", key);
-	strtmp +=
-	    sprint_sockaddr((sockaddr_t *) &
-			    (key->so_owner.so_9p_owner.client_addr), strtmp,
-			    SOCK_NAME_MAX);
+	b_left = display_printf(dspbuf, "STATE_LOCK_OWNER_9P %p", owner);
 
-	strtmp +=
-	    sprintf(strtmp, " proc_id=%u", key->so_owner.so_9p_owner.proc_id);
+	if (b_left <= 0)
+		return b_left;
 
-	strtmp +=
-	    sprintf(strtmp, " refcount=%d",
-		    atomic_fetch_int32_t(&key->so_refcount));
+	b_left = display_sockaddr(dspbuf,
+				  &owner->so_owner.so_9p_owner.client_addr);
 
-	return strtmp - str;
+	if (b_left <= 0)
+		return b_left;
+
+	b_left = display_printf(dspbuf, " proc_id=%u",
+				owner->so_owner.so_9p_owner.proc_id);
+
+	if (b_left <= 0)
+		return b_left;
+
+	return display_printf(dspbuf, " refcount=%d",
+			      atomic_fetch_int32_t(&owner->so_refcount));
 }
 
 /**
@@ -89,7 +94,9 @@ int display_9p_owner(state_owner_t *key, char *str)
 
 int display_9p_owner_key(struct gsh_buffdesc *buff, char *str)
 {
-	return display_9p_owner(buff->addr, str);
+	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
+	display_9p_owner(&dspbuf, buff->addr);
+	return display_buffer_len(&dspbuf);
 }
 
 /**
@@ -103,7 +110,9 @@ int display_9p_owner_key(struct gsh_buffdesc *buff, char *str)
 
 int display_9p_owner_val(struct gsh_buffdesc *buff, char *str)
 {
-	return display_9p_owner(buff->addr, str);
+	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
+	display_9p_owner(&dspbuf, buff->addr);
+	return display_buffer_len(&dspbuf);
 }
 
 /**
@@ -119,11 +128,13 @@ int display_9p_owner_val(struct gsh_buffdesc *buff, char *str)
 int compare_9p_owner(state_owner_t *owner1, state_owner_t *owner2)
 {
 	if (isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE)) {
-		char str1[HASHTABLE_DISPLAY_STRLEN];
-		char str2[HASHTABLE_DISPLAY_STRLEN];
+		char str1[LOG_BUFF_LEN / 2];
+		char str2[LOG_BUFF_LEN / 2];
+		struct display_buffer dspbuf1 = {sizeof(str1), str1, str1};
+		struct display_buffer dspbuf2 = {sizeof(str2), str2, str2};
 
-		display_9p_owner(owner1, str1);
-		display_9p_owner(owner2, str2);
+		display_9p_owner(&dspbuf1, owner1);
+		display_9p_owner(&dspbuf2, owner2);
 		LogFullDebug(COMPONENT_STATE, "{%s} vs {%s}", str1, str2);
 	}
 

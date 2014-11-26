@@ -595,9 +595,14 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 
 	}
 
-	LogFullDebug(COMPONENT_NFS_V4_LOCK,
-		     "LOCK state_seqid = %u, lock_state = %p",
-		     lock_state->state_seqid, lock_state);
+	if (isFullDebug(COMPONENT_NFS_V4_LOCK)) {
+		char str[LOG_BUFF_LEN];
+		struct display_buffer dspbuf = {sizeof(str), str, str};
+
+		display_stateid(&dspbuf, lock_state);
+
+		LogFullDebug(COMPONENT_NFS_V4_LOCK, "LOCK stateid %s", str);
+	}
 
 	LogLock(COMPONENT_NFS_V4_LOCK, NIV_FULL_DEBUG, "LOCK applied",
 		data->current_entry, lock_owner, &lock_desc);

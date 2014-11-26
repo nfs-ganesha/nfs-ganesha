@@ -937,10 +937,12 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid, bool make_stale)
 		state_nfs4_owner_unlock_all(owner);
 
 		if (isFullDebug(COMPONENT_CLIENTID)) {
+			char str[LOG_BUFF_LEN];
+			struct display_buffer dspbuf = {sizeof(str), str, str};
 			int32_t refcount =
 			    atomic_fetch_int32_t(&owner->so_refcount);
 
-			DisplayOwner(owner, str);
+			display_owner(&dspbuf, owner);
 
 			if (refcount > 1)
 				LogWarn(COMPONENT_CLIENTID,
@@ -992,10 +994,12 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid, bool make_stale)
 		release_openstate(owner);
 
 		if (isFullDebug(COMPONENT_CLIENTID)) {
+			char str[LOG_BUFF_LEN];
+			struct display_buffer dspbuf = {sizeof(str), str, str};
 			int32_t refcount =
 			    atomic_fetch_int32_t(&owner->so_refcount);
 
-			DisplayOwner(owner, str);
+			display_owner(&dspbuf, owner);
 
 			if (refcount > 1)
 				LogWarn(COMPONENT_CLIENTID,

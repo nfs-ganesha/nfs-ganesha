@@ -71,9 +71,14 @@ state_status_t state_add_segment(state_t *state, struct pnfs_segment *segment,
 	state_layout_segment_t *new_segment = NULL;
 
 	if (state->state_type != STATE_TYPE_LAYOUT) {
+		char str[LOG_BUFF_LEN];
+		struct display_buffer dspbuf = {sizeof(str), str, str};
+
+		display_stateid(&dspbuf, state);
+
 		LogCrit(COMPONENT_PNFS,
-			"Attempt to add layout segment to "
-			"non-layout state: %p", state);
+			"Attempt to add layout segment to non-layout state: %s",
+			str);
 		return STATE_BAD_TYPE;
 	}
 
@@ -245,13 +250,14 @@ void revoke_owner_layouts(state_owner_t *client_owner)
 		pthread_mutex_unlock(&client_owner->so_mutex);
 
 	if (errcnt == STATE_ERR_MAX) {
-		char owner_str[HASHTABLE_DISPLAY_STRLEN];
+		char str[LOG_BUFF_LEN];
+		struct display_buffer dspbuf = {sizeof(str), str, str};
 
-		DisplayOwner(client_owner, owner_str);
+		display_owner(&dspbuf, client_owner);
 
 		LogFatal(COMPONENT_STATE,
 			 "Could not complete cleanup of layouts for client owner %s",
-			 owner_str);
+			 str);
 	}
 }
 

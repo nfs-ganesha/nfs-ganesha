@@ -58,15 +58,22 @@ uint64_t global_sequence = 0;
 /**
  * @brief Display a session ID
  *
- * @param[in]  session_id The session ID
- * @param[out] str        Output buffer
+ * @param[in/out] dspbuf     display_buffer describing output string
+ * @param[in]     session_id The session ID
  *
- * @return Length of output string.
+ * @return the bytes remaining in the buffer.
  */
 
-int display_session_id(char *session_id, char *str)
+int display_session_id(struct display_buffer *dspbuf, char *session_id)
 {
-	return DisplayOpaqueValue(session_id, NFS4_SESSIONID_SIZE, str);
+	int b_left = display_cat(dspbuf, "sessionid=");
+
+	if (b_left > 0)
+		b_left = display_opaque_value(dspbuf,
+					      session_id,
+					      NFS4_SESSIONID_SIZE);
+
+	return b_left;
 }
 
 /**
@@ -80,30 +87,23 @@ int display_session_id(char *session_id, char *str)
 
 int display_session_id_key(struct gsh_buffdesc *buff, char *str)
 {
-	char *strtmp = str;
-
-	strtmp += sprintf(strtmp, "sessionid=");
-	strtmp += display_session_id(buff->addr, strtmp);
-	return strtmp - str;
+	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
+	display_session_id(&dspbuf, buff->addr);
+	return display_buffer_len(&dspbuf);
 }
 
 /**
  * @brief Display a session object
  *
+ * @param[in]  buff The key to display
  * @param[in]  session The session to display
- * @param[out] str     Output buffer
  *
- * @return Length of displayed string.
+ * @return Length of output string.
  */
 
-int display_session(nfs41_session_t *session, char *str)
+int display_session(struct display_buffer *dspbuf, nfs41_session_t *session)
 {
-	char *strtmp = str;
-
-	strtmp += sprintf(strtmp, "sessionid=");
-	strtmp += display_session_id(session->session_id, strtmp);
-
-	return strtmp - str;
+	return display_session_id(dspbuf, session->session_id);
 }
 
 /**
@@ -117,7 +117,9 @@ int display_session(nfs41_session_t *session, char *str)
 
 int display_session_id_val(struct gsh_buffdesc *buff, char *str)
 {
-	return display_session(buff->addr, str);
+	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
+	display_session(&dspbuf, buff->addr);
+	return display_buffer_len(&dspbuf);
 }
 
 /**
@@ -320,12 +322,15 @@ int nfs41_Session_Get_Pointer(char sessionid[NFS4_SESSIONID_SIZE],
 	struct gsh_buffdesc key;
 	struct gsh_buffdesc val;
 	struct hash_latch latch;
-	char str[HASHTABLE_DISPLAY_STRLEN];
+	char str[LOG_BUFF_LEN];
+	struct display_buffer dspbuf = {sizeof(str), str, str};
+	bool str_valid = false;
 	hash_error_t code;
 
 	if (isFullDebug(COMPONENT_SESSIONS)) {
-		display_session_id(sessionid, str);
+		display_session_id(&dspbuf, sessionid);
 		LogFullDebug(COMPONENT_SESSIONS, "Get Session %s", str);
+		str_valid = true;
 	}
 
 	key.addr = sessionid;
@@ -334,7 +339,9 @@ int nfs41_Session_Get_Pointer(char sessionid[NFS4_SESSIONID_SIZE],
 	code = hashtable_getlatch(ht_session_id, &key, &val, false, &latch);
 	if (code != HASHTABLE_SUCCESS) {
 		hashtable_releaselatched(ht_session_id, &latch);
-		LogFullDebug(COMPONENT_SESSIONS, "Session %s Not Found", str);
+		if (str_valid)
+			LogFullDebug(COMPONENT_SESSIONS,
+				     "Session %s Not Found", str);
 		return 0;
 	}
 
@@ -343,7 +350,8 @@ int nfs41_Session_Get_Pointer(char sessionid[NFS4_SESSIONID_SIZE],
 
 	hashtable_releaselatched(ht_session_id, &latch);
 
-	LogFullDebug(COMPONENT_SESSIONS, "Session %s Found", str);
+	if (str_valid)
+		LogFullDebug(COMPONENT_SESSIONS, "Session %s Found", str);
 
 	return 1;
 }

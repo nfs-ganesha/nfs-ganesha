@@ -64,7 +64,11 @@ int nfs4_op_setclientid(struct nfs_argop4 *op, compound_data_t *data,
 	clientaddr4 * const res_SETCLIENTID4_INUSE =
 	    &resp->nfs_resop4_u.opsetclientid.SETCLIENTID4res_u.client_using;
 	char str_verifier[NFS4_VERIFIER_SIZE * 2 + 1];
+	struct display_buffer dspbuf_verifier = {
+			sizeof(str_verifier), str_verifier, str_verifier};
 	char str_client[NFS4_OPAQUE_LIMIT * 2 + 1];
+	struct display_buffer dspbuf_client = {
+			sizeof(str_client), str_client, str_client};
 	const char *str_client_addr = "(unknown)";
 	/* The clientid4 broken down into fields */
 	char str_clientid4[DISPLAY_CLIENTID_SIZE];
@@ -89,12 +93,13 @@ int nfs4_op_setclientid(struct nfs_argop4 *op, compound_data_t *data,
 		str_client_addr = op_ctx->client->hostaddr_str;
 
 	if (isDebug(COMPONENT_CLIENTID)) {
-		DisplayOpaqueValue(arg_SETCLIENTID4->client.id.id_val,
-				   arg_SETCLIENTID4->client.id.id_len,
-				   str_client);
+		display_opaque_value(&dspbuf_client,
+				     arg_SETCLIENTID4->client.id.id_val,
+				     arg_SETCLIENTID4->client.id.id_len);
 
-		sprint_mem(str_verifier, arg_SETCLIENTID4->client.verifier,
-			   NFS4_VERIFIER_SIZE);
+		display_opaque_bytes(&dspbuf_verifier,
+				     arg_SETCLIENTID4->client.verifier,
+				     NFS4_VERIFIER_SIZE);
 	} else {
 		str_client[0] = '\0';
 		str_verifier[0] = '\0';
