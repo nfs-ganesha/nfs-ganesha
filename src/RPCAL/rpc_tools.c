@@ -185,47 +185,42 @@ uint64_t hash_sockaddr(sockaddr_t *addr, bool ignore_port)
 	return addr_hash;
 }
 
-int sprint_sockaddr(sockaddr_t *addr, char *buf, int len)
+int display_sockaddr(struct display_buffer *dspbuf, sockaddr_t *addr)
 {
 	const char *name = NULL;
-	int port, alen;
+	char ipname[SOCK_NAME_MAX];
+	int port;
+	int b_left = display_start(dspbuf);
 
-	buf[0] = '\0';
+	if (b_left <= 0)
+		return b_left;
 
 	switch (addr->ss_family) {
 	case AF_INET:
-		name =
-		    inet_ntop(addr->ss_family,
-			      &(((struct sockaddr_in *)addr)->sin_addr), buf,
-			      len);
+		name = inet_ntop(addr->ss_family,
+				 &(((struct sockaddr_in *)addr)->sin_addr),
+				 ipname,
+				 sizeof(ipname));
 		port = ntohs(((struct sockaddr_in *)addr)->sin_port);
 		break;
+
 	case AF_INET6:
-		name =
-		    inet_ntop(addr->ss_family,
-			      &(((struct sockaddr_in6 *)addr)->sin6_addr), buf,
-			      len);
+		name = inet_ntop(addr->ss_family,
+				 &(((struct sockaddr_in6 *)addr)->sin6_addr),
+				 ipname,
+				 sizeof(ipname));
 		port = ntohs(((struct sockaddr_in6 *)addr)->sin6_port);
 		break;
+
 	case AF_LOCAL:
-		strncpy(buf, ((struct sockaddr_un *)addr)->sun_path, len);
-		name = buf;
-		port = -1;
-		break;
-	default:
-		port = -1;
+		return display_cat(dspbuf,
+				   ((struct sockaddr_un *)addr)->sun_path);
 	}
 
-	alen = strlen(buf);
-
-	if (name == NULL) {
-		strncpy(buf, "<unknown>", len);
-		return 0;
-	}
-
-	if (port >= 0 && alen < len)
-		snprintf(buf + alen, len - alen, ":%d", port);
-	return 1;
+	if (name == NULL)
+		return display_cat(dspbuf, "<unknown>");
+	else
+		return display_printf(dspbuf, "%s:%d", name, port);
 }
 
 int sprint_sockip(sockaddr_t *addr, char *buf, int len)
