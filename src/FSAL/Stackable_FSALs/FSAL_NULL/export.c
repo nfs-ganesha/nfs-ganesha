@@ -66,7 +66,7 @@ static void release(struct fsal_export *exp_hdl)
 	sub_fsal = myself->sub_export->fsal;
 
 	/* Release the sub_export */
-	myself->sub_export->ops->release(myself->sub_export);
+	myself->sub_export->exp_ops.release(myself->sub_export);
 	fsal_put(sub_fsal);
 
 	fsal_detach_export(exp_hdl->fsal, &exp_hdl->exports);
@@ -79,69 +79,69 @@ static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
 				      struct fsal_obj_handle *obj_hdl,
 				      fsal_dynamicfsinfo_t *infop)
 {
-	return next_ops.exp_ops->get_fs_dynamic_info(exp_hdl, obj_hdl,
+	return next_ops.exp_ops.get_fs_dynamic_info(exp_hdl, obj_hdl,
 						     infop);
 }
 
 static bool fs_supports(struct fsal_export *exp_hdl,
 			fsal_fsinfo_options_t option)
 {
-	return next_ops.exp_ops->fs_supports(exp_hdl, option);
+	return next_ops.exp_ops.fs_supports(exp_hdl, option);
 }
 
 static uint64_t fs_maxfilesize(struct fsal_export *exp_hdl)
 {
-	return next_ops.exp_ops->fs_maxfilesize(exp_hdl);
+	return next_ops.exp_ops.fs_maxfilesize(exp_hdl);
 }
 
 static uint32_t fs_maxread(struct fsal_export *exp_hdl)
 {
-	return next_ops.exp_ops->fs_maxread(exp_hdl);
+	return next_ops.exp_ops.fs_maxread(exp_hdl);
 }
 
 static uint32_t fs_maxwrite(struct fsal_export *exp_hdl)
 {
-	return next_ops.exp_ops->fs_maxwrite(exp_hdl);
+	return next_ops.exp_ops.fs_maxwrite(exp_hdl);
 }
 
 static uint32_t fs_maxlink(struct fsal_export *exp_hdl)
 {
-	return next_ops.exp_ops->fs_maxlink(exp_hdl);
+	return next_ops.exp_ops.fs_maxlink(exp_hdl);
 }
 
 static uint32_t fs_maxnamelen(struct fsal_export *exp_hdl)
 {
-	return next_ops.exp_ops->fs_maxnamelen(exp_hdl);
+	return next_ops.exp_ops.fs_maxnamelen(exp_hdl);
 }
 
 static uint32_t fs_maxpathlen(struct fsal_export *exp_hdl)
 {
-	return next_ops.exp_ops->fs_maxpathlen(exp_hdl);
+	return next_ops.exp_ops.fs_maxpathlen(exp_hdl);
 }
 
 static struct timespec fs_lease_time(struct fsal_export *exp_hdl)
 {
-	return next_ops.exp_ops->fs_lease_time(exp_hdl);
+	return next_ops.exp_ops.fs_lease_time(exp_hdl);
 }
 
 static fsal_aclsupp_t fs_acl_support(struct fsal_export *exp_hdl)
 {
-	return next_ops.exp_ops->fs_acl_support(exp_hdl);
+	return next_ops.exp_ops.fs_acl_support(exp_hdl);
 }
 
 static attrmask_t fs_supported_attrs(struct fsal_export *exp_hdl)
 {
-	return next_ops.exp_ops->fs_supported_attrs(exp_hdl);
+	return next_ops.exp_ops.fs_supported_attrs(exp_hdl);
 }
 
 static uint32_t fs_umask(struct fsal_export *exp_hdl)
 {
-	return next_ops.exp_ops->fs_umask(exp_hdl);
+	return next_ops.exp_ops.fs_umask(exp_hdl);
 }
 
 static uint32_t fs_xattr_access_rights(struct fsal_export *exp_hdl)
 {
-	return next_ops.exp_ops->fs_xattr_access_rights(exp_hdl);
+	return next_ops.exp_ops.fs_xattr_access_rights(exp_hdl);
 }
 
 /* get_quota
@@ -157,7 +157,7 @@ static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 			       const char *filepath, int quota_type,
 			       fsal_quota_t *pquota)
 {
-	return next_ops.exp_ops->get_quota(exp_hdl, filepath, quota_type,
+	return next_ops.exp_ops.get_quota(exp_hdl, filepath, quota_type,
 					   pquota);
 }
 
@@ -169,7 +169,7 @@ static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 			       const char *filepath, int quota_type,
 			       fsal_quota_t *pquota, fsal_quota_t *presquota)
 {
-	return next_ops.exp_ops->set_quota(exp_hdl, filepath, quota_type,
+	return next_ops.exp_ops.set_quota(exp_hdl, filepath, quota_type,
 					   pquota, presquota);
 }
 
@@ -184,7 +184,7 @@ static fsal_status_t extract_handle(struct fsal_export *exp_hdl,
 				    fsal_digesttype_t in_type,
 				    struct gsh_buffdesc *fh_desc)
 {
-	return next_ops.exp_ops->extract_handle(exp_hdl, in_type, fh_desc);
+	return next_ops.exp_ops.extract_handle(exp_hdl, in_type, fh_desc);
 }
 
 /* nullfs_export_ops_init
@@ -285,7 +285,7 @@ fsal_status_t nullfs_create_export(struct fsal_module *fsal_hdl,
 		return fsalstat(ERR_FSAL_NOMEM, ENOMEM);
 	}
 
-	expres = fsal_stack->ops->create_export(fsal_stack,
+	expres = fsal_stack->m_ops.create_export(fsal_stack,
 						nullfsal.subfsal.fsal_node,
 						up_ops);
 	fsal_put(fsal_stack);
@@ -298,20 +298,29 @@ fsal_status_t nullfs_create_export(struct fsal_module *fsal_hdl,
 	}
 
 	myself->sub_export = op_ctx->fsal_export;
-	/* Init next_ops structure */
-	next_ops.exp_ops = gsh_malloc(sizeof(struct export_ops));
-	next_ops.obj_ops = gsh_malloc(sizeof(struct fsal_obj_ops));
-	next_ops.ds_ops = gsh_malloc(sizeof(struct fsal_ds_ops));
 
-	memcpy(next_ops.exp_ops,
-	       myself->sub_export->ops,
+	/* Init next_ops structure */
+	/*** FIX ME!!!
+	 * This structure had 3 mallocs that were never freed,
+	 * and would leak for every export created.
+	 * Now static to avoid the leak, the saved contents were
+	 * never restored back to the original.
+	 */
+
+	memcpy(&next_ops.exp_ops,
+	       &myself->sub_export->exp_ops,
 	       sizeof(struct export_ops));
-	memcpy(next_ops.obj_ops,
+#ifdef EXPORT_OPS_INIT
+	/*** FIX ME!!!
+	 * Need to iterate through the lists to save and restore.
+	 */
+	memcpy(&next_ops.obj_ops,
 	       myself->sub_export->obj_ops,
 	       sizeof(struct fsal_obj_ops));
-	memcpy(next_ops.ds_ops,
-	       myself->sub_export->ds_ops,
+	memcpy(&next_ops.dsh_ops,
+	       myself->sub_export->dsh_ops,
 	       sizeof(struct fsal_ds_ops));
+#endif				/* EXPORT_OPS_INIT */
 	next_ops.up_ops = up_ops;
 
 	retval = fsal_export_init(&myself->export);
@@ -319,8 +328,13 @@ fsal_status_t nullfs_create_export(struct fsal_module *fsal_hdl,
 		gsh_free(myself);
 		return fsalstat(posix2fsal_error(retval), retval);
 	}
-	nullfs_export_ops_init(myself->export.ops);
+	nullfs_export_ops_init(&myself->export.exp_ops);
+#ifdef EXPORT_OPS_INIT
+	/*** FIX ME!!!
+	 * Need to iterate through the lists to save and restore.
+	 */
 	nullfs_handle_ops_init(myself->export.obj_ops);
+#endif				/* EXPORT_OPS_INIT */
 	myself->export.up_ops = up_ops;
 	myself->export.fsal = fsal_hdl;
 

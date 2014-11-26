@@ -9,20 +9,19 @@
  * ----------------------------------------------------------------------------
  */
 /*
- * vim:noexpandtab:shiftwidth=4:tabstop=4:
+ * vim:noexpandtab:shiftwidth=8:tabstop=8:
  */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include "fsal.h"
-#include "fsal_internal.h"
-#include "fsal_convert.h"
-#include "fsal_types.h"
 #include <sys/types.h>
 #include <unistd.h>
 #include <utime.h>
 #include <sys/time.h>
+#include "fsal_api.h"
+#include "fsal_internal.h"
+#include "fsal_convert.h"
 #include "pt_methods.h"
 #include "pt_ganesha.h"
 #include "export_mgr.h"
@@ -142,8 +141,8 @@ fsal_status_t PTFSAL_setattrs(struct fsal_obj_handle *dir_hdl,	/* IN */
 	wanted_attrs = *p_attrib_set;
 
 	/* First, check that FSAL attributes changes are allowed. */
-	if (!p_context->fsal_export->ops->fs_supports(p_context->fsal_export,
-						      fso_cansettime)) {
+	if (!p_context->fsal_export->exp_ops.
+	    fs_supports(p_context->fsal_export, fso_cansettime)) {
 		if (wanted_attrs.mask &
 		    (ATTR_ATIME | ATTR_CREATION | ATTR_CTIME | ATTR_MTIME)) {
 			/* handled as an unsettable attribute. */
@@ -153,12 +152,12 @@ fsal_status_t PTFSAL_setattrs(struct fsal_obj_handle *dir_hdl,	/* IN */
 
 	/* apply umask, if mode attribute is to be changed */
 	if (FSAL_TEST_MASK(wanted_attrs.mask, ATTR_MODE)) {
-		wanted_attrs.mode &= ~p_context->fsal_export->ops->
+		wanted_attrs.mode &= ~p_context->fsal_export->exp_ops.
 			fs_umask(p_context->fsal_export);
 	}
 
 	/* get current attributes */
-	current_attrs.mask = p_context->fsal_export->ops->
+	current_attrs.mask = p_context->fsal_export->exp_ops.
 		fs_supported_attrs(p_context->fsal_export);
 	status =
 	    PTFSAL_getattrs(p_context->fsal_export, p_context, myself->handle,

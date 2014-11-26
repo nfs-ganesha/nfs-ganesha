@@ -47,7 +47,7 @@
 fsal_status_t nullfs_open(struct fsal_obj_handle *obj_hdl,
 			  fsal_openflags_t openflags)
 {
-	return next_ops.obj_ops->open(obj_hdl, openflags);
+	return next_ops.obj_ops.open(obj_hdl, openflags);
 }
 
 /* nullfs_status
@@ -56,7 +56,7 @@ fsal_status_t nullfs_open(struct fsal_obj_handle *obj_hdl,
 
 fsal_openflags_t nullfs_status(struct fsal_obj_handle *obj_hdl)
 {
-	return next_ops.obj_ops->status(obj_hdl);
+	return next_ops.obj_ops.status(obj_hdl);
 }
 
 /* nullfs_read
@@ -69,7 +69,7 @@ fsal_status_t nullfs_read(struct fsal_obj_handle *obj_hdl,
 			  size_t *read_amount,
 			  bool *end_of_file)
 {
-	return next_ops.obj_ops->read(obj_hdl, offset, buffer_size,
+	return next_ops.obj_ops.read(obj_hdl, offset, buffer_size,
 				      buffer, read_amount, end_of_file);
 }
 
@@ -82,7 +82,7 @@ fsal_status_t nullfs_write(struct fsal_obj_handle *obj_hdl,
 			   size_t buffer_size, void *buffer,
 			   size_t *write_amount, bool *fsal_stable)
 {
-	return next_ops.obj_ops->write(obj_hdl, offset, buffer_size,
+	return next_ops.obj_ops.write(obj_hdl, offset, buffer_size,
 				       buffer, write_amount, fsal_stable);
 }
 
@@ -94,7 +94,7 @@ fsal_status_t nullfs_write(struct fsal_obj_handle *obj_hdl,
 fsal_status_t nullfs_commit(struct fsal_obj_handle *obj_hdl,	/* sync */
 			    off_t offset, size_t len)
 {
-	return next_ops.obj_ops->commit(obj_hdl, offset, len);
+	return next_ops.obj_ops.commit(obj_hdl, offset, len);
 }
 
 /* nullfs_lock_op
@@ -109,7 +109,7 @@ fsal_status_t nullfs_lock_op(struct fsal_obj_handle *obj_hdl,
 			     fsal_lock_param_t *request_lock,
 			     fsal_lock_param_t *conflicting_lock)
 {
-	return next_ops.obj_ops->lock_op(obj_hdl, p_owner, lock_op,
+	return next_ops.obj_ops.lock_op(obj_hdl, p_owner, lock_op,
 					 request_lock, conflicting_lock);
 }
 
@@ -121,7 +121,7 @@ fsal_status_t nullfs_lock_op(struct fsal_obj_handle *obj_hdl,
 
 fsal_status_t nullfs_close(struct fsal_obj_handle *obj_hdl)
 {
-	return next_ops.obj_ops->close(obj_hdl);
+	return next_ops.obj_ops.close(obj_hdl);
 }
 
 /* nullfs_lru_cleanup
@@ -133,5 +133,5 @@ fsal_status_t nullfs_close(struct fsal_obj_handle *obj_hdl)
 fsal_status_t nullfs_lru_cleanup(struct fsal_obj_handle *obj_hdl,
 				 lru_actions_t requests)
 {
-	return next_ops.obj_ops->lru_cleanup(obj_hdl, requests);
+	return next_ops.obj_ops.lru_cleanup(obj_hdl, requests);
 }

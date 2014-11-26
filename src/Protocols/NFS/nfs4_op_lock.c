@@ -397,7 +397,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* Do grace period checking */
 	if (nfs_in_grace()) {
-		if (op_ctx->fsal_export->ops->
+		if (op_ctx->fsal_export->exp_ops.
 			fs_supports(op_ctx->fsal_export, fso_grace_method))
 				fsal_grace = true;
 

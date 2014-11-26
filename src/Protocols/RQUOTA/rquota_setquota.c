@@ -93,7 +93,7 @@ int rquota_setquota(nfs_arg_t *arg,
 	fsal_quota_in.btimeleft = qarg->sqa_dqblk.rq_btimeleft;
 	fsal_quota_in.ftimeleft = qarg->sqa_dqblk.rq_ftimeleft;
 
-	fsal_status = exp->fsal_export->ops->set_quota(exp->fsal_export,
+	fsal_status = exp->fsal_export->exp_ops.set_quota(exp->fsal_export,
 						       quota_path, quota_type,
 						       &fsal_quota_in,
 						       &fsal_quota_out);

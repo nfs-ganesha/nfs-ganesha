@@ -134,21 +134,31 @@ int vfs_get_root_handle(struct vfs_filesystem *vfs_fs,
 	return vfs_re_index(vfs_fs, exp);
 }
 
+/** Routines to intercept pNFS
+ *  (null routines in XFS)
+ */
+
 void vfs_fini(struct vfs_fsal_export *myself)
 {
 	pnfs_panfs_fini(myself->pnfs_data);
 }
 
-void vfs_init_export_ops(struct vfs_fsal_export *myself,
-			 const char *export_path)
+void vfs_init_handle_ops_pnfs(struct vfs_fsal_export *myself,
+			      struct fsal_obj_ops *ops)
+{
+	if (myself->pnfs_panfs_enabled)
+		handle_ops_pnfs(ops);
+}
+
+void vfs_init_export_ops_pnfs(struct vfs_fsal_export *myself,
+			      const char *export_path)
 {
 	if (myself->pnfs_panfs_enabled) {
 		LogInfo(COMPONENT_FSAL,
 			"pnfs_panfs was enabled for [%s]",
 			export_path);
-		export_ops_pnfs(myself->export.ops);
-		handle_ops_pnfs(myself->export.obj_ops);
-		fsal_ops_pnfs(myself->export.fsal->ops);
+		export_ops_pnfs(&myself->export.exp_ops);
+		fsal_ops_pnfs(&myself->export.fsal->m_ops);
 	}
 }
 

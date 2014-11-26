@@ -158,7 +158,7 @@ int _9p_attach(struct _9p_request_data *req9p, void *worker_data,
 			goto errout;
 		}
 	} else {
-		fsal_status = op_ctx->fsal_export->ops->lookup_path(
+		fsal_status = op_ctx->fsal_export->exp_ops.lookup_path(
 						op_ctx->fsal_export,
 						exppath,
 						&pfsal_handle);
@@ -168,7 +168,7 @@ int _9p_attach(struct _9p_request_data *req9p, void *worker_data,
 			goto errout;
 		}
 
-		pfsal_handle->ops->handle_to_key(pfsal_handle,
+		pfsal_handle->obj_ops.handle_to_key(pfsal_handle,
 						 &fsal_data.fh_desc);
 		fsal_data.export = export->fsal_export;
 

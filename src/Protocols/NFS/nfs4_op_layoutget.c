@@ -257,7 +257,7 @@ static nfsstat4 one_segment(cache_entry_t *entry,
 	state_status_t state_status = 0;
 	/* Size of a loc_body buffer */
 	size_t loc_body_size = MIN(
-	    op_ctx->fsal_export->ops->fs_loc_body_size(op_ctx->fsal_export),
+	    op_ctx->fsal_export->exp_ops.fs_loc_body_size(op_ctx->fsal_export),
 	    arg->maxcount);
 
 	if (loc_body_size == 0) {
@@ -283,7 +283,7 @@ static nfsstat4 one_segment(cache_entry_t *entry,
 	++layout_state->state_data.layout.granting;
 	PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
-	nfs_status = entry->obj_handle->ops->layoutget(entry->obj_handle,
+	nfs_status = entry->obj_handle->obj_ops.layoutget(entry->obj_handle,
 						      op_ctx,
 						      &loc_body,
 						      arg,
@@ -387,7 +387,7 @@ int nfs4_op_layoutget(struct nfs_argop4 *op, compound_data_t *data,
 		goto out;
 
 	/* max_segment_count is also an indication of if fsal supports pnfs */
-	max_segment_count = op_ctx->fsal_export->ops->
+	max_segment_count = op_ctx->fsal_export->exp_ops.
 			fs_maximum_segments(op_ctx->fsal_export);
 
 	if (max_segment_count == 0) {

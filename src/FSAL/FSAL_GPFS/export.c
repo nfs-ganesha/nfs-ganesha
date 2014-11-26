@@ -383,12 +383,15 @@ nfsstat4 gpfs_create_ds_handle(struct fsal_export * const export_pub,
 			       const struct gsh_buffdesc * const desc,
 			       struct fsal_ds_handle ** const ds_pub)
 {
+	struct fsal_module *fsal = export_pub->fsal;
 	/* Handle to be created */
-	struct gpfs_ds *ds = NULL;
+	struct gpfs_ds *ds;
+	struct fsal_pnfs_ds *pds;
 	struct fsal_filesystem *fs;
+	struct gpfs_file_handle *fh;
 	enum fsid_type fsid_type;
 	struct fsal_fsid__ fsid;
-	struct gpfs_file_handle *fh;
+	nfsstat4 status;
 
 	*ds_pub = NULL;
 
@@ -419,22 +422,22 @@ nfsstat4 gpfs_create_ds_handle(struct fsal_export * const export_pub,
 		return NFS4ERR_STALE;
 	}
 
-	ds = gsh_calloc(1, sizeof(struct gpfs_ds));
+	status = fsal->m_ops.fsal_pnfs_ds(fsal, desc, &pds);
+	if (status != NFS4_OK)
+		return status;
 
-	if (ds == NULL)
+	status = fsal->m_ops.fsal_ds_handle(pds, desc, ds_pub);
+	if (status != NFS4_OK) {
+		pds->s_ops.release(pds);
 		return NFS4ERR_SERVERFAULT;
+	}
 
-	/* Connect lazily when a FILE_SYNC4 write forces us to, not
-	   here. */
+	/* assumes fsal_ds_handle is first in handle struct */
+	ds = (struct gpfs_ds *)*ds_pub;
 
-	ds->connected = false;
 	ds->gpfs_fs = fs->private;
 
 	memcpy(&ds->wire, desc->addr, desc->len);
-
-	fsal_ds_handle_init(&ds->ds, export_pub->ds_ops, export_pub->fsal);
-
-	*ds_pub = &ds->ds;
 
 	return NFS4_OK;
 }
@@ -783,8 +786,7 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 		gsh_free(myself);
 		return fsalstat(posix2fsal_error(retval), retval);
 	}
-	gpfs_export_ops_init(myself->export.ops);
-	gpfs_handle_ops_init(myself->export.obj_ops);
+	gpfs_export_ops_init(&myself->export.exp_ops);
 	myself->export.up_ops = up_ops;
 
 	retval = fsal_attach_export(fsal_hdl, &myself->export.exports);
@@ -823,23 +825,21 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 	gpfs_ganesha(OPENHANDLE_GET_VERIFIER, &GPFS_write_verifier);
 
 	myself->pnfs_ds_enabled =
-	    myself->export.ops->fs_supports(&myself->export,
+	    myself->export.exp_ops.fs_supports(&myself->export,
 					    fso_pnfs_ds_supported);
 	myself->pnfs_mds_enabled =
-	    myself->export.ops->fs_supports(&myself->export,
+	    myself->export.exp_ops.fs_supports(&myself->export,
 					    fso_pnfs_mds_supported);
 	if (myself->pnfs_ds_enabled) {
 		LogInfo(COMPONENT_FSAL,
 			"gpfs_fsal_create: pnfs ds was enabled for [%s]",
 			op_ctx->export->fullpath);
-		ds_ops_init(myself->export.ds_ops);
 	}
 	if (myself->pnfs_mds_enabled) {
 		LogInfo(COMPONENT_FSAL,
 			"gpfs_fsal_create: pnfs mds was enabled for [%s]",
 			op_ctx->export->fullpath);
-		export_ops_pnfs(myself->export.ops);
-		handle_ops_pnfs(myself->export.obj_ops);
+		export_ops_pnfs(&myself->export.exp_ops);
 	}
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 

@@ -68,7 +68,7 @@ fsal_status_t GPFSFSAL_create(struct fsal_obj_handle *dir_hdl,	/* IN */
 	unix_mode = fsal2unix_mode(accessmode);
 
 	/* Apply umask */
-	unix_mode = unix_mode & ~p_context->fsal_export->ops->
+	unix_mode = unix_mode & ~p_context->fsal_export->exp_ops.
 			fs_umask(p_context->fsal_export);
 
 	LogFullDebug(COMPONENT_FSAL, "Creation mode: 0%o", accessmode);
@@ -155,7 +155,7 @@ fsal_status_t GPFSFSAL_mkdir(struct fsal_obj_handle *dir_hdl,	/* IN */
 	unix_mode = fsal2unix_mode(accessmode);
 
 	/* Apply umask */
-	unix_mode = unix_mode & ~p_context->fsal_export->ops->
+	unix_mode = unix_mode & ~p_context->fsal_export->exp_ops.
 			fs_umask(p_context->fsal_export);
 
 	/* build new entry path */
@@ -236,7 +236,7 @@ fsal_status_t GPFSFSAL_link(struct fsal_obj_handle *destdir_hdl,	/* IN */
 
 	/* Tests if hardlinking is allowed by configuration. */
 
-	if (!p_context->fsal_export->ops->
+	if (!p_context->fsal_export->exp_ops.
 	    fs_supports(p_context->fsal_export,
 			fso_link_support))
 		return fsalstat(ERR_FSAL_NOTSUPP, 0);
@@ -330,7 +330,7 @@ fsal_status_t GPFSFSAL_mknode(struct fsal_obj_handle *dir_hdl,	/* IN */
 	unix_mode = fsal2unix_mode(accessmode);
 
 	/* Apply umask */
-	unix_mode = unix_mode & ~p_context->fsal_export->ops->
+	unix_mode = unix_mode & ~p_context->fsal_export->exp_ops.
 			fs_umask(p_context->fsal_export);
 
 	switch (nodetype) {

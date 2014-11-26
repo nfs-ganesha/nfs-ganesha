@@ -1413,7 +1413,7 @@ static fsal_status_t pxy_symlink(struct fsal_obj_handle *dir_hdl,
 	struct pxy_obj_handle *ph;
 
 	/* Tests if symlinking is allowed by configuration. */
-	if (!op_ctx->fsal_export->ops->fs_supports(op_ctx->fsal_export,
+	if (!op_ctx->fsal_export->exp_ops.fs_supports(op_ctx->fsal_export,
 						  fso_symlink_support))
 		return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 
@@ -1513,7 +1513,7 @@ static fsal_status_t pxy_link(struct fsal_obj_handle *obj_hdl,
 	int opcnt = 0;
 
 	/* Tests if hardlinking is allowed by configuration. */
-	if (!op_ctx->fsal_export->ops->fs_supports(op_ctx->fsal_export,
+	if (!op_ctx->fsal_export->exp_ops.fs_supports(op_ctx->fsal_export,
 						  fso_link_support))
 		return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 
@@ -1707,7 +1707,7 @@ static fsal_status_t pxy_setattrs(struct fsal_obj_handle *obj_hdl,
 	nfs_resop4 resoparray[FSAL_SETATTR_NB_OP_ALLOC];
 
 	if (FSAL_TEST_MASK(attrs->mask, ATTR_MODE))
-		attrs->mode &= ~op_ctx->fsal_export->ops->
+		attrs->mode &= ~op_ctx->fsal_export->exp_ops.
 				fs_umask(op_ctx->fsal_export);
 
 	ph = container_of(obj_hdl, struct pxy_obj_handle, obj);
@@ -1832,7 +1832,7 @@ static void pxy_hdl_release(struct fsal_obj_handle *obj_hdl)
 	struct pxy_obj_handle *ph =
 	    container_of(obj_hdl, struct pxy_obj_handle, obj);
 
-	fsal_obj_handle_uninit(obj_hdl);
+	fsal_obj_handle_fini(obj_hdl);
 
 	gsh_free(ph);
 }
@@ -1870,6 +1870,7 @@ static fsal_status_t pxy_read(struct fsal_obj_handle *obj_hdl,
 			      uint64_t offset, size_t buffer_size, void *buffer,
 			      size_t *read_amount, bool *end_of_file)
 {
+	int mr;
 	int rc;
 	int opcnt = 0;
 	struct pxy_obj_handle *ph;
@@ -1890,10 +1891,9 @@ static fsal_status_t pxy_read(struct fsal_obj_handle *obj_hdl,
 		return fsalstat(ERR_FSAL_FILE_OPEN, EBADF);
 #endif
 
-	if (buffer_size >
-	    op_ctx->fsal_export->ops->fs_maxread(op_ctx->fsal_export))
-		buffer_size =
-		    op_ctx->fsal_export->ops->fs_maxread(op_ctx->fsal_export);
+	mr = op_ctx->fsal_export->exp_ops.fs_maxread(op_ctx->fsal_export);
+	if (buffer_size > mr)
+		buffer_size = mr;
 
 	COMPOUNDV4_ARG_ADD_OP_PUTFH(opcnt, argoparray, ph->fh4);
 	rok = &resoparray[opcnt].nfs_resop4_u.opread.READ4res_u.resok4;
@@ -1915,6 +1915,7 @@ static fsal_status_t pxy_write(struct fsal_obj_handle *obj_hdl,
 			       uint64_t offset, size_t size, void *buffer,
 			       size_t *write_amount, bool *fsal_stable)
 {
+	int mw;
 	int rc;
 	int opcnt = 0;
 #define FSAL_WRITE_NB_OP_ALLOC 2
@@ -1936,10 +1937,10 @@ static fsal_status_t pxy_write(struct fsal_obj_handle *obj_hdl,
 	}
 #endif
 
-	if (size >
-	    op_ctx->fsal_export->ops->fs_maxwrite(op_ctx->fsal_export))
-		size =
-		    op_ctx->fsal_export->ops->fs_maxwrite(op_ctx->fsal_export);
+	mw = op_ctx->fsal_export->exp_ops.fs_maxwrite(op_ctx->fsal_export);
+	if (size > mw)
+		size = mw;
+
 	COMPOUNDV4_ARG_ADD_OP_PUTFH(opcnt, argoparray, ph->fh4);
 	wok = &resoparray[opcnt].nfs_resop4_u.opwrite.WRITE4res_u.resok4;
 	COMPOUNDV4_ARG_ADD_OP_WRITE(opcnt, argoparray, offset, buffer, size);
@@ -2065,6 +2066,7 @@ static struct pxy_obj_handle *pxy_alloc_handle(struct fsal_export *exp,
 		}
 #endif
 		fsal_obj_handle_init(&n->obj, exp, attr->type);
+		pxy_handle_ops_init(&n->obj.obj_ops);
 	}
 	return n;
 }

@@ -106,7 +106,7 @@ int _9p_xattrcreate(struct _9p_request_data *req9p, void *worker_data,
 			 (u32) *msgtag, *fid, name);
 
 		fsal_status =
-		    pfid->pentry->obj_handle->ops->remove_extattr_by_name(
+		    pfid->pentry->obj_handle->obj_ops.remove_extattr_by_name(
 			pfid->pentry->obj_handle,
 			name);
 
@@ -149,7 +149,7 @@ int _9p_xattrcreate(struct _9p_request_data *req9p, void *worker_data,
 			create = FALSE;
 
 		fsal_status =
-		    pfid->pentry->obj_handle->ops->setextattr_value(
+		    pfid->pentry->obj_handle->obj_ops.setextattr_value(
 			pfid->pentry->obj_handle,
 			name,
 			pfid->specdata.xattr.xattr_content,
@@ -160,7 +160,7 @@ int _9p_xattrcreate(struct _9p_request_data *req9p, void *worker_data,
 		if (FSAL_IS_ERROR(fsal_status)
 		    && fsal_status.major == ERR_FSAL_EXIST && (*flag == 0)) {
 			fsal_status =
-			    pfid->pentry->obj_handle->ops->
+			    pfid->pentry->obj_handle->obj_ops.
 			    setextattr_value(pfid->pentry->obj_handle,
 					     name,
 					     pfid->specdata.xattr.xattr_content,
@@ -174,7 +174,7 @@ int _9p_xattrcreate(struct _9p_request_data *req9p, void *worker_data,
 					   (fsal_status)), plenout, preply);
 
 		fsal_status =
-		    pfid->pentry->obj_handle->ops->getextattr_id_by_name(
+		    pfid->pentry->obj_handle->obj_ops.getextattr_id_by_name(
 			pfid->pentry->obj_handle,
 			name,
 			&pfid->specdata.xattr.xattr_id);

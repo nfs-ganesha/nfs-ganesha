@@ -92,7 +92,7 @@ MODULE_INIT void glusterfs_init(void)
 	}
 
 	/* set up module operations */
-	glfsal_module->fsal.ops->create_export = glusterfs_create_export;
+	glfsal_module->fsal.m_ops.create_export = glusterfs_create_export;
 
 	/* setup global handle internals */
 	glfsal_module->fs_info = default_gluster_info;

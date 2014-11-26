@@ -32,7 +32,6 @@
 
 #include "config.h"
 
-#include "fsal.h"
 #include <libgen.h>		/* used for 'dirname' */
 #include <pthread.h>
 #include <string.h>
@@ -41,6 +40,7 @@
 #include <sys/time.h>
 #include <mntent.h>
 #include "ganesha_list.h"
+#include "fsal.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 #include "FSAL/fsal_config.h"
@@ -108,7 +108,7 @@ static struct zfs_fsal_obj_handle *alloc_handle(struct zfs_file_handle *fh,
 	}
 
 	hdl->obj_handle.attributes.mask =
-	    exp_hdl->ops->fs_supported_attrs(exp_hdl);
+	    exp_hdl->exp_ops.fs_supported_attrs(exp_hdl);
 
 	st = posix2fsal_attributes(stat, &hdl->obj_handle.attributes);
 	if (FSAL_IS_ERROR(st))
@@ -117,10 +117,10 @@ static struct zfs_fsal_obj_handle *alloc_handle(struct zfs_file_handle *fh,
 	fsal_obj_handle_init(&hdl->obj_handle,
 			     exp_hdl,
 			     posix2fsal_type(stat->st_mode));
+	zfs_handle_ops_init(&hdl->obj_handle.obj_ops);
 	return hdl;
 
  spcerr:
-	hdl->obj_handle.ops = NULL;
 	PTHREAD_RWLOCK_unlock(&hdl->obj_handle.lock);
 	pthread_rwlock_destroy(&hdl->obj_handle.lock);
 	if (hdl->obj_handle.type == SYMBOLIC_LINK) {
@@ -158,7 +158,7 @@ static fsal_status_t tank_lookup(struct fsal_obj_handle *parent,
 	memset(&fh, 0, sizeof(struct zfs_file_handle));
 	parent_hdl =
 	    container_of(parent, struct zfs_fsal_obj_handle, obj_handle);
-	if (!parent->ops->handle_is(parent, DIRECTORY)) {
+	if (!parent->obj_ops.handle_is(parent, DIRECTORY)) {
 		LogCrit(COMPONENT_FSAL,
 			"Parent handle is not a directory. hdl = 0x%p", parent);
 		return fsalstat(ERR_FSAL_NOTDIR, 0);
@@ -307,7 +307,7 @@ static fsal_status_t tank_create(struct fsal_obj_handle *dir_hdl,
 	int type;
 
 	*handle = NULL;		/* poison it */
-	if (!dir_hdl->ops->handle_is(dir_hdl, DIRECTORY)) {
+	if (!dir_hdl->obj_ops.handle_is(dir_hdl, DIRECTORY)) {
 		LogCrit(COMPONENT_FSAL,
 			"Parent handle is not a directory. hdl = 0x%p",
 			dir_hdl);
@@ -362,7 +362,7 @@ static fsal_status_t tank_mkdir(struct fsal_obj_handle *dir_hdl,
 	int type;
 
 	*handle = NULL;		/* poison it */
-	if (!dir_hdl->ops->handle_is(dir_hdl, DIRECTORY)) {
+	if (!dir_hdl->obj_ops.handle_is(dir_hdl, DIRECTORY)) {
 		LogCrit(COMPONENT_FSAL,
 			"Parent handle is not a directory. hdl = 0x%p",
 			dir_hdl);
@@ -435,7 +435,7 @@ static fsal_status_t tank_makesymlink(struct fsal_obj_handle *dir_hdl,
 	struct zfs_file_handle fh;
 
 	*handle = NULL;		/* poison it first */
-	if (!dir_hdl->ops->handle_is(dir_hdl, DIRECTORY)) {
+	if (!dir_hdl->obj_ops.handle_is(dir_hdl, DIRECTORY)) {
 		LogCrit(COMPONENT_FSAL,
 			"Parent handle is not a directory. hdl = 0x%p",
 			dir_hdl);
@@ -533,7 +533,7 @@ static fsal_status_t tank_linkfile(struct fsal_obj_handle *obj_hdl,
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	creden_t cred;
 
-	if (!op_ctx->fsal_export->ops->
+	if (!op_ctx->fsal_export->exp_ops.
 	    fs_supports(op_ctx->fsal_export, fso_link_support)) {
 		fsal_error = ERR_FSAL_NOTSUPP;
 		goto out;
@@ -772,7 +772,7 @@ static fsal_status_t tank_setattrs(struct fsal_obj_handle *obj_hdl,
 
 	/* apply umask, if mode attribute is to be changed */
 	if (FSAL_TEST_MASK(attrs->mask, ATTR_MODE))
-		attrs->mode &= ~op_ctx->fsal_export->ops->
+		attrs->mode &= ~op_ctx->fsal_export->exp_ops.
 				fs_umask(op_ctx->fsal_export);
 	myself = container_of(obj_hdl, struct zfs_fsal_obj_handle, obj_handle);
 
@@ -977,7 +977,7 @@ static void release(struct fsal_obj_handle *obj_hdl)
 		}
 	}
 
-	fsal_obj_handle_uninit(obj_hdl);
+	fsal_obj_handle_fini(obj_hdl);
 
 	if (type == SYMBOLIC_LINK) {
 		if (myself->u.symlink.link_content != NULL)

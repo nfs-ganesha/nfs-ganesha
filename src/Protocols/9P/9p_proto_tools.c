@@ -264,24 +264,19 @@ int _9p_tools_clunk(struct _9p_fid *pfid)
 
 		/* Do we handle system.posix_acl_access */
 		if (pfid->specdata.xattr.xattr_id == ACL_ACCESS_XATTR_ID) {
-			fsal_status =
-			    pfid->pentry->obj_handle->ops->setextattr_value(
-				    pfid->pentry->obj_handle,
-				    "system.posix_acl_access",
-				    pfid->specdata.xattr.xattr_content,
-				    pfid->specdata.xattr.xattr_size,
-				    FALSE);
+			fsal_status = pfid->pentry->obj_handle->obj_ops.
+				setextattr_value(pfid->pentry->obj_handle,
+					"system.posix_acl_access",
+					pfid->specdata.xattr.xattr_content,
+					pfid->specdata.xattr.xattr_size,
+					FALSE);
 		} else {
 			/* Write the xattr content */
-			fsal_status =
-			    pfid->pentry->obj_handle->ops->
+			fsal_status = pfid->pentry->obj_handle->obj_ops.
 				setextattr_value_by_id(pfid->pentry->obj_handle,
-						       pfid->specdata.xattr.
-						       xattr_id,
-						       pfid->specdata.xattr.
-						       xattr_content,
-						       pfid->specdata.xattr.
-						       xattr_size);
+					pfid->specdata.xattr.xattr_id,
+					pfid->specdata.xattr.xattr_content,
+					pfid->specdata.xattr.xattr_size);
 			if (FSAL_IS_ERROR(fsal_status)) {
 				free_fid(pfid);
 				return _9p_tools_errno(

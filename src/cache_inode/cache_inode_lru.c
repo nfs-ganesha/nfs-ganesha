@@ -411,7 +411,7 @@ cache_inode_lru_clean(cache_entry_t *entry)
 
 	/* Free FSAL resources */
 	if (entry->obj_handle) {
-		entry->obj_handle->ops->release(entry->obj_handle);
+		entry->obj_handle->obj_ops.release(entry->obj_handle);
 		entry->obj_handle = NULL;
 	}
 

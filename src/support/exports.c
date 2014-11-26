@@ -568,7 +568,7 @@ static int fsal_commit(void *node, void *link_mem, void *self_struct,
 			pathlen--;
 		export->fullpath[pathlen] = '\0';
 	}
-	status = fsal->ops->create_export(fsal,
+	status = fsal->m_ops.create_export(fsal,
 					  node,
 					  &fsal_up_top);
 	if ((export->options_set & EXPORT_OPTION_EXPIRE_SET) == 0)
@@ -591,8 +591,10 @@ static int fsal_commit(void *node, void *link_mem, void *self_struct,
 	/* We are connected up to the fsal side.  Now
 	 * validate maxread/write etc with fsal params
 	 */
-	MaxRead = export->fsal_export->ops->fs_maxread(export->fsal_export);
-	MaxWrite = export->fsal_export->ops->fs_maxwrite(export->fsal_export);
+	MaxRead = export->fsal_export->
+		exp_ops.fs_maxread(export->fsal_export);
+	MaxWrite = export->fsal_export->
+		exp_ops.fs_maxwrite(export->fsal_export);
 
 	if (export->MaxRead > MaxRead && MaxRead != 0) {
 		LogInfo(COMPONENT_CONFIG,
@@ -1296,7 +1298,7 @@ static int build_default_root(void)
 	} else {
 		fsal_status_t rc;
 
-		rc = fsal_hdl->ops->create_export(fsal_hdl,
+		rc = fsal_hdl->m_ops.create_export(fsal_hdl,
 						  NULL,
 						  &fsal_up_top);
 
@@ -1314,7 +1316,7 @@ static int build_default_root(void)
 	export->fsal_export = root_op_context.req_ctx.fsal_export;
 
 	if (!insert_gsh_export(export)) {
-		export->fsal_export->ops->release(export->fsal_export);
+		export->fsal_export->exp_ops.release(export->fsal_export);
 		fsal_put(fsal_hdl);
 		LogCrit(COMPONENT_CONFIG,
 			"Failed to insert pseudo root   In use??");
@@ -1412,7 +1414,7 @@ void free_export_resources(struct gsh_export *export)
 	FreeClientList(&export->clients);
 	if (export->fsal_export != NULL) {
 		struct fsal_module *fsal = export->fsal_export->fsal;
-		export->fsal_export->ops->release(export->fsal_export);
+		export->fsal_export->exp_ops.release(export->fsal_export);
 		fsal_put(fsal);
 	}
 	export->fsal_export = NULL;
@@ -1521,7 +1523,7 @@ int init_export_root(struct gsh_export *export)
 		 "About to lookup_path for ExportId=%u Path=%s",
 		 export->export_id, export->fullpath);
 	fsal_status =
-	    export->fsal_export->ops->lookup_path(export->fsal_export,
+	    export->fsal_export->exp_ops.lookup_path(export->fsal_export,
 						  export->fullpath,
 						  &root_handle);
 

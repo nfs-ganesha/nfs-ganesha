@@ -293,8 +293,7 @@ fsal_status_t pt_create_export(struct fsal_module *fsal_hdl,
 			 "pt_fsal_create: out of memory for object");
 		goto errout2;
 	}
-	pt_export_ops_init(myself->export.ops);
-	pt_handle_ops_init(myself->export.obj_ops);
+	pt_export_ops_init(&myself->export.exp_ops);
 	myself->export.up_ops = up_ops;
 
 	retval = fsal_attach_export(fsal_hdl, &myself->export.exports);

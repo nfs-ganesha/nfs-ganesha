@@ -39,7 +39,6 @@
 
 #include <cephfs/libcephfs.h>
 #include <fcntl.h>
-#include "fsal.h"
 #include "fsal_api.h"
 #include "FSAL/fsal_commonlib.h"
 #include "fsal_up.h"
@@ -81,7 +80,7 @@ static void release(struct fsal_ds_handle *const ds_pub)
 {
 	/* The private 'full' DS handle */
 	struct ds *ds = container_of(ds_pub, struct ds, ds);
-	fsal_ds_handle_uninit(&ds->ds);
+	fsal_ds_handle_fini(&ds->ds);
 	gsh_free(ds);
 }
 

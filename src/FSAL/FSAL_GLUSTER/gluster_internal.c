@@ -28,6 +28,7 @@
 #include <sys/types.h>
 #include <attr/xattr.h> /* ENOATTR */
 #include "gluster_internal.h"
+#include "fsal_api.h"
 #include "fsal_convert.h"
 #include "nfs4_acls.h"
 #include "FSAL/fsal_commonlib.h"
@@ -284,6 +285,7 @@ int construct_handle(struct glusterfs_export *glexport, const struct stat *sb,
 
 	fsal_obj_handle_init(&constructing->handle, &glexport->export,
 			     constructing->handle.attributes.type);
+	handle_ops_init(&constructing->handle.obj_ops);
 
 	*obj = constructing;
 

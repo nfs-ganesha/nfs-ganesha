@@ -167,8 +167,7 @@ fsal_status_t pxy_create_export(struct fsal_module *fsal_hdl,
 		gsh_free(exp);
 		return fsalstat(ERR_FSAL_NOMEM, ENOMEM);
 	}
-	pxy_export_ops_init(exp->exp.ops);
-	pxy_handle_ops_init(exp->exp.obj_ops);
+	pxy_export_ops_init(&exp->exp.exp_ops);
 	exp->exp.up_ops = up_ops;
 	exp->info = &pxy->special;
 	exp->exp.fsal = fsal_hdl;

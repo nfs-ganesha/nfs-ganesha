@@ -619,8 +619,7 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 		gsh_free(myself);
 		return fsalstat(posix2fsal_error(retval), retval);
 	}
-	vfs_export_ops_init(myself->export.ops);
-	vfs_handle_ops_init(myself->export.obj_ops);
+	vfs_export_ops_init(&myself->export.exp_ops);
 	myself->export.up_ops = up_ops;
 
 	retval = load_config_from_node(parse_node,
@@ -631,7 +630,7 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 	if (retval != 0)
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	myself->export.fsal = fsal_hdl;
-	vfs_init_export_ops(myself, op_ctx->export->fullpath);
+	vfs_init_export_ops_pnfs(myself, op_ctx->export->fullpath);
 
 	retval = fsal_attach_export(fsal_hdl, &myself->export.exports);
 	if (retval != 0) {

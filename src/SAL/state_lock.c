@@ -1785,7 +1785,7 @@ static void grant_blocked_locks(cache_entry_t *entry)
 	/* If FSAL supports async blocking locks,
 	 * allow it to grant blocked locks.
 	 */
-	if (export->ops->fs_supports(export, fso_lock_support_async_block))
+	if (export->exp_ops.fs_supports(export, fso_lock_support_async_block))
 		return;
 
 	glist_for_each_safe(glist, glistn, &entry->object.file.lock_list) {
@@ -2132,7 +2132,7 @@ state_status_t do_unlock_no_owner(cache_entry_t *entry,
 		LogEntry("FSAL Unlock", found_entry);
 
 		fsal_status =
-		    entry->obj_handle->ops->lock_op(entry->obj_handle,
+		    entry->obj_handle->obj_ops.lock_op(entry->obj_handle,
 						    NULL, FSAL_OP_UNLOCK,
 						    punlock, NULL);
 
@@ -2200,15 +2200,16 @@ state_status_t do_lock_op(cache_entry_t *entry,
 	 *   overlaps a lock we already have (no need to make another FSAL
 	 *   call in that case)
 	 */
-	if (!fsal_export->ops->fs_supports(fsal_export, fso_lock_support)
-	    || (!fsal_export->ops->
+	if (!fsal_export->exp_ops.fs_supports(fsal_export, fso_lock_support)
+	    || (!fsal_export->exp_ops.
 		fs_supports(fsal_export, fso_lock_support_async_block)
 		&& lock_op == FSAL_OP_CANCEL)
-	    || (!fsal_export->ops->
+	    || (!fsal_export->exp_ops.
 		fs_supports(fsal_export, fso_lock_support_async_block)
 		&& overlap)
-	    || (!fsal_export->ops->
-		fs_supports(fsal_export, fso_lock_support_owner) && overlap))
+	    || (!fsal_export->exp_ops.
+		fs_supports(fsal_export, fso_lock_support_owner)
+		&& overlap))
 		return STATE_SUCCESS;
 
 	LogLock(COMPONENT_STATE, NIV_FULL_DEBUG, fsal_lock_op_str(lock_op),
@@ -2216,10 +2217,11 @@ state_status_t do_lock_op(cache_entry_t *entry,
 
 	memset(&conflicting_lock, 0, sizeof(conflicting_lock));
 
-	if (fsal_export->ops->fs_supports(fsal_export, fso_lock_support_owner)
+	if (fsal_export->exp_ops.
+	    fs_supports(fsal_export, fso_lock_support_owner)
 	    || lock_op != FSAL_OP_UNLOCK) {
 		if (lock_op == FSAL_OP_LOCKB &&
-		    !fsal_export->ops->fs_supports(
+		    !fsal_export->exp_ops.fs_supports(
 				fsal_export,
 				fso_lock_support_async_block))
 			lock_op = FSAL_OP_LOCK;
@@ -2233,9 +2235,9 @@ state_status_t do_lock_op(cache_entry_t *entry,
 			if (status == STATE_LOCK_CONFLICT)
 				sleep(1); /* Don't bombard the filesystem. */
 
-			fsal_status = entry->obj_handle->ops->lock_op(
+			fsal_status = entry->obj_handle->obj_ops.lock_op(
 					entry->obj_handle,
-					fsal_export->ops->fs_supports(
+					fsal_export->exp_ops.fs_supports(
 						fsal_export,
 						fso_lock_support_owner)
 					? owner : NULL, lock_op,
@@ -2446,7 +2448,7 @@ state_status_t state_lock(cache_entry_t *entry,
 	 * well.
 	 */
 	if (lock->lock_type == FSAL_LOCK_R &&
-	    fsal_export->ops->fs_supports(fsal_export, fso_reopen_method))
+	    fsal_export->exp_ops.fs_supports(fsal_export, fso_reopen_method))
 		openflags = FSAL_O_READ;
 	else
 		openflags = FSAL_O_RDWR;
@@ -2616,7 +2618,7 @@ state_status_t state_lock(cache_entry_t *entry,
 	}
 
 	/* Decide how to proceed */
-	if (fsal_export->ops->
+	if (fsal_export->exp_ops.
 	    fs_supports(fsal_export, fso_lock_support_async_block)
 	    && blocking == STATE_NLM_BLOCKING) {
 		/* FSAL supports blocking locks, and this is an NLM blocking
@@ -2706,7 +2708,7 @@ state_status_t state_lock(cache_entry_t *entry,
 	 * make FSAL call. Don't ask for conflict if we know about a conflict.
 	 */
 	if (allow
-	    || fsal_export->ops->fs_supports(fsal_export,
+	    || fsal_export->exp_ops.fs_supports(fsal_export,
 					     fso_lock_support_async_block)) {
 		/* Prepare to make call to FSAL for this lock */
 		status = do_lock_op(entry,

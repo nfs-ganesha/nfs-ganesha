@@ -475,7 +475,7 @@ static fattr_xdr_result encode_linksupport(XDR *xdr,
 	if (args->data != NULL) {
 		export = op_ctx->fsal_export;
 		linksupport =
-		    export->ops->fs_supports(export, fso_link_support);
+		    export->exp_ops.fs_supports(export, fso_link_support);
 	}
 	if (!xdr_bool(xdr, &linksupport))
 		return FATTR_XDR_FAILED;
@@ -501,7 +501,7 @@ static fattr_xdr_result encode_symlinksupport(XDR *xdr,
 	if (args->data != NULL) {
 		export = op_ctx->fsal_export;
 		symlinksupport =
-		    export->ops->fs_supports(export, fso_symlink_support);
+		    export->exp_ops.fs_supports(export, fso_symlink_support);
 	}
 	if (!xdr_bool(xdr, &symlinksupport))
 		return FATTR_XDR_FAILED;
@@ -529,7 +529,7 @@ static fattr_xdr_result encode_namedattrsupport(XDR *xdr,
 	if (args->data != NULL) {
 		export = op_ctx->fsal_export;
 		namedattrsupport =
-		    export->ops->fs_supports(export, fso_named_attr);
+		    export->exp_ops.fs_supports(export, fso_named_attr);
 	}
 	if (!xdr_bool(xdr, &namedattrsupport))
 		return FATTR_XDR_FAILED;
@@ -589,7 +589,7 @@ static fattr_xdr_result encode_uniquehandles(XDR *xdr,
 	if (args->data != NULL) {
 		export = op_ctx->fsal_export;
 		uniquehandles =
-		    export->ops->fs_supports(export, fso_unique_handles);
+		    export->exp_ops.fs_supports(export, fso_unique_handles);
 	}
 	if (!inline_xdr_bool(xdr, &uniquehandles))
 		return FATTR_XDR_FAILED;
@@ -838,7 +838,7 @@ static fattr_xdr_result encode_aclsupport(XDR *xdr,
 
 	if (args->data != NULL) {
 		export = op_ctx->fsal_export;
-		aclsupport = export->ops->fs_acl_support(export);
+		aclsupport = export->exp_ops.fs_acl_support(export);
 	}
 	if (!inline_xdr_u_int32_t(xdr, &aclsupport))
 		return FATTR_XDR_FAILED;
@@ -884,7 +884,8 @@ static fattr_xdr_result encode_cansettime(XDR *xdr,
 
 	if (args->data != NULL) {
 		export = op_ctx->fsal_export;
-		cansettime = export->ops->fs_supports(export, fso_cansettime);
+		cansettime = export->exp_ops.
+				fs_supports(export, fso_cansettime);
 	}
 	if (!inline_xdr_bool(xdr, &cansettime))
 		return FATTR_XDR_FAILED;
@@ -911,7 +912,7 @@ static fattr_xdr_result encode_case_insensitive(XDR *xdr,
 	if (args->data != NULL) {
 		export = op_ctx->fsal_export;
 		caseinsensitive =
-		    export->ops->fs_supports(export, fso_case_insensitive);
+		    export->exp_ops.fs_supports(export, fso_case_insensitive);
 	}
 	if (!inline_xdr_bool(xdr, &caseinsensitive))
 		return FATTR_XDR_FAILED;
@@ -938,7 +939,7 @@ static fattr_xdr_result encode_case_preserving(XDR *xdr,
 	if (args->data != NULL) {
 		export = op_ctx->fsal_export;
 		casepreserving =
-		    export->ops->fs_supports(export, fso_case_preserving);
+		    export->exp_ops.fs_supports(export, fso_case_preserving);
 	}
 	if (!inline_xdr_bool(xdr, &casepreserving))
 		return FATTR_XDR_FAILED;
@@ -965,7 +966,7 @@ static fattr_xdr_result encode_chown_restricted(XDR *xdr,
 	if (args->data != NULL) {
 		export = op_ctx->fsal_export;
 		chownrestricted =
-		    export->ops->fs_supports(export, fso_chown_restricted);
+		    export->exp_ops.fs_supports(export, fso_chown_restricted);
 	}
 	if (!inline_xdr_bool(xdr, &chownrestricted))
 		return FATTR_XDR_FAILED;
@@ -1202,7 +1203,8 @@ static fattr_xdr_result encode_homogeneous(XDR *xdr,
 
 	if (args->data != NULL) {
 		export = op_ctx->fsal_export;
-		homogeneous = export->ops->fs_supports(export, fso_homogenous);
+		homogeneous = export->exp_ops.
+				fs_supports(export, fso_homogenous);
 	}
 	if (!inline_xdr_bool(xdr, &homogeneous))
 		return FATTR_XDR_FAILED;
@@ -1227,7 +1229,7 @@ static fattr_xdr_result encode_maxfilesize(XDR *xdr,
 
 	if (args->data != NULL) {
 		export = op_ctx->fsal_export;
-		maxfilesize = export->ops->fs_maxfilesize(export);
+		maxfilesize = export->exp_ops.fs_maxfilesize(export);
 	}
 	if (!inline_xdr_u_int64_t(xdr, &maxfilesize))
 		return FATTR_XDR_FAILED;
@@ -1251,7 +1253,7 @@ static fattr_xdr_result encode_maxlink(XDR *xdr, struct xdr_attrs_args *args)
 
 	if (args->data != NULL) {
 		export = op_ctx->fsal_export;
-		maxlink = export->ops->fs_maxlink(export);
+		maxlink = export->exp_ops.fs_maxlink(export);
 	}
 	if (!inline_xdr_u_int32_t(xdr, &maxlink))
 		return FATTR_XDR_FAILED;
@@ -1274,7 +1276,7 @@ static fattr_xdr_result encode_maxname(XDR *xdr, struct xdr_attrs_args *args)
 
 	if (args->data != NULL) {
 		export = op_ctx->fsal_export;
-		maxname = export->ops->fs_maxnamelen(export);
+		maxname = export->exp_ops.fs_maxnamelen(export);
 	}
 	if (!inline_xdr_u_int32_t(xdr, &maxname))
 		return FATTR_XDR_FAILED;
@@ -1383,7 +1385,7 @@ static fattr_xdr_result encode_no_trunc(XDR *xdr, struct xdr_attrs_args *args)
 
 	if (args->data != NULL) {
 		export = op_ctx->fsal_export;
-		no_trunc = export->ops->fs_supports(export, fso_no_trunc);
+		no_trunc = export->exp_ops.fs_supports(export, fso_no_trunc);
 	}
 	if (!inline_xdr_bool(xdr, &no_trunc))
 		return FATTR_XDR_FAILED;
@@ -2057,7 +2059,7 @@ static fattr_xdr_result encode_fs_layout_types(XDR *xdr,
 	if (args->data == NULL)
 		return FATTR_XDR_NOOP;
 	export = op_ctx->fsal_export;
-	export->ops->fs_layouttypes(export, &typecount, &layouttypes);
+	export->exp_ops.fs_layouttypes(export, &typecount, &layouttypes);
 
 	if (!inline_xdr_u_int32_t(xdr, (uint32_t *) &typecount))
 		return FATTR_XDR_FAILED;
@@ -2121,7 +2123,8 @@ static fattr_xdr_result encode_layout_blocksize(XDR *xdr,
 		return FATTR_XDR_NOOP;
 	} else {
 		struct fsal_export *export = op_ctx->fsal_export;
-		uint32_t blocksize = export->ops->fs_layout_blocksize(export);
+		uint32_t blocksize = export->exp_ops.
+					fs_layout_blocksize(export);
 
 		if (!inline_xdr_u_int32_t(xdr, &blocksize))
 			return FATTR_XDR_FAILED;

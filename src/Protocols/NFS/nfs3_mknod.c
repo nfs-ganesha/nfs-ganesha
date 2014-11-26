@@ -204,7 +204,7 @@ int nfs3_mknod(nfs_arg_t *arg,
 	/* if quota support is active, then we should check is the
 	   FSAL allows inode creation or not */
 	fsal_status =
-	    op_ctx->fsal_export->ops->check_quota(op_ctx->fsal_export,
+	    op_ctx->fsal_export->exp_ops.check_quota(op_ctx->fsal_export,
 						   op_ctx->export->fullpath,
 						   FSAL_QUOTA_INODES);
 	if (FSAL_IS_ERROR(fsal_status)) {

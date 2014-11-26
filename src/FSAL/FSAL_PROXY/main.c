@@ -207,8 +207,8 @@ MODULE_INIT void pxy_init(void)
 	if (register_fsal(&PROXY.module, "PROXY", FSAL_MAJOR_VERSION,
 			  FSAL_MINOR_VERSION, FSAL_ID_NO_PNFS) != 0)
 		return;
-	PROXY.module.ops->init_config = pxy_init_config;
-	PROXY.module.ops->create_export = pxy_create_export;
+	PROXY.module.m_ops.init_config = pxy_init_config;
+	PROXY.module.m_ops.create_export = pxy_create_export;
 }
 
 MODULE_FINI void pxy_unload(void)

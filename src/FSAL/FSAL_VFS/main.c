@@ -31,13 +31,13 @@
 
 #include "config.h"
 
-#include "fsal.h"
 #include <libgen.h>		/* used for 'dirname' */
 #include <pthread.h>
 #include <string.h>
 #include <limits.h>
 #include <sys/types.h>
 #include "ganesha_list.h"
+#include "fsal.h"
 #include "FSAL/fsal_init.h"
 
 /* VFS FSAL module private storage
@@ -189,8 +189,8 @@ MODULE_INIT void vfs_init(void)
 		fprintf(stderr, "VFS module failed to register");
 		return;
 	}
-	myself->ops->create_export = vfs_create_export;
-	myself->ops->init_config = init_config;
+	myself->m_ops.create_export = vfs_create_export;
+	myself->m_ops.init_config = init_config;
 }
 
 MODULE_FINI void vfs_unload(void)
