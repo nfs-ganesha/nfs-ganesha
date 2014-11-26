@@ -634,14 +634,6 @@ struct nfs_client_id_t {
 	time_t cid_last_renew;	/*< Time of last renewal */
 	nfs_clientid_confirm_state_t cid_confirmed; /*< Confirm/expire state */
 	nfs_client_cred_t cid_credential;	/*< Client credential */
-	sockaddr_t cid_client_addr;	/*< Network address of
-					   client. @note This only really
-					   makes sense for NFSv4.0, and
-					   even then it's dubious.
-					   NFSv4.1 explicitly allows
-					   multiple addresses per
-					   session and multiple sessions
-					   per client. */
 	int cid_allow_reclaim;	/*< Whether this client can still
 				   reclaim state */
 	char *cid_recov_dir;	/*< Recovery directory */

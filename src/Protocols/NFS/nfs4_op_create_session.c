@@ -73,8 +73,6 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 	nfs41_session_t *nfs41_session = NULL;
 	/* Client supplied clientid */
 	clientid4 clientid = 0;
-	/* The client's network address */
-	sockaddr_t client_addr;
 	/* The client address as a string, for gratuitous logging */
 	const char *str_client_addr = "(unknown)";
 	/* The client name, for gratuitous logging */
@@ -121,8 +119,6 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (data->minorversion == 0)
 		return res_CREATE_SESSION4->csr_status = NFS4ERR_INVAL;
-
-	copy_xprt_addr(&client_addr, data->req->rq_xprt);
 
 	LogDebug(component,
 		 "CREATE_SESSION client addr=%s clientid=%s -------------------",
@@ -235,11 +231,11 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 		if (!nfs_compare_clientcred(&unconf->cid_credential,
 					    &data->credential)) {
 			if (isDebug(component)) {
-				char unconfirmed_addr[SOCK_NAME_MAX + 1];
+				char *unconfirmed_addr = "(unknown)";
 
-				sprint_sockip(&unconf->cid_client_addr,
-					      unconfirmed_addr,
-					      sizeof(unconfirmed_addr));
+				if (unconf->gsh_client != NULL)
+					unconfirmed_addr =
+					    unconf->gsh_client->hostaddr_str;
 
 				LogDebug(component,
 					 "Unconfirmed ClientId %s->'%s': Principals do not match... unconfirmed addr=%s Return NFS4ERR_CLID_INUSE",
@@ -262,11 +258,11 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 		if (!nfs_compare_clientcred(&conf->cid_credential,
 					    &data->credential)) {
 			if (isDebug(component)) {
-				char confirmed_addr[SOCK_NAME_MAX + 1];
+				char *confirmed_addr = "(unknown)";
 
-				sprint_sockip(&conf->cid_client_addr,
-					      confirmed_addr,
-					      sizeof(confirmed_addr));
+				if (conf->gsh_client != NULL)
+					confirmed_addr =
+					    conf->gsh_client->hostaddr_str;
 
 				LogDebug(component,
 					 "Confirmed ClientId %s->%s addr=%s: Principals do not match... confirmed addr=%s Return NFS4ERR_CLID_INUSE",
