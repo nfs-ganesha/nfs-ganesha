@@ -42,15 +42,14 @@
 #include "config.h"
 #endif
 
-#include "fsal.h"
 #include <libgen.h>		/* used for 'dirname' */
 #include <pthread.h>
 #include <string.h>
 #include <sys/types.h>
 #include "ganesha_list.h"
+#include "fsal.h"
 #include "fsal_internal.h"
 #include "FSAL/fsal_init.h"
-#include "fsal_api.h"
 
 #include <signal.h>
 #include "pt_ganesha.h"
@@ -320,8 +319,8 @@ MODULE_INIT void pt_init(void)
 		fprintf(stderr, "PT module failed to register");
 		return;
 	}
-	myself->ops->create_export = pt_create_export;
-	myself->ops->init_config = init_config;
+	myself->m_ops.create_export = pt_create_export;
+	myself->m_ops.init_config = init_config;
 	pt_filesystem.fsal = myself;
 }
 

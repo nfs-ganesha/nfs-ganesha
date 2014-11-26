@@ -109,7 +109,7 @@ int nfs3_fsinfo(nfs_arg_t *arg,
 	FSINFO_FIELD->dtpref = op_ctx->export->PrefReaddir;
 
 	FSINFO_FIELD->maxfilesize =
-	    op_ctx->fsal_export->ops->fs_maxfilesize(op_ctx->fsal_export);
+	    op_ctx->fsal_export->exp_ops.fs_maxfilesize(op_ctx->fsal_export);
 	FSINFO_FIELD->time_delta.tv_sec = 1;
 	FSINFO_FIELD->time_delta.tv_nsec = 0;
 

@@ -63,26 +63,28 @@ static void shutdown_handles(struct fsal_module *fsal)
 							handles);
 		LogDebug(COMPONENT_FSAL,
 			 "Releasing handle");
-		h->ops->release(h);
+		h->obj_ops.release(h);
 	}
 }
 
 /**
  * @brief Dispose of lingering DS handles
  *
- * @param[in] export fsal module to clean up */
-static void shutdown_ds_handles(struct fsal_module *fsal)
+ * @param[in] pds pNFS DS to clean up
+ */
+
+static void shutdown_ds_handles(struct fsal_pnfs_ds *pds)
 {
 	/* Handle iterator */
 	struct glist_head *hi = NULL;
 	/* Next pointer in handle iteration */
 	struct glist_head *hn = NULL;
 
-	if (glist_empty(&fsal->ds_handles))
+	if (glist_empty(&pds->ds_handles))
 		return;
 
 	LogDebug(COMPONENT_FSAL, "Extra DS file handles hanging around.");
-	glist_for_each_safe(hi, hn, &fsal->ds_handles) {
+	glist_for_each_safe(hi, hn, &pds->ds_handles) {
 		struct fsal_ds_handle *h = glist_entry(hi,
 						       struct fsal_ds_handle,
 						       ds_handles);
@@ -93,7 +95,40 @@ static void shutdown_ds_handles(struct fsal_module *fsal)
 				 refcount);
 			atomic_store_int32_t(&h->refcount, 0);
 		}
-		h->ops->release(h);
+		h->dsh_ops.release(h);
+	}
+}
+
+/**
+ * @brief Dispose of lingering pNFS Data Servers
+ *
+ * @param[in] fsal fsal module to clean up
+ */
+
+static void shutdown_pnfs_ds(struct fsal_module *fsal)
+{
+	/* Handle iterator */
+	struct glist_head *hi = NULL;
+	/* Next pointer in handle iteration */
+	struct glist_head *hn = NULL;
+
+	if (glist_empty(&fsal->servers))
+		return;
+
+	LogDebug(COMPONENT_FSAL, "Extra DS file handles hanging around.");
+	glist_for_each_safe(hi, hn, &fsal->servers) {
+		struct fsal_pnfs_ds *h = glist_entry(hi,
+						     struct fsal_pnfs_ds,
+						     ds_handles);
+		shutdown_ds_handles(h);
+		int32_t refcount = atomic_fetch_int32_t(&h->refcount);
+		if (refcount != 0) {
+			LogDebug(COMPONENT_FSAL,
+				 "Extra references (%"PRIi32") hanging around.",
+				 refcount);
+			atomic_store_int32_t(&h->refcount, 0);
+		}
+		h->s_ops.release(h);
 	}
 }
 
@@ -109,7 +144,7 @@ static void shutdown_export(struct fsal_export *export)
 	LogDebug(COMPONENT_FSAL,
 		 "Releasing export");
 
-	export->ops->release(export);
+	export->exp_ops.release(export);
 	fsal_put(fsal);
 }
 
@@ -141,7 +176,7 @@ void destroy_fsals(void)
 
 		LogEvent(COMPONENT_FSAL, "Shutting down DS handles for FSAL %s",
 			 m->name);
-		shutdown_ds_handles(m);
+		shutdown_pnfs_ds(m);
 
 		LogEvent(COMPONENT_FSAL, "Shutting down exports for FSAL %s",
 			 m->name);
@@ -179,7 +214,7 @@ void destroy_fsals(void)
 
 			LogEvent(COMPONENT_FSAL, "Unloading FSAL %s",
 				 fsal_name);
-			rc = m->ops->unload(m);
+			rc = m->m_ops.unload(m);
 			if (rc != 0) {
 				LogMajor(COMPONENT_FSAL,
 					 "Unload of %s failed with error %d",
@@ -209,7 +244,7 @@ void emergency_cleanup_fsals(void)
 		struct fsal_module *m = glist_entry(mi,
 						    struct fsal_module,
 						    fsals);
-		m->ops->emergency_cleanup();
+		m->m_ops.emergency_cleanup();
 	}
 }
 

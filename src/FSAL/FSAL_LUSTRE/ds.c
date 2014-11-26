@@ -37,7 +37,7 @@
 #include "config.h"
 
 #include <assert.h>
-#include "fsal.h"
+#include "fsal_api.h"
 #include "fsal_handle.h"
 #include "fsal_internal.h"
 #include "FSAL/access_check.h"
@@ -46,8 +46,6 @@
 #include <fcntl.h>
 #include "FSAL/fsal_commonlib.h"
 #include "lustre_methods.h"
-#include "fsal_handle.h"
-
 #include "pnfs_utils.h"
 #include "nfs_exports.h"
 
@@ -68,7 +66,7 @@ lustre_release(struct fsal_ds_handle *const ds_pub)
 					    struct lustre_ds,
 					    ds);
 
-	fsal_ds_handle_uninit(&ds->ds);
+	fsal_ds_handle_fini(&ds->ds);
 
 	gsh_free(ds);
 }
@@ -103,15 +101,13 @@ lustre_ds_read(struct fsal_ds_handle *const ds_pub,
 		count4 *const supplied_length,
 		bool *const end_of_file)
 {
-	struct lustre_file_handle *lustre_handle;
+	/* The private 'full' DS handle */
+	struct lustre_ds *ds = container_of(ds_pub, struct lustre_ds, ds);
+	struct lustre_file_handle *lustre_handle = &ds->wire;
 	/* The amount actually read */
 	int amount_read = 0;
 	char mypath[MAXPATHLEN];
 	int fd = 0;
-
-	/* The private 'full' DS handle */
-	struct lustre_ds *ds = container_of(ds_pub, struct lustre_ds, ds);
-	lustre_handle = &ds->wire;
 
 	/* get the path of the file in Lustre */
 	lustre_handle_to_path(ds->lustre_fs->fs->path,
@@ -175,12 +171,11 @@ lustre_ds_write(struct fsal_ds_handle *const ds_pub,
 		verifier4 *writeverf,
 		stable_how4 *stability_got)
 {
-	/* The amount actually read */
-	int32_t amount_written = 0;
-	struct lustre_file_handle *lustre_handle;
 	/* The private 'full' DS handle */
 	struct lustre_ds *ds = container_of(ds_pub, struct lustre_ds, ds);
-	lustre_handle = &ds->wire;
+	struct lustre_file_handle *lustre_handle = &ds->wire;
+	/* The amount actually read */
+	int32_t amount_written = 0;
 	char mypath[MAXPATHLEN];
 	int fd = 0;
 

@@ -36,7 +36,6 @@
 #include "config.h"
 
 #include <fcntl.h>
-#include "fsal.h"
 #include "fsal_api.h"
 #include "FSAL/fsal_commonlib.h"
 #include "fsal_convert.h"
@@ -63,7 +62,7 @@ static void release(struct fsal_ds_handle *const ds_pub)
 	/* The private 'full' DS handle */
 	struct gpfs_ds *ds = container_of(ds_pub, struct gpfs_ds, ds);
 
-	fsal_ds_handle_uninit(&ds->ds);
+	fsal_ds_handle_fini(&ds->ds);
 
 	gsh_free(ds);
 }
@@ -95,16 +94,15 @@ static nfsstat4 ds_read(struct fsal_ds_handle *const ds_pub,
 			count4 * const supplied_length,
 			bool * const end_of_file)
 {
-	struct gpfs_file_handle *gpfs_handle;
+	/* The private 'full' DS handle */
+	struct gpfs_ds *ds = container_of(ds_pub, struct gpfs_ds, ds);
+	struct gpfs_file_handle *gpfs_handle = &ds->wire;
 	/* The amount actually read */
 	int amount_read = 0;
 	struct dsread_arg rarg;
 	unsigned int *fh;
 	int errsv = 0;
 
-	/* The private 'full' DS handle */
-	struct gpfs_ds *ds = container_of(ds_pub, struct gpfs_ds, ds);
-	gpfs_handle = &ds->wire;
 
 	fh = (int *)&(gpfs_handle->f_handle);
 
@@ -166,16 +164,14 @@ static nfsstat4 ds_read_plus(struct fsal_ds_handle *const ds_pub,
 			bool * const end_of_file,
 			struct io_info *info)
 {
-	struct gpfs_file_handle *gpfs_handle;
+	/* The private 'full' DS handle */
+	struct gpfs_ds *ds = container_of(ds_pub, struct gpfs_ds, ds);
+	struct gpfs_file_handle *gpfs_handle = &ds->wire;
 	/* The amount actually read */
 	int amount_read = 0;
 	struct dsread_arg rarg;
 	unsigned int *fh;
 	int errsv = 0;
-
-	/* The private 'full' DS handle */
-	struct gpfs_ds *ds = container_of(ds_pub, struct gpfs_ds, ds);
-	gpfs_handle = &ds->wire;
 
 	fh = (int *)&(gpfs_handle->f_handle);
 
@@ -249,14 +245,13 @@ static nfsstat4 ds_write(struct fsal_ds_handle *const ds_pub,
 			 verifier4 * const writeverf,
 			 stable_how4 * const stability_got)
 {
+	/* The private 'full' DS handle */
+	struct gpfs_ds *ds = container_of(ds_pub, struct gpfs_ds, ds);
+	struct gpfs_file_handle *gpfs_handle = &ds->wire;
 	/* The amount actually read */
 	int32_t amount_written = 0;
 	struct dswrite_arg warg;
 	unsigned int *fh;
-	struct gpfs_file_handle *gpfs_handle;
-	/* The private 'full' DS handle */
-	struct gpfs_ds *ds = container_of(ds_pub, struct gpfs_ds, ds);
-	gpfs_handle = &ds->wire;
 	struct gsh_buffdesc key;
 	int errsv = 0;
 
@@ -338,14 +333,13 @@ static nfsstat4 ds_write_plus(struct fsal_ds_handle *const ds_pub,
 			 stable_how4 * const stability_got,
 			 struct io_info *info)
 {
+	/* The private 'full' DS handle */
+	struct gpfs_ds *ds = container_of(ds_pub, struct gpfs_ds, ds);
+	struct gpfs_file_handle *gpfs_handle = &ds->wire;
 	/* The amount actually read */
 	int32_t amount_written = 0;
 	struct dswrite_arg warg;
 	unsigned int *fh;
-	struct gpfs_file_handle *gpfs_handle;
-	/* The private 'full' DS handle */
-	struct gpfs_ds *ds = container_of(ds_pub, struct gpfs_ds, ds);
-	gpfs_handle = &ds->wire;
 	struct gsh_buffdesc key;
 	int errsv = 0;
 

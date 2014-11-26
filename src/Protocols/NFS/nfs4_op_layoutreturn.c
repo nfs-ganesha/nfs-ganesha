@@ -478,7 +478,7 @@ nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
 
 			handle_recalls(arg, layout_state, &g->sls_segment);
 
-			nfs_status = entry->obj_handle->ops->layoutreturn(
+			nfs_status = entry->obj_handle->obj_ops.layoutreturn(
 						entry->obj_handle,
 						op_ctx,
 						body_val ? &lrf_body : NULL,
@@ -528,7 +528,7 @@ nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
 		arg->last_segment = false;
 		arg->dispose = false;
 
-		nfs_status = entry->obj_handle->ops->layoutreturn(
+		nfs_status = entry->obj_handle->obj_ops.layoutreturn(
 					entry->obj_handle,
 					op_ctx, body_val ? &lrf_body : NULL,
 					arg);

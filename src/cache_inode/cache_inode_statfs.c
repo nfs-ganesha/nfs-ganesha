@@ -61,7 +61,7 @@ cache_inode_statfs(cache_entry_t *entry,
 	export = op_ctx->export->fsal_export;
 	/* Get FSAL to get dynamic info */
 	fsal_status =
-	    export->ops->get_fs_dynamic_info(export, entry->obj_handle,
+	    export->exp_ops.get_fs_dynamic_info(export, entry->obj_handle,
 					     dynamicinfo);
 	if (FSAL_IS_ERROR(fsal_status)) {
 		status = cache_inode_error_convert(fsal_status);

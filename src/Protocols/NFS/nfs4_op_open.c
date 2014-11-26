@@ -406,8 +406,8 @@ static nfsstat4 open4_validate_claim(compound_data_t *data,
 		if (data->minorversion == 0)
 			status = NFS4ERR_NOTSUPP;
 
-		if (op_ctx->fsal_export->
-			ops->fs_supports(op_ctx->fsal_export, fso_grace_method))
+		if (op_ctx->fsal_export->exp_ops.
+			fs_supports(op_ctx->fsal_export, fso_grace_method))
 				fsal_grace = true;
 		if (!fsal_grace && nfs_in_grace())
 			status = NFS4ERR_GRACE;
@@ -604,7 +604,7 @@ static nfsstat4 open4_create(OPEN4args *arg, compound_data_t *data,
 
 	/* if quota support is active, then we should check is
 	   the FSAL allows inode creation or not */
-	fsal_status = op_ctx->fsal_export->ops->check_quota(
+	fsal_status = op_ctx->fsal_export->exp_ops.check_quota(
 						op_ctx->fsal_export,
 						op_ctx->export->fullpath,
 						FSAL_QUOTA_INODES);
@@ -898,10 +898,10 @@ static nfsstat4 open4_claim_deleg(OPEN4args *arg, compound_data_t *data,
 	state_t *iter_state;
 	state_t *found_state = NULL;
 
-	if (!(op_ctx->fsal_export->ops->fs_supports(
-			op_ctx->fsal_export, fso_delegations_w)
-	      || op_ctx->fsal_export->ops->fs_supports(
-			op_ctx->fsal_export, fso_delegations_r))
+	if (!(op_ctx->fsal_export->exp_ops.
+	      fs_supports(op_ctx->fsal_export, fso_delegations_w)
+	      || op_ctx->fsal_export->exp_ops.
+		 fs_supports(op_ctx->fsal_export, fso_delegations_r))
 	      ) {
 		LogDebug(COMPONENT_STATE,
 			 "NFS4 OPEN returning NFS4ERR_NOTSUPP for CLAIM_DELEGATE");

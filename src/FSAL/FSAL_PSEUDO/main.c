@@ -170,8 +170,8 @@ void pseudo_fsal_init(void)
 		fprintf(stderr, "PSEUDO module failed to register");
 		return;
 	}
-	myself->ops->create_export = pseudofs_create_export;
-	myself->ops->init_config = init_config;
-	myself->ops->unload = unload_pseudo_fsal;
+	myself->m_ops.create_export = pseudofs_create_export;
+	myself->m_ops.init_config = init_config;
+	myself->m_ops.unload = unload_pseudo_fsal;
 	myself->name = gsh_strdup("PSEUDO");
 }

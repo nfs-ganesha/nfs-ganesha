@@ -93,7 +93,7 @@ int nlm4_Share(nfs_arg_t *args,
 	 * have a reclaim flag, so we will honor the reclaim flag if used.
 	 */
 	if (grace) {
-		if (op_ctx->fsal_export->ops->
+		if (op_ctx->fsal_export->exp_ops.
 			fs_supports(op_ctx->fsal_export, fso_grace_method))
 			fsal_grace = true;
 		if (!fsal_grace && !arg->reclaim) {

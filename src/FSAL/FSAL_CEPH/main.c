@@ -181,11 +181,7 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 			op_ctx->export->fullpath);
 		goto error;
 	}
-	export_ops_init(export->export.ops);
-	handle_ops_init(export->export.obj_ops);
-#ifdef CEPH_PNFS
-	ds_ops_init(export->export.ds_ops);
-#endif				/* CEPH_PNFS */
+	export_ops_init(&export->export.exp_ops);
 	export->export.up_ops = up_ops;
 
 	initialized = true;
@@ -242,7 +238,9 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 		 op_ctx->export->fullpath);
 
 	root.ino.val = CEPH_INO_ROOT;
+#ifdef CEPH_NOSNAP
 	root.snapid.val = CEPH_NOSNAP;
+#endif /* CEPH_NOSNAP */
 	i = ceph_ll_get_inode(export->cmount, root);
 	if (!i) {
 		status.major = ERR_FSAL_SERVERFAULT;
@@ -281,6 +279,41 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 	return status;
 }
 
+#ifdef CEPH_PNFS
+
+/**
+ * @brief Try to create a FSAL data server handle
+ *
+ * @param[in]  pds      FSAL pNFS DS
+ * @param[out] handle   FSAL DS handle
+ *
+ * @retval NFS4_OK, NFS4ERR_SERVERFAULT.
+ */
+
+static nfsstat4 fsal_ds_handle(struct fsal_pnfs_ds *const pds,
+			       const struct gsh_buffdesc *const hdl_desc,
+			       struct fsal_ds_handle **const handle)
+{
+	struct ds *ds = gsh_calloc(1, sizeof(struct ds));
+
+	if (ds == NULL) {
+		*handle = NULL;
+		return NFS4ERR_SERVERFAULT;
+	}
+	*handle = &ds->ds;
+	fsal_ds_handle_init(*handle, pds);
+	ds_ops_init(&(*handle)->dsh_ops);
+
+	/* Connect lazily when a FILE_SYNC4 write forces us to, not
+	   here. */
+
+	ds->connected = false;
+
+	return NFS4_OK;
+}
+
+#endif				/* CEPH_PNFS */
+
 /**
  * @brief Initialize and register the FSAL
  *
@@ -309,8 +342,11 @@ MODULE_INIT void init(void)
 	}
 
 	/* Set up module operations */
-	myself->ops->create_export = create_export;
-	myself->ops->init_config = init_config;
+#ifdef CEPH_PNFS
+	myself->m_ops.fsal_ds_handle = fsal_ds_handle;
+#endif				/* CEPH_PNFS */
+	myself->m_ops.create_export = create_export;
+	myself->m_ops.init_config = init_config;
 }
 
 /**

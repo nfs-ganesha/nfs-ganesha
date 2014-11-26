@@ -248,7 +248,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 	*entry = NULL;
 
 	/* Get FSAL-specific key */
-	new_obj->ops->handle_to_key(new_obj, &fh_desc);
+	new_obj->obj_ops.handle_to_key(new_obj, &fh_desc);
 
 	(void) cih_hash_key(&key, op_ctx->fsal_export->fsal, &fh_desc,
 			    CIH_HASH_KEY_PROTOTYPE);
@@ -466,7 +466,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 	}
 
 	/* must free new_obj if no new entry was created to reference it. */
-	new_obj->ops->release(new_obj);
+	new_obj->obj_ops.release(new_obj);
 
 	return status;
 }				/* cache_inode_new_entry */

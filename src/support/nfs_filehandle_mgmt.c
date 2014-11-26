@@ -153,7 +153,7 @@ cache_entry_t *nfs3_FhandleToCache(nfs_fh3 *fh3,
 
 	/* adjust the handle opaque into a cache key */
 	fsal_status =
-	    export->ops->extract_handle(export, FSAL_DIGEST_NFSV3,
+	    export->exp_ops.extract_handle(export, FSAL_DIGEST_NFSV3,
 					&fsal_data.fh_desc);
 
 	if (FSAL_IS_ERROR(fsal_status))
@@ -196,7 +196,7 @@ bool nfs4_FSALToFhandle(nfs_fh4 *fh4,
 	fh_desc.addr = &file_handle->fsopaque;
 	fh_desc.len = fh4->nfs_fh4_len - offsetof(file_handle_v4_t, fsopaque);
 	fsal_status =
-	    fsalhandle->ops->handle_digest(fsalhandle, FSAL_DIGEST_NFSV4,
+	    fsalhandle->obj_ops.handle_digest(fsalhandle, FSAL_DIGEST_NFSV4,
 					   &fh_desc);
 	if (FSAL_IS_ERROR(fsal_status)) {
 		LogDebug(COMPONENT_FILEHANDLE,
@@ -247,7 +247,7 @@ bool nfs3_FSALToFhandle(nfs_fh3 *fh3,
 	fh_desc.addr = &file_handle->fsopaque;
 	fh_desc.len = fh3->data.data_len - offsetof(file_handle_v3_t, fsopaque);
 	fsal_status =
-	    fsalhandle->ops->handle_digest(fsalhandle, FSAL_DIGEST_NFSV3,
+	    fsalhandle->obj_ops.handle_digest(fsalhandle, FSAL_DIGEST_NFSV3,
 					   &fh_desc);
 	if (FSAL_IS_ERROR(fsal_status)) {
 		LogDebug(COMPONENT_FILEHANDLE,

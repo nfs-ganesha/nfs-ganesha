@@ -51,6 +51,7 @@
 #include "nfs_core.h"
 #include "config_parsing.h"
 #include "ganesha_types.h"
+#include "FSAL/fsal_commonlib.h"
 #include "fsal_private.h"
 
 /** fsal module method defaults and common methods
@@ -61,7 +62,7 @@
  * is that older fsals must safely run with newer ganesha core.
  * This is observed by the following rules:
  *
- * 1. New methods are *always* appended to the ops vector in fsal_api.h
+ * 1. New methods are *always* appended to the m_ops vector in fsal_api.h
  *
  * 2. This file is updated to add the default method.
  *
@@ -175,6 +176,49 @@ static size_t fs_da_addr_size(struct fsal_module *fsal_hdl)
 	return 0;
 }
 
+/**
+ * @brief Try to create a FSAL data server
+ *
+ * @param[in]  fsal_hdl The FSAL in which to create the handle
+ * @param[out] handle   FSAL pNFS DS
+ *
+ * @retval NFS4_OK, NFS4ERR_SERVERFAULT.
+ */
+
+static nfsstat4 fsal_pnfs_ds(struct fsal_module *const fsal_hdl,
+			     const struct gsh_buffdesc *const hdl_desc,
+			     struct fsal_pnfs_ds **const handle)
+{
+	*handle = gsh_calloc(sizeof(struct fsal_pnfs_ds), 1);
+	if (*handle == NULL)
+		return NFS4ERR_SERVERFAULT;
+
+	fsal_pnfs_ds_init(*handle, fsal_hdl);
+	op_ctx->fsal_pnfs_ds = *handle;
+	return NFS4_OK;
+}
+
+/**
+ * @brief Try to create a FSAL data server handle
+ *
+ * @param[in]  pds      FSAL pNFS DS
+ * @param[out] handle   FSAL DS handle
+ *
+ * @retval NFS4_OK, NFS4ERR_SERVERFAULT.
+ */
+
+static nfsstat4 fsal_ds_handle(struct fsal_pnfs_ds *const pds,
+			       const struct gsh_buffdesc *const hdl_desc,
+			       struct fsal_ds_handle **const handle)
+{
+	*handle = gsh_calloc(sizeof(struct fsal_ds_handle), 1);
+	if (*handle == NULL)
+		return NFS4ERR_SERVERFAULT;
+
+	fsal_ds_handle_init(*handle, pds);
+	return NFS4_OK;
+}
+
 /* Default fsal module method vector.
  * copied to allocated vector at register time
  */
@@ -187,6 +231,8 @@ struct fsal_ops def_fsal_ops = {
 	.emergency_cleanup = emergency_cleanup,
 	.getdeviceinfo = getdeviceinfo,
 	.fs_da_addr_size = fs_da_addr_size,
+	.fsal_pnfs_ds = fsal_pnfs_ds,
+	.fsal_ds_handle = fsal_ds_handle,
 };
 
 /* export_release
@@ -240,19 +286,33 @@ static fsal_status_t create_handle(struct fsal_export *exp_hdl,
 }
 
 /**
- * @brief Fail to create a FSAL data server handle from a wire handle
+ * @brief Try to create a FSAL data server handle
  *
  * @param[in]  exp_hdl  The export in which to create the handle
- * @param[out] handle   FSAL object handle
+ * @param[out] handle   FSAL DS handle
  *
- * @retval NFS4ERR_BADHANDLE.
+ * @retval NFS4_OK, NFS4ERR_SERVERFAULT.
  */
 
 static nfsstat4 create_ds_handle(struct fsal_export *const exp_hdl,
 				 const struct gsh_buffdesc *const hdl_desc,
 				 struct fsal_ds_handle **const handle)
 {
-	return NFS4ERR_BADHANDLE;
+	struct fsal_module *fsal = exp_hdl->fsal;
+	struct fsal_pnfs_ds *pds;
+	nfsstat4 status = fsal->m_ops.fsal_pnfs_ds(fsal, hdl_desc, &pds);
+
+	/* FIXME: decide whether to use an existing pDS;
+	 * currently assumes 1 pDS per 1 DS handle.
+	 */
+	if (status != NFS4_OK)
+		return status;
+
+	status = fsal->m_ops.fsal_ds_handle(pds, hdl_desc, handle);
+	if (status != NFS4_OK)
+		pds->s_ops.release(pds);
+
+	return status;
 }
 
 /* get_dynamic_info
@@ -1056,13 +1116,36 @@ struct fsal_obj_ops def_handle_ops = {
 	.layoutcommit = layoutcommit
 };
 
+/* fsal_pnfs_ds common methods */
+
+/**
+ * @brief Fail to clean up a pNFS Data Server
+ *
+ * Getting here is bad, it means we support but have not completely
+ * implemented Data Servers.
+ *
+ * @param[in] pds Handle to release
+ *
+ * @return NFSv4.1 status codes.
+ */
+static void pds_release(struct fsal_pnfs_ds *const pds)
+{
+	LogCrit(COMPONENT_PNFS, "Unimplemented pNFS DS release!");
+	fsal_pnfs_ds_fini(pds);
+	gsh_free(pds);
+}
+
+struct fsal_pnfs_ds_ops def_pnfs_ds_ops = {
+	.release = pds_release,
+};
+
 /* fsal_ds_handle common methods */
 
 /**
- * @brief Fail to clean up a filehandle
+ * @brief Fail to clean up a DS handle
  *
  * Getting here is bad, it means we support but have not completely
- * impelmented DS handles.
+ * implemented DS handles.
  *
  * @param[in] release Handle to release
  *
@@ -1070,7 +1153,9 @@ struct fsal_obj_ops def_handle_ops = {
  */
 static void ds_release(struct fsal_ds_handle *const ds_hdl)
 {
-	LogCrit(COMPONENT_PNFS, "Unimplemented DS release!");
+	LogCrit(COMPONENT_PNFS, "Unimplemented DS handle release!");
+	fsal_ds_handle_fini(ds_hdl);
+	gsh_free(ds_hdl);
 }
 
 /**

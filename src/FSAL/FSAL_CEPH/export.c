@@ -71,7 +71,6 @@ static void release(struct fsal_export *export_pub)
 	fsal_detach_export(export->export.fsal, &export->export.exports);
 	free_export_ops(&export->export);
 
-	export->export.ops = NULL;
 	ceph_shutdown(export->cmount);
 	export->cmount = NULL;
 	gsh_free(export);
@@ -198,37 +197,40 @@ nfsstat4 create_ds_handle(struct fsal_export * const export_pub,
 			  const struct gsh_buffdesc * const desc,
 			  struct fsal_ds_handle ** const ds_pub)
 {
+	struct fsal_module *fsal = export_pub->fsal;
 	/* Full 'private' export structure */
 	struct export *export =
 	    container_of(export_pub, struct export, export);
 	/* Handle to be created */
 	struct ds *ds;
+	struct fsal_pnfs_ds *pds;
+	nfsstat4 status;
 
 	*ds_pub = NULL;
 
 	if (desc->len != sizeof(struct ds_wire))
 		return NFS4ERR_BADHANDLE;
 
-	ds = gsh_calloc(1, sizeof(struct ds));
+	status = fsal->m_ops.fsal_pnfs_ds(fsal, desc, &pds);
+	if (status != NFS4_OK)
+		return status;
 
-	if (ds == NULL)
+	status = fsal->m_ops.fsal_ds_handle(pds, desc, ds_pub);
+	if (status != NFS4_OK) {
+		pds->s_ops.release(pds);
 		return NFS4ERR_SERVERFAULT;
+	}
 
-	/* Connect lazily when a FILE_SYNC4 write forces us to, not
-	   here. */
-
-	ds->connected = false;
+	/* assumes fsal_ds_handle is first in handle struct */
+	ds = (struct ds *)*ds_pub;
 
 	memcpy(&ds->wire, desc->addr, desc->len);
 
 	if (ds->wire.layout.fl_stripe_unit == 0) {
-		gsh_free(ds);
+		ds->dsh_ops.release(ds);
+		pds->s_ops.release(pds);
 		return NFS4ERR_BADHANDLE;
 	}
-
-	fsal_ds_handle_init(&ds->ds, export->export.ds_ops, export_pub->fsal);
-
-	*ds_pub = &ds->ds;
 
 	return NFS4_OK;
 }

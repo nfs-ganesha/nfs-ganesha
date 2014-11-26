@@ -122,31 +122,17 @@ static void fsal_detach_handle(struct fsal_module *fsal,
 	PTHREAD_RWLOCK_unlock(&fsal->lock);
 }
 
+/**
+ * @brief Initialize export ops vectors
+ *
+ * @param[in] exp Export handle
+ *
+ */
+
 int fsal_export_init(struct fsal_export *exp)
 {
-	exp->ops = gsh_malloc(sizeof(struct export_ops));
-	if (exp->ops == NULL)
-		goto errout;
-	memcpy(exp->ops, &def_export_ops, sizeof(struct export_ops));
-
-	exp->obj_ops = gsh_malloc(sizeof(struct fsal_obj_ops));
-	if (exp->obj_ops == NULL)
-		goto errout;
-	memcpy(exp->obj_ops, &def_handle_ops, sizeof(struct fsal_obj_ops));
-
-	exp->ds_ops = gsh_malloc(sizeof(struct fsal_ds_ops));
-	if (exp->ds_ops == NULL)
-		goto errout;
-	memcpy(exp->ds_ops, &def_ds_ops, sizeof(struct fsal_ds_ops));
-
+	memcpy(&exp->exp_ops, &def_export_ops, sizeof(struct export_ops));
 	return 0;
-
- errout:
-	if (exp->ops)
-		gsh_free(exp->ops);
-	if (exp->obj_ops)
-		gsh_free(exp->obj_ops);
-	return ENOMEM;
 }
 
 /**
@@ -160,18 +146,7 @@ int fsal_export_init(struct fsal_export *exp)
 
 void free_export_ops(struct fsal_export *exp_hdl)
 {
-	if (exp_hdl->ops) {
-		gsh_free(exp_hdl->ops);
-		exp_hdl->ops = NULL;
-	}
-	if (exp_hdl->obj_ops) {
-		gsh_free(exp_hdl->obj_ops);
-		exp_hdl->obj_ops = NULL;
-	}
-	if (exp_hdl->ds_ops) {
-		gsh_free(exp_hdl->ds_ops);
-		exp_hdl->ds_ops = NULL;
-	}
+	memset(&exp_hdl->exp_ops, 0, sizeof(exp_hdl->exp_ops));	/* poison */
 }
 
 void fsal_obj_handle_init(struct fsal_obj_handle *obj, struct fsal_export *exp,
@@ -179,7 +154,7 @@ void fsal_obj_handle_init(struct fsal_obj_handle *obj, struct fsal_export *exp,
 {
 	pthread_rwlockattr_t attrs;
 
-	obj->ops = exp->obj_ops;
+	memcpy(&obj->obj_ops, &def_handle_ops, sizeof(struct fsal_obj_ops));
 	obj->fsal = exp->fsal;
 	obj->type = type;
 	obj->attributes.expire_time_attr = 0;
@@ -194,44 +169,85 @@ void fsal_obj_handle_init(struct fsal_obj_handle *obj, struct fsal_export *exp,
 	fsal_attach_handle(exp->fsal, &obj->handles);
 }
 
-void fsal_obj_handle_uninit(struct fsal_obj_handle *obj)
+void fsal_obj_handle_fini(struct fsal_obj_handle *obj)
 {
 	pthread_rwlock_destroy(&obj->lock);
 
 	fsal_detach_handle(obj->fsal, &obj->handles);
 
-	obj->ops = NULL;	/*poison myself */
+	memset(&obj->obj_ops, 0, sizeof(obj->obj_ops));	/* poison myself */
 	obj->fsal = NULL;
 }
 
-void fsal_attach_ds(struct fsal_module *fsal, struct glist_head *ds_link)
+void fsal_attach_pnfs_ds(struct fsal_module *fsal, struct glist_head *ds_link)
 {
 	PTHREAD_RWLOCK_wrlock(&fsal->lock);
-	glist_add(&fsal->ds_handles, ds_link);
+	glist_add(&fsal->servers, ds_link);
 	PTHREAD_RWLOCK_unlock(&fsal->lock);
 }
 
-void fsal_detach_ds(struct fsal_module *fsal, struct glist_head *ds_link)
+void fsal_detach_pnfs_ds(struct fsal_module *fsal, struct glist_head *ds_link)
 {
 	PTHREAD_RWLOCK_wrlock(&fsal->lock);
 	glist_del(ds_link);
 	PTHREAD_RWLOCK_unlock(&fsal->lock);
 }
 
-void fsal_ds_handle_init(struct fsal_ds_handle *ds, struct fsal_ds_ops *ops,
-			 struct fsal_module *fsal)
+void fsal_pnfs_ds_init(struct fsal_pnfs_ds *pds, struct fsal_module *fsal)
 {
-	ds->refcount = 1;	/* we start out with a reference */
-	ds->ops = ops;
-	ds->fsal = fsal;
-	fsal_attach_ds(fsal, &ds->ds_handles);
+	pthread_rwlockattr_t attrs;
+
+	pds->refcount = 1;	/* we start out with a reference */
+	memcpy(&pds->s_ops, &def_pnfs_ds_ops, sizeof(pds->s_ops));
+	pds->fsal = fsal;
+
+	pthread_rwlockattr_init(&attrs);
+#ifdef GLIBC
+	pthread_rwlockattr_setkind_np(
+		&attrs,
+		PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
+#endif
+	pthread_rwlock_init(&pds->lock, &attrs);
+
+	fsal_attach_pnfs_ds(fsal, &pds->ds_handles);
 }
 
-void fsal_ds_handle_uninit(struct fsal_ds_handle *ds)
+void fsal_pnfs_ds_fini(struct fsal_pnfs_ds *pds)
 {
-	fsal_detach_ds(ds->fsal, &ds->ds_handles);
-	ds->ops = NULL;		/*poison myself */
-	ds->fsal = NULL;
+	pthread_rwlock_destroy(&pds->lock);
+
+	fsal_detach_pnfs_ds(pds->fsal, &pds->ds_handles);
+	memset(&pds->s_ops, 0, sizeof(pds->s_ops));	/* poison myself */
+	pds->fsal = NULL;
+}
+
+void fsal_attach_ds_handle(struct fsal_pnfs_ds *pds, struct glist_head *link)
+{
+	PTHREAD_RWLOCK_wrlock(&pds->lock);
+	glist_add(&pds->ds_handles, link);
+	PTHREAD_RWLOCK_unlock(&pds->lock);
+}
+
+void fsal_detach_ds_handle(struct fsal_pnfs_ds *pds, struct glist_head *link)
+{
+	PTHREAD_RWLOCK_wrlock(&pds->lock);
+	glist_del(link);
+	PTHREAD_RWLOCK_unlock(&pds->lock);
+}
+
+void fsal_ds_handle_init(struct fsal_ds_handle *dsh, struct fsal_pnfs_ds *pds)
+{
+	dsh->refcount = 1;	/* we start out with a reference */
+	memcpy(&dsh->dsh_ops, &def_ds_ops, sizeof(dsh->dsh_ops));
+	dsh->pds = pds;
+	fsal_attach_ds_handle(pds, &dsh->ds_handles);
+}
+
+void fsal_ds_handle_fini(struct fsal_ds_handle *dsh)
+{
+	fsal_detach_ds_handle(dsh->pds, &dsh->ds_handles);
+	memset(&dsh->dsh_ops, 0, sizeof(dsh->dsh_ops));	/* poison myself */
+	dsh->pds = NULL;
 }
 
 /**

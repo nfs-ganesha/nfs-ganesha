@@ -82,7 +82,7 @@ int rquota_getquota(nfs_arg_t *arg,
 		quota_path = exp->fullpath;
 	}
 	fsal_status =
-	    exp->fsal_export->ops->get_quota(exp->fsal_export,
+	    exp->fsal_export->exp_ops.get_quota(exp->fsal_export,
 					     quota_path, quota_type,
 					     &fsal_quota);
 	if (FSAL_IS_ERROR(fsal_status)) {

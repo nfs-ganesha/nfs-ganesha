@@ -31,10 +31,10 @@
 
 #include "config.h"
 
-#include "fsal.h"
 #include <string.h>
 #include <sys/types.h>
 #include "ganesha_list.h"
+#include "fsal.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 #include "FSAL/fsal_commonlib.h"
@@ -72,7 +72,6 @@ static void release(struct fsal_export *exp_hdl)
 
 	fsal_detach_export(exp_hdl->fsal, &exp_hdl->exports);
 	free_export_ops(exp_hdl);
-	myself->export.ops = NULL;	/* poison myself */
 
 	gsh_free(myself);		/* elvis has left the building */
 }
@@ -312,8 +311,7 @@ fsal_status_t zfs_create_export(struct fsal_module *fsal_hdl,
 	if (retval != 0)
 		goto errout;
 
-	zfs_export_ops_init(myself->export.ops);
-	zfs_handle_ops_init(myself->export.obj_ops);
+	zfs_export_ops_init(&myself->export.exp_ops);
 	myself->export.up_ops = up_ops;
 
 	retval = load_config_from_node(parse_node,
@@ -374,7 +372,6 @@ err_locked:
 		fsal_detach_export(fsal_hdl, &myself->export.exports);
 errout:
 	if (myself != NULL) {
-		myself->export.ops = NULL;	/* poison myself */
 		gsh_free(myself);	/* elvis has left the building */
 	}
 	return fsalstat(fsal_error, retval);

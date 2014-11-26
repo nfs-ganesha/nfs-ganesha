@@ -31,7 +31,6 @@
 #include "config.h"
 #endif
 
-#include "fsal.h"
 #include <libgen.h>		/* used for 'dirname' */
 #include <pthread.h>
 #include <string.h>
@@ -40,6 +39,7 @@
 #include <sys/syscall.h>
 #include <mntent.h>
 #include "ganesha_list.h"
+#include "fsal.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 #include "FSAL/fsal_commonlib.h"
@@ -113,11 +113,12 @@ static struct pt_fsal_obj_handle *alloc_handle(ptfsal_handle_t *fh,
 		strcpy(hdl->u.unopenable.name, unopenable_name);
 	}
 	hdl->obj_handle.attributes.mask =
-	    exp_hdl->ops->fs_supported_attrs(exp_hdl);
+	    exp_hdl->exp_ops.fs_supported_attrs(exp_hdl);
 	memcpy(&hdl->obj_handle.attributes, attributes,
 	       sizeof(struct attrlist));
 
 	fsal_obj_handle_init(&hdl->obj_handle, exp_hdl, attributes->type);
+	pt_handle_ops_init(&hdl->obj_handle.obj_ops);
 	return hdl;
 
  spcerr:
@@ -157,7 +158,7 @@ static fsal_status_t pt_lookup(struct fsal_obj_handle *parent,
 		return fsalstat(ERR_FSAL_FAULT, 0);
 	memset(fh, 0, sizeof(ptfsal_handle_t));
 	fh->data.handle.handle_size = FSI_CCL_PERSISTENT_HANDLE_N_BYTES;
-	if (!parent->ops->handle_is(parent, DIRECTORY)) {
+	if (!parent->obj_ops.handle_is(parent, DIRECTORY)) {
 		LogCrit(COMPONENT_FSAL,
 			"Parent handle is not a directory. hdl = 0x%p", parent);
 		return fsalstat(ERR_FSAL_NOTDIR, 0);
@@ -198,7 +199,7 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 	ptfsal_handle_t *fh = alloca(sizeof(ptfsal_handle_t));
 
 	*handle = NULL;		/* poison it */
-	if (!dir_hdl->ops->handle_is(dir_hdl, DIRECTORY)) {
+	if (!dir_hdl->obj_ops.handle_is(dir_hdl, DIRECTORY)) {
 		LogCrit(COMPONENT_FSAL,
 			"Parent handle is not a directory. hdl = 0x%p",
 			dir_hdl);
@@ -207,8 +208,8 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 	memset(fh, 0, sizeof(ptfsal_handle_t));
 	fh->data.handle.handle_size = FSI_CCL_PERSISTENT_HANDLE_N_BYTES;
 
-	attrib->mask =
-	    op_ctx->fsal_export->ops->fs_supported_attrs(op_ctx->fsal_export);
+	attrib->mask = op_ctx->fsal_export->exp_ops.
+	    fs_supported_attrs(op_ctx->fsal_export);
 	status = PTFSAL_create(dir_hdl, name, op_ctx,
 			       attrib->mode, fh, attrib);
 	if (FSAL_IS_ERROR(status))
@@ -239,7 +240,7 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 	ptfsal_handle_t *fh = alloca(sizeof(ptfsal_handle_t));
 
 	*handle = NULL;		/* poison it */
-	if (!dir_hdl->ops->handle_is(dir_hdl, DIRECTORY)) {
+	if (!dir_hdl->obj_ops.handle_is(dir_hdl, DIRECTORY)) {
 		LogCrit(COMPONENT_FSAL,
 			"Parent handle is not a directory. hdl = 0x%p",
 			dir_hdl);
@@ -248,8 +249,8 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 	memset(fh, 0, sizeof(ptfsal_handle_t));
 	fh->data.handle.handle_size = FSI_CCL_PERSISTENT_HANDLE_N_BYTES;
 
-	attrib->mask =
-	    op_ctx->fsal_export->ops->fs_supported_attrs(op_ctx->fsal_export);
+	attrib->mask = op_ctx->fsal_export->exp_ops.
+	    fs_supported_attrs(op_ctx->fsal_export);
 	status = PTFSAL_mkdir(dir_hdl, name, op_ctx, attrib->mode, fh, attrib);
 	if (FSAL_IS_ERROR(status))
 		return status;
@@ -283,7 +284,7 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 	ptfsal_handle_t *fh = alloca(sizeof(ptfsal_handle_t));
 
 	*handle = NULL;		/* poison it */
-	if (!dir_hdl->ops->handle_is(dir_hdl, DIRECTORY)) {
+	if (!dir_hdl->obj_ops.handle_is(dir_hdl, DIRECTORY)) {
 		LogCrit(COMPONENT_FSAL,
 			"Parent handle is not a directory. hdl = 0x%p",
 			dir_hdl);
@@ -293,8 +294,8 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 	memset(fh, 0, sizeof(ptfsal_handle_t));
 	fh->data.handle.handle_size = FSI_CCL_PERSISTENT_HANDLE_N_BYTES;
 
-	attrib->mask =
-	    op_ctx->fsal_export->ops->fs_supported_attrs(op_ctx->fsal_export);
+	attrib->mask = op_ctx->fsal_export->exp_ops.
+	    fs_supported_attrs(op_ctx->fsal_export);
 	status =
 	    PTFSAL_mknode(dir_hdl, name, op_ctx, attrib->mode,
 			  nodetype, dev, fh,
@@ -502,8 +503,8 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl)
 
 	myself = container_of(obj_hdl, struct pt_fsal_obj_handle, obj_handle);
 
-	obj_hdl->attributes.mask =
-	    op_ctx->fsal_export->ops->fs_supported_attrs(op_ctx->fsal_export);
+	obj_hdl->attributes.mask = op_ctx->fsal_export->exp_ops.
+	    fs_supported_attrs(op_ctx->fsal_export);
 	status =
 	    PTFSAL_getattrs(op_ctx->fsal_export, op_ctx, myself->handle,
 			    &obj_hdl->attributes);
@@ -675,7 +676,7 @@ static void release(struct fsal_obj_handle *obj_hdl)
 	}
 	myself = container_of(obj_hdl, struct pt_fsal_obj_handle, obj_handle);
 
-	fsal_obj_handle_uninit(obj_hdl);
+	fsal_obj_handle_fini(obj_hdl);
 
 	if (type == SYMBOLIC_LINK) {
 		if (myself->u.symlink.link_content != NULL)
@@ -791,7 +792,7 @@ fsal_status_t pt_lookup_path(struct fsal_export *exp_hdl,
 	if (retval < 0)
 		goto fileerr;
 
-	attributes.mask = exp_hdl->ops->fs_supported_attrs(exp_hdl);
+	attributes.mask = exp_hdl->exp_ops.fs_supported_attrs(exp_hdl);
 	fsal_status = pt_posix2fsal_attributes(&stat, &attributes);
 	if (FSAL_IS_ERROR(fsal_status))
 		goto fileerr;
@@ -865,7 +866,7 @@ fsal_status_t pt_create_handle(struct fsal_export *exp_hdl,
 	fh = alloca(hdl_desc->len);
 	memcpy(fh, hdl_desc->addr, hdl_desc->len); /* struct aligned copy */
 
-	attrib.mask = exp_hdl->ops->fs_supported_attrs(exp_hdl);
+	attrib.mask = exp_hdl->exp_ops.fs_supported_attrs(exp_hdl);
 	status = PTFSAL_getattrs(exp_hdl, op_ctx, fh, &attrib);
 	if (FSAL_IS_ERROR(status))
 		return status;

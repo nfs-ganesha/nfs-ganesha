@@ -119,7 +119,7 @@ cache_inode_lookupp_impl(cache_entry_t *entry,
 		PTHREAD_RWLOCK_wrlock(&entry->content_lock);
 
 		fsal_status =
-		    entry->obj_handle->ops->lookup(entry->obj_handle,
+		    entry->obj_handle->obj_ops.lookup(entry->obj_handle,
 						   "..", &parent_handle);
 		if (FSAL_IS_ERROR(fsal_status)) {
 			if (fsal_status.major == ERR_FSAL_STALE) {

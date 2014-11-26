@@ -96,7 +96,7 @@ cache_inode_commit(cache_entry_t *entry, uint64_t offset, size_t count)
 		PTHREAD_RWLOCK_rdlock(&entry->content_lock);
 	}
 
-	fsal_status = entry->obj_handle->ops->commit(entry->obj_handle,
+	fsal_status = entry->obj_handle->obj_ops.commit(entry->obj_handle,
 						     offset, count);
 
 	if (FSAL_IS_ERROR(fsal_status)) {

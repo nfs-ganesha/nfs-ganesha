@@ -95,7 +95,7 @@ static int op_dsread(struct nfs_argop4 *op, compound_data_t *data,
 
 	res_READ4->READ4res_u.resok4.data.data_val = buffer;
 
-	nfs_status = data->current_ds->ops->read(
+	nfs_status = data->current_ds->dsh_ops.read(
 				data->current_ds,
 				op_ctx,
 				&arg_READ4->stateid,
@@ -170,7 +170,7 @@ static int op_dsread_plus(struct nfs_argop4 *op, compound_data_t *data,
 		return res_RPLUS->rpr_status;
 	}
 
-	nfs_status = data->current_ds->ops->read_plus(
+	nfs_status = data->current_ds->dsh_ops.read_plus(
 				data->current_ds,
 				op_ctx,
 				&arg_READ4->stateid,
@@ -673,7 +673,7 @@ int nfs4_op_io_advise(struct nfs_argop4 *op, compound_data_t *data,
 		hints.offset = arg_IO_ADVISE->iaa_offset;
 		hints.count = arg_IO_ADVISE->iaa_count;
 
-		fsal_status = entry->obj_handle->ops->io_advise(
+		fsal_status = entry->obj_handle->obj_ops.io_advise(
 					entry->obj_handle,
 					&hints);
 		if (FSAL_IS_ERROR(fsal_status)) {
@@ -757,7 +757,7 @@ int nfs4_op_seek(struct nfs_argop4 *op, compound_data_t *data,
 		else
 			info.io_content.adb.adb_offset = arg_SEEK->sa_offset;
 
-		fsal_status = entry->obj_handle->ops->seek(
+		fsal_status = entry->obj_handle->obj_ops.seek(
 					entry->obj_handle,
 					&info);
 		if (FSAL_IS_ERROR(fsal_status)) {

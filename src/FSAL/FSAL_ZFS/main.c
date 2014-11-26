@@ -31,12 +31,12 @@
 
 #include "config.h"
 
-#include "fsal.h"
 #include <libgen.h>		/* used for 'dirname' */
 #include <pthread.h>
 #include <string.h>
 #include <sys/types.h>
 #include "ganesha_list.h"
+#include "fsal.h"
 #include "fsal_internal.h"
 #include "zfs_methods.h"
 #include "FSAL/fsal_init.h"
@@ -170,8 +170,8 @@ MODULE_INIT void zfs_load(void)
 		return;
 	}
 
-	myself->ops->create_export = zfs_create_export;
-	myself->ops->init_config = zfs_init_config;
+	myself->m_ops.create_export = zfs_create_export;
+	myself->m_ops.init_config = zfs_init_config;
 }
 
 MODULE_FINI void zfs_unload(void)

@@ -55,21 +55,21 @@
 static fsal_status_t lookup(struct fsal_obj_handle *parent,
 			    const char *path, struct fsal_obj_handle **handle)
 {
-	return next_ops.obj_ops->lookup(parent, path, handle);
+	return next_ops.obj_ops.lookup(parent, path, handle);
 }
 
 static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 			    const char *name, struct attrlist *attrib,
 			    struct fsal_obj_handle **handle)
 {
-	return next_ops.obj_ops->create(dir_hdl, name, attrib, handle);
+	return next_ops.obj_ops.create(dir_hdl, name, attrib, handle);
 }
 
 static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 			     const char *name, struct attrlist *attrib,
 			     struct fsal_obj_handle **handle)
 {
-	return next_ops.obj_ops->mkdir(dir_hdl, name, attrib, handle);
+	return next_ops.obj_ops.mkdir(dir_hdl, name, attrib, handle);
 }
 
 static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
@@ -78,7 +78,7 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 			      struct attrlist *attrib,
 			      struct fsal_obj_handle **handle)
 {
-	return next_ops.obj_ops->mknode(dir_hdl, name, nodetype, dev,
+	return next_ops.obj_ops.mknode(dir_hdl, name, nodetype, dev,
 					attrib, handle);
 }
 
@@ -93,7 +93,7 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 				 struct attrlist *attrib,
 				 struct fsal_obj_handle **handle)
 {
-	return next_ops.obj_ops->symlink(dir_hdl, name, link_path,
+	return next_ops.obj_ops.symlink(dir_hdl, name, link_path,
 					 attrib, handle);
 }
 
@@ -101,7 +101,7 @@ static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
 				 struct gsh_buffdesc *link_content,
 				 bool refresh)
 {
-	return next_ops.obj_ops->readlink(obj_hdl, link_content,
+	return next_ops.obj_ops.readlink(obj_hdl, link_content,
 					  refresh);
 }
 
@@ -109,7 +109,7 @@ static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
 			      struct fsal_obj_handle *destdir_hdl,
 			      const char *name)
 {
-	return next_ops.obj_ops->link(obj_hdl, destdir_hdl, name);
+	return next_ops.obj_ops.link(obj_hdl, destdir_hdl, name);
 }
 
 /**
@@ -127,7 +127,7 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 				  fsal_cookie_t *whence, void *dir_state,
 				  fsal_readdir_cb cb, bool *eof)
 {
-	return next_ops.obj_ops->readdir(dir_hdl, whence, dir_state, cb,
+	return next_ops.obj_ops.readdir(dir_hdl, whence, dir_state, cb,
 					 eof);
 }
 
@@ -136,13 +136,13 @@ static fsal_status_t renamefile(struct fsal_obj_handle *olddir_hdl,
 				struct fsal_obj_handle *newdir_hdl,
 				const char *new_name)
 {
-	return next_ops.obj_ops->rename(olddir_hdl, old_name, newdir_hdl,
+	return next_ops.obj_ops.rename(olddir_hdl, old_name, newdir_hdl,
 					new_name);
 }
 
 static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl)
 {
-	return next_ops.obj_ops->getattrs(obj_hdl);
+	return next_ops.obj_ops.getattrs(obj_hdl);
 }
 
 /*
@@ -153,7 +153,7 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl)
 static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 			      struct attrlist *attrs)
 {
-	return next_ops.obj_ops->setattrs(obj_hdl, attrs);
+	return next_ops.obj_ops.setattrs(obj_hdl, attrs);
 }
 
 /* file_unlink
@@ -163,7 +163,7 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
 				 const char *name)
 {
-	return next_ops.obj_ops->unlink(dir_hdl, name);
+	return next_ops.obj_ops.unlink(dir_hdl, name);
 }
 
 /* handle_digest
@@ -177,7 +177,7 @@ static fsal_status_t handle_digest(const struct fsal_obj_handle *obj_hdl,
 				   fsal_digesttype_t output_type,
 				   struct gsh_buffdesc *fh_desc)
 {
-	return next_ops.obj_ops->handle_digest(obj_hdl, output_type, fh_desc);
+	return next_ops.obj_ops.handle_digest(obj_hdl, output_type, fh_desc);
 }
 
 /**
@@ -190,7 +190,7 @@ static fsal_status_t handle_digest(const struct fsal_obj_handle *obj_hdl,
 static void handle_to_key(struct fsal_obj_handle *obj_hdl,
 			  struct gsh_buffdesc *fh_desc)
 {
-	return next_ops.obj_ops->handle_to_key(obj_hdl, fh_desc);
+	return next_ops.obj_ops.handle_to_key(obj_hdl, fh_desc);
 }
 
 /*
@@ -200,7 +200,7 @@ static void handle_to_key(struct fsal_obj_handle *obj_hdl,
 
 static void release(struct fsal_obj_handle *obj_hdl)
 {
-	next_ops.obj_ops->release(obj_hdl);
+	next_ops.obj_ops.release(obj_hdl);
 }
 
 void nullfs_handle_ops_init(struct fsal_obj_ops *ops)
@@ -256,7 +256,7 @@ fsal_status_t nullfs_lookup_path(struct fsal_export *exp_hdl,
 				 struct fsal_obj_handle **handle)
 {
 	printf("Called %p\n", nullfs_lookup_path);
-	return next_ops.exp_ops->lookup_path(exp_hdl, path, handle);
+	return next_ops.exp_ops.lookup_path(exp_hdl, path, handle);
 }
 
 /* create_handle
@@ -275,6 +275,6 @@ fsal_status_t nullfs_create_handle(struct fsal_export *exp_hdl,
 				   struct gsh_buffdesc *hdl_desc,
 				   struct fsal_obj_handle **handle)
 {
-	return next_ops.exp_ops->create_handle(exp_hdl, hdl_desc,
+	return next_ops.exp_ops.create_handle(exp_hdl, hdl_desc,
 					       handle);
 }

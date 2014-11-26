@@ -65,7 +65,7 @@ static int op_dswrite(struct nfs_argop4 *op, compound_data_t *data,
 	/* NFSv4 return code */
 	nfsstat4 nfs_status = 0;
 
-	nfs_status = data->current_ds->ops->write(
+	nfs_status = data->current_ds->dsh_ops.write(
 				data->current_ds,
 				op_ctx,
 				&arg_WRITE4->stateid,
@@ -104,7 +104,7 @@ static int op_dswrite_plus(struct nfs_argop4 *op, compound_data_t *data,
 	nfsstat4 nfs_status = 0;
 
 	if (info->io_content.what == NFS4_CONTENT_DATA)
-		nfs_status = data->current_ds->ops->write(
+		nfs_status = data->current_ds->dsh_ops.write(
 				data->current_ds,
 				op_ctx,
 				&arg_WRITE4->stateid,
@@ -116,7 +116,7 @@ static int op_dswrite_plus(struct nfs_argop4 *op, compound_data_t *data,
 				&res_WRITE4->WRITE4res_u.resok4.writeverf,
 				&res_WRITE4->WRITE4res_u.resok4.committed);
 	else
-		nfs_status = data->current_ds->ops->write_plus(
+		nfs_status = data->current_ds->dsh_ops.write_plus(
 				data->current_ds,
 				op_ctx,
 				&arg_WRITE4->stateid,
@@ -189,7 +189,7 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* if quota support is active, then we should check is the FSAL
 	   allows inode creation or not */
-	fsal_status = op_ctx->fsal_export->ops->check_quota(
+	fsal_status = op_ctx->fsal_export->exp_ops.check_quota(
 						op_ctx->fsal_export,
 						op_ctx->export->fullpath,
 						FSAL_QUOTA_INODES);
@@ -373,8 +373,7 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 
 		verf_desc.addr = res_WRITE4->WRITE4res_u.resok4.writeverf;
 		verf_desc.len = sizeof(verifier4);
-		op_ctx->fsal_export->ops->get_write_verifier(
-			&verf_desc);
+		op_ctx->fsal_export->exp_ops.get_write_verifier(&verf_desc);
 
 		res_WRITE4->status = NFS4_OK;
 		goto done;
@@ -422,8 +421,7 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 
 	verf_desc.addr = res_WRITE4->WRITE4res_u.resok4.writeverf;
 	verf_desc.len = sizeof(verifier4);
-	op_ctx->fsal_export->ops->get_write_verifier(
-		&verf_desc);
+	op_ctx->fsal_export->exp_ops.get_write_verifier(&verf_desc);
 
 	res_WRITE4->status = NFS4_OK;
 

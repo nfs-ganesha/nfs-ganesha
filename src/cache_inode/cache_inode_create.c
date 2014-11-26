@@ -118,19 +118,19 @@ cache_inode_create(cache_entry_t *parent,
 	switch (type) {
 	case REGULAR_FILE:
 		fsal_status =
-		    dir_handle->ops->create(dir_handle, name,
+		    dir_handle->obj_ops.create(dir_handle, name,
 					    &object_attributes, &object_handle);
 		break;
 
 	case DIRECTORY:
 		fsal_status =
-		    dir_handle->ops->mkdir(dir_handle, name,
+		    dir_handle->obj_ops.mkdir(dir_handle, name,
 					   &object_attributes, &object_handle);
 		break;
 
 	case SYMBOLIC_LINK:
 		fsal_status =
-		    dir_handle->ops->symlink(dir_handle, name,
+		    dir_handle->obj_ops.symlink(dir_handle, name,
 					     create_arg->link_content,
 					     &object_attributes,
 					     &object_handle);
@@ -138,7 +138,7 @@ cache_inode_create(cache_entry_t *parent,
 
 	case SOCKET_FILE:
 	case FIFO_FILE:
-		fsal_status = dir_handle->ops->mknode(dir_handle,
+		fsal_status = dir_handle->obj_ops.mknode(dir_handle,
 						      name, type,
 						      NULL, /* dev_t !needed */
 						      &object_attributes,
@@ -148,7 +148,7 @@ cache_inode_create(cache_entry_t *parent,
 	case BLOCK_FILE:
 	case CHARACTER_FILE:
 		fsal_status =
-		    dir_handle->ops->mknode(dir_handle, name, type,
+		    dir_handle->obj_ops.mknode(dir_handle, name, type,
 					    &create_arg->dev_spec,
 					    &object_attributes, &object_handle);
 		break;

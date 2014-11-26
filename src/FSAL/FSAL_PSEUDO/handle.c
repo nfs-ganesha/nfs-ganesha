@@ -302,6 +302,8 @@ static struct pseudo_fsal_obj_handle
 	FSAL_SET_MASK(hdl->obj_handle.attributes.mask, ATTR_RAWDEV);
 
 	fsal_obj_handle_init(&hdl->obj_handle, exp_hdl, DIRECTORY);
+	pseudofs_handle_ops_init(&hdl->obj_handle.obj_ops);
+
 	avltree_init(&hdl->avl_name, pseudofs_n_cmpf, 0 /* flags */);
 	avltree_init(&hdl->avl_index, pseudofs_i_cmpf, 0 /* flags */);
 	hdl->next_i = 2;
@@ -413,7 +415,7 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 
 	*handle = NULL;		/* poison it */
 
-	if (!dir_hdl->ops->handle_is(dir_hdl, DIRECTORY)) {
+	if (!dir_hdl->obj_ops.handle_is(dir_hdl, DIRECTORY)) {
 		LogCrit(COMPONENT_FSAL,
 			"Parent handle is not a directory. hdl = 0x%p",
 			dir_hdl);
@@ -425,7 +427,7 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 			      obj_handle);
 
 	unix_mode = fsal2unix_mode(attrib->mode)
-	    & ~op_ctx->fsal_export->ops->fs_umask(op_ctx->fsal_export);
+	    & ~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
 
 	/* allocate an obj_handle and fill it up */
 	hdl = alloc_directory_handle(myself,
@@ -750,7 +752,7 @@ static void release(struct fsal_obj_handle *obj_hdl)
 		return;
 	}
 
-	fsal_obj_handle_uninit(obj_hdl);
+	fsal_obj_handle_fini(obj_hdl);
 
 	LogDebug(COMPONENT_FSAL,
 		 "Releasing hdl=%p, name=%s",

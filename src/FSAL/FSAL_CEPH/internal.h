@@ -107,8 +107,8 @@ struct ds_wire {
  */
 
 struct ds {
-	struct ds_wire wire;	/*< Wire data */
 	struct fsal_ds_handle ds;	/*< Public DS handle */
+	struct ds_wire wire;	/*< Wire data */
 	bool connected;		/*< True if the handle has been connected
 				   (in Ceph) */
 };

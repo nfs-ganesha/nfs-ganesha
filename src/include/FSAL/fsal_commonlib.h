@@ -62,15 +62,17 @@ void free_export_ops(struct fsal_export *exp_hdl);
 void fsal_obj_handle_init(struct fsal_obj_handle *, struct fsal_export *,
 			  object_file_type_t);
 
-void fsal_obj_handle_uninit(struct fsal_obj_handle *obj);
+void fsal_obj_handle_fini(struct fsal_obj_handle *obj);
 
 /*
  * pNFS DS Helpers
  */
 
-void fsal_ds_handle_init(struct fsal_ds_handle *, struct fsal_ds_ops *,
-			 struct fsal_module *);
-void fsal_ds_handle_uninit(struct fsal_ds_handle *ds);
+void fsal_pnfs_ds_init(struct fsal_pnfs_ds *pds, struct fsal_module *fsal);
+void fsal_pnfs_ds_fini(struct fsal_pnfs_ds *pds);
+
+void fsal_ds_handle_init(struct fsal_ds_handle *dsh, struct fsal_pnfs_ds *pds);
+void fsal_ds_handle_fini(struct fsal_ds_handle *dsh);
 
 int open_dir_by_path_walk(int first_fd, const char *path, struct stat *stat);
 

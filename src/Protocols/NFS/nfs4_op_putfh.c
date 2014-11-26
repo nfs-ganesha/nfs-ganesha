@@ -148,8 +148,10 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t *data,
 		 */
 		data->current_filetype = REGULAR_FILE;
 
+		/* FIXME: when no fsal_export? Why copy above?
+		 */
 		res_PUTFH4->status =
-		    export->ops->create_ds_handle(export,
+		    export->exp_ops.create_ds_handle(export,
 						  &fh_desc,
 						  &data->current_ds);
 
@@ -166,7 +168,7 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t *data,
 
 		/* adjust the handle opaque into a cache key */
 		fsal_status =
-		    export->ops->extract_handle(export,
+		    export->exp_ops.extract_handle(export,
 						FSAL_DIGEST_NFSV4,
 						&fsal_data.fh_desc);
 

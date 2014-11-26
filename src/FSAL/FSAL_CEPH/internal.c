@@ -153,7 +153,9 @@ int construct_handle(const struct stat *st, struct Inode *i,
 		return -ENOMEM;
 
 	constructing->vi.ino.val = st->st_ino;
+#ifdef CEPH_NOSNAP
 	constructing->vi.snapid.val = st->st_dev;
+#endif /* CEPH_NOSNAP */
 	constructing->i = i;
 	constructing->up_ops = export->export.up_ops;
 
@@ -161,6 +163,7 @@ int construct_handle(const struct stat *st, struct Inode *i,
 
 	fsal_obj_handle_init(&constructing->handle, &export->export,
 			     constructing->handle.attributes.type);
+	handle_ops_init(&constructing->handle.obj_ops);
 
 	constructing->export = export;
 
@@ -178,6 +181,6 @@ int construct_handle(const struct stat *st, struct Inode *i,
 void deconstruct_handle(struct handle *obj)
 {
 	ceph_ll_put(obj->export->cmount, obj->i);
-	fsal_obj_handle_uninit(&obj->handle);
+	fsal_obj_handle_fini(&obj->handle);
 	gsh_free(obj);
 }

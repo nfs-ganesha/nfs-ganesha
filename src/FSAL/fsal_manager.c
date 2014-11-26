@@ -406,15 +406,10 @@ int register_fsal(struct fsal_module *fsal_hdl, const char *name,
 		}
 	}
 
-/* allocate and init ops vector to system wide defaults
- * from FSAL/default_methods.c
- */
-	fsal_hdl->ops = gsh_malloc(sizeof(struct fsal_ops));
-	if (fsal_hdl->ops == NULL) {
-		so_error = ENOMEM;
-		goto errout;
-	}
-	memcpy(fsal_hdl->ops, &def_fsal_ops, sizeof(struct fsal_ops));
+	/* init ops vector to system wide defaults
+	 * from FSAL/default_methods.c
+	 */
+	memcpy(&fsal_hdl->m_ops, &def_fsal_ops, sizeof(struct fsal_ops));
 
 	pthread_rwlockattr_init(&attrs);
 #ifdef GLIBC
@@ -423,7 +418,7 @@ int register_fsal(struct fsal_module *fsal_hdl, const char *name,
 		PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
 #endif
 	pthread_rwlock_init(&fsal_hdl->lock, &attrs);
-	glist_init(&fsal_hdl->ds_handles);
+	glist_init(&fsal_hdl->servers);
 	glist_init(&fsal_hdl->handles);
 	glist_init(&fsal_hdl->exports);
 	glist_add_tail(&fsal_list, &fsal_hdl->fsals);
@@ -439,8 +434,6 @@ int register_fsal(struct fsal_module *fsal_hdl, const char *name,
 		gsh_free(fsal_hdl->path);
 	if (fsal_hdl->name)
 		gsh_free(fsal_hdl->name);
-	if (fsal_hdl->ops)
-		gsh_free(fsal_hdl->ops);
 	load_state = error;
 	pthread_mutex_unlock(&fsal_lock);
 	LogCrit(COMPONENT_INIT, "FSAL \"%s\" failed to register because: %s",
@@ -476,8 +469,6 @@ int unregister_fsal(struct fsal_module *fsal_hdl)
 		gsh_free(fsal_hdl->path);
 	if (fsal_hdl->name)
 		gsh_free(fsal_hdl->name);
-	if (fsal_hdl->ops)
-		gsh_free(fsal_hdl->ops);
 	return 0;
 }
 
@@ -555,7 +546,7 @@ int fsal_load_init(void *node, const char *name, struct fsal_module **fsal_hdl,
 		}
 		op_ctx->fsal_module = *fsal_hdl;
 		myconfig = get_parse_root(node);
-		status = (*fsal_hdl)->ops->init_config(*fsal_hdl, myconfig);
+		status = (*fsal_hdl)->m_ops.init_config(*fsal_hdl, myconfig);
 		if (FSAL_IS_ERROR(status)) {
 			LogCrit(COMPONENT_CONFIG,
 				"Failed to initialize FSAL (%s)", name);

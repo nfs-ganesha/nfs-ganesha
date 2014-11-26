@@ -157,7 +157,7 @@ fsal_status_t GPFSFSAL_lookup(const struct req_op_context *p_context,
 	/* get object attributes */
 	if (p_object_attr) {
 		p_object_attr->mask =
-		    p_context->fsal_export->ops->
+		    p_context->fsal_export->exp_ops.
 		    fs_supported_attrs(p_context->fsal_export);
 		status = GPFSFSAL_getattrs(p_context->fsal_export, gpfs_fs,
 					   p_context, fh, p_object_attr);

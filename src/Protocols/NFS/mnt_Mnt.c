@@ -141,7 +141,7 @@ int mnt_Mnt(nfs_arg_t *arg,
 		LogEvent(COMPONENT_NFSPROTO,
 			 "MOUNT: Performance warning: Export entry is not cached");
 
-		if (FSAL_IS_ERROR(op_ctx->fsal_export->ops->lookup_path(
+		if (FSAL_IS_ERROR(op_ctx->fsal_export->exp_ops.lookup_path(
 						op_ctx->fsal_export,
 						arg->arg_mnt,
 						&pfsal_handle))) {
@@ -172,7 +172,7 @@ int mnt_Mnt(nfs_arg_t *arg,
 		cache_inode_put(entry);
 	} else {
 		/* Release the fsal_obj_handle created for the path */
-		pfsal_handle->ops->release(pfsal_handle);
+		pfsal_handle->obj_ops.release(pfsal_handle);
 	}
 
 	/* Return the supported authentication flavor in V3 based

@@ -91,17 +91,17 @@ int nfs3_pathconf(nfs_arg_t *arg,
 	}
 
 	res->res_pathconf3.PATHCONF3res_u.resok.linkmax =
-	    exp_hdl->ops->fs_maxlink(exp_hdl);
+	    exp_hdl->exp_ops.fs_maxlink(exp_hdl);
 	res->res_pathconf3.PATHCONF3res_u.resok.name_max =
-	    exp_hdl->ops->fs_maxnamelen(exp_hdl);
+	    exp_hdl->exp_ops.fs_maxnamelen(exp_hdl);
 	res->res_pathconf3.PATHCONF3res_u.resok.no_trunc =
-	    exp_hdl->ops->fs_supports(exp_hdl, fso_no_trunc);
+	    exp_hdl->exp_ops.fs_supports(exp_hdl, fso_no_trunc);
 	res->res_pathconf3.PATHCONF3res_u.resok.chown_restricted =
-	    exp_hdl->ops->fs_supports(exp_hdl, fso_chown_restricted);
+	    exp_hdl->exp_ops.fs_supports(exp_hdl, fso_chown_restricted);
 	res->res_pathconf3.PATHCONF3res_u.resok.case_insensitive =
-	    exp_hdl->ops->fs_supports(exp_hdl, fso_case_insensitive);
+	    exp_hdl->exp_ops.fs_supports(exp_hdl, fso_case_insensitive);
 	res->res_pathconf3.PATHCONF3res_u.resok.case_preserving =
-	    exp_hdl->ops->fs_supports(exp_hdl, fso_case_preserving);
+	    exp_hdl->exp_ops.fs_supports(exp_hdl, fso_case_preserving);
 
 	/* Build post op file attributes */
 	nfs_SetPostOpAttr(entry,
