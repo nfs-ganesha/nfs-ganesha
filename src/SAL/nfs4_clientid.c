@@ -526,9 +526,7 @@ int display_client_id_val(struct gsh_buffdesc *buff, char *str)
  */
 nfs_client_id_t *create_client_id(clientid4 clientid,
 				  nfs_client_record_t *client_record,
-				  sockaddr_t *client_addr,
 				  nfs_client_cred_t *credential,
-				  struct gsh_client *gsh_client,
 				  uint32_t minorversion)
 {
 	nfs_client_id_t *client_rec = pool_alloc(client_id_pool, NULL);
@@ -562,11 +560,10 @@ nfs_client_id_t *create_client_id(clientid4 clientid,
 	client_rec->cid_clientid = clientid;
 	client_rec->cid_last_renew = time(NULL);
 	client_rec->cid_client_record = client_record;
-	client_rec->cid_client_addr = *client_addr;
 	client_rec->cid_credential = *credential;
 	client_rec->cid_minorversion = minorversion;
-	client_rec->gsh_client = gsh_client;
-	inc_gsh_client_refcount(gsh_client);
+	client_rec->gsh_client = op_ctx->client;
+	inc_gsh_client_refcount(op_ctx->client);
 
 	/* need to init the list_head */
 	glist_init(&client_rec->cid_openowners);

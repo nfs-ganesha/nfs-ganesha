@@ -68,7 +68,6 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op, compound_data_t *data,
 	nfs_client_id_t *unconf = NULL;
 	nfs_client_record_t *client_record;
 	clientid4 clientid = 0;
-	sockaddr_t client_addr;
 	char str_verifier[NFS4_VERIFIER_SIZE * 2 + 1];
 	const char *str_client_addr = "(unknown)";
 	/* The client name, for gratuitous logging */
@@ -99,8 +98,6 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op, compound_data_t *data,
 		res_SETCLIENTID_CONFIRM4->status = NFS4ERR_NOTSUPP;
 		return res_SETCLIENTID_CONFIRM4->status;
 	}
-
-	copy_xprt_addr(&client_addr, data->req->rq_xprt);
 
 	if (op_ctx->client != NULL)
 		str_client_addr = op_ctx->client->hostaddr_str;
@@ -178,15 +175,15 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op, compound_data_t *data,
 		/* First must match principal */
 		if (!nfs_compare_clientcred(&unconf->cid_credential,
 					    &data->credential)
-		    || !cmp_sockaddr(&unconf->cid_client_addr,
-				     &client_addr,
-				     true)) {
+		    || op_ctx->client == NULL
+		    || unconf->gsh_client == NULL
+		    || op_ctx->client != unconf->gsh_client) {
 			if (isDebug(COMPONENT_CLIENTID)) {
-				char unconfirmed_addr[SOCK_NAME_MAX + 1];
+				char *unconfirmed_addr = "(unknown)";
 
-				sprint_sockip(&unconf->cid_client_addr,
-					      unconfirmed_addr,
-					      sizeof(unconfirmed_addr));
+				if (unconf->gsh_client != NULL)
+					unconfirmed_addr =
+					    unconf->gsh_client->hostaddr_str;
 
 				LogDebug(COMPONENT_CLIENTID,
 					 "Unconfirmed ClientId %s->'%s': Principals do not match... unconfirmed addr=%s Return NFS4ERR_CLID_INUSE",
@@ -251,15 +248,15 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op, compound_data_t *data,
 		/* First must match principal */
 		if (!nfs_compare_clientcred(&conf->cid_credential,
 					    &data->credential)
-		    || !cmp_sockaddr(&conf->cid_client_addr,
-				     &client_addr,
-				     true)) {
+		    || op_ctx->client == NULL
+		    || conf->gsh_client == NULL
+		    || op_ctx->client != conf->gsh_client) {
 			if (isDebug(COMPONENT_CLIENTID)) {
-				char confirmed_addr[SOCK_NAME_MAX + 1];
+				char *confirmed_addr = "(unknown)";
 
-				sprint_sockip(&conf->cid_client_addr,
-					      confirmed_addr,
-					      sizeof(confirmed_addr));
+				if (conf->gsh_client != NULL)
+					confirmed_addr =
+					    conf->gsh_client->hostaddr_str;
 
 				LogDebug(COMPONENT_CLIENTID,
 					 "Confirmed ClientId %s->%s addr=%s: Principals do not match...  confirmed addr=%s Return NFS4ERR_CLID_INUSE",

@@ -202,9 +202,7 @@ clientid_status_t nfs_client_id_get_confirmed(clientid4 clientid,
 
 nfs_client_id_t *create_client_id(clientid4 clientid,
 				  nfs_client_record_t *client_record,
-				  sockaddr_t *client_addr,
 				  nfs_client_cred_t *credential,
-				  struct gsh_client *gsh_client,
 				  uint32_t minorversion);
 
 clientid_status_t nfs_client_id_insert(nfs_client_id_t *clientid);

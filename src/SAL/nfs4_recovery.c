@@ -254,14 +254,15 @@ void nfs4_create_clid_name(nfs_client_record_t *cl_rec,
 void nfs4_create_clid_name41(nfs_client_record_t *cl_rec,
 			     nfs_client_id_t *clientid)
 {
-	char buf[SOCK_NAME_MAX + 1];
+	char *buf = "unknown";
 	char cidstr[PATH_MAX];
 	struct display_buffer       dspbuf = {sizeof(cidstr), cidstr, cidstr};
 	char                         cidstr_len[10];
 	int total_len;
 
 	/* get the caller's IP addr */
-	sprint_sockip(&clientid->cid_client_addr, buf, sizeof(buf));
+	if (clientid->gsh_client != NULL)
+		buf = clientid->gsh_client->hostaddr_str;
 
 	if (convert_opaque_value_max_for_dir(&dspbuf,
 					     cl_rec->cr_client_val,

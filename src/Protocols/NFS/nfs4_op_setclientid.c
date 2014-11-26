@@ -76,7 +76,6 @@ int nfs4_op_setclientid(struct nfs_argop4 *op, compound_data_t *data,
 	nfs_client_id_t *unconf;
 	clientid4 clientid;
 	verifier4 verifier;
-	sockaddr_t client_addr;
 	int rc;
 
 	resp->resop = NFS4_OP_SETCLIENTID;
@@ -85,8 +84,6 @@ int nfs4_op_setclientid(struct nfs_argop4 *op, compound_data_t *data,
 		res_SETCLIENTID4->status = NFS4ERR_NOTSUPP;
 		return res_SETCLIENTID4->status;
 	}
-
-	copy_xprt_addr(&client_addr, data->req->rq_xprt);
 
 	if (op_ctx->client != NULL)
 		str_client_addr = op_ctx->client->hostaddr_str;
@@ -158,19 +155,19 @@ int nfs4_op_setclientid(struct nfs_argop4 *op, compound_data_t *data,
 
 		if (!nfs_compare_clientcred(&conf->cid_credential,
 					    &data->credential)
-		    || !cmp_sockaddr(&conf->cid_client_addr,
-				     &client_addr,
-				     true)) {
+		    || op_ctx->client == NULL
+		    || conf->gsh_client == NULL
+		    || op_ctx->client != conf->gsh_client) {
 			/* CASE 1:
 			 *
 			 * Confirmed record exists and not the same principal
 			 */
 			if (isDebug(COMPONENT_CLIENTID)) {
-				char confirmed_addr[SOCK_NAME_MAX + 1];
+				char *confirmed_addr = "(unknown)";
 
-				sprint_sockip(&conf->cid_client_addr,
-					      confirmed_addr,
-					      sizeof(confirmed_addr));
+				if (conf->gsh_client != NULL)
+					confirmed_addr =
+					    conf->gsh_client->hostaddr_str;
 
 				LogDebug(COMPONENT_CLIENTID,
 					 "Confirmed ClientId %s->'%s': Principals do not match... confirmed addr=%s Return NFS4ERR_CLID_INUSE",
@@ -290,9 +287,7 @@ int nfs4_op_setclientid(struct nfs_argop4 *op, compound_data_t *data,
 
 	unconf = create_client_id(clientid,
 				  client_record,
-				  &client_addr,
 				  &data->credential,
-				  op_ctx->client,
 				  0);
 
 	if (unconf == NULL) {
