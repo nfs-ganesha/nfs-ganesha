@@ -349,7 +349,16 @@ do {									\
 } while (0)
 
 bool copy_xprt_addr(sockaddr_t *, SVCXPRT *);
-int sprint_sockaddr(sockaddr_t *, char *, int);
+
+int display_sockaddr(struct display_buffer *dspbuf, sockaddr_t *addr);
+
+static inline void sprint_sockaddr(sockaddr_t *addr, char *buf, int len)
+{
+	struct display_buffer dspbuf = {len, buf, buf};
+	buf[0] = '\0';
+	display_sockaddr(&dspbuf, addr);
+}
+
 int sprint_sockip(sockaddr_t *, char *, int);
 const char *xprt_type_to_str(xprt_type_t);
 
