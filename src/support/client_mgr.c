@@ -203,7 +203,7 @@ struct gsh_client *get_gsh_client(sockaddr_t *client_ipaddr, bool lookup_only)
 	cl->addr.addr = cl->addrbuf;
 	cl->addr.len = addr_len;
 	cl->refcnt = 0;		/* we will hold a ref starting out... */
-	sprint_sockaddr(client_ipaddr, hoststr, SOCK_NAME_MAX);
+	sprint_sockip(client_ipaddr, hoststr, SOCK_NAME_MAX);
 	cl->hostaddr_str = gsh_strdup(hoststr);
 
 	PTHREAD_RWLOCK_wrlock(&client_by_ip.lock);
