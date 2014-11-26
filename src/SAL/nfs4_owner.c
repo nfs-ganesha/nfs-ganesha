@@ -54,7 +54,9 @@ hash_table_t *ht_nfs4_owner;
  */
 int display_nfs4_owner_key(struct gsh_buffdesc *buff, char *str)
 {
-	return display_nfs4_owner((state_owner_t *) (buff->addr), str);
+	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
+	display_nfs4_owner(&dspbuf, buff->addr);
+	return display_buffer_len(&dspbuf);
 }
 
 /**
@@ -63,53 +65,68 @@ int display_nfs4_owner_key(struct gsh_buffdesc *buff, char *str)
  * @param[in]  owner The state owner
  * @param[out] str   Output string
  *
- * @return The length of the output string.
+ * @return the bytes remaining in the buffer.
  */
-int display_nfs4_owner(state_owner_t *owner, char *str)
+int display_nfs4_owner(struct display_buffer *dspbuf, state_owner_t *owner)
 {
-	char *strtmp = str;
-	struct display_buffer dspbuf;
+	int b_left = display_printf(dspbuf,  "%s %p:",
+				    state_owner_type_to_str(owner->so_type),
+				    owner);
 
-	strtmp +=
-	    sprintf(strtmp, "%s %p:", state_owner_type_to_str(owner->so_type),
-		    owner);
+	if (b_left <= 0)
+		return b_left;
 
-	strtmp += sprintf(strtmp, " clientid={");
+	b_left = display_printf(dspbuf, " clientid={");
 
-	/* Temporary display buffer until display_owner gets converted. */
-	dspbuf.b_size = 1024;
-	dspbuf.b_start = strtmp;
-	dspbuf.b_current = strtmp;
+	if (b_left <= 0)
+		return b_left;
 
-	display_client_id_rec(&dspbuf,
-			      owner->so_owner.so_nfs4_owner.so_clientrec);
+	b_left = display_client_id_rec(dspbuf, owner->so_owner.so_nfs4_owner
+						.so_clientrec);
 
-	strtmp += display_buffer_len(&dspbuf);
+	if (b_left <= 0)
+		return b_left;
 
-	strtmp += sprintf(strtmp, "} owner=");
+	b_left = display_printf(dspbuf, "} owner=");
 
-	strtmp +=
-	    DisplayOpaqueValue(owner->so_owner_val, owner->so_owner_len,
-			       strtmp);
+	if (b_left <= 0)
+		return b_left;
 
-	strtmp +=
-	    sprintf(strtmp, " confirmed=%u seqid=%u",
+	b_left = display_opaque_value(dspbuf,
+				      owner->so_owner_val,
+				      owner->so_owner_len);
+
+	if (b_left <= 0)
+		return b_left;
+
+	b_left = display_printf(dspbuf, " confirmed=%u seqid=%u",
 		    owner->so_owner.so_nfs4_owner.so_confirmed,
 		    owner->so_owner.so_nfs4_owner.so_seqid);
 
+	if (b_left <= 0)
+		return b_left;
+
 	if (owner->so_owner.so_nfs4_owner.so_related_owner != NULL) {
-		strtmp += sprintf(strtmp, " related_owner={");
-		strtmp +=
-		    display_nfs4_owner(owner->so_owner.so_nfs4_owner.
-				       so_related_owner, strtmp);
-		strtmp += sprintf(strtmp, "}");
+		b_left = display_printf(dspbuf, " related_owner={");
+
+		if (b_left <= 0)
+			return b_left;
+
+		b_left =
+		    display_nfs4_owner(dspbuf, owner->so_owner
+					       .so_nfs4_owner.so_related_owner);
+
+		if (b_left <= 0)
+			return b_left;
+
+		b_left = display_printf(dspbuf, "}");
+
+		if (b_left <= 0)
+			return b_left;
 	}
 
-	strtmp +=
-	    sprintf(strtmp, " refcount=%d",
+	return display_printf(dspbuf, " refcount=%d",
 		    atomic_fetch_int32_t(&owner->so_refcount));
-
-	return strtmp - str;
 }
 
 /**
@@ -122,7 +139,9 @@ int display_nfs4_owner(state_owner_t *owner, char *str)
  */
 int display_nfs4_owner_val(struct gsh_buffdesc *buff, char *str)
 {
-	return display_nfs4_owner(buff->addr, str);
+	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
+	display_nfs4_owner(&dspbuf, buff->addr);
+	return display_buffer_len(&dspbuf);
 }
 
 /**
@@ -137,11 +156,13 @@ int display_nfs4_owner_val(struct gsh_buffdesc *buff, char *str)
 int compare_nfs4_owner(state_owner_t *owner1, state_owner_t *owner2)
 {
 	if (isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE)) {
-		char str1[HASHTABLE_DISPLAY_STRLEN];
-		char str2[HASHTABLE_DISPLAY_STRLEN];
+		char str1[LOG_BUFF_LEN / 2];
+		char str2[LOG_BUFF_LEN / 2];
+		struct display_buffer dspbuf1 = {sizeof(str1), str1, str1};
+		struct display_buffer dspbuf2 = {sizeof(str2), str2, str2};
 
-		display_nfs4_owner(owner1, str1);
-		display_nfs4_owner(owner2, str2);
+		display_nfs4_owner(&dspbuf1, owner1);
+		display_nfs4_owner(&dspbuf2, owner2);
 		LogFullDebug(COMPONENT_STATE, "{%s} vs {%s}", str1, str2);
 	}
 
@@ -191,11 +212,13 @@ int compare_nfs4_owner_key(struct gsh_buffdesc *buff1,
 	state_owner_t *pkey2 = buff2->addr;
 
 	if (isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE)) {
-		char str1[HASHTABLE_DISPLAY_STRLEN];
-		char str2[HASHTABLE_DISPLAY_STRLEN];
+		char str1[LOG_BUFF_LEN / 2];
+		char str2[LOG_BUFF_LEN / 2];
+		struct display_buffer dspbuf1 = {sizeof(str1), str1, str1};
+		struct display_buffer dspbuf2 = {sizeof(str2), str2, str2};
 
-		DisplayOwner(pkey1, str1);
-		DisplayOwner(pkey2, str2);
+		display_owner(&dspbuf1, pkey1);
+		display_owner(&dspbuf2, pkey2);
 
 		if (isDebug(COMPONENT_HASHTABLE))
 			LogFullDebug(COMPONENT_STATE, "{%s} vs {%s}", str1,
@@ -440,11 +463,15 @@ state_owner_t *create_nfs4_owner(state_nfs4_owner_name_t *name,
 			    related_owner;
 		} else if (owner->so_owner.so_nfs4_owner.so_related_owner !=
 			   related_owner) {
-			char str1[HASHTABLE_DISPLAY_STRLEN];
-			char str2[HASHTABLE_DISPLAY_STRLEN];
+			char str1[LOG_BUFF_LEN / 2];
+			char str2[LOG_BUFF_LEN / 2];
+			struct display_buffer dspbuf1 = {
+						sizeof(str1), str1, str1};
+			struct display_buffer dspbuf2 = {
+						sizeof(str2), str2, str2};
 
-			DisplayOwner(related_owner, str1);
-			DisplayOwner(owner, str1);
+			display_owner(&dspbuf1, related_owner);
+			display_owner(&dspbuf2, owner);
 
 			LogCrit(COMPONENT_NFS_V4_LOCK,
 				"Related {%s} doesn't match for {%s}", str1,
@@ -461,8 +488,11 @@ state_owner_t *create_nfs4_owner(state_nfs4_owner_name_t *name,
 
 	if (!isnew && owner != NULL && pisnew != NULL) {
 		if (isDebug(COMPONENT_STATE)) {
-			char str[HASHTABLE_DISPLAY_STRLEN];
-			DisplayOwner(owner, str);
+			char str[LOG_BUFF_LEN];
+			struct display_buffer dspbuf = {sizeof(str), str, str};
+
+			display_owner(&dspbuf, owner);
+
 			LogDebug(COMPONENT_STATE,
 				 "Previously known owner {%s} is being reused",
 				 str);
@@ -646,7 +676,9 @@ bool Check_nfs4_seqid(state_owner_t *owner, seqid4 seqid, nfs_argop4 *args,
 		      cache_entry_t *entry, nfs_resop4 *resp, const char *tag)
 {
 	seqid4 next;
-	char str[HASHTABLE_DISPLAY_STRLEN];
+	char str[LOG_BUFF_LEN];
+	struct display_buffer dspbuf = {sizeof(str), str, str};
+	bool str_valid = false;
 
 	/* Check if any owner to verify seqid against */
 	if (owner == NULL) {
@@ -656,22 +688,27 @@ bool Check_nfs4_seqid(state_owner_t *owner, seqid4 seqid, nfs_argop4 *args,
 		return true;
 	}
 
-	if (isDebug(COMPONENT_STATE))
-		DisplayOwner(owner, str);
+	if (isDebug(COMPONENT_STATE)) {
+		display_owner(&dspbuf, owner);
+		str_valid = true;
+	}
 
 	/* If this is a new state owner, client may start with any seqid */
 	if (owner->so_owner.so_nfs4_owner.so_last_entry == NULL) {
-		LogFullDebug(COMPONENT_STATE,
-			     "%s: New {%s} doesn't have saved seqid, req seqid %u",
-			     tag, str, seqid);
+		if (str_valid)
+			LogFullDebug(COMPONENT_STATE,
+				     "%s: New {%s} doesn't have saved seqid, req seqid %u",
+				     tag, str, seqid);
 		return true;
 	}
 
 	/* Check for valid next seqid */
 	next = owner->so_owner.so_nfs4_owner.so_seqid + 1;
 
-	LogFullDebug(COMPONENT_STATE, "%s: Check {%s} next %u req seqid %u",
-		     tag, str, next, seqid);
+	if (str_valid)
+		LogFullDebug(COMPONENT_STATE,
+			     "%s: Check {%s} next %u req seqid %u",
+			     tag, str, next, seqid);
 
 	if (seqid == next)
 		return true;
@@ -683,31 +720,35 @@ bool Check_nfs4_seqid(state_owner_t *owner, seqid4 seqid, nfs_argop4 *args,
 
 	/* Now check for valid replay */
 	if (owner->so_owner.so_nfs4_owner.so_seqid != seqid) {
-		LogDebug(COMPONENT_STATE,
-			 "%s: Invalid seqid %u in request (not replay), expected seqid for {%s}, returning NFS4ERR_BAD_SEQID",
-			 tag, seqid, str);
+		if (str_valid)
+			LogDebug(COMPONENT_STATE,
+				 "%s: Invalid seqid %u in request (not replay), expected seqid for {%s}, returning NFS4ERR_BAD_SEQID",
+				 tag, seqid, str);
 		return false;
 	}
 
 	if (args->argop != owner->so_owner.so_nfs4_owner.so_args.argop) {
-		LogDebug(COMPONENT_STATE,
-			 "%s: Invalid seqid %u in request (not replay - not same op), expected seqid for {%s}, returning NFS4ERR_BAD_SEQID",
-			 tag, seqid, str);
+		if (str_valid)
+			LogDebug(COMPONENT_STATE,
+				 "%s: Invalid seqid %u in request (not replay - not same op), expected seqid for {%s}, returning NFS4ERR_BAD_SEQID",
+				 tag, seqid, str);
 		return false;
 	}
 
 	if (owner->so_owner.so_nfs4_owner.so_last_entry != entry) {
-		LogDebug(COMPONENT_STATE,
-			 "%s: Invalid seqid %u in request (not replay - wrong file), expected seqid for {%s}, returning NFS4ERR_BAD_SEQID",
-			 tag, seqid, str);
+		if (str_valid)
+			LogDebug(COMPONENT_STATE,
+				 "%s: Invalid seqid %u in request (not replay - wrong file), expected seqid for {%s}, returning NFS4ERR_BAD_SEQID",
+				 tag, seqid, str);
 		return false;
 	}
 
 	/** @todo FSF: add more checks here... */
 
-	LogDebug(COMPONENT_STATE,
-		 "%s: Copying saved response for seqid %u into {%s}", tag,
-		 seqid, str);
+	if (str_valid)
+		LogDebug(COMPONENT_STATE,
+			 "%s: Copying saved response for seqid %u into {%s}",
+			 tag, seqid, str);
 
 	/* Copy the saved response and tell caller to use it */
 	nfs4_Compound_CopyResOne(resp, &owner->so_owner.so_nfs4_owner.so_resp);

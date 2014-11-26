@@ -83,8 +83,8 @@ static int reap_hash_table(hash_table_t *ht_reap)
 
 				if (isDebug(COMPONENT_CLIENTID)) {
 					char str[LOG_BUFF_LEN];
-					struct display_buffer
-					    dspbuf = {sizeof(str), str, str};
+					struct display_buffer dspbuf = {
+						sizeof(str), str, str};
 
 					display_client_id_rec(&dspbuf,
 							      pclientid);

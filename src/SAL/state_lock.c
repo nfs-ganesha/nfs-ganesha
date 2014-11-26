@@ -300,9 +300,10 @@ static void
 LogEntryRefCount(const char *reason, state_lock_entry_t *le, int32_t refcount)
 {
 	if (isFullDebug(COMPONENT_STATE)) {
-		char owner[HASHTABLE_DISPLAY_STRLEN];
+		char owner[LOG_BUFF_LEN];
+		struct display_buffer dspbuf = {sizeof(owner), owner, owner};
 
-		DisplayOwner(le->sle_owner, owner);
+		display_owner(&dspbuf, le->sle_owner);
 
 		LogFullDebug(COMPONENT_STATE,
 			     "%s Entry: %p entry=%p, fileid=%" PRIu64
@@ -436,12 +437,13 @@ void log_lock(log_components_t component,
 	      char *function)
 {
 	if (isLevel(component, debug)) {
-		char owner_str[HASHTABLE_DISPLAY_STRLEN];
+		char str[LOG_BUFF_LEN];
+		struct display_buffer dspbuf = {sizeof(str), str, str};
 
 		if (owner != NULL)
-			DisplayOwner(owner, owner_str);
+			display_owner(&dspbuf, owner);
 		else
-			sprintf(owner_str, "NONE");
+			display_cat(&dspbuf, "NONE");
 
 		DisplayLogComponentLevel(component, file, line, function, debug,
 			"%s Lock: entry=%p, fileid=%" PRIu64
@@ -451,7 +453,7 @@ void log_lock(log_components_t component,
 			(uint64_t) entry->obj_handle->attributes.fileid,
 			str_lockt(lock->lock_type),
 			lock->lock_start,
-			lock_end(lock), owner_str);
+			lock_end(lock), str);
 	}
 }
 
@@ -1156,44 +1158,66 @@ static void grant_blocked_locks(cache_entry_t *entry);
  */
 int display_lock_cookie_key(struct gsh_buffdesc *buff, char *str)
 {
-	return DisplayOpaqueValue(buff->addr, buff->len, str);
+	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
+	display_lock_cookie(&dspbuf, buff->addr);
+	return display_buffer_len(&dspbuf);
 }
 
 /**
  * @brief Display lock cookie entry
  *
- * @param[in]  he  Cookie entry to display
- * @param[out] str Output buffer
+ * @param[in/out] dspbuf display_buffer describing output string
+ * @param[in]     he     Cookie entry to display
  *
- * @return Length of output string.
+ * @return the bytes remaining in the buffer.
  */
-int display_lock_cookie_entry(state_cookie_entry_t *he, char *str)
+int display_lock_cookie_entry(struct display_buffer *dspbuf,
+			      state_cookie_entry_t *he)
 {
-	char *tmp = str;
+	int b_left = display_printf(dspbuf, "%p: cookie ", he);
 
-	tmp += sprintf(tmp, "%p: cookie ", he);
-	tmp += DisplayOpaqueValue(he->sce_cookie, he->sce_cookie_size, tmp);
-	tmp += sprintf(tmp,
-		" entry {%p fileid=%" PRIu64 "} lock {",
-		he->sce_entry,
-		(uint64_t) he->sce_entry->obj_handle->attributes.fileid);
+	if (b_left <= 0)
+		return b_left;
+
+	b_left = display_opaque_value(dspbuf,
+				      he->sce_cookie,
+				      he->sce_cookie_size);
+
+	if (b_left <= 0)
+		return b_left;
+
+	b_left = display_printf(dspbuf, " entry {%p fileid=%" PRIu64 "} lock {",
+				he->sce_entry,
+				he->sce_entry->obj_handle->attributes.fileid);
+
+	if (b_left <= 0)
+		return b_left;
+
 	if (he->sce_lock_entry != NULL) {
-		tmp += sprintf(tmp, "%p owner {", he->sce_lock_entry);
+		b_left = display_printf(dspbuf, "%p owner {",
+					he->sce_lock_entry);
 
-		tmp += DisplayOwner(he->sce_lock_entry->sle_owner, tmp);
+		if (b_left <= 0)
+			return b_left;
 
-		tmp += sprintf(tmp,
-			"} type=%s start=0x%"PRIx64" end=0x%"PRIx64
-			" blocked=%s}",
+		b_left = display_owner(dspbuf, he->sce_lock_entry->sle_owner);
+
+		if (b_left <= 0)
+			return b_left;
+
+		b_left = display_printf(
+			dspbuf,
+			"} type=%s start=0x%"PRIx64" end=0x%"
+			PRIx64" blocked=%s}",
 			str_lockt(he->sce_lock_entry->sle_lock.lock_type),
 			he->sce_lock_entry->sle_lock.lock_start,
 			lock_end(&he->sce_lock_entry->sle_lock),
 			str_blocked(he->sce_lock_entry->sle_blocked));
 	} else {
-		tmp += sprintf(tmp, "<NULL>}");
+		b_left = display_printf(dspbuf, "<NULL>}");
 	}
 
-	return tmp - str;
+	return b_left;
 }
 
 /**
@@ -1206,7 +1230,9 @@ int display_lock_cookie_entry(state_cookie_entry_t *he, char *str)
  */
 int display_lock_cookie_val(struct gsh_buffdesc *buff, char *str)
 {
-	return display_lock_cookie_entry(buff->addr, str);
+	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
+	display_lock_cookie_entry(&dspbuf, buff->addr);
+	return display_buffer_len(&dspbuf);
 }
 
 /**
@@ -1222,11 +1248,13 @@ int compare_lock_cookie_key(struct gsh_buffdesc *buff1,
 			    struct gsh_buffdesc *buff2)
 {
 	if (isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE)) {
-		char str1[HASHTABLE_DISPLAY_STRLEN];
-		char str2[HASHTABLE_DISPLAY_STRLEN];
+		char str1[LOG_BUFF_LEN / 2];
+		char str2[LOG_BUFF_LEN / 2];
+		struct display_buffer dspbuf1 = {sizeof(str1), str1, str1};
+		struct display_buffer dspbuf2 = {sizeof(str2), str2, str2};
 
-		display_lock_cookie_key(buff1, str1);
-		display_lock_cookie_key(buff2, str2);
+		display_lock_cookie(&dspbuf1, buff1);
+		display_lock_cookie(&dspbuf2, buff2);
 		LogFullDebug(COMPONENT_STATE, "{%s} vs {%s}", str1, str2);
 	}
 
@@ -1311,12 +1339,13 @@ uint64_t lock_cookie_rbt_hash_func(hash_parameter_t *hparam,
  */
 void free_cookie(state_cookie_entry_t *cookie_entry, bool unblock)
 {
-	char str[HASHTABLE_DISPLAY_STRLEN];
+	char str[LOG_BUFF_LEN];
+	struct display_buffer dspbuf = {sizeof(str), str, str};
 	bool str_valid = false;
 	void *cookie = cookie_entry->sce_cookie;
 
 	if (isFullDebug(COMPONENT_STATE)) {
-		display_lock_cookie_entry(cookie_entry, str);
+		display_lock_cookie_entry(&dspbuf, cookie_entry);
 		str_valid = true;
 	}
 
@@ -1358,7 +1387,8 @@ state_status_t state_add_grant_cookie(cache_entry_t *entry,
 {
 	struct gsh_buffdesc buffkey, buffval;
 	state_cookie_entry_t *hash_entry;
-	char str[HASHTABLE_DISPLAY_STRLEN];
+	char str[LOG_BUFF_LEN];
+	struct display_buffer dspbuf = {sizeof(str), str, str};
 	bool str_valid = false;
 	state_status_t status = 0;
 
@@ -1372,7 +1402,7 @@ state_status_t state_add_grant_cookie(cache_entry_t *entry,
 	}
 
 	if (isFullDebug(COMPONENT_STATE)) {
-		DisplayOpaqueValue(cookie, cookie_size, str);
+		display_opaque_value(&dspbuf, cookie, cookie_size);
 		str_valid = true;
 	}
 
@@ -1407,12 +1437,16 @@ state_status_t state_add_grant_cookie(cache_entry_t *entry,
 	buffval.addr = (void *)hash_entry;
 	buffval.len = sizeof(*hash_entry);
 
-	if (isFullDebug(COMPONENT_STATE))
-		display_lock_cookie_entry(hash_entry, str);
+	if (isFullDebug(COMPONENT_STATE)) {
+		display_lock_cookie_entry(&dspbuf, hash_entry);
+		str_valid = true;
+	}
 
-	if (hashtable_test_and_set
-	    (ht_lock_cookies, &buffkey, &buffval,
-	     HASHTABLE_SET_HOW_SET_NO_OVERWRITE) != HASHTABLE_SUCCESS) {
+	if (hashtable_test_and_set(ht_lock_cookies,
+				   &buffkey,
+				   &buffval,
+				   HASHTABLE_SET_HOW_SET_NO_OVERWRITE)
+	    != HASHTABLE_SUCCESS) {
 		gsh_free(hash_entry);
 		if (str_valid)
 			LogFullDebug(COMPONENT_STATE,
@@ -1539,7 +1573,8 @@ state_status_t state_find_grant(void *cookie, int cookie_size,
 	struct gsh_buffdesc buffkey;
 	struct gsh_buffdesc buffval;
 	struct gsh_buffdesc buffused_key;
-	char str[HASHTABLE_DISPLAY_STRLEN];
+	char str[LOG_BUFF_LEN];
+	struct display_buffer dspbuf = {sizeof(str), str, str};
 	bool str_valid = false;
 	state_status_t status = 0;
 
@@ -1547,8 +1582,10 @@ state_status_t state_find_grant(void *cookie, int cookie_size,
 	buffkey.len = cookie_size;
 
 	if (isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE)) {
-		display_lock_cookie_key(&buffkey, str);
+		display_lock_cookie(&dspbuf, &buffkey);
+
 		LogFullDebug(COMPONENT_STATE, "KEY {%s}", str);
+
 		str_valid = true;
 	}
 
@@ -1557,7 +1594,8 @@ state_status_t state_find_grant(void *cookie, int cookie_size,
 			  &buffused_key,
 			  &buffval) != HASHTABLE_SUCCESS) {
 		if (str_valid)
-			LogFullDebug(COMPONENT_STATE, "KEY {%s} NOTFOUND", str);
+			LogFullDebug(COMPONENT_STATE,
+				     "KEY {%s} NOTFOUND", str);
 		status = STATE_BAD_COOKIE;
 		return status;
 	}
@@ -1565,8 +1603,9 @@ state_status_t state_find_grant(void *cookie, int cookie_size,
 	*cookie_entry = buffval.addr;
 
 	if (isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE)) {
-		display_lock_cookie_entry(*cookie_entry, str);
-		LogFullDebug(COMPONENT_STATE, "Found Lock Cookie {%s}", str);
+		display_lock_cookie_entry(&dspbuf, *cookie_entry);
+		LogFullDebug(COMPONENT_STATE,
+			     "Found Lock Cookie {%s}", str);
 	}
 
 	status = STATE_SUCCESS;
@@ -3050,12 +3089,12 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 			     0, 0, UNKNOWN_REQUEST);
 
 	if (isFullDebug(COMPONENT_STATE)) {
-		char client[HASHTABLE_DISPLAY_STRLEN];
+		char str[LOG_BUFF_LEN];
+		struct display_buffer dspbuf = {sizeof(str), str, str};
 
-		display_nsm_client(nsmclient, client);
+		display_nsm_client(&dspbuf, nsmclient);
 
-		LogFullDebug(COMPONENT_STATE, "Notify for %s",
-			     client);
+		LogFullDebug(COMPONENT_STATE, "Notify for %s", str);
 	}
 
 	glist_init(&newlocks);
@@ -3286,13 +3325,14 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 	}
 
 	if (errcnt == STATE_ERR_MAX) {
-		char client[HASHTABLE_DISPLAY_STRLEN];
+		char str[LOG_BUFF_LEN];
+		struct display_buffer dspbuf = {sizeof(str), str, str};
 
-		display_nsm_client(nsmclient, client);
+		display_nsm_client(&dspbuf, nsmclient);
 
 		LogFatal(COMPONENT_STATE,
 			 "Could not complete NLM notify for %s",
-			 client);
+			 str);
 	}
 
 	/* Put locks from current client incarnation onto end of list.
@@ -3406,13 +3446,14 @@ void state_nfs4_owner_unlock_all(state_owner_t *owner)
 	}
 
 	if (errcnt == STATE_ERR_MAX) {
-		char owner_str[HASHTABLE_DISPLAY_STRLEN];
+		char str[LOG_BUFF_LEN];
+		struct display_buffer dspbuf = {sizeof(str), str, str};
 
-		DisplayOwner(owner, owner_str);
+		display_owner(&dspbuf, owner);
 
 		LogFatal(COMPONENT_STATE,
 			 "Could not complete cleanup of lock state for lock owner %s",
-			 owner_str);
+			 str);
 	}
 
 	op_ctx->export = saved_export;

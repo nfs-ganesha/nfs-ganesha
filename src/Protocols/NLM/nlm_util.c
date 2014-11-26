@@ -142,10 +142,9 @@ void netobj_free(netobj *obj)
 void netobj_to_string(netobj *obj, char *buffer, int maxlen)
 {
 	int len = obj->n_len;
-	if ((len * 2) + 10 > maxlen)
-		len = (maxlen - 10) / 2;
+	struct display_buffer dspbuf = {maxlen, buffer, buffer};
 
-	DisplayOpaqueValue(obj->n_bytes, len, buffer);
+	display_opaque_value(&dspbuf, obj->n_bytes, len);
 }
 
 void nlm_init(void)

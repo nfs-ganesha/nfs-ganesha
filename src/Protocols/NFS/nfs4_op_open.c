@@ -201,15 +201,23 @@ static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t *data,
 		}
 
 		if (isFullDebug(COMPONENT_STATE)) {
-			char str1[HASHTABLE_DISPLAY_STRLEN];
-			char str2[HASHTABLE_DISPLAY_STRLEN];
+			char str1[LOG_BUFF_LEN / 3];
+			char str2[LOG_BUFF_LEN / 3];
+			char str3[LOG_BUFF_LEN / 3];
+			struct display_buffer dspbuf1 = {
+						sizeof(str1), str1, str1};
+			struct display_buffer dspbuf2 = {
+						sizeof(str2), str2, str2};
+			struct display_buffer dspbuf3 = {
+						sizeof(str3), str3, str3};
 
-			DisplayOwner(si_owner, str1);
-			DisplayOwner(owner, str2);
+			display_owner(&dspbuf1, si_owner);
+			display_owner(&dspbuf2, owner);
+			display_stateid(&dspbuf3, state_iterate);
 
 			LogFullDebug(COMPONENT_STATE,
-				     "Comparing state %p owner %s to open owner %s",
-				     state_iterate, str1, str2);
+				     "Comparing %s owner %s to open owner %s",
+				     str3, str1, str2);
 		}
 
 		/* Check if open_owner is the same.  Since owners are
@@ -950,9 +958,15 @@ static nfsstat4 open4_claim_deleg(OPEN4args *arg, compound_data_t *data,
 			 "state not found with CLAIM_DELEGATE_CUR");
 		return NFS4ERR_BAD_STATEID;
 	} else {
-		LogFullDebug(COMPONENT_NFS_V4,
-			     "found matching state %p",
-			     found_state);
+		if (isFullDebug(COMPONENT_NFS_V4)) {
+			char str[LOG_BUFF_LEN];
+			struct display_buffer dspbuf = {sizeof(str), str, str};
+
+			display_stateid(&dspbuf, found_state);
+
+			LogFullDebug(COMPONENT_NFS_V4,
+				     "found matching %s", str);
+		}
 		dec_state_t_ref(found_state);
 	}
 
@@ -1076,9 +1090,19 @@ static void get_delegation(compound_data_t *data, OPEN4args *args,
 		}
 	}
 
-	LogDebug(COMPONENT_NFS_V4_LOCK,
-		 "get_delegation openowner %p clientowner %p status %s",
-		 openowner, clientowner, state_err_str(state_status));
+	if (isDebug(COMPONENT_NFS_V4_LOCK)) {
+		char str1[LOG_BUFF_LEN / 2];
+		char str2[LOG_BUFF_LEN / 2];
+		struct display_buffer dspbuf1 = {sizeof(str1), str1, str1};
+		struct display_buffer dspbuf2 = {sizeof(str2), str2, str2};
+
+		display_nfs4_owner(&dspbuf1, openowner);
+		display_nfs4_owner(&dspbuf2, clientowner);
+
+		LogDebug(COMPONENT_NFS_V4_LOCK,
+			 "get_delegation openowner %s clientowner %s status %s",
+			 str1, str2, state_err_str(state_status));
+	}
 
 	dec_state_t_ref(new_state);
 }

@@ -1254,46 +1254,55 @@ static enum recall_resp_action handle_recall_response(
 				rpc_call_t *call)
 {
 	enum recall_resp_action resp_action;
-	char str[OTHERSIZE * 2 + 32];
+	char str[DISPLAY_STATEID_OTHER_SIZE];
+	struct display_buffer dspbuf = {sizeof(str), str, str};
+	bool str_valid = false;
 
-	if (isDebug(COMPONENT_NFS_CB))
-		display_stateid_other(p_cargs->drc_stateid.other, str);
+	if (isDebug(COMPONENT_NFS_CB)) {
+		display_stateid_other(&dspbuf, p_cargs->drc_stateid.other);
+		str_valid = true;
+	}
 
 	struct cf_deleg_stats *clfl_stats =
 		&state->state_data.deleg.sd_clfile_stats;
 
 	switch (call->cbt.v_u.v4.res.status) {
 	case NFS4_OK:
-		LogDebug(COMPONENT_NFS_CB,
-		"Delegation %s successfully recalled", str);
+		if (str_valid)
+			LogDebug(COMPONENT_NFS_CB,
+				 "Delegation %s successfully recalled", str);
 		resp_action = DELEG_RET_WAIT;
 		clfl_stats->cfd_rs_time =
 					time(NULL);
 		break;
 	case NFS4ERR_BADHANDLE:
-		LogDebug(COMPONENT_NFS_CB,
-			 "Client sent NFS4ERR_BADHANDLE response, retrying recall for Delegation %s",
-			 str);
+		if (str_valid)
+			LogDebug(COMPONENT_NFS_CB,
+				 "Client sent NFS4ERR_BADHANDLE response, retrying recall for Delegation %s",
+				 str);
 		resp_action = DELEG_RECALL_SCHED;
 		break;
 	case NFS4ERR_DELAY:
-		LogDebug(COMPONENT_NFS_CB,
-			 "Client sent NFS4ERR_DELAY response, retrying recall for Delegation %s",
-			 str);
+		if (str_valid)
+			LogDebug(COMPONENT_NFS_CB,
+				 "Client sent NFS4ERR_DELAY response, retrying recall for Delegation %s",
+				 str);
 		resp_action = DELEG_RECALL_SCHED;
 		break;
 	case  NFS4ERR_BAD_STATEID:
-		LogDebug(COMPONENT_NFS_CB,
-			 "Client sent NFS4ERR_BAD_STATEID response, retrying recall for  Delegation %s",
-			 str);
+		if (str_valid)
+			LogDebug(COMPONENT_NFS_CB,
+				 "Client sent NFS4ERR_BAD_STATEID response, retrying recall for  Delegation %s",
+				 str);
 		resp_action = DELEG_RECALL_SCHED;
 		break;
 	default:
 		/* some other NFS error, consider the recall failed */
-		LogDebug(COMPONENT_NFS_CB,
-			 "Client sent %d response, retrying recall for Delegation %s",
-			 call->cbt.v_u.v4.res.status,
-			 str);
+		if (str_valid)
+			LogDebug(COMPONENT_NFS_CB,
+				 "Client sent %d response, retrying recall for Delegation %s",
+				 call->cbt.v_u.v4.res.status,
+				 str);
 		resp_action = DELEG_RECALL_SCHED;
 		break;
 	}
@@ -1335,6 +1344,8 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 	struct delegrecall_context *deleg_ctx = arg;
 	struct state_t *state;
 	cache_entry_t *entry = NULL;
+	char str[LOG_BUFF_LEN];
+	struct display_buffer dspbuf = {sizeof(str), str, str};
 
 	LogDebug(COMPONENT_NFS_CB, "%p %s", call,
 		 (hook == RPC_CALL_COMPLETE) ? "Success" : "Failed");
@@ -1353,7 +1364,13 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 		goto out_free_drc;
 	}
 
-	LogDebug(COMPONENT_NFS_CB, "deleg_entry %p", state);
+	if (isDebug(COMPONENT_NFS_CB)) {
+		char str[LOG_BUFF_LEN];
+		struct display_buffer dspbuf = {sizeof(str), str, str};
+
+		display_stateid(&dspbuf, state);
+		LogDebug(COMPONENT_NFS_CB, "deleg_entry %s", str);
+	}
 
 	switch (hook) {
 	case RPC_CALL_COMPLETE:
@@ -1398,8 +1415,11 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 
 out_revoke:
 
+	display_stateid(&dspbuf, state);
+
 	LogCrit(COMPONENT_NFS_V4,
-		"Revoking delegation(%p)", state);
+		"Revoking delegation for %s", str);
+
 	deleg_ctx->drc_clid->num_revokes++;
 	inc_revokes(deleg_ctx->drc_clid->gsh_client);
 
@@ -1411,11 +1431,10 @@ out_revoke:
 
 	if (rc != STATE_SUCCESS) {
 		LogCrit(COMPONENT_NFS_V4,
-			"Delegation could not be revoked(%p)",
-			state);
+			"Delegation could not be revoked for %s", str);
 	} else {
 		LogDebug(COMPONENT_NFS_V4,
-			 "Delegation revoked(%p)", state);
+			 "Delegation revoked for %s", str);
 	}
 
 out_free_drc:
@@ -1458,14 +1477,23 @@ void delegrecall_one(cache_entry_t *entry,
 	rpc_call_t *call = NULL;
 	nfs_cb_argop4 argop[1];
 	struct cf_deleg_stats *clfl_stats;
+	char str[LOG_BUFF_LEN];
+	struct display_buffer dspbuf = {sizeof(str), str, str};
+	bool str_valid = false;
 
 	clfl_stats = &state->state_data.deleg.sd_clfile_stats;
+
+	if (isDebug(COMPONENT_FSAL_UP)) {
+		display_stateid(&dspbuf, state);
+		str_valid = true;
+	}
 
 	/* record the first attempt to recall this delegation */
 	if (clfl_stats->cfd_r_time == 0)
 		clfl_stats->cfd_r_time = time(NULL);
 
-	LogFullDebug(COMPONENT_FSAL_UP, "Recalling delegation %p", state);
+	if (str_valid)
+		LogFullDebug(COMPONENT_FSAL_UP, "Recalling delegation %s", str);
 
 	inc_recalls(p_cargs->drc_clid->gsh_client);
 
@@ -1551,22 +1579,27 @@ out:
 	    p_cargs &&
 	    !schedule_delegrecall_task(p_cargs, 1)) {
 		/* Keep the delegation in p_cargs */
-		LogDebug(COMPONENT_FSAL_UP,
-			 "Retry delegation for state %p", state);
+		if (str_valid)
+			LogDebug(COMPONENT_FSAL_UP,
+				 "Retry delegation for %s", str);
 		return;
 	}
 
-	LogCrit(COMPONENT_STATE, "Delegation(%p) will be revoked", state);
+	if (!str_valid)
+		display_stateid(&dspbuf, state);
+
+	LogCrit(COMPONENT_STATE, "Delegation will be revoked for %s",
+		str);
 
 	p_cargs->drc_clid->num_revokes++;
 	inc_revokes(p_cargs->drc_clid->gsh_client);
 
 	if (deleg_revoke(entry, state) != STATE_SUCCESS) {
 		LogDebug(COMPONENT_FSAL_UP,
-			 "Failed to revoke delegation(%p).", state);
+			 "Failed to revoke delegation %s.", str);
 	} else {
 		LogDebug(COMPONENT_FSAL_UP,
-			 "Delegation revoked(%p)", state);
+			 "Delegation revoked %s", str);
 	}
 
 	free_delegrecall_context(p_cargs);
@@ -1585,12 +1618,20 @@ static void delegrevoke_check(void *ctx)
 	cache_entry_t *entry = NULL;
 	struct state_t *state = NULL;
 	bool free_drc = true;
+	char str[LOG_BUFF_LEN];
+	struct display_buffer dspbuf = {sizeof(str), str, str};
+	bool str_valid = false;
 
 	state = nfs4_State_Get_Pointer(deleg_ctx->drc_stateid.other);
 
 	if (state == NULL) {
 		LogDebug(COMPONENT_NFS_CB, "Delegation is already returned");
 		goto out;
+	}
+
+	if (isDebug(COMPONENT_NFS_CB)) {
+		display_stateid(&dspbuf, state);
+		str_valid = true;
 	}
 
 	entry = get_state_entry_ref(state);
@@ -1601,8 +1642,9 @@ static void delegrevoke_check(void *ctx)
 	}
 
 	if (eval_deleg_revoke(state)) {
-		LogDebug(COMPONENT_STATE,
-			"Revoking delegation(%p)", state);
+		if (str_valid)
+			LogDebug(COMPONENT_STATE,
+				"Revoking delegation for %s", str);
 
 		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 
@@ -1611,18 +1653,23 @@ static void delegrevoke_check(void *ctx)
 		PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
 		if (rc != STATE_SUCCESS) {
+			if (!str_valid)
+				display_stateid(&dspbuf, state);
+
 			LogCrit(COMPONENT_NFS_V4,
-				"Delegation could not be revoked(%p)",
-				state);
+				"Delegation could not be revoked for %s",
+				str);
 		} else {
-			LogDebug(COMPONENT_NFS_V4,
-				 "Delegation revoked(%p)",
-				 state);
+			if (str_valid)
+				LogDebug(COMPONENT_NFS_V4,
+					 "Delegation revoked for %s",
+					 str);
 		}
 	} else {
-		LogFullDebug(COMPONENT_STATE,
-			     "Not revoking the delegation %p yet",
-			     state);
+		if (str_valid)
+			LogFullDebug(COMPONENT_STATE,
+				     "Not yet revoking the delegation for %s",
+				     str);
 
 		schedule_delegrevoke_check(deleg_ctx, 1);
 		free_drc = false;
@@ -1721,7 +1768,14 @@ state_status_t delegrecall_impl(cache_entry_t *entry)
 		if (state->state_type != STATE_TYPE_DELEG)
 			continue;
 
-		LogDebug(COMPONENT_NFS_CB, "Delegation %p", state);
+		if (isDebug(COMPONENT_NFS_CB)) {
+			char str[LOG_BUFF_LEN];
+			struct display_buffer dspbuf = {sizeof(str), str, str};
+
+			display_stateid(&dspbuf, state);
+			LogDebug(COMPONENT_NFS_CB, "Delegation for %s", str);
+		}
+
 		deleg_state = &state->state_data.deleg.sd_state;
 		if (*deleg_state != DELEG_GRANTED) {
 			LogDebug(COMPONENT_FSAL_UP,

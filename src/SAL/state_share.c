@@ -161,9 +161,16 @@ state_status_t state_share_add(cache_entry_t *entry,
 		}
 	}
 
-	LogFullDebug(COMPONENT_STATE,
-		     "state %p: added share_access %u, " "share_deny %u", state,
-		     new_share_access, new_share_deny);
+	if (isFullDebug(COMPONENT_NFS_V4_LOCK)) {
+		char str[LOG_BUFF_LEN];
+		struct display_buffer dspbuf = {sizeof(str), str, str};
+
+		display_stateid(&dspbuf, state);
+
+		LogFullDebug(COMPONENT_STATE,
+			     "%s: added share_access %u, share_deny %u",
+			     str, new_share_access, new_share_deny);
+	}
 
 	/* Update previously seen share state in the bitmap. */
 	state_share_set_prev(state, &(state->state_data));
@@ -239,9 +246,16 @@ state_status_t state_share_remove(cache_entry_t *entry,
 	/* state has been removed, so adjust open flags */
 	cache_inode_adjust_openflags(entry);
 
-	LogFullDebug(COMPONENT_STATE,
-		     "state %p: removed share_access %u, " "share_deny %u",
-		     state, removed_share_access, removed_share_deny);
+	if (isFullDebug(COMPONENT_NFS_V4_LOCK)) {
+		char str[LOG_BUFF_LEN];
+		struct display_buffer dspbuf = {sizeof(str), str, str};
+
+		display_stateid(&dspbuf, state);
+
+		LogFullDebug(COMPONENT_STATE,
+			     "%s: removed share_access %u, share_deny %u",
+			     str, removed_share_access, removed_share_deny);
+	}
 
 	return status;
 }
@@ -320,10 +334,19 @@ state_status_t state_share_upgrade(cache_entry_t *entry,
 	/* Update share state. */
 	state->state_data.share.share_access = new_share_access;
 	state->state_data.share.share_deny = new_share_deny;
-	LogFullDebug(COMPONENT_STATE,
-		     "state %p: upgraded share_access %u, share_deny %u", state,
-		     state->state_data.share.share_access,
-		     state->state_data.share.share_deny);
+
+	if (isFullDebug(COMPONENT_NFS_V4_LOCK)) {
+		char str[LOG_BUFF_LEN];
+		struct display_buffer dspbuf = {sizeof(str), str, str};
+
+		display_stateid(&dspbuf, state);
+
+		LogFullDebug(COMPONENT_STATE,
+			     "%s: upgraded share_access %u, share_deny %u",
+			     str,
+			     state->state_data.share.share_access,
+			     state->state_data.share.share_deny);
+	}
 
 	/* Update previously seen share state. */
 	state_share_set_prev(state, state_data);
@@ -408,10 +431,18 @@ state_status_t state_share_downgrade(cache_entry_t *entry,
 	/* state is downgraded, so adjust open flags */
 	cache_inode_adjust_openflags(entry);
 
-	LogFullDebug(COMPONENT_STATE,
-		     "state %p: downgraded share_access %u, " "share_deny %u",
-		     state, state->state_data.share.share_access,
-		     state->state_data.share.share_deny);
+	if (isFullDebug(COMPONENT_NFS_V4_LOCK)) {
+		char str[LOG_BUFF_LEN];
+		struct display_buffer dspbuf = {sizeof(str), str, str};
+
+		display_stateid(&dspbuf, state);
+
+		LogFullDebug(COMPONENT_STATE,
+			     "%s: downgraded share_access %u, share_deny %u",
+			     str,
+			     state->state_data.share.share_access,
+			     state->state_data.share.share_deny);
+	}
 
 	return status;
 }

@@ -83,7 +83,9 @@ state_status_t state_add_impl(cache_entry_t *entry, enum state_type state_type,
 			      struct state_refer *refer)
 {
 	state_t *pnew_state = NULL;
-	char debug_str[OTHERSIZE * 2 + 1];
+	char str[DISPLAY_STATEID_OTHER_SIZE];
+	struct display_buffer dspbuf = {sizeof(str), str, str};
+	bool str_valid = false;
 	cache_inode_status_t cache_status;
 	bool got_pinned = false;
 	bool got_export_ref = false;
@@ -152,20 +154,22 @@ state_status_t state_add_impl(cache_entry_t *entry, enum state_type state_type,
 	if (refer)
 		pnew_state->state_refer = *refer;
 
-	if (isDebug(COMPONENT_STATE))
-		sprint_mem(debug_str, (char *)pnew_state->stateid_other,
-			   OTHERSIZE);
+	if (isDebug(COMPONENT_STATE)) {
+		display_stateid_other(&dspbuf, pnew_state->stateid_other);
+		str_valid = true;
+	}
 
 	glist_init(&pnew_state->state_list);
 
 	/* Add the state to the related hashtable */
 	if (!nfs4_State_Set(pnew_state)) {
-		sprint_mem(debug_str, (char *)pnew_state->stateid_other,
-			   OTHERSIZE);
+		if (!str_valid)
+			display_stateid_other(&dspbuf,
+					      pnew_state->stateid_other);
 
 		LogCrit(COMPONENT_STATE,
 			"Can't create a new state id %s for the entry %p (F)",
-			debug_str, entry);
+			str, entry);
 
 		/* Return STATE_MALLOC_ERROR since most likely the
 		 * nfs4_State_Set failed to allocate memory.
@@ -225,7 +229,8 @@ state_status_t state_add_impl(cache_entry_t *entry, enum state_type state_type,
 	/* Copy the result */
 	*state = pnew_state;
 
-	LogFullDebug(COMPONENT_STATE, "Add State: %s", debug_str);
+	if (str_valid)
+		LogFullDebug(COMPONENT_STATE, "Add State: %s", str);
 
 	/* Regular exit */
 	status = STATE_SUCCESS;
@@ -304,24 +309,30 @@ state_status_t state_add(cache_entry_t *entry, enum state_type state_type,
 
 void state_del_locked(state_t *state)
 {
-	char debug_str[OTHERSIZE * 2 + 1];
+	char str[LOG_BUFF_LEN];
+	struct display_buffer dspbuf = {sizeof(str), str, str};
+	bool str_valid = false;
 	cache_entry_t *entry;
 	struct gsh_export *export;
 	state_owner_t *owner;
 
-	if (isDebug(COMPONENT_STATE))
-		sprint_mem(debug_str, (char *)state->stateid_other, OTHERSIZE);
+	if (isDebug(COMPONENT_STATE)) {
+		display_stateid(&dspbuf, state);
+		str_valid = true;
+	}
 
 	/* Remove the entry from the HashTable. If it fails, we have lost the
 	 * race with another caller of state_del/state_del_locked.
 	 */
 	if (!nfs4_State_Del(state->stateid_other)) {
-		LogDebug(COMPONENT_STATE,
-			 "Racing to delete state %s", debug_str);
+		if (str_valid)
+			LogDebug(COMPONENT_STATE,
+				 "Racing to delete %s", str);
 		return;
 	}
 
-	LogFullDebug(COMPONENT_STATE, "Deleting state %s", debug_str);
+	if (str_valid)
+		LogFullDebug(COMPONENT_STATE, "Deleting %s", str);
 
 	/* Protect extraction of all the referenced objects, we don't
 	 * actually need to test them or take references because we assure
@@ -664,13 +675,14 @@ void release_openstate(state_owner_t *owner)
 	}
 
 	if (errcnt == STATE_ERR_MAX) {
-		char owner_str[HASHTABLE_DISPLAY_STRLEN];
+		char str[LOG_BUFF_LEN];
+		struct display_buffer dspbuf = {sizeof(str), str, str};
 
-		DisplayOwner(owner, owner_str);
+		display_owner(&dspbuf, owner);
 
 		LogFatal(COMPONENT_STATE,
 			 "Could not complete cleanup of lock state for lock owner %s",
-			 owner_str);
+			 str);
 	}
 }
 
@@ -942,33 +954,21 @@ void dump_all_states(void)
 			 " =State List= ");
 
 		glist_for_each(glist, &state_v4_all) {
-			char *state_type = "unknown";
-			char str[HASHTABLE_DISPLAY_STRLEN];
+			char str1[LOG_BUFF_LEN / 2];
+			char str2[LOG_BUFF_LEN / 2];
+			struct display_buffer dspbuf1 = {
+						sizeof(str1), str1, str1};
+			struct display_buffer dspbuf2 = {
+						sizeof(str2), str2, str2};
 
 			state = glist_entry(glist, state_t, state_list_all);
 			owner = get_state_owner_ref(state);
 
-			switch (state->state_type) {
-			case STATE_TYPE_NONE:
-				state_type = "NONE";
-				break;
-			case STATE_TYPE_SHARE:
-				state_type = "SHARE";
-				break;
-			case STATE_TYPE_DELEG:
-				state_type = "DELEGATION";
-				break;
-			case STATE_TYPE_LOCK:
-				state_type = "LOCK";
-				break;
-			case STATE_TYPE_LAYOUT:
-				state_type = "LAYOUT";
-				break;
-			}
+			display_owner(&dspbuf1, owner);
+			display_stateid(&dspbuf2, state);
 
-			DisplayOwner(owner, str);
-			LogDebug(COMPONENT_STATE, "State %p type %s owner {%s}",
-				 state, state_type, str);
+			LogDebug(COMPONENT_STATE, "State {%s} owner {%s}",
+				 str2, str1);
 
 			if (owner != NULL)
 				dec_state_owner_ref(owner);
