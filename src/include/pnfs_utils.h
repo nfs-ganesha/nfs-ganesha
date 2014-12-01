@@ -226,4 +226,8 @@ nfsstat4 FSAL_encode_v4_multipath(XDR *xdrs, const uint32_t num_hosts,
 
 nfsstat4 posix2nfs4_error(int posix_errorcode);
 
+int ReadDataServers(config_file_t in_config);
+
+void fsal_pnfs_ds_free(struct fsal_pnfs_ds *pds);
+
 #endif				/* PNFS_UTILS_H */
