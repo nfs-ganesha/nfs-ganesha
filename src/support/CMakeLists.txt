@@ -44,6 +44,7 @@ SET(support_STAT_SRCS
    nfs_read_conf.c
    nfs_convert.c
    nfs_ip_name.c
+   ds.c
    exports.c
    fridgethr.c
    delayed_exec.c

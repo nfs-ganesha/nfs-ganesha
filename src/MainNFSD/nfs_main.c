@@ -119,7 +119,9 @@ int main(int argc, char *argv[])
 {
 	char *tempo_exec_name = NULL;
 	char localmachine[MAXHOSTNAMELEN + 1];
-	int c, rc;
+	int c;
+	int dsc;
+	int rc;
 	int pidfile;
 #ifndef HAVE_DAEMON
 	int dev_null_fd = 0;
@@ -440,6 +442,14 @@ int main(int argc, char *argv[])
 		LogFatal(COMPONENT_INIT,
 			 "Failed to initialize server packages");
 
+	/* Load Data Server entries from parsed file
+	 * returns the number of DS entries.
+	 */
+	dsc = ReadDataServers(config_struct);
+	if (dsc < 0)
+		LogFatal(COMPONENT_INIT,
+			  "Error while parsing DS entries");
+
 	/* Load export entries from parsed file
 	 * returns the number of export entries.
 	 */
@@ -447,7 +457,8 @@ int main(int argc, char *argv[])
 	if (rc < 0)
 		LogFatal(COMPONENT_INIT,
 			  "Error while parsing export entries");
-	else if (rc == 0)
+
+	if (rc == 0 && dsc == 0)
 		LogWarn(COMPONENT_INIT,
 			"No export entries found in configuration file !!!");
 
