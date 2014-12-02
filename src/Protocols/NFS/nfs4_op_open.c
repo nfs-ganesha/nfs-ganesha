@@ -305,31 +305,28 @@ static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t *data,
 		}
 	} else {
 		/* If we find the previous share state, update share state. */
-		if (file_state->state_type == STATE_TYPE_SHARE) {
-			LogFullDebug(COMPONENT_STATE,
-				     "Update existing share state");
-			state_status = state_share_upgrade(
-						   data->current_entry,
+		LogFullDebug(COMPONENT_STATE,
+			     "Update existing share state");
+		state_status = state_share_upgrade(data->current_entry,
 						   &candidate_data,
 						   owner,
 						   file_state,
 						   openflags & FSAL_O_RECLAIM);
 
-			if (state_status != STATE_SUCCESS) {
-				cache_status =
-				    cache_inode_close(data->current_entry, 0);
+		if (state_status != STATE_SUCCESS) {
+			cache_status =
+			    cache_inode_close(data->current_entry, 0);
 
-				if (cache_status != CACHE_INODE_SUCCESS) {
-					/* Log bad close and continue. */
-					LogEvent(COMPONENT_STATE,
-						 "Failed to close cache inode: status=%d",
-						 cache_status);
-				}
+			if (cache_status != CACHE_INODE_SUCCESS) {
+				/* Log bad close and continue. */
 				LogEvent(COMPONENT_STATE,
-					 "Failed to update existing share state");
-				dec_state_t_ref(file_state);
-				return nfs4_Errno_state(state_status);
+					 "Failed to close cache inode: status=%d",
+					 cache_status);
 			}
+			LogEvent(COMPONENT_STATE,
+				 "Failed to update existing share state");
+			dec_state_t_ref(file_state);
+			return nfs4_Errno_state(state_status);
 		}
 	}
 
