@@ -42,6 +42,7 @@
 #include "cache_inode.h"
 #include "cache_inode_lru.h"
 #include "9p.h"
+#include "fsal.h"
 
 int _9p_clunk(struct _9p_request_data *req9p, void *worker_data,
 	      u32 *plenout, char *preply)
@@ -71,6 +72,7 @@ int _9p_clunk(struct _9p_request_data *req9p, void *worker_data,
 		return _9p_rerror(req9p, worker_data, msgtag, EIO, plenout,
 				  preply);
 	}
+	op_ctx = &pfid->op_context;
 
 	rc = _9p_tools_clunk(pfid);
 	req9p->pconn->fids[*fid] = NULL;

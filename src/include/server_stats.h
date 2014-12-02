@@ -42,6 +42,7 @@
 #include <sys/types.h>
 
 void server_stats_nfs_done(request_data_t *reqdata, int rc, bool dup);
+void server_stats_9p_done(u8 msgtype, struct _9p_request_data *req9p);
 
 void server_stats_io_done(size_t requested,
 			  size_t transferred, bool success, bool is_write);
