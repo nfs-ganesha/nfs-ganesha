@@ -33,6 +33,8 @@ set(GUI_SCRIPT_SRC
   manage_clients.py
   manage_logger.py
   manage_exports.py
+  client_stats_9pOps.py
+  export_stats_9pOps.py
   )
 
 # Qt Designer files that get compiled into .py scripts

@@ -381,19 +381,24 @@ struct nfsv41_stats {
 	struct layout_op recall;
 };
 
+struct transport_stats {
+	uint64_t rx_bytes;
+	uint64_t rx_pkt;
+	uint64_t rx_err;
+	uint64_t tx_bytes;
+	uint64_t tx_pkt;
+	uint64_t tx_err;
+};
+
+#ifdef _USE_9P
 struct _9p_stats {
 	struct proto_op cmds;	/* non-I/O ops */
 	struct xfer_op read;
 	struct xfer_op write;
-	struct transport_stats {
-		uint64_t rx_bytes;
-		uint64_t rx_pkt;
-		uint64_t rx_err;
-		uint64_t tx_bytes;
-		uint64_t tx_pkt;
-		uint64_t tx_err;
-	} trans;
+	struct transport_stats trans;
+	struct proto_op *opcodes[_9P_RWSTAT+1];
 };
+#endif
 
 struct global_stats {
 	struct nfsv3_stats nfsv3;
@@ -984,6 +989,48 @@ void server_stats_transport_done(struct gsh_client *client,
 		record_transport_stats(&sp->trans, rx_bytes, rx_pkt, rx_err,
 				       tx_bytes, tx_pkt, tx_err);
 }
+
+/**
+ * @bried record 9p operation stats
+ *
+ * Called from 9P interpreter at operation completion
+ */
+void server_stats_9p_done(u8 opc, struct _9p_request_data *req9p)
+{
+	struct gsh_client *client;
+	struct gsh_export *export;
+	struct _9p_stats *sp;
+
+	client = req9p->pconn->client;
+	if (client) {
+		struct server_stats *server_st;
+
+		server_st = container_of(client, struct server_stats, client);
+		sp = get_9p(&server_st->st, &client->lock);
+		if (sp != NULL) {
+			if (sp->opcodes[opc] == NULL)
+				sp->opcodes[opc] =
+					gsh_calloc(sizeof(struct proto_op), 1);
+			if (sp->opcodes[opc] != NULL)
+				record_op(sp->opcodes[opc], 0, 0, true, false);
+		}
+	}
+
+	if (op_ctx->export) {
+		struct export_stats *exp_st;
+
+		export = op_ctx->export;
+		exp_st = container_of(export, struct export_stats, export);
+		sp = get_9p(&exp_st->st, &export->lock);
+		if (sp != NULL) {
+			if (sp->opcodes[opc] == NULL)
+				sp->opcodes[opc] =
+					gsh_calloc(sizeof(struct proto_op), 1);
+			if (sp->opcodes[opc] != NULL)
+				record_op(sp->opcodes[opc], 0, 0, true, false);
+		}
+	}
+}
 #endif
 
 /**
@@ -1280,6 +1327,31 @@ void server_stats_summary(DBusMessageIter *iter, struct gsh_stats *st)
 	stats_available = st->_9p != 0;
 	dbus_message_iter_append_basic(iter, DBUS_TYPE_BOOLEAN,
 				       &stats_available);
+}
+
+/** @brief Report protocol operation statistics
+ *
+ * struct proto_op {
+ *         uint64_t total;
+ *         uint64_t errors;
+ *         ...
+ * }
+ *
+ * @param op    [IN] pointer to proto op sub-structure of interest
+ * @param iter  [IN] interator in reply stream to fill
+ */
+static void server_dbus_op_stats(struct proto_op *op, DBusMessageIter *iter)
+{
+	DBusMessageIter struct_iter;
+	uint64_t zero = 0;
+
+	dbus_message_iter_open_container(iter, DBUS_TYPE_STRUCT, NULL,
+					 &struct_iter);
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
+				       op == NULL ? &zero : &op->total);
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
+				       op == NULL ? &zero : &op->errors);
+	dbus_message_iter_close_container(iter, &struct_iter);
 }
 
 /**
@@ -1694,6 +1766,7 @@ void cache_inode_dbus_show(DBusMessageIter *iter)
 	dbus_message_iter_close_container(iter, &struct_iter);
 }
 
+#ifdef _USE_9P
 void server_dbus_9p_iostats(struct _9p_stats *_9pp, DBusMessageIter *iter)
 {
 	struct timespec timestamp;
@@ -1712,6 +1785,18 @@ void server_dbus_9p_transstats(struct _9p_stats *_9pp, DBusMessageIter *iter)
 	dbus_append_timestamp(iter, &timestamp);
 	server_dbus_transportstats(&_9pp->trans, iter);
 }
+
+void server_dbus_9p_opstats(struct _9p_stats *_9pp, u8 opcode,
+			    DBusMessageIter *iter)
+{
+	struct timespec timestamp;
+
+	now(&timestamp);
+	dbus_append_timestamp(iter, &timestamp);
+	server_dbus_op_stats(_9pp->opcodes[opcode], iter);
+}
+#endif
+
 
 /**
  * @brief Report layout statistics as a struct
@@ -1834,10 +1919,18 @@ void server_stats_free(struct gsh_stats *statsp)
 		gsh_free(statsp->nfsv42);
 		statsp->nfsv42 = NULL;
 	}
+#ifdef _USE_9P
 	if (statsp->_9p != NULL) {
+		u8 opc;
+
+		for (opc = 0; opc <= _9P_RWSTAT; opc++) {
+			if (statsp->_9p->opcodes[opc] != NULL)
+				gsh_free(statsp->_9p->opcodes[opc]);
+		}
 		gsh_free(statsp->_9p);
 		statsp->_9p = NULL;
 	}
+#endif
 }
 
 /** @} */

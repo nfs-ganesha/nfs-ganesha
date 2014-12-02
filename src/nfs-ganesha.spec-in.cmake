@@ -588,6 +588,8 @@ make DESTDIR=%{buildroot} install
 %{_bindir}/ganesha_stats
 %{_bindir}/sm_notify.ganesha
 %{_bindir}/ganesha_mgr
+%{_bindir}/client_stats_9pOps
+%{_bindir}/export_stats_9pOps
 %endif
 
 %changelog

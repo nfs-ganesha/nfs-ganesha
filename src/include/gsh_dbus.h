@@ -33,6 +33,10 @@
 #include <dbus/dbus.h>
 #include "log.h"
 
+#ifdef _USE_9P
+#include "9p_types.h"
+#endif
+
 /**
  *
  * \file gsh_dbus.h
@@ -213,5 +217,9 @@ int32_t gsh_dbus_register_path(const char *name,
 int gsh_dbus_broadcast(char *obj_name, char *int_name,
 		       char *sig_name, int type, ...);
 /* more to come */
+
+#ifdef _USE_9P
+bool arg_9p_op(DBusMessageIter *args, u8 *opcode, char **errormsg);
+#endif
 
 #endif				/* GSH_DBUS_H */

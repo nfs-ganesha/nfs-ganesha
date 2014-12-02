@@ -43,6 +43,10 @@
 
 void server_stats_nfs_done(request_data_t *reqdata, int rc, bool dup);
 
+#ifdef _USE_9P
+void server_stats_9p_done(u8 msgtype, struct _9p_request_data *req9p);
+#endif
+
 void server_stats_io_done(size_t requested,
 			  size_t transferred, bool success, bool is_write);
 void server_stats_compound_done(int num_ops, int status);

@@ -550,14 +550,17 @@ static struct gsh_dbus_interface cltmgr_client_table = {
 static struct gsh_client *lookup_client(DBusMessageIter *args, char **errormsg)
 {
 	sockaddr_t sockaddr;
+	struct gsh_client *client = NULL;
 	bool success = true;
 
 	success = arg_ipaddr(args, &sockaddr, errormsg);
 
-	if (success)
-		return get_gsh_client(&sockaddr, true);
-	else
-		return NULL;
+	if (success) {
+		client = get_gsh_client(&sockaddr, true);
+		if (client == NULL)
+			*errormsg = "Client IP address not found";
+	}
+	return client;
 }
 
 /**
@@ -796,6 +799,7 @@ static struct gsh_dbus_method cltmgr_show_delegations = {
 		 END_ARG_LIST}
 };
 
+#ifdef _USE_9P
 /**
  * DBUS method to report 9p I/O statistics
  *
@@ -890,6 +894,57 @@ static struct gsh_dbus_method cltmgr_show_9p_trans = {
 		 END_ARG_LIST}
 };
 
+/**
+ * DBUS method to report 9p protocol operation statistics
+ *
+ */
+
+static bool get_9p_client_op_stats(DBusMessageIter *args,
+				   DBusMessage *reply,
+				   DBusError *error)
+{
+	struct gsh_client *client = NULL;
+	struct server_stats *server_st = NULL;
+	u8 opcode;
+	bool success = true;
+	char *errormsg = "OK";
+	DBusMessageIter iter;
+
+	dbus_message_iter_init_append(reply, &iter);
+	client = lookup_client(args, &errormsg);
+	if (client == NULL) {
+		success = false;
+	} else {
+		server_st = container_of(client, struct server_stats, client);
+		if (server_st->st._9p == NULL) {
+			success = false;
+			errormsg = "Client does not have any 9p activity";
+		}
+	}
+	dbus_message_iter_next(args);
+	if (success)
+		success = arg_9p_op(args, &opcode, &errormsg);
+	dbus_status_reply(&iter, success, errormsg);
+	if (success)
+		server_dbus_9p_opstats(server_st->st._9p, opcode, &iter);
+
+	if (client != NULL)
+		put_gsh_client(client);
+	return true;
+}
+
+static struct gsh_dbus_method cltmgr_show_9p_op_stats = {
+	.name = "Get9pOpStats",
+	.method = get_9p_client_op_stats,
+	.args = {IPADDR_ARG,
+		 _9P_OP_ARG,
+		 STATUS_REPLY,
+		 TIMESTAMP_REPLY,
+		 OP_STATS_REPLY,
+		 END_ARG_LIST}
+};
+#endif
+
 
 static struct gsh_dbus_method *cltmgr_stats_methods[] = {
 	&cltmgr_show_v3_io,
@@ -897,8 +952,11 @@ static struct gsh_dbus_method *cltmgr_stats_methods[] = {
 	&cltmgr_show_v41_io,
 	&cltmgr_show_v41_layouts,
 	&cltmgr_show_delegations,
+#ifdef _USE_9P
 	&cltmgr_show_9p_io,
 	&cltmgr_show_9p_trans,
+	&cltmgr_show_9p_op_stats,
+#endif
 	NULL
 };
 
