@@ -2138,8 +2138,8 @@ sockaddr_t *convert_ipv6_to_ipv4(sockaddr_t *ipv6, sockaddr_t *ipv4)
 			char ipstring4[SOCK_NAME_MAX];
 			char ipstring6[SOCK_NAME_MAX];
 
-			sprint_sockaddr(ipv6, ipstring6, sizeof(ipstring6));
-			sprint_sockaddr(ipv4, ipstring4, sizeof(ipstring4));
+			sprint_sockip(ipv6, ipstring6, sizeof(ipstring6));
+			sprint_sockip(ipv4, ipstring4, sizeof(ipstring4));
 			LogMidDebug(COMPONENT_EXPORT,
 				    "Converting IPv6 encapsulated IPv4 address %s to IPv4 %s",
 				    ipstring6, ipstring4);

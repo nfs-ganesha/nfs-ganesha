@@ -421,8 +421,8 @@ int ipstring_to_sockaddr(const char *str, sockaddr_t *addr)
 		p = info;
 		if (isFullDebug(COMPONENT_RPC)) {
 			while (p != NULL) {
-				sprint_sockaddr((sockaddr_t *) p->ai_addr,
-						ipname, sizeof(ipname));
+				sprint_sockip((sockaddr_t *) p->ai_addr,
+					      ipname, sizeof(ipname));
 				LogFullDebug(COMPONENT_RPC,
 					     "getaddrinfo %s returned %s family=%s socktype=%s "
 					     "protocol=%s", str, ipname,

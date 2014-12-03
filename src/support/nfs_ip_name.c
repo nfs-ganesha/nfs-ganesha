@@ -111,7 +111,7 @@ int display_ip_name_key(struct gsh_buffdesc *pbuff, char *str)
 {
 	sockaddr_t *addr = (sockaddr_t *) (pbuff->addr);
 
-	sprint_sockaddr(addr, str, HASHTABLE_DISPLAY_STRLEN);
+	sprint_sockip(addr, str, HASHTABLE_DISPLAY_STRLEN);
 	return strlen(str);
 }
 
@@ -182,7 +182,7 @@ int nfs_ip_name_add(sockaddr_t *ipaddr, char *hostname, size_t size)
 	gettimeofday(&tv1, NULL);
 	timersub(&tv1, &tv0, &dur);
 
-	sprint_sockaddr(pipaddr, ipstring, sizeof(ipstring));
+	sprint_sockip(pipaddr, ipstring, sizeof(ipstring));
 
 	/* display warning if DNS resolution took more that 1.0s */
 	if (dur.tv_sec >= 1) {
@@ -242,7 +242,7 @@ int nfs_ip_name_get(sockaddr_t *ipaddr, char *hostname, size_t size)
 	nfs_ip_name_t *nfs_ip_name;
 	char ipstring[SOCK_NAME_MAX + 1];
 
-	sprint_sockaddr(ipaddr, ipstring, sizeof(ipstring));
+	sprint_sockip(ipaddr, ipstring, sizeof(ipstring));
 
 	buffkey.addr = (caddr_t) ipaddr;
 	buffkey.len = sizeof(sockaddr_t);
@@ -281,7 +281,7 @@ int nfs_ip_name_remove(sockaddr_t *ipaddr)
 	nfs_ip_name_t *nfs_ip_name = NULL;
 	char ipstring[SOCK_NAME_MAX + 1];
 
-	sprint_sockaddr(ipaddr, ipstring, sizeof(ipstring));
+	sprint_sockip(ipaddr, ipstring, sizeof(ipstring));
 
 	buffkey.addr = (caddr_t) ipaddr;
 	buffkey.len = sizeof(sockaddr_t);
