@@ -42,6 +42,8 @@
 #include "sal_functions.h"
 #include "nsm.h"
 #include "log.h"
+#include "client_mgr.h"
+#include "fsal.h"
 
 /**
  * @brief NSM clients
@@ -165,9 +167,7 @@ int compare_nsm_client(state_nsm_client_t *client1,
 		return 0;
 
 	if (!nfs_param.core_param.nsm_use_caller_name) {
-		if (cmp_sockaddr(&client1->ssc_client_addr,
-				 &client2->ssc_client_addr,
-				 true) == 0)
+		if (client1->ssc_client != client2->ssc_client)
 			return 1;
 		return 0;
 	}
@@ -225,9 +225,7 @@ uint32_t nsm_client_value_hash_func(hash_parameter_t *hparam,
 		    (unsigned long)sum +
 		    (unsigned long)pkey->ssc_nlm_caller_name_len;
 	} else {
-		res =
-		    hash_sockaddr(&pkey->ssc_client_addr,
-				  true) % hparam->index_size;
+		res = (unsigned long) pkey->ssc_client;
 	}
 
 	if (isDebug(COMPONENT_HASHTABLE))
@@ -265,7 +263,7 @@ uint64_t nsm_client_rbt_hash_func(hash_parameter_t *hparam,
 		    (unsigned long)sum +
 		    (unsigned long)pkey->ssc_nlm_caller_name_len;
 	} else {
-		res = hash_sockaddr(&pkey->ssc_client_addr, true);
+		res = (unsigned long) pkey->ssc_client;
 	}
 
 	if (isDebug(COMPONENT_HASHTABLE))
@@ -385,9 +383,9 @@ int compare_nlm_client(state_nlm_client_t *client1,
 	    != 0)
 		return 1;
 
-	if (cmp_sockaddr
-	    (&client1->slc_server_addr, &client2->slc_server_addr,
-	     true) == 0)
+	if (cmp_sockaddr(&client1->slc_server_addr,
+			 &client2->slc_server_addr,
+			 true) == 0)
 		return 1;
 
 	if (client1->slc_client_type != client2->slc_client_type)
@@ -771,6 +769,9 @@ void free_nsm_client(state_nsm_client_t *client)
 	if (client->ssc_nlm_caller_name != NULL)
 		gsh_free(client->ssc_nlm_caller_name);
 
+	if (client->ssc_client != NULL)
+		put_gsh_client(client->ssc_client);
+
 	assert(pthread_mutex_destroy(&client->ssc_mutex) == 0);
 
 	gsh_free(client);
@@ -882,7 +883,6 @@ state_nsm_client_t *get_nsm_client(care_t care, SVCXPRT *xprt,
 {
 	state_nsm_client_t key;
 	state_nsm_client_t *pclient;
-	char sock_name[SOCK_NAME_MAX + 1];
 	char str[LOG_BUFF_LEN];
 	struct display_buffer dspbuf = {sizeof(str), str, str};
 	struct hash_latch latch;
@@ -902,44 +902,13 @@ state_nsm_client_t *get_nsm_client(care_t care, SVCXPRT *xprt,
 			return NULL;
 
 		key.ssc_nlm_caller_name = caller_name;
-	} else if (xprt == NULL) {
-		int rc =
-		    ipstring_to_sockaddr(caller_name, &key.ssc_client_addr);
-		if (rc != 0) {
-			LogEvent(COMPONENT_STATE,
-				 "Error %s, converting caller_name %s to an ipaddress",
-				 gai_strerror(rc), caller_name);
+	} else if (op_ctx->client == NULL) {
+		LogCrit(COMPONENT_STATE,
+			"No gsh_client for caller_name %s", caller_name);
 
-			return NULL;
-		}
-
-		key.ssc_nlm_caller_name_len = strlen(caller_name);
-
-		if (key.ssc_nlm_caller_name_len > LM_MAXSTRLEN)
-			return NULL;
-
-		key.ssc_nlm_caller_name = caller_name;
+		return NULL;
 	} else {
-		key.ssc_nlm_caller_name = sock_name;
-
-		if (copy_xprt_addr(&key.ssc_client_addr, xprt) == 0) {
-			LogCrit(COMPONENT_STATE,
-				"Error converting caller_name %s to an ipaddress",
-				caller_name);
-
-			return NULL;
-		}
-
-		if (sprint_sockip
-		    (&key.ssc_client_addr, key.ssc_nlm_caller_name,
-		     sizeof(sock_name)) == 0) {
-			LogCrit(COMPONENT_STATE,
-				"Error converting caller_name %s to an ipaddress",
-				caller_name);
-
-			return NULL;
-		}
-
+		key.ssc_nlm_caller_name = op_ctx->client->hostaddr_str;
 		key.ssc_nlm_caller_name_len = strlen(key.ssc_nlm_caller_name);
 	}
 
@@ -1029,6 +998,11 @@ state_nsm_client_t *get_nsm_client(care_t care, SVCXPRT *xprt,
 	glist_init(&pclient->ssc_lock_list);
 	glist_init(&pclient->ssc_share_list);
 	pclient->ssc_refcount = 1;
+
+	if (op_ctx->client != NULL) {
+		pclient->ssc_client = op_ctx->client;
+		inc_gsh_client_refcount(op_ctx->client);
+	}
 
 	if (isFullDebug(COMPONENT_STATE)) {
 		display_nsm_client(&dspbuf, pclient);

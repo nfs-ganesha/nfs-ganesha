@@ -460,7 +460,7 @@ typedef struct state_nsm_client_t {
 					   structure */
 	struct glist_head ssc_lock_list;	/*< All locks held by client */
 	struct glist_head ssc_share_list;	/*< All share reservations */
-	sockaddr_t ssc_client_addr;	/*< Network address of client */
+	struct gsh_client *ssc_client;		/*< The client involved */
 	int32_t ssc_refcount;	/*< Reference count to protect
 				   structure */
 	int32_t ssc_monitored;	/*< If this client is actively
