@@ -86,11 +86,15 @@ int nfs3_write(nfs_arg_t *arg,
 	int rc = NFS_REQ_OK;
 	fsal_status_t fsal_status;
 
+	offset = arg->arg_write3.offset;
+	size = arg->arg_write3.count;
+
+	if ((arg->arg_write3.stable == DATA_SYNC) ||
+	    (arg->arg_write3.stable == FILE_SYNC))
+		sync = true;
+
 	if (isDebug(COMPONENT_NFSPROTO)) {
 		char str[LEN_FH_STR], *stables = "";
-
-		offset = arg->arg_write3.offset;
-		size = arg->arg_write3.count;
 
 		switch (arg->arg_write3.stable) {
 		case UNSTABLE:
@@ -98,11 +102,9 @@ int nfs3_write(nfs_arg_t *arg,
 			break;
 		case DATA_SYNC:
 			stables = "DATA_SYNC";
-			sync = true;
 			break;
 		case FILE_SYNC:
 			stables = "FILE_SYNC";
-			sync = true;
 			break;
 		}
 
@@ -171,9 +173,6 @@ int nfs3_write(nfs_arg_t *arg,
 		rc = NFS_REQ_OK;
 		goto out;
 	}
-
-	offset = arg->arg_write3.offset;
-	size = arg->arg_write3.count;
 
 	if (size > arg->arg_write3.data.data_len) {
 		/* should never happen */
