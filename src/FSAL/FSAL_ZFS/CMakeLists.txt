@@ -1,6 +1,11 @@
 
 ########### next target ###############
 
+IF(ZFS_PREFIX)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I${ZFS_PREFIX}/include")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -L${ZFS_PREFIX}/lib")
+ENDIF()
+
 SET(fsalzfs_LIB_SRCS
    fsal_internal.c
    main.c
