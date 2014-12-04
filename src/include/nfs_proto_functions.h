@@ -240,9 +240,6 @@ int nfs4_op_lookup(struct nfs_argop4 *, compound_data_t *,
 int nfs4_op_lookupp(struct nfs_argop4 *, compound_data_t *,
 		    struct nfs_resop4 *);
 
-int nfs4_op_lookupp(struct nfs_argop4 *, compound_data_t *,
-		    struct nfs_resop4 *);
-
 int nfs4_op_nverify(struct nfs_argop4 *, compound_data_t *,
 		    struct nfs_resop4 *);
 
@@ -317,11 +314,6 @@ int nfs4_op_notsupp(struct nfs_argop4 *, compound_data_t *data,
 int nfs4_op_exchange_id(struct nfs_argop4 *, compound_data_t *,
 			struct nfs_resop4 *);
 
-int nfs4_op_commit(struct nfs_argop4 *, compound_data_t *,
-		   struct nfs_resop4 *);
-
-int nfs4_op_close(struct nfs_argop4 *, compound_data_t *, struct nfs_resop4 *);
-
 int nfs4_op_create_session(struct nfs_argop4 *, compound_data_t *,
 			   struct nfs_resop4 *);
 
@@ -339,12 +331,6 @@ int nfs4_op_destroy_clientid(struct nfs_argop4 *, compound_data_t *,
 
 int nfs4_op_destroy_session(struct nfs_argop4 *, compound_data_t *,
 			    struct nfs_resop4 *);
-
-int nfs4_op_lock(struct nfs_argop4 *, compound_data_t *, struct nfs_resop4 *);
-
-int nfs4_op_lockt(struct nfs_argop4 *, compound_data_t *, struct nfs_resop4 *);
-
-int nfs4_op_locku(struct nfs_argop4 *, compound_data_t *, struct nfs_resop4 *);
 
 int nfs4_op_layoutget(struct nfs_argop4 *, compound_data_t *,
 		      struct nfs_resop4 *);
