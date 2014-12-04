@@ -40,7 +40,7 @@
 #include <os/mntent.h>
 #include <os/quota.h>
 #include <dlfcn.h>
-#include "ganesha_list.h"
+#include "gsh_list.h"
 #include "config_parsing.h"
 #include "fsal_convert.h"
 #include "FSAL/fsal_commonlib.h"

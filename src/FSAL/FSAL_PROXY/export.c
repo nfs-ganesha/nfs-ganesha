@@ -26,7 +26,7 @@
 #include "fsal.h"
 #include <pthread.h>
 #include <sys/types.h>
-#include "ganesha_list.h"
+#include "gsh_list.h"
 #include "FSAL/fsal_commonlib.h"
 #include "FSAL/fsal_config.h"
 #include "pxy_fsal_methods.h"

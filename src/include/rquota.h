@@ -6,7 +6,7 @@
 #ifndef _RQUOTA_H_RPCGEN
 #define _RQUOTA_H_RPCGEN
 
-#include "ganesha_rpc.h"
+#include "gsh_rpc.h"
 #include "extended_types.h"
 
 #ifdef __cplusplus

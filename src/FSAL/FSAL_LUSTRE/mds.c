@@ -26,7 +26,7 @@
 #include "config.h"
 
 #include <assert.h>
-#include "ganesha_rpc.h"
+#include "gsh_rpc.h"
 #include "fsal.h"
 #include "fsal_types.h"
 #include "fsal_api.h"

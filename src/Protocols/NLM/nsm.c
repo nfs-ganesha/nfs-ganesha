@@ -26,7 +26,7 @@
 #include "config.h"
 #include <sys/utsname.h>
 #include "abstract_atomic.h"
-#include "ganesha_rpc.h"
+#include "gsh_rpc.h"
 #include "nsm.h"
 #include "sal_data.h"
 

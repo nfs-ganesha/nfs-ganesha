@@ -33,7 +33,7 @@
 #include <arpa/inet.h>
 #include <sys/poll.h>
 #include <netdb.h>
-#include "ganesha_list.h"
+#include "gsh_list.h"
 #include "abstract_atomic.h"
 #include "fsal_types.h"
 #include "FSAL/fsal_commonlib.h"

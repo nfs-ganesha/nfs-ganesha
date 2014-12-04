@@ -39,7 +39,7 @@
 #include <grp.h>
 #include <unistd.h>
 #include "gsh_intrinsic.h"
-#include "ganesha_types.h"
+#include "gsh_types.h"
 #include "common_utils.h"
 #include "avltree.h"
 #include "uid2grp.h"

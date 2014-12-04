@@ -40,7 +40,7 @@
 ** Forward declarations to avoid circular dependency conflicts
 */
 
-#include "ganesha_status.h"
+#include "gsh_status.h"
 
 typedef struct cache_entry_t cache_entry_t;
 
@@ -65,8 +65,8 @@ typedef struct cache_entry_t cache_entry_t;
 #include "nfs23.h"
 #include "nfs4.h"
 #include "nlm4.h"
-#include "ganesha_list.h"
-#include "ganesha_types.h"
+#include "gsh_list.h"
+#include "gsh_types.h"
 #include "nfs4_acls.h"
 
 /**

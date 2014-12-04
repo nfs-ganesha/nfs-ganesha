@@ -101,4 +101,3 @@ TRACEPOINT_LOGLEVEL(
 #define TRACEPOINT_INCLUDE "ganesha_lttng/nfs_rpc.h"
 
 #include <lttng/tracepoint-event.h>
-

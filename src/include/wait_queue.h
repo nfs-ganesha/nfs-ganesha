@@ -38,7 +38,7 @@
 
 #include <errno.h>
 #include <pthread.h>
-#include "ganesha_list.h"
+#include "gsh_list.h"
 
 typedef struct wait_entry {
 	pthread_mutex_t mtx;

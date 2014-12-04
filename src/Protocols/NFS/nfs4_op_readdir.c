@@ -24,7 +24,7 @@
  * --------------------------------------- */
 #include "config.h"
 #include "log.h"
-#include "ganesha_rpc.h"
+#include "gsh_rpc.h"
 #include "fsal.h"
 #include "nfs_core.h"
 #include "cache_inode.h"

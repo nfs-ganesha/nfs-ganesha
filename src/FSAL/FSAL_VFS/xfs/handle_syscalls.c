@@ -35,7 +35,7 @@
 #include <sys/syscall.h>
 #include <xfs/xfs.h>
 #include <xfs/handle.h>
-#include "ganesha_list.h"
+#include "gsh_list.h"
 #include "fsal_convert.h"
 #include "FSAL/fsal_commonlib.h"
 #include "../vfs_methods.h"

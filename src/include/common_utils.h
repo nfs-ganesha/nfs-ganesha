@@ -17,7 +17,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "ganesha_types.h"
+#include "gsh_types.h"
 #include "log.h"
 
 /**

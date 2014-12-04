@@ -50,7 +50,7 @@
 #include <wbclient.h>
 #endif
 #include "common_utils.h"
-#include "ganesha_rpc.h"
+#include "gsh_rpc.h"
 #include "nfs_core.h"
 #include "idmapper.h"
 

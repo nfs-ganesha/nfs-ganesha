@@ -13,7 +13,7 @@
 #ifndef _FSAL_NFSV4_MACROS_H
 #define _FSAL_NFSV4_MACROS_H
 
-#include "ganesha_rpc.h"
+#include "gsh_rpc.h"
 #include "nfs4.h"
 
 #include "fsal.h"

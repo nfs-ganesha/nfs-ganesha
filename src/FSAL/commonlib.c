@@ -56,7 +56,7 @@
 #ifdef HAVE_MNTENT_H
 #include <mntent.h>
 #endif
-#include "ganesha_list.h"
+#include "gsh_list.h"
 #ifdef USE_BLKID
 #include <blkid/blkid.h>
 #include <uuid/uuid.h>

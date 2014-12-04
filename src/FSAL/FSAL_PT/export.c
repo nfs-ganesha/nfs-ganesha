@@ -38,7 +38,7 @@
 #include <mntent.h>
 #include <sys/statvfs.h>
 #include <sys/quota.h>
-#include "ganesha_list.h"
+#include "gsh_list.h"
 #include "config_parsing.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"

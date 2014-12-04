@@ -35,7 +35,7 @@
 #include "sal_functions.h"
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
-#include "ganesha_list.h"
+#include "gsh_list.h"
 #include "export_mgr.h"
 
 static const char *lock_tag = "LOCK";

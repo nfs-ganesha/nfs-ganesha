@@ -26,8 +26,8 @@
  * -------------
  */
 
-#ifndef _GANESHA_DBUS_H
-#define _GANESHA_DBUS_H
+#ifndef GSH_DBUS_H
+#define GSH_DBUS_H
 
 #include "config.h"
 #include <dbus/dbus.h>
@@ -35,7 +35,7 @@
 
 /**
  *
- * \file ganesha_dbus.h
+ * \file gsh_dbus.h
  * \author Matt Benjamin and Lee Dobryden
  * \brief Low-level DBUS message server and callout framework.
  *
@@ -214,4 +214,4 @@ int gsh_dbus_broadcast(char *obj_name, char *int_name,
 		       char *sig_name, int type, ...);
 /* more to come */
 
-#endif				/* _GANESHA_DBUS_H */
+#endif				/* GSH_DBUS_H */

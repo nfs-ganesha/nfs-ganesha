@@ -45,20 +45,20 @@
 #include <sys/resource.h>
 
 #include "log.h"
-#include "ganesha_list.h"
+#include "gsh_list.h"
 #include "rpc/rpc.h"
 #include "common_utils.h"
 #include "abstract_mem.h"
 
 #ifdef USE_DBUS
-#include "ganesha_dbus.h"
+#include "gsh_dbus.h"
 #endif
 
 #include "nfs_core.h"
 #include "config_parsing.h"
 
 #ifdef USE_LTTNG
-#include "ganesha_lttng/logger.h"
+#include "gsh_lttng/logger.h"
 #endif
 
 /*

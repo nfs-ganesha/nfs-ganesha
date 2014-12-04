@@ -33,7 +33,7 @@
 #include <time.h>
 #include <pthread.h>
 #include <assert.h>
-#include "ganesha_list.h"
+#include "gsh_list.h"
 #include "abstract_mem.h"
 #include "fsal.h"
 #include "nfs_core.h"
@@ -41,7 +41,7 @@
 #include "nfs_rpc_callback.h"
 #include "nfs_rpc_callback_simulator.h"
 #include "sal_functions.h"
-#include "ganesha_dbus.h"
+#include "gsh_dbus.h"
 
 /**
  * @file nfs_rpc_callback_simulator.c

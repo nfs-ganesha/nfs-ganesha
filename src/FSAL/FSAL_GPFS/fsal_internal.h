@@ -35,7 +35,7 @@
 
 #include <sys/stat.h>
 #include "fsal.h"
-#include "ganesha_list.h"
+#include "gsh_list.h"
 #include "fsal_types.h"
 #include "fcntl.h"
 #include "include/gpfs_nfs.h"

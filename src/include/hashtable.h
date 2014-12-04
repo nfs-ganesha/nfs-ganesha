@@ -46,7 +46,7 @@
 #include <pthread.h>
 #include "log.h"
 #include "abstract_mem.h"
-#include "ganesha_types.h"
+#include "gsh_types.h"
 
 /**
  * @brief A pair of buffer descriptors

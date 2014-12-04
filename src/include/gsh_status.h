@@ -1,5 +1,5 @@
 /*
- * Copyright © CohortFS, LLC.
+ * Copyright © 2014 CohortFS, LLC.
  * Author: William Allen Simpson <bill@CohortFS.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 
 /**
- * @file   ganesha_status.h
+ * @file   gsh_status.h
  * @author William Allen Simpson <bill@CohortFS.com>
  * @author Daniel Gryniewicz <dang@CohortFS.com>
  * @date   Mon Nov 17 14:11:17 2014
@@ -27,8 +27,8 @@
  * @brief Ganesha Unified Status
  */
 
-#ifndef GANESHA_STATUS_H
-#define GANESHA_STATUS_H
+#ifndef GSH_STATUS_H
+#define GSH_STATUS_H
 
 /**
  * @brief Possible Errors from SAL Code
@@ -141,4 +141,4 @@ typedef enum cache_inode_status {
 	CACHE_INODE_BADHANDLE = 44,
 } cache_inode_status_t;
 
-#endif				/* !GANESHA_STATUS_H */
+#endif				/* !GSH_STATUS_H */

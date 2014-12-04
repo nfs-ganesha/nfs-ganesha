@@ -43,7 +43,7 @@
 #include <sys/types.h>
 
 #include "avltree.h"
-#include "ganesha_types.h"
+#include "gsh_types.h"
 
 struct gsh_client {
 	struct avltree_node node_k;

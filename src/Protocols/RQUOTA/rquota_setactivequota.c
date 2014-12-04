@@ -26,7 +26,7 @@
 #include <sys/file.h>
 #include "hashtable.h"
 #include "log.h"
-#include "ganesha_rpc.h"
+#include "gsh_rpc.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "nfs_core.h"

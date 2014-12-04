@@ -47,7 +47,7 @@
 #ifndef FSAL_UP_H
 #define FSAL_UP_H
 
-#include "ganesha_status.h"
+#include "gsh_status.h"
 #include "fsal_api.h"
 #include "cache_inode.h"
 
