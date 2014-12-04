@@ -62,7 +62,7 @@
 #include "uid2grp.h"
 
 #ifdef USE_LTTNG
-#include "ganesha_lttng/nfs_rpc.h"
+#include "gsh_lttng/nfs_rpc.h"
 #endif
 
 pool_t *request_pool;

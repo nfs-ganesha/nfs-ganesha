@@ -30,7 +30,7 @@
  */
 
 #include "avltree.h"
-#include "ganesha_list.h"
+#include "gsh_list.h"
 
 struct pseudo_fsal_obj_handle;
 

@@ -3,7 +3,7 @@
  * It was generated using rpcgen.
  */
 #include "config.h"
-#include "ganesha_rpc.h"
+#include "gsh_rpc.h"
 #include "nfs23.h"
 
 static struct nfs_request_lookahead dummy_lookahead = {

@@ -40,7 +40,7 @@
 #include <sys/syscall.h>
 #include <ctype.h>
 #include <mntent.h>
-#include "ganesha_list.h"
+#include "gsh_list.h"
 #include "fsal_handle.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"

@@ -50,7 +50,7 @@
 #include "fsal.h"
 #include "nfs_core.h"
 #include "config_parsing.h"
-#include "ganesha_types.h"
+#include "gsh_types.h"
 #include "FSAL/fsal_commonlib.h"
 #include "fsal_private.h"
 

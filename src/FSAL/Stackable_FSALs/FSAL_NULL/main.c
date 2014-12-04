@@ -37,7 +37,7 @@
 #include <string.h>
 #include <limits.h>
 #include <sys/types.h>
-#include "ganesha_list.h"
+#include "gsh_list.h"
 #include "FSAL/fsal_init.h"
 #include "nullfs_methods.h"
 

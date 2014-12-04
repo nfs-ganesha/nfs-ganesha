@@ -20,7 +20,7 @@
  * -------------
  */
 
-#include "ganesha_rpc.h"
+#include "gsh_rpc.h"
 #include <cephfs/libcephfs.h>
 #include "fsal.h"
 #include "fsal_types.h"

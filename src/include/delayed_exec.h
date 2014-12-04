@@ -51,7 +51,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "ganesha_types.h"
+#include "gsh_types.h"
 
 void delayed_start(void);
 void delayed_shutdown(void);

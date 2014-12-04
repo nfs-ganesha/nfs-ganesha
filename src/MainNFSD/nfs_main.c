@@ -62,8 +62,8 @@
 #define TRACEPOINT_DEFINE
 #define TRACEPOINT_PROBE_DYNAMIC_LINKAGE
 
-#include "ganesha_lttng/logger.h"
-#include "ganesha_lttng/nfs_rpc.h"
+#include "gsh_lttng/logger.h"
+#include "gsh_lttng/nfs_rpc.h"
 #endif /* USE_LTTNG */
 
 /* parameters for NFSd startup and default values */

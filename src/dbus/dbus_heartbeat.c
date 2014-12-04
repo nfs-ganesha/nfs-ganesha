@@ -39,8 +39,8 @@
 #include "nfs_core.h"
 #include "log.h"
 #include "avltree.h"
-#include "ganesha_types.h"
-#include "ganesha_dbus.h"
+#include "gsh_types.h"
+#include "gsh_dbus.h"
 #include "abstract_atomic.h"
 #include "gsh_intrinsic.h"
 

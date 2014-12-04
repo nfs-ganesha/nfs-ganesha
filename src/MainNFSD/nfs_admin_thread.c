@@ -43,7 +43,7 @@
 #include "export_mgr.h"
 #include "fsal.h"
 #ifdef USE_DBUS
-#include "ganesha_dbus.h"
+#include "gsh_dbus.h"
 #endif
 
 struct glist_head temp_exportlist;

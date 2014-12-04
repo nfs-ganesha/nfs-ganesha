@@ -19,7 +19,7 @@
  */
 
 /**
- * @file   ganesha_types.h
+ * @file   gsh_types.h
  * @author Adam C. Emerson <aemerson@linuxbox.com>
  * @date   Mon Jul  9 16:59:11 2012
  *
@@ -29,8 +29,8 @@
  * in Ganesha.
  */
 
-#ifndef GANESHA_TYPES__
-#define GANESHA_TYPES__
+#ifndef GSH_TYPES_H
+#define GSH_TYPES_H
 
 #include <stdint.h>
 
@@ -58,4 +58,4 @@ struct gsh_buffdesc {
 	size_t len;		/*< Length of the buffer */
 };
 
-#endif				/* !GANESHA_TYPES__ */
+#endif				/* !GSH_TYPES_H */

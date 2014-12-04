@@ -51,9 +51,9 @@
 #include "nfs_core.h"
 #include "log.h"
 #include "avltree.h"
-#include "ganesha_types.h"
+#include "gsh_types.h"
 #ifdef USE_DBUS
-#include "ganesha_dbus.h"
+#include "gsh_dbus.h"
 #endif
 #include "client_mgr.h"
 #include "export_mgr.h"

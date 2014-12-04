@@ -36,7 +36,7 @@
 #include <pthread.h>
 #include <string.h>
 #include <sys/types.h>
-#include "ganesha_list.h"
+#include "gsh_list.h"
 #include "fsal_convert.h"
 #include "FSAL/fsal_commonlib.h"
 #include "nullfs_methods.h"

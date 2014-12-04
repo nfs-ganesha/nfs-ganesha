@@ -59,7 +59,7 @@
 ** Forward declarations to avoid circular dependency conflicts
 */
 
-#include "ganesha_status.h"
+#include "gsh_status.h"
 
 typedef struct nfs_client_id_t		nfs_client_id_t;
 typedef struct nfs41_session		nfs41_session_t;
