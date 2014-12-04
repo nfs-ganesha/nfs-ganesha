@@ -61,6 +61,7 @@
 static struct config_item_list protocols[] = {
 	CONFIG_LIST_TOK("3", CORE_OPTION_NFSV3),
 	CONFIG_LIST_TOK("4", CORE_OPTION_NFSV4),
+	CONFIG_LIST_TOK("9p", CORE_OPTION_9P),
 	CONFIG_LIST_EOL
 };
 
