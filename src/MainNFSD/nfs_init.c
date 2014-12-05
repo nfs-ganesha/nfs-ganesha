@@ -404,28 +404,34 @@ static void nfs_Start_threads(void)
 
 #ifdef _USE_9P
 	/* Starting the 9P/TCP dispatcher thread */
-	rc = pthread_create(&_9p_dispatcher_thrid, &attr_thr,
-			    _9p_dispatcher_thread, NULL);
-	if (rc != 0) {
-		LogFatal(COMPONENT_THREAD,
-			 "Could not create  9P/TCP dispatcher, error = %d (%s)",
-			 errno, strerror(errno));
+	if (nfs_param.core_param.core_options & CORE_OPTION_9P) {
+		rc = pthread_create(&_9p_dispatcher_thrid, &attr_thr,
+				    _9p_dispatcher_thread, NULL);
+		if (rc != 0) {
+			LogFatal(COMPONENT_THREAD,
+				 "Could not create  9P/TCP dispatcher,"
+				 " error = %d (%s)",
+				 errno, strerror(errno));
+		}
+		LogEvent(COMPONENT_THREAD,
+			 "9P/TCP dispatcher thread was started successfully");
 	}
-	LogEvent(COMPONENT_THREAD,
-		 "9P/TCP dispatcher thread was started successfully");
 #endif
 
 #ifdef _USE_9P_RDMA
 	/* Starting the 9P/RDMA dispatcher thread */
-	rc = pthread_create(&_9p_rdma_dispatcher_thrid, &attr_thr,
-			    _9p_rdma_dispatcher_thread, NULL);
-	if (rc != 0) {
-		LogFatal(COMPONENT_THREAD,
-			 "Could not create  9P/RDMA dispatcher, error = %d (%s)",
-			 errno, strerror(errno));
+	if (nfs_param.core_param.core_options & CORE_OPTION_9P) {
+		rc = pthread_create(&_9p_rdma_dispatcher_thrid, &attr_thr,
+				    _9p_rdma_dispatcher_thread, NULL);
+		if (rc != 0) {
+			LogFatal(COMPONENT_THREAD,
+				 "Could not create  9P/RDMA dispatcher,"
+				 " error = %d (%s)",
+				 errno, strerror(errno));
+		}
+		LogEvent(COMPONENT_THREAD,
+			 "9P/RDMA dispatcher thread was started successfully");
 	}
-	LogEvent(COMPONENT_THREAD,
-		 "9P/RDMA dispatcher thread was started successfully");
 #endif
 
 #ifdef _USE_NFS_MSK
