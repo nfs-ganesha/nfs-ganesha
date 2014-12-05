@@ -142,6 +142,8 @@ static struct config_item core_params[] = {
 		      nfs_core_param, decoder_fridge_block_timeout),
 	CONF_ITEM_LIST("NFS_Protocols", CORE_OPTION_ALL_VERS, protocols,
 		       nfs_core_param, core_options),
+	CONF_ITEM_LIST("Protocols", CORE_OPTION_ALL_VERS, protocols,
+		       nfs_core_param, core_options),
 	CONF_ITEM_BOOL("NSM_Use_Caller_Name", false,
 		       nfs_core_param, nsm_use_caller_name),
 	CONF_ITEM_BOOL("Clustered", true,
