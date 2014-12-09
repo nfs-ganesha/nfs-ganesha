@@ -372,7 +372,8 @@ err_locked:
 		fsal_detach_export(fsal_hdl, &myself->export.exports);
 errout:
 	if (myself != NULL) {
-		gsh_free(myself);	/* elvis has left the building */
+		/* elvis has left the building */
+		gsh_free(myself);
 	}
 	return fsalstat(fsal_error, retval);
 }

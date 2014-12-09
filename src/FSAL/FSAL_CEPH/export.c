@@ -136,9 +136,8 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 	}
 
 	rc = ceph_ll_walk(export->cmount, realpath, &i, &st);
-	if (rc < 0) {
+	if (rc < 0)
 		return ceph2fsal_error(rc);
-	}
 
 	rc = construct_handle(&st, i, export, &handle);
 	if (rc < 0) {
