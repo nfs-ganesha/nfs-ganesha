@@ -31,14 +31,14 @@
 
 #include "config.h"
 
-#include "fsal.h"
 #include <libgen.h>		/* used for 'dirname' */
 #include <pthread.h>
 #include <string.h>
 #include <sys/types.h>
 #include <mntent.h>
 #include <sys/statvfs.h>
-#include "ganesha_list.h"
+#include "gsh_list.h"
+#include "fsal.h"
 #include "fsal_handle.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
@@ -426,15 +426,17 @@ nfsstat4 lustre_create_ds_handle(struct fsal_export *const export_pub,
 				 const struct gsh_buffdesc *const desc,
 				 struct fsal_ds_handle **const ds_pub)
 {
+	struct fsal_module *fsal = export_pub->fsal;
 	/* Handle to be created */
-	struct lustre_ds *ds = NULL;
+	struct lustre_ds *ds;
+	struct fsal_pnfs_ds *pds;
 	struct lustre_file_handle *lustre_fh;
 	struct fsal_filesystem *fs;
 	enum fsid_type fsid_type;
 	struct fsal_fsid__ fsid;
+	nfsstat4 status;
 
 	*ds_pub = NULL;
-
 
 	/* Get the related Lustre FS */
 	lustre_fh = (struct lustre_file_handle *) desc->addr;
@@ -451,7 +453,7 @@ nfsstat4 lustre_create_ds_handle(struct fsal_export *const export_pub,
 		return NFS4ERR_STALE;
 	}
 
-	if (fs->fsal != export_pub->fsal) {
+	if (fs->fsal != fsal) {
 		LogInfo(COMPONENT_FSAL,
 			"Non LUSTRE filesystem "
 			"fsid=0x%016"PRIx64".0x%016"PRIx64
@@ -460,25 +462,27 @@ nfsstat4 lustre_create_ds_handle(struct fsal_export *const export_pub,
 		return NFS4ERR_STALE;
 	}
 
+	/* XXX in GPFS, len is checked before using any of the fields??? */
 	if (desc->len != sizeof(struct lustre_file_handle))
 		return NFS4ERR_BADHANDLE;
-	ds = gsh_calloc(1, sizeof(struct lustre_ds));
 
-	if (ds == NULL)
+	status = fsal->m_ops.fsal_pnfs_ds(fsal, desc, &pds);
+	if (status != NFS4_OK)
+		return status;
+
+	status = fsal->m_ops.fsal_ds_handle(pds, desc, ds_pub);
+	if (status != NFS4_OK) {
+		pds->s_ops.release(pds);
 		return NFS4ERR_SERVERFAULT;
+	}
 
-	/* Connect lazily when a FILE_SYNC4 write forces us to, not
-	 *            here. */
+	/* assumes fsal_ds_handle is first in handle struct */
+	ds = (struct lustre_ds *)*ds_pub;
 
-	ds->connected = false;
 
 	ds->lustre_fs = fs->private;
 
 	memcpy(&ds->wire, desc->addr, desc->len);
-
-	fsal_ds_handle_init(&ds->ds, export_pub->ds_ops, export_pub->fsal);
-
-	*ds_pub = &ds->ds;
 
 	return NFS4_OK;
 }
@@ -787,8 +791,7 @@ fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
 		gsh_free(myself);
 		return fsalstat(posix2fsal_error(retval), retval);
 	}
-	lustre_export_ops_init(myself->export.ops);
-	lustre_handle_ops_init(myself->export.obj_ops);
+	lustre_export_ops_init(&myself->export.exp_ops);
 	myself->export.up_ops = up_ops;
 
 	retval = load_config_from_node(parse_node,
@@ -831,11 +834,11 @@ fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
 	op_ctx->fsal_export = &myself->export;
 
 	myself->pnfs_ds_enabled =
-	    myself->export.ops->fs_supports(&myself->export,
+	    myself->export.exp_ops.fs_supports(&myself->export,
 					    fso_pnfs_ds_supported) &&
 	    myself->pnfs_param.pnfs_enabled;
 	myself->pnfs_mds_enabled =
-	    myself->export.ops->fs_supports(&myself->export,
+	    myself->export.exp_ops.fs_supports(&myself->export,
 					    fso_pnfs_mds_supported) &&
 	    myself->pnfs_param.pnfs_enabled;
 
@@ -843,14 +846,12 @@ fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
 		LogInfo(COMPONENT_FSAL,
 			"lustre_fsal_create: pnfs DS was enabled for [%s]",
 			op_ctx->export->fullpath);
-		ds_ops_init(myself->export.ds_ops);
 	}
 	if (myself->pnfs_mds_enabled) {
 		LogInfo(COMPONENT_FSAL,
 			"lustre_fsal_create: pnfs MDS was enabled for [%s]",
 			op_ctx->export->fullpath);
-		export_ops_pnfs(myself->export.ops);
-		handle_ops_pnfs(myself->export.obj_ops);
+		export_ops_pnfs(&myself->export.exp_ops);
 	}
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 

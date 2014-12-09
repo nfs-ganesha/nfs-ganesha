@@ -62,7 +62,7 @@ static void release(struct fsal_export *exp_hdl)
 	myself = container_of(exp_hdl, struct pseudofs_fsal_export, export);
 
 	if (myself->root_handle != NULL) {
-		fsal_obj_handle_uninit(&myself->root_handle->obj_handle);
+		fsal_obj_handle_fini(&myself->root_handle->obj_handle);
 
 		LogDebug(COMPONENT_FSAL,
 			 "Releasing hdl=%p, name=%s",
@@ -309,9 +309,7 @@ fsal_status_t pseudofs_create_export(struct fsal_module *fsal_hdl,
 		return fsalstat(posix2fsal_error(retval), retval);
 	}
 
-	pseudofs_export_ops_init(myself->export.ops);
-	pseudofs_handle_ops_init(myself->export.obj_ops);
-
+	pseudofs_export_ops_init(&myself->export.exp_ops);
 	myself->export.up_ops = up_ops;
 
 	retval = fsal_attach_export(fsal_hdl, &myself->export.exports);

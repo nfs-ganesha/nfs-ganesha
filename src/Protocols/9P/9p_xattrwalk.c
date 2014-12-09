@@ -130,7 +130,7 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, void *worker_data,
 		/* xattrwalk is used with an empty name,
 		 * this is a listxattr request */
 		fsal_status =
-		    pxattrfid->pentry->obj_handle->ops->list_ext_attrs(
+		    pxattrfid->pentry->obj_handle->obj_ops.list_ext_attrs(
 			pxattrfid->pentry->obj_handle,
 			FSAL_XATTR_RW_COOKIE,	/* Start with RW cookie,
 						 * hiding RO ones */
@@ -180,7 +180,7 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, void *worker_data,
 	} else {
 		/* xattrwalk has a non-empty name, use regular setxattr */
 		fsal_status =
-		    pxattrfid->pentry->obj_handle->ops->
+		    pxattrfid->pentry->obj_handle->obj_ops.
 		    getextattr_id_by_name(pxattrfid->pentry->obj_handle,
 					  name,
 					  &pxattrfid->specdata.xattr.xattr_id);
@@ -203,7 +203,7 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, void *worker_data,
 		}
 
 		fsal_status =
-		    pxattrfid->pentry->obj_handle->ops->
+		    pxattrfid->pentry->obj_handle->obj_ops.
 		    getextattr_value_by_name(pxattrfid->pentry->obj_handle,
 					     name,
 					     pxattrfid->specdata.xattr.

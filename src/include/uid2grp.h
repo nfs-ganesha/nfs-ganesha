@@ -41,8 +41,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <pthread.h>
-#include "ganesha_rpc.h"
-#include "ganesha_types.h"
+#include "gsh_rpc.h"
+#include "gsh_types.h"
 
 /**
  * @brief Shared between idmapper.c and uid2grp_cache.c.  If you

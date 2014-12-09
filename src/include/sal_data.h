@@ -42,24 +42,47 @@
 #include <sys/param.h>
 #include <time.h>
 #include <pthread.h>
+#include <dirent.h>		/* For having MAXNAMLEN */
 
-#include "cache_inode.h"
 #include "abstract_atomic.h"
 #include "abstract_mem.h"
 #include "hashtable.h"
-#include "fsal.h"
-#include "fsal_types.h"
-#include "log.h"
-#include "config_parsing.h"
-#include "nfs_core.h"
-#include "nfs23.h"
-#include "nfs4.h"
-#include "nfs_proto_functions.h"
-#include "nlm4.h"
-#ifdef _USE_9P
-#include "9p.h"
-#endif				/* _USE_9P */
 #include "fsal_pnfs.h"
+#include "config_parsing.h"
+
+#ifdef _USE_9P
+/* define u32 and related types independent of SAL and 9P */
+#include "9p_types.h"
+#endif				/* _USE_9P */
+
+/**
+** Forward declarations to avoid circular dependency conflicts
+*/
+
+#include "gsh_status.h"
+
+typedef struct nfs_client_id_t		nfs_client_id_t;
+typedef struct nfs41_session		nfs41_session_t;
+
+/**
+** Consolidated circular dependencies
+*/
+
+#include "nfs_proto_data.h"
+
+/**
+ ** Forward references to types
+ */
+typedef struct nfs_argop4_state		nfs_argop4_state;
+typedef struct nfs_client_record_t	nfs_client_record_t;
+typedef struct state_async_queue_t	state_async_queue_t;
+typedef struct state_block_data_t	state_block_data_t;
+typedef struct state_cookie_entry_t	state_cookie_entry_t;
+typedef struct state_lock_entry_t	state_lock_entry_t;
+typedef struct state_nfs4_owner_t	state_nfs4_owner_t;
+typedef struct state_nlm_client_t	state_nlm_client_t;
+typedef struct state_owner_t		state_owner_t;
+typedef struct state_t			state_t;
 
 /**
  * @brief Number of errors before giving up on recovery
@@ -75,30 +98,6 @@
  * This is true no matter what the beginning of the lock range is.
  */
 #define STATE_LOCK_OFFSET_EOF 0xFFFFFFFFFFFFFFFFLL
-
-/**
- * @brief States of a delegation
- *
- * Different states a delegation can be in during its lifetime
- */
-enum deleg_state {
-	DELEG_GRANTED =  1,	/* Granted               */
-	DELEG_RECALL_WIP,	/* Recall in progress    */
-};
-
-/* Forward references to types */
-typedef struct state_nfs4_owner_t state_nfs4_owner_t;
-typedef struct state_owner_t state_owner_t;
-typedef struct state_t state_t;
-typedef struct nfs_argop4_state nfs_argop4_state;
-typedef struct state_lock_entry_t state_lock_entry_t;
-typedef struct state_async_queue_t state_async_queue_t;
-typedef struct nfs_client_record_t nfs_client_record_t;
-typedef struct state_nlm_client_t state_nlm_client_t;
-typedef struct state_nlm_share_t state_nlm_share_t;
-typedef struct state_cookie_entry_t state_cookie_entry_t;
-typedef struct state_block_data_t state_block_data_t;
-typedef struct state_layout_segment state_layout_segment_t;
 
 extern struct fridgethr *state_async_fridge;
 
@@ -131,7 +130,9 @@ extern hash_table_t *ht_session_id;
 typedef struct nfs41_session_slot__ {
 	sequenceid4 sequence;	/*< Sequence number of this operation */
 	pthread_mutex_t lock;	/*< Lock on the slot */
-	COMPOUND4res_extended cached_result;	/*< The cached result */
+	struct COMPOUND4res_extended cached_result;	/*< NFv41: pointer to
+							   cached RPC result in
+							   a session's slot */
 	unsigned int cache_used;	/*< If we cached the result */
 } nfs41_session_slot_t;
 
@@ -292,6 +293,16 @@ typedef struct state_lock_t {
 	struct glist_head state_sharelist;	/*< List of states related
 						   to a share */
 } state_lock_t;
+
+/**
+ * @brief States of a delegation
+ *
+ * Different states a delegation can be in during its lifetime
+ */
+enum deleg_state {
+	DELEG_GRANTED =  1,	/* Granted               */
+	DELEG_RECALL_WIP,	/* Recall in progress    */
+};
 
 /**
  * @brief Data for a delegation
@@ -736,67 +747,6 @@ extern hash_table_t *ht_client_record;
 extern hash_table_t *ht_confirmed_client_id;
 extern hash_table_t *ht_unconfirmed_client_id;
 
-/**
- * @brief Possible Errors from SAL Code
- *
- * @note A lot of these errors don't make sense in the context of the
- *       SAL and ought to be pruned.
- */
-
-typedef enum state_status_t {
-	STATE_SUCCESS,
-	STATE_MALLOC_ERROR,
-	STATE_POOL_MUTEX_INIT_ERROR,
-	STATE_GET_NEW_LRU_ENTRY,
-	STATE_INIT_ENTRY_FAILED,
-	STATE_FSAL_ERROR,
-	STATE_LRU_ERROR,
-	STATE_HASH_SET_ERROR,
-	STATE_NOT_A_DIRECTORY,
-	STATE_INCONSISTENT_ENTRY,
-	STATE_BAD_TYPE,
-	STATE_ENTRY_EXISTS,
-	STATE_DIR_NOT_EMPTY,
-	STATE_NOT_FOUND,
-	STATE_INVALID_ARGUMENT,
-	STATE_INSERT_ERROR,
-	STATE_HASH_TABLE_ERROR,
-	STATE_FSAL_EACCESS,
-	STATE_IS_A_DIRECTORY,
-	STATE_FSAL_EPERM,
-	STATE_NO_SPACE_LEFT,
-	STATE_READ_ONLY_FS,
-	STATE_IO_ERROR,
-	STATE_FSAL_ESTALE,
-	STATE_FSAL_ERR_SEC,
-	STATE_STATE_CONFLICT,
-	STATE_LOCKED,
-	STATE_QUOTA_EXCEEDED,
-	STATE_DEAD_ENTRY,
-	STATE_ASYNC_POST_ERROR,
-	STATE_NOT_SUPPORTED,
-	STATE_STATE_ERROR,
-	STATE_FSAL_DELAY,
-	STATE_NAME_TOO_LONG,
-	STATE_LOCK_CONFLICT,
-	STATE_LOCK_BLOCKED,
-	STATE_LOCK_DEADLOCK,
-	STATE_BAD_COOKIE,
-	STATE_FILE_BIG,
-	STATE_GRACE_PERIOD,
-	STATE_CACHE_INODE_ERR,
-	STATE_SIGNAL_ERROR,
-	STATE_KILLED,
-	STATE_FILE_OPEN,
-	STATE_MLINK,
-	STATE_SERVERFAULT,
-	STATE_TOOSMALL,
-	STATE_XDEV,
-	STATE_FSAL_SHARE_DENIED,
-	STATE_IN_GRACE,
-	STATE_BADHANDLE,
-} state_status_t;
-
 /******************************************************************************
  *
  * Lock Data
@@ -891,14 +841,14 @@ struct state_lock_entry_t {
  * @brief Description of a layout segment
  */
 
-struct state_layout_segment {
+typedef struct state_layout_segment {
 	struct glist_head sls_state_segments;	/*< Link on the per-layout-state
 						   segment list */
 	state_t *sls_state;	/*< Associated layout state */
 	struct pnfs_segment sls_segment;	/*< Segment descriptor */
 	void *sls_fsal_data;	/*< FSAL data */
 	pthread_mutex_t sls_mutex;	/*< Mutex */
-};
+} state_layout_segment_t;
 
 /**
  * @brief An entry in a list of states affected by a recall
@@ -1055,7 +1005,7 @@ extern pool_t *state_v4_pool;	/*< Pool for NFSv4 files's states */
  * @brief NLM share reservation
  */
 
-struct state_nlm_share_t {
+typedef struct state_nlm_share {
 	struct glist_head sns_share_per_file;	/*< Shares on this file */
 	struct glist_head sns_share_per_owner;	/*< Shares for this owner */
 	struct glist_head sns_share_per_client;	/*< Shares for this client */
@@ -1065,7 +1015,7 @@ struct state_nlm_share_t {
 	struct gsh_export *sns_export;	/*< Export */
 	int sns_access;		/*< Access mode */
 	int sns_deny;		/*< Deny mode */
-};
+} state_nlm_share_t;
 
 #ifdef DEBUG_SAL
 extern struct glist_head state_v4_all;

@@ -78,11 +78,11 @@ static state_status_t do_share_op(cache_entry_t *entry,
 	state_status_t status = STATE_SUCCESS;
 
 	/* Quick exit if share reservation is not supported by FSAL */
-	if (!op_ctx->fsal_export->ops->
+	if (!op_ctx->fsal_export->exp_ops.
 	    fs_supports(op_ctx->fsal_export, fso_share_support))
 		return STATE_SUCCESS;
 
-	fsal_status = entry->obj_handle->ops->share_op(entry->obj_handle,
+	fsal_status = entry->obj_handle->obj_ops.share_op(entry->obj_handle,
 						       NULL,
 						       *share);
 
@@ -731,7 +731,7 @@ state_status_t state_nlm_share(cache_entry_t *entry,
 	 * open read-write now itself for all access needs.
 	 */
 	if (share_access == fsa_R &&
-	    fsal_export->ops->fs_supports(fsal_export, fso_reopen_method))
+	    fsal_export->exp_ops.fs_supports(fsal_export, fso_reopen_method))
 		openflags = FSAL_O_READ;
 	else
 		openflags = FSAL_O_RDWR;

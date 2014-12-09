@@ -85,7 +85,7 @@ cache_inode_readlink(cache_entry_t *entry,
 		refresh = !(entry->flags & CACHE_INODE_TRUST_CONTENT);
 	}
 	fsal_status =
-	    entry->obj_handle->ops->readlink(entry->obj_handle,
+	    entry->obj_handle->obj_ops.readlink(entry->obj_handle,
 					     link_content, refresh);
 	if (refresh && !(FSAL_IS_ERROR(fsal_status)))
 		atomic_set_uint32_t_bits(&entry->flags,

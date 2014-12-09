@@ -19,7 +19,7 @@ extern "C" {
 #ifndef _AUTH_SYS_DEFINE_FOR_NFSv41
 #define _AUTH_SYS_DEFINE_FOR_NFSv41
 
-#include "ganesha_rpc.h"
+#include "gsh_rpc.h"
 
 	typedef struct authsys_parms authsys_parms;
 #endif				/* _AUTH_SYS_DEFINE_FOR_NFSv41 */

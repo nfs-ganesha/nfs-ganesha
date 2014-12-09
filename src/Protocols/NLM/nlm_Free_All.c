@@ -25,7 +25,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
-#include "ganesha_rpc.h"
+#include "gsh_rpc.h"
 #include "log.h"
 #include "nlm4.h"
 #include "sal_functions.h"

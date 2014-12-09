@@ -2,7 +2,7 @@
  * Local RPC definitions, especially the GSS switch and
  * compensating definitions if we don't have GSS.
  */
-#include "ganesha_rpc.h"
+#include "gsh_rpc.h"
 
 /* Now the NFS stuff we're looking for */
 

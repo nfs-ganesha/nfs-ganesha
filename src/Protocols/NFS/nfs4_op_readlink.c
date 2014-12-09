@@ -39,7 +39,7 @@
 #include "nfs_proto_tools.h"
 #include "nfs_convert.h"
 #include "nfs_file_handle.h"
-#include "ganesha_types.h"
+#include "gsh_types.h"
 
 /**
  * @brief The NFS4_OP_READLINK operation.

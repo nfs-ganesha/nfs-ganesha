@@ -1,8 +1,8 @@
 /* This is a central clearing house for RPC definitions. Nothing
    should included anything related to RPC except this file */
 
-#ifndef GANESHA_RPC_H
-#define GANESHA_RPC_H
+#ifndef GSH_RPC_H
+#define GSH_RPC_H
 
 #include "config.h"
 
@@ -29,7 +29,7 @@
 #include <rpc/rpc_msg.h>
 #include <rpc/gss_internal.h>	/* XXX */
 #include "abstract_mem.h"
-#include "ganesha_list.h"
+#include "gsh_list.h"
 #include "log.h"
 #include "fridgethr.h"
 
@@ -367,4 +367,4 @@ extern int ipstring_to_sockaddr(const char *, sockaddr_t *);
 CLIENT *gsh_clnt_create(char *, unsigned long, unsigned long, char *);
 void gsh_clnt_destroy(CLIENT *);
 
-#endif /* GANESHA_RPC_H */
+#endif /* GSH_RPC_H */

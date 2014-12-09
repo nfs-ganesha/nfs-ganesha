@@ -39,7 +39,7 @@
 #include <mntent.h>
 #include <libzfswrap.h>
 #include <ctype.h>
-#include "ganesha_list.h"
+#include "gsh_list.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 #include "FSAL/fsal_config.h"

@@ -36,25 +36,47 @@
 #ifndef CACHE_INODE_H
 #define CACHE_INODE_H
 
+/**
+** Forward declarations to avoid circular dependency conflicts
+*/
+
+#include "gsh_status.h"
+
+typedef struct cache_entry_t cache_entry_t;
+
+/**
+** Includes after forward declarations
+*/
+
 #include <stdbool.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/param.h>
 #include <time.h>
 #include <pthread.h>
+
 #include "abstract_mem.h"
 #include "hashtable.h"
 #include "avltree.h"
-#include "fsal.h"
 #include "log.h"
 #include "gsh_config.h"
+#include "common_utils.h"
 #include "config_parsing.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "nlm4.h"
-#include "ganesha_list.h"
+#include "gsh_list.h"
+#include "gsh_types.h"
 #include "nfs4_acls.h"
 
+/**
+** Forward declarations to resolve circular dependency conflicts
+*/
+struct fsal_module;
+struct fsal_export;
+struct fsal_obj_handle;
+struct gsh_export;
+struct io_info;
 
 /**
  * @defgroup config_cache_inode Structure and defaults for Cache_Inode
@@ -127,10 +149,6 @@ struct cache_inode_parameter {
 
 extern struct config_block cache_inode_param_blk;
 extern struct cache_inode_parameter cache_param;
-
-/* Forward references */
-typedef struct cache_entry_t cache_entry_t;
-struct gsh_export;
 
 /** Maximum size of NFSv3 handle */
 static const size_t FILEHANDLE_MAX_LEN_V3 = 64;
@@ -340,22 +358,6 @@ cache_inode_free_dirent(cache_inode_dir_entry_t *dirent)
 }
 
 /**
- * @brief Represents one of the many-many links between inodes and exports.
- *
- */
-
-struct entry_export_map {
-	/** The relevant cache inode entry */
-	cache_entry_t *entry;
-	/** The export the entry belongs to */
-	struct gsh_export *export;
-	/** List of entries per export */
-	struct glist_head entry_per_export;
-	/** List of exports per entry */
-	struct glist_head export_per_entry;
-};
-
-/**
  * @brief Stats for file-specific and client-file delegation heuristics
  */
 
@@ -524,6 +526,22 @@ struct cache_entry_t {
 };
 
 /**
+ * @brief Represents one of the many-many links between inodes and exports.
+ *
+ */
+
+struct entry_export_map {
+	/** The relevant cache inode entry */
+	cache_entry_t *entry;
+	/** The export the entry belongs to */
+	struct gsh_export *export;
+	/** List of entries per export */
+	struct glist_head entry_per_export;
+	/** List of exports per entry */
+	struct glist_head export_per_entry;
+};
+
+/**
  * Data to be used as the key into the cache_entry hash table.
  */
 
@@ -583,59 +601,6 @@ static const uint32_t CACHE_INODE_INVALIDATE_ATTRS = 0x01;
 static const uint32_t CACHE_INODE_INVALIDATE_CONTENT = 0x02;
 static const uint32_t CACHE_INODE_INVALIDATE_CLOSE = 0x04;
 static const uint32_t CACHE_INODE_INVALIDATE_GOT_LOCK = 0x08;
-
-/**
- * Possible errors
- */
-typedef enum cache_inode_status_t {
-	CACHE_INODE_SUCCESS = 0,
-	CACHE_INODE_MALLOC_ERROR = 1,
-	CACHE_INODE_POOL_MUTEX_INIT_ERROR = 2,
-	CACHE_INODE_GET_NEW_LRU_ENTRY = 3,
-	CACHE_INODE_INIT_ENTRY_FAILED = 4,
-	CACHE_INODE_FSAL_ERROR = 5,
-	CACHE_INODE_LRU_ERROR = 6,
-	CACHE_INODE_HASH_SET_ERROR = 7,
-	CACHE_INODE_NOT_A_DIRECTORY = 8,
-	CACHE_INODE_INCONSISTENT_ENTRY = 9,
-	CACHE_INODE_BAD_TYPE = 10,
-	CACHE_INODE_ENTRY_EXISTS = 11,
-	CACHE_INODE_DIR_NOT_EMPTY = 12,
-	CACHE_INODE_NOT_FOUND = 13,
-	CACHE_INODE_INVALID_ARGUMENT = 14,
-	CACHE_INODE_INSERT_ERROR = 15,
-	CACHE_INODE_HASH_TABLE_ERROR = 16,
-	CACHE_INODE_FSAL_EACCESS = 17,
-	CACHE_INODE_IS_A_DIRECTORY = 18,
-	CACHE_INODE_FSAL_EPERM = 19,
-	CACHE_INODE_NO_SPACE_LEFT = 20,
-	CACHE_INODE_READ_ONLY_FS = 21,
-	CACHE_INODE_IO_ERROR = 22,
-	CACHE_INODE_FSAL_ESTALE = 23,
-	CACHE_INODE_FSAL_ERR_SEC = 24,
-	CACHE_INODE_STATE_CONFLICT = 25,
-	CACHE_INODE_QUOTA_EXCEEDED = 26,
-	CACHE_INODE_DEAD_ENTRY = 27,
-	CACHE_INODE_ASYNC_POST_ERROR = 28,
-	CACHE_INODE_NOT_SUPPORTED = 29,
-	CACHE_INODE_STATE_ERROR = 30,
-	CACHE_INODE_DELAY = 31,
-	CACHE_INODE_NAME_TOO_LONG = 32,
-	CACHE_INODE_BAD_COOKIE = 33,
-	CACHE_INODE_FILE_BIG = 34,
-	CACHE_INODE_KILLED = 35,
-	CACHE_INODE_FILE_OPEN = 36,
-	CACHE_INODE_FSAL_XDEV = 37,
-	CACHE_INODE_FSAL_MLINK = 38,
-	CACHE_INODE_SERVERFAULT = 39,
-	CACHE_INODE_TOOSMALL = 40,
-	CACHE_INODE_FSAL_SHARE_DENIED = 41,
-	CACHE_INODE_BADNAME = 42,
-	CACHE_INODE_UNION_NOTSUPP = 43,
-	CACHE_INODE_CROSS_JUNCTION = 44,
-	CACHE_INODE_IN_GRACE = 45,
-	CACHE_INODE_BADHANDLE = 46,
-} cache_inode_status_t;
 
 /**
  * @brief Type of callback for cache_inode_readdir
@@ -890,6 +855,12 @@ inline int cache_inode_set_time_current(struct timespec *time);
 void cache_inode_destroyer(void);
 
 /**
+** Resolve forward declarations
+*/
+#include "export_mgr.h"
+#include "fsal_api.h"
+
+/**
  * @brief Update cache_entry metadata from its attributes
  *
  * This function, to be used after a FSAL_getattr, updates the
@@ -988,7 +959,7 @@ cache_inode_refresh_attrs(cache_entry_t *entry)
 	}
 
 	fsal_status =
-	    entry->obj_handle->ops->getattrs(entry->obj_handle);
+	    entry->obj_handle->obj_ops.getattrs(entry->obj_handle);
 	if (FSAL_IS_ERROR(fsal_status)) {
 		cache_inode_kill_entry(entry);
 		cache_status = cache_inode_error_convert(fsal_status);

@@ -28,7 +28,7 @@
 #include <sys/file.h>		/* for having FNDELAY */
 #include "hashtable.h"
 #include "log.h"
-#include "ganesha_rpc.h"
+#include "gsh_rpc.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "nfs_core.h"
@@ -82,7 +82,7 @@ int rquota_getquota(nfs_arg_t *arg,
 		quota_path = exp->fullpath;
 	}
 	fsal_status =
-	    exp->fsal_export->ops->get_quota(exp->fsal_export,
+	    exp->fsal_export->exp_ops.get_quota(exp->fsal_export,
 					     quota_path, quota_type,
 					     &fsal_quota);
 	if (FSAL_IS_ERROR(fsal_status)) {

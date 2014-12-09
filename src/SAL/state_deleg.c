@@ -44,6 +44,7 @@
 
 #include "fsal.h"
 #include "nfs_core.h"
+#include "nfs_exports.h"
 #include "nfs4.h"
 #include "sal_functions.h"
 #include "nlm_util.h"
@@ -52,6 +53,7 @@
 #include "nfs_rpc_callback.h"
 #include "server_stats.h"
 #include "fsal_up.h"
+#include "nfs_file_handle.h"
 
 /**
  * @brief Check if exiting OPENs would conflict granting a delegation.
@@ -388,7 +390,7 @@ bool should_we_grant_deleg(cache_entry_t *entry, nfs_client_id_t *client,
 
 	*prerecall = false;
 	if (!nfs_param.nfsv4_param.allow_delegations
-	    || !op_ctx->fsal_export->ops->fs_supports(
+	    || !op_ctx->fsal_export->exp_ops.fs_supports(
 					op_ctx->fsal_export,
 					fso_delegations_r)
 	    || !(op_ctx->export_perms->options & EXPORT_OPTION_DELEGATIONS)
@@ -632,14 +634,14 @@ bool deleg_supported(cache_entry_t *entry, struct fsal_export *fsal_export,
 	 * check for OPEN4_SHARE_ACCESS_WRITE bit first!
 	 */
 	if (share_access & OPEN4_SHARE_ACCESS_WRITE) {
-		if (!fsal_export->ops->fs_supports(fsal_export,
+		if (!fsal_export->exp_ops.fs_supports(fsal_export,
 						   fso_delegations_w))
 			return false;
 		if (!(export_perms->options & EXPORT_OPTION_WRITE_DELEG))
 			return false;
 	} else {
 		assert(share_access & OPEN4_SHARE_ACCESS_READ);
-		if (!fsal_export->ops->fs_supports(fsal_export,
+		if (!fsal_export->exp_ops.fs_supports(fsal_export,
 						   fso_delegations_r))
 			return false;
 		if (!(export_perms->options & EXPORT_OPTION_READ_DELEG))

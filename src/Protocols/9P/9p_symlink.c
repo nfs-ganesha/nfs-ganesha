@@ -39,6 +39,7 @@
 #include <pthread.h>
 #include <sys/stat.h>
 #include "nfs_core.h"
+#include "nfs_exports.h"
 #include "log.h"
 #include "cache_inode.h"
 #include "fsal.h"

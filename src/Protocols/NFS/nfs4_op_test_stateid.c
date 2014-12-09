@@ -38,13 +38,13 @@
 #include <pthread.h>
 #include "hashtable.h"
 #include "log.h"
-#include "ganesha_rpc.h"
+#include "gsh_rpc.h"
 #include "nfs4.h"
 #include "nfs_core.h"
 #include "sal_functions.h"
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
-#include "ganesha_list.h"
+#include "gsh_list.h"
 
 /**
  * @brief The NFS4_OP_TEST_STATEID operation.

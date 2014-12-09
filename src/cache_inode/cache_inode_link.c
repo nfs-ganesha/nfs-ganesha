@@ -89,7 +89,7 @@ cache_inode_link(cache_entry_t *entry,
 	/* Rather than performing a lookup first, just try to make the
 	   link and return the FSAL's error if it fails. */
 	fsal_status =
-	    entry->obj_handle->ops->link(entry->obj_handle,
+	    entry->obj_handle->obj_ops.link(entry->obj_handle,
 					 dest_dir->obj_handle, name);
 	status_ref_entry = cache_inode_refresh_attrs_locked(entry);
 	status_ref_dest_dir =

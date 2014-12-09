@@ -1,11 +1,11 @@
 #include "config.h"
 #include "abstract_mem.h"
-#include "fsal.h"
+#include "fsal_types.h"
 #include "hashtable.h"
 #include "log.h"
 #include "nfs4_acls.h"
-#include <pthread.h>
 #include "city.h"
+#include "common_utils.h"
 
 pool_t *fsal_acl_pool;
 

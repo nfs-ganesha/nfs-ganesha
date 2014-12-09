@@ -22,12 +22,12 @@
  *
  */
 
-#ifndef _NLM_UTIL_H
-#define _NLM_UTIL_H
+#ifndef NLM_UTIL_H
+#define NLM_UTIL_H
 
-#include "ganesha_list.h"
+#include "gsh_list.h"
 #include "nlm4.h"
-#include "sal_functions.h"
+#include "sal_data.h"
 
 extern const char *lock_result_str(int rc);
 extern netobj *copy_netobj(netobj *dst, netobj *src);
@@ -79,4 +79,4 @@ nlm4_stats nlm_convert_state_error(state_status_t status);
 state_status_t nlm_granted_callback(cache_entry_t *pentry,
 				    state_lock_entry_t *lock_entry);
 
-#endif				/* _NLM_UTIL_H */
+#endif				/* NLM_UTIL_H */

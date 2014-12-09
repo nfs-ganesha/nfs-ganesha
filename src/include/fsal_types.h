@@ -34,17 +34,12 @@
 #ifndef _FSAL_TYPES_H
 #define _FSAL_TYPES_H
 
-/* other includes */
+#include <stddef.h>
 #include <sys/types.h>
 #include <sys/param.h>
 #include <dirent.h>		/* for MAXNAMLEN */
-#include "config_parsing.h"
-#include "ganesha_rpc.h"
-#include "ganesha_types.h"
-#include "uid2grp.h"
 
-/* Forward declarations */
-struct fsal_export;
+#include "uid2grp.h"
 
 /* Cookie to be used in FSAL_ListXAttrs() to bypass RO xattr */
 static const uint32_t FSAL_XATTR_RW_COOKIE = ~0;
@@ -108,131 +103,6 @@ struct export_perms {
 #define GID_SQUASHED	0x08
 #define GARRAY_SQUASHED	0x10
 #define MANAGED_GIDS	0x20
-
-/**
- * @brief request op context
- *
- * This is created early in the operation with the context of the
- * operation.  The difference between "context" and request parameters
- * or arguments is that the context is derived information such as
- * the resolved credentials, socket (network and client host) data
- * and other bits of environment associated with the request.  It gets
- * passed down the call chain only as far as it needs to go for the op
- * i.e. don't put it in the function/method proto "just because".
- *
- * The lifetime of this structure and all the data it points to is the
- * operation for V2,3 and the compound for V4+.  All elements and what
- * they point to are invariant for the lifetime.
- *
- * NOTE: This is a across-the-api shared structure.  It must survive with
- *       older consumers of its contents.  Future development
- *       can change this struct so long as it follows the rules:
- *
- *       1. New elements are appended at the end, never inserted in the middle.
- *
- *       2. This structure _only_ contains pointers and simple scalar values.
- *
- *       3. Changing an already defined struct pointer is strictly not allowed.
- *
- *       4. This struct is always passed by reference, never by value.
- *
- *       5. This struct is never copied/saved.
- *
- *       6. Code changes are first introduced in the core.  Assume the fsal
- *          module does not know and the code will still do the right thing.
- */
-
-struct req_op_context {
-	struct user_cred *creds;	/*< resolved user creds from request */
-	struct user_cred original_creds;	/*< Saved creds */
-	struct group_data *caller_gdata;
-	gid_t *caller_garray_copy;	/*< Copied garray from AUTH_SYS */
-	gid_t *managed_garray_copy;	/*< Copied garray from managed gids */
-	int	cred_flags;		/* Various cred flags */
-	sockaddr_t *caller_addr;	/*< IP connection info */
-	const uint64_t *clientid;	/*< Client ID of caller, NULL if
-					   unknown/not applicable. */
-	uint32_t nfs_vers;	/*< NFS protocol version of request */
-	uint32_t nfs_minorvers;	/*< NFSv4 minor version */
-	uint32_t req_type;	/*< request_type NFS | 9P */
-	struct gsh_client *client;	/*< client host info including stats */
-	struct gsh_export *export;	/*< current export */
-	struct fsal_export *fsal_export;	/*< current fsal export */
-	struct export_perms *export_perms;	/*< Effective export perms */
-	nsecs_elapsed_t start_time;	/*< start time of this op/request */
-	nsecs_elapsed_t queue_wait;	/*< time in wait queue */
-	void *fsal_private;		/*< private for FSAL use */
-	/* add new context members here */
-};
-
-/**
- * @brief Thread private storage.
- *
- * TLS variables look like globals but since they are global only in the
- * context of a single thread, they do not require locks.  This is true
- * of all thread either within or separate from a/the fridge.
- *
- * All thread local storage is declared extern here.  The actual
- * storage declaration is in fridgethr.c.
- */
-
-/**
- * @brief Operation context.
- *
- * This carries everything relevant to a protocol operation
- * Space for the struct itself is allocated elsewhere.
- * Test/assert opctx != NULL first (or let the SEGV kill you)
- */
-
-extern __thread struct req_op_context *op_ctx;
-
-/**
- * @brief Ops context for asynch and not protocol tasks that need to use
- * subsystems that depend on op_ctx.
- */
-
-struct root_op_context {
-	struct req_op_context req_ctx;
-	struct req_op_context *old_op_ctx;
-	struct user_cred creds;
-	struct export_perms export_perms;
-};
-
-/* Expor permissions for root op context, defined in protocol layer */
-uint32_t root_op_export_options;
-uint32_t root_op_export_set;
-
-static inline void init_root_op_context(struct root_op_context *ctx,
-					struct gsh_export *exp,
-					struct fsal_export *fsal_exp,
-					uint32_t nfs_vers,
-					uint32_t nfs_minorvers,
-					uint32_t req_type)
-{
-	/* Initialize req_ctx.
-	 * Note that a zeroed creds works just fine as root creds.
-	 */
-	memset(ctx, 0, sizeof(*ctx));
-	ctx->req_ctx.creds = &ctx->creds;
-	ctx->req_ctx.nfs_vers = nfs_vers;
-	ctx->req_ctx.nfs_minorvers = nfs_minorvers;
-	ctx->req_ctx.req_type = req_type;
-	ctx->req_ctx.export = exp;
-	ctx->req_ctx.fsal_export = fsal_exp;
-	ctx->req_ctx.export_perms = &ctx->export_perms;
-	ctx->export_perms.set = root_op_export_set;
-	ctx->export_perms.options = root_op_export_options;
-	ctx->old_op_ctx = op_ctx;
-	op_ctx = &ctx->req_ctx;
-}
-
-static inline void release_root_op_context(void)
-{
-	struct root_op_context *ctx;
-
-	ctx = container_of(op_ctx, struct root_op_context, req_ctx);
-	op_ctx = ctx->old_op_ctx;
-}
 
 /** filesystem identifier */
 
@@ -550,6 +420,64 @@ struct attrlist {
 					   for attributes. Settable by FSAL. */
 };
 
+/******************************************************
+ *            Attribute mask management.
+ ******************************************************/
+
+/** this macro tests if an attribute is set
+ *  example :
+ *  FSAL_TEST_MASK( attrib_list.mask, FSAL_ATTR_CREATION )
+ */
+#define FSAL_TEST_MASK(_attrib_mask_ , _attr_const_) \
+	((_attrib_mask_) & (_attr_const_))
+
+/** this macro sets an attribute
+ *  example :
+ *  FSAL_SET_MASK( attrib_list.mask, FSAL_ATTR_CREATION )
+ */
+#define FSAL_SET_MASK(_attrib_mask_ , _attr_const_) \
+	((_attrib_mask_) |= (_attr_const_))
+
+#define FSAL_UNSET_MASK(_attrib_mask_ , _attr_const_) \
+	((_attrib_mask_) &= ~(_attr_const_))
+
+/** this macro clears the attribute mask
+ *  example :
+ *  FSAL_CLEAR_MASK( attrib_list.asked_attributes )
+ */
+#define FSAL_CLEAR_MASK(_attrib_mask_) \
+	((_attrib_mask_) = 0LL)
+
+/******************************************************
+ *          FSAL extended attributes management.
+ ******************************************************/
+
+/** An extented attribute entry */
+typedef struct fsal_xattrent {
+	uint64_t xattr_id;	/*< xattr index */
+	uint64_t xattr_cookie;	/*< cookie for the next entry */
+	struct attrlist attributes;	/*< entry attributes (if supported) */
+	char xattr_name[MAXNAMLEN + 1];	/*< attribute name  */
+} fsal_xattrent_t;
+
+/* generic definitions for extended attributes */
+
+#define XATTR_FOR_FILE     0x00000001
+#define XATTR_FOR_DIR      0x00000002
+#define XATTR_FOR_SYMLINK  0x00000004
+#define XATTR_FOR_ALL      0x0000000F
+#define XATTR_RO           0x00000100
+#define XATTR_RW           0x00000200
+/* function for getting an attribute value */
+#define XATTR_RW_COOKIE ~0
+
+/* Flags representing if an FSAL supports read or write delegations */
+#define FSAL_OPTION_FILE_READ_DELEG 0x00000001	/*< File read delegations */
+#define FSAL_OPTION_FILE_WRITE_DELEG 0x00000002	/*< File write delegations */
+#define FSAL_OPTION_FILE_DELEGATIONS (FSAL_OPTION_FILE_READ_DELEG | \
+					   FSAL_OPTION_FILE_WRITE_DELEG)
+#define FSAL_OPTION_NO_DELEGATIONS 0
+
 /** Mask for permission testing. Both mode and ace4 mask are encoded. */
 
 typedef enum {
@@ -759,6 +687,33 @@ typedef struct fsal_status__ {
 	fsal_errors_t major;	/*< FSAL status code */
 	int minor;		/*< Other error code (usually POSIX) */
 } fsal_status_t;
+
+/******************************************************
+ *              FSAL Returns macros
+ ******************************************************/
+
+/**
+ *  fsalstat (was ReturnCode) :
+ *  Macro for returning a fsal_status_t without trace nor stats increment.
+ */
+static inline fsal_status_t fsalstat(fsal_errors_t major, uint32_t minor)
+{
+	fsal_status_t status = {major, minor};
+	return status;
+}
+
+/******************************************************
+ *              FSAL Errors handling.
+ ******************************************************/
+
+/** Tests whether the returned status is erroneous.
+ *  Example :
+ *  if (FSAL_IS_ERROR(status = FSAL_call(...))) {
+ *     printf("ERROR status = %d, %d\n", status.major,status.minor);
+ *  }
+ */
+#define FSAL_IS_ERROR(_status_) \
+	(!((_status_).major == ERR_FSAL_NO_ERROR))
 
 /**
  * @brief File system dynamic info.

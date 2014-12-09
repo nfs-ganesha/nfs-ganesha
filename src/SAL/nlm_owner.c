@@ -37,8 +37,11 @@
 #include "config.h"
 #include <string.h>
 #include <ctype.h>
+#include <netdb.h>
+
 #include "sal_functions.h"
 #include "nsm.h"
+#include "log.h"
 
 /**
  * @brief NSM clients

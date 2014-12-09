@@ -235,7 +235,7 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
 	/* Cache miss, allocate a new entry */
 	exp_hdl = fsdata->export;
 	fsal_status =
-	    exp_hdl->ops->create_handle(exp_hdl, &fsdata->fh_desc,
+	    exp_hdl->exp_ops.create_handle(exp_hdl, &fsdata->fh_desc,
 					&new_hdl);
 	if (FSAL_IS_ERROR(fsal_status)) {
 		status = cache_inode_error_convert(fsal_status);
@@ -310,7 +310,7 @@ cache_inode_get_keyed(cache_inode_key_t *key,
 
 		exp_hdl = op_ctx->fsal_export;
 		fsal_status =
-		    exp_hdl->ops->create_handle(exp_hdl, &key->kv,
+		    exp_hdl->exp_ops.create_handle(exp_hdl, &key->kv,
 						&new_hdl);
 
 		if (unlikely(FSAL_IS_ERROR(fsal_status))) {
@@ -409,8 +409,8 @@ cache_inode_get_protected(cache_entry_t **entry,
 
 	if (unlikely((*entry) == NULL)) {
 		LogDebug(COMPONENT_CACHE_INODE,
-			 "cih_get_by_key_latched failed returning CACHE_INODE_FSAL_ESTALE");
-		return CACHE_INODE_FSAL_ESTALE;
+			 "cih_get_by_key_latched failed returning CACHE_INODE_ESTALE");
+		return CACHE_INODE_ESTALE;
 	}
 
 	/* Ref entry */

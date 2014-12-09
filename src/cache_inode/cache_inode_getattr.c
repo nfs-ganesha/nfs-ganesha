@@ -130,7 +130,7 @@ cache_inode_getattr(cache_entry_t *entry,
 		} else {
 			LogMajor(COMPONENT_CACHE_INODE,
 				 "A junction became stale");
-			status = CACHE_INODE_FSAL_ESTALE;
+			status = CACHE_INODE_ESTALE;
 			/* Need to signal problem to callback */
 			(void) cb(opaque, junction_entry, NULL, 0);
 			return status;

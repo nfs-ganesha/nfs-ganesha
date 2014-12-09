@@ -23,8 +23,6 @@
 
 #include <fcntl.h>
 #include "fsal.h"
-#include "fsal_types.h"
-#include "fsal_api.h"
 #include "gluster_internal.h"
 #include "FSAL/fsal_commonlib.h"
 #include "fsal_convert.h"
@@ -50,7 +48,7 @@ static void handle_release(struct fsal_obj_handle *obj_hdl)
 	now(&s_time);
 #endif
 
-	fsal_obj_handle_uninit(&objhandle->handle);
+	fsal_obj_handle_fini(&objhandle->handle);
 
 	if (objhandle->glfd) {
 		rc = glfs_close(objhandle->glfd);

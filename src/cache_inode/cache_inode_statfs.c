@@ -40,17 +40,14 @@
 #include <pthread.h>
 #include <fcntl.h>
 #include <sys/file.h>		/* for having FNDELAY */
+
 #include "hashtable.h"
 #include "log.h"
-#include "nfs23.h"
-#include "nfs4.h"
-#include "mount.h"
+#include "fsal.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
-#include "nfs_exports.h"
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
-#include "nfs_exports.h"
 #include "export_mgr.h"
 
 cache_inode_status_t
@@ -64,7 +61,7 @@ cache_inode_statfs(cache_entry_t *entry,
 	export = op_ctx->export->fsal_export;
 	/* Get FSAL to get dynamic info */
 	fsal_status =
-	    export->ops->get_fs_dynamic_info(export, entry->obj_handle,
+	    export->exp_ops.get_fs_dynamic_info(export, entry->obj_handle,
 					     dynamicinfo);
 	if (FSAL_IS_ERROR(fsal_status)) {
 		status = cache_inode_error_convert(fsal_status);

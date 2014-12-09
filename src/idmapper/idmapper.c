@@ -33,8 +33,6 @@
  */
 
 #include "config.h"
-#include "ganesha_rpc.h"
-#include "nfs_core.h"
 #include <unistd.h>		/* for using gethostname */
 #include <stdlib.h>		/* for using exit */
 #include <strings.h>
@@ -46,11 +44,14 @@
 #include <stdbool.h>
 #ifdef USE_NFSIDMAP
 #include <nfsidmap.h>
+#include "nfs_exports.h"
 #endif				/* USE_NFSIDMAP */
 #ifdef _MSPAC_SUPPORT
 #include <wbclient.h>
 #endif
 #include "common_utils.h"
+#include "gsh_rpc.h"
+#include "nfs_core.h"
 #include "idmapper.h"
 
 static struct gsh_buffdesc owner_domain;

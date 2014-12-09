@@ -47,8 +47,8 @@
 #include "log.h"
 #include "hashtable.h"
 #include "fsal.h"
+#include "nfs_core.h"
 #include "sal_functions.h"
-#include "export_mgr.h"
 
 pool_t *state_owner_pool;	/*< Pool for NFSv4 files's open owner */
 
@@ -114,16 +114,14 @@ const char *state_err_str(state_status_t err)
 		return "STATE_READ_ONLY_FS";
 	case STATE_IO_ERROR:
 		return "STATE_IO_ERROR";
-	case STATE_FSAL_ESTALE:
-		return "STATE_FSAL_ESTALE";
+	case STATE_ESTALE:
+		return "STATE_ESTALE";
 	case STATE_FSAL_ERR_SEC:
 		return "STATE_FSAL_ERR_SEC";
 	case STATE_STATE_CONFLICT:
 		return "STATE_STATE_CONFLICT";
 	case STATE_QUOTA_EXCEEDED:
 		return "STATE_QUOTA_EXCEEDED";
-	case STATE_DEAD_ENTRY:
-		return "STATE_DEAD_ENTRY";
 	case STATE_ASYNC_POST_ERROR:
 		return "STATE_ASYNC_POST_ERROR";
 	case STATE_NOT_SUPPORTED:
@@ -152,8 +150,6 @@ const char *state_err_str(state_status_t err)
 		return "STATE_CACHE_INODE_ERR";
 	case STATE_SIGNAL_ERROR:
 		return "STATE_SIGNAL_ERROR";
-	case STATE_KILLED:
-		return "STATE_KILLED";
 	case STATE_FILE_OPEN:
 		return "STATE_FILE_OPEN";
 	case STATE_FSAL_SHARE_DENIED:
@@ -232,16 +228,14 @@ state_status_t cache_inode_status_to_state_status(cache_inode_status_t status)
 		return STATE_READ_ONLY_FS;
 	case CACHE_INODE_IO_ERROR:
 		return STATE_IO_ERROR;
-	case CACHE_INODE_FSAL_ESTALE:
-		return STATE_FSAL_ESTALE;
+	case CACHE_INODE_ESTALE:
+		return STATE_ESTALE;
 	case CACHE_INODE_FSAL_ERR_SEC:
 		return STATE_FSAL_ERR_SEC;
 	case CACHE_INODE_STATE_CONFLICT:
 		return STATE_STATE_CONFLICT;
 	case CACHE_INODE_QUOTA_EXCEEDED:
 		return STATE_QUOTA_EXCEEDED;
-	case CACHE_INODE_DEAD_ENTRY:
-		return STATE_DEAD_ENTRY;
 	case CACHE_INODE_ASYNC_POST_ERROR:
 		return STATE_ASYNC_POST_ERROR;
 	case CACHE_INODE_NOT_SUPPORTED:
@@ -257,8 +251,6 @@ state_status_t cache_inode_status_to_state_status(cache_inode_status_t status)
 		return STATE_BAD_COOKIE;
 	case CACHE_INODE_FILE_BIG:
 		return STATE_FILE_BIG;
-	case CACHE_INODE_KILLED:
-		return STATE_KILLED;
 	case CACHE_INODE_FILE_OPEN:
 		return STATE_FILE_OPEN;
 	case CACHE_INODE_FSAL_SHARE_DENIED:
@@ -317,7 +309,7 @@ state_status_t state_error_convert(fsal_status_t fsal_status)
 
 	case ERR_FSAL_STALE:
 	case ERR_FSAL_FHEXPIRED:
-		return STATE_FSAL_ESTALE;
+		return STATE_ESTALE;
 
 	case ERR_FSAL_INVAL:
 	case ERR_FSAL_OVERFLOW:
@@ -491,9 +483,7 @@ nfsstat4 nfs4_Errno_state(state_status_t error)
 		nfserror = NFS4ERR_NAMETOOLONG;
 		break;
 
-	case STATE_KILLED:
-	case STATE_DEAD_ENTRY:
-	case STATE_FSAL_ESTALE:
+	case STATE_ESTALE:
 		nfserror = NFS4ERR_STALE;
 		break;
 
@@ -660,9 +650,7 @@ nfsstat3 nfs3_Errno_state(state_status_t error)
 		nfserror = NFS3ERR_ROFS;
 		break;
 
-	case STATE_KILLED:
-	case STATE_DEAD_ENTRY:
-	case STATE_FSAL_ESTALE:
+	case STATE_ESTALE:
 		nfserror = NFS3ERR_STALE;
 		break;
 
@@ -750,8 +738,7 @@ nfsstat3 nfs3_Errno_state(state_status_t error)
 bool state_unlock_err_ok(state_status_t status)
 {
 	return status == STATE_SUCCESS ||
-	       status == STATE_FSAL_ESTALE ||
-	       status == STATE_DEAD_ENTRY;
+	       status == STATE_ESTALE;
 }
 
 /** String for undefined state owner types */

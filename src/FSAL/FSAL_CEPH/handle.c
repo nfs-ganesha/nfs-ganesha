@@ -217,7 +217,7 @@ static fsal_status_t fsal_create(struct fsal_obj_handle *dir_pub,
 	struct handle *obj;
 
 	unix_mode = fsal2unix_mode(attrib->mode)
-	    & ~op_ctx->fsal_export->ops->fs_umask(op_ctx->fsal_export);
+	    & ~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
 	rc = ceph_ll_create(export->cmount, dir->i, name, unix_mode,
 			    O_CREAT, &st, &i, NULL, op_ctx->creds->caller_uid,
 			    op_ctx->creds->caller_gid);
@@ -269,7 +269,7 @@ static fsal_status_t fsal_mkdir(struct fsal_obj_handle *dir_pub,
 	struct Inode *i = NULL;
 
 	unix_mode = fsal2unix_mode(attrib->mode)
-		& ~op_ctx->fsal_export->ops->fs_umask(op_ctx->fsal_export);
+		& ~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
 	rc = ceph_ll_mkdir(export->cmount, dir->i, name, unix_mode, &st, &i,
 			   op_ctx->creds->caller_uid,
 			   op_ctx->creds->caller_gid);
@@ -446,7 +446,7 @@ static fsal_status_t setattrs(struct fsal_obj_handle *handle_pub,
 
 	/* apply umask, if mode attribute is to be changed */
 	if (FSAL_TEST_MASK(attrs->mask, ATTR_MODE))
-		attrs->mode &= ~op_ctx->fsal_export->ops->
+		attrs->mode &= ~op_ctx->fsal_export->exp_ops.
 			fs_umask(op_ctx->fsal_export);
 
 	memset(&st, 0, sizeof(struct stat));

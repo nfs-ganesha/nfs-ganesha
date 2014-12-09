@@ -33,7 +33,7 @@
  */
 
 #include "config.h"
-#include "ganesha_rpc.h"
+#include "gsh_rpc.h"
 #include "nfs_core.h"
 #include <unistd.h>		/* for using gethostname */
 #include <stdlib.h>		/* for using exit */

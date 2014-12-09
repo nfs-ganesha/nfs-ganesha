@@ -35,7 +35,7 @@
 
 #include <sys/stat.h>
 #include "fsal.h"
-#include "ganesha_list.h"
+#include "gsh_list.h"
 #include "fsal_types.h"
 #include "fcntl.h"
 #include "include/gpfs_nfs.h"
@@ -58,8 +58,8 @@ void set_gpfs_verifier(verifier4 *verifier);
  */
 
 struct gpfs_ds {
-	struct gpfs_file_handle wire;	/*< Wire data */
 	struct fsal_ds_handle ds;	/*< Public DS handle */
+	struct gpfs_file_handle wire;	/*< Wire data */
 	struct gpfs_filesystem *gpfs_fs; /*< filesystem handle belongs to */
 	bool connected;		/*< True if the handle has been connected */
 };

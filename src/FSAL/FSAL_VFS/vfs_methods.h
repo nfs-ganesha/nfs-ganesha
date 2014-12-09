@@ -160,10 +160,17 @@ int vfs_get_root_handle(struct vfs_filesystem *vfs_fs,
 int vfs_re_index(struct vfs_filesystem *vfs_fs,
 		 struct vfs_fsal_export *exp);
 
+/** Routines to intercept pNFS
+ *  (null routines in XFS)
+ */
+
 void vfs_fini(struct vfs_fsal_export *myself);
 
-void vfs_init_export_ops(struct vfs_fsal_export *myself,
-			 const char *export_path);
+void vfs_init_handle_ops_pnfs(struct vfs_fsal_export *myself,
+			      struct fsal_obj_ops *ops);
+
+void vfs_init_export_ops_pnfs(struct vfs_fsal_export *myself,
+			      const char *export_path);
 
 int vfs_init_export_pnfs(struct vfs_fsal_export *myself);
 

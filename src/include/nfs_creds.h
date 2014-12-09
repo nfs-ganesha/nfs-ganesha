@@ -39,13 +39,9 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-#include "ganesha_rpc.h"
-#include "fsal.h"
+#include "fsal_types.h"
 #include "cache_inode.h"
-
-#include "nfs23.h"
-#include "nfs4.h"
-#include "mount.h"
+#include "sal_data.h"
 
 bool get_req_creds(struct svc_req *req);
 

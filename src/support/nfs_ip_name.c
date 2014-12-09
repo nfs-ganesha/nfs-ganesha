@@ -34,6 +34,7 @@
 #include "log.h"
 #include "nfs_core.h"
 #include "nfs_exports.h"
+#include "nfs_ip_stats.h"
 #include "config_parsing.h"
 #include <stdlib.h>
 #include <string.h>

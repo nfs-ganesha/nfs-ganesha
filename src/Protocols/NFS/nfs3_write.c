@@ -37,10 +37,7 @@
 #include <sys/file.h>
 #include "hashtable.h"
 #include "log.h"
-#include "ganesha_rpc.h"
-#include "nfs23.h"
-#include "nfs4.h"
-#include "mount.h"
+#include "fsal.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
 #include "nfs_exports.h"
@@ -162,7 +159,7 @@ int nfs3_write(nfs_arg_t *arg,
 	/* if quota support is active, then we should check is the
 	   FSAL allows inode creation or not */
 	fsal_status =
-	    op_ctx->fsal_export->ops->check_quota(op_ctx->fsal_export,
+	    op_ctx->fsal_export->exp_ops.check_quota(op_ctx->fsal_export,
 						   op_ctx->export->fullpath,
 						   FSAL_QUOTA_BLOCKS);
 

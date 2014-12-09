@@ -119,10 +119,6 @@ enum fsal_id {
 	FSAL_ID_COUNT
 };
 
-struct fsal_module;
-
-struct fsal_module *pnfs_fsal[FSAL_ID_COUNT];
-
 /**
  * @brief FSAL view of the NFSv4.1 deviceid4.
  *

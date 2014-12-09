@@ -10,20 +10,19 @@
  * ----------------------------------------------------------------------------
  */
 /*
- * vim:noexpandtab:shiftwidth=4:tabstop=4:
+ * vim:noexpandtab:shiftwidth=8:tabstop=8:
  */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "fsal.h"
+#include "fsal_api.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 #include "pt_methods.h"
 #include <unistd.h>
 #include <fcntl.h>
-#include <fsal_api.h>
 
 /* PTFSAL */
 #include "pt_ganesha.h"
@@ -85,7 +84,7 @@ fsal_status_t PTFSAL_create(struct fsal_obj_handle *dir_hdl,	/* IN */
 	unix_mode = fsal2unix_mode(accessmode);
 
 	/* Apply umask */
-	unix_mode = unix_mode & ~p_context->fsal_export->ops->
+	unix_mode = unix_mode & ~p_context->fsal_export->exp_ops.
 			fs_umask(p_context->fsal_export);
 
 	LogFullDebug(COMPONENT_FSAL, "Creation mode: 0%o", accessmode);
@@ -182,11 +181,11 @@ fsal_status_t PTFSAL_mkdir(struct fsal_obj_handle *dir_hdl,	/* IN */
 	unix_mode = fsal2unix_mode(accessmode);
 
 	/* Apply umask */
-	unix_mode = unix_mode & ~p_context->fsal_export->ops->
+	unix_mode = unix_mode & ~p_context->fsal_export->exp_ops.
 			fs_umask(p_context->fsal_export);
 
 	/* get directory metadata */
-	parent_dir_attrs.mask = p_context->fsal_export->ops->
+	parent_dir_attrs.mask = p_context->fsal_export->exp_ops.
 				fs_supported_attrs(p_context->fsal_export);
 	status =
 	    PTFSAL_getattrs(p_context->fsal_export, p_context, pt_hdl->handle,

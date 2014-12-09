@@ -45,8 +45,9 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+
 #include "nfs4.h"
-#include "fsal_types.h"
+#include "gsh_rpc.h"
 
 /**
  * @brief An enumeration of protocols in the NFS family

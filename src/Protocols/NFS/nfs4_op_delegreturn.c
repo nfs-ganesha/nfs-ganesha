@@ -39,11 +39,12 @@
 #include <fcntl.h>
 #include "hashtable.h"
 #include "log.h"
-#include "ganesha_rpc.h"
+#include "gsh_rpc.h"
 #include "nfs4.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
 #include "nfs_exports.h"
+#include "nfs_file_handle.h"
 #include "nfs_proto_functions.h"
 #include "sal_functions.h"
 

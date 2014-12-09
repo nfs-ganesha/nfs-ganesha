@@ -32,9 +32,11 @@
  */
 #include "config.h"
 #include "log.h"
-#include "nfs4.h"
+#include "fsal.h"
 #include "nfs_core.h"
 #include "nfs_convert.h"
+#include "nfs_exports.h"
+#include "nfs_file_handle.h"
 #include "export_mgr.h"
 #include "nfs_creds.h"
 

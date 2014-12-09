@@ -132,12 +132,12 @@ cache_inode_rdwr_plus(cache_entry_t *entry,
 	   to open or close a file descriptor. */
 	PTHREAD_RWLOCK_rdlock(&entry->content_lock);
 	content_locked = true;
-	loflags = obj_hdl->ops->status(obj_hdl);
+	loflags = obj_hdl->obj_ops.status(obj_hdl);
 	while ((!is_open(entry))
 	       || (loflags && loflags != FSAL_O_RDWR && loflags != openflags)) {
 		PTHREAD_RWLOCK_unlock(&entry->content_lock);
 		PTHREAD_RWLOCK_wrlock(&entry->content_lock);
-		loflags = obj_hdl->ops->status(obj_hdl);
+		loflags = obj_hdl->obj_ops.status(obj_hdl);
 		if ((!is_open(entry))
 		    || (loflags && loflags != FSAL_O_RDWR
 			&& loflags != openflags)) {
@@ -151,28 +151,28 @@ cache_inode_rdwr_plus(cache_entry_t *entry,
 		}
 		PTHREAD_RWLOCK_unlock(&entry->content_lock);
 		PTHREAD_RWLOCK_rdlock(&entry->content_lock);
-		loflags = obj_hdl->ops->status(obj_hdl);
+		loflags = obj_hdl->obj_ops.status(obj_hdl);
 	}
 
 	/* Call FSAL_read or FSAL_write */
 	if (io_direction == CACHE_INODE_READ) {
 		fsal_status =
-		    obj_hdl->ops->read(obj_hdl, offset, io_size,
+		    obj_hdl->obj_ops.read(obj_hdl, offset, io_size,
 				       buffer, bytes_moved, eof);
 	} else if (io_direction == CACHE_INODE_READ_PLUS) {
 		fsal_status =
-		    obj_hdl->ops->read_plus(obj_hdl, offset, io_size,
+		    obj_hdl->obj_ops.read_plus(obj_hdl, offset, io_size,
 					    buffer, bytes_moved, eof, info);
 	} else {
 		bool fsal_sync = *sync;
 		if (io_direction == CACHE_INODE_WRITE)
 			fsal_status =
-			  obj_hdl->ops->write(obj_hdl, offset,
+			  obj_hdl->obj_ops.write(obj_hdl, offset,
 					      io_size, buffer, bytes_moved,
 					      &fsal_sync);
 		else
 			fsal_status =
-			  obj_hdl->ops->write_plus(obj_hdl, offset,
+			  obj_hdl->obj_ops.write_plus(obj_hdl, offset,
 						   io_size, buffer,
 						   bytes_moved, &fsal_sync,
 						   info);
@@ -180,9 +180,9 @@ cache_inode_rdwr_plus(cache_entry_t *entry,
 		   supposed to be a stable write we can sync to the hard
 		   drive. */
 
-		if (*sync && !(obj_hdl->ops->status(obj_hdl) & FSAL_O_SYNC)
+		if (*sync && !(obj_hdl->obj_ops.status(obj_hdl) & FSAL_O_SYNC)
 		    && !fsal_sync && !FSAL_IS_ERROR(fsal_status)) {
-			fsal_status = obj_hdl->ops->commit(obj_hdl,
+			fsal_status = obj_hdl->obj_ops.commit(obj_hdl,
 							   offset, io_size);
 		} else {
 			*sync = fsal_sync;
@@ -214,7 +214,7 @@ cache_inode_rdwr_plus(cache_entry_t *entry,
 		}
 
 		if ((fsal_status.major != ERR_FSAL_NOT_OPENED)
-		    && (obj_hdl->ops->status(obj_hdl) != FSAL_O_CLOSED)) {
+		    && (obj_hdl->obj_ops.status(obj_hdl) != FSAL_O_CLOSED)) {
 			cache_inode_status_t cstatus;
 
 			LogFullDebug(COMPONENT_CACHE_INODE,

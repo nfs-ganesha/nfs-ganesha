@@ -56,7 +56,6 @@ static void export_release(struct fsal_export *exp_hdl)
 	fsal_detach_export(glfs_export->export.fsal,
 			   &glfs_export->export.exports);
 	free_export_ops(&glfs_export->export);
-	glfs_export->export.ops = NULL;
 
 	/* Gluster and memory cleanup */
 	glfs_fini(glfs_export->gl_fs);
@@ -596,8 +595,7 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 		goto out;
 	}
 
-	export_ops_init(glfsexport->export.ops);
-	handle_ops_init(glfsexport->export.obj_ops);
+	export_ops_init(&glfsexport->export.exp_ops);
 	glfsexport->export.up_ops = up_ops;
 
 	fs = glfs_new(params.glvolname);

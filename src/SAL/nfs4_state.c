@@ -50,6 +50,7 @@
 #include "cache_inode_lru.h"
 #include "export_mgr.h"
 #include "fsal_up.h"
+#include "nfs_file_handle.h"
 
 pool_t *state_v4_pool;		/*< Pool for NFSv4 files's states */
 

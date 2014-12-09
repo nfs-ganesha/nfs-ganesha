@@ -42,10 +42,7 @@
 
 /* XXX prune: */
 #include "log.h"
-#include "nfs_core.h"
-#include "nfs23.h"
-#include "nfs4.h"
-#include "fsal.h"
+#include "nfs_proto_functions.h"
 
 #include "nfs_dupreq.h"
 #include "city.h"

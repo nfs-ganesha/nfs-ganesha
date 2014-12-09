@@ -26,7 +26,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdio.h>
-#include "ganesha_list.h"
+#include "gsh_list.h"
 
 /**
  * @brief Configuration parser data structures
@@ -109,4 +109,4 @@ void print_parse_tree(FILE * output, struct config_root *tree);
  */
 void free_parse_tree(struct config_root *tree);
 
-#endif
+#endif				/* CONFPARSER_H */

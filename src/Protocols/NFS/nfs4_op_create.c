@@ -38,8 +38,7 @@
 #include <fcntl.h>
 #include <sys/file.h>
 #include "log.h"
-#include "ganesha_rpc.h"
-#include "nfs4.h"
+#include "fsal.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
 #include "nfs_exports.h"
@@ -96,7 +95,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 	 * inode creation or not */
 	exp_hdl = op_ctx->fsal_export;
 
-	fsal_status = exp_hdl->ops->check_quota(exp_hdl,
+	fsal_status = exp_hdl->exp_ops.check_quota(exp_hdl,
 						op_ctx->export->fullpath,
 						FSAL_QUOTA_INODES);
 

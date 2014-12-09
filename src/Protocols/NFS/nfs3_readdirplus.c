@@ -36,9 +36,7 @@
 #include <fcntl.h>
 #include "hashtable.h"
 #include "log.h"
-#include "nfs23.h"
-#include "nfs4.h"
-#include "mount.h"
+#include "fsal.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
 #include "cache_inode_lru.h"

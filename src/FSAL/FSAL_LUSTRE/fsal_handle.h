@@ -34,6 +34,10 @@
 #include <sys/stat.h>
 #include <string.h>
 #include <stddef.h> /* For having offsetof defined */
+#include <limits.h>
+
+#include "fsal_types.h"
+#include "fsal_api.h"
 
 #ifdef HAVE_INCLUDE_LUSTREAPI_H
 #include <lustre/lustreapi.h>
@@ -89,7 +93,7 @@ static inline int lustre_handle_to_path(char *mntpath,
 	/* A Lustre fid path is looking like
 	 * <where_lustre_is_mounted>/.lustre/fid/0x200000400:0x469a:0x0
 	 * the "0x200000400:0x469a:0x0" represent the displayed fid */
-	return snprintf(path, MAXPATHLEN, "%s/.lustre/fid/" DFID_NOBRACE,
+	return snprintf(path, PATH_MAX, "%s/.lustre/fid/" DFID_NOBRACE,
 			mntpath, PFID(&handle->fid));
 }
 
@@ -118,7 +122,7 @@ lustre_name_to_handle_at(struct fsal_filesystem *fs,
 			 const char *name,
 			 struct lustre_file_handle *out_handle, int flags)
 {
-	char path[MAXPATHLEN + 2];
+	char path[PATH_MAX + 2];
 
 	if (!fs || !at_handle || !name || !out_handle)
 		return -1;
@@ -126,8 +130,8 @@ lustre_name_to_handle_at(struct fsal_filesystem *fs,
 	lustre_handle_to_path(fs->path, at_handle, path);
 
 	if (flags != AT_EMPTY_PATH) {
-		strncat(path, "/", MAXPATHLEN);
-		strncat(path, name, MAXPATHLEN);
+		strncat(path, "/", PATH_MAX);
+		strncat(path, name, PATH_MAX);
 	}
 
 	return lustre_path_to_handle(path, fs->fsid, out_handle);
@@ -137,7 +141,7 @@ static inline int lustre_open_by_handle(char *mntpath,
 					struct lustre_file_handle *handle,
 					int flags)
 {
-	char path[MAXPATHLEN];
+	char path[PATH_MAX];
 
 	lustre_handle_to_path(mntpath, handle, path);
 

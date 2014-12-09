@@ -36,7 +36,7 @@
  * @brief Export manager
  */
 
-#include "ganesha_list.h"
+#include "gsh_list.h"
 #include "cache_inode.h"
 
 #ifndef EXPORT_MGR_H

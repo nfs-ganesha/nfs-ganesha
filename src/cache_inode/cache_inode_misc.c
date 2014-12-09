@@ -105,16 +105,14 @@ cache_inode_err_str(cache_inode_status_t err)
 		return "CACHE_INODE_READ_ONLY_FS";
 	case CACHE_INODE_IO_ERROR:
 		return "CACHE_INODE_IO_ERROR";
-	case CACHE_INODE_FSAL_ESTALE:
-		return "CACHE_INODE_FSAL_ESTALE";
+	case CACHE_INODE_ESTALE:
+		return "CACHE_INODE_ESTALE";
 	case CACHE_INODE_FSAL_ERR_SEC:
 		return "CACHE_INODE_FSAL_ERR_SEC";
 	case CACHE_INODE_STATE_CONFLICT:
 		return "CACHE_INODE_STATE_CONFLICT";
 	case CACHE_INODE_QUOTA_EXCEEDED:
 		return "CACHE_INODE_QUOTA_EXCEEDED";
-	case CACHE_INODE_DEAD_ENTRY:
-		return "CACHE_INODE_DEAD_ENTRY";
 	case CACHE_INODE_ASYNC_POST_ERROR:
 		return "CACHE_INODE_ASYNC_POST_ERROR";
 	case CACHE_INODE_NOT_SUPPORTED:
@@ -131,8 +129,6 @@ cache_inode_err_str(cache_inode_status_t err)
 		return "CACHE_INODE_BAD_COOKIE";
 	case CACHE_INODE_FILE_BIG:
 		return "CACHE_INODE_FILE_BIG";
-	case CACHE_INODE_KILLED:
-		return "CACHE_INODE_KILLED";
 	case CACHE_INODE_FILE_OPEN:
 		return "CACHE_INODE_FILE_OPEN";
 	case CACHE_INODE_FSAL_XDEV:
@@ -248,7 +244,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 	*entry = NULL;
 
 	/* Get FSAL-specific key */
-	new_obj->ops->handle_to_key(new_obj, &fh_desc);
+	new_obj->obj_ops.handle_to_key(new_obj, &fh_desc);
 
 	(void) cih_hash_key(&key, op_ctx->fsal_export->fsal, &fh_desc,
 			    CIH_HASH_KEY_PROTOTYPE);
@@ -466,7 +462,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 	}
 
 	/* must free new_obj if no new entry was created to reference it. */
-	new_obj->ops->release(new_obj);
+	new_obj->obj_ops.release(new_obj);
 
 	return status;
 }				/* cache_inode_new_entry */
@@ -545,7 +541,7 @@ void cache_inode_unexport(struct gsh_export *export)
 
 		/* For any other failure skip, we might busy wait.
 		 * For out of memory errors, we will limit our
-		 * retries. CACHE_INODE_FSAL_ESTALE should eventually
+		 * retries. CACHE_INODE_ESTALE should eventually
 		 * result in CACHE_INODE_NOT_FOUND as the mapping for
 		 * the stale inode gets cleaned up.
 		 */
@@ -654,7 +650,7 @@ cache_inode_error_convert(fsal_status_t fsal_status)
 
 	case ERR_FSAL_STALE:
 	case ERR_FSAL_FHEXPIRED:
-		return CACHE_INODE_FSAL_ESTALE;
+		return CACHE_INODE_ESTALE;
 
 	case ERR_FSAL_INVAL:
 	case ERR_FSAL_OVERFLOW:

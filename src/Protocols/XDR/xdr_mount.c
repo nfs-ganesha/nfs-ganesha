@@ -4,7 +4,7 @@
  */
 
 #include "config.h"
-#include "ganesha_rpc.h"
+#include "gsh_rpc.h"
 #include "mount.h"
 #include "nfs23.h"
 

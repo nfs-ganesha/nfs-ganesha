@@ -51,9 +51,9 @@
 #include "nfs_core.h"
 #include "log.h"
 #include "avltree.h"
-#include "ganesha_types.h"
+#include "gsh_types.h"
 #ifdef USE_DBUS
-#include "ganesha_dbus.h"
+#include "gsh_dbus.h"
 #endif
 #include "export_mgr.h"
 #include "client_mgr.h"
@@ -62,6 +62,8 @@
 #include "abstract_atomic.h"
 #include "gsh_intrinsic.h"
 #include "sal_functions.h"
+#include "nfs_exports.h"
+#include "nfs_proto_functions.h"
 
 /**
  * @brief Exports are stored in an AVL tree with front-end cache.

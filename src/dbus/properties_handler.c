@@ -33,12 +33,12 @@
 #include <time.h>
 #include <pthread.h>
 #include <assert.h>
-#include "ganesha_list.h"
+#include "gsh_list.h"
 #include "fsal.h"
 #include "nfs_core.h"
 #include "log.h"
 #include "nfs_rpc_callback.h"
-#include "ganesha_dbus.h"
+#include "gsh_dbus.h"
 #include <os/memstream.h>
 #include "dbus_priv.h"
 

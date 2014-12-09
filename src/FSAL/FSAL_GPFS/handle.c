@@ -32,7 +32,6 @@
 
 #include "config.h"
 
-#include "fsal.h"
 #include <libgen.h>		/* used for 'dirname' */
 #include <pthread.h>
 #include <string.h>
@@ -40,6 +39,7 @@
 #include <sys/types.h>
 #include <sys/syscall.h>
 #include <mntent.h>
+#include "fsal.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 #include "FSAL/fsal_commonlib.h"
@@ -59,11 +59,12 @@ static struct gpfs_fsal_obj_handle *alloc_handle(struct gpfs_file_handle *fh,
 						 const char *link_content,
 						 struct fsal_export *exp_hdl)
 {
-	struct gpfs_fsal_obj_handle *hdl;
-
-	hdl =
+	struct gpfs_fsal_export *myself =
+	    container_of(exp_hdl, struct gpfs_fsal_export, export);
+	struct gpfs_fsal_obj_handle *hdl =
 	    gsh_malloc(sizeof(struct gpfs_fsal_obj_handle) +
 		       sizeof(struct gpfs_file_handle));
+
 	if (hdl == NULL)
 		return NULL;
 	memset(hdl, 0,
@@ -89,11 +90,15 @@ static struct gpfs_fsal_obj_handle *alloc_handle(struct gpfs_file_handle *fh,
 	}
 
 	hdl->obj_handle.attributes.mask =
-	    exp_hdl->ops->fs_supported_attrs(exp_hdl);
+	    exp_hdl->exp_ops.fs_supported_attrs(exp_hdl);
 	memcpy(&hdl->obj_handle.attributes, attributes,
 	       sizeof(struct attrlist));
 
 	fsal_obj_handle_init(&hdl->obj_handle, exp_hdl, attributes->type);
+	gpfs_handle_ops_init(&hdl->obj_handle.obj_ops);
+	if (myself->pnfs_mds_enabled)
+		handle_ops_pnfs(&hdl->obj_handle.obj_ops);
+
 	return hdl;
 
  spcerr:
@@ -129,7 +134,7 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 		return fsalstat(ERR_FSAL_FAULT, 0);
 	memset(fh, 0, sizeof(struct gpfs_file_handle));
 	fh->handle_size = OPENHANDLE_HANDLE_LEN;
-	if (!parent->ops->handle_is(parent, DIRECTORY)) {
+	if (!parent->obj_ops.handle_is(parent, DIRECTORY)) {
 		LogCrit(COMPONENT_FSAL,
 			"Parent handle is not a directory. hdl = 0x%p", parent);
 		return fsalstat(ERR_FSAL_NOTDIR, 0);
@@ -178,7 +183,7 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 	struct gpfs_file_handle *fh = alloca(sizeof(struct gpfs_file_handle));
 
 	*handle = NULL;		/* poison it */
-	if (!dir_hdl->ops->handle_is(dir_hdl, DIRECTORY)) {
+	if (!dir_hdl->obj_ops.handle_is(dir_hdl, DIRECTORY)) {
 		LogCrit(COMPONENT_FSAL,
 			"Parent handle is not a directory. hdl = 0x%p",
 			dir_hdl);
@@ -187,7 +192,7 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 	memset(fh, 0, sizeof(struct gpfs_file_handle));
 	fh->handle_size = OPENHANDLE_HANDLE_LEN;
 
-	attrib->mask = op_ctx->fsal_export->ops->
+	attrib->mask = op_ctx->fsal_export->exp_ops.
 		fs_supported_attrs(op_ctx->fsal_export);
 	status =
 	    GPFSFSAL_create(dir_hdl, name, op_ctx, attrib->mode, fh, attrib);
@@ -220,7 +225,7 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 	struct gpfs_file_handle *fh = alloca(sizeof(struct gpfs_file_handle));
 
 	*handle = NULL;		/* poison it */
-	if (!dir_hdl->ops->handle_is(dir_hdl, DIRECTORY)) {
+	if (!dir_hdl->obj_ops.handle_is(dir_hdl, DIRECTORY)) {
 		LogCrit(COMPONENT_FSAL,
 			"Parent handle is not a directory. hdl = 0x%p",
 			dir_hdl);
@@ -229,7 +234,7 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 	memset(fh, 0, sizeof(struct gpfs_file_handle));
 	fh->handle_size = OPENHANDLE_HANDLE_LEN;
 
-	attrib->mask = op_ctx->fsal_export->ops->
+	attrib->mask = op_ctx->fsal_export->exp_ops.
 		fs_supported_attrs(op_ctx->fsal_export);
 	status = GPFSFSAL_mkdir(dir_hdl, name, op_ctx, attrib->mode, fh,
 				attrib);
@@ -264,7 +269,7 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 	struct gpfs_file_handle *fh = alloca(sizeof(struct gpfs_file_handle));
 
 	*handle = NULL;		/* poison it */
-	if (!dir_hdl->ops->handle_is(dir_hdl, DIRECTORY)) {
+	if (!dir_hdl->obj_ops.handle_is(dir_hdl, DIRECTORY)) {
 		LogCrit(COMPONENT_FSAL,
 			"Parent handle is not a directory. hdl = 0x%p",
 			dir_hdl);
@@ -274,7 +279,7 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 	memset(fh, 0, sizeof(struct gpfs_file_handle));
 	fh->handle_size = OPENHANDLE_HANDLE_LEN;
 
-	attrib->mask = op_ctx->fsal_export->ops->
+	attrib->mask = op_ctx->fsal_export->exp_ops.
 		fs_supported_attrs(op_ctx->fsal_export);
 	status =
 	    GPFSFSAL_mknode(dir_hdl, name, op_ctx, attrib->mode, nodetype, dev,
@@ -315,7 +320,7 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 	struct gpfs_file_handle *fh = alloca(sizeof(struct gpfs_file_handle));
 
 	*handle = NULL;		/* poison it first */
-	if (!dir_hdl->ops->handle_is(dir_hdl, DIRECTORY)) {
+	if (!dir_hdl->obj_ops.handle_is(dir_hdl, DIRECTORY)) {
 		LogCrit(COMPONENT_FSAL,
 			"Parent handle is not a directory. hdl = 0x%p",
 			dir_hdl);
@@ -324,7 +329,7 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 	memset(fh, 0, sizeof(struct gpfs_file_handle));
 	fh->handle_size = OPENHANDLE_HANDLE_LEN;
 
-	attrib->mask = op_ctx->fsal_export->ops->
+	attrib->mask = op_ctx->fsal_export->exp_ops.
 		fs_supported_attrs(op_ctx->fsal_export);
 	status =
 	    GPFSFSAL_symlink(dir_hdl, name, link_path, op_ctx,
@@ -530,7 +535,7 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl)
 	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle,
 			      obj_handle);
 
-	obj_hdl->attributes.mask = op_ctx->fsal_export->ops->
+	obj_hdl->attributes.mask = op_ctx->fsal_export->exp_ops.
 		fs_supported_attrs(op_ctx->fsal_export);
 	status = GPFSFSAL_getattrs(op_ctx->fsal_export, obj_hdl->fs->private,
 				   op_ctx, myself->handle,
@@ -671,7 +676,7 @@ static void release(struct fsal_obj_handle *obj_hdl)
 
 	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
 
-	fsal_obj_handle_uninit(obj_hdl);
+	fsal_obj_handle_fini(obj_hdl);
 
 	if (type == SYMBOLIC_LINK) {
 		if (myself->u.symlink.link_content != NULL)
@@ -777,7 +782,7 @@ fsal_status_t gpfs_lookup_path(struct fsal_export *exp_hdl,
 	if (FSAL_IS_ERROR(fsal_status))
 		goto fileerr;
 
-	attributes.mask = exp_hdl->ops->fs_supported_attrs(exp_hdl);
+	attributes.mask = exp_hdl->exp_ops.fs_supported_attrs(exp_hdl);
 	fsal_status = fsal_get_xstat_by_handle(dir_fd, fh, &buffxstat,
 					       NULL, false);
 	if (FSAL_IS_ERROR(fsal_status))
@@ -895,7 +900,7 @@ fsal_status_t gpfs_create_handle(struct fsal_export *exp_hdl,
 
 	gpfs_fs = fs->private;
 
-	attrib.mask = exp_hdl->ops->fs_supported_attrs(exp_hdl);
+	attrib.mask = exp_hdl->exp_ops.fs_supported_attrs(exp_hdl);
 	status = GPFSFSAL_getattrs(exp_hdl, gpfs_fs, op_ctx, fh, &attrib);
 	if (FSAL_IS_ERROR(status))
 		return status;
