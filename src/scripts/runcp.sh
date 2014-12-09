@@ -195,6 +195,7 @@ NO_COMPLEX_MACRO_FILES="include/ganesha_dbus.h|include/server_stats_private.h"
 NO_COMPLEX_MACRO_FILES="$NO_COMPLEX_MACRO_FILES|include/gsh_intrinsic.h"
 NO_COMPLEX_MACRO_FILES="$NO_COMPLEX_MACRO_FILES|support/exports.c"
 NO_COMPLEX_MACRO_FILES="$NO_COMPLEX_MACRO_FILES|support/export_mgr.c"
+NO_COMPLEX_MACRO_FILES="$NO_COMPLEX_MACRO_FILES|include/gsh_dbus.h"
 
 NO_DEEP_INDENTATION_FILES="cache_inode/cache_inode_lru.c|include/rbt_tree.h"
 
