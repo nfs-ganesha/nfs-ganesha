@@ -1,6 +1,7 @@
 /* GPFS methods for handles
  */
 
+#include <fcntl.h>
 #include "include/gpfs_nfs.h"
 
 /* private helpers from export

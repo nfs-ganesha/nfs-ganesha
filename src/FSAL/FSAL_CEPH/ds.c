@@ -28,9 +28,9 @@
  * @brief pNFS DS operations for Ceph
  *
  * This file implements the read, write, commit, and dispose
- * operations for Ceph data-server handles.  The functionality to
- * create a data server handle is in the export.c file, as it is part
- * of the export object's interface.
+ * operations for Ceph data-server handles.
+ *
+ * Also, creating a data server handle -- now called via the DS itself.
  */
 
 #ifdef CEPH_PNFS
@@ -41,6 +41,7 @@
 #include <fcntl.h>
 #include "fsal_api.h"
 #include "FSAL/fsal_commonlib.h"
+#include "../fsal_private.h"
 #include "fsal_up.h"
 #include "internal.h"
 #include "pnfs_utils.h"
@@ -69,17 +70,15 @@ static inline void local_invalidate(struct ds *ds, struct fsal_export *export)
 }
 
 /**
- * @brief Release a DS object
+ * @brief Release a DS handle
  *
- * @param[in] obj_pub The object to release
- *
- * @return NFS Status codes.
+ * @param[in] ds_pub The object to release
  */
-
-static void release(struct fsal_ds_handle *const ds_pub)
+static void ds_release(struct fsal_ds_handle *const ds_pub)
 {
 	/* The private 'full' DS handle */
 	struct ds *ds = container_of(ds_pub, struct ds, ds);
+
 	fsal_ds_handle_fini(&ds->ds);
 	gsh_free(ds);
 }
@@ -365,15 +364,72 @@ static nfsstat4 ds_commit(struct fsal_ds_handle *const ds_pub,
 #endif				/* COMMIT_FIX */
 
 	memset(*writeverf, 0, NFS4_VERIFIER_SIZE);
+
+	LogCrit(COMPONENT_PNFS, "Commits should go to MDS\n");
 	return NFS4_OK;
 }
 
-void ds_ops_init(struct fsal_ds_ops *ops)
+static void dsh_ops_init(struct fsal_dsh_ops *ops)
 {
-	ops->release = release;
+	memcpy(ops, &def_dsh_ops, sizeof(struct fsal_dsh_ops));
+
+	ops->release = ds_release;
 	ops->read = ds_read;
 	ops->write = ds_write;
 	ops->commit = ds_commit;
-};
+}
+
+/**
+ * @brief Try to create a FSAL data server handle from a wire handle
+ *
+ * This function creates a FSAL data server handle from a client
+ * supplied "wire" handle.  This is also where validation gets done,
+ * since PUTFH is the only operation that can return
+ * NFS4ERR_BADHANDLE.
+ *
+ * @param[in]  pds      FSAL pNFS DS
+ * @param[in]  desc     Buffer from which to create the file
+ * @param[out] handle   FSAL DS handle
+ *
+ * @return NFSv4.1 error codes.
+ */
+
+static nfsstat4 make_ds_handle(struct fsal_pnfs_ds *const pds,
+			       const struct gsh_buffdesc *const desc,
+			       struct fsal_ds_handle **const handle)
+{
+	struct ds_wire *dsw = (struct ds_wire *)desc->addr;
+	struct ds *ds;			/* Handle to be created */
+
+	*handle = NULL;
+
+	if (desc->len != sizeof(struct ds_wire))
+		return NFS4ERR_BADHANDLE;
+
+	if (dsw->layout.fl_stripe_unit == 0)
+		return NFS4ERR_BADHANDLE;
+
+	ds = gsh_calloc(sizeof(struct ds), 1);
+	if (ds == NULL)
+		return NFS4ERR_SERVERFAULT;
+
+	*handle = &ds->ds;
+	fsal_ds_handle_init(*handle, pds);
+
+	/* Connect lazily when a FILE_SYNC4 write forces us to, not
+	   here. */
+
+	ds->connected = false;
+
+	memcpy(&ds->wire, desc->addr, desc->len);
+	return NFS4_OK;
+}
+
+void pnfs_ds_ops_init(struct fsal_pnfs_ds_ops *ops)
+{
+	memcpy(ops, &def_pnfs_ds_ops, sizeof(struct fsal_pnfs_ds_ops));
+	ops->make_ds_handle = make_ds_handle;
+	ops->fsal_dsh_ops = dsh_ops_init;
+}
 
 #endif				/* CEPH_PNFS */

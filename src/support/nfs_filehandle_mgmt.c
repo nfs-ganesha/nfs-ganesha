@@ -207,7 +207,7 @@ bool nfs4_FSALToFhandle(nfs_fh4 *fh4,
 	file_handle->fhversion = GANESHA_FH_VERSION;
 	file_handle->fs_len = fh_desc.len;	/* set the actual size */
 	/* keep track of the export id */
-	file_handle->exportid = exp->export_id;
+	file_handle->id.exports = exp->export_id;
 
 	/* Set the len */
 	fh4->nfs_fh4_len = nfs4_sizeof_handle(file_handle);
@@ -359,7 +359,7 @@ int nfs4_Is_Fh_Invalid(nfs_fh4 *fh)
 			} else {
 				LogInfo(COMPONENT_FILEHANDLE,
 					"INVALID HANDLE: is_pseudofs=%d",
-					pfile_handle->exportid == 0);
+					pfile_handle->id.exports == 0);
 			}
 		}
 

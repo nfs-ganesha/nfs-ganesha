@@ -39,15 +39,14 @@
 #include <sys/statvfs.h>
 #include "gsh_list.h"
 #include "fsal.h"
-#include "fsal_handle.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 #include "FSAL/fsal_commonlib.h"
 #include "FSAL/fsal_config.h"
-#include "fsal_handle.h"
 #include "lustre_methods.h"
 #include "nfs_exports.h"
 #include "export_mgr.h"
+#include "pnfs_utils.h"
 
 #ifdef HAVE_INCLUDE_LUSTREAPI_H
 #include <lustre/lustreapi.h>
@@ -62,9 +61,13 @@
 
 static void lustre_release(struct fsal_export *exp_hdl)
 {
-	struct lustre_fsal_export *myself;
+	struct lustre_fsal_export *myself =
+	    container_of(exp_hdl, struct lustre_fsal_export, export);
 
-	myself = container_of(exp_hdl, struct lustre_fsal_export, export);
+	if (myself->pnfs_ds_enabled) {
+		/* special case: server_id matches export_id */
+		pnfs_ds_remove(op_ctx->export->export_id, true);
+	}
 
 	lustre_unexport_filesystems(myself);
 	fsal_detach_export(exp_hdl->fsal, &exp_hdl->exports);
@@ -408,85 +411,6 @@ static fsal_status_t lustre_extract_handle(struct fsal_export *exp_hdl,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-/**
- * @brief Create a FSAL data server handle from a wire handle
- *
- * This function creates a FSAL data server handle from a client
- * supplied "wire" handle.  This is also where validation gets done,
- * since PUTFH is the only operation that can return
- * NFS4ERR_BADHANDLE.
- *
- * @param[in]  export_pub The export in which to create the handle
- * @param[in]  desc       Buffer from which to create the file
- * @param[out] ds_pub     FSAL data server handle
- *
- * @return NFSv4.1 error codes.
- */
-nfsstat4 lustre_create_ds_handle(struct fsal_export *const export_pub,
-				 const struct gsh_buffdesc *const desc,
-				 struct fsal_ds_handle **const ds_pub)
-{
-	struct fsal_module *fsal = export_pub->fsal;
-	/* Handle to be created */
-	struct lustre_ds *ds;
-	struct fsal_pnfs_ds *pds;
-	struct lustre_file_handle *lustre_fh;
-	struct fsal_filesystem *fs;
-	enum fsid_type fsid_type;
-	struct fsal_fsid__ fsid;
-	nfsstat4 status;
-
-	*ds_pub = NULL;
-
-	/* Get the related Lustre FS */
-	lustre_fh = (struct lustre_file_handle *) desc->addr;
-
-	lustre_extract_fsid(lustre_fh, &fsid_type, &fsid);
-
-	fs = lookup_fsid(&fsid, fsid_type);
-	if (fs == NULL) {
-		LogInfo(COMPONENT_FSAL,
-			"Could not find filesystem for "
-			"fsid=0x%016"PRIx64".0x%016"PRIx64
-			" from handle",
-			fsid.major, fsid.minor);
-		return NFS4ERR_STALE;
-	}
-
-	if (fs->fsal != fsal) {
-		LogInfo(COMPONENT_FSAL,
-			"Non LUSTRE filesystem "
-			"fsid=0x%016"PRIx64".0x%016"PRIx64
-			" from handle",
-			fsid.major, fsid.minor);
-		return NFS4ERR_STALE;
-	}
-
-	/* XXX in GPFS, len is checked before using any of the fields??? */
-	if (desc->len != sizeof(struct lustre_file_handle))
-		return NFS4ERR_BADHANDLE;
-
-	status = fsal->m_ops.fsal_pnfs_ds(fsal, desc, &pds);
-	if (status != NFS4_OK)
-		return status;
-
-	status = fsal->m_ops.fsal_ds_handle(pds, desc, ds_pub);
-	if (status != NFS4_OK) {
-		pds->s_ops.release(pds);
-		return NFS4ERR_SERVERFAULT;
-	}
-
-	/* assumes fsal_ds_handle is first in handle struct */
-	ds = (struct lustre_ds *)*ds_pub;
-
-
-	ds->lustre_fs = fs->private;
-
-	memcpy(&ds->wire, desc->addr, desc->len);
-
-	return NFS4_OK;
-}
-
 /* lustre_export_ops_init
  * overwrite vector entries with the methods that we support
  */
@@ -497,7 +421,6 @@ void lustre_export_ops_init(struct export_ops *ops)
 	ops->lookup_path = lustre_lookup_path;
 	ops->extract_handle = lustre_extract_handle;
 	ops->create_handle = lustre_create_handle;
-	ops->create_ds_handle = lustre_create_ds_handle;
 	ops->get_fs_dynamic_info = lustre_get_dynamic_info;
 	ops->fs_supports = lustre_fs_supports;
 	ops->fs_maxfilesize = lustre_fs_maxfilesize;
@@ -526,7 +449,7 @@ void free_lustre_filesystem(struct lustre_filesystem *lustre_fs)
 int lustre_claim_filesystem(struct fsal_filesystem *fs, struct fsal_export *exp)
 {
 	struct lustre_filesystem *lustre_fs = fs->private;
-	int retval = 0;
+	int retval;
 	struct lustre_fsal_export *myself;
 	struct lustre_filesystem_export_map *map = NULL;
 
@@ -536,8 +459,7 @@ int lustre_claim_filesystem(struct fsal_filesystem *fs, struct fsal_export *exp)
 		LogInfo(COMPONENT_FSAL,
 			"Attempt to claim non-LUSTRE filesystem %s",
 			fs->path);
-		retval = ENXIO;
-		goto errout;
+		return ENXIO;
 	}
 
 	map = gsh_calloc(1, sizeof(*map));
@@ -546,8 +468,7 @@ int lustre_claim_filesystem(struct fsal_filesystem *fs, struct fsal_export *exp)
 		LogCrit(COMPONENT_FSAL,
 			"Out of memory to claim file system %s",
 			fs->path);
-		retval = ENOMEM;
-		goto errout;
+		return ENOMEM;
 	}
 
 	if (fs->fsal != NULL) {
@@ -770,10 +691,10 @@ fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
 				   void *parse_node,
 				   const struct fsal_up_vector *up_ops)
 {
+	/* The status code to return */
+	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	struct lustre_fsal_export *myself;
-	int retval = 0;
 	struct config_error_type err_type;
-	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 
 	myself = gsh_malloc(sizeof(struct lustre_fsal_export));
 	if (myself == NULL) {
@@ -784,50 +705,51 @@ fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
 	memset(myself, 0, sizeof(struct lustre_fsal_export));
 	glist_init(&myself->filesystems);
 
-	retval = fsal_export_init(&myself->export);
-	if (retval != 0) {
+	status.minor = fsal_export_init(&myself->export);
+	if (status.minor != 0) {
 		LogMajor(COMPONENT_FSAL,
 			 "out of memory for object");
 		gsh_free(myself);
-		return fsalstat(posix2fsal_error(retval), retval);
+		status.major = posix2fsal_error(status.minor);
+		return status;
 	}
 	lustre_export_ops_init(&myself->export.exp_ops);
 	myself->export.up_ops = up_ops;
 
-	retval = load_config_from_node(parse_node,
-				       &export_param,
-				       myself,
-				       true,
-				       &err_type);
-	if (!config_error_is_harmless(&err_type))
-		return fsalstat(ERR_FSAL_INVAL, 0);
+	status.minor = load_config_from_node(parse_node, &export_param, myself,
+					     true, &err_type);
+	if (!config_error_is_harmless(&err_type)) {
+		status.major = ERR_FSAL_INVAL;
+		return status;
+	}
 
-	retval = fsal_attach_export(fsal_hdl, &myself->export.exports);
-	if (retval != 0)
+	status.minor = fsal_attach_export(fsal_hdl, &myself->export.exports);
+	if (status.minor != 0) {
+		status.major = posix2fsal_error(status.minor);
 		goto errout;	/* seriously bad */
+	}
 	myself->export.fsal = fsal_hdl;
 
-	retval = populate_posix_file_systems();
-	if (retval != 0) {
+	status.minor = populate_posix_file_systems();
+	if (status.minor != 0) {
 		LogCrit(COMPONENT_FSAL,
 			"populate_posix_file_systems returned %s (%d)",
-			strerror(retval), retval);
-		fsal_error = posix2fsal_error(retval);
+			strerror(status.minor), status.minor);
+		status.major = posix2fsal_error(status.minor);
 		goto errout;
 	}
 
-	retval = claim_posix_filesystems(op_ctx->export->fullpath,
-					 fsal_hdl,
-					 &myself->export,
-					 lustre_claim_filesystem,
-					 lustre_unclaim_filesystem,
-					 &myself->root_fs);
-	if (retval != 0) {
+	status.minor = claim_posix_filesystems(op_ctx->export->fullpath,
+					       fsal_hdl, &myself->export,
+					       lustre_claim_filesystem,
+					       lustre_unclaim_filesystem,
+					       &myself->root_fs);
+	if (status.minor != 0) {
 		LogCrit(COMPONENT_FSAL,
 			"claim_posix_filesystems(%s) returned %s (%d)",
 			op_ctx->export->fullpath,
-			strerror(retval), retval);
-		fsal_error = posix2fsal_error(retval);
+			strerror(status.minor), status.minor);
+		status.major = posix2fsal_error(status.minor);
 		goto errout;
 	}
 
@@ -843,6 +765,25 @@ fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
 	    myself->pnfs_param.pnfs_enabled;
 
 	if (myself->pnfs_ds_enabled) {
+		struct fsal_pnfs_ds *pds;
+
+		status = fsal_hdl->m_ops.
+			fsal_pnfs_ds(fsal_hdl, parse_node, &pds);
+		if (status.major != ERR_FSAL_NO_ERROR)
+			goto errout;
+
+		/* special case: server_id matches export_id */
+		pds->pds_number = op_ctx->export->export_id;
+		pds->pds_type = DS_ASSOCIATED_EXPORT;
+
+		if (!pnfs_ds_insert(pds)) {
+			LogCrit(COMPONENT_CONFIG,
+				"Server id %d already in use.",
+				pds->pds_number);
+			status.major = ERR_FSAL_EXIST;
+			goto errout;
+		}
+
 		LogInfo(COMPONENT_FSAL,
 			"lustre_fsal_create: pnfs DS was enabled for [%s]",
 			op_ctx->export->fullpath);
@@ -853,10 +794,10 @@ fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
 			op_ctx->export->fullpath);
 		export_ops_pnfs(&myself->export.exp_ops);
 	}
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	return status;
 
  errout:
 	free_export_ops(&myself->export);
 	gsh_free(myself);		/* elvis has left the building */
-	return fsalstat(fsal_error, retval);
+	return status;
 }
