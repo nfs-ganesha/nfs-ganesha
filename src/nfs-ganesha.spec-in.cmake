@@ -443,6 +443,10 @@ install -m 755 config_samples/lustre.conf		%{buildroot}%{_sysconfdir}/ganesha
 
 %if %{with_fsal_gpfs}
 install -m 755 config_samples/gpfs.conf			%{buildroot}%{_sysconfdir}/ganesha
+install -m 755 config_samples/gpfs.ganesha.nfsd.conf	%{buildroot}%{_sysconfdir}/ganesha
+install -m 755 config_samples/gpfs.ganesha.main.conf	%{buildroot}%{_sysconfdir}/ganesha
+install -m 755 config_samples/gpfs.ganesha.log.conf	%{buildroot}%{_sysconfdir}/ganesha
+install -m 755 config_samples/gpfs.ganesha.exports.conf	%{buildroot}%{_sysconfdir}/ganesha
 %endif
 
 %if %{with_utils}
@@ -517,6 +521,10 @@ make DESTDIR=%{buildroot} install
 %defattr(-,root,root,-)
 %{_libdir}/ganesha/libfsalgpfs*
 %config(noreplace) %{_sysconfdir}/ganesha/gpfs.conf
+%config(noreplace) %{_sysconfdir}/ganesha/gpfs.ganesha.nfsd.conf
+%config(noreplace) %{_sysconfdir}/ganesha/gpfs.ganesha.main.conf
+%config(noreplace) %{_sysconfdir}/ganesha/gpfs.ganesha.log.conf
+%config(noreplace) %{_sysconfdir}/ganesha/gpfs.ganesha.exports.conf
 %endif
 
 %if %{with_fsal_zfs}
