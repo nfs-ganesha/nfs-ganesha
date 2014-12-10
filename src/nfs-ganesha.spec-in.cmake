@@ -603,6 +603,7 @@ make DESTDIR=%{buildroot} install
 /usr/bin/purge_gids
 /usr/bin/ganesha_stats
 /usr/bin/sm_notify.ganesha
+/usr/bin/ganesha_mgr
 %endif
 
 
