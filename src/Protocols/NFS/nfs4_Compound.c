@@ -880,12 +880,12 @@ void compound_data_Free(compound_data_t *data)
 		cache_inode_put(data->saved_entry);
 
 	if (data->current_ds) {
-		ds_put(data->current_ds);
+		ds_handle_put(data->current_ds);
 		data->current_ds = NULL;
 	}
 
 	if (data->saved_ds) {
-		ds_put(data->saved_ds);
+		ds_handle_put(data->saved_ds);
 		data->saved_ds = NULL;
 	}
 

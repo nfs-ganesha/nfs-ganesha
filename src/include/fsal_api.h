@@ -327,7 +327,9 @@ struct fsal_export;
 struct fsal_obj_handle;
 struct fsal_filesystem;
 struct fsal_pnfs_ds;
+struct fsal_pnfs_ds_ops;
 struct fsal_ds_handle;
+struct fsal_dsh_ops;
 
 #ifndef SEEK_SET
 #define SEEK_SET 0
@@ -587,37 +589,28 @@ struct fsal_ops {
  */
 	 size_t(*fs_da_addr_size) (struct fsal_module *fsal_hdl);
 
-
 /**
  * @brief Create a FSAL pNFS data server
  *
- * @param[in]  fsal_hdl FSAL module
- * @param[in]  hdl_desc Buffer from which to create the struct
- * @param[out] handle   FSAL pNFS DS
+ * @param[in]  fsal_hdl		FSAL module
+ * @param[in]  parse_node	opaque pointer to parse tree node for
+ *				export options to be passed to
+ *				load_config_from_node
+ * @param[out] handle		FSAL pNFS DS
  *
- * @return NFSv4.1 error codes.
+ * @return FSAL status.
  */
-	 nfsstat4(*fsal_pnfs_ds) (struct fsal_module *const fsal_hdl,
-				    const struct gsh_buffdesc *
-				    const hdl_desc,
-				    struct fsal_pnfs_ds **const pds);
+	 fsal_status_t(*fsal_pnfs_ds) (struct fsal_module *const fsal_hdl,
+				       void *parse_node,
+				       struct fsal_pnfs_ds **const handle);
 
 /**
- * @brief Create a FSAL data server handle from a wire handle
+ * @brief Initialize FSAL specific values for pNFS data server
  *
- * This function creates a FSAL data server handle from a client
- * supplied "wire" handle.
- *
- * @param[in]  pds      FSAL pNFS DS
- * @param[in]  hdl_desc Buffer from which to create the struct
- * @param[out] handle   FSAL DS handle
- *
- * @return NFSv4.1 error codes.
+ * @param[in]  ops	FSAL pNFS Data Server operations vector
  */
-	 nfsstat4(*fsal_ds_handle) (struct fsal_pnfs_ds *const pds,
-				    const struct gsh_buffdesc *
-				    const hdl_desc,
-				    struct fsal_ds_handle **const handle);
+	 void(*fsal_pnfs_ds_ops) (struct fsal_pnfs_ds_ops *ops);
+
 /**@}*/
 };
 
@@ -640,8 +633,6 @@ struct export_ops {
  * should clean up all private resources and destroy the object.
  *
  * @param[in] exp_hdl The export to release.
- *
- * @return FSAL status.
  */
 	 void (*release) (struct fsal_export *exp_hdl);
 /**@}*/
@@ -729,23 +720,6 @@ struct export_ops {
 	 fsal_status_t(*create_handle) (struct fsal_export *exp_hdl,
 					struct gsh_buffdesc *hdl_desc,
 					struct fsal_obj_handle **handle);
-
-/**
- * @brief Create a FSAL data server handle from a wire handle
- *
- * This function creates a FSAL data server handle from a client
- * supplied "wire" handle.
- *
- * @param[in]  exp_hdl  The export in which to create the handle
- * @param[in]  hdl_desc Buffer from which to creat the file
- * @param[out] handle   FSAL object handle
- *
- * @return NFSv4.1 error codes.
- */
-	 nfsstat4(*create_ds_handle) (struct fsal_export *const exp_hdl,
-				      const struct gsh_buffdesc *
-				      const hdl_desc,
-				      struct fsal_ds_handle **const handle);
 /**@}*/
 
 /**@{*/
@@ -1138,8 +1112,6 @@ struct fsal_obj_ops {
  * leak.
  *
  * @param[in] obj_hdl Handle to release
- *
- * @return FSAL status.
  */
 	 void (*release) (struct fsal_obj_handle *obj_hdl);
 /**@}*/
@@ -1972,17 +1944,48 @@ struct fsal_pnfs_ds_ops {
  * @brief Clean up a server
  *
  * This function cleans up private resources associated with a
- * server and deallocates it.  Implement this method or you will
- * leak.  This function should not be called directly.
+ * server and deallocates it.  A default is supplied.
  *
- * @param[in] pds Server to release
+ * This function should not be called directly.
  *
- * @return NFSv4.1 status codes.
+ * @param[in]  pds	FSAL pNFS DS to release
  */
 	 void (*release) (struct fsal_pnfs_ds *const pds);
+
+/**
+ * @brief Initialize FSAL specific permissions per pNFS DS
+ *
+ * @param[in]  pds      FSAL pNFS DS
+ */
+	 void(*permissions) (struct fsal_pnfs_ds *const pds);
 /**@}*/
 
 /**@{*/
+
+/**
+ * @brief Create a FSAL data server handle from a wire handle
+ *
+ * This function creates a FSAL data server handle from a client
+ * supplied "wire" handle.
+ *
+ * @param[in]  pds      FSAL pNFS DS
+ * @param[in]  hdl_desc Buffer from which to create the struct
+ * @param[out] handle   FSAL DS handle
+ *
+ * @return NFSv4.1 error codes.
+ */
+	 nfsstat4(*make_ds_handle) (struct fsal_pnfs_ds *const pds,
+				    const struct gsh_buffdesc *
+				    const hdl_desc,
+				    struct fsal_ds_handle **const handle);
+
+/**
+ * @brief Initialize FSAL specific values for DS handle
+ *
+ * @param[in]  ops	FSAL DS handle operations vector
+ */
+	 void(*fsal_dsh_ops) (struct fsal_dsh_ops *ops);
+
 /**@}*/
 };
 
@@ -1990,7 +1993,7 @@ struct fsal_pnfs_ds_ops {
  * @brief FSAL DS handle operations vector
  */
 
-struct fsal_ds_ops {
+struct fsal_dsh_ops {
 /**@{*/
 
 /**
@@ -2005,8 +2008,6 @@ struct fsal_ds_ops {
  * leak.  This function should not be called directly.
  *
  * @param[in] ds_hdl Handle to release
- *
- * @return NFSv4.1 status codes.
  */
 	 void (*release) (struct fsal_ds_handle *const ds_hdl);
 /**@}*/
@@ -2305,6 +2306,13 @@ struct fsal_obj_handle {
 	object_file_type_t type;	/*< Object file type */
 };
 
+enum ds_type {
+	DS_STANDARD,		/*< This DS is a "standard" DS */
+	DS_ASSOCIATED_EXPORT,	/*< This DS is associated with an export,
+				    pds_number will be the same as export_id.
+				    */
+};
+
 /**
  * @brief Public structure for pNFS Data Servers
  *
@@ -2316,16 +2324,18 @@ struct fsal_obj_handle {
  */
 
 struct fsal_pnfs_ds {
-	struct glist_head servers;	/*< Link in list of Data Servers under
+	struct glist_head server;	/*< Link in list of Data Servers under
 					   the same FSAL. */
 	struct glist_head ds_handles;	/*< Head of list of DS handles */
 	struct fsal_module *fsal;	/*< Link back to fsal module */
 	struct fsal_pnfs_ds_ops s_ops;	/*< Operations vector */
 
+	struct avltree_node ds_node;	/*< Node in tree of all Data Servers. */
 	pthread_rwlock_t lock;		/*< Lock to be held when
-					    manipulating its list (below). */
+					    manipulating its list (above). */
 	int32_t refcount;		/*< Reference count */
-	uint32_t pds_number;		/*< Identifier */
+	uint16_t pds_number;		/*< Identifier */
+	enum ds_type pds_type;		/*< DS type */
 };
 
 /**
@@ -2339,48 +2349,47 @@ struct fsal_pnfs_ds {
  */
 
 struct fsal_ds_handle {
-	struct glist_head ds_handles;	/*< Link in list of DS handles under
-					   the same DS. */
+	struct glist_head ds_handle;	/*< Link in list of DS handles under
+					   the same pDS. */
 	struct fsal_pnfs_ds *pds;	/*< Link back to pDS */
-	struct fsal_ds_ops dsh_ops;	/*< Operations vector */
+	struct fsal_dsh_ops dsh_ops;	/*< Operations vector */
 
-	int32_t refcount;		/*< Reference count */
-	uint32_t dsh_number;		/*< Identifier */
+	int64_t refcount;		/*< Reference count */
 };
 
 /**
- * @brief Get a reference on a handle
+ * @brief Get a reference on a DS handle
  *
- * This function increments the reference count on a handle.
+ * This function increments the reference count on a DS handle.
  *
  * @param[in] ds_hdl The handle to reference
  */
 
-static inline void ds_get(struct fsal_ds_handle *const ds_hdl)
+static inline void ds_handle_get_ref(struct fsal_ds_handle *const ds_hdl)
 {
-	atomic_inc_int32_t(&ds_hdl->refcount);
+	atomic_inc_int64_t(&ds_hdl->refcount);
 }
 
 /**
- * @brief Release a reference on a handle
+ * @brief Release a reference on a DS handle
  *
- * This function releases a reference to a handle.  Once a caller's
+ * This function releases a reference to a DS handle.  Once a caller's
  * reference is released they should make no attempt to access the
  * handle or even dereference a pointer to it.
  *
  * @param[in] ds_hdl The handle to relinquish
  */
 
-static inline void ds_put(struct fsal_ds_handle *const ds_hdl)
+static inline void ds_handle_put(struct fsal_ds_handle *const ds_hdl)
 {
-	int32_t refcount;
+	int64_t refcount = atomic_dec_int64_t(&ds_hdl->refcount);
 
-	refcount = atomic_dec_int32_t(&ds_hdl->refcount);
+	if (refcount != 0) {
+		assert(refcount > 0);
+		return;
+	}
 
-	assert(refcount >= 0);
-
-	if (refcount == 0)
-		ds_hdl->dsh_ops.release(ds_hdl);
+	ds_hdl->dsh_ops.release(ds_hdl);
 }
 
 /**

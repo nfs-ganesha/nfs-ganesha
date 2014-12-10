@@ -87,13 +87,13 @@ static void shutdown_ds_handles(struct fsal_pnfs_ds *pds)
 	glist_for_each_safe(hi, hn, &pds->ds_handles) {
 		struct fsal_ds_handle *h = glist_entry(hi,
 						       struct fsal_ds_handle,
-						       ds_handles);
-		int32_t refcount = atomic_fetch_int32_t(&h->refcount);
+						       ds_handle);
+		int64_t refcount = atomic_fetch_int64_t(&h->refcount);
 		if (refcount != 0) {
 			LogDebug(COMPONENT_FSAL,
-				 "Extra references (%"PRIi32") hanging around.",
+				 "Extra references (%"PRIi64") hanging around.",
 				 refcount);
-			atomic_store_int32_t(&h->refcount, 0);
+			atomic_store_int64_t(&h->refcount, 0);
 		}
 		h->dsh_ops.release(h);
 	}
@@ -115,11 +115,11 @@ static void shutdown_pnfs_ds(struct fsal_module *fsal)
 	if (glist_empty(&fsal->servers))
 		return;
 
-	LogDebug(COMPONENT_FSAL, "Extra DS file handles hanging around.");
+	LogDebug(COMPONENT_FSAL, "Extra pNFS Data Servers hanging around.");
 	glist_for_each_safe(hi, hn, &fsal->servers) {
 		struct fsal_pnfs_ds *h = glist_entry(hi,
 						     struct fsal_pnfs_ds,
-						     ds_handles);
+						     server);
 		shutdown_ds_handles(h);
 		int32_t refcount = atomic_fetch_int32_t(&h->refcount);
 		if (refcount != 0) {

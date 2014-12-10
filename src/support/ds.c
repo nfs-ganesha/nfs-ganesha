@@ -30,17 +30,233 @@
 #include "log.h"
 #include "fsal.h"
 #include "nfs_core.h"
+#include "FSAL/fsal_commonlib.h"
 #include "pnfs_utils.h"
 
 /**
- * @brief Free the DS block
+ * @brief Servers are stored in an AVL tree with front-end cache.
+ *
+ * @note  number of cache slots should be prime.
+ */
+#define SERVER_BY_ID_CACHE_SIZE 127
+
+struct server_by_id {
+	pthread_rwlock_t lock;
+	struct avltree t;
+	struct avltree_node *cache[SERVER_BY_ID_CACHE_SIZE];
+};
+
+static struct server_by_id server_by_id;
+
+/**
+ * @brief Compute cache slot for an entry
+ *
+ * This function computes a hash slot, taking an address modulo the
+ * number of cache slots (which should be prime).
+ *
+ * @param ptr [in] Entry address
+ *
+ * @return The computed offset.
+ */
+static inline uint16_t id_cache_offsetof(uint16_t k)
+{
+	return k % SERVER_BY_ID_CACHE_SIZE;
+}
+
+/**
+ * @brief Server id comparator for AVL tree walk
+ *
+ */
+static int server_id_cmpf(const struct avltree_node *lhs,
+			  const struct avltree_node *rhs)
+{
+	struct fsal_pnfs_ds *lk, *rk;
+
+	lk = avltree_container_of(lhs, struct fsal_pnfs_ds, ds_node);
+	rk = avltree_container_of(rhs, struct fsal_pnfs_ds, ds_node);
+	if (lk->pds_number != rk->pds_number)
+		return (lk->pds_number < rk->pds_number) ? -1 : 1;
+	else
+		return 0;
+}
+
+/**
+ * @brief Allocate the pDS entry.
+ *
+ * @return pointer to fsal_pnfs_ds.
+ * NULL on allocation errors.
  */
 
-void fsal_pnfs_ds_free(struct fsal_pnfs_ds *pds)
+struct fsal_pnfs_ds *pnfs_ds_alloc(void)
+{
+	return gsh_calloc(sizeof(struct fsal_pnfs_ds), 1);
+}
+
+/**
+ * @brief Free the pDS entry.
+ */
+
+void pnfs_ds_free(struct fsal_pnfs_ds *pds)
 {
 	if (!pds->refcount)
 		return;
+
 	gsh_free(pds);
+}
+
+/**
+ * @brief Insert the pDS entry into the AVL tree.
+ *
+ * @param exp [IN] the server entry
+ *
+ * @return false on failure.
+ */
+
+bool pnfs_ds_insert(struct fsal_pnfs_ds *pds)
+{
+	void **cache_slot;
+	struct avltree_node *node;
+
+	assert(pds->refcount == 1);	/* we will hold a ref starting out... */
+
+	PTHREAD_RWLOCK_wrlock(&server_by_id.lock);
+	node = avltree_insert(&pds->ds_node, &server_by_id.t);
+	if (node) {
+		PTHREAD_RWLOCK_unlock(&server_by_id.lock);
+		return false;	/* somebody beat us to it */
+	}
+
+	/* update cache */
+	cache_slot = (void **)
+		&(server_by_id.cache[id_cache_offsetof(pds->pds_number)]);
+	atomic_store_voidptr(cache_slot, &pds->ds_node);
+
+	pnfs_ds_get_ref(pds);		/* pds->refcount == 2 */
+	PTHREAD_RWLOCK_unlock(&server_by_id.lock);
+	return true;
+}
+
+/**
+ * @brief Lookup the fsal_pnfs_ds struct for this server id
+ *
+ * Lookup the fsal_pnfs_ds struct by pds_number.
+ * Server ids are assigned by the config file and carried about
+ * by file handles.
+ *
+ * @param pds_number   [IN] the server id extracted from the handle
+ *
+ * @return pointer to ref locked server
+ */
+struct fsal_pnfs_ds *pnfs_ds_get(uint16_t pds_number)
+{
+	void **cache_slot;
+	struct avltree_node *node;
+	struct fsal_pnfs_ds *pds;
+	struct fsal_pnfs_ds v;
+
+	v.pds_number = pds_number;
+	PTHREAD_RWLOCK_rdlock(&server_by_id.lock);
+
+	/* check cache */
+	cache_slot = (void **)
+		&(server_by_id.cache[id_cache_offsetof(pds_number)]);
+	node = (struct avltree_node *)atomic_fetch_voidptr(cache_slot);
+	if (node) {
+		pds = avltree_container_of(node, struct fsal_pnfs_ds, ds_node);
+		if (pds->pds_number == pds_number) {
+			/* got it in 1 */
+			LogDebug(COMPONENT_HASHTABLE_CACHE,
+				 "server_by_id cache hit slot %d",
+				 id_cache_offsetof(pds_number));
+			goto out;
+		}
+	}
+
+	/* fall back to AVL */
+	node = avltree_lookup(&v.ds_node, &server_by_id.t);
+	if (node) {
+		pds = avltree_container_of(node, struct fsal_pnfs_ds, ds_node);
+		/* update cache */
+		atomic_store_voidptr(cache_slot, node);
+		goto out;
+	} else {
+		PTHREAD_RWLOCK_unlock(&server_by_id.lock);
+		return NULL;
+	}
+
+ out:
+	pnfs_ds_get_ref(pds);
+	PTHREAD_RWLOCK_unlock(&server_by_id.lock);
+	return pds;
+}
+
+/**
+ * @brief Release the fsal_pnfs_ds struct
+ *
+ * @param exp [IN] the server entry
+ */
+
+void pnfs_ds_put(struct fsal_pnfs_ds *pds)
+{
+	int32_t refcount = atomic_dec_int32_t(&pds->refcount);
+
+	if (refcount != 0) {
+		assert(refcount > 0);
+		return;
+	}
+
+	/* free resources */
+	fsal_pnfs_ds_fini(pds);
+	gsh_free(pds);
+}
+
+/**
+ * @brief Remove the pDS entry from the AVL tree.
+ *
+ * @param pds_number   [IN] the server id extracted from the handle
+ * @param final        [IN] Also drop from FSAL.
+ */
+
+void pnfs_ds_remove(uint16_t pds_number, bool final)
+{
+	struct avltree_node *node;
+	struct fsal_pnfs_ds *pds = NULL;
+	struct fsal_pnfs_ds v;
+
+	v.pds_number = pds_number;
+	PTHREAD_RWLOCK_wrlock(&server_by_id.lock);
+
+	node = avltree_lookup(&v.ds_node, &server_by_id.t);
+	if (node) {
+		void **cache_slot = (void **)
+			&(server_by_id.cache[id_cache_offsetof(pds_number)]);
+		struct avltree_node *cnode = (struct avltree_node *)
+			 atomic_fetch_voidptr(cache_slot);
+
+		/* Remove the server from the AVL cache and tree */
+		if (node == cnode)
+			atomic_store_voidptr(cache_slot, NULL);
+
+		pds = avltree_container_of(node, struct fsal_pnfs_ds, ds_node);
+		avltree_remove(node, &server_by_id.t);
+	}
+
+	PTHREAD_RWLOCK_unlock(&server_by_id.lock);
+
+	if (pds != NULL) {
+		/* Release table reference to the server.
+		 * Release of resources will occur on last reference.
+		 * Which may or may not be from this call.
+		 */
+		pnfs_ds_put(pds);
+
+		if (final) {
+			/* Also drop from FSAL.  Instead of pDS thread,
+			 * relying on export cleanup thread.
+			 */
+			pnfs_ds_put(pds);
+		}
+	}
 }
 
 /**
@@ -49,7 +265,7 @@ void fsal_pnfs_ds_free(struct fsal_pnfs_ds *pds)
  * Use the Name parameter passed in via the self_struct to lookup the
  * fsal.  If the fsal is not loaded (yet), load it and call its init.
  *
- * Create the DS and pass the FSAL sub-block to it so that the
+ * Create the pDS and pass the FSAL sub-block to it so that the
  * fsal method can process the rest of the parameters in the block
  */
 
@@ -60,7 +276,7 @@ static int fsal_commit(void *node, void *link_mem, void *self_struct,
 	struct fsal_module *fsal;
 	struct fsal_pnfs_ds *pds;
 	struct root_op_context root_op_context;
-	nfsstat4 status;
+	fsal_status_t status;
 	int errcnt;
 
 	/* Initialize req_ctx */
@@ -72,8 +288,7 @@ static int fsal_commit(void *node, void *link_mem, void *self_struct,
 		goto err;
 
 	status = fsal->m_ops.fsal_pnfs_ds(fsal, node, &pds);
-
-	if (status != 0) {
+	if (status.major != ERR_FSAL_NO_ERROR) {
 		fsal_put(fsal);
 		LogCrit(COMPONENT_CONFIG,
 			"Could not create pNFS DS");
@@ -87,7 +302,7 @@ err:
 }
 
 /**
- * @brief DS block handlers
+ * @brief pNFS DS block handlers
  */
 
 /**
@@ -97,9 +312,9 @@ err:
 static void *pds_init(void *link_mem, void *self_struct)
 {
 	if (self_struct == NULL) {
-		return gsh_calloc(sizeof(struct fsal_pnfs_ds), 1);
+		return pnfs_ds_alloc();
 	} else { /* free resources case */
-		fsal_pnfs_ds_free(self_struct);
+		pnfs_ds_free(self_struct);
 		return NULL;
 	}
 }
@@ -115,11 +330,29 @@ static int pds_commit(void *node, void *link_mem, void *self_struct,
 		      struct config_error_type *err_type)
 {
 	struct fsal_pnfs_ds *pds = self_struct;
-	struct fsal_module *fsal = pds->fsal;
+	struct fsal_pnfs_ds *probe = pnfs_ds_get(pds->pds_number);
+
+	/* redundant probe before insert??? */
+	if (probe != NULL) {
+		LogDebug(COMPONENT_CONFIG,
+			 "Server %d already exists!",
+			 pds->pds_number);
+		pnfs_ds_put(probe);
+		err_type->exists = true;
+		return 1;
+	}
+
+	if (!pnfs_ds_insert(pds)) {
+		LogCrit(COMPONENT_CONFIG,
+			"Server id %d already in use.",
+			pds->pds_number);
+		err_type->exists = true;
+		return 1;
+	}
 
 	LogEvent(COMPONENT_CONFIG,
 		 "DS %d created at FSAL (%s) with path (%s)",
-		 pds->pds_number, fsal->name, fsal->path);
+		 pds->pds_number, pds->fsal->name, pds->fsal->path);
 	return 0;
 }
 
@@ -161,11 +394,11 @@ static struct config_item fsal_params[] = {
  */
 
 static struct config_item pds_items[] = {
-	CONF_ITEM_UI32("Number", 0, INT32_MAX, 0,
+	CONF_ITEM_UI16("Number", 0, UINT16_MAX, 0,
 		       fsal_pnfs_ds, pds_number),
 	CONF_RELAX_BLOCK("FSAL", fsal_params,
 			 fsal_init, fsal_commit,
-			 fsal_pnfs_ds, servers), /* ??? placeholder */
+			 fsal_pnfs_ds, server), /* ??? placeholder */
 	CONFIG_EOL
 };
 
@@ -184,12 +417,12 @@ static struct config_block pds_block = {
 };
 
 /**
- * @brief Read the DS entries from the parsed configuration file.
+ * @brief Read the DS blocks from the parsed configuration file.
  *
  * @param[in]  in_config    The file that contains the DS list
  *
  * @return A negative value on error;
- *         otherwise, the number of DS entries.
+ *         otherwise, the number of DS blocks.
  */
 
 int ReadDataServers(config_file_t in_config)
@@ -206,4 +439,23 @@ int ReadDataServers(config_file_t in_config)
 		return -1;
 
 	return rc;
+}
+
+/**
+ * @brief Initialize server tree
+ */
+
+void server_pkginit(void)
+{
+	pthread_rwlockattr_t rwlock_attr;
+
+	assert(pthread_rwlockattr_init(&rwlock_attr) == 0);
+#ifdef GLIBC
+	assert(pthread_rwlockattr_setkind_np(
+		&rwlock_attr,
+		PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP) == 0);
+#endif
+	assert(pthread_rwlock_init(&server_by_id.lock, &rwlock_attr) == 0);
+	avltree_init(&server_by_id.t, server_id_cmpf, 0);
+	memset(&server_by_id.cache, 0, sizeof(server_by_id.cache));
 }

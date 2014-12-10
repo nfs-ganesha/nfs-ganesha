@@ -41,7 +41,6 @@
 #include "fsal_internal.h"
 #include "lustre_methods.h"
 #include "FSAL/fsal_init.h"
-#include "FSAL/fsal_commonlib.h"
 
 bool pnfs_enabled;
 
@@ -230,37 +229,6 @@ fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
 				   void *parse_node,
 				   const struct fsal_up_vector *up_ops);
 
-/**
- * @brief Try to create a FSAL data server handle
- *
- * @param[in]  pds      FSAL pNFS DS
- * @param[out] handle   FSAL DS handle
- *
- * @retval NFS4_OK, NFS4ERR_SERVERFAULT.
- */
-
-static nfsstat4 fsal_ds_handle(struct fsal_pnfs_ds *const pds,
-			       const struct gsh_buffdesc *const hdl_desc,
-			       struct fsal_ds_handle **const handle)
-{
-	struct lustre_ds *ds = gsh_calloc(1, sizeof(struct lustre_ds));
-
-	if (ds == NULL) {
-		*handle = NULL;
-		return NFS4ERR_SERVERFAULT;
-	}
-	*handle = &ds->ds;
-	fsal_ds_handle_init(*handle, pds);
-	ds_ops_init(&(*handle)->dsh_ops);
-
-	/* Connect lazily when a FILE_SYNC4 write forces us to, not
-	   here. */
-
-	ds->connected = false;
-
-	return NFS4_OK;
-}
-
 /* Module initialization.
  * Called by dlopen() to register the module
  * keep a private pointer to me in myself
@@ -274,7 +242,6 @@ static struct lustre_fsal_module LUSTRE;
 /* linkage to the exports and handle ops initializers
  */
 
-
 MODULE_INIT void lustre_init(void)
 {
 	int retval;
@@ -286,7 +253,9 @@ MODULE_INIT void lustre_init(void)
 		fprintf(stderr, "LUSTRE module failed to register");
 		return;
 	}
-	myself->m_ops.fsal_ds_handle = fsal_ds_handle;
+
+	/* Set up module operations */
+	myself->m_ops.fsal_pnfs_ds_ops = lustre_pnfs_ds_ops_init;
 	myself->m_ops.create_export = lustre_create_export;
 	myself->m_ops.init_config = lustre_init_config;
 	myself->m_ops.getdeviceinfo = lustre_getdeviceinfo;

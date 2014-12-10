@@ -319,7 +319,7 @@ fsal_status_t nullfs_create_export(struct fsal_module *fsal_hdl,
 	       sizeof(struct fsal_obj_ops));
 	memcpy(&next_ops.dsh_ops,
 	       myself->sub_export->dsh_ops,
-	       sizeof(struct fsal_ds_ops));
+	       sizeof(struct fsal_dsh_ops));
 #endif				/* EXPORT_OPS_INIT */
 	next_ops.up_ops = up_ops;
 

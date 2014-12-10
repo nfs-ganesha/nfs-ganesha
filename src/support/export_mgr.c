@@ -650,15 +650,13 @@ bool mount_gsh_export(struct gsh_export *exp)
 
 void put_gsh_export(struct gsh_export *export)
 {
-	int64_t refcount;
 	struct export_stats *export_st;
+	int64_t refcount = atomic_dec_int64_t(&export->refcnt);
 
-	assert(export->refcnt > 0);
-
-	refcount = atomic_dec_int64_t(&export->refcnt);
-
-	if (refcount != 0)
+	if (refcount != 0) {
+		assert(refcount > 0);
 		return;
+	}
 
 	/* Releasing last reference */
 

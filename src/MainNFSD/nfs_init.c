@@ -68,6 +68,7 @@
 #include <sys/capability.h>	/* For capget/capset */
 #endif
 #include "uid2grp.h"
+#include "pnfs_utils.h"
 
 
 /* global information exported to all layers (as extern vars) */
@@ -238,6 +239,7 @@ int nfs_set_param_from_conf(config_file_t parse_tree,
 	 */
 	client_pkginit();
 	export_pkginit();
+	server_pkginit();
 
 	/* Core parameters */
 	(void) load_config_from_parse(parse_tree,
