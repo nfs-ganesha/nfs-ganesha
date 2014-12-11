@@ -970,9 +970,9 @@ static struct config_item_list sec_types[] = {
  */
 
 static struct config_item_list squash_types[] = {
-	CONFIG_LIST_TOK("Root", 0),
-	CONFIG_LIST_TOK("Root_Squash", 0),
-	CONFIG_LIST_TOK("RootSquash", 0),
+	CONFIG_LIST_TOK("Root", EXPORT_OPTION_ROOT_SQUASH),
+	CONFIG_LIST_TOK("Root_Squash", EXPORT_OPTION_ROOT_SQUASH),
+	CONFIG_LIST_TOK("RootSquash", EXPORT_OPTION_ROOT_SQUASH),
 	CONFIG_LIST_TOK("All", EXPORT_OPTION_ALL_ANONYMOUS),
 	CONFIG_LIST_TOK("All_Squash", EXPORT_OPTION_ALL_ANONYMOUS),
 	CONFIG_LIST_TOK("AllSquash", EXPORT_OPTION_ALL_ANONYMOUS),
