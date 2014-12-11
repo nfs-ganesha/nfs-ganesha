@@ -58,7 +58,7 @@
 #include "uid2grp.h"
 #include "client_mgr.h"
 
-/* Expor permissions for root op context */
+/* Export permissions for root op context */
 uint32_t root_op_export_options = EXPORT_OPTION_ROOT |
 				  EXPORT_OPTION_ACCESS_TYPE |
 				  EXPORT_OPTION_AUTH_TYPES |
@@ -314,7 +314,7 @@ bool get_req_creds(struct svc_req *req)
 	}
 
 	/****************************************************************/
-	/* Mow check for anon creds or id squashing			*/
+	/* Now check for anon creds or id squashing			*/
 	/****************************************************************/
 	if ((op_ctx->cred_flags & CREDS_ANON) != 0 ||
 	    ((op_ctx->export_perms->options &
