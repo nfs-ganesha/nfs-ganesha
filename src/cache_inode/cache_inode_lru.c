@@ -1308,7 +1308,7 @@ void cache_inode_dec_pin_ref(cache_entry_t *entry, bool closefile)
 			++(q->size);
 		}
 
-		if (closefile == TRUE) {
+		if (closefile == true) {
 			cache_inode_close(entry,
 					  CACHE_INODE_FLAG_REALLYCLOSE |
 					  CACHE_INODE_FLAG_NOT_PINNED);

@@ -127,7 +127,7 @@ int _9p_symlink(struct _9p_request_data *req9p, void *worker_data,
 	}
 
 	/* This is not a TATTACH fid */
-	pfid->from_attach = FALSE;
+	pfid->from_attach = false;
 
 	cache_status = cache_inode_fileid(pentry_symlink, &fileid);
 

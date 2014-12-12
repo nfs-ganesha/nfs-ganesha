@@ -252,7 +252,7 @@ int _9p_tools_clunk(struct _9p_fid *pfid)
 
 	/* If the fid is related to a xattr, free the related memory */
 	if (pfid->specdata.xattr.xattr_content != NULL &&
-	    pfid->specdata.xattr.xattr_write == TRUE) {
+	    pfid->specdata.xattr.xattr_write == true) {
 		/* Check size give at TXATTRCREATE with
 		 * the one resulting from the writes */
 		if (pfid->specdata.xattr.xattr_size !=
@@ -263,12 +263,13 @@ int _9p_tools_clunk(struct _9p_fid *pfid)
 
 		/* Do we handle system.posix_acl_access */
 		if (pfid->specdata.xattr.xattr_id == ACL_ACCESS_XATTR_ID) {
-			fsal_status = pfid->pentry->obj_handle->obj_ops.
-				setextattr_value(pfid->pentry->obj_handle,
+			fsal_status =
+			    pfid->pentry->obj_handle->obj_ops.setextattr_value(
+					pfid->pentry->obj_handle,
 					"system.posix_acl_access",
 					pfid->specdata.xattr.xattr_content,
 					pfid->specdata.xattr.xattr_size,
-					FALSE);
+					false);
 		} else {
 			/* Write the xattr content */
 			fsal_status = pfid->pentry->obj_handle->obj_ops.

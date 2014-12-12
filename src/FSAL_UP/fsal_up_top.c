@@ -416,7 +416,6 @@ static state_status_t create_file_recall(cache_entry_t *entry,
 		goto out;
 	}
 
-	glist_init(&recall->entry_link);
 	glist_init(&recall->state_list);
 	recall->entry = entry;
 	recall->type = type;
@@ -430,7 +429,7 @@ static state_status_t create_file_recall(cache_entry_t *entry,
 		goto out;
 	}
 
-	glist_for_each(state_iter, &entry->state_list) {
+	glist_for_each(state_iter, &entry->list_of_states) {
 		/* Entry in the state list */
 		struct recall_state_list *list_entry = NULL;
 		/* Iterator over segments on this state */
@@ -495,7 +494,6 @@ static state_status_t create_file_recall(cache_entry_t *entry,
 				rc = STATE_MALLOC_ERROR;
 				goto out;
 			}
-			glist_init(&list_entry->link);
 			list_entry->state = s;
 			glist_add_tail(&recall->state_list, &list_entry->link);
 			none = false;
@@ -810,7 +808,7 @@ static int32_t layoutrec_completion(rpc_call_t *call, rpc_call_hook hook,
 		nfs4_return_one_state(state->state_entry,
 				      LAYOUTRETURN4_FILE, circumstance,
 				      state, cb_data->segment, 0, NULL,
-				      &deleted, true);
+				      &deleted);
 		PTHREAD_RWLOCK_unlock(&state->state_entry->state_lock);
 	}
 	free_layoutrec(&call->cbt.v_u.v4.args.argarray.argarray_val[1]);
@@ -856,8 +854,7 @@ static void return_one_async(void *arg)
 
 		nfs4_return_one_state(s->state_entry,
 				      LAYOUTRETURN4_FILE, circumstance_revoke,
-				      s, cb_data->segment, 0, NULL, &deleted,
-				      true);
+				      s, cb_data->segment, 0, NULL, &deleted);
 		PTHREAD_RWLOCK_unlock(&s->state_entry->state_lock);
 	}
 	release_root_op_context();
@@ -937,7 +934,7 @@ static void layoutrecall_one_call(void *arg)
 						      LAYOUTRETURN4_FILE,
 						      circumstance_revoke, s,
 						      cb_data->segment, 0, NULL,
-						      &deleted, true);
+						      &deleted);
 				gsh_free(cb_data);
 			}
 		} else {

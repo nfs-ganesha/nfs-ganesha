@@ -75,8 +75,8 @@ pthread_mutex_t all_state_v4_mutex = PTHREAD_MUTEX_INITIALIZER;
  *
  * @return Operation status
  */
-state_status_t state_add_impl(cache_entry_t *entry, state_type_t state_type,
-			      state_data_t *state_data,
+state_status_t state_add_impl(cache_entry_t *entry, enum state_type state_type,
+			      union state_data *state_data,
 			      state_owner_t *owner_input, state_t **state,
 			      struct state_refer *refer)
 {
@@ -86,7 +86,7 @@ state_status_t state_add_impl(cache_entry_t *entry, state_type_t state_type,
 	bool got_pinned = false;
 	state_status_t status = 0;
 
-	if (glist_empty(&entry->state_list)) {
+	if (glist_empty(&entry->list_of_states)) {
 		cache_status = cache_inode_inc_pin_ref(entry);
 
 		if (cache_status != CACHE_INODE_SUCCESS) {
@@ -120,7 +120,7 @@ state_status_t state_add_impl(cache_entry_t *entry, state_type_t state_type,
 				so_clientrec, pnew_state->stateid_other);
 
 	/* Set the type and data for this state */
-	memcpy(&(pnew_state->state_data), state_data, sizeof(state_data_t));
+	memcpy(&(pnew_state->state_data), state_data, sizeof(*state_data));
 	pnew_state->state_type = state_type;
 	pnew_state->state_seqid = 0;	/* will be incremented to 1 later */
 	pnew_state->state_entry = entry;
@@ -159,7 +159,7 @@ state_status_t state_add_impl(cache_entry_t *entry, state_type_t state_type,
 	}
 
 	/* Add state to list for cache entry */
-	glist_add_tail(&entry->state_list, &pnew_state->state_list);
+	glist_add_tail(&entry->list_of_states, &pnew_state->state_list);
 
 	inc_state_owner_ref(owner_input);
 
@@ -204,8 +204,9 @@ state_status_t state_add_impl(cache_entry_t *entry, state_type_t state_type,
  *
  * @return Operation status
  */
-state_status_t state_add(cache_entry_t *entry, state_type_t state_type,
-			 state_data_t *state_data, state_owner_t *owner_input,
+state_status_t state_add(cache_entry_t *entry, enum state_type state_type,
+			 union state_data *state_data,
+			 state_owner_t *owner_input,
 			 state_t **state, struct state_refer *refer)
 {
 	state_status_t status = 0;
@@ -294,7 +295,7 @@ void state_del_locked(state_t *state, cache_entry_t *entry)
 
 	LogFullDebug(COMPONENT_STATE, "Deleted state %s", debug_str);
 
-	if (glist_empty(&entry->state_list))
+	if (glist_empty(&entry->list_of_states))
 		cache_inode_dec_pin_ref(entry, false);
 }
 
@@ -331,10 +332,10 @@ void state_nfs4_state_wipe(cache_entry_t *entry)
 	struct glist_head *glist, *glistn;
 	state_t *state = NULL;
 
-	if (glist_empty(&entry->state_list))
+	if (glist_empty(&entry->list_of_states))
 		return;
 
-	glist_for_each_safe(glist, glistn, &entry->state_list) {
+	glist_for_each_safe(glist, glistn, &entry->list_of_states) {
 		state = glist_entry(glist, state_t, state_list);
 		state_del_locked(state, entry);
 	}

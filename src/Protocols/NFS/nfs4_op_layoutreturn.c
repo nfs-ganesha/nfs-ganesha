@@ -123,7 +123,7 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op, compound_data_t *data,
 				data,
 				STATEID_SPECIAL_CURRENT,
 				0,
-				FALSE,
+				false,
 				tag);
 
 			if (nfs_status != NFS4_OK) {
@@ -138,6 +138,8 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op, compound_data_t *data,
 		spec.length = arg_LAYOUTRETURN4->lora_layoutreturn.
 					layoutreturn4_u.lr_layout.lrf_length;
 
+		PTHREAD_RWLOCK_wrlock(&data->current_entry->state_lock);
+
 		res_LAYOUTRETURN4->lorr_status = nfs4_return_one_state(
 			data->current_entry,
 			arg_LAYOUTRETURN4->lora_layoutreturn.lr_returntype,
@@ -150,8 +152,9 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op, compound_data_t *data,
 				lr_layout.lrf_body.lrf_body_len,
 			arg_LAYOUTRETURN4->lora_layoutreturn.layoutreturn4_u.
 				lr_layout.lrf_body.lrf_body_val,
-				&deleted,
-				false);
+				&deleted);
+
+		PTHREAD_RWLOCK_unlock(&data->current_entry->state_lock);
 
 		if (res_LAYOUTRETURN4->lorr_status == NFS4_OK) {
 			if (deleted) {
@@ -239,6 +242,8 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op, compound_data_t *data,
 					continue;
 			}
 
+			PTHREAD_RWLOCK_wrlock(&data->current_entry->state_lock);
+
 			res_LAYOUTRETURN4->lorr_status = nfs4_return_one_state(
 			    layout_state->state_entry,
 			    arg_LAYOUTRETURN4->lora_layoutreturn.lr_returntype,
@@ -248,8 +253,9 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op, compound_data_t *data,
 			    spec,
 			    0,
 			    NULL,
-			    &deleted,
-			    false);
+			    &deleted);
+
+			PTHREAD_RWLOCK_unlock(&data->current_entry->state_lock);
 
 			if (res_LAYOUTRETURN4->lorr_status != NFS4_OK)
 				break;
@@ -368,6 +374,8 @@ void handle_recalls(struct fsal_layoutreturn_arg *arg, state_t *state,
  * the specified range and iomode.  If all layouts have been returned,
  * it deletes the state.
  *
+ * Must hold the state_lock in write mode.
+ *
  * @param[in]     entry        Cache entry whose layouts we return
  * @param[in]     return_type  Whether this is a file, fs, or server return
  * @param[in]     circumstance Why the layout is being returned
@@ -376,7 +384,6 @@ void handle_recalls(struct fsal_layoutreturn_arg *arg, state_t *state,
  * @param[in]     body_len     Length of type-specific layout return data
  * @param[in]     body_val     Type-specific layout return data
  * @param[out]    deleted      True if the layout state has been deleted
- * @param[in]     hold_lock    Whether to retain the state lock
  *
  * @return NFSv4.1 status codes
  */
@@ -387,7 +394,7 @@ nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
 			       state_t *layout_state,
 			       struct pnfs_segment spec_segment,
 			       size_t body_len, const void *body_val,
-			       bool *deleted, bool hold_lock)
+			       bool *deleted)
 {
 	/* Return from SAL calls */
 	state_status_t state_status = 0;
@@ -513,7 +520,7 @@ nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
 
 		if (glist_empty
 		    (&layout_state->state_data.layout.state_segments)) {
-			state_del(layout_state, hold_lock);
+			state_del(layout_state, true);
 			*deleted = true;
 		} else
 			*deleted = false;

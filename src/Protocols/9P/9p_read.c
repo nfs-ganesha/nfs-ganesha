@@ -106,7 +106,7 @@ int _9p_read(struct _9p_request_data *req9p, void *worker_data,
 		/* Copy the value cached during xattrwalk */
 		memcpy(databuffer, pfid->specdata.xattr.xattr_content + *offset,
 		       *count);
-		pfid->specdata.xattr.xattr_write = FALSE;
+		pfid->specdata.xattr.xattr_write = false;
 
 		outcount = (u32) *count;
 	} else {

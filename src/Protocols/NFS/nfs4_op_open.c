@@ -86,9 +86,7 @@ static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t *data,
 	/* The arguments to the open operation */
 	OPEN4args *args = &op->nfs_argop4_u.opopen;
 	/* The state to be added */
-	state_data_t candidate_data;
-	/* The type of state to add */
-	state_type_t candidate_type = STATE_TYPE_SHARE;
+	union state_data candidate_data;
 	/* Return value of state operations */
 	state_status_t state_status = STATE_SUCCESS;
 	/* Return value of Cache inode operations */
@@ -188,7 +186,7 @@ static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t *data,
 	/* Try to find if the same open_owner already has acquired a
 	 * stateid for this file
 	 */
-	glist_for_each(glist, &data->current_entry->state_list) {
+	glist_for_each(glist, &data->current_entry->list_of_states) {
 		state_iterate = glist_entry(glist, state_t, state_list);
 
 		if (state_iterate->state_type != STATE_TYPE_SHARE)
@@ -224,7 +222,7 @@ static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (*new_state) {
 		state_status = state_add_impl(data->current_entry,
-					      candidate_type,
+					      STATE_TYPE_SHARE,
 					      &candidate_data,
 					      owner,
 					      &file_state,
@@ -295,8 +293,7 @@ static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t *data,
 		}
 	} else {
 		/* If we find the previous share state, update share state. */
-		if ((candidate_type == STATE_TYPE_SHARE)
-		    && (file_state->state_type == STATE_TYPE_SHARE)) {
+		if (file_state->state_type == STATE_TYPE_SHARE) {
 			LogFullDebug(COMPONENT_STATE,
 				     "Update existing share state");
 			state_status = state_share_upgrade(
@@ -989,7 +986,7 @@ static void get_delegation(compound_data_t *data, OPEN4args *args,
 {
 	state_status_t state_status;
 	fsal_lock_param_t lock_desc;
-	state_data_t deleg_data;
+	union state_data deleg_data;
 	open_delegation_type4 deleg_type;
 	state_owner_t *clientowner = &client->cid_owner;
 	struct state_refer refer;

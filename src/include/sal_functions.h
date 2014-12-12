@@ -536,13 +536,14 @@ void cancel_all_nlm_blocked();
  *
  ******************************************************************************/
 
-state_status_t state_add_impl(cache_entry_t *entry, state_type_t state_type,
-			      state_data_t *state_data,
+state_status_t state_add_impl(cache_entry_t *entry, enum state_type state_type,
+			      union state_data *state_data,
 			      state_owner_t *owner_input, state_t **state,
 			      struct state_refer *refer);
 
-state_status_t state_add(cache_entry_t *entry, state_type_t state_type,
-			 state_data_t *state_data, state_owner_t *owner_input,
+state_status_t state_add(cache_entry_t *entry, enum state_type state_type,
+			 union state_data *state_data,
+			 state_owner_t *owner_input,
 			 state_t **state, struct state_refer *refer);
 
 state_status_t state_set(state_t *state);
@@ -582,7 +583,7 @@ bool can_we_grant_deleg(cache_entry_t *entry, state_t *open_state);
 bool should_we_grant_deleg(cache_entry_t *entry, nfs_client_id_t *client,
 			   state_t *open_state, OPEN4args *args,
 			   state_owner_t *owner, bool *prerecall);
-void init_new_deleg_state(state_data_t *deleg_state,
+void init_new_deleg_state(union state_data *deleg_state,
 			  open_delegation_type4 sd_type,
 			  nfs_client_id_t *clientid);
 struct deleg_data *create_deleg_data(cache_entry_t *entry, state_t *state,
@@ -624,22 +625,23 @@ state_status_t state_share_remove(cache_entry_t *entry,
 
 state_status_t state_share_upgrade(cache_entry_t *entry,
 				   /* new share bits */
-				   state_data_t *state_data,
+				   union state_data *state_data,
 				   state_owner_t *owner,
 				   /* state that holds current share bits */
 				   state_t *state, bool reclaim);
 
 state_status_t state_share_downgrade(cache_entry_t *entry,
 				     /* new share bits */
-				     state_data_t *state_data,
+				     union state_data *state_data,
 				     state_owner_t *owner,
 				     /* state that holds current share bits */
 				     state_t *state);
 
-state_status_t state_share_set_prev(state_t *state, state_data_t *state_data);
+state_status_t state_share_set_prev(state_t *state,
+				    union state_data *state_data);
 
 state_status_t state_share_check_prev(state_t *state,
-				      state_data_t *state_data);
+				      union state_data *state_data);
 
 enum share_bypass_modes {
 	SHARE_BYPASS_NONE,

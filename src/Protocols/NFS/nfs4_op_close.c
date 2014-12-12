@@ -55,7 +55,7 @@ void cleanup_layouts(compound_data_t *data)
 	 * return_on_close.
 	 */
 
-	glist_for_each(glist, &data->current_entry->state_list) {
+	glist_for_each(glist, &data->current_entry->list_of_states) {
 		state_t *state = glist_entry(glist, state_t,
 					     state_list);
 
@@ -69,7 +69,7 @@ void cleanup_layouts(compound_data_t *data)
 
 	glist_for_each_safe(glist,
 			    glistn,
-			    &data->current_entry->state_list) {
+			    &data->current_entry->list_of_states) {
 		state_t *state = glist_entry(glist, state_t,
 					     state_list);
 		bool deleted = false;
@@ -90,8 +90,7 @@ void cleanup_layouts(compound_data_t *data)
 					      entire,
 					      0,
 					      NULL,
-					      &deleted,
-					      true);
+					      &deleted);
 			if (!deleted) {
 				LogCrit(COMPONENT_PNFS,
 					"Layout state not destroyed on last close return.");
@@ -157,11 +156,11 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 					data->minorversion == 0 ?
 					    STATEID_SPECIAL_FOR_CLOSE_40 :
 					    STATEID_SPECIAL_FOR_CLOSE_41,
-					0,
-					FALSE, /* don't check owner seqid */
+					arg_CLOSE4->seqid,
+					data->minorversion == 0,
 					close_tag);
 
-	if (nfs_status != NFS4_OK) {
+	if (nfs_status != NFS4_OK && nfs_status != NFS4ERR_REPLAY) {
 		res_CLOSE4->status = nfs_status;
 		LogDebug(COMPONENT_STATE, "CLOSE failed nfs4_Check_Stateid");
 		return res_CLOSE4->status;

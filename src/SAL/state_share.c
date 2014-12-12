@@ -259,7 +259,7 @@ state_status_t state_share_remove(cache_entry_t *entry,
  * @return State status.
  */
 state_status_t state_share_upgrade(cache_entry_t *entry,
-				   state_data_t *state_data,
+				   union state_data *state_data,
 				   state_owner_t *owner, state_t *state,
 				   bool reclaim)
 {
@@ -344,7 +344,7 @@ state_status_t state_share_upgrade(cache_entry_t *entry,
  * @return State status.
  */
 state_status_t state_share_downgrade(cache_entry_t *entry,
-				     state_data_t *state_data,
+				     union state_data *state_data,
 				     state_owner_t *owner, state_t *state)
 {
 	state_status_t status = STATE_SUCCESS;
@@ -422,7 +422,8 @@ state_status_t state_share_downgrade(cache_entry_t *entry,
  * @param[in] state      State to update
  * @param[in] state_data Previous modes to add
  */
-state_status_t state_share_set_prev(state_t *state, state_data_t *state_data)
+state_status_t state_share_set_prev(state_t *state,
+				    union state_data *state_data)
 {
 	state_status_t status = STATE_SUCCESS;
 
@@ -444,7 +445,7 @@ state_status_t state_share_set_prev(state_t *state, state_data_t *state_data)
  * @param[in] state_data Alleged previous mode
  */
 state_status_t state_share_check_prev(state_t *state,
-				      state_data_t *state_data)
+				      union state_data *state_data)
 {
 	state_status_t status = STATE_SUCCESS;
 

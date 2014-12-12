@@ -91,11 +91,11 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op, compound_data_t *data,
 				&state_found,
 				data,
 				STATEID_SPECIAL_FOR_LOCK,
-				0,
-				false,
+				arg_OPEN_DOWNGRADE4->seqid,
+				data->minorversion == 0,
 				tag);
 
-	if (rc != NFS4_OK) {
+	if (rc != NFS4_OK && rc != NFS4ERR_REPLAY) {
 		res_OPEN_DOWNGRADE4->status = rc;
 		LogDebug(COMPONENT_STATE,
 			 "OPEN_DOWNGRADE failed nfs4_Check_Stateid");
@@ -221,7 +221,7 @@ static nfsstat4 nfs4_do_open_downgrade(struct nfs_argop4 *op,
 				       state_owner_t *owner, state_t *state,
 				       char **cause)
 {
-	state_data_t candidate_data;
+	union state_data candidate_data;
 	state_status_t state_status;
 	OPEN_DOWNGRADE4args *args = &op->nfs_argop4_u.opopen_downgrade;
 

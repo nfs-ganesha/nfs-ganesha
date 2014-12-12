@@ -269,7 +269,7 @@ typedef struct cache_inode_share__ {
  */
 typedef struct cache_inode_key {
 	uint64_t hk;		/* hash key */
-	struct fsal_module *fsal;	/*< fsal module */
+	void *fsal;		/*< fsal module */
 	struct gsh_buffdesc kv;		/*< fsal handle */
 } cache_inode_key_t;
 
@@ -470,7 +470,7 @@ struct cache_entry_t {
 	    that should not see changes in state. */
 	pthread_rwlock_t state_lock;
 	/** States on this cache entry */
-	struct glist_head state_list;
+	struct glist_head list_of_states;
 	/** Exports per entry (protected by attr_lock) */
 	struct glist_head export_list;
 	/** Atomic pointer to the first mapped export for fast path */
@@ -665,7 +665,7 @@ cache_inode_get_protected(cache_entry_t **entry,
 			  cache_inode_status_t get_entry(cache_entry_t **,
 							 void *),
 			  void *source);
-void cache_inode_put(cache_entry_t *entry);
+
 void cache_inode_unexport(struct gsh_export *export);
 
 cache_inode_status_t cache_inode_access_sw(cache_entry_t *entry,

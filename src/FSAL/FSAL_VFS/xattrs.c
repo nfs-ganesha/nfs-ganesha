@@ -114,10 +114,10 @@ static int attr_is_read_only(unsigned int attr_index)
 {
 	if (attr_index < XATTR_COUNT) {
 		if (xattr_list[attr_index].flags & XATTR_RO)
-			return TRUE;
+			return true;
 	}
 	/* else : standard xattr */
-	return FALSE;
+	return false;
 }
 
 
@@ -354,7 +354,7 @@ fsal_status_t vfs_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
 
 	/* save a call if output array is full */
 	if (out_index == xattrs_tabsize) {
-		*end_of_list = FALSE;
+		*end_of_list = false;
 		*p_nb_returned = out_index;
 		return fsalstat(ERR_FSAL_NO_ERROR, 0);
 	}
@@ -407,11 +407,11 @@ fsal_status_t vfs_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
 		}
 		/* all xattrs are in the output array */
 		if (ptr >= names + namesize)
-			*end_of_list = TRUE;
+			*end_of_list = true;
 		else
-			*end_of_list = FALSE;
+			*end_of_list = false;
 	} else			/* no xattrs */
-		*end_of_list = TRUE;
+		*end_of_list = true;
 
 	*p_nb_returned = out_index;
 
@@ -651,7 +651,7 @@ fsal_status_t vfs_setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 	close(fd);
 
 	return vfs_setextattr_value(obj_hdl, name, buffer_addr,
-				    buffer_size, FALSE);
+				    buffer_size, false);
 }
 
 fsal_status_t vfs_getextattr_attrs(struct fsal_obj_handle *obj_hdl,

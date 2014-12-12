@@ -28,6 +28,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <unistd.h>
 #include <string.h>
 #include <strings.h>
@@ -47,6 +48,24 @@
 
 #define MAXSTR 1024
 #define MAXFPOS 16
+
+/* If not otherwise defined, define OFD locks */
+#ifndef F_OFD_GETLK
+#define F_OFD_GETLK	36
+#endif
+
+#ifndef F_OFD_SETLK
+#define F_OFD_SETLK	37
+#endif
+
+#ifndef F_OFD_SETLKW
+#define F_OFD_SETLKW	38
+#endif
+
+enum lock_mode {
+	LOCK_MODE_POSIX = 0,
+	LOCK_MODE_OFD = 1,
+};
 
 int readln(FILE *in, char *buf, int buflen);
 
@@ -180,7 +199,8 @@ char *get_token_value(char *line, int *value, struct token *tokens,
 		      bool optional, enum requires_more requires_more,
 		      const char *invalid);
 char *get_status(char *line, struct response *resp);
-char *get_open_opts(char *line, long int *fpos, int *flags, int *mode);
+char *get_open_opts(char *line, long int *fpos, int *flags, int *mode,
+		    int *lock_mode);
 char *parse_response(char *line, struct response *resp);
 char *parse_request(char *line, struct response *req, int no_tag);
 char *get_on_off(char *line, bool *value);

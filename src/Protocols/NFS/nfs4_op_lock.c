@@ -65,9 +65,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 	/* Status code from state calls */
 	state_status_t state_status = STATE_SUCCESS;
 	/* Data for lock state to be created */
-	state_data_t candidate_data;
-	/* Type of lock state */
-	state_type_t candidate_type = STATE_TYPE_LOCK;
+	union state_data candidate_data;
 	/* Status code for protocol functions */
 	nfsstat4 nfs_status = 0;
 	/* Created or found lock state */
@@ -166,7 +164,6 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 
 		if (nfs_status != NFS4_OK) {
 			if ((nfs_status == NFS4ERR_REPLAY)
-			    && (state_open != NULL)
 			    && (state_open->state_owner != NULL)) {
 				open_owner = state_open->state_owner;
 				resp_owner = open_owner;
@@ -265,7 +262,6 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 
 		if (nfs_status != NFS4_OK) {
 			if ((nfs_status == NFS4ERR_REPLAY)
-			    && (lock_state != NULL)
 			    && (lock_state->state_owner != NULL)) {
 				lock_owner = lock_state->state_owner;
 				open_owner = lock_owner->so_owner.so_nfs4_owner.
@@ -489,7 +485,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 
 		/* Add the lock state to the lock table */
 		state_status = state_add(data->current_entry,
-					 candidate_type,
+					 STATE_TYPE_LOCK,
 					 &candidate_data,
 					 lock_owner,
 					 &lock_state,
