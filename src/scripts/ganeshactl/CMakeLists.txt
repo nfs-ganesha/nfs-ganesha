@@ -14,6 +14,7 @@ set(GANESHA_SRCS
   Ganesha/QtUI/log_settings.py
   Ganesha/io_stats.py
   Ganesha/glib_dbus_stats.py
+  Ganesha/ganesha_mgr_utils.py
   )
 
 # Command line scripts
@@ -22,6 +23,7 @@ set(SCRIPT_SRC
   get_clientids.py
   grace_period.py
   purge_gids.py
+  ganesha_mgr.py
   ganeshactl.py
   ganesha-admin.py
   ganesha_stats.py

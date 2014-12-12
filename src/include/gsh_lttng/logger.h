@@ -34,6 +34,6 @@ TRACEPOINT_LOGLEVEL(
 #endif /* GANESHA_LTTNG_LOG_TP_H */
 
 #undef TRACEPOINT_INCLUDE
-#define TRACEPOINT_INCLUDE "ganesha_lttng/logger.h"
+#define TRACEPOINT_INCLUDE "gsh_lttng/logger.h"
 
 #include <lttng/tracepoint-event.h>
