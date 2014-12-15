@@ -72,6 +72,12 @@
 %global with_rdma 0
 %endif
 
+%if %{?_with_jemalloc:1}%{!?_with_jemalloc:0}
+%global with_jemalloc 1
+%else
+%global with_jemalloc 0
+%endif
+
 %if %{?_with_lustre_up:1}%{!?_with_lustre_up:0}
 %global with_lustre_up 1
 %else
@@ -121,6 +127,9 @@ BuildRequires:	nfs-utils-lib-devel
 %endif
 %if %{with_rdma}
 BuildRequires:	libmooshika-devel >= 0.6-0
+%endif
+%if %{with_jemalloc}
+BuildRequires:	jemalloc-devel
 %endif
 %if %{with_lustre_up}
 BuildRequires: lcap-devel >= 0.1-0
@@ -372,6 +381,9 @@ cmake .	-DCMAKE_BUILD_TYPE=Debug			\
 %if %{with_rdma}
 	-DUSE_9P_RDMA=ON				\
 %endif
+%if %{with_jemalloc}
+	-DALLOCATOR=jemalloc				\
+%endif
 %if %{with_lustre_up}
 	-DUSE_FSAL_LUSTRE_UP=ON				\
 %endif
@@ -609,6 +621,9 @@ make DESTDIR=%{buildroot} install
 
 
 %changelog
+* Mon Dec 15 2014 Niels de Vos <ndevos@redhat.com>
+- Enable building against jemalloc.
+
 * Thu Nov 20 2014 Niels de Vos <ndevos@redhat.com>
 - Include the systemd unit in RHEL7.
 - Include the nfs-ganesha-lock systemd unit.

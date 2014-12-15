@@ -1166,6 +1166,10 @@ if(USE_9P_RDMA)
     set( WITH_ARG "${WITH_ARG} --with rdma")
 endif(USE_9P_RDMA)
 
+if(${ALLOCATOR} STREQUAL "jemalloc")
+    set( WITH_ARG "${WITH_ARG} --with jemalloc")
+endif(${ALLOCATOR} STREQUAL "jemalloc")
+
 if(USE_ADMIN_TOOLS)
     set( WITH_ARG "${WITH_ARG} --with utils")
 endif(USE_ADMIN_TOOLS)
