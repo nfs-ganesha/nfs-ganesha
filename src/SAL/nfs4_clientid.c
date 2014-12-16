@@ -1002,9 +1002,9 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid, bool make_stale)
 			display_owner(&dspbuf, owner);
 
 			if (refcount > 1)
-				LogWarn(COMPONENT_CLIENTID,
-					"Expired State, Possibly extra references to {%s}",
-					str);
+				LogFatal(COMPONENT_CLIENTID,
+					 "Expired State, Possibly extra references to {%s}",
+					 str);
 			else
 				LogFullDebug(COMPONENT_CLIENTID,
 					     "Expired State for {%s}", str);
