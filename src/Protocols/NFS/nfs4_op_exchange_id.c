@@ -128,8 +128,8 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op, compound_data_t *data,
 		if (pnfs_flags == 0)
 			pnfs_flags |= EXCHGID4_FLAG_USE_NON_PNFS;
 	}
-	LogDebug(COMPONENT_CLIENTID, "EXCHANGE_ID pnfs_flags 0x%08x\n",
-								pnfs_flags);
+	LogDebug(COMPONENT_CLIENTID, "EXCHANGE_ID pnfs_flags 0x%08x",
+		 pnfs_flags);
 
 	update = (arg_EXCHANGE_ID4->eia_flags &
 		  EXCHGID4_FLAG_UPD_CONFIRMED_REC_A) != 0;
