@@ -67,6 +67,17 @@ int display_owner(struct display_buffer *dspbuf, state_owner_t *owner);
 void inc_state_owner_ref(state_owner_t *owner);
 void dec_state_owner_ref(state_owner_t *owner);
 
+#define LogStateOwner(note, owner) \
+	do { \
+		if (isFullDebug(COMPONENT_STATE)) { \
+			char str[LOG_BUFF_LEN]; \
+			struct display_buffer dspbuf = { \
+						sizeof(str), str, str}; \
+			display_owner(&dspbuf, owner); \
+			LogFullDebug(COMPONENT_STATE, "%s%s", note, str); \
+		} \
+	} while (0)
+
 state_owner_t *get_state_owner(care_t care, state_owner_t *pkey,
 			       state_owner_init_t init_owner, bool_t *isnew);
 
