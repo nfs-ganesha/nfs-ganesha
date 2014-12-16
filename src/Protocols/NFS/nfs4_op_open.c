@@ -496,6 +496,8 @@ bool open4_open_owner(struct nfs_argop4 *op, compound_data_t *data,
 				   &isnew,
 				   CARE_ALWAYS);
 
+	LogStateOwner("Open: ", *owner);
+
 	if (*owner == NULL) {
 		res_OPEN4->status = NFS4ERR_RESOURCE;
 		LogEvent(COMPONENT_STATE,
@@ -1429,6 +1431,9 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 	if (arg_OPEN4->claim.claim)
 		openflags |= FSAL_O_RECLAIM;
 
+	/* This is safe because data->current_entry has already changed if
+	 * not a CLAIM_PREVIOUS.
+	 */
 	PTHREAD_RWLOCK_wrlock(&data->current_entry->state_lock);
 
 	res_OPEN4->status = open4_do_open(op,
@@ -1442,6 +1447,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 	if (res_OPEN4->status == NFS4_OK)
 		do_delegation(arg_OPEN4, res_OPEN4, data, owner, file_state,
 			      clientid);
+
 	PTHREAD_RWLOCK_unlock(&data->current_entry->state_lock);
 
 	if (res_OPEN4->status != NFS4_OK) {

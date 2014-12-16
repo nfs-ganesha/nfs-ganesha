@@ -174,6 +174,8 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t *data,
 				       NULL,
 				       CARE_ALWAYS);
 
+	LogStateOwner("Lock: ", lock_owner);
+
 	if (lock_owner == NULL) {
 		LogEvent(COMPONENT_NFS_V4_LOCK,
 			 "LOCKT unable to create lock owner");
@@ -203,6 +205,8 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t *data,
 		/* A conflicting lock from a different lock_owner,
 		 * returns NFS4ERR_DENIED
 		 */
+		LogStateOwner("Conflict: ", conflict_owner);
+
 		Process_nfs4_conflict(&res_LOCKT4->LOCKT4res_u.denied,
 				      conflict_owner,
 				      &conflict_desc);

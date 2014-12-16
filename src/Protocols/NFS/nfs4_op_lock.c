@@ -162,6 +162,8 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 			if (nfs_status == NFS4ERR_REPLAY) {
 				open_owner = get_state_owner_ref(state_open);
 
+				LogStateOwner("Open: ", open_owner);
+
 				if (open_owner != NULL) {
 					resp_owner = open_owner;
 					seqid = arg_LOCK4->locker.locker4_u
@@ -177,6 +179,8 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 		}
 
 		open_owner = get_state_owner_ref(state_open);
+
+		LogStateOwner("Open: ", open_owner);
 
 		if (open_owner == NULL) {
 			/* State is going stale. */
@@ -242,6 +246,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 		/* Is this lock_owner known ? */
 		convert_nfs4_lock_owner(&arg_LOCK4->locker.locker4_u.open_owner.
 					lock_owner, &owner_name);
+		LogStateOwner("Lock: ", lock_owner);
 	} else {
 		/* Existing lock owner Find the lock stateid From
 		 * that, get the open_owner
@@ -267,6 +272,8 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 		if (nfs_status != NFS4_OK) {
 			if (nfs_status == NFS4ERR_REPLAY) {
 				lock_owner = get_state_owner_ref(lock_state);
+
+				LogStateOwner("Lock: ", lock_owner);
 
 				if (lock_owner != NULL) {
 					open_owner = lock_owner->so_owner
@@ -312,6 +319,8 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 		 */
 		lock_owner = get_state_owner_ref(lock_state);
 
+		LogStateOwner("Lock: ", lock_owner);
+
 		if (lock_owner == NULL) {
 			/* State is going stale. */
 			res_LOCK4->status = NFS4ERR_STALE;
@@ -322,6 +331,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 
 		open_owner =
 			lock_owner->so_owner.so_nfs4_owner.so_related_owner;
+		LogStateOwner("Open: ", open_owner);
 		inc_state_owner_ref(open_owner);
 		state_open = lock_state->state_data.lock.openstate;
 		inc_state_t_ref(state_open);
@@ -453,6 +463,8 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 					       0,
 					       &isnew,
 					       CARE_ALWAYS);
+
+		LogStateOwner("Lock: ", lock_owner);
 
 		if (lock_owner == NULL) {
 			res_LOCK4->status = NFS4ERR_RESOURCE;
@@ -626,6 +638,9 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (lock_state != NULL)
 		dec_state_t_ref(lock_state);
+
+	LogStateOwner("Open: ", open_owner);
+	LogStateOwner("Lock: ", lock_owner);
 
 	if (open_owner != NULL)
 		dec_state_owner_ref(open_owner);
