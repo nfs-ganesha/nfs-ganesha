@@ -942,7 +942,7 @@ void dump_all_states(void)
 	state_t *state;
 	state_owner_t *owner;
 
-	if (!isDebug(COMPONENT_STATE))
+	if (!isFullDebug(COMPONENT_STATE))
 		return;
 
 	pthread_mutex_lock(&all_state_v4_mutex);
@@ -950,8 +950,7 @@ void dump_all_states(void)
 	if (!glist_empty(&state_v4_all)) {
 		struct glist_head *glist;
 
-		LogDebug(COMPONENT_STATE,
-			 " =State List= ");
+		LogFullDebug(COMPONENT_STATE, " =State List= ");
 
 		glist_for_each(glist, &state_v4_all) {
 			char str1[LOG_BUFF_LEN / 2];
@@ -967,17 +966,17 @@ void dump_all_states(void)
 			display_owner(&dspbuf1, owner);
 			display_stateid(&dspbuf2, state);
 
-			LogDebug(COMPONENT_STATE, "State {%s} owner {%s}",
-				 str2, str1);
+			LogFullDebug(COMPONENT_STATE,
+				     "State {%s} owner {%s}",
+				     str2, str1);
 
 			if (owner != NULL)
 				dec_state_owner_ref(owner);
 		}
 
-		LogDebug(COMPONENT_STATE,
-			 " ----------------------");
+		LogFullDebug(COMPONENT_STATE, " ----------------------");
 	} else
-		LogDebug(COMPONENT_STATE, "All states released");
+		LogFullDebug(COMPONENT_STATE, "All states released");
 
 	pthread_mutex_unlock(&all_state_v4_mutex);
 }

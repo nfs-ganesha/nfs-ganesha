@@ -1263,7 +1263,7 @@ void state_wipe_file(cache_entry_t *entry)
 #ifdef DEBUG_SAL
 void dump_all_owners(void)
 {
-	if (!isDebug(COMPONENT_STATE))
+	if (!isFullDebug(COMPONENT_STATE))
 		return;
 
 	pthread_mutex_lock(&all_state_owners_mutex);
@@ -1273,21 +1273,20 @@ void dump_all_owners(void)
 		struct display_buffer dspbuf = {sizeof(str), str, str};
 		struct glist_head *glist;
 
-		LogDebug(COMPONENT_STATE,
-			 " ---------------------- State Owner List ----------------------");
+		LogFullDebug(COMPONENT_STATE,
+			     " ---------------------- State Owner List ----------------------");
 
 		glist_for_each(glist, &state_owners_all) {
 			display_reset_buffer(&dspbuf);
 			display_owner(&dspbuf, glist_entry(glist,
 							   state_owner_t,
 							   so_all_owners));
-			LogDebug(COMPONENT_STATE, "{%s}", str);
+			LogFullDebug(COMPONENT_STATE, "{%s}", str);
 		}
 
-		LogDebug(COMPONENT_STATE,
-			 " ----------------------");
+		LogFullDebug(COMPONENT_STATE, " ----------------------");
 	} else
-		LogDebug(COMPONENT_STATE, "All state owners released");
+		LogFullDebug(COMPONENT_STATE, "All state owners released");
 
 	pthread_mutex_unlock(&all_state_owners_mutex);
 }
