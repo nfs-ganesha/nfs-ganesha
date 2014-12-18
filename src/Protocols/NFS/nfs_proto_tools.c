@@ -1141,23 +1141,50 @@ static fattr_xdr_result decode_files_total(XDR *xdr,
 static fattr_xdr_result encode_fs_locations(XDR *xdr,
 					    struct xdr_attrs_args *args)
 {
-/** todo the parse part should be done at export time to a simple struct
- *  the parse is memory and memcpy hungry! NOOP it for now.
- */
-/* if(data->current_entry->type != DIRECTORY) */
-/*   { */
-/*  continue; */
-/*   } */
+	fsal_status_t st;
+	fs_locations4 fs_locs;
+	fs_location4 fs_loc;
+	component4 fs_path;
+	component4 fs_root;
+	component4 fs_server;
+	char root[MNTNAMLEN];
+	char path[MNTNAMLEN];
+	char server[MNTNAMLEN];
 
-/* if(!nfs4_referral_str_To_Fattr_fs_location */
-/*    (data->current_entry->object.dir.referral, tmp_buff, &tmp_int)) */
-/*   { */
-/*  continue; */
-/*   } */
+	if (args->data == NULL || args->data->current_entry == NULL)
+		return FATTR_XDR_NOOP;
 
-/* memcpy((char *)(current_pos), tmp_buff, tmp_int); */
-/* LastOffset += tmp_int; */
-/* break; */
+	if (args->data->current_entry->type != DIRECTORY)
+		return FATTR_XDR_NOOP;
+
+	fs_root.utf8string_len = MNTNAMLEN;
+	fs_root.utf8string_val = root;
+	fs_path.utf8string_len = MNTNAMLEN;
+	fs_path.utf8string_val = path;
+	fs_locs.fs_root.pathname4_len = 1;
+	fs_locs.fs_root.pathname4_val = &fs_path;
+	fs_server.utf8string_len = MNTNAMLEN;
+	fs_server.utf8string_val = server;
+	fs_loc.server.server_len = 1;
+	fs_loc.server.server_val = &fs_server;
+	fs_loc.rootpath.pathname4_len = 1;
+	fs_loc.rootpath.pathname4_val = &fs_root;
+	fs_locs.locations.locations_len = 1;
+	fs_locs.locations.locations_val = &fs_loc;
+
+	/* For now allow for one fs locations, fs_locations() should set:
+	   root and update its length, can not be bigger than MNTNAMLEN
+	   path and update its length, can not be bigger than MNTNAMLEN
+	   server and update its length, can not be bigger than MNTNAMELEN
+	*/
+	st = args->data->current_entry->obj_handle->obj_ops.fs_locations(
+					args->data->current_entry->obj_handle,
+					&fs_locs);
+	if (FSAL_IS_ERROR(st))
+		return FATTR_XDR_NOOP;
+
+	if (!xdr_fs_locations4(xdr, &fs_locs))
+		return FATTR_XDR_FAILED;
 
 	return FATTR_XDR_SUCCESS;
 }
@@ -2541,7 +2568,7 @@ const struct fattr4_dent fattr4tab[FATTR4_SEC_LABEL + 1] = {
 	,
 	[FATTR4_FS_LOCATIONS] = {
 		.name = "FATTR4_FS_LOCATIONS",
-		.supported = 0,
+		.supported = 1,
 		.size_fattr4 = sizeof(fattr4_fs_locations),
 		.encode = encode_fs_locations,
 		.decode = decode_fs_locations,
@@ -4108,4 +4135,20 @@ nfsstat4 nfs4_utf8string2dynamic(const utf8string *input,
 	else
 		gsh_free(name);
 	return status;
+}
+
+/**
+ * @brief: is a directory's sticky bit set?
+ *
+ */
+bool is_sticky_bit_set(const struct attrlist *attr)
+{
+	if (attr->mode & (S_IXUSR|S_IXGRP|S_IXOTH))
+		return false;
+
+	if (!(attr->mode & S_ISVTX))
+		return false;
+
+	LogDebug(COMPONENT_NFS_V4, "sticky bit is set on %ld", attr->fileid);
+	return true;
 }

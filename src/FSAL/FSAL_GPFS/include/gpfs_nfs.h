@@ -92,6 +92,7 @@ struct flock
 #define OPENHANDLE_STATFS_BY_FH   143
 #define OPENHANDLE_TRACE_ME       150
 #define OPENHANDLE_QUOTA          151
+#define OPENHANDLE_FS_LOCATIONS   152
 
 struct trace_arg
 {
@@ -657,6 +658,17 @@ struct xstat_arg
     struct stat *buf;
     struct fsal_fsid *fsid;
     uint32_t *expire_attr;
+};
+
+struct fs_loc_arg {
+    int mountdirfd;
+    struct gpfs_file_handle *handle;
+    int fs_root_len;
+    char *fs_root;
+    int fs_path_len;
+    char *fs_path;
+    int fs_server_len;
+    char *fs_server;
 };
 
 struct xstat_access_arg

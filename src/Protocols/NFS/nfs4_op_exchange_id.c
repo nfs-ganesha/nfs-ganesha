@@ -333,6 +333,7 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op, compound_data_t *data,
 	    unconf->cid_create_session_sequence;
 
 	res_EXCHANGE_ID4_ok->eir_flags |= client_record->cr_pnfs_flags;
+	res_EXCHANGE_ID4_ok->eir_flags |= EXCHGID4_FLAG_SUPP_MOVED_REFER;
 
 	res_EXCHANGE_ID4_ok->eir_state_protect.spr_how = SP4_NONE;
 
