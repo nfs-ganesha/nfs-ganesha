@@ -72,7 +72,8 @@ struct gpfs_ds {
 		ATTR_MODE     | ATTR_NUMLINKS | ATTR_OWNER     | \
 		ATTR_GROUP    | ATTR_ATIME    | ATTR_RAWDEV    | \
 		ATTR_CTIME    | ATTR_MTIME    | ATTR_SPACEUSED | \
-		ATTR_CHGTIME | ATTR_ACL | ATTR4_SPACE_RESERVED)
+		ATTR_CHGTIME | ATTR_ACL | ATTR4_SPACE_RESERVED | \
+		ATTR4_FS_LOCATIONS)
 
 /* Define the buffer size for GPFS NFS4 ACL. */
 #define GPFS_ACL_BUF_SIZE 0x1000
@@ -199,6 +200,13 @@ fsal_status_t GPFSFSAL_getattrs(struct fsal_export *export,	/* IN */
 				const struct req_op_context *p_context,	/* IN */
 				struct gpfs_file_handle *p_filehandle,	/* IN */
 				struct attrlist *p_object_attributes); /* IO */
+
+fsal_status_t GPFSFSAL_fs_loc(struct fsal_export *export,	/* IN */
+				struct gpfs_filesystem *gpfs_fs, /* IN */
+				const struct req_op_context *p_context,	/* IN */
+				struct gpfs_file_handle *p_filehandle,	/* IN */
+				struct attrlist *p_object_attributes,  /* OUT */
+				struct fs_locations4 *fs_loc);         /* OUT */
 
 fsal_status_t GPFSFSAL_statfs(int fd,				/* IN */
 			      struct fsal_obj_handle *obj_hdl,	/* IN */

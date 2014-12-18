@@ -48,6 +48,59 @@ extern fsal_status_t fsal_acl_2_gpfs_acl(fsal_acl_t *p_fsalacl,
 #endif				/* _USE_NFS4_ACL */
 
 /**
+ * GPFSFSAL_fs_loc:
+ * Get fs_locations attribute for the object specified by its filehandle.
+ *
+ * \return Major error codes :
+ *        - ERR_FSAL_NO_ERROR     (no error)
+ *        - Another error code if an error occured.
+ */
+fsal_status_t GPFSFSAL_fs_loc(struct fsal_export *export,	/* IN */
+				struct gpfs_filesystem *gpfs_fs, /* IN */
+				const struct req_op_context *p_context,	/* IN */
+				struct gpfs_file_handle *p_filehandle,	/* IN */
+				struct attrlist *p_object_attributes,  /* OUT */
+				struct fs_locations4 *fs_locs)         /* OUT */
+{
+	int errsv, rc;
+	struct fs_loc_arg fs_loc;
+
+	fs_loc.fs_path_len = fs_locs->fs_root.pathname4_val->utf8string_len;
+	fs_loc.fs_path = fs_locs->fs_root.pathname4_val->utf8string_val;
+	fs_loc.fs_server_len = fs_locs->locations.locations_val->
+					server.server_val->utf8string_len;
+	fs_loc.fs_server = fs_locs->locations.locations_val->
+					server.server_val->utf8string_val;
+	fs_loc.fs_root_len = fs_locs->locations.locations_val->
+					rootpath.pathname4_val->utf8string_len;
+	fs_loc.fs_root = fs_locs->locations.locations_val->
+					rootpath.pathname4_val->utf8string_val;
+	fs_loc.mountdirfd = gpfs_fs->root_fd;
+	fs_loc.handle = p_filehandle;
+
+	rc = gpfs_ganesha(OPENHANDLE_FS_LOCATIONS, &fs_loc);
+	errsv = errno;
+	LogDebug(COMPONENT_FSAL,
+		 "gpfs_ganesha: FS_LOCATIONS returned, rc %d errsv %d",
+		 rc, errsv);
+
+	if (rc)
+		return fsalstat(ERR_FSAL_ATTRNOTSUPP, 0);
+
+	fs_locs->fs_root.pathname4_val->utf8string_len = fs_loc.fs_path_len;
+	fs_locs->locations.locations_val->server.server_val->utf8string_len =
+					fs_loc.fs_server_len;
+	fs_locs->locations.locations_val->rootpath.pathname4_val->
+					utf8string_len = fs_loc.fs_root_len;
+
+	LogDebug(COMPONENT_FSAL,
+		 "gpfs_ganesha: FS_LOCATIONS root=%s path=%s server=%s",
+		 fs_loc.fs_root, fs_loc.fs_path, fs_loc.fs_server);
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
+/**
  * GPFSFSAL_getattrs:
  * Get attributes for the object specified by its filehandle.
  *

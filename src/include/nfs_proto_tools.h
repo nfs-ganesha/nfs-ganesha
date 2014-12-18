@@ -271,6 +271,8 @@ int nfs4_Fattr_cmp(fattr4 *, fattr4 *);
 bool nfs3_FSALattr_To_Fattr(struct gsh_export *, const struct attrlist *,
 			    fattr3 *);
 
+bool is_sticky_bit_set(const struct attrlist *attr);
+
 bool cache_entry_to_nfs3_Fattr(cache_entry_t *, fattr3 *);
 
 bool nfs3_Sattr_To_FSALattr(struct attrlist *, sattr3 *);
