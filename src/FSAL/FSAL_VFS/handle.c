@@ -42,8 +42,8 @@
 #include "fsal_handle_syscalls.h"
 #include "FSAL/fsal_commonlib.h"
 #include "vfs_methods.h"
-#include "pnfs_panfs/mds.h"
 #include <os/subr.h>
+#include "subfsal.h"
 
 /* helpers
  */
@@ -133,7 +133,7 @@ static struct vfs_fsal_obj_handle *alloc_handle(int dirfd,
 	fsal_obj_handle_init(&hdl->obj_handle, exp_hdl,
 			     posix2fsal_type(stat->st_mode));
 	vfs_handle_ops_init(&hdl->obj_handle.obj_ops);
-	vfs_init_handle_ops_pnfs(myself, &hdl->obj_handle.obj_ops);
+	vfs_sub_init_handle_ops(myself, &hdl->obj_handle.obj_ops);
 
 	return hdl;
 
