@@ -177,6 +177,7 @@ option(USE_FSAL_GPFS "build GPFS FSAL" ON)
 option(USE_FSAL_ZFS "build ZFS FSAL" ON)
 option(USE_FSAL_LUSTRE "build LUSTRE FSAL" ON)
 option(USE_FSAL_XFS "build XFS support in VFS FSAL" ON)
+option(USE_FSAL_PANFS "build PanFS support in VFS FSAL" ON)
 option(USE_FSAL_GLUSTER "build GLUSTER FSAL shared library" ON)
 
 # FSALs which are disabled by default
@@ -911,6 +912,7 @@ message(STATUS "USE_FSAL_VFS = ${USE_FSAL_VFS}")
 message(STATUS "USE_FSAL_CEPH = ${USE_FSAL_CEPH}")
 message(STATUS "USE_FSAL_HPSS = ${USE_FSAL_HPSS}")
 message(STATUS "USE_FSAL_XFS = ${USE_FSAL_XFS}")
+message(STATUS "USE_FSAL_PANFS = ${USE_FSAL_PANFS}")
 message(STATUS "USE_FSAL_GPFS = ${USE_FSAL_GPFS}")
 message(STATUS "USE_FSAL_PT = ${USE_FSAL_PT}")
 message(STATUS "USE_FSAL_ZFS = ${USE_FSAL_ZFS}")
@@ -984,6 +986,11 @@ set(USE_HPSS_FSAL ${USE_HPSS_FSAL}
 set(USE_FSAL_XFS ${USE_FSAL_XFS}
   CACHE BOOL
    "build XFS FSAL"
+   FORCE)
+
+set(USE_FSAL_PANFS ${USE_FSAL_PANFS}
+  CACHE BOOL
+   "build PanFS FSAL"
    FORCE)
 
 set(USE_FSAL_GPFS ${USE_FSAL_GPFS}
@@ -1137,6 +1144,10 @@ endif(USE_FSAL_ZFS)
 if(USE_FSAL_XFS)
     set( WITH_ARG "${WITH_ARG} --with xfs")
 endif(USE_FSAL_XFS)
+
+if(USE_FSAL_PANFS)
+    set( WITH_ARG "${WITH_ARG} --with panfs")
+endif(USE_FSAL_PANFS)
 
 if(USE_FSAL_GPFS)
     set( WITH_ARG "${WITH_ARG} --with gpfs")

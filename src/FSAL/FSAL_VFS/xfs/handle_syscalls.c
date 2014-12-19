@@ -431,27 +431,3 @@ errout:
 	return retval;
 }
 
-/** Routines to intercept pNFS
- */
-
-void vfs_fini(struct vfs_fsal_export *myself)
-{
-	return;
-}
-
-void vfs_init_handle_ops_pnfs(struct vfs_fsal_export *myself,
-			      struct fsal_obj_ops *ops)
-{
-	return;
-}
-
-void vfs_init_export_ops_pnfs(struct vfs_fsal_export *myself,
-			      const char *export_path)
-{
-	return;
-}
-
-int vfs_init_export_pnfs(struct vfs_fsal_export *myself)
-{
-	return 0;
-}
