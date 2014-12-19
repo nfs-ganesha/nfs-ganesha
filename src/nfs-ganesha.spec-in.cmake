@@ -12,61 +12,71 @@
 %global with_systemd 0
 %endif
 
-%if %{?_with_gpfs:1}%{!?_with_gpfs:0}
+# Conditionally enable some FSALs, disable others.
+#
+# 1. rpmbuild accepts these options (gpfs as example):
+#    --with gpfs
+#    --without gpfs
+# 2. CMake enables FSALs by detecting available support on the build system.
+#
+# Build the FSAL when "--with <fsal>" or CMake detected support.
+# Override CMake's decision by passing "--without <fsal>" to rpmbuild.
+
+%if 0%{?_with_gpfs:1} || (0%{!?_without_gpfs:1} && "@USE_FSAL_GPFS@" == "ON")
 %global with_fsal_gpfs 1
 %else
 %global with_fsal_gpfs 0
 %endif
 
-%if %{?_with_zfs:1}%{!?_with_zfs:0}
+%if 0%{?_with_zfs:1} || (0%{!?_without_zfs:1} && "@USE_FSAL_ZFS@" == "ON")
 %global with_fsal_zfs 1
 %else
 %global with_fsal_zfs 0
 %endif
 
-%if %{?_with_xfs:1}%{!?_with_xfs:0}
+%if 0%{?_with_xfs:1} || (0%{!?_without_xfs:1} && "@USE_FSAL_XFS@" == "ON")
 %global with_fsal_xfs 1
 %else
 %global with_fsal_xfs 0
 %endif
 
-%if %{?_with_ceph:1}%{!?_with_ceph:0}
+%if 0%{?_with_ceph:1} || (0%{!?_without_ceph:1} && "@USE_FSAL_CEPH@" == "ON")
 %global with_fsal_ceph 1
 %else
 %global with_fsal_ceph 0
 %endif
 
-%if %{?_with_lustre:1}%{!?_with_lustre:0}
+%if 0%{?_with_lustre:1} || (0%{!?_without_lustre:1} && "@USE_FSAL_LUSTRE@" == "ON")
 %global with_fsal_lustre 1
 %else
 %global with_fsal_lustre 0
 %endif
 
-%if %{?_with_shook:1}%{!?_with_shook:0}
+%if 0%{?_with_shook:1} || (0%{!?_without_shook:1} && "@USE_FSAL_SHOOK@" == "ON")
 %global with_fsal_shook 1
 %else
 %global with_fsal_shook 0
 %endif
 
-%if %{?_with_gluster:1}%{!?_with_gluster:0}
+%if 0%{?_with_gluster:1} || (0%{!?_without_gluster:1} && "@USE_FSAL_GLUSTER@" == "ON")
 %global with_fsal_gluster 1
 %else
 %global with_fsal_gluster 0
 %endif
 
-%if %{?_with_hpss:1}%{!?_with_hpss:0}
+%if 0%{?_with_hpss:1} || (0%{!?_without_hpss:1} && "@USE_FSAL_HPSS@" == "ON")
 %global with_fsal_hpss 1
 %else
 %global with_fsal_hpss 0
 %endif
 
-%if %{?_with_pt:1}%{!?_with_pt:0}
+%if 0%{?_with_pt:1} || (0%{!?_without_pt:1} && "@USE_FSAL_PT@" == "ON")
 %global with_fsal_pt 1
 %else
 %global with_fsal_pt 0
 %endif
 
-%if %{?_with_rdma:1}%{!?_with_rdma:0}
+%if 0%{?_with_rdma:1} || (0%{!?_without_rdma:1} && "@USE_9P_RDMA@" == "ON")
 %global with_rdma 1
 %else
 %global with_rdma 0
@@ -90,7 +100,7 @@
 %global with_lttng 0
 %endif
 
-%if %{?_with_utils:1}%{!?_with_utils:0}
+%if 0%{?_with_utils:1} || (0%{!?_without_utils:1} && "@USE_ADMIN_TOOLS@" == "ON")
 %global with_utils 1
 %else
 %global with_utils 0
