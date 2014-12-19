@@ -129,12 +129,6 @@ set(CPACK_COMPONENT_DAEMON_DISPLAY_NAME "NFS-Ganesha daemon")
 include(${CMAKE_SOURCE_DIR}/cmake/cpack_config.cmake)
 include(CPack)
 
-# Now create a useable specfile
-configure_file(
-  "${PROJECT_SOURCE_DIR}/nfs-ganesha.spec-in.cmake"
-  "${PROJECT_SOURCE_DIR}/nfs-ganesha.spec"
-)
-
 if (FREEBSD)
 #default gcc doesn't like using -Wuninitialized without -O on FreeBSD
     set(PLATFORM "FREEBSD")
@@ -1185,6 +1179,11 @@ if(USE_ADMIN_TOOLS)
     set( WITH_ARG "${WITH_ARG} --with utils")
 endif(USE_ADMIN_TOOLS)
 
+# Now create a useable specfile
+configure_file(
+  "${PROJECT_SOURCE_DIR}/nfs-ganesha.spec-in.cmake"
+  "${PROJECT_SOURCE_DIR}/nfs-ganesha.spec"
+)
 
 add_custom_target( rpm DEPENDS dist)
 add_custom_command(TARGET rpm
