@@ -1191,6 +1191,12 @@ add_custom_command(TARGET rpm
 		  VERBATIM
 		  DEPENDS dist)
 
+add_custom_target( srpm DEPENDS dist)
+add_custom_command(TARGET srpm
+                  COMMAND sh -c "rpmbuild --define '_srcrpmdir ${CMAKE_CURRENT_BINARY_DIR}' ${WITH_ARG} -ts ${PKG_NAME}"
+		  VERBATIM
+		  DEPENDS dist)
+
 if(COVERAGE)
 	find_program(LCOV_EXEC lcov)
 	find_program(GENHTML_EXEC genhtml)
