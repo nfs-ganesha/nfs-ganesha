@@ -111,11 +111,12 @@ enum fsal_id {
 	  * official FSAL_ID.
 	  */
 	FSAL_ID_EXPERIMENTAL = 1,
-	FSAL_ID_VFS = 2,
+	FSAL_ID_PANFS = 2,
 	FSAL_ID_GPFS = 3,
 	FSAL_ID_CEPH = 4,
 	FSAL_ID_LUSTRE = 5,
 	FSAL_ID_GLUSTER = 6,
+	FSAL_ID_VFS = 7,
 	FSAL_ID_COUNT
 };
 
