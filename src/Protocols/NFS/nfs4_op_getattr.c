@@ -96,6 +96,11 @@ int nfs4_op_getattr(struct nfs_argop4 *op, compound_data_t *data,
 					&data->currentFH,
 					&arg_GETATTR4->attr_request);
 
+	if (is_sticky_bit_set(&data->current_entry->obj_handle->attributes)) {
+		if (!(attribute_is_set(&arg_GETATTR4->attr_request,
+						FATTR4_FS_LOCATIONS)))
+			res_GETATTR4->status = NFS4ERR_MOVED;
+	}
 	return res_GETATTR4->status;
 }				/* nfs4_op_getattr */
 

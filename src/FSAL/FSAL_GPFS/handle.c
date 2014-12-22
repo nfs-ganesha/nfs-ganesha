@@ -704,6 +704,32 @@ static fsal_status_t share_op(struct fsal_obj_handle *obj_hdl,
 	return status;
 }
 
+/* gpfs_fs_locations
+ */
+
+static fsal_status_t gpfs_fs_locations(struct fsal_obj_handle *obj_hdl,
+					struct fs_locations4 *fs_locs)
+{
+	struct gpfs_fsal_obj_handle *myself;
+	fsal_status_t status;
+
+	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle,
+			      obj_handle);
+
+	obj_hdl->attributes.mask = op_ctx->fsal_export->exp_ops.
+		fs_supported_attrs(op_ctx->fsal_export);
+
+	status = GPFSFSAL_fs_loc(op_ctx->fsal_export, obj_hdl->fs->private,
+				 op_ctx, myself->handle,
+				 &obj_hdl->attributes, fs_locs);
+
+	if (FSAL_IS_ERROR(status)) {
+		FSAL_CLEAR_MASK(obj_hdl->attributes.mask);
+		FSAL_SET_MASK(obj_hdl->attributes.mask, ATTR_RDATTR_ERR);
+	}
+	return status;
+}
+
 void gpfs_handle_ops_init(struct fsal_obj_ops *ops)
 {
 	ops->release = release;
@@ -722,6 +748,7 @@ void gpfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->unlink = file_unlink;
 	ops->open = gpfs_open;
 	ops->reopen = gpfs_reopen;
+	ops->fs_locations = gpfs_fs_locations;
 	ops->status = gpfs_status;
 	ops->read = gpfs_read;
 	ops->read_plus = gpfs_read_plus;

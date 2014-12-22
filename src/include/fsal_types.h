@@ -375,6 +375,8 @@ typedef uint64_t attrmask_t;
 #define ATTR_ATIME_SERVER  0x0000000000200000
 /* Set mtime to server time */
 #define ATTR_MTIME_SERVER  0x0000000000400000
+/* Set fs locations */
+#define ATTR4_FS_LOCATIONS  0x0000000000800000
 
 /* attributes that used for NFS v3 */
 

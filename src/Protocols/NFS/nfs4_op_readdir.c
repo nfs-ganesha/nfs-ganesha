@@ -369,6 +369,13 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 		goto server_fault;
 	}
 
+	if (is_sticky_bit_set(attr)) {
+		rdattr_error = NFS4ERR_MOVED;
+		LogDebug(COMPONENT_NFS_READDIR,
+			 "Skipping because of %s",
+			 nfsstat4_to_str(rdattr_error));
+	}
+
  skip:
 
 	if (rdattr_error != NFS4_OK) {
