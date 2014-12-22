@@ -181,8 +181,9 @@ static void unregister_rpc(void)
 }
 
 #define test_for_additional_nfs_protocols(p) \
-	((p != P_MNT && p != P_NLM) ||					\
-	 (nfs_param.core_param.core_options &  CORE_OPTION_NFSV3) != 0)
+	((p != P_MNT && p != P_NLM && p != P_RQUOTA) ||		   \
+	 (nfs_param.core_param.core_options & (CORE_OPTION_NFSV3 | \
+					       CORE_OPTION_NFSV4)))
 
 /**
  * @brief Close file descriptors used for RPC services.
@@ -638,7 +639,9 @@ void nfs_Init_svc()
 	Register_program(P_MNT, CORE_OPTION_NFSV3, MOUNT_V3);
 	if (nfs_param.core_param.enable_NLM)
 		Register_program(P_NLM, CORE_OPTION_NFSV3, NLM4_VERS);
-	if (nfs_param.core_param.enable_RQUOTA) {
+	if (nfs_param.core_param.enable_RQUOTA &&
+	    (nfs_param.core_param.core_options & (CORE_OPTION_NFSV3 |
+						  CORE_OPTION_NFSV4))) {
 		Register_program(P_RQUOTA, CORE_OPTION_ALL_VERS, RQUOTAVERS);
 		Register_program(P_RQUOTA, CORE_OPTION_ALL_VERS,
 				 EXT_RQUOTAVERS);

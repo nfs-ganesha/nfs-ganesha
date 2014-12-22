@@ -60,7 +60,10 @@
 
 static struct config_item_list protocols[] = {
 	CONFIG_LIST_TOK("3", CORE_OPTION_NFSV3),
+	CONFIG_LIST_TOK("nfs3", CORE_OPTION_NFSV3),
 	CONFIG_LIST_TOK("4", CORE_OPTION_NFSV4),
+	CONFIG_LIST_TOK("nfs4", CORE_OPTION_NFSV4),
+	CONFIG_LIST_TOK("9p", CORE_OPTION_9P),
 	CONFIG_LIST_EOL
 };
 
@@ -140,6 +143,8 @@ static struct config_item core_params[] = {
 	CONF_ITEM_I64("Decoder_Fridge_Block_Timeout", 0, 7200, 600,
 		      nfs_core_param, decoder_fridge_block_timeout),
 	CONF_ITEM_LIST("NFS_Protocols", CORE_OPTION_ALL_VERS, protocols,
+		       nfs_core_param, core_options),
+	CONF_ITEM_LIST("Protocols", CORE_OPTION_ALL_VERS, protocols,
 		       nfs_core_param, core_options),
 	CONF_ITEM_BOOL("NSM_Use_Caller_Name", false,
 		       nfs_core_param, nsm_use_caller_name),

@@ -89,7 +89,7 @@ int _9p_lock(struct _9p_request_data *req9p, void *worker_data,
 
 	char name[MAXNAMLEN];
 
-	struct hostent *hp;
+	struct addrinfo hints, *result;
 	struct sockaddr_storage client_addr;
 
 	struct _9p_fid *pfid = NULL;
@@ -130,12 +130,15 @@ int _9p_lock(struct _9p_request_data *req9p, void *worker_data,
 	 * get the client's ip addr */
 	snprintf(name, MAXNAMLEN, "%.*s", *client_id_len, client_id_str);
 
-	hp = gethostbyname(name);
-	if (hp == NULL)
+	memset((char *)&hints, 0, sizeof(struct addrinfo));
+	hints.ai_family = AF_INET;
+	if (getaddrinfo(name, NULL, &hints, &result))
 		return _9p_rerror(req9p, worker_data, msgtag, EINVAL, plenout,
 				  preply);
 
-	memcpy((char *)&client_addr, hp->h_addr, hp->h_length);
+	memcpy((char *)&client_addr,
+	       (char *)result->ai_addr,
+	       result->ai_addrlen);
 
 	powner = get_9p_owner(&client_addr, *proc_id);
 	if (powner == NULL)
