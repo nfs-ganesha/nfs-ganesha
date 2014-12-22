@@ -188,7 +188,7 @@ nfsstat4 FSAL_encode_ipv4_netaddr(XDR *xdrs, uint16_t proto, uint32_t addr,
  * @return NFSv4 error codes
  */
 static nfsstat4 make_file_handle_ds(const struct gsh_buffdesc *fh_desc,
-				    const unsigned int export_id,
+				    const uint16_t server_id,
 				    nfs_fh4 *wirehandle)
 {
 	/* The v4_handle being constructed */
@@ -206,7 +206,7 @@ static nfsstat4 make_file_handle_ds(const struct gsh_buffdesc *fh_desc,
 	v4_handle->fhversion = GANESHA_FH_VERSION;
 	v4_handle->fs_len = fh_desc->len;
 	memcpy(v4_handle->fsopaque, fh_desc->addr, fh_desc->len);
-	v4_handle->exportid = export_id;
+	v4_handle->id.servers = server_id;
 	v4_handle->flags = FILE_HANDLE_V4_FLAG_DS;
 
 	return NFS4_OK;
@@ -240,7 +240,7 @@ nfsstat4 FSAL_encode_file_layout(XDR *xdrs,
 				 const struct pnfs_deviceid *deviceid,
 				 nfl_util4 util, const uint32_t first_idx,
 				 const offset4 ptrn_ofst,
-				 const unsigned int export_id,
+				 const uint16_t server_id,
 				 const uint32_t num_fhs,
 				 const struct gsh_buffdesc *fhs)
 {
@@ -283,7 +283,7 @@ nfsstat4 FSAL_encode_file_layout(XDR *xdrs,
 		memset(&buffer, 0, sizeof(buffer));
 
 		nfs_status = make_file_handle_ds(fhs + i,
-						 export_id,
+						 server_id,
 						 &handle);
 		if (nfs_status != NFS4_OK) {
 			LogMajor(COMPONENT_PNFS, "Failed converting FH %lu.",

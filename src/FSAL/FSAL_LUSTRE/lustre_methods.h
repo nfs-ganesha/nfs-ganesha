@@ -1,6 +1,38 @@
 /*
  * vim:noexpandtab:shiftwidth=8:tabstop=8:
+ *
+ * Copyright CEA/DAM/DIF  (2008)
+ * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
+ *                Thomas LEIBOVICI  thomas.leibovici@cea.fr
+ *
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ *
  */
+
+/**
+ *
+ * \file    lustre_methods.h
+ * \version Revision: 1.01
+ * \brief   Lustre-specific definitions usually found in fsal_internal.h.
+ *
+ */
+
+#ifndef _LUSTRE_METHODS_H
+#define _LUSTRE_METHODS_H
 
 extern char *exec_name;
 
@@ -19,6 +51,11 @@ extern char *exec_name;
  */
 
 struct fsal_staticfsinfo_t *lustre_staticinfo(struct fsal_module *hdl);
+
+struct lustre_exp_pnfs_parameter {
+	unsigned int stripe_unit;
+	bool pnfs_enabled;
+};
 
 /*
  * LUSTRE internal export
@@ -44,6 +81,17 @@ struct lustre_filesystem {
 	pthread_t up_thread; /* upcall thread */
 };
 
+/* this needs to be refactored to put ipport inside sockaddr_in */
+struct lustre_pnfs_ds_parameter {
+	struct glist_head ds_list;
+	struct sockaddr_in ipaddr;
+	unsigned short ipport;
+	unsigned int id;
+};
+
+struct lustre_pnfs_parameter {
+	struct glist_head ds_list;
+};
 
 /* LUSTRE FSAL module private storage
  *  */
@@ -173,3 +221,5 @@ fsal_status_t lustre_remove_extattr_by_id(struct fsal_obj_handle *obj_hdl,
 					  unsigned int xattr_id);
 fsal_status_t lustre_remove_extattr_by_name(struct fsal_obj_handle *obj_hdl,
 					    const char *xattr_name);
+
+#endif /* _LUSTRE_METHODS_H */

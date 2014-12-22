@@ -331,6 +331,7 @@ typedef struct compound_data {
 					     savedFH */
 	struct export_perms saved_export_perms; /*< Permissions for export for
 					       savedFH */
+	struct fsal_pnfs_ds *saved_fsal_pnfs_ds; /*< Saved fsal_pnfs_ds */
 	struct svc_req *req;	/*< RPC Request related to the compound */
 	struct nfs_worker_data *worker;	/*< Worker thread data */
 	nfs_client_cred_t credential;	/*< Raw RPC credentials */
@@ -366,7 +367,7 @@ static inline void set_current_entry(compound_data_t *data,
 
 	/* Clear out the current_ds */
 	if (data->current_ds) {
-		ds_put(data->current_ds);
+		ds_handle_put(data->current_ds);
 		data->current_ds = NULL;
 	}
 

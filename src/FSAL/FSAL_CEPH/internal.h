@@ -165,7 +165,7 @@ void ceph2fsal_attributes(const struct stat *buffstat,
 void export_ops_init(struct export_ops *ops);
 void handle_ops_init(struct fsal_obj_ops *ops);
 #ifdef CEPH_PNFS
-void ds_ops_init(struct fsal_ds_ops *ops);
+void pnfs_ds_ops_init(struct fsal_pnfs_ds_ops *ops);
 void export_ops_pnfs(struct export_ops *ops);
 void handle_ops_pnfs(struct fsal_obj_ops *ops);
 #endif				/* CEPH_PNFS */

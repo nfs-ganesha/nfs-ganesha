@@ -10,7 +10,7 @@ struct nullfs_file_handle {
 struct next_ops {
 	struct export_ops exp_ops;	/*< Vector of operations */
 	struct fsal_obj_ops obj_ops;	/*< Shared handle methods vector */
-	struct fsal_ds_ops dsh_ops;	/*< Shared handle methods vector */
+	struct fsal_dsh_ops dsh_ops;	/*< Shared handle methods vector */
 	const struct fsal_up_vector *up_ops;	/*< Upcall operations */
 };
 

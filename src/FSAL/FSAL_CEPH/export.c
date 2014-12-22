@@ -176,66 +176,6 @@ static fsal_status_t extract_handle(struct fsal_export *exp_hdl,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-#ifdef CEPH_PNFS
-
-/**
- * @brief Create a FSAL data server handle from a wire handle
- *
- * This function creates a FSAL data server handle from a client
- * supplied "wire" handle.  This is also where validation gets done,
- * since PUTFH is the only operation that can return
- * NFS4ERR_BADHANDLE.
- *
- * @param[in]  export_pub The export in which to create the handle
- * @param[in]  desc       Buffer from which to create the file
- * @param[out] ds_pub     FSAL data server handle
- *
- * @return NFSv4.1 error codes.
- */
-nfsstat4 create_ds_handle(struct fsal_export * const export_pub,
-			  const struct gsh_buffdesc * const desc,
-			  struct fsal_ds_handle ** const ds_pub)
-{
-	struct fsal_module *fsal = export_pub->fsal;
-	/* Full 'private' export structure */
-	struct export *export =
-	    container_of(export_pub, struct export, export);
-	/* Handle to be created */
-	struct ds *ds;
-	struct fsal_pnfs_ds *pds;
-	nfsstat4 status;
-
-	*ds_pub = NULL;
-
-	if (desc->len != sizeof(struct ds_wire))
-		return NFS4ERR_BADHANDLE;
-
-	status = fsal->m_ops.fsal_pnfs_ds(fsal, desc, &pds);
-	if (status != NFS4_OK)
-		return status;
-
-	status = fsal->m_ops.fsal_ds_handle(pds, desc, ds_pub);
-	if (status != NFS4_OK) {
-		pds->s_ops.release(pds);
-		return NFS4ERR_SERVERFAULT;
-	}
-
-	/* assumes fsal_ds_handle is first in handle struct */
-	ds = (struct ds *)*ds_pub;
-
-	memcpy(&ds->wire, desc->addr, desc->len);
-
-	if (ds->wire.layout.fl_stripe_unit == 0) {
-		ds->dsh_ops.release(ds);
-		pds->s_ops.release(pds);
-		return NFS4ERR_BADHANDLE;
-	}
-
-	return NFS4_OK;
-}
-
-#endif				/* CEPH_PNFS */
-
 /**
  * @brief Create a handle object from a wire handle
  *
@@ -548,9 +488,6 @@ void export_ops_init(struct export_ops *ops)
 	ops->lookup_path = lookup_path;
 	ops->extract_handle = extract_handle;
 	ops->create_handle = create_handle;
-#ifdef CEPH_PNFS
-	ops->create_ds_handle = create_ds_handle;
-#endif				/* CEPH_PNFS */
 	ops->get_fs_dynamic_info = get_fs_dynamic_info;
 	ops->fs_supports = fs_supports;
 	ops->fs_maxfilesize = fs_maxfilesize;

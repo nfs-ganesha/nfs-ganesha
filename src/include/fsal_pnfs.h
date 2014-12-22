@@ -75,7 +75,7 @@
  * operations.  Ensure that the @c fs_supports method returns @c true
  * when queried with @c fso_pnfs_ds_supported.
  *
- * You must implement the @c create_ds_handle method on the export.
+ * You must implement the @c make_ds_handle method on the pNFS DS.
  * This must create an object of type @c fsal_ds_handle from the NFS
  * handle supplied as part of your layout.  See the @c fsal_ds_handle
  * documentation for details.  You must implement the @c release, @c
