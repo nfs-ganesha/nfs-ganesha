@@ -66,14 +66,22 @@ static int pop_file(struct parser_state *st);
 
 SPACE        [ \t\r\f]
 NL           [\n]
+EQUALS       "="
+COMMA        ","
+SEMI         ";"
+LCURLY       "{"
+RCURLY       "}"
+SQUOTE       "'"
+DQUOTE       "\""
+
+PATHNAME     [a-zA-Z0-9\\\/\-\.\_]
 VAL_CHAR     [^ \t\r\n\f;"'#]
 COMMENTEXT	 #.*$
-/* lettre posant probleme dans une chaine */
 STRING_CHAR       [^\n]
 IDENTIFIER [a-zA-Z_][a-zA-Z0-9_\-]*
 
 /* INCLUDE state is used for picking the name of the include file */
-%START YY_INIT BLOCK IN_BLOCK STMT_OR_SUB_BLOCK VALUE ENDVALUE QUOTE_STR LIT_STRING INCLUDE
+%START YY_INIT BLOCK IN_BLOCK STMT_OR_SUB_BLOCK TERM ENDTERM QUOTE_STR LIT_STRING INCLUDE
 
 %%
 %{
@@ -86,7 +94,7 @@ IDENTIFIER [a-zA-Z_][a-zA-Z0-9_\-]*
 	/* not a token, return nothing */
 }
 
-<INCLUDE>{VAL_CHAR}+ {
+<INCLUDE>{PATHNAME}+ {
 	{
 		int c;
 
@@ -106,7 +114,7 @@ IDENTIFIER [a-zA-Z_][a-zA-Z0-9_\-]*
 	}
 }
 
-<INCLUDE>\"{VAL_CHAR}+\" {
+<INCLUDE>\"{PATHNAME}+\" {
 	{
 		int c;
 
@@ -139,7 +147,7 @@ IDENTIFIER [a-zA-Z_][a-zA-Z0-9_\-]*
 		yyterminate();
 }
 
-
+   /* Initial State.  We start with a block identifier */
 
 <YY_INIT>{IDENTIFIER} { /* first block */
 	/* identifier */
@@ -149,13 +157,16 @@ IDENTIFIER [a-zA-Z_][a-zA-Z0-9_\-]*
 	return IDENTIFIER;
 }
 
+   /* Blocks */
 
-<BLOCK>"{"        {/* start of  block */
+<BLOCK>{LCURLY}        {/* start of  block */
 	DEBUG_LEX("BEGIN_BLOCK\n");
 	BEGIN IN_BLOCK;
 	stp->block_depth++;
 	return BEGIN_BLOCK;
 }
+
+   /* Statements or subblocks start with an identifier */
 
 <IN_BLOCK>{IDENTIFIER} { /* name of block or keyword */
 	/* identifier */
@@ -165,7 +176,9 @@ IDENTIFIER [a-zA-Z_][a-zA-Z0-9_\-]*
 	return IDENTIFIER;
 }
 
-<IN_BLOCK>"}"     {   /* end of block */
+   /* End of a block */
+
+<IN_BLOCK>{RCURLY}     {   /* end of block */
 	DEBUG_LEX("END_BLOCK\n");
 	if (stp->block_depth <= 0) {
 		/* error */
@@ -185,14 +198,18 @@ IDENTIFIER [a-zA-Z_][a-zA-Z0-9_\-]*
 	}
 }
 
-<STMT_OR_SUB_BLOCK>"="  { /* A statement */
+   /* Disambiguate a statement, identifier "=" ... */
+
+<STMT_OR_SUB_BLOCK>{EQUALS}  { /* A statement */
 	/* equal_op */
 	DEBUG_LEX(" , ");
-	BEGIN VALUE;
+	BEGIN TERM;
 	return EQUAL_OP;
 }
 
-<STMT_OR_SUB_BLOCK>"{" {
+   /* Disambiguate a subblock, identifier "{" ... */
+
+<STMT_OR_SUB_BLOCK>{LCURLY} {
 	/* sub-block */
 	DEBUG_LEX("\nBEGIN_SUB_BLOCK\n");
 	BEGIN IN_BLOCK;
@@ -200,28 +217,38 @@ IDENTIFIER [a-zA-Z_][a-zA-Z0-9_\-]*
 	return BEGIN_SUB_BLOCK;
 }
 
-<VALUE>"\""  {  /* start of a double quote string */
+   /* Double Quote, allows char escaping */
+
+<TERM>{DQUOTE}  {  /* start of a double quote string */
 	BEGIN QUOTE_STR;
 	DEBUG_LEX("quote value:<");
 }
 
-<VALUE>"'"   { /* start of a single quote string */
+   /* Single Quote, single line with no escaping */
+
+<TERM>{SQUOTE}   { /* start of a single quote string */
 	BEGIN LIT_STRING;
 	DEBUG_LEX("lit value:<");
 }
 
-<VALUE>({VAL_CHAR})+  { /* start of a number or label/tag */
+   /* Terminal, gobbles anything other than white and ";" */
+
+<TERM>({VAL_CHAR})+  { /* start of a number or label/tag */
 	DEBUG_LEX("token value:%s",yytext);
-	BEGIN ENDVALUE;
+	BEGIN ENDTERM;
 	yylval->token = gsh_strdup(yytext);
 	return KEYVALUE;
 }
 
-<ENDVALUE>";"  { /* end of statement */
+   /* End of statement */
+
+<ENDTERM>{SEMI}  { /* end of statement */
 	DEBUG_LEX("]\n");
 	BEGIN IN_BLOCK;
 	return END_STMT;
 }
+
+   /* Double Quote, gobble chars */
 
 <QUOTE_STR>[^\"]*\" {
 	if (yytext[yyleng - 2] == '\\') {
@@ -239,10 +266,12 @@ IDENTIFIER [a-zA-Z_][a-zA-Z0-9_\-]*
 			return _ERROR_;
 		}
 		DEBUG_LEX("%s>", yylval->token);
-		BEGIN ENDVALUE;
+		BEGIN ENDTERM;
 		return KEYVALUE;
 	}
 }
+
+   /* Single Quote, gobble chars */
 
 <LIT_STRING>[^\n]*\'  { /* end of single quote string */
 	yylval->token =	filter_string(yytext, 0);
@@ -256,9 +285,11 @@ IDENTIFIER [a-zA-Z_][a-zA-Z0-9_\-]*
 		return _ERROR_;
 	}
 	DEBUG_LEX("%s>", yylval->token);
-	BEGIN ENDVALUE;
+	BEGIN ENDTERM;
 	return KEYVALUE;
 }
+
+   /* Single Quote, Throw an error if not a single line */
 
 <LIT_STRING>\n { /* ERROR: eol within single quote string */
 	ganeshun_yyerror(yylloc, yyscanner, "closing quote missing");
@@ -266,9 +297,13 @@ IDENTIFIER [a-zA-Z_][a-zA-Z0-9_\-]*
 	return _ERROR_;
 }
 
+   /* Skip over stuff we don't send upstairs */
+
 {COMMENTEXT}  ;/* ignore */
 {SPACE}        ;/* ignore */
 {NL}           ;/* ignore */
+
+   /* Unrecognized chars.  Must do better... */
 
 . { /* ERROR: out of character character */
 	DEBUG_LEX("unexpected stuff %s\n", yytext);
