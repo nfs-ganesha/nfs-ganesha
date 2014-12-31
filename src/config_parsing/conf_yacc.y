@@ -89,6 +89,10 @@ struct config_node *config_stmt(char *varname,
 				int lineno,
 				struct parser_state *st);
 
+struct config_node *config_term(char *varval,
+				char *filename,
+				int lineno,
+				struct parser_state *st);
 #ifdef _DEBUG_PARSING
 #define DEBUG_YACK   print_parse_tree
 #else
@@ -123,10 +127,10 @@ program:
 }
 | blocklist
 {
-  DEBUG_YACK(stderr,$1);
   if ($1 != NULL)
-    glist_add_tail(&($1)->node, &st->root_node->root.u.blk.sub_nodes);
+    glist_add_tail(&($1)->node, &st->root_node->root.u.nterm.sub_nodes);
   link_node(&st->root_node->root);
+  DEBUG_YACK(stderr, st->root_node);
 }
 ;
 
@@ -202,6 +206,21 @@ void ganesha_yyerror(YYLTYPE *yylloc_param,
 }
 
 /**
+ * @brief Notes on parse tree linkage
+ *
+ * We use glist a little differently so beware.
+ * Elsewhere in the server, we only glist_init() the head
+ * and leave the 'node' members alone (both next and prev == NULL).
+ * However, the parse FSM handles siblings as a list via the LR rules.
+ * This means that while sub_nodes is the "head" of the list, it only
+ * gets linked in when the rules add the already formed list is fully
+ * parsed. Therefore, to make this all work, each node's 'node' member
+ * gets a turn as the head which requires it to be glist_init()'d
+ * contrary to what the rest of the code does.  The last node to play
+ * 'head' is then the 'sub_nodes' member of the parent.
+ */
+
+/**
  *  Create a block item with the given content
  */
 struct config_node *config_block(char *blockname,
@@ -226,12 +245,12 @@ struct config_node *config_block(char *blockname,
 		return NULL;
 	}
 	glist_init(&node->node);
-	node->name = blockname;
+	node->u.nterm.name = blockname;
 	node->filename = filename;
 	node->linenumber = lineno;
 	node->type = TYPE_BLOCK;
-	glist_init(&node->u.blk.sub_nodes);
-	glist_add_tail(&list->node, &node->u.blk.sub_nodes);
+	glist_init(&node->u.nterm.sub_nodes);
+	glist_add_tail(&list->node, &node->u.nterm.sub_nodes);
 	link_node(node);
 	return node;
 }
@@ -248,18 +267,18 @@ void link_node(struct config_node *node)
 
 	assert(node->type == TYPE_BLOCK ||
 	       node->type == TYPE_ROOT);
-	glist_for_each(ns, &node->u.blk.sub_nodes) {
+	glist_for_each(ns, &node->u.nterm.sub_nodes) {
 		subnode = glist_entry(ns, struct config_node, node);
 		if (subnode->type == TYPE_BLOCK)
-			subnode->u.blk.parent = node;
+			subnode->u.nterm.parent = node;
 	}
 }
 
 /**
- *  Create a key=value peer (assignment)
+ *  Create a term (value)
  */
-struct config_node *config_stmt(char *varname,
-				char *varval,
+
+struct config_node *config_term(char *varval,
 				char *filename,
 				int lineno,
 				struct parser_state *st)
@@ -272,11 +291,44 @@ struct config_node *config_stmt(char *varname,
 		return NULL;
 	}
 	glist_init(&node->node);
-	node->name = varname;
+	node->filename = filename;
+	node->linenumber = lineno;
+	node->type = TYPE_TERM;
+	node->u.term.type = TERM_STRING;
+	node->u.term.varvalue = varval;
+	return node;
+}
+
+/**
+ *  Create a statement node (key = list of terms)
+ */
+
+struct config_node *config_stmt(char *varname,
+				char *varval,
+				char *filename,
+				int lineno,
+				struct parser_state *st)
+{
+	struct config_node *node, *term_node;
+
+	term_node = config_term(varval,
+				filename,
+				lineno,
+				st);
+	if (term_node == NULL)
+		return NULL;  /* st->err_type already set */
+	node = gsh_calloc(1, sizeof(struct config_node));
+	if (node == NULL) {
+		st->err_type->resource = true;
+		return NULL;
+	}
+	glist_init(&node->node);
+	glist_init(&node->u.nterm.sub_nodes);
+	glist_add_tail(&term_node->node, &node->u.nterm.sub_nodes);
 	node->filename = filename;
 	node->linenumber = lineno;
 	node->type = TYPE_STMT;
-	node->u.varvalue = varval;
+	node->u.nterm.name = varname;
 	return node;
 }
 

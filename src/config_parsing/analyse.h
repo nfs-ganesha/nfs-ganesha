@@ -37,22 +37,42 @@
  * Parse tree node.
  */
 
-enum  node_type { TYPE_ROOT = 1, TYPE_BLOCK, TYPE_STMT};
+/* Config nodes are either terminals or non-terminals.
+ * BLOCK and STMT are non-terminals.
+ * ROOT is a special case BLOCK (root of tree...)
+ * TERM is a value/token terminal.
+ */
+
+enum  node_type { TYPE_ROOT = 1, TYPE_BLOCK, TYPE_STMT, TYPE_TERM};
+
+enum  term_type {
+	TERM_TOKEN = 1,
+	TERM_PATH,
+	TERM_STRING
+};
 
 struct config_node {
 	struct glist_head node;
-	char *name;		/* block or parameter name */
 	char *filename;		/* pointer to filename in file list */
 	int linenumber;
 	bool found;		/* use accounting private in do_block_load */
 	enum node_type type;	/* switches union contents */
 	union {			/* sub_nodes are always struct config_node */
-		char *varvalue;			/* TYPE_STMT */
-		struct {				/* TYPE_BLOCK */
+		struct {		/* TYPE_TERM */
+			enum term_type type;
+			char *varvalue;
+		} term;
+		struct {		/* TYPE_BLOCK | TYPE_STMT */
+			char *name;	/* name */
 			struct config_node *parent;
 			struct glist_head sub_nodes;
-		} blk;
+		} nterm;
 	}u;
+};
+
+struct config_term_type {
+	const char *name;
+	const char *desc;
 };
 
 /*

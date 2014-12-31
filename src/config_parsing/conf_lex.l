@@ -333,7 +333,7 @@ int ganeshun_yy_init_parser(char *srcfile, struct parser_state *st)
 	if (confroot == NULL)
 		goto nospc;
 	glist_init(&confroot->root.node);
-	glist_init(&confroot->root.u.blk.sub_nodes);
+	glist_init(&confroot->root.u.nterm.sub_nodes);
 	confroot->root.type = TYPE_ROOT;
 	st->root_node = confroot;
 	ganeshun_yylex_init_extra(st, &st->scanner);

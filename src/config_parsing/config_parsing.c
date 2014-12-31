@@ -159,24 +159,23 @@ char *err_type_str(struct config_error_type *err_type)
 static bool convert_bool(struct config_node *node,
 			 bool *b)
 {
-	if (!strcasecmp(node->u.varvalue, "1") ||
-	    !strcasecmp(node->u.varvalue, "yes") ||
-	    !strcasecmp(node->u.varvalue, "true")) {
+	if (!strcasecmp(node->u.term.varvalue, "1") ||
+	    !strcasecmp(node->u.term.varvalue, "yes") ||
+	    !strcasecmp(node->u.term.varvalue, "true")) {
 		*b = true;
 		return true;
 	}
-	if (!strcasecmp(node->u.varvalue, "0") ||
-	    !strcasecmp(node->u.varvalue, "no") ||
-	    !strcasecmp(node->u.varvalue, "false")) {
+	if (!strcasecmp(node->u.term.varvalue, "0") ||
+	    !strcasecmp(node->u.term.varvalue, "no") ||
+	    !strcasecmp(node->u.term.varvalue, "false")) {
 		*b = false;
 		return true;
 	}
 	LogMajor(COMPONENT_CONFIG,
-		 "At (%s:%d): %s (%s) should be 'true' or 'false'",
+		 "At (%s:%d): (%s) should be 'true' or 'false'",
 		 node->filename,
 		 node->linenumber,
-		 node->name,
-		 node->u.varvalue);
+		 node->u.term.varvalue);
 	return false;
 }
 
@@ -188,24 +187,22 @@ static bool convert_int(struct config_node *node,
 	char *endptr;
 
 	errno = 0;
-	val = strtoll(node->u.varvalue, &endptr, 10);
-	if (*node->u.varvalue != '\0' && *endptr == '\0') {
+	val = strtoll(node->u.term.varvalue, &endptr, 10);
+	if (*node->u.term.varvalue != '\0' && *endptr == '\0') {
 		if (errno != 0 || val < min || val > max) {
 			LogMajor(COMPONENT_CONFIG,
-				 "At (%s:%d): %s (%s) is out of range",
+				 "At (%s:%d): (%s) is out of range",
 				 node->filename,
 				 node->linenumber,
-				 node->name,
-				 node->u.varvalue);
+				 node->u.term.varvalue);
 			return false;
 		}
 	} else {
 		LogMajor(COMPONENT_CONFIG,
-			 "At (%s:%d): %s (%s) is not an integer",
+			 "At (%s:%d): (%s) is not an integer",
 			 node->filename,
 			 node->linenumber,
-			 node->name,
-			 node->u.varvalue);
+			 node->u.term.varvalue);
 		return false;
 	}
 	*num = val;
@@ -220,24 +217,22 @@ static bool convert_uint(struct config_node *node,
 	char *endptr;
 
 	errno = 0;
-	val = strtoull(node->u.varvalue, &endptr, 10);
-	if (*node->u.varvalue != '\0' && *endptr == '\0') {
+	val = strtoull(node->u.term.varvalue, &endptr, 10);
+	if (*node->u.term.varvalue != '\0' && *endptr == '\0') {
 		if (errno != 0 || val < min || val > max) {
 			LogMajor(COMPONENT_CONFIG,
-				 "At (%s:%d): %s (%s) is out of range",
+				 "At (%s:%d): (%s) is out of range",
 				 node->filename,
 				 node->linenumber,
-				 node->name,
-				 node->u.varvalue);
+				 node->u.term.varvalue);
 			return false;
 		}
 	} else {
 		LogMajor(COMPONENT_CONFIG,
-			 "At (%s:%d): %s (%s) is not an integer",
+			 "At (%s:%d): (%s) is not an integer",
 			 node->filename,
 			 node->linenumber,
-			 node->name,
-			 node->u.varvalue);
+			 node->u.term.varvalue);
 		return false;
 	}
 	*num = val;
@@ -251,24 +246,22 @@ static bool convert_anonid(struct config_node *node,
 	char *endptr;
 
 	errno = 0;
-	val = strtoll(node->u.varvalue, &endptr, 10);
-	if (*node->u.varvalue != '\0' && *endptr == '\0') {
+	val = strtoll(node->u.term.varvalue, &endptr, 10);
+	if (*node->u.term.varvalue != '\0' && *endptr == '\0') {
 		if (errno != 0 || val < INT32_MIN || val > UINT32_MAX) {
 			LogMajor(COMPONENT_CONFIG,
-				 "At (%s:%d): %s (%s) is out of range",
+				 "At (%s:%d): (%s) is out of range",
 				 node->filename,
 				 node->linenumber,
-				 node->name,
-				 node->u.varvalue);
+				 node->u.term.varvalue);
 			return false;
 		}
 	} else {
 		LogMajor(COMPONENT_CONFIG,
-			 "At (%s:%d): %s (%s) is not an integer",
+			 "At (%s:%d): (%s) is not an integer",
 			 node->filename,
 			 node->linenumber,
-			 node->name,
-			 node->u.varvalue);
+			 node->u.term.varvalue);
 		return false;
 	}
 	*id = val;
@@ -287,24 +280,22 @@ static int convert_fsid(struct config_node *node, void *param)
 	int errors = 0;
 
 	errno = 0;
-	major = strtoull(node->u.varvalue, &endptr, 10);
-	if (*node->u.varvalue != '\0' && *endptr == '.') {
+	major = strtoull(node->u.term.varvalue, &endptr, 10);
+	if (*node->u.term.varvalue != '\0' && *endptr == '.') {
 		if (errno != 0 || major == ULLONG_MAX) {
 			LogMajor(COMPONENT_CONFIG,
-				 "At (%s:%d): %s (%s) major is out of range",
+				 "At (%s:%d): (%s) major is out of range",
 				 node->filename,
 				 node->linenumber,
-				 node->name,
-				 node->u.varvalue);
+				 node->u.term.varvalue);
 			errors++;
 		}
 	} else {
 		LogMajor(COMPONENT_CONFIG,
-			 "At (%s:%d): %s (%s) is not a filesystem id",
+			 "At (%s:%d): (%s) is not a filesystem id",
 			 node->filename,
 			 node->linenumber,
-			 node->name,
-			 node->u.varvalue);
+			 node->u.term.varvalue);
 		errors++;
 	}
 	if (errors == 0) {
@@ -313,20 +304,18 @@ static int convert_fsid(struct config_node *node, void *param)
 		if (*sp != '\0' && *endptr == '\0') {
 			if (errno != 0 || minor == ULLONG_MAX) {
 				LogMajor(COMPONENT_CONFIG,
-					 "At (%s:%d): %s (%s) minor is out of range",
+					 "At (%s:%d): (%s) minor is out of range",
 					 node->filename,
 					 node->linenumber,
-					 node->name,
-					 node->u.varvalue);
+					 node->u.term.varvalue);
 				errors++;
 			}
 		} else {
 			LogMajor(COMPONENT_CONFIG,
-				 "At (%s:%d): %s (%s) is not a filesystem id",
+				 "At (%s:%d): (%s) is not a filesystem id",
 				 node->filename,
 				 node->linenumber,
-				 node->name,
-				 node->u.varvalue);
+				 node->u.term.varvalue);
 			errors++;
 		}
 	}
@@ -348,13 +337,13 @@ static int convert_list(struct config_node *node,
 			uint32_t *flags)
 {
 	struct config_item_list *tok;
-	char *csv_list = alloca(strlen(node->u.varvalue) + 1);
+	char *csv_list = alloca(strlen(node->u.term.varvalue) + 1);
 	char *sp, *cp, *ep;
 	bool found;
 	int errors = 0;
 
 	*flags = 0;
-	strcpy(csv_list, node->u.varvalue);
+	strcpy(csv_list, node->u.term.varvalue);
 	sp = csv_list;
 	ep = sp + strlen(sp);
 	while (sp < ep) {
@@ -374,10 +363,9 @@ static int convert_list(struct config_node *node,
 		}
 		if (!found) {
 			LogMajor(COMPONENT_CONFIG,
-				 "At (%s:%d): %s has unknown token (%s)",
+				 "At (%s:%d): unknown token (%s)",
 				 node->filename,
 				 node->linenumber,
-				 node->name,
 				 sp);
 			errors++;
 		}
@@ -397,7 +385,7 @@ static int convert_enum(struct config_node *node,
 	tok = item->u.lst.tokens;
 	found = false;
 	while (tok->token != NULL) {
-		if (strcasecmp(node->u.varvalue, tok->token) == 0) {
+		if (strcasecmp(node->u.term.varvalue, tok->token) == 0) {
 			*val = tok->value;
 			found = true;
 		}
@@ -405,11 +393,10 @@ static int convert_enum(struct config_node *node,
 	}
 	if (!found) {
 		LogMajor(COMPONENT_CONFIG,
-			 "At (%s:%d): %s has unknown token (%s)",
+			 "At (%s:%d): unknown token (%s)",
 			 node->filename,
 			 node->linenumber,
-			 node->name,
-			 node->u.varvalue);
+			 node->u.term.varvalue);
 		errors++;
 	}
 	return errors;
@@ -428,23 +415,22 @@ static int convert_inet_addr(struct config_node *node,
 	hints.ai_family = ai_family;
 	hints.ai_socktype = 0;
 	hints.ai_protocol = 0;
-	rc = getaddrinfo(node->u.varvalue, NULL,
+	rc = getaddrinfo(node->u.term.varvalue, NULL,
 			 &hints, &res);
 	if (rc == 0) {
 		memcpy(sock, res->ai_addr, res->ai_addrlen);
 		if (res->ai_next != NULL)
 			LogInfo(COMPONENT_CONFIG,
-				"At (%s:%d): Multiple addresses for %s = %s",
+				"At (%s:%d): Multiple addresses for %s",
 				node->filename,
 				node->linenumber,
-				node->name,
-				node->u.varvalue);
+				node->u.term.varvalue);
 	} else {
 		LogMajor(COMPONENT_CONFIG,
-			 "At (%s:%d): No IP address found for %s = %s because:%s",
+			 "At (%s:%d): No IP address found for %s because:%s",
 			 node->filename,
 			 node->linenumber,
-			 item->name, node->u.varvalue,
+			 node->u.term.varvalue,
 			 gai_strerror(rc));
 	}
 	freeaddrinfo(res);
@@ -468,7 +454,9 @@ static struct config_node *lookup_node(struct glist_head *list,
 	
 	glist_for_each(ns, list) {
 		node = glist_entry(ns, struct config_node, node);
-		if (strcasecmp(name, node->name) == 0) {
+		assert(node->type == TYPE_BLOCK ||
+		       node->type == TYPE_STMT);
+		if (strcasecmp(name, node->u.nterm.name) == 0) {
 			node->found = true;
 			return node;
 		}
@@ -496,7 +484,9 @@ static struct config_node *lookup_next_node(struct glist_head *list,
 
 	glist_for_each_next(start, ns, list) {
 		node = glist_entry(ns, struct config_node, node);
-		if (strcasecmp(name, node->name) == 0) {
+		assert(node->type == TYPE_BLOCK ||
+		       node->type == TYPE_STMT);
+		if (strcasecmp(name, node->u.nterm.name) == 0) {
 			node->found = true;
 			return node;
 		}
@@ -749,7 +739,7 @@ static int do_block_load(struct config_node *blk,
 	struct config_item *item;
 	caddr_t *param_addr;
 	struct sockaddr *sock;
-	struct config_node *node, *next_node = NULL;
+	struct config_node *node, *term_node, *next_node = NULL;
 	struct glist_head *ns;
 	int rc;
 	int errors = 0;
@@ -760,7 +750,7 @@ static int do_block_load(struct config_node *blk,
 		uint32_t flags;
 		bool bval;
 
-		node = lookup_node(&blk->u.blk.sub_nodes, item->name);
+		node = lookup_node(&blk->u.nterm.sub_nodes, item->name);
 		if ((item->flags & CONFIG_MANDATORY) && (node == NULL)) {
 			err_type->missing = true;
 			errors++;
@@ -770,7 +760,7 @@ static int do_block_load(struct config_node *blk,
 			return errors;
 		}
 		while (node != NULL) {
-			next_node = lookup_next_node(&blk->u.blk.sub_nodes,
+			next_node = lookup_next_node(&blk->u.nterm.sub_nodes,
 						     &node->node, item->name);
 			if (next_node != NULL &&
 			    (item->flags & CONFIG_UNIQUE)) {
@@ -778,7 +768,7 @@ static int do_block_load(struct config_node *blk,
 					 "At (%s:%d): Parameter %s set more than once",
 					 next_node->filename,
 					 next_node->linenumber,
-					 next_node->name);
+					 next_node->u.nterm.name);
 				err_type->unique = true;
 				errors++;
 				node = next_node;
@@ -788,12 +778,16 @@ static int do_block_load(struct config_node *blk,
 						 + item->off);
 			LogFullDebug(COMPONENT_CONFIG,
 				     "%p name=%s type=%s",
-				     param_addr, item->name, config_type_str(item->type));
+				     param_addr, item->name,
+				     config_type_str(item->type));
+			term_node = glist_first_entry(&node->u.nterm.sub_nodes,
+						      struct config_node,
+						      node);
 			switch (item->type) {
 			case CONFIG_NULL:
 				break;
 			case CONFIG_INT16:
-				if (convert_int(node, item->u.i16.minval,
+				if (convert_int(term_node, item->u.i16.minval,
 						item->u.i16.maxval,
 						&val))
 					*(int16_t *)param_addr = (int16_t)val;
@@ -803,7 +797,8 @@ static int do_block_load(struct config_node *blk,
 				}
 				break;
 			case CONFIG_UINT16:
-				if (convert_uint(node, item->u.ui16.minval,
+				if (convert_uint(term_node,
+						 item->u.ui16.minval,
 						 item->u.ui16.maxval,
 						 &uval))
 					*(uint16_t *)param_addr
@@ -814,7 +809,7 @@ static int do_block_load(struct config_node *blk,
 				}
 				break;
 			case CONFIG_INT32:
-				if (convert_int(node, item->u.i32.minval,
+				if (convert_int(term_node, item->u.i32.minval,
 						item->u.i32.maxval,
 						&val)) {
 					*(int32_t *)param_addr = (int32_t)val;
@@ -832,7 +827,8 @@ static int do_block_load(struct config_node *blk,
 				}
 				break;
 			case CONFIG_UINT32:
-				if (convert_uint(node, item->u.ui32.minval,
+				if (convert_uint(term_node,
+						 item->u.ui32.minval,
 						 item->u.ui32.maxval,
 						 &uval)) {
 					if (item->flags & CONFIG_MODE)
@@ -845,7 +841,8 @@ static int do_block_load(struct config_node *blk,
 				}
 				break;
 			case CONFIG_INT64:
-				if (convert_int(node, item->u.i64.minval,
+				if (convert_int(term_node,
+						item->u.i64.minval,
 						item->u.i64.maxval,
 						&val))
 					*(int64_t *)param_addr = val;
@@ -855,7 +852,8 @@ static int do_block_load(struct config_node *blk,
 				}
 				break;
 			case CONFIG_UINT64:
-				if (convert_uint(node, item->u.ui64.minval,
+				if (convert_uint(term_node,
+						 item->u.ui64.minval,
 						 item->u.ui64.maxval,
 						 &uval))
 					*(uint64_t *)param_addr = uval;
@@ -865,7 +863,7 @@ static int do_block_load(struct config_node *blk,
 				}
 				break;
 			case CONFIG_FSID:
-				rc = convert_fsid(node, param_addr);
+				rc = convert_fsid(term_node, param_addr);
 				if (rc == 0) {
 					if (item->u.fsid.set_off < UINT32_MAX) {
 						caddr_t *mask_addr;
@@ -881,7 +879,7 @@ static int do_block_load(struct config_node *blk,
 				}
 				break;
 			case CONFIG_ANONID:
-				rc = convert_anonid(node, &uval);
+				rc = convert_anonid(term_node, &uval);
 				if (rc != 0) {
 					caddr_t *mask_addr;
 					mask_addr = (caddr_t *)
@@ -900,17 +898,17 @@ static int do_block_load(struct config_node *blk,
 				if (*(char **)param_addr != NULL)
 					gsh_free(*(char **)param_addr);
 				*(char **)param_addr =
-					gsh_strdup(node->u.varvalue);
+					gsh_strdup(term_node->u.term.varvalue);
 				break;
 			case CONFIG_PATH:
 				if (*(char **)param_addr != NULL)
 					gsh_free(*(char **)param_addr);
 				/** @todo validate path with access() */
 				*(char **)param_addr =
-					gsh_strdup(node->u.varvalue);
+					gsh_strdup(term_node->u.term.varvalue);
 				break;
 			case CONFIG_TOKEN:
-				rc = convert_enum(node, item, &flags);
+				rc = convert_enum(term_node, item, &flags);
 				if (rc == 0)
 					*(uint32_t *)param_addr = flags;
 				else {
@@ -919,7 +917,7 @@ static int do_block_load(struct config_node *blk,
 				}
 				break;
 			case CONFIG_BOOL:
-				if (convert_bool(node, &bval))
+				if (convert_bool(term_node, &bval))
 					*(bool *)param_addr = bval;
 				else {
 					err_type->invalid = true;
@@ -927,7 +925,7 @@ static int do_block_load(struct config_node *blk,
 				}
 				break;
 			case CONFIG_BOOLBIT:
-				if (convert_bool(node, &bval)) {
+				if (convert_bool(term_node, &bval)) {
 					if (bval)
 						*(uint32_t *)param_addr
 							|= item->u.bit.bit;
@@ -952,7 +950,7 @@ static int do_block_load(struct config_node *blk,
 				   (*(uint32_t *)param_addr & item->u.lst.mask))
 					*(uint32_t *)param_addr &=
 							~item->u.lst.mask;
-				rc = convert_list(node, item, &flags);
+				rc = convert_list(term_node, item, &flags);
 				if (rc == 0) {
 					*(uint32_t *)param_addr |= flags;
 					if (item->u.lst.set_off < UINT32_MAX) {
@@ -980,7 +978,7 @@ static int do_block_load(struct config_node *blk,
 				   (*(uint32_t *)param_addr & item->u.lst.mask))
 					*(uint32_t *)param_addr &=
 							~item->u.lst.mask;
-				rc = convert_enum(node, item, &flags);
+				rc = convert_enum(term_node, item, &flags);
 				if (rc == 0) {
 					*(uint32_t *)param_addr |= flags;
 					if (item->u.lst.set_off < UINT32_MAX) {
@@ -1007,7 +1005,7 @@ static int do_block_load(struct config_node *blk,
 				   (*(uint32_t *)param_addr & item->u.lst.mask))
 					*(uint32_t *)param_addr &=
 							~item->u.lst.mask;
-				rc = convert_enum(node, item, &flags);
+				rc = convert_enum(term_node, item, &flags);
 				if (rc == 0) {
 					*(uint32_t *)param_addr |= flags;
 					if (item->u.lst.set_off < UINT32_MAX) {
@@ -1033,7 +1031,7 @@ static int do_block_load(struct config_node *blk,
 			case CONFIG_IPV4_ADDR:
 				sock = (struct sockaddr *)param_addr;
 
-				rc = convert_inet_addr(node, item,
+				rc = convert_inet_addr(term_node, item,
 						       AF_INET, sock);
 				if (rc != 0) {
 					err_type->invalid = true;
@@ -1043,7 +1041,7 @@ static int do_block_load(struct config_node *blk,
 			case CONFIG_IPV6_ADDR:
 				sock = (struct sockaddr *)param_addr;
 
-				rc = convert_inet_addr(node, item,
+				rc = convert_inet_addr(term_node, item,
 						       AF_INET6, sock);
 				if (rc != 0) {
 					err_type->invalid = true;
@@ -1051,7 +1049,8 @@ static int do_block_load(struct config_node *blk,
 				}
 				break;
 			case CONFIG_INET_PORT:
-				if (convert_uint(node, item->u.ui16.minval,
+				if (convert_uint(term_node,
+						 item->u.ui16.minval,
 						 item->u.ui16.maxval,
 						 &uval))
 					*(uint16_t *)param_addr =
@@ -1082,7 +1081,7 @@ static int do_block_load(struct config_node *blk,
 	/* We've been marking config nodes as being "seen" during the
 	 * scans.  Report the bogus and typo inflicted bits.
 	 */
-	glist_for_each(ns, &blk->u.blk.sub_nodes) {
+	glist_for_each(ns, &blk->u.nterm.sub_nodes) {
 		node = glist_entry(ns, struct config_node, node);
 		if (node->found)
 			node->found = false;
@@ -1091,7 +1090,7 @@ static int do_block_load(struct config_node *blk,
 				 "At (%s:%d): Unknown parameter (%s)",
 				 node->filename,
 				 node->linenumber,
-				 node->name);
+				 node->u.nterm.name);
 			err_type->bogus = true;
 			errors++;
 		}
@@ -1181,7 +1180,8 @@ static int proc_block(struct config_node *node,
 		goto err_out;
 	}
 	if (item->u.blk.display != NULL)
-		item->u.blk.display("DEFAULTS", node, link_mem, param_struct);
+		item->u.blk.display("DEFAULTS", node,
+				      link_mem, param_struct);
 	LogFullDebug(COMPONENT_CONFIG,
 		     "------ At (%s:%d): do_block_load %s",
 		     node->filename,
@@ -1239,8 +1239,8 @@ config_file_t get_parse_root(void *node)
 
 	parent = (struct config_node *)node;
 	assert(parent->type == TYPE_BLOCK);
-	while (parent->u.blk.parent != NULL) {
-		parent = parent->u.blk.parent;
+	while (parent->u.nterm.parent != NULL) {
+		parent = parent->u.nterm.parent;
 		assert(parent->type == TYPE_ROOT ||
 		       parent->type == TYPE_BLOCK);
 	}
@@ -1503,6 +1503,20 @@ static char *parse_expr(char *expr, struct expr_parse **expr_node)
 		return NULL;
 }
 
+static inline bool match_one_term(char *value, struct config_node *node)
+{
+	struct config_node *term_node;
+	struct glist_head *ts;
+
+	glist_for_each(ts, &node->u.nterm.sub_nodes) {
+		term_node = glist_entry(ts, struct config_node,	node);
+		assert(term_node->type == TYPE_TERM);
+		if (strcasecmp(value, term_node->u.term.varvalue) == 0)
+			return true;
+	}
+	return false;
+}
+
 /**
  * @brief Select block based on the evaluation of the qualifier args
  *
@@ -1526,16 +1540,16 @@ static bool match_block(struct config_node *blk,
 
 	assert(blk->type == TYPE_BLOCK);
 	for (arg = expr->arg; arg != NULL; arg = arg->next) {
-		glist_for_each(ns, &blk->u.blk.sub_nodes) {
+		glist_for_each(ns, &blk->u.nterm.sub_nodes) {
 			sub_node = glist_entry(ns, struct config_node, node);
 			if (sub_node->type == TYPE_STMT &&
-			    strcasecmp(arg->name, sub_node->name) == 0) {
+			    strcasecmp(arg->name,
+				       sub_node->u.nterm.name) == 0) {
 				found = true;
 				if (expr->next == NULL &&
 				    strcasecmp(arg->value, "*") == 0)
 					continue;
-				if (strcasecmp(arg->value,
-					       sub_node->u.varvalue) != 0)
+				if (!match_one_term(arg->value, sub_node))
 					return false;
 			}
 		}
@@ -1593,7 +1607,7 @@ int find_config_nodes(config_file_t config, char *expr_str,
 	expr = expr_head;
 	*node_list = NULL;
 again:
-	glist_for_each(ns, &top->u.blk.sub_nodes) {
+	glist_for_each(ns, &top->u.nterm.sub_nodes) {
 #ifdef DS_ONLY_WAS
 		/* recent changes to parsing may prevent this,
 		 * but retain code here for future reference.
@@ -1607,7 +1621,7 @@ again:
 		}
 #endif
 		sub_node = glist_entry(ns, struct config_node, node);
-		if (strcasecmp(expr->name, sub_node->name) == 0 &&
+		if (strcasecmp(expr->name, sub_node->u.nterm.name) == 0 &&
 		    sub_node->type == TYPE_BLOCK &&
 		    match_block(sub_node, expr)) {
 			if (expr->next != NULL) {
@@ -1668,10 +1682,10 @@ int load_config_from_node(void *tree_node,
 		return -1;
 	}
 	if (node->type == TYPE_BLOCK) {
-		if (strcasecmp(node->name, blkname) != 0) {
+		if (strcasecmp(node->u.nterm.name, blkname) != 0) {
 			LogCrit(COMPONENT_CONFIG,
 				"Looking for block (%s), got (%s)",
-				blkname, node->name);
+				blkname, node->u.nterm.name);
 			err_type->invalid = true;
 			return -1;
 		}
@@ -1760,7 +1774,7 @@ int load_config_from_parse(config_file_t config,
 			return -1;
 		}
 	}
-	glist_for_each(ns, &tree->root.u.blk.sub_nodes) {
+	glist_for_each(ns, &tree->root.u.nterm.sub_nodes) {
 #ifdef DS_ONLY_WAS
 		/* recent changes to parsing may prevent this,
 		 * but retain code here for future reference.
@@ -1776,7 +1790,7 @@ int load_config_from_parse(config_file_t config,
 #endif
 		node = glist_entry(ns, struct config_node, node);
 		if (node->type == TYPE_BLOCK &&
-		    strcasecmp(blkname, node->name) == 0) {
+		    strcasecmp(blkname, node->u.nterm.name) == 0) {
 			if (found > 0 &&
 			    (conf_blk->blk_desc.flags & CONFIG_UNIQUE)) {
 				LogWarn(COMPONENT_CONFIG,
