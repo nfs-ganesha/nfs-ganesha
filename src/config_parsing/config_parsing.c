@@ -58,6 +58,9 @@ config_file_t config_ParseFile(char *file_path,
 	}
 	rc = ganesha_yyparse(&st);
 	root = st.root_node;
+#ifdef DUMP_PARSE_TREE
+	print_parse_tree(stderr, root);
+#endif
 	ganeshun_yy_cleanup_parser(&st);
 	return (config_file_t)root;
 }
@@ -337,39 +340,33 @@ static int convert_list(struct config_node *node,
 			uint32_t *flags)
 {
 	struct config_item_list *tok;
-	char *csv_list = alloca(strlen(node->u.term.varvalue) + 1);
-	char *sp, *cp, *ep;
+	struct config_node *sub_node;
+	struct glist_head *nsi, *nsn;
 	bool found;
 	int errors = 0;
 
 	*flags = 0;
-	strcpy(csv_list, node->u.term.varvalue);
-	sp = csv_list;
-	ep = sp + strlen(sp);
-	while (sp < ep) {
-		cp = index(sp, ',');
-		if (cp != NULL)
-			*cp++ = '\0';
-		else
-			cp = ep;
-		tok = item->u.lst.tokens;
+	glist_for_each_safe(nsi, nsn, &node->u.nterm.sub_nodes) {
+		sub_node = glist_entry(nsi, struct config_node, node);
+		assert(sub_node->type == TYPE_TERM);
 		found = false;
-		while (tok->token != NULL) {
-			if (strcasecmp(sp, tok->token) == 0) {
+		for (tok = item->u.lst.tokens;
+		     tok->token != NULL;
+		     tok++) {
+			if (strcasecmp(sub_node->u.term.varvalue,
+				       tok->token) == 0) {
 				*flags |= tok->value;
 				found = true;
 			}
-			tok++;
 		}
 		if (!found) {
 			LogMajor(COMPONENT_CONFIG,
 				 "At (%s:%d): unknown token (%s)",
 				 node->filename,
 				 node->linenumber,
-				 sp);
+				 sub_node->u.term.varvalue);
 			errors++;
 		}
-		sp = cp;
 	}
 	return errors;
 }
@@ -434,6 +431,56 @@ static int convert_inet_addr(struct config_node *node,
 			 gai_strerror(rc));
 	}
 	freeaddrinfo(res);
+	return rc;
+}
+
+static enum config_type type_hint(enum term_type term_type)
+{
+	switch (term_type) {
+	case TERM_TOKEN:
+		return CONFIG_STRING;
+	case TERM_PATH:
+		return CONFIG_PATH;
+	case TERM_STRING:
+		return CONFIG_STRING;
+	}
+	return CONFIG_STRING;  /* when all else fails, it's a string... */
+}
+
+/**
+ * @brief Walk the term node list and call handler for each node
+ *
+ * This is effectively a callback on each token in the list.
+ * Pass along a type hint based on what the parser recognized.
+ *
+ * @param node [IN] pointer to the statement node
+ * @param item [IN] pointer to the config_item table entry
+ * @param param_addr [IN] pointer to target struct member
+ * @param err_type [OUT] error handling ref
+ * @return number of errors
+ */
+
+static int do_proc(struct config_node *node,
+		   struct config_item *item,
+		   void *param_addr,
+		   struct config_error_type *err_type)
+{
+	struct config_node *term_node;
+	struct glist_head *nsi, *nsn;
+	int rc = 0;
+
+	assert(node->type == TYPE_STMT);
+	glist_for_each_safe(nsi, nsn,
+			    &node->u.nterm.sub_nodes) {
+		term_node = glist_entry(nsi,
+				       struct config_node,
+				       node);
+		rc += item->u.proc.handler(term_node->u.term.varvalue,
+					   type_hint(term_node->u.term.type),
+					   item,
+					   param_addr,
+					   err_type);
+	}
 	return rc;
 }
 
@@ -670,7 +717,10 @@ static int do_block_init(struct config_item *params,
 			*(uint16_t *)param_addr = htons(item->u.ui16.def);
 			break;
 		case CONFIG_BLOCK:
-			(void) item->u.blk.init(NULL, param_addr); /* do parent init */
+			(void) item->u.blk.init(NULL, param_addr);
+			break;
+		case CONFIG_PROC:
+			(void) item->u.proc.init(NULL, param_addr);
 			break;
 		default:
 			LogCrit(COMPONENT_CONFIG,
@@ -684,7 +734,7 @@ static int do_block_init(struct config_item *params,
 }
 
 /**
- * @brief This is the NOOP init for block parsing
+ * @brief This is the NOOP init for block and proc parsing
  *
  * @param link_mem [IN] pointer to member in referencing structure
  * @param self_struct [IN] pointer to space reserved/allocated for block
@@ -950,7 +1000,7 @@ static int do_block_load(struct config_node *blk,
 				   (*(uint32_t *)param_addr & item->u.lst.mask))
 					*(uint32_t *)param_addr &=
 							~item->u.lst.mask;
-				rc = convert_list(term_node, item, &flags);
+				rc = convert_list(node, item, &flags);
 				if (rc == 0) {
 					*(uint32_t *)param_addr |= flags;
 					if (item->u.lst.set_off < UINT32_MAX) {
@@ -1062,6 +1112,12 @@ static int do_block_load(struct config_node *blk,
 				break;
 			case CONFIG_BLOCK:
 				rc = proc_block(node, item, param_addr,
+						err_type);
+				if (rc != 0)
+					errors += rc;
+				break;
+			case CONFIG_PROC:
+				rc = do_proc(node, item, param_addr,
 						err_type);
 				if (rc != 0)
 					errors += rc;

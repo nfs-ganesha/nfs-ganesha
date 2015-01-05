@@ -83,114 +83,111 @@ struct config_node *config_block(char *blockname,
 
 void link_node(struct config_node *node);
 
+ struct config_node *link_sibling(struct config_node *first,
+				  struct config_node *second);
+
 struct config_node *config_stmt(char *varname,
-				char *varval,
+				struct config_node *exprlist,
 				char *filename,
 				int lineno,
 				struct parser_state *st);
 
 struct config_node *config_term(char *varval,
+				enum term_type type,
 				char *filename,
 				int lineno,
 				struct parser_state *st);
-#ifdef _DEBUG_PARSING
-#define DEBUG_YACK   print_parse_tree
-#else
-#define DEBUG_YACK(...) (void)0
-#endif
 
 }
 
 %token _ERROR_
-%token BEGIN_BLOCK
-%token END_BLOCK
-%token BEGIN_SUB_BLOCK
-%token END_SUB_BLOCK
+%token LCURLY_OP
+%token RCURLY_OP
 %token EQUAL_OP
-%token END_STMT
+%token COMMA_OP
+%token SEMI_OP
 %token <token> IDENTIFIER
-%token <token> KEYVALUE
+%token <token> STRING
+%token <token> TOKEN
+%token <token> TOK_PATH
 
-%type <node> blocklist
-%type <node> listitems
-%type <node> block
+%type <node> deflist
 %type <node> definition
-%type <node> subblock
-%type <node> statement
+%type <node> exprlist
+%type <node> expression
 
+%start config
 
 %%
 
-program:
+config:
 { /* empty */
   ganesha_yyerror(&yyloc, st->scanner, "Empty configuration file");
 }
-| blocklist
+| deflist
 {
   if ($1 != NULL)
     glist_add_tail(&($1)->node, &st->root_node->root.u.nterm.sub_nodes);
   link_node(&st->root_node->root);
-  DEBUG_YACK(stderr, st->root_node);
 }
 ;
 
-blocklist: /* empty */ {
+
+deflist:
+definition
+{
+  $$ = $1;
+}
+| deflist definition
+{
+  $$ = link_sibling($1, $2);
+}
+;
+
+definition: { /* empty */
   $$ = NULL;
 }
-| blocklist block
-{
-  if ($1 == NULL) {
-    $$ = $2;
-  } else {
-    if ($2 != NULL)
-      glist_add_tail(&($1)->node, &($2)->node);
-    $$ = $1;
-  }
-}
-;
-
-block:
-IDENTIFIER BEGIN_BLOCK listitems END_BLOCK
-{
-  $$=config_block($1, $3, @$.filename, @$.first_line, st);
-}
-;
-
-listitems: /* empty */ {
-  $$ = NULL;
-}
-| listitems definition
-{
-  if ($1 == NULL) {
-    $$ = $2;
-  } else {
-    if ($2 != NULL)
-      glist_add_tail(&($1)->node, &($2)->node);
-    $$ = $1;
-  }
-}
-;
-
-definition:
-statement
-| subblock
-;
-
-
-statement:
-IDENTIFIER EQUAL_OP KEYVALUE END_STMT
+| IDENTIFIER EQUAL_OP exprlist SEMI_OP
 {
   $$=config_stmt($1, $3, @$.filename, @$.first_line, st);
 }
-;
-
-subblock:
-IDENTIFIER BEGIN_SUB_BLOCK listitems END_SUB_BLOCK
+| IDENTIFIER LCURLY_OP deflist RCURLY_OP
 {
   $$=config_block($1, $3, @$.filename, @$.first_line, st);
 }
 ;
 
+/* A statement is a comma separated sequence of option/value tokens
+ */
+
+exprlist:
+expression
+{
+  $$ = $1;
+}
+| exprlist COMMA_OP expression
+{
+  $$ = link_sibling($1, $3);
+}
+;
+
+expression: /* empty */ {
+  printf("empty expr\n");
+  $$ = NULL;
+}
+| TOK_PATH
+{
+  $$ = config_term($1, TERM_PATH, @$.filename, @$.first_line, st);
+}
+| TOKEN
+{
+  $$ = config_term($1, TERM_TOKEN, @$.filename, @$.first_line, st);
+}
+| STRING
+{
+  $$ = config_term($1, TERM_STRING, @$.filename, @$.first_line, st);
+}
+;
 
 %%
 
@@ -257,7 +254,7 @@ struct config_node *config_block(char *blockname,
 
 /**
  * @brief Walk the subnode list and update all the sub-blocks in it
- *
+ * so we can find the root of the parse tree when we need it.
  */
 
 void link_node(struct config_node *node)
@@ -275,10 +272,28 @@ void link_node(struct config_node *node)
 }
 
 /**
+ * @brief Link siblings together
+ *
+ */
+
+struct config_node *link_sibling(struct config_node *first,
+				 struct config_node *second)
+{
+	if (first == NULL) {
+		return second;
+	} else {
+		if (second != NULL)
+			glist_add_tail(&first->node, &second->node);
+		return first;
+	}
+}
+
+/**
  *  Create a term (value)
  */
 
 struct config_node *config_term(char *varval,
+				enum term_type type,
 				char *filename,
 				int lineno,
 				struct parser_state *st)
@@ -294,7 +309,7 @@ struct config_node *config_term(char *varval,
 	node->filename = filename;
 	node->linenumber = lineno;
 	node->type = TYPE_TERM;
-	node->u.term.type = TERM_STRING;
+	node->u.term.type = type;
 	node->u.term.varvalue = varval;
 	return node;
 }
@@ -304,19 +319,13 @@ struct config_node *config_term(char *varval,
  */
 
 struct config_node *config_stmt(char *varname,
-				char *varval,
+				struct config_node *exprlist,
 				char *filename,
 				int lineno,
 				struct parser_state *st)
 {
-	struct config_node *node, *term_node;
+	struct config_node *node;
 
-	term_node = config_term(varval,
-				filename,
-				lineno,
-				st);
-	if (term_node == NULL)
-		return NULL;  /* st->err_type already set */
 	node = gsh_calloc(1, sizeof(struct config_node));
 	if (node == NULL) {
 		st->err_type->resource = true;
@@ -324,7 +333,7 @@ struct config_node *config_stmt(char *varname,
 	}
 	glist_init(&node->node);
 	glist_init(&node->u.nterm.sub_nodes);
-	glist_add_tail(&term_node->node, &node->u.nterm.sub_nodes);
+	glist_add_tail(&exprlist->node, &node->u.nterm.sub_nodes);
 	node->filename = filename;
 	node->linenumber = lineno;
 	node->type = TYPE_STMT;

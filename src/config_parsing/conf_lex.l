@@ -69,19 +69,21 @@ NL           [\n]
 EQUALS       "="
 COMMA        ","
 SEMI         ";"
-LCURLY       "{"
-RCURLY       "}"
+LCURLY       "\{"
+RCURLY       "\}"
 SQUOTE       "'"
 DQUOTE       "\""
 
-PATHNAME     [a-zA-Z0-9\\\/\-\.\_]
-VAL_CHAR     [^ \t\r\n\f;"'#]
+INCLPATH     \/?([a-zA-Z0-9\-\.\_])+(\/[a-zA-Z0-9\-\.\_]+)*
+PATHNAME     (\/[a-zA-Z0-9\-\.\_]+)
+LONGPATH     (\/?[a-zA-Z0-9\-\.\_]+(\/[a-zA-Z0-9\-\.\_]+)+)
+TOKEN_CHARS   [a-zA-Z0-9\._\-]+
 COMMENTEXT	 #.*$
 STRING_CHAR       [^\n]
-IDENTIFIER [a-zA-Z_][a-zA-Z0-9_\-]*
+ID_CHARS [a-zA-Z_][a-zA-Z0-9_\-]*
 
 /* INCLUDE state is used for picking the name of the include file */
-%START YY_INIT BLOCK IN_BLOCK STMT_OR_SUB_BLOCK TERM ENDTERM QUOTE_STR LIT_STRING INCLUDE
+%START YY_INIT DEFINITION TERM QUOTE_STR LIT_STRING INCLUDE
 
 %%
 %{
@@ -94,7 +96,8 @@ IDENTIFIER [a-zA-Z_][a-zA-Z0-9_\-]*
 	/* not a token, return nothing */
 }
 
-<INCLUDE>{PATHNAME}+ {
+<INCLUDE>{INCLPATH} {
+
 	{
 		int c;
 
@@ -114,7 +117,7 @@ IDENTIFIER [a-zA-Z_][a-zA-Z0-9_\-]*
 	}
 }
 
-<INCLUDE>\"{PATHNAME}+\" {
+<INCLUDE>\"{INCLPATH}\" {
 	{
 		int c;
 
@@ -149,36 +152,35 @@ IDENTIFIER [a-zA-Z_][a-zA-Z0-9_\-]*
 
    /* Initial State.  We start with a block identifier */
 
-<YY_INIT>{IDENTIFIER} { /* first block */
+<YY_INIT>{ID_CHARS} { /* first block */
 	/* identifier */
 	DEBUG_LEX("[block:%s]\n",yytext);
 	yylval->token = gsh_strdup(yytext);
-	BEGIN BLOCK;
+	BEGIN DEFINITION;
 	return IDENTIFIER;
 }
 
-   /* Blocks */
-
-<BLOCK>{LCURLY}        {/* start of  block */
-	DEBUG_LEX("BEGIN_BLOCK\n");
-	BEGIN IN_BLOCK;
-	stp->block_depth++;
-	return BEGIN_BLOCK;
-}
-
-   /* Statements or subblocks start with an identifier */
-
-<IN_BLOCK>{IDENTIFIER} { /* name of block or keyword */
-	/* identifier */
+<DEFINITION>{ID_CHARS} {
 	DEBUG_LEX("[id:%s",yytext);
 	yylval->token = gsh_strdup(yytext);
-	BEGIN STMT_OR_SUB_BLOCK;
 	return IDENTIFIER;
 }
 
-   /* End of a block */
+{EQUALS} {
+	DEBUG_LEX(" EQUALS ");
+	yylval->token = gsh_strdup(yytext);
+	BEGIN TERM;
+	return EQUAL_OP;
+}
 
-<IN_BLOCK>{RCURLY}     {   /* end of block */
+{LCURLY} {
+	DEBUG_LEX("BEGIN_BLOCK\n");
+	BEGIN DEFINITION;
+	stp->block_depth++;
+	return LCURLY_OP;
+}
+
+{RCURLY}     {   /* end of block */
 	DEBUG_LEX("END_BLOCK\n");
 	if (stp->block_depth <= 0) {
 		/* error */
@@ -186,36 +188,28 @@ IDENTIFIER [a-zA-Z_][a-zA-Z0-9_\-]*
 				"closing bracket outside a block");
 		stp->err_type->scan = true;
 		return _ERROR_;
-	} else
-		stp->block_depth --;
-
-	if (stp->block_depth == 0) {
-		BEGIN YY_INIT;
-		return END_BLOCK;
 	} else {
-		BEGIN IN_BLOCK;
-		return END_SUB_BLOCK;
+		stp->block_depth --;
+		if (stp->block_depth == 0) {
+			BEGIN YY_INIT;
+		}
 	}
+	return RCURLY_OP;
 }
 
-   /* Disambiguate a statement, identifier "=" ... */
-
-<STMT_OR_SUB_BLOCK>{EQUALS}  { /* A statement */
-	/* equal_op */
-	DEBUG_LEX(" , ");
-	BEGIN TERM;
-	return EQUAL_OP;
+{COMMA}  { /* another terminal to follow ',' */
+	DEBUG_LEX(" ',' ");
+	return COMMA_OP;
 }
 
-   /* Disambiguate a subblock, identifier "{" ... */
+   /* End of statement */
 
-<STMT_OR_SUB_BLOCK>{LCURLY} {
-	/* sub-block */
-	DEBUG_LEX("\nBEGIN_SUB_BLOCK\n");
-	BEGIN IN_BLOCK;
-	stp->block_depth++;
-	return BEGIN_SUB_BLOCK;
+{SEMI}  { /* end of statement */
+	DEBUG_LEX("]\n");
+	BEGIN DEFINITION;
+	return SEMI_OP;
 }
+
 
    /* Double Quote, allows char escaping */
 
@@ -231,21 +225,18 @@ IDENTIFIER [a-zA-Z_][a-zA-Z0-9_\-]*
 	DEBUG_LEX("lit value:<");
 }
 
-   /* Terminal, gobbles anything other than white and ";" */
-
-<TERM>({VAL_CHAR})+  { /* start of a number or label/tag */
-	DEBUG_LEX("token value:%s",yytext);
-	BEGIN ENDTERM;
+<TERM>{PATHNAME}|{LONGPATH}  { /* a POSIX pathname */
+	DEBUG_LEX("pathname:%s", yytext);
 	yylval->token = gsh_strdup(yytext);
-	return KEYVALUE;
+	return TOK_PATH;
 }
 
-   /* End of statement */
+   /* Last resort terminal, gobbles anything other than white and ";" */
 
-<ENDTERM>{SEMI}  { /* end of statement */
-	DEBUG_LEX("]\n");
-	BEGIN IN_BLOCK;
-	return END_STMT;
+<TERM>{TOKEN_CHARS}  { /* start of a number or label/tag */
+	DEBUG_LEX("token value:%s",yytext);
+	yylval->token = gsh_strdup(yytext);
+	return TOKEN;
 }
 
    /* Double Quote, gobble chars */
@@ -266,8 +257,8 @@ IDENTIFIER [a-zA-Z_][a-zA-Z0-9_\-]*
 			return _ERROR_;
 		}
 		DEBUG_LEX("%s>", yylval->token);
-		BEGIN ENDTERM;
-		return KEYVALUE;
+		BEGIN TERM;
+		return STRING;
 	}
 }
 
@@ -285,8 +276,8 @@ IDENTIFIER [a-zA-Z_][a-zA-Z0-9_\-]*
 		return _ERROR_;
 	}
 	DEBUG_LEX("%s>", yylval->token);
-	BEGIN ENDTERM;
-	return KEYVALUE;
+	BEGIN TERM;
+	return STRING;
 }
 
    /* Single Quote, Throw an error if not a single line */
@@ -306,7 +297,7 @@ IDENTIFIER [a-zA-Z_][a-zA-Z0-9_\-]*
    /* Unrecognized chars.  Must do better... */
 
 . { /* ERROR: out of character character */
-	DEBUG_LEX("unexpected stuff %s\n", yytext);
+	DEBUG_LEX("unexpected stuff (%s)\n", yytext);
 	ganeshun_yyerror(yylloc, yyscanner, "Unexpected character");
 	stp->err_type->scan = true;
 	return _ERROR_;

@@ -243,8 +243,8 @@ void LogClientListEntry(log_components_t component,
 			    perms);
 		return;
 
-	case RAW_CLIENT_LIST:
-		LogCrit(component, "  %p RAW_CLIENT_LIST: <unknown>(%s)", entry,
+	case PROTO_CLIENT:
+		LogCrit(component, "  %p PROTO_CLIENT: <unknown>(%s)", entry,
 			perms);
 		return;
 	case BAD_CLIENT:
@@ -261,15 +261,16 @@ void LogClientListEntry(log_components_t component,
 /**
  * @brief Expand the client name token into one or more client entries
  *
- * @param exp        [IN] the export this gets linked to (in tail order)
+ * @param client_list[IN] the client list this gets linked to (in tail order)
  * @param client_tok [IN] the name string.  We modify it.
  * @param perms      [IN] pointer to the permissions to copy into each
+ * @param err_type   [OUT] error handling ref
  *
  * @returns 0 on success, error count on failure
  */
 
-static int add_client(struct gsh_export *export,
-		      char *client_tok,
+static int add_client(struct glist_head *client_list,
+		      const char *client_tok,
 		      struct export_perms *perms,
 		      struct config_error_type *err_type)
 {
@@ -283,9 +284,6 @@ static int add_client(struct gsh_export *export,
 			 "Allocate of client space failed");
 		goto out;
 	}
-#ifdef USE_NODELIST
-#error "Node list expansion goes here but not yet"
-#endif
 	glist_init(&cli->cle_list);
 	if (client_tok[0] == '*' && client_tok[1] == '\0') {
 		cli->type = MATCH_ANY_CLIENT;
@@ -397,8 +395,7 @@ static int add_client(struct gsh_export *export,
 				continue;
 			cli->client_perms = *perms;
 			LogClientListEntry(COMPONENT_CONFIG, cli);
-			glist_add_tail(&export->clients,
-				       &cli->cle_list);
+			glist_add_tail(client_list, &cli->cle_list);
 			cli = NULL; /* let go of it */
 		}
 		freeaddrinfo(info);
@@ -413,8 +410,7 @@ static int add_client(struct gsh_export *export,
 	}
 	cli->client_perms = *perms;
 	LogClientListEntry(COMPONENT_CONFIG, cli);
-	glist_add_tail(&export->clients,
-		       &cli->cle_list);
+	glist_add_tail(client_list, &cli->cle_list);
 	cli = NULL;
 out:
 	if (cli != NULL)
@@ -449,15 +445,12 @@ static void *client_init(void *link_mem, void *self_struct)
 		if (cli == NULL)
 			return NULL;
 		glist_init(&cli->cle_list);
-		cli->type = RAW_CLIENT_LIST;
+		cli->type = PROTO_CLIENT;
 		return cli;
 	} else { /* free resources case */
 		cli = self_struct;
 
 		assert(glist_empty(&cli->cle_list));
-		if (cli->type == RAW_CLIENT_LIST &&
-		    cli->client.raw_client_str != NULL)
-			gsh_free(cli->client.raw_client_str);
 		gsh_free(cli);
 		return NULL;
 	}
@@ -471,8 +464,9 @@ static void *client_init(void *link_mem, void *self_struct)
  * here and in add_client, we allocate new client entries and free
  * what was passed to us rather than try and link it in.
  *
+ * @param node [IN] the config_node **not used**
  * @param link_mem [IN] the exportlist entry. add_client adds to its glist.
- * @param self_struct  [IN] the filled out client entry with a RAW_CLIENT_LIST
+ * @param self_struct  [IN] the filled out client entry with a PROTO_CLIENT
  *
  * @return 0 on success, error count for failure.
  */
@@ -482,36 +476,18 @@ static int client_commit(void *node, void *link_mem, void *self_struct,
 {
 	struct exportlist_client_entry__ *cli;
 	struct gsh_export *export;
-	struct glist_head *cli_list;
-	char *client_list, *tok, *endptr;
 	int errcnt = 0;
 
-	cli_list = link_mem;
-	export = container_of(cli_list, struct gsh_export, clients);
+	export = container_of(link_mem, struct gsh_export, clients);
 	cli = self_struct;
-	assert(cli->type == RAW_CLIENT_LIST);
-
-	client_list = cli->client.raw_client_str;
-	cli->client.raw_client_str = NULL;
-	if (client_list == NULL || client_list[0] == '\0') {
+	assert(cli->type == PROTO_CLIENT);
+	if (glist_empty(&cli->cle_list)) {
 		LogCrit(COMPONENT_CONFIG,
 			"No clients specified");
 		err_type->invalid = true;
 		errcnt++;
-	}
-	/* take the first token for ourselves.  it may expand!
-	 * loop thru the rest and use our options as theirs (copy)
-	 */
-	tok = client_list;
-	while (errcnt == 0 && tok != NULL) {
-		endptr = index(tok, ',');
-		if (endptr != NULL)
-			*endptr++ = '\0';
-		LogMidDebug(COMPONENT_CONFIG,
-			    "Adding client %s", tok);
-		errcnt += add_client(export, tok, &cli->client_perms,
-				     err_type);
-		tok = endptr;
+	} else {
+		glist_splice_tail(&export->clients, &cli->cle_list);
 	}
 	if (errcnt == 0)
 		client_init(link_mem, self_struct);
@@ -781,6 +757,9 @@ static int export_commit(void *node, void *link_mem, void *self_struct,
 		 export->export_id, export->pseudopath,
 		 export->fullpath, export->FS_tag, perms);
 
+	LogEvent(COMPONENT_CONFIG,
+		 "Export %d has %ld defined clients", export->export_id,
+		 glist_length(&export->clients));
 	put_gsh_export(export);
 	return 0;
 
@@ -1042,6 +1021,47 @@ struct config_item_list deleg_types[] =  {
 		_struct_, _perms_.options, _perms_.set)
 
 /**
+ * @brief Process a list of clients for a client block
+ *
+ * CONFIG_PROC handler that gets called for each token in the term list.
+ * Create a exportlist_client_entry__ for each token and link it into
+ * the proto client's cle_list list head.  We will pass that head to the
+ * export in commit.
+ *
+ * NOTES: this is the place to expand a node list with perhaps moving the
+ * call to add_client into the expander rather than build a list there
+ * to be then walked here...
+ *
+ * @param token [IN] pointer to token string from parse tree
+ * @param type_hint [IN] a type hint from what the parser recognized
+ * @param item [IN] pointer to the config item table entry
+ * @param param_addr [IN] pointer to prototype client entry
+ * @param err_type [OUT] error handling
+ * @return error count
+ */
+
+static int client_adder(const char *token,
+			enum config_type type_hint,
+			struct config_item *item,
+			void *param_addr,
+			struct config_error_type *err_type)
+{
+	struct exportlist_client_entry__ *proto_cli;
+	int rc;
+
+	proto_cli = container_of(param_addr,
+				 struct exportlist_client_entry__,
+				 cle_list);
+#ifdef USE_NODELIST
+#error "Node list expansion goes here but not yet"
+#endif
+	LogMidDebug(COMPONENT_CONFIG, "Adding client %s", token);
+	rc = add_client(&proto_cli->cle_list,
+			token, &proto_cli->client_perms, err_type);
+	return rc;
+}
+
+/**
  * @brief Table of client sub-block parameters
  *
  * NOTE: node discovery is ordered by this table!
@@ -1051,8 +1071,8 @@ struct config_item_list deleg_types[] =  {
 
 static struct config_item client_params[] = {
 	CONF_EXPORT_PERMS(exportlist_client_entry__, client_perms),
-	CONF_ITEM_STR("Clients", 1, MAXPATHLEN, NULL,
-		      exportlist_client_entry__, client.raw_client_str),
+	CONF_ITEM_PROC("Clients", noop_conf_init, client_adder,
+		       exportlist_client_entry__, cle_list),
 	CONFIG_EOL
 };
 
@@ -1760,7 +1780,7 @@ void kill_export_junction_entry(cache_entry_t *entry)
 }
 
 static char *client_types[] = {
-	[RAW_CLIENT_LIST] = "RAW_CLIENT_LIST",
+	[PROTO_CLIENT] = "PROTO_CLIENT",
 	[HOSTIF_CLIENT] = "HOSTIF_CLIENT",
 	[NETWORK_CLIENT] = "NETWORK_CLIENT",
 	[NETGROUP_CLIENT] = "NETGROUP_CLIENT",

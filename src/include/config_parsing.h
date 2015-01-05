@@ -338,9 +338,13 @@ struct config_item {
 					void *self_struct);
 		} blk;
 		struct { /* CONFIG_PROC */
-			struct conf_item_list *tokens;
-			uint32_t def;
-			int (*setf)(void *field, void *args);
+			size_t set_off;
+			void *(*init)(void *link_mem, void *self_struct);
+			int (*handler)(const char *token,
+				       enum config_type type_hint,
+				       struct config_item *item,
+				       void *param_addr,
+				       struct config_error_type *err_type);
 		} proc;
 	} u;
 	size_t off; /* offset into struct pointed to by opaque_dest */
@@ -458,12 +462,12 @@ struct config_item {
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
 
-#define CONF_ITEM_PROC(_name_, _def_, _tokens_, _proc_) \
+#define CONF_ITEM_PROC(_name_, _init_, _handler_, _struct_, _mem_)	\
 	{ .name = _name_,			    \
-	  .type = CONFIG_PROC,		    \
-	  .u.proc.def = _def_,			    \
-	  .u.proc.tokens = _tokens_,		    \
-	  .u.proc.setf = _proc_	    \
+	  .type = CONFIG_PROC,			    \
+	  .u.proc.init = _init_,		    \
+	  .u.proc.handler = _handler_,			    \
+	  .off = offsetof(struct _struct_, _mem_)   \
 	}
 
 #define CONF_ITEM_LIST(_name_, _def_, _tokens_, _struct_, _mem_) \
