@@ -70,6 +70,12 @@
 %global with_fsal_hpss 0
 %endif
 
+%if 0%{?_with_panfs:1} || (0%{!?_without_pan:1} && "@USE_FSAL_PANFS@" == "ON")
+%global with_fsal_panfs 1
+%else
+%global with_fsal_panfs 0
+%endif
+
 %if 0%{?_with_pt:1} || (0%{!?_without_pt:1} && "@USE_FSAL_PT@" == "ON")
 %global with_fsal_pt 1
 %else
@@ -312,6 +318,18 @@ This package contains a FSAL shared object to
 be used with NFS-Ganesha to support HPSS
 %endif
 
+# PANFS
+%if %{with_fsal_panfs}
+%package panfs
+Summary: The NFS-GANESHA's PANFS FSAL
+Group: Applications/System
+Requires:	nfs-ganesha
+
+%description panfs
+This package contains a FSAL shared object to
+be used with NFS-Ganesha to support PANFS
+%endif
+
 # PT
 %if %{with_fsal_pt}
 %package pt
@@ -377,6 +395,11 @@ cmake .	-DCMAKE_BUILD_TYPE=Debug			\
 	-DUSE_FSAL_HPSS=ON				\
 %else
 	-DUSE_FSAL_HPSS=OFF				\
+%endif
+%if %{with_fsal_panfs}
+	-DUSE_FSAL_PANFS=ON				\
+%else
+	-DUSE_FSAL_PANFS=OFF				\
 %endif
 %if %{with_fsal_pt}
 	-DUSE_FSAL_PT=ON				\
@@ -596,6 +619,12 @@ make DESTDIR=%{buildroot} install
 %{_libdir}/ganesha/libfsalhpss*
 %endif
 
+%if %{with_fsal_panfs}
+%files panfs
+%defattr(-,root,root,-)
+%{_libdir}/ganesha/libfsalpanfs*
+%endif
+
 %if %{with_fsal_pt}
 %files pt
 %defattr(-,root,root,-)
@@ -631,6 +660,9 @@ make DESTDIR=%{buildroot} install
 
 
 %changelog
+* Mon Jan 5 2015 Niels de Vos <ndevos@redhat.com>
+- Add a panfs subpackage.
+
 * Mon Dec 15 2014 Niels de Vos <ndevos@redhat.com>
 - Enable building against jemalloc.
 
