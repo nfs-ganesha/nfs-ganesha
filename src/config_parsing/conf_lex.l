@@ -71,8 +71,8 @@ COMMA        ","
 SEMI         ";"
 LCURLY       "\{"
 RCURLY       "\}"
-SQUOTE       "'"
-DQUOTE       "\""
+SQUOTE       \'[^\']*\'
+DQUOTE       \"(\\.|[^\"])*\"
 
 INCLPATH     \/?([a-zA-Z0-9\-\.\_])+(\/[a-zA-Z0-9\-\.\_]+)*
 PATHNAME     (\/[a-zA-Z0-9\-\.\_]+)
@@ -83,7 +83,7 @@ STRING_CHAR       [^\n]
 ID_CHARS [a-zA-Z_][a-zA-Z0-9_\-]*
 
 /* INCLUDE state is used for picking the name of the include file */
-%START YY_INIT DEFINITION TERM QUOTE_STR LIT_STRING INCLUDE
+%START YY_INIT DEFINITION TERM INCLUDE
 
 %%
 %{
@@ -155,20 +155,19 @@ ID_CHARS [a-zA-Z_][a-zA-Z0-9_\-]*
 <YY_INIT>{ID_CHARS} { /* first block */
 	/* identifier */
 	DEBUG_LEX("[block:%s]\n",yytext);
-	yylval->token = gsh_strdup(yytext);
+	yylval->token = save_token(yytext, false, stp);
 	BEGIN DEFINITION;
 	return IDENTIFIER;
 }
 
 <DEFINITION>{ID_CHARS} {
 	DEBUG_LEX("[id:%s",yytext);
-	yylval->token = gsh_strdup(yytext);
+	yylval->token = save_token(yytext, false, stp);
 	return IDENTIFIER;
 }
 
 {EQUALS} {
 	DEBUG_LEX(" EQUALS ");
-	yylval->token = gsh_strdup(yytext);
 	BEGIN TERM;
 	return EQUAL_OP;
 }
@@ -214,20 +213,22 @@ ID_CHARS [a-zA-Z_][a-zA-Z0-9_\-]*
    /* Double Quote, allows char escaping */
 
 <TERM>{DQUOTE}  {  /* start of a double quote string */
-	BEGIN QUOTE_STR;
-	DEBUG_LEX("quote value:<");
+	DEBUG_LEX("quote value:<%s>", yytext);
+	yylval->token = save_token(yytext, true, stp);
+	return DQUOTE;
 }
 
    /* Single Quote, single line with no escaping */
 
 <TERM>{SQUOTE}   { /* start of a single quote string */
-	BEGIN LIT_STRING;
-	DEBUG_LEX("lit value:<");
+	DEBUG_LEX("lit value:<%s>", yytext);
+	yylval->token = save_token(yytext, false, stp);
+	return SQUOTE;
 }
 
 <TERM>{PATHNAME}|{LONGPATH}  { /* a POSIX pathname */
 	DEBUG_LEX("pathname:%s", yytext);
-	yylval->token = gsh_strdup(yytext);
+	yylval->token = save_token(yytext, false, stp);
 	return TOK_PATH;
 }
 
@@ -235,57 +236,8 @@ ID_CHARS [a-zA-Z_][a-zA-Z0-9_\-]*
 
 <TERM>{TOKEN_CHARS}  { /* start of a number or label/tag */
 	DEBUG_LEX("token value:%s",yytext);
-	yylval->token = gsh_strdup(yytext);
+	yylval->token = save_token(yytext, false, stp);
 	return TOKEN;
-}
-
-   /* Double Quote, gobble chars */
-
-<QUOTE_STR>[^\"]*\" {
-	if (yytext[yyleng - 2] == '\\') {
-		yyless(yyleng - 1);
-		yymore();
-	} else {
-		yylval->token = filter_string(yytext, 1);
-		if (yylval->token == NULL) {
-			ganeshun_yyerror(yylloc, yyscanner, "Out of memory");
-			stp->err_type->resource = true;
-			return _ERROR_;
-		} else if (yylval->token == (char *)-1) {
-			ganeshun_yyerror(yylloc, yyscanner, "Bad literal string");
-			stp->err_type->scan = true;
-			return _ERROR_;
-		}
-		DEBUG_LEX("%s>", yylval->token);
-		BEGIN TERM;
-		return STRING;
-	}
-}
-
-   /* Single Quote, gobble chars */
-
-<LIT_STRING>[^\n]*\'  { /* end of single quote string */
-	yylval->token =	filter_string(yytext, 0);
-	if (yylval->token == NULL) {
-		ganeshun_yyerror(yylloc, yyscanner, "Out of memory");
-		stp->err_type->resource = true;
-		return _ERROR_;
-	} else if (yylval->token == (char *)-1) {
-		ganeshun_yyerror(yylloc, yyscanner, "Bad literal string");
-		stp->err_type->scan = true;
-		return _ERROR_;
-	}
-	DEBUG_LEX("%s>", yylval->token);
-	BEGIN TERM;
-	return STRING;
-}
-
-   /* Single Quote, Throw an error if not a single line */
-
-<LIT_STRING>\n { /* ERROR: eol within single quote string */
-	ganeshun_yyerror(yylloc, yyscanner, "closing quote missing");
-	stp->err_type->scan = true;
-	return _ERROR_;
 }
 
    /* Skip over stuff we don't send upstairs */
@@ -344,64 +296,6 @@ void ganeshun_yy_cleanup_parser(struct parser_state *st)
 		while(pop_file(st) != 0);
 	}
 	ganeshun_yylex_destroy(st->scanner);
-}
-
-/**
- * @brief filter a string for escaped chars
- *
- * You can escape anything in quoted strings. Literals
- * can't and must be on one line.
- *
- * @param src yytext from the lexer
- * @param esc do quoted string escapes
- *
- * @return allocated string or NULL for ENOMEM and -1 for esc errors
- */
-
-static char *filter_string(char *src, int esc)
-{
-	int c;
-	char *sp, *dst, *dp;
-
-	dst = gsh_calloc(1, strlen(src) + 1);
-	if (dst == NULL)
-		return NULL;
-	sp = src;
-	dp = dst;
-	c = *sp++;
-	while (c != '\0') {
-		if (esc) { /* quoted strings */
-			if (c == '\\' && *sp != '\0') {
-				*dp++ = *sp++;
-			} else if (c == '\"' && *sp == '\0') {
-				*dp++ = '\0';
-				goto done;
-			} else if ((c == '\n' || c == '\"') &&
-				   *sp != '\0') {
-				gsh_free(dst);
-				return (char *)-1;
-			} else {
-				*dp++ = c;
-
-			}
-		} else { /* literal strings */
-			if (c == '\'' && *sp == '\0') {
-				*dp++ = '\0';
-				goto done;
-			} else if ((c == '\n' || c == '\'') &&
-				   *sp != '\0') {
-				gsh_free(dst);
-				return (char *)-1;
-			} else {
-				*dp++ = c;
-			}
-		}
-		c = *sp++;
-	}
-	*dp = *sp;
-
-done:
-	return dst;
 }
 
 static int new_file(char *name_tok,

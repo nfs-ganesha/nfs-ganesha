@@ -33,10 +33,80 @@
 #endif
 #include "abstract_mem.h"
 
+/**
+ * @brief Insert a scanner token into the token table
+ *
+ * Look up the token in the list matching case insensitive.
+ * If there is a match, return a pointer to the token in the table.
+ * Otherwise, allocate space, link it and return the pointer.
+ * if 'esc' == true, this is a double quoted string which needs to
+ * be filtered.  Turn the escaped non-printable into the non-printable.
+ *
+ * @param token [IN] pointer to the yytext token from flex
+ * @param esc [IN] bool, filter if true
+ * @param st [IN] pointer to parser state
+ * @return pointer to persistant storage for token or NULL;
+ */
+
+char *save_token(char *token, bool esc, struct parser_state *st)
+{
+	struct token_tab *tokp, *new_tok;
+
+	for (tokp = st->root_node->tokens;
+	     tokp != NULL;
+	     tokp = tokp->next) {
+		if (strcasecmp(token, tokp->token) == 0)
+			return tokp->token;
+	}
+	new_tok = gsh_calloc(1, (sizeof(struct token_tab) +
+				 strlen(token) + 1));
+	if (new_tok == NULL)
+		return NULL;
+	if (esc) {
+		char *sp, *dp;
+		int c;
+
+		sp = token;
+		dp = new_tok->token;
+		c = *sp++;
+		if (c == '\"')
+			c = *sp++; /* gobble leading '"' from regexp */
+		while (c != '\0') {
+			if (c == '\\') {
+				c = *sp++;
+				if (c == '\0')
+					break;
+				switch (c) {
+				case 'n':
+					c = '\n';
+					break;
+				case 't':
+					c = '\t';
+					break;
+				case 'r':
+					c = '\r';
+					break;
+				default:
+					break;
+				}
+			} else if (c == '"' && *sp == '\0')
+				break;  /* skip trailing '"' from regexp */
+			*dp++ = c;
+			c = *sp++;
+		}
+	} else
+		strcpy(new_tok->token, token);
+	new_tok->next = st->root_node->tokens;
+	st->root_node->tokens = new_tok;
+	return new_tok->token;
+}
+
 struct config_term_type config_term_type[] = {
 	[TERM_TOKEN]  = {"TOKEN", "option name or number"},
 	[TERM_PATH]   = {"PATH", "file path name"},
-	[TERM_STRING] = {"STRING", "quoted string"}
+	[TERM_STRING] = {"STRING", "simple string"},
+	[TERM_DQUOTE] = {"STRING", "double quoted string"},
+	[TERM_SQUOTE] = {"STRING", "single quoted string"}
 };
 
 /**
@@ -112,6 +182,7 @@ static void free_node(struct config_node *node)
 void free_parse_tree(struct config_root *tree)
 {
 	struct file_list *file, *next_file;
+	struct token_tab *token, *next_token;
 	struct config_node *node;
 	struct glist_head *nsi, *nsn;
 
@@ -128,6 +199,12 @@ void free_parse_tree(struct config_root *tree)
 		gsh_free(file->pathname);
 		gsh_free(file);
 		file = next_file;
+	}
+	token = tree->tokens;
+	while (token != NULL) {
+		next_token = token->next;
+		gsh_free(token);
+		token = next_token;
 	}
 	gsh_free(tree);
 	return;

@@ -42,6 +42,7 @@
  * Reads the content of a configuration file and
  * stores it in a memory structure.
  */
+
 config_file_t config_ParseFile(char *file_path,
 			       struct config_error_type *err_type)
 {
@@ -443,8 +444,10 @@ static enum config_type type_hint(enum term_type term_type)
 		return CONFIG_PATH;
 	case TERM_STRING:
 		return CONFIG_STRING;
+	default:
+		return CONFIG_STRING;  /* when all else fails,
+					* it's a string... */
 	}
-	return CONFIG_STRING;  /* when all else fails, it's a string... */
 }
 
 /**

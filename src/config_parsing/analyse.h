@@ -48,7 +48,9 @@ enum  node_type { TYPE_ROOT = 1, TYPE_BLOCK, TYPE_STMT, TYPE_TERM};
 enum  term_type {
 	TERM_TOKEN = 1,
 	TERM_PATH,
-	TERM_STRING
+	TERM_STRING,
+	TERM_DQUOTE,
+	TERM_SQUOTE
 };
 
 struct config_node {
@@ -86,6 +88,19 @@ struct file_list {
 };
 
 /*
+ * Symbol table
+ * Every token the scanner keeps goes here.  It is a linear
+ * list but we don't need much more than that.  What we do
+ * need is an accounting of all that memory so we can free it
+ * when the parser barfs and leaves stuff on its FSM stack.
+ */
+
+struct token_tab {
+	struct token_tab *next;
+	char token[];
+};
+
+/*
  * Parse tree root
  * A parse tree consists of several blocks,
  * each block consists of variables definitions
@@ -99,6 +114,7 @@ struct config_root {
 	struct config_node root;
 	char *conf_dir;
 	struct file_list *files;
+	struct token_tab *tokens;
 };
 
 /*
@@ -114,6 +130,7 @@ struct parser_state {
 	struct config_error_type *err_type;
 };
 
+char *save_token(char *token, bool esc, struct parser_state *st);
 int ganesha_yyparse(struct parser_state *st);
 int ganeshun_yy_init_parser(char *srcfile,
 			   struct parser_state *st);

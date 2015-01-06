@@ -108,6 +108,8 @@ struct config_node *config_term(char *varval,
 %token SEMI_OP
 %token <token> IDENTIFIER
 %token <token> STRING
+%token <token> DQUOTE
+%token <token> SQUOTE
 %token <token> TOKEN
 %token <token> TOK_PATH
 
@@ -187,6 +189,14 @@ expression: /* empty */ {
 {
   $$ = config_term($1, TERM_STRING, @$.filename, @$.first_line, st);
 }
+| DQUOTE
+{
+  $$ = config_term($1, TERM_DQUOTE, @$.filename, @$.first_line, st);
+}
+| SQUOTE
+{
+  $$ = config_term($1, TERM_SQUOTE, @$.filename, @$.first_line, st);
+}
 ;
 
 %%
@@ -227,8 +237,14 @@ struct config_node *config_block(char *blockname,
 				 struct parser_state *st)
 {
 	struct config_node *node, *cnode;
-	int cnt;
 
+	if (blockname == NULL) {
+		LogWarn(COMPONENT_CONFIG,
+			"Config file (%s:%d) no memory for block ID token.",
+			filename, lineno);
+		st->err_type->empty = true;
+		return NULL;
+	}
 	if (list == NULL) {
 		LogWarn(COMPONENT_CONFIG,
 			"Config file (%s:%d) Block %s is empty",
@@ -300,6 +316,13 @@ struct config_node *config_term(char *varval,
 {
 	struct config_node *node;
 
+	if (varval == NULL) {
+		LogWarn(COMPONENT_CONFIG,
+			"Config file (%s:%d) no memory for option value token.",
+			filename, lineno);
+		st->err_type->empty = true;
+		return NULL;
+	}
 	node = gsh_calloc(1, sizeof(struct config_node));
 	if (node == NULL) {
 		st->err_type->resource = true;
@@ -326,6 +349,13 @@ struct config_node *config_stmt(char *varname,
 {
 	struct config_node *node;
 
+	if (varname == NULL) {
+		LogWarn(COMPONENT_CONFIG,
+			"Config file (%s:%d) no memory for option ID token.",
+			filename, lineno);
+		st->err_type->empty = true;
+		return NULL;
+	}
 	node = gsh_calloc(1, sizeof(struct config_node));
 	if (node == NULL) {
 		st->err_type->resource = true;
