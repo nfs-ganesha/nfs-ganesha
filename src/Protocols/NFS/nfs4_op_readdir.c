@@ -73,7 +73,7 @@ static void restore_data(struct nfs4_readdir_cb_data *tracker)
 	tracker->saved_gsh_export = NULL;
 
 	/* Restore creds */
-	if (!get_req_creds(tracker->data->req)) {
+	if (nfs_req_creds(tracker->data->req) != NFS4_OK) {
 		LogCrit(COMPONENT_EXPORT,
 			"Failure to restore creds");
 	}
@@ -163,7 +163,7 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 		op_ctx->fsal_export = op_ctx->export->fsal_export;
 
 		/* Build the credentials */
-		rdattr_error = nfs4_MakeCred(data);
+		rdattr_error = nfs4_export_check_access(data->req);
 
 		if (rdattr_error == NFS4ERR_ACCESS) {
 			/* If return is NFS4ERR_ACCESS then this client

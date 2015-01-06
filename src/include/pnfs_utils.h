@@ -235,7 +235,7 @@ struct fsal_pnfs_ds *pnfs_ds_alloc(void);
 void pnfs_ds_free(struct fsal_pnfs_ds *pds);
 
 bool pnfs_ds_insert(struct fsal_pnfs_ds *pds);
-struct fsal_pnfs_ds *pnfs_ds_get(uint16_t pds_number);
+struct fsal_pnfs_ds *pnfs_ds_get(uint16_t id_servers);
 
 static inline void pnfs_ds_get_ref(struct fsal_pnfs_ds *pds)
 {
@@ -243,7 +243,7 @@ static inline void pnfs_ds_get_ref(struct fsal_pnfs_ds *pds)
 }
 
 void pnfs_ds_put(struct fsal_pnfs_ds *pds);
-void pnfs_ds_remove(uint16_t pds_number, bool final);
+void pnfs_ds_remove(uint16_t id_servers, bool final);
 
 int ReadDataServers(config_file_t in_config);
 void server_pkginit(void);

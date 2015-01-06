@@ -202,10 +202,10 @@ int nfs_rpc_req2client_cred(struct svc_req *req, nfs_client_cred_t *pcred)
  *
  * @param[in]  req              Incoming request.
  *
- * @return true if successful, false otherwise
+ * @return NFS4_OK if successful, NFS4ERR_ACCESS otherwise.
  *
  */
-bool get_req_creds(struct svc_req *req)
+nfsstat4 nfs_req_creds(struct svc_req *req)
 {
 	unsigned int i;
 	const char *auth_label = "UNKNOWN";
@@ -308,7 +308,7 @@ bool get_req_creds(struct svc_req *req)
 		/* Reject the request for weak authentication and
 		 * return to worker
 		 */
-		return false;
+		return NFS4ERR_ACCESS;
 
 		break;
 	}
@@ -332,7 +332,7 @@ bool get_req_creds(struct svc_req *req)
 			    op_ctx->creds->caller_uid,
 			    op_ctx->creds->caller_gid);
 		op_ctx->cred_flags |= UID_SQUASHED | GID_SQUASHED;
-		return true;
+		return NFS4_OK;
 	}
 
 	/* Now we will use the original_creds uid from original credential */
@@ -363,7 +363,7 @@ bool get_req_creds(struct svc_req *req)
 			/** @todo: do we really want to bail here? */
 			LogCrit(COMPONENT_DISPATCH,
 				"Attempt to fetch managed_gids failed");
-			return false;
+			return NFS4ERR_ACCESS;
 		}
 
 		op_ctx->creds->caller_glen = op_ctx->caller_gdata->nbgroups;
@@ -397,7 +397,7 @@ bool get_req_creds(struct svc_req *req)
 				if ((*garray_copy) == NULL) {
 					LogCrit(COMPONENT_DISPATCH,
 						"Attempt to sqaush caller_garray failed - no memory");
-					return false;
+					return NFS4ERR_ACCESS;
 				}
 
 				memcpy((*garray_copy),
@@ -442,7 +442,7 @@ out:
 				? " (squashed)"
 				: ""));
 
-	return true;
+	return NFS4_OK;
 }
 
 /**
@@ -484,20 +484,20 @@ void clean_credentials(void)
 }
 
 /**
- * @brief Validate export permissions and update compound
+ * @brief Validate export permissions
  *
- * @param[in] data Compound data to be used
+ * @param[in]  req              Incoming request.
  *
  * @return NFS4_OK if successful, NFS4ERR_ACCESS or NFS4ERR_WRONGSEC otherwise.
  *
  */
-int nfs4_MakeCred(compound_data_t *data)
+nfsstat4 nfs4_export_check_access(struct svc_req *req)
 {
-	xprt_type_t xprt_type = svc_get_xprt_type(data->req->rq_xprt);
+	xprt_type_t xprt_type = svc_get_xprt_type(req->rq_xprt);
 	int port = get_port(op_ctx->caller_addr);
 
 	LogMidDebugAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
-		    "nfs4_MakeCred about to call nfs_export_check_access");
+		    "nfs4_export_check_access about to call export_check_access");
 	export_check_access();
 
 	/* Check if any access at all */
@@ -559,7 +559,7 @@ int nfs4_MakeCred(compound_data_t *data)
 	}
 
 	/* Test if export allows the authentication provided */
-	if (export_check_security(data->req) == false) {
+	if (export_check_security(req) == false) {
 		LogInfoAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
 			"NFS4 auth not allowed on Export_Id %d %s for client %s",
 			op_ctx->export->export_id,
@@ -571,10 +571,7 @@ int nfs4_MakeCred(compound_data_t *data)
 	}
 
 	/* Get creds */
-	if (!get_req_creds(data->req))
-		return NFS4ERR_ACCESS;
-
-	return NFS4_OK;
+	return nfs_req_creds(req);
 }
 
 /**
