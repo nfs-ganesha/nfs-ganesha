@@ -140,6 +140,9 @@ int _9p_lock(struct _9p_request_data *req9p, void *worker_data,
 	       (char *)result->ai_addr,
 	       result->ai_addrlen);
 
+	/* variable result is not needed anymore, let's free it */
+	freeaddrinfo(result);
+
 	powner = get_9p_owner(&client_addr, *proc_id);
 	if (powner == NULL)
 		return _9p_rerror(req9p, worker_data, msgtag, EINVAL, plenout,
