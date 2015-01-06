@@ -774,7 +774,6 @@ fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
 
 		/* special case: server_id matches export_id */
 		pds->pds_number = op_ctx->export->export_id;
-		pds->pds_type = DS_ASSOCIATED_EXPORT;
 
 		if (!pnfs_ds_insert(pds)) {
 			LogCrit(COMPONENT_CONFIG,

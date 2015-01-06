@@ -2319,13 +2319,6 @@ struct fsal_obj_handle {
 	object_file_type_t type;	/*< Object file type */
 };
 
-enum ds_type {
-	DS_STANDARD,		/*< This DS is a "standard" DS */
-	DS_ASSOCIATED_EXPORT,	/*< This DS is associated with an export,
-				    pds_number will be the same as export_id.
-				    */
-};
-
 /**
  * @brief Public structure for pNFS Data Servers
  *
@@ -2348,7 +2341,6 @@ struct fsal_pnfs_ds {
 					    manipulating its list (above). */
 	int32_t refcount;		/*< Reference count */
 	uint16_t pds_number;		/*< Identifier */
-	enum ds_type pds_type;		/*< DS type */
 };
 
 /**
