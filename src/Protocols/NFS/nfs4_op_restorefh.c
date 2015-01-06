@@ -42,7 +42,6 @@
 #include "nfs_proto_tools.h"
 #include "nfs_file_handle.h"
 #include "export_mgr.h"
-#include "pnfs_utils.h"
 
 /**
  *
@@ -125,11 +124,6 @@ int nfs4_op_restorefh(struct nfs_argop4 *op, compound_data_t *data,
 	/* Update the current entry */
 	set_current_entry(data, data->saved_entry, true);
 
-	if (op_ctx->fsal_pnfs_ds != NULL) {
-		pnfs_ds_put(op_ctx->fsal_pnfs_ds);
-		op_ctx->fsal_pnfs_ds = NULL;
-	}
-
 	/* Restore the saved stateid */
 	data->current_stateid = data->saved_stateid;
 	data->current_stateid_valid = data->saved_stateid_valid;
@@ -139,11 +133,6 @@ int nfs4_op_restorefh(struct nfs_argop4 *op, compound_data_t *data,
 		data->current_ds = data->saved_ds;
 		data->current_filetype = data->saved_filetype;
 		ds_handle_get_ref(data->current_ds);
-	}
-
-	if (data->saved_fsal_pnfs_ds != NULL) {
-		op_ctx->fsal_pnfs_ds = data->saved_fsal_pnfs_ds;
-		pnfs_ds_get_ref(op_ctx->fsal_pnfs_ds);
 	}
 
 	if (isFullDebug(COMPONENT_NFS_V4)) {
