@@ -122,7 +122,7 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 		PTHREAD_RWLOCK_unlock(&entry_src->attr_lock);
 
 		/* Build credentials */
-		res_SECINFO4->status = nfs4_MakeCred(data);
+		res_SECINFO4->status = nfs4_export_check_access(data->req);
 
 		/* Test for access error (export should not be visible). */
 		if (res_SECINFO4->status == NFS4ERR_ACCESS) {
@@ -287,7 +287,7 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 			op_ctx->export->fsal_export;
 
 		/* Restore creds */
-		if (!get_req_creds(data->req)) {
+		if (nfs_req_creds(data->req) != NFS4_OK) {
 			LogCrit(COMPONENT_EXPORT,
 				"Failure to restore creds");
 		}

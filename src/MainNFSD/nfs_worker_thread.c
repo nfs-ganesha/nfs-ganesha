@@ -1223,7 +1223,7 @@ static void nfs_rpc_execute(request_data_t *req,
 				export_perms.options = EXPORT_OPTION_ROOT;
 			}
 
-			if (get_req_creds(svcreq) == false) {
+			if (nfs_req_creds(svcreq) != NFS4_OK) {
 				LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 					"could not get uid and gid, rejecting client %s",
 					client_ip);

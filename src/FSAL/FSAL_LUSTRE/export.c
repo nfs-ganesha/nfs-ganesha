@@ -66,7 +66,7 @@ static void lustre_release(struct fsal_export *exp_hdl)
 
 	if (myself->pnfs_ds_enabled) {
 		/* special case: server_id matches export_id */
-		pnfs_ds_remove(op_ctx->export->export_id, true);
+		pnfs_ds_remove(exp_hdl->id_exports, true);
 	}
 
 	lustre_unexport_filesystems(myself);
@@ -773,15 +773,18 @@ fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
 			goto errout;
 
 		/* special case: server_id matches export_id */
-		pds->pds_number = op_ctx->export->export_id;
+		pds->id_servers = op_ctx->export->export_id;
 
 		if (!pnfs_ds_insert(pds)) {
 			LogCrit(COMPONENT_CONFIG,
 				"Server id %d already in use.",
-				pds->pds_number);
+				pds->id_servers);
 			status.major = ERR_FSAL_EXIST;
 			goto errout;
 		}
+
+		/* special case: avoid lookup of related export */
+		pds->related = op_ctx->export;
 
 		LogInfo(COMPONENT_FSAL,
 			"lustre_fsal_create: pnfs DS was enabled for [%s]",

@@ -74,8 +74,8 @@ static int server_id_cmpf(const struct avltree_node *lhs,
 
 	lk = avltree_container_of(lhs, struct fsal_pnfs_ds, ds_node);
 	rk = avltree_container_of(rhs, struct fsal_pnfs_ds, ds_node);
-	if (lk->pds_number != rk->pds_number)
-		return (lk->pds_number < rk->pds_number) ? -1 : 1;
+	if (lk->id_servers != rk->id_servers)
+		return (lk->id_servers < rk->id_servers) ? -1 : 1;
 	else
 		return 0;
 }
@@ -128,7 +128,7 @@ bool pnfs_ds_insert(struct fsal_pnfs_ds *pds)
 
 	/* update cache */
 	cache_slot = (void **)
-		&(server_by_id.cache[id_cache_offsetof(pds->pds_number)]);
+		&(server_by_id.cache[id_cache_offsetof(pds->id_servers)]);
 	atomic_store_voidptr(cache_slot, &pds->ds_node);
 
 	pnfs_ds_get_ref(pds);		/* pds->refcount == 2 */
@@ -139,35 +139,35 @@ bool pnfs_ds_insert(struct fsal_pnfs_ds *pds)
 /**
  * @brief Lookup the fsal_pnfs_ds struct for this server id
  *
- * Lookup the fsal_pnfs_ds struct by pds_number.
+ * Lookup the fsal_pnfs_ds struct by id_servers.
  * Server ids are assigned by the config file and carried about
  * by file handles.
  *
- * @param pds_number   [IN] the server id extracted from the handle
+ * @param id_servers   [IN] the server id extracted from the handle
  *
  * @return pointer to ref locked server
  */
-struct fsal_pnfs_ds *pnfs_ds_get(uint16_t pds_number)
+struct fsal_pnfs_ds *pnfs_ds_get(uint16_t id_servers)
 {
 	void **cache_slot;
 	struct avltree_node *node;
 	struct fsal_pnfs_ds *pds;
 	struct fsal_pnfs_ds v;
 
-	v.pds_number = pds_number;
+	v.id_servers = id_servers;
 	PTHREAD_RWLOCK_rdlock(&server_by_id.lock);
 
 	/* check cache */
 	cache_slot = (void **)
-		&(server_by_id.cache[id_cache_offsetof(pds_number)]);
+		&(server_by_id.cache[id_cache_offsetof(id_servers)]);
 	node = (struct avltree_node *)atomic_fetch_voidptr(cache_slot);
 	if (node) {
 		pds = avltree_container_of(node, struct fsal_pnfs_ds, ds_node);
-		if (pds->pds_number == pds_number) {
+		if (pds->id_servers == id_servers) {
 			/* got it in 1 */
 			LogDebug(COMPONENT_HASHTABLE_CACHE,
 				 "server_by_id cache hit slot %d",
-				 id_cache_offsetof(pds_number));
+				 id_cache_offsetof(id_servers));
 			goto out;
 		}
 	}
@@ -213,23 +213,23 @@ void pnfs_ds_put(struct fsal_pnfs_ds *pds)
 /**
  * @brief Remove the pDS entry from the AVL tree.
  *
- * @param pds_number   [IN] the server id extracted from the handle
+ * @param id_servers   [IN] the server id extracted from the handle
  * @param final        [IN] Also drop from FSAL.
  */
 
-void pnfs_ds_remove(uint16_t pds_number, bool final)
+void pnfs_ds_remove(uint16_t id_servers, bool final)
 {
 	struct avltree_node *node;
 	struct fsal_pnfs_ds *pds = NULL;
 	struct fsal_pnfs_ds v;
 
-	v.pds_number = pds_number;
+	v.id_servers = id_servers;
 	PTHREAD_RWLOCK_wrlock(&server_by_id.lock);
 
 	node = avltree_lookup(&v.ds_node, &server_by_id.t);
 	if (node) {
 		void **cache_slot = (void **)
-			&(server_by_id.cache[id_cache_offsetof(pds_number)]);
+			&(server_by_id.cache[id_cache_offsetof(id_servers)]);
 		struct avltree_node *cnode = (struct avltree_node *)
 			 atomic_fetch_voidptr(cache_slot);
 
@@ -330,13 +330,13 @@ static int pds_commit(void *node, void *link_mem, void *self_struct,
 		      struct config_error_type *err_type)
 {
 	struct fsal_pnfs_ds *pds = self_struct;
-	struct fsal_pnfs_ds *probe = pnfs_ds_get(pds->pds_number);
+	struct fsal_pnfs_ds *probe = pnfs_ds_get(pds->id_servers);
 
 	/* redundant probe before insert??? */
 	if (probe != NULL) {
 		LogDebug(COMPONENT_CONFIG,
 			 "Server %d already exists!",
-			 pds->pds_number);
+			 pds->id_servers);
 		pnfs_ds_put(probe);
 		err_type->exists = true;
 		return 1;
@@ -345,14 +345,14 @@ static int pds_commit(void *node, void *link_mem, void *self_struct,
 	if (!pnfs_ds_insert(pds)) {
 		LogCrit(COMPONENT_CONFIG,
 			"Server id %d already in use.",
-			pds->pds_number);
+			pds->id_servers);
 		err_type->exists = true;
 		return 1;
 	}
 
 	LogEvent(COMPONENT_CONFIG,
 		 "DS %d created at FSAL (%s) with path (%s)",
-		 pds->pds_number, pds->fsal->name, pds->fsal->path);
+		 pds->id_servers, pds->fsal->name, pds->fsal->path);
 	return 0;
 }
 
@@ -368,7 +368,7 @@ static void pds_display(const char *step, void *node,
 
 	LogMidDebug(COMPONENT_CONFIG,
 		    "%s %p DS %d FSAL (%s) with path (%s)",
-		    step, pds, pds->pds_number, fsal->name, fsal->path);
+		    step, pds, pds->id_servers, fsal->name, fsal->path);
 }
 
 /**
@@ -395,7 +395,7 @@ static struct config_item fsal_params[] = {
 
 static struct config_item pds_items[] = {
 	CONF_ITEM_UI16("Number", 0, UINT16_MAX, 0,
-		       fsal_pnfs_ds, pds_number),
+		       fsal_pnfs_ds, id_servers),
 	CONF_RELAX_BLOCK("FSAL", fsal_params,
 			 fsal_init, fsal_commit,
 			 fsal_pnfs_ds, server), /* ??? placeholder */

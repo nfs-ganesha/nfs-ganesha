@@ -139,7 +139,7 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t *data,
 		PTHREAD_RWLOCK_unlock(&file_entry->attr_lock);
 
 		/* Build credentials */
-		res_LOOKUP4->status = nfs4_MakeCred(data);
+		res_LOOKUP4->status = nfs4_export_check_access(data->req);
 
 		/* Test for access error (export should not be visible). */
 		if (res_LOOKUP4->status == NFS4ERR_ACCESS) {
