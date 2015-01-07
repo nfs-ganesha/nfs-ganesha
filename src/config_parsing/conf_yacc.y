@@ -115,6 +115,8 @@ struct config_node *config_term(char *varval,
 
 %type <node> deflist
 %type <node> definition
+%type <node> block
+%type <node> statement
 %type <node> exprlist
 %type <node> expression
 
@@ -146,16 +148,49 @@ definition
 }
 ;
 
-definition: { /* empty */
-  $$ = NULL;
-}
-| IDENTIFIER EQUAL_OP exprlist SEMI_OP
+/* definition: statement | block ; */
+
+definition:
+ IDENTIFIER EQUAL_OP statement
 {
-  $$=config_stmt($1, $3, @$.filename, @$.first_line, st);
+  $$ = config_stmt($1, $3, @$.filename, @$.first_line, st);
 }
-| IDENTIFIER LCURLY_OP deflist RCURLY_OP
+| IDENTIFIER LCURLY_OP block
 {
   $$=config_block($1, $3, @$.filename, @$.first_line, st);
+}
+;
+
+statement:
+ exprlist SEMI_OP
+{
+  $$ = $1;
+}
+| error SEMI_OP
+{
+  LogCrit(COMPONENT_CONFIG,
+	  "Config parse (%s:%d) Syntax error in statement",
+	  @$.filename, @$.first_line);
+  yyerrok;
+  $$ = NULL;
+}
+;
+
+block:
+{ /* empty */
+  $$ = NULL;
+}
+| deflist RCURLY_OP
+{
+  $$ = $1;
+}
+| error RCURLY_OP
+{
+  LogCrit(COMPONENT_CONFIG,
+	  "Config parse (%s:%d) Syntax error in block",
+	  @$.filename, @$.first_line);
+  yyerrok;
+  $$ = NULL;
 }
 ;
 
@@ -174,7 +209,6 @@ expression
 ;
 
 expression: /* empty */ {
-  printf("empty expr\n");
   $$ = NULL;
 }
 | TOK_PATH
@@ -206,7 +240,7 @@ void ganesha_yyerror(YYLTYPE *yylloc_param,
 		     char *s){
 
   LogCrit(COMPONENT_CONFIG,
-	  "Config file (%s:%d) error: %s",
+	  "Config file (%s:%d) error: %s\n",
 	  yylloc_param->filename,
 	  yylloc_param->first_line,
 	  s);
@@ -351,8 +385,15 @@ struct config_node *config_stmt(char *varname,
 
 	if (varname == NULL) {
 		LogWarn(COMPONENT_CONFIG,
-			"Config file (%s:%d) no memory for option ID token.",
+			"Config file (%s:%d) no memory for option token.",
 			filename, lineno);
+		st->err_type->empty = true;
+		return NULL;
+	}
+	if (exprlist == NULL) {
+		LogWarn(COMPONENT_CONFIG,
+			"Config file (%s:%d): Parameter (%s) has no option values",
+			filename, lineno, varname);
 		st->err_type->empty = true;
 		return NULL;
 	}
@@ -363,11 +404,11 @@ struct config_node *config_stmt(char *varname,
 	}
 	glist_init(&node->node);
 	glist_init(&node->u.nterm.sub_nodes);
-	glist_add_tail(&exprlist->node, &node->u.nterm.sub_nodes);
 	node->filename = filename;
 	node->linenumber = lineno;
 	node->type = TYPE_STMT;
 	node->u.nterm.name = varname;
+	glist_add_tail(&exprlist->node, &node->u.nterm.sub_nodes);
 	return node;
 }
 

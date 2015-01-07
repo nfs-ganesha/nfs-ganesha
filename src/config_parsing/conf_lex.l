@@ -19,10 +19,6 @@
 #   include <string.h>
 #endif
 
-/* Alias for the dirty wrap */
-
-#define ganeshun_yyerror ganesha_yyerror
-
 /* Our versions of parser macros */
 
 #define YY_USER_INIT \
@@ -103,15 +99,8 @@ ID_CHARS [a-zA-Z_][a-zA-Z0-9_\-]*
 
 		DEBUG_LEX("Calling new_file with unquoted %s\n", yytext);
 		c = new_file(yytext, stp);
-		if (c != 0) {
-			if (c == EINVAL)
-				ganeshun_yyerror(yylloc, yyscanner,
-						"config file already parsed, ignored");
-			else
-				ganeshun_yyerror(yylloc, yyscanner,
-						"error opening file");
+		if (c == ENOMEM)
 			yyterminate();
-		}
 		BEGIN YY_INIT;
 		DEBUG_LEX("done new file\n");
 	}
@@ -123,25 +112,11 @@ ID_CHARS [a-zA-Z_][a-zA-Z0-9_\-]*
 
 		DEBUG_LEX("Calling new_file with quoted %s\n", yytext);
 		c = new_file(yytext, stp);
-		if (c != 0) {
-			if (c == EINVAL)
-				ganeshun_yyerror(yylloc, yyscanner,
-						"config file already parsed, ignored");
-			else
-				ganeshun_yyerror(yylloc, yyscanner,
-						"error opening file");
+		if (c == ENOMEM)
 			yyterminate();
-		}
 		BEGIN YY_INIT;
 		DEBUG_LEX("done new file\n");
 	}
-}
-
-<INCLUDE>[.\n]+ {
-	DEBUG_LEX("BAD include, line break\n");
-	/* error bad include */
-	stp->err_type->scan = true;
-	yyterminate();
 }
 
 <<EOF>> { /* end of included file */
@@ -181,18 +156,9 @@ ID_CHARS [a-zA-Z_][a-zA-Z0-9_\-]*
 
 {RCURLY}     {   /* end of block */
 	DEBUG_LEX("END_BLOCK\n");
-	if (stp->block_depth <= 0) {
-		/* error */
-		ganeshun_yyerror(yylloc, yyscanner,
-				"closing bracket outside a block");
-		stp->err_type->scan = true;
-		return _ERROR_;
-	} else {
-		stp->block_depth --;
-		if (stp->block_depth == 0) {
-			BEGIN YY_INIT;
-		}
-	}
+	stp->block_depth --;
+	if (stp->block_depth <= 0)
+		BEGIN YY_INIT;
 	return RCURLY_OP;
 }
 
@@ -250,8 +216,11 @@ ID_CHARS [a-zA-Z_][a-zA-Z0-9_\-]*
 
 . { /* ERROR: out of character character */
 	DEBUG_LEX("unexpected stuff (%s)\n", yytext);
-	ganeshun_yyerror(yylloc, yyscanner, "Unexpected character");
+	LogCrit(COMPONENT_CONFIG,
+		"Config file (%s:%d): Unexpected character (%s)",
+		yylloc->filename, yylloc->first_line, yytext);
 	stp->err_type->scan = true;
+	yylval->token = save_token(yytext, false, stp); /* for error rpt */
 	return _ERROR_;
 }
 
@@ -321,12 +290,10 @@ static int new_file(char *name_tok,
 	}
 	if (confroot->files == NULL) {
 		if (filename[0] == '/') {
-			char *path = gsh_strdup(filename);
+			char *path = alloca(strlen(filename) + 1);
 
-			if (path == NULL)
-				goto errout;
+			strcpy(path, filename);
 			confroot->conf_dir = gsh_strdup(dirname(path));
-			gsh_free(path);
 		} else {
 			confroot->conf_dir = gsh_strdup(".");
 		}
@@ -347,6 +314,10 @@ static int new_file(char *name_tok,
 	/* loop detection */
 	for (fp = confroot->files; fp != NULL; fp = fp->next) {
 		if (!strcmp(fp->pathname, fullpath)) {
+			LogCrit(COMPONENT_CONFIG,
+				"Config file (%s:%d): file (%s)already parsed, ignored",
+				yylloc->filename, yylloc->first_line,
+				fullpath);
 			rc = EINVAL;
 			goto errout;
 		}
@@ -359,12 +330,19 @@ static int new_file(char *name_tok,
 	if (flist == NULL) {
 		goto errout;
 	}
-	flist->next = confroot->files;
-	flist->pathname = fullpath;
-	confroot->files = flist;
-	in_file = fopen(flist->pathname, "r" );
+	in_file = fopen(fullpath, "r" );
 	if (in_file == NULL) {
+		char *filename = "<initial file>";
+		int first_line = 0;;
+
 		rc = errno;
+		if (yylloc != NULL) {
+			filename = yylloc->filename;
+			first_line = yylloc->first_line;
+		}
+		LogCrit(COMPONENT_CONFIG,
+			"Config file (%s:%d): new file (%s) open error (%s), ignored",
+			filename, first_line, fullpath, strerror(rc));
 		goto errout;
 	}
 	bs->bs = ganeshun_yy_create_buffer(in_file,
@@ -374,17 +352,20 @@ static int new_file(char *name_tok,
 		st->curbs->lineno = yylineno;
 	bs->prev = st->curbs;
 	bs->f = in_file;
-	bs->filename = flist->pathname;
+	bs->filename = fullpath;
 	ganeshun_yy_switch_to_buffer(bs->bs, yyscanner);
-	st->current_file = flist->pathname;
+	st->current_file = fullpath;
 	st->curbs = bs;
+	flist->pathname = fullpath;
+	flist->next = confroot->files;
+	confroot->files = flist;
 	return 0;
 
 errout:
 	if (rc == ENOMEM)
 		st->err_type->resource = true;
 	else
-		st->err_type->invalid = true;
+		st->err_type->scan = true;
 	if (flist != NULL)
 		gsh_free(flist);
 	if (bs != NULL)

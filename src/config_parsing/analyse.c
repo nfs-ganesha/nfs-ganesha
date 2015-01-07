@@ -150,13 +150,30 @@ static void print_node(FILE *output,
 void print_parse_tree(FILE *output, struct config_root *tree)
 {
 	struct config_node *node;
+	struct file_list *file;
+	struct token_tab *token;
 	struct glist_head *nsi, *nsn;
 
 	assert(tree->root.type == TYPE_ROOT);
+	fprintf(output, "<SUMMARY>\n");
+	fprintf(output, "   <BLOCK_COUNT> %ld </BLOCKCOUNT>\n",
+		glist_length(&tree->root.u.nterm.sub_nodes));
+	fprintf(output, "   <CONFIGURATION_FILES>\n");
+	for (file = tree->files; file != NULL; file = file->next)
+		fprintf(output, "      <FILE> \"%s\" </FILE>\n",
+			file->pathname);
+	fprintf(output, "   </CONFIGURATION_FILES>\n");
+	fprintf(output, "   <TOKEN_TABLE>\n");
+	for (token = tree->tokens; token != NULL; token = token->next)
+		fprintf(output, "      <TOKEN>%s</TOKEN>\n", token->token);
+	fprintf(output, "   </TOKEN_TABLE>\n");
+	fprintf(output, "</SUMMARY>\n");
+	fprintf(output, "<PARSE_TREE>\n");
 	glist_for_each_safe(nsi, nsn, &tree->root.u.nterm.sub_nodes) {
 		node = glist_entry(nsi, struct config_node, node);
-		print_node(output, node, 0);
+		print_node(output, node, 3);
 	}
+	fprintf(output, "</PARSE_TREE>\n");
 	return;
 }
 
