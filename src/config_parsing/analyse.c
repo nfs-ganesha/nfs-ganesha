@@ -106,7 +106,9 @@ struct config_term_type config_term_type[] = {
 	[TERM_PATH]   = {"PATH", "file path name"},
 	[TERM_STRING] = {"STRING", "simple string"},
 	[TERM_DQUOTE] = {"STRING", "double quoted string"},
-	[TERM_SQUOTE] = {"STRING", "single quoted string"}
+	[TERM_SQUOTE] = {"STRING", "single quoted string"},
+	[TERM_TRUE]   = {"TRUE", "boolean TRUE"},
+	[TERM_FALSE]  = {"FALSE", "boolean FALSE"}
 };
 
 /**

@@ -50,7 +50,9 @@ enum  term_type {
 	TERM_PATH,
 	TERM_STRING,
 	TERM_DQUOTE,
-	TERM_SQUOTE
+	TERM_SQUOTE,
+	TERM_TRUE,
+	TERM_FALSE
 };
 
 struct config_node {

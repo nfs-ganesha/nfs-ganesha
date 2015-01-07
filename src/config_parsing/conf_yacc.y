@@ -112,6 +112,8 @@ struct config_node *config_term(char *varval,
 %token <token> SQUOTE
 %token <token> TOKEN
 %token <token> TOK_PATH
+%token <token> TOK_TRUE
+%token <token> TOK_FALSE
 
 %type <node> deflist
 %type <node> definition
@@ -230,6 +232,14 @@ expression: /* empty */ {
 | SQUOTE
 {
   $$ = config_term($1, TERM_SQUOTE, @$.filename, @$.first_line, st);
+}
+| TOK_TRUE
+{
+  $$ = config_term($1, TERM_TRUE, @$.filename, @$.first_line, st);
+}
+| TOK_FALSE
+{
+  $$ = config_term($1, TERM_FALSE, @$.filename, @$.first_line, st);
 }
 ;
 

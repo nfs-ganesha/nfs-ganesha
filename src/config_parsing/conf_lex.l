@@ -69,6 +69,12 @@ LCURLY       "\{"
 RCURLY       "\}"
 SQUOTE       \'[^\']*\'
 DQUOTE       \"(\\.|[^\"])*\"
+YES          [Yy][Ee][Ss]
+TRUE         [Tt][Rr][Uu][Ee]
+ON           [Oo][Nn]
+NO           [Nn][Oo]
+FALSE        [Ff][Aa][Ll][Ss][Ee]
+OFF          [Oo][Ff][Ff]
 
 INCLPATH     \/?([a-zA-Z0-9\-\.\_])+(\/[a-zA-Z0-9\-\.\_]+)*
 PATHNAME     (\/[a-zA-Z0-9\-\.\_]+)
@@ -196,6 +202,18 @@ ID_CHARS [a-zA-Z_][a-zA-Z0-9_\-]*
 	DEBUG_LEX("pathname:%s", yytext);
 	yylval->token = save_token(yytext, false, stp);
 	return TOK_PATH;
+}
+
+<TERM>{YES}|{TRUE}|{ON}  { /* a boolean TRUE */
+	DEBUG_LEX("boolean TRUE:%s", yytext);
+	yylval->token = save_token(yytext, false, stp);
+	return TOK_TRUE;
+}
+
+<TERM>{NO}|{FALSE}|{OFF}  { /* a boolean FALSE */
+	DEBUG_LEX("boolean FALSE:%s", yytext);
+	yylval->token = save_token(yytext, false, stp);
+	return TOK_FALSE;
 }
 
    /* Last resort terminal, gobbles anything other than white and ";" */

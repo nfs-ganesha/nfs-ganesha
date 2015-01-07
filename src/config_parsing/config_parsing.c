@@ -163,24 +163,19 @@ char *err_type_str(struct config_error_type *err_type)
 static bool convert_bool(struct config_node *node,
 			 bool *b)
 {
-	if (!strcasecmp(node->u.term.varvalue, "1") ||
-	    !strcasecmp(node->u.term.varvalue, "yes") ||
-	    !strcasecmp(node->u.term.varvalue, "true")) {
+	if (node->u.term.type == TERM_TRUE)
 		*b = true;
-		return true;
-	}
-	if (!strcasecmp(node->u.term.varvalue, "0") ||
-	    !strcasecmp(node->u.term.varvalue, "no") ||
-	    !strcasecmp(node->u.term.varvalue, "false")) {
+	else if (node->u.term.type == TERM_FALSE)
 		*b = false;
-		return true;
-	}
-	LogMajor(COMPONENT_CONFIG,
-		 "At (%s:%d): (%s) should be 'true' or 'false'",
+	else {
+		LogMajor(COMPONENT_CONFIG,
+		 "At (%s:%d): Expected boolean (true/false) got (%s)",
 		 node->filename,
 		 node->linenumber,
 		 node->u.term.varvalue);
-	return false;
+		return false;
+	}
+	return true;
 }
 
 static bool convert_int(struct config_node *node,
