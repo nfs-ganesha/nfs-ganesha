@@ -42,7 +42,6 @@
 #include "nfs_proto_tools.h"
 #include "nfs_file_handle.h"
 #include "export_mgr.h"
-#include "pnfs_utils.h"
 
 /**
  *
@@ -130,11 +129,6 @@ int nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t *data,
 		data->saved_ds = NULL;
 	}
 
-	if (data->saved_fsal_pnfs_ds != NULL) {
-		pnfs_ds_put(data->saved_fsal_pnfs_ds);
-		data->saved_fsal_pnfs_ds = NULL;
-	}
-
 	data->saved_entry = data->current_entry;
 	data->saved_filetype = data->current_filetype;
 
@@ -142,11 +136,6 @@ int nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t *data,
 	if (data->current_ds != NULL) {
 		data->saved_ds = data->current_ds;
 		ds_handle_get_ref(data->saved_ds);
-	}
-
-	if (op_ctx->fsal_pnfs_ds != NULL) {
-		data->saved_fsal_pnfs_ds = op_ctx->fsal_pnfs_ds;
-		pnfs_ds_get_ref(op_ctx->fsal_pnfs_ds);
 	}
 
 	/* Take another reference.  As of now the filehandle is both saved

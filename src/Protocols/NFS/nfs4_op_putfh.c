@@ -125,26 +125,22 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t *data,
 		/* If old CurrentFH had a related server, release reference. */
 		if (op_ctx->fsal_pnfs_ds != NULL) {
 			changed = v4_handle->id.servers
-				!= op_ctx->fsal_pnfs_ds->pds_number;
+				!= op_ctx->fsal_pnfs_ds->id_servers;
 			pnfs_ds_put(op_ctx->fsal_pnfs_ds);
-		} else if (op_ctx->export != NULL &&
-			   pds->pds_number != op_ctx->export->export_id) {
-			/* We have switched from an MDS handle with export to
-			 * a DS handle where the DS is associated with an
-			 * export and the export is different.
-			 */
-			changed = true;
-		} else {
-			/* Permissions have changed if we had an export. */
-			changed = op_ctx->export != NULL;
 		}
 
 		/* If old CurrentFH had a related export, release reference. */
 		if (op_ctx->export != NULL) {
+			changed = op_ctx->export != pds->related;
 			put_gsh_export(op_ctx->export);
-			op_ctx->export = NULL;
-			op_ctx->fsal_export = NULL;
 		}
+
+		op_ctx->export = pds->related;
+		if (op_ctx->export != NULL) {
+			get_gsh_export_ref(op_ctx->export);
+			op_ctx->fsal_export = op_ctx->export->fsal_export;
+		} else
+			op_ctx->fsal_export = NULL;
 
 		/* Clear out current entry for now */
 		set_current_entry(data, NULL, false);
@@ -154,20 +150,10 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t *data,
 
 		if (changed) {
 			/* permissions may have changed */
-			switch (pds->pds_type) {
-			case DS_STANDARD:
-				res_PUTFH4->status = nfs4_MakeCred(data);
-				if (res_PUTFH4->status != NFS4_OK)
-					return res_PUTFH4->status;
-				break;
-			case DS_ASSOCIATED_EXPORT:
-				pds->s_ops.permissions(pds);
-
-				res_PUTFH4->status = NFS4ERR_ACCESS;
-				if (!get_req_creds(data->req))
-					return res_PUTFH4->status;
-				break;
-			}
+			res_PUTFH4->status = pds->s_ops.
+				permissions(pds, data->req);
+			if (res_PUTFH4->status != NFS4_OK)
+				return res_PUTFH4->status;
 		}
 
 		fh_desc.len = v4_handle->fs_len;
@@ -222,11 +208,12 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t *data,
 		/* Clear out current entry for now */
 		set_current_entry(data, NULL, false);
 
-		/* update _ctx fields needed by nfs4_MakeCred */
+		/* update _ctx fields needed by nfs4_export_check_access */
 		op_ctx->export = exporting;
 
 		if (changed) {
-			res_PUTFH4->status = nfs4_MakeCred(data);
+			res_PUTFH4->status =
+			    nfs4_export_check_access(data->req);
 			if (res_PUTFH4->status != NFS4_OK)
 				return res_PUTFH4->status;
 		}

@@ -49,6 +49,7 @@
 #include "lustre_methods.h"
 #include "pnfs_utils.h"
 #include "nfs_exports.h"
+#include "nfs_creds.h"
 
 /**
  * @brief Release a DS handle
@@ -309,9 +310,17 @@ static nfsstat4 make_ds_handle(struct fsal_pnfs_ds *const pds,
 	return NFS4_OK;
 }
 
+static nfsstat4 pds_permissions(struct fsal_pnfs_ds *const pds,
+				struct svc_req *req)
+{
+	/* special case: related export has been set */
+	return nfs4_export_check_access(req);
+}
+
 void lustre_pnfs_ds_ops_init(struct fsal_pnfs_ds_ops *ops)
 {
 	memcpy(ops, &def_pnfs_ds_ops, sizeof(struct fsal_pnfs_ds_ops));
+	ops->permissions = pds_permissions;
 	ops->make_ds_handle = make_ds_handle;
 	ops->fsal_dsh_ops = dsh_ops_init;
 }

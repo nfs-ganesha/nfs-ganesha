@@ -163,7 +163,7 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 		put_gsh_export(original_export);
 
 		/* Build credentials */
-		res_LOOKUPP4->status = nfs4_MakeCred(data);
+		res_LOOKUPP4->status = nfs4_export_check_access(data->req);
 
 		/* Test for access error (export should not be visible). */
 		if (res_LOOKUPP4->status == NFS4ERR_ACCESS) {

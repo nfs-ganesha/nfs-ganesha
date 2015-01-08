@@ -54,6 +54,7 @@
 #include "FSAL/fsal_commonlib.h"
 #include "fsal_private.h"
 #include "pnfs_utils.h"
+#include "nfs_creds.h"
 
 /** fsal module method defaults and common methods
  */
@@ -1111,15 +1112,20 @@ static void pds_release(struct fsal_pnfs_ds *const pds)
  * @brief Initialize FSAL specific permissions per pNFS DS
  *
  * @param[in]  pds      FSAL pNFS DS
+ * @param[in]  req      Incoming request.
+ *
+ * @retval NFS4_OK, NFS4ERR_ACCESS, NFS4ERR_WRONGSEC.
  */
 
-static void pds_permissions(struct fsal_pnfs_ds *const pds)
+static nfsstat4 pds_permissions(struct fsal_pnfs_ds *const pds,
+				struct svc_req *req)
 {
 	/* FIX ME!!! Replace with a non-export dependent system.
 	 * For now, reset per init_root_op_context()
 	 */
 	op_ctx->export_perms->set = root_op_export_set;
 	op_ctx->export_perms->options = root_op_export_options;
+	return NFS4_OK;
 }
 
 /**
