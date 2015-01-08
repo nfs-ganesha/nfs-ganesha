@@ -45,8 +45,7 @@
 typedef enum export_state {
 	EXPORT_INIT = 0,	/*< still being initialized */
 	EXPORT_READY,		/*< searchable, usable */
-	EXPORT_BLOCKED,		/*< not available for search */
-	EXPORT_RELEASE		/*< No references, ready for reaping */
+	EXPORT_STALE,		/*< export is no longer valid */
 } export_state_t;
 
 /**

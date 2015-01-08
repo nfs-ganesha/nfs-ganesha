@@ -696,6 +696,11 @@ void remove_gsh_export(uint16_t export_id)
 	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
 
 	if (export != NULL) {
+		/* Mark the export as stale so no new references will be
+		 * granted.
+		 */
+		set_gsh_export_state(export, EXPORT_STALE);
+
 		/* Release table reference to the export.
 		 * Release of resources will occur on last reference.
 		 * Which may or may not be from this call.
