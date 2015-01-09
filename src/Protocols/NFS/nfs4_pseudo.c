@@ -340,8 +340,7 @@ bool pseudo_mount_export(struct gsh_export *export)
 		 tmp_pseudopath);
 
 	/* Now find the export we are mounted on */
-	op_ctx->export =
-	    get_gsh_export_by_pseudo(tmp_pseudopath, false);
+	op_ctx->export = get_gsh_export_by_pseudo(tmp_pseudopath, false);
 
 	if (op_ctx->export == NULL) {
 		LogFatal(COMPONENT_EXPORT,
@@ -401,8 +400,7 @@ bool pseudo_mount_export(struct gsh_export *export)
 	}
 
 	/* Lock (and refresh if necessary) the attributes */
-	cache_status =
-	    cache_inode_lock_trust_attrs(state.dirent, true);
+	cache_status = cache_inode_lock_trust_attrs(state.dirent, true);
 
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		LogCrit(COMPONENT_EXPORT,
@@ -435,6 +433,8 @@ bool pseudo_mount_export(struct gsh_export *export)
 			export->fullpath,
 			export->pseudopath,
 			cache_inode_err_str(cache_status));
+
+		PTHREAD_RWLOCK_unlock(&state.dirent->attr_lock);
 
 		/* Release the LRU reference and return failure. */
 		cache_inode_put(state.dirent);
@@ -524,8 +524,11 @@ void pseudo_unmount_export(struct gsh_export *export)
 			break;
 		}
 
-		/* Take a reference to that export */
-		get_gsh_export_ref(sub_mounted_export);
+		/* Take a reference to that export. Export may be dead
+		 * already, but we should see if we can speed along its
+		 * unmounting.
+		 */
+		(void) get_gsh_export_ref(sub_mounted_export, true);
 
 		/* Drop the lock */
 		PTHREAD_RWLOCK_unlock(&export->lock);
@@ -554,7 +557,7 @@ void pseudo_unmount_export(struct gsh_export *export)
 		/* Clean up the junction inode */
 
 		/* Take an LRU reference */
-		cache_inode_lru_ref(junction_inode, LRU_FLAG_NONE);
+		(void) cache_inode_lru_ref(junction_inode, LRU_REQ_STALE_OK);
 
 		/* Release the export lock so we can take attr_lock */
 		PTHREAD_RWLOCK_unlock(&export->lock);

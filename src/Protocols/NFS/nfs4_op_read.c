@@ -224,6 +224,7 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 	cache_entry_t *entry = NULL;
 	bool sync = false;
 	bool anonymous_started = false;
+	state_owner_t *owner = NULL;
 
 	/* Say we are managing NFS4_OP_READ */
 	resp->resop = NFS4_OP_READ;
@@ -263,6 +264,10 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 		switch (state_found->state_type) {
 		case STATE_TYPE_SHARE:
 			state_open = state_found;
+			/* Note this causes an extra refcount, but it
+			 * simplifies logic below.
+			 */
+			inc_state_t_ref(state_open);
 			/**
 			 * @todo FSF: need to check against existing locks
 			 */
@@ -270,6 +275,7 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 
 		case STATE_TYPE_LOCK:
 			state_open = state_found->state_data.lock.openstate;
+			inc_state_t_ref(state_open);
 			/**
 			 * @todo FSF: should check that write is in
 			 * range of an byte range lock...
@@ -287,7 +293,7 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 					sdeleg->sd_type,
 					sdeleg->sd_state);
 				res_READ4->status = NFS4ERR_BAD_STATEID;
-				return res_READ4->status;
+				goto out;
 			}
 
 			state_open = NULL;
@@ -298,7 +304,7 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 			LogDebug(COMPONENT_NFS_V4_LOCK,
 				 "READ with invalid statid of type %d",
 				 state_found->state_type);
-			return res_READ4->status;
+			goto out;
 		}
 
 		/* This is a read operation, this means that the file
@@ -316,11 +322,17 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 			    share_deny & OPEN4_SHARE_DENY_READ) {
 				/* Bad open mode, return NFS4ERR_OPENMODE */
 				res_READ4->status = NFS4ERR_OPENMODE;
-				LogDebug(COMPONENT_NFS_V4_LOCK,
-					 "READ state %p doesn't have "
-					 "OPEN4_SHARE_ACCESS_READ",
-					 state_found);
-				return res_READ4->status;
+
+				if (isDebug(COMPONENT_NFS_V4_LOCK)) {
+					char str[LOG_BUFF_LEN];
+					struct display_buffer dspbuf = {
+							sizeof(str), str, str};
+					display_stateid(&dspbuf, state_found);
+					LogDebug(COMPONENT_NFS_V4_LOCK,
+						 "READ %s doesn't have OPEN4_SHARE_ACCESS_READ",
+						 str);
+				}
+				goto out;
 			}
 		}
 
@@ -336,12 +348,10 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 		 */
 		switch (state_found->state_type) {
 		case STATE_TYPE_SHARE:
-			if ((data->minorversion == 0)
-			    &&
-			    (!(state_found->state_owner->so_owner.so_nfs4_owner.
-			       so_confirmed))) {
+			if (data->minorversion == 0 &&
+			    !state_owner_confirmed(state_found)) {
 				res_READ4->status = NFS4ERR_BAD_STATEID;
-				return res_READ4->status;
+				goto out;
 			}
 			break;
 		case STATE_TYPE_LOCK:
@@ -353,7 +363,7 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 			 * above), anyway it costs nothing to add this
 			 * test */
 			res_READ4->status = NFS4ERR_BAD_STATEID;
-			return res_READ4->status;
+			goto out;
 			break;
 		}
 	} else {
@@ -372,7 +382,7 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 						: SHARE_BYPASS_NONE));
 
 		if (res_READ4->status != NFS4_OK)
-			return res_READ4->status;
+			goto out;
 
 		anonymous_started = true;
 	}
@@ -460,9 +470,11 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	if (!anonymous_started && data->minorversion == 0) {
-		op_ctx->clientid =
-		    &state_found->state_owner->so_owner.so_nfs4_owner.
-		    so_clientid;
+		owner = get_state_owner_ref(state_found);
+		if (owner != NULL) {
+			op_ctx->clientid =
+				&owner->so_owner.so_nfs4_owner.so_clientid;
+		}
 	}
 
 	cache_status =
@@ -509,6 +521,18 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 	server_stats_io_done(size, read_size,
 			     (res_READ4->status == NFS4_OK) ? true : false,
 			     false);
+
+ out:
+
+	if (owner != NULL)
+		dec_state_owner_ref(owner);
+
+	if (state_found != NULL)
+		dec_state_t_ref(state_found);
+
+	if (state_open != NULL)
+		dec_state_t_ref(state_open);
+
 	return res_READ4->status;
 }				/* nfs4_op_read */
 
@@ -693,6 +717,9 @@ done:
 		 nfsstat4_to_str(res_IO_ADVISE->iaa_status),
 		 hints.hints, hints.offset, hints.count);
 
+	if (state_found != NULL)
+		dec_state_t_ref(state_found);
+
 	return res_IO_ADVISE->iaa_status;
 }				/* nfs4_op_io_advise */
 
@@ -772,6 +799,9 @@ done:
 		 "Status  %s type %d offset %ld ",
 		 nfsstat4_to_str(res_SEEK->sr_status), arg_SEEK->sa_what,
 		 arg_SEEK->sa_offset);
+
+	if (state_found != NULL)
+		dec_state_t_ref(state_found);
 
 	return res_SEEK->sr_status;
 }

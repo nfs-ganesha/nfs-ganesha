@@ -104,14 +104,24 @@ extern struct lru_state lru_state;
 #define LRU_REQ_INITIAL  0x0002
 
 /**
- * The caller is scanning the entry (READDIR)
+ * The caller is doing something that doesn't care if entry is dead
  */
-#define LRU_REQ_SCAN  0x0004
+#define LRU_REQ_STALE_OK  0x0004
 
 /**
  * qlane is locked
  */
 #define LRU_UNREF_QLOCKED 0x0008
+
+/**
+ * entry->state_lock is held
+ *
+ * This will prevent cleanup on unref. The calling thread MUST hold another
+ * reference that will be release without holding the state_lock (which SHOULD
+ * be true in order to even be able to reference entry->state_lock), which
+ * release will allow cleanup if necessary.
+ */
+#define LRU_UNREF_STATE_LOCK_HELD 0x0010
 
 /**
  * The minimum reference count for a cache entry not being recycled.
@@ -131,7 +141,7 @@ extern int cache_inode_lru_pkgshutdown(void);
 extern size_t open_fd_count;
 
 cache_inode_status_t cache_inode_lru_get(struct cache_entry_t **entry);
-void cache_inode_lru_ref(cache_entry_t *entry, uint32_t flags);
+cache_inode_status_t cache_inode_lru_ref(cache_entry_t *entry, uint32_t flags);
 
 /* XXX */
 void cache_inode_lru_kill(cache_entry_t *entry);

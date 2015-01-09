@@ -622,7 +622,8 @@ cache_inode_readdir(cache_entry_t *directory,
 		LogFullDebug(COMPONENT_NFS_READDIR,
 			     "permission check for directory status=%s",
 			     cache_inode_err_str(status));
-		goto unlock_attrs;
+		PTHREAD_RWLOCK_unlock(&directory->attr_lock);
+		return status;
 	}
 
 	if (attrmask != 0) {
@@ -787,7 +788,8 @@ cache_inode_readdir(cache_entry_t *directory,
 		cb_parms.attr_allowed = attr_status == CACHE_INODE_SUCCESS;
 		cb_parms.cookie = dirent->hk.k;
 
-		tmp_status = cache_inode_getattr(entry, &cb_parms, cb);
+		tmp_status =
+		    cache_inode_getattr(entry, &cb_parms, cb, CB_ORIGINAL);
 
 		if (tmp_status != CACHE_INODE_SUCCESS) {
 			cache_inode_lru_unref(entry, LRU_FLAG_NONE);
@@ -855,9 +857,6 @@ unlock_dir:
 	PTHREAD_RWLOCK_unlock(&directory->content_lock);
 	return status;
 
-unlock_attrs:
-	PTHREAD_RWLOCK_unlock(&directory->attr_lock);
-	return status;
 }				/* cache_inode_readdir */
 
 /** @} */

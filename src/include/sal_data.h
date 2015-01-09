@@ -365,12 +365,14 @@ struct state_t {
 #ifdef DEBUG_SAL
 	struct glist_head state_list_all;    /*< Global list of all stateids */
 #endif
+	pthread_mutex_t state_mutex; /*< Mutex protecting following pointers */
 	struct gsh_export *state_export; /*< Export this entry belongs to */
 	state_owner_t *state_owner;	/*< State Owner related to this state */
 	cache_entry_t *state_entry;	/*< Related entry */
 	union state_data state_data;
 	enum state_type state_type;
 	u_int32_t state_seqid;		/*< The NFSv4 Sequence id */
+	int32_t state_refcount;		/*< Refcount for state_t objects */
 	char stateid_other[OTHERSIZE];	/*< "Other" part of state id,
 					   used as hash key */
 	struct state_refer state_refer;	/*< For NFSv4.1, track the
@@ -388,25 +390,6 @@ struct state_t {
 		(id4)->seqid = (state)->state_seqid; \
 		(void)memcpy((id4)->other, (state)->stateid_other, OTHERSIZE); \
 	} while (0)
-
-/**
- * @brief Delegation state data object
- *
- * We could potentially put all the delegation data in struct state_deleg
- * itself but that would add storage for other state types. So we
- * allocate memory for storing delegation related state data in this
- * object.
- */
-struct deleg_data {
-	struct glist_head dd_list;
-	cache_entry_t *dd_entry;
-	state_t *dd_state;
-	state_owner_t *dd_owner;
-	struct gsh_export *dd_export;
-	uint16_t dd_export_id;
-};
-
-
 
 /*****************************************************************************
  *
@@ -477,7 +460,7 @@ typedef struct state_nsm_client_t {
 					   structure */
 	struct glist_head ssc_lock_list;	/*< All locks held by client */
 	struct glist_head ssc_share_list;	/*< All share reservations */
-	sockaddr_t ssc_client_addr;	/*< Network address of client */
+	struct gsh_client *ssc_client;		/*< The client involved */
 	int32_t ssc_refcount;	/*< Reference count to protect
 				   structure */
 	int32_t ssc_monitored;	/*< If this client is actively
@@ -651,14 +634,6 @@ struct nfs_client_id_t {
 	time_t cid_last_renew;	/*< Time of last renewal */
 	nfs_clientid_confirm_state_t cid_confirmed; /*< Confirm/expire state */
 	nfs_client_cred_t cid_credential;	/*< Client credential */
-	sockaddr_t cid_client_addr;	/*< Network address of
-					   client. @note This only really
-					   makes sense for NFSv4.0, and
-					   even then it's dubious.
-					   NFSv4.1 explicitly allows
-					   multiple addresses per
-					   session and multiple sessions
-					   per client. */
 	int cid_allow_reclaim;	/*< Whether this client can still
 				   reclaim state */
 	char *cid_recov_dir;	/*< Recovery directory */
@@ -811,11 +786,6 @@ struct state_block_data_t {
 	} sbd_prot;
 };
 
-typedef enum lock_type_t {
-	POSIX_LOCK,		/*< Byte-range lock */
-	LEASE_LOCK		/*< Delegation */
-} lock_type_t;
-
 struct state_lock_entry_t {
 	struct glist_head sle_list;	/*< Locks on this file */
 	struct glist_head sle_owner_locks; /*< Link on the owner lock list */
@@ -831,10 +801,9 @@ struct state_lock_entry_t {
 	state_owner_t *sle_owner;	/* Lock owner */
 	state_t *sle_state;	/*< Associated lock state */
 	state_blocking_t sle_blocked;	/*< Blocking status */
-	int sle_ref_count;	/*< Reference count */
+	int32_t sle_ref_count;	/*< Reference count */
 	fsal_lock_param_t sle_lock;	/*< Lock description */
 	pthread_mutex_t sle_mutex;	/*< Mutex to protect the structure */
-	lock_type_t sle_type;	/*< Type of lock */
 };
 
 /**
@@ -847,7 +816,6 @@ typedef struct state_layout_segment {
 	state_t *sls_state;	/*< Associated layout state */
 	struct pnfs_segment sls_segment;	/*< Segment descriptor */
 	void *sls_fsal_data;	/*< FSAL data */
-	pthread_mutex_t sls_mutex;	/*< Mutex */
 } state_layout_segment_t;
 
 /**

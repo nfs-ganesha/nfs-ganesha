@@ -79,7 +79,7 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op, compound_data_t *data,
 	op_ctx->fsal_export = NULL;
 
 	/* Clear out current entry for now */
-	set_current_entry(data, NULL, false);
+	set_current_entry(data, NULL);
 
 	/* Get the root export of the Pseudo FS */
 	op_ctx->export = get_gsh_export_by_pseudo("/", true);
@@ -127,7 +127,7 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op, compound_data_t *data,
 		    "Root node %p", data->current_entry);
 
 	/* Set the current entry using the ref from get */
-	set_current_entry(data, file_entry, false);
+	set_current_entry(data, file_entry);
 
 	/* If no currentFH were set, allocate one */
 	if (data->currentFH.nfs_fh4_val == NULL) {

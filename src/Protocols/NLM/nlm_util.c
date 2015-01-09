@@ -142,10 +142,9 @@ void netobj_free(netobj *obj)
 void netobj_to_string(netobj *obj, char *buffer, int maxlen)
 {
 	int len = obj->n_len;
-	if ((len * 2) + 10 > maxlen)
-		len = (maxlen - 10) / 2;
+	struct display_buffer dspbuf = {maxlen, buffer, buffer};
 
-	DisplayOpaqueValue(obj->n_bytes, len, buffer);
+	display_opaque_value(&dspbuf, obj->n_bytes, len);
 }
 
 void nlm_init(void)
@@ -248,9 +247,11 @@ static void nlm4_send_grant_msg(state_async_queue_t *arg)
 
 	PTHREAD_RWLOCK_unlock(&cookie_entry->sce_entry->state_lock);
 
-	/* Initialize a context */
+	/* Initialize a context, it is ok if the export is stale because
+	 * we must clean up the cookie_entry.
+	 */
 	export = cookie_entry->sce_lock_entry->sle_export;
-	get_gsh_export_ref(export);
+	(void) get_gsh_export_ref(export, true);
 
 	init_root_op_context(&root_op_context,
 			     export, export->fsal_export,
@@ -533,7 +534,7 @@ nlm4_stats nlm_convert_state_error(state_status_t status)
 		return NLM4_ROFS;
 	case STATE_NOT_FOUND:
 		return NLM4_STALE_FH;
-	case STATE_FSAL_ESTALE:
+	case STATE_ESTALE:
 		return NLM4_STALE_FH;
 	case STATE_FILE_BIG:
 		return NLM4_FBIG;

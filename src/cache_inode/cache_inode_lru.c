@@ -179,7 +179,6 @@ size_t open_fd_count = 0;
  * independent partition of the LRU queue.
  */
 
-static pthread_mutex_t lru_mtx;
 static struct fridgethr *lru_fridge;
 
 enum lru_edge {
@@ -236,8 +235,6 @@ static inline void
 lru_init_queues(void)
 {
 	int ix;
-
-	pthread_mutex_init(&lru_mtx, NULL);
 
 	for (ix = 0; ix < LRU_N_Q_LANES; ++ix) {
 		struct lru_q_lane *qlane = &LRU[ix];
@@ -1361,17 +1358,25 @@ cache_inode_is_pinned(cache_entry_t *entry)
  *
  * @retval CACHE_INODE_SUCCESS if the reference was acquired
  */
-void
-cache_inode_lru_ref(cache_entry_t *entry, uint32_t flags)
+cache_inode_status_t cache_inode_lru_ref(cache_entry_t *entry, uint32_t flags)
 {
+	cache_inode_lru_t *lru = &entry->lru;
+	struct lru_q_lane *qlane = &LRU[lru->lane];
+	struct lru_q *q;
+
+	if ((flags & (LRU_REQ_INITIAL | LRU_REQ_STALE_OK)) == 0) {
+		QLOCK(qlane);
+		if (lru->qid == LRU_ENTRY_CLEANUP) {
+			QUNLOCK(qlane);
+			return CACHE_INODE_ESTALE;
+		}
+		QUNLOCK(qlane);
+	}
+
 	atomic_inc_int32_t(&entry->lru.refcnt);
 
 	/* adjust LRU on initial refs */
-	if (flags & (LRU_REQ_INITIAL | LRU_REQ_SCAN)) {
-
-		cache_inode_lru_t *lru = &entry->lru;
-		struct lru_q_lane *qlane = &LRU[lru->lane];
-		struct lru_q *q;
+	if (flags & LRU_REQ_INITIAL) {
 
 		/* do it less */
 		if ((atomic_inc_int32_t(&entry->lru.cf) % 3) != 0)
@@ -1415,7 +1420,7 @@ cache_inode_lru_ref(cache_entry_t *entry, uint32_t flags)
 		QUNLOCK(qlane);
 	}			/* initial ref */
  out:
-	return;
+	return CACHE_INODE_SUCCESS;
 }
 
 /**
@@ -1437,20 +1442,41 @@ void
 cache_inode_lru_unref(cache_entry_t *entry, uint32_t flags)
 {
 	int32_t refcnt;
-	enum lru_q_id qid;
+	bool do_cleanup = false;
+	uint32_t lane = entry->lru.lane;
+	struct lru_q_lane *qlane = &LRU[lane];
+	bool qlocked = flags & LRU_UNREF_QLOCKED;
+	bool other_lock_held = flags & LRU_UNREF_STATE_LOCK_HELD;
+
+	if (!qlocked && !other_lock_held) {
+		QLOCK(qlane);
+		if (((entry->lru.flags & LRU_CLEANED) == 0) &&
+		    (entry->lru.qid == LRU_ENTRY_CLEANUP)) {
+			do_cleanup = true;
+			entry->lru.flags |= LRU_CLEANED;
+		}
+		QUNLOCK(qlane);
+
+		if (do_cleanup) {
+			LogDebug(COMPONENT_CACHE_INODE,
+				 "LRU_ENTRY_CLEANUP of entry %p",
+				 entry);
+			state_wipe_file(entry);
+			kill_export_root_entry(entry);
+			kill_export_junction_entry(entry);
+		}
+	}
 
 	refcnt = atomic_dec_int32_t(&entry->lru.refcnt);
 
 	if (unlikely(refcnt == 0)) {
 
-		uint32_t lane = entry->lru.lane;
-		struct lru_q_lane *qlane = &LRU[lane];
-		bool qlocked = flags & LRU_UNREF_QLOCKED;
 		struct lru_q *q;
 
 		/* we MUST recheck that refcount is still 0 */
 		if (!qlocked)
 			QLOCK(qlane);
+
 		refcnt = atomic_fetch_int32_t(&entry->lru.refcnt);
 
 		if (unlikely(refcnt > 0)) {
@@ -1458,9 +1484,6 @@ cache_inode_lru_unref(cache_entry_t *entry, uint32_t flags)
 				QUNLOCK(qlane);
 			goto out;
 		}
-
-		/* save qid */
-		qid = entry->lru.qid;
 
 		/* Really zero.  Remove entry and mark it as dead. */
 		q = lru_queue_of(entry);
@@ -1472,16 +1495,6 @@ cache_inode_lru_unref(cache_entry_t *entry, uint32_t flags)
 
 		if (!qlocked)
 			QUNLOCK(qlane);
-
-		/* inline cleanup */
-		if (qid == LRU_ENTRY_CLEANUP) {
-			LogDebug(COMPONENT_CACHE_INODE,
-				 "LRU_ENTRY_CLEANUP of entry %p",
-				 entry);
-			state_wipe_file(entry);
-			kill_export_root_entry(entry);
-			kill_export_junction_entry(entry);
-		}
 
 		cache_inode_lru_clean(entry);
 		pool_free(cache_inode_entry_pool, entry);

@@ -68,7 +68,7 @@ cache_inode_status_t up_get(struct fsal_module *fsal,
 		return CACHE_INODE_NOT_FOUND;
 
 	/* Found entry, ref it */
-	cache_inode_lru_ref(*entry, LRU_REQ_INITIAL);
+	(void) cache_inode_lru_ref(*entry, LRU_REQ_INITIAL);
 	cih_latch_rele(&latch);
 
 	return CACHE_INODE_SUCCESS;

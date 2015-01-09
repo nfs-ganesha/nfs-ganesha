@@ -84,13 +84,23 @@ int nlm4_Granted_Res(nfs_arg_t *args,
 
 	PTHREAD_RWLOCK_unlock(&cookie_entry->sce_entry->state_lock);
 
-	/* Fill in op_ctx */
+	/* Fill in op_ctx, nfs_rpc_execute will release the export ref.
+	 * We take an export reference even if the export is stale because
+	 * we want to properly clean up the cookie_entry.
+	 */
+	(void) get_gsh_export_ref(op_ctx->export, true);
 	op_ctx->export = cookie_entry->sce_lock_entry->sle_export;
-	get_gsh_export_ref(op_ctx->export); /* nfs_rpc_execute will release */
 	op_ctx->fsal_export = op_ctx->export->fsal_export;
-	if (arg->stat.stat != NLM4_GRANTED) {
+
+	/* If the client returned an error or the export has gone stale,
+	 * release the grant to properly clean up cookie_entry.
+	 */
+	if (arg->stat.stat != NLM4_GRANTED || !export_ready(op_ctx->export)) {
 		LogMajor(COMPONENT_NLM,
-			 "Granted call failed due to client error, releasing lock");
+			 "Granted call failed due to %s, releasing lock",
+			 arg->stat.stat != NLM4_GRANTED
+				? "client error"
+				: "export stale");
 		state_status = state_release_grant(cookie_entry);
 		if (state_status != STATE_SUCCESS) {
 			LogDebug(COMPONENT_NLM,

@@ -104,13 +104,18 @@ static nfsstat4 acquire_layout_state(compound_data_t *data,
 					false,
 					tag);
 
-	if (nfs_status != NFS4_OK)
-		goto out;
+	if (nfs_status != NFS4_OK) {
+		/* The supplied stateid was invalid */
+		return nfs_status;
+	}
 
 	if (supplied_state->state_type == STATE_TYPE_LAYOUT) {
 		/* If the state supplied is a layout state, we can
-		 * simply use it */
+		 * simply use it, return with the reference we just
+		 * acquired.
+		 */
 		*layout_state = supplied_state;
+		return nfs_status;
 	} else if ((supplied_state->state_type == STATE_TYPE_SHARE)
 		   || (supplied_state->state_type == STATE_TYPE_DELEG)
 		   || (supplied_state->state_type == STATE_TYPE_LOCK)) {
@@ -147,6 +152,7 @@ static nfsstat4 acquire_layout_state(compound_data_t *data,
 
 			if (condemned_state->state_data.layout.granting) {
 				nfs_status = NFS4ERR_DELAY;
+				dec_state_t_ref(condemned_state);
 				goto out;
 			}
 
@@ -160,6 +166,8 @@ static nfsstat4 acquire_layout_state(compound_data_t *data,
 						   NULL,
 						   &deleted);
 
+			dec_state_t_ref(condemned_state);
+
 			if (nfs_status != NFS4_OK)
 				goto out;
 
@@ -169,23 +177,17 @@ static nfsstat4 acquire_layout_state(compound_data_t *data,
 			}
 
 			condemned_state = NULL;
-		} else if (state_status != STATE_NOT_FOUND) {
-			nfs_status = nfs4_Errno_state(state_status);
-			goto out;
 		}
-
-		PTHREAD_RWLOCK_unlock(&data->current_entry->state_lock);
-		lock_held = false;
 
 		layout_data.layout.state_layout_type = layout_type;
 		layout_data.layout.state_return_on_close = false;
 
-		state_status = state_add(data->current_entry,
-					 STATE_TYPE_LAYOUT,
-					 &layout_data,
-					 clientid_owner,
-					 layout_state,
-					 &refer);
+		state_status = state_add_impl(data->current_entry,
+					      STATE_TYPE_LAYOUT,
+					      &layout_data,
+					      clientid_owner,
+					      layout_state,
+					      &refer);
 
 		if (state_status != STATE_SUCCESS) {
 			nfs_status = nfs4_Errno_state(state_status);
@@ -193,13 +195,6 @@ static nfsstat4 acquire_layout_state(compound_data_t *data,
 		}
 
 		glist_init(&(*layout_state)->state_data.layout.state_segments);
-
-		/* Attach this open to an export */
-		(*layout_state)->state_export = op_ctx->export;
-		PTHREAD_RWLOCK_wrlock(&op_ctx->export->lock);
-		glist_add_tail(&op_ctx->export->exp_state_list,
-			       &(*layout_state)->state_export_list);
-		PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
 	} else {
 		/* A state eixsts but is of an invalid type. */
 		nfs_status = NFS4ERR_BAD_STATEID;
@@ -207,6 +202,9 @@ static nfsstat4 acquire_layout_state(compound_data_t *data,
 	}
 
  out:
+
+	/* We are done with the supplied_state, release the reference. */
+	dec_state_t_ref(supplied_state);
 
 	if (lock_held)
 		PTHREAD_RWLOCK_unlock(&data->current_entry->state_lock);
@@ -500,13 +498,16 @@ int nfs4_op_layoutget(struct nfs_argop4 *op, compound_data_t *data,
 			free_layouts(layouts, numlayouts);
 
 		if ((layout_state) && (layout_state->state_seqid == 0)) {
-			state_del(layout_state, false);
+			state_del(layout_state);
 			layout_state = NULL;
 		}
 
 		/* Poison the current stateid */
 		data->current_stateid_valid = false;
 	}
+
+	if (layout_state != NULL)
+		dec_state_t_ref(layout_state);
 
 	res_LAYOUTGET4->logr_status = nfs_status;
 

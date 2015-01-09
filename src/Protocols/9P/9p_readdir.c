@@ -86,7 +86,8 @@ static inline u8 *fill_entry(u8 *cursor, u8 qid_type, u64 qid_path, u64 cookie,
 static cache_inode_status_t _9p_readdir_callback(void *opaque,
 						 cache_entry_t *entry,
 						 const struct attrlist *attr,
-						 uint64_t mounted_on_fileid)
+						 uint64_t mounted_on_fileid,
+						 enum cb_state cb_state)
 {
 	struct cache_inode_readdir_cb_parms *cb_parms = opaque;
 	struct _9p_cb_data *tracker = cb_parms->opaque;

@@ -121,23 +121,7 @@ int nfs4_op_release_lockowner(struct nfs_argop4 *op, compound_data_t *data,
 		goto out1;
 	}
 
-	pthread_mutex_lock(&lock_owner->so_mutex);
-
-	/* got the owner, does it still have any locks being held */
-	if (!glist_empty(&lock_owner->so_lock_list)) {
-		pthread_mutex_unlock(&lock_owner->so_mutex);
-
-		res_RELEASE_LOCKOWNER4->status = NFS4ERR_LOCKS_HELD;
-	} else {
-		pthread_mutex_unlock(&lock_owner->so_mutex);
-
-		/* found the lock owner and it doesn't have any locks,
-		 * release it
-		 */
-		release_lockstate(lock_owner);
-
-		res_RELEASE_LOCKOWNER4->status = NFS4_OK;
-	}
+	res_RELEASE_LOCKOWNER4->status = release_lock_owner(lock_owner);
 
 	/* Release the reference to the lock owner acquired
 	 * via create_nfs4_owner

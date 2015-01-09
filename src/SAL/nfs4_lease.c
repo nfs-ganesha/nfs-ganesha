@@ -83,9 +83,10 @@ bool valid_lease(nfs_client_id_t *clientid)
 	valid = _valid_lease(clientid);
 
 	if (isFullDebug(COMPONENT_CLIENTID)) {
-		char str[HASHTABLE_DISPLAY_STRLEN];
+		char str[LOG_BUFF_LEN];
+		struct display_buffer dspbuf = {sizeof(str), str, str};
 
-		display_client_id_rec(clientid, str);
+		display_client_id_rec(&dspbuf, clientid);
 		LogFullDebug(COMPONENT_CLIENTID,
 			     "Check Lease %s (Valid=%s %u seconds left)", str,
 			     valid ? "YES" : "NO", valid);
@@ -115,9 +116,10 @@ int reserve_lease(nfs_client_id_t *clientid)
 		clientid->cid_lease_reservations++;
 
 	if (isFullDebug(COMPONENT_CLIENTID)) {
-		char str[HASHTABLE_DISPLAY_STRLEN];
+		char str[LOG_BUFF_LEN];
+		struct display_buffer dspbuf = {sizeof(str), str, str};
 
-		display_client_id_rec(clientid, str);
+		display_client_id_rec(&dspbuf, clientid);
 		LogFullDebug(COMPONENT_CLIENTID,
 			     "Reserve Lease %s (Valid=%s %u seconds left)", str,
 			     valid ? "YES" : "NO", valid);
@@ -147,9 +149,10 @@ void update_lease(nfs_client_id_t *clientid)
 		clientid->cid_last_renew = time(NULL);
 
 	if (isFullDebug(COMPONENT_CLIENTID)) {
-		char str[HASHTABLE_DISPLAY_STRLEN];
+		char str[LOG_BUFF_LEN];
+		struct display_buffer dspbuf = {sizeof(str), str, str};
 
-		display_client_id_rec(clientid, str);
+		display_client_id_rec(&dspbuf, clientid);
 		LogFullDebug(COMPONENT_CLIENTID, "Update Lease %s", str);
 	}
 }

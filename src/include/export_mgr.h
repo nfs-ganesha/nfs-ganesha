@@ -45,8 +45,7 @@
 typedef enum export_state {
 	EXPORT_INIT = 0,	/*< still being initialized */
 	EXPORT_READY,		/*< searchable, usable */
-	EXPORT_BLOCKED,		/*< not available for search */
-	EXPORT_RELEASE		/*< No references, ready for reaping */
+	EXPORT_STALE,		/*< export is no longer valid */
 } export_state_t;
 
 /**
@@ -118,7 +117,7 @@ struct gsh_export {
 	/** The last time the export stats were updated */
 	nsecs_elapsed_t last_update;
 	/** The condition the export is in */
-	export_state_t state;
+	uint32_t exp_state;
 	/** Export non-permission options */
 	uint32_t options;
 	/** Export non-permission options set */
@@ -146,16 +145,45 @@ struct gsh_export *get_gsh_export_by_pseudo_locked(char *path,
 						   bool exact_match);
 struct gsh_export *get_gsh_export_by_tag(char *tag);
 bool mount_gsh_export(struct gsh_export *exp);
-void set_gsh_export_state(struct gsh_export *export, export_state_t state);
+
+
+/**
+ * @brief Set export entry's state
+ *
+ * Set the state under the global write lock to keep it safe
+ * from scan/lookup races.
+ * We assert state transitions because errors here are BAD.
+ *
+ * @param export [IN] The export to change state
+ * @param state  [IN] the state to set
+ */
+
+static inline void
+set_gsh_export_state(struct gsh_export *export, export_state_t state)
+{
+	atomic_store_uint32_t(&export->exp_state, state);
+}
+
 void put_gsh_export(struct gsh_export *export);
 void remove_gsh_export(uint16_t export_id);
 bool foreach_gsh_export(bool(*cb) (struct gsh_export *exp, void *state),
 			void *state);
 
-static inline void get_gsh_export_ref(struct gsh_export *exp)
+static inline bool export_ready(struct gsh_export *export)
 {
-	atomic_inc_int64_t(&exp->refcnt);
+	return atomic_fetch_uint32_t(&export->exp_state) == EXPORT_READY;
 }
+
+static inline bool
+get_gsh_export_ref(struct gsh_export *export, bool export_release_ok)
+{
+	if (export && (export_release_ok || export_ready(export))) {
+		atomic_inc_int64_t(&export->refcnt);
+		return true;
+	}
+	return false;
+}
+
 void export_revert(struct gsh_export *export);
 void export_add_to_mount_work(struct gsh_export *export);
 void export_add_to_unexport_work_locked(struct gsh_export *export);

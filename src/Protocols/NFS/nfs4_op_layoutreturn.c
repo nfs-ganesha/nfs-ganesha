@@ -94,6 +94,16 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op, compound_data_t *data,
 	const char *tag = "LAYOUTRETURN";
 	/* Segment selecting which segments to return. */
 	struct pnfs_segment spec = { 0, 0, 0 };
+	/* Remember if we need to do fsid based return */
+	bool return_fsid = false;
+	/* Referenced cache entry */
+	cache_entry_t *entry = NULL;
+	/* Referenced export */
+	struct gsh_export *export = NULL;
+	/* Root op context for returning fsid or all layouts */
+	struct root_op_context root_op_context;
+	/* Keep track of so_mutex */
+	bool so_mutex_locked = false;
 
 	resp->resop = NFS4_OP_LAYOUTRETURN;
 
@@ -108,13 +118,11 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op, compound_data_t *data,
 
 		if (nfs_status  != NFS4_OK) {
 			res_LAYOUTRETURN4->lorr_status = nfs_status;
-			return res_LAYOUTRETURN4->lorr_status;
+			break;
 		}
 
 		/* Retrieve state corresponding to supplied ID */
-		if (arg_LAYOUTRETURN4->lora_reclaim) {
-			layout_state = NULL;
-		} else {
+		if (!arg_LAYOUTRETURN4->lora_reclaim) {
 			nfs_status = nfs4_Check_Stateid(
 				&arg_LAYOUTRETURN4->lora_layoutreturn.
 					layoutreturn4_u.lr_layout.lrf_stateid,
@@ -128,7 +136,7 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op, compound_data_t *data,
 
 			if (nfs_status != NFS4_OK) {
 				res_LAYOUTRETURN4->lorr_status = nfs_status;
-				return res_LAYOUTRETURN4->lorr_status;
+				break;
 			}
 		}
 
@@ -152,17 +160,15 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op, compound_data_t *data,
 				lr_layout.lrf_body.lrf_body_len,
 			arg_LAYOUTRETURN4->lora_layoutreturn.layoutreturn4_u.
 				lr_layout.lrf_body.lrf_body_val,
-				&deleted);
+			&deleted);
 
 		PTHREAD_RWLOCK_unlock(&data->current_entry->state_lock);
 
 		if (res_LAYOUTRETURN4->lorr_status == NFS4_OK) {
 			if (deleted) {
-				memset(data->current_stateid.other,
-				       0,
-				       sizeof(data->current_stateid.other));
+				/* Poison the current stateid */
+				data->current_stateid_valid = false;
 
-				data->current_stateid.seqid = NFS4_UINT32_MAX;
 				res_LAYOUTRETURN4->LAYOUTRETURN4res_u.
 				    lorr_stateid.lrs_present = 0;
 			} else {
@@ -179,6 +185,10 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op, compound_data_t *data,
 					       tag);
 			}
 		}
+
+		if (layout_state != NULL)
+			dec_state_t_ref(layout_state);
+
 		break;
 
 	case LAYOUTRETURN4_FSID:
@@ -186,7 +196,7 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op, compound_data_t *data,
 
 		if (nfs_status != NFS4_OK) {
 			res_LAYOUTRETURN4->lorr_status = nfs_status;
-			return res_LAYOUTRETURN4->lorr_status;
+			break;
 		}
 
 		cache_status =
@@ -195,9 +205,12 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op, compound_data_t *data,
 		if (cache_status != CACHE_INODE_SUCCESS) {
 			res_LAYOUTRETURN4->lorr_status =
 			    nfs4_Errno(cache_status);
-			return res_LAYOUTRETURN4->lorr_status;
+			break;
 		}
-		break;
+
+		return_fsid = true;
+
+		/* FALLTHROUGH */
 
 	case LAYOUTRETURN4_ALL:
 		spec.io_mode = arg_LAYOUTRETURN4->lora_iomode;
@@ -206,46 +219,123 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op, compound_data_t *data,
 
 		clientid_owner = &data->session->clientid_record->cid_owner;
 
+		/* Initialize req_ctx */
+		init_root_op_context(&root_op_context, NULL, NULL,
+				     0, 0, UNKNOWN_REQUEST);
+
 		/* We need the safe version because return_one_state
-		   can delete the current state. */
+		 * can delete the current state.
+		 *
+		 * Since we can not hold so_mutex (which protects the list)
+		 * the entire time, we will have to restart here after
+		 * dropping the mutex.
+		 *
+		 * Since we push each entry to the end of the list, we will
+		 * not need to continually examine entries that need to be
+		 * skipped, except for one final pass.
+		 *
+		 * An example flow might be:
+		 * skip 1
+		 * skip 2
+		 * do some work on 3
+		 * restart
+		 * skip 4
+		 * do some work on 5
+		 * restart
+		 * skip 1
+		 * skip 2
+		 * skip 4
+		 * done
+		 */
+
+ again:
+
+		pthread_mutex_lock(&clientid_owner->so_mutex);
+		so_mutex_locked = true;
 
 		glist_for_each_safe(glist, glistn,
 				    &clientid_owner->so_owner.so_nfs4_owner.
 				     so_state_list) {
-			state_t *candidate_state;
+			layout_state = glist_entry(glist,
+						   state_t,
+						   state_owner_list);
 
-			candidate_state = glist_entry(glist,
-						      state_t,
-						      state_owner_list);
+			/* Move to end of list in case of error to ease
+			 * retries and push off dealing with non-layout
+			 * states (which should only be delegations).
+			 */
+			glist_del(&layout_state->state_owner_list);
+			glist_add_tail(&clientid_owner->
+					   so_owner.so_nfs4_owner.so_state_list,
+				       &layout_state->state_owner_list);
 
-			if (candidate_state->state_type != STATE_TYPE_LAYOUT)
+			if (layout_state->state_type != STATE_TYPE_LAYOUT)
 				continue;
-			else
-				layout_state = candidate_state;
 
-			if (arg_LAYOUTRETURN4->lora_layoutreturn.
-			    lr_returntype == LAYOUTRETURN4_FSID) {
+			if (!get_state_entry_export_owner_refs(layout_state,
+							       &entry,
+							       &export,
+							       NULL)) {
+				/* This state is associated with an entry or
+				 * export that is going stale, skip it (it
+				 * will be cleaned up as part of the stale
+				 * entry or export processing. */
+				continue;
+			}
+
+			/* Set up the root op context for this state */
+			root_op_context.req_ctx.clientid =
+			    &clientid_owner->so_owner.so_nfs4_owner.so_clientid;
+			root_op_context.req_ctx.export = export;
+			root_op_context.req_ctx.fsal_export =
+							export->fsal_export;
+
+			/* Take a reference on the state_t */
+			inc_state_t_ref(layout_state);
+
+			/* Now we need to drop so_mutex to continue the
+			 * processing.
+			 */
+			pthread_mutex_unlock(&clientid_owner->so_mutex);
+			so_mutex_locked = false;
+
+			if (return_fsid) {
 				fsal_fsid_t this_fsid;
 				cache_status =
-				    cache_inode_fsid(layout_state->state_entry,
-						     &this_fsid);
+				    cache_inode_fsid(entry, &this_fsid);
 
 				if (cache_status != CACHE_INODE_SUCCESS) {
 					res_LAYOUTRETURN4->lorr_status =
 					    nfs4_Errno(cache_status);
-					return res_LAYOUTRETURN4->lorr_status;
+					/* Release the state_t reference */
+					dec_state_t_ref(layout_state);
+					break;
 				}
 
 				if (memcmp(&fsid,
 					   &this_fsid,
 					   sizeof(fsal_fsid_t)))
-					continue;
+					/* Release the cache entry */
+					cache_inode_lru_unref(entry,
+							      LRU_FLAG_NONE);
+
+					/* Release the export */
+					put_gsh_export(export);
+
+					/* Release the state_t reference */
+					dec_state_t_ref(layout_state);
+
+					/* Since we had to drop so_mutex, the
+					 * list may have changed under us, we
+					 * MUST start over.
+					 */
+					goto again;
 			}
 
-			PTHREAD_RWLOCK_wrlock(&data->current_entry->state_lock);
+			PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 
 			res_LAYOUTRETURN4->lorr_status = nfs4_return_one_state(
-			    layout_state->state_entry,
+			    entry,
 			    arg_LAYOUTRETURN4->lora_layoutreturn.lr_returntype,
 			    arg_LAYOUTRETURN4->lora_reclaim ?
 				circumstance_reclaim : circumstance_client,
@@ -255,24 +345,52 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op, compound_data_t *data,
 			    NULL,
 			    &deleted);
 
-			PTHREAD_RWLOCK_unlock(&data->current_entry->state_lock);
+			PTHREAD_RWLOCK_unlock(&entry->state_lock);
+
+			/* Release the state_t reference */
+			dec_state_t_ref(layout_state);
 
 			if (res_LAYOUTRETURN4->lorr_status != NFS4_OK)
 				break;
+
+			/* Since we had to drop so_mutex, the list may have
+			 * changed under us, we MUST start over.
+			 */
+			goto again;
 		}
 
-		memset(data->current_stateid.other,
-		       0,
-		       sizeof(data->current_stateid.other));
+		if (so_mutex_locked)
+			pthread_mutex_lock(&clientid_owner->so_mutex);
 
-		data->current_stateid.seqid = NFS4_UINT32_MAX;
+		/* Poison the current stateid */
+		data->current_stateid_valid = false;
+
 		res_LAYOUTRETURN4->LAYOUTRETURN4res_u.lorr_stateid.lrs_present =
 		    0;
 		break;
 
 	default:
 		res_LAYOUTRETURN4->lorr_status = NFS4ERR_INVAL;
-		return res_LAYOUTRETURN4->lorr_status;
+	}
+
+	if (arg_LAYOUTRETURN4->lora_layoutreturn.lr_returntype ==
+							LAYOUTRETURN4_FSID
+	    ||
+	    arg_LAYOUTRETURN4->lora_layoutreturn.lr_returntype ==
+							LAYOUTRETURN4_ALL
+	    ) {
+		/* Release the root op context we setup above */
+		release_root_op_context();
+	}
+
+	if (entry != NULL) {
+		/* Release the cache entry */
+		cache_inode_lru_unref(entry, LRU_FLAG_NONE);
+	}
+
+	if (export != NULL) {
+		/* Release the export */
+		put_gsh_export(export);
 	}
 
 	return res_LAYOUTRETURN4->lorr_status;
@@ -293,7 +411,21 @@ void nfs4_op_layoutreturn_Free(nfs_resop4 *resp)
 	return;
 }				/* nfs41_op_layoutreturn_Free */
 
-void handle_recalls(struct fsal_layoutreturn_arg *arg, state_t *state,
+/**
+ * @brief Handle recalls corresponding to one stateid
+ *
+ * Must hold the state_lock in write mode.
+ *
+ * @param[in]     args         Layout return args
+ * @param[in]     entry        Cache entry whose layouts we return
+ * @param[in]     state        The state in question
+ * @param[in]     segment      Segment specified in return
+ *
+ */
+
+void handle_recalls(struct fsal_layoutreturn_arg *arg,
+		    cache_entry_t *entry,
+		    state_t *state,
 		    const struct pnfs_segment *segment)
 {
 	/* Iterator over the recall list */
@@ -301,8 +433,9 @@ void handle_recalls(struct fsal_layoutreturn_arg *arg, state_t *state,
 	/* Next recall for safe iteration */
 	struct glist_head *recall_next = NULL;
 
-	glist_for_each_safe(recall_iter, recall_next,
-			    &state->state_entry->layoutrecall_list) {
+	glist_for_each_safe(recall_iter,
+			    recall_next,
+			    &entry->layoutrecall_list) {
 		/* The current recall state */
 		struct state_layout_recall_file *r;
 		/* Iteration on states */
@@ -330,28 +463,30 @@ void handle_recalls(struct fsal_layoutreturn_arg *arg, state_t *state,
 				continue;
 
 			glist_for_each(seg_iter,
-				       &s->state->state_data.layout.
+				       &state->state_data.layout.
 				       state_segments) {
-				/** @todo this code looks very suspicieous */
+				struct state_layout_segment *g;
+
+				g = glist_entry(seg_iter,
+						struct state_layout_segment,
+						sls_state_segments);
+
+				if (!pnfs_segments_overlap(&g->sls_segment,
+							   segment)) {
+					/* We don't even touch this */
+					break;
+				} else if (!pnfs_segment_contains(
+							segment,
+							&g->sls_segment)) {
+					/* Not satisfied completely */
+				} else
+					satisfaction = true;
 			}
-			struct state_layout_segment *g;
-
-			g = glist_entry(seg_iter,
-					struct state_layout_segment,
-					sls_state_segments);
-
-			if (!pnfs_segments_overlap(&g->sls_segment, segment)) {
-				/* We don't even touch this */
-				break;
-			} else if (!pnfs_segment_contains(segment,
-							  &g->sls_segment)) {
-				/* Not satisfied completely */
-			} else
-				satisfaction = true;
 
 			if (satisfaction
-			    && glist_length(&s->state->state_data.layout.
+			    && glist_length(&state->state_data.layout.
 					    state_segments) == 1) {
+				dec_state_t_ref(s->state);
 				glist_del(&s->link);
 				arg->recall_cookies[arg->ncookies++]
 				    = r->recall_cookie;
@@ -360,6 +495,7 @@ void handle_recalls(struct fsal_layoutreturn_arg *arg, state_t *state,
 		}
 
 		if (glist_empty(&r->state_list)) {
+			/* Remove from entry->layoutrecall_list */
 			glist_del(&r->entry_link);
 			gsh_free(r);
 		}
@@ -410,8 +546,6 @@ nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
 	XDR lrf_body;
 	/* The beginning of the stream */
 	unsigned int beginning = 0;
-	/* If we have a lock on the segment */
-	bool seg_locked = false;
 	/* Number of recalls currently on the entry */
 	size_t recalls = 0;
 	/* The current segment in iteration */
@@ -463,9 +597,6 @@ nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
 			g = glist_entry(seg_iter, state_layout_segment_t,
 					sls_state_segments);
 
-			pthread_mutex_lock(&g->sls_mutex);
-			seg_locked = true;
-
 			arg->cur_segment = g->sls_segment;
 			arg->fsal_seg_data = g->sls_fsal_data;
 			/* TODO: why this check does not work */
@@ -475,15 +606,13 @@ nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
 			    (&spec_segment, &g->sls_segment)) {
 				arg->dispose = true;
 			} else if (pnfs_segments_overlap(&spec_segment,
-							 &g->sls_segment)) {
+							 &g->sls_segment))
 				arg->dispose = false;
-			} else {
-				seg_locked = false;
-				pthread_mutex_unlock(&g->sls_mutex);
+			else
 				continue;
-			}
 
-			handle_recalls(arg, layout_state, &g->sls_segment);
+			handle_recalls(arg, entry, layout_state,
+				       &g->sls_segment);
 
 			nfs_status = entry->obj_handle->obj_ops.layoutreturn(
 						entry->obj_handle,
@@ -496,7 +625,6 @@ nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
 
 			if (arg->dispose) {
 				state_status = state_delete_segment(g);
-				seg_locked = false;
 				if (state_status != STATE_SUCCESS) {
 					nfs_status =
 					    nfs4_Errno_state(state_status);
@@ -506,8 +634,6 @@ nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
 				g->sls_segment =
 				    pnfs_segment_difference(&spec_segment,
 							    &g->sls_segment);
-				seg_locked = false;
-				pthread_mutex_unlock(&g->sls_mutex);
 			}
 		}
 
@@ -520,7 +646,7 @@ nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
 
 		if (glist_empty
 		    (&layout_state->state_data.layout.state_segments)) {
-			state_del(layout_state, true);
+			state_del_locked(layout_state);
 			*deleted = true;
 		} else
 			*deleted = false;
@@ -551,9 +677,6 @@ nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
  out:
 	if (body_val)
 		xdr_destroy(&lrf_body);
-
-	if (seg_locked)
-		pthread_mutex_unlock(&g->sls_mutex);
 
 	return nfs_status;
 }

@@ -719,8 +719,7 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 	 */
 	nfs4_create_recov_dir();
 
-	/* initialize grace and read in the client IDs */
-	nfs4_init_grace();
+	/* read in the client IDs */
 	nfs4_load_recov_clids(NULL);
 
 	/* Start grace period */

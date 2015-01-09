@@ -166,6 +166,7 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 	fsal_status_t fsal_status;
 	bool anonymous_started = false;
 	struct gsh_buffdesc verf_desc;
+	state_owner_t *owner = NULL;
 
 	/* Lock are not supported */
 	resp->resop = NFS4_OP_WRITE;
@@ -228,11 +229,16 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 		switch (state_found->state_type) {
 		case STATE_TYPE_SHARE:
 			state_open = state_found;
+			/* Note this causes an extra refcount, but it
+			 * simplifies logic below.
+			 */
+			inc_state_t_ref(state_open);
 			/** @todo FSF: need to check against existing locks */
 			break;
 
 		case STATE_TYPE_LOCK:
 			state_open = state_found->state_data.lock.openstate;
+			inc_state_t_ref(state_open);
 			/**
 			 * @todo FSF: should check that write is in range of an
 			 * exclusive lock...
@@ -276,10 +282,16 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 		     OPEN4_SHARE_ACCESS_WRITE) == 0) {
 			/* Bad open mode, return NFS4ERR_OPENMODE */
 			res_WRITE4->status = NFS4ERR_OPENMODE;
-			LogDebug(COMPONENT_NFS_V4_LOCK,
-				 "WRITE state %p doesn't have OPEN4_SHARE_ACCESS_WRITE",
-				 state_found);
-			return res_WRITE4->status;
+				if (isDebug(COMPONENT_NFS_V4_LOCK)) {
+					char str[LOG_BUFF_LEN];
+					struct display_buffer dspbuf = {
+							sizeof(str), str, str};
+					display_stateid(&dspbuf, state_found);
+					LogDebug(COMPONENT_NFS_V4_LOCK,
+						 "WRITE %s doesn't have OPEN4_SHARE_ACCESS_WRITE",
+						 str);
+				}
+			goto out;
 		}
 	} else {
 		/* Special stateid, no open state, check to see if any
@@ -297,7 +309,7 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 					SHARE_BYPASS_NONE));
 
 		if (res_WRITE4->status != NFS4_OK)
-			return res_WRITE4->status;
+			goto out;
 
 		anonymous_started = true;
 	}
@@ -385,9 +397,11 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 		sync = true;
 
 	if (!anonymous_started && data->minorversion == 0) {
-		op_ctx->clientid =
-		    &state_found->state_owner->so_owner.so_nfs4_owner.
-		    so_clientid;
+		owner = get_state_owner_ref(state_found);
+		if (owner != NULL) {
+			op_ctx->clientid =
+				&owner->so_owner.so_nfs4_owner.so_clientid;
+		}
 	}
 
 	cache_status = cache_inode_rdwr_plus(entry,
@@ -433,6 +447,18 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 	server_stats_io_done(size, written_size,
 			     (res_WRITE4->status == NFS4_OK) ? true : false,
 			     true);
+
+ out:
+
+	if (owner != NULL)
+		dec_state_owner_ref(owner);
+
+	if (state_found != NULL)
+		dec_state_t_ref(state_found);
+
+	if (state_open != NULL)
+		dec_state_t_ref(state_open);
+
 	return res_WRITE4->status;
 }				/* nfs4_op_write */
 

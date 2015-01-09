@@ -563,8 +563,9 @@ nfs_dupreq_get_drc(struct svc_req *req)
 			    CityHash64WithSeed((char *)&drc_k.d_u.tcp.addr,
 					       sizeof(sockaddr_t), 911);
 			{
-				char str[512];
-				sprint_sockaddr(&drc_k.d_u.tcp.addr, str, 512);
+				char str[SOCK_NAME_MAX];
+				sprint_sockaddr(&drc_k.d_u.tcp.addr,
+						str, sizeof(str));
 				LogFullDebug(COMPONENT_DUPREQ,
 					     "get drc for addr: %s", str);
 			}

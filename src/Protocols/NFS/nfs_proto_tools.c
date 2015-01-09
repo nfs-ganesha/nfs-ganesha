@@ -3139,7 +3139,8 @@ struct Fattr_filler_opaque {
 static cache_inode_status_t Fattr_filler(void *opaque,
 					 cache_entry_t *entry,
 					 const struct attrlist *attr,
-					 uint64_t mounted_on_fileid)
+					 uint64_t mounted_on_fileid,
+					 enum cb_state cb_state)
 {
 	struct xdr_attrs_args args;
 	struct Fattr_filler_opaque *f = (struct Fattr_filler_opaque *)opaque;
@@ -3210,8 +3211,8 @@ nfsstat4 cache_entry_To_Fattr(cache_entry_t *entry, fattr4 *Fattr,
 			 "No permission check for ACL for entry %p", entry);
 	}
 
-	return
-	    nfs4_Errno(cache_inode_getattr(entry, &f, Fattr_filler));
+	return nfs4_Errno(
+		cache_inode_getattr(entry, &f, Fattr_filler, CB_ORIGINAL));
 }
 
 int nfs4_Fattr_Fill_Error(fattr4 *Fattr, nfsstat4 rdattr_error)

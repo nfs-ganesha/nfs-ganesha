@@ -51,6 +51,7 @@
 #include <ctype.h>
 #include "export_mgr.h"
 #include "fsal_up.h"
+#include "sal_functions.h"
 
 struct global_export_perms export_opt = {
 	.def.anonymous_uid = ANON_UID,
@@ -1451,30 +1452,6 @@ void exports_pkginit(void)
 }
 
 /**
- * @brief Function to be called from cache_inode_get_protected to get an
- * export's root entry.
- *
- * @param entry  [IN/OUT] call by ref pointer to store cache entry
- * @param source [IN] void pointer to the export
- *
- * @return cache inode status code
- * @retval CACHE_INODE_ESTALE indicates this export no longer has a root
- * entry
- */
-
-cache_inode_status_t export_get_root_entry(cache_entry_t **entry, void *source)
-{
-	struct gsh_export *export = source;
-
-	*entry = export->exp_root_cache_inode;
-
-	if (unlikely((*entry) == NULL))
-		return CACHE_INODE_ESTALE;
-	else
-		return CACHE_INODE_SUCCESS;
-}
-
-/**
  * @brief Return a reference to the root cache inode entry of the export
  *
  * Must be called with the caller holding a reference to the export.
@@ -1491,10 +1468,19 @@ cache_inode_status_t export_get_root_entry(cache_entry_t **entry, void *source)
 cache_inode_status_t nfs_export_get_root_entry(struct gsh_export *export,
 					       cache_entry_t **entry)
 {
-	return cache_inode_get_protected(entry,
-					 &export->lock,
-					 export_get_root_entry,
-					 export);
+	cache_inode_status_t status;
+
+	PTHREAD_RWLOCK_rdlock(&export->lock);
+
+	status =
+	    cache_inode_lru_ref(export->exp_root_cache_inode, LRU_FLAG_NONE);
+
+	if (status == CACHE_INODE_SUCCESS)
+		*entry = export->exp_root_cache_inode;
+
+	PTHREAD_RWLOCK_unlock(&export->lock);
+
+	return status;
 }
 
 /**
@@ -1615,17 +1601,12 @@ out:
  * @param exp [IN] the export
  */
 
-#define RELEASE_EXP_ROOT_FLAG_NONE		0x0000
-#define RELEASE_EXP_ROOT_FLAG_ULOCK_ATTR	0x0001
-#define RELEASE_EXP_ROOT_FLAG_ULOCK_LOCK	0x0002
-#define RELEASE_EXP_ROOT_FLAG_ULOCK_BOTH \
-	(RELEASE_EXP_ROOT_FLAG_ULOCK_ATTR|RELEASE_EXP_ROOT_FLAG_ULOCK_LOCK)
-
 static inline void
-release_export_root_locked(struct gsh_export *export,
-			   cache_entry_t *entry, uint32_t flags)
+release_export_root_locked(struct gsh_export *export, cache_entry_t *entry)
 {
 	cache_entry_t *root_entry = NULL;
+
+	PTHREAD_RWLOCK_wrlock(&export->lock);
 
 	glist_del(&export->exp_root_list);
 	root_entry = export->exp_root_cache_inode;
@@ -1633,18 +1614,19 @@ release_export_root_locked(struct gsh_export *export,
 
 	if (root_entry != NULL) {
 		/* Allow this entry to be removed (unlink) */
-		(void)atomic_dec_int32_t(&entry->exp_root_refcount);
+		(void) atomic_dec_int32_t(&entry->exp_root_refcount);
 
 		/* We must not hold entry->attr_lock across
-		 * cache_inode_dec_pin_ref (LRU lane lock order) */
-		if (flags & RELEASE_EXP_ROOT_FLAG_ULOCK_ATTR)
-			PTHREAD_RWLOCK_unlock(&entry->attr_lock);
-
-		if (flags & RELEASE_EXP_ROOT_FLAG_ULOCK_LOCK)
-			PTHREAD_RWLOCK_unlock(&export->lock);
+		 * cache_inode_dec_pin_ref (LRU lane lock order)
+		 */
+		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+		PTHREAD_RWLOCK_unlock(&export->lock);
 
 		/* Release the pin reference */
 		cache_inode_dec_pin_ref(root_entry, false);
+	} else {
+		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+		PTHREAD_RWLOCK_unlock(&export->lock);
 	}
 
 	LogDebug(COMPONENT_EXPORT,
@@ -1677,13 +1659,24 @@ void release_export_root(struct gsh_export *export)
 	}
 
 	PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
-	PTHREAD_RWLOCK_wrlock(&export->lock);
 
 	/* Make the export unreachable as a root cache inode */
-	release_export_root_locked(export, entry,
-				   RELEASE_EXP_ROOT_FLAG_ULOCK_BOTH);
+	release_export_root_locked(export, entry);
 
 	cache_inode_put(entry);
+}
+
+static inline void clean_up_export(struct gsh_export *export)
+{
+	/* Make export unreachable */
+	pseudo_unmount_export(export);
+	remove_gsh_export(export->export_id);
+
+	/* Release state belonging to this export */
+	state_release_export(export);
+
+	/* Flush cache inodes belonging to this export */
+	cache_inode_unexport(export);
 }
 
 void unexport(struct gsh_export *export)
@@ -1692,9 +1685,8 @@ void unexport(struct gsh_export *export)
 	LogDebug(COMPONENT_EXPORT,
 		 "Unexport %s, Pseduo %s",
 		 export->fullpath, export->pseudopath);
-	pseudo_unmount_export(export);
-	remove_gsh_export(export->export_id);
 	release_export_root(export);
+	clean_up_export(export);
 }
 
 /**
@@ -1722,20 +1714,16 @@ void kill_export_root_entry(cache_entry_t *entry)
 			return;
 		}
 
-		get_gsh_export_ref(export);
+		(void) get_gsh_export_ref(export, true);
 		LogInfo(COMPONENT_CONFIG,
 			"Killing export_id %d because root entry went bad",
 			export->export_id);
 
-		PTHREAD_RWLOCK_wrlock(&export->lock);
-
 		/* Make the export unreachable as a root cache inode */
-		release_export_root_locked(
-			export, entry, RELEASE_EXP_ROOT_FLAG_ULOCK_BOTH);
+		release_export_root_locked(export, entry);
 
-		/* Make the export otherwise unreachable */
-		pseudo_unmount_export(export);
-		remove_gsh_export(export->export_id);
+		/* Make the export otherwise unreachable and clean it up */
+		clean_up_export(export);
 
 		put_gsh_export(export);
 	}
@@ -1766,7 +1754,7 @@ void kill_export_junction_entry(cache_entry_t *entry)
 	/* Detach the export from the inode */
 	entry->object.dir.junction_export = NULL;
 
-	get_gsh_export_ref(export);
+	(void) get_gsh_export_ref(export, true);
 
 	LogInfo(COMPONENT_CONFIG,
 		"Unmounting export_id %d because junction entry went bad",
@@ -2150,8 +2138,8 @@ sockaddr_t *convert_ipv6_to_ipv4(sockaddr_t *ipv6, sockaddr_t *ipv4)
 			char ipstring4[SOCK_NAME_MAX];
 			char ipstring6[SOCK_NAME_MAX];
 
-			sprint_sockaddr(ipv6, ipstring6, sizeof(ipstring6));
-			sprint_sockaddr(ipv4, ipstring4, sizeof(ipstring4));
+			sprint_sockip(ipv6, ipstring6, sizeof(ipstring6));
+			sprint_sockip(ipv4, ipstring4, sizeof(ipstring4));
 			LogMidDebug(COMPONENT_EXPORT,
 				    "Converting IPv6 encapsulated IPv4 address %s to IPv4 %s",
 				    ipstring6, ipstring4);

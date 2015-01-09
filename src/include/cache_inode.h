@@ -173,17 +173,17 @@ enum lru_q_id {
 	LRU_ENTRY_CLEANUP
 };
 
+#define LRU_CLEANED 0x00000001
+
 typedef struct cache_inode_lru__ {
-	enum lru_q_id qid;	/*< Queue identifier */
 	struct glist_head q;	/*< Link in the physical deque
 				   impelmenting a portion of the logical
 				   LRU. */
+	enum lru_q_id qid;	/*< Queue identifier */
 	int32_t refcnt;		/*< Reference count.  This is signed to make
 				   mistakes easy to see. */
 	int32_t pin_refcnt;	/*< Unpin it only if this goes down to zero */
-	uint32_t flags;		/*< Flags for details of this entry's status,
-				 *< such as whether it is pinned and whether
-				 *< it's in L1 or L2. */
+	uint32_t flags;		/*< Flags for details of this entry's status */
 	uint32_t lane;		/*< The lane in which an entry currently
 				 *< resides, so we can lock the deque and
 				 *< decrement the correct counter when moving
@@ -487,8 +487,6 @@ struct cache_entry_t {
 		struct cache_inode_file {
 			/** Pointers for lock list */
 			struct glist_head lock_list;
-			/** Pointers for delegation list */
-			struct glist_head deleg_list;
 			/** Pointers for NLM share list */
 			struct glist_head nlm_share_list;
 			/** Share reservation state for this file. */
@@ -602,6 +600,12 @@ static const uint32_t CACHE_INODE_INVALIDATE_CONTENT = 0x02;
 static const uint32_t CACHE_INODE_INVALIDATE_CLOSE = 0x04;
 static const uint32_t CACHE_INODE_INVALIDATE_GOT_LOCK = 0x08;
 
+enum cb_state {
+	CB_ORIGINAL,
+	CB_JUNCTION,
+	CB_PROBLEM,
+};
+
 /**
  * @brief Type of callback for cache_inode_readdir
  *
@@ -639,7 +643,8 @@ typedef cache_inode_status_t (*cache_inode_getattr_cb_t)
 	(void *opaque,
 	 cache_entry_t *entry,
 	 const struct attrlist *attr,
-	 uint64_t mounted_on_fileid);
+	 uint64_t mounted_on_fileid,
+	 enum cb_state cb_state);
 
 const char *cache_inode_err_str(cache_inode_status_t err);
 
@@ -659,12 +664,6 @@ cache_inode_status_t cache_inode_get(cache_inode_fsal_data_t *fsdata,
 cache_entry_t *cache_inode_get_keyed(cache_inode_key_t *key,
 				     uint32_t flags,
 				     cache_inode_status_t *status);
-cache_inode_status_t
-cache_inode_get_protected(cache_entry_t **entry,
-			  pthread_rwlock_t *lock,
-			  cache_inode_status_t get_entry(cache_entry_t **,
-							 void *),
-			  void *source);
 
 void cache_inode_unexport(struct gsh_export *export);
 
@@ -737,7 +736,8 @@ cache_inode_status_t cache_inode_create(cache_entry_t *entry_parent,
 
 cache_inode_status_t cache_inode_getattr(cache_entry_t *entry,
 					 void *opaque,
-					 cache_inode_getattr_cb_t cb);
+					 cache_inode_getattr_cb_t cb,
+					 enum cb_state cb_state);
 
 cache_inode_status_t cache_inode_fileid(cache_entry_t *entry,
 					uint64_t *fileid);
