@@ -34,6 +34,7 @@
 
 #include "log.h"
 #include "nfs_core.h"
+#include "gsh_rpc.h"
 
 typedef struct __nfs_start_info {
 	int dump_default_config;
@@ -67,5 +68,10 @@ int init_server_pkgs(void);
  * start NFS service
  */
 void nfs_start(nfs_start_info_t *p_start_info);
+
+/* in nfs_rpc_dispatcher_thread.c */
+
+enum xprt_stat thr_decode_rpc_request(struct fridgethr_context *thr_ctx,
+				      SVCXPRT * xprt);
 
 #endif				/* !NFS_INIT_H */

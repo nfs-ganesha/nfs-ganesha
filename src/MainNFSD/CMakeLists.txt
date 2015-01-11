@@ -40,6 +40,7 @@ if(USE_9P AND USE_9P_RDMA)
 endif(USE_9P AND USE_9P_RDMA)
 
 if(USE_NFS_MSK)
+  add_definitions(-D_USE_NFS_MSK)
   SET(MainServices_STAT_SRCS
     ${MainServices_STAT_SRCS}
     nfs_rpc_msk.c)

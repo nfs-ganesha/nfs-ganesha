@@ -64,19 +64,16 @@
 #include "nfs_file_handle.h"
 #include <mooshika.h>
 
-enum xprt_stat thr_decode_rpc_request(struct fridgethr_context *thr_ctx,
-				      SVCXPRT * xprt);
-
-
-void nfs_msk_callback_disconnect(msk_trans_t *trans)
-{
-}
 
 struct clx {
 	pthread_mutex_t lock;
 	pthread_cond_t cond;
 	SVCXPRT *xprt;
 };
+
+void nfs_msk_callback_disconnect(msk_trans_t *trans)
+{
+}
 
 void nfs_msk_callback(void *arg)
 {
@@ -88,10 +85,6 @@ void nfs_msk_callback(void *arg)
 	PTHREAD_MUTEX_unlock(&clx->lock);
 }
 
-/* extern
-SVCXPRT *svc_msk_create(msk_trans_t *, u_int, void (*)(void *), void *);
-*/
-
 void *nfs_msk_thread(void *arg)
 {
 	msk_trans_t *trans = arg;
@@ -99,7 +92,7 @@ void *nfs_msk_thread(void *arg)
 	struct clx clx;
 	/*** alloc onfsreq ***/
 
-	if (trans == NULL) {
+	if (arg == NULL) {
 		LogMajor(COMPONENT_NFS_MSK,
 			"NFS/RDMA: handle thread started but no child_trans");
 		return NULL;
@@ -110,7 +103,7 @@ void *nfs_msk_thread(void *arg)
 
 	PTHREAD_MUTEX_lock(&clx.lock);
 
-	xprt = svc_msk_create(trans, 30, nfs_msk_callback, &clx);
+	xprt = svc_msk_create(arg, 30, nfs_msk_callback, &clx);
 	clx.xprt = xprt;
 
 	/* It's still safe to set stuff here that will be used in
