@@ -130,6 +130,7 @@ void *_9p_rdma_thread(void *Arg)
 	unsigned int i = 0;
 	int rc = 0;
 	struct _9p_outqueue *outqueue = trans->private_data;
+	struct sockaddr *addrpeer;
 
 	priv = gsh_malloc(sizeof(*priv));
 	if (priv == NULL) {
@@ -159,8 +160,16 @@ void *_9p_rdma_thread(void *Arg)
 	atomic_store_uint32_t(&p_9p_conn->refcount, 0);
 	p_9p_conn->trans_type = _9P_RDMA;
 	p_9p_conn->trans_data.rdma_trans = trans;
+
+	addrpeer = msk_get_dst_addr(trans);
+	if (addrpeer == NULL) {
+		LogCrit(COMPONENT_9P, "Cannot get peer address");
+		goto error;
+	}
+	memcpy(&p_9p_conn->addrpeer, addrpeer,
+	       MIN(sizeof(*addrpeer), sizeof(p_9p_conn->addrpeer)));
 	p_9p_conn->client =
-		get_gsh_client((sockaddr_t *)msk_get_dst_addr(trans), false);
+		get_gsh_client(&p_9p_conn->addrpeer, false);
 
 	/* Init the fids pointers array */
 	memset(&p_9p_conn->fids,
