@@ -85,6 +85,11 @@ int _9p_attach(struct _9p_request_data *req9p, void *worker_data,
 		 (u32) *msgtag, *fid, *afid, (int) *uname_len, uname_str,
 		 (int) *aname_len, aname_str, *n_uname);
 
+	if (*fid >= _9P_FID_PER_CONN) {
+		err = ERANGE;
+		goto errout;
+	}
+
 	/*
 	 * Find the export for the aname (using as well Path or Tag)
 	 */
@@ -98,11 +103,6 @@ int _9p_attach(struct _9p_request_data *req9p, void *worker_data,
 	/* Did we find something ? */
 	if (export == NULL) {
 		err = ENOENT;
-		goto errout;
-	}
-
-	if (*fid >= _9P_FID_PER_CONN) {
-		err = ERANGE;
 		goto errout;
 	}
 
