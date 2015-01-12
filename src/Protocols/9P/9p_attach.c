@@ -71,6 +71,7 @@ int _9p_attach(struct _9p_request_data *req9p, void *worker_data,
 	char exppath[MAXPATHLEN];
 	cache_inode_fsal_data_t fsal_data;
 	struct fsal_obj_handle *pfsal_handle;
+	int port;
 
 	/* Get data */
 	_9p_getptr(cursor, msgtag, u16);
@@ -103,6 +104,16 @@ int _9p_attach(struct _9p_request_data *req9p, void *worker_data,
 	/* Did we find something ? */
 	if (export == NULL) {
 		err = ENOENT;
+		goto errout;
+	}
+
+	port = get_port(&req9p->pconn->addrpeer);
+	if (export->export_perms.options & EXPORT_OPTION_PRIVILEGED_PORT &&
+	    port >= IPPORT_RESERVED) {
+		LogInfo(COMPONENT_9P,
+			"Port %d is too high for this export entry, rejecting client",
+			port);
+		err = EACCES;
 		goto errout;
 	}
 
