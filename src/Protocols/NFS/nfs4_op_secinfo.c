@@ -106,8 +106,7 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 		cache_entry_t *entry = NULL;
 
 		/* Try to get a reference to the export. */
-		if (!get_gsh_export_ref(entry_src->object.dir.junction_export,
-					false)) {
+		if (!export_ready(entry_src->object.dir.junction_export)) {
 			/* Export has gone bad. */
 			/* Release attr_lock */
 			PTHREAD_RWLOCK_unlock(&entry_src->attr_lock);
@@ -120,6 +119,8 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 			res_SECINFO4->status = NFS4ERR_STALE;
 			goto out;
 		}
+
+		get_gsh_export_ref(entry_src->object.dir.junction_export);
 
 		/* Save the compound data context */
 		save_export_perms = *op_ctx->export_perms;

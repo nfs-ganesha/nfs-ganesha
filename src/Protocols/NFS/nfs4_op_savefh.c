@@ -86,11 +86,16 @@ int nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t *data,
 			return res_SAVEFH->status;
 	}
 
-	/* Determine if we can get a new export reference */
-	if (!get_gsh_export_ref(op_ctx->export, false)) {
-		/* The SavedFH export has gone bad. */
-		res_SAVEFH->status = NFS4ERR_STALE;
-		return res_SAVEFH->status;
+	/* Determine if we can get a new export reference. If there is
+	 * no op_ctx->export, don't get a reference.
+	 */
+	if (op_ctx->export != NULL) {
+		if (!export_ready(op_ctx->export)) {
+			/* The CurrentFH export has gone bad. */
+			res_SAVEFH->status = NFS4ERR_STALE;
+			return res_SAVEFH->status;
+		}
+		get_gsh_export_ref(op_ctx->export);
 	}
 
 	/* Copy the data from current FH to saved FH */
