@@ -349,6 +349,7 @@ Summary: The NFS-GANESHA's GLUSTER FSAL
 Group: Applications/System
 Requires:	nfs-ganesha
 BuildRequires:	glusterfs-api-devel >= 3.5.1
+BuildRequires:  libattr-devel
 
 %description gluster
 This package contains a FSAL shared object to
