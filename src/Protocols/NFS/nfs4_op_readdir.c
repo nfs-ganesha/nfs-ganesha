@@ -154,13 +154,14 @@ cache_inode_status_t nfs4_readdir_callback(void *opaque,
 		/* Get a reference to the export and stash it in
 		 * compound data.
 		 */
-		if (!get_gsh_export_ref(entry->object.dir.junction_export,
-					false)) {
+		if (!export_ready(entry->object.dir.junction_export)) {
 			/* Export is in the process of being released.
 			 * Pretend it's not actually a junction.
 			 */
 			goto not_junction;
 		}
+
+		get_gsh_export_ref(entry->object.dir.junction_export);
 
 		/* Save the compound data context */
 		tracker->save_export_perms = *op_ctx->export_perms;

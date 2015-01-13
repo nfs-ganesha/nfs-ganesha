@@ -573,7 +573,7 @@ static state_lock_entry_t *create_state_lock_entry(cache_entry_t *entry,
 	glist_add_tail(&export->exp_lock_list,
 		       &new_entry->sle_export_locks);
 	PTHREAD_RWLOCK_unlock(&export->lock);
-	(void) get_gsh_export_ref(export, true);
+	get_gsh_export_ref(export);
 
 	/* Add to list of locks owned by owner */
 	inc_state_owner_ref(owner);
@@ -1746,9 +1746,10 @@ void try_to_grant_lock(state_lock_entry_t *lock_entry)
 		reason = "Removing canceled blocked lock entry";
 	} else if (lock_entry->sle_block_data == NULL) {
 		reason = "Removing blocked lock entry with no block data";
-	} else if (!get_gsh_export_ref(export, false)) {
+	} else if (!export_ready(export)) {
 		reason = "Removing blocked lock entry due to stale export";
 	} else {
+		get_gsh_export_ref(export);
 		call_back = lock_entry->sle_block_data->sbd_granted_callback;
 		/* Mark the lock_entry as provisionally granted and make the
 		 * granted call back. The granted call back is responsible
@@ -3178,7 +3179,7 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 		 * not have had it's last refcount released. We will check
 		 * later to see if the export is being removed.
 		 */
-		(void) get_gsh_export_ref(export, true);
+		get_gsh_export_ref(export);
 
 		/* Get a reference to the owner */
 		inc_state_owner_ref(owner);
@@ -3277,7 +3278,7 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 		 * not have had it's last refcount released. We will check
 		 * later to see if the export is being removed.
 		 */
-		(void) get_gsh_export_ref(export, true);
+		get_gsh_export_ref(export);
 
 		/* Get a reference to the owner */
 		inc_state_owner_ref(owner);
@@ -3726,7 +3727,8 @@ void cancel_all_nlm_blocked()
 		root_op_context.req_ctx.fsal_export =
 			root_op_context.req_ctx.export->fsal_export;
 
-		(void) get_gsh_export_ref(root_op_context.req_ctx.export, true);
+		get_gsh_export_ref(root_op_context.req_ctx.export);
+
 		/** @todo also look at the LRU ref for pentry */
 
 		LogEntry("Blocked Lock found", found_entry);

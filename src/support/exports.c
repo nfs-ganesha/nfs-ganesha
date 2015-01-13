@@ -443,13 +443,6 @@ static void *client_init(void *link_mem, void *self_struct)
 	assert(link_mem != NULL || self_struct != NULL);
 
 	if (link_mem == NULL) {
-		struct glist_head *cli_list;
-		struct gsh_export *export;
-
-		cli_list = self_struct;
-		export = container_of(cli_list, struct gsh_export,
-				      clients);
-		glist_init(&export->clients);
 		return self_struct;
 	} else if (self_struct == NULL) {
 		cli = gsh_calloc(sizeof(struct exportlist_client_entry__), 1);
@@ -766,10 +759,6 @@ static int export_commit(void *node, void *link_mem, void *self_struct,
 				 export->export_id);
 		goto err_out;  /* have errors. don't init or load a fsal */
 	}
-	glist_init(&export->exp_state_list);
-	glist_init(&export->exp_lock_list);
-	glist_init(&export->exp_nlm_share_list);
-	glist_init(&export->mounted_exports_list);
 
 	/* now probe the fsal and init it */
 	/* pass along the block that is/was the FS_Specific */
@@ -792,7 +781,7 @@ static int export_commit(void *node, void *link_mem, void *self_struct,
 		 "Export %d created at pseudo (%s) with path (%s) and tag (%s) perms (%s)",
 		 export->export_id, export->pseudopath,
 		 export->fullpath, export->FS_tag, perms);
-	set_gsh_export_state(export, EXPORT_READY);
+
 	put_gsh_export(export);
 	return 0;
 
@@ -1253,11 +1242,6 @@ static int build_default_root(void)
 	export->PrefWrite = FSAL_MAXIOSIZE;
 	export->PrefRead = FSAL_MAXIOSIZE;
 	export->PrefReaddir = 16384;
-	glist_init(&export->exp_state_list);
-	glist_init(&export->exp_lock_list);
-	glist_init(&export->exp_nlm_share_list);
-	glist_init(&export->mounted_exports_list);
-	glist_init(&export->clients);
 
 	/* Default anonymous uid and gid */
 	export->export_perms.anonymous_uid = (uid_t) ANON_UID;
@@ -1325,7 +1309,6 @@ static int build_default_root(void)
 			"Failed to insert pseudo root   In use??");
 		goto err_out;
 	}
-	set_gsh_export_state(export, EXPORT_READY);
 
 	/* This export must be mounted to the PseudoFS */
 	export_add_to_mount_work(export);
@@ -1714,7 +1697,7 @@ void kill_export_root_entry(cache_entry_t *entry)
 			return;
 		}
 
-		(void) get_gsh_export_ref(export, true);
+		get_gsh_export_ref(export);
 		LogInfo(COMPONENT_CONFIG,
 			"Killing export_id %d because root entry went bad",
 			export->export_id);
@@ -1754,7 +1737,7 @@ void kill_export_junction_entry(cache_entry_t *entry)
 	/* Detach the export from the inode */
 	entry->object.dir.junction_export = NULL;
 
-	(void) get_gsh_export_ref(export, true);
+	get_gsh_export_ref(export);
 
 	LogInfo(COMPONENT_CONFIG,
 		"Unmounting export_id %d because junction entry went bad",

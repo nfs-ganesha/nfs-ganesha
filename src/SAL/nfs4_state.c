@@ -102,7 +102,7 @@ state_status_t state_add_impl(cache_entry_t *entry, enum state_type state_type,
 	}
 
 	/* Attempt to get a reference to the export. */
-	if (!get_gsh_export_ref(op_ctx->export, false)) {
+	if (!export_ready(op_ctx->export)) {
 		/* If we could not get a reference, return stale.
 		 * Release attr_lock
 		 */
@@ -110,6 +110,8 @@ state_status_t state_add_impl(cache_entry_t *entry, enum state_type state_type,
 		status = STATE_ESTALE;
 		goto errout;
 	}
+
+	get_gsh_export_ref(op_ctx->export);
 
 	got_export_ref = true;
 
@@ -484,9 +486,10 @@ bool get_state_entry_export_owner_refs(state_t *state,
 
 	if (export != NULL) {
 		if (state->state_export != NULL &&
-		    get_gsh_export_ref(state->state_export, false))
+		    export_ready(state->state_export)) {
+			get_gsh_export_ref(state->state_export);
 			*export = state->state_export;
-		else
+		} else
 			goto fail;
 	}
 

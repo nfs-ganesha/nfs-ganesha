@@ -251,7 +251,7 @@ static void nlm4_send_grant_msg(state_async_queue_t *arg)
 	 * we must clean up the cookie_entry.
 	 */
 	export = cookie_entry->sce_lock_entry->sle_export;
-	(void) get_gsh_export_ref(export, true);
+	get_gsh_export_ref(export);
 
 	init_root_op_context(&root_op_context,
 			     export, export->fsal_export,

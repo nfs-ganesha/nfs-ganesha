@@ -125,8 +125,7 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t *data,
 		/* Attempt to get a reference to the export across the
 		 * junction.
 		 */
-		if (!get_gsh_export_ref(file_entry->object.dir.junction_export,
-					false)) {
+		if (!export_ready(file_entry->object.dir.junction_export)) {
 			/* If we could not get a reference, return stale.
 			 * Release attr_lock
 			 */
@@ -136,6 +135,8 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t *data,
 			res_LOOKUP4->status = NFS4ERR_STALE;
 			goto out;
 		}
+
+		get_gsh_export_ref(file_entry->object.dir.junction_export);
 
 		/* Release any old export reference */
 		if (op_ctx->export != NULL)

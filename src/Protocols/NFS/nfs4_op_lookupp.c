@@ -131,8 +131,8 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 		/* Check if there is a problem with the export and try and
 		 * get a reference to the parent export.
 		 */
-		if (dir_entry == NULL ||
-		    !get_gsh_export_ref(parent_exp, false)) {
+		if (dir_entry == NULL || parent_exp == NULL ||
+		    !export_ready(parent_exp)) {
 			/* Export is in the process of dying */
 			PTHREAD_RWLOCK_unlock(&original_export->lock);
 			LogCrit(COMPONENT_EXPORT,
@@ -143,6 +143,8 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 			res_LOOKUPP4->status = NFS4ERR_STALE;
 			return res_LOOKUPP4->status;
 		}
+
+		get_gsh_export_ref(parent_exp);
 
 		if (cache_inode_lru_ref(dir_entry, LRU_FLAG_NONE) !=
 		    CACHE_INODE_SUCCESS) {
