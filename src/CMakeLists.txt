@@ -1131,64 +1131,99 @@ configure_file(
 set( PKG_NAME "${CPACK_PACKAGE_FILE_NAME}.tar.gz")
 add_custom_target(dist COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
 
-# set "--with" arguments for rpmbuild
+# Tweak the "%bcond_<with|without> in the specfile for every
+# optional feature. Take care on the logic of this syntax
+# %bcond_with means you add a "--with" option, default is "without this feature"
+# %bcond_without adds a"--without" so the feature is enabled by default
 # This has to be coherent with chosen FSALs
-set( WITH_ARG "")
-
 if(USE_FSAL_LUSTRE)
-    set( WITH_ARG "${WITH_ARG} --with lustre")
+    set(BCOND_LUSTRE "%bcond_without")
+else(USE_FSAL_LUSTRE)
+    set(BCOND_LUSTRE "%bcond_with")
 endif(USE_FSAL_LUSTRE)
 
+if(USE_FSAL_LUSTRE_UP)
+    set(BCOND_FSAL_LUSTRE_UP "%bcond_without")
+else(USE_FSAL_LUSTRE_UP)
+    set(BCOND_FSAL_LUSTRE_UP "%bcond_with")
+endif(USE_FSAL_LUSTRE_UP)
+
 if(USE_FSAL_SHOOK)
-    set( WITH_ARG "${WITH_ARG} --with shook")
+    set(BCOND_SHOOK "%bcond_without")
+else(USE_FSAL_SHOOK)
+    set(BCOND_SHOOK "%bcond_with")
 endif(USE_FSAL_SHOOK)
 
 if(USE_FSAL_ZFS)
-    set( WITH_ARG "${WITH_ARG} --with zfs")
+    set(BCOND_ZFS "%bcond_without")
+else(USE_FSAL_ZFS)
+    set(BCOND_ZFS "%bcond_with")
 endif(USE_FSAL_ZFS)
 
 if(USE_FSAL_XFS)
-    set( WITH_ARG "${WITH_ARG} --with xfs")
+    set(BCOND_XFS "%bcond_without")
+else(USE_FSAL_XFS)
+    set(BCOND_XFS "%bcond_with")
 endif(USE_FSAL_XFS)
 
 if(USE_FSAL_PANFS)
-    set( WITH_ARG "${WITH_ARG} --with panfs")
+    set(BCOND_PANFS "%bcond_without")
+else(USE_FSAL_PANFS)
+    set(BCOND_PANFS "%bcond_with")
 endif(USE_FSAL_PANFS)
 
 if(USE_FSAL_GPFS)
-    set( WITH_ARG "${WITH_ARG} --with gpfs")
+    set(BCOND_GPFS "%bcond_without")
+else(USE_FSAL_GPFS)
+    set(BCOND_GPFS "%bcond_with")
 endif(USE_FSAL_GPFS)
 
 if(USE_FSAL_CEPH)
-    set( WITH_ARG "${WITH_ARG} --with ceph")
-endif(USE_FSAL_CEPH)
-
-if(USE_FSAL_CEPH)
-    set( WITH_ARG "${WITH_ARG} --with ceph")
+    set(BCOND_CEPH "%bcond_without")
+else(USE_FSAL_CEPH)
+    set(BCOND_CEPH "%bcond_with")
 endif(USE_FSAL_CEPH)
 
 if(USE_FSAL_GLUSTER)
-    set( WITH_ARG "${WITH_ARG} --with gluster")
+    set(BCOND_GLUSTER "%bcond_without")
+else(USE_FSAL_GLUSTER)
+    set(BCOND_GLUSTER "%bcond_with")
 endif(USE_FSAL_GLUSTER)
 
 if(USE_FSAL_HPSS)
-    set( WITH_ARG "${WITH_ARG} --with hpss")
+    set(BCOND_HPSS "%bcond_without")
+else(USE_FSAL_HPSS)
+    set(BCOND_HPSS "%bcond_with")
 endif(USE_FSAL_HPSS)
 
 if(USE_FSAL_PT)
-    set( WITH_ARG "${WITH_ARG} --with pt")
+    set(BCOND_PT "%bcond_without")
+else(USE_FSAL_PT)
+    set(BCOND_PT "%bcond_with")
 endif(USE_FSAL_PT)
 
 if(USE_9P_RDMA)
-    set( WITH_ARG "${WITH_ARG} --with rdma")
+    set(BCOND_RDMA "%bcond_without")
+else(USE_9P_RDMA)
+    set(BCOND_RDMA "%bcond_with")
 endif(USE_9P_RDMA)
 
+if(USE_LTTNG)
+    set(BCOND_LTTNG "%bcond_without")
+else(USE_LTTNG)
+    set(BCOND_LTTNG "%bcond_with")
+endif(USE_LTTNG)
+
 if(${ALLOCATOR} STREQUAL "jemalloc")
-    set( WITH_ARG "${WITH_ARG} --with jemalloc")
+    set(BCOND_JEMALLOC "%bcond_without")
+else(${ALLOCATOR} STREQUAL "jemalloc")
+    set(BCOND_JEMALLOC "%bcond_with")
 endif(${ALLOCATOR} STREQUAL "jemalloc")
 
 if(USE_ADMIN_TOOLS)
-    set( WITH_ARG "${WITH_ARG} --with utils")
+    set(BCOND_UTILS "%bcond_without")
+else(USE_ADMIN_TOOLS)
+    set(BCOND_UTILS "%bcond_with")
 endif(USE_ADMIN_TOOLS)
 
 # Now create a useable specfile
@@ -1199,13 +1234,14 @@ configure_file(
 
 add_custom_target( rpm DEPENDS dist)
 add_custom_command(TARGET rpm
-                  COMMAND sh -c "rpmbuild ${WITH_ARG} -ta ${PKG_NAME}"
+                  COMMAND sh -c "rpmbuild -ta ${PKG_NAME}"
 		  VERBATIM
 		  DEPENDS dist)
 
+set(RPMDEST "--define '_srcrpmdir ${CMAKE_CURRENT_BINARY_DIR}'")
 add_custom_target( srpm DEPENDS dist)
 add_custom_command(TARGET srpm
-                  COMMAND sh -c "rpmbuild --define '_srcrpmdir ${CMAKE_CURRENT_BINARY_DIR}' ${WITH_ARG} -ts ${PKG_NAME}"
+                  COMMAND sh -c "rpmbuild ${RPMDEST} -ts ${PKG_NAME}"
 		  VERBATIM
 		  DEPENDS dist)
 
