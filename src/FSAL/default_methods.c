@@ -195,9 +195,11 @@ static fsal_status_t fsal_pnfs_ds(struct fsal_module *const fsal_hdl,
 				  struct fsal_pnfs_ds **const handle)
 {
 	LogDebug(COMPONENT_PNFS, "Default pNFS DS creation!");
-	*handle = pnfs_ds_alloc();
-	if (*handle == NULL)
-		return fsalstat(ERR_FSAL_NOMEM, ENOMEM);
+	if (*handle == NULL) {
+		*handle = pnfs_ds_alloc();
+		if (*handle == NULL)
+			return fsalstat(ERR_FSAL_NOMEM, ENOMEM);
+	}
 
 	fsal_pnfs_ds_init(*handle, fsal_hdl);
 	op_ctx->fsal_pnfs_ds = *handle;
