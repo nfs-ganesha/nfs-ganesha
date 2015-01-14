@@ -250,13 +250,13 @@ static struct config_block export_param = {
 
 fsal_status_t nullfs_create_export(struct fsal_module *fsal_hdl,
 				   void *parse_node,
+				   struct config_error_type *err_type,
 				   const struct fsal_up_vector *up_ops)
 {
 	fsal_status_t expres;
 	struct fsal_module *fsal_stack;
 	struct nullfs_fsal_export *myself;
 	struct nullfsal_args nullfsal;
-	struct config_error_type err_type;
 	int retval;
 
 	/* process our FSAL block to get the name of the fsal
@@ -266,7 +266,7 @@ fsal_status_t nullfs_create_export(struct fsal_module *fsal_hdl,
 				       &export_param,
 				       &nullfsal,
 				       true,
-				       &err_type);
+				       err_type);
 	if (retval != 0)
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	fsal_stack = lookup_fsal(nullfsal.subfsal.name);
@@ -286,8 +286,9 @@ fsal_status_t nullfs_create_export(struct fsal_module *fsal_hdl,
 	}
 
 	expres = fsal_stack->m_ops.create_export(fsal_stack,
-						nullfsal.subfsal.fsal_node,
-						up_ops);
+						 nullfsal.subfsal.fsal_node,
+						 err_type,
+						 up_ops);
 	fsal_put(fsal_stack);
 	if (FSAL_IS_ERROR(expres)) {
 		LogMajor(COMPONENT_FSAL,

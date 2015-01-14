@@ -193,11 +193,11 @@ struct fsal_staticfsinfo_t *lustre_staticinfo(struct fsal_module *hdl)
  */
 
 static fsal_status_t lustre_init_config(struct fsal_module *fsal_hdl,
-				 config_file_t config_struct)
+					config_file_t config_struct,
+					struct config_error_type *err_type)
 {
 	struct lustre_fsal_module *lustre_me =
 	    container_of(fsal_hdl, struct lustre_fsal_module, fsal);
-	struct config_error_type err_type;
 
 	lustre_me->fs_info = lustre_info; /* get a copy of the defaults */
 	/* Read FS parameter for this FSAL */
@@ -205,8 +205,8 @@ static fsal_status_t lustre_init_config(struct fsal_module *fsal_hdl,
 				      &lustre_param,
 				      lustre_me,
 				      true,
-				      &err_type);
-	if (!config_error_is_harmless(&err_type))
+				      err_type);
+	if (!config_error_is_harmless(err_type))
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	display_fsinfo(&lustre_me->fs_info);
 
@@ -227,6 +227,7 @@ static fsal_status_t lustre_init_config(struct fsal_module *fsal_hdl,
 
 fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
 				   void *parse_node,
+				   struct config_error_type *err_type,
 				   const struct fsal_up_vector *up_ops);
 
 /* Module initialization.

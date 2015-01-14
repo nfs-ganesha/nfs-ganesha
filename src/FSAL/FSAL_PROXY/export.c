@@ -155,6 +155,7 @@ void pxy_export_ops_init(struct export_ops *ops)
  * keep the later static then the former */
 fsal_status_t pxy_create_export(struct fsal_module *fsal_hdl,
 				void *parse_node,
+				struct config_error_type *err_type,
 				const struct fsal_up_vector *up_ops)
 {
 	struct pxy_export *exp = gsh_calloc(1, sizeof(*exp));

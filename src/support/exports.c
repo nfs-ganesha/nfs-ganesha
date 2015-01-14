@@ -539,7 +539,7 @@ static int fsal_commit(void *node, void *link_mem, void *self_struct,
 		export->fullpath[pathlen] = '\0';
 	}
 	status = fsal->m_ops.create_export(fsal,
-					  node,
+					   node, err_type,
 					  &fsal_up_top);
 	if ((export->options_set & EXPORT_OPTION_EXPIRE_SET) == 0)
 		export->expire_time_attr = cache_param.expire_time_attr;
@@ -1210,7 +1210,7 @@ struct config_block export_defaults_param = {
  * @return -1 on error, 0 if we already have one, 1 if created one
  */
 
-static int build_default_root(void)
+static int build_default_root(struct config_error_type *err_type)
 {
 	struct gsh_export *export;
 	struct fsal_module *fsal_hdl = NULL;
@@ -1304,8 +1304,9 @@ static int build_default_root(void)
 		fsal_status_t rc;
 
 		rc = fsal_hdl->m_ops.create_export(fsal_hdl,
-						  NULL,
-						  &fsal_up_top);
+						   NULL,
+						   err_type,
+						   &fsal_up_top);
 
 		if (FSAL_IS_ERROR(rc)) {
 			fsal_put(fsal_hdl);
@@ -1353,27 +1354,27 @@ err_out:
  *         the number of export entries else.
  */
 
-int ReadExports(config_file_t in_config)
+int ReadExports(config_file_t in_config,
+		struct config_error_type *err_type)
 {
-	struct config_error_type err_type;
 	int rc, ret = 0;
 
 	rc = load_config_from_parse(in_config,
 				    &export_defaults_param,
 				    NULL,
 				    false,
-				    &err_type);
-	if (!config_error_is_harmless(&err_type))
+				    err_type);
+	if (!config_error_is_harmless(err_type))
 		return -1;
 
 	rc = load_config_from_parse(in_config,
 				    &export_param,
 				    NULL,
 				    false,
-				    &err_type);
-	if (!config_error_is_harmless(&err_type))
+				    err_type);
+	if (!config_error_is_harmless(err_type))
 		return -1;
-	ret = build_default_root();
+	ret = build_default_root(err_type);
 	if (ret < 0) {
 		LogCrit(COMPONENT_CONFIG,
 			"No pseudo root!");

@@ -2518,18 +2518,18 @@ struct config_block logging_param = {
  * @return 0 if ok, -1 if failed,
  *
  */
-int read_log_config(config_file_t in_config)
+int read_log_config(config_file_t in_config,
+		    struct config_error_type *err_type)
 {
 	struct logger_config logger;
-	struct config_error_type err_type;
 
 	memset(&logger, 0, sizeof(struct logger_config));
 	(void)load_config_from_parse(in_config,
 				     &logging_param,
 				     &logger,
 				     true,
-				     &err_type);
-	if (err_type.empty || config_error_is_harmless(&err_type))
+				     err_type);
+	if (err_type->empty || config_error_is_harmless(err_type))
 		return 0;
 	else
 		return -1;
@@ -2555,6 +2555,9 @@ void reread_log_config()
 		return;
 	}
 
+	/* Create a memstream for parser+processing error messages */
+	if (!init_error_type(&err_type))
+		return;
 	/* Attempt to parse the new configuration file */
 	config_struct = config_ParseFile(config_path, &err_type);
 	if (!config_error_no_error(&err_type)) {
@@ -2562,13 +2565,15 @@ void reread_log_config()
 		LogCrit(COMPONENT_CONFIG,
 			"Error while parsing new configuration file %s",
 			config_path);
+		report_config_errors(&err_type, config_errs_to_log);
 		return;
 	}
 
 	/* Create the new exports list */
-	status = read_log_config(config_struct);
+	status = read_log_config(config_struct, &err_type);
 	if (status < 0)
 		LogCrit(COMPONENT_CONFIG, "Error while parsing LOG entries");
 
+	report_config_errors(&err_type, config_errs_to_log);
 	config_Free(config_struct);
 }

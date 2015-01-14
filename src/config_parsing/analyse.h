@@ -74,6 +74,9 @@ struct config_node {
 	}u;
 };
 
+/* Array of structs in analyse.c for translating enum term_type
+ */
+
 struct config_term_type {
 	const char *name;
 	const char *desc;
@@ -137,6 +140,13 @@ int ganesha_yyparse(struct parser_state *st);
 int ganeshun_yy_init_parser(char *srcfile,
 			   struct parser_state *st);
 void ganeshun_yy_cleanup_parser(struct parser_state *st);
+
+/**
+ * Error reporting
+ */
+
+void config_error(FILE *fp, const char *filename, int linenum,
+		  char *format, va_list args);
 
 /**
  *  Displays the content of parse tree.

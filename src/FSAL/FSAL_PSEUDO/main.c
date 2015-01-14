@@ -109,7 +109,8 @@ struct fsal_staticfsinfo_t *pseudofs_staticinfo(struct fsal_module *hdl)
  */
 
 static fsal_status_t init_config(struct fsal_module *fsal_hdl,
-				 config_file_t config_struct)
+				 config_file_t config_struct,
+				 struct config_error_type *err_type)
 {
 	struct pseudo_fsal_module *pseudofs_me =
 	    container_of(fsal_hdl, struct pseudo_fsal_module, fsal);

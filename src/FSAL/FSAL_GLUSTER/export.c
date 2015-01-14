@@ -547,9 +547,9 @@ static struct config_block export_param = {
 
 fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 				      void *parse_node,
+				      struct config_error_type *err_type,
 				      const struct fsal_up_vector *up_ops)
 {
-	struct config_error_type err_type;
 	int rc;
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	struct glusterfs_export *glfsexport = NULL;
@@ -567,7 +567,7 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 				   &export_param,
 				   &params,
 				   true,
-				   &err_type);
+				   err_type);
 	if (rc != 0) {
 		LogCrit(COMPONENT_FSAL,
 			"Incorrect or missing parameters for export %s",

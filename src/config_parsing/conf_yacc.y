@@ -71,14 +71,17 @@ int ganesha_yylex(YYSTYPE *yylval_param,
 		  YYLTYPE *yylloc_param,
 		  struct parser_state *st);
 
+void config_parse_error(YYLTYPE *yylloc_param,
+			struct parser_state *st,
+			char *format, ...);
+
 void ganesha_yyerror(YYLTYPE *yylloc_param,
 		     void *yyscanner,
 		     char*);
 
 struct config_node *config_block(char *blockname,
 				 struct config_node *list,
-				 char *filename,
-				 int lineno,
+				 YYLTYPE *yylloc_param,
 				 struct parser_state *st);
 
 void link_node(struct config_node *node);
@@ -88,14 +91,12 @@ void link_node(struct config_node *node);
 
 struct config_node *config_stmt(char *varname,
 				struct config_node *exprlist,
-				char *filename,
-				int lineno,
+				 YYLTYPE *yylloc_param,
 				struct parser_state *st);
 
 struct config_node *config_term(char *varval,
 				enum term_type type,
-				char *filename,
-				int lineno,
+				 YYLTYPE *yylloc_param,
 				struct parser_state *st);
 
 }
@@ -128,7 +129,7 @@ struct config_node *config_term(char *varval,
 
 config:
 { /* empty */
-  ganesha_yyerror(&yyloc, st->scanner, "Empty configuration file");
+  config_parse_error(&yyloc, st, "Empty configuration file");
 }
 | deflist
 {
@@ -155,11 +156,11 @@ definition
 definition:
  IDENTIFIER EQUAL_OP statement
 {
-  $$ = config_stmt($1, $3, @$.filename, @$.first_line, st);
+  $$ = config_stmt($1, $3, &@$, st);
 }
 | IDENTIFIER LCURLY_OP block
 {
-  $$=config_block($1, $3, @$.filename, @$.first_line, st);
+  $$=config_block($1, $3, &@$, st);
 }
 ;
 
@@ -170,9 +171,7 @@ statement:
 }
 | error SEMI_OP
 {
-  LogCrit(COMPONENT_CONFIG,
-	  "Config parse (%s:%d) Syntax error in statement",
-	  @$.filename, @$.first_line);
+  config_parse_error(&@$, st, "Syntax error in statement");
   yyerrok;
   $$ = NULL;
 }
@@ -188,9 +187,7 @@ block:
 }
 | error RCURLY_OP
 {
-  LogCrit(COMPONENT_CONFIG,
-	  "Config parse (%s:%d) Syntax error in block",
-	  @$.filename, @$.first_line);
+  config_parse_error(&@$, st, "Syntax error in block");
   yyerrok;
   $$ = NULL;
 }
@@ -215,35 +212,68 @@ expression: /* empty */ {
 }
 | TOK_PATH
 {
-  $$ = config_term($1, TERM_PATH, @$.filename, @$.first_line, st);
+  $$ = config_term($1, TERM_PATH, &@$, st);
 }
 | TOKEN
 {
-  $$ = config_term($1, TERM_TOKEN, @$.filename, @$.first_line, st);
+  $$ = config_term($1, TERM_TOKEN, &@$, st);
 }
 | STRING
 {
-  $$ = config_term($1, TERM_STRING, @$.filename, @$.first_line, st);
+  $$ = config_term($1, TERM_STRING, &@$, st);
 }
 | DQUOTE
 {
-  $$ = config_term($1, TERM_DQUOTE, @$.filename, @$.first_line, st);
+  $$ = config_term($1, TERM_DQUOTE, &@$, st);
 }
 | SQUOTE
 {
-  $$ = config_term($1, TERM_SQUOTE, @$.filename, @$.first_line, st);
+  $$ = config_term($1, TERM_SQUOTE, &@$, st);
 }
 | TOK_TRUE
 {
-  $$ = config_term($1, TERM_TRUE, @$.filename, @$.first_line, st);
+  $$ = config_term($1, TERM_TRUE, &@$, st);
 }
 | TOK_FALSE
 {
-  $$ = config_term($1, TERM_FALSE, @$.filename, @$.first_line, st);
+  $$ = config_term($1, TERM_FALSE, &@$, st);
 }
 ;
 
 %%
+
+  /**
+   * @brief Report an scanner/parser error
+   *
+   * Replacement for yyerror() to get more info.
+   * HACK ALERT: new_file() does not have yylloc initialized yet for
+   * first file so create a string and init line number for it.
+   */
+
+void config_parse_error(YYLTYPE *yylloc_param,
+			struct parser_state *st,
+			char *format, ...)
+{
+	FILE *fp = st->err_type->fp;
+	va_list arguments;
+	char *filename = "<unknown file>";
+	int linenum = 0;;
+
+	if (fp == NULL)
+		return;  /* no stream, no message */
+	if (yylloc_param != NULL) {
+	  filename = yylloc_param->filename;
+	  linenum = yylloc_param->first_line;
+	}
+	va_start(arguments, format);
+	config_error(fp, filename, linenum, format, arguments);
+	va_end(arguments);
+}
+
+/* This is here because bison wants it declared.
+ * We do not use it because we can't get around the API.
+ * Use config_parse_error() instead.
+ */
 
 void ganesha_yyerror(YYLTYPE *yylloc_param,
 		     void *yyscanner,
@@ -276,23 +306,20 @@ void ganesha_yyerror(YYLTYPE *yylloc_param,
  */
 struct config_node *config_block(char *blockname,
 				 struct config_node *list,
-				 char *filename,
-				 int lineno,
+				 YYLTYPE *yylloc_param,
 				 struct parser_state *st)
 {
 	struct config_node *node, *cnode;
 
 	if (blockname == NULL) {
-		LogWarn(COMPONENT_CONFIG,
-			"Config file (%s:%d) no memory for block ID token.",
-			filename, lineno);
+		config_parse_error(yylloc_param, st,
+				   "no memory for block ID token.");
 		st->err_type->empty = true;
 		return NULL;
 	}
 	if (list == NULL) {
-		LogWarn(COMPONENT_CONFIG,
-			"Config file (%s:%d) Block %s is empty",
-			filename, lineno,  blockname);
+		config_parse_error(yylloc_param, st,
+				   "Block %s is empty", blockname);
 		st->err_type->empty = true;
 		return NULL;
 	}
@@ -303,8 +330,8 @@ struct config_node *config_block(char *blockname,
 	}
 	glist_init(&node->node);
 	node->u.nterm.name = blockname;
-	node->filename = filename;
-	node->linenumber = lineno;
+	node->filename = yylloc_param->filename;
+	node->linenumber = yylloc_param->first_line;
 	node->type = TYPE_BLOCK;
 	glist_init(&node->u.nterm.sub_nodes);
 	glist_add_tail(&list->node, &node->u.nterm.sub_nodes);
@@ -354,16 +381,14 @@ struct config_node *link_sibling(struct config_node *first,
 
 struct config_node *config_term(char *varval,
 				enum term_type type,
-				char *filename,
-				int lineno,
+				YYLTYPE *yylloc_param,
 				struct parser_state *st)
 {
 	struct config_node *node;
 
 	if (varval == NULL) {
-		LogWarn(COMPONENT_CONFIG,
-			"Config file (%s:%d) no memory for option value token.",
-			filename, lineno);
+		config_parse_error(yylloc_param, st,
+				   "no memory for option value token.");
 		st->err_type->empty = true;
 		return NULL;
 	}
@@ -373,8 +398,8 @@ struct config_node *config_term(char *varval,
 		return NULL;
 	}
 	glist_init(&node->node);
-	node->filename = filename;
-	node->linenumber = lineno;
+	node->filename = yylloc_param->filename;
+	node->linenumber = yylloc_param->first_line;
 	node->type = TYPE_TERM;
 	node->u.term.type = type;
 	node->u.term.varvalue = varval;
@@ -387,23 +412,21 @@ struct config_node *config_term(char *varval,
 
 struct config_node *config_stmt(char *varname,
 				struct config_node *exprlist,
-				char *filename,
-				int lineno,
+				 YYLTYPE *yylloc_param,
 				struct parser_state *st)
 {
 	struct config_node *node;
 
 	if (varname == NULL) {
-		LogWarn(COMPONENT_CONFIG,
-			"Config file (%s:%d) no memory for option token.",
-			filename, lineno);
+		config_parse_error(yylloc_param, st,
+				   "no memory for parameter name.");
 		st->err_type->empty = true;
 		return NULL;
 	}
 	if (exprlist == NULL) {
-		LogWarn(COMPONENT_CONFIG,
-			"Config file (%s:%d): Parameter (%s) has no option values",
-			filename, lineno, varname);
+		config_parse_error(yylloc_param, st,
+				   "Parameter (%s) has no option values",
+				   varname);
 		st->err_type->empty = true;
 		return NULL;
 	}
@@ -414,8 +437,8 @@ struct config_node *config_stmt(char *varname,
 	}
 	glist_init(&node->node);
 	glist_init(&node->u.nterm.sub_nodes);
-	node->filename = filename;
-	node->linenumber = lineno;
+	node->filename = yylloc_param->filename;
+	node->linenumber = yylloc_param->first_line;
 	node->type = TYPE_STMT;
 	node->u.nterm.name = varname;
 	glist_add_tail(&exprlist->node, &node->u.nterm.sub_nodes);

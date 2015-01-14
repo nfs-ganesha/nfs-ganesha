@@ -234,9 +234,8 @@ ID_CHARS [a-zA-Z_][a-zA-Z0-9_\-]*
 
 . { /* ERROR: out of character character */
 	DEBUG_LEX("unexpected stuff (%s)\n", yytext);
-	LogCrit(COMPONENT_CONFIG,
-		"Config file (%s:%d): Unexpected character (%s)",
-		yylloc->filename, yylloc->first_line, yytext);
+	config_parse_error(yylloc, stp,
+		"Unexpected character (%s)", yytext);
 	stp->err_type->scan = true;
 	yylval->token = save_token(yytext, false, stp); /* for error rpt */
 	return _ERROR_;
@@ -267,7 +266,10 @@ int ganeshun_yy_init_parser(char *srcfile, struct parser_state *st)
 	confroot->root.type = TYPE_ROOT;
 	st->root_node = confroot;
 	ganeshun_yylex_init_extra(st, &st->scanner);
-	return new_file(srcfile, st);
+	rc = new_file(srcfile, st);
+	if (rc == 0)
+		confroot->root.filename = gsh_strdup(srcfile);
+	return rc;
 
 nospc:
 	st->err_type->resource = true;
@@ -332,9 +334,8 @@ static int new_file(char *name_tok,
 	/* loop detection */
 	for (fp = confroot->files; fp != NULL; fp = fp->next) {
 		if (!strcmp(fp->pathname, fullpath)) {
-			LogCrit(COMPONENT_CONFIG,
-				"Config file (%s:%d): file (%s)already parsed, ignored",
-				yylloc->filename, yylloc->first_line,
+			config_parse_error(yylloc, st,
+				"file (%s)already parsed, ignored",
 				fullpath);
 			rc = EINVAL;
 			goto errout;
@@ -350,17 +351,10 @@ static int new_file(char *name_tok,
 	}
 	in_file = fopen(fullpath, "r" );
 	if (in_file == NULL) {
-		char *filename = "<initial file>";
-		int first_line = 0;;
-
 		rc = errno;
-		if (yylloc != NULL) {
-			filename = yylloc->filename;
-			first_line = yylloc->first_line;
-		}
-		LogCrit(COMPONENT_CONFIG,
-			"Config file (%s:%d): new file (%s) open error (%s), ignored",
-			filename, first_line, fullpath, strerror(rc));
+		config_parse_error(yylloc, st,
+			"new file (%s) open error (%s), ignored",
+			strerror(rc));
 		goto errout;
 	}
 	bs->bs = ganeshun_yy_create_buffer(in_file,

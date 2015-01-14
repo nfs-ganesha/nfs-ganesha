@@ -50,7 +50,6 @@ config_file_t config_ParseFile(char *file_path,
 	struct config_root *root;
 	int rc;
 
-	clear_error_type(err_type);
 	memset(&st, 0, sizeof(struct parser_state));
 	st.err_type = err_type;
 	rc = ganeshun_yy_init_parser(file_path, &st);
@@ -160,18 +159,103 @@ char *err_type_str(struct config_error_type *err_type)
 	return buf;
 }
 
+bool init_error_type(struct config_error_type *err_type)
+{
+	memset(err_type, 0, sizeof(struct config_error_type));
+	err_type->fp = open_memstream(&err_type->diag_buf,
+				     &err_type->diag_buf_size);
+	if (err_type->fp == NULL) {
+		LogCrit(COMPONENT_MAIN,
+			 "Could not open memory stream for parser errors");
+		return false;
+	}
+	return true;
+}
+
+/**
+ * @brief Log an error to the parse error stream
+ *
+ * cnode is void * because struct config_node is hidden outside parse code
+ * and we can report errors in fsal_manager.c etc.
+ */
+
+void config_proc_error(void *cnode,
+		       struct config_error_type *err_type,
+		       char *format, ...)
+{
+	struct config_node *node = cnode;
+	FILE *fp = err_type->fp;
+	char *filename = "<unknown file>";
+	int linenumber = 0;
+	va_list arguments;
+
+	if (fp == NULL)
+		return;  /* no stream, no message */
+	if (node != NULL && node->filename != NULL) {
+		filename = node->filename;
+		linenumber = node->linenumber;
+	}
+	va_start(arguments, format);
+	config_error(fp, filename, linenumber,
+		     format, arguments);
+	va_end(arguments);
+}
+void config_errs_to_log(char *err,
+			struct config_error_type *err_type)
+{
+	log_levels_t log_level;
+
+	if (config_error_is_fatal(err_type) ||
+	    config_error_is_crit(err_type))
+		log_level = NIV_CRIT;
+	else if (config_error_is_harmless(err_type))
+		log_level = NIV_WARN;
+	else
+		log_level = NIV_EVENT;
+	DisplayLogComponentLevel(COMPONENT_CONFIG,
+				 __FILE__, __LINE__, (char *)__func__,
+				  log_level, "%s", err);
+}
+
+void report_config_errors(struct config_error_type *err_type,
+			  void (*logger)(char *msg,
+					 struct config_error_type *err_type))
+{
+	char *msgp, *cp;
+
+	if (err_type->fp == NULL)
+		return;
+	fclose(err_type->fp);
+	err_type->fp = NULL;
+	msgp = err_type->diag_buf;
+	if (msgp == NULL)
+		return;
+	while (*msgp != '\0') {
+		cp = index(msgp, '\f');
+		if (cp != NULL) {
+			*cp++ = '\0';
+			logger(msgp, err_type);
+			msgp = cp;
+		} else {
+			logger(msgp, err_type);
+			break;
+		}
+	}
+	gsh_free(err_type->diag_buf);
+	err_type->diag_buf = NULL;
+}
+
 static bool convert_bool(struct config_node *node,
-			 bool *b)
+			 bool *b,
+			 struct config_error_type *err_type)
 {
 	if (node->u.term.type == TERM_TRUE)
 		*b = true;
 	else if (node->u.term.type == TERM_FALSE)
 		*b = false;
 	else {
-		LogMajor(COMPONENT_CONFIG,
-		 "At (%s:%d): Expected boolean (true/false) got (%s)",
-		 node->filename,
-		 node->linenumber,
+		config_proc_error(node, err_type,
+		 "Expected boolean (true/false) got (%s)",
 		 node->u.term.varvalue);
 		return false;
 	}
@@ -180,7 +264,8 @@ static bool convert_bool(struct config_node *node,
 
 static bool convert_int(struct config_node *node,
 			int64_t min, int64_t max,
-			int64_t *num)
+			int64_t *num,
+			struct config_error_type *err_type)
 {
 	int64_t val;
 	char *endptr;
@@ -189,19 +274,15 @@ static bool convert_int(struct config_node *node,
 	val = strtoll(node->u.term.varvalue, &endptr, 10);
 	if (*node->u.term.varvalue != '\0' && *endptr == '\0') {
 		if (errno != 0 || val < min || val > max) {
-			LogMajor(COMPONENT_CONFIG,
-				 "At (%s:%d): (%s) is out of range",
-				 node->filename,
-				 node->linenumber,
-				 node->u.term.varvalue);
+			config_proc_error(node, err_type,
+					  "(%s) is out of range",
+					  node->u.term.varvalue);
 			return false;
 		}
 	} else {
-		LogMajor(COMPONENT_CONFIG,
-			 "At (%s:%d): (%s) is not an integer",
-			 node->filename,
-			 node->linenumber,
-			 node->u.term.varvalue);
+		config_proc_error(node, err_type,
+				  "(%s) is not an integer",
+				  node->u.term.varvalue);
 		return false;
 	}
 	*num = val;
@@ -210,7 +291,8 @@ static bool convert_int(struct config_node *node,
 
 static bool convert_uint(struct config_node *node,
 			 uint64_t min, uint64_t max,
-			 uint64_t *num)
+			 uint64_t *num,
+			 struct config_error_type *err_type)
 {
 	uint64_t val;
 	char *endptr;
@@ -219,19 +301,15 @@ static bool convert_uint(struct config_node *node,
 	val = strtoull(node->u.term.varvalue, &endptr, 10);
 	if (*node->u.term.varvalue != '\0' && *endptr == '\0') {
 		if (errno != 0 || val < min || val > max) {
-			LogMajor(COMPONENT_CONFIG,
-				 "At (%s:%d): (%s) is out of range",
-				 node->filename,
-				 node->linenumber,
-				 node->u.term.varvalue);
+			config_proc_error(node, err_type,
+					  "(%s) is out of range",
+					  node->u.term.varvalue);
 			return false;
 		}
 	} else {
-		LogMajor(COMPONENT_CONFIG,
-			 "At (%s:%d): (%s) is not an integer",
-			 node->filename,
-			 node->linenumber,
-			 node->u.term.varvalue);
+		config_proc_error(node, err_type,
+				  "(%s) is not an integer",
+				  node->u.term.varvalue);
 		return false;
 	}
 	*num = val;
@@ -239,7 +317,8 @@ static bool convert_uint(struct config_node *node,
 }
 
 static bool convert_anonid(struct config_node *node,
-			   uint64_t *id)
+			   uint64_t *id,
+			   struct config_error_type *err_type)
 {
 	int64_t val;
 	char *endptr;
@@ -248,19 +327,15 @@ static bool convert_anonid(struct config_node *node,
 	val = strtoll(node->u.term.varvalue, &endptr, 10);
 	if (*node->u.term.varvalue != '\0' && *endptr == '\0') {
 		if (errno != 0 || val < INT32_MIN || val > UINT32_MAX) {
-			LogMajor(COMPONENT_CONFIG,
-				 "At (%s:%d): (%s) is out of range",
-				 node->filename,
-				 node->linenumber,
-				 node->u.term.varvalue);
+			config_proc_error(node, err_type,
+					  "(%s) is out of range",
+					  node->u.term.varvalue);
 			return false;
 		}
 	} else {
-		LogMajor(COMPONENT_CONFIG,
-			 "At (%s:%d): (%s) is not an integer",
-			 node->filename,
-			 node->linenumber,
-			 node->u.term.varvalue);
+		config_proc_error(node, err_type,
+				  "(%s) is not an integer",
+				  node->u.term.varvalue);
 		return false;
 	}
 	*id = val;
@@ -271,7 +346,8 @@ static bool convert_anonid(struct config_node *node,
  * @brief convert an fsid which is a "<64bit num>.<64bit num"
  */
 
-static int convert_fsid(struct config_node *node, void *param)
+static int convert_fsid(struct config_node *node, void *param,
+			struct config_error_type *err_type)
 {
 	struct fsal_fsid__ *fsid = (struct fsal_fsid__ *)param;
 	uint64_t major, minor;
@@ -282,19 +358,15 @@ static int convert_fsid(struct config_node *node, void *param)
 	major = strtoull(node->u.term.varvalue, &endptr, 10);
 	if (*node->u.term.varvalue != '\0' && *endptr == '.') {
 		if (errno != 0 || major == ULLONG_MAX) {
-			LogMajor(COMPONENT_CONFIG,
-				 "At (%s:%d): (%s) major is out of range",
-				 node->filename,
-				 node->linenumber,
-				 node->u.term.varvalue);
+			config_proc_error(node, err_type,
+					  "(%s) major is out of range",
+					  node->u.term.varvalue);
 			errors++;
 		}
 	} else {
-		LogMajor(COMPONENT_CONFIG,
-			 "At (%s:%d): (%s) is not a filesystem id",
-			 node->filename,
-			 node->linenumber,
-			 node->u.term.varvalue);
+		config_proc_error(node, err_type,
+				  "(%s) is not a filesystem id",
+				  node->u.term.varvalue);
 		errors++;
 	}
 	if (errors == 0) {
@@ -302,19 +374,15 @@ static int convert_fsid(struct config_node *node, void *param)
 		minor = strtoull(sp, &endptr, 10);
 		if (*sp != '\0' && *endptr == '\0') {
 			if (errno != 0 || minor == ULLONG_MAX) {
-				LogMajor(COMPONENT_CONFIG,
-					 "At (%s:%d): (%s) minor is out of range",
-					 node->filename,
-					 node->linenumber,
-					 node->u.term.varvalue);
+				config_proc_error(node, err_type,
+						  "(%s) minor is out of range",
+						  node->u.term.varvalue);
 				errors++;
 			}
 		} else {
-			LogMajor(COMPONENT_CONFIG,
-				 "At (%s:%d): (%s) is not a filesystem id",
-				 node->filename,
-				 node->linenumber,
-				 node->u.term.varvalue);
+			config_proc_error(node, err_type,
+					  "(%s) is not a filesystem id",
+					  node->u.term.varvalue);
 			errors++;
 		}
 	}
@@ -328,12 +396,12 @@ static int convert_fsid(struct config_node *node, void *param)
 /**
  * @brief Scan a list of CSV tokens.
  *
- * tokenize the CSV list here but  move to parser!
  */
 
 static int convert_list(struct config_node *node,
 			struct config_item *item,
-			uint32_t *flags)
+			uint32_t *flags,
+			struct config_error_type *err_type)
 {
 	struct config_item_list *tok;
 	struct config_node *sub_node;
@@ -356,11 +424,9 @@ static int convert_list(struct config_node *node,
 			}
 		}
 		if (!found) {
-			LogMajor(COMPONENT_CONFIG,
-				 "At (%s:%d): unknown token (%s)",
-				 node->filename,
-				 node->linenumber,
-				 sub_node->u.term.varvalue);
+			config_proc_error(node, err_type,
+					  "Unknown token (%s)",
+					  sub_node->u.term.varvalue);
 			errors++;
 		}
 	}
@@ -369,7 +435,8 @@ static int convert_list(struct config_node *node,
 
 static int convert_enum(struct config_node *node,
 			struct config_item *item,
-			uint32_t *val)
+			uint32_t *val,
+			struct config_error_type *err_type)
 {
 	struct config_item_list *tok;
 	bool found;
@@ -385,8 +452,8 @@ static int convert_enum(struct config_node *node,
 		tok++;
 	}
 	if (!found) {
-		LogMajor(COMPONENT_CONFIG,
-			 "At (%s:%d): unknown token (%s)",
+		config_proc_error(node, err_type,
+			 "Unknown token (%s)",
 			 node->filename,
 			 node->linenumber,
 			 node->u.term.varvalue);
@@ -398,7 +465,8 @@ static int convert_enum(struct config_node *node,
 static int convert_inet_addr(struct config_node *node,
 			     struct config_item *item,
 			     int ai_family,
-			     struct sockaddr *sock)
+			     struct sockaddr *sock,
+			     struct config_error_type *err_type)
 {
 	struct addrinfo hints;
 	struct addrinfo *res = NULL;
@@ -413,18 +481,14 @@ static int convert_inet_addr(struct config_node *node,
 	if (rc == 0) {
 		memcpy(sock, res->ai_addr, res->ai_addrlen);
 		if (res->ai_next != NULL)
-			LogInfo(COMPONENT_CONFIG,
-				"At (%s:%d): Multiple addresses for %s",
-				node->filename,
-				node->linenumber,
-				node->u.term.varvalue);
+			config_proc_error(node, err_type,
+					  "Multiple addresses for %s",
+					  node->u.term.varvalue);
 	} else {
-		LogMajor(COMPONENT_CONFIG,
-			 "At (%s:%d): No IP address found for %s because:%s",
-			 node->filename,
-			 node->linenumber,
-			 node->u.term.varvalue,
-			 gai_strerror(rc));
+		config_proc_error(node, err_type,
+				  "No IP address found for %s because:%s",
+				  node->u.term.varvalue,
+				  gai_strerror(rc));
 	}
 	freeaddrinfo(res);
 	return rc;
@@ -590,8 +654,10 @@ static const char *config_type_str(enum config_type type)
 	return "unknown";
 }
 
-static int do_block_init(struct config_item *params,
-			 void *param_struct)
+static int do_block_init(struct config_node *blk_node,
+			 struct config_item *params,
+			 void *param_struct,
+			 struct config_error_type *err_type)
 {
 	struct config_item *item;
 	caddr_t *param_addr;
@@ -692,9 +758,10 @@ static int do_block_init(struct config_item *params,
 			rc = inet_pton(AF_INET,
 				       item->u.ipv4.def, &sock->sin_addr);
 			if (rc <= 0) {
-				LogWarn(COMPONENT_CONFIG,
-					"Cannot set IPv4 default for %s to %s",
-					item->name, item->u.ipv4.def);
+				config_proc_error(blk_node, err_type,
+						  "Cannot set IPv4 default for %s to %s",
+						  item->name,
+						  item->u.ipv4.def);
 				errors++;
 			}
 			break;
@@ -705,9 +772,10 @@ static int do_block_init(struct config_item *params,
 			rc = inet_pton(AF_INET6,
 				       item->u.ipv6.def, &sock6->sin6_addr);
 			if (rc <= 0) {
-				LogWarn(COMPONENT_CONFIG,
-					"Cannot set IPv4 default for %s to %s",
-					item->name, item->u.ipv6.def);
+				config_proc_error(blk_node, err_type,
+						  "Cannot set IPv4 default for %s to %s",
+						  item->name,
+						  item->u.ipv6.def);
 				errors++;
 			}
 			break;
@@ -721,9 +789,9 @@ static int do_block_init(struct config_item *params,
 			(void) item->u.proc.init(NULL, param_addr);
 			break;
 		default:
-			LogCrit(COMPONENT_CONFIG,
-				"Cannot set default for parameter %s, type(%d) yet",
-				item->name, item->type);
+			config_proc_error(blk_node, err_type,
+					  "Cannot set default for parameter %s, type(%d) yet",
+					  item->name, item->type);
 			errors++;
 			break;
 		}
@@ -802,9 +870,9 @@ static int do_block_load(struct config_node *blk,
 		if ((item->flags & CONFIG_MANDATORY) && (node == NULL)) {
 			err_type->missing = true;
 			errors++;
-			LogCrit(COMPONENT_CONFIG,
-				"Mandatory field, %s is missing from config\n",
-				item->name);
+			config_proc_error(blk, err_type,
+					  "Mandatory field, %s is missing from block (%s)",
+					  item->name, blk->u.nterm.name);
 			return errors;
 		}
 		while (node != NULL) {
@@ -812,11 +880,9 @@ static int do_block_load(struct config_node *blk,
 						     &node->node, item->name);
 			if (next_node != NULL &&
 			    (item->flags & CONFIG_UNIQUE)) {
-				LogMajor(COMPONENT_CONFIG,
-					 "At (%s:%d): Parameter %s set more than once",
-					 next_node->filename,
-					 next_node->linenumber,
-					 next_node->u.nterm.name);
+				config_proc_error(next_node, err_type,
+						  "Parameter %s set more than once",
+						  next_node->u.nterm.name);
 				err_type->unique = true;
 				errors++;
 				node = next_node;
@@ -837,7 +903,7 @@ static int do_block_load(struct config_node *blk,
 			case CONFIG_INT16:
 				if (convert_int(term_node, item->u.i16.minval,
 						item->u.i16.maxval,
-						&val))
+						&val, err_type))
 					*(int16_t *)param_addr = (int16_t)val;
 				else {
 					err_type->invalid = true;
@@ -848,7 +914,7 @@ static int do_block_load(struct config_node *blk,
 				if (convert_uint(term_node,
 						 item->u.ui16.minval,
 						 item->u.ui16.maxval,
-						 &uval))
+						 &uval, err_type))
 					*(uint16_t *)param_addr
 						= (uint16_t)uval;
 				else {
@@ -859,7 +925,7 @@ static int do_block_load(struct config_node *blk,
 			case CONFIG_INT32:
 				if (convert_int(term_node, item->u.i32.minval,
 						item->u.i32.maxval,
-						&val)) {
+						&val, err_type)) {
 					*(int32_t *)param_addr = (int32_t)val;
 					if (item->u.i32.set_off < UINT32_MAX) {
 						caddr_t *mask_addr;
@@ -878,7 +944,7 @@ static int do_block_load(struct config_node *blk,
 				if (convert_uint(term_node,
 						 item->u.ui32.minval,
 						 item->u.ui32.maxval,
-						 &uval)) {
+						 &uval, err_type)) {
 					if (item->flags & CONFIG_MODE)
 						uval = unix2fsal_mode(uval);
 					*(uint32_t *)param_addr
@@ -892,7 +958,7 @@ static int do_block_load(struct config_node *blk,
 				if (convert_int(term_node,
 						item->u.i64.minval,
 						item->u.i64.maxval,
-						&val))
+						&val, err_type))
 					*(int64_t *)param_addr = val;
 				else {
 					err_type->invalid = true;
@@ -903,7 +969,7 @@ static int do_block_load(struct config_node *blk,
 				if (convert_uint(term_node,
 						 item->u.ui64.minval,
 						 item->u.ui64.maxval,
-						 &uval))
+						 &uval, err_type))
 					*(uint64_t *)param_addr = uval;
 				else {
 					err_type->invalid = true;
@@ -911,7 +977,8 @@ static int do_block_load(struct config_node *blk,
 				}
 				break;
 			case CONFIG_FSID:
-				rc = convert_fsid(term_node, param_addr);
+				rc = convert_fsid(term_node, param_addr,
+						  err_type);
 				if (rc == 0) {
 					if (item->u.fsid.set_off < UINT32_MAX) {
 						caddr_t *mask_addr;
@@ -927,7 +994,8 @@ static int do_block_load(struct config_node *blk,
 				}
 				break;
 			case CONFIG_ANONID:
-				rc = convert_anonid(term_node, &uval);
+				rc = convert_anonid(term_node,
+						    &uval, err_type);
 				if (rc != 0) {
 					caddr_t *mask_addr;
 					mask_addr = (caddr_t *)
@@ -956,7 +1024,8 @@ static int do_block_load(struct config_node *blk,
 					gsh_strdup(term_node->u.term.varvalue);
 				break;
 			case CONFIG_TOKEN:
-				rc = convert_enum(term_node, item, &flags);
+				rc = convert_enum(term_node, item, &flags,
+						  err_type);
 				if (rc == 0)
 					*(uint32_t *)param_addr = flags;
 				else {
@@ -965,7 +1034,8 @@ static int do_block_load(struct config_node *blk,
 				}
 				break;
 			case CONFIG_BOOL:
-				if (convert_bool(term_node, &bval))
+				if (convert_bool(term_node, &bval,
+						 err_type))
 					*(bool *)param_addr = bval;
 				else {
 					err_type->invalid = true;
@@ -973,7 +1043,8 @@ static int do_block_load(struct config_node *blk,
 				}
 				break;
 			case CONFIG_BOOLBIT:
-				if (convert_bool(term_node, &bval)) {
+				if (convert_bool(term_node, &bval,
+					    err_type)) {
 					if (bval)
 						*(uint32_t *)param_addr
 							|= item->u.bit.bit;
@@ -998,7 +1069,8 @@ static int do_block_load(struct config_node *blk,
 				   (*(uint32_t *)param_addr & item->u.lst.mask))
 					*(uint32_t *)param_addr &=
 							~item->u.lst.mask;
-				rc = convert_list(node, item, &flags);
+				rc = convert_list(node, item, &flags,
+						  err_type);
 				if (rc == 0) {
 					*(uint32_t *)param_addr |= flags;
 					if (item->u.lst.set_off < UINT32_MAX) {
@@ -1026,7 +1098,8 @@ static int do_block_load(struct config_node *blk,
 				   (*(uint32_t *)param_addr & item->u.lst.mask))
 					*(uint32_t *)param_addr &=
 							~item->u.lst.mask;
-				rc = convert_enum(term_node, item, &flags);
+				rc = convert_enum(term_node, item, &flags,
+					err_type);
 				if (rc == 0) {
 					*(uint32_t *)param_addr |= flags;
 					if (item->u.lst.set_off < UINT32_MAX) {
@@ -1053,7 +1126,8 @@ static int do_block_load(struct config_node *blk,
 				   (*(uint32_t *)param_addr & item->u.lst.mask))
 					*(uint32_t *)param_addr &=
 							~item->u.lst.mask;
-				rc = convert_enum(term_node, item, &flags);
+				rc = convert_enum(term_node, item, &flags,
+						  err_type);
 				if (rc == 0) {
 					*(uint32_t *)param_addr |= flags;
 					if (item->u.lst.set_off < UINT32_MAX) {
@@ -1080,7 +1154,8 @@ static int do_block_load(struct config_node *blk,
 				sock = (struct sockaddr *)param_addr;
 
 				rc = convert_inet_addr(term_node, item,
-						       AF_INET, sock);
+						       AF_INET, sock,
+						       err_type);
 				if (rc != 0) {
 					err_type->invalid = true;
 					errors++;
@@ -1090,7 +1165,8 @@ static int do_block_load(struct config_node *blk,
 				sock = (struct sockaddr *)param_addr;
 
 				rc = convert_inet_addr(term_node, item,
-						       AF_INET6, sock);
+						       AF_INET6, sock,
+						       err_type);
 				if (rc != 0) {
 					err_type->invalid = true;
 					errors++;
@@ -1100,7 +1176,7 @@ static int do_block_load(struct config_node *blk,
 				if (convert_uint(term_node,
 						 item->u.ui16.minval,
 						 item->u.ui16.maxval,
-						 &uval))
+						 &uval, err_type))
 					*(uint16_t *)param_addr =
 						htons((uint16_t)uval);
 				else {
@@ -1121,8 +1197,8 @@ static int do_block_load(struct config_node *blk,
 					errors += rc;
 				break;
 			default:
-				LogCrit(COMPONENT_CONFIG,
-					"Cannot set value for type(%d) yet",
+				config_proc_error(term_node, err_type,
+						  "Cannot set value for type(%d) yet",
 					item->type);
 				break;
 			}
@@ -1140,11 +1216,9 @@ static int do_block_load(struct config_node *blk,
 		if (node->found)
 			node->found = false;
 		else {
-			LogMajor(COMPONENT_CONFIG,
-				 "At (%s:%d): Unknown parameter (%s)",
-				 node->filename,
-				 node->linenumber,
-				 node->u.nterm.name);
+			config_proc_error(node, err_type,
+					  "Unknown parameter (%s)",
+					  node->u.nterm.name);
 			err_type->bogus = true;
 			errors++;
 		}
@@ -1200,21 +1274,17 @@ static int proc_block(struct config_node *node,
 	assert(item->type == CONFIG_BLOCK);
 
 	if (node->type != TYPE_BLOCK) {
-		LogCrit(COMPONENT_CONFIG,
-			"At (%s:%d): %s is not a block!",
-			 node->filename,
-			 node->linenumber,
-			item->name);
+		config_proc_error(node, err_type,
+				  "%s is not a block!",
+				  item->name);
 		err_type->invalid = true;
 		return 1;
 	}
 	param_struct = item->u.blk.init(link_mem, NULL);
 	if (param_struct == NULL) {
-		LogCrit(COMPONENT_CONFIG,
-			"At (%s:%d): Could not init block for %s",
-			 node->filename,
-			 node->linenumber,
-			item->name);
+		config_proc_error(node, err_type,
+				  "Could not init block for %s",
+				  item->name);
 		err_type->init = true;
 		return 1;
 	}
@@ -1223,13 +1293,12 @@ static int proc_block(struct config_node *node,
 		     node->filename,
 		     node->linenumber,
 		     item->name);
-	errors = do_block_init(item->u.blk.params, param_struct);
+	errors = do_block_init(node, item->u.blk.params,
+			       param_struct, err_type);
 	if (errors != 0) {
-		LogCrit(COMPONENT_CONFIG,
-			"At (%s:%d): Could not initialize parameters for %s",
-			node->filename,
-			node->linenumber,
-			item->name);
+		config_proc_error(node, err_type,
+				  "Could not initialize parameters for %s",
+				  item->name);
 		err_type->init = true;
 		goto err_out;
 	}
@@ -1246,12 +1315,10 @@ static int proc_block(struct config_node *node,
 			   (item->flags & CONFIG_RELAX) ? true : false,
 			   param_struct, err_type);
 	if (errors > 0 && !config_error_is_harmless(err_type)) {
-		LogCrit(COMPONENT_CONFIG,
-			"At (%s:%d): %d errors while processing parameters for %s",
-			node->filename,
-			node->linenumber,
-			errors,
-			item->name);
+		config_proc_error(node, err_type,
+				  "%d errors while processing parameters for %s",
+				  errors,
+				  item->name);
 		goto err_out;
 	}
 	LogFullDebug(COMPONENT_CONFIG,
@@ -1261,12 +1328,10 @@ static int proc_block(struct config_node *node,
 		     item->name);
 	errors = item->u.blk.commit(node, link_mem, param_struct, err_type);
 	if (errors > 0 && !config_error_is_harmless(err_type)) {
-		LogCrit(COMPONENT_CONFIG,
-			"At (%s:%d): %d validation errors in block %s",
-			node->filename,
-			node->linenumber,
-			errors,
-			item->name);
+		config_proc_error(node, err_type,
+				  "%d validation errors in block %s",
+				  errors,
+				  item->name);
 		return errors;
 	}
 	if (item->u.blk.display != NULL)
@@ -1631,12 +1696,14 @@ static bool match_block(struct config_node *blk,
  * @param config    [IN] root of parse tree
  * @param expr_str  [IN] expression description of block
  * @param node_list [OUT] pointer to store node list
+ * @param err_type  [OUT] error processing
  *
  * @return 0 on success, errno for errors
  */
 
 int find_config_nodes(config_file_t config, char *expr_str,
-		     struct config_node_list **node_list)
+		      struct config_node_list **node_list,
+		      struct config_error_type *err_type)
 {
 	struct config_root *tree = (struct config_root *)config;
 	struct glist_head *ns;
@@ -1648,16 +1715,16 @@ int find_config_nodes(config_file_t config, char *expr_str,
 	int rc = EINVAL;
 	bool found = false;
 
-	ep = parse_expr(expr_str, &expr_head);
-	if (ep == NULL || *ep != '\0')
-		goto out;
 	if (tree->root.type != TYPE_ROOT) {
-		LogCrit(COMPONENT_CONFIG,
-			"Expected to start at parse tree root for (%s)",
-			expr_str);
+		config_proc_error(&tree->root, err_type,
+				  "Expected to start at parse tree root for (%s)",
+				  expr_str);
 		goto out;
 	}
 	top = &tree->root;
+	ep = parse_expr(expr_str, &expr_head);
+	if (ep == NULL || *ep != '\0')
+		goto out;
 	expr = expr_head;
 	*node_list = NULL;
 again:
@@ -1668,7 +1735,7 @@ again:
 		 * -- WAS
 		 */
 		if (ns == NULL) {
-			LogMajor(COMPONENT_CONFIG,
+			config_proc_error(top, err_type,
 				 "Missing sub_node for (%s)",
 				 expr_str);
 			break;
@@ -1727,26 +1794,25 @@ int load_config_from_node(void *tree_node,
 	char *blkname = conf_blk->blk_desc.name;
 	int rc;
 
-	clear_error_type(err_type);
 	if (node == NULL) {
-		LogMajor(COMPONENT_CONFIG,
-			 "Missing tree_node for (%s)",
-			 blkname);
+		config_proc_error(NULL, err_type,
+				  "Missing tree_node for (%s)",
+				  blkname);
 		err_type->empty = true;
 		return -1;
 	}
 	if (node->type == TYPE_BLOCK) {
 		if (strcasecmp(node->u.nterm.name, blkname) != 0) {
-			LogCrit(COMPONENT_CONFIG,
-				"Looking for block (%s), got (%s)",
-				blkname, node->u.nterm.name);
+			config_proc_error(node, err_type,
+					  "Looking for block (%s), got (%s)",
+					  blkname, node->u.nterm.name);
 			err_type->invalid = true;
 			return -1;
 		}
 	} else {
-		LogCrit(COMPONENT_CONFIG,
-			"Unrecognized parse tree node type for block (%s)",
-			blkname);
+		config_proc_error(node, err_type,
+				  "Unrecognized parse tree node type for block (%s)",
+				  blkname);
 		err_type->invalid = true;
 		return -1;
 	}
@@ -1755,20 +1821,9 @@ int load_config_from_node(void *tree_node,
 			param,
 			err_type);
 	if (rc != 0) {
-		char *file;
-		int lineno;
-
-		if (node->filename != NULL) {
-			file = node->filename;
-			lineno = node->linenumber;
-		} else {
-			file = "<unknown file>";
-			lineno = 0;
-		}			
-		LogMajor(COMPONENT_CONFIG,
-			 "At (%s:%d): %d errors found in configuration block %s",
-			 file, lineno,
-			 rc, blkname);
+		config_proc_error(node, err_type,
+				  "%d errors found in configuration block %s",
+				  rc, blkname);
 		return -1;
 	}
 	return 0;
@@ -1803,27 +1858,26 @@ int load_config_from_parse(config_file_t config,
 	int rc, cum_errs = 0;
 	void *blk_mem = NULL;
 
-	clear_error_type(err_type);
 	if (tree == NULL) {
-		LogWarn(COMPONENT_CONFIG,
-			"Missing parse tree root for (%s)",
-			blkname);
+		config_proc_error(NULL, err_type,
+				  "Missing parse tree root for (%s)",
+				  blkname);
 		err_type->empty = true;
 		return -1;
 	}
 	if (tree->root.type != TYPE_ROOT) {
-		LogCrit(COMPONENT_CONFIG,
-			"Expected to start at parse tree root for (%s)",
-			blkname);
+		config_proc_error(&tree->root, err_type,
+				  "Expected to start at parse tree root for (%s)",
+				  blkname);
 		err_type->internal = true;
 		return -1;
 	}
 	if (param != NULL) {
 		blk_mem = conf_blk->blk_desc.u.blk.init(NULL, param);
 		if (blk_mem == NULL) {
-			LogMajor(COMPONENT_CONFIG,
-				 "Top level block init failed for (%s)",
-				 blkname);
+			config_proc_error(&tree->root, err_type,
+					  "Top level block init failed for (%s)",
+					  blkname);
 			err_type->internal = true;
 			return -1;
 		}
@@ -1835,9 +1889,9 @@ int load_config_from_parse(config_file_t config,
 		 * -- WAS
 		 */
 		if (ns == NULL) {
-			LogMajor(COMPONENT_CONFIG,
-				 "Missing sub_node for (%s)",
-				 blkname);
+			config_proc_error(&tree->root, err_type,
+					  "Missing sub_node for (%s)",
+					  blkname);
 			node = NULL;
 			break;
 		}
@@ -1847,24 +1901,19 @@ int load_config_from_parse(config_file_t config,
 		    strcasecmp(blkname, node->u.nterm.name) == 0) {
 			if (found > 0 &&
 			    (conf_blk->blk_desc.flags & CONFIG_UNIQUE)) {
-				LogWarn(COMPONENT_CONFIG,
-					"At (%s:%d): Only one %s block allowed",
-					node->filename,
-					node->linenumber,
-					blkname);
+				config_proc_error(node, err_type,
+						  "Only one %s block allowed",
+						  blkname);
 			} else {
-				struct config_error_type blk_errs;
-
-				clear_error_type(&blk_errs);
 				rc = proc_block(node,
 						&conf_blk->blk_desc,
 						blk_mem,
-						&blk_errs);
+						err_type);
 				if (rc != 0)
 					cum_errs += rc;
-				if (config_error_is_harmless(&blk_errs))
+				if (config_error_is_harmless(err_type))
 					found++;
-				config_error_comb_errors(err_type, &blk_errs);
+				config_error_comb_errors(err_type, err_type);
 			}
 		}
 	}
@@ -1877,33 +1926,24 @@ int load_config_from_parse(config_file_t config,
 			param : conf_blk->blk_desc.u.blk.init((void *)~0UL,
 							      NULL);
 		assert(blk_mem != NULL);
-		LogEvent(COMPONENT_CONFIG,
-			 "Using defaults for %s", blkname);
-		rc = do_block_init(conf_blk->blk_desc.u.blk.params,
-				   blk_mem);
+		config_proc_error(&tree->root, err_type,
+				  "Using defaults for %s", blkname);
+		rc = do_block_init(&tree->root,
+				   conf_blk->blk_desc.u.blk.params,
+				   blk_mem, err_type);
 		if (rc != 0) {
-			LogCrit(COMPONENT_CONFIG,
-				"Could not initialize defaults for block %s",
-				blkname);
+			config_proc_error(&tree->root, err_type,
+					  "Could not initialize defaults for block %s",
+					  blkname);
 			err_type->init = true;
 			cum_errs += rc;
 		}
 	}
 	if (cum_errs != 0) {
-		char *file;
-		int lineno;
-		char *errstr = err_type_str(err_type);;
+		char *errstr = err_type_str(err_type);
 
-		if (node != NULL) {
-			file = node->filename;
-			lineno = node->linenumber;
-		} else {
-			file = "<unknown file>";
-			lineno = 0;
-		}			
-		LogMajor(COMPONENT_CONFIG,
-			 "At (%s:%d): %d %s errors found block %s",
-			 file, lineno,
+		config_proc_error(node, err_type,
+			 "%d %s errors found block %s",
 			 cum_errs,
 			 errstr != NULL ? errstr : "unknown",
 			 blkname);

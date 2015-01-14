@@ -393,12 +393,15 @@ int main(int argc, char *argv[])
 		LogFatal(COMPONENT_MAIN,
 			 "Could not start nfs daemon, pthread_sigmask failed");
 
+	/* Create a memstream for parser+processing error messages */
+	if (!init_error_type(&err_type))
+		goto fatal_die;
+
 	/* Parse the configuration file so we all know what is going on. */
 
 	if (config_path == NULL || config_path[0] == '\0') {
 		LogWarn(COMPONENT_INIT,
 			"No configuration file named.");
-		clear_error_type(&err_type);
 		config_struct = NULL;
 	} else
 		config_struct = config_ParseFile(config_path, &err_type);
@@ -406,13 +409,13 @@ int main(int argc, char *argv[])
 	if (!config_error_no_error(&err_type)) {
 		char *errstr = err_type_str(&err_type);
 
-		if (!config_error_is_harmless(&err_type))
-			LogFatal(COMPONENT_INIT,
+		if (!config_error_is_harmless(&err_type)) {
+			LogCrit(COMPONENT_INIT,
 				 "Error %s while parsing (%s)",
 				 errstr != NULL ? errstr : "unknown",
 				 config_path);
-			/* NOT REACHED */
-		else
+			goto fatal_die;
+		} else
 			LogWarn(COMPONENT_INIT,
 				"Error %s while parsing (%s)",
 				errstr != NULL ? errstr : "unknown",
@@ -421,9 +424,11 @@ int main(int argc, char *argv[])
 			gsh_free(errstr);
 	}
 
-	if (read_log_config(config_struct) < 0)
-		LogFatal(COMPONENT_INIT,
+	if (read_log_config(config_struct, &err_type) < 0) {
+		LogCrit(COMPONENT_INIT,
 			 "Error while parsing log configuration");
+		goto fatal_die;
+	}
 
 	/* We need all the fsal modules loaded so we can have
 	 * the list available at exports parsing time.
@@ -432,35 +437,42 @@ int main(int argc, char *argv[])
 
 	/* parse configuration file */
 
-	if (nfs_set_param_from_conf(config_struct, &my_nfs_start_info)) {
-		LogFatal(COMPONENT_INIT,
+	if (nfs_set_param_from_conf(config_struct,
+				    &my_nfs_start_info,
+				    &err_type)) {
+		LogCrit(COMPONENT_INIT,
 			 "Error setting parameters from configuration file.");
+		goto fatal_die;
 	}
 
 	/* initialize core subsystems and data structures */
-	if (init_server_pkgs() != 0)
-		LogFatal(COMPONENT_INIT,
-			 "Failed to initialize server packages");
-
+	if (init_server_pkgs() != 0) {
+		LogCrit(COMPONENT_INIT,
+			"Failed to initialize server packages");
+		goto fatal_die;
+	}
 	/* Load Data Server entries from parsed file
 	 * returns the number of DS entries.
 	 */
-	dsc = ReadDataServers(config_struct);
-	if (dsc < 0)
-		LogFatal(COMPONENT_INIT,
-			  "Error while parsing DS entries");
+	dsc = ReadDataServers(config_struct, &err_type);
+	if (dsc < 0) {
+		LogCrit(COMPONENT_INIT,
+			"Error while parsing DS entries");
+		goto fatal_die;
+	}
 
 	/* Load export entries from parsed file
 	 * returns the number of export entries.
 	 */
-	rc = ReadExports(config_struct);
-	if (rc < 0)
-		LogFatal(COMPONENT_INIT,
+	rc = ReadExports(config_struct, &err_type);
+	if (rc < 0) {
+		LogCrit(COMPONENT_INIT,
 			  "Error while parsing export entries");
-
+	}
 	if (rc == 0 && dsc == 0)
 		LogWarn(COMPONENT_INIT,
 			"No export entries found in configuration file !!!");
+	report_config_errors(&err_type, config_errs_to_log);
 
 	/* freeing syntax tree : */
 
@@ -471,4 +483,10 @@ int main(int argc, char *argv[])
 
 	return 0;
 
+fatal_die:
+	report_config_errors(&err_type, config_errs_to_log);
+	LogFatal(COMPONENT_INIT,
+		 "Fatal errors.  Server exiting...");
+	/* NOT REACHED */
+	return 2;
 }

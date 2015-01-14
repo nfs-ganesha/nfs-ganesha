@@ -99,6 +99,7 @@ fsal_status_t pxy_create_handle(struct fsal_export *exp_hdl,
 
 fsal_status_t pxy_create_export(struct fsal_module *fsal_hdl,
 				void *parse_node,
+				struct config_error_type *err_type,
 				const struct fsal_up_vector *up_ops);
 
 fsal_status_t pxy_get_dynamic_info(struct fsal_export *,

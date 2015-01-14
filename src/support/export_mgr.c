@@ -812,6 +812,18 @@ static struct gsh_export *lookup_export(DBusMessageIter *args, char **errormsg)
 	return export;
 }
 
+/**
+ * @brief Report processing errors to the DBUS client.
+ *
+ * For now, they just go to the log (as before).
+ */
+
+static void config_errs_to_dbus(char *err,
+				struct config_error_type *err_type)
+{
+	LogCrit(COMPONENT_EXPORT, "%s", err);
+}
+
 struct showexports_state {
 	DBusMessageIter export_iter;
 };
@@ -866,11 +878,16 @@ static bool gsh_export_addexport(DBusMessageIter *args,
 	LogInfo(COMPONENT_EXPORT, "Adding export from file: %s with %s",
 		file_path, export_expr);
 
+	/* Create a memstream for parser+processing error messages */
+	if (!init_error_type(&err_type))
+		goto out;
+
 	config_struct = config_ParseFile(file_path, &err_type);
 	if (!config_error_is_harmless(&err_type)) {
 		err_detail = err_type_str(&err_type);
 		LogCrit(COMPONENT_EXPORT,
 			"Error while parsing %s", file_path);
+		report_config_errors(&err_type, config_errs_to_dbus);
 		dbus_set_error(error, DBUS_ERROR_INVALID_FILE_CONTENT,
 			       "Error while parsing %s because of %s errors",
 			       file_path,
@@ -879,7 +896,8 @@ static bool gsh_export_addexport(DBusMessageIter *args,
 			goto out;
 	}
 
-	rc = find_config_nodes(config_struct, export_expr, &config_list);
+	rc = find_config_nodes(config_struct, export_expr,
+			       &config_list, &err_type);
 	if (rc != 0) {
 		LogCrit(COMPONENT_EXPORT,
 			"Error finding exports: %s because %s",
@@ -934,6 +952,7 @@ static bool gsh_export_addexport(DBusMessageIter *args,
 				       file_path);
 			status = false;
 		}
+		report_config_errors(&err_type, config_errs_to_dbus);
 		goto out;
 	} else {
 		err_detail = err_type_str(&err_type);
@@ -947,6 +966,8 @@ static bool gsh_export_addexport(DBusMessageIter *args,
 			       exp_cnt, file_path,
 			       err_detail != NULL ? err_detail : "unknown");
 	}
+	report_config_errors(&err_type, config_errs_to_dbus);
+
 out:
 	if (err_detail != NULL)
 		gsh_free(err_detail);

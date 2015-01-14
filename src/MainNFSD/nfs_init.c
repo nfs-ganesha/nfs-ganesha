@@ -225,14 +225,14 @@ void nfs_print_param_config()
  *
  * @param[in]  config_struct Parsed config file
  * @param[out] p_start_info  Startup parameters
+ * @param[out] err_type error reporting state
  *
  * @return -1 on failure.
  */
 int nfs_set_param_from_conf(config_file_t parse_tree,
-			    nfs_start_info_t *p_start_info)
+			    nfs_start_info_t *p_start_info,
+			    struct config_error_type *err_type)
 {
-	struct config_error_type err_type;
-
 	/*
 	 * Initialize exports and clients so config parsing can use them
 	 * early.
@@ -243,11 +243,11 @@ int nfs_set_param_from_conf(config_file_t parse_tree,
 
 	/* Core parameters */
 	(void) load_config_from_parse(parse_tree,
-				    &nfs_core,
-				    &nfs_param.core_param,
-				    true,
-				    &err_type);
-	if (!config_error_is_harmless(&err_type)) {
+				      &nfs_core,
+				      &nfs_param.core_param,
+				      true,
+				      err_type);
+	if (!config_error_is_harmless(err_type)) {
 		LogCrit(COMPONENT_INIT,
 			"Error while parsing core configuration");
 		return -1;
@@ -255,11 +255,11 @@ int nfs_set_param_from_conf(config_file_t parse_tree,
 
 	/* Worker paramters: ip/name hash table and expiration for each entry */
 	(void) load_config_from_parse(parse_tree,
-				    &nfs_ip_name,
-				    NULL,
-				    true,
-				    &err_type);
-	if (!config_error_is_harmless(&err_type)) {
+				      &nfs_ip_name,
+				      NULL,
+				      true,
+				      err_type);
+	if (!config_error_is_harmless(err_type)) {
 		LogCrit(COMPONENT_INIT,
 			"Error while parsing IP/name configuration");
 		return -1;
@@ -268,11 +268,11 @@ int nfs_set_param_from_conf(config_file_t parse_tree,
 #ifdef _HAVE_GSSAPI
 	/* NFS kerberos5 configuration */
 	(void) load_config_from_parse(parse_tree,
-				    &krb5_param,
-				    &nfs_param.krb5_param,
-				    true,
-				    &err_type);
-	if (!config_error_is_harmless(&err_type)) {
+				      &krb5_param,
+				      &nfs_param.krb5_param,
+				      true,
+				      err_type);
+	if (!config_error_is_harmless(err_type)) {
 		LogCrit(COMPONENT_INIT,
 			"Error while parsing NFS/KRB5 configuration for RPCSEC_GSS");
 		return -1;
@@ -281,11 +281,11 @@ int nfs_set_param_from_conf(config_file_t parse_tree,
 
 	/* NFSv4 specific configuration */
 	(void) load_config_from_parse(parse_tree,
-				    &version4_param,
-				    &nfs_param.nfsv4_param,
-				    true,
-				    &err_type);
-	if (!config_error_is_harmless(&err_type)) {
+				      &version4_param,
+				      &nfs_param.nfsv4_param,
+				      true,
+				      err_type);
+	if (!config_error_is_harmless(err_type)) {
 		LogCrit(COMPONENT_INIT,
 			"Error while parsing NFSv4 specific configuration");
 		return -1;
@@ -296,8 +296,8 @@ int nfs_set_param_from_conf(config_file_t parse_tree,
 				      &_9p_param_blk,
 				      NULL,
 				      true,
-				      &err_type);
-	if (!config_error_is_harmless(&err_type)) {
+				      err_type);
+	if (!config_error_is_harmless(err_type)) {
 		LogCrit(COMPONENT_INIT,
 			"Error while parsing 9P specific configuration");
 		return -1;
@@ -306,11 +306,11 @@ int nfs_set_param_from_conf(config_file_t parse_tree,
 
 	/* Cache inode client parameters */
 	(void) load_config_from_parse(parse_tree,
-				    &cache_inode_param_blk,
-				    NULL,
-				    true,
-				    &err_type);
-	if (!config_error_is_harmless(&err_type)) {
+				      &cache_inode_param_blk,
+				      NULL,
+				      true,
+				      err_type);
+	if (!config_error_is_harmless(err_type)) {
 		LogCrit(COMPONENT_INIT,
 			"Error while parsing 9P specific configuration");
 		return -1;

@@ -26,8 +26,10 @@
 
 #include "config.h"
 #include "analyse.h"
+#include "config_parsing.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdarg.h>
 #if HAVE_STRING_H
 #include <string.h>
 #endif
@@ -179,20 +181,25 @@ void print_parse_tree(FILE *output, struct config_root *tree)
 	return;
 }
 
+/**
+ * @brief Free a parse tree node.
+ *
+ * Note that we do not free either u.nterm.name or u.term.varvalue.
+ * this is because these are pointers into the token table which
+ * is freed elsewhere.
+ */
+
 static void free_node(struct config_node *node)
 {
 	if (node->type == TYPE_BLOCK || node->type == TYPE_STMT) {
 		struct config_node *sub_node;
 		struct glist_head *nsi, *nsn;
 
-		gsh_free(node->u.nterm.name);
 		glist_for_each_safe(nsi, nsn, &node->u.nterm.sub_nodes) {
 			sub_node = glist_entry(nsi, struct config_node, node);
 			glist_del(&sub_node->node);
 			free_node(sub_node);
 		}
-	} else { /* TYPE_TERM */
-		gsh_free(node->u.term.varvalue);
 	}
 	gsh_free(node);
 	return;
@@ -205,11 +212,12 @@ void free_parse_tree(struct config_root *tree)
 	struct config_node *node;
 	struct glist_head *nsi, *nsn;
 
-	glist_for_each_safe(nsi, nsn, &tree->root.node) {
+	glist_for_each_safe(nsi, nsn, &tree->root.u.nterm.sub_nodes) {
 		node = glist_entry(nsi, struct config_node, node);
 		glist_del(&node->node);
 		free_node(node);
 	}
+	gsh_free(tree->root.filename);
 	if(tree->conf_dir != NULL)
 		gsh_free(tree->conf_dir);
 	file = tree->files;
@@ -228,3 +236,12 @@ void free_parse_tree(struct config_root *tree)
 	gsh_free(tree);
 	return;
 }
+
+void config_error(FILE *fp, const char *filename, int linenum,
+			 char *fmt, va_list args)
+{
+	fprintf(fp, "Config File (%s:%d): ", filename, linenum);
+	vfprintf(fp, fmt, args);
+	fputc('\f', fp); /* form feed (remember those?) used as msg sep */
+}
+

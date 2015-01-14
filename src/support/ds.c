@@ -454,17 +454,17 @@ static struct config_block pds_block = {
  *         otherwise, the number of DS blocks.
  */
 
-int ReadDataServers(config_file_t in_config)
+int ReadDataServers(config_file_t in_config,
+		    struct config_error_type *err_type)
 {
-	struct config_error_type err_type;
 	int rc;
 
 	rc = load_config_from_parse(in_config,
 				    &pds_block,
 				    NULL,
 				    false,
-				    &err_type);
-	if (!config_error_is_harmless(&err_type))
+				    err_type);
+	if (!config_error_is_harmless(err_type))
 		return -1;
 
 	return rc;

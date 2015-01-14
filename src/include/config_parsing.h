@@ -92,6 +92,9 @@ struct config_error_type {
 	bool empty:1;		/*< block is empty */
 	bool internal:1;        /*< internal error */
 	bool bogus:1;		/*< bogus (deprecated?) param */
+	char *diag_buf;		/*< buffer for scan+parse+processing msgs */
+	size_t diag_buf_size;	/*< size of diag buffer used by memstream */
+	FILE *fp;		/*< FILE * for memstream */
 };
 
 /** @brief Error detail decoders
@@ -149,15 +152,6 @@ static inline void config_error_comb_errors(struct config_error_type *err_type,
 					    struct config_error_type *more_errs)
 {
 	*(uint16_t *)err_type |= *(uint16_t *)more_errs;
-}
-
-/**
- * @brief Clear the error types
- */
-
-static inline void clear_error_type(struct config_error_type *err_type)
-{
-	memset(err_type, 0, sizeof(struct config_error_type));
 }
 
 struct config_block;
@@ -867,7 +861,8 @@ struct config_node_list {
 
 /* find a node in the parse tree using expression */
 int find_config_nodes(config_file_t config, char *expr,
-		     struct config_node_list **node_list);
+		     struct config_node_list **node_list,
+		      struct config_error_type *err_type);
 
 /* fill configuration structure from parse tree */
 int load_config_from_node(void *tree_node,
@@ -885,6 +880,16 @@ int load_config_from_parse(config_file_t config,
 
 /* translate err_type values to log/dbus error string*/
 char *err_type_str(struct config_error_type *err_type);
+bool init_error_type(struct config_error_type *err_type);
+void config_errs_to_log(char *err,
+			struct config_error_type *err_type);
+void config_proc_error(void *cnode,
+		       struct config_error_type *err_type,
+		       char *format, ...);
+void report_config_errors(struct config_error_type *err_type,
+			  void (*logger)(char *msg,
+					  struct config_error_type *err_type));
+
 
 /**
  * @brief NOOP config initializer and commit functions.

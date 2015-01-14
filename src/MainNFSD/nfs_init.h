@@ -52,7 +52,8 @@ void nfs_prereq_init(char *program_name, char *host_name, int debug_level,
  * Load parameters from config file.
  */
 int nfs_set_param_from_conf(config_file_t config_struct,
-			    nfs_start_info_t *p_start_info);
+			    nfs_start_info_t *p_start_info,
+			    struct config_error_type *err_type);
 
 /**
  * Initialization that needs config file parse but must be done
