@@ -92,8 +92,10 @@ static nfsstat4 acquire_layout_state(compound_data_t *data,
 	state_status = get_clientid_owner(data->session->clientid,
 					  &clientid_owner);
 
-	if (state_status != STATE_SUCCESS)
+	if (state_status != STATE_SUCCESS) {
 		nfs_status = nfs4_Errno_state(state_status);
+		goto out;
+	}
 
 	/* Retrieve state corresponding to supplied ID, inspect it
 	 * and, if necessary, create a new layout state
