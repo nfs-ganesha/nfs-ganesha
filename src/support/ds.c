@@ -273,8 +273,10 @@ static int fsal_commit(void *node, void *link_mem, void *self_struct,
 		       struct config_error_type *err_type)
 {
 	struct fsal_args *fp = self_struct;
+	struct fsal_module **pds_fsal = link_mem;
+	struct fsal_pnfs_ds *pds =
+		container_of(pds_fsal, struct fsal_pnfs_ds, fsal);
 	struct fsal_module *fsal;
-	struct fsal_pnfs_ds *pds;
 	struct root_op_context root_op_context;
 	fsal_status_t status;
 	int errcnt;
@@ -295,6 +297,10 @@ static int fsal_commit(void *node, void *link_mem, void *self_struct,
 		err_type->init = true;
 		errcnt++;
 	}
+
+	LogEvent(COMPONENT_CONFIG,
+		 "DS %d fsal_commit at FSAL (%s) with path (%s)",
+		 pds->id_servers, pds->fsal->name, pds->fsal->path);
 
 err:
 	release_root_op_context();
@@ -398,7 +404,7 @@ static struct config_item pds_items[] = {
 		       fsal_pnfs_ds, id_servers),
 	CONF_RELAX_BLOCK("FSAL", fsal_params,
 			 fsal_init, fsal_commit,
-			 fsal_pnfs_ds, server), /* ??? placeholder */
+			 fsal_pnfs_ds, fsal),
 	CONFIG_EOL
 };
 
