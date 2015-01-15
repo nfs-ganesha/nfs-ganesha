@@ -2565,7 +2565,7 @@ void reread_log_config()
 		LogCrit(COMPONENT_CONFIG,
 			"Error while parsing new configuration file %s",
 			config_path);
-		report_config_errors(&err_type, config_errs_to_log);
+		report_config_errors(&err_type, NULL, config_errs_to_log);
 		return;
 	}
 
@@ -2574,6 +2574,6 @@ void reread_log_config()
 	if (status < 0)
 		LogCrit(COMPONENT_CONFIG, "Error while parsing LOG entries");
 
-	report_config_errors(&err_type, config_errs_to_log);
+	report_config_errors(&err_type, NULL, config_errs_to_log);
 	config_Free(config_struct);
 }

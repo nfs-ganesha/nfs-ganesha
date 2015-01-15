@@ -472,7 +472,7 @@ int main(int argc, char *argv[])
 	if (rc == 0 && dsc == 0)
 		LogWarn(COMPONENT_INIT,
 			"No export entries found in configuration file !!!");
-	report_config_errors(&err_type, config_errs_to_log);
+	report_config_errors(&err_type, NULL, config_errs_to_log);
 
 	/* freeing syntax tree : */
 
@@ -484,7 +484,7 @@ int main(int argc, char *argv[])
 	return 0;
 
 fatal_die:
-	report_config_errors(&err_type, config_errs_to_log);
+	report_config_errors(&err_type, NULL, config_errs_to_log);
 	LogFatal(COMPONENT_INIT,
 		 "Fatal errors.  Server exiting...");
 	/* NOT REACHED */

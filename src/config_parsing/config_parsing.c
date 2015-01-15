@@ -200,7 +200,7 @@ void config_proc_error(void *cnode,
 		     format, arguments);
 	va_end(arguments);
 }
-void config_errs_to_log(char *err,
+void config_errs_to_log(char *err, void *dest,
 			struct config_error_type *err_type)
 {
 	log_levels_t log_level;
@@ -217,8 +217,8 @@ void config_errs_to_log(char *err,
 				  log_level, "%s", err);
 }
 
-void report_config_errors(struct config_error_type *err_type,
-			  void (*logger)(char *msg,
+void report_config_errors(struct config_error_type *err_type, void *dest,
+			  void (*logger)(char *msg, void *dest,
 					 struct config_error_type *err_type))
 {
 	char *msgp, *cp;
@@ -234,10 +234,10 @@ void report_config_errors(struct config_error_type *err_type,
 		cp = index(msgp, '\f');
 		if (cp != NULL) {
 			*cp++ = '\0';
-			logger(msgp, err_type);
+			logger(msgp, dest, err_type);
 			msgp = cp;
 		} else {
-			logger(msgp, err_type);
+			logger(msgp, dest, err_type);
 			break;
 		}
 	}
