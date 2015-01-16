@@ -991,6 +991,23 @@ void dec_state_owner_ref(state_owner_t *owner)
 		return;
 	}
 
+	/*
+	 * NFSv4 Open Owner is cached beyond CLOSE op for lease period
+	 * so that it can be used if the client re-opens the file thus
+	 * avoiding the need to confirm the OPEN. If not re-used, these
+	 * objects will later be cleaned up by the reaper thread.
+	 */
+	if ((owner->so_type == STATE_OPEN_OWNER_NFSV4) &&
+	    (atomic_fetch_time_t(&owner->so_owner.so_nfs4_owner.
+				 last_close_time) == 0)) {
+		atomic_store_time_t(&owner->so_owner.so_nfs4_owner.
+				    last_close_time, time(NULL));
+		LogFullDebug(COMPONENT_STATE,
+			     "Cached open owner {%s}",
+			     str);
+		return;
+	}
+
 	ht_owner = get_state_owner_hash_table(owner);
 
 	if (ht_owner == NULL) {
@@ -1124,6 +1141,8 @@ state_owner_t *get_state_owner(care_t care, state_owner_t *key,
 		 * a race occurs.
 		 */
 		inc_state_owner_ref(owner);
+		atomic_store_time_t(&owner->so_owner.so_nfs4_owner.
+				    last_close_time, 0);
 
 		hashtable_releaselatched(ht_owner, &latch);
 
