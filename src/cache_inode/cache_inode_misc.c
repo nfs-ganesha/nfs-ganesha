@@ -278,8 +278,6 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 	status = cache_inode_lru_get(&nentry);
 
 	if (nentry == NULL) {
-		/* Release the subtree hash table lock */
-		cih_latch_rele(&latch);
 		LogCrit(COMPONENT_CACHE_INODE, "cache_inode_lru_get failed");
 		status = CACHE_INODE_MALLOC_ERROR;
 		goto out;
