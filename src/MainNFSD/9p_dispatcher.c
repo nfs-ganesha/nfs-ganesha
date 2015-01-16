@@ -129,6 +129,7 @@ void *_9p_socket_thread(void *Arg)
 	uint32_t msglen;
 
 	struct _9p_conn _9p_conn;
+	socklen_t addrpeerlen;
 
 	int readlen = 0;
 	int total_readlen = 0;
@@ -157,9 +158,9 @@ void *_9p_socket_thread(void *Arg)
 	if (gettimeofday(&_9p_conn.birth, NULL) == -1)
 		LogFatal(COMPONENT_9P, "Cannot get connection's time of birth");
 
-	_9p_conn.addrpeerlen = sizeof(_9p_conn.addrpeer);
+	addrpeerlen = sizeof(_9p_conn.addrpeer);
 	rc = getpeername(tcp_sock, (struct sockaddr *)&_9p_conn.addrpeer,
-			 &_9p_conn.addrpeerlen);
+			 &addrpeerlen);
 	if (rc == -1) {
 		LogMajor(COMPONENT_9P,
 			 "Cannot get peername to tcp socket for 9p, error %d (%s)",
