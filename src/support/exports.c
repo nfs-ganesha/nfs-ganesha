@@ -991,10 +991,10 @@ struct config_item_list deleg_types[] =  {
 	CONF_ITEM_LIST_BITS_SET("Transports",				\
 		EXPORT_OPTION_TRANSPORTS, EXPORT_OPTION_TRANSPORTS,	\
 		transports, _struct_, _perms_.options, _perms_.set),	\
-	CONF_ITEM_ANONID("Anonymous_uid",				\
+	CONF_ITEM_I32_SET("Anonymous_uid", INT32_MIN, INT32_MAX,	\
 		ANON_UID, _struct_, _perms_.anonymous_uid,		\
 		EXPORT_OPTION_ANON_UID_SET, _perms_.set),		\
-	CONF_ITEM_ANONID("Anonymous_gid",				\
+	CONF_ITEM_I32_SET("Anonymous_gid", INT32_MIN, INT32_MAX,	\
 		ANON_GID, _struct_, _perms_.anonymous_gid,		\
 		EXPORT_OPTION_ANON_GID_SET, _perms_.set),		\
 	CONF_ITEM_LIST_BITS_SET("SecType",				\

@@ -52,7 +52,10 @@ enum  term_type {
 	TERM_DQUOTE,
 	TERM_SQUOTE,
 	TERM_TRUE,
-	TERM_FALSE
+	TERM_FALSE,
+	TERM_DECNUM,
+	TERM_HEXNUM,
+	TERM_OCTNUM
 };
 
 struct config_node {
@@ -64,6 +67,7 @@ struct config_node {
 	union {			/* sub_nodes are always struct config_node */
 		struct {		/* TYPE_TERM */
 			enum term_type type;
+			char *op_code;
 			char *varvalue;
 		} term;
 		struct {		/* TYPE_BLOCK | TYPE_STMT */
@@ -72,14 +76,6 @@ struct config_node {
 			struct glist_head sub_nodes;
 		} nterm;
 	}u;
-};
-
-/* Array of structs in analyse.c for translating enum term_type
- */
-
-struct config_term_type {
-	const char *name;
-	const char *desc;
 };
 
 /*
@@ -147,6 +143,9 @@ void ganeshun_yy_cleanup_parser(struct parser_state *st);
 
 void config_error(FILE *fp, const char *filename, int linenum,
 		  char *format, va_list args);
+
+const char *config_term_name(enum term_type type);
+const char *config_term_desc(enum term_type type);
 
 /**
  *  Displays the content of parse tree.

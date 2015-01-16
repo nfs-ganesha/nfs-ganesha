@@ -103,15 +103,31 @@ char *save_token(char *token, bool esc, struct parser_state *st)
 	return new_tok->token;
 }
 
-struct config_term_type config_term_type[] = {
+struct {
+	const char *name;
+	const char *desc;
+} config_term_type[] = {
 	[TERM_TOKEN]  = {"TOKEN", "option name or number"},
 	[TERM_PATH]   = {"PATH", "file path name"},
 	[TERM_STRING] = {"STRING", "simple string"},
-	[TERM_DQUOTE] = {"STRING", "double quoted string"},
-	[TERM_SQUOTE] = {"STRING", "single quoted string"},
+	[TERM_DQUOTE] = {"DQUOTE", "double quoted string"},
+	[TERM_SQUOTE] = {"SQUOTE", "single quoted string"},
 	[TERM_TRUE]   = {"TRUE", "boolean TRUE"},
-	[TERM_FALSE]  = {"FALSE", "boolean FALSE"}
+	[TERM_FALSE]  = {"FALSE", "boolean FALSE"},
+	[TERM_DECNUM] = {"DECNUM", "decimal number"},
+	[TERM_HEXNUM] = {"HEXNUM", "hexadecimal number"},
+	[TERM_OCTNUM] = {"OCTNUM", "octal number"}
 };
+
+const char *config_term_name(enum term_type type)
+{
+	return config_term_type[(int)type].name;
+}
+
+const char *config_term_desc(enum term_type type)
+{
+	return config_term_type[(int)type].desc;
+}
 
 /**
  *  Displays the content of a list of blocks.
@@ -143,10 +159,12 @@ static void print_node(FILE *output,
 			node->u.nterm.name);
 	} else {
 		/* a statement value */
-		fprintf(output, "%*s(%s)'%s'\n", indent, " ",
+		fprintf(output, "%*s(%s)'%s' '%s'\n", indent, " ",
 			(node->u.term.type != 0
 			 ? config_term_type[node->u.term.type].name
 			 : "unknown"),
+			(node->u.term.op_code != NULL
+			 ? node->u.term.op_code : " "),
 			node->u.term.varvalue);
 	}
 }

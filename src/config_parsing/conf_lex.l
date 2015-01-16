@@ -67,6 +67,9 @@ COMMA        ","
 SEMI         ";"
 LCURLY       "\{"
 RCURLY       "\}"
+MINUS        "\-"
+TWIDDLE      "\~"
+
 SQUOTE       \'[^\']*\'
 DQUOTE       \"(\\.|[^\"])*\"
 YES          [Yy][Ee][Ss]
@@ -75,11 +78,14 @@ ON           [Oo][Nn]
 NO           [Nn][Oo]
 FALSE        [Ff][Aa][Ll][Ss][Ee]
 OFF          [Oo][Ff][Ff]
+OCTNUM       0[1-7][0-7]*
+HEXNUM       0[xX][0-9a-fA-F]+
+DECNUM       [1-9][0-9]*
 
 INCLPATH     \/?([a-zA-Z0-9\-\.\_])+(\/[a-zA-Z0-9\-\.\_]+)*
 PATHNAME     (\/[a-zA-Z0-9\-\.\_]+)
 LONGPATH     (\/?[a-zA-Z0-9\-\.\_]+(\/[a-zA-Z0-9\-\.\_]+)+)
-TOKEN_CHARS   [a-zA-Z0-9\._\-]+
+TOKEN_CHARS   [a-zA-Z0-9\._][a-zA-Z0-9\._\-]*
 COMMENTEXT	 #.*$
 STRING_CHAR       [^\n]
 ID_CHARS [a-zA-Z_][a-zA-Z0-9_\-]*
@@ -214,6 +220,31 @@ ID_CHARS [a-zA-Z_][a-zA-Z0-9_\-]*
 	DEBUG_LEX("boolean FALSE:%s", yytext);
 	yylval->token = save_token(yytext, false, stp);
 	return TOK_FALSE;
+}
+
+<TERM>{MINUS}|{TWIDDLE} { /* an arithmetic op */
+	DEBUG_LEX(" arith op:%s", yytext);
+	yylval->token = save_token(yytext, false, stp);
+	return TOK_ARITH_OP;
+}
+
+
+<TERM>{OCTNUM}  { /* an octal number */
+	DEBUG_LEX(" octal number:%s", yytext);
+	yylval->token = save_token(yytext, false, stp);
+	return TOK_OCTNUM;
+}
+
+<TERM>{HEXNUM}  { /* a hexidecimal number */
+	DEBUG_LEX(" hex number:%s", yytext);
+	yylval->token = save_token(yytext, false, stp);
+	return TOK_HEXNUM;
+}
+
+<TERM>{DECNUM}  { /* a decimal number */
+	DEBUG_LEX(" dec number:%s", yytext);
+	yylval->token = save_token(yytext, false, stp);
+	return TOK_DECNUM;
 }
 
    /* Last resort terminal, gobbles anything other than white and ";" */

@@ -94,7 +94,8 @@ struct config_node *config_stmt(char *varname,
 				 YYLTYPE *yylloc_param,
 				struct parser_state *st);
 
-struct config_node *config_term(char *varval,
+struct config_node *config_term(char *opcode,
+				char *varval,
 				enum term_type type,
 				 YYLTYPE *yylloc_param,
 				struct parser_state *st);
@@ -115,6 +116,10 @@ struct config_node *config_term(char *varval,
 %token <token> TOK_PATH
 %token <token> TOK_TRUE
 %token <token> TOK_FALSE
+%token <token> TOK_DECNUM
+%token <token> TOK_HEXNUM
+%token <token> TOK_OCTNUM
+%token <token> TOK_ARITH_OP
 
 %type <node> deflist
 %type <node> definition
@@ -212,31 +217,55 @@ expression: /* empty */ {
 }
 | TOK_PATH
 {
-  $$ = config_term($1, TERM_PATH, &@$, st);
+  $$ = config_term(NULL, $1, TERM_PATH, &@$, st);
 }
 | TOKEN
 {
-  $$ = config_term($1, TERM_TOKEN, &@$, st);
+  $$ = config_term(NULL, $1, TERM_TOKEN, &@$, st);
 }
 | STRING
 {
-  $$ = config_term($1, TERM_STRING, &@$, st);
+  $$ = config_term(NULL, $1, TERM_STRING, &@$, st);
 }
 | DQUOTE
 {
-  $$ = config_term($1, TERM_DQUOTE, &@$, st);
+  $$ = config_term(NULL, $1, TERM_DQUOTE, &@$, st);
 }
 | SQUOTE
 {
-  $$ = config_term($1, TERM_SQUOTE, &@$, st);
+  $$ = config_term(NULL, $1, TERM_SQUOTE, &@$, st);
 }
 | TOK_TRUE
 {
-  $$ = config_term($1, TERM_TRUE, &@$, st);
+  $$ = config_term(NULL, $1, TERM_TRUE, &@$, st);
 }
 | TOK_FALSE
 {
-  $$ = config_term($1, TERM_FALSE, &@$, st);
+  $$ = config_term(NULL, $1, TERM_FALSE, &@$, st);
+}
+| TOK_OCTNUM
+{
+  $$ = config_term(NULL, $1, TERM_OCTNUM, &@$, st);
+}
+| TOK_HEXNUM
+{
+  $$ = config_term(NULL, $1, TERM_HEXNUM, &@$, st);
+}
+| TOK_DECNUM
+{
+  $$ = config_term(NULL, $1, TERM_DECNUM, &@$, st);
+}
+| TOK_ARITH_OP TOK_OCTNUM
+{
+  $$ = config_term($1, $2, TERM_OCTNUM, &@$, st);
+}
+| TOK_ARITH_OP TOK_HEXNUM
+{
+  $$ = config_term($1, $2, TERM_HEXNUM, &@$, st);
+}
+| TOK_ARITH_OP TOK_DECNUM
+{
+  $$ = config_term($1, $2, TERM_DECNUM, &@$, st);
 }
 ;
 
@@ -379,7 +408,8 @@ struct config_node *link_sibling(struct config_node *first,
  *  Create a term (value)
  */
 
-struct config_node *config_term(char *varval,
+struct config_node *config_term(char *opcode,
+				char *varval,
 				enum term_type type,
 				YYLTYPE *yylloc_param,
 				struct parser_state *st)
@@ -402,6 +432,7 @@ struct config_node *config_term(char *varval,
 	node->linenumber = yylloc_param->first_line;
 	node->type = TYPE_TERM;
 	node->u.term.type = type;
+	node->u.term.op_code = opcode;
 	node->u.term.varvalue = varval;
 	return node;
 }
