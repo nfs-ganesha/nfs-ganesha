@@ -605,8 +605,10 @@ static inline struct gsh_export *get_state_export_ref(state_t *state)
 	pthread_mutex_lock(&state->state_mutex);
 
 	if (state->state_export != NULL &&
-	    !get_gsh_export_ref(state->state_export, false))
+	    export_ready(state->state_export)) {
+		get_gsh_export_ref(state->state_export);
 		export = state->state_export;
+	}
 
 	pthread_mutex_unlock(&state->state_mutex);
 

@@ -137,7 +137,7 @@ struct gsh_export *export_take_unexport_work(void)
 
 	if (export != NULL) {
 		glist_del(&export->exp_work);
-		(void) get_gsh_export_ref(export, true);
+		get_gsh_export_ref(export);
 	}
 
 	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
@@ -215,12 +215,23 @@ static int export_id_cmpf(const struct avltree_node *lhs,
 struct gsh_export *alloc_export(void)
 {
 	struct export_stats *export_st;
+	struct gsh_export *export;
 
 	export_st = gsh_calloc(sizeof(struct export_stats), 1);
 	if (export_st == NULL)
 		return NULL;
 
-	return &export_st->export;
+	export = &export_st->export;
+
+	glist_init(&export->exp_state_list);
+	glist_init(&export->exp_lock_list);
+	glist_init(&export->exp_nlm_share_list);
+	glist_init(&export->mounted_exports_list);
+	glist_init(&export->clients);
+
+	assert(pthread_rwlock_init(&export->lock, NULL) == 0);
+
+	return export;
 }
 
 /**
@@ -236,9 +247,13 @@ void free_export(struct gsh_export *export)
 
 	if (!export->refcnt)
 		return;
+
+	/* free resources */
 	free_export_resources(export);
 	export_st = container_of(export, struct export_stats, export);
+	server_stats_free(&export_st->st);
 	gsh_free(export_st);
+	assert(pthread_rwlock_destroy(&export->lock) == 0);
 }
 
 
@@ -264,18 +279,19 @@ bool insert_gsh_export(struct gsh_export *export)
 	PTHREAD_RWLOCK_wrlock(&export_by_id.lock);
 	node = avltree_insert(&export->node_k, &export_by_id.t);
 	if (node) {
+		/* somebody beat us to it */
 		PTHREAD_RWLOCK_unlock(&export_by_id.lock);
-		return false;	/* somebody beat us to it */
+		return false;
 	}
-	pthread_rwlock_init(&export->lock, NULL);
 	/* update cache */
 	cache_slot = (void **)
 		&(export_by_id.cache[eid_cache_offsetof(&export_by_id,
 							export->export_id)]);
 	atomic_store_voidptr(cache_slot, &export->node_k);
 	glist_add_tail(&exportlist, &export->exp_list);
-	(void) get_gsh_export_ref(export, true);
+	get_gsh_export_ref(export);
 	glist_init(&export->entry_list);
+	atomic_store_uint32_t(&export->exp_state, EXPORT_READY);
 	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
 	return true;
 }
@@ -311,12 +327,9 @@ struct gsh_export *get_gsh_export(uint16_t export_id)
 			LogDebug(COMPONENT_HASHTABLE_CACHE,
 				 "export_mgr cache hit slot %d",
 				 eid_cache_offsetof(&export_by_id, export_id));
-			exp =
-			    avltree_container_of(node, struct gsh_export,
-						 node_k);
-			if (atomic_fetch_uint32_t(&exp->exp_state) ==
-			    EXPORT_READY)
-				goto out;
+			exp = avltree_container_of(node, struct gsh_export,
+						   node_k);
+			goto out;
 		}
 	}
 
@@ -324,21 +337,15 @@ struct gsh_export *get_gsh_export(uint16_t export_id)
 	node = avltree_lookup(&v.node_k, &export_by_id.t);
 	if (node) {
 		exp = avltree_container_of(node, struct gsh_export, node_k);
-		if (atomic_fetch_uint32_t(&exp->exp_state) == EXPORT_READY) {
-			PTHREAD_RWLOCK_unlock(&export_by_id.lock);
-			return NULL;
-		}
 		/* update cache */
 		atomic_store_voidptr(cache_slot, node);
-		goto out;
 	} else {
 		PTHREAD_RWLOCK_unlock(&export_by_id.lock);
 		return NULL;
 	}
 
  out:
-	if (!get_gsh_export_ref(exp, false))
-		exp = NULL;
+	get_gsh_export_ref(exp);
 	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
 	return exp;
 }
@@ -372,9 +379,6 @@ struct gsh_export *get_gsh_export_by_path_locked(char *path,
 
 	glist_for_each(glist, &exportlist) {
 		export = glist_entry(glist, struct gsh_export, exp_list);
-
-		if (atomic_fetch_uint32_t(&export->exp_state) == EXPORT_READY)
-			continue;
 
 		len_export = strlen(export->fullpath);
 
@@ -417,8 +421,8 @@ struct gsh_export *get_gsh_export_by_path_locked(char *path,
 		}
 	}
 
-	if (ret_exp == NULL || !get_gsh_export_ref(ret_exp, false))
-		ret_exp = NULL;
+	if (ret_exp != NULL)
+		get_gsh_export_ref(ret_exp);
 
 	return ret_exp;
 }
@@ -479,9 +483,6 @@ struct gsh_export *get_gsh_export_by_pseudo_locked(char *path,
 	glist_for_each(glist, &exportlist) {
 		export = glist_entry(glist, struct gsh_export, exp_list);
 
-		if (atomic_fetch_uint32_t(&export->exp_state) != EXPORT_READY)
-			continue;
-
 		if (export->pseudopath == NULL)
 			continue;
 
@@ -532,8 +533,8 @@ struct gsh_export *get_gsh_export_by_pseudo_locked(char *path,
 		}
 	}
 
-	if (ret_exp == NULL || !get_gsh_export_ref(ret_exp, false))
-		ret_exp = NULL;
+	if (ret_exp != NULL)
+		get_gsh_export_ref(ret_exp);
 
 	return ret_exp;
 }
@@ -580,8 +581,7 @@ struct gsh_export *get_gsh_export_by_tag(char *tag)
 	PTHREAD_RWLOCK_rdlock(&export_by_id.lock);
 	glist_for_each(glist, &exportlist) {
 		export = glist_entry(glist, struct gsh_export, exp_list);
-		if (atomic_fetch_uint32_t(&export->exp_state) == EXPORT_READY)
-			continue;
+
 		if (export->FS_tag != NULL &&
 		    !strcmp(export->FS_tag, tag))
 			goto out;
@@ -590,8 +590,7 @@ struct gsh_export *get_gsh_export_by_tag(char *tag)
 	return NULL;
 
  out:
-	if (!get_gsh_export_ref(export, false))
-		export = NULL;
+	get_gsh_export_ref(export);
 	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
 	return export;
 }
@@ -624,7 +623,6 @@ bool mount_gsh_export(struct gsh_export *exp)
 
 void put_gsh_export(struct gsh_export *export)
 {
-	struct export_stats *export_st;
 	int64_t refcount = atomic_dec_int64_t(&export->refcnt);
 
 	if (refcount != 0) {
@@ -634,12 +632,7 @@ void put_gsh_export(struct gsh_export *export)
 
 	/* Releasing last reference */
 
-	/* free resources */
-	free_export_resources(export);
-	pthread_rwlock_destroy(&export->lock);
-	export_st = container_of(export, struct export_stats, export);
-	server_stats_free(&export_st->st);
-	gsh_free(export_st);
+	free_export(export);
 }
 
 /**
@@ -661,8 +654,7 @@ void remove_gsh_export(uint16_t export_id)
 	PTHREAD_RWLOCK_wrlock(&export_by_id.lock);
 	node = avltree_lookup(&v.node_k, &export_by_id.t);
 	if (node) {
-		export =
-		    avltree_container_of(node, struct gsh_export, node_k);
+		export = avltree_container_of(node, struct gsh_export, node_k);
 
 		/* Remove the export from the AVL tree */
 		cache_slot = (void **)
@@ -675,17 +667,17 @@ void remove_gsh_export(uint16_t export_id)
 
 		/* Remove the export from the export list */
 		glist_del(&export->exp_list);
+
+		/* Mark the export as stale so no new references will be
+		 * granted.
+		 */
+		atomic_store_uint32_t(&export->exp_state, EXPORT_STALE);
 	}
 
 	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
 
 	if (export != NULL) {
-		/* Mark the export as stale so no new references will be
-		 * granted.
-		 */
-		set_gsh_export_state(export, EXPORT_STALE);
-
-		/* Release table reference to the export.
+		/* Release sentinel reference to the export.
 		 * Release of resources will occur on last reference.
 		 * Which may or may not be from this call.
 		 */

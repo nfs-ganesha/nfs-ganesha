@@ -88,9 +88,9 @@ int nlm4_Granted_Res(nfs_arg_t *args,
 	 * We take an export reference even if the export is stale because
 	 * we want to properly clean up the cookie_entry.
 	 */
-	(void) get_gsh_export_ref(op_ctx->export, true);
 	op_ctx->export = cookie_entry->sce_lock_entry->sle_export;
 	op_ctx->fsal_export = op_ctx->export->fsal_export;
+	get_gsh_export_ref(op_ctx->export);
 
 	/* If the client returned an error or the export has gone stale,
 	 * release the grant to properly clean up cookie_entry.
