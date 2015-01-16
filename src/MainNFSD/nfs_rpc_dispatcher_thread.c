@@ -315,10 +315,10 @@ int Bind_sockets_V6(void)
 					 "Cannot get %s socket info for udp6 socket errno=%d (%s)",
 					 tags[p], errno, strerror(errno));
 
-			if ((rc = bind(udp_socket[p],
-				      (struct sockaddr *)
-				      pdatap->bindaddr_udp6.addr.buf,
-				      (socklen_t) pdatap->si_udp6.si_alen) == -1))
+			rc = bind(udp_socket[p],
+			      (struct sockaddr *)pdatap->bindaddr_udp6.addr.buf,
+				  (socklen_t) pdatap->si_udp6.si_alen);
+			if (rc == -1)
 				LogWarn(COMPONENT_DISPATCH,
 					 "Cannot bind %s udp6 socket, error %d (%s)",
 					 tags[p], errno, strerror(errno));
@@ -344,13 +344,14 @@ int Bind_sockets_V6(void)
 					 "Cannot get %s socket info for tcp6 socket errno=%d (%s)",
 					 tags[p], errno, strerror(errno));
 
-			if ((rc = bind(tcp_socket[p],
-				 (struct sockaddr *)
+			rc = bind(tcp_socket[p],
+				  (struct sockaddr *)
 				   pdatap->bindaddr_tcp6.addr.buf,
-				 (socklen_t) pdatap->si_tcp6.si_alen) == -1))
+				 (socklen_t) pdatap->si_tcp6.si_alen);
+			if (rc == -1)
 				LogWarn(COMPONENT_DISPATCH,
-					 "Cannot bind %s tcp6 socket, error %d (%s)",
-					 tags[p], errno, strerror(errno));
+					"Cannot bind %s tcp6 socket, error %d (%s)",
+					tags[p], errno, strerror(errno));
 		}
 
 	return rc;
@@ -388,10 +389,11 @@ int Bind_sockets_V4(void)
 					 "Cannot get %s socket info for udp6 socket errno=%d (%s)",
 					 tags[p], errno, strerror(errno));
 
-			if ((rc = bind(udp_socket[p],
-				 (struct sockaddr *)
+			rc = bind(udp_socket[p],
+				  (struct sockaddr *)
 				  pdatap->bindaddr_udp6.addr.buf,
-				 (socklen_t) pdatap->si_udp6.si_alen) == -1))
+				  (socklen_t) pdatap->si_udp6.si_alen);
+			if (rc == -1)
 				LogFatal(COMPONENT_DISPATCH,
 					 "Cannot bind %s udp6 socket, error %d (%s)",
 					 tags[p], errno, strerror(errno));
@@ -417,10 +419,11 @@ int Bind_sockets_V4(void)
 					 "Cannot get %s socket info for tcp6 socket errno=%d (%s)",
 					 tags[p], errno, strerror(errno));
 
-			if ((rc = bind(tcp_socket[p],
-				 (struct sockaddr *)
-				   pdatap->bindaddr_tcp6.addr.buf,
-				 (socklen_t) pdatap->si_tcp6.si_alen) == -1))
+			rc = bind(tcp_socket[p],
+				  (struct sockaddr *)
+				  pdatap->bindaddr_tcp6.addr.buf,
+				  (socklen_t) pdatap->si_tcp6.si_alen);
+			if (rc == -1)
 				LogWarn(COMPONENT_DISPATCH,
 					 "Cannot bind %s tcp socket, error %d (%s)",
 					 tags[p], errno, strerror(errno));
@@ -436,7 +439,7 @@ void Bind_sockets(void)
 	rc = Bind_sockets_V6();
 	if (rc) {
 		LogMajor(COMPONENT_DISPATCH,
-                         "Error binding to V6 interface");
+			 "Error binding to V6 interface");
 	} else {
 		goto exit;
 	}
