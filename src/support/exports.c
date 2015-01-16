@@ -69,6 +69,8 @@ struct global_export_perms export_opt = {
 	.def.set = UINT32_MAX
 };
 
+static void FreeClientList(struct glist_head *clients);
+
 static void StrExportOptions(struct export_perms *p_perms, char *buffer)
 {
 	char *buf = buffer;
@@ -450,6 +452,8 @@ static void *client_init(void *link_mem, void *self_struct)
 	} else { /* free resources case */
 		cli = self_struct;
 
+		if (!glist_empty(&cli->cle_list))
+			FreeClientList(&cli->cle_list);
 		assert(glist_empty(&cli->cle_list));
 		gsh_free(cli);
 		return NULL;
