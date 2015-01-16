@@ -546,6 +546,8 @@ void state_nfs4_state_wipe(cache_entry_t *entry)
 
 	glist_for_each_safe(glist, glistn, &entry->list_of_states) {
 		state = glist_entry(glist, state_t, state_list);
+		if (state->state_type > STATE_TYPE_LAYOUT)
+			continue;
 		state_del_locked(state);
 	}
 

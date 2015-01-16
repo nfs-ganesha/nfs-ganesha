@@ -254,8 +254,11 @@ enum state_type {
 	STATE_TYPE_NONE = 0,
 	STATE_TYPE_SHARE = 1,
 	STATE_TYPE_DELEG = 2,
-	STATE_TYPE_LOCK = 4,
-	STATE_TYPE_LAYOUT = 5
+	STATE_TYPE_LOCK = 3,
+	STATE_TYPE_LAYOUT = 4,
+	STATE_TYPE_NLM_LOCK = 5,
+	STATE_TYPE_NLM_SHARE = 6,
+	STATE_TYPE_9P_FID = 7,
 };
 
 /**
@@ -264,7 +267,8 @@ enum state_type {
 
 struct state_share {
 	struct glist_head share_lockstates;	/*< Lock states for this
-						   open state */
+						   open state
+						   This field MUST be first */
 	unsigned int share_access;	/*< The NFSv4 Share Access state */
 	unsigned int share_deny;	/*< The NFSv4 Share Deny state */
 	unsigned int share_access_prev;	/*< Previous share access state */
@@ -277,10 +281,23 @@ struct state_share {
 
 struct state_lock {
 	struct glist_head state_locklist;	/*< List of locks owned by
-						   this stateid */
+						   this stateid
+						   This field MUST be first */
 	struct glist_head state_sharelist;	/*< List of states related
 						   to a share */
 	state_t *openstate;	/*< The related open-state */
+};
+
+/**
+ * @brief Data for a 9p fid
+ */
+
+struct state_9p_fid {
+	struct glist_head state_locklist;	/*< List of locks owned by
+						   this fid
+						   This field MUST be first */
+	unsigned int share_access;	/*< The 9p Access state */
+	unsigned int share_deny;	/*< Will always be 0 */
 };
 
 /**
@@ -337,6 +354,7 @@ union state_data {
 	struct state_lock lock;
 	struct state_deleg deleg;
 	struct state_layout layout;
+	struct state_9p_fid fid;
 	uint32_t io_advise;
 };
 

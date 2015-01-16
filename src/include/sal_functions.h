@@ -120,7 +120,7 @@ int Init_9p_hash(void);
 
 /******************************************************************************
  *
- * NLM State functions
+ * NLM Owner functions
  *
  ******************************************************************************/
 
@@ -189,6 +189,24 @@ state_owner_t *get_nlm_owner(care_t care, state_nlm_client_t *client,
 			     netobj *oh, uint32_t svid);
 
 int Init_nlm_hash(void);
+
+/******************************************************************************
+ *
+ * NLM State functions
+ *
+ ******************************************************************************/
+
+int display_nlm_state(struct display_buffer *dspbuf, state_t *key);
+int compare_nlm_state(state_t *state1, state_t *state2);
+int Init_nlm_state_hash(void);
+void dec_nlm_state_ref(state_t *state);
+
+int get_nlm_state(enum state_type state_type,
+		  cache_entry_t *state_entry,
+		  state_owner_t *state_owner,
+		  bool nsm_state_applies,
+		  uint32_t nsm_state,
+		  state_t **pstate);
 
 /******************************************************************************
  *
@@ -361,8 +379,33 @@ void update_stateid(state_t *state, stateid4 *stateid, compound_data_t *data,
 		    const char *tag);
 
 int nfs4_Init_state_id(void);
-void inc_state_t_ref(struct state_t *state);
-void dec_state_t_ref(struct state_t *state);
+
+/**
+ * @brief Take a reference on state_t
+ *
+ * @param[in] state The state_t to ref
+ */
+static inline void inc_state_t_ref(struct state_t *state)
+{
+	atomic_inc_int32_t(&state->state_refcount);
+}
+
+void dec_nfs4_state_ref(struct state_t *state);
+
+/**
+ * @brief Relinquish a reference on any State
+ *
+ * @param[in] state The NLM State to release
+ */
+static inline void dec_state_t_ref(struct state_t *state)
+{
+	if (state->state_type == STATE_TYPE_NLM_LOCK ||
+	    state->state_type == STATE_TYPE_NLM_SHARE)
+		dec_nlm_state_ref(state);
+	else
+		dec_nfs4_state_ref(state);
+}
+
 int nfs4_State_Set(state_t *state_data);
 struct state_t *nfs4_State_Get_Pointer(char *other);
 bool nfs4_State_Del(char *other);

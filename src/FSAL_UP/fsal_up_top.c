@@ -470,6 +470,11 @@ static state_status_t create_file_recall(cache_entry_t *entry,
 			continue;
 		}
 
+		if ((s->state_type != STATE_TYPE_LAYOUT)
+		    || (s->state_data.layout.state_layout_type != type)) {
+			continue;
+		}
+
 		if (spec) {
 			switch (spec->how) {
 			case layoutrecall_howspec_exactly:
@@ -495,10 +500,6 @@ static state_status_t create_file_recall(cache_entry_t *entry,
 
 		dec_state_owner_ref(owner);
 
-		if ((s->state_type != STATE_TYPE_LAYOUT)
-		    || (s->state_data.layout.state_layout_type != type)) {
-			continue;
-		}
 		glist_for_each(seg_iter,
 			       &s->state_data.layout.state_segments) {
 			state_layout_segment_t *g = glist_entry(

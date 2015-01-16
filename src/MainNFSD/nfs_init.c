@@ -672,6 +672,14 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 		}
 		LogInfo(COMPONENT_INIT,
 			"NLM Owner cache successfully initialized");
+		/* Init The NLM Owner cache */
+		LogDebug(COMPONENT_INIT, "Now building NLM State cache");
+		if (Init_nlm_state_hash() != 0) {
+			LogFatal(COMPONENT_INIT,
+				 "Error while initializing NLM State cache");
+		}
+		LogInfo(COMPONENT_INIT,
+			"NLM State cache successfully initialized");
 		nlm_init();
 	}
 #ifdef _USE_9P

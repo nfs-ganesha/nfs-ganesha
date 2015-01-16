@@ -19,6 +19,7 @@ SET(sal_STAT_SRCS
    nfs41_session_id.c
    nfs4_owner.c
    nlm_owner.c
+   nlm_state.c
 )
 
 if(USE_9P)

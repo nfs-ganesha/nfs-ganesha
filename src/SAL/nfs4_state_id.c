@@ -158,6 +158,12 @@ const char *str_state_type(state_t *state)
 		return "LOCK";
 	case STATE_TYPE_LAYOUT:
 		return "LAYOUT";
+	case STATE_TYPE_NLM_LOCK:
+		return "NLM_LOCK";
+	case STATE_TYPE_NLM_SHARE:
+		return "NLM_SHARE";
+	case STATE_TYPE_9P_FID:
+		return "9P_FID";
 	}
 
 	return "UNKNOWN";
@@ -342,21 +348,11 @@ void nfs4_BuildStateId_Other(nfs_client_id_t *clientid, char *other)
 }
 
 /**
- * @brief Take a reference on state_t
- *
- * @param[in] state The state_t to ref
- */
-void inc_state_t_ref(struct state_t *state)
-{
-	atomic_inc_int32_t(&state->state_refcount);
-}
-
-/**
  * @brief Relinquish a reference on a state_t
  *
  * @param[in] state The state_t to release
  */
-void dec_state_t_ref(struct state_t *state)
+void dec_nfs4_state_ref(struct state_t *state)
 {
 	char str[LOG_BUFF_LEN];
 	struct display_buffer dspbuf = {sizeof(str), str, str};
@@ -869,6 +865,11 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, cache_entry_t *entry,
 			}
 			PTHREAD_RWLOCK_unlock(&entry2->state_lock);
 			/* Fall through for failure */
+
+		case STATE_TYPE_NLM_LOCK:
+		case STATE_TYPE_NLM_SHARE:
+		case STATE_TYPE_9P_FID:
+			/* Fall through - don't expect these types */
 
 		case STATE_TYPE_NONE:
 		case STATE_TYPE_SHARE:
