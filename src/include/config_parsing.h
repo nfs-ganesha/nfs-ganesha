@@ -92,6 +92,7 @@ struct config_error_type {
 	bool empty:1;		/*< block is empty */
 	bool internal:1;        /*< internal error */
 	bool bogus:1;		/*< bogus (deprecated?) param */
+	uint32_t errors;	/*< cumulative error count for parse+proc */
 	char *diag_buf;		/*< buffer for scan+parse+processing msgs */
 	size_t diag_buf_size;	/*< size of diag buffer used by memstream */
 	FILE *fp;		/*< FILE * for memstream */
@@ -411,13 +412,13 @@ struct config_item {
 	  .type = CONFIG_FSID,		   	    \
 	  .u.fsid.def_maj = _def_maj_,		    \
 	  .u.fsid.def_min = _def_min_,		    \
-	  .u.fsid.set_off = UINT32_MAX,		    \
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
 #define CONF_ITEM_FSID_SET(_name_, _def_maj_, _def_min_, _struct_, \
 			   _mem_, _bit_, _set_)     \
 	{ .name = _name_,			    \
 	  .type = CONFIG_FSID,		   	    \
+	  .flags = CONFIG_MARK_SET,			\
 	  .u.fsid.def_maj = _def_maj_,		    \
 	  .u.fsid.def_min = _def_min_,		    \
 	  .u.fsid.bit = _bit_,		   	    \
@@ -475,6 +476,7 @@ struct config_item {
 				_mem_, _set_)	    \
 	{ .name = _name_,			    \
 	  .type = CONFIG_LIST,		  	    \
+	  .flags = CONFIG_MARK_SET,			\
 	  .u.lst.def = _def_,			    \
 	  .u.lst.mask = _mask_,			    \
 	  .u.lst.set_off = offsetof(struct _struct_, _set_),   \
@@ -487,13 +489,13 @@ struct config_item {
 	  .type = CONFIG_BOOLBIT,		    \
 	  .u.bit.def = _def_,			    \
 	  .u.bit.bit = _bit_,			    \
-	  .u.bit.set_off = UINT32_MAX,		    \
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
 
 #define CONF_ITEM_BOOLBIT_SET(_name_, _def_, _bit_, _struct_, _mem_, _set_) \
 	{ .name = _name_,			    \
 	  .type = CONFIG_BOOLBIT,		    \
+	  .flags = CONFIG_MARK_SET,			\
 	  .u.bit.def = _def_,			    \
 	  .u.bit.bit = _bit_,			    \
 	  .u.bit.set_off = offsetof(struct _struct_, _set_),   \
@@ -513,8 +515,6 @@ struct config_item {
 	{ .name = _name_,			    \
 	  .type = CONFIG_ENUM,			    \
 	  .u.lst.def = _def_,			    \
-	  .u.lst.mask = UINT32_MAX,		    \
-	  .u.lst.set_off = UINT32_MAX,		    \
 	  .u.lst.tokens = _tokens_,		    \
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
@@ -523,6 +523,7 @@ struct config_item {
 			   _bit_, _set_)		   \
 	{ .name = _name_,			    \
 	  .type = CONFIG_ENUM_SET,		    \
+	  .flags = CONFIG_MARK_SET,			\
 	  .u.lst.def = _def_,			    \
 	  .u.lst.mask = UINT32_MAX,		    \
 	  .u.lst.tokens = _tokens_,		    \
@@ -536,7 +537,6 @@ struct config_item {
 	  .type = CONFIG_ENUM,			    \
 	  .u.lst.def = _def_,			    \
 	  .u.lst.mask = _mask_,			    \
-	  .u.lst.set_off = UINT32_MAX,		    \
 	  .u.lst.tokens = _tokens_,		    \
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
@@ -545,6 +545,7 @@ struct config_item {
 				_mem_, _set_)	    \
 	{ .name = _name_,			    \
 	  .type = CONFIG_ENUM,			    \
+	  .flags = CONFIG_MARK_SET,			\
 	  .u.lst.def = _def_,			    \
 	  .u.lst.mask = _mask_,			    \
 	  .u.lst.set_off = offsetof(struct _struct_, _set_),   \
@@ -714,17 +715,6 @@ struct config_item {
 	  .u.i32.bit = _bit_,		   	    \
 	  .u.i32.set_off = offsetof(struct _struct_, _set_),   \
 	  .off = offsetof(struct _struct_, _mem_)   \
-	}
-
-#define CONF_INDEX_I32(_name_, _min_, _max_, _def_, _idx_, _struct_, _mem_) \
-	{ .name = _name_,			    \
-	  .type = CONFIG_INT32,		    \
-	  .u.i32.minval = _min_,		    \
-	  .u.i32.maxval = _max_,		    \
-	  .u.i32.def = _def_,			    \
-	  .u.i32.set_off = UINT32_MAX,   \
-	  .off = (sizeof(struct _struct_) * _idx_)	\
-		  + offsetof(struct _struct_, _mem_)	\
 	}
 
 #define CONF_ITEM_UI32(_name_, _min_, _max_, _def_, _struct_, _mem_) \

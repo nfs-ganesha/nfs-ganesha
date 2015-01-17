@@ -159,13 +159,13 @@ static void StrExportOptions(struct export_perms *p_perms, char *buffer)
 	} else
 		buf += sprintf(buf, ",         ");
 
-	if ((p_perms->set & EXPORT_OPTION_ANON_UID_SET) == 0)
+	if ((p_perms->set & EXPORT_OPTION_ANON_UID_SET) != 0)
 		buf += sprintf(buf, ", anon_uid=%6d",
 			       (int)p_perms->anonymous_uid);
 	else
 		buf += sprintf(buf, ",                ");
 
-	if ((p_perms->set & EXPORT_OPTION_ANON_GID_SET) == 0)
+	if ((p_perms->set & EXPORT_OPTION_ANON_GID_SET) != 0)
 		buf += sprintf(buf, ", anon_gid=%6d",
 			       (int)p_perms->anonymous_gid);
 	else
