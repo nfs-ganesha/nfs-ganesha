@@ -96,8 +96,13 @@ char *save_token(char *token, bool esc, struct parser_state *st)
 			*dp++ = c;
 			c = *sp++;
 		}
-	} else
+	} else {
+		if (*token == '\'')  /* skip and chomp "'" in an SQUOTE */
+			token++;
 		strcpy(new_tok->token, token);
+		if (new_tok->token[strlen(new_tok->token) - 1] == '\'')
+			new_tok->token[strlen(new_tok->token) - 1] = '\0';
+	}
 	new_tok->next = st->root_node->tokens;
 	st->root_node->tokens = new_tok;
 	return new_tok->token;
