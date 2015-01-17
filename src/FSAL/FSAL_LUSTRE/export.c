@@ -765,7 +765,7 @@ fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
 	    myself->pnfs_param.pnfs_enabled;
 
 	if (myself->pnfs_ds_enabled) {
-		struct fsal_pnfs_ds *pds;
+		struct fsal_pnfs_ds *pds = NULL;
 
 		status = fsal_hdl->m_ops.
 			fsal_pnfs_ds(fsal_hdl, parse_node, &pds);
