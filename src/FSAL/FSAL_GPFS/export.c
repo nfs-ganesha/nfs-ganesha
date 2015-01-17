@@ -756,7 +756,7 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 	    myself->export.exp_ops.fs_supports(&myself->export,
 					    fso_pnfs_mds_supported);
 	if (myself->pnfs_ds_enabled) {
-		struct fsal_pnfs_ds *pds;
+		struct fsal_pnfs_ds *pds = NULL;
 
 		status = fsal_hdl->m_ops.
 			fsal_pnfs_ds(fsal_hdl, parse_node, &pds);
