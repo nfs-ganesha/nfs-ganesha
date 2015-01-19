@@ -581,7 +581,6 @@ static int fsal_commit(void *node, void *link_mem, void *self_struct,
 
 	assert(root_op_context.req_ctx.fsal_export != NULL);
 	export->fsal_export = root_op_context.req_ctx.fsal_export;
-	root_op_context.req_ctx.fsal_export->id_exports = export->export_id;
 
 	/* We are connected up to the fsal side.  Now
 	 * validate maxread/write etc with fsal params
@@ -1300,7 +1299,6 @@ static int build_default_root(void)
 
 	assert(root_op_context.req_ctx.fsal_export != NULL);
 	export->fsal_export = root_op_context.req_ctx.fsal_export;
-	root_op_context.req_ctx.fsal_export->id_exports = 0;
 
 	if (!insert_gsh_export(export)) {
 		export->fsal_export->exp_ops.release(export->fsal_export);

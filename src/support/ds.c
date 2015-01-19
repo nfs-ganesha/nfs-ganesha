@@ -38,7 +38,7 @@
  *
  * @note  number of cache slots should be prime.
  */
-#define SERVER_BY_ID_CACHE_SIZE 127
+#define SERVER_BY_ID_CACHE_SIZE 193
 
 struct server_by_id {
 	pthread_rwlock_t lock;
@@ -54,7 +54,7 @@ static struct server_by_id server_by_id;
  * This function computes a hash slot, taking an address modulo the
  * number of cache slots (which should be prime).
  *
- * @param ptr [in] Entry address
+ * @param k [in] Entry index value
  *
  * @return The computed offset.
  */
@@ -114,24 +114,31 @@ void pnfs_ds_free(struct fsal_pnfs_ds *pds)
 
 bool pnfs_ds_insert(struct fsal_pnfs_ds *pds)
 {
-	void **cache_slot;
 	struct avltree_node *node;
+	void **cache_slot = (void **)
+		&(server_by_id.cache[id_cache_offsetof(pds->id_servers)]);
 
-	assert(pds->refcount == 1);	/* we will hold a ref starting out... */
+	/* we will hold a ref starting out... */
+	assert(pds->refcount == 1);
 
 	PTHREAD_RWLOCK_wrlock(&server_by_id.lock);
 	node = avltree_insert(&pds->ds_node, &server_by_id.t);
 	if (node) {
+		/* somebody beat us to it */
 		PTHREAD_RWLOCK_unlock(&server_by_id.lock);
-		return false;	/* somebody beat us to it */
+		return false;
 	}
 
 	/* update cache */
-	cache_slot = (void **)
-		&(server_by_id.cache[id_cache_offsetof(pds->id_servers)]);
 	atomic_store_voidptr(cache_slot, &pds->ds_node);
 
-	pnfs_ds_get_ref(pds);		/* pds->refcount == 2 */
+	pnfs_ds_get_ref(pds);		/* == 2 */
+	if (pds->mds_export != NULL) {
+		/* also bump related export for duration */
+		get_gsh_export_ref(pds->mds_export);
+		pds->mds_export->has_pnfs_ds = true;
+	}
+
 	PTHREAD_RWLOCK_unlock(&server_by_id.lock);
 	return true;
 }
@@ -149,17 +156,16 @@ bool pnfs_ds_insert(struct fsal_pnfs_ds *pds)
  */
 struct fsal_pnfs_ds *pnfs_ds_get(uint16_t id_servers)
 {
-	void **cache_slot;
+	struct fsal_pnfs_ds v;
 	struct avltree_node *node;
 	struct fsal_pnfs_ds *pds;
-	struct fsal_pnfs_ds v;
+	void **cache_slot = (void **)
+		&(server_by_id.cache[id_cache_offsetof(id_servers)]);
 
 	v.id_servers = id_servers;
 	PTHREAD_RWLOCK_rdlock(&server_by_id.lock);
 
 	/* check cache */
-	cache_slot = (void **)
-		&(server_by_id.cache[id_cache_offsetof(id_servers)]);
 	node = (struct avltree_node *)atomic_fetch_voidptr(cache_slot);
 	if (node) {
 		pds = avltree_container_of(node, struct fsal_pnfs_ds, ds_node);
@@ -178,7 +184,6 @@ struct fsal_pnfs_ds *pnfs_ds_get(uint16_t id_servers)
 		pds = avltree_container_of(node, struct fsal_pnfs_ds, ds_node);
 		/* update cache */
 		atomic_store_voidptr(cache_slot, node);
-		goto out;
 	} else {
 		PTHREAD_RWLOCK_unlock(&server_by_id.lock);
 		return NULL;
@@ -186,6 +191,10 @@ struct fsal_pnfs_ds *pnfs_ds_get(uint16_t id_servers)
 
  out:
 	pnfs_ds_get_ref(pds);
+	if (pds->mds_export != NULL)
+		/* also bump related export for duration */
+		get_gsh_export_ref(pds->mds_export);
+
 	PTHREAD_RWLOCK_unlock(&server_by_id.lock);
 	return pds;
 }
@@ -219,31 +228,45 @@ void pnfs_ds_put(struct fsal_pnfs_ds *pds)
 
 void pnfs_ds_remove(uint16_t id_servers, bool final)
 {
+	struct fsal_pnfs_ds v;
 	struct avltree_node *node;
 	struct fsal_pnfs_ds *pds = NULL;
-	struct fsal_pnfs_ds v;
+	void **cache_slot = (void **)
+		&(server_by_id.cache[id_cache_offsetof(id_servers)]);
 
 	v.id_servers = id_servers;
 	PTHREAD_RWLOCK_wrlock(&server_by_id.lock);
 
 	node = avltree_lookup(&v.ds_node, &server_by_id.t);
 	if (node) {
-		void **cache_slot = (void **)
-			&(server_by_id.cache[id_cache_offsetof(id_servers)]);
 		struct avltree_node *cnode = (struct avltree_node *)
 			 atomic_fetch_voidptr(cache_slot);
 
-		/* Remove the server from the AVL cache and tree */
+		/* Remove from the AVL cache and tree */
 		if (node == cnode)
 			atomic_store_voidptr(cache_slot, NULL);
+		avltree_remove(node, &server_by_id.t);
 
 		pds = avltree_container_of(node, struct fsal_pnfs_ds, ds_node);
-		avltree_remove(node, &server_by_id.t);
+
+		/* Eliminate repeated locks during draining. Idempotent. */
+		pds->pnfs_ds_status = PNFS_DS_STALE;
 	}
 
 	PTHREAD_RWLOCK_unlock(&server_by_id.lock);
 
+	/* removal has a once-only semantic */
 	if (pds != NULL) {
+		if (pds->mds_export != NULL)
+			/* special case: avoid lookup of related export.
+			 * get_gsh_export_ref() was bumped in pnfs_ds_insert()
+			 *
+			 * once-only, so no need for lock here.
+			 * do not pre-clear related export (mds_export).
+			 * always check pnfs_ds_status instead.
+			 */
+			put_gsh_export(pds->mds_export);
+
 		/* Release table reference to the server.
 		 * Release of resources will occur on last reference.
 		 * Which may or may not be from this call.

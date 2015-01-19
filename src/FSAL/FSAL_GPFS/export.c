@@ -57,11 +57,6 @@ static void release(struct fsal_export *exp_hdl)
 	struct gpfs_fsal_export *myself =
 	    container_of(exp_hdl, struct gpfs_fsal_export, export);
 
-	if (myself->pnfs_ds_enabled) {
-		/* special case: server_id matches export_id */
-		pnfs_ds_remove(exp_hdl->id_exports, true);
-	}
-
 	gpfs_unexport_filesystems(myself);
 	fsal_detach_export(exp_hdl->fsal, &exp_hdl->exports);
 	free_export_ops(exp_hdl);
@@ -765,6 +760,7 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 
 		/* special case: server_id matches export_id */
 		pds->id_servers = op_ctx->export->export_id;
+		pds->mds_export = op_ctx->export;
 
 		if (!pnfs_ds_insert(pds)) {
 			LogCrit(COMPONENT_CONFIG,
@@ -773,9 +769,6 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 			status.major = ERR_FSAL_EXIST;
 			goto errout;
 		}
-
-		/* special case: avoid lookup of related export */
-		pds->related = op_ctx->export;
 
 		LogInfo(COMPONENT_FSAL,
 			"gpfs_fsal_create: pnfs ds was enabled for [%s]",

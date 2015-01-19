@@ -131,23 +131,27 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t *data,
 
 		/* If old CurrentFH had a related export, release reference. */
 		if (op_ctx->export != NULL) {
-			changed = op_ctx->export != pds->related;
+			changed = op_ctx->export != pds->mds_export;
 			put_gsh_export(op_ctx->export);
 		}
 
-		if (pds->related != NULL) {
-			if (!export_ready(pds->related)) {
-				op_ctx->export = NULL;
-				op_ctx->fsal_export = NULL;
-				res_PUTFH4->status = NFS4ERR_STALE;
-				return res_PUTFH4->status;
-			}
-			get_gsh_export_ref(pds->related);
-			op_ctx->export = pds->related;
-			op_ctx->fsal_export = op_ctx->export->fsal_export;
-		} else {
+		if (pds->mds_export == NULL) {
+			/* most likely */
 			op_ctx->export = NULL;
 			op_ctx->fsal_export = NULL;
+		} else if (pds->pnfs_ds_status == PNFS_DS_READY) {
+			/* special case: avoid lookup of related export.
+			 * get_gsh_export_ref() was bumped in pnfs_ds_get()
+			 */
+			op_ctx->export = pds->mds_export;
+			op_ctx->fsal_export = op_ctx->export->fsal_export;
+		} else {
+			/* export reference has been dropped. */
+			put_gsh_export(pds->mds_export);
+			op_ctx->export = NULL;
+			op_ctx->fsal_export = NULL;
+			res_PUTFH4->status = NFS4ERR_STALE;
+			return res_PUTFH4->status;
 		}
 
 		/* Clear out current entry for now */
