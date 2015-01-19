@@ -42,11 +42,10 @@
 #ifndef EXPORT_MGR_H
 #define EXPORT_MGR_H
 
-typedef enum export_state {
-	EXPORT_INIT = 0,	/*< still being initialized */
+enum export_status {
 	EXPORT_READY,		/*< searchable, usable */
 	EXPORT_STALE,		/*< export is no longer valid */
-} export_state_t;
+};
 
 /**
  * @brief Represents an export.
@@ -116,8 +115,6 @@ struct gsh_export {
 	struct export_perms export_perms;
 	/** The last time the export stats were updated */
 	nsecs_elapsed_t last_update;
-	/** The condition the export is in */
-	uint32_t exp_state;
 	/** Export non-permission options */
 	uint32_t options;
 	/** Export non-permission options set */
@@ -127,6 +124,9 @@ struct gsh_export {
 	int32_t expire_time_attr;
 	/** Export_Id for this export */
 	uint16_t export_id;
+
+	uint8_t export_status;		/*< current condition */
+	bool has_pnfs_ds;		/*< id_servers matches export_id */
 };
 
 void export_pkginit(void);
@@ -165,7 +165,7 @@ bool foreach_gsh_export(bool(*cb) (struct gsh_export *exp, void *state),
  */
 static inline bool export_ready(struct gsh_export *export)
 {
-	return atomic_fetch_uint32_t(&export->exp_state) == EXPORT_READY;
+	return export->export_status == EXPORT_READY;
 }
 
 static inline void get_gsh_export_ref(struct gsh_export *export)
