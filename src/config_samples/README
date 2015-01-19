@@ -18,3 +18,131 @@ zfs.conf
 The most readily used FSAL for experimentation with Ganesha given a recent
 kernel is FSAL_VFS using vfs.conf.
 
+Configuration File Processing
+=============================
+A configuration file uses the following syntax rules.  Processing errors are reported
+to the log or, in the case of an 'AddExport' DBus command, in the reply message.
+System administrators should always check the log or DBus reply  whenever they
+make changes to the configuration.  The processing will attempt to process the
+whole file and report all errors, some of which can be serious enough to prevent
+the server from starting.  Like all compilers that make a best effort to keep
+processing, there are some errors that cannot be cleanly recovered from.
+
+Comments
+--------
+The syntax provides for comments.  A comment is any text following a '#' character
+to the end of the line.  The one exception where it is ignored is when the '#' is
+enclosed in a quoted string.
+Examples are:
+
+# This whole line is a comment
+
+Protocol = TCP; # The rest of this line is a comment
+
+user_date_format = "%D #";  # The '#' in the quoted string is just another character.
+
+Including Other files
+---------------------
+Additional files can be referenced in a configuration.  The included file
+is inserted into the configuration text in place of this line.  The configuration
+following this line is resumed after the end of the included files.  File inclusion
+can be to any depth.
+
+%include <filename>
+This line replaces the line with the contents of the file <filename>.
+Examples are:
+
+%include base.conf
+
+or
+
+%include "base.conf"
+
+The quotes are optional for backward compatibility.
+
+Symbols
+-------
+Symbols are case insensitive words separated by white space or punctuation.
+Symbols used for block and parameter names must be an alphabetic optionally
+followed by more alphabetics, numbers, '-', '.', or '_'.  Symbols used for
+option values follow the same syntax unless enclosed between quote characters.
+
+Examples are:
+
+LOG { Default_Log_Level = EVENT; }
+
+is equivalent to
+
+log{default_Log_LEVEL=event;}
+
+Numeric and Boolean Option Values
+---------------------------------
+Numeric options can be defined in octal, decimal, or hexadecimal.  The
+format follows ANSI C syntax.
+Examples are:
+
+mode = 0755;  # This is octal 0755, 493 (decimal)
+
+maxwrite = 65535;
+
+maxread = 0xffff;
+
+Maxread and maxwrite are equal.  Values can be input in any base although
+log messages will only display in one base.  For example, the log will
+report the value for 'mode' in octal regardless of the base used to set it
+in the configuration.
+
+Numeric values can also be negated or logical NOT'd.
+Examples are:
+
+anonomousuid = -2;  # this is a negative 2
+
+mask = ~0xff;  # this is equivalent to 0xffffff00 (for 32 bit integers)
+
+The operator can have white space between the '-' or '~' and the numeric
+value.
+
+Boolean types are also recognized.  The values 'true', 'yes', and 'on' are
+TRUE and the values 'false', 'no', and 'off' are FALSE.  Note that '1' and '0'
+are rejected.  Booleans and integers different.
+
+Single "'" and double '"' quoted strings can contain any arbitrary, multiline
+sequence of characters.  The C escaped non-printables \n, \t, and \c as well as
+any escaped printable, e.g. \", can be escaped within a double quoted string.  A
+single quoted string contains all the characters between the first "'" and the
+next "'".  If the string must contain a "'", use a double quoted string.
+
+All other values must start with an alphanumeric, '_', or '.'.  Any subsequent
+characters can also contain a '-'.  Any value that has characters that does not
+fit this pattern must be quoted.
+
+
+Blocks
+------
+Options are grouped into "blocks" of related parameters.  A block is
+a name followed by parameters enclosed between '{' and '}'.
+Examples are:
+
+export {
+	export_id = 17;
+	fsal {
+		name = VFS;
+	}
+}
+
+Note that 'fsal' is a sub-block.
+
+Statements
+----------
+A statement within a block is a parameter name followed by a '=' that is followed
+by an option value or a comma separated list of option values.  A statement is
+terminated by a ';'.
+Examples are:
+
+CanSetTime = true;
+
+Protocols = 3, 4,
+	    9p;
+
+The first case is a simple boolean parameter.  The second is a list.  Note that
+the list can span lines.
