@@ -69,7 +69,7 @@ static inline bool fid_is_zero(const lustre_fid *fid)
 
 #define FLUSH_REQ_COUNT 10000
 #define LEN_MESSAGE 1024
-#define JOBID_LEN 100
+#define JOBID_LEN LUSTRE_JOBID_LENGTH
 
 
 static int lustre_invalidate_entry(struct lustre_filesystem *lustre_fs,
@@ -109,7 +109,7 @@ static int lustre_changelog_upcall(struct lustre_filesystem *lustre_fs,
 	char message2[LEN_MESSAGE];
 
 	struct tm ts;
-	time_t	secs;
+	time_t secs;
 	int rc;
 
 	secs = rec->cr_time >> 30;
@@ -218,8 +218,8 @@ void *LUSTREFSAL_UP_Thread(void *Arg)
 {
 	const struct fsal_up_vector *event_func;
 	struct lustre_filesystem *lustre_fs = Arg;
-	struct lcap_cl_ctx          *ctx = NULL;
-	struct changelog_rec    *rec;
+	struct lcap_cl_ctx *ctx = NULL;
+	struct changelog_rec *rec;
 	struct changelog_ext_jobid *jid;
 	struct changelog_ext_rename *rnm;
 	int flags = LCAP_CL_DIRECT|LCAP_CL_JOBID;
@@ -228,6 +228,7 @@ void *LUSTREFSAL_UP_Thread(void *Arg)
 	long long managed_idx = 0LL;
 	unsigned int req_count = 0;
 	/* For wanting of a llapi call to get this information */
+	/* @todo: use information form fsal_filesystem here */
 	const char mdtname[] = "lustre-MDT0000";
 	const char chlg_reader[] = "cl1";
 	char my_jobid[JOBID_LEN];
@@ -256,7 +257,7 @@ void *LUSTREFSAL_UP_Thread(void *Arg)
 	last_idx = 0LL;
 	managed_idx = 0LL;
 	while (true) {
-		/* register as a changelog reader */
+		/* open changelog reading channel in lcap */
 		rc = lcap_changelog_start(&ctx, flags, mdtname, last_idx);
 		if (rc) {
 			LogFatal(COMPONENT_FSAL_UP,
@@ -272,12 +273,21 @@ void *LUSTREFSAL_UP_Thread(void *Arg)
 				jid = changelog_rec_jobid(rec);
 			else
 				break;
-
 			if (rec->cr_index > managed_idx) {
 				managed_idx = rec->cr_index;
 				last_idx = rec->cr_index;
 				req_count += 1;
 
+				/* If jobid is an empty string, skip it */
+				if (jid->cr_jid[0] == '\0') {
+					rc = lcap_changelog_free(ctx, &rec);
+					if (rc)
+						LogFatal(COMPONENT_FSAL_UP,
+							 "lcap_changelog_free: "
+							 "%d,%s\n",
+							 rc, strerror(-rc));
+					continue;
+				}
 				/* Do not care for records generated
 				 * by Ganesha's activity */
 				if (!strcmp(jid->cr_jobid, my_jobid)) {
@@ -295,8 +305,8 @@ void *LUSTREFSAL_UP_Thread(void *Arg)
 							     rec);
 				if (rc)
 					LogMajor(COMPONENT_FSAL,
-						   "error occured when dealing "
-						   "with a changelog record");
+						   "error occured when dealing"
+						   " with a changelog record");
 
 				rc = lcap_changelog_free(ctx, &rec);
 				if (rc)
