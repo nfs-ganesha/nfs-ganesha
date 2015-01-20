@@ -432,6 +432,81 @@ int Bind_sockets_V4(void)
 	return rc;
 }
 
+/**
+ * @brief Bind the udp and tcp sockets for V4 Interfaces
+ */
+int Bind_sockets_V4(void)
+{
+	protos p;
+	int    rc = 0;
+
+	for (p = P_NFS; p < P_COUNT; p++)
+		if (test_for_additional_nfs_protocols(p)) {
+			proto_data *pdatap = &pdata[p];
+			memset(&pdatap->sinaddr_udp, 0,
+			       sizeof(pdatap->sinaddr_udp));
+			pdatap->sinaddr_udp.sin_family = AF_INET;
+			/* all interfaces */
+			pdatap->sinaddr_udp.sin_addr.s_addr = htonl(INADDR_ANY);
+			pdatap->sinaddr_udp.sin_port =
+			    htons(nfs_param.core_param.port[p]);
+
+			pdatap->netbuf_udp6.maxlen =
+			    sizeof(pdatap->sinaddr_udp);
+			pdatap->netbuf_udp6.len = sizeof(pdatap->sinaddr_udp);
+			pdatap->netbuf_udp6.buf = &pdatap->sinaddr_udp;
+
+			pdatap->bindaddr_udp6.qlen = SOMAXCONN;
+			pdatap->bindaddr_udp6.addr = pdatap->netbuf_udp6;
+
+			if (!__rpc_fd2sockinfo(udp_socket[p], &pdatap->si_udp6))
+				LogFatal(COMPONENT_DISPATCH,
+					 "Cannot get %s socket info for udp6 socket errno=%d (%s)",
+					 tags[p], errno, strerror(errno));
+
+			rc = bind(udp_socket[p],
+				 (struct sockaddr *)
+				  pdatap->bindaddr_udp6.addr.buf,
+				 (socklen_t) pdatap->si_udp6.si_alen);
+			if (rc == -1)
+				LogFatal(COMPONENT_DISPATCH,
+					 "Cannot bind %s udp6 socket, error %d (%s)",
+					 tags[p], errno, strerror(errno));
+
+			memset(&pdatap->sinaddr_tcp, 0,
+			       sizeof(pdatap->sinaddr_tcp));
+			pdatap->sinaddr_tcp.sin_family = AF_INET;
+			/* all interfaces */
+			pdatap->sinaddr_tcp.sin_addr.s_addr = htonl(INADDR_ANY);
+			pdatap->sinaddr_tcp.sin_port =
+			    htons(nfs_param.core_param.port[p]);
+
+			pdatap->netbuf_tcp6.maxlen =
+			    sizeof(pdatap->sinaddr_tcp);
+			pdatap->netbuf_tcp6.len = sizeof(pdatap->sinaddr_tcp);
+			pdatap->netbuf_tcp6.buf = &pdatap->sinaddr_tcp;
+
+			pdatap->bindaddr_tcp6.qlen = SOMAXCONN;
+			pdatap->bindaddr_tcp6.addr = pdatap->netbuf_tcp6;
+
+			if (!__rpc_fd2sockinfo(tcp_socket[p], &pdatap->si_tcp6))
+				LogWarn(COMPONENT_DISPATCH,
+					 "Cannot get %s socket info for tcp6 socket errno=%d (%s)",
+					 tags[p], errno, strerror(errno));
+
+			rc = bind(tcp_socket[p],
+				 (struct sockaddr *)
+				   pdatap->bindaddr_tcp6.addr.buf,
+				 (socklen_t) pdatap->si_tcp6.si_alen);
+			if (rc == -1)
+				LogWarn(COMPONENT_DISPATCH,
+					 "Cannot bind %s tcp socket, error %d (%s)",
+					 tags[p], errno, strerror(errno));
+		}
+
+	return rc;
+}
+
 void Bind_sockets(void)
 {
 	int	rc = 0;
