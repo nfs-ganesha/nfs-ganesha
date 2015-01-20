@@ -416,8 +416,8 @@ int Bind_sockets_V4(void)
 
 			if (!__rpc_fd2sockinfo(tcp_socket[p], &pdatap->si_tcp6))
 				LogWarn(COMPONENT_DISPATCH,
-					 "Cannot get %s socket info for tcp6 socket errno=%d (%s)",
-					 tags[p], errno, strerror(errno));
+					"Cannot get %s socket info for tcp6 socket errno=%d (%s)",
+					tags[p], errno, strerror(errno));
 
 			rc = bind(tcp_socket[p],
 				  (struct sockaddr *)
@@ -425,8 +425,8 @@ int Bind_sockets_V4(void)
 				  (socklen_t) pdatap->si_tcp6.si_alen);
 			if (rc == -1)
 				LogWarn(COMPONENT_DISPATCH,
-					 "Cannot bind %s tcp socket, error %d (%s)",
-					 tags[p], errno, strerror(errno));
+					"Cannot bind %s tcp socket, error %d (%s)",
+					tags[p], errno, strerror(errno));
 		}
 
 	return rc;
@@ -515,6 +515,101 @@ void Register_program(protos prot, int flag, int vers)
 }
 
 /**
+ * @brief Allocate the tcp and udp sockets for the nfs daemon
+ */
+void Allocate_sockets()
+{
+	protos p;
+	int    one = 1;
+
+	LogFullDebug(COMPONENT_DISPATCH, "Allocation of the sockets");
+
+	for (p = P_NFS; p < P_COUNT; p++) {
+		if (test_for_additional_nfs_protocols(p)) {
+			/* Initialize all the sockets to -1 because
+			 * it makes some code later easier */
+			udp_socket[p] = -1;
+			tcp_socket[p] = -1;
+
+			udp_socket[p] = socket(AF_INET6,
+					       SOCK_DGRAM,
+					       IPPROTO_UDP);
+
+			if (udp_socket[p] == -1) {
+				LogWarn(COMPONENT_DISPATCH,
+					"Cannot allocate a udp socket for %s, error %d (%s)",
+					tags[p], errno, strerror(errno));
+				if (errno == EAFNOSUPPORT) {
+					LogInfo(COMPONENT_DISPATCH,
+					    "System may not have V6 intfs configured");
+				}
+				goto try_V4;
+			}
+
+			tcp_socket[p] = socket(AF_INET6,
+					       SOCK_STREAM,
+					       IPPROTO_TCP);
+
+			if (tcp_socket[p] == -1)
+				LogWarn(COMPONENT_DISPATCH,
+					"Cannot allocate a tcp socket for %s, error %d (%s)",
+					tags[p], errno, strerror(errno));
+
+try_V4:
+			udp_socket[p] = socket(AF_INET,
+					       SOCK_DGRAM,
+					       IPPROTO_UDP);
+
+			if (udp_socket[p] == -1) {
+				if (errno == EAFNOSUPPORT) {
+					LogInfo(COMPONENT_DISPATCH,
+					    "No V6 and V4 intfs configured?!");
+				}
+
+				LogWarn(COMPONENT_DISPATCH,
+					"Cannot allocate a udp socket for %s, error %d (%s)",
+					tags[p], errno, strerror(errno));
+			}
+
+			tcp_socket[p] = socket(AF_INET,
+					       SOCK_STREAM,
+					       IPPROTO_TCP);
+
+			if (tcp_socket[p] == -1) {
+				LogFatal(COMPONENT_DISPATCH,
+					 "Cannot allocate a tcp socket for %s, error %d (%s)",
+					 tags[p], errno, strerror(errno));
+			}
+
+			/* Use SO_REUSEADDR in order to avoid wait
+			 * the 2MSL timeout */
+			if (setsockopt(udp_socket[p],
+				       SOL_SOCKET, SO_REUSEADDR,
+				       &one, sizeof(one)))
+				LogWarn(COMPONENT_DISPATCH,
+					 "Bad udp socket options for %s, error %d (%s)",
+					 tags[p], errno, strerror(errno));
+
+			if (setsockopt(tcp_socket[p],
+				       SOL_SOCKET, SO_REUSEADDR,
+				       &one, sizeof(one)))
+				LogWarn(COMPONENT_DISPATCH,
+					 "Bad tcp socket options for %s, error %d (%s)",
+					 tags[p], errno, strerror(errno));
+
+			/* We prefer using non-blocking socket
+			 * in the specific case */
+			if (fcntl(udp_socket[p], F_SETFL, FNDELAY) == -1)
+				LogFatal(COMPONENT_DISPATCH,
+					 "Cannot set udp socket for %s as non blocking, error %d (%s)",
+					 tags[p], errno, strerror(errno));
+		}
+	}
+}
+
+
+
+/**
  * @brief Init the svc descriptors for the nfs daemon
  *
  * Perform all the required initialization for the RPC subsystem and event
@@ -522,10 +617,8 @@ void Register_program(protos prot, int flag, int vers)
  */
 void nfs_Init_svc()
 {
-	protos p;
 	svc_init_params svc_params;
 	int ix, code __attribute__ ((unused)) = 0;
-	int one = 1;
 
 	LogDebug(COMPONENT_DISPATCH, "NFS INIT: Core options = %d",
 		 nfs_param.core_param.core_options);
@@ -620,55 +713,7 @@ void nfs_Init_svc()
 	LogFullDebug(COMPONENT_DISPATCH, "netconfig found for UDPv6 and TCPv6");
 
 	/* Allocate the UDP and TCP sockets for the RPC */
-	LogFullDebug(COMPONENT_DISPATCH, "Allocation of the sockets");
-	for (p = P_NFS; p < P_COUNT; p++)
-		if (test_for_additional_nfs_protocols(p)) {
-			/* Initialize all the sockets to -1 because
-			 * it makes some code later easier */
-			udp_socket[p] = -1;
-			tcp_socket[p] = -1;
-
-			udp_socket[p] = socket(P_FAMILY,
-					       SOCK_DGRAM,
-					       IPPROTO_UDP);
-
-			if (udp_socket[p] == -1)
-				LogFatal(COMPONENT_DISPATCH,
-					 "Cannot allocate a udp socket for %s, error %d (%s)",
-					 tags[p], errno, strerror(errno));
-
-			tcp_socket[p] = socket(P_FAMILY,
-					       SOCK_STREAM,
-					       IPPROTO_TCP);
-
-			if (tcp_socket[p] == -1)
-				LogFatal(COMPONENT_DISPATCH,
-					 "Cannot allocate a tcp socket for %s, error %d (%s)",
-					 tags[p], errno, strerror(errno));
-
-			/* Use SO_REUSEADDR in order to avoid wait
-			 * the 2MSL timeout */
-			if (setsockopt(udp_socket[p],
-				       SOL_SOCKET, SO_REUSEADDR,
-				       &one, sizeof(one)))
-				LogFatal(COMPONENT_DISPATCH,
-					 "Bad udp socket options for %s, error %d (%s)",
-					 tags[p], errno, strerror(errno));
-
-			if (setsockopt(tcp_socket[p],
-				       SOL_SOCKET, SO_REUSEADDR,
-				       &one, sizeof(one)))
-				LogFatal(COMPONENT_DISPATCH,
-					 "Bad tcp socket options for %s, error %d (%s)",
-					 tags[p], errno, strerror(errno));
-
-			/* We prefer using non-blocking socket
-			 * in the specific case */
-			if (fcntl(udp_socket[p], F_SETFL, FNDELAY) == -1)
-				LogFatal(COMPONENT_DISPATCH,
-					 "Cannot set udp socket for %s as non blocking, error %d (%s)",
-					 tags[p], errno, strerror(errno));
-		}
+	Allocate_sockets();
 
 	socket_setoptions(tcp_socket[P_NFS]);
 
