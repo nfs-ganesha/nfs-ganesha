@@ -29,6 +29,7 @@
 #define VFS_METHODS_H
 
 #include "fsal_handle_syscalls.h"
+#include "fsal_api.h"
 
 struct vfs_fsal_obj_handle;
 struct vfs_fsal_export;
@@ -122,6 +123,9 @@ struct vfs_fsal_obj_handle {
 		} unopenable;
 	} u;
 };
+
+#define OBJ_VFS_FROM_FSAL(fsal) \
+	container_of((fsal), struct vfs_fsal_obj_handle, obj_handle)
 
 /* default vex ops */
 int vfs_fd_to_handle(int fd, struct fsal_filesystem *fs,

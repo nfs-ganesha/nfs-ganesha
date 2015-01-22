@@ -57,17 +57,33 @@ void vfs_sub_fini(struct vfs_fsal_export *myself)
 {
 }
 
-void vfs_sub_init_handle_ops(struct vfs_fsal_export *myself,
-			      struct fsal_obj_ops *ops)
-{
-}
-
 void vfs_sub_init_export_ops(struct vfs_fsal_export *myself,
 			      const char *export_path)
 {
 }
 
 int vfs_sub_init_export(struct vfs_fsal_export *myself)
+{
+	return 0;
+}
+
+struct vfs_fsal_obj_handle *vfs_sub_alloc_handle(void)
+{
+	struct vfs_fsal_obj_handle *hdl;
+
+	hdl = gsh_calloc(1,
+			 (sizeof(struct vfs_fsal_obj_handle) +
+			  sizeof(vfs_file_handle_t)));
+	if (hdl == NULL)
+		return NULL;
+	hdl->handle = (vfs_file_handle_t *) &hdl[1];
+
+	return hdl;
+}
+
+int vfs_sub_init_handle(struct vfs_fsal_export *myself,
+		struct vfs_fsal_obj_handle *hdl,
+		const char *path)
 {
 	return 0;
 }

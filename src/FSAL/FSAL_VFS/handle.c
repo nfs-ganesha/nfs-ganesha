@@ -57,10 +57,18 @@ int vfs_fsal_open(struct vfs_fsal_obj_handle *hdl,
 	return vfs_open_by_handle(vfs_fs, hdl->handle, openflags, fsal_error);
 }
 
-/* alloc_handle
- * allocate and fill in a handle
+/**
+ * @brief Create a VFS OBJ handle
+ *
+ * @param[in] dirfd	FD for dir containing new handle
+ * @param[in] fh	VFS FH for new handle
+ * @param[in] fs	FileSystem containing new handle
+ * @param[in] stat	stat(2) resutls for new handle
+ * @param[in] dir_fh	VFS FH for dir containing new handle
+ * @param[in] path	Path to new handle
+ * @param[in] exp_hdl	Export containing new handle
+ * @return VFS OBJ handle on success, NULL on failure
  */
-
 static struct vfs_fsal_obj_handle *alloc_handle(int dirfd,
 						vfs_file_handle_t *fh,
 						struct fsal_filesystem *fs,
@@ -74,12 +82,9 @@ static struct vfs_fsal_obj_handle *alloc_handle(int dirfd,
 	struct vfs_fsal_obj_handle *hdl;
 	fsal_status_t st;
 
-	hdl = gsh_calloc(1,
-			 (sizeof(struct vfs_fsal_obj_handle) +
-			  sizeof(vfs_file_handle_t)));
+	hdl = vfs_sub_alloc_handle();
 	if (hdl == NULL)
 		return NULL;
-	hdl->handle = (vfs_file_handle_t *) &hdl[1];
 	memcpy(hdl->handle, fh, sizeof(vfs_file_handle_t));
 	hdl->obj_handle.type = posix2fsal_type(stat->st_mode);
 	hdl->dev = posix2fsal_devt(stat->st_dev);
@@ -136,7 +141,8 @@ static struct vfs_fsal_obj_handle *alloc_handle(int dirfd,
 	fsal_obj_handle_init(&hdl->obj_handle, exp_hdl,
 			     posix2fsal_type(stat->st_mode));
 	vfs_handle_ops_init(&hdl->obj_handle.obj_ops);
-	vfs_sub_init_handle_ops(myself, &hdl->obj_handle.obj_ops);
+	if (vfs_sub_init_handle(myself, hdl, path) < 0)
+		goto spcerr;
 
 	return hdl;
 
