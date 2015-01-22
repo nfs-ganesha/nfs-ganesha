@@ -123,6 +123,8 @@ int _9p_lcreate(struct _9p_request_data *req9p, void *worker_data,
 				  preply);
 
 	_9p_openflags2FSAL(flags, &openflags);
+	pfid->state.state_data.fid.share_access =
+		_9p_openflags_to_share_access(flags);
 
 	cache_status = cache_inode_open(pentry_newfile, openflags, 0);
 	if (cache_status != CACHE_INODE_SUCCESS) {

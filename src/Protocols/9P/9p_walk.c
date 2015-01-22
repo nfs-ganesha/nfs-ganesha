@@ -96,6 +96,14 @@ int _9p_walk(struct _9p_request_data *req9p, void *worker_data,
 		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
 				  preply);
 
+	/* Initialize state_t embeded in fid. The refcount is initialized
+	 * to one to represent the state_t being embeded in the fid. This
+	 * prevents it from ever being reduced to zero by dec_state_t_ref.
+	 */
+	glist_init(&pfid->state.state_data.fid.state_locklist);
+	pfid->state.state_type = STATE_TYPE_9P_FID;
+	pfid->state.state_refcount = 1;
+
 	/* Is this a lookup or a fid cloning operation ? */
 	if (*nwname == 0) {
 		/* Cloning operation */

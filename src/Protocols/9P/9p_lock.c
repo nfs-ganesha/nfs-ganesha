@@ -83,7 +83,6 @@ int _9p_lock(struct _9p_request_data *req9p, void *worker_data,
 	state_status_t state_status = STATE_SUCCESS;
 	state_owner_t *holder;
 	state_owner_t *powner;
-	state_t state;
 	fsal_lock_param_t lock;
 	fsal_lock_param_t conflict;
 
@@ -164,7 +163,7 @@ int _9p_lock(struct _9p_request_data *req9p, void *worker_data,
 		}
 
 		state_status = state_lock(pfid->pentry,
-					  powner, &state,
+					  powner, &pfid->state,
 					  STATE_NON_BLOCKING, NULL, &lock,
 					  &holder, &conflict);
 

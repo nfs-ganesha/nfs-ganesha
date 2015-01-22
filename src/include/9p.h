@@ -35,10 +35,12 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <sys/select.h>
+#include <fcntl.h>
 
 #include "9p_types.h"
 #include "fsal_types.h"
 #include "cache_inode.h"
+#include "sal_data.h"
 
 #ifdef _USE_9P_RDMA
 #include <infiniband/arch.h>
@@ -288,6 +290,7 @@ struct _9p_fid {
 	struct group_data *gdata;
 	cache_entry_t *pentry;
 	struct _9p_qid qid;
+	struct state_t state;
 	cache_entry_t *ppentry;
 	char name[MAXNAMLEN];
 	u32 opens;
@@ -653,6 +656,20 @@ int _9p_tools_errno(cache_inode_status_t cache_status);
 void _9p_openflags2FSAL(u32 *inflags, fsal_openflags_t *outflags);
 int _9p_tools_clunk(struct _9p_fid *pfid);
 void _9p_cleanup_fids(struct _9p_conn *conn);
+
+static inline unsigned int _9p_openflags_to_share_access(u32 *inflags)
+{
+	switch ((*inflags) & O_ACCMODE) {
+	case O_RDONLY:
+		return OPEN4_SHARE_ACCESS_READ;
+	case O_WRONLY:
+		return OPEN4_SHARE_ACCESS_WRITE;
+	case O_RDWR:
+		return OPEN4_SHARE_ACCESS_READ | OPEN4_SHARE_ACCESS_WRITE;
+	default:
+		return 0;
+	}
+}
 
 #ifdef _USE_9P_RDMA
 /* 9P/RDMA callbacks */
