@@ -708,8 +708,8 @@ hashtable_setlatched(struct hash_table *ht,
  * @brief Delete a value from the store following a previous GetLatch
  *
  * This function removes a value from the a hash store, the value
- * already having been looked up with GetLatched.  In all cases, the
- * lock is released.  hashtable_getlatch must have been called with
+ * already having been looked up with GetLatched. In all cases, the
+ * lock is retained. hashtable_getlatch must have been called with
  * may_read true.
  *
  * @param[in,out] ht      The hash store to be modified
@@ -721,26 +721,21 @@ hashtable_setlatched(struct hash_table *ht,
  * @param[out] stored_val If non-NULL, a buffer descriptor for the
  *                        removed value as stored.
  *
- * @retval HASHTABLE_SUCCESS on non-colliding insert
- * @retval Other errors on failure
  */
 
-hash_error_t
-hashtable_deletelatched(struct hash_table *ht,
-			const struct gsh_buffdesc *key,
-			struct hash_latch *latch,
-			struct gsh_buffdesc *stored_key,
-			struct gsh_buffdesc *stored_val)
+void hashtable_deletelatched(struct hash_table *ht,
+			     const struct gsh_buffdesc *key,
+			     struct hash_latch *latch,
+			     struct gsh_buffdesc *stored_key,
+			     struct gsh_buffdesc *stored_val)
 {
 	/* The pair of buffer descriptors comprising the stored entry */
 	struct hash_data *data = NULL;
 	/* Its partition */
 	struct hash_partition *partition = &ht->partitions[latch->index];
 
-	if (!latch->locator) {
-		hashtable_releaselatched(ht, latch);
-		return HASHTABLE_SUCCESS;
-	}
+	if (!latch->locator)
+		return;
 
 	data = RBT_OPAQ(latch->locator);
 
@@ -802,9 +797,6 @@ hashtable_deletelatched(struct hash_table *ht,
 	pool_free(ht->data_pool, data);
 	pool_free(ht->node_pool, latch->locator);
 	--ht->partitions[latch->index].count;
-
-	hashtable_releaselatched(ht, latch);
-	return HASHTABLE_SUCCESS;
 }
 
 /**
@@ -1036,122 +1028,6 @@ hashtable_getref(hash_table_t *ht, struct gsh_buffdesc *key,
 			get_ref(val);
 	case HASHTABLE_ERROR_NO_SUCH_KEY:
 		hashtable_releaselatched(ht, &latch);
-		break;
-
-	default:
-		break;
-	}
-
-	return rc;
-}
-
-/**
- * @brief Decrement the refcount of and possibly remove an entry
- *
- * This function decrements the reference count and deletes the entry
- * if it goes to zero.
- *
- * @param[in,out] ht         The hashtable to be modified
- * @param[in]     key        The key corresponding to the entry to delete
- * @param[out]    stored_key If non-NULL, a buffer descriptor specifying
- *                           the key as stored in the hash table
- * @param[out]    stored_val If non-NULL, a buffer descriptor specifying
- *                           the key as stored in the hash table
- * @param[in]     put_ref    Function to decrement the reference count of
- *                           the located object.  If the function returns 0,
- *                           the entry is deleted.  If put_ref is NULL, the
- *                           entry is deleted unconditionally.
- * @retval HASHTABLE_SUCCESS on deletion
- * @retval HASHTABLE_NOT_DELETED put_ref returned a non-zero value
- */
-
-hash_error_t
-hashtable_delref(hash_table_t *ht, struct gsh_buffdesc *key,
-		 struct gsh_buffdesc *stored_key,
-		 struct gsh_buffdesc *stored_val,
-		 int (*put_ref)(struct gsh_buffdesc *))
-{
-	/* structure to hold retained state */
-	struct hash_latch latch;
-	/* Stored return code */
-	hash_error_t rc = 0;
-	/* Temporary buffer descriptor.  We need the value to call the
-	   decrement function, even if the caller didn't request the
-	   value. */
-	struct gsh_buffdesc temp_val;
-
-	rc = hashtable_getlatch(ht, key, &temp_val, true, &latch);
-
-	switch (rc) {
-	case HASHTABLE_ERROR_NO_SUCH_KEY:
-		hashtable_releaselatched(ht, &latch);
-		break;
-
-	case HASHTABLE_SUCCESS:
-		if (put_ref != NULL) {
-			if (put_ref(&temp_val) != 0) {
-				hashtable_releaselatched(ht, &latch);
-				rc = HASHTABLE_NOT_DELETED;
-				goto out;
-			}
-		}
-		rc = hashtable_deletelatched(ht, key, &latch, stored_key,
-					     stored_val);
-		break;
-
-	default:
-		break;
-	}
-
- out:
-
-	return rc;
-}
-
-/**
- * @brief Remove an entry if key and value both match
- *
- * This function looks up an entry and removes it if both the key and
- * the supplied pointer matches the stored value pointer.
- *
- * @param[in,out] ht  The hashtable to be modified
- * @param[in]     key The key corresponding to the entry to delete
- * @param[in]     val A pointer, which should match the stored entry's
- *                    value pointer.
- *
- * @retval HASHTABLE_SUCCESS on deletion
- * @retval HASHTABLE_NO_SUCH_KEY if the key was not found or the
- *         values did not match.
- */
-
-hash_error_t
-hashtable_delsafe(hash_table_t *ht, struct gsh_buffdesc *key,
-		  struct gsh_buffdesc *val)
-{
-	/* structure to hold retained state */
-	struct hash_latch latch;
-	/* Stored return code */
-	hash_error_t rc = 0;
-	/* Temporary buffer descriptor.  We need the value to call the
-	   decrement function, even if the caller didn't request the
-	   value. */
-	struct gsh_buffdesc found_val;
-
-	rc = hashtable_getlatch(ht, key, &found_val, true, &latch);
-
-	switch (rc) {
-	case HASHTABLE_ERROR_NO_SUCH_KEY:
-		hashtable_releaselatched(ht, &latch);
-		break;
-
-	case HASHTABLE_SUCCESS:
-		if (found_val.addr == val->addr) {
-			rc = hashtable_deletelatched(ht, key, &latch, NULL,
-						     NULL);
-		} else {
-			rc = HASHTABLE_ERROR_NO_SUCH_KEY;
-			hashtable_releaselatched(ht, &latch);
-		}
 		break;
 
 	default:

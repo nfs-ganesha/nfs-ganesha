@@ -232,12 +232,12 @@ void nfs4_acl_release_entry(fsal_acl_t *acl, fsal_acl_status_t *status)
 		}
 
 		/* use the key to delete the entry */
-		rc = hashtable_deletelatched(fsal_acl_hash, &key, &latch,
-					     &old_key, &old_value);
-		if (rc == HASHTABLE_SUCCESS)
-			break;
+		hashtable_deletelatched(fsal_acl_hash, &key, &latch,
+					&old_key, &old_value);
 
-		/* Fall through to default case */
+		/* Release the latch */
+		hashtable_releaselatched(fsal_acl_hash, &latch);
+		break;
 
 	default:
 		LogCrit(COMPONENT_NFS_V4_ACL,

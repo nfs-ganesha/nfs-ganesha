@@ -175,9 +175,9 @@ typedef struct hash_table {
  */
 
 struct hash_latch {
-	uint32_t index;	/*< Saved partition index */
-	uint64_t rbt_hash; /*< Saved red-black hash */
 	struct rbt_node *locator; /*< Saved location in the tree */
+	uint64_t rbt_hash; /*< Saved red-black hash */
+	uint32_t index;	/*< Saved partition index */
 };
 
 typedef enum hash_set_how {
@@ -219,11 +219,11 @@ hash_error_t hashtable_setlatched(struct hash_table *, struct gsh_buffdesc *,
 				  struct gsh_buffdesc *, struct hash_latch *,
 				  int, struct gsh_buffdesc *,
 				  struct gsh_buffdesc *);
-hash_error_t hashtable_deletelatched(struct hash_table *,
-				     const struct gsh_buffdesc *,
-				     struct hash_latch *,
-				     struct gsh_buffdesc *,
-				     struct gsh_buffdesc *);
+void hashtable_deletelatched(struct hash_table *,
+			     const struct gsh_buffdesc *,
+			     struct hash_latch *,
+			     struct gsh_buffdesc *,
+			     struct gsh_buffdesc *);
 hash_error_t hashtable_delall(struct hash_table *,
 			      int (*)(struct gsh_buffdesc,
 				      struct gsh_buffdesc));
@@ -318,11 +318,14 @@ static inline hash_error_t HashTable_Del(struct hash_table *ht,
 
 	switch (rc) {
 	case HASHTABLE_SUCCESS:
-		return hashtable_deletelatched(ht, key, &latch, stored_key,
-					       stored_val);
+		hashtable_deletelatched(ht, key, &latch,
+					stored_key, stored_val);
+		/* Fall through to release latch */
 
 	case HASHTABLE_ERROR_NO_SUCH_KEY:
 		hashtable_releaselatched(ht, &latch);
+		/* Fall through to return */
+
 	default:
 		return rc;
 	}
@@ -338,12 +341,6 @@ hash_error_t hashtable_test_and_set(struct hash_table *,
 hash_error_t hashtable_getref(struct hash_table *, struct gsh_buffdesc *,
 			      struct gsh_buffdesc *,
 			      void (*)(struct gsh_buffdesc *));
-hash_error_t hashtable_delref(struct hash_table *, struct gsh_buffdesc *,
-			      struct gsh_buffdesc *,
-			      struct gsh_buffdesc *,
-			      int (*)(struct gsh_buffdesc *));
-hash_error_t hashtable_delsafe(hash_table_t *, struct gsh_buffdesc *,
-			       struct gsh_buffdesc *);
 
 /** @} */
 

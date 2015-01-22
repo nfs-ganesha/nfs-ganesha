@@ -1054,21 +1054,11 @@ void dec_state_owner_ref(state_owner_t *owner)
 	}
 
 	/* use the key to delete the entry */
-	rc = hashtable_deletelatched(ht_owner, &buffkey, &latch, &old_key,
-				     &old_value);
+	hashtable_deletelatched(ht_owner, &buffkey, &latch, &old_key,
+				&old_value);
 
-	if (rc != HASHTABLE_SUCCESS) {
-		if (rc == HASHTABLE_ERROR_NO_SUCH_KEY)
-			hashtable_releaselatched(ht_owner, &latch);
-
-		if (!str_valid)
-			display_owner(&dspbuf, owner);
-
-		LogCrit(COMPONENT_STATE, "Error %s, could not remove {%s}",
-			hash_table_err_to_str(rc), str);
-
-		return;
-	}
+	/* Release the latch */
+	hashtable_releaselatched(ht_owner, &latch);
 
 	if (str_valid)
 		LogFullDebug(COMPONENT_STATE, "Free {%s}", str);

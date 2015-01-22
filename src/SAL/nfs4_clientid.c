@@ -1430,20 +1430,11 @@ int32_t dec_client_record_ref(nfs_client_record_t *record)
 	}
 
 	/* use the key to delete the entry */
-	rc = hashtable_deletelatched(ht_client_record, &buffkey, &latch,
-				     &old_key, &old_value);
+	hashtable_deletelatched(ht_client_record, &buffkey, &latch,
+				&old_key, &old_value);
 
-	if (rc != HASHTABLE_SUCCESS) {
-		if (rc == HASHTABLE_ERROR_NO_SUCH_KEY)
-			hashtable_releaselatched(ht_client_record, &latch);
-
-		display_client_record(&dspbuf, record);
-
-		LogCrit(COMPONENT_CLIENTID, "Error %s, could not remove {%s}",
-			hash_table_err_to_str(rc), str);
-
-		return refcount;
-	}
+	/* Release the latch */
+	hashtable_releaselatched(ht_client_record, &latch);
 
 	LogFullDebug(COMPONENT_CLIENTID, "Free {%s}", str);
 
