@@ -520,7 +520,8 @@ void Register_program(protos prot, int flag, int vers)
 void Allocate_sockets()
 {
 	protos p;
-	int    one = 1;
+	int    one        = 1;
+	bool   v6disabled = FALSE;
 
 	LogFullDebug(COMPONENT_DISPATCH, "Allocation of the sockets");
 
@@ -531,6 +532,9 @@ void Allocate_sockets()
 			udp_socket[p] = -1;
 			tcp_socket[p] = -1;
 
+			if (v6disabled)
+				goto try_V4;
+
 			udp_socket[p] = socket(AF_INET6,
 					       SOCK_DGRAM,
 					       IPPROTO_UDP);
@@ -540,7 +544,8 @@ void Allocate_sockets()
 					"Cannot allocate a udp socket for %s, error %d (%s)",
 					tags[p], errno, strerror(errno));
 				if (errno == EAFNOSUPPORT) {
-					LogInfo(COMPONENT_DISPATCH,
+					v6disabled = TRUE;
+					LogWarn(COMPONENT_DISPATCH,
 					    "System may not have V6 intfs configured");
 				}
 				goto try_V4;

@@ -368,8 +368,16 @@ int _9p_create_socket(void)
 	struct sockaddr_in sinaddr_tcp;
 
 	sock = socket(P_FAMILY, SOCK_STREAM, IPPROTO_TCP);
-	if (sock == -1)
-		goto try_socket_V4;
+	if (sock == -1) {
+		if (errno == EAFNOSUPPORT) {
+			LogWarn(COMPONENT_DISPATCH,
+				"Could not create V6 socket, trying V4");
+			goto try_socket_V4;
+		} else {
+			goto bad_socket;
+		}
+	}
+
 	if ((setsockopt(sock,
 			SOL_SOCKET, SO_REUSEADDR,
 			&one, sizeof(one)) == -1) ||
