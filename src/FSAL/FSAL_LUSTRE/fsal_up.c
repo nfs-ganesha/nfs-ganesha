@@ -41,7 +41,7 @@
 #include <sys/time.h>
 #include <mntent.h>
 #include <unistd.h> /* glibc uses <sys/fsuid.h> */
-#include <netdb.h> /* fgor gethostbyname() */
+#include <netdb.h>
 #include <attr/xattr.h>
 
 #ifdef USE_FSAL_LUSTRE_UP

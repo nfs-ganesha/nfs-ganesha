@@ -42,7 +42,7 @@
 #include <sys/syscall.h>
 #include <mntent.h>
 #include <unistd.h> /* glibc uses <sys/fsuid.h> */
-#include <netdb.h> /* fgor gethostbyname() */
+#include <netdb.h>
 #include <attr/xattr.h> /* GetNameParent does lgetxattr */
 
 #include "abstract_mem.h"
