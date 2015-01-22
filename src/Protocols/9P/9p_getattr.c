@@ -95,6 +95,7 @@ int _9p_getattr(struct _9p_request_data *req9p, void *worker_data,
 		return _9p_rerror(req9p, worker_data, msgtag, EIO, plenout,
 				  preply);
 	}
+	op_ctx = &pfid->op_context;
 
 	/* Attach point is found, build the requested attributes */
 

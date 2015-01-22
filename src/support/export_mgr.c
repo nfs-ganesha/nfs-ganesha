@@ -1431,6 +1431,57 @@ static struct gsh_dbus_method export_show_v41_layouts = {
 		 END_ARG_LIST}
 };
 
+extern bool arg_9p_op(DBusMessageIter *args, u8 *opcode, char **errormsg);
+/**
+ * DBUS method to report 9p protocol operation statistics
+ *
+ */
+static bool get_9p_export_op_stats(DBusMessageIter *args,
+				   DBusMessage *reply,
+				   DBusError *error)
+{
+	struct gsh_export *export = NULL;
+	struct export_stats *export_st = NULL;
+	u8 opcode;
+	bool success = true;
+	char *errormsg = "OK";
+	DBusMessageIter iter;
+
+	dbus_message_iter_init_append(reply, &iter);
+	export = lookup_export(args, &errormsg);
+	if (export == NULL) {
+		success = false;
+	} else {
+		export_st = container_of(export, struct export_stats, export);
+		if (export_st->st._9p == NULL) {
+			success = false;
+			errormsg = "Export does not have any 9p activity";
+		}
+	}
+	dbus_message_iter_next(args);
+	if (success)
+		success = arg_9p_op(args, &opcode, &errormsg);
+	dbus_status_reply(&iter, success, errormsg);
+	if (success)
+		server_dbus_9p_opstats(export_st->st._9p, opcode, &iter);
+
+	if (export != NULL)
+		put_gsh_export(export);
+	return true;
+}
+
+static struct gsh_dbus_method export_show_9p_op_stats = {
+	.name = "Get9pOpStats",
+	.method = get_9p_export_op_stats,
+	.args = {EXPORT_ID_ARG,
+		 _9P_OP_ARG,
+		 STATUS_REPLY,
+		 TIMESTAMP_REPLY,
+		 OP_STATS_REPLY,
+		 END_ARG_LIST}
+};
+
+
 /**
  * DBUS method to report 9p I/O statistics
  *
@@ -1580,6 +1631,7 @@ static struct gsh_dbus_method *export_stats_methods[] = {
 	&global_show_fast_ops,
 	&cache_inode_show,
 	&export_show_all_io,
+	&export_show_9p_op_stats,
 	NULL
 };
 
