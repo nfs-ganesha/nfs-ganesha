@@ -1,4 +1,4 @@
-%define __arch_install_post   /usr/lib/rpm/check-rpaths   /usr/lib/rpm/check-buildroot
+%define __arch_install_post /usr/lib/rpm/check-rpaths /usr/lib/rpm/check-buildroot
 
 %if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
 %global with_nfsidmap 1
@@ -6,7 +6,7 @@
 %global with_nfsidmap 0
 %endif
 
-%if ( 0%{?fedora} >= 18 || 0%{?rhel} >= 7 ) && ! %{!?bl6:0}
+%if ( 0%{?fedora} >= 18 || 0%{?rhel} >= 7 )
 %global with_systemd 1
 %else
 %global with_systemd 0
@@ -17,112 +17,69 @@
 # 1. rpmbuild accepts these options (gpfs as example):
 #    --with gpfs
 #    --without gpfs
-# 2. CMake enables FSALs by detecting available support on the build system.
-#
-# Build the FSAL when "--with <fsal>" or CMake detected support.
-# Override CMake's decision by passing "--without <fsal>" to rpmbuild.
 
-%if 0%{?_with_gpfs:1} || (0%{!?_without_gpfs:1} && "@USE_FSAL_GPFS@" == "ON")
-%global with_fsal_gpfs 1
-%else
-%global with_fsal_gpfs 0
-%endif
+%define on_off_switch() %%{?with_%1:ON}%%{!?with_%1:OFF}
 
-%if 0%{?_with_zfs:1} || (0%{!?_without_zfs:1} && "@USE_FSAL_ZFS@" == "ON")
-%global with_fsal_zfs 1
-%else
-%global with_fsal_zfs 0
-%endif
+# A few explanation about %bcond_with and %bcond_without
+# /!\ be careful: this syntax can be quite messy
+# %bcond_with means you add a "--with" option, default = without this feature
+# %bcond_without adds a"--without" so the feature is enabled by default
 
-%if 0%{?_with_xfs:1} || (0%{!?_without_xfs:1} && "@USE_FSAL_XFS@" == "ON")
-%global with_fsal_xfs 1
-%else
-%global with_fsal_xfs 0
-%endif
+@BCOND_GPFS@ gpfs
+%global use_fsal_gpfs %{on_off_switch gpfs}
 
-%if 0%{?_with_ceph:1} || (0%{!?_without_ceph:1} && "@USE_FSAL_CEPH@" == "ON")
-%global with_fsal_ceph 1
-%else
-%global with_fsal_ceph 0
-%endif
+@BCOND_ZFS@ zfs
+%global use_fsal_zfs %{on_off_switch zfs}
 
-%if 0%{?_with_lustre:1} || (0%{!?_without_lustre:1} && "@USE_FSAL_LUSTRE@" == "ON")
-%global with_fsal_lustre 1
-%else
-%global with_fsal_lustre 0
-%endif
+@BCOND_XFS@ xfs
+%global use_fsal_xfs %{on_off_switch xfs}
 
-%if 0%{?_with_shook:1} || (0%{!?_without_shook:1} && "@USE_FSAL_SHOOK@" == "ON")
-%global with_fsal_shook 1
-%else
-%global with_fsal_shook 0
-%endif
+@BCOND_CEPH@ ceph
+%global use_fsal_ceph %{on_off_switch ceph}
 
-%if 0%{?_with_gluster:1} || (0%{!?_without_gluster:1} && "@USE_FSAL_GLUSTER@" == "ON")
-%global with_fsal_gluster 1
-%else
-%global with_fsal_gluster 0
-%endif
+@BCOND_LUSTRE@ lustre
+%global use_fsal_lustre %{on_off_switch lustre}
 
-%if 0%{?_with_hpss:1} || (0%{!?_without_hpss:1} && "@USE_FSAL_HPSS@" == "ON")
-%global with_fsal_hpss 1
-%else
-%global with_fsal_hpss 0
-%endif
+@BCOND_SHOOK@ shook
+%global use_fsal_shook %{on_off_switch shook}
 
-%if 0%{?_with_panfs:1} || (0%{!?_without_pan:1} && "@USE_FSAL_PANFS@" == "ON")
-%global with_fsal_panfs 1
-%else
-%global with_fsal_panfs 0
-%endif
+@BCOND_GLUSTER@ gluster
+%global use_fsal_gluster %{on_off_switch gluster}
 
-%if 0%{?_with_pt:1} || (0%{!?_without_pt:1} && "@USE_FSAL_PT@" == "ON")
-%global with_fsal_pt 1
-%else
-%global with_fsal_pt 0
-%endif
+@BCOND_HPSS@ hpss
+%global use_fsal_hpss %{on_off_switch hpss}
 
-%if 0%{?_with_rdma:1} || (0%{!?_without_rdma:1} && "@USE_9P_RDMA@" == "ON")
-%global with_rdma 1
-%else
-%global with_rdma 0
-%endif
+@BCOND_PANFS@ panfs
+%global use_fsal_panfs %{on_off_switch panfs}
 
-%if %{?_with_jemalloc:1}%{!?_with_jemalloc:0}
-%global with_jemalloc 1
-%else
-%global with_jemalloc 0
-%endif
+@BCOND_PT@ pt
+%global use_fsal_pt %{on_off_switch pt}
 
-%if %{?_with_lustre_up:1}%{!?_with_lustre_up:0}
-%global with_lustre_up 1
-%else
-%global with_lustre_up 0
-%endif
+@BCOND_RDMA@ rdma
+%global use_rdma %{on_off_switch rdma}
 
-%if %{?_with_lttng:1}%{!?_with_lttng:0}
-%global with_lttng 1
-%else
-%global with_lttng 0
-%endif
+@BCOND_JEMALLOC@ jemalloc
 
-%if 0%{?_with_utils:1} || (0%{!?_without_utils:1} && "@USE_ADMIN_TOOLS@" == "ON")
-%global with_utils 1
-%else
-%global with_utils 0
-%endif
+@BCOND_FSAL_LUSTRE_UP@ lustre_up
+%global use_lustre_up %{on_off_switch lustre_up}
 
-%global dev_version %{lua: extraver = string.gsub('@GANESHA_EXTRA_VERSION@', '%-', '_'); print(extraver) }
+@BCOND_LTTNG@ lttng
+%global use_lttng %{on_off_switch lttng}
+
+@BCOND_UTILS@ utils
+%global use_utils %{on_off_switch utils}
+
+%global dev_version %{lua: extraver = string.gsub('@GANESHA_EXTRA_VERSION@', '%-', '.'); print(extraver) }
 
 %define sourcename @CPACK_SOURCE_PACKAGE_FILE_NAME@
 
 Name:		nfs-ganesha
-Version:	@GANESHA_BASE_VERSION@%{dev_version}
-Release:	1%{?dist}
+Version:	@GANESHA_BASE_VERSION@
+Release:	0%{dev_version}%{?dist}
 Summary:	NFS-Ganesha is a NFS Server running in user space
 Group:		Applications/System
 License:	LGPLv3+
-Url:               https://github.com/nfs-ganesha/nfs-ganesha/wiki
+Url:		https://github.com/nfs-ganesha/nfs-ganesha/wiki
 
 Source:		%{sourcename}.tar.gz
 
@@ -141,13 +98,13 @@ BuildRequires:	libnfsidmap-devel
 %else
 BuildRequires:	nfs-utils-lib-devel
 %endif
-%if %{with_rdma}
+%if %{with rdma}
 BuildRequires:	libmooshika-devel >= 0.6-0
 %endif
-%if %{with_jemalloc}
+%if %{with jemalloc}
 BuildRequires:	jemalloc-devel
 %endif
-%if %{with_lustre_up}
+%if %{with lustre_up}
 BuildRequires: lcap-devel >= 0.1-0
 %endif
 %if %{with_systemd}
@@ -189,7 +146,7 @@ Summary: The NFS-GANESHA's NULLFS Stackable FSAL
 Group: Applications/System
 
 %description nullfs
-This package contains a Stackble FSAL shared object to
+This package contains a Stackable FSAL shared object to
 be used with NFS-Ganesha. This is mostly a template for future (more sophisticated) stackable FSALs
 
 %package proxy
@@ -202,7 +159,7 @@ Requires: nfs-ganesha
 This package contains a FSAL shared object to
 be used with NFS-Ganesha to support PROXY based filesystems
 
-%if %{with_utils}
+%if %{with utils}
 %package utils
 Summary: The NFS-GANESHA's util scripts
 Group: Applications/System
@@ -214,7 +171,7 @@ Requires: nfs-ganesha python
 This package contains utility scripts for managing the NFS-GANESHA server
 %endif
 
-%if %{with_lttng}
+%if %{with lttng}
 %package lttng
 Summary: The NFS-GANESHA's library for use with LTTng
 Group: Applications/System
@@ -230,7 +187,7 @@ to the ganesha.nfsd server, it makes it possible to trace using LTTng.
 # for activating this part of the spec file
 
 # GPFS
-%if %{with_fsal_gpfs}
+%if %{with gpfs}
 %package gpfs
 Summary: The NFS-GANESHA's GPFS FSAL
 Group: Applications/System
@@ -241,7 +198,7 @@ be used with NFS-Ganesha to support GPFS backend
 %endif
 
 # ZFS
-%if %{with_fsal_zfs}
+%if %{with zfs}
 %package zfs
 Summary: The NFS-GANESHA's ZFS FSAL
 Group: Applications/System
@@ -254,7 +211,7 @@ be used with NFS-Ganesha to support ZFS
 %endif
 
 # CEPH
-%if %{with_fsal_ceph}
+%if %{with ceph}
 %package ceph
 Summary: The NFS-GANESHA's CEPH FSAL
 Group: Applications/System
@@ -267,7 +224,7 @@ be used with NFS-Ganesha to support CEPH
 %endif
 
 # LUSTRE
-%if %{with_fsal_lustre}
+%if %{with lustre}
 %package lustre
 Summary: The NFS-GANESHA's LUSTRE FSAL
 Group: Applications/System
@@ -280,7 +237,7 @@ be used with NFS-Ganesha to support LUSTRE
 %endif
 
 # SHOOK
-%if %{with_fsal_shook}
+%if %{with shook}
 %package shook
 Summary: The NFS-GANESHA's LUSTRE/SHOOK FSAL
 Group: Applications/System
@@ -293,7 +250,7 @@ be used with NFS-Ganesha to support LUSTRE via SHOOK
 %endif
 
 # XFS
-%if %{with_fsal_xfs}
+%if %{with xfs}
 %package xfs
 Summary: The NFS-GANESHA's XFS FSAL
 Group: Applications/System
@@ -306,7 +263,7 @@ to support XFS correctly
 %endif
 
 # HPSS
-%if %{with_fsal_hpss}
+%if %{with hpss}
 %package hpss
 Summary: The NFS-GANESHA's HPSS FSAL
 Group: Applications/System
@@ -319,7 +276,7 @@ be used with NFS-Ganesha to support HPSS
 %endif
 
 # PANFS
-%if %{with_fsal_panfs}
+%if %{with panfs}
 %package panfs
 Summary: The NFS-GANESHA's PANFS FSAL
 Group: Applications/System
@@ -331,7 +288,7 @@ be used with NFS-Ganesha to support PANFS
 %endif
 
 # PT
-%if %{with_fsal_pt}
+%if %{with pt}
 %package pt
 Summary: The NFS-GANESHA's PT FSAL
 Group: Applications/System
@@ -343,13 +300,13 @@ be used with NFS-Ganesha to support PT
 %endif
 
 # GLUSTER
-%if %{with_fsal_gluster}
+%if %{with gluster}
 %package gluster
 Summary: The NFS-GANESHA's GLUSTER FSAL
 Group: Applications/System
 Requires:	nfs-ganesha
 BuildRequires:	glusterfs-api-devel >= 3.5.1
-BuildRequires:  libattr-devel
+BuildRequires:	libattr-devel
 
 %description gluster
 This package contains a FSAL shared object to
@@ -362,76 +319,28 @@ be used with NFS-Ganesha to support Gluster
 %build
 cmake .	-DCMAKE_BUILD_TYPE=Debug			\
 	-DBUILD_CONFIG=rpmbuild				\
-%if %{with_fsal_zfs}
-	-DUSE_FSAL_ZFS=ON				\
-%else
-	-DUSE_FSAL_ZFS=OFF				\
-%endif
-%if %{with_fsal_xfs}
-	-DUSE_FSAL_XFS=ON				\
-%else
-	-DUSE_FSAL_XFS=OFF				\
-%endif
-%if %{with_fsal_ceph}
-	-DUSE_FSAL_CEPH=ON				\
-%else
-	-DUSE_FSAL_CEPH=OFF				\
-%endif
-%if %{with_fsal_lustre}
-	-DUSE_FSAL_LUSTRE=ON				\
-%else
-	-DUSE_FSAL_LUSTRE=OFF				\
-%endif
-%if %{with_fsal_shook}
-	-DUSE_FSAL_SHOOK=ON				\
-%else
-	-DUSE_FSAL_SHOOK=OFF				\
-%endif
-%if %{with_fsal_gpfs}
-	-DUSE_FSAL_GPFS=ON				\
-%else
-	-DUSE_FSAL_GPFS=OFF				\
-%endif
-%if %{with_fsal_hpss}
-	-DUSE_FSAL_HPSS=ON				\
-%else
-	-DUSE_FSAL_HPSS=OFF				\
-%endif
-%if %{with_fsal_panfs}
-	-DUSE_FSAL_PANFS=ON				\
-%else
-	-DUSE_FSAL_PANFS=OFF				\
-%endif
-%if %{with_fsal_pt}
-	-DUSE_FSAL_PT=ON				\
-%else
-	-DUSE_FSAL_PT=OFF				\
-%endif
-%if %{with_fsal_gluster}
-	-DUSE_FSAL_GLUSTER=ON				\
-%else
-	-DUSE_FSAL_GLUSTER=OFF				\
-%endif
-%if %{with_rdma}
-	-DUSE_9P_RDMA=ON				\
-%endif
-%if %{with_jemalloc}
-	-DALLOCATOR=jemalloc				\
-%endif
-%if %{with_lustre_up}
-	-DUSE_FSAL_LUSTRE_UP=ON				\
-%endif
-%if %{with_lttng}
-	-DUSE_LTTNG=ON				\
-%endif
-%if %{with_utils}
-        -DUSE_ADMIN_TOOLS=ON                            \
-%endif
+	-DUSE_FSAL_ZFS=%{use_fsal_zfs}			\
+	-DUSE_FSAL_XFS=%{use_fsal_xfs}			\
+	-DUSE_FSAL_CEPH=%{use_fsal_ceph}		\
+	-DUSE_FSAL_LUSTRE=%{use_fsal_lustre}		\
+	-DUSE_FSAL_SHOOK=%{use_fsal_shook}		\
+	-DUSE_FSAL_GPFS=%{use_fsal_gpfs}		\
+	-DUSE_FSAL_HPSS=%{use_fsal_hpss}		\
+	-DUSE_FSAL_PANFS=%{use_fsal_panfs}		\
+	-DUSE_FSAL_PT=%{use_fsal_pt}			\
+	-DUSE_FSAL_GLUSTER=%{use_fsal_gluster}		\
+	-DUSE_9P_RDMA=%{use_rdma}			\
+	-DUSE_FSAL_LUSTRE_UP=%{use_lustre_up}		\
+	-DUSE_LTTNG=%{use_lttng}			\
+	-DUSE_ADMIN_TOOLS=%{use_utils}			\
 	-DUSE_FSAL_VFS=ON				\
 	-DUSE_FSAL_PROXY=ON				\
 	-DUSE_DBUS=ON					\
 	-DUSE_9P=ON					\
-	-DDISTNAME_HAS_GIT_DATA=OFF
+	-DDISTNAME_HAS_GIT_DATA=OFF			\
+%if %{with jemalloc}
+	-DALLOCATOR=jemalloc
+%endif
 
 make %{?_smp_mflags} || make %{?_smp_mflags} || make
 
@@ -444,59 +353,59 @@ mkdir -p %{buildroot}%{_bindir}
 mkdir -p %{buildroot}%{_sbindir}
 mkdir -p %{buildroot}%{_libdir}/ganesha
 mkdir -p %{buildroot}%{_localstatedir}/run/ganesha
-install -m 644 config_samples/logrotate_ganesha         %{buildroot}%{_sysconfdir}/logrotate.d/ganesha
+install -m 644 config_samples/logrotate_ganesha	%{buildroot}%{_sysconfdir}/logrotate.d/ganesha
 install -m 644 scripts/ganeshactl/org.ganesha.nfsd.conf	%{buildroot}%{_sysconfdir}/dbus-1/system.d
-install -m 755 tools/mount.9P				%{buildroot}%{_sbindir}/mount.9P
+install -m 755 tools/mount.9P	%{buildroot}%{_sbindir}/mount.9P
 
-install -m 644 config_samples/vfs.conf             %{buildroot}%{_sysconfdir}/ganesha
+install -m 644 config_samples/vfs.conf %{buildroot}%{_sysconfdir}/ganesha
 
 %if %{with_systemd}
 mkdir -p %{buildroot}%{_unitdir}
 install -m 644 scripts/systemd/nfs-ganesha.service	%{buildroot}%{_unitdir}/nfs-ganesha.service
 install -m 644 scripts/systemd/nfs-ganesha-lock.service	%{buildroot}%{_unitdir}/nfs-ganesha-lock.service
-install -m 755 scripts/systemd/sysconfig/nfs-ganesha	%{buildroot}%{_sysconfdir}/sysconfig/ganesha
+install -m 644 scripts/systemd/sysconfig/nfs-ganesha	%{buildroot}%{_sysconfdir}/sysconfig/ganesha
 %else
 mkdir -p %{buildroot}%{_sysconfdir}/init.d
 install -m 755 ganesha.init				%{buildroot}%{_sysconfdir}/init.d/nfs-ganesha
-install -m 755 ganesha.sysconfig			%{buildroot}%{_sysconfdir}/sysconfig/ganesha
+install -m 644 ganesha.sysconfig			%{buildroot}%{_sysconfdir}/sysconfig/ganesha
 %endif
 
-%if %{with_utils} && 0%{?rhel} && 0%{?rhel} <= 6
+%if %{with utils} && 0%{?rhel} && 0%{?rhel} <= 6
 %{!?__python2: %global __python2 /usr/bin/python2}
 %{!?python2_sitelib: %global python2_sitelib %(%{__python2} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")}
 %{!?python2_sitearch: %global python2_sitearch %(%{__python2} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib(1))")}
 %endif
 
-%if %{with_fsal_pt}
-install -m 755 ganesha.pt.init                            %{buildroot}%{_sysconfdir}/init.d/nfs-ganesha-pt
-install -m 644 config_samples/pt.conf                     %{buildroot}%{_sysconfdir}/ganesha
+%if %{with pt}
+install -m 755 ganesha.pt.init %{buildroot}%{_sysconfdir}/init.d/nfs-ganesha-pt
+install -m 644 config_samples/pt.conf %{buildroot}%{_sysconfdir}/ganesha
 %endif
 
-%if %{with_fsal_xfs}
-install -m 755 config_samples/xfs.conf			%{buildroot}%{_sysconfdir}/ganesha
+%if %{with xfs}
+install -m 644 config_samples/xfs.conf %{buildroot}%{_sysconfdir}/ganesha
 %endif
 
-%if %{with_fsal_zfs}
-install -m 755 config_samples/zfs.conf			%{buildroot}%{_sysconfdir}/ganesha
+%if %{with zfs}
+install -m 644 config_samples/zfs.conf %{buildroot}%{_sysconfdir}/ganesha
 %endif
 
-%if %{with_fsal_ceph}
-install -m 755 config_samples/ceph.conf			%{buildroot}%{_sysconfdir}/ganesha
+%if %{with ceph}
+install -m 644 config_samples/ceph.conf %{buildroot}%{_sysconfdir}/ganesha
 %endif
 
-%if %{with_fsal_lustre}
-install -m 755 config_samples/lustre.conf		%{buildroot}%{_sysconfdir}/ganesha
+%if %{with lustre}
+install -m 755 config_samples/lustre.conf %{buildroot}%{_sysconfdir}/ganesha
 %endif
 
-%if %{with_fsal_gpfs}
-install -m 755 config_samples/gpfs.conf			%{buildroot}%{_sysconfdir}/ganesha
-install -m 755 config_samples/gpfs.ganesha.nfsd.conf	%{buildroot}%{_sysconfdir}/ganesha
-install -m 755 config_samples/gpfs.ganesha.main.conf	%{buildroot}%{_sysconfdir}/ganesha
-install -m 755 config_samples/gpfs.ganesha.log.conf	%{buildroot}%{_sysconfdir}/ganesha
-install -m 755 config_samples/gpfs.ganesha.exports.conf	%{buildroot}%{_sysconfdir}/ganesha
+%if %{with gpfs}
+install -m 644 config_samples/gpfs.conf	%{buildroot}%{_sysconfdir}/ganesha
+install -m 644 config_samples/gpfs.ganesha.nfsd.conf %{buildroot}%{_sysconfdir}/ganesha
+install -m 644 config_samples/gpfs.ganesha.main.conf %{buildroot}%{_sysconfdir}/ganesha
+install -m 644 config_samples/gpfs.ganesha.log.conf %{buildroot}%{_sysconfdir}/ganesha
+install -m 644 config_samples/gpfs.ganesha.exports.conf	%{buildroot}%{_sysconfdir}/ganesha
 %endif
 
-%if %{with_utils}
+%if %{with utils}
 pushd .
 cd scripts/ganeshactl/
 python setup.py --quiet install --root=%{buildroot}
@@ -562,8 +471,8 @@ make DESTDIR=%{buildroot} install
 %defattr(-,root,root,-)
 %{_libdir}/ganesha/libfsalproxy*
 
-# Optionnal packages
-%if %{with_fsal_gpfs}
+# Optional packages
+%if %{with gpfs}
 %files gpfs
 %defattr(-,root,root,-)
 %{_libdir}/ganesha/libfsalgpfs*
@@ -574,59 +483,59 @@ make DESTDIR=%{buildroot} install
 %config(noreplace) %{_sysconfdir}/ganesha/gpfs.ganesha.exports.conf
 %endif
 
-%if %{with_fsal_zfs}
+%if %{with zfs}
 %files zfs
 %defattr(-,root,root,-)
 %{_libdir}/ganesha/libfsalzfs*
 %config(noreplace) %{_sysconfdir}/ganesha/zfs.conf
 %endif
 
-%if %{with_fsal_xfs}
+%if %{with xfs}
 %files xfs
 %defattr(-,root,root,-)
 %{_libdir}/ganesha/libfsalxfs*
 %config(noreplace) %{_sysconfdir}/ganesha/xfs.conf
 %endif
 
-%if %{with_fsal_ceph}
+%if %{with ceph}
 %files ceph
 %defattr(-,root,root,-)
 %{_libdir}/ganesha/libfsalceph*
 %config(noreplace) %{_sysconfdir}/ganesha/ceph.conf
 %endif
 
-%if %{with_fsal_lustre}
+%if %{with lustre}
 %files lustre
 %defattr(-,root,root,-)
 %config(noreplace) %{_sysconfdir}/ganesha/lustre.conf
 %{_libdir}/ganesha/libfsallustre*
 %endif
 
-%if %{with_fsal_shook}
+%if %{with shook}
 %files shook
 %defattr(-,root,root,-)
 %{_libdir}/ganesha/libfsalshook*
 %endif
 
-%if %{with_fsal_gluster}
+%if %{with gluster}
 %files gluster
 %defattr(-,root,root,-)
 %{_libdir}/ganesha/libfsalgluster*
 %endif
 
-%if %{with_fsal_hpss}
+%if %{with hpss}
 %files hpss
 %defattr(-,root,root,-)
 %{_libdir}/ganesha/libfsalhpss*
 %endif
 
-%if %{with_fsal_panfs}
+%if %{with panfs}
 %files panfs
 %defattr(-,root,root,-)
 %{_libdir}/ganesha/libfsalpanfs*
 %endif
 
-%if %{with_fsal_pt}
+%if %{with pt}
 %files pt
 %defattr(-,root,root,-)
 %{_libdir}/ganesha/libfsalpt*
@@ -634,43 +543,32 @@ make DESTDIR=%{buildroot} install
 %config(noreplace) %{_sysconfdir}/ganesha/pt.conf
 %endif
 
-%if %{with_lttng}
+%if %{with lttng}
 %files lttng
 %defattr(-,root,root,-)
 %{_libdir}/ganesha/libganesha_trace*
 %endif
 
-%if %{with_utils}
+%if %{with utils}
 %files utils
 %defattr(-,root,root,-)
 %{python2_sitelib}/Ganesha/*
 %{python2_sitelib}/ganeshactl-*-info
-/usr/bin/ganesha-admin
-/usr/bin/manage_clients
-/usr/bin/manage_exports
-/usr/bin/manage_logger
-/usr/bin/ganeshactl
-/usr/bin/fake_recall
-/usr/bin/get_clientids
-/usr/bin/grace_period
-/usr/bin/purge_gids
-/usr/bin/ganesha_stats
-/usr/bin/sm_notify.ganesha
-/usr/bin/ganesha_mgr
+%{_bindir}/ganesha-admin
+%{_bindir}/manage_clients
+%{_bindir}/manage_exports
+%{_bindir}/manage_logger
+%{_bindir}/ganeshactl
+%{_bindir}/fake_recall
+%{_bindir}/get_clientids
+%{_bindir}/grace_period
+%{_bindir}/purge_gids
+%{_bindir}/ganesha_stats
+%{_bindir}/sm_notify.ganesha
+%{_bindir}/ganesha_mgr
 %endif
 
-
 %changelog
-* Mon Jan 5 2015 Niels de Vos <ndevos@redhat.com>
-- Add a panfs subpackage.
-
-* Mon Dec 15 2014 Niels de Vos <ndevos@redhat.com>
-- Enable building against jemalloc.
-
-* Thu Nov 20 2014 Niels de Vos <ndevos@redhat.com>
-- Include the systemd unit in RHEL7.
-- Include the nfs-ganesha-lock systemd unit.
-
 * Fri Jun 27 2014  Philippe DENIEL <philippe.deniel@cea.fr> 2.1
 - Exports are now dynamic.  They can be added or removed via DBus commands.
 - The Pseudo filesystem has been re-written as a FSAL
