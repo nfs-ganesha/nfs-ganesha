@@ -722,6 +722,59 @@ void state_share_anonymous_io_done(cache_entry_t *entry, int share_access)
 }
 
 /**
+ * @brief Remove an NLM share
+ *
+ * @param[in]     state	The state_t describing the share to remove
+ *
+ */
+void remove_nlm_share(state_t *state, bool *unpin)
+{
+	cache_entry_t *entry = state->state_entry;
+	state_owner_t *owner = state->state_owner;
+	state_nlm_client_t *client = owner->so_owner.so_nlm_owner.so_client;
+
+	/* Remove from share list for export */
+	PTHREAD_RWLOCK_wrlock(&op_ctx->export->lock);
+	glist_del(&state->state_export_list);
+	PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
+
+	/* Remove the share from the list for the file. */
+	glist_del(&state->state_list);
+
+	if (glist_empty(&entry->object.file.nlm_share_list)) {
+		/* The list is now empty, remove the pin ref and
+		 * the extra LRU ref.
+		 */
+		if (unpin != NULL) {
+			/* Indicate to caller to unpin */
+			*unpin = true;
+		} else {
+			cache_inode_dec_pin_ref(entry, false);
+			cache_inode_lru_unref(entry, LRU_FLAG_NONE);
+		}
+	}
+
+	/* Remove the share from the NSM Client list */
+	PTHREAD_MUTEX_lock(&client->slc_nsm_client->ssc_mutex);
+
+	glist_del(&state->state_data.nlm_share.share_perclient);
+
+	PTHREAD_MUTEX_unlock(&client->slc_nsm_client->ssc_mutex);
+
+	dec_nsm_client_ref(client->slc_nsm_client);
+
+	/* Remove the share from the NLM Owner list */
+	PTHREAD_MUTEX_lock(&owner->so_mutex);
+
+	glist_del(&state->state_owner_list);
+
+	PTHREAD_MUTEX_unlock(&owner->so_mutex);
+
+	/* Release the state_t reference for active share. */
+	dec_state_t_ref(state);
+}
+
+/**
  * @brief Implement NLM share call
  *
  * @param[in,out] entry        File on which to operate
@@ -729,25 +782,42 @@ void state_share_anonymous_io_done(cache_entry_t *entry, int share_access)
  * @param[in]     share_access Share mode requested
  * @param[in]     share_deny   Deny mode requested
  * @param[in]     owner        Share owner
+ * @param[in]     state        state_t to manage the share
+ * @param[in]     reclaim      Indicates if this is a reclaim
  *
  * @return State status.
  */
 state_status_t state_nlm_share(cache_entry_t *entry,
 			       int share_access,
-			       int share_deny, state_owner_t *owner,
+			       int share_deny,
+			       state_owner_t *owner,
+			       state_t *state,
 			       bool reclaim)
 {
 	unsigned int old_entry_share_access;
 	unsigned int old_entry_share_deny;
 	unsigned int new_entry_share_access;
 	unsigned int new_entry_share_deny;
+	unsigned int old_share_access;
+	unsigned int old_share_deny;
 	fsal_share_param_t share_param;
-	state_nlm_share_t *nlm_share;
 	cache_inode_status_t cache_status;
 	fsal_openflags_t openflags;
 	state_status_t status = 0;
 	struct fsal_export *fsal_export = op_ctx->fsal_export;
 	bool unpin = true;
+	state_nlm_client_t *client = owner->so_owner.so_nlm_owner.so_client;
+
+	if (share_access == OPEN4_SHARE_ACCESS_NONE) {
+		/* An update to no access is considered the same as
+		 * an unshare.
+		 */
+		return state_nlm_unshare(entry,
+					 OPEN4_SHARE_ACCESS_BOTH,
+					 OPEN4_SHARE_DENY_BOTH,
+					 owner,
+					 state);
+	}
 
 	cache_status = cache_inode_lru_ref(entry, LRU_FLAG_NONE);
 
@@ -803,71 +873,60 @@ state_status_t state_nlm_share(cache_entry_t *entry,
 		goto out_unlock;
 	}
 
-	/* Create a new NLM Share object */
-	nlm_share = gsh_calloc(1, sizeof(state_nlm_share_t));
-
-	if (nlm_share == NULL) {
-		LogEvent(COMPONENT_STATE, "Can not allocate memory for share");
-		status = STATE_MALLOC_ERROR;
-		goto out_unlock;
-	}
-
-	nlm_share->sns_owner = owner;
-	nlm_share->sns_entry = entry;
-	nlm_share->sns_access = share_access;
-	nlm_share->sns_deny = share_deny;
-	nlm_share->sns_export = op_ctx->export;
-
 	/* Add share to list for NLM Owner */
-	inc_state_owner_ref(owner);
-
 	PTHREAD_MUTEX_lock(&owner->so_mutex);
 
 	glist_add_tail(&owner->so_owner.so_nlm_owner.so_nlm_shares,
-		       &nlm_share->sns_share_per_owner);
+		       &state->state_owner_list);
 
 	PTHREAD_MUTEX_unlock(&owner->so_mutex);
 
-	dec_state_owner_ref(owner);
-
 	/* Add share to list for NSM Client */
-	inc_nsm_client_ref(owner->so_owner.so_nlm_owner.so_client->
-			   slc_nsm_client);
+	inc_nsm_client_ref(client->slc_nsm_client);
 
-	PTHREAD_MUTEX_lock(&owner->so_owner.so_nlm_owner.so_client
-			   ->slc_nsm_client->ssc_mutex);
+	PTHREAD_MUTEX_lock(&client->slc_nsm_client->ssc_mutex);
 
-	glist_add_tail(&owner->so_owner.so_nlm_owner.so_client->slc_nsm_client->
-		       ssc_share_list, &nlm_share->sns_share_per_client);
+	glist_add_tail(&client->slc_nsm_client->ssc_share_list,
+		       &state->state_data.nlm_share.share_perclient);
 
-	PTHREAD_MUTEX_unlock(&owner->so_owner.so_nlm_owner.so_client
-			     ->slc_nsm_client->ssc_mutex);
+	PTHREAD_MUTEX_unlock(&client->slc_nsm_client->ssc_mutex);
 
 	if (glist_empty(&entry->object.file.nlm_share_list))
 		unpin = false;
-	if (glist_empty(&entry->object.file.lock_list)) {
-		/* List was empty so we must retain the pin reference. */
-		unpin = false;
-	}
 
 	/* Add share to list for file. */
 	glist_add_tail(&entry->object.file.nlm_share_list,
-		       &nlm_share->sns_share_per_file);
+		       &state->state_list);
 
 	/* Add to share list for export */
 	PTHREAD_RWLOCK_wrlock(&op_ctx->export->lock);
 	glist_add_tail(&op_ctx->export->exp_nlm_share_list,
-		       &nlm_share->sns_share_per_export);
+		       &state->state_export_list);
 	PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
 
 	/* Get the current union of share states of this file. */
 	old_entry_share_access = state_share_get_share_access(entry);
 	old_entry_share_deny = state_share_get_share_deny(entry);
 
+	/* Get the old access/deny (it may be none if this is a new
+	 * share reservation rather than an update).
+	 */
+	old_share_access = state->state_data.nlm_share.share_access;
+	old_share_deny = state->state_data.nlm_share.share_deny;
+
+	/* If we had never had a share, take a reference on the state_t
+	 * to retain it.
+	 */
+	if (old_share_access != OPEN4_SHARE_ACCESS_NONE)
+		inc_state_t_ref(state);
+
 	/* Update the ref counted share state of this file. */
-	state_share_update_counter(entry, OPEN4_SHARE_ACCESS_NONE,
-				   OPEN4_SHARE_DENY_NONE, share_access,
-				   share_deny, true);
+	state_share_update_counter(entry,
+				   old_share_access,
+				   old_share_deny,
+				   share_access,
+				   share_deny,
+				   true);
 
 	/* Get the updated union of share states of this file. */
 	new_entry_share_access = state_share_get_share_access(entry);
@@ -887,51 +946,14 @@ state_status_t state_nlm_share(cache_entry_t *entry,
 
 		if (status != STATE_SUCCESS) {
 			/* Revert the ref counted share state of this file. */
-			state_share_update_counter(entry, share_access,
+			state_share_update_counter(entry,
+						   share_access,
 						   share_deny,
-						   OPEN4_SHARE_ACCESS_NONE,
-						   OPEN4_SHARE_DENY_NONE, true);
+						   old_share_access,
+						   old_share_deny,
+						   true);
 
-			/* Remove from share list for export */
-			PTHREAD_RWLOCK_wrlock(&op_ctx->export->lock);
-			glist_del(&nlm_share->sns_share_per_export);
-			PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
-
-			/* Remove the share from the list for the file. */
-			glist_del(&nlm_share->sns_share_per_file);
-
-			if (glist_empty(&entry->object.file.nlm_share_list)) {
-				/* List is now empty so we must drop the pin
-				 * reference.
-				 */
-				unpin = true;
-			}
-
-			/* Remove the share from the NSM Client list */
-			PTHREAD_MUTEX_lock(&owner->so_owner.so_nlm_owner
-					   .so_client->slc_nsm_client
-					   ->ssc_mutex);
-
-			glist_del(&nlm_share->sns_share_per_client);
-
-			PTHREAD_MUTEX_unlock(&owner->so_owner.so_nlm_owner
-					     .so_client->slc_nsm_client
-					     ->ssc_mutex);
-
-			dec_nsm_client_ref(owner->so_owner.so_nlm_owner.
-					   so_client->slc_nsm_client);
-
-			/* Remove the share from the NLM Owner list */
-			PTHREAD_MUTEX_lock(&owner->so_mutex);
-
-			glist_del(&nlm_share->sns_share_per_owner);
-
-			PTHREAD_MUTEX_unlock(&owner->so_mutex);
-
-			dec_state_owner_ref(owner);
-
-			/* Free the NLM Share and exit */
-			gsh_free(nlm_share);
+			remove_nlm_share(state, &unpin);
 
 			LogDebug(COMPONENT_STATE, "do_share_op failed");
 
@@ -939,7 +961,11 @@ state_status_t state_nlm_share(cache_entry_t *entry,
 		}
 	}
 
-	LogFullDebug(COMPONENT_STATE, "added share_access %u, " "share_deny %u",
+	/* Update the current share type */
+	state->state_data.nlm_share.share_access = share_access;
+	state->state_data.nlm_share.share_deny = share_deny;
+
+	LogFullDebug(COMPONENT_STATE, "added share_access %u, share_deny %u",
 		     share_access, share_deny);
 
  out_unlock:
@@ -963,27 +989,30 @@ state_status_t state_nlm_share(cache_entry_t *entry,
 /**
  * @brief Implement NLM unshare procedure
  *
- * @param[in,out] entry        File on which to opwerate
+ * @param[in,out] entry        File on which to operate
  * @param[in]     share_access Access mode to relinquish
  * @param[in]     share_deny   Deny mode to relinquish
  * @param[in]     owner        Share owner
+ * @param[in]     state        The state object associated with this owner
+ * @param[in]     state        state_t to manage the share
  *
  * @return State status.
  */
 state_status_t state_nlm_unshare(cache_entry_t *entry,
 				 int share_access,
 				 int share_deny,
-				 state_owner_t *owner)
+				 state_owner_t *owner,
+				 state_t *state)
 {
-	struct glist_head *glist, *glistn;
 	unsigned int old_entry_share_access;
 	unsigned int old_entry_share_deny;
 	unsigned int new_entry_share_access;
 	unsigned int new_entry_share_deny;
-	unsigned int removed_share_access;
-	unsigned int removed_share_deny;
+	unsigned int old_share_access;
+	unsigned int old_share_deny;
+	unsigned int new_share_access;
+	unsigned int new_share_deny;
 	fsal_share_param_t share_param;
-	state_nlm_share_t *nlm_share;
 	cache_inode_status_t cache_status;
 	state_status_t status = 0;
 
@@ -997,116 +1026,66 @@ state_status_t state_nlm_unshare(cache_entry_t *entry,
 
 	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 
-	glist_for_each_safe(glist, glistn, &entry->object.file.nlm_share_list) {
-		nlm_share =
-		    glist_entry(glist, state_nlm_share_t, sns_share_per_file);
+	/* Get the current union of share states of this file. */
+	old_entry_share_access = state_share_get_share_access(entry);
+	old_entry_share_deny = state_share_get_share_deny(entry);
 
-		if (different_owners(owner, nlm_share->sns_owner))
-			continue;
+	/* Old share state. */
+	old_share_access = state->state_data.nlm_share.share_access;
+	old_share_deny = state->state_data.nlm_share.share_deny;
 
-		if ((op_ctx->export != NULL) &&
-		    (op_ctx->export != nlm_share->sns_export))
-			continue;
+	/* The removal might not remove everything. */
+	new_share_access = old_share_access - (old_share_access & share_access);
+	new_share_deny = old_share_deny - (old_share_deny & share_deny);
 
-		/* share_access == OPEN4_SHARE_ACCESS_NONE indicates that
-		 * any share should be matched for unshare.
-		 */
-		if (share_access != OPEN4_SHARE_ACCESS_NONE
-		    && (nlm_share->sns_access != share_access
-			|| nlm_share->sns_deny != share_deny))
-			continue;
+	/* Update the ref counted share state of this file. */
+	state_share_update_counter(entry,
+				   old_share_access,
+				   old_share_deny,
+				   new_share_access,
+				   new_share_deny,
+				   true);
 
-		/* Get the current union of share states of this file. */
-		old_entry_share_access = state_share_get_share_access(entry);
-		old_entry_share_deny = state_share_get_share_deny(entry);
+	/* Get the updated union of share states of this file. */
+	new_entry_share_access = state_share_get_share_access(entry);
+	new_entry_share_deny = state_share_get_share_deny(entry);
 
-		/* Share state to be removed. */
-		removed_share_access = nlm_share->sns_access;
-		removed_share_deny = nlm_share->sns_deny;
+	/* If this file's share bits are different from the supposed
+	 * value, update it.
+	 */
+	if ((new_entry_share_access != old_entry_share_access)
+	    || (new_entry_share_deny != old_entry_share_deny)) {
+		/* Try to push to FSAL. */
+		share_param.share_access = new_entry_share_access;
+		share_param.share_deny = new_entry_share_deny;
+		share_param.share_reclaim = false;
 
-		/* Update the ref counted share state of this file. */
-		state_share_update_counter(entry, removed_share_access,
-					   removed_share_deny,
-					   OPEN4_SHARE_ACCESS_NONE,
-					   OPEN4_SHARE_DENY_NONE, true);
+		status = do_share_op(entry, owner, &share_param);
 
-		/* Get the updated union of share states of this file. */
-		new_entry_share_access = state_share_get_share_access(entry);
-		new_entry_share_deny = state_share_get_share_deny(entry);
-
-		/* If this file's share bits are different from the supposed
-		 * value, update it.
-		 */
-		if ((new_entry_share_access != old_entry_share_access)
-		    || (new_entry_share_deny != old_entry_share_deny)) {
-			/* Try to push to FSAL. */
-			share_param.share_access = new_entry_share_access;
-			share_param.share_deny = new_entry_share_deny;
-			share_param.share_reclaim = false;
-
-			status = do_share_op(entry, owner,
-					     &share_param);
-
-			if (status != STATE_SUCCESS) {
-				/* Revert the ref counted share state
-				 * of this file.
-				 */
-				state_share_update_counter(
-					entry,
-					OPEN4_SHARE_ACCESS_NONE,
-					OPEN4_SHARE_DENY_NONE,
-					removed_share_access,
-					removed_share_deny,
-					true);
-
-				LogDebug(COMPONENT_STATE, "do_share_op failed");
-				goto out;
-			}
-		}
-
-		LogFullDebug(COMPONENT_STATE,
-			     "removed share_access %u, share_deny %u",
-			     removed_share_access, removed_share_deny);
-
-		/* Remove from share list for export */
-		PTHREAD_RWLOCK_wrlock(&nlm_share->sns_export->lock);
-		glist_del(&nlm_share->sns_share_per_export);
-		PTHREAD_RWLOCK_unlock(&nlm_share->sns_export->lock);
-
-		/* Remove the share from the list for the file. */
-		glist_del(&nlm_share->sns_share_per_file);
-
-		if (glist_empty(&entry->object.file.nlm_share_list)) {
-			/* The list is now empty, remove the pin ref and
-			 * the extra LRU ref.
+		if (status != STATE_SUCCESS) {
+			/* Revert the ref counted share state
+			 * of this file.
 			 */
-			cache_inode_dec_pin_ref(entry, false);
-			cache_inode_lru_unref(entry, LRU_FLAG_NONE);
+			state_share_update_counter(entry,
+						   new_share_access,
+						   new_share_deny,
+						   old_share_access,
+						   old_share_deny,
+						   true);
+
+			LogDebug(COMPONENT_STATE, "do_share_op failed");
+			goto out;
 		}
+	}
 
-		/* Remove the share from the NSM Client list */
-		PTHREAD_MUTEX_lock(&owner->so_owner.so_nlm_owner.so_client
-				   ->slc_nsm_client->ssc_mutex);
+	LogFullDebug(COMPONENT_STATE,
+		     "removed share_access %u, share_deny %u",
+		     share_access, share_deny);
 
-		glist_del(&nlm_share->sns_share_per_client);
-
-		PTHREAD_MUTEX_unlock(&owner->so_owner.so_nlm_owner.so_client
-				     ->slc_nsm_client->ssc_mutex);
-
-		dec_nsm_client_ref(owner->so_owner.so_nlm_owner.so_client->
-				   slc_nsm_client);
-
-		/* Remove the share from the NLM Owner list */
-		PTHREAD_MUTEX_lock(&owner->so_mutex);
-
-		glist_del(&nlm_share->sns_share_per_owner);
-
-		PTHREAD_MUTEX_unlock(&owner->so_mutex);
-
-		dec_state_owner_ref(owner);
-
-		/* Free the NLM Share (and continue to look for more) */
-		gsh_free(nlm_share);
+	if (new_share_access == OPEN4_SHARE_ACCESS_NONE &&
+	    new_share_deny == OPEN4_SHARE_DENY_NONE) {
+		/* The share is completely removed. */
+		remove_nlm_share(state, NULL);
 	}
 
  out:
@@ -1129,63 +1108,21 @@ state_status_t state_nlm_unshare(cache_entry_t *entry,
  */
 void state_share_wipe(cache_entry_t *entry)
 {
-	state_nlm_share_t *nlm_share;
+	state_t *state;
 	struct glist_head *glist;
 	struct glist_head *glistn;
-	state_owner_t *owner;
 
 	glist_for_each_safe(glist, glistn, &entry->object.file.nlm_share_list) {
-		nlm_share =
-		    glist_entry(glist, state_nlm_share_t, sns_share_per_file);
+		state = glist_entry(glist, state_t, state_list);
 
-		owner = nlm_share->sns_owner;
-
-		/* Remove from share list for export */
-		PTHREAD_RWLOCK_wrlock(&nlm_share->sns_export->lock);
-		glist_del(&nlm_share->sns_share_per_export);
-		PTHREAD_RWLOCK_unlock(&nlm_share->sns_export->lock);
-
-		/* Remove the share from the list for the file. */
-		glist_del(&nlm_share->sns_share_per_file);
-
-		if (glist_empty(&entry->object.file.nlm_share_list)) {
-			/* The list is now empty, remove the pin ref and
-			 * the extra LRU ref.
-			 */
-			cache_inode_dec_pin_ref(entry, false);
-			cache_inode_lru_unref(entry, LRU_FLAG_NONE);
-		}
-
-		/* Remove the share from the NSM Client list */
-		PTHREAD_MUTEX_lock(&owner->so_owner.so_nlm_owner.so_client
-				   ->slc_nsm_client->ssc_mutex);
-
-		glist_del(&nlm_share->sns_share_per_client);
-
-		PTHREAD_MUTEX_unlock(&owner->so_owner.so_nlm_owner.so_client
-				     ->slc_nsm_client->ssc_mutex);
-
-		dec_nsm_client_ref(owner->so_owner.so_nlm_owner.so_client->
-				   slc_nsm_client);
-
-		/* Remove the share from the NLM Owner list */
-		PTHREAD_MUTEX_lock(&owner->so_mutex);
-
-		glist_del(&nlm_share->sns_share_per_owner);
-
-		PTHREAD_MUTEX_unlock(&owner->so_mutex);
-
-		dec_state_owner_ref(owner);
-
-		/* Free the NLM Share (and continue to look for more) */
-		gsh_free(nlm_share);
+		remove_nlm_share(state, NULL);
 	}
 }
 
 void state_export_unshare_all(void)
 {
 	int errcnt = 0;
-	state_nlm_share_t *nlm_share;
+	state_t *state;
 	state_owner_t *owner;
 	cache_entry_t *entry;
 	state_status_t status;
@@ -1193,18 +1130,20 @@ void state_export_unshare_all(void)
 	while (errcnt < STATE_ERR_MAX) {
 		PTHREAD_RWLOCK_wrlock(&op_ctx->export->lock);
 
-		nlm_share =
-		    glist_first_entry(&op_ctx->export->exp_nlm_share_list,
-				      state_nlm_share_t,
-				      sns_share_per_export);
+		state = glist_first_entry(&op_ctx->export->exp_nlm_share_list,
+					  state_t,
+					  state_export_list);
 
-		if (nlm_share == NULL) {
+		if (state == NULL) {
 			PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
 			break;
 		}
 
-		entry = nlm_share->sns_entry;
-		owner = nlm_share->sns_owner;
+		entry = state->state_entry;
+		owner = state->state_owner;
+
+		/* Get a reference to the state_t */
+		inc_state_t_ref(state);
 
 		/* get a reference to the owner */
 		inc_state_owner_ref(owner);
@@ -1225,12 +1164,15 @@ void state_export_unshare_all(void)
 
 		/* Remove all shares held by this Owner on this export */
 		status = state_nlm_unshare(entry,
-					   OPEN4_SHARE_ACCESS_NONE,
-					   OPEN4_SHARE_DENY_NONE,
-					   owner);
+					   OPEN4_SHARE_ACCESS_BOTH,
+					   OPEN4_SHARE_DENY_BOTH,
+					   owner,
+					   state);
 
+		/* Release references taken above. Should free the state_t. */
 		dec_state_owner_ref(owner);
 		cache_inode_lru_unref(entry, LRU_FLAG_NONE);
+		dec_state_t_ref(state);
 
 		if (!state_unlock_err_ok(status)) {
 			/* Increment the error count and try the next share,

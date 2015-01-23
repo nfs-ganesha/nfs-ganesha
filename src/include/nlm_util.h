@@ -72,7 +72,8 @@ int nlm_process_share_parms(struct svc_req *req, nlm4_share *share,
 			    cache_entry_t **ppentry, care_t care,
 			    state_nsm_client_t **ppnsm_client,
 			    state_nlm_client_t **ppnlm_client,
-			    state_owner_t **ppowner);
+			    state_owner_t **ppowner,
+			    state_t **state);
 
 void nlm_process_conflict(nlm4_holder *nlm_holder, state_owner_t *holder,
 			  fsal_lock_param_t *conflict);

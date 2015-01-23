@@ -262,13 +262,27 @@ enum state_type {
 };
 
 /**
- * @brief Data for a share reservation/open
+ * @brief Data for an NFS v4 share reservation/open
  */
 
 struct state_share {
 	struct glist_head share_lockstates;	/*< Lock states for this
 						   open state
 						   This field MUST be first */
+	unsigned int share_access;	/*< The NFSv4 Share Access state */
+	unsigned int share_deny;	/*< The NFSv4 Share Deny state */
+	unsigned int share_access_prev;	/*< Previous share access state */
+	unsigned int share_deny_prev;	/*< Previous share deny state   */
+};
+
+/**
+ * @brief Data for an NLM share reservation/open
+ */
+
+struct state_nlm_share {
+	struct glist_head share_perclient;	/*< Lock states for this
+						    open state
+						    This field MUST be first */
 	unsigned int share_access;	/*< The NFSv4 Share Access state */
 	unsigned int share_deny;	/*< The NFSv4 Share Deny state */
 	unsigned int share_access_prev;	/*< Previous share access state */
@@ -351,6 +365,7 @@ struct state_layout {
 
 union state_data {
 	struct state_share share;
+	struct state_nlm_share nlm_share;
 	struct state_lock lock;
 	struct state_deleg deleg;
 	struct state_layout layout;
@@ -987,22 +1002,6 @@ typedef struct nfs_grace_start {
 
 extern pool_t *state_owner_pool;	/*< Pool for NFSv4 files's open owner */
 extern pool_t *state_v4_pool;	/*< Pool for NFSv4 files's states */
-
-/**
- * @brief NLM share reservation
- */
-
-typedef struct state_nlm_share {
-	struct glist_head sns_share_per_file;	/*< Shares on this file */
-	struct glist_head sns_share_per_owner;	/*< Shares for this owner */
-	struct glist_head sns_share_per_client;	/*< Shares for this client */
-	struct glist_head sns_share_per_export;	/*< Shares for this export */
-	state_owner_t *sns_owner;	/*< State owner */
-	cache_entry_t *sns_entry;	/*< File */
-	struct gsh_export *sns_export;	/*< Export */
-	int sns_access;		/*< Access mode */
-	int sns_deny;		/*< Deny mode */
-} state_nlm_share_t;
 
 #ifdef DEBUG_SAL
 extern struct glist_head state_v4_all;

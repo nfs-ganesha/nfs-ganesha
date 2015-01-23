@@ -54,6 +54,7 @@ int nlm4_Share(nfs_arg_t *args,
 	state_nsm_client_t *nsm_client;
 	state_nlm_client_t *nlm_client;
 	state_owner_t *nlm_owner;
+	state_t *nlm_state;
 	int rc;
 	int grace = nfs_in_grace();
 	/* Indicate if we let FSAL to handle requests during grace. */
@@ -118,7 +119,8 @@ int nlm4_Share(nfs_arg_t *args,
 				     CARE_NO_MONITOR,
 				     &nsm_client,
 				     &nlm_client,
-				     &nlm_owner);
+				     &nlm_owner,
+				     &nlm_state);
 
 	if (rc >= 0) {
 		/* Present the error back to the client */
@@ -133,6 +135,7 @@ int nlm4_Share(nfs_arg_t *args,
 				       arg->share.access,
 				       arg->share.mode,
 				       nlm_owner,
+				       nlm_state,
 				       grace);
 
 	if (state_status != STATE_SUCCESS) {
@@ -147,6 +150,7 @@ int nlm4_Share(nfs_arg_t *args,
 	dec_nlm_client_ref(nlm_client);
 	dec_state_owner_ref(nlm_owner);
 	cache_inode_put(entry);
+	dec_nlm_state_ref(nlm_state);
 
 	LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Share %s",
 		 lock_result_str(res->res_nlm4share.stat));

@@ -861,13 +861,18 @@ state_status_t state_share_anonymous_io_start(cache_entry_t *entry,
 
 void state_share_anonymous_io_done(cache_entry_t *entry, int share_access);
 
-state_status_t state_nlm_share(cache_entry_t *,
-			       int, int, state_owner_t *, bool);
+state_status_t state_nlm_share(cache_entry_t *entry,
+			       int share_access,
+			       int share_deny,
+			       state_owner_t *owner,
+			       state_t *state,
+			       bool reclaim);
 
 state_status_t state_nlm_unshare(cache_entry_t *entry,
 				 int share_access,
 				 int share_deny,
-				 state_owner_t *owner);
+				 state_owner_t *owner,
+				 state_t *state);
 
 void state_share_wipe(cache_entry_t *entry);
 void state_export_unshare_all(void);

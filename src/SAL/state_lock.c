@@ -3086,7 +3086,7 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 	cache_entry_t *entry;
 	int errcnt = 0;
 	struct glist_head newlocks;
-	state_nlm_share_t *found_share;
+	state_t *found_share;
 	state_status_t status = 0;
 	struct root_op_context root_op_context;
 	struct gsh_export *export;
@@ -3258,9 +3258,10 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 		/* We just need to find any file this client has locks on.
 		 * We pick the first lock the client holds, and use it's file.
 		 */
-		found_share = glist_first_entry(&nsmclient->ssc_share_list,
-						state_nlm_share_t,
-						sns_share_per_client);
+		found_share =
+			glist_first_entry(&nsmclient->ssc_share_list,
+					  state_t,
+					  state_data.share.share_lockstates);
 
 		/* If we don't find any entries, then we are done. */
 		if (found_share == NULL) {
@@ -3272,9 +3273,9 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 		 * to proceed with the operation (cache entry, owner, and
 		 * export).
 		 */
-		entry = found_share->sns_entry;
-		owner = found_share->sns_owner;
-		export = found_share->sns_export;
+		entry = found_share->state_entry;
+		owner = found_share->state_owner;
+		export = found_share->state_export;
 
 		root_op_context.req_ctx.export = export;
 		root_op_context.req_ctx.fsal_export = export->fsal_export;
@@ -3300,11 +3301,14 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 		/* Get a reference to the owner */
 		inc_state_owner_ref(owner);
 
+		/* Get a reference to the state_t */
+		inc_state_t_ref(found_share);
+
 		/* Move this entry to the end of the list
 		 * (this will help if errors occur)
 		 */
 		glist_add_tail(&nsmclient->ssc_share_list,
-			       &found_share->sns_share_per_client);
+			       &found_share->state_data.share.share_lockstates);
 
 		PTHREAD_MUTEX_unlock(&nsmclient->ssc_mutex);
 
@@ -3313,9 +3317,10 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 			 * Owner on the file (on all exports)
 			 */
 			status = state_nlm_unshare(entry,
-						   OPEN4_SHARE_ACCESS_NONE,
-						   OPEN4_SHARE_DENY_NONE,
-						   owner);
+						   OPEN4_SHARE_ACCESS_BOTH,
+						   OPEN4_SHARE_DENY_BOTH,
+						   owner,
+						   found_share);
 		} else {
 			/* The export is being removed, we didn't bother
 			 * calling state_unlock() because export cleanup
@@ -3330,6 +3335,7 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 		put_gsh_export(export);
 		dec_state_owner_ref(owner);
 		cache_inode_lru_unref(entry, LRU_FLAG_NONE);
+		dec_state_t_ref(found_share);
 
 		if (!state_unlock_err_ok(status)) {
 			/* Increment the error count and try the next share,

@@ -424,7 +424,8 @@ int nlm_process_share_parms(struct svc_req *req, nlm4_share *share,
 			    cache_entry_t **ppentry, care_t care,
 			    state_nsm_client_t **ppnsm_client,
 			    state_nlm_client_t **ppnlm_client,
-			    state_owner_t **ppowner)
+			    state_owner_t **ppowner,
+			    state_t **state)
 {
 	nfsstat3 nfsstat3;
 	SVCXPRT *ptr_svc = req->rq_xprt;
@@ -467,8 +468,6 @@ int nlm_process_share_parms(struct svc_req *req, nlm4_share *share,
 		 * unlock), just return GRANTED (the unlock must succeed, there
 		 * can't be any locks).
 		 */
-		dec_nsm_client_ref(*ppnsm_client);
-
 		if (care != CARE_NOT)
 			rc = NLM4_DENIED_NOLOCKS;
 		else
@@ -481,9 +480,6 @@ int nlm_process_share_parms(struct svc_req *req, nlm4_share *share,
 
 	if (*ppowner == NULL) {
 		LogDebug(COMPONENT_NLM, "Could not get NLM Owner");
-		dec_nsm_client_ref(*ppnsm_client);
-		dec_nlm_client_ref(*ppnlm_client);
-		*ppnlm_client = NULL;
 
 		/* If owner is not found, and we don't care (such as unlock),
 		 * just return GRANTED (the unlock must succeed, there can't be
@@ -497,11 +493,40 @@ int nlm_process_share_parms(struct svc_req *req, nlm4_share *share,
 		goto out_put;
 	}
 
+	if (state != NULL) {
+		rc = get_nlm_state(STATE_TYPE_NLM_SHARE,
+				   *ppentry,
+				   *ppowner,
+				   false,
+				   0,
+				   state);
+
+		if (rc > 0) {
+			LogDebug(COMPONENT_NLM, "Could not get NLM State");
+			goto out_put;
+		}
+	}
+
 	LogFullDebug(COMPONENT_NLM, "Parameters Processed");
 
 	return -1;
 
  out_put:
+
+	if (*ppnsm_client != NULL) {
+		dec_nsm_client_ref(*ppnsm_client);
+		*ppnsm_client = NULL;
+	}
+
+	if (*ppnlm_client != NULL) {
+		dec_nlm_client_ref(*ppnlm_client);
+		*ppnlm_client = NULL;
+	}
+
+	if (*ppowner != NULL) {
+		dec_state_owner_ref(*ppowner);
+		*ppowner = NULL;
+	}
 
 	cache_inode_put(*ppentry);
 	*ppentry = NULL;
