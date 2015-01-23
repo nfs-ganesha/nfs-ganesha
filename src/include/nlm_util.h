@@ -56,13 +56,16 @@ extern void netobj_to_string(netobj *obj, char *buffer, int maxlen);
  * ppblock_data: Data required to make a call back to the client to grant a
  *               blocked lock
  */
-int nlm_process_parameters(struct svc_req *, bool,
-			   nlm4_lock *, fsal_lock_param_t *,
-			   cache_entry_t **,
-			   care_t, state_nsm_client_t **,
-			   state_nlm_client_t **,
-			   state_owner_t **,
-			   state_block_data_t **);
+int nlm_process_parameters(struct svc_req *req, bool exclusive,
+			   nlm4_lock *alock, fsal_lock_param_t *plock,
+			   cache_entry_t **ppentry,
+			   care_t care, state_nsm_client_t **ppnsm_client,
+			   state_nlm_client_t **ppnlm_client,
+			   state_owner_t **ppowner,
+			   state_block_data_t **block_data,
+			   bool nsm_state_applies,
+			   int32_t nsm_state,
+			   state_t **state);
 
 int nlm_process_share_parms(struct svc_req *req, nlm4_share *share,
 			    struct fsal_export *exp_hdl,

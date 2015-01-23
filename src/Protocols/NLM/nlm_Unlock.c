@@ -100,6 +100,9 @@ int nlm4_Unlock(nfs_arg_t *args,
 				    &nsm_client,
 				    &nlm_client,
 				    &nlm_owner,
+				    NULL,
+				    false,
+				    0,
 				    NULL);
 
 	if (rc >= 0) {
@@ -111,7 +114,7 @@ int nlm4_Unlock(nfs_arg_t *args,
 		return NFS_REQ_OK;
 	}
 
-	state_status = state_unlock(pentry, nlm_owner, NULL, &lock);
+	state_status = state_unlock(pentry, nlm_owner, false, 0, &lock);
 
 	if (state_status != STATE_SUCCESS) {
 		/* Unlock could fail in the FSAL and make a bit of a mess,

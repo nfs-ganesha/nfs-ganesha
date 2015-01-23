@@ -586,16 +586,19 @@ state_status_t do_lock_op(cache_entry_t *entry,
 			  fsal_lock_param_t *conflict,
 			  bool_t overlap,
 			  enum fsal_sle_type sle_type);
+
 state_status_t state_unlock(cache_entry_t *entry,
-			    state_owner_t *owner, state_t *state,
+			    state_owner_t *owner,
+			    bool state_applies,
+			    int32_t state,
 			    fsal_lock_param_t *lock);
 
 state_status_t state_cancel(cache_entry_t *entry,
 			    state_owner_t *owner, fsal_lock_param_t *lock);
 
 state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
-				bool from_client,
-				state_t *state);
+				bool state_applies,
+				int32_t state);
 
 void state_nfs4_owner_unlock_all(state_owner_t *owner);
 

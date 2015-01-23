@@ -54,6 +54,7 @@ int nlm4_Lock(nfs_arg_t *args,
 	state_nsm_client_t *nsm_client;
 	state_nlm_client_t *nlm_client;
 	state_owner_t *nlm_owner, *holder;
+	state_t *nlm_state;
 	fsal_lock_param_t lock, conflict;
 	int rc;
 	int grace = nfs_in_grace();
@@ -128,7 +129,10 @@ int nlm4_Lock(nfs_arg_t *args,
 				    &nsm_client,
 				    &nlm_client,
 				    &nlm_owner,
-				    &pblock_data);
+				    &pblock_data,
+				    req->rq_proc != NLMPROC4_NM_LOCK,
+				    arg->state,
+				    &nlm_state);
 
 	if (rc >= 0) {
 		/* Present the error back to the client */
@@ -146,12 +150,12 @@ int nlm4_Lock(nfs_arg_t *args,
 		PTHREAD_RWLOCK_unlock(&entry->state_lock);
 		LogDebug(COMPONENT_NLM,
 			 "NLM lock request DROPPED due to delegation conflict");
-		return NFS_REQ_DROP;
+		rc = NFS_REQ_DROP;
+		goto out;
 	} else {
 		atomic_inc_uint32_t(&entry->object.file.anon_ops);
 		PTHREAD_RWLOCK_unlock(&entry->state_lock);
 	}
-
 
 	/* Cast the state number into a state pointer to protect
 	 * locks from a client that has rebooted from the SM_NOTIFY
@@ -159,7 +163,7 @@ int nlm4_Lock(nfs_arg_t *args,
 	 */
 	state_status = state_lock(entry,
 				  nlm_owner,
-				  (void *)(ptrdiff_t) arg->state,
+				  nlm_state,
 				  arg->block ? STATE_NLM_BLOCKING :
 					       STATE_NON_BLOCKING,
 				  pblock_data,
@@ -190,25 +194,32 @@ int nlm4_Lock(nfs_arg_t *args,
 
 		if (state_status == STATE_IN_GRACE) {
 			res->res_nlm4.stat.stat = NLM4_DENIED_GRACE_PERIOD;
-			return NFS_REQ_OK;
+			goto out_ok;
 		}
 
 	} else {
 		res->res_nlm4.stat.stat = NLM4_GRANTED;
 	}
 
+ out_ok:
+
+	rc = NFS_REQ_OK;
+
+ out:
+
 	/* Release the NLM Client and NLM Owner references we have */
 	dec_nsm_client_ref(nsm_client);
 	dec_nlm_client_ref(nlm_client);
 	dec_state_owner_ref(nlm_owner);
 	cache_inode_put(entry);
+	dec_nlm_state_ref(nlm_state);
 
 	LogDebug(COMPONENT_NLM,
 		 "REQUEST RESULT: %s %s",
 		 proc_name,
 		 lock_result_str(res->res_nlm4.stat.stat));
 
-	return NFS_REQ_OK;
+	return rc;
 }
 
 static void nlm4_lock_message_resp(state_async_queue_t *arg)

@@ -279,7 +279,10 @@ int nlm_process_parameters(struct svc_req *req, bool exclusive,
 			   care_t care, state_nsm_client_t **ppnsm_client,
 			   state_nlm_client_t **ppnlm_client,
 			   state_owner_t **ppowner,
-			   state_block_data_t **block_data)
+			   state_block_data_t **block_data,
+			   bool nsm_state_applies,
+			   int32_t nsm_state,
+			   state_t **state)
 {
 	nfsstat3 nfsstat3;
 	SVCXPRT *ptr_svc = req->rq_xprt;
@@ -288,6 +291,9 @@ int nlm_process_parameters(struct svc_req *req, bool exclusive,
 	*ppnsm_client = NULL;
 	*ppnlm_client = NULL;
 	*ppowner = NULL;
+
+	if (state != NULL)
+		*state = NULL;
 
 	/* Convert file handle into a cache entry */
 	*ppentry = nfs3_FhandleToCache((struct nfs_fh3 *)&alock->fh,
@@ -322,8 +328,6 @@ int nlm_process_parameters(struct svc_req *req, bool exclusive,
 		 * unlock), just return GRANTED (the unlock must succeed,
 		 * there can't be any locks).
 		 */
-		dec_nsm_client_ref(*ppnsm_client);
-
 		if (care != CARE_NOT)
 			rc = NLM4_DENIED_NOLOCKS;
 		else
@@ -336,9 +340,6 @@ int nlm_process_parameters(struct svc_req *req, bool exclusive,
 
 	if (*ppowner == NULL) {
 		LogDebug(COMPONENT_NLM, "Could not get NLM Owner");
-		dec_nsm_client_ref(*ppnsm_client);
-		dec_nlm_client_ref(*ppnlm_client);
-		*ppnlm_client = NULL;
 
 		/* If owner is not found, and we don't care (such as unlock),
 		 * just return GRANTED (the unlock must succeed, there can't be
@@ -350,6 +351,20 @@ int nlm_process_parameters(struct svc_req *req, bool exclusive,
 			rc = NLM4_GRANTED;
 
 		goto out_put;
+	}
+
+	if (state != NULL) {
+		rc = get_nlm_state(STATE_TYPE_NLM_LOCK,
+				   *ppentry,
+				   *ppowner,
+				   nsm_state_applies,
+				   nsm_state,
+				   state);
+
+		if (rc > 0) {
+			LogDebug(COMPONENT_NLM, "Could not get NLM State");
+			goto out_put;
+		}
 	}
 
 	if (block_data != NULL) {
@@ -371,6 +386,7 @@ int nlm_process_parameters(struct svc_req *req, bool exclusive,
 			       alock->fh.n_len);
 		}
 	}
+
 	/* Fill in plock */
 	plock->lock_type = exclusive ? FSAL_LOCK_W : FSAL_LOCK_R;
 	plock->lock_start = alock->l_offset;
@@ -383,6 +399,22 @@ int nlm_process_parameters(struct svc_req *req, bool exclusive,
  out_put:
 
 	cache_inode_put(*ppentry);
+
+	if (*ppnsm_client != NULL) {
+		dec_nsm_client_ref(*ppnsm_client);
+		*ppnsm_client = NULL;
+	}
+
+	if (*ppnlm_client != NULL) {
+		dec_nlm_client_ref(*ppnlm_client);
+		*ppnlm_client = NULL;
+	}
+
+	if (*ppowner != NULL) {
+		dec_state_owner_ref(*ppowner);
+		*ppowner = NULL;
+	}
+
 	*ppentry = NULL;
 	return rc;
 }

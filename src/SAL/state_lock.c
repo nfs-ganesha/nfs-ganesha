@@ -580,9 +580,11 @@ static state_lock_entry_t *create_state_lock_entry(cache_entry_t *entry,
 
 	PTHREAD_MUTEX_lock(&owner->so_mutex);
 
-	if (owner->so_type == STATE_LOCK_OWNER_NFSV4 && state != NULL) {
+	if (state != NULL) {
 		glist_add_tail(&state->state_data.lock.state_locklist,
 			       &new_entry->sle_state_locks);
+
+		inc_state_t_ref(state);
 	}
 
 	glist_add_tail(&owner->so_lock_list, &new_entry->sle_owner_locks);
@@ -705,14 +707,14 @@ static void remove_from_locklist(state_lock_entry_t *lock_entry)
 		/* Remove from list of locks owned by owner */
 		PTHREAD_MUTEX_lock(&owner->so_mutex);
 
-		if (owner->so_type == STATE_LOCK_OWNER_NFSV4)
-			glist_del(&lock_entry->sle_state_locks);
-
+		glist_del(&lock_entry->sle_state_locks);
 		glist_del(&lock_entry->sle_owner_locks);
 
 		PTHREAD_MUTEX_unlock(&owner->so_mutex);
 
 		dec_state_owner_ref(owner);
+		if (lock_entry->sle_state != NULL)
+			dec_state_t_ref(lock_entry->sle_state);
 	}
 
 	lock_entry->sle_owner = NULL;
@@ -1028,7 +1030,8 @@ static state_status_t subtract_lock_from_entry(cache_entry_t *entry,
  */
 static state_status_t subtract_lock_from_list(cache_entry_t *entry,
 					      state_owner_t *owner,
-					      state_t *state,
+					      bool state_applies,
+					      int32_t state,
 					      fsal_lock_param_t *lock,
 					      bool *removed,
 					      struct glist_head *list)
@@ -1059,8 +1062,8 @@ static state_status_t subtract_lock_from_list(cache_entry_t *entry,
 		 * This protects NLM locks from the current iteration of an NLM
 		 * client from being released by SM_NOTIFY.
 		 */
-		if (state != NULL && lock_owner_is_nlm(found_entry)
-		    && found_entry->sle_state == state)
+		if (state_applies &&
+		    found_entry->sle_state->state_seqid == state)
 			continue;
 
 		/* We have matched owner. Even though we are taking a reference
@@ -1130,7 +1133,7 @@ static state_status_t subtract_list_from_list(cache_entry_t *entry,
 		found_entry = glist_entry(glist, state_lock_entry_t, sle_list);
 
 		status =
-		    subtract_lock_from_list(entry, NULL, NULL,
+		    subtract_lock_from_list(entry, NULL, false, 0,
 					    &found_entry->sle_lock, &removed,
 					    target);
 		if (status != STATE_SUCCESS)
@@ -1970,7 +1973,9 @@ void cancel_blocked_lock(cache_entry_t *entry,
  * @param[in]     lock  Lock description
  */
 void cancel_blocked_locks_range(cache_entry_t *entry,
-				state_owner_t *owner, state_t *state,
+				state_owner_t *owner,
+				bool state_applies,
+				int32_t state,
 				fsal_lock_param_t *lock)
 {
 	struct glist_head *glist, *glistn;
@@ -1989,8 +1994,8 @@ void cancel_blocked_locks_range(cache_entry_t *entry,
 		 * This protects NLM locks from the current iteration of an NLM
 		 * client from being released by SM_NOTIFY.
 		 */
-		if (state != NULL && lock_owner_is_nlm(found_entry)
-		    && found_entry->sle_state == state)
+		if (state_applies &&
+		    found_entry->sle_state->state_seqid == state)
 			continue;
 
 		/* Skip granted locks */
@@ -2862,7 +2867,8 @@ state_status_t state_lock(cache_entry_t *entry,
  */
 state_status_t state_unlock(cache_entry_t *entry,
 			    state_owner_t *owner,
-			    state_t *state,
+			    bool state_applies,
+			    int32_t state,
 			    fsal_lock_param_t *lock)
 {
 	bool empty = false;
@@ -2906,12 +2912,12 @@ state_status_t state_unlock(cache_entry_t *entry,
 	/* First cancel any blocking locks that might
 	 * overlap the unlocked range.
 	 */
-	cancel_blocked_locks_range(entry, owner, state, lock);
+	cancel_blocked_locks_range(entry, owner, state_applies, state, lock);
 
 	/* Release the lock from cache inode lock list for entry */
 	status =
-	    subtract_lock_from_list(entry, owner, state, lock, &removed,
-				    &entry->object.file.lock_list);
+	    subtract_lock_from_list(entry, owner, state_applies, state, lock,
+				    &removed, &entry->object.file.lock_list);
 
 	/* If the lock list has become zero; decrement the pin ref count pt
 	 * placed. Do this here just in case subtract_lock_from_list has made
@@ -3071,8 +3077,8 @@ state_status_t state_cancel(cache_entry_t *entry,
  * @return State status.
  */
 state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
-				bool from_client,
-				state_t *state)
+				bool state_applies,
+				int32_t state)
 {
 	state_owner_t *owner;
 	state_lock_entry_t *found_entry;
@@ -3122,7 +3128,15 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 		/* Remove from the client lock list */
 		glist_del(&found_entry->sle_client_locks);
 
-		if (found_entry->sle_state == state && from_client) {
+		/* If called as a result of SM_NOTIFY, we don't drop the
+		 * locks belonging to the "current" NSM state counter passed
+		 * in the SM_NOTIFTY. Otherwise, we drop all locks.
+		 * We expect never to get an SM_NOTIFY from a client that uses
+		 * non-monitored locks (it will send a FREE_ALL instead (which
+		 * will not set the state_applies flag).
+		 */
+		if (state_applies &&
+		    found_entry->sle_state->state_seqid == state) {
 			/* This is a new lock acquired since the client
 			 * rebooted, retain it.
 			 *
@@ -3205,7 +3219,8 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 			/* Remove all locks held by this NLM Client on
 			 * the file.
 			 */
-			status = state_unlock(entry, owner, state, &lock);
+			status = state_unlock(entry, owner, state_applies,
+					      state, &lock);
 		} else {
 			/* The export is being removed, we didn't bother
 			 * calling state_unlock() because export cleanup
@@ -3234,6 +3249,8 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 
 	/* Now remove NLM_SHARE reservations.
 	 * Only accept so many errors before giving up.
+	 * We always drop all NLM_SHARE reservations since they are
+	 * non-monitored.
 	 */
 	while (errcnt < STATE_ERR_MAX) {
 		PTHREAD_MUTEX_lock(&nsmclient->ssc_mutex);
@@ -3424,7 +3441,7 @@ void state_nfs4_owner_unlock_all(state_owner_t *owner)
 		lock.lock_length = 0;
 
 		/* Remove all locks held by this owner on the file */
-		status = state_unlock(entry, owner, state, &lock);
+		status = state_unlock(entry, owner, false, 0, &lock);
 
 		if (!state_unlock_err_ok(status)) {
 			/* Increment the error count and try the next lock,
@@ -3542,7 +3559,7 @@ void state_export_unlock_all(void)
 		/* Remove all locks held by this NLM Client on
 		 * the file.
 		 */
-		status = state_unlock(entry, owner, state, &lock);
+		status = state_unlock(entry, owner, false, 0, &lock);
 
 		/* Release the refcounts we took above. */
 		if (owner->so_type == STATE_LOCK_OWNER_NFSV4)

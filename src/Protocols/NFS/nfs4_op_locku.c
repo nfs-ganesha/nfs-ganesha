@@ -184,7 +184,8 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t *data,
 	   unlock into SAL (and FSAL). */
 	state_status = state_unlock(data->current_entry,
 				    lock_owner,
-				    state_found,
+				    false,
+				    0,
 				    &lock_desc);
 
 	if (state_status != STATE_SUCCESS) {

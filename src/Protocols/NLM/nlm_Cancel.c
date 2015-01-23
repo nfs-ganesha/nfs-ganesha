@@ -101,6 +101,9 @@ int nlm4_Cancel(nfs_arg_t *args,
 				    &nsm_client,
 				    &nlm_client,
 				    &nlm_owner,
+				    NULL,
+				    false,
+				    0,
 				    NULL);
 
 	if (rc >= 0) {

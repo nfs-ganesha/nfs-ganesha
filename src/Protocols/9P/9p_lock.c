@@ -177,7 +177,7 @@ int _9p_lock(struct _9p_request_data *req9p, void *worker_data,
 		break;
 
 	case _9P_LOCK_TYPE_UNLCK:
-		if (state_unlock(pfid->pentry, powner, NULL, &lock)
+		if (state_unlock(pfid->pentry, powner, false, 0, &lock)
 			    != STATE_SUCCESS)
 			status = _9P_LOCK_ERROR;
 		else
