@@ -2255,7 +2255,6 @@ struct fsal_export {
 	struct fsal_module *fsal;	/*< Link back to the FSAL module */
 	const struct fsal_up_vector *up_ops;	/*< Upcall operations */
 	struct export_ops exp_ops;	/*< Vector of operations */
-	uint16_t id_exports;		/*< Identifier copy */
 };
 
 /**
@@ -2335,19 +2334,25 @@ struct fsal_obj_handle {
  *
  */
 
+enum pnfs_ds_status {
+	PNFS_DS_READY,			/*< searchable, usable */
+	PNFS_DS_STALE,			/*< is no longer valid */
+};
+
 struct fsal_pnfs_ds {
 	struct glist_head server;	/*< Link in list of Data Servers under
 					   the same FSAL. */
 	struct glist_head ds_handles;	/*< Head of list of DS handles */
 	struct fsal_module *fsal;	/*< Link back to fsal module */
 	struct fsal_pnfs_ds_ops s_ops;	/*< Operations vector */
-	struct gsh_export *related;	/*< related export */
+	struct gsh_export *mds_export;	/*< related export */
 
 	struct avltree_node ds_node;	/*< Node in tree of all Data Servers. */
 	pthread_rwlock_t lock;		/*< Lock to be held when
 					    manipulating its list (above). */
 	int32_t refcount;		/*< Reference count */
 	uint16_t id_servers;		/*< Identifier */
+	uint8_t pnfs_ds_status;		/*< current condition */
 };
 
 /**
