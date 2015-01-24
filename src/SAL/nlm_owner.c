@@ -101,7 +101,8 @@ int display_nsm_client(struct display_buffer *dspbuf, state_nsm_client_t *key)
 	if (b_left <= 0)
 		return b_left;
 
-	return display_printf(dspbuf, " %s refcount=%d",
+	return display_printf(dspbuf, " ssc_client=%p %s refcount=%d",
+			      key->ssc_client,
 			      atomic_fetch_int32_t(&key->ssc_monitored)
 					? "monitored" : "unmonitored",
 			      atomic_fetch_int32_t(&key->ssc_refcount));
@@ -910,6 +911,7 @@ state_nsm_client_t *get_nsm_client(care_t care, SVCXPRT *xprt,
 	} else {
 		key.ssc_nlm_caller_name = op_ctx->client->hostaddr_str;
 		key.ssc_nlm_caller_name_len = strlen(key.ssc_nlm_caller_name);
+		key.ssc_client = op_ctx->client;
 	}
 
 	if (isFullDebug(COMPONENT_STATE)) {
