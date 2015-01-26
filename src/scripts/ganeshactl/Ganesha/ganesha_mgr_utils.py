@@ -29,6 +29,7 @@ import dbus
 from dbus import glib
 from collections import namedtuple
 
+gobject.threads_init()
 glib.init_threads()
 
 Client = namedtuple('Client',
