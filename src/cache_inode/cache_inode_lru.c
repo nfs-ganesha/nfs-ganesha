@@ -395,7 +395,9 @@ cache_inode_lru_clean(cache_entry_t *entry)
 		cache_status =
 		    cache_inode_close(entry,
 				      CACHE_INODE_FLAG_REALLYCLOSE |
-				      CACHE_INODE_FLAG_NOT_PINNED);
+				      CACHE_INODE_FLAG_NOT_PINNED |
+				      CACHE_INODE_FLAG_CLEANUP |
+				      CACHE_INODE_DONT_KILL);
 		if (cache_status != CACHE_INODE_SUCCESS) {
 			LogCrit(COMPONENT_CACHE_INODE_LRU,
 				"Error closing file in cleanup: %d.",
@@ -1274,8 +1276,10 @@ cache_inode_inc_pin_ref(cache_entry_t *entry)
  * partition for its lane.  If the entry is not pinned, it is a
  * no-op.
  *
+ * If closefile is true, caller MUST hold the content_lock.
+ *
  * @param[in] entry      The entry to be moved
- * @param[in] closefile  Indicates if file should be closed
+ * @param[in] closefile  Indicates if file should be closed=
  *
  */
 void cache_inode_dec_pin_ref(cache_entry_t *entry, bool closefile)
@@ -1308,7 +1312,10 @@ void cache_inode_dec_pin_ref(cache_entry_t *entry, bool closefile)
 		if (closefile == true) {
 			cache_inode_close(entry,
 					  CACHE_INODE_FLAG_REALLYCLOSE |
-					  CACHE_INODE_FLAG_NOT_PINNED);
+					  CACHE_INODE_FLAG_NOT_PINNED |
+					  CACHE_INODE_FLAG_CONTENT_HAVE |
+					  CACHE_INODE_FLAG_CONTENT_HOLD |
+					  CACHE_INODE_DONT_KILL);
 		}
 	}
 
