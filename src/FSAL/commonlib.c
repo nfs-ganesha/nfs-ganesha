@@ -799,9 +799,9 @@ int change_fsid_type(struct fsal_filesystem *fs,
 			/* Shrink each 64 bit quantity to 32 bits by xoring the
 			 * two halves.
 			 */
-			major = (fs->fsid.major && MASK_32) ^
+			major = (fs->fsid.major & MASK_32) ^
 				(fs->fsid.major >> 32);
-			minor = (fs->fsid.minor && MASK_32) ^
+			minor = (fs->fsid.minor & MASK_32) ^
 				(fs->fsid.minor >> 32);
 			valid = true;
 		} else if (fs->fsid_type == FSID_ONE_UINT64) {
@@ -809,7 +809,7 @@ int change_fsid_type(struct fsal_filesystem *fs,
 			 * the high order 32 bits as major.
 			 */
 			major = fs->fsid.major >> 32;
-			minor = fs->fsid.major && MASK_32;
+			minor = fs->fsid.major & MASK_32;
 			valid = true;
 		}
 
