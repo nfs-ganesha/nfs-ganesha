@@ -200,7 +200,6 @@ static nfsstat4 ds_read_plus(struct fsal_ds_handle *const ds_pub,
 	} else {
 		info->io_content.what = NFS4_CONTENT_DATA;
 		info->io_content.data.d_offset = offset + amount_read;
-		info->io_content.data.d_allocated = true;
 		info->io_content.data.d_data.data_len = amount_read;
 		info->io_content.data.d_data.data_val = buffer;
 		if (amount_read == 0 || amount_read < requested_length)

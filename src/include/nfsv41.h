@@ -2502,7 +2502,6 @@ extern "C" {
 
 	typedef struct {
 		offset4         d_offset;
-		bool_t          d_allocated;
 		struct {
 			u_int data_len;
 			char *data_val;
@@ -7567,9 +7566,6 @@ extern "C" {
 		if (objp->rpr_contents.what == NFS4_CONTENT_DATA) {
 			if (!xdr_offset4(xdrs,
 					&objp->rpr_contents.data.d_offset))
-				return false;
-			if (!inline_xdr_bool(xdrs,
-					&objp->rpr_contents.data.d_allocated))
 				return false;
 			if (!inline_xdr_bytes
 			    (xdrs,

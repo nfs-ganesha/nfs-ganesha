@@ -154,7 +154,6 @@ static int op_dsread_plus(struct nfs_argop4 *op, compound_data_t *data,
 		res_RPLUS->rpr_resok4.rpr_eof = FALSE;
 		contentp->what = NFS4_CONTENT_DATA;
 		contentp->data.d_offset = arg_READ4->offset;
-		contentp->data.d_allocated = FALSE;
 		contentp->data.d_data.data_len =  0;
 		contentp->data.d_data.data_val = NULL;
 		res_RPLUS->rpr_status = NFS4_OK;
@@ -196,7 +195,6 @@ static int op_dsread_plus(struct nfs_argop4 *op, compound_data_t *data,
 	}
 	if (info->io_content.what == NFS4_CONTENT_DATA) {
 		contentp->data.d_offset = info->io_content.data.d_offset;
-		contentp->data.d_allocated = info->io_content.data.d_allocated;
 		contentp->data.d_data.data_len =
 					info->io_content.data.d_data.data_len;
 		contentp->data.d_data.data_val =
@@ -618,7 +616,6 @@ int nfs4_op_read_plus(struct nfs_argop4 *op, compound_data_t *data,
 	}
 	if (info.io_content.what == NFS4_CONTENT_DATA) {
 		contentp->data.d_offset = info.io_content.data.d_offset;
-		contentp->data.d_allocated = info.io_content.data.d_allocated;
 		contentp->data.d_data.data_len =
 					info.io_content.data.d_data.data_len;
 		contentp->data.d_data.data_val =
