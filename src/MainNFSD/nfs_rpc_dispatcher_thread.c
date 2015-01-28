@@ -145,6 +145,9 @@ int tcp_socket[P_COUNT];
 SVCXPRT *udp_xprt[P_COUNT];
 SVCXPRT *tcp_xprt[P_COUNT];
 
+/* Flag to indicate if V6 interfaces on the host are enabled */
+bool v6disabled;
+
 /**
  * @brief Unregister an RPC program.
  *
@@ -521,7 +524,6 @@ void Allocate_sockets()
 {
 	protos p;
 	int    one        = 1;
-	bool   v6disabled = FALSE;
 
 	LogFullDebug(COMPONENT_DISPATCH, "Allocation of the sockets");
 
@@ -632,6 +634,8 @@ void nfs_Init_svc()
 	nfs_rpc_queue_init();
 
 	LogInfo(COMPONENT_DISPATCH, "NFS INIT: using TIRPC");
+
+	v6disabled = FALSE;
 
 	memset(&svc_params, 0, sizeof(svc_params));
 
