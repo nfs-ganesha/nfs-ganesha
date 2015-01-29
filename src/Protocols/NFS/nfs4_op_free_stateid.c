@@ -38,13 +38,13 @@
 #include <pthread.h>
 #include "hashtable.h"
 #include "log.h"
-#include "ganesha_rpc.h"
+#include "gsh_rpc.h"
 #include "nfs4.h"
 #include "nfs_core.h"
 #include "sal_functions.h"
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
-#include "ganesha_list.h"
+#include "gsh_list.h"
 
 /**
  *
@@ -90,7 +90,8 @@ int nfs4_op_free_stateid(struct nfs_argop4 *op, compound_data_t *data,
 	if (res_FREE_STATEID4->fsr_status != NFS4_OK)
 		return res_FREE_STATEID4->fsr_status;
 
-	state_del(state, false);
+	state_del(state);
+	dec_state_t_ref(state);
 
 	return res_FREE_STATEID4->fsr_status;
 

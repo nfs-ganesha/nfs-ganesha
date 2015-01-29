@@ -33,7 +33,7 @@
 
 #include "config.h"
 #include "log.h"
-#include "nfs4.h"
+#include "fsal.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
 #include "cache_inode_lru.h"
@@ -94,25 +94,39 @@ int nfs4_op_restorefh(struct nfs_argop4 *op, compound_data_t *data,
 	if (res_RESTOREFH->status != NFS4_OK)
 		return res_RESTOREFH->status;
 
+	/* Determine if we can get a new export reference. If there is
+	 * no saved export, don't get a reference to it.
+	 */
+	if (data->saved_export != NULL) {
+		if (!export_ready(data->saved_export)) {
+			/* The SavedFH export has gone bad. */
+			res_RESTOREFH->status = NFS4ERR_STALE;
+			return res_RESTOREFH->status;
+		}
+		get_gsh_export_ref(data->saved_export);
+	}
+
 	/* Copy the data from current FH to saved FH */
 	memcpy(data->currentFH.nfs_fh4_val, data->savedFH.nfs_fh4_val,
 	       data->savedFH.nfs_fh4_len);
 
 	data->currentFH.nfs_fh4_len = data->savedFH.nfs_fh4_len;
 
+	if (cache_inode_lru_ref(data->saved_entry, LRU_FLAG_NONE) !=
+	    CACHE_INODE_SUCCESS) {
+		/* SavedFH has gone stale. Return the export reference. */
+		put_gsh_export(data->saved_export);
+		res_RESTOREFH->status = NFS4ERR_STALE;
+		return res_RESTOREFH->status;
+	}
+
 	if (op_ctx->export != NULL)
 		put_gsh_export(op_ctx->export);
 
 	/* Restore the export information */
 	op_ctx->export = data->saved_export;
-	if (op_ctx->export != NULL) {
+	if (op_ctx->export != NULL)
 		op_ctx->fsal_export = op_ctx->export->fsal_export;
-
-		/* Get a reference to the export for the new CurrentFH
-		 * independent of SavedFH if appropriate.
-		 */
-		get_gsh_export_ref(op_ctx->export);
-	}
 
 	*op_ctx->export_perms = data->saved_export_perms;
 
@@ -122,7 +136,7 @@ int nfs4_op_restorefh(struct nfs_argop4 *op, compound_data_t *data,
 	 */
 
 	/* Update the current entry */
-	set_current_entry(data, data->saved_entry, true);
+	set_current_entry(data, data->saved_entry);
 
 	/* Restore the saved stateid */
 	data->current_stateid = data->saved_stateid;
@@ -132,7 +146,7 @@ int nfs4_op_restorefh(struct nfs_argop4 *op, compound_data_t *data,
 	if (data->current_ds != NULL) {
 		data->current_ds = data->saved_ds;
 		data->current_filetype = data->saved_filetype;
-		ds_get(data->current_ds);
+		ds_handle_get_ref(data->current_ds);
 	}
 
 	if (isFullDebug(COMPONENT_NFS_V4)) {

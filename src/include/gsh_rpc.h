@@ -1,8 +1,8 @@
 /* This is a central clearing house for RPC definitions. Nothing
    should included anything related to RPC except this file */
 
-#ifndef GANESHA_RPC_H
-#define GANESHA_RPC_H
+#ifndef GSH_RPC_H
+#define GSH_RPC_H
 
 #include "config.h"
 
@@ -29,7 +29,7 @@
 #include <rpc/rpc_msg.h>
 #include <rpc/gss_internal.h>	/* XXX */
 #include "abstract_mem.h"
-#include "ganesha_list.h"
+#include "gsh_list.h"
 #include "log.h"
 #include "fridgethr.h"
 
@@ -349,7 +349,16 @@ do {									\
 } while (0)
 
 bool copy_xprt_addr(sockaddr_t *, SVCXPRT *);
-int sprint_sockaddr(sockaddr_t *, char *, int);
+
+int display_sockaddr(struct display_buffer *dspbuf, sockaddr_t *addr);
+
+static inline void sprint_sockaddr(sockaddr_t *addr, char *buf, int len)
+{
+	struct display_buffer dspbuf = {len, buf, buf};
+	buf[0] = '\0';
+	display_sockaddr(&dspbuf, addr);
+}
+
 int sprint_sockip(sockaddr_t *, char *, int);
 const char *xprt_type_to_str(xprt_type_t);
 
@@ -367,4 +376,4 @@ extern int ipstring_to_sockaddr(const char *, sockaddr_t *);
 CLIENT *gsh_clnt_create(char *, unsigned long, unsigned long, char *);
 void gsh_clnt_destroy(CLIENT *);
 
-#endif /* GANESHA_RPC_H */
+#endif /* GSH_RPC_H */

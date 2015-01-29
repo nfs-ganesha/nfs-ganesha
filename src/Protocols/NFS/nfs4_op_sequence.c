@@ -30,6 +30,7 @@
  */
 
 #include "config.h"
+#include "fsal.h"
 #include "sal_functions.h"
 #include "nfs_rpc_callback.h"
 #include "nfs_convert.h"

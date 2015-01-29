@@ -42,10 +42,7 @@
 
 /* XXX prune: */
 #include "log.h"
-#include "nfs_core.h"
-#include "nfs23.h"
-#include "nfs4.h"
-#include "fsal.h"
+#include "nfs_proto_functions.h"
 
 #include "nfs_dupreq.h"
 #include "city.h"
@@ -566,8 +563,9 @@ nfs_dupreq_get_drc(struct svc_req *req)
 			    CityHash64WithSeed((char *)&drc_k.d_u.tcp.addr,
 					       sizeof(sockaddr_t), 911);
 			{
-				char str[512];
-				sprint_sockaddr(&drc_k.d_u.tcp.addr, str, 512);
+				char str[SOCK_NAME_MAX];
+				sprint_sockaddr(&drc_k.d_u.tcp.addr,
+						str, sizeof(str));
 				LogFullDebug(COMPONENT_DUPREQ,
 					     "get drc for addr: %s", str);
 			}

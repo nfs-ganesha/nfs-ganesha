@@ -33,8 +33,7 @@
 
 #include "config.h"
 #include "log.h"
-#include "ganesha_rpc.h"
-#include "nfs4.h"
+#include "fsal.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
 #include "cache_inode_lru.h"
@@ -87,6 +86,18 @@ int nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t *data,
 			return res_SAVEFH->status;
 	}
 
+	/* Determine if we can get a new export reference. If there is
+	 * no op_ctx->export, don't get a reference.
+	 */
+	if (op_ctx->export != NULL) {
+		if (!export_ready(op_ctx->export)) {
+			/* The CurrentFH export has gone bad. */
+			res_SAVEFH->status = NFS4ERR_STALE;
+			return res_SAVEFH->status;
+		}
+		get_gsh_export_ref(op_ctx->export);
+	}
+
 	/* Copy the data from current FH to saved FH */
 	memcpy(data->savedFH.nfs_fh4_val,
 	       data->currentFH.nfs_fh4_val,
@@ -102,18 +113,8 @@ int nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t *data,
 	if (data->saved_export != NULL)
 		put_gsh_export(data->saved_export);
 
-	/* Save the export information by taking a reference since
-	 * currentFH is still active.  Assert this just to be sure...
-	 */
-	if (op_ctx->export != NULL) {
-		data->saved_export = op_ctx->export;
-		/* Get a reference to the export for the new SavedFH
-		 * independent of CurrentFH if appropriate.
-		 */
-		get_gsh_export_ref(data->saved_export);
-	} else
-		data->saved_export = NULL;
-
+	/* Save the export information (reference already taken above). */
+	data->saved_export = op_ctx->export;
 	data->saved_export_perms = *op_ctx->export_perms;
 
 	/* If saved and current entry are equal, skip the following. */
@@ -126,7 +127,7 @@ int nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	if (data->saved_ds) {
-		ds_put(data->saved_ds);
+		ds_handle_put(data->saved_ds);
 		data->saved_ds = NULL;
 	}
 
@@ -136,7 +137,7 @@ int nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t *data,
 	/* Make SAVEFH work right for DS handle */
 	if (data->current_ds != NULL) {
 		data->saved_ds = data->current_ds;
-		ds_get(data->saved_ds);
+		ds_handle_get_ref(data->saved_ds);
 	}
 
 	/* Take another reference.  As of now the filehandle is both saved
@@ -144,7 +145,7 @@ int nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t *data,
 	 * have a pseudofs handle.
 	 */
 	if (data->saved_entry)
-		cache_inode_lru_ref(data->saved_entry, LRU_FLAG_NONE);
+		(void) cache_inode_lru_ref(data->saved_entry, LRU_REQ_STALE_OK);
 
  out:
 

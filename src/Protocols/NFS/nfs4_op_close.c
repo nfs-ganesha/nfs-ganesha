@@ -33,6 +33,7 @@
 #include "config.h"
 #include <pthread.h>
 #include "log.h"
+#include "fsal.h"
 #include "nfs4.h"
 #include "sal_functions.h"
 #include "nfs_proto_tools.h"
@@ -54,21 +55,30 @@ void cleanup_layouts(compound_data_t *data)
 	 * return_on_close.
 	 */
 
-	glist_for_each(glist, &data->current_entry->state_list) {
+	glist_for_each(glist, &data->current_entry->list_of_states) {
 		state_t *state = glist_entry(glist, state_t,
 					     state_list);
+		state_owner_t *owner = get_state_owner_ref(state);
+
+		if (owner == NULL) {
+			/* Skip states that have gone stale. */
+			continue;
+		}
 
 		if ((state->state_type == STATE_TYPE_SHARE) &&
-		    (state->state_owner->so_type == STATE_OPEN_OWNER_NFSV4) &&
-		    (state->state_owner->so_owner.so_nfs4_owner.so_clientid
+		    (owner->so_type == STATE_OPEN_OWNER_NFSV4) &&
+		    (owner->so_owner.so_nfs4_owner.so_clientid
 		     == data->session->clientid)) {
+			dec_state_owner_ref(owner);
 			return;
 		}
+
+		dec_state_owner_ref(owner);
 	}
 
 	glist_for_each_safe(glist,
 			    glistn,
-			    &data->current_entry->state_list) {
+			    &data->current_entry->list_of_states) {
 		state_t *state = glist_entry(glist, state_t,
 					     state_list);
 		bool deleted = false;
@@ -77,9 +87,15 @@ void cleanup_layouts(compound_data_t *data)
 			.offset = 0,
 			.length = NFS4_UINT64_MAX
 		};
+		state_owner_t *owner = get_state_owner_ref(state);
+
+		if (owner == NULL) {
+			/* Skip states that have gone stale. */
+			continue;
+		}
 
 		if ((state->state_type == STATE_TYPE_LAYOUT) &&
-		    (state->state_owner->so_owner.so_nfs4_owner.so_clientrec
+		    (owner->so_owner.so_nfs4_owner.so_clientrec
 		      == data->session->clientid_record) &&
 		    state->state_data.layout.state_return_on_close) {
 			nfs4_return_one_state(data->current_entry,
@@ -89,13 +105,14 @@ void cleanup_layouts(compound_data_t *data)
 					      entire,
 					      0,
 					      NULL,
-					      &deleted,
-					      true);
+					      &deleted);
 			if (!deleted) {
 				LogCrit(COMPONENT_PNFS,
 					"Layout state not destroyed on last close return.");
 			}
 		}
+
+		dec_state_owner_ref(owner);
 	}
 }
 
@@ -156,11 +173,11 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 					data->minorversion == 0 ?
 					    STATEID_SPECIAL_FOR_CLOSE_40 :
 					    STATEID_SPECIAL_FOR_CLOSE_41,
-					0,
-					FALSE, /* don't check owner seqid */
+					arg_CLOSE4->seqid,
+					data->minorversion == 0,
 					close_tag);
 
-	if (nfs_status != NFS4_OK) {
+	if (nfs_status != NFS4_OK && nfs_status != NFS4ERR_REPLAY) {
 		res_CLOSE4->status = nfs_status;
 		LogDebug(COMPONENT_STATE, "CLOSE failed nfs4_Check_Stateid");
 		return res_CLOSE4->status;
@@ -186,7 +203,13 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 		return res_CLOSE4->status;
 	}
 
-	open_owner = state_found->state_owner;
+	open_owner = get_state_owner_ref(state_found);
+
+	if (open_owner == NULL) {
+		/* Unexpected, but something just went stale. */
+		res_CLOSE4->status = NFS4ERR_STALE;
+		goto out3;
+	}
 
 	pthread_mutex_lock(&open_owner->so_mutex);
 
@@ -202,13 +225,11 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 			 * told what was wrong
 			 */
 			pthread_mutex_unlock(&open_owner->so_mutex);
-			return res_CLOSE4->status;
+			goto out2;
 		}
 	}
 
 	pthread_mutex_unlock(&open_owner->so_mutex);
-
-	inc_state_owner_ref(open_owner);
 
 	PTHREAD_RWLOCK_wrlock(&data->current_entry->state_lock);
 
@@ -247,12 +268,12 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 						  state_data.lock.
 						  state_sharelist);
 
-		state_del_locked(lock_state, data->current_entry);
+		state_del_locked(lock_state);
 	}
 
 	/* File is closed, release the share state */
 	if (state_found->state_type == STATE_TYPE_SHARE) {
-		state_status = state_share_remove(state_found->state_entry,
+		state_status = state_share_remove(data->current_entry,
 						  open_owner,
 						  state_found);
 
@@ -264,7 +285,7 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	/* File is closed, release the corresponding state */
-	state_del_locked(state_found, data->current_entry);
+	state_del_locked(state_found);
 
 	/* Poison the current stateid */
 	data->current_stateid_valid = false;
@@ -307,7 +328,13 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 				    data->current_entry, resp, close_tag);
 	}
 
+ out2:
+
 	dec_state_owner_ref(open_owner);
+
+ out3:
+
+	dec_state_t_ref(state_found);
 
 	return res_CLOSE4->status;
 }				/* nfs4_op_close */

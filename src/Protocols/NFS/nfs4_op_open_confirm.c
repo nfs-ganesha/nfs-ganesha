@@ -32,7 +32,7 @@
  */
 #include "config.h"
 #include "log.h"
-#include "ganesha_rpc.h"
+#include "gsh_rpc.h"
 #include "nfs4.h"
 #include "nfs_core.h"
 #include "sal_functions.h"
@@ -91,24 +91,22 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op, compound_data_t *data,
 				 data->minorversion == 0,
 				 tag);
 
-	if (rc != NFS4_OK) {
-		if ((rc == NFS4ERR_REPLAY) && (state_found != NULL)
-		    && (state_found->state_owner != NULL)) {
-			open_owner = state_found->state_owner;
-			inc_state_owner_ref(open_owner);
-			goto check_seqid;
-		}
-
+	if (rc != NFS4_OK && rc != NFS4ERR_REPLAY) {
 		res_OPEN_CONFIRM4->status = rc;
 		return res_OPEN_CONFIRM4->status;
 	}
 
-	open_owner = state_found->state_owner;
-	inc_state_owner_ref(open_owner);
+	open_owner = get_state_owner_ref(state_found);
+
+	if (open_owner == NULL) {
+		/* State is going stale. */
+		res_OPEN_CONFIRM4->status = NFS4ERR_STALE;
+		LogDebug(COMPONENT_NFS_V4,
+			 "OPEN CONFIRM failed nfs4_Check_Stateid, stale open owner");
+		goto out2;
+	}
 
 	pthread_mutex_lock(&open_owner->so_mutex);
-
- check_seqid:
 
 	/* Check seqid */
 	if (!Check_nfs4_seqid(open_owner,
@@ -121,16 +119,14 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op, compound_data_t *data,
 		 * told what was wrong
 		 */
 		pthread_mutex_unlock(&open_owner->so_mutex);
-		dec_state_owner_ref(open_owner);
-		return res_OPEN_CONFIRM4->status;
+		goto out;
 	}
 
 	/* If opened file is already confirmed, retrun NFS4ERR_BAD_STATEID */
 	if (open_owner->so_owner.so_nfs4_owner.so_confirmed) {
 		pthread_mutex_unlock(&open_owner->so_mutex);
-		dec_state_owner_ref(open_owner);
 		res_OPEN_CONFIRM4->status = NFS4ERR_BAD_STATEID;
-		return res_OPEN_CONFIRM4->status;
+		goto out;
 	}
 
 	/* Set the state as confirmed */
@@ -150,7 +146,13 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op, compound_data_t *data,
 			    resp,
 			    tag);
 
+ out:
+
 	dec_state_owner_ref(open_owner);
+
+ out2:
+
+	dec_state_t_ref(state_found);
 
 	return res_OPEN_CONFIRM4->status;
 }				/* nfs4_op_open_confirm */

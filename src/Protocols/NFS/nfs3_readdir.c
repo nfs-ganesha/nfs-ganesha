@@ -36,10 +36,7 @@
 #include <fcntl.h>
 #include "hashtable.h"
 #include "log.h"
-#include "ganesha_rpc.h"
-#include "nfs23.h"
-#include "nfs4.h"
-#include "mount.h"
+#include "fsal.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
 #include "cache_inode_lru.h"
@@ -53,7 +50,8 @@
 cache_inode_status_t nfs3_readdir_callback(void *opaque,
 					   cache_entry_t *entry,
 					   const struct attrlist *attr,
-					   uint64_t mounted_on_fileid);
+					   uint64_t mounted_on_fileid,
+					   enum cb_state cb_state);
 
 static void free_entry3s(entry3 *entry3s);
 
@@ -89,7 +87,11 @@ nfsstat3 nfs_readdir_dot_entry(cache_entry_t *entry, const char *name,
 	cb_parms.attr_allowed = true;
 	cb_parms.cookie = cookie;
 	cb_parms.in_result = true;
-	cache_status = cb(&cb_parms, entry, &entry->obj_handle->attributes, 0);
+	cache_status = cb(&cb_parms,
+			  entry,
+			  &entry->obj_handle->attributes,
+			  0,
+			  CB_ORIGINAL);
 
 	if (cache_status != CACHE_INODE_SUCCESS)
 		return nfs3_Errno(cache_status);
@@ -388,7 +390,8 @@ void nfs3_readdir_free(nfs_res_t *resp)
 cache_inode_status_t nfs3_readdir_callback(void *opaque,
 					   cache_entry_t *entry,
 					   const struct attrlist *attr,
-					   uint64_t mounted_on_fileid)
+					   uint64_t mounted_on_fileid,
+					   enum cb_state cb_state)
 {
 	/* Not-so-opaque pointer to callback data` */
 	struct cache_inode_readdir_cb_parms *cb_parms = opaque;

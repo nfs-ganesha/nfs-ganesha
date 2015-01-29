@@ -31,20 +31,19 @@
 
 #include "config.h"
 
-#include "fsal.h"
 #include <libgen.h>		/* used for 'dirname' */
 #include <pthread.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/syscall.h>
 #include <mntent.h>
-#include "ganesha_list.h"
+#include "gsh_list.h"
+#include "fsal.h"
 #include "fsal_handle.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 #include "FSAL/fsal_config.h"
 #include "FSAL/fsal_commonlib.h"
-#include "fsal_handle.h"
 #include "lustre_methods.h"
 #include <stdbool.h>
 
@@ -92,6 +91,8 @@ static struct lustre_fsal_obj_handle *alloc_handle(
 				   const char *sock_name,
 				   struct fsal_export *exp_hdl)
 {
+	struct lustre_fsal_export *myself =
+	    container_of(exp_hdl, struct lustre_fsal_export, export);
 	struct lustre_fsal_obj_handle *hdl;
 	fsal_status_t st;
 
@@ -137,12 +138,15 @@ static struct lustre_fsal_obj_handle *alloc_handle(
 	}
 
 	hdl->obj_handle.attributes.mask =
-	    exp_hdl->ops->fs_supported_attrs(exp_hdl);
+	    exp_hdl->exp_ops.fs_supported_attrs(exp_hdl);
 	st = posix2fsal_attributes(stat, &hdl->obj_handle.attributes);
 	if (FSAL_IS_ERROR(st))
 		goto spcerr;
 	fsal_obj_handle_init(&hdl->obj_handle, exp_hdl,
 			     posix2fsal_type(stat->st_mode));
+	lustre_handle_ops_init(&hdl->obj_handle.obj_ops);
+	if (myself->pnfs_mds_enabled)
+		handle_ops_pnfs(&hdl->obj_handle.obj_ops);
 	return hdl;
 
  spcerr:
@@ -192,7 +196,7 @@ static fsal_status_t lustre_lookup(struct fsal_obj_handle *parent,
 	memset(fh, 0, sizeof(struct lustre_file_handle));
 	parent_hdl =
 	    container_of(parent, struct lustre_fsal_obj_handle, obj_handle);
-	if (!parent->ops->handle_is(parent, DIRECTORY)) {
+	if (!parent->obj_ops.handle_is(parent, DIRECTORY)) {
 		LogCrit(COMPONENT_FSAL,
 			"Parent handle is not a directory. hdl = 0x%p", parent);
 		return fsalstat(ERR_FSAL_NOTDIR, 0);
@@ -309,7 +313,7 @@ static fsal_status_t lustre_create(struct fsal_obj_handle *dir_hdl,
 	    alloca(sizeof(struct lustre_file_handle));
 
 	*handle = NULL;		/* poison it */
-	if (!dir_hdl->ops->handle_is(dir_hdl, DIRECTORY)) {
+	if (!dir_hdl->obj_ops.handle_is(dir_hdl, DIRECTORY)) {
 		LogCrit(COMPONENT_FSAL,
 			"Parent handle is not a directory. hdl = 0x%p",
 			dir_hdl);
@@ -319,7 +323,7 @@ static fsal_status_t lustre_create(struct fsal_obj_handle *dir_hdl,
 	myself =
 	    container_of(dir_hdl, struct lustre_fsal_obj_handle, obj_handle);
 	unix_mode = fsal2unix_mode(attrib->mode)
-	    & ~op_ctx->fsal_export->ops->fs_umask(op_ctx->fsal_export);
+	    & ~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
 	lustre_handle_to_path(dir_hdl->fs->path,
 			      myself->handle, dirpath);
 
@@ -382,7 +386,7 @@ static fsal_status_t lustre_makedir(struct fsal_obj_handle *dir_hdl,
 	    alloca(sizeof(struct lustre_file_handle));
 
 	*handle = NULL;		/* poison it */
-	if (!dir_hdl->ops->handle_is(dir_hdl, DIRECTORY)) {
+	if (!dir_hdl->obj_ops.handle_is(dir_hdl, DIRECTORY)) {
 		LogCrit(COMPONENT_FSAL,
 			"Parent handle is not a directory. hdl = 0x%p",
 			dir_hdl);
@@ -392,7 +396,7 @@ static fsal_status_t lustre_makedir(struct fsal_obj_handle *dir_hdl,
 	myself =
 	    container_of(dir_hdl, struct lustre_fsal_obj_handle, obj_handle);
 	unix_mode = fsal2unix_mode(attrib->mode)
-	    & ~op_ctx->fsal_export->ops->fs_umask(op_ctx->fsal_export);
+	    & ~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
 	lustre_handle_to_path(dir_hdl->fs->path,
 			      myself->handle, dirpath);
 	rc = lstat(dirpath, &stat);
@@ -463,7 +467,7 @@ static fsal_status_t lustre_makenode(struct fsal_obj_handle *dir_hdl,
 	    alloca(sizeof(struct lustre_file_handle));
 
 	*handle = NULL;		/* poison it */
-	if (!dir_hdl->ops->handle_is(dir_hdl, DIRECTORY)) {
+	if (!dir_hdl->obj_ops.handle_is(dir_hdl, DIRECTORY)) {
 		LogCrit(COMPONENT_FSAL,
 			"Parent handle is not a directory. hdl = 0x%p",
 			dir_hdl);
@@ -474,7 +478,7 @@ static fsal_status_t lustre_makenode(struct fsal_obj_handle *dir_hdl,
 	myself =
 	    container_of(dir_hdl, struct lustre_fsal_obj_handle, obj_handle);
 	unix_mode = fsal2unix_mode(attrib->mode)
-	    & ~op_ctx->fsal_export->ops->fs_umask(op_ctx->fsal_export);
+	    & ~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
 	switch (nodetype) {
 	case BLOCK_FILE:
 		if (!dev) {
@@ -571,7 +575,7 @@ static fsal_status_t lustre_makesymlink(struct fsal_obj_handle *dir_hdl,
 	    alloca(sizeof(struct lustre_file_handle));
 
 	*handle = NULL;		/* poison it first */
-	if (!dir_hdl->ops->handle_is(dir_hdl, DIRECTORY)) {
+	if (!dir_hdl->obj_ops.handle_is(dir_hdl, DIRECTORY)) {
 		LogCrit(COMPONENT_FSAL,
 			"Parent handle is not a directory. hdl = 0x%p",
 			dir_hdl);
@@ -715,7 +719,7 @@ static fsal_status_t lustre_linkfile(struct fsal_obj_handle *obj_hdl,
 	int rc = 0;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 
-	if (!op_ctx->fsal_export->ops->
+	if (!op_ctx->fsal_export->exp_ops.
 	    fs_supports(op_ctx->fsal_export, fso_link_support)) {
 		fsal_error = ERR_FSAL_NOTSUPP;
 		goto out;
@@ -957,7 +961,7 @@ static fsal_status_t lustre_setattrs(struct fsal_obj_handle *obj_hdl,
 
 	/* apply umask, if mode attribute is to be changed */
 	if (FSAL_TEST_MASK(attrs->mask, ATTR_MODE))
-		attrs->mode &= ~op_ctx->fsal_export->ops->
+		attrs->mode &= ~op_ctx->fsal_export->exp_ops.
 				fs_umask(op_ctx->fsal_export);
 	myself =
 	    container_of(obj_hdl, struct lustre_fsal_obj_handle, obj_handle);
@@ -1248,7 +1252,7 @@ static void release(struct fsal_obj_handle *obj_hdl)
 		}
 	}
 
-	fsal_obj_handle_uninit(obj_hdl);
+	fsal_obj_handle_fini(obj_hdl);
 
 	if (type == SYMBOLIC_LINK) {
 		if (myself->u.symlink.link_content != NULL)

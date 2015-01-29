@@ -89,7 +89,7 @@ int _9p_lock(struct _9p_request_data *req9p, void *worker_data,
 
 	char name[MAXNAMLEN];
 
-	struct hostent *hp;
+	struct addrinfo hints, *result;
 	struct sockaddr_storage client_addr;
 
 	struct _9p_fid *pfid = NULL;
@@ -130,12 +130,18 @@ int _9p_lock(struct _9p_request_data *req9p, void *worker_data,
 	 * get the client's ip addr */
 	snprintf(name, MAXNAMLEN, "%.*s", *client_id_len, client_id_str);
 
-	hp = gethostbyname(name);
-	if (hp == NULL)
+	memset((char *)&hints, 0, sizeof(struct addrinfo));
+	hints.ai_family = AF_INET;
+	if (getaddrinfo(name, NULL, &hints, &result))
 		return _9p_rerror(req9p, worker_data, msgtag, EINVAL, plenout,
 				  preply);
 
-	memcpy((char *)&client_addr, hp->h_addr, hp->h_length);
+	memcpy((char *)&client_addr,
+	       (char *)result->ai_addr,
+	       result->ai_addrlen);
+
+	/* variable result is not needed anymore, let's free it */
+	freeaddrinfo(result);
 
 	powner = get_9p_owner(&client_addr, *proc_id);
 	if (powner == NULL)
@@ -160,7 +166,7 @@ int _9p_lock(struct _9p_request_data *req9p, void *worker_data,
 		state_status = state_lock(pfid->pentry,
 					  powner, &state,
 					  STATE_NON_BLOCKING, NULL, &lock,
-					  &holder, &conflict, POSIX_LOCK);
+					  &holder, &conflict);
 
 		if (state_status == STATE_SUCCESS)
 			status = _9P_LOCK_SUCCESS;
@@ -172,9 +178,7 @@ int _9p_lock(struct _9p_request_data *req9p, void *worker_data,
 		break;
 
 	case _9P_LOCK_TYPE_UNLCK:
-		if (state_unlock(pfid->pentry,
-				 powner, NULL, &lock,
-				 POSIX_LOCK)
+		if (state_unlock(pfid->pentry, powner, NULL, &lock)
 			    != STATE_SUCCESS)
 			status = _9P_LOCK_ERROR;
 		else

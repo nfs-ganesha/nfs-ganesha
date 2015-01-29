@@ -149,11 +149,16 @@ int nfs4_op_setattr(struct nfs_argop4 *op, compound_data_t *data,
 			switch (state_found->state_type) {
 			case STATE_TYPE_SHARE:
 				state_open = state_found;
+				/* Note this causes an extra refcount, but it
+				 * simplifies logic below.
+				 */
+				inc_state_t_ref(state_open);
 				break;
 
 			case STATE_TYPE_LOCK:
 				state_open =
 				    state_found->state_data.lock.openstate;
+				inc_state_t_ref(state_open);
 				break;
 
 			case STATE_TYPE_DELEG:
@@ -240,6 +245,12 @@ int nfs4_op_setattr(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (anonymous_started)
 		state_share_anonymous_io_done(entry, OPEN4_SHARE_ACCESS_WRITE);
+
+	if (state_found != NULL)
+		dec_state_t_ref(state_found);
+
+	if (state_open != NULL)
+		dec_state_t_ref(state_open);
 
 	return res_SETATTR4->status;
 }				/* nfs4_op_setattr */

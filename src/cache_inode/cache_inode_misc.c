@@ -105,16 +105,14 @@ cache_inode_err_str(cache_inode_status_t err)
 		return "CACHE_INODE_READ_ONLY_FS";
 	case CACHE_INODE_IO_ERROR:
 		return "CACHE_INODE_IO_ERROR";
-	case CACHE_INODE_FSAL_ESTALE:
-		return "CACHE_INODE_FSAL_ESTALE";
+	case CACHE_INODE_ESTALE:
+		return "CACHE_INODE_ESTALE";
 	case CACHE_INODE_FSAL_ERR_SEC:
 		return "CACHE_INODE_FSAL_ERR_SEC";
 	case CACHE_INODE_STATE_CONFLICT:
 		return "CACHE_INODE_STATE_CONFLICT";
 	case CACHE_INODE_QUOTA_EXCEEDED:
 		return "CACHE_INODE_QUOTA_EXCEEDED";
-	case CACHE_INODE_DEAD_ENTRY:
-		return "CACHE_INODE_DEAD_ENTRY";
 	case CACHE_INODE_ASYNC_POST_ERROR:
 		return "CACHE_INODE_ASYNC_POST_ERROR";
 	case CACHE_INODE_NOT_SUPPORTED:
@@ -131,8 +129,6 @@ cache_inode_err_str(cache_inode_status_t err)
 		return "CACHE_INODE_BAD_COOKIE";
 	case CACHE_INODE_FILE_BIG:
 		return "CACHE_INODE_FILE_BIG";
-	case CACHE_INODE_KILLED:
-		return "CACHE_INODE_KILLED";
 	case CACHE_INODE_FILE_OPEN:
 		return "CACHE_INODE_FILE_OPEN";
 	case CACHE_INODE_FSAL_XDEV:
@@ -248,7 +244,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 	*entry = NULL;
 
 	/* Get FSAL-specific key */
-	new_obj->ops->handle_to_key(new_obj, &fh_desc);
+	new_obj->obj_ops.handle_to_key(new_obj, &fh_desc);
 
 	(void) cih_hash_key(&key, op_ctx->fsal_export->fsal, &fh_desc,
 			    CIH_HASH_KEY_PROTOTYPE);
@@ -262,16 +258,18 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 				  __func__, __LINE__);
 	if (oentry) {
 		/* Entry is already in the cache, do not add it */
-		status = CACHE_INODE_ENTRY_EXISTS;
 		LogDebug(COMPONENT_CACHE_INODE,
 			 "Trying to add an already existing "
 			 "entry 1. Found entry %p type: %d, New type: %d",
 			 oentry, oentry->type, new_obj->type);
-		cache_inode_lru_ref(oentry, LRU_FLAG_NONE);
+		status = cache_inode_lru_ref(oentry, LRU_FLAG_NONE);
+		if (status == CACHE_INODE_SUCCESS) {
+			status = CACHE_INODE_ENTRY_EXISTS;
+			*entry = oentry;
+			(void)atomic_inc_uint64_t(&cache_stp->inode_conf);
+		}
 		/* Release the subtree hash table lock */
 		cih_latch_rele(&latch);
-		*entry = oentry;
-		(void)atomic_inc_uint64_t(&cache_stp->inode_conf);
 		goto out;
 	}
 	/* !LATCHED */
@@ -280,8 +278,6 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 	status = cache_inode_lru_get(&nentry);
 
 	if (nentry == NULL) {
-		/* Release the subtree hash table lock */
-		cih_latch_rele(&latch);
 		LogCrit(COMPONENT_CACHE_INODE, "cache_inode_lru_get failed");
 		status = CACHE_INODE_MALLOC_ERROR;
 		goto out;
@@ -291,7 +287,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 	nentry->type = new_obj->type;
 	nentry->flags = 0;
 	nentry->icreate_refcnt = 0;
-	glist_init(&nentry->state_list);
+	glist_init(&nentry->list_of_states);
 	glist_init(&nentry->export_list);
 	glist_init(&nentry->layoutrecall_list);
 
@@ -301,16 +297,18 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 				  __LINE__);
 	if (oentry) {
 		/* Entry is already in the cache, do not add it. */
-		status = CACHE_INODE_ENTRY_EXISTS;
 		LogDebug(COMPONENT_CACHE_INODE,
 			 "lost race to add entry %p type: %d, New type: %d",
 			 oentry, oentry->obj_handle->type, new_obj->type);
 		/* Ref it */
-		cache_inode_lru_ref(oentry, LRU_FLAG_NONE);
+		status = cache_inode_lru_ref(oentry, LRU_FLAG_NONE);
+		if (status == CACHE_INODE_SUCCESS) {
+			status = CACHE_INODE_ENTRY_EXISTS;
+			*entry = oentry;
+			(void)atomic_inc_uint64_t(&cache_stp->inode_conf);
+		}
 		/* Release the subtree hash table lock */
 		cih_latch_rele(&latch);
-		*entry = oentry;
-		(void)atomic_inc_uint64_t(&cache_stp->inode_conf);
 		goto out;
 	}
 
@@ -336,7 +334,6 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 			 "Adding a REGULAR_FILE, entry=%p", nentry);
 
 		/* No shares or locks, yet. */
-		glist_init(&nentry->object.file.deleg_list);
 		glist_init(&nentry->object.file.lock_list);
 		glist_init(&nentry->object.file.nlm_share_list);
 		memset(&nentry->object.file.share_state, 0,
@@ -466,47 +463,10 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 	}
 
 	/* must free new_obj if no new entry was created to reference it. */
-	new_obj->ops->release(new_obj);
+	new_obj->obj_ops.release(new_obj);
 
 	return status;
 }				/* cache_inode_new_entry */
-
-struct export_get_first_entry_parms {
-	struct gsh_export *export;
-	struct entry_export_map *expmap;
-};
-
-/**
- * @brief Function to be called from cache_inode_get_protected to get the
- * first cache inode entry associated with an export.
- *
- * Also returns the expmap in the source parms for use by cache_inode_unexport.
- * This is safe due to the assumptions made by cache_inode_unexport.
- *
- * @param entry  [IN/OUT] call by ref pointer to store cache entry
- * @param source [IN/OUT] void pointer to parms structure
- *
- * @return cache inode status code
- @ @retval CACHE_INODE_NOT_FOUND indicates there are associated entries
- */
-
-cache_inode_status_t export_get_first_entry(cache_entry_t **entry, void *source)
-{
-	struct export_get_first_entry_parms *parms = source;
-
-	*entry = NULL;
-
-	parms->expmap = glist_first_entry(&parms->export->entry_list,
-					  struct entry_export_map,
-					  entry_per_export);
-
-	if (unlikely(parms->expmap == NULL))
-		return CACHE_INODE_NOT_FOUND;
-
-	*entry = parms->expmap->entry;
-
-	return CACHE_INODE_SUCCESS;
-}
 
 /**
  * @brief Cleans up cache inode entries on unexport.
@@ -525,35 +485,34 @@ cache_inode_status_t export_get_first_entry(cache_entry_t **entry, void *source)
 
 void cache_inode_unexport(struct gsh_export *export)
 {
-	struct export_get_first_entry_parms parms;
 	cache_entry_t *entry;
-	int errcnt = 0;
 	cache_inode_status_t status;
 	struct entry_export_map *expmap;
 
-	parms.export = export;
+	while (true) {
+		PTHREAD_RWLOCK_rdlock(&export->lock);
 
-	while (errcnt < 10) {
-		status = cache_inode_get_protected(&entry,
-						   &export->lock,
-						   export_get_first_entry,
-						   &parms);
+		expmap = glist_first_entry(&export->entry_list,
+					   struct entry_export_map,
+					   entry_per_export);
 
-		/* If we ran out of entries, we are done. */
-		if (status == CACHE_INODE_NOT_FOUND)
-			break;
+		if (unlikely(expmap == NULL)) {
+			/* No more cache entries for this export */
+			PTHREAD_RWLOCK_unlock(&export->lock);
+			return;
+		}
 
-		/* For any other failure skip, we might busy wait.
-		 * For out of memory errors, we will limit our
-		 * retries. CACHE_INODE_FSAL_ESTALE should eventually
-		 * result in CACHE_INODE_NOT_FOUND as the mapping for
-		 * the stale inode gets cleaned up.
-		 */
+		entry = expmap->entry;
+
+		status = cache_inode_lru_ref(entry, LRU_FLAG_NONE);
+
 		if (status != CACHE_INODE_SUCCESS) {
-			if (status == CACHE_INODE_MALLOC_ERROR)
-				errcnt++;
+			/* This entry was going stale, skip it. */
+			PTHREAD_RWLOCK_unlock(&export->lock);
 			continue;
 		}
+
+		PTHREAD_RWLOCK_unlock(&export->lock);
 
 		/*
 		 * Now with the appropriate locks, remove this entry from the
@@ -564,10 +523,13 @@ void cache_inode_unexport(struct gsh_export *export)
 		PTHREAD_RWLOCK_wrlock(&export->lock);
 
 		/* Remove from list of exports for this entry */
-		glist_del(&parms.expmap->export_per_entry);
+		glist_del(&expmap->export_per_entry);
 
 		/* Remove from list of entries for this export */
-		glist_del(&parms.expmap->entry_per_export);
+		glist_del(&expmap->entry_per_export);
+
+		/* And now free the map */
+		gsh_free(expmap);
 
 		expmap = glist_first_entry(&entry->export_list,
 					   struct entry_export_map,
@@ -594,15 +556,11 @@ void cache_inode_unexport(struct gsh_export *export)
 			PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 		}
 
-
-
-		gsh_free(parms.expmap);
-
 		/* Done with entry, it may be cleaned up at this point.
 		 * If other exports reference this entry then the entry
 		 * will still be alive.
 		 */
-		cache_inode_put(entry);
+		cache_inode_lru_unref(entry, LRU_FLAG_NONE);
 	}
 }
 
@@ -654,7 +612,7 @@ cache_inode_error_convert(fsal_status_t fsal_status)
 
 	case ERR_FSAL_STALE:
 	case ERR_FSAL_FHEXPIRED:
-		return CACHE_INODE_FSAL_ESTALE;
+		return CACHE_INODE_ESTALE;
 
 	case ERR_FSAL_INVAL:
 	case ERR_FSAL_OVERFLOW:

@@ -71,7 +71,6 @@ static void release(struct fsal_export *export_pub)
 	fsal_detach_export(export->export.fsal, &export->export.exports);
 	free_export_ops(&export->export);
 
-	export->export.ops = NULL;
 	ceph_shutdown(export->cmount);
 	export->cmount = NULL;
 	gsh_free(export);
@@ -137,9 +136,8 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 	}
 
 	rc = ceph_ll_walk(export->cmount, realpath, &i, &st);
-	if (rc < 0) {
+	if (rc < 0)
 		return ceph2fsal_error(rc);
-	}
 
 	rc = construct_handle(&st, i, export, &handle);
 	if (rc < 0) {
@@ -177,63 +175,6 @@ static fsal_status_t extract_handle(struct fsal_export *exp_hdl,
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
-
-#ifdef CEPH_PNFS
-
-/**
- * @brief Create a FSAL data server handle from a wire handle
- *
- * This function creates a FSAL data server handle from a client
- * supplied "wire" handle.  This is also where validation gets done,
- * since PUTFH is the only operation that can return
- * NFS4ERR_BADHANDLE.
- *
- * @param[in]  export_pub The export in which to create the handle
- * @param[in]  desc       Buffer from which to create the file
- * @param[out] ds_pub     FSAL data server handle
- *
- * @return NFSv4.1 error codes.
- */
-nfsstat4 create_ds_handle(struct fsal_export * const export_pub,
-			  const struct gsh_buffdesc * const desc,
-			  struct fsal_ds_handle ** const ds_pub)
-{
-	/* Full 'private' export structure */
-	struct export *export =
-	    container_of(export_pub, struct export, export);
-	/* Handle to be created */
-	struct ds *ds;
-
-	*ds_pub = NULL;
-
-	if (desc->len != sizeof(struct ds_wire))
-		return NFS4ERR_BADHANDLE;
-
-	ds = gsh_calloc(1, sizeof(struct ds));
-
-	if (ds == NULL)
-		return NFS4ERR_SERVERFAULT;
-
-	/* Connect lazily when a FILE_SYNC4 write forces us to, not
-	   here. */
-
-	ds->connected = false;
-
-	memcpy(&ds->wire, desc->addr, desc->len);
-
-	if (ds->wire.layout.fl_stripe_unit == 0) {
-		gsh_free(ds);
-		return NFS4ERR_BADHANDLE;
-	}
-
-	fsal_ds_handle_init(&ds->ds, export->export.ds_ops, export_pub->fsal);
-
-	*ds_pub = &ds->ds;
-
-	return NFS4_OK;
-}
-
-#endif				/* CEPH_PNFS */
 
 /**
  * @brief Create a handle object from a wire handle
@@ -547,9 +488,6 @@ void export_ops_init(struct export_ops *ops)
 	ops->lookup_path = lookup_path;
 	ops->extract_handle = extract_handle;
 	ops->create_handle = create_handle;
-#ifdef CEPH_PNFS
-	ops->create_ds_handle = create_ds_handle;
-#endif				/* CEPH_PNFS */
 	ops->get_fs_dynamic_info = get_fs_dynamic_info;
 	ops->fs_supports = fs_supports;
 	ops->fs_maxfilesize = fs_maxfilesize;

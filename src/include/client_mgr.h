@@ -39,6 +39,12 @@
 #ifndef CLIENT_MGR_H
 #define CLIENT_MGR_H
 
+#include <pthread.h>
+#include <sys/types.h>
+
+#include "avltree.h"
+#include "gsh_types.h"
+
 struct gsh_client {
 	struct avltree_node node_k;
 	pthread_rwlock_t lock;
@@ -48,6 +54,11 @@ struct gsh_client {
 	char *hostaddr_str;
 	unsigned char addrbuf[];
 };
+
+static inline int64_t inc_gsh_client_refcount(struct gsh_client *client)
+{
+	return atomic_inc_int64_t(&client->refcnt);
+}
 
 void client_pkginit(void);
 #ifdef USE_DBUS

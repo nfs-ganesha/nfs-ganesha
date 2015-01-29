@@ -105,10 +105,10 @@ int _9p_walk(struct _9p_request_data *req9p, void *worker_data,
 		pnewfid->fid = *newfid;
 
 		/* This is not a TATTACH fid */
-		pnewfid->from_attach = FALSE;
+		pnewfid->from_attach = false;
 
 		/* Increments refcount */
-		cache_inode_lru_ref(pnewfid->pentry, LRU_FLAG_NONE);
+		(void) cache_inode_lru_ref(pnewfid->pentry, LRU_REQ_STALE_OK);
 	} else {
 		/* the walk is in fact a lookup */
 		pentry = pfid->pentry;
@@ -154,7 +154,7 @@ int _9p_walk(struct _9p_request_data *req9p, void *worker_data,
 		pnewfid->gdata = pfid->gdata;
 
 		/* This is not a TATTACH fid */
-		pnewfid->from_attach = FALSE;
+		pnewfid->from_attach = false;
 
 		cache_status = cache_inode_fileid(pnewfid->pentry, &fileid);
 		if (cache_status != CACHE_INODE_SUCCESS) {

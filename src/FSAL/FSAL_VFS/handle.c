@@ -32,17 +32,18 @@
 
 #include "config.h"
 
-#include "fsal.h"
-#include "fsal_handle_syscalls.h"
 #include <libgen.h>		/* used for 'dirname' */
 #include <pthread.h>
 #include <string.h>
 #include <sys/types.h>
-#include "ganesha_list.h"
+#include "gsh_list.h"
+#include "fsal.h"
 #include "fsal_convert.h"
+#include "fsal_handle_syscalls.h"
 #include "FSAL/fsal_commonlib.h"
 #include "vfs_methods.h"
 #include <os/subr.h>
+#include "subfsal.h"
 
 /* helpers
  */
@@ -68,6 +69,8 @@ static struct vfs_fsal_obj_handle *alloc_handle(int dirfd,
 						const char *path,
 						struct fsal_export *exp_hdl)
 {
+	struct vfs_fsal_export *myself =
+	    container_of(exp_hdl, struct vfs_fsal_export, export);
 	struct vfs_fsal_obj_handle *hdl;
 	fsal_status_t st;
 
@@ -122,13 +125,16 @@ static struct vfs_fsal_obj_handle *alloc_handle(int dirfd,
 			goto spcerr;
 	}
 	hdl->obj_handle.attributes.mask =
-	    exp_hdl->ops->fs_supported_attrs(exp_hdl);
+	    exp_hdl->exp_ops.fs_supported_attrs(exp_hdl);
 	st = posix2fsal_attributes(stat, &hdl->obj_handle.attributes);
 	if (FSAL_IS_ERROR(st))
 		goto spcerr;
 	hdl->obj_handle.attributes.fsid = fs->fsid;
 	fsal_obj_handle_init(&hdl->obj_handle, exp_hdl,
 			     posix2fsal_type(stat->st_mode));
+	vfs_handle_ops_init(&hdl->obj_handle.obj_ops);
+	vfs_sub_init_handle_ops(myself, &hdl->obj_handle.obj_ops);
+
 	return hdl;
 
  spcerr:
@@ -168,7 +174,7 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 	*handle = NULL;		/* poison it first */
 	parent_hdl =
 	    container_of(parent, struct vfs_fsal_obj_handle, obj_handle);
-	if (!parent->ops->handle_is(parent, DIRECTORY)) {
+	if (!parent->obj_ops.handle_is(parent, DIRECTORY)) {
 		LogCrit(COMPONENT_FSAL,
 			"Parent handle is not a directory. hdl = 0x%p", parent);
 		return fsalstat(ERR_FSAL_NOTDIR, 0);
@@ -356,7 +362,7 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 
 	*handle = NULL;		/* poison it */
 
-	if (!dir_hdl->ops->handle_is(dir_hdl, DIRECTORY)) {
+	if (!dir_hdl->obj_ops.handle_is(dir_hdl, DIRECTORY)) {
 		LogCrit(COMPONENT_FSAL,
 			"Parent handle is not a directory. hdl = 0x%p",
 			dir_hdl);
@@ -374,7 +380,7 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 		goto hdlerr;
 	}
 	unix_mode = fsal2unix_mode(attrib->mode)
-	    & ~op_ctx->fsal_export->ops->fs_umask(op_ctx->fsal_export);
+	    & ~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
 	dir_fd = vfs_fsal_open(myself, flags, &fsal_error);
 	if (dir_fd < 0)
 		return fsalstat(fsal_error, -dir_fd);
@@ -443,7 +449,7 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 	LogDebug(COMPONENT_FSAL, "create %s", name);
 
 	*handle = NULL;		/* poison it */
-	if (!dir_hdl->ops->handle_is(dir_hdl, DIRECTORY)) {
+	if (!dir_hdl->obj_ops.handle_is(dir_hdl, DIRECTORY)) {
 		LogCrit(COMPONENT_FSAL,
 			"Parent handle is not a directory. hdl = 0x%p",
 			dir_hdl);
@@ -461,7 +467,7 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 		goto hdlerr;
 	}
 	unix_mode = fsal2unix_mode(attrib->mode)
-	    & ~op_ctx->fsal_export->ops->fs_umask(op_ctx->fsal_export);
+	    & ~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
 	dir_fd = vfs_fsal_open(myself, flags, &fsal_error);
 	if (dir_fd < 0)
 		return fsalstat(fsal_error, -dir_fd);
@@ -536,7 +542,7 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 	LogDebug(COMPONENT_FSAL, "create %s", name);
 
 	*handle = NULL;		/* poison it */
-	if (!dir_hdl->ops->handle_is(dir_hdl, DIRECTORY)) {
+	if (!dir_hdl->obj_ops.handle_is(dir_hdl, DIRECTORY)) {
 		LogCrit(COMPONENT_FSAL,
 			"Parent handle is not a directory. hdl = 0x%p",
 			dir_hdl);
@@ -557,7 +563,7 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 	user = attrib->owner;
 	group = attrib->group;
 	unix_mode = fsal2unix_mode(attrib->mode)
-	    & ~op_ctx->fsal_export->ops->fs_umask(op_ctx->fsal_export);
+	    & ~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
 	switch (nodetype) {
 	case BLOCK_FILE:
 		create_mode = S_IFBLK;
@@ -638,7 +644,7 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 	LogDebug(COMPONENT_FSAL, "create %s", name);
 
 	*handle = NULL;		/* poison it first */
-	if (!dir_hdl->ops->handle_is(dir_hdl, DIRECTORY)) {
+	if (!dir_hdl->obj_ops.handle_is(dir_hdl, DIRECTORY)) {
 		LogCrit(COMPONENT_FSAL,
 			"Parent handle is not a directory. hdl = 0x%p",
 			dir_hdl);
@@ -773,7 +779,7 @@ static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
 	int flags = O_PATH | O_NOACCESS | O_NOFOLLOW;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 
-	if (!op_ctx->fsal_export->ops->
+	if (!op_ctx->fsal_export->exp_ops.
 	    fs_supports(op_ctx->fsal_export, fso_link_support)) {
 		fsal_error = ERR_FSAL_NOTSUPP;
 		goto out;
@@ -1175,7 +1181,7 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 
 	/* apply umask, if mode attribute is to be changed */
 	if (FSAL_TEST_MASK(attrs->mask, ATTR_MODE))
-		attrs->mode &= ~op_ctx->fsal_export->ops->
+		attrs->mode &= ~op_ctx->fsal_export->exp_ops.
 			fs_umask(op_ctx->fsal_export);
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
 	if (obj_hdl->fsal != obj_hdl->fs->fsal) {
@@ -1487,7 +1493,7 @@ static void release(struct fsal_obj_handle *obj_hdl)
 		}
 	}
 
-	fsal_obj_handle_uninit(obj_hdl);
+	fsal_obj_handle_fini(obj_hdl);
 
 	if (type == SYMBOLIC_LINK) {
 		if (myself->u.symlink.link_content != NULL)

@@ -32,8 +32,12 @@
  *
  */
 #include "config.h"
+#include "fsal.h"
 #include "sal_functions.h"
 #include "nfs_convert.h"
+#include "nfs_core.h"
+#include "nfs_exports.h"
+#include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
 #include "server_stats.h"
 #include "export_mgr.h"
@@ -876,12 +880,12 @@ void compound_data_Free(compound_data_t *data)
 		cache_inode_put(data->saved_entry);
 
 	if (data->current_ds) {
-		ds_put(data->current_ds);
+		ds_handle_put(data->current_ds);
 		data->current_ds = NULL;
 	}
 
 	if (data->saved_ds) {
-		ds_put(data->saved_ds);
+		ds_handle_put(data->saved_ds);
 		data->saved_ds = NULL;
 	}
 
@@ -941,12 +945,6 @@ void nfs4_Compound_CopyResOne(nfs_resop4 *res_dst, nfs_resop4 *res_src)
 	case NFS4_OP_CREATE:
 	case NFS4_OP_DELEGPURGE:
 	case NFS4_OP_DELEGRETURN:
-		nfs4_op_delegreturn_CopyRes(
-			&res_dst->nfs_resop4_u.opdelegreturn,
-			&res_src->nfs_resop4_u.opdelegreturn);
-
-		return;
-
 	case NFS4_OP_GETATTR:
 	case NFS4_OP_GETFH:
 	case NFS4_OP_LINK:

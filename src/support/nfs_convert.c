@@ -544,9 +544,7 @@ nfsstat4 nfs4_Errno_verbose(cache_inode_status_t error, const char *where)
 		nfserror = NFS4ERR_NAMETOOLONG;
 		break;
 
-	case CACHE_INODE_KILLED:
-	case CACHE_INODE_DEAD_ENTRY:
-	case CACHE_INODE_FSAL_ESTALE:
+	case CACHE_INODE_ESTALE:
 		nfserror = NFS4ERR_STALE;
 		break;
 
@@ -716,9 +714,7 @@ nfsstat3 nfs3_Errno_verbose(cache_inode_status_t error, const char *where)
 		nfserror = NFS3ERR_ROFS;
 		break;
 
-	case CACHE_INODE_KILLED:
-	case CACHE_INODE_DEAD_ENTRY:
-	case CACHE_INODE_FSAL_ESTALE:
+	case CACHE_INODE_ESTALE:
 		nfserror = NFS3ERR_STALE;
 		break;
 

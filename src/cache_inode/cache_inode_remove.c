@@ -137,7 +137,7 @@ cache_inode_remove(cache_entry_t *entry, const char *name)
 	}
 
 	fsal_status =
-	    entry->obj_handle->ops->unlink(entry->obj_handle, name);
+	    entry->obj_handle->obj_ops.unlink(entry->obj_handle, name);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		if (fsal_status.major == ERR_FSAL_STALE)

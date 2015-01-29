@@ -37,10 +37,7 @@
 #include <sys/file.h>
 #include "hashtable.h"
 #include "log.h"
-#include "ganesha_rpc.h"
-#include "nfs23.h"
-#include "nfs4.h"
-#include "mount.h"
+#include "fsal.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
 #include "nfs_exports.h"
@@ -86,11 +83,15 @@ int nfs3_write(nfs_arg_t *arg,
 	int rc = NFS_REQ_OK;
 	fsal_status_t fsal_status;
 
+	offset = arg->arg_write3.offset;
+	size = arg->arg_write3.count;
+
+	if ((arg->arg_write3.stable == DATA_SYNC) ||
+	    (arg->arg_write3.stable == FILE_SYNC))
+		sync = true;
+
 	if (isDebug(COMPONENT_NFSPROTO)) {
 		char str[LEN_FH_STR], *stables = "";
-
-		offset = arg->arg_write3.offset;
-		size = arg->arg_write3.count;
 
 		switch (arg->arg_write3.stable) {
 		case UNSTABLE:
@@ -98,11 +99,9 @@ int nfs3_write(nfs_arg_t *arg,
 			break;
 		case DATA_SYNC:
 			stables = "DATA_SYNC";
-			sync = true;
 			break;
 		case FILE_SYNC:
 			stables = "FILE_SYNC";
-			sync = true;
 			break;
 		}
 
@@ -162,7 +161,7 @@ int nfs3_write(nfs_arg_t *arg,
 	/* if quota support is active, then we should check is the
 	   FSAL allows inode creation or not */
 	fsal_status =
-	    op_ctx->fsal_export->ops->check_quota(op_ctx->fsal_export,
+	    op_ctx->fsal_export->exp_ops.check_quota(op_ctx->fsal_export,
 						   op_ctx->export->fullpath,
 						   FSAL_QUOTA_BLOCKS);
 
@@ -171,9 +170,6 @@ int nfs3_write(nfs_arg_t *arg,
 		rc = NFS_REQ_OK;
 		goto out;
 	}
-
-	offset = arg->arg_write3.offset;
-	size = arg->arg_write3.count;
 
 	if (size > arg->arg_write3.data.data_len) {
 		/* should never happen */

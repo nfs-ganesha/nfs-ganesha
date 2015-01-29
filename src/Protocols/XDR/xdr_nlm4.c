@@ -4,7 +4,7 @@
  */
 
 #include "config.h"
-#include "ganesha_rpc.h"
+#include "gsh_rpc.h"
 #include "nlm4.h"
 
 bool xdr_nlm4_stats(XDR * xdrs, nlm4_stats * objp)

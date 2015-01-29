@@ -35,7 +35,7 @@
 
 #include <sys/stat.h>
 #include "fsal.h"
-#include "ganesha_list.h"
+#include "gsh_list.h"
 #include "fsal_types.h"
 #include "fcntl.h"
 #include "include/gpfs_nfs.h"
@@ -58,8 +58,8 @@ void set_gpfs_verifier(verifier4 *verifier);
  */
 
 struct gpfs_ds {
-	struct gpfs_file_handle wire;	/*< Wire data */
 	struct fsal_ds_handle ds;	/*< Public DS handle */
+	struct gpfs_file_handle wire;	/*< Wire data */
 	struct gpfs_filesystem *gpfs_fs; /*< filesystem handle belongs to */
 	bool connected;		/*< True if the handle has been connected */
 };
@@ -72,7 +72,8 @@ struct gpfs_ds {
 		ATTR_MODE     | ATTR_NUMLINKS | ATTR_OWNER     | \
 		ATTR_GROUP    | ATTR_ATIME    | ATTR_RAWDEV    | \
 		ATTR_CTIME    | ATTR_MTIME    | ATTR_SPACEUSED | \
-		ATTR_CHGTIME | ATTR_ACL | ATTR4_SPACE_RESERVED)
+		ATTR_CHGTIME | ATTR_ACL | ATTR4_SPACE_RESERVED | \
+		ATTR4_FS_LOCATIONS)
 
 /* Define the buffer size for GPFS NFS4 ACL. */
 #define GPFS_ACL_BUF_SIZE 0x1000
@@ -92,7 +93,7 @@ static inline size_t gpfs_sizeof_handle(const struct gpfs_file_handle *hdl)
 
 void export_ops_init(struct export_ops *ops);
 void handle_ops_init(struct fsal_obj_ops *ops);
-void ds_ops_init(struct fsal_ds_ops *ops);
+void pnfs_ds_ops_init(struct fsal_pnfs_ds_ops *ops);
 void export_ops_pnfs(struct export_ops *ops);
 void handle_ops_pnfs(struct fsal_obj_ops *ops);
 
@@ -199,6 +200,13 @@ fsal_status_t GPFSFSAL_getattrs(struct fsal_export *export,	/* IN */
 				const struct req_op_context *p_context,	/* IN */
 				struct gpfs_file_handle *p_filehandle,	/* IN */
 				struct attrlist *p_object_attributes); /* IO */
+
+fsal_status_t GPFSFSAL_fs_loc(struct fsal_export *export,	/* IN */
+				struct gpfs_filesystem *gpfs_fs, /* IN */
+				const struct req_op_context *p_context,	/* IN */
+				struct gpfs_file_handle *p_filehandle,	/* IN */
+				struct attrlist *p_object_attributes,  /* OUT */
+				struct fs_locations4 *fs_loc);         /* OUT */
 
 fsal_status_t GPFSFSAL_statfs(int fd,				/* IN */
 			      struct fsal_obj_handle *obj_hdl,	/* IN */

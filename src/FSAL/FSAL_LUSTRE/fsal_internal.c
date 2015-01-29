@@ -46,7 +46,6 @@
 #include <attr/xattr.h> /* GetNameParent does lgetxattr */
 
 #include "abstract_mem.h"
-#include  "fsal.h"
 #include "fsal_handle.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"

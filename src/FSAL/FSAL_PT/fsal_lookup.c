@@ -39,7 +39,7 @@
 #endif
 
 #include <string.h>
-#include "fsal.h"
+#include "fsal_api.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 #include "pt_ganesha.h"
@@ -102,7 +102,7 @@ fsal_status_t PTFSAL_lookup(const struct req_op_context *p_context,
 	parent_dir_attrs = &parent_hdl->obj_handle.attributes;
 
 	/* get directory metadata */
-	parent_dir_attrs->mask = p_context->fsal_export->ops->
+	parent_dir_attrs->mask = p_context->fsal_export->exp_ops.
 			fs_supported_attrs(p_context->fsal_export);
 	status =
 	    fsal_internal_handle2fd_at(p_context, parent_hdl, &parent_fd,
@@ -149,7 +149,7 @@ fsal_status_t PTFSAL_lookup(const struct req_op_context *p_context,
 
 	/* get object attributes */
 	if (p_object_attr) {
-		p_object_attr->mask = p_context->fsal_export->ops->
+		p_object_attr->mask = p_context->fsal_export->exp_ops.
 				fs_supported_attrs(p_context->fsal_export);
 		status = PTFSAL_getattrs(p_context->fsal_export, p_context,
 					 fh, p_object_attr);

@@ -27,7 +27,7 @@
  */
 
 /* export.c
- * VFS FSAL export object
+ * VFS Super-FSAL export object
  */
 
 #include "config.h"
@@ -41,16 +41,16 @@
 #include <os/mntent.h>
 #include <os/quota.h>
 #include <dlfcn.h>
-#include "ganesha_list.h"
+#include "gsh_list.h"
 #include "fsal_convert.h"
 #include "config_parsing.h"
 #include "FSAL/fsal_commonlib.h"
 #include "FSAL/fsal_config.h"
 #include "fsal_handle_syscalls.h"
 #include "vfs_methods.h"
-#include "pnfs_panfs/mds.h"
 #include "nfs_exports.h"
 #include "export_mgr.h"
+#include "subfsal.h"
 
 /* helpers to/from other VFS objects
  */
@@ -62,7 +62,7 @@ int vfs_get_root_fd(struct fsal_export *exp_hdl)
 	struct vfs_fsal_export *myself;
 	struct vfs_filesystem *my_root_fs;
 
-	myself = container_of(exp_hdl, struct vfs_fsal_export, export);
+	myself = EXPORT_VFS_FROM_FSAL(exp_hdl);
 	my_root_fs = myself->root_fs->private;
 	return my_root_fs->root_fd;
 }
@@ -74,9 +74,9 @@ static void release(struct fsal_export *exp_hdl)
 {
 	struct vfs_fsal_export *myself;
 
-	myself = container_of(exp_hdl, struct vfs_fsal_export, export);
+	myself = EXPORT_VFS_FROM_FSAL(exp_hdl);
 
-	vfs_fini(myself);
+	vfs_sub_fini(myself);
 
 	vfs_unexport_filesystems(myself);
 
@@ -240,7 +240,7 @@ static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval;
 
-	myself = container_of(exp_hdl, struct vfs_fsal_export, export);
+	myself = EXPORT_VFS_FROM_FSAL(exp_hdl);
 
 	/** @todo	if we later have a config to disallow crossmnt, check
 	 *		that the quota is in the same file system as export.
@@ -291,7 +291,7 @@ static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval;
 
-	myself = container_of(exp_hdl, struct vfs_fsal_export, export);
+	myself = EXPORT_VFS_FROM_FSAL(exp_hdl);
 
 	/** @todo	if we later have a config to disallow crossmnt, check
 	 *		that the quota is in the same file system as export.
@@ -401,37 +401,6 @@ void vfs_export_ops_init(struct export_ops *ops)
 	ops->set_quota = set_quota;
 }
 
-static struct config_item_list fsid_types[] = {
-	CONFIG_LIST_TOK("None", FSID_NO_TYPE),
-	CONFIG_LIST_TOK("One64", FSID_ONE_UINT64),
-	CONFIG_LIST_TOK("Major64", FSID_MAJOR_64),
-	CONFIG_LIST_TOK("Two64", FSID_TWO_UINT64),
-	CONFIG_LIST_TOK("uuid", FSID_TWO_UINT64),
-	CONFIG_LIST_TOK("Two32", FSID_TWO_UINT32),
-	CONFIG_LIST_TOK("Dev", FSID_DEVICE),
-	CONFIG_LIST_TOK("Device", FSID_DEVICE),
-	CONFIG_LIST_EOL
-};
-
-static struct config_item export_params[] = {
-	CONF_ITEM_NOOP("name"),
-	CONF_ITEM_BOOL("pnfs", false,
-		       vfs_fsal_export, pnfs_panfs_enabled),
-	CONF_ITEM_ENUM("fsid_type", -1,
-		       fsid_types,
-		       vfs_fsal_export, fsid_type),
-	CONFIG_EOL
-};
-
-static struct config_block export_param = {
-	.dbus_interface_name = "org.ganesha.nfsd.config.fsal.vfs-export%d",
-	.blk_desc.name = "FSAL",
-	.blk_desc.type = CONFIG_BLOCK,
-	.blk_desc.u.blk.init = noop_conf_init,
-	.blk_desc.u.blk.params = export_params,
-	.blk_desc.u.blk.commit = noop_conf_commit
-};
-
 void free_vfs_filesystem(struct vfs_filesystem *vfs_fs)
 {
 	if (vfs_fs->root_fd >= 0)
@@ -446,7 +415,7 @@ int vfs_claim_filesystem(struct fsal_filesystem *fs, struct fsal_export *exp)
 	struct vfs_fsal_export *myself;
 	struct vfs_filesystem_export_map *map;
 
-	myself = container_of(exp, struct vfs_fsal_export, export);
+	myself = EXPORT_VFS_FROM_FSAL(exp);
 
 	map = gsh_calloc(1, sizeof(*map));
 
@@ -619,19 +588,18 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 		gsh_free(myself);
 		return fsalstat(posix2fsal_error(retval), retval);
 	}
-	vfs_export_ops_init(myself->export.ops);
-	vfs_handle_ops_init(myself->export.obj_ops);
+	vfs_export_ops_init(&myself->export.exp_ops);
 	myself->export.up_ops = up_ops;
 
 	retval = load_config_from_node(parse_node,
-				       &export_param,
+				       vfs_sub_export_param,
 				       myself,
 				       true,
 				       &err_type);
 	if (retval != 0)
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	myself->export.fsal = fsal_hdl;
-	vfs_init_export_ops(myself, op_ctx->export->fullpath);
+	vfs_sub_init_export_ops(myself, op_ctx->export->fullpath);
 
 	retval = fsal_attach_export(fsal_hdl, &myself->export.exports);
 	if (retval != 0) {
@@ -665,7 +633,7 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 		goto errout;
 	}
 
-	retval = vfs_init_export_pnfs(myself);
+	retval = vfs_sub_init_export(myself);
 	if (retval != 0) {
 		fsal_error = posix2fsal_error(retval);
 		goto errout;

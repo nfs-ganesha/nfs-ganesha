@@ -31,8 +31,7 @@
  * Routines used for managing the NFS4 COMPOUND functions.
  */
 #include "config.h"
-#include "ganesha_rpc.h"
-#include "nfs4.h"
+#include "fsal.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
 #include "nfs_exports.h"
@@ -169,7 +168,7 @@ int nfs4_op_secinfo_no_name(struct nfs_argop4 *op, compound_data_t *data,
 	res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.SECINFO4resok_len = idx;
 
 	/* Need to clear out CurrentFH */
-	set_current_entry(data, NULL, false);
+	set_current_entry(data, NULL);
 
 	data->currentFH.nfs_fh4_len = 0;
 

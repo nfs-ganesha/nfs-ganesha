@@ -464,7 +464,7 @@ errout:
 	if (rc == ENOMEM)
 		st->err_type->resource = true;
 	else
-		st->err_type->scan = true;
+		st->err_type->invalid = true;
 	if (flist != NULL)
 		gsh_free(flist);
 	if (bs != NULL)

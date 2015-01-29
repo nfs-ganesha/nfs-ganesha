@@ -1087,7 +1087,6 @@ static int do_block_load(struct config_node *blk,
 		if (node->found)
 			node->found = false;
 		else {
-			err_type->bogus = true;
 			LogMajor(COMPONENT_CONFIG,
 				 "At (%s:%d): Unknown parameter (%s)",
 				 node->filename,
@@ -1595,6 +1594,18 @@ int find_config_nodes(config_file_t config, char *expr_str,
 	*node_list = NULL;
 again:
 	glist_for_each(ns, &top->u.blk.sub_nodes) {
+#ifdef DS_ONLY_WAS
+		/* recent changes to parsing may prevent this,
+		 * but retain code here for future reference.
+		 * -- WAS
+		 */
+		if (ns == NULL) {
+			LogMajor(COMPONENT_CONFIG,
+				 "Missing sub_node for (%s)",
+				 expr_str);
+			break;
+		}
+#endif
 		sub_node = glist_entry(ns, struct config_node, node);
 		if (strcasecmp(expr->name, sub_node->name) == 0 &&
 		    sub_node->type == TYPE_BLOCK &&
@@ -1649,6 +1660,13 @@ int load_config_from_node(void *tree_node,
 	int rc;
 
 	clear_error_type(err_type);
+	if (node == NULL) {
+		LogMajor(COMPONENT_CONFIG,
+			 "Missing tree_node for (%s)",
+			 blkname);
+		err_type->empty = true;
+		return -1;
+	}
 	if (node->type == TYPE_BLOCK) {
 		if (strcasecmp(node->name, blkname) != 0) {
 			LogCrit(COMPONENT_CONFIG,
@@ -1718,24 +1736,44 @@ int load_config_from_parse(config_file_t config,
 	void *blk_mem = NULL;
 
 	clear_error_type(err_type);
+	if (tree == NULL) {
+		LogWarn(COMPONENT_CONFIG,
+			"Missing parse tree root for (%s)",
+			blkname);
+		err_type->empty = true;
+		return -1;
+	}
 	if (tree->root.type != TYPE_ROOT) {
-		LogInfo(COMPONENT_CONFIG,
+		LogCrit(COMPONENT_CONFIG,
 			"Expected to start at parse tree root for (%s)",
 			blkname);
-		err_type->invalid = true;
+		err_type->internal = true;
 		return -1;
 	}
 	if (param != NULL) {
 		blk_mem = conf_blk->blk_desc.u.blk.init(NULL, param);
 		if (blk_mem == NULL) {
 			LogMajor(COMPONENT_CONFIG,
-				 "Top level block init failed for %s",
+				 "Top level block init failed for (%s)",
 				 blkname);
-			err_type->invalid = true;
+			err_type->internal = true;
 			return -1;
 		}
 	}
 	glist_for_each(ns, &tree->root.u.blk.sub_nodes) {
+#ifdef DS_ONLY_WAS
+		/* recent changes to parsing may prevent this,
+		 * but retain code here for future reference.
+		 * -- WAS
+		 */
+		if (ns == NULL) {
+			LogMajor(COMPONENT_CONFIG,
+				 "Missing sub_node for (%s)",
+				 blkname);
+			node = NULL;
+			break;
+		}
+#endif
 		node = glist_entry(ns, struct config_node, node);
 		if (node->type == TYPE_BLOCK &&
 		    strcasecmp(blkname, node->name) == 0) {
@@ -1763,6 +1801,8 @@ int load_config_from_parse(config_file_t config,
 		}
 	}
 	if (found == 0) {
+		err_type->empty = true;
+
 		/* Found nothing but we have to do the allocate and init
 		 * at least. Use a fake, not NULL link_mem */
 		blk_mem = param != NULL ?

@@ -40,8 +40,7 @@
 #include <sys/file.h>
 #include "hashtable.h"
 #include "log.h"
-#include "ganesha_rpc.h"
-#include "nfs4.h"
+#include "fsal.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
 #include "nfs_exports.h"
@@ -106,7 +105,7 @@ int nfs4_op_commit(struct nfs_argop4 *op, compound_data_t *data,
 	verf_desc.addr = &res_COMMIT4->COMMIT4res_u.resok4.writeverf;
 	verf_desc.len = sizeof(verifier4);
 
-	op_ctx->fsal_export->ops->get_write_verifier(&verf_desc);
+	op_ctx->fsal_export->exp_ops.get_write_verifier(&verf_desc);
 
 	LogFullDebug(COMPONENT_NFS_V4,
 		     "Commit verifier %d-%d",
@@ -158,7 +157,7 @@ static int op_dscommit(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* Call the commit operation */
 	nfs_status =
-	    data->current_ds->ops->commit(data->current_ds, op_ctx,
+	    data->current_ds->dsh_ops.commit(data->current_ds, op_ctx,
 					  arg_COMMIT4->offset,
 					  arg_COMMIT4->count,
 					  &res_COMMIT4->COMMIT4res_u.resok4.

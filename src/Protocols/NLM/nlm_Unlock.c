@@ -26,8 +26,8 @@
 #include <string.h>
 #include <pthread.h>
 #include "log.h"
-#include "ganesha_rpc.h"
-#include "nlm4.h"
+#include "fsal.h"
+#include "nfs_proto_functions.h"
 #include "sal_functions.h"
 #include "nlm_util.h"
 #include "nlm_async.h"
@@ -111,11 +111,7 @@ int nlm4_Unlock(nfs_arg_t *args,
 		return NFS_REQ_OK;
 	}
 
-	state_status = state_unlock(pentry,
-				    nlm_owner,
-				    NULL,
-				    &lock,
-				    POSIX_LOCK);
+	state_status = state_unlock(pentry, nlm_owner, NULL, &lock);
 
 	if (state_status != STATE_SUCCESS) {
 		/* Unlock could fail in the FSAL and make a bit of a mess,

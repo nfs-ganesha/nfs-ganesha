@@ -7,7 +7,7 @@
 #define _NSM_H_RPCGEN
 
 #include "config.h"
-#include "ganesha_rpc.h"
+#include "gsh_rpc.h"
 #include "sal_data.h"
 
 #ifdef __cplusplus

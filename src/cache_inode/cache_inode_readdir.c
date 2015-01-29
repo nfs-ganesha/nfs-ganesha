@@ -383,7 +383,7 @@ populate_dirent(const char *name, void *dir_state,
 	fsal_status_t fsal_status = { 0, 0 };
 	struct fsal_obj_handle *dir_hdl = state->directory->obj_handle;
 
-	fsal_status = dir_hdl->ops->lookup(dir_hdl, name, &entry_hdl);
+	fsal_status = dir_hdl->obj_ops.lookup(dir_hdl, name, &entry_hdl);
 	if (FSAL_IS_ERROR(fsal_status)) {
 		*state->status = cache_inode_error_convert(fsal_status);
 		if (*state->status == CACHE_INODE_FSAL_XDEV) {
@@ -491,7 +491,7 @@ cache_inode_readdir_populate(cache_entry_t *directory)
 	state.offset_cookie = 0;
 
 	fsal_status =
-		directory->obj_handle->ops->readdir(directory->obj_handle,
+		directory->obj_handle->obj_ops.readdir(directory->obj_handle,
 						    NULL,
 						    (void *)&state,
 						    populate_dirent,
@@ -622,7 +622,8 @@ cache_inode_readdir(cache_entry_t *directory,
 		LogFullDebug(COMPONENT_NFS_READDIR,
 			     "permission check for directory status=%s",
 			     cache_inode_err_str(status));
-		goto unlock_attrs;
+		PTHREAD_RWLOCK_unlock(&directory->attr_lock);
+		return status;
 	}
 
 	if (attrmask != 0) {
@@ -740,7 +741,7 @@ cache_inode_readdir(cache_entry_t *directory,
 				     cache_inode_err_str(tmp_status));
 
 			if (retry_stale
-			    && tmp_status == CACHE_INODE_FSAL_ESTALE) {
+			    && tmp_status == CACHE_INODE_ESTALE) {
 				LogDebug(COMPONENT_NFS_READDIR,
 					 "cache_inode_get_keyed returned %s "
 					 "for %s - retrying entry",
@@ -752,7 +753,7 @@ cache_inode_readdir(cache_entry_t *directory,
 			}
 
 			if (tmp_status == CACHE_INODE_NOT_FOUND
-			    || tmp_status == CACHE_INODE_FSAL_ESTALE) {
+			    || tmp_status == CACHE_INODE_ESTALE) {
 				/* Directory changed out from under us.
 				   Invalidate it, skip the name, and keep
 				   going. */
@@ -787,11 +788,12 @@ cache_inode_readdir(cache_entry_t *directory,
 		cb_parms.attr_allowed = attr_status == CACHE_INODE_SUCCESS;
 		cb_parms.cookie = dirent->hk.k;
 
-		tmp_status = cache_inode_getattr(entry, &cb_parms, cb);
+		tmp_status =
+		    cache_inode_getattr(entry, &cb_parms, cb, CB_ORIGINAL);
 
 		if (tmp_status != CACHE_INODE_SUCCESS) {
 			cache_inode_lru_unref(entry, LRU_FLAG_NONE);
-			if (tmp_status == CACHE_INODE_FSAL_ESTALE) {
+			if (tmp_status == CACHE_INODE_ESTALE) {
 				if (retry_stale) {
 					LogDebug(COMPONENT_NFS_READDIR,
 						 "cache_inode_getattr returned "
@@ -855,9 +857,6 @@ unlock_dir:
 	PTHREAD_RWLOCK_unlock(&directory->content_lock);
 	return status;
 
-unlock_attrs:
-	PTHREAD_RWLOCK_unlock(&directory->attr_lock);
-	return status;
 }				/* cache_inode_readdir */
 
 /** @} */

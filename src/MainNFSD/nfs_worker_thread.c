@@ -45,11 +45,7 @@
 #include "hashtable.h"
 #include "abstract_atomic.h"
 #include "log.h"
-#include "ganesha_rpc.h"
-#include "nfs23.h"
-#include "nfs4.h"
-#include "mount.h"
-#include "nlm4.h"
+#include "fsal.h"
 #include "rquota.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
@@ -66,7 +62,7 @@
 #include "uid2grp.h"
 
 #ifdef USE_LTTNG
-#include "ganesha_lttng/nfs_rpc.h"
+#include "gsh_lttng/nfs_rpc.h"
 #endif
 
 pool_t *request_pool;
@@ -1227,7 +1223,7 @@ static void nfs_rpc_execute(request_data_t *req,
 				export_perms.options = EXPORT_OPTION_ROOT;
 			}
 
-			if (get_req_creds(svcreq) == false) {
+			if (nfs_req_creds(svcreq) != NFS4_OK) {
 				LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 					"could not get uid and gid, rejecting client %s",
 					client_ip);

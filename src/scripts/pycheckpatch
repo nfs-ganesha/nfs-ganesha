@@ -1,0 +1,88 @@
+#!/usr/bin/env python
+
+# Run checkpatch against commits specified. It just passes the arguments
+# to "git rev-list" command to get the list of commits except "-a" option.
+#
+# If "-a" option is given, it would run checkpatch against all commits.
+# Otherwise, it would stop at the very first commit that fails
+# checkpatch.
+#
+# Example:
+# pycheckpatch V2.2-dev-15..HEAD
+# pycheckpatch -a V2.2-dev-15..HEAD
+
+import os, sys, subprocess
+
+checkpatch = "./src/scripts/checkpatch.pl"
+if len(sys.argv) < 2:
+    sys.exit('\tUsage: %s [-a] [rev-list-opts] {rev-list-args}' % sys.argv[0])
+
+rev_list_args = sys.argv[1:]
+check_all = False
+if "-a" in rev_list_args:
+    rev_list_args.remove("-a")
+    check_all = True
+
+# Python 2.6 lacks check_output method. Following code copied from
+# Python2.7 source code to work with python2.6 or lower versions.
+if "check_output" not in dir(subprocess):
+    def f(*popenargs, **kwargs):
+        if 'stdout' in kwargs:
+            raise ValueError('stdout argument not allowed, it will be overridden.')
+        process = subprocess.Popen(stdout=subprocess.PIPE, *popenargs, **kwargs)
+        output, unused_err = process.communicate()
+        retcode = process.poll()
+        if retcode:
+            cmd = kwargs.get("args")
+            if cmd is None:
+                cmd = popenargs[0]
+            error = subprocess.CalledProcessError(retcode, cmd)
+            error.output = output
+            raise error
+        return output
+    subprocess.check_output = f
+
+cmd = "git rev-parse --show-toplevel"
+output = subprocess.check_output(cmd, shell=True)
+
+# change the cwd to top level git directory for checkpatch config file.
+os.chdir(output.strip())
+
+cmd = ['git', 'rev-list', '--no-merges'] + rev_list_args
+output = subprocess.check_output(cmd)
+commits = output.splitlines()
+if len(commits) == 0:
+    sys.exit("'%s' resulted in zero commits to check" % " ".join(rev_list_args))
+
+result = []
+for commit in commits:
+    cmd = "git show %s --format=email | %s -" % (commit, checkpatch)
+    try:
+        subprocess.check_output(cmd, shell=True)
+        result.append((commit, True, ""))
+    except subprocess.CalledProcessError as e:
+        result.append((commit, False, e.output))
+        no_tree_error = "Must be run from the top-level dir. of a kernel tree"
+        if no_tree_error in e.output:
+            out = """
+    You don't have ganesha checkpatch config file placed in the top level
+    git directory.  "cp ./src/scripts/checkpatch.conf .checkpatch.conf"
+    should fix the error!
+
+    checkpatch.pl failed with the following error message:
+        %s""" % e.output
+            sys.exit(out)
+        elif not check_all:
+            break
+
+# check all statuses
+status = [s for c,s,o in result]
+if all(status):
+    print("All commits passed checkpatch!")
+else:
+    print("Not all commits passed checkpatch! :-(")
+    for commit,status,out in result:
+        s = "passed" if status else "failed"
+        print("COMMIT %s %s" % (commit, s))
+        if not status: print(out)
+    sys.exit(1)

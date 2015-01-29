@@ -37,7 +37,7 @@
 #include <string.h>
 #include <limits.h>
 #include <sys/types.h>
-#include "ganesha_list.h"
+#include "gsh_list.h"
 #include "FSAL/fsal_init.h"
 #include "nullfs_methods.h"
 
@@ -175,8 +175,8 @@ MODULE_INIT void nullfs_init(void)
 		fprintf(stderr, "NULLFS module failed to register");
 		return;
 	}
-	myself->ops->create_export = nullfs_create_export;
-	myself->ops->init_config = init_config;
+	myself->m_ops.create_export = nullfs_create_export;
+	myself->m_ops.init_config = init_config;
 }
 
 MODULE_FINI void nullfs_unload(void)

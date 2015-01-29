@@ -36,25 +36,47 @@
 #ifndef CACHE_INODE_H
 #define CACHE_INODE_H
 
+/**
+** Forward declarations to avoid circular dependency conflicts
+*/
+
+#include "gsh_status.h"
+
+typedef struct cache_entry_t cache_entry_t;
+
+/**
+** Includes after forward declarations
+*/
+
 #include <stdbool.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/param.h>
 #include <time.h>
 #include <pthread.h>
+
 #include "abstract_mem.h"
 #include "hashtable.h"
 #include "avltree.h"
-#include "fsal.h"
 #include "log.h"
 #include "gsh_config.h"
+#include "common_utils.h"
 #include "config_parsing.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "nlm4.h"
-#include "ganesha_list.h"
+#include "gsh_list.h"
+#include "gsh_types.h"
 #include "nfs4_acls.h"
 
+/**
+** Forward declarations to resolve circular dependency conflicts
+*/
+struct fsal_module;
+struct fsal_export;
+struct fsal_obj_handle;
+struct gsh_export;
+struct io_info;
 
 /**
  * @defgroup config_cache_inode Structure and defaults for Cache_Inode
@@ -128,10 +150,6 @@ struct cache_inode_parameter {
 extern struct config_block cache_inode_param_blk;
 extern struct cache_inode_parameter cache_param;
 
-/* Forward references */
-typedef struct cache_entry_t cache_entry_t;
-struct gsh_export;
-
 /** Maximum size of NFSv3 handle */
 static const size_t FILEHANDLE_MAX_LEN_V3 = 64;
 /** Maximum size of NFSv4 handle */
@@ -155,17 +173,17 @@ enum lru_q_id {
 	LRU_ENTRY_CLEANUP
 };
 
+#define LRU_CLEANED 0x00000001
+
 typedef struct cache_inode_lru__ {
-	enum lru_q_id qid;	/*< Queue identifier */
 	struct glist_head q;	/*< Link in the physical deque
 				   impelmenting a portion of the logical
 				   LRU. */
+	enum lru_q_id qid;	/*< Queue identifier */
 	int32_t refcnt;		/*< Reference count.  This is signed to make
 				   mistakes easy to see. */
 	int32_t pin_refcnt;	/*< Unpin it only if this goes down to zero */
-	uint32_t flags;		/*< Flags for details of this entry's status,
-				 *< such as whether it is pinned and whether
-				 *< it's in L1 or L2. */
+	uint32_t flags;		/*< Flags for details of this entry's status */
 	uint32_t lane;		/*< The lane in which an entry currently
 				 *< resides, so we can lock the deque and
 				 *< decrement the correct counter when moving
@@ -251,7 +269,7 @@ typedef struct cache_inode_share__ {
  */
 typedef struct cache_inode_key {
 	uint64_t hk;		/* hash key */
-	struct fsal_module *fsal;	/*< fsal module */
+	void *fsal;		/*< fsal module */
 	struct gsh_buffdesc kv;		/*< fsal handle */
 } cache_inode_key_t;
 
@@ -338,22 +356,6 @@ cache_inode_free_dirent(cache_inode_dir_entry_t *dirent)
 		gsh_free(dirent->ckey.kv.addr);
 	gsh_free(dirent);
 }
-
-/**
- * @brief Represents one of the many-many links between inodes and exports.
- *
- */
-
-struct entry_export_map {
-	/** The relevant cache inode entry */
-	cache_entry_t *entry;
-	/** The export the entry belongs to */
-	struct gsh_export *export;
-	/** List of entries per export */
-	struct glist_head entry_per_export;
-	/** List of exports per entry */
-	struct glist_head export_per_entry;
-};
 
 /**
  * @brief Stats for file-specific and client-file delegation heuristics
@@ -468,7 +470,7 @@ struct cache_entry_t {
 	    that should not see changes in state. */
 	pthread_rwlock_t state_lock;
 	/** States on this cache entry */
-	struct glist_head state_list;
+	struct glist_head list_of_states;
 	/** Exports per entry (protected by attr_lock) */
 	struct glist_head export_list;
 	/** Atomic pointer to the first mapped export for fast path */
@@ -485,8 +487,6 @@ struct cache_entry_t {
 		struct cache_inode_file {
 			/** Pointers for lock list */
 			struct glist_head lock_list;
-			/** Pointers for delegation list */
-			struct glist_head deleg_list;
 			/** Pointers for NLM share list */
 			struct glist_head nlm_share_list;
 			/** Share reservation state for this file. */
@@ -521,6 +521,22 @@ struct cache_entry_t {
 			struct glist_head export_roots;
 		} dir;		/*< DIRECTORY data */
 	} object;
+};
+
+/**
+ * @brief Represents one of the many-many links between inodes and exports.
+ *
+ */
+
+struct entry_export_map {
+	/** The relevant cache inode entry */
+	cache_entry_t *entry;
+	/** The export the entry belongs to */
+	struct gsh_export *export;
+	/** List of entries per export */
+	struct glist_head entry_per_export;
+	/** List of exports per entry */
+	struct glist_head export_per_entry;
 };
 
 /**
@@ -584,58 +600,11 @@ static const uint32_t CACHE_INODE_INVALIDATE_CONTENT = 0x02;
 static const uint32_t CACHE_INODE_INVALIDATE_CLOSE = 0x04;
 static const uint32_t CACHE_INODE_INVALIDATE_GOT_LOCK = 0x08;
 
-/**
- * Possible errors
- */
-typedef enum cache_inode_status_t {
-	CACHE_INODE_SUCCESS = 0,
-	CACHE_INODE_MALLOC_ERROR = 1,
-	CACHE_INODE_POOL_MUTEX_INIT_ERROR = 2,
-	CACHE_INODE_GET_NEW_LRU_ENTRY = 3,
-	CACHE_INODE_INIT_ENTRY_FAILED = 4,
-	CACHE_INODE_FSAL_ERROR = 5,
-	CACHE_INODE_LRU_ERROR = 6,
-	CACHE_INODE_HASH_SET_ERROR = 7,
-	CACHE_INODE_NOT_A_DIRECTORY = 8,
-	CACHE_INODE_INCONSISTENT_ENTRY = 9,
-	CACHE_INODE_BAD_TYPE = 10,
-	CACHE_INODE_ENTRY_EXISTS = 11,
-	CACHE_INODE_DIR_NOT_EMPTY = 12,
-	CACHE_INODE_NOT_FOUND = 13,
-	CACHE_INODE_INVALID_ARGUMENT = 14,
-	CACHE_INODE_INSERT_ERROR = 15,
-	CACHE_INODE_HASH_TABLE_ERROR = 16,
-	CACHE_INODE_FSAL_EACCESS = 17,
-	CACHE_INODE_IS_A_DIRECTORY = 18,
-	CACHE_INODE_FSAL_EPERM = 19,
-	CACHE_INODE_NO_SPACE_LEFT = 20,
-	CACHE_INODE_READ_ONLY_FS = 21,
-	CACHE_INODE_IO_ERROR = 22,
-	CACHE_INODE_FSAL_ESTALE = 23,
-	CACHE_INODE_FSAL_ERR_SEC = 24,
-	CACHE_INODE_STATE_CONFLICT = 25,
-	CACHE_INODE_QUOTA_EXCEEDED = 26,
-	CACHE_INODE_DEAD_ENTRY = 27,
-	CACHE_INODE_ASYNC_POST_ERROR = 28,
-	CACHE_INODE_NOT_SUPPORTED = 29,
-	CACHE_INODE_STATE_ERROR = 30,
-	CACHE_INODE_DELAY = 31,
-	CACHE_INODE_NAME_TOO_LONG = 32,
-	CACHE_INODE_BAD_COOKIE = 33,
-	CACHE_INODE_FILE_BIG = 34,
-	CACHE_INODE_KILLED = 35,
-	CACHE_INODE_FILE_OPEN = 36,
-	CACHE_INODE_FSAL_XDEV = 37,
-	CACHE_INODE_FSAL_MLINK = 38,
-	CACHE_INODE_SERVERFAULT = 39,
-	CACHE_INODE_TOOSMALL = 40,
-	CACHE_INODE_FSAL_SHARE_DENIED = 41,
-	CACHE_INODE_BADNAME = 42,
-	CACHE_INODE_UNION_NOTSUPP = 43,
-	CACHE_INODE_CROSS_JUNCTION = 44,
-	CACHE_INODE_IN_GRACE = 45,
-	CACHE_INODE_BADHANDLE = 46,
-} cache_inode_status_t;
+enum cb_state {
+	CB_ORIGINAL,
+	CB_JUNCTION,
+	CB_PROBLEM,
+};
 
 /**
  * @brief Type of callback for cache_inode_readdir
@@ -674,7 +643,8 @@ typedef cache_inode_status_t (*cache_inode_getattr_cb_t)
 	(void *opaque,
 	 cache_entry_t *entry,
 	 const struct attrlist *attr,
-	 uint64_t mounted_on_fileid);
+	 uint64_t mounted_on_fileid,
+	 enum cb_state cb_state);
 
 const char *cache_inode_err_str(cache_inode_status_t err);
 
@@ -694,13 +664,7 @@ cache_inode_status_t cache_inode_get(cache_inode_fsal_data_t *fsdata,
 cache_entry_t *cache_inode_get_keyed(cache_inode_key_t *key,
 				     uint32_t flags,
 				     cache_inode_status_t *status);
-cache_inode_status_t
-cache_inode_get_protected(cache_entry_t **entry,
-			  pthread_rwlock_t *lock,
-			  cache_inode_status_t get_entry(cache_entry_t **,
-							 void *),
-			  void *source);
-void cache_inode_put(cache_entry_t *entry);
+
 void cache_inode_unexport(struct gsh_export *export);
 
 cache_inode_status_t cache_inode_access_sw(cache_entry_t *entry,
@@ -772,7 +736,8 @@ cache_inode_status_t cache_inode_create(cache_entry_t *entry_parent,
 
 cache_inode_status_t cache_inode_getattr(cache_entry_t *entry,
 					 void *opaque,
-					 cache_inode_getattr_cb_t cb);
+					 cache_inode_getattr_cb_t cb,
+					 enum cb_state cb_state);
 
 cache_inode_status_t cache_inode_fileid(cache_entry_t *entry,
 					uint64_t *fileid);
@@ -890,6 +855,12 @@ inline int cache_inode_set_time_current(struct timespec *time);
 void cache_inode_destroyer(void);
 
 /**
+** Resolve forward declarations
+*/
+#include "export_mgr.h"
+#include "fsal_api.h"
+
+/**
  * @brief Update cache_entry metadata from its attributes
  *
  * This function, to be used after a FSAL_getattr, updates the
@@ -988,7 +959,7 @@ cache_inode_refresh_attrs(cache_entry_t *entry)
 	}
 
 	fsal_status =
-	    entry->obj_handle->ops->getattrs(entry->obj_handle);
+	    entry->obj_handle->obj_ops.getattrs(entry->obj_handle);
 	if (FSAL_IS_ERROR(fsal_status)) {
 		cache_inode_kill_entry(entry);
 		cache_status = cache_inode_error_convert(fsal_status);

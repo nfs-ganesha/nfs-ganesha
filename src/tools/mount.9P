@@ -1,16 +1,7 @@
-#! /bin/bash
+#!/bin/bash
 #
 # Usage:
-# /sbin/mount.9P spec dir [-sfnv] [-o options]
-#
-
-case $1 in
-  -h|--help|-?)
-      echo "mount.9P is a private mount(8) wrapper for 9P."
-      echo "Don't use it directly!"
-      exit 1
-      ;;
-esac
+# /sbin/mount.9P spec dir [-fnrsvw] [-o options]
 
 restricted=1
 
@@ -23,102 +14,102 @@ fi
 # mountpoint only.  All necessary options have to be defined in /etc/fstab.
 #
 if [ $restricted -eq 1 ]; then
-  exec /bin/mount -i "$2"
+  exec /bin/mount -i "$@"
 fi
 
 
-IP_ADDR_PATTERN='^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$'
-HOSTNAME_PATTERN='^[a-z]+[a-z0-9]*'
-
-# First argument is looking "hostname_or_ip:/remotepath
-if ! echo $1 | grep -q ":" ; then
-  echo "Bad Syntax"
-  exit 1
-fi
-
-# Get mountpoint
-MNT=$2
-
-# Get serverid and remotepath
-SERVERID=`echo $1 | awk -F ':' '{print $1}'`
-REMOTEPATH=`echo $1 | awk -F ':' '{print $2}'`
-
-# check for correctness of argument
-if ! echo  $SERVERID | egrep -q $HOSTNAME_PATTERN ; then
-  if ! echo $SERVERID | egrep -q $IP_ADDR_PATTERN ; then
-     echo "Bad server id"
-     exit 1
-  else
-    IPADDR=$SERVERID
-  fi
-else
-  if ! IPADDR=`getent ahostsv4 $SERVERID  2>&1  | grep STREAM | cut -f1 -d " " | head -1` ; then
-    echo "Hostname could not be resolved"
-    exit 1
-  fi
-fi
-
-#Default value
-aname=$REMOTEPATH
-version="9p2000.L"
-debug="0x0"
+# "Custom" default values (different from kernel default)
 access="user"
 uname="root"
 msize="65560"
-misc="rw"
-trans="tcp"
-rq=32
-sq=32
-port=564
 
-# Now manage options
-IN_OPTIONS=`echo $4 | tr "," "\n"`
+# Command line building variables
+opts=""
+switch=""
+IPADDR=""
+MNT=""
 
-for OPT in $IN_OPTIONS; do
-  opt_ok=0
-  for OPT_TYPE in "version=" "access=" "debug=" "uname=" "msize=" "trans=" "rq=" "sq=" "port=" "cache=" "context="; do
-    if echo $OPT | grep -q $OPT_TYPE ; then
-      eval $OPT
-      opt_ok=1
-    fi
-  done
 
-  if echo $OPT | egrep -q "^ro$" ; then
-    misc="ro"
-    opt_ok=1
-  fi
+# Options can sneak in anywhere, e.g. mount -o foo device -o bar dir -o meh
+# This allows for various flags and takes the first two non-options as
+# device and dir accordingly
+while [[ $# -ge $OPTIND ]]; do
+  if getopts ":o:fnrsvwh" opt; then
+    case "$opt" in
+      o)
+        IN_OPTIONS="${OPTARG//,/ }"
 
-  if echo $OPT  | egrep -q "^rw$" ; then
-    misc="rw"
-    opt_ok=1
-  fi
+        for OPT in $IN_OPTIONS; do
+          case "${OPT%%=*}" in
+            # pass known options through...
+            version|ro|rw|remount|posixacl|debug|trans|rq|sq|timeout| \
+            port|cache|loose|mmap|cachetag|noextend|privport|context)
+              opts+="${OPT},"
+              ;;
+            access)
+              access="${OPT#*=}"
+              ;;
+            uname)
+              uname="${OPT#*=}"
+              ;;
+            msize)
+              msize="${OPT#*=}"
+              ;;
+            *)
+              echo "Invalid 9p option: $OPT"
+              exit 1
+              ;;
+          esac
+        done
+        ;;
+      f|n|r|s|w)
+        switch+="-$opt "
+	;;
+      v)
+        switch+="-$opt "
+        VERBOSE=1
+        ;;
+      h)
+        echo "Usage: $0 remotehost:remotedir dir [-fnrsvw] [-o options]"
+        exit 1
+        ;;
+      \?)
+        echo "Invalid mount option: -$OPTARG"
+        exit 1
+        ;;
+    esac
+  elif [[ -z "$IPADDR" ]]; then
+    shift $((OPTIND-1))
+    OPTIND=1
+    REMOTE="$1"
+    shift
 
-  if echo $OPT | egrep -q "^remount$" ; then
-    misc="remount,$misc"
-    opt_ok=1
-  fi
-
-  if echo $OPT | egrep -q "^posixacl$" ; then
-    misc="$misc,posixacl"
-    opt_ok=1
-  fi
-
-  if echo $OPT | egrep -q "^cache=mmap$" ; then
-    misc="$misc,cache=mmap"
-    opt_ok=1
-  fi
-
-  if echo $OPT | egrep -q "^context=" ; then
-    misc="$misc,context=$context"
-    opt_ok=1
-  fi
-
-  if [ $opt_ok -eq 0 ] ; then
-      echo "Invalid option $OPT"
+    if [[ "$REMOTE" != *:* ]]; then
+      echo "Mount destination $REMOTE should be server:path"
       exit 1
+    fi
+
+    SERVERID="${REMOTE%%:*}"
+    aname="${REMOTE#*:}"
+
+    if ! IPADDR=$(getent ahostsv4 "$SERVERID" 2>&1 | awk '/STREAM/ { print $1; exit }'); then
+      echo "Hostname could not be resolved"
+      exit 1
+    fi
+  elif [[ -z "$MNT" ]]; then
+    shift $((OPTIND-1))
+    OPTIND=1
+    MNT="$1"
+    shift
+  else
+    echo "Extra argument: ${!OPTIND}"
+    exit 1
   fi
 done
 
 # the "-i" is mandatory to avoid looping on this helper
-#echo " /bin/mount -i -t 9p $IPADDR $MNT -o $misc,uname=$uname,aname=$aname,msize=$msize,version=$version,debug=$debug,access=$access,trans=$trans,sq=$sq,rq=$rq",port=$port
-exec /bin/mount -i -t 9p $IPADDR $MNT -o $misc,uname=$uname,aname=$aname,msize=$msize,version=$version,debug=$debug,access=$access,trans=$trans,rq=$rq,sq=$sq,port=$port
+EXEC_STRING="/bin/mount -i $switch -t 9p $IPADDR $MNT -o ${opts}access=${access},uname=${uname},msize=${msize},aname=${aname}"
+if [[ -n "$VERBOSE" ]]; then
+  echo "$EXEC_STRING"
+fi
+exec $EXEC_STRING

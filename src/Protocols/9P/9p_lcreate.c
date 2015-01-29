@@ -39,6 +39,7 @@
 #include <pthread.h>
 #include <sys/stat.h>
 #include "nfs_core.h"
+#include "nfs_exports.h"
 #include "log.h"
 #include "cache_inode.h"
 #include "cache_inode_lru.h"
@@ -165,7 +166,7 @@ int _9p_lcreate(struct _9p_request_data *req9p, void *worker_data,
 	}
 
 	/* This is not a TATTACH fid */
-	pfid->from_attach = FALSE;
+	pfid->from_attach = false;
 
 	/* Pin as well. We probably want to close the file if this fails,
 	 * but it won't happen - right?! */

@@ -97,9 +97,9 @@ cache_inode_lookupp_impl(cache_entry_t *entry,
 			 * below the sentinel count)
 			 */
 			PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
-			cache_inode_lru_ref(entry, LRU_FLAG_NONE);
+			status = cache_inode_lru_ref(entry, LRU_FLAG_NONE);
 			*parent = entry;
-			return CACHE_INODE_SUCCESS;
+			return status;
 		}
 
 		PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
@@ -119,7 +119,7 @@ cache_inode_lookupp_impl(cache_entry_t *entry,
 		PTHREAD_RWLOCK_wrlock(&entry->content_lock);
 
 		fsal_status =
-		    entry->obj_handle->ops->lookup(entry->obj_handle,
+		    entry->obj_handle->obj_ops.lookup(entry->obj_handle,
 						   "..", &parent_handle);
 		if (FSAL_IS_ERROR(fsal_status)) {
 			if (fsal_status.major == ERR_FSAL_STALE) {

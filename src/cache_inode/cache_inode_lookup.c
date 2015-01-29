@@ -99,7 +99,7 @@ cache_inode_lookup_impl(cache_entry_t *parent,
 		*entry = parent;
 		/* Increment the refcount so the caller's decrementing it
 		   doesn't take us below the sentinel count. */
-		cache_inode_lru_ref(*entry, LRU_FLAG_NONE);
+		status = cache_inode_lru_ref(*entry, LRU_FLAG_NONE);
 		goto out;
 	} else if (strcmp(name, "..") == 0) {
 		/* Directory do only have exactly one parent. This a limitation
@@ -169,7 +169,7 @@ cache_inode_lookup_impl(cache_entry_t *parent,
 
 	dir_handle = parent->obj_handle;
 	fsal_status =
-	    dir_handle->ops->lookup(dir_handle, name, &object_handle);
+	    dir_handle->obj_ops.lookup(dir_handle, name, &object_handle);
 	if (FSAL_IS_ERROR(fsal_status)) {
 		if (fsal_status.major == ERR_FSAL_STALE) {
 			LogEvent(COMPONENT_CACHE_INODE,

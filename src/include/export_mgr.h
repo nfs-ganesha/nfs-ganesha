@@ -36,18 +36,16 @@
  * @brief Export manager
  */
 
-#include "ganesha_list.h"
+#include "gsh_list.h"
 #include "cache_inode.h"
 
 #ifndef EXPORT_MGR_H
 #define EXPORT_MGR_H
 
-typedef enum export_state {
-	EXPORT_INIT = 0,	/*< still being initialized */
+enum export_status {
 	EXPORT_READY,		/*< searchable, usable */
-	EXPORT_BLOCKED,		/*< not available for search */
-	EXPORT_RELEASE		/*< No references, ready for reaping */
-} export_state_t;
+	EXPORT_STALE,		/*< export is no longer valid */
+};
 
 /**
  * @brief Represents an export.
@@ -117,8 +115,6 @@ struct gsh_export {
 	struct export_perms export_perms;
 	/** The last time the export stats were updated */
 	nsecs_elapsed_t last_update;
-	/** The condition the export is in */
-	export_state_t state;
 	/** Export non-permission options */
 	uint32_t options;
 	/** Export non-permission options set */
@@ -128,6 +124,9 @@ struct gsh_export {
 	int32_t expire_time_attr;
 	/** Export_Id for this export */
 	uint16_t export_id;
+
+	uint8_t export_status;		/*< current condition */
+	bool has_pnfs_ds;		/*< id_servers matches export_id */
 };
 
 void export_pkginit(void);
@@ -146,16 +145,34 @@ struct gsh_export *get_gsh_export_by_pseudo_locked(char *path,
 						   bool exact_match);
 struct gsh_export *get_gsh_export_by_tag(char *tag);
 bool mount_gsh_export(struct gsh_export *exp);
-void set_gsh_export_state(struct gsh_export *export, export_state_t state);
 void put_gsh_export(struct gsh_export *export);
 void remove_gsh_export(uint16_t export_id);
 bool foreach_gsh_export(bool(*cb) (struct gsh_export *exp, void *state),
 			void *state);
 
-static inline void get_gsh_export_ref(struct gsh_export *exp)
+/**
+ * @brief Advisory check of export readiness.
+ *
+ * This function does not guarantee the export is reachable at the point of
+ * the test, it is just used to allow a function to take a shortcut if the
+ * export has gone stale, usually when the function is about to take an
+ * additional reference based on some object having a pointer and reference
+ * to the export.
+ *
+ * @param[in] export The export to test for readiness.
+ *
+ * @retval true if the export is ready
+ */
+static inline bool export_ready(struct gsh_export *export)
 {
-	atomic_inc_int64_t(&exp->refcnt);
+	return export->export_status == EXPORT_READY;
 }
+
+static inline void get_gsh_export_ref(struct gsh_export *export)
+{
+	atomic_inc_int64_t(&export->refcnt);
+}
+
 void export_revert(struct gsh_export *export);
 void export_add_to_mount_work(struct gsh_export *export);
 void export_add_to_unexport_work_locked(struct gsh_export *export);

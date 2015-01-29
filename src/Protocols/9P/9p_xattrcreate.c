@@ -40,6 +40,7 @@
 #include <sys/types.h>
 #include <sys/xattr.h>
 #include "nfs_core.h"
+#include "nfs_exports.h"
 #include "log.h"
 #include "cache_inode.h"
 #include "fsal.h"
@@ -105,7 +106,7 @@ int _9p_xattrcreate(struct _9p_request_data *req9p, void *worker_data,
 			 (u32) *msgtag, *fid, name);
 
 		fsal_status =
-		    pfid->pentry->obj_handle->ops->remove_extattr_by_name(
+		    pfid->pentry->obj_handle->obj_ops.remove_extattr_by_name(
 			pfid->pentry->obj_handle,
 			name);
 
@@ -143,12 +144,12 @@ int _9p_xattrcreate(struct _9p_request_data *req9p, void *worker_data,
 
 		/* try to create if flag doesn't have REPLACE bit */
 		if ((*flag & XATTR_REPLACE) == 0)
-			create = TRUE;
+			create = true;
 		else
-			create = FALSE;
+			create = false;
 
 		fsal_status =
-		    pfid->pentry->obj_handle->ops->setextattr_value(
+		    pfid->pentry->obj_handle->obj_ops.setextattr_value(
 			pfid->pentry->obj_handle,
 			name,
 			pfid->specdata.xattr.xattr_content,
@@ -159,11 +160,11 @@ int _9p_xattrcreate(struct _9p_request_data *req9p, void *worker_data,
 		if (FSAL_IS_ERROR(fsal_status)
 		    && fsal_status.major == ERR_FSAL_EXIST && (*flag == 0)) {
 			fsal_status =
-			    pfid->pentry->obj_handle->ops->
+			    pfid->pentry->obj_handle->obj_ops.
 			    setextattr_value(pfid->pentry->obj_handle,
 					     name,
 					     pfid->specdata.xattr.xattr_content,
-					     *size, FALSE);
+					     *size, false);
 		}
 
 		if (FSAL_IS_ERROR(fsal_status))
@@ -173,7 +174,7 @@ int _9p_xattrcreate(struct _9p_request_data *req9p, void *worker_data,
 					   (fsal_status)), plenout, preply);
 
 		fsal_status =
-		    pfid->pentry->obj_handle->ops->getextattr_id_by_name(
+		    pfid->pentry->obj_handle->obj_ops.getextattr_id_by_name(
 			pfid->pentry->obj_handle,
 			name,
 			&pfid->specdata.xattr.xattr_id);

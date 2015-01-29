@@ -32,9 +32,11 @@
  */
 #include "config.h"
 #include "log.h"
-#include "nfs4.h"
+#include "fsal.h"
 #include "nfs_core.h"
 #include "nfs_convert.h"
+#include "nfs_exports.h"
+#include "nfs_file_handle.h"
 #include "export_mgr.h"
 #include "nfs_creds.h"
 
@@ -77,7 +79,7 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op, compound_data_t *data,
 	op_ctx->fsal_export = NULL;
 
 	/* Clear out current entry for now */
-	set_current_entry(data, NULL, false);
+	set_current_entry(data, NULL);
 
 	/* Get the root export of the Pseudo FS */
 	op_ctx->export = get_gsh_export_by_pseudo("/", true);
@@ -93,7 +95,7 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op, compound_data_t *data,
 	op_ctx->fsal_export = op_ctx->export->fsal_export;
 
 	/* Build credentials */
-	res_PUTROOTFH4->status = nfs4_MakeCred(data);
+	res_PUTROOTFH4->status = nfs4_export_check_access(data->req);
 
 	/* Test for access error (export should not be visible). */
 	if (res_PUTROOTFH4->status == NFS4ERR_ACCESS) {
@@ -125,7 +127,7 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op, compound_data_t *data,
 		    "Root node %p", data->current_entry);
 
 	/* Set the current entry using the ref from get */
-	set_current_entry(data, file_entry, false);
+	set_current_entry(data, file_entry);
 
 	/* If no currentFH were set, allocate one */
 	if (data->currentFH.nfs_fh4_val == NULL) {

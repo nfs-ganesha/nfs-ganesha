@@ -21,7 +21,7 @@
  */
 
 #include <stdio.h>
-#include "ganesha_list.h"
+#include "gsh_list.h"
 
 struct myteststruct {
 	int value;

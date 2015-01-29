@@ -38,8 +38,7 @@
 #include <fcntl.h>
 #include <sys/file.h>
 #include "log.h"
-#include "ganesha_rpc.h"
-#include "nfs4.h"
+#include "fsal.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
 #include "nfs_exports.h"
@@ -96,7 +95,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 	 * inode creation or not */
 	exp_hdl = op_ctx->fsal_export;
 
-	fsal_status = exp_hdl->ops->check_quota(exp_hdl,
+	fsal_status = exp_hdl->exp_ops.check_quota(exp_hdl,
 						op_ctx->export->fullpath,
 						FSAL_QUOTA_INODES);
 
@@ -438,7 +437,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 	/* @todo : BUGAZOMEU: fair ele free dans cette fonction */
 
 	/* Keep the vnode entry for the file in the compound data */
-	set_current_entry(data, entry_new, true);
+	set_current_entry(data, entry_new);
 
 	/* If you reach this point, then no error occured */
 	res_CREATE4->status = NFS4_OK;

@@ -39,12 +39,13 @@ struct vfs_filesystem;
  */
 struct vfs_fsal_export {
 	struct fsal_export export;
-	bool pnfs_panfs_enabled;
-	void *pnfs_data;
 	struct fsal_filesystem *root_fs;
 	struct glist_head filesystems;
 	int fsid_type;
 };
+
+#define EXPORT_VFS_FROM_FSAL(fsal) \
+	container_of((fsal), struct vfs_fsal_export, export)
 
 /*
  * VFS internal filesystem
@@ -159,13 +160,6 @@ int vfs_get_root_handle(struct vfs_filesystem *vfs_fs,
 
 int vfs_re_index(struct vfs_filesystem *vfs_fs,
 		 struct vfs_fsal_export *exp);
-
-void vfs_fini(struct vfs_fsal_export *myself);
-
-void vfs_init_export_ops(struct vfs_fsal_export *myself,
-			 const char *export_path);
-
-int vfs_init_export_pnfs(struct vfs_fsal_export *myself);
 
 /*
  * VFS structure to tell subfunctions wether they should close the

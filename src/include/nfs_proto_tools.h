@@ -40,10 +40,6 @@
 #include <sys/file.h>		/* for having FNDELAY */
 #include "hashtable.h"
 #include "log.h"
-#include "ganesha_rpc.h"
-#include "nfs23.h"
-#include "nfs4.h"
-#include "mount.h"
 #include "cache_inode.h"
 #include "nfs_file_handle.h"
 #include "sal_data.h"
@@ -196,7 +192,7 @@ static inline bool attribute_is_set(struct bitmap4 *bits, int attr)
 	int offset = attr / 32;
 
 	if (offset >= bits->bitmap4_len)
-		return FALSE;
+		return false;
 	return (bits->map[offset] & (1 << (attr % 32))) != 0;
 }
 
@@ -205,11 +201,11 @@ static inline bool set_attribute_in_bitmap(struct bitmap4 *bits, int attr)
 	int offset = attr / 32;
 
 	if (offset >= 3)
-		return FALSE;	/* over upper bound */
+		return false;	/* over upper bound */
 	if (offset >= bits->bitmap4_len)
 		bits->bitmap4_len = offset + 1;	/* roll into the next word */
 	bits->map[offset] |= (1 << (attr % 32));
-	return TRUE;
+	return true;
 }
 
 static inline bool clear_attribute_in_bitmap(struct bitmap4 *bits, int attr)
@@ -217,9 +213,9 @@ static inline bool clear_attribute_in_bitmap(struct bitmap4 *bits, int attr)
 	int offset = attr / 32;
 
 	if (offset >= bits->bitmap4_len)
-		return FALSE;
+		return false;
 	bits->map[offset] &= ~(1 << (attr % 32));
-	return TRUE;
+	return true;
 }
 
 void nfs_SetWccData(const struct pre_op_attr *before_attr,
@@ -244,7 +240,7 @@ nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
 			       state_t *layout_state,
 			       struct pnfs_segment spec_segment,
 			       size_t body_len, const void *body_val,
-			       bool *deleted, bool hold_lock);
+			       bool *deleted);
 
 typedef enum {
 	UTF8_SCAN_NONE = 0,	/* do no validation other than size */
@@ -259,9 +255,6 @@ typedef enum {
 nfsstat4 nfs4_utf8string2dynamic(const utf8string *input, utf8_scantype_t scan,
 				 char **obj_name);
 
-void handle_recalls(struct fsal_layoutreturn_arg *arg, state_t *state,
-		    const struct pnfs_segment *segment);
-
 nfsstat4 cache_entry_To_Fattr(cache_entry_t *, fattr4 *,
 			      compound_data_t *, nfs_fh4 *,
 			      struct bitmap4 *);
@@ -274,6 +267,8 @@ int nfs4_Fattr_cmp(fattr4 *, fattr4 *);
 
 bool nfs3_FSALattr_To_Fattr(struct gsh_export *, const struct attrlist *,
 			    fattr3 *);
+
+bool is_sticky_bit_set(const struct attrlist *attr);
 
 bool cache_entry_to_nfs3_Fattr(cache_entry_t *, fattr3 *);
 

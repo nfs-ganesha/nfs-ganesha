@@ -72,7 +72,7 @@ is_open(cache_entry_t *entry)
 	if ((entry == NULL) || (entry->obj_handle == NULL)
 	    || (entry->type != REGULAR_FILE))
 		return false;
-	return (entry->obj_handle->ops->status(entry->obj_handle) !=
+	return (entry->obj_handle->obj_ops.status(entry->obj_handle) !=
 		FSAL_O_CLOSED);
 }
 
@@ -94,7 +94,7 @@ is_open_for_write(cache_entry_t *entry)
 
 	if ((entry == NULL) || (entry->type != REGULAR_FILE))
 		return false;
-	openflags = entry->obj_handle->ops->status(entry->obj_handle);
+	openflags = entry->obj_handle->obj_ops.status(entry->obj_handle);
 	return openflags & FSAL_O_WRITE;
 }
 
@@ -115,7 +115,7 @@ bool is_open_for_read(cache_entry_t *entry)
 
 	if ((entry == NULL) || (entry->type != REGULAR_FILE))
 		return false;
-	openflags = entry->obj_handle->ops->status(entry->obj_handle);
+	openflags = entry->obj_handle->obj_ops.status(entry->obj_handle);
 	return openflags & FSAL_O_READ;
 }
 
@@ -163,7 +163,7 @@ cache_inode_open(cache_entry_t *entry,
 		PTHREAD_RWLOCK_wrlock(&entry->content_lock);
 
 	obj_hdl = entry->obj_handle;
-	current_flags = obj_hdl->ops->status(obj_hdl);
+	current_flags = obj_hdl->obj_ops.status(obj_hdl);
 
 	/* Filter out overloaded FSAL_O_RECLAIM */
 	openflags &= ~FSAL_O_RECLAIM;
@@ -177,13 +177,13 @@ cache_inode_open(cache_entry_t *entry,
 		 * losing any lock state due to closing the file!
 		 */
 		fsal_export = op_ctx->fsal_export;
-		if (fsal_export->ops->fs_supports(fsal_export,
+		if (fsal_export->exp_ops.fs_supports(fsal_export,
 						  fso_reopen_method)) {
-			fsal_status = obj_hdl->ops->reopen(obj_hdl,
+			fsal_status = obj_hdl->obj_ops.reopen(obj_hdl,
 							   openflags);
 			closed = false;
 		} else {
-			fsal_status = obj_hdl->ops->close(obj_hdl);
+			fsal_status = obj_hdl->obj_ops.close(obj_hdl);
 			closed = true;
 		}
 		if (FSAL_IS_ERROR(fsal_status)
@@ -207,11 +207,11 @@ cache_inode_open(cache_entry_t *entry,
 			atomic_dec_size_t(&open_fd_count);
 
 		/* Force re-openning */
-		current_flags = obj_hdl->ops->status(obj_hdl);
+		current_flags = obj_hdl->obj_ops.status(obj_hdl);
 	}
 
 	if ((current_flags == FSAL_O_CLOSED)) {
-		fsal_status = obj_hdl->ops->open(obj_hdl, openflags);
+		fsal_status = obj_hdl->obj_ops.open(obj_hdl, openflags);
 		if (FSAL_IS_ERROR(fsal_status)) {
 			status = cache_inode_error_convert(fsal_status);
 			LogDebug(COMPONENT_CACHE_INODE,
@@ -301,7 +301,8 @@ cache_inode_close(cache_entry_t *entry, uint32_t flags)
 	    || (flags & CACHE_INODE_FLAG_REALLYCLOSE)
 	    || (entry->obj_handle->attributes.numlinks == 0)) {
 		LogFullDebug(COMPONENT_CACHE_INODE, "Closing entry %p", entry);
-		fsal_status = entry->obj_handle->ops->close(entry->obj_handle);
+		fsal_status = entry->obj_handle->
+				obj_ops.close(entry->obj_handle);
 		if (FSAL_IS_ERROR(fsal_status)
 		    && (fsal_status.major != ERR_FSAL_NOT_OPENED)) {
 			status = cache_inode_error_convert(fsal_status);
@@ -366,12 +367,12 @@ void cache_inode_adjust_openflags(cache_entry_t *entry)
 	 */
 	if (entry->object.file.share_state.share_access_write > 0 ||
 	    entry->object.file.write_delegated ||
-	    !fsal_export->ops->fs_supports(fsal_export, fso_reopen_method))
+	    !fsal_export->exp_ops.fs_supports(fsal_export, fso_reopen_method))
 		return;
 
 	obj_hdl = entry->obj_handle;
 	PTHREAD_RWLOCK_wrlock(&entry->content_lock);
-	openflags = obj_hdl->ops->status(obj_hdl);
+	openflags = obj_hdl->obj_ops.status(obj_hdl);
 	if (!(openflags & FSAL_O_WRITE)) /* nothing to downgrade */
 		goto unlock;
 
@@ -387,7 +388,7 @@ void cache_inode_adjust_openflags(cache_entry_t *entry)
 		goto unlock;
 
 	openflags &= ~FSAL_O_WRITE;
-	fsal_status = obj_hdl->ops->reopen(obj_hdl, openflags);
+	fsal_status = obj_hdl->obj_ops.reopen(obj_hdl, openflags);
 	if (FSAL_IS_ERROR(fsal_status)) {
 		LogWarn(COMPONENT_CACHE_INODE,
 			"fsal reopen method returned: %d(%d)",

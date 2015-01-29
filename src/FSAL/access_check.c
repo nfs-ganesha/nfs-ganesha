@@ -578,6 +578,14 @@ fsal_check_access_no_acl(struct user_cred *creds,
 		     gid, creds->caller_uid, creds->caller_gid, access_type);
 
 	if (creds->caller_uid == 0) {
+		if (p_object_attributes->type == DIRECTORY) {
+			if (allowed != NULL)
+				*allowed = access_type;
+			LogFullDebug(COMPONENT_NFS_V4_ACL,
+				     "Root has full access on directories.");
+			return fsalstat(ERR_FSAL_NO_ERROR, 0);
+		}
+
 		rc = ((access_type & FSAL_X_OK) == 0)
 		    || ((mode & (S_IXOTH | S_IXUSR | S_IXGRP)) != 0);
 		if (!rc) {

@@ -47,13 +47,13 @@
 #include "log.h"
 #include "hashtable.h"
 #include "fsal.h"
+#include "nfs_core.h"
 #include "sal_functions.h"
-#include "export_mgr.h"
 
 pool_t *state_owner_pool;	/*< Pool for NFSv4 files's open owner */
 
 #ifdef DEBUG_SAL
-struct glist_head state_owners_all;
+struct glist_head state_owners_all = GLIST_HEAD_INIT(state_owners_all);
 pthread_mutex_t all_state_owners_mutex = PTHREAD_MUTEX_INITIALIZER;
 #endif
 
@@ -114,16 +114,14 @@ const char *state_err_str(state_status_t err)
 		return "STATE_READ_ONLY_FS";
 	case STATE_IO_ERROR:
 		return "STATE_IO_ERROR";
-	case STATE_FSAL_ESTALE:
-		return "STATE_FSAL_ESTALE";
+	case STATE_ESTALE:
+		return "STATE_ESTALE";
 	case STATE_FSAL_ERR_SEC:
 		return "STATE_FSAL_ERR_SEC";
 	case STATE_STATE_CONFLICT:
 		return "STATE_STATE_CONFLICT";
 	case STATE_QUOTA_EXCEEDED:
 		return "STATE_QUOTA_EXCEEDED";
-	case STATE_DEAD_ENTRY:
-		return "STATE_DEAD_ENTRY";
 	case STATE_ASYNC_POST_ERROR:
 		return "STATE_ASYNC_POST_ERROR";
 	case STATE_NOT_SUPPORTED:
@@ -152,8 +150,6 @@ const char *state_err_str(state_status_t err)
 		return "STATE_CACHE_INODE_ERR";
 	case STATE_SIGNAL_ERROR:
 		return "STATE_SIGNAL_ERROR";
-	case STATE_KILLED:
-		return "STATE_KILLED";
 	case STATE_FILE_OPEN:
 		return "STATE_FILE_OPEN";
 	case STATE_FSAL_SHARE_DENIED:
@@ -232,16 +228,14 @@ state_status_t cache_inode_status_to_state_status(cache_inode_status_t status)
 		return STATE_READ_ONLY_FS;
 	case CACHE_INODE_IO_ERROR:
 		return STATE_IO_ERROR;
-	case CACHE_INODE_FSAL_ESTALE:
-		return STATE_FSAL_ESTALE;
+	case CACHE_INODE_ESTALE:
+		return STATE_ESTALE;
 	case CACHE_INODE_FSAL_ERR_SEC:
 		return STATE_FSAL_ERR_SEC;
 	case CACHE_INODE_STATE_CONFLICT:
 		return STATE_STATE_CONFLICT;
 	case CACHE_INODE_QUOTA_EXCEEDED:
 		return STATE_QUOTA_EXCEEDED;
-	case CACHE_INODE_DEAD_ENTRY:
-		return STATE_DEAD_ENTRY;
 	case CACHE_INODE_ASYNC_POST_ERROR:
 		return STATE_ASYNC_POST_ERROR;
 	case CACHE_INODE_NOT_SUPPORTED:
@@ -257,8 +251,6 @@ state_status_t cache_inode_status_to_state_status(cache_inode_status_t status)
 		return STATE_BAD_COOKIE;
 	case CACHE_INODE_FILE_BIG:
 		return STATE_FILE_BIG;
-	case CACHE_INODE_KILLED:
-		return STATE_KILLED;
 	case CACHE_INODE_FILE_OPEN:
 		return STATE_FILE_OPEN;
 	case CACHE_INODE_FSAL_SHARE_DENIED:
@@ -317,7 +309,7 @@ state_status_t state_error_convert(fsal_status_t fsal_status)
 
 	case ERR_FSAL_STALE:
 	case ERR_FSAL_FHEXPIRED:
-		return STATE_FSAL_ESTALE;
+		return STATE_ESTALE;
 
 	case ERR_FSAL_INVAL:
 	case ERR_FSAL_OVERFLOW:
@@ -491,9 +483,7 @@ nfsstat4 nfs4_Errno_state(state_status_t error)
 		nfserror = NFS4ERR_NAMETOOLONG;
 		break;
 
-	case STATE_KILLED:
-	case STATE_DEAD_ENTRY:
-	case STATE_FSAL_ESTALE:
+	case STATE_ESTALE:
 		nfserror = NFS4ERR_STALE;
 		break;
 
@@ -660,9 +650,7 @@ nfsstat3 nfs3_Errno_state(state_status_t error)
 		nfserror = NFS3ERR_ROFS;
 		break;
 
-	case STATE_KILLED:
-	case STATE_DEAD_ENTRY:
-	case STATE_FSAL_ESTALE:
+	case STATE_ESTALE:
 		nfserror = NFS3ERR_STALE;
 		break;
 
@@ -750,8 +738,7 @@ nfsstat3 nfs3_Errno_state(state_status_t error)
 bool state_unlock_err_ok(state_status_t status)
 {
 	return status == STATE_SUCCESS ||
-	       status == STATE_FSAL_ESTALE ||
-	       status == STATE_DEAD_ENTRY;
+	       status == STATE_ESTALE;
 }
 
 /** String for undefined state owner types */
@@ -828,37 +815,42 @@ bool different_owners(state_owner_t *owner1, state_owner_t *owner2)
 /**
  * @brief Display a state owner
  *
- * @param[in]  owner Owner to display
- * @param[out] buf   Buffer for output string
+ * @param[in/out] dspbuf display_buffer describing output string
+ * @param[in]     owner  Owner to display
  *
- * @return Length of output string.
+ * @return the bytes remaining in the buffer.
  */
-int DisplayOwner(state_owner_t *owner, char *buf)
+int display_owner(struct display_buffer *dspbuf, state_owner_t *owner)
 {
 	if (owner == NULL)
-		return sprintf(buf, "<NULL>");
+		return display_printf(dspbuf, "<NULL>");
 
 	switch (owner->so_type) {
 	case STATE_LOCK_OWNER_NLM:
-		return display_nlm_owner(owner, buf);
+		return display_nlm_owner(dspbuf, owner);
 
 #ifdef _USE_9P
 	case STATE_LOCK_OWNER_9P:
-		return display_9p_owner(owner, buf);
+		return display_9p_owner(dspbuf, owner);
 #endif
 
 	case STATE_OPEN_OWNER_NFSV4:
 	case STATE_LOCK_OWNER_NFSV4:
 	case STATE_CLIENTID_OWNER_NFSV4:
-		return display_nfs4_owner(owner, buf);
+		return display_nfs4_owner(dspbuf, owner);
 
 	case STATE_LOCK_OWNER_UNKNOWN:
-		return sprintf(buf, "%s powner=%p: refcount=%d",
-			       state_owner_type_to_str(owner->so_type), owner,
-			       atomic_fetch_int32_t(&owner->so_refcount));
+		return
+		    display_printf(dspbuf,
+				   "%s powner=%p: refcount=%d",
+				   state_owner_type_to_str(owner->so_type),
+				   owner,
+				   atomic_fetch_int32_t(&owner->so_refcount));
 	}
 
-	return sprintf(buf, "%s powner=%p", invalid_state_owner_type, owner);
+	return display_printf(dspbuf,
+			      "%s powner=%p",
+			      invalid_state_owner_type, owner);
 }
 
 /**
@@ -868,16 +860,22 @@ int DisplayOwner(state_owner_t *owner, char *buf)
  */
 void inc_state_owner_ref(state_owner_t *owner)
 {
-	char str[HASHTABLE_DISPLAY_STRLEN];
+	char str[LOG_BUFF_LEN];
+	struct display_buffer dspbuf = {sizeof(str), str, str};
+	bool str_valid = false;
 	int32_t refcount;
 
-	if (isDebug(COMPONENT_STATE))
-		DisplayOwner(owner, str);
+	if (isFullDebug(COMPONENT_STATE)) {
+		display_owner(&dspbuf, owner);
+		str_valid = true;
+	}
 
 	refcount = atomic_inc_int32_t(&owner->so_refcount);
 
-	LogFullDebug(COMPONENT_STATE, "Increment refcount now=%" PRId32 " {%s}",
-		     refcount, str);
+	if (str_valid)
+		LogFullDebug(COMPONENT_STATE,
+			     "Increment refcount now=%" PRId32 " {%s}",
+			     refcount, str);
 }
 
 /**
@@ -887,7 +885,8 @@ void inc_state_owner_ref(state_owner_t *owner)
  */
 void free_state_owner(state_owner_t *owner)
 {
-	char str[HASHTABLE_DISPLAY_STRLEN];
+	char str[LOG_BUFF_LEN];
+	struct display_buffer dspbuf = {sizeof(str), str, str};
 
 	switch (owner->so_type) {
 	case STATE_LOCK_OWNER_NLM:
@@ -906,7 +905,7 @@ void free_state_owner(state_owner_t *owner)
 		break;
 
 	case STATE_LOCK_OWNER_UNKNOWN:
-		DisplayOwner(owner, str);
+		display_owner(&dspbuf, owner);
 
 		LogCrit(COMPONENT_STATE, "Unexpected removal of {%s}", str);
 		return;
@@ -915,7 +914,7 @@ void free_state_owner(state_owner_t *owner)
 	if (owner->so_owner_val != NULL)
 		gsh_free(owner->so_owner_val);
 
-	pthread_mutex_destroy(&owner->so_mutex);
+	assert(pthread_mutex_destroy(&owner->so_mutex) == 0);
 
 #ifdef DEBUG_SAL
 	pthread_mutex_lock(&all_state_owners_mutex);
@@ -963,7 +962,9 @@ hash_table_t *get_state_owner_hash_table(state_owner_t *owner)
  */
 void dec_state_owner_ref(state_owner_t *owner)
 {
-	char str[HASHTABLE_DISPLAY_STRLEN];
+	char str[LOG_BUFF_LEN];
+	struct display_buffer dspbuf = {sizeof(str), str, str};
+	bool str_valid = false;
 	struct hash_latch latch;
 	hash_error_t rc;
 	struct gsh_buffdesc buffkey;
@@ -972,15 +973,18 @@ void dec_state_owner_ref(state_owner_t *owner)
 	int32_t refcount;
 	hash_table_t *ht_owner;
 
-	if (isDebug(COMPONENT_STATE))
-		DisplayOwner(owner, str);
+	if (isDebug(COMPONENT_STATE)) {
+		display_owner(&dspbuf, owner);
+		str_valid = true;
+	}
 
 	refcount = atomic_dec_int32_t(&owner->so_refcount);
 
 	if (refcount != 0) {
-		LogFullDebug(COMPONENT_STATE,
-			     "Decrement refcount now=%" PRId32 " {%s}",
-			     refcount, str);
+		if (str_valid)
+			LogFullDebug(COMPONENT_STATE,
+				     "Decrement refcount now=%" PRId32 " {%s}",
+				     refcount, str);
 
 		assert(refcount > 0);
 
@@ -990,7 +994,8 @@ void dec_state_owner_ref(state_owner_t *owner)
 	ht_owner = get_state_owner_hash_table(owner);
 
 	if (ht_owner == NULL) {
-		DisplayOwner(owner, str);
+		if (!str_valid)
+			display_owner(&dspbuf, owner);
 
 		LogCrit(COMPONENT_STATE, "Unexpected owner {%s}", str);
 
@@ -1003,13 +1008,14 @@ void dec_state_owner_ref(state_owner_t *owner)
 	buffkey.len = sizeof(*owner);
 
 	/* Get the hash table entry and hold latch */
-	rc = hashtable_getlatch(ht_owner, &buffkey, &old_value, TRUE, &latch);
+	rc = hashtable_getlatch(ht_owner, &buffkey, &old_value, true, &latch);
 
 	if (rc != HASHTABLE_SUCCESS) {
 		if (rc == HASHTABLE_ERROR_NO_SUCH_KEY)
 			hashtable_releaselatched(ht_owner, &latch);
 
-		DisplayOwner(owner, str);
+		if (!str_valid)
+			display_owner(&dspbuf, owner);
 
 		LogCrit(COMPONENT_STATE, "Error %s, could not find {%s}",
 			hash_table_err_to_str(rc), str);
@@ -1020,9 +1026,10 @@ void dec_state_owner_ref(state_owner_t *owner)
 	refcount = atomic_fetch_int32_t(&owner->so_refcount);
 
 	if (refcount > 0) {
-		LogDebug(COMPONENT_STATE,
-			 "Did not release {%s} refcount now=%" PRId32, str,
-			 refcount);
+		if (str_valid)
+			LogDebug(COMPONENT_STATE,
+				 "Did not release {%s} refcount now=%" PRId32,
+				 str, refcount);
 
 		hashtable_releaselatched(ht_owner, &latch);
 
@@ -1037,7 +1044,8 @@ void dec_state_owner_ref(state_owner_t *owner)
 		if (rc == HASHTABLE_ERROR_NO_SUCH_KEY)
 			hashtable_releaselatched(ht_owner, &latch);
 
-		DisplayOwner(owner, str);
+		if (!str_valid)
+			display_owner(&dspbuf, owner);
 
 		LogCrit(COMPONENT_STATE, "Error %s, could not remove {%s}",
 			hash_table_err_to_str(rc), str);
@@ -1045,7 +1053,8 @@ void dec_state_owner_ref(state_owner_t *owner)
 		return;
 	}
 
-	LogFullDebug(COMPONENT_STATE, "Free {%s}", str);
+	if (str_valid)
+		LogFullDebug(COMPONENT_STATE, "Free {%s}", str);
 
 	free_state_owner(owner);
 }
@@ -1064,7 +1073,9 @@ state_owner_t *get_state_owner(care_t care, state_owner_t *key,
 			       state_owner_init_t init_owner, bool_t *isnew)
 {
 	state_owner_t *owner;
-	char str[HASHTABLE_DISPLAY_STRLEN];
+	char str[LOG_BUFF_LEN];
+	struct display_buffer dspbuf = {sizeof(str), str, str};
+	bool str_valid = false;
 	struct hash_latch latch;
 	hash_error_t rc;
 	struct gsh_buffdesc buffkey;
@@ -1072,18 +1083,21 @@ state_owner_t *get_state_owner(care_t care, state_owner_t *key,
 	hash_table_t *ht_owner;
 
 	if (isnew != NULL)
-		*isnew = FALSE;
+		*isnew = false;
 
 	if (isFullDebug(COMPONENT_STATE)) {
-		DisplayOwner(key, str);
+		display_owner(&dspbuf, key);
 
 		LogFullDebug(COMPONENT_STATE, "Find {%s}", str);
+
+		str_valid = true;
 	}
 
 	ht_owner = get_state_owner_hash_table(key);
 
 	if (ht_owner == NULL) {
-		DisplayOwner(key, str);
+		if (!str_valid)
+			display_owner(&dspbuf, key);
 
 		LogCrit(COMPONENT_STATE, "ht=%p Unexpected key {%s}", ht_owner,
 			str);
@@ -1093,7 +1107,7 @@ state_owner_t *get_state_owner(care_t care, state_owner_t *key,
 	buffkey.addr = key;
 	buffkey.len = sizeof(*key);
 
-	rc = hashtable_getlatch(ht_owner, &buffkey, &buffval, TRUE, &latch);
+	rc = hashtable_getlatch(ht_owner, &buffkey, &buffval, true, &latch);
 
 	/* If we found it, return it */
 	if (rc == HASHTABLE_SUCCESS) {
@@ -1101,7 +1115,7 @@ state_owner_t *get_state_owner(care_t care, state_owner_t *key,
 
 		/* Return the found NSM Client */
 		if (isFullDebug(COMPONENT_STATE)) {
-			DisplayOwner(owner, str);
+			display_owner(&dspbuf, owner);
 			LogFullDebug(COMPONENT_STATE, "Found {%s}", str);
 		}
 
@@ -1117,7 +1131,8 @@ state_owner_t *get_state_owner(care_t care, state_owner_t *key,
 	}
 	/* An error occurred, return NULL */
 	if (rc != HASHTABLE_ERROR_NO_SUCH_KEY) {
-		DisplayOwner(key, str);
+		if (!str_valid)
+			display_owner(&dspbuf, key);
 
 		LogCrit(COMPONENT_STATE, "Error %s, could not find {%s}",
 			hash_table_err_to_str(rc), str);
@@ -1128,10 +1143,8 @@ state_owner_t *get_state_owner(care_t care, state_owner_t *key,
 	/* Not found, but we don't care, return NULL */
 	if (care == CARE_NOT) {
 		/* Return the found NSM Client */
-		if (isFullDebug(COMPONENT_STATE)) {
-			DisplayOwner(key, str);
+		if (str_valid)
 			LogFullDebug(COMPONENT_STATE, "Ignoring {%s}", str);
-		}
 
 		hashtable_releaselatched(ht_owner, &latch);
 
@@ -1141,7 +1154,8 @@ state_owner_t *get_state_owner(care_t care, state_owner_t *key,
 	owner = pool_alloc(state_owner_pool, NULL);
 
 	if (owner == NULL) {
-		DisplayOwner(key, str);
+		if (!str_valid)
+			display_owner(&dspbuf, key);
 		LogCrit(COMPONENT_STATE, "No memory for {%s}", str);
 
 		return NULL;
@@ -1150,14 +1164,8 @@ state_owner_t *get_state_owner(care_t care, state_owner_t *key,
 	/* Copy everything over */
 	memcpy(owner, key, sizeof(*key));
 
-	if (pthread_mutex_init(&owner->so_mutex, NULL) == -1) {
-		/* Mutex initialization failed, free the created owner */
-		DisplayOwner(key, str);
-		LogCrit(COMPONENT_STATE, "Could not init mutex for {%s}", str);
+	assert(pthread_mutex_init(&owner->so_mutex, NULL) == 0);
 
-		gsh_free(owner);
-		return NULL;
-	}
 #ifdef DEBUG_SAL
 	pthread_mutex_lock(&all_state_owners_mutex);
 
@@ -1174,7 +1182,8 @@ state_owner_t *get_state_owner(care_t care, state_owner_t *key,
 
 	if (owner->so_owner_val == NULL) {
 		/* Discard the created owner */
-		DisplayOwner(key, str);
+		if (!str_valid)
+			display_owner(&dspbuf, key);
 		LogCrit(COMPONENT_STATE, "No memory for {%s}", str);
 
 		free_state_owner(owner);
@@ -1188,7 +1197,7 @@ state_owner_t *get_state_owner(care_t care, state_owner_t *key,
 	owner->so_refcount = 1;
 
 	if (isFullDebug(COMPONENT_STATE)) {
-		DisplayOwner(owner, str);
+		display_owner(&dspbuf, owner);
 		LogFullDebug(COMPONENT_STATE, "New {%s}", str);
 	}
 
@@ -1197,12 +1206,12 @@ state_owner_t *get_state_owner(care_t care, state_owner_t *key,
 	buffval.addr = owner;
 	buffval.len = sizeof(*owner);
 
-	rc = hashtable_setlatched(ht_owner, &buffval, &buffval, &latch, FALSE,
+	rc = hashtable_setlatched(ht_owner, &buffval, &buffval, &latch, false,
 				  NULL, NULL);
 
 	/* An error occurred, return NULL */
 	if (rc != HASHTABLE_SUCCESS) {
-		DisplayOwner(owner, str);
+		display_owner(&dspbuf, owner);
 
 		LogCrit(COMPONENT_STATE, "Error %s, inserting {%s}",
 			hash_table_err_to_str(rc), str);
@@ -1213,7 +1222,7 @@ state_owner_t *get_state_owner(care_t care, state_owner_t *key,
 	}
 
 	if (isnew != NULL)
-		*isnew = TRUE;
+		*isnew = true;
 
 	return owner;
 }
@@ -1251,79 +1260,33 @@ void state_wipe_file(cache_entry_t *entry)
 #endif
 }
 
-/**
- * @brief Display a run of bytes
- *
- * This produces a string as a decimal count and a series of decimal
- * digits.
- *
- * @param[in]  value Bytes to display
- * @param[in]  len   Count of bytes to display
- * @param[out] str   Output buffer
- *
- * @return Length of output string.
- */
-int DisplayOpaqueValue(char *value, int len, char *str)
-{
-	unsigned int i = 0;
-	char *strtmp = str;
-
-	if (value == NULL || len == 0)
-		return sprintf(str, "(NULL)");
-
-	strtmp += sprintf(strtmp, "(%d:", len);
-
-	assert(len > 0);
-
-	if (len < 0 || len > 1024)
-		len = 1024;
-
-	for (i = 0; i < len; i++)
-		if (!isprint(value[i]))
-			break;
-
-	if (i == len) {
-		memcpy(strtmp, value, len);
-		strtmp += len;
-		*strtmp = '\0';
-	} else {
-		strtmp += sprintf(strtmp, "0x");
-		for (i = 0; i < len; i++)
-			strtmp +=
-			    sprintf(strtmp, "%02x", (unsigned char)value[i]);
-	}
-
-	strtmp += sprintf(strtmp, ")");
-
-	return strtmp - str;
-}
-
 #ifdef DEBUG_SAL
 void dump_all_owners(void)
 {
-	if (!isDebug(COMPONENT_STATE))
+	if (!isFullDebug(COMPONENT_STATE))
 		return;
 
 	pthread_mutex_lock(&all_state_owners_mutex);
 
 	if (!glist_empty(&state_owners_all)) {
-		char str[HASHTABLE_DISPLAY_STRLEN];
+		char str[LOG_BUFF_LEN];
+		struct display_buffer dspbuf = {sizeof(str), str, str};
 		struct glist_head *glist;
 
-		LogDebug(COMPONENT_STATE,
-			 " ---------------------- State Owner List ----------------------");
+		LogFullDebug(COMPONENT_STATE,
+			     " ---------------------- State Owner List ----------------------");
 
 		glist_for_each(glist, &state_owners_all) {
-			DisplayOwner(glist_entry
-				     (glist, state_owner_t, so_all_owners),
-				     str);
-			LogDebug(COMPONENT_STATE, "{%s}", str);
+			display_reset_buffer(&dspbuf);
+			display_owner(&dspbuf, glist_entry(glist,
+							   state_owner_t,
+							   so_all_owners));
+			LogFullDebug(COMPONENT_STATE, "{%s}", str);
 		}
 
-		LogDebug(COMPONENT_STATE,
-			 " ----------------------");
+		LogFullDebug(COMPONENT_STATE, " ----------------------");
 	} else
-		LogDebug(COMPONENT_STATE, "All state owners released");
+		LogFullDebug(COMPONENT_STATE, "All state owners released");
 
 	pthread_mutex_unlock(&all_state_owners_mutex);
 }

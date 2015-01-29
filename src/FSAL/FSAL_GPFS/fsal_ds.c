@@ -28,21 +28,22 @@
  * @brief pNFS DS operations for GPFS
  *
  * This file implements the read, write, commit, and dispose
- * operations for GPFS data-server handles.  The functionality to
- * create a data server handle is in the export.c file, as it is part
- * of the export object's interface.
+ * operations for GPFS data-server handles.
+ *
+ * Also, creating a data server handle -- now called via the DS itself.
  */
 
 #include "config.h"
 
 #include <fcntl.h>
-#include "fsal.h"
 #include "fsal_api.h"
 #include "FSAL/fsal_commonlib.h"
+#include "../fsal_private.h"
 #include "fsal_convert.h"
 #include "fsal_internal.h"
 #include "gpfs_methods.h"
 #include "pnfs_utils.h"
+#include "nfs_creds.h"
 
 #define min(a, b)			\
 	({ typeof(a) _a = (a);		\
@@ -50,21 +51,16 @@
 	_a < _b ? _a : _b; })
 
 /**
- * @brief Release an object
+ * @brief Release a DS handle
  *
- * This function looks up an object by name in a directory.
- *
- * @param[in] obj_pub The object to release
- *
- * @return FSAL status codes.
+ * @param[in] ds_pub The object to release
  */
-static void release(struct fsal_ds_handle *const ds_pub)
+static void ds_release(struct fsal_ds_handle *const ds_pub)
 {
 	/* The private 'full' DS handle */
 	struct gpfs_ds *ds = container_of(ds_pub, struct gpfs_ds, ds);
 
-	fsal_ds_handle_uninit(&ds->ds);
-
+	fsal_ds_handle_fini(&ds->ds);
 	gsh_free(ds);
 }
 
@@ -95,16 +91,15 @@ static nfsstat4 ds_read(struct fsal_ds_handle *const ds_pub,
 			count4 * const supplied_length,
 			bool * const end_of_file)
 {
-	struct gpfs_file_handle *gpfs_handle;
+	/* The private 'full' DS handle */
+	struct gpfs_ds *ds = container_of(ds_pub, struct gpfs_ds, ds);
+	struct gpfs_file_handle *gpfs_handle = &ds->wire;
 	/* The amount actually read */
 	int amount_read = 0;
 	struct dsread_arg rarg;
 	unsigned int *fh;
 	int errsv = 0;
 
-	/* The private 'full' DS handle */
-	struct gpfs_ds *ds = container_of(ds_pub, struct gpfs_ds, ds);
-	gpfs_handle = &ds->wire;
 
 	fh = (int *)&(gpfs_handle->f_handle);
 
@@ -132,7 +127,7 @@ static nfsstat4 ds_read(struct fsal_ds_handle *const ds_pub,
 	*supplied_length = amount_read;
 
 	if (amount_read == 0 || amount_read < requested_length)
-		*end_of_file = TRUE;
+		*end_of_file = true;
 
 	return NFS4_OK;
 }
@@ -166,16 +161,14 @@ static nfsstat4 ds_read_plus(struct fsal_ds_handle *const ds_pub,
 			bool * const end_of_file,
 			struct io_info *info)
 {
-	struct gpfs_file_handle *gpfs_handle;
+	/* The private 'full' DS handle */
+	struct gpfs_ds *ds = container_of(ds_pub, struct gpfs_ds, ds);
+	struct gpfs_file_handle *gpfs_handle = &ds->wire;
 	/* The amount actually read */
 	int amount_read = 0;
 	struct dsread_arg rarg;
 	unsigned int *fh;
 	int errsv = 0;
-
-	/* The private 'full' DS handle */
-	struct gpfs_ds *ds = container_of(ds_pub, struct gpfs_ds, ds);
-	gpfs_handle = &ds->wire;
 
 	fh = (int *)&(gpfs_handle->f_handle);
 
@@ -207,11 +200,11 @@ static nfsstat4 ds_read_plus(struct fsal_ds_handle *const ds_pub,
 	} else {
 		info->io_content.what = NFS4_CONTENT_DATA;
 		info->io_content.data.d_offset = offset + amount_read;
-		info->io_content.data.d_allocated = TRUE;
+		info->io_content.data.d_allocated = true;
 		info->io_content.data.d_data.data_len = amount_read;
 		info->io_content.data.d_data.data_val = buffer;
 		if (amount_read == 0 || amount_read < requested_length)
-			*end_of_file = TRUE;
+			*end_of_file = true;
 	}
 
 	return NFS4_OK;
@@ -249,14 +242,13 @@ static nfsstat4 ds_write(struct fsal_ds_handle *const ds_pub,
 			 verifier4 * const writeverf,
 			 stable_how4 * const stability_got)
 {
+	/* The private 'full' DS handle */
+	struct gpfs_ds *ds = container_of(ds_pub, struct gpfs_ds, ds);
+	struct gpfs_file_handle *gpfs_handle = &ds->wire;
 	/* The amount actually read */
 	int32_t amount_written = 0;
 	struct dswrite_arg warg;
 	unsigned int *fh;
-	struct gpfs_file_handle *gpfs_handle;
-	/* The private 'full' DS handle */
-	struct gpfs_ds *ds = container_of(ds_pub, struct gpfs_ds, ds);
-	gpfs_handle = &ds->wire;
 	struct gsh_buffdesc key;
 	int errsv = 0;
 
@@ -338,14 +330,13 @@ static nfsstat4 ds_write_plus(struct fsal_ds_handle *const ds_pub,
 			 stable_how4 * const stability_got,
 			 struct io_info *info)
 {
+	/* The private 'full' DS handle */
+	struct gpfs_ds *ds = container_of(ds_pub, struct gpfs_ds, ds);
+	struct gpfs_file_handle *gpfs_handle = &ds->wire;
 	/* The amount actually read */
 	int32_t amount_written = 0;
 	struct dswrite_arg warg;
 	unsigned int *fh;
-	struct gpfs_file_handle *gpfs_handle;
-	/* The private 'full' DS handle */
-	struct gpfs_ds *ds = container_of(ds_pub, struct gpfs_ds, ds);
-	gpfs_handle = &ds->wire;
 	struct gsh_buffdesc key;
 	int errsv = 0;
 
@@ -424,12 +415,99 @@ static nfsstat4 ds_commit(struct fsal_ds_handle *const ds_pub,
 	return NFS4ERR_INVAL;
 }
 
-void ds_ops_init(struct fsal_ds_ops *ops)
+static void dsh_ops_init(struct fsal_dsh_ops *ops)
 {
-	ops->release = release;
+	/* redundant copy, but you never know about the future... */
+	memcpy(ops, &def_dsh_ops, sizeof(struct fsal_dsh_ops));
+
+	ops->release = ds_release;
 	ops->read = ds_read;
 	ops->read_plus = ds_read_plus;
 	ops->write = ds_write;
 	ops->write_plus = ds_write_plus;
 	ops->commit = ds_commit;
-};
+}
+
+/**
+ * @brief Try to create a FSAL data server handle from a wire handle
+ *
+ * This function creates a FSAL data server handle from a client
+ * supplied "wire" handle.  This is also where validation gets done,
+ * since PUTFH is the only operation that can return
+ * NFS4ERR_BADHANDLE.
+ *
+ * @param[in]  pds      FSAL pNFS DS
+ * @param[in]  desc     Buffer from which to create the file
+ * @param[out] handle   FSAL DS handle
+ *
+ * @return NFSv4.1 error codes.
+ */
+
+static nfsstat4 make_ds_handle(struct fsal_pnfs_ds *const pds,
+			       const struct gsh_buffdesc *const desc,
+			       struct fsal_ds_handle **const handle)
+{
+	struct gpfs_file_handle *fh = (struct gpfs_file_handle *)desc->addr;
+	struct gpfs_ds *ds;		/* Handle to be created */
+	struct fsal_filesystem *fs;
+	struct fsal_fsid__ fsid;
+	enum fsid_type fsid_type;
+
+	*handle = NULL;
+
+	if (desc->len != sizeof(struct gpfs_file_handle))
+		return NFS4ERR_BADHANDLE;
+
+	gpfs_extract_fsid(fh, &fsid_type, &fsid);
+
+	fs = lookup_fsid(&fsid, fsid_type);
+	if (fs == NULL) {
+		LogInfo(COMPONENT_FSAL,
+			"Could not find filesystem for "
+			"fsid=0x%016"PRIx64".0x%016"PRIx64
+			" from handle",
+			fsid.major, fsid.minor);
+		return NFS4ERR_STALE;
+	}
+
+	if (fs->fsal != pds->fsal) {
+		LogInfo(COMPONENT_FSAL,
+			"Non GPFS filesystem "
+			"fsid=0x%016"PRIx64".0x%016"PRIx64
+			" from handle",
+			fsid.major, fsid.minor);
+		return NFS4ERR_STALE;
+	}
+
+	ds = gsh_calloc(sizeof(struct gpfs_ds), 1);
+	if (ds == NULL)
+		return NFS4ERR_SERVERFAULT;
+
+	*handle = &ds->ds;
+	fsal_ds_handle_init(*handle, pds);
+
+	/* Connect lazily when a FILE_SYNC4 write forces us to, not
+	   here. */
+
+	ds->connected = false;
+
+	ds->gpfs_fs = fs->private;
+
+	memcpy(&ds->wire, desc->addr, desc->len);
+	return NFS4_OK;
+}
+
+static nfsstat4 pds_permissions(struct fsal_pnfs_ds *const pds,
+				struct svc_req *req)
+{
+	/* special case: related export has been set */
+	return nfs4_export_check_access(req);
+}
+
+void pnfs_ds_ops_init(struct fsal_pnfs_ds_ops *ops)
+{
+	memcpy(ops, &def_pnfs_ds_ops, sizeof(struct fsal_pnfs_ds_ops));
+	ops->permissions = pds_permissions;
+	ops->make_ds_handle = make_ds_handle;
+	ops->fsal_dsh_ops = dsh_ops_init;
+}

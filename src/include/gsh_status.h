@@ -1,0 +1,144 @@
+/*
+ * Copyright © 2014 CohortFS, LLC.
+ * Author: William Allen Simpson <bill@CohortFS.com>
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ */
+
+/**
+ * @file   gsh_status.h
+ * @author William Allen Simpson <bill@CohortFS.com>
+ * @author Daniel Gryniewicz <dang@CohortFS.com>
+ * @date   Mon Nov 17 14:11:17 2014
+ *
+ * @brief Ganesha Unified Status
+ */
+
+#ifndef GSH_STATUS_H
+#define GSH_STATUS_H
+
+/**
+ * @brief Possible Errors from SAL Code
+ *
+ * @note A lot of these errors don't make sense in the context of the
+ *       SAL and ought to be pruned.
+ */
+typedef enum state_status {
+	STATE_SUCCESS,
+	STATE_MALLOC_ERROR,
+	STATE_POOL_MUTEX_INIT_ERROR,
+	STATE_GET_NEW_LRU_ENTRY,
+	STATE_INIT_ENTRY_FAILED,
+	STATE_FSAL_ERROR,
+	STATE_LRU_ERROR,
+	STATE_HASH_SET_ERROR,
+	STATE_NOT_A_DIRECTORY,
+	STATE_INCONSISTENT_ENTRY,
+	STATE_BAD_TYPE,
+	STATE_ENTRY_EXISTS,
+	STATE_DIR_NOT_EMPTY,
+	STATE_NOT_FOUND,
+	STATE_INVALID_ARGUMENT,
+	STATE_INSERT_ERROR,
+	STATE_HASH_TABLE_ERROR,
+	STATE_FSAL_EACCESS,
+	STATE_IS_A_DIRECTORY,
+	STATE_FSAL_EPERM,
+	STATE_NO_SPACE_LEFT,
+	STATE_READ_ONLY_FS,
+	STATE_IO_ERROR,
+	STATE_ESTALE,
+	STATE_FSAL_ERR_SEC,
+	STATE_STATE_CONFLICT,
+	STATE_LOCKED,
+	STATE_QUOTA_EXCEEDED,
+	STATE_ASYNC_POST_ERROR,
+	STATE_NOT_SUPPORTED,
+	STATE_STATE_ERROR,
+	STATE_FSAL_DELAY,
+	STATE_NAME_TOO_LONG,
+	STATE_LOCK_CONFLICT,
+	STATE_LOCK_BLOCKED,
+	STATE_LOCK_DEADLOCK,
+	STATE_BAD_COOKIE,
+	STATE_FILE_BIG,
+	STATE_GRACE_PERIOD,
+	STATE_CACHE_INODE_ERR,
+	STATE_SIGNAL_ERROR,
+	STATE_FILE_OPEN,
+	STATE_MLINK,
+	STATE_SERVERFAULT,
+	STATE_TOOSMALL,
+	STATE_XDEV,
+	STATE_FSAL_SHARE_DENIED,
+	STATE_IN_GRACE,
+	STATE_BADHANDLE,
+} state_status_t;
+
+#define STATE_FSAL_ESTALE STATE_ESTALE
+
+/**
+ * @brief Possible Errors from Cache_Inode
+ */
+typedef enum cache_inode_status {
+	CACHE_INODE_SUCCESS = 0,
+	CACHE_INODE_MALLOC_ERROR = 1,
+	CACHE_INODE_POOL_MUTEX_INIT_ERROR = 2,
+	CACHE_INODE_GET_NEW_LRU_ENTRY = 3,
+	CACHE_INODE_INIT_ENTRY_FAILED = 4,
+	CACHE_INODE_FSAL_ERROR = 5,
+	CACHE_INODE_LRU_ERROR = 6,
+	CACHE_INODE_HASH_SET_ERROR = 7,
+	CACHE_INODE_NOT_A_DIRECTORY = 8,
+	CACHE_INODE_INCONSISTENT_ENTRY = 9,
+	CACHE_INODE_BAD_TYPE = 10,
+	CACHE_INODE_ENTRY_EXISTS = 11,
+	CACHE_INODE_DIR_NOT_EMPTY = 12,
+	CACHE_INODE_NOT_FOUND = 13,
+	CACHE_INODE_INVALID_ARGUMENT = 14,
+	CACHE_INODE_INSERT_ERROR = 15,
+	CACHE_INODE_HASH_TABLE_ERROR = 16,
+	CACHE_INODE_FSAL_EACCESS = 17,
+	CACHE_INODE_IS_A_DIRECTORY = 18,
+	CACHE_INODE_FSAL_EPERM = 19,
+	CACHE_INODE_NO_SPACE_LEFT = 20,
+	CACHE_INODE_READ_ONLY_FS = 21,
+	CACHE_INODE_IO_ERROR = 22,
+	CACHE_INODE_ESTALE = 23,
+	CACHE_INODE_FSAL_ERR_SEC = 24,
+	CACHE_INODE_STATE_CONFLICT = 25,
+	CACHE_INODE_QUOTA_EXCEEDED = 26,
+	CACHE_INODE_ASYNC_POST_ERROR = 27,
+	CACHE_INODE_NOT_SUPPORTED = 28,
+	CACHE_INODE_STATE_ERROR = 29,
+	CACHE_INODE_DELAY = 30,
+	CACHE_INODE_NAME_TOO_LONG = 31,
+	CACHE_INODE_BAD_COOKIE = 32,
+	CACHE_INODE_FILE_BIG = 33,
+	CACHE_INODE_FILE_OPEN = 34,
+	CACHE_INODE_FSAL_XDEV = 35,
+	CACHE_INODE_FSAL_MLINK = 36,
+	CACHE_INODE_SERVERFAULT = 37,
+	CACHE_INODE_TOOSMALL = 38,
+	CACHE_INODE_FSAL_SHARE_DENIED = 39,
+	CACHE_INODE_BADNAME = 40,
+	CACHE_INODE_UNION_NOTSUPP = 41,
+	CACHE_INODE_CROSS_JUNCTION = 42,
+	CACHE_INODE_IN_GRACE = 43,
+	CACHE_INODE_BADHANDLE = 44,
+} cache_inode_status_t;
+
+#endif				/* !GSH_STATUS_H */

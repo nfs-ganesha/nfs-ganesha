@@ -39,22 +39,18 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-#include "ganesha_rpc.h"
-#include "fsal.h"
+#include "fsal_types.h"
 #include "cache_inode.h"
-
-#include "nfs23.h"
-#include "nfs4.h"
-#include "mount.h"
-
-bool get_req_creds(struct svc_req *req);
+#include "sal_data.h"
 
 void init_credentials(void);
 void clean_credentials(void);
 
 void squash_setattr(struct attrlist *attr);
 
-int nfs4_MakeCred(compound_data_t *);
+nfsstat4 nfs_req_creds(struct svc_req *req);
+
+nfsstat4 nfs4_export_check_access(struct svc_req *req);
 
 cache_inode_status_t nfs_access_op(cache_entry_t *entry,
 				   uint32_t requested_access,

@@ -50,8 +50,11 @@
 #include "fsal.h"
 #include "nfs_core.h"
 #include "config_parsing.h"
-#include "ganesha_types.h"
+#include "gsh_types.h"
+#include "FSAL/fsal_commonlib.h"
 #include "fsal_private.h"
+#include "pnfs_utils.h"
+#include "nfs_creds.h"
 
 /** fsal module method defaults and common methods
  */
@@ -61,7 +64,7 @@
  * is that older fsals must safely run with newer ganesha core.
  * This is observed by the following rules:
  *
- * 1. New methods are *always* appended to the ops vector in fsal_api.h
+ * 1. New methods are *always* appended to the m_ops vector in fsal_api.h
  *
  * 2. This file is updated to add the default method.
  *
@@ -175,6 +178,45 @@ static size_t fs_da_addr_size(struct fsal_module *fsal_hdl)
 	return 0;
 }
 
+/**
+ * @brief Try to create a FSAL pNFS data server
+ *
+ * @param[in]  fsal_hdl		FSAL module
+ * @param[in]  parse_node	opaque pointer to parse tree node for
+ *				export options to be passed to
+ *				load_config_from_node
+ * @param[out] handle		FSAL pNFS DS
+ *
+ * @return FSAL status.
+ */
+
+static fsal_status_t fsal_pnfs_ds(struct fsal_module *const fsal_hdl,
+				  void *parse_node,
+				  struct fsal_pnfs_ds **const handle)
+{
+	LogDebug(COMPONENT_PNFS, "Default pNFS DS creation!");
+	if (*handle == NULL) {
+		*handle = pnfs_ds_alloc();
+		if (*handle == NULL)
+			return fsalstat(ERR_FSAL_NOMEM, ENOMEM);
+	}
+
+	fsal_pnfs_ds_init(*handle, fsal_hdl);
+	op_ctx->fsal_pnfs_ds = *handle;
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
+/**
+ * @brief Initialize FSAL specific values for pNFS data server
+ *
+ * @param[in]  ops	FSAL pNFS Data Server operations vector
+ */
+
+static void fsal_pnfs_ds_ops(struct fsal_pnfs_ds_ops *ops)
+{
+	memcpy(ops, &def_pnfs_ds_ops, sizeof(struct fsal_pnfs_ds_ops));
+}
+
 /* Default fsal module method vector.
  * copied to allocated vector at register time
  */
@@ -187,6 +229,8 @@ struct fsal_ops def_fsal_ops = {
 	.emergency_cleanup = emergency_cleanup,
 	.getdeviceinfo = getdeviceinfo,
 	.fs_da_addr_size = fs_da_addr_size,
+	.fsal_pnfs_ds = fsal_pnfs_ds,
+	.fsal_pnfs_ds_ops = fsal_pnfs_ds_ops,
 };
 
 /* export_release
@@ -237,22 +281,6 @@ static fsal_status_t create_handle(struct fsal_export *exp_hdl,
 				   struct fsal_obj_handle **handle)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
-}
-
-/**
- * @brief Fail to create a FSAL data server handle from a wire handle
- *
- * @param[in]  exp_hdl  The export in which to create the handle
- * @param[out] handle   FSAL object handle
- *
- * @retval NFS4ERR_BADHANDLE.
- */
-
-static nfsstat4 create_ds_handle(struct fsal_export *const exp_hdl,
-				 const struct gsh_buffdesc *const hdl_desc,
-				 struct fsal_ds_handle **const handle)
-{
-	return NFS4ERR_BADHANDLE;
 }
 
 /* get_dynamic_info
@@ -484,7 +512,6 @@ struct export_ops def_export_ops = {
 	.lookup_junction = lookup_junction,
 	.extract_handle = extract_handle,
 	.create_handle = create_handle,
-	.create_ds_handle = create_ds_handle,
 	.get_fs_dynamic_info = get_dynamic_info,
 	.fs_supports = fs_supports,
 	.fs_maxfilesize = fs_maxfilesize,
@@ -677,6 +704,16 @@ static fsal_status_t file_open(struct fsal_obj_handle *obj_hdl,
 
 static fsal_status_t file_reopen(struct fsal_obj_handle *obj_hdl,
 				 fsal_openflags_t openflags)
+{
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
+}
+
+/* fs_locations
+ * default case not supported
+ */
+
+static fsal_status_t fs_locations(struct fsal_obj_handle *obj_hdl,
+				 struct fs_locations4 *fs_locs)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
@@ -913,8 +950,8 @@ static fsal_status_t remove_extattr_by_name(struct fsal_obj_handle *obj_hdl,
  * default case always be happy
  */
 
-fsal_status_t lru_cleanup(struct fsal_obj_handle *obj_hdl,
-			  lru_actions_t requests)
+static fsal_status_t lru_cleanup(struct fsal_obj_handle *obj_hdl,
+				 lru_actions_t requests)
 {
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -1027,6 +1064,7 @@ struct fsal_obj_ops def_handle_ops = {
 	.unlink = file_unlink,
 	.open = file_open,
 	.reopen = file_reopen,
+	.fs_locations = fs_locations,
 	.status = file_status,
 	.read = file_read,
 	.read_plus = file_read_plus,
@@ -1056,21 +1094,98 @@ struct fsal_obj_ops def_handle_ops = {
 	.layoutcommit = layoutcommit
 };
 
+/* fsal_pnfs_ds common methods */
+
+/**
+ * @brief Clean up a pNFS Data Server
+ *
+ * Getting here is normal!
+ *
+ * @param[in] pds Handle to release
+ */
+static void pds_release(struct fsal_pnfs_ds *const pds)
+{
+	LogDebug(COMPONENT_PNFS, "Default pNFS DS release!");
+	fsal_pnfs_ds_fini(pds);
+	gsh_free(pds);
+}
+
+/**
+ * @brief Initialize FSAL specific permissions per pNFS DS
+ *
+ * @param[in]  pds      FSAL pNFS DS
+ * @param[in]  req      Incoming request.
+ *
+ * @retval NFS4_OK, NFS4ERR_ACCESS, NFS4ERR_WRONGSEC.
+ */
+
+static nfsstat4 pds_permissions(struct fsal_pnfs_ds *const pds,
+				struct svc_req *req)
+{
+	/* FIX ME!!! Replace with a non-export dependent system.
+	 * For now, reset per init_root_op_context()
+	 */
+	op_ctx->export_perms->set = root_op_export_set;
+	op_ctx->export_perms->options = root_op_export_options;
+	return NFS4_OK;
+}
+
+/**
+ * @brief Try to create a FSAL data server handle
+ *
+ * @param[in]  pds      FSAL pNFS DS
+ * @param[in]  hdl_desc Buffer from which to create the struct
+ * @param[out] handle   FSAL DS handle
+ *
+ * @retval NFS4_OK, NFS4ERR_SERVERFAULT.
+ */
+
+static nfsstat4 pds_handle(struct fsal_pnfs_ds *const pds,
+			   const struct gsh_buffdesc *const hdl_desc,
+			   struct fsal_ds_handle **const handle)
+{
+	LogCrit(COMPONENT_PNFS, "Unimplemented DS handle creation!");
+	*handle = gsh_calloc(sizeof(struct fsal_ds_handle), 1);
+	if (*handle == NULL)
+		return NFS4ERR_SERVERFAULT;
+
+	fsal_ds_handle_init(*handle, pds);
+	return NFS4_OK;
+}
+
+/**
+ * @brief Initialize FSAL specific values for data server handle
+ *
+ * @param[in]  ops	FSAL DS handle operations vector
+ */
+
+static void pds_handle_ops(struct fsal_dsh_ops *ops)
+{
+	memcpy(ops, &def_dsh_ops, sizeof(struct fsal_dsh_ops));
+}
+
+struct fsal_pnfs_ds_ops def_pnfs_ds_ops = {
+	.release = pds_release,
+	.permissions = pds_permissions,
+	.make_ds_handle = pds_handle,
+	.fsal_dsh_ops = pds_handle_ops,
+};
+
 /* fsal_ds_handle common methods */
 
 /**
- * @brief Fail to clean up a filehandle
+ * @brief Fail to clean up a DS handle
  *
  * Getting here is bad, it means we support but have not completely
- * impelmented DS handles.
+ * implemented DS handles.
  *
  * @param[in] release Handle to release
- *
- * @return NFSv4.1 status codes.
  */
 static void ds_release(struct fsal_ds_handle *const ds_hdl)
 {
-	LogCrit(COMPONENT_PNFS, "Unimplemented DS release!");
+	LogCrit(COMPONENT_PNFS, "Unimplemented DS handle release!");
+	fsal_ds_handle_fini(ds_hdl);
+	gsh_free(ds_hdl);
 }
 
 /**
@@ -1176,7 +1291,7 @@ static nfsstat4 ds_commit(struct fsal_ds_handle *const ds_hdl,
 	return NFS4ERR_NOTSUPP;
 }
 
-struct fsal_ds_ops def_ds_ops = {
+struct fsal_dsh_ops def_dsh_ops = {
 	.release = ds_release,
 	.read = ds_read,
 	.read_plus = ds_read_plus,

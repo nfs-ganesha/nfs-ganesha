@@ -45,8 +45,9 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+
 #include "nfs4.h"
-#include "fsal_types.h"
+#include "gsh_rpc.h"
 
 /**
  * @brief An enumeration of protocols in the NFS family
@@ -168,9 +169,20 @@ typedef enum protos {
 #define CORE_OPTION_NFSV4 0x00000002	/*< NFSv4 operations are supported */
 
 /**
+ * @brief Support 9p
+ */
+#define CORE_OPTION_9P 0x00000004	/*< NFSv4 operations are supported */
+
+/**
  * @brief Support NFSv3 and NFSv4.
  */
-#define CORE_OPTION_ALL_VERS (CORE_OPTION_NFSV3 | CORE_OPTION_NFSV4)
+#define CORE_OPTION_ALL_NFS_VERS (CORE_OPTION_NFSV3 | CORE_OPTION_NFSV4)
+
+/**
+ * @brief Support all protocols
+ */
+#define CORE_OPTION_ALL_VERS (CORE_OPTION_NFSV3 | CORE_OPTION_NFSV4 | \
+			      CORE_OPTION_9P)
 
 typedef struct nfs_core_param {
 	/** An array of port numbers, one for each protocol.  Set by

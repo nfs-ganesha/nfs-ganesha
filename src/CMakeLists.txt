@@ -38,7 +38,7 @@ set(GANESHA_PATCH_LEVEL )
 # Extra version is for naming development/RC.  It is blank in master/stable branches
 # so it can be available to end-users to name local variants/versions
 # If used, it is always of the form "-whateveryouwant"
-set(GANESHA_EXTRA_VERSION -dev-18.1)
+set(GANESHA_EXTRA_VERSION -dev-24.1)
 
 set(GANESHA_VERSION ${GANESHA_MAJOR_VERSION}.${GANESHA_MINOR_VERSION}${GANESHA_PATCH_LEVEL}${GANESHA_EXTRA_VERSION})
 set(GANESHA_BASE_VERSION ${GANESHA_MAJOR_VERSION}.${GANESHA_MINOR_VERSION}${GANESHA_PATCH_LEVEL})
@@ -129,12 +129,6 @@ set(CPACK_COMPONENT_DAEMON_DISPLAY_NAME "NFS-Ganesha daemon")
 include(${CMAKE_SOURCE_DIR}/cmake/cpack_config.cmake)
 include(CPack)
 
-# Now create a useable specfile
-configure_file(
-  "${PROJECT_SOURCE_DIR}/nfs-ganesha.spec-in.cmake"
-  "${PROJECT_SOURCE_DIR}/nfs-ganesha.spec"
-)
-
 if (FREEBSD)
 #default gcc doesn't like using -Wuninitialized without -O on FreeBSD
     set(PLATFORM "FREEBSD")
@@ -177,6 +171,7 @@ option(USE_FSAL_GPFS "build GPFS FSAL" ON)
 option(USE_FSAL_ZFS "build ZFS FSAL" ON)
 option(USE_FSAL_LUSTRE "build LUSTRE FSAL" ON)
 option(USE_FSAL_XFS "build XFS support in VFS FSAL" ON)
+option(USE_FSAL_PANFS "build PanFS support in VFS FSAL" ON)
 option(USE_FSAL_GLUSTER "build GLUSTER FSAL shared library" ON)
 
 # FSALs which are disabled by default
@@ -488,6 +483,18 @@ if(USE_FSAL_GLUSTER)
       set(USE_FSAL_GLUSTER OFF)
     endif(STRICT_PACKAGE)
   endif((NOT HAVE_GFAPI) OR (NOT HAVE_GLUSTER_H))
+
+  if(USE_FSAL_GLUSTER)
+    check_include_files("unistd.h;attr/xattr.h" HAVE_XATTR_H)
+    if(NOT HAVE_XATTR_H)
+      if(STRICT_PACKAGE)
+        message(FATAL_ERROR "STRICT PACKAGE: Can not find attr/xattr.h, disabling GLUSTER fsal build")
+      else(STRICT_PACKAGE)
+        message(WARNING "Can not find attr/xattr.h, disabling GLUSTER fsal build")
+        set(USE_FSAL_GLUSTER OFF)
+      endif(STRICT_PACKAGE)
+    endif(NOT HAVE_XATTR_H)
+  endif(USE_FSAL_GLUSTER)
 endif(USE_FSAL_GLUSTER)
 
 if(USE_FSAL_CEPH)
@@ -911,6 +918,7 @@ message(STATUS "USE_FSAL_VFS = ${USE_FSAL_VFS}")
 message(STATUS "USE_FSAL_CEPH = ${USE_FSAL_CEPH}")
 message(STATUS "USE_FSAL_HPSS = ${USE_FSAL_HPSS}")
 message(STATUS "USE_FSAL_XFS = ${USE_FSAL_XFS}")
+message(STATUS "USE_FSAL_PANFS = ${USE_FSAL_PANFS}")
 message(STATUS "USE_FSAL_GPFS = ${USE_FSAL_GPFS}")
 message(STATUS "USE_FSAL_PT = ${USE_FSAL_PT}")
 message(STATUS "USE_FSAL_ZFS = ${USE_FSAL_ZFS}")
@@ -984,6 +992,11 @@ set(USE_HPSS_FSAL ${USE_HPSS_FSAL}
 set(USE_FSAL_XFS ${USE_FSAL_XFS}
   CACHE BOOL
    "build XFS FSAL"
+   FORCE)
+
+set(USE_FSAL_PANFS ${USE_FSAL_PANFS}
+  CACHE BOOL
+   "build PanFS FSAL"
    FORCE)
 
 set(USE_FSAL_GPFS ${USE_FSAL_GPFS}
@@ -1118,62 +1131,117 @@ configure_file(
 set( PKG_NAME "${CPACK_PACKAGE_FILE_NAME}.tar.gz")
 add_custom_target(dist COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
 
-# set "--with" arguments for rpmbuild
+# Tweak the "%bcond_<with|without> in the specfile for every
+# optional feature. Take care on the logic of this syntax
+# %bcond_with means you add a "--with" option, default is "without this feature"
+# %bcond_without adds a"--without" so the feature is enabled by default
 # This has to be coherent with chosen FSALs
-set( WITH_ARG "")
-
 if(USE_FSAL_LUSTRE)
-    set( WITH_ARG "${WITH_ARG} --with lustre")
+    set(BCOND_LUSTRE "%bcond_without")
+else(USE_FSAL_LUSTRE)
+    set(BCOND_LUSTRE "%bcond_with")
 endif(USE_FSAL_LUSTRE)
 
+if(USE_FSAL_LUSTRE_UP)
+    set(BCOND_FSAL_LUSTRE_UP "%bcond_without")
+else(USE_FSAL_LUSTRE_UP)
+    set(BCOND_FSAL_LUSTRE_UP "%bcond_with")
+endif(USE_FSAL_LUSTRE_UP)
+
 if(USE_FSAL_SHOOK)
-    set( WITH_ARG "${WITH_ARG} --with shook")
+    set(BCOND_SHOOK "%bcond_without")
+else(USE_FSAL_SHOOK)
+    set(BCOND_SHOOK "%bcond_with")
 endif(USE_FSAL_SHOOK)
 
 if(USE_FSAL_ZFS)
-    set( WITH_ARG "${WITH_ARG} --with zfs")
+    set(BCOND_ZFS "%bcond_without")
+else(USE_FSAL_ZFS)
+    set(BCOND_ZFS "%bcond_with")
 endif(USE_FSAL_ZFS)
 
 if(USE_FSAL_XFS)
-    set( WITH_ARG "${WITH_ARG} --with xfs")
+    set(BCOND_XFS "%bcond_without")
+else(USE_FSAL_XFS)
+    set(BCOND_XFS "%bcond_with")
 endif(USE_FSAL_XFS)
 
+if(USE_FSAL_PANFS)
+    set(BCOND_PANFS "%bcond_without")
+else(USE_FSAL_PANFS)
+    set(BCOND_PANFS "%bcond_with")
+endif(USE_FSAL_PANFS)
+
 if(USE_FSAL_GPFS)
-    set( WITH_ARG "${WITH_ARG} --with gpfs")
+    set(BCOND_GPFS "%bcond_without")
+else(USE_FSAL_GPFS)
+    set(BCOND_GPFS "%bcond_with")
 endif(USE_FSAL_GPFS)
 
 if(USE_FSAL_CEPH)
-    set( WITH_ARG "${WITH_ARG} --with ceph")
-endif(USE_FSAL_CEPH)
-
-if(USE_FSAL_CEPH)
-    set( WITH_ARG "${WITH_ARG} --with ceph")
+    set(BCOND_CEPH "%bcond_without")
+else(USE_FSAL_CEPH)
+    set(BCOND_CEPH "%bcond_with")
 endif(USE_FSAL_CEPH)
 
 if(USE_FSAL_GLUSTER)
-    set( WITH_ARG "${WITH_ARG} --with gluster")
+    set(BCOND_GLUSTER "%bcond_without")
+else(USE_FSAL_GLUSTER)
+    set(BCOND_GLUSTER "%bcond_with")
 endif(USE_FSAL_GLUSTER)
 
 if(USE_FSAL_HPSS)
-    set( WITH_ARG "${WITH_ARG} --with hpss")
+    set(BCOND_HPSS "%bcond_without")
+else(USE_FSAL_HPSS)
+    set(BCOND_HPSS "%bcond_with")
 endif(USE_FSAL_HPSS)
 
 if(USE_FSAL_PT)
-    set( WITH_ARG "${WITH_ARG} --with pt")
+    set(BCOND_PT "%bcond_without")
+else(USE_FSAL_PT)
+    set(BCOND_PT "%bcond_with")
 endif(USE_FSAL_PT)
 
 if(USE_9P_RDMA)
-    set( WITH_ARG "${WITH_ARG} --with rdma")
+    set(BCOND_RDMA "%bcond_without")
+else(USE_9P_RDMA)
+    set(BCOND_RDMA "%bcond_with")
 endif(USE_9P_RDMA)
 
+if(USE_LTTNG)
+    set(BCOND_LTTNG "%bcond_without")
+else(USE_LTTNG)
+    set(BCOND_LTTNG "%bcond_with")
+endif(USE_LTTNG)
+
+if(${ALLOCATOR} STREQUAL "jemalloc")
+    set(BCOND_JEMALLOC "%bcond_without")
+else(${ALLOCATOR} STREQUAL "jemalloc")
+    set(BCOND_JEMALLOC "%bcond_with")
+endif(${ALLOCATOR} STREQUAL "jemalloc")
+
 if(USE_ADMIN_TOOLS)
-    set( WITH_ARG "${WITH_ARG} --with utils")
+    set(BCOND_UTILS "%bcond_without")
+else(USE_ADMIN_TOOLS)
+    set(BCOND_UTILS "%bcond_with")
 endif(USE_ADMIN_TOOLS)
 
+# Now create a useable specfile
+configure_file(
+  "${PROJECT_SOURCE_DIR}/nfs-ganesha.spec-in.cmake"
+  "${PROJECT_SOURCE_DIR}/nfs-ganesha.spec"
+)
 
 add_custom_target( rpm DEPENDS dist)
 add_custom_command(TARGET rpm
-                  COMMAND sh -c "rpmbuild ${WITH_ARG} -ta ${PKG_NAME}"
+                  COMMAND sh -c "rpmbuild -ta ${PKG_NAME}"
+		  VERBATIM
+		  DEPENDS dist)
+
+set(RPMDEST "--define '_srcrpmdir ${CMAKE_CURRENT_BINARY_DIR}'")
+add_custom_target( srpm DEPENDS dist)
+add_custom_command(TARGET srpm
+                  COMMAND sh -c "rpmbuild ${RPMDEST} -ts ${PKG_NAME}"
 		  VERBATIM
 		  DEPENDS dist)
 

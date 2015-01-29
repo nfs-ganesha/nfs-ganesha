@@ -34,7 +34,7 @@
  */
 #include "config.h"
 #include "log.h"
-#include "nfs4.h"
+#include "fsal.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
 #include "nfs_exports.h"
@@ -122,24 +122,35 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t *data,
 		/* Handle junction */
 		cache_entry_t *entry = NULL;
 
+		/* Attempt to get a reference to the export across the
+		 * junction.
+		 */
+		if (!export_ready(file_entry->object.dir.junction_export)) {
+			/* If we could not get a reference, return stale.
+			 * Release attr_lock
+			 */
+			PTHREAD_RWLOCK_unlock(&file_entry->attr_lock);
+			LogDebug(COMPONENT_EXPORT,
+				 "NFS4ERR_STALE on LOOKUP of %s", name);
+			res_LOOKUP4->status = NFS4ERR_STALE;
+			goto out;
+		}
+
+		get_gsh_export_ref(file_entry->object.dir.junction_export);
+
 		/* Release any old export reference */
 		if (op_ctx->export != NULL)
 			put_gsh_export(op_ctx->export);
 
-		/* Get a reference to the export and stash it in
-		 * compound data.
-		 */
-		get_gsh_export_ref(file_entry->object.dir.junction_export);
-
+		/* Stash the new export in the compound data. */
 		op_ctx->export = file_entry->object.dir.junction_export;
-		op_ctx->fsal_export =
-			op_ctx->export->fsal_export;
+		op_ctx->fsal_export = op_ctx->export->fsal_export;
 
 		/* Release attr_lock */
 		PTHREAD_RWLOCK_unlock(&file_entry->attr_lock);
 
 		/* Build credentials */
-		res_LOOKUP4->status = nfs4_MakeCred(data);
+		res_LOOKUP4->status = nfs4_export_check_access(data->req);
 
 		/* Test for access error (export should not be visible). */
 		if (res_LOOKUP4->status == NFS4ERR_ACCESS) {
@@ -201,7 +212,7 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	/* Keep the pointer within the compound data */
-	set_current_entry(data, file_entry, false);
+	set_current_entry(data, file_entry);
 	file_entry = NULL;
 
 	/* Return successfully */

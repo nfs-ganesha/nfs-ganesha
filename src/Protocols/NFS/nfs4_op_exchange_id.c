@@ -32,7 +32,7 @@
 #include "config.h"
 #include <pthread.h>
 #include "log.h"
-#include "nfs4.h"
+#include "fsal.h"
 #include "nfs_core.h"
 #include "nfs_proto_functions.h"
 #include "sal_functions.h"
@@ -85,7 +85,6 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op, compound_data_t *data,
 	nfs_client_record_t *client_record;
 	nfs_client_id_t *conf;
 	nfs_client_id_t *unconf;
-	sockaddr_t client_addr;
 	int rc;
 	int len;
 	char *temp;
@@ -115,8 +114,6 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op, compound_data_t *data,
 			   EXCHGID4_FLAG_CONFIRMED_R)) != 0)
 		return res_EXCHANGE_ID4->eir_status = NFS4ERR_INVAL;
 
-	copy_xprt_addr(&client_addr, data->req->rq_xprt);
-
 	/**
 	 * @todo Look into this again later, if no exports support
 	 * pNFS, then we shouldn't claim to support it.
@@ -131,8 +128,8 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op, compound_data_t *data,
 		if (pnfs_flags == 0)
 			pnfs_flags |= EXCHGID4_FLAG_USE_NON_PNFS;
 	}
-	LogDebug(COMPONENT_CLIENTID, "EXCHANGE_ID pnfs_flags 0x%08x\n",
-								pnfs_flags);
+	LogDebug(COMPONENT_CLIENTID, "EXCHANGE_ID pnfs_flags 0x%08x",
+		 pnfs_flags);
 
 	update = (arg_EXCHANGE_ID4->eia_flags &
 		  EXCHGID4_FLAG_UPD_CONFIRMED_REC_A) != 0;
@@ -232,9 +229,9 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op, compound_data_t *data,
 			   NFS4_VERIFIER_SIZE) == 0) {
 			if (!nfs_compare_clientcred(&conf->cid_credential,
 						    &data->credential)
-			    || !cmp_sockaddr(&conf->cid_client_addr,
-					     &client_addr,
-					     true)) {
+			    || op_ctx->client == NULL
+			    || conf->gsh_client == NULL
+			    || op_ctx->client != conf->gsh_client) {
 				/* CASE 9, Update but wrong principal */
 				res_EXCHANGE_ID4->eir_status = NFS4ERR_PERM;
 			} else {
@@ -282,9 +279,7 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op, compound_data_t *data,
 
 	unconf = create_client_id(0,
 				  client_record,
-				  &client_addr,
 				  &data->credential,
-				  op_ctx->client,
 				  data->minorversion);
 
 	if (unconf == NULL) {
@@ -333,6 +328,7 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op, compound_data_t *data,
 	    unconf->cid_create_session_sequence;
 
 	res_EXCHANGE_ID4_ok->eir_flags |= client_record->cr_pnfs_flags;
+	res_EXCHANGE_ID4_ok->eir_flags |= EXCHGID4_FLAG_SUPP_MOVED_REFER;
 
 	res_EXCHANGE_ID4_ok->eir_state_protect.spr_how = SP4_NONE;
 

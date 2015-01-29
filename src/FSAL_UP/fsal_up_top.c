@@ -50,6 +50,21 @@
 #include "export_mgr.h"
 #include "server_stats.h"
 
+struct delegrecall_context {
+	/* Reserve lease during delegation recall */
+	nfs_client_id_t *drc_clid;
+	/* Preserve the stateid we are recalling */
+	stateid4 drc_stateid;
+	/* Hold a reference to the export during delegation recall */
+	struct gsh_export *drc_exp;
+};
+
+enum recall_resp_action {
+	DELEG_RECALL_SCHED,
+	DELEG_RET_WAIT,
+	REVOKE
+};
+
 static int schedule_delegrevoke_check(struct delegrecall_context *ctx,
 				      uint32_t delay);
 static int schedule_delegrecall_task(struct delegrecall_context *ctx,
@@ -355,6 +370,27 @@ static state_status_t lock_avail(struct fsal_module *fsal,
 	return STATE_SUCCESS;
 }
 
+static void destroy_recall(struct state_layout_recall_file *recall)
+{
+	if (recall == NULL)
+		return;
+
+	while (!glist_empty(&recall->state_list)) {
+		struct recall_state_list *list_entry;
+		/* The first entry in the queue */
+		list_entry = glist_first_entry(&recall->state_list,
+					       struct recall_state_list,
+					       link);
+		dec_state_t_ref(list_entry->state);
+		glist_del(&list_entry->link);
+		gsh_free(list_entry);
+	}
+
+	/* Remove from entry->layoutrecall_list */
+	glist_del(&recall->entry_link);
+	gsh_free(recall);
+}
+
 /**
  * @brief Create layout recall state
  *
@@ -402,7 +438,6 @@ static state_status_t create_file_recall(cache_entry_t *entry,
 		goto out;
 	}
 
-	glist_init(&recall->entry_link);
 	glist_init(&recall->state_list);
 	recall->entry = entry;
 	recall->type = type;
@@ -416,7 +451,7 @@ static state_status_t create_file_recall(cache_entry_t *entry,
 		goto out;
 	}
 
-	glist_for_each(state_iter, &entry->state_list) {
+	glist_for_each(state_iter, &entry->list_of_states) {
 		/* Entry in the state list */
 		struct recall_state_list *list_entry = NULL;
 		/* Iterator over segments on this state */
@@ -427,21 +462,28 @@ static state_status_t create_file_recall(cache_entry_t *entry,
 					 state_list);
 		/* Does this state have a matching segment? */
 		bool match = false;
+		/* referenced owner */
+		state_owner_t *owner = get_state_owner_ref(s);
+
+		if (owner == NULL) {
+			/* This state is going stale, skip */
+			continue;
+		}
 
 		if (spec) {
 			switch (spec->how) {
 			case layoutrecall_howspec_exactly:
 				if (spec->u.client !=
-				    s->state_owner->so_owner.so_nfs4_owner.
-				    so_clientid) {
+				    owner->so_owner.so_nfs4_owner.so_clientid) {
+					dec_state_owner_ref(owner);
 					continue;
 				}
 				break;
 
 			case layoutrecall_howspec_complement:
 				if (spec->u.client ==
-				    s->state_owner->so_owner.so_nfs4_owner.
-				    so_clientid) {
+				    owner->so_owner.so_nfs4_owner.so_clientid) {
+					dec_state_owner_ref(owner);
 					continue;
 				}
 				break;
@@ -450,6 +492,8 @@ static state_status_t create_file_recall(cache_entry_t *entry,
 				break;
 			}
 		}
+
+		dec_state_owner_ref(owner);
 
 		if ((s->state_type != STATE_TYPE_LAYOUT)
 		    || (s->state_data.layout.state_layout_type != type)) {
@@ -461,10 +505,8 @@ static state_status_t create_file_recall(cache_entry_t *entry,
 				seg_iter,
 				state_layout_segment_t,
 				sls_state_segments);
-			pthread_mutex_lock(&g->sls_mutex);
 			if (pnfs_segments_overlap(segment, &g->sls_segment))
 				match = true;
-			pthread_mutex_unlock(&g->sls_mutex);
 		}
 		if (match) {
 			/**
@@ -481,9 +523,9 @@ static state_status_t create_file_recall(cache_entry_t *entry,
 				rc = STATE_MALLOC_ERROR;
 				goto out;
 			}
-			glist_init(&list_entry->link);
 			list_entry->state = s;
 			glist_add_tail(&recall->state_list, &list_entry->link);
+			inc_state_t_ref(s);
 			none = false;
 		}
 	}
@@ -494,19 +536,8 @@ static state_status_t create_file_recall(cache_entry_t *entry,
  out:
 
 	if ((rc != STATE_SUCCESS) && recall) {
-		/* Iterator over work queue, for disposing of it. */
-		struct glist_head *wi = NULL;
-		/* Preserved next over work queue. */
-		struct glist_head *wn = NULL;
-
-		glist_for_each_safe(wi, wn, &recall->state_list) {
-			struct recall_state_list *list_entry
-				= glist_entry(wi, struct recall_state_list,
-					      link);
-			glist_del(&list_entry->link);
-			gsh_free(list_entry);
-		}
-		gsh_free(recall);
+		/* Destroy the recall list constructed so far. */
+		destroy_recall(recall);
 	} else {
 		glist_add_tail(&entry->layoutrecall_list, &recall->entry_link);
 		*recout = recall;
@@ -567,6 +598,8 @@ state_status_t layoutrecall(struct fsal_module *fsal,
 	struct state_layout_recall_file *recall = NULL;
 	/* Iterator over the work list */
 	struct glist_head *wi = NULL;
+	struct gsh_export *exp = NULL;
+	state_owner_t *owner = NULL;
 
 	rc = cache_inode_status_to_state_status(up_get(fsal, handle, &entry));
 	if (rc != STATE_SUCCESS)
@@ -583,7 +616,8 @@ state_status_t layoutrecall(struct fsal_module *fsal,
 
 	/**
 	 * @todo This leaves us open to a race if a return comes in
-	 * while we're traversing the work list.
+	 * while we're traversing the work list. However, the race may now
+	 * be harmless since everything is refcounted.
 	 */
 	glist_for_each(wi, &recall->state_list) {
 		/* The current entry in the queue */
@@ -593,66 +627,88 @@ state_status_t layoutrecall(struct fsal_module *fsal,
 							  link);
 		struct state_t *s = g->state;
 		struct layoutrecall_cb_data *cb_data;
-		struct gsh_export *exp = s->state_export;
-		cache_entry_t *entry = s->state_entry;
 		nfs_cb_argop4 *arg;
 		CB_LAYOUTRECALL4args *cb_layoutrec;
+		layoutrecall_file4 *layout;
 
 		cb_data = gsh_malloc(sizeof(struct layoutrecall_cb_data));
 		if (cb_data == NULL) {
 			rc = STATE_MALLOC_ERROR;
 			goto out;
 		}
+
 		arg = &cb_data->arg;
 		arg->argop = NFS4_OP_CB_LAYOUTRECALL;
 		cb_layoutrec = &arg->nfs_cb_argop4_u.opcblayoutrecall;
+		layout = &cb_layoutrec->clora_recall.layoutrecall4_u.lor_layout;
+
 		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
+
 		cb_layoutrec->clora_type = layout_type;
 		cb_layoutrec->clora_iomode = segment->io_mode;
 		cb_layoutrec->clora_changed = changed;
 		cb_layoutrec->clora_recall.lor_recalltype = LAYOUTRECALL4_FILE;
-		cb_layoutrec->clora_recall.layoutrecall4_u.lor_layout.
-		    lor_offset = segment->offset;
-		cb_layoutrec->clora_recall.layoutrecall4_u.lor_layout.
-		    lor_length = segment->length;
-		cb_layoutrec->clora_recall.layoutrecall4_u.lor_layout.lor_fh.
-		    nfs_fh4_len = sizeof(struct alloc_file_handle_v4);
-		cb_layoutrec->clora_recall.layoutrecall4_u.lor_layout.lor_fh.
-		    nfs_fh4_val =
-		    gsh_malloc(sizeof(struct alloc_file_handle_v4));
-		if (cb_layoutrec->clora_recall.layoutrecall4_u.lor_layout.
-				lor_fh.nfs_fh4_val == NULL) {
+		layout->lor_offset = segment->offset;
+		layout->lor_length = segment->length;
+
+		if (nfs4_AllocateFH(&layout->lor_fh) != NFS4_OK) {
 			PTHREAD_RWLOCK_unlock(&entry->state_lock);
 			gsh_free(cb_data);
 			rc = STATE_MALLOC_ERROR;
 			goto out;
 		}
+
+		if (!get_state_entry_export_owner_refs(s,
+						       NULL,
+						       &exp,
+						       &owner)) {
+			/* The export, owner, or state_t has gone stale,
+			 * skip this entry
+			 */
+			PTHREAD_RWLOCK_unlock(&entry->state_lock);
+			gsh_free(layout->lor_fh.nfs_fh4_val);
+			gsh_free(cb_data);
+			continue;
+		}
+
 		if (!nfs4_FSALToFhandle(
-				&cb_layoutrec->clora_recall.layoutrecall4_u
-				.lor_layout.lor_fh,
+				&layout->lor_fh,
 				entry->obj_handle,
 				exp)) {
 			PTHREAD_RWLOCK_unlock(&entry->state_lock);
+			gsh_free(layout->lor_fh.nfs_fh4_val);
 			gsh_free(cb_data);
-			gsh_free(cb_layoutrec->clora_recall.layoutrecall4_u.
-						lor_layout.lor_fh.nfs_fh4_val);
+			put_gsh_export(exp);
+			dec_state_owner_ref(owner);
 			rc = STATE_MALLOC_ERROR;
 			goto out;
 		}
-		update_stateid(s,
-			       &cb_layoutrec->clora_recall.layoutrecall4_u.
-			       lor_layout.lor_stateid, NULL, "LAYOUTRECALL");
+
+		put_gsh_export(exp);
+
+		update_stateid(s, &layout->lor_stateid, NULL, "LAYOUTRECALL");
+
 		memcpy(cb_data->stateid_other, s->stateid_other, OTHERSIZE);
 		cb_data->segment = *segment;
-		cb_data->client =
-		    s->state_owner->so_owner.so_nfs4_owner.so_clientrec;
+		cb_data->client = owner->so_owner.so_nfs4_owner.so_clientrec;
 		cb_data->attempts = 0;
+
+		dec_state_owner_ref(owner);
+
 		PTHREAD_RWLOCK_unlock(&entry->state_lock);
 		layoutrecall_one_call(cb_data);
 	}
 
  out:
-	cache_inode_put(entry);
+
+	/* Free the recall list resources */
+	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
+	destroy_recall(recall);
+	PTHREAD_RWLOCK_unlock(&entry->state_lock);
+
+	/* Release the cache entry */
+	cache_inode_lru_unref(entry, LRU_FLAG_NONE);
+
 	return rc;
 }
 
@@ -697,6 +753,10 @@ static int32_t layoutrec_completion(rpc_call_t *call, rpc_call_hook hook,
 	bool deleted = false;
 	state_t *state = NULL;
 	struct root_op_context root_op_context;
+	cache_entry_t *entry = NULL;
+	struct gsh_export *export = NULL;
+	state_owner_t *owner = NULL;
+	bool ok = false;
 
 	/* Initialize req_ctx */
 	init_root_op_context(&root_op_context, NULL, NULL,
@@ -761,7 +821,11 @@ static int32_t layoutrec_completion(rpc_call_t *call, rpc_call_hook hook,
 
  revoke:
 	/* If we don't find the state, there's nothing to return. */
-	if (nfs4_State_Get_Pointer(cb_data->stateid_other, &state)) {
+	state = nfs4_State_Get_Pointer(cb_data->stateid_other);
+
+	ok = get_state_entry_export_owner_refs(state, &entry, &export, &owner);
+
+	if (ok) {
 		enum fsal_layoutreturn_circumstance circumstance;
 
 		if (hook == RPC_CALL_COMPLETE &&
@@ -775,7 +839,7 @@ static int32_t layoutrec_completion(rpc_call_t *call, rpc_call_hook hook,
 		 * @todo This is where you would record that a
 		 * recall was completed, one way or the other.
 		 * The clientid is specified in
-		 * state->state_owner->so_owner.so_nfs4_owner.so_clientid
+		 * owner->so_owner.so_nfs4_owner.so_clientid
 		 * The number of times we retried the call is
 		 * specified in cb_data->attempts and the time we
 		 * specified the first call is in
@@ -785,26 +849,44 @@ static int32_t layoutrec_completion(rpc_call_t *call, rpc_call_hook hook,
 		 * return, otherwise we count it as an error.
 		 */
 
-		PTHREAD_RWLOCK_wrlock(&state->state_entry->state_lock);
+		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 
-		root_op_context.req_ctx.clientid = &state->state_owner
-			->so_owner.so_nfs4_owner.so_clientid;
-		root_op_context.req_ctx.export = state->state_export;
-		root_op_context.req_ctx.fsal_export =
-			root_op_context.req_ctx.export->fsal_export;
+		root_op_context.req_ctx.clientid =
+			&owner->so_owner.so_nfs4_owner.so_clientid;
+		root_op_context.req_ctx.export = export;
+		root_op_context.req_ctx.fsal_export = export->fsal_export;
 
-		nfs4_return_one_state(state->state_entry,
+		nfs4_return_one_state(entry,
 				      LAYOUTRETURN4_FILE, circumstance,
 				      state, cb_data->segment, 0, NULL,
-				      &deleted, true);
-		PTHREAD_RWLOCK_unlock(&state->state_entry->state_lock);
+				      &deleted);
+
+		PTHREAD_RWLOCK_unlock(&entry->state_lock);
 	}
+
+	if (state != NULL) {
+		/* Release the reference taken above */
+		dec_state_t_ref(state);
+	}
+
 	free_layoutrec(&call->cbt.v_u.v4.args.argarray.argarray_val[1]);
 	nfs41_complete_single(call, hook, cb_data, flags);
 	gsh_free(cb_data);
 
 out:
 	release_root_op_context();
+
+	if (ok) {
+		/* Release the export */
+		put_gsh_export(export);
+
+		/* Release the cache entry */
+		cache_inode_lru_unref(entry, LRU_FLAG_NONE);
+
+		/* Release the owner */
+		dec_state_owner_ref(owner);
+	}
+
 	return 0;
 }
 
@@ -823,31 +905,55 @@ out:
 static void return_one_async(void *arg)
 {
 	struct layoutrecall_cb_data *cb_data = arg;
-	state_t *s;
+	state_t *state;
 	bool deleted = false;
 	struct root_op_context root_op_context;
+	cache_entry_t *entry = NULL;
+	struct gsh_export *export = NULL;
+	state_owner_t *owner = NULL;
+	bool ok = false;
 
 	/* Initialize req_ctx */
 	init_root_op_context(&root_op_context, NULL, NULL,
 			     0, 0, UNKNOWN_REQUEST);
 
-	if (nfs4_State_Get_Pointer(cb_data->stateid_other, &s)) {
-		PTHREAD_RWLOCK_wrlock(&s->state_entry->state_lock);
+	state = nfs4_State_Get_Pointer(cb_data->stateid_other);
 
-		root_op_context.req_ctx.clientid = &s->state_owner
-			->so_owner.so_nfs4_owner.so_clientid;
-		root_op_context.req_ctx.export = s->state_export;
-		root_op_context.req_ctx.fsal_export =
-			root_op_context.req_ctx.export->fsal_export;
+	ok = get_state_entry_export_owner_refs(state, &entry, &export, &owner);
 
-		nfs4_return_one_state(s->state_entry,
-				      LAYOUTRETURN4_FILE, circumstance_revoke,
-				      s, cb_data->segment, 0, NULL, &deleted,
-				      true);
-		PTHREAD_RWLOCK_unlock(&s->state_entry->state_lock);
+	if (ok) {
+		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
+
+		root_op_context.req_ctx.clientid =
+			&owner->so_owner.so_nfs4_owner.so_clientid;
+		root_op_context.req_ctx.export = export;
+		root_op_context.req_ctx.fsal_export = export->fsal_export;
+
+		nfs4_return_one_state(entry, LAYOUTRETURN4_FILE,
+				      circumstance_revoke, state,
+				      cb_data->segment, 0, NULL, &deleted);
+
+		PTHREAD_RWLOCK_unlock(&entry->state_lock);
 	}
+
 	release_root_op_context();
 	gsh_free(cb_data);
+
+	if (state != NULL) {
+		/* Release the reference taken above */
+		dec_state_t_ref(state);
+	}
+
+	if (ok) {
+		/* Release the export */
+		put_gsh_export(export);
+
+		/* Release the cache entry */
+		cache_inode_lru_unref(entry, LRU_FLAG_NONE);
+
+		/* Release the owner */
+		dec_state_owner_ref(owner);
+	}
 }
 
 /**
@@ -860,9 +966,13 @@ static void return_one_async(void *arg)
 static void layoutrecall_one_call(void *arg)
 {
 	struct layoutrecall_cb_data *cb_data = arg;
-	state_t *s;
+	state_t *state;
 	int code;
 	struct root_op_context root_op_context;
+	cache_entry_t *entry = NULL;
+	struct gsh_export *export = NULL;
+	state_owner_t *owner = NULL;
+	bool ok = false;
 
 	/* Initialize req_ctx */
 	init_root_op_context(&root_op_context, NULL, NULL,
@@ -871,12 +981,23 @@ static void layoutrecall_one_call(void *arg)
 	if (cb_data->attempts == 0)
 		now(&cb_data->first_recall);
 
-	if (nfs4_State_Get_Pointer(cb_data->stateid_other, &s)) {
-		PTHREAD_RWLOCK_wrlock(&s->state_entry->state_lock);
-		code =
-		    nfs_rpc_v41_single(cb_data->client, &cb_data->arg,
-				       &s->state_refer, layoutrec_completion,
-				       cb_data, free_layoutrec);
+	state = nfs4_State_Get_Pointer(cb_data->stateid_other);
+
+	ok = get_state_entry_export_owner_refs(state, &entry, &export, &owner);
+
+	if (ok) {
+		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
+
+		root_op_context.req_ctx.clientid =
+		    &owner->so_owner.so_nfs4_owner.so_clientid;
+		root_op_context.req_ctx.export = export;
+		root_op_context.req_ctx.fsal_export = export->fsal_export;
+
+		code = nfs_rpc_v41_single(cb_data->client, &cb_data->arg,
+					  &state->state_refer,
+					  layoutrec_completion,
+					  cb_data, free_layoutrec);
+
 		if (code != 0) {
 			/**
 			 * @todo On failure to submit a callback, we
@@ -911,29 +1032,40 @@ static void layoutrecall_one_call(void *arg)
 			} else {
 				bool deleted = false;
 
-				root_op_context.req_ctx.clientid =
-					&s->state_owner->so_owner.so_nfs4_owner
-					.so_clientid;
-				root_op_context.req_ctx.export =
-					s->state_export;
-				root_op_context.req_ctx.fsal_export =
-				    root_op_context.req_ctx.export->fsal_export;
-
-				nfs4_return_one_state(s->state_entry,
+				nfs4_return_one_state(entry,
 						      LAYOUTRETURN4_FILE,
-						      circumstance_revoke, s,
-						      cb_data->segment, 0, NULL,
-						      &deleted, true);
+						      circumstance_revoke,
+						      state, cb_data->segment,
+						      0, NULL, &deleted);
 				gsh_free(cb_data);
 			}
 		} else {
 			++cb_data->attempts;
 		}
-		PTHREAD_RWLOCK_unlock(&s->state_entry->state_lock);
+
+		PTHREAD_RWLOCK_unlock(&entry->state_lock);
+
 	} else {
 		gsh_free(cb_data);
 	}
+
 	release_root_op_context();
+
+	if (state != NULL) {
+		/* Release the reference taken above */
+		dec_state_t_ref(state);
+	}
+
+	if (ok) {
+		/* Release the export */
+		put_gsh_export(export);
+
+		/* Release the cache entry */
+		cache_inode_lru_unref(entry, LRU_FLAG_NONE);
+
+		/* Release the owner */
+		dec_state_owner_ref(owner);
+	}
 }
 
 /**
@@ -1077,18 +1209,14 @@ state_status_t notify_device(notify_deviceid_type4 notify_type,
  * @return false, if the delegation should not be revoked.
  */
 
-bool eval_deleg_revoke(struct deleg_data *deleg_entry)
+bool eval_deleg_revoke(struct state_t *deleg_state)
 {
 	struct cf_deleg_stats *clfl_stats;
 	time_t curr_time;
 	time_t recall_success_time, first_recall_time;
 	uint32_t lease_lifetime = nfs_param.nfsv4_param.lease_lifetime;
-	open_delegation_type4 sd_type;
 
-	sd_type = deleg_entry->dd_state->state_data.deleg.sd_type;
-	assert(sd_type == OPEN_DELEGATE_READ || sd_type == OPEN_DELEGATE_WRITE);
-
-	clfl_stats = &deleg_entry->dd_state->state_data.deleg.sd_clfile_stats;
+	clfl_stats = &deleg_state->state_data.deleg.sd_clfile_stats;
 
 	curr_time = time(NULL);
 	recall_success_time = clfl_stats->cfd_rs_time;
@@ -1122,50 +1250,77 @@ bool eval_deleg_revoke(struct deleg_data *deleg_entry)
 
 static enum recall_resp_action handle_recall_response(
 				struct delegrecall_context *p_cargs,
+				struct state_t *state,
 				rpc_call_t *call)
 {
 	enum recall_resp_action resp_action;
-	struct deleg_data *deleg_entry = p_cargs->drc_deleg_entry;
+	char str[DISPLAY_STATEID_OTHER_SIZE];
+	struct display_buffer dspbuf = {sizeof(str), str, str};
+	bool str_valid = false;
+
+	if (isDebug(COMPONENT_NFS_CB)) {
+		display_stateid_other(&dspbuf, p_cargs->drc_stateid.other);
+		str_valid = true;
+	}
 
 	struct cf_deleg_stats *clfl_stats =
-		&deleg_entry->dd_state->state_data.deleg.sd_clfile_stats;
+		&state->state_data.deleg.sd_clfile_stats;
 
 	switch (call->cbt.v_u.v4.res.status) {
 	case NFS4_OK:
-		LogDebug(COMPONENT_NFS_CB,
-		"Delegation successfully recalled");
+		if (str_valid)
+			LogDebug(COMPONENT_NFS_CB,
+				 "Delegation %s successfully recalled", str);
 		resp_action = DELEG_RET_WAIT;
 		clfl_stats->cfd_rs_time =
 					time(NULL);
 		break;
 	case NFS4ERR_BADHANDLE:
-		LogDebug(COMPONENT_NFS_CB,
-			 "Client sent NFS4ERR_BADHANDLE response, retrying recall for(%p)",
-			 p_cargs->drc_deleg_entry);
+		if (str_valid)
+			LogDebug(COMPONENT_NFS_CB,
+				 "Client sent NFS4ERR_BADHANDLE response, retrying recall for Delegation %s",
+				 str);
 		resp_action = DELEG_RECALL_SCHED;
 		break;
 	case NFS4ERR_DELAY:
-		LogDebug(COMPONENT_NFS_CB,
-			 "Client sent NFS4ERR_DELAY response, retrying recall for(%p)",
-			 p_cargs->drc_deleg_entry);
+		if (str_valid)
+			LogDebug(COMPONENT_NFS_CB,
+				 "Client sent NFS4ERR_DELAY response, retrying recall for Delegation %s",
+				 str);
 		resp_action = DELEG_RECALL_SCHED;
 		break;
 	case  NFS4ERR_BAD_STATEID:
-		LogDebug(COMPONENT_NFS_CB,
-			 "Client sent NFS4ERR_BAD_STATEID response, retrying recall for (%p)",
-			 p_cargs->drc_deleg_entry);
+		if (str_valid)
+			LogDebug(COMPONENT_NFS_CB,
+				 "Client sent NFS4ERR_BAD_STATEID response, retrying recall for  Delegation %s",
+				 str);
 		resp_action = DELEG_RECALL_SCHED;
 		break;
 	default:
 		/* some other NFS error, consider the recall failed */
-		LogDebug(COMPONENT_NFS_CB,
-			 "Client sent %d response, retrying recall for (%p)",
-			 call->cbt.v_u.v4.res.status,
-			 p_cargs->drc_deleg_entry);
+		if (str_valid)
+			LogDebug(COMPONENT_NFS_CB,
+				 "Client sent %d response, retrying recall for Delegation %s",
+				 call->cbt.v_u.v4.res.status,
+				 str);
 		resp_action = DELEG_RECALL_SCHED;
 		break;
 	}
 	return resp_action;
+}
+
+static inline void
+free_delegrecall_context(struct delegrecall_context *deleg_ctx)
+{
+	pthread_mutex_lock(&deleg_ctx->drc_clid->cid_mutex);
+	update_lease(deleg_ctx->drc_clid);
+	pthread_mutex_unlock(&deleg_ctx->drc_clid->cid_mutex);
+
+	put_gsh_export(deleg_ctx->drc_exp);
+
+	dec_client_id_ref(deleg_ctx->drc_clid);
+
+	gsh_free(deleg_ctx);
 }
 
 /**
@@ -1186,43 +1341,36 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 	char *fh = NULL;
 	enum recall_resp_action resp_act;
 	state_status_t rc = STATE_SUCCESS;
-	struct delegrecall_context *deleg_ctx =
-				(struct delegrecall_context *) arg;
-	struct deleg_data *deleg_entry, *tdentry;
-	cache_entry_t *entry = deleg_ctx->drc_entry;
-	struct glist_head *glist, *glist_n;
-	nfs_client_id_t *clientid;
+	struct delegrecall_context *deleg_ctx = arg;
+	struct state_t *state;
+	cache_entry_t *entry = NULL;
+	char str[LOG_BUFF_LEN];
+	struct display_buffer dspbuf = {sizeof(str), str, str};
 
 	LogDebug(COMPONENT_NFS_CB, "%p %s", call,
 		 (hook == RPC_CALL_COMPLETE) ? "Success" : "Failed");
 
-	assert(entry != NULL);
-	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
-	deleg_entry = NULL;
-	glist_for_each_safe(glist, glist_n, &entry->object.file.deleg_list) {
-		tdentry = glist_entry(glist, struct deleg_data, dd_list);
-		if (deleg_ctx->drc_deleg_entry == tdentry &&
-		    SAME_STATEID(&deleg_ctx->drc_stateid, tdentry->dd_state)) {
-			deleg_entry = tdentry;
-			break;
-		}
-	}
+	state = nfs4_State_Get_Pointer(deleg_ctx->drc_stateid.other);
 
-	if (!deleg_entry) {
+	if (state == NULL) {
 		LogDebug(COMPONENT_NFS_CB, "Delegation is already returned");
-		cache_inode_put(deleg_ctx->drc_entry);
-		pthread_mutex_lock(&deleg_ctx->drc_clid->cid_mutex);
-		update_lease(deleg_ctx->drc_clid);
-		pthread_mutex_unlock(&deleg_ctx->drc_clid->cid_mutex);
-		put_gsh_export(deleg_ctx->drc_exp);
-		dec_client_id_ref(deleg_ctx->drc_clid);
-		gsh_free(deleg_ctx);
-		goto out_free;
+		goto out_free_drc;
 	}
 
-	LogDebug(COMPONENT_NFS_CB, "deleg_entry %p", deleg_entry);
+	entry = get_state_entry_ref(state);
 
-	clientid = deleg_entry->dd_owner->so_owner.so_nfs4_owner.so_clientrec;
+	if (entry == NULL) {
+		LogDebug(COMPONENT_NFS_CB, "Stale cache entry");
+		goto out_free_drc;
+	}
+
+	if (isDebug(COMPONENT_NFS_CB)) {
+		char str[LOG_BUFF_LEN];
+		struct display_buffer dspbuf = {sizeof(str), str, str};
+
+		display_stateid(&dspbuf, state);
+		LogDebug(COMPONENT_NFS_CB, "deleg_entry %s", str);
+	}
 
 	switch (hook) {
 	case RPC_CALL_COMPLETE:
@@ -1234,19 +1382,21 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 			set_cb_chan_down(deleg_ctx->drc_clid, true);
 			resp_act = DELEG_RECALL_SCHED;
 		} else
-			resp_act = handle_recall_response(deleg_ctx, call);
+			resp_act = handle_recall_response(deleg_ctx,
+							  state,
+							  call);
 		break;
 	default:
 		LogDebug(COMPONENT_NFS_CB, "%p unknown hook %d", call, hook);
 
-		set_cb_chan_down(clientid, true);
+		set_cb_chan_down(deleg_ctx->drc_clid, true);
 		/* Mark the recall as failed */
 		resp_act = DELEG_RECALL_SCHED;
 		break;
 	}
 	switch (resp_act) {
 	case DELEG_RECALL_SCHED:
-		if (eval_deleg_revoke(deleg_entry))
+		if (eval_deleg_revoke(state))
 			goto out_revoke;
 		else {
 			if (schedule_delegrecall_task(deleg_ctx, 1))
@@ -1262,35 +1412,48 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 	case REVOKE:
 		goto out_revoke;
 	}
-out_revoke:
-	LogCrit(COMPONENT_NFS_V4,
-		"Revoking delegation(%p)", deleg_entry);
-	clientid->num_revokes++;
-	inc_revokes(clientid->gsh_client);
 
-	rc = deleg_revoke(deleg_entry);
+out_revoke:
+
+	display_stateid(&dspbuf, state);
+
+	LogCrit(COMPONENT_NFS_V4,
+		"Revoking delegation for %s", str);
+
+	deleg_ctx->drc_clid->num_revokes++;
+	inc_revokes(deleg_ctx->drc_clid->gsh_client);
+
+	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
+
+	rc = deleg_revoke(entry, state);
+
+	PTHREAD_RWLOCK_unlock(&entry->state_lock);
+
 	if (rc != STATE_SUCCESS) {
 		LogCrit(COMPONENT_NFS_V4,
-			"Delegation could not be revoked(%p)",
-			deleg_entry);
+			"Delegation could not be revoked for %s", str);
 	} else {
 		LogDebug(COMPONENT_NFS_V4,
-			 "Delegation revoked(%p)", deleg_entry);
+			 "Delegation revoked for %s", str);
 	}
-	cache_inode_put(deleg_ctx->drc_entry);
-	pthread_mutex_lock(&clientid->cid_mutex);
-	update_lease(clientid);
-	pthread_mutex_unlock(&clientid->cid_mutex);
-	put_gsh_export(deleg_ctx->drc_exp);
-	dec_client_id_ref(clientid);
-	gsh_free(deleg_ctx);
+
+out_free_drc:
+
+	free_delegrecall_context(deleg_ctx);
 
 out_free:
-	PTHREAD_RWLOCK_unlock(&entry->state_lock);
+
 	fh = call->cbt.v_u.v4.args.argarray.argarray_val->
 				nfs_cb_argop4_u.opcbrecall.fh.nfs_fh4_val;
 	gsh_free(fh);
 	free_rpc_call(call);
+
+	if (entry != NULL)
+		cache_inode_lru_unref(entry, LRU_FLAG_NONE);
+
+	if (state != NULL)
+		dec_state_t_ref(state);
+
 	return 0; /*Always return zero, the delegation is recalled or revoked */
 }
 
@@ -1300,53 +1463,57 @@ out_free:
  * This function sends a cb_recall for one delegation, the caller has to lock
  * cache_entry->state_lock before calling this function.
  *
+ * @param[in] entry The cache entry being delegated
  * @param[in] deleg_entry Lock entry covering the delegation
  * @param[in] delegrecall_context
  */
 
-static uint32_t delegrecall_one(struct deleg_data *deleg_entry,
-				struct delegrecall_context *p_cargs)
+void delegrecall_one(cache_entry_t *entry,
+		     struct state_t *state,
+		     struct delegrecall_context *p_cargs)
 {
 	char *maxfh = NULL;
-	uint32_t ret = 1;
 	rpc_call_channel_t *chan;
 	rpc_call_t *call = NULL;
 	nfs_cb_argop4 argop[1];
-	struct gsh_export *exp;
 	struct cf_deleg_stats *clfl_stats;
-	nfs_client_id_t *clientid;
-	clientid = deleg_entry->dd_owner->so_owner.so_nfs4_owner.so_clientrec;
-	clfl_stats = &deleg_entry->dd_state->state_data.deleg.sd_clfile_stats;
+	char str[LOG_BUFF_LEN];
+	struct display_buffer dspbuf = {sizeof(str), str, str};
+	bool str_valid = false;
+
+	clfl_stats = &state->state_data.deleg.sd_clfile_stats;
+
+	if (isDebug(COMPONENT_FSAL_UP)) {
+		display_stateid(&dspbuf, state);
+		str_valid = true;
+	}
 
 	/* record the first attempt to recall this delegation */
 	if (clfl_stats->cfd_r_time == 0)
 		clfl_stats->cfd_r_time = time(NULL);
 
-	cache_entry_t *entry = deleg_entry->dd_entry;
+	if (str_valid)
+		LogFullDebug(COMPONENT_FSAL_UP, "Recalling delegation %s", str);
 
-	LogFullDebug(COMPONENT_FSAL_UP, "Recalling delegation:%p", deleg_entry);
-
-	inc_recalls(clientid->gsh_client);
-
-	exp = deleg_entry->dd_state->state_export;
+	inc_recalls(p_cargs->drc_clid->gsh_client);
 
 	/* Attempt a recall only if channel state is UP */
-	if (get_cb_chan_down(clientid)) {
+	if (get_cb_chan_down(p_cargs->drc_clid)) {
 		LogCrit(COMPONENT_NFS_CB,
 			"Call back channel down, not issuing a recall");
 		goto out;
 	}
 
-	chan = nfs_rpc_get_chan(clientid, NFS_RPC_FLAG_NONE);
+	chan = nfs_rpc_get_chan(p_cargs->drc_clid, NFS_RPC_FLAG_NONE);
 	if (!chan) {
 		LogCrit(COMPONENT_NFS_CB, "nfs_rpc_get_chan failed");
 		/* TODO: move this to nfs_rpc_get_chan ? */
-		set_cb_chan_down(clientid, true);
+		set_cb_chan_down(p_cargs->drc_clid, true);
 		goto out;
 	}
 	if (!chan->clnt) {
 		LogCrit(COMPONENT_NFS_CB, "nfs_rpc_get_chan failed (no clnt)");
-		set_cb_chan_down(clientid, true);
+		set_cb_chan_down(p_cargs->drc_clid, true);
 		goto out;
 	}
 	/* allocate a new call--freed in completion hook */
@@ -1361,12 +1528,11 @@ static uint32_t delegrecall_one(struct deleg_data *deleg_entry,
 
 	/* setup a compound */
 	cb_compound_init_v4(&call->cbt, 1, 0,
-			    clientid->cid_cb.v40.cb_callback_ident,
+			    p_cargs->drc_clid->cid_cb.v40.cb_callback_ident,
 			    "brrring!!!", 10);
 
 	argop->argop = NFS4_OP_CB_RECALL;
-	COPY_STATEID(&argop->nfs_cb_argop4_u.opcbrecall.stateid,
-			deleg_entry->dd_state);
+	COPY_STATEID(&argop->nfs_cb_argop4_u.opcbrecall.stateid, state);
 	argop->nfs_cb_argop4_u.opcbrecall.truncate = false;
 
 	maxfh = gsh_malloc(NFS4_FHSIZE); /* free in cb_completion_func() */
@@ -1382,7 +1548,7 @@ static uint32_t delegrecall_one(struct deleg_data *deleg_entry,
 	/* Building a new fh */
 	if (!nfs4_FSALToFhandle(&argop->nfs_cb_argop4_u.opcbrecall.fh,
 				entry->obj_handle,
-				exp)) {
+				p_cargs->drc_exp)) {
 		LogCrit(COMPONENT_FSAL_UP,
 			"nfs4_FSALToFhandle failed, can not process recall");
 		goto out;
@@ -1394,173 +1560,161 @@ static uint32_t delegrecall_one(struct deleg_data *deleg_entry,
 	/* set completion hook */
 	call->call_hook = delegrecall_completion_func;
 
-	if (!p_cargs) {
-		p_cargs = gsh_malloc(sizeof(struct delegrecall_context));
-		if (!p_cargs) {
-			LogDebug(COMPONENT_FSAL_UP,
-				 "FSAL_UP_DELEG: no mem, aborting.");
-			goto out;
-		}
-
-		p_cargs->drc_clid = clientid;
-		p_cargs->drc_entry = entry;
-		p_cargs->drc_deleg_entry = deleg_entry;
-		p_cargs->drc_exp = exp;
-		COPY_STATEID(&p_cargs->drc_stateid, deleg_entry->dd_state);
-	}
-
 	/* call it (here, in current thread context)
 	   ret is always 0 for async calls, might change in future */
-	ret = nfs_rpc_submit_call(call, p_cargs, NFS_RPC_CALL_NONE);
-	if (!ret)
-		return ret;
+	if (nfs_rpc_submit_call(call, p_cargs, NFS_RPC_CALL_NONE) == 0)
+		return;
 
 out:
-	inc_failed_recalls(clientid->gsh_client);
+
+	inc_failed_recalls(p_cargs->drc_clid->gsh_client);
+
 	if (maxfh)
 		gsh_free(maxfh);
+
 	if (call)
 		free_rpc_call(call);
 
-	if (eval_deleg_revoke(deleg_entry)) {
-		ret = 0;
-		goto out_revoke;
-	} else {
-		if (!p_cargs || schedule_delegrecall_task(p_cargs, 1)) {
-			ret = 1;
-			goto out_revoke;
-		}
-		ret = 0;
+	if (!eval_deleg_revoke(state) &&
+	    p_cargs &&
+	    !schedule_delegrecall_task(p_cargs, 1)) {
+		/* Keep the delegation in p_cargs */
+		if (str_valid)
+			LogDebug(COMPONENT_FSAL_UP,
+				 "Retry delegation for %s", str);
+		return;
 	}
 
-	/* Keep the delegation in p_cargs */
-	return ret;
+	if (!str_valid)
+		display_stateid(&dspbuf, state);
 
-out_revoke:
-	LogCrit(COMPONENT_STATE, "Delegation(%p) will be revoked", deleg_entry);
-	clientid->num_revokes++;
-	inc_revokes(clientid->gsh_client);
+	LogCrit(COMPONENT_STATE, "Delegation will be revoked for %s",
+		str);
 
-	if (deleg_revoke(deleg_entry) != STATE_SUCCESS) {
+	p_cargs->drc_clid->num_revokes++;
+	inc_revokes(p_cargs->drc_clid->gsh_client);
+
+	if (deleg_revoke(entry, state) != STATE_SUCCESS) {
 		LogDebug(COMPONENT_FSAL_UP,
-			 "Failed to revoke delegation(%p).", deleg_entry);
+			 "Failed to revoke delegation %s.", str);
 	} else {
 		LogDebug(COMPONENT_FSAL_UP,
-			 "Delegation revoked(%p)", deleg_entry);
+			 "Delegation revoked %s", str);
 	}
-	cache_inode_put(entry);
-	pthread_mutex_lock(&clientid->cid_mutex);
-	update_lease(clientid);
-	pthread_mutex_unlock(&clientid->cid_mutex);
-	put_gsh_export(exp);
-	dec_client_id_ref(clientid);
-	if (p_cargs)
-		gsh_free(p_cargs);
 
-	return ret;
-
+	free_delegrecall_context(p_cargs);
 }
 
 /**
  * @brief Check if the delegation needs to be revoked.
  *
- * @param[in] found_entry Lock entry covering the delegation
- * @param[in] entry File on which the delegation is held
+ * @param[in] ctx Delegation recall context describing the delegation
  */
 
 static void delegrevoke_check(void *ctx)
 {
 	uint32_t rc = 0;
-	struct glist_head *glist, *glist_n;
 	struct delegrecall_context *deleg_ctx = ctx;
-	cache_entry_t *entry = deleg_ctx->drc_entry;
-	struct deleg_data *deleg_entry = NULL;
-	nfs_client_id_t *clid = deleg_ctx->drc_clid;
+	cache_entry_t *entry = NULL;
+	struct state_t *state = NULL;
+	bool free_drc = true;
+	char str[LOG_BUFF_LEN];
+	struct display_buffer dspbuf = {sizeof(str), str, str};
+	bool str_valid = false;
 
-	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
-	glist_for_each_safe(glist, glist_n, &entry->object.file.deleg_list) {
-		deleg_entry = glist_entry(glist, struct deleg_data, dd_list);
-		if (deleg_ctx->drc_deleg_entry == deleg_entry &&
-			SAME_STATEID(&deleg_ctx->drc_stateid,
-				     deleg_entry->dd_state)) {
-			if (eval_deleg_revoke(deleg_ctx->drc_deleg_entry)) {
-				LogDebug(COMPONENT_STATE,
-					"Revoking delegation(%p)", deleg_entry);
-				rc = deleg_revoke(deleg_entry);
-				if (rc != STATE_SUCCESS) {
-					LogCrit(COMPONENT_NFS_V4,
-					  "Delegation could not be revoked(%p)",
-						deleg_entry);
-				} else {
-					LogDebug(COMPONENT_NFS_V4,
-						 "Delegation revoked(%p)",
-						 deleg_entry);
-				}
-				cache_inode_put(entry);
-				pthread_mutex_lock(&clid->cid_mutex);
-				update_lease(clid);
-				pthread_mutex_unlock(&clid->cid_mutex);
-				put_gsh_export(deleg_ctx->drc_exp);
-				dec_client_id_ref(clid);
-				gsh_free(deleg_ctx);
-			} else {
-				LogFullDebug(COMPONENT_STATE,
-					     "Not revoking the delegation(%p)",
-					     deleg_entry);
-				schedule_delegrevoke_check(deleg_ctx, 1);
-			}
-			break;
+	state = nfs4_State_Get_Pointer(deleg_ctx->drc_stateid.other);
+
+	if (state == NULL) {
+		LogDebug(COMPONENT_NFS_CB, "Delegation is already returned");
+		goto out;
+	}
+
+	if (isDebug(COMPONENT_NFS_CB)) {
+		display_stateid(&dspbuf, state);
+		str_valid = true;
+	}
+
+	entry = get_state_entry_ref(state);
+
+	if (entry == NULL) {
+		LogDebug(COMPONENT_NFS_CB, "Stale cache entry");
+		goto out;
+	}
+
+	if (eval_deleg_revoke(state)) {
+		if (str_valid)
+			LogDebug(COMPONENT_STATE,
+				"Revoking delegation for %s", str);
+
+		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
+
+		rc = deleg_revoke(entry, state);
+
+		PTHREAD_RWLOCK_unlock(&entry->state_lock);
+
+		if (rc != STATE_SUCCESS) {
+			if (!str_valid)
+				display_stateid(&dspbuf, state);
+
+			LogCrit(COMPONENT_NFS_V4,
+				"Delegation could not be revoked for %s",
+				str);
 		} else {
-			deleg_entry = NULL;
+			if (str_valid)
+				LogDebug(COMPONENT_NFS_V4,
+					 "Delegation revoked for %s",
+					 str);
 		}
-	}
-	PTHREAD_RWLOCK_unlock(&entry->state_lock);
+	} else {
+		if (str_valid)
+			LogFullDebug(COMPONENT_STATE,
+				     "Not yet revoking the delegation for %s",
+				     str);
 
-	if (!deleg_entry) {
-		LogDebug(COMPONENT_NFS_CB, "Delgation is already returned");
-		cache_inode_put(entry);
-		pthread_mutex_lock(&clid->cid_mutex);
-		update_lease(clid);
-		pthread_mutex_unlock(&clid->cid_mutex);
-		put_gsh_export(deleg_ctx->drc_exp);
-		dec_client_id_ref(clid);
-		gsh_free(deleg_ctx);
+		schedule_delegrevoke_check(deleg_ctx, 1);
+		free_drc = false;
 	}
 
-	return;
+ out:
+
+	if (free_drc)
+		free_delegrecall_context(deleg_ctx);
+
+	if (state != NULL)
+		dec_state_t_ref(state);
+
+	if (entry != NULL)
+		cache_inode_lru_unref(entry, LRU_FLAG_NONE);
 }
 
 static void delegrecall_task(void *ctx)
 {
-	struct glist_head *glist, *glist_n;
 	struct delegrecall_context *deleg_ctx = ctx;
-	cache_entry_t *entry = deleg_ctx->drc_entry;
-	struct deleg_data *deleg_entry = NULL;
+	struct state_t *state;
+	cache_entry_t *entry;
 
-	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
-	glist_for_each_safe(glist, glist_n, &entry->object.file.deleg_list) {
-		deleg_entry = glist_entry(glist, struct deleg_data, dd_list);
-		if (deleg_ctx->drc_deleg_entry == deleg_entry &&
-			SAME_STATEID(&deleg_ctx->drc_stateid,
-				     deleg_entry->dd_state)) {
-			delegrecall_one(deleg_entry, deleg_ctx);
-			break;
-		} else {
-			deleg_entry = NULL;
-		}
-	}
-	PTHREAD_RWLOCK_unlock(&entry->state_lock);
-	if (!deleg_entry) {
+	state = nfs4_State_Get_Pointer(deleg_ctx->drc_stateid.other);
+
+	if (state == NULL) {
 		LogDebug(COMPONENT_NFS_CB, "Delgation is already returned");
-		cache_inode_put(entry);
-		pthread_mutex_lock(&deleg_ctx->drc_clid->cid_mutex);
-		update_lease(deleg_ctx->drc_clid);
-		pthread_mutex_unlock(&deleg_ctx->drc_clid->cid_mutex);
-		dec_client_id_ref(deleg_ctx->drc_clid);
-		put_gsh_export(deleg_ctx->drc_exp);
-		gsh_free(deleg_ctx);
+		free_delegrecall_context(deleg_ctx);
+	} else {
+		entry = get_state_entry_ref(state);
+
+		if (entry != NULL) {
+			PTHREAD_RWLOCK_wrlock(&entry->state_lock);
+
+			delegrecall_one(entry, state, deleg_ctx);
+
+			PTHREAD_RWLOCK_unlock(&entry->state_lock);
+
+			cache_inode_lru_unref(entry, LRU_FLAG_NONE);
+		} else {
+			LogDebug(COMPONENT_NFS_CB,
+				 "Delgation recall skipped due to stale cache entry");
+		}
+		dec_state_t_ref(state);
 	}
-	return;
 }
 
 static int schedule_delegrecall_task(struct delegrecall_context *ctx,
@@ -1596,11 +1750,11 @@ static int schedule_delegrevoke_check(struct delegrecall_context *ctx,
 state_status_t delegrecall_impl(cache_entry_t *entry)
 {
 	struct glist_head *glist, *glist_n;
-	struct deleg_data *deleg_entry = NULL;
 	state_status_t rc = 0;
 	uint32_t *deleg_state = NULL;
-	nfs_client_id_t *clid = NULL;
-	struct gsh_export *probe_exp;
+	struct state_t *state;
+	state_owner_t *owner;
+	struct delegrecall_context *drc_ctx;
 
 	LogDebug(COMPONENT_FSAL_UP,
 		 "FSAL_UP_DELEG: entry %p type %u",
@@ -1608,12 +1762,21 @@ state_status_t delegrecall_impl(cache_entry_t *entry)
 
 	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 
-	glist_for_each_safe(glist, glist_n, &entry->object.file.deleg_list) {
-		deleg_entry = glist_entry(glist, struct deleg_data, dd_list);
+	glist_for_each_safe(glist, glist_n, &entry->list_of_states) {
+		state = glist_entry(glist, struct state_t, state_list);
 
-		LogDebug(COMPONENT_NFS_CB, "deleg_entry %p", deleg_entry);
-		deleg_state =
-			&deleg_entry->dd_state->state_data.deleg.sd_state;
+		if (state->state_type != STATE_TYPE_DELEG)
+			continue;
+
+		if (isDebug(COMPONENT_NFS_CB)) {
+			char str[LOG_BUFF_LEN];
+			struct display_buffer dspbuf = {sizeof(str), str, str};
+
+			display_stateid(&dspbuf, state);
+			LogDebug(COMPONENT_NFS_CB, "Delegation for %s", str);
+		}
+
+		deleg_state = &state->state_data.deleg.sd_state;
 		if (*deleg_state != DELEG_GRANTED) {
 			LogDebug(COMPONENT_FSAL_UP,
 				 "Delegation already being recalled, NOOP");
@@ -1621,41 +1784,33 @@ state_status_t delegrecall_impl(cache_entry_t *entry)
 		}
 		*deleg_state = DELEG_RECALL_WIP;
 
-		entry->object.file.fdeleg_stats.fds_last_recall = time(NULL);
+		drc_ctx = gsh_malloc(sizeof(struct delegrecall_context));
 
-		/* Recall is an asynchrons operation, hence keep a hold on
-		 * the export to prevent racing with remove_gsh_expor()
+		if (drc_ctx == NULL) {
+			LogFatal(COMPONENT_FSAL_UP,
+				 "Could not allocate delegation recal context");
+		}
+
+		/* Get references on the owner and the the export. The
+		 * export reference we will hold while we perform the recall.
+		 * The owner reference will be used to get access to the
+		 * clientid and reserve the lease.
 		 */
-		probe_exp = get_gsh_export(deleg_entry->dd_export_id);
-		if (probe_exp == NULL) {
-			/* Remove export is underway, which will
-			 * do the actual work, no need to do anything.
-			 */
+		if (!get_state_entry_export_owner_refs(state,
+						       NULL,
+						       &drc_ctx->drc_exp,
+						       &owner)) {
 			LogDebug(COMPONENT_FSAL_UP,
-				 "Racing with delete export. Do nothing");
-			continue;
-		}
-		if (probe_exp != deleg_entry->dd_export) {
-			/* Whole world changed under us and a new export
-			 * with same old export-id has been added.
-			 * Do nothing.
-			 */
-			LogWarn(COMPONENT_FSAL_UP,
-				"Export changed prebe_exp:%p sle_exp: %p\n",
-				probe_exp, deleg_entry->dd_export);
-			put_gsh_export(probe_exp);
+				 "Something is going stale, no need to recall delegation");
 			continue;
 		}
 
-		if (nfs_client_id_get_confirmed(deleg_entry->
-						dd_owner->so_owner.
-						so_nfs4_owner.so_clientid,
-						&clid) != CLIENT_ID_SUCCESS) {
-			LogCrit(COMPONENT_NFS_CB,
-				"No clid record, code %d", rc);
-			put_gsh_export(probe_exp);
-			continue;
-		}
+		drc_ctx->drc_clid = owner->so_owner.so_nfs4_owner.so_clientrec;
+		COPY_STATEID(&drc_ctx->drc_stateid, state);
+		inc_client_id_ref(drc_ctx->drc_clid);
+		dec_state_owner_ref(owner);
+
+		entry->object.file.fdeleg_stats.fds_last_recall = time(NULL);
 
 		/* Prevent client's lease expiring until we complete
 		 * this recall/revoke operation. If the client's lease
@@ -1663,23 +1818,17 @@ state_status_t delegrecall_impl(cache_entry_t *entry)
 		 * expired clients revoke this delegation, and we just
 		 * skip it here.
 		 */
-		pthread_mutex_lock(&clid->cid_mutex);
-		if (!reserve_lease(clid)) {
-			pthread_mutex_unlock(&clid->cid_mutex);
-			put_gsh_export(probe_exp);
-			dec_client_id_ref(clid);
+		pthread_mutex_lock(&drc_ctx->drc_clid->cid_mutex);
+		if (!reserve_lease(drc_ctx->drc_clid)) {
+			pthread_mutex_unlock(&drc_ctx->drc_clid->cid_mutex);
+			put_gsh_export(drc_ctx->drc_exp);
+			dec_client_id_ref(drc_ctx->drc_clid);
+			gsh_free(drc_ctx);
 			continue;
 		}
-		pthread_mutex_unlock(&clid->cid_mutex);
+		pthread_mutex_unlock(&drc_ctx->drc_clid->cid_mutex);
 
-		cache_inode_lru_ref(entry, LRU_FLAG_NONE);
-
-		rc = delegrecall_one(deleg_entry, NULL);
-
-		if (rc)
-			LogCrit(COMPONENT_FSAL_UP,
-				"delegrecall_one(%p) failed", deleg_entry);
-
+		delegrecall_one(entry, state, drc_ctx);
 	}
 	PTHREAD_RWLOCK_unlock(&entry->state_lock);
 	return rc;

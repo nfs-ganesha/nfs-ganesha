@@ -33,14 +33,13 @@
 #include <string.h>
 #include <pthread.h>
 #include "log.h"
-#include "nfs4.h"
+#include "fsal.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
 #include "nfs_convert.h"
 #include "fsal_pnfs.h"
-#include "sal_data.h"
 #include "sal_functions.h"
 
 /**
@@ -149,25 +148,27 @@ int nfs4_op_layoutcommit(struct nfs_argop4 *op, compound_data_t *data,
 
 	arg.type = layout_state->state_data.layout.state_layout_type;
 
+	PTHREAD_RWLOCK_wrlock(&data->current_entry->state_lock);
+
 	glist_for_each(glist, &layout_state->state_data.layout.state_segments) {
 		segment = glist_entry(glist,
 				      state_layout_segment_t,
 				      sls_state_segments);
 
-		pthread_mutex_lock(&segment->sls_mutex);
 		arg.segment = segment->sls_segment;
 		arg.fsal_seg_data = segment->sls_fsal_data;
-		pthread_mutex_unlock(&segment->sls_mutex);
 
-		nfs_status = data->current_entry->obj_handle->ops->layoutcommit(
-						data->current_entry->obj_handle,
+		nfs_status = data->current_entry->obj_handle->
+			   obj_ops.layoutcommit(data->current_entry->obj_handle,
 						op_ctx,
 						&lou_body,
 						&arg,
 						&res);
 
-		if (nfs_status != NFS4_OK)
+		if (nfs_status != NFS4_OK) {
+			PTHREAD_RWLOCK_unlock(&data->current_entry->state_lock);
 			goto out;
+		}
 
 		if (res.commit_done)
 			break;
@@ -176,6 +177,8 @@ int nfs4_op_layoutcommit(struct nfs_argop4 *op, compound_data_t *data,
 		   in-memory decode stream. */
 		xdr_setpos(&lou_body, beginning);
 	}
+
+	PTHREAD_RWLOCK_unlock(&data->current_entry->state_lock);
 
 	if (arg_LAYOUTCOMMIT4->loca_time_modify.nt_timechanged
 	    || arg_LAYOUTCOMMIT4->loca_last_write_offset.no_newoffset
@@ -201,6 +204,9 @@ int nfs4_op_layoutcommit(struct nfs_argop4 *op, compound_data_t *data,
 	nfs_status = NFS4_OK;
 
  out:
+
+	if (layout_state != NULL)
+		dec_state_t_ref(layout_state);
 
 	xdr_destroy(&lou_body);
 

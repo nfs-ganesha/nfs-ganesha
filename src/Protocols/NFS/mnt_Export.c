@@ -38,7 +38,7 @@
 #include "log.h"
 #include "nfs_core.h"
 #include "nfs_exports.h"
-#include "mount.h"
+#include "fsal.h"
 #include "nfs_proto_functions.h"
 #include "export_mgr.h"
 

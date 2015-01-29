@@ -19,7 +19,7 @@ ml_console:		ml_functions.o ml_console.o
 			gcc $(FLAGS) -lm -o ml_console ml_functions.o ml_console.o
 
 ml_posix_client:	ml_functions.o ml_posix_client.o
-			gcc $(FLAGS) -lm -o ml_posix_client ml_functions.o ml_posix_client.o
+			gcc $(FLAGS) -lm -lpthread -o ml_posix_client ml_functions.o ml_posix_client.o
 
 ml_console.o:		ml_console.c multilock.h
 

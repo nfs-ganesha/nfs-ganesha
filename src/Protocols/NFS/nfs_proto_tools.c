@@ -31,9 +31,12 @@
  * A set of functions used to managed NFS.
  */
 #include "log.h"
+#include "fsal.h"
 #include "cache_inode.h"
 #include "fsal_convert.h"
+#include "nfs_core.h"
 #include "nfs_convert.h"
+#include "nfs_exports.h"
 #include "nfs_proto_tools.h"
 #include "idmapper.h"
 #include "export_mgr.h"
@@ -205,15 +208,13 @@ bool nfs_RetryableError(cache_inode_status_t cache_status)
 	case CACHE_INODE_FSAL_EPERM:
 	case CACHE_INODE_NO_SPACE_LEFT:
 	case CACHE_INODE_READ_ONLY_FS:
-	case CACHE_INODE_KILLED:
-	case CACHE_INODE_FSAL_ESTALE:
+	case CACHE_INODE_ESTALE:
 	case CACHE_INODE_FSAL_ERR_SEC:
 	case CACHE_INODE_QUOTA_EXCEEDED:
 	case CACHE_INODE_NOT_SUPPORTED:
 	case CACHE_INODE_UNION_NOTSUPP:
 	case CACHE_INODE_NAME_TOO_LONG:
 	case CACHE_INODE_STATE_CONFLICT:
-	case CACHE_INODE_DEAD_ENTRY:
 	case CACHE_INODE_ASYNC_POST_ERROR:
 	case CACHE_INODE_STATE_ERROR:
 	case CACHE_INODE_BAD_COOKIE:
@@ -472,7 +473,7 @@ static fattr_xdr_result encode_linksupport(XDR *xdr,
 	if (args->data != NULL) {
 		export = op_ctx->fsal_export;
 		linksupport =
-		    export->ops->fs_supports(export, fso_link_support);
+		    export->exp_ops.fs_supports(export, fso_link_support);
 	}
 	if (!xdr_bool(xdr, &linksupport))
 		return FATTR_XDR_FAILED;
@@ -498,7 +499,7 @@ static fattr_xdr_result encode_symlinksupport(XDR *xdr,
 	if (args->data != NULL) {
 		export = op_ctx->fsal_export;
 		symlinksupport =
-		    export->ops->fs_supports(export, fso_symlink_support);
+		    export->exp_ops.fs_supports(export, fso_symlink_support);
 	}
 	if (!xdr_bool(xdr, &symlinksupport))
 		return FATTR_XDR_FAILED;
@@ -526,7 +527,7 @@ static fattr_xdr_result encode_namedattrsupport(XDR *xdr,
 	if (args->data != NULL) {
 		export = op_ctx->fsal_export;
 		namedattrsupport =
-		    export->ops->fs_supports(export, fso_named_attr);
+		    export->exp_ops.fs_supports(export, fso_named_attr);
 	}
 	if (!xdr_bool(xdr, &namedattrsupport))
 		return FATTR_XDR_FAILED;
@@ -586,7 +587,7 @@ static fattr_xdr_result encode_uniquehandles(XDR *xdr,
 	if (args->data != NULL) {
 		export = op_ctx->fsal_export;
 		uniquehandles =
-		    export->ops->fs_supports(export, fso_unique_handles);
+		    export->exp_ops.fs_supports(export, fso_unique_handles);
 	}
 	if (!inline_xdr_bool(xdr, &uniquehandles))
 		return FATTR_XDR_FAILED;
@@ -835,7 +836,7 @@ static fattr_xdr_result encode_aclsupport(XDR *xdr,
 
 	if (args->data != NULL) {
 		export = op_ctx->fsal_export;
-		aclsupport = export->ops->fs_acl_support(export);
+		aclsupport = export->exp_ops.fs_acl_support(export);
 	}
 	if (!inline_xdr_u_int32_t(xdr, &aclsupport))
 		return FATTR_XDR_FAILED;
@@ -881,7 +882,8 @@ static fattr_xdr_result encode_cansettime(XDR *xdr,
 
 	if (args->data != NULL) {
 		export = op_ctx->fsal_export;
-		cansettime = export->ops->fs_supports(export, fso_cansettime);
+		cansettime = export->exp_ops.
+				fs_supports(export, fso_cansettime);
 	}
 	if (!inline_xdr_bool(xdr, &cansettime))
 		return FATTR_XDR_FAILED;
@@ -908,7 +910,7 @@ static fattr_xdr_result encode_case_insensitive(XDR *xdr,
 	if (args->data != NULL) {
 		export = op_ctx->fsal_export;
 		caseinsensitive =
-		    export->ops->fs_supports(export, fso_case_insensitive);
+		    export->exp_ops.fs_supports(export, fso_case_insensitive);
 	}
 	if (!inline_xdr_bool(xdr, &caseinsensitive))
 		return FATTR_XDR_FAILED;
@@ -935,7 +937,7 @@ static fattr_xdr_result encode_case_preserving(XDR *xdr,
 	if (args->data != NULL) {
 		export = op_ctx->fsal_export;
 		casepreserving =
-		    export->ops->fs_supports(export, fso_case_preserving);
+		    export->exp_ops.fs_supports(export, fso_case_preserving);
 	}
 	if (!inline_xdr_bool(xdr, &casepreserving))
 		return FATTR_XDR_FAILED;
@@ -962,7 +964,7 @@ static fattr_xdr_result encode_chown_restricted(XDR *xdr,
 	if (args->data != NULL) {
 		export = op_ctx->fsal_export;
 		chownrestricted =
-		    export->ops->fs_supports(export, fso_chown_restricted);
+		    export->exp_ops.fs_supports(export, fso_chown_restricted);
 	}
 	if (!inline_xdr_bool(xdr, &chownrestricted))
 		return FATTR_XDR_FAILED;
@@ -1139,23 +1141,50 @@ static fattr_xdr_result decode_files_total(XDR *xdr,
 static fattr_xdr_result encode_fs_locations(XDR *xdr,
 					    struct xdr_attrs_args *args)
 {
-/** todo the parse part should be done at export time to a simple struct
- *  the parse is memory and memcpy hungry! NOOP it for now.
- */
-/* if(data->current_entry->type != DIRECTORY) */
-/*   { */
-/*  continue; */
-/*   } */
+	fsal_status_t st;
+	fs_locations4 fs_locs;
+	fs_location4 fs_loc;
+	component4 fs_path;
+	component4 fs_root;
+	component4 fs_server;
+	char root[MNTNAMLEN];
+	char path[MNTNAMLEN];
+	char server[MNTNAMLEN];
 
-/* if(!nfs4_referral_str_To_Fattr_fs_location */
-/*    (data->current_entry->object.dir.referral, tmp_buff, &tmp_int)) */
-/*   { */
-/*  continue; */
-/*   } */
+	if (args->data == NULL || args->data->current_entry == NULL)
+		return FATTR_XDR_NOOP;
 
-/* memcpy((char *)(current_pos), tmp_buff, tmp_int); */
-/* LastOffset += tmp_int; */
-/* break; */
+	if (args->data->current_entry->type != DIRECTORY)
+		return FATTR_XDR_NOOP;
+
+	fs_root.utf8string_len = MNTNAMLEN;
+	fs_root.utf8string_val = root;
+	fs_path.utf8string_len = MNTNAMLEN;
+	fs_path.utf8string_val = path;
+	fs_locs.fs_root.pathname4_len = 1;
+	fs_locs.fs_root.pathname4_val = &fs_path;
+	fs_server.utf8string_len = MNTNAMLEN;
+	fs_server.utf8string_val = server;
+	fs_loc.server.server_len = 1;
+	fs_loc.server.server_val = &fs_server;
+	fs_loc.rootpath.pathname4_len = 1;
+	fs_loc.rootpath.pathname4_val = &fs_root;
+	fs_locs.locations.locations_len = 1;
+	fs_locs.locations.locations_val = &fs_loc;
+
+	/* For now allow for one fs locations, fs_locations() should set:
+	   root and update its length, can not be bigger than MNTNAMLEN
+	   path and update its length, can not be bigger than MNTNAMLEN
+	   server and update its length, can not be bigger than MNTNAMELEN
+	*/
+	st = args->data->current_entry->obj_handle->obj_ops.fs_locations(
+					args->data->current_entry->obj_handle,
+					&fs_locs);
+	if (FSAL_IS_ERROR(st))
+		return FATTR_XDR_NOOP;
+
+	if (!xdr_fs_locations4(xdr, &fs_locs))
+		return FATTR_XDR_FAILED;
 
 	return FATTR_XDR_SUCCESS;
 }
@@ -1199,7 +1228,8 @@ static fattr_xdr_result encode_homogeneous(XDR *xdr,
 
 	if (args->data != NULL) {
 		export = op_ctx->fsal_export;
-		homogeneous = export->ops->fs_supports(export, fso_homogenous);
+		homogeneous = export->exp_ops.
+				fs_supports(export, fso_homogenous);
 	}
 	if (!inline_xdr_bool(xdr, &homogeneous))
 		return FATTR_XDR_FAILED;
@@ -1224,7 +1254,7 @@ static fattr_xdr_result encode_maxfilesize(XDR *xdr,
 
 	if (args->data != NULL) {
 		export = op_ctx->fsal_export;
-		maxfilesize = export->ops->fs_maxfilesize(export);
+		maxfilesize = export->exp_ops.fs_maxfilesize(export);
 	}
 	if (!inline_xdr_u_int64_t(xdr, &maxfilesize))
 		return FATTR_XDR_FAILED;
@@ -1248,7 +1278,7 @@ static fattr_xdr_result encode_maxlink(XDR *xdr, struct xdr_attrs_args *args)
 
 	if (args->data != NULL) {
 		export = op_ctx->fsal_export;
-		maxlink = export->ops->fs_maxlink(export);
+		maxlink = export->exp_ops.fs_maxlink(export);
 	}
 	if (!inline_xdr_u_int32_t(xdr, &maxlink))
 		return FATTR_XDR_FAILED;
@@ -1271,7 +1301,7 @@ static fattr_xdr_result encode_maxname(XDR *xdr, struct xdr_attrs_args *args)
 
 	if (args->data != NULL) {
 		export = op_ctx->fsal_export;
-		maxname = export->ops->fs_maxnamelen(export);
+		maxname = export->exp_ops.fs_maxnamelen(export);
 	}
 	if (!inline_xdr_u_int32_t(xdr, &maxname))
 		return FATTR_XDR_FAILED;
@@ -1380,7 +1410,7 @@ static fattr_xdr_result encode_no_trunc(XDR *xdr, struct xdr_attrs_args *args)
 
 	if (args->data != NULL) {
 		export = op_ctx->fsal_export;
-		no_trunc = export->ops->fs_supports(export, fso_no_trunc);
+		no_trunc = export->exp_ops.fs_supports(export, fso_no_trunc);
 	}
 	if (!inline_xdr_bool(xdr, &no_trunc))
 		return FATTR_XDR_FAILED;
@@ -2054,7 +2084,7 @@ static fattr_xdr_result encode_fs_layout_types(XDR *xdr,
 	if (args->data == NULL)
 		return FATTR_XDR_NOOP;
 	export = op_ctx->fsal_export;
-	export->ops->fs_layouttypes(export, &typecount, &layouttypes);
+	export->exp_ops.fs_layouttypes(export, &typecount, &layouttypes);
 
 	if (!inline_xdr_u_int32_t(xdr, (uint32_t *) &typecount))
 		return FATTR_XDR_FAILED;
@@ -2118,7 +2148,8 @@ static fattr_xdr_result encode_layout_blocksize(XDR *xdr,
 		return FATTR_XDR_NOOP;
 	} else {
 		struct fsal_export *export = op_ctx->fsal_export;
-		uint32_t blocksize = export->ops->fs_layout_blocksize(export);
+		uint32_t blocksize = export->exp_ops.
+					fs_layout_blocksize(export);
 
 		if (!inline_xdr_u_int32_t(xdr, &blocksize))
 			return FATTR_XDR_FAILED;
@@ -2537,7 +2568,7 @@ const struct fattr4_dent fattr4tab[FATTR4_SEC_LABEL + 1] = {
 	,
 	[FATTR4_FS_LOCATIONS] = {
 		.name = "FATTR4_FS_LOCATIONS",
-		.supported = 0,
+		.supported = 1,
 		.size_fattr4 = sizeof(fattr4_fs_locations),
 		.encode = encode_fs_locations,
 		.decode = decode_fs_locations,
@@ -3108,7 +3139,8 @@ struct Fattr_filler_opaque {
 static cache_inode_status_t Fattr_filler(void *opaque,
 					 cache_entry_t *entry,
 					 const struct attrlist *attr,
-					 uint64_t mounted_on_fileid)
+					 uint64_t mounted_on_fileid,
+					 enum cb_state cb_state)
 {
 	struct xdr_attrs_args args;
 	struct Fattr_filler_opaque *f = (struct Fattr_filler_opaque *)opaque;
@@ -3179,8 +3211,8 @@ nfsstat4 cache_entry_To_Fattr(cache_entry_t *entry, fattr4 *Fattr,
 			 "No permission check for ACL for entry %p", entry);
 	}
 
-	return
-	    nfs4_Errno(cache_inode_getattr(entry, &f, Fattr_filler));
+	return nfs4_Errno(
+		cache_inode_getattr(entry, &f, Fattr_filler, CB_ORIGINAL));
 }
 
 int nfs4_Fattr_Fill_Error(fattr4 *Fattr, nfsstat4 rdattr_error)
@@ -4104,4 +4136,20 @@ nfsstat4 nfs4_utf8string2dynamic(const utf8string *input,
 	else
 		gsh_free(name);
 	return status;
+}
+
+/**
+ * @brief: is a directory's sticky bit set?
+ *
+ */
+bool is_sticky_bit_set(const struct attrlist *attr)
+{
+	if (attr->mode & (S_IXUSR|S_IXGRP|S_IXOTH))
+		return false;
+
+	if (!(attr->mode & S_ISVTX))
+		return false;
+
+	LogDebug(COMPONENT_NFS_V4, "sticky bit is set on %ld", attr->fileid);
+	return true;
 }

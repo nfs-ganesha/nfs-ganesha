@@ -122,7 +122,7 @@ verification.
 
 The commands and specific parameters are:
 
-[tag] OPEN    file_pos rw|ro|wo|O_RDWR|O_RDONLY|O_WRONLY [create|creat|O_CREAT] "file-name"
+[tag] OPEN    file_pos rw|ro|wo|O_RDWR|O_RDONLY|O_WRONLY [create|creat|O_CREAT] [POSIX|OFD] "file-name"
 [tag] CLOSE   file_pos
 [tag] READ    file_pos length
 [tag] READ    file_pos "string"
@@ -149,6 +149,9 @@ a file descriptor.
 
 Files may be opened read-write, read-only, or write-only. Files may also be
 created on open (other open flags may be supported in the future).
+
+The OFD option indicates that Open File Description locks (or equivalent) will
+be used on this file descriptor.
 
 CLOSE
 -----

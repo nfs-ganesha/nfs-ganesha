@@ -29,27 +29,23 @@
  * @brief Most of the init routines
  */
 #include "config.h"
-#include "ganesha_rpc.h"
 #include "nfs_init.h"
 #include "log.h"
 #include "fsal.h"
-#include "nfs23.h"
-#include "nfs4.h"
-#include "mount.h"
-#include "nlm4.h"
 #include "rquota.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
 #include "cache_inode_lru.h"
 #include "nfs_file_handle.h"
 #include "nfs_exports.h"
+#include "nfs_ip_stats.h"
 #include "nfs_proto_functions.h"
 #include "nfs_dupreq.h"
 #include "config_parsing.h"
 #include "nfs4_acls.h"
 #include "nfs_rpc_callback.h"
 #ifdef USE_DBUS
-#include "ganesha_dbus.h"
+#include "gsh_dbus.h"
 #endif
 #ifdef _USE_CB_SIMULATOR
 #include "nfs_rpc_callback_simulator.h"
@@ -72,6 +68,7 @@
 #include <sys/capability.h>	/* For capget/capset */
 #endif
 #include "uid2grp.h"
+#include "pnfs_utils.h"
 
 
 /* global information exported to all layers (as extern vars) */
@@ -242,6 +239,7 @@ int nfs_set_param_from_conf(config_file_t parse_tree,
 	 */
 	client_pkginit();
 	export_pkginit();
+	server_pkginit();
 
 	/* Core parameters */
 	(void) load_config_from_parse(parse_tree,
@@ -408,28 +406,34 @@ static void nfs_Start_threads(void)
 
 #ifdef _USE_9P
 	/* Starting the 9P/TCP dispatcher thread */
-	rc = pthread_create(&_9p_dispatcher_thrid, &attr_thr,
-			    _9p_dispatcher_thread, NULL);
-	if (rc != 0) {
-		LogFatal(COMPONENT_THREAD,
-			 "Could not create  9P/TCP dispatcher, error = %d (%s)",
-			 errno, strerror(errno));
+	if (nfs_param.core_param.core_options & CORE_OPTION_9P) {
+		rc = pthread_create(&_9p_dispatcher_thrid, &attr_thr,
+				    _9p_dispatcher_thread, NULL);
+		if (rc != 0) {
+			LogFatal(COMPONENT_THREAD,
+				 "Could not create  9P/TCP dispatcher,"
+				 " error = %d (%s)",
+				 errno, strerror(errno));
+		}
+		LogEvent(COMPONENT_THREAD,
+			 "9P/TCP dispatcher thread was started successfully");
 	}
-	LogEvent(COMPONENT_THREAD,
-		 "9P/TCP dispatcher thread was started successfully");
 #endif
 
 #ifdef _USE_9P_RDMA
 	/* Starting the 9P/RDMA dispatcher thread */
-	rc = pthread_create(&_9p_rdma_dispatcher_thrid, &attr_thr,
-			    _9p_rdma_dispatcher_thread, NULL);
-	if (rc != 0) {
-		LogFatal(COMPONENT_THREAD,
-			 "Could not create  9P/RDMA dispatcher, error = %d (%s)",
-			 errno, strerror(errno));
+	if (nfs_param.core_param.core_options & CORE_OPTION_9P) {
+		rc = pthread_create(&_9p_rdma_dispatcher_thrid, &attr_thr,
+				    _9p_rdma_dispatcher_thread, NULL);
+		if (rc != 0) {
+			LogFatal(COMPONENT_THREAD,
+				 "Could not create  9P/RDMA dispatcher,"
+				 " error = %d (%s)",
+				 errno, strerror(errno));
+		}
+		LogEvent(COMPONENT_THREAD,
+			 "9P/RDMA dispatcher thread was started successfully");
 	}
-	LogEvent(COMPONENT_THREAD,
-		 "9P/RDMA dispatcher thread was started successfully");
 #endif
 
 #ifdef _USE_NFS_MSK
@@ -715,8 +719,7 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 	 */
 	nfs4_create_recov_dir();
 
-	/* initialize grace and read in the client IDs */
-	nfs4_init_grace();
+	/* read in the client IDs */
 	nfs4_load_recov_clids(NULL);
 
 	/* Start grace period */

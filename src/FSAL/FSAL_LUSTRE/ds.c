@@ -29,15 +29,15 @@
  * @brief pNFS DS operations for LUSTRE
  *
  * This file implements the read, write, commit, and dispose
- * operations for LUSTRE data-server handles.  The functionality to
- * create a data server handle is in the export.c file, as it is part
- * of the export object's interface.
+ * operations for LUSTRE data-server handles.
+ *
+ * Also, creating a data server handle -- now called via the DS itself.
  */
 
 #include "config.h"
 
 #include <assert.h>
-#include "fsal.h"
+#include "fsal_api.h"
 #include "fsal_handle.h"
 #include "fsal_internal.h"
 #include "FSAL/access_check.h"
@@ -45,20 +45,16 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include "FSAL/fsal_commonlib.h"
+#include "../fsal_private.h"
 #include "lustre_methods.h"
-#include "fsal_handle.h"
-
 #include "pnfs_utils.h"
 #include "nfs_exports.h"
+#include "nfs_creds.h"
 
 /**
- * @brief Release an object
+ * @brief Release a DS handle
  *
- * This function looks up an object by name in a directory.
- *
- * @param[in] obj_pub The object to release
- *
- * @return FSAL status codes.
+ * @param[in] ds_pub The object to release
  */
 static void
 lustre_release(struct fsal_ds_handle *const ds_pub)
@@ -68,8 +64,7 @@ lustre_release(struct fsal_ds_handle *const ds_pub)
 					    struct lustre_ds,
 					    ds);
 
-	fsal_ds_handle_uninit(&ds->ds);
-
+	fsal_ds_handle_fini(&ds->ds);
 	gsh_free(ds);
 }
 
@@ -103,15 +98,13 @@ lustre_ds_read(struct fsal_ds_handle *const ds_pub,
 		count4 *const supplied_length,
 		bool *const end_of_file)
 {
-	struct lustre_file_handle *lustre_handle;
+	/* The private 'full' DS handle */
+	struct lustre_ds *ds = container_of(ds_pub, struct lustre_ds, ds);
+	struct lustre_file_handle *lustre_handle = &ds->wire;
 	/* The amount actually read */
 	int amount_read = 0;
 	char mypath[MAXPATHLEN];
 	int fd = 0;
-
-	/* The private 'full' DS handle */
-	struct lustre_ds *ds = container_of(ds_pub, struct lustre_ds, ds);
-	lustre_handle = &ds->wire;
 
 	/* get the path of the file in Lustre */
 	lustre_handle_to_path(ds->lustre_fs->fs->path,
@@ -175,12 +168,11 @@ lustre_ds_write(struct fsal_ds_handle *const ds_pub,
 		verifier4 *writeverf,
 		stable_how4 *stability_got)
 {
-	/* The amount actually read */
-	int32_t amount_written = 0;
-	struct lustre_file_handle *lustre_handle;
 	/* The private 'full' DS handle */
 	struct lustre_ds *ds = container_of(ds_pub, struct lustre_ds, ds);
-	lustre_handle = &ds->wire;
+	struct lustre_file_handle *lustre_handle = &ds->wire;
+	/* The amount actually read */
+	int32_t amount_written = 0;
 	char mypath[MAXPATHLEN];
 	int fd = 0;
 
@@ -242,11 +234,93 @@ lustre_ds_commit(struct fsal_ds_handle *const ds_pub,
 	return NFS4_OK;
 }
 
-void
-ds_ops_init(struct fsal_ds_ops *ops)
+static void
+dsh_ops_init(struct fsal_dsh_ops *ops)
 {
+	memcpy(ops, &def_dsh_ops, sizeof(struct fsal_dsh_ops));
+
 	ops->release = lustre_release;
 	ops->read = lustre_ds_read;
 	ops->write = lustre_ds_write;
 	ops->commit = lustre_ds_commit;
+}
+
+/**
+ * @brief Try to create a FSAL data server handle
+ *
+ * @param[in]  pds      FSAL pNFS DS
+ * @param[in]  desc     Buffer from which to create the file
+ * @param[out] handle   FSAL DS handle
+ *
+ * @return NFSv4.1 error codes.
+ */
+
+static nfsstat4 make_ds_handle(struct fsal_pnfs_ds *const pds,
+			       const struct gsh_buffdesc *const desc,
+			       struct fsal_ds_handle **const handle)
+{
+	struct lustre_file_handle *lustre_fh =
+					(struct lustre_file_handle *)desc->addr;
+	struct lustre_ds *ds;		/* Handle to be created */
+	struct fsal_filesystem *fs;
+	struct fsal_fsid__ fsid;
+	enum fsid_type fsid_type;
+
+	*handle = NULL;
+
+	if (desc->len != sizeof(struct lustre_file_handle))
+		return NFS4ERR_BADHANDLE;
+
+	lustre_extract_fsid(lustre_fh, &fsid_type, &fsid);
+
+	fs = lookup_fsid(&fsid, fsid_type);
+	if (fs == NULL) {
+		LogInfo(COMPONENT_FSAL,
+			"Could not find filesystem for "
+			"fsid=0x%016"PRIx64".0x%016"PRIx64
+			" from handle",
+			fsid.major, fsid.minor);
+		return NFS4ERR_STALE;
+	}
+
+	if (fs->fsal != pds->fsal) {
+		LogInfo(COMPONENT_FSAL,
+			"Non LUSTRE filesystem "
+			"fsid=0x%016"PRIx64".0x%016"PRIx64
+			" from handle",
+			fsid.major, fsid.minor);
+		return NFS4ERR_STALE;
+	}
+
+	ds = gsh_calloc(sizeof(struct lustre_ds), 1);
+	if (ds == NULL)
+		return NFS4ERR_SERVERFAULT;
+
+	*handle = &ds->ds;
+	fsal_ds_handle_init(*handle, pds);
+
+	/* Connect lazily when a FILE_SYNC4 write forces us to, not
+	   here. */
+
+	ds->connected = false;
+
+	ds->lustre_fs = fs->private;
+
+	memcpy(&ds->wire, desc->addr, desc->len);
+	return NFS4_OK;
+}
+
+static nfsstat4 pds_permissions(struct fsal_pnfs_ds *const pds,
+				struct svc_req *req)
+{
+	/* special case: related export has been set */
+	return nfs4_export_check_access(req);
+}
+
+void lustre_pnfs_ds_ops_init(struct fsal_pnfs_ds_ops *ops)
+{
+	memcpy(ops, &def_pnfs_ds_ops, sizeof(struct fsal_pnfs_ds_ops));
+	ops->permissions = pds_permissions;
+	ops->make_ds_handle = make_ds_handle;
+	ops->fsal_dsh_ops = dsh_ops_init;
 }

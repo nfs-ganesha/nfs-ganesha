@@ -31,8 +31,7 @@
  * Routines used for managing the NFS4 COMPOUND functions.
  */
 #include "config.h"
-#include "ganesha_rpc.h"
-#include "nfs4.h"
+#include "fsal.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
 #include "nfs_exports.h"
@@ -106,24 +105,35 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 		/* Handle junction */
 		cache_entry_t *entry = NULL;
 
+		/* Try to get a reference to the export. */
+		if (!export_ready(entry_src->object.dir.junction_export)) {
+			/* Export has gone bad. */
+			/* Release attr_lock */
+			PTHREAD_RWLOCK_unlock(&entry_src->attr_lock);
+			LogDebug(NFS4ERR_STALE,
+				 "NFS4ERR_STALE On Export_Id %d Path %s",
+				 entry_src->object.dir
+					.junction_export->export_id,
+				 entry_src->object.dir
+					.junction_export->fullpath);
+			res_SECINFO4->status = NFS4ERR_STALE;
+			goto out;
+		}
+
+		get_gsh_export_ref(entry_src->object.dir.junction_export);
+
 		/* Save the compound data context */
 		save_export_perms = *op_ctx->export_perms;
 		saved_gsh_export = op_ctx->export;
 
-		/* Get a reference to the export and stash it in
-		 * compound data.
-		 */
-		get_gsh_export_ref(entry_src->object.dir.junction_export);
-
 		op_ctx->export = entry_src->object.dir.junction_export;
-		op_ctx->fsal_export =
-			op_ctx->export->fsal_export;
+		op_ctx->fsal_export = op_ctx->export->fsal_export;
 
 		/* Release attr_lock */
 		PTHREAD_RWLOCK_unlock(&entry_src->attr_lock);
 
 		/* Build credentials */
-		res_SECINFO4->status = nfs4_MakeCred(data);
+		res_SECINFO4->status = nfs4_export_check_access(data->req);
 
 		/* Test for access error (export should not be visible). */
 		if (res_SECINFO4->status == NFS4ERR_ACCESS) {
@@ -255,7 +265,7 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (data->minorversion != 0) {
 		/* Need to clear out CurrentFH */
-		set_current_entry(data, NULL, false);
+		set_current_entry(data, NULL);
 
 		data->currentFH.nfs_fh4_len = 0;
 
@@ -284,11 +294,10 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 
 		*op_ctx->export_perms = save_export_perms;
 		op_ctx->export = saved_gsh_export;
-		op_ctx->fsal_export =
-			op_ctx->export->fsal_export;
+		op_ctx->fsal_export = op_ctx->export->fsal_export;
 
 		/* Restore creds */
-		if (!get_req_creds(data->req)) {
+		if (nfs_req_creds(data->req) != NFS4_OK) {
 			LogCrit(COMPONENT_EXPORT,
 				"Failure to restore creds");
 		}

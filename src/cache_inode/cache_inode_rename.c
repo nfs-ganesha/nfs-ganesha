@@ -40,7 +40,7 @@
 #include "log.h"
 #include "hashtable.h"
 #include "fsal.h"
-#include "cache_inode.h"
+#include "cache_inode_lru.h"
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -217,7 +217,7 @@ cache_inode_rename(cache_entry_t *dir_src,
 	if (lookup_src == NULL) {
 		/* If FSAL FH is stale, then this was managed in
 		 * cache_inode_lookup */
-		if (status != CACHE_INODE_FSAL_ESTALE)
+		if (status != CACHE_INODE_ESTALE)
 			status = CACHE_INODE_NOT_FOUND;
 
 		LogEvent(COMPONENT_CACHE_INODE,
@@ -263,7 +263,7 @@ cache_inode_rename(cache_entry_t *dir_src,
 	}
 	if (status == CACHE_INODE_NOT_FOUND)
 		status = CACHE_INODE_SUCCESS;
-	if (status == CACHE_INODE_FSAL_ESTALE) {
+	if (status == CACHE_INODE_ESTALE) {
 		LogDebug(COMPONENT_CACHE_INODE,
 			 "Rename (%p,%s)->(%p,%s) : stale destination", dir_src,
 			 oldname, dir_dest, newname);
@@ -291,7 +291,7 @@ cache_inode_rename(cache_entry_t *dir_src,
 	LogFullDebug(COMPONENT_CACHE_INODE, "about to call FSAL rename");
 
 	fsal_status =
-	    dir_src->obj_handle->ops->rename(dir_src->obj_handle,
+	    dir_src->obj_handle->obj_ops.rename(dir_src->obj_handle,
 					     oldname, dir_dest->obj_handle,
 					     newname);
 
@@ -319,7 +319,7 @@ cache_inode_rename(cache_entry_t *dir_src,
 		/* Force a refresh of the overwritten inode */
 		status_ref_dst =
 		    cache_inode_refresh_attrs_locked(lookup_dst);
-		if (status_ref_dst == CACHE_INODE_FSAL_ESTALE)
+		if (status_ref_dst == CACHE_INODE_ESTALE)
 			status_ref_dst = CACHE_INODE_SUCCESS;
 	}
 

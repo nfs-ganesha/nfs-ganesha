@@ -75,7 +75,7 @@
  * operations.  Ensure that the @c fs_supports method returns @c true
  * when queried with @c fso_pnfs_ds_supported.
  *
- * You must implement the @c create_ds_handle method on the export.
+ * You must implement the @c make_ds_handle method on the pNFS DS.
  * This must create an object of type @c fsal_ds_handle from the NFS
  * handle supplied as part of your layout.  See the @c fsal_ds_handle
  * documentation for details.  You must implement the @c release, @c
@@ -111,17 +111,14 @@ enum fsal_id {
 	  * official FSAL_ID.
 	  */
 	FSAL_ID_EXPERIMENTAL = 1,
-	FSAL_ID_VFS = 2,
+	FSAL_ID_PANFS = 2,
 	FSAL_ID_GPFS = 3,
 	FSAL_ID_CEPH = 4,
 	FSAL_ID_LUSTRE = 5,
 	FSAL_ID_GLUSTER = 6,
+	FSAL_ID_VFS = 7,
 	FSAL_ID_COUNT
 };
-
-struct fsal_module;
-
-struct fsal_module *pnfs_fsal[FSAL_ID_COUNT];
 
 /**
  * @brief FSAL view of the NFSv4.1 deviceid4.

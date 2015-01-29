@@ -40,9 +40,18 @@
 #ifndef FSAL_API
 #define FSAL_API
 
+#include "fsal_types.h"
 #include "fsal_pnfs.h"
+#include "config_parsing.h"
 #include "avltree.h"
 #include "abstract_atomic.h"
+
+/**
+** Forward declarations to resolve circular dependency conflicts
+*/
+struct gsh_client;
+struct gsh_export;
+struct fsal_up_vector;		/* From fsal_up.h */
 
 /**
  * @page newapi New FSAL API
@@ -148,7 +157,7 @@
  *	This vector is used to access methods e.g.:
  *
  * @code{.c}
- * exp_hdl->ops->lookup(exp_hdl, name, ...);
+ * exp_hdl->exp_ops.lookup(exp_hdl, name, ...);
  * @endcode
  *
  * Note that exp_hdl is used to dereference the method and it is also
@@ -300,7 +309,7 @@
 /**
  * @brief Minor Version
  *
- * Increment this whenever a new method is appended to the ops vector.
+ * Increment this whenever a new method is appended to the m_ops vector.
  * The remainder of the API is unchanged.
  *
  * If the major version is incremented, reset the minor to 0 (zero).
@@ -313,17 +322,14 @@
 
 /* Forward references for object methods */
 
+struct fsal_module;
 struct fsal_export;
-struct export_ops;
 struct fsal_obj_handle;
-struct fsal_obj_ops;
 struct fsal_filesystem;
-struct gsh_export;
+struct fsal_pnfs_ds;
+struct fsal_pnfs_ds_ops;
 struct fsal_ds_handle;
-struct fsal_ds_ops;
-
-struct fsal_up_vector;		/* From fsal_up.h */
-struct fsal_xattrent;
+struct fsal_dsh_ops;
 
 #ifndef SEEK_SET
 #define SEEK_SET 0
@@ -354,26 +360,61 @@ struct io_hints {
 };
 
 /**
- * @brief FSAL object definition
+ * @brief request op context
  *
- * This structure is the base FSAL instance definition, providing the
- * public face to a single, loaded FSAL.
+ * This is created early in the operation with the context of the
+ * operation.  The difference between "context" and request parameters
+ * or arguments is that the context is derived information such as
+ * the resolved credentials, socket (network and client host) data
+ * and other bits of environment associated with the request.  It gets
+ * passed down the call chain only as far as it needs to go for the op
+ * i.e. don't put it in the function/method proto "just because".
+ *
+ * The lifetime of this structure and all the data it points to is the
+ * operation for V2,3 and the compound for V4+.  All elements and what
+ * they point to are invariant for the lifetime.
+ *
+ * NOTE: This is an across-the-api shared structure.  It must survive with
+ *       older consumers of its contents.  Future development can change
+ *       this struct so long as it follows the rules:
+ *
+ *       1. New elements are appended at the end, never inserted in the middle.
+ *
+ *       2. This structure _only_ contains pointers and simple scalar values.
+ *
+ *       3. Changing an already defined struct pointer is strictly not allowed.
+ *
+ *       4. This struct is always passed by reference, never by value.
+ *
+ *       5. This struct is never copied/saved.
+ *
+ *       6. Code changes are first introduced in the core.  Assume the fsal
+ *          module does not know and the code will still do the right thing.
  */
 
-struct fsal_module {
-	struct glist_head fsals;	/*< link in list of loaded fsals */
-	pthread_rwlock_t lock;		/*< Lock to be held when
-					    manipulating the list of exports. */
-	int32_t refcount;		/*< Reference count */
-	struct glist_head exports;	/*< Head of list of exports from
-					   this FSAL */
-	struct glist_head handles;	/*< Head of list of object handles */
-	struct glist_head ds_handles;	/*< Head of list of DS handles */
-	char *name;		/*< Name set from .so and/or config */
-	char *path;		/*< Path to .so file */
-	void *dl_handle;	/*< Handle to the dlopen()d shared
-				   library. NULL if statically linked */
-	struct fsal_ops *ops;	/*< FSAL module methods vector */
+struct req_op_context {
+	struct user_cred *creds;	/*< resolved user creds from request */
+	struct user_cred original_creds;	/*< Saved creds */
+	struct group_data *caller_gdata;
+	gid_t *caller_garray_copy;	/*< Copied garray from AUTH_SYS */
+	gid_t *managed_garray_copy;	/*< Copied garray from managed gids */
+	int	cred_flags;		/* Various cred flags */
+	sockaddr_t *caller_addr;	/*< IP connection info */
+	const uint64_t *clientid;	/*< Client ID of caller, NULL if
+					   unknown/not applicable. */
+	uint32_t nfs_vers;	/*< NFS protocol version of request */
+	uint32_t nfs_minorvers;	/*< NFSv4 minor version */
+	uint32_t req_type;	/*< request_type NFS | 9P */
+	struct gsh_client *client;	/*< client host info including stats */
+	struct gsh_export *export;	/*< current export */
+	struct fsal_export *fsal_export;	/*< current fsal export */
+	struct export_perms *export_perms;	/*< Effective export perms */
+	nsecs_elapsed_t start_time;	/*< start time of this op/request */
+	nsecs_elapsed_t queue_wait;	/*< time in wait queue */
+	void *fsal_private;		/*< private for FSAL use */
+	struct fsal_module *fsal_module;	/*< current fsal module */
+	struct fsal_pnfs_ds *fsal_pnfs_ds;	/*< current pNFS DS */
+	/* add new context members here */
 };
 
 /**
@@ -519,7 +560,7 @@ struct fsal_ops {
  * When this function is called, the FSAL should write device
  * information to the @c da_addr_body stream.
  *
- * @param[in]  exp_hdl      Export handle
+ * @param[in]  fsal_hdl     FSAL module
  * @param[out] da_addr_body An XDR stream to which the FSAL is to
  *                          write the layout type-specific information
  *                          corresponding to the deviceid.
@@ -548,107 +589,29 @@ struct fsal_ops {
  */
 	 size_t(*fs_da_addr_size) (struct fsal_module *fsal_hdl);
 
+/**
+ * @brief Create a FSAL pNFS data server
+ *
+ * @param[in]  fsal_hdl		FSAL module
+ * @param[in]  parse_node	opaque pointer to parse tree node for
+ *				export options to be passed to
+ *				load_config_from_node
+ * @param[out] handle		FSAL pNFS DS
+ *
+ * @return FSAL status.
+ */
+	 fsal_status_t(*fsal_pnfs_ds) (struct fsal_module *const fsal_hdl,
+				       void *parse_node,
+				       struct fsal_pnfs_ds **const handle);
+
+/**
+ * @brief Initialize FSAL specific values for pNFS data server
+ *
+ * @param[in]  ops	FSAL pNFS Data Server operations vector
+ */
+	 void(*fsal_pnfs_ds_ops) (struct fsal_pnfs_ds_ops *ops);
+
 /**@}*/
-};
-
-/**
- * @brief Relinquish a reference to the module
- *
- * This function relinquishes one reference to the FSAL.  After the
- * reference count falls to zero, the FSAL may be freed and unloaded.
- *
- * @param[in] fsal_hdl FSAL on which to release reference.
- */
-
-static inline void fsal_put(struct fsal_module *fsal_hdl)
-{
-	int32_t refcount;
-
-	refcount = atomic_dec_int32_t(&fsal_hdl->refcount);
-
-	assert(refcount >= 0);
-
-	if (refcount == 0) {
-		LogInfo(COMPONENT_FSAL,
-			"FSAL %s now unused",
-			fsal_hdl->name);
-	}
-}
-
-/**
- * Global fsal manager functions
- * used by nfs_main to initialize fsal modules.
- */
-
-void start_fsals(void);
-int load_fsal(const char *name,
-	      struct fsal_module **fsal_hdl);
-
-/* Called only within MODULE_INIT and MODULE_FINI functions of a fsal
- * module
- */
-
-/**
- * @brief Register a FSAL
- *
- * This function registers an FSAL with ganesha and initializes the
- * public portion of the FSAL data structure, including providing
- * default operation vectors.
- *
- * @param[in,out] fsal_hdl      The FSAL module to register.
- * @param[in]     name          The FSAL's name
- * @param[in]     major_version Major version fo the API against which
- *                              the FSAL was written
- * @param[in]     minor_version Minor version of the API against which
- *                              the FSAL was written.
- *
- * @return 0 on success.
- * @return EINVAL on version mismatch.
- */
-
-int register_fsal(struct fsal_module *fsal_hdl, const char *name,
-		  uint32_t major_version, uint32_t minor_version,
-		  uint8_t fsal_id);
-/**
- * @brief Unregister an FSAL
- *
- * This function unregisters an FSAL from Ganesha.  It should be
- * called from the module finalizer as part of unloading.
- *
- * @param[in] fsal_hdl The FSAL to unregister
- *
- * @return 0 on success.
- * @return EBUSY if outstanding references or exports exist.
- */
-
-int unregister_fsal(struct fsal_module *fsal_hdl);
-
-/**
- * @brief Find and take a reference on an FSAL
- *
- * This function finds an FSAL by name and increments its reference
- * count.  It is used as part of export setup.  The @c put method
- * should be used  to release the reference before unloading.
- */
-struct fsal_module *lookup_fsal(const char *name);
-
-/**
- * @brief Export object
- *
- * This structure is created by the @c create_export method on the
- * FSAL module.  It is stored as part of the export list and is used
- * to manage individual exports, interrogate properties of the
- * filesystem, and create individual file handle objects.
- */
-
-struct fsal_export {
-	struct fsal_module *fsal;	/*< Link back to the FSAL module */
-	struct glist_head exports;	/*< Link in list of exports from
-					   the same FSAL. */
-	struct export_ops *ops;	/*< Vector of operations */
-	struct fsal_obj_ops *obj_ops;	/*< Shared handle methods vector */
-	struct fsal_ds_ops *ds_ops;	/*< Shared handle methods vector */
-	const struct fsal_up_vector *up_ops;	/*< Upcall operations */
 };
 
 /**
@@ -670,8 +633,6 @@ struct export_ops {
  * should clean up all private resources and destroy the object.
  *
  * @param[in] exp_hdl The export to release.
- *
- * @return FSAL status.
  */
 	 void (*release) (struct fsal_export *exp_hdl);
 /**@}*/
@@ -759,23 +720,6 @@ struct export_ops {
 	 fsal_status_t(*create_handle) (struct fsal_export *exp_hdl,
 					struct gsh_buffdesc *hdl_desc,
 					struct fsal_obj_handle **handle);
-
-/**
- * @brief Create a FSAL data server handle from a wire handle
- *
- * This function creates a FSAL data server handle from a client
- * supplied "wire" handle.
- *
- * @param[in]  exp_hdl  The export in which to create the handle
- * @param[in]  hdl_desc Buffer from which to creat the file
- * @param[out] handle   FSAL object handle
- *
- * @return NFSv4.1 error codes.
- */
-	 nfsstat4(*create_ds_handle) (struct fsal_export *const exp_hdl,
-				      const struct gsh_buffdesc *
-				      const hdl_desc,
-				      struct fsal_ds_handle **const handle);
 /**@}*/
 
 /**@{*/
@@ -1101,43 +1045,7 @@ struct export_ops {
 };
 
 /**
- * @brief Public structure for filesystem objects
- *
- * This structure is used for files of all types including directories
- * and anything else that can be operated on via NFS.
- *
- * All functions that create a a new object handle should allocate
- * memory for the complete (public and private) handle and perform any
- * private initialization.  They should fill the
- * @c fsal_obj_handle::attributes structure.  They should also call the
- * @c fsal_obj_handle_init function with the public object handle,
- * object handle operations vector, public export, and file type.
- *
- * @note Do we actually need a lock and ref count on the fsal object
- * handle, since cache_inode is managing life cycle and concurrency?
- * That is, do we expect fsal_obj_handle to have a reference count
- * that would be separate from that managed by cache_inode_lru?
- */
-
-struct fsal_obj_handle {
-	pthread_rwlock_t lock;		/*< Lock on handle */
-	struct glist_head handles;	/*< Link in list of handles under
-					   an fsal */
-	object_file_type_t type;	/*< Object file type */
-	struct fsal_module *fsal;	/*< Link back to fsal module */
-	struct fsal_filesystem *fs;	/*< Owning filesystem */
-	struct attrlist attributes;	/*< Cached attributes */
-	struct fsal_obj_ops *ops;	/*< Operations vector */
-};
-
-/**
- * @brief Public structure for filesystem descriptions
- *
- * This stucture is provided along with a general interface to support those
- * FSALs that map into a traditional file system model. Note that
- * fsal_obj_handles do not link to an fsal_filesystem, that linkage is reserved
- * for and FSAL's private obj handle if appropriate.
- *
+ * @brief Filesystem operations
  */
 
 typedef int (*claim_filesystem_cb)(struct fsal_filesystem *fs,
@@ -1177,30 +1085,6 @@ static inline int sizeof_fsid(enum fsid_type type)
 	return -1;
 }
 
-struct fsal_filesystem {
-	struct fsal_module *fsal;	/*< Link back to fsal module */
-	struct glist_head filesystems;	/*< List of file systems */
-	unclaim_filesystem_cb unclaim;  /*< Call back to unclaim this fs */
-	struct fsal_filesystem *parent;	/*< Parent file system */
-	struct glist_head children;	/*< Child file systems */
-	struct glist_head siblings;	/*< Entry in list of parent's child
-					    file systems */
-	bool exported;			/*< true if explicitly exported */
-	bool in_fsid_avl;		/*< true if inserted in fsid avl */
-	bool in_dev_avl;		/*< true if inserted in dev avl */
-	fsal_dev_t dev;			/*< device filesystem is on */
-	enum fsid_type fsid_type;	/*< type of fsid present */
-	struct fsal_fsid__ fsid;	/*< file system id */
-	struct avltree_node avl_fsid;	/*< AVL indexed by fsid */
-	struct avltree_node avl_dev;	/*< AVL indexed by dev */
-	void *private;			/*< Private data for owning FSAL */
-	char *path;			/*< Path to root of this file system */
-	char *device;			/*< Path to block device */
-	char *type;			/*< fs type */
-	uint32_t pathlen;		/*< Length of path */
-	uint32_t namelen;		/*< Name length from statfs */
-};
-
 /**
  * @brief Directory cookie
  */
@@ -1210,7 +1094,7 @@ typedef uint64_t fsal_cookie_t;
 typedef bool(*fsal_readdir_cb) (const char *name, void *dir_state,
 				fsal_cookie_t cookie);
 /**
- * @brief FSAL objectoperations vector
+ * @brief FSAL object operations vector
  */
 
 struct fsal_obj_ops {
@@ -1228,8 +1112,6 @@ struct fsal_obj_ops {
  * leak.
  *
  * @param[in] obj_hdl Handle to release
- *
- * @return FSAL status.
  */
 	 void (*release) (struct fsal_obj_handle *obj_hdl);
 /**@}*/
@@ -1461,6 +1343,19 @@ struct fsal_obj_ops {
 	 fsal_status_t(*link) (struct fsal_obj_handle *obj_hdl,
 			       struct fsal_obj_handle *destdir_hdl,
 			       const char *name);
+
+/**
+ * @brief get fs_locations
+ *
+ * This function returns the fs locations for an object.
+ *
+ * @param[in] obj_hdl        Object to get fs locations for
+ * @param[out] fs_locations4 fs locations
+ *
+ * @return FSAL status
+ */
+	 fsal_status_t(*fs_locations) (struct fsal_obj_handle *obj_hdl,
+				       struct fs_locations4 *fs_locs);
 
 /**
  * @brief Rename a file
@@ -2048,24 +1943,75 @@ struct fsal_obj_ops {
 };
 
 /**
- * @brief Public structure for DS file handles
- *
- * This structure is used for files of all types including directories
- * and anything else that can be operated on via NFS.  Having an
- * independent reference count and lock here makes sense, since there
- * is no caching infrastructure overlaying this system.
- *
+ * @brief FSAL pNFS Data Server operations vector
  */
 
-struct fsal_ds_handle {
-	struct glist_head ds_handles;	/*< Link in list of DS handles under
-					   an fsal */
-	int32_t refcount;		/*< Reference count */
-	struct fsal_module *fsal;	/*< Link back to fsal module */
-	struct fsal_ds_ops *ops;	/*< Operations vector */
+struct fsal_pnfs_ds_ops {
+/**@{*/
+
+/**
+ * Lifecycle management.
+ */
+
+/**
+ * @brief Clean up a server
+ *
+ * This function cleans up private resources associated with a
+ * server and deallocates it.  A default is supplied.
+ *
+ * This function should not be called directly.
+ *
+ * @param[in]  pds	FSAL pNFS DS to release
+ */
+	 void (*release) (struct fsal_pnfs_ds *const pds);
+
+/**
+ * @brief Initialize FSAL specific permissions per pNFS DS
+ *
+ * @param[in]  pds      FSAL pNFS DS
+ * @param[in]  req      Incoming request.
+ *
+ * @return NFSv4.1 error codes:
+ *			NFS4_OK, NFS4ERR_ACCESS, NFS4ERR_WRONGSEC.
+ */
+	 nfsstat4(*permissions) (struct fsal_pnfs_ds *const pds,
+				 struct svc_req *req);
+/**@}*/
+
+/**@{*/
+
+/**
+ * @brief Create a FSAL data server handle from a wire handle
+ *
+ * This function creates a FSAL data server handle from a client
+ * supplied "wire" handle.
+ *
+ * @param[in]  pds      FSAL pNFS DS
+ * @param[in]  hdl_desc Buffer from which to create the struct
+ * @param[out] handle   FSAL DS handle
+ *
+ * @return NFSv4.1 error codes.
+ */
+	 nfsstat4(*make_ds_handle) (struct fsal_pnfs_ds *const pds,
+				    const struct gsh_buffdesc *
+				    const hdl_desc,
+				    struct fsal_ds_handle **const handle);
+
+/**
+ * @brief Initialize FSAL specific values for DS handle
+ *
+ * @param[in]  ops	FSAL DS handle operations vector
+ */
+	 void(*fsal_dsh_ops) (struct fsal_dsh_ops *ops);
+
+/**@}*/
 };
 
-struct fsal_ds_ops {
+/**
+ * @brief FSAL DS handle operations vector
+ */
+
+struct fsal_dsh_ops {
 /**@{*/
 
 /**
@@ -2080,8 +2026,6 @@ struct fsal_ds_ops {
  * leak.  This function should not be called directly.
  *
  * @param[in] ds_hdl Handle to release
- *
- * @return NFSv4.1 status codes.
  */
 	 void (*release) (struct fsal_ds_handle *const ds_hdl);
 /**@}*/
@@ -2245,43 +2189,232 @@ struct fsal_ds_ops {
 			    const offset4 offset,
 			    const count4 count,
 			    verifier4 * const writeverf);
+/**@}*/
 };
 
+/**
+ * @brief FSAL object definition
+ *
+ * This structure is the base FSAL instance definition, providing the
+ * public face to a single, loaded FSAL.
+ */
+
+struct fsal_module {
+	struct glist_head fsals;	/*< link in list of loaded fsals */
+	struct glist_head exports;	/*< Head of list of exports from
+					   this FSAL */
+	struct glist_head handles;	/*< Head of list of object handles */
+	struct glist_head servers;	/*< Head of list of Data Servers */
+	char *path;		/*< Path to .so file */
+	char *name;		/*< Name set from .so and/or config */
+	void *dl_handle;	/*< Handle to the dlopen()d shared
+				   library. NULL if statically linked */
+	struct fsal_ops m_ops;	/*< FSAL module methods vector */
+
+	pthread_rwlock_t lock;		/*< Lock to be held when
+					    manipulating its lists (above). */
+	int32_t refcount;		/*< Reference count */
+};
 
 /**
- * @brief Get a reference on a handle
+ * @brief Relinquish a reference to the module
  *
- * This function increments the reference count on a handle.
+ * This function relinquishes one reference to the FSAL.  After the
+ * reference count falls to zero, the FSAL may be freed and unloaded.
+ *
+ * @param[in] fsal_hdl FSAL on which to release reference.
+ */
+
+static inline void fsal_put(struct fsal_module *fsal_hdl)
+{
+	int32_t refcount;
+
+	refcount = atomic_dec_int32_t(&fsal_hdl->refcount);
+
+	assert(refcount >= 0);
+
+	if (refcount == 0) {
+		LogInfo(COMPONENT_FSAL,
+			"FSAL %s now unused",
+			fsal_hdl->name);
+	}
+}
+
+/**
+ * @brief Export object
+ *
+ * This structure is created by the @c create_export method on the
+ * FSAL module.  It is stored as part of the export list and is used
+ * to manage individual exports, interrogate properties of the
+ * filesystem, and create individual file handle objects.
+ */
+
+struct fsal_export {
+	struct glist_head exports;	/*< Link in list of exports from
+					   the same FSAL. */
+	struct fsal_module *fsal;	/*< Link back to the FSAL module */
+	const struct fsal_up_vector *up_ops;	/*< Upcall operations */
+	struct export_ops exp_ops;	/*< Vector of operations */
+};
+
+/**
+ * @brief Public structure for filesystem descriptions
+ *
+ * This stucture is provided along with a general interface to support those
+ * FSALs that map into a traditional file system model. Note that
+ * fsal_obj_handles do not link to an fsal_filesystem, that linkage is reserved
+ * for FSAL's private obj handle if appropriate.
+ *
+ */
+
+struct fsal_filesystem {
+	struct glist_head filesystems;	/*< List of file systems */
+	struct glist_head children;	/*< Child file systems */
+	struct glist_head siblings;	/*< Entry in list of parent's child
+					    file systems */
+	struct fsal_filesystem *parent;	/*< Parent file system */
+	struct fsal_module *fsal;	/*< Link back to fsal module */
+	void *private;			/*< Private data for owning FSAL */
+	char *path;			/*< Path to root of this file system */
+	char *device;			/*< Path to block device */
+	char *type;			/*< fs type */
+
+	unclaim_filesystem_cb unclaim;  /*< Call back to unclaim this fs */
+	uint32_t pathlen;		/*< Length of path */
+	uint32_t namelen;		/*< Name length from statfs */
+
+	struct avltree_node avl_fsid;	/*< AVL indexed by fsid */
+	struct avltree_node avl_dev;	/*< AVL indexed by dev */
+	struct fsal_fsid__ fsid;	/*< file system id */
+	fsal_dev_t dev;			/*< device filesystem is on */
+	enum fsid_type fsid_type;	/*< type of fsid present */
+	bool in_fsid_avl;		/*< true if inserted in fsid avl */
+	bool in_dev_avl;		/*< true if inserted in dev avl */
+	bool exported;			/*< true if explicitly exported */
+};
+
+/**
+ * @brief Public structure for filesystem objects
+ *
+ * This structure is used for files of all types including directories
+ * and anything else that can be operated on via NFS.
+ *
+ * All functions that create a a new object handle should allocate
+ * memory for the complete (public and private) handle and perform any
+ * private initialization.  They should fill the
+ * @c fsal_obj_handle::attributes structure.  They should also call the
+ * @c fsal_obj_handle_init function with the public object handle,
+ * object handle operations vector, public export, and file type.
+ *
+ * @note Do we actually need a lock and ref count on the fsal object
+ * handle, since cache_inode is managing life cycle and concurrency?
+ * That is, do we expect fsal_obj_handle to have a reference count
+ * that would be separate from that managed by cache_inode_lru?
+ */
+
+struct fsal_obj_handle {
+	struct glist_head handles;	/*< Link in list of handles under
+					   the same FSAL. */
+	struct fsal_filesystem *fs;	/*< Owning filesystem */
+	struct fsal_module *fsal;	/*< Link back to fsal module */
+	struct fsal_obj_ops obj_ops;	/*< Operations vector */
+
+	pthread_rwlock_t lock;		/*< Lock on handle */
+	struct attrlist attributes;	/*< Cached attributes */
+	object_file_type_t type;	/*< Object file type */
+};
+
+/**
+ * @brief Public structure for pNFS Data Servers
+ *
+ * This structure is used for files of all types including directories
+ * and anything else that can be operated on via NFS.  Having an
+ * independent reference count and lock here makes sense, since there
+ * is no caching infrastructure overlaying this system.
+ *
+ */
+
+enum pnfs_ds_status {
+	PNFS_DS_READY,			/*< searchable, usable */
+	PNFS_DS_STALE,			/*< is no longer valid */
+};
+
+struct fsal_pnfs_ds {
+	struct glist_head server;	/*< Link in list of Data Servers under
+					   the same FSAL. */
+	struct glist_head ds_handles;	/*< Head of list of DS handles */
+	struct fsal_module *fsal;	/*< Link back to fsal module */
+	struct fsal_pnfs_ds_ops s_ops;	/*< Operations vector */
+	struct gsh_export *mds_export;	/*< related export */
+
+	struct avltree_node ds_node;	/*< Node in tree of all Data Servers. */
+	pthread_rwlock_t lock;		/*< Lock to be held when
+					    manipulating its list (above). */
+	int32_t refcount;		/*< Reference count */
+	uint16_t id_servers;		/*< Identifier */
+	uint8_t pnfs_ds_status;		/*< current condition */
+};
+
+/**
+ * @brief Public structure for DS file handles
+ *
+ * This structure is used for files of all types including directories
+ * and anything else that can be operated on via NFS.  Having an
+ * independent reference count and lock here makes sense, since there
+ * is no caching infrastructure overlaying this system.
+ *
+ */
+
+struct fsal_ds_handle {
+	struct glist_head ds_handle;	/*< Link in list of DS handles under
+					   the same pDS. */
+	struct fsal_pnfs_ds *pds;	/*< Link back to pDS */
+	struct fsal_dsh_ops dsh_ops;	/*< Operations vector */
+
+	int64_t refcount;		/*< Reference count */
+};
+
+/**
+ * @brief Get a reference on a DS handle
+ *
+ * This function increments the reference count on a DS handle.
  *
  * @param[in] ds_hdl The handle to reference
  */
 
-static inline void ds_get(struct fsal_ds_handle *const ds_hdl)
+static inline void ds_handle_get_ref(struct fsal_ds_handle *const ds_hdl)
 {
-	atomic_inc_int32_t(&ds_hdl->refcount);
+	atomic_inc_int64_t(&ds_hdl->refcount);
 }
 
 /**
- * @brief Release a reference on a handle
+ * @brief Release a reference on a DS handle
  *
- * This function releases a reference to a handle.  Once a caller's
+ * This function releases a reference to a DS handle.  Once a caller's
  * reference is released they should make no attempt to access the
  * handle or even dereference a pointer to it.
  *
  * @param[in] ds_hdl The handle to relinquish
  */
 
-static inline void ds_put(struct fsal_ds_handle *const ds_hdl)
+static inline void ds_handle_put(struct fsal_ds_handle *const ds_hdl)
 {
-	int32_t refcount;
+	int64_t refcount = atomic_dec_int64_t(&ds_hdl->refcount);
 
-	refcount = atomic_dec_int32_t(&ds_hdl->refcount);
+	if (refcount != 0) {
+		assert(refcount > 0);
+		return;
+	}
 
-	assert(refcount >= 0);
-
-	if (refcount == 0)
-		ds_hdl->ops->release(ds_hdl);
+	ds_hdl->dsh_ops.release(ds_hdl);
 }
+
+/**
+** Resolve forward declarations
+*/
+#include "client_mgr.h"
+#include "export_mgr.h"
+#include "fsal_up.h"
 
 #endif				/* !FSAL_API */
 /** @} */

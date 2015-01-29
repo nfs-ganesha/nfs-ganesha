@@ -45,6 +45,7 @@
 #include "fsal.h"
 #include "sal_functions.h"
 #include "nfs_core.h"
+#include "nfs_proto_tools.h"
 
 /**
  * @brief Add a segment to an existing layout state
@@ -52,6 +53,8 @@
  * This function is intended to be used in nfs41_op_layoutget to add
  * each segment returned by FSAL_layoutget to an existing state of
  * type STATE_TYPE_LAYOUT.
+ *
+ * Must hold the state_lock in write mode.
  *
  * @param[in] state           The layout state.
  * @param[in] segment         Layout segment itself granted by the FSAL
@@ -66,42 +69,22 @@ state_status_t state_add_segment(state_t *state, struct pnfs_segment *segment,
 {
 	/* Pointer to the new segment being added to the state */
 	state_layout_segment_t *new_segment = NULL;
-	pthread_mutexattr_t mattr;
 
 	if (state->state_type != STATE_TYPE_LAYOUT) {
+		char str[LOG_BUFF_LEN];
+		struct display_buffer dspbuf = {sizeof(str), str, str};
+
+		display_stateid(&dspbuf, state);
+
 		LogCrit(COMPONENT_PNFS,
-			"Attempt to add layout segment to "
-			"non-layout state: %p", state);
+			"Attempt to add layout segment to non-layout state: %s",
+			str);
 		return STATE_BAD_TYPE;
 	}
 
 	new_segment = gsh_calloc(1, sizeof(*new_segment));
 	if (!new_segment)
 		return STATE_MALLOC_ERROR;
-
-	if (pthread_mutexattr_init(&mattr) != 0) {
-		gsh_free(new_segment);
-		return STATE_INIT_ENTRY_FAILED;
-	}
-#if defined(__linux__)
-	if (pthread_mutexattr_settype(&mattr,
-				      PTHREAD_MUTEX_RECURSIVE_NP) != 0) {
-		gsh_free(new_segment);
-		return STATE_INIT_ENTRY_FAILED;
-	}
-#else
-	if (pthread_mutexattr_settype(&mattr, PTHREAD_MUTEX_RECURSIVE) != 0) {
-		gsh_free(new_segment);
-		return STATE_INIT_ENTRY_FAILED;
-	}
-#endif
-
-	if (pthread_mutex_init(&new_segment->sls_mutex, &mattr) != 0) {
-		gsh_free(new_segment);
-		return STATE_INIT_ENTRY_FAILED;
-	}
-
-	pthread_mutexattr_destroy(&mattr);
 
 	new_segment->sls_fsal_data = fsal_data;
 	new_segment->sls_state = state;
@@ -131,8 +114,6 @@ state_status_t state_add_segment(state_t *state, struct pnfs_segment *segment,
 state_status_t state_delete_segment(state_layout_segment_t *segment)
 {
 	glist_del(&segment->sls_state_segments);
-	pthread_mutex_unlock(&segment->sls_mutex);
-	pthread_mutex_destroy(&segment->sls_mutex);
 	gsh_free(segment);
 	return STATE_SUCCESS;
 }
@@ -154,33 +135,129 @@ state_status_t state_delete_segment(state_layout_segment_t *segment)
 
 state_status_t state_lookup_layout_state(cache_entry_t *entry,
 					 state_owner_t *owner,
-					 layouttype4 type, state_t **state)
+					 layouttype4 type,
+					 state_t **state)
 {
 	/* Pointer for iterating over the list of states on the file */
 	struct glist_head *glist_iter = NULL;
 	/* The state under inspection in the loop */
 	state_t *state_iter = NULL;
-	/* The state found, if one exists */
-	state_t *state_found = NULL;
 
-	glist_for_each(glist_iter, &entry->state_list) {
+	glist_for_each(glist_iter, &entry->list_of_states) {
 		state_iter = glist_entry(glist_iter, state_t, state_list);
-		if ((state_iter->state_type == STATE_TYPE_LAYOUT)
-		    && (state_iter->state_owner == owner)
-		    && (state_iter->state_data.layout.state_layout_type ==
-			type)) {
-			state_found = state_iter;
-			break;
+		if (state_iter->state_type == STATE_TYPE_LAYOUT &&
+		    state_same_owner(state_iter, owner) &&
+		    state_iter->state_data.layout.state_layout_type == type) {
+			inc_state_t_ref(state_iter);
+			*state = state_iter;
+			return STATE_SUCCESS;
 		}
 	}
 
-	if (!state_found) {
-		return STATE_NOT_FOUND;
-	} else if (state_found->state_entry != entry) {
-		return STATE_INCONSISTENT_ENTRY;
-	} else {
-		*state = state_found;
-		return STATE_SUCCESS;
+	return STATE_NOT_FOUND;
+}
+
+/**
+ * @brief Revoke layouts belonging to the client owner.
+ *
+ * @param[in,out] client owner
+ */
+void revoke_owner_layouts(state_owner_t *client_owner)
+{
+	state_t *state;
+	cache_entry_t *entry;
+	int errcnt = 0;
+	struct glist_head *glist, *glistn;
+	bool so_mutex_held;
+
+ again:
+
+	pthread_mutex_lock(&client_owner->so_mutex);
+	so_mutex_held = true;
+
+	glist_for_each_safe(glist, glistn,
+			&client_owner->so_owner.so_nfs4_owner.so_state_list) {
+		bool deleted = false;
+		struct pnfs_segment entire = {
+			.io_mode = LAYOUTIOMODE4_ANY,
+			.offset = 0,
+			.length = NFS4_UINT64_MAX
+		};
+
+		state = glist_entry(glist, state_t, state_owner_list);
+
+		/* Move entry to end of list to handle errors and skipping of
+		 * non-layout states.
+		 */
+		glist_del(&state->state_owner_list);
+		glist_add_tail(
+			&client_owner->so_owner.so_nfs4_owner.so_state_list,
+			&state->state_owner_list);
+
+		/* Skip non-layout states. */
+		if (state->state_type != STATE_TYPE_LAYOUT)
+			continue;
+
+		/* Safely access the cache inode associated with the state.
+		 * This will get an LRU reference protecting our access
+		 * even after state_deleg_revoke releases the reference it
+		 * holds.
+		 */
+		entry = get_state_entry_ref(state);
+
+		if (entry == NULL) {
+			LogDebug(COMPONENT_STATE,
+				 "Stale state or cache entry");
+			continue;
+		}
+
+		pthread_mutex_unlock(&client_owner->so_mutex);
+		so_mutex_held = false;
+
+		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
+
+		(void) nfs4_return_one_state(entry,
+					     LAYOUTRETURN4_FILE,
+					     circumstance_revoke,
+					     state,
+					     entire,
+					     0,
+					     NULL,
+					     &deleted);
+
+		if (!deleted) {
+			errcnt++;
+			LogCrit(COMPONENT_PNFS,
+				"Layout state not destroyed during lease expiry.");
+		}
+
+		PTHREAD_RWLOCK_unlock(&entry->state_lock);
+
+		cache_inode_lru_unref(entry, LRU_FLAG_NONE);
+
+		if (errcnt < STATE_ERR_MAX) {
+			/* Loop again, but since we droped the so_mutex, we
+			 * must restart.
+			 */
+			goto again;
+		}
+
+		/* Too many errors, quit. */
+		break;
+	}
+
+	if (so_mutex_held)
+		pthread_mutex_unlock(&client_owner->so_mutex);
+
+	if (errcnt == STATE_ERR_MAX) {
+		char str[LOG_BUFF_LEN];
+		struct display_buffer dspbuf = {sizeof(str), str, str};
+
+		display_owner(&dspbuf, client_owner);
+
+		LogFatal(COMPONENT_STATE,
+			 "Could not complete cleanup of layouts for client owner %s",
+			 str);
 	}
 }
 

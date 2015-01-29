@@ -51,9 +51,9 @@
 #include "nfs_core.h"
 #include "log.h"
 #include "avltree.h"
-#include "ganesha_types.h"
+#include "gsh_types.h"
 #ifdef USE_DBUS
-#include "ganesha_dbus.h"
+#include "gsh_dbus.h"
 #endif
 #include "export_mgr.h"
 #include "client_mgr.h"
@@ -61,17 +61,21 @@
 #include "server_stats.h"
 #include "abstract_atomic.h"
 #include "gsh_intrinsic.h"
-#include "sal_functions.h"
+#include "nfs_exports.h"
+#include "nfs_proto_functions.h"
+#include "pnfs_utils.h"
 
 /**
  * @brief Exports are stored in an AVL tree with front-end cache.
  *
+ * @note  number of cache slots should be prime.
  */
+#define EXPORT_BY_ID_CACHE_SIZE 769
+
 struct export_by_id {
 	pthread_rwlock_t lock;
 	struct avltree t;
-	struct avltree_node **cache;
-	uint32_t cache_sz;
+	struct avltree_node *cache[EXPORT_BY_ID_CACHE_SIZE];
 };
 
 static struct export_by_id export_by_id;
@@ -150,14 +154,13 @@ struct gsh_export *export_take_unexport_work(void)
  * This function computes a hash slot, taking an address modulo the
  * number of cache slotes (which should be prime).
  *
- * @param wt [in] The table
- * @param ptr [in] Entry address
+ * @param k [in] Entry index value
  *
  * @return The computed offset.
  */
-static inline uint32_t eid_cache_offsetof(struct export_by_id *eid, uint64_t k)
+static inline uint16_t eid_cache_offsetof(uint16_t k)
 {
-	return k % eid->cache_sz;
+	return k % EXPORT_BY_ID_CACHE_SIZE;
 }
 
 /**
@@ -167,13 +170,12 @@ static inline uint32_t eid_cache_offsetof(struct export_by_id *eid, uint64_t k)
  */
 void export_revert(struct gsh_export *export)
 {
-	void **cache_slot;
-	struct avltree_node *cnode = NULL;
+	struct avltree_node *cnode;
+	void **cache_slot = (void **)
+	     &(export_by_id.cache[eid_cache_offsetof(export->export_id)]);
 
 	PTHREAD_RWLOCK_wrlock(&export_by_id.lock);
 
-	cache_slot = (void **) &(export_by_id.
-		cache[eid_cache_offsetof(&export_by_id, export->export_id)]);
 	cnode = (struct avltree_node *)atomic_fetch_voidptr(cache_slot);
 	if (&export->node_k == cnode)
 		atomic_store_voidptr(cache_slot, NULL);
@@ -214,12 +216,23 @@ static int export_id_cmpf(const struct avltree_node *lhs,
 struct gsh_export *alloc_export(void)
 {
 	struct export_stats *export_st;
+	struct gsh_export *export;
 
 	export_st = gsh_calloc(sizeof(struct export_stats), 1);
 	if (export_st == NULL)
 		return NULL;
 
-	return &export_st->export;
+	export = &export_st->export;
+
+	glist_init(&export->exp_state_list);
+	glist_init(&export->exp_lock_list);
+	glist_init(&export->exp_nlm_share_list);
+	glist_init(&export->mounted_exports_list);
+	glist_init(&export->clients);
+
+	assert(pthread_rwlock_init(&export->lock, NULL) == 0);
+
+	return export;
 }
 
 /**
@@ -235,9 +248,13 @@ void free_export(struct gsh_export *export)
 
 	if (!export->refcnt)
 		return;
+
+	/* free resources */
 	free_export_resources(export);
 	export_st = container_of(export, struct export_stats, export);
+	server_stats_free(&export_st->st);
 	gsh_free(export_st);
+	assert(pthread_rwlock_destroy(&export->lock) == 0);
 }
 
 
@@ -255,26 +272,26 @@ void free_export(struct gsh_export *export)
 
 bool insert_gsh_export(struct gsh_export *export)
 {
-	struct avltree_node *node = NULL;
-	void **cache_slot;
+	struct avltree_node *node;
+	void **cache_slot = (void **)
+	    &(export_by_id.cache[eid_cache_offsetof(export->export_id)]);
 
-	export->refcnt = 1;	/* we will hold a ref starting out... */
+	/* we will hold a ref starting out... */
+	export->refcnt = 1;
 
 	PTHREAD_RWLOCK_wrlock(&export_by_id.lock);
 	node = avltree_insert(&export->node_k, &export_by_id.t);
 	if (node) {
+		/* somebody beat us to it */
 		PTHREAD_RWLOCK_unlock(&export_by_id.lock);
-		return false;	/* somebody beat us to it */
+		return false;
 	}
-	pthread_rwlock_init(&export->lock, NULL);
 	/* update cache */
-	cache_slot = (void **)
-		&(export_by_id.cache[eid_cache_offsetof(&export_by_id,
-							export->export_id)]);
 	atomic_store_voidptr(cache_slot, &export->node_k);
 	glist_add_tail(&exportlist, &export->exp_list);
-	get_gsh_export_ref(export);
+	get_gsh_export_ref(export);		/* == 2 */
 	glist_init(&export->entry_list);
+
 	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
 	return true;
 }
@@ -292,29 +309,25 @@ bool insert_gsh_export(struct gsh_export *export)
  */
 struct gsh_export *get_gsh_export(uint16_t export_id)
 {
-	struct avltree_node *node = NULL;
-	struct gsh_export *exp;
 	struct gsh_export v;
-	void **cache_slot;
+	struct avltree_node *node;
+	struct gsh_export *exp;
+	void **cache_slot = (void **)
+	    &(export_by_id.cache[eid_cache_offsetof(export_id)]);
 
 	v.export_id = export_id;
 	PTHREAD_RWLOCK_rdlock(&export_by_id.lock);
 
 	/* check cache */
-	cache_slot = (void **)
-	    &(export_by_id.cache[eid_cache_offsetof(&export_by_id, export_id)]);
 	node = (struct avltree_node *)atomic_fetch_voidptr(cache_slot);
 	if (node) {
-		if (export_id_cmpf(&v.node_k, node) == 0) {
+		exp = avltree_container_of(node, struct gsh_export, node_k);
+		if (exp->export_id == export_id) {
 			/* got it in 1 */
 			LogDebug(COMPONENT_HASHTABLE_CACHE,
 				 "export_mgr cache hit slot %d",
-				 eid_cache_offsetof(&export_by_id, export_id));
-			exp =
-			    avltree_container_of(node, struct gsh_export,
-						 node_k);
-			if (exp->state == EXPORT_READY)
-				goto out;
+				 eid_cache_offsetof(export_id));
+			goto out;
 		}
 	}
 
@@ -322,13 +335,8 @@ struct gsh_export *get_gsh_export(uint16_t export_id)
 	node = avltree_lookup(&v.node_k, &export_by_id.t);
 	if (node) {
 		exp = avltree_container_of(node, struct gsh_export, node_k);
-		if (exp->state != EXPORT_READY) {
-			PTHREAD_RWLOCK_unlock(&export_by_id.lock);
-			return NULL;
-		}
 		/* update cache */
 		atomic_store_voidptr(cache_slot, node);
-		goto out;
 	} else {
 		PTHREAD_RWLOCK_unlock(&export_by_id.lock);
 		return NULL;
@@ -338,34 +346,6 @@ struct gsh_export *get_gsh_export(uint16_t export_id)
 	get_gsh_export_ref(exp);
 	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
 	return exp;
-}
-
-/**
- * @brief Set export entry's state
- *
- * Set the state under the global write lock to keep it safe
- * from scan/lookup races.
- * We assert state transitions because errors here are BAD.
- *
- * @param export [IN] The export to change state
- * @param state  [IN] the state to set
- */
-
-void set_gsh_export_state(struct gsh_export *export, export_state_t state)
-{
-	PTHREAD_RWLOCK_wrlock(&export_by_id.lock);
-	if (state == EXPORT_READY) {
-		assert(export->state == EXPORT_INIT
-		       || export->state == EXPORT_BLOCKED);
-	} else if (state == EXPORT_BLOCKED) {
-		assert(export->state == EXPORT_READY);
-	} else if (state == EXPORT_RELEASE) {
-		assert(export->state == EXPORT_BLOCKED && export->refcnt == 0);
-	} else {
-		assert(0);
-	}
-	export->state = state;
-	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
 }
 
 /**
@@ -397,9 +377,6 @@ struct gsh_export *get_gsh_export_by_path_locked(char *path,
 
 	glist_for_each(glist, &exportlist) {
 		export = glist_entry(glist, struct gsh_export, exp_list);
-
-		if (export->state != EXPORT_READY)
-			continue;
 
 		len_export = strlen(export->fullpath);
 
@@ -504,9 +481,6 @@ struct gsh_export *get_gsh_export_by_pseudo_locked(char *path,
 	glist_for_each(glist, &exportlist) {
 		export = glist_entry(glist, struct gsh_export, exp_list);
 
-		if (export->state != EXPORT_READY)
-			continue;
-
 		if (export->pseudopath == NULL)
 			continue;
 
@@ -605,8 +579,7 @@ struct gsh_export *get_gsh_export_by_tag(char *tag)
 	PTHREAD_RWLOCK_rdlock(&export_by_id.lock);
 	glist_for_each(glist, &exportlist) {
 		export = glist_entry(glist, struct gsh_export, exp_list);
-		if (export->state != EXPORT_READY)
-			continue;
+
 		if (export->FS_tag != NULL &&
 		    !strcmp(export->FS_tag, tag))
 			goto out;
@@ -648,39 +621,16 @@ bool mount_gsh_export(struct gsh_export *exp)
 
 void put_gsh_export(struct gsh_export *export)
 {
-	int64_t refcount;
-	struct export_stats *export_st;
+	int64_t refcount = atomic_dec_int64_t(&export->refcnt);
 
-	assert(export->refcnt > 0);
-
-	refcount = atomic_dec_int64_t(&export->refcnt);
-
-	if (refcount != 0)
+	if (refcount != 0) {
+		assert(refcount > 0);
 		return;
+	}
 
 	/* Releasing last reference */
 
-	/* Release state belonging to this export */
-	state_release_export(export);
-
-	/* Flush cache inodes belonging to this export */
-	cache_inode_unexport(export);
-
-	/* can we really let go or do we have unfinished business? */
-	assert(glist_empty(&export->entry_list));
-	assert(glist_empty(&export->exp_state_list));
-	assert(glist_empty(&export->exp_lock_list));
-	assert(glist_empty(&export->exp_nlm_share_list));
-	assert(glist_empty(&export->mounted_exports_list));
-	assert(glist_null(&export->exp_root_list));
-	assert(glist_null(&export->mounted_exports_node));
-
-	/* free resources */
-	free_export_resources(export);
-	pthread_rwlock_destroy(&export->lock);
-	export_st = container_of(export, struct export_stats, export);
-	server_stats_free(&export_st->st);
-	gsh_free(export_st);
+	free_export(export);
 }
 
 /**
@@ -691,37 +641,45 @@ void put_gsh_export(struct gsh_export *export)
 
 void remove_gsh_export(uint16_t export_id)
 {
-	struct avltree_node *node = NULL;
-	struct avltree_node *cnode = NULL;
-	struct gsh_export *export = NULL;
 	struct gsh_export v;
-	void **cache_slot;
+	struct avltree_node *node;
+	struct gsh_export *export = NULL;
+	void **cache_slot = (void **)
+	    &(export_by_id.cache[eid_cache_offsetof(export_id)]);
 
 	v.export_id = export_id;
-
 	PTHREAD_RWLOCK_wrlock(&export_by_id.lock);
+
 	node = avltree_lookup(&v.node_k, &export_by_id.t);
 	if (node) {
-		export =
-		    avltree_container_of(node, struct gsh_export, node_k);
+		struct avltree_node *cnode = (struct avltree_node *)
+			atomic_fetch_voidptr(cache_slot);
 
-		/* Remove the export from the AVL tree */
-		cache_slot = (void **)
-		    &(export_by_id.
-		      cache[eid_cache_offsetof(&export_by_id, export_id)]);
-		cnode = (struct avltree_node *)atomic_fetch_voidptr(cache_slot);
+		/* Remove from the AVL cache and tree */
 		if (node == cnode)
 			atomic_store_voidptr(cache_slot, NULL);
 		avltree_remove(node, &export_by_id.t);
 
+		export = avltree_container_of(node, struct gsh_export, node_k);
+
 		/* Remove the export from the export list */
 		glist_del(&export->exp_list);
+
+		/* No new references will be granted. Idempotent. */
+		export->export_status = EXPORT_STALE;
 	}
 
 	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
 
+	/* removal has a once-only semantic */
 	if (export != NULL) {
-		/* Release table reference to the export.
+		if (export->has_pnfs_ds) {
+			/* once-only, so no need for lock here */
+			export->has_pnfs_ds = false;
+			pnfs_ds_remove(export->export_id, true);
+		}
+
+		/* Release sentinel reference to the export.
 		 * Release of resources will occur on last reference.
 		 * Which may or may not be from this call.
 		 */
@@ -1663,9 +1621,8 @@ void export_pkginit(void)
 #endif
 	pthread_rwlock_init(&export_by_id.lock, &rwlock_attr);
 	avltree_init(&export_by_id.t, export_id_cmpf, 0);
-	export_by_id.cache_sz = 255;
-	export_by_id.cache =
-	    gsh_calloc(export_by_id.cache_sz, sizeof(struct avltree_node *));
+	memset(&export_by_id.cache, 0, sizeof(export_by_id.cache));
+
 	glist_init(&exportlist);
 	glist_init(&mount_work);
 	glist_init(&unexport_work);

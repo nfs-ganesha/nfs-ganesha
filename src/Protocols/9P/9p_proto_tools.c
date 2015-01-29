@@ -41,6 +41,7 @@
 #include <fcntl.h>
 #include "nfs_core.h"
 #include "log.h"
+#include "fsal.h"
 #include "9p.h"
 #include "idmapper.h"
 #include "uid2grp.h"
@@ -156,8 +157,7 @@ int _9p_tools_errno(cache_inode_status_t cache_status)
 		rc = EROFS;
 		break;
 
-	case CACHE_INODE_FSAL_ESTALE:
-	case CACHE_INODE_DEAD_ENTRY:
+	case CACHE_INODE_ESTALE:
 		rc = ESTALE;
 		break;
 
@@ -252,7 +252,7 @@ int _9p_tools_clunk(struct _9p_fid *pfid)
 
 	/* If the fid is related to a xattr, free the related memory */
 	if (pfid->specdata.xattr.xattr_content != NULL &&
-	    pfid->specdata.xattr.xattr_write == TRUE) {
+	    pfid->specdata.xattr.xattr_write == true) {
 		/* Check size give at TXATTRCREATE with
 		 * the one resulting from the writes */
 		if (pfid->specdata.xattr.xattr_size !=
@@ -264,23 +264,19 @@ int _9p_tools_clunk(struct _9p_fid *pfid)
 		/* Do we handle system.posix_acl_access */
 		if (pfid->specdata.xattr.xattr_id == ACL_ACCESS_XATTR_ID) {
 			fsal_status =
-			    pfid->pentry->obj_handle->ops->setextattr_value(
-				    pfid->pentry->obj_handle,
-				    "system.posix_acl_access",
-				    pfid->specdata.xattr.xattr_content,
-				    pfid->specdata.xattr.xattr_size,
-				    FALSE);
+			    pfid->pentry->obj_handle->obj_ops.setextattr_value(
+					pfid->pentry->obj_handle,
+					"system.posix_acl_access",
+					pfid->specdata.xattr.xattr_content,
+					pfid->specdata.xattr.xattr_size,
+					false);
 		} else {
 			/* Write the xattr content */
-			fsal_status =
-			    pfid->pentry->obj_handle->ops->
+			fsal_status = pfid->pentry->obj_handle->obj_ops.
 				setextattr_value_by_id(pfid->pentry->obj_handle,
-						       pfid->specdata.xattr.
-						       xattr_id,
-						       pfid->specdata.xattr.
-						       xattr_content,
-						       pfid->specdata.xattr.
-						       xattr_size);
+					pfid->specdata.xattr.xattr_id,
+					pfid->specdata.xattr.xattr_content,
+					pfid->specdata.xattr.xattr_size);
 			if (FSAL_IS_ERROR(fsal_status)) {
 				free_fid(pfid);
 				return _9p_tools_errno(
@@ -307,7 +303,7 @@ int _9p_tools_clunk(struct _9p_fid *pfid)
 			cache_status =
 			    cache_inode_refresh_attrs_locked(pfid->pentry);
 			if (cache_status != CACHE_INODE_SUCCESS
-			    && cache_status != CACHE_INODE_FSAL_ESTALE) {
+			    && cache_status != CACHE_INODE_ESTALE) {
 				free_fid(pfid);
 				return _9p_tools_errno(cache_status);
 			}

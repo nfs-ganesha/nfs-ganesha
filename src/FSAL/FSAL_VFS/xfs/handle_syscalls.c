@@ -35,7 +35,7 @@
 #include <sys/syscall.h>
 #include <xfs/xfs.h>
 #include <xfs/handle.h>
-#include "ganesha_list.h"
+#include "gsh_list.h"
 #include "fsal_convert.h"
 #include "FSAL/fsal_commonlib.h"
 #include "../vfs_methods.h"
@@ -431,18 +431,3 @@ errout:
 	return retval;
 }
 
-void vfs_fini(struct vfs_fsal_export *myself)
-{
-	return;
-}
-
-void vfs_init_export_ops(struct vfs_fsal_export *myself,
-			 const char *export_path)
-{
-	return;
-}
-
-int vfs_init_export_pnfs(struct vfs_fsal_export *myself)
-{
-	return 0;
-}

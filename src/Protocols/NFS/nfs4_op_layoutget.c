@@ -33,7 +33,7 @@
 #include <stdint.h>
 #include "hashtable.h"
 #include "log.h"
-#include "ganesha_rpc.h"
+#include "gsh_rpc.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"
@@ -84,6 +84,7 @@ static nfsstat4 acquire_layout_state(compound_data_t *data,
 	state_t *condemned_state = NULL;
 	/* Tracking data for the layout state */
 	struct state_refer refer;
+	bool lock_held = false;
 
 	memcpy(refer.session, data->session->session_id, sizeof(sessionid4));
 	refer.sequence = data->sequence;
@@ -103,20 +104,28 @@ static nfsstat4 acquire_layout_state(compound_data_t *data,
 					false,
 					tag);
 
-	if (nfs_status != NFS4_OK)
-		goto out;
+	if (nfs_status != NFS4_OK) {
+		/* The supplied stateid was invalid */
+		return nfs_status;
+	}
 
 	if (supplied_state->state_type == STATE_TYPE_LAYOUT) {
 		/* If the state supplied is a layout state, we can
-		 * simply use it */
+		 * simply use it, return with the reference we just
+		 * acquired.
+		 */
 		*layout_state = supplied_state;
+		return nfs_status;
 	} else if ((supplied_state->state_type == STATE_TYPE_SHARE)
 		   || (supplied_state->state_type == STATE_TYPE_DELEG)
 		   || (supplied_state->state_type == STATE_TYPE_LOCK)) {
 		/* For share, delegation, and lock states, create a
 		   new layout state. */
-		state_data_t layout_data;
-		memset(&layout_data, 0, sizeof(state_data_t));
+		union state_data layout_data;
+		memset(&layout_data, 0, sizeof(layout_data));
+
+		PTHREAD_RWLOCK_wrlock(&data->current_entry->state_lock);
+		lock_held = true;
 
 		/* See if a layout state already exists */
 		state_status =
@@ -143,6 +152,7 @@ static nfsstat4 acquire_layout_state(compound_data_t *data,
 
 			if (condemned_state->state_data.layout.granting) {
 				nfs_status = NFS4ERR_DELAY;
+				dec_state_t_ref(condemned_state);
 				goto out;
 			}
 
@@ -154,8 +164,9 @@ static nfsstat4 acquire_layout_state(compound_data_t *data,
 						   entire,
 						   0,
 						   NULL,
-						   &deleted,
-						   false);
+						   &deleted);
+
+			dec_state_t_ref(condemned_state);
 
 			if (nfs_status != NFS4_OK)
 				goto out;
@@ -166,21 +177,17 @@ static nfsstat4 acquire_layout_state(compound_data_t *data,
 			}
 
 			condemned_state = NULL;
-
-		} else if (state_status != STATE_NOT_FOUND) {
-			nfs_status = nfs4_Errno_state(state_status);
-			goto out;
 		}
 
 		layout_data.layout.state_layout_type = layout_type;
 		layout_data.layout.state_return_on_close = false;
 
-		state_status = state_add(data->current_entry,
-					 STATE_TYPE_LAYOUT,
-					 &layout_data,
-					 clientid_owner,
-					 layout_state,
-					 &refer);
+		state_status = state_add_impl(data->current_entry,
+					      STATE_TYPE_LAYOUT,
+					      &layout_data,
+					      clientid_owner,
+					      layout_state,
+					      &refer);
 
 		if (state_status != STATE_SUCCESS) {
 			nfs_status = nfs4_Errno_state(state_status);
@@ -188,13 +195,6 @@ static nfsstat4 acquire_layout_state(compound_data_t *data,
 		}
 
 		glist_init(&(*layout_state)->state_data.layout.state_segments);
-
-		/* Attach this open to an export */
-		(*layout_state)->state_export = op_ctx->export;
-		PTHREAD_RWLOCK_wrlock(&op_ctx->export->lock);
-		glist_add_tail(&op_ctx->export->exp_state_list,
-			       &(*layout_state)->state_export_list);
-		PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
 	} else {
 		/* A state eixsts but is of an invalid type. */
 		nfs_status = NFS4ERR_BAD_STATEID;
@@ -202,6 +202,12 @@ static nfsstat4 acquire_layout_state(compound_data_t *data,
 	}
 
  out:
+
+	/* We are done with the supplied_state, release the reference. */
+	dec_state_t_ref(supplied_state);
+
+	if (lock_held)
+		PTHREAD_RWLOCK_unlock(&data->current_entry->state_lock);
 
 	return nfs_status;
 }
@@ -257,7 +263,7 @@ static nfsstat4 one_segment(cache_entry_t *entry,
 	state_status_t state_status = 0;
 	/* Size of a loc_body buffer */
 	size_t loc_body_size = MIN(
-	    op_ctx->fsal_export->ops->fs_loc_body_size(op_ctx->fsal_export),
+	    op_ctx->fsal_export->exp_ops.fs_loc_body_size(op_ctx->fsal_export),
 	    arg->maxcount);
 
 	if (loc_body_size == 0) {
@@ -283,7 +289,7 @@ static nfsstat4 one_segment(cache_entry_t *entry,
 	++layout_state->state_data.layout.granting;
 	PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
-	nfs_status = entry->obj_handle->ops->layoutget(entry->obj_handle,
+	nfs_status = entry->obj_handle->obj_ops.layoutget(entry->obj_handle,
 						      op_ctx,
 						      &loc_body,
 						      arg,
@@ -387,7 +393,7 @@ int nfs4_op_layoutget(struct nfs_argop4 *op, compound_data_t *data,
 		goto out;
 
 	/* max_segment_count is also an indication of if fsal supports pnfs */
-	max_segment_count = op_ctx->fsal_export->ops->
+	max_segment_count = op_ctx->fsal_export->exp_ops.
 			fs_maximum_segments(op_ctx->fsal_export);
 
 	if (max_segment_count == 0) {
@@ -492,13 +498,16 @@ int nfs4_op_layoutget(struct nfs_argop4 *op, compound_data_t *data,
 			free_layouts(layouts, numlayouts);
 
 		if ((layout_state) && (layout_state->state_seqid == 0)) {
-			state_del(layout_state, false);
+			state_del(layout_state);
 			layout_state = NULL;
 		}
 
 		/* Poison the current stateid */
 		data->current_stateid_valid = false;
 	}
+
+	if (layout_state != NULL)
+		dec_state_t_ref(layout_state);
 
 	res_LAYOUTGET4->logr_status = nfs_status;
 

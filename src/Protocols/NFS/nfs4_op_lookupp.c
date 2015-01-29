@@ -34,7 +34,7 @@
  */
 #include "config.h"
 #include "log.h"
-#include "nfs4.h"
+#include "fsal.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
 #include "nfs_exports.h"
@@ -61,7 +61,7 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 		    struct nfs_resop4 *resp)
 {
 	LOOKUPP4res * const res_LOOKUPP4 = &resp->nfs_resop4_u.oplookupp;
-	cache_entry_t *dir_entry;
+	cache_entry_t *dir_entry = NULL;
 	cache_entry_t *file_entry;
 	cache_inode_status_t cache_status;
 	struct gsh_export *original_export = op_ctx->export;
@@ -88,13 +88,13 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 	PTHREAD_RWLOCK_rdlock(&original_export->lock);
 
 	if (data->current_entry == original_export->exp_root_cache_inode) {
-		struct gsh_export *parent_exp;
+		struct gsh_export *parent_exp = NULL;
 
 		/* Handle reverse junction */
 		LogDebug(COMPONENT_EXPORT,
 			 "Handling reverse junction from Export_Id %d Path %s Parent=%p",
-			 op_ctx->export->export_id,
-			 op_ctx->export->fullpath,
+			 original_export->export_id,
+			 original_export->fullpath,
 			 original_export->exp_parent_exp);
 
 		if (original_export->exp_parent_exp == NULL) {
@@ -112,7 +112,7 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 		 * so if it cascades into cleanup, we aren't holding
 		 * an export lock that would cause trouble.
 		 */
-		set_current_entry(data, NULL, false);
+		set_current_entry(data, NULL);
 
 		/* We need to protect accessing the parent information
 		 * with the export lock. We use the current export's lock
@@ -128,15 +128,33 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 		dir_entry = original_export->exp_junction_inode;
 		parent_exp = original_export->exp_parent_exp;
 
-		/* Check if there is a problem with the export. */
-		if (dir_entry == NULL || parent_exp == NULL) {
+		/* Check if there is a problem with the export and try and
+		 * get a reference to the parent export.
+		 */
+		if (dir_entry == NULL || parent_exp == NULL ||
+		    !export_ready(parent_exp)) {
 			/* Export is in the process of dying */
+			PTHREAD_RWLOCK_unlock(&original_export->lock);
 			LogCrit(COMPONENT_EXPORT,
 				"Reverse junction from Export_Id %d Path %s Parent=%p is stale",
-				op_ctx->export->export_id,
-				op_ctx->export->fullpath,
+				original_export->export_id,
+				original_export->fullpath,
 				parent_exp);
+			res_LOOKUPP4->status = NFS4ERR_STALE;
+			return res_LOOKUPP4->status;
+		}
+
+		get_gsh_export_ref(parent_exp);
+
+		if (cache_inode_lru_ref(dir_entry, LRU_FLAG_NONE) !=
+		    CACHE_INODE_SUCCESS) {
+			/* junction inode has gone stale. */
 			PTHREAD_RWLOCK_unlock(&original_export->lock);
+			LogCrit(COMPONENT_EXPORT,
+				"Reverse junction from Export_Id %d Path %s Parent=%p is stale",
+				original_export->export_id,
+				original_export->fullpath,
+				parent_exp);
 			res_LOOKUPP4->status = NFS4ERR_STALE;
 			return res_LOOKUPP4->status;
 		}
@@ -144,13 +162,10 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 		/* Set up dir_entry as current entry with an LRU reference
 		 * while still holding the lock.
 		 */
-		set_current_entry(data, dir_entry, true);
+		set_current_entry(data, dir_entry);
 
-		/* Get a reference to the export and stash it in
-		 * compound data while still holding the lock.
+		/* Stash parent export in opctx while still holding the lock.
 		 */
-		get_gsh_export_ref(parent_exp);
-
 		op_ctx->export = parent_exp;
 		op_ctx->fsal_export = op_ctx->export->fsal_export;
 
@@ -159,11 +174,11 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 		 */
 		PTHREAD_RWLOCK_unlock(&original_export->lock);
 
-		/* Release old export reference */
+		/* Release old export reference that was held by opctx. */
 		put_gsh_export(original_export);
 
 		/* Build credentials */
-		res_LOOKUPP4->status = nfs4_MakeCred(data);
+		res_LOOKUPP4->status = nfs4_export_check_access(data->req);
 
 		/* Test for access error (export should not be visible). */
 		if (res_LOOKUPP4->status == NFS4ERR_ACCESS) {
@@ -173,8 +188,8 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 			 */
 			LogDebug(COMPONENT_EXPORT,
 				 "NFS4ERR_ACCESS Hiding Export_Id %d Path %s with NFS4ERR_NOENT",
-				 op_ctx->export->export_id,
-				 op_ctx->export->fullpath);
+				 parent_exp->export_id,
+				 parent_exp->fullpath);
 			res_LOOKUPP4->status = NFS4ERR_NOENT;
 			return res_LOOKUPP4->status;
 		}
@@ -198,7 +213,7 @@ not_junction:
 		}
 
 		/* Keep the pointer within the compound data */
-		set_current_entry(data, file_entry, true);
+		set_current_entry(data, file_entry);
 
 		/* Return successfully */
 		res_LOOKUPP4->status = NFS4_OK;
@@ -206,7 +221,7 @@ not_junction:
 		/* Unable to look up parent for some reason.
 		 * Return error.
 		 */
-		set_current_entry(data, NULL, false);
+		set_current_entry(data, NULL);
 		res_LOOKUPP4->status = nfs4_Errno(cache_status);
 	}
 
