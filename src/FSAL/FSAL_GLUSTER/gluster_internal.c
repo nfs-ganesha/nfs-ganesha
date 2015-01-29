@@ -263,7 +263,7 @@ int construct_handle(struct glusterfs_export *glexport, const struct stat *sb,
 	}
 
 	constructing->handle.attributes.mask =
-		glexport->export.ops->fs_supported_attrs(&glexport->export);
+		glexport->export.exp_ops.fs_supported_attrs(&glexport->export);
 
 	stat2fsal_attributes(sb, &constructing->handle.attributes);
 
