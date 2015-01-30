@@ -304,7 +304,7 @@ struct fsal_up_vector;		/* From fsal_up.h */
  * e.g.  the argument list changed or a method is removed.
  */
 
-#define FSAL_MAJOR_VERSION 2
+#define FSAL_MAJOR_VERSION 3
 
 /**
  * @brief Minor Version
