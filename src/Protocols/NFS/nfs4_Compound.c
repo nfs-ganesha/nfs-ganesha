@@ -635,7 +635,7 @@ int nfs4_Compound(nfs_arg_t *arg,
 				}
 			}
 
-			if (opcode >= NFS4_OP_LAST_ONE)
+			if (opcode > NFS4_OP_LAST_ONE)
 				opcode = 0;
 		}
 		LogDebug(COMPONENT_NFS_V4, "Request %d: opcode %d is %s", i,

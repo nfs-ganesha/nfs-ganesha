@@ -600,7 +600,8 @@ void pseudo_unmount_export(struct gsh_export *export)
 
 	if (mounted_on_export != NULL) {
 		if (strcmp(mounted_on_export->fsal_export->fsal->name,
-		    "PSEUDO") == 0) {
+			   "PSEUDO") == 0
+		    && junction_inode != NULL) {
 			char *pseudopath = gsh_strdup(export->pseudopath);
 			if (pseudopath != NULL) {
 				/* Initialize req_ctx */

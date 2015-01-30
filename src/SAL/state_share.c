@@ -1113,7 +1113,11 @@ state_status_t state_nlm_unshare(cache_entry_t *entry,
 
 	PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
+	PTHREAD_RWLOCK_wrlock(&entry->content_lock);
+
 	cache_inode_dec_pin_ref(entry, true);
+
+	PTHREAD_RWLOCK_unlock(&entry->content_lock);
 
 	return status;
 }

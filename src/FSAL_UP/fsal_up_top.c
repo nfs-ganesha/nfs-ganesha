@@ -1576,7 +1576,6 @@ out:
 		free_rpc_call(call);
 
 	if (!eval_deleg_revoke(state) &&
-	    p_cargs &&
 	    !schedule_delegrecall_task(p_cargs, 1)) {
 		/* Keep the delegation in p_cargs */
 		if (str_valid)
@@ -1802,6 +1801,7 @@ state_status_t delegrecall_impl(cache_entry_t *entry)
 						       &owner)) {
 			LogDebug(COMPONENT_FSAL_UP,
 				 "Something is going stale, no need to recall delegation");
+			gsh_free(drc_ctx);
 			continue;
 		}
 

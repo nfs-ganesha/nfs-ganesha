@@ -591,6 +591,10 @@ static const uint32_t CACHE_INODE_FLAG_REALLYCLOSE = 0x80;
 static const uint32_t CACHE_INODE_FLAG_NOT_PINNED = 0x100;
 /** Open for reclaim. */
 static const uint32_t CACHE_INODE_FLAG_RECLAIM = 0x200;
+/** File is being cleaned up so close need not take content_lock */
+static const uint32_t CACHE_INODE_FLAG_CLEANUP = 0x400;
+/** Don't kill entry on ESTALE */
+static const uint32_t CACHE_INODE_DONT_KILL = 0x800;
 
 /**
  * Flags to cache_inode_invalidate

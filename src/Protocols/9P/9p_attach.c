@@ -65,7 +65,7 @@ int _9p_attach(struct _9p_request_data *req9p, void *worker_data,
 
 	struct _9p_fid *pfid = NULL;
 
-	struct gsh_export *export;
+	struct gsh_export *export = NULL;
 	cache_inode_status_t cache_status;
 	fsal_status_t fsal_status;
 	char exppath[MAXPATHLEN];
@@ -225,6 +225,7 @@ errout:
 
 	if (export != NULL)
 		put_gsh_export(export);
+
 	if (pfid != NULL) {
 		if (pfid->pentry != NULL)
 			cache_inode_put(pfid->pentry);

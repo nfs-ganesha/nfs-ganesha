@@ -763,8 +763,10 @@ void revoke_owner_delegs(state_owner_t *client_owner)
 void state_export_release_nfs4_state(void)
 {
 	state_t *state;
+	state_t *first;
 	state_status_t state_status;
 	int errcnt = 0;
+	int layouts;
 	struct glist_head *glist, *glistn;
 	bool hold_export_lock;
 
@@ -777,6 +779,8 @@ void state_export_release_nfs4_state(void)
 
 	PTHREAD_RWLOCK_wrlock(&op_ctx->export->lock);
 	hold_export_lock = true;
+	first = NULL;
+	layouts = 0;
 
 	glist_for_each_safe(glist, glistn, &op_ctx->export->exp_state_list) {
 		cache_entry_t *entry = NULL;
@@ -789,6 +793,16 @@ void state_export_release_nfs4_state(void)
 		};
 
 		state = glist_entry(glist, state_t, state_export_list);
+
+		if (state == first && layouts == 0) {
+			/* We have run through all the original states and
+			 * not encountered any layout states.
+			 */
+			break;
+		}
+
+		if (first == NULL)
+			first = state;
 
 		/* Move state to the end of the list in case an error
 		 * occurs or the state is going stale. This also keeps us
@@ -803,6 +817,8 @@ void state_export_release_nfs4_state(void)
 			/* Skip non-layout states. */
 			continue;
 		}
+
+		layouts++;
 
 		if (!get_state_entry_export_owner_refs(state,
 						       &entry,

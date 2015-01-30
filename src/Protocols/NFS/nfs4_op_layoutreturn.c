@@ -186,8 +186,7 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op, compound_data_t *data,
 			}
 		}
 
-		if (layout_state != NULL)
-			dec_state_t_ref(layout_state);
+		dec_state_t_ref(layout_state);
 
 		break;
 
