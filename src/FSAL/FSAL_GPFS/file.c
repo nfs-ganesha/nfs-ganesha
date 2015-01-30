@@ -165,21 +165,26 @@ fsal_status_t gpfs_read_plus(struct fsal_obj_handle *obj_hdl,
 	nb_read = gpfs_ganesha(OPENHANDLE_READ_BY_FD, &rarg);
 	errsv = errno;
 
-	if (nb_read == -1 && errsv != ENODATA) {
+	if (nb_read < 0) {
 		if (errsv == EUNATCH)
 			LogFatal(COMPONENT_FSAL, "GPFS Returned EUNATCH");
-		return fsalstat(posix2fsal_error(errsv), errsv);
-	}
+		if (errsv != ENODATA)
+			return fsalstat(posix2fsal_error(errsv), errsv);
 
-	if (errsv == ENODATA) {
+		/* errsv == ENODATA */
 		info->io_content.what = NFS4_CONTENT_HOLE;
 		info->io_content.hole.di_offset = offset;     /*offset of hole*/
 		info->io_content.hole.di_length = buffer_size;/*length of hole*/
 		*read_amount = buffer_size;
+		if ((buffer_size + offset) > obj_hdl->attributes.filesize) {
+			*read_amount = obj_hdl->attributes.filesize - offset;
+			if (*read_amount < 0)
+				*read_amount = 0;
+			info->io_content.hole.di_length = *read_amount;
+		}
 	} else {
 		info->io_content.what = NFS4_CONTENT_DATA;
 		info->io_content.data.d_offset = offset + nb_read;
-		info->io_content.data.d_allocated = true;   /* ??? */
 		info->io_content.data.d_data.data_len = nb_read;
 		info->io_content.data.d_data.data_val = buffer;
 		*read_amount = nb_read;

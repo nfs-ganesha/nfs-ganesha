@@ -153,7 +153,7 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 	WRITE4args * const arg_WRITE4 = &op->nfs_argop4_u.opwrite;
 	WRITE4res * const res_WRITE4 = &resp->nfs_resop4_u.opwrite;
 	uint64_t size = 0;
-	size_t written_size;
+	size_t written_size = 0;
 	uint64_t offset;
 	bool eof_met;
 	bool sync = false;
