@@ -33,17 +33,17 @@ class RetrieveExportStats():
     def fast_stats(self):
         stats_op = self.exportmgrobj.get_dbus_method("GetFastOPS",
                                  self.dbus_exportstats_name)
-        return FastStats(stats_op(0))
+        return FastStats(stats_op())
     # NFSv3/NFSv40/NFSv41/NFSv42/NLM4/MNTv1/MNTv3/RQUOTA totalled over all exports
     def global_stats(self):
         stats_op = self.exportmgrobj.get_dbus_method("GetGlobalOPS",
                                  self.dbus_exportstats_name)
-        return GlobalStats(stats_op(0))
+        return GlobalStats(stats_op())
     # cache inode stats
     def inode_stats(self):
         stats_op = self.exportmgrobj.get_dbus_method("ShowCacheInode",
                                  self.dbus_exportstats_name)
-        return InodeStats(stats_op(0))
+        return InodeStats(stats_op())
     # list of all exports
     def export_stats(self):
         stats_op = self.exportmgrobj.get_dbus_method("ShowExports",

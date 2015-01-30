@@ -22,16 +22,10 @@
 
 import sys
 import time
-import gobject
-import dbus.mainloop.glib
-from dbus import glib
 from Ganesha.ganesha_mgr_utils import ClientMgr
 from Ganesha.ganesha_mgr_utils import ExportMgr
 from Ganesha.ganesha_mgr_utils import AdminInterface
 from Ganesha.ganesha_mgr_utils import LogManager
-
-glib.init_threads()
-
 
 SERVICE = 'org.ganesha.nfsd'
 

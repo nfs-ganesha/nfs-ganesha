@@ -245,10 +245,13 @@ MODULE_INIT void pt_init(void)
 	}
 
 	/* init mutexes */
-	pthread_rwlock_init(&g_fsi_cache_handle_rw_lock, NULL);
-	pthread_rwlock_wrlock(&g_fsi_cache_handle_rw_lock);
+	rc = pthread_rwlock_init(&g_fsi_cache_handle_rw_lock, NULL);
+	if (rc != 0) {
+		LogFatal(COMPONENT_FSAL,
+			"pthread lock init failed: %s", strerror(rc));
+		return;
+	}
 	g_fsi_name_handle_cache.m_count = 0;
-	pthread_rwlock_unlock(&g_fsi_cache_handle_rw_lock);
 
 	/*
 	 * fsi_ipc_trace_level allows using the level settings differently than

@@ -1490,8 +1490,7 @@ static struct gsh_dbus_method export_show_total_ops = {
 static struct gsh_dbus_method global_show_total_ops = {
 	.name = "GetGlobalOPS",
 	.method = get_nfsv_global_total_ops,
-	.args = {EXPORT_ID_ARG,
-		 STATUS_REPLY,
+	.args = {STATUS_REPLY,
 		 TIMESTAMP_REPLY,
 		 TOTAL_OPS_REPLY,
 		 END_ARG_LIST}
@@ -1500,8 +1499,7 @@ static struct gsh_dbus_method global_show_total_ops = {
 static struct gsh_dbus_method global_show_fast_ops = {
 	.name = "GetFastOPS",
 	.method = get_nfsv_global_fast_ops,
-	.args = {EXPORT_ID_ARG,
-		 STATUS_REPLY,
+	.args = {STATUS_REPLY,
 		 TIMESTAMP_REPLY,
 		 TOTAL_OPS_REPLY,
 		 END_ARG_LIST}
@@ -1510,8 +1508,7 @@ static struct gsh_dbus_method global_show_fast_ops = {
 static struct gsh_dbus_method cache_inode_show = {
 	.name = "ShowCacheInode",
 	.method = show_cache_inode_stats,
-	.args = {EXPORT_ID_ARG,
-		 STATUS_REPLY,
+	.args = {STATUS_REPLY,
 		 TIMESTAMP_REPLY,
 		 TOTAL_OPS_REPLY,
 		 END_ARG_LIST}
