@@ -366,9 +366,19 @@ int _9p_create_socket(void)
 	struct t_bind bindaddr_tcp6;
 	struct __rpc_sockinfo si_tcp6;
 
+	struct sockaddr_in sinaddr_tcp;
+
 	sock = socket(P_FAMILY, SOCK_STREAM, IPPROTO_TCP);
-	if (sock == -1)
-		goto bad_socket;
+	if (sock == -1) {
+		if (errno == EAFNOSUPPORT) {
+			LogWarn(COMPONENT_DISPATCH,
+				"Could not create V6 socket, trying V4");
+			goto try_socket_V4;
+		} else {
+			goto bad_socket;
+		}
+	}
+
 	if ((setsockopt(sock,
 			SOL_SOCKET, SO_REUSEADDR,
 			&one, sizeof(one)) == -1) ||
@@ -424,6 +434,68 @@ int _9p_create_socket(void)
 	}
 
 	return sock;
+
+try_socket_V4:
+	sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	if (sock == -1)
+		goto bad_socket;
+
+	if ((setsockopt(sock,
+			SOL_SOCKET, SO_REUSEADDR,
+			&one, sizeof(one)) == -1) ||
+	    (setsockopt(sock,
+			IPPROTO_TCP, TCP_NODELAY,
+			&one, sizeof(one)) == -1) ||
+	    (setsockopt(sock,
+			IPPROTO_TCP, TCP_KEEPIDLE,
+			&centvingt, sizeof(centvingt)) == -1) ||
+	    (setsockopt(sock,
+			IPPROTO_TCP, TCP_KEEPINTVL,
+			&centvingt, sizeof(centvingt)) == -1) ||
+	    (setsockopt(sock,
+			IPPROTO_TCP, TCP_KEEPCNT,
+			&neuf, sizeof(neuf)) == -1))
+		goto bad_socket;
+
+	socket_setoptions(sock);
+	memset(&sinaddr_tcp, 0, sizeof(sinaddr_tcp));
+	sinaddr_tcp.sin_family = AF_INET;
+	/* All the interfaces on the machine are used */
+	sinaddr_tcp.sin_addr.s_addr = htonl(INADDR_ANY);
+	sinaddr_tcp.sin_port = htons(_9p_param._9p_tcp_port);
+
+	netbuf_tcp6.maxlen = sizeof(sinaddr_tcp);
+	netbuf_tcp6.len = sizeof(sinaddr_tcp);
+	netbuf_tcp6.buf = &sinaddr_tcp;
+
+	bindaddr_tcp6.qlen = SOMAXCONN;
+	bindaddr_tcp6.addr = netbuf_tcp6;
+
+	if (!__rpc_fd2sockinfo(sock, &si_tcp6)) {
+		LogFatal(COMPONENT_DISPATCH,
+	 "V4 : Cannot get 9p socket info for tcp6 socket errno=%d (%s)",
+			 errno, strerror(errno));
+		return -1;
+	}
+
+	if (bind(sock,
+		 (struct sockaddr *)bindaddr_tcp6.addr.buf,
+		 (socklen_t) si_tcp6.si_alen) == -1) {
+		LogFatal(COMPONENT_DISPATCH,
+		 "V4 : Cannot bind 9p tcp6 socket, error %d (%s)", errno,
+			 strerror(errno));
+		return -1;
+	}
+
+	if (listen(sock, 20) == -1) {
+		LogFatal(COMPONENT_DISPATCH,
+		 "V4 : Cannot bind 9p tcp6 socket, error %d (%s)", errno,
+			 strerror(errno));
+		return -1;
+	}
+
+	return sock;
+
 
 bad_socket:
 	LogFatal(COMPONENT_9P_DISPATCH,
