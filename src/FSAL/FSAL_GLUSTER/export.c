@@ -50,6 +50,8 @@ static void export_release(struct fsal_export *exp_hdl)
 {
 	struct glusterfs_export *glfs_export =
 	    container_of(exp_hdl, struct glusterfs_export, export);
+	int *retval = NULL;
+	int err     = 0;
 
 	/* check activity on the export */
 
@@ -57,6 +59,22 @@ static void export_release(struct fsal_export *exp_hdl)
 	fsal_detach_export(glfs_export->export.fsal,
 			   &glfs_export->export.exports);
 	free_export_ops(&glfs_export->export);
+
+	glfs_export->destroy_mode = true;
+
+	/* Wait for up_thread to exit */
+	err = pthread_join(glfs_export->up_thread, (void **)&retval);
+
+	if (*retval) {
+		LogDebug(COMPONENT_FSAL, "Up_thread join returned value %d",
+			 *retval);
+	}
+
+	if (err) {
+		LogCrit(COMPONENT_FSAL, "Up_thread join failed (%s)",
+			strerror(err));
+		return;
+	}
 
 	/* Gluster and memory cleanup */
 	glfs_fini(glfs_export->gl_fs);
@@ -552,7 +570,7 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 				      struct config_error_type *err_type,
 				      const struct fsal_up_vector *up_ops)
 {
-	int rc;
+	int rc = 0;
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	struct glusterfs_export *glfsexport = NULL;
 	glfs_t *fs = NULL;
@@ -598,7 +616,6 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 	}
 
 	export_ops_init(&glfsexport->export.exp_ops);
-	glfsexport->export.up_ops = up_ops;
 
 	fs = glfs_new(params.glvolname);
 	if (!fs) {
@@ -653,6 +670,7 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 	glfsexport->acl_enable =
 		((op_ctx->export->export_perms.options &
 		  EXPORT_OPTION_DISABLE_ACL) ? 0 : 1);
+	glfsexport->destroy_mode = false;
 
 	op_ctx->fsal_export = &glfsexport->export;
 
@@ -693,6 +711,19 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 			 op_ctx->export->fullpath);
 		export_ops_pnfs(&glfsexport->export.exp_ops);
 		fsal_ops_pnfs(&glfsexport->export.fsal->m_ops);
+	}
+
+	if (up_ops) {
+		glfsexport->export.up_ops = up_ops;
+		rc = initiate_up_thread(glfsexport);
+
+		if (rc != 0) {
+			LogCrit(COMPONENT_FSAL,
+				"Unable to create GLUSTERFSAL_UP_Thread. Export: %s",
+				op_ctx->export->fullpath);
+			status.major = ERR_FSAL_FAULT;
+			goto out;
+		}
 	}
 
  out:

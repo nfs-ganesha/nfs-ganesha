@@ -352,6 +352,8 @@ struct glusterfs_export {
 	bool acl_enable;
 	bool pnfs_ds_enabled;
 	bool pnfs_mds_enabled;
+	bool destroy_mode;
+	pthread_t up_thread; /* upcall thread */
 };
 
 struct glusterfs_handle {
@@ -531,5 +533,10 @@ nfsstat4 getdeviceinfo(struct fsal_module *fsal_hdl,
 			XDR *da_addr_body, const layouttype4 type,
 			const struct pnfs_deviceid *deviceid);
 
+/* UP thread routines */
+void *GLUSTERFSAL_UP_Thread(void *Arg);
+int initiate_up_thread(struct glusterfs_export *glfsexport);
+int upcall_inode_invalidate(struct glusterfs_export *glfsexport,
+			    struct glfs_object *object);
 
 #endif				/* GLUSTER_INTERNAL */
