@@ -18,6 +18,7 @@ SET(fsalgluster_LIB_SRCS
    main.c
    export.c
    handle.c
+   fsal_up.c
    gluster_internal.h
    gluster_internal.c
    mds.c
