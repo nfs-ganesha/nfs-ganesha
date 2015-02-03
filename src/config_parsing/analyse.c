@@ -121,7 +121,13 @@ struct {
 	[TERM_FALSE]  = {"FALSE", "boolean FALSE"},
 	[TERM_DECNUM] = {"DECNUM", "decimal number"},
 	[TERM_HEXNUM] = {"HEXNUM", "hexadecimal number"},
-	[TERM_OCTNUM] = {"OCTNUM", "octal number"}
+	[TERM_OCTNUM] = {"OCTNUM", "octal number"},
+	[TERM_V4_ANY] = {"V4_ANY", "IPv4 any address"},
+	[TERM_V4ADDR] = {"V4ADDR", "IPv4 numeric address"},
+	[TERM_V4CIDR] = {"V4CIDR", "IPv4 CIDR subnet"},
+	[TERM_V6ADDR] = {"V6ADDR", "IPv6 numeric address"},
+	[TERM_V6CIDR] = {"V6CIDR", "IPv6 CIDR subnet"},
+	[TERM_FSID]   = {"FSID", "file system ID"}
 };
 
 const char *config_term_name(enum term_type type)

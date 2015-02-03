@@ -120,6 +120,12 @@ struct config_node *config_term(char *opcode,
 %token <token> TOK_HEXNUM
 %token <token> TOK_OCTNUM
 %token <token> TOK_ARITH_OP
+%token <token> TOK_V4_ANY
+%token <token> TOK_V4ADDR
+%token <token> TOK_V4CIDR
+%token <token> TOK_V6ADDR
+%token <token> TOK_V6CIDR
+%token <token> TOK_FSID
 
 %type <node> deflist
 %type <node> definition
@@ -266,6 +272,30 @@ expression: /* empty */ {
 | TOK_ARITH_OP TOK_DECNUM
 {
   $$ = config_term($1, $2, TERM_DECNUM, &@$, st);
+}
+| TOK_V4_ANY
+{
+  $$ = config_term(NULL, $1, TERM_V4_ANY, &@$, st);
+}
+| TOK_V4ADDR
+{
+  $$ = config_term(NULL, $1, TERM_V4ADDR, &@$, st);
+}
+| TOK_V4CIDR
+{
+  $$ = config_term(NULL, $1, TERM_V4CIDR, &@$, st);
+}
+| TOK_V6ADDR
+{
+  $$ = config_term(NULL, $1, TERM_V6ADDR, &@$, st);
+}
+| TOK_V6CIDR
+{
+  $$ = config_term(NULL, $1, TERM_V6CIDR, &@$, st);
+}
+| TOK_FSID
+{
+  $$ = config_term(NULL, $1, TERM_FSID, &@$, st);
 }
 ;
 

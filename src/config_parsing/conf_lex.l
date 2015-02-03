@@ -69,6 +69,16 @@ LCURLY       "\{"
 RCURLY       "\}"
 MINUS        "\-"
 TWIDDLE      "\~"
+SPLAT        "\*"
+DOT          "\."
+
+CIDR         \/[1-9][0-9]{0,1}
+V4FIRST      [1-9][0-9]{0,2}
+V4OCTET      [0-9]{1,3}
+IPV4ADDR     {V4FIRST}{DOT}{V4OCTET}{DOT}{V4OCTET}{DOT}{V4OCTET}
+H16          [0-9A-Fa-f]{1,4}
+LS32         {H16}:{H16}|{IPV4ADDR}
+IPV6ADDR     ({H16}:){6}{LS32}|::({H16}:){5}{LS32}|({H16})?::({H16}:){4}{LS32}|(({H16}:){0,1}{H16})?::({H16}:){3}{LS32}|(({H16}:){0,2}{H16})?::({H16}:){2}{LS32}|(({H16}:){0,3}{H16})?::{H16}:{LS32}|(({H16}:){0,4}{H16})?::{LS32}|(({H16}:){0,5}{H16})?::{H16}|(({H16}:){0,6}{H16})?::
 
 SQUOTE       \'[^\']*\'
 DQUOTE       \"(\\.|[^\"])*\"
@@ -80,14 +90,13 @@ FALSE        [Ff][Aa][Ll][Ss][Ee]
 OFF          [Oo][Ff][Ff]
 OCTNUM       0[1-7][0-7]*
 HEXNUM       0[xX][0-9a-fA-F]+
-DECNUM       [1-9][0-9]*
+DECNUM       (0|[1-9][0-9]*)
 
 INCLPATH     \/?([a-zA-Z0-9\-\.\_])+(\/[a-zA-Z0-9\-\.\_]+)*
 PATHNAME     (\/[a-zA-Z0-9\-\.\_]+)
 LONGPATH     (\/?[a-zA-Z0-9\-\.\_]+(\/[a-zA-Z0-9\-\.\_]+)+)
-TOKEN_CHARS   [a-zA-Z0-9\._][a-zA-Z0-9\._\-]*
+TOKEN_CHARS   [a-zA-Z_][a-zA-Z0-9\._\-]*
 COMMENTEXT	 #.*$
-STRING_CHAR       [^\n]
 ID_CHARS [a-zA-Z_][a-zA-Z0-9_\-]*
 
 /* INCLUDE state is used for picking the name of the include file */
@@ -204,12 +213,6 @@ ID_CHARS [a-zA-Z_][a-zA-Z0-9_\-]*
 	return SQUOTE;
 }
 
-<TERM>{PATHNAME}|{LONGPATH}  { /* a POSIX pathname */
-	DEBUG_LEX("pathname:%s", yytext);
-	yylval->token = save_token(yytext, false, stp);
-	return TOK_PATH;
-}
-
 <TERM>{YES}|{TRUE}|{ON}  { /* a boolean TRUE */
 	DEBUG_LEX("boolean TRUE:%s", yytext);
 	yylval->token = save_token(yytext, false, stp);
@@ -228,6 +231,11 @@ ID_CHARS [a-zA-Z_][a-zA-Z0-9_\-]*
 	return TOK_ARITH_OP;
 }
 
+<TERM>({OCTNUM}|{DECNUM}|{HEXNUM}){DOT}({OCTNUM}|{DECNUM}|{HEXNUM}) { /* an FSID */
+	DEBUG_LEX(" FSID :%s", yytext);
+	yylval->token = save_token(yytext, false, stp);
+	return TOK_FSID;
+}
 
 <TERM>{OCTNUM}  { /* an octal number */
 	DEBUG_LEX(" octal number:%s", yytext);
@@ -247,7 +255,42 @@ ID_CHARS [a-zA-Z_][a-zA-Z0-9_\-]*
 	return TOK_DECNUM;
 }
 
-   /* Last resort terminal, gobbles anything other than white and ";" */
+<TERM>{SPLAT}|(0{DOT}0{DOT}0{DOT}0)  { /* v4 address wildcard, ganesha only, not IETF */
+	DEBUG_LEX(" V4 any:%s", yytext);
+	yylval->token = save_token(yytext, false, stp);
+	return TOK_V4_ANY;
+}
+
+<TERM>{IPV4ADDR}{CIDR}?  { /* V4 CIDR */
+	DEBUG_LEX(" IPv4 :%s", yytext);
+	yylval->token = save_token(yytext, false, stp);
+	if (index(yylval->token, '/') == NULL)
+		return TOK_V4ADDR;
+	else
+		return TOK_V4CIDR;
+}
+
+   /* Mere mortals are not supposed to grok the pattern for IPV6ADDR. */
+   /* I got it from the Flex manual. */
+
+<TERM>{IPV6ADDR}{CIDR}?  { /* V6 CIDR */
+	DEBUG_LEX(" IPv6 :%s", yytext);
+	yylval->token = save_token(yytext, false, stp);
+	if (index(yylval->token, '/') == NULL)
+		return TOK_V6ADDR;
+	else
+		return TOK_V6CIDR;
+}
+
+   /* Last resort terminals. PATHAME is here because it can confuse */
+   /* with a CIDR (precedence) and */
+   /* TOKEN_CHARS gobbles anything other than white and ";" */
+
+<TERM>{PATHNAME}|{LONGPATH}  { /* a POSIX pathname */
+	DEBUG_LEX("pathname:%s", yytext);
+	yylval->token = save_token(yytext, false, stp);
+	return TOK_PATH;
+}
 
 <TERM>{TOKEN_CHARS}  { /* start of a number or label/tag */
 	DEBUG_LEX("token value:%s",yytext);
