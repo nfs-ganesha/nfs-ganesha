@@ -168,6 +168,7 @@ static nfsstat4 ds_read_plus(struct fsal_ds_handle *const ds_pub,
 	int amount_read = 0;
 	struct dsread_arg rarg;
 	unsigned int *fh;
+	uint64_t filesize;
 	int errsv = 0;
 
 	fh = (int *)&(gpfs_handle->f_handle);
@@ -177,6 +178,7 @@ static nfsstat4 ds_read_plus(struct fsal_ds_handle *const ds_pub,
 	rarg.bufP = buffer;
 	rarg.offset = offset;
 	rarg.length = requested_length;
+	rarg.filesize = &filesize;
 	rarg.options = IO_SKIP_HOLE;
 
 	LogDebug(COMPONENT_PNFS,
@@ -197,6 +199,16 @@ static nfsstat4 ds_read_plus(struct fsal_ds_handle *const ds_pub,
 		info->io_content.what = NFS4_CONTENT_HOLE;
 		info->io_content.hole.di_offset = offset;     /*offset of hole*/
 		info->io_content.hole.di_length = requested_length;/*hole len*/
+
+		if ((requested_length + offset) > filesize) {
+			amount_read = filesize - offset;
+			if (amount_read < 0) {
+				amount_read = 0;
+				*end_of_file = true;
+			} else if (amount_read < requested_length)
+				*end_of_file = true;
+			info->io_content.hole.di_length = amount_read;
+		}
 	} else {
 		info->io_content.what = NFS4_CONTENT_DATA;
 		info->io_content.data.d_offset = offset + amount_read;
