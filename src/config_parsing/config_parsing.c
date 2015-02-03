@@ -395,6 +395,10 @@ errout:
 
 /**
  * @brief convert an fsid which is a "<64bit num>.<64bit num"
+ *
+ * NOTE: using assert() here because the parser has already
+ * validated so bad things have happened to the parse tree if...
+ *
  */
 
 static bool convert_fsid(struct config_node *node, void *param,
@@ -403,47 +407,64 @@ static bool convert_fsid(struct config_node *node, void *param,
 	struct fsal_fsid__ *fsid = (struct fsal_fsid__ *)param;
 	uint64_t major, minor;
 	char *endptr, *sp;
-	int errors = 0;
+	int base;
 
-	errno = 0;
-	major = strtoull(node->u.term.varvalue, &endptr, 10);
-	if (*node->u.term.varvalue != '\0' && *endptr == '.') {
-		if (errno != 0 || major == ULLONG_MAX) {
-			config_proc_error(node, err_type,
-					  "(%s) major is out of range",
-					  node->u.term.varvalue);
-			errors++;
-		}
-	} else {
+	if (node->type != TYPE_TERM) {
 		config_proc_error(node, err_type,
-				  "(%s) is not a filesystem id",
-				  node->u.term.varvalue);
-		errors++;
+				  "Expected an FSID, got a %s",
+				  (node->type == TYPE_ROOT
+				   ? "root node"
+				   : (node->type == TYPE_BLOCK
+				      ? "block" : "statement")));
+		goto errout;
 	}
-	if (errors == 0) {
-		sp = endptr + 1;
-		minor = strtoull(sp, &endptr, 10);
-		if (*sp != '\0' && *endptr == '\0') {
-			if (errno != 0 || minor == ULLONG_MAX) {
-				config_proc_error(node, err_type,
-						  "(%s) minor is out of range",
-						  node->u.term.varvalue);
-				errors++;
-			}
-		} else {
-			config_proc_error(node, err_type,
-					  "(%s) is not a filesystem id",
-					  node->u.term.varvalue);
-			errors++;
-		}
+	if (node->u.term.type != TERM_FSID) {
+		config_proc_error(node, err_type,
+				  "Expected an FSID, got a %s",
+				  config_term_desc(node->u.term.type));
+		goto errout;
 	}
-	if (errors == 0) {
-		fsid->major = major;
-		fsid->minor = minor;
+	errno = 0;
+	sp = node->u.term.varvalue;
+	if (sp[0] == '0') {
+		if (sp[1] == 'x' || sp[1] == 'X')
+			base = 16;
+		else
+			base = 8;
 	} else
-		err_type->invalid = true;
-	err_type->errors += errors;
-	return errors == 0;
+		base = 10;
+	major = strtoull(sp, &endptr, base);
+	assert(*endptr == '.');
+	if (errno != 0 || major == ULLONG_MAX) {
+		config_proc_error(node, err_type,
+				  "(%s) major is out of range",
+				  node->u.term.varvalue);
+		goto errout;
+	}
+	sp = endptr + 1;
+	if (sp[0] == '0') {
+		if (sp[1] == 'x' || sp[1] == 'X')
+			base = 16;
+		else
+			base = 8;
+	} else
+		base = 10;
+	minor = strtoull(sp, &endptr, base);
+	assert(*endptr == '\0');
+	if (errno != 0 || minor == ULLONG_MAX) {
+		config_proc_error(node, err_type,
+				  "(%s) minor is out of range",
+				  node->u.term.varvalue);
+		goto errout;
+	}
+	fsid->major = major;
+	fsid->minor = minor;
+	return true;
+
+errout:
+	err_type->invalid = true;
+	err_type->errors++;
+	return false;
 }
 
 /**
