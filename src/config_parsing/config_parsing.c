@@ -540,16 +540,27 @@ static bool convert_enum(struct config_node *node,
 
 static void convert_inet_addr(struct config_node *node,
 			     struct config_item *item,
-			     int ai_family,
-			     struct sockaddr *sock,
+			     sockaddr_t *sock,
 			     struct config_error_type *err_type)
 {
 	struct addrinfo hints;
 	struct addrinfo *res = NULL;
 	int rc;
 
+	if (node->u.term.type == TERM_V4ADDR ||
+	    node->u.term.type == TERM_V4_ANY)
+		hints.ai_family = AF_INET;
+	else if (node->u.term.type == TERM_V6ADDR)
+		hints.ai_family = AF_INET6;
+	else {
+		config_proc_error(node, err_type,
+				  "Expected an IP address, got a %s",
+				  config_term_desc(node->u.term.type));
+		err_type->invalid = true;
+		err_type->errors++;
+		return;
+	}
 	hints.ai_flags = AI_ADDRCONFIG;
-	hints.ai_family = ai_family;
 	hints.ai_socktype = 0;
 	hints.ai_protocol = 0;
 	rc = getaddrinfo(node->u.term.varvalue, NULL,
@@ -571,7 +582,9 @@ static void convert_inet_addr(struct config_node *node,
 		err_type->invalid = true;
 		err_type->errors++;
 	}
-	freeaddrinfo(res);
+	if (res != NULL)
+		freeaddrinfo(res);
+	return;
 }
 
 static enum config_type type_hint(enum term_type term_type)
@@ -718,10 +731,8 @@ static const char *config_type_str(enum config_type type)
 		return "CONFIG_BOOL";
 	case CONFIG_BOOLBIT:
 		return "CONFIG_BOOLBIT";
-	case CONFIG_IPV4_ADDR:
-		return "CONFIG_IPV4_ADDR";
-	case CONFIG_IPV6_ADDR:
-		return "CONFIG_IPV6_ADDR";
+	case CONFIG_IP_ADDR:
+		return "CONFIG_IP_ADDR";
 	case CONFIG_INET_PORT:
 		return "CONFIG_INET_PORT";
 	case CONFIG_BLOCK:
@@ -739,8 +750,7 @@ static bool do_block_init(struct config_node *blk_node,
 {
 	struct config_item *item;
 	caddr_t *param_addr;
-	struct sockaddr_in *sock;
-	struct sockaddr_in6 *sock6;
+	sockaddr_t *sock;
 	int rc;
 	int errors = 0;
 
@@ -826,31 +836,36 @@ static bool do_block_init(struct config_node *blk_node,
 				     item->u.lst.mask, item->u.lst.def,
 				     *(uint32_t *)param_addr);
 			break;
-		case CONFIG_IPV4_ADDR:
-			sock = (struct sockaddr_in *)param_addr;
-			memset(&sock->sin_addr, 0, sizeof(struct in_addr));
-			sock->sin_family = AF_INET;
-			rc = inet_pton(AF_INET,
-				       item->u.ipv4.def, &sock->sin_addr);
-			if (rc <= 0) {
+		case CONFIG_IP_ADDR:
+			sock = (sockaddr_t *)param_addr;
+			memset(sock, 0, sizeof(sockaddr_t));
+			errno = 0;
+			if (index(item->u.ip.def, ':') != NULL) {
+				sock->ss_family = AF_INET6;
+				rc = inet_pton(AF_INET6,
+					       item->u.ip.def,
+					       &((struct sockaddr_in6 *)sock)
+					       ->sin6_addr);
+			} else if (index(item->u.ip.def, '.') != NULL) {
+				sock->ss_family = AF_INET;
+				rc = inet_pton(AF_INET,
+					       item->u.ip.def,
+					       &((struct sockaddr_in *)sock)
+					       ->sin_addr);
+			} else {
 				config_proc_error(blk_node, err_type,
-						  "Cannot set IPv4 default for %s to %s",
+						  "Bad default for %s: %s",
 						  item->name,
-						  item->u.ipv4.def);
+						  item->u.ip.def);
 				errors++;
+				break;
 			}
-			break;
-		case CONFIG_IPV6_ADDR:
-			sock6 = (struct sockaddr_in6 *)param_addr;
-			memset(&sock6->sin6_addr, 0, sizeof(struct in6_addr));
-			sock6->sin6_family = AF_INET6;
-			rc = inet_pton(AF_INET6,
-				       item->u.ipv6.def, &sock6->sin6_addr);
 			if (rc <= 0) {
 				config_proc_error(blk_node, err_type,
-						  "Cannot set IPv4 default for %s to %s",
+						  "Cannot set IP default for %s to %s because %s",
 						  item->name,
-						  item->u.ipv6.def);
+						  item->u.ip.def,
+						  strerror(errno));
 				errors++;
 			}
 			break;
@@ -1152,14 +1167,9 @@ static int do_block_load(struct config_node *blk,
 					     item->u.lst.mask, val.ui32,
 					     *(uint32_t *)param_addr);
 				break;
-			case CONFIG_IPV4_ADDR:
-				convert_inet_addr(term_node, item, AF_INET,
-						  (struct sockaddr *)param_addr,
-						  err_type);
-				break;
-			case CONFIG_IPV6_ADDR:
-				convert_inet_addr(term_node, item, AF_INET6,
-						  (struct sockaddr *)param_addr,
+			case CONFIG_IP_ADDR:
+				convert_inet_addr(term_node, item,
+						  (sockaddr_t *)param_addr,
 						  err_type);
 				break;
 			case CONFIG_INET_PORT:

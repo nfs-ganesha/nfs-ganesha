@@ -55,8 +55,7 @@ enum config_type {
 	CONFIG_TOKEN,
 	CONFIG_BOOL,
 	CONFIG_BOOLBIT,
-	CONFIG_IPV4_ADDR,
-	CONFIG_IPV6_ADDR,
+	CONFIG_IP_ADDR,
 	CONFIG_INET_PORT,
 	CONFIG_BLOCK,
 	CONFIG_PROC
@@ -260,12 +259,9 @@ struct config_item {
 			int maxsize;
 			const char *def;
 		} str;
-		struct { /* CONFIG_IPV4_ADDR */
+		struct { /* CONFIG_IP_ADDR */
 			const char *def;
-		} ipv4;
-		struct { /* CONFIG_IPV6_ADDR */
-			const char *def;
-		} ipv6;
+		} ip;
 		struct { /* CONFIG_INT16 */
 			int16_t minval;
 			int16_t maxval;
@@ -393,9 +389,7 @@ struct config_item {
  *
  * There are a few specialized item entries
  *
- * CONF_ITEM_IPV4_ADDR processes an IPv4 address specification
- *
- * CONF_ITEM_IPV6_ADDR processes an IPv6 address specification
+ * CONF_ITEM_IP_ADDR processes an IP (both v4 and v6)  address specification
  *
  * CONF_ITEM_INET_PORT processes an unsigned 16 bit integer in
  * network byte order.
@@ -628,23 +622,17 @@ struct config_item {
 	  .u.str.def = _def_,			    \
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
-#define CONF_ITEM_IPV4_ADDR(_name_, _def_, _struct_, _mem_) \
+#define CONF_ITEM_IP_ADDR(_name_, _def_, _struct_, _mem_) \
 	{ .name = _name_,			    \
-	  .type = CONFIG_IPV4_ADDR,		    \
-	  .u.ipv4.def = _def_,			    \
+	  .type = CONFIG_IP_ADDR,		    \
+	  .u.ip.def = _def_,			    \
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
-#define CONF_MAND_IPV4_ADDR(_name_, _def_, _struct_, _mem_) \
+#define CONF_MAND_IP_ADDR(_name_, _def_, _struct_, _mem_) \
 	{ .name = _name_,			    \
-	  .type = CONFIG_IPV4_ADDR,		    \
+	  .type = CONFIG_IP_ADDR,		    \
 	  .flags = CONFIG_UNIQUE|CONFIG_MANDATORY,  \
-	  .u.ipv4.def = _def_,			    \
-	  .off = offsetof(struct _struct_, _mem_)   \
-	}
-#define CONF_ITEM_IPV6_ADDR(_name_, _def_, _struct_, _mem_) \
-	{ .name = _name_,			    \
-	  .type = CONFIG_IPV6_ADDR,		    \
-	  .u.ipv6.def = _def_,			    \
+	  .u.ip.def = _def_,			    \
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
 

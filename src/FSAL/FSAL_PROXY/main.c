@@ -76,8 +76,8 @@ static struct config_item_list sec_types[] = {
 static struct config_item proxy_remote_params[] = {
 	CONF_ITEM_UI32("Retry_SleepTime", 0, 60, 10,
 		       pxy_client_params, retry_sleeptime),
-	CONF_MAND_IPV4_ADDR("Srv_Addr", "127.0.0.1",
-			    pxy_client_params, srv_addr),
+	CONF_MAND_IP_ADDR("Srv_Addr", "127.0.0.1",
+			  pxy_client_params, srv_addr),
 	CONF_ITEM_UI32("NFS_Service", 0, UINT32_MAX, 100003,
 		       pxy_client_params, srv_prognum),
 	CONF_ITEM_UI32("NFS_SendSize", 512, FSAL_MAXIOSIZE, 32768,

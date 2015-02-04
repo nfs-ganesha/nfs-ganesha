@@ -114,8 +114,8 @@ static int dataserver_commit(void *node, void *link_mem, void *self_struct,
 }
 
 static struct config_item ds_params[] = {
-	CONF_MAND_IPV4_ADDR("DS_Addr", "127.0.0.1",
-			    lustre_pnfs_ds_parameter, ipaddr),
+	CONF_MAND_IP_ADDR("DS_Addr", "127.0.0.1",
+			  lustre_pnfs_ds_parameter, ipaddr),
 	CONF_MAND_INET_PORT("DS_Port", 1024, UINT16_MAX, 3260,
 		       lustre_pnfs_ds_parameter, ipport), /* use iscsi port */
 	CONF_MAND_UI32("DS_Id", 1, UINT32_MAX, 1,
