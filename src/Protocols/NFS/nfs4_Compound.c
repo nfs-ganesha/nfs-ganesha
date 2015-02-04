@@ -416,6 +416,15 @@ static const struct nfs4_op_desc optabv4[] = {
 				.exp_perm_flags = 0},
 };
 
+/** Define the last valid NFS v4 op for each minor version.
+ *
+ */
+nfs_opnum4 LastOpcode[] = {
+	NFS4_OP_RELEASE_LOCKOWNER,
+	NFS4_OP_RECLAIM_COMPLETE,
+	NFS4_OP_WRITE_SAME
+};
+
 /**
  * @brief The NFS PROC4 COMPOUND
  *
@@ -446,7 +455,7 @@ int nfs4_Compound(nfs_arg_t *arg,
 	unsigned int i = 0;
 	int status = NFS4_OK;
 	compound_data_t data;
-	int opcode;
+	nfs_opnum4 opcode;
 	const uint32_t compound4_minor = arg->arg_compound4.minorversion;
 	const uint32_t argarray_len = arg->arg_compound4.argarray.argarray_len;
 	nfs_argop4 * const argarray = arg->arg_compound4.argarray.argarray_val;
@@ -620,24 +629,20 @@ int nfs4_Compound(nfs_arg_t *arg,
 		now(&ts);
 		op_start_time = timespec_diff(&ServerBootTime, &ts);
 		opcode = argarray[i].argop;
-		if (compound4_minor == 0) {
-			if (opcode > NFS4_OP_RELEASE_LOCKOWNER)
-				opcode = 0;
-		} else {
-			/* already range checked for minor version mismatch,
-			 * must be 4.1
-			 */
-			if (data.session != NULL) {
-				if (data.session->fore_channel_attrs.
-				    ca_maxoperations == i) {
-					status = NFS4ERR_TOO_MANY_OPS;
-					goto bad_op_state;
-				}
-			}
 
-			if (opcode > NFS4_OP_LAST_ONE)
-				opcode = 0;
+		/* Handle opcode overflow */
+		if (opcode > LastOpcode[compound4_minor])
+			opcode = 0;
+
+		if (compound4_minor > 0 &&
+		    data.session != NULL) {
+			if (data.session->fore_channel_attrs.
+			    ca_maxoperations == i) {
+				status = NFS4ERR_TOO_MANY_OPS;
+				goto bad_op_state;
+			}
 		}
+
 		LogDebug(COMPONENT_NFS_V4, "Request %d: opcode %d is %s", i,
 			 argarray[i].argop, optabv4[opcode].name);
 		perm_flags =
