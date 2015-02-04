@@ -379,7 +379,7 @@ void dec_state_t_ref(struct state_t *state)
 		return;
 	}
 
-	assert(pthread_mutex_destroy(&state->state_mutex) == 0);
+	pthread_mutex_destroy(&state->state_mutex);
 
 	pool_free(state_v4_pool, state);
 

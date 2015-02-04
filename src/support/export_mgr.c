@@ -230,7 +230,7 @@ struct gsh_export *alloc_export(void)
 	glist_init(&export->mounted_exports_list);
 	glist_init(&export->clients);
 
-	assert(pthread_rwlock_init(&export->lock, NULL) == 0);
+	pthread_rwlock_init(&export->lock, NULL);
 
 	return export;
 }
@@ -254,7 +254,7 @@ void free_export(struct gsh_export *export)
 	export_st = container_of(export, struct export_stats, export);
 	server_stats_free(&export_st->st);
 	gsh_free(export_st);
-	assert(pthread_rwlock_destroy(&export->lock) == 0);
+	pthread_rwlock_destroy(&export->lock);
 }
 
 
