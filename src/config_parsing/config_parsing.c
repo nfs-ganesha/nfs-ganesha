@@ -980,9 +980,34 @@ static int do_block_load(struct config_node *blk,
 				     "%p name=%s type=%s",
 				     param_addr, item->name,
 				     config_type_str(item->type));
+			if (glist_empty(&node->u.nterm.sub_nodes)) {
+				config_proc_error(node, err_type,
+						  "%s %s is empty",
+						  (node->type == TYPE_STMT
+						   ? "Statement"
+						   : "Block"),
+						  node->u.nterm.name);
+				err_type->empty = true;
+				err_type->errors++;
+				node = next_node;
+				continue;
+			}
 			term_node = glist_first_entry(&node->u.nterm.sub_nodes,
 						      struct config_node,
 						      node);
+			if ((item->type != CONFIG_BLOCK &&
+			     item->type != CONFIG_PROC &&
+			     item->type != CONFIG_LIST) &&
+			    glist_length(&node->u.nterm.sub_nodes) > 1) {
+				config_proc_error(node, err_type,
+						  "%s can have only one option.  First one is (%s)",
+						  node->u.nterm.name,
+						  term_node->u.term.varvalue);
+				err_type->invalid = true;
+				err_type->errors++;
+				node = next_node;
+				continue;
+			}
 			switch (item->type) {
 			case CONFIG_NULL:
 				break;
@@ -1833,6 +1858,7 @@ int load_config_from_parse(config_file_t config,
 	struct glist_head *ns;
 	char *blkname = conf_blk->blk_desc.name;
 	int found = 0;
+	int prev_errs = err_type->errors;
 	void *blk_mem = NULL;
 
 	if (tree == NULL) {
@@ -1860,19 +1886,6 @@ int load_config_from_parse(config_file_t config,
 		}
 	}
 	glist_for_each(ns, &tree->root.u.nterm.sub_nodes) {
-#ifdef DS_ONLY_WAS
-		/* recent changes to parsing may prevent this,
-		 * but retain code here for future reference.
-		 * -- WAS
-		 */
-		if (ns == NULL) {
-			config_proc_error(&tree->root, err_type,
-					  "Missing sub_node for (%s)",
-					  blkname);
-			node = NULL;
-			break;
-		}
-#endif
 		node = glist_entry(ns, struct config_node, node);
 		if (node->type == TYPE_BLOCK &&
 		    strcasecmp(blkname, node->u.nterm.name) == 0) {
@@ -1915,12 +1928,12 @@ int load_config_from_parse(config_file_t config,
 			err_type->init = true;
 		}
 	}
-	if (err_type->errors != 0) {
+	if (err_type->errors > prev_errs) {
 		char *errstr = err_type_str(err_type);
 
 		config_proc_error(node, err_type,
 			 "%d %s errors found block %s",
-			 err_type->errors,
+			 err_type->errors - prev_errs,
 			 errstr != NULL ? errstr : "unknown",
 			 blkname);
 		if (errstr != NULL)

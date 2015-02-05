@@ -155,7 +155,10 @@ config:
 
 
 deflist:
-definition
+{ /* empty */
+  $$ = NULL;
+}
+| definition
 {
   $$ = $1;
 }
@@ -211,7 +214,10 @@ block:
  */
 
 exprlist:
-expression
+{ /* empty */
+  $$ = NULL;
+}
+| expression
 {
   $$ = $1;
 }
@@ -387,12 +393,6 @@ struct config_node *config_block(char *blockname,
 		st->err_type->empty = true;
 		return NULL;
 	}
-	if (list == NULL) {
-		config_parse_error(yylloc_param, st,
-				   "Block %s is empty", blockname);
-		st->err_type->empty = true;
-		return NULL;
-	}
 	node = gsh_calloc(1, sizeof(struct config_node));
 	if (node == NULL) {
 		st->err_type->resource = true;
@@ -404,8 +404,10 @@ struct config_node *config_block(char *blockname,
 	node->linenumber = yylloc_param->first_line;
 	node->type = TYPE_BLOCK;
 	glist_init(&node->u.nterm.sub_nodes);
-	glist_add_tail(&list->node, &node->u.nterm.sub_nodes);
-	link_node(node);
+	if (list != NULL) {
+		glist_add_tail(&list->node, &node->u.nterm.sub_nodes);
+		link_node(node);
+	}
 	return node;
 }
 
@@ -495,13 +497,6 @@ struct config_node *config_stmt(char *varname,
 		st->err_type->empty = true;
 		return NULL;
 	}
-	if (exprlist == NULL) {
-		config_parse_error(yylloc_param, st,
-				   "Parameter (%s) has no option values",
-				   varname);
-		st->err_type->empty = true;
-		return NULL;
-	}
 	node = gsh_calloc(1, sizeof(struct config_node));
 	if (node == NULL) {
 		st->err_type->resource = true;
@@ -513,7 +508,8 @@ struct config_node *config_stmt(char *varname,
 	node->linenumber = yylloc_param->first_line;
 	node->type = TYPE_STMT;
 	node->u.nterm.name = varname;
-	glist_add_tail(&exprlist->node, &node->u.nterm.sub_nodes);
+	if (exprlist != NULL)
+		glist_add_tail(&exprlist->node, &node->u.nterm.sub_nodes);
 	return node;
 }
 
