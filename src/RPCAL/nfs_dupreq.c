@@ -316,13 +316,17 @@ void dupreq2_pkginit(void)
  * @return IPPROTO_UDP or IPPROTO_TCP.
  */
 static inline unsigned int get_ipproto_by_xprt(SVCXPRT *xprt)
-{				/* XXX correct, but inelegant */
-	if (xprt->xp_p2 != NULL)
+{
+	switch (xprt->xp_type) {
+	case XPRT_UDP:
 		return IPPROTO_UDP;
-	else if (xprt->xp_p1 != NULL)
+	case XPRT_TCP:
+	case XPRT_TCP_RENDEZVOUS:
 		return IPPROTO_TCP;
-	else
-		return IPPROTO_IP;	/* Dummy output */
+	default:
+		break;
+	}
+	return IPPROTO_IP;	/* Dummy output */
 }
 
 /**
