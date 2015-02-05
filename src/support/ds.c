@@ -484,7 +484,7 @@ void server_pkginit(void)
 		&rwlock_attr,
 		PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
 #endif
-	pthread_rwlock_init(&server_by_id.lock, &rwlock_attr);
+	PTHREAD_RWLOCK_init(&server_by_id.lock, &rwlock_attr);
 	avltree_init(&server_by_id.t, server_id_cmpf, 0);
 	memset(&server_by_id.cache, 0, sizeof(server_by_id.cache));
 }

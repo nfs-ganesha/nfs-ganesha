@@ -90,7 +90,7 @@ void _9p_FlushFlushHook(struct _9p_conn *conn, int tag, unsigned long sequence)
 		 * --AND-- is older than the flush request.
 		 **/
 		if ((hook->tag == tag) && (hook->sequence < sequence)) {
-			pthread_cond_init(&fc.condition, NULL);
+			PTHREAD_COND_init(&fc.condition, NULL);
 			fc.reply_sent = 0;
 			hook->condition = &fc;
 			glist_del(&hook->list);

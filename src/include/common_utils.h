@@ -83,6 +83,53 @@ extern int portable_clock_gettime(struct timespec *ts);
 #endif
 
 /**
+ * @brief Logging rwlock initialization
+ *
+ * @param[in,out] _lock The rwlock to initialize
+ * @param[in,out] _attr The attributes used while initializing the lock
+ */
+#define PTHREAD_RWLOCK_init(_lock, _attr)				\
+	do {								\
+		int rc;							\
+									\
+		rc = pthread_rwlock_init(_lock, _attr);			\
+		if (rc == 0) {						\
+			LogFullDebug(COMPONENT_RW_LOCK,			\
+				     "Init rwlock %p (%s) at %s:%d",	\
+				     _lock, #_lock,			\
+				     __FILE__, __LINE__);		\
+		} else {						\
+			LogCrit(COMPONENT_RW_LOCK,			\
+				"Error %d, Init rwlock %p (%s) "	\
+				"at %s:%d", rc, _lock, #_lock,		\
+				__FILE__, __LINE__);			\
+		}							\
+	} while (0)
+
+/**
+ * @brief Logging rwlock destroy
+ *
+ * @param[in,out] _lock The rwlock to destroy
+ */
+#define PTHREAD_RWLOCK_destroy(_lock)					\
+	do {								\
+		int rc;							\
+									\
+		rc = pthread_rwlock_destroy(_lock);			\
+		if (rc == 0) {						\
+			LogFullDebug(COMPONENT_RW_LOCK,			\
+				     "Destroy mutex %p (%s) at %s:%d",	\
+				     _lock, #_lock,			\
+				     __FILE__, __LINE__);		\
+		} else {						\
+			LogCrit(COMPONENT_RW_LOCK,			\
+				"Error %d, Destroy mutex %p (%s) "	\
+				"at %s:%d", rc, _lock, #_lock,		\
+				__FILE__, __LINE__);			\
+		}							\
+	} while (0)
+
+/**
  * @brief Logging write-lock
  *
  * @param[in,out] _lock Read-write lock
@@ -198,6 +245,103 @@ extern int portable_clock_gettime(struct timespec *ts);
 			LogCrit(COMPONENT_RW_LOCK,			\
 				"Error %d, releasing mutex %p (%s) "	\
 				"at %s:%d", rc, _mtx, #_mtx,		\
+				__FILE__, __LINE__);			\
+		}							\
+	} while (0)
+
+/**
+ * @brief Logging mutex initialization
+ *
+ * @param[in,out] _mtx The mutex to initialize
+ * @param[in,out] _attr The attributes used while initializing the mutex
+ */
+#define PTHREAD_MUTEX_init(_mtx, _attr)					\
+	do {								\
+		int rc;							\
+									\
+		rc = pthread_mutex_init(_mtx, _attr);			\
+		if (rc == 0) {						\
+			LogFullDebug(COMPONENT_RW_LOCK,			\
+				     "Init mutex %p (%s) at %s:%d",	\
+				     _mtx, #_mtx,			\
+				     __FILE__, __LINE__);		\
+		} else {						\
+			LogCrit(COMPONENT_RW_LOCK,			\
+				"Error %d, Init mutex %p (%s) "		\
+				"at %s:%d", rc, _mtx, #_mtx,		\
+				__FILE__, __LINE__);			\
+		}							\
+	} while (0)
+
+/**
+ * @brief Logging mutex destroy
+ *
+ * @param[in,out] _mtx The mutex to destroy
+ */
+
+#define PTHREAD_MUTEX_destroy(_mtx)					\
+	do {								\
+		int rc;							\
+									\
+		rc = pthread_mutex_destroy(_mtx);			\
+		if (rc == 0) {						\
+			LogFullDebug(COMPONENT_RW_LOCK,			\
+				     "Destroy mutex %p (%s) at %s:%d",	\
+				     _mtx, #_mtx,			\
+				     __FILE__, __LINE__);		\
+		} else {						\
+			LogCrit(COMPONENT_RW_LOCK,			\
+				"Error %d, Destroy mutex %p (%s) "	\
+				"at %s:%d", rc, _mtx, #_mtx,		\
+				__FILE__, __LINE__);			\
+		}							\
+	} while (0)
+
+/**
+ * @brief Logging condition variable initialization
+ *
+ * @param[in,out] _cond The condition variable to initialize
+ * @param[in,out] _attr The attributes used while initializing the
+ *			condition variable
+ */
+#define PTHREAD_COND_init(_cond, _attr)					\
+	do {								\
+		int rc;							\
+									\
+		rc = pthread_cond_init(_cond, _attr);			\
+		if (rc == 0) {						\
+			LogFullDebug(COMPONENT_RW_LOCK,			\
+				     "Init cond %p (%s) at %s:%d",	\
+				     _cond, #_cond,			\
+				     __FILE__, __LINE__);		\
+		} else {						\
+			LogCrit(COMPONENT_RW_LOCK,			\
+				"Error %d, Init cond %p (%s) "		\
+				"at %s:%d", rc, _cond, #_cond,		\
+				__FILE__, __LINE__);			\
+		}							\
+	} while (0)
+
+/**
+ * @brief Logging condtion variable destroy
+ *
+ * @param[in,out] _cond The condition variable to destroy
+ */
+
+#define PTHREAD_COND_destroy(_cond)					\
+	do {								\
+		int rc;							\
+									\
+		rc = pthread_cond_destroy(_cond);			\
+		if (rc == 0) {						\
+			LogFullDebug(COMPONENT_RW_LOCK,			\
+				     "Destroy cond %p (%s) at %s:%d",	\
+				     _cond, #_cond,			\
+				     __FILE__, __LINE__);		\
+		} else {						\
+			LogCrit(COMPONENT_RW_LOCK,			\
+				"Error %d, Destroy cond %p (%s) "	\
+				"at %s:%d", rc, _cond, #_cond,		\
 				__FILE__, __LINE__);			\
 		}							\
 	} while (0)

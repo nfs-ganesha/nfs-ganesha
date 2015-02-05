@@ -773,7 +773,7 @@ void free_nsm_client(state_nsm_client_t *client)
 	if (client->ssc_client != NULL)
 		put_gsh_client(client->ssc_client);
 
-	pthread_mutex_destroy(&client->ssc_mutex);
+	PTHREAD_MUTEX_destroy(&client->ssc_mutex);
 
 	gsh_free(client);
 }
@@ -986,13 +986,13 @@ state_nsm_client_t *get_nsm_client(care_t care, SVCXPRT *xprt,
 	/* Copy everything over */
 	memcpy(pclient, &key, sizeof(key));
 
-	pthread_mutex_init(&pclient->ssc_mutex, NULL);
+	PTHREAD_MUTEX_init(&pclient->ssc_mutex, NULL);
 
 	pclient->ssc_nlm_caller_name = gsh_strdup(key.ssc_nlm_caller_name);
 
 	if (pclient->ssc_nlm_caller_name == NULL) {
 		/* Discard the created client */
-		pthread_mutex_destroy(&pclient->ssc_mutex);
+		PTHREAD_MUTEX_destroy(&pclient->ssc_mutex);
 		free_nsm_client(pclient);
 		return NULL;
 	}
@@ -1026,7 +1026,7 @@ state_nsm_client_t *get_nsm_client(care_t care, SVCXPRT *xprt,
 		LogCrit(COMPONENT_STATE, "Error %s, inserting {%s}",
 			hash_table_err_to_str(rc), str);
 
-		pthread_mutex_destroy(&pclient->ssc_mutex);
+		PTHREAD_MUTEX_destroy(&pclient->ssc_mutex);
 		free_nsm_client(pclient);
 
 		return NULL;

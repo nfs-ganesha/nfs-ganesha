@@ -188,7 +188,7 @@ static struct group_data *uid2grp_allocate_by_name(
 		return NULL;
 	}
 
-	pthread_mutex_init(&gdata->lock, NULL);
+	PTHREAD_MUTEX_init(&gdata->lock, NULL);
 	gdata->epoch = time(NULL);
 	gdata->refcount = 0;
 	return gdata;
@@ -231,7 +231,7 @@ static struct group_data *uid2grp_allocate_by_uid(uid_t uid)
 		return NULL;
 	}
 
-	pthread_mutex_init(&gdata->lock, NULL);
+	PTHREAD_MUTEX_init(&gdata->lock, NULL);
 	gdata->epoch = time(NULL);
 	gdata->refcount = 0;
 	return gdata;

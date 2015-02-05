@@ -347,10 +347,10 @@ void free_client_id(nfs_client_id_t *clientid)
 		}
 	}
 
-	pthread_mutex_destroy(&clientid->cid_mutex);
-	pthread_mutex_destroy(&clientid->cid_owner.so_mutex);
+	PTHREAD_MUTEX_destroy(&clientid->cid_mutex);
+	PTHREAD_MUTEX_destroy(&clientid->cid_owner.so_mutex);
 	if (clientid->cid_minorversion == 0) {
-		pthread_mutex_destroy(&clientid->cid_cb.v40.cb_chan.mtx);
+		PTHREAD_MUTEX_destroy(&clientid->cid_cb.v40.cb_chan.mtx);
 	}
 
 	put_gsh_client(clientid->gsh_client);
@@ -540,15 +540,15 @@ nfs_client_id_t *create_client_id(clientid4 clientid,
 		return NULL;
 	}
 
-	pthread_mutex_init(&client_rec->cid_mutex, NULL);
+	PTHREAD_MUTEX_init(&client_rec->cid_mutex, NULL);
 
 	owner = &client_rec->cid_owner;
 
-	pthread_mutex_init(&owner->so_mutex, NULL);
+	PTHREAD_MUTEX_init(&owner->so_mutex, NULL);
 
 	/* initialize the chan mutex for v4 */
 	if (minorversion == 0) {
-		pthread_mutex_init(&client_rec->cid_cb.v40.cb_chan.mtx, NULL);
+		PTHREAD_MUTEX_init(&client_rec->cid_cb.v40.cb_chan.mtx, NULL);
 		client_rec->cid_cb.v40.cb_chan_down = true;
 		client_rec->first_path_down_resp_time = 0;
 	}
@@ -1373,7 +1373,7 @@ int32_t inc_client_record_ref(nfs_client_record_t *record)
  */
 void free_client_record(nfs_client_record_t *record)
 {
-	pthread_mutex_destroy(&record->cr_mutex);
+	PTHREAD_MUTEX_destroy(&record->cr_mutex);
 
 	gsh_free(record);
 }
@@ -1650,7 +1650,7 @@ nfs_client_record_t *get_client_record(const char *const value,
 		return NULL;
 	}
 
-	pthread_mutex_init(&record->cr_mutex, NULL);
+	PTHREAD_MUTEX_init(&record->cr_mutex, NULL);
 
 	/* Use same record for record and key */
 	buffval.addr = record;

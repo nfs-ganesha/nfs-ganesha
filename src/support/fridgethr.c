@@ -166,7 +166,7 @@ int fridgethr_init(struct fridgethr **frout, const char *s,
 			break;
 
 		case fridgethr_defer_block:
-			pthread_cond_init(&frobj->deferment.block.cond, NULL);
+			PTHREAD_COND_init(&frobj->deferment.block.cond, NULL);
 			frobj->deferment.block.waiters = 0;
 			break;
 
@@ -205,7 +205,7 @@ int fridgethr_init(struct fridgethr **frout, const char *s,
 
 	if (rc != 0) {
 		if (mutexinit) {
-			pthread_mutex_destroy(&frobj->mtx);
+			PTHREAD_MUTEX_destroy(&frobj->mtx);
 			mutexinit = false;
 		}
 		if (attrinit) {
@@ -233,7 +233,7 @@ int fridgethr_init(struct fridgethr **frout, const char *s,
 
 void fridgethr_destroy(struct fridgethr *fr)
 {
-	pthread_mutex_destroy(&fr->mtx);
+	PTHREAD_MUTEX_destroy(&fr->mtx);
 	pthread_attr_destroy(&fr->attr);
 	gsh_free(fr->s);
 	gsh_free(fr);
@@ -570,8 +570,8 @@ static void *fridgethr_start_routine(void *arg)
 	if (fr->p.thread_finalize)
 		fr->p.thread_finalize(&fe->ctx);
 
-	pthread_mutex_destroy(&fe->ctx.mtx);
-	pthread_cond_destroy(&fe->ctx.cv);
+	PTHREAD_MUTEX_destroy(&fe->ctx.mtx);
+	PTHREAD_COND_destroy(&fe->ctx.cv);
 	gsh_free(fe);
 	fe = NULL;
 	/* At this point the fridge entry no longer exists and must
@@ -658,10 +658,10 @@ static int fridgethr_spawn(struct fridgethr *fr,
  create_err:
 
 	if (conditioned)
-		pthread_cond_destroy(&fe->ctx.cv);
+		PTHREAD_COND_destroy(&fe->ctx.cv);
 
 	if (mutexed)
-		pthread_mutex_destroy(&fe->ctx.mtx);
+		PTHREAD_MUTEX_destroy(&fe->ctx.mtx);
 
 	if (fe != NULL)
 		gsh_free(fe);

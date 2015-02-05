@@ -240,7 +240,7 @@ lru_init_queues(void)
 		struct lru_q_lane *qlane = &LRU[ix];
 
 		/* one mutex per lane */
-		pthread_mutex_init(&qlane->mtx, NULL);
+		PTHREAD_MUTEX_init(&qlane->mtx, NULL);
 
 		/* init iterator */
 		qlane->iter.active = false;
@@ -419,9 +419,9 @@ cache_inode_lru_clean(cache_entry_t *entry)
 
 	/* Finalize last bits of the cache entry */
 	cache_inode_key_delete(&entry->fh_hk.key);
-	pthread_rwlock_destroy(&entry->content_lock);
-	pthread_rwlock_destroy(&entry->state_lock);
-	pthread_rwlock_destroy(&entry->attr_lock);
+	PTHREAD_RWLOCK_destroy(&entry->content_lock);
+	PTHREAD_RWLOCK_destroy(&entry->state_lock);
+	PTHREAD_RWLOCK_destroy(&entry->attr_lock);
 }
 
 /**
@@ -1139,10 +1139,10 @@ fail:
 		rc, strerror(rc));
 
 	if (attr_lock_init)
-		pthread_rwlock_destroy(&entry->attr_lock);
+		PTHREAD_RWLOCK_destroy(&entry->attr_lock);
 
 	if (content_lock_init)
-		pthread_rwlock_destroy(&entry->content_lock);
+		PTHREAD_RWLOCK_destroy(&entry->content_lock);
 
 	return false;
 }

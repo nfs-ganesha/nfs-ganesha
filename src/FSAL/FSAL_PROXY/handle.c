@@ -969,8 +969,8 @@ int pxy_init_rpc(const struct pxy_fsal_module *pm)
 			free_io_contexts();
 			return ENOMEM;
 		}
-		pthread_mutex_init(&c->iolock, NULL);
-		pthread_cond_init(&c->iowait, NULL);
+		PTHREAD_MUTEX_init(&c->iolock, NULL);
+		PTHREAD_COND_init(&c->iowait, NULL);
 		c->nfs_prog = pm->special.srv_prognum;
 		c->sendbuf_sz = pm->special.srv_sendsize;
 		c->recvbuf_sz = pm->special.srv_recvsize;

@@ -201,7 +201,7 @@ out:
  */
 void init_dbus_broadcast()
 {
-	pthread_mutex_init(&dbus_bcast_lock, NULL);
+	PTHREAD_MUTEX_init(&dbus_bcast_lock, NULL);
 	glist_init(&dbus_broadcast_list);
 
 	if (nfs_param.core_param.heartbeat_freq > 0)

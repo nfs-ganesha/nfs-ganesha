@@ -914,7 +914,7 @@ void free_state_owner(state_owner_t *owner)
 	if (owner->so_owner_val != NULL)
 		gsh_free(owner->so_owner_val);
 
-	pthread_mutex_destroy(&owner->so_mutex);
+	PTHREAD_MUTEX_destroy(&owner->so_mutex);
 
 #ifdef DEBUG_SAL
 	pthread_mutex_lock(&all_state_owners_mutex);
@@ -1164,7 +1164,7 @@ state_owner_t *get_state_owner(care_t care, state_owner_t *key,
 	/* Copy everything over */
 	memcpy(owner, key, sizeof(*key));
 
-	pthread_mutex_init(&owner->so_mutex, NULL);
+	PTHREAD_MUTEX_init(&owner->so_mutex, NULL);
 
 #ifdef DEBUG_SAL
 	pthread_mutex_lock(&all_state_owners_mutex);

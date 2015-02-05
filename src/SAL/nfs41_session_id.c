@@ -244,10 +244,10 @@ int32_t dec_session_ref(nfs41_session_t *session)
 		/* Destroy this session's mutexes and condition variable */
 
 		for (i = 0; i < NFS41_NB_SLOTS; i++)
-			pthread_mutex_destroy(&session->slots[i].lock);
+			PTHREAD_MUTEX_destroy(&session->slots[i].lock);
 
-		pthread_cond_destroy(&session->cb_cond);
-		pthread_mutex_destroy(&session->cb_mutex);
+		PTHREAD_COND_destroy(&session->cb_cond);
+		PTHREAD_MUTEX_destroy(&session->cb_mutex);
 
 		/* Destroy the session's back channel (if any) */
 		if (session->flags & session_bc_up)

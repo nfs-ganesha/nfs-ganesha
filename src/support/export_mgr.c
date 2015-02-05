@@ -230,7 +230,7 @@ struct gsh_export *alloc_export(void)
 	glist_init(&export->mounted_exports_list);
 	glist_init(&export->clients);
 
-	pthread_rwlock_init(&export->lock, NULL);
+	PTHREAD_RWLOCK_init(&export->lock, NULL);
 
 	return export;
 }
@@ -254,7 +254,7 @@ void free_export(struct gsh_export *export)
 	export_st = container_of(export, struct export_stats, export);
 	server_stats_free(&export_st->st);
 	gsh_free(export_st);
-	pthread_rwlock_destroy(&export->lock);
+	PTHREAD_RWLOCK_destroy(&export->lock);
 }
 
 
@@ -1616,7 +1616,7 @@ void export_pkginit(void)
 		&rwlock_attr,
 		PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
 #endif
-	pthread_rwlock_init(&export_by_id.lock, &rwlock_attr);
+	PTHREAD_RWLOCK_init(&export_by_id.lock, &rwlock_attr);
 	avltree_init(&export_by_id.t, export_id_cmpf, 0);
 	memset(&export_by_id.cache, 0, sizeof(export_by_id.cache));
 

@@ -372,7 +372,7 @@ static inline drc_t *alloc_tcp_drc(enum drc_type dtype)
 	drc->npart = nfs_param.core_param.drc.tcp.npart;
 	drc->hiwat = nfs_param.core_param.drc.udp.hiwat;
 
-	pthread_mutex_init(&drc->mtx, NULL);
+	PTHREAD_MUTEX_init(&drc->mtx, NULL);
 
 	/* init dict */
 	code =
@@ -416,7 +416,7 @@ static inline void free_tcp_drc(drc_t *drc)
 {
 	if (drc->xt.tree[0].cache)
 		gsh_free(drc->xt.tree[0].cache);
-	pthread_mutex_destroy(&drc->mtx);
+	PTHREAD_MUTEX_destroy(&drc->mtx);
 	LogFullDebug(COMPONENT_DUPREQ, "free TCP drc %p", drc);
 	pool_free(tcp_drc_pool, drc);
 }
@@ -805,7 +805,7 @@ static inline void nfs_dupreq_free_dupreq(dupreq_entry_t *dv)
 		func->free_function(dv->res);
 		free_nfs_res(dv->res);
 	}
-	pthread_mutex_destroy(&dv->mtx);
+	PTHREAD_MUTEX_destroy(&dv->mtx);
 	pool_free(dupreq_pool, dv);
 }
 

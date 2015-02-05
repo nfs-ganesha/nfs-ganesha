@@ -148,7 +148,7 @@ void fsal_obj_handle_init(struct fsal_obj_handle *obj, struct fsal_export *exp,
 		&attrs,
 		PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
 #endif
-	pthread_rwlock_init(&obj->lock, &attrs);
+	PTHREAD_RWLOCK_init(&obj->lock, &attrs);
 
 	PTHREAD_RWLOCK_wrlock(&obj->fsal->lock);
 	glist_add(&obj->fsal->handles, &obj->handles);
@@ -160,7 +160,7 @@ void fsal_obj_handle_fini(struct fsal_obj_handle *obj)
 	PTHREAD_RWLOCK_wrlock(&obj->fsal->lock);
 	glist_del(&obj->handles);
 	PTHREAD_RWLOCK_unlock(&obj->fsal->lock);
-	pthread_rwlock_destroy(&obj->lock);
+	PTHREAD_RWLOCK_destroy(&obj->lock);
 	memset(&obj->obj_ops, 0, sizeof(obj->obj_ops));	/* poison myself */
 	obj->fsal = NULL;
 }
@@ -182,7 +182,7 @@ void fsal_pnfs_ds_init(struct fsal_pnfs_ds *pds, struct fsal_module *fsal)
 		&attrs,
 		PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
 #endif
-	pthread_rwlock_init(&pds->lock, &attrs);
+	PTHREAD_RWLOCK_init(&pds->lock, &attrs);
 	glist_init(&pds->ds_handles);
 
 	PTHREAD_RWLOCK_wrlock(&fsal->lock);
@@ -195,7 +195,7 @@ void fsal_pnfs_ds_fini(struct fsal_pnfs_ds *pds)
 	PTHREAD_RWLOCK_wrlock(&pds->fsal->lock);
 	glist_del(&pds->server);
 	PTHREAD_RWLOCK_unlock(&pds->fsal->lock);
-	pthread_rwlock_destroy(&pds->lock);
+	PTHREAD_RWLOCK_destroy(&pds->lock);
 	memset(&pds->s_ops, 0, sizeof(pds->s_ops));	/* poison myself */
 	pds->fsal = NULL;
 }

@@ -345,7 +345,7 @@ hashtable_init(struct hash_param *hparam)
 		if (hparam->flags & HT_FLAG_CACHE) {
 			partition->cache = gsh_calloc(1, cache_page_size(ht));
 			if (!(partition->cache)) {
-				pthread_rwlock_destroy(&partition->lock);
+				PTHREAD_RWLOCK_destroy(&partition->lock);
 				goto deconstruct;
 			}
 		}
@@ -373,7 +373,7 @@ hashtable_init(struct hash_param *hparam)
 		if (hparam->flags & HT_FLAG_CACHE)
 			gsh_free(ht->partitions[completed - 1].cache);
 
-		pthread_rwlock_destroy(&(ht->partitions[completed - 1].lock));
+		PTHREAD_RWLOCK_destroy(&(ht->partitions[completed - 1].lock));
 		completed--;
 	}
 	if (ht->node_pool)
@@ -417,7 +417,7 @@ hashtable_destroy(struct hash_table *ht,
 			ht->partitions[index].cache = NULL;
 		}
 
-		pthread_rwlock_destroy(&(ht->partitions[index].lock));
+		PTHREAD_RWLOCK_destroy(&(ht->partitions[index].lock));
 	}
 	pool_destroy(ht->node_pool);
 	pool_destroy(ht->data_pool);
