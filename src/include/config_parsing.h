@@ -38,6 +38,27 @@ typedef enum { CONFIG_ITEM_BLOCK = 1, CONFIG_ITEM_VAR } config_item_type;
  * @brief Data structures for config parse tree processing
  */
 
+enum  term_type {
+	TERM_TOKEN = 1,
+	TERM_REGEX,
+	TERM_PATH,
+	TERM_STRING,
+	TERM_DQUOTE,
+	TERM_SQUOTE,
+	TERM_TRUE,
+	TERM_FALSE,
+	TERM_DECNUM,
+	TERM_HEXNUM,
+	TERM_OCTNUM,
+	TERM_V4_ANY,
+	TERM_V4ADDR,
+	TERM_V4CIDR,
+	TERM_V6ADDR,
+	TERM_V6CIDR,
+	TERM_FSID,
+	TERM_NETGROUP
+};
+
 enum config_type {
 	CONFIG_NULL = 0,
 	CONFIG_INT16,
@@ -74,6 +95,9 @@ enum config_type {
  * This is a better way than a bunch of mask bits...
  * Examination of the error type lets the calling code decide
  * just how bad and messed up the config file is.
+ *
+ * NOTE: If you add an error here, update err_type_str() and friends
+ * as well.
  */
 
 struct config_error_type {
@@ -327,9 +351,10 @@ struct config_item {
 			size_t set_off;
 			void *(*init)(void *link_mem, void *self_struct);
 			int (*handler)(const char *token,
-				       enum config_type type_hint,
+				       enum term_type type_hint,
 				       struct config_item *item,
 				       void *param_addr,
+				       void *cnode,
 				       struct config_error_type *err_type);
 		} proc;
 	} u;
@@ -845,6 +870,9 @@ int load_config_from_parse(config_file_t config,
 			   struct config_error_type *err_type);
 
 /* translate err_type values to log/dbus error string*/
+const char *config_term_name(enum term_type type);
+const char *config_term_desc(enum term_type type);
+
 char *err_type_str(struct config_error_type *err_type);
 bool init_error_type(struct config_error_type *err_type);
 void config_errs_to_log(char *err, void *,

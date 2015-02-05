@@ -587,21 +587,6 @@ static void convert_inet_addr(struct config_node *node,
 	return;
 }
 
-static enum config_type type_hint(enum term_type term_type)
-{
-	switch (term_type) {
-	case TERM_TOKEN:
-		return CONFIG_STRING;
-	case TERM_PATH:
-		return CONFIG_PATH;
-	case TERM_STRING:
-		return CONFIG_STRING;
-	default:
-		return CONFIG_STRING;  /* when all else fails,
-					* it's a string... */
-	}
-}
-
 /**
  * @brief Walk the term node list and call handler for each node
  *
@@ -631,9 +616,10 @@ static void do_proc(struct config_node *node,
 				       struct config_node,
 				       node);
 		rc += item->u.proc.handler(term_node->u.term.varvalue,
-					   type_hint(term_node->u.term.type),
+					   term_node->u.term.type,
 					   item,
 					   param_addr,
+					   term_node,
 					   err_type);
 	}
 	err_type->errors += rc;

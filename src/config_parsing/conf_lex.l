@@ -5,6 +5,7 @@
 #pragma GCC diagnostic ignored "-Wunused-function"
 
 #include "config.h"
+#include "config_parsing.h"
 #include "analyse.h"
 #include "abstract_mem.h"
 #include "conf_yacc.h"
@@ -71,11 +72,11 @@ MINUS        "\-"
 TWIDDLE      "\~"
 SPLAT        "\*"
 DOT          "\."
+AT           "@"
 
 CIDR         \/[1-9][0-9]{0,1}
-V4FIRST      [1-9][0-9]{0,2}
 V4OCTET      [0-9]{1,3}
-IPV4ADDR     {V4FIRST}{DOT}{V4OCTET}{DOT}{V4OCTET}{DOT}{V4OCTET}
+IPV4ADDR     {V4OCTET}{DOT}{V4OCTET}{DOT}{V4OCTET}{DOT}{V4OCTET}
 H16          [0-9A-Fa-f]{1,4}
 LS32         {H16}:{H16}|{IPV4ADDR}
 IPV6ADDR     ({H16}:){6}{LS32}|::({H16}:){5}{LS32}|({H16})?::({H16}:){4}{LS32}|(({H16}:){0,1}{H16})?::({H16}:){3}{LS32}|(({H16}:){0,2}{H16})?::({H16}:){2}{LS32}|(({H16}:){0,3}{H16})?::{H16}:{LS32}|(({H16}:){0,4}{H16})?::{LS32}|(({H16}:){0,5}{H16})?::{H16}|(({H16}:){0,6}{H16})?::
@@ -95,7 +96,7 @@ DECNUM       (0|[1-9][0-9]*)
 INCLPATH     \/?([a-zA-Z0-9\-\.\_])+(\/[a-zA-Z0-9\-\.\_]+)*
 PATHNAME     (\/[a-zA-Z0-9\-\.\_]+)
 LONGPATH     (\/?[a-zA-Z0-9\-\.\_]+(\/[a-zA-Z0-9\-\.\_]+)+)
-TOKEN_CHARS   [a-zA-Z_][a-zA-Z0-9\._\-]*
+TOKEN_CHARS   [a-zA-Z_\?][a-zA-Z0-9\._\-\*\?]*
 COMMENTEXT	 #.*$
 ID_CHARS [a-zA-Z_][a-zA-Z0-9_\-]*
 
@@ -282,6 +283,12 @@ ID_CHARS [a-zA-Z_][a-zA-Z0-9_\-]*
 		return TOK_V6CIDR;
 }
 
+<TERM>{AT}{ID_CHARS} { /* a netgroup used for clients */
+	DEBUG_LEX(" netgroup :%s", yytext);
+	yylval->token = save_token(yytext, false, stp);
+	return TOK_NETGROUP;
+}
+
    /* Last resort terminals. PATHAME is here because it can confuse */
    /* with a CIDR (precedence) and */
    /* TOKEN_CHARS gobbles anything other than white and ";" */
@@ -292,10 +299,14 @@ ID_CHARS [a-zA-Z_][a-zA-Z0-9_\-]*
 	return TOK_PATH;
 }
 
-<TERM>{TOKEN_CHARS}  { /* start of a number or label/tag */
+<TERM>{TOKEN_CHARS}|{SPLAT}{TOKEN_CHARS}  { /* start of a number or label/tag */
 	DEBUG_LEX("token value:%s",yytext);
 	yylval->token = save_token(yytext, false, stp);
-	return TOKEN;
+	if (index(yylval->token, '*') != NULL ||
+	    index(yylval->token, '?') != NULL)
+		return REGEX_TOKEN;
+	else
+		return TOKEN;
 }
 
    /* Skip over stuff we don't send upstairs */

@@ -265,7 +265,9 @@ void LogClientListEntry(log_components_t component,
  *
  * @param client_list[IN] the client list this gets linked to (in tail order)
  * @param client_tok [IN] the name string.  We modify it.
+ * @param type_hint  [IN] type hint from parser for client_tok
  * @param perms      [IN] pointer to the permissions to copy into each
+ * @param cnode      [IN] opaque pointer needed for config_proc_error()
  * @param err_type   [OUT] error handling ref
  *
  * @returns 0 on success, error count on failure
@@ -273,42 +275,47 @@ void LogClientListEntry(log_components_t component,
 
 static int add_client(struct glist_head *client_list,
 		      const char *client_tok,
+		      enum term_type type_hint,
 		      struct export_perms *perms,
+		      void *cnode,
 		      struct config_error_type *err_type)
 {
 	struct exportlist_client_entry__ *cli;
 	int errcnt = 0;
 	struct addrinfo *info;
+	CIDR *cidr;
+	uint32_t addr;
+	int rc;
 
 	cli = gsh_calloc(sizeof(struct exportlist_client_entry__), 1);
 	if (cli == NULL) {
-		LogMajor(COMPONENT_CONFIG,
-			 "Allocate of client space failed");
+		config_proc_error(cnode, err_type,
+				  "Allocate of client space failed");
 		goto out;
 	}
 	glist_init(&cli->cle_list);
-	if (client_tok[0] == '*' && client_tok[1] == '\0') {
+	switch (type_hint) {
+	case TERM_V4_ANY:
 		cli->type = MATCH_ANY_CLIENT;
-	} else if (client_tok[0] == '@') {
+		break;
+	case TERM_NETGROUP:
 		if (strlen(client_tok) > MAXHOSTNAMELEN) {
-			LogMajor(COMPONENT_CONFIG,
-				 "netgroup (%s) name too long",
-				 client_tok);
+			config_proc_error(cnode, err_type,
+					  "netgroup (%s) name too long",
+					  client_tok);
 			err_type->invalid = true;
 			errcnt++;
 			goto out;
 		}
 		cli->client.netgroup.netgroupname = gsh_strdup(client_tok + 1);
 		cli->type = NETGROUP_CLIENT;
-	} else if (index(client_tok, '/') != NULL) {
-		CIDR *cidr;
-		uint32_t addr;
-
+		break;
+	case TERM_V4CIDR:  /* this needs to be migrated to libcidr! (no v6) */
 		cidr = cidr_from_str(client_tok);
 		if (cidr == NULL) {
-			LogMajor(COMPONENT_CONFIG,
-				 "Expected a CIDR address, got (%s)",
-				 client_tok);
+			config_proc_error(cnode, err_type,
+					  "Expected a IPv4 CIDR address, got (%s)",
+					  client_tok);
 			err_type->invalid = true;
 			errcnt++;
 			goto out;
@@ -319,93 +326,125 @@ static int add_client(struct glist_head *client_list,
 		cli->client.network.netmask = ntohl(addr);
 		cidr_free(cidr);
 		cli->type = NETWORK_CLIENT;
-	} else if (index(client_tok, '*') != NULL ||
-		   index(client_tok, '?') != NULL) {
+		break;
+	case TERM_REGEX:
 		if (strlen(client_tok) > MAXHOSTNAMELEN) {
-			LogMajor(COMPONENT_CONFIG,
-				 "Wildcard client (%s) name too long",
-				 client_tok);
+			config_proc_error(cnode, err_type,
+					  "Wildcard client (%s) name too long",
+					  client_tok);
 			err_type->invalid = true;
 			errcnt++;
 			goto out;
 		}
 		cli->client.wildcard.wildcard = gsh_strdup(client_tok);
 		cli->type = WILDCARDHOST_CLIENT;
-	} else if (getaddrinfo(client_tok, NULL, NULL, &info) == 0) {
-		struct addrinfo *ap, *ap_last = NULL;
-		struct in_addr in_addr_last;
-		struct in6_addr in6_addr_last;
+		break;
+	case TERM_V4ADDR:
+		rc = inet_pton(AF_INET, client_tok,
+			       &cli->client.hostif.clientaddr);
+		assert(rc == 1);  /* this had better be grok'd by now! */
+		cli->type = HOSTIF_CLIENT;
+		break;
+	case TERM_V6ADDR:
+		rc = inet_pton(AF_INET6, client_tok,
+			       &cli->client.hostif.clientaddr6);
+		assert(rc == 1);  /* this had better be grok'd by now! */
+		cli->type = HOSTIF_CLIENT_V6;
+		break;
+	case TERM_TOKEN: /* only dns names now. */
+		rc = getaddrinfo(client_tok, NULL, NULL, &info);
+		if (rc == 0) {
+			struct addrinfo *ap, *ap_last = NULL;
+			struct in_addr in_addr_last;
+			struct in6_addr in6_addr_last;
 
-		for (ap = info; ap != NULL; ap = ap->ai_next) {
-			LogFullDebug(COMPONENT_CONFIG,
-				     "flags=%d family=%d socktype=%d protocol=%d addrlen=%d name=%s",
-				     ap->ai_flags,
-				     ap->ai_family,
-				     ap->ai_socktype,
-				     ap->ai_protocol,
-				     (int) ap->ai_addrlen,
-				     ap->ai_canonname);
-			if (cli == NULL) {
-				cli = gsh_calloc(
-				    sizeof(struct exportlist_client_entry__),
-				    1);
+			for (ap = info; ap != NULL; ap = ap->ai_next) {
+				LogFullDebug(COMPONENT_CONFIG,
+					     "flags=%d family=%d socktype=%d protocol=%d addrlen=%d name=%s",
+					     ap->ai_flags,
+					     ap->ai_family,
+					     ap->ai_socktype,
+					     ap->ai_protocol,
+					     (int) ap->ai_addrlen,
+					     ap->ai_canonname);
 				if (cli == NULL) {
-					LogMajor(COMPONENT_CONFIG,
-						 "Allocate of client space failed");
-					break;
+					cli = gsh_calloc(
+						sizeof(struct
+						    exportlist_client_entry__),
+						1);
+					if (cli == NULL) {
+						config_proc_error(cnode,
+								  err_type,
+								  "Allocate of client space failed");
+						err_type->resource = true;
+						errcnt++;
+						break;
+					}
+					glist_init(&cli->cle_list);
 				}
-				glist_init(&cli->cle_list);
+				if (ap->ai_family == AF_INET &&
+				    (ap->ai_socktype == SOCK_STREAM ||
+				     ap->ai_socktype == SOCK_DGRAM)) {
+					struct in_addr infoaddr =
+						((struct sockaddr_in *)
+						 ap->ai_addr)->sin_addr;
+					if (ap_last != NULL &&
+					    ap_last->ai_family
+					    == ap->ai_family &&
+					    memcmp(&infoaddr,
+						   &in_addr_last,
+						   sizeof(struct in_addr)) == 0)
+						continue;
+					memcpy(&(cli->client.hostif.clientaddr),
+					       &infoaddr,
+					       sizeof(struct in_addr));
+					cli->type = HOSTIF_CLIENT;
+					ap_last = ap;
+					in_addr_last = infoaddr;
+
+				} else if (ap->ai_family == AF_INET6 &&
+					   (ap->ai_socktype == SOCK_STREAM ||
+					    ap->ai_socktype == SOCK_DGRAM)) {
+					struct in6_addr infoaddr =
+						((struct sockaddr_in6 *)
+						 ap->ai_addr)->sin6_addr;
+
+					if (ap_last != NULL &&
+					    ap_last->ai_family == ap->ai_family
+					    &&  !memcmp(&infoaddr,
+						       &in6_addr_last,
+						       sizeof(struct in6_addr)))
+						continue;
+					/* IPv6 address */
+					memcpy(
+					    &(cli->client.hostif.clientaddr6),
+					       &infoaddr,
+					       sizeof(struct in6_addr));
+					cli->type = HOSTIF_CLIENT_V6;
+					ap_last = ap;
+					in6_addr_last = infoaddr;
+				} else
+					continue;
+				cli->client_perms = *perms;
+				LogClientListEntry(COMPONENT_CONFIG, cli);
+				glist_add_tail(client_list, &cli->cle_list);
+				cli = NULL; /* let go of it */
 			}
-			if (ap->ai_family == AF_INET &&
-			    (ap->ai_socktype == SOCK_STREAM ||
-			     ap->ai_socktype == SOCK_DGRAM)) {
-				struct in_addr infoaddr =
-					((struct sockaddr_in *)ap->ai_addr)->
-					sin_addr;
-				if (ap_last != NULL &&
-				    ap_last->ai_family == ap->ai_family &&
-				    memcmp(&infoaddr,
-					   &in_addr_last,
-					   sizeof(struct in_addr)) == 0)
-					continue;
-				memcpy(&(cli->client.hostif.clientaddr),
-				       &infoaddr, sizeof(struct in_addr));
-				cli->type = HOSTIF_CLIENT;
-				ap_last = ap;
-				in_addr_last = infoaddr;
-
-			} else if (ap->ai_family == AF_INET6 &&
-				   (ap->ai_socktype == SOCK_STREAM ||
-				    ap->ai_socktype == SOCK_DGRAM)) {
-				struct in6_addr infoaddr =
-				    ((struct sockaddr_in6 *)ap->ai_addr)->
-				    sin6_addr;
-
-				if (ap_last != NULL &&
-				    ap_last->ai_family == ap->ai_family &&
-				    memcmp(&infoaddr,
-					   &in6_addr_last,
-					   sizeof(struct in6_addr)) == 0)
-					continue;
-				/* IPv6 address */
-				memcpy(&(cli->client.hostif.clientaddr6),
-				       &infoaddr, sizeof(struct in6_addr));
-				cli->type = HOSTIF_CLIENT_V6;
-				ap_last = ap;
-				in6_addr_last = infoaddr;
-			} else
-				continue;
-			cli->client_perms = *perms;
-			LogClientListEntry(COMPONENT_CONFIG, cli);
-			glist_add_tail(client_list, &cli->cle_list);
-			cli = NULL; /* let go of it */
+			freeaddrinfo(info);
+			goto out;
+		} else {
+			config_proc_error(cnode, err_type,
+					  "Client (%s)not found because %s",
+					  client_tok, gai_strerror(rc));
+			err_type->bogus = true;
+			errcnt++;
 		}
-		freeaddrinfo(info);
-		goto out;
-	} else {  /* does gsspric decode go here? */
-		LogMajor(COMPONENT_CONFIG,
-			 "Unknown client token (%s)",
-			 client_tok);
+		break;
+	default:
+		config_proc_error(cnode, err_type,
+				  "Expected a client, got a %s for (%s)",
+				  config_term_desc(type_hint),
+				  client_tok);
 		err_type->bogus = true;
 		errcnt++;
 		goto out;
@@ -1045,9 +1084,10 @@ struct config_item_list deleg_types[] =  {
  */
 
 static int client_adder(const char *token,
-			enum config_type type_hint,
+			enum term_type type_hint,
 			struct config_item *item,
 			void *param_addr,
+			void *cnode,
 			struct config_error_type *err_type)
 {
 	struct exportlist_client_entry__ *proto_cli;
@@ -1061,7 +1101,8 @@ static int client_adder(const char *token,
 #endif
 	LogMidDebug(COMPONENT_CONFIG, "Adding client %s", token);
 	rc = add_client(&proto_cli->cle_list,
-			token, &proto_cli->client_perms, err_type);
+			token, type_hint,
+			&proto_cli->client_perms, cnode, err_type);
 	return rc;
 }
 

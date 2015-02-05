@@ -4,6 +4,7 @@
 #pragma GCC diagnostic ignored "-Wunused-variable"
 
 #include "config.h"
+#include "config_parsing.h"
 #include "analyse.h"
 #include "abstract_mem.h"
 
@@ -113,6 +114,7 @@ struct config_node *config_term(char *opcode,
 %token <token> DQUOTE
 %token <token> SQUOTE
 %token <token> TOKEN
+%token <token> REGEX_TOKEN
 %token <token> TOK_PATH
 %token <token> TOK_TRUE
 %token <token> TOK_FALSE
@@ -126,6 +128,7 @@ struct config_node *config_term(char *opcode,
 %token <token> TOK_V6ADDR
 %token <token> TOK_V6CIDR
 %token <token> TOK_FSID
+%token <token> TOK_NETGROUP
 
 %type <node> deflist
 %type <node> definition
@@ -229,6 +232,10 @@ expression: /* empty */ {
 {
   $$ = config_term(NULL, $1, TERM_TOKEN, &@$, st);
 }
+| REGEX_TOKEN
+{
+  $$ = config_term(NULL, $1, TERM_REGEX, &@$, st);
+}
 | STRING
 {
   $$ = config_term(NULL, $1, TERM_STRING, &@$, st);
@@ -296,6 +303,10 @@ expression: /* empty */ {
 | TOK_FSID
 {
   $$ = config_term(NULL, $1, TERM_FSID, &@$, st);
+}
+| TOK_NETGROUP
+{
+  $$ = config_term(NULL, $1, TERM_NETGROUP, &@$, st);
 }
 ;
 

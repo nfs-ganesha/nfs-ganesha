@@ -45,25 +45,6 @@
 
 enum  node_type { TYPE_ROOT = 1, TYPE_BLOCK, TYPE_STMT, TYPE_TERM};
 
-enum  term_type {
-	TERM_TOKEN = 1,
-	TERM_PATH,
-	TERM_STRING,
-	TERM_DQUOTE,
-	TERM_SQUOTE,
-	TERM_TRUE,
-	TERM_FALSE,
-	TERM_DECNUM,
-	TERM_HEXNUM,
-	TERM_OCTNUM,
-	TERM_V4_ANY,
-	TERM_V4ADDR,
-	TERM_V4CIDR,
-	TERM_V6ADDR,
-	TERM_V6CIDR,
-	TERM_FSID
-};
-
 struct config_node {
 	struct glist_head node;
 	char *filename;		/* pointer to filename in file list */
@@ -149,9 +130,6 @@ void ganeshun_yy_cleanup_parser(struct parser_state *st);
 
 void config_error(FILE *fp, const char *filename, int linenum,
 		  char *format, va_list args);
-
-const char *config_term_name(enum term_type type);
-const char *config_term_desc(enum term_type type);
 
 /**
  *  Displays the content of parse tree.
