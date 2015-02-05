@@ -387,12 +387,6 @@ struct config_node *config_block(char *blockname,
 {
 	struct config_node *node, *cnode;
 
-	if (blockname == NULL) {
-		config_parse_error(yylloc_param, st,
-				   "no memory for block ID token.");
-		st->err_type->empty = true;
-		return NULL;
-	}
 	node = gsh_calloc(1, sizeof(struct config_node));
 	if (node == NULL) {
 		st->err_type->resource = true;
@@ -459,12 +453,6 @@ struct config_node *config_term(char *opcode,
 {
 	struct config_node *node;
 
-	if (varval == NULL) {
-		config_parse_error(yylloc_param, st,
-				   "no memory for option value token.");
-		st->err_type->empty = true;
-		return NULL;
-	}
 	node = gsh_calloc(1, sizeof(struct config_node));
 	if (node == NULL) {
 		st->err_type->resource = true;
@@ -491,12 +479,6 @@ struct config_node *config_stmt(char *varname,
 {
 	struct config_node *node;
 
-	if (varname == NULL) {
-		config_parse_error(yylloc_param, st,
-				   "no memory for parameter name.");
-		st->err_type->empty = true;
-		return NULL;
-	}
 	node = gsh_calloc(1, sizeof(struct config_node));
 	if (node == NULL) {
 		st->err_type->resource = true;

@@ -71,6 +71,8 @@ RCURLY       "\}"
 MINUS        "\-"
 TWIDDLE      "\~"
 SPLAT        "\*"
+HUH          "\?"
+BANG         "\!"
 DOT          "\."
 AT           "@"
 
@@ -94,9 +96,15 @@ HEXNUM       0[xX][0-9a-fA-F]+
 DECNUM       (0|[1-9][0-9]*)
 
 INCLPATH     \/?([a-zA-Z0-9\-\.\_])+(\/[a-zA-Z0-9\-\.\_]+)*
-PATHNAME     (\/[a-zA-Z0-9\-\.\_]+)
-LONGPATH     (\/?[a-zA-Z0-9\-\.\_]+(\/[a-zA-Z0-9\-\.\_]+)+)
-TOKEN_CHARS   [a-zA-Z_\?][a-zA-Z0-9\._\-\*\?]*
+PATHNAME     (\/[a-zA-Z0-9\-\.\_]+)\/?
+LONGPATH     (\/?[a-zA-Z0-9\-\.\_]+(\/[a-zA-Z0-9\-\.\_]+)+)\/?
+TOKEN_CHARS  [a-zA-Z_\?][a-zA-Z0-9\._\-]*
+
+WC           [a-zA-Z0-9\._\-]
+WR           \[{BANG}?({WC})+\]
+WP           ({WR}|{SPLAT}|{HUH})
+WILDCARD     ({WC}*{WP})+{WC}*
+
 COMMENTEXT	 #.*$
 ID_CHARS [a-zA-Z_][a-zA-Z0-9_\-]*
 
@@ -299,14 +307,16 @@ ID_CHARS [a-zA-Z_][a-zA-Z0-9_\-]*
 	return TOK_PATH;
 }
 
-<TERM>{TOKEN_CHARS}|{SPLAT}{TOKEN_CHARS}  { /* start of a number or label/tag */
+<TERM>{TOKEN_CHARS}  { /* start of a number or label/tag */
 	DEBUG_LEX("token value:%s",yytext);
 	yylval->token = save_token(yytext, false, stp);
-	if (index(yylval->token, '*') != NULL ||
-	    index(yylval->token, '?') != NULL)
-		return REGEX_TOKEN;
-	else
-		return TOKEN;
+	return TOKEN;
+}
+
+<TERM>{WILDCARD}  { /* start of a number or label/tag as glob(7) string */
+	DEBUG_LEX("token value:%s",yytext);
+	yylval->token = save_token(yytext, false, stp);
+	return REGEX_TOKEN;
 }
 
    /* Skip over stuff we don't send upstairs */

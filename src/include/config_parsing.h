@@ -112,7 +112,6 @@ struct config_error_type {
 	bool missing:1;		/*< missing mandatory parameter */
 	bool validate:1;	/*< commit param validation */
 	bool exists:1;		/*< block already exists */
-	bool empty:1;		/*< block is empty */
 	bool internal:1;        /*< internal error */
 	bool bogus:1;		/*< bogus (deprecated?) param */
 	uint32_t errors;	/*< cumulative error count for parse+proc */

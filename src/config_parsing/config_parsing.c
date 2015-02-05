@@ -141,8 +141,6 @@ char *err_type_str(struct config_error_type *err_type)
 		fputs("block validation, ", fp);
 	if (err_type->exists)
 		fputs("block exists, ", fp);
-	if (err_type->empty)
-		fputs("block empty, ", fp);
 	if (err_type->internal)
 		fputs("internal error, ", fp);
 	if (err_type->bogus)
@@ -981,14 +979,11 @@ static int do_block_load(struct config_node *blk,
 				     param_addr, item->name,
 				     config_type_str(item->type));
 			if (glist_empty(&node->u.nterm.sub_nodes)) {
-				config_proc_error(node, err_type,
-						  "%s %s is empty",
-						  (node->type == TYPE_STMT
-						   ? "Statement"
-						   : "Block"),
-						  node->u.nterm.name);
-				err_type->empty = true;
-				err_type->errors++;
+				LogInfo(COMPONENT_CONFIG,
+					"%s %s is empty",
+					(node->type == TYPE_STMT
+					 ? "Statement" : "Block"),
+					node->u.nterm.name);
 				node = next_node;
 				continue;
 			}
@@ -1803,7 +1798,7 @@ int load_config_from_node(void *tree_node,
 		config_proc_error(NULL, err_type,
 				  "Missing tree_node for (%s)",
 				  blkname);
-		err_type->empty = true;
+		err_type->missing = true;
 		return -1;
 	}
 	if (node->type == TYPE_BLOCK) {
@@ -1865,7 +1860,7 @@ int load_config_from_parse(config_file_t config,
 		config_proc_error(NULL, err_type,
 				  "Missing parse tree root for (%s)",
 				  blkname);
-		err_type->empty = true;
+		err_type->missing = true;
 		return -1;
 	}
 	if (tree->root.type != TYPE_ROOT) {
@@ -1909,16 +1904,12 @@ int load_config_from_parse(config_file_t config,
 		}
 	}
 	if (found == 0) {
-		err_type->empty = true;
-
 		/* Found nothing but we have to do the allocate and init
 		 * at least. Use a fake, not NULL link_mem */
 		blk_mem = param != NULL ?
 			param : conf_blk->blk_desc.u.blk.init((void *)~0UL,
 							      NULL);
 		assert(blk_mem != NULL);
-		config_proc_error(&tree->root, err_type,
-				  "Using defaults for %s", blkname);
 		if (!do_block_init(&tree->root,
 				   conf_blk->blk_desc.u.blk.params,
 				   blk_mem, err_type)) {

@@ -2529,7 +2529,7 @@ int read_log_config(config_file_t in_config,
 				     &logger,
 				     true,
 				     err_type);
-	if (err_type->empty || config_error_is_harmless(err_type))
+	if (config_error_is_harmless(err_type))
 		return 0;
 	else
 		return -1;
