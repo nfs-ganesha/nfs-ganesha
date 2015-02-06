@@ -63,6 +63,8 @@
 
 #define P_FAMILY AF_INET6
 
+bool v6disabled_9p;
+
 void DispatchWork9P(request_data_t *req)
 {
 	switch (req->rtype) {
@@ -348,27 +350,34 @@ end:
 }				/* _9p_socket_thread */
 
 /**
- * _9p_create_socket: create the accept socket for 9P
+ * _9p_create_socket_V4 : create the socket and bind for 9P using
+ * the available V4 interfaces on the host. This is not the default
+ * for ganesha. We expect _9p_create_socket_V6 to be called first
+ * and succeed. Only when the V6 function returns failure is this
+ * function expected to be called. See _9p_create_socket().
  *
- * This function create the accept socket for the 9p dispatcher thread.
- *
- * @return socket fd or -1 if failed.
+ * @return socket fd or -1 in case of failure
  *
  */
-int _9p_create_socket(void)
+static int _9p_create_socket_V4(void)
 {
-	int sock = -1;
-	int one = 1;
-	int centvingt = 120;
-	int neuf = 9;
-	struct sockaddr_in6 sinaddr_tcp6;
-	struct netbuf netbuf_tcp6;
-	struct t_bind bindaddr_tcp6;
-	struct __rpc_sockinfo si_tcp6;
+	int			sock = -1;
+	int			one = 1;
+	int			centvingt = 120;
+	int			neuf = 9;
+	struct	netbuf		netbuf_tcp;
+	struct	t_bind		bindaddr_tcp;
+	struct	__rpc_sockinfo	si_tcp;
+	struct	sockaddr_in	sinaddr_tcp;
 
-	sock = socket(P_FAMILY, SOCK_STREAM, IPPROTO_TCP);
-	if (sock == -1)
-		goto bad_socket;
+	sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	if (sock == -1) {
+		LogWarn(COMPONENT_9P_DISPATCH,
+			"Error creating V4 socket, error %d(%s)",
+			errno, strerror(errno));
+		return -1;
+	}
+
 	if ((setsockopt(sock,
 			SOL_SOCKET, SO_REUSEADDR,
 			&one, sizeof(one)) == -1) ||
@@ -383,8 +392,104 @@ int _9p_create_socket(void)
 			&centvingt, sizeof(centvingt)) == -1) ||
 	    (setsockopt(sock,
 			IPPROTO_TCP, TCP_KEEPCNT,
-			&neuf, sizeof(neuf)) == -1))
-		goto bad_socket;
+			&neuf, sizeof(neuf)) == -1)) {
+		LogWarn(COMPONENT_9P_DISPATCH,
+			"Error setting V4 socket option, error %d(%s)",
+			errno, strerror(errno));
+		return -1;
+	}
+
+	socket_setoptions(sock);
+	memset(&sinaddr_tcp, 0, sizeof(sinaddr_tcp));
+	sinaddr_tcp.sin_family = AF_INET;
+
+	/* All the interfaces on the machine are used */
+	sinaddr_tcp.sin_addr.s_addr = htonl(INADDR_ANY);
+	sinaddr_tcp.sin_port = htons(_9p_param._9p_tcp_port);
+
+	netbuf_tcp.maxlen = sizeof(sinaddr_tcp);
+	netbuf_tcp.len = sizeof(sinaddr_tcp);
+	netbuf_tcp.buf = &sinaddr_tcp;
+
+	bindaddr_tcp.qlen = SOMAXCONN;
+	bindaddr_tcp.addr = netbuf_tcp;
+
+	if (!__rpc_fd2sockinfo(sock, &si_tcp)) {
+		LogWarn(COMPONENT_9P_DISPATCH,
+			"V4 : Cannot get 9p socket info for tcp6 socket error %d(%s)",
+			errno, strerror(errno));
+		return -1;
+	}
+
+	if (bind(sock,
+		 (struct sockaddr *)bindaddr_tcp.addr.buf,
+		 (socklen_t) si_tcp.si_alen) == -1) {
+		LogWarn(COMPONENT_9P_DISPATCH,
+			"V4 : Cannot bind 9p tcp6 socket, error %d(%s)", errno,
+			strerror(errno));
+		return -1;
+	}
+
+	if (listen(sock, 20) == -1) {
+		LogWarn(COMPONENT_9P_DISPATCH,
+			"V4 : Cannot bind 9p tcp6 socket, error %d(%s)", errno,
+			strerror(errno));
+		return -1;
+	}
+
+	return sock;
+}
+
+/**
+ * _9p_create_socket_V6 : create the socket and bind for 9P using
+ * the available V6 interfaces on the host
+ *
+ * @return socket fd or -1 in case of failure
+ *
+ */
+static int _9p_create_socket_V6(void)
+{
+	int sock = -1;
+	int one	= 1;
+	int centvingt = 120;
+	int neuf = 9;
+	struct sockaddr_in6 sinaddr_tcp6;
+	struct netbuf netbuf_tcp6;
+	struct t_bind bindaddr_tcp6;
+	struct __rpc_sockinfo si_tcp6;
+
+	sock = socket(P_FAMILY, SOCK_STREAM, IPPROTO_TCP);
+	if (sock == -1) {
+		if (errno == EAFNOSUPPORT) {
+			LogWarn(COMPONENT_9P_DISPATCH,
+				"Error creating socket, V6 intfs disabled? error %d(%s)",
+				errno, strerror(errno));
+			v6disabled_9p = true;
+		}
+
+		return -1;
+	}
+
+	if ((setsockopt(sock,
+			SOL_SOCKET, SO_REUSEADDR,
+			&one, sizeof(one)) == -1) ||
+	    (setsockopt(sock,
+			IPPROTO_TCP, TCP_NODELAY,
+			&one, sizeof(one)) == -1) ||
+	    (setsockopt(sock,
+			IPPROTO_TCP, TCP_KEEPIDLE,
+			&centvingt, sizeof(centvingt)) == -1) ||
+	    (setsockopt(sock,
+			IPPROTO_TCP, TCP_KEEPINTVL,
+			&centvingt, sizeof(centvingt)) == -1) ||
+	    (setsockopt(sock,
+			IPPROTO_TCP, TCP_KEEPCNT,
+			&neuf, sizeof(neuf)) == -1)) {
+		LogWarn(COMPONENT_9P_DISPATCH,
+			"Error setting V6 socket option, error %d(%s)",
+			errno, strerror(errno));
+		return -1;
+	}
 
 	socket_setoptions(sock);
 	memset(&sinaddr_tcp6, 0, sizeof(sinaddr_tcp6));
@@ -401,34 +506,66 @@ int _9p_create_socket(void)
 	bindaddr_tcp6.addr = netbuf_tcp6;
 
 	if (!__rpc_fd2sockinfo(sock, &si_tcp6)) {
-		LogFatal(COMPONENT_DISPATCH,
-			 "Cannot get 9p socket info for tcp6 socket errno=%d (%s)",
-			 errno, strerror(errno));
+		LogWarn(COMPONENT_9P_DISPATCH,
+			"Cannot get 9p socket info for tcp6 socket error %d(%s)",
+			errno, strerror(errno));
 		return -1;
 	}
 
 	if (bind(sock,
 		 (struct sockaddr *)bindaddr_tcp6.addr.buf,
 		 (socklen_t) si_tcp6.si_alen) == -1) {
-		LogFatal(COMPONENT_DISPATCH,
-			 "Cannot bind 9p tcp6 socket, error %d (%s)", errno,
-			 strerror(errno));
+		LogWarn(COMPONENT_9P_DISPATCH,
+			"Cannot bind 9p tcp6 socket, error %d (%s)", errno,
+			strerror(errno));
 		return -1;
 	}
 
 	if (listen(sock, 20) == -1) {
-		LogFatal(COMPONENT_DISPATCH,
-			 "Cannot bind 9p tcp6 socket, error %d (%s)", errno,
-			 strerror(errno));
+		LogWarn(COMPONENT_9P_DISPATCH,
+			"Cannot bind 9p tcp6 socket, error %d (%s)", errno,
+			strerror(errno));
 		return -1;
+	}
+
+	return sock;
+}
+
+/**
+ * _9p_create_socket: create the accept socket for 9P
+ *
+ * This function creates the accept socket for the 9p dispatcher thread.
+ *
+ * @return socket fd or -1 if failed.
+ *
+ */
+int _9p_create_socket(void)
+{
+	int sock = -1;
+
+	v6disabled_9p = false;
+
+	sock = _9p_create_socket_V6();
+	if (sock == -1) {
+		if (v6disabled_9p) {
+			/* Need to retry with V4 interfaces */
+			sock = _9p_create_socket_V4();
+			if (sock == -1) {
+				/* Some system error, bail */
+				LogWarn(COMPONENT_9P_DISPATCH,
+					"Error creating 9P socket using V4");
+				goto bad_socket;
+			}
+		} else {
+			LogWarn(COMPONENT_9P_DISPATCH,
+				"Error creating 9P socket using V6");
+			goto bad_socket;
+		}
 	}
 
 	return sock;
 
 bad_socket:
-	LogFatal(COMPONENT_9P_DISPATCH,
-		 "Bad socket option 9p, error %d (%s)", errno,
-		 strerror(errno));
 	return -1;
 }				/* _9p_create_socket */
 
