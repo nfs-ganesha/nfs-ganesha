@@ -812,6 +812,40 @@ static struct gsh_export *lookup_export(DBusMessageIter *args, char **errormsg)
 	return export;
 }
 
+/* Private state for config_errs_to_dbus to convert
+ * parsing error stream in to a string of '\n' terminated
+ * message lines.
+ */
+
+struct error_detail {
+	char *buf;
+	size_t bufsize;
+	FILE *fp;
+};
+
+/**
+ * @brief Report processing errors to the DBUS client.
+ *
+ * For now, they just go to the log (as before).
+ */
+
+static void config_errs_to_dbus(char *err, void *dest,
+				struct config_error_type *err_type)
+{
+	struct error_detail *err_dest = dest;
+
+	if (err_dest->fp == NULL) {
+		err_dest->fp = open_memstream(&err_dest->buf,
+					      &err_dest->bufsize);
+		if (err_dest->fp == NULL) {
+			LogCrit(COMPONENT_EXPORT,
+				"Unable to allocate space for parse errors");
+			return;
+		}
+	}
+	fprintf(err_dest->fp, "%s\n", err);
+}
+
 struct showexports_state {
 	DBusMessageIter export_iter;
 };
@@ -842,6 +876,7 @@ static bool gsh_export_addexport(DBusMessageIter *args,
 	struct config_error_type err_type;
 	DBusMessageIter iter;
 	char *err_detail = NULL;
+	struct error_detail conf_errs = {NULL, 0, NULL};
 
 	/* Get path */
 	if (dbus_message_iter_get_arg_type(args) == DBUS_TYPE_STRING)
@@ -866,24 +901,38 @@ static bool gsh_export_addexport(DBusMessageIter *args,
 	LogInfo(COMPONENT_EXPORT, "Adding export from file: %s with %s",
 		file_path, export_expr);
 
+	/* Create a memstream for parser+processing error messages */
+	if (!init_error_type(&err_type))
+		goto out;
+
 	config_struct = config_ParseFile(file_path, &err_type);
 	if (!config_error_is_harmless(&err_type)) {
 		err_detail = err_type_str(&err_type);
 		LogCrit(COMPONENT_EXPORT,
 			"Error while parsing %s", file_path);
+		report_config_errors(&err_type,
+				     &conf_errs,
+				     config_errs_to_dbus);
+		fclose(conf_errs.fp);
 		dbus_set_error(error, DBUS_ERROR_INVALID_FILE_CONTENT,
-			       "Error while parsing %s because of %s errors",
+			       "Error while parsing %s because of %s errors. Details:\n%s",
 			       file_path,
-			       err_detail != NULL ? err_detail : "unknown");
-			status = false;
-			goto out;
+			       err_detail != NULL ? err_detail : "unknown",
+			       conf_errs.buf);
+		status = false;
+		goto out;
 	}
 
-	rc = find_config_nodes(config_struct, export_expr, &config_list);
+	rc = find_config_nodes(config_struct, export_expr,
+			       &config_list, &err_type);
 	if (rc != 0) {
 		LogCrit(COMPONENT_EXPORT,
 			"Error finding exports: %s because %s",
 			export_expr, strerror(rc));
+		report_config_errors(&err_type,
+				     &conf_errs,
+				     config_errs_to_dbus);
+		fclose(conf_errs.fp);
 		dbus_set_error(error, DBUS_ERROR_INVALID_ARGS,
 			       "Error finding exports: %s because %s",
 			       export_expr, strerror(rc));
@@ -906,17 +955,34 @@ static bool gsh_export_addexport(DBusMessageIter *args,
 		}
 		gsh_free(lp);
 	}
+	report_config_errors(&err_type,
+			     &conf_errs,
+			     config_errs_to_dbus);
+	if (conf_errs.fp != NULL)
+		fclose(conf_errs.fp);
 	if (status) {
 		if (exp_cnt > 0) {
-			char *message = alloca(sizeof("%d exports added") + 10);
+			size_t msg_size = sizeof("%d exports added") + 10;
+			char *message;
 
-			snprintf(message,
-				 sizeof("%d exports added") + 10,
-				 "%d exports added", exp_cnt);
+			if (conf_errs.buf != NULL &&
+			    strlen(conf_errs.buf) > 0) {
+				msg_size += (strlen(conf_errs.buf)
+					     + strlen(". Errors found:\n"));
+				message = gsh_calloc(1, msg_size);
+				snprintf(message, msg_size,
+					 "%d exports added. Errors found:\n%s",
+					 exp_cnt, conf_errs.buf);
+			} else {
+				message = gsh_calloc(1, msg_size);
+				snprintf(message, msg_size,
+					 "%d exports added", exp_cnt);
+			}
 			dbus_message_iter_init_append(reply, &iter);
 			dbus_message_iter_append_basic(&iter,
 						       DBUS_TYPE_STRING,
 						       &message);
+			gsh_free(message);
 		} else if (err_type.exists) {
 			LogWarn(COMPONENT_EXPORT,
 				"Selected entries in %s already active!!!",
@@ -943,11 +1009,15 @@ static bool gsh_export_addexport(DBusMessageIter *args,
 			err_detail != NULL ? err_detail : "unknown");
 		dbus_set_error(error,
 			       DBUS_ERROR_INVALID_FILE_CONTENT,
-			       "%d export entries in %s added because %s errors",
+			       "%d export entries in %s added because %s errors. Details:\n%s",
 			       exp_cnt, file_path,
-			       err_detail != NULL ? err_detail : "unknown");
+			       err_detail != NULL ? err_detail : "unknown",
+			       conf_errs.buf);
 	}
+
 out:
+	if (conf_errs.buf)
+		gsh_free(conf_errs.buf);
 	if (err_detail != NULL)
 		gsh_free(err_detail);
 	config_Free(config_struct);

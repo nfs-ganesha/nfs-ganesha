@@ -5,6 +5,7 @@
 #pragma GCC diagnostic ignored "-Wunused-function"
 
 #include "config.h"
+#include "config_parsing.h"
 #include "analyse.h"
 #include "abstract_mem.h"
 #include "conf_yacc.h"
@@ -18,10 +19,6 @@
 #if HAVE_STRING_H
 #   include <string.h>
 #endif
-
-/* Alias for the dirty wrap */
-
-#define ganeshun_yyerror ganesha_yyerror
 
 /* Our versions of parser macros */
 
@@ -66,14 +63,53 @@ static int pop_file(struct parser_state *st);
 
 SPACE        [ \t\r\f]
 NL           [\n]
-VAL_CHAR     [^ \t\r\n\f;"'#]
+EQUALS       "="
+COMMA        ","
+SEMI         ";"
+LCURLY       "\{"
+RCURLY       "\}"
+MINUS        "\-"
+TWIDDLE      "\~"
+SPLAT        "\*"
+HUH          "\?"
+BANG         "\!"
+DOT          "\."
+AT           "@"
+
+CIDR         \/[1-9][0-9]{0,1}
+V4OCTET      [0-9]{1,3}
+IPV4ADDR     {V4OCTET}{DOT}{V4OCTET}{DOT}{V4OCTET}{DOT}{V4OCTET}
+H16          [0-9A-Fa-f]{1,4}
+LS32         {H16}:{H16}|{IPV4ADDR}
+IPV6ADDR     ({H16}:){6}{LS32}|::({H16}:){5}{LS32}|({H16})?::({H16}:){4}{LS32}|(({H16}:){0,1}{H16})?::({H16}:){3}{LS32}|(({H16}:){0,2}{H16})?::({H16}:){2}{LS32}|(({H16}:){0,3}{H16})?::{H16}:{LS32}|(({H16}:){0,4}{H16})?::{LS32}|(({H16}:){0,5}{H16})?::{H16}|(({H16}:){0,6}{H16})?::
+
+SQUOTE       \'[^\']*\'
+DQUOTE       \"(\\.|[^\"])*\"
+YES          [Yy][Ee][Ss]
+TRUE         [Tt][Rr][Uu][Ee]
+ON           [Oo][Nn]
+NO           [Nn][Oo]
+FALSE        [Ff][Aa][Ll][Ss][Ee]
+OFF          [Oo][Ff][Ff]
+OCTNUM       0[1-7][0-7]*
+HEXNUM       0[xX][0-9a-fA-F]+
+DECNUM       (0|[1-9][0-9]*)
+
+INCLPATH     \/?([a-zA-Z0-9\-\.\_])+(\/[a-zA-Z0-9\-\.\_]+)*
+PATHNAME     (\/[a-zA-Z0-9\-\.\_]+)\/?
+LONGPATH     (\/?[a-zA-Z0-9\-\.\_]+(\/[a-zA-Z0-9\-\.\_]+)+)\/?
+TOKEN_CHARS  [a-zA-Z_\?][a-zA-Z0-9\._\-]*
+
+WC           [a-zA-Z0-9\._\-]
+WR           \[{BANG}?({WC})+\]
+WP           ({WR}|{SPLAT}|{HUH})
+WILDCARD     ({WC}*{WP})+{WC}*
+
 COMMENTEXT	 #.*$
-/* lettre posant probleme dans une chaine */
-STRING_CHAR       [^\n]
-IDENTIFIER [a-zA-Z_][a-zA-Z0-9_\-]*
+ID_CHARS [a-zA-Z_][a-zA-Z0-9_\-]*
 
 /* INCLUDE state is used for picking the name of the include file */
-%START YY_INIT BLOCK IN_BLOCK STMT_OR_SUB_BLOCK VALUE ENDVALUE QUOTE_STR LIT_STRING INCLUDE
+%START YY_INIT DEFINITION TERM INCLUDE
 
 %%
 %{
@@ -86,51 +122,31 @@ IDENTIFIER [a-zA-Z_][a-zA-Z0-9_\-]*
 	/* not a token, return nothing */
 }
 
-<INCLUDE>{VAL_CHAR}+ {
+<INCLUDE>{INCLPATH} {
+
 	{
 		int c;
 
 		DEBUG_LEX("Calling new_file with unquoted %s\n", yytext);
 		c = new_file(yytext, stp);
-		if (c != 0) {
-			if (c == EINVAL)
-				ganeshun_yyerror(yylloc, yyscanner,
-						"config file already parsed, ignored");
-			else
-				ganeshun_yyerror(yylloc, yyscanner,
-						"error opening file");
+		if (c == ENOMEM)
 			yyterminate();
-		}
 		BEGIN YY_INIT;
 		DEBUG_LEX("done new file\n");
 	}
 }
 
-<INCLUDE>\"{VAL_CHAR}+\" {
+<INCLUDE>\"{INCLPATH}\" {
 	{
 		int c;
 
 		DEBUG_LEX("Calling new_file with quoted %s\n", yytext);
 		c = new_file(yytext, stp);
-		if (c != 0) {
-			if (c == EINVAL)
-				ganeshun_yyerror(yylloc, yyscanner,
-						"config file already parsed, ignored");
-			else
-				ganeshun_yyerror(yylloc, yyscanner,
-						"error opening file");
+		if (c == ENOMEM)
 			yyterminate();
-		}
 		BEGIN YY_INIT;
 		DEBUG_LEX("done new file\n");
 	}
-}
-
-<INCLUDE>[.\n]+ {
-	DEBUG_LEX("BAD include, line break\n");
-	/* error bad include */
-	stp->err_type->scan = true;
-	yyterminate();
 }
 
 <<EOF>> { /* end of included file */
@@ -139,141 +155,184 @@ IDENTIFIER [a-zA-Z_][a-zA-Z0-9_\-]*
 		yyterminate();
 }
 
+   /* Initial State.  We start with a block identifier */
 
-
-<YY_INIT>{IDENTIFIER} { /* first block */
+<YY_INIT>{ID_CHARS} { /* first block */
 	/* identifier */
 	DEBUG_LEX("[block:%s]\n",yytext);
-	yylval->token = gsh_strdup(yytext);
-	BEGIN BLOCK;
+	yylval->token = save_token(yytext, false, stp);
+	BEGIN DEFINITION;
 	return IDENTIFIER;
 }
 
-
-<BLOCK>"{"        {/* start of  block */
-	DEBUG_LEX("BEGIN_BLOCK\n");
-	BEGIN IN_BLOCK;
-	stp->block_depth++;
-	return BEGIN_BLOCK;
-}
-
-<IN_BLOCK>{IDENTIFIER} { /* name of block or keyword */
-	/* identifier */
+<DEFINITION>{ID_CHARS} {
 	DEBUG_LEX("[id:%s",yytext);
-	yylval->token = gsh_strdup(yytext);
-	BEGIN STMT_OR_SUB_BLOCK;
+	yylval->token = save_token(yytext, false, stp);
 	return IDENTIFIER;
 }
 
-<IN_BLOCK>"}"     {   /* end of block */
-	DEBUG_LEX("END_BLOCK\n");
-	if (stp->block_depth <= 0) {
-		/* error */
-		ganeshun_yyerror(yylloc, yyscanner,
-				"closing bracket outside a block");
-		stp->err_type->scan = true;
-		return _ERROR_;
-	} else
-		stp->block_depth --;
-
-	if (stp->block_depth == 0) {
-		BEGIN YY_INIT;
-		return END_BLOCK;
-	} else {
-		BEGIN IN_BLOCK;
-		return END_SUB_BLOCK;
-	}
-}
-
-<STMT_OR_SUB_BLOCK>"="  { /* A statement */
-	/* equal_op */
-	DEBUG_LEX(" , ");
-	BEGIN VALUE;
+{EQUALS} {
+	DEBUG_LEX(" EQUALS ");
+	BEGIN TERM;
 	return EQUAL_OP;
 }
 
-<STMT_OR_SUB_BLOCK>"{" {
-	/* sub-block */
-	DEBUG_LEX("\nBEGIN_SUB_BLOCK\n");
-	BEGIN IN_BLOCK;
+{LCURLY} {
+	DEBUG_LEX("BEGIN_BLOCK\n");
+	BEGIN DEFINITION;
 	stp->block_depth++;
-	return BEGIN_SUB_BLOCK;
+	return LCURLY_OP;
 }
 
-<VALUE>"\""  {  /* start of a double quote string */
-	BEGIN QUOTE_STR;
-	DEBUG_LEX("quote value:<");
+{RCURLY}     {   /* end of block */
+	DEBUG_LEX("END_BLOCK\n");
+	stp->block_depth --;
+	if (stp->block_depth <= 0)
+		BEGIN YY_INIT;
+	return RCURLY_OP;
 }
 
-<VALUE>"'"   { /* start of a single quote string */
-	BEGIN LIT_STRING;
-	DEBUG_LEX("lit value:<");
+{COMMA}  { /* another terminal to follow ',' */
+	DEBUG_LEX(" ',' ");
+	return COMMA_OP;
 }
 
-<VALUE>({VAL_CHAR})+  { /* start of a number or label/tag */
-	DEBUG_LEX("token value:%s",yytext);
-	BEGIN ENDVALUE;
-	yylval->token = gsh_strdup(yytext);
-	return KEYVALUE;
-}
+   /* End of statement */
 
-<ENDVALUE>";"  { /* end of statement */
+{SEMI}  { /* end of statement */
 	DEBUG_LEX("]\n");
-	BEGIN IN_BLOCK;
-	return END_STMT;
+	BEGIN DEFINITION;
+	return SEMI_OP;
 }
 
-<QUOTE_STR>[^\"]*\" {
-	if (yytext[yyleng - 2] == '\\') {
-		yyless(yyleng - 1);
-		yymore();
-	} else {
-		yylval->token = filter_string(yytext, 1);
-		if (yylval->token == NULL) {
-			ganeshun_yyerror(yylloc, yyscanner, "Out of memory");
-			stp->err_type->resource = true;
-			return _ERROR_;
-		} else if (yylval->token == (char *)-1) {
-			ganeshun_yyerror(yylloc, yyscanner, "Bad literal string");
-			stp->err_type->scan = true;
-			return _ERROR_;
-		}
-		DEBUG_LEX("%s>", yylval->token);
-		BEGIN ENDVALUE;
-		return KEYVALUE;
-	}
+
+   /* Double Quote, allows char escaping */
+
+<TERM>{DQUOTE}  {  /* start of a double quote string */
+	DEBUG_LEX("quote value:<%s>", yytext);
+	yylval->token = save_token(yytext, true, stp);
+	return DQUOTE;
 }
 
-<LIT_STRING>[^\n]*\'  { /* end of single quote string */
-	yylval->token =	filter_string(yytext, 0);
-	if (yylval->token == NULL) {
-		ganeshun_yyerror(yylloc, yyscanner, "Out of memory");
-		stp->err_type->resource = true;
-		return _ERROR_;
-	} else if (yylval->token == (char *)-1) {
-		ganeshun_yyerror(yylloc, yyscanner, "Bad literal string");
-		stp->err_type->scan = true;
-		return _ERROR_;
-	}
-	DEBUG_LEX("%s>", yylval->token);
-	BEGIN ENDVALUE;
-	return KEYVALUE;
+   /* Single Quote, single line with no escaping */
+
+<TERM>{SQUOTE}   { /* start of a single quote string */
+	DEBUG_LEX("lit value:<%s>", yytext);
+	yylval->token = save_token(yytext, false, stp);
+	return SQUOTE;
 }
 
-<LIT_STRING>\n { /* ERROR: eol within single quote string */
-	ganeshun_yyerror(yylloc, yyscanner, "closing quote missing");
-	stp->err_type->scan = true;
-	return _ERROR_;
+<TERM>{YES}|{TRUE}|{ON}  { /* a boolean TRUE */
+	DEBUG_LEX("boolean TRUE:%s", yytext);
+	yylval->token = save_token(yytext, false, stp);
+	return TOK_TRUE;
 }
+
+<TERM>{NO}|{FALSE}|{OFF}  { /* a boolean FALSE */
+	DEBUG_LEX("boolean FALSE:%s", yytext);
+	yylval->token = save_token(yytext, false, stp);
+	return TOK_FALSE;
+}
+
+<TERM>{MINUS}|{TWIDDLE} { /* an arithmetic op */
+	DEBUG_LEX(" arith op:%s", yytext);
+	yylval->token = save_token(yytext, false, stp);
+	return TOK_ARITH_OP;
+}
+
+<TERM>({OCTNUM}|{DECNUM}|{HEXNUM}){DOT}({OCTNUM}|{DECNUM}|{HEXNUM}) { /* an FSID */
+	DEBUG_LEX(" FSID :%s", yytext);
+	yylval->token = save_token(yytext, false, stp);
+	return TOK_FSID;
+}
+
+<TERM>{OCTNUM}  { /* an octal number */
+	DEBUG_LEX(" octal number:%s", yytext);
+	yylval->token = save_token(yytext, false, stp);
+	return TOK_OCTNUM;
+}
+
+<TERM>{HEXNUM}  { /* a hexidecimal number */
+	DEBUG_LEX(" hex number:%s", yytext);
+	yylval->token = save_token(yytext, false, stp);
+	return TOK_HEXNUM;
+}
+
+<TERM>{DECNUM}  { /* a decimal number */
+	DEBUG_LEX(" dec number:%s", yytext);
+	yylval->token = save_token(yytext, false, stp);
+	return TOK_DECNUM;
+}
+
+<TERM>{SPLAT}|(0{DOT}0{DOT}0{DOT}0)  { /* v4 address wildcard, ganesha only, not IETF */
+	DEBUG_LEX(" V4 any:%s", yytext);
+	yylval->token = save_token(yytext, false, stp);
+	return TOK_V4_ANY;
+}
+
+<TERM>{IPV4ADDR}{CIDR}?  { /* V4 CIDR */
+	DEBUG_LEX(" IPv4 :%s", yytext);
+	yylval->token = save_token(yytext, false, stp);
+	if (index(yylval->token, '/') == NULL)
+		return TOK_V4ADDR;
+	else
+		return TOK_V4CIDR;
+}
+
+   /* Mere mortals are not supposed to grok the pattern for IPV6ADDR. */
+   /* I got it from the Flex manual. */
+
+<TERM>{IPV6ADDR}{CIDR}?  { /* V6 CIDR */
+	DEBUG_LEX(" IPv6 :%s", yytext);
+	yylval->token = save_token(yytext, false, stp);
+	if (index(yylval->token, '/') == NULL)
+		return TOK_V6ADDR;
+	else
+		return TOK_V6CIDR;
+}
+
+<TERM>{AT}{ID_CHARS} { /* a netgroup used for clients */
+	DEBUG_LEX(" netgroup :%s", yytext);
+	yylval->token = save_token(yytext, false, stp);
+	return TOK_NETGROUP;
+}
+
+   /* Last resort terminals. PATHAME is here because it can confuse */
+   /* with a CIDR (precedence) and */
+   /* TOKEN_CHARS gobbles anything other than white and ";" */
+
+<TERM>{PATHNAME}|{LONGPATH}  { /* a POSIX pathname */
+	DEBUG_LEX("pathname:%s", yytext);
+	yylval->token = save_token(yytext, false, stp);
+	return TOK_PATH;
+}
+
+<TERM>{TOKEN_CHARS}  { /* start of a number or label/tag */
+	DEBUG_LEX("token value:%s",yytext);
+	yylval->token = save_token(yytext, false, stp);
+	return TOKEN;
+}
+
+<TERM>{WILDCARD}  { /* start of a number or label/tag as glob(7) string */
+	DEBUG_LEX("token value:%s",yytext);
+	yylval->token = save_token(yytext, false, stp);
+	return REGEX_TOKEN;
+}
+
+   /* Skip over stuff we don't send upstairs */
 
 {COMMENTEXT}  ;/* ignore */
 {SPACE}        ;/* ignore */
 {NL}           ;/* ignore */
 
+   /* Unrecognized chars.  Must do better... */
+
 . { /* ERROR: out of character character */
-	DEBUG_LEX("unexpected stuff %s\n", yytext);
-	ganeshun_yyerror(yylloc, yyscanner, "Unexpected character");
+	DEBUG_LEX("unexpected stuff (%s)\n", yytext);
+	config_parse_error(yylloc, stp,
+		"Unexpected character (%s)", yytext);
 	stp->err_type->scan = true;
+	yylval->token = save_token(yytext, false, stp); /* for error rpt */
 	return _ERROR_;
 }
 
@@ -298,11 +357,14 @@ int ganeshun_yy_init_parser(char *srcfile, struct parser_state *st)
 	if (confroot == NULL)
 		goto nospc;
 	glist_init(&confroot->root.node);
-	glist_init(&confroot->root.u.blk.sub_nodes);
+	glist_init(&confroot->root.u.nterm.sub_nodes);
 	confroot->root.type = TYPE_ROOT;
 	st->root_node = confroot;
 	ganeshun_yylex_init_extra(st, &st->scanner);
-	return new_file(srcfile, st);
+	rc = new_file(srcfile, st);
+	if (rc == 0)
+		confroot->root.filename = gsh_strdup(srcfile);
+	return rc;
 
 nospc:
 	st->err_type->resource = true;
@@ -318,64 +380,6 @@ void ganeshun_yy_cleanup_parser(struct parser_state *st)
 		while(pop_file(st) != 0);
 	}
 	ganeshun_yylex_destroy(st->scanner);
-}
-
-/**
- * @brief filter a string for escaped chars
- *
- * You can escape anything in quoted strings. Literals
- * can't and must be on one line.
- *
- * @param src yytext from the lexer
- * @param esc do quoted string escapes
- *
- * @return allocated string or NULL for ENOMEM and -1 for esc errors
- */
-
-static char *filter_string(char *src, int esc)
-{
-	int c;
-	char *sp, *dst, *dp;
-
-	dst = gsh_calloc(1, strlen(src) + 1);
-	if (dst == NULL)
-		return NULL;
-	sp = src;
-	dp = dst;
-	c = *sp++;
-	while (c != '\0') {
-		if (esc) { /* quoted strings */
-			if (c == '\\' && *sp != '\0') {
-				*dp++ = *sp++;
-			} else if (c == '\"' && *sp == '\0') {
-				*dp++ = '\0';
-				goto done;
-			} else if ((c == '\n' || c == '\"') &&
-				   *sp != '\0') {
-				gsh_free(dst);
-				return (char *)-1;
-			} else {
-				*dp++ = c;
-
-			}
-		} else { /* literal strings */
-			if (c == '\'' && *sp == '\0') {
-				*dp++ = '\0';
-				goto done;
-			} else if ((c == '\n' || c == '\'') &&
-				   *sp != '\0') {
-				gsh_free(dst);
-				return (char *)-1;
-			} else {
-				*dp++ = c;
-			}
-		}
-		c = *sp++;
-	}
-	*dp = *sp;
-
-done:
-	return dst;
 }
 
 static int new_file(char *name_tok,
@@ -401,12 +405,10 @@ static int new_file(char *name_tok,
 	}
 	if (confroot->files == NULL) {
 		if (filename[0] == '/') {
-			char *path = gsh_strdup(filename);
+			char *path = alloca(strlen(filename) + 1);
 
-			if (path == NULL)
-				goto errout;
+			strcpy(path, filename);
 			confroot->conf_dir = gsh_strdup(dirname(path));
-			gsh_free(path);
 		} else {
 			confroot->conf_dir = gsh_strdup(".");
 		}
@@ -427,6 +429,9 @@ static int new_file(char *name_tok,
 	/* loop detection */
 	for (fp = confroot->files; fp != NULL; fp = fp->next) {
 		if (!strcmp(fp->pathname, fullpath)) {
+			config_parse_error(yylloc, st,
+				"file (%s)already parsed, ignored",
+				fullpath);
 			rc = EINVAL;
 			goto errout;
 		}
@@ -439,12 +444,12 @@ static int new_file(char *name_tok,
 	if (flist == NULL) {
 		goto errout;
 	}
-	flist->next = confroot->files;
-	flist->pathname = fullpath;
-	confroot->files = flist;
-	in_file = fopen(flist->pathname, "r" );
+	in_file = fopen(fullpath, "r" );
 	if (in_file == NULL) {
 		rc = errno;
+		config_parse_error(yylloc, st,
+			"new file (%s) open error (%s), ignored",
+			strerror(rc));
 		goto errout;
 	}
 	bs->bs = ganeshun_yy_create_buffer(in_file,
@@ -454,17 +459,20 @@ static int new_file(char *name_tok,
 		st->curbs->lineno = yylineno;
 	bs->prev = st->curbs;
 	bs->f = in_file;
-	bs->filename = flist->pathname;
+	bs->filename = fullpath;
 	ganeshun_yy_switch_to_buffer(bs->bs, yyscanner);
-	st->current_file = flist->pathname;
+	st->current_file = fullpath;
 	st->curbs = bs;
+	flist->pathname = fullpath;
+	flist->next = confroot->files;
+	confroot->files = flist;
 	return 0;
 
 errout:
 	if (rc == ENOMEM)
 		st->err_type->resource = true;
 	else
-		st->err_type->invalid = true;
+		st->err_type->scan = true;
 	if (flist != NULL)
 		gsh_free(flist);
 	if (bs != NULL)

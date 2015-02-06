@@ -272,11 +272,11 @@ static struct config_block export_param = {
 
 fsal_status_t pt_create_export(struct fsal_module *fsal_hdl,
 			       void *parse_node,
+			       struct config_error_type *err_type,
 			       const struct fsal_up_vector *up_ops)
 {
 	struct pt_fsal_export *myself;
 	int retval = 0;
-	struct config_error_type err_type;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 
 	myself = gsh_malloc(sizeof(struct pt_fsal_export));
@@ -305,7 +305,7 @@ fsal_status_t pt_create_export(struct fsal_module *fsal_hdl,
 				       &export_param,
 				       myself,
 				       true,
-				       &err_type);
+				       err_type);
 	if (retval != 0) {
 		retval = EINVAL;
 		goto errout;

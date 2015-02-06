@@ -122,7 +122,8 @@ static int unload_fsal(struct fsal_module *fsal_hdl)
  */
 
 static fsal_status_t init_config(struct fsal_module *fsal_hdl,
-				 config_file_t config_struct)
+				 config_file_t config_struct,
+				 struct config_error_type *err_type)
 {
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -142,6 +143,7 @@ static void dump_config(struct fsal_module *fsal_hdl, int log_fd)
 
 static fsal_status_t create_export(struct fsal_module *fsal_hdl,
 				   void *parse_node,
+				   struct config_error_type *err_type,
 				   const struct fsal_up_vector *up_ops)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);

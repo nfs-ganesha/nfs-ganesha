@@ -38,6 +38,27 @@ typedef enum { CONFIG_ITEM_BLOCK = 1, CONFIG_ITEM_VAR } config_item_type;
  * @brief Data structures for config parse tree processing
  */
 
+enum  term_type {
+	TERM_TOKEN = 1,
+	TERM_REGEX,
+	TERM_PATH,
+	TERM_STRING,
+	TERM_DQUOTE,
+	TERM_SQUOTE,
+	TERM_TRUE,
+	TERM_FALSE,
+	TERM_DECNUM,
+	TERM_HEXNUM,
+	TERM_OCTNUM,
+	TERM_V4_ANY,
+	TERM_V4ADDR,
+	TERM_V4CIDR,
+	TERM_V6ADDR,
+	TERM_V6CIDR,
+	TERM_FSID,
+	TERM_NETGROUP
+};
+
 enum config_type {
 	CONFIG_NULL = 0,
 	CONFIG_INT16,
@@ -47,7 +68,6 @@ enum config_type {
 	CONFIG_INT64,
 	CONFIG_UINT64,
 	CONFIG_FSID,
-	CONFIG_ANONID,
 	CONFIG_STRING,
 	CONFIG_PATH,
 	CONFIG_LIST,
@@ -56,8 +76,7 @@ enum config_type {
 	CONFIG_TOKEN,
 	CONFIG_BOOL,
 	CONFIG_BOOLBIT,
-	CONFIG_IPV4_ADDR,
-	CONFIG_IPV6_ADDR,
+	CONFIG_IP_ADDR,
 	CONFIG_INET_PORT,
 	CONFIG_BLOCK,
 	CONFIG_PROC
@@ -68,6 +87,7 @@ enum config_type {
 #define CONFIG_MODE		0x004  /*< this param is octal "mode" */
 #define CONFIG_RELAX		0x008  /*< this block has extra params
 					*  so don't complain about them */
+#define CONFIG_MARK_SET		0x010  /*< Mark this param as set */
 
 /**
  * @brief Config file processing error type
@@ -75,6 +95,9 @@ enum config_type {
  * This is a better way than a bunch of mask bits...
  * Examination of the error type lets the calling code decide
  * just how bad and messed up the config file is.
+ *
+ * NOTE: If you add an error here, update err_type_str() and friends
+ * as well.
  */
 
 struct config_error_type {
@@ -89,9 +112,12 @@ struct config_error_type {
 	bool missing:1;		/*< missing mandatory parameter */
 	bool validate:1;	/*< commit param validation */
 	bool exists:1;		/*< block already exists */
-	bool empty:1;		/*< block is empty */
 	bool internal:1;        /*< internal error */
 	bool bogus:1;		/*< bogus (deprecated?) param */
+	uint32_t errors;	/*< cumulative error count for parse+proc */
+	char *diag_buf;		/*< buffer for scan+parse+processing msgs */
+	size_t diag_buf_size;	/*< size of diag buffer used by memstream */
+	FILE *fp;		/*< FILE * for memstream */
 };
 
 /** @brief Error detail decoders
@@ -149,15 +175,6 @@ static inline void config_error_comb_errors(struct config_error_type *err_type,
 					    struct config_error_type *more_errs)
 {
 	*(uint16_t *)err_type |= *(uint16_t *)more_errs;
-}
-
-/**
- * @brief Clear the error types
- */
-
-static inline void clear_error_type(struct config_error_type *err_type)
-{
-	memset(err_type, 0, sizeof(struct config_error_type));
 }
 
 struct config_block;
@@ -265,12 +282,9 @@ struct config_item {
 			int maxsize;
 			const char *def;
 		} str;
-		struct { /* CONFIG_IPV4_ADDR */
+		struct { /* CONFIG_IP_ADDR */
 			const char *def;
-		} ipv4;
-		struct { /* CONFIG_IPV6_ADDR */
-			const char *def;
-		} ipv6;
+		} ip;
 		struct { /* CONFIG_INT16 */
 			int16_t minval;
 			int16_t maxval;
@@ -309,11 +323,6 @@ struct config_item {
 			uint32_t bit;
 			size_t set_off;
 		} fsid;
-		struct { /* CONFIG_ANONID */
-			uint32_t def;
-			uint32_t bit;
-			size_t set_off;
-		} anonid;
 		struct { /* CONFIG_LIST | CONFIG_ENUM | CONFIG_ENUM_SET |
 			    CONFIG_LIST_BITS | CONFIG_ENUM_BITS */
 			uint32_t def;
@@ -338,9 +347,14 @@ struct config_item {
 					void *self_struct);
 		} blk;
 		struct { /* CONFIG_PROC */
-			struct conf_item_list *tokens;
-			uint32_t def;
-			int (*setf)(void *field, void *args);
+			size_t set_off;
+			void *(*init)(void *link_mem, void *self_struct);
+			int (*handler)(const char *token,
+				       enum term_type type_hint,
+				       struct config_item *item,
+				       void *param_addr,
+				       void *cnode,
+				       struct config_error_type *err_type);
 		} proc;
 	} u;
 	size_t off; /* offset into struct pointed to by opaque_dest */
@@ -399,9 +413,7 @@ struct config_item {
  *
  * There are a few specialized item entries
  *
- * CONF_ITEM_IPV4_ADDR processes an IPv4 address specification
- *
- * CONF_ITEM_IPV6_ADDR processes an IPv6 address specification
+ * CONF_ITEM_IP_ADDR processes an IP (both v4 and v6)  address specification
  *
  * CONF_ITEM_INET_PORT processes an unsigned 16 bit integer in
  * network byte order.
@@ -418,25 +430,17 @@ struct config_item {
 	  .type = CONFIG_FSID,		   	    \
 	  .u.fsid.def_maj = _def_maj_,		    \
 	  .u.fsid.def_min = _def_min_,		    \
-	  .u.fsid.set_off = UINT32_MAX,		    \
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
 #define CONF_ITEM_FSID_SET(_name_, _def_maj_, _def_min_, _struct_, \
 			   _mem_, _bit_, _set_)     \
 	{ .name = _name_,			    \
 	  .type = CONFIG_FSID,		   	    \
+	  .flags = CONFIG_MARK_SET,			\
 	  .u.fsid.def_maj = _def_maj_,		    \
 	  .u.fsid.def_min = _def_min_,		    \
 	  .u.fsid.bit = _bit_,		   	    \
 	  .u.fsid.set_off = offsetof(struct _struct_, _set_),   \
-	  .off = offsetof(struct _struct_, _mem_)   \
-	}
-#define CONF_ITEM_ANONID(_name_, _def_, _struct_, _mem_, _bit_, _set_) \
-	{ .name = _name_,			    \
-	  .type = CONFIG_ANONID,		    \
-	  .u.anonid.def = _def_,		    \
-	  .u.anonid.bit = _bit_,		    \
-	  .u.anonid.set_off = offsetof(struct _struct_, _set_),   \
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
 #define CONF_ITEM_BLOCK(_name_, _params_, _init_, _commit_, _struct_, _mem_) \
@@ -458,12 +462,12 @@ struct config_item {
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
 
-#define CONF_ITEM_PROC(_name_, _def_, _tokens_, _proc_) \
+#define CONF_ITEM_PROC(_name_, _init_, _handler_, _struct_, _mem_)	\
 	{ .name = _name_,			    \
-	  .type = CONFIG_PROC,		    \
-	  .u.proc.def = _def_,			    \
-	  .u.proc.tokens = _tokens_,		    \
-	  .u.proc.setf = _proc_	    \
+	  .type = CONFIG_PROC,			    \
+	  .u.proc.init = _init_,		    \
+	  .u.proc.handler = _handler_,			    \
+	  .off = offsetof(struct _struct_, _mem_)   \
 	}
 
 #define CONF_ITEM_LIST(_name_, _def_, _tokens_, _struct_, _mem_) \
@@ -490,6 +494,7 @@ struct config_item {
 				_mem_, _set_)	    \
 	{ .name = _name_,			    \
 	  .type = CONFIG_LIST,		  	    \
+	  .flags = CONFIG_MARK_SET,			\
 	  .u.lst.def = _def_,			    \
 	  .u.lst.mask = _mask_,			    \
 	  .u.lst.set_off = offsetof(struct _struct_, _set_),   \
@@ -502,13 +507,13 @@ struct config_item {
 	  .type = CONFIG_BOOLBIT,		    \
 	  .u.bit.def = _def_,			    \
 	  .u.bit.bit = _bit_,			    \
-	  .u.bit.set_off = UINT32_MAX,		    \
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
 
 #define CONF_ITEM_BOOLBIT_SET(_name_, _def_, _bit_, _struct_, _mem_, _set_) \
 	{ .name = _name_,			    \
 	  .type = CONFIG_BOOLBIT,		    \
+	  .flags = CONFIG_MARK_SET,			\
 	  .u.bit.def = _def_,			    \
 	  .u.bit.bit = _bit_,			    \
 	  .u.bit.set_off = offsetof(struct _struct_, _set_),   \
@@ -528,8 +533,6 @@ struct config_item {
 	{ .name = _name_,			    \
 	  .type = CONFIG_ENUM,			    \
 	  .u.lst.def = _def_,			    \
-	  .u.lst.mask = UINT32_MAX,		    \
-	  .u.lst.set_off = UINT32_MAX,		    \
 	  .u.lst.tokens = _tokens_,		    \
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
@@ -538,6 +541,7 @@ struct config_item {
 			   _bit_, _set_)		   \
 	{ .name = _name_,			    \
 	  .type = CONFIG_ENUM_SET,		    \
+	  .flags = CONFIG_MARK_SET,			\
 	  .u.lst.def = _def_,			    \
 	  .u.lst.mask = UINT32_MAX,		    \
 	  .u.lst.tokens = _tokens_,		    \
@@ -551,7 +555,6 @@ struct config_item {
 	  .type = CONFIG_ENUM,			    \
 	  .u.lst.def = _def_,			    \
 	  .u.lst.mask = _mask_,			    \
-	  .u.lst.set_off = UINT32_MAX,		    \
 	  .u.lst.tokens = _tokens_,		    \
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
@@ -560,6 +563,7 @@ struct config_item {
 				_mem_, _set_)	    \
 	{ .name = _name_,			    \
 	  .type = CONFIG_ENUM,			    \
+	  .flags = CONFIG_MARK_SET,			\
 	  .u.lst.def = _def_,			    \
 	  .u.lst.mask = _mask_,			    \
 	  .u.lst.set_off = offsetof(struct _struct_, _set_),   \
@@ -642,23 +646,17 @@ struct config_item {
 	  .u.str.def = _def_,			    \
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
-#define CONF_ITEM_IPV4_ADDR(_name_, _def_, _struct_, _mem_) \
+#define CONF_ITEM_IP_ADDR(_name_, _def_, _struct_, _mem_) \
 	{ .name = _name_,			    \
-	  .type = CONFIG_IPV4_ADDR,		    \
-	  .u.ipv4.def = _def_,			    \
+	  .type = CONFIG_IP_ADDR,		    \
+	  .u.ip.def = _def_,			    \
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
-#define CONF_MAND_IPV4_ADDR(_name_, _def_, _struct_, _mem_) \
+#define CONF_MAND_IP_ADDR(_name_, _def_, _struct_, _mem_) \
 	{ .name = _name_,			    \
-	  .type = CONFIG_IPV4_ADDR,		    \
+	  .type = CONFIG_IP_ADDR,		    \
 	  .flags = CONFIG_UNIQUE|CONFIG_MANDATORY,  \
-	  .u.ipv4.def = _def_,			    \
-	  .off = offsetof(struct _struct_, _mem_)   \
-	}
-#define CONF_ITEM_IPV6_ADDR(_name_, _def_, _struct_, _mem_) \
-	{ .name = _name_,			    \
-	  .type = CONFIG_IPV6_ADDR,		    \
-	  .u.ipv6.def = _def_,			    \
+	  .u.ip.def = _def_,			    \
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
 
@@ -722,23 +720,13 @@ struct config_item {
 			  _bit_, _set_) \
 	{ .name = _name_,			    \
 	  .type = CONFIG_INT32,		    \
+	  .flags = CONFIG_MARK_SET,   \
 	  .u.i32.minval = _min_,		    \
 	  .u.i32.maxval = _max_,		    \
 	  .u.i32.def = _def_,			    \
 	  .u.i32.bit = _bit_,		   	    \
 	  .u.i32.set_off = offsetof(struct _struct_, _set_),   \
 	  .off = offsetof(struct _struct_, _mem_)   \
-	}
-
-#define CONF_INDEX_I32(_name_, _min_, _max_, _def_, _idx_, _struct_, _mem_) \
-	{ .name = _name_,			    \
-	  .type = CONFIG_INT32,		    \
-	  .u.i32.minval = _min_,		    \
-	  .u.i32.maxval = _max_,		    \
-	  .u.i32.def = _def_,			    \
-	  .u.i32.set_off = UINT32_MAX,   \
-	  .off = (sizeof(struct _struct_) * _idx_)	\
-		  + offsetof(struct _struct_, _mem_)	\
 	}
 
 #define CONF_ITEM_UI32(_name_, _min_, _max_, _def_, _struct_, _mem_) \
@@ -863,7 +851,8 @@ struct config_node_list {
 
 /* find a node in the parse tree using expression */
 int find_config_nodes(config_file_t config, char *expr,
-		     struct config_node_list **node_list);
+		     struct config_node_list **node_list,
+		      struct config_error_type *err_type);
 
 /* fill configuration structure from parse tree */
 int load_config_from_node(void *tree_node,
@@ -880,7 +869,20 @@ int load_config_from_parse(config_file_t config,
 			   struct config_error_type *err_type);
 
 /* translate err_type values to log/dbus error string*/
+const char *config_term_name(enum term_type type);
+const char *config_term_desc(enum term_type type);
+
 char *err_type_str(struct config_error_type *err_type);
+bool init_error_type(struct config_error_type *err_type);
+void config_errs_to_log(char *err, void *,
+			struct config_error_type *err_type);
+void config_proc_error(void *cnode,
+		       struct config_error_type *err_type,
+		       char *format, ...);
+void report_config_errors(struct config_error_type *err_type, void *dest,
+			  void (*logger)(char *msg, void *dest,
+					 struct config_error_type *err_type));
+
 
 /**
  * @brief NOOP config initializer and commit functions.

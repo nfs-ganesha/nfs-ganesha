@@ -130,19 +130,19 @@ struct fsal_staticfsinfo_t *vfs_staticinfo(struct fsal_module *hdl)
  */
 
 static fsal_status_t init_config(struct fsal_module *fsal_hdl,
-				 config_file_t config_struct)
+				 config_file_t config_struct,
+				 struct config_error_type *err_type)
 {
 	struct xfs_fsal_module *xfs_me =
 	    container_of(fsal_hdl, struct xfs_fsal_module, fsal);
-	struct config_error_type err_type;
 
 	xfs_me->fs_info = default_posix_info;	/* copy the consts */
 	(void) load_config_from_parse(config_struct,
 				      &xfs_param,
 				      &xfs_me->fs_info,
 				      true,
-				      &err_type);
-	if (!config_error_is_harmless(&err_type))
+				      err_type);
+	if (!config_error_is_harmless(err_type))
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	display_fsinfo(&xfs_me->fs_info);
 	LogFullDebug(COMPONENT_FSAL,
@@ -162,6 +162,7 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 
 fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 				void *parse_node,
+				struct config_error_type *err_type,
 				const struct fsal_up_vector *up_ops);
 
 /* Module initialization.

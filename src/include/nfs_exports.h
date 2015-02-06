@@ -62,7 +62,7 @@
 
 
 typedef enum exportlist_client_type__ {
-	RAW_CLIENT_LIST = 0,
+	PROTO_CLIENT = 0,
 	HOSTIF_CLIENT = 1,
 	NETWORK_CLIENT = 2,
 	NETGROUP_CLIENT = 3,
@@ -84,7 +84,6 @@ typedef struct exportlist_client_entry__ {
 	struct glist_head cle_list;
 	exportlist_client_type_t type;
 	union {
-		char *raw_client_str;
 		union {
 			uint32_t clientaddr; /* wrong! fix to be struct */
 			struct in6_addr clientaddr6;
@@ -213,7 +212,8 @@ void unexport(struct gsh_export *export);
 void kill_export_root_entry(cache_entry_t *entry);
 void kill_export_junction_entry(cache_entry_t *entry);
 
-int ReadExports(config_file_t in_config);
+int ReadExports(config_file_t in_config,
+		struct config_error_type *err_type);
 void free_export_resources(struct gsh_export *export);
 void exports_pkginit(void);
 

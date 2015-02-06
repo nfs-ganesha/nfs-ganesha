@@ -112,19 +112,19 @@ struct fsal_staticfsinfo_t *zfs_staticinfo(struct fsal_module *hdl)
  */
 
 static fsal_status_t zfs_init_config(struct fsal_module *fsal_hdl,
-				 config_file_t config_struct)
+				     config_file_t config_struct,
+				     struct config_error_type *err_type)
 {
 	struct zfs_fsal_module *zfs_me =
 	    container_of(fsal_hdl, struct zfs_fsal_module, fsal);
-	struct config_error_type err_type;
 
 	zfs_me->fs_info = default_zfs_info;	/* copy the consts */
 	(void) load_config_from_parse(config_struct,
 				      &zfs_param,
 				      &zfs_me,
 				      true,
-				      &err_type);
-	if (!config_error_is_harmless(&err_type))
+				      err_type);
+	if (!config_error_is_harmless(err_type))
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	display_fsinfo(&zfs_me->fs_info);
 	LogFullDebug(COMPONENT_FSAL,
@@ -144,6 +144,7 @@ static fsal_status_t zfs_init_config(struct fsal_module *fsal_hdl,
 
 fsal_status_t zfs_create_export(struct fsal_module *fsal_hdl,
 				void *parse_node,
+				struct config_error_type *err_type,
 				const struct fsal_up_vector *up_ops);
 
 /* Module initialization.

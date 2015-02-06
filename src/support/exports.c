@@ -69,6 +69,8 @@ struct global_export_perms export_opt = {
 	.def.set = UINT32_MAX
 };
 
+static void FreeClientList(struct glist_head *clients);
+
 static void StrExportOptions(struct export_perms *p_perms, char *buffer)
 {
 	char *buf = buffer;
@@ -157,13 +159,13 @@ static void StrExportOptions(struct export_perms *p_perms, char *buffer)
 	} else
 		buf += sprintf(buf, ",         ");
 
-	if ((p_perms->set & EXPORT_OPTION_ANON_UID_SET) == 0)
+	if ((p_perms->set & EXPORT_OPTION_ANON_UID_SET) != 0)
 		buf += sprintf(buf, ", anon_uid=%6d",
 			       (int)p_perms->anonymous_uid);
 	else
 		buf += sprintf(buf, ",                ");
 
-	if ((p_perms->set & EXPORT_OPTION_ANON_GID_SET) == 0)
+	if ((p_perms->set & EXPORT_OPTION_ANON_GID_SET) != 0)
 		buf += sprintf(buf, ", anon_gid=%6d",
 			       (int)p_perms->anonymous_gid);
 	else
@@ -243,8 +245,8 @@ void LogClientListEntry(log_components_t component,
 			    perms);
 		return;
 
-	case RAW_CLIENT_LIST:
-		LogCrit(component, "  %p RAW_CLIENT_LIST: <unknown>(%s)", entry,
+	case PROTO_CLIENT:
+		LogCrit(component, "  %p PROTO_CLIENT: <unknown>(%s)", entry,
 			perms);
 		return;
 	case BAD_CLIENT:
@@ -261,54 +263,59 @@ void LogClientListEntry(log_components_t component,
 /**
  * @brief Expand the client name token into one or more client entries
  *
- * @param exp        [IN] the export this gets linked to (in tail order)
+ * @param client_list[IN] the client list this gets linked to (in tail order)
  * @param client_tok [IN] the name string.  We modify it.
+ * @param type_hint  [IN] type hint from parser for client_tok
  * @param perms      [IN] pointer to the permissions to copy into each
+ * @param cnode      [IN] opaque pointer needed for config_proc_error()
+ * @param err_type   [OUT] error handling ref
  *
  * @returns 0 on success, error count on failure
  */
 
-static int add_client(struct gsh_export *export,
-		      char *client_tok,
+static int add_client(struct glist_head *client_list,
+		      const char *client_tok,
+		      enum term_type type_hint,
 		      struct export_perms *perms,
+		      void *cnode,
 		      struct config_error_type *err_type)
 {
 	struct exportlist_client_entry__ *cli;
 	int errcnt = 0;
 	struct addrinfo *info;
+	CIDR *cidr;
+	uint32_t addr;
+	int rc;
 
 	cli = gsh_calloc(sizeof(struct exportlist_client_entry__), 1);
 	if (cli == NULL) {
-		LogMajor(COMPONENT_CONFIG,
-			 "Allocate of client space failed");
+		config_proc_error(cnode, err_type,
+				  "Allocate of client space failed");
 		goto out;
 	}
-#ifdef USE_NODELIST
-#error "Node list expansion goes here but not yet"
-#endif
 	glist_init(&cli->cle_list);
-	if (client_tok[0] == '*' && client_tok[1] == '\0') {
+	switch (type_hint) {
+	case TERM_V4_ANY:
 		cli->type = MATCH_ANY_CLIENT;
-	} else if (client_tok[0] == '@') {
+		break;
+	case TERM_NETGROUP:
 		if (strlen(client_tok) > MAXHOSTNAMELEN) {
-			LogMajor(COMPONENT_CONFIG,
-				 "netgroup (%s) name too long",
-				 client_tok);
+			config_proc_error(cnode, err_type,
+					  "netgroup (%s) name too long",
+					  client_tok);
 			err_type->invalid = true;
 			errcnt++;
 			goto out;
 		}
 		cli->client.netgroup.netgroupname = gsh_strdup(client_tok + 1);
 		cli->type = NETGROUP_CLIENT;
-	} else if (index(client_tok, '/') != NULL) {
-		CIDR *cidr;
-		uint32_t addr;
-
+		break;
+	case TERM_V4CIDR:  /* this needs to be migrated to libcidr! (no v6) */
 		cidr = cidr_from_str(client_tok);
 		if (cidr == NULL) {
-			LogMajor(COMPONENT_CONFIG,
-				 "Expected a CIDR address, got (%s)",
-				 client_tok);
+			config_proc_error(cnode, err_type,
+					  "Expected a IPv4 CIDR address, got (%s)",
+					  client_tok);
 			err_type->invalid = true;
 			errcnt++;
 			goto out;
@@ -319,102 +326,132 @@ static int add_client(struct gsh_export *export,
 		cli->client.network.netmask = ntohl(addr);
 		cidr_free(cidr);
 		cli->type = NETWORK_CLIENT;
-	} else if (index(client_tok, '*') != NULL ||
-		   index(client_tok, '?') != NULL) {
+		break;
+	case TERM_REGEX:
 		if (strlen(client_tok) > MAXHOSTNAMELEN) {
-			LogMajor(COMPONENT_CONFIG,
-				 "Wildcard client (%s) name too long",
-				 client_tok);
+			config_proc_error(cnode, err_type,
+					  "Wildcard client (%s) name too long",
+					  client_tok);
 			err_type->invalid = true;
 			errcnt++;
 			goto out;
 		}
 		cli->client.wildcard.wildcard = gsh_strdup(client_tok);
 		cli->type = WILDCARDHOST_CLIENT;
-	} else if (getaddrinfo(client_tok, NULL, NULL, &info) == 0) {
-		struct addrinfo *ap, *ap_last = NULL;
-		struct in_addr in_addr_last;
-		struct in6_addr in6_addr_last;
+		break;
+	case TERM_V4ADDR:
+		rc = inet_pton(AF_INET, client_tok,
+			       &cli->client.hostif.clientaddr);
+		assert(rc == 1);  /* this had better be grok'd by now! */
+		cli->type = HOSTIF_CLIENT;
+		break;
+	case TERM_V6ADDR:
+		rc = inet_pton(AF_INET6, client_tok,
+			       &cli->client.hostif.clientaddr6);
+		assert(rc == 1);  /* this had better be grok'd by now! */
+		cli->type = HOSTIF_CLIENT_V6;
+		break;
+	case TERM_TOKEN: /* only dns names now. */
+		rc = getaddrinfo(client_tok, NULL, NULL, &info);
+		if (rc == 0) {
+			struct addrinfo *ap, *ap_last = NULL;
+			struct in_addr in_addr_last;
+			struct in6_addr in6_addr_last;
 
-		for (ap = info; ap != NULL; ap = ap->ai_next) {
-			LogFullDebug(COMPONENT_CONFIG,
-				     "flags=%d family=%d socktype=%d protocol=%d addrlen=%d name=%s",
-				     ap->ai_flags,
-				     ap->ai_family,
-				     ap->ai_socktype,
-				     ap->ai_protocol,
-				     (int) ap->ai_addrlen,
-				     ap->ai_canonname);
-			if (cli == NULL) {
-				cli = gsh_calloc(
-				    sizeof(struct exportlist_client_entry__),
-				    1);
+			for (ap = info; ap != NULL; ap = ap->ai_next) {
+				LogFullDebug(COMPONENT_CONFIG,
+					     "flags=%d family=%d socktype=%d protocol=%d addrlen=%d name=%s",
+					     ap->ai_flags,
+					     ap->ai_family,
+					     ap->ai_socktype,
+					     ap->ai_protocol,
+					     (int) ap->ai_addrlen,
+					     ap->ai_canonname);
 				if (cli == NULL) {
-					LogMajor(COMPONENT_CONFIG,
-						 "Allocate of client space failed");
-					break;
+					cli = gsh_calloc(
+						sizeof(struct
+						    exportlist_client_entry__),
+						1);
+					if (cli == NULL) {
+						config_proc_error(cnode,
+								  err_type,
+								  "Allocate of client space failed");
+						err_type->resource = true;
+						errcnt++;
+						break;
+					}
+					glist_init(&cli->cle_list);
 				}
-				glist_init(&cli->cle_list);
+				if (ap->ai_family == AF_INET &&
+				    (ap->ai_socktype == SOCK_STREAM ||
+				     ap->ai_socktype == SOCK_DGRAM)) {
+					struct in_addr infoaddr =
+						((struct sockaddr_in *)
+						 ap->ai_addr)->sin_addr;
+					if (ap_last != NULL &&
+					    ap_last->ai_family
+					    == ap->ai_family &&
+					    memcmp(&infoaddr,
+						   &in_addr_last,
+						   sizeof(struct in_addr)) == 0)
+						continue;
+					memcpy(&(cli->client.hostif.clientaddr),
+					       &infoaddr,
+					       sizeof(struct in_addr));
+					cli->type = HOSTIF_CLIENT;
+					ap_last = ap;
+					in_addr_last = infoaddr;
+
+				} else if (ap->ai_family == AF_INET6 &&
+					   (ap->ai_socktype == SOCK_STREAM ||
+					    ap->ai_socktype == SOCK_DGRAM)) {
+					struct in6_addr infoaddr =
+						((struct sockaddr_in6 *)
+						 ap->ai_addr)->sin6_addr;
+
+					if (ap_last != NULL &&
+					    ap_last->ai_family == ap->ai_family
+					    &&  !memcmp(&infoaddr,
+						       &in6_addr_last,
+						       sizeof(struct in6_addr)))
+						continue;
+					/* IPv6 address */
+					memcpy(
+					    &(cli->client.hostif.clientaddr6),
+					       &infoaddr,
+					       sizeof(struct in6_addr));
+					cli->type = HOSTIF_CLIENT_V6;
+					ap_last = ap;
+					in6_addr_last = infoaddr;
+				} else
+					continue;
+				cli->client_perms = *perms;
+				LogClientListEntry(COMPONENT_CONFIG, cli);
+				glist_add_tail(client_list, &cli->cle_list);
+				cli = NULL; /* let go of it */
 			}
-			if (ap->ai_family == AF_INET &&
-			    (ap->ai_socktype == SOCK_STREAM ||
-			     ap->ai_socktype == SOCK_DGRAM)) {
-				struct in_addr infoaddr =
-					((struct sockaddr_in *)ap->ai_addr)->
-					sin_addr;
-				if (ap_last != NULL &&
-				    ap_last->ai_family == ap->ai_family &&
-				    memcmp(&infoaddr,
-					   &in_addr_last,
-					   sizeof(struct in_addr)) == 0)
-					continue;
-				memcpy(&(cli->client.hostif.clientaddr),
-				       &infoaddr, sizeof(struct in_addr));
-				cli->type = HOSTIF_CLIENT;
-				ap_last = ap;
-				in_addr_last = infoaddr;
-
-			} else if (ap->ai_family == AF_INET6 &&
-				   (ap->ai_socktype == SOCK_STREAM ||
-				    ap->ai_socktype == SOCK_DGRAM)) {
-				struct in6_addr infoaddr =
-				    ((struct sockaddr_in6 *)ap->ai_addr)->
-				    sin6_addr;
-
-				if (ap_last != NULL &&
-				    ap_last->ai_family == ap->ai_family &&
-				    memcmp(&infoaddr,
-					   &in6_addr_last,
-					   sizeof(struct in6_addr)) == 0)
-					continue;
-				/* IPv6 address */
-				memcpy(&(cli->client.hostif.clientaddr6),
-				       &infoaddr, sizeof(struct in6_addr));
-				cli->type = HOSTIF_CLIENT_V6;
-				ap_last = ap;
-				in6_addr_last = infoaddr;
-			} else
-				continue;
-			cli->client_perms = *perms;
-			LogClientListEntry(COMPONENT_CONFIG, cli);
-			glist_add_tail(&export->clients,
-				       &cli->cle_list);
-			cli = NULL; /* let go of it */
+			freeaddrinfo(info);
+			goto out;
+		} else {
+			config_proc_error(cnode, err_type,
+					  "Client (%s)not found because %s",
+					  client_tok, gai_strerror(rc));
+			err_type->bogus = true;
+			errcnt++;
 		}
-		freeaddrinfo(info);
-		goto out;
-	} else {  /* does gsspric decode go here? */
-		LogMajor(COMPONENT_CONFIG,
-			 "Unknown client token (%s)",
-			 client_tok);
+		break;
+	default:
+		config_proc_error(cnode, err_type,
+				  "Expected a client, got a %s for (%s)",
+				  config_term_desc(type_hint),
+				  client_tok);
 		err_type->bogus = true;
 		errcnt++;
 		goto out;
 	}
 	cli->client_perms = *perms;
 	LogClientListEntry(COMPONENT_CONFIG, cli);
-	glist_add_tail(&export->clients,
-		       &cli->cle_list);
+	glist_add_tail(client_list, &cli->cle_list);
 	cli = NULL;
 out:
 	if (cli != NULL)
@@ -449,15 +486,14 @@ static void *client_init(void *link_mem, void *self_struct)
 		if (cli == NULL)
 			return NULL;
 		glist_init(&cli->cle_list);
-		cli->type = RAW_CLIENT_LIST;
+		cli->type = PROTO_CLIENT;
 		return cli;
 	} else { /* free resources case */
 		cli = self_struct;
 
+		if (!glist_empty(&cli->cle_list))
+			FreeClientList(&cli->cle_list);
 		assert(glist_empty(&cli->cle_list));
-		if (cli->type == RAW_CLIENT_LIST &&
-		    cli->client.raw_client_str != NULL)
-			gsh_free(cli->client.raw_client_str);
 		gsh_free(cli);
 		return NULL;
 	}
@@ -471,8 +507,9 @@ static void *client_init(void *link_mem, void *self_struct)
  * here and in add_client, we allocate new client entries and free
  * what was passed to us rather than try and link it in.
  *
+ * @param node [IN] the config_node **not used**
  * @param link_mem [IN] the exportlist entry. add_client adds to its glist.
- * @param self_struct  [IN] the filled out client entry with a RAW_CLIENT_LIST
+ * @param self_struct  [IN] the filled out client entry with a PROTO_CLIENT
  *
  * @return 0 on success, error count for failure.
  */
@@ -482,36 +519,18 @@ static int client_commit(void *node, void *link_mem, void *self_struct,
 {
 	struct exportlist_client_entry__ *cli;
 	struct gsh_export *export;
-	struct glist_head *cli_list;
-	char *client_list, *tok, *endptr;
 	int errcnt = 0;
 
-	cli_list = link_mem;
-	export = container_of(cli_list, struct gsh_export, clients);
+	export = container_of(link_mem, struct gsh_export, clients);
 	cli = self_struct;
-	assert(cli->type == RAW_CLIENT_LIST);
-
-	client_list = cli->client.raw_client_str;
-	cli->client.raw_client_str = NULL;
-	if (client_list == NULL || client_list[0] == '\0') {
+	assert(cli->type == PROTO_CLIENT);
+	if (glist_empty(&cli->cle_list)) {
 		LogCrit(COMPONENT_CONFIG,
 			"No clients specified");
 		err_type->invalid = true;
 		errcnt++;
-	}
-	/* take the first token for ourselves.  it may expand!
-	 * loop thru the rest and use our options as theirs (copy)
-	 */
-	tok = client_list;
-	while (errcnt == 0 && tok != NULL) {
-		endptr = index(tok, ',');
-		if (endptr != NULL)
-			*endptr++ = '\0';
-		LogMidDebug(COMPONENT_CONFIG,
-			    "Adding client %s", tok);
-		errcnt += add_client(export, tok, &cli->client_perms,
-				     err_type);
-		tok = endptr;
+	} else {
+		glist_splice_tail(&export->clients, &cli->cle_list);
 	}
 	if (errcnt == 0)
 		client_init(link_mem, self_struct);
@@ -563,7 +582,7 @@ static int fsal_commit(void *node, void *link_mem, void *self_struct,
 		export->fullpath[pathlen] = '\0';
 	}
 	status = fsal->m_ops.create_export(fsal,
-					  node,
+					   node, err_type,
 					  &fsal_up_top);
 	if ((export->options_set & EXPORT_OPTION_EXPIRE_SET) == 0)
 		export->expire_time_attr = cache_param.expire_time_attr;
@@ -776,11 +795,14 @@ static int export_commit(void *node, void *link_mem, void *self_struct,
 
 	StrExportOptions(&export->export_perms, perms);
 
-	LogEvent(COMPONENT_CONFIG,
-		 "Export %d created at pseudo (%s) with path (%s) and tag (%s) perms (%s)",
-		 export->export_id, export->pseudopath,
-		 export->fullpath, export->FS_tag, perms);
+	LogInfo(COMPONENT_CONFIG,
+		"Export %d created at pseudo (%s) with path (%s) and tag (%s) perms (%s)",
+		export->export_id, export->pseudopath,
+		export->fullpath, export->FS_tag, perms);
 
+	LogInfo(COMPONENT_CONFIG,
+		"Export %d has %ld defined clients", export->export_id,
+		glist_length(&export->clients));
 	put_gsh_export(export);
 	return 0;
 
@@ -1012,10 +1034,10 @@ struct config_item_list deleg_types[] =  {
 	CONF_ITEM_LIST_BITS_SET("Transports",				\
 		EXPORT_OPTION_TRANSPORTS, EXPORT_OPTION_TRANSPORTS,	\
 		transports, _struct_, _perms_.options, _perms_.set),	\
-	CONF_ITEM_ANONID("Anonymous_uid",				\
+	CONF_ITEM_I32_SET("Anonymous_uid", INT32_MIN, INT32_MAX,	\
 		ANON_UID, _struct_, _perms_.anonymous_uid,		\
 		EXPORT_OPTION_ANON_UID_SET, _perms_.set),		\
-	CONF_ITEM_ANONID("Anonymous_gid",				\
+	CONF_ITEM_I32_SET("Anonymous_gid", INT32_MIN, INT32_MAX,	\
 		ANON_GID, _struct_, _perms_.anonymous_gid,		\
 		EXPORT_OPTION_ANON_GID_SET, _perms_.set),		\
 	CONF_ITEM_LIST_BITS_SET("SecType",				\
@@ -1042,6 +1064,49 @@ struct config_item_list deleg_types[] =  {
 		_struct_, _perms_.options, _perms_.set)
 
 /**
+ * @brief Process a list of clients for a client block
+ *
+ * CONFIG_PROC handler that gets called for each token in the term list.
+ * Create a exportlist_client_entry__ for each token and link it into
+ * the proto client's cle_list list head.  We will pass that head to the
+ * export in commit.
+ *
+ * NOTES: this is the place to expand a node list with perhaps moving the
+ * call to add_client into the expander rather than build a list there
+ * to be then walked here...
+ *
+ * @param token [IN] pointer to token string from parse tree
+ * @param type_hint [IN] a type hint from what the parser recognized
+ * @param item [IN] pointer to the config item table entry
+ * @param param_addr [IN] pointer to prototype client entry
+ * @param err_type [OUT] error handling
+ * @return error count
+ */
+
+static int client_adder(const char *token,
+			enum term_type type_hint,
+			struct config_item *item,
+			void *param_addr,
+			void *cnode,
+			struct config_error_type *err_type)
+{
+	struct exportlist_client_entry__ *proto_cli;
+	int rc;
+
+	proto_cli = container_of(param_addr,
+				 struct exportlist_client_entry__,
+				 cle_list);
+#ifdef USE_NODELIST
+#error "Node list expansion goes here but not yet"
+#endif
+	LogMidDebug(COMPONENT_CONFIG, "Adding client %s", token);
+	rc = add_client(&proto_cli->cle_list,
+			token, type_hint,
+			&proto_cli->client_perms, cnode, err_type);
+	return rc;
+}
+
+/**
  * @brief Table of client sub-block parameters
  *
  * NOTE: node discovery is ordered by this table!
@@ -1051,8 +1116,8 @@ struct config_item_list deleg_types[] =  {
 
 static struct config_item client_params[] = {
 	CONF_EXPORT_PERMS(exportlist_client_entry__, client_perms),
-	CONF_ITEM_STR("Clients", 1, MAXPATHLEN, NULL,
-		      exportlist_client_entry__, client.raw_client_str),
+	CONF_ITEM_PROC("Clients", noop_conf_init, client_adder,
+		       exportlist_client_entry__, cle_list),
 	CONFIG_EOL
 };
 
@@ -1190,7 +1255,7 @@ struct config_block export_defaults_param = {
  * @return -1 on error, 0 if we already have one, 1 if created one
  */
 
-static int build_default_root(void)
+static int build_default_root(struct config_error_type *err_type)
 {
 	struct gsh_export *export;
 	struct fsal_module *fsal_hdl = NULL;
@@ -1284,8 +1349,9 @@ static int build_default_root(void)
 		fsal_status_t rc;
 
 		rc = fsal_hdl->m_ops.create_export(fsal_hdl,
-						  NULL,
-						  &fsal_up_top);
+						   NULL,
+						   err_type,
+						   &fsal_up_top);
 
 		if (FSAL_IS_ERROR(rc)) {
 			fsal_put(fsal_hdl);
@@ -1311,8 +1377,8 @@ static int build_default_root(void)
 	/* This export must be mounted to the PseudoFS */
 	export_add_to_mount_work(export);
 
-	LogEvent(COMPONENT_CONFIG,
-		 "Export 0 (/) successfully created");
+	LogInfo(COMPONENT_CONFIG,
+		"Export 0 (/) successfully created");
 
 	put_gsh_export(export);	/* all done, let go */
 	release_root_op_context();
@@ -1333,27 +1399,27 @@ err_out:
  *         the number of export entries else.
  */
 
-int ReadExports(config_file_t in_config)
+int ReadExports(config_file_t in_config,
+		struct config_error_type *err_type)
 {
-	struct config_error_type err_type;
 	int rc, ret = 0;
 
 	rc = load_config_from_parse(in_config,
 				    &export_defaults_param,
 				    NULL,
 				    false,
-				    &err_type);
-	if (!config_error_is_harmless(&err_type))
+				    err_type);
+	if (!config_error_is_harmless(err_type))
 		return -1;
 
 	rc = load_config_from_parse(in_config,
 				    &export_param,
 				    NULL,
 				    false,
-				    &err_type);
-	if (!config_error_is_harmless(&err_type))
+				    err_type);
+	if (!config_error_is_harmless(err_type))
 		return -1;
-	ret = build_default_root();
+	ret = build_default_root(err_type);
 	if (ret < 0) {
 		LogCrit(COMPONENT_CONFIG,
 			"No pseudo root!");
@@ -1760,7 +1826,7 @@ void kill_export_junction_entry(cache_entry_t *entry)
 }
 
 static char *client_types[] = {
-	[RAW_CLIENT_LIST] = "RAW_CLIENT_LIST",
+	[PROTO_CLIENT] = "PROTO_CLIENT",
 	[HOSTIF_CLIENT] = "HOSTIF_CLIENT",
 	[NETWORK_CLIENT] = "NETWORK_CLIENT",
 	[NETGROUP_CLIENT] = "NETGROUP_CLIENT",

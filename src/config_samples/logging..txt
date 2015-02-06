@@ -63,6 +63,9 @@ LOG {
 	  #
 	  # If user_defined is set for date or time, these fields take a
 	  # strftime type format.  These are examples. The default is empty.
+	  # Note that you will need single or double quotes because it could
+	  # have spaces and, in this particular example, it has a leading '%'
+	  # which is not part of a regular token which must have a leading alphabetic.
 	  #
 #	  user_date_format = "%D";
 #	  user_time_format = "%T";

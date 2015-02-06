@@ -114,8 +114,8 @@ static int dataserver_commit(void *node, void *link_mem, void *self_struct,
 }
 
 static struct config_item ds_params[] = {
-	CONF_MAND_IPV4_ADDR("DS_Addr", "127.0.0.1",
-			    lustre_pnfs_ds_parameter, ipaddr),
+	CONF_MAND_IP_ADDR("DS_Addr", "127.0.0.1",
+			  lustre_pnfs_ds_parameter, ipaddr),
 	CONF_MAND_INET_PORT("DS_Port", 1024, UINT16_MAX, 3260,
 		       lustre_pnfs_ds_parameter, ipport), /* use iscsi port */
 	CONF_MAND_UI32("DS_Id", 1, UINT32_MAX, 1,
@@ -193,11 +193,11 @@ struct fsal_staticfsinfo_t *lustre_staticinfo(struct fsal_module *hdl)
  */
 
 static fsal_status_t lustre_init_config(struct fsal_module *fsal_hdl,
-				 config_file_t config_struct)
+					config_file_t config_struct,
+					struct config_error_type *err_type)
 {
 	struct lustre_fsal_module *lustre_me =
 	    container_of(fsal_hdl, struct lustre_fsal_module, fsal);
-	struct config_error_type err_type;
 
 	lustre_me->fs_info = lustre_info; /* get a copy of the defaults */
 	/* Read FS parameter for this FSAL */
@@ -205,8 +205,8 @@ static fsal_status_t lustre_init_config(struct fsal_module *fsal_hdl,
 				      &lustre_param,
 				      lustre_me,
 				      true,
-				      &err_type);
-	if (!config_error_is_harmless(&err_type))
+				      err_type);
+	if (!config_error_is_harmless(err_type))
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	display_fsinfo(&lustre_me->fs_info);
 
@@ -227,6 +227,7 @@ static fsal_status_t lustre_init_config(struct fsal_module *fsal_hdl,
 
 fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
 				   void *parse_node,
+				   struct config_error_type *err_type,
 				   const struct fsal_up_vector *up_ops);
 
 /* Module initialization.

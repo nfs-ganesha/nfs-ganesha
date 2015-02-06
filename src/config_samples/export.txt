@@ -256,7 +256,7 @@ EXPORT
 {
 	Export_Id - 0;
 	Path = /;
-	Pseudo = /';
+	Pseudo = /;
 	CLIENT
 	{
 		Clients = 192.168.0.0/16;
@@ -271,7 +271,7 @@ EXPORT
 {
 	Export_Id - 0;
 	Path = /;
-	Pseudo = /';
+	Pseudo = /;
 	Squash = None;
 	Protcols = NFSV4;
 	Transports = TCP;

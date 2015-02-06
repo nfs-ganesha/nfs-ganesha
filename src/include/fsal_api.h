@@ -454,11 +454,13 @@ struct fsal_ops {
  *
  * @param[in] fsal_hdl      The FSAL module
  * @param[in] config_struct Parsed ganesha configuration file
+ * @param[out]err_type      config error processing state
  *
  * @return FSAL status.
  */
 	 fsal_status_t(*init_config) (struct fsal_module *fsal_hdl,
-				      config_file_t config_struct);
+				      config_file_t config_struct,
+				      struct config_error_type *err_type);
 /**
  * @brief Dump configuration
  *
@@ -505,12 +507,14 @@ struct fsal_ops {
  * @param[in]     parse_node  opaque pointer to parse tree node for
  *                            export options to be passed to
  *                            load_config_from_node
+ * @param[out]    err_type    config proocessing error reporting
  * @param[in]     up_ops      Upcall ops
  *
  * @return FSAL status.
  */
 	 fsal_status_t(*create_export) (struct fsal_module *fsal_hdl,
 					void *parse_node,
+					struct config_error_type *err_type,
 					const struct fsal_up_vector *up_ops);
 
 /**

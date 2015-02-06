@@ -525,8 +525,8 @@ int fsal_load_init(void *node, const char *name, struct fsal_module **fsal_hdl,
 	fsal_status_t status;
 
 	if (name == NULL || strlen(name) == 0) {
-		LogCrit(COMPONENT_CONFIG,
-			"Name of FSAL is missing");
+		config_proc_error(node, err_type,
+				  "Name of FSAL is missing");
 		err_type->missing = true;
 		return 1;
 	}
@@ -538,18 +538,20 @@ int fsal_load_init(void *node, const char *name, struct fsal_module **fsal_hdl,
 
 		retval = load_fsal(name, fsal_hdl);
 		if (retval != 0) {
-			LogCrit(COMPONENT_CONFIG,
-				"Failed to load FSAL (%s) because: %s", name,
-				strerror(retval));
+			config_proc_error(node, err_type,
+					  "Failed to load FSAL (%s) because: %s",
+					  name,	strerror(retval));
 			err_type->fsal = true;
 			return 1;
 		}
 		op_ctx->fsal_module = *fsal_hdl;
 		myconfig = get_parse_root(node);
-		status = (*fsal_hdl)->m_ops.init_config(*fsal_hdl, myconfig);
+		status = (*fsal_hdl)->m_ops.init_config(*fsal_hdl,
+							myconfig, err_type);
 		if (FSAL_IS_ERROR(status)) {
-			LogCrit(COMPONENT_CONFIG,
-				"Failed to initialize FSAL (%s)", name);
+			config_proc_error(node, err_type,
+					  "Failed to initialize FSAL (%s)",
+					  name);
 			fsal_put(*fsal_hdl);
 			err_type->fsal = true;
 			return 1;

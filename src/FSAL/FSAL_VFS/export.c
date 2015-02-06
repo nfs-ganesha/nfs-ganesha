@@ -565,10 +565,10 @@ void vfs_unexport_filesystems(struct vfs_fsal_export *exp)
 
 fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 				void *parse_node,
+				struct config_error_type *err_type,
 				const struct fsal_up_vector *up_ops)
 {
 	struct vfs_fsal_export *myself;
-	struct config_error_type err_type;
 	int retval = 0;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 
@@ -595,7 +595,7 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 				       vfs_sub_export_param,
 				       myself,
 				       true,
-				       &err_type);
+				       err_type);
 	if (retval != 0)
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	myself->export.fsal = fsal_hdl;

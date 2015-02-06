@@ -292,10 +292,10 @@ static struct config_block export_param = {
 
 fsal_status_t zfs_create_export(struct fsal_module *fsal_hdl,
 				void *parse_node,
+				struct config_error_type *err_type,
 				const struct fsal_up_vector *up_ops)
 {
 	struct zfs_fsal_export *myself = NULL;
-	struct config_error_type err_type;
 	int retval = 0;
 	fsal_errors_t fsal_error = ERR_FSAL_INVAL;
 	libzfswrap_vfs_t *p_zfs = NULL;
@@ -318,7 +318,7 @@ fsal_status_t zfs_create_export(struct fsal_module *fsal_hdl,
 				       &export_param,
 				       myself,
 				       true,
-				       &err_type);
+				       err_type);
 	if (retval != 0)
 		goto errout;
 

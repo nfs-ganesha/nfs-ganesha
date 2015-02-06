@@ -37,21 +37,31 @@
  * Parse tree node.
  */
 
-enum  node_type { TYPE_ROOT = 1, TYPE_BLOCK, TYPE_STMT};
+/* Config nodes are either terminals or non-terminals.
+ * BLOCK and STMT are non-terminals.
+ * ROOT is a special case BLOCK (root of tree...)
+ * TERM is a value/token terminal.
+ */
+
+enum  node_type { TYPE_ROOT = 1, TYPE_BLOCK, TYPE_STMT, TYPE_TERM};
 
 struct config_node {
 	struct glist_head node;
-	char *name;		/* block or parameter name */
 	char *filename;		/* pointer to filename in file list */
 	int linenumber;
 	bool found;		/* use accounting private in do_block_load */
 	enum node_type type;	/* switches union contents */
 	union {			/* sub_nodes are always struct config_node */
-		char *varvalue;			/* TYPE_STMT */
-		struct {				/* TYPE_BLOCK */
+		struct {		/* TYPE_TERM */
+			enum term_type type;
+			char *op_code;
+			char *varvalue;
+		} term;
+		struct {		/* TYPE_BLOCK | TYPE_STMT */
+			char *name;	/* name */
 			struct config_node *parent;
 			struct glist_head sub_nodes;
-		} blk;
+		} nterm;
 	}u;
 };
 
@@ -63,6 +73,19 @@ struct config_node {
 struct file_list {
 	struct file_list *next;
 	char *pathname;
+};
+
+/*
+ * Symbol table
+ * Every token the scanner keeps goes here.  It is a linear
+ * list but we don't need much more than that.  What we do
+ * need is an accounting of all that memory so we can free it
+ * when the parser barfs and leaves stuff on its FSM stack.
+ */
+
+struct token_tab {
+	struct token_tab *next;
+	char token[];
 };
 
 /*
@@ -79,6 +102,7 @@ struct config_root {
 	struct config_node root;
 	char *conf_dir;
 	struct file_list *files;
+	struct token_tab *tokens;
 };
 
 /*
@@ -94,10 +118,18 @@ struct parser_state {
 	struct config_error_type *err_type;
 };
 
+char *save_token(char *token, bool esc, struct parser_state *st);
 int ganesha_yyparse(struct parser_state *st);
 int ganeshun_yy_init_parser(char *srcfile,
 			   struct parser_state *st);
 void ganeshun_yy_cleanup_parser(struct parser_state *st);
+
+/**
+ * Error reporting
+ */
+
+void config_error(FILE *fp, const char *filename, int linenum,
+		  char *format, va_list args);
 
 /**
  *  Displays the content of parse tree.

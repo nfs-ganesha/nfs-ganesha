@@ -99,11 +99,11 @@ static struct config_block ceph_block = {
  */
 
 static fsal_status_t init_config(struct fsal_module *module_in,
-				 config_file_t config_struct)
+				 config_file_t config_struct,
+				 struct config_error_type *err_type)
 {
 	struct ceph_fsal_module *myself =
 	    container_of(module_in, struct ceph_fsal_module, fsal);
-	struct config_error_type err_type;
 
 	LogDebug(COMPONENT_FSAL,
 		 "Ceph module setup.");
@@ -113,8 +113,8 @@ static fsal_status_t init_config(struct fsal_module *module_in,
 				      &ceph_block,
 				      myself,
 				      true,
-				      &err_type);
-	if (!config_error_is_harmless(&err_type))
+				      err_type);
+	if (!config_error_is_harmless(err_type))
 		return fsalstat(ERR_FSAL_INVAL, 0);
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
@@ -143,6 +143,7 @@ static fsal_status_t init_config(struct fsal_module *module_in,
 
 static fsal_status_t create_export(struct fsal_module *module_in,
 				   void *parse_node,
+				   struct config_error_type *err_type,
 				   const struct fsal_up_vector *up_ops)
 {
 	/* The status code to return */
