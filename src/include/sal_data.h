@@ -554,6 +554,7 @@ struct state_nfs4_owner_t {
 	struct glist_head so_state_list; /*< States owned by this owner */
 	struct glist_head so_perclient;  /*< open owner entry to be
 					   linked to client */
+	time_t last_close_time; /* time last CLOSE op performed */
 };
 
 /**
@@ -570,7 +571,7 @@ struct state_owner_t {
 	struct glist_head so_all_owners; /**< Global list of all state owners */
 #endif				/* _DEBUG_MEMLEAKS */
 	pthread_mutex_t so_mutex;	/*< Mutex on this owner */
-	int so_refcount;	/*< Reference count for lifecyce management */
+	int32_t so_refcount;	/*< Reference count for lifecyce management */
 	int so_owner_len;	/*< Length of owner name */
 	char *so_owner_val;	/*< Owner name */
 	union {

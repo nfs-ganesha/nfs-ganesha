@@ -66,6 +66,7 @@ bool different_owners(state_owner_t *owner1, state_owner_t *owner2);
 int display_owner(struct display_buffer *dspbuf, state_owner_t *owner);
 void inc_state_owner_ref(state_owner_t *owner);
 void dec_state_owner_ref(state_owner_t *owner);
+void free_state_owner(state_owner_t *owner);
 
 #define LogStateOwner(note, owner) \
 	do { \
