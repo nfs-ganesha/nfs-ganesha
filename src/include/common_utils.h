@@ -103,6 +103,7 @@ extern int portable_clock_gettime(struct timespec *ts);
 				"Error %d, Init rwlock %p (%s) "	\
 				"at %s:%d", rc, _lock, #_lock,		\
 				__FILE__, __LINE__);			\
+			abort();					\
 		}							\
 	} while (0)
 
@@ -126,6 +127,7 @@ extern int portable_clock_gettime(struct timespec *ts);
 				"Error %d, Destroy mutex %p (%s) "	\
 				"at %s:%d", rc, _lock, #_lock,		\
 				__FILE__, __LINE__);			\
+			abort();					\
 		}							\
 	} while (0)
 
@@ -150,6 +152,7 @@ extern int portable_clock_gettime(struct timespec *ts);
 				"Error %d, write locking %p (%s) "	\
 				"at %s:%d", rc, _lock, #_lock,		\
 				__FILE__, __LINE__);			\
+			abort();					\
 		}							\
 	} while (0)							\
 
@@ -174,6 +177,7 @@ extern int portable_clock_gettime(struct timespec *ts);
 				"Error %d, read locking %p (%s) "	\
 				"at %s:%d", rc, _lock, #_lock,		\
 				__FILE__, __LINE__);			\
+			abort();					\
 		}							\
 	} while (0)							\
 
@@ -198,6 +202,7 @@ extern int portable_clock_gettime(struct timespec *ts);
 				"Error %d, unlocking %p (%s) at %s:%d",	\
 				rc, _lock, #_lock,			\
 				__FILE__, __LINE__);			\
+			abort();					\
 		}							\
 	} while (0)							\
 
@@ -222,6 +227,7 @@ extern int portable_clock_gettime(struct timespec *ts);
 				"Error %d, acquiring mutex %p (%s) "	\
 				"at %s:%d", rc, _mtx, #_mtx,		\
 				__FILE__, __LINE__);			\
+			abort();					\
 		}							\
 	} while (0)
 
@@ -246,6 +252,7 @@ extern int portable_clock_gettime(struct timespec *ts);
 				"Error %d, releasing mutex %p (%s) "	\
 				"at %s:%d", rc, _mtx, #_mtx,		\
 				__FILE__, __LINE__);			\
+			abort();					\
 		}							\
 	} while (0)
 
@@ -270,6 +277,7 @@ extern int portable_clock_gettime(struct timespec *ts);
 				"Error %d, Init mutex %p (%s) "		\
 				"at %s:%d", rc, _mtx, #_mtx,		\
 				__FILE__, __LINE__);			\
+			abort();					\
 		}							\
 	} while (0)
 
@@ -294,6 +302,7 @@ extern int portable_clock_gettime(struct timespec *ts);
 				"Error %d, Destroy mutex %p (%s) "	\
 				"at %s:%d", rc, _mtx, #_mtx,		\
 				__FILE__, __LINE__);			\
+			abort();					\
 		}							\
 	} while (0)
 
@@ -319,6 +328,7 @@ extern int portable_clock_gettime(struct timespec *ts);
 				"Error %d, Init cond %p (%s) "		\
 				"at %s:%d", rc, _cond, #_cond,		\
 				__FILE__, __LINE__);			\
+			abort();					\
 		}							\
 	} while (0)
 
@@ -343,6 +353,7 @@ extern int portable_clock_gettime(struct timespec *ts);
 				"Error %d, Destroy cond %p (%s) "	\
 				"at %s:%d", rc, _cond, #_cond,		\
 				__FILE__, __LINE__);			\
+			abort();					\
 		}							\
 	} while (0)
 
