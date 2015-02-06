@@ -457,6 +457,7 @@ struct dsread_arg
   char *bufP;
   uint64_t offset;
   uint64_t length;
+  uint64_t *filesize;
   int options;
 };
 
