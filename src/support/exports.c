@@ -795,14 +795,14 @@ static int export_commit(void *node, void *link_mem, void *self_struct,
 
 	StrExportOptions(&export->export_perms, perms);
 
-	LogEvent(COMPONENT_CONFIG,
-		 "Export %d created at pseudo (%s) with path (%s) and tag (%s) perms (%s)",
-		 export->export_id, export->pseudopath,
-		 export->fullpath, export->FS_tag, perms);
+	LogInfo(COMPONENT_CONFIG,
+		"Export %d created at pseudo (%s) with path (%s) and tag (%s) perms (%s)",
+		export->export_id, export->pseudopath,
+		export->fullpath, export->FS_tag, perms);
 
-	LogEvent(COMPONENT_CONFIG,
-		 "Export %d has %ld defined clients", export->export_id,
-		 glist_length(&export->clients));
+	LogInfo(COMPONENT_CONFIG,
+		"Export %d has %ld defined clients", export->export_id,
+		glist_length(&export->clients));
 	put_gsh_export(export);
 	return 0;
 
@@ -1377,8 +1377,8 @@ static int build_default_root(struct config_error_type *err_type)
 	/* This export must be mounted to the PseudoFS */
 	export_add_to_mount_work(export);
 
-	LogEvent(COMPONENT_CONFIG,
-		 "Export 0 (/) successfully created");
+	LogInfo(COMPONENT_CONFIG,
+		"Export 0 (/) successfully created");
 
 	put_gsh_export(export);	/* all done, let go */
 	release_root_op_context();
