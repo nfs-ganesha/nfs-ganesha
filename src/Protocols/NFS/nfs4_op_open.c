@@ -1272,16 +1272,16 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	/* Check if lease is expired and reserve it */
-	pthread_mutex_lock(&clientid->cid_mutex);
+	PTHREAD_MUTEX_lock(&clientid->cid_mutex);
 
 	if (!reserve_lease(clientid)) {
-		pthread_mutex_unlock(&clientid->cid_mutex);
+		PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
 		res_OPEN4->status = NFS4ERR_EXPIRED;
 		LogDebug(COMPONENT_NFS_V4, "Lease expired");
 		goto out3;
 	}
 
-	pthread_mutex_unlock(&clientid->cid_mutex);
+	PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
 
 	/* Get the open owner */
 
@@ -1513,9 +1513,9 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* Update the lease before exit */
 	if (data->minorversion == 0) {
-		pthread_mutex_lock(&clientid->cid_mutex);
+		PTHREAD_MUTEX_lock(&clientid->cid_mutex);
 		update_lease(clientid);
-		pthread_mutex_unlock(&clientid->cid_mutex);
+		PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
 	}
 
  out3:

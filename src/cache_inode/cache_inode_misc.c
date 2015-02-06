@@ -451,9 +451,9 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 		clean_mapping(nentry);
 
 		/* Destroy the locks */
-		pthread_rwlock_destroy(&nentry->attr_lock);
-		pthread_rwlock_destroy(&nentry->content_lock);
-		pthread_rwlock_destroy(&nentry->state_lock);
+		PTHREAD_RWLOCK_destroy(&nentry->attr_lock);
+		PTHREAD_RWLOCK_destroy(&nentry->content_lock);
+		PTHREAD_RWLOCK_destroy(&nentry->state_lock);
 
 		if (has_hashkey)
 			cache_inode_key_delete(&nentry->fh_hk.key);

@@ -957,7 +957,7 @@ static u_int nfs_rpc_rdvs(SVCXPRT *xprt, SVCXPRT *newxprt, const u_int flags,
 	static pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
 	uint32_t tchan;
 
-	pthread_mutex_lock(&mtx);
+	PTHREAD_MUTEX_lock(&mtx);
 
 	tchan = next_chan;
 	assert((next_chan >= TCP_EVCHAN_0) && (next_chan < N_EVENT_CHAN));
@@ -971,7 +971,7 @@ static u_int nfs_rpc_rdvs(SVCXPRT *xprt, SVCXPRT *newxprt, const u_int flags,
 	/* NB: xu->drc is allocated on first request--we need shared
 	 * TCP DRC for v3, but per-connection for v4 */
 
-	pthread_mutex_unlock(&mtx);
+	PTHREAD_MUTEX_unlock(&mtx);
 
 	(void)svc_rqst_evchan_reg(rpc_evchan[tchan].chan_id, newxprt,
 				  SVC_RQST_FLAG_NONE);
@@ -1041,11 +1041,11 @@ void thr_stallq(struct fridgethr_context *thr_ctx)
 
 	while (1) {
 		thread_delay_ms(1000);
-		pthread_mutex_lock(&nfs_req_st.stallq.mtx);
+		PTHREAD_MUTEX_lock(&nfs_req_st.stallq.mtx);
  restart:
 		if (nfs_req_st.stallq.stalled == 0) {
 			nfs_req_st.stallq.active = false;
-			pthread_mutex_unlock(&nfs_req_st.stallq.mtx);
+			PTHREAD_MUTEX_unlock(&nfs_req_st.stallq.mtx);
 			break;
 		}
 
@@ -1056,12 +1056,12 @@ void thr_stallq(struct fridgethr_context *thr_ctx)
 				xprt = xu->xprt;
 				/* lock ordering
 				 * (cf. nfs_rpc_cond_stall_xprt) */
-				pthread_mutex_unlock(&nfs_req_st.stallq.mtx);
+				PTHREAD_MUTEX_unlock(&nfs_req_st.stallq.mtx);
 				/* !LOCKED */
 				LogDebug(COMPONENT_DISPATCH,
 					 "unstalling stalled xprt %p", xprt);
-				pthread_mutex_lock(&xprt->xp_lock);
-				pthread_mutex_lock(&nfs_req_st.stallq.mtx);
+				PTHREAD_MUTEX_lock(&xprt->xp_lock);
+				PTHREAD_MUTEX_lock(&nfs_req_st.stallq.mtx);
 				/* check that we're still stalled */
 				if (xu->flags & XPRT_PRIVATE_FLAG_STALLED) {
 					glist_del(&xu->stallq);
@@ -1078,7 +1078,7 @@ void thr_stallq(struct fridgethr_context *thr_ctx)
 				goto restart;
 			}
 		}
-		pthread_mutex_unlock(&nfs_req_st.stallq.mtx);
+		PTHREAD_MUTEX_unlock(&nfs_req_st.stallq.mtx);
 	}
 
 	LogDebug(COMPONENT_DISPATCH, "stallq idle, thread exit");
@@ -1090,7 +1090,7 @@ static bool nfs_rpc_cond_stall_xprt(SVCXPRT *xprt)
 	bool activate = false;
 	uint32_t nreqs;
 
-	pthread_mutex_lock(&xprt->xp_lock);
+	PTHREAD_MUTEX_lock(&xprt->xp_lock);
 
 	xu = (gsh_xprt_private_t *) xprt->xp_u1;
 	nreqs = xu->req_cnt;
@@ -1102,13 +1102,13 @@ static bool nfs_rpc_cond_stall_xprt(SVCXPRT *xprt)
 
 	/* check per-xprt quota */
 	if (likely(nreqs < nfs_param.core_param.dispatch_max_reqs_xprt)) {
-		pthread_mutex_unlock(&xprt->xp_lock);
+		PTHREAD_MUTEX_unlock(&xprt->xp_lock);
 		return false;
 	}
 
 	/* XXX can't happen */
 	if (unlikely(xu->flags & XPRT_PRIVATE_FLAG_STALLED)) {
-		pthread_mutex_unlock(&xprt->xp_lock);
+		PTHREAD_MUTEX_unlock(&xprt->xp_lock);
 		LogDebug(COMPONENT_DISPATCH, "xprt %p already stalled (oops)",
 			 xprt);
 		return true;
@@ -1118,19 +1118,19 @@ static bool nfs_rpc_cond_stall_xprt(SVCXPRT *xprt)
 		 xprt, nreqs);
 
 	/* ok, need to stall */
-	pthread_mutex_lock(&nfs_req_st.stallq.mtx);
+	PTHREAD_MUTEX_lock(&nfs_req_st.stallq.mtx);
 
 	glist_add_tail(&nfs_req_st.stallq.q, &xu->stallq);
 	++(nfs_req_st.stallq.stalled);
 	xu->flags |= XPRT_PRIVATE_FLAG_STALLED;
-	pthread_mutex_unlock(&xprt->xp_lock);
+	PTHREAD_MUTEX_unlock(&xprt->xp_lock);
 
 	/* if no thread is servicing the stallq, start one */
 	if (!nfs_req_st.stallq.active) {
 		nfs_req_st.stallq.active = true;
 		activate = true;
 	}
-	pthread_mutex_unlock(&nfs_req_st.stallq.mtx);
+	PTHREAD_MUTEX_unlock(&nfs_req_st.stallq.mtx);
 
 	if (activate) {
 		int rc = 0;
@@ -1282,12 +1282,12 @@ void nfs_rpc_enqueue_req(request_data_t *req)
 			--(wqe->waiters);
 			/* ! SPIN LOCKED */
 			pthread_spin_unlock(&nfs_req_st.reqs.sp);
-			pthread_mutex_lock(&wqe->lwe.mtx);
+			PTHREAD_MUTEX_lock(&wqe->lwe.mtx);
 			/* XXX reliable handoff */
 			wqe->flags |= Wqe_LFlag_SyncDone;
 			if (wqe->flags & Wqe_LFlag_WaitSync)
 				pthread_cond_signal(&wqe->lwe.cv);
-			pthread_mutex_unlock(&wqe->lwe.mtx);
+			PTHREAD_MUTEX_unlock(&wqe->lwe.mtx);
 		} else
 			/* ! SPIN LOCKED */
 			pthread_spin_unlock(&nfs_req_st.reqs.sp);
@@ -1414,7 +1414,7 @@ request_data_t *nfs_rpc_dequeue_req(nfs_worker_data_t *worker)
 	if (!nfsreq) {
 		wait_q_entry_t *wqe = &worker->wqe;
 		assert(wqe->waiters == 0); /* wqe is not on any wait queue */
-		pthread_mutex_lock(&wqe->lwe.mtx);
+		PTHREAD_MUTEX_lock(&wqe->lwe.mtx);
 		wqe->flags = Wqe_LFlag_WaitSync;
 		wqe->waiters = 1;
 		/* XXX functionalize */
@@ -1443,7 +1443,7 @@ request_data_t *nfs_rpc_dequeue_req(nfs_worker_data_t *worker)
 					      Wqe_LFlag_SyncDone);
 				}
 				pthread_spin_unlock(&nfs_req_st.reqs.sp);
-				pthread_mutex_unlock(&wqe->lwe.mtx);
+				PTHREAD_MUTEX_unlock(&wqe->lwe.mtx);
 				return NULL;
 			}
 		}
@@ -1451,7 +1451,7 @@ request_data_t *nfs_rpc_dequeue_req(nfs_worker_data_t *worker)
 		/* XXX wqe was removed from nfs_req_st.waitq
 		 * (by signalling thread) */
 		wqe->flags &= ~(Wqe_LFlag_WaitSync | Wqe_LFlag_SyncDone);
-		pthread_mutex_unlock(&wqe->lwe.mtx);
+		PTHREAD_MUTEX_unlock(&wqe->lwe.mtx);
 		LogFullDebug(COMPONENT_DISPATCH, "wqe wakeup %p", wqe);
 		goto retry_deq;
 	}
@@ -1590,9 +1590,9 @@ static inline enum xprt_stat nfs_rpc_continue_decoding(SVCXPRT *xprt,
 	gsh_xprt_private_t *xu = (gsh_xprt_private_t *) xprt->xp_u1;
 	uint32_t nreqs;
 
-	pthread_mutex_lock(&xprt->xp_lock);
+	PTHREAD_MUTEX_lock(&xprt->xp_lock);
 	nreqs = xu->req_cnt;
-	pthread_mutex_unlock(&xprt->xp_lock);
+	PTHREAD_MUTEX_unlock(&xprt->xp_lock);
 
 	/* check per-xprt quota */
 	if (unlikely(nreqs > nfs_param.core_param.dispatch_max_reqs_xprt))
@@ -1878,10 +1878,10 @@ static inline bool thr_continue_decoding(SVCXPRT *xprt, enum xprt_stat stat)
 	gsh_xprt_private_t *xu;
 	uint32_t nreqs;
 
-	pthread_mutex_lock(&xprt->xp_lock);
+	PTHREAD_MUTEX_lock(&xprt->xp_lock);
 	xu = (gsh_xprt_private_t *) xprt->xp_u1;
 	nreqs = xu->req_cnt;
-	pthread_mutex_unlock(&xprt->xp_lock);
+	PTHREAD_MUTEX_unlock(&xprt->xp_lock);
 
 	if (unlikely(nreqs > nfs_param.core_param.dispatch_max_reqs_xprt))
 		return false;

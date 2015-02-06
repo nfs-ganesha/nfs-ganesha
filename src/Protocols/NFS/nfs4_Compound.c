@@ -780,11 +780,11 @@ int nfs4_Compound(nfs_arg_t *arg,
 	/* If we have reserved a lease, update it and release it */
 	if (data.preserved_clientid != NULL) {
 		/* Update and release lease */
-		pthread_mutex_lock(&data.preserved_clientid->cid_mutex);
+		PTHREAD_MUTEX_lock(&data.preserved_clientid->cid_mutex);
 
 		update_lease(data.preserved_clientid);
 
-		pthread_mutex_unlock(&data.preserved_clientid->cid_mutex);
+		PTHREAD_MUTEX_unlock(&data.preserved_clientid->cid_mutex);
 	}
 
 	if (status != NFS4_OK)

@@ -122,7 +122,7 @@ static struct zfs_fsal_obj_handle *alloc_handle(struct zfs_file_handle *fh,
 
  spcerr:
 	PTHREAD_RWLOCK_unlock(&hdl->obj_handle.lock);
-	pthread_rwlock_destroy(&hdl->obj_handle.lock);
+	PTHREAD_RWLOCK_destroy(&hdl->obj_handle.lock);
 	if (hdl->obj_handle.type == SYMBOLIC_LINK) {
 		if (hdl->u.symlink.link_content != NULL)
 			gsh_free(hdl->u.symlink.link_content);

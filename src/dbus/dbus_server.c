@@ -144,9 +144,9 @@ int dbus_bcast_item_compare(struct glist_head *a,
  */
 void del_dbus_broadcast(struct dbus_bcast_item *to_remove)
 {
-	pthread_mutex_lock(&dbus_bcast_lock);
+	PTHREAD_MUTEX_lock(&dbus_bcast_lock);
 	glist_del(&to_remove->dbus_bcast_q);
-	pthread_mutex_unlock(&dbus_bcast_lock);
+	PTHREAD_MUTEX_unlock(&dbus_bcast_lock);
 
 	gsh_free(to_remove);
 }
@@ -187,11 +187,11 @@ struct dbus_bcast_item *add_dbus_broadcast(
 	new_bcast->bcast_arg = bcast_arg;
 	new_bcast->bcast_callback = bcast_callback;
 
-	pthread_mutex_lock(&dbus_bcast_lock);
+	PTHREAD_MUTEX_lock(&dbus_bcast_lock);
 	glist_insert_sorted(&dbus_broadcast_list,
 			    &(new_bcast->dbus_bcast_q),
 			    &dbus_bcast_item_compare);
-	pthread_mutex_unlock(&dbus_bcast_lock);
+	PTHREAD_MUTEX_unlock(&dbus_bcast_lock);
 out:
 	return new_bcast;
 }
@@ -201,7 +201,7 @@ out:
  */
 void init_dbus_broadcast()
 {
-	pthread_mutex_init(&dbus_bcast_lock, NULL);
+	PTHREAD_MUTEX_init(&dbus_bcast_lock, NULL);
 	glist_init(&dbus_broadcast_list);
 
 	if (nfs_param.core_param.heartbeat_freq > 0)
@@ -684,7 +684,7 @@ void *gsh_dbus_thread(void *arg)
 
 		LogFullDebug(COMPONENT_DBUS, "top of poll loop");
 
-		pthread_mutex_lock(&dbus_bcast_lock);
+		PTHREAD_MUTEX_lock(&dbus_bcast_lock);
 		glist_for_each_safe(glist, glistn, &dbus_broadcast_list) {
 			struct dbus_bcast_item *bcast_item = glist_entry(glist,
 							struct dbus_bcast_item,
@@ -736,7 +736,7 @@ void *gsh_dbus_thread(void *arg)
 						    &dbus_bcast_item_compare);
 			}
 		}
-		pthread_mutex_unlock(&dbus_bcast_lock);
+		PTHREAD_MUTEX_unlock(&dbus_bcast_lock);
 
 		/* do stuff */
 		if (!dbus_connection_read_write_dispatch

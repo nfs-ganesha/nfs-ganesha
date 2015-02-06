@@ -159,7 +159,7 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op, compound_data_t *data,
 	 * 18.35.4. IMPLEMENTATION
 	 */
 
-	pthread_mutex_lock(&client_record->cr_mutex);
+	PTHREAD_MUTEX_lock(&client_record->cr_mutex);
 
 	conf = client_record->cr_confirmed_rec;
 
@@ -178,9 +178,9 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op, compound_data_t *data,
 		 */
 		if (!nfs_compare_clientcred(&conf->cid_credential,
 					    &data->credential)) {
-			pthread_mutex_lock(&conf->cid_mutex);
+			PTHREAD_MUTEX_lock(&conf->cid_mutex);
 			if (!valid_lease(conf) || !client_id_has_state(conf)) {
-				pthread_mutex_unlock(&conf->cid_mutex);
+				PTHREAD_MUTEX_unlock(&conf->cid_mutex);
 
 				/* CASE 3, client collisions, old
 				 * clientid is expired
@@ -191,7 +191,7 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op, compound_data_t *data,
 				dec_client_id_ref(conf);
 				conf = NULL;
 			} else {
-				pthread_mutex_unlock(&conf->cid_mutex);
+				PTHREAD_MUTEX_unlock(&conf->cid_mutex);
 				/* CASE 3, client collisions, old
 				 * clientid is not expired
 				 */
@@ -367,7 +367,7 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op, compound_data_t *data,
 
  out:
 
-	pthread_mutex_unlock(&client_record->cr_mutex);
+	PTHREAD_MUTEX_unlock(&client_record->cr_mutex);
 
 	/* Release our reference to the client record */
 	dec_client_record_ref(client_record);

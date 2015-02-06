@@ -153,7 +153,7 @@ void *_9p_rdma_thread(void *Arg)
 	priv->pconn = p_9p_conn;
 
 	for (i = 0; i < FLUSH_BUCKETS; i++) {
-		pthread_mutex_init(&p_9p_conn->flush_buckets[i].lock, NULL);
+		PTHREAD_MUTEX_init(&p_9p_conn->flush_buckets[i].lock, NULL);
 		glist_init(&p_9p_conn->flush_buckets[i].list);
 	}
 	p_9p_conn->sequence = 0;
@@ -342,8 +342,8 @@ static void _9p_rdma_setup_global(uint8_t **poutrdmabuf, msk_data_t **pwdata,
 			 "9P/RDMA: trans handler could not malloc outqueue");
 		return;
 	}
-	pthread_mutex_init(&outqueue->lock, NULL);
-	pthread_cond_init(&outqueue->cond, NULL);
+	PTHREAD_MUTEX_init(&outqueue->lock, NULL);
+	PTHREAD_COND_init(&outqueue->cond, NULL);
 	outqueue->data = wdata;
 	*poutqueue = outqueue;
 }

@@ -152,7 +152,7 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op, compound_data_t *data,
 		}
 	}
 
-	pthread_mutex_lock(&client_record->cr_mutex);
+	PTHREAD_MUTEX_lock(&client_record->cr_mutex);
 
 	inc_client_record_ref(client_record);
 
@@ -486,7 +486,7 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op, compound_data_t *data,
 
  out:
 
-	pthread_mutex_unlock(&client_record->cr_mutex);
+	PTHREAD_MUTEX_unlock(&client_record->cr_mutex);
 	/* Release our reference to the client record and return */
 	dec_client_record_ref(client_record);
 	return res_SETCLIENTID_CONFIRM4->status;

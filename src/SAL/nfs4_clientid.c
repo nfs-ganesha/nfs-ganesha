@@ -310,12 +310,12 @@ bool client_id_has_state(nfs_client_id_t *clientid)
 	if (glist_empty(&clientid->cid_openowners))
 		return false;
 
-	pthread_mutex_lock(&clientid->cid_owner.so_mutex);
+	PTHREAD_MUTEX_lock(&clientid->cid_owner.so_mutex);
 
 	result = !glist_empty(
 		&clientid->cid_owner.so_owner.so_nfs4_owner.so_state_list);
 
-	pthread_mutex_unlock(&clientid->cid_owner.so_mutex);
+	PTHREAD_MUTEX_unlock(&clientid->cid_owner.so_mutex);
 
 	return result;
 }
@@ -347,11 +347,10 @@ void free_client_id(nfs_client_id_t *clientid)
 		}
 	}
 
-	assert(pthread_mutex_destroy(&clientid->cid_mutex) == 0);
-	assert(pthread_mutex_destroy(&clientid->cid_owner.so_mutex) == 0);
+	PTHREAD_MUTEX_destroy(&clientid->cid_mutex);
+	PTHREAD_MUTEX_destroy(&clientid->cid_owner.so_mutex);
 	if (clientid->cid_minorversion == 0) {
-		assert(pthread_mutex_destroy(&clientid->cid_cb.v40.cb_chan.mtx)
-								== 0);
+		PTHREAD_MUTEX_destroy(&clientid->cid_cb.v40.cb_chan.mtx);
 	}
 
 	put_gsh_client(clientid->gsh_client);
@@ -489,8 +488,10 @@ int compare_client_id(struct gsh_buffdesc *buff1, struct gsh_buffdesc *buff2)
 int display_client_id_key(struct gsh_buffdesc *buff, char *str)
 {
 	struct display_buffer dspbuf = {DISPLAY_CLIENTID_SIZE, str, str};
+	int rc;
 
-	assert(display_clientid(&dspbuf, *((clientid4 *) (buff->addr))) >= 0);
+	rc = display_clientid(&dspbuf, *((clientid4 *) (buff->addr)));
+	assert(rc >= 0);
 
 	return display_buffer_len(&dspbuf);
 }
@@ -539,16 +540,15 @@ nfs_client_id_t *create_client_id(clientid4 clientid,
 		return NULL;
 	}
 
-	assert(pthread_mutex_init(&client_rec->cid_mutex, NULL) == 0);
+	PTHREAD_MUTEX_init(&client_rec->cid_mutex, NULL);
 
 	owner = &client_rec->cid_owner;
 
-	assert(pthread_mutex_init(&owner->so_mutex, NULL) == 0);
+	PTHREAD_MUTEX_init(&owner->so_mutex, NULL);
 
 	/* initialize the chan mutex for v4 */
 	if (minorversion == 0) {
-		assert(pthread_mutex_init(&client_rec->cid_cb.v40.cb_chan.mtx,
-					  NULL) == 0);
+		PTHREAD_MUTEX_init(&client_rec->cid_cb.v40.cb_chan.mtx, NULL);
 		client_rec->cid_cb.v40.cb_chan_down = true;
 		client_rec->first_path_down_resp_time = 0;
 	}
@@ -838,7 +838,7 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid, bool make_stale)
 	init_root_op_context(&root_op_context, NULL, NULL,
 			     0, 0, UNKNOWN_REQUEST);
 
-	pthread_mutex_lock(&clientid->cid_mutex);
+	PTHREAD_MUTEX_lock(&clientid->cid_mutex);
 	if (clientid->cid_confirmed == EXPIRED_CLIENT_ID) {
 		if (isFullDebug(COMPONENT_CLIENTID)) {
 			display_client_id_rec(&dspbuf, clientid);
@@ -846,7 +846,7 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid, bool make_stale)
 				     "Expired (skipped) {%s}", str);
 		}
 
-		pthread_mutex_unlock(&clientid->cid_mutex);
+		PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
 		release_root_op_context();
 		return false;
 	}
@@ -864,13 +864,13 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid, bool make_stale)
 
 	if (make_stale) {
 		clientid->cid_confirmed = STALE_CLIENT_ID;
-		pthread_mutex_unlock(&clientid->cid_mutex);
+		PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
 	} else {
 		clientid->cid_confirmed = EXPIRED_CLIENT_ID;
 		/* Need to clean up the client record. */
 		record = clientid->cid_client_record;
 
-		pthread_mutex_unlock(&clientid->cid_mutex);
+		PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
 
 		/* Detach the clientid record from the client record */
 		if (record->cr_confirmed_rec == clientid)
@@ -910,7 +910,7 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid, bool make_stale)
 	while (true) {
 		state_owner_t *owner;
 
-		pthread_mutex_lock(&clientid->cid_mutex);
+		PTHREAD_MUTEX_lock(&clientid->cid_mutex);
 
 		owner = glist_first_entry(&clientid->cid_lockowners,
 					  state_owner_t,
@@ -918,7 +918,7 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid, bool make_stale)
 
 
 		if (owner == NULL) {
-			pthread_mutex_unlock(&clientid->cid_mutex);
+			PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
 			break;
 		}
 
@@ -932,7 +932,7 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid, bool make_stale)
 		/* Hold a reference to the owner while we drop the cid_mutex. */
 		inc_state_owner_ref(owner);
 
-		pthread_mutex_unlock(&clientid->cid_mutex);
+		PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
 
 		state_nfs4_owner_unlock_all(owner);
 
@@ -968,14 +968,14 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid, bool make_stale)
 	while (true) {
 		state_owner_t *owner;
 
-		pthread_mutex_lock(&clientid->cid_mutex);
+		PTHREAD_MUTEX_lock(&clientid->cid_mutex);
 
 		owner = glist_first_entry(&clientid->cid_openowners,
 					  state_owner_t,
 					  so_owner.so_nfs4_owner.so_perclient);
 
 		if (owner == NULL) {
-			pthread_mutex_unlock(&clientid->cid_mutex);
+			PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
 			break;
 		}
 
@@ -989,7 +989,7 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid, bool make_stale)
 		/* Hold a reference to the owner while we drop the cid_mutex. */
 		inc_state_owner_ref(owner);
 
-		pthread_mutex_unlock(&clientid->cid_mutex);
+		PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
 
 		release_openstate(owner);
 
@@ -1373,7 +1373,7 @@ int32_t inc_client_record_ref(nfs_client_record_t *record)
  */
 void free_client_record(nfs_client_record_t *record)
 {
-	assert(pthread_mutex_destroy(&record->cr_mutex) == 0);
+	PTHREAD_MUTEX_destroy(&record->cr_mutex);
 
 	gsh_free(record);
 }
@@ -1650,7 +1650,7 @@ nfs_client_record_t *get_client_record(const char *const value,
 		return NULL;
 	}
 
-	assert(pthread_mutex_init(&record->cr_mutex, NULL) == 0);
+	PTHREAD_MUTEX_init(&record->cr_mutex, NULL);
 
 	/* Use same record for record and key */
 	buffval.addr = record;

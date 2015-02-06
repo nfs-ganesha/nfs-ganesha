@@ -215,7 +215,7 @@ void *delayed_thread(void *arg)
 
 	pthread_sigmask(SIG_SETMASK, NULL, &old_sigmask);
 
-	pthread_mutex_lock(&mtx);
+	PTHREAD_MUTEX_lock(&mtx);
 	while (delayed_state == delayed_running) {
 		struct timespec then;
 		void (*func) (void *);
@@ -230,9 +230,9 @@ void *delayed_thread(void *arg)
 			break;
 
 		case delayed_employed:
-			pthread_mutex_unlock(&mtx);
+			PTHREAD_MUTEX_unlock(&mtx);
 			func(arg);
-			pthread_mutex_lock(&mtx);
+			PTHREAD_MUTEX_lock(&mtx);
 			break;
 		}
 	}
@@ -240,7 +240,7 @@ void *delayed_thread(void *arg)
 	if (LIST_EMPTY(&thread_list))
 		pthread_cond_broadcast(&cv);
 
-	pthread_mutex_unlock(&mtx);
+	PTHREAD_MUTEX_unlock(&mtx);
 	gsh_free(thr);
 
 	return NULL;
@@ -270,7 +270,7 @@ void delayed_start(void)
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 
-	pthread_mutex_lock(&mtx);
+	PTHREAD_MUTEX_lock(&mtx);
 	delayed_state = delayed_running;
 
 	for (i = 0; i < threads_to_start; ++i) {
@@ -290,7 +290,7 @@ void delayed_start(void)
 		}
 		LIST_INSERT_HEAD(&thread_list, thread, link);
 	}
-	pthread_mutex_unlock(&mtx);
+	PTHREAD_MUTEX_unlock(&mtx);
 }
 
 /**
@@ -304,7 +304,7 @@ void delayed_shutdown(void)
 	now(&then);
 	then.tv_sec += 120;
 
-	pthread_mutex_lock(&mtx);
+	PTHREAD_MUTEX_lock(&mtx);
 	delayed_state = delayed_stopping;
 	pthread_cond_broadcast(&cv);
 	while ((rc != ETIMEDOUT) && !LIST_EMPTY(&thread_list))
@@ -322,7 +322,7 @@ void delayed_shutdown(void)
 			gsh_free(thr);
 		}
 	}
-	pthread_mutex_unlock(&mtx);
+	PTHREAD_MUTEX_unlock(&mtx);
 }
 
 /**
@@ -363,7 +363,7 @@ int delayed_submit(void (*func) (void *), void *arg, nsecs_elapsed_t delay)
 	now(&mul->realtime);
 	timespec_add_nsecs(delay, &mul->realtime);
 
-	pthread_mutex_lock(&mtx);
+	PTHREAD_MUTEX_lock(&mtx);
 	first = avltree_first(&tree);
 	collision = avltree_insert(&mul->node, &tree);
 	if (unlikely(collision)) {
@@ -381,7 +381,7 @@ int delayed_submit(void (*func) (void *), void *arg, nsecs_elapsed_t delay)
 	if (!first || comparator(&mul->node, first) < 0)
 		pthread_cond_broadcast(&cv);
 
-	pthread_mutex_unlock(&mtx);
+	PTHREAD_MUTEX_unlock(&mtx);
 
 	return 0;
 }

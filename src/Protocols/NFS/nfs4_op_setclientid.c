@@ -134,7 +134,7 @@ int nfs4_op_setclientid(struct nfs_argop4 *op, compound_data_t *data,
 	 * 1, CASE 2, CASE 3, CASE 4, and CASE 5.
 	 */
 
-	pthread_mutex_lock(&client_record->cr_mutex);
+	PTHREAD_MUTEX_lock(&client_record->cr_mutex);
 
 	if (isFullDebug(COMPONENT_CLIENTID)) {
 		char str[LOG_BUFF_LEN];
@@ -349,7 +349,7 @@ int nfs4_op_setclientid(struct nfs_argop4 *op, compound_data_t *data,
 
  out:
 
-	pthread_mutex_unlock(&client_record->cr_mutex);
+	PTHREAD_MUTEX_unlock(&client_record->cr_mutex);
 
 	/* Release our reference to the client record */
 	dec_client_record_ref(client_record);

@@ -176,9 +176,9 @@ int display_stateid(struct display_buffer *dspbuf, state_t *state)
 	int b_left;
 	cache_entry_t *entry;
 
-	pthread_mutex_lock(&state->state_mutex);
+	PTHREAD_MUTEX_lock(&state->state_mutex);
 	entry = state->state_entry;
-	pthread_mutex_unlock(&state->state_mutex);
+	PTHREAD_MUTEX_unlock(&state->state_mutex);
 
 	b_left = display_stateid_other(dspbuf, state->stateid_other);
 
@@ -379,7 +379,7 @@ void dec_state_t_ref(struct state_t *state)
 		return;
 	}
 
-	assert(pthread_mutex_destroy(&state->state_mutex) == 0);
+	PTHREAD_MUTEX_destroy(&state->state_mutex);
 
 	pool_free(state_v4_pool, state);
 
@@ -660,21 +660,21 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, cache_entry_t *entry,
 				/* We don't expect this, but, just in case...
 				 * Update and release already reserved lease.
 				 */
-				pthread_mutex_lock(&data->preserved_clientid
+				PTHREAD_MUTEX_lock(&data->preserved_clientid
 						   ->cid_mutex);
 				update_lease(data->preserved_clientid);
-				pthread_mutex_unlock(&data->preserved_clientid
+				PTHREAD_MUTEX_unlock(&data->preserved_clientid
 						     ->cid_mutex);
 				data->preserved_clientid = NULL;
 			}
 
 			/* Check if lease is expired and reserve it */
-			pthread_mutex_lock(&pclientid->cid_mutex);
+			PTHREAD_MUTEX_lock(&pclientid->cid_mutex);
 
 			if (!reserve_lease(pclientid)) {
 				LogDebug(COMPONENT_STATE,
 					 "Returning NFS4ERR_EXPIRED");
-				pthread_mutex_unlock(&pclientid->cid_mutex);
+				PTHREAD_MUTEX_unlock(&pclientid->cid_mutex);
 				status = NFS4ERR_EXPIRED;
 				goto failure;
 			}
@@ -690,7 +690,7 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, cache_entry_t *entry,
 				 */
 				data->preserved_clientid = pclientid;
 			}
-			pthread_mutex_unlock(&pclientid->cid_mutex);
+			PTHREAD_MUTEX_unlock(&pclientid->cid_mutex);
 
 			/* Replayed close, it's ok, but stateid doesn't exist */
 			LogDebug(COMPONENT_STATE,
@@ -708,12 +708,12 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, cache_entry_t *entry,
 			 * midst of tear down due to expired lease or if
 			 * in fact the entry is actually stale.
 			 */
-			pthread_mutex_lock(&pclientid->cid_mutex);
+			PTHREAD_MUTEX_lock(&pclientid->cid_mutex);
 
 			if (!reserve_lease(pclientid)) {
 				LogDebug(COMPONENT_STATE,
 					 "Returning NFS4ERR_EXPIRED");
-				pthread_mutex_unlock(&pclientid->cid_mutex);
+				PTHREAD_MUTEX_unlock(&pclientid->cid_mutex);
 
 				/* Release the clientid reference we just
 				 * acquired.
@@ -727,7 +727,7 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, cache_entry_t *entry,
 			 * clientid NULL.
 			 */
 			update_lease(pclientid);
-			pthread_mutex_unlock(&pclientid->cid_mutex);
+			PTHREAD_MUTEX_unlock(&pclientid->cid_mutex);
 
 			/* The lease was valid, so this must be a stale
 			 * entry.
@@ -747,26 +747,26 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, cache_entry_t *entry,
 			/* We don't expect this to happen, but, just in case...
 			 * Update and release already reserved lease.
 			 */
-			pthread_mutex_lock(&data->preserved_clientid
+			PTHREAD_MUTEX_lock(&data->preserved_clientid
 					   ->cid_mutex);
 
 			update_lease(data->preserved_clientid);
 
-			pthread_mutex_unlock(&data->preserved_clientid
+			PTHREAD_MUTEX_unlock(&data->preserved_clientid
 					     ->cid_mutex);
 
 			data->preserved_clientid = NULL;
 		}
 
 		/* Check if lease is expired and reserve it */
-		pthread_mutex_lock(
+		PTHREAD_MUTEX_lock(
 		    &owner2->so_owner.so_nfs4_owner.so_clientrec->cid_mutex);
 
 		if (!reserve_lease(
 				owner2->so_owner.so_nfs4_owner.so_clientrec)) {
 			LogDebug(COMPONENT_STATE, "Returning NFS4ERR_EXPIRED");
 
-			pthread_mutex_unlock(&owner2->so_owner.so_nfs4_owner
+			PTHREAD_MUTEX_unlock(&owner2->so_owner.so_nfs4_owner
 					     .so_clientrec->cid_mutex);
 
 			status = NFS4ERR_EXPIRED;
@@ -776,7 +776,7 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, cache_entry_t *entry,
 		data->preserved_clientid =
 		    owner2->so_owner.so_nfs4_owner.so_clientrec;
 
-		pthread_mutex_unlock(
+		PTHREAD_MUTEX_unlock(
 		    &owner2->so_owner.so_nfs4_owner.so_clientrec->cid_mutex);
 	}
 

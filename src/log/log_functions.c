@@ -330,14 +330,14 @@ static struct tm *Localtime_r(const time_t *p_time, struct tm *p_tm)
 		return NULL;
 	}
 
-	pthread_mutex_lock(&mutex_localtime);
+	PTHREAD_MUTEX_lock(&mutex_localtime);
 
 	p_tmp_tm = localtime(p_time);
 
 	/* copy the result */
 	(*p_tm) = (*p_tmp_tm);
 
-	pthread_mutex_unlock(&mutex_localtime);
+	PTHREAD_MUTEX_unlock(&mutex_localtime);
 
 	return p_tm;
 }

@@ -86,10 +86,10 @@ int nfs4_op_release_lockowner(struct nfs_argop4 *op, compound_data_t *data,
 		goto out2;
 	}
 
-	pthread_mutex_lock(&nfs_client_id->cid_mutex);
+	PTHREAD_MUTEX_lock(&nfs_client_id->cid_mutex);
 
 	if (!reserve_lease(nfs_client_id)) {
-		pthread_mutex_unlock(&nfs_client_id->cid_mutex);
+		PTHREAD_MUTEX_unlock(&nfs_client_id->cid_mutex);
 
 		dec_client_id_ref(nfs_client_id);
 
@@ -97,7 +97,7 @@ int nfs4_op_release_lockowner(struct nfs_argop4 *op, compound_data_t *data,
 		goto out2;
 	}
 
-	pthread_mutex_unlock(&nfs_client_id->cid_mutex);
+	PTHREAD_MUTEX_unlock(&nfs_client_id->cid_mutex);
 
 	/* look up the lock owner and see if we can find it */
 	convert_nfs4_lock_owner(&arg_RELEASE_LOCKOWNER4->lock_owner,
@@ -131,11 +131,11 @@ int nfs4_op_release_lockowner(struct nfs_argop4 *op, compound_data_t *data,
  out1:
 
 	/* Update the lease before exit */
-	pthread_mutex_lock(&nfs_client_id->cid_mutex);
+	PTHREAD_MUTEX_lock(&nfs_client_id->cid_mutex);
 
 	update_lease(nfs_client_id);
 
-	pthread_mutex_unlock(&nfs_client_id->cid_mutex);
+	PTHREAD_MUTEX_unlock(&nfs_client_id->cid_mutex);
 
 	dec_client_id_ref(nfs_client_id);
 

@@ -258,9 +258,9 @@ int nlm_send_async(int proc, state_nlm_client_t *host, void *inarg, void *key)
 			host->slc_callback_auth = authnone_create();
 		}
 
-		pthread_mutex_lock(&nlm_async_resp_mutex);
+		PTHREAD_MUTEX_lock(&nlm_async_resp_mutex);
 		resp_key = key;
-		pthread_mutex_unlock(&nlm_async_resp_mutex);
+		PTHREAD_MUTEX_unlock(&nlm_async_resp_mutex);
 
 		LogFullDebug(COMPONENT_NLM, "About to make clnt_call");
 
@@ -292,14 +292,14 @@ int nlm_send_async(int proc, state_nlm_client_t *host, void *inarg, void *key)
 			LogMajor(COMPONENT_NLM,
 				 "NLM async Client exceeded retry count %d",
 				 MAX_ASYNC_RETRY);
-			pthread_mutex_lock(&nlm_async_resp_mutex);
+			PTHREAD_MUTEX_lock(&nlm_async_resp_mutex);
 			resp_key = NULL;
-			pthread_mutex_unlock(&nlm_async_resp_mutex);
+			PTHREAD_MUTEX_unlock(&nlm_async_resp_mutex);
 			return retval;
 		}
 	}
 
-	pthread_mutex_lock(&nlm_async_resp_mutex);
+	PTHREAD_MUTEX_lock(&nlm_async_resp_mutex);
 
 	if (resp_key != NULL) {
 		/* Wait for 5 seconds or a signal */
@@ -324,14 +324,14 @@ int nlm_send_async(int proc, state_nlm_client_t *host, void *inarg, void *key)
 		LogFullDebug(COMPONENT_NLM, "Done waiting");
 	}
 
-	pthread_mutex_unlock(&nlm_async_resp_mutex);
+	PTHREAD_MUTEX_unlock(&nlm_async_resp_mutex);
 
 	return retval;
 }
 
 void nlm_signal_async_resp(void *key)
 {
-	pthread_mutex_lock(&nlm_async_resp_mutex);
+	PTHREAD_MUTEX_lock(&nlm_async_resp_mutex);
 
 	if (resp_key == key) {
 		resp_key = NULL;
@@ -341,5 +341,5 @@ void nlm_signal_async_resp(void *key)
 		LogFullDebug(COMPONENT_NLM, "Didn't signal condition variable");
 	}
 
-	pthread_mutex_unlock(&nlm_async_resp_mutex);
+	PTHREAD_MUTEX_unlock(&nlm_async_resp_mutex);
 }

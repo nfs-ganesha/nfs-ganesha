@@ -141,11 +141,11 @@ void *_9p_socket_thread(void *Arg)
 
 	/* Init the struct _9p_conn structure */
 	memset(&_9p_conn, 0, sizeof(_9p_conn));
-	pthread_mutex_init(&_9p_conn.sock_lock, NULL);
+	PTHREAD_MUTEX_init(&_9p_conn.sock_lock, NULL);
 	_9p_conn.trans_type = _9P_TCP;
 	_9p_conn.trans_data.sockfd = tcp_sock;
 	for (i = 0; i < FLUSH_BUCKETS; i++) {
-		pthread_mutex_init(&_9p_conn.flush_buckets[i].lock, NULL);
+		PTHREAD_MUTEX_init(&_9p_conn.flush_buckets[i].lock, NULL);
 		glist_init(&_9p_conn.flush_buckets[i].list);
 	}
 	atomic_store_uint32_t(&_9p_conn.refcount, 0);

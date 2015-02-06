@@ -87,7 +87,7 @@ int nfs4_op_renew(struct nfs_argop4 *op, compound_data_t *data,
 		return res_RENEW4->status;
 	}
 
-	pthread_mutex_lock(&clientid->cid_mutex);
+	PTHREAD_MUTEX_lock(&clientid->cid_mutex);
 
 	if (!reserve_lease(clientid)) {
 		res_RENEW4->status = NFS4ERR_EXPIRED;
@@ -109,7 +109,7 @@ int nfs4_op_renew(struct nfs_argop4 *op, compound_data_t *data,
 		}
 	}
 
-	pthread_mutex_unlock(&clientid->cid_mutex);
+	PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
 
 	dec_client_id_ref(clientid);
 

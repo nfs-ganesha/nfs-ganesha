@@ -212,7 +212,7 @@ struct gsh_client *get_gsh_client(sockaddr_t *client_ipaddr, bool lookup_only)
 		gsh_free(server_st);	/* somebody beat us to it */
 		cl = avltree_container_of(node, struct gsh_client, node_k);
 	} else {
-		pthread_rwlock_init(&cl->lock, NULL);
+		PTHREAD_RWLOCK_init(&cl->lock, NULL);
 	}
 
  out:
@@ -939,7 +939,7 @@ void client_pkginit(void)
 		&rwlock_attr,
 		PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
 #endif
-	pthread_rwlock_init(&client_by_ip.lock, &rwlock_attr);
+	PTHREAD_RWLOCK_init(&client_by_ip.lock, &rwlock_attr);
 	avltree_init(&client_by_ip.t, client_ip_cmpf, 0);
 	client_by_ip.cache_sz = 32767;
 	client_by_ip.cache =

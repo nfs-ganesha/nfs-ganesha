@@ -62,18 +62,18 @@
  */
 void uid2grp_hold_group_data(struct group_data *gdata)
 {
-	pthread_mutex_lock(&gdata->lock);
+	PTHREAD_MUTEX_lock(&gdata->lock);
 	gdata->refcount++;
-	pthread_mutex_unlock(&gdata->lock);
+	PTHREAD_MUTEX_unlock(&gdata->lock);
 }
 
 void uid2grp_release_group_data(struct group_data *gdata)
 {
 	unsigned int refcount;
 
-	pthread_mutex_lock(&gdata->lock);
+	PTHREAD_MUTEX_lock(&gdata->lock);
 	refcount = --gdata->refcount;
-	pthread_mutex_unlock(&gdata->lock);
+	PTHREAD_MUTEX_unlock(&gdata->lock);
 
 	if (refcount == 0) {
 		gsh_free(gdata->groups);
@@ -188,7 +188,7 @@ static struct group_data *uid2grp_allocate_by_name(
 		return NULL;
 	}
 
-	pthread_mutex_init(&gdata->lock, NULL);
+	PTHREAD_MUTEX_init(&gdata->lock, NULL);
 	gdata->epoch = time(NULL);
 	gdata->refcount = 0;
 	return gdata;
@@ -231,7 +231,7 @@ static struct group_data *uid2grp_allocate_by_uid(uid_t uid)
 		return NULL;
 	}
 
-	pthread_mutex_init(&gdata->lock, NULL);
+	PTHREAD_MUTEX_init(&gdata->lock, NULL);
 	gdata->epoch = time(NULL);
 	gdata->refcount = 0;
 	return gdata;

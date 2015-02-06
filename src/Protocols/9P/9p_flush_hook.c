@@ -71,9 +71,9 @@ void _9p_AddFlushHook(struct _9p_request_data *req, int tag,
 	hook->tag = tag;
 	hook->condition = NULL;
 	hook->sequence = sequence;
-	pthread_mutex_lock(&conn->flush_buckets[bucket].lock);
+	PTHREAD_MUTEX_lock(&conn->flush_buckets[bucket].lock);
 	glist_add(&conn->flush_buckets[bucket].list, &hook->list);
-	pthread_mutex_unlock(&conn->flush_buckets[bucket].lock);
+	PTHREAD_MUTEX_unlock(&conn->flush_buckets[bucket].lock);
 }
 
 void _9p_FlushFlushHook(struct _9p_conn *conn, int tag, unsigned long sequence)
@@ -83,14 +83,14 @@ void _9p_FlushFlushHook(struct _9p_conn *conn, int tag, unsigned long sequence)
 	struct _9p_flush_hook *hook = NULL;
 	struct flush_condition fc;
 
-	pthread_mutex_lock(&conn->flush_buckets[bucket].lock);
+	PTHREAD_MUTEX_lock(&conn->flush_buckets[bucket].lock);
 	glist_for_each(node, &conn->flush_buckets[bucket].list) {
 		hook = glist_entry(node, struct _9p_flush_hook, list);
 		/* Cancel a request that has the right tag
 		 * --AND-- is older than the flush request.
 		 **/
 		if ((hook->tag == tag) && (hook->sequence < sequence)) {
-			pthread_cond_init(&fc.condition, NULL);
+			PTHREAD_COND_init(&fc.condition, NULL);
 			fc.reply_sent = 0;
 			hook->condition = &fc;
 			glist_del(&hook->list);
@@ -107,7 +107,7 @@ void _9p_FlushFlushHook(struct _9p_conn *conn, int tag, unsigned long sequence)
 			break;
 		}
 	}
-	pthread_mutex_unlock(&conn->flush_buckets[bucket].lock);
+	PTHREAD_MUTEX_unlock(&conn->flush_buckets[bucket].lock);
 }
 
 void _9p_DiscardFlushHook(struct _9p_request_data *req)
@@ -116,7 +116,7 @@ void _9p_DiscardFlushHook(struct _9p_request_data *req)
 	struct _9p_conn *conn = req->pconn;
 	int bucket = hook->tag % FLUSH_BUCKETS;
 
-	pthread_mutex_lock(&conn->flush_buckets[bucket].lock);
+	PTHREAD_MUTEX_lock(&conn->flush_buckets[bucket].lock);
 	/* If no flush request arrived, we have to
 	 * remove the hook from the list.
 	 * If a flush request arrived, signal the thread that is waiting
@@ -128,5 +128,5 @@ void _9p_DiscardFlushHook(struct _9p_request_data *req)
 		pthread_cond_signal(&hook->condition->condition);
 	}
 
-	pthread_mutex_unlock(&conn->flush_buckets[bucket].lock);
+	PTHREAD_MUTEX_unlock(&conn->flush_buckets[bucket].lock);
 }

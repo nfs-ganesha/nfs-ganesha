@@ -28,6 +28,7 @@
 #include <rpc/rpc_dplx.h>
 #include <rpc/rpc_msg.h>
 #include <rpc/gss_internal.h>	/* XXX */
+#include "common_utils.h"
 #include "abstract_mem.h"
 #include "gsh_list.h"
 #include "log.h"
@@ -191,7 +192,7 @@ static inline bool gsh_xprt_ref(SVCXPRT *xprt, uint32_t flags,
 	bool refd;
 
 	if (!(flags & XPRT_PRIVATE_FLAG_LOCKED))
-		pthread_mutex_lock(&xprt->xp_lock);
+		PTHREAD_MUTEX_lock(&xprt->xp_lock);
 
 	if (flags & XPRT_PRIVATE_FLAG_INCREQ)
 		req_cnt = ++(xu->req_cnt);
@@ -215,7 +216,7 @@ static inline void gsh_xprt_unref(SVCXPRT *xprt, uint32_t flags,
 	uint32_t req_cnt;
 
 	if (!(flags & XPRT_PRIVATE_FLAG_LOCKED))
-		pthread_mutex_lock(&xprt->xp_lock);
+		PTHREAD_MUTEX_lock(&xprt->xp_lock);
 
 	if (flags & XPRT_PRIVATE_FLAG_DECREQ)
 		req_cnt = --(xu->req_cnt);
@@ -249,7 +250,7 @@ static inline bool gsh_xprt_decoder_guard(SVCXPRT *xprt, uint32_t flags)
 	bool rslt = false;
 
 	if (!(flags & XPRT_PRIVATE_FLAG_LOCKED))
-		pthread_mutex_lock(&xprt->xp_lock);
+		PTHREAD_MUTEX_lock(&xprt->xp_lock);
 
 	if (xu->flags & XPRT_PRIVATE_FLAG_DECODING) {
 		LogDebug(COMPONENT_DISPATCH, "guard failed: flag %s",
@@ -268,7 +269,7 @@ static inline bool gsh_xprt_decoder_guard(SVCXPRT *xprt, uint32_t flags)
 
  unlock:
 	if (!(flags & XPRT_PRIVATE_FLAG_LOCKED))
-		pthread_mutex_unlock(&xprt->xp_lock);
+		PTHREAD_MUTEX_unlock(&xprt->xp_lock);
 
 	return rslt;
 }
@@ -278,14 +279,14 @@ static inline void gsh_xprt_clear_flag(SVCXPRT *xprt, uint32_t flags)
 	gsh_xprt_private_t *xu = (gsh_xprt_private_t *)xprt->xp_u1;
 
 	if (!(flags & XPRT_PRIVATE_FLAG_LOCKED))
-		pthread_mutex_lock(&xprt->xp_lock);
+		PTHREAD_MUTEX_lock(&xprt->xp_lock);
 
 	if (flags & XPRT_PRIVATE_FLAG_DECODING)
 		if (xu->flags & XPRT_PRIVATE_FLAG_DECODING)
 			xu->flags &= ~XPRT_PRIVATE_FLAG_DECODING;
 
 	/* unconditional */
-	pthread_mutex_unlock(&xprt->xp_lock);
+	PTHREAD_MUTEX_unlock(&xprt->xp_lock);
 
 	return;
 }

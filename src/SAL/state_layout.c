@@ -172,7 +172,7 @@ void revoke_owner_layouts(state_owner_t *client_owner)
 
  again:
 
-	pthread_mutex_lock(&client_owner->so_mutex);
+	PTHREAD_MUTEX_lock(&client_owner->so_mutex);
 	so_mutex_held = true;
 
 	glist_for_each_safe(glist, glistn,
@@ -211,7 +211,7 @@ void revoke_owner_layouts(state_owner_t *client_owner)
 			continue;
 		}
 
-		pthread_mutex_unlock(&client_owner->so_mutex);
+		PTHREAD_MUTEX_unlock(&client_owner->so_mutex);
 		so_mutex_held = false;
 
 		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
@@ -247,7 +247,7 @@ void revoke_owner_layouts(state_owner_t *client_owner)
 	}
 
 	if (so_mutex_held)
-		pthread_mutex_unlock(&client_owner->so_mutex);
+		PTHREAD_MUTEX_unlock(&client_owner->so_mutex);
 
 	if (errcnt == STATE_ERR_MAX) {
 		char str[LOG_BUFF_LEN];

@@ -81,10 +81,10 @@ struct clx {
 void nfs_msk_callback(void *arg)
 {
 	struct clx *clx = arg;
-	pthread_mutex_lock(&clx->lock);
+	PTHREAD_MUTEX_lock(&clx->lock);
 	thr_decode_rpc_request(NULL, clx->xprt);
 	pthread_cond_signal(&clx->cond);
-	pthread_mutex_unlock(&clx->lock);
+	PTHREAD_MUTEX_unlock(&clx->lock);
 }
 
 /* extern
@@ -104,10 +104,10 @@ void *nfs_msk_thread(void *arg)
 		return NULL;
 	}
 
-	pthread_cond_init(&clx.cond, NULL);
-	pthread_mutex_init(&clx.lock, NULL);
+	PTHREAD_COND_init(&clx.cond, NULL);
+	PTHREAD_MUTEX_init(&clx.lock, NULL);
 
-	pthread_mutex_lock(&clx.lock);
+	PTHREAD_MUTEX_lock(&clx.lock);
 
 	xprt = svc_msk_create(trans, 30, nfs_msk_callback, &clx);
 	clx.xprt = xprt;
@@ -126,7 +126,7 @@ void *nfs_msk_thread(void *arg)
 	while (SVC_STAT(xprt) == XPRT_IDLE)
 		pthread_cond_wait(&clx.cond, &clx.lock);
 
-	pthread_mutex_unlock(&clx.lock);
+	PTHREAD_MUTEX_unlock(&clx.lock);
 
 	/* We never get here for some reason */
 	msk_destroy_trans(&trans);

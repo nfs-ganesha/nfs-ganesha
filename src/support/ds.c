@@ -478,13 +478,13 @@ void server_pkginit(void)
 {
 	pthread_rwlockattr_t rwlock_attr;
 
-	assert(pthread_rwlockattr_init(&rwlock_attr) == 0);
+	pthread_rwlockattr_init(&rwlock_attr);
 #ifdef GLIBC
-	assert(pthread_rwlockattr_setkind_np(
+	pthread_rwlockattr_setkind_np(
 		&rwlock_attr,
-		PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP) == 0);
+		PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
 #endif
-	assert(pthread_rwlock_init(&server_by_id.lock, &rwlock_attr) == 0);
+	PTHREAD_RWLOCK_init(&server_by_id.lock, &rwlock_attr);
 	avltree_init(&server_by_id.t, server_id_cmpf, 0);
 	memset(&server_by_id.cache, 0, sizeof(server_by_id.cache));
 }

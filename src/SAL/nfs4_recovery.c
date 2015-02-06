@@ -71,7 +71,7 @@ static void nfs_release_v4_client(char *ip);
  */
 void nfs4_start_grace(nfs_grace_start_t *gsp)
 {
-	pthread_mutex_lock(&grace.g_mutex);
+	PTHREAD_MUTEX_lock(&grace.g_mutex);
 
 	/* grace should always be greater than or equal to lease time,
 	 * some clients are known to have problems with grace greater than 60
@@ -102,7 +102,7 @@ void nfs4_start_grace(nfs_grace_start_t *gsp)
 				nfs4_load_recov_clids_nolock(gsp);
 		}
 	}
-	pthread_mutex_unlock(&grace.g_mutex);
+	PTHREAD_MUTEX_unlock(&grace.g_mutex);
 }
 
 int last_grace = -1;
@@ -120,7 +120,7 @@ int nfs_in_grace(void)
 	if (nfs_param.nfsv4_param.graceless)
 		return 0;
 
-	pthread_mutex_lock(&grace.g_mutex);
+	PTHREAD_MUTEX_lock(&grace.g_mutex);
 
 	in_grace = ((grace.g_start + grace.g_duration) > time(NULL));
 
@@ -132,7 +132,7 @@ int nfs_in_grace(void)
 		LogDebug(COMPONENT_STATE, "NFS Server IN GRACE");
 	}
 
-	pthread_mutex_unlock(&grace.g_mutex);
+	PTHREAD_MUTEX_unlock(&grace.g_mutex);
 
 	return in_grace;
 }
@@ -513,9 +513,9 @@ void  nfs4_chk_clid(nfs_client_id_t *clientid)
 	/* If we aren't in grace period, then reclaim is not possible */
 	if (!nfs_in_grace())
 		return;
-	pthread_mutex_lock(&grace.g_mutex);
+	PTHREAD_MUTEX_lock(&grace.g_mutex);
 	nfs4_chk_clid_impl(clientid, &dummy_clid_ent);
-	pthread_mutex_unlock(&grace.g_mutex);
+	PTHREAD_MUTEX_unlock(&grace.g_mutex);
 	return;
 }
 
@@ -982,11 +982,11 @@ static void nfs4_load_recov_clids_nolock(nfs_grace_start_t *gsp)
  */
 void nfs4_load_recov_clids(nfs_grace_start_t *gsp)
 {
-	pthread_mutex_lock(&grace.g_mutex);
+	PTHREAD_MUTEX_lock(&grace.g_mutex);
 
 	nfs4_load_recov_clids_nolock(gsp);
 
-	pthread_mutex_unlock(&grace.g_mutex);
+	PTHREAD_MUTEX_unlock(&grace.g_mutex);
 }
 
 /**
@@ -1136,15 +1136,15 @@ void nfs4_record_revoke(nfs_client_id_t *delr_clid, nfs_fh4 *delr_handle)
 	 * the reaper thread revokes delegations of an already expired
 	 * client!
 	 */
-	pthread_mutex_lock(&delr_clid->cid_mutex);
+	PTHREAD_MUTEX_lock(&delr_clid->cid_mutex);
 	if (delr_clid->cid_confirmed == EXPIRED_CLIENT_ID) {
 		/* Called from reaper thread, no need to record
 		 * revoked file handles for an expired client.
 		 */
-		pthread_mutex_unlock(&delr_clid->cid_mutex);
+		PTHREAD_MUTEX_unlock(&delr_clid->cid_mutex);
 		return;
 	}
-	pthread_mutex_unlock(&delr_clid->cid_mutex);
+	PTHREAD_MUTEX_unlock(&delr_clid->cid_mutex);
 
 	/* Parse through the clientid directory structure */
 	assert(delr_clid->cid_recov_dir != NULL);
@@ -1200,10 +1200,10 @@ bool nfs4_check_deleg_reclaim(nfs_client_id_t *clid, nfs_fh4 *fhandle)
 				  rhdlstr, sizeof(rhdlstr));
 	assert(retval != -1);
 
-	pthread_mutex_lock(&grace.g_mutex);
+	PTHREAD_MUTEX_lock(&grace.g_mutex);
 	nfs4_chk_clid_impl(clid, &clid_ent);
 	if (clid_ent == NULL || glist_empty(&clid_ent->cl_rfh_list)) {
-		pthread_mutex_unlock(&grace.g_mutex);
+		PTHREAD_MUTEX_unlock(&grace.g_mutex);
 		return true;
 	}
 
@@ -1211,7 +1211,7 @@ bool nfs4_check_deleg_reclaim(nfs_client_id_t *clid, nfs_fh4 *fhandle)
 		rfh_entry = glist_entry(node, rdel_fh_t, rdfh_list);
 		assert(rfh_entry != NULL);
 		if (!strcmp(rhdlstr, rfh_entry->rdfh_handle_str)) {
-			pthread_mutex_unlock(&grace.g_mutex);
+			PTHREAD_MUTEX_unlock(&grace.g_mutex);
 			LogFullDebug(COMPONENT_CLIENTID,
 				"Can't reclaim revoked fh:%s",
 				rfh_entry->rdfh_handle_str);
@@ -1219,7 +1219,7 @@ bool nfs4_check_deleg_reclaim(nfs_client_id_t *clid, nfs_fh4 *fhandle)
 		}
 	}
 
-	pthread_mutex_unlock(&grace.g_mutex);
+	PTHREAD_MUTEX_unlock(&grace.g_mutex);
 	LogFullDebug(COMPONENT_CLIENTID, "Returning TRUE");
 	return true;
 }
@@ -1385,7 +1385,7 @@ static void nfs_release_v4_client(char *ip)
 			pdata = RBT_OPAQ(pn);
 
 			cp = (nfs_client_id_t *) pdata->val.addr;
-			pthread_mutex_lock(&cp->cid_mutex);
+			PTHREAD_MUTEX_lock(&cp->cid_mutex);
 			if ((cp->cid_confirmed == CONFIRMED_CLIENT_ID)
 			     && ip_match(ip, cp)) {
 				inc_client_id_ref(cp);
@@ -1394,22 +1394,22 @@ static void nfs_release_v4_client(char *ip)
 				recp = cp->cid_client_record;
 				inc_client_record_ref(recp);
 
-				pthread_mutex_unlock(&cp->cid_mutex);
+				PTHREAD_MUTEX_unlock(&cp->cid_mutex);
 
 				PTHREAD_RWLOCK_unlock(&ht->partitions[i].lock);
 
-				pthread_mutex_lock(&recp->cr_mutex);
+				PTHREAD_MUTEX_lock(&recp->cr_mutex);
 
 				nfs_client_id_expire(cp, true);
 
-				pthread_mutex_unlock(&recp->cr_mutex);
+				PTHREAD_MUTEX_unlock(&recp->cr_mutex);
 
 				dec_client_id_ref(cp);
 				dec_client_record_ref(recp);
 				return;
 
 			} else {
-				pthread_mutex_unlock(&cp->cid_mutex);
+				PTHREAD_MUTEX_unlock(&cp->cid_mutex);
 			}
 			RBT_INCREMENT(pn);
 		}

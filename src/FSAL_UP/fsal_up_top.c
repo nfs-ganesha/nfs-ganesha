@@ -1312,9 +1312,9 @@ static enum recall_resp_action handle_recall_response(
 static inline void
 free_delegrecall_context(struct delegrecall_context *deleg_ctx)
 {
-	pthread_mutex_lock(&deleg_ctx->drc_clid->cid_mutex);
+	PTHREAD_MUTEX_lock(&deleg_ctx->drc_clid->cid_mutex);
 	update_lease(deleg_ctx->drc_clid);
-	pthread_mutex_unlock(&deleg_ctx->drc_clid->cid_mutex);
+	PTHREAD_MUTEX_unlock(&deleg_ctx->drc_clid->cid_mutex);
 
 	put_gsh_export(deleg_ctx->drc_exp);
 
@@ -1818,15 +1818,15 @@ state_status_t delegrecall_impl(cache_entry_t *entry)
 		 * expired clients revoke this delegation, and we just
 		 * skip it here.
 		 */
-		pthread_mutex_lock(&drc_ctx->drc_clid->cid_mutex);
+		PTHREAD_MUTEX_lock(&drc_ctx->drc_clid->cid_mutex);
 		if (!reserve_lease(drc_ctx->drc_clid)) {
-			pthread_mutex_unlock(&drc_ctx->drc_clid->cid_mutex);
+			PTHREAD_MUTEX_unlock(&drc_ctx->drc_clid->cid_mutex);
 			put_gsh_export(drc_ctx->drc_exp);
 			dec_client_id_ref(drc_ctx->drc_clid);
 			gsh_free(drc_ctx);
 			continue;
 		}
-		pthread_mutex_unlock(&drc_ctx->drc_clid->cid_mutex);
+		PTHREAD_MUTEX_unlock(&drc_ctx->drc_clid->cid_mutex);
 
 		delegrecall_one(entry, state, drc_ctx);
 	}

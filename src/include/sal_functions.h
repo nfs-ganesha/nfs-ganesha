@@ -586,14 +586,14 @@ static inline cache_entry_t *get_state_entry_ref(state_t *state)
 {
 	cache_entry_t *entry = NULL;
 
-	pthread_mutex_lock(&state->state_mutex);
+	PTHREAD_MUTEX_lock(&state->state_mutex);
 
 	if (state->state_entry != NULL &&
 	    cache_inode_lru_ref(state->state_entry,
 				LRU_FLAG_NONE) == CACHE_INODE_SUCCESS)
 		entry = state->state_entry;
 
-	pthread_mutex_unlock(&state->state_mutex);
+	PTHREAD_MUTEX_unlock(&state->state_mutex);
 
 	return entry;
 }
@@ -602,7 +602,7 @@ static inline struct gsh_export *get_state_export_ref(state_t *state)
 {
 	struct gsh_export *export = NULL;
 
-	pthread_mutex_lock(&state->state_mutex);
+	PTHREAD_MUTEX_lock(&state->state_mutex);
 
 	if (state->state_export != NULL &&
 	    export_ready(state->state_export)) {
@@ -610,7 +610,7 @@ static inline struct gsh_export *get_state_export_ref(state_t *state)
 		export = state->state_export;
 	}
 
-	pthread_mutex_unlock(&state->state_mutex);
+	PTHREAD_MUTEX_unlock(&state->state_mutex);
 
 	return export;
 }
@@ -619,12 +619,12 @@ static inline bool state_same_export(state_t *state, struct gsh_export *export)
 {
 	bool same = false;
 
-	pthread_mutex_lock(&state->state_mutex);
+	PTHREAD_MUTEX_lock(&state->state_mutex);
 
 	if (state->state_export != NULL)
 		same = state->state_export == export;
 
-	pthread_mutex_unlock(&state->state_mutex);
+	PTHREAD_MUTEX_unlock(&state->state_mutex);
 
 	return same;
 }
@@ -633,12 +633,12 @@ static inline uint16_t state_export_id(state_t *state)
 {
 	uint16_t export_id = UINT16_MAX;
 
-	pthread_mutex_lock(&state->state_mutex);
+	PTHREAD_MUTEX_lock(&state->state_mutex);
 
 	if (state->state_export != NULL)
 		export_id = state->state_export->export_id;
 
-	pthread_mutex_unlock(&state->state_mutex);
+	PTHREAD_MUTEX_unlock(&state->state_mutex);
 
 	return export_id;
 }
@@ -647,14 +647,14 @@ static inline state_owner_t *get_state_owner_ref(state_t *state)
 {
 	state_owner_t *owner = NULL;
 
-	pthread_mutex_lock(&state->state_mutex);
+	PTHREAD_MUTEX_lock(&state->state_mutex);
 
 	if (state->state_owner != NULL) {
 		owner = state->state_owner;
 		inc_state_owner_ref(owner);
 	}
 
-	pthread_mutex_unlock(&state->state_mutex);
+	PTHREAD_MUTEX_unlock(&state->state_mutex);
 
 	return owner;
 }
@@ -663,14 +663,14 @@ static inline bool state_owner_confirmed(state_t *state)
 {
 	bool confirmed = false;
 
-	pthread_mutex_lock(&state->state_mutex);
+	PTHREAD_MUTEX_lock(&state->state_mutex);
 
 	if (state->state_owner != NULL) {
 		confirmed =
 			state->state_owner->so_owner.so_nfs4_owner.so_confirmed;
 	}
 
-	pthread_mutex_unlock(&state->state_mutex);
+	PTHREAD_MUTEX_unlock(&state->state_mutex);
 
 	return confirmed;
 }
@@ -679,12 +679,12 @@ static inline bool state_same_owner(state_t *state, state_owner_t *owner)
 {
 	bool same = false;
 
-	pthread_mutex_lock(&state->state_mutex);
+	PTHREAD_MUTEX_lock(&state->state_mutex);
 
 	if (state->state_owner != NULL)
 		same = state->state_owner == owner;
 
-	pthread_mutex_unlock(&state->state_mutex);
+	PTHREAD_MUTEX_unlock(&state->state_mutex);
 
 	return same;
 }

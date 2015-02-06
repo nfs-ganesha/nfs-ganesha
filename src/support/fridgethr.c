@@ -166,7 +166,7 @@ int fridgethr_init(struct fridgethr **frout, const char *s,
 			break;
 
 		case fridgethr_defer_block:
-			pthread_cond_init(&frobj->deferment.block.cond, NULL);
+			PTHREAD_COND_init(&frobj->deferment.block.cond, NULL);
 			frobj->deferment.block.waiters = 0;
 			break;
 
@@ -205,7 +205,7 @@ int fridgethr_init(struct fridgethr **frout, const char *s,
 
 	if (rc != 0) {
 		if (mutexinit) {
-			pthread_mutex_destroy(&frobj->mtx);
+			PTHREAD_MUTEX_destroy(&frobj->mtx);
 			mutexinit = false;
 		}
 		if (attrinit) {
@@ -233,7 +233,7 @@ int fridgethr_init(struct fridgethr **frout, const char *s,
 
 void fridgethr_destroy(struct fridgethr *fr)
 {
-	pthread_mutex_destroy(&fr->mtx);
+	PTHREAD_MUTEX_destroy(&fr->mtx);
 	pthread_attr_destroy(&fr->attr);
 	gsh_free(fr->s);
 	gsh_free(fr);
@@ -256,7 +256,7 @@ static void fridgethr_finish_transition(struct fridgethr *fr, bool locked)
 		return;
 
 	if (fr->cb_mtx && !locked)
-		pthread_mutex_lock(fr->cb_mtx);
+		PTHREAD_MUTEX_lock(fr->cb_mtx);
 
 	if (fr->cb_func != NULL)
 		fr->cb_func(fr->cb_arg);
@@ -265,7 +265,7 @@ static void fridgethr_finish_transition(struct fridgethr *fr, bool locked)
 		pthread_cond_broadcast(fr->cb_cv);
 
 	if (fr->cb_mtx && !locked)
-		pthread_mutex_unlock(fr->cb_mtx);
+		PTHREAD_MUTEX_unlock(fr->cb_mtx);
 
 	if (!locked) {
 		fr->cb_mtx = NULL;
@@ -570,8 +570,8 @@ static void *fridgethr_start_routine(void *arg)
 	if (fr->p.thread_finalize)
 		fr->p.thread_finalize(&fe->ctx);
 
-	pthread_mutex_destroy(&fe->ctx.mtx);
-	pthread_cond_destroy(&fe->ctx.cv);
+	PTHREAD_MUTEX_destroy(&fe->ctx.mtx);
+	PTHREAD_COND_destroy(&fe->ctx.cv);
 	gsh_free(fe);
 	fe = NULL;
 	/* At this point the fridge entry no longer exists and must
@@ -658,10 +658,10 @@ static int fridgethr_spawn(struct fridgethr *fr,
  create_err:
 
 	if (conditioned)
-		pthread_cond_destroy(&fe->ctx.cv);
+		PTHREAD_COND_destroy(&fe->ctx.cv);
 
 	if (mutexed)
-		pthread_mutex_destroy(&fe->ctx.mtx);
+		PTHREAD_MUTEX_destroy(&fe->ctx.mtx);
 
 	if (fe != NULL)
 		gsh_free(fe);
@@ -1506,7 +1506,7 @@ void fridgethr_cancel(struct fridgethr *fr)
 	/* Next thread link */
 	struct glist_head *tn = NULL;
 
-	pthread_mutex_lock(&fr->mtx);
+	PTHREAD_MUTEX_lock(&fr->mtx);
 	LogEvent(COMPONENT_THREAD, "Cancelling %d threads from fridge %s.",
 		 fr->nthreads, fr->s);
 	glist_for_each_safe(ti, tn, &fr->thread_list) {
@@ -1520,7 +1520,7 @@ void fridgethr_cancel(struct fridgethr *fr)
 		glist_del(&t->thread_link);
 		--(fr->nthreads);
 	}
-	pthread_mutex_unlock(&fr->mtx);
+	PTHREAD_MUTEX_unlock(&fr->mtx);
 	LogEvent(COMPONENT_THREAD, "All threads in %s cancelled.", fr->s);
 }
 

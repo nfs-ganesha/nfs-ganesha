@@ -110,7 +110,7 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op, compound_data_t *data,
 		goto out2;
 	}
 
-	pthread_mutex_lock(&open_owner->so_mutex);
+	PTHREAD_MUTEX_lock(&open_owner->so_mutex);
 
 	/* Check seqid */
 	if (!Check_nfs4_seqid(open_owner,
@@ -121,11 +121,11 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op, compound_data_t *data,
 			      tag)) {
 		/* Response is all setup for us and LogDebug told what was wrong
 		 */
-		pthread_mutex_unlock(&open_owner->so_mutex);
+		PTHREAD_MUTEX_unlock(&open_owner->so_mutex);
 		goto out;
 	}
 
-	pthread_mutex_unlock(&open_owner->so_mutex);
+	PTHREAD_MUTEX_unlock(&open_owner->so_mutex);
 
 	/* What kind of open is it ? */
 	LogFullDebug(COMPONENT_STATE,

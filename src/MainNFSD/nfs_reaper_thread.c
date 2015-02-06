@@ -67,7 +67,7 @@ static int reap_hash_table(hash_table_t *ht_reap)
 			pclientid = addr->val.addr;
 			count++;
 
-			pthread_mutex_lock(&pclientid->cid_mutex);
+			PTHREAD_MUTEX_lock(&pclientid->cid_mutex);
 
 			if (!valid_lease(pclientid)) {
 				inc_client_id_ref(pclientid);
@@ -76,7 +76,7 @@ static int reap_hash_table(hash_table_t *ht_reap)
 				precord = pclientid->cid_client_record;
 				inc_client_record_ref(precord);
 
-				pthread_mutex_unlock(&pclientid->cid_mutex);
+				PTHREAD_MUTEX_unlock(&pclientid->cid_mutex);
 
 				PTHREAD_RWLOCK_unlock(&ht_reap->partitions[i].
 						      lock);
@@ -95,18 +95,18 @@ static int reap_hash_table(hash_table_t *ht_reap)
 				}
 
 				/* Take cr_mutex and expire clientid */
-				pthread_mutex_lock(&precord->cr_mutex);
+				PTHREAD_MUTEX_lock(&precord->cr_mutex);
 
 				rc = nfs_client_id_expire(pclientid, false);
 
-				pthread_mutex_unlock(&precord->cr_mutex);
+				PTHREAD_MUTEX_unlock(&precord->cr_mutex);
 
 				dec_client_id_ref(pclientid);
 				dec_client_record_ref(precord);
 				if (rc)
 					goto restart;
 			} else {
-				pthread_mutex_unlock(&pclientid->cid_mutex);
+				PTHREAD_MUTEX_unlock(&pclientid->cid_mutex);
 			}
 
 			RBT_INCREMENT(pn);
