@@ -275,19 +275,19 @@ void nfs_Init_admin_thread(void)
 
 static void admin_issue_command(admin_command_t command)
 {
-	pthread_mutex_lock(&admin_control_mtx);
+	PTHREAD_MUTEX_lock(&admin_control_mtx);
 	while ((admin_command != admin_none_pending)
 	       && ((admin_status != admin_stable)
 		   || (admin_status != admin_halted))) {
 		pthread_cond_wait(&admin_control_cv, &admin_control_mtx);
 	}
 	if (admin_status == admin_halted) {
-		pthread_mutex_unlock(&admin_control_mtx);
+		PTHREAD_MUTEX_unlock(&admin_control_mtx);
 		return;
 	}
 	admin_command = command;
 	pthread_cond_broadcast(&admin_control_cv);
-	pthread_mutex_unlock(&admin_control_mtx);
+	PTHREAD_MUTEX_unlock(&admin_control_mtx);
 }
 
 /**
@@ -425,7 +425,7 @@ void *admin_thread(void *UnusedArg)
 {
 	SetNameFunction("Admin");
 
-	pthread_mutex_lock(&admin_control_mtx);
+	PTHREAD_MUTEX_lock(&admin_control_mtx);
 	while (admin_command != admin_shutdown) {
 		if (admin_command != admin_none_pending)
 			continue;
@@ -435,12 +435,12 @@ void *admin_thread(void *UnusedArg)
 	admin_command = admin_none_pending;
 	admin_status = admin_shutting_down;
 	pthread_cond_broadcast(&admin_control_cv);
-	pthread_mutex_unlock(&admin_control_mtx);
+	PTHREAD_MUTEX_unlock(&admin_control_mtx);
 	do_shutdown();
-	pthread_mutex_lock(&admin_control_mtx);
+	PTHREAD_MUTEX_lock(&admin_control_mtx);
 	admin_status = admin_halted;
 	pthread_cond_broadcast(&admin_control_cv);
-	pthread_mutex_unlock(&admin_control_mtx);
+	PTHREAD_MUTEX_unlock(&admin_control_mtx);
 
 	return NULL;
 }				/* admin_thread */

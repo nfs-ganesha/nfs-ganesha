@@ -917,11 +917,11 @@ void free_state_owner(state_owner_t *owner)
 	PTHREAD_MUTEX_destroy(&owner->so_mutex);
 
 #ifdef DEBUG_SAL
-	pthread_mutex_lock(&all_state_owners_mutex);
+	PTHREAD_MUTEX_lock(&all_state_owners_mutex);
 
 	glist_del(&owner->so_all_owners);
 
-	pthread_mutex_unlock(&all_state_owners_mutex);
+	PTHREAD_MUTEX_unlock(&all_state_owners_mutex);
 #endif
 
 	pool_free(state_owner_pool, owner);
@@ -1167,11 +1167,11 @@ state_owner_t *get_state_owner(care_t care, state_owner_t *key,
 	PTHREAD_MUTEX_init(&owner->so_mutex, NULL);
 
 #ifdef DEBUG_SAL
-	pthread_mutex_lock(&all_state_owners_mutex);
+	PTHREAD_MUTEX_lock(&all_state_owners_mutex);
 
 	glist_add_tail(&state_owners_all, &owner->so_all_owners);
 
-	pthread_mutex_unlock(&all_state_owners_mutex);
+	PTHREAD_MUTEX_unlock(&all_state_owners_mutex);
 #endif
 
 	/* Do any owner type specific initialization */
@@ -1266,7 +1266,7 @@ void dump_all_owners(void)
 	if (!isFullDebug(COMPONENT_STATE))
 		return;
 
-	pthread_mutex_lock(&all_state_owners_mutex);
+	PTHREAD_MUTEX_lock(&all_state_owners_mutex);
 
 	if (!glist_empty(&state_owners_all)) {
 		char str[LOG_BUFF_LEN];
@@ -1288,7 +1288,7 @@ void dump_all_owners(void)
 	} else
 		LogFullDebug(COMPONENT_STATE, "All state owners released");
 
-	pthread_mutex_unlock(&all_state_owners_mutex);
+	PTHREAD_MUTEX_unlock(&all_state_owners_mutex);
 }
 #endif
 

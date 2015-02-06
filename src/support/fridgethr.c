@@ -256,7 +256,7 @@ static void fridgethr_finish_transition(struct fridgethr *fr, bool locked)
 		return;
 
 	if (fr->cb_mtx && !locked)
-		pthread_mutex_lock(fr->cb_mtx);
+		PTHREAD_MUTEX_lock(fr->cb_mtx);
 
 	if (fr->cb_func != NULL)
 		fr->cb_func(fr->cb_arg);
@@ -265,7 +265,7 @@ static void fridgethr_finish_transition(struct fridgethr *fr, bool locked)
 		pthread_cond_broadcast(fr->cb_cv);
 
 	if (fr->cb_mtx && !locked)
-		pthread_mutex_unlock(fr->cb_mtx);
+		PTHREAD_MUTEX_unlock(fr->cb_mtx);
 
 	if (!locked) {
 		fr->cb_mtx = NULL;
@@ -1506,7 +1506,7 @@ void fridgethr_cancel(struct fridgethr *fr)
 	/* Next thread link */
 	struct glist_head *tn = NULL;
 
-	pthread_mutex_lock(&fr->mtx);
+	PTHREAD_MUTEX_lock(&fr->mtx);
 	LogEvent(COMPONENT_THREAD, "Cancelling %d threads from fridge %s.",
 		 fr->nthreads, fr->s);
 	glist_for_each_safe(ti, tn, &fr->thread_list) {
@@ -1520,7 +1520,7 @@ void fridgethr_cancel(struct fridgethr *fr)
 		glist_del(&t->thread_link);
 		--(fr->nthreads);
 	}
-	pthread_mutex_unlock(&fr->mtx);
+	PTHREAD_MUTEX_unlock(&fr->mtx);
 	LogEvent(COMPONENT_THREAD, "All threads in %s cancelled.", fr->s);
 }
 

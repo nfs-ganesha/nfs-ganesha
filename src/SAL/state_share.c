@@ -821,12 +821,12 @@ state_status_t state_nlm_share(cache_entry_t *entry,
 	/* Add share to list for NLM Owner */
 	inc_state_owner_ref(owner);
 
-	pthread_mutex_lock(&owner->so_mutex);
+	PTHREAD_MUTEX_lock(&owner->so_mutex);
 
 	glist_add_tail(&owner->so_owner.so_nlm_owner.so_nlm_shares,
 		       &nlm_share->sns_share_per_owner);
 
-	pthread_mutex_unlock(&owner->so_mutex);
+	PTHREAD_MUTEX_unlock(&owner->so_mutex);
 
 	dec_state_owner_ref(owner);
 
@@ -834,13 +834,13 @@ state_status_t state_nlm_share(cache_entry_t *entry,
 	inc_nsm_client_ref(owner->so_owner.so_nlm_owner.so_client->
 			   slc_nsm_client);
 
-	pthread_mutex_lock(&owner->so_owner.so_nlm_owner.so_client
+	PTHREAD_MUTEX_lock(&owner->so_owner.so_nlm_owner.so_client
 			   ->slc_nsm_client->ssc_mutex);
 
 	glist_add_tail(&owner->so_owner.so_nlm_owner.so_client->slc_nsm_client->
 		       ssc_share_list, &nlm_share->sns_share_per_client);
 
-	pthread_mutex_unlock(&owner->so_owner.so_nlm_owner.so_client
+	PTHREAD_MUTEX_unlock(&owner->so_owner.so_nlm_owner.so_client
 			     ->slc_nsm_client->ssc_mutex);
 
 	if (glist_empty(&entry->object.file.nlm_share_list))
@@ -908,13 +908,13 @@ state_status_t state_nlm_share(cache_entry_t *entry,
 			}
 
 			/* Remove the share from the NSM Client list */
-			pthread_mutex_lock(&owner->so_owner.so_nlm_owner
+			PTHREAD_MUTEX_lock(&owner->so_owner.so_nlm_owner
 					   .so_client->slc_nsm_client
 					   ->ssc_mutex);
 
 			glist_del(&nlm_share->sns_share_per_client);
 
-			pthread_mutex_unlock(&owner->so_owner.so_nlm_owner
+			PTHREAD_MUTEX_unlock(&owner->so_owner.so_nlm_owner
 					     .so_client->slc_nsm_client
 					     ->ssc_mutex);
 
@@ -922,11 +922,11 @@ state_status_t state_nlm_share(cache_entry_t *entry,
 					   so_client->slc_nsm_client);
 
 			/* Remove the share from the NLM Owner list */
-			pthread_mutex_lock(&owner->so_mutex);
+			PTHREAD_MUTEX_lock(&owner->so_mutex);
 
 			glist_del(&nlm_share->sns_share_per_owner);
 
-			pthread_mutex_unlock(&owner->so_mutex);
+			PTHREAD_MUTEX_unlock(&owner->so_mutex);
 
 			dec_state_owner_ref(owner);
 
@@ -1085,23 +1085,23 @@ state_status_t state_nlm_unshare(cache_entry_t *entry,
 		}
 
 		/* Remove the share from the NSM Client list */
-		pthread_mutex_lock(&owner->so_owner.so_nlm_owner.so_client
+		PTHREAD_MUTEX_lock(&owner->so_owner.so_nlm_owner.so_client
 				   ->slc_nsm_client->ssc_mutex);
 
 		glist_del(&nlm_share->sns_share_per_client);
 
-		pthread_mutex_unlock(&owner->so_owner.so_nlm_owner.so_client
+		PTHREAD_MUTEX_unlock(&owner->so_owner.so_nlm_owner.so_client
 				     ->slc_nsm_client->ssc_mutex);
 
 		dec_nsm_client_ref(owner->so_owner.so_nlm_owner.so_client->
 				   slc_nsm_client);
 
 		/* Remove the share from the NLM Owner list */
-		pthread_mutex_lock(&owner->so_mutex);
+		PTHREAD_MUTEX_lock(&owner->so_mutex);
 
 		glist_del(&nlm_share->sns_share_per_owner);
 
-		pthread_mutex_unlock(&owner->so_mutex);
+		PTHREAD_MUTEX_unlock(&owner->so_mutex);
 
 		dec_state_owner_ref(owner);
 
@@ -1157,23 +1157,23 @@ void state_share_wipe(cache_entry_t *entry)
 		}
 
 		/* Remove the share from the NSM Client list */
-		pthread_mutex_lock(&owner->so_owner.so_nlm_owner.so_client
+		PTHREAD_MUTEX_lock(&owner->so_owner.so_nlm_owner.so_client
 				   ->slc_nsm_client->ssc_mutex);
 
 		glist_del(&nlm_share->sns_share_per_client);
 
-		pthread_mutex_unlock(&owner->so_owner.so_nlm_owner.so_client
+		PTHREAD_MUTEX_unlock(&owner->so_owner.so_nlm_owner.so_client
 				     ->slc_nsm_client->ssc_mutex);
 
 		dec_nsm_client_ref(owner->so_owner.so_nlm_owner.so_client->
 				   slc_nsm_client);
 
 		/* Remove the share from the NLM Owner list */
-		pthread_mutex_lock(&owner->so_mutex);
+		PTHREAD_MUTEX_lock(&owner->so_mutex);
 
 		glist_del(&nlm_share->sns_share_per_owner);
 
-		pthread_mutex_unlock(&owner->so_mutex);
+		PTHREAD_MUTEX_unlock(&owner->so_mutex);
 
 		dec_state_owner_ref(owner);
 

@@ -387,7 +387,7 @@ void cancel_work(struct response *req)
 	struct work_item *work;
 	bool start_over = true;
 
-	pthread_mutex_lock(&work_mutex);
+	PTHREAD_MUTEX_lock(&work_mutex);
 
 	while (start_over) {
 		start_over = false;
@@ -406,7 +406,7 @@ void cancel_work(struct response *req)
 		}
 	}
 
-	pthread_mutex_unlock(&work_mutex);
+	PTHREAD_MUTEX_unlock(&work_mutex);
 }
 
 /* Must only be called from main thread...*/
@@ -419,7 +419,7 @@ int schedule_work(struct response *resp)
 		return -1;
 	}
 
-	pthread_mutex_lock(&work_mutex);
+	PTHREAD_MUTEX_lock(&work_mutex);
 
 	memcpy(&work->resp, resp, sizeof(*resp));
 
@@ -430,7 +430,7 @@ int schedule_work(struct response *resp)
 	/* Signal to the worker and polling threads there is new work */
 	pthread_cond_broadcast(&work_cond);
 
-	pthread_mutex_unlock(&work_mutex);
+	PTHREAD_MUTEX_unlock(&work_mutex);
 
 	return 0;
 }
@@ -978,13 +978,13 @@ void *worker(void *t_type)
 	bool complete, cancelled = false;
 	enum thread_type thread_type = *((enum thread_type *) t_type);
 
-	pthread_mutex_lock(&work_mutex);
+	PTHREAD_MUTEX_lock(&work_mutex);
 
 	while (true) {
 		/* Look for work */
 		work = get_work(thread_type);
 
-		pthread_mutex_unlock(&work_mutex);
+		PTHREAD_MUTEX_unlock(&work_mutex);
 
 		assert(work != NULL);
 
@@ -1003,7 +1003,7 @@ void *worker(void *t_type)
 		if (complete)
 			respond(&work->resp);
 
-		pthread_mutex_lock(&work_mutex);
+		PTHREAD_MUTEX_lock(&work_mutex);
 
 		if (complete) {
 			/* Remember if the main thread was trying to cancel

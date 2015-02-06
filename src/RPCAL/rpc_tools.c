@@ -460,19 +460,19 @@ CLIENT *gsh_clnt_create(char *host, unsigned long prog, unsigned long vers,
 			char *proto)
 {
 	CLIENT *clnt;
-	pthread_mutex_lock(&clnt_create_mutex);
+	PTHREAD_MUTEX_lock(&clnt_create_mutex);
 	clnt = clnt_create(host, prog, vers, proto);
 	if (clnt == NULL) {
 		const char *err = clnt_spcreateerror("clnt_create failed");
 		LogDebug(COMPONENT_RPC, "%s", err);
 	}
-	pthread_mutex_unlock(&clnt_create_mutex);
+	PTHREAD_MUTEX_unlock(&clnt_create_mutex);
 	return clnt;
 }
 
 void gsh_clnt_destroy(CLIENT *clnt)
 {
-	pthread_mutex_lock(&clnt_create_mutex);
+	PTHREAD_MUTEX_lock(&clnt_create_mutex);
 	clnt_destroy(clnt);
-	pthread_mutex_unlock(&clnt_create_mutex);
+	PTHREAD_MUTEX_unlock(&clnt_create_mutex);
 }

@@ -189,22 +189,22 @@ state_status_t state_add_impl(cache_entry_t *entry, enum state_type state_type,
 
 	/* Attach this to an export */
 	PTHREAD_RWLOCK_wrlock(&op_ctx->export->lock);
-	pthread_mutex_lock(&pnew_state->state_mutex);
+	PTHREAD_MUTEX_lock(&pnew_state->state_mutex);
 	pnew_state->state_export = op_ctx->export;
 	glist_add_tail(&op_ctx->export->exp_state_list,
 		       &pnew_state->state_export_list);
-	pthread_mutex_unlock(&pnew_state->state_mutex);
+	PTHREAD_MUTEX_unlock(&pnew_state->state_mutex);
 	PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
 
 	/* Add state to list for cache entry */
-	pthread_mutex_lock(&pnew_state->state_mutex);
+	PTHREAD_MUTEX_lock(&pnew_state->state_mutex);
 	glist_add_tail(&entry->list_of_states, &pnew_state->state_list);
 	pnew_state->state_entry = entry;
-	pthread_mutex_unlock(&pnew_state->state_mutex);
+	PTHREAD_MUTEX_unlock(&pnew_state->state_mutex);
 
 	/* Add state to list for owner */
-	pthread_mutex_lock(&owner_input->so_mutex);
-	pthread_mutex_lock(&pnew_state->state_mutex);
+	PTHREAD_MUTEX_lock(&owner_input->so_mutex);
+	PTHREAD_MUTEX_lock(&pnew_state->state_mutex);
 
 	pnew_state->state_owner = owner_input;
 	inc_state_owner_ref(owner_input);
@@ -212,16 +212,16 @@ state_status_t state_add_impl(cache_entry_t *entry, enum state_type state_type,
 	glist_add_tail(&owner_input->so_owner.so_nfs4_owner.so_state_list,
 		       &pnew_state->state_owner_list);
 
-	pthread_mutex_unlock(&pnew_state->state_mutex);
-	pthread_mutex_unlock(&owner_input->so_mutex);
+	PTHREAD_MUTEX_unlock(&pnew_state->state_mutex);
+	PTHREAD_MUTEX_unlock(&owner_input->so_mutex);
 
 
 #ifdef DEBUG_SAL
-	pthread_mutex_lock(&all_state_v4_mutex);
+	PTHREAD_MUTEX_lock(&all_state_v4_mutex);
 
 	glist_add_tail(&state_v4_all, &pnew_state->state_list_all);
 
-	pthread_mutex_unlock(&all_state_v4_mutex);
+	PTHREAD_MUTEX_unlock(&all_state_v4_mutex);
 #endif
 
 	if (pnew_state->state_type == STATE_TYPE_DELEG &&
@@ -344,30 +344,30 @@ void state_del_locked(state_t *state)
 	 * reason, however, static and dynamic code analysis have no way of
 	 * knowing this reference is safe.
 	 */
-	pthread_mutex_lock(&state->state_mutex);
+	PTHREAD_MUTEX_lock(&state->state_mutex);
 	entry = state->state_entry;
 	export = state->state_export;
 	owner = state->state_owner;
-	pthread_mutex_unlock(&state->state_mutex);
+	PTHREAD_MUTEX_unlock(&state->state_mutex);
 
 	if (owner != NULL) {
 		/* Remove from list of states owned by owner and
 		 * release the state owner reference.
 		 */
-		pthread_mutex_lock(&owner->so_mutex);
-		pthread_mutex_lock(&state->state_mutex);
+		PTHREAD_MUTEX_lock(&owner->so_mutex);
+		PTHREAD_MUTEX_lock(&state->state_mutex);
 		glist_del(&state->state_owner_list);
 		state->state_owner = NULL;
-		pthread_mutex_unlock(&state->state_mutex);
-		pthread_mutex_unlock(&owner->so_mutex);
+		PTHREAD_MUTEX_unlock(&state->state_mutex);
+		PTHREAD_MUTEX_unlock(&owner->so_mutex);
 		dec_state_owner_ref(owner);
 	}
 
 	/* Remove from the list of states for a particular cache entry */
-	pthread_mutex_lock(&state->state_mutex);
+	PTHREAD_MUTEX_lock(&state->state_mutex);
 	glist_del(&state->state_list);
 	state->state_entry = NULL;
-	pthread_mutex_unlock(&state->state_mutex);
+	PTHREAD_MUTEX_unlock(&state->state_mutex);
 	cache_inode_lru_unref(entry, LRU_UNREF_STATE_LOCK_HELD);
 
 	/* Remove from the list of lock states for a particular open state.
@@ -390,19 +390,19 @@ void state_del_locked(state_t *state)
 	 * proceeding with state deletion.
 	 */
 	PTHREAD_RWLOCK_wrlock(&export->lock);
-	pthread_mutex_lock(&state->state_mutex);
+	PTHREAD_MUTEX_lock(&state->state_mutex);
 	glist_del(&state->state_export_list);
 	state->state_export = NULL;
-	pthread_mutex_unlock(&state->state_mutex);
+	PTHREAD_MUTEX_unlock(&state->state_mutex);
 	PTHREAD_RWLOCK_unlock(&export->lock);
 	put_gsh_export(export);
 
 #ifdef DEBUG_SAL
-	pthread_mutex_lock(&all_state_v4_mutex);
+	PTHREAD_MUTEX_lock(&all_state_v4_mutex);
 
 	glist_del(&state->state_list_all);
 
-	pthread_mutex_unlock(&all_state_v4_mutex);
+	PTHREAD_MUTEX_unlock(&all_state_v4_mutex);
 #endif
 
 	if (glist_empty(&entry->list_of_states))
@@ -468,7 +468,7 @@ bool get_state_entry_export_owner_refs(state_t *state,
 	if (state == NULL)
 		return false;
 
-	pthread_mutex_lock(&state->state_mutex);
+	PTHREAD_MUTEX_lock(&state->state_mutex);
 
 	LogFullDebug(COMPONENT_STATE,
 		     "state %p state_entry %p state_export %p state_owner %p",
@@ -502,13 +502,13 @@ bool get_state_entry_export_owner_refs(state_t *state,
 		}
 	}
 
-	pthread_mutex_unlock(&state->state_mutex);
+	PTHREAD_MUTEX_unlock(&state->state_mutex);
 
 	return true;
 
 fail:
 
-	pthread_mutex_unlock(&state->state_mutex);
+	PTHREAD_MUTEX_unlock(&state->state_mutex);
 
 	if (entry != NULL && *entry != NULL) {
 		cache_inode_lru_unref(*entry, LRU_FLAG_NONE);
@@ -559,10 +559,10 @@ void state_nfs4_state_wipe(cache_entry_t *entry)
  */
 enum nfsstat4 release_lock_owner(state_owner_t *owner)
 {
-	pthread_mutex_lock(&owner->so_mutex);
+	PTHREAD_MUTEX_lock(&owner->so_mutex);
 
 	if (!glist_empty(&owner->so_lock_list)) {
-		pthread_mutex_unlock(&owner->so_mutex);
+		PTHREAD_MUTEX_unlock(&owner->so_mutex);
 
 		return NFS4ERR_LOCKS_HELD;
 	}
@@ -576,20 +576,20 @@ enum nfsstat4 release_lock_owner(state_owner_t *owner)
 					  state_owner_list);
 
 		if (state == NULL) {
-			pthread_mutex_unlock(&owner->so_mutex);
+			PTHREAD_MUTEX_unlock(&owner->so_mutex);
 			return NFS4_OK;
 		}
 
 		/* Make sure the state doesn't go away on us... */
 		inc_state_t_ref(state);
 
-		pthread_mutex_unlock(&owner->so_mutex);
+		PTHREAD_MUTEX_unlock(&owner->so_mutex);
 
 		state_del(state);
 
 		dec_state_t_ref(state);
 
-		pthread_mutex_lock(&owner->so_mutex);
+		PTHREAD_MUTEX_lock(&owner->so_mutex);
 	}
 }
 
@@ -610,7 +610,7 @@ void release_openstate(state_owner_t *owner)
 		cache_entry_t *entry = NULL;
 		struct gsh_export *export = NULL;
 
-		pthread_mutex_lock(&owner->so_mutex);
+		PTHREAD_MUTEX_lock(&owner->so_mutex);
 
 		state = glist_first_entry(&owner->so_owner.so_nfs4_owner
 								.so_state_list,
@@ -618,7 +618,7 @@ void release_openstate(state_owner_t *owner)
 					  state_owner_list);
 
 		if (state == NULL) {
-			pthread_mutex_unlock(&owner->so_mutex);
+			PTHREAD_MUTEX_unlock(&owner->so_mutex);
 			return;
 		}
 
@@ -637,14 +637,14 @@ void release_openstate(state_owner_t *owner)
 			/* The cache entry, export, or state must be about to
 			 * die, skip for now.
 			 */
-			pthread_mutex_unlock(&owner->so_mutex);
+			PTHREAD_MUTEX_unlock(&owner->so_mutex);
 			continue;
 		}
 
 		/* Make sure the state doesn't go away on us... */
 		inc_state_t_ref(state);
 
-		pthread_mutex_unlock(&owner->so_mutex);
+		PTHREAD_MUTEX_unlock(&owner->so_mutex);
 
 		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 
@@ -703,7 +703,7 @@ void revoke_owner_delegs(state_owner_t *client_owner)
 
  again:
 
-	pthread_mutex_lock(&client_owner->so_mutex);
+	PTHREAD_MUTEX_lock(&client_owner->so_mutex);
 	so_mutex_held = true;
 
 	glist_for_each_safe(glist, glistn,
@@ -735,7 +735,7 @@ void revoke_owner_delegs(state_owner_t *client_owner)
 			continue;
 		}
 
-		pthread_mutex_unlock(&client_owner->so_mutex);
+		PTHREAD_MUTEX_unlock(&client_owner->so_mutex);
 		so_mutex_held = false;
 
 		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
@@ -752,7 +752,7 @@ void revoke_owner_delegs(state_owner_t *client_owner)
 	}
 
 	if (so_mutex_held)
-		pthread_mutex_unlock(&client_owner->so_mutex);
+		PTHREAD_MUTEX_unlock(&client_owner->so_mutex);
 }
 
 /**
@@ -964,7 +964,7 @@ void dump_all_states(void)
 	if (!isFullDebug(COMPONENT_STATE))
 		return;
 
-	pthread_mutex_lock(&all_state_v4_mutex);
+	PTHREAD_MUTEX_lock(&all_state_v4_mutex);
 
 	if (!glist_empty(&state_v4_all)) {
 		struct glist_head *glist;
@@ -997,7 +997,7 @@ void dump_all_states(void)
 	} else
 		LogFullDebug(COMPONENT_STATE, "All states released");
 
-	pthread_mutex_unlock(&all_state_v4_mutex);
+	PTHREAD_MUTEX_unlock(&all_state_v4_mutex);
 }
 #endif
 

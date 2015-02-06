@@ -106,7 +106,7 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op, compound_data_t *data,
 		goto out2;
 	}
 
-	pthread_mutex_lock(&open_owner->so_mutex);
+	PTHREAD_MUTEX_lock(&open_owner->so_mutex);
 
 	/* Check seqid */
 	if (!Check_nfs4_seqid(open_owner,
@@ -118,20 +118,20 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op, compound_data_t *data,
 		/* Response is all setup for us and LogDebug
 		 * told what was wrong
 		 */
-		pthread_mutex_unlock(&open_owner->so_mutex);
+		PTHREAD_MUTEX_unlock(&open_owner->so_mutex);
 		goto out;
 	}
 
 	/* If opened file is already confirmed, retrun NFS4ERR_BAD_STATEID */
 	if (open_owner->so_owner.so_nfs4_owner.so_confirmed) {
-		pthread_mutex_unlock(&open_owner->so_mutex);
+		PTHREAD_MUTEX_unlock(&open_owner->so_mutex);
 		res_OPEN_CONFIRM4->status = NFS4ERR_BAD_STATEID;
 		goto out;
 	}
 
 	/* Set the state as confirmed */
 	open_owner->so_owner.so_nfs4_owner.so_confirmed = true;
-	pthread_mutex_unlock(&open_owner->so_mutex);
+	PTHREAD_MUTEX_unlock(&open_owner->so_mutex);
 
 	/* Handle stateid/seqid for success */
 	update_stateid(state_found,

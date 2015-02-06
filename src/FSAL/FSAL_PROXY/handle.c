@@ -347,7 +347,7 @@ static int pxy_got_rpc_reply(struct pxy_rpc_io_context *ctx, int sock, int sz,
 	if (sz > ctx->recvbuf_sz)
 		return -E2BIG;
 
-	pthread_mutex_lock(&ctx->iolock);
+	PTHREAD_MUTEX_lock(&ctx->iolock);
 	memcpy(repbuf, &xid, sizeof(xid));
 	/*
 	 * sz includes 4 bytes of xid which have been processed
@@ -373,7 +373,7 @@ static int pxy_got_rpc_reply(struct pxy_rpc_io_context *ctx, int sock, int sz,
 	ctx->iodone = 1;
 	size = ctx->ioresult;
 	pthread_cond_signal(&ctx->iowait);
-	pthread_mutex_unlock(&ctx->iolock);
+	PTHREAD_MUTEX_unlock(&ctx->iolock);
 	return size;
 }
 
@@ -402,18 +402,18 @@ static int pxy_rpc_read_reply(int sock)
 	LogDebug(COMPONENT_FSAL, "Recmark %x, xid %u\n", h.recmark, h.xid);
 	h.recmark &= ~(1U << 31);
 
-	pthread_mutex_lock(&listlock);
+	PTHREAD_MUTEX_lock(&listlock);
 	glist_for_each(c, &rpc_calls) {
 		struct pxy_rpc_io_context *ctx =
 		    container_of(c, struct pxy_rpc_io_context, calls);
 
 		if (ctx->rpc_xid == h.xid) {
 			glist_del(c);
-			pthread_mutex_unlock(&listlock);
+			PTHREAD_MUTEX_unlock(&listlock);
 			return pxy_got_rpc_reply(ctx, sock, h.recmark, h.xid);
 		}
 	}
-	pthread_mutex_unlock(&listlock);
+	PTHREAD_MUTEX_unlock(&listlock);
 
 	cnt = h.recmark - 4;
 	LogDebug(COMPONENT_FSAL, "xid %u is not on the list, skip %d bytes\n",
@@ -446,11 +446,11 @@ static void pxy_new_socket_ready(void)
 
 		glist_del(c);
 
-		pthread_mutex_lock(&ctx->iolock);
+		PTHREAD_MUTEX_lock(&ctx->iolock);
 		ctx->iodone = 1;
 		ctx->ioresult = -EAGAIN;
 		pthread_cond_signal(&ctx->iowait);
-		pthread_mutex_unlock(&ctx->iolock);
+		PTHREAD_MUTEX_unlock(&ctx->iolock);
 	}
 }
 
@@ -504,7 +504,7 @@ static void *pxy_rpc_recv(void *arg)
 
 	for (;;) {
 		int nsleeps = 0;
-		pthread_mutex_lock(&listlock);
+		PTHREAD_MUTEX_lock(&listlock);
 		do {
 			rpc_sock = pxy_connect(info, &addr_rpc);
 			if (rpc_sock < 0) {
@@ -516,10 +516,10 @@ static void *pxy_rpc_recv(void *arg)
 							  addr,
 							  sizeof(addr)),
 						ntohs(info->srv_port));
-				pthread_mutex_unlock(&listlock);
+				PTHREAD_MUTEX_unlock(&listlock);
 				sleep(info->retry_sleeptime);
 				nsleeps++;
-				pthread_mutex_lock(&listlock);
+				PTHREAD_MUTEX_lock(&listlock);
 			} else {
 				LogDebug(COMPONENT_FSAL,
 					 "Connected after %d sleeps, "
@@ -527,7 +527,7 @@ static void *pxy_rpc_recv(void *arg)
 					 nsleeps);
 			}
 		} while (rpc_sock < 0);
-		pthread_mutex_unlock(&listlock);
+		PTHREAD_MUTEX_unlock(&listlock);
 
 		pfd.fd = rpc_sock;
 		pfd.events = POLLIN | POLLRDHUP;
@@ -557,10 +557,10 @@ static void *pxy_rpc_recv(void *arg)
 				break;
 			}
 
-			pthread_mutex_lock(&listlock);
+			PTHREAD_MUTEX_lock(&listlock);
 			close(rpc_sock);
 			rpc_sock = -1;
-			pthread_mutex_unlock(&listlock);
+			PTHREAD_MUTEX_unlock(&listlock);
 		}
 	}
 
@@ -573,20 +573,20 @@ static enum clnt_stat pxy_process_reply(struct pxy_rpc_io_context *ctx,
 	enum clnt_stat rc = RPC_CANTRECV;
 	struct timespec ts;
 
-	pthread_mutex_lock(&ctx->iolock);
+	PTHREAD_MUTEX_lock(&ctx->iolock);
 	ts.tv_sec = time(NULL) + 60;
 	ts.tv_nsec = 0;
 
 	while (!ctx->iodone) {
 		int w = pthread_cond_timedwait(&ctx->iowait, &ctx->iolock, &ts);
 		if (w == ETIMEDOUT) {
-			pthread_mutex_unlock(&ctx->iolock);
+			PTHREAD_MUTEX_unlock(&ctx->iolock);
 			return RPC_TIMEDOUT;
 		}
 	}
 
 	ctx->iodone = 0;
-	pthread_mutex_unlock(&ctx->iolock);
+	PTHREAD_MUTEX_unlock(&ctx->iolock);
 
 	if (ctx->ioresult > 0) {
 		struct rpc_msg reply;
@@ -653,10 +653,10 @@ static enum clnt_stat pxy_process_reply(struct pxy_rpc_io_context *ctx,
 
 static void pxy_rpc_need_sock(void)
 {
-	pthread_mutex_lock(&listlock);
+	PTHREAD_MUTEX_lock(&listlock);
 	while (rpc_sock < 0)
 		pthread_cond_wait(&sockless, &listlock);
-	pthread_mutex_unlock(&listlock);
+	PTHREAD_MUTEX_unlock(&listlock);
 }
 
 static int pxy_rpc_renewer_wait(int timeout)
@@ -664,12 +664,12 @@ static int pxy_rpc_renewer_wait(int timeout)
 	struct timespec ts;
 	int rc;
 
-	pthread_mutex_lock(&listlock);
+	PTHREAD_MUTEX_lock(&listlock);
 	ts.tv_sec = time(NULL) + timeout;
 	ts.tv_nsec = 0;
 
 	rc = pthread_cond_timedwait(&sockless, &listlock, &ts);
-	pthread_mutex_unlock(&listlock);
+	PTHREAD_MUTEX_unlock(&listlock);
 	return (rc == ETIMEDOUT);
 }
 
@@ -682,9 +682,9 @@ static int pxy_compoundv4_call(struct pxy_rpc_io_context *pcontext,
 	AUTH *au;
 	enum clnt_stat rc;
 
-	pthread_mutex_lock(&listlock);
+	PTHREAD_MUTEX_lock(&listlock);
 	rmsg.rm_xid = rpc_xid++;
-	pthread_mutex_unlock(&listlock);
+	PTHREAD_MUTEX_unlock(&listlock);
 	rmsg.rm_direction = CALL;
 
 	rmsg.rm_call.cb_rpcvers = RPC_MSG_VERSION;
@@ -724,7 +724,7 @@ static int pxy_compoundv4_call(struct pxy_rpc_io_context *pcontext,
 			LogDebug(COMPONENT_FSAL, "%ssend XID %u with %d bytes",
 				 (first_try ? "First attempt to " : "Re"),
 				 rmsg.rm_xid, pos);
-			pthread_mutex_lock(&listlock);
+			PTHREAD_MUTEX_lock(&listlock);
 			while (bc < pos) {
 				int wc = write(rpc_sock, buf, pos - bc);
 				if (wc <= 0) {
@@ -745,7 +745,7 @@ static int pxy_compoundv4_call(struct pxy_rpc_io_context *pcontext,
 				if (!first_try)
 					glist_del(&pcontext->calls);
 			}
-			pthread_mutex_unlock(&listlock);
+			PTHREAD_MUTEX_unlock(&listlock);
 
 			if (bc == pos)
 				rc = pxy_process_reply(pcontext, res);
@@ -775,13 +775,13 @@ int pxy_compoundv4_execute(const char *caller, const struct user_cred *creds,
 		.resarray.resarray_len = cnt
 	};
 
-	pthread_mutex_lock(&context_lock);
+	PTHREAD_MUTEX_lock(&context_lock);
 	while (glist_empty(&free_contexts))
 		pthread_cond_wait(&need_context, &context_lock);
 	ctx =
 	    glist_first_entry(&free_contexts, struct pxy_rpc_io_context, calls);
 	glist_del(&ctx->calls);
-	pthread_mutex_unlock(&context_lock);
+	PTHREAD_MUTEX_unlock(&context_lock);
 
 	do {
 		rc = pxy_compoundv4_call(ctx, creds, &arg, &res);
@@ -793,10 +793,10 @@ int pxy_compoundv4_execute(const char *caller, const struct user_cred *creds,
 	} while ((rc == RPC_CANTRECV && (ctx->ioresult == -EAGAIN))
 		 || (rc == RPC_CANTSEND));
 
-	pthread_mutex_lock(&context_lock);
+	PTHREAD_MUTEX_lock(&context_lock);
 	pthread_cond_signal(&need_context);
 	glist_add(&free_contexts, &ctx->calls);
-	pthread_mutex_unlock(&context_lock);
+	PTHREAD_MUTEX_unlock(&context_lock);
 
 	if (rc == RPC_SUCCESS)
 		return res.status;
@@ -808,9 +808,9 @@ int pxy_compoundv4_execute(const char *caller, const struct user_cred *creds,
 
 void pxy_get_clientid(clientid4 *ret)
 {
-	pthread_mutex_lock(&pxy_clientid_mutex);
+	PTHREAD_MUTEX_lock(&pxy_clientid_mutex);
 	*ret = pxy_clientid;
-	pthread_mutex_unlock(&pxy_clientid_mutex);
+	PTHREAD_MUTEX_unlock(&pxy_clientid_mutex);
 }
 
 static int pxy_setclientid(clientid4 *resultclientid, uint32_t *lease_time)
@@ -920,9 +920,9 @@ static void *pxy_clientid_renewer(void *Arg)
 		pxy_rpc_need_sock();
 		needed = pxy_setclientid(&newcid, &lease_time);
 		if (!needed) {
-			pthread_mutex_lock(&pxy_clientid_mutex);
+			PTHREAD_MUTEX_lock(&pxy_clientid_mutex);
 			pxy_clientid = newcid;
-			pthread_mutex_unlock(&pxy_clientid_mutex);
+			PTHREAD_MUTEX_unlock(&pxy_clientid_mutex);
 		}
 	}
 	return NULL;
@@ -953,10 +953,10 @@ int pxy_init_rpc(const struct pxy_fsal_module *pm)
  *       there is work to do to get this fnctn to truely be
  *       per export.
  */
-	pthread_mutex_lock(&listlock);
+	PTHREAD_MUTEX_lock(&listlock);
 	if (rpc_xid == 0)
 		rpc_xid = getpid() ^ time(NULL);
-	pthread_mutex_unlock(&listlock);
+	PTHREAD_MUTEX_unlock(&listlock);
 	if (gethostname(pxy_hostname, sizeof(pxy_hostname)))
 		strncpy(pxy_hostname, "NFS-GANESHA/Proxy",
 			sizeof(pxy_hostname));

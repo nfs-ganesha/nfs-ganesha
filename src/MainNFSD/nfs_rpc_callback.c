@@ -633,7 +633,7 @@ int nfs_rpc_create_chan_v41(nfs41_session_t *session, int num_sec_parms,
 	bool authed = false;
 	struct timeval cb_timeout = { 15, 0 };
 
-	pthread_mutex_lock(&chan->mtx);
+	PTHREAD_MUTEX_lock(&chan->mtx);
 
 	if (chan->clnt) {
 		/* Something better later. */
@@ -720,7 +720,7 @@ int nfs_rpc_create_chan_v41(nfs41_session_t *session, int num_sec_parms,
 	if ((code != 0) && chan->clnt)
 		_nfs_rpc_destroy_chan(chan);
 
-	pthread_mutex_unlock(&chan->mtx);
+	PTHREAD_MUTEX_unlock(&chan->mtx);
 
 	return code;
 }
@@ -834,11 +834,11 @@ void nfs_rpc_destroy_chan(rpc_call_channel_t *chan)
 {
 	assert(chan);
 
-	pthread_mutex_lock(&chan->mtx);
+	PTHREAD_MUTEX_lock(&chan->mtx);
 
 	_nfs_rpc_destroy_chan(chan);
 
-	pthread_mutex_unlock(&chan->mtx);
+	PTHREAD_MUTEX_unlock(&chan->mtx);
 }
 
 /**
@@ -858,7 +858,7 @@ enum clnt_stat rpc_cb_null(rpc_call_channel_t *chan, struct timeval timeout,
 
 	/* XXX TI-RPC does the signal masking */
 	if (!locked)
-		pthread_mutex_lock(&chan->mtx);
+		PTHREAD_MUTEX_lock(&chan->mtx);
 
 	if (!chan->clnt) {
 		stat = RPC_INTR;
@@ -876,7 +876,7 @@ enum clnt_stat rpc_cb_null(rpc_call_channel_t *chan, struct timeval timeout,
 
  unlock:
 	if (!locked)
-		pthread_mutex_unlock(&chan->mtx);
+		PTHREAD_MUTEX_unlock(&chan->mtx);
 
 	return stat;
 }
@@ -971,12 +971,12 @@ int32_t nfs_rpc_submit_call(rpc_call_t *call, void *completion_arg,
 		code = nfs_rpc_dispatch_call(call, NFS_RPC_CALL_NONE);
 	} else {
 		nfsreq = nfs_rpc_get_nfsreq(0 /* flags */);
-		pthread_mutex_lock(&call->we.mtx);
+		PTHREAD_MUTEX_lock(&call->we.mtx);
 		call->states = NFS_CB_CALL_QUEUED;
 		nfsreq->rtype = NFS_CALL;
 		nfsreq->r_u.call = call;
 		nfs_rpc_enqueue_req(nfsreq);
-		pthread_mutex_unlock(&call->we.mtx);
+		PTHREAD_MUTEX_unlock(&call->we.mtx);
 	}
 
 	return code;
@@ -998,7 +998,7 @@ int32_t nfs_rpc_dispatch_call(rpc_call_t *call, uint32_t flags)
 	rpc_call_hook hook_status = RPC_CALL_COMPLETE;
 
 	/* send the call, set states, wake waiters, etc */
-	pthread_mutex_lock(&call->we.mtx);
+	PTHREAD_MUTEX_lock(&call->we.mtx);
 
 	switch (call->states) {
 	case NFS_CB_CALL_DISPATCH:
@@ -1008,10 +1008,10 @@ int32_t nfs_rpc_dispatch_call(rpc_call_t *call, uint32_t flags)
 	}
 
 	call->states = NFS_CB_CALL_DISPATCH;
-	pthread_mutex_unlock(&call->we.mtx);
+	PTHREAD_MUTEX_unlock(&call->we.mtx);
 
 	/* XXX TI-RPC does the signal masking */
-	pthread_mutex_lock(&call->chan->mtx);
+	PTHREAD_MUTEX_lock(&call->chan->mtx);
 
 	if (!call->chan->clnt) {
 		call->stat = RPC_INTR;
@@ -1035,16 +1035,16 @@ int32_t nfs_rpc_dispatch_call(rpc_call_t *call, uint32_t flags)
 	}
 
  unlock:
-	pthread_mutex_unlock(&call->chan->mtx);
+	PTHREAD_MUTEX_unlock(&call->chan->mtx);
 
 	/* signal waiter(s) */
-	pthread_mutex_lock(&call->we.mtx);
+	PTHREAD_MUTEX_lock(&call->we.mtx);
 	call->states |= NFS_CB_CALL_FINISHED;
 
 	/* broadcast will generally be inexpensive */
 	if (call->flags & NFS_RPC_CALL_BROADCAST)
 		pthread_cond_broadcast(&call->we.cv);
-	pthread_mutex_unlock(&call->we.mtx);
+	PTHREAD_MUTEX_unlock(&call->we.mtx);
 
 	/* call completion hook */
 	RPC_CALL_HOOK(call, hook_status, call->completion_arg,
@@ -1191,7 +1191,7 @@ static bool find_cb_slot(nfs41_session_t *session, bool wait, slotid4 *slot,
 	slotid4 cur = 0;
 	bool found = false;
 
-	pthread_mutex_lock(&session->cb_mutex);
+	PTHREAD_MUTEX_lock(&session->cb_mutex);
  retry:
 	for (cur = 0;
 	     cur < MIN(session->back_channel_attrs.ca_maxrequests,
@@ -1226,7 +1226,7 @@ static bool find_cb_slot(nfs41_session_t *session, bool wait, slotid4 *slot,
 		++session->cb_slots[*slot].sequence;
 		assert(*slot < session->back_channel_attrs.ca_maxrequests);
 	}
-	pthread_mutex_unlock(&session->cb_mutex);
+	PTHREAD_MUTEX_unlock(&session->cb_mutex);
 
 	return found;
 }
@@ -1241,12 +1241,12 @@ static bool find_cb_slot(nfs41_session_t *session, bool wait, slotid4 *slot,
 
 static void release_cb_slot(nfs41_session_t *session, slotid4 slot, bool sent)
 {
-	pthread_mutex_lock(&session->cb_mutex);
+	PTHREAD_MUTEX_lock(&session->cb_mutex);
 	session->cb_slots[slot].in_use = false;
 	if (!sent)
 		--session->cb_slots[slot].sequence;
 	pthread_cond_broadcast(&session->cb_cond);
-	pthread_mutex_unlock(&session->cb_mutex);
+	PTHREAD_MUTEX_unlock(&session->cb_mutex);
 }
 
 /**
@@ -1323,10 +1323,10 @@ int nfs_rpc_v41_single(nfs_client_id_t *clientid, nfs_cb_argop4 *op,
 				/* Clean up... */
 				free_single_call(call);
 				release_cb_slot(session, slot, false);
-				pthread_mutex_lock(&chan->mtx);
+				PTHREAD_MUTEX_lock(&chan->mtx);
 				nfs_rpc_destroy_v41_chan(chan);
 				session->flags &= ~session_bc_up;
-				pthread_mutex_unlock(&chan->mtx);
+				PTHREAD_MUTEX_unlock(&chan->mtx);
 			} else {
 				sent = true;
 				goto out;

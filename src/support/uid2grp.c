@@ -62,18 +62,18 @@
  */
 void uid2grp_hold_group_data(struct group_data *gdata)
 {
-	pthread_mutex_lock(&gdata->lock);
+	PTHREAD_MUTEX_lock(&gdata->lock);
 	gdata->refcount++;
-	pthread_mutex_unlock(&gdata->lock);
+	PTHREAD_MUTEX_unlock(&gdata->lock);
 }
 
 void uid2grp_release_group_data(struct group_data *gdata)
 {
 	unsigned int refcount;
 
-	pthread_mutex_lock(&gdata->lock);
+	PTHREAD_MUTEX_lock(&gdata->lock);
 	refcount = --gdata->refcount;
-	pthread_mutex_unlock(&gdata->lock);
+	PTHREAD_MUTEX_unlock(&gdata->lock);
 
 	if (refcount == 0) {
 		gsh_free(gdata->groups);

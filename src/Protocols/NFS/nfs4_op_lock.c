@@ -475,7 +475,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 		}
 
 		if (!isnew) {
-			pthread_mutex_lock(&lock_owner->so_mutex);
+			PTHREAD_MUTEX_lock(&lock_owner->so_mutex);
 			/* Check lock_seqid if it has attached locks. */
 			if (!glist_empty(&lock_owner->so_lock_list)
 			    && (data->minorversion == 0)
@@ -493,14 +493,14 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 				dump_all_locks(
 					"All locks (re-use of lock owner)");
 
-				pthread_mutex_unlock(&lock_owner->so_mutex);
+				PTHREAD_MUTEX_unlock(&lock_owner->so_mutex);
 				/* Response is all setup for us and
 				 * LogDebug told what was wrong
 				 */
 				goto out2;
 			}
 
-			pthread_mutex_unlock(&lock_owner->so_mutex);
+			PTHREAD_MUTEX_unlock(&lock_owner->so_mutex);
 
 		}
 

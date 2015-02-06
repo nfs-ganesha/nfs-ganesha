@@ -211,7 +211,7 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 		goto out3;
 	}
 
-	pthread_mutex_lock(&open_owner->so_mutex);
+	PTHREAD_MUTEX_lock(&open_owner->so_mutex);
 
 	/* Check seqid */
 	if (data->minorversion == 0) {
@@ -224,12 +224,12 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 			/* Response is all setup for us and LogDebug
 			 * told what was wrong
 			 */
-			pthread_mutex_unlock(&open_owner->so_mutex);
+			PTHREAD_MUTEX_unlock(&open_owner->so_mutex);
 			goto out2;
 		}
 	}
 
-	pthread_mutex_unlock(&open_owner->so_mutex);
+	PTHREAD_MUTEX_unlock(&open_owner->so_mutex);
 
 	PTHREAD_RWLOCK_wrlock(&data->current_entry->state_lock);
 

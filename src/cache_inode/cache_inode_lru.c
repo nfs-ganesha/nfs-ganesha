@@ -125,13 +125,13 @@ struct lru_q_lane {
 
 #define QLOCK(qlane) \
 	do { \
-		pthread_mutex_lock(&(qlane)->mtx); \
+		PTHREAD_MUTEX_lock(&(qlane)->mtx); \
 		(qlane)->locktrace.func = (char *) __func__; \
 		(qlane)->locktrace.line = __LINE__; \
 	} while (0)
 
 #define QUNLOCK(qlane) \
-	pthread_mutex_unlock(&(qlane)->mtx)
+	PTHREAD_MUTEX_unlock(&(qlane)->mtx)
 
 /**
  * A multi-level LRU algorithm inspired by MQ [Zhou].  Transition from

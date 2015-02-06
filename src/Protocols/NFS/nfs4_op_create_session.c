@@ -151,7 +151,7 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 		found = conf;
 	}
 
-	pthread_mutex_lock(&client_record->cr_mutex);
+	PTHREAD_MUTEX_lock(&client_record->cr_mutex);
 
 	inc_client_record_ref(client_record);
 
@@ -332,10 +332,10 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 	inc_client_id_ref(found);
 
 	/* add to head of session list (encapsulate?) */
-	pthread_mutex_lock(&found->cid_mutex);
+	PTHREAD_MUTEX_lock(&found->cid_mutex);
 	glist_add(&found->cid_cb.v41.cb_session_list,
 		  &nfs41_session->session_link);
-	pthread_mutex_unlock(&found->cid_mutex);
+	PTHREAD_MUTEX_unlock(&found->cid_mutex);
 
 	/* Set ca_maxrequests */
 	nfs41_session->fore_channel_attrs.ca_maxrequests = NFS41_NB_SLOTS;
@@ -515,7 +515,7 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 	res_CREATE_SESSION4->csr_status = NFS4_OK;
 
  out:
-	pthread_mutex_unlock(&client_record->cr_mutex);
+	PTHREAD_MUTEX_unlock(&client_record->cr_mutex);
 	/* Release our reference to the client record and return */
 	dec_client_record_ref(client_record);
 	return res_CREATE_SESSION4->csr_status;

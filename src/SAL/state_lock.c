@@ -488,11 +488,11 @@ void dump_all_locks(const char *label)
 #ifdef DEBUG_SAL
 	struct glist_head *glist;
 
-	pthread_mutex_lock(&all_locks_mutex);
+	PTHREAD_MUTEX_lock(&all_locks_mutex);
 
 	if (glist_empty(&state_all_locks)) {
 		LogFullDebug(COMPONENT_STATE, "All Locks are freed");
-		pthread_mutex_unlock(&all_locks_mutex);
+		PTHREAD_MUTEX_unlock(&all_locks_mutex);
 		return;
 	}
 
@@ -500,7 +500,7 @@ void dump_all_locks(const char *label)
 	    LogEntry(label,
 		     glist_entry(glist, state_lock_entry_t, sle_all_locks));
 
-	pthread_mutex_unlock(&all_locks_mutex);
+	PTHREAD_MUTEX_unlock(&all_locks_mutex);
 #else
 	return;
 #endif
@@ -558,13 +558,13 @@ static state_lock_entry_t *create_state_lock_entry(cache_entry_t *entry,
 		inc_nsm_client_ref(owner->so_owner.so_nlm_owner.so_client->
 				   slc_nsm_client);
 
-		pthread_mutex_lock(&owner->so_owner.so_nlm_owner.so_client
+		PTHREAD_MUTEX_lock(&owner->so_owner.so_nlm_owner.so_client
 				   ->slc_nsm_client->ssc_mutex);
 		glist_add_tail(&owner->so_owner.so_nlm_owner.so_client->
 			       slc_nsm_client->ssc_lock_list,
 			       &new_entry->sle_client_locks);
 
-		pthread_mutex_unlock(&owner->so_owner.so_nlm_owner.so_client
+		PTHREAD_MUTEX_unlock(&owner->so_owner.so_nlm_owner.so_client
 				     ->slc_nsm_client->ssc_mutex);
 	}
 
@@ -578,7 +578,7 @@ static state_lock_entry_t *create_state_lock_entry(cache_entry_t *entry,
 	/* Add to list of locks owned by owner */
 	inc_state_owner_ref(owner);
 
-	pthread_mutex_lock(&owner->so_mutex);
+	PTHREAD_MUTEX_lock(&owner->so_mutex);
 
 	if (owner->so_type == STATE_LOCK_OWNER_NFSV4 && state != NULL) {
 		glist_add_tail(&state->state_data.lock.state_locklist,
@@ -587,14 +587,14 @@ static state_lock_entry_t *create_state_lock_entry(cache_entry_t *entry,
 
 	glist_add_tail(&owner->so_lock_list, &new_entry->sle_owner_locks);
 
-	pthread_mutex_unlock(&owner->so_mutex);
+	PTHREAD_MUTEX_unlock(&owner->so_mutex);
 
 #ifdef DEBUG_SAL
-	pthread_mutex_lock(&all_locks_mutex);
+	PTHREAD_MUTEX_lock(&all_locks_mutex);
 
 	glist_add_tail(&state_all_locks, &new_entry->sle_all_locks);
 
-	pthread_mutex_unlock(&all_locks_mutex);
+	PTHREAD_MUTEX_unlock(&all_locks_mutex);
 #endif
 
 	return new_entry;
@@ -652,9 +652,9 @@ static void lock_entry_dec_ref(state_lock_entry_t *lock_entry)
 			gsh_free(lock_entry->sle_block_data);
 		}
 #ifdef DEBUG_SAL
-		pthread_mutex_lock(&all_locks_mutex);
+		PTHREAD_MUTEX_lock(&all_locks_mutex);
 		glist_del(&lock_entry->sle_all_locks);
-		pthread_mutex_unlock(&all_locks_mutex);
+		PTHREAD_MUTEX_unlock(&all_locks_mutex);
 #endif
 
 		put_gsh_export(lock_entry->sle_export);
@@ -683,13 +683,13 @@ static void remove_from_locklist(state_lock_entry_t *lock_entry)
 			/* Remove from list of locks owned
 			 * by client that owner belongs to
 			 */
-			pthread_mutex_lock(&owner->so_owner.so_nlm_owner
+			PTHREAD_MUTEX_lock(&owner->so_owner.so_nlm_owner
 					   .so_client->slc_nsm_client
 					   ->ssc_mutex);
 
 			glist_del(&lock_entry->sle_client_locks);
 
-			pthread_mutex_unlock(&owner->so_owner.so_nlm_owner
+			PTHREAD_MUTEX_unlock(&owner->so_owner.so_nlm_owner
 					     .so_client->slc_nsm_client
 					     ->ssc_mutex);
 
@@ -703,14 +703,14 @@ static void remove_from_locklist(state_lock_entry_t *lock_entry)
 		PTHREAD_RWLOCK_unlock(&lock_entry->sle_export->lock);
 
 		/* Remove from list of locks owned by owner */
-		pthread_mutex_lock(&owner->so_mutex);
+		PTHREAD_MUTEX_lock(&owner->so_mutex);
 
 		if (owner->so_type == STATE_LOCK_OWNER_NFSV4)
 			glist_del(&lock_entry->sle_state_locks);
 
 		glist_del(&lock_entry->sle_owner_locks);
 
-		pthread_mutex_unlock(&owner->so_mutex);
+		PTHREAD_MUTEX_unlock(&owner->so_mutex);
 
 		dec_state_owner_ref(owner);
 	}
@@ -2820,11 +2820,11 @@ state_status_t state_lock(cache_entry_t *entry,
 		PTHREAD_RWLOCK_unlock(&entry->state_lock);
 		release_state_lock = false;
 
-		pthread_mutex_lock(&blocked_locks_mutex);
+		PTHREAD_MUTEX_lock(&blocked_locks_mutex);
 
 		glist_add_tail(&state_blocked_locks, &block_data->sbd_list);
 
-		pthread_mutex_unlock(&blocked_locks_mutex);
+		PTHREAD_MUTEX_unlock(&blocked_locks_mutex);
 	} else {
 		LogMajor(COMPONENT_STATE, "Unable to lock FSAL, error=%s",
 			 state_err_str(status));
@@ -3104,7 +3104,7 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 	 * Only accept so many errors before giving up.
 	 */
 	while (errcnt < STATE_ERR_MAX) {
-		pthread_mutex_lock(&nsmclient->ssc_mutex);
+		PTHREAD_MUTEX_lock(&nsmclient->ssc_mutex);
 
 		/* We just need to find any file this client has locks on.
 		 * We pick the first lock the client holds, and use it's file.
@@ -3115,7 +3115,7 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 
 		/* If we don't find any entries, then we are done. */
 		if (found_entry == NULL) {
-			pthread_mutex_unlock(&nsmclient->ssc_mutex);
+			PTHREAD_MUTEX_unlock(&nsmclient->ssc_mutex);
 			break;
 		}
 
@@ -3146,7 +3146,7 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 			LogEntry("Don't release new lock", found_entry);
 			glist_add_tail(&newlocks,
 				       &found_entry->sle_client_locks);
-			pthread_mutex_unlock(&nsmclient->ssc_mutex);
+			PTHREAD_MUTEX_unlock(&nsmclient->ssc_mutex);
 			continue;
 		}
 
@@ -3192,7 +3192,7 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 
 		/* Now we are done with this specific entry, release the mutex.
 		 */
-		pthread_mutex_unlock(&nsmclient->ssc_mutex);
+		PTHREAD_MUTEX_unlock(&nsmclient->ssc_mutex);
 
 		/* Make lock that covers the whole file.
 		 * type doesn't matter for unlock
@@ -3236,7 +3236,7 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 	 * Only accept so many errors before giving up.
 	 */
 	while (errcnt < STATE_ERR_MAX) {
-		pthread_mutex_lock(&nsmclient->ssc_mutex);
+		PTHREAD_MUTEX_lock(&nsmclient->ssc_mutex);
 
 		/* We just need to find any file this client has locks on.
 		 * We pick the first lock the client holds, and use it's file.
@@ -3247,7 +3247,7 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 
 		/* If we don't find any entries, then we are done. */
 		if (found_share == NULL) {
-			pthread_mutex_unlock(&nsmclient->ssc_mutex);
+			PTHREAD_MUTEX_unlock(&nsmclient->ssc_mutex);
 			break;
 		}
 
@@ -3289,7 +3289,7 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 		glist_add_tail(&nsmclient->ssc_share_list,
 			       &found_share->sns_share_per_client);
 
-		pthread_mutex_unlock(&nsmclient->ssc_mutex);
+		PTHREAD_MUTEX_unlock(&nsmclient->ssc_mutex);
 
 		if (export_ready(export)) {
 			/* Remove all shares held by this NSM Client and
@@ -3344,9 +3344,9 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 	 * even the fact that the newlocks list head is a stack local
 	 * variable is local will actually work just fine.
 	 */
-	pthread_mutex_lock(&nsmclient->ssc_mutex);
+	PTHREAD_MUTEX_lock(&nsmclient->ssc_mutex);
 	glist_add_list_tail(&nsmclient->ssc_lock_list, &newlocks);
-	pthread_mutex_unlock(&nsmclient->ssc_mutex);
+	PTHREAD_MUTEX_unlock(&nsmclient->ssc_mutex);
 	LogFullDebug(COMPONENT_STATE, "DONE");
 
 	release_root_op_context();
@@ -3372,7 +3372,7 @@ void state_nfs4_owner_unlock_all(state_owner_t *owner)
 
 	/* Only accept so many errors before giving up. */
 	while (errcnt < STATE_ERR_MAX) {
-		pthread_mutex_lock(&owner->so_mutex);
+		PTHREAD_MUTEX_lock(&owner->so_mutex);
 
 		/* We just need to find any file this owner has locks on.
 		 * We pick the first lock the owner holds, and use it's file.
@@ -3384,7 +3384,7 @@ void state_nfs4_owner_unlock_all(state_owner_t *owner)
 
 		/* If we don't find any entries, then we are done. */
 		if (state == NULL) {
-			pthread_mutex_unlock(&owner->so_mutex);
+			PTHREAD_MUTEX_unlock(&owner->so_mutex);
 			break;
 		}
 
@@ -3403,7 +3403,7 @@ void state_nfs4_owner_unlock_all(state_owner_t *owner)
 						       &export,
 						       NULL);
 
-		pthread_mutex_unlock(&owner->so_mutex);
+		PTHREAD_MUTEX_unlock(&owner->so_mutex);
 
 		if (!ok) {
 			/* Entry and/or export is dying, skip this state,
@@ -3583,7 +3583,7 @@ void find_blocked_lock_upcall(cache_entry_t *entry, void *owner,
 	struct glist_head *glist;
 	state_block_data_t *pblock;
 
-	pthread_mutex_lock(&blocked_locks_mutex);
+	PTHREAD_MUTEX_lock(&blocked_locks_mutex);
 
 	glist_for_each(glist, &state_blocked_locks) {
 		pblock = glist_entry(glist, state_block_data_t, sbd_list);
@@ -3616,7 +3616,7 @@ void find_blocked_lock_upcall(cache_entry_t *entry, void *owner,
 
 		LogEntry("Blocked Lock found", found_entry);
 
-		pthread_mutex_unlock(&blocked_locks_mutex);
+		PTHREAD_MUTEX_unlock(&blocked_locks_mutex);
 
 		return;
 	}			/* glist_for_each_safe */
@@ -3625,7 +3625,7 @@ void find_blocked_lock_upcall(cache_entry_t *entry, void *owner,
 		LogBlockedList("Blocked Lock List",
 			       NULL, &state_blocked_locks);
 
-	pthread_mutex_unlock(&blocked_locks_mutex);
+	PTHREAD_MUTEX_unlock(&blocked_locks_mutex);
 
 	if (isFullDebug(COMPONENT_STATE) && isFullDebug(COMPONENT_MEMLEAKS)) {
 		PTHREAD_RWLOCK_rdlock(&entry->state_lock);
@@ -3702,7 +3702,7 @@ void cancel_all_nlm_blocked()
 
 	LogDebug(COMPONENT_STATE, "Cancel all blocked locks");
 
-	pthread_mutex_lock(&blocked_locks_mutex);
+	PTHREAD_MUTEX_lock(&blocked_locks_mutex);
 
 	pblock = glist_first_entry(&state_blocked_locks,
 				   state_block_data_t,
@@ -3721,7 +3721,7 @@ void cancel_all_nlm_blocked()
 
 		lock_entry_inc_ref(found_entry);
 
-		pthread_mutex_unlock(&blocked_locks_mutex);
+		PTHREAD_MUTEX_unlock(&blocked_locks_mutex);
 
 		root_op_context.req_ctx.export = found_entry->sle_export;
 		root_op_context.req_ctx.fsal_export =
@@ -3750,7 +3750,7 @@ void cancel_all_nlm_blocked()
 
 		lock_entry_dec_ref(found_entry);
 
-		pthread_mutex_lock(&blocked_locks_mutex);
+		PTHREAD_MUTEX_lock(&blocked_locks_mutex);
 
 		/* Get next item off list */
 		pblock = glist_first_entry(&state_blocked_locks,
@@ -3760,7 +3760,7 @@ void cancel_all_nlm_blocked()
 
 out:
 
-	pthread_mutex_unlock(&blocked_locks_mutex);
+	PTHREAD_MUTEX_unlock(&blocked_locks_mutex);
 	release_root_op_context();
 	return;
 }

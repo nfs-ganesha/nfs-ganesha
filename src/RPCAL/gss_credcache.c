@@ -432,13 +432,13 @@ static struct gssd_k5_kt_princ *get_ple_by_princ(krb5_context context,
 {
 	struct gssd_k5_kt_princ *ple;
 
-	pthread_mutex_lock(&ple_mtx);
+	PTHREAD_MUTEX_lock(&ple_mtx);
 
 	ple = find_ple_by_princ(context, princ);
 	if (ple == NULL)
 		ple = new_ple(context, princ);
 
-	pthread_mutex_unlock(&ple_mtx);
+	PTHREAD_MUTEX_unlock(&ple_mtx);
 
 	return ple;
 }

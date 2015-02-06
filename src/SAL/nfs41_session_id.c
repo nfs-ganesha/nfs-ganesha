@@ -235,9 +235,9 @@ int32_t dec_session_ref(nfs41_session_t *session)
 
 		/* Unlink the session from the client's list of
 		   sessions */
-		pthread_mutex_lock(&session->clientid_record->cid_mutex);
+		PTHREAD_MUTEX_lock(&session->clientid_record->cid_mutex);
 		glist_del(&session->session_link);
-		pthread_mutex_unlock(&session->clientid_record->cid_mutex);
+		PTHREAD_MUTEX_unlock(&session->clientid_record->cid_mutex);
 
 		/* Decrement our reference to the clientid record */
 		dec_client_id_ref(session->clientid_record);

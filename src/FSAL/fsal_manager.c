@@ -109,7 +109,7 @@ static void load_fsal_pseudo(void)
 	if (dl_path == NULL)
 		LogFatal(COMPONENT_INIT, "Couldn't Register FSAL_PSEUDO");
 
-	pthread_mutex_lock(&fsal_lock);
+	PTHREAD_MUTEX_lock(&fsal_lock);
 
 	if (load_state != idle)
 		LogFatal(COMPONENT_INIT, "Couldn't Register FSAL_PSEUDO");
@@ -121,12 +121,12 @@ static void load_fsal_pseudo(void)
 
 	load_state = loading;
 
-	pthread_mutex_unlock(&fsal_lock);
+	PTHREAD_MUTEX_unlock(&fsal_lock);
 
 	/* now it is the module's turn to register itself */
 	pseudo_fsal_init();
 
-	pthread_mutex_lock(&fsal_lock);
+	PTHREAD_MUTEX_lock(&fsal_lock);
 
 	if (load_state != registered)
 		LogFatal(COMPONENT_INIT, "Couldn't Register FSAL_PSEUDO");
@@ -139,7 +139,7 @@ static void load_fsal_pseudo(void)
 	fsal->dl_handle = NULL;
 	so_error = 0;
 	load_state = idle;
-	pthread_mutex_unlock(&fsal_lock);
+	PTHREAD_MUTEX_unlock(&fsal_lock);
 }
 
 /**
@@ -211,7 +211,7 @@ int load_fsal(const char *name,
 	dl_path = gsh_strdup(path);
 	if (dl_path == NULL)
 		return ENOMEM;
-	pthread_mutex_lock(&fsal_lock);
+	PTHREAD_MUTEX_lock(&fsal_lock);
 	if (load_state != idle)
 		goto errout;
 	if (dl_error) {
@@ -220,7 +220,7 @@ int load_fsal(const char *name,
 	}
 
 	load_state = loading;
-	pthread_mutex_unlock(&fsal_lock);
+	PTHREAD_MUTEX_unlock(&fsal_lock);
 
 	LogDebug(COMPONENT_INIT, "Loading FSAL %s with %s", name, path);
 #ifdef LINUX
@@ -229,7 +229,7 @@ int load_fsal(const char *name,
 	dl = dlopen(path, RTLD_NOW | RTLD_LOCAL);
 #endif
 
-	pthread_mutex_lock(&fsal_lock);
+	PTHREAD_MUTEX_lock(&fsal_lock);
 	if (dl == NULL) {
 #ifdef ELIBACC
 		retval = ELIBACC;	/* hand craft a meaningful error */
@@ -267,11 +267,11 @@ int load_fsal(const char *name,
 				" from module:%s Error:%s", path, dl_error);
 			goto dlerr;
 		}
-		pthread_mutex_unlock(&fsal_lock);
+		PTHREAD_MUTEX_unlock(&fsal_lock);
 
 		(*module_init) ();	/* try registering by hand this time */
 
-		pthread_mutex_lock(&fsal_lock);
+		PTHREAD_MUTEX_lock(&fsal_lock);
 	}
 	if (load_state == error) {	/* we are in registration hell */
 		retval = so_error;	/* this is the registration error */
@@ -301,14 +301,14 @@ int load_fsal(const char *name,
 	so_error = 0;
 	*fsal_hdl_p = fsal;
 	load_state = idle;
-	pthread_mutex_unlock(&fsal_lock);
+	PTHREAD_MUTEX_unlock(&fsal_lock);
 	return 0;
 
 dlerr:
 	dlclose(dl);
 errout:
 	load_state = idle;
-	pthread_mutex_unlock(&fsal_lock);
+	PTHREAD_MUTEX_unlock(&fsal_lock);
 	LogMajor(COMPONENT_INIT, "Failed to load module (%s) because: %s",
 		 path,
 		 strerror(retval));
@@ -333,17 +333,17 @@ struct fsal_module *lookup_fsal(const char *name)
 	struct fsal_module *fsal;
 	struct glist_head *entry;
 
-	pthread_mutex_lock(&fsal_lock);
+	PTHREAD_MUTEX_lock(&fsal_lock);
 	glist_for_each(entry, &fsal_list) {
 		fsal = glist_entry(entry, struct fsal_module, fsals);
 		if (strcasecmp(name, fsal->name) == 0) {
 			atomic_inc_int32_t(&fsal->refcount);
-			pthread_mutex_unlock(&fsal_lock);
+			PTHREAD_MUTEX_unlock(&fsal_lock);
 			op_ctx->fsal_module = fsal;
 			return fsal;
 		}
 	}
-	pthread_mutex_unlock(&fsal_lock);
+	PTHREAD_MUTEX_unlock(&fsal_lock);
 	return NULL;
 }
 
@@ -380,7 +380,7 @@ int register_fsal(struct fsal_module *fsal_hdl, const char *name,
 {
 	pthread_rwlockattr_t attrs;
 
-	pthread_mutex_lock(&fsal_lock);
+	PTHREAD_MUTEX_lock(&fsal_lock);
 	if ((major_version != FSAL_MAJOR_VERSION)
 	    || (minor_version > FSAL_MINOR_VERSION)) {
 		so_error = EINVAL;
@@ -426,7 +426,7 @@ int register_fsal(struct fsal_module *fsal_hdl, const char *name,
 		load_state = registered;
 	if (fsal_id != FSAL_ID_NO_PNFS && fsal_id < FSAL_ID_COUNT)
 		pnfs_fsal[fsal_id] = fsal_hdl;
-	pthread_mutex_unlock(&fsal_lock);
+	PTHREAD_MUTEX_unlock(&fsal_lock);
 	return 0;
 
  errout:
@@ -435,7 +435,7 @@ int register_fsal(struct fsal_module *fsal_hdl, const char *name,
 	if (fsal_hdl->name)
 		gsh_free(fsal_hdl->name);
 	load_state = error;
-	pthread_mutex_unlock(&fsal_lock);
+	PTHREAD_MUTEX_unlock(&fsal_lock);
 	LogCrit(COMPONENT_INIT, "FSAL \"%s\" failed to register because: %s",
 		name, strerror(so_error));
 	return so_error;

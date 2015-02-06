@@ -103,9 +103,9 @@ static ssize_t tcp_conn_send(struct _9p_conn *conn, const void *buf, size_t len,
 {
 	ssize_t ret;
 
-	pthread_mutex_lock(&conn->sock_lock);
+	PTHREAD_MUTEX_lock(&conn->sock_lock);
 	ret = send(conn->trans_data.sockfd, buf, len, flags);
-	pthread_mutex_unlock(&conn->sock_lock);
+	PTHREAD_MUTEX_unlock(&conn->sock_lock);
 
 	if (ret < 0)
 		server_stats_transport_done(conn->client,

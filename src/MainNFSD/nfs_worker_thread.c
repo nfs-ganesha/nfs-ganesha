@@ -1519,15 +1519,15 @@ static void worker_run(struct fridgethr_context *ctx)
 			/* check for destroyed xprts */
 			xu = (gsh_xprt_private_t *) nfsreq->r_u.nfs->xprt->
 			    xp_u1;
-			pthread_mutex_lock(&nfsreq->r_u.nfs->xprt->xp_lock);
+			PTHREAD_MUTEX_lock(&nfsreq->r_u.nfs->xprt->xp_lock);
 			if (nfsreq->r_u.nfs->xprt->
 			    xp_flags & SVC_XPRT_FLAG_DESTROYED) {
-				pthread_mutex_unlock(&nfsreq->r_u.nfs->xprt->
+				PTHREAD_MUTEX_unlock(&nfsreq->r_u.nfs->xprt->
 						     xp_lock);
 				goto finalize_req;
 			}
 			reqcnt = xu->req_cnt;
-			pthread_mutex_unlock(&nfsreq->r_u.nfs->xprt->xp_lock);
+			PTHREAD_MUTEX_unlock(&nfsreq->r_u.nfs->xprt->xp_lock);
 			/* execute */
 			LogDebug(COMPONENT_DISPATCH,
 				 "NFS protocol request, nfsreq=%p xprt=%p req_cnt=%d",

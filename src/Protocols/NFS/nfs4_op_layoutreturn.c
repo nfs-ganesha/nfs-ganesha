@@ -249,7 +249,7 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op, compound_data_t *data,
 
  again:
 
-		pthread_mutex_lock(&clientid_owner->so_mutex);
+		PTHREAD_MUTEX_lock(&clientid_owner->so_mutex);
 		so_mutex_locked = true;
 
 		glist_for_each_safe(glist, glistn,
@@ -295,7 +295,7 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op, compound_data_t *data,
 			/* Now we need to drop so_mutex to continue the
 			 * processing.
 			 */
-			pthread_mutex_unlock(&clientid_owner->so_mutex);
+			PTHREAD_MUTEX_unlock(&clientid_owner->so_mutex);
 			so_mutex_locked = false;
 
 			if (return_fsid) {
@@ -359,7 +359,7 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op, compound_data_t *data,
 		}
 
 		if (so_mutex_locked)
-			pthread_mutex_lock(&clientid_owner->so_mutex);
+			PTHREAD_MUTEX_lock(&clientid_owner->so_mutex);
 
 		/* Poison the current stateid */
 		data->current_stateid_valid = false;

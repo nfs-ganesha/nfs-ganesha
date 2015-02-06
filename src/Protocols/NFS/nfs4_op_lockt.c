@@ -151,16 +151,16 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t *data,
 		return res_LOCKT4->status;
 	}
 
-	pthread_mutex_lock(&clientid->cid_mutex);
+	PTHREAD_MUTEX_lock(&clientid->cid_mutex);
 
 	if (!reserve_lease(clientid)) {
-		pthread_mutex_unlock(&clientid->cid_mutex);
+		PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
 		dec_client_id_ref(clientid);
 		res_LOCKT4->status = NFS4ERR_EXPIRED;
 		return res_LOCKT4->status;
 	}
 
-	pthread_mutex_unlock(&clientid->cid_mutex);
+	PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
 
 	/* Is this lock_owner known ? */
 	convert_nfs4_lock_owner(&arg_LOCKT4->owner, &owner_name);
@@ -225,9 +225,9 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* Update the lease before exit */
 	if (data->minorversion == 0) {
-		pthread_mutex_lock(&clientid->cid_mutex);
+		PTHREAD_MUTEX_lock(&clientid->cid_mutex);
 		update_lease(clientid);
-		pthread_mutex_unlock(&clientid->cid_mutex);
+		PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
 	}
 
 	dec_client_id_ref(clientid);
