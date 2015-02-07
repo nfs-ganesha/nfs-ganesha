@@ -832,6 +832,7 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid, bool make_stale)
 	nfs_client_record_t *record;
 	char str[LOG_BUFF_LEN];
 	struct display_buffer dspbuf = {sizeof(str), str, str};
+	bool str_valid = false;
 	struct root_op_context root_op_context;
 
 	/* Initialize req_ctx */
@@ -1032,9 +1033,12 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid, bool make_stale)
 							       nfs41_session_t,
 							       session_link);
 
-			if (!nfs41_Session_Del(session->session_id))
+			if (!nfs41_Session_Del(session->session_id)) {
+				display_client_id_rec(&dspbuf, clientid);
 				LogCrit(COMPONENT_SESSIONS,
-					"Expire session failed");
+					"Expire session failed for {%s}",
+					str);
+			}
 		}
 	}
 
@@ -1044,20 +1048,25 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid, bool make_stale)
 		clientid->cid_recov_dir = NULL;
 	}
 
-	if (isFullDebug(COMPONENT_CLIENTID)) {
-		display_client_id_rec(&dspbuf, clientid);
-		LogFullDebug(COMPONENT_CLIENTID, "Expired (done) {%s}", str);
-	}
-
 	if (isDebug(COMPONENT_CLIENTID)) {
 		display_client_id_rec(&dspbuf, clientid);
 		LogDebug(COMPONENT_CLIENTID,
-			 "About to release last reference to {%s}", str);
+			 "Expired (done), about to release last reference {%s}",
+			 str);
+		str_valid = true;
 	}
 
 	/* Release the hash table reference to the clientid. */
 	if (!make_stale)
 		(void)dec_client_id_ref(clientid);
+
+	if (isFullDebug(COMPONENT_CLIENTID)) {
+		if (!str_valid)
+			display_printf(&dspbuf, "clientid %p", clientid);
+		LogFullDebug(COMPONENT_CLIENTID,
+			     "Expired (done), released last reference {%s}",
+			     str);
+	}
 
 	release_root_op_context();
 	return true;
