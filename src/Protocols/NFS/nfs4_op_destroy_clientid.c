@@ -116,6 +116,8 @@ int nfs4_op_destroy_clientid(struct nfs_argop4 *op, compound_data_t *data,
 		goto out;
 	}
 
+	(void) inc_client_record_ref(client_record);
+
 	PTHREAD_MUTEX_lock(&client_record->cr_mutex);
 
 	if (isFullDebug(COMPONENT_CLIENTID)) {
