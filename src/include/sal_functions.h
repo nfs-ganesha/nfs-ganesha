@@ -252,8 +252,6 @@ void
 nfs41_foreach_client_callback(bool(*cb) (nfs_client_id_t *cl, void *state),
 			      void *state);
 
-bool client_id_has_nfs41_sessions(nfs_client_id_t *clientid);
-
 bool client_id_has_state(nfs_client_id_t *clientid);
 
 int32_t inc_client_id_ref(nfs_client_id_t *clientid);
