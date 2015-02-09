@@ -153,7 +153,7 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t *data,
 
 	PTHREAD_MUTEX_lock(&clientid->cid_mutex);
 
-	if (!reserve_lease(clientid)) {
+	if (data->minorversion == 0 && !reserve_lease(clientid)) {
 		PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
 		dec_client_id_ref(clientid);
 		res_LOCKT4->status = NFS4ERR_EXPIRED;

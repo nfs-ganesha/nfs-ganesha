@@ -162,6 +162,11 @@ static int reap_hash_table(hash_table_t *ht_reap)
 			PTHREAD_MUTEX_lock(&pclientid->cid_mutex);
 
 			if (!valid_lease(pclientid)) {
+				char str[LOG_BUFF_LEN];
+				struct display_buffer dspbuf = {
+					sizeof(str), str, str};
+				bool str_valid = false;
+
 				inc_client_id_ref(pclientid);
 
 				/* Take a reference to the client record */
@@ -174,16 +179,13 @@ static int reap_hash_table(hash_table_t *ht_reap)
 						      lock);
 
 				if (isDebug(COMPONENT_CLIENTID)) {
-					char str[LOG_BUFF_LEN];
-					struct display_buffer dspbuf = {
-						sizeof(str), str, str};
-
 					display_client_id_rec(&dspbuf,
 							      pclientid);
 
 					LogFullDebug(COMPONENT_CLIENTID,
 						     "Expire index %d %s", i,
 						     str);
+					str_valid = true;
 				}
 
 				/* Take cr_mutex and expire clientid */
@@ -195,6 +197,17 @@ static int reap_hash_table(hash_table_t *ht_reap)
 
 				dec_client_id_ref(pclientid);
 				dec_client_record_ref(precord);
+
+				if (isFullDebug(COMPONENT_CLIENTID)) {
+					if (!str_valid)
+						display_printf(&dspbuf,
+							       "clientid %p",
+							       pclientid);
+					LogFullDebug(COMPONENT_CLIENTID,
+						     "Reaper done, expired {%s}",
+						     str);
+				}
+
 				if (rc)
 					goto restart;
 			} else {

@@ -92,6 +92,7 @@ int nfs4_op_destroy_session(struct nfs_argop4 *op, compound_data_t *data,
 	if (!cmp_sockaddr(&nw_addr, &client_addr, false)) {
 		res_DESTROY_SESSION4->dsr_status =
 		    NFS4ERR_CONN_NOT_BOUND_TO_SESSION;
+		dec_session_ref(session);
 		return res_DESTROY_SESSION4->dsr_status;
 	}
 

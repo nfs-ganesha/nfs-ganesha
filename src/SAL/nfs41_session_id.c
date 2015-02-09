@@ -175,6 +175,7 @@ static hash_parameter_t session_id_param = {
 	.index_size = PRIME_STATE,
 	.hash_func_key = session_id_value_hash_func,
 	.hash_func_rbt = session_id_rbt_hash_func,
+	.ht_log_component = COMPONENT_SESSIONS,
 	.compare_key = compare_session_id,
 	.key_to_str = display_session_id_key,
 	.val_to_str = display_session_id_val,
