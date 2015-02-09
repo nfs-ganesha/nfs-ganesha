@@ -113,7 +113,7 @@ char *pidfile_path = GANESHA_PIDFILE_PATH;
  *
  * @return NULL.
  */
-void *sigmgr_thread(void *UnusedArg)
+static void *sigmgr_thread(void *UnusedArg)
 {
 	SetNameFunction("sigmgr");
 	int signal_caught = 0;

@@ -147,10 +147,7 @@ uint32_t get_dequeue_count(void);
 /*
  * Thread entry functions
  */
-void *rpc_dispatcher_thread(void *UnusedArg);
 void *admin_thread(void *UnusedArg);
-void *reaper_thread(void *UnusedArg);
-void *sigmgr_thread(void *UnusedArg);
 
 #ifdef _USE_9P
 void *_9p_dispatcher_thread(void *arg);

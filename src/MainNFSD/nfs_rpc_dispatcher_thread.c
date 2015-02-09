@@ -910,6 +910,9 @@ void nfs_Init_svc(void)
 
 }
 
+/* forward declaration in lieu of moving code {WAS} */
+static void *rpc_dispatcher_thread(void *arg);
+
 /**
  * @brief Start service threads
  *
@@ -2081,7 +2084,7 @@ static bool nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */)
  * @return Pointer to the result (but this function will mostly loop forever).
  *
  */
-void *rpc_dispatcher_thread(void *arg)
+static void *rpc_dispatcher_thread(void *arg)
 {
 	int32_t chan_id = *((int32_t *) arg);
 
