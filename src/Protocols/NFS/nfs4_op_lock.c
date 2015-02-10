@@ -123,15 +123,20 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 	switch (arg_LOCK4->locktype) {
 	case READW_LT:
 		blocking = STATE_NFSV4_BLOCKING;
+		/* Fall through */
+
 	case READ_LT:
 		lock_desc.lock_type = FSAL_LOCK_R;
 		break;
 
 	case WRITEW_LT:
 		blocking = STATE_NFSV4_BLOCKING;
+		/* Fall through */
+
 	case WRITE_LT:
 		lock_desc.lock_type = FSAL_LOCK_W;
 		break;
+
 	default:
 		LogDebug(COMPONENT_NFS_V4_LOCK,
 			 "Invalid lock type");
