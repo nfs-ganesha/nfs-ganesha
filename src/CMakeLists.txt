@@ -206,6 +206,7 @@ option(_NO_TCP_REGISTER "disable registration of tcp services on portmapper" ON)
 option(_NO_PORTMAPPER "disable registration on portmapper" ON)
 option(_NO_XATTRD "disable ghost xattr directory and files support" ON)
 option(DEBUG_SAL "enable debugging of SAL by keeping list of all locks, stateids, and state owners" OFF)
+option(_VALGRIND_MEMCHECK "Initialize buffers passed to GPFS ioctl that valgrind doesn't understand" OFF)
 option(PROXY_HANDLE_MAPPING "enable NFSv3 handle mapping for PROXY FSAL" OFF)
 
 # Debug symbols (-g) build flag
@@ -940,6 +941,7 @@ message(STATUS "_NO_TCP_REGISTER = ${_NO_TCP_REGISTER}")
 message(STATUS "_NO_PORTMAPPER = ${_NO_PORTMAPPER}")
 message(STATUS "_NO_XATTRD = ${_NO_XATTRD}")
 message(STATUS "DEBUG_SAL = ${DEBUG_SAL}")
+message(STATUS "_VALGRIND_MEMCHECK = ${_VALGRIND_MEMCHECK}")
 message(STATUS "PROXY_HANDLE_MAPPING = ${PROXY_HANDLE_MAPPING}")
 message(STATUS "DEBUG_SYMS = ${DEBUG_SYMS}")
 message(STATUS "COVERAGE = ${COVERAGE}")
@@ -1057,6 +1059,11 @@ set(USE_NFSIDMAP ${USE_NFSIDMAP}
 set(DEBUG_SAL ${DEBUG_SAL}
   CACHE BOOL
    "enable debug SAL"
+   FORCE)
+
+set(_VALGRIND_MEMCHECK ${_VALGRIND_MEMCHECK}
+  CACHE BOOL
+   "Initialize buffers passed to GPFS ioctl"
    FORCE)
 
 set(ENABLE_ERROR_INJECTION ${ENABLE_ERROR_INJECTION}
