@@ -177,7 +177,7 @@ fsal_status_t gpfs_read_plus(struct fsal_obj_handle *obj_hdl,
 		info->io_content.hole.di_length = buffer_size;/*length of hole*/
 		*read_amount = buffer_size;
 		if ((buffer_size + offset) > obj_hdl->attributes.filesize) {
-			if (obj_hdl->attributes.filesize - offset < 0)
+			if (offset > obj_hdl->attributes.filesize)
 				*read_amount = 0;
 			else
 				*read_amount =
