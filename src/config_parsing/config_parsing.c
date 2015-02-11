@@ -1710,7 +1710,7 @@ int find_config_nodes(config_file_t config, char *expr_str,
 	struct glist_head *ns;
 	struct config_node *sub_node;
 	struct config_node *top;
-	struct expr_parse *expr, *expr_head;
+	struct expr_parse *expr, *expr_head = NULL;
 	struct config_node_list *list = NULL, *list_tail = NULL;
 	char *ep;
 	int rc = EINVAL;
