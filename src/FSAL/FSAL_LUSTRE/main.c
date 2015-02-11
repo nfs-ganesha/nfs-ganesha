@@ -222,14 +222,6 @@ static fsal_status_t lustre_init_config(struct fsal_module *fsal_hdl,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-/* Internal LUSTRE method linkage to export object
- */
-
-fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
-				   void *parse_node,
-				   struct config_error_type *err_type,
-				   const struct fsal_up_vector *up_ops);
-
 /* Module initialization.
  * Called by dlopen() to register the module
  * keep a private pointer to me in myself

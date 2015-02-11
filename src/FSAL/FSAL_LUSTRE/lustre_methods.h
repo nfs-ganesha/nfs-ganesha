@@ -113,6 +113,14 @@ struct lustre_filesystem_export_map {
 	struct glist_head on_filesystems;
 };
 
+/* Internal LUSTRE method linkage to export object
+ */
+
+fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
+				   void *parse_node,
+				   struct config_error_type *err_type,
+				   const struct fsal_up_vector *up_ops);
+
 void lustre_unexport_filesystems(struct lustre_fsal_export *exp);
 
 /* method proto linkage to handle.c for export
