@@ -273,6 +273,7 @@ static bool convert_number(struct config_node *node,
 			   struct config_error_type *err_type)
 {
 	uint64_t val, mask, min, max;
+	int64_t sval, smin, smax;
 	char *endptr;
 	int base;
 	bool signed_int = false;
@@ -308,69 +309,89 @@ static bool convert_number(struct config_node *node,
 	}
 	switch (item->type) {
 	case CONFIG_INT16:
-		mask = ~0x7fff;
-		min = item->u.i16.minval;
-		max = item->u.i16.maxval;
+		smin = item->u.i16.minval;
+		smax = item->u.i16.maxval;
 		signed_int = true;
 		break;
 	case CONFIG_UINT16:
-		mask = ~0xffff;
+		mask = UINT16_MAX;
 		min = item->u.ui16.minval;
 		max = item->u.ui16.maxval;
 		break;
 	case CONFIG_INT32:
-		mask = ~0x7fffffff;
-		min = item->u.i32.minval;
-		max = item->u.i32.maxval;
+		smin = item->u.i32.minval;
+		smax = item->u.i32.maxval;
 		signed_int = true;
 		break;
 	case CONFIG_UINT32:
-		mask = ~0xffffffff;
+		mask = UINT32_MAX;
 		min = item->u.ui32.minval;
 		max = item->u.ui32.maxval;
 		break;
 	case CONFIG_INT64:
-		mask = ~0x7fffffffffffffff;
-		min = item->u.i64.minval;
-		max = item->u.i64.maxval;
+		smin = item->u.i64.minval;
+		smax = item->u.i64.maxval;
 		signed_int = true;
 		break;
 	case CONFIG_UINT64:
-		mask = 0;
+		mask = UINT64_MAX;
 		min = item->u.ui64.minval;
 		max = item->u.ui64.maxval;
 		break;
 	default:
 		goto errout;
 	}
-	if ((val & mask) != 0) { /* int type range check */
-		config_proc_error(node, err_type,
-				  "(%s) overflows the range",
-				  node->u.term.varvalue);
-		goto errout;
-	}
-	if (node->u.term.op_code == NULL)
-		goto done;
-	else if (*node->u.term.op_code == '-')
-		val = (uint64_t)(-(int64_t)val);
-	else if (*node->u.term.op_code == '~')
-		val = ~val;
-	else {
-		config_proc_error(node, err_type,
-				  "bogus arithmetic op (%s)",
-				  node->u.term.op_code);
-		goto errout;
-	}
+
 	if (signed_int) {
-		if (((int64_t)val < (int64_t)min)
-		    || ((int64_t)val > (int64_t)max)) {
+		if (node->u.term.op_code == NULL) {
+			/* Check for overflow of int64_t on positive */
+			if (val > (uint64_t) INT64_MAX) {
+				config_proc_error(node, err_type,
+					  "(%s) is out of range",
+					  node->u.term.varvalue);
+				goto errout;
+			}
+			sval = val;
+		} else if (*node->u.term.op_code == '-') {
+			/* Check for underflow of int64_t on negative */
+			if (val > ((uint64_t) INT64_MAX) + 1) {
+				config_proc_error(node, err_type,
+					  "(%s) is out of range",
+					  node->u.term.varvalue);
+				goto errout;
+			}
+			sval = -((int64_t) val);
+		} else {
+			config_proc_error(node, err_type,
+				  "(%c) is not allowed for signed values",
+				  *node->u.term.op_code);
+			goto errout;
+		}
+		if (sval < smin || sval > smax) {
 			config_proc_error(node, err_type,
 				  "(%s) is out of range",
 				  node->u.term.varvalue);
 			goto errout;
 		}
+		val = (uint64_t) sval;
 	} else {
-		if ((val < min) || (val > max)) {
+		if (node->u.term.op_code != NULL &&
+		    *node->u.term.op_code == '~') {
+			/* Check for overflow before negation */
+			if ((val & ~mask) != 0) {
+				config_proc_error(node, err_type,
+					  "(%s) is out of range",
+					  node->u.term.varvalue);
+				goto errout;
+			}
+			val = ~val & mask;
+		} else if (node->u.term.op_code != NULL) {
+			config_proc_error(node, err_type,
+				  "(%c) is not allowed for signed values",
+				  *node->u.term.op_code);
+			goto errout;
+		}
+		if (val < min || val > max) {
 			config_proc_error(node, err_type,
 				  "(%s) is out of range",
 				  node->u.term.varvalue);
@@ -381,7 +402,6 @@ static bool convert_number(struct config_node *node,
 	if (item->flags & CONFIG_MODE)
 		val = unix2fsal_mode(val);
 
-done:
 	*num = val;
 	return true;
 
