@@ -75,9 +75,9 @@ static fsal_staticfsinfo_t default_ceph_info = {
 };
 
 static struct config_item ceph_items[] = {
-	CONF_ITEM_MODE("umask", 0, 0777, 0,
+	CONF_ITEM_MODE("umask", 0,
 			ceph_fsal_module, fs_info.umask),
-	CONF_ITEM_MODE("xattr_access_rights", 0, 0777, 0,
+	CONF_ITEM_MODE("xattr_access_rights", 0,
 			ceph_fsal_module, fs_info.xattr_access_rights),
 	CONFIG_EOL
 };

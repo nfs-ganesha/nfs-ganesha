@@ -748,12 +748,12 @@ struct config_item {
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
 
-#define CONF_ITEM_MODE(_name_, _min_, _max_, _def_, _struct_, _mem_) \
+#define CONF_ITEM_MODE(_name_, _def_, _struct_, _mem_) \
 	{ .name = _name_,			    \
 	  .type = CONFIG_UINT32,		    \
 	  .flags = CONFIG_MODE,			    \
-	  .u.ui32.minval = _min_,		    \
-	  .u.ui32.maxval = _max_,		    \
+	  .u.ui32.minval = 0,			    \
+	  .u.ui32.maxval = 0777,		    \
 	  .u.ui32.def = _def_,			    \
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}

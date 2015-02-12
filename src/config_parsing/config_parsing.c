@@ -399,9 +399,6 @@ static bool convert_number(struct config_node *node,
 		}
 	}
 
-	if (item->flags & CONFIG_MODE)
-		val = unix2fsal_mode(val);
-
 	*num = val;
 	return true;
 

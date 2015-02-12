@@ -95,11 +95,11 @@ static struct config_item gpfs_params[] = {
 		       fsal_staticfsinfo_t, symlink_support),
 	CONF_ITEM_BOOL("cansettime", true,
 		       fsal_staticfsinfo_t, cansettime),
-	CONF_ITEM_MODE("umask", 0, 0777, 0,
+	CONF_ITEM_MODE("umask", 0,
 		       fsal_staticfsinfo_t, umask),
 	CONF_ITEM_BOOL("auth_xdev_export", false,
 		       fsal_staticfsinfo_t, auth_exportpath_xdev),
-	CONF_ITEM_MODE("xattr_access_rights", 0, 0777, 0400,
+	CONF_ITEM_MODE("xattr_access_rights", 0400,
 		       fsal_staticfsinfo_t, xattr_access_rights),
 	/* At the moment GPFS doesn't support WRITE delegations */
 	CONF_ITEM_ENUM_BITS("Delegations",
