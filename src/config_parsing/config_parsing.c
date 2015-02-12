@@ -948,7 +948,9 @@ static int do_block_load(struct config_node *blk,
 	int errors = 0;
 
 	for (item = params; item->name != NULL; item++) {
-		union gen_int val;
+		uint64_t num64;
+		bool bool_val;
+		uint32_t num32;
 
 		node = lookup_node(&blk->u.nterm.sub_nodes, item->name);
 		if ((item->flags & CONFIG_MANDATORY) && (node == NULL)) {
@@ -1008,18 +1010,18 @@ static int do_block_load(struct config_node *blk,
 				break;
 			case CONFIG_INT16:
 				if (convert_number(term_node, item,
-						   &val.ui64, err_type))
-					*(int16_t *)param_addr = val.i16;
+						   &num64, err_type))
+					*(int16_t *)param_addr = num64;
 				break;
 			case CONFIG_UINT16:
 				if (convert_number(term_node, item,
-						   &val.ui64, err_type))
-					*(uint16_t *)param_addr	= val.ui16;
+						   &num64, err_type))
+					*(uint16_t *)param_addr	= num64;
 				break;
 			case CONFIG_INT32:
 				if (convert_number(term_node, item,
-						   &val.ui64, err_type)) {
-					*(int32_t *)param_addr = val.i32;
+						   &num64, err_type)) {
+					*(int32_t *)param_addr = num64;
 					if (item->flags & CONFIG_MARK_SET) {
 						caddr_t *mask_addr;
 
@@ -1033,18 +1035,18 @@ static int do_block_load(struct config_node *blk,
 				break;
 			case CONFIG_UINT32:
 				if (convert_number(term_node, item,
-						   &val.ui64, err_type))
-					*(uint32_t *)param_addr	= val.ui32;
+						   &num64, err_type))
+					*(uint32_t *)param_addr	= num64;
 				break;
 			case CONFIG_INT64:
 				if (convert_number(term_node, item,
-						   &val.ui64, err_type))
-					*(int64_t *)param_addr = val.i64;
+						   &num64, err_type))
+					*(int64_t *)param_addr = num64;
 				break;
 			case CONFIG_UINT64:
 				if (convert_number(term_node, item,
-						   &val.ui64, err_type))
-					*(uint64_t *)param_addr = val.ui64;
+						   &num64, err_type))
+					*(uint64_t *)param_addr = num64;
 				break;
 			case CONFIG_FSID:
 				if (convert_fsid(term_node, param_addr,
@@ -1073,17 +1075,19 @@ static int do_block_load(struct config_node *blk,
 					gsh_strdup(term_node->u.term.varvalue);
 				break;
 			case CONFIG_TOKEN:
-				if (convert_enum(term_node, item, &val.ui32,
+				if (convert_enum(term_node, item, &num32,
 						 err_type))
-					*(uint32_t *)param_addr = val.ui32;
+					*(uint32_t *)param_addr = num32;
 				break;
 			case CONFIG_BOOL:
-				if (convert_bool(term_node, &val.b, err_type))
-					*(bool *)param_addr = val.b;
+				if (convert_bool(term_node, &bool_val,
+						 err_type))
+					*(bool *)param_addr = bool_val;
 				break;
 			case CONFIG_BOOLBIT:
-				if (convert_bool(term_node, &val.b, err_type)) {
-					if (val.b)
+				if (convert_bool(term_node, &bool_val,
+						 err_type)) {
+					if (bool_val)
 						*(uint32_t *)param_addr
 							|= item->u.bit.bit;
 					else
@@ -1104,9 +1108,9 @@ static int do_block_load(struct config_node *blk,
 				   (*(uint32_t *)param_addr & item->u.lst.mask))
 					*(uint32_t *)param_addr &=
 							~item->u.lst.mask;
-				if (convert_list(node, item, &val.ui32,
+				if (convert_list(node, item, &num32,
 						 err_type)) {
-					*(uint32_t *)param_addr |= val.ui32;
+					*(uint32_t *)param_addr |= num32;
 					if (item->flags & CONFIG_MARK_SET) {
 						caddr_t *mask_addr;
 						mask_addr = (caddr_t *)
@@ -1121,7 +1125,7 @@ static int do_block_load(struct config_node *blk,
 					     " value=%08"PRIx32,
 					     param_addr,
 					     item->name,
-					     item->u.lst.mask, val.ui32,
+					     item->u.lst.mask, num32,
 					     *(uint32_t *)param_addr);
 				break;
 			case CONFIG_ENUM:
@@ -1129,9 +1133,9 @@ static int do_block_load(struct config_node *blk,
 				   (*(uint32_t *)param_addr & item->u.lst.mask))
 					*(uint32_t *)param_addr &=
 							~item->u.lst.mask;
-				if (convert_enum(term_node, item, &val.ui32,
+				if (convert_enum(term_node, item, &num32,
 						 err_type)) {
-					*(uint32_t *)param_addr |= val.ui32;
+					*(uint32_t *)param_addr |= num32;
 					if (item->flags & CONFIG_MARK_SET) {
 						caddr_t *mask_addr;
 						mask_addr = (caddr_t *)
@@ -1146,16 +1150,16 @@ static int do_block_load(struct config_node *blk,
 					     " value=%08"PRIx32,
 					     param_addr,
 					     item->name,
-					     item->u.lst.mask, val.ui32,
+					     item->u.lst.mask, num32,
 					     *(uint32_t *)param_addr);
 			case CONFIG_ENUM_SET:
 				if (item->u.lst.def ==
 				   (*(uint32_t *)param_addr & item->u.lst.mask))
 					*(uint32_t *)param_addr &=
 							~item->u.lst.mask;
-				if (convert_enum(term_node, item, &val.ui32,
+				if (convert_enum(term_node, item, &num32,
 						 err_type)) {
-					*(uint32_t *)param_addr |= val.ui32;
+					*(uint32_t *)param_addr |= num32;
 					if (item->flags & CONFIG_MARK_SET) {
 						caddr_t *mask_addr;
 						mask_addr = (caddr_t *)
@@ -1170,7 +1174,7 @@ static int do_block_load(struct config_node *blk,
 					     " value=%08"PRIx32,
 					     param_addr,
 					     item->name,
-					     item->u.lst.mask, val.ui32,
+					     item->u.lst.mask, num32,
 					     *(uint32_t *)param_addr);
 				break;
 			case CONFIG_IP_ADDR:
@@ -1180,9 +1184,9 @@ static int do_block_load(struct config_node *blk,
 				break;
 			case CONFIG_INET_PORT:
 				if (convert_number(term_node, item,
-						   &val.ui64, err_type))
+						   &num64, err_type))
 					*(uint16_t *)param_addr =
-						htons((uint16_t)val.ui16);
+						htons((uint16_t)num64);
 				break;
 			case CONFIG_BLOCK:
 				if (!proc_block(node, item, param_addr,
