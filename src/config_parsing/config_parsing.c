@@ -328,6 +328,12 @@ static bool convert_number(struct config_node *node,
 		min = item->u.ui32.minval;
 		max = item->u.ui32.maxval;
 		break;
+	case CONFIG_ANON_ID:
+		/* Internal to config, anonymous id is treated as int64_t */
+		smin = item->u.i64.minval;
+		smax = item->u.i64.maxval;
+		signed_int = true;
+		break;
 	case CONFIG_INT64:
 		smin = item->u.i64.minval;
 		smax = item->u.i64.maxval;
@@ -716,6 +722,8 @@ static const char *config_type_str(enum config_type type)
 		return "CONFIG_UINT64";
 	case CONFIG_FSID:
 		return "CONFIG_FSID";
+	case CONFIG_ANON_ID:
+		return "CONFIG_ANON_ID";
 	case CONFIG_STRING:
 		return "CONFIG_STRING";
 	case CONFIG_PATH:
@@ -780,6 +788,9 @@ static bool do_block_init(struct config_node *blk_node,
 			break;
 		case CONFIG_UINT64:
 			*(uint64_t *)param_addr = item->u.ui64.def;
+			break;
+		case CONFIG_ANON_ID:
+			*(uid_t *)param_addr = item->u.i64.def;
 			break;
 		case CONFIG_FSID:
 			((struct fsal_fsid__ *)param_addr)->major
@@ -1064,6 +1075,21 @@ static int do_block_load(struct config_node *blk,
 				if (convert_number(term_node, item,
 						   &num64, err_type))
 					*(uint64_t *)param_addr = num64;
+				break;
+			case CONFIG_ANON_ID:
+				if (convert_number(term_node, item,
+						   &num64, err_type)) {
+					*(uid_t *)param_addr = num64;
+					if (item->flags & CONFIG_MARK_SET) {
+						caddr_t *mask_addr;
+
+						mask_addr = (caddr_t *)
+							((uint64_t)param_struct
+							 + item->u.i64.set_off);
+						*(uint32_t *)mask_addr
+							|= item->u.i64.bit;
+					}
+				}
 				break;
 			case CONFIG_FSID:
 				if (convert_fsid(term_node, param_addr,
