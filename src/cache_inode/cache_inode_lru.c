@@ -1004,6 +1004,9 @@ cache_inode_lru_pkginit(void)
 			nr_open = fopen("/proc/sys/fs/nr_open", "r");
 			if (nr_open == NULL) {
 				code = errno;
+				LogWarn(COMPONENT_CACHE_INODE_LRU,
+					"Attempt to open /proc/sys/fs/nr_open failed (%d)",
+					code);
 				goto err_open;
 			}
 			code = fscanf(nr_open, "%" SCNu32 "\n",
