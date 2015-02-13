@@ -684,12 +684,12 @@ static struct config_block export_param = {
 
 fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
 				   void *parse_node,
+				   struct config_error_type *err_type,
 				   const struct fsal_up_vector *up_ops)
 {
 	/* The status code to return */
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	struct lustre_fsal_export *myself;
-	struct config_error_type err_type;
 
 	myself = gsh_malloc(sizeof(struct lustre_fsal_export));
 	if (myself == NULL) {
@@ -712,8 +712,8 @@ fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
 	myself->export.up_ops = up_ops;
 
 	status.minor = load_config_from_node(parse_node, &export_param, myself,
-					     true, &err_type);
-	if (!config_error_is_harmless(&err_type)) {
+					     true, err_type);
+	if (!config_error_is_harmless(err_type)) {
 		status.major = ERR_FSAL_INVAL;
 		return status;
 	}

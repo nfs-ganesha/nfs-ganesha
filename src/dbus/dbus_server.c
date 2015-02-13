@@ -360,6 +360,8 @@ static bool dbus_reply_introspection(DBusMessage *reply,
 					prop_access[(*prop)->access]);
 			}
 			have_props = true;
+			if ((*iface)->signal_props)
+				props_signal = true;
 		}
 		if ((*iface)->methods != NULL) {
 			struct gsh_dbus_method **method, *mp;
