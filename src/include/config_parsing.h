@@ -67,6 +67,7 @@ enum config_type {
 	CONFIG_UINT32,
 	CONFIG_INT64,
 	CONFIG_UINT64,
+	CONFIG_ANON_ID,
 	CONFIG_FSID,
 	CONFIG_STRING,
 	CONFIG_PATH,
@@ -311,6 +312,8 @@ struct config_item {
 			int64_t minval;
 			int64_t maxval;
 			int64_t def;
+			uint32_t bit;
+			size_t set_off;
 		} i64;
 		struct { /* CONFIG_UINT64 */
 			uint64_t minval;
@@ -729,6 +732,19 @@ struct config_item {
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
 
+#define CONF_ITEM_ANON_ID_SET(_name_, _def_, _struct_, _mem_, \
+			  _bit_, _set_) \
+	{ .name = _name_,			    \
+	  .type = CONFIG_ANON_ID,		    \
+	  .flags = CONFIG_MARK_SET,		    \
+	  .u.i64.minval = INT32_MIN,		    \
+	  .u.i64.maxval = UINT32_MAX,		    \
+	  .u.i64.def = _def_,			    \
+	  .u.i64.bit = _bit_,			    \
+	  .u.i64.set_off = offsetof(struct _struct_, _set_),   \
+	  .off = offsetof(struct _struct_, _mem_)   \
+	}
+
 #define CONF_ITEM_UI32(_name_, _min_, _max_, _def_, _struct_, _mem_) \
 	{ .name = _name_,			    \
 	  .type = CONFIG_UINT32,		    \
@@ -748,12 +764,12 @@ struct config_item {
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
 
-#define CONF_ITEM_MODE(_name_, _min_, _max_, _def_, _struct_, _mem_) \
+#define CONF_ITEM_MODE(_name_, _def_, _struct_, _mem_) \
 	{ .name = _name_,			    \
 	  .type = CONFIG_UINT32,		    \
 	  .flags = CONFIG_MODE,			    \
-	  .u.ui32.minval = _min_,		    \
-	  .u.ui32.maxval = _max_,		    \
+	  .u.ui32.minval = 0,			    \
+	  .u.ui32.maxval = 0777,		    \
 	  .u.ui32.def = _def_,			    \
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}

@@ -779,7 +779,7 @@ static fsal_status_t tank_setattrs(struct fsal_obj_handle *obj_hdl,
 	if (myself->handle->i_snap != 0) {
 		LogDebug(COMPONENT_FSAL,
 			 "Trying to change the attributes of an object inside a snapshot");
-		fsalstat(ERR_FSAL_ROFS, 0);
+		return fsalstat(ERR_FSAL_ROFS, 0);
 	}
 
 	/* First, check that FSAL attributes */

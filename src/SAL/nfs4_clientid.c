@@ -271,25 +271,6 @@ int32_t inc_client_id_ref(nfs_client_id_t *clientid)
 }
 
 /**
- * @brief nfsv41 has-sessions prediccate (returns true if sessions found)
- *
- * @param[in] clientid Client record
- *
- * @return true if there are sessions associated with the client,
- * false otherwise.
- */
-
-bool client_id_has_nfs41_sessions(nfs_client_id_t *clientid)
-{
-	if (clientid->cid_minorversion > 0) {
-		if (!glist_empty(&clientid->cid_cb.v41.cb_session_list))
-			return true;
-	}
-
-	return false;
-}
-
-/**
  * @brief Tests whether state exists on a client id
  *
  * We assume that open owners are predictive of open or lock state,

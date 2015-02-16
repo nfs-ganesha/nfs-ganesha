@@ -63,8 +63,6 @@
 
 #define P_FAMILY AF_INET6
 
-bool v6disabled_9p;
-
 void DispatchWork9P(request_data_t *req)
 {
 	switch (req->rtype) {
@@ -373,7 +371,7 @@ static int _9p_create_socket_V4(void)
 	sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (sock == -1) {
 		LogWarn(COMPONENT_9P_DISPATCH,
-			"Error creating V4 socket, error %d(%s)",
+			"Error creating 9p V4 socket, error %d(%s)",
 			errno, strerror(errno));
 		return -1;
 	}
@@ -394,9 +392,9 @@ static int _9p_create_socket_V4(void)
 			IPPROTO_TCP, TCP_KEEPCNT,
 			&neuf, sizeof(neuf)) == -1)) {
 		LogWarn(COMPONENT_9P_DISPATCH,
-			"Error setting V4 socket option, error %d(%s)",
+			"Error setting 9p V4 socket option, error %d(%s)",
 			errno, strerror(errno));
-		return -1;
+		goto err;
 	}
 
 	socket_setoptions(sock);
@@ -416,28 +414,33 @@ static int _9p_create_socket_V4(void)
 
 	if (!__rpc_fd2sockinfo(sock, &si_tcp)) {
 		LogWarn(COMPONENT_9P_DISPATCH,
-			"V4 : Cannot get 9p socket info for tcp6 socket error %d(%s)",
+			"Cannot get 9p socket info for tcp V4 socket error %d(%s)",
 			errno, strerror(errno));
-		return -1;
+		goto err;
 	}
 
 	if (bind(sock,
 		 (struct sockaddr *)bindaddr_tcp.addr.buf,
 		 (socklen_t) si_tcp.si_alen) == -1) {
 		LogWarn(COMPONENT_9P_DISPATCH,
-			"V4 : Cannot bind 9p tcp6 socket, error %d(%s)", errno,
+			"Cannot bind 9p tcp V4 socket, error %d(%s)", errno,
 			strerror(errno));
-		return -1;
+		goto err;
 	}
 
 	if (listen(sock, 20) == -1) {
 		LogWarn(COMPONENT_9P_DISPATCH,
-			"V4 : Cannot bind 9p tcp6 socket, error %d(%s)", errno,
+			"Cannot bind 9p tcp V4 socket, error %d(%s)", errno,
 			strerror(errno));
-		return -1;
+		goto err;
 	}
 
 	return sock;
+
+err:
+
+	close(sock);
+	return -1;
 }
 
 /**
@@ -464,7 +467,7 @@ static int _9p_create_socket_V6(void)
 			LogWarn(COMPONENT_9P_DISPATCH,
 				"Error creating socket, V6 intfs disabled? error %d(%s)",
 				errno, strerror(errno));
-			v6disabled_9p = true;
+			return _9p_create_socket_V4();
 		}
 
 		return -1;
@@ -488,7 +491,7 @@ static int _9p_create_socket_V6(void)
 		LogWarn(COMPONENT_9P_DISPATCH,
 			"Error setting V6 socket option, error %d(%s)",
 			errno, strerror(errno));
-		return -1;
+		goto err;
 	}
 
 	socket_setoptions(sock);
@@ -509,7 +512,7 @@ static int _9p_create_socket_V6(void)
 		LogWarn(COMPONENT_9P_DISPATCH,
 			"Cannot get 9p socket info for tcp6 socket error %d(%s)",
 			errno, strerror(errno));
-		return -1;
+		goto err;
 	}
 
 	if (bind(sock,
@@ -518,76 +521,62 @@ static int _9p_create_socket_V6(void)
 		LogWarn(COMPONENT_9P_DISPATCH,
 			"Cannot bind 9p tcp6 socket, error %d (%s)", errno,
 			strerror(errno));
-		return -1;
+		goto err;
 	}
 
 	if (listen(sock, 20) == -1) {
 		LogWarn(COMPONENT_9P_DISPATCH,
 			"Cannot bind 9p tcp6 socket, error %d (%s)", errno,
 			strerror(errno));
-		return -1;
+		goto err;
 	}
 
 	return sock;
+
+err:
+
+	close(sock);
+	return -1;
 }
 
 /**
- * _9p_create_socket: create the accept socket for 9P
- *
- * This function creates the accept socket for the 9p dispatcher thread.
- *
- * @return socket fd or -1 if failed.
- *
- */
-int _9p_create_socket(void)
-{
-	int sock = -1;
-
-	v6disabled_9p = false;
-
-	sock = _9p_create_socket_V6();
-	if (sock == -1) {
-		if (v6disabled_9p) {
-			/* Need to retry with V4 interfaces */
-			sock = _9p_create_socket_V4();
-			if (sock == -1) {
-				/* Some system error, bail */
-				LogWarn(COMPONENT_9P_DISPATCH,
-					"Error creating 9P socket using V4");
-				goto bad_socket;
-			}
-		} else {
-			LogWarn(COMPONENT_9P_DISPATCH,
-				"Error creating 9P socket using V6");
-			goto bad_socket;
-		}
-	}
-
-	return sock;
-
-bad_socket:
-	return -1;
-}				/* _9p_create_socket */
-
-/**
- * _9p_dispatcher_svc_run: main loop for 9p dispatcher
+ * _9p_dispatcher_thread: thread used for RPC dispatching.
  *
  * This function is the main loop for the 9p dispatcher.
  * It never returns because it is an infinite loop.
  *
- * @param sock accept socket for 9p dispatch
+ * @param Arg (unused)
  *
- * @return nothing (void function).
+ * @return Pointer to the result (but this function will mostly loop forever).
  *
  */
-void _9p_dispatcher_svc_run(long int sock)
+void *_9p_dispatcher_thread(void *Arg)
 {
+	int _9p_socket;
 	int rc = 0;
 	struct sockaddr_in addr;
 	socklen_t addrlen = sizeof(addr);
 	long int newsock = -1;
 	pthread_attr_t attr_thr;
 	pthread_t tcp_thrid;
+
+	SetNameFunction("_9p_disp");
+
+	/* Calling dispatcher main loop */
+	LogInfo(COMPONENT_9P_DISPATCH, "Entering nfs/rpc dispatcher");
+
+	LogDebug(COMPONENT_9P_DISPATCH, "My pthread id is %p",
+		 (caddr_t) pthread_self());
+
+	/* Set up the _9p_socket (trying V6 first, will fall back to V4
+	 * if V6 fails).
+	 */
+	_9p_socket = _9p_create_socket_V6();
+
+	if (_9p_socket == -1) {
+		LogFatal(COMPONENT_9P_DISPATCH,
+			 "Can't get socket for 9p dispatcher");
+	}
 
 	/* Init for thread parameter (mostly for scheduling) */
 	if (pthread_attr_init(&attr_thr) != 0)
@@ -603,8 +592,12 @@ void _9p_dispatcher_svc_run(long int sock)
 			 "can't set pthread's join state");
 
 	LogEvent(COMPONENT_9P_DISPATCH, "9P dispatcher started");
+
 	while (true) {
-		newsock = accept(sock, (struct sockaddr *)&addr, &addrlen);
+		newsock = accept(_9p_socket,
+				 (struct sockaddr *)&addr,
+				 &addrlen);
+
 		if (newsock < 0) {
 			LogCrit(COMPONENT_9P_DISPATCH, "accept failed");
 			continue;
@@ -619,42 +612,8 @@ void _9p_dispatcher_svc_run(long int sock)
 				 errno, strerror(errno));
 		}
 	}			/* while */
-	return;
-}				/* _9p_dispatcher_svc_run */
 
-/**
- * _9p_dispatcher_thread: thread used for RPC dispatching.
- *
- * Thead used for RPC dispatching. It gets the requests and then spool it to
- * one of the worker's LRU.  The worker chosen is the one with the smaller load
- * (its LRU is the shorter one).
- *
- * @param Arg (unused)
- *
- * @return Pointer to the result (but this function will mostly loop forever).
- *
- */
-void *_9p_dispatcher_thread(void *Arg)
-{
-	int _9p_socket = -1;
-
-	SetNameFunction("_9p_disp");
-
-	/* Calling dispatcher main loop */
-	LogInfo(COMPONENT_9P_DISPATCH, "Entering nfs/rpc dispatcher");
-
-	LogDebug(COMPONENT_9P_DISPATCH, "My pthread id is %p",
-		 (caddr_t) pthread_self());
-
-	/* Set up the _9p_socket */
-	_9p_socket = _9p_create_socket();
-	if (_9p_socket == -1) {
-		LogCrit(COMPONENT_9P_DISPATCH,
-			"Can't get socket for 9p dispatcher");
-		exit(1);
-	}
-
-	_9p_dispatcher_svc_run(_9p_socket);
+	close(_9p_socket);
 
 	return NULL;
 }				/* _9p_dispatcher_thread */

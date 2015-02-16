@@ -93,11 +93,11 @@ static struct config_item xfs_params[] = {
 		       fsal_staticfsinfo_t, maxread),
 	CONF_ITEM_UI64("maxwrite", 512, FSAL_MAXIOSIZE, FSAL_MAXIOSIZE,
 		       fsal_staticfsinfo_t, maxwrite),
-	CONF_ITEM_MODE("umask", 0, 0777, 0,
+	CONF_ITEM_MODE("umask", 0,
 		       fsal_staticfsinfo_t, umask),
 	CONF_ITEM_BOOL("auth_xdev_export", false,
 		       fsal_staticfsinfo_t, auth_exportpath_xdev),
-	CONF_ITEM_MODE("xattr_access_rights", 0, 0777, 0400,
+	CONF_ITEM_MODE("xattr_access_rights", 0400,
 		       fsal_staticfsinfo_t, xattr_access_rights),
 	CONFIG_EOL
 };

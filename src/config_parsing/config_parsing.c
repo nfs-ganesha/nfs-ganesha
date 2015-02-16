@@ -273,6 +273,7 @@ static bool convert_number(struct config_node *node,
 			   struct config_error_type *err_type)
 {
 	uint64_t val, mask, min, max;
+	int64_t sval, smin, smax;
 	char *endptr;
 	int base;
 	bool signed_int = false;
@@ -308,69 +309,95 @@ static bool convert_number(struct config_node *node,
 	}
 	switch (item->type) {
 	case CONFIG_INT16:
-		mask = ~0x7fff;
-		min = item->u.i16.minval;
-		max = item->u.i16.maxval;
+		smin = item->u.i16.minval;
+		smax = item->u.i16.maxval;
 		signed_int = true;
 		break;
 	case CONFIG_UINT16:
-		mask = ~0xffff;
+		mask = UINT16_MAX;
 		min = item->u.ui16.minval;
 		max = item->u.ui16.maxval;
 		break;
 	case CONFIG_INT32:
-		mask = ~0x7fffffff;
-		min = item->u.i32.minval;
-		max = item->u.i32.maxval;
+		smin = item->u.i32.minval;
+		smax = item->u.i32.maxval;
 		signed_int = true;
 		break;
 	case CONFIG_UINT32:
-		mask = ~0xffffffff;
+		mask = UINT32_MAX;
 		min = item->u.ui32.minval;
 		max = item->u.ui32.maxval;
 		break;
+	case CONFIG_ANON_ID:
+		/* Internal to config, anonymous id is treated as int64_t */
+		smin = item->u.i64.minval;
+		smax = item->u.i64.maxval;
+		signed_int = true;
+		break;
 	case CONFIG_INT64:
-		mask = ~0x7fffffffffffffff;
-		min = item->u.i64.minval;
-		max = item->u.i64.maxval;
+		smin = item->u.i64.minval;
+		smax = item->u.i64.maxval;
 		signed_int = true;
 		break;
 	case CONFIG_UINT64:
-		mask = 0;
+		mask = UINT64_MAX;
 		min = item->u.ui64.minval;
 		max = item->u.ui64.maxval;
 		break;
 	default:
 		goto errout;
 	}
-	if ((val & mask) != 0) { /* int type range check */
-		config_proc_error(node, err_type,
-				  "(%s) overflows the range",
-				  node->u.term.varvalue);
-		goto errout;
-	}
-	if (node->u.term.op_code == NULL)
-		goto done;
-	else if (*node->u.term.op_code == '-')
-		val = (uint64_t)(-(int64_t)val);
-	else if (*node->u.term.op_code == '~')
-		val = ~val;
-	else {
-		config_proc_error(node, err_type,
-				  "bogus arithmetic op (%s)",
-				  node->u.term.op_code);
-		goto errout;
-	}
+
 	if (signed_int) {
-		if (((int64_t)val < (int64_t)min)
-		    || ((int64_t)val > (int64_t)max)) {
+		if (node->u.term.op_code == NULL) {
+			/* Check for overflow of int64_t on positive */
+			if (val > (uint64_t) INT64_MAX) {
+				config_proc_error(node, err_type,
+					  "(%s) is out of range",
+					  node->u.term.varvalue);
+				goto errout;
+			}
+			sval = val;
+		} else if (*node->u.term.op_code == '-') {
+			/* Check for underflow of int64_t on negative */
+			if (val > ((uint64_t) INT64_MAX) + 1) {
+				config_proc_error(node, err_type,
+					  "(%s) is out of range",
+					  node->u.term.varvalue);
+				goto errout;
+			}
+			sval = -((int64_t) val);
+		} else {
+			config_proc_error(node, err_type,
+				  "(%c) is not allowed for signed values",
+				  *node->u.term.op_code);
+			goto errout;
+		}
+		if (sval < smin || sval > smax) {
 			config_proc_error(node, err_type,
 				  "(%s) is out of range",
 				  node->u.term.varvalue);
 			goto errout;
 		}
+		val = (uint64_t) sval;
 	} else {
-		if ((val < min) || (val > max)) {
+		if (node->u.term.op_code != NULL &&
+		    *node->u.term.op_code == '~') {
+			/* Check for overflow before negation */
+			if ((val & ~mask) != 0) {
+				config_proc_error(node, err_type,
+					  "(%s) is out of range",
+					  node->u.term.varvalue);
+				goto errout;
+			}
+			val = ~val & mask;
+		} else if (node->u.term.op_code != NULL) {
+			config_proc_error(node, err_type,
+				  "(%c) is not allowed for signed values",
+				  *node->u.term.op_code);
+			goto errout;
+		}
+		if (val < min || val > max) {
 			config_proc_error(node, err_type,
 				  "(%s) is out of range",
 				  node->u.term.varvalue);
@@ -378,10 +405,6 @@ static bool convert_number(struct config_node *node,
 		}
 	}
 
-	if (item->flags & CONFIG_MODE)
-		val = unix2fsal_mode(val);
-
-done:
 	*num = val;
 	return true;
 
@@ -699,6 +722,8 @@ static const char *config_type_str(enum config_type type)
 		return "CONFIG_UINT64";
 	case CONFIG_FSID:
 		return "CONFIG_FSID";
+	case CONFIG_ANON_ID:
+		return "CONFIG_ANON_ID";
 	case CONFIG_STRING:
 		return "CONFIG_STRING";
 	case CONFIG_PATH:
@@ -763,6 +788,9 @@ static bool do_block_init(struct config_node *blk_node,
 			break;
 		case CONFIG_UINT64:
 			*(uint64_t *)param_addr = item->u.ui64.def;
+			break;
+		case CONFIG_ANON_ID:
+			*(uid_t *)param_addr = item->u.i64.def;
 			break;
 		case CONFIG_FSID:
 			((struct fsal_fsid__ *)param_addr)->major
@@ -948,7 +976,9 @@ static int do_block_load(struct config_node *blk,
 	int errors = 0;
 
 	for (item = params; item->name != NULL; item++) {
-		union gen_int val;
+		uint64_t num64;
+		bool bool_val;
+		uint32_t num32;
 
 		node = lookup_node(&blk->u.nterm.sub_nodes, item->name);
 		if ((item->flags & CONFIG_MANDATORY) && (node == NULL)) {
@@ -1008,18 +1038,18 @@ static int do_block_load(struct config_node *blk,
 				break;
 			case CONFIG_INT16:
 				if (convert_number(term_node, item,
-						   &val.ui64, err_type))
-					*(int16_t *)param_addr = val.i16;
+						   &num64, err_type))
+					*(int16_t *)param_addr = num64;
 				break;
 			case CONFIG_UINT16:
 				if (convert_number(term_node, item,
-						   &val.ui64, err_type))
-					*(uint16_t *)param_addr	= val.ui16;
+						   &num64, err_type))
+					*(uint16_t *)param_addr	= num64;
 				break;
 			case CONFIG_INT32:
 				if (convert_number(term_node, item,
-						   &val.ui64, err_type)) {
-					*(int32_t *)param_addr = val.i32;
+						   &num64, err_type)) {
+					*(int32_t *)param_addr = num64;
 					if (item->flags & CONFIG_MARK_SET) {
 						caddr_t *mask_addr;
 
@@ -1033,18 +1063,33 @@ static int do_block_load(struct config_node *blk,
 				break;
 			case CONFIG_UINT32:
 				if (convert_number(term_node, item,
-						   &val.ui64, err_type))
-					*(uint32_t *)param_addr	= val.ui32;
+						   &num64, err_type))
+					*(uint32_t *)param_addr	= num64;
 				break;
 			case CONFIG_INT64:
 				if (convert_number(term_node, item,
-						   &val.ui64, err_type))
-					*(int64_t *)param_addr = val.i64;
+						   &num64, err_type))
+					*(int64_t *)param_addr = num64;
 				break;
 			case CONFIG_UINT64:
 				if (convert_number(term_node, item,
-						   &val.ui64, err_type))
-					*(uint64_t *)param_addr = val.ui64;
+						   &num64, err_type))
+					*(uint64_t *)param_addr = num64;
+				break;
+			case CONFIG_ANON_ID:
+				if (convert_number(term_node, item,
+						   &num64, err_type)) {
+					*(uid_t *)param_addr = num64;
+					if (item->flags & CONFIG_MARK_SET) {
+						caddr_t *mask_addr;
+
+						mask_addr = (caddr_t *)
+							((uint64_t)param_struct
+							 + item->u.i64.set_off);
+						*(uint32_t *)mask_addr
+							|= item->u.i64.bit;
+					}
+				}
 				break;
 			case CONFIG_FSID:
 				if (convert_fsid(term_node, param_addr,
@@ -1073,17 +1118,19 @@ static int do_block_load(struct config_node *blk,
 					gsh_strdup(term_node->u.term.varvalue);
 				break;
 			case CONFIG_TOKEN:
-				if (convert_enum(term_node, item, &val.ui32,
+				if (convert_enum(term_node, item, &num32,
 						 err_type))
-					*(uint32_t *)param_addr = val.ui32;
+					*(uint32_t *)param_addr = num32;
 				break;
 			case CONFIG_BOOL:
-				if (convert_bool(term_node, &val.b, err_type))
-					*(bool *)param_addr = val.b;
+				if (convert_bool(term_node, &bool_val,
+						 err_type))
+					*(bool *)param_addr = bool_val;
 				break;
 			case CONFIG_BOOLBIT:
-				if (convert_bool(term_node, &val.b, err_type)) {
-					if (val.b)
+				if (convert_bool(term_node, &bool_val,
+						 err_type)) {
+					if (bool_val)
 						*(uint32_t *)param_addr
 							|= item->u.bit.bit;
 					else
@@ -1104,9 +1151,9 @@ static int do_block_load(struct config_node *blk,
 				   (*(uint32_t *)param_addr & item->u.lst.mask))
 					*(uint32_t *)param_addr &=
 							~item->u.lst.mask;
-				if (convert_list(node, item, &val.ui32,
+				if (convert_list(node, item, &num32,
 						 err_type)) {
-					*(uint32_t *)param_addr |= val.ui32;
+					*(uint32_t *)param_addr |= num32;
 					if (item->flags & CONFIG_MARK_SET) {
 						caddr_t *mask_addr;
 						mask_addr = (caddr_t *)
@@ -1121,7 +1168,7 @@ static int do_block_load(struct config_node *blk,
 					     " value=%08"PRIx32,
 					     param_addr,
 					     item->name,
-					     item->u.lst.mask, val.ui32,
+					     item->u.lst.mask, num32,
 					     *(uint32_t *)param_addr);
 				break;
 			case CONFIG_ENUM:
@@ -1129,9 +1176,9 @@ static int do_block_load(struct config_node *blk,
 				   (*(uint32_t *)param_addr & item->u.lst.mask))
 					*(uint32_t *)param_addr &=
 							~item->u.lst.mask;
-				if (convert_enum(term_node, item, &val.ui32,
+				if (convert_enum(term_node, item, &num32,
 						 err_type)) {
-					*(uint32_t *)param_addr |= val.ui32;
+					*(uint32_t *)param_addr |= num32;
 					if (item->flags & CONFIG_MARK_SET) {
 						caddr_t *mask_addr;
 						mask_addr = (caddr_t *)
@@ -1146,16 +1193,16 @@ static int do_block_load(struct config_node *blk,
 					     " value=%08"PRIx32,
 					     param_addr,
 					     item->name,
-					     item->u.lst.mask, val.ui32,
+					     item->u.lst.mask, num32,
 					     *(uint32_t *)param_addr);
 			case CONFIG_ENUM_SET:
 				if (item->u.lst.def ==
 				   (*(uint32_t *)param_addr & item->u.lst.mask))
 					*(uint32_t *)param_addr &=
 							~item->u.lst.mask;
-				if (convert_enum(term_node, item, &val.ui32,
+				if (convert_enum(term_node, item, &num32,
 						 err_type)) {
-					*(uint32_t *)param_addr |= val.ui32;
+					*(uint32_t *)param_addr |= num32;
 					if (item->flags & CONFIG_MARK_SET) {
 						caddr_t *mask_addr;
 						mask_addr = (caddr_t *)
@@ -1170,7 +1217,7 @@ static int do_block_load(struct config_node *blk,
 					     " value=%08"PRIx32,
 					     param_addr,
 					     item->name,
-					     item->u.lst.mask, val.ui32,
+					     item->u.lst.mask, num32,
 					     *(uint32_t *)param_addr);
 				break;
 			case CONFIG_IP_ADDR:
@@ -1180,9 +1227,9 @@ static int do_block_load(struct config_node *blk,
 				break;
 			case CONFIG_INET_PORT:
 				if (convert_number(term_node, item,
-						   &val.ui64, err_type))
+						   &num64, err_type))
 					*(uint16_t *)param_addr =
-						htons((uint16_t)val.ui16);
+						htons((uint16_t)num64);
 				break;
 			case CONFIG_BLOCK:
 				if (!proc_block(node, item, param_addr,

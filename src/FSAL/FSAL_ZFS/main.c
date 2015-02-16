@@ -75,11 +75,11 @@ static struct config_item zfs_params[] = {
 		       zfs_fsal_module, fs_info.maxread),
 	CONF_ITEM_UI32("maxwrite", 512, FSAL_MAXIOSIZE, FSAL_MAXIOSIZE,
 		       zfs_fsal_module, fs_info.maxwrite),
-	CONF_ITEM_MODE("umask", 0, 0777, 0,
+	CONF_ITEM_MODE("umask", 0,
 		       zfs_fsal_module, fs_info.umask),
 	CONF_ITEM_BOOL("auth_xdev_export", false,
 		       zfs_fsal_module, fs_info.auth_exportpath_xdev),
-	CONF_ITEM_MODE("xattr_access_rights", 0, 0777, 0400,
+	CONF_ITEM_MODE("xattr_access_rights", 0400,
 		       zfs_fsal_module, fs_info.xattr_access_rights),
 	CONFIG_EOL
 };
