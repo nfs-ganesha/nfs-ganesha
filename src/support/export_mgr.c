@@ -913,7 +913,8 @@ static bool gsh_export_addexport(DBusMessageIter *args,
 		report_config_errors(&err_type,
 				     &conf_errs,
 				     config_errs_to_dbus);
-		fclose(conf_errs.fp);
+		if (conf_errs.fp != NULL)
+			fclose(conf_errs.fp);
 		dbus_set_error(error, DBUS_ERROR_INVALID_FILE_CONTENT,
 			       "Error while parsing %s because of %s errors. Details:\n%s",
 			       file_path,
@@ -932,7 +933,8 @@ static bool gsh_export_addexport(DBusMessageIter *args,
 		report_config_errors(&err_type,
 				     &conf_errs,
 				     config_errs_to_dbus);
-		fclose(conf_errs.fp);
+		if (conf_errs.fp != NULL)
+			fclose(conf_errs.fp);
 		dbus_set_error(error, DBUS_ERROR_INVALID_ARGS,
 			       "Error finding exports: %s because %s",
 			       export_expr, strerror(rc));
