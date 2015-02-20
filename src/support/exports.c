@@ -723,6 +723,17 @@ static int export_commit(void *node, void *link_mem, void *self_struct,
 	}
 	if (errcnt)
 		goto err_out;  /* have basic errors. don't even try more... */
+
+	/* export->fsal_export is valid iff fsal_commit succeeds.
+	 * Config code calls export_commit even if fsal_commit fails at
+	 * the moment, so error out here if fsal_commit failed.
+	 */
+	if (export->fsal_export == NULL) {
+		err_type->validate = true;
+		errcnt++;
+		goto err_out;
+	}
+
 	probe_exp = get_gsh_export(export->export_id);
 	if (probe_exp != NULL) {
 		LogDebug(COMPONENT_CONFIG,

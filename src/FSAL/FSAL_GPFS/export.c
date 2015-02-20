@@ -724,7 +724,7 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 			"populate_posix_file_systems returned %s (%d)",
 			strerror(status.minor), status.minor);
 		status.major = posix2fsal_error(status.minor);
-		goto errout;
+		goto detach;
 	}
 
 	status.minor = claim_posix_filesystems(op_ctx->export->fullpath,
@@ -738,7 +738,7 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 			op_ctx->export->fullpath,
 			strerror(status.minor), status.minor);
 		status.major = posix2fsal_error(status.minor);
-		goto errout;
+		goto detach;
 	}
 
 	op_ctx->fsal_export = &myself->export;
@@ -757,7 +757,7 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 		status = fsal_hdl->m_ops.
 			fsal_pnfs_ds(fsal_hdl, parse_node, &pds);
 		if (status.major != ERR_FSAL_NO_ERROR)
-			goto errout;
+			goto detach;
 
 		/* special case: server_id matches export_id */
 		pds->id_servers = op_ctx->export->export_id;
@@ -768,7 +768,9 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 				"Server id %d already in use.",
 				pds->id_servers);
 			status.major = ERR_FSAL_EXIST;
-			goto errout;
+			fsal_pnfs_ds_fini(pds);
+			gsh_free(pds);
+			goto detach;
 		}
 
 		LogInfo(COMPONENT_FSAL,
@@ -783,7 +785,9 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 	}
 	return status;
 
- errout:
+detach:
+	fsal_detach_export(fsal_hdl, &myself->export.exports);
+errout:
 	free_export_ops(&myself->export);
 	gsh_free(myself);		/* elvis has left the building */
 	return status;

@@ -90,10 +90,14 @@ case "$1" in
 	start
         ;;
   reload)
-	if [ ! -f $LOCK_FILE ] ; then
-	   killproc -p $PID_FILE $prog -HUP
-        fi
-        RETVAL=0 ;
+	echo -n $"Reloading $prog: "
+	if [ -f $LOCK_FILE ] ; then
+		killproc -p $PID_FILE $prog -HUP
+		RETVAL=0
+	else
+		RETVAL=1
+	fi
+        echo
         ;;
   force-reload)
 	stop 

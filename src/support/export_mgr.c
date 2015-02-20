@@ -246,8 +246,7 @@ void free_export(struct gsh_export *export)
 {
 	struct export_stats *export_st;
 
-	if (!export->refcnt)
-		return;
+	assert(export->refcnt == 0);
 
 	/* free resources */
 	free_export_resources(export);
@@ -276,9 +275,6 @@ bool insert_gsh_export(struct gsh_export *export)
 	void **cache_slot = (void **)
 	    &(export_by_id.cache[eid_cache_offsetof(export->export_id)]);
 
-	/* we will hold a ref starting out... */
-	export->refcnt = 1;
-
 	PTHREAD_RWLOCK_wrlock(&export_by_id.lock);
 	node = avltree_insert(&export->node_k, &export_by_id.t);
 	if (node) {
@@ -286,6 +282,10 @@ bool insert_gsh_export(struct gsh_export *export)
 		PTHREAD_RWLOCK_unlock(&export_by_id.lock);
 		return false;
 	}
+
+	/* we will hold a ref starting out... */
+	get_gsh_export_ref(export);
+
 	/* update cache */
 	atomic_store_voidptr(cache_slot, &export->node_k);
 	glist_add_tail(&exportlist, &export->exp_list);
