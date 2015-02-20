@@ -135,7 +135,7 @@ to simplify mounting to NFS-GANESHA. This is a 9p mount helper.
 Summary: The NFS-GANESHA's VFS FSAL
 Group: Applications/System
 BuildRequires: libattr-devel
-Requires: nfs-ganesha
+Requires: nfs-ganesha = %{version}-%{release}
 
 %description vfs
 This package contains a FSAL shared object to
@@ -144,6 +144,7 @@ be used with NFS-Ganesha to support VFS based filesystems
 %package nullfs
 Summary: The NFS-GANESHA's NULLFS Stackable FSAL
 Group: Applications/System
+Requires: nfs-ganesha = %{version}-%{release}
 
 %description nullfs
 This package contains a Stackable FSAL shared object to
@@ -153,7 +154,7 @@ be used with NFS-Ganesha. This is mostly a template for future (more sophisticat
 Summary: The NFS-GANESHA's PROXY FSAL
 Group: Applications/System
 BuildRequires: libattr-devel
-Requires: nfs-ganesha
+Requires: nfs-ganesha = %{version}-%{release}
 
 %description proxy
 This package contains a FSAL shared object to
@@ -165,7 +166,7 @@ Summary: The NFS-GANESHA's util scripts
 Group: Applications/System
 BuildRequires:	PyQt4-devel
 Requires:	PyQt4
-Requires: nfs-ganesha python
+Requires: nfs-ganesha = %{version}-%{release}, python
 
 %description utils
 This package contains utility scripts for managing the NFS-GANESHA server
@@ -176,7 +177,7 @@ This package contains utility scripts for managing the NFS-GANESHA server
 Summary: The NFS-GANESHA's library for use with LTTng
 Group: Applications/System
 BuildRequires: lttng-ust-devel >= 2.3
-Requires: nfs-ganesha, lttng-tools >= 2.3,  lttng-ust >= 2.3
+Requires: nfs-ganesha = %{version}-%{release}, lttng-tools >= 2.3,  lttng-ust >= 2.3
 
 %description lttng
 This package contains the libganesha_trace.so library. When preloaded
@@ -191,6 +192,7 @@ to the ganesha.nfsd server, it makes it possible to trace using LTTng.
 %package gpfs
 Summary: The NFS-GANESHA's GPFS FSAL
 Group: Applications/System
+Requires: nfs-ganesha = %{version}-%{release}
 
 %description gpfs
 This package contains a FSAL shared object to
@@ -202,7 +204,7 @@ be used with NFS-Ganesha to support GPFS backend
 %package zfs
 Summary: The NFS-GANESHA's ZFS FSAL
 Group: Applications/System
-Requires:	nfs-ganesha
+Requires:	nfs-ganesha = %{version}-%{release}
 BuildRequires:	libzfswrap-devel
 
 %description zfs
@@ -215,6 +217,7 @@ be used with NFS-Ganesha to support ZFS
 %package ceph
 Summary: The NFS-GANESHA's CEPH FSAL
 Group: Applications/System
+Requires:	nfs-ganesha = %{version}-%{release}
 Requires:	ceph >= 0.78
 BuildRequires:	ceph-devel >= 0.78
 
@@ -228,7 +231,8 @@ be used with NFS-Ganesha to support CEPH
 %package lustre
 Summary: The NFS-GANESHA's LUSTRE FSAL
 Group: Applications/System
-Requires:	lustre nfs-ganesha
+Requires:	nfs-ganesha = %{version}-%{release}
+Requires:	lustre
 BuildRequires:	libattr-devel lustre
 
 %description lustre
@@ -241,7 +245,8 @@ be used with NFS-Ganesha to support LUSTRE
 %package shook
 Summary: The NFS-GANESHA's LUSTRE/SHOOK FSAL
 Group: Applications/System
-Requires:	lustre shook-client nfs-ganesha
+Requires:	nfs-ganesha = %{version}-%{release}
+Requires:	lustre shook-client
 BuildRequires:	libattr-devel lustre shook-devel
 
 %description shook
@@ -254,7 +259,7 @@ be used with NFS-Ganesha to support LUSTRE via SHOOK
 %package xfs
 Summary: The NFS-GANESHA's XFS FSAL
 Group: Applications/System
-Requires:	nfs-ganesha
+Requires:	nfs-ganesha = %{version}-%{release}
 BuildRequires:	libattr-devel xfsprogs-devel
 
 %description xfs
@@ -267,7 +272,7 @@ to support XFS correctly
 %package hpss
 Summary: The NFS-GANESHA's HPSS FSAL
 Group: Applications/System
-Requires:	nfs-ganesha
+Requires:	nfs-ganesha = %{version}-%{release}
 #BuildRequires:	hpssfs
 
 %description hpss
@@ -280,7 +285,7 @@ be used with NFS-Ganesha to support HPSS
 %package panfs
 Summary: The NFS-GANESHA's PANFS FSAL
 Group: Applications/System
-Requires:	nfs-ganesha
+Requires:	nfs-ganesha = %{version}-%{release}
 
 %description panfs
 This package contains a FSAL shared object to
@@ -292,7 +297,8 @@ be used with NFS-Ganesha to support PANFS
 %package pt
 Summary: The NFS-GANESHA's PT FSAL
 Group: Applications/System
-Requires:	nfs-ganesha
+Requires:	nfs-ganesha = %{version}-%{release}
+
 
 %description pt
 This package contains a FSAL shared object to
@@ -304,7 +310,7 @@ be used with NFS-Ganesha to support PT
 %package gluster
 Summary: The NFS-GANESHA's GLUSTER FSAL
 Group: Applications/System
-Requires:	nfs-ganesha
+Requires:	nfs-ganesha = %{version}-%{release}
 BuildRequires:	glusterfs-api-devel >= 3.5.1
 BuildRequires:	libattr-devel
 
