@@ -565,6 +565,8 @@ int nfs4_Compound(nfs_arg_t *arg,
 	 * These checks apply only to 4.1 */
 	if (compound4_minor > 0) {
 
+		/* Check for valid operation to start an NFS v4.1 COMPOUND:
+		 */
 		if (argarray[0].argop != NFS4_OP_ILLEGAL
 		    && argarray[0].argop != NFS4_OP_SEQUENCE
 		    && argarray[0].argop != NFS4_OP_EXCHANGE_ID
@@ -592,10 +594,11 @@ int nfs4_Compound(nfs_arg_t *arg,
 			 * then server MUST return  NFS4ERR_NOT_ONLY_OP. See
 			 * 18.37.3 nd test DSESS9005 for details
 			 */
-			if (argarray[0].argop == NFS4_OP_EXCHANGE_ID
-			    || argarray[0].argop == NFS4_OP_CREATE_SESSION
-			    || argarray[0].argop == NFS4_OP_DESTROY_CLIENTID
-			    || argarray[0].argop == NFS4_OP_DESTROY_SESSION) {
+			if (argarray[0].argop == NFS4_OP_EXCHANGE_ID ||
+			    argarray[0].argop == NFS4_OP_CREATE_SESSION ||
+			    argarray[0].argop == NFS4_OP_DESTROY_CLIENTID ||
+			    argarray[0].argop == NFS4_OP_DESTROY_SESSION ||
+			    argarray[0].argop == NFS4_OP_BIND_CONN_TO_SESSION) {
 				status = NFS4ERR_NOT_ONLY_OP;
 				res->res_compound4.status = status;
 				res->res_compound4.resarray.resarray_len = 0;
@@ -625,6 +628,15 @@ int nfs4_Compound(nfs_arg_t *arg,
 		/* Used to check if OP_SEQUENCE is the first operation */
 		data.oppos = i;
 
+		/* Verify BIND_CONN_TO_SESSION is not used in a compound
+		 * with length > 1.
+		 */
+		if (i > 0 &&
+		    argarray[i].argop == NFS4_OP_BIND_CONN_TO_SESSION) {
+			status = NFS4ERR_NOT_ONLY_OP;
+			goto bad_op_state;
+		}
+
 		/* time each op */
 		now(&ts);
 		op_start_time = timespec_diff(&ServerBootTime, &ts);
@@ -634,13 +646,10 @@ int nfs4_Compound(nfs_arg_t *arg,
 		if (opcode > LastOpcode[compound4_minor])
 			opcode = 0;
 
-		if (compound4_minor > 0 &&
-		    data.session != NULL) {
-			if (data.session->fore_channel_attrs.
-			    ca_maxoperations == i) {
-				status = NFS4ERR_TOO_MANY_OPS;
-				goto bad_op_state;
-			}
+		if (compound4_minor > 0 && data.session != NULL &&
+		    data.session->fore_channel_attrs.ca_maxoperations == i) {
+			status = NFS4ERR_TOO_MANY_OPS;
+			goto bad_op_state;
 		}
 
 		LogDebug(COMPONENT_NFS_V4, "Request %d: opcode %d is %s", i,

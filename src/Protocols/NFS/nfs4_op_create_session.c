@@ -479,9 +479,6 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 	/* Release our reference to the confirmed record */
 	dec_client_id_ref(conf);
 
-	/* And to the session */
-	dec_session_ref(nfs41_session);
-
 	if (isFullDebug(component)) {
 		char str[LOG_BUFF_LEN];
 		struct display_buffer dspbuf = {sizeof(str), str, str};
@@ -509,7 +506,18 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 		}
 	}
 
-	LogDebug(component, "CREATE_SESSION success session=%p", nfs41_session);
+	if (isDebug(component)) {
+		char str[LOG_BUFF_LEN];
+		struct display_buffer dspbuf = {sizeof(str), str, str};
+
+		display_session(&dspbuf, nfs41_session);
+
+		LogDebug(component,
+			 "CREATE_SESSION success %s", str);
+	}
+
+	/* Release our reference to the session */
+	dec_session_ref(nfs41_session);
 
 	/* Successful exit */
 	res_CREATE_SESSION4->csr_status = NFS4_OK;
