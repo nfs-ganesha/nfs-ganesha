@@ -94,6 +94,7 @@ OFF          [Oo][Ff][Ff]
 OCTNUM       0[1-7][0-7]*
 HEXNUM       0[xX][0-9a-fA-F]+
 DECNUM       (0|[1-9][0-9]*)
+NINEP        9[pP]
 
 INCLPATH     \/?([a-zA-Z0-9\-\.\_])+(\/[a-zA-Z0-9\-\.\_]+)*
 PATHNAME     (\/[a-zA-Z0-9\-\.\_]+)\/?
@@ -238,6 +239,12 @@ ID_CHARS [a-zA-Z_][a-zA-Z0-9_\-]*
 	DEBUG_LEX(" arith op:%s", yytext);
 	yylval->token = save_token(yytext, false, stp);
 	return TOK_ARITH_OP;
+}
+
+<TERM>{NINEP}  { /* "9P" is here to take precedence over numbers, this is a special */
+	DEBUG_LEX("token value:%s",yytext);
+	yylval->token = save_token(yytext, false, stp);
+	return TOKEN;
 }
 
 <TERM>({OCTNUM}|{DECNUM}|{HEXNUM}){DOT}({OCTNUM}|{DECNUM}|{HEXNUM}) { /* an FSID */
