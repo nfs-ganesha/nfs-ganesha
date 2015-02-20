@@ -257,9 +257,6 @@ bool client_id_has_state(nfs_client_id_t *clientid);
 int32_t inc_client_id_ref(nfs_client_id_t *clientid);
 int32_t dec_client_id_ref(nfs_client_id_t *clientid);
 
-int32_t inc_session_ref(nfs41_session_t *session);
-int32_t dec_session_ref(nfs41_session_t *session);
-
 int display_client_record(struct display_buffer *dspbuf,
 			  nfs_client_record_t *record);
 
@@ -290,6 +287,12 @@ nfs_client_record_t *get_client_record(const char *const value,
  * NFS4.1 Session ID functions
  *
  ******************************************************************************/
+
+int display_session_id(struct display_buffer *dspbuf, char *session_id);
+int display_session(struct display_buffer *dspbuf, nfs41_session_t *session);
+
+int32_t inc_session_ref(nfs41_session_t *session);
+int32_t dec_session_ref(nfs41_session_t *session);
 
 int display_session_id_key(struct gsh_buffdesc *buff, char *str);
 int display_session_id_val(struct gsh_buffdesc *buff, char *str);
