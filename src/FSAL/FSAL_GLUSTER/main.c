@@ -75,6 +75,51 @@ static struct fsal_staticfsinfo_t default_gluster_info = {
 
 static struct glusterfs_fsal_module *glfsal_module;
 
+static struct config_item glfs_params[] = {
+	CONF_ITEM_BOOL("pnfs_mds", false,
+		       fsal_staticfsinfo_t, pnfs_mds),
+	CONF_ITEM_BOOL("pnfs_ds", true,
+		       fsal_staticfsinfo_t, pnfs_ds),
+	CONFIG_EOL
+};
+
+struct config_block glfs_param = {
+	.dbus_interface_name = "org.ganesha.nfsd.config.fsal.gluster",
+	.blk_desc.name = "GLUSTER",
+	.blk_desc.type = CONFIG_BLOCK,
+	.blk_desc.u.blk.init = noop_conf_init,
+	.blk_desc.u.blk.params = glfs_params,
+	.blk_desc.u.blk.commit = noop_conf_commit
+};
+
+static fsal_status_t init_config(struct fsal_module *fsal_hdl,
+				 config_file_t config_struct,
+				 struct config_error_type *err_type)
+{
+	struct glusterfs_fsal_module *glfsal_module =
+	    container_of(fsal_hdl, struct glusterfs_fsal_module, fsal);
+
+
+	glfsal_module->fs_info = default_gluster_info;
+	(void) load_config_from_parse(config_struct,
+				      &glfs_param,
+				      &glfsal_module->fs_info,
+				      true,
+				      err_type);
+
+	/*
+	 * Global block is not mandatory, so evenif
+	 * it is not parsed correctly, don't consider
+	 * that as an error
+	 */
+	if (!config_error_is_harmless(err_type))
+		LogDebug(COMPONENT_FSAL, "Parsing Export Block failed");
+
+	display_fsinfo(&glfsal_module->fs_info);
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
 /* Module methods
  */
 
@@ -99,7 +144,7 @@ MODULE_INIT void glusterfs_init(void)
 	glfsal_module->fsal.m_ops.create_export = glusterfs_create_export;
 
 	/* setup global handle internals */
-	glfsal_module->fs_info = default_gluster_info;
+	glfsal_module->fsal.m_ops.init_config = init_config;
 
 	/*
 	 * Following inits needed for pNFS support
