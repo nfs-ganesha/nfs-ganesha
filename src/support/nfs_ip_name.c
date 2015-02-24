@@ -133,12 +133,12 @@ int display_ip_name_val(struct gsh_buffdesc *pbuff, char *str)
 
 /**
  *
- * nfs_ip_name_add: adds an entry in the duplicate requests cache.
+ * nfs_ip_name_add: adds an entry into IP/name cache.
  *
  * Adds an entry in the duplicate requests cache.
  *
  * @param ipaddr           [IN]    the ipaddr to be used as key
- * @param hostname         [IN]    the hostname added (found by using gethostbyaddr)
+ * @param hostname         [OUT]    the hostname added (found by using getnameinfo)
  *
  * @return IP_NAME_SUCCESS if successfull\n.
  * @return IP_NAME_INSERT_MALLOC_ERROR if an error occured during the insertion process \n
