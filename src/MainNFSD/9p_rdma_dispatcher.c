@@ -210,7 +210,7 @@ static void _9p_rdma_setup_pernic(msk_trans_t *trans, uint8_t *outrdmabuf)
 	if (msk_getpd(trans)->private)
 		return;
 
-	pernic = malloc(sizeof(*pernic));
+	pernic = gsh_malloc(sizeof(*pernic));
 	if (!pernic) {
 		LogFatal(COMPONENT_9P,
 			 "9P/RDMA: pernic setup could not allocate pernic");
@@ -293,10 +293,10 @@ error:
 			msk_dereg_mr(pernic->outmr);
 		if (pernic->inmr)
 			msk_dereg_mr(pernic->inmr);
-		free(pernic->rdmabuf);
-		free(pernic->rdata);
+		gsh_free(pernic->rdmabuf);
+		gsh_free(pernic->rdata);
 	}
-	free(pernic);
+	gsh_free(pernic);
 	return;
 }
 
