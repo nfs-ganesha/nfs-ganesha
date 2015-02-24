@@ -194,13 +194,11 @@ int nfs_ip_name_add(sockaddr_t *ipaddr, char *hostname, size_t size)
 
 	/* Ask for the name to be cached */
 	if (rc != 0) {
+		strmaxcpy(nfs_ip_name->hostname, ipstring,
+			sizeof(nfs_ip_name->hostname));
 		LogEvent(COMPONENT_DISPATCH,
-			 "Cannot resolve address %s, error %s", ipstring,
-			 gai_strerror(rc));
-
-		gsh_free(nfs_ip_name);
-		gsh_free(pipaddr);
-		return IP_NAME_NETDB_ERROR;
+			 "Cannot resolve address %s, error %s, using %s as hostname",
+			 ipstring, gai_strerror(rc), nfs_ip_name->hostname);
 	}
 
 	LogDebug(COMPONENT_DISPATCH, "Inserting %s->%s to addr cache", ipstring,
