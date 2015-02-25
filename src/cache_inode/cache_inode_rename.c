@@ -220,7 +220,7 @@ cache_inode_rename(cache_entry_t *dir_src,
 		if (status != CACHE_INODE_ESTALE)
 			status = CACHE_INODE_NOT_FOUND;
 
-		LogEvent(COMPONENT_CACHE_INODE,
+		LogDebug(COMPONENT_CACHE_INODE,
 			 "Rename (%p,%s)->(%p,%s) : source doesn't exist",
 			 dir_src, oldname, dir_dest, newname);
 		goto out;
