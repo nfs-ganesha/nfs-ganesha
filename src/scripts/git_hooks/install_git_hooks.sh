@@ -8,9 +8,9 @@ HOOKDIR=$TOPDIR/.git/hooks
 # directory.
 ln -sf ./src/scripts/checkpatch.conf "$TOPDIR/.checkpatch.conf"
 
-cp "$CURDIR/pre-commit" "$HOOKDIR"
+cp -f "$CURDIR/pre-commit" "$HOOKDIR"
 chmod +x  "$HOOKDIR/pre-commit"
 
-cp "$CURDIR/commit-msg" "$HOOKDIR"
+cp -f "$CURDIR/commit-msg" "$HOOKDIR"
 chmod +x "$HOOKDIR/commit-msg"
 
