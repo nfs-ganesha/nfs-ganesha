@@ -162,8 +162,10 @@ static void unregister(const rpcprog_t prog, const rpcvers_t vers1,
 	for (vers = vers1; vers <= vers2; vers++) {
 		rpcb_unset(prog, vers, netconfig_udpv4);
 		rpcb_unset(prog, vers, netconfig_tcpv4);
-		rpcb_unset(prog, vers, netconfig_udpv6);
-		rpcb_unset(prog, vers, netconfig_tcpv6);
+		if (netconfig_udpv6)
+			rpcb_unset(prog, vers, netconfig_udpv6);
+		if (netconfig_tcpv6)
+			rpcb_unset(prog, vers, netconfig_tcpv6);
 	}
 }
 
@@ -686,12 +688,14 @@ void Register_program(protos prot, int flag, int vers)
 				 "Cannot register %s V%d on UDP", tags[prot],
 				 (int)vers);
 
-		LogInfo(COMPONENT_DISPATCH, "Registering %s V%d/UDPv6",
-			tags[prot], (int)vers);
-		if (!UDP_REGISTER(prot, vers, netconfig_udpv6))
-			LogFatal(COMPONENT_DISPATCH,
-				 "Cannot register %s V%d on UDPv6", tags[prot],
-				 (int)vers);
+		if (netconfig_udpv6) {
+			LogInfo(COMPONENT_DISPATCH, "Registering %s V%d/UDPv6",
+				tags[prot], (int)vers);
+			if (!UDP_REGISTER(prot, vers, netconfig_udpv6))
+				LogFatal(COMPONENT_DISPATCH,
+					 "Cannot register %s V%d on UDPv6",
+					 tags[prot], (int)vers);
+		}
 
 #ifndef _NO_TCP_REGISTER
 		LogInfo(COMPONENT_DISPATCH, "Registering %s V%d/TCP",
@@ -702,12 +706,14 @@ void Register_program(protos prot, int flag, int vers)
 				 "Cannot register %s V%d on TCP", tags[prot],
 				 (int)vers);
 
-		LogInfo(COMPONENT_DISPATCH, "Registering %s V%d/TCPv6",
-			tags[prot], (int)vers);
-		if (!TCP_REGISTER(prot, vers, netconfig_tcpv6))
-			LogFatal(COMPONENT_DISPATCH,
-				 "Cannot register %s V%d on TCPv6", tags[prot],
-				 (int)vers);
+		if (netconfig_tcpv6) {
+			LogInfo(COMPONENT_DISPATCH, "Registering %s V%d/TCPv6",
+				tags[prot], (int)vers);
+			if (!TCP_REGISTER(prot, vers, netconfig_tcpv6))
+				LogFatal(COMPONENT_DISPATCH,
+					 "Cannot register %s V%d on TCPv6",
+					 tags[prot], (int)vers);
+		}
 #endif				/* _NO_TCP_REGISTER */
 	}
 }
@@ -805,17 +811,21 @@ void nfs_Init_svc()
 	/* Get the netconfig entries from /etc/netconfig */
 	netconfig_udpv6 = (struct netconfig *)getnetconfigent("udp6");
 	if (netconfig_udpv6 == NULL)
-		LogFatal(COMPONENT_DISPATCH,
+		LogInfo(COMPONENT_DISPATCH,
 			 "Cannot get udp6 netconfig, cannot get an entry for udp6 in netconfig file. Check file /etc/netconfig...");
 
 	/* Get the netconfig entries from /etc/netconfig */
 	netconfig_tcpv6 = (struct netconfig *)getnetconfigent("tcp6");
 	if (netconfig_tcpv6 == NULL)
-		LogFatal(COMPONENT_DISPATCH,
+		LogInfo(COMPONENT_DISPATCH,
 			 "Cannot get tcp6 netconfig, cannot get an entry for tcp in netconfig file. Check file /etc/netconfig...");
 
-	/* A short message to show that /etc/netconfig parsing was a success */
-	LogFullDebug(COMPONENT_DISPATCH, "netconfig found for UDPv6 and TCPv6");
+	/* A short message to show that /etc/netconfig parsing was a success
+	 * for ipv6
+	 */
+	if (netconfig_udpv6 && netconfig_tcpv6)
+		LogFullDebug(COMPONENT_DISPATCH,
+			     "netconfig found for UDPv6 and TCPv6");
 
 	/* Allocate the UDP and TCP sockets for the RPC */
 	Allocate_sockets();
