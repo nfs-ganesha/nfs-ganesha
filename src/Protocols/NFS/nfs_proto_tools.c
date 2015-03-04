@@ -4119,7 +4119,7 @@ nfsstat4 nfs4_utf8string2dynamic(const utf8string *input,
 	if (input->utf8string_val == NULL || input->utf8string_len == 0)
 		return NFS4ERR_INVAL;
 
-	if (input->utf8string_len > MAXNAMLEN)
+	if (input->utf8string_len > MAXPATHLEN)
 		return NFS4ERR_NAMETOOLONG;
 
 	char *name = gsh_malloc(input->utf8string_len + 1);
