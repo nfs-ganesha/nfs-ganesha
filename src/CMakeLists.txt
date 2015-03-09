@@ -215,6 +215,9 @@ option(DEBUG_SYMS "include debug symbols to binaries (-g option)" OFF)
 # Add coverage information to build tree
 option(COVERAGE "add flag to generate coverage data at runtime" OFF)
 
+# Add coverage information to build tree
+option(ENFORCE_GCC "enforce gcc as a the C compiler used for the project" OFF)
+
 # enable code profiling [-g -pg]
 option(PROFILING "turn on code profiling (-g and -pg)" OFF)
 
@@ -275,6 +278,12 @@ ENDIF(DEBUG_SYMS)
 IF(COVERAGE)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --coverage")
 ENDIF(COVERAGE)
+
+# Set what's needed is GCC is enforced
+IF(ENFORCE_GCC)
+    set(CMAKE_COMPILER_IS_GNUCXX TRUE)
+    set(CMAKE_C_COMPILER gcc)
+ENDIF(ENFORCE_GCC)
 
 # Build source locations and parameters
 IF(USE_FSAL_CEPH)
@@ -945,6 +954,7 @@ message(STATUS "_VALGRIND_MEMCHECK = ${_VALGRIND_MEMCHECK}")
 message(STATUS "PROXY_HANDLE_MAPPING = ${PROXY_HANDLE_MAPPING}")
 message(STATUS "DEBUG_SYMS = ${DEBUG_SYMS}")
 message(STATUS "COVERAGE = ${COVERAGE}")
+message(STATUS "ENFORCE_GCC = ${ENFORCE_GCC}")
 message(STATUS "PROFILING = ${PROFILING}")
 message(STATUS "USE_GSS = ${USE_GSS}")
 message(STATUS "TIRPC_EPOLL = ${TIRPC_EPOLL}")
@@ -1278,6 +1288,7 @@ if(DOXYGEN_FOUND)
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     )
 endif(DOXYGEN_FOUND)
+
 
 # Include thread-sanitizer module
 include(${CMAKE_SOURCE_DIR}/cmake/tsan.cmake)
