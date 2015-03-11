@@ -17,7 +17,6 @@
 #include <rpc/xdr_inline.h>
 #include <rpc/rpc.h>
 #include <rpc/svc.h>
-#include <rpc/svc_dg.h>
 #include <rpc/clnt.h>
 
 #ifdef _HAVE_GSSAPI
