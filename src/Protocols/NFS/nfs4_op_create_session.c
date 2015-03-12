@@ -513,7 +513,9 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 		display_session(&dspbuf, nfs41_session);
 
 		LogDebug(component,
-			 "CREATE_SESSION success %s", str);
+			 "success %s csa_flags 0x%X csr_flags 0x%X",
+			  str, arg_CREATE_SESSION4->csa_flags,
+			  res_CREATE_SESSION4ok->csr_flags);
 	}
 
 	/* Release our reference to the session */

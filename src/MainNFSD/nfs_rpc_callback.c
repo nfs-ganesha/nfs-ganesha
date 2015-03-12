@@ -717,9 +717,12 @@ int nfs_rpc_create_chan_v41(nfs41_session_t *session, int num_sec_parms,
 	code = 0;
 
  out:
-	if ((code != 0) && chan->clnt)
-		_nfs_rpc_destroy_chan(chan);
-
+	if (code != 0) {
+		LogWarn(COMPONENT_NFS_CB,
+			"can not create back channel, code %d", code);
+		if (chan->clnt)
+			_nfs_rpc_destroy_chan(chan);
+	}
 	PTHREAD_MUTEX_unlock(&chan->mtx);
 
 	return code;
