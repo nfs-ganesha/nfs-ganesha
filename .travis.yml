@@ -1,47 +1,76 @@
 language: c
 
 compiler:
-  - gcc
+ - gcc
+ - clang
 
 env:
-  - BUILD_TYPE=Debug
-  - BUILD_TYPE=Release
+ - BUILD_TYPE=Maintainer
+ - BUILD_TYPE=Debug
+ - BUILD_TYPE=Release
 
 branches:
  only:
-  - travis
-  - next
+ - next
+
+matrix:
+ allow_failures:
+  - compiler: clang
+    env: BUILD_TYPE=Maintainer
+  - compiler: clang
+    env: BUILD_TYPE=Debug
 
 before_install:
  - git submodule update --init --recursive
- - sudo apt-get install libnfsidmap2
- - sudo apt-get install libnfsidmap-dev
- - sudo apt-get install libkrb5-3
- - sudo apt-get install libkrb5-dev
- - sudo apt-get install libk5crypto3
- - sudo apt-get install libgssapi-krb5-2
- - sudo apt-get install libgssglue1
- - sudo apt-get install libdbus-1-3
- - sudo apt-get install dbus
- - sudo apt-get install libdbus-1-dev
- - sudo apt-get install libcap-dev
+ - sudo add-apt-repository -y ppa:gluster/glusterfs-3.6
+ - wget -q -O- 'https://ceph.com/git/?p=ceph.git;a=blob_plain;f=keys/release.asc' | sudo apt-key add -
+ - echo deb http://eu.ceph.com/debian-firefly/ $(lsb_release -sc) main | sudo tee /etc/apt/sources.list.d/ceph.list
+ - sudo apt-add-repository -y ppa:lttng/ppa
+ - sudo apt-get update -q
+ - sudo apt-get install -y libnfsidmap2
+ - sudo apt-get install -y libnfsidmap-dev
+ - sudo apt-get install -y libkrb5-3
+ - sudo apt-get install -y libkrb5-dev
+ - sudo apt-get install -y libk5crypto3
+ - sudo apt-get install -y libgssapi-krb5-2
+ - sudo apt-get install -y libgssglue1
+ - sudo apt-get install -y libdbus-1-3
+ - sudo apt-get install -y libattr1-dev
+ - sudo apt-get install -y libacl1-dev
+ - sudo apt-get install -y dbus
+ - sudo apt-get install -y libdbus-1-dev
+ - sudo apt-get install -y libcap-dev
+ - sudo apt-get install -y libjemalloc-dev
+ - sudo apt-get install -y glusterfs-common
+ - sudo apt-get install -y uuid-dev
+ - sudo apt-get install -y libblkid-dev
+ - sudo apt-get install -y xfslibs-dev
+ - sudo apt-get install -y libcephfs-dev
+ - sudo apt-get install -y libwbclient-dev
+ - sudo apt-get install -y lttng-tools
+ - sudo apt-get install -y liblttng-ust-dev
+ - sudo apt-get install -y lttng-modules-dkms
+ - sudo apt-get install -y pyqt4-dev-tools
+ - sudo apt-get install -y rpm2cpio
+ - sudo apt-get install -y libaio-dev
+ - sudo apt-get install -y libibverbs-dev
+ - sudo apt-get install -y librdmacm-dev
 
-script: mkdir ../build && cd ../build && cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DBUILD_CONFIG=everything ../nfs-ganesha/src/ && make
+install:
+ - wget https://downloads.hpdd.intel.com/public/lustre/latest-maintenance-release/el6/server/RPMS/x86_64/lustre-2.5.3-2.6.32_431.23.3.el6_lustre.x86_64.x86_64.rpm -O /tmp/lustre.rpm
+ - mkdir /tmp/lustre && pushd /tmp/lustre ; rpm2cpio /tmp/lustre.rpm | cpio -id ./usr/include/\* ./usr/lib64/liblustreapi.a ; popd
+ - wget https://github.com/tfb-bull/mooshika/archive/0.7.1.tar.gz -O /tmp/mooshika.tar.gz
+ - mkdir /tmp/mooshika && tar xf /tmp/mooshika.tar.gz -C /tmp && cd /tmp/mooshika-0.7.1 && sh autogen.sh && ./configure --prefix=/tmp/mooshika && make && make install && cd $TRAVIS_BUILD_DIR
+ - if [[ ${CC} == 'gcc' ]]; then cd contrib/libzfswrap && aclocal -I m4 && libtoolize --force --copy && autoconf && autoheader && automake -a --add-missing -Wall && ./configure --prefix=/tmp/libzfswrap && make && make install && cd $TRAVIS_BUILD_DIR ; fi
 
-notifications:
-  email:
-    recepients:
-      - sbhamare@panasas.com
+script:
+ - mkdir ../build && cd ../build && cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DBUILD_CONFIG=everything -DUSE_FSAL_PT=ON -DUSE_FSAL_CEPH=ON -DUSE_ADMIN_TOOLS=ON -DUSE_LTTNG=ON -DUSE_TIRPC_IPV6=ON -DUSE_9P_RDMA=ON -D_USE_9P_RDMA=ON -DLUSTRE_PREFIX=/tmp/lustre/usr -DZFS_PREFIX=/tmp/libzfswrap -DMOOSHIKA_PREFIX=/tmp/mooshika ../nfs-ganesha/src/ && make
 
-    on_success: always
-    on_failure: always
-
-  irc:
-    channels:
-      - "irc.panasas.com#pnfs"
-    template:
-      - "%{repository}#%{build_number}  (%{branch} - %{commit}) : %{message}"
-      - "Build details: %{build_url}"
-    use_notice: true
-    skip_join: true
+#notifications:
+#  email:
+#    recepients:
+#     - thomas.favre-bulle@bull.net
+#
+#    on_success: always
+#    on_failure: always
 
