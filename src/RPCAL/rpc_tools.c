@@ -101,14 +101,14 @@ const char *str_af(int af)
 const char *xprt_type_to_str(xprt_type_t type)
 {
 	switch (type) {
+	case XPRT_UNKNOWN:
+		return "UNKNOWN";
 	case XPRT_UDP:
 		return "udp";
 	case XPRT_TCP:
 		return "tcp";
 	case XPRT_TCP_RENDEZVOUS:
 		return "tcp rendezvous";
-	case XPRT_UNKNOWN:
-		return "UNKNOWN";
 	case XPRT_SCTP:
 		return "sctp";
 	case XPRT_RDMA:
