@@ -597,11 +597,14 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 		group = -1;  /*setgid bit on dir propagates dir group owner */
 
 	/* create it with no access because we are root when we do this */
+	fsal_set_credentials(op_ctx->creds);
 	retval = mknodat(dir_fd, name, create_mode, unix_dev);
 	if (retval < 0) {
 		retval = errno;
+		fsal_restore_ganesha_credentials();
 		goto direrr;
 	}
+	fsal_restore_ganesha_credentials();
 	retval = make_file_safe(myself, op_ctx, dir_fd, name,
 				unix_mode, user, group, &hdl);
 	if (!retval) {
@@ -823,13 +826,14 @@ static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
 		retval = destdirfd;
 		goto fileerr;
 	}
-	retval =
-	    vfs_link_by_handle(myself->handle, srcfd, "", destdirfd, name,
-			       AT_EMPTY_PATH, &fsal_error);
+	fsal_set_credentials(op_ctx->creds);
+	retval = vfs_link_by_handle(myself->handle, srcfd, "", destdirfd, name,
+				    AT_EMPTY_PATH, &fsal_error);
 	if (retval < 0) {
 		retval = errno;
 		fsal_error = posix2fsal_error(retval);
 	}
+	fsal_restore_ganesha_credentials();
 	close(destdirfd);
 
  fileerr:
@@ -1392,6 +1396,7 @@ static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
 			fsal_error = posix2fsal_error(retval);
 		goto errout;
 	}
+	fsal_set_credentials(op_ctx->creds);
 	retval = unlinkat(fd, name, (S_ISDIR(stat.st_mode)) ? AT_REMOVEDIR : 0);
 	if (retval < 0) {
 		retval = errno;
@@ -1400,6 +1405,7 @@ static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
 		else
 			fsal_error = posix2fsal_error(retval);
 	}
+	fsal_restore_ganesha_credentials();
 
  errout:
 	close(fd);
