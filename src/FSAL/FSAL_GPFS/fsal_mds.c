@@ -165,15 +165,15 @@ nfsstat4 getdeviceinfo(struct fsal_module *fsal_hdl,
 	darg.devid.device_id4 = deviceid->device_id4;
 	darg.devid.devid = deviceid->devid;
 
-	ds_buffer = fs_da_addr_size(NULL);
+	ds_buffer = da_addr_body->x_handy;
 
 	darg.xdr.p = (int *)da_addr_body->x_base;
 	da_beginning = xdr_getpos(da_addr_body);
 	darg.xdr.end = (int *)(darg.xdr.p + ((ds_buffer - da_beginning)>>2));
 
 	LogDebug(COMPONENT_PNFS,
-		"getdeviceinfo p %p end %p da_length %ld seq %d fd %d fsid 0x%lx\n",
-		darg.xdr.p, darg.xdr.end, da_beginning,
+		"getdeviceinfo p %p end %p da_length %lu ds_buffer %lu seq %d fd %d fsid 0x%lx\n",
+		darg.xdr.p, darg.xdr.end, da_beginning, ds_buffer,
 		deviceid->device_id2, deviceid->device_id4,
 		deviceid->devid);
 
@@ -350,8 +350,15 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_hdl,
 				     req_ctx->export->export_id, 1,
 				     &ds_desc);
 	if (nfs_status) {
-		LogCrit(COMPONENT_PNFS,
-			"Failed to encode nfsv4_1_file_layout.");
+		if (arg->maxcount <=
+		    op_ctx->fsal_export->
+		    exp_ops.fs_loc_body_size(op_ctx->fsal_export)) {
+			nfs_status = NFS4ERR_TOOSMALL;
+			LogDebug(COMPONENT_PNFS,
+				"Failed to encode nfsv4_1_file_layout.");
+		} else
+			LogCrit(COMPONENT_PNFS,
+				"Failed to encode nfsv4_1_file_layout.");
 		goto relinquish;
 	}
 

@@ -85,6 +85,12 @@ extern uint32_t root_op_export_options;
 extern uint32_t root_op_export_set;
 
 /**
+ * @brief node id used to construct recovery directory in
+ * cluster implementation.
+ */
+extern ushort g_nodeid;
+
+/**
  * @brief Ops context for asynch and not protocol tasks that need to use
  * subsystems that depend on op_ctx.
  */

@@ -114,11 +114,8 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op, compound_data_t *data,
 			   EXCHGID4_FLAG_CONFIRMED_R)) != 0)
 		return res_EXCHANGE_ID4->eir_status = NFS4ERR_INVAL;
 
-	/**
-	 * @todo Look into this again later, if no exports support
-	 * pNFS, then we shouldn't claim to support it.
-	 */
-
+	/* If client did not ask for pNFS related server roles than just set
+	   server roles */
 	pnfs_flags = arg_EXCHANGE_ID4->eia_flags & EXCHGID4_FLAG_MASK_PNFS;
 	if (pnfs_flags == 0) {
 		if (nfs_param.nfsv4_param.pnfs_mds)
@@ -128,8 +125,21 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op, compound_data_t *data,
 		if (pnfs_flags == 0)
 			pnfs_flags |= EXCHGID4_FLAG_USE_NON_PNFS;
 	}
-	LogDebug(COMPONENT_CLIENTID, "EXCHANGE_ID pnfs_flags 0x%08x",
-		 pnfs_flags);
+	/* If client did ask for pNFS related server roles than try to match the
+	   server roles to the client request. */
+	else {
+		if ((arg_EXCHANGE_ID4->eia_flags & EXCHGID4_FLAG_USE_PNFS_MDS)
+		    && (nfs_param.nfsv4_param.pnfs_mds))
+			pnfs_flags |= EXCHGID4_FLAG_USE_PNFS_MDS;
+		if ((arg_EXCHANGE_ID4->eia_flags & EXCHGID4_FLAG_USE_PNFS_DS)
+		    && (nfs_param.nfsv4_param.pnfs_ds))
+			pnfs_flags |= EXCHGID4_FLAG_USE_PNFS_DS;
+		if (pnfs_flags == 0)
+			pnfs_flags |= EXCHGID4_FLAG_USE_NON_PNFS;
+	}
+	LogDebug(COMPONENT_CLIENTID,
+		"EXCHANGE_ID pnfs_flags 0x%08x eia_flags 0x%08x",
+		 pnfs_flags, arg_EXCHANGE_ID4->eia_flags);
 
 	update = (arg_EXCHANGE_ID4->eia_flags &
 		  EXCHGID4_FLAG_UPD_CONFIRMED_REC_A) != 0;

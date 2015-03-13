@@ -70,32 +70,10 @@ int nfs4_op_sequence(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	if (!nfs41_Session_Get_Pointer(arg_SEQUENCE4->sa_sessionid, &session)) {
-		if (nfs_in_grace()) {
-			memcpy(res_SEQUENCE4->SEQUENCE4res_u.sr_resok4.
-			       sr_sessionid, arg_SEQUENCE4->sa_sessionid,
-			       NFS4_SESSIONID_SIZE);
-			res_SEQUENCE4->SEQUENCE4res_u.sr_resok4.sr_sequenceid =
-			    arg_SEQUENCE4->sa_sequenceid;
-			res_SEQUENCE4->SEQUENCE4res_u.sr_resok4.sr_slotid =
-			    arg_SEQUENCE4->sa_slotid;
-			res_SEQUENCE4->SEQUENCE4res_u.sr_resok4.
-			    sr_highest_slotid = NFS41_NB_SLOTS - 1;
-			res_SEQUENCE4->SEQUENCE4res_u.sr_resok4.
-			    sr_target_highest_slotid = arg_SEQUENCE4->sa_slotid;
-			res_SEQUENCE4->SEQUENCE4res_u.sr_resok4.
-			    sr_status_flags =
-			    SEQ4_STATUS_RESTART_RECLAIM_NEEDED;
-			LogDebugAlt(COMPONENT_SESSIONS, COMPONENT_CLIENTID,
-				    "SEQUENCE returning status %s flags 0x%X",
-				    nfsstat4_to_str(res_SEQUENCE4->sr_status),
-				    res_SEQUENCE4->SEQUENCE4res_u.sr_resok4.
-				    sr_status_flags);
-		} else {
-			res_SEQUENCE4->sr_status = NFS4ERR_BADSESSION;
-			LogDebugAlt(COMPONENT_SESSIONS, COMPONENT_CLIENTID,
-				    "SEQUENCE returning status %s",
-				    nfsstat4_to_str(res_SEQUENCE4->sr_status));
-		}
+		res_SEQUENCE4->sr_status = NFS4ERR_BADSESSION;
+		LogDebugAlt(COMPONENT_SESSIONS, COMPONENT_CLIENTID,
+			    "SEQUENCE returning status %s",
+			    nfsstat4_to_str(res_SEQUENCE4->sr_status));
 
 		return res_SEQUENCE4->sr_status;
 	}
