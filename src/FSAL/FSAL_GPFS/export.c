@@ -745,6 +745,24 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 
 	gpfs_ganesha(OPENHANDLE_GET_VERIFIER, &GPFS_write_verifier);
 
+	/* if the nodeid has not been obtained, get it now */
+	if (!g_nodeid) {
+		struct grace_period_arg gpa;
+		int nodeid;
+		struct gpfs_filesystem *gpfs_fs;
+
+		gpfs_fs = myself->root_fs->private;
+		gpa.mountdirfd = gpfs_fs->root_fd;
+
+		nodeid = gpfs_ganesha(OPENHANDLE_GET_NODEID, &gpa);
+		if (nodeid >= 0) {
+			/* GPFS starts with 0, we want node ids to be > 0 */
+			g_nodeid = nodeid + 1;
+			LogFullDebug(COMPONENT_FSAL, "nodeid = (%d)", g_nodeid);
+		} else
+			LogCrit(COMPONENT_FSAL,
+			    "OPENHANDLE_GET_NODEID failed nodeid = %d", nodeid);
+	}
 	myself->pnfs_ds_enabled =
 	    myself->export.exp_ops.fs_supports(&myself->export,
 					    fso_pnfs_ds_supported);
