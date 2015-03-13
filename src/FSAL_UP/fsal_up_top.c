@@ -423,8 +423,8 @@ static state_status_t create_file_recall(cache_entry_t *entry,
 					 struct state_layout_recall_file
 					 **recout)
 {
-	/* True if no layouts matching the request have been found */
-	bool none = true;
+	/* True if a layout matching the request has been found */
+	bool found = false;
 	/* Iterator over all states on the cache entry */
 	struct glist_head *state_iter = NULL;
 	/* Error return code */
@@ -433,10 +433,8 @@ static state_status_t create_file_recall(cache_entry_t *entry,
 	struct state_layout_recall_file *recall =
 	    gsh_malloc(sizeof(struct state_layout_recall_file));
 
-	if (!recall) {
-		rc = STATE_MALLOC_ERROR;
-		goto out;
-	}
+	if (!recall)
+		return STATE_MALLOC_ERROR;
 
 	glist_init(&recall->state_list);
 	recall->entry = entry;
@@ -526,21 +524,21 @@ static state_status_t create_file_recall(cache_entry_t *entry,
 			list_entry->state = s;
 			glist_add_tail(&recall->state_list, &list_entry->link);
 			inc_state_t_ref(s);
-			none = false;
+			found = true;
 		}
 	}
 
-	if (none)
+	if (!found)
 		rc = STATE_NOT_FOUND;
 
  out:
 
-	if ((rc != STATE_SUCCESS) && recall) {
-		/* Destroy the recall list constructed so far. */
-		destroy_recall(recall);
-	} else {
+	if (rc == STATE_SUCCESS) {
 		glist_add_tail(&entry->layoutrecall_list, &recall->entry_link);
 		*recout = recall;
+	} else {
+		/* Destroy the recall list constructed so far. */
+		destroy_recall(recall);
 	}
 
 	return rc;

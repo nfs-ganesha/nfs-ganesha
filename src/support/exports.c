@@ -1897,22 +1897,15 @@ static exportlist_client_entry_t *client_match(sockaddr_t *hostaddr,
 			rc = nfs_ip_name_get(hostaddr, hostname,
 					     sizeof(hostname));
 
-			if (rc != IP_NAME_SUCCESS) {
-				if (rc == IP_NAME_NOT_FOUND) {
-					/* IPaddr was not cached, add it to the
-					 * cache
-					 */
-					if (nfs_ip_name_add(hostaddr,
-							    hostname,
-							    sizeof(hostname))
-					    != IP_NAME_SUCCESS) {
-						/* Major failure, name not
-						 * be resolved
-						 */
-						break;
-					}
-				}
+			if (rc == IP_NAME_NOT_FOUND) {
+				/* IPaddr was not cached, add it to the cache */
+				rc = nfs_ip_name_add(hostaddr,
+						     hostname,
+						     sizeof(hostname));
 			}
+
+			if (rc != IP_NAME_SUCCESS)
+				break; /* Fatal failure */
 
 			/* At this point 'hostname' should contain the
 			 * name that was found
@@ -1941,25 +1934,21 @@ static exportlist_client_entry_t *client_match(sockaddr_t *hostaddr,
 			rc = nfs_ip_name_get(hostaddr, hostname,
 					     sizeof(hostname));
 
-			if (rc != IP_NAME_SUCCESS) {
-				if (rc == IP_NAME_NOT_FOUND) {
-					/* IPaddr was not cached, add it to
-					 * the cache
-					 */
-					if (nfs_ip_name_add(hostaddr,
-							    hostname,
-							    sizeof(hostname))
-					    != IP_NAME_SUCCESS) {
-						/* Major failure, name could
-						 * not be resolved
-						 */
-/** @todo this change from 1.5 is not IPv6 useful.
- * come back to this and use the string from client mgr inside req_ctx...
- */
-						break;
-					}
-				}
+			if (rc == IP_NAME_NOT_FOUND) {
+				/* IPaddr was not cached, add it to the cache */
+
+				/** @todo this change from 1.5 is not IPv6
+				 * useful.  come back to this and use the
+				 * string from client mgr inside req_ctx...
+				 */
+				rc = nfs_ip_name_add(hostaddr,
+						     hostname,
+						     sizeof(hostname));
 			}
+
+			if (rc != IP_NAME_SUCCESS)
+					break;
+
 			/* At this point 'hostname' should contain the
 			 * name that was found
 			 */

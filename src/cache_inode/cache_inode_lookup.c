@@ -163,7 +163,6 @@ cache_inode_lookup_impl(cache_entry_t *parent,
 				PTHREAD_RWLOCK_wrlock(&parent->content_lock);
 			}
 		}
-		assert(*entry == NULL);
 		LogDebug(COMPONENT_CACHE_INODE, "Cache Miss detected");
 	}
 
