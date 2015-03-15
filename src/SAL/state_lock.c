@@ -607,8 +607,8 @@ static state_lock_entry_t *create_state_lock_entry(cache_entry_t *entry,
  *
  * @return New entry or NULL.
  */
-inline state_lock_entry_t *state_lock_entry_t_dup(state_lock_entry_t *
-						  orig_entry)
+static inline state_lock_entry_t *
+state_lock_entry_t_dup(state_lock_entry_t *orig_entry)
 {
 	return create_state_lock_entry(orig_entry->sle_entry,
 				       orig_entry->sle_export,
