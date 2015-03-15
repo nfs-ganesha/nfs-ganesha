@@ -854,7 +854,7 @@ void cache_inode_kill_entry(cache_entry_t *entry);
 cache_inode_status_t cache_inode_invalidate(cache_entry_t *entry,
 					    uint32_t flags);
 
-inline int cache_inode_set_time_current(struct timespec *time);
+int cache_inode_set_time_current(struct timespec *time);
 
 void cache_inode_destroyer(void);
 
