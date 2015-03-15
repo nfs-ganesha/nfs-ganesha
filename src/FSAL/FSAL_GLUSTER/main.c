@@ -34,6 +34,7 @@
 #include "fsal.h"
 #include "FSAL/fsal_init.h"
 #include "gluster_internal.h"
+#include "FSAL/fsal_commonlib.h"
 
 /* GLUSTERFS FSAL module private storage
  */
@@ -67,6 +68,8 @@ static struct fsal_staticfsinfo_t default_gluster_info = {
 	.umask = 0,
 	.auth_exportpath_xdev = false,
 	.xattr_access_rights = 0400,	/* root=RW, owner=R */
+	.pnfs_mds = true,
+	.pnfs_ds = true,
 };
 
 static struct glusterfs_fsal_module *glfsal_module;
@@ -96,6 +99,13 @@ MODULE_INIT void glusterfs_init(void)
 
 	/* setup global handle internals */
 	glfsal_module->fs_info = default_gluster_info;
+
+	/*
+	 * Following inits needed for pNFS support
+	 * get device info will used by pnfs meta data server
+	 */
+	glfsal_module->fsal.m_ops.getdeviceinfo = getdeviceinfo;
+	glfsal_module->fsal.m_ops.fsal_pnfs_ds_ops = pnfs_ds_ops_init;
 
 	LogDebug(COMPONENT_FSAL, "FSAL Gluster initialized");
 }

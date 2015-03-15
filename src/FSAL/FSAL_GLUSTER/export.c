@@ -40,6 +40,7 @@
 #include "gluster_internal.h"
 #include "nfs_exports.h"
 #include "export_mgr.h"
+#include "pnfs_utils.h"
 
 /**
  * @brief Implements GLUSTER FSAL exportoperation release
@@ -653,6 +654,45 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 		  EXPORT_OPTION_DISABLE_ACL) ? 0 : 1);
 
 	op_ctx->fsal_export = &glfsexport->export;
+
+	glfsexport->pnfs_ds_enabled =
+		glfsexport->export.exp_ops.fs_supports(&glfsexport->export,
+						fso_pnfs_ds_supported);
+	if (glfsexport->pnfs_ds_enabled) {
+		struct fsal_pnfs_ds *pds = NULL;
+
+		status = fsal_hdl->m_ops.
+				fsal_pnfs_ds(fsal_hdl, parse_node, &pds);
+		if (status.major != ERR_FSAL_NO_ERROR)
+			goto out;
+
+		/* special case: server_id matches export_id */
+		pds->id_servers = op_ctx->export->export_id;
+		pds->mds_export = op_ctx->export;
+
+		if (!pnfs_ds_insert(pds)) {
+			LogCrit(COMPONENT_CONFIG,
+				"Server id %d already in use.",
+				pds->id_servers);
+			status.major = ERR_FSAL_EXIST;
+			goto out;
+		}
+
+		LogDebug(COMPONENT_PNFS,
+			 "glusterfs_fsal_create: pnfs ds was enabled for [%s]",
+			 op_ctx->export->fullpath);
+	}
+
+	glfsexport->pnfs_mds_enabled =
+		glfsexport->export.exp_ops.fs_supports(&glfsexport->export,
+						fso_pnfs_mds_supported);
+	if (glfsexport->pnfs_mds_enabled) {
+		LogDebug(COMPONENT_PNFS,
+			 "glusterfs_fsal_create: pnfs mds was enabled for [%s]",
+			 op_ctx->export->fullpath);
+		export_ops_pnfs(&glfsexport->export.exp_ops);
+		fsal_ops_pnfs(&glfsexport->export.fsal->m_ops);
+	}
 
  out:
 	if (params.glvolname)
