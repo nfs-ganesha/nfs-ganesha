@@ -495,7 +495,7 @@ void SetComponentLogLevel(log_components_t component, int level_to_set)
 	}
 }
 
-inline int ReturnLevelDebug()
+static inline int ReturnLevelDebug()
 {
 	return component_log_level[COMPONENT_ALL];
 }				/* ReturnLevelDebug */
