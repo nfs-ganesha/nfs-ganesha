@@ -62,6 +62,9 @@ typedef int minor_t;
 
 typedef ushort_t o_mode_t; /* old file attribute type */
 
+typedef char *caddr_t;
+typedef int daddr_t;
+
 /*
  * Definitions remaining from previous partial support for 64-bit file
  * offsets.  This partial support for devices greater than 2gb requires
