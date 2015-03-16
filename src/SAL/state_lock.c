@@ -2100,7 +2100,7 @@ state_status_t state_release_grant(state_cookie_entry_t *cookie_entry)
  *
  * @return The human-readable string.
  */
-inline const char *fsal_lock_op_str(fsal_lock_op_t op)
+static inline const char *fsal_lock_op_str(fsal_lock_op_t op)
 {
 	switch (op) {
 	case FSAL_OP_LOCKT:
