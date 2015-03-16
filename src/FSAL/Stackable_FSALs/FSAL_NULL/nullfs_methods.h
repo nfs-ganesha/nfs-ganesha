@@ -10,6 +10,19 @@ struct next_ops {
 	const struct fsal_up_vector *up_ops;	/*< Upcall operations */
 };
 
+/**
+ * Structure used to store data for read_dirents callback.
+ *
+ * Before executing the upper level callback (it might be another
+ * stackable fsal or the inode cache), the context has to be restored.
+ */
+struct nullfs_readdir_state {
+	fsal_readdir_cb cb; /*< Callback to the upper layer. */
+	struct nullfs_fsal_export *exp; /*< Export of the current nullfsal. */
+	void *dir_state; /*< State to be sent to the next callback. */
+};
+
+
 extern struct next_ops next_ops;
 extern struct fsal_up_vector fsal_up_top;
 void nullfs_handle_ops_init(struct fsal_obj_ops *ops);

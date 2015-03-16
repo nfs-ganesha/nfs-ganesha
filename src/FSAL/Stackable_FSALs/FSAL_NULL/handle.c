@@ -398,6 +398,32 @@ static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
 }
 
 /**
+ * Callback function for read_dirents.
+ *
+ * See fsal_readdir_cb type for more details.
+ *
+ * This function restores the context for the upper stacked fsal or inode.
+ *
+ * @param name Directly passed to upper layer.
+ * @param dir_state A nullfs_readdir_state struct.
+ * @param cookie Directly passed to upper layer.
+ *
+ * @return Result coming from the upper layer.
+ */
+static bool nullfs_readdir_cb(const char *name, void *dir_state,
+			       fsal_cookie_t cookie)
+{
+	struct nullfs_readdir_state *state =
+		(struct nullfs_readdir_state *) dir_state;
+
+	op_ctx->fsal_export = &state->exp->export;
+	bool result = state->cb(name, state->dir_state, cookie);
+	op_ctx->fsal_export = state->exp->sub_export;
+
+	return result;
+}
+
+/**
  * read_dirents
  * read the directory and call through the callback function for
  * each entry.
