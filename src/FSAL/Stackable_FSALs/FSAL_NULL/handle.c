@@ -107,6 +107,82 @@ void nullfs_copy_attrlist(struct attrlist *dest, struct attrlist *source)
 /* handle methods
  */
 
+/**
+ * Allocate and initialize a new nullfs handle.
+ *
+ * This function doesn't free the sub_handle if the allocation fails. It must
+ * be done in the calling function.
+ *
+ * @param[in] export The nullfs export used by the handle.
+ * @param[in] sub_handle The handle used by the subfsal.
+ * @param[in] fs The filesystem of the new handle.
+ *
+ * @return The new handle, or NULL if the allocation failed.
+ */
+static struct nullfs_fsal_obj_handle *nullfs_alloc_handle(
+		struct nullfs_fsal_export *export,
+		struct fsal_obj_handle *sub_handle,
+		struct fsal_filesystem *fs)
+{
+	struct nullfs_fsal_obj_handle *result =
+		gsh_calloc(1, sizeof(struct nullfs_fsal_obj_handle));
+	if (result) {
+		/* default handlers */
+		fsal_obj_handle_init(&result->obj_handle, &export->export,
+				     sub_handle->type);
+		/* nullfs handlers */
+		nullfs_handle_ops_init(&result->obj_handle.obj_ops);
+		result->sub_handle = sub_handle;
+		result->obj_handle.type = sub_handle->type;
+		result->obj_handle.fs = fs;
+		/* attributes */
+		nullfs_copy_attrlist(&result->obj_handle.attributes,
+			&sub_handle->attributes);
+	}
+
+	return result;
+}
+
+/**
+ * Attempts to create a new nullfs handle, or cleanup memory if it fails.
+ *
+ * This function is a wrapper of nullfs_alloc_handle. It adds error checking
+ * and logging. It also cleans objects allocated in the subfsal if it fails.
+ *
+ * @param[in] export The nullfs export used by the handle.
+ * @param[in,out] sub_handle The handle used by the subfsal.
+ * @param[in] fs The filesystem of the new handle.
+ * @param[in] new_handle Address where the new allocated pointer should be
+ * written.
+ * @param[in] subfsal_status Result of the allocation of the subfsal handle.
+ *
+ * @return An error code for the function.
+ */
+static fsal_status_t nullfs_alloc_and_check_handle(
+		struct nullfs_fsal_export *export,
+		struct fsal_obj_handle *sub_handle,
+		struct fsal_filesystem *fs,
+		struct fsal_obj_handle **new_handle,
+		fsal_status_t subfsal_status)
+{
+	/** Result status of the operation. */
+	fsal_status_t status = subfsal_status;
+
+	if (!FSAL_IS_ERROR(subfsal_status)) {
+		struct nullfs_fsal_obj_handle *null_handle =
+			nullfs_alloc_handle(export, sub_handle, fs);
+		if (null_handle == NULL) {
+			status = fsalstat(ERR_FSAL_NOMEM, ENOMEM);
+			LogCrit(COMPONENT_FSAL, "Out of memory");
+
+			sub_handle->obj_ops.release(sub_handle);
+		} else {
+			*new_handle = &null_handle->obj_handle;
+		}
+	}
+	return status;
+}
+
 /* lookup
  * deprecated NULL parent && NULL path implies root handle
  */
