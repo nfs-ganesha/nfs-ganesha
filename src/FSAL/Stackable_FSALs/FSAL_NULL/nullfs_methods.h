@@ -3,10 +3,6 @@
 
 struct nullfs_fsal_obj_handle;
 
-struct nullfs_file_handle {
-	int nothing;
-};
-
 struct next_ops {
 	struct export_ops exp_ops;	/*< Vector of operations */
 	struct fsal_obj_ops obj_ops;	/*< Shared handle methods vector */
@@ -36,11 +32,9 @@ fsal_status_t nullfs_create_handle(struct fsal_export *exp_hdl,
 
 /*
  * NULLFS internal object handle
- * handle is a pointer because
- *  a) the last element of file_handle is a char[] meaning variable len...
- *  b) we cannot depend on it *always* being last or being the only
- *     variable sized struct here...  a pointer is safer.
- * wrt locks, should this be a lock counter??
+ *
+ * It contains a pointer to the fsal_obj_handle used by the subfsal.
+ *
  * AF_UNIX sockets are strange ducks.  I personally cannot see why they
  * are here except for the ability of a client to see such an animal with
  * an 'ls' or get rid of one with an 'rm'.  You can't open them in the
@@ -49,22 +43,8 @@ fsal_status_t nullfs_create_handle(struct fsal_export *exp_hdl,
  */
 
 struct nullfs_fsal_obj_handle {
-	struct fsal_obj_handle obj_handle;
-	struct nullfs_file_handle *handle;
-	union {
-		struct {
-			int fd;
-			fsal_openflags_t openflags;
-		} file;
-		struct {
-			unsigned char *link_content;
-			int link_size;
-		} symlink;
-		struct {
-			struct nullfs_file_handle *dir;
-			char *name;
-		} unopenable;
-	} u;
+	struct fsal_obj_handle obj_handle; /*< Handle containing nullfs data.*/
+	struct fsal_obj_handle *sub_handle; /*< Handle of the sub fsal.*/
 };
 
 int nullfs_fsal_open(struct nullfs_fsal_obj_handle *, int, fsal_errors_t *);
