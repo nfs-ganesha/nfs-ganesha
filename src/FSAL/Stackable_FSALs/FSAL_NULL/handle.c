@@ -438,8 +438,34 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 				  fsal_cookie_t *whence, void *dir_state,
 				  fsal_readdir_cb cb, bool *eof)
 {
-	return next_ops.obj_ops.readdir(dir_hdl, whence, dir_state, cb,
-					 eof);
+	struct nullfs_fsal_obj_handle *handle =
+		container_of(dir_hdl, struct nullfs_fsal_obj_handle,
+			     obj_handle);
+
+	struct nullfs_fsal_export *export =
+		container_of(op_ctx->fsal_export, struct nullfs_fsal_export,
+			     export);
+
+	struct nullfs_readdir_state cb_state = {
+		.cb = cb,
+		.dir_state = dir_state,
+		.exp = export
+	};
+
+	/* attributes : upper layer to subfsal */
+	nullfs_copy_attrlist(&handle->sub_handle->attributes,
+		&handle->obj_handle.attributes);
+	/* calling subfsal method */
+	op_ctx->fsal_export = export->sub_export;
+	fsal_status_t status =
+		handle->sub_handle->obj_ops.readdir(handle->sub_handle,
+		whence, &cb_state, nullfs_readdir_cb, eof);
+	op_ctx->fsal_export = &export->export;
+	/* attributes : subfsal to upper layer */
+	nullfs_copy_attrlist(&handle->obj_handle.attributes,
+		&handle->sub_handle->attributes);
+
+	return status;
 }
 
 static fsal_status_t renamefile(struct fsal_obj_handle *obj_hdl,
