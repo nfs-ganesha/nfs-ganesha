@@ -40,10 +40,69 @@
 #include "fsal_convert.h"
 #include "FSAL/fsal_commonlib.h"
 #include "nullfs_methods.h"
+#include "nfs4_acls.h"
 #include <os/subr.h>
 
 /* helpers
  */
+
+/**
+ * Release the acl of an attrlist, with error checking and logging.
+ *
+ * This function is a wrapper of nfs4_acl_release_entry, checking its return
+ * value and logging any error.
+ *
+ * The argument must be not null. Its acl field can be null : in this case this
+ * function does nothing.
+ *
+ * If the function is successful, attrs->acl is set to NULL.
+ *
+ * @param[in,out] attrs The attrlist which acl field will be released.
+ */
+static void nullfs_attrlist_acl_release(struct attrlist *attrs)
+{
+	fsal_acl_status_t status;
+	/* checking if the pointer is null is done in nfs4_acl_release_entry. */
+	nfs4_acl_release_entry(attrs->acl, &status);
+
+	if (status != NFS_V4_ACL_SUCCESS)
+		LogCrit(COMPONENT_FSAL, "Release of acl failed (status = %i)",
+			status);
+	else
+		attrs->acl = NULL;
+}
+
+void nullfs_copy_attrlist(struct attrlist *dest, struct attrlist *source)
+{
+	if (dest == NULL || source == NULL)
+		return;
+
+	if (source->mask != 0LL) {
+		/* A full copy of the structure is done. It can obviously be
+		 * optimized.
+		 *
+		 * Testing each bit of the mask to copy fields one by one
+		 * doesn't seems efficient either. I think the best way would be
+		 * to check and copy the fields that are likely to be changed in
+		 * each fsal function, and to call a general purpose function
+		 * like this only if unexpected bits remains in the source mask.
+		 */
+
+		/* We must handle attrlist.acl field separately, because it has
+		 * a refcounter.
+		 */
+		if (dest->acl != source->acl) {
+			if (source->acl != NULL)
+				nfs4_acl_entry_inc_ref(source->acl);
+
+			nullfs_attrlist_acl_release(dest);
+		}
+
+		memcpy(dest, source, sizeof(*dest));
+		FSAL_CLEAR_MASK(source->mask);
+	}
+}
+
 
 /* handle methods
  */
