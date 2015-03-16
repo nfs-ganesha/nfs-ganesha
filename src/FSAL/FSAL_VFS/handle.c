@@ -782,6 +782,8 @@ static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
 	int flags = O_PATH | O_NOACCESS | O_NOFOLLOW;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 
+	LogFullDebug(COMPONENT_FSAL, "link to %s", name);
+
 	if (!op_ctx->fsal_export->exp_ops.
 	    fs_supports(op_ctx->fsal_export, fso_link_support)) {
 		fsal_error = ERR_FSAL_NOTSUPP;
@@ -799,17 +801,23 @@ static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
 		fsal_error = posix2fsal_error(retval);
 		goto out;
 	}
+
 	if (obj_hdl->type == REGULAR_FILE && myself->u.file.fd >= 0) {
 		srcfd = myself->u.file.fd;
 	} else {
 		srcfd = vfs_fsal_open(myself, flags, &fsal_error);
 		if (srcfd < 0) {
 			retval = -srcfd;
+			fsal_error = posix2fsal_error(retval);
+			LogDebug(COMPONENT_FSAL,
+				 "open myself returned %d", retval);
 			goto out;
 		}
 	}
+
 	destdir =
 	    container_of(destdir_hdl, struct vfs_fsal_obj_handle, obj_handle);
+
 	if (destdir_hdl->fsal != destdir_hdl->fs->fsal) {
 		LogDebug(COMPONENT_FSAL,
 			 "FSAL %s operation for handle belonging to FSAL %s, return EXDEV",
@@ -821,25 +829,35 @@ static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
 		fsal_error = posix2fsal_error(retval);
 		goto fileerr;
 	}
+
 	destdirfd = vfs_fsal_open(destdir, flags, &fsal_error);
+
 	if (destdirfd < 0) {
 		retval = destdirfd;
+		fsal_error = posix2fsal_error(retval);
+		LogDebug(COMPONENT_FSAL,
+			 "open destdir returned %d", retval);
 		goto fileerr;
 	}
+
 	fsal_set_credentials(op_ctx->creds);
-	retval = vfs_link_by_handle(myself->handle, srcfd, "", destdirfd, name,
-				    AT_EMPTY_PATH, &fsal_error);
+	retval = vfs_link_by_handle(myself->handle, srcfd, destdirfd, name);
+
 	if (retval < 0) {
 		retval = errno;
+		LogFullDebug(COMPONENT_FSAL,
+			     "link returned %d", retval);
 		fsal_error = posix2fsal_error(retval);
 	}
 	fsal_restore_ganesha_credentials();
+
 	close(destdirfd);
 
  fileerr:
 	if (!(obj_hdl->type == REGULAR_FILE && myself->u.file.fd >= 0))
 		close(srcfd);
  out:
+	LogFullDebug(COMPONENT_FSAL, "returning %d, %d", fsal_error, retval);
 	return fsalstat(fsal_error, retval);
 }
 

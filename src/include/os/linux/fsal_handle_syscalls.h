@@ -100,12 +100,12 @@ static inline int vfs_stat_by_handle(int mountfd, vfs_file_handle_t *fh,
 	return fstatat(mountfd, "", buf, AT_EMPTY_PATH);
 }
 
-static inline int vfs_link_by_handle(vfs_file_handle_t *fh, int srcfd,
-				     const char *sname, int destdirfd,
-				     const char *dname, int flags,
-				     fsal_errors_t *fsal_error)
+static inline int vfs_link_by_handle(vfs_file_handle_t *fh,
+				     int srcfd,
+				     int destdirfd,
+				     const char *dname)
 {
-	return linkat(srcfd, sname, destdirfd, dname, flags);
+	return linkat(srcfd, "", destdirfd, dname, AT_EMPTY_PATH);
 }
 
 static inline int vfs_readlink_by_handle(vfs_file_handle_t *fh, int srcfd,

@@ -282,7 +282,8 @@ int vfs_open_by_handle(struct vfs_filesystem *vfs_fs,
 		LogDebug(COMPONENT_FSAL,
 			 "Invaliid handle type = 0");
 		errno = EINVAL;
-		return -1;
+		fd = -1;
+		goto out;
 	case HANDLE_TYPE_8:
 		kernel_fh->handle_type = fh->handle_data[handle_cursor];
 		handle_cursor++;
@@ -310,6 +311,7 @@ int vfs_open_by_handle(struct vfs_filesystem *vfs_fs,
 
 	fd = open_by_handle_at(vfs_fs->root_fd, kernel_fh, openflags);
 
+out:
 	if (fd < 0) {
 		fd = -errno;
 		if (fd == -ENOENT)
