@@ -47,7 +47,27 @@
 fsal_status_t nullfs_open(struct fsal_obj_handle *obj_hdl,
 			  fsal_openflags_t openflags)
 {
-	return next_ops.obj_ops.open(obj_hdl, openflags);
+	struct nullfs_fsal_obj_handle *handle =
+		container_of(obj_hdl, struct nullfs_fsal_obj_handle,
+			     obj_handle);
+
+	struct nullfs_fsal_export *export =
+		container_of(op_ctx->fsal_export, struct nullfs_fsal_export,
+			     export);
+
+	/* attributes : upper layer to subfsal */
+	nullfs_copy_attrlist(&handle->sub_handle->attributes,
+			     &handle->obj_handle.attributes);
+	/* calling subfsal method */
+	op_ctx->fsal_export = export->sub_export;
+	fsal_status_t status =
+		handle->sub_handle->obj_ops.open(handle->sub_handle, openflags);
+	op_ctx->fsal_export = &export->export;
+	/* attributes : subfsal to upper layer */
+	nullfs_copy_attrlist(&handle->obj_handle.attributes,
+			     &handle->sub_handle->attributes);
+
+	return status;
 }
 
 /* nullfs_status
@@ -56,7 +76,27 @@ fsal_status_t nullfs_open(struct fsal_obj_handle *obj_hdl,
 
 fsal_openflags_t nullfs_status(struct fsal_obj_handle *obj_hdl)
 {
-	return next_ops.obj_ops.status(obj_hdl);
+	struct nullfs_fsal_obj_handle *handle =
+		container_of(obj_hdl, struct nullfs_fsal_obj_handle,
+			     obj_handle);
+
+	struct nullfs_fsal_export *export =
+		container_of(op_ctx->fsal_export, struct nullfs_fsal_export,
+			     export);
+
+	/* attributes : upper layer to subfsal */
+	nullfs_copy_attrlist(&handle->sub_handle->attributes,
+			     &handle->obj_handle.attributes);
+	/* calling subfsal method */
+	op_ctx->fsal_export = export->sub_export;
+	fsal_openflags_t status =
+		handle->sub_handle->obj_ops.status(handle->sub_handle);
+	op_ctx->fsal_export = &export->export;
+	/* attributes : subfsal to upper layer */
+	nullfs_copy_attrlist(&handle->obj_handle.attributes,
+			     &handle->sub_handle->attributes);
+
+	return status;
 }
 
 /* nullfs_read
@@ -69,8 +109,29 @@ fsal_status_t nullfs_read(struct fsal_obj_handle *obj_hdl,
 			  size_t *read_amount,
 			  bool *end_of_file)
 {
-	return next_ops.obj_ops.read(obj_hdl, offset, buffer_size,
-				      buffer, read_amount, end_of_file);
+	struct nullfs_fsal_obj_handle *handle =
+		container_of(obj_hdl, struct nullfs_fsal_obj_handle,
+			     obj_handle);
+
+	struct nullfs_fsal_export *export =
+		container_of(op_ctx->fsal_export, struct nullfs_fsal_export,
+			     export);
+
+	/* attributes : upper layer to subfsal */
+	nullfs_copy_attrlist(&handle->sub_handle->attributes,
+			     &handle->obj_handle.attributes);
+	/* calling subfsal method */
+	op_ctx->fsal_export = export->sub_export;
+	fsal_status_t status =
+		handle->sub_handle->obj_ops.read(handle->sub_handle, offset,
+						 buffer_size, buffer,
+						 read_amount, end_of_file);
+	op_ctx->fsal_export = &export->export;
+	/* attributes : subfsal to upper layer */
+	nullfs_copy_attrlist(&handle->obj_handle.attributes,
+			     &handle->sub_handle->attributes);
+
+	return status;
 }
 
 /* nullfs_write
@@ -82,8 +143,32 @@ fsal_status_t nullfs_write(struct fsal_obj_handle *obj_hdl,
 			   size_t buffer_size, void *buffer,
 			   size_t *write_amount, bool *fsal_stable)
 {
-	return next_ops.obj_ops.write(obj_hdl, offset, buffer_size,
-				       buffer, write_amount, fsal_stable);
+	struct nullfs_fsal_obj_handle *handle =
+		container_of(obj_hdl, struct nullfs_fsal_obj_handle,
+			     obj_handle);
+
+	struct nullfs_fsal_export *export =
+		container_of(op_ctx->fsal_export, struct nullfs_fsal_export,
+			     export);
+
+	/* attributes : upper layer to subfsal */
+	nullfs_copy_attrlist(&handle->sub_handle->attributes,
+			     &handle->obj_handle.attributes);
+	/* calling subfsal method */
+	op_ctx->fsal_export = export->sub_export;
+	fsal_status_t status =
+		handle->sub_handle->obj_ops.write(handle->sub_handle,
+						  offset,
+						  buffer_size,
+						  buffer,
+						  write_amount,
+						  fsal_stable);
+	op_ctx->fsal_export = &export->export;
+	/* attributes : subfsal to upper layer */
+	nullfs_copy_attrlist(&handle->obj_handle.attributes,
+			     &handle->sub_handle->attributes);
+
+	return status;
 }
 
 /* nullfs_commit
@@ -94,7 +179,28 @@ fsal_status_t nullfs_write(struct fsal_obj_handle *obj_hdl,
 fsal_status_t nullfs_commit(struct fsal_obj_handle *obj_hdl,	/* sync */
 			    off_t offset, size_t len)
 {
-	return next_ops.obj_ops.commit(obj_hdl, offset, len);
+	struct nullfs_fsal_obj_handle *handle =
+		container_of(obj_hdl, struct nullfs_fsal_obj_handle,
+			     obj_handle);
+
+	struct nullfs_fsal_export *export =
+		container_of(op_ctx->fsal_export, struct nullfs_fsal_export,
+			     export);
+
+	/* attributes : upper layer to subfsal */
+	nullfs_copy_attrlist(&handle->sub_handle->attributes,
+			     &handle->obj_handle.attributes);
+	/* calling subfsal method */
+	op_ctx->fsal_export = export->sub_export;
+	fsal_status_t status =
+		handle->sub_handle->obj_ops.commit(handle->sub_handle,
+						   offset, len);
+	op_ctx->fsal_export = &export->export;
+	/* attributes : subfsal to upper layer */
+	nullfs_copy_attrlist(&handle->obj_handle.attributes,
+			     &handle->sub_handle->attributes);
+
+	return status;
 }
 
 /* nullfs_lock_op
@@ -109,8 +215,31 @@ fsal_status_t nullfs_lock_op(struct fsal_obj_handle *obj_hdl,
 			     fsal_lock_param_t *request_lock,
 			     fsal_lock_param_t *conflicting_lock)
 {
-	return next_ops.obj_ops.lock_op(obj_hdl, p_owner, lock_op,
-					 request_lock, conflicting_lock);
+	struct nullfs_fsal_obj_handle *handle =
+		container_of(obj_hdl, struct nullfs_fsal_obj_handle,
+			     obj_handle);
+
+	struct nullfs_fsal_export *export =
+		container_of(op_ctx->fsal_export, struct nullfs_fsal_export,
+			     export);
+
+	/* attributes : upper layer to subfsal */
+	nullfs_copy_attrlist(&handle->sub_handle->attributes,
+			     &handle->obj_handle.attributes);
+	/* calling subfsal method */
+	op_ctx->fsal_export = export->sub_export;
+	fsal_status_t status =
+		handle->sub_handle->obj_ops.lock_op(handle->sub_handle,
+						    p_owner,
+						    lock_op,
+						    request_lock,
+						    conflicting_lock);
+	op_ctx->fsal_export = &export->export;
+	/* attributes : subfsal to upper layer */
+	nullfs_copy_attrlist(&handle->obj_handle.attributes,
+			     &handle->sub_handle->attributes);
+
+	return status;
 }
 
 /* nullfs_close
@@ -121,7 +250,27 @@ fsal_status_t nullfs_lock_op(struct fsal_obj_handle *obj_hdl,
 
 fsal_status_t nullfs_close(struct fsal_obj_handle *obj_hdl)
 {
-	return next_ops.obj_ops.close(obj_hdl);
+	struct nullfs_fsal_obj_handle *handle =
+		container_of(obj_hdl, struct nullfs_fsal_obj_handle,
+			     obj_handle);
+
+	struct nullfs_fsal_export *export =
+		container_of(op_ctx->fsal_export, struct nullfs_fsal_export,
+			     export);
+
+	/* attributes : upper layer to subfsal */
+	nullfs_copy_attrlist(&handle->sub_handle->attributes,
+			     &handle->obj_handle.attributes);
+	/* calling subfsal method */
+	op_ctx->fsal_export = export->sub_export;
+	fsal_status_t status =
+		handle->sub_handle->obj_ops.close(handle->sub_handle);
+	op_ctx->fsal_export = &export->export;
+	/* attributes : subfsal to upper layer */
+	nullfs_copy_attrlist(&handle->obj_handle.attributes,
+			     &handle->sub_handle->attributes);
+
+	return status;
 }
 
 /* nullfs_lru_cleanup
@@ -133,5 +282,26 @@ fsal_status_t nullfs_close(struct fsal_obj_handle *obj_hdl)
 fsal_status_t nullfs_lru_cleanup(struct fsal_obj_handle *obj_hdl,
 				 lru_actions_t requests)
 {
-	return next_ops.obj_ops.lru_cleanup(obj_hdl, requests);
+	struct nullfs_fsal_obj_handle *handle =
+		container_of(obj_hdl, struct nullfs_fsal_obj_handle,
+			     obj_handle);
+
+	struct nullfs_fsal_export *export =
+		container_of(op_ctx->fsal_export, struct nullfs_fsal_export,
+			     export);
+
+	/* attributes : upper layer to subfsal */
+	nullfs_copy_attrlist(&handle->sub_handle->attributes,
+			     &handle->obj_handle.attributes);
+	/* calling subfsal method */
+	op_ctx->fsal_export = export->sub_export;
+	fsal_status_t status =
+		handle->sub_handle->obj_ops.lru_cleanup(handle->sub_handle,
+							requests);
+	op_ctx->fsal_export = &export->export;
+	/* attributes : subfsal to upper layer */
+	nullfs_copy_attrlist(&handle->obj_handle.attributes,
+		&handle->sub_handle->attributes);
+
+	return status;
 }
