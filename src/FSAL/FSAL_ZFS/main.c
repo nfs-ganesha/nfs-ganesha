@@ -60,6 +60,7 @@ static struct fsal_staticfsinfo_t default_zfs_info = {
 	.unique_handles = true,		/* handles are unique and persistent */
 	.lease_time = {10, 0},	/* Duration of lease at FS in seconds */
 	.acl_support = FSAL_ACLSUPPORT_ALLOW,	/* ACL support */
+	.cansettime = true,
 	.homogenous = true,			/* homogenous */
 	.supported_attrs = ZFS_SUPPORTED_ATTRIBUTES, /* supported attributes */
 };
