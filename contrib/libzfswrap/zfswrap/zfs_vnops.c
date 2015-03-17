@@ -2537,6 +2537,7 @@ zfs_setattr(vnode_t *vp, vattr_t *vap, int flags, cred_t *cr,
 		return (EPERM);
 	}
 
+#if 0 /* XXXX this reflects a need up merge from ZFS upstream */
 	/*
 	 * Verify timestamps doesn't overflow 32 bits.
 	 * ZFS can handle large timestamps, but 32bit syscalls can't
@@ -2550,6 +2551,7 @@ zfs_setattr(vnode_t *vp, vattr_t *vap, int flags, cred_t *cr,
 			return (EOVERFLOW);
 		}
 	}
+#endif
 
 top:
 	attrzp = NULL;
