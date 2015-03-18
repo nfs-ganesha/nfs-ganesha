@@ -62,6 +62,7 @@ static struct fsal_staticfsinfo_t default_zfs_info = {
 	.acl_support = FSAL_ACLSUPPORT_ALLOW,	/* ACL support */
 	.homogenous = true,			/* homogenous */
 	.supported_attrs = ZFS_SUPPORTED_ATTRIBUTES, /* supported attributes */
+	.link_supports_permission_checks = true,
 };
 
 static struct config_item zfs_params[] = {

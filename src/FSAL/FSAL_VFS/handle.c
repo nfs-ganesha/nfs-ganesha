@@ -840,7 +840,6 @@ static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
 		goto fileerr;
 	}
 
-	fsal_set_credentials(op_ctx->creds);
 	retval = vfs_link_by_handle(myself->handle, srcfd, destdirfd, name);
 
 	if (retval < 0) {
@@ -849,7 +848,6 @@ static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
 			     "link returned %d", retval);
 		fsal_error = posix2fsal_error(retval);
 	}
-	fsal_restore_ganesha_credentials();
 
 	close(destdirfd);
 

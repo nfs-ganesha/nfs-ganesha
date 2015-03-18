@@ -67,6 +67,7 @@ static struct fsal_staticfsinfo_t lustre_info = {
 	.maxwrite = FSAL_MAXIOSIZE,
 	.pnfs_mds = true,
 	.pnfs_ds = true,
+	.link_supports_permission_checks = true,
 };
 
 static void *dataserver_init(void *link_mem, void *self_struct)

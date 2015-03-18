@@ -88,6 +88,7 @@ static struct fsal_staticfsinfo_t default_posix_info = {
 	.umask = 0,
 	.auth_exportpath_xdev = false,
 	.xattr_access_rights = 0400,	/* root=RW, owner=R */
+	.link_supports_permission_checks = false,
 };
 
 /* private helper for export object

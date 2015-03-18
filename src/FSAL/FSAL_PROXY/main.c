@@ -62,6 +62,7 @@ static struct fsal_staticfsinfo_t proxy_info = {
 	.acl_support = FSAL_ACLSUPPORT_ALLOW,
 	.homogenous = true,
 	.supported_attrs = SUPPORTED_ATTRIBUTES,
+	.link_supports_permission_checks = true,
 };
 
 #ifdef _USE_GSSRPC
