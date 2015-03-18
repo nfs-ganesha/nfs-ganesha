@@ -686,6 +686,9 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 	/* The status code to return */
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	struct gpfs_fsal_export *myself;
+	struct readlink_arg varg;
+	struct gpfs_filesystem *gpfs_fs;
+	int rc;
 
 	myself = gsh_malloc(sizeof(struct gpfs_fsal_export));
 	if (myself == NULL) {
@@ -744,12 +747,18 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 	op_ctx->fsal_export = &myself->export;
 
 	gpfs_ganesha(OPENHANDLE_GET_VERIFIER, &GPFS_write_verifier);
+	gpfs_fs = myself->root_fs->private;
+	varg.fd = gpfs_fs->root_fd;
+	varg.buffer = (char *)&GPFS_write_verifier;
+	rc = gpfs_ganesha(OPENHANDLE_GET_VERIFIER, &varg);
+	if (rc != 0)
+		LogCrit(COMPONENT_FSAL,
+		    "OPENHANDLE_GET_VERIFIER failed with rc = %d", rc);
 
 	/* if the nodeid has not been obtained, get it now */
 	if (!g_nodeid) {
 		struct grace_period_arg gpa;
 		int nodeid;
-		struct gpfs_filesystem *gpfs_fs;
 
 		gpfs_fs = myself->root_fs->private;
 		gpa.mountdirfd = gpfs_fs->root_fd;
@@ -758,10 +767,10 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 		if (nodeid >= 0) {
 			/* GPFS starts with 0, we want node ids to be > 0 */
 			g_nodeid = nodeid + 1;
-			LogFullDebug(COMPONENT_FSAL, "nodeid = (%d)", g_nodeid);
+			LogFullDebug(COMPONENT_FSAL, "nodeid %hu", g_nodeid);
 		} else
 			LogCrit(COMPONENT_FSAL,
-			    "OPENHANDLE_GET_NODEID failed nodeid = %d", nodeid);
+			    "OPENHANDLE_GET_NODEID failed rc %d", nodeid);
 	}
 	myself->pnfs_ds_enabled =
 	    myself->export.exp_ops.fs_supports(&myself->export,
