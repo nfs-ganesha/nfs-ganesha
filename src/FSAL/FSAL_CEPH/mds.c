@@ -480,7 +480,7 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_pub,
 	ds_wire.snapseq = ceph_ll_snap_seq(export->cmount, handle->wire.vi);
 
 	nfs_status = FSAL_encode_file_layout(loc_body, &deviceid, util, 0, 0,
-					     req_ctx->export->export_id, 1,
+					     &req_ctx->export->export_id, 1,
 					     &ds_desc);
 	if (nfs_status != NFS4_OK) {
 		LogCrit(COMPONENT_PNFS,

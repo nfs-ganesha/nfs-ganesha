@@ -234,7 +234,7 @@ static nfsstat4 make_file_handle_ds(const struct gsh_buffdesc *fh_desc,
  * @param[in]  util      Stripe width and flags for the layout
  * @param[in]  first_idx First stripe index
  * @param[in]  ptrn_ofst Pattern offset
- * @param[in]  export_id Export ID (export on Data Server)
+ * @param[in]  ds_ids	 Server IDs of DSs for each file handle
  * @param[in]  num_fhs   Number of file handles in array
  * @param[in]  fhs       Array if buffer descriptors holding opaque DS
  *                       handles
@@ -244,7 +244,7 @@ nfsstat4 FSAL_encode_file_layout(XDR *xdrs,
 				 const struct pnfs_deviceid *deviceid,
 				 nfl_util4 util, const uint32_t first_idx,
 				 const offset4 ptrn_ofst,
-				 const uint16_t server_id,
+				 const uint16_t *ds_ids,
 				 const uint32_t num_fhs,
 				 const struct gsh_buffdesc *fhs)
 {
@@ -288,7 +288,7 @@ nfsstat4 FSAL_encode_file_layout(XDR *xdrs,
 		memset(buffer, 0, sizeof(buffer));
 
 		nfs_status = make_file_handle_ds(fhs + i,
-						 server_id,
+						 *(ds_ids + i),
 						 &handle);
 		if (nfs_status != NFS4_OK) {
 			LogMajor(COMPONENT_PNFS, "Failed converting FH %lu.",
