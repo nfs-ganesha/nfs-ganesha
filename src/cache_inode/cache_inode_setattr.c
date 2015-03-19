@@ -66,6 +66,7 @@ cache_inode_setattr(cache_entry_t *entry,
 	fsal_acl_status_t acl_status = 0;
 	cache_inode_status_t status = CACHE_INODE_SUCCESS;
 	uint64_t before;
+	const struct user_cred *creds = op_ctx->creds;
 
 	/* True if we have taken the content lock on 'entry' */
 	bool content_locked = false;
@@ -103,6 +104,65 @@ cache_inode_setattr(cache_entry_t *entry,
 	if (attr->mask & (ATTR_SIZE | ATTR4_SPACE_RESERVED)) {
 		PTHREAD_RWLOCK_wrlock(&entry->content_lock);
 		content_locked = true;
+	}
+
+	/* Test for the following condition from chown(2):
+	 *
+	 *     When the owner or group of an executable file are changed by an
+	 *     unprivileged user the S_ISUID and S_ISGID mode bits are cleared.
+	 *     POSIX does not specify whether this also should happen when
+	 *     root does the chown(); the Linux behavior depends on the kernel
+	 *     version.  In case of a non-group-executable file (i.e., one for
+	 *     which the S_IXGRP bit is not set) the S_ISGID bit indicates
+	 *     mandatory locking, and is not cleared by a chown().
+	 *
+	 */
+	if (creds->caller_uid != 0 &&
+	    (FSAL_TEST_MASK(attr->mask, ATTR_OWNER) ||
+	     FSAL_TEST_MASK(attr->mask, ATTR_GROUP)) &&
+	    ((entry->obj_handle->attributes.mode &
+	      (S_IXOTH | S_IXUSR | S_IXGRP)) != 0) &&
+	    ((entry->obj_handle->attributes.mode &
+	      (S_ISUID | S_ISGID)) != 0)) {
+		/* Non-priviledged user changing ownership on an executable
+		 * file with S_ISUID or S_ISGID bit set, need to be cleared.
+		 */
+		if (!FSAL_TEST_MASK(attr->mask, ATTR_MODE)) {
+			/* Mode wasn't being set, so set it now, start with
+			 * the current attributes.
+			 */
+			attr->mode = entry->obj_handle->attributes.mode;
+			FSAL_SET_MASK(attr->mask, ATTR_MODE);
+		}
+
+		/* Don't clear S_ISGID if the file isn't group executable.
+		 * In that case, S_ISGID indicates mandatory locking and
+		 * is not cleared by chown.
+		 */
+		if ((entry->obj_handle->attributes.mode & S_IXGRP) != 0)
+			attr->mode &= ~S_ISGID;
+
+		/* Clear S_ISUID. */
+		attr->mode &= ~S_ISUID;
+	}
+
+	/* Test for the following condition from chmod(2):
+	 *
+	 *     If the calling process is not privileged (Linux: does not have
+	 *     the CAP_FSETID capability), and the group of the file does not
+	 *     match the effective group ID of the process or one of its
+	 *     supplementary group IDs, the S_ISGID bit will be turned off,
+	 *     but this will not cause an error to be returned.
+	 *
+	 * We test the actual mode being set before testing for group
+	 * membership since that is a bit more expensive.
+	 */
+	if (creds->caller_uid != 0 &&
+	    FSAL_TEST_MASK(attr->mask, ATTR_MODE) &&
+	    (attr->mode & S_ISGID) != 0 &&
+	    not_in_group_list(entry->obj_handle->attributes.group)) {
+		/* Clear S_ISGID */
+		attr->mode &= ~S_ISGID;
 	}
 
 	saved_acl = obj_handle->attributes.acl;

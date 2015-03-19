@@ -717,6 +717,8 @@ cache_inode_access(cache_entry_t *entry,
 	return cache_inode_access_sw(entry, access_type, NULL, NULL, true);
 }
 
+bool not_in_group_list(gid_t gid);
+
 cache_inode_status_t
 cache_inode_check_setattr_perms(cache_entry_t *entry,
 				struct attrlist *attr,

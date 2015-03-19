@@ -132,7 +132,7 @@ cache_inode_access_sw(cache_entry_t *entry,
 	return status;
 }
 
-static bool not_in_group_list(gid_t gid)
+bool not_in_group_list(gid_t gid)
 {
 	const struct user_cred *creds = op_ctx->creds;
 	int i;
