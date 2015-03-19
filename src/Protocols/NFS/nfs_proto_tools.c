@@ -1605,7 +1605,9 @@ static fattr_xdr_result encode_rawdev(XDR *xdr, struct xdr_attrs_args *args)
 	specdata4.specdata1 = args->attrs->rawdev.major;
 	specdata4.specdata2 = args->attrs->rawdev.minor;
 
-	if (!inline_xdr_u_int64_t(xdr, (uint64_t *) &specdata4))
+	if (!inline_xdr_u_int32_t(xdr, &specdata4.specdata1))
+		return FATTR_XDR_FAILED;
+	if (!inline_xdr_u_int32_t(xdr, &specdata4.specdata2))
 		return FATTR_XDR_FAILED;
 
 	return FATTR_XDR_SUCCESS;
@@ -1615,7 +1617,9 @@ static fattr_xdr_result decode_rawdev(XDR *xdr, struct xdr_attrs_args *args)
 {
 	struct specdata4 specdata4 = {.specdata1 = 0, .specdata2 = 0 };
 
-	if (!inline_xdr_u_int64_t(xdr, (uint64_t *) &specdata4))
+	if (!inline_xdr_u_int32_t(xdr, &specdata4.specdata1))
+		return FATTR_XDR_FAILED;
+	if (!inline_xdr_u_int32_t(xdr, &specdata4.specdata2))
 		return FATTR_XDR_FAILED;
 
 	args->attrs->rawdev.major = specdata4.specdata1;
