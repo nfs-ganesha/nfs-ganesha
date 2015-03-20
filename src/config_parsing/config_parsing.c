@@ -1944,9 +1944,8 @@ int load_config_from_parse(config_file_t config,
 					config_proc_error(node, err_type,
 							  "Errors processing block (%s)",
 							  blkname);
-				if (config_error_is_harmless(err_type))
+				else
 					found++;
-				config_error_comb_errors(err_type, err_type);
 			}
 		}
 	}

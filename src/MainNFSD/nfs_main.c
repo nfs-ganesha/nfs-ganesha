@@ -468,8 +468,7 @@ int main(int argc, char *argv[])
 	if (rc < 0) {
 		LogCrit(COMPONENT_INIT,
 			  "Error while parsing export entries");
-		if (config_error_is_fatal(&err_type))
-			goto fatal_die;
+		goto fatal_die;
 	}
 	if (rc == 0 && dsc == 0)
 		LogWarn(COMPONENT_INIT,

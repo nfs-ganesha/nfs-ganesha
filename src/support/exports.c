@@ -1413,30 +1413,35 @@ err_out:
 int ReadExports(config_file_t in_config,
 		struct config_error_type *err_type)
 {
-	int rc, ret = 0;
+	int rc, num_exp;
 
 	rc = load_config_from_parse(in_config,
 				    &export_defaults_param,
 				    NULL,
 				    false,
 				    err_type);
-	if (!config_error_is_harmless(err_type))
+	if (rc < 0) {
+		LogCrit(COMPONENT_CONFIG, "Export defaults block error");
 		return -1;
+	}
 
-	rc = load_config_from_parse(in_config,
+	num_exp = load_config_from_parse(in_config,
 				    &export_param,
 				    NULL,
 				    false,
 				    err_type);
-	if (!config_error_is_harmless(err_type))
-		return -1;
-	ret = build_default_root(err_type);
-	if (ret < 0) {
-		LogCrit(COMPONENT_CONFIG,
-			"No pseudo root!");
+	if (num_exp < 0) {
+		LogCrit(COMPONENT_CONFIG, "Export block error");
 		return -1;
 	}
-	return rc + ret;
+
+	rc = build_default_root(err_type);
+	if (rc < 0) {
+		LogCrit(COMPONENT_CONFIG, "No pseudo root!");
+		return -1;
+	}
+
+	return num_exp;
 }
 
 static void FreeClientList(struct glist_head *clients)
