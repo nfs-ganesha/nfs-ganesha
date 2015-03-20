@@ -33,11 +33,6 @@
 #include <utime.h>
 #include <sys/time.h>
 
-/** @todo FSF: there are lots of assumptions in here that must be fixed when we
- *             support unexport. The thread may go away when all exports are
- *             removed and must clean itself up. Also, it must make sure it gets
- *             mount_root_fd from a living export.
- */
 void *GPFSFSAL_UP_Thread(void *Arg)
 {
 	struct gpfs_filesystem *gpfs_fs = Arg;
@@ -86,8 +81,6 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 
 	/* Start querying for events and processing. */
 	while (1) {
-		/* @todo FSF: need to figure out how to exit in new scheme */
-
 		LogFullDebug(COMPONENT_FSAL_UP,
 			     "Requesting event from FSAL Callback interface for %d.",
 			     gpfs_fs->root_fd);
@@ -355,9 +348,9 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 			}
 			break;
 
-		case THREAD_STOP:	/* GPFS export no longer available */
-			LogWarn(COMPONENT_FSAL_UP,
-				"GPFS file system %d is no longer available",
+		case THREAD_STOP:  /* We wanted to terminate this thread */
+			LogDebug(COMPONENT_FSAL_UP,
+				"Terminating the GPFS up call thread for %d",
 				gpfs_fs->root_fd);
 			return NULL;
 

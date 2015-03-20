@@ -604,6 +604,9 @@ void gpfs_unclaim_filesystem(struct fsal_filesystem *fs)
 	struct gpfs_filesystem *gpfs_fs = fs->private;
 	struct glist_head *glist, *glistn;
 	struct gpfs_filesystem_export_map *map;
+	struct callback_arg callback;
+	int reason;
+	int rc;
 
 	if (gpfs_fs != NULL) {
 		glist_for_each_safe(glist, glistn, &gpfs_fs->exports) {
@@ -625,8 +628,19 @@ void gpfs_unclaim_filesystem(struct fsal_filesystem *fs)
 			gsh_free(map);
 		}
 
+		/* Terminate GPFS upcall thread */
+		callback.mountdirfd = gpfs_fs->root_fd;
+		reason = THREAD_STOP;
+		callback.reason = &reason;
+		rc = gpfs_ganesha(OPENHANDLE_THREAD_UPDATE, &callback);
+		if (rc)
+			LogCrit(COMPONENT_FSAL,
+				"Unable to stop upcall thread for %s, fd=%d, errno=%d",
+				fs->path, gpfs_fs->root_fd, errno);
+		else
+			LogFullDebug(COMPONENT_FSAL, "Thread STOP successful");
+		pthread_join(gpfs_fs->up_thread, NULL);
 		free_gpfs_filesystem(gpfs_fs);
-
 		fs->private = NULL;
 	}
 
