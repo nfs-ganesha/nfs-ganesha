@@ -607,8 +607,8 @@ static state_lock_entry_t *create_state_lock_entry(cache_entry_t *entry,
  *
  * @return New entry or NULL.
  */
-inline state_lock_entry_t *state_lock_entry_t_dup(state_lock_entry_t *
-						  orig_entry)
+static inline state_lock_entry_t *
+state_lock_entry_t_dup(state_lock_entry_t *orig_entry)
 {
 	return create_state_lock_entry(orig_entry->sle_entry,
 				       orig_entry->sle_export,
@@ -2100,7 +2100,7 @@ state_status_t state_release_grant(state_cookie_entry_t *cookie_entry)
  *
  * @return The human-readable string.
  */
-inline const char *fsal_lock_op_str(fsal_lock_op_t op)
+static inline const char *fsal_lock_op_str(fsal_lock_op_t op)
 {
 	switch (op) {
 	case FSAL_OP_LOCKT:

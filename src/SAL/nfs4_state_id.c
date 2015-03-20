@@ -243,7 +243,7 @@ int compare_state_id(struct gsh_buffdesc *buff1, struct gsh_buffdesc *buff2)
  *
  * @param[in] stateid Array aliased to stateid
  */
-inline uint32_t compute_stateid_hash_value(uint32_t *stateid)
+static inline uint32_t compute_stateid_hash_value(uint32_t *stateid)
 {
 	return stateid[1] ^ stateid[2];
 }
