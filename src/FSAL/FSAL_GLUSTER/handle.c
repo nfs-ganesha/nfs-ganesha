@@ -26,6 +26,8 @@
 #include "gluster_internal.h"
 #include "FSAL/fsal_commonlib.h"
 #include "fsal_convert.h"
+#include "pnfs_utils.h"
+#include "nfs_exports.h"
 
 /* fsal_obj_handle common methods
  */
@@ -1566,4 +1568,5 @@ void handle_ops_init(struct fsal_obj_ops *ops)
 	ops->lru_cleanup = lru_cleanup;
 	ops->handle_digest = handle_digest;
 	ops->handle_to_key = handle_to_key;
+	handle_ops_pnfs(ops);
 }

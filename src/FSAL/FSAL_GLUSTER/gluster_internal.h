@@ -357,6 +357,8 @@ struct glusterfs_export {
 	gid_t savedgid;
 	struct fsal_export export;
 	bool acl_enable;
+	bool pnfs_ds_enabled;
+	bool pnfs_mds_enabled;
 };
 
 struct glusterfs_handle {
@@ -366,7 +368,36 @@ struct glusterfs_handle {
 	struct glfs_fd *glfd;
 	fsal_openflags_t openflags;
 	struct fsal_obj_handle handle;	/* public FSAL handle */
+
+	/* following added for pNFS support */
+	uint64_t rd_issued;
+	uint64_t rd_serial;
+	uint64_t rw_issued;
+	uint64_t rw_serial;
+	uint64_t rw_max_len;
 };
+
+/* Structures defined for PNFS */
+struct glfs_ds_handle {
+	struct fsal_ds_handle ds;
+	struct glfs_object *glhandle;
+	struct glfs_fd *glfd;
+	stable_how4  stability_got;
+	bool connected;
+};
+
+struct glfs_file_layout {
+	uint32_t stripe_length;
+	uint64_t stripe_type;
+	uint32_t devid;
+};
+
+struct glfs_ds_wire {
+	unsigned char gfid[16];
+	int flags;
+	struct glfs_file_layout layout; /*< Layout information */
+};
+
 
 /* A POSIX ACL Entry */
 typedef struct glusterfs_ace_v1 {
@@ -485,5 +516,27 @@ fsal_status_t mode_bits_to_acl(struct glfs *fs,
 			       struct attrlist *attrs, int *attrs_valid,
 			       glusterfs_fsal_xstat_t *buffxstat,
 			       bool is_dir);
+
+/*
+ * Following have been introduced for pNFS support
+ */
+
+/* Need to call this to initialize export_ops for pnfs */
+void export_ops_pnfs(struct export_ops *ops);
+
+/* Need to call this to initialize obj_ops for pnfs */
+void handle_ops_pnfs(struct fsal_obj_ops *ops);
+
+/* Need to call this to initialize ops for pnfs */
+void fsal_ops_pnfs(struct fsal_ops *ops);
+
+void dsh_ops_init(struct fsal_dsh_ops *ops);
+
+void pnfs_ds_ops_init(struct fsal_pnfs_ds_ops *ops);
+
+nfsstat4 getdeviceinfo(struct fsal_module *fsal_hdl,
+			XDR *da_addr_body, const layouttype4 type,
+			const struct pnfs_deviceid *deviceid);
+
 
 #endif				/* GLUSTER_INTERNAL */
