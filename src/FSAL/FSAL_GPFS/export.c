@@ -480,6 +480,7 @@ int gpfs_claim_filesystem(struct fsal_filesystem *fs, struct fsal_export *exp)
 	int retval;
 	struct gpfs_fsal_export *myself;
 	struct gpfs_filesystem_export_map *map = NULL;
+	pthread_attr_t attr_thr;
 
 	myself = container_of(exp, struct gpfs_fsal_export, export);
 
@@ -545,41 +546,33 @@ int gpfs_claim_filesystem(struct fsal_filesystem *fs, struct fsal_export *exp)
 		goto errout;
 	}
 
-	if (gpfs_fs->up_ops == NULL) {
-		pthread_attr_t attr_thr;
+	memset(&attr_thr, 0, sizeof(attr_thr));
 
-		memset(&attr_thr, 0, sizeof(attr_thr));
+	if (pthread_attr_init(&attr_thr) != 0)
+		LogCrit(COMPONENT_THREAD, "can't init pthread's attributes");
 
-		/* Initialization of thread attributes from nfs_init.c */
-		if (pthread_attr_init(&attr_thr) != 0)
-			LogCrit(COMPONENT_THREAD,
-				"can't init pthread's attributes");
+	if (pthread_attr_setscope(&attr_thr, PTHREAD_SCOPE_SYSTEM) != 0)
+		LogCrit(COMPONENT_THREAD, "can't set pthread's scope");
 
-		if (pthread_attr_setscope(&attr_thr, PTHREAD_SCOPE_SYSTEM) != 0)
-			LogCrit(COMPONENT_THREAD, "can't set pthread's scope");
+	if (pthread_attr_setdetachstate(&attr_thr,
+					PTHREAD_CREATE_JOINABLE) != 0)
+		LogCrit(COMPONENT_THREAD, "can't set pthread's join state");
 
-		if (pthread_attr_setdetachstate(&attr_thr,
-						PTHREAD_CREATE_JOINABLE) != 0)
-			LogCrit(COMPONENT_THREAD,
-				"can't set pthread's join state");
+	if (pthread_attr_setstacksize(&attr_thr, 2116488) != 0)
+		LogCrit(COMPONENT_THREAD, "can't set pthread's stack size");
 
-		if (pthread_attr_setstacksize(&attr_thr, 2116488) != 0)
-			LogCrit(COMPONENT_THREAD,
-				"can't set pthread's stack size");
+	gpfs_fs->up_ops = exp->up_ops;
+	retval = pthread_create(&gpfs_fs->up_thread,
+				&attr_thr,
+				GPFSFSAL_UP_Thread,
+				gpfs_fs);
 
-		gpfs_fs->up_ops = exp->up_ops;
-		retval = pthread_create(&gpfs_fs->up_thread,
-					&attr_thr,
-					GPFSFSAL_UP_Thread,
-					gpfs_fs);
-
-		if (retval != 0) {
-			retval = errno;
-			LogCrit(COMPONENT_THREAD,
-				"Could not create GPFSFSAL_UP_Thread, error = %d (%s)",
-				retval, strerror(retval));
-			goto errout;
-		}
+	if (retval != 0) {
+		retval = errno;
+		LogCrit(COMPONENT_THREAD,
+			"Could not create GPFSFSAL_UP_Thread, error = %d (%s)",
+			retval, strerror(retval));
+		goto errout;
 	}
 
 	fs->private = gpfs_fs;
