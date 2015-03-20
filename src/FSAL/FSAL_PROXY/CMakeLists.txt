@@ -24,7 +24,7 @@ add_library(fsalproxy SHARED ${fsalproxy_LIB_SRCS})
 
 target_link_libraries(fsalproxy 
 		      ${SYSTEM_LIBRARIES}
-                      ${LIBTIRPC_LIBRARIES})
+)
 
 if(PROXY_HANDLE_MAPPING)
   target_link_libraries(fsalproxy sqlite3)
