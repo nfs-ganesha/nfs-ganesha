@@ -124,6 +124,7 @@ static struct fsal_staticfsinfo_t default_posix_info = {
 	.accesscheck_support = true,
 	.share_support = true,
 	.share_support_owner = false,
+	.link_supports_permission_checks = true,
 };
 
 static struct config_item pt_params[] = {

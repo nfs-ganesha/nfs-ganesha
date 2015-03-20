@@ -57,19 +57,13 @@ static inline int vfs_stat_by_handle(int mountfd, vfs_file_handle_t *fh,
 	return ret;
 }
 
-static inline int vfs_link_by_handle(vfs_file_handle_t *fh, int srcfd,
-				     const char *sname, int destdirfd,
-				     const char *dname, int flags,
-				     fsal_errors_t *fsal_error)
+static inline int vfs_link_by_handle(vfs_file_handle_t *fh,
+				     int srcfd,
+				     int destdirfd,
+				     const char *dname)
 {
-	int retval;
 	struct fhandle *handle = (struct fhandle *)fh->handle;
-	retval = fhlink(handle, destdirfd, dname);
-	if (retval < 0) {
-		retval = -errno;
-		*fsal_error = posix2fsal_error(errno);
-	}
-	return retval;
+	return fhlink(handle, destdirfd, dname);
 }
 
 static inline int vfs_readlink_by_handle(vfs_file_handle_t *fh, int srcfd,

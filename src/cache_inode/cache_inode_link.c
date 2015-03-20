@@ -86,6 +86,20 @@ cache_inode_link(cache_entry_t *entry,
 		goto out;
 	}
 
+	if (!op_ctx->fsal_export->exp_ops.fs_supports(
+			op_ctx->fsal_export,
+			fso_link_supports_permission_checks)) {
+		status = cache_inode_access(
+			dest_dir,
+			FSAL_MODE_MASK_SET(FSAL_W_OK) |
+			FSAL_MODE_MASK_SET(FSAL_X_OK) |
+			FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_EXECUTE) |
+			FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_FILE));
+
+		if (status != CACHE_INODE_SUCCESS)
+			goto out;
+	}
+
 	/* Rather than performing a lookup first, just try to make the
 	   link and return the FSAL's error if it fails. */
 	fsal_status =
@@ -97,16 +111,27 @@ cache_inode_link(cache_entry_t *entry,
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		status = cache_inode_error_convert(fsal_status);
+		LogFullDebug(COMPONENT_CACHE_INODE,
+			     "link failed %s",
+			     cache_inode_err_str(status));
 		goto out;
 	}
 
 	status = status_ref_entry;
-	if (status != CACHE_INODE_SUCCESS)
+	if (status != CACHE_INODE_SUCCESS) {
+		LogFullDebug(COMPONENT_CACHE_INODE,
+			     "getattrs entry failed %s",
+			     cache_inode_err_str(status));
 		goto out;
+	}
 
 	status = status_ref_dest_dir;
-	if (status != CACHE_INODE_SUCCESS)
+	if (status != CACHE_INODE_SUCCESS) {
+		LogFullDebug(COMPONENT_CACHE_INODE,
+			     "getattrs directory failed %s",
+			     cache_inode_err_str(status));
 		goto out;
+	}
 
 	/* Add the new entry in the destination directory */
 	PTHREAD_RWLOCK_wrlock(&dest_dir->content_lock);

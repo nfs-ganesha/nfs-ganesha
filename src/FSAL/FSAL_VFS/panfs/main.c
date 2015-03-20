@@ -81,6 +81,7 @@ static struct fsal_staticfsinfo_t default_posix_info = {
 	.supported_attrs = PANFS_SUPPORTED_ATTRIBUTES,
 	.maxread = FSAL_MAXIOSIZE,
 	.maxwrite = FSAL_MAXIOSIZE,
+	.link_supports_permission_checks = false,
 };
 
 static struct config_item panfs_params[] = {
