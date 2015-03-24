@@ -58,6 +58,13 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 	uint32_t upflags = 0;
 	int errsv = 0;
 
+#ifdef _VALGRIND_MEMCHECK
+		memset(handle.f_handle, 0, sizeof(handle.f_handle));
+		memset(&buf, 0, sizeof(buf));
+		memset(&fl, 0, sizeof(fl));
+		memset(&devid, 0, sizeof(devid));
+#endif
+
 	snprintf(thr_name, sizeof(thr_name),
 		 "fsal_up_%"PRIu64".%"PRIu64,
 		 gpfs_fs->fs->dev.major, gpfs_fs->fs->dev.minor);
@@ -100,11 +107,6 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 		callback.fl = &fl;
 		callback.dev_id = &devid;
 		callback.expire_attr = &expire_time_attr;
-
-#ifdef _VALGRIND_MEMCHECK
-		memset(callback.handle->f_handle, 0,
-		       callback.handle->handle_size);
-#endif
 
 		rc = gpfs_ganesha(OPENHANDLE_INODE_UPDATE, &callback);
 		errsv = errno;
