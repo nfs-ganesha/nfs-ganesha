@@ -148,10 +148,6 @@ static nfsstat4 pnfs_layout_get(struct fsal_obj_handle          *obj_pub,
 		container_of(req_ctx->fsal_export,
 			     struct glusterfs_export, export);
 
-	struct glusterfs_fsal_module *glfsal_module =
-		container_of(req_ctx->fsal_module,
-			     struct glusterfs_fsal_module, fsal);
-
 	struct glusterfs_handle *handle =
 		container_of(obj_pub, struct glusterfs_handle, handle);
 	int    p_flags = 0;

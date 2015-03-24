@@ -20,6 +20,8 @@ SET(fsalgluster_LIB_SRCS
    handle.c
    gluster_internal.h
    gluster_internal.c
+   mds.c
+   ds.c
 )
 
 add_library(fsalgluster SHARED ${fsalgluster_LIB_SRCS})
