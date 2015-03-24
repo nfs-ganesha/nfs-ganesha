@@ -1052,7 +1052,7 @@ struct config_item_list deleg_types[] =  {
 		ANON_GID, _struct_, _perms_.anonymous_gid,		\
 		EXPORT_OPTION_ANON_GID_SET, _perms_.set),		\
 	CONF_ITEM_LIST_BITS_SET("SecType",				\
-		EXPORT_OPTION_AUTH_UNIX,				\
+		EXPORT_OPTION_AUTH_NONE | EXPORT_OPTION_AUTH_UNIX,	\
 		EXPORT_OPTION_AUTH_TYPES,				\
 		sec_types, _struct_, _perms_.options, _perms_.set),	\
 	CONF_ITEM_BOOLBIT_SET("PrivilegedPort",				\

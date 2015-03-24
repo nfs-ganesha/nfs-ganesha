@@ -217,20 +217,13 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 	 */
 	int idx = 0;
 
-	if (op_ctx->export_perms->options & EXPORT_OPTION_AUTH_NONE)
-		res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx++]
-		    .flavor = AUTH_NONE;
-
-	if (op_ctx->export_perms->options & EXPORT_OPTION_AUTH_UNIX)
-		res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx++]
-		    .flavor = AUTH_UNIX;
-
+	/* List the security flavors in the order we prefer */
 	if (op_ctx->export_perms->options &
-	    EXPORT_OPTION_RPCSEC_GSS_NONE) {
-		res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx].
-		    flavor = RPCSEC_GSS;
+	    EXPORT_OPTION_RPCSEC_GSS_PRIV) {
 		res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx]
-		    .secinfo4_u.flavor_info.service = RPCSEC_GSS_SVC_NONE;
+		    .flavor = RPCSEC_GSS;
+		res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx]
+		    .secinfo4_u.flavor_info.service = RPCSEC_GSS_SVC_PRIVACY;
 		res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx]
 		    .secinfo4_u.flavor_info.qop = GSS_C_QOP_DEFAULT;
 		res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx++]
@@ -250,16 +243,24 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	if (op_ctx->export_perms->options &
-	    EXPORT_OPTION_RPCSEC_GSS_PRIV) {
+	    EXPORT_OPTION_RPCSEC_GSS_NONE) {
+		res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx].
+		    flavor = RPCSEC_GSS;
 		res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx]
-		    .flavor = RPCSEC_GSS;
-		res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx]
-		    .secinfo4_u.flavor_info.service = RPCSEC_GSS_SVC_PRIVACY;
+		    .secinfo4_u.flavor_info.service = RPCSEC_GSS_SVC_NONE;
 		res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx]
 		    .secinfo4_u.flavor_info.qop = GSS_C_QOP_DEFAULT;
 		res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx++]
 		    .secinfo4_u.flavor_info.oid = v5oid;
 	}
+
+	if (op_ctx->export_perms->options & EXPORT_OPTION_AUTH_UNIX)
+		res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx++]
+		    .flavor = AUTH_UNIX;
+
+	if (op_ctx->export_perms->options & EXPORT_OPTION_AUTH_NONE)
+		res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx++]
+		    .flavor = AUTH_NONE;
 
 	res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_len = idx;
 

@@ -176,25 +176,26 @@ int mnt_Mnt(nfs_arg_t *arg,
 	}
 
 	/* Return the supported authentication flavor in V3 based
-	 * on the client's export permissions.
+	 * on the client's export permissions. These should be listed
+	 * in a preferred order.
 	 */
-	if (op_ctx->export_perms->options & EXPORT_OPTION_AUTH_NONE)
-		auth_flavor[index_auth++] = AUTH_NONE;
-	if (op_ctx->export_perms->options & EXPORT_OPTION_AUTH_UNIX)
-		auth_flavor[index_auth++] = AUTH_UNIX;
 #ifdef _HAVE_GSSAPI
 	if (nfs_param.krb5_param.active_krb5 == true) {
 		if (op_ctx->export_perms->options &
-		    EXPORT_OPTION_RPCSEC_GSS_NONE)
-			auth_flavor[index_auth++] = MNT_RPC_GSS_NONE;
+		    EXPORT_OPTION_RPCSEC_GSS_PRIV)
+			auth_flavor[index_auth++] = MNT_RPC_GSS_PRIVACY;
 		if (op_ctx->export_perms->options &
 		    EXPORT_OPTION_RPCSEC_GSS_INTG)
 			auth_flavor[index_auth++] = MNT_RPC_GSS_INTEGRITY;
 		if (op_ctx->export_perms->options &
-		    EXPORT_OPTION_RPCSEC_GSS_PRIV)
-			auth_flavor[index_auth++] = MNT_RPC_GSS_PRIVACY;
+		    EXPORT_OPTION_RPCSEC_GSS_NONE)
+			auth_flavor[index_auth++] = MNT_RPC_GSS_NONE;
 	}
 #endif
+	if (op_ctx->export_perms->options & EXPORT_OPTION_AUTH_UNIX)
+		auth_flavor[index_auth++] = AUTH_UNIX;
+	if (op_ctx->export_perms->options & EXPORT_OPTION_AUTH_NONE)
+		auth_flavor[index_auth++] = AUTH_NONE;
 
 	LogDebug(COMPONENT_NFSPROTO,
 		 "MOUNT: Entry supports %d different flavours handle=%s for client %s",
