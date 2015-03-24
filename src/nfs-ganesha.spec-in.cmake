@@ -69,6 +69,9 @@
 @BCOND_UTILS@ utils
 %global use_utils %{on_off_switch utils}
 
+@BCOND_GUI_UTILS@ gui_utils
+%global use_gui_utils %{on_off_switch gui_utils}
+
 %global dev_version %{lua: extraver = string.gsub('@GANESHA_EXTRA_VERSION@', '%-', '.'); print(extraver) }
 
 %define sourcename @CPACK_SOURCE_PACKAGE_FILE_NAME@
@@ -164,8 +167,10 @@ be used with NFS-Ganesha to support PROXY based filesystems
 %package utils
 Summary: The NFS-GANESHA's util scripts
 Group: Applications/System
+%if %{with gui_utils}
 BuildRequires:	PyQt4-devel
 Requires:	PyQt4
+%endif
 Requires: nfs-ganesha = %{version}-%{release}, python
 
 %description utils
@@ -339,6 +344,7 @@ cmake .	-DCMAKE_BUILD_TYPE=Debug			\
 	-DUSE_FSAL_LUSTRE_UP=%{use_lustre_up}		\
 	-DUSE_LTTNG=%{use_lttng}			\
 	-DUSE_ADMIN_TOOLS=%{use_utils}			\
+	-DUSE_GUI_ADMIN_TOOLS=%{use_gui_utils}		\
 	-DUSE_FSAL_VFS=ON				\
 	-DUSE_FSAL_PROXY=ON				\
 	-DUSE_DBUS=ON					\
@@ -560,11 +566,13 @@ make DESTDIR=%{buildroot} install
 %defattr(-,root,root,-)
 %{python2_sitelib}/Ganesha/*
 %{python2_sitelib}/ganeshactl-*-info
+%if %{with gui_utils}
 %{_bindir}/ganesha-admin
 %{_bindir}/manage_clients
 %{_bindir}/manage_exports
 %{_bindir}/manage_logger
 %{_bindir}/ganeshactl
+%endif
 %{_bindir}/fake_recall
 %{_bindir}/get_clientids
 %{_bindir}/grace_period
