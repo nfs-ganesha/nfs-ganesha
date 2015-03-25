@@ -667,8 +667,9 @@ static void *export_init(void *link_mem, void *self_struct)
  * parameters are already done.
  */
 
-static int export_commit(void *node, void *link_mem, void *self_struct,
-			 struct config_error_type *err_type)
+static int export_commit_common(void *node, void *link_mem, void *self_struct,
+				struct config_error_type *err_type,
+				bool add_export)
 {
 	struct gsh_export *export, *probe_exp;
 	int errcnt = 0;
@@ -800,8 +801,12 @@ static int export_commit(void *node, void *link_mem, void *self_struct,
 		goto err_out;
 	}
 
-	/* This export must be mounted to the PseudoFS if NFS v4 */
-	if (export->export_perms.options & EXPORT_OPTION_NFSV4)
+	/* add_export_commit shouldn't add this export to mount work as
+	 * add_export_commit deals with creating pseudo mount directly.
+	 * So add this export to mount work only if NFSv4 exported and
+	 * is not a dynamically added export.
+	 */
+	if (!add_export && export->export_perms.options & EXPORT_OPTION_NFSV4)
 		export_add_to_mount_work(export);
 
 	StrExportOptions(&export->export_perms, perms);
@@ -819,6 +824,15 @@ static int export_commit(void *node, void *link_mem, void *self_struct,
 
 err_out:
 	return errcnt;
+}
+
+static int export_commit(void *node, void *link_mem, void *self_struct,
+			 struct config_error_type *err_type)
+{
+	bool add_export = false; /* not a dynamic add export */
+
+	return export_commit_common(node, link_mem, self_struct, err_type,
+				    add_export);
 }
 
 /**
@@ -854,8 +868,10 @@ static int add_export_commit(void *node, void *link_mem, void *self_struct,
 	struct gsh_export *export = self_struct;
 	int errcnt = 0;
 	int status;
+	bool add_export = true; /* dynamic add export */
 
-	errcnt = export_commit(node, link_mem, self_struct, err_type);
+	errcnt = export_commit_common(node, link_mem, self_struct, err_type,
+				      add_export);
 	if (errcnt != 0)
 		goto err_out;
 
