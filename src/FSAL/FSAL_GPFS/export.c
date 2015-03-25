@@ -462,6 +462,7 @@ int open_root_fd(struct gpfs_filesystem *gpfs_fs)
 			"Could not re-index GPFS file system fsid for %s",
 			gpfs_fs->fs->path);
 		retval = -retval;
+		goto errout;
 	}
 
 	return retval;
