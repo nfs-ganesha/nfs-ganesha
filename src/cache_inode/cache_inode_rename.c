@@ -196,6 +196,7 @@ cache_inode_rename(cache_entry_t *dir_src,
 	cache_inode_status_t status = CACHE_INODE_SUCCESS;
 	cache_inode_status_t status_ref_dir_src = CACHE_INODE_SUCCESS;
 	cache_inode_status_t status_ref_dir_dst = CACHE_INODE_SUCCESS;
+	cache_inode_status_t status_ref_src = CACHE_INODE_SUCCESS;
 	cache_inode_status_t status_ref_dst = CACHE_INODE_SUCCESS;
 
 	if ((dir_src->type != DIRECTORY) || (dir_dest->type != DIRECTORY)) {
@@ -303,6 +304,8 @@ cache_inode_rename(cache_entry_t *dir_src,
 		status_ref_dir_dst =
 			cache_inode_refresh_attrs_locked(dir_dest);
 
+	status_ref_src = cache_inode_refresh_attrs_locked(lookup_src);
+
 	LogFullDebug(COMPONENT_CACHE_INODE, "done refreshing attributes");
 
 	if (FSAL_IS_ERROR(fsal_status)) {
@@ -317,8 +320,7 @@ cache_inode_rename(cache_entry_t *dir_src,
 
 	if (lookup_dst) {
 		/* Force a refresh of the overwritten inode */
-		status_ref_dst =
-		    cache_inode_refresh_attrs_locked(lookup_dst);
+		status_ref_dst = cache_inode_refresh_attrs_locked(lookup_dst);
 		if (status_ref_dst == CACHE_INODE_ESTALE)
 			status_ref_dst = CACHE_INODE_SUCCESS;
 	}
@@ -327,6 +329,9 @@ cache_inode_rename(cache_entry_t *dir_src,
 
 	if (status == CACHE_INODE_SUCCESS)
 		status = status_ref_dir_dst;
+
+	if (status == CACHE_INODE_SUCCESS)
+		status = status_ref_src;
 
 	if (status == CACHE_INODE_SUCCESS)
 		status = status_ref_dst;
