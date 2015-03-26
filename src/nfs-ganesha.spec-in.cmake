@@ -93,6 +93,7 @@ BuildRequires:	libcap-devel
 BuildRequires:	libblkid-devel
 BuildRequires:	libuuid-devel
 Requires:	dbus
+Requires:	nfs-utils
 %if %{with_nfsidmap}
 BuildRequires:	libnfsidmap-devel
 %else
