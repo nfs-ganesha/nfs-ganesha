@@ -134,7 +134,6 @@ extern writeverf3 NFS3_write_verifier;	/*< NFS V3 write verifier */
 extern nfs_worker_data_t *workers_data;
 extern char *config_path;
 extern char *pidfile_path;
-extern ushort g_nodeid;
 
 /*
  * function prototypes
