@@ -24,9 +24,12 @@ set(SCRIPT_SRC
   grace_period.py
   purge_gids.py
   ganesha_mgr.py
+  ganesha_stats.py
+  )
+
+set(GUI_SCRIPT_SRC
   ganeshactl.py
   ganesha-admin.py
-  ganesha_stats.py
   manage_clients.py
   manage_logger.py
   manage_exports.py
@@ -45,17 +48,19 @@ if(PYTHON)
 
   # Generate rules for compiling .ui -> .py
   set(UI_PY_FILES)
-  foreach(ui_file ${UI_SRC})
-    string(REPLACE ".ui" ".py" py_file ${ui_file})
-    add_custom_command(
-      OUTPUT ${py_file}
-      COMMAND mkdir -p build/lib/Ganesha/QtUI
-      COMMAND pyuic4 "${CMAKE_CURRENT_SOURCE_DIR}/${ui_file}" -o "build/lib/${py_file}"
-      DEPENDS ${ui_file}
-      )
-    set(UI_PY_FILES ${UI_PY_FILES} "${py_file}")
-    list(APPEND GANESHA_SRCS ${py_file})
-  endforeach()
+  if(USE_GUI_ADMIN_TOOLS)
+    foreach(ui_file ${UI_SRC})
+      string(REPLACE ".ui" ".py" py_file ${ui_file})
+      add_custom_command(
+        OUTPUT ${py_file}
+        COMMAND mkdir -p build/lib/Ganesha/QtUI
+        COMMAND pyuic4 "${CMAKE_CURRENT_SOURCE_DIR}/${ui_file}" -o "build/lib/${py_file}"
+        DEPENDS ${ui_file}
+        )
+      set(UI_PY_FILES ${UI_PY_FILES} "${py_file}")
+      list(APPEND GANESHA_SRCS ${py_file})
+    endforeach()
+  endif()
 
   # Generate rules to copy command line scripts from src to build,
   # stripping .py along the way
@@ -70,6 +75,18 @@ if(PYTHON)
     list(APPEND SCRIPTS ${script_file})
   endforeach()
 
+  if(USE_GUI_ADMIN_TOOLS)
+    foreach(src_file ${GUI_SCRIPT_SRC})
+      string(REPLACE ".py" "" script_file ${src_file})
+      add_custom_command(
+        OUTPUT ${script_file}
+        COMMAND cp "${CMAKE_CURRENT_SOURCE_DIR}/${src_file}" ${script_file}
+        DEPENDS ${src_file}
+        )
+      list(APPEND SCRIPTS ${script_file})
+    endforeach()
+  endif()
+
   # Build up the string for the configure substitution in setup.py
   set(SCRIPTS_STRING)
   foreach(script_py ${SCRIPT_SRC})
@@ -80,6 +97,17 @@ if(PYTHON)
       set(SCRIPTS_STRING "${SCRIPTS_STRING}, '${script}'")
     endif()
   endforeach()
+
+  if(USE_GUI_ADMIN_TOOLS)
+    foreach(script_py ${GUI_SCRIPT_SRC})
+      string(REPLACE ".py" "" script ${script_py})
+      if("${SCRIPTS_STRING}" STREQUAL "")
+        set(SCRIPTS_STRING "'${script}'")
+      else()
+        set(SCRIPTS_STRING "${SCRIPTS_STRING}, '${script}'")
+      endif()
+    endforeach()
+  endif()
 
   configure_file(${SETUP_PY_IN} ${SETUP_PY})
 

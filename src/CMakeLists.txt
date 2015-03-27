@@ -247,6 +247,9 @@ option(DISTNAME_HAS_GIT_DATA "Distribution package's name carries git data" OFF 
 # Build and package Python admin scripts for managing via DBus
 option(USE_ADMIN_TOOLS "Package Admin scripts" OFF)
 
+# Build and package Python gui admin scripts for managing via DBus
+option(USE_GUI_ADMIN_TOOLS "Package GUI Admin scripts" ON)
+
 # Final location for server modules such as FSAL shared objects
 # We do this separately because packaging (RPM) installs in a
 # "build root" but installs somewhere else (/usr)
@@ -976,6 +979,7 @@ message(STATUS "GOLD_LINKER = ${GOLD_LINKER}")
 message(STATUS "CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX}")
 message(STATUS "FSAL_DESTINATION = ${FSAL_DESTINATION}")
 message(STATUS "USE_ADMIN_TOOLS = ${USE_ADMIN_TOOLS}")
+message(STATUS "USE_GUI_ADMIN_TOOLS = ${USE_GUI_ADMIN_TOOLS}")
 message(STATUS "MODULES_PATH = ${MODULES_PATH}")
 message(STATUS "USE_TSAN = ${USE_TSAN}")
 message(STATUS "USE_LTTNG = ${USE_LTTNG}")
@@ -1116,6 +1120,11 @@ set(USE_ADMIN_TOOLS ${USE_ADMIN_TOOLS}
   "Package Admin Scripts"
   FORCE)
 
+set(USE_GUI_ADMIN_TOOLS ${USE_GUI_ADMIN_TOOLS}
+  CACHE BOOL
+  "Package GUI Admin Scripts"
+  FORCE)
+
 set(USE_TSAN ${USE_TSAN}
   CACHE BOOL
   "Enable GCC Thread-Sanitizer"
@@ -1242,6 +1251,12 @@ if(USE_ADMIN_TOOLS)
 else(USE_ADMIN_TOOLS)
     set(BCOND_UTILS "%bcond_with")
 endif(USE_ADMIN_TOOLS)
+
+if(USE_GUI_ADMIN_TOOLS)
+    set(BCOND_GUI_UTILS "%bcond_without")
+else(USE_GUI_ADMIN_TOOLS)
+    set(BCOND_GUI_UTILS "%bcond_with")
+endif(USE_GUI_ADMIN_TOOLS)
 
 # Now create a useable specfile
 configure_file(

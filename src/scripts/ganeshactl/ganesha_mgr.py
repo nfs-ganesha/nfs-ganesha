@@ -233,7 +233,7 @@ if __name__ == '__main__':
        print "Too few arguments."\
              " Try \"ganesha_mgr.py help\" for more info"
 
-    if sys.argv[1] == "add_client":
+    elif sys.argv[1] == "add_client":
         if len(sys.argv) < 3:
            print "add_client requires an IP."\
                  " Try \"ganesha_mgr.py help\" for more info"
