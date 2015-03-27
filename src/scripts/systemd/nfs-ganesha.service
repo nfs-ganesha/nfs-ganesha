@@ -14,6 +14,7 @@
 Description=NFS-Ganesha file server
 Documentation=http://github.com/nfs-ganesha/nfs-ganesha/wiki
 After=rpcbind.service nfs-ganesha-lock.service
+Requires=rpcbind.service nfs-ganesha-lock.service
 Conflicts=nfs.target
 
 [Service]
