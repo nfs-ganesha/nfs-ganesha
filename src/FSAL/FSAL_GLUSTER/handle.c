@@ -895,7 +895,8 @@ static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
  * @brief Implements GLUSTER FSAL objectoperation rename
  */
 
-static fsal_status_t renamefile(struct fsal_obj_handle *olddir_hdl,
+static fsal_status_t renamefile(struct fsal_obj_handle *obj_hdl,
+				struct fsal_obj_handle *olddir_hdl,
 				const char *old_name,
 				struct fsal_obj_handle *newdir_hdl,
 				const char *new_name)

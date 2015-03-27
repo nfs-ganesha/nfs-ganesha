@@ -131,13 +131,14 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 					 eof);
 }
 
-static fsal_status_t renamefile(struct fsal_obj_handle *olddir_hdl,
+static fsal_status_t renamefile(struct fsal_obj_handle *obj_hdl,
+				struct fsal_obj_handle *olddir_hdl,
 				const char *old_name,
 				struct fsal_obj_handle *newdir_hdl,
 				const char *new_name)
 {
-	return next_ops.obj_ops.rename(olddir_hdl, old_name, newdir_hdl,
-					new_name);
+	return next_ops.obj_ops.rename(obj_hdl, olddir_hdl, old_name,
+				       newdir_hdl, new_name);
 }
 
 static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl)

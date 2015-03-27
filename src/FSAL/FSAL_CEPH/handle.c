@@ -572,7 +572,8 @@ static fsal_status_t fsal_link(struct fsal_obj_handle *handle_pub,
  * @return FSAL status.
  */
 
-static fsal_status_t fsal_rename(struct fsal_obj_handle *olddir_pub,
+static fsal_status_t fsal_rename(struct fsal_obj_handle *obj_hdl,
+				 struct fsal_obj_handle *olddir_pub,
 				 const char *old_name,
 				 struct fsal_obj_handle *newdir_pub,
 				 const char *new_name)
