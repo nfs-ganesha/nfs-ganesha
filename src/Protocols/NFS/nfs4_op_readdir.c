@@ -379,7 +379,7 @@ not_junction:
 		goto server_fault;
 	}
 
-	if (is_sticky_bit_set(attr)) {
+	if (entry->type == DIRECTORY && is_sticky_bit_set(attr)) {
 		rdattr_error = NFS4ERR_MOVED;
 		LogDebug(COMPONENT_NFS_READDIR,
 			 "Skipping because of %s",

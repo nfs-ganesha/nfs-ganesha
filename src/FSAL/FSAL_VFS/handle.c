@@ -1061,26 +1061,13 @@ static struct closefd vfs_fsal_open_and_stat(struct fsal_export *exp,
 		retval = fstat(cfd.fd, stat);
 		func = "fstat";
 		break;
-	case DIRECTORY:
-		cfd.fd = vfs_fsal_open(myself, open_flags, fsal_error);
-		if (cfd.fd < 0) {
-			LogDebug(COMPONENT_FSAL,
-				 "Failed with %s open_flags 0x%08x",
-				 strerror(-cfd.fd), open_flags);
-			return cfd;
-		}
-		cfd.close_fd = true;
-		retval =
-		    vfs_stat_by_handle(cfd.fd, myself->handle, stat,
-				       open_flags);
-		func = "vfs_stat_by_handle (1)";
-		break;
 	case SYMBOLIC_LINK:
 		open_flags |= (O_PATH | O_RDWR | O_NOFOLLOW);
 		goto vfos_open;
 	case FIFO_FILE:
 		open_flags |= O_NONBLOCK;
 		/* fall through */
+	case DIRECTORY:
 	default:
  vfos_open:
 		cfd.fd = vfs_fsal_open(myself, open_flags, fsal_error);
@@ -1091,10 +1078,9 @@ static struct closefd vfs_fsal_open_and_stat(struct fsal_export *exp,
 			return cfd;
 		}
 		cfd.close_fd = true;
-		retval =
-		    vfs_stat_by_handle(cfd.fd, myself->handle, stat,
-				       open_flags);
-		func = "vfs_stat_by_handle (2)";
+		retval = vfs_stat_by_handle(cfd.fd, myself->handle,
+					    stat, open_flags);
+		func = "vfs_stat_by_handle";
 		break;
 	}
 
