@@ -643,7 +643,8 @@ static fsal_status_t tank_readdir(struct fsal_obj_handle *dir_hdl,
 	return fsalstat(posix2fsal_error(retval), retval);
 }
 
-static fsal_status_t tank_rename(struct fsal_obj_handle *olddir_hdl,
+static fsal_status_t tank_rename(struct fsal_obj_handle *obj_hdl,
+				 struct fsal_obj_handle *olddir_hdl,
 				 const char *old_name,
 				 struct fsal_obj_handle *newdir_hdl,
 				 const char *new_name)

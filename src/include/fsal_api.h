@@ -1374,7 +1374,8 @@ struct fsal_obj_ops {
  *
  * @return FSAL status
  */
-	 fsal_status_t(*rename) (struct fsal_obj_handle *olddir_hdl,
+	 fsal_status_t(*rename) (struct fsal_obj_handle *obj_hdl,
+				 struct fsal_obj_handle *olddir_hdl,
 				 const char *old_name,
 				 struct fsal_obj_handle *newdir_hdl,
 				 const char *new_name);

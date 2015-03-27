@@ -292,9 +292,9 @@ cache_inode_rename(cache_entry_t *dir_src,
 	LogFullDebug(COMPONENT_CACHE_INODE, "about to call FSAL rename");
 
 	fsal_status =
-	    dir_src->obj_handle->obj_ops.rename(dir_src->obj_handle,
-					     oldname, dir_dest->obj_handle,
-					     newname);
+	    dir_src->obj_handle->obj_ops.rename(lookup_src->obj_handle,
+						dir_src->obj_handle, oldname,
+						dir_dest->obj_handle, newname);
 
 	LogFullDebug(COMPONENT_CACHE_INODE, "returned from FSAL rename");
 

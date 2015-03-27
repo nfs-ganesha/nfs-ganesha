@@ -946,12 +946,13 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 	return fsalstat(fsal_error, retval);
 }
 
-static fsal_status_t renamefile(struct fsal_obj_handle *olddir_hdl,
+static fsal_status_t renamefile(struct fsal_obj_handle *obj_hdl,
+				struct fsal_obj_handle *olddir_hdl,
 				const char *old_name,
 				struct fsal_obj_handle *newdir_hdl,
 				const char *new_name)
 {
-	struct vfs_fsal_obj_handle *olddir, *newdir;
+	struct vfs_fsal_obj_handle *olddir, *newdir, *obj;
 	int oldfd = -1, newfd = -1;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval = 0;
@@ -987,6 +988,7 @@ static fsal_status_t renamefile(struct fsal_obj_handle *olddir_hdl,
 		fsal_error = posix2fsal_error(retval);
 		goto out;
 	}
+	obj = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
 	newfd = vfs_fsal_open(newdir, O_PATH | O_NOACCESS, &fsal_error);
 	if (newfd < 0) {
 		retval = -newfd;
@@ -1000,6 +1002,28 @@ static fsal_status_t renamefile(struct fsal_obj_handle *olddir_hdl,
 	if (retval < 0) {
 		retval = errno;
 		fsal_error = posix2fsal_error(retval);
+	} else if (vfs_unopenable_type(obj->obj_handle.type)) {
+		/* A block, char, or socket has been renamed. Fixup
+		 * our information in the handle so we can still stat it.
+		 * Save the name in case we have to sort of undo.
+		 */
+		char *saved_name = obj->u.unopenable.name;
+		memcpy(obj->u.unopenable.dir, newdir->handle,
+		       sizeof(vfs_file_handle_t));
+		obj->u.unopenable.name = gsh_strdup(new_name);
+		if (obj->u.unopenable.name != NULL) {
+			/* Discard saved_name */
+			gsh_free(saved_name);
+		} else {
+			/* It's a bad day, we're going to be messed up
+			 * no matter what we try and do, maybe leave
+			 * things not completely hosed.
+			 */
+			LogCrit(COMPONENT_FSAL,
+				"Failed to allocate memory to rename special inode from %s to %s",
+				old_name, new_name);
+			obj->u.unopenable.name = saved_name;
+		}
 	}
 	fsal_restore_ganesha_credentials();
  out:
