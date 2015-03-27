@@ -187,8 +187,6 @@ void *_9p_socket_thread(void *Arg)
 
 		LogEvent(COMPONENT_9P, "9p socket #%ld is connected to %s",
 			 tcp_sock, strcaller);
-		printf("9p socket #%ld is connected to %s\n", tcp_sock,
-		       strcaller);
 	}
 	_9p_conn.client = get_gsh_client(&_9p_conn.addrpeer, false);
 
