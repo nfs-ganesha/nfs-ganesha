@@ -25,30 +25,25 @@ struct kxArgs {
 	signed long arg2;
 };
 
-static int fd = -1;
-
 int gpfs_ganesha(int op, void *oarg)
 {
 	int rc;
-	int localFD;
+	static int gpfs_fd = -1;
 	struct kxArgs args;
 
-	if (fd >= 0)
-		localFD = fd;
-	else {
-		localFD = open(GPFS_DEVNAMEX, O_RDONLY);
-		if (localFD < 0) {
+	if (gpfs_fd < 0) {
+		gpfs_fd = open(GPFS_DEVNAMEX, O_RDONLY);
+		if (gpfs_fd < 0) {
 			fprintf(stderr,
 				"Ganesha call to GPFS failed with ENOSYS\n");
 			return ENOSYS;
 		}
-		(void)fcntl(localFD, F_SETFD, FD_CLOEXEC);
-		fd = localFD;
+		(void)fcntl(gpfs_fd, F_SETFD, FD_CLOEXEC);
 	}
 
 	args.arg1 = op;
 	args.arg2 = (long)oarg;
-	rc = ioctl(localFD, kGanesha, &args);
+	rc = ioctl(gpfs_fd, kGanesha, &args);
 
 	return rc;
 }

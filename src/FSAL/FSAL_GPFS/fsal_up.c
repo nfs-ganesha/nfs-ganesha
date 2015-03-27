@@ -33,11 +33,6 @@
 #include <utime.h>
 #include <sys/time.h>
 
-/** @todo FSF: there are lots of assumptions in here that must be fixed when we
- *             support unexport. The thread may go away when all exports are
- *             removed and must clean itself up. Also, it must make sure it gets
- *             mount_root_fd from a living export.
- */
 void *GPFSFSAL_UP_Thread(void *Arg)
 {
 	struct gpfs_filesystem *gpfs_fs = Arg;
@@ -57,6 +52,13 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 	uint32_t expire_time_attr = 0;
 	uint32_t upflags = 0;
 	int errsv = 0;
+
+#ifdef _VALGRIND_MEMCHECK
+		memset(handle.f_handle, 0, sizeof(handle.f_handle));
+		memset(&buf, 0, sizeof(buf));
+		memset(&fl, 0, sizeof(fl));
+		memset(&devid, 0, sizeof(devid));
+#endif
 
 	snprintf(thr_name, sizeof(thr_name),
 		 "fsal_up_%"PRIu64".%"PRIu64,
@@ -79,8 +81,6 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 
 	/* Start querying for events and processing. */
 	while (1) {
-		/* @todo FSF: need to figure out how to exit in new scheme */
-
 		LogFullDebug(COMPONENT_FSAL_UP,
 			     "Requesting event from FSAL Callback interface for %d.",
 			     gpfs_fs->root_fd);
@@ -100,11 +100,6 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 		callback.fl = &fl;
 		callback.dev_id = &devid;
 		callback.expire_attr = &expire_time_attr;
-
-#ifdef _VALGRIND_MEMCHECK
-		memset(callback.handle->f_handle, 0,
-		       callback.handle->handle_size);
-#endif
 
 		rc = gpfs_ganesha(OPENHANDLE_INODE_UPDATE, &callback);
 		errsv = errno;
@@ -353,9 +348,9 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 			}
 			break;
 
-		case THREAD_STOP:	/* GPFS export no longer available */
-			LogWarn(COMPONENT_FSAL_UP,
-				"GPFS file system %d is no longer available",
+		case THREAD_STOP:  /* We wanted to terminate this thread */
+			LogDebug(COMPONENT_FSAL_UP,
+				"Terminating the GPFS up call thread for %d",
 				gpfs_fs->root_fd);
 			return NULL;
 

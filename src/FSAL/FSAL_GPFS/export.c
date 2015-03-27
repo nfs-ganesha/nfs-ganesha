@@ -462,6 +462,7 @@ int open_root_fd(struct gpfs_filesystem *gpfs_fs)
 			"Could not re-index GPFS file system fsid for %s",
 			gpfs_fs->fs->path);
 		retval = -retval;
+		goto errout;
 	}
 
 	return retval;
@@ -480,6 +481,7 @@ int gpfs_claim_filesystem(struct fsal_filesystem *fs, struct fsal_export *exp)
 	int retval;
 	struct gpfs_fsal_export *myself;
 	struct gpfs_filesystem_export_map *map = NULL;
+	pthread_attr_t attr_thr;
 
 	myself = container_of(exp, struct gpfs_fsal_export, export);
 
@@ -545,41 +547,33 @@ int gpfs_claim_filesystem(struct fsal_filesystem *fs, struct fsal_export *exp)
 		goto errout;
 	}
 
-	if (gpfs_fs->up_ops == NULL) {
-		pthread_attr_t attr_thr;
+	memset(&attr_thr, 0, sizeof(attr_thr));
 
-		memset(&attr_thr, 0, sizeof(attr_thr));
+	if (pthread_attr_init(&attr_thr) != 0)
+		LogCrit(COMPONENT_THREAD, "can't init pthread's attributes");
 
-		/* Initialization of thread attributes from nfs_init.c */
-		if (pthread_attr_init(&attr_thr) != 0)
-			LogCrit(COMPONENT_THREAD,
-				"can't init pthread's attributes");
+	if (pthread_attr_setscope(&attr_thr, PTHREAD_SCOPE_SYSTEM) != 0)
+		LogCrit(COMPONENT_THREAD, "can't set pthread's scope");
 
-		if (pthread_attr_setscope(&attr_thr, PTHREAD_SCOPE_SYSTEM) != 0)
-			LogCrit(COMPONENT_THREAD, "can't set pthread's scope");
+	if (pthread_attr_setdetachstate(&attr_thr,
+					PTHREAD_CREATE_JOINABLE) != 0)
+		LogCrit(COMPONENT_THREAD, "can't set pthread's join state");
 
-		if (pthread_attr_setdetachstate(&attr_thr,
-						PTHREAD_CREATE_JOINABLE) != 0)
-			LogCrit(COMPONENT_THREAD,
-				"can't set pthread's join state");
+	if (pthread_attr_setstacksize(&attr_thr, 2116488) != 0)
+		LogCrit(COMPONENT_THREAD, "can't set pthread's stack size");
 
-		if (pthread_attr_setstacksize(&attr_thr, 2116488) != 0)
-			LogCrit(COMPONENT_THREAD,
-				"can't set pthread's stack size");
+	gpfs_fs->up_ops = exp->up_ops;
+	retval = pthread_create(&gpfs_fs->up_thread,
+				&attr_thr,
+				GPFSFSAL_UP_Thread,
+				gpfs_fs);
 
-		gpfs_fs->up_ops = exp->up_ops;
-		retval = pthread_create(&gpfs_fs->up_thread,
-					&attr_thr,
-					GPFSFSAL_UP_Thread,
-					gpfs_fs);
-
-		if (retval != 0) {
-			retval = errno;
-			LogCrit(COMPONENT_THREAD,
-				"Could not create GPFSFSAL_UP_Thread, error = %d (%s)",
-				retval, strerror(retval));
-			goto errout;
-		}
+	if (retval != 0) {
+		retval = errno;
+		LogCrit(COMPONENT_THREAD,
+			"Could not create GPFSFSAL_UP_Thread, error = %d (%s)",
+			retval, strerror(retval));
+		goto errout;
 	}
 
 	fs->private = gpfs_fs;
@@ -610,6 +604,9 @@ void gpfs_unclaim_filesystem(struct fsal_filesystem *fs)
 	struct gpfs_filesystem *gpfs_fs = fs->private;
 	struct glist_head *glist, *glistn;
 	struct gpfs_filesystem_export_map *map;
+	struct callback_arg callback;
+	int reason;
+	int rc;
 
 	if (gpfs_fs != NULL) {
 		glist_for_each_safe(glist, glistn, &gpfs_fs->exports) {
@@ -631,8 +628,19 @@ void gpfs_unclaim_filesystem(struct fsal_filesystem *fs)
 			gsh_free(map);
 		}
 
+		/* Terminate GPFS upcall thread */
+		callback.mountdirfd = gpfs_fs->root_fd;
+		reason = THREAD_STOP;
+		callback.reason = &reason;
+		rc = gpfs_ganesha(OPENHANDLE_THREAD_UPDATE, &callback);
+		if (rc)
+			LogCrit(COMPONENT_FSAL,
+				"Unable to stop upcall thread for %s, fd=%d, errno=%d",
+				fs->path, gpfs_fs->root_fd, errno);
+		else
+			LogFullDebug(COMPONENT_FSAL, "Thread STOP successful");
+		pthread_join(gpfs_fs->up_thread, NULL);
 		free_gpfs_filesystem(gpfs_fs);
-
 		fs->private = NULL;
 	}
 
