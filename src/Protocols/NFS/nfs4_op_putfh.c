@@ -47,6 +47,171 @@
 #include "nfs_file_handle.h"
 #include "pnfs_utils.h"
 
+static int nfs4_ds_putfh(compound_data_t *data)
+{
+	struct file_handle_v4 *v4_handle =
+		(struct file_handle_v4 *)data->currentFH.nfs_fh4_val;
+	struct fsal_pnfs_ds *pds;
+	struct gsh_buffdesc fh_desc;
+	bool changed = true;
+
+	LogFullDebug(COMPONENT_FILEHANDLE, "NFS4 Handle 0x%X export id %d",
+		v4_handle->fhflags1, v4_handle->id.exports);
+
+	/* Find any existing server by the "id" from the handle,
+	 * before releasing the old DS (to prevent thrashing).
+	 */
+	pds = pnfs_ds_get(v4_handle->id.servers);
+	if (pds == NULL) {
+		LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
+			   "NFS4 Request from client (%s) has invalid server identifier %d",
+			   op_ctx->client
+				?  op_ctx->client->hostaddr_str
+				: "unknown",
+			   v4_handle->id.servers);
+
+		return NFS4ERR_STALE;
+	}
+
+	/* If old CurrentFH had a related server, release reference. */
+	if (op_ctx->fsal_pnfs_ds != NULL) {
+		changed = v4_handle->id.servers
+			!= op_ctx->fsal_pnfs_ds->id_servers;
+		pnfs_ds_put(op_ctx->fsal_pnfs_ds);
+	}
+
+	/* If old CurrentFH had a related export, release reference. */
+	if (op_ctx->export != NULL) {
+		changed = op_ctx->export != pds->mds_export;
+		put_gsh_export(op_ctx->export);
+	}
+
+	if (pds->mds_export == NULL) {
+		/* most likely */
+		op_ctx->export = NULL;
+		op_ctx->fsal_export = NULL;
+	} else if (pds->pnfs_ds_status == PNFS_DS_READY) {
+		/* special case: avoid lookup of related export.
+		 * get_gsh_export_ref() was bumped in pnfs_ds_get()
+		 */
+		op_ctx->export = pds->mds_export;
+		op_ctx->fsal_export = op_ctx->export->fsal_export;
+	} else {
+		/* export reference has been dropped. */
+		put_gsh_export(pds->mds_export);
+		op_ctx->export = NULL;
+		op_ctx->fsal_export = NULL;
+		return NFS4ERR_STALE;
+	}
+
+	/* Clear out current entry for now */
+	set_current_entry(data, NULL);
+
+	/* update _ctx fields */
+	op_ctx->fsal_pnfs_ds = pds;
+
+	if (changed) {
+		int status;
+		/* permissions may have changed */
+		status = pds->s_ops.permissions(pds, data->req);
+		if (status != NFS4_OK)
+			return status;
+	}
+
+	fh_desc.len = v4_handle->fs_len;
+	fh_desc.addr = &v4_handle->fsopaque;
+
+	/* Leave the current_entry as NULL, but indicate a
+	 * regular file.
+	 */
+	data->current_filetype = REGULAR_FILE;
+
+	return pds->s_ops.make_ds_handle(pds, &fh_desc, &data->current_ds,
+					 v4_handle->fhflags1);
+}
+
+static int nfs4_mds_putfh(compound_data_t *data)
+{
+	struct file_handle_v4 *v4_handle =
+		(struct file_handle_v4 *)data->currentFH.nfs_fh4_val;
+	struct gsh_export *exporting;
+	cache_inode_fsal_data_t fsal_data;
+	fsal_status_t fsal_status;
+	cache_inode_status_t cache_status;
+	cache_entry_t *file_entry;
+	bool changed = true;
+
+	LogFullDebug(COMPONENT_FILEHANDLE, "NFS4 Handle 0x%X export id %d",
+		v4_handle->fhflags1, v4_handle->id.exports);
+
+	/* Find any existing export by the "id" from the handle,
+	 * before releasing the old export (to prevent thrashing).
+	 */
+	exporting = get_gsh_export(v4_handle->id.exports);
+	if (exporting == NULL) {
+		LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
+			   "NFS4 Request from client (%s) has invalid export identifier %d",
+			   op_ctx->client
+				?  op_ctx->client->hostaddr_str
+				: "unknown",
+			   v4_handle->id.exports);
+
+		return NFS4ERR_STALE;
+	}
+
+	/* If old CurrentFH had a related export, release reference. */
+	if (op_ctx->export != NULL) {
+		changed = v4_handle->id.exports != op_ctx->export->export_id;
+		put_gsh_export(op_ctx->export);
+	}
+
+	/* If old CurrentFH had a related server, release reference. */
+	if (op_ctx->fsal_pnfs_ds != NULL) {
+		pnfs_ds_put(op_ctx->fsal_pnfs_ds);
+		op_ctx->fsal_pnfs_ds = NULL;
+	}
+
+	/* Clear out current entry for now */
+	set_current_entry(data, NULL);
+
+	/* update _ctx fields needed by nfs4_export_check_access */
+	op_ctx->export = exporting;
+
+	if (changed) {
+		int status;
+
+		status = nfs4_export_check_access(data->req);
+		if (status != NFS4_OK)
+			return status;
+	}
+
+	op_ctx->fsal_export = fsal_data.export = exporting->fsal_export;
+	fsal_data.fh_desc.len = v4_handle->fs_len;
+	fsal_data.fh_desc.addr = &v4_handle->fsopaque;
+
+	/* adjust the handle opaque into a cache key */
+	fsal_status = fsal_data.export->exp_ops.extract_handle(fsal_data.export,
+			       FSAL_DIGEST_NFSV4, &fsal_data.fh_desc,
+			       v4_handle->fhflags1);
+	if (FSAL_IS_ERROR(fsal_status))
+		return nfs4_Errno(cache_inode_error_convert(fsal_status));
+
+	/* Build the pentry.  Refcount +1. */
+	cache_status = cache_inode_get(&fsal_data, &file_entry);
+	if (cache_status != CACHE_INODE_SUCCESS)
+		return nfs4_Errno(cache_status);
+
+	/* Set the current entry using the ref from get */
+	set_current_entry(data, file_entry);
+
+	LogFullDebug(COMPONENT_FILEHANDLE,
+		     "File handle is of type %s(%d)",
+		     object_file_type_to_str(data->current_filetype),
+		     data->current_filetype);
+
+	return NFS4_OK;
+}
+
 /**
  * @brief The NFS4_OP_PUTFH operation
  *
@@ -65,10 +230,6 @@
 int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t *data,
 		  struct nfs_resop4 *resp)
 {
-	struct file_handle_v4 *v4_handle;
-	cache_entry_t *file_entry;
-	bool changed = true;
-
 	/* Convenience alias for args */
 	PUTFH4args * const arg_PUTFH4 = &op->nfs_argop4_u.opputfh;
 	/* Convenience alias for resopnse */
@@ -86,15 +247,8 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t *data,
 	if (data->currentFH.nfs_fh4_val == NULL)
 		nfs4_AllocateFH(&data->currentFH);
 
-	v4_handle = (struct file_handle_v4 *)data->currentFH.nfs_fh4_val;
-
-	LogFullDebug(COMPONENT_FILEHANDLE, "NFS4 Handle 0x%X export id %d",
-		v4_handle->fhflags1, v4_handle->id.exports);
-
 	/* Copy the filehandle from the arg structure */
 	data->currentFH.nfs_fh4_len = arg_PUTFH4->object.nfs_fh4_len;
-
-	/* Put the data in place */
 	memcpy(data->currentFH.nfs_fh4_val, arg_PUTFH4->object.nfs_fh4_val,
 	       arg_PUTFH4->object.nfs_fh4_len);
 
@@ -102,171 +256,12 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t *data,
 	 * don't support metadata operations.  Thus, we can't call into
 	 * cache_inode to populate the metadata cache.
 	 */
-	if (nfs4_Is_Fh_DSHandle(&data->currentFH)) {
-		struct fsal_pnfs_ds *pds;
-		struct gsh_buffdesc fh_desc;
+	if (nfs4_Is_Fh_DSHandle(&data->currentFH))
+		res_PUTFH4->status = nfs4_ds_putfh(data);
+	else
+		res_PUTFH4->status = nfs4_mds_putfh(data);
 
-		/* Find any existing server by the "id" from the handle,
-		 * before releasing the old DS (to prevent thrashing).
-		 */
-		pds = pnfs_ds_get(v4_handle->id.servers);
-		if (pds == NULL) {
-			LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
-				"NFS4 Request from client (%s) has invalid server identifier %d",
-				op_ctx->client
-					? op_ctx->client->hostaddr_str
-					: "unknown",
-				v4_handle->id.servers);
-
-			res_PUTFH4->status = NFS4ERR_STALE;
-			return res_PUTFH4->status;
-		}
-
-		/* If old CurrentFH had a related server, release reference. */
-		if (op_ctx->fsal_pnfs_ds != NULL) {
-			changed = v4_handle->id.servers
-				!= op_ctx->fsal_pnfs_ds->id_servers;
-			pnfs_ds_put(op_ctx->fsal_pnfs_ds);
-		}
-
-		/* If old CurrentFH had a related export, release reference. */
-		if (op_ctx->export != NULL) {
-			changed = op_ctx->export != pds->mds_export;
-			put_gsh_export(op_ctx->export);
-		}
-
-		if (pds->mds_export == NULL) {
-			/* most likely */
-			op_ctx->export = NULL;
-			op_ctx->fsal_export = NULL;
-		} else if (pds->pnfs_ds_status == PNFS_DS_READY) {
-			/* special case: avoid lookup of related export.
-			 * get_gsh_export_ref() was bumped in pnfs_ds_get()
-			 */
-			op_ctx->export = pds->mds_export;
-			op_ctx->fsal_export = op_ctx->export->fsal_export;
-		} else {
-			/* export reference has been dropped. */
-			put_gsh_export(pds->mds_export);
-			op_ctx->export = NULL;
-			op_ctx->fsal_export = NULL;
-			res_PUTFH4->status = NFS4ERR_STALE;
-			return res_PUTFH4->status;
-		}
-
-		/* Clear out current entry for now */
-		set_current_entry(data, NULL);
-
-		/* update _ctx fields */
-		op_ctx->fsal_pnfs_ds = pds;
-
-		if (changed) {
-			/* permissions may have changed */
-			res_PUTFH4->status = pds->s_ops.
-				permissions(pds, data->req);
-			if (res_PUTFH4->status != NFS4_OK)
-				return res_PUTFH4->status;
-		}
-
-		fh_desc.len = v4_handle->fs_len;
-		fh_desc.addr = &v4_handle->fsopaque;
-
-		/* Leave the current_entry as NULL, but indicate a
-		 * regular file.
-		 */
-		data->current_filetype = REGULAR_FILE;
-
-		res_PUTFH4->status = pds->s_ops.
-		    make_ds_handle(pds, &fh_desc, &data->current_ds,
-				   v4_handle->fhflags1);
-
-		if (res_PUTFH4->status != NFS4_OK)
-			return res_PUTFH4->status;
-	} else {
-		struct gsh_export *exporting;
-		cache_inode_fsal_data_t fsal_data;
-		fsal_status_t fsal_status;
-		cache_inode_status_t cache_status;
-
-		/* Find any existing export by the "id" from the handle,
-		 * before releasing the old export (to prevent thrashing).
-		 */
-		exporting = get_gsh_export(v4_handle->id.exports);
-		if (exporting == NULL) {
-			LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
-				"NFS4 Request from client (%s) has invalid export identifier %d",
-				op_ctx->client
-					? op_ctx->client->hostaddr_str
-					: "unknown",
-				v4_handle->id.exports);
-
-			res_PUTFH4->status = NFS4ERR_STALE;
-			return res_PUTFH4->status;
-		}
-
-		/* If old CurrentFH had a related export, release reference. */
-		if (op_ctx->export != NULL) {
-			changed = v4_handle->id.exports
-				!= op_ctx->export->export_id;
-			put_gsh_export(op_ctx->export);
-		}
-
-		/* If old CurrentFH had a related server, release reference. */
-		if (op_ctx->fsal_pnfs_ds != NULL) {
-			pnfs_ds_put(op_ctx->fsal_pnfs_ds);
-			op_ctx->fsal_pnfs_ds = NULL;
-		}
-
-		/* Clear out current entry for now */
-		set_current_entry(data, NULL);
-
-		/* update _ctx fields needed by nfs4_export_check_access */
-		op_ctx->export = exporting;
-
-		if (changed) {
-			res_PUTFH4->status =
-			    nfs4_export_check_access(data->req);
-			if (res_PUTFH4->status != NFS4_OK)
-				return res_PUTFH4->status;
-		}
-
-		op_ctx->fsal_export =
-		fsal_data.export = exporting->fsal_export;
-		fsal_data.fh_desc.len = v4_handle->fs_len;
-		fsal_data.fh_desc.addr = &v4_handle->fsopaque;
-
-		/* adjust the handle opaque into a cache key */
-		fsal_status = fsal_data.export->exp_ops.
-				extract_handle(fsal_data.export,
-						FSAL_DIGEST_NFSV4,
-						&fsal_data.fh_desc,
-						v4_handle->fhflags1);
-		if (FSAL_IS_ERROR(fsal_status)) {
-			res_PUTFH4->status =
-			    nfs4_Errno(cache_inode_error_convert(fsal_status));
-			return res_PUTFH4->status;
-		}
-
-		/* Build the pentry.  Refcount +1. */
-		cache_status = cache_inode_get(&fsal_data,
-					       &file_entry);
-		if (cache_status != CACHE_INODE_SUCCESS) {
-			res_PUTFH4->status = nfs4_Errno(cache_status);
-			return res_PUTFH4->status;
-		}
-
-		/* Set the current entry using the ref from get */
-		set_current_entry(data, file_entry);
-
-		LogFullDebug(COMPONENT_FILEHANDLE,
-			     "File handle is of type %s(%d)",
-			     object_file_type_to_str(data->current_filetype),
-			     data->current_filetype);
-	}
-
-	res_PUTFH4->status = NFS4_OK;
-
-	return NFS4_OK;
+	return res_PUTFH4->status;
 }				/* nfs4_op_putfh */
 
 /**
