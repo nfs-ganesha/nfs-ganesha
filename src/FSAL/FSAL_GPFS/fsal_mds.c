@@ -148,14 +148,14 @@ nfsstat4 getdeviceinfo(struct fsal_module *fsal_hdl,
 		       XDR *da_addr_body, const layouttype4 type,
 		       const struct pnfs_deviceid *deviceid)
 {
-	/* The position before any bytes are sent to the stream */
-	size_t da_beginning = 0;
-	/* The total length of the XDR-encoded da_addr_body */
-	size_t da_length = 0;
-	int rc = 0;
-	size_t ds_buffer = 0;
 	struct deviceinfo_arg darg;
-	int errsv = 0;
+	/* The position before any bytes are sent to the stream */
+	size_t da_beginning;
+	size_t ds_buffer;
+	/* The total length of the XDR-encoded da_addr_body */
+	size_t da_length;
+	int rc;
+	int errsv;
 
 	darg.mountdirfd = deviceid->device_id4;
 	darg.type = LAYOUT4_NFSV4_1_FILES;
@@ -165,11 +165,11 @@ nfsstat4 getdeviceinfo(struct fsal_module *fsal_hdl,
 	darg.devid.device_id4 = deviceid->device_id4;
 	darg.devid.devid = deviceid->devid;
 
-	ds_buffer = da_addr_body->x_handy;
-
-	darg.xdr.p = (int *)da_addr_body->x_base;
 	da_beginning = xdr_getpos(da_addr_body);
-	darg.xdr.end = (int *)(darg.xdr.p + ((ds_buffer - da_beginning)>>2));
+	darg.xdr.p = xdr_inline(da_addr_body, 0);
+	ds_buffer = da_addr_body->x_handy; /* xdr_size_inline(da_addr_body); */
+	darg.xdr.end = (int *)(darg.xdr.p
+			+ ((ds_buffer - da_beginning) / BYTES_PER_XDR_UNIT));
 
 	LogDebug(COMPONENT_PNFS,
 		"getdeviceinfo p %p end %p da_length %lu ds_buffer %lu seq %d fd %d fsid 0x%lx\n",
@@ -186,7 +186,7 @@ nfsstat4 getdeviceinfo(struct fsal_module *fsal_hdl,
 			LogFatal(COMPONENT_PNFS, "GPFS Returned EUNATCH");
 		return NFS4ERR_RESOURCE;
 	}
-	xdr_setpos(da_addr_body, rc);
+	(void)xdr_inline(da_addr_body, rc);
 	da_length = xdr_getpos(da_addr_body) - da_beginning;
 
 	LogDebug(COMPONENT_PNFS, "getdeviceinfo rc %d da_length %ld\n", rc,
