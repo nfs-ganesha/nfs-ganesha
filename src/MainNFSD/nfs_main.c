@@ -78,11 +78,11 @@ char *log_path = NULL;
 char *exec_name = "nfs-ganesha";
 char *host_name = "localhost";
 int debug_level = -1;
-int detach_flag = false;
+int detach_flag = true;
 
 /* command line syntax */
 
-char options[] = "h@vRTdS:F:S:P:f:L:N:E:p:";
+char options[] = "h@vRTdS:FS:P:f:L:N:E:p:";
 char usage[] =
 	"Usage: %s [-hd][-L <logfile>][-N <dbg_lvl>][-f <config_file>]\n"
 	"\t[-h]                display this help\n"
@@ -91,7 +91,7 @@ char usage[] =
 	"\t[-N <dbg_lvl>]      set the verbosity level\n"
 	"\t[-f <config_file>]  set the config file to be used\n"
 	"\t[-p <pid_file>]     set the pid file\n"
-	"\t[-d]                the daemon starts in background, in a new process group\n"
+	"\t[-F]                the program stays in foreground\n"
 	"\t[-R]                daemon will manage RPCSEC_GSS (default is no RPCSEC_GSS)\n"
 	"\t[-T]                dump the default configuration on stdout\n"
 	"\t[-E] <epoch<]       overrides ServerBootTime for ServerEpoch\n"
@@ -217,9 +217,9 @@ int main(int argc, char *argv[])
 			}
 			break;
 
-		case 'd':
-			/* Detach or not detach ? */
-			detach_flag = true;
+		case 'F':
+			/* Don't detach, foreground mode */
+			detach_flag = false;
 			break;
 
 		case 'R':

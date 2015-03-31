@@ -21,7 +21,7 @@ Conflicts=nfs.target
 Type=forking
 Environment="NOFILE=1048576"
 EnvironmentFile=/etc/sysconfig/ganesha
-ExecStart=/usr/bin/ganesha.nfsd -d $OPTIONS
+ExecStart=/usr/bin/ganesha.nfsd $OPTIONS
 ExecStartPost=-/bin/bash -c "prlimit --pid $MAINPID --nofile=$NOFILE:$NOFILE"
 ExecReload=/bin/dbus-send --system   --dest=org.ganesha.nfsd --type=method_call /org/ganesha/nfsd/admin  org.ganesha.nfsd.admin.reload
 ExecStop=/bin/dbus-send --system   --dest=org.ganesha.nfsd --type=method_call /org/ganesha/nfsd/admin org.ganesha.nfsd.admin.shutdown
