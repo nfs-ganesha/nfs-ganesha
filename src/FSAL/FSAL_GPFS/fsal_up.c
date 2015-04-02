@@ -312,8 +312,13 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 				/* Check for accepted flags, any other changes
 				   just invalidate. */
 				if (flags &
-				    (UP_SIZE | UP_NLINK | UP_MODE | UP_OWN |
+				    ~(UP_SIZE | UP_NLINK | UP_MODE | UP_OWN |
 				     UP_TIMES | UP_ATIME | UP_SIZE_BIG)) {
+					rc = event_func->invalidate(
+						gpfs_fs->fs->fsal, &key,
+						CACHE_INODE_INVALIDATE_ATTRS |
+						CACHE_INODE_INVALIDATE_CONTENT);
+				} else {
 					attr.mask = 0;
 					if (flags & UP_SIZE)
 						attr.mask |=
@@ -364,15 +369,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 						     &key, &attr,
 						     upflags, NULL, NULL);
 					}
-				} else {
-					rc = event_func->
-					    invalidate(
-						gpfs_fs->fs->fsal, &key,
-						CACHE_INODE_INVALIDATE_ATTRS
-						|
-						CACHE_INODE_INVALIDATE_CONTENT);
 				}
-
 			}
 			break;
 
