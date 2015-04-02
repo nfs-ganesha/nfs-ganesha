@@ -21,7 +21,7 @@
 # source function library
 . /etc/rc.d/init.d/functions
 
-PATHPROG=/usr/bin/ganesha.nfsd 
+PATHPROG=/usr/bin/ganesha.nfsd
 
 # Default HPSS options
 LOGFILE=/var/log/ganesha.log
@@ -31,7 +31,7 @@ prog=ganesha.nfsd
 PID_FILE=${PID_FILE:=/var/run/${prog}.pid}
 LOCK_FILE=${LOCK_FILE:=/var/lock/subsys/${prog}}
 
-[ -f /etc/sysconfig/ganesha ] && . /etc/sysconfig/ganesha 
+[ -f /etc/sysconfig/ganesha ] && . /etc/sysconfig/ganesha
 
 OPTIONS="-d -L $LOGFILE -f $CONFFILE -N NIV_EVENT -p $PID_FILE "
 RETVAL=0
@@ -45,13 +45,13 @@ start() {
         else
                 daemon --pidfile $PID_FILE $PATHPROG $OPTIONS
                 RETVAL=$?
-                if [ $RETVAL -eq 0 ]; then 
+                if [ $RETVAL -eq 0 ]; then
 		            touch $LOCK_FILE
 		        else
 		            RETVAL=1
                 fi
         fi
-        echo 
+        echo
 }
 
 stop() {
@@ -62,7 +62,7 @@ stop() {
         else
                 killproc $PATHPROG
                 RETVAL=$?
-                if [ $RETVAL -eq 0 ]; then 
+                if [ $RETVAL -eq 0 ]; then
 		  rm -f  $LOCK_FILE
                   success
 		else
@@ -100,7 +100,7 @@ case "$1" in
         echo
         ;;
   force-reload)
-	stop 
+	stop
 	start
 	;;
   try-restart)
@@ -113,7 +113,7 @@ case "$1" in
 	fi
 	;;
   status)
-	if [ $RETVAL -eq 5 ] ; then 
+	if [ $RETVAL -eq 5 ] ; then
 	    RETVAL=3
         else
 	   status -p $PID_FILE $PATHPROG
