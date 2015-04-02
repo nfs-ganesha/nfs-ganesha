@@ -281,6 +281,34 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 					    flags, callback.buf->st_ino,
 					    (int)callback.buf->st_nlink);
 
+				/** @todo: This notification is completely
+				 * asynchronous.  If we happen to change some
+				 * of the attributes later, we end up over
+				 * writing those with these possibly stale
+				 * values as we don't know when we get to
+				 * update with these up call values. We should
+				 * probably use time stamp or let the up call
+				 * always provide UP_TIMES flag in which case
+				 * we can compare the current ctime vs up call
+				 * provided ctime before updating the
+				 * attributes.
+				 *
+				 * For now, we think size attribute is more
+				 * important than others, so invalidate the
+				 * attributes and let ganesha fetch attributes
+				 * as needed if this update includes a size
+				 * change. We are careless for other attribute
+				 * changes, and we may end up with stale values
+				 * until this gets fixed!
+				 */
+				if (flags & (UP_SIZE | UP_SIZE_BIG)) {
+					rc = event_func->invalidate(
+						gpfs_fs->fs->fsal, &key,
+						CACHE_INODE_INVALIDATE_ATTRS |
+						CACHE_INODE_INVALIDATE_CONTENT);
+					break;
+				}
+
 				/* Check for accepted flags, any other changes
 				   just invalidate. */
 				if (flags &
