@@ -82,10 +82,9 @@ int detach_flag = true;
 
 /* command line syntax */
 
-char options[] = "h@vRTdS:FS:P:f:L:N:E:p:";
+char options[] = "v@L:N:f:p:FRTE:h";
 char usage[] =
 	"Usage: %s [-hd][-L <logfile>][-N <dbg_lvl>][-f <config_file>]\n"
-	"\t[-h]                display this help\n"
 	"\t[-v]                display version information\n"
 	"\t[-L <logfile>]      set the default logfile for the daemon\n"
 	"\t[-N <dbg_lvl>]      set the verbosity level\n"
@@ -95,6 +94,7 @@ char usage[] =
 	"\t[-R]                daemon will manage RPCSEC_GSS (default is no RPCSEC_GSS)\n"
 	"\t[-T]                dump the default configuration on stdout\n"
 	"\t[-E] <epoch<]       overrides ServerBootTime for ServerEpoch\n"
+	"\t[-h]                display this help\n"
 	"----------------- Signals ----------------\n"
 	"SIGUSR1    : Enable/Disable File Content Cache forced flush\n"
 	"SIGTERM    : Cleanly terminate the program\n"
