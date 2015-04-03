@@ -327,6 +327,14 @@ cache_inode_check_setattr_perms(cache_entry_t *entry,
 			    "Change ATIME and/or MTIME requires FSAL_ACE_PERM_WRITE_ATTR");
 	}
 
+	if (access_check == 0) {
+		if (FSAL_TEST_MASK(attr->mask, ATTR_SIZE) && is_open_write)
+			note = " (Ok, open for write)";
+		else
+			note = " (Ok, no permission neccessary)";
+		goto out;
+	}
+
 	if (isDebug(COMPONENT_CACHE_INODE) || isDebug(COMPONENT_NFS_V4_ACL)) {
 		char *need_write_owner = "";
 		char *need_write_acl = "";

@@ -71,6 +71,12 @@ static void nfs_release_v4_client(char *ip);
  */
 void nfs4_start_grace(nfs_grace_start_t *gsp)
 {
+	if (nfs_param.nfsv4_param.graceless) {
+		LogEvent(COMPONENT_STATE,
+			 "NFS Server skipping GRACE (Graceless is true)");
+		return;
+	}
+
 	PTHREAD_MUTEX_lock(&grace.g_mutex);
 
 	/* grace should always be greater than or equal to lease time,
