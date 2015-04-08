@@ -477,7 +477,7 @@ do {                                         \
  * Get a pointer where to copy data in the reply.
  * This leaves room in the reply for a u32 len header
  */
-#define _9p_getbuffertofill(__cursor) (((char *) (cursor)) + sizeof(u32))
+#define _9p_getbuffertofill(__cursor) (((char *) (__cursor)) + sizeof(u32))
 
 #define _9p_setinitptr(__cursor, __start, __reqtype) \
 do {                                                 \
