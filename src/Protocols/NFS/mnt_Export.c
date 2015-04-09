@@ -74,6 +74,14 @@ static bool proc_export(struct gsh_export *export, void *arg)
 		return true;
 	}
 
+	if (!(op_ctx->export_perms->options & EXPORT_OPTION_NFSV3)) {
+		LogFullDebug(COMPONENT_NFSPROTO,
+			     "Not exported for NFSv3, Export_Id %d %s",
+			     export->export_id, export->fullpath);
+
+		return true;
+	}
+
 	new_expnode = gsh_calloc(1, sizeof(struct exportnode));
 	if (new_expnode == NULL)
 		goto nomem;
