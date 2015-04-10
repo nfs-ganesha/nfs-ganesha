@@ -1,6 +1,4 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
- *
  * Copyright (C) Panasas Inc., 2011
  * Author: Jim Lieb jlieb@panasas.com
  *
@@ -102,16 +100,8 @@ struct fsal_staticfsinfo_t *pseudofs_staticinfo(struct fsal_module *hdl)
 	return &myself->fs_info;
 }
 
-/* Module methods
- */
-
-/* init_config
- * must be called with a reference taken (via lookup_fsal)
- */
-
-static fsal_status_t init_config(struct fsal_module *fsal_hdl,
-				 config_file_t config_struct,
-				 struct config_error_type *err_type)
+/* Initialize pseudo fs info */
+static void init_config(struct fsal_module *fsal_hdl)
 {
 	struct pseudo_fsal_module *pseudofs_me =
 	    container_of(fsal_hdl, struct pseudo_fsal_module, fsal);
@@ -134,7 +124,6 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 	LogDebug(COMPONENT_FSAL,
 		 "FSAL INIT: Supported attributes mask = 0x%" PRIx64,
 		 pseudofs_me->fs_info.supported_attrs);
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /* Module initialization.
@@ -173,7 +162,9 @@ void pseudo_fsal_init(void)
 		return;
 	}
 	myself->m_ops.create_export = pseudofs_create_export;
-	myself->m_ops.init_config = init_config;
 	myself->m_ops.unload = unload_pseudo_fsal;
 	myself->name = gsh_strdup("PSEUDO");
+
+	/* initialize our config */
+	init_config(myself);
 }

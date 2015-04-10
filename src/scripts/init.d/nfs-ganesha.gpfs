@@ -227,10 +227,10 @@ start() {
 			OPTIONS="$OPTIONS -E $ganesha_epoch"
 		fi
 		echo  -n $"Starting $prog: "
-		ulimit -n 1048576          
+		ulimit -n 1048576
 		#Remove the status tracking files
 		rm -rf /var/lib/nfs/ganesha_local/*
- 
+
 		daemon numactl -i all $PATHPROG $OPTIONS
 		RETVAL=$?
 		if [ $HAVE_SMNOTIFY -eq 0 ]; then
@@ -342,7 +342,7 @@ stop() {
 				 break
 			 fi
 		done
-        fi 
+        fi
         echo
         return $RETVAL
 }
