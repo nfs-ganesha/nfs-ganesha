@@ -433,7 +433,7 @@ endif(HAVE_STRING_H AND HAVE_STRINGS_H)
 
 # PROXY handle mapping needs sqlite3
 IF(PROXY_HANDLE_MAPPING)
-  check_include_files(sqlite3.h, HAVE_SQLITE3_H)
+  check_include_files(sqlite3.h HAVE_SQLITE3_H)
   check_library_exists(
     sqlite3
     sqlite3_open
