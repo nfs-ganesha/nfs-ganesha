@@ -245,13 +245,13 @@ int main(int argc, char *argv[])
 			ServerEpoch = (time_t) atoll(optarg);
 			break;
 
-		case '?':
 		case 'h':
-		default:
-			/* display the help */
 			fprintf(stderr, usage, exec_name);
 			exit(0);
-			break;
+
+		default: /* '?' */
+			fprintf(stderr, "Try '%s -h' for usage\n", exec_name);
+			exit(1);
 		}
 	}
 
