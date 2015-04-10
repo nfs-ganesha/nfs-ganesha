@@ -756,7 +756,7 @@ typedef state_status_t(*granted_callback_t) (cache_entry_t *entry,
 
 typedef struct state_nlm_block_data_t {
 	netobj sbd_nlm_fh;	/*< Filehandle */
-	char sbd_nlm_fh_buf[MAX_NETOBJ_SZ];	/*< Statically allocated
+	char sbd_nlm_fh_buf[NFS3_FHSIZE];	/*< Statically allocated
 						   FH buffer */
 } state_nlm_block_data_t;
 
