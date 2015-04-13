@@ -183,6 +183,7 @@ option(USE_FSAL_XFS "build XFS support in VFS FSAL" ON)
 option(USE_FSAL_PANFS "build PanFS support in VFS FSAL" OFF)
 option(USE_FSAL_GLUSTER "build GLUSTER FSAL shared library" ON)
 option(USE_FSAL_NULL "build NULL FSAL shared library" ON)
+option(USE_FSAL_RGW "build RGW FSAL shared library" OFF)
 
 # FSALs which are disabled by default
 option(USE_FSAL_PT "build PT FSAL" OFF)
@@ -332,6 +333,17 @@ IF(USE_FSAL_CEPH)
     LIST(APPEND CMAKE_REQUIRED_INCLUDES "${CEPH_PREFIX}/include")
   ELSE()
     set(CEPH_PREFIX "/usr" CACHE PATH "Path to Ceph installation")
+  ENDIF()
+ENDIF()
+
+IF(USE_FSAL_RGW)
+  IF(RGW_PREFIX)
+    set(RGW_PREFIX ${RGW_PREFIX} CACHE PATH "Path to RGW installation")
+    LIST(APPEND CMAKE_PREFIX_PATH "${RGW_PREFIX}")
+    LIST(APPEND CMAKE_LIBRARY_PATH "${RGW_PREFIX}/lib")
+    LIST(APPEND CMAKE_REQUIRED_INCLUDES "${RGW_PREFIX}/include")
+  ELSE()
+    set(RGW_PREFIX "/usr" CACHE PATH "Path to RGW installation")
   ENDIF()
 ENDIF()
 
@@ -602,6 +614,24 @@ if(STRICT_PACKAGE)
     endif(STRICT_PACKAGE)
  endif(NOT CEPH_FS)
 endif(USE_FSAL_CEPH)
+
+if(USE_FSAL_RGW)
+  find_library(LIBRGW rgw)
+  check_library_exists(
+    rgw
+    ""
+    ${RGW_PREFIX}
+    LIBRGW
+    )
+  if(NOT LIBRGW)
+    if(STRICT_PACKAGE)
+      message(FATAL_ERROR "STRICT_PACKAGE : Cannot find RGW runtime.  Disabling RGW fsal build")
+    else(STRICT_PACKAGE)
+      message(WARNING "Cannot find RGW runtime.  Disabling RGW fsal build")
+      set(USE_FSAL_RGW OFF)
+    endif(STRICT_PACKAGE)
+  endif(NOT LIBRGW)
+endif(USE_FSAL_RGW)
 
 if(USE_FSAL_LUSTRE)
   find_library(HAVE_LUSTREAPI lustreapi)
@@ -1018,6 +1048,7 @@ message(STATUS "-------------------------------------------------------")
 message(STATUS "USE_FSAL_PROXY = ${USE_FSAL_PROXY}")
 message(STATUS "USE_FSAL_VFS = ${USE_FSAL_VFS}")
 message(STATUS "USE_FSAL_CEPH = ${USE_FSAL_CEPH}")
+message(STATUS "USE_FSAL_RGW = ${USE_FSAL_RGW}")
 message(STATUS "USE_FSAL_HPSS = ${USE_FSAL_HPSS}")
 message(STATUS "USE_FSAL_XFS = ${USE_FSAL_XFS}")
 message(STATUS "USE_FSAL_PANFS = ${USE_FSAL_PANFS}")
@@ -1060,6 +1091,7 @@ message(STATUS "_USE_9P_RDMA = ${_USE_9P_RDMA}")
 message(STATUS "USE_NFS_RDMA = ${USE_NFS_RDMA}")
 message(STATUS "KRB5_PREFIX = ${KRB5_PREFIX}")
 message(STATUS "CEPH_PREFIX = ${CEPH_PREFIX}")
+message(STATUS "RGW_PREFIX = ${RGW_PREFIX}")
 message(STATUS "HPSS_PREFIX = ${HPSS_PREFIX}")
 message(STATUS "GLUSTER_PREFIX = ${GLUSTER_PREFIX}")
 message(STATUS "ZFS_PREFIX = ${ZFS_PREFIX}")
@@ -1094,6 +1126,11 @@ set(USE_FSAL_PROXY ${USE_FSAL_PROXY}
 set(USE_FSAL_CEPH ${USE_FSAL_CEPH}
   CACHE BOOL
    "build CEPH FSAL shared library"
+   FORCE)
+
+ set(USE_FSAL_RGW ${USE_FSAL_RGW}
+  CACHE BOOL
+   "build RGW FSAL shared library"
    FORCE)
 
 set(USE_HPSS_FSAL ${USE_HPSS_FSAL}
@@ -1315,6 +1352,12 @@ if(USE_FSAL_CEPH)
 else(USE_FSAL_CEPH)
     set(BCOND_CEPH "%bcond_with")
 endif(USE_FSAL_CEPH)
+
+if(USE_FSAL_RGW)
+    set(BCOND_RGW "%bcond_without")
+else(USE_FSAL_RGW)
+    set(BCOND_RGW "%bcond_with")
+endif(USE_FSAL_RGW)
 
 if(USE_FSAL_GLUSTER)
     set(BCOND_GLUSTER "%bcond_without")
