@@ -48,6 +48,9 @@ Requires: sles-release >= 12
 @BCOND_CEPH@ ceph
 %global use_fsal_ceph %{on_off_switch ceph}
 
+@BCOND_RGW@ rgw
+%global use_fsal_rgw %{on_off_switch rgw}
+
 @BCOND_LUSTRE@ lustre
 %global use_fsal_lustre %{on_off_switch lustre}
 
@@ -281,6 +284,20 @@ This package contains a FSAL shared object to
 be used with NFS-Ganesha to support CEPH
 %endif
 
+# RGW
+%if %{with rgw}
+%package rgw
+Summary: The NFS-GANESHA's RGW FSAL
+Group: Applications/System
+Requires:	nfs-ganesha = %{version}-%{release}
+Requires:	rgw >= 0.78
+BuildRequires:	rgw-devel >= 0.78
+
+%description rgw
+This package contains a FSAL shared object to
+be used with NFS-Ganesha to support RGW
+%endif
+
 # LUSTRE
 %if %{with lustre}
 %package lustre
@@ -384,6 +401,7 @@ cmake .	-DCMAKE_BUILD_TYPE=Debug			\
 	-DUSE_FSAL_ZFS=%{use_fsal_zfs}			\
 	-DUSE_FSAL_XFS=%{use_fsal_xfs}			\
 	-DUSE_FSAL_CEPH=%{use_fsal_ceph}		\
+	-DUSE_FSAL_RGW=%{use_fsal_rgw}			\
 	-DUSE_FSAL_LUSTRE=%{use_fsal_lustre}		\
 	-DUSE_FSAL_SHOOK=%{use_fsal_shook}		\
 	-DUSE_FSAL_GPFS=%{use_fsal_gpfs}		\
@@ -594,6 +612,13 @@ killall -SIGHUP dbus-daemon 2>&1 > /dev/null
 %defattr(-,root,root,-)
 %{_libdir}/ganesha/libfsalceph*
 %config(noreplace) %{_sysconfdir}/ganesha/ceph.conf
+%endif
+
+%if %{with rgw}
+%files rgw
+%defattr(-,root,root,-)
+%{_libdir}/ganesha/libfsalrgw*
+%config(noreplace) %{_sysconfdir}/ganesha/rgw.conf
 %endif
 
 %if %{with lustre}
