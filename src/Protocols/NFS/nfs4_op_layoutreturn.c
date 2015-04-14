@@ -104,6 +104,7 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op, compound_data_t *data,
 	struct root_op_context root_op_context;
 	/* Keep track of so_mutex */
 	bool so_mutex_locked = false;
+	state_t *first;
 
 	resp->resop = NFS4_OP_LAYOUTRETURN;
 
@@ -251,6 +252,7 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op, compound_data_t *data,
 
 		PTHREAD_MUTEX_lock(&clientid_owner->so_mutex);
 		so_mutex_locked = true;
+		first = NULL;
 
 		glist_for_each_safe(glist, glistn,
 				    &clientid_owner->so_owner.so_nfs4_owner.
@@ -258,6 +260,10 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op, compound_data_t *data,
 			layout_state = glist_entry(glist,
 						   state_t,
 						   state_owner_list);
+			if (first == NULL)
+				first = layout_state;
+			else if (first == layout_state)
+				break;
 
 			/* Move to end of list in case of error to ease
 			 * retries and push off dealing with non-layout

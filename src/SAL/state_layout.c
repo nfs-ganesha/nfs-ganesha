@@ -164,14 +164,14 @@ state_status_t state_lookup_layout_state(cache_entry_t *entry,
  */
 void revoke_owner_layouts(state_owner_t *client_owner)
 {
-	state_t *state;
+	state_t *state, *first;
 	cache_entry_t *entry;
 	int errcnt = 0;
 	struct glist_head *glist, *glistn;
 	bool so_mutex_held;
 
  again:
-
+	first = NULL;
 	PTHREAD_MUTEX_lock(&client_owner->so_mutex);
 	so_mutex_held = true;
 
@@ -185,6 +185,16 @@ void revoke_owner_layouts(state_owner_t *client_owner)
 		};
 
 		state = glist_entry(glist, state_t, state_owner_list);
+
+		/* We set first to the first state we look in this iteration.
+		 * If the current state matches the first state, it implies
+		 * that went through the entire list without droping the lock
+		 * guarding the list. So nothing more left to process.
+		 */
+		if (first == NULL)
+			first = state;
+		else if (first == state)
+			break;
 
 		/* Move entry to end of list to handle errors and skipping of
 		 * non-layout states.
