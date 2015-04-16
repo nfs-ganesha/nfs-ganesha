@@ -2327,7 +2327,26 @@ struct fsal_obj_handle {
 	struct fsal_obj_ops obj_ops;	/*< Operations vector */
 
 	pthread_rwlock_t lock;		/*< Lock on handle */
-	struct attrlist attributes;	/*< Cached attributes */
+
+	/** @todo: DEPRECATED : Cached attributes.
+	 *
+	 * This structure will be deleted, so it should not be accessed anymore.
+	 *
+	 * To read/write attributes, use the attrlist field instead.
+	 */
+	struct attrlist attributes;
+
+	/** Pointer to the cached attributes.
+	 *
+	 * This pointer will become the only way to access attributes from a
+	 * fsal_obj_handle object. Do not use attributes field.
+	 *
+	 * This pointer should be set by the fsal when the handle is created.
+	 * Its value should not be changed once initialized. The release
+	 * of this field is also done by the FSAL.
+	 */
+	struct attrlist *attrs;
+
 	object_file_type_t type;	/*< Object file type */
 };
 

@@ -138,6 +138,12 @@ void fsal_obj_handle_init(struct fsal_obj_handle *obj, struct fsal_export *exp,
 {
 	pthread_rwlockattr_t attrs;
 
+	/* @todo: Temporary code, to keep FSALs which are still using
+	 * fsal_obj_handle.attributes working.
+	 */
+	if (obj->attrs == NULL)
+		obj->attrs = &obj->attributes;
+
 	memcpy(&obj->obj_ops, &def_handle_ops, sizeof(struct fsal_obj_ops));
 	obj->fsal = exp->fsal;
 	obj->type = type;
