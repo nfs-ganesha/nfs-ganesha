@@ -290,7 +290,7 @@ int nfs4_Is_Fh_DSHandle(nfs_fh4 *fh)
 
 	fhandle4 = (file_handle_v4_t *) (fh->nfs_fh4_val);
 
-	return (fhandle4->flags & FILE_HANDLE_V4_FLAG_DS) != 0;
+	return (fhandle4->fhflags1 & FILE_HANDLE_V4_FLAG_DS) != 0;
 }
 
 /**

@@ -985,8 +985,14 @@ static fattr_xdr_result decode_chown_restricted(XDR *xdr,
 static fattr_xdr_result encode_filehandle(XDR *xdr,
 					  struct xdr_attrs_args *args)
 {
+	file_handle_v4_t *fh;
+
 	if (args->hdl4 == NULL || args->hdl4->nfs_fh4_val == NULL)
 		return FATTR_XDR_FAILED;
+
+	fh = (file_handle_v4_t *)args->hdl4->nfs_fh4_val;
+	fh->id.exports = htons(fh->id.exports);
+
 	if (!inline_xdr_bytes
 	    (xdr, &args->hdl4->nfs_fh4_val, &args->hdl4->nfs_fh4_len,
 	     NFS4_FHSIZE))
@@ -999,6 +1005,7 @@ static fattr_xdr_result encode_filehandle(XDR *xdr,
 static fattr_xdr_result decode_filehandle(XDR *xdr,
 					  struct xdr_attrs_args *args)
 {
+	file_handle_v4_t *fh;
 	uint32_t fhlen = 0, pos;
 
 	if (args->hdl4 == NULL || args->hdl4->nfs_fh4_val == NULL) {
@@ -1013,6 +1020,9 @@ static fattr_xdr_result decode_filehandle(XDR *xdr,
 		     NFS4_FHSIZE))
 			return FATTR_XDR_FAILED;
 	}
+	fh = (file_handle_v4_t *)args->hdl4->nfs_fh4_val;
+	fh->id.exports = ntohs(fh->id.exports);
+
 	return FATTR_XDR_SUCCESS;
 }
 
