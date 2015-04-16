@@ -46,36 +46,44 @@
  *	- etc ... (See linux Documentation/CodingStyle.txt)
  */
 
-/* FIXME: We assume xdrmem. How to do this generic I don't know */
 static void _XDR_2_ioctlxdr_read_begin(XDR *xdr, struct pan_ioctl_xdr *pixdr)
 {
-	pixdr->xdr_buff = xdr->x_private;
-	pixdr->xdr_alloc_len = xdr->x_handy;
+	pixdr->xdr_buff = xdr_inline(xdr, 0);
+	pixdr->xdr_alloc_len = xdr->x_handy; /* xdr_size_inline(xdr); */
 	pixdr->xdr_len = 0;
 	LogDebug(COMPONENT_FSAL,
-		 "alloc_len=%d x_private=%p", pixdr->xdr_alloc_len,
-		  xdr->x_private);
+		 "alloc_len=%d xdr_buff=%p",
+		 pixdr->xdr_alloc_len,
+		 pixdr->xdr_buff);
 }
 
 /* We need to update the XDR with the encoded bytes */
 static void _XDR_2_ioctlxdr_read_end(XDR *xdr, struct pan_ioctl_xdr *pixdr)
 {
-	xdr->x_handy -= pixdr->xdr_len;
-	xdr->x_private = (char *)xdr->x_private + pixdr->xdr_len;
+	void *p = xdr_inline(xdr, pixdr->xdr_len);
+
 	LogDebug(COMPONENT_FSAL,
-		 "xdr_len=%d x_private=%p", pixdr->xdr_len, xdr->x_private);
+		 "xdr_len=%d xdr_buff_end=%p",
+		 pixdr->xdr_len,
+		 p);
 }
 
 static void _XDR_2_ioctlxdr_write(XDR *xdr, struct pan_ioctl_xdr *pixdr)
 {
-	pixdr->xdr_len = xdr ? xdr_getpos(xdr) : 0;
-	if (pixdr->xdr_len && xdr->x_base) {
-		pixdr->xdr_buff = xdr->x_base;
-		pixdr->xdr_alloc_len = pixdr->xdr_len;
+	if (xdr) {
+		pixdr->xdr_len = xdr_getpos(xdr);
+		xdr_setpos(xdr, 0);
+		/* return the head of the buffer, and reset the pos again */
+		pixdr->xdr_buff = xdr_inline(xdr, pixdr->xdr_len);
 	} else {
+		/* ensure NULL for next test */
 		pixdr->xdr_buff = NULL;
-		pixdr->xdr_alloc_len = pixdr->xdr_len = 0;
 	}
+	if (!pixdr->xdr_buff) {
+		/* ensure 0 for next assignment */
+		pixdr->xdr_len = 0;
+	}
+	pixdr->xdr_alloc_len = pixdr->xdr_len;
 	LogDebug(COMPONENT_FSAL,
 		 "xdr_len=%d xdr_buff=%p", pixdr->xdr_len, pixdr->xdr_buff);
 }
