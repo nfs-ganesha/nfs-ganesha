@@ -456,7 +456,8 @@ static void dsh_ops_init(struct fsal_dsh_ops *ops)
 
 static nfsstat4 make_ds_handle(struct fsal_pnfs_ds *const pds,
 			       const struct gsh_buffdesc *const desc,
-			       struct fsal_ds_handle **const handle)
+			       struct fsal_ds_handle **const handle,
+			       int flags)
 {
 	struct gpfs_file_handle *fh = (struct gpfs_file_handle *)desc->addr;
 	struct gpfs_ds *ds;		/* Handle to be created */
@@ -468,6 +469,26 @@ static nfsstat4 make_ds_handle(struct fsal_pnfs_ds *const pds,
 
 	if (desc->len != sizeof(struct gpfs_file_handle))
 		return NFS4ERR_BADHANDLE;
+
+	if (flags & FH_FSAL_BIG_ENDIAN) {
+#if (BYTE_ORDER != BIG_ENDIAN)
+		fh->handle_size = bswap_16(fh->handle_size);
+		fh->handle_type = bswap_16(fh->handle_type);
+		fh->handle_version = bswap_16(fh->handle_version);
+		fh->handle_key_size = bswap_16(fh->handle_key_size);
+#endif
+	} else {
+#if (BYTE_ORDER == BIG_ENDIAN)
+		fh->handle_size = bswap_16(fh->handle_size);
+		fh->handle_type = bswap_16(fh->handle_type);
+		fh->handle_version = bswap_16(fh->handle_version);
+		fh->handle_key_size = bswap_16(fh->handle_key_size);
+#endif
+	}
+	LogFullDebug(COMPONENT_FSAL,
+	  "flags 0x%X size %d type %d ver %d key_size %d FSID 0x%X:%X",
+	   flags, fh->handle_size, fh->handle_type, fh->handle_version,
+	   fh->handle_key_size, fh->handle_fsid[0], fh->handle_fsid[1]);
 
 	gpfs_extract_fsid(fh, &fsid_type, &fsid);
 

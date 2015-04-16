@@ -90,6 +90,9 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t *data,
 	}
 	v4_handle = (struct file_handle_v4 *)data->currentFH.nfs_fh4_val;
 
+	LogFullDebug(COMPONENT_FILEHANDLE, "NFS4 Handle 0x%X export id %d",
+		v4_handle->fhflags1, v4_handle->id.exports);
+
 	/* Copy the filehandle from the arg structure */
 	data->currentFH.nfs_fh4_len = arg_PUTFH4->object.nfs_fh4_len;
 
@@ -177,7 +180,8 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t *data,
 		data->current_filetype = REGULAR_FILE;
 
 		res_PUTFH4->status = pds->s_ops.
-		    make_ds_handle(pds, &fh_desc, &data->current_ds);
+		    make_ds_handle(pds, &fh_desc, &data->current_ds,
+				   v4_handle->fhflags1);
 
 		if (res_PUTFH4->status != NFS4_OK)
 			return res_PUTFH4->status;
@@ -239,7 +243,8 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t *data,
 		fsal_status = fsal_data.export->exp_ops.
 				extract_handle(fsal_data.export,
 						FSAL_DIGEST_NFSV4,
-						&fsal_data.fh_desc);
+						&fsal_data.fh_desc,
+						v4_handle->fhflags1);
 		if (FSAL_IS_ERROR(fsal_status)) {
 			res_PUTFH4->status =
 			    nfs4_Errno(cache_inode_error_convert(fsal_status));

@@ -707,7 +707,8 @@ struct export_ops {
  */
 	 fsal_status_t(*extract_handle) (struct fsal_export *exp_hdl,
 					 fsal_digesttype_t in_type,
-					 struct gsh_buffdesc *fh_desc);
+					 struct gsh_buffdesc *fh_desc,
+					 int flags);
 /**
  * @brief Create a FSAL object handle from a wire handle
  *
@@ -2000,7 +2001,8 @@ struct fsal_pnfs_ds_ops {
 	 nfsstat4(*make_ds_handle) (struct fsal_pnfs_ds *const pds,
 				    const struct gsh_buffdesc *
 				    const hdl_desc,
-				    struct fsal_ds_handle **const handle);
+				    struct fsal_ds_handle **const handle,
+				    int flags);
 
 /**
  * @brief Initialize FSAL specific values for DS handle

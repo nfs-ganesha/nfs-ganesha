@@ -2196,7 +2196,8 @@ fsal_status_t pxy_get_dynamic_info(struct fsal_export *exp_hdl,
  * can be used to identify the object */
 fsal_status_t pxy_extract_handle(struct fsal_export *exp_hdl,
 				 fsal_digesttype_t in_type,
-				 struct gsh_buffdesc *fh_desc)
+				 struct gsh_buffdesc *fh_desc,
+				 int flags)
 {
 	struct pxy_handle_blob *pxyblob;
 	size_t fh_size;
