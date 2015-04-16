@@ -235,9 +235,12 @@ static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 
 static fsal_status_t extract_handle(struct fsal_export *exp_hdl,
 				    fsal_digesttype_t in_type,
-				    struct gsh_buffdesc *fh_desc)
+				    struct gsh_buffdesc *fh_desc,
+				    int flags)
 {
 	size_t fh_min;
+	uint64_t *hashkey;
+	ushort *len;
 
 	fh_min = 1;
 
@@ -247,7 +250,19 @@ static fsal_status_t extract_handle(struct fsal_export *exp_hdl,
 			 fh_min, fh_desc->len);
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 	}
-
+	hashkey = (uint64_t *)fh_desc->addr;
+	len = (ushort *)((char *)hashkey + sizeof(uint64_t));
+	if (flags & FH_FSAL_BIG_ENDIAN) {
+#if (BYTE_ORDER != BIG_ENDIAN)
+		*len = bswap_16(*len);
+		*hashkey = bswap_64(*hashkey);
+#endif
+	} else {
+#if (BYTE_ORDER == BIG_ENDIAN)
+		*len = bswap_16(*len);
+		*hashkey = bswap_64(*hashkey);
+#endif
+	}
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 

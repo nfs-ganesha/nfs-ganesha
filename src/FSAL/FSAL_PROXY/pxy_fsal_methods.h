@@ -107,6 +107,6 @@ fsal_status_t pxy_get_dynamic_info(struct fsal_export *,
 				   fsal_dynamicfsinfo_t *);
 
 fsal_status_t pxy_extract_handle(struct fsal_export *, fsal_digesttype_t,
-				 struct gsh_buffdesc *);
+				 struct gsh_buffdesc *, int);
 
 #endif

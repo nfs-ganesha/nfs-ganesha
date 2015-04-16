@@ -269,7 +269,8 @@ static fsal_status_t lookup_junction(struct fsal_export *exp_hdl,
 
 static fsal_status_t extract_handle(struct fsal_export *exp_hdl,
 				    fsal_digesttype_t in_type,
-				    struct gsh_buffdesc *fh_desc)
+				    struct gsh_buffdesc *fh_desc,
+				    int flags)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
@@ -1145,7 +1146,8 @@ static nfsstat4 pds_permissions(struct fsal_pnfs_ds *const pds,
 
 static nfsstat4 pds_handle(struct fsal_pnfs_ds *const pds,
 			   const struct gsh_buffdesc *const hdl_desc,
-			   struct fsal_ds_handle **const handle)
+			   struct fsal_ds_handle **const handle,
+			   int flags)
 {
 	LogCrit(COMPONENT_PNFS, "Unimplemented DS handle creation!");
 	*handle = gsh_calloc(sizeof(struct fsal_ds_handle), 1);

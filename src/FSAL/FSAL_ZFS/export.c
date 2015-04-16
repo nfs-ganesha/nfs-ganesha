@@ -220,7 +220,8 @@ static uint32_t fs_xattr_access_rights(struct fsal_export *exp_hdl)
 
 static fsal_status_t tank_extract_handle(struct fsal_export *exp_hdl,
 					 fsal_digesttype_t in_type,
-					 struct gsh_buffdesc *fh_desc)
+					 struct gsh_buffdesc *fh_desc,
+					 int flags)
 {
 	struct zfs_file_handle *hdl;
 	size_t fh_size;

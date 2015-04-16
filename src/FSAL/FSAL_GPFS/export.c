@@ -344,7 +344,8 @@ static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 
 static fsal_status_t gpfs_extract_handle(struct fsal_export *exp_hdl,
 					 fsal_digesttype_t in_type,
-					 struct gsh_buffdesc *fh_desc)
+					 struct gsh_buffdesc *fh_desc,
+					 int flags)
 {
 	struct gpfs_file_handle *hdl;
 	size_t fh_size = 0;
@@ -354,6 +355,26 @@ static fsal_status_t gpfs_extract_handle(struct fsal_export *exp_hdl,
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
 	hdl = (struct gpfs_file_handle *)fh_desc->addr;
+	if (flags & FH_FSAL_BIG_ENDIAN) {
+#if (BYTE_ORDER != BIG_ENDIAN)
+		hdl->handle_size = bswap_16(hdl->handle_size);
+		hdl->handle_type = bswap_16(hdl->handle_type);
+		hdl->handle_version = bswap_16(hdl->handle_version);
+		hdl->handle_key_size = bswap_16(hdl->handle_key_size);
+#endif
+	} else {
+#if (BYTE_ORDER == BIG_ENDIAN)
+		hdl->handle_size = bswap_16(hdl->handle_size);
+		hdl->handle_type = bswap_16(hdl->handle_type);
+		hdl->handle_version = bswap_16(hdl->handle_version);
+		hdl->handle_key_size = bswap_16(hdl->handle_key_size);
+#endif
+	}
+	LogFullDebug(COMPONENT_FSAL,
+	  "flags 0x%X size %d type %d ver %d key_size %d FSID 0x%X:%X",
+	   flags, hdl->handle_size, hdl->handle_type, hdl->handle_version,
+	   hdl->handle_key_size, hdl->handle_fsid[0], hdl->handle_fsid[1]);
+
 	fh_size = gpfs_sizeof_handle(hdl);
 	if (fh_desc->len != fh_size) {
 		LogMajor(COMPONENT_FSAL,
@@ -708,8 +729,9 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 	glist_init(&myself->filesystems);
 
 	status.minor = fsal_internal_version();
-	LogInfo(COMPONENT_FSAL, "GPFS get version is %d options 0x%X",
-		status.minor, op_ctx->export->export_perms.options);
+	LogInfo(COMPONENT_FSAL, "GPFS get version is %d options 0x%X id %d",
+		status.minor, op_ctx->export->export_perms.options,
+		op_ctx->export->export_id);
 
 	status.minor = fsal_export_init(&myself->export);
 	if (status.minor != 0) {

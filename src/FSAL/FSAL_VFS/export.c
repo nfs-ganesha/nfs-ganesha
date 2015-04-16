@@ -363,7 +363,8 @@ static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 
 static fsal_status_t extract_handle(struct fsal_export *exp_hdl,
 				    fsal_digesttype_t in_type,
-				    struct gsh_buffdesc *fh_desc)
+				    struct gsh_buffdesc *fh_desc,
+				    int flags)
 {
 	struct fsal_filesystem *fs;
 	bool dummy;

@@ -160,7 +160,8 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
  */
 static fsal_status_t extract_handle(struct fsal_export *exp_hdl,
 				    fsal_digesttype_t in_type,
-				    struct gsh_buffdesc *fh_desc)
+				    struct gsh_buffdesc *fh_desc,
+				    int flags)
 {
 	switch (in_type) {
 		/* Digested Handles */

@@ -207,7 +207,11 @@ static nfsstat4 make_file_handle_ds(const struct gsh_buffdesc *fh_desc,
 	v4_handle->fs_len = fh_desc->len;
 	memcpy(v4_handle->fsopaque, fh_desc->addr, fh_desc->len);
 	v4_handle->id.servers = htons(server_id);
+#if (BYTE_ORDER == BIG_ENDIAN)
+	v4_handle->fhflags1 = FILE_HANDLE_V4_FLAG_DS | FH_FSAL_BIG_ENDIAN;
+#else
 	v4_handle->fhflags1 = FILE_HANDLE_V4_FLAG_DS;
+#endif
 
 	return NFS4_OK;
 }
