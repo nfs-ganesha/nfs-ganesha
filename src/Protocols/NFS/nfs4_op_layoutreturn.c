@@ -312,22 +312,19 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op, compound_data_t *data,
 				if (cache_status != CACHE_INODE_SUCCESS) {
 					res_LAYOUTRETURN4->lorr_status =
 					    nfs4_Errno(cache_status);
-					/* Release the state_t reference */
+					cache_inode_lru_unref(entry,
+							      LRU_FLAG_NONE);
+					put_gsh_export(export);
 					dec_state_t_ref(layout_state);
 					break;
 				}
 
 				if (memcmp(&fsid,
 					   &this_fsid,
-					   sizeof(fsal_fsid_t)))
-					/* Release the cache entry */
+					   sizeof(fsal_fsid_t))) {
 					cache_inode_lru_unref(entry,
 							      LRU_FLAG_NONE);
-
-					/* Release the export */
 					put_gsh_export(export);
-
-					/* Release the state_t reference */
 					dec_state_t_ref(layout_state);
 
 					/* Since we had to drop so_mutex, the
@@ -335,6 +332,7 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op, compound_data_t *data,
 					 * MUST start over.
 					 */
 					goto again;
+				}
 			}
 
 			PTHREAD_RWLOCK_wrlock(&entry->state_lock);
