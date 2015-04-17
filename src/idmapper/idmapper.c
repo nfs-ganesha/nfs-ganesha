@@ -314,6 +314,67 @@ static bool atless2id(char *name, size_t len, uint32_t *id,
 }
 
 /**
+ * @brief Return gid given a group name
+ *
+ * @param[in]  name  group name
+ * @param[out] gid   address for gid to be filled in
+ *
+ * @return 0 on success and errno on failure.
+ *
+ * NOTE: If a group name doesn't exist, getgrnam_r returns 0 with the
+ * result pointer set to NULL. We turn that into ENOENT error! Also,
+ * getgrnam_r fails with ERANGE if there is a group with a large number
+ * of users that it can't fill all those users into the supplied buffer.
+ * This need not be the group we are asking for! ERANGE is handled here,
+ * so this function never ends up returning ERANGE back to the caller.
+ */
+static int name_to_gid(const char *name, gid_t *gid)
+{
+	struct group g;
+	struct group *gres = NULL;
+	char *buf;
+	size_t buflen = sysconf(_SC_GETGR_R_SIZE_MAX);
+
+	/* Upper bound on the buffer length. Just to bailout if there is
+	 * a bug in getgrname_r returning ERANGE incorrectly. 64MB
+	 * should be good enough for now.
+	 */
+	size_t maxlen = 64 * 1024 * 1024;
+	int err;
+
+	if (buflen == -1)
+		buflen = PWENT_BEST_GUESS_LEN;
+
+	do {
+		buf = gsh_malloc(buflen);
+		if (buf == NULL) {
+			LogCrit(COMPONENT_IDMAPPER,
+				"gsh_malloc failed, buflen: %zu", buflen);
+
+			return ENOMEM;
+		}
+
+		err = getgrnam_r(name, &g, buf, buflen, &gres);
+		if (err == ERANGE) {
+			buflen *= 16;
+			gsh_free(buf);
+		}
+	} while (buflen <= maxlen && err == ERANGE);
+
+	if (err == 0) {
+		if (gres == NULL)
+			err = ENOENT;
+		else
+			*gid = gres->gr_gid;
+	}
+
+	if (err != ERANGE)
+		gsh_free(buf);
+
+	return err;
+}
+
+/**
  * @brief Lookup a name using PAM
  *
  * @param[in]  name       C string of name
@@ -340,23 +401,15 @@ static bool pwentname2id(char *name, size_t len, uint32_t *id,
 		*at = '\0';
 	}
 	if (group) {
-		struct group g;
-		struct group *gres;
-		int size = sysconf(_SC_GETGR_R_SIZE_MAX);
-		char *gbuf;
+		int err;
 
-		if (size == -1)
-			size = PWENT_BEST_GUESS_LEN;
-
-		gbuf = alloca(size);
-
-		if (getgrnam_r(name, &g, gbuf, size, &gres) != 0) {
-			LogInfo(COMPONENT_IDMAPPER, "getgrnam_r %s failed",
-				 name);
-			return false;
-		} else if (gres != NULL) {
-			*id = gres->gr_gid;
+		err = name_to_gid(name, id);
+		if (err == 0)
 			return true;
+		else if (err != ENOENT) {
+			LogWarn(COMPONENT_IDMAPPER,
+				"getgrnam_r %s failed, error: %d", name, err);
+			return false;
 		}
 #ifndef USE_NFSIDMAP
 		else {

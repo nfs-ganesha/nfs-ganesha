@@ -104,6 +104,7 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op, compound_data_t *data,
 	struct root_op_context root_op_context;
 	/* Keep track of so_mutex */
 	bool so_mutex_locked = false;
+	state_t *first;
 
 	resp->resop = NFS4_OP_LAYOUTRETURN;
 
@@ -251,6 +252,7 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op, compound_data_t *data,
 
 		PTHREAD_MUTEX_lock(&clientid_owner->so_mutex);
 		so_mutex_locked = true;
+		first = NULL;
 
 		glist_for_each_safe(glist, glistn,
 				    &clientid_owner->so_owner.so_nfs4_owner.
@@ -258,6 +260,10 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op, compound_data_t *data,
 			layout_state = glist_entry(glist,
 						   state_t,
 						   state_owner_list);
+			if (first == NULL)
+				first = layout_state;
+			else if (first == layout_state)
+				break;
 
 			/* Move to end of list in case of error to ease
 			 * retries and push off dealing with non-layout
@@ -306,22 +312,19 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op, compound_data_t *data,
 				if (cache_status != CACHE_INODE_SUCCESS) {
 					res_LAYOUTRETURN4->lorr_status =
 					    nfs4_Errno(cache_status);
-					/* Release the state_t reference */
+					cache_inode_lru_unref(entry,
+							      LRU_FLAG_NONE);
+					put_gsh_export(export);
 					dec_state_t_ref(layout_state);
 					break;
 				}
 
 				if (memcmp(&fsid,
 					   &this_fsid,
-					   sizeof(fsal_fsid_t)))
-					/* Release the cache entry */
+					   sizeof(fsal_fsid_t))) {
 					cache_inode_lru_unref(entry,
 							      LRU_FLAG_NONE);
-
-					/* Release the export */
 					put_gsh_export(export);
-
-					/* Release the state_t reference */
 					dec_state_t_ref(layout_state);
 
 					/* Since we had to drop so_mutex, the
@@ -329,6 +332,7 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op, compound_data_t *data,
 					 * MUST start over.
 					 */
 					goto again;
+				}
 			}
 
 			PTHREAD_RWLOCK_wrlock(&entry->state_lock);
