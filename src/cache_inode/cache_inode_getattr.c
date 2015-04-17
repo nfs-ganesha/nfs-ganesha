@@ -90,13 +90,13 @@ cache_inode_getattr(cache_entry_t *entry,
 	if (entry == op_ctx->export->exp_root_cache_inode)
 		mounted_on_fileid = op_ctx->export->exp_mounted_on_file_id;
 	else
-		mounted_on_fileid = entry->obj_handle->attributes.fileid;
+		mounted_on_fileid = entry->obj_handle->attrs->fileid;
 
 	PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
 
 	status = cb(opaque,
 		    entry,
-		    &entry->obj_handle->attributes,
+		    entry->obj_handle->attrs,
 		    mounted_on_fileid,
 		    cb_state);
 
@@ -192,7 +192,7 @@ cache_inode_fileid(cache_entry_t *entry,
 		status = cache_inode_lock_trust_attrs(entry, false);
 
 		if (status == CACHE_INODE_SUCCESS) {
-			*fileid = entry->obj_handle->attributes.fileid;
+			*fileid = entry->obj_handle->attrs->fileid;
 
 			PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 		}
@@ -227,7 +227,7 @@ cache_inode_fsid(cache_entry_t *entry,
 	if (status != CACHE_INODE_SUCCESS)
 		goto out;
 
-	*fsid = entry->obj_handle->attributes.fsid;
+	*fsid = entry->obj_handle->attrs->fsid;
 
 	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 
@@ -262,7 +262,7 @@ cache_inode_size(cache_entry_t *entry,
 	if (status != CACHE_INODE_SUCCESS)
 		goto out;
 
-	*size = entry->obj_handle->attributes.filesize;
+	*size = entry->obj_handle->attrs->filesize;
 
 	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 

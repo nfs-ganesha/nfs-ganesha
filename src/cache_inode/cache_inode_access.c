@@ -230,7 +230,7 @@ cache_inode_check_setattr_perms(cache_entry_t *entry,
 		goto out;
 	}
 
-	not_owner = (creds->caller_uid != entry->obj_handle->attributes.owner);
+	not_owner = (creds->caller_uid != entry->obj_handle->attrs->owner);
 
 	/* Only ownership change need to be checked for owner */
 	if (FSAL_TEST_MASK(attr->mask, ATTR_OWNER)) {
@@ -359,7 +359,7 @@ cache_inode_check_setattr_perms(cache_entry_t *entry,
 			    need_write_acl, need_write_data, need_write_attr);
 	}
 
-	if (entry->obj_handle->attributes.acl) {
+	if (entry->obj_handle->attrs->acl) {
 		status =
 		    cache_inode_access_no_mutex(entry, access_check);
 
