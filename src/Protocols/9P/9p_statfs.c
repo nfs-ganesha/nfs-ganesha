@@ -95,7 +95,7 @@ int _9p_statfs(struct _9p_request_data *req9p, void *worker_data,
 	bavail = (u64 *) &dynamicinfo.avail_bytes;
 	files = (u64 *) &dynamicinfo.total_files;
 	ffree = (u64 *) &dynamicinfo.free_files;
-	fsid = (u64) pfid->pentry->obj_handle->attributes.rawdev.major;
+	fsid = (u64) pfid->pentry->obj_handle->attrs->rawdev.major;
 
 	/* Build the reply */
 	_9p_setinitptr(cursor, preply, _9P_RSTATFS);

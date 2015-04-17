@@ -243,13 +243,13 @@ int _9p_readdir(struct _9p_request_data *req9p, void *worker_data,
 		/* Deal with "." and ".." */
 		cursor =
 		    fill_entry(cursor, _9P_QTDIR,
-			       pfid->pentry->obj_handle->attributes.fileid, 1LL,
+			       pfid->pentry->obj_handle->attrs->fileid, 1LL,
 			       DT_DIR, strlen(pathdot), pathdot);
 		dcount += 24 + strlen(pathdot);
 
 		cursor =
 		    fill_entry(cursor, _9P_QTDIR,
-			       pentry_dot_dot->obj_handle->attributes.fileid,
+			       pentry_dot_dot->obj_handle->attrs->fileid,
 			       2LL, DT_DIR, strlen(pathdotdot), pathdotdot);
 		dcount += 24 + strlen(pathdotdot);
 
@@ -268,7 +268,7 @@ int _9p_readdir(struct _9p_request_data *req9p, void *worker_data,
 
 		cursor =
 		    fill_entry(cursor, _9P_QTDIR,
-			       pentry_dot_dot->obj_handle->attributes.fileid,
+			       pentry_dot_dot->obj_handle->attrs->fileid,
 			       2LL, DT_DIR, strlen(pathdotdot), pathdotdot);
 		dcount += 24 + strlen(pathdotdot);
 

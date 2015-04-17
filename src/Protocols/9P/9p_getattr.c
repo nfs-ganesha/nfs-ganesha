@@ -103,20 +103,20 @@ int _9p_getattr(struct _9p_request_data *req9p, void *worker_data,
 	valid = _9P_GETATTR_BASIC;	/* FSAL covers all basic attributes */
 
 	if (*request_mask & _9P_GETATTR_RDEV) {
-		mode = (u32) pfid->pentry->obj_handle->attributes.mode;
-		if (pfid->pentry->obj_handle->attributes.type == DIRECTORY)
+		mode = (u32) pfid->pentry->obj_handle->attrs->mode;
+		if (pfid->pentry->obj_handle->attrs->type == DIRECTORY)
 			mode |= __S_IFDIR;
-		if (pfid->pentry->obj_handle->attributes.type == REGULAR_FILE)
+		if (pfid->pentry->obj_handle->attrs->type == REGULAR_FILE)
 			mode |= __S_IFREG;
-		if (pfid->pentry->obj_handle->attributes.type == SYMBOLIC_LINK)
+		if (pfid->pentry->obj_handle->attrs->type == SYMBOLIC_LINK)
 			mode |= __S_IFLNK;
-		if (pfid->pentry->obj_handle->attributes.type == SOCKET_FILE)
+		if (pfid->pentry->obj_handle->attrs->type == SOCKET_FILE)
 			mode |= __S_IFSOCK;
-		if (pfid->pentry->obj_handle->attributes.type == BLOCK_FILE)
+		if (pfid->pentry->obj_handle->attrs->type == BLOCK_FILE)
 			mode |= __S_IFBLK;
-		if (pfid->pentry->obj_handle->attributes.type == CHARACTER_FILE)
+		if (pfid->pentry->obj_handle->attrs->type == CHARACTER_FILE)
 			mode |= __S_IFCHR;
-		if (pfid->pentry->obj_handle->attributes.type == FIFO_FILE)
+		if (pfid->pentry->obj_handle->attrs->type == FIFO_FILE)
 			mode |= __S_IFIFO;
 	} else
 		mode = 0;
@@ -124,18 +124,18 @@ int _9p_getattr(struct _9p_request_data *req9p, void *worker_data,
 	/** @todo this is racy, use cache_inode_lock_trust_attrs */
 	uid =
 	    (*request_mask & _9P_GETATTR_UID) ?
-		(u32) pfid->pentry->obj_handle->attributes.owner :
+		(u32) pfid->pentry->obj_handle->attrs->owner :
 		0;
 	gid =
 	    (*request_mask & _9P_GETATTR_GID) ?
-		(u32) pfid->pentry->obj_handle->attributes.group :
+		(u32) pfid->pentry->obj_handle->attrs->group :
 		0;
 	nlink =
 	    (*request_mask & _9P_GETATTR_NLINK) ?
-		(u64) pfid->pentry->obj_handle->attributes.numlinks :
+		(u64) pfid->pentry->obj_handle->attrs->numlinks :
 		0LL;
 	/* rdev = (*request_mask & _9P_GETATTR_RDEV) ?
-	 *     (u64) pfid->pentry->obj_handle->attributes.rawdev.major :
+	 *     (u64) pfid->pentry->obj_handle->attrs->rawdev.major :
 	 *     0LL; */
 	rdev =
 	    (*request_mask & _9P_GETATTR_RDEV) ?
@@ -143,28 +143,27 @@ int _9p_getattr(struct _9p_request_data *req9p, void *worker_data,
 		0LL;
 	size =
 	    (*request_mask & _9P_GETATTR_SIZE) ?
-		(u64) pfid->pentry->obj_handle->attributes.filesize :
+		(u64) pfid->pentry->obj_handle->attrs->filesize :
 		0LL;
 	blksize =
 	    (*request_mask & _9P_GETATTR_BLOCKS) ? (u64) _9P_BLK_SIZE : 0LL;
 	blocks =
-	    (*request_mask & _9P_GETATTR_BLOCKS) ? (u64) (pfid->pentry->
-							  obj_handle->
-							  attributes.filesize /
-							  DEV_BSIZE) : 0LL;
+	    (*request_mask & _9P_GETATTR_BLOCKS)
+	    ? (u64) (pfid->pentry->obj_handle->attrs->filesize / DEV_BSIZE)
+	    : 0LL;
 	atime_sec =
 	    (*request_mask & _9P_GETATTR_ATIME) ?
-		(u64) pfid->pentry->obj_handle->attributes.atime.tv_sec :
+		(u64) pfid->pentry->obj_handle->attrs->atime.tv_sec :
 		0LL;
 	atime_nsec = 0LL;
 	mtime_sec =
 	    (*request_mask & _9P_GETATTR_MTIME) ?
-		(u64) pfid->pentry->obj_handle->attributes.mtime.tv_sec :
+		(u64) pfid->pentry->obj_handle->attrs->mtime.tv_sec :
 		0LL;
 	mtime_nsec = 0LL;
 	ctime_sec =
 	    (*request_mask & _9P_GETATTR_CTIME) ?
-		(u64) pfid->pentry->obj_handle->attributes.ctime.tv_sec :
+		(u64) pfid->pentry->obj_handle->attrs->ctime.tv_sec :
 		0LL;
 	ctime_nsec = 0LL;
 
