@@ -552,8 +552,6 @@ void *_9p_dispatcher_thread(void *Arg)
 {
 	int _9p_socket;
 	int rc = 0;
-	struct sockaddr_in addr;
-	socklen_t addrlen = sizeof(addr);
 	long int newsock = -1;
 	pthread_attr_t attr_thr;
 	pthread_t tcp_thrid;
@@ -592,12 +590,11 @@ void *_9p_dispatcher_thread(void *Arg)
 	LogEvent(COMPONENT_9P_DISPATCH, "9P dispatcher started");
 
 	while (true) {
-		newsock = accept(_9p_socket,
-				 (struct sockaddr *)&addr,
-				 &addrlen);
+		newsock = accept(_9p_socket, NULL, NULL);
 
 		if (newsock < 0) {
-			LogCrit(COMPONENT_9P_DISPATCH, "accept failed");
+			LogCrit(COMPONENT_9P_DISPATCH, "accept failed: %d",
+				errno);
 			continue;
 		}
 
