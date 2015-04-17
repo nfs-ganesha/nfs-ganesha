@@ -389,7 +389,7 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 	 *        cache_inode_access_no_mutex
 	 */
 	if (state_open == NULL &&
-	    entry->obj_handle->attributes.owner !=
+	    entry->obj_handle->attrs->owner !=
 	    op_ctx->creds->caller_uid) {
 		/* Need to permission check the read. */
 		cache_status =

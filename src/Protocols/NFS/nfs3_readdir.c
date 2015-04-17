@@ -89,7 +89,7 @@ nfsstat3 nfs_readdir_dot_entry(cache_entry_t *entry, const char *name,
 	cb_parms.in_result = true;
 	cache_status = cb(&cb_parms,
 			  entry,
-			  &entry->obj_handle->attributes,
+			  entry->obj_handle->attrs,
 			  0,
 			  CB_ORIGINAL);
 

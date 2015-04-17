@@ -98,15 +98,15 @@ void nfs_SetPreOpAttr(cache_entry_t *entry, pre_op_attr *attr)
 		attr->attributes_follow = false;
 	} else {
 		attr->pre_op_attr_u.attributes.size =
-		    entry->obj_handle->attributes.filesize;
+		    entry->obj_handle->attrs->filesize;
 		attr->pre_op_attr_u.attributes.mtime.tv_sec =
-		    entry->obj_handle->attributes.mtime.tv_sec;
+		    entry->obj_handle->attrs->mtime.tv_sec;
 		attr->pre_op_attr_u.attributes.mtime.tv_nsec =
-		    entry->obj_handle->attributes.mtime.tv_nsec;
+		    entry->obj_handle->attrs->mtime.tv_nsec;
 		attr->pre_op_attr_u.attributes.ctime.tv_sec =
-		    entry->obj_handle->attributes.ctime.tv_sec;
+		    entry->obj_handle->attrs->ctime.tv_sec;
 		attr->pre_op_attr_u.attributes.ctime.tv_nsec =
-		    entry->obj_handle->attributes.ctime.tv_nsec;
+		    entry->obj_handle->attrs->ctime.tv_nsec;
 		attr->attributes_follow = TRUE;
 		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 	}
@@ -3648,7 +3648,7 @@ bool cache_entry_to_nfs3_Fattr(cache_entry_t *entry, fattr3 *Fattr)
 	if (entry && (cache_inode_lock_trust_attrs(entry, false)
 		      == CACHE_INODE_SUCCESS)) {
 		rc = nfs3_FSALattr_To_Fattr(op_ctx->export,
-					    &entry->obj_handle->attributes,
+					    entry->obj_handle->attrs,
 					    Fattr);
 		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 	}

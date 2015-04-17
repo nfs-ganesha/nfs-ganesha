@@ -135,7 +135,7 @@ int nfs3_read(nfs_arg_t *arg,
 	/** @todo this is racy, use cache_inode_lock_trust_attrs and
 	 *        cache_inode_access_no_mutex
 	 */
-	if (entry->obj_handle->attributes.owner != op_ctx->creds->caller_uid) {
+	if (entry->obj_handle->attrs->owner != op_ctx->creds->caller_uid) {
 		cache_status =
 		    cache_inode_access(entry, FSAL_READ_ACCESS);
 
