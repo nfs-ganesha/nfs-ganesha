@@ -147,7 +147,7 @@ void fsal_obj_handle_init(struct fsal_obj_handle *obj, struct fsal_export *exp,
 	memcpy(&obj->obj_ops, &def_handle_ops, sizeof(struct fsal_obj_ops));
 	obj->fsal = exp->fsal;
 	obj->type = type;
-	obj->attributes.expire_time_attr = 0;
+	obj->attrs->expire_time_attr = 0;
 	pthread_rwlockattr_init(&attrs);
 #ifdef GLIBC
 	pthread_rwlockattr_setkind_np(

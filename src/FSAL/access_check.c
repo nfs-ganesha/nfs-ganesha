@@ -675,16 +675,15 @@ fsal_status_t fsal_test_access(struct fsal_obj_handle *obj_hdl,
 			       fsal_accessflags_t *allowed,
 			       fsal_accessflags_t *denied)
 {
-	struct attrlist *attribs = &obj_hdl->attributes;
-
-	if (attribs->acl && IS_FSAL_ACE4_MASK_VALID(access_type)) {
+	if (obj_hdl->attrs->acl && IS_FSAL_ACE4_MASK_VALID(access_type)) {
 		return fsal_check_access_acl(op_ctx->creds,
 					     FSAL_ACE4_MASK(access_type),
-					     allowed, denied, attribs);
+					     allowed, denied, obj_hdl->attrs);
 	} else {		/* fall back to use mode to check access. */
 		return fsal_check_access_no_acl(op_ctx->creds,
 						FSAL_MODE_MASK(access_type),
-						allowed, denied, attribs);
+						allowed, denied,
+						obj_hdl->attrs);
 	}
 }
 
