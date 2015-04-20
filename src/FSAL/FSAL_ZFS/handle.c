@@ -95,6 +95,7 @@ static struct zfs_fsal_obj_handle *alloc_handle(struct zfs_file_handle *fh,
 	hdl->handle = (struct zfs_file_handle *)&hdl[1];
 	memcpy(hdl->handle, fh, sizeof(struct zfs_file_handle));
 
+	hdl->obj_handle.attrs = &hdl->attributes;
 	hdl->obj_handle.type = posix2fsal_type(stat->st_mode);
 
 	if ((hdl->obj_handle.type == SYMBOLIC_LINK) &&
@@ -108,10 +109,9 @@ static struct zfs_fsal_obj_handle *alloc_handle(struct zfs_file_handle *fh,
 		hdl->u.symlink.link_size = len;
 	}
 
-	hdl->obj_handle.attributes.mask =
-	    exp_hdl->exp_ops.fs_supported_attrs(exp_hdl);
+	hdl->attributes.mask = exp_hdl->exp_ops.fs_supported_attrs(exp_hdl);
 
-	st = posix2fsal_attributes(stat, &hdl->obj_handle.attributes);
+	st = posix2fsal_attributes(stat, &hdl->attributes);
 	if (FSAL_IS_ERROR(st))
 		goto spcerr;
 
@@ -501,8 +501,8 @@ static fsal_status_t tank_readsymlink(struct fsal_obj_handle *obj_hdl,
 	/* The link length should be cached in the file handle */
 
 	link_content->len =
-	    obj_hdl->attributes.filesize ? (obj_hdl->attributes.filesize +
-					    1) : fsal_default_linksize;
+	    myself->attributes.filesize ? (myself->attributes.filesize +
+					   1) : fsal_default_linksize;
 	link_content->addr = gsh_malloc(link_content->len);
 
 	if (link_content->addr == NULL)
@@ -738,10 +738,10 @@ static fsal_status_t tank_getattrs(struct fsal_obj_handle *obj_hdl)
 
 	/* convert attributes */
  ok_file_opened_and_deleted:
-	st = posix2fsal_attributes(&stat, &obj_hdl->attributes);
+	st = posix2fsal_attributes(&stat, &myself->attributes);
 	if (FSAL_IS_ERROR(st)) {
-		FSAL_CLEAR_MASK(obj_hdl->attributes.mask);
-		FSAL_SET_MASK(obj_hdl->attributes.mask, ATTR_RDATTR_ERR);
+		FSAL_CLEAR_MASK(myself->attributes.mask);
+		FSAL_SET_MASK(myself->attributes.mask, ATTR_RDATTR_ERR);
 		fsal_error = st.major;
 		retval = st.minor;
 		goto out;
