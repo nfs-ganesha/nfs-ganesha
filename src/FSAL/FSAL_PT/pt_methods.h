@@ -37,6 +37,7 @@ void pt_handle_ops_init(struct fsal_obj_ops *ops);
 
 struct pt_fsal_obj_handle {
 	struct fsal_obj_handle obj_handle;
+	struct attrlist attributes;
 	ptfsal_handle_t *handle;
 	union {
 		struct {

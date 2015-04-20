@@ -86,6 +86,7 @@ static struct pt_fsal_obj_handle *alloc_handle(ptfsal_handle_t *fh,
 	       (sizeof(struct pt_fsal_obj_handle) + sizeof(ptfsal_handle_t)));
 	hdl->handle = (ptfsal_handle_t *) &hdl[1];
 	memcpy(hdl->handle, fh, sizeof(ptfsal_handle_t));
+	hdl->obj_handle.attrs = &hdl->attributes;
 	hdl->obj_handle.type = attributes->type;
 	hdl->obj_handle.fs = &pt_filesystem;
 	if (hdl->obj_handle.type == REGULAR_FILE) {
@@ -112,10 +113,8 @@ static struct pt_fsal_obj_handle *alloc_handle(ptfsal_handle_t *fh,
 			goto spcerr;
 		strcpy(hdl->u.unopenable.name, unopenable_name);
 	}
-	hdl->obj_handle.attributes.mask =
-	    exp_hdl->exp_ops.fs_supported_attrs(exp_hdl);
-	memcpy(&hdl->obj_handle.attributes, attributes,
-	       sizeof(struct attrlist));
+	hdl->attributes.mask = exp_hdl->exp_ops.fs_supported_attrs(exp_hdl);
+	memcpy(&hdl->attributes, attributes, sizeof(struct attrlist));
 
 	fsal_obj_handle_init(&hdl->obj_handle, exp_hdl, attributes->type);
 	pt_handle_ops_init(&hdl->obj_handle.obj_ops);
@@ -163,7 +162,7 @@ static fsal_status_t pt_lookup(struct fsal_obj_handle *parent,
 			"Parent handle is not a directory. hdl = 0x%p", parent);
 		return fsalstat(ERR_FSAL_NOTDIR, 0);
 	}
-	attrib.mask = parent->attributes.mask;
+	attrib.mask = parent->attrs->mask;
 	status = PTFSAL_lookup(op_ctx, parent, path, &attrib, fh);
 	if (FSAL_IS_ERROR(status))
 		return status;
@@ -504,14 +503,14 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl)
 
 	myself = container_of(obj_hdl, struct pt_fsal_obj_handle, obj_handle);
 
-	obj_hdl->attributes.mask = op_ctx->fsal_export->exp_ops.
+	myself->attributes.mask = op_ctx->fsal_export->exp_ops.
 	    fs_supported_attrs(op_ctx->fsal_export);
 	status =
 	    PTFSAL_getattrs(op_ctx->fsal_export, op_ctx, myself->handle,
-			    &obj_hdl->attributes);
+			    &myself->attributes);
 	if (FSAL_IS_ERROR(status)) {
-		FSAL_CLEAR_MASK(obj_hdl->attributes.mask);
-		FSAL_SET_MASK(obj_hdl->attributes.mask, ATTR_RDATTR_ERR);
+		FSAL_CLEAR_MASK(myself->attributes.mask);
+		FSAL_SET_MASK(myself->attributes.mask, ATTR_RDATTR_ERR);
 	}
 	return status;
 }

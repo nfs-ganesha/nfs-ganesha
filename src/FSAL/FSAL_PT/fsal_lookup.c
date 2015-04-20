@@ -99,7 +99,7 @@ fsal_status_t PTFSAL_lookup(const struct req_op_context *p_context,
 	parent_hdl =
 	    container_of(parent, struct pt_fsal_obj_handle, obj_handle);
 
-	parent_dir_attrs = &parent_hdl->obj_handle.attributes;
+	parent_dir_attrs = &parent_hdl->attributes;
 
 	/* get directory metadata */
 	parent_dir_attrs->mask = p_context->fsal_export->exp_ops.
