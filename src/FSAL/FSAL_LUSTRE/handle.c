@@ -106,6 +106,7 @@ static struct lustre_fsal_obj_handle *alloc_handle(
 		sizeof(struct lustre_file_handle)));
 	hdl->handle = (struct lustre_file_handle *)&hdl[1];
 	memcpy(hdl->handle, fh, sizeof(struct lustre_file_handle));
+	hdl->obj_handle.attrs = &hdl->attributes;
 	hdl->obj_handle.type = posix2fsal_type(stat->st_mode);
 	hdl->dev = posix2fsal_devt(stat->st_dev);
 	hdl->obj_handle.fs = fs;
@@ -137,9 +138,8 @@ static struct lustre_fsal_obj_handle *alloc_handle(
 		strcpy(hdl->u.sock.sock_name, sock_name);
 	}
 
-	hdl->obj_handle.attributes.mask =
-	    exp_hdl->exp_ops.fs_supported_attrs(exp_hdl);
-	st = posix2fsal_attributes(stat, &hdl->obj_handle.attributes);
+	hdl->attributes.mask = exp_hdl->exp_ops.fs_supported_attrs(exp_hdl);
+	st = posix2fsal_attributes(stat, &hdl->attributes);
 	if (FSAL_IS_ERROR(st))
 		goto spcerr;
 	fsal_obj_handle_init(&hdl->obj_handle, exp_hdl,
@@ -923,10 +923,10 @@ static fsal_status_t lustre_getattrs(struct fsal_obj_handle *obj_hdl)
 		goto errout;
 
 	/* convert attributes */
-	st = posix2fsal_attributes(&stat, &obj_hdl->attributes);
+	st = posix2fsal_attributes(&stat, &myself->attributes);
 	if (FSAL_IS_ERROR(st)) {
-		FSAL_CLEAR_MASK(obj_hdl->attributes.mask);
-		FSAL_SET_MASK(obj_hdl->attributes.mask, ATTR_RDATTR_ERR);
+		FSAL_CLEAR_MASK(myself->attributes.mask);
+		FSAL_SET_MASK(myself->attributes.mask, ATTR_RDATTR_ERR);
 		fsal_error = st.major;
 		rc = st.minor;
 		goto out;

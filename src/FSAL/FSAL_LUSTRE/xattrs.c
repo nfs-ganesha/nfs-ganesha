@@ -343,7 +343,7 @@ fsal_status_t lustre_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
 	for (index = cookie, out_index = 0;
 	     index < XATTR_COUNT && out_index < xattrs_tabsize; index++) {
 		if (do_match_type
-		    (xattr_list[index].flags, obj_hdl->attributes.type)) {
+		    (xattr_list[index].flags, obj_handle->attributes.type)) {
 			/* fills an xattr entry */
 			xattrs_tab[out_index].xattr_id = index;
 			strncpy(xattr_list[index].xattr_name,
@@ -352,10 +352,10 @@ fsal_status_t lustre_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
 
 			/* set asked attributes (all supported) */
 			xattrs_tab[out_index].attributes.mask =
-			    obj_hdl->attributes.mask;
+			    obj_handle->attributes.mask;
 
 			if (file_attributes_to_xattr_attrs
-			    (&obj_hdl->attributes,
+			    (&obj_handle->attributes,
 			     &xattrs_tab[out_index].attributes, index)) {
 				/* set error flag */
 				xattrs_tab[out_index].attributes.mask =
@@ -409,10 +409,10 @@ fsal_status_t lustre_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
 
 			/* set asked attributes (all supported) */
 			xattrs_tab[out_index].attributes.mask =
-			    obj_hdl->attributes.mask;
+			    obj_handle->attributes.mask;
 
 			if (file_attributes_to_xattr_attrs
-			    (&obj_hdl->attributes,
+			    (&obj_handle->attributes,
 			     &xattrs_tab[out_index].attributes, index)) {
 				/* set error flag */
 				xattrs_tab[out_index].attributes.mask =
@@ -496,7 +496,7 @@ fsal_status_t lustre_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 	/* check that this index match the type of entry */
 	if ((xattr_id < XATTR_COUNT)
 	    && !do_match_type(xattr_list[xattr_id].flags,
-			      obj_hdl->attributes.type)) {
+			      obj_handle->attributes.type)) {
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	} else if (xattr_id >= XATTR_COUNT) {
 		char attr_name[MAXPATHLEN];
@@ -550,7 +550,7 @@ fsal_status_t lustre_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
 	/* look for this name */
 	for (index = 0; index < XATTR_COUNT; index++) {
 		if (do_match_type
-		    (xattr_list[index].flags, obj_hdl->attributes.type)
+		    (xattr_list[index].flags, obj_handle->attributes.type)
 		    && !strcmp(xattr_list[index].xattr_name, xattr_name)) {
 			return lustre_getextattr_value_by_id(obj_hdl,
 							     index, buffer_addr,
@@ -643,16 +643,20 @@ fsal_status_t lustre_getextattr_attrs(struct fsal_obj_handle *obj_hdl,
 				      unsigned int xattr_id,
 				      struct attrlist *p_attrs)
 {
+	struct lustre_fsal_obj_handle *obj_handle = NULL;
 	int rc;
 
 	/* sanity checks */
 	if (!obj_hdl || !p_attrs)
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
+	obj_handle =
+	    container_of(obj_hdl, struct lustre_fsal_obj_handle, obj_handle);
+
 	/* check that this index match the type of entry */
 	if (xattr_id < XATTR_COUNT
 	    && !do_match_type(xattr_list[xattr_id].flags,
-			      obj_hdl->attributes.type)) {
+			      obj_handle->attributes.type)) {
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	} else if (xattr_id >= XATTR_COUNT) {
 		/* This is user defined xattr */
@@ -660,7 +664,7 @@ fsal_status_t lustre_getextattr_attrs(struct fsal_obj_handle *obj_hdl,
 			     xattr_id - XATTR_COUNT);
 	}
 
-	rc = file_attributes_to_xattr_attrs(&obj_hdl->attributes,
+	rc = file_attributes_to_xattr_attrs(&obj_handle->attributes,
 					    p_attrs,
 					    xattr_id);
 	if (rc)
