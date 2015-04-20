@@ -126,7 +126,7 @@ fsal_status_t GPFSFSAL_lookup(const struct req_op_context *p_context,
 	 */
 	gpfs_extract_fsid(fh, &fsid_type, &fsid);
 
-	if (fsid.major != parent->attributes.fsid.major) {
+	if (fsid.major != parent_hdl->attributes.fsid.major) {
 		/* XDEV */
 		*new_fs = lookup_fsid(&fsid, fsid_type);
 		if (*new_fs == NULL) {

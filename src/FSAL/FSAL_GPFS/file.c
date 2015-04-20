@@ -131,7 +131,7 @@ fsal_status_t gpfs_read(struct fsal_obj_handle *obj_hdl,
 		return status;
 
 	if ((*end_of_file == false)
-	    && ((offset + *read_amount) >= obj_hdl->attributes.filesize))
+	    && ((offset + *read_amount) >= myself->attributes.filesize))
 		*end_of_file = true;
 
 	return fsalstat(fsal_error, retval);
@@ -177,12 +177,12 @@ fsal_status_t gpfs_read_plus(struct fsal_obj_handle *obj_hdl,
 		info->io_content.hole.di_offset = offset;     /*offset of hole*/
 		info->io_content.hole.di_length = buffer_size;/*length of hole*/
 		*read_amount = buffer_size;
-		if ((buffer_size + offset) > obj_hdl->attributes.filesize) {
-			if (offset > obj_hdl->attributes.filesize)
+		if ((buffer_size + offset) > myself->attributes.filesize) {
+			if (offset > myself->attributes.filesize)
 				*read_amount = 0;
 			else
 				*read_amount =
-					obj_hdl->attributes.filesize - offset;
+					myself->attributes.filesize - offset;
 			info->io_content.hole.di_length = *read_amount;
 		}
 	} else {
@@ -194,7 +194,7 @@ fsal_status_t gpfs_read_plus(struct fsal_obj_handle *obj_hdl,
 	}
 	if (nb_read != -1 &&
 		(nb_read == 0 || nb_read < buffer_size ||
-		((offset + nb_read) >= obj_hdl->attributes.filesize)))
+		((offset + nb_read) >= myself->attributes.filesize)))
 		*end_of_file = true;
 	else
 		*end_of_file = false;

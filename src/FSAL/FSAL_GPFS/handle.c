@@ -71,6 +71,7 @@ static struct gpfs_fsal_obj_handle *alloc_handle(struct gpfs_file_handle *fh,
 	       (sizeof(struct gpfs_fsal_obj_handle) +
 		sizeof(struct gpfs_file_handle)));
 	hdl->handle = (struct gpfs_file_handle *)&hdl[1];
+	hdl->obj_handle.attrs = &hdl->attributes;
 	hdl->obj_handle.fs = fs;
 	memcpy(hdl->handle, fh, sizeof(struct gpfs_file_handle));
 	hdl->obj_handle.type = attributes->type;
@@ -89,10 +90,8 @@ static struct gpfs_fsal_obj_handle *alloc_handle(struct gpfs_file_handle *fh,
 		hdl->u.symlink.link_size = len;
 	}
 
-	hdl->obj_handle.attributes.mask =
-	    exp_hdl->exp_ops.fs_supported_attrs(exp_hdl);
-	memcpy(&hdl->obj_handle.attributes, attributes,
-	       sizeof(struct attrlist));
+	hdl->attributes.mask = exp_hdl->exp_ops.fs_supported_attrs(exp_hdl);
+	memcpy(&hdl->attributes, attributes, sizeof(struct attrlist));
 
 	fsal_obj_handle_init(&hdl->obj_handle, exp_hdl, attributes->type);
 	gpfs_handle_ops_init(&hdl->obj_handle.obj_ops);
@@ -147,7 +146,7 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 		retval = EXDEV;
 		goto hdlerr;
 	}
-	attrib.mask = parent->attributes.mask;
+	attrib.mask = parent->attrs->mask;
 	status = GPFSFSAL_lookup(op_ctx, parent, path, &attrib, fh, &fs);
 	if (FSAL_IS_ERROR(status))
 		return status;
@@ -536,14 +535,14 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl)
 	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle,
 			      obj_handle);
 
-	obj_hdl->attributes.mask = op_ctx->fsal_export->exp_ops.
+	myself->attributes.mask = op_ctx->fsal_export->exp_ops.
 		fs_supported_attrs(op_ctx->fsal_export);
 	status = GPFSFSAL_getattrs(op_ctx->fsal_export, obj_hdl->fs->private,
 				   op_ctx, myself->handle,
-				   &obj_hdl->attributes);
+				   &myself->attributes);
 	if (FSAL_IS_ERROR(status)) {
-		FSAL_CLEAR_MASK(obj_hdl->attributes.mask);
-		FSAL_SET_MASK(obj_hdl->attributes.mask, ATTR_RDATTR_ERR);
+		FSAL_CLEAR_MASK(myself->attributes.mask);
+		FSAL_SET_MASK(myself->attributes.mask, ATTR_RDATTR_ERR);
 	}
 	return status;
 }
@@ -717,16 +716,16 @@ static fsal_status_t gpfs_fs_locations(struct fsal_obj_handle *obj_hdl,
 	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle,
 			      obj_handle);
 
-	obj_hdl->attributes.mask = op_ctx->fsal_export->exp_ops.
+	myself->attributes.mask = op_ctx->fsal_export->exp_ops.
 		fs_supported_attrs(op_ctx->fsal_export);
 
 	status = GPFSFSAL_fs_loc(op_ctx->fsal_export, obj_hdl->fs->private,
 				 op_ctx, myself->handle,
-				 &obj_hdl->attributes, fs_locs);
+				 &myself->attributes, fs_locs);
 
 	if (FSAL_IS_ERROR(status)) {
-		FSAL_CLEAR_MASK(obj_hdl->attributes.mask);
-		FSAL_SET_MASK(obj_hdl->attributes.mask, ATTR_RDATTR_ERR);
+		FSAL_CLEAR_MASK(myself->attributes.mask);
+		FSAL_SET_MASK(myself->attributes.mask, ATTR_RDATTR_ERR);
 	}
 	return status;
 }
