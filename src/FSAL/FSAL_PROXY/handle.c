@@ -117,6 +117,7 @@ struct pxy_handle_blob {
 
 struct pxy_obj_handle {
 	struct fsal_obj_handle obj;
+	struct attrlist attributes;
 	nfs_fh4 fh4;
 #ifdef PROXY_HANDLE_MAPPING
 	nfs23_map_handle_t h23;
@@ -1254,7 +1255,7 @@ static fsal_status_t pxy_create(struct fsal_obj_handle *dir_hdl,
 			     &fhok->object, handle);
 	if (FSAL_IS_ERROR(st))
 		return st;
-	*attrib = (*handle)->attributes;
+	*attrib = *(*handle)->attrs;
 	return st;
 }
 
@@ -1312,7 +1313,7 @@ static fsal_status_t pxy_mkdir(struct fsal_obj_handle *dir_hdl,
 			     &atok->obj_attributes,
 			     &fhok->object, handle);
 	if (!FSAL_IS_ERROR(st))
-		*attrib = (*handle)->attributes;
+		*attrib = *(*handle)->attrs;
 	return st;
 }
 
@@ -1397,7 +1398,7 @@ static fsal_status_t pxy_mknod(struct fsal_obj_handle *dir_hdl,
 			     &atok->obj_attributes,
 			     &fhok->object, handle);
 	if (!FSAL_IS_ERROR(st))
-		*attrib = (*handle)->attributes;
+		*attrib = *(*handle)->attrs;
 	return st;
 }
 
@@ -1456,7 +1457,7 @@ static fsal_status_t pxy_symlink(struct fsal_obj_handle *dir_hdl,
 			     &atok->obj_attributes,
 			     &fhok->object, handle);
 	if (!FSAL_IS_ERROR(st))
-		*attrib = (*handle)->attributes;
+		*attrib = *(*handle)->attrs;
 	return st;
 }
 
@@ -1481,8 +1482,8 @@ static fsal_status_t pxy_readlink(struct fsal_obj_handle *obj_hdl,
 	   the file handle. */
 
 	link_content->len =
-	    obj_hdl->attributes.filesize ? (obj_hdl->attributes.filesize +
-					    1) : fsal_default_linksize;
+	    ph->attributes.filesize ? (ph->attributes.filesize + 1)
+				    : fsal_default_linksize;
 	link_content->addr = gsh_malloc(link_content->len);
 
 	if (link_content->addr == NULL)
@@ -1688,7 +1689,7 @@ static fsal_status_t pxy_getattrs(struct fsal_obj_handle *obj_hdl)
 	st = pxy_getattrs_impl(op_ctx->creds, op_ctx->fsal_export,
 			       &ph->fh4, &obj_attr);
 	if (!FSAL_IS_ERROR(st))
-		obj_hdl->attributes = obj_attr;
+		ph->attributes = obj_attr;
 	return st;
 }
 
@@ -1745,7 +1746,7 @@ static fsal_status_t pxy_setattrs(struct fsal_obj_handle *obj_hdl,
 			"Attribute conversion fails with %d, ignoring attibutes after making changes",
 			rc);
 	} else {
-		obj_hdl->attributes = attrs_after;
+		ph->attributes = attrs_after;
 	}
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
@@ -1786,7 +1787,7 @@ static fsal_status_t pxy_unlink(struct fsal_obj_handle *dir_hdl,
 
 	if (nfs4_Fattr_To_FSAL_attr(&dirattr, &atok->obj_attributes, NULL) ==
 	    NFS4_OK)
-		dir_hdl->attributes = dirattr;
+		ph->attributes = dirattr;
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -2056,7 +2057,8 @@ static struct pxy_obj_handle *pxy_alloc_handle(struct fsal_export *exp,
 		n->fh4 = *fh;
 		n->fh4.nfs_fh4_val = n->blob.bytes;
 		memcpy(n->blob.bytes, fh->nfs_fh4_val, fh->nfs_fh4_len);
-		n->obj.attributes = *attr;
+		n->obj.attrs = &n->attributes;
+		n->attributes = *attr;
 		n->blob.len = fh->nfs_fh4_len + sizeof(n->blob);
 		n->blob.type = attr->type;
 #ifdef PROXY_HANDLE_MAPPING
