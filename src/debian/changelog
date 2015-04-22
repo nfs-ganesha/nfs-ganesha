@@ -1,3 +1,22 @@
+nfs-ganesha (2.2.0-1) stable; urgency=log
+
+  * Ganesha supports granting delegations
+  * There have been numerous config changes
+  * Ganesha now includes systemd scripts
+  * Improved packaging for RPM and Debian
+  * Major stability improvements
+  * non-QT based python tools
+  * Support for Ganesha to be a pNFS DS only, no MDS
+  * SECINFO in preferred order
+  * LTTng support
+  * NFS v4.2 support
+  * Major improvements in 9p support
+  * Code cleanup (checkpatch and Coverity)
+  * ntirpc improvements
+  * FSAL_GLUSTER updated with pNFS and ACL support and more
+
+ -- Philippe Deniel <philippe.deniel@>  Wed, 22 Apr 2015 15:30:00 +0200
+
 nfs-ganesha (2.1.0-1) stable; urgency=log
 
   * Updates for the debian packaging using the cmake build system
