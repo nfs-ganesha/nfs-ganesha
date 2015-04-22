@@ -584,6 +584,22 @@ make DESTDIR=%{buildroot} install
 %endif
 
 %changelog
+* Tue Apr 21 2015  Philippe DENIEL <philippe.deniel@cea.fr> 2.2
+- Ganesha supports granting delegations
+- There have been numerous config changes
+- Ganesha now includes systemd scripts
+- Improved packaging for RPM and Debian
+- Major stability improvements
+- non-QT based python tools
+- Support for Ganesha to be a pNFS DS only, no MDS
+- SECINFO in preferred order
+- LTTng support
+- NFS v4.2 support
+- Major improvements in 9p support
+- Code cleanup (checkpatch and Coverity)
+- ntirpc improvements
+- FSAL_GLUSTER updated with pNFS and ACL support and more
+
 * Fri Jun 27 2014  Philippe DENIEL <philippe.deniel@cea.fr> 2.1
 - Exports are now dynamic.  They can be added or removed via DBus commands.
 - The Pseudo filesystem has been re-written as a FSAL

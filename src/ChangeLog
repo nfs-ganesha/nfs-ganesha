@@ -566,6 +566,7 @@
 	number of alternate gids to 16.
       -	RPM packaging has been restructured and updated.  The DBus tools
 	are now packaged.
+
 2.2.0 - Tue 21 Apr 2015
       - Ganesha supports granting delegations
       - There have been numerous config changes
