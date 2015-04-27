@@ -199,6 +199,7 @@ option(USE_CB_SIMULATOR "enable callback simulator thread" OFF)
 
 option(USE_NFSIDMAP "Use of libnfsidmap for name resolution" ON)
 option(ENABLE_ERROR_INJECTION "enable error injection" OFF)
+option(ENABLE_VFS_DEBUG_ACL "Enable debug ACL store for VFS" OFF)
 
 # Electric Fence (-lefence) link flag
 option(USE_EFENCE "link with efence memory debug library" OFF)
@@ -942,6 +943,7 @@ message(STATUS "USE_DBUS = ${USE_DBUS}")
 message(STATUS "USE_CB_SIMULATOR = ${USE_CB_SIMULATOR}")
 message(STATUS "USE_NFSIDMAP = ${USE_NFSIDMAP}")
 message(STATUS "ENABLE_ERROR_INJECTION = ${ENABLE_ERROR_INJECTION}")
+message(STATUS "ENABLE_VFS_DEBUG_ACL = ${ENABLE_VFS_DEBUG_ACL}")
 message(STATUS "USE_CAPS = ${USE_CAPS}")
 message(STATUS "USE_BLKID = ${USE_BLKID}")
 message(STATUS "STRICT_PACKAGE = ${STRICT_PACKAGE}")
@@ -1082,6 +1084,11 @@ set(_VALGRIND_MEMCHECK ${_VALGRIND_MEMCHECK}
 set(ENABLE_ERROR_INJECTION ${ENABLE_ERROR_INJECTION}
   CACHE BOOL
    "enable error injection"
+   FORCE)
+
+set(ENABLE_VFS_DEBUG_ACL ${ENABLE_VFS_DEBUG_ACL}
+  CACHE BOOL
+   "Enable debug ACL store for VFS"
    FORCE)
 
 set(_MSPAC_SUPPORT ${_MSPAC_SUPPORT}

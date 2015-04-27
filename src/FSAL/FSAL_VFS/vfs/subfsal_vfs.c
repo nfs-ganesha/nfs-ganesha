@@ -32,6 +32,9 @@
 #include "fsal_api.h"
 #include "../vfs_methods.h"
 #include "../subfsal.h"
+#ifdef ENABLE_VFS_DEBUG_ACL
+#include "attrs.h"
+#endif /* ENABLE_VFS_DEBUG_ACL */
 
 /* Export */
 
@@ -79,6 +82,9 @@ void vfs_sub_init_export_ops(struct vfs_fsal_export *myself,
 
 int vfs_sub_init_export(struct vfs_fsal_export *myself)
 {
+#ifdef ENABLE_VFS_DEBUG_ACL
+	vfs_acl_init();
+#endif /* ENABLE_VFS_DEBUG_ACL */
 	return 0;
 }
 
@@ -96,9 +102,18 @@ struct vfs_fsal_obj_handle *vfs_sub_alloc_handle(void)
 	return hdl;
 }
 
+
+struct vfs_subfsal_obj_ops vfs_obj_subops = {
+#ifdef ENABLE_VFS_DEBUG_ACL
+	vfs_sub_getattrs,
+	vfs_sub_setattrs,
+#endif /* ENABLE_VFS_DEBUG_ACL */
+};
+
 int vfs_sub_init_handle(struct vfs_fsal_export *myself,
 		struct vfs_fsal_obj_handle *hdl,
 		const char *path)
 {
+	hdl->sub_ops = &vfs_obj_subops;
 	return 0;
 }

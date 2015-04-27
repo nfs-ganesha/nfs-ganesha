@@ -14,6 +14,10 @@ SET(fsalvfs_LIB_SRCS
    subfsal_vfs.c
   )
 
+if(ENABLE_VFS_DEBUG_ACL)
+  set(fsalvfs_LIB_SRCS ${fsalvfs_LIB_SRCS} attrs.c)
+endif(ENABLE_VFS_DEBUG_ACL)
+
 add_library(fsalvfs SHARED ${fsalvfs_LIB_SRCS})
 
 target_link_libraries(fsalvfs
