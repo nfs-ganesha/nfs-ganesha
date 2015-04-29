@@ -362,9 +362,12 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 	int fd, dir_fd;
 	struct stat stat;
 	mode_t unix_mode;
-	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
+	fsal_status_t status = {0, 0};
 	int retval = 0;
 	int flags = O_PATH | O_NOACCESS;
+#ifdef ENABLE_VFS_DEBUG_ACL
+	fsal_accessflags_t access_type;
+#endif /* ENABLE_VFS_DEBUG_ACL */
 	vfs_file_handle_t *fh = NULL;
 
 	vfs_alloc_handle(fh);
@@ -390,11 +393,20 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 		retval = EXDEV;
 		goto hdlerr;
 	}
+
+#ifdef ENABLE_VFS_DEBUG_ACL
+	access_type = FSAL_MODE_MASK_SET(FSAL_W_OK) |
+		FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_FILE);
+	status = fsal_test_access(dir_hdl, access_type, NULL, NULL);
+	if (FSAL_IS_ERROR(status))
+		return status;
+#endif /* ENABLE_VFS_DEBUG_ACL */
+
 	unix_mode = fsal2unix_mode(attrib->mode)
 	    & ~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
-	dir_fd = vfs_fsal_open(myself, flags, &fsal_error);
+	dir_fd = vfs_fsal_open(myself, flags, &status.major);
 	if (dir_fd < 0)
-		return fsalstat(fsal_error, -dir_fd);
+		return fsalstat(status.major, -dir_fd);
 	retval = vfs_stat_by_handle(dir_fd, myself->handle, &stat, flags);
 	if (retval < 0) {
 		retval = errno;
@@ -439,8 +451,8 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
  direrr:
 	close(dir_fd);
  hdlerr:
-	fsal_error = posix2fsal_error(retval);
-	return fsalstat(fsal_error, retval);
+	status.major = posix2fsal_error(retval);
+	return fsalstat(status.major, retval);
 }
 
 static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
@@ -451,9 +463,12 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 	int dir_fd;
 	struct stat stat;
 	mode_t unix_mode;
-	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
+	fsal_status_t status = {0, 0};
 	int retval = 0;
 	int flags = O_PATH | O_NOACCESS;
+#ifdef ENABLE_VFS_DEBUG_ACL
+	fsal_accessflags_t access_type;
+#endif /* ENABLE_VFS_DEBUG_ACL */
 	vfs_file_handle_t *fh = NULL;
 
 	vfs_alloc_handle(fh);
@@ -478,11 +493,20 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 		retval = EXDEV;
 		goto hdlerr;
 	}
+
+#ifdef ENABLE_VFS_DEBUG_ACL
+	access_type = FSAL_MODE_MASK_SET(FSAL_W_OK) |
+		FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_SUBDIRECTORY);
+	status = fsal_test_access(dir_hdl, access_type, NULL, NULL);
+	if (FSAL_IS_ERROR(status))
+		return status;
+#endif /* ENABLE_VFS_DEBUG_ACL */
+
 	unix_mode = fsal2unix_mode(attrib->mode)
 	    & ~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
-	dir_fd = vfs_fsal_open(myself, flags, &fsal_error);
+	dir_fd = vfs_fsal_open(myself, flags, &status.major);
 	if (dir_fd < 0)
-		return fsalstat(fsal_error, -dir_fd);
+		return fsalstat(status.major, -dir_fd);
 	retval = vfs_stat_by_handle(dir_fd, myself->handle, &stat, flags);
 	if (retval < 0) {
 		retval = errno;
@@ -527,8 +551,8 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
  direrr:
 	close(dir_fd);
  hdlerr:
-	fsal_error = posix2fsal_error(retval);
-	return fsalstat(fsal_error, retval);
+	status.major = posix2fsal_error(retval);
+	return fsalstat(status.major, retval);
 }
 
 static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
@@ -542,12 +566,18 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 	int dir_fd = -1;
 	struct stat stat;
 	mode_t unix_mode, create_mode = 0;
-	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
+	fsal_status_t status = {0, 0};
 	int retval = 0;
 	uid_t user;
 	gid_t group;
 	dev_t unix_dev = 0;
 	int flags = O_PATH | O_NOACCESS;
+#ifdef ENABLE_VFS_DEBUG_ACL
+	fsal_accessflags_t access_type;
+#endif /* ENABLE_VFS_DEBUG_ACL */
+	vfs_file_handle_t *fh = NULL;
+
+	vfs_alloc_handle(fh);
 
 	LogDebug(COMPONENT_FSAL, "create %s", name);
 
@@ -570,6 +600,15 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 		retval = EXDEV;
 		goto hdlerr;
 	}
+
+#ifdef ENABLE_VFS_DEBUG_ACL
+	access_type = FSAL_MODE_MASK_SET(FSAL_W_OK) |
+		FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_FILE);
+	status = fsal_test_access(dir_hdl, access_type, NULL, NULL);
+	if (FSAL_IS_ERROR(status))
+		return status;
+#endif /* ENABLE_VFS_DEBUG_ACL */
+
 	user = attrib->owner;
 	group = attrib->group;
 	unix_mode = fsal2unix_mode(attrib->mode)
@@ -592,10 +631,10 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 	default:
 		LogMajor(COMPONENT_FSAL, "Invalid node type in FSAL_mknode: %d",
 			 nodetype);
-		fsal_error = ERR_FSAL_INVAL;
+		status.major = ERR_FSAL_INVAL;
 		goto errout;
 	}
-	dir_fd = vfs_fsal_open(myself, flags, &fsal_error);
+	dir_fd = vfs_fsal_open(myself, flags, &status.major);
 	if (dir_fd < 0)
 		goto errout;
 	retval = vfs_stat_by_handle(dir_fd, myself->handle, &stat, flags);
@@ -629,9 +668,9 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 	close(dir_fd);		/* done with parent */
 
  hdlerr:
-	fsal_error = posix2fsal_error(retval);
+	status.major = posix2fsal_error(retval);
  errout:
-	return fsalstat(fsal_error, retval);
+	return fsalstat(status.major, retval);
 }
 
 /** makesymlink
@@ -648,9 +687,12 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 	struct vfs_fsal_obj_handle *myself, *hdl;
 	int dir_fd = -1;
 	struct stat stat;
-	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
+	fsal_status_t status = {0, 0};
 	int retval = 0;
 	int flags = O_PATH | O_NOACCESS;
+#ifdef ENABLE_VFS_DEBUG_ACL
+	fsal_accessflags_t access_type;
+#endif /* ENABLE_VFS_DEBUG_ACL */
 	vfs_file_handle_t *fh = NULL;
 
 	vfs_alloc_handle(fh);
@@ -675,9 +717,18 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 		retval = EXDEV;
 		goto hdlerr;
 	}
-	dir_fd = vfs_fsal_open(myself, flags, &fsal_error);
+
+#ifdef ENABLE_VFS_DEBUG_ACL
+	access_type = FSAL_MODE_MASK_SET(FSAL_W_OK) |
+		FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_FILE);
+	status = fsal_test_access(dir_hdl, access_type, NULL, NULL);
+	if (FSAL_IS_ERROR(status))
+		return status;
+#endif /* ENABLE_VFS_DEBUG_ACL */
+
+	dir_fd = vfs_fsal_open(myself, flags, &status.major);
 	if (dir_fd < 0)
-		return fsalstat(fsal_error, -dir_fd);
+		return fsalstat(status.major, -dir_fd);
 	flags |= O_NOFOLLOW;	/* BSD needs O_NOFOLLOW for
 				 * fhopen() of symlinks */
 	retval = vfs_stat_by_handle(dir_fd, myself->handle, &stat, flags);
@@ -727,10 +778,10 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 	close(dir_fd);
  hdlerr:
 	if (retval == ENOENT)
-		fsal_error = ERR_FSAL_STALE;
+		status.major = ERR_FSAL_STALE;
 	else
-		fsal_error = posix2fsal_error(retval);
-	return fsalstat(fsal_error, retval);
+		status.major = posix2fsal_error(retval);
+	return fsalstat(status.major, retval);
 }
 
 static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
