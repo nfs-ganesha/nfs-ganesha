@@ -132,6 +132,7 @@ typedef uint32_t fsal_acetype_t;
 #define FSAL_ACE_TYPE_DENY  1
 #define FSAL_ACE_TYPE_AUDIT 2
 #define FSAL_ACE_TYPE_ALARM 3
+#define FSAL_ACE_TYPE_MAX   4
 
 /** ACE flag */
 

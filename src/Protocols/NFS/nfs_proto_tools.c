@@ -710,6 +710,7 @@ static fattr_xdr_result decode_acl(XDR *xdr, struct xdr_attrs_args *args)
 	char buffer[MAXNAMLEN + 1];
 	char *buffp = buffer;
 	utf8string utf8buffer;
+	fattr_xdr_result res = FATTR_XDR_FAILED;
 	int who = 0;		/* not ACE_SPECIAL anything */
 
 	acldata.naces = 0;
@@ -724,7 +725,6 @@ static fattr_xdr_result decode_acl(XDR *xdr, struct xdr_attrs_args *args)
 		args->nfs_status = NFS4ERR_SERVERFAULT;
 		return FATTR_XDR_FAILED;
 	}
-	memset(acldata.aces, 0, acldata.naces * sizeof(fsal_ace_t));
 	for (ace = acldata.aces; ace < acldata.aces + acldata.naces; ace++) {
 		int i;
 
@@ -732,6 +732,12 @@ static fattr_xdr_result decode_acl(XDR *xdr, struct xdr_attrs_args *args)
 
 		if (!inline_xdr_u_int32_t(xdr, &ace->type))
 			goto baderr;
+		if (ace->type >= FSAL_ACE_TYPE_MAX) {
+			LogFullDebug(COMPONENT_NFS_V4, "Bad ACE type 0x%x",
+				     ace->type);
+			res = FATTR_XDR_NOOP;
+			goto baderr;
+		}
 		if (!inline_xdr_u_int32_t(xdr, &ace->flag))
 			goto baderr;
 		if (!inline_xdr_u_int32_t(xdr, &ace->perm))
@@ -823,7 +829,7 @@ static fattr_xdr_result decode_acl(XDR *xdr, struct xdr_attrs_args *args)
 
  baderr:
 	nfs4_ace_free(acldata.aces);
-	return FATTR_XDR_FAILED;
+	return res;
 }
 
 /*
@@ -4044,7 +4050,7 @@ static int Fattr4_To_FSAL_attr(struct attrlist *attrs, fattr4 *Fattr,
 
 		if (attribute_to_set > FATTR4_SEC_LABEL) {
 			nfs_status = NFS4ERR_BADXDR;	/* undefined attr */
-			break;
+			goto decodeerr;
 		}
 		xdr_res = f4e->decode(&attr_body, &args);
 
@@ -4068,7 +4074,7 @@ static int Fattr4_To_FSAL_attr(struct attrlist *attrs, fattr4 *Fattr,
 				/* preserve previous error */
 				nfs_status = NFS4ERR_ATTRNOTSUPP;
 			}
-			break;
+			goto decodeerr;
 		} else {
 			LogFullDebug(COMPONENT_NFS_V4,
 				     "Decode attr FAILED: %d, name = %s",
@@ -4077,11 +4083,12 @@ static int Fattr4_To_FSAL_attr(struct attrlist *attrs, fattr4 *Fattr,
 				nfs_status = NFS4ERR_BADXDR;
 			else
 				nfs_status = args.nfs_status;
-			break;
+			goto decodeerr;
 		}
 	}
 	if (xdr_getpos(&attr_body) < Fattr->attr_vals.attrlist4_len)
 		nfs_status = NFS4ERR_BADXDR;	/* underrun on attribute */
+decodeerr:
 	xdr_destroy(&attr_body);
 	return nfs_status;
 }
