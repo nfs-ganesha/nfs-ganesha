@@ -299,7 +299,8 @@ static int gpfs_acl_2_fsal_acl(struct attrlist *p_object_attributes,
 }
 
 /* Covert FSAL ACLs to GPFS NFS4 ACLs. */
-fsal_status_t fsal_acl_2_gpfs_acl(fsal_acl_t *p_fsalacl,
+fsal_status_t fsal_acl_2_gpfs_acl(struct fsal_obj_handle *dir_hdl,
+				  fsal_acl_t *p_fsalacl,
 				  gpfsfsal_xstat_t *p_buffxstat)
 {
 	int i;
@@ -342,6 +343,24 @@ fsal_status_t fsal_acl_2_gpfs_acl(fsal_acl_t *p_fsalacl,
 			 (p_gpfsacl->ace_v4[i].
 			  aceFlags & FSAL_ACE_FLAG_GROUP_ID) ? "gid" : "uid",
 			 p_gpfsacl->ace_v4[i].aceWho);
+
+		/* It is invalid to set inherit flags on non dir objects */
+		if (dir_hdl->type != DIRECTORY &&
+		    (p_gpfsacl->ace_v4[i].aceFlags &
+		    FSAL_ACE_FLAG_INHERIT) != 0) {
+			LogMidDebug(COMPONENT_FSAL,
+			   "attempt to set inherit flag to non dir object");
+			return fsalstat(ERR_FSAL_INVAL, 0);
+		}
+
+		/* It is invalid to set inherit only with
+		 * out an actual inherit flag */
+		if ((p_gpfsacl->ace_v4[i].aceFlags & FSAL_ACE_FLAG_INHERIT) ==
+			FSAL_ACE_FLAG_INHERIT_ONLY) {
+			LogMidDebug(COMPONENT_FSAL,
+			   "attempt to set inherit only without an inherit flag");
+			return fsalstat(ERR_FSAL_INVAL, 0);
+		}
 
 	}
 

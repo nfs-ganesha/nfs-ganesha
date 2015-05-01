@@ -43,7 +43,8 @@
 #include "export_mgr.h"
 
 #ifdef _USE_NFS4_ACL
-extern fsal_status_t fsal_acl_2_gpfs_acl(fsal_acl_t *p_fsalacl,
+extern fsal_status_t fsal_acl_2_gpfs_acl(struct fsal_obj_handle *dir_hdl,
+					 fsal_acl_t *p_fsalacl,
 					 gpfsfsal_xstat_t *p_buffxstat);
 #endif				/* _USE_NFS4_ACL */
 
@@ -385,7 +386,8 @@ fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,	/* IN */
 
 			/* Convert FSAL ACL to GPFS NFS4 ACL and fill buffer. */
 			status =
-			    fsal_acl_2_gpfs_acl(p_object_attributes->acl,
+			    fsal_acl_2_gpfs_acl(dir_hdl,
+						p_object_attributes->acl,
 						&buffxstat);
 
 			if (FSAL_IS_ERROR(status))
