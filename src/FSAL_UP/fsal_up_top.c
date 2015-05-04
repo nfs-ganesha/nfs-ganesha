@@ -1379,7 +1379,9 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 		fh = call->cbt.v_u.v4.args.argarray.argarray_val->
 				nfs_cb_argop4_u.opcbrecall.fh.nfs_fh4_val;
 		if (call->stat != RPC_SUCCESS) {
-			LogEvent(COMPONENT_NFS_CB, "Callback channel down");
+			LogEvent(COMPONENT_NFS_CB,
+				 "Call stat: %d, marking CB channel down",
+				 call->stat);
 			set_cb_chan_down(deleg_ctx->drc_clid, true);
 			resp_act = DELEG_RECALL_SCHED;
 		} else
@@ -1388,8 +1390,8 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 							  call);
 		break;
 	default:
-		LogDebug(COMPONENT_NFS_CB, "%p unknown hook %d", call, hook);
-
+		LogEvent(COMPONENT_NFS_CB,
+			 "Unknown hook %d, marking CB channel down", hook);
 		set_cb_chan_down(deleg_ctx->drc_clid, true);
 		/* Mark the recall as failed */
 		resp_act = DELEG_RECALL_SCHED;
