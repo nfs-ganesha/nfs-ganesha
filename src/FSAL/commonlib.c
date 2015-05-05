@@ -1072,6 +1072,14 @@ static void posix_find_parent(struct fsal_filesystem *this)
 		if (strncmp(fs->path, this->path, fs->pathlen) != 0)
 			continue;
 
+		/* Differentiate between /fs1 and /fs10 for parent of
+		 * /fs10/fs2, however, if fs->path is "/", we need to
+		 * special case.
+		 */
+		if (fs->pathlen != 1 &&
+		    this->path[fs->pathlen] != '/')
+			continue;
+
 		this->parent = fs;
 		plen = fs->pathlen;
 	}
