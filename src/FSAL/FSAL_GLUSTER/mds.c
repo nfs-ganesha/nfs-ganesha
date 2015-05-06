@@ -150,7 +150,6 @@ static nfsstat4 pnfs_layout_get(struct fsal_obj_handle          *obj_pub,
 
 	struct glusterfs_handle *handle =
 		container_of(obj_pub, struct glusterfs_handle, handle);
-	int    p_flags = 0;
 	int    rc = 0;
 	/* Structure containing the storage parameters of the file within
 	   glusterfs. */
@@ -219,8 +218,6 @@ static nfsstat4 pnfs_layout_get(struct fsal_obj_handle          *obj_pub,
 		return posix2nfs4_error(-rc);
 	}
 
-	fsal2posix_openflags(handle->openflags, &p_flags);
-	ds_wire.flags    = p_flags;
 	ds_wire.layout   = file_layout;
 	ds_desc.addr     = &ds_wire;
 	ds_desc.len      = sizeof(struct glfs_ds_wire);
