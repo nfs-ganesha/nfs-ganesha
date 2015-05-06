@@ -374,6 +374,9 @@ void fsal2posix_openflags(fsal_openflags_t fsal_flags, int *p_posix_flags)
 
 	if (fsal_flags & FSAL_O_SYNC)
 		*p_posix_flags |= O_SYNC;
+
+	if (fsal_flags & FSAL_O_TRUNC)
+		*p_posix_flags |= O_TRUNC;
 }
 
 /**

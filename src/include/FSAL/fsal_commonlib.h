@@ -137,4 +137,7 @@ fsal_status_t fsal_rename_access(struct fsal_obj_handle *old_dir_hdl,
 				 bool isdir);
 fsal_status_t fsal_mode_to_acl(struct attrlist *attrs, fsal_acl_t *sacl);
 fsal_status_t fsal_acl_to_mode(struct attrlist *attrs);
+
+void set_common_verifier(struct attrlist *attrs, fsal_verifier_t verifier);
+
 #endif				/* FSAL_COMMONLIB_H */

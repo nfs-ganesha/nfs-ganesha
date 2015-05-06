@@ -55,6 +55,7 @@
 #include "fsal_private.h"
 #include "pnfs_utils.h"
 #include "nfs_creds.h"
+#include "sal_data.h"
 
 /** fsal module method defaults and common methods
  */
@@ -216,6 +217,18 @@ static void fsal_pnfs_ds_ops(struct fsal_pnfs_ds_ops *ops)
 	memcpy(ops, &def_pnfs_ds_ops, sizeof(struct fsal_pnfs_ds_ops));
 }
 
+/**
+ * @brief Indicate support for extended operations.
+ *
+ * @param[in]  fsal_hdl		FSAL module
+ *
+ * @retval true if extended operations are supported.
+ */
+static bool support_ex(void)
+{
+	return false;
+}
+
 /* Default fsal module method vector.
  * copied to allocated vector at register time
  */
@@ -230,6 +243,7 @@ struct fsal_ops def_fsal_ops = {
 	.fs_da_addr_size = fs_da_addr_size,
 	.fsal_pnfs_ds = fsal_pnfs_ds,
 	.fsal_pnfs_ds_ops = fsal_pnfs_ds_ops,
+	.support_ex = support_ex,
 };
 
 /* export_release
@@ -500,7 +514,21 @@ static size_t fs_loc_body_size(struct fsal_export *exp_hdl)
 static void global_verifier(struct gsh_buffdesc *verf_desc)
 {
 	memcpy(verf_desc->addr, &NFS4_write_verifier, verf_desc->len);
-};
+}
+
+/**
+ * @brief Free a state_t structure
+ *
+ * @param[in] exp_hdl               Export state_t is associated with
+ * @param[in] state                 state_t structure to free.
+ *
+ * @returns NULL on failure otherwise a state structure.
+ */
+
+void free_state(struct state_t *state)
+{
+	gsh_free(state);
+}
 
 /* Default fsal export method vector.
  * copied to allocated vector at register time
@@ -533,7 +561,8 @@ struct export_ops def_export_ops = {
 	.fs_layout_blocksize = fs_layout_blocksize,
 	.fs_maximum_segments = fs_maximum_segments,
 	.fs_loc_body_size = fs_loc_body_size,
-	.get_write_verifier = global_verifier
+	.get_write_verifier = global_verifier,
+	.free_state = free_state,
 };
 
 /* fsal_obj_handle common methods
@@ -556,6 +585,30 @@ static bool handle_is(struct fsal_obj_handle *obj_hdl, object_file_type_t type)
 static void handle_release(struct fsal_obj_handle *obj_hdl)
 {
 	/* return */
+}
+
+/**
+ * @brief Merge a duplicate handle with an original handle
+ *
+ * This function is used if an upper layer detects that a duplicate
+ * object handle has been created. It allows the FSAL to merge anything
+ * from the duplicate back into the original, and then release the
+ * duplicate.
+ *
+ * @param[in]  orig_hdl  Original handle
+ * @param[in]  dupe_hdl Handle to merge into original
+ *
+ * @return FSAL status.
+ *
+ */
+
+static fsal_status_t handle_merge(struct fsal_obj_handle *orig_hdl,
+				  struct fsal_obj_handle *dupe_hdl)
+{
+	/* Default is to just release the duplicate. */
+	dupe_hdl->obj_ops.release(dupe_hdl);
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /* lookup
@@ -1091,12 +1144,188 @@ static nfsstat4 layoutcommit(struct fsal_obj_handle *obj_hdl,
 	return NFS4ERR_NOTSUPP;
 }
 
+/* open2
+ * default case not supported
+ */
+
+static fsal_status_t open2(struct fsal_obj_handle *obj_hdl,
+			   struct state_t *fd,
+			   fsal_openflags_t openflags,
+			   enum fsal_create_mode createmode,
+			   const char *name,
+			   struct attrlist *attrib_set,
+			   fsal_verifier_t verifier,
+			   struct fsal_obj_handle **new_obj,
+			   bool *caller_perm_check)
+{
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
+}
+
+/**
+ * @brief Check the exclusive create verifier for a file.
+ *
+ * The default behavior is to check verifier against atime and mtime.
+ *
+ * @param[in] obj_hdl     File to check verifier
+ * @param[in] verifier    Verifier to use for exclusive create
+ *
+ * @retval true if verifier matches
+ */
+
+static bool check_verifier(struct fsal_obj_handle *obj_hdl,
+			   fsal_verifier_t verifier)
+{
+	uint32_t verf_hi = 0, verf_lo = 0;
+
+	memcpy(&verf_hi,
+	       verifier,
+	       sizeof(uint32_t));
+	memcpy(&verf_lo,
+	       verifier + sizeof(uint32_t),
+	       sizeof(uint32_t));
+
+	LogFullDebug(COMPONENT_FSAL,
+		     "Passed verifier %"PRIx32" %"PRIx32
+		     " file verifier %"PRIx32" %"PRIx32,
+		     verf_hi, verf_lo,
+		     (uint32_t) obj_hdl->attrs->atime.tv_sec,
+		     (uint32_t) obj_hdl->attrs->mtime.tv_sec);
+
+	return obj_hdl->attrs->atime.tv_sec == verf_hi &&
+	       obj_hdl->attrs->mtime.tv_sec == verf_lo;
+}
+
+/* status2
+ * default case return 0
+ */
+
+static fsal_openflags_t status2(struct state_t *state)
+{
+	return 0;
+}
+
+/* reopen2
+ * default case not supported
+ */
+
+static fsal_status_t reopen2(struct fsal_obj_handle *obj_hdl,
+			     struct state_t *state,
+			     fsal_openflags_t openflags)
+{
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
+}
+
+/* read2
+ * default case not supported
+ */
+
+static fsal_status_t read2(struct fsal_obj_handle *obj_hdl,
+			   bool bypass,
+			   struct state_t *state,
+			   uint64_t seek_descriptor,
+			   size_t buffer_size,
+			   void *buffer, size_t *read_amount,
+			   bool *end_of_file,
+			   struct io_info *info)
+{
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
+}
+
+/* write2
+ * default case not supported
+ */
+
+static fsal_status_t write2(struct fsal_obj_handle *obj_hdl,
+			    bool bypass,
+			    struct state_t *state,
+			    uint64_t seek_descriptor,
+			    size_t buffer_size,
+			    void *buffer,
+			    size_t *write_amount,
+			    bool *fsal_stable,
+			    struct io_info *info)
+{
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
+}
+
+/* seek2
+ * default case not supported
+ */
+
+static fsal_status_t seek2(struct fsal_obj_handle *obj_hdl,
+			   struct state_t *fd,
+			   struct io_info *info)
+{
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
+}
+
+/* io io_advise2
+ * default case not supported
+ */
+
+static fsal_status_t io_advise2(struct fsal_obj_handle *obj_hdl,
+				struct state_t *fd,
+				struct io_hints *hints)
+{
+	hints->hints = 0;
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
+/* commit2
+ * default case not supported
+ */
+
+static fsal_status_t commit2(struct fsal_obj_handle *obj_hdl,
+			     off_t offset,
+			     size_t len)
+{
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
+}
+
+/* lock_op2
+ * default case not supported
+ */
+
+static fsal_status_t lock_op2(struct fsal_obj_handle *obj_hdl,
+			      struct state_t *state,
+			      void *p_owner,
+			      fsal_lock_op_t lock_op,
+			      fsal_lock_param_t *request_lock,
+			      fsal_lock_param_t *conflicting_lock)
+{
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
+}
+
+/* setattr2
+ * default case not supported
+ */
+
+static fsal_status_t setattr2(struct fsal_obj_handle *obj_hdl,
+			      bool bypass,
+			      struct state_t *state,
+			      struct attrlist *attrs)
+{
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
+}
+
+/* close2
+ * default case not supported
+ */
+
+static fsal_status_t close2(struct fsal_obj_handle *obj_hdl,
+			    struct state_t *fd)
+{
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
+}
+
 /* Default fsal handle object method vector.
  * copied to allocated vector at register time
  */
 
 struct fsal_obj_ops def_handle_ops = {
 	.release = handle_release,
+	.merge = handle_merge,
 	.lookup = lookup,
 	.readdir = read_dirents,
 	.create = create,
@@ -1144,7 +1373,19 @@ struct fsal_obj_ops def_handle_ops = {
 	.getxattrs = getxattrs,
 	.setxattrs = setxattrs,
 	.removexattrs = removexattrs,
-	.listxattrs = listxattrs
+	.listxattrs = listxattrs,
+	.open2 = open2,
+	.check_verifier = check_verifier,
+	.status2 = status2,
+	.reopen2 = reopen2,
+	.read2 = read2,
+	.write2 = write2,
+	.seek2 = seek2,
+	.io_advise2 = io_advise2,
+	.commit2 = commit2,
+	.lock_op2 = lock_op2,
+	.setattr2 = setattr2,
+	.close2 = close2,
 };
 
 /* fsal_pnfs_ds common methods */

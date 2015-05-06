@@ -386,6 +386,7 @@ struct state_t {
 	struct gsh_export *state_export; /*< Export this entry belongs to */
 	state_owner_t *state_owner;	/*< State Owner related to this state */
 	cache_entry_t *state_entry;	/*< Related entry */
+	struct fsal_obj_handle *state_obj; /*< Related object */
 	union state_data state_data;
 	enum state_type state_type;
 	u_int32_t state_seqid;		/*< The NFSv4 Sequence id */

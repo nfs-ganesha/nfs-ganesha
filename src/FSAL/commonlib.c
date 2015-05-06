@@ -1927,4 +1927,35 @@ fsal_status_t fsal_acl_to_mode(struct attrlist *attrs)
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
+void set_common_verifier(struct attrlist *attrs, fsal_verifier_t verifier)
+{
+	uint32_t verf_hi = 0, verf_lo = 0;
+
+	memcpy(&verf_hi,
+	       verifier,
+	       sizeof(uint32_t));
+	memcpy(&verf_lo,
+	       verifier + sizeof(uint32_t),
+	       sizeof(uint32_t));
+
+	LogFullDebug(COMPONENT_FSAL,
+		     "Passed verifier %"PRIx32" %"PRIx32,
+		     verf_hi, verf_lo);
+
+	if (isDebug(COMPONENT_FSAL) &&
+	    (FSAL_TEST_MASK(attrs->mask, ATTR_ATIME) ||
+	    (FSAL_TEST_MASK(attrs->mask, ATTR_MTIME)))) {
+		LogWarn(COMPONENT_FSAL,
+			"atime or mtime was already set in attributes%"
+			PRIx32" %"PRIx32,
+			(uint32_t) attrs->atime.tv_sec,
+			(uint32_t) attrs->mtime.tv_sec);
+	}
+
+	attrs->atime.tv_sec = verf_hi;
+	attrs->mtime.tv_sec = verf_lo;
+
+	FSAL_SET_MASK(attrs->mask, ATTR_ATIME | ATTR_MTIME);
+}
+
 /** @} */

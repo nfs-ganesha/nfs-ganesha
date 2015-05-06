@@ -411,6 +411,9 @@ typedef uint64_t attrmask_t;
 #define CREATE_MASK_REG_NFS3 (CREATE_MASK_NON_REG_NFS3 | ATTR_SIZE)
 #define CREATE_MASK_REG_NFS4 (CREATE_MASK_NON_REG_NFS4 | ATTR_SIZE)
 
+#define ATTRS_SET_TIME (ATTR_ATIME | ATTR_MTIME | \
+			ATTR_ATIME_SERVER | ATTR_MTIME_SERVER)
+
 
 /**
  * @brief A list of FS object's attributes.
@@ -547,6 +550,8 @@ static inline fsal_accessflags_t FSAL_ACE4_MASK(fsal_accessflags_t access)
 					      FSAL_ACE_PERM_APPEND_DATA))
 #define FSAL_READ_ACCESS (FSAL_MODE_MASK_SET(FSAL_R_OK) | \
 			  FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_READ_DATA))
+#define FSAL_EXECUTE_ACCESS (FSAL_MODE_MASK_SET(FSAL_X_OK) | \
+			  FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_EXECUTE))
 
 /* Object handle LRU resource actions
  */
@@ -564,17 +569,31 @@ typedef enum {
 
 typedef uint16_t fsal_openflags_t;
 
-#define FSAL_O_CLOSED   0x0000	/* Closed */
-#define FSAL_O_READ     0x0001	/* read */
-#define FSAL_O_WRITE    0x0002	/* write */
-#define FSAL_O_RDWR     (FSAL_O_READ|FSAL_O_WRITE)  /* read/write: both flags
+#define FSAL_O_CLOSED     0x0000  /* Closed */
+#define FSAL_O_READ       0x0001  /* read */
+#define FSAL_O_WRITE      0x0002  /* write */
+#define FSAL_O_RDWR       (FSAL_O_READ|FSAL_O_WRITE)  /* read/write: both flags
 						     * explicitly or'd together
 						     * so that FSAL_O_RDWR can
 						     * be used as a mask */
-#define FSAL_O_SYNC     0x0004	/* sync */
-#define FSAL_O_RECLAIM  0x0008	/* open reclaim */
-#define FSAL_O_REOPEN   0x0010  /* re-open */
-#define FSAL_O_ANY      0x0020  /* any open file descriptor is usable */
+#define FSAL_O_SYNC            0x0004  /* sync */
+#define FSAL_O_RECLAIM         0x0008  /* open reclaim */
+#define FSAL_O_REOPEN          0x0010  /* re-open */
+#define FSAL_O_ANY             0x0020  /* any open file descriptor is usable */
+#define FSAL_O_TRUNC           0x0040  /* Truncate file on open */
+#define FSAL_O_DENY_READ       0x0100
+#define FSAL_O_DENY_WRITE      0x0200
+#define FSAL_O_DENY_WRITE_MAND 0x0400  /* Mandatory deny-write (i.e. NFSv4) */
+#define FSAL_O_DENY_NONE       0x0000
+
+enum fsal_create_mode {
+	FSAL_NO_CREATE = 0,
+	FSAL_UNCHECKED = 1,
+	FSAL_GUARDED = 2,
+	FSAL_EXCLUSIVE = 3,
+	FSAL_EXCLUSIVE_41 = 4,
+	FSAL_EXCLUSIVE_9P,
+};
 
 /** File system static info. */
 
@@ -828,6 +847,8 @@ typedef struct fsal_share_param_t {
 	uint32_t share_deny;
 	bool share_reclaim;
 } fsal_share_param_t;
+
+typedef char fsal_verifier_t[8];
 
 #endif				/* _FSAL_TYPES_H */
 /** @} */

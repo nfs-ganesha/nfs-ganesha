@@ -52,6 +52,8 @@
 struct gsh_client;
 struct gsh_export;
 struct fsal_up_vector;		/* From fsal_up.h */
+struct state_t;
+enum state_type;
 
 /**
  * @page newapi New FSAL API
@@ -615,6 +617,13 @@ struct fsal_ops {
  */
 	 void (*fsal_pnfs_ds_ops)(struct fsal_pnfs_ds_ops *ops);
 
+/**
+ * @brief Indicate support for extended operations.
+ *
+ * @retval true if extended operations are supported.
+ */
+	 bool (*support_ex)(void);
+
 /**@}*/
 };
 
@@ -1047,6 +1056,16 @@ struct export_ops {
 	void (*get_write_verifier)(struct gsh_buffdesc *verf_desc);
 
 /**@}*/
+
+/**
+ * @brief Free a state_t structure
+ *
+ * @param[in] state                 state_t structure to free.
+ *
+ * @returns NULL on failure otherwise a state structure.
+ */
+
+	void (*free_state)(struct state_t *state);
 };
 
 /**
@@ -1119,6 +1138,26 @@ struct fsal_obj_ops {
  * @param[in] obj_hdl Handle to release
  */
 	 void (*release)(struct fsal_obj_handle *obj_hdl);
+
+/**
+ * @brief Merge a duplicate handle with an original handle
+ *
+ * This function is used if an upper layer detects that a duplicate
+ * object handle has been created. It allows the FSAL to merge anything
+ * from the duplicate back into the original.
+ *
+ * The caller must release the object (the caller may have to close
+ * files if the merge is unsuccessful).
+ *
+ * @param[in]  orig_hdl  Original handle
+ * @param[in]  dupe_hdl Handle to merge into original
+ *
+ * @return FSAL status.
+ *
+ */
+	 fsal_status_t (*merge)(struct fsal_obj_handle *orig_hdl,
+				struct fsal_obj_handle *dupe_hdl);
+
 /**@}*/
 
 /**@{*/
@@ -2014,6 +2053,296 @@ struct fsal_obj_ops {
 				     bool_t *lr_eof,
 				     xattrlist4 * lr_names);
 
+
+/**@}*/
+
+/**@{*/
+
+/**
+ * Extended API functions.
+ *
+ * With these new operations, the FSAL becomes responsible for managing
+ * share reservations. The FSAL is also granted more control over the
+ * state of a "file descriptor" and has more control of what a "file
+ * descriptor" even is. Ultimately, it is whatever the FSAL needs in
+ * order to manage the share reservations and lock state.
+ *
+ * The open2 method also allows atomic create/setattr/open (just like the
+ * NFS v4 OPEN operation).
+ *
+ */
+
+/**
+ * @brief Open a file descriptor for read or write and possibly create
+ *
+ * This function opens a file for read or write, possibly creating it.
+ * If the caller is passing a state, it must hold the state_lock
+ * exclusive.
+ *
+ * state can be NULL which indicates a stateless open (such as via the
+ * NFS v3 CREATE operation), in which case the FSAL must assure protection
+ * of any resources. If the file is being created, such protection is
+ * simple since no one else will have access to the object yet, however,
+ * in the case of an exclusive create, the common resources may still need
+ * protection.
+ *
+ * If Name is NULL, obj_hdl is the file itself, otherwise obj_hdl is the
+ * parent directory.
+ *
+ * On an exclusive create, the upper layer may know the object handle
+ * already, so it MAY call with name == NULL. In this case, the caller
+ * expects just to check the verifier. The caller must hold the attr_lock
+ * since the FSAL will update the attributes in checking the verifier.
+ *
+ * On a call with an existing object handle for an UNCHECKED create,
+ * we can set the size to 0, because of this, the caller must hold the
+ * attr_lock to update the attributes.
+ *
+ * If attributes are not set on create, the FSAL will set some minimal
+ * attributes (for example, mode might be set to 0600).
+ *
+ * If an open by name succeeds and did not result in Ganesha creating a file,
+ * the caller will need to do a subsequent permission check to confirm the
+ * open. This is because the permission attributes were not available
+ * beforehand.
+ *
+ * @param[in] obj_hdl               File to open or parent directory
+ * @param[in,out] state             state_t to use for this operation
+ * @param[in] openflags             Mode for open
+ * @param[in] createmode            Mode for create
+ * @param[in] name                  Name for file if being created or opened
+ * @param[in] attrib_set            Attributes to set on created file
+ * @param[in] verifier              Verifier to use for exclusive create
+ * @param[in,out] new_obj           Newly created object
+ * @param[in,out] caller_perm_check The caller must do a permission check
+ *
+ * @return FSAL status.
+ */
+	 fsal_status_t (*open2)(struct fsal_obj_handle *obj_hdl,
+				struct state_t *state,
+				fsal_openflags_t openflags,
+				enum fsal_create_mode createmode,
+				const char *name,
+				struct attrlist *attrib_set,
+				fsal_verifier_t verifier,
+				struct fsal_obj_handle **new_obj,
+				bool *caller_perm_check);
+
+/**
+ * @brief Check the exclusive create verifier for a file.
+ *
+ * @param[in] obj_hdl     File to check verifier
+ * @param[in] verifier    Verifier to use for exclusive create
+ *
+ * @retval true if verifier matches
+ */
+	 bool (*check_verifier)(struct fsal_obj_handle *obj_hdl,
+				fsal_verifier_t verifier);
+
+/**
+ * @brief Return open status of a state.
+ *
+ * This function returns open flags representing the current open
+ * status for a state. The state_lock must be held.
+ *
+ * @param[in] state File state to interrogate
+ *
+ * @retval Flags representing current open status
+ */
+	fsal_openflags_t (*status2)(struct state_t *state);
+
+/**
+ * @brief Re-open a file that may be already opened
+ *
+ * This function supports changing the access mode of a share reservation and
+ * thus should only be called with a share state. The state_lock must be held.
+ *
+ * This MAY be used to open a file the first time if there is no need for
+ * open by name or create semantics. One example would be 9P lopen.
+ *
+ * @param[in] obj_hdl     File on which to operate
+ * @param[in] state       state_t to use for this operation
+ * @param[in] openflags   Mode for re-open
+ *
+ * @return FSAL status.
+ */
+	 fsal_status_t (*reopen2)(struct fsal_obj_handle *obj_hdl,
+				  struct state_t *state,
+				  fsal_openflags_t openflags);
+
+/**
+ * @brief Read data from a file
+ *
+ * This function reads data from the given file. The FSAL must be able to
+ * perform the read whether a state is presented or not. This function also
+ * is expected to handle properly bypassing or not share reservations.
+ *
+ * @param[in]     obj_hdl        File on which to operate
+ * @param[in]     bypass         If state doesn't indicate a share reservation,
+ *                               bypass any deny read
+ * @param[in]     state          state_t to use for this operation
+ * @param[in]     offset         Position from which to read
+ * @param[in]     buffer_size    Amount of data to read
+ * @param[out]    buffer         Buffer to which data are to be copied
+ * @param[out]    read_amount    Amount of data read
+ * @param[out]    end_of_file    true if the end of file has been reached
+ * @param[in,out] info           more information about the data
+ *
+ * @return FSAL status.
+ */
+	 fsal_status_t (*read2)(struct fsal_obj_handle *obj_hdl,
+				bool bypass,
+				struct state_t *state,
+				uint64_t offset,
+				size_t buffer_size,
+				void *buffer,
+				size_t *read_amount,
+				bool *end_of_file,
+				struct io_info *info);
+
+/**
+ * @brief Write data to a file
+ *
+ * This function writes data to a file. The FSAL must be able to
+ * perform the write whether a state is presented or not. This function also
+ * is expected to handle properly bypassing or not share reservations. Even
+ * with bypass == true, it will enforce a mandatory (NFSv4) deny_write if
+ * an appropriate state is not passed).
+ *
+ * The FSAL is expected to enforce sync if necessary.
+ *
+ * @param[in]     obj_hdl        File on which to operate
+ * @param[in]     bypass         If state doesn't indicate a share reservation,
+ *                               bypass any non-mandatory deny write
+ * @param[in]     state          state_t to use for this operation
+ * @param[in]     offset         Position at which to write
+ * @param[in]     buffer         Data to be written
+ * @param[in,out] fsal_stable    In, if on, the fsal is requested to write data
+ *                               to stable store. Out, the fsal reports what
+ *                               it did.
+ * @param[in,out] info           more information about the data
+ *
+ * @return FSAL status.
+ */
+	 fsal_status_t (*write2)(struct fsal_obj_handle *obj_hdl,
+				 bool bypass,
+				 struct state_t *state,
+				 uint64_t offset,
+				 size_t buffer_size,
+				 void *buffer,
+				 size_t *wrote_amount,
+				 bool *fsal_stable,
+				 struct io_info *info);
+
+/**
+ * @brief Seek to data or hole
+ *
+ * This function seek to data or hole in a file.
+ *
+ * @param[in]     obj_hdl   File on which to operate
+ * @param[in]     state     state_t to use for this operation
+ * @param[in,out] info      Information about the data
+ *
+ * @return FSAL status.
+ */
+	 fsal_status_t (*seek2)(struct fsal_obj_handle *obj_hdl,
+				struct state_t *state,
+				struct io_info *info);
+/**
+ * @brief IO Advise
+ *
+ * This function give hints to fs.
+ *
+ * @param[in]     obj_hdl          File on which to operate
+ * @param[in]     state            state_t to use for this operation
+ * @param[in,out] info             Information about the data
+ *
+ * @return FSAL status.
+ */
+	 fsal_status_t (*io_advise2)(struct fsal_obj_handle *obj_hdl,
+				     struct state_t *state,
+				     struct io_hints *hints);
+
+/**
+ * @brief Commit written data
+ *
+ * This function flushes possibly buffered data to a file. This method
+ * differs from commit due to the need to interact with share reservations
+ * and the fact that the FSAL manages the state of "file descriptors". The
+ * FSAL must be able to perform this operation without being passed a specific
+ * state.
+ *
+ * @param[in] obj_hdl          File on which to operate
+ * @param[in] state            state_t to use for this operation
+ * @param[in] offset           Start of range to commit
+ * @param[in] len              Length of range to commit
+ *
+ * @return FSAL status.
+ */
+	 fsal_status_t (*commit2)(struct fsal_obj_handle *obj_hdl,
+				  off_t offset,
+				  size_t len);
+
+/**
+ * @brief Perform a lock operation
+ *
+ * This function performs a lock operation (lock, unlock, test) on a
+ * file. This method assumes the FSAL is able to support lock owners,
+ * though it need not support asynchronous blocking locks. Passing the
+ * lock state allows the FSAL to associate information with a specific
+ * lock owner for each file (which may include use of a "file descriptor".
+ *
+ * @param[in]  obj_hdl          File on which to operate
+ * @param[in]  state            state_t to use for this operation
+ * @param[in]  owner            Lock owner
+ * @param[in]  lock_op          Operation to perform
+ * @param[in]  request_lock     Lock to take/release/test
+ * @param[out] conflicting_lock Conflicting lock
+ *
+ * @return FSAL status.
+ */
+	 fsal_status_t (*lock_op2)(struct fsal_obj_handle *obj_hdl,
+				   struct state_t *state,
+				   void *owner,
+				   fsal_lock_op_t lock_op,
+				   fsal_lock_param_t *request_lock,
+				   fsal_lock_param_t *conflicting_lock);
+
+/**
+ * @brief Set attributes on an object
+ *
+ * This function sets attributes on an object.  Which attributes are
+ * set is determined by attrib_set->mask. The FSAL must manage bypass
+ * or not of share reservations, and a state may be passed.
+ *
+ * @param[in] obj_hdl    File on which to operate
+ * @param[in] bypass     If state doesn't indicate a share reservation,
+ *                       bypass any non-mandatory deny write
+ * @param[in] state      state_t to use for this operation
+ * @param[in] attrib_set Attributes to set
+ *
+ * @return FSAL status.
+ */
+	 fsal_status_t (*setattr2)(struct fsal_obj_handle *obj_hdl,
+				   bool bypass,
+				   struct state_t *state,
+				   struct attrlist *attrib_set);
+
+/**
+ * @brief Manage closing a file when a state is no longer needed.
+ *
+ * When the upper layers are ready to dispense with a state, this method is
+ * called to allow the FSAL to close any file descriptors or release any other
+ * resources associated with the state. A call to free_state should be assumed
+ * to follow soon.
+ *
+ * @param[in] obj_hdl    File on which to operate
+ * @param[in] state      state_t to use for this operation
+ *
+ * @return FSAL status.
+ */
+	 fsal_status_t (*close2)(struct fsal_obj_handle *obj_hdl,
+				 struct state_t *state);
 
 /**@}*/
 };
