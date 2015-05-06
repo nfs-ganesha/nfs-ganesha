@@ -384,7 +384,6 @@ struct glusterfs_handle {
 struct glfs_ds_handle {
 	struct fsal_ds_handle ds;
 	struct glfs_object *glhandle;
-	struct glfs_fd *glfd;
 	stable_how4  stability_got;
 	bool connected;
 };
@@ -397,7 +396,6 @@ struct glfs_file_layout {
 
 struct glfs_ds_wire {
 	unsigned char gfid[16];
-	int flags;
 	struct glfs_file_layout layout; /*< Layout information */
 };
 

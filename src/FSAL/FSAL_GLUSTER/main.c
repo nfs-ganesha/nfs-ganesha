@@ -68,7 +68,7 @@ static struct fsal_staticfsinfo_t default_gluster_info = {
 	.umask = 0,
 	.auth_exportpath_xdev = false,
 	.xattr_access_rights = 0400,	/* root=RW, owner=R */
-	.pnfs_mds = true,
+	.pnfs_mds = false,
 	.pnfs_ds = true,
 	.link_supports_permission_checks = true,
 };
