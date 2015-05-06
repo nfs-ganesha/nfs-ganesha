@@ -1110,7 +1110,6 @@ clientid_status_t nfs_client_id_get(hash_table_t *ht, clientid4 clientid,
 			/* Stale client becuse of ip detach and attach to
 			 * same node */
 			status = CLIENT_ID_STALE;
-			dec_client_id_ref(pclientid);
 			pclientid->cid_confirmed = EXPIRED_CLIENT_ID;
 			rc = HashTable_Del(ht, &buffkey, NULL, NULL);
 			if (rc != HASHTABLE_SUCCESS) {
