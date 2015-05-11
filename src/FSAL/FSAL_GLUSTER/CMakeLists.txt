@@ -1,7 +1,7 @@
 add_definitions(
   -D__USE_GNU
   -D_GNU_SOURCE
-  -I/usr/include/glusterfs/api/
+  ${GFAPI_CFLAGS}
 )
 
 set( LIB_PREFIX 64)
@@ -23,13 +23,15 @@ SET(fsalgluster_LIB_SRCS
    gluster_internal.c
    mds.c
    ds.c
+   posix_acls.h
+   posix_acls.c
 )
 
 add_library(fsalgluster SHARED ${fsalgluster_LIB_SRCS})
 
 target_link_libraries(fsalgluster
   ${SYSTEM_LIBRARIES}
-  gfapi
+  ${GFAPI_LIBRARIES}
 )
 
 set_target_properties(fsalgluster PROPERTIES VERSION 4.2.0 SOVERSION 4)

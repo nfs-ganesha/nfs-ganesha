@@ -317,8 +317,8 @@ be used with NFS-Ganesha to support PT
 Summary: The NFS-GANESHA's GLUSTER FSAL
 Group: Applications/System
 Requires:	nfs-ganesha = %{version}-%{release}
-BuildRequires:	glusterfs-api-devel >= 3.5.1
-BuildRequires:	libattr-devel
+BuildRequires:        glusterfs-api-devel >= 3.7
+BuildRequires:        libattr-devel, libacl-devel
 
 %description gluster
 This package contains a FSAL shared object to

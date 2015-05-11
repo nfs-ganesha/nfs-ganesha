@@ -27,6 +27,7 @@
 #include "fsal.h"
 #include "fsal_types.h"
 #include "fsal_api.h"
+#include "posix_acls.h"
 #include <glusterfs/api/glfs.h>
 #include <glusterfs/api/glfs-handles.h>
 
@@ -424,6 +425,7 @@ typedef struct fsal_xstat__ {
 	int attr_valid;
 	struct stat buffstat;
 	char buffacl[GLFS_ACL_BUF_SIZE];
+	acl_t acl;
 } glusterfs_fsal_xstat_t;
 
 /* GLUSTERFS ACL */

@@ -698,7 +698,6 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 	glusterfs_fsal_xstat_t buffxstat;
 	int mask = 0;
 	int attr_valid = 0;
-	bool is_dir = 0;
 	struct glusterfs_export *glfs_export =
 	    container_of(op_ctx->fsal_export, struct glusterfs_export, export);
 	struct glusterfs_handle *objhandle =
@@ -787,6 +786,8 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 			/* mode-bits too if not already passed */
 			FSAL_SET_MASK(mask, GLAPI_SET_ATTR_MODE);
 		} else if (mask & GLAPI_SET_ATTR_MODE) {
+#if 0
+			bool is_dir = 0;
 			switch (obj_hdl->type) {
 			case REGULAR_FILE:
 				is_dir = 0; break;
@@ -795,13 +796,8 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 			default:
 				break;
 			}
-			status =
-			 mode_bits_to_acl(glfs_export->gl_fs, objhandle,
-					  attrs, &attr_valid,
-					  &buffxstat, is_dir);
+#endif
 
-			if (FSAL_IS_ERROR(status))
-				goto out;
 		}
 	} else if (FSAL_TEST_MASK(attrs->mask, ATTR_ACL)) {
 		status = fsalstat(ERR_FSAL_ATTRNOTSUPP, 0);
@@ -823,12 +819,9 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 		}
 	}
 
-	if (FSAL_TEST_MASK(attr_valid, XATTR_ACL)) {
-		status = glusterfs_set_acl(glfs_export,
-					   objhandle, &buffxstat);
-		if (FSAL_IS_ERROR(status))
-			goto out;
-	}
+	if (FSAL_TEST_MASK(attr_valid, XATTR_ACL))
+		status = glusterfs_set_acl(glfs_export, objhandle, &buffxstat);
+
 out:
 #ifdef GLTIMING
 	now(&e_time);
