@@ -41,6 +41,10 @@
 #include "nfs_exports.h"
 #include "export_mgr.h"
 #include "pnfs_utils.h"
+/* The default location of gfapi log
+ * if glfs_log param is not defined in
+ * the export file */
+#define GFAPI_LOG_LOCATION "/var/log/ganesha-gfapi.log"
 
 /**
  * @brief Implements GLUSTER FSAL exportoperation release
@@ -546,7 +550,7 @@ static struct config_item export_params[] = {
 		      glexport_params, glhostname),
 	CONF_ITEM_PATH("volpath", 1, MAXPATHLEN, "/",
 		      glexport_params, glvolpath),
-	CONF_ITEM_PATH("glfs_log", 1, MAXPATHLEN, "/tmp/gfapi.log",
+	CONF_ITEM_PATH("glfs_log", 1, MAXPATHLEN, GFAPI_LOG_LOCATION,
 		       glexport_params, glfs_log),
 	CONFIG_EOL
 };
