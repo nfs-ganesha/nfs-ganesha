@@ -478,40 +478,29 @@ fsal_status_t glusterfs_get_acl(struct glusterfs_export *glfs_export,
 				glusterfs_fsal_xstat_t *buffxstat,
 				struct attrlist *fsalattr)
 {
-	int rc = 0;
-	const char *acl_key = "user.nfsv4_acls";
-	glusterfs_acl_t *acl = NULL;
-
+	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	fsalattr->acl = NULL;
 
 	if (NFSv4_ACL_SUPPORT && FSAL_TEST_MASK(fsalattr->mask, ATTR_ACL)) {
-		rc = glfs_h_getxattrs(glfs_export->gl_fs,
-				      glhandle,
-				      acl_key, buffxstat->buffacl,
-				      GLFS_ACL_BUF_SIZE);
-		if (rc > 0) {
+
+		buffxstat->acl = glfs_h_acl_get(glfs_export->gl_fs,
+						glhandle,
+						ACL_TYPE_ACCESS);
+		if (buffxstat->acl) {
 			/* rc is the size of buffacl */
-			acl = (glusterfs_acl_t *) buffxstat->buffacl;
 			FSAL_SET_MASK(buffxstat->attr_valid, XATTR_ACL);
+			status = posix_acl_2_fsal_acl(buffxstat->acl,
+							&fsalattr->acl);
 			LogFullDebug(COMPONENT_FSAL, "acl = %p", fsalattr->acl);
-		} else if (rc == 0 || (rc == -1 && errno == ENOATTR)) {
-			/* ACL is empty, or no ACL has been set */
-			FSAL_SET_MASK(buffxstat->attr_valid, XATTR_ACL);
-			LogFullDebug(COMPONENT_FSAL, "no ACL-xattr set");
 		} else {
 			/* some real error occurred */
 			LogMajor(COMPONENT_FSAL, "failed to fetch ACL");
 			return fsalstat(ERR_FSAL_SERVERFAULT, errno);
 		}
 
-		rc = glusterfs_acl_2_fsal_acl(fsalattr, acl);
-		if (rc != ERR_FSAL_NO_ERROR) {
-			LogMajor(COMPONENT_FSAL, "failed to convert ACL");
-			return fsalstat(ERR_FSAL_SERVERFAULT, errno);
-		}
 	}
 
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	return status;
 }
 
 /*
@@ -522,18 +511,9 @@ fsal_status_t glusterfs_set_acl(struct glusterfs_export *glfs_export,
 				glusterfs_fsal_xstat_t *buffxstat)
 {
 	int rc = 0;
-	char *acl_key = "user.nfsv4_acls";
-	glusterfs_acl_t *acl_p;
-	unsigned int acl_total_size = 0;
 
-	if (!NFSv4_ACL_SUPPORT)
-		return fsalstat(ERR_FSAL_ATTRNOTSUPP, 0);
-
-	acl_p = (glusterfs_acl_t *)(buffxstat->buffacl);
-	acl_total_size = acl_p->acl_len;
-	rc = glfs_h_setxattrs(glfs_export->gl_fs, objhandle->glhandle,
-			      acl_key, buffxstat->buffacl,
-			      acl_total_size, 0);
+	rc = glfs_h_acl_set(glfs_export->gl_fs, objhandle->glhandle,
+				ACL_TYPE_ACCESS, buffxstat->acl);
 
 	if (rc < 0) {
 		/* TODO: check if error is appropriate.*/
@@ -924,32 +904,21 @@ fsal_status_t glusterfs_process_acl(struct glfs *fs,
 				    struct attrlist *attrs,
 				    glusterfs_fsal_xstat_t *buffxstat)
 {
-	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
-	uint32_t fsal_mode;
-
-	memset(&buffxstat->buffacl, 0, GLFS_ACL_BUF_SIZE);
-	fsal_mode = unix2fsal_mode(buffxstat->buffstat.st_mode);
-
 	if (attrs->acl) {
 		LogDebug(COMPONENT_FSAL, "setattr acl = %p",
 			 attrs->acl);
 
-		/* Clear owner,group,everyone mode-bits */
-		fsal_mode &= CLEAR_MODE_BITS;
+		/* Convert FSAL ACL to POSIX ACL */
 
-		/* Convert FSAL ACL to GLUSTERFS NFS4 ACL and fill buffer. */
-		status =
-		    fsal_acl_2_glusterfs_acl(attrs->acl,
-					buffxstat->buffacl, &fsal_mode);
-		buffxstat->buffstat.st_mode = fsal2unix_mode(fsal_mode);
+		buffxstat->acl = fsal_acl_2_posix_acl(attrs->acl);
 
-		if (FSAL_IS_ERROR(status))
-			return status;
+		if (!buffxstat->acl)
+			return fsalstat(ERR_FSAL_FAULT, 0);
 	} else {
 		LogCrit(COMPONENT_FSAL, "setattr acl is NULL");
 		return fsalstat(ERR_FSAL_FAULT, 0);
 	}
-	return status;
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 int initiate_up_thread(struct glusterfs_export *glfsexport)
