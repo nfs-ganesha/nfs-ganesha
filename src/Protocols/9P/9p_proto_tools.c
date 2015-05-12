@@ -339,6 +339,18 @@ void _9p_openflags2FSAL(u32 *inflags, fsal_openflags_t *outflags)
 
 void free_fid(struct _9p_fid *pfid)
 {
+	if (pfid->state != NULL) {
+		if (pfid->pentry->obj_handle->fsal->m_ops.support_ex()) {
+			/* We need to close the state before freeing the state.
+			 */
+			(void) pfid->pentry->obj_handle->obj_ops.close2(
+						pfid->pentry->obj_handle,
+						pfid->state);
+		}
+
+		pfid->state->state_exp->exp_ops.free_state(pfid->state);
+	}
+
 	if (pfid->pentry != NULL)
 		cache_inode_put(pfid->pentry);
 

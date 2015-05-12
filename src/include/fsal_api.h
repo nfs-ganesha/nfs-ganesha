@@ -1058,6 +1058,23 @@ struct export_ops {
 /**@}*/
 
 /**
+ * @brief Allocate a state_t structure
+ *
+ * Note that this is not expected to fail since memory allocation is
+ * expected to abort on failure.
+ *
+ * @param[in] exp_hdl               Export state_t will be associated with
+ * @param[in] state_type            Type of state to allocate
+ * @param[in] related_state         Related state if appropriate
+ *
+ * @returns a state structure.
+ */
+
+	struct state_t *(*alloc_state)(struct fsal_export *exp_hdl,
+				       enum state_type state_type,
+				       struct state_t *related_state);
+
+/**
  * @brief Free a state_t structure
  *
  * @param[in] state                 state_t structure to free.

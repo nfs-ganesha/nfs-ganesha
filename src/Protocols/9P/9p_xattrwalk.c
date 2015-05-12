@@ -107,8 +107,11 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	/* set op_ctx, it will be useful if FSAL is later called */
 	_9p_init_opctx(pfid, req9p);
 
-	/* Initiate xattr's fid by copying file's fid in it */
+	/* Initiate xattr's fid by copying file's fid in it.
+	 * Don't copy the state_t pointer.
+	 */
 	memcpy((char *)pxattrfid, (char *)pfid, sizeof(struct _9p_fid));
+	pxattrfid->state = NULL;
 
 	snprintf(name, MAXNAMLEN, "%.*s", *name_len, name_str);
 

@@ -150,8 +150,6 @@ state_status_t state_lock_init(void)
 	state_owner_pool =
 	    pool_basic_init("NFSv4 state owners", sizeof(state_owner_t));
 
-	state_v4_pool = pool_basic_init("NFSv4 files states", sizeof(state_t));
-
 	return status;
 }
 

@@ -952,7 +952,7 @@ static void get_delegation(compound_data_t *data, OPEN4args *args,
 	open_delegation_type4 deleg_type;
 	state_owner_t *clientowner = &client->cid_owner;
 	struct state_refer refer;
-	state_t *new_state;
+	state_t *new_state = NULL;
 
 	/* Check if any prior OPENs conflict with granting a delegation */
 	if (state_open_deleg_conflict(data->current_entry, open_state))

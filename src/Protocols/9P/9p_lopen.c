@@ -77,7 +77,7 @@ int _9p_lopen(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	}
 
 	_9p_openflags2FSAL(flags, &openflags);
-	pfid->state.state_data.fid.share_access =
+	pfid->state->state_data.fid.share_access =
 		_9p_openflags_to_share_access(flags);
 
 	_9p_init_opctx(pfid, req9p);

@@ -114,7 +114,7 @@ int _9p_lcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	fileid = cache_inode_fileid(pentry_newfile);
 
 	_9p_openflags2FSAL(flags, &openflags);
-	pfid->state.state_data.fid.share_access =
+	pfid->state->state_data.fid.share_access =
 		_9p_openflags_to_share_access(flags);
 
 	cache_status = cache_inode_open(pentry_newfile, openflags, 0);

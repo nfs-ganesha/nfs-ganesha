@@ -202,7 +202,7 @@ int Init_nlm_state_hash(void);
 void dec_nlm_state_ref(state_t *state);
 
 int get_nlm_state(enum state_type state_type,
-		  cache_entry_t *state_entry,
+		  cache_entry_t *entry,
 		  state_owner_t *state_owner,
 		  bool nsm_state_applies,
 		  uint32_t nsm_state,

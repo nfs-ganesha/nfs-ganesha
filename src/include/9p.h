@@ -303,7 +303,7 @@ struct _9p_fid {
 	struct group_data *gdata;
 	cache_entry_t *pentry;
 	struct _9p_qid qid;
-	struct state_t state;
+	struct state_t *state;
 	cache_entry_t *ppentry;
 	char name[MAXNAMLEN];
 	u32 opens;

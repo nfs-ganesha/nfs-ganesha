@@ -54,8 +54,6 @@
 #include "nfs_file_handle.h"
 #include "nfs_proto_tools.h"
 
-pool_t *state_v4_pool;		/*< Pool for NFSv4 files's states */
-
 #ifdef DEBUG_SAL
 struct glist_head state_v4_all = GLIST_HEAD_INIT(state_v4_all);
 pthread_mutex_t all_state_v4_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -68,11 +66,14 @@ pthread_mutex_t all_state_v4_mutex = PTHREAD_MUTEX_INITIALIZER;
  * entry.  It exists to allow callers to integrate state into a larger
  * operation.
  *
+ * The caller may have already allocated a state, in which case state
+ * need not be NULL.
+ *
  * @param[in,out] entry       Cache entry to operate on
  * @param[in]     state_type  State to be defined
  * @param[in]     state_data  Data related to this state
  * @param[in]     owner_input Related open_owner
- * @param[out]    state       The new state
+ * @param[in,out] state       The new state
  * @param[in]     refer       Reference to compound creating state
  *
  * @return Operation status
@@ -82,15 +83,17 @@ state_status_t state_add_impl(cache_entry_t *entry, enum state_type state_type,
 			      state_owner_t *owner_input, state_t **state,
 			      struct state_refer *refer)
 {
-	state_t *pnew_state = NULL;
+	state_t *pnew_state = *state;
 	char str[DISPLAY_STATEID_OTHER_SIZE];
 	struct display_buffer dspbuf = {sizeof(str), str, str};
 	bool str_valid = false;
 	cache_inode_status_t cache_status;
+	bool got_entry_ref = false;
 	bool got_pinned = false;
 	bool got_export_ref = false;
 	state_status_t status = 0;
 	bool mutex_init = false;
+	struct state_t *openstate = NULL;
 
 	if (isFullDebug(COMPONENT_STATE) && pnew_state != NULL) {
 		display_stateid(&dspbuf, pnew_state);
@@ -104,8 +107,10 @@ state_status_t state_add_impl(cache_entry_t *entry, enum state_type state_type,
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		status = cache_inode_status_to_state_status(cache_status);
 		LogDebug(COMPONENT_STATE, "Could not ref file");
-		return status;
+		goto errout;
 	}
+
+	got_entry_ref = true;
 
 	/* Attempt to get a reference to the export. */
 	if (!export_ready(op_ctx->export)) {
@@ -134,7 +139,15 @@ state_status_t state_add_impl(cache_entry_t *entry, enum state_type state_type,
 		got_pinned = true;
 	}
 
-	pnew_state = pool_alloc(state_v4_pool);
+	if (pnew_state == NULL) {
+		if (state_type == STATE_TYPE_LOCK)
+			openstate = state_data->lock.openstate;
+
+		pnew_state = op_ctx->fsal_export->exp_ops.alloc_state(
+							op_ctx->fsal_export,
+							state_type,
+							openstate);
+	}
 
 	PTHREAD_MUTEX_init(&pnew_state->state_mutex, NULL);
 
@@ -251,8 +264,15 @@ errout:
 	if (mutex_init)
 		PTHREAD_MUTEX_destroy(&pnew_state->state_mutex);
 
-	if (pnew_state != NULL)
-		pool_free(state_v4_pool, pnew_state);
+	if (pnew_state != NULL) {
+		/* Make sure the new state is closed (may have been passed in
+		 * with file open).
+		 */
+		(void) entry->obj_handle->obj_ops.close2(entry->obj_handle,
+							 pnew_state);
+
+		pnew_state->state_exp->exp_ops.free_state(pnew_state);
+	}
 
 	if (got_pinned)
 		cache_inode_dec_pin_ref(entry, false);
@@ -260,7 +280,10 @@ errout:
 	if (got_export_ref)
 		put_gsh_export(op_ctx->export);
 
-	cache_inode_lru_unref(entry, LRU_UNREF_STATE_LOCK_HELD);
+	if (got_entry_ref)
+		cache_inode_lru_unref(entry, LRU_UNREF_STATE_LOCK_HELD);
+
+	*state = NULL;
 
 	return status;
 }				/* state_add */
@@ -421,6 +444,17 @@ void state_del_locked(state_t *state)
 	glist_del(&state->state_list);
 	state->state_entry = NULL;
 	PTHREAD_MUTEX_unlock(&state->state_mutex);
+
+	if (entry->obj_handle->fsal->m_ops.support_ex()) {
+		/* We need to close the state at this point. The state will
+		 * eventually be freed and it must be closed before free. This
+		 * is the last point we have a valid reference to the object
+		 * handle.
+		 */
+		(void) entry->obj_handle->obj_ops.close2(entry->obj_handle,
+							 state);
+	}
+
 	cache_inode_lru_unref(entry, LRU_UNREF_STATE_LOCK_HELD);
 
 	/* Remove from the list of lock states for a particular open state.
@@ -773,12 +807,17 @@ void release_openstate(state_owner_t *owner)
 			}
 		}
 
+		/* If FSAL supports extended operations, file will be closed by
+		 * state_del_locked.
+		 */
 		state_del_locked(state);
 
 		dec_state_t_ref(state);
 
-		/* Close the file in FSAL through the cache inode */
-		cache_inode_close(entry, CACHE_INODE_FLAG_NONE);
+		if (!entry->obj_handle->fsal->m_ops.support_ex()) {
+			/* Close the file in FSAL through the cache inode */
+			cache_inode_close(entry, CACHE_INODE_FLAG_NONE);
+		}
 
 		PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
@@ -859,12 +898,17 @@ void revoke_owner_delegs(state_owner_t *client_owner)
 		PTHREAD_MUTEX_unlock(&client_owner->so_mutex);
 		so_mutex_held = false;
 
+		/* If FSAL supports extended operations, file will be closed by
+		 * state_del_locked which is called from deleg_revoke.
+		 */
 		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 		state_deleg_revoke(entry, state);
 		PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
-		/* Close the file in FSAL through the cache inode */
-		cache_inode_close(entry, 0);
+		if (!entry->obj_handle->fsal->m_ops.support_ex()) {
+			/* Close the file in FSAL through the cache inode */
+			cache_inode_close(entry, 0);
+		}
 
 		cache_inode_lru_unref(entry, LRU_FLAG_NONE);
 

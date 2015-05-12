@@ -119,14 +119,6 @@ int _9p_attach(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	/* Set export and fid id in fid */
 	pfid = gsh_calloc(1, sizeof(struct _9p_fid));
 
-	/* Initialize state_t embeded in fid. The refcount is initialized
-	 * to one to represent the state_t being embeded in the fid. This
-	 * prevents it from ever being reduced to zero by dec_state_t_ref.
-	 */
-	glist_init(&pfid->state.state_data.fid.state_locklist);
-	pfid->state.state_type = STATE_TYPE_9P_FID;
-	pfid->state.state_refcount = 1;
-
 	pfid->fid = *fid;
 	req9p->pconn->fids[*fid] = pfid;
 
@@ -195,6 +187,18 @@ int _9p_attach(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	}
 
 	fileid = cache_inode_fileid(pfid->pentry);
+
+	/* Initialize state_t embeded in fid. The refcount is initialized
+	 * to one to represent the state_t being embeded in the fid. This
+	 * prevents it from ever being reduced to zero by dec_state_t_ref.
+	 */
+	pfid->state =
+		op_ctx->fsal_export->exp_ops.alloc_state(op_ctx->fsal_export,
+							 STATE_TYPE_9P_FID,
+							 NULL);
+
+	glist_init(&pfid->state->state_data.fid.state_locklist);
+	pfid->state->state_refcount = 1;
 
 	/* Compute the qid */
 	pfid->qid.type = _9P_QTDIR;
