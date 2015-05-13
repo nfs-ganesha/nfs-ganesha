@@ -52,6 +52,7 @@
 #cmakedefine HAVE_DAEMON 1
 #cmakedefine USE_LTTNG 1
 #cmakedefine ENABLE_VFS_DEBUG_ACL 1
+#cmakedefine ENABLE_RFC_ACL 1
 
 #define NFS_GANESHA 1
 

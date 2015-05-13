@@ -3234,8 +3234,27 @@ nfsstat4 cache_entry_To_Fattr(cache_entry_t *entry, fattr4 *Fattr,
 			return nfs4_Errno(status);
 		}
 	} else {
+#ifdef ENABLE_RFC_ACL
+		cache_inode_status_t status;
+
+		LogDebug(COMPONENT_NFS_V4_ACL,
+			 "Permission check for ATTR for entry %p", entry);
+
+		status =
+		    cache_inode_access(entry,
+				       FSAL_ACE4_MASK_SET
+				       (FSAL_ACE_PERM_READ_ATTR));
+
+		if (status != CACHE_INODE_SUCCESS) {
+			LogDebug(COMPONENT_NFS_V4_ACL,
+				 "Permission check for ATTR for entry %p failed with %s",
+				 entry, cache_inode_err_str(status));
+			return nfs4_Errno(status);
+		}
+#else /* ENABLE_RFC_ACL */
 		LogDebug(COMPONENT_NFS_V4_ACL,
 			 "No permission check for ACL for entry %p", entry);
+#endif /* ENABLE_RFC_ACL */
 	}
 
 	return nfs4_Errno(
