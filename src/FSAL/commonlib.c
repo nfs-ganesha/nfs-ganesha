@@ -331,6 +331,8 @@ const char *msg_fsal_err(fsal_errors_t fsal_err)
 		return "Server in Grace";
 	case ERR_FSAL_NO_DATA:
 		return "No Data";
+	case ERR_FSAL_NO_ACE:
+		return "No matching ACE";
 	}
 
 	return "Unknown FSAL error";

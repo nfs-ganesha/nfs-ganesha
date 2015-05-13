@@ -500,11 +500,12 @@ typedef enum {
 	FSAL_ACCESS_OK = 0x00000000,	/*< Allow */
 	FSAL_ACCESS_FLAG_BIT_MASK = 0x80000000,
 	FSAL_MODE_BIT_MASK = 0x07000000,
-	FSAL_ACE4_BIT_MASK = 0x40FFFFFF,
+	FSAL_ACE4_BIT_MASK = 0x50FFFFFF,
 	FSAL_MODE_MASK_FLAG = 0x00000000,
 	FSAL_ACE4_MASK_FLAG = 0x80000000,
-	FSAL_ACE4_PERM_CONTINUE = 0x40000000	/*< Indicate ACL evaluation
+	FSAL_ACE4_PERM_CONTINUE = 0x40000000,	/*< Indicate ACL evaluation
 						 * should continue */
+	FSAL_ACE4_REQ_FLAG = 0x10000000, /*< Indicate required ACL allow */
 } fsal_accessflags_t;
 
 static inline fsal_accessflags_t FSAL_MODE_MASK(fsal_accessflags_t access)
@@ -524,6 +525,8 @@ static inline fsal_accessflags_t FSAL_ACE4_MASK(fsal_accessflags_t access)
 	((access & FSAL_ACCESS_FLAG_BIT_MASK) == FSAL_MODE_MASK_FLAG)
 #define IS_FSAL_ACE4_MASK_VALID(access) \
 	((access & FSAL_ACCESS_FLAG_BIT_MASK) == FSAL_ACE4_MASK_FLAG)
+
+#define IS_FSAL_ACE4_REQ(access) (access & FSAL_ACE4_REQ_FLAG)
 
 #define FSAL_WRITE_ACCESS (FSAL_MODE_MASK_SET(FSAL_W_OK) | \
 			   FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_DATA | \
@@ -693,6 +696,7 @@ typedef enum fsal_errors_t {
 	ERR_FSAL_FILE_OPEN = 10046,
 	ERR_FSAL_UNION_NOTSUPP = 10094,
 	ERR_FSAL_IN_GRACE = 10095,
+	ERR_FSAL_NO_ACE = 10096,
 } fsal_errors_t;
 
 /**

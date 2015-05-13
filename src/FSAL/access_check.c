@@ -307,7 +307,7 @@ static void fsal_print_access_by_acl(int naces, int ace_number,
  * @param[in] denied
  * @param[in] p_object_attributes
  *
- * @return ERR_FSAL_NO_ERROR or ERR_FSAL_ACCESS
+ * @return ERR_FSAL_NO_ERROR, ERR_FSAL_ACCESS, or ERR_FSAL_NO_ACE
  */
 
 static fsal_status_t fsal_check_access_acl(struct user_cred *creds,
@@ -333,6 +333,13 @@ static fsal_status_t fsal_check_access_acl(struct user_cred *creds,
 
 	if (denied != NULL)
 		*denied = 0;
+
+	if (!p_object_attributes->acl) {
+		/* Means that FSAL_ACE4_REQ_FLAG was set, but no ACLs */
+		LogFullDebug(COMPONENT_NFS_V4_ACL,
+			     "Allow ACE required, but no ACLs");
+		return fsalstat(ERR_FSAL_NO_ACE, 0);
+	}
 
 	/* unsatisfied flags */
 	missing_access = v4mask & ~FSAL_ACE4_PERM_CONTINUE;
@@ -515,15 +522,19 @@ static fsal_status_t fsal_check_access_acl(struct user_cred *creds,
 		}
 	}
 
-	if (missing_access || (denied != NULL && *denied != 0)) {
+	if (IS_FSAL_ACE4_REQ(v4mask) && missing_access) {
+		LogDebug(COMPONENT_NFS_V4_ACL, "final access unknown (NO_ACE)");
+		return fsalstat(ERR_FSAL_NO_ACE, 0);
+	} else if (missing_access || (denied != NULL && *denied != 0)) {
 		if ((missing_access &
 		     (FSAL_ACE_PERM_WRITE_ATTR | FSAL_ACE_PERM_WRITE_ACL |
 		      FSAL_ACE_PERM_WRITE_OWNER)) != 0) {
-			LogDebug(COMPONENT_NFS_V4_ACL, "access denied (EPERM)");
+			LogDebug(COMPONENT_NFS_V4_ACL,
+				 "final access denied (EPERM)");
 			return fsalstat(ERR_FSAL_PERM, 0);
 		} else {
 			LogDebug(COMPONENT_NFS_V4_ACL,
-				 "access denied (EACCESS)");
+				 "final access denied (EACCESS)");
 			return fsalstat(ERR_FSAL_ACCESS, 0);
 		}
 	} else {
@@ -675,7 +686,8 @@ fsal_status_t fsal_test_access(struct fsal_obj_handle *obj_hdl,
 			       fsal_accessflags_t *allowed,
 			       fsal_accessflags_t *denied)
 {
-	if (obj_hdl->attrs->acl && IS_FSAL_ACE4_MASK_VALID(access_type)) {
+	if (IS_FSAL_ACE4_REQ(access_type) ||
+	    (obj_hdl->attrs->acl && IS_FSAL_ACE4_MASK_VALID(access_type))) {
 		return fsal_check_access_acl(op_ctx->creds,
 					     FSAL_ACE4_MASK(access_type),
 					     allowed, denied, obj_hdl->attrs);

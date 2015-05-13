@@ -695,6 +695,7 @@ cache_inode_error_convert(fsal_status_t fsal_status)
 	case ERR_FSAL_ALREADY_INIT:
 	case ERR_FSAL_BAD_INIT:
 	case ERR_FSAL_TIMEOUT:
+	case ERR_FSAL_NO_ACE:
 		/* These errors should be handled inside Cache Inode (or
 		 * should never be seen by Cache Inode) */
 		LogDebug(COMPONENT_CACHE_INODE,
