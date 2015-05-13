@@ -173,11 +173,15 @@ int nfs3_symlink(nfs_arg_t *arg,
 	 */
 	squash_setattr(&sattr);
 
-	if ((sattr.mask & (ATTR_ATIME | ATTR_MTIME | ATTR_CTIME))
+	if ((sattr.mask & CREATE_MASK_NON_REG_NFS3)
 	    || ((sattr.mask & ATTR_OWNER)
 		&& (op_ctx->creds->caller_uid != sattr.owner))
 	    || ((sattr.mask & ATTR_GROUP)
 		&& (op_ctx->creds->caller_gid != sattr.group))) {
+
+		/* mask off flags handled by create */
+		sattr.mask &= CREATE_MASK_NON_REG_NFS3 | ATTRS_CREDS;
+
 		/* A call to cache_inode_setattr is required */
 		cache_status = cache_inode_setattr(symlink_entry,
 						   &sattr,

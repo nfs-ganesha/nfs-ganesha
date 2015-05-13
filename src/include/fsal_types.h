@@ -387,6 +387,16 @@ typedef uint64_t attrmask_t;
 		      ATTR_ATIME    | ATTR_MTIME    | \
 		      ATTR_CTIME    | ATTR_SPACEUSED)
 
+#define ATTRS_TIME (ATTR_ATIME | ATTR_MTIME | ATTR_CTIME)
+#define ATTRS_CREDS (ATTR_OWNER | ATTR_GROUP)
+
+#define CREATE_MASK_NON_REG_NFS3 (ATTRS_TIME)
+#define CREATE_MASK_NON_REG_NFS4 (ATTRS_TIME | ATTR_ACL)
+
+#define CREATE_MASK_REG_NFS3 (CREATE_MASK_NON_REG_NFS3 | ATTR_SIZE)
+#define CREATE_MASK_REG_NFS4 (CREATE_MASK_NON_REG_NFS4 | ATTR_SIZE)
+
+
 /**
  * @brief A list of FS object's attributes.
  */
