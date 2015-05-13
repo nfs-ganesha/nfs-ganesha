@@ -57,7 +57,7 @@ fsal_ace_t *nfs4_ace_alloc(int nace)
 	return ace;
 }
 
-static fsal_acl_t *nfs4_acl_alloc()
+fsal_acl_t *nfs4_acl_alloc()
 {
 	fsal_acl_t *acl = NULL;
 
@@ -82,7 +82,7 @@ void nfs4_ace_free(fsal_ace_t *ace)
 	gsh_free(ace);
 }
 
-static void nfs4_acl_free(fsal_acl_t *acl)
+void nfs4_acl_free(fsal_acl_t *acl)
 {
 	if (!acl)
 		return;

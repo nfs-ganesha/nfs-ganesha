@@ -40,8 +40,10 @@ typedef int fsal_acl_status_t;
 #define NFS_V4_ACL_INIT_ENTRY_FAILED  6
 #define NFS_V4_ACL_NOT_FOUND  7
 
+fsal_acl_t *nfs4_acl_alloc();
 fsal_ace_t *nfs4_ace_alloc(int nace);
 
+void nfs4_acl_free(fsal_acl_t *acl);
 void nfs4_ace_free(fsal_ace_t *pace);
 
 void nfs4_acl_entry_inc_ref(fsal_acl_t *pacl);
