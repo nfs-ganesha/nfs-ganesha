@@ -788,13 +788,14 @@ static nfsstat4 open4_create(OPEN4args *arg, compound_data_t *data,
 		/* Skip setting attributes if all asked attributes
 		 * are handled by create
 		 */
-		if ((sattr.mask &
-		     (ATTR_ACL | ATTR_ATIME | ATTR_MTIME | ATTR_CTIME |
-		      ATTR_SIZE)) ||
-		    ((sattr.mask & ATTR_OWNER)
+		if ((sattr.mask & CREATE_MASK_REG_NFS4)
+		    || ((sattr.mask & ATTR_OWNER)
 			&& (op_ctx->creds->caller_uid != sattr.owner))
 		    || ((sattr.mask & ATTR_GROUP)
 			&& (op_ctx->creds->caller_gid != sattr.group))) {
+
+			/* mask off flags handled by create */
+			sattr.mask &= CREATE_MASK_REG_NFS4 | ATTRS_CREDS;
 
 			cache_status =
 			    cache_inode_setattr(entry_newfile, &sattr,
