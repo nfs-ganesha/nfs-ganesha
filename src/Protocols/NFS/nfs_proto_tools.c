@@ -3216,7 +3216,7 @@ nfsstat4 cache_entry_To_Fattr(cache_entry_t *entry, fattr4 *Fattr,
 	/* Permissiomn check only if ACL is asked for.
 	 * NOTE: We intentionally do NOT check ACE4_READ_ATTR.
 	 */
-	if (attribute_is_set(Bitmap, ATTR_ACL)) {
+	if (attribute_is_set(Bitmap, FATTR4_ACL)) {
 		cache_inode_status_t status;
 
 		LogDebug(COMPONENT_NFS_V4_ACL,
