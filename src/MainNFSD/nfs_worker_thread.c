@@ -736,7 +736,7 @@ static void nfs_rpc_execute(request_data_t *req,
 	memset(&req_ctx, 0, sizeof(struct req_op_context));
 	op_ctx = &req_ctx;
 	op_ctx->creds = &user_credentials;
-	op_ctx->caller_addr = &worker_data->hostaddr;
+	op_ctx->caller_addr = (sockaddr_t *)svc_getrpccaller(xprt);
 	op_ctx->nfs_vers = svcreq->rq_vers;
 	op_ctx->req_type = req->rtype;
 	op_ctx->export_perms = &export_perms;
@@ -752,21 +752,6 @@ static void nfs_rpc_execute(request_data_t *req,
 	 * capture hostaddr at SVC_RECV).  For TCP, if we intend to use
 	 * this, we should sprint a buffer once, in when we're setting up
 	 * xprt private data. */
-
-/* can I change this to be call by ref instead of copy?
- * the xprt is valid for the lifetime here
- */
-	if (copy_xprt_addr(op_ctx->caller_addr, xprt) == 0) {
-		LogDebug(COMPONENT_DISPATCH,
-			 "copy_xprt_addr failed for Program %d, Version %d, Function %d",
-			 (int)svcreq->rq_prog,
-			 (int)svcreq->rq_vers, (int)svcreq->rq_proc);
-		/* XXX move lock wrapper into RPC API */
-		DISP_SLOCK(xprt);
-		svcerr_systemerr(xprt, svcreq);
-		DISP_SUNLOCK(xprt);
-		goto out;
-	}
 
 	port = get_port(op_ctx->caller_addr);
 	op_ctx->client = get_gsh_client(op_ctx->caller_addr, false);
@@ -1372,7 +1357,6 @@ static void nfs_rpc_execute(request_data_t *req,
 	if (res_nfs)
 		nfs_dupreq_rele(svcreq, reqnfs->funcdesc);
 
-out:
 	SetClientIP(NULL);
 	if (op_ctx->client != NULL)
 		put_gsh_client(op_ctx->client);
@@ -1400,7 +1384,7 @@ static void _9p_execute(request_data_t *req, nfs_worker_data_t *worker_data)
 
 	memset(&req_ctx, 0, sizeof(struct req_op_context));
 	op_ctx = &req_ctx;
-	op_ctx->caller_addr = &worker_data->hostaddr;
+	op_ctx->caller_addr = (sockaddr_t *)&req->r_u._9p.pconn->addrpeer;
 	op_ctx->req_type = req->rtype;
 	op_ctx->export_perms = &export_perms;
 
