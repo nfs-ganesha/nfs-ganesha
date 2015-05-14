@@ -313,11 +313,8 @@ static nfsstat4 pnfs_layout_commit(struct fsal_obj_handle *obj_pub,
 	}
 
 	/* Gets previous status of file in the MDS */
-	if (objhandle->openflags != FSAL_O_CLOSED)
-		rc = glfs_fstat(objhandle->glfd, &old_stat);
-	else
-		rc = glfs_h_stat(glfs_export->gl_fs,
-				 objhandle->glhandle, &old_stat);
+	rc = glfs_h_stat(glfs_export->gl_fs,
+			 objhandle->glhandle, &old_stat);
 
 	if (rc != 0) {
 		LogMajor(COMPONENT_PNFS,
