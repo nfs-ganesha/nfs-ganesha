@@ -36,15 +36,11 @@
  * @brief Free a range lock
  *
  * @param[in]  args
- * @param[in]  export
- * @param[in]  worker
  * @param[in]  req
  * @param[out] res
  */
 
-int nlm4_Unlock(nfs_arg_t *args,
-		nfs_worker_data_t *worker,
-		struct svc_req *req, nfs_res_t *res)
+int nlm4_Unlock(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 {
 	nlm4_unlockargs *arg = &args->arg_nlm4_unlock;
 	cache_entry_t *pentry;
@@ -169,15 +165,11 @@ static void nlm4_unlock_message_resp(state_async_queue_t *arg)
  * @brief Unlock Message
  *
  * @param[in]  args
- * @param[in]  export
- * @param[in]  worker
  * @param[in]  req
  * @param[out] res
  *
  */
-int nlm4_Unlock_Message(nfs_arg_t *args,
-			nfs_worker_data_t *worker, struct svc_req *req,
-			nfs_res_t *res)
+int nlm4_Unlock_Message(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 {
 	state_nlm_client_t *nlm_client = NULL;
 	state_nsm_client_t *nsm_client;
@@ -199,7 +191,7 @@ int nlm4_Unlock_Message(nfs_arg_t *args,
 	if (nlm_client == NULL)
 		rc = NFS_REQ_DROP;
 	else
-		rc = nlm4_Unlock(args, worker, req, res);
+		rc = nlm4_Unlock(args, req, res);
 
 	if (rc == NFS_REQ_OK)
 		rc = nlm_send_async_res_nlm4(nlm_client,

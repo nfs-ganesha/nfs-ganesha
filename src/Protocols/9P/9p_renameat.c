@@ -43,8 +43,7 @@
 #include "fsal.h"
 #include "9p.h"
 
-int _9p_renameat(struct _9p_request_data *req9p, void *worker_data,
-		 u32 *plenout, char *preply)
+int _9p_renameat(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 	u16 *msgtag = NULL;
@@ -77,37 +76,32 @@ int _9p_renameat(struct _9p_request_data *req9p, void *worker_data,
 		 *newname_len, newname_str);
 
 	if (*oldfid >= _9P_FID_PER_CONN)
-		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, ERANGE, plenout, preply);
 
 	poldfid = req9p->pconn->fids[*oldfid];
 
 	/* Check that it is a valid fid */
 	if (poldfid == NULL || poldfid->pentry == NULL) {
 		LogDebug(COMPONENT_9P, "request on invalid fid=%u", *oldfid);
-		return _9p_rerror(req9p, worker_data, msgtag, EIO, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, EIO, plenout, preply);
 	}
 
 	_9p_init_opctx(poldfid, req9p);
 
 	if (*newfid >= _9P_FID_PER_CONN)
-		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, ERANGE, plenout, preply);
 
 	pnewfid = req9p->pconn->fids[*newfid];
 
 	/* Check that it is a valid fid */
 	if (pnewfid == NULL || pnewfid->pentry == NULL) {
 		LogDebug(COMPONENT_9P, "request on invalid fid=%u", *newfid);
-		return _9p_rerror(req9p, worker_data, msgtag, EIO, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, EIO, plenout, preply);
 	}
 
 	if ((op_ctx->export_perms->options &
 				 EXPORT_OPTION_WRITE_ACCESS) == 0)
-		return _9p_rerror(req9p, worker_data, msgtag, EROFS, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, EROFS, plenout, preply);
 
 	/* Let's do the job */
 	snprintf(oldname, MAXNAMLEN, "%.*s", *oldname_len, oldname_str);
@@ -117,7 +111,7 @@ int _9p_renameat(struct _9p_request_data *req9p, void *worker_data,
 	    cache_inode_rename(poldfid->pentry, oldname, pnewfid->pentry,
 			       newname);
 	if (cache_status != CACHE_INODE_SUCCESS)
-		return _9p_rerror(req9p, worker_data, msgtag,
+		return _9p_rerror(req9p, msgtag,
 				  _9p_tools_errno(cache_status), plenout,
 				  preply);
 

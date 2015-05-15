@@ -54,7 +54,6 @@
  * Implements the NFSPROC3_CREATE function.
  *
  * @param[in]  arg     NFS arguments union
- * @param[in]  worker  Worker thread data
  * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call
  *
@@ -64,9 +63,7 @@
  *
  */
 
-int nfs3_create(nfs_arg_t *arg,
-		nfs_worker_data_t *worker,
-		struct svc_req *req, nfs_res_t *res)
+int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
 	const char *file_name = arg->arg_create3.where.name;
 	uint32_t mode = 0;

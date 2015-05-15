@@ -173,7 +173,7 @@ typedef union nfs_res__ {
 #define NEEDS_EXPORT	0x0020	/* Request needs an export */
 
 typedef int (*nfs_protocol_function_t) (nfs_arg_t *,
-					nfs_worker_data_t *, struct svc_req *,
+					struct svc_req *,
 					nfs_res_t *);
 
 typedef int (*nfsremote_protocol_function_t) (CLIENT *, nfs_arg_t *,
@@ -320,7 +320,6 @@ typedef struct compound_data {
 	struct export_perms saved_export_perms; /*< Permissions for export for
 					       savedFH */
 	struct svc_req *req;	/*< RPC Request related to the compound */
-	struct nfs_worker_data *worker;	/*< Worker thread data */
 	nfs_client_cred_t credential;	/*< Raw RPC credentials */
 	nfs_client_id_t *preserved_clientid;	/*< clientid that has lease
 						   reserved, if any */

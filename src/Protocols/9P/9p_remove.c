@@ -52,8 +52,7 @@
 	req9p->pconn->fids[*fid] = NULL;                                \
 } while (0)
 
-int _9p_remove(struct _9p_request_data *req9p, void *worker_data,
-	       u32 *plenout, char *preply)
+int _9p_remove(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 
@@ -69,28 +68,25 @@ int _9p_remove(struct _9p_request_data *req9p, void *worker_data,
 	LogDebug(COMPONENT_9P, "TREMOVE: tag=%u fid=%u", (u32) *msgtag, *fid);
 
 	if (*fid >= _9P_FID_PER_CONN)
-		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, ERANGE, plenout, preply);
 
 	pfid = req9p->pconn->fids[*fid];
 
 	/* Check that it is a valid fid */
 	if (pfid == NULL || pfid->pentry == NULL) {
 		LogDebug(COMPONENT_9P, "request on invalid fid=%u", *fid);
-		return _9p_rerror(req9p, worker_data, msgtag, EIO, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, EIO, plenout, preply);
 	}
 
 	_9p_init_opctx(pfid, req9p);
 
 	if ((op_ctx->export_perms->options &
 				 EXPORT_OPTION_WRITE_ACCESS) == 0)
-		return _9p_rerror(req9p, worker_data, msgtag, EROFS, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, EROFS, plenout, preply);
 
 	cache_status = cache_inode_remove(pfid->ppentry, pfid->name);
 	if (cache_status != CACHE_INODE_SUCCESS)
-		return _9p_rerror(req9p, worker_data, msgtag,
+		return _9p_rerror(req9p, msgtag,
 				  _9p_tools_errno(cache_status), plenout,
 				  preply);
 
@@ -106,7 +102,7 @@ int _9p_remove(struct _9p_request_data *req9p, void *worker_data,
 					      CACHE_INODE_FLAG_REALLYCLOSE);
 			if (cache_status != CACHE_INODE_SUCCESS) {
 				FREE_FID(pfid, fid, req9p);
-				return _9p_rerror(req9p, worker_data, msgtag,
+				return _9p_rerror(req9p, msgtag,
 						  _9p_tools_errno(cache_status),
 						  plenout, preply);
 			}

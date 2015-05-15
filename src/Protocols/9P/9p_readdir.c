@@ -157,8 +157,7 @@ static cache_inode_status_t _9p_readdir_callback(void *opaque,
 	return CACHE_INODE_SUCCESS;
 }
 
-int _9p_readdir(struct _9p_request_data *req9p, void *worker_data,
-		u32 *plenout, char *preply)
+int _9p_readdir(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 	struct _9p_cb_data tracker;
@@ -191,21 +190,18 @@ int _9p_readdir(struct _9p_request_data *req9p, void *worker_data,
 		 (u32) *msgtag, *fid, (unsigned long long)*offset, *count);
 
 	if (*fid >= _9P_FID_PER_CONN)
-		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, ERANGE, plenout, preply);
 
 	pfid = req9p->pconn->fids[*fid];
 
 	/* Make sure the requested amount of data respects negotiated msize */
 	if (*count + _9P_ROOM_RREADDIR > req9p->pconn->msize)
-		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, ERANGE, plenout, preply);
 
 	/* Check that it is a valid fid */
 	if (pfid == NULL || pfid->pentry == NULL) {
 		LogDebug(COMPONENT_9P, "request on invalid fid=%u", *fid);
-		return _9p_rerror(req9p, worker_data, msgtag, EIO, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, EIO, plenout, preply);
 	}
 
 	_9p_init_opctx(pfid, req9p);
@@ -220,8 +216,7 @@ int _9p_readdir(struct _9p_request_data *req9p, void *worker_data,
 	 * total   = ~40 bytes (average size) per dentry */
 
 	if (*count < 52)	/* require room for . and .. */
-		return _9p_rerror(req9p, worker_data, msgtag, EIO, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, EIO, plenout, preply);
 
 	/* Build the reply - it'll just be overwritten if error */
 	_9p_setinitptr(cursor, preply, _9P_RREADDIR);
@@ -236,7 +231,7 @@ int _9p_readdir(struct _9p_request_data *req9p, void *worker_data,
 		cache_status =
 		    cache_inode_lookupp(pfid->pentry, &pentry_dot_dot);
 		if (pentry_dot_dot == NULL)
-			return _9p_rerror(req9p, worker_data, msgtag,
+			return _9p_rerror(req9p, msgtag,
 					  _9p_tools_errno(cache_status),
 					  plenout, preply);
 
@@ -262,7 +257,7 @@ int _9p_readdir(struct _9p_request_data *req9p, void *worker_data,
 		cache_status =
 		    cache_inode_lookupp(pfid->pentry, &pentry_dot_dot);
 		if (pentry_dot_dot == NULL)
-			return _9p_rerror(req9p, worker_data, msgtag,
+			return _9p_rerror(req9p, msgtag,
 					  _9p_tools_errno(cache_status),
 					  plenout, preply);
 
@@ -296,7 +291,7 @@ int _9p_readdir(struct _9p_request_data *req9p, void *worker_data,
 		 * In the 9P logic, this situation just mean
 		 * "end of directory reached" */
 		if (cache_status != CACHE_INODE_NOT_FOUND)
-			return _9p_rerror(req9p, worker_data, msgtag,
+			return _9p_rerror(req9p, msgtag,
 					  _9p_tools_errno(cache_status),
 					  plenout, preply);
 	}

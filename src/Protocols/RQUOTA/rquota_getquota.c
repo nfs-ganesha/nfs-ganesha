@@ -44,15 +44,11 @@
  * @brief The Rquota getquota function, for all versions.
  *
  * @param[in]  arg    Ignored
- * @param[in]  export Ignored
- * @param[in]  worker Ignored
  * @param[in]  req    Ignored
  * @param[out] res    Ignored
  *
  */
-int rquota_getquota(nfs_arg_t *arg,
-		    nfs_worker_data_t *worker,
-		    struct svc_req *req, nfs_res_t *res)
+int rquota_getquota(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
 	fsal_status_t fsal_status;
 	fsal_quota_t fsal_quota;

@@ -38,15 +38,11 @@
  * @brief Lock Granted Result Handler
  *
  * @param[in]  arg
- * @param[in]  export
- * @param[in]  worker
  * @param[in]  req
  * @param[out] res
  *
  */
-int nlm4_Granted_Res(nfs_arg_t *args,
-		     nfs_worker_data_t *worker, struct svc_req *req,
-		     nfs_res_t *res)
+int nlm4_Granted_Res(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 {
 	nlm4_res *arg = &args->arg_nlm4_res;
 	char buffer[1024];

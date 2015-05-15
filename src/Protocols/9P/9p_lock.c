@@ -64,8 +64,7 @@ char *strtype[] = { "RDLOCK", "WRLOCK", "UNLOCK" };
  */
 char *strstatus[] = { "SUCCESS", "BLOCKED", "ERROR", "GRACE" };
 
-int _9p_lock(struct _9p_request_data *req9p, void *worker_data,
-	     u32 *plenout, char *preply)
+int _9p_lock(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 	u16 *msgtag = NULL;
@@ -114,16 +113,14 @@ int _9p_lock(struct _9p_request_data *req9p, void *worker_data,
 		 *proc_id, *client_id_len, client_id_str);
 
 	if (*fid >= _9P_FID_PER_CONN)
-		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, ERANGE, plenout, preply);
 
 	pfid = req9p->pconn->fids[*fid];
 
 	/* Check that it is a valid fid */
 	if (pfid == NULL || pfid->pentry == NULL) {
 		LogDebug(COMPONENT_9P, "request on invalid fid=%u", *fid);
-		return _9p_rerror(req9p, worker_data, msgtag, EIO, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, EIO, plenout, preply);
 	}
 	_9p_init_opctx(pfid, req9p);
 
@@ -135,8 +132,7 @@ int _9p_lock(struct _9p_request_data *req9p, void *worker_data,
 	memset((char *)&hints, 0, sizeof(struct addrinfo));
 	hints.ai_family = AF_INET;
 	if (getaddrinfo(name, NULL, &hints, &result))
-		return _9p_rerror(req9p, worker_data, msgtag, EINVAL, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, EINVAL, plenout, preply);
 
 	memcpy((char *)&client_addr,
 	       (char *)result->ai_addr,
@@ -147,8 +143,7 @@ int _9p_lock(struct _9p_request_data *req9p, void *worker_data,
 
 	powner = get_9p_owner(&client_addr, *proc_id);
 	if (powner == NULL)
-		return _9p_rerror(req9p, worker_data, msgtag, EINVAL, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, EINVAL, plenout, preply);
 
 	/* Do the job */
 	switch (*type) {
@@ -189,8 +184,7 @@ int _9p_lock(struct _9p_request_data *req9p, void *worker_data,
 		break;
 
 	default:
-		return _9p_rerror(req9p, worker_data, msgtag, EINVAL, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, EINVAL, plenout, preply);
 		break;
 	}			/* switch( *type ) */
 

@@ -46,8 +46,7 @@
 #include "fsal.h"
 #include "9p.h"
 
-int _9p_xattrcreate(struct _9p_request_data *req9p, void *worker_data,
-		    u32 *plenout, char *preply)
+int _9p_xattrcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 	int create;
@@ -77,16 +76,14 @@ int _9p_xattrcreate(struct _9p_request_data *req9p, void *worker_data,
 		 (unsigned long long)*size, *flag);
 
 	if (*fid >= _9P_FID_PER_CONN)
-		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, ERANGE, plenout, preply);
 
 	pfid = req9p->pconn->fids[*fid];
 
 	/* Check that it is a valid fid */
 	if (pfid == NULL || pfid->pentry == NULL) {
 		LogDebug(COMPONENT_9P, "request on invalid fid=%u", *fid);
-		return _9p_rerror(req9p, worker_data, msgtag, EIO, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, EIO, plenout, preply);
 	}
 
 	/* set op_ctx, it will be useful if FSAL is later called */
@@ -94,8 +91,7 @@ int _9p_xattrcreate(struct _9p_request_data *req9p, void *worker_data,
 
 	if ((op_ctx->export_perms->options &
 				 EXPORT_OPTION_WRITE_ACCESS) == 0)
-		return _9p_rerror(req9p, worker_data, msgtag, EROFS, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, EROFS, plenout, preply);
 
 	snprintf(name, MAXNAMLEN, "%.*s", *name_len, name_str);
 
@@ -111,7 +107,7 @@ int _9p_xattrcreate(struct _9p_request_data *req9p, void *worker_data,
 			name);
 
 		if (FSAL_IS_ERROR(fsal_status))
-			return _9p_rerror(req9p, worker_data, msgtag,
+			return _9p_rerror(req9p, msgtag,
 					  _9p_tools_errno
 					  (cache_inode_error_convert
 					   (fsal_status)), plenout, preply);
@@ -128,7 +124,7 @@ int _9p_xattrcreate(struct _9p_request_data *req9p, void *worker_data,
 		pfid->specdata.xattr.xattr_content =
 		     gsh_malloc(XATTR_BUFFERSIZE);
 		if (pfid->specdata.xattr.xattr_content == NULL)
-			return _9p_rerror(req9p, worker_data, msgtag, ENOMEM,
+			return _9p_rerror(req9p, msgtag, ENOMEM,
 					  plenout, preply);
 		/* Special Value */
 		pfid->specdata.xattr.xattr_id = ACL_ACCESS_XATTR_ID;
@@ -139,7 +135,7 @@ int _9p_xattrcreate(struct _9p_request_data *req9p, void *worker_data,
 		pfid->specdata.xattr.xattr_content =
 		     gsh_malloc(XATTR_BUFFERSIZE);
 		if (pfid->specdata.xattr.xattr_content == NULL)
-			return _9p_rerror(req9p, worker_data, msgtag, ENOMEM,
+			return _9p_rerror(req9p, msgtag, ENOMEM,
 					  plenout, preply);
 
 		/* try to create if flag doesn't have REPLACE bit */
@@ -168,7 +164,7 @@ int _9p_xattrcreate(struct _9p_request_data *req9p, void *worker_data,
 		}
 
 		if (FSAL_IS_ERROR(fsal_status))
-			return _9p_rerror(req9p, worker_data, msgtag,
+			return _9p_rerror(req9p, msgtag,
 					  _9p_tools_errno
 					  (cache_inode_error_convert
 					   (fsal_status)), plenout, preply);
@@ -180,7 +176,7 @@ int _9p_xattrcreate(struct _9p_request_data *req9p, void *worker_data,
 			&pfid->specdata.xattr.xattr_id);
 
 		if (FSAL_IS_ERROR(fsal_status))
-			return _9p_rerror(req9p, worker_data, msgtag,
+			return _9p_rerror(req9p, msgtag,
 					  _9p_tools_errno
 					  (cache_inode_error_convert
 					   (fsal_status)), plenout, preply);

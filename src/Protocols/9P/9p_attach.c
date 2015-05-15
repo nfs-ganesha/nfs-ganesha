@@ -46,8 +46,7 @@
 #include "nfs_exports.h"
 #include "9p.h"
 
-int _9p_attach(struct _9p_request_data *req9p, void *worker_data,
-	       u32 *plenout, char *preply)
+int _9p_attach(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 	u16 *msgtag = NULL;
@@ -241,5 +240,5 @@ errout:
 		gsh_free(pfid);
 	}
 
-	return _9p_rerror(req9p, worker_data, msgtag, err, plenout, preply);
+	return _9p_rerror(req9p, msgtag, err, plenout, preply);
 }

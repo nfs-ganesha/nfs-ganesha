@@ -46,163 +46,115 @@ extern const nfs_function_desc_t nlm4_func_desc[];
 extern const nfs_function_desc_t rquota1_func_desc[];
 extern const nfs_function_desc_t rquota2_func_desc[];
 
-int mnt_Null(nfs_arg_t *,
-	     nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+int mnt_Null(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
-int mnt_Mnt(nfs_arg_t *,
-	    nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+int mnt_Mnt(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
-int mnt_Dump(nfs_arg_t *,
-	     nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+int mnt_Dump(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
-int mnt_Umnt(nfs_arg_t *,
-	     nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+int mnt_Umnt(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
-int mnt_UmntAll(nfs_arg_t *,
-		nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+int mnt_UmntAll(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
-int mnt_Export(nfs_arg_t *,
-	       nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+int mnt_Export(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
 /* @}
  * -- End of MNT protocol functions. --
  */
 
-int nlm_Null(nfs_arg_t *,
-	     nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+int nlm_Null(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
-int nlm4_Test(nfs_arg_t *,
-	      nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+int nlm4_Test(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
-int nlm4_Lock(nfs_arg_t *,
-	      nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+int nlm4_Lock(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
-int nlm4_Cancel(nfs_arg_t *,
-		nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+int nlm4_Cancel(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
-int nlm4_Unlock(nfs_arg_t *,
-		nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+int nlm4_Unlock(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
-int nlm4_Sm_Notify(nfs_arg_t *,
-		   nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+int nlm4_Sm_Notify(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
-int nlm4_Test_Message(nfs_arg_t *,
-		      nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+int nlm4_Test_Message(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
-int nlm4_Cancel_Message(nfs_arg_t *,
-			nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+int nlm4_Cancel_Message(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
-int nlm4_Lock_Message(nfs_arg_t *,
-		      nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+int nlm4_Lock_Message(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
-int nlm4_Unlock_Message(nfs_arg_t *,
-			nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+int nlm4_Unlock_Message(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
-int nlm4_Granted_Res(nfs_arg_t *,
-		     nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+int nlm4_Granted_Res(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
-int nlm4_Share(nfs_arg_t *,
-	       nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+int nlm4_Share(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
-int nlm4_Unshare(nfs_arg_t *,
-		 nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+int nlm4_Unshare(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
-int nlm4_Free_All(nfs_arg_t *,
-		  nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+int nlm4_Free_All(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
 /* @}
  * -- End of NLM protocol functions. --
  */
 
-int rquota_Null(nfs_arg_t *,
-		nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+int rquota_Null(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
-int rquota_getquota(nfs_arg_t *,
-		    nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+int rquota_getquota(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
-int rquota_getactivequota(nfs_arg_t *,
-			  nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+int rquota_getactivequota(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
-int rquota_setquota(nfs_arg_t *,
-		    nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+int rquota_setquota(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
-int rquota_setactivequota(nfs_arg_t *,
-			  nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+int rquota_setactivequota(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
 /* @}
  *  * -- End of RQUOTA protocol functions. --
  *   */
 
-int nfs_null(nfs_arg_t *,
-	     nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+int nfs_null(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
-int nfs3_getattr(nfs_arg_t *,
-		 nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+int nfs3_getattr(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
-int nfs3_setattr(nfs_arg_t *,
-		 nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+int nfs3_setattr(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
-int nfs3_lookup(nfs_arg_t *,
-		nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+int nfs3_lookup(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
-int nfs3_readlink(nfs_arg_t *,
-		  nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+int nfs3_readlink(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
-int nfs3_read(nfs_arg_t *,
-	      nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+int nfs3_read(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
-int nfs3_write(nfs_arg_t *,
-	       nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+int nfs3_write(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
-int nfs3_create(nfs_arg_t *,
-		nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+int nfs3_create(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
-int nfs3_remove(nfs_arg_t *,
-		nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+int nfs3_remove(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
-int nfs3_rename(nfs_arg_t *,
-		nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+int nfs3_rename(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
-int nfs3_link(nfs_arg_t *,
-	      nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+int nfs3_link(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
-int nfs3_symlink(nfs_arg_t *,
-		 nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+int nfs3_symlink(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
-int nfs3_mkdir(nfs_arg_t *,
-	       nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+int nfs3_mkdir(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
-int nfs3_rmdir(nfs_arg_t *,
-	       nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+int nfs3_rmdir(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
-int nfs3_readdir(nfs_arg_t *,
-		 nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+int nfs3_readdir(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
-int nfs3_fsstat(nfs_arg_t *,
-		nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+int nfs3_fsstat(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
-int nfs3_access(nfs_arg_t *,
-		nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+int nfs3_access(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
-int nfs3_readdirplus(nfs_arg_t *,
-		     nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+int nfs3_readdirplus(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
-int nfs3_fsinfo(nfs_arg_t *,
-		nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+int nfs3_fsinfo(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
-int nfs3_pathconf(nfs_arg_t *,
-		  nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+int nfs3_pathconf(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
-int nfs3_commit(nfs_arg_t *,
-		nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+int nfs3_commit(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
-int nfs3_mknod(nfs_arg_t *,
-	       nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+int nfs3_mknod(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
 /* Functions needed for nfs v4 */
 
-int nfs4_Compound(nfs_arg_t *,
-		  nfs_worker_data_t *, struct svc_req *, nfs_res_t *);
+int nfs4_Compound(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
 int nfs4_op_access(struct nfs_argop4 *, compound_data_t *,
 		   struct nfs_resop4 *);

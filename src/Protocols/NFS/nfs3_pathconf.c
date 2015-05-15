@@ -51,7 +51,6 @@
  * Implements NFSPROC3_PATHCONF.
  *
  * @param[in]  arg     NFS arguments union
- * @param[in]  worker  Worker thread data
  * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call
  *
@@ -60,9 +59,7 @@
  * @retval NFS_REQ_FAILED if failed and not retryable
  */
 
-int nfs3_pathconf(nfs_arg_t *arg,
-		  nfs_worker_data_t *worker,
-		  struct svc_req *req, nfs_res_t *res)
+int nfs3_pathconf(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
 	cache_entry_t *entry = NULL;
 	int rc = NFS_REQ_OK;

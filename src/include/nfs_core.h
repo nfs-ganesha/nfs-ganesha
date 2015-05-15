@@ -131,7 +131,6 @@ extern time_t ServerEpoch;
 extern verifier4 NFS4_write_verifier;	/*< NFS V4 write verifier */
 extern writeverf3 NFS3_write_verifier;	/*< NFS V3 write verifier */
 
-extern nfs_worker_data_t *workers_data;
 extern char *config_path;
 extern char *pidfile_path;
 
@@ -151,10 +150,8 @@ void *admin_thread(void *UnusedArg);
 
 #ifdef _USE_9P
 void *_9p_dispatcher_thread(void *arg);
-void _9p_tcp_process_request(struct _9p_request_data *req9p,
-			     nfs_worker_data_t *worker_data);
-int _9p_process_buffer(struct _9p_request_data *req9p,
-		       nfs_worker_data_t *worker_data, char *replydata,
+void _9p_tcp_process_request(struct _9p_request_data *req9p);
+int _9p_process_buffer(struct _9p_request_data *req9p, char *replydata,
 		       u32 *poutlen);
 
 void DispatchWork9P(request_data_t *req);
@@ -162,8 +159,7 @@ void DispatchWork9P(request_data_t *req);
 
 #ifdef _USE_9P_RDMA
 void *_9p_rdma_dispatcher_thread(void *arg);
-void _9p_rdma_process_request(struct _9p_request_data *req9p,
-			      nfs_worker_data_t *worker_data);
+void _9p_rdma_process_request(struct _9p_request_data *req9p);
 void _9p_rdma_cleanup_conn(msk_trans_t *trans);
 #endif
 
@@ -176,6 +172,7 @@ int nfs_Init_worker_data(nfs_worker_data_t *pdata);
 int nfs_Init_request_data(nfs_request_data_t *pdata);
 void nfs_rpc_dispatch_threads(pthread_attr_t *attr_thr);
 void nfs_rpc_dispatch_stop(void);
+void nfs_rpc_execute(request_data_t *req);
 void Clean_RPC(void);
 
 /* Config parsing routines */

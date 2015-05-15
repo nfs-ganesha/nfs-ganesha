@@ -48,8 +48,7 @@
 
 #define XATTRS_ARRAY_LEN 100
 
-int _9p_xattrwalk(struct _9p_request_data *req9p, void *worker_data,
-		  u32 *plenout, char *preply)
+int _9p_xattrwalk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 	u16 *msgtag = NULL;
@@ -91,25 +90,21 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, void *worker_data,
 			 (u32) *msgtag, *fid, *attrfid, *name_len, name_str);
 
 	if (*fid >= _9P_FID_PER_CONN)
-		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, ERANGE, plenout, preply);
 
 	if (*attrfid >= _9P_FID_PER_CONN)
-		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, ERANGE, plenout, preply);
 
 	pfid = req9p->pconn->fids[*fid];
 	/* Check that it is a valid fid */
 	if (pfid == NULL || pfid->pentry == NULL) {
 		LogDebug(COMPONENT_9P, "request on invalid fid=%u", *fid);
-		return _9p_rerror(req9p, worker_data, msgtag, EIO, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, EIO, plenout, preply);
 	}
 
 	pxattrfid = gsh_calloc(1, sizeof(struct _9p_fid));
 	if (pxattrfid == NULL)
-		return _9p_rerror(req9p, worker_data, msgtag, ENOMEM, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, ENOMEM, plenout, preply);
 
 	/* set op_ctx, it will be useful if FSAL is later called */
 	_9p_init_opctx(pfid, req9p);
@@ -122,8 +117,7 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, void *worker_data,
 	pxattrfid->specdata.xattr.xattr_content = gsh_malloc(XATTR_BUFFERSIZE);
 	if (pxattrfid->specdata.xattr.xattr_content == NULL) {
 		gsh_free(pxattrfid);
-		return _9p_rerror(req9p, worker_data, msgtag, ENOMEM, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, ENOMEM, plenout, preply);
 	}
 
 	if (*name_len == 0) {
@@ -142,7 +136,7 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, void *worker_data,
 		if (FSAL_IS_ERROR(fsal_status)) {
 			gsh_free(pxattrfid->specdata.xattr.xattr_content);
 			gsh_free(pxattrfid);
-			return _9p_rerror(req9p, worker_data, msgtag,
+			return _9p_rerror(req9p, msgtag,
 					  _9p_tools_errno
 					  (cache_inode_error_convert
 					   (fsal_status)), plenout, preply);
@@ -153,7 +147,7 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, void *worker_data,
 		if (eod_met != true) {
 			gsh_free(pxattrfid->specdata.xattr.xattr_content);
 			gsh_free(pxattrfid);
-			return _9p_rerror(req9p, worker_data, msgtag, ERANGE,
+			return _9p_rerror(req9p, msgtag, ERANGE,
 					  plenout, preply);
 		}
 
@@ -173,8 +167,8 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, void *worker_data,
 				gsh_free(pxattrfid->specdata.xattr.
 					 xattr_content);
 				gsh_free(pxattrfid);
-				return _9p_rerror(req9p, worker_data, msgtag,
-						  ERANGE, plenout, preply);
+				return _9p_rerror(req9p, msgtag, ERANGE,
+						  plenout, preply);
 			}
 		}
 	} else {
@@ -192,10 +186,10 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, void *worker_data,
 
 			/* ENOENT for xattr is ENOATTR */
 			if (fsal_status.major == ERR_FSAL_NOENT)
-				return _9p_rerror(req9p, worker_data, msgtag,
-						  ENOATTR, plenout, preply);
+				return _9p_rerror(req9p, msgtag, ENOATTR,
+						  plenout, preply);
 			else
-				return _9p_rerror(req9p, worker_data, msgtag,
+				return _9p_rerror(req9p, msgtag,
 						  _9p_tools_errno
 						  (cache_inode_error_convert
 						   (fsal_status)), plenout,
@@ -215,7 +209,7 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, void *worker_data,
 			gsh_free(pxattrfid);
 
 			/* fsal_status.minor is a valid errno code */
-			return _9p_rerror(req9p, worker_data, msgtag,
+			return _9p_rerror(req9p, msgtag,
 					  fsal_status.minor, plenout, preply);
 		}
 	}

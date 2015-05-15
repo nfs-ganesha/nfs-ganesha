@@ -698,11 +698,9 @@ const nfs_function_desc_t *nfs_rpc_get_funcdesc(nfs_request_data_t *reqnfs)
  * @brief Main RPC dispatcher routine
  *
  * @param[in,out] req         NFS request
- * @param[in,out] worker_data Worker thread context
  *
  */
-static void nfs_rpc_execute(request_data_t *req,
-			    nfs_worker_data_t *worker_data)
+void nfs_rpc_execute(request_data_t *req)
 {
 	nfs_request_data_t *reqnfs = req->r_u.nfs;
 	nfs_arg_t *arg_nfs = &reqnfs->arg_nfs;
@@ -1244,7 +1242,7 @@ static void nfs_rpc_execute(request_data_t *req,
 			    ? op_ctx->export->export_id : -1));
 #endif
 		rc = reqnfs->funcdesc->service_function(arg_nfs,
-							worker_data, svcreq,
+							svcreq,
 							res_nfs);
 
 #ifdef USE_LTTNG
@@ -1374,9 +1372,8 @@ static void nfs_rpc_execute(request_data_t *req,
  * @brief Execute a 9p request
  *
  * @param[in,out] req9p       9p request
- * @param[in,out] worker_data Worker's specific data
  */
-static void _9p_execute(request_data_t *req, nfs_worker_data_t *worker_data)
+static void _9p_execute(request_data_t *req)
 {
 	struct _9p_request_data *req9p = &req->r_u._9p;
 	struct req_op_context req_ctx;
@@ -1389,10 +1386,10 @@ static void _9p_execute(request_data_t *req, nfs_worker_data_t *worker_data)
 	op_ctx->export_perms = &export_perms;
 
 	if (req9p->pconn->trans_type == _9P_TCP)
-		_9p_tcp_process_request(req9p, worker_data);
+		_9p_tcp_process_request(req9p);
 #ifdef _USE_9P_RDMA
 	else if (req9p->pconn->trans_type == _9P_RDMA)
-		_9p_rdma_process_request(req9p, worker_data);
+		_9p_rdma_process_request(req9p);
 #endif
 }				/* _9p_execute */
 
@@ -1499,7 +1496,7 @@ static void worker_run(struct fridgethr_context *ctx)
 			LogDebug(COMPONENT_DISPATCH,
 				 "NFS protocol request, nfsreq=%p xprt=%p req_cnt=%d",
 				 nfsreq, nfsreq->r_u.nfs->xprt, reqcnt);
-			nfs_rpc_execute(nfsreq, worker_data);
+			nfs_rpc_execute(nfsreq);
 			break;
 
 		case NFS_CALL:
@@ -1509,7 +1506,7 @@ static void worker_run(struct fridgethr_context *ctx)
 
 #ifdef _USE_9P
 		case _9P_REQUEST:
-			_9p_execute(nfsreq, worker_data);
+			_9p_execute(nfsreq);
 			break;
 #endif
 		}

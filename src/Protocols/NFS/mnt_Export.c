@@ -188,16 +188,12 @@ static bool proc_export(struct gsh_export *export, void *arg)
  * Return a list of all exports and their allowed clients/groups/networks.
  *
  * @param[in]  arg     Ignored
- * @param[in]  export  The export list to be return to the client.
- * @param[in]  worker  Ignored
  * @param[in]  req     Ignored
  * @param[out] res     Pointer to the export list
  *
  */
 
-int mnt_Export(nfs_arg_t *arg,
-	       nfs_worker_data_t *worker,
-	       struct svc_req *req, nfs_res_t *res)
+int mnt_Export(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
 	struct proc_state proc_state;
 

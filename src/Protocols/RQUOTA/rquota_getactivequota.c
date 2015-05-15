@@ -42,16 +42,12 @@
  * @brief The Rquota getactivequota function, for all versions.
  *
  * @param[in]  arg     Ignored
- * @param[in]  export  Ignored
- * @param[in]  worker  Ignored
  * @param[in]  req     Ignored
  * @param[out] res     Ignored
  *
  */
 
-int rquota_getactivequota(nfs_arg_t *arg,
-			  nfs_worker_data_t *worker, struct svc_req *req,
-			  nfs_res_t *res)
+int rquota_getactivequota(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
 	LogFullDebug(COMPONENT_NFSPROTO,
 		     "REQUEST PROCESSING: Calling rquota_getactivequota");

@@ -438,8 +438,6 @@ nfs_opnum4 LastOpcode[] = {
  *
  *
  *  @param[in]  arg        Generic nfs arguments
- *  @param[in]  export     The full export list
- *  @param[in]  worker     Worker thread data
  *  @param[in]  req        NFSv4 request structure
  *  @param[out] res        NFSv4 reply structure
  *
@@ -450,9 +448,7 @@ nfs_opnum4 LastOpcode[] = {
  * @retval NFS_REQ_DROP if we pretend we never saw the request.
  */
 
-int nfs4_Compound(nfs_arg_t *arg,
-		  nfs_worker_data_t *worker,
-		  struct svc_req *req, nfs_res_t *res)
+int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
 	unsigned int i = 0;
 	int status = NFS4_OK;
@@ -538,7 +534,6 @@ int nfs4_Compound(nfs_arg_t *arg,
 
 	/* Minor version related stuff */
 	data.minorversion = compound4_minor;
-	data.worker = worker;
 	data.req = req;
 
 	/* Building the client credential field */

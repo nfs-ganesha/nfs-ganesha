@@ -36,15 +36,11 @@
  * @brief Free All Locks
  *
  * @param[in]  arg
- * @param[in]  export
- * @param[in]  worker
  * @param[in]  req
  * @param[out] res
  */
 
-int nlm4_Free_All(nfs_arg_t *args,
-		  nfs_worker_data_t *worker,
-		  struct svc_req *req, nfs_res_t *res)
+int nlm4_Free_All(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 {
 	nlm4_free_allargs *arg = &args->arg_nlm4_free_allargs;
 	state_status_t state_status = STATE_SUCCESS;

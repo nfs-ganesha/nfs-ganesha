@@ -37,16 +37,12 @@
  * @brief Test lock
  *
  * @param[in]  args
- * @param[in]  export
- * @param[in]  worker
  * @param[in]  req
  * @param[out] res
  *
  */
 
-int nlm4_Test(nfs_arg_t *args,
-	      nfs_worker_data_t *worker,
-	      struct svc_req *req, nfs_res_t *res)
+int nlm4_Test(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 {
 	nlm4_testargs *arg = &args->arg_nlm4_test;
 	cache_entry_t *pentry;
@@ -193,16 +189,12 @@ static void nlm4_test_message_resp(state_async_queue_t *arg)
  * @brief Test lock Message
  *
  * @param[in]  args
- * @param[in]  export
- * @param[in]  worker
  * @param[in]  req
  * @param[out] res
  *
  */
 
-int nlm4_Test_Message(nfs_arg_t *args,
-		      nfs_worker_data_t *worker, struct svc_req *req,
-		      nfs_res_t *res)
+int nlm4_Test_Message(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 {
 	state_nlm_client_t *nlm_client = NULL;
 	state_nsm_client_t *nsm_client;
@@ -224,7 +216,7 @@ int nlm4_Test_Message(nfs_arg_t *args,
 	if (nlm_client == NULL)
 		rc = NFS_REQ_DROP;
 	else
-		rc = nlm4_Test(args, worker, req, res);
+		rc = nlm4_Test(args, req, res);
 
 	if (rc == NFS_REQ_OK)
 		rc = nlm_send_async_res_nlm4test(nlm_client,

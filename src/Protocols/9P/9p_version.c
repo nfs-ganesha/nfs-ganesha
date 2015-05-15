@@ -45,8 +45,7 @@
 
 static const char version_9p200l[] = "9P2000.L";
 
-int _9p_version(struct _9p_request_data *req9p, void *worker_data,
-		u32 *plenout, char *preply)
+int _9p_version(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 	u16 *msgtag = NULL;
@@ -64,8 +63,7 @@ int _9p_version(struct _9p_request_data *req9p, void *worker_data,
 
 	if (strncmp(version_str, version_9p200l, *version_len)) {
 		LogEvent(COMPONENT_9P, "RVERSION: BAD VERSION");
-		return _9p_rerror(req9p, worker_data, msgtag, ENOENT, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, ENOENT, plenout, preply);
 	}
 
 	if (req9p->pconn->msize < *msize)
@@ -78,8 +76,7 @@ int _9p_version(struct _9p_request_data *req9p, void *worker_data,
 	/* A too small msize would result in buffer overflows on calls
 	 * such as STAT. Make sure it is not ridiculously low. */
 	if (*msize < 512)
-		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, ERANGE, plenout, preply);
 
 	/* Good version, build the reply */
 	_9p_setinitptr(cursor, preply, _9P_RVERSION);

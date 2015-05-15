@@ -44,8 +44,7 @@
 #include "fsal.h"
 #include "9p.h"
 
-int _9p_mknod(struct _9p_request_data *req9p, void *worker_data,
-	      u32 *plenout, char *preply)
+int _9p_mknod(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 	u16 *msgtag = NULL;
@@ -85,24 +84,21 @@ int _9p_mknod(struct _9p_request_data *req9p, void *worker_data,
 		 *minor, *gid);
 
 	if (*fid >= _9P_FID_PER_CONN)
-		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, ERANGE, plenout, preply);
 
 	pfid = req9p->pconn->fids[*fid];
 
 	/* Check that it is a valid fid */
 	if (pfid == NULL || pfid->pentry == NULL) {
 		LogDebug(COMPONENT_9P, "request on invalid fid=%u", *fid);
-		return _9p_rerror(req9p, worker_data, msgtag, EIO, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, EIO, plenout, preply);
 	}
 
 	_9p_init_opctx(pfid, req9p);
 
 	if ((op_ctx->export_perms->options &
 				 EXPORT_OPTION_WRITE_ACCESS) == 0)
-		return _9p_rerror(req9p, worker_data, msgtag, EROFS, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, EROFS, plenout, preply);
 
 	snprintf(obj_name, MAXNAMLEN, "%.*s", *name_len, name_str);
 
@@ -116,8 +112,7 @@ int _9p_mknod(struct _9p_request_data *req9p, void *worker_data,
 	else if (S_ISSOCK(*mode))
 		nodetype = SOCKET_FILE;
 	else			/* bad type */
-		return _9p_rerror(req9p, worker_data, msgtag, EINVAL, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, EINVAL, plenout, preply);
 
 	create_arg.dev_spec.major = *major;
 	create_arg.dev_spec.minor = *minor;
@@ -128,7 +123,7 @@ int _9p_mknod(struct _9p_request_data *req9p, void *worker_data,
 	    cache_inode_create(pfid->pentry, obj_name, nodetype, *mode,
 			       &create_arg, &pentry_newobj);
 	if (pentry_newobj == NULL)
-		return _9p_rerror(req9p, worker_data, msgtag,
+		return _9p_rerror(req9p, msgtag,
 				  _9p_tools_errno(cache_status), plenout,
 				  preply);
 

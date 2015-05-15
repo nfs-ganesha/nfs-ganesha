@@ -36,16 +36,12 @@
  * @brief Set a share reservation
  *
  * @param[in]  args
- * @param[in]  export
- * @param[in]  worker
  * @param[in]  req
  * @param[out] res
  *
  */
 
-int nlm4_Unshare(nfs_arg_t *args,
-		 nfs_worker_data_t *worker,
-		 struct svc_req *req, nfs_res_t *res)
+int nlm4_Unshare(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 {
 	nlm4_shareargs *arg = &args->arg_nlm4_share;
 	cache_entry_t *pentry;

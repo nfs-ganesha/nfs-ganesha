@@ -38,16 +38,12 @@
  * The NLM proc null function, for all versions.
  *
  * @param[in]  parg     Ignored
- * @param[in]  pexport  Ignored
- * @param[in]  pworker  Ignored
  * @param[in]  preq     Ignored
  * @param[out] pres     Ignored
  *
  */
 
-int nlm_Null(nfs_arg_t *arg,
-	     nfs_worker_data_t *worker,
-	     struct svc_req *req, nfs_res_t *res)
+int nlm_Null(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
 	LogDebug(COMPONENT_NLM, "REQUEST PROCESSING: Calling nlm_Null");
 

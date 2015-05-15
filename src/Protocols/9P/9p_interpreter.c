@@ -80,8 +80,7 @@ const struct _9p_function_desc _9pfuncdesc[] = {
 	[_9P_TWSTAT] = {_9p_not_2000L, "_9P_TWSTAT"}
 };
 
-int _9p_not_2000L(struct _9p_request_data *req9p, void *worker_data,
-		  u32 *plenout, char *preply)
+int _9p_not_2000L(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 {
 	char *msgdata = req9p->_9pmsg + _9P_HDR_SIZE;
 	u8 *pmsgtype = NULL;
@@ -93,7 +92,7 @@ int _9p_not_2000L(struct _9p_request_data *req9p, void *worker_data,
 		 "(%u|%s) is not a 9P2000.L message, returning ENOTSUP",
 		 *pmsgtype, _9pfuncdesc[*pmsgtype].funcname);
 
-	_9p_rerror(req9p, worker_data, &msgtag, ENOTSUP, plenout, preply);
+	_9p_rerror(req9p, &msgtag, ENOTSUP, plenout, preply);
 
 	return -1;
 }				/* _9p_not_2000L */
@@ -118,14 +117,13 @@ static ssize_t tcp_conn_send(struct _9p_conn *conn, const void *buf, size_t len,
 	return ret;
 }
 
-void _9p_tcp_process_request(struct _9p_request_data *req9p,
-			     nfs_worker_data_t *worker_data)
+void _9p_tcp_process_request(struct _9p_request_data *req9p)
 {
 	u32 outdatalen = 0;
 	int rc = 0;
 	char replydata[_9P_MSG_SIZE];
 
-	rc = _9p_process_buffer(req9p, worker_data, replydata, &outdatalen);
+	rc = _9p_process_buffer(req9p, replydata, &outdatalen);
 	if (rc != 1) {
 		LogMajor(COMPONENT_9P,
 			 "Could not process 9P buffer on socket #%lu",
@@ -140,8 +138,7 @@ void _9p_tcp_process_request(struct _9p_request_data *req9p,
 	_9p_DiscardFlushHook(req9p);
 }				/* _9p_process_request */
 
-int _9p_process_buffer(struct _9p_request_data *req9p,
-		       nfs_worker_data_t *worker_data, char *replydata,
+int _9p_process_buffer(struct _9p_request_data *req9p, char *replydata,
 		       u32 *poutlen)
 {
 	char *msgdata;
@@ -174,9 +171,7 @@ int _9p_process_buffer(struct _9p_request_data *req9p,
 	*poutlen = req9p->pconn->msize;
 
 	/* Call the 9P service function */
-	rc = _9pfuncdesc[msgtype].service_function(req9p,
-						   (void *)worker_data,
-						   poutlen, replydata);
+	rc = _9pfuncdesc[msgtype].service_function(req9p, poutlen, replydata);
 	_9p_release_opctx();
 	op_ctx = NULL; /* poison the op context to disgard it */
 	if (rc < 0)

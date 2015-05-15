@@ -44,8 +44,7 @@
 #include "fsal.h"
 #include "9p.h"
 
-int _9p_link(struct _9p_request_data *req9p, void *worker_data,
-	     u32 *plenout, char *preply)
+int _9p_link(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 	u16 *msgtag = NULL;
@@ -71,36 +70,31 @@ int _9p_link(struct _9p_request_data *req9p, void *worker_data,
 		 (u32) *msgtag, *dfid, *targetfid, *name_len, name_str);
 
 	if (*dfid >= _9P_FID_PER_CONN)
-		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, ERANGE, plenout, preply);
 
 	pdfid = req9p->pconn->fids[*dfid];
 
 	/* Check that it is a valid fid */
 	if (pdfid == NULL || pdfid->pentry == NULL) {
 		LogDebug(COMPONENT_9P, "request on invalid dfid=%u", *dfid);
-		return _9p_rerror(req9p, worker_data, msgtag, EIO, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, EIO, plenout, preply);
 	}
 
 	_9p_init_opctx(pdfid, req9p);
 
 	if ((op_ctx->export_perms->options &
 				 EXPORT_OPTION_WRITE_ACCESS) == 0)
-		return _9p_rerror(req9p, worker_data, msgtag, EROFS, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, EROFS, plenout, preply);
 
 	if (*targetfid >= _9P_FID_PER_CONN)
-		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, ERANGE, plenout, preply);
 
 	ptargetfid = req9p->pconn->fids[*targetfid];
 	/* Check that it is a valid fid */
 	if (ptargetfid == NULL || ptargetfid->pentry == NULL) {
 		LogDebug(COMPONENT_9P, "request on invalid targetfid=%u",
 			 *targetfid);
-		return _9p_rerror(req9p, worker_data, msgtag, EIO, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, EIO, plenout, preply);
 	}
 
 	/* Let's do the job */
@@ -110,7 +104,7 @@ int _9p_link(struct _9p_request_data *req9p, void *worker_data,
 	    cache_inode_link(ptargetfid->pentry, pdfid->pentry, link_name);
 
 	if (cache_status != CACHE_INODE_SUCCESS)
-		return _9p_rerror(req9p, worker_data, msgtag,
+		return _9p_rerror(req9p, msgtag,
 				  _9p_tools_errno(cache_status), plenout,
 				  preply);
 

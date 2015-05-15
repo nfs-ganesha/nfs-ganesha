@@ -55,7 +55,6 @@
  * Implements the NFSPROC3_SETATTR function.
  *
  * @param[in]  arg     NFS arguments union
- * @param[in]  worker  Data for worker thread
  * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call
  *
@@ -65,9 +64,7 @@
  *
  */
 
-int nfs3_setattr(nfs_arg_t *arg,
-		 nfs_worker_data_t *worker,
-		 struct svc_req *req, nfs_res_t *res)
+int nfs3_setattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
 	struct attrlist setattr;
 	cache_entry_t *entry = NULL;

@@ -46,16 +46,12 @@
  * The MOUNT proc proc function, for all versions.
  *
  * @param[in]  arg     The export path to be mounted
- * @param[in]  export  The export list
- * @param[in]  worker  ignored
  * @param[in]  req     ignored
  * @param[out] res     Result structure.
  *
  */
 
-int mnt_Mnt(nfs_arg_t *arg,
-	    nfs_worker_data_t *worker,
-	    struct svc_req *req, nfs_res_t *res)
+int mnt_Mnt(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
 	struct gsh_export *export = NULL;
 	struct fsal_obj_handle *pfsal_handle = NULL;

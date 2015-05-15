@@ -116,8 +116,7 @@ void _9p_rdma_callback_disconnect(msk_trans_t *trans)
 	_9p_rdma_cleanup_conn(trans);
 }
 
-void _9p_rdma_process_request(struct _9p_request_data *req9p,
-			      nfs_worker_data_t *worker_data)
+void _9p_rdma_process_request(struct _9p_request_data *req9p)
 {
 	uint32_t msglen;
 	int rc = 0;
@@ -157,8 +156,7 @@ void _9p_rdma_process_request(struct _9p_request_data *req9p,
 			     "Received 9P/RDMA message of size %u",
 			     msglen);
 
-		rc = _9p_process_buffer(req9p, worker_data, dataout->data,
-					&dataout->size);
+		rc = _9p_process_buffer(req9p, dataout->data, &dataout->size);
 		if (rc != 1) {
 			LogMajor(COMPONENT_9P,
 				 "Could not process 9P buffer on trans %p",
