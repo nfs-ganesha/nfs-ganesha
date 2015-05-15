@@ -418,7 +418,7 @@ static fsal_status_t fsal_check_access_acl(struct user_cred *creds,
 			return fsalstat(ERR_FSAL_NO_ERROR, 0);
 		}
 	}
-	/** @TODO@ Even if user is admin, audit/alarm checks should be done. */
+	/** @todo Even if user is admin, audit/alarm checks should be done. */
 
 	for (pace = pacl->aces; pace < pacl->aces + pacl->naces; pace++) {
 		ace_number += 1;
@@ -473,12 +473,14 @@ static fsal_status_t fsal_check_access_acl(struct user_cred *creds,
 					ace_number,
 					pace,
 					v4mask,
+#ifndef ENABLE_RFC_ACL
 					(pace->perm & missing_access &
 					 (FSAL_ACE_PERM_WRITE_ATTR |
 					  FSAL_ACE_PERM_WRITE_ACL |
 					  FSAL_ACE_PERM_WRITE_OWNER))
 					    != 0 ?
 					    ERR_FSAL_PERM :
+#endif /* ENABLE_RFC_ACL */
 					    ERR_FSAL_ACCESS,
 					is_dir,
 					creds);
@@ -488,6 +490,7 @@ static fsal_status_t fsal_check_access_acl(struct user_cred *creds,
 				if (denied == NULL ||
 				    (v4mask &
 				     FSAL_ACE4_PERM_CONTINUE) == 0) {
+#ifndef ENABLE_RFC_ACL
 					if ((pace->perm & missing_access &
 					    (FSAL_ACE_PERM_WRITE_ATTR |
 					     FSAL_ACE_PERM_WRITE_ACL |
@@ -495,16 +498,19 @@ static fsal_status_t fsal_check_access_acl(struct user_cred *creds,
 					    != 0) {
 						LogDebug(COMPONENT_NFS_V4_ACL,
 							 "access denied (EPERM)");
-						return
-						    fsalstat
-						    (ERR_FSAL_PERM, 0);
+						return fsalstat(ERR_FSAL_PERM,
+							0);
 					} else {
 						LogDebug(COMPONENT_NFS_V4_ACL,
 							 "access denied (EACCESS)");
-						return fsalstat(
-						     ERR_FSAL_ACCESS,
-						     0);
+						return fsalstat(ERR_FSAL_ACCESS,
+							0);
 					}
+#else /* ENABLE_RFC_ACL */
+					LogDebug(COMPONENT_NFS_V4_ACL,
+						 "access denied (EACCESS)");
+					return fsalstat(ERR_FSAL_ACCESS, 0);
+#endif /* ENABLE_RFC_ACL */
 				}
 
 				missing_access &=
@@ -526,6 +532,7 @@ static fsal_status_t fsal_check_access_acl(struct user_cred *creds,
 		LogDebug(COMPONENT_NFS_V4_ACL, "final access unknown (NO_ACE)");
 		return fsalstat(ERR_FSAL_NO_ACE, 0);
 	} else if (missing_access || (denied != NULL && *denied != 0)) {
+#ifndef ENABLE_RFC_ACL
 		if ((missing_access &
 		     (FSAL_ACE_PERM_WRITE_ATTR | FSAL_ACE_PERM_WRITE_ACL |
 		      FSAL_ACE_PERM_WRITE_OWNER)) != 0) {
@@ -537,6 +544,10 @@ static fsal_status_t fsal_check_access_acl(struct user_cred *creds,
 				 "final access denied (EACCESS)");
 			return fsalstat(ERR_FSAL_ACCESS, 0);
 		}
+#else /* ENABLE_RFC_ACL */
+		LogDebug(COMPONENT_NFS_V4_ACL, "final access denied (EACCESS)");
+		return fsalstat(ERR_FSAL_ACCESS, 0);
+#endif /* ENABLE_RFC_ACL */
 	} else {
 		LogFullDebug(COMPONENT_NFS_V4_ACL, "access granted");
 		return fsalstat(ERR_FSAL_NO_ERROR, 0);
