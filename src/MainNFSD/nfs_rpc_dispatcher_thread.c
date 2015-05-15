@@ -1423,6 +1423,8 @@ request_data_t *nfs_rpc_dequeue_req(nfs_worker_data_t *worker)
 
 	/* wait */
 	if (!nfsreq) {
+		struct fridgethr_context *ctx =
+			container_of(worker, struct fridgethr_context, wd);
 		wait_q_entry_t *wqe = &worker->wqe;
 
 		assert(wqe->waiters == 0); /* wqe is not on any wait queue */
@@ -1439,7 +1441,7 @@ request_data_t *nfs_rpc_dequeue_req(nfs_worker_data_t *worker)
 			timeout.tv_nsec = 0;
 			pthread_cond_timedwait(&wqe->lwe.cv, &wqe->lwe.mtx,
 					       &timeout);
-			if (fridgethr_you_should_break(worker->ctx)) {
+			if (fridgethr_you_should_break(ctx)) {
 				/* We are returning;
 				 * so take us out of the waitq */
 				pthread_spin_lock(&nfs_req_st.reqs.sp);

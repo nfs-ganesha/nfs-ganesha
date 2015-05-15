@@ -1426,8 +1426,7 @@ static uint32_t worker_indexer;
 
 static void worker_thread_initializer(struct fridgethr_context *ctx)
 {
-	struct nfs_worker_data *wd =
-	    gsh_calloc(sizeof(struct nfs_worker_data), 1);
+	struct nfs_worker_data *wd = &ctx->wd;
 	char thr_name[32];
 
 	wd->worker_index = atomic_inc_uint32_t(&worker_indexer);
@@ -1436,8 +1435,6 @@ static void worker_thread_initializer(struct fridgethr_context *ctx)
 
 	/* Initalize thr waitq */
 	init_wait_q_entry(&wd->wqe);
-	wd->ctx = ctx;
-	ctx->thread_info = wd;
 }
 
 /**
@@ -1448,7 +1445,6 @@ static void worker_thread_initializer(struct fridgethr_context *ctx)
 
 static void worker_thread_finalizer(struct fridgethr_context *ctx)
 {
-	gsh_free(ctx->thread_info);
 	ctx->thread_info = NULL;
 }
 
@@ -1465,7 +1461,7 @@ static void worker_thread_finalizer(struct fridgethr_context *ctx)
 
 static void worker_run(struct fridgethr_context *ctx)
 {
-	struct nfs_worker_data *worker_data = ctx->thread_info;
+	struct nfs_worker_data *worker_data = &ctx->wd;
 	request_data_t *nfsreq;
 	gsh_xprt_private_t *xu = NULL;
 	uint32_t reqcnt;
