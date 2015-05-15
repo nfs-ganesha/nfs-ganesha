@@ -44,6 +44,7 @@
 #include "nfs4_acls.h"
 #include "sal_functions.h"
 #include "nfs_core.h"
+#include "FSAL/fsal_commonlib.h"
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -74,6 +75,9 @@ cache_inode_remove(cache_entry_t *entry, const char *name)
 	fsal_status_t fsal_status = { 0, 0 };
 	cache_inode_status_t status = CACHE_INODE_SUCCESS;
 	cache_inode_status_t status_ref_entry = CACHE_INODE_SUCCESS;
+#ifdef ENABLE_RFC_ACL
+	bool isdir = false;
+#endif /* ENABLE_RFC_ACL */
 
 	if (entry->type != DIRECTORY) {
 		status = CACHE_INODE_NOT_A_DIRECTORY;
@@ -96,6 +100,9 @@ cache_inode_remove(cache_entry_t *entry, const char *name)
 
 	/* Do not remove a junction node or an export root. */
 	if (to_remove_entry->type == DIRECTORY) {
+#ifdef ENABLE_RFC_ACL
+		isdir = true;
+#endif /* ENABLE_RFC_ACL */
 		/* Get attr_lock for looking at junction_export */
 		PTHREAD_RWLOCK_rdlock(&to_remove_entry->attr_lock);
 
@@ -135,6 +142,21 @@ cache_inode_remove(cache_entry_t *entry, const char *name)
 				cache_inode_err_str(status));
 		}
 	}
+
+#ifdef ENABLE_RFC_ACL
+	/* Get attr_locks for access checking */
+	PTHREAD_RWLOCK_rdlock(&entry->attr_lock);
+	PTHREAD_RWLOCK_rdlock(&to_remove_entry->attr_lock);
+	fsal_status = fsal_remove_access(entry->obj_handle,
+					 to_remove_entry->obj_handle,
+					 isdir);
+	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+	PTHREAD_RWLOCK_unlock(&to_remove_entry->attr_lock);
+	if (FSAL_IS_ERROR(fsal_status)) {
+		status = cache_inode_error_convert(fsal_status);
+		goto out;
+	}
+#endif /* ENABLE_RFC_ACL */
 
 	fsal_status =
 	    entry->obj_handle->obj_ops.unlink(entry->obj_handle, name);

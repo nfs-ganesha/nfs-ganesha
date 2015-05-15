@@ -1599,4 +1599,78 @@ fsal_errors_t fsal_inherit_acls(struct attrlist *attrs, fsal_acl_t *sacl,
 	return ERR_FSAL_NO_ERROR;
 }
 
+fsal_status_t fsal_remove_access(struct fsal_obj_handle *dir_hdl,
+				 struct fsal_obj_handle *rem_hdl,
+				 bool isdir)
+{
+	fsal_status_t fsal_status = { 0, 0 };
+	fsal_status_t del_status = { 0, 0 };
+
+	/* draft-ietf-nfsv4-acls section 12 */
+	/* If no execute on dir, deny */
+	fsal_status = dir_hdl->obj_ops.test_access(
+				dir_hdl,
+				FSAL_MODE_MASK_SET(FSAL_X_OK) |
+				FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_EXECUTE),
+				NULL, NULL);
+	if (FSAL_IS_ERROR(fsal_status)) {
+		LogFullDebug(COMPONENT_FSAL,
+			 "Could not delete: No execute permession on parent: %s",
+			 msg_fsal_err(fsal_status.major));
+		return fsal_status;
+	}
+
+	/* We can delete if we have *either* ACE_PERM_DELETE or
+	 * ACE_PERM_DELETE_CHILD.  7530 - 6.2.1.3.2 */
+	del_status = rem_hdl->obj_ops.test_access(
+				rem_hdl,
+				FSAL_MODE_MASK_SET(FSAL_W_OK) |
+				FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_DELETE) |
+				FSAL_ACE4_REQ_FLAG,
+				NULL, NULL);
+	fsal_status = dir_hdl->obj_ops.test_access(
+				dir_hdl,
+				FSAL_MODE_MASK_SET(FSAL_W_OK) |
+				FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_DELETE_CHILD) |
+				FSAL_ACE4_REQ_FLAG,
+				NULL, NULL);
+	if (FSAL_IS_ERROR(fsal_status) && FSAL_IS_ERROR(del_status)) {
+		/* Neither was explicitly allowed */
+		if (fsal_status.major != ERR_FSAL_NO_ACE) {
+			/* Explicitly denied */
+			LogFullDebug(COMPONENT_FSAL,
+				 "Could not delete (DELETE_CHILD) %s",
+				 msg_fsal_err(fsal_status.major));
+			return fsal_status;
+		}
+		if (del_status.major != ERR_FSAL_NO_ACE) {
+			/* Explicitly denied */
+			LogFullDebug(COMPONENT_FSAL,
+				 "Could not delete (DELETE) %s",
+				 msg_fsal_err(del_status.major));
+			return del_status;
+		}
+
+		/* Neither ACE_PERM_DELETE nor ACE_PERM_DELETE_CHILD are set.
+		 * Check for ADD_FILE in parent */
+		fsal_status = dir_hdl->obj_ops.test_access(
+				dir_hdl,
+				FSAL_MODE_MASK_SET(FSAL_W_OK) |
+				FSAL_ACE4_MASK_SET(isdir ?
+					   FSAL_ACE_PERM_ADD_SUBDIRECTORY
+					   : FSAL_ACE_PERM_ADD_FILE),
+				NULL, NULL);
+
+		if (FSAL_IS_ERROR(fsal_status)) {
+			LogFullDebug(COMPONENT_FSAL,
+				 "Could not delete (ADD_CHILD) %s",
+				 msg_fsal_err(fsal_status.major));
+			return fsal_status;
+		}
+		/* Allowed; fall through */
+	}
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
 /** @} */

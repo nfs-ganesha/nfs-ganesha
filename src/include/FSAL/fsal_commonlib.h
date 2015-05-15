@@ -128,4 +128,7 @@ int decode_fsid(char *buf,
 
 fsal_errors_t fsal_inherit_acls(struct attrlist *attrs, fsal_acl_t *sacl,
 			       fsal_aceflag_t inherit);
+fsal_status_t fsal_remove_access(struct fsal_obj_handle *dir_hdl,
+				 struct fsal_obj_handle *rem_hdl,
+				 bool isdir);
 #endif				/* FSAL_COMMONLIB_H */
