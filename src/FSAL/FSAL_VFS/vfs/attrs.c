@@ -32,6 +32,7 @@
 #include "avltree.h"
 #include "fsal.h"
 #include "fsal_convert.h"
+#include "FSAL/access_check.h"
 #include "../vfs_methods.h"
 #include "attrs.h"
 
@@ -82,9 +83,12 @@ static struct vfs_acl_entry *vfs_acl_locate(struct fsal_obj_handle *obj)
 	obj->obj_ops.handle_to_key(obj, &key);
 
 	fa_entry = vfs_acl_lookup(&key);
-	if (fa_entry)
+	if (fa_entry) {
+		LogDebug(COMPONENT_FSAL, "found");
 		return fa_entry;
+	}
 
+	LogDebug(COMPONENT_FSAL, "create");
 	fa_entry = gsh_calloc(sizeof(struct vfs_acl_entry), 1);
 	if (!fa_entry)
 		return NULL;
@@ -130,6 +134,7 @@ fsal_status_t vfs_sub_getattrs(struct vfs_fsal_obj_handle *vfs_hdl,
 	fsal_acl_data_t acldata;
 	fsal_acl_t *acl;
 
+	LogDebug(COMPONENT_FSAL, "Enter");
 	fa = vfs_acl_locate(&vfs_hdl->obj_handle);
 	if (!fa->fa_acl.naces) {
 		/* No ACLs yet */
@@ -139,6 +144,8 @@ fsal_status_t vfs_sub_getattrs(struct vfs_fsal_obj_handle *vfs_hdl,
 		return fsalstat(ERR_FSAL_NO_ERROR, 0);
 	}
 
+	fsal_print_acl(COMPONENT_FSAL, NIV_FULL_DEBUG,
+		       (fsal_acl_t *)&fa->fa_acl);
 	acldata.naces = fa->fa_acl.naces;
 	acldata.aces = (fsal_ace_t *) nfs4_ace_alloc(acldata.naces);
 	memcpy(acldata.aces, fa->fa_acl.aces,
@@ -147,6 +154,7 @@ fsal_status_t vfs_sub_getattrs(struct vfs_fsal_obj_handle *vfs_hdl,
 	acl = nfs4_acl_new_entry(&acldata, &status);
 	if (!acl)
 		return fsalstat(ERR_FSAL_FAULT, status);
+	fsal_print_acl(COMPONENT_FSAL, NIV_FULL_DEBUG, acl);
 	vfs_hdl->attributes.acl = acl;
 	FSAL_SET_MASK(attrib->mask, ATTR_ACL);
 
@@ -162,12 +170,16 @@ fsal_status_t vfs_sub_setattrs(struct vfs_fsal_obj_handle *vfs_hdl,
 	if (!FSAL_TEST_MASK(request_mask, ATTR_ACL) || !attrib || !attrib->acl)
 		return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
+	LogDebug(COMPONENT_FSAL, "Enter");
+	fsal_print_acl(COMPONENT_FSAL, NIV_FULL_DEBUG, attrib->acl);
 	fa = vfs_acl_locate(&vfs_hdl->obj_handle);
 	nfs4_ace_free(fa->fa_acl.aces);
 	fa->fa_acl.naces = attrib->acl->naces;
 	fa->fa_acl.aces = (fsal_ace_t *) nfs4_ace_alloc(fa->fa_acl.naces);
 	memcpy(fa->fa_acl.aces, attrib->acl->aces,
 	       fa->fa_acl.naces * sizeof(fsal_ace_t));
+	fsal_print_acl(COMPONENT_FSAL, NIV_FULL_DEBUG,
+		       (fsal_acl_t *)&fa->fa_acl);
 
 	FSAL_SET_MASK(attrib->mask, ATTR_ACL);
 

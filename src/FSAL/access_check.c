@@ -136,6 +136,127 @@ static bool fsal_check_ace_applicable(fsal_ace_t *pace,
 	return is_applicable;
 }
 
+static const char *fsal_ace_type(fsal_acetype_t type)
+{
+	switch (type) {
+	case FSAL_ACE_TYPE_ALLOW:
+		return "A";
+	case FSAL_ACE_TYPE_DENY:
+		return "D ";
+	case FSAL_ACE_TYPE_AUDIT:
+		return "U";
+	case FSAL_ACE_TYPE_ALARM:
+		return "L";
+	default:
+		return "unknown";
+	}
+}
+
+static const char *fsal_ace_perm(fsal_aceperm_t perm)
+{
+	static char buf[64];
+	char *c = buf;
+
+	if (perm & FSAL_ACE_PERM_READ_DATA)
+		*c++ = 'r';
+	if (perm & FSAL_ACE_PERM_WRITE_DATA)
+		*c++ = 'w';
+	if (perm & FSAL_ACE_PERM_APPEND_DATA)
+		*c++ = 'a';
+	if (perm & FSAL_ACE_PERM_EXECUTE)
+		*c++ = 'x';
+	if (perm & FSAL_ACE_PERM_DELETE)
+		*c++ = 'd';
+	if (perm & FSAL_ACE_PERM_DELETE_CHILD)
+		*c++ = 'D';
+	if (perm & FSAL_ACE_PERM_READ_ATTR)
+		*c++ = 't';
+	if (perm & FSAL_ACE_PERM_WRITE_ATTR)
+		*c++ = 'T';
+	if (perm & FSAL_ACE_PERM_READ_NAMED_ATTR)
+		*c++ = 'n';
+	if (perm & FSAL_ACE_PERM_WRITE_NAMED_ATTR)
+		*c++ = 'N';
+	if (perm & FSAL_ACE_PERM_READ_ACL)
+		*c++ = 'c';
+	if (perm & FSAL_ACE_PERM_WRITE_ACL)
+		*c++ = 'C';
+	if (perm & FSAL_ACE_PERM_WRITE_OWNER)
+		*c++ = 'o';
+	if (perm & FSAL_ACE_PERM_SYNCHRONIZE)
+		*c++ = 'y';
+	*c = '\0';
+
+	return buf;
+}
+
+static const char *fsal_ace_flag(char *buf, fsal_aceflag_t flag)
+{
+	char *c = buf;
+
+	if (flag & FSAL_ACE_FLAG_GROUP_ID)
+		*c++ = 'g';
+	if (flag & FSAL_ACE_FLAG_FILE_INHERIT)
+		*c++ = 'f';
+	if (flag & FSAL_ACE_FLAG_DIR_INHERIT)
+		*c++ = 'd';
+	if (flag & FSAL_ACE_FLAG_NO_PROPAGATE)
+		*c++ = 'n';
+	if (flag & FSAL_ACE_FLAG_INHERIT_ONLY)
+		*c++ = 'i';
+	if (flag & FSAL_ACE_FLAG_SUCCESSFUL)
+		*c++ = 'S';
+	if (flag & FSAL_ACE_FLAG_FAILED)
+		*c++ = 'F';
+	if (flag & FSAL_ACE_FLAG_INHERITED)
+		*c++ = 'I';
+	if (flag & FSAL_ACE_IFLAG_EXCLUDE_FILES)
+		*c++ = 'x';
+	if (flag & FSAL_ACE_IFLAG_EXCLUDE_DIRS)
+		*c++ = 'X';
+	if (flag & FSAL_ACE_IFLAG_SPECIAL_ID)
+		*c++ = 'S';
+	if (flag & FSAL_ACE_IFLAG_MODE_GEN)
+		*c++ = 'G';
+	*c = '\0';
+
+	return buf;
+}
+
+void fsal_print_ace_int(log_components_t component, log_levels_t debug,
+			fsal_ace_t *ace, char *file, int line,
+			char *function)
+{
+	char fbuf[16];
+	char ibuf[16];
+
+	if (!isLevel(component, debug))
+		return;
+
+	DisplayLogComponentLevel(component, file, line, function, debug,
+				 "ACE %s:%s(%s):%u:%s",
+				 fsal_ace_type(ace->type),
+				 fsal_ace_flag(fbuf, ace->flag),
+				 fsal_ace_flag(ibuf, ace->iflag),
+				 ace->who.uid,
+				 fsal_ace_perm(ace->perm));
+}
+
+void fsal_print_acl_int(log_components_t component, log_levels_t debug,
+			fsal_acl_t *acl, char *file, int line,
+			char *function)
+{
+	fsal_ace_t *ace = NULL;
+
+	if (!isLevel(component, debug))
+		return;
+
+	DisplayLogComponentLevel(component, file, line, function, debug,
+				 "ACL naces: %u aces:", acl->naces);
+	for (ace = acl->aces; ace < acl->aces + acl->naces; ace++)
+		fsal_print_ace_int(component, debug, ace, file, line, function);
+}
+
 int display_fsal_inherit_flags(struct display_buffer *dspbuf, fsal_ace_t *pace)
 {
 	if (!pace)

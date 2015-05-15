@@ -29,6 +29,7 @@
 
 #include "fsal_types.h"
 #include "fsal_convert.h"
+#include "FSAL/access_check.h"
 #include "nfs4_acls.h"
 #include "../vfs_methods.h"
 #include "attrs.h"
@@ -285,9 +286,11 @@ static fsal_status_t fsal_acl_2_panfs_acl(struct attrlist *attrib,
 
 	/* Create Panfs acl data. */
 	panacl->naces = attrib->acl->naces;
+	LogDebug(COMPONENT_FSAL, "Converting %u aces:", panacl->naces);
 
 	for (ace = attrib->acl->aces, panace = panacl->aces;
 	     ace < attrib->acl->aces + attrib->acl->naces; ace++, panace++) {
+		fsal_print_ace(COMPONENT_FSAL, NIV_DEBUG, ace);
 		panace->info = fsal_to_panace_info(ace->type, ace->flag);
 		if (panace->info == (uint32_t)-1) {
 			ret = ERR_FSAL_INVAL;
@@ -344,6 +347,7 @@ static fsal_status_t panfs_acl_2_fsal_acl(struct pan_fs_acl_s *panacl,
 	if (!acldata.aces)
 		return fsalstat(ERR_FSAL_NOMEM, ENOMEM);
 
+	LogDebug(COMPONENT_FSAL, "Converting %u aces:", acldata.naces);
 	ace = acldata.aces;
 	for (panace = panacl->aces; panace < panacl->aces + panacl->naces;
 	     panace++) {
@@ -353,6 +357,7 @@ static fsal_status_t panfs_acl_2_fsal_acl(struct pan_fs_acl_s *panacl,
 		ace->flag = panace_info_to_fsal_flag(panace->info);
 		ace->perm = panace_perm_to_fsal_perm(panace->permissions);
 		panace_id_to_fsal_id(&panace->identity, ace);
+		fsal_print_ace(COMPONENT_FSAL, NIV_DEBUG, ace);
 		ace++;
 	}
 

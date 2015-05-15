@@ -6,6 +6,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include "fsal_api.h"
 
 /* fsal_test_access
  * common (default) access check method for fsal_obj_handle objects.
@@ -23,4 +24,16 @@ void fsal_set_credentials(const struct user_cred *creds);
 void fsal_save_ganesha_credentials(void);
 void fsal_restore_ganesha_credentials(void);
 
+void fsal_print_ace_int(log_components_t component, log_levels_t debug,
+			fsal_ace_t *ace, char *file, int line,
+			char *function);
+#define fsal_print_ace(component, debug, ace) \
+	fsal_print_ace_int((component), (debug), (ace), \
+		 (char *) __FILE__, __LINE__, (char *) __func__)
+void fsal_print_acl_int(log_components_t component, log_levels_t debug,
+			fsal_acl_t *acl, char *file, int line,
+			char *function);
+#define fsal_print_acl(component, debug, acl) \
+	fsal_print_acl_int((component), (debug), (acl), \
+		 (char *) __FILE__, __LINE__, (char *) __func__)
 #endif
