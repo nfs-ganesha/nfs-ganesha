@@ -237,6 +237,9 @@ errout:
 	if (pfid != NULL) {
 		if (pfid->pentry != NULL)
 			cache_inode_put(pfid->pentry);
+		if (pfid->ucred != NULL)
+			release_9p_user_cred_ref(pfid->ucred);
+
 		gsh_free(pfid);
 	}
 

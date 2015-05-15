@@ -46,8 +46,9 @@
 #define FREE_FID(pfid, fid, req9p) do {                                 \
 	/* Tell cache_inode that the entry is no longer reachable */    \
 	cache_inode_put(pfid->pentry);                                  \
+	pfid->pentry = NULL;						\
 	/* Free the fid */                                              \
-	gsh_free(pfid);                                                 \
+	free_fid(pfid);							\
 	req9p->pconn->fids[*fid] = NULL;                                \
 } while (0)
 

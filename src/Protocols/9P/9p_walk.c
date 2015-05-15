@@ -161,6 +161,10 @@ int _9p_walk(struct _9p_request_data *req9p, void *worker_data,
 		/* This clunk release the gdata */
 		pnewfid->gdata = pfid->gdata;
 
+		/* Refcounted object (incremented at the end of the function,
+		 * if there was no errors). */
+		pnewfid->ucred = pfid->ucred;
+
 		/* This is not a TATTACH fid */
 		pnewfid->from_attach = false;
 
@@ -215,8 +219,9 @@ int _9p_walk(struct _9p_request_data *req9p, void *worker_data,
 	/* As much qid as requested fid */
 	nwqid = nwname;
 
-	/* Hold refcount on gdata */
+	/* Increment refcounters. */
 	uid2grp_hold_group_data(pnewfid->gdata);
+	get_9p_user_cred_ref(pnewfid->ucred);
 
 	/* Build the reply */
 	_9p_setinitptr(cursor, preply, _9P_RWALK);

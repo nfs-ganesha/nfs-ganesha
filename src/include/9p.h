@@ -283,10 +283,22 @@ struct _9p_qid {
 				 *  for a file system element */
 };
 
+/**
+ * @brief Internal 9P structure containing client credentials.
+ *
+ * This structure wraps struct user_cred, adding a refcounter to know when it
+ * should be released (it is shared between several op_ctx and fids).
+ */
+struct _9p_user_cred {
+	struct user_cred creds; /*< Credentials. */
+	int64_t refcount; /*< Counter of references (to the container or the
+			   * creds field). */
+};
+
 struct _9p_fid {
 	u32 fid;
 	struct req_op_context op_context;
-	struct user_cred ucred;
+	struct _9p_user_cred *ucred; /*< Client credentials (refcounted). */
 	struct group_data *gdata;
 	cache_entry_t *pentry;
 	struct _9p_qid qid;
@@ -649,6 +661,34 @@ extern struct config_block _9p_param_blk;
 int _9p_init(void);
 
 /* Tools functions */
+
+/**
+ * @brief Increment the refcounter of a _9p_user_cred structure.
+ *
+ * @param creds Reference that is being copied.
+ */
+void get_9p_user_cred_ref(struct _9p_user_cred *creds);
+
+/**
+ * @brief Release a reference to an _9p_user_cred structure.
+ *
+ * This function decrements the refcounter of the containing _9p_user_cred
+ * structure. If this counter reaches 0, the structure is freed.
+ *
+ * @param creds The reference that is released.
+ */
+void release_9p_user_cred_ref(struct _9p_user_cred *creds);
+
+/**
+ * @brief Free this fid after releasing its resources.
+ *
+ * This function can be used to free a partially allocated fid, when an error
+ * occurs. To release a valid fid, use _9p_tools_clunk instead.
+ *
+ * @param[in,out] pfid pointer to fid entry.
+ */
+void free_fid(struct _9p_fid *pfid);
+
 int _9p_tools_get_req_context_by_uid(u32 uid, struct _9p_fid *pfid);
 int _9p_tools_get_req_context_by_name(int uname_len, char *uname_str,
 				      struct _9p_fid *pfid);

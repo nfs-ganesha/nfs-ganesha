@@ -47,6 +47,70 @@
 #include "uid2grp.h"
 #include "export_mgr.h"
 
+/**
+ * @brief Allocate a new struct _9p_user_cred, with refcounter set to 1.
+ *
+ * @return NULL if the allocation failed, else the new structure.
+ */
+static struct _9p_user_cred *new_9p_user_creds()
+{
+	struct _9p_user_cred *result =
+		gsh_calloc(sizeof(struct _9p_user_cred), 1);
+
+	if (result != NULL)
+		result->refcount = 1;
+
+	return result;
+}
+
+/**
+ * @brief Get a new reference of user credential.
+ *
+ * This function increments the refcount of the argument. Any reference returned
+ * by this function must be released.
+ *
+ * @param[in,out] creds The 9P credential containing the wanted credentials.
+ * @return A reference to the credentials.
+ */
+static struct user_cred *get_user_cred_ref(struct _9p_user_cred *creds)
+{
+	atomic_inc_int64_t(&creds->refcount);
+	return &creds->creds;
+}
+
+void get_9p_user_cred_ref(struct _9p_user_cred *creds)
+{
+	atomic_inc_int64_t(&creds->refcount);
+}
+
+void release_9p_user_cred_ref(struct _9p_user_cred *creds)
+{
+	int64_t refcount = atomic_dec_int64_t(&creds->refcount);
+
+	if (refcount != 0) {
+		assert(refcount > 0);
+		return;
+	}
+
+	gsh_free(creds);
+}
+
+/**
+ * @brief Release a reference obtained with get_user_cred_ref.
+ *
+ * This function decrements the refcounter of the containing _9p_user_cred
+ * structure. If this counter reaches 0, the structure is freed.
+ *
+ * @param creds The reference that is released.
+ */
+static void release_user_cred_ref(struct user_cred *creds)
+{
+	struct _9p_user_cred *cred_9p =
+		container_of(creds, struct _9p_user_cred, creds);
+
+	release_9p_user_cred_ref(cred_9p);
+}
+
 int _9p_init(void)
 {
 	return 0;
@@ -59,13 +123,17 @@ int _9p_tools_get_req_context_by_uid(u32 uid, struct _9p_fid *pfid)
 	if (!uid2grp(uid, &grpdata))
 		return -ENOENT;
 
-	pfid->gdata = grpdata;
-	pfid->ucred.caller_uid = grpdata->uid;
-	pfid->ucred.caller_gid = grpdata->gid;
-	pfid->ucred.caller_glen = grpdata->nbgroups;
-	pfid->ucred.caller_garray = grpdata->groups;
+	pfid->ucred = new_9p_user_creds();
+	if (pfid->ucred == NULL)
+		return -ENOMEM;
 
-	pfid->op_context.creds = &pfid->ucred;
+	pfid->gdata = grpdata;
+	pfid->ucred->creds.caller_uid = grpdata->uid;
+	pfid->ucred->creds.caller_gid = grpdata->gid;
+	pfid->ucred->creds.caller_glen = grpdata->nbgroups;
+	pfid->ucred->creds.caller_garray = grpdata->groups;
+
+	pfid->op_context.creds = get_user_cred_ref(pfid->ucred);
 	pfid->op_context.caller_addr = NULL;	/* Useless for 9P, we'll see
 						 * if daemon crashes... */
 	pfid->op_context.req_type = _9P_REQUEST;
@@ -85,13 +153,17 @@ int _9p_tools_get_req_context_by_name(int uname_len, char *uname_str,
 	if (!name2grp(&name, &grpdata))
 		return -ENOENT;
 
-	pfid->gdata = grpdata;
-	pfid->ucred.caller_uid = grpdata->uid;
-	pfid->ucred.caller_gid = grpdata->gid;
-	pfid->ucred.caller_glen = grpdata->nbgroups;
-	pfid->ucred.caller_garray = grpdata->groups;
+	pfid->ucred = new_9p_user_creds();
+	if (pfid->ucred == NULL)
+		return -ENOMEM;
 
-	pfid->op_context.creds = &pfid->ucred;
+	pfid->gdata = grpdata;
+	pfid->ucred->creds.caller_uid = grpdata->uid;
+	pfid->ucred->creds.caller_gid = grpdata->gid;
+	pfid->ucred->creds.caller_glen = grpdata->nbgroups;
+	pfid->ucred->creds.caller_garray = grpdata->groups;
+
+	pfid->op_context.creds = get_user_cred_ref(pfid->ucred);
 	pfid->op_context.caller_addr = NULL;	/* Useless for 9P, we'll see
 						 * if daemon crashes... */
 	pfid->op_context.req_type = _9P_REQUEST;
@@ -210,18 +282,17 @@ void _9p_openflags2FSAL(u32 *inflags, fsal_openflags_t *outflags)
 		*outflags = FSAL_O_READ;
 }				/* _9p_openflags2FSAL */
 
-/**
- * @brief Free this fid after releasing its resources.
- *
- * @param pfid   [IN] pointer to fid entry
- * @param fid    [IN] pointer to fid acquired from message
- * @param req9p [IN] pointer to request data
- */
-static void free_fid(struct _9p_fid *pfid)
+void free_fid(struct _9p_fid *pfid)
 {
-	cache_inode_put(pfid->pentry);
-	if (pfid->from_attach)
+	if (pfid->from_attach) {
 		put_gsh_export(pfid->op_context.export);
+		release_user_cred_ref(pfid->op_context.creds);
+	}
+	if (pfid->pentry != NULL)
+		cache_inode_put(pfid->pentry);
+
+	if (pfid->ucred != NULL)
+		release_9p_user_cred_ref(pfid->ucred);
 
 	gsh_free(pfid->specdata.xattr.xattr_content);
 	gsh_free(pfid);

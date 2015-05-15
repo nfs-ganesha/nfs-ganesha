@@ -266,6 +266,8 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, void *worker_data,
 	/* hold reference on gdata */
 	uid2grp_hold_group_data(pxattrfid->gdata);
 
+	get_9p_user_cred_ref(pfid->ucred);
+
 	/* Build the reply */
 	_9p_setinitptr(cursor, preply, _9P_RXATTRWALK);
 	_9p_setptr(cursor, msgtag, u16);
