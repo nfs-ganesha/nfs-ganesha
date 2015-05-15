@@ -90,7 +90,7 @@ int _9p_walk(struct _9p_request_data *req9p, void *worker_data,
 		return _9p_rerror(req9p, worker_data, msgtag, EIO, plenout,
 				  preply);
 	}
-	op_ctx = &pfid->op_context;
+	_9p_init_opctx(pfid, req9p);
 	pnewfid = gsh_calloc(1, sizeof(struct _9p_fid));
 	if (pnewfid == NULL)
 		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
@@ -111,9 +111,6 @@ int _9p_walk(struct _9p_request_data *req9p, void *worker_data,
 
 		/* Set the new fid id */
 		pnewfid->fid = *newfid;
-
-		/* This is not a TATTACH fid */
-		pnewfid->from_attach = false;
 
 		/* Increments refcount */
 		(void) cache_inode_lru_ref(pnewfid->pentry, LRU_REQ_STALE_OK);
@@ -152,7 +149,6 @@ int _9p_walk(struct _9p_request_data *req9p, void *worker_data,
 		}
 
 		pnewfid->fid = *newfid;
-		pnewfid->op_context = pfid->op_context;
 		pnewfid->ppentry = pfid->pentry;
 		strncpy(pnewfid->name, name, MAXNAMLEN-1);
 
@@ -163,10 +159,8 @@ int _9p_walk(struct _9p_request_data *req9p, void *worker_data,
 
 		/* Refcounted object (incremented at the end of the function,
 		 * if there was no errors). */
+		pnewfid->export = pfid->export;
 		pnewfid->ucred = pfid->ucred;
-
-		/* This is not a TATTACH fid */
-		pnewfid->from_attach = false;
 
 		cache_status = cache_inode_fileid(pnewfid->pentry, &fileid);
 		if (cache_status != CACHE_INODE_SUCCESS) {
@@ -222,6 +216,7 @@ int _9p_walk(struct _9p_request_data *req9p, void *worker_data,
 	/* Increment refcounters. */
 	uid2grp_hold_group_data(pnewfid->gdata);
 	get_9p_user_cred_ref(pnewfid->ucred);
+	get_gsh_export_ref(pnewfid->export);
 
 	/* Build the reply */
 	_9p_setinitptr(cursor, preply, _9P_RWALK);

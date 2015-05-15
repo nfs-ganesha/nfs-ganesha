@@ -297,7 +297,8 @@ struct _9p_user_cred {
 
 struct _9p_fid {
 	u32 fid;
-	struct req_op_context op_context;
+	/** Ganesha export of the file (refcounted). */
+	struct gsh_export *export;
 	struct _9p_user_cred *ucred; /*< Client credentials (refcounted). */
 	struct group_data *gdata;
 	cache_entry_t *pentry;
@@ -306,7 +307,6 @@ struct _9p_fid {
 	cache_entry_t *ppentry;
 	char name[MAXNAMLEN];
 	u32 opens;
-	bool from_attach;
 	union {
 		u32 iounit;
 		struct _9p_xattr_desc {
@@ -678,6 +678,25 @@ void get_9p_user_cred_ref(struct _9p_user_cred *creds);
  * @param creds The reference that is released.
  */
 void release_9p_user_cred_ref(struct _9p_user_cred *creds);
+
+/**
+ * @brief Initialize op_ctx for the current request.
+ *
+ * op_ctx must point to an allocated structure.
+ *
+ * @param pfid fid used to initialize the context.
+ * @param req9p request date used to initialize export_perms. It can be NULL,
+ * in this case export_perms will be uninitialized.
+ */
+void _9p_init_opctx(struct _9p_fid *pfid, struct _9p_request_data *req9p);
+
+/**
+ * @brief Release resources taken by _9p_init_opctx.
+ *
+ * op_ctx contains several pointers to refcounted objects. This function
+ * decrements these counters and sets the associated fields to NULL.
+ */
+void _9p_release_opctx(void);
 
 /**
  * @brief Free this fid after releasing its resources.

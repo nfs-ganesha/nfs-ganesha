@@ -92,7 +92,7 @@ int _9p_read(struct _9p_request_data *req9p, void *worker_data,
 				  preply);
 	}
 
-	op_ctx = &pfid->op_context;
+	_9p_init_opctx(pfid, req9p);
 
 	/* Start building the reply already
 	 * So we don't need to use an intermediate data buffer
@@ -122,7 +122,7 @@ int _9p_read(struct _9p_request_data *req9p, void *worker_data,
 			LogDebug(COMPONENT_9P,
 				 "Cannot get client block for 9P request");
 		} else {
-			pfid->op_context.client = client;
+			op_ctx->client = client;
 
 			server_stats_io_done(*count,
 					     read_size,

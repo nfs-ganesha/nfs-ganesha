@@ -72,6 +72,8 @@ int _9p_clunk(struct _9p_request_data *req9p, void *worker_data,
 				  preply);
 	}
 
+	_9p_init_opctx(pfid, req9p);
+
 	rc = _9p_tools_clunk(pfid);
 	req9p->pconn->fids[*fid] = NULL;
 

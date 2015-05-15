@@ -83,7 +83,7 @@ int _9p_lopen(struct _9p_request_data *req9p, void *worker_data,
 	pfid->state.state_data.fid.share_access =
 		_9p_openflags_to_share_access(flags);
 
-	op_ctx = &pfid->op_context;
+	_9p_init_opctx(pfid, req9p);
 	if (pfid->pentry->type == REGULAR_FILE) {
 		/** @todo: Maybe other types (FIFO, SOCKET,...) require
 		 * to be opened too */

@@ -95,12 +95,12 @@ int _9p_lcreate(struct _9p_request_data *req9p, void *worker_data,
 				  preply);
 	}
 
-	if ((pfid->op_context.export_perms->options &
+	_9p_init_opctx(pfid, req9p);
+	if ((op_ctx->export_perms->options &
 				 EXPORT_OPTION_WRITE_ACCESS) == 0)
 		return _9p_rerror(req9p, worker_data, msgtag, EROFS, plenout,
 				  preply);
 
-	op_ctx = &pfid->op_context;
 	snprintf(file_name, MAXNAMLEN, "%.*s", *name_len, name_str);
 
 	/* Create the file */
@@ -136,7 +136,7 @@ int _9p_lcreate(struct _9p_request_data *req9p, void *worker_data,
 		 *        that could be in play.
 		 */
 		if ((cache_status == CACHE_INODE_FSAL_EACCESS)
-		    && (pfid->op_context.creds->caller_uid ==
+		    && (op_ctx->creds->caller_uid ==
 			pentry_newfile->obj_handle->attributes.owner)
 		    && ((*mode & 0400) == 0400)) {
 			/* If we reach this piece of code, this means that
@@ -145,17 +145,17 @@ int _9p_lcreate(struct _9p_request_data *req9p, void *worker_data,
 			 * cache_inode code, but for the mode is 04xy
 			 * the user is not allowed to open it.
 			 * Becoming root override this */
-			uid_t saved_uid = pfid->op_context.creds->caller_uid;
+			uid_t saved_uid = op_ctx->creds->caller_uid;
 
 			/* Become root */
-			pfid->op_context.creds->caller_uid = 0;
+			op_ctx->creds->caller_uid = 0;
 
 			/* Do the job as root */
 			cache_status =
 			    cache_inode_open(pentry_newfile, openflags, 0);
 
 			/* Back to standard user */
-			pfid->op_context.creds->caller_uid = saved_uid;
+			op_ctx->creds->caller_uid = saved_uid;
 
 			if (cache_status != CACHE_INODE_SUCCESS)
 				return _9p_rerror(req9p, worker_data, msgtag,
@@ -166,9 +166,6 @@ int _9p_lcreate(struct _9p_request_data *req9p, void *worker_data,
 					  _9p_tools_errno(cache_status),
 					  plenout, preply);
 	}
-
-	/* This is not a TATTACH fid */
-	pfid->from_attach = false;
 
 	/* Pin as well. We probably want to close the file if this fails,
 	 * but it won't happen - right?! */

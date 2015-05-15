@@ -208,7 +208,7 @@ int _9p_readdir(struct _9p_request_data *req9p, void *worker_data,
 				  preply);
 	}
 
-	op_ctx = &pfid->op_context;
+	_9p_init_opctx(pfid, req9p);
 
 	/* For each entry, returns:
 	 * qid     = 13 bytes

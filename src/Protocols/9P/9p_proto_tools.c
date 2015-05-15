@@ -116,6 +116,57 @@ int _9p_init(void)
 	return 0;
 }				/* _9p_init */
 
+void _9p_init_opctx(struct _9p_fid *pfid, struct _9p_request_data *req9p)
+{
+
+	struct gsh_export *export = pfid->export;
+
+	if (export != NULL) {
+		/* export affectation (require refcount handling). */
+		if (op_ctx->export != export) {
+			if (op_ctx->export != NULL) {
+				LogCrit(COMPONENT_9P,
+					"Op_ctx was already initialized, or was not allocated/cleaned up properly.");
+				/* This tells there's an error in the code.
+				 * Use an assert because :
+				 * - if compiled in debug mode, the program will
+				 * crash and tell the developer he has something
+				 * to fix here.
+				 * - if compiled for production, we'll try to
+				 * recover. */
+				assert(false);
+			}
+
+			get_gsh_export_ref(export);
+			op_ctx->export = export;
+		}
+
+		op_ctx->fsal_export = export->fsal_export;
+	}
+
+	if (req9p != NULL)
+		op_ctx->export_perms = &req9p->pconn->export_perms;
+
+	op_ctx->creds = get_user_cred_ref(pfid->ucred);
+}
+
+void _9p_release_opctx(void)
+{
+	struct gsh_export *export = op_ctx->export;
+
+	if (export != NULL) {
+		op_ctx->export = NULL;
+		put_gsh_export(export);
+	}
+
+	struct user_cred *creds = op_ctx->creds;
+
+	if (creds != NULL) {
+		op_ctx->creds = NULL;
+		release_user_cred_ref(creds);
+	}
+}
+
 int _9p_tools_get_req_context_by_uid(u32 uid, struct _9p_fid *pfid)
 {
 	struct group_data *grpdata;
@@ -133,10 +184,13 @@ int _9p_tools_get_req_context_by_uid(u32 uid, struct _9p_fid *pfid)
 	pfid->ucred->creds.caller_glen = grpdata->nbgroups;
 	pfid->ucred->creds.caller_garray = grpdata->groups;
 
-	pfid->op_context.creds = get_user_cred_ref(pfid->ucred);
-	pfid->op_context.caller_addr = NULL;	/* Useless for 9P, we'll see
-						 * if daemon crashes... */
-	pfid->op_context.req_type = _9P_REQUEST;
+	if (op_ctx->creds != NULL)
+		release_user_cred_ref(op_ctx->creds);
+	op_ctx->creds = get_user_cred_ref(pfid->ucred);
+
+	op_ctx->caller_addr = NULL;	/* Useless for 9P, we'll see
+					 * if daemon crashes... */
+	op_ctx->req_type = _9P_REQUEST;
 
 	return 0;
 }				/* _9p_tools_get_fsal_cred */
@@ -163,10 +217,13 @@ int _9p_tools_get_req_context_by_name(int uname_len, char *uname_str,
 	pfid->ucred->creds.caller_glen = grpdata->nbgroups;
 	pfid->ucred->creds.caller_garray = grpdata->groups;
 
-	pfid->op_context.creds = get_user_cred_ref(pfid->ucred);
-	pfid->op_context.caller_addr = NULL;	/* Useless for 9P, we'll see
-						 * if daemon crashes... */
-	pfid->op_context.req_type = _9P_REQUEST;
+	if (op_ctx->creds != NULL)
+		release_user_cred_ref(op_ctx->creds);
+	op_ctx->creds = get_user_cred_ref(pfid->ucred);
+
+	op_ctx->caller_addr = NULL;	/* Useless for 9P, we'll see
+					 * if daemon crashes... */
+	op_ctx->req_type = _9P_REQUEST;
 
 	return 0;
 }				/* _9p_tools_get_fsal_cred */
@@ -284,12 +341,11 @@ void _9p_openflags2FSAL(u32 *inflags, fsal_openflags_t *outflags)
 
 void free_fid(struct _9p_fid *pfid)
 {
-	if (pfid->from_attach) {
-		put_gsh_export(pfid->op_context.export);
-		release_user_cred_ref(pfid->op_context.creds);
-	}
 	if (pfid->pentry != NULL)
 		cache_inode_put(pfid->pentry);
+
+	if (pfid->export != NULL)
+		put_gsh_export(pfid->export);
 
 	if (pfid->ucred != NULL)
 		release_9p_user_cred_ref(pfid->ucred);
@@ -302,10 +358,6 @@ int _9p_tools_clunk(struct _9p_fid *pfid)
 {
 	fsal_status_t fsal_status;
 	cache_inode_status_t cache_status;
-
-	/* Set op_ctx */
-	op_ctx = &pfid->op_context;
-
 
 	/* pentry may be null in the case of an aborted TATTACH
 	 * this would happens when trying to mount a non-existing
