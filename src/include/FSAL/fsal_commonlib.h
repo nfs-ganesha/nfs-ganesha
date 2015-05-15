@@ -126,4 +126,6 @@ int decode_fsid(char *buf,
 		struct fsal_fsid__ *fsid,
 		enum fsid_type fsid_type);
 
+fsal_errors_t fsal_inherit_acls(struct attrlist *attrs, fsal_acl_t *sacl,
+			       fsal_aceflag_t inherit);
 #endif				/* FSAL_COMMONLIB_H */

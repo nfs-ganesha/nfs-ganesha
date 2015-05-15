@@ -1510,4 +1510,93 @@ int decode_fsid(char *buf,
 	return sizeof_fsid(fsid_type);
 }
 
+
+static inline bool is_dup_ace(fsal_ace_t *ace, fsal_aceflag_t inherit)
+{
+	if (!IS_FSAL_ACE_INHERIT(*ace))
+		return false;
+	if (inherit != FSAL_ACE_FLAG_DIR_INHERIT)
+		/* Only dup on directories */
+		return false;
+	if (IS_FSAL_ACE_NO_PROPAGATE(*ace))
+		return false;
+	if (IS_FSAL_ACE_FILE_INHERIT(*ace) && !IS_FSAL_ACE_DIR_INHERIT(*ace))
+		return false;
+	if (!IS_FSAL_ACE_PERM(*ace))
+		return false;
+
+	return true;
+}
+
+static fsal_errors_t dup_ace(fsal_ace_t *sace, fsal_ace_t *dace)
+{
+	*dace = *sace;
+
+	GET_FSAL_ACE_FLAG(*sace) |= FSAL_ACE_FLAG_INHERIT_ONLY;
+
+	GET_FSAL_ACE_FLAG(*dace) &= ~(FSAL_ACE_FLAG_INHERIT |
+				      FSAL_ACE_FLAG_NO_PROPAGATE);
+
+	return ERR_FSAL_NO_ERROR;
+}
+
+fsal_errors_t fsal_inherit_acls(struct attrlist *attrs, fsal_acl_t *sacl,
+				fsal_aceflag_t inherit)
+{
+	int naces;
+	fsal_ace_t *sace, *dace;
+
+	if (!sacl || !sacl->aces || sacl->naces == 0)
+		return ERR_FSAL_NO_ERROR;
+
+	if (attrs->acl && attrs->acl->aces && attrs->acl->naces > 0)
+		return ERR_FSAL_EXIST;
+
+	naces = 0;
+	for (sace = sacl->aces; sace < sacl->aces + sacl->naces; sace++) {
+		if (IS_FSAL_ACE_FLAG(*sace, inherit))
+			naces++;
+		if (is_dup_ace(sace, inherit))
+			naces++;
+	}
+
+	if (naces == 0)
+		return ERR_FSAL_NO_ERROR;
+
+	attrs->acl = nfs4_acl_alloc();
+	if (!attrs->acl)
+		return ERR_FSAL_NOMEM;
+	attrs->acl->aces = (fsal_ace_t *) nfs4_ace_alloc(naces);
+	if (!attrs->acl->aces) {
+		nfs4_acl_free(attrs->acl);
+		attrs->acl = NULL;
+		return ERR_FSAL_NOMEM;
+	}
+
+	dace = attrs->acl->aces;
+	for (sace = sacl->aces; sace < sacl->aces + sacl->naces; sace++) {
+		if (IS_FSAL_ACE_FLAG(*sace, inherit)) {
+			*dace = *sace;
+			if (IS_FSAL_ACE_NO_PROPAGATE(*dace))
+				GET_FSAL_ACE_FLAG(*dace) &=
+					~(FSAL_ACE_FLAG_INHERIT |
+					  FSAL_ACE_FLAG_NO_PROPAGATE);
+			else if (inherit == FSAL_ACE_FLAG_DIR_INHERIT &&
+				 IS_FSAL_ACE_FILE_INHERIT(*dace) &&
+				 !IS_FSAL_ACE_DIR_INHERIT(*dace))
+				GET_FSAL_ACE_FLAG(*dace) |=
+					FSAL_ACE_FLAG_NO_PROPAGATE;
+			else if (is_dup_ace(dace, inherit)) {
+				dup_ace(dace, dace + 1);
+				dace++;
+			}
+			dace++;
+		}
+	}
+	attrs->acl->naces = naces;
+	FSAL_SET_MASK(attrs->mask, ATTR_ACL);
+
+	return ERR_FSAL_NO_ERROR;
+}
+
 /** @} */
