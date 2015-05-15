@@ -69,6 +69,20 @@
 /* fsal_module to fsal_export helpers
  */
 
+static uint32_t ace_modes[3][3] = {
+	{ /* owner */
+		S_IRUSR, S_IWUSR, S_IXUSR
+	},
+	{ /* group */
+		S_IRGRP, S_IWGRP, S_IXGRP
+	},
+	{ /* everyone */
+		S_IRUSR | S_IRGRP | S_IROTH,
+		S_IWUSR | S_IWGRP | S_IWOTH,
+		S_IXUSR | S_IXGRP | S_IXOTH,
+	}
+};
+
 /* fsal_attach_export
  * called from the FSAL's create_export method with a reference on the fsal.
  */
@@ -1670,6 +1684,234 @@ fsal_status_t fsal_remove_access(struct fsal_obj_handle *dir_hdl,
 		/* Allowed; fall through */
 	}
 
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
+static inline void setmode(struct attrlist *attrs, uint32_t mode, bool allow)
+{
+	if (allow)
+		attrs->mode |= mode;
+	else
+		attrs->mode &= ~(mode);
+}
+
+static fsal_status_t
+fsal_mode_set_ace(fsal_ace_t *deny, fsal_ace_t *allow, uint32_t mode)
+{
+	GET_FSAL_ACE_TYPE(*allow) = FSAL_ACE_TYPE_ALLOW;
+	GET_FSAL_ACE_TYPE(*deny) = FSAL_ACE_TYPE_DENY;
+
+	if (mode & S_IRUSR)
+		GET_FSAL_ACE_PERM(*allow) |= FSAL_ACE_PERM_READ_DATA;
+	else
+		GET_FSAL_ACE_PERM(*deny) |= FSAL_ACE_PERM_READ_DATA;
+	if (mode & S_IWUSR)
+		GET_FSAL_ACE_PERM(*allow) |=
+			FSAL_ACE_PERM_WRITE_DATA | FSAL_ACE_PERM_APPEND_DATA;
+	else
+		GET_FSAL_ACE_PERM(*deny) |=
+			FSAL_ACE_PERM_WRITE_DATA | FSAL_ACE_PERM_APPEND_DATA;
+	if (mode & S_IXUSR)
+		GET_FSAL_ACE_PERM(*allow) |= FSAL_ACE_PERM_EXECUTE;
+	else
+		GET_FSAL_ACE_PERM(*deny) |= FSAL_ACE_PERM_EXECUTE;
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
+static fsal_status_t
+fsal_mode_gen_set(fsal_ace_t *ace, uint32_t mode)
+{
+	fsal_ace_t *allow, *deny;
+
+	/* @OWNER */
+	deny = ace;
+	allow = deny + 1;
+	GET_FSAL_ACE_USER(*allow) = FSAL_ACE_SPECIAL_OWNER;
+	GET_FSAL_ACE_IFLAG(*allow) |= (FSAL_ACE_IFLAG_MODE_GEN |
+				       FSAL_ACE_IFLAG_SPECIAL_ID);
+	GET_FSAL_ACE_USER(*deny) = FSAL_ACE_SPECIAL_OWNER;
+	GET_FSAL_ACE_IFLAG(*deny) |= (FSAL_ACE_IFLAG_MODE_GEN |
+				      FSAL_ACE_IFLAG_SPECIAL_ID);
+	fsal_mode_set_ace(deny, allow, mode & S_IRWXU);
+	/* @GROUP */
+	deny += 2;
+	allow = deny + 1;
+	GET_FSAL_ACE_USER(*allow) = FSAL_ACE_SPECIAL_GROUP;
+	GET_FSAL_ACE_IFLAG(*allow) |= (FSAL_ACE_IFLAG_MODE_GEN |
+				       FSAL_ACE_IFLAG_SPECIAL_ID);
+	GET_FSAL_ACE_FLAG(*allow) = FSAL_ACE_FLAG_GROUP_ID;
+	GET_FSAL_ACE_USER(*deny) = FSAL_ACE_SPECIAL_GROUP;
+	GET_FSAL_ACE_IFLAG(*deny) |= (FSAL_ACE_IFLAG_MODE_GEN |
+				      FSAL_ACE_IFLAG_SPECIAL_ID);
+	GET_FSAL_ACE_FLAG(*deny) = FSAL_ACE_FLAG_GROUP_ID;
+	fsal_mode_set_ace(deny, allow, (mode & S_IRWXG) << 3);
+	/* @EVERYONE */
+	deny += 2;
+	allow = deny + 1;
+	GET_FSAL_ACE_USER(*allow) = FSAL_ACE_SPECIAL_EVERYONE;
+	GET_FSAL_ACE_IFLAG(*allow) |= (FSAL_ACE_IFLAG_MODE_GEN |
+				       FSAL_ACE_IFLAG_SPECIAL_ID);
+	GET_FSAL_ACE_USER(*deny) = FSAL_ACE_SPECIAL_EVERYONE;
+	GET_FSAL_ACE_IFLAG(*deny) |= (FSAL_ACE_IFLAG_MODE_GEN |
+				      FSAL_ACE_IFLAG_SPECIAL_ID);
+	fsal_mode_set_ace(deny, allow, (mode & S_IRWXO) << 6);
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
+static fsal_status_t
+fsal_mode_gen_acl(struct attrlist *attrs)
+{
+	attrs->acl = nfs4_acl_alloc();
+	if (!attrs->acl)
+		return fsalstat(ERR_FSAL_NOMEM, 0);
+	attrs->acl->naces = 6;
+	attrs->acl->aces = (fsal_ace_t *) nfs4_ace_alloc(attrs->acl->naces);
+	if (!attrs->acl->aces) {
+		nfs4_acl_free(attrs->acl);
+		attrs->acl = NULL;
+		return fsalstat(ERR_FSAL_NOMEM, 0);
+	}
+
+	fsal_mode_gen_set(attrs->acl->aces, attrs->mode);
+
+	FSAL_SET_MASK(attrs->mask, ATTR_ACL);
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
+fsal_status_t fsal_mode_to_acl(struct attrlist *attrs, fsal_acl_t *sacl)
+{
+	int naces;
+	fsal_ace_t *sace, *dace;
+
+	if (!FSAL_TEST_MASK(attrs->mask, ATTR_MODE))
+		return fsalstat(ERR_FSAL_NO_ERROR, 0);
+
+	if (!sacl || sacl->naces == 0)
+		return fsal_mode_gen_acl(attrs);
+
+	naces = 0;
+	for (sace = sacl->aces; sace < sacl->aces + sacl->naces; sace++) {
+		if (IS_FSAL_ACE_MODE_GEN(*sace)) {
+			/* Don't copy mode geneated ACEs; will be re-created */
+			continue;
+		}
+
+		naces++;
+		if (IS_FSAL_ACE_INHERIT_ONLY(*sace))
+			continue;
+		if (!IS_FSAL_ACE_PERM(*sace))
+			continue;
+		if (IS_FSAL_ACE_INHERIT(*sace)) {
+			/* Dup this ACE */
+			naces++;
+		}
+		/* XXX dang dup for non-special case */
+	}
+
+	if (naces == 0) {
+		/* Only mode generate aces */
+		return fsal_mode_gen_acl(attrs);
+	}
+
+	/* Space for generated ACEs at the end */
+	naces += 6;
+
+	attrs->acl = nfs4_acl_alloc();
+	if (!attrs->acl)
+		return fsalstat(ERR_FSAL_NOMEM, 0);
+	attrs->acl->aces = (fsal_ace_t *) nfs4_ace_alloc(naces);
+	if (!attrs->acl->aces) {
+		nfs4_acl_free(attrs->acl);
+		attrs->acl = NULL;
+		return fsalstat(ERR_FSAL_NOMEM, 0);
+	}
+
+	attrs->acl->naces = 0;
+	dace = attrs->acl->aces;
+	for (sace = sacl->aces; sace < sacl->aces + sacl->naces;
+	     sace++, dace++) {
+		if (IS_FSAL_ACE_MODE_GEN(*sace))
+			continue;
+
+		*dace = *sace;
+		attrs->acl->naces++;
+
+		if (IS_FSAL_ACE_INHERIT_ONLY(*dace) ||
+		    (!IS_FSAL_ACE_PERM(*dace)))
+			continue;
+
+		if (IS_FSAL_ACE_INHERIT(*dace)) {
+			/* Need to duplicate */
+			GET_FSAL_ACE_FLAG(*dace) |= FSAL_ACE_FLAG_INHERIT_ONLY;
+			dace++;
+			*dace = *sace;
+			attrs->acl->naces++;
+			GET_FSAL_ACE_FLAG(*dace) &= ~(FSAL_ACE_FLAG_INHERIT);
+		}
+
+		if (IS_FSAL_ACE_SPECIAL(*dace)) {
+			GET_FSAL_ACE_PERM(*dace) &=
+				~(FSAL_ACE_PERM_READ_DATA |
+				  FSAL_ACE_PERM_LIST_DIR |
+				  FSAL_ACE_PERM_WRITE_DATA |
+				  FSAL_ACE_PERM_ADD_FILE |
+				  FSAL_ACE_PERM_APPEND_DATA |
+				  FSAL_ACE_PERM_ADD_SUBDIRECTORY |
+				  FSAL_ACE_PERM_EXECUTE);
+		} else {
+			/* Do non-special stuff */
+		}
+	}
+
+	if (naces - attrs->acl->naces != 6) {
+		LogDebug(COMPONENT_FSAL, "Bad naces: %d not %d",
+			 attrs->acl->naces, naces - 6);
+		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
+	}
+
+	fsal_mode_gen_set(dace, attrs->mode);
+
+	attrs->acl->naces = naces;
+	FSAL_SET_MASK(attrs->mask, ATTR_ACL);
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
+fsal_status_t fsal_acl_to_mode(struct attrlist *attrs)
+{
+	fsal_ace_t *ace = NULL;
+	uint32_t *modes;
+
+	if (!FSAL_TEST_MASK(attrs->mask, ATTR_ACL))
+		return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	if (!attrs->acl || attrs->acl->naces == 0)
+		return fsalstat(ERR_FSAL_NO_ERROR, 0);
+
+	for (ace = attrs->acl->aces; ace < attrs->acl->aces + attrs->acl->naces;
+	     ace++) {
+		if (IS_FSAL_ACE_SPECIAL_OWNER(*ace))
+			modes = ace_modes[0];
+		else if (IS_FSAL_ACE_SPECIAL_GROUP(*ace))
+			modes = ace_modes[1];
+		else if (IS_FSAL_ACE_SPECIAL_EVERYONE(*ace))
+			modes = ace_modes[2];
+		else
+			continue;
+
+		if (IS_FSAL_ACE_READ_DATA(*ace))
+			setmode(attrs, modes[0], IS_FSAL_ACE_ALLOW(*ace));
+		if (IS_FSAL_ACE_WRITE_DATA(*ace) ||
+		    IS_FSAL_ACE_APPEND_DATA(*ace))
+			setmode(attrs, modes[1], IS_FSAL_ACE_ALLOW(*ace));
+		if (IS_FSAL_ACE_EXECUTE(*ace))
+			setmode(attrs, modes[2], IS_FSAL_ACE_ALLOW(*ace));
+
+	}
+
+	FSAL_SET_MASK(attrs->mask, ATTR_MODE);
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 

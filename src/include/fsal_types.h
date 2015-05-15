@@ -149,6 +149,7 @@ typedef uint32_t fsal_aceflag_t;
 
 /** ACE internal flags */
 
+#define FSAL_ACE_IFLAG_MODE_GEN       0x10000000
 #define FSAL_ACE_IFLAG_EXCLUDE_FILES  0x40000000
 #define FSAL_ACE_IFLAG_EXCLUDE_DIRS   0x20000000
 #define FSAL_ACE_IFLAG_SPECIAL_ID     0x80000000
@@ -280,6 +281,9 @@ typedef struct fsal_acl_data__ {
 
 /* Macros for internal NFS4 ACE flags. */
 
+#define IS_FSAL_ACE_MODE_GEN(ACE) \
+	IS_FSAL_ACE_BIT(GET_FSAL_ACE_IFLAG(ACE), \
+			FSAL_ACE_IFLAG_MODE_GEN)
 #define IS_FSAL_ACE_SPECIAL_ID(ACE) \
 	IS_FSAL_ACE_BIT(GET_FSAL_ACE_IFLAG(ACE), \
 			FSAL_ACE_IFLAG_SPECIAL_ID)

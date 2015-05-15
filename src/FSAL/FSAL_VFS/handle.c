@@ -1325,6 +1325,9 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 	struct closefd cfd = { .fd = -1, .close_fd = false };
 	struct stat stat;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
+#ifdef ENABLE_RFC_ACL
+	fsal_status_t fsal_status = {0, 0};
+#endif /* ENABLE_RFC_ACL */
 	int retval = 0;
 	int open_flags = O_RDONLY;
 
@@ -1344,6 +1347,26 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 		fsal_error = posix2fsal_error(retval);
 		goto hdlerr;
 	}
+
+#ifdef ENABLE_RFC_ACL
+	if (FSAL_TEST_MASK(attrs->mask, ATTR_MODE) &&
+	    !FSAL_TEST_MASK(attrs->mask, ATTR_ACL)) {
+		/* Set ACL from MODE */
+		fsal_status = fsal_mode_to_acl(attrs, myself->attributes.acl);
+	} else {
+		/* If ATTR_ACL is set, mode needs to be adjusted no matter what.
+		 * See 7530 s 6.4.1.3 */
+		if (!FSAL_TEST_MASK(attrs->mask, ATTR_MODE))
+			attrs->mode = myself->attributes.mode;
+		fsal_status = fsal_acl_to_mode(attrs);
+	}
+	if (FSAL_IS_ERROR(fsal_status)) {
+		fsal_error = fsal_status.major;
+		retval = fsal_status.minor;
+		goto hdlerr;
+	}
+#endif /* ENABLE_RFC_ACL */
+
 
 	/* This is yet another "you can't get there from here".  If this object
 	 * is a socket (AF_UNIX), an fd on the socket s useless _period_.
