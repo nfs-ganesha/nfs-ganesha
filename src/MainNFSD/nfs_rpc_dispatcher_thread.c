@@ -1535,11 +1535,9 @@ static inline void free_nfs_request(request_data_t *nfsreq)
 }
 
 const nfs_function_desc_t *nfs_rpc_get_funcdesc(nfs_request_data_t *);
-static int nfs_rpc_get_args(struct fridgethr_context *, nfs_request_data_t *);
+static int nfs_rpc_get_args(nfs_request_data_t *);
 
-static inline enum auth_stat AuthenticateRequest(struct fridgethr_context
-						 *thr_ctx,
-						 nfs_request_data_t *nfsreq,
+static inline enum auth_stat AuthenticateRequest(nfs_request_data_t *nfsreq,
 						 bool *no_dispatch)
 {
 	struct svc_req *req = &(nfsreq->req);
@@ -1770,8 +1768,7 @@ static bool is_rpc_call_valid(nfs_request_data_t *reqnfs)
 	return false;
 }				/* is_rpc_call_valid */
 
-enum xprt_stat thr_decode_rpc_request(struct fridgethr_context
-						    *thr_ctx, SVCXPRT *xprt)
+enum xprt_stat thr_decode_rpc_request(void *context, SVCXPRT *xprt)
 {
 	request_data_t *nfsreq;
 	enum xprt_stat stat = XPRT_IDLE;
@@ -1780,7 +1777,9 @@ enum xprt_stat thr_decode_rpc_request(struct fridgethr_context
 	bool enqueued = false;
 	bool recv_status;
 
-	LogDebug(COMPONENT_DISPATCH, "enter");
+	LogDebug(COMPONENT_DISPATCH,
+		 "%p context %p",
+		 xprt, context);
 
 	nfsreq = alloc_nfs_request(xprt);	/* ! NULL */
 
@@ -1838,38 +1837,37 @@ enum xprt_stat thr_decode_rpc_request(struct fridgethr_context
 				 xprt->xp_fd, addrbuf, stat);
 		}
 		goto done;
-	} else {
-		/* XXX so long as nfs_rpc_get_funcdesc calls is_rpc_call_valid
-		 * and fails if that call fails, there is no reason to call that
-		 * function again, below */
-		if (is_rpc_call_valid(nfsreq->r_u.nfs) == false)
-			goto finish;
-		nfsreq->r_u.nfs->funcdesc =
-		    nfs_rpc_get_funcdesc(nfsreq->r_u.nfs);
-		if (AuthenticateRequest(thr_ctx,
-					nfsreq->r_u.nfs,
-					&no_dispatch) != AUTH_OK ||
-		    no_dispatch)
-			goto finish;
-
-		if (!nfs_rpc_get_args(thr_ctx, nfsreq->r_u.nfs))
-			goto finish;
-
-		/* update accounting */
-		if (!gsh_xprt_ref
-		    (xprt, XPRT_PRIVATE_FLAG_INCREQ, __func__, __LINE__)) {
-			stat = XPRT_DIED;
-			goto finish;
-		}
-
-		/* XXX as above, the call has already passed is_rpc_call_valid,
-		 * the former check here is removed. */
-		nfs_rpc_enqueue_req(nfsreq);
-		enqueued = true;
 	}
+
+	/* XXX so long as nfs_rpc_get_funcdesc calls is_rpc_call_valid
+	 * and fails if that call fails, there is no reason to call that
+	 * function again, below */
+	if (!is_rpc_call_valid(nfsreq->r_u.nfs))
+		goto finish;
+
+	nfsreq->r_u.nfs->funcdesc = nfs_rpc_get_funcdesc(nfsreq->r_u.nfs);
+	if (AuthenticateRequest(nfsreq->r_u.nfs, &no_dispatch) != AUTH_OK
+	 || no_dispatch)
+		goto finish;
+
+	if (!nfs_rpc_get_args(nfsreq->r_u.nfs))
+		goto finish;
+
+	/* update accounting */
+	if (!gsh_xprt_ref(xprt, XPRT_PRIVATE_FLAG_INCREQ, __func__, __LINE__)) {
+		stat = XPRT_DIED;
+		goto unlock;
+	}
+
+	/* XXX as above, the call has already passed is_rpc_call_valid,
+	 * the former check here is removed. */
+	nfs_rpc_enqueue_req(nfsreq);
+	enqueued = true;
 
  finish:
 	stat = SVC_STAT(xprt);
+
+ unlock:
 	DISP_RUNLOCK(xprt);
 
  done:
@@ -1912,7 +1910,7 @@ void thr_decode_rpc_requests(struct fridgethr_context *thr_ctx)
 	LogFullDebug(COMPONENT_RPC, "enter xprt=%p", xprt);
 
 	do {
-		stat = thr_decode_rpc_request(thr_ctx, xprt);
+		stat = thr_decode_rpc_request(NULL, xprt);
 	} while (thr_continue_decoding(xprt, stat));
 
 	LogDebug(COMPONENT_DISPATCH, "exiting, stat=%s", xprt_stat_s[stat]);
@@ -2106,8 +2104,7 @@ static void *rpc_dispatcher_thread(void *arg)
 /*
  * Extract RPC argument.
  */
-int nfs_rpc_get_args(struct fridgethr_context *thr_ctx,
-		     nfs_request_data_t *reqnfs)
+int nfs_rpc_get_args(nfs_request_data_t *reqnfs)
 {
 	SVCXPRT *xprt = reqnfs->xprt;
 	nfs_arg_t *arg_nfs = &reqnfs->arg_nfs;
