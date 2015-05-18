@@ -73,9 +73,10 @@ cache_inode_statfs(cache_entry_t *entry,
 	}
 	LogFullDebug(COMPONENT_CACHE_INODE,
 		     "cache_inode_statfs: dynamicinfo: {total_bytes = %" PRIu64
-		     ", " "free_bytes = %" PRIu64 ", avail_bytes = %" PRIu64
+		     ", free_bytes = %" PRIu64 ", avail_bytes = %" PRIu64
 		     ", total_files = %" PRIu64 ", free_files = %" PRIu64
-		     ", avail_files = %" PRIu64 "}", dynamicinfo->total_bytes,
+		     ", avail_files = %" PRIu64 "}",
+		     dynamicinfo->total_bytes,
 		     dynamicinfo->free_bytes, dynamicinfo->avail_bytes,
 		     dynamicinfo->total_files, dynamicinfo->free_files,
 		     dynamicinfo->avail_files);

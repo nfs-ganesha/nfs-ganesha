@@ -483,6 +483,7 @@ lru_reap_impl(enum lru_q_id qid)
 			if (LRU_ENTRY_RECLAIMABLE(entry, refcnt)) {
 				/* it worked */
 				struct lru_q *q = lru_queue_of(entry);
+
 				cih_remove_latched(entry, &latch,
 						   CIH_REMOVE_QLOCKED);
 				LRU_DQ_SAFE(lru, q);
@@ -597,6 +598,7 @@ void cache_inode_lru_cleanup_try_push(cache_entry_t *entry)
 		if (LRU_ENTRY_RECLAIMABLE(entry, refcnt)) {
 			/* it worked */
 			struct lru_q *q = lru_queue_of(entry);
+
 			cih_remove_latched(entry, &latch,
 					   CIH_REMOVE_QLOCKED);
 			LRU_DQ_SAFE(lru, q);
@@ -686,6 +688,7 @@ lru_run(struct fridgethr_context *ctx)
 	/* The current count (after reaping) of open FDs */
 	size_t currentopen = 0;
 	struct lru_q *q;
+	time_t new_thread_wait;
 
 	SetNameFunction("cache_lru");
 
@@ -715,8 +718,7 @@ lru_run(struct fridgethr_context *ctx)
 	if ((atomic_fetch_size_t(&open_fd_count) < lru_state.fds_lowat)
 	    && cache_param.use_fd_cache) {
 		LogDebug(COMPONENT_CACHE_INODE_LRU,
-			 "FD count is %zd and low water mark is "
-			 "%d: not reaping.",
+			 "FD count is %zd and low water mark is %d: not reaping.",
 			 atomic_fetch_size_t(&open_fd_count),
 			 lru_state.fds_lowat);
 		if (cache_param.use_fd_cache
@@ -733,13 +735,11 @@ lru_run(struct fridgethr_context *ctx)
 		   value is less than the work to do in a single queue,
 		   don't spin through more passes. */
 		size_t workpass = 0;
-
 		time_t curr_time = time(NULL);
-		fdratepersec =
-		    (curr_time <=
-		     lru_state.prev_time) ? 1 : (formeropen -
-						 lru_state.prev_fd_count) /
-		    (curr_time - lru_state.prev_time);
+
+		fdratepersec = (curr_time <= lru_state.prev_time)
+			? 1 : (formeropen - lru_state.prev_fd_count) /
+					(curr_time - lru_state.prev_time);
 
 		LogFullDebug(COMPONENT_CACHE_INODE_LRU,
 			     "fdrate:%u fdcount:%zd slept for %" PRIu64 " sec",
@@ -748,8 +748,7 @@ lru_run(struct fridgethr_context *ctx)
 
 		if (extremis) {
 			LogDebug(COMPONENT_CACHE_INODE_LRU,
-				 "Open FDs over high water mark, "
-				 "reapring aggressively.");
+				 "Open FDs over high water mark, reapring aggressively.");
 		}
 
 		/* Total fds closed between all lanes and all current runs. */
@@ -770,21 +769,20 @@ lru_run(struct fridgethr_context *ctx)
 				cache_entry_t *entry;
 				/* Current queue lane */
 				struct lru_q_lane *qlane = &LRU[lane];
-				q = &qlane->L1;
 				/* entry refcnt */
 				uint32_t refcnt;
 
+				q = &qlane->L1;
+
 				LogDebug(COMPONENT_CACHE_INODE_LRU,
-					 "Reaping up to %d entries from lane "
-					 "%zd",
+					 "Reaping up to %d entries from lane %zd",
 					 lru_state.per_lane_work, lane);
 
 				LogFullDebug(COMPONENT_CACHE_INODE_LRU,
-					     "formeropen=%zd totalwork=%zd "
-					     "workpass=%zd closed:%zd "
-					     "totalclosed:%" PRIu64, formeropen,
-					     totalwork, workpass, closed,
-					     totalclosed);
+					     "formeropen=%zd totalwork=%zd workpass=%zd closed:%zd totalclosed:%"
+					     PRIu64,
+					     formeropen, totalwork, workpass,
+					     closed, totalclosed);
 
 				QLOCK(qlane);
 				qlane->iter.active = true;	/* ACTIVE */
@@ -868,8 +866,7 @@ lru_run(struct fridgethr_context *ctx)
 				qlane->iter.active = false; /* !ACTIVE */
 				QUNLOCK(qlane);
 				LogDebug(COMPONENT_CACHE_INODE_LRU,
-					 "Actually processed %zd entries on "
-					 "lane %zd closing %zd descriptors",
+					 "Actually processed %zd entries on lane %zd closing %zd descriptors",
 					 workdone, lane, closed);
 				workpass += workdone;
 			}	/* foreach lane */
@@ -888,9 +885,7 @@ lru_run(struct fridgethr_context *ctx)
 			if (++lru_state.futility >
 			    cache_param.futility_count) {
 				LogCrit(COMPONENT_CACHE_INODE_LRU,
-					"Futility count exceeded.  The LRU "
-					"thread is unable to make progress in "
-					"reclaiming FDs.  Disabling FD cache.");
+					"Futility count exceeded.  The LRU thread is unable to make progress in reclaiming FDs.  Disabling FD cache.");
 				lru_state.caching_fds = false;
 			}
 		}
@@ -911,28 +906,27 @@ lru_run(struct fridgethr_context *ctx)
 	lru_state.prev_time = time(NULL);
 
 	fdnorm = (fdratepersec + fds_avg) / fds_avg;
-	fddelta =
-	    (currentopen >
-	     lru_state.fds_lowat) ? (currentopen - lru_state.fds_lowat) : 0;
+	fddelta = (currentopen > lru_state.fds_lowat)
+			? (currentopen - lru_state.fds_lowat) : 0;
 	fdmulti = (fddelta * 10) / fds_avg;
 	fdmulti = fdmulti ? fdmulti : 1;
-	fdwait_ratio =
-	    lru_state.fds_hiwat / ((lru_state.fds_hiwat + fdmulti * fddelta) *
-				   fdnorm);
-	time_t new_thread_wait = threadwait * fdwait_ratio;
+	fdwait_ratio = lru_state.fds_hiwat /
+			((lru_state.fds_hiwat + fdmulti * fddelta) * fdnorm);
+
+	new_thread_wait = threadwait * fdwait_ratio;
+
 	if (new_thread_wait < cache_param.lru_run_interval / 10)
 		new_thread_wait = cache_param.lru_run_interval / 10;
 
 	fridgethr_setwait(ctx, new_thread_wait);
 
 	LogDebug(COMPONENT_CACHE_INODE_LRU,
-		 "After work, open_fd_count:%zd  count:%" PRIu64 " fdrate:%u "
-		 "threadwait=%" PRIu64 "\n",
+		 "After work, open_fd_count:%zd  count:%" PRIu64
+		 " fdrate:%u threadwait=%" PRIu64,
 		 atomic_fetch_size_t(&open_fd_count),
 		 lru_state.entries_used, fdratepersec, threadwait);
 	LogFullDebug(COMPONENT_CACHE_INODE_LRU,
-		     "currentopen=%zd futility=%d totalwork=%zd "
-		     "biggest_window=%d extremis=%d lanes=%d " "fds_lowat=%d ",
+		     "currentopen=%zd futility=%d totalwork=%zd biggest_window=%d extremis=%d lanes=%d fds_lowat=%d ",
 		     currentopen, lru_state.futility, totalwork,
 		     lru_state.biggest_window, extremis, LRU_N_Q_LANES,
 		     lru_state.fds_lowat);
@@ -972,8 +966,7 @@ cache_inode_lru_pkginit(void)
 	if (getrlimit(RLIMIT_NOFILE, &rlim) != 0) {
 		code = errno;
 		LogCrit(COMPONENT_CACHE_INODE_LRU,
-			"Call to getrlimit failed with error %d.  "
-			"This should not happen.  Assigning default of %d.",
+			"Call to getrlimit failed with error %d. This should not happen.  Assigning default of %d.",
 			code, FD_FALLBACK_LIMIT);
 		lru_state.fds_system_imposed = FD_FALLBACK_LIMIT;
 	} else {
@@ -981,19 +974,17 @@ cache_inode_lru_pkginit(void)
 			/* Save the old soft value so we can fall back to it
 			   if setrlimit fails. */
 			rlim_t old_soft = rlim.rlim_cur;
+
 			LogInfo(COMPONENT_CACHE_INODE_LRU,
 				"Attempting to increase soft limit from %"
-				PRIu64 " " "to hard limit of %" PRIu64 "",
+				PRIu64 " to hard limit of %" PRIu64,
 				(uint64_t) rlim.rlim_cur,
 				(uint64_t) rlim.rlim_max);
 			rlim.rlim_cur = rlim.rlim_max;
 			if (setrlimit(RLIMIT_NOFILE, &rlim) < 0) {
 				code = errno;
 				LogWarn(COMPONENT_CACHE_INODE_LRU,
-					"Attempt to raise soft FD limit to "
-					"hard FD limit "
-					"failed with error %d.  Sticking to "
-					"soft limit.",
+					"Attempt to raise soft FD limit to hard FD limit failed with error %d.  Sticking to soft limit.",
 					code);
 				rlim.rlim_cur = old_soft;
 			}
@@ -1014,21 +1005,17 @@ cache_inode_lru_pkginit(void)
 			if (code != 1) {
 				code = errno;
 				LogMajor(COMPONENT_CACHE_INODE_LRU,
-					 "The rlimit on open file descriptors "
-					 "is infinite and the attempt to find "
-					 "the system maximum failed with error "
-					 "%d.  Assigning the default fallback "
-					 "of %d which is almost certainly too "
-					 "small.  If you are on a Linux system,"
-					 " this should never happen.  If "
-					 "you are running some other system, "
-					 "please set an rlimit on file "
-					 "descriptors (for example, "
-					 "with ulimit) for this process and "
-					 " consider editing " __FILE__
-					 "to add support for finding "
-					 "your system's maximum.", code,
+					 "The rlimit on open file descriptors is infinite and the attempt to find the system maximum failed with error %d.",
+					 code);
+				LogMajor(COMPONENT_CACHE_INODE_LRU,
+					 "Assigning the default fallback of %d which is almost certainly too small.",
 					 FD_FALLBACK_LIMIT);
+				LogMajor(COMPONENT_CACHE_INODE_LRU,
+					 "If you are on a Linux system, this should never happen.");
+				LogMajor(COMPONENT_CACHE_INODE_LRU,
+					 "If you are running some other system, please set an rlimit on file descriptors (for example, with ulimit) for this process and consider editing "
+					 __FILE__
+					 "to add support for finding your system's maximum.");
 				lru_state.fds_system_imposed =
 				    FD_FALLBACK_LIMIT;
 			}

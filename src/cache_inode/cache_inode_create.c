@@ -161,7 +161,6 @@ cache_inode_create(cache_entry_t *parent,
 		LogFullDebug(COMPONENT_CACHE_INODE,
 			     "create failed because inconsistent entry");
 		goto out;
-		break;
 	}
 
 	/* Refresh the parent's attributes */
@@ -180,8 +179,7 @@ cache_inode_create(cache_entry_t *parent,
 			if (*entry != NULL) {
 				status = CACHE_INODE_ENTRY_EXISTS;
 				LogFullDebug(COMPONENT_CACHE_INODE,
-					     "create failed because it already "
-					     "exists");
+					     "create failed because it already exists");
 				if ((*entry)->type != type) {
 					/* Incompatible types, returns NULL */
 					cache_inode_put(*entry);

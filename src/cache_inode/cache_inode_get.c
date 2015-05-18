@@ -161,6 +161,7 @@ void clean_mapping(cache_entry_t *entry)
 	 */
 	glist_for_each_safe(glist, glistn, &entry->export_list) {
 		struct entry_export_map *expmap;
+
 		expmap = glist_entry(glist,
 				     struct entry_export_map,
 				     export_per_entry);

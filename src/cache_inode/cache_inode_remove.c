@@ -185,14 +185,14 @@ cache_inode_remove(cache_entry_t *entry, const char *name)
 	status = status_ref_entry;
 	if (status != CACHE_INODE_SUCCESS) {
 		LogDebug(COMPONENT_CACHE_INODE,
-			 "cache_inode_refresh_attrs_locked(entry %p %s) "
-			 "returned %s", entry, name,
-			 cache_inode_err_str(status_ref_entry));
+			 "cache_inode_refresh_attrs_locked(entry %p %s) returned %s",
+			 entry, name, cache_inode_err_str(status_ref_entry));
 	}
 
 out:
-	LogFullDebug(COMPONENT_CACHE_INODE, "remove %s: status=%s", name,
-		     cache_inode_err_str(status));
+	LogFullDebug(COMPONENT_CACHE_INODE,
+		     "remove %s: status=%s",
+		     name, cache_inode_err_str(status));
 
 	/* This is for the reference taken by lookup */
 	if (to_remove_entry)

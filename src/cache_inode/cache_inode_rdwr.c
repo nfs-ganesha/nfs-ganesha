@@ -165,6 +165,7 @@ cache_inode_rdwr_plus(cache_entry_t *entry,
 					    buffer, bytes_moved, eof, info);
 	} else {
 		bool fsal_sync = *sync;
+
 		if (io_direction == CACHE_INODE_WRITE)
 			fsal_status =
 			  obj_hdl->obj_ops.write(obj_hdl, offset,
@@ -190,15 +191,13 @@ cache_inode_rdwr_plus(cache_entry_t *entry,
 	}
 
 	LogFullDebug(COMPONENT_FSAL,
-		     "cache_inode_rdwr: FSAL IO operation returned "
-		     "%d, asked_size=%zu, effective_size=%zu",
+		     "cache_inode_rdwr: FSAL IO operation returned %d, asked_size=%zu, effective_size=%zu",
 		     fsal_status.major, io_size, *bytes_moved);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		if (fsal_status.major == ERR_FSAL_DELAY) {
 			LogEvent(COMPONENT_CACHE_INODE,
-				 "cache_inode_rdwr: FSAL_write "
-				 " returned EBUSY");
+				 "cache_inode_rdwr: FSAL_write returned EBUSY");
 		} else {
 			LogDebug(COMPONENT_CACHE_INODE,
 				 "cache_inode_rdwr: fsal_status.major = %d",
@@ -240,9 +239,9 @@ cache_inode_rdwr_plus(cache_entry_t *entry,
 	}
 
 	LogFullDebug(COMPONENT_CACHE_INODE,
-		     "cache_inode_rdwr: inode/direct: io_size=%zu, "
-		     "bytes_moved=%zu, offset=%" PRIu64, io_size, *bytes_moved,
-		     offset);
+		     "cache_inode_rdwr: inode/direct: io_size=%zu, bytes_moved=%zu, offset=%"
+		     PRIu64,
+		     io_size, *bytes_moved, offset);
 
 	if (opened) {
 		PTHREAD_RWLOCK_unlock(&entry->content_lock);

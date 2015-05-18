@@ -136,6 +136,7 @@ bool not_in_group_list(gid_t gid)
 {
 	const struct user_cred *creds = op_ctx->creds;
 	int i;
+
 	if (creds->caller_gid == gid) {
 
 		LogDebugCIA(COMPONENT_CACHE_INODE, COMPONENT_NFS_V4_ACL,

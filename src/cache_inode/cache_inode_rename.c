@@ -366,9 +366,8 @@ cache_inode_rename(cache_entry_t *dir_src,
 		 * resource in this case */
 
 		LogDebug(COMPONENT_CACHE_INODE,
-			 "Rename (%p,%s)->(%p,%s) : source and target "
-			 "directory  the same", dir_src, oldname, dir_dest,
-			 newname);
+			 "Rename (%p,%s)->(%p,%s) : source and target directory  the same",
+			 dir_src, oldname, dir_dest, newname);
 
 		cache_inode_status_t tmp_status =
 		    cache_inode_rename_cached_dirent(dir_dest,

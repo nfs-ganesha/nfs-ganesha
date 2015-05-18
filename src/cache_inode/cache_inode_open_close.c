@@ -196,8 +196,8 @@ cache_inode_open(cache_entry_t *entry,
 			}
 
 			LogDebug(COMPONENT_CACHE_INODE,
-				 "cache_inode_open: returning %d(%s) from "
-				 "FSAL_close", status,
+				 "cache_inode_open: returning %d(%s) from FSAL_close",
+				 status,
 				 cache_inode_err_str(status));
 
 			goto unlock;
@@ -210,13 +210,13 @@ cache_inode_open(cache_entry_t *entry,
 		current_flags = obj_hdl->obj_ops.status(obj_hdl);
 	}
 
-	if ((current_flags == FSAL_O_CLOSED)) {
+	if (current_flags == FSAL_O_CLOSED) {
 		fsal_status = obj_hdl->obj_ops.open(obj_hdl, openflags);
 		if (FSAL_IS_ERROR(fsal_status)) {
 			status = cache_inode_error_convert(fsal_status);
 			LogDebug(COMPONENT_CACHE_INODE,
-				 "cache_inode_open: returning %d(%s) from "
-				 "FSAL_open", status,
+				 "cache_inode_open: returning %d(%s) from FSAL_open",
+				 status,
 				 cache_inode_err_str(status));
 			if (fsal_status.major == ERR_FSAL_STALE) {
 				LogEvent(COMPONENT_CACHE_INODE,
@@ -233,8 +233,8 @@ cache_inode_open(cache_entry_t *entry,
 
 
 		LogDebug(COMPONENT_CACHE_INODE,
-			 "cache_inode_open: pentry %p: openflags = %d, "
-			 "open_fd_count = %zd", entry, openflags,
+			 "cache_inode_open: pentry %p: openflags = %d, open_fd_count = %zd",
+			 entry, openflags,
 			 atomic_fetch_size_t(&open_fd_count));
 	}
 
@@ -314,9 +314,8 @@ cache_inode_close(cache_entry_t *entry, uint32_t flags)
 				cache_inode_kill_entry(entry);
 			}
 			LogCrit(COMPONENT_CACHE_INODE,
-				"FSAL_close failed, returning %d(%s) for entry "
-				"%p", status, cache_inode_err_str(status),
-				entry);
+				"FSAL_close failed, returning %d(%s) for entry %p",
+				status, cache_inode_err_str(status), entry);
 			goto unlock;
 		}
 		if (!FSAL_IS_ERROR(fsal_status))

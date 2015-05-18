@@ -259,8 +259,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 	if (oentry) {
 		/* Entry is already in the cache, do not add it */
 		LogDebug(COMPONENT_CACHE_INODE,
-			 "Trying to add an already existing "
-			 "entry 1. Found entry %p type: %d, New type: %d",
+			 "Trying to add an already existing entry 1. Found entry %p type: %d, New type: %d",
 			 oentry, oentry->type, new_obj->type);
 		status = cache_inode_lru_ref(oentry, LRU_FLAG_NONE);
 		if (status == CACHE_INODE_SUCCESS) {
@@ -374,7 +373,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 	case BLOCK_FILE:
 	case CHARACTER_FILE:
 		LogDebug(COMPONENT_CACHE_INODE,
-			 "Adding a special file of type %d " "entry=%p",
+			 "Adding a special file of type %d entry=%p",
 			 nentry->type, nentry);
 		break;
 
@@ -649,8 +648,7 @@ cache_inode_error_convert(fsal_status_t fsal_status)
 
 	case ERR_FSAL_NOT_OPENED:
 		LogDebug(COMPONENT_CACHE_INODE,
-			 "Conversion of ERR_FSAL_NOT_OPENED to "
-			 "CACHE_INODE_FSAL_ERROR");
+			 "Conversion of ERR_FSAL_NOT_OPENED to CACHE_INODE_FSAL_ERROR");
 		return CACHE_INODE_FSAL_ERROR;
 
 	case ERR_FSAL_ISDIR:
@@ -695,8 +693,7 @@ cache_inode_error_convert(fsal_status_t fsal_status)
 		/* These errors should be handled inside Cache Inode (or
 		 * should never be seen by Cache Inode) */
 		LogDebug(COMPONENT_CACHE_INODE,
-			 "Conversion of FSAL error %d,%d to "
-			 "CACHE_INODE_FSAL_ERROR",
+			 "Conversion of FSAL error %d,%d to CACHE_INODE_FSAL_ERROR",
 			 fsal_status.major, fsal_status.minor);
 		return CACHE_INODE_FSAL_ERROR;
 	}
@@ -704,9 +701,7 @@ cache_inode_error_convert(fsal_status_t fsal_status)
 	/* We should never reach this line, this may produce a warning with
 	 * certain compiler */
 	LogCrit(COMPONENT_CACHE_INODE,
-		"cache_inode_error_convert: default conversion to "
-		"CACHE_INODE_FSAL_ERROR for error %d, line %u should never be "
-		"reached",
+		"cache_inode_error_convert: default conversion to CACHE_INODE_FSAL_ERROR for error %d, line %u should never be reached",
 		fsal_status.major, __LINE__);
 	return CACHE_INODE_FSAL_ERROR;
 }
@@ -872,8 +867,8 @@ cache_inode_lock_trust_attrs(cache_entry_t *entry,
 
 		if (cache_status != CACHE_INODE_SUCCESS) {
 			LogCrit(COMPONENT_CACHE_INODE,
-				"cache_inode_invalidate_all_cached_dirent "
-				"returned %d (%s)", cache_status,
+				"cache_inode_invalidate_all_cached_dirent returned %d (%s)",
+				cache_status,
 				cache_inode_err_str(cache_status));
 			goto unlock;
 		}
