@@ -887,8 +887,7 @@ static fsal_status_t handle_digest(const struct fsal_obj_handle *handle_pub,
 	case FSAL_DIGEST_NFSV4:
 		if (fh_desc->len < sizeof(handle->vi)) {
 			LogMajor(COMPONENT_FSAL,
-				 "digest_handle: space too small for "
-				 "handle.  Need %zu, have %zu",
+				 "digest_handle: space too small for handle.  Need %zu, have %zu",
 				 sizeof(vinodeno_t), fh_desc->len);
 			return fsalstat(ERR_FSAL_TOOSMALL, 0);
 		} else {

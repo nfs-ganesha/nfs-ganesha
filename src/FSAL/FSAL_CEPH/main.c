@@ -330,8 +330,7 @@ MODULE_FINI void finish(void)
 
 	if (unregister_fsal(&CephFSM.fsal) != 0) {
 		LogCrit(COMPONENT_FSAL,
-			"Unable to unload Ceph FSAL.  Dying with extreme "
-			"prejudice.");
+			"Unable to unload Ceph FSAL.  Dying with extreme prejudice.");
 		abort();
 	}
 }

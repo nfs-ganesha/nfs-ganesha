@@ -66,7 +66,6 @@ static inline void local_invalidate(struct ds *ds, struct fsal_export *export)
 	};
 	up_async_invalidate(general_fridge, export->up_ops, export->fsal, &key,
 			    CACHE_INODE_INVALIDATE_ATTRS, NULL, NULL);
-	return;
 }
 
 /**
@@ -256,8 +255,8 @@ static nfsstat4 ds_write(struct fsal_ds_handle *const ds_pub,
 				parent_hash);
 			if (ceph_status != 0) {
 				LogMajor(COMPONENT_PNFS,
-					 "Filehandle connection failed"
-					 " with: %d\n", ceph_status);
+					 "Filehandle connection failed with: %d\n",
+					 ceph_status);
 				return posix2nfs4_error(-ceph_status);
 			}
 			ds->connected = true;
