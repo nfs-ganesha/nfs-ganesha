@@ -67,12 +67,12 @@
  *      - ERR_FSAL_NO_ERROR: no error.
  *      - Another error code if an error occured during this call.
  */
-fsal_status_t GPFSFSAL_open(struct fsal_obj_handle *obj_hdl,	/* IN */
-			    const struct req_op_context *p_context,	/* IN */
-			    fsal_openflags_t openflags,	/* IN */
-			    int *file_desc,	/* IN/OUT */
-			    struct attrlist *p_file_attributes, /* IN/OUT */
-			    bool reopen) /* IN */
+fsal_status_t GPFSFSAL_open(struct fsal_obj_handle *obj_hdl,
+			    const struct req_op_context *p_context,
+			    fsal_openflags_t openflags,
+			    int *file_desc,
+			    struct attrlist *p_file_attributes,
+			    bool reopen)
 {
 	int rc;
 	fsal_status_t status;
@@ -142,12 +142,12 @@ fsal_status_t GPFSFSAL_open(struct fsal_obj_handle *obj_hdl,	/* IN */
  *      - ERR_FSAL_NO_ERROR: no error.
  *      - Another error code if an error occured during this call.
  */
-fsal_status_t GPFSFSAL_read(int fd,	/* IN */
-			    uint64_t offset,	/* IN */
-			    size_t buffer_size,	/* IN */
-			    caddr_t buffer,	/* OUT */
-			    size_t *p_read_amount,	/* OUT */
-			    bool *p_end_of_file)   /* OUT */
+fsal_status_t GPFSFSAL_read(int fd,
+			    uint64_t offset,
+			    size_t buffer_size,
+			    caddr_t buffer,
+			    size_t *p_read_amount,
+			    bool *p_end_of_file)
 {
 	struct read_arg rarg;
 	ssize_t nb_read;
@@ -201,12 +201,12 @@ fsal_status_t GPFSFSAL_read(int fd,	/* IN */
  *      - ERR_FSAL_NO_ERROR: no error.
  *      - Another error code if an error occured during this call.
  */
-fsal_status_t GPFSFSAL_write(int fd,	/* IN */
-			     uint64_t offset,	/* IN */
-			     size_t buffer_size,	/* IN */
-			     caddr_t buffer,	/* IN */
-			     size_t *p_write_amount,	/* OUT */
-			     bool *fsal_stable,	/* IN/OUT */
+fsal_status_t GPFSFSAL_write(int fd,
+			     uint64_t offset,
+			     size_t buffer_size,
+			     caddr_t buffer,
+			     size_t *p_write_amount,
+			     bool *fsal_stable,
 			     const struct req_op_context *p_context)
 {
 	struct write_arg warg;
@@ -256,10 +256,10 @@ fsal_status_t GPFSFSAL_write(int fd,	/* IN */
  *      - ERR_FSAL_NO_ERROR: no error.
  *      - Another error code if an error occured during this call.
  */
-fsal_status_t GPFSFSAL_alloc(int fd,			/* IN */
-			     uint64_t offset,		/* IN */
-			     uint64_t length,		/* IN */
-			     bool allocate)		/* IN */
+fsal_status_t GPFSFSAL_alloc(int fd,
+			     uint64_t offset,
+			     uint64_t length,
+			     bool allocate)
 {
 	struct alloc_arg aarg;
 	int rc;

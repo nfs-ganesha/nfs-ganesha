@@ -148,8 +148,8 @@ fsal_status_t gpfsfsal_xstat_2_fsal_attributes(gpfsfsal_xstat_t *p_buffxstat,
 
 	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_MODE)) {
 		p_fsalattr_out->mode = unix2fsal_mode(p_buffstat->st_mode);
-		LogFullDebug(COMPONENT_FSAL, "mode = %llu",
-			     (long long unsigned int)p_fsalattr_out->mode);
+		LogFullDebug(COMPONENT_FSAL, "mode = %"PRIu32,
+			     p_fsalattr_out->mode);
 	}
 	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_NUMLINKS)) {
 		p_fsalattr_out->numlinks = p_buffstat->st_nlink;

@@ -131,9 +131,8 @@ fsal_status_t GPFSFSAL_lookup(const struct req_op_context *p_context,
 		*new_fs = lookup_fsid(&fsid, fsid_type);
 		if (*new_fs == NULL) {
 			LogDebug(COMPONENT_FSAL,
-				 "Lookup of %s crosses filesystem boundary to "
-				 "unknown file system "
-				 "fsid=0x%016"PRIx64".0x%016"PRIx64,
+				 "Lookup of %s crosses filesystem boundary to unknown file system fsid=0x%016"
+				 PRIx64".0x%016"PRIx64,
 				 p_filename, fsid.major, fsid.minor);
 			return fsalstat(ERR_FSAL_XDEV, EXDEV);
 		}

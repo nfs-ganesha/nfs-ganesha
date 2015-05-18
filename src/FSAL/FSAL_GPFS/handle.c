@@ -910,18 +910,16 @@ fsal_status_t gpfs_create_handle(struct fsal_export *exp_hdl,
 
 	if (fs == NULL) {
 		LogInfo(COMPONENT_FSAL,
-			"Could not find filesystem for "
-			"fsid=0x%016"PRIx64".0x%016"PRIx64
-			" from handle",
+			"Could not find filesystem for fsid=0x%016"PRIx64
+			".0x%016"PRIx64" from handle",
 			fsid.major, fsid.minor);
 		return fsalstat(ERR_FSAL_STALE, ESTALE);
 	}
 
 	if (fs->fsal != exp_hdl->fsal) {
 		LogInfo(COMPONENT_FSAL,
-			"Non GPFS filesystem "
-			"fsid=0x%016"PRIx64".0x%016"PRIx64
-			" from handle",
+			"Non GPFS filesystem fsid=0x%016"PRIx64
+			".0x%016"PRIx64" from handle",
 			fsid.major, fsid.minor);
 		return fsalstat(ERR_FSAL_STALE, ESTALE);
 	}

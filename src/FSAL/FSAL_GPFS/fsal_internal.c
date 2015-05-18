@@ -713,7 +713,7 @@ fsal_status_t fsal_readlink_by_handle(int dirfd,
  * \return GPFS version
  */
 
-int fsal_internal_version()
+int fsal_internal_version(void)
 {
 	int rc;
 	int errsv = 0;

@@ -118,6 +118,7 @@ fsal_status_t gpfs_read(struct fsal_obj_handle *obj_hdl,
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval = 0;
 	fsal_status_t status;
+
 	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
 
 	assert(myself->u.file.fd >= 0
@@ -429,8 +430,7 @@ fsal_status_t gpfs_lock_op(struct fsal_obj_handle *obj_hdl,
 	}
 	if (conflicting_lock == NULL && lock_op == FSAL_OP_LOCKT) {
 		LogDebug(COMPONENT_FSAL,
-			 "conflicting_lock argument can't"
-			 " be NULL with lock_op  = LOCKT");
+			 "conflicting_lock argument can't be NULL with lock_op  = LOCKT");
 		fsal_error = ERR_FSAL_FAULT;
 		goto out;
 	}
