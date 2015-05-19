@@ -80,8 +80,8 @@ void display_vfs_handle(struct display_buffer *dspbuf,
 	int b_left;
 
 	b_left = display_printf(dspbuf,
-				"Handle len %hhu:"
-				" fsid=0x%016"PRIx32".0x%016"PRIx32
+				"Handle len %hhu: fsid=0x%016"
+				PRIx32".0x%016"PRIx32
 				" fid_len=%"PRIu16
 				" fid_pad=%"PRIu16,
 				fh->handle_len,
@@ -242,8 +242,8 @@ bool vfs_valid_handle(struct gsh_buffdesc *desc)
 		int b_left;
 
 		b_left = display_printf(&dspbuf,
-					"Handle len %d: "
-					" fsid=0x%016"PRIx32".0x%016"PRIx32
+					"Handle len %d: fsid=0x%016"
+					PRIx32".0x%016"PRIx32
 					" fid_len=%"PRIu16
 					" fid_pad=%"PRIu16
 					(int) desc->len,

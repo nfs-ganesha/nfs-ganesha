@@ -155,8 +155,9 @@ static int file_attributes_to_xattr_attrs(struct attrlist *file_attrs,
 
 	if (unsupp) {
 		LogDebug(COMPONENT_FSAL,
-			 "Asking for unsupported attributes in %s(): %#llX removing it from asked attributes",
-			 __func__, (long long unsigned int)unsupp);
+			 "Asking for unsupported attributes in %s(): 0x%"
+			 PRIx64" removing it from asked attributes",
+			 __func__, unsupp);
 
 		xattr_attrs->mask &= (~unsupp);
 	}
@@ -441,6 +442,7 @@ fsal_status_t vfs_getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
 	/* search in xattrs */
 	if (!found) {
 		fsal_errors_t fe;
+
 		fd = (obj_hdl->type == DIRECTORY) ?
 			vfs_fsal_open(obj_handle, O_DIRECTORY, &fe) :
 			vfs_fsal_open(obj_handle, O_RDWR, &fe);
@@ -451,6 +453,7 @@ fsal_status_t vfs_getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
 		rc = xattr_name_to_id(fd, xattr_name);
 		if (rc < 0) {
 			int minor = errno;
+
 			close(fd);
 			return fsalstat(-rc, minor);
 		} else {
@@ -496,6 +499,7 @@ fsal_status_t vfs_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 		rc = xattr_id_to_name(fd, xattr_id, attr_name);
 		if (rc) {
 			int minor = errno;
+
 			close(fd);
 			return fsalstat(-rc, minor);
 		}
@@ -644,6 +648,7 @@ fsal_status_t vfs_setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 	rc = xattr_id_to_name(fd, xattr_id, name);
 	if (rc) {
 		int minor = errno;
+
 		close(fd);
 		return fsalstat(-rc, minor);
 	}
@@ -699,6 +704,7 @@ fsal_status_t vfs_remove_extattr_by_id(struct fsal_obj_handle *obj_hdl,
 	rc = xattr_id_to_name(fd, xattr_id, name);
 	if (rc) {
 		int minor = errno;
+
 		close(fd);
 		return fsalstat(-rc, minor);
 	}

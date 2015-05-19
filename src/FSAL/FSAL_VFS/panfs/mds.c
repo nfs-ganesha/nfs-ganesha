@@ -281,6 +281,7 @@ static void initiate_recall(struct vfs_fsal_obj_handle *myself,
 struct _recall_thread {
 	pthread_t thread;
 	int fd;
+	/** @toodo: not sure if this needs to be volatile */
 	volatile bool stop;
 };
 

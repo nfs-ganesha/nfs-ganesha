@@ -313,8 +313,7 @@ fsal_status_t vfs_lock_op(struct fsal_obj_handle *obj_hdl,
 			if (retval) {
 				retval = errno;	/* we lose the inital error */
 				LogCrit(COMPONENT_FSAL,
-					"After failing a lock request, I couldn't even"
-					" get the details of who owns the lock.");
+					"After failing a lock request, I couldn't even get the details of who owns the lock.");
 				fsal_error = posix2fsal_error(retval);
 				goto out;
 			}

@@ -109,9 +109,12 @@ static struct vfs_fsal_obj_handle *alloc_handle(int dirfd,
 		   special files  require craziness */
 		if (dir_fh == NULL) {
 			int retval;
+
 			vfs_alloc_handle(dir_fh);
+
 			retval =
 			    vfs_fd_to_handle(dirfd, hdl->obj_handle.fs, fh);
+
 			if (retval < 0)
 				goto spcerr;
 		}
@@ -166,10 +169,11 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 	int retval, dirfd;
 	struct stat stat;
 	vfs_file_handle_t *fh = NULL;
-	vfs_alloc_handle(fh);
 	fsal_dev_t dev;
 	struct fsal_filesystem *fs;
 	bool xfsal = false;
+
+	vfs_alloc_handle(fh);
 
 	*handle = NULL;		/* poison it first */
 	parent_hdl =
@@ -212,8 +216,8 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 		fs = lookup_dev(&dev);
 		if (fs == NULL) {
 			LogDebug(COMPONENT_FSAL,
-				 "Lookup of %s crosses filesystem boundary to "
-				 "unknown file system dev=%"PRIu64".%"PRIu64,
+				 "Lookup of %s crosses filesystem boundary to unknown file system dev=%"
+				 PRIu64".%"PRIu64,
 				 path, dev.major, dev.minor);
 			retval = EXDEV;
 			goto direrr;
@@ -356,6 +360,7 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 	int retval = 0;
 	int flags = O_PATH | O_NOACCESS;
 	vfs_file_handle_t *fh = NULL;
+
 	vfs_alloc_handle(fh);
 
 	LogDebug(COMPONENT_FSAL, "create %s", name);
@@ -444,6 +449,7 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 	int retval = 0;
 	int flags = O_PATH | O_NOACCESS;
 	vfs_file_handle_t *fh = NULL;
+
 	vfs_alloc_handle(fh);
 
 	LogDebug(COMPONENT_FSAL, "create %s", name);
@@ -536,8 +542,6 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 	gid_t group;
 	dev_t unix_dev = 0;
 	int flags = O_PATH | O_NOACCESS;
-	vfs_file_handle_t *fh = NULL;
-	vfs_alloc_handle(fh);
 
 	LogDebug(COMPONENT_FSAL, "create %s", name);
 
@@ -642,6 +646,7 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 	int retval = 0;
 	int flags = O_PATH | O_NOACCESS;
 	vfs_file_handle_t *fh = NULL;
+
 	vfs_alloc_handle(fh);
 
 	LogDebug(COMPONENT_FSAL, "create %s", name);
@@ -1008,6 +1013,7 @@ static fsal_status_t renamefile(struct fsal_obj_handle *obj_hdl,
 		 * Save the name in case we have to sort of undo.
 		 */
 		char *saved_name = obj->u.unopenable.name;
+
 		memcpy(obj->u.unopenable.dir, newdir->handle,
 		       sizeof(vfs_file_handle_t));
 		obj->u.unopenable.name = gsh_strdup(new_name);
@@ -1042,8 +1048,6 @@ static struct closefd vfs_fsal_open_and_stat(struct fsal_export *exp,
 	struct fsal_obj_handle *obj_hdl = &myself->obj_handle;
 	struct closefd cfd = { .fd = -1, .close_fd = false };
 	int retval = 0;
-	vfs_file_handle_t *fh = NULL;
-	vfs_alloc_handle(fh);
 	const char *func = "unknown";
 	struct vfs_filesystem *vfs_fs = myself->obj_handle.fs->private;
 
@@ -1112,7 +1116,9 @@ static struct closefd vfs_fsal_open_and_stat(struct fsal_export *exp,
 		retval = errno;
 		if (cfd.close_fd) {
 			int rc;
+
 			rc = close(cfd.fd);
+
 			if (rc < 0) {
 				rc = errno;
 				LogDebug(COMPONENT_FSAL, "close failed with %s",
@@ -1518,6 +1524,7 @@ static void release(struct fsal_obj_handle *obj_hdl)
 
 	if (type == REGULAR_FILE) {
 		fsal_status_t st = vfs_close(obj_hdl);
+
 		if (FSAL_IS_ERROR(st)) {
 			LogCrit(COMPONENT_FSAL,
 				"Could not close hdl 0x%p, error %s(%d)",
@@ -1697,9 +1704,8 @@ fsal_status_t vfs_check_handle(struct fsal_export *exp_hdl,
 		*fs = lookup_fsid(&fsid, fsid_type);
 		if (*fs == NULL) {
 			LogInfo(COMPONENT_FSAL,
-				"Could not map "
-				"fsid=0x%016"PRIx64".0x%016"PRIx64
-				" to filesytem",
+				"Could not map fsid=0x%016"PRIx64
+				".0x%016"PRIx64" to filesytem",
 				fsid.major, fsid.minor);
 			retval = ESTALE;
 			fsal_error = posix2fsal_error(retval);

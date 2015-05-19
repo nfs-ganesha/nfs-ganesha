@@ -75,6 +75,7 @@ struct config_block *vfs_sub_export_param = &export_param_block;
 void vfs_sub_fini(struct vfs_fsal_export *vfs)
 {
 	struct panfs_fsal_export *myself = EXPORT_PANFS_FROM_VFS(vfs);
+
 	pnfs_panfs_fini(myself->pnfs_data);
 }
 
@@ -82,6 +83,7 @@ void vfs_sub_init_handle_ops(struct vfs_fsal_export *vfs,
 			      struct fsal_obj_ops *ops)
 {
 	struct panfs_fsal_export *myself = EXPORT_PANFS_FROM_VFS(vfs);
+
 	if (myself->pnfs_enabled)
 		handle_ops_pnfs(ops);
 }
@@ -90,6 +92,7 @@ void vfs_sub_init_export_ops(struct vfs_fsal_export *vfs,
 			      const char *export_path)
 {
 	struct panfs_fsal_export *myself = EXPORT_PANFS_FROM_VFS(vfs);
+
 	if (myself->pnfs_enabled) {
 		LogInfo(COMPONENT_FSAL,
 			"pnfs_panfs was enabled for [%s]",

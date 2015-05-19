@@ -192,6 +192,7 @@ int vfs_map_name_to_handle_at(int fd,
 
 	if (rc < 0) {
 		int err = errno;
+
 		LogDebug(COMPONENT_FSAL,
 			 "Error %s (%d) bytes = %d",
 			 strerror(err), err, (int) kernel_fh->handle_bytes);
@@ -227,6 +228,7 @@ int vfs_map_name_to_handle_at(int fd,
 		   kernel_fh->handle_type >= INT16_MIN) {
 		/* Type fits in 16 bits */
 		int16_t handle_type_16 = kernel_fh->handle_type;
+
 		memcpy(fh->handle_data + fh->handle_len,
 		       &handle_type_16,
 		       sizeof(handle_type_16));

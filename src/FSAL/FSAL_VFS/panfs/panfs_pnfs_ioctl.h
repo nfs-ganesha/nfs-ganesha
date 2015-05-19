@@ -79,11 +79,13 @@ struct pan_layoutget_ioctl {
  * @return Valid error codes in RFC 5661, p. 365.
  */
 struct pan_getdeviceinfo_ioctl {
-	struct pan_ioctl_hdr hdr;	/* IN/OUT */
-	struct pan_ioctl_xdr da_addr_body;	/* IN/OUT */
-	const layouttype4 type;	/*   IN   */
-	const struct pnfs_deviceid deviceid;	/*   IN   */
+	struct pan_ioctl_hdr hdr;
+	struct pan_ioctl_xdr da_addr_body;
+	/* input only params */
+	const layouttype4 type;
+	const struct pnfs_deviceid deviceid;
 };
+
 #define PAN_FS_CLIENT_PNFS_DEVICEINFO   \
 	_IOWR(PAN_FS_CLIENT_SDK_IOCTL, 101, struct pan_getdeviceinfo_ioctl)
 
