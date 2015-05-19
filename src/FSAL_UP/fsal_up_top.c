@@ -1411,7 +1411,6 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 		if (schedule_delegrevoke_check(deleg_ctx, 1))
 			goto out_revoke;
 		goto out_free;
-		break;
 	case REVOKE:
 		goto out_revoke;
 	}

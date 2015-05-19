@@ -72,7 +72,7 @@ struct invalidate_args {
 	struct fsal_module *fsal;
 	struct gsh_buffdesc obj;
 	uint32_t flags;
-	void (*cb) (void *, cache_inode_status_t);
+	void (*cb)(void *, cache_inode_status_t);
 	void *cb_arg;
 	char key[];
 };
@@ -94,7 +94,7 @@ int up_async_invalidate(struct fridgethr *fr,
 			const struct fsal_up_vector *up_ops,
 			struct fsal_module *fsal,
 			struct gsh_buffdesc *obj, uint32_t flags,
-			void (*cb) (void *, cache_inode_status_t), void *cb_arg)
+			void (*cb)(void *, cache_inode_status_t), void *cb_arg)
 {
 	struct invalidate_args *args = NULL;
 	int rc = 0;
@@ -131,7 +131,7 @@ struct update_args {
 	struct gsh_buffdesc obj;
 	struct attrlist attr;
 	uint32_t flags;
-	void (*cb) (void *, cache_inode_status_t);
+	void (*cb)(void *, cache_inode_status_t);
 	void *cb_arg;
 	char key[];
 };
@@ -154,7 +154,7 @@ int up_async_update(struct fridgethr *fr,
 		    const struct fsal_up_vector *up_ops,
 		    struct fsal_module *fsal,
 		    struct gsh_buffdesc *obj, struct attrlist *attr,
-		    uint32_t flags, void (*cb) (void *, cache_inode_status_t),
+		    uint32_t flags, void (*cb)(void *, cache_inode_status_t),
 		    void *cb_arg)
 {
 	struct update_args *args = NULL;
@@ -193,7 +193,7 @@ struct lock_grant_args {
 	struct gsh_buffdesc file;
 	void *owner;
 	fsal_lock_param_t lock_param;
-	void (*cb) (void *, state_status_t);
+	void (*cb)(void *, state_status_t);
 	void *cb_arg;
 	char key[];
 };
@@ -256,7 +256,7 @@ struct lock_avail_args {
 	struct gsh_buffdesc file;
 	void *owner;
 	fsal_lock_param_t lock_param;
-	void (*cb) (void *, state_status_t);
+	void (*cb)(void *, state_status_t);
 	void *cb_arg;
 	char key[];
 };
@@ -280,7 +280,7 @@ int up_async_lock_avail(struct fridgethr *fr,
 			struct fsal_module *fsal,
 			struct gsh_buffdesc *file, void *owner,
 			fsal_lock_param_t *lock_param,
-			void (*cb) (void *, state_status_t),
+			void (*cb)(void *, state_status_t),
 			void *cb_arg)
 {
 	struct lock_avail_args *args = NULL;
@@ -322,7 +322,7 @@ struct layoutrecall_args {
 	struct pnfs_segment segment;
 	void *cookie;
 	struct layoutrecall_spec spec;
-	void (*cb) (void *, state_status_t);
+	void (*cb)(void *, state_status_t);
 	void *cb_arg;
 	char data[];
 };
@@ -354,7 +354,7 @@ int up_async_layoutrecall(struct fridgethr *fr,
 			  layouttype4 layout_type, bool changed,
 			  const struct pnfs_segment *segment, void *cookie,
 			  struct layoutrecall_spec *spec,
-			  void (*cb) (void *, state_status_t),
+			  void (*cb)(void *, state_status_t),
 			  void *cb_arg)
 {
 	struct layoutrecall_args *args = NULL;
@@ -404,7 +404,7 @@ struct notify_device_args {
 	layouttype4 layout_type;
 	struct pnfs_deviceid devid;
 	bool immediate;
-	void (*cb) (void *, state_status_t);
+	void (*cb)(void *, state_status_t);
 	void *cb_arg;
 	char data[];
 };
@@ -430,7 +430,7 @@ int up_async_notify_device(struct fridgethr *fr,
 			   notify_deviceid_type4 notify_type,
 			   layouttype4 layout_type,
 			   struct pnfs_deviceid *devid,
-			   bool immediate, void (*cb) (void *, state_status_t),
+			   bool immediate, void (*cb)(void *, state_status_t),
 			   void *cb_arg)
 {
 	struct notify_device_args *args = NULL;
@@ -466,7 +466,7 @@ struct delegrecall_args {
 	const struct fsal_up_vector *up_ops;
 	struct fsal_module *fsal;
 	struct gsh_buffdesc handle;
-	void (*cb) (void *, state_status_t);
+	void (*cb)(void *, state_status_t);
 	void *cb_arg;
 	char key[];
 };
