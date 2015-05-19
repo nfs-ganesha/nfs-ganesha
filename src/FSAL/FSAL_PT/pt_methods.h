@@ -78,7 +78,8 @@ fsal_status_t pt_write(struct fsal_obj_handle *obj_hdl,
 		       size_t buffer_size, void *buffer, size_t *wrote_amount,
 		       bool *fsal_stable);
 
-fsal_status_t pt_commit(struct fsal_obj_handle *obj_hdl,	/* sync */
+/* sync */
+fsal_status_t pt_commit(struct fsal_obj_handle *obj_hdl,
 			off_t offset, size_t len);
 
 fsal_status_t pt_lock_op(struct fsal_obj_handle *obj_hdl,
@@ -88,7 +89,7 @@ fsal_status_t pt_lock_op(struct fsal_obj_handle *obj_hdl,
 			 fsal_lock_param_t *conflicting_lock);
 
 fsal_status_t pt_share_op(struct fsal_obj_handle *obj_hdl,
-			  void *p_owner,	/* IN (opaque to FSAL) */
+			  void *p_owner,
 			  fsal_share_param_t request_share);
 fsal_status_t pt_close(struct fsal_obj_handle *obj_hdl);
 fsal_status_t pt_lru_cleanup(struct fsal_obj_handle *obj_hdl,

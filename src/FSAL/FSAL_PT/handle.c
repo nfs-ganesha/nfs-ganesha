@@ -671,6 +671,7 @@ static void release(struct fsal_obj_handle *obj_hdl)
 
 	if (type == REGULAR_FILE) {
 		fsal_status_t st = pt_close(obj_hdl);
+
 		if (FSAL_IS_ERROR(st))
 			LogCrit(COMPONENT_FSAL,
 				"Could not close");

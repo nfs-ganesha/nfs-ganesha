@@ -47,7 +47,7 @@ int handle_index_is_valid(int handle_index)
 }
 
 /* ------------------------------------------------------------------------- */
-static void ptfsal_create_key()
+static void ptfsal_create_key(void)
 {
 	if (pthread_key_create(&ptfsal_thread_key, NULL) < 0) {
 		FSI_TRACE(FSI_FATAL, "cannot create fsal pthread key errno=%d",
@@ -56,7 +56,7 @@ static void ptfsal_create_key()
 }
 
 /* ------------------------------------------------------------------------- */
-ptfsal_threadcontext_t *ptfsal_get_thread_context()
+ptfsal_threadcontext_t *ptfsal_get_thread_context(void)
 {
 	ptfsal_threadcontext_t *p_cur_context;
 
@@ -95,6 +95,7 @@ void fsi_get_whole_path(const char *parentPath, const char *name, char *path)
 		snprintf(path, PATH_MAX, "%s", name);
 	} else {
 		size_t export_len = strnlen(parentPath, PATH_MAX);
+
 		if (parentPath[export_len - 1] == '/')
 			snprintf(path, PATH_MAX, "%s%s", parentPath, name);
 		else
@@ -128,19 +129,19 @@ int fsi_cache_name_and_handle(const struct req_op_context *p_context,
 
 	if (strnlen(name, 1) == 0) {
 		FSI_TRACE(FSI_NOTICE,
-			  "The name is empty string for handle : "
-			  "%p->0x%lx %lx %lx %lx", handle, handlePtr[0],
+			  "The name is empty string for handle: %p->0x%lx %lx %lx %lx",
+			  handle, handlePtr[0],
 			  handlePtr[1], handlePtr[2], handlePtr[3]);
 	}
 	return 0;
 }
 
 /* -------------------------------------------------------------------------- */
-int fsi_get_name_from_handle(const struct req_op_context *p_context, /* IN */
+int fsi_get_name_from_handle(const struct req_op_context *p_context,
 			     struct fsal_export *export,
-			     ptfsal_handle_t *pt_handle, /* IN */
-			     char *name, /* OUT */
-			     int *handle_index) /* OUT */
+			     ptfsal_handle_t *pt_handle,
+			     char *name,
+			     int *handle_index)
 {
 	int index;
 	int rc;
@@ -152,6 +153,7 @@ int fsi_get_name_from_handle(const struct req_op_context *p_context, /* IN */
 	ptfsal_threadcontext_t *p_cur_context;
 	CACHE_TABLE_ENTRY_T cacheLookupEntry;
 	CACHE_ENTRY_DATA_HANDLE_TO_NAME_T *handleToNameEntryPtr;
+
 	FSI_TRACE(FSI_DEBUG, "Get name from handle:\n");
 	ptfsal_print_handle(pt_handle->data.handle.f_handle);
 
@@ -183,8 +185,7 @@ int fsi_get_name_from_handle(const struct req_op_context *p_context, /* IN */
 				/* Check whether the name from cache is empty */
 				if (strnlen(name, 1) == 0) {
 					FSI_TRACE(FSI_NOTICE,
-						  "The name is empty string from cache by index:"
-						  "%p->0x%lx %lx %lx %lx",
+						  "The name is empty string from cache by index: %p->0x%lx %lx %lx %lx",
 						  handlePtr, handlePtr[0],
 						  handlePtr[1], handlePtr[2],
 						  handlePtr[3]);
@@ -229,8 +230,7 @@ int fsi_get_name_from_handle(const struct req_op_context *p_context, /* IN */
 		/* Check whether the name from cache is empty */
 		if (strnlen(name, 1) == 0) {
 			FSI_TRACE(FSI_NOTICE,
-				  "The name is empty string from opened file cache:"
-				  "%p->0x%lx %lx %lx %lx.  Continue searching other caches",
+				  "The name is empty string from opened file cache: %p->0x%lx %lx %lx %lx.  Continue searching other caches",
 				  handlePtr, handlePtr[0], handlePtr[1],
 				  handlePtr[2], handlePtr[3]);
 		} else {
@@ -274,8 +274,8 @@ int fsi_get_name_from_handle(const struct req_op_context *p_context, /* IN */
 			/* Check whether the name from cache is empty */
 			if (strnlen(name, 1) == 0) {
 				FSI_TRACE(FSI_NOTICE,
-					  "The name is empty string from cache by loop: "
-					  "%p->0x%lx %lx %lx %lx", handlePtr,
+					  "The name is empty string from cache by loop: %p->0x%lx %lx %lx %lx",
+					  handlePtr,
 					  handlePtr[0], handlePtr[1],
 					  handlePtr[2], handlePtr[3]);
 				/* Need get name from PT side,
@@ -312,8 +312,8 @@ int fsi_get_name_from_handle(const struct req_op_context *p_context, /* IN */
 	if (rc == 0) {
 		if (strnlen(name, 1) == 0) {
 			FSI_TRACE(FSI_NOTICE,
-				  "The name is empty string from PT: "
-				  "%p->0x%lx %lx %lx %lx", handlePtr,
+				  "The name is empty string from PT: %p->0x%lx %lx %lx %lx",
+				  handlePtr,
 				  handlePtr[0], handlePtr[1], handlePtr[2],
 				  handlePtr[3]);
 		} else {
@@ -388,6 +388,7 @@ int fsi_update_cache_name(char *oldname, char *newname)
 void fsi_remove_cache_by_handle(char *handle)
 {
 	int index;
+
 	pthread_rwlock_wrlock(&g_fsi_cache_handle_rw_lock);
 	for (index = 0; index < FSI_MAX_HANDLE_CACHE_ENTRY; index++) {
 
@@ -603,6 +604,7 @@ int ptfsal_stat_by_handle(const struct req_op_context *p_context,
 
 	if (g_ptfsal_context_flag) {
 		ptfsal_threadcontext_t *p_cur_context;
+
 		p_cur_context = ptfsal_get_thread_context();
 		if (p_cur_context != NULL
 		    && p_cur_context->cur_fsi_handle_index != -1) {
@@ -809,8 +811,8 @@ int ptfsal_open_by_handle(const struct req_op_context *p_context,
 	 */
 	if (strnlen(fsi_filename, 1) == 0) {
 		FSI_TRACE(FSI_ERR,
-			  "The file name is empty string for handle: "
-			  "0x%lx %lx %lx %lx", handlePtr[0], handlePtr[1],
+			  "The file name is empty string for handle:  0x%lx %lx %lx %lx",
+			  handlePtr[0], handlePtr[1],
 			  handlePtr[2], handlePtr[3]);
 		return -1;
 	}
@@ -820,6 +822,7 @@ int ptfsal_open_by_handle(const struct req_op_context *p_context,
 	 */
 	if (handle_index != -1) {
 		int handle_index_return = -1;
+
 		FSI_TRACE(FSI_DEBUG, "cur handle index %d", handle_index);
 		handle_index_return =
 		    CCL_FSAL_TRY_FASTOPEN_BY_INDEX(&ccl_context, handle_index,
@@ -832,8 +835,10 @@ int ptfsal_open_by_handle(const struct req_op_context *p_context,
 	 * specific is initialized, so we can just check it
 	 */
 	ptfsal_threadcontext_t *p_cur_context;
+
 	if (g_ptfsal_context_flag) {
 		int existing_handle_index;
+
 		p_cur_context = ptfsal_get_thread_context();
 		if (p_cur_context != NULL) {
 			/*
@@ -889,6 +894,7 @@ void ptfsal_close(int handle_index)
 
 	if (g_ptfsal_context_flag) {
 		ptfsal_threadcontext_t *p_cur_context;
+
 		p_cur_context = ptfsal_get_thread_context();
 		if (p_cur_context != NULL) {
 			/* update context cache */
@@ -921,8 +927,8 @@ int ptfsal_open(struct pt_fsal_obj_handle *p_parent_directory_handle,
 				      fsi_parent_dir_name, NULL);
 	if (rc < 0) {
 		FSI_TRACE(FSI_ERR,
-			  "Handle to name failed rc=%d, "
-			  "failed to get parent directory name.", rc);
+			  "Handle to name failed rc=%d, failed to get parent directory name.",
+			  rc);
 		return rc;
 	}
 	FSI_TRACE(FSI_DEBUG, "FSI - Parent dir name = %s\n",
@@ -945,6 +951,7 @@ int ptfsal_open(struct pt_fsal_obj_handle *p_parent_directory_handle,
 
 	if (handleOpened >= 0) {
 		char fsal_path[PATH_MAX];
+
 		memset(fsal_path, 0, PATH_MAX);
 		memcpy(fsal_path, &fsi_name, PATH_MAX);
 		rc = ptfsal_name_to_handle(p_context,
@@ -998,6 +1005,7 @@ int ptfsal_unlink(const struct req_op_context *p_context,
 	char key[FSI_CCL_PERSISTENT_HANDLE_N_BYTES];
 	int cacheDeleteRC;
 	int handle_index_to_close;
+
 	rc = fsi_get_name_from_handle(p_context,
 				      p_context->fsal_export,
 				      p_parent_directory_handle->handle,
@@ -1126,6 +1134,7 @@ int ptfsal_mkdir(struct pt_fsal_obj_handle *p_parent_directory_handle,
 	if (rc == 0) {
 		/* get handle */
 		char fsal_path[PATH_MAX];
+
 		memset(fsal_path, 0, PATH_MAX);
 		memcpy(fsal_path, &fsi_name, PATH_MAX);
 
@@ -1436,6 +1445,7 @@ int ptfsal_handle_to_name(ptfsal_handle_t *p_filehandle,
 void ptfsal_print_handle(char *handle)
 {
 	uint64_t *handlePtr = (uint64_t *) handle;
+
 	FSI_TRACE(FSI_DEBUG, "FSI - handle 0x%lx %lx %lx %lx", handlePtr[0],
 		  handlePtr[1], handlePtr[2], handlePtr[3]);
 }
@@ -1454,6 +1464,7 @@ int fsi_update_cache_stat(const char *p_filename, uint64_t newMode,
 mode_t fsal_type2unix(int fsal_type)
 {
 	mode_t outMode = 0;
+
 	FSI_TRACE(FSI_DEBUG, "fsal_type: %d", fsal_type);
 	switch (fsal_type) {
 	case FIFO_FILE:
@@ -1488,6 +1499,7 @@ void ptfsal_set_fsi_handle_data(struct fsal_export *exp_hdl,
 				const struct req_op_context *p_context,
 				ccl_context_t *ccl_context) {
 	char *export_path = NULL;
+
 	if (p_context != NULL)
 		export_path = (char *)p_context->export->fullpath;
 	ptfsal_set_fsi_handle_data_path(exp_hdl,
@@ -1505,6 +1517,7 @@ void ptfsal_set_fsi_handle_data_path(struct fsal_export *exp_hdl,
 {
 	unsigned char *bytes;
 	struct pt_fsal_export *myself;
+
 	myself = container_of(exp_hdl, struct pt_fsal_export, export);
 
 	ccl_context->export_id = myself->pt_export_id;
@@ -1529,8 +1542,7 @@ void ptfsal_set_fsi_handle_data_path(struct fsal_export *exp_hdl,
 			 bytes[0], bytes[1], bytes[2], bytes[3]);
 	}
 	FSI_TRACE(FSI_DEBUG,
-		  "Export ID = %lu, uid = %lu, gid = %lu, Export Path = "
-		  "%s, client ip = %s\n",
+		  "Export ID = %lu, uid = %lu, gid = %lu, Export Path = %s, client ip = %s",
 		  ccl_context->export_id,
 		  ccl_context->uid,
 		  ccl_context->gid,
@@ -1566,8 +1578,8 @@ int fsi_cache_table_init(CACHE_TABLE_T *cacheTableToInit,
 
 	if (cacheTableToInit->cacheEntries == NULL) {
 		FSI_TRACE(FSI_ERR,
-			  "Unable to allocate memory for cache table"
-			  " (cache id = %d", cacheTableInitParam->cacheTableID);
+			  "Unable to allocate memory for cache table (cache id = %d",
+			  cacheTableInitParam->cacheTableID);
 		return -1;
 	}
 

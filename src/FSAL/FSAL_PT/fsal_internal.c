@@ -62,9 +62,9 @@ uint32_t CredentialLifetime = 3600;
 struct fsal_staticfsinfo_t global_fs_info;
 
 static fsal_status_t fsal_internal_testAccess_no_acl(
-		const struct req_op_context *p_context,	/* IN */
-		fsal_accessflags_t access_type,	/* IN */
-		struct attrlist *p_object_attributes);	/* IN */
+		const struct req_op_context *p_context,
+		fsal_accessflags_t access_type,
+		struct attrlist *p_object_attributes);
 
 /**
  * fsal_internal_handle2fd:
@@ -188,9 +188,9 @@ fsal_status_t fsal_internal_handle2fd_at(const struct req_op_context *
  */
 fsal_status_t fsal_internal_get_handle(const struct req_op_context *p_context,
 				       struct fsal_export *export,
-				       const char *p_fsalpath,	/* IN */
+				       const char *p_fsalpath,
 				       ptfsal_handle_t *p_handle)
-{				/* OUT */
+{
 	int rc;
 	fsi_stat_struct buffstat;
 	uint64_t *handlePtr;

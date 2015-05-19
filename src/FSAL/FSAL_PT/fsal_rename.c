@@ -65,12 +65,12 @@
  *        - Another error code if an error occured.
  */
 
-fsal_status_t PTFSAL_rename(struct fsal_obj_handle *old_hdl,	/* IN */
-			    const char *p_old_name,	/* IN */
-			    struct fsal_obj_handle *new_hdl,	/* IN */
-			    const char *p_new_name,	/* IN */
+fsal_status_t PTFSAL_rename(struct fsal_obj_handle *old_hdl,
+			    const char *p_old_name,
+			    struct fsal_obj_handle *new_hdl,
+			    const char *p_new_name,
 			    const struct req_op_context *p_context)
-{				/* IN */
+{
 
 	int rc, errsv;
 	struct stat st;

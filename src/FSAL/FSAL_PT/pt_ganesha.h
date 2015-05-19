@@ -42,149 +42,149 @@
 
 /* PT operations structure */
 struct vfs_fn_pointers {
-	int (*init_fn) (int multi_threaded, log_function_t log_fn,
-			log_level_check_function_t log_level_check_fn,
-			int
-			ipc_ccl_to_component_trc_level_map
-			[FSI_NUM_TRACE_LEVELS]);
-	int (*check_handle_index_fn) (int handle_index);
-	int (*find_handle_by_name_and_export_fn) (const char *filename,
-						  ccl_context_t *handle);
-	int (*stat_fn) (ccl_context_t *handle, const char *filename,
-			fsi_stat_struct *sbuf);
-	int (*fstat_fn) (int handle_index, fsi_stat_struct *sbuf);
-	int (*stat_by_handle_fn) (ccl_context_t *context,
-				  struct CCLPersistentHandle *handle,
-				  fsi_stat_struct *sbuf);
-	int (*rcv_msg_nowait_fn) (int msg_id, void *p_msg_buf, size_t msg_size,
-				  long msg_type);
-	int (*rcv_msg_wait_fn) (int msg_id, void *p_msg_buf, size_t msg_size,
-				long msg_type);
-	int (*rcv_msg_wait_block_fn) (int msg_id, void *p_msg_buf,
-				      size_t msg_size, long msg_type);
-	int (*send_msg_fn) (int msg_id, const void *p_msg_buf, size_t msg_size);
-	int (*chmod_fn) (ccl_context_t *handle, const char *path, mode_t mode);
-	int (*chown_fn) (ccl_context_t *handle, const char *path, uid_t uid,
-			 gid_t gid);
-	int (*ntimes_fn) (ccl_context_t *handle, const char *filename,
-			  uint64_t atime, uint64_t mtime, uint64_t btime);
-	int (*mkdir_fn) (ccl_context_t *handle, const char *path, mode_t mode);
-	int (*rmdir_fn) (ccl_context_t *handle, const char *path);
-	int (*get_real_filename_fn) (ccl_context_t *handle, const char *path,
-				     const char *name, char *found_name,
-				     const size_t found_name_max_size);
-	 uint64_t(*disk_free_fn) (ccl_context_t *handle, const char *path,
-				  uint64_t *bsize, uint64_t *dfree,
-				  uint64_t *dsize);
-	int (*unlink_fn) (ccl_context_t *handle, char *path);
-	int (*rename_fn) (ccl_context_t *handle, const char *old_name,
-			  const char *new_name);
-	int (*opendir_fn) (ccl_context_t *handle, const char *filename,
-			   const char *mask, uint32_t attr);
-	int (*closedir_fn) (ccl_context_t *handle,
-			    struct fsi_struct_dir_t *dirp);
-	int (*readdir_fn) (ccl_context_t *handle,
-			   struct fsi_struct_dir_t *dirp,
-			   fsi_stat_struct *sbuf);
-	void (*seekdir_fn) (ccl_context_t *handle,
-			    struct fsi_struct_dir_t *dirp, long offset);
-	long (*telldir_fn) (ccl_context_t *handle,
-			    struct fsi_struct_dir_t *dirp);
-	int (*chdir_fn) (ccl_context_t *handle, const char *path);
-	int (*fsync_fn) (ccl_context_t *handle, int handle_index);
-	int (*ftruncate_fn) (ccl_context_t *handle, int handle_index,
-			     uint64_t offset);
-	 ssize_t(*pread_fn) (ccl_context_t *handle, void *data, size_t n,
-			     uint64_t offset, uint64_t max_readahead_offset);
-	 ssize_t(*pwrite_fn) (ccl_context_t *handle, int handle_index,
-			      const void *data, size_t n, uint64_t offset);
-	int (*open_fn) (ccl_context_t *handle, char *path, int flags,
-			mode_t mode);
-	int (*close_fn) (ccl_context_t *handle, int handle_index,
-			 int close_style);
-	int (*get_any_io_responses_fn) (int handle_index, int *p_combined_rc,
-					struct ccl_msg_t *p_msg);
-	void (*ipc_stats_logger_fn) (ccl_context_t *handle);
-	 uint64_t(*update_stats_fn) (struct ipc_client_stats_t *stat,
-				     uint64_t value_fn);
-	int (*sys_acl_get_entry_fn) (ccl_context_t *handle, acl_t theacl,
-				     int entry_id, acl_entry_t *entry_p);
-	int (*sys_acl_get_tag_type_fn) (ccl_context_t *handle,
-					acl_entry_t entry_d,
-					acl_tag_t *tag_type_p);
-	int (*sys_acl_get_permset_fn) (ccl_context_t *handle,
+	int (*init_fn)(int multi_threaded, log_function_t log_fn,
+		       log_level_check_function_t log_level_check_fn,
+		       int
+		       ipc_ccl_to_component_trc_level_map
+		       [FSI_NUM_TRACE_LEVELS]);
+	int (*check_handle_index_fn)(int handle_index);
+	int (*find_handle_by_name_and_export_fn)(const char *filename,
+						 ccl_context_t *handle);
+	int (*stat_fn)(ccl_context_t *handle, const char *filename,
+		       fsi_stat_struct *sbuf);
+	int (*fstat_fn)(int handle_index, fsi_stat_struct *sbuf);
+	int (*stat_by_handle_fn)(ccl_context_t *context,
+				 struct CCLPersistentHandle *handle,
+				 fsi_stat_struct *sbuf);
+	int (*rcv_msg_nowait_fn)(int msg_id, void *p_msg_buf, size_t msg_size,
+				 long msg_type);
+	int (*rcv_msg_wait_fn)(int msg_id, void *p_msg_buf, size_t msg_size,
+			       long msg_type);
+	int (*rcv_msg_wait_block_fn)(int msg_id, void *p_msg_buf,
+				     size_t msg_size, long msg_type);
+	int (*send_msg_fn)(int msg_id, const void *p_msg_buf, size_t msg_size);
+	int (*chmod_fn)(ccl_context_t *handle, const char *path, mode_t mode);
+	int (*chown_fn)(ccl_context_t *handle, const char *path, uid_t uid,
+			gid_t gid);
+	int (*ntimes_fn)(ccl_context_t *handle, const char *filename,
+			 uint64_t atime, uint64_t mtime, uint64_t btime);
+	int (*mkdir_fn)(ccl_context_t *handle, const char *path, mode_t mode);
+	int (*rmdir_fn)(ccl_context_t *handle, const char *path);
+	int (*get_real_filename_fn)(ccl_context_t *handle, const char *path,
+				    const char *name, char *found_name,
+				    const size_t found_name_max_size);
+	uint64_t (*disk_free_fn)(ccl_context_t *handle, const char *path,
+				 uint64_t *bsize, uint64_t *dfree,
+				 uint64_t *dsize);
+	int (*unlink_fn)(ccl_context_t *handle, char *path);
+	int (*rename_fn)(ccl_context_t *handle, const char *old_name,
+			 const char *new_name);
+	int (*opendir_fn)(ccl_context_t *handle, const char *filename,
+			  const char *mask, uint32_t attr);
+	int (*closedir_fn)(ccl_context_t *handle,
+			   struct fsi_struct_dir_t *dirp);
+	int (*readdir_fn)(ccl_context_t *handle,
+			  struct fsi_struct_dir_t *dirp,
+			  fsi_stat_struct *sbuf);
+	void (*seekdir_fn)(ccl_context_t *handle,
+			   struct fsi_struct_dir_t *dirp, long offset);
+	long (*telldir_fn)(ccl_context_t *handle,
+			   struct fsi_struct_dir_t *dirp);
+	int (*chdir_fn)(ccl_context_t *handle, const char *path);
+	int (*fsync_fn)(ccl_context_t *handle, int handle_index);
+	int (*ftruncate_fn)(ccl_context_t *handle, int handle_index,
+			    uint64_t offset);
+	ssize_t (*pread_fn)(ccl_context_t *handle, void *data, size_t n,
+			    uint64_t offset, uint64_t max_readahead_offset);
+	ssize_t (*pwrite_fn)(ccl_context_t *handle, int handle_index,
+			     const void *data, size_t n, uint64_t offset);
+	int (*open_fn)(ccl_context_t *handle, char *path, int flags,
+		       mode_t mode);
+	int (*close_fn)(ccl_context_t *handle, int handle_index,
+			int close_style);
+	int (*get_any_io_responses_fn)(int handle_index, int *p_combined_rc,
+				       struct ccl_msg_t *p_msg);
+	void (*ipc_stats_logger_fn)(ccl_context_t *handle);
+	uint64_t (*update_stats_fn)(struct ipc_client_stats_t *stat,
+				    uint64_t value_fn);
+	int (*sys_acl_get_entry_fn)(ccl_context_t *handle, acl_t theacl,
+				    int entry_id, acl_entry_t *entry_p);
+	int (*sys_acl_get_tag_type_fn)(ccl_context_t *handle,
 				       acl_entry_t entry_d,
-				       acl_permset_t *permset_p);
-	void *(*sys_acl_get_qualifier_fn) (ccl_context_t *handle,
-					   acl_entry_t entry_d);
-	 acl_t(*sys_acl_get_file_fn) (ccl_context_t *handle,
-				      const char *path_p, acl_type_t type);
-	int (*sys_acl_clear_perms_fn) (ccl_context_t *handle,
-				       acl_permset_t permset);
-	int (*sys_acl_add_perm_fn) (ccl_context_t *handle,
-				    acl_permset_t permset, acl_perm_t perm);
-	 acl_t(*sys_acl_init_fn) (ccl_context_t *handle, int count);
-	int (*sys_acl_create_entry_fn) (ccl_context_t *handle, acl_t *pacl,
-					acl_entry_t *pentry);
-	int (*sys_acl_set_tag_type_fn) (ccl_context_t *handle,
-					acl_entry_t entry, acl_tag_t tagtype);
-	int (*sys_acl_set_qualifier_fn) (ccl_context_t *handle,
-					 acl_entry_t entry, void *qual);
-	int (*sys_acl_set_permset_fn) (ccl_context_t *handle,
-				       acl_entry_t entry,
-				       acl_permset_t permset);
-	int (*sys_acl_set_file_fn) (ccl_context_t *handle, const char *name,
-				    acl_type_t acltype, acl_t theacl);
-	int (*sys_acl_delete_def_file_fn) (ccl_context_t *handle,
-					   const char *path);
-	int (*sys_acl_get_perm_fn) (ccl_context_t *handle,
-				    acl_permset_t permset, acl_perm_t perm);
-	int (*sys_acl_free_acl_fn) (ccl_context_t *handle, acl_t posix_acl);
-	int (*name_to_handle_fn) (ccl_context_t *pvfs_handle, const char *path,
-				  struct CCLPersistentHandle *phandle);
-	int (*handle_to_name_fn) (ccl_context_t *pvfs_handle,
-				  struct CCLPersistentHandle *phandle,
-				  char *path);
-	int (*dynamic_fsinfo_fn) (ccl_context_t *pvfs_handle, char *path,
-				  struct CCLClientOpDynamicFsInfoRspMsg *
-				  pfs_info);
-	int (*readlink_fn) (ccl_context_t *pvfs_handle, const char *path,
-			    char *link_content);
-	int (*symlink_fn) (ccl_context_t *pvfs_handle, const char *path,
-			   const char *link_content);
-	int (*update_handle_nfs_state_fn) (int handle_index,
-					   enum e_nfs_state state,
-					   int expected_state);
-	int (*safe_update_handle_nfs_state_fn) (int handle_index,
-						enum e_nfs_state state,
-						int expected_state);
-	int (*fsal_try_stat_by_index_fn) (ccl_context_t *handle,
-					  int handle_index, char *fsal_name,
-					  fsi_stat_struct *sbuf);
-	int (*fsal_try_fastopen_by_index_fn) (ccl_context_t *handle,
-					      int handle_index,
-					      char *fsal_name);
-	int (*find_oldest_handle_fn) ();
-	 bool(*can_close_handle_fn) (int handle_index, int timeout);
-	int (*up_mutex_lock_fn) (pthread_mutex_t *mutex);
-	int (*up_mutex_unlock_fn) (pthread_mutex_t *mutex);
-	void (*log_fn) (const fsi_ipc_trace_level level, const char *func,
-			const char *format, ...);
-	int (*implicit_close_for_nfs_fn) (int handle_index_to_close,
-					  int close_style);
-	int (*update_cache_stat_fn) (const char *filename, uint64_t newMode,
-				     uint64_t export_id);
-	char *(*get_version_fn) ();
-	int (*check_version_fn) (char *version);
-	void (*close_listener_fn) (int closeHandle_req_msgq,
-				   int closeHandle_rsp_msgq);
+				       acl_tag_t *tag_type_p);
+	int (*sys_acl_get_permset_fn)(ccl_context_t *handle,
+				      acl_entry_t entry_d,
+				      acl_permset_t *permset_p);
+	void *(*sys_acl_get_qualifier_fn)(ccl_context_t *handle,
+					  acl_entry_t entry_d);
+	acl_t (*sys_acl_get_file_fn)(ccl_context_t *handle,
+				     const char *path_p, acl_type_t type);
+	int (*sys_acl_clear_perms_fn)(ccl_context_t *handle,
+				      acl_permset_t permset);
+	int (*sys_acl_add_perm_fn)(ccl_context_t *handle,
+				   acl_permset_t permset, acl_perm_t perm);
+	acl_t (*sys_acl_init_fn)(ccl_context_t *handle, int count);
+	int (*sys_acl_create_entry_fn)(ccl_context_t *handle, acl_t *pacl,
+				       acl_entry_t *pentry);
+	int (*sys_acl_set_tag_type_fn)(ccl_context_t *handle,
+				       acl_entry_t entry, acl_tag_t tagtype);
+	int (*sys_acl_set_qualifier_fn)(ccl_context_t *handle,
+					acl_entry_t entry, void *qual);
+	int (*sys_acl_set_permset_fn)(ccl_context_t *handle,
+				      acl_entry_t entry,
+				      acl_permset_t permset);
+	int (*sys_acl_set_file_fn)(ccl_context_t *handle, const char *name,
+				   acl_type_t acltype, acl_t theacl);
+	int (*sys_acl_delete_def_file_fn)(ccl_context_t *handle,
+					  const char *path);
+	int (*sys_acl_get_perm_fn)(ccl_context_t *handle,
+				   acl_permset_t permset, acl_perm_t perm);
+	int (*sys_acl_free_acl_fn)(ccl_context_t *handle, acl_t posix_acl);
+	int (*name_to_handle_fn)(ccl_context_t *pvfs_handle, const char *path,
+				 struct CCLPersistentHandle *phandle);
+	int (*handle_to_name_fn)(ccl_context_t *pvfs_handle,
+				 struct CCLPersistentHandle *phandle,
+				 char *path);
+	int (*dynamic_fsinfo_fn)(ccl_context_t *pvfs_handle, char *path,
+				 struct CCLClientOpDynamicFsInfoRspMsg *
+				 pfs_info);
+	int (*readlink_fn)(ccl_context_t *pvfs_handle, const char *path,
+			   char *link_content);
+	int (*symlink_fn)(ccl_context_t *pvfs_handle, const char *path,
+			  const char *link_content);
+	int (*update_handle_nfs_state_fn)(int handle_index,
+					  enum e_nfs_state state,
+					  int expected_state);
+	int (*safe_update_handle_nfs_state_fn)(int handle_index,
+					       enum e_nfs_state state,
+					       int expected_state);
+	int (*fsal_try_stat_by_index_fn)(ccl_context_t *handle,
+					 int handle_index, char *fsal_name,
+					 fsi_stat_struct *sbuf);
+	int (*fsal_try_fastopen_by_index_fn)(ccl_context_t *handle,
+					     int handle_index,
+					     char *fsal_name);
+	int (*find_oldest_handle_fn)(void);
+	bool (*can_close_handle_fn)(int handle_index, int timeout);
+	int (*up_mutex_lock_fn)(pthread_mutex_t *mutex);
+	int (*up_mutex_unlock_fn)(pthread_mutex_t *mutex);
+	void (*log_fn)(const fsi_ipc_trace_level level, const char *func,
+		       const char *format, ...);
+	int (*implicit_close_for_nfs_fn)(int handle_index_to_close,
+					 int close_style);
+	int (*update_cache_stat_fn)(const char *filename, uint64_t newMode,
+				    uint64_t export_id);
+	char *(*get_version_fn)(void);
+	int (*check_version_fn)(char *version);
+	void (*close_listener_fn)(int closeHandle_req_msgq,
+				  int closeHandle_rsp_msgq);
 
-	int (*ccl_lock_io_operation_mutex_fn) (int handle_index);
-	int (*ccl_unlock_io_operation_mutex_fn) (int handle_index);
-	int (*ccl_lock_io_handle_mutex_fn) (int handle_index);
-	int (*ccl_unlock_io_handle_mutex_fn) (int handle_index);
-	int (*ccl_lock_file_mutex_fn) ();
-	int (*ccl_unlock_file_mutex_fn) ();
+	int (*ccl_lock_io_operation_mutex_fn)(int handle_index);
+	int (*ccl_unlock_io_operation_mutex_fn)(int handle_index);
+	int (*ccl_lock_io_handle_mutex_fn)(int handle_index);
+	int (*ccl_unlock_io_handle_mutex_fn)(int handle_index);
+	int (*ccl_lock_file_mutex_fn)(void);
+	int (*ccl_unlock_file_mutex_fn)(void);
 };
 
 #define CCL_INIT                    g_ccl_function_map.init_fn
@@ -449,7 +449,7 @@ int ptfsal_implicit_close_for_nfs(int handle_index_to_close, int close_style);
 
 void *ptfsal_polling_closeHandler_thread(void *args);
 void ptfsal_close(int handle_index);
-void ptfsal_terminate_ptfsal_threads();
+void ptfsal_terminate_ptfsal_threads(void);
 bool compare(struct fsal_obj_handle *obj_hdl,
 	     struct fsal_obj_handle *other_hdl);
 fsal_status_t handle_digest(const struct fsal_obj_handle *obj_hdl,
@@ -485,8 +485,8 @@ typedef struct {
 	 *          0 if string1 == string2
 	 *         -1 if string1 <  string2
 	 */
-	int (*cacheKeyComprefn) (const void *cacheEntry1,
-				 const void *cacheEntry2);
+	int (*cacheKeyComprefn)(const void *cacheEntry1,
+				const void *cacheEntry2);
 } CACHE_TABLE_INIT_PARAM;
 
 typedef struct {
@@ -512,7 +512,7 @@ typedef struct {
 	CACHE_ID_ENUMS cacheTableID;
 	/* Defined in CACHE_ID_* enum */
 	/* Function pointer to the comparison */
-	int (*cacheKeyComprefn) (const void *key1, const void *key2);
+	int (*cacheKeyComprefn)(const void *key1, const void *key2);
 } CACHE_TABLE_META_DATA_T;
 
 typedef struct {
@@ -549,7 +549,7 @@ void fsi_cache_handle2name_dumpTableKeys(fsi_ipc_trace_level logLevel,
 void fsi_cache_32Bytes_rawDump(fsi_ipc_trace_level loglevel, void *data,
 			       int index);
 extern CACHE_TABLE_T g_fsi_name_handle_cache_opened_files;
-int pt_ganesha_fsal_ccl_init();
+int pt_ganesha_fsal_ccl_init(void);
 fsal_status_t pt_posix2fsal_attributes(struct stat *p_buffstat,
 				       struct attrlist *p_fsalattr_out);
 #endif				/* ifndef __PT_GANESHA_H__ */

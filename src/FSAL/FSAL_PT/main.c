@@ -232,6 +232,7 @@ MODULE_INIT void pt_init(void)
 
 	/* load CCL module */
 	int rc = pt_ganesha_fsal_ccl_init();
+
 	if (rc)
 		return;
 	/*
@@ -261,6 +262,7 @@ MODULE_INIT void pt_init(void)
 	 * We map FSI Trace Level to Ganesha debug levels through this array.
 	 */
 	int ipc_ccl_to_component_trc_level_map[FSI_NUM_TRACE_LEVELS];
+
 	ipc_ccl_to_component_trc_level_map[FSI_NO_LEVEL] = NIV_NULL;
 	ipc_ccl_to_component_trc_level_map[FSI_FATAL] = NIV_MAJ;
 	ipc_ccl_to_component_trc_level_map[FSI_ERR] = NIV_CRIT;
@@ -281,20 +283,18 @@ MODULE_INIT void pt_init(void)
 	}
 
 	FSI_TRACE(FSI_NOTICE,
-		  "About to call " "ptfsal_closeHandle_listener_thread_init");
+		  "About to call ptfsal_closeHandle_listener_thread_init");
 	if (ptfsal_closeHandle_listener_thread_init() == -1) {
 		FSI_TRACE(FSI_ERR,
-			  "ptfsal_closeHandle_listener_thread_init "
-			  "returned rc = -1");
+			  "ptfsal_closeHandle_listener_thread_init returned rc = -1");
 		return;
 	}
 
 	FSI_TRACE(FSI_NOTICE,
-		  "About to call " "ptfsal_polling_closeHandler_thread_init");
+		  "About to call ptfsal_polling_closeHandler_thread_init");
 	if (ptfsal_polling_closeHandler_thread_init() == -1) {
 		FSI_TRACE(FSI_ERR,
-			  "ptfsal_polling_closeHandler_thread_init "
-			  "returned rc = -1");
+			  "ptfsal_polling_closeHandler_thread_init returned rc = -1");
 		return;
 	}
 
@@ -374,7 +374,7 @@ char *load_dynamic_function(void *fn_map_ptr, const char *func_name)
 	return error_string;
 }
 
-int pt_ganesha_fsal_ccl_init()
+int pt_ganesha_fsal_ccl_init(void)
 {
 	g_ccl_lib_handle = dlopen(CCL_SO_PATH, RTLD_LAZY);
 	if (!g_ccl_lib_handle) {
@@ -528,6 +528,7 @@ int pt_ganesha_fsal_ccl_init()
 
 	/* load and map variables that reside in the CCL shared library */
 	void *g_shm_at_obj = dlsym(g_ccl_lib_handle, "g_shm_at");
+
 	if (!g_shm_at_obj) {
 		LogCrit(COMPONENT_FSAL, "Failed to load symbol g_shm_at");
 		return -1;
@@ -535,6 +536,7 @@ int pt_ganesha_fsal_ccl_init()
 	g_shm_at_fsal = (char *)g_shm_at_obj;
 
 	void *g_fsi_handles_obj = dlsym(g_ccl_lib_handle, "g_fsi_handles");
+
 	if (!g_fsi_handles_obj) {
 		LogCrit(COMPONENT_FSAL, "Failed to load symbol g_fsi_handles");
 		return -1;
@@ -543,6 +545,7 @@ int pt_ganesha_fsal_ccl_init()
 
 	void *g_fsi_dir_handles_obj =
 	    dlsym(g_ccl_lib_handle, "g_fsi_dir_handles");
+
 	if (!g_fsi_dir_handles_obj) {
 		LogCrit(COMPONENT_FSAL,
 			"Failed to load symbol g_fsi_dir_handles");
@@ -553,6 +556,7 @@ int pt_ganesha_fsal_ccl_init()
 
 	void *g_fsi_acl_handles_obj =
 	    dlsym(g_ccl_lib_handle, "g_fsi_acl_handles");
+
 	if (!g_fsi_acl_handles_obj) {
 		LogCrit(COMPONENT_FSAL, "Failed to load g_fsi_acl_handles");
 		return -1;
@@ -610,7 +614,7 @@ static int ptfsal_polling_closeHandler_thread_init(void)
 	return 0;
 }
 
-fsal_status_t PTFSAL_terminate()
+fsal_status_t PTFSAL_terminate(void)
 {
 	int index;
 	int minor = 0;
@@ -663,8 +667,7 @@ fsal_status_t PTFSAL_terminate()
 
 				if (rc != 0) {
 					FSI_TRACE(FSI_ERR,
-						  "Failed to create parallel close"
-						  "thread for handle[%d] rc[%d]",
+						  "Failed to create parallel close thread for handle[%d] rc[%d]",
 						  index, rc);
 				} else {
 					FSI_TRACE(FSI_NOTICE,
@@ -689,6 +692,7 @@ fsal_status_t PTFSAL_terminate()
 
 	/* Join the Polling Close Handle thread */
 	int terminate_rc = pthread_join(g_pthread_polling_closehandler, NULL);
+
 	if (terminate_rc == 0) {
 		FSI_TRACE(FSI_NOTICE,
 			  "Join Polling close handle thread successfully");

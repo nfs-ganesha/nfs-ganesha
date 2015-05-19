@@ -92,6 +92,7 @@ fsal_status_t pt_read(struct fsal_obj_handle *obj_hdl,
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval = 0;
 	fsal_status_t status;
+
 	myself = container_of(obj_hdl, struct pt_fsal_obj_handle, obj_handle);
 
 	assert(myself->u.file.fd >= 0

@@ -338,8 +338,7 @@ fsal_status_t PTFSAL_setattrs(struct fsal_obj_handle *dir_hdl,	/* IN */
 					      myself->handle, fsi_name, NULL);
 		if (rc < 0) {
 			FSI_TRACE(FSI_ERR,
-				  "Failed to convert file handle back to filename "
-				  "from cache");
+				  "Failed to convert file handle back to filename from cache");
 			FSI_TRACE(FSI_DEBUG,
 				  "Handle to name failed for hanlde %s",
 				  myself->handle->data.handle.f_handle);

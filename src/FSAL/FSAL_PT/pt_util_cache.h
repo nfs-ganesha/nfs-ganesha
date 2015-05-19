@@ -43,8 +43,8 @@ typedef struct {
 	 *          0 if string1 == string2
 	 *         -1 if string1 <  string2
 	 */
-	int (*cacheKeyComprefn) (const void *cacheEntry1,
-				 const void *cacheEntry2);
+	int (*cacheKeyComprefn)(const void *cacheEntry1,
+				const void *cacheEntry2);
 } CACHE_TABLE_INIT_PARAM;
 
 typedef struct {
@@ -72,7 +72,7 @@ typedef struct {
 	 * Defined in CACHE_ID_* enum
 	 * Function pointer to the comparison function
 	 */
-	int (*cacheKeyComprefn) (const void *key1, const void *key2);
+	int (*cacheKeyComprefn)(const void *key1, const void *key2);
 } CACHE_TABLE_META_DATA_T;
 
 typedef struct {

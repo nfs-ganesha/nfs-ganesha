@@ -75,19 +75,19 @@ fsal_status_t
 fsal_internal_get_handle_at(const struct req_op_context *p_context,
 			    struct fsal_export *export,
 			    int dfd,
-			    const char *p_fsalname,	/* IN */
+			    const char *p_fsalname,
 			    ptfsal_handle_t *p_handle);
 
 fsal_status_t
 fsal_internal_get_handle(const struct req_op_context *p_context,
 			 struct fsal_export *export,
-			 const char *p_fsalpath,	/* IN */
+			 const char *p_fsalpath,
 			 ptfsal_handle_t *p_handle);
 /**
  * Get the handle for a path (posix or fid path)
  */
-fsal_status_t fsal_internal_fd2handle(int fd,	/* IN */
-				      ptfsal_handle_t *p_handle); /* OUT */
+fsal_status_t fsal_internal_fd2handle(int fd,
+				      ptfsal_handle_t *p_handle);
 
 fsal_status_t fsal_internal_link_at(int srcfd, int dfd, char *name);
 
@@ -105,161 +105,161 @@ fsal_status_t fsal_stat_by_handle(int dirfd, ptfsal_handle_t *p_handle,
 
 fsal_status_t
 fsal_check_access_by_mode(const struct req_op_context *p_context,
-			  fsal_accessflags_t access_type,	/* IN */
-			struct stat *p_buffstat);	/* IN */
+			  fsal_accessflags_t access_type,
+			struct stat *p_buffstat);
 
-fsal_status_t PTFSAL_access(ptfsal_handle_t *p_object_handle,	/* IN */
-			    int dirfd,	/* IN */
-			    fsal_accessflags_t access_type,	/* IN */
-			    struct attrlist *p_object_attributes);/* IN/OUT */
+fsal_status_t PTFSAL_access(ptfsal_handle_t *p_object_handle,
+			    int dirfd,
+			    fsal_accessflags_t access_type,
+			    struct attrlist *p_object_attributes);
 
-fsal_status_t PTFSAL_getattrs(struct fsal_export *export,	/* IN */
-			      const struct req_op_context *p_context,	/* IN */
-			      ptfsal_handle_t *p_filehandle,	/* IN */
-			      struct attrlist *p_object_attributes);/* IN/OUT */
-
-fsal_status_t PTFSAL_getattrs_descriptor(int *p_file_descriptor,  /* IN */
-					 ptfsal_handle_t *p_filehandle,/* IN */
-					 int dirfd,	/* IN */
-					 struct attrlist *p_object_attributes);
-					/* IN/OUT */
-
-fsal_status_t PTFSAL_setattrs(struct fsal_obj_handle *dir_hdl,	/* IN */
-			      const struct req_op_context *p_context,/* IN */
-			      struct attrlist *p_attrib_set,	/* IN */
+fsal_status_t PTFSAL_getattrs(struct fsal_export *export,
+			      const struct req_op_context *p_context,
+			      ptfsal_handle_t *p_filehandle,
 			      struct attrlist *p_object_attributes);
-			      /* IN/OUT */
 
-fsal_status_t PTFSAL_create(struct fsal_obj_handle *dir_hdl,	/* IN */
-			    const char *p_filename,	/* IN */
-			    const struct req_op_context *p_context, /* IN */
-			    uint32_t accessmode,	/* IN */
-			    ptfsal_handle_t *p_object_handle,	/* OUT */
-			    struct attrlist *p_object_attributes); /* IN/OUT */
-fsal_status_t PTFSAL_mkdir(struct fsal_obj_handle *dir_hdl,	/* IN */
-			   const char *p_dirname,	/* IN */
-			   const struct req_op_context *p_context, /* IN */
-			   uint32_t accessmode,	/* IN */
-			   ptfsal_handle_t *p_object_handle,	/* OUT */
-			   struct attrlist *p_object_attributes); /* IN/OUT */
-fsal_status_t PTFSAL_mknode(struct fsal_obj_handle *dir_hdl,	/* IN */
-			    const char *p_node_name,	/* IN */
-			    const struct req_op_context *p_context, /* IN */
-			    uint32_t accessmode,	/* IN */
-			    mode_t nodetype,	/* IN */
-			    fsal_dev_t *dev,	/* IN */
-			    ptfsal_handle_t *p_object_handle,	/* OUT */
+fsal_status_t PTFSAL_getattrs_descriptor(int *p_file_descriptor,
+					 ptfsal_handle_t *p_filehandle,
+					 int dirfd,
+					 struct attrlist *p_object_attributes);
+
+
+fsal_status_t PTFSAL_setattrs(struct fsal_obj_handle *dir_hdl,
+			      const struct req_op_context *p_context,
+			      struct attrlist *p_attrib_set,
+			      struct attrlist *p_object_attributes);
+
+
+fsal_status_t PTFSAL_create(struct fsal_obj_handle *dir_hdl,
+			    const char *p_filename,
+			    const struct req_op_context *p_context,
+			    uint32_t accessmode,
+			    ptfsal_handle_t *p_object_handle,
+			    struct attrlist *p_object_attributes);
+fsal_status_t PTFSAL_mkdir(struct fsal_obj_handle *dir_hdl,
+			   const char *p_dirname,
+			   const struct req_op_context *p_context,
+			   uint32_t accessmode,
+			   ptfsal_handle_t *p_object_handle,
+			   struct attrlist *p_object_attributes);
+fsal_status_t PTFSAL_mknode(struct fsal_obj_handle *dir_hdl,
+			    const char *p_node_name,
+			    const struct req_op_context *p_context,
+			    uint32_t accessmode,
+			    mode_t nodetype,
+			    fsal_dev_t *dev,
+			    ptfsal_handle_t *p_object_handle,
 			    struct attrlist *node_attributes);
-fsal_status_t PTFSAL_link(struct fsal_obj_handle *destdir_hdl,	/* IN */
-			  ptfsal_handle_t *target_handle,	/* IN */
-			  const char *p_link_name,	/* IN */
-			  const struct req_op_context *p_context, /* IN */
-			  struct attrlist *p_attributes);
-fsal_status_t PTFSAL_opendir(ptfsal_handle_t *p_dir_handle,	/* IN */
-			     int dirfd,	/* IN */
-			     int *p_dir_descriptor,	/* OUT */
-			     struct attrlist *p_dir_attributes); /* IN/OUT */
-
-fsal_status_t PTFSAL_closedir(int *p_dir_descriptor /* IN */);
-
-fsal_status_t PTFSAL_open_by_name(ptfsal_handle_t *dirhandle,	/* IN */
-				  const char *filename,	/* IN */
-				  int dirfd,	/* IN */
-				  fsal_openflags_t openflags,	/* IN */
-				  int *file_descriptor,	/* OUT */
-				  struct attrlist *file_attributes);
-				  /* IN/OUT */
-
-fsal_status_t PTFSAL_open(struct fsal_obj_handle *obj_hdl,	/* IN */
+fsal_status_t PTFSAL_link(struct fsal_obj_handle *destdir_hdl,
+			  ptfsal_handle_t *target_handle,
+			  const char *p_link_name,
 			  const struct req_op_context *p_context,
-			  fsal_openflags_t openflags,	/* IN */
-			  int *p_file_descriptor,	/* OUT */
-			  struct attrlist *p_file_attributes);	/* IN/OUT */
+			  struct attrlist *p_attributes);
+fsal_status_t PTFSAL_opendir(ptfsal_handle_t *p_dir_handle,
+			     int dirfd,
+			     int *p_dir_descriptor,
+			     struct attrlist *p_dir_attributes);
 
-fsal_status_t PTFSAL_read(struct pt_fsal_obj_handle *p_file_descriptor,/* IN */
+fsal_status_t PTFSAL_closedir(int *p_dir_descriptor);
+
+fsal_status_t PTFSAL_open_by_name(ptfsal_handle_t *dirhandle,
+				  const char *filename,
+				  int dirfd,
+				  fsal_openflags_t openflags,
+				  int *file_descriptor,
+				  struct attrlist *file_attributes);
+
+
+fsal_status_t PTFSAL_open(struct fsal_obj_handle *obj_hdl,
+			  const struct req_op_context *p_context,
+			  fsal_openflags_t openflags,
+			  int *p_file_descriptor,
+			  struct attrlist *p_file_attributes);
+
+fsal_status_t PTFSAL_read(struct pt_fsal_obj_handle *p_file_descriptor,
 			  const struct req_op_context *opctx,
-			  uint64_t offset,	/* [IN] */
-			  size_t buffer_size,	/* IN */
-			  caddr_t buffer,	/* OUT */
-			  size_t *p_read_amount,	/* OUT */
-			  bool *p_end_of_file);	/* OUT */
+			  uint64_t offset,
+			  size_t buffer_size,
+			  caddr_t buffer,
+			  size_t *p_read_amount,
+			  bool *p_end_of_file);
 
 fsal_status_t
 PTFSAL_write(struct pt_fsal_obj_handle *p_file_descriptor,
 	     const struct req_op_context *opctx,
-	     uint64_t offset,	/* IN */
-	     size_t buffer_size,	/* IN */
-	     caddr_t buffer,	/* IN */
-	     size_t *p_write_amount,	/* OUT */
-	     bool *fsal_stable);	/* IN/OUT */
+	     uint64_t offset,
+	     size_t buffer_size,
+	     caddr_t buffer,
+	     size_t *p_write_amount,
+	     bool *fsal_stable);
 
-fsal_status_t PTFSAL_close(int p_file_descriptor);	/* IN */
+fsal_status_t PTFSAL_close(int p_file_descriptor);
 
-fsal_status_t PTFSAL_dynamic_fsinfo(ptfsal_handle_t *p_handle,	/* IN */
-				    int dirfd,	/* IN */
+fsal_status_t PTFSAL_dynamic_fsinfo(ptfsal_handle_t *p_handle,
+				    int dirfd,
 				    fsal_dynamicfsinfo_t *p_dynamicinfo);
-				    /* OUT */
 
-fsal_status_t PTFSAL_test_access(int dirfd,	/* IN */
-				 fsal_accessflags_t access_type, /* IN */
-				 struct attrlist *p_object_attributes /* IN */
+
+fsal_status_t PTFSAL_test_access(int dirfd,
+				 fsal_accessflags_t access_type,
+				 struct attrlist *p_object_attributes
 				);
 
-fsal_status_t PTFSAL_terminate();
+fsal_status_t PTFSAL_terminate(void);
 
-fsal_status_t PTFSAL_lookup(const struct req_op_context *p_context, /* IN */
+fsal_status_t PTFSAL_lookup(const struct req_op_context *p_context,
 			    struct fsal_obj_handle *parent,
 			    const char *p_filename,
 			    struct attrlist *p_object_attr,
 			    ptfsal_handle_t *fh);
 
-fsal_status_t PTFSAL_lookupPath(const char *p_path,	/* IN */
-				int dirfd,	/* IN */
-				ptfsal_handle_t *object_handle,	/* OUT */
+fsal_status_t PTFSAL_lookupPath(const char *p_path,
+				int dirfd,
+				ptfsal_handle_t *object_handle,
 				struct attrlist *p_object_attributes);
-				/* IN/OUT */
 
-fsal_status_t PTFSAL_lookupJunction(ptfsal_handle_t *p_handle,	/* IN */
-				    int dirfd,	/* IN */
-				    ptfsal_handle_t *fsoot_hdl,	/* OUT */
+
+fsal_status_t PTFSAL_lookupJunction(ptfsal_handle_t *p_handle,
+				    int dirfd,
+				    ptfsal_handle_t *fsoot_hdl,
 				    struct attrlist *p_fsroot_attributes);
-				    /* IN/OUT */
 
-fsal_status_t PTFSAL_lock_op(struct fsal_obj_handle *obj_hdl,	/* IN */
-			     void *p_owner,	/* IN */
-			     fsal_lock_op_t lock_op,	/* IN */
-			     fsal_lock_param_t request_lock,	/* IN */
-			     fsal_lock_param_t *conflicting_lock);  /* OUT */
 
-fsal_status_t PTFSAL_share_op(int mntfd,	/* IN */
-			      int fd,	/* IN */
-			      void *p_owner,	/* IN */
-			      fsal_share_param_t request_share); /* IN */
+fsal_status_t PTFSAL_lock_op(struct fsal_obj_handle *obj_hdl,
+			     void *p_owner,
+			     fsal_lock_op_t lock_op,
+			     fsal_lock_param_t request_lock,
+			     fsal_lock_param_t *conflicting_lock);
 
-fsal_status_t PTFSAL_rcp(ptfsal_handle_t *filehandle,	/* IN */
-			 int dirfd,	/* IN */
-			 const char *p_local_path,	/* IN */
-			 int transfer_opt /* IN */);
+fsal_status_t PTFSAL_share_op(int mntfd,
+			      int fd,
+			      void *p_owner,
+			      fsal_share_param_t request_share);
 
-fsal_status_t PTFSAL_rename(struct fsal_obj_handle *old_hdl,	/* IN */
-			    const char *p_old_name,	/* IN */
-			    struct fsal_obj_handle *new_hdl,	/* IN */
-			    const char *p_new_name,	/* IN */
-			    const struct req_op_context *p_context); /* IN */
+fsal_status_t PTFSAL_rcp(ptfsal_handle_t *filehandle,
+			 int dirfd,
+			 const char *p_local_path,
+			 int transfer_opt);
 
-fsal_status_t PTFSAL_readlink(struct fsal_obj_handle *dir_hdl,	/* IN */
-			      const struct req_op_context *p_context, /* IN */
-			      char *p_link_content,	/* OUT */
-			      size_t *link_len,	/* IN/OUT */
-			      struct attrlist *p_link_attributes); /* IN/OUT */
+fsal_status_t PTFSAL_rename(struct fsal_obj_handle *old_hdl,
+			    const char *p_old_name,
+			    struct fsal_obj_handle *new_hdl,
+			    const char *p_new_name,
+			    const struct req_op_context *p_context);
 
-fsal_status_t PTFSAL_symlink(struct fsal_obj_handle *dir_hdl,	/* IN */
-			     const char *p_linkname,	/* IN */
-			     const char *p_linkcontent,	/* IN */
-			     const struct req_op_context *p_context, /* IN */
-			     uint32_t accessmode,	/* IN (ignored) */
-			     ptfsal_handle_t *p_link_handle,	/* OUT */
-			     struct attrlist *p_link_attributes); /* IN/OUT */
+fsal_status_t PTFSAL_readlink(struct fsal_obj_handle *dir_hdl,
+			      const struct req_op_context *p_context,
+			      char *p_link_content,
+			      size_t *link_len,
+			      struct attrlist *p_link_attributes);
+
+fsal_status_t PTFSAL_symlink(struct fsal_obj_handle *dir_hdl,
+			     const char *p_linkname,
+			     const char *p_linkcontent,
+			     const struct req_op_context *p_context,
+			     uint32_t accessmode,
+			     ptfsal_handle_t *p_link_handle,
+			     struct attrlist *p_link_attributes);
 
 int PTFSAL_handlecmp(ptfsal_handle_t *handle1, ptfsal_handle_t *handle2,
 		     fsal_status_t *status);
@@ -272,62 +272,62 @@ unsigned int PTFSAL_Handle_to_HashIndex(ptfsal_handle_t *p_handle,
 unsigned int PTFSAL_Handle_to_RBTIndex(ptfsal_handle_t *p_handle,
 				       unsigned int cookie);
 
-fsal_status_t PTFSAL_truncate(struct fsal_export *export,	/* IN */
-			      struct pt_fsal_obj_handle *p_filehandle, /* IN */
-			      const struct req_op_context *p_context, /* IN */
-			      size_t length,	/* IN */
+fsal_status_t PTFSAL_truncate(struct fsal_export *export,
+			      struct pt_fsal_obj_handle *p_filehandle,
+			      const struct req_op_context *p_context,
+			      size_t length,
 			      struct attrlist *p_object_attributes);
-			      /* IN/OUT */
 
-fsal_status_t PTFSAL_unlink(struct fsal_obj_handle *dir_hdl,	/* IN */
-			    const char *p_object_name,	/* IN */
-			    const struct req_op_context *p_context,	/* IN */
-			    struct attrlist *p_parent_attributes); /* IN/OUT */
+
+fsal_status_t PTFSAL_unlink(struct fsal_obj_handle *dir_hdl,
+			    const char *p_object_name,
+			    const struct req_op_context *p_context,
+			    struct attrlist *p_parent_attributes);
 
 char *PTFSAL_GetFSName();
 
-fsal_status_t PTFSAL_GetXAttrAttrs(ptfsal_handle_t *obj_hdl,	/* IN */
-				   int dirfd,	/* IN */
-				   unsigned int xattr_id,	/* IN */
+fsal_status_t PTFSAL_GetXAttrAttrs(ptfsal_handle_t *obj_hdl,
+				   int dirfd,
+				   unsigned int xattr_id,
 				   struct attrlist *p_attrs);
 
-fsal_status_t PTFSAL_ListXAttrs(ptfsal_handle_t *obj_hdl,	/* IN */
-				unsigned int cookie,	/* IN */
-				int dirfd,	/* IN */
-				fsal_xattrent_t *xattrs_tab,	/* IN/OUT */
-				unsigned int xattrs_tabsize,	/* IN */
-				unsigned int *p_nb_returned,	/* OUT */
-				int *end_of_list);	/* OUT */
+fsal_status_t PTFSAL_ListXAttrs(ptfsal_handle_t *obj_hdl,
+				unsigned int cookie,
+				int dirfd,
+				fsal_xattrent_t *xattrs_tab,
+				unsigned int xattrs_tabsize,
+				unsigned int *p_nb_returned,
+				int *end_of_list);
 
-fsal_status_t PTFSAL_GetXAttrValueById(ptfsal_handle_t *objhdl,	/* IN */
-				       unsigned int xattr_id,	/* IN */
-				       int dirfd,	/* IN */
-				       caddr_t buffer_addr,	/* IN/OUT */
-				       size_t buffer_size,	/* IN */
-				       size_t *p_output_size);	/* OUT */
+fsal_status_t PTFSAL_GetXAttrValueById(ptfsal_handle_t *objhdl,
+				       unsigned int xattr_id,
+				       int dirfd,
+				       caddr_t buffer_addr,
+				       size_t buffer_size,
+				       size_t *p_output_size);
 
-fsal_status_t PTFSAL_GetXAttrIdByName(ptfsal_handle_t *objhdl,	/* IN */
-				      const char *xattr_name,	/* IN */
-				      int dirfd,	/* IN */
-				      unsigned int *pxattr_id);	/* OUT */
+fsal_status_t PTFSAL_GetXAttrIdByName(ptfsal_handle_t *objhdl,
+				      const char *xattr_name,
+				      int dirfd,
+				      unsigned int *pxattr_id);
 
-fsal_status_t PTFSAL_GetXAttrValueByName(ptfsal_handle_t *objhdl,/* IN */
-					 const char *xattr_name, /* IN */
-					 int dirfd,	/* IN */
-					 caddr_t buffer_addr,	/* IN/OUT */
-					 size_t buffer_size,	/* IN */
-					 size_t *p_output_size);/* OUT */
+fsal_status_t PTFSAL_GetXAttrValueByName(ptfsal_handle_t *objhdl,
+					 const char *xattr_name,
+					 int dirfd,
+					 caddr_t buffer_addr,
+					 size_t buffer_size,
+					 size_t *p_output_size);
 
-fsal_status_t PTFSAL_SetXAttrValue(ptfsal_handle_t *obj_hdl,	/* IN */
-				   const char *xattr_name,	/* IN */
-				   int dirfd,	/* IN */
-				   caddr_t buffer_addr,	/* IN */
-				   size_t buffer_size,	/* IN */
-				   int create);	/* IN */
+fsal_status_t PTFSAL_SetXAttrValue(ptfsal_handle_t *obj_hdl,
+				   const char *xattr_name,
+				   int dirfd,
+				   caddr_t buffer_addr,
+				   size_t buffer_size,
+				   int create);
 
-fsal_status_t PTFSAL_RemoveXAttrByName(ptfsal_handle_t *objhdl,	/* IN */
-				       int dirfd,	/* IN */
-				       const char *xattr_name);	/* IN */
+fsal_status_t PTFSAL_RemoveXAttrByName(ptfsal_handle_t *objhdl,
+				       int dirfd,
+				       const char *xattr_name);
 
 unsigned int PTFSAL_GetFileno(int pfile);
 
