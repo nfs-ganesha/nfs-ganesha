@@ -63,6 +63,7 @@ libzfswrap_vfs_t *ZFSFSAL_GetVFS(zfs_file_handle_t *handle)
 
 	/* Handle the indirection */
 	int i;
+
 	for (i = 1; i < i_snapshots + 1; i++) {
 		if (p_snapshots[i].index == handle->i_snap) {
 			LogFullDebug(COMPONENT_FSAL,
@@ -189,6 +190,7 @@ static fsal_status_t tank_lookup(struct fsal_obj_handle *parent,
 			 "Lookup inside the .zfs/ pseudo-directory");
 
 		int i;
+
 		for (i = 1; i < i_snapshots + 1; i++)
 			if (!strcmp(p_snapshots[i].psz_name, path) &&
 			    (i == i_snapshots + 1))
@@ -971,6 +973,7 @@ static void release(struct fsal_obj_handle *obj_hdl)
 	if (type == REGULAR_FILE &&
 	    myself->u.file.openflags != FSAL_O_CLOSED) {
 		fsal_status_t st = tank_close(obj_hdl);
+
 		if (FSAL_IS_ERROR(st)) {
 			LogCrit(COMPONENT_FSAL,
 				"Could not close, error %s(%d)",

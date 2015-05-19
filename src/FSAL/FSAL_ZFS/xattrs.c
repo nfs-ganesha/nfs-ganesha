@@ -174,8 +174,9 @@ static int file_attributes_to_xattr_attrs(struct attrlist *file_attrs,
 
 	if (unsupp) {
 		LogDebug(COMPONENT_FSAL,
-			 "Asking for unsupported attributes: %#llX removing it from asked attributes",
-			 (long long unsigned int)unsupp);
+			 "Asking for unsupported attributes: 0x%"PRIx64
+			 " removing it from asked attributes",
+			 unsupp);
 
 		xattr_attrs->mask &= (~unsupp);
 	}
@@ -375,6 +376,7 @@ static int xattr_format_value(caddr_t buffer, size_t *datalen, size_t maxlen)
 		/* 2 bytes per initial byte +'0x' +\n +\0 */
 		char *curr_out;
 		char *tmp_buf = (char *)gsh_malloc(3 * size_in + 4);
+
 		if (!tmp_buf)
 			return ERR_FSAL_NOMEM;
 		curr_out = tmp_buf;
@@ -382,6 +384,7 @@ static int xattr_format_value(caddr_t buffer, size_t *datalen, size_t maxlen)
 		/* hexa representation */
 		for (i = 0; i < size_in; i++) {
 			unsigned char *p8 = (unsigned char *)(buffer + i);
+
 			if ((i % 4 == 3) && (i != size_in - 1))
 				curr_out += sprintf(curr_out, "%02hhX.", *p8);
 			else
