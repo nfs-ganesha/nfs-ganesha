@@ -129,6 +129,7 @@ uid_t setuser(uid_t uid)
 {
 	int rc = 0;
 	uid_t orig_uid = syscall(SYS_getuid);
+
 	rc = syscall(SYS_seteuid, uid);
 	if (rc != 0)
 		LogCrit(COMPONENT_FSAL, "Could not set user identity");
@@ -139,6 +140,7 @@ gid_t setgroup(gid_t gid)
 {
 	int rc = 0;
 	gid_t orig_gid = syscall(SYS_getgid);
+
 	rc = syscall(SYS_setegid, gid);
 	if (rc != 0)
 		LogCrit(COMPONENT_FSAL, "Could not set group identity");

@@ -39,6 +39,7 @@ ssize_t fsetxattr(int fd, const char *name, void *value, size_t size, int flags)
 {
 	char buff[EXTATTR_MAXNAMELEN];
 	ssize_t attr_size = 0;
+
 	errno = 0;
 
 	attr_size =
