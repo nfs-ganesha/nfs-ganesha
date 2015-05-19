@@ -277,18 +277,16 @@ static nfsstat4 make_ds_handle(struct fsal_pnfs_ds *const pds,
 	fs = lookup_fsid(&fsid, fsid_type);
 	if (fs == NULL) {
 		LogInfo(COMPONENT_FSAL,
-			"Could not find filesystem for "
-			"fsid=0x%016"PRIx64".0x%016"PRIx64
-			" from handle",
+			"Could not find filesystem for fsid=0x%016"PRIx64
+			".0x%016"PRIx64" from handle",
 			fsid.major, fsid.minor);
 		return NFS4ERR_STALE;
 	}
 
 	if (fs->fsal != pds->fsal) {
 		LogInfo(COMPONENT_FSAL,
-			"Non LUSTRE filesystem "
-			"fsid=0x%016"PRIx64".0x%016"PRIx64
-			" from handle",
+			"Non LUSTRE filesystem fsid=0x%016"PRIx64
+			".0x%016"PRIx64" from handle",
 			fsid.major, fsid.minor);
 		return NFS4ERR_STALE;
 	}

@@ -188,7 +188,7 @@ fsal_status_t lustre_lock_op(struct fsal_obj_handle *obj_hdl,
 			     fsal_lock_param_t *request_lock,
 			     fsal_lock_param_t *conflicting_lock);
 fsal_status_t lustre_share_op(struct fsal_obj_handle *obj_hdl,
-			      void *p_owner,	/* IN (opaque to FSAL) */
+			      void *p_owner,
 			      fsal_share_param_t request_share);
 fsal_status_t lustre_close(struct fsal_obj_handle *obj_hdl);
 fsal_status_t lustre_lru_cleanup(struct fsal_obj_handle *obj_hdl,

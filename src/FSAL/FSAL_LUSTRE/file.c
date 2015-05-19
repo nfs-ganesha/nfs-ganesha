@@ -75,6 +75,7 @@ fsal_status_t lustre_open(struct fsal_obj_handle *obj_hdl,
 #ifdef USE_FSAL_SHOOK
 	/* Do Shook Magic */
 	fsal_status_t st;
+
 	st = lustre_shook_restore(obj_hdl,
 				  posix_flags & O_TRUNC,
 				  NULL);
@@ -264,8 +265,7 @@ fsal_status_t lustre_lock_op(struct fsal_obj_handle *obj_hdl,
 	}
 	if (conflicting_lock == NULL && lock_op == FSAL_OP_LOCKT) {
 		LogDebug(COMPONENT_FSAL,
-			 "conflicting_lock argument can't"
-			 " be NULL with lock_op  = LOCKT");
+			 "conflicting_lock argument can't be NULL with lock_op  = LOCKT");
 		fsal_error = ERR_FSAL_FAULT;
 		goto out;
 	}
@@ -313,8 +313,7 @@ fsal_status_t lustre_lock_op(struct fsal_obj_handle *obj_hdl,
 			if (rc) {
 				rc = errno;	/* we lose the inital error */
 				LogCrit(COMPONENT_FSAL,
-					"After failing a lock request, I couldn't even"
-					" get the details of who owns the lock.");
+					"After failing a lock request, I couldn't even get the details of who owns the lock.");
 				fsal_error = posix2fsal_error(rc);
 				goto out;
 			}

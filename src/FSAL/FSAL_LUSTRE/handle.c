@@ -439,8 +439,7 @@ static fsal_status_t lustre_makedir(struct fsal_obj_handle *dir_hdl,
 	fsal_error = posix2fsal_error(rc);
 	if (rmdir(newpath))		/* remove the evidence on errors */
 		LogFullDebug(COMPONENT_FSAL,
-			     "lustre_makedir failed, calling rmdir to "
-			     "remove evidence of failure returned error=%d",
+			     "lustre_makedir failed, calling rmdir to remove evidence of failure returned error=%d",
 			     errno);
  errout:
 	return fsalstat(fsal_error, rc);
@@ -1010,6 +1009,7 @@ static fsal_status_t lustre_setattrs(struct fsal_obj_handle *obj_hdl,
 #ifdef USE_FSAL_SHOOK
 		/* Do Shook Magic */
 		fsal_status_t st;
+
 		st = lustre_shook_restore(obj_hdl,
 					 (attrs->filesize == 0),
 					 &trunc_done);
@@ -1244,6 +1244,7 @@ static void release(struct fsal_obj_handle *obj_hdl)
 	    && (myself->u.file.fd >= 0
 		|| myself->u.file.openflags != FSAL_O_CLOSED)) {
 		fsal_status_t status;
+
 		status = lustre_close(obj_hdl);
 		if (FSAL_IS_ERROR(status)) {
 			LogCrit(COMPONENT_FSAL,
@@ -1433,9 +1434,8 @@ fsal_status_t lustre_create_handle(struct fsal_export *exp_hdl,
 		fs = lookup_fsid(&fsid, fsid_type);
 		if (fs == NULL) {
 			LogInfo(COMPONENT_FSAL,
-				"Could not map "
-				"fsid=0x%016"PRIx64".0x%016"PRIx64
-				" to filesytem",
+				"Could not map fsid=0x%016"PRIx64
+				".0x%016"PRIx64" to filesytem",
 				fsid.major, fsid.minor);
 			rc = ESTALE;
 			return fsalstat(posix2fsal_error(rc), rc);

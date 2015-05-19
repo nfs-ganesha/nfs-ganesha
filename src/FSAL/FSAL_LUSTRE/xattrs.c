@@ -168,8 +168,9 @@ static int file_attributes_to_xattr_attrs(struct attrlist *file_attrs,
 
 	if (unsupp) {
 		LogDebug(COMPONENT_FSAL,
-			 "Asking for unsupported attributes in %s(): %#llX removing it from asked attributes",
-			 __func__, (long long unsigned int)unsupp);
+			 "Asking for unsupported attributes in %s(): 0x%"PRIx64
+			 " removing it from asked attributes",
+			 __func__, unsupp);
 
 		xattr_attrs->mask &= (~unsupp);
 	}
