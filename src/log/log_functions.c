@@ -299,6 +299,7 @@ void RegisterCleanup(cleanup_list_element *clean)
 void Cleanup(void)
 {
 	cleanup_list_element *c = cleanup_list;
+
 	while (c != NULL) {
 		c->clean();
 		c = c->next;
@@ -478,8 +479,7 @@ void SetComponentLogLevel(log_components_t component, int level_to_set)
 
 	if (LogComponents[component].comp_env_set) {
 		LogWarn(COMPONENT_CONFIG,
-			"LOG %s level %s from config is ignored because %s"
-			" was set in environment",
+			"LOG %s level %s from config is ignored because %s was set in environment",
 			LogComponents[component].comp_name,
 			ReturnLevelInt(level_to_set),
 			ReturnLevelInt(component_log_level[component]));
@@ -495,12 +495,12 @@ void SetComponentLogLevel(log_components_t component, int level_to_set)
 	}
 }
 
-static inline int ReturnLevelDebug()
+static inline int ReturnLevelDebug(void)
 {
 	return component_log_level[COMPONENT_ALL];
 }				/* ReturnLevelDebug */
 
-static void IncrementLevelDebug()
+static void IncrementLevelDebug(void)
 {
 	_SetLevelDebug(ReturnLevelDebug() + 1);
 
@@ -508,7 +508,7 @@ static void IncrementLevelDebug()
 		   ReturnLevelInt(component_log_level[COMPONENT_ALL]));
 }				/* IncrementLevelDebug */
 
-static void DecrementLevelDebug()
+static void DecrementLevelDebug(void)
 {
 	_SetLevelDebug(ReturnLevelDebug() - 1);
 
@@ -516,7 +516,7 @@ static void DecrementLevelDebug()
 		   ReturnLevelInt(component_log_level[COMPONENT_ALL]));
 }				/* DecrementLevelDebug */
 
-void set_const_log_str()
+void set_const_log_str(void)
 {
 	struct display_buffer dspbuf = { sizeof(const_log_str),
 		const_log_str,
@@ -808,7 +808,6 @@ void release_log_facility(char *name)
 		gsh_free(facility->lf_private);
 	gsh_free(facility->lf_name);
 	gsh_free(facility);
-	return;
 }
 
 /**
@@ -1231,9 +1230,8 @@ static int log_to_file(log_header_t headers, void *private,
  error:
 
 	fprintf(stderr,
-		"Error: couldn't complete write to the log file %s"
-		"status=%d (%s) message was:\n%s", path, my_status,
-		strerror(my_status), buffer->b_start);
+		"Error: couldn't complete write to the log file %s status=%d (%s) message was:\n%s",
+		path, my_status, strerror(my_status), buffer->b_start);
 
  out:
 
@@ -1922,6 +1920,7 @@ static void *format_init(void *link_mem, void *self_struct)
 		return gsh_calloc(1, sizeof(struct logfields));
 	else {
 		struct logfields *lf = self_struct;
+
 		if (lf->user_date_fmt != NULL)
 			gsh_free(lf->user_date_fmt);
 		if (lf->user_time_fmt != NULL)
@@ -2535,7 +2534,7 @@ int read_log_config(config_file_t in_config,
 		return -1;
 }				/* read_log_config */
 
-void reread_log_config()
+void reread_log_config(void)
 {
 	int status = 0;
 	int i;

@@ -6,7 +6,7 @@ void show_display_buffer(struct display_buffer *dspbuf, char *cmt)
 	       strlen(dspbuf->b_start), dspbuf->b_start);
 }
 
-int main()
+int main(int argc, char **argv)
 {
 	char *opaque1 = "this-is-opaque";
 	char *opaque2 = "\3\4\012\65\0";
