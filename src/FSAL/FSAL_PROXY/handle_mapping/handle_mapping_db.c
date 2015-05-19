@@ -385,9 +385,9 @@ static int init_database_access(db_thread_info_t *p_thr_info)
 		rc = sqlite3_exec(p_thr_info->db_conn,
 				  "CREATE TABLE " MAP_TABLE " ( " OBJID_FIELD
 				  "   BIGINT NOT NULL, " HASH_FIELD
-				  "    INT NOT NULL, " HANDLE_FIELD "  TEXT, "
-				  "PRIMARY KEY(" OBJID_FIELD ", " HASH_FIELD
-				  ") )", NULL, NULL, &errmsg);
+				  "    INT NOT NULL, " HANDLE_FIELD
+				  "  TEXT, PRIMARY KEY(" OBJID_FIELD ", "
+				  HASH_FIELD ") )", NULL, NULL, &errmsg);
 
 		CheckCommand(p_thr_info->db_conn, rc, errmsg);
 
@@ -405,8 +405,8 @@ static int init_database_access(db_thread_info_t *p_thr_info)
 
 	rc = sqlite3_prepare_v2(p_thr_info->db_conn,
 				"INSERT INTO " MAP_TABLE "(" OBJID_FIELD ","
-				HASH_FIELD "," HANDLE_FIELD ") "
-				"VALUES (?1, ?2, ?3 )", -1,
+				HASH_FIELD "," HANDLE_FIELD
+				") VALUES (?1, ?2, ?3 )", -1,
 				&(p_thr_info->prep_stmt[INSERT_STATEMENT]),
 				&unparsed);
 
@@ -1029,7 +1029,7 @@ int handlemap_db_delete(nfs23_map_handle_t *p_in_nfs23_digest)
  * Wait for all queues to be empty
  * and all current DB request to be done.
  */
-int handlemap_db_flush()
+int handlemap_db_flush(void)
 {
 	unsigned int i;
 	struct timeval t1;

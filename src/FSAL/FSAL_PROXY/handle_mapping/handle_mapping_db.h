@@ -55,6 +55,6 @@ int handlemap_db_delete(nfs23_map_handle_t *p_in_nfs23_digest);
  * Wait for all queues to be empty
  * and all current DB request to be done.
  */
-int handlemap_db_flush();
+int handlemap_db_flush(void);
 
 #endif

@@ -334,6 +334,7 @@ int HandleMap_GetFH(const nfs23_map_handle_t *nfs23_digest,
 
 	if (rc == HASHTABLE_SUCCESS) {
 		handle_pool_entry_t *h = (handle_pool_entry_t *) buffval.addr;
+
 		if (h->fh_len < fsal_handle->len) {
 			fsal_handle->len = h->fh_len;
 			memcpy(fsal_handle->addr, h->fh_data, h->fh_len);
@@ -420,7 +421,7 @@ int HandleMap_DelFH(nfs23_map_handle_t *p_in_nfs23_digest)
 /**
  * Flush pending database operations (before stopping the server).
  */
-int HandleMap_Flush()
+int HandleMap_Flush(void)
 {
 	return handlemap_db_flush();
 }

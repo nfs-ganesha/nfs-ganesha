@@ -90,6 +90,6 @@ int HandleMap_SetFH(nfs23_map_handle_t *p_in_nfs23_digest,
 
 int HandleMap_DelFH(nfs23_map_handle_t *p_in_nfs23_digest);
 
-int HandleMap_Flush();
+int HandleMap_Flush(void);
 
 #endif

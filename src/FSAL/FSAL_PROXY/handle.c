@@ -390,6 +390,7 @@ static int pxy_rpc_read_reply(int sock)
 
 	while (cnt < 8) {
 		int bc = read(sock, buf + cnt, 8 - cnt);
+
 		if (bc < 0)
 			return -errno;
 		cnt += bc;
@@ -458,8 +459,10 @@ static int pxy_connect(struct pxy_client_params *info,
 		       struct sockaddr_in *dest)
 {
 	int sock;
+
 	if (info->use_privileged_client_port) {
 		int priv_port = 0;
+
 		sock = rresvport(&priv_port);
 		if (sock < 0)
 			LogCrit(COMPONENT_FSAL,
@@ -504,6 +507,7 @@ static void *pxy_rpc_recv(void *arg)
 
 	for (;;) {
 		int nsleeps = 0;
+
 		PTHREAD_MUTEX_lock(&listlock);
 		do {
 			rpc_sock = pxy_connect(info, &addr_rpc);
@@ -522,8 +526,7 @@ static void *pxy_rpc_recv(void *arg)
 				PTHREAD_MUTEX_lock(&listlock);
 			} else {
 				LogDebug(COMPONENT_FSAL,
-					 "Connected after %d sleeps, "
-					 "resending outstanding calls",
+					 "Connected after %d sleeps, resending outstanding calls",
 					 nsleeps);
 			}
 		} while (rpc_sock < 0);
@@ -545,8 +548,7 @@ static void *pxy_rpc_recv(void *arg)
 			default:
 				if (pfd.revents & POLLRDHUP) {
 					LogEvent(COMPONENT_FSAL,
-						 "Other end has closed "
-						 "connection, reconnecting...");
+						 "Other end has closed connection, reconnecting...");
 				} else if (pfd.revents & POLLNVAL) {
 					LogEvent(COMPONENT_FSAL,
 						 "Socket is closed");
@@ -579,6 +581,7 @@ static enum clnt_stat pxy_process_reply(struct pxy_rpc_io_context *ctx,
 
 	while (!ctx->iodone) {
 		int w = pthread_cond_timedwait(&ctx->iowait, &ctx->iolock, &ts);
+
 		if (w == ETIMEDOUT) {
 			PTHREAD_MUTEX_unlock(&ctx->iolock);
 			return RPC_TIMEDOUT;
@@ -721,12 +724,14 @@ static int pxy_compoundv4_call(struct pxy_rpc_io_context *pcontext,
 		do {
 			int bc = 0;
 			char *buf = pcontext->sendbuf;
+
 			LogDebug(COMPONENT_FSAL, "%ssend XID %u with %d bytes",
 				 (first_try ? "First attempt to " : "Re"),
 				 rmsg.rm_xid, pos);
 			PTHREAD_MUTEX_lock(&listlock);
 			while (bc < pos) {
 				int wc = write(rpc_sock, buf, pos - bc);
+
 				if (wc <= 0) {
 					close(rpc_sock);
 					break;
@@ -931,9 +936,11 @@ static void *pxy_clientid_renewer(void *Arg)
 static void free_io_contexts(void)
 {
 	struct glist_head *cur, *n;
+
 	glist_for_each_safe(cur, n, &free_contexts) {
 		struct pxy_rpc_io_context *c =
 		    container_of(cur, struct pxy_rpc_io_context, calls);
+
 		glist_del(cur);
 		gsh_free(c);
 	}
@@ -1735,8 +1742,8 @@ static fsal_status_t pxy_setattrs(struct fsal_obj_handle *obj_hdl,
 	rc = nfs4_Fattr_To_FSAL_attr(&attrs_after, &atok->obj_attributes, NULL);
 	if (rc != NFS4_OK) {
 		LogWarn(COMPONENT_FSAL,
-			"Attribute conversion fails with %d, "
-			"ignoring attibutes after making changes", rc);
+			"Attribute conversion fails with %d, ignoring attibutes after making changes",
+			rc);
 	} else {
 		obj_hdl->attributes = attrs_after;
 	}
@@ -2054,6 +2061,7 @@ static struct pxy_obj_handle *pxy_alloc_handle(struct fsal_export *exp,
 		n->blob.type = attr->type;
 #ifdef PROXY_HANDLE_MAPPING
 		int rc;
+
 		memset(&n->h23, 0, sizeof(n->h23));
 		n->h23.len = sizeof(n->h23);
 		n->h23.type = PXY_HANDLE_MAPPED;
