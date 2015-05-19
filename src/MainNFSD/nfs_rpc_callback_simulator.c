@@ -457,5 +457,5 @@ void nfs_rpc_cbsim_pkginit(void)
  */
 void nfs_rpc_cbsim_pkgshutdown(void)
 {
-	return;
+	/* return */
 }

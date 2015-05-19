@@ -121,6 +121,7 @@ void *sigmgr_thread(void *UnusedArg)
 	/* Loop until we catch SIGTERM */
 	while (signal_caught != SIGTERM) {
 		sigset_t signals_to_catch;
+
 		sigemptyset(&signals_to_catch);
 		sigaddset(&signals_to_catch, SIGTERM);
 		sigaddset(&signals_to_catch, SIGHUP);
@@ -167,7 +168,7 @@ void nfs_prereq_init(char *program_name, char *host_name, int debug_level,
 /**
  * @brief Print the nfs_parameter_structure
  */
-void nfs_print_param_config()
+void nfs_print_param_config(void)
 {
 	printf("NFS_Core_Param\n{\n");
 
@@ -411,8 +412,7 @@ static void nfs_Start_threads(void)
 				    _9p_dispatcher_thread, NULL);
 		if (rc != 0) {
 			LogFatal(COMPONENT_THREAD,
-				 "Could not create  9P/TCP dispatcher,"
-				 " error = %d (%s)",
+				 "Could not create  9P/TCP dispatcher, error = %d (%s)",
 				 errno, strerror(errno));
 		}
 		LogEvent(COMPONENT_THREAD,
@@ -427,8 +427,7 @@ static void nfs_Start_threads(void)
 				    _9p_rdma_dispatcher_thread, NULL);
 		if (rc != 0) {
 			LogFatal(COMPONENT_THREAD,
-				 "Could not create  9P/RDMA dispatcher,"
-				 " error = %d (%s)",
+				 "Could not create  9P/RDMA dispatcher, error = %d (%s)",
 				 errno, strerror(errno));
 		}
 		LogEvent(COMPONENT_THREAD,
@@ -540,7 +539,7 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 	request_pool =
 	    pool_init("Request pool", sizeof(request_data_t),
 		      pool_basic_substrate, NULL,
-		      NULL /* FASTER constructor_request_data_t */ ,
+		      NULL, /* FASTER constructor_request_data_t */
 		      NULL);
 	if (!request_pool)
 		LogFatal(COMPONENT_INIT,
@@ -549,7 +548,7 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 	request_data_pool =
 	    pool_init("Request Data Pool", sizeof(nfs_request_data_t),
 		      pool_basic_substrate, NULL,
-		      NULL /* FASTER constructor_nfs_request_data_t */ ,
+		      NULL, /* FASTER constructor_nfs_request_data_t */
 		      NULL);
 	if (!request_data_pool)
 		LogFatal(COMPONENT_INIT,

@@ -758,8 +758,8 @@ static void nfs_rpc_execute(request_data_t *req,
  */
 	if (copy_xprt_addr(op_ctx->caller_addr, xprt) == 0) {
 		LogDebug(COMPONENT_DISPATCH,
-			 "copy_xprt_addr failed for Program %d, Version %d, "
-			 "Function %d", (int)svcreq->rq_prog,
+			 "copy_xprt_addr failed for Program %d, Version %d, Function %d",
+			 (int)svcreq->rq_prog,
 			 (int)svcreq->rq_vers, (int)svcreq->rq_proc);
 		/* XXX move lock wrapper into RPC API */
 		DISP_SLOCK(xprt);
@@ -772,16 +772,16 @@ static void nfs_rpc_execute(request_data_t *req,
 	op_ctx->client = get_gsh_client(op_ctx->caller_addr, false);
 	if (op_ctx->client == NULL) {
 		LogDebug(COMPONENT_DISPATCH,
-			 "Cannot get client block for Program %d, Version %d, "
-			 "Function %d", (int)svcreq->rq_prog,
+			 "Cannot get client block for Program %d, Version %d, Function %d",
+			 (int)svcreq->rq_prog,
 			 (int)svcreq->rq_vers, (int)svcreq->rq_proc);
 	} else {
 		/* Set the Client IP for this thread */
 		SetClientIP(op_ctx->client->hostaddr_str);
 		client_ip = op_ctx->client->hostaddr_str;
 		LogDebug(COMPONENT_DISPATCH,
-			 "Request from %s for Program %d, Version %d, Function %d "
-			 "has xid=%u", client_ip,
+			 "Request from %s for Program %d, Version %d, Function %d has xid=%u",
+			 client_ip,
 			 (int)svcreq->rq_prog, (int)svcreq->rq_vers,
 			 (int)svcreq->rq_proc, svcreq->rq_xid);
 	}
@@ -804,16 +804,15 @@ static void nfs_rpc_execute(request_data_t *req,
 	if (dpq_status == DUPREQ_SUCCESS) {
 		/* A new request, continue processing it. */
 		LogFullDebug(COMPONENT_DISPATCH,
-			     "Current request is not duplicate or "
-			     "not cacheable.");
+			     "Current request is not duplicate or not cacheable.");
 	} else {
 		switch (dpq_status) {
 		case DUPREQ_EXISTS:
 			/* Found the request in the dupreq cache.
 			 * Send cached reply. */
 			LogFullDebug(COMPONENT_DISPATCH,
-				     "DUP: DupReq Cache Hit: using previous "
-				     "reply, rpcxid=%u", svcreq->rq_xid);
+				     "DUP: DupReq Cache Hit: using previous reply, rpcxid=%u",
+				     svcreq->rq_xid);
 
 			LogFullDebug(COMPONENT_DISPATCH,
 				     "Before svc_sendreply on socket %d (dup req)",
@@ -825,10 +824,7 @@ static void nfs_rpc_execute(request_data_t *req,
 				    reqnfs->funcdesc->xdr_encode_func,
 			     (caddr_t) res_nfs) == false) {
 				LogDebug(COMPONENT_DISPATCH,
-					 "NFS DISPATCHER: FAILURE: Error while calling "
-					 "svc_sendreply on a duplicate request. rpcxid=%u "
-					 "socket=%d function:%s client:%s program:%d "
-					 "nfs version:%d proc:%d xid:%u errno: %d",
+					 "NFS DISPATCHER: FAILURE: Error while calling svc_sendreply on a duplicate request. rpcxid=%u socket=%d function:%s client:%s program:%d nfs version:%d proc:%d xid:%u errno: %d",
 					 svcreq->rq_xid, xprt->xp_fd,
 					 reqnfs->funcdesc->funcname,
 					 client_ip,
@@ -844,8 +840,7 @@ static void nfs_rpc_execute(request_data_t *req,
 			/* Another thread owns the request */
 		case DUPREQ_BEING_PROCESSED:
 			LogFullDebug(COMPONENT_DISPATCH,
-				     "DUP: Request xid=%u is already being processed; the "
-				     "active thread will reply",
+				     "DUP: Request xid=%u is already being processed; the active thread will reply",
 				     svcreq->rq_xid);
 			/* Free the arguments */
 			DISP_SLOCK(xprt);
@@ -856,8 +851,7 @@ static void nfs_rpc_execute(request_data_t *req,
 			 * the duplicate request cache */
 		case DUPREQ_ERROR:
 			LogCrit(COMPONENT_DISPATCH,
-				"DUP: Did not find the request in the duplicate request cache "
-				"and couldn't add the request.");
+				"DUP: Did not find the request in the duplicate request cache and couldn't add the request.");
 			DISP_SLOCK(xprt);
 			svcerr_systemerr(xprt, svcreq);
 			break;
@@ -872,8 +866,7 @@ static void nfs_rpc_execute(request_data_t *req,
 
 		default:
 			LogCrit(COMPONENT_DISPATCH,
-				"DUP: Unknown duplicate request cache status. This should never "
-				"be reached!");
+				"DUP: Unknown duplicate request cache status. This should never be reached!");
 			DISP_SLOCK(xprt);
 			svcerr_systemerr(xprt, svcreq);
 			break;
@@ -1312,10 +1305,7 @@ static void nfs_rpc_execute(request_data_t *req,
 			    xprt, svcreq, reqnfs->funcdesc->xdr_encode_func,
 		     (caddr_t) res_nfs) == false) {
 			LogDebug(COMPONENT_DISPATCH,
-				 "NFS DISPATCHER: FAILURE: Error while calling "
-				 "svc_sendreply on a new request. rpcxid=%u "
-				 "socket=%d function:%s client:%s program:%d "
-				 "nfs version:%d proc:%d xid:%u errno: %d",
+				 "NFS DISPATCHER: FAILURE: Error while calling svc_sendreply on a new request. rpcxid=%u socket=%d function:%s client:%s program:%d nfs version:%d proc:%d xid:%u errno: %d",
 				 svcreq->rq_xid, xprt->xp_fd,
 				 reqnfs->funcdesc->funcname,
 				 client_ip,
@@ -1341,6 +1331,7 @@ static void nfs_rpc_execute(request_data_t *req,
 	 * file handle) */
 	if (isInfo(COMPONENT_DISPATCH) || isInfo(COMPONENT_EXPORT)) {
 		char dumpfh[1024];
+
 		sprint_fhandle3(dumpfh, (nfs_fh3 *) arg_nfs);
 		LogInfo(COMPONENT_DISPATCH,
 			"%s Request from host %s V3 not allowed on this export, proc=%d, FH=%s",
@@ -1355,8 +1346,8 @@ static void nfs_rpc_execute(request_data_t *req,
 	/* nb, a no-op when req is uncacheable */
 	if (nfs_dupreq_delete(svcreq) != DUPREQ_SUCCESS) {
 		LogCrit(COMPONENT_DISPATCH,
-			"Attempt to delete duplicate request failed on "
-			"line %d", __LINE__);
+			"Attempt to delete duplicate request failed on line %d",
+			__LINE__);
 	}
 
  freeargs:
@@ -1392,8 +1383,6 @@ out:
 #ifdef USE_LTTNG
 	tracepoint(nfs_rpc, end, req);
 #endif
-
-	return;
 }
 
 #ifdef _USE_9P
@@ -1421,8 +1410,6 @@ static void _9p_execute(request_data_t *req, nfs_worker_data_t *worker_data)
 	else if (req9p->pconn->trans_type == _9P_RDMA)
 		_9p_rdma_process_request(req9p, worker_data);
 #endif
-
-	return;
 }				/* _9p_execute */
 
 /**

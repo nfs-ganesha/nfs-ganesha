@@ -120,8 +120,6 @@ void nfs_rpc_cb_pkginit(void)
 	if (gssd_check_mechs() != 0)
 		LogCrit(COMPONENT_INIT,
 			"sanity check: gssd_check_mechs() failed");
-
-	return;
 }
 
 /**
@@ -129,7 +127,7 @@ void nfs_rpc_cb_pkginit(void)
  */
 void nfs_rpc_cb_pkgshutdown(void)
 {
-	return;
+	/* return */
 }
 
 /**
@@ -419,6 +417,7 @@ static inline char *format_host_principal(rpc_call_channel_t *chan, char *buf,
 	case RPC_CHAN_V40:
 		{
 			nfs_client_id_t *clientid = chan->source.clientid;
+
 			switch (clientid->cid_cb.v40.cb_addr.ss.ss_family) {
 			case AF_INET:
 				{
@@ -451,7 +450,6 @@ static inline char *format_host_principal(rpc_call_channel_t *chan, char *buf,
 	case RPC_CHAN_V41:
 		/* XXX implement */
 		goto out;
-		break;
 	}
 
 	if (host) {
@@ -1113,6 +1111,7 @@ static rpc_call_t *construct_single_call(nfs41_session_t *session,
 		referring_call_list4 *list =
 		    gsh_calloc(1, sizeof(referring_call_list4));
 		referring_call4 *ref_call = NULL;
+
 		if (!list) {
 			free_rpc_call(call);
 			return NULL;
@@ -1281,10 +1280,10 @@ static void release_cb_slot(nfs41_session_t *session, slotid4 slot, bool sent)
  */
 int nfs_rpc_v41_single(nfs_client_id_t *clientid, nfs_cb_argop4 *op,
 		       struct state_refer *refer,
-		       int32_t(*completion) (rpc_call_t *, rpc_call_hook,
+		       int32_t (*completion)(rpc_call_t *, rpc_call_hook,
 					     void *arg, uint32_t flags),
 		       void *completion_arg,
-		       void (*free_op) (nfs_cb_argop4 *op))
+		       void (*free_op)(nfs_cb_argop4 *op))
 {
 	int scan = 0;
 	bool sent = false;
@@ -1306,6 +1305,7 @@ int nfs_rpc_v41_single(nfs_client_id_t *clientid, nfs_cb_argop4 *op,
 			slotid4 highest_slot = 0;
 			rpc_call_t *call = NULL;
 			int code = 0;
+
 			if (!
 			    (find_cb_slot
 			     (session, scan == 1, &slot, &highest_slot))) {
@@ -1366,6 +1366,7 @@ enum clnt_stat nfs_test_cb_chan(nfs_client_id_t *pclientid)
 	struct timeval CB_TIMEOUT = {15, 0};
 	rpc_call_channel_t *chan;
 	enum clnt_stat stat = RPC_SUCCESS;
+
 	assert(pclientid);
 	/* create (fix?) channel */
 	for (tries = 0; tries < 2; ++tries) {

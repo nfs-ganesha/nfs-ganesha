@@ -107,9 +107,7 @@ const char *xprt_stat_s[4] = {
 void nfs_rpc_dispatch_dummy(struct svc_req *ptr_req, SVCXPRT *ptr_svc)
 {
 	LogMajor(COMPONENT_DISPATCH,
-		 "NFS DISPATCH DUMMY: Possible error, function "
-		 "nfs_rpc_dispatch_dummy should never be called");
-	return;
+		 "NFS DISPATCH DUMMY: Possible error, function nfs_rpc_dispatch_dummy should never be called");
 }
 
 const char *tags[] = {
@@ -159,6 +157,7 @@ static void unregister(const rpcprog_t prog, const rpcvers_t vers1,
 		       const rpcvers_t vers2)
 {
 	rpcvers_t vers;
+
 	for (vers = vers1; vers <= vers2; vers++) {
 		rpcb_unset(prog, vers, netconfig_udpv4);
 		rpcb_unset(prog, vers, netconfig_tcpv4);
@@ -202,7 +201,7 @@ static void unregister_rpc(void)
  * immediately if no connection is pending on it, hence drastically
  * reducing the probability for trouble.
  */
-static void close_rpc_fd()
+static void close_rpc_fd(void)
 {
 	protos p;
 
@@ -301,6 +300,7 @@ static int Bind_sockets_V6(void)
 		if (test_for_additional_nfs_protocols(p)) {
 
 			proto_data *pdatap = &pdata[p];
+
 			memset(&pdatap->sinaddr_udp6, 0,
 			       sizeof(pdatap->sinaddr_udp6));
 			pdatap->sinaddr_udp6.sin6_family = AF_INET6;
@@ -388,6 +388,7 @@ static int Bind_sockets_V4(void)
 		if (test_for_additional_nfs_protocols(p)) {
 
 			proto_data *pdatap = &pdata[p];
+
 			memset(&pdatap->sinaddr_udp, 0,
 			       sizeof(pdatap->sinaddr_udp));
 			pdatap->sinaddr_udp.sin_family = AF_INET;
@@ -485,8 +486,6 @@ void Bind_sockets(void)
 
 	LogInfo(COMPONENT_DISPATCH,
 		"Bind_sockets() successful, v6disabled = %d", v6disabled);
-
-	return;
 }
 
 /**
@@ -574,7 +573,7 @@ static int Allocate_sockets_V4(int p)
 /**
  * @brief Allocate the tcp and udp sockets for the nfs daemon
  */
-static void Allocate_sockets()
+static void Allocate_sockets(void)
 {
 	protos	p;
 	int	rc = 0;
@@ -724,7 +723,7 @@ void Register_program(protos prot, int flag, int vers)
  * Perform all the required initialization for the RPC subsystem and event
  * channels.
  */
-void nfs_Init_svc()
+void nfs_Init_svc(void)
 {
 	svc_init_params svc_params;
 	int ix, code __attribute__ ((unused)) = 0;
@@ -764,6 +763,7 @@ void nfs_Init_svc()
 
 	/* Set TIRPC debug flags */
 	uint32_t tirpc_debug_flags = nfs_param.core_param.rpc.debug_flags;
+
 	if (!tirpc_control(TIRPC_SET_DEBUG_FLAGS, &tirpc_debug_flags))
 		LogCrit(COMPONENT_INIT, "Failed setting TI-RPC debug flags");
 
@@ -836,8 +836,7 @@ void nfs_Init_svc()
 		/* Some log that can be useful when debug ONC/RPC
 		 * and RPCSEC_GSS matter */
 		LogDebug(COMPONENT_DISPATCH,
-			 "Socket numbers are: nfs_udp=%u  nfs_tcp=%u "
-			 "mnt_udp=%u  mnt_tcp=%u nlm_tcp=%u nlm_udp=%u",
+			 "Socket numbers are: nfs_udp=%u  nfs_tcp=%u mnt_udp=%u  mnt_tcp=%u nlm_tcp=%u nlm_udp=%u",
 			 udp_socket[P_NFS], tcp_socket[P_NFS],
 			 udp_socket[P_MNT], tcp_socket[P_MNT],
 			 udp_socket[P_NLM], tcp_socket[P_NLM]);
@@ -1144,6 +1143,7 @@ static bool nfs_rpc_cond_stall_xprt(SVCXPRT *xprt)
 
 	if (activate) {
 		int rc = 0;
+
 		LogDebug(COMPONENT_DISPATCH, "starting stallq service thread");
 		rc = fridgethr_submit(req_fridge, thr_stallq,
 				      NULL /* no arg */);
@@ -1205,12 +1205,12 @@ void nfs_rpc_queue_init(void)
 static uint32_t enqueued_reqs;
 static uint32_t dequeued_reqs;
 
-uint32_t get_enqueue_count()
+uint32_t get_enqueue_count(void)
 {
 	return enqueued_reqs;
 }
 
-uint32_t get_dequeue_count()
+uint32_t get_dequeue_count(void)
 {
 	return dequeued_reqs;
 }
@@ -1250,7 +1250,6 @@ void nfs_rpc_enqueue_req(request_data_t *req)
 #endif
 	default:
 		goto out;
-		break;
 	}
 
 	/* this one is real, timestamp it
@@ -1266,7 +1265,7 @@ void nfs_rpc_enqueue_req(request_data_t *req)
 	atomic_inc_uint32_t(&enqueued_reqs);
 
 	LogDebug(COMPONENT_DISPATCH,
-		 "enqueued req, q %p (%s %p:%p) " "size is %d (enq %u deq %u)",
+		 "enqueued req, q %p (%s %p:%p) size is %d (enq %u deq %u)",
 		 q, qpair->s, &qpair->producer, &qpair->consumer, q->size,
 		 enqueued_reqs, dequeued_reqs);
 
@@ -1348,9 +1347,8 @@ request_data_t *nfs_rpc_consume_req(struct req_q_pair *qpair)
 			pthread_spin_unlock(&qpair->consumer.sp);
 			if (s)
 				LogFullDebug(COMPONENT_DISPATCH,
-					     "try splice, qpair %s consumer qsize=%u "
-					     "producer qsize=%u", s, csize,
-					     psize);
+					     "try splice, qpair %s consumer qsize=%u producer qsize=%u",
+					     s, csize, psize);
 			goto out;
 		}
 
@@ -1359,8 +1357,8 @@ request_data_t *nfs_rpc_consume_req(struct req_q_pair *qpair)
 
 		if (s)
 			LogFullDebug(COMPONENT_DISPATCH,
-				     "try splice, qpair %s consumer qsize=%u "
-				     "producer qsize=%u", s, csize, psize);
+				     "try splice, qpair %s consumer qsize=%u producer qsize=%u",
+				     s, csize, psize);
 	}
  out:
 	return nfsreq;
@@ -1423,6 +1421,7 @@ request_data_t *nfs_rpc_dequeue_req(nfs_worker_data_t *worker)
 	/* wait */
 	if (!nfsreq) {
 		wait_q_entry_t *wqe = &worker->wqe;
+
 		assert(wqe->waiters == 0); /* wqe is not on any wait queue */
 		PTHREAD_MUTEX_lock(&wqe->lwe.mtx);
 		wqe->flags = Wqe_LFlag_WaitSync;
@@ -1612,6 +1611,7 @@ static inline enum xprt_stat nfs_rpc_continue_decoding(SVCXPRT *xprt,
 	case XPRT_IDLE:
 		{
 			struct pollfd fd;
+
 			fd.fd = xprt->xp_fd;
 			fd.events = POLLIN;
 			if (poll(&fd, 1, 0) > 0) /* ms, ie, now */
@@ -2113,16 +2113,16 @@ int nfs_rpc_get_args(struct fridgethr_context *thr_ctx,
 	memset(arg_nfs, 0, sizeof(nfs_arg_t));
 
 	LogFullDebug(COMPONENT_DISPATCH,
-		     "Before svc_getargs on socket %d, xprt=%p", xprt->xp_fd,
-		     xprt);
+		     "Before svc_getargs on socket %d, xprt=%p",
+		     xprt->xp_fd, xprt);
 
 	if (svc_getargs
 	    (xprt, req, reqnfs->funcdesc->xdr_decode_func, (caddr_t) arg_nfs,
 	     &reqnfs->lookahead) == false) {
 		LogInfo(COMPONENT_DISPATCH,
-			"svc_getargs failed for Program %d, Version %d, "
-			"Function %d xid=%u", (int)req->rq_prog,
-			(int)req->rq_vers, (int)req->rq_proc, req->rq_xid);
+			"svc_getargs failed for Program %d, Version %d, Function %d xid=%u",
+			(int)req->rq_prog, (int)req->rq_vers,
+			(int)req->rq_proc, req->rq_xid);
 		/* XXX move this, removing need for thr_ctx */
 		DISP_SLOCK2(xprt);
 		svcerr_decode(xprt, req);

@@ -81,6 +81,7 @@ struct clx {
 void nfs_msk_callback(void *arg)
 {
 	struct clx *clx = arg;
+
 	PTHREAD_MUTEX_lock(&clx->lock);
 	thr_decode_rpc_request(NULL, clx->xprt);
 	pthread_cond_signal(&clx->cond);
@@ -189,23 +190,18 @@ void *nfs_msk_dispatcher_thread(void *nullarg)
 		child_trans = msk_accept_one(trans);
 		if (child_trans == NULL)
 			LogMajor(COMPONENT_NFS_MSK,
-				"NFS/RDMA: dispatcher "
-				"failed to accept a new client");
+				"NFS/RDMA: dispatcher failed to accept a new client");
 		else {
 			LogDebug(COMPONENT_NFS_MSK,
-				"Got a new connection, "
-				"spawning a polling thread");
+				"Got a new connection, spawning a polling thread");
 			rc = pthread_create(&thrid_handle_trans,
 					&attr_thr, nfs_msk_thread, child_trans);
 			if (rc)
 				LogMajor(COMPONENT_NFS_MSK,
-					"NFS/RDMA: dipatcher "
-					"accepted a new client "
-					"but could not spawn a related thread");
+					"NFS/RDMA: dipatcher accepted a new client but could not spawn a related thread");
 			else
 				LogEvent(COMPONENT_NFS_MSK,
-					"NFS/RDMA: thread %u spawned "
-					"to manage a new child_trans",
+					"NFS/RDMA: thread %u spawned to manage a new child_trans",
 					(unsigned int)thrid_handle_trans);
 		}
 	} /* while (1) */
