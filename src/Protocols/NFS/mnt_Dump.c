@@ -71,5 +71,4 @@ int mnt_Dump(nfs_arg_t *arg,
 void mnt_Dump_Free(nfs_res_t *res)
 {
 	/* Nothing to do */
-	return;
-}				/* mnt_Dump_Free */
+}

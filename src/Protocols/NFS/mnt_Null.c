@@ -65,5 +65,5 @@ int mnt_Null(nfs_arg_t *arg,
  */
 void mnt_Null_Free(nfs_res_t *res)
 {
-	return;
+	/* return */
 }

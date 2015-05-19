@@ -70,5 +70,4 @@ int mnt_Umnt(nfs_arg_t *arg,
 void mnt_Umnt_Free(nfs_res_t *res)
 {
 	/* Nothing to do */
-	return;
-}				/* mnt_Umnt_Free */
+}

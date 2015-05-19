@@ -241,7 +241,7 @@ int mnt_Mnt(nfs_arg_t *arg,
 
 void mnt1_Mnt_Free(nfs_res_t *res)
 {
-	return;
+	/* return */
 }
 
 void mnt3_Mnt_Free(nfs_res_t *res)
@@ -252,5 +252,4 @@ void mnt3_Mnt_Free(nfs_res_t *res)
 		gsh_free(res->res_mnt3.mountres3_u.mountinfo.fhandle.
 			 fhandle3_val);
 	}
-	return;
 }
