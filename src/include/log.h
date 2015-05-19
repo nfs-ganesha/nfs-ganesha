@@ -154,7 +154,7 @@ void DisplayLogComponentLevel(log_components_t component, char *file, int line,
 
 int read_log_config(config_file_t in_config,
 		    struct config_error_type *err_type);
-void reread_log_config();
+void reread_log_config(void);
 
 typedef enum log_type {
 	SYSLOG = 0,
@@ -190,7 +190,7 @@ int enable_log_facility(char *name);
 int disable_log_facility(char *name);
 int set_log_destination(char *name, char *dest);
 int set_log_level(char *name, log_levels_t max_level);
-void set_const_log_str();
+void set_const_log_str(void);
 
 struct log_component_info {
 	const char *comp_name;	/* component name */

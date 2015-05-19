@@ -96,6 +96,7 @@ static inline void glist_del(struct glist_head *node)
 {
 	struct glist_head *left = node->prev;
 	struct glist_head *right = node->next;
+
 	if (left != NULL)
 		left->next = right;
 	if (right != NULL)
@@ -167,6 +168,7 @@ static inline size_t glist_length(struct glist_head *head)
 {
 	size_t length = 0;
 	struct glist_head *dummy = NULL;
+
 	glist_for_each(dummy, head) {
 		++length;
 	}
@@ -199,6 +201,7 @@ static inline void glist_insert_sorted(struct glist_head *head,
 				       glist_compare compare)
 {
 	struct glist_head *next = NULL;
+
 	if (glist_empty(head)) {
 		glist_add_tail(head, new);
 		return;

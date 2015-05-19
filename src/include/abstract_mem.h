@@ -91,8 +91,10 @@ gsh_malloc_aligned(size_t a, size_t n)
 	return valloc(n);
 #else
 	void *p;
+
 	if (posix_memalign(&p, a, n) != 0)
 		p = NULL;
+
 	return p;
 #endif
 }
@@ -402,6 +404,7 @@ static inline void *
 pool_alloc(pool_t *pool, void *parameters)
 {
 	void *object = pool->substrate_vector->allocator(pool);
+
 	if (object && (pool->constructor))
 		(pool->constructor) (object, parameters);
 

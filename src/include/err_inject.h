@@ -27,7 +27,7 @@
 #ifdef _ERROR_INJECTION
 extern int worker_delay_time;
 extern int next_worker_delay_time;
-int init_error_injector();
+int init_error_injector(void);
 #endif
 
 #endif				/* ERR_INJECT_H */

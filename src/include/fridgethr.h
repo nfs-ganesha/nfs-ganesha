@@ -73,7 +73,7 @@ struct fridgethr_entry {
 					   user and associated with the
 					   thread.  Never modified by the
 					   fridgethr code. */
-		void (*func) (struct fridgethr_context *); /*< Function being
+		void (*func)(struct fridgethr_context *); /*< Function being
 							       executed */
 		void *arg;	/*< Functions argument */
 	} ctx;
@@ -204,7 +204,7 @@ struct fridgethr {
 	uint32_t nidle;		/*< Number of idle threads */
 	uint32_t flags;		/*< Fridge-wide flags */
 	fridgethr_comm_t command;	/*< Command state */
-	void (*cb_func) (void *);	/*< Callback on command completion */
+	void (*cb_func)(void *);	/*< Callback on command completion */
 	void *cb_arg;		/*< Argument for completion callback */
 	pthread_mutex_t *cb_mtx;	/*< Mutex for completion condition
 					    variable */

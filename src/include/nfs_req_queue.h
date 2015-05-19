@@ -106,6 +106,7 @@ static inline void nfs_rpc_q_init(struct req_q *q)
 static inline uint32_t nfs_rpc_q_next_slot(void)
 {
 	uint32_t ix = atomic_inc_uint32_t(&nfs_req_st.reqs.ctr);
+
 	if (!ix)
 		ix = atomic_inc_uint32_t(&nfs_req_st.reqs.ctr);
 	return ix;
@@ -120,6 +121,7 @@ static inline void nfs_rpc_queue_awaken(void *arg)
 	pthread_spin_lock(&st->reqs.sp);
 	glist_for_each_safe(g, n, &st->reqs.wait_list) {
 		wait_q_entry_t *wqe = glist_entry(g, wait_q_entry_t, waitq);
+
 		pthread_cond_signal(&wqe->lwe.cv);
 		pthread_cond_signal(&wqe->rwe.cv);
 	}

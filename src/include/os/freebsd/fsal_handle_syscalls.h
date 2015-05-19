@@ -63,6 +63,7 @@ static inline int vfs_link_by_handle(vfs_file_handle_t *fh,
 				     const char *dname)
 {
 	struct fhandle *handle = (struct fhandle *)fh->handle;
+
 	return fhlink(handle, destdirfd, dname);
 }
 
@@ -71,6 +72,7 @@ static inline int vfs_readlink_by_handle(vfs_file_handle_t *fh, int srcfd,
 					 size_t bufsize)
 {
 	struct fhandle *handle = (struct fhandle *)fh->handle;
+
 	return fhreadlink(handle, buf, bufsize);
 }
 

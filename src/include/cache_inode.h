@@ -166,7 +166,7 @@ static const size_t CACHE_INODE_UNSTABLE_BUFFERSIZE = 100 * 1024 * 1024;
  * Valid LRU queues.
  */
 enum lru_q_id {
-	LRU_ENTRY_NONE = 0 /* entry not queued */ ,
+	LRU_ENTRY_NONE = 0, /* entry not queued */
 	LRU_ENTRY_L1,
 	LRU_ENTRY_L2,
 	LRU_ENTRY_PINNED,
@@ -925,6 +925,7 @@ cache_inode_is_attrs_valid(const cache_entry_t *entry)
 
 	if (entry->obj_handle->attributes.expire_time_attr > 0) {
 		time_t current_time = time(NULL);
+
 		if (current_time - entry->attr_time >
 		    entry->obj_handle->attributes.expire_time_attr)
 			return false;
@@ -1018,6 +1019,7 @@ cache_inode_get_changeid4(cache_entry_t *entry)
 {
 	cache_inode_status_t status;
 	changeid4 changeid;
+
 	status = cache_inode_lock_trust_attrs(entry, false);
 
 	changeid = (changeid4) entry->change_time;

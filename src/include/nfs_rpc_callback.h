@@ -121,6 +121,7 @@ enum clnt_stat rpc_cb_null(rpc_call_channel_t *chan, struct timeval timeout,
 static inline void nfs_rpc_init_call(void *ptr, void *parameters)
 {
 	rpc_call_t *call = (rpc_call_t *) ptr;
+
 	memset(call, 0, sizeof(rpc_call_t));
 	init_wait_entry(&call->we);
 }
@@ -150,7 +151,7 @@ int32_t nfs_rpc_dispatch_call(rpc_call_t *call, uint32_t flags);
 
 int nfs_rpc_v41_single(nfs_client_id_t *clientid, nfs_cb_argop4 *op,
 		       struct state_refer *refer,
-		       int32_t(*completion) (rpc_call_t *, rpc_call_hook,
+		       int32_t (*completion)(rpc_call_t *, rpc_call_hook,
 					     void *arg, uint32_t flags),
 		       void *completion_arg,
 		       void (*free_op)(nfs_cb_argop4 *op));

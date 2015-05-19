@@ -31,7 +31,7 @@
 extern pthread_mutex_t nlm_async_resp_mutex;
 extern pthread_cond_t nlm_async_resp_cond;
 
-int nlm_async_callback_init();
+int nlm_async_callback_init(void);
 
 int nlm_send_async_res_nlm4(state_nlm_client_t *host, state_async_func_t func,
 			    nfs_res_t *pres);

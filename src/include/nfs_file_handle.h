@@ -145,6 +145,7 @@ static inline short nfs3_FhandleToExportId(nfs_fh3 *pfh3)
 static inline short nlm4_FhandleToExportId(netobj *pfh3)
 {
 	nfs_fh3 fh3;
+
 	if (pfh3 == NULL)
 		return nfs3_FhandleToExportId(NULL);
 	fh3.data.data_val = pfh3->n_bytes;

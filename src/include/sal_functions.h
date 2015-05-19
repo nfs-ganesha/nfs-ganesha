@@ -606,7 +606,7 @@ void state_export_unlock_all(void);
 
 void state_lock_wipe(cache_entry_t *entry);
 
-void cancel_all_nlm_blocked();
+void cancel_all_nlm_blocked(void);
 
 /******************************************************************************
  *

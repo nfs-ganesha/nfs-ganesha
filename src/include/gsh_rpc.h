@@ -174,6 +174,7 @@ void nfs_dupreq_put_drc(SVCXPRT *, struct drc *, uint32_t);
 static inline void free_gsh_xprt_private(SVCXPRT *xprt)
 {
 	gsh_xprt_private_t *xu = (gsh_xprt_private_t *)xprt->xp_u1;
+
 	if (xu) {
 		if (xu->drc)
 			nfs_dupreq_put_drc(xprt, xu->drc, DRC_FLAG_RELEASE);
@@ -239,8 +240,6 @@ static inline void gsh_xprt_unref(SVCXPRT *xprt, uint32_t flags,
 		COMPONENT_RPC,
 		"xprt %p postrelease req_cnt=%u xp_refcnt=%u tag=%s line=%d",
 		xprt, req_cnt, xprt->xp_refcnt, tag, line);
-
-	return;
 }
 
 static inline bool gsh_xprt_decoder_guard(SVCXPRT *xprt, uint32_t flags)
@@ -286,8 +285,6 @@ static inline void gsh_xprt_clear_flag(SVCXPRT *xprt, uint32_t flags)
 
 	/* unconditional */
 	PTHREAD_MUTEX_unlock(&xprt->xp_lock);
-
-	return;
 }
 
 #define DISP_SLOCK(x)							\
@@ -355,6 +352,7 @@ int display_sockaddr(struct display_buffer *dspbuf, sockaddr_t *addr);
 static inline void sprint_sockaddr(sockaddr_t *addr, char *buf, int len)
 {
 	struct display_buffer dspbuf = {len, buf, buf};
+
 	buf[0] = '\0';
 	display_sockaddr(&dspbuf, addr);
 }

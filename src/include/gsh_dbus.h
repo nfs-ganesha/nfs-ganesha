@@ -136,8 +136,8 @@ struct gsh_dbus_prop {
 	const char *name;
 	dbus_prop_access_t access;
 	const char *type;
-	 bool(*get) (DBusMessageIter *reply);
-	 bool(*set) (DBusMessageIter *args);
+	 bool (*get)(DBusMessageIter *reply);
+	 bool (*set)(DBusMessageIter *args);
 };
 
 struct gsh_dbus_arg {
@@ -148,7 +148,7 @@ struct gsh_dbus_arg {
 
 struct gsh_dbus_method {
 	const char *name;
-	 bool(*method) (DBusMessageIter *args,
+	 bool (*method)(DBusMessageIter *args,
 			DBusMessage *reply,
 			DBusError *error);
 	struct gsh_dbus_arg args[];
@@ -156,7 +156,7 @@ struct gsh_dbus_method {
 
 struct gsh_dbus_signal {
 	const char *name;
-	 bool(*signal) (DBusMessageIter *args, DBusMessage *reply);
+	bool (*signal)(DBusMessageIter *args, DBusMessage *reply);
 	struct gsh_dbus_arg args[];
 };
 
@@ -199,7 +199,7 @@ void del_dbus_broadcast(struct dbus_bcast_item *to_remove);
 
 /* heartbeat function call back */
 int dbus_heartbeat_cb(void *arg);
-void init_heartbeat();
+void init_heartbeat(void);
 
 void gsh_dbus_pkginit(void);
 void gsh_dbus_pkgshutdown(void);

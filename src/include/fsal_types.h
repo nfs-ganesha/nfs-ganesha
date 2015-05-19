@@ -440,17 +440,17 @@ struct attrlist {
  *  example :
  *  FSAL_TEST_MASK( attrib_list.mask, FSAL_ATTR_CREATION )
  */
-#define FSAL_TEST_MASK(_attrib_mask_ , _attr_const_) \
+#define FSAL_TEST_MASK(_attrib_mask_, _attr_const_) \
 	((_attrib_mask_) & (_attr_const_))
 
 /** this macro sets an attribute
  *  example :
  *  FSAL_SET_MASK( attrib_list.mask, FSAL_ATTR_CREATION )
  */
-#define FSAL_SET_MASK(_attrib_mask_ , _attr_const_) \
+#define FSAL_SET_MASK(_attrib_mask_, _attr_const_) \
 	((_attrib_mask_) |= (_attr_const_))
 
-#define FSAL_UNSET_MASK(_attrib_mask_ , _attr_const_) \
+#define FSAL_UNSET_MASK(_attrib_mask_, _attr_const_) \
 	((_attrib_mask_) &= ~(_attr_const_))
 
 /** this macro clears the attribute mask

@@ -125,6 +125,7 @@ static inline void display_reset_buffer(struct display_buffer *dspbuf)
 static inline int display_buffer_len(struct display_buffer *dspbuf)
 {
 	int len = dspbuf->b_current - dspbuf->b_start;
+
 	if (len == dspbuf->b_size) {
 		/* Buffer has overflowed, due to forced overflow or partial
 		 * UTF-8 fixup, the actual string length might actually be less

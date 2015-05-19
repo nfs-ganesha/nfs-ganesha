@@ -141,8 +141,8 @@ extern char *pidfile_path;
 request_data_t *nfs_rpc_get_nfsreq(uint32_t flags);
 void nfs_rpc_enqueue_req(request_data_t *req);
 
-uint32_t get_enqueue_count();
-uint32_t get_dequeue_count();
+uint32_t get_enqueue_count(void);
+uint32_t get_dequeue_count(void);
 
 /*
  * Thread entry functions

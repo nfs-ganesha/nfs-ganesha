@@ -253,6 +253,7 @@ typedef enum rfc_5665_nc_type nc_type;
 static const struct __netid_nc_table {
 	const char *netid;
 	int netid_len;
+	/* nc_type */
 	const nc_type nc;
 	int af;
 } netid_nc_table[] = {

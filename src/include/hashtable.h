@@ -212,7 +212,7 @@ hash_error_t hashtable_destroy(struct hash_table *,
 				       struct gsh_buffdesc));
 hash_error_t hashtable_getlatch(struct hash_table *,
 				const struct gsh_buffdesc *,
-				struct gsh_buffdesc *, bool ,
+				struct gsh_buffdesc *, bool,
 				struct hash_latch *);
 void hashtable_releaselatched(struct hash_table *, struct hash_latch *);
 hash_error_t hashtable_setlatched(struct hash_table *, struct gsh_buffdesc *,

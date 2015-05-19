@@ -59,6 +59,7 @@ enum drc_type {
 typedef struct drc {
 	enum drc_type type;
 	struct rbtree_x xt;
+	/* Define the tail queue */
 	TAILQ_HEAD(drc_tailq, dupreq_entry) dupreq_q;
 	pthread_mutex_t mtx;
 	uint32_t npart;
@@ -73,6 +74,7 @@ typedef struct drc {
 		struct {
 			sockaddr_t addr;
 			struct opr_rbtree_node recycle_k;
+
 			TAILQ_ENTRY(drc) recycle_q; /* XXX drc */
 			time_t recycle_time;
 			uint64_t hk; /* hash key */
@@ -88,6 +90,7 @@ typedef enum dupreq_state {
 
 struct dupreq_entry {
 	struct opr_rbtree_node rbt_k;
+	/* Define the tail queue */
 	TAILQ_ENTRY(dupreq_entry) fifo_q;
 	pthread_mutex_t mtx;
 	struct {
@@ -116,6 +119,7 @@ static inline nfs_res_t *alloc_nfs_res(void)
 {
 	/* XXX can pool/ctor zero mem? */
 	nfs_res_t *res = pool_alloc(nfs_res_pool, NULL);
+
 	memset(res, 0, sizeof(nfs_res_t));
 	return res;
 }
