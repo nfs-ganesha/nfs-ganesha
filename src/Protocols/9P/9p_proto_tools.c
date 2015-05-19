@@ -208,8 +208,6 @@ void _9p_openflags2FSAL(u32 *inflags, fsal_openflags_t *outflags)
 	/* We consider that non( has O_WRONLY or has O_RDWR ) is RD_ONLY */
 	if (!(*inflags & (O_WRONLY | O_RDWR)))
 		*outflags = FSAL_O_READ;
-
-	return;
 }				/* _9p_openflags2FSAL */
 
 /**
@@ -317,6 +315,7 @@ int _9p_tools_clunk(struct _9p_fid *pfid)
 void _9p_cleanup_fids(struct _9p_conn *conn)
 {
 	int i;
+
 	for (i = 0; i < _9P_FID_PER_CONN; i++) {
 		if (conn->fids[i]) {
 			_9p_tools_clunk(conn->fids[i]);

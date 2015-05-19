@@ -297,7 +297,6 @@ error:
 		gsh_free(pernic->rdata);
 	}
 	gsh_free(pernic);
-	return;
 }
 
 static void _9p_rdma_setup_global(uint8_t **poutrdmabuf, msk_data_t **pwdata,

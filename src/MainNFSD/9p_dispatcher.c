@@ -83,7 +83,6 @@ void DispatchWork9P(request_data_t *req)
 			LogCrit(COMPONENT_DISPATCH,
 				"/!\\ Implementation error, bad 9P transport type");
 			return;
-			break;
 		}
 		break;
 
@@ -91,7 +90,6 @@ void DispatchWork9P(request_data_t *req)
 		LogCrit(COMPONENT_DISPATCH,
 			"/!\\ Implementation error, 9P Dispatch function is called for non-9P request !!!!");
 		return;
-		break;
 	}
 
 	/* increase connection refcount */

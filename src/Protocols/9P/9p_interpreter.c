@@ -138,7 +138,6 @@ void _9p_tcp_process_request(struct _9p_request_data *req9p,
 				 req9p->pconn->trans_data.sockfd);
 	}
 	_9p_DiscardFlushHook(req9p);
-	return;
 }				/* _9p_process_request */
 
 int _9p_process_buffer(struct _9p_request_data *req9p,

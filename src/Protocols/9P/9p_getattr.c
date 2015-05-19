@@ -201,16 +201,18 @@ int _9p_getattr(struct _9p_request_data *req9p, void *worker_data,
 	_9p_checkbound(cursor, preply, plenout);
 
 	LogDebug(COMPONENT_9P,
-		 "RGETATTR: tag=%u valid=0x%"PRIx64" qid=(type=%u,version=%u,"
-		 "path=%"PRIu64") mode=0%o uid=%u gid=%u nlink=%"PRIu64
+		 "RGETATTR: tag=%u valid=0x%"PRIx64
+		 "qid=(type=%u,version=%u, path=%"
+		 PRIu64") mode=0%o uid=%u gid=%u nlink=%"PRIu64
 		 " rdev=%"PRIu64" size=%"PRIu64" blksize=%"PRIu64
 		 " blocks=%"PRIu64" atime=(%"PRIu64",%"PRIu64") mtime=(%"PRIu64
 		 ",%"PRIu64") ctime=(%"PRIu64",%"PRIu64") btime=(%"PRIu64
-		 ",%"PRIu64") gen=%"PRIu64", data_version=%"PRIu64, *msgtag,
-		 valid, pfid->qid.type, pfid->qid.version, pfid->qid.path, mode,
-		 uid, gid, nlink, rdev, size, blksize, blocks, atime_sec,
-		 atime_nsec, mtime_sec, mtime_nsec, ctime_sec, ctime_nsec,
-		 btime_sec, btime_nsec, gen, data_version);
+		 ",%"PRIu64") gen=%"PRIu64", data_version=%"PRIu64,
+		 *msgtag, valid, pfid->qid.type, pfid->qid.version,
+		 pfid->qid.path, mode, uid, gid, nlink, rdev, size, blksize,
+		 blocks, atime_sec, atime_nsec, mtime_sec, mtime_nsec,
+		 ctime_sec, ctime_nsec, btime_sec, btime_nsec, gen,
+		 data_version);
 
 	return 1;
 }

@@ -51,6 +51,7 @@ int _9p_unlinkat(struct _9p_request_data *req9p, void *worker_data,
 	u32 *dfid = NULL;
 	u16 *name_len = NULL;
 	char *name_str = NULL;
+	/* flags are not used */
 	__attribute__ ((unused)) u32 *flags = NULL;
 
 	struct _9p_fid *pdfid = NULL;
