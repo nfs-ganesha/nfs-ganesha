@@ -215,8 +215,7 @@ key_locate(struct hash_table *ht, const struct gsh_buffdesc *key,
 		if (isFullDebug(COMPONENT_HASHTABLE)
 		    && isFullDebug(ht->parameter.ht_log_component))
 			LogFullDebug(ht->parameter.ht_log_component,
-				     "Matching hash found, but no "
-				     "matching key.");
+				     "Matching hash found, but no matching key.");
 		return HASHTABLE_ERROR_NO_SUCH_KEY;
 	}
 
@@ -639,9 +638,9 @@ hashtable_setlatched(struct hash_table *ht,
 				dispval[0] = '\0';
 
 			LogFullDebug(ht->parameter.ht_log_component,
-				     "Set %s Key=%p {%s} Value=%p {%s} "
-				     "index=%" PRIu32 " rbt_hash=%" PRIu64
-				     " was replaced", ht->parameter.ht_name,
+				     "Set %s Key=%p {%s} Value=%p {%s} index=%"
+				     PRIu32" rbt_hash=%"PRIu64" was replaced",
+				     ht->parameter.ht_name,
 				     descriptors->key.addr, dispkey,
 				     descriptors->val.addr, dispval,
 				     latch->index, latch->rbt_hash);
@@ -772,10 +771,12 @@ void hashtable_deletelatched(struct hash_table *ht,
 	if (partition->cache) {
 		uint32_t offset = cache_offsetof(ht, latch->rbt_hash);
 		struct rbt_node *cnode = partition->cache[offset];
+
 		if (cnode) {
 #if COMPARE_BEFORE_CLEAR_CACHE
 			struct hash_data *data1 = RBT_OPAQ(cnode);
 			struct hash_data *data2 = RBT_OPAQ(latch->locator);
+
 			if (ht->parameter.
 			    compare_key(&(data1->key), &(data2->key))
 			    == 0) {
@@ -921,8 +922,7 @@ hashtable_log(log_components_t component, struct hash_table *ht)
 			if (compute(ht, &data->key, &index, &rbt_hash)
 			    != HASHTABLE_SUCCESS) {
 				LogCrit(component,
-					"Possible implementation error in "
-					"hash_func_both");
+					"Possible implementation error in hash_func_both");
 				index = 0;
 				rbt_hash = 0;
 			}
