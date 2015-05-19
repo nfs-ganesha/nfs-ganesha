@@ -102,7 +102,7 @@ static bool fsal_check_ace_applicable(fsal_ace_t *pace,
 	/* To be applicable, the entry should not be INHERIT_ONLY. */
 	if (IS_FSAL_ACE_INHERIT_ONLY(*pace)) {
 		LogFullDebug(COMPONENT_NFS_V4_ACL,
-			     "Not applicable, " "inherit only");
+			     "Not applicable, inherit only");
 		return false;
 	}
 
@@ -277,9 +277,9 @@ static void fsal_print_access_by_acl(int naces, int ace_number,
 	if (!isFullDebug(COMPONENT_NFS_V4_ACL))
 		return;
 
-	if ((access_result == ERR_FSAL_NO_ERROR))
+	if (access_result == ERR_FSAL_NO_ERROR)
 		b_left = display_cat(&dspbuf, "access granted");
-	else if ((access_result == ERR_FSAL_PERM))
+	else if (access_result == ERR_FSAL_PERM)
 		b_left = display_cat(&dspbuf, "access denied (EPERM)");
 	else
 		b_left = display_cat(&dspbuf, "access denied (EACCESS)");
@@ -573,9 +573,10 @@ fsal_check_access_no_acl(struct user_cred *creds,
 	mode = p_object_attributes->mode;
 
 	LogFullDebug(COMPONENT_NFS_V4_ACL,
-		     "file Mode=%#o, file uid=%u, file gid= %u, "
-		     "user uid=%u, user gid= %u, access_type=0X%x", mode, uid,
-		     gid, creds->caller_uid, creds->caller_gid, access_type);
+		     "file Mode=%#o, file uid=%u, file gid= %u, user uid=%u, user gid= %u, access_type=0X%x",
+		     mode, uid, gid,
+		     creds->caller_uid, creds->caller_gid,
+		     access_type);
 
 	if (creds->caller_uid == 0) {
 		if (p_object_attributes->type == DIRECTORY) {
@@ -700,10 +701,11 @@ void fsal_set_credentials(const struct user_cred *creds)
 	setuser(creds->caller_uid);
 }
 
-void fsal_save_ganesha_credentials()
+void fsal_save_ganesha_credentials(void)
 {
 	int i;
 	char buffer[1024], *p = buffer;
+
 	ganesha_uid = setuser(0);
 	setuser(ganesha_uid);
 	ganesha_gid = setgroup(0);
@@ -739,7 +741,7 @@ void fsal_save_ganesha_credentials()
 	LogInfo(COMPONENT_FSAL, "%s", buffer);
 }
 
-void fsal_restore_ganesha_credentials()
+void fsal_restore_ganesha_credentials(void)
 {
 	setuser(ganesha_uid);
 	setgroup(ganesha_gid);

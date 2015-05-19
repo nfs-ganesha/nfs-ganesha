@@ -153,10 +153,8 @@ nfsstat4 FSAL_encode_ipv4_netaddr(XDR *xdrs, uint16_t proto, uint32_t addr,
 		     ((port & 0xff00) >> 0x08), (port & 0x00ff));
 	if (written_length >= v4_addrbuff_len) {
 		LogCrit(COMPONENT_FSAL,
-			"Programming error in FSAL_encode_ipv4_netaddr "
-			"defined in %s:%u %s causing"
-			"snprintf to overflow address buffer.", __FILE__,
-			__LINE__, __func__);
+			"Programming error in FSAL_encode_ipv4_netaddr defined in %s:%u %s causing snprintf to overflow address buffer.",
+			__FILE__, __LINE__, __func__);
 		return NFS4ERR_SERVERFAULT;
 	}
 
@@ -282,6 +280,7 @@ nfsstat4 FSAL_encode_file_layout(XDR *xdrs,
 	for (i = 0; i < num_fhs; i++) {
 		nfs_fh4 handle;
 		struct alloc_file_handle_v4 buffer;
+
 		handle.nfs_fh4_val = (char *)&buffer;
 		handle.nfs_fh4_len = sizeof(buffer);
 		memset(&buffer, 0, sizeof(buffer));

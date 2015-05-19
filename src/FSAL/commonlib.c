@@ -973,9 +973,8 @@ static void posix_create_file_system(struct mntent *mnt)
 					   avl_fsid);
 
 		LogDebug(COMPONENT_FSAL,
-			 "Skipped duplicate %s namelen=%d "
-			 "fsid=0x%016"PRIx64".0x%016"PRIx64
-			 " %"PRIu64".%"PRIu64,
+			 "Skipped duplicate %s namelen=%d fsid=0x%016"PRIx64
+			 ".0x%016"PRIx64" %"PRIu64".%"PRIu64,
 			 fs->path, (int) fs->namelen,
 			 fs->fsid.major, fs->fsid.minor,
 			 fs->fsid.major, fs->fsid.minor);
@@ -1102,6 +1101,7 @@ void show_tree(struct fsal_filesystem *this, int nest)
 {
 	struct glist_head *glist;
 	char blanks[1024];
+
 	memset(blanks, ' ', nest * 2);
 	blanks[nest * 2] = '\0';
 
@@ -1202,6 +1202,7 @@ struct fsal_filesystem *lookup_fsid_locked(struct fsal_fsid__ *fsid,
 					   enum fsid_type fsid_type)
 {
 	struct fsal_filesystem key;
+
 	key.fsid = *fsid;
 	key.fsid_type = fsid_type;
 	return avltree_inline_fsid_lookup(&key.avl_fsid);
@@ -1210,6 +1211,7 @@ struct fsal_filesystem *lookup_fsid_locked(struct fsal_fsid__ *fsid,
 struct fsal_filesystem *lookup_dev_locked(struct fsal_dev__ *dev)
 {
 	struct fsal_filesystem key;
+
 	key.dev = *dev;
 	return avltree_inline_dev_lookup(&key.avl_dev);
 }
