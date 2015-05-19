@@ -59,9 +59,6 @@ fsal_status_t nullfs_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
 		container_of(op_ctx->fsal_export, struct nullfs_fsal_export,
 			     export);
 
-	/* attributes : upper layer to subfsal */
-	nullfs_copy_attrlist(&handle->sub_handle->attributes,
-			     &handle->obj_handle.attributes);
 	/* calling subfsal method */
 	op_ctx->fsal_export = export->sub_export;
 	fsal_status_t status = handle->sub_handle->obj_ops.list_ext_attrs(
@@ -69,9 +66,6 @@ fsal_status_t nullfs_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
 		xattrs_tab, xattrs_tabsize,
 		p_nb_returned, end_of_list);
 	op_ctx->fsal_export = &export->export;
-	/* attributes : subfsal to upper layer */
-	nullfs_copy_attrlist(&handle->obj_handle.attributes,
-			     &handle->sub_handle->attributes);
 
 	return status;
 }
@@ -88,18 +82,12 @@ fsal_status_t nullfs_getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
 		container_of(op_ctx->fsal_export, struct nullfs_fsal_export,
 			     export);
 
-	/* attributes : upper layer to subfsal */
-	nullfs_copy_attrlist(&handle->sub_handle->attributes,
-			     &handle->obj_handle.attributes);
 	/* calling subfsal method */
 	op_ctx->fsal_export = export->sub_export;
 	fsal_status_t status =
 		handle->sub_handle->obj_ops.getextattr_id_by_name(
 				handle->sub_handle, xattr_name, pxattr_id);
 	op_ctx->fsal_export = &export->export;
-	/* attributes : subfsal to upper layer */
-	nullfs_copy_attrlist(&handle->obj_handle.attributes,
-			     &handle->sub_handle->attributes);
 
 	return status;
 }
@@ -118,9 +106,6 @@ fsal_status_t nullfs_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 		container_of(op_ctx->fsal_export, struct nullfs_fsal_export,
 			     export);
 
-	/* attributes : upper layer to subfsal */
-	nullfs_copy_attrlist(&handle->sub_handle->attributes,
-			     &handle->obj_handle.attributes);
 	/* calling subfsal method */
 	op_ctx->fsal_export = export->sub_export;
 	fsal_status_t status =
@@ -130,9 +115,6 @@ fsal_status_t nullfs_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 				buffer_size,
 				p_output_size);
 	op_ctx->fsal_export = &export->export;
-	/* attributes : subfsal to upper layer */
-	nullfs_copy_attrlist(&handle->obj_handle.attributes,
-			     &handle->sub_handle->attributes);
 
 	return status;
 }
@@ -151,9 +133,6 @@ fsal_status_t nullfs_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
 		container_of(op_ctx->fsal_export, struct nullfs_fsal_export,
 			     export);
 
-	/* attributes : upper layer to subfsal */
-	nullfs_copy_attrlist(&handle->sub_handle->attributes,
-			     &handle->obj_handle.attributes);
 	/* calling subfsal method */
 	op_ctx->fsal_export = export->sub_export;
 	fsal_status_t status =
@@ -164,9 +143,6 @@ fsal_status_t nullfs_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
 				buffer_size,
 				p_output_size);
 	op_ctx->fsal_export = &export->export;
-	/* attributes : subfsal to upper layer */
-	nullfs_copy_attrlist(&handle->obj_handle.attributes,
-			     &handle->sub_handle->attributes);
 
 	return status;
 }
@@ -184,9 +160,6 @@ fsal_status_t nullfs_setextattr_value(struct fsal_obj_handle *obj_hdl,
 		container_of(op_ctx->fsal_export, struct nullfs_fsal_export,
 			     export);
 
-	/* attributes : upper layer to subfsal */
-	nullfs_copy_attrlist(&handle->sub_handle->attributes,
-			     &handle->obj_handle.attributes);
 	/* calling subfsal method */
 	op_ctx->fsal_export = export->sub_export;
 	fsal_status_t status = handle->sub_handle->obj_ops.setextattr_value(
@@ -194,9 +167,6 @@ fsal_status_t nullfs_setextattr_value(struct fsal_obj_handle *obj_hdl,
 		buffer_addr, buffer_size,
 		create);
 	op_ctx->fsal_export = &export->export;
-	/* attributes : subfsal to upper layer */
-	nullfs_copy_attrlist(&handle->obj_handle.attributes,
-			     &handle->sub_handle->attributes);
 
 	return status;
 }
@@ -214,9 +184,6 @@ fsal_status_t nullfs_setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 		container_of(op_ctx->fsal_export, struct nullfs_fsal_export,
 			     export);
 
-	/* attributes : upper layer to subfsal */
-	nullfs_copy_attrlist(&handle->sub_handle->attributes,
-			     &handle->obj_handle.attributes);
 	/* calling subfsal method */
 	op_ctx->fsal_export = export->sub_export;
 	fsal_status_t status =
@@ -225,9 +192,6 @@ fsal_status_t nullfs_setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 				xattr_id, buffer_addr,
 				buffer_size);
 	op_ctx->fsal_export = &export->export;
-	/* attributes : subfsal to upper layer */
-	nullfs_copy_attrlist(&handle->obj_handle.attributes,
-			     &handle->sub_handle->attributes);
 
 	return status;
 }
@@ -244,18 +208,12 @@ fsal_status_t nullfs_getextattr_attrs(struct fsal_obj_handle *obj_hdl,
 		container_of(op_ctx->fsal_export, struct nullfs_fsal_export,
 			     export);
 
-	/* attributes : upper layer to subfsal */
-	nullfs_copy_attrlist(&handle->sub_handle->attributes,
-			     &handle->obj_handle.attributes);
 	/* calling subfsal method */
 	op_ctx->fsal_export = export->sub_export;
 	fsal_status_t status = handle->sub_handle->obj_ops.getextattr_attrs(
 		handle->sub_handle, xattr_id,
 		p_attrs);
 	op_ctx->fsal_export = &export->export;
-	/* attributes : subfsal to upper layer */
-	nullfs_copy_attrlist(&handle->obj_handle.attributes,
-			     &handle->sub_handle->attributes);
 
 	return status;
 }
@@ -271,17 +229,11 @@ fsal_status_t nullfs_remove_extattr_by_id(struct fsal_obj_handle *obj_hdl,
 		container_of(op_ctx->fsal_export, struct nullfs_fsal_export,
 			     export);
 
-	/* attributes : upper layer to subfsal */
-	nullfs_copy_attrlist(&handle->sub_handle->attributes,
-		&handle->obj_handle.attributes);
 	/* calling subfsal method */
 	op_ctx->fsal_export = export->sub_export;
 	fsal_status_t status = handle->sub_handle->obj_ops.remove_extattr_by_id(
 		handle->sub_handle, xattr_id);
 	op_ctx->fsal_export = &export->export;
-	/* attributes : subfsal to upper layer */
-	nullfs_copy_attrlist(&handle->obj_handle.attributes,
-		&handle->sub_handle->attributes);
 
 	return status;
 }
@@ -297,18 +249,12 @@ fsal_status_t nullfs_remove_extattr_by_name(struct fsal_obj_handle *obj_hdl,
 		container_of(op_ctx->fsal_export, struct nullfs_fsal_export,
 			     export);
 
-	/* attributes : upper layer to subfsal */
-	nullfs_copy_attrlist(&handle->sub_handle->attributes,
-			     &handle->obj_handle.attributes);
 	/* calling subfsal method */
 	op_ctx->fsal_export = export->sub_export;
 	fsal_status_t status =
 		handle->sub_handle->obj_ops.remove_extattr_by_name(
 				handle->sub_handle, xattr_name);
 	op_ctx->fsal_export = &export->export;
-	/* attributes : subfsal to upper layer */
-	nullfs_copy_attrlist(&handle->obj_handle.attributes,
-			     &handle->sub_handle->attributes);
 
 	return status;
 }

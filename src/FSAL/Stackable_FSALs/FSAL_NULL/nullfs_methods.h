@@ -73,19 +73,6 @@ static inline bool nullfs_unopenable_type(object_file_type_t type)
 	}
 }
 
-/**
- * Function used to copy an attrlist between nullfs and a subfsal.
- *
- * The copy is done only if the source mask is not cleared. The source
- * mask is then cleared.
- *
- * The function does nothing if dest or source is NULL.
- *
- * @param dest attrlist that will receive the values of source.
- * @param source Source attrlist which mask will be tested.
- */
-void nullfs_copy_attrlist(struct attrlist *dest, struct attrlist *source);
-
 	/* I/O management */
 fsal_status_t nullfs_open(struct fsal_obj_handle *obj_hdl,
 			  fsal_openflags_t openflags);

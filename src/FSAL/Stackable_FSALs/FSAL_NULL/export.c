@@ -86,17 +86,11 @@ static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
 		container_of(obj_hdl, struct nullfs_fsal_obj_handle,
 			     obj_handle);
 
-	/* attributes : upper layer to subfsal */
-	nullfs_copy_attrlist(&handle->sub_handle->attributes,
-		&handle->obj_handle.attributes);
 	/* calling subfsal method */
 	op_ctx->fsal_export = exp->sub_export;
 	fsal_status_t status = exp->sub_export->exp_ops.get_fs_dynamic_info(
 		exp->sub_export, handle->sub_handle, infop);
 	op_ctx->fsal_export = &exp->export;
-	/* attributes : subfsal to upper layer */
-	nullfs_copy_attrlist(&handle->obj_handle.attributes,
-		&handle->sub_handle->attributes);
 
 	return status;
 }
