@@ -418,6 +418,7 @@ static bool nullfs_readdir_cb(const char *name, void *dir_state,
 
 	op_ctx->fsal_export = &state->exp->export;
 	bool result = state->cb(name, state->dir_state, cookie);
+
 	op_ctx->fsal_export = state->exp->sub_export;
 
 	return result;
@@ -751,6 +752,7 @@ fsal_status_t nullfs_lookup_path(struct fsal_export *exp_hdl,
 
 	/* call to subfsal lookup with the good context. */
 	fsal_status_t status;
+
 	op_ctx->fsal_export = exp->sub_export;
 	status = exp->sub_export->exp_ops.lookup_path(exp->sub_export, path,
 						      &sub_handle);
@@ -787,6 +789,7 @@ fsal_status_t nullfs_create_handle(struct fsal_export *exp_hdl,
 
 	/* call to subfsal lookup with the good context. */
 	fsal_status_t status;
+
 	op_ctx->fsal_export = export->sub_export;
 
 	status = export->sub_export->exp_ops.create_handle(export->sub_export,

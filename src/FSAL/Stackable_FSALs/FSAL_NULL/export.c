@@ -110,6 +110,7 @@ static bool fs_supports(struct fsal_export *exp_hdl,
 	op_ctx->fsal_export = exp->sub_export;
 	bool result =
 		exp->sub_export->exp_ops.fs_supports(exp->sub_export, option);
+
 	op_ctx->fsal_export = &exp->export;
 
 	return result;
@@ -135,6 +136,7 @@ static uint32_t fs_maxread(struct fsal_export *exp_hdl)
 
 	op_ctx->fsal_export = exp->sub_export;
 	uint32_t result = exp->sub_export->exp_ops.fs_maxread(exp->sub_export);
+
 	op_ctx->fsal_export = &exp->export;
 
 	return result;
@@ -147,6 +149,7 @@ static uint32_t fs_maxwrite(struct fsal_export *exp_hdl)
 
 	op_ctx->fsal_export = exp->sub_export;
 	uint32_t result = exp->sub_export->exp_ops.fs_maxwrite(exp->sub_export);
+
 	op_ctx->fsal_export = &exp->export;
 
 	return result;
@@ -159,6 +162,7 @@ static uint32_t fs_maxlink(struct fsal_export *exp_hdl)
 
 	op_ctx->fsal_export = exp->sub_export;
 	uint32_t result = exp->sub_export->exp_ops.fs_maxlink(exp->sub_export);
+
 	op_ctx->fsal_export = &exp->export;
 
 	return result;
@@ -237,6 +241,7 @@ static uint32_t fs_umask(struct fsal_export *exp_hdl)
 
 	op_ctx->fsal_export = exp->sub_export;
 	uint32_t result = exp->sub_export->exp_ops.fs_umask(exp->sub_export);
+
 	op_ctx->fsal_export = &exp->export;
 
 	return result;
