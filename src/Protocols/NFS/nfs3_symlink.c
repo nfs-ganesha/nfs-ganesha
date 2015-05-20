@@ -90,9 +90,8 @@ int nfs3_symlink(nfs_arg_t *arg,
 				 str);
 
 		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling nfs_Symlink handle: "
-			 "%s name: %s target: %s", str, symlink_name,
-			 target_path);
+			 "REQUEST PROCESSING: Calling nfs_Symlink handle: %s name: %s target: %s",
+			 str, symlink_name, target_path);
 	}
 
 	/* to avoid setting it on each error case */

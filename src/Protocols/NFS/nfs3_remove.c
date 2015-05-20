@@ -85,8 +85,8 @@ int nfs3_remove(nfs_arg_t *arg,
 				 str);
 
 		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling nfs_Remove handle: %s "
-			 "name: %s", str, name);
+			 "REQUEST PROCESSING: Calling nfs_Remove handle: %s name: %s",
+			 str, name);
 	}
 
 	/* Convert file handle into a pentry */
@@ -137,8 +137,7 @@ int nfs3_remove(nfs_arg_t *arg,
 		}
 	}
 
-	LogFullDebug(COMPONENT_NFSPROTO,
-		     "==== NFS REMOVE ====> Trying to remove" " file %s", name);
+	LogFullDebug(COMPONENT_NFSPROTO, "Trying to remove file %s", name);
 
 	/* Remove the entry. */
 	cache_status = cache_inode_remove(parent_entry, name);
@@ -185,5 +184,5 @@ int nfs3_remove(nfs_arg_t *arg,
  */
 void nfs3_remove_free(nfs_res_t *res)
 {
-	return;
+	/* Nothing to do here */
 }

@@ -71,6 +71,7 @@ int nfs3_fsinfo(nfs_arg_t *arg,
 
 	if (isDebug(COMPONENT_NFSPROTO)) {
 		char str[LEN_FH_STR];
+
 		sprint_fhandle3(str, &(arg->arg_fsinfo3.fsroot));
 		LogDebug(COMPONENT_NFSPROTO,
 			 "REQUEST PROCESSING: Calling nfs3_fsinfo handle: %s",
@@ -152,5 +153,5 @@ int nfs3_fsinfo(nfs_arg_t *arg,
  */
 void nfs3_fsinfo_free(nfs_res_t *res)
 {
-	return;
+	/* Nothing to do here */
 }

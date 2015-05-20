@@ -231,5 +231,5 @@ int nfs3_setattr(nfs_arg_t *arg,
 
 void nfs3_setattr_free(nfs_res_t *res)
 {
-	return;
+	/* Nothing to do here */
 }

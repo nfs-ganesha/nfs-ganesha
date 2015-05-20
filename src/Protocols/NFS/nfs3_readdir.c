@@ -189,9 +189,9 @@ int nfs3_readdir(nfs_arg_t *arg,
 	estimated_num_entries =
 	    MIN(count / (sizeof(entry3) - sizeof(char *)), 120);
 	LogFullDebug(COMPONENT_NFS_READDIR,
-		     "---> nfs3_readdir: count=%lu  cookie=%" PRIu64 "  "
-		     "estimated_num_entries=%lu", count, cookie,
-		     estimated_num_entries);
+		     "---> nfs3_readdir: count=%lu  cookie=%" PRIu64
+		     " estimated_num_entries=%lu",
+		     count, cookie, estimated_num_entries);
 	if (estimated_num_entries == 0) {
 		res->res_readdir3.status = NFS3ERR_TOOSMALL;
 		rc = NFS_REQ_OK;
@@ -325,9 +325,9 @@ int nfs3_readdir(nfs_arg_t *arg,
 	}
 
 	LogFullDebug(COMPONENT_NFS_READDIR,
-		     "-- Readdir -> Call to " "cache_inode_readdir(cookie=%"
-		     PRIu64 " -> num_entries = %u", cache_inode_cookie,
-		     num_entries);
+		     "-- Readdir -> Call to cache_inode_readdir(cookie=%"
+		     PRIu64 " -> num_entries = %u",
+		     cache_inode_cookie, num_entries);
 
 	RES_READDIR3_OK->reply.entries = tracker.entries;
 	RES_READDIR3_OK->reply.eof = eod_met;
@@ -407,7 +407,7 @@ cache_inode_status_t nfs3_readdir_callback(void *opaque,
 		cb_parms->in_result = false;
 		return CACHE_INODE_SUCCESS;
 	}
-	if ((tracker->mem_left < need)) {
+	if (tracker->mem_left < need) {
 		if (tracker->count == 0)
 			tracker->error = NFS3ERR_TOOSMALL;
 
@@ -450,6 +450,4 @@ static void free_entry3s(entry3 *entry3s)
 		gsh_free(entry->name);
 
 	gsh_free(entry3s);
-
-	return;
-}				/* free_entry3s */
+}

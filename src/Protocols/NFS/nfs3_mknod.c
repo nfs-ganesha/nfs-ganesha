@@ -91,8 +91,8 @@ int nfs3_mknod(nfs_arg_t *arg,
 			"<empty name>" : file_name;
 		sprint_fhandle3(str, &(arg->arg_mknod3.where.dir));
 		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling nfs3_mknod handle: %s "
-			 "name: %s", str, fname);
+			 "REQUEST PROCESSING: Calling nfs3_mknod handle: %s name: %s",
+			 str, fname);
 	}
 
 	/* to avoid setting them on each error case */

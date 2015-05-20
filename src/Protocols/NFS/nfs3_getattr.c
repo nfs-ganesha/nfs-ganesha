@@ -71,6 +71,7 @@ int nfs3_getattr(nfs_arg_t *arg,
 
 	if (isDebug(COMPONENT_NFSPROTO)) {
 		char str[LEN_FH_STR];
+
 		nfs_FhandleToStr(req->rq_vers, &(arg->arg_getattr3.object),
 				 NULL, str);
 		LogDebug(COMPONENT_NFSPROTO,
@@ -126,5 +127,4 @@ int nfs3_getattr(nfs_arg_t *arg,
 void nfs3_getattr_free(nfs_res_t *resp)
 {
 	/* Nothing to do here */
-	return;
 }

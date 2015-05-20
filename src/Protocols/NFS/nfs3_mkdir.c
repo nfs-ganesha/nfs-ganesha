@@ -87,8 +87,8 @@ int nfs3_mkdir(nfs_arg_t *arg,
 				 NULL, str);
 
 		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling nfs3_mkdir handle: %s "
-			 "name: %s", str, dir_name);
+			 "REQUEST PROCESSING: Calling nfs3_mkdir handle: %s name: %s",
+			 str, dir_name);
 	}
 
 	/* to avoid setting it on each error case */

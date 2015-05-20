@@ -111,9 +111,9 @@ int nfs3_write(nfs_arg_t *arg,
 				 str);
 
 		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling nfs_Write handle: %s "
-			 "start: %" PRIx64 " len: %" PRIx64 " %s", str, offset,
-			 size, stables);
+			 "REQUEST PROCESSING: Calling nfs_Write handle: %s start: %"
+			 PRIx64 " len: %" PRIx64 " %s",
+			 str, offset, size, stables);
 	}
 
 	/* to avoid setting it on each error case */
@@ -189,8 +189,8 @@ int nfs3_write(nfs_arg_t *arg,
 
 		if ((offset + size) > op_ctx->export->MaxOffsetWrite) {
 			LogEvent(COMPONENT_NFSPROTO,
-				 "A client tryed to violate max "
-				 "file size %" PRIu64 " for exportid #%hu",
+				 "A client tryed to violate max file size %"
+				 PRIu64 " for exportid #%hu",
 				 op_ctx->export->MaxOffsetWrite,
 				 op_ctx->export->export_id);
 
@@ -304,5 +304,5 @@ int nfs3_write(nfs_arg_t *arg,
  */
 void nfs3_write_free(nfs_res_t *res)
 {
-	return;
+	/* Nothing to do here */
 }

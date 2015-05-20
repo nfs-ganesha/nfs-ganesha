@@ -88,8 +88,8 @@ int nfs3_create(nfs_arg_t *arg,
 		nfs_FhandleToStr(req->rq_vers, &(arg->arg_create3.where.dir),
 				 NULL, str);
 		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling nfs3_create handle: "
-			 "%s name: %s", str, file_name ? file_name : "");
+			 "REQUEST PROCESSING: Calling nfs3_create handle: %s name: %s",
+			 str, file_name ? file_name : "");
 	}
 
 	memset(&sattr, 0, sizeof(struct attrlist));

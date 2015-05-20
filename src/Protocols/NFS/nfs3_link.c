@@ -91,8 +91,8 @@ int nfs3_link(nfs_arg_t *arg,
 				 strto);
 
 		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling nfs3_link handle: %s to "
-			 "handle: %s name: %s", strfrom, strto, link_name);
+			 "REQUEST PROCESSING: Calling nfs3_link handle: %s to handle: %s name: %s",
+			 strfrom, strto, link_name);
 	}
 
 	/* to avoid setting it on each error case */
@@ -219,5 +219,5 @@ int nfs3_link(nfs_arg_t *arg,
  */
 void nfs3_link_free(nfs_res_t *resp)
 {
-	return;
+	/* Nothing to do here */
 }

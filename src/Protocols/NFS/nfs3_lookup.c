@@ -79,8 +79,8 @@ int nfs3_lookup(nfs_arg_t *arg,
 		nfs_FhandleToStr(req->rq_vers, &(arg->arg_lookup3.what.dir),
 				 NULL, str);
 		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling nfs_Lookup handle: %s "
-			 " name: %s", str, name);
+			 "REQUEST PROCESSING: Calling nfs_Lookup handle: %s name: %s",
+			 str, name);
 	}
 
 	/* to avoid setting it on each error case */

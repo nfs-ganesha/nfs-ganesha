@@ -96,9 +96,8 @@ int nfs3_rename(nfs_arg_t *arg,
 				 strto);
 
 		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling nfs_Rename from "
-			 "handle: %s name %s to handle: %s name: %s", strfrom,
-			 entry_name, strto, new_entry_name);
+			 "REQUEST PROCESSING: Calling nfs_Rename from handle: %s name %s to handle: %s name: %s",
+			 strfrom, entry_name, strto, new_entry_name);
 	}
 
 	/* to avoid setting it on each error case */
@@ -218,5 +217,5 @@ int nfs3_rename(nfs_arg_t *arg,
  */
 void nfs3_rename_free(nfs_res_t *res)
 {
-	return;
+	/* Nothing to do here */
 }

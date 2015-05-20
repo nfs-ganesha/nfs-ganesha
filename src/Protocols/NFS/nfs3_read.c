@@ -108,8 +108,9 @@ int nfs3_read(nfs_arg_t *arg,
 
 		nfs_FhandleToStr(req->rq_vers, &arg->arg_read3.file, NULL, str);
 		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling nfs_Read handle: %s "
-			 "start: %" PRIu64 " len: %" PRIu64, str, offset, size);
+			 "REQUEST PROCESSING: Calling nfs_Read handle: %s start: %"
+			 PRIu64 " len: %" PRIu64,
+			 str, offset, size);
 	}
 
 	/* to avoid setting it on each error case */
@@ -172,14 +173,14 @@ int nfs3_read(nfs_arg_t *arg,
 	/* do not exceed maxium READ offset if set */
 	if (op_ctx->export->MaxOffsetRead < UINT64_MAX) {
 		LogFullDebug(COMPONENT_NFSPROTO,
-			     "Read offset=%" PRIu64 " count=%zd "
-			     "MaxOffSet=%" PRIu64, offset, size,
-			     op_ctx->export->MaxOffsetRead);
+			     "Read offset=%" PRIu64
+			     " count=%zd MaxOffSet=%" PRIu64,
+			     offset, size, op_ctx->export->MaxOffsetRead);
 
 		if ((offset + size) > op_ctx->export->MaxOffsetRead) {
 			LogEvent(COMPONENT_NFSPROTO,
-				 "A client tryed to violate max "
-				 "file size %" PRIu64 " for exportid #%hu",
+				 "A client tryed to violate max file size %"
+				 PRIu64 " for exportid #%hu",
 				 op_ctx->export->MaxOffsetRead,
 				 op_ctx->export->export_id);
 

@@ -179,8 +179,8 @@ int nfs3_readdirplus(nfs_arg_t *arg,
 	tracker.total_entries = estimated_num_entries;
 
 	LogFullDebug(COMPONENT_NFS_READDIR,
-		     "nfs3_readdirplus: dircount=%u " "begin_cookie=%" PRIu64
-		     " " "estimated_num_entries=%lu, mem_left=%zd",
+		     "nfs3_readdirplus: dircount=%u begin_cookie=%" PRIu64
+		     " estimated_num_entries=%lu, mem_left=%zd",
 		     arg->arg_readdirplus3.dircount, begin_cookie,
 		     estimated_num_entries, tracker.mem_left);
 
@@ -265,6 +265,7 @@ int nfs3_readdirplus(nfs_arg_t *arg,
 	/* Fill in ".." */
 	if (begin_cookie <= 1) {
 		cache_entry_t *parent_dir_entry = NULL;
+
 		cache_status_gethandle = cache_inode_lookupp(dir_entry,
 							     &parent_dir_entry);
 
@@ -522,6 +523,4 @@ static void free_entryplus3s(entryplus3 *entryplus3s)
 	}
 
 	gsh_free(entryplus3s);
-
-	return;
-}				/* free_entryplus3s */
+}

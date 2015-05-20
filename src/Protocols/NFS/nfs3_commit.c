@@ -74,6 +74,7 @@ int nfs3_commit(nfs_arg_t *arg,
 
 	if (isDebug(COMPONENT_NFSPROTO)) {
 		char str[LEN_FH_STR];
+
 		sprint_fhandle3(str, &(arg->arg_commit3.file));
 		LogDebug(COMPONENT_NFSPROTO,
 			 "REQUEST PROCESSING: Calling nfs3_commit handle: %s",
@@ -136,5 +137,5 @@ int nfs3_commit(nfs_arg_t *arg,
  */
 void nfs3_commit_free(nfs_res_t *res)
 {
-	return;
+	/* Nothing to do here */
 }

@@ -86,8 +86,8 @@ int nfs3_rmdir(nfs_arg_t *arg,
 				 str);
 
 		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling nfs3_rmdir handle: %s "
-			 "name: %s", str, name);
+			 "REQUEST PROCESSING: Calling nfs3_rmdir handle: %s name: %s",
+			 str, name);
 	}
 
 	/* Convert file handle into a pentry */
@@ -184,5 +184,5 @@ int nfs3_rmdir(nfs_arg_t *arg,
  */
 void nfs3_rmdir_free(nfs_res_t *res)
 {
-	return;
+	/* Nothing to do here */
 }
