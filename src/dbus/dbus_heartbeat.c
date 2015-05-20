@@ -100,7 +100,7 @@ int dbus_heartbeat_cb(void *arg)
 	return rc;
 }
 
-void init_heartbeat()
+void init_heartbeat(void)
 {
 	healthstats.old_enqueue = get_enqueue_count();
 	healthstats.old_dequeue = get_dequeue_count();
