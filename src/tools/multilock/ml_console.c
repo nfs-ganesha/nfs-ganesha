@@ -52,7 +52,7 @@ bool err_accounting;
 sigset_t full_signal_set;
 sigset_t original_signal_set;
 
-void open_socket()
+void open_socket(void)
 {
 	int rc;
 
@@ -84,7 +84,7 @@ void open_socket()
 		      errno, strerror(errno));
 }
 
-void do_accept()
+void do_accept(void)
 {
 	struct client *client = malloc(sizeof(*client));
 	socklen_t len;
@@ -275,7 +275,7 @@ int receive(bool watchin, long int timeout_secs)
 	}
 }
 
-void error()
+void error(void)
 {
 	int len = strlen(errdetail);
 
@@ -344,7 +344,7 @@ struct response *process_client_response(struct client *client)
 	return client_resp;
 }
 
-static void master_command();
+static void master_command(void);
 
 struct response *receive_response(bool watchin, long int timeout_secs)
 {
@@ -431,7 +431,7 @@ struct token master_commands[] = {
 	{"", 0, MCMD_CLIENT_CMD}
 };
 
-static void handle_quit();
+static void handle_quit(void);
 
 /*
  * wait_for_expected_responses
@@ -503,7 +503,7 @@ void wait_for_expected_responses(const char *label, int count,
 		handle_quit();
 }
 
-void handle_quit()
+void handle_quit(void)
 {
 	struct response *expect_resp;
 	struct client *client;
@@ -917,7 +917,7 @@ void mcmd_simple(struct master_state *ms)
 		ms->rest = NULL;
 }
 
-void master_command()
+void master_command(void)
 {
 	struct master_state ms = {
 		.inbrace = false,

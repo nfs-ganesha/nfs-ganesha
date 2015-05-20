@@ -157,6 +157,7 @@ const char *str_lock_mode(int lock_mode)
 int readln(FILE *in, char *buf, int buflen)
 {
 	int len;
+
 	if (fgets(buf, buflen, in) != NULL) {
 		len = strlen(buf);
 		if (buf[len - 1] == '\n')
@@ -439,6 +440,7 @@ char *get_on_off(char *line, bool *value)
 {
 	int tvalue;
 	char *rest;
+
 	rest = get_token_value(line, &tvalue, on_off, true, REQUIRES_NO_MORE,
 			       "Invalid on/off");
 	*value = (bool) tvalue;
