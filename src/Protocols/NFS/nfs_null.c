@@ -73,5 +73,4 @@ int nfs_null(nfs_arg_t *arg,
 void nfs_null_free(nfs_res_t *res)
 {
 	/* Nothing to do here */
-	return;
 }

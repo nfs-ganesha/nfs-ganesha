@@ -182,7 +182,6 @@ bool nfs_RetryableError(cache_inode_status_t cache_status)
 		LogCrit(COMPONENT_NFSPROTO,
 			"Possible implementation error: CACHE_INODE_SUCCESS managed as an error");
 		return false;
-		break;
 
 	case CACHE_INODE_MALLOC_ERROR:
 	case CACHE_INODE_POOL_MUTEX_INIT_ERROR:
@@ -196,7 +195,6 @@ bool nfs_RetryableError(cache_inode_status_t cache_status)
 	case CACHE_INODE_INSERT_ERROR:
 		/* Internal error, should be dropped and retryed */
 		return true;
-		break;
 
 	case CACHE_INODE_NOT_A_DIRECTORY:
 	case CACHE_INODE_BAD_TYPE:
@@ -231,7 +229,6 @@ bool nfs_RetryableError(cache_inode_status_t cache_status)
 	case CACHE_INODE_BADHANDLE:
 		/* Non retryable error, return error to client */
 		return false;
-		break;
 	}
 
 	/* Should never reach this */
@@ -258,6 +255,7 @@ static inline int nfs4_max_attr_index(compound_data_t *data)
 {
 	if (data) {
 		enum nfs4_minor_vers minorversion = data->minorversion;
+
 		switch (minorversion) {
 		case NFS4_MINOR_VERS_0:
 			return FATTR4_MOUNTED_ON_FILEID;
@@ -305,6 +303,7 @@ static fattr_xdr_result encode_supported_attrs(XDR *xdr,
 	     attr++) {
 		if (fattr4tab[attr].supported) {
 			bool res = set_attribute_in_bitmap(&bits, attr);
+
 			assert(res);
 		}
 	}
@@ -695,6 +694,7 @@ static fattr_xdr_result encode_acl(XDR *xdr, struct xdr_attrs_args *args)
 		}		/* for ace... */
 	} else {
 		uint32_t noacls = 0;
+
 		if (!inline_xdr_u_int32_t(xdr, &noacls))
 			return FATTR_XDR_FAILED;
 	}
@@ -726,6 +726,7 @@ static fattr_xdr_result decode_acl(XDR *xdr, struct xdr_attrs_args *args)
 	memset(acldata.aces, 0, acldata.naces * sizeof(fsal_ace_t));
 	for (ace = acldata.aces; ace < acldata.aces + acldata.naces; ace++) {
 		int i;
+
 		who = 0;
 
 		if (!inline_xdr_u_int32_t(xdr, &ace->type))
@@ -1767,6 +1768,7 @@ static inline fattr_xdr_result encode_time(XDR *xdr, struct timespec *ts)
 {
 	uint64_t seconds = ts->tv_sec;
 	uint32_t nseconds = ts->tv_nsec;
+
 	if (!inline_xdr_u_int64_t(xdr, &seconds))
 		return FATTR_XDR_FAILED;
 	if (!inline_xdr_u_int32_t(xdr, &nseconds))
@@ -2092,10 +2094,11 @@ static fattr_xdr_result encode_fs_layout_types(XDR *xdr,
 					       struct xdr_attrs_args *args)
 {
 	struct fsal_export *export;
-	const layouttype4 *layouttypes = NULL;
 	layouttype4 layout_type;
 	int32_t typecount = 0;
 	int32_t index = 0;
+	/* layouts */
+	const layouttype4 *layouttypes = NULL;
 
 	if (args->data == NULL)
 		return FATTR_XDR_NOOP;
@@ -2333,16 +2336,17 @@ static fattr_xdr_result encode_support_exclusive_create(XDR *xdr,
 {
 	struct bitmap4 bits;
 	int attr, offset;
+	bool res;
 
 	memset(&bits, 0, sizeof(bits));
 	for (attr = FATTR4_SUPPORTED_ATTRS; attr <= FATTR4_SEC_LABEL;
 	     attr++) {
 		if (fattr4tab[attr].supported) {
-			bool res = set_attribute_in_bitmap(&bits, attr);
+			res = set_attribute_in_bitmap(&bits, attr);
 			assert(res);
 		}
 	}
-	bool res = clear_attribute_in_bitmap(&bits, FATTR4_TIME_ACCESS_SET);
+	res = clear_attribute_in_bitmap(&bits, FATTR4_TIME_ACCESS_SET);
 	assert(res);
 	res = clear_attribute_in_bitmap(&bits, FATTR4_TIME_MODIFY_SET);
 	assert(res);
@@ -3587,8 +3591,8 @@ static void nfs3_FSALattr_To_PartialFattr(const struct attrlist *FSAL_attr,
 		Fattr->fsid = (nfs3_uint64) squash_fsid(&FSAL_attr->fsid);
 
 		LogFullDebug(COMPONENT_NFSPROTO,
-			     "Compressing fsid for NFS v3 from "
-			     "fsid major %#" PRIX64 " (%" PRIu64 "), minor %#"
+			     "Compressing fsid for NFS v3 from fsid major %#"
+			     PRIX64 " (%" PRIu64 "), minor %#"
 			     PRIX64 " (%" PRIu64 ") to nfs3_fsid = %#" PRIX64
 			     " (%" PRIu64 ")",
 			     FSAL_attr->fsid.major,
@@ -3640,6 +3644,7 @@ static void nfs3_FSALattr_To_PartialFattr(const struct attrlist *FSAL_attr,
 bool cache_entry_to_nfs3_Fattr(cache_entry_t *entry, fattr3 *Fattr)
 {
 	bool rc = false;
+
 	if (entry && (cache_inode_lock_trust_attrs(entry, false)
 		      == CACHE_INODE_SUCCESS)) {
 		rc = nfs3_FSALattr_To_Fattr(op_ctx->export,
@@ -3677,8 +3682,8 @@ bool nfs3_FSALattr_To_Fattr(struct gsh_export *export,
 	nfs3_FSALattr_To_PartialFattr(FSAL_attr, &got, Fattr);
 	if (want & ~got) {
 		LogCrit(COMPONENT_NFSPROTO,
-			"Likely bug: FSAL did not fill in a standard NFSv3 "
-			"attribute: missing %lx", want & ~got);
+			"Likely bug: FSAL did not fill in a standard NFSv3 attribute: missing %lx",
+			want & ~got);
 	}
 
 	if ((export->options_set & EXPORT_OPTION_FSID_SET) != 0) {
@@ -3689,8 +3694,8 @@ bool nfs3_FSALattr_To_Fattr(struct gsh_export *export,
 					&export->filesystem_id);
 
 		LogFullDebug(COMPONENT_NFSPROTO,
-			     "Compressing export filesystem_id for NFS v3 from "
-			     "fsid major %#" PRIX64 " (%" PRIu64 "), minor %#"
+			     "Compressing export filesystem_id for NFS v3 from fsid major %#"
+			     PRIX64 " (%" PRIu64 "), minor %#"
 			     PRIX64 " (%" PRIu64 ") to nfs3_fsid = %#" PRIX64
 			     " (%" PRIu64 ")",
 			     export->filesystem_id.major,
@@ -3717,6 +3722,7 @@ bool nfs3_FSALattr_To_Fattr(struct gsh_export *export,
 bool nfs4_Fattr_Check_Access_Bitmap(struct bitmap4 *bitmap, int access)
 {
 	int attribute;
+
 	assert((access == FATTR4_ATTR_READ) || (access == FATTR4_ATTR_WRITE));
 
 	for (attribute = next_attr_from_bitmap(bitmap, -1); attribute != -1;
@@ -3977,7 +3983,6 @@ int nfs4_Fattr_cmp(fattr4 *Fattr1, fattr4 *Fattr2)
 
 		default:
 			return 0;
-			break;
 		}
 	}
 	return 1;
