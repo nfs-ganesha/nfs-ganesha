@@ -1243,8 +1243,7 @@ static fsal_status_t lock_op(struct fsal_obj_handle *obj_hdl,
 		rc = glfs_posix_lock(objhandle->glfd, cmd, &flock);
 		if (rc) {
 			LogCrit(COMPONENT_FSAL,
-				"Failed to get conflicting lock post lock"
-				" failure");
+				"Failed to get conflicting lock post lock failure");
 			status = gluster2fsal_error(errno);
 			goto out;
 		}
@@ -1539,8 +1538,6 @@ static void handle_to_key(struct fsal_obj_handle *obj_hdl,
 	now(&e_time);
 	latency_update(&s_time, &e_time, lat_handle_to_key);
 #endif
-
-	return;
 }
 
 /**

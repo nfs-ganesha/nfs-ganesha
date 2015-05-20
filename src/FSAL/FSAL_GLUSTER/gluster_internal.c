@@ -47,6 +47,7 @@
 fsal_status_t gluster2fsal_error(const int gluster_errorcode)
 {
 	fsal_status_t status;
+
 	status.minor = gluster_errorcode;
 
 	switch (gluster_errorcode) {
@@ -299,8 +300,6 @@ void gluster_cleanup_vars(struct glfs_object *glhandle)
 		 * TODO: Useful point for logging? */
 		glfs_h_close(glhandle);
 	}
-
-	return;
 }
 
 /* fs_specific_has() parses the fs_specific string for a particular key,
@@ -965,9 +964,8 @@ void latency_dump(void)
 	int i = 0;
 
 	for (; i < LATENCY_SLOTS; i++) {
-		LogCrit(COMPONENT_FSAL, "Op:%d:Count:%llu:nsecs:%llu", i,
-			(long long unsigned int)glfsal_latencies[i].count,
-			(long long unsigned int)glfsal_latencies[i].
+		LogCrit(COMPONENT_FSAL, "Op:%d:Count:%"PRIu64":nsecs:%"PRIu64,
+			i, glfsal_latencies[i].count, glfsal_latencies[i].
 			overall_time);
 	}
 }
