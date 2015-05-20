@@ -257,6 +257,7 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (state_found != NULL) {
 		struct state_deleg *sdeleg;
+
 		if (info)
 			info->io_advise = state_found->state_data.io_advise;
 		switch (state_found->state_type) {
@@ -362,7 +363,6 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 			 * test */
 			res_READ4->status = NFS4ERR_BAD_STATEID;
 			goto out;
-			break;
 		}
 	} else {
 		/* Special stateid, no open state, check to see if any
@@ -416,14 +416,15 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (op_ctx->export->MaxOffsetRead < UINT64_MAX) {
 		LogFullDebug(COMPONENT_NFS_V4,
-			     "Read offset=%" PRIu64 " count=%zd "
-			     "MaxOffSet=%" PRIu64, offset, size,
+			     "Read offset=%" PRIu64
+			     " count=%zd MaxOffSet=%" PRIu64,
+			     offset, size,
 			     op_ctx->export->MaxOffsetRead);
 
 		if ((offset + size) > op_ctx->export->MaxOffsetRead) {
 			LogEvent(COMPONENT_NFS_V4,
-				 "A client tryed to violate max "
-				 "file size %" PRIu64 " for exportid #%hu",
+				 "A client tryed to violate max file size %"
+				 PRIu64 " for exportid #%hu",
 				 op_ctx->export->MaxOffsetRead,
 				 op_ctx->export->export_id);
 
@@ -573,8 +574,7 @@ void nfs4_op_read_Free(nfs_resop4 *res)
 	if (resp->status == NFS4_OK)
 		if (resp->READ4res_u.resok4.data.data_val != NULL)
 			gsh_free(resp->READ4res_u.resok4.data.data_val);
-	return;
-}				/* nfs4_op_read_Free */
+}
 
 /**
  * @brief The NFS4_OP_READ_PLUS operation
@@ -594,9 +594,11 @@ int nfs4_op_read_plus(struct nfs_argop4 *op, compound_data_t *data,
 {
 	struct nfs_resop4 res;
 	struct io_info info;
+	/* Response */
 	READ_PLUS4res * const res_RPLUS = &resp->nfs_resop4_u.opread_plus;
 	READ4res *res_READ4 = &res.nfs_resop4_u.opread;
 	contents *contentp = &res_RPLUS->rpr_resok4.rpr_contents;
+
 	resp->resop = NFS4_OP_READ_PLUS;
 
 	nfs4_read(op, data, &res, CACHE_INODE_READ_PLUS, &info);
@@ -632,9 +634,7 @@ void nfs4_op_read_plus_Free(nfs_resop4 *res)
 	if (resp->rpr_status == NFS4_OK && conp->what == NFS4_CONTENT_DATA)
 		if (conp->data.d_data.data_val != NULL)
 			gsh_free(conp->data.d_data.data_val);
-
-	return;
-}				/* nfs4_op_read_Free */
+}
 
 /**
  * @brief The NFS4_OP_IO_ADVISE operation
@@ -731,8 +731,7 @@ done:
 void nfs4_op_io_advise_Free(nfs_resop4 *resp)
 {
 	/* Nothing to be done */
-	return;
-}				/* nfs4_op_io_advise_Free */
+}
 
 
 int nfs4_op_seek(struct nfs_argop4 *op, compound_data_t *data,

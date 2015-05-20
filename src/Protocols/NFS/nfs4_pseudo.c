@@ -603,6 +603,7 @@ void pseudo_unmount_export(struct gsh_export *export)
 			   "PSEUDO") == 0
 		    && junction_inode != NULL) {
 			char *pseudopath = gsh_strdup(export->pseudopath);
+
 			if (pseudopath != NULL) {
 				/* Initialize req_ctx */
 				init_root_op_context(

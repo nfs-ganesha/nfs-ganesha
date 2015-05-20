@@ -186,14 +186,12 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op, compound_data_t *data,
 void nfs4_op_open_downgrade_Free(nfs_resop4 *resp)
 {
 	/* Nothing to be done */
-	return;
-}				/* nfs4_op_open_downgrade_Free */
+}
 
 void nfs4_op_open_downgrade_CopyRes(OPEN_DOWNGRADE4res *res_dst,
 				    OPEN_DOWNGRADE4res *res_src)
 {
-	/* Nothing to be done */
-	return;
+	/* Nothing to deep copy */
 }
 
 static nfsstat4 nfs4_do_open_downgrade(struct nfs_argop4 *op,

@@ -45,9 +45,11 @@
 
 struct nfs4_op_desc {
 	char *name;
-	int (*funct) (struct nfs_argop4 *, compound_data_t *,
-		      struct nfs_resop4 *);
-	void (*free_res) (nfs_resop4 *);
+	int (*funct)(struct nfs_argop4 *,
+		     compound_data_t *,
+		     struct nfs_resop4 *);
+
+	void (*free_res)(nfs_resop4 *);
 	int exp_perm_flags;
 };
 
@@ -458,6 +460,7 @@ int nfs4_Compound(nfs_arg_t *arg,
 	nfs_opnum4 opcode;
 	const uint32_t compound4_minor = arg->arg_compound4.minorversion;
 	const uint32_t argarray_len = arg->arg_compound4.argarray.argarray_len;
+	/* Array of op arguments */
 	nfs_argop4 * const argarray = arg->arg_compound4.argarray.argarray_val;
 	nfs_resop4 *resarray;
 	nsecs_elapsed_t op_start_time;
@@ -860,6 +863,7 @@ void nfs4_Compound_Free(nfs_res_t *res)
 
 	for (i = 0; i < res->res_compound4.resarray.resarray_len; i++) {
 		nfs_resop4 *val = &res->res_compound4.resarray.resarray_val[i];
+
 		if (val) {
 			/* !val is an error case, but it can occur, so avoid
 			 * indirect on NULL
@@ -872,8 +876,6 @@ void nfs4_Compound_Free(nfs_res_t *res)
 
 	if (res->res_compound4.tag.utf8string_val)
 		gsh_free(res->res_compound4.tag.utf8string_val);
-
-	return;
 }
 
 /**

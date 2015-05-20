@@ -143,8 +143,8 @@ int nfs4_op_setclientid(struct nfs_argop4 *op, compound_data_t *data,
 		display_client_record(&dspbuf, client_record);
 
 		LogFullDebug(COMPONENT_CLIENTID,
-			     "Client Record %s cr_confirmed_rec=%p "
-			     "cr_unconfirmed_rec=%p", str,
+			     "Client Record %s cr_confirmed_rec=%p cr_unconfirmed_rec=%p",
+			     str,
 			     client_record->cr_confirmed_rec,
 			     client_record->cr_unconfirmed_rec);
 	}
@@ -371,5 +371,4 @@ void nfs4_op_setclientid_Free(nfs_resop4 *res)
 		if (resp->SETCLIENTID4res_u.client_using.r_addr != NULL)
 			gsh_free(resp->SETCLIENTID4res_u.client_using.r_addr);
 	}
-	return;
 }

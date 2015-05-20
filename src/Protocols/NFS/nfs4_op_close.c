@@ -197,8 +197,7 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 			res_CLOSE4->CLOSE4res_u.open_stateid.seqid = 1;
 
 		LogDebug(COMPONENT_STATE,
-			 "CLOSE failed nfs4_Check_Stateid must have already been closed."
-			 " But treating it as replayed close and returning NFS4_OK");
+			 "CLOSE failed nfs4_Check_Stateid must have already been closed. But treating it as replayed close and returning NFS4_OK");
 
 		return res_CLOSE4->status;
 	}
@@ -279,8 +278,8 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 
 		if (state_status != STATE_SUCCESS) {
 			LogEvent(COMPONENT_STATE,
-				 "CLOSE failed to release share state "
-				 "error: %s", state_err_str(state_status));
+				 "CLOSE failed to release share state error: %s",
+				 state_err_str(state_status));
 		}
 	}
 
@@ -350,11 +349,9 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 void nfs4_op_close_Free(nfs_resop4 *resp)
 {
 	/* Nothing to be done */
-	return;
-}				/* nfs4_op_close_Free */
+}
 
 void nfs4_op_close_CopyRes(CLOSE4res *res_dst, CLOSE4res *res_src)
 {
-	/* Nothing to be done */
-	return;
-}				/* nfs4_op_close_CopyRes */
+	/* Nothing to deep copy */
+}

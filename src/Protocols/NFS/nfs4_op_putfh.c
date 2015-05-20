@@ -114,8 +114,7 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t *data,
 		pds = pnfs_ds_get(v4_handle->id.servers);
 		if (pds == NULL) {
 			LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
-				"NFS4 Request from client (%s) "
-				"has invalid server identifier %d",
+				"NFS4 Request from client (%s) has invalid server identifier %d",
 				op_ctx->client
 					? op_ctx->client->hostaddr_str
 					: "unknown",
@@ -197,8 +196,7 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t *data,
 		exporting = get_gsh_export(v4_handle->id.exports);
 		if (exporting == NULL) {
 			LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
-				"NFS4 Request from client (%s) "
-				"has invalid export identifier %d",
+				"NFS4 Request from client (%s) has invalid export identifier %d",
 				op_ctx->client
 					? op_ctx->client->hostaddr_str
 					: "unknown",
@@ -281,6 +279,5 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t *data,
  */
 void nfs4_op_putfh_Free(nfs_resop4 *resp)
 {
-	/* Nothing to be freed */
-	return;
-}				/* nfs4_op_putfh_Free */
+	/* Nothing to be done */
+}

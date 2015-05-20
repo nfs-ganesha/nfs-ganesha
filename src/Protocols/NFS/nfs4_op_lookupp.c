@@ -239,5 +239,4 @@ not_junction:
 void nfs4_op_lookupp_Free(nfs_resop4 *resp)
 {
 	/* Nothing to be done */
-	return;
-}				/* nfs4_op_lookupp_Free */
+}

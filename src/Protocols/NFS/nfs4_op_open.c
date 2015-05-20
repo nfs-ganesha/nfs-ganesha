@@ -297,8 +297,8 @@ static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t *data,
 			if (cache_status != CACHE_INODE_SUCCESS) {
 				/* Log bad close and continue. */
 				LogEvent(COMPONENT_STATE,
-					 "Failed to close cache inode: "
-					 "status=%d", cache_status);
+					 "Failed to close cache inode: status=%d",
+					 cache_status);
 			}
 
 			return nfs4_Errno_state(state_status);
@@ -530,6 +530,7 @@ bool open4_open_owner(struct nfs_argop4 *op, compound_data_t *data,
 			if (res_OPEN4->status == NFS4_OK) {
 				utf8string *utfile;
 				open_claim4 *oc = &arg_OPEN4->claim;
+
 				switch (oc->claim) {
 				case CLAIM_NULL:
 					utfile = &oc->open_claim4_u.file;
@@ -851,7 +852,7 @@ static nfsstat4 open4_claim_null(OPEN4args *arg, compound_data_t *data,
 	parent = data->current_entry;
 
 	/* Parent must be a directory */
-	if ((parent->type != DIRECTORY)) {
+	if (parent->type != DIRECTORY) {
 		if (parent->type == SYMBOLIC_LINK) {
 			nfs_status = NFS4ERR_SYMLINK;
 			goto out;
@@ -1052,8 +1053,7 @@ static void get_delegation(compound_data_t *data, OPEN4args *args,
 						  new_state);
 		if (state_status != STATE_SUCCESS) {
 			LogDebug(COMPONENT_NFS_V4_LOCK,
-				 "get_delegation call added state but failed to"
-				 " lock with status %s",
+				 "get_delegation call added state but failed to lock with status %s",
 				 state_err_str(state_status));
 			state_del_locked(new_state);
 			dec_state_t_ref(new_state);
@@ -1343,6 +1343,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 	case CLAIM_NULL:
 		{
 			cache_entry_t *entry = NULL;
+
 			res_OPEN4->status = open4_claim_null(arg_OPEN4,
 							     data,
 							     res_OPEN4,
@@ -1555,5 +1556,5 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
  */
 void nfs4_op_open_Free(nfs_resop4 *resp)
 {
-	return;
-}				/* nfs4_op_open_Free */
+	/* Nothing to be done */
+}

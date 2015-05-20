@@ -224,6 +224,7 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 	 */
 	if (state_found != NULL) {
 		struct state_deleg *sdeleg;
+
 		if (info)
 			info->io_advise = state_found->state_data.io_advise;
 		switch (state_found->state_type) {
@@ -345,8 +346,8 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 
 		if ((offset + size) > op_ctx->export->MaxOffsetWrite) {
 			LogEvent(COMPONENT_NFS_V4,
-				 "A client tryed to violate max "
-				 "file size %" PRIu64 " for exportid #%hu",
+				 "A client tryed to violate max file size %"
+				 PRIu64 " for exportid #%hu",
 				 op_ctx->export->MaxOffsetWrite,
 				 op_ctx->export->export_id);
 
@@ -497,8 +498,7 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t *data,
 void nfs4_op_write_Free(nfs_resop4 *resp)
 {
 	/* Nothing to be done */
-	return;
-}				/* nfs4_op_write_Free */
+}
 
 /**
  * @brief The NFS4_OP_WRITE_SAME operation
@@ -540,6 +540,7 @@ int nfs4_op_allocate(struct nfs_argop4 *op, compound_data_t *data,
 	struct nfs_resop4 res;
 	struct nfs_argop4 arg;
 	struct io_info info;
+	/* Arguments and response */
 	ALLOCATE4args * const arg_ALLOC = &op->nfs_argop4_u.opallocate;
 	ALLOCATE4res * const res_ALLOC = &resp->nfs_resop4_u.opallocate;
 
@@ -579,6 +580,7 @@ int nfs4_op_deallocate(struct nfs_argop4 *op, compound_data_t *data,
 	struct nfs_resop4 res;
 	struct nfs_argop4 arg;
 	struct io_info info;
+	/* Arguments and response */
 	DEALLOCATE4args * const arg_DEALLOC = &op->nfs_argop4_u.opdeallocate;
 	DEALLOCATE4res * const res_DEALLOC = &resp->nfs_resop4_u.opdeallocate;
 

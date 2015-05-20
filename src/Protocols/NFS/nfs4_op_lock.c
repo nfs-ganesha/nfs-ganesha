@@ -233,8 +233,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 			display_client_id_rec(&dspbuf_lock, clientid);
 
 			LogDebug(COMPONENT_CLIENTID,
-				 "Unexpected, new lock owner clientid {%s} "
-				 "doesn't match open owner clientid {%s}",
+				 "Unexpected, new lock owner clientid {%s} doesn't match open owner clientid {%s}",
 				 str_lock, str_open);
 		}
 
@@ -293,8 +292,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 
 			res_LOCK4->status = nfs_status;
 			LogDebug(COMPONENT_NFS_V4_LOCK,
-				 "LOCK failed nfs4_Check_Stateid for existing "
-				 "lock owner");
+				 "LOCK failed nfs4_Check_Stateid for existing lock owner");
 			return res_LOCK4->status;
 		}
 
@@ -313,8 +311,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 		if (lock_state->state_type != STATE_TYPE_LOCK) {
 			res_LOCK4->status = NFS4ERR_BAD_STATEID;
 			LogDebug(COMPONENT_NFS_V4_LOCK,
-				 "LOCK failed existing lock owner, "
-				 "state type is not LOCK");
+				 "LOCK failed existing lock owner,  state type is not LOCK");
 			goto out2;
 		}
 

@@ -330,5 +330,4 @@ void nfs4_op_secinfo_Free(nfs_resop4 *res)
 		gsh_free(resp->SECINFO4res_u.resok4.SECINFO4resok_val);
 		resp->SECINFO4res_u.resok4.SECINFO4resok_val = NULL;
 	}
-	return;
-}				/* nfs4_op_secinfo_Free */
+}

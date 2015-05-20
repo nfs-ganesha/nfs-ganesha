@@ -122,6 +122,7 @@ static nfsstat4 acquire_layout_state(compound_data_t *data,
 		/* For share, delegation, and lock states, create a
 		   new layout state. */
 		union state_data layout_data;
+
 		memset(&layout_data, 0, sizeof(layout_data));
 
 		PTHREAD_RWLOCK_wrlock(&data->current_entry->state_lock);
@@ -398,8 +399,7 @@ int nfs4_op_layoutget(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (max_segment_count == 0) {
 		LogWarn(COMPONENT_PNFS,
-			"The FSAL must specify a non-zero "
-			"fs_maximum_segments.");
+			"The FSAL must specify a non-zero fs_maximum_segments.");
 		nfs_status = NFS4ERR_LAYOUTUNAVAILABLE;
 		goto out;
 	}

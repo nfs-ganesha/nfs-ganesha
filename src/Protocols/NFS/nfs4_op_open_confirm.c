@@ -168,12 +168,10 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op, compound_data_t *data,
 void nfs4_op_open_confirm_Free(nfs_resop4 *resp)
 {
 	/* Nothing to be done */
-	return;
-}				/* nfs4_op_open_confirm_Free */
+}
 
 void nfs4_op_open_confirm_CopyRes(OPEN_CONFIRM4res *resp_dst,
 				  OPEN_CONFIRM4res *resp_src)
 {
-	/* Nothing to be done */
-	return;
+	/* Nothing to deep copy */
 }

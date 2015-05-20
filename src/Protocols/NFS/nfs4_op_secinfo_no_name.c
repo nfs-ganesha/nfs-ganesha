@@ -111,6 +111,7 @@ int nfs4_op_secinfo_no_name(struct nfs_argop4 *op, compound_data_t *data,
 	 * all implemented.
 	 */
 	int idx = 0;
+
 	if (op_ctx->export_perms->options & EXPORT_OPTION_AUTH_NONE)
 		res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.
 		    SECINFO4resok_val[idx++].flavor = AUTH_NONE;
@@ -205,5 +206,4 @@ void nfs4_op_secinfo_no_name_Free(nfs_resop4 *res)
 		gsh_free(resp->SECINFO4res_u.resok4.SECINFO4resok_val);
 		resp->SECINFO4res_u.resok4.SECINFO4resok_val = NULL;
 	}
-	return;
-}				/* nfs4_op_secinfo_no_name_Free */
+}
