@@ -622,9 +622,8 @@ nfsstat4 nfs4_Errno_verbose(cache_inode_status_t error, const char *where)
 	case CACHE_INODE_CROSS_JUNCTION:
 		/* Should not occur */
 		LogDebug(COMPONENT_NFS_V4,
-			 "Line %u should never be reached in nfs4_Errno"
-			 " from %s for cache_status=%u", __LINE__, where,
-			 error);
+			 "Line %u should never be reached in nfs4_Errno from %s for cache_status=%u",
+			 __LINE__, where, error);
 		nfserror = NFS4ERR_INVAL;
 		break;
 	}
@@ -738,8 +737,8 @@ nfsstat3 nfs3_Errno_verbose(cache_inode_status_t error, const char *where)
 
 	case CACHE_INODE_IO_ERROR:
 		LogCrit(COMPONENT_NFSPROTO,
-			"Error CACHE_INODE_IO_ERROR in %s converted to NFS3ERR_IO"
-			" but was set non-retryable", where);
+			"Error CACHE_INODE_IO_ERROR in %s converted to NFS3ERR_IO but was set non-retryable",
+			where);
 		nfserror = NFS3ERR_IO;
 		break;
 
@@ -791,9 +790,8 @@ nfsstat3 nfs3_Errno_verbose(cache_inode_status_t error, const char *where)
 	case CACHE_INODE_CROSS_JUNCTION:
 		/* Should not occur */
 		LogDebug(COMPONENT_NFSPROTO,
-			 "Line %u should never be reached in nfs3_Errno"
-			 " from %s for cache_status=%u", __LINE__, where,
-			 error);
+			 "Line %u should never be reached in nfs3_Errno from %s for cache_status=%u",
+			 __LINE__, where, error);
 		nfserror = NFS3ERR_INVAL;
 		break;
 	}

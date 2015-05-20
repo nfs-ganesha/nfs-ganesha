@@ -575,6 +575,7 @@ static int fsal_commit(void *node, void *link_mem, void *self_struct,
 	 */
 	if (export->fullpath[0] == '/') {
 		int pathlen;
+
 		pathlen = strlen(export->fullpath);
 		while ((export->fullpath[pathlen - 1] == '/') &&
 		       (pathlen > 1))
@@ -1467,6 +1468,7 @@ static void FreeClientList(struct glist_head *clients)
 
 	glist_for_each_safe(glist, glistn, clients) {
 		exportlist_client_entry_t *client;
+
 		client =
 		    glist_entry(glist, exportlist_client_entry_t, cle_list);
 		glist_del(&client->cle_list);
@@ -1496,6 +1498,7 @@ void free_export_resources(struct gsh_export *export)
 	FreeClientList(&export->clients);
 	if (export->fsal_export != NULL) {
 		struct fsal_module *fsal = export->fsal_export->fsal;
+
 		export->fsal_export->exp_ops.release(export->fsal_export);
 		fsal_put(fsal);
 	}
@@ -2118,6 +2121,7 @@ bool export_check_security(struct svc_req *req)
 		} else {
 			struct svc_rpc_gss_data *gd;
 			rpc_gss_svc_t svc;
+
 			gd = SVCAUTH_PRIVATE(req->rq_auth);
 			svc = gd->sec.svc;
 			LogFullDebug(COMPONENT_EXPORT, "Testing svc %d",
@@ -2195,6 +2199,7 @@ sockaddr_t *convert_ipv6_to_ipv4(sockaddr_t *ipv6, sockaddr_t *ipv4)
 	    && (psockaddr_in6->sin6_addr.s6_addr[10] == 0xFF)
 	    && (psockaddr_in6->sin6_addr.s6_addr[11] == 0xFF)) {
 		void *ab;
+
 		memset(ipv4, 0, sizeof(*ipv4));
 		ab = &(psockaddr_in6->sin6_addr.s6_addr[12]);
 
@@ -2326,6 +2331,7 @@ void export_check_access(void)
 
 	if (isMidDebug(COMPONENT_EXPORT)) {
 		char perms[1024];
+
 		if (client != NULL) {
 			StrExportOptions(&client->client_perms, perms);
 			LogMidDebug(COMPONENT_EXPORT,

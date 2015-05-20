@@ -46,15 +46,18 @@ static int errors;		/* global error count */
 
 /* Initialize data to pseudorandom values.
  */
-void setup()
+void setup(void)
 {
 	uint64 a = 9;
 	uint64 b = 777;
 	int i;
+
 	for (i = 0; i < kDataSize; i++) {
 		a = (a ^ (a >> 41)) * k0 + b;
 		b = (b ^ (b >> 41)) * k0 + i;
+
 		uint8 u = b >> 37;
+
 		memcpy(data + i, &u, 1);	/* uint8 -> char */
 	}
 }

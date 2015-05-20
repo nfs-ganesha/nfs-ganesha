@@ -256,7 +256,7 @@ void nfs4_acl_release_entry(fsal_acl_t *acl, fsal_acl_status_t *status)
 	nfs4_acl_free(acl);
 }
 
-static void nfs4_acls_test()
+static void nfs4_acls_test(void)
 {
 	int i = 0;
 	fsal_acl_data_t acldata, acldata2;
@@ -316,7 +316,7 @@ static void nfs4_acls_test()
 	nfs4_acl_release_entry(acl, &status);
 }
 
-int nfs4_acls_init()
+int nfs4_acls_init(void)
 {
 	LogDebug(COMPONENT_NFS_V4_ACL, "Initialize NFSv4 ACLs");
 	LogDebug(COMPONENT_NFS_V4_ACL,

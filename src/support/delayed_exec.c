@@ -73,9 +73,12 @@ struct delayed_multi {
  */
 
 struct delayed_task {
-	void (*func) (void *);	/*< Function for delayed task */
-	void *arg;		/*< Argument for delayed task */
-	 LIST_ENTRY(delayed_task) link;	/*< Link in the task list. */
+	/** Function for delayed task */
+	void (*func)(void *);
+	/** Argument for delayed task */
+	void *arg;
+	/** Link in the task list. */
+	LIST_ENTRY(delayed_task) link;
 };
 
 /**
@@ -218,8 +221,9 @@ void *delayed_thread(void *arg)
 	PTHREAD_MUTEX_lock(&mtx);
 	while (delayed_state == delayed_running) {
 		struct timespec then;
-		void (*func) (void *);
+		void (*func)(void *);
 		void *arg;
+
 		switch (delayed_get_work(&then, &func, &arg)) {
 		case delayed_unemployed:
 			pthread_cond_wait(&cv, &mtx);
@@ -280,8 +284,7 @@ void delayed_start(void)
 
 		if (thread == NULL) {
 			LogFatal(COMPONENT_THREAD,
-				 "Unable to start delayed executor: "
-				 "no memory.");
+				 "Unable to start delayed executor: no memory.");
 		}
 		rc = pthread_create(&thread->id, &attr, delayed_thread, thread);
 		if (rc != 0) {
@@ -301,6 +304,7 @@ void delayed_shutdown(void)
 {
 	int rc = -1;
 	struct timespec then;
+
 	now(&then);
 	then.tv_sec += 120;
 
@@ -314,8 +318,7 @@ void delayed_shutdown(void)
 		struct delayed_thread *thr;
 
 		LogMajor(COMPONENT_THREAD,
-			 "Delayed executor threads not shutting down cleanly, "
-			 "taking harsher measures.");
+			 "Delayed executor threads not shutting down cleanly, taking harsher measures.");
 		while ((thr = LIST_FIRST(&thread_list)) != NULL) {
 			LIST_REMOVE(thr, link);
 			pthread_cancel(thr->id);

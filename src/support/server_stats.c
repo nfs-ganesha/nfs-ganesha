@@ -121,7 +121,7 @@ static const struct op_name optabv3[] = {
 	[NFSPROC3_GETATTR] = {.name = "GETATTR", },
 	[NFSPROC3_SETATTR] = {.name = "SETATTR", },
 	[NFSPROC3_LOOKUP] = {.name = "LOOKUP", },
-	[NFSPROC3_ACCESS] = {.name = "ACCESS" , } ,
+	[NFSPROC3_ACCESS] = {.name = "ACCESS", },
 	[NFSPROC3_READLINK] = {.name = "READLINK", },
 	[NFSPROC3_READ] = {.name = "READ", },
 	[NFSPROC3_WRITE] = {.name = "WRITE", },
@@ -1012,6 +1012,7 @@ void server_stats_nfs_done(request_data_t *reqdata, int rc, bool dup)
 	stop_time = timespec_diff(&ServerBootTime, &current_time);
 	if (client != NULL) {
 		struct server_stats *server_st;
+
 		server_st = container_of(client, struct server_stats, client);
 		record_stats(&server_st->st, &client->lock, reqdata,
 			     stop_time - op_ctx->start_time,
@@ -1030,7 +1031,6 @@ void server_stats_nfs_done(request_data_t *reqdata, int rc, bool dup)
 		(void)atomic_store_uint64_t(&op_ctx->export->last_update,
 					    stop_time);
 	}
-	return;
 }
 
 /**
@@ -1057,6 +1057,7 @@ void server_stats_nfsv4_op_done(int proto_op,
 
 	if (client != NULL) {
 		struct server_stats *server_st;
+
 		server_st = container_of(client, struct server_stats, client);
 		record_nfsv4_op(&server_st->st, &client->lock, proto_op,
 				op_ctx->nfs_minorvers, stop_time - start_time,
@@ -1085,7 +1086,6 @@ void server_stats_nfsv4_op_done(int proto_op,
 		(void)atomic_store_uint64_t(&op_ctx->export->last_update,
 					    stop_time);
 	}
-	return;
 }
 
 /**
@@ -1104,6 +1104,7 @@ void server_stats_compound_done(int num_ops, int status)
 	stop_time = timespec_diff(&ServerBootTime, &current_time);
 	if (client != NULL) {
 		struct server_stats *server_st;
+
 		server_st = container_of(client, struct server_stats, client);
 		record_compound(&server_st->st, &client->lock,
 				op_ctx->nfs_minorvers,
@@ -1123,7 +1124,6 @@ void server_stats_compound_done(int num_ops, int status)
 		(void)atomic_store_uint64_t(&op_ctx->export->last_update,
 					    stop_time);
 	}
-	return;
 }
 
 /**
@@ -1153,7 +1153,6 @@ void server_stats_io_done(size_t requested,
 		record_io_stats(&exp_st->st, &op_ctx->export->lock,
 				requested, transferred, success, is_write);
 	}
-	return;
 }
 
 /**
@@ -1175,6 +1174,7 @@ void inc_grants(struct gsh_client *client)
 {
 	if (client != NULL) {
 		struct server_stats *server_st;
+
 		server_st = container_of(client, struct server_stats, client);
 		check_deleg_struct(&server_st->st, &client->lock);
 		server_st->st.deleg->curr_deleg_grants++;
@@ -1184,6 +1184,7 @@ void dec_grants(struct gsh_client *client)
 {
 	if (client != NULL) {
 		struct server_stats *server_st;
+
 		server_st = container_of(client, struct server_stats, client);
 		check_deleg_struct(&server_st->st, &client->lock);
 		server_st->st.deleg->curr_deleg_grants++;
@@ -1193,6 +1194,7 @@ void inc_revokes(struct gsh_client *client)
 {
 	if (client != NULL) {
 		struct server_stats *server_st;
+
 		server_st = container_of(client, struct server_stats, client);
 		check_deleg_struct(&server_st->st, &client->lock);
 		server_st->st.deleg->num_revokes++;
@@ -1202,6 +1204,7 @@ void inc_recalls(struct gsh_client *client)
 {
 	if (client != NULL) {
 		struct server_stats *server_st;
+
 		server_st = container_of(client, struct server_stats, client);
 		check_deleg_struct(&server_st->st, &client->lock);
 		server_st->st.deleg->tot_recalls++;
@@ -1211,6 +1214,7 @@ void inc_failed_recalls(struct gsh_client *client)
 {
 	if (client != NULL) {
 		struct server_stats *server_st;
+
 		server_st = container_of(client, struct server_stats, client);
 		check_deleg_struct(&server_st->st, &client->lock);
 		server_st->st.deleg->failed_recalls++;

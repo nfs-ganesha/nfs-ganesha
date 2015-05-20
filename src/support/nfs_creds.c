@@ -186,7 +186,6 @@ int nfs_rpc_req2client_cred(struct svc_req *req, nfs_client_cred_t *pcred)
 	default:
 		/* Unsupported authentication flavour */
 		return -1;
-		break;
 	}
 
 	return 1;
