@@ -169,5 +169,4 @@ int nlm4_Share(nfs_arg_t *args,
 void nlm4_Share_Free(nfs_res_t *res)
 {
 	netobj_free(&res->res_nlm4share.cookie);
-	return;
 }

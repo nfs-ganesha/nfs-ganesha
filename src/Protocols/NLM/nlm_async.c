@@ -313,6 +313,7 @@ int nlm_send_async(int proc, state_nlm_client_t *host, void *inarg, void *key)
 
 		while (resp_key != NULL && now.tv_sec < (start.tv_sec + 5)) {
 			int rc;
+
 			rc = pthread_cond_timedwait(&nlm_async_resp_cond,
 						    &nlm_async_resp_mutex,
 						    &timeout);

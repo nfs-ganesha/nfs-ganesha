@@ -126,5 +126,5 @@ int nlm4_Granted_Res(nfs_arg_t *args,
  */
 void nlm4_Granted_Res_Free(nfs_res_t *res)
 {
-	return;
+	/* Nothing to do */
 }

@@ -91,5 +91,5 @@ int nlm4_Free_All(nfs_arg_t *args,
  */
 void nlm4_Free_All_Free(nfs_res_t *res)
 {
-	return;
+	/* Nothing to do */
 }

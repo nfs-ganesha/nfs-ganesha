@@ -87,5 +87,5 @@ int nlm4_Sm_Notify(nfs_arg_t *args,
  */
 void nlm4_Sm_Notify_Free(nfs_res_t *res)
 {
-	return;
+	/* Nothing to do */
 }

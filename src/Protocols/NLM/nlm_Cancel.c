@@ -146,6 +146,7 @@ static void nlm4_cancel_message_resp(state_async_queue_t *arg)
 
 	if (isFullDebug(COMPONENT_NLM)) {
 		char buffer[1024];
+
 		netobj_to_string(&nlm_arg->nlm_async_args.nlm_async_res.
 				 res_nlm4test.cookie, buffer, 1024);
 		LogFullDebug(COMPONENT_NLM,

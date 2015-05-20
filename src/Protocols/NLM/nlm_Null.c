@@ -65,5 +65,5 @@ int nlm_Null(nfs_arg_t *arg,
  */
 void nlm_Null_Free(nfs_res_t *res)
 {
-	return;
+	/* Nothing to do */
 }

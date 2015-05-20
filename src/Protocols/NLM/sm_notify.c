@@ -25,6 +25,7 @@ nsm_notify_1(notify *argp, CLIENT *clnt)
 {
 	static char clnt_res;
 	AUTH *nsm_auth;
+
 	nsm_auth = authnone_create();
 
 	memset((char *)&clnt_res, 0, sizeof(clnt_res));
