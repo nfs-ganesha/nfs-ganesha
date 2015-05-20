@@ -87,6 +87,7 @@ int display_nlm_state(struct display_buffer *dspbuf, state_t *key)
 int display_nlm_state_key(struct gsh_buffdesc *buff, char *str)
 {
 	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
+
 	display_nlm_state(&dspbuf, buff->addr);
 	return display_buffer_len(&dspbuf);
 }
@@ -102,6 +103,7 @@ int display_nlm_state_key(struct gsh_buffdesc *buff, char *str)
 int display_nlm_state_val(struct gsh_buffdesc *buff, char *str)
 {
 	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
+
 	display_nlm_state(&dspbuf, buff->addr);
 	return display_buffer_len(&dspbuf);
 }

@@ -550,8 +550,6 @@ void state_nfs4_state_wipe(cache_entry_t *entry)
 			continue;
 		state_del_locked(state);
 	}
-
-	return;
 }
 
 /**

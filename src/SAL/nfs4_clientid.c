@@ -330,9 +330,8 @@ void free_client_id(nfs_client_id_t *clientid)
 
 	PTHREAD_MUTEX_destroy(&clientid->cid_mutex);
 	PTHREAD_MUTEX_destroy(&clientid->cid_owner.so_mutex);
-	if (clientid->cid_minorversion == 0) {
+	if (clientid->cid_minorversion == 0)
 		PTHREAD_MUTEX_destroy(&clientid->cid_cb.v40.cb_chan.mtx);
-	}
 
 	put_gsh_client(clientid->gsh_client);
 
@@ -454,6 +453,7 @@ int compare_client_id(struct gsh_buffdesc *buff1, struct gsh_buffdesc *buff2)
 {
 	clientid4 cl1 = *((clientid4 *) (buff1->addr));
 	clientid4 cl2 = *((clientid4 *) (buff2->addr));
+
 	return (cl1 == cl2) ? 0 : 1;
 }
 
@@ -747,8 +747,8 @@ clientid_status_t nfs_client_id_confirm(nfs_client_id_t *clientid,
 			display_client_id_rec(&dspbuf, clientid);
 
 			LogCrit(COMPONENT_CLIENTID,
-				"Unexpected problem %s, could not remove "
-				"{%s}", hash_table_err_to_str(rc), str);
+				"Unexpected problem %s, could not remove {%s}",
+				hash_table_err_to_str(rc), str);
 		}
 
 		return CLIENT_ID_INVALID_ARGUMENT;
@@ -768,8 +768,8 @@ clientid_status_t nfs_client_id_confirm(nfs_client_id_t *clientid,
 			display_client_id_rec(&dspbuf, clientid);
 
 			LogCrit(COMPONENT_CLIENTID,
-				"Unexpected problem %s, could not "
-				"insert {%s}", hash_table_err_to_str(rc), str);
+				"Unexpected problem %s, could not insert {%s}",
+				hash_table_err_to_str(rc), str);
 		}
 
 		/* Set this up so this client id record will be
@@ -1732,7 +1732,6 @@ nfs41_foreach_client_callback(bool(*cb) (nfs_client_id_t *cl, void *state),
 		}
 		PTHREAD_RWLOCK_unlock(&(ht->partitions[i].lock));
 	}
-	return;
 }
 
 /** @} */

@@ -328,6 +328,7 @@ void nfs4_add_clid(nfs_client_id_t *clientid)
 		/* if the (remaining) clientid is shorter than 255 */
 		/* create the last level of dir and break out */
 		int len = strlen(&clientid->cid_recov_dir[position]);
+
 		if (len <= NAME_MAX) {
 			strcat(path, "/");
 			strncat(path, &clientid->cid_recov_dir[position], len);
@@ -522,7 +523,6 @@ void  nfs4_chk_clid(nfs_client_id_t *clientid)
 	PTHREAD_MUTEX_lock(&grace.g_mutex);
 	nfs4_chk_clid_impl(clientid, &dummy_clid_ent);
 	PTHREAD_MUTEX_unlock(&grace.g_mutex);
-	return;
 }
 
 static void free_heap(char *path, char *new_path, char *build_clid)
@@ -584,6 +584,7 @@ void nfs4_cp_pop_revoked_delegs(clid_entry_t *clid_ent,
 		if (tgtdir) {
 			char lopath[PATH_MAX];
 			int fd;
+
 			sprintf(lopath, "%s/", tgtdir);
 			strncat(lopath, dentp->d_name, strlen(dentp->d_name));
 			fd = creat(lopath, 0700);
@@ -620,6 +621,7 @@ void nfs4_cp_pop_revoked_delegs(clid_entry_t *clid_ent,
 		 */
 		if (del) {
 			char del_path[PATH_MAX];
+
 			sprintf(del_path, "%s/%s", path, dentp->d_name);
 			if (unlink(del_path) < 0) {
 				LogEvent(COMPONENT_CLIENTID,
@@ -1159,6 +1161,7 @@ void nfs4_record_revoke(nfs_client_id_t *delr_clid, nfs_fh4 *delr_handle)
 	length = strlen(delr_clid->cid_recov_dir);
 	while (position < length) {
 		int len = strlen(&delr_clid->cid_recov_dir[position]);
+
 		if (len <= NAME_MAX) {
 			strcat(path, "/");
 			strncat(path, &delr_clid->cid_recov_dir[position], len);
@@ -1252,6 +1255,7 @@ void extractv4(char *ipv6, char *ipv4)
 {
 	char *token, *saveptr;
 	char *delim = ":";
+
 	token = strtok_r(ipv6, delim, &saveptr);
 	while (token != NULL) {
 		/* IPv4 delimiter is '.' */
@@ -1340,7 +1344,6 @@ static void nfs_release_nlm_state(char *release_ip)
 		}
 		PTHREAD_RWLOCK_unlock(&ht->partitions[i].lock);
 	}
-	return;
 }
 
 static int ip_match(char *ip, nfs_client_id_t *cid)

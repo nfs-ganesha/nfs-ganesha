@@ -119,6 +119,7 @@ int display_nsm_client(struct display_buffer *dspbuf, state_nsm_client_t *key)
 int display_nsm_client_key(struct gsh_buffdesc *buff, char *str)
 {
 	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
+
 	display_nsm_client(&dspbuf, buff->addr);
 	return display_buffer_len(&dspbuf);
 }
@@ -134,6 +135,7 @@ int display_nsm_client_key(struct gsh_buffdesc *buff, char *str)
 int display_nsm_client_val(struct gsh_buffdesc *buff, char *str)
 {
 	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
+
 	display_nsm_client(&dspbuf, buff->addr);
 	return display_buffer_len(&dspbuf);
 }
@@ -332,6 +334,7 @@ int display_nlm_client(struct display_buffer *dspbuf, state_nlm_client_t *key)
 int display_nlm_client_key(struct gsh_buffdesc *buff, char *str)
 {
 	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
+
 	display_nlm_client(&dspbuf, buff->addr);
 	return display_buffer_len(&dspbuf);
 }
@@ -347,6 +350,7 @@ int display_nlm_client_key(struct gsh_buffdesc *buff, char *str)
 int display_nlm_client_val(struct gsh_buffdesc *buff, char *str)
 {
 	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
+
 	display_nlm_client(&dspbuf, buff->addr);
 	return display_buffer_len(&dspbuf);
 }
@@ -538,6 +542,7 @@ int display_nlm_owner(struct display_buffer *dspbuf, state_owner_t *owner)
 int display_nlm_owner_key(struct gsh_buffdesc *buff, char *str)
 {
 	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
+
 	display_nlm_owner(&dspbuf, buff->addr);
 	return display_buffer_len(&dspbuf);
 }
@@ -553,6 +558,7 @@ int display_nlm_owner_key(struct gsh_buffdesc *buff, char *str)
 int display_nlm_owner_val(struct gsh_buffdesc *buff, char *str)
 {
 	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
+
 	display_nlm_owner(&dspbuf, buff->addr);
 	return display_buffer_len(&dspbuf);
 }

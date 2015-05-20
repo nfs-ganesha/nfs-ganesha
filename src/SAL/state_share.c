@@ -583,9 +583,8 @@ static void state_share_update_counter(cache_entry_t *entry, int old_access,
 		    deny_write_inc;
 
 	LogFullDebug(COMPONENT_STATE,
-		     "entry %p: share counter: "
-		     "access_read %u, access_write %u, "
-		     "deny_read %u, deny_write %u, deny_write_v4 %u", entry,
+		     "entry %p: share counter: access_read %u, access_write %u, deny_read %u, deny_write %u, deny_write_v4 %u",
+		     entry,
 		     entry->object.file.share_state.share_access_read,
 		     entry->object.file.share_state.share_access_write,
 		     entry->object.file.share_state.share_deny_read,
@@ -661,6 +660,7 @@ state_status_t state_share_anonymous_io_start(cache_entry_t *entry,
 	 *             should be called indicating v3 or v4...
 	 */
 	state_status_t status = 0;
+
 	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 
 	status = state_share_check_conflict(entry,

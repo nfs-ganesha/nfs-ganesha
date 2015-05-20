@@ -552,16 +552,13 @@ bool state_deleg_conflict(cache_entry_t *entry, bool write)
 		|| (deleg_stats->fds_deleg_type == OPEN_DELEGATE_WRITE))
 	    ) {
 		LogDebug(COMPONENT_STATE,
-			 "While trying to perform a %s op, found a "
-			 "conflicting %s delegation",
+			 "While trying to perform a %s op, found a conflicting %s delegation",
 			 write ? "write" : "read",
 			 (deleg_stats->fds_deleg_type
 			  == OPEN_DELEGATE_WRITE) ? "WRITE" : "READ");
 		if (async_delegrecall(general_fridge, entry) != 0)
 			LogCrit(COMPONENT_STATE,
-				"Failed to start thread to recall "
-				"delegation from conflicting "
-				"operation.");
+				"Failed to start thread to recall delegation from conflicting operation.");
 		return true;
 	}
 	return false;

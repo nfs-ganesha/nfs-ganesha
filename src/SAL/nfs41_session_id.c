@@ -88,6 +88,7 @@ int display_session_id(struct display_buffer *dspbuf, char *session_id)
 int display_session_id_key(struct gsh_buffdesc *buff, char *str)
 {
 	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
+
 	display_session_id(&dspbuf, buff->addr);
 	return display_buffer_len(&dspbuf);
 }
@@ -126,6 +127,7 @@ int display_session(struct display_buffer *dspbuf, nfs41_session_t *session)
 int display_session_id_val(struct gsh_buffdesc *buff, char *str)
 {
 	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
+
 	display_session(&dspbuf, buff->addr);
 	return display_buffer_len(&dspbuf);
 }

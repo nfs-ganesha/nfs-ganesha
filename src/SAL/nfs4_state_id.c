@@ -123,6 +123,7 @@ int display_stateid_other(struct display_buffer *dspbuf, char *other)
 int display_state_id_key(struct gsh_buffdesc *buff, char *str)
 {
 	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
+
 	display_stateid_other(&dspbuf, buff->addr);
 	return display_buffer_len(&dspbuf);
 }
@@ -212,6 +213,7 @@ int display_stateid(struct display_buffer *dspbuf, state_t *state)
 int display_state_id_val(struct gsh_buffdesc *buff, char *str)
 {
 	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
+
 	display_stateid(&dspbuf, buff->addr);
 	return display_buffer_len(&dspbuf);
 }
@@ -817,8 +819,8 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, cache_entry_t *entry,
 			/* OLD_STATEID */
 			if (str_valid)
 				LogDebug(COMPONENT_STATE,
-					 "Check %s stateid found OLD stateid %s"
-					 ", expected seqid %"PRIu32,
+					 "Check %s stateid found OLD stateid %s, expected seqid %"
+					 PRIu32,
 					 tag, str,
 					 state2->state_seqid);
 			status = NFS4ERR_OLD_STATEID;
@@ -841,8 +843,8 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, cache_entry_t *entry,
 			/* BAD_STATEID */
 			if (str_valid)
 				LogDebug(COMPONENT_STATE,
-					 "Check %s stateid found BAD stateid %s"
-					 ", expected seqid %"PRIu32,
+					 "Check %s stateid found BAD stateid %s, expected seqid %"
+					 PRIu32,
 					 tag, str,
 					 state2->state_seqid);
 			status = NFS4ERR_BAD_STATEID;

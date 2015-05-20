@@ -307,8 +307,8 @@ LogEntryRefCount(const char *reason, state_lock_entry_t *le, int32_t refcount)
 
 		LogFullDebug(COMPONENT_STATE,
 			     "%s Entry: %p entry=%p, fileid=%" PRIu64
-			     ", export=%u, type=%s, "
-			     "start=0x%"PRIx64", end=0x%"PRIx64
+			     ", export=%u, type=%s, start=0x%"PRIx64
+			     ", end=0x%"PRIx64
 			     ", blocked=%s/%p, state=%p, refcount=%"PRIu32
 			     ", owner={%s}",
 			     reason, le, le->sle_entry,
@@ -1162,6 +1162,7 @@ static void grant_blocked_locks(cache_entry_t *entry);
 int display_lock_cookie_key(struct gsh_buffdesc *buff, char *str)
 {
 	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
+
 	display_lock_cookie(&dspbuf, buff->addr);
 	return display_buffer_len(&dspbuf);
 }
@@ -1234,6 +1235,7 @@ int display_lock_cookie_entry(struct display_buffer *dspbuf,
 int display_lock_cookie_val(struct gsh_buffdesc *buff, char *str)
 {
 	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
+
 	display_lock_cookie_entry(&dspbuf, buff->addr);
 	return display_buffer_len(&dspbuf);
 }
@@ -3713,7 +3715,7 @@ void state_lock_wipe(cache_entry_t *entry)
 	cache_inode_lru_unref(entry, LRU_FLAG_NONE);
 }
 
-void cancel_all_nlm_blocked()
+void cancel_all_nlm_blocked(void)
 {
 	state_lock_entry_t *found_entry;
 	cache_entry_t *pentry;
@@ -3785,7 +3787,6 @@ out:
 
 	PTHREAD_MUTEX_unlock(&blocked_locks_mutex);
 	release_root_op_context();
-	return;
 }
 
 /** @} */

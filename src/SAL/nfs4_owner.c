@@ -55,6 +55,7 @@ hash_table_t *ht_nfs4_owner;
 int display_nfs4_owner_key(struct gsh_buffdesc *buff, char *str)
 {
 	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
+
 	display_nfs4_owner(&dspbuf, buff->addr);
 	return display_buffer_len(&dspbuf);
 }
@@ -140,6 +141,7 @@ int display_nfs4_owner(struct display_buffer *dspbuf, state_owner_t *owner)
 int display_nfs4_owner_val(struct gsh_buffdesc *buff, char *str)
 {
 	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
+
 	display_nfs4_owner(&dspbuf, buff->addr);
 	return display_buffer_len(&dspbuf);
 }
