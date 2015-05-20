@@ -117,5 +117,5 @@ int rquota_getquota(nfs_arg_t *arg,
  */
 void rquota_getquota_Free(nfs_res_t *res)
 {
-	return;
+	/* Nothing to do */
 }

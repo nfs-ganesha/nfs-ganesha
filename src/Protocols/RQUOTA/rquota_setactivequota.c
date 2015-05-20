@@ -64,5 +64,5 @@ int rquota_setactivequota(nfs_arg_t *arg,
  */
 void rquota_setactivequota_Free(nfs_res_t *res)
 {
-	return;
+	/* Nothing to do */
 }

@@ -67,5 +67,5 @@ int rquota_getactivequota(nfs_arg_t *arg,
  */
 void rquota_getactivequota_Free(nfs_res_t *res)
 {
-	return;
+	/* Nothing to do */
 }

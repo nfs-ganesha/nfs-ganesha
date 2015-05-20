@@ -134,5 +134,5 @@ out:
  */
 void rquota_setquota_Free(nfs_res_t *res)
 {
-	return;
+	/* Nothing to do */
 }

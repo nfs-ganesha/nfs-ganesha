@@ -68,5 +68,5 @@ int rquota_Null(nfs_arg_t *arg,
  */
 void rquota_Null_Free(nfs_res_t *res)
 {
-	return;
+	/* Nothing to do */
 }
