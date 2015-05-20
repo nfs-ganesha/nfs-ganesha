@@ -817,7 +817,10 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 				     objhandle->glhandle,
 				     &buffxstat.buffstat,
 				     mask);
-		GLUSTER_VALIDATE_RETURN_STATUS(rc);
+		if (rc != 0) {
+			status = gluster2fsal_error(errno);
+			goto out;
+		}
 	}
 
 	if (FSAL_TEST_MASK(attr_valid, XATTR_ACL)) {
