@@ -432,7 +432,9 @@ typedef struct fsal_xstat__ {
 	int attr_valid;
 	struct stat buffstat;
 	char buffacl[GLFS_ACL_BUF_SIZE];
-	acl_t acl;
+	acl_t e_acl; /* stores effective acl */
+	acl_t i_acl; /* stores inherited acl */
+	bool is_dir;
 } glusterfs_fsal_xstat_t;
 
 /* GLUSTERFS ACL */
