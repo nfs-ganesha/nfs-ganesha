@@ -268,6 +268,16 @@ int construct_handle(struct glusterfs_export *glexport, const struct stat *sb,
 
 	stat2fsal_attributes(sb, &constructing->handle.attributes);
 
+	switch (constructing->handle.type) {
+	case REGULAR_FILE:
+		buffxstat.is_dir = false;
+		break;
+	case DIRECTORY:
+		buffxstat.is_dir = true;
+		break;
+	default:
+		break;
+	}
 	status = glusterfs_get_acl(glexport, glhandle, &buffxstat,
 				   &constructing->handle.attributes);
 
@@ -482,14 +492,28 @@ fsal_status_t glusterfs_get_acl(struct glusterfs_export *glfs_export,
 
 	if (NFSv4_ACL_SUPPORT && FSAL_TEST_MASK(fsalattr->mask, ATTR_ACL)) {
 
-		buffxstat->acl = glfs_h_acl_get(glfs_export->gl_fs,
+		buffxstat->e_acl = glfs_h_acl_get(glfs_export->gl_fs,
 						glhandle,
 						ACL_TYPE_ACCESS);
-		if (buffxstat->acl) {
+		if (buffxstat->e_acl) {
 			/* rc is the size of buffacl */
 			FSAL_SET_MASK(buffxstat->attr_valid, XATTR_ACL);
-			status = posix_acl_2_fsal_acl(buffxstat->acl,
-							&fsalattr->acl);
+			/* For directories consider inherited acl too */
+			if (buffxstat->is_dir) {
+				buffxstat->i_acl = glfs_h_acl_get(
+						glfs_export->gl_fs,
+						glhandle, ACL_TYPE_DEFAULT);
+				if (!buffxstat->i_acl)
+					LogDebug(COMPONENT_FSAL,
+				"inherited acl is not defined for directory");
+
+				status = posix_acl_2_fsal_acl_for_dir(
+						buffxstat->e_acl,
+						buffxstat->i_acl,
+						&fsalattr->acl);
+			} else
+				status = posix_acl_2_fsal_acl(buffxstat->e_acl,
+						&fsalattr->acl);
 			LogFullDebug(COMPONENT_FSAL, "acl = %p", fsalattr->acl);
 		} else {
 			/* some real error occurred */
@@ -512,13 +536,22 @@ fsal_status_t glusterfs_set_acl(struct glusterfs_export *glfs_export,
 	int rc = 0;
 
 	rc = glfs_h_acl_set(glfs_export->gl_fs, objhandle->glhandle,
-				ACL_TYPE_ACCESS, buffxstat->acl);
-
+				ACL_TYPE_ACCESS, buffxstat->e_acl);
 	if (rc < 0) {
 		/* TODO: check if error is appropriate.*/
+		LogMajor(COMPONENT_FSAL, "failed to set access type posix acl");
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	}
-
+	/* For directories consider inherited acl too */
+	if (buffxstat->is_dir && buffxstat->i_acl) {
+		rc = glfs_h_acl_set(glfs_export->gl_fs, objhandle->glhandle,
+				ACL_TYPE_DEFAULT, buffxstat->i_acl);
+		if (rc < 0) {
+			LogMajor(COMPONENT_FSAL,
+				 "failed to set default type posix acl");
+			return fsalstat(ERR_FSAL_INVAL, 0);
+		}
+	}
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
@@ -908,11 +941,22 @@ fsal_status_t glusterfs_process_acl(struct glfs *fs,
 			 attrs->acl);
 
 		/* Convert FSAL ACL to POSIX ACL */
-
-		buffxstat->acl = fsal_acl_2_posix_acl(attrs->acl);
-
-		if (!buffxstat->acl)
+		buffxstat->e_acl = fsal_acl_2_posix_acl(attrs->acl,
+						ACL_TYPE_ACCESS);
+		if (!buffxstat->e_acl) {
+			LogMajor(COMPONENT_FSAL,
+				 "failed to set access type posix acl");
 			return fsalstat(ERR_FSAL_FAULT, 0);
+		}
+		/* For directories consider inherited acl too */
+		if (buffxstat->is_dir) {
+			buffxstat->i_acl = fsal_acl_2_posix_acl(attrs->acl,
+							ACL_TYPE_DEFAULT);
+			if (!buffxstat->i_acl)
+				LogDebug(COMPONENT_FSAL,
+				"inherited acl is not defined for directory");
+		}
+
 	} else {
 		LogCrit(COMPONENT_FSAL, "setattr acl is NULL");
 		return fsalstat(ERR_FSAL_FAULT, 0);
