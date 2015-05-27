@@ -37,6 +37,7 @@ LOGFILE=SYSLOG
 #LOGFILE=STDERR
 #LOGFILE=STDOUT
 EPOCHFILE=/var/lib/nfs/ganesha-epoch
+PIDFILE=/var/run/ganesha.nfsd.pid
 
 CONFFILE=/etc/ganesha/gpfs.ganesha.nfsd.conf
 
@@ -44,38 +45,8 @@ CONFFILE=/etc/ganesha/gpfs.ganesha.nfsd.conf
 [ -z "$RQUOTAD" ] && RQUOTAD=`type -path rpc.rquotad`
 
 ###########################################################
-# DEBUG LEVELS FOR SPECIFIC COMPONENTS
-# (uncomment #export to enable)
 
-# Possible debug levels (severity high to low):
-## NIV_NULL
-## NIV_MAJOR
-## NIV_CRIT
-## NIV_EVENT
-## NIV_INFO
-## NIV_DEBUG
-## NIV_MID_DEBUG
-## NIV_FULL_DEBUG
-
-#Some common useful log components:
-#export COMPONENT_INIT=NIV_INFO
-#export COMPONENT_CACHE_INODE=NIV_FULL_DEBUG
-#export COMPONENT_DISPATCH=NIV_FULL_DEBUG
-#export COMPONENT_DISPATCH=NIV_DEBUG
-#export COMPONENT_FSAL_UP=NIV_FULL_DEBUG
-#export COMPONENT_FSAL=NIV_FULL_DEBUG
-#export COMPONENT_NFSPROTO=NIV_FULL_DEBUG
-#export COMPONENT_NFS_V4=NIV_FULL_DEBUG
-#export COMPONENT_NFS_READDIR=NIV_FULL_DEBUG
-#export COMPONENT_MEMLEAKS=NIV_FULL_DEBUG
-
-#For Lock/State debugging:
-#export COMPONENT_NLM=NIV_FULL_DEBUG
-#export COMPONENT_NFS_V4_LOCK=NIV_FULL_DEBUG
-#export COMPONENT_STATE=NIV_FULL_DEBUG
-###########################################################
-
-OPTIONS="-d -f $CONFFILE -L $LOGFILE -N NIV_INFO"
+OPTIONS="-f $CONFFILE -L $LOGFILE -N INFO -p $PIDFILE"
 RETVAL=0
 prog="ganesha.nfsd"
 CMD_LOGGER="/usr/bin/logger -i -t ganesha.gpfs-init "
@@ -303,14 +274,7 @@ stop() {
         fi
 	if [ $pid ]; then
                 # Ganesha is running. Stop it.
-                #check for deadlock and take a dump if required
-                check_hang $pid
-                if [ $? -eq 0 ]; then
-                        kill -TERM $pid >/dev/null 2>&1
-                else
-                        kill -ABRT $PID >/dev/null 2>&1
-                fi
-                usleep 100000
+		kill -TERM $pid >/dev/null 2>&1
 
                 # Unconditionally delete this file.
                 rm -f  /var/lock/subsys/ganesha.nfsd
