@@ -364,6 +364,7 @@ struct glusterfs_handle {
 	struct glfs_fd *glfd;
 	fsal_openflags_t openflags;
 	struct fsal_obj_handle handle;	/* public FSAL handle */
+	struct attrlist attributes; /* Attributes of this Object. */
 
 	/* following added for pNFS support */
 	uint64_t rd_issued;

@@ -263,10 +263,11 @@ int construct_handle(struct glusterfs_export *glexport, const struct stat *sb,
 		return -1;
 	}
 
-	constructing->handle.attributes.mask =
+	constructing->handle.attrs = &constructing->attributes;
+	constructing->attributes.mask =
 		glexport->export.exp_ops.fs_supported_attrs(&glexport->export);
 
-	stat2fsal_attributes(sb, &constructing->handle.attributes);
+	stat2fsal_attributes(sb, &constructing->attributes);
 
 	switch (constructing->handle.type) {
 	case REGULAR_FILE:
@@ -279,7 +280,7 @@ int construct_handle(struct glusterfs_export *glexport, const struct stat *sb,
 		break;
 	}
 	status = glusterfs_get_acl(glexport, glhandle, &buffxstat,
-				   &constructing->handle.attributes);
+				   &constructing->attributes);
 
 	if (FSAL_IS_ERROR(status)) {
 		/* TODO: Is the error appropriate */
@@ -295,7 +296,7 @@ int construct_handle(struct glusterfs_export *glexport, const struct stat *sb,
 	constructing->glfd = NULL;
 
 	fsal_obj_handle_init(&constructing->handle, &glexport->export,
-			     constructing->handle.attributes.type);
+			     constructing->attributes.type);
 	handle_ops_init(&constructing->handle.obj_ops);
 
 	*obj = constructing;
