@@ -913,6 +913,7 @@ hashtable_log(log_components_t component, struct hash_table *ht)
 		LogFullDebug(component,
 			     "The partition in position %" PRIu32
 			     "contains: %u entries", i, root->rbt_num_node);
+		PTHREAD_RWLOCK_rdlock(&ht->partitions[i].lock);
 		RBT_LOOP(root, it) {
 			data = it->rbt_opaq;
 
@@ -932,6 +933,7 @@ hashtable_log(log_components_t component, struct hash_table *ht)
 				     PRIu64, dispkey, dispval, index, rbt_hash);
 			RBT_INCREMENT(it);
 		}
+		PTHREAD_RWLOCK_unlock(&ht->partitions[i].lock);
 	}
 }
 
