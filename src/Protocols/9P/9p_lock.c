@@ -86,6 +86,9 @@ int _9p_lock(struct _9p_request_data *req9p, void *worker_data,
 	fsal_lock_param_t lock;
 	fsal_lock_param_t conflict;
 
+	memset(&lock, 0, sizeof(lock));
+	memset(&conflict, 0, sizeof(conflict));
+
 	char name[MAXNAMLEN];
 
 	struct addrinfo hints, *result;
