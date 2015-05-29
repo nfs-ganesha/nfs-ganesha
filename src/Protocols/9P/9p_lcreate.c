@@ -128,43 +128,9 @@ int _9p_lcreate(struct _9p_request_data *req9p, void *worker_data,
 
 	cache_status = cache_inode_open(pentry_newfile, openflags, 0);
 	if (cache_status != CACHE_INODE_SUCCESS) {
-		/* Owner override..
-		 * deal with this stupid 04xy mode corner case */
-		/** @todo this is racy, use cache_inode_lock_trust_attrs
-		 *        also, this owner override check is not
-		 *        strictly true, this is not the only mode
-		 *        that could be in play.
-		 */
-		if ((cache_status == CACHE_INODE_FSAL_EACCESS)
-		    && (op_ctx->creds->caller_uid ==
-			pentry_newfile->obj_handle->attributes.owner)
-		    && ((*mode & 0400) == 0400)) {
-			/* If we reach this piece of code, this means that
-			 * a user did open( O_CREAT, 04xy) on a file the
-			 * file was created in 04xy mode by the forme
-			 * cache_inode code, but for the mode is 04xy
-			 * the user is not allowed to open it.
-			 * Becoming root override this */
-			uid_t saved_uid = op_ctx->creds->caller_uid;
-
-			/* Become root */
-			op_ctx->creds->caller_uid = 0;
-
-			/* Do the job as root */
-			cache_status =
-			    cache_inode_open(pentry_newfile, openflags, 0);
-
-			/* Back to standard user */
-			op_ctx->creds->caller_uid = saved_uid;
-
-			if (cache_status != CACHE_INODE_SUCCESS)
-				return _9p_rerror(req9p, worker_data, msgtag,
-						  _9p_tools_errno(cache_status),
-						  plenout, preply);
-		} else
-			return _9p_rerror(req9p, worker_data, msgtag,
-					  _9p_tools_errno(cache_status),
-					  plenout, preply);
+		return _9p_rerror(req9p, worker_data, msgtag,
+				  _9p_tools_errno(cache_status),
+				  plenout, preply);
 	}
 
 	/* Pin as well. We probably want to close the file if this fails,
