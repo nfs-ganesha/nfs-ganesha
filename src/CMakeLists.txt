@@ -743,7 +743,7 @@ set(LIBTIRPC_INCLUDE_DIR
   "${PROJECT_BINARY_DIR}/libtirpc/ntirpc"
   "${PROJECT_BINARY_DIR}/libtirpc/ntirpc/rpc"
 )
-set(LIBTIRPC_LIBRARIES "${PROJECT_BINARY_DIR}/libntirpc/src/libntirpc.a")
+set(LIBTIRPC_LIBRARIES ntirpc)
 
 # Find misc system libs
 find_library(LIBRT rt)  # extended Pthreads functions
