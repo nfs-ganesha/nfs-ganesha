@@ -106,27 +106,20 @@ int nfs4_op_secinfo_no_name(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	/**
-	 * @todo We have the opportunity to associate a preferred
-	 * security triple with a specific fs/export.  For now, list
-	 * all implemented.
+	 * @todo We give here the order in which the client should try
+	 * different authentifications. Might want to give it in the
+	 * order given in the config.
 	 */
 	int idx = 0;
 
-	if (op_ctx->export_perms->options & EXPORT_OPTION_AUTH_NONE)
-		res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.
-		    SECINFO4resok_val[idx++].flavor = AUTH_NONE;
-
-	if (op_ctx->export_perms->options & EXPORT_OPTION_AUTH_UNIX)
-		res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.
-		    SECINFO4resok_val[idx++].flavor = AUTH_UNIX;
-
 	if (op_ctx->export_perms->options &
-	    EXPORT_OPTION_RPCSEC_GSS_NONE) {
-		res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.
-		    SECINFO4resok_val[idx].flavor = RPCSEC_GSS;
+	    EXPORT_OPTION_RPCSEC_GSS_PRIV) {
 		res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.
 		    SECINFO4resok_val[idx]
-		    .secinfo4_u.flavor_info.service = RPCSEC_GSS_SVC_NONE;
+		    .flavor = RPCSEC_GSS;
+		res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.
+		    SECINFO4resok_val[idx]
+		    .secinfo4_u.flavor_info.service = RPCSEC_GSS_SVC_PRIVACY;
 		res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.
 		    SECINFO4resok_val[idx]
 		    .secinfo4_u.flavor_info.qop = GSS_C_QOP_DEFAULT;
@@ -151,13 +144,12 @@ int nfs4_op_secinfo_no_name(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	if (op_ctx->export_perms->options &
-	    EXPORT_OPTION_RPCSEC_GSS_PRIV) {
+	    EXPORT_OPTION_RPCSEC_GSS_NONE) {
+		res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.
+		    SECINFO4resok_val[idx].flavor = RPCSEC_GSS;
 		res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.
 		    SECINFO4resok_val[idx]
-		    .flavor = RPCSEC_GSS;
-		res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.
-		    SECINFO4resok_val[idx]
-		    .secinfo4_u.flavor_info.service = RPCSEC_GSS_SVC_PRIVACY;
+		    .secinfo4_u.flavor_info.service = RPCSEC_GSS_SVC_NONE;
 		res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.
 		    SECINFO4resok_val[idx]
 		    .secinfo4_u.flavor_info.qop = GSS_C_QOP_DEFAULT;
@@ -165,6 +157,14 @@ int nfs4_op_secinfo_no_name(struct nfs_argop4 *op, compound_data_t *data,
 		    SECINFO4resok_val[idx++]
 		    .secinfo4_u.flavor_info.oid = v5oid;
 	}
+
+	if (op_ctx->export_perms->options & EXPORT_OPTION_AUTH_UNIX)
+		res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.
+		    SECINFO4resok_val[idx++].flavor = AUTH_UNIX;
+
+	if (op_ctx->export_perms->options & EXPORT_OPTION_AUTH_NONE)
+		res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.
+		    SECINFO4resok_val[idx++].flavor = AUTH_NONE;
 
 	res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.SECINFO4resok_len = idx;
 
