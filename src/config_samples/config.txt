@@ -174,7 +174,7 @@ EXPORT_DEFAULTS {}
 		    default None)
 
 	Protocols(enum list,
-		  values [3, 4, NFS3, NFS4, V3, V4, NFSv4, NFSv4, 9P],
+		  values [3, 4, NFS3, NFS4, V3, V4, NFSv3, NFSv4, 9P],
 		  default [3, 4, 9P])
 
 	Transports(enum list, values [UDP, TCP], default [UDP, TCP])
