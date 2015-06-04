@@ -43,6 +43,44 @@
 #include "nfs_proto_tools.h"
 #include "nfs_file_handle.h"
 
+static inline bool check_fs_locations(cache_entry_t *entry)
+{
+	fsal_status_t st;
+	fs_locations4 fs_locs;
+	fs_location4 fs_loc;
+	component4 fs_path;
+	component4 fs_root;
+	component4 fs_server;
+	char root[MAXPATHLEN];
+	char path[MAXPATHLEN];
+	char server[MAXHOSTNAMELEN];
+
+	fs_root.utf8string_len = sizeof(root);
+	fs_root.utf8string_val = root;
+	fs_path.utf8string_len = sizeof(path);
+	fs_path.utf8string_val = path;
+	fs_locs.fs_root.pathname4_len = 1;
+	fs_locs.fs_root.pathname4_val = &fs_path;
+	fs_server.utf8string_len = sizeof(server);
+	fs_server.utf8string_val = server;
+	fs_loc.server.server_len = 1;
+	fs_loc.server.server_val = &fs_server;
+	fs_loc.rootpath.pathname4_len = 1;
+	fs_loc.rootpath.pathname4_val = &fs_root;
+	fs_locs.locations.locations_len = 1;
+	fs_locs.locations.locations_val = &fs_loc;
+
+	/* For now allow for one fs locations, fs_locations() should set:
+	   root and update its length, can not be bigger than MAXPATHLEN
+	   path and update its length, can not be bigger than MAXPATHLEN
+	   server and update its length, can not be bigger than MAXHOSTNAMELEN
+	*/
+	st = entry->obj_handle->obj_ops.fs_locations(entry->obj_handle,
+						     &fs_locs);
+
+	return !FSAL_IS_ERROR(st);
+}
+
 /**
  * @brief Gets attributes for an entry in the FSAL.
  *
@@ -97,11 +135,12 @@ int nfs4_op_getattr(struct nfs_argop4 *op, compound_data_t *data,
 					&arg_GETATTR4->attr_request);
 
 	if (data->current_entry->type == DIRECTORY &&
-	    is_sticky_bit_set(data->current_entry->obj_handle->attrs)) {
-		if (!(attribute_is_set(&arg_GETATTR4->attr_request,
-						FATTR4_FS_LOCATIONS)))
-			res_GETATTR4->status = NFS4ERR_MOVED;
-	}
+	    is_sticky_bit_set(data->current_entry->obj_handle->attrs) &&
+	    !attribute_is_set(&arg_GETATTR4->attr_request,
+			       FATTR4_FS_LOCATIONS) &&
+	    check_fs_locations(data->current_entry))
+		res_GETATTR4->status = NFS4ERR_MOVED;
+
 	return res_GETATTR4->status;
 }				/* nfs4_op_getattr */
 

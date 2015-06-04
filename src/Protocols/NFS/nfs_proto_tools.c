@@ -1167,9 +1167,9 @@ static fattr_xdr_result encode_fs_locations(XDR *xdr,
 	component4 fs_path;
 	component4 fs_root;
 	component4 fs_server;
-	char root[MNTNAMLEN];
-	char path[MNTNAMLEN];
-	char server[MNTNAMLEN];
+	char root[MAXPATHLEN];
+	char path[MAXPATHLEN];
+	char server[MAXHOSTNAMELEN];
 
 	if (args->data == NULL || args->data->current_entry == NULL)
 		return FATTR_XDR_NOOP;
@@ -1177,13 +1177,13 @@ static fattr_xdr_result encode_fs_locations(XDR *xdr,
 	if (args->data->current_entry->type != DIRECTORY)
 		return FATTR_XDR_NOOP;
 
-	fs_root.utf8string_len = MNTNAMLEN;
+	fs_root.utf8string_len = sizeof(root);
 	fs_root.utf8string_val = root;
-	fs_path.utf8string_len = MNTNAMLEN;
+	fs_path.utf8string_len = sizeof(path);
 	fs_path.utf8string_val = path;
 	fs_locs.fs_root.pathname4_len = 1;
 	fs_locs.fs_root.pathname4_val = &fs_path;
-	fs_server.utf8string_len = MNTNAMLEN;
+	fs_server.utf8string_len = sizeof(server);
 	fs_server.utf8string_val = server;
 	fs_loc.server.server_len = 1;
 	fs_loc.server.server_val = &fs_server;
@@ -1193,15 +1193,21 @@ static fattr_xdr_result encode_fs_locations(XDR *xdr,
 	fs_locs.locations.locations_val = &fs_loc;
 
 	/* For now allow for one fs locations, fs_locations() should set:
-	   root and update its length, can not be bigger than MNTNAMLEN
-	   path and update its length, can not be bigger than MNTNAMLEN
-	   server and update its length, can not be bigger than MNTNAMELEN
+	   root and update its length, can not be bigger than MAXPATHLEN
+	   path and update its length, can not be bigger than MAXPATHLEN
+	   server and update its length, can not be bigger than MAXHOSTNAMELEN
 	*/
 	st = args->data->current_entry->obj_handle->obj_ops.fs_locations(
 					args->data->current_entry->obj_handle,
 					&fs_locs);
-	if (FSAL_IS_ERROR(st))
-		return FATTR_XDR_NOOP;
+	if (FSAL_IS_ERROR(st)) {
+		strcpy(root, "not_supported");
+		strcpy(path, "not_supported");
+		strcpy(server, "not_supported");
+		fs_root.utf8string_len = strlen(root);
+		fs_path.utf8string_len = strlen(path);
+		fs_server.utf8string_len = strlen(server);
+	}
 
 	if (!xdr_fs_locations4(xdr, &fs_locs))
 		return FATTR_XDR_FAILED;
