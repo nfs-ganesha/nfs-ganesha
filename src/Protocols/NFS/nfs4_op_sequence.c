@@ -193,7 +193,7 @@ int nfs4_op_sequence(struct nfs_argop4 *op, compound_data_t *data,
 	res_SEQUENCE4->SEQUENCE4res_u.sr_resok4.sr_highest_slotid =
 	    NFS41_NB_SLOTS - 1;
 	res_SEQUENCE4->SEQUENCE4res_u.sr_resok4.sr_target_highest_slotid =
-	    arg_SEQUENCE4->sa_slotid;	/* Maybe not the best choice */
+	    session->fore_channel_attrs.ca_maxrequests - 1;
 
 	res_SEQUENCE4->SEQUENCE4res_u.sr_resok4.sr_status_flags = 0;
 
