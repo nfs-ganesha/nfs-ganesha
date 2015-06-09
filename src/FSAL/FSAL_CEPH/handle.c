@@ -232,7 +232,7 @@ static fsal_status_t fsal_create(struct fsal_obj_handle *dir_pub,
 	}
 
 	*obj_pub = &obj->handle;
-	*attrib = obj->handle.attributes;
+	*attrib = obj->attributes;
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -285,7 +285,7 @@ static fsal_status_t fsal_mkdir(struct fsal_obj_handle *dir_pub,
 	}
 
 	*obj_pub = &obj->handle;
-	*attrib = obj->handle.attributes;
+	*attrib = obj->attributes;
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -335,7 +335,7 @@ static fsal_status_t fsal_symlink(struct fsal_obj_handle *dir_pub,
 	}
 
 	*obj_pub = &obj->handle;
-	*attrib = obj->handle.attributes;
+	*attrib = obj->attributes;
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -413,7 +413,7 @@ static fsal_status_t getattrs(struct fsal_obj_handle *handle_pub)
 	if (rc < 0)
 		return ceph2fsal_error(rc);
 
-	ceph2fsal_attributes(&st, &handle->handle.attributes);
+	ceph2fsal_attributes(&st, &handle->attributes);
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }

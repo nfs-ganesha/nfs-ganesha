@@ -74,6 +74,7 @@ struct export {
 
 struct handle {
 	struct fsal_obj_handle handle;	/*< The public handle */
+	struct attrlist attributes;
 	Fh *fd;
 	struct Inode *i;	/*< The Ceph inode */
 	const struct fsal_up_vector *up_ops;	/*< Upcall operations */

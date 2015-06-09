@@ -158,11 +158,12 @@ int construct_handle(const struct stat *st, struct Inode *i,
 #endif /* CEPH_NOSNAP */
 	constructing->i = i;
 	constructing->up_ops = export->export.up_ops;
+	constructing->handle.attrs = &constructing->attributes;
 
-	ceph2fsal_attributes(st, &constructing->handle.attributes);
+	ceph2fsal_attributes(st, &constructing->attributes);
 
 	fsal_obj_handle_init(&constructing->handle, &export->export,
-			     constructing->handle.attributes.type);
+			     constructing->attributes.type);
 	handle_ops_init(&constructing->handle.obj_ops);
 
 	constructing->export = export;
