@@ -143,7 +143,7 @@ void *GLUSTERFSAL_UP_Thread(void *Arg)
 	callback.fs = glfsexport->gl_fs;
 
 	/* Start querying for events and processing. */
-	while (!glfsexport->destroy_mode) {
+	while (!atomic_fetch_int8_t(&glfsexport->destroy_mode)) {
 		LogFullDebug(COMPONENT_FSAL_UP,
 			     "Requesting event from FSAL Callback interface for %p.",
 			     glfsexport->gl_fs);
@@ -199,7 +199,6 @@ void *GLUSTERFSAL_UP_Thread(void *Arg)
 		 * inode update / invalidate? */
 		switch (reason) {
 		case GFAPI_INODE_INVALIDATE:
-		{
 			cbk_inode_arg =
 				(struct callback_inode_arg *)callback.event_arg;
 
@@ -219,8 +218,7 @@ void *GLUSTERFSAL_UP_Thread(void *Arg)
 			if (cbk_inode_arg->oldp_object)
 				upcall_inode_invalidate(glfsexport,
 						  cbk_inode_arg->oldp_object);
-		}
-		break;
+			break;
 		default:
 			LogWarn(COMPONENT_FSAL_UP, "Unknown event: %d", reason);
 			continue;

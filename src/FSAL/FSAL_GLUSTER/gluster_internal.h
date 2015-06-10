@@ -353,7 +353,7 @@ struct glusterfs_export {
 	bool acl_enable;
 	bool pnfs_ds_enabled;
 	bool pnfs_mds_enabled;
-	bool destroy_mode;
+	int8_t destroy_mode;
 	pthread_t up_thread; /* upcall thread */
 };
 
