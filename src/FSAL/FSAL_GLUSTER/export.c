@@ -64,12 +64,12 @@ static void export_release(struct fsal_export *exp_hdl)
 			   &glfs_export->export.exports);
 	free_export_ops(&glfs_export->export);
 
-	glfs_export->destroy_mode = true;
+	atomic_add_int8_t (&glfs_export->destroy_mode, 1);
 
 	/* Wait for up_thread to exit */
 	err = pthread_join(glfs_export->up_thread, (void **)&retval);
 
-	if (*retval) {
+	if (retval && *retval) {
 		LogDebug(COMPONENT_FSAL, "Up_thread join returned value %d",
 			 *retval);
 	}
@@ -674,7 +674,7 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 	glfsexport->acl_enable =
 		((op_ctx->export->export_perms.options &
 		  EXPORT_OPTION_DISABLE_ACL) ? 0 : 1);
-	glfsexport->destroy_mode = false;
+	glfsexport->destroy_mode = 0;
 
 	op_ctx->fsal_export = &glfsexport->export;
 
