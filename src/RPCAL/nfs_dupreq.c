@@ -886,16 +886,16 @@ static inline bool drc_should_retire(drc_t *drc)
 	return false;
 }
 
-static inline bool nfs_dupreq_v4_cacheable(nfs_request_data_t *nfs_req)
+static inline bool nfs_dupreq_v4_cacheable(nfs_request_t *reqnfs)
 {
-	COMPOUND4args *arg_c4 = (COMPOUND4args *)&nfs_req->arg_nfs;
+	COMPOUND4args *arg_c4 = (COMPOUND4args *)&reqnfs->arg_nfs;
 
 	if (arg_c4->minorversion > 0)
 		return false;
-	if ((nfs_req->lookahead.
-	     flags & (NFS_LOOKAHEAD_CREATE))) /* override OPEN4_CREATE */
+	if ((reqnfs->lookahead.flags & (NFS_LOOKAHEAD_CREATE)))
+		/* override OPEN4_CREATE */
 		return true;
-	if ((nfs_req->lookahead.flags &
+	if ((reqnfs->lookahead.flags &
 	     (NFS_LOOKAHEAD_OPEN | /* all logical OPEN */
 	      NFS_LOOKAHEAD_CLOSE | NFS_LOOKAHEAD_LOCK | /* includes LOCKU */
 	      NFS_LOOKAHEAD_READ | /* because large, though idempotent */
@@ -912,13 +912,13 @@ static inline bool nfs_dupreq_v4_cacheable(nfs_request_data_t *nfs_req)
  * creates one in the START state.  On any non-error return, the refcnt
  * of the corresponding entry is incremented.
  *
- * @param[in] nfs_req The NFS request data
+ * @param[in] reqnfs  The NFS request data
  * @param[in] req     The request to be cached
  *
  * @retval DUPREQ_SUCCESS if successful.
  * @retval DUPREQ_INSERT_MALLOC_ERROR if an error occured during insertion.
  */
-dupreq_status_t nfs_dupreq_start(nfs_request_data_t *nfs_req,
+dupreq_status_t nfs_dupreq_start(nfs_request_t *reqnfs,
 				 struct svc_req *req)
 {
 	dupreq_status_t status = DUPREQ_SUCCESS;
@@ -945,8 +945,8 @@ dupreq_status_t nfs_dupreq_start(nfs_request_data_t *nfs_req,
 
 	switch (drc->type) {
 	case DRC_TCP_V4:
-		if (nfs_req->funcdesc->service_function == nfs4_Compound) {
-			if (!nfs_dupreq_v4_cacheable(nfs_req)) {
+		if (reqnfs->funcdesc->service_function == nfs4_Compound) {
+			if (!nfs_dupreq_v4_cacheable(reqnfs)) {
 				/* for such requests, we merely thread
 				 * the request through for later
 				 * cleanup--all v41 caching is handled
@@ -960,7 +960,7 @@ dupreq_status_t nfs_dupreq_start(nfs_request_data_t *nfs_req,
 	default:
 		/* likewise for other protocol requests we may not or choose not
 		 * to cache */
-		if (!(nfs_req->funcdesc->dispatch_behaviour & CAN_BE_DUP)) {
+		if (!(reqnfs->funcdesc->dispatch_behaviour & CAN_BE_DUP)) {
 			req->rq_u1 = (void *)DUPREQ_NOCACHE;
 			res = alloc_nfs_res();
 			goto out;
@@ -1062,7 +1062,7 @@ dupreq_status_t nfs_dupreq_start(nfs_request_data_t *nfs_req,
 
  out:
 	if (res)
-		nfs_req->res_nfs = req->rq_u2 = res;
+		reqnfs->res_nfs = req->rq_u2 = res;
 
 	return status;
 }

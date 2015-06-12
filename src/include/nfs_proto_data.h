@@ -190,14 +190,14 @@ typedef struct nfs_function_desc__ {
 	unsigned int dispatch_behaviour;
 } nfs_function_desc_t;
 
-typedef struct nfs_request_data {
+typedef struct nfs_request {
 	SVCXPRT *xprt;
-	struct svc_req req;
+	struct svc_req svc;
 	struct nfs_request_lookahead lookahead;
 	nfs_arg_t arg_nfs;
 	nfs_res_t *res_nfs;
 	const nfs_function_desc_t *funcdesc;
-} nfs_request_data_t;
+} nfs_request_t;
 
 enum rpc_chan_type {
 	RPC_CHAN_V40,

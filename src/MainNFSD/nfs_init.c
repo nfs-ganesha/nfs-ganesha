@@ -545,15 +545,6 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 		LogFatal(COMPONENT_INIT,
 			 "Error while allocating request pool");
 
-	request_data_pool =
-	    pool_init("Request Data Pool", sizeof(nfs_request_data_t),
-		      pool_basic_substrate, NULL,
-		      NULL, /* FASTER constructor_nfs_request_data_t */
-		      NULL);
-	if (!request_data_pool)
-		LogFatal(COMPONENT_INIT,
-			"Error while allocating request data pool");
-
 	dupreq_pool =
 	    pool_init("Duplicate Request Pool", sizeof(dupreq_entry_t),
 		      pool_basic_substrate, NULL, NULL, NULL);

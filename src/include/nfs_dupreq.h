@@ -144,7 +144,7 @@ drc_t *drc_get_tcp_drc(struct svc_req *);
 void drc_release_tcp_drc(drc_t *);
 void nfs_dupreq_put_drc(SVCXPRT *xprt, drc_t *drc, uint32_t flags);
 
-dupreq_status_t nfs_dupreq_start(nfs_request_data_t *,
+dupreq_status_t nfs_dupreq_start(nfs_request_t *,
 				 struct svc_req *);
 dupreq_status_t nfs_dupreq_finish(struct svc_req *, nfs_res_t *);
 dupreq_status_t nfs_dupreq_delete(struct svc_req *);

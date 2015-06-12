@@ -858,7 +858,7 @@ static void record_stats(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
 			 nsecs_elapsed_t qwait_time, bool success, bool dup,
 			 bool global)
 {
-	struct svc_req *req = &reqdata->r_u.nfs->req;
+	struct svc_req *req = &reqdata->r_u.req.svc;
 	uint32_t proto_op = req->rq_proc;
 
 	if (req->rq_prog == nfs_param.core_param.program[P_NFS]) {
@@ -993,7 +993,7 @@ void server_stats_nfs_done(request_data_t *reqdata, int rc, bool dup)
 	struct gsh_client *client = op_ctx->client;
 	struct timespec current_time;
 	nsecs_elapsed_t stop_time;
-	struct svc_req *req = &reqdata->r_u.nfs->req;
+	struct svc_req *req = &reqdata->r_u.req.svc;
 	uint32_t proto_op = req->rq_proc;
 
 	if (req->rq_prog == NFS_PROGRAM && op_ctx->nfs_vers == NFS_V3)
