@@ -155,23 +155,31 @@ void *GLUSTERFSAL_UP_Thread(void *Arg)
 		reason = callback.reason;
 
 		if (rc != 0) {
-			LogCrit(COMPONENT_FSAL_UP,
-				"Poll upcall failed for %p. rc %d errno %d (%s) reason %d",
-				glfsexport->gl_fs, rc, errsv,
-				strerror(errsv), reason);
-
-			rc = -(rc);
-			/* Could be ENOMEM issues. Retry for couple of times
+			/* if ENOMEM retry for couple of times
 			 * and then exit
 			 */
-			if (retry < 10) {
+			if ((errsv == ENOMEM) && (retry < 10)) {
 				sleep(1);
 				retry++;
 				continue;
 			} else {
-				LogFatal(COMPONENT_FSAL_UP,
-					 "Retry limit for poll_upcall exceeded for (%p).",
-					 glfsexport->gl_fs);
+				switch (errsv) {
+				case ENOMEM:
+					LogFatal(COMPONENT_FSAL_UP,
+						 "Memory allocation failed during poll_upcall for (%p).",
+						 glfsexport->gl_fs);
+					break;
+				case ENOTSUP:
+					LogEvent(COMPONENT_FSAL_UP,
+						 "Upcall feature is not supported for (%p).",
+						 glfsexport->gl_fs);
+					break;
+				default:
+					LogCrit(COMPONENT_FSAL_UP,
+						"Poll upcall failed for %p. rc %d errno %d (%s) reason %d",
+						glfsexport->gl_fs, rc, errsv,
+						strerror(errsv), reason);
+				}
 				return NULL;
 			}
 		}
@@ -182,9 +190,10 @@ void *GLUSTERFSAL_UP_Thread(void *Arg)
 			     "Received upcall event: reason(%d)",
 			     reason);
 
-		if (!reason)
+		if (!reason) {
+			sleep(1);
 			continue;
-
+		}
 
 		/* Decide what type of event this is
 		 * inode update / invalidate? */
