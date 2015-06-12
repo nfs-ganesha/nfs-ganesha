@@ -112,7 +112,7 @@ static inline int _get_obj_fd(struct fsal_obj_handle *obj_hdl)
 	struct vfs_fsal_obj_handle *myself;
 
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
-	if (myself->u.file.fd >= 0 && myself->u.file.openflags != FSAL_O_CLOSED)
+	if (myself->u.file.openflags != FSAL_O_CLOSED)
 		return myself->u.file.fd;
 	else
 		return -1;
@@ -208,11 +208,17 @@ nfsstat4 layoutget(struct fsal_obj_handle *obj_hdl,
 
 	res->last_segment = true;
 	_XDR_2_ioctlxdr_read_begin(loc_body, &pixdr);
-	ret =
-	    panfs_um_layoutget(_get_obj_fd(obj_hdl), &pixdr, clientid, myself,
-			       arg, res);
+
+	/* Take read lock on object to protect file descriptor. */
+	PTHREAD_RWLOCK_rdlock(&obj_hdl->lock);
+
+	ret = panfs_um_layoutget(_get_obj_fd(obj_hdl), &pixdr, clientid,
+				 myself, arg, res);
 	if (!ret)
 		_XDR_2_ioctlxdr_read_end(loc_body, &pixdr);
+
+	PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+
 	LogDebug(COMPONENT_FSAL,
 		 "layout[0x%lx,0x%lx,0x%x] ret => %d", res->segment.offset,
 		 res->segment.length, res->segment.io_mode, ret);
@@ -233,7 +239,14 @@ nfsstat4 layoutreturn(struct fsal_obj_handle *obj_hdl,
 		 arg->dispose, arg->last_segment, arg->ncookies);
 
 	_XDR_2_ioctlxdr_write(lrf_body, &pixdr);
+
+	/* Take read lock on object to protect file descriptor. */
+	PTHREAD_RWLOCK_rdlock(&obj_hdl->lock);
+
 	ret = panfs_um_layoutreturn(_get_obj_fd(obj_hdl), &pixdr, arg);
+
+	PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+
 	LogDebug(COMPONENT_FSAL,
 		 "layout[0x%lx,0x%lx,0x%x] ret => %d",
 		 arg->cur_segment.offset, arg->cur_segment.length,
@@ -251,7 +264,14 @@ nfsstat4 layoutcommit(struct fsal_obj_handle *obj_hdl,
 	nfsstat4 ret;
 
 	_XDR_2_ioctlxdr_write(lou_body, &pixdr);
+
+	/* Take read lock on object to protect file descriptor. */
+	PTHREAD_RWLOCK_rdlock(&obj_hdl->lock);
+
 	ret = panfs_um_layoutcommit(_get_obj_fd(obj_hdl), &pixdr, arg, res);
+
+	PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+
 	LogDebug(COMPONENT_FSAL,
 		 "layout[0x%lx,0x%lx,0x%x] last_write=0x%lx ret => %d",
 		 arg->segment.offset, arg->segment.length, arg->segment.io_mode,

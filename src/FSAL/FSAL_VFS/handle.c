@@ -908,7 +908,14 @@ static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
 		goto out;
 	}
 
-	if (obj_hdl->type == REGULAR_FILE && myself->u.file.fd >= 0) {
+	/* Take read lock on object to protect file descriptor.
+	 * We only take a read lock because we are not changing the state of
+	 * the file descriptor.
+	 */
+	PTHREAD_RWLOCK_rdlock(&obj_hdl->lock);
+
+	if (obj_hdl->type == REGULAR_FILE &&
+	    myself->u.file.openflags != FSAL_O_CLOSED) {
 		srcfd = myself->u.file.fd;
 	} else {
 		srcfd = vfs_fsal_open(myself, flags, &fsal_error);
@@ -917,7 +924,7 @@ static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
 			fsal_error = posix2fsal_error(retval);
 			LogDebug(COMPONENT_FSAL,
 				 "open myself returned %d", retval);
-			goto out;
+			goto out_unlock;
 		}
 	}
 
@@ -960,6 +967,11 @@ static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
  fileerr:
 	if (!(obj_hdl->type == REGULAR_FILE && myself->u.file.fd >= 0))
 		close(srcfd);
+
+ out_unlock:
+
+	PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+
  out:
 	LogFullDebug(COMPONENT_FSAL, "returning %d, %d", fsal_error, retval);
 	return fsalstat(fsal_error, retval);
@@ -1141,9 +1153,25 @@ static fsal_status_t renamefile(struct fsal_obj_handle *obj_hdl,
 	return fsalstat(fsal_error, retval);
 }
 
+/**
+ * @brief Open file and get attributes.
+ *
+ * This function opens a file and returns the file descriptor and fetches
+ * the attributes. The obj_hdl->lock MUST be held for this call.
+ *
+ * @param[in]     exp         The fsal_export the file belongs to
+ * @param[in]     myself      File to access
+ * @param[in/out] stat        The struct stat to fetch attributes into
+ * @param[in]     open_flags  The mode to open the file in
+ * @param[out]    fsal_error  Place to return an error
+ *
+ * @return The file descriptor plus indication if it needs to be closed.
+ *
+ */
 static struct closefd vfs_fsal_open_and_stat(struct fsal_export *exp,
 					     struct vfs_fsal_obj_handle *myself,
-					     struct stat *stat, int open_flags,
+					     struct stat *stat,
+					     fsal_openflags_t flags,
 					     fsal_errors_t *fsal_error)
 {
 	struct fsal_obj_handle *obj_hdl = &myself->obj_handle;
@@ -1151,6 +1179,9 @@ static struct closefd vfs_fsal_open_and_stat(struct fsal_export *exp,
 	int retval = 0;
 	const char *func = "unknown";
 	struct vfs_filesystem *vfs_fs = myself->obj_handle.fs->private;
+	int open_flags;
+
+	fsal2posix_openflags(flags, &open_flags);
 
 	switch (obj_hdl->type) {
 	case SOCKET_FILE:
@@ -1174,7 +1205,15 @@ static struct closefd vfs_fsal_open_and_stat(struct fsal_export *exp,
 		func = "fstatat";
 		break;
 	case REGULAR_FILE:
-		if (myself->u.file.openflags == FSAL_O_CLOSED) {
+		/* Check if the file descriptor happens to be in a compatible
+		 * mode. If not, open a temporary file descriptor.
+		 *
+		 * Note that FSAL_O_REOPEN will never be set in
+		 * myself->u.file.openflags and thus forces a re-open.
+		 */
+		if (((flags & FSAL_O_ANY) != 0 &&
+		     (myself->u.file.openflags & FSAL_O_RDWR) == 0) ||
+		    ((myself->u.file.openflags & flags) != flags)) {
 			/* no file open at the moment */
 			cfd.fd = vfs_fsal_open(myself, open_flags, fsal_error);
 			if (cfd.fd < 0) {
@@ -1260,8 +1299,15 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl)
 		goto out;
 	}
 
+	/* Take read lock on object to protect file descriptor.
+	 * We only take a read lock because we are not changing the state of
+	 * the file descriptor. If the file is not already open for read,
+	 * then we will get a temporary file descriptor.
+	 */
+	PTHREAD_RWLOCK_rdlock(&obj_hdl->lock);
+
 	cfd = vfs_fsal_open_and_stat(op_ctx->fsal_export, myself, &stat,
-				     O_RDONLY, &fsal_error);
+				     FSAL_O_ANY, &fsal_error);
 	if (cfd.fd >= 0) {
 		request_mask = myself->attributes.mask;
 		st = posix2fsal_attributes(&stat, &myself->attributes);
@@ -1304,10 +1350,14 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl)
 			 * like owners, get a modern linux kernel...
 			 */
 			fsal_error = ERR_FSAL_NO_ERROR;
-			goto out;
+			goto out_unlock;
 		}
 		retval = -cfd.fd;
 	}
+
+ out_unlock:
+
+	PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
 
  out:
 	return fsalstat(fsal_error, retval);
@@ -1329,7 +1379,7 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 	fsal_status_t fsal_status = {0, 0};
 #endif /* ENABLE_RFC_ACL */
 	int retval = 0;
-	int open_flags = O_RDONLY;
+	fsal_openflags_t open_flags = FSAL_O_ANY;
 
 	/* apply umask, if mode attribute is to be changed */
 	if (FSAL_TEST_MASK(attrs->mask, ATTR_MODE))
@@ -1345,7 +1395,7 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 				: "(none)");
 		retval = EXDEV;
 		fsal_error = posix2fsal_error(retval);
-		goto hdlerr;
+		return fsalstat(fsal_error, retval);
 	}
 
 #ifdef ENABLE_RFC_ACL
@@ -1381,8 +1431,21 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 	 * or the listener forgot to unlink it, it is lame duck.
 	 */
 
-	if (FSAL_TEST_MASK(attrs->mask, ATTR_SIZE))
-		open_flags = O_RDWR;
+	/* Test if size is being set, make sure file is regular and if so,
+	 * require a read/write file descriptor.
+	 */
+	if (FSAL_TEST_MASK(attrs->mask, ATTR_SIZE)) {
+		if (obj_hdl->type != REGULAR_FILE)
+			return fsalstat(ERR_FSAL_INVAL, EINVAL);
+		open_flags = FSAL_O_RDWR;
+	}
+
+	/* Take read lock on object to protect file descriptor.
+	 * We only take a read lock because we are not changing the state of
+	 * the file descriptor. If the file is not open for read (or read/write
+	 * in the case of setting size) we will use a temporary file descriptor.
+	 */
+	PTHREAD_RWLOCK_rdlock(&obj_hdl->lock);
 
 	cfd = vfs_fsal_open_and_stat(op_ctx->fsal_export, myself, &stat,
 				     open_flags, &fsal_error);
@@ -1400,36 +1463,45 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 			 * like owners, get a modern linux kernel...
 			 */
 			fsal_error = ERR_FSAL_NO_ERROR;
-			goto out;
+		} else {
+			retval = -cfd.fd;
 		}
-		return fsalstat(fsal_error, cfd.fd);
+		goto out_unlock;
 	}
+
 	/** TRUNCATE **/
 	if (FSAL_TEST_MASK(attrs->mask, ATTR_SIZE)) {
-		if (obj_hdl->type != REGULAR_FILE) {
-			fsal_error = ERR_FSAL_INVAL;
-			goto fileerr;
-		}
 		retval = ftruncate(cfd.fd, attrs->filesize);
 		if (retval != 0) {
-			/* XXX ESXi volume creation pattern reliably
-			 * reaches this point and reliably can successfully
-			 * ftruncate on reopen.  I don't know yet if fd if
-			 * we failed to handle a previous error, or what.
-			 * I don't see a prior failed op in wireshark. */
-			if (retval == -1 /* bad fd */) {
-				vfs_close(obj_hdl);
-				if (cfd.close_fd)
-					close(cfd.fd);
-				cfd = vfs_fsal_open_and_stat(
-							op_ctx->fsal_export,
-							     myself, &stat,
-							     open_flags,
-							     &fsal_error);
-				retval = ftruncate(cfd.fd, attrs->filesize);
-				if (retval != 0)
-					goto fileerr;
-			} else
+			/** @todo FSF: is this still necessary?
+			 *
+			 * XXX ESXi volume creation pattern reliably
+			 * reached this point in the past, however now that we
+			 * only use the already open file descriptor if it is
+			 * open read/write, this may no longer fail.
+			 * If there is some other error from ftruncate, then
+			 * we will needlessly retry, but without more detail
+			 * of the original failure, we can't be sure.
+			 * Fortunately permission checking is done by
+			 * Ganesha before calling here, so we won't get an
+			 * EACCES since this call is done as root. We could
+			 * get EFBIG, EPERM, or EINVAL.
+			 */
+			if (cfd.close_fd)
+				close(cfd.fd);
+
+			cfd = vfs_fsal_open_and_stat(op_ctx->fsal_export,
+						     myself, &stat,
+						     open_flags | FSAL_O_REOPEN,
+						     &fsal_error);
+
+			if (cfd.fd < 0) {
+				retval = -cfd.fd;
+				goto out_unlock;
+			}
+
+			retval = ftruncate(cfd.fd, attrs->filesize);
+			if (retval != 0)
 				goto fileerr;
 		}
 	}
@@ -1533,7 +1605,11 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
  out:
 	if (cfd.close_fd)
 		close(cfd.fd);
- hdlerr:
+
+ out_unlock:
+
+	PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+
 	return fsalstat(fsal_error, retval);
 }
 

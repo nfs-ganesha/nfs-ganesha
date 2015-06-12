@@ -65,6 +65,9 @@ fsal_status_t vfs_open(struct fsal_obj_handle *obj_hdl,
 		return fsalstat(fsal_error, retval);
 	}
 
+	/* Take write lock on object to protect file descriptor. */
+	PTHREAD_RWLOCK_wrlock(&obj_hdl->lock);
+
 	assert(myself->u.file.fd == -1
 	       && myself->u.file.openflags == FSAL_O_CLOSED && openflags != 0);
 
@@ -78,6 +81,9 @@ fsal_status_t vfs_open(struct fsal_obj_handle *obj_hdl,
 		myself->u.file.fd = fd;
 		myself->u.file.openflags = openflags;
 	}
+
+	PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+
 	return fsalstat(fsal_error, retval);
 }
 
@@ -119,6 +125,9 @@ fsal_status_t vfs_read(struct fsal_obj_handle *obj_hdl,
 		return fsalstat(fsal_error, retval);
 	}
 
+	/* Take read lock on object to protect file descriptor. */
+	PTHREAD_RWLOCK_rdlock(&obj_hdl->lock);
+
 	assert(myself->u.file.fd >= 0
 	       && myself->u.file.openflags != FSAL_O_CLOSED);
 
@@ -138,6 +147,9 @@ fsal_status_t vfs_read(struct fsal_obj_handle *obj_hdl,
 	    ? true : false;
 
  out:
+
+	PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+
 	return fsalstat(fsal_error, retval);
 }
 
@@ -166,6 +178,9 @@ fsal_status_t vfs_write(struct fsal_obj_handle *obj_hdl,
 		return fsalstat(fsal_error, retval);
 	}
 
+	/* Take read lock on object to protect file descriptor. */
+	PTHREAD_RWLOCK_rdlock(&obj_hdl->lock);
+
 	assert(myself->u.file.fd >= 0
 	       && myself->u.file.openflags != FSAL_O_CLOSED);
 
@@ -191,6 +206,9 @@ fsal_status_t vfs_write(struct fsal_obj_handle *obj_hdl,
 	}
 
  out:
+
+	PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+
 	fsal_restore_ganesha_credentials();
 	return fsalstat(fsal_error, retval);
 }
@@ -218,6 +236,9 @@ fsal_status_t vfs_commit(struct fsal_obj_handle *obj_hdl,	/* sync */
 		return fsalstat(fsal_error, retval);
 	}
 
+	/* Take read lock on object to protect file descriptor. */
+	PTHREAD_RWLOCK_rdlock(&obj_hdl->lock);
+
 	assert(myself->u.file.fd >= 0
 	       && myself->u.file.openflags != FSAL_O_CLOSED);
 
@@ -226,6 +247,9 @@ fsal_status_t vfs_commit(struct fsal_obj_handle *obj_hdl,	/* sync */
 		retval = errno;
 		fsal_error = posix2fsal_error(retval);
 	}
+
+	PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+
 	return fsalstat(fsal_error, retval);
 }
 
@@ -257,6 +281,9 @@ fsal_status_t vfs_lock_op(struct fsal_obj_handle *obj_hdl,
 		fsal_error = posix2fsal_error(retval);
 		return fsalstat(fsal_error, retval);
 	}
+
+	/* Take read lock on object to protect file descriptor. */
+	PTHREAD_RWLOCK_rdlock(&obj_hdl->lock);
 
 	if (myself->u.file.fd < 0 ||
 	    myself->u.file.openflags == FSAL_O_CLOSED) {
@@ -341,6 +368,9 @@ fsal_status_t vfs_lock_op(struct fsal_obj_handle *obj_hdl,
 		}
 	}
  out:
+
+	PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+
 	return fsalstat(fsal_error, retval);
 }
 
@@ -368,6 +398,9 @@ fsal_status_t vfs_close(struct fsal_obj_handle *obj_hdl)
 		return fsalstat(fsal_error, retval);
 	}
 
+	/* Take write lock on object to protect file descriptor. */
+	PTHREAD_RWLOCK_wrlock(&obj_hdl->lock);
+
 	if (myself->u.file.fd >= 0 &&
 	    myself->u.file.openflags != FSAL_O_CLOSED) {
 		retval = close(myself->u.file.fd);
@@ -378,6 +411,9 @@ fsal_status_t vfs_close(struct fsal_obj_handle *obj_hdl)
 		myself->u.file.fd = -1;
 		myself->u.file.openflags = FSAL_O_CLOSED;
 	}
+
+	PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+
 	return fsalstat(fsal_error, retval);
 }
 
@@ -405,6 +441,9 @@ fsal_status_t vfs_lru_cleanup(struct fsal_obj_handle *obj_hdl,
 		return fsalstat(fsal_error, retval);
 	}
 
+	/* Take read lock on object to protect file descriptor. */
+	PTHREAD_RWLOCK_rdlock(&obj_hdl->lock);
+
 	if (obj_hdl->type == REGULAR_FILE && myself->u.file.fd >= 0) {
 		retval = close(myself->u.file.fd);
 		myself->u.file.fd = -1;
@@ -414,5 +453,8 @@ fsal_status_t vfs_lru_cleanup(struct fsal_obj_handle *obj_hdl,
 		retval = errno;
 		fsal_error = posix2fsal_error(retval);
 	}
+
+	PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+
 	return fsalstat(fsal_error, retval);
 }
