@@ -1460,8 +1460,6 @@ static void worker_run(struct fridgethr_context *ctx)
 {
 	struct nfs_worker_data *worker_data = &ctx->wd;
 	request_data_t *nfsreq;
-	gsh_xprt_private_t *xu = NULL;
-	uint32_t reqcnt;
 
 	/* Worker's loop */
 	while (!fridgethr_you_should_break(ctx)) {
@@ -1481,21 +1479,19 @@ static void worker_run(struct fridgethr_context *ctx)
 			break;
 		case NFS_REQUEST:
 			/* check for destroyed xprts */
-			xu = (gsh_xprt_private_t *) nfsreq->r_u.nfs->xprt->
-			    xp_u1;
-			PTHREAD_MUTEX_lock(&nfsreq->r_u.nfs->xprt->xp_lock);
 			if (nfsreq->r_u.nfs->xprt->
 			    xp_flags & SVC_XPRT_FLAG_DESTROYED) {
-				PTHREAD_MUTEX_unlock(&nfsreq->r_u.nfs->xprt->
-						     xp_lock);
+				/* Idempotent: once set, the DESTROYED flag
+				 * is never cleared. No lock needed.
+				 */
 				goto finalize_req;
 			}
-			reqcnt = xu->req_cnt;
-			PTHREAD_MUTEX_unlock(&nfsreq->r_u.nfs->xprt->xp_lock);
-			/* execute */
+
 			LogDebug(COMPONENT_DISPATCH,
-				 "NFS protocol request, nfsreq=%p xprt=%p req_cnt=%d",
-				 nfsreq, nfsreq->r_u.nfs->xprt, reqcnt);
+				 "NFS protocol request, nfsreq=%p xprt=%p requests=%d",
+				 nfsreq,
+				 nfsreq->r_u.nfs->xprt,
+				 nfsreq->r_u.nfs->xprt->xp_requests);
 			nfs_rpc_execute(nfsreq);
 			break;
 
@@ -1518,7 +1514,7 @@ static void worker_run(struct fridgethr_context *ctx)
 
 		switch (nfsreq->rtype) {
 		case NFS_REQUEST:
-			/* adjust req_cnt and return xprt ref */
+			/* adjust request count and return xprt ref */
 			gsh_xprt_unref(nfsreq->r_u.nfs->xprt,
 				       XPRT_PRIVATE_FLAG_DECREQ, __func__,
 				       __LINE__);

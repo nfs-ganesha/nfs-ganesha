@@ -146,7 +146,6 @@ const char *str_gc_proc(rpc_gss_proc_t);
 typedef struct gsh_xprt_private {
 	SVCXPRT *xprt;
 	uint32_t flags;
-	uint32_t req_cnt; /*< outstanding requests counter */
 	struct glist_head stallq;
 } gsh_xprt_private_t;
 
@@ -156,8 +155,7 @@ static inline gsh_xprt_private_t *alloc_gsh_xprt_private(SVCXPRT *xprt,
 	gsh_xprt_private_t *xu = gsh_malloc(sizeof(gsh_xprt_private_t));
 
 	xu->xprt = xprt;
-	xu->flags = XPRT_PRIVATE_FLAG_NONE;
-	xu->req_cnt = 0;
+	xu->flags = flags;
 
 	return xu;
 }
@@ -180,24 +178,21 @@ static inline bool gsh_xprt_ref(SVCXPRT *xprt, uint32_t flags,
 				const char *tag,
 				const int line)
 {
-	gsh_xprt_private_t *xu = (gsh_xprt_private_t *) xprt->xp_u1;
-	uint32_t req_cnt;
 	bool refd;
 
 	if (!(flags & XPRT_PRIVATE_FLAG_LOCKED))
 		PTHREAD_MUTEX_lock(&xprt->xp_lock);
 
 	if (flags & XPRT_PRIVATE_FLAG_INCREQ)
-		req_cnt = ++(xu->req_cnt);
-	else
-		req_cnt = xu->req_cnt;
+		atomic_inc_uint32_t(&xprt->xp_requests);
 
 	refd = SVC_REF2(xprt, SVC_REF_FLAG_LOCKED, tag, line);
 
 	/* !LOCKED */
 
-	LogFullDebug(COMPONENT_DISPATCH, "xprt %p req_cnt=%u tag=%s line=%d",
-		     xprt, req_cnt, tag, line);
+	LogFullDebugAlt(COMPONENT_DISPATCH, COMPONENT_RPC,
+		"xprt %p xp_requests=%u xp_refcnt=%u ag=%s line=%d",
+		xprt, xprt->xp_requests, xprt->xp_refcnt, tag, line);
 
 	return refd;
 }
@@ -205,34 +200,30 @@ static inline bool gsh_xprt_ref(SVCXPRT *xprt, uint32_t flags,
 static inline void gsh_xprt_unref(SVCXPRT *xprt, uint32_t flags,
 				  const char *tag, const int line)
 {
-	gsh_xprt_private_t *xu = (gsh_xprt_private_t *) xprt->xp_u1;
-	uint32_t req_cnt;
+	LogFullDebugAlt(COMPONENT_DISPATCH, COMPONENT_RPC,
+		"xprt %p prerelease xp_requests=%u xp_refcnt=%u tag=%s line=%d",
+		xprt, xprt->xp_requests, xprt->xp_refcnt, tag, line);
 
 	if (!(flags & XPRT_PRIVATE_FLAG_LOCKED))
 		PTHREAD_MUTEX_lock(&xprt->xp_lock);
 
 	if (flags & XPRT_PRIVATE_FLAG_DECREQ)
-		req_cnt = --(xu->req_cnt);
-	else
-		req_cnt = xu->req_cnt;
+		atomic_dec_uint32_t(&xprt->xp_requests);
 
-	if (flags & XPRT_PRIVATE_FLAG_DECODING)
+	if (flags & XPRT_PRIVATE_FLAG_DECODING) {
+		gsh_xprt_private_t *xu = (gsh_xprt_private_t *) xprt->xp_u1;
+
 		if (xu->flags & XPRT_PRIVATE_FLAG_DECODING)
 			xu->flags &= ~XPRT_PRIVATE_FLAG_DECODING;
-
-	LogFullDebug(
-		COMPONENT_RPC,
-		"xprt %p prerelease req_cnt=%u xp_refcnt=%u tag=%s line=%d",
-		xprt, req_cnt, xprt->xp_refcnt, tag, line);
+	}
 
 	/* release xprt refcnt */
 	SVC_RELEASE2(xprt, SVC_RELEASE_FLAG_LOCKED, tag, line);
 	/* !LOCKED */
 
-	LogFullDebug(
-		COMPONENT_RPC,
-		"xprt %p postrelease req_cnt=%u xp_refcnt=%u tag=%s line=%d",
-		xprt, req_cnt, xprt->xp_refcnt, tag, line);
+	LogFullDebugAlt(COMPONENT_DISPATCH, COMPONENT_RPC,
+		"xprt %p postrelease xp_requests=%u xp_refcnt=%u tag=%s line=%d",
+		xprt, xprt->xp_requests, xprt->xp_refcnt, tag, line);
 }
 
 static inline bool gsh_xprt_decoder_guard(SVCXPRT *xprt, uint32_t flags)
@@ -267,14 +258,15 @@ static inline bool gsh_xprt_decoder_guard(SVCXPRT *xprt, uint32_t flags)
 
 static inline void gsh_xprt_clear_flag(SVCXPRT *xprt, uint32_t flags)
 {
-	gsh_xprt_private_t *xu = (gsh_xprt_private_t *)xprt->xp_u1;
-
 	if (!(flags & XPRT_PRIVATE_FLAG_LOCKED))
 		PTHREAD_MUTEX_lock(&xprt->xp_lock);
 
-	if (flags & XPRT_PRIVATE_FLAG_DECODING)
+	if (flags & XPRT_PRIVATE_FLAG_DECODING) {
+		gsh_xprt_private_t *xu = (gsh_xprt_private_t *)xprt->xp_u1;
+
 		if (xu->flags & XPRT_PRIVATE_FLAG_DECODING)
 			xu->flags &= ~XPRT_PRIVATE_FLAG_DECODING;
+	}
 
 	/* unconditional */
 	PTHREAD_MUTEX_unlock(&xprt->xp_lock);

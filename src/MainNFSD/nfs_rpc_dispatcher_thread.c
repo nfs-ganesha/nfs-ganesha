@@ -1043,10 +1043,11 @@ uint32_t nfs_rpc_outstanding_reqs_est(void)
 	return treqs;
 }
 
-static inline bool stallq_should_unstall(gsh_xprt_private_t *xu)
+static inline bool stallq_should_unstall(SVCXPRT *xprt)
 {
-	return ((xu->req_cnt < nfs_param.core_param.dispatch_max_reqs_xprt / 2)
-		|| (xu->xprt->xp_flags & SVC_XPRT_FLAG_DESTROYED));
+	return ((xprt->xp_requests
+		 < nfs_param.core_param.dispatch_max_reqs_xprt / 2)
+		|| (xprt->xp_flags & SVC_XPRT_FLAG_DESTROYED));
 }
 
 void thr_stallq(struct fridgethr_context *thr_ctx)
@@ -1067,9 +1068,10 @@ void thr_stallq(struct fridgethr_context *thr_ctx)
 
 		glist_for_each(l, &nfs_req_st.stallq.q) {
 			xu = glist_entry(l, gsh_xprt_private_t, stallq);
+			xprt = xu->xprt;
+
 			/* handle stalled xprts that idle out */
-			if (stallq_should_unstall(xu)) {
-				xprt = xu->xprt;
+			if (stallq_should_unstall(xprt)) {
 				/* lock ordering
 				 * (cf. nfs_rpc_cond_stall_xprt) */
 				PTHREAD_MUTEX_unlock(&nfs_req_st.stallq.mtx);
@@ -1104,23 +1106,21 @@ static bool nfs_rpc_cond_stall_xprt(SVCXPRT *xprt)
 {
 	gsh_xprt_private_t *xu;
 	bool activate = false;
-	uint32_t nreqs;
-
-	PTHREAD_MUTEX_lock(&xprt->xp_lock);
-
-	xu = (gsh_xprt_private_t *) xprt->xp_u1;
-	nreqs = xu->req_cnt;
-
-	LogDebug(COMPONENT_DISPATCH,
-		 "xprt %p refcnt %d has %d %d reqs active (max %d)", xprt,
-		 xprt->xp_refcnt, nreqs, xu->req_cnt,
-		 nfs_param.core_param.dispatch_max_reqs_xprt);
+	uint32_t nreqs = xprt->xp_requests;
 
 	/* check per-xprt quota */
 	if (likely(nreqs < nfs_param.core_param.dispatch_max_reqs_xprt)) {
-		PTHREAD_MUTEX_unlock(&xprt->xp_lock);
+		LogDebug(COMPONENT_DISPATCH,
+			 "xprt %p refcnt %d has %d reqs active (max %d)",
+			 xprt,
+			 xprt->xp_refcnt,
+			 nreqs,
+			 nfs_param.core_param.dispatch_max_reqs_xprt);
 		return false;
 	}
+
+	PTHREAD_MUTEX_lock(&xprt->xp_lock);
+	xu = (gsh_xprt_private_t *) xprt->xp_u1;
 
 	/* XXX can't happen */
 	if (unlikely(xu->flags & XPRT_PRIVATE_FLAG_STALLED)) {
@@ -1603,16 +1603,10 @@ static inline enum auth_stat AuthenticateRequest(nfs_request_data_t *nfsreq,
 static inline enum xprt_stat nfs_rpc_continue_decoding(SVCXPRT *xprt,
 						       enum xprt_stat stat)
 {
-	gsh_xprt_private_t *xu = (gsh_xprt_private_t *) xprt->xp_u1;
-	uint32_t nreqs;
-
-	PTHREAD_MUTEX_lock(&xprt->xp_lock);
-	nreqs = xu->req_cnt;
-	PTHREAD_MUTEX_unlock(&xprt->xp_lock);
-
 	/* check per-xprt quota */
-	if (unlikely(nreqs > nfs_param.core_param.dispatch_max_reqs_xprt))
-		goto out;
+	if (unlikely(xprt->xp_requests
+		     > nfs_param.core_param.dispatch_max_reqs_xprt))
+		return stat;
 
 	switch (stat) {
 	case XPRT_IDLE:
@@ -1629,7 +1623,6 @@ static inline enum xprt_stat nfs_rpc_continue_decoding(SVCXPRT *xprt,
 		break;
 	}			/* switch */
 
- out:
 	return stat;
 }
 
@@ -1892,15 +1885,8 @@ enum xprt_stat thr_decode_rpc_request(void *context, SVCXPRT *xprt)
 
 static inline bool thr_continue_decoding(SVCXPRT *xprt, enum xprt_stat stat)
 {
-	gsh_xprt_private_t *xu;
-	uint32_t nreqs;
-
-	PTHREAD_MUTEX_lock(&xprt->xp_lock);
-	xu = (gsh_xprt_private_t *) xprt->xp_u1;
-	nreqs = xu->req_cnt;
-	PTHREAD_MUTEX_unlock(&xprt->xp_lock);
-
-	if (unlikely(nreqs > nfs_param.core_param.dispatch_max_reqs_xprt))
+	if (unlikely(xprt->xp_requests
+		     > nfs_param.core_param.dispatch_max_reqs_xprt))
 		return false;
 
 	return (stat == XPRT_MOREREQS);
