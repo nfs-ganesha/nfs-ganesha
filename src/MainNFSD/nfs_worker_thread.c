@@ -1497,7 +1497,7 @@ static void worker_run(struct fridgethr_context *ctx)
 
 		case NFS_CALL:
 			/* NFSv4 rpc call (callback) */
-			nfs_rpc_dispatch_call(nfsreq->r_u.call, 0);
+			nfs_rpc_dispatch_call(&nfsreq->r_u.call, 0);
 			break;
 
 #ifdef _USE_9P

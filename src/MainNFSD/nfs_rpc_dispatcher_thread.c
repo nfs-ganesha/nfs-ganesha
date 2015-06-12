@@ -1005,22 +1005,6 @@ static void nfs_rpc_free_xprt(SVCXPRT *xprt)
 	free_gsh_xprt_private(xprt);
 }
 
-/**
- * @brief Get a request frame (call or svc request)
- *
- * @param[in] flags Unused.
- *
- * @return Request frame.
- */
-request_data_t *nfs_rpc_get_nfsreq(uint32_t __attribute__ ((unused)) flags)
-{
-	request_data_t *nfsreq = NULL;
-
-	nfsreq = pool_alloc(request_pool, NULL);
-
-	return nfsreq;
-}
-
 uint32_t nfs_rpc_outstanding_reqs_est(void)
 {
 	static uint32_t ctr;

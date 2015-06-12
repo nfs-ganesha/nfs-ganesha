@@ -109,7 +109,7 @@ typedef struct request_data {
 	struct glist_head req_q;	/* chaining of pending requests */
 	request_type_t rtype;
 	union request_content {
-		rpc_call_t *call;
+		rpc_call_t call;
 		nfs_request_data_t *nfs;
 #ifdef _USE_9P
 		struct _9p_request_data _9p;
@@ -137,7 +137,6 @@ extern char *pidfile_path;
 /*
  * function prototypes
  */
-request_data_t *nfs_rpc_get_nfsreq(uint32_t flags);
 void nfs_rpc_enqueue_req(request_data_t *req);
 
 uint32_t get_enqueue_count(void);
