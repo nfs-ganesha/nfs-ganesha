@@ -527,7 +527,6 @@ static /* inline */ drc_t *
 nfs_dupreq_get_drc(struct svc_req *req)
 {
 	enum drc_type dtype = get_drc_type(req);
-	gsh_xprt_private_t *xu = (gsh_xprt_private_t *) req->rq_xprt->xp_u1;
 	drc_t *drc = NULL;
 	bool drc_check_expired = false;
 
@@ -541,9 +540,12 @@ nfs_dupreq_get_drc(struct svc_req *req)
 		goto out;
 	case DRC_TCP_V4:
 	case DRC_TCP_V3:
-		PTHREAD_MUTEX_lock(&req->rq_xprt->xp_lock);
-		if (xu->drc) {
-			drc = xu->drc;
+		/* Idempotent address, no need for lock;
+		 * xprt will be valid as long as svc_req.
+		 */
+		drc = (drc_t *)req->rq_xprt->xp_u2;
+		if (drc) {
+			/* found, no danger of removal */
 			LogFullDebug(COMPONENT_DUPREQ, "ref DRC=%p for xprt=%p",
 				     drc, req->rq_xprt);
 			PTHREAD_MUTEX_lock(&drc->mtx);	/* LOCKED */
@@ -554,8 +556,12 @@ nfs_dupreq_get_drc(struct svc_req *req)
 			drc_t *tdrc = NULL;
 
 			memset(&drc_k, 0, sizeof(drc_k));
-
 			drc_k.type = dtype;
+
+			/* Since the drc can last longer than the xprt,
+			 * copy the address. Read operation of constant data,
+			 * no xprt lock required.
+			 */
 			(void)copy_xprt_addr(&drc_k.d_u.tcp.addr, req->rq_xprt);
 
 			drc_k.d_u.tcp.hk =
@@ -611,8 +617,8 @@ nfs_dupreq_get_drc(struct svc_req *req)
 			}
 			DRC_ST_UNLOCK();
 			drc->d_u.tcp.recycle_time = 0;
-			/* xprt drc */
-			(void)nfs_dupreq_ref_drc(drc);	/* xu ref */
+
+			(void)nfs_dupreq_ref_drc(drc);	/* xprt ref */
 
 			/* try to expire unused DRCs somewhat in proportion to
 			 * new connection arrivals */
@@ -622,9 +628,13 @@ nfs_dupreq_get_drc(struct svc_req *req)
 				     "after ref drc %p refcnt==%u ", drc,
 				     drc->refcnt);
 
-			xu->drc = drc;
+			/* Idempotent address, no need for lock;
+			 * set once here, never changes.
+			 * No other fields are modified.
+			 * Assumes address stores are atomic.
+			 */
+			req->rq_xprt->xp_u2 = (void *)drc;
 		}
-		PTHREAD_MUTEX_unlock(&req->rq_xprt->xp_lock);
 		break;
 	default:
 		/* XXX error */

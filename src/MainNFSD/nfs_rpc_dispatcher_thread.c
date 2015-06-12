@@ -998,6 +998,10 @@ static u_int nfs_rpc_rdvs(SVCXPRT *xprt, SVCXPRT *newxprt, const u_int flags,
  */
 static void nfs_rpc_free_xprt(SVCXPRT *xprt)
 {
+	if (xprt->xp_u2) {
+		nfs_dupreq_put_drc(xprt, xprt->xp_u2, DRC_FLAG_RELEASE);
+		xprt->xp_u2 = NULL;
+	}
 	free_gsh_xprt_private(xprt);
 }
 
