@@ -52,8 +52,7 @@ int _9p_statfs(struct _9p_request_data *req9p, void *worker_data,
 
 	struct _9p_fid *pfid = NULL;
 
-	u32 type = 0x6969;	/* NFS_SUPER_MAGIC for wanting of better,
-				 * FSAL do not return this information */
+	u32 type = 0x01021997;	/* V9FS_MAGIC */
 	u32 bsize = 1;		/* cache_inode_statfs and
 				 * FSAL already care for blocksize */
 	u64 *blocks = NULL;
