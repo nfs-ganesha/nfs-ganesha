@@ -214,6 +214,10 @@ fsal_status_t GPFSFSAL_write(int fd,
 	int errsv = 0;
 	uint32_t stability_got;
 
+#ifdef _VALGRIND_MEMCHECK
+	stability_got = 0;
+#endif
+
 	/* sanity checks. */
 
 	if (!buffer || !p_write_amount)
