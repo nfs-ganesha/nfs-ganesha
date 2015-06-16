@@ -54,7 +54,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 	int errsv = 0;
 
 #ifdef _VALGRIND_MEMCHECK
-		memset(handle.f_handle, 0, sizeof(handle.f_handle));
+		memset(&handle, 0, sizeof(handle));
 		memset(&buf, 0, sizeof(buf));
 		memset(&fl, 0, sizeof(fl));
 		memset(&devid, 0, sizeof(devid));
