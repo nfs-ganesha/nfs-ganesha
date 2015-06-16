@@ -1484,7 +1484,8 @@ static inline request_data_t *alloc_nfs_request(SVCXPRT *xprt)
 
 	/* set up req */
 	reqdata->r_u.req.svc.rq_xprt = xprt;
-	reqdata->r_u.req.svc.rq_rtaddr.len = 0;
+	reqdata->r_u.req.svc.rq_daddr_len = 0;
+	reqdata->r_u.req.svc.rq_raddr_len = 0;
 
 	/* set up xprt */
 	reqdata->r_u.req.xprt = xprt;
@@ -1499,9 +1500,6 @@ static inline void free_nfs_request(request_data_t *reqdata)
 		/* dispose RPC header */
 		if (reqdata->r_u.req.svc.rq_msg)
 			(void)free_rpc_msg(reqdata->r_u.req.svc.rq_msg);
-		if (reqdata->r_u.req.svc.rq_rtaddr.len)
-			mem_free(reqdata->r_u.req.svc.rq_rtaddr.buf,
-				 reqdata->r_u.req.svc.rq_rtaddr.len);
 		if (reqdata->r_u.req.svc.rq_auth)
 			SVCAUTH_RELEASE(reqdata->r_u.req.svc.rq_auth,
 					&(reqdata->r_u.req.svc));
