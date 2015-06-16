@@ -441,7 +441,9 @@ void _9p_cleanup_fids(struct _9p_conn *conn)
 
 	for (i = 0; i < _9P_FID_PER_CONN; i++) {
 		if (conn->fids[i]) {
+			_9p_init_opctx(conn->fids[i], NULL);
 			_9p_tools_clunk(conn->fids[i]);
+			_9p_release_opctx();
 			conn->fids[i] = NULL;	/* poison the entry */
 		}
 	}
