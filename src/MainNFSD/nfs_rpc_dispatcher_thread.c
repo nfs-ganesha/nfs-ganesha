@@ -86,10 +86,10 @@ const char *req_q_s[N_REQ_QUEUES] = {
 	"REQ_Q_HIGH_LATENCY"
 };
 
-static u_int nfs_rpc_rdvs(SVCXPRT *xprt, SVCXPRT *newxprt, const u_int flags,
-			  void *u_data);
+static u_int nfs_rpc_recv_user_data(SVCXPRT *xprt, SVCXPRT *newxprt,
+				    const u_int flags, void *u_data);
 static bool nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */);
-static void nfs_rpc_free_xprt(SVCXPRT *xprt);
+static void nfs_rpc_free_user_data(SVCXPRT *xprt);
 
 const char *xprt_stat_s[4] = {
 	"XPRT_DIED",
@@ -226,9 +226,9 @@ void Create_udp(protos prot)
 	/* Hook xp_getreq */
 	(void)SVC_CONTROL(udp_xprt[prot], SVCSET_XP_GETREQ, nfs_rpc_getreq_ng);
 
-	/* Hook xp_free_xprt (finalize/free private data) */
-	(void)SVC_CONTROL(udp_xprt[prot], SVCSET_XP_FREE_XPRT,
-			  nfs_rpc_free_xprt);
+	/* Hook xp_free_user_data (finalize/free private data) */
+	(void)SVC_CONTROL(udp_xprt[prot], SVCSET_XP_FREE_USER_DATA,
+			  nfs_rpc_free_user_data);
 
 	/* Setup private data */
 	(udp_xprt[prot])->xp_u1 =
@@ -260,12 +260,13 @@ void Create_tcp(protos prot)
 	/* Hook xp_getreq */
 	(void)SVC_CONTROL(tcp_xprt[prot], SVCSET_XP_GETREQ, nfs_rpc_getreq_ng);
 
-	/* Hook xp_rdvs -- allocate new xprts to event channels */
-	(void)SVC_CONTROL(tcp_xprt[prot], SVCSET_XP_RDVS, nfs_rpc_rdvs);
+	/* Hook xp_recv_user_data -- allocate new xprts to event channels */
+	(void)SVC_CONTROL(tcp_xprt[prot], SVCSET_XP_RECV_USER_DATA,
+			  nfs_rpc_recv_user_data);
 
-	/* Hook xp_free_xprt (finalize/free private data) */
-	(void)SVC_CONTROL(tcp_xprt[prot], SVCSET_XP_FREE_XPRT,
-			  nfs_rpc_free_xprt);
+	/* Hook xp_free_user_data (finalize/free private data) */
+	(void)SVC_CONTROL(tcp_xprt[prot], SVCSET_XP_FREE_USER_DATA,
+			  nfs_rpc_free_user_data);
 
 	/* Setup private data */
 	(tcp_xprt[prot])->xp_u1 =
@@ -962,8 +963,8 @@ void nfs_rpc_dispatch_stop(void)
  *
  * @return Always returns 0.
  */
-static u_int nfs_rpc_rdvs(SVCXPRT *xprt, SVCXPRT *newxprt, const u_int flags,
-			  void *u_data)
+static u_int nfs_rpc_recv_user_data(SVCXPRT *xprt, SVCXPRT *newxprt,
+				    const u_int flags, void *u_data)
 {
 	static uint32_t next_chan = TCP_EVCHAN_0;
 	static pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
@@ -996,7 +997,7 @@ static u_int nfs_rpc_rdvs(SVCXPRT *xprt, SVCXPRT *newxprt, const u_int flags,
  *
  * @param[in] xprt Transport to destroy
  */
-static void nfs_rpc_free_xprt(SVCXPRT *xprt)
+static void nfs_rpc_free_user_data(SVCXPRT *xprt)
 {
 	if (xprt->xp_u2) {
 		nfs_dupreq_put_drc(xprt, xprt->xp_u2, DRC_FLAG_RELEASE);
