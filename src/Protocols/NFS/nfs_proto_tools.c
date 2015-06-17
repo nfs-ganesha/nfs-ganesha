@@ -227,6 +227,7 @@ bool nfs_RetryableError(cache_inode_status_t cache_status)
 	case CACHE_INODE_CROSS_JUNCTION:
 	case CACHE_INODE_IN_GRACE:
 	case CACHE_INODE_BADHANDLE:
+	case CACHE_INODE_NO_DATA:
 		/* Non retryable error, return error to client */
 		return false;
 	}

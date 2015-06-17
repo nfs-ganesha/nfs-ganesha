@@ -588,6 +588,7 @@ nfsstat4 nfs4_Errno_verbose(cache_inode_status_t error, const char *where)
 		nfserror = NFS4ERR_TOOSMALL;
 		break;
 
+	case CACHE_INODE_NO_DATA:
 	case CACHE_INODE_SERVERFAULT:
 		nfserror = NFS4ERR_SERVERFAULT;
 		break;
@@ -758,6 +759,7 @@ nfsstat3 nfs3_Errno_verbose(cache_inode_status_t error, const char *where)
 		nfserror = NFS3ERR_TOOSMALL;
 		break;
 
+	case CACHE_INODE_NO_DATA:
 	case CACHE_INODE_SERVERFAULT:
 		nfserror = NFS3ERR_SERVERFAULT;
 		break;

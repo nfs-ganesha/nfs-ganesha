@@ -191,6 +191,9 @@ int posix2fsal_error(int posix_errorcode)
 	case EINTR:
 		return ERR_FSAL_INTERRUPT;
 
+	case ENODATA:
+		return ERR_FSAL_NO_DATA;
+
 	default:
 		LogCrit(COMPONENT_FSAL,
 			"Mapping %d(default) to ERR_FSAL_SERVERFAULT",

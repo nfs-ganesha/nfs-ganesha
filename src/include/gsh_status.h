@@ -139,6 +139,7 @@ typedef enum cache_inode_status {
 	CACHE_INODE_CROSS_JUNCTION = 42,
 	CACHE_INODE_IN_GRACE = 43,
 	CACHE_INODE_BADHANDLE = 44,
+	CACHE_INODE_NO_DATA = 45,
 } cache_inode_status_t;
 
 #endif				/* !GSH_STATUS_H */

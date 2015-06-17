@@ -316,6 +316,10 @@ int _9p_tools_errno(cache_inode_status_t cache_status)
 		rc = EAGAIN;
 		break;
 
+	case CACHE_INODE_NO_DATA:
+		rc = ENODATA;
+		break;
+
 	default:
 		rc = EIO;
 		break;
