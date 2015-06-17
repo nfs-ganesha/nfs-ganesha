@@ -63,6 +63,7 @@
 #endif
 #include "fsal_api.h"
 #include "FSAL/fsal_commonlib.h"
+#include "FSAL/access_check.h"
 #include "fsal_private.h"
 #include "fsal_convert.h"
 
@@ -1683,6 +1684,38 @@ fsal_status_t fsal_remove_access(struct fsal_obj_handle *dir_hdl,
 		}
 		/* Allowed; fall through */
 	}
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
+fsal_status_t fsal_rename_access(struct fsal_obj_handle *src_dir_hdl,
+				 struct fsal_obj_handle *src_obj_hdl,
+				 struct fsal_obj_handle *dst_dir_hdl,
+				 struct fsal_obj_handle *dst_obj_hdl,
+				 bool isdir)
+{
+	fsal_status_t status = {0, 0};
+	fsal_accessflags_t access_type;
+
+	status = fsal_remove_access(src_dir_hdl, src_obj_hdl, isdir);
+	if (FSAL_IS_ERROR(status))
+		return status;
+
+	if (dst_obj_hdl) {
+		status = fsal_remove_access(dst_dir_hdl, dst_obj_hdl, isdir);
+		if (FSAL_IS_ERROR(status))
+			return status;
+	}
+
+	access_type = FSAL_MODE_MASK_SET(FSAL_W_OK);
+	if (isdir)
+		access_type |=
+			FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_SUBDIRECTORY);
+	else
+		access_type |= FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_FILE);
+	status = fsal_test_access(dst_dir_hdl, access_type, NULL, NULL);
+	if (FSAL_IS_ERROR(status))
+		return status;
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }

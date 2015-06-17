@@ -40,6 +40,7 @@
 #include "log.h"
 #include "hashtable.h"
 #include "fsal.h"
+#include "FSAL/fsal_commonlib.h"
 #include "cache_inode_lru.h"
 
 #include <unistd.h>
@@ -280,6 +281,39 @@ cache_inode_rename(cache_entry_t *dir_src,
 			 dir_src, oldname, dir_dest, newname);
 		goto out;
 	}
+
+#ifdef ENABLE_RFC_ACL
+	/* Get attr_locks for access checking */
+	PTHREAD_RWLOCK_rdlock(&dir_src->attr_lock);
+	PTHREAD_RWLOCK_rdlock(&lookup_src->attr_lock);
+	if (dir_src != dir_dest)
+		PTHREAD_RWLOCK_rdlock(&dir_dest->attr_lock);
+	if (lookup_dst)
+		PTHREAD_RWLOCK_rdlock(&lookup_dst->attr_lock);
+	fsal_status = fsal_rename_access(dir_src->obj_handle,
+					 lookup_src->obj_handle,
+					 dir_dest->obj_handle,
+					 lookup_dst ?
+					     lookup_dst->obj_handle : NULL,
+					 lookup_src->type == DIRECTORY);
+	/* Release attr_locks */
+	if (lookup_dst)
+		PTHREAD_RWLOCK_unlock(&lookup_dst->attr_lock);
+	if (dir_src != dir_dest)
+		PTHREAD_RWLOCK_unlock(&dir_dest->attr_lock);
+	PTHREAD_RWLOCK_unlock(&lookup_src->attr_lock);
+	PTHREAD_RWLOCK_unlock(&dir_src->attr_lock);
+
+	if (FSAL_IS_ERROR(fsal_status)) {
+		status = cache_inode_error_convert(fsal_status);
+
+		LogFullDebug(COMPONENT_CACHE_INODE,
+			     "FSAL rename_access failed with %s",
+			     cache_inode_err_str(status));
+
+		goto out;
+	}
+#endif /* ENABLE_RFC_ACL */
 
 	/* Perform the rename operation in FSAL before doing anything in the
 	 * cache. Indeed, if the FSAL_rename fails unexpectly, the cache would

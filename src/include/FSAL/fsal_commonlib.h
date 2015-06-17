@@ -131,6 +131,11 @@ fsal_errors_t fsal_inherit_acls(struct attrlist *attrs, fsal_acl_t *sacl,
 fsal_status_t fsal_remove_access(struct fsal_obj_handle *dir_hdl,
 				 struct fsal_obj_handle *rem_hdl,
 				 bool isdir);
+fsal_status_t fsal_rename_access(struct fsal_obj_handle *old_dir_hdl,
+				 struct fsal_obj_handle *src_obj_hdl,
+				 struct fsal_obj_handle *new_dir_hdl,
+				 struct fsal_obj_handle *dst_obj_hdl,
+				 bool isdir);
 fsal_status_t fsal_mode_to_acl(struct attrlist *attrs, fsal_acl_t *sacl);
 fsal_status_t fsal_acl_to_mode(struct attrlist *attrs);
 #endif				/* FSAL_COMMONLIB_H */
