@@ -442,10 +442,19 @@ fsal_status_t vfs_getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
 	/* search in xattrs */
 	if (!found) {
 		fsal_errors_t fe;
+		int openflags;
 
-		fd = (obj_hdl->type == DIRECTORY) ?
-			vfs_fsal_open(obj_handle, O_DIRECTORY, &fe) :
-			vfs_fsal_open(obj_handle, O_RDWR, &fe);
+		switch (obj_hdl->type) {
+		case DIRECTORY:
+			openflags = O_DIRECTORY;
+			break;
+		case SYMBOLIC_LINK:
+			openflags = O_RDWR|O_PATH;
+			break;
+		default:
+			openflags = O_RDWR;
+		}
+		fd = vfs_fsal_open(obj_handle, openflags, &fe);
 		if (fd < 0)
 			return fsalstat(fe, -fd);
 
