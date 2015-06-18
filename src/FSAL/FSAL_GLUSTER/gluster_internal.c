@@ -32,6 +32,7 @@
 #include "fsal_convert.h"
 #include "nfs4_acls.h"
 #include "FSAL/fsal_commonlib.h"
+#include "posix_acls.h"
 
 /**
  * @brief FSAL status mapping from GlusterFS errors
@@ -400,43 +401,60 @@ fsal_status_t glusterfs_get_acl(struct glusterfs_export *glfs_export,
 				glusterfs_fsal_xstat_t *buffxstat,
 				struct attrlist *fsalattr)
 {
-	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
-	fsalattr->acl = NULL;
+	fsal_status_t status;
+	fsal_acl_data_t acldata;
+	fsal_acl_status_t aclstatus;
+	fsal_ace_t *pace = NULL;
+	int e_count = 0, i_count = 0, ret = 0;
 
+	fsalattr->acl = NULL;
 	if (NFSv4_ACL_SUPPORT && FSAL_TEST_MASK(fsalattr->mask, ATTR_ACL)) {
 
 		buffxstat->e_acl = glfs_h_acl_get(glfs_export->gl_fs,
-						glhandle,
-						ACL_TYPE_ACCESS);
-		if (buffxstat->e_acl) {
-			/* rc is the size of buffacl */
-			FSAL_SET_MASK(buffxstat->attr_valid, XATTR_ACL);
-			/* For directories consider inherited acl too */
-			if (buffxstat->is_dir) {
-				buffxstat->i_acl = glfs_h_acl_get(
-						glfs_export->gl_fs,
-						glhandle, ACL_TYPE_DEFAULT);
-				if (!buffxstat->i_acl)
-					LogDebug(COMPONENT_FSAL,
-				"inherited acl is not defined for directory");
+						glhandle, ACL_TYPE_ACCESS);
 
-				status = posix_acl_2_fsal_acl_for_dir(
-						buffxstat->e_acl,
-						buffxstat->i_acl,
-						&fsalattr->acl);
-			} else
-				status = posix_acl_2_fsal_acl(buffxstat->e_acl,
-						&fsalattr->acl);
-			LogFullDebug(COMPONENT_FSAL, "acl = %p", fsalattr->acl);
-		} else {
-			/* some real error occurred */
-			LogMajor(COMPONENT_FSAL, "failed to fetch ACL");
-			status = gluster2fsal_error(errno);
+		status = gluster2fsal_error(errno);
+
+		e_count = ace_count(buffxstat->e_acl);
+
+		if (buffxstat->is_dir) {
+			buffxstat->i_acl = glfs_h_acl_get(glfs_export->gl_fs,
+						glhandle, ACL_TYPE_DEFAULT);
+			i_count = ace_count(buffxstat->i_acl);
 		}
 
+		acldata.naces = e_count + i_count;
+
+		LogDebug(COMPONENT_FSAL, "No of aces present in fsal_acl_t = %d"
+					, acldata.naces);
+		if (!acldata.naces)
+			return status;
+
+		FSAL_SET_MASK(buffxstat->attr_valid, XATTR_ACL);
+
+		acldata.aces = (fsal_ace_t *) nfs4_ace_alloc(acldata.naces);
+		pace = acldata.aces;
+
+		ret = posix_acl_2_fsal_acl(buffxstat->e_acl,
+					buffxstat->is_dir, false, &pace);
+		if (i_count > 0)
+			ret = posix_acl_2_fsal_acl(buffxstat->i_acl,
+						true, true, &pace);
+		if (ret < 0)
+			return fsalstat(ERR_FSAL_NO_ACE, -1);
+
+		fsalattr->acl = nfs4_acl_new_entry(&acldata, &aclstatus);
+		LogDebug(COMPONENT_FSAL, "fsal acl = %p, fsal_acl_status = %u",
+				fsalattr->acl, aclstatus);
+		if (fsalattr->acl == NULL) {
+			LogCrit(COMPONENT_FSAL,
+			"failed to create a new acl entry");
+			return fsalstat(ERR_FSAL_NOMEM, -1);
+		}
 	}
 
-	return status;
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+
 }
 
 /*

@@ -1,5 +1,6 @@
 #include <sys/acl.h>
-
+#include "nfs4_acls.h"
+#include <acl/libacl.h>
 #include "fsal_types.h"
 
 /* inheritance flags checks */
@@ -23,18 +24,19 @@
 	(FSAL_ACE_PERM_WRITE_DATA | FSAL_ACE_PERM_APPEND_DATA)
 #define FSAL_ACE_PERM_SET_OWNER_WRITE \
 	(FSAL_ACE_PERM_WRITE_ACL | FSAL_ACE_PERM_WRITE_ATTR)
-#define FSAL_ACE_PERM_SET_DEFAULT_WRITE_DIR \
-	(FSAL_ACE_PERM_WRITE_DATA | FSAL_ACE_PERM_APPEND_DATA \
-	| FSAL_ACE_PERM_DELETE_CHILD)
 
-fsal_status_t
-posix_acl_2_fsal_acl(acl_t p_posixacl, fsal_acl_t **p_falacl);
+int
+posix_acl_2_fsal_acl(acl_t p_posixacl, bool is_dir, bool is_inherit,
+			fsal_ace_t **p_falacl);
 
 acl_t
 fsal_acl_2_posix_acl(fsal_acl_t *p_fsalacl, acl_type_t type);
 
 acl_entry_t
-find_entry(acl_t acl, acl_tag_t tag, int id);
+find_entry(acl_t acl, acl_tag_t tag, unsigned int id);
 
-fsal_status_t
-posix_acl_2_fsal_acl_for_dir(acl_t e_acl, acl_t i_acl, fsal_acl_t **p_falacl);
+acl_entry_t
+get_entry(acl_t acl, acl_tag_t tag, unsigned int id);
+
+int
+ace_count(acl_t acl);
