@@ -1358,7 +1358,8 @@ void nfs_rpc_execute(request_data_t *reqdata)
 	if ((reqdata->r_u.req.svc.rq_vers == 2)
 	 || (reqdata->r_u.req.svc.rq_vers == 3)
 	 || (reqdata->r_u.req.svc.rq_vers == 4)) {
-		if (!SVC_FREEARGS(xprt, reqdesc->xdr_decode_func,
+		if (!SVC_FREEARGS(xprt, &reqdata->r_u.req.svc,
+				  reqdesc->xdr_decode_func,
 				  (caddr_t) arg_nfs)) {
 			LogCrit(COMPONENT_DISPATCH,
 				"NFS DISPATCHER: FAILURE: Bad SVC_FREEARGS for %s",
