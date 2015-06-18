@@ -449,6 +449,13 @@ IF(PROXY_HANDLE_MAPPING)
   endif(NOT HAVE_SQLITE3 OR HAVE_SQLITE3_H)
 ENDIF(PROXY_HANDLE_MAPPING)
 
+IF(_VALGRIND_MEMCHECK)
+  check_include_files(valgrind/memcheck.h HAVE_MEMCHECK_H)
+  if(NOT HAVE_MEMCHECK_H)
+	  message(FATAL_ERROR "Cannot find valgrind/memcheck.h, install valgrind-devel package to enable _VALGRIND_MEMCHECK")
+  ENDIF(NOT HAVE_MEMCHECK_H)
+ENDIF(_VALGRIND_MEMCHECK)
+
 # X_ATTRD requires the kernel to have xattrs...DBUS_STATS
 if(NOT _NO_XATTRD)
   check_include_files("unistd.h;sys/xattr.h" HAVE_XATTR_H)

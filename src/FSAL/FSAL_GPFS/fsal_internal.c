@@ -228,10 +228,6 @@ fsal_status_t fsal_internal_get_handle(const char *p_fsalpath,	/* IN */
 	if (!p_handle || !p_fsalpath)
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
-#ifdef _VALGRIND_MEMCHECK
-	memset(p_handle, 0, sizeof(*p_handle));
-#endif
-
 	harg.handle = p_handle;
 	harg.handle->handle_size = OPENHANDLE_HANDLE_LEN;
 	harg.handle->handle_key_size = OPENHANDLE_KEY_LEN;
@@ -239,10 +235,6 @@ fsal_status_t fsal_internal_get_handle(const char *p_fsalpath,	/* IN */
 	harg.name = p_fsalpath;
 	harg.dfd = AT_FDCWD;
 	harg.flag = 0;
-
-#ifdef _VALGRIND_MEMCHECK
-	memset(harg.handle->f_handle, 0, harg.handle->handle_size);
-#endif
 
 	LogFullDebug(COMPONENT_FSAL, "Lookup handle for %s", p_fsalpath);
 
@@ -281,10 +273,6 @@ fsal_status_t fsal_internal_get_handle_at(int dfd, const char *p_fsalname,
 
 	if (!p_handle)
 		return fsalstat(ERR_FSAL_FAULT, 0);
-
-#ifdef _VALGRIND_MEMCHECK
-	memset(p_handle, 0, sizeof(*p_handle));
-#endif
 
 	harg.handle = p_handle;
 	harg.handle->handle_size = OPENHANDLE_HANDLE_LEN;
@@ -336,10 +324,6 @@ fsal_status_t fsal_internal_get_fh(int dirfd,	/* IN  */
 	if (!p_out_fh || !p_dir_fh || !p_fsalname)
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
-#ifdef _VALGRIND_MEMCHECK
-	memset(p_out_fh, 0, sizeof(*p_out_fh));
-#endif
-
 	harg.mountdirfd = dirfd;
 	harg.dir_fh = p_dir_fh;
 	harg.out_fh = p_out_fh;
@@ -384,10 +368,6 @@ fsal_status_t fsal_internal_fd2handle(int fd,
 	if (!p_handle)
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
-#ifdef _VALGRIND_MEMCHECK
-	memset(p_handle, 0, sizeof(*p_handle));
-#endif
-
 	harg.handle = p_handle;
 	harg.handle->handle_size = OPENHANDLE_HANDLE_LEN;
 	harg.handle->handle_key_size = OPENHANDLE_KEY_LEN;
@@ -395,10 +375,6 @@ fsal_status_t fsal_internal_fd2handle(int fd,
 	harg.name = NULL;
 	harg.dfd = fd;
 	harg.flag = 0;
-
-#ifdef _VALGRIND_MEMCHECK
-	memset(harg.handle->f_handle, 0, harg.handle->handle_size);
-#endif
 
 	LogFullDebug(COMPONENT_FSAL, "Lookup handle by fd for %d", fd);
 
@@ -481,10 +457,6 @@ fsal_status_t fsal_internal_stat_name(int dirfd,
 	int rc;
 	struct stat_name_arg statarg;
 	int errsv = 0;
-
-#ifdef _VALGRIND_MEMCHECK
-	memset(buf, 0, sizeof(*buf));
-#endif
 
 	if (!p_stat_name)
 		return fsalstat(ERR_FSAL_FAULT, 0);
@@ -583,10 +555,6 @@ fsal_status_t fsal_internal_create(struct fsal_obj_handle *dir_hdl,
 	if (!p_stat_name)
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
-#ifdef _VALGRIND_MEMCHECK
-	memset(p_new_handle, 0, sizeof(*p_new_handle));
-#endif
-
 	gpfs_hdl =
 	    container_of(dir_hdl, struct gpfs_fsal_obj_handle, obj_handle);
 	gpfs_fs = dir_hdl->fs->private;
@@ -682,10 +650,6 @@ fsal_status_t fsal_readlink_by_handle(int dirfd,
 	struct readlink_fh_arg readlinkarg;
 	int errsv = 0;
 
-#ifdef _VALGRIND_MEMCHECK
-	memset(__buf, 0, *maxlen);
-#endif
-
 	readlinkarg.mountdirfd = dirfd;
 	readlinkarg.handle = p_handle;
 	readlinkarg.buffer = __buf;
@@ -749,10 +713,6 @@ fsal_status_t fsal_get_xstat_by_handle(int dirfd,
 
 	if (!p_handle || !p_buffxstat)
 		return fsalstat(ERR_FSAL_FAULT, 0);
-
-#ifdef _VALGRIND_MEMCHECK
-	memset(p_buffxstat, 0, sizeof(*p_buffxstat));
-#endif
 
 #ifdef _USE_NFS4_ACL
 	/* Initialize acl header so that GPFS knows what we want. */
