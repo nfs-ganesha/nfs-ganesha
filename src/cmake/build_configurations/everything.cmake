@@ -1,9 +1,14 @@
 # Turn on everything in the options for a complete build
 
-#set(USE_TIRPC_IPV6 ON) # exports.c is broken here...
 set(PROXY_HANDLE_MAPPING ON)
 set(_NO_XATTRD OFF)
 set(USE_DBUS ON)
 set(USE_CB_SIMULATOR ON)
+set(USE_FSAL_PT ON)
+set(USE_FSAL_XFS ON)
+set(USE_FSAL_CEPH ON)
+set(USE_FSAL_GLUSTER ON)
+set(USE_FSAL_LUSTRE ON)
+set(USE_FSAL_ZFS ON)
 
 message(STATUS "Building everything")
