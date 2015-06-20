@@ -567,6 +567,7 @@ else(USE_FSAL_LUSTRE)
 endif(USE_FSAL_LUSTRE)
 
 if(USE_FSAL_LUSTRE AND USE_FSAL_SHOOK)
+  find_library(HAVE_SHOOK shooksvr)
   check_library_exists(
     shooksvr
     shook_restore
@@ -582,6 +583,10 @@ if(USE_FSAL_LUSTRE AND USE_FSAL_SHOOK)
       set(USE_FSAL_SHOOK OFF)
     endif(STRICT_PACKAGE)
   endif((NOT HAVE_SHOOK) OR (NOT HAVE_SHOOK_XATTRS))
+  if(USE_FSAL_SHOOK AND HAVE_INCLUDE_LUSTREAPI_H)
+    # shook uses a different define than us for this flag
+    set(_LUSTRE_API_HEADER 1)
+  endif(USE_FSAL_SHOOK AND HAVE_INCLUDE_LUSTREAPI_H)
 endif(USE_FSAL_LUSTRE AND USE_FSAL_SHOOK)
 
 IF(USE_FSAL_LUSTRE_UP)
