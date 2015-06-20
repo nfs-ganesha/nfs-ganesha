@@ -336,7 +336,7 @@ IF(USE_FSAL_HPSS)
   IF(HPSS_PREFIX)
     set(HPSS_PREFIX ${HPSS_PREFIX} CACHE PATH "Path to HPSS installation")
   ELSE()
-    set(HPSS_PREFIX "/usr" CACHE PATH "Path to HPSS installation")
+    set(HPSS_PREFIX "/opt/hpss" CACHE PATH "Path to HPSS installation")
   ENDIF()
 
   # If you are not using hpss with krb5, remove the hpsskrb5auth here.
