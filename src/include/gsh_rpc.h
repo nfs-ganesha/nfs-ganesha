@@ -136,17 +136,21 @@ const char *str_gc_proc(rpc_gss_proc_t);
 /* Private data associated with a new TI-RPC (TCP) SVCXPRT (transport
  * connection), ie, xprt->xp_u1.
  */
-#define XPRT_PRIVATE_FLAG_NONE 0x0000
-#define XPRT_PRIVATE_FLAG_LOCKED 0x0001
-#define XPRT_PRIVATE_FLAG_INCREQ 0x0002
-#define XPRT_PRIVATE_FLAG_DECREQ 0x0004
+#define XPRT_PRIVATE_FLAG_NONE		SVC_XPRT_FLAG_NONE
+/* uint16_t actually used */
 #define XPRT_PRIVATE_FLAG_DECODING 0x0008
 #define XPRT_PRIVATE_FLAG_STALLED 0x0010	/* ie, -on stallq- */
 
+/* uint32_t instructions */
+#define XPRT_PRIVATE_FLAG_LOCKED	SVC_XPRT_FLAG_LOCKED
+#define XPRT_PRIVATE_FLAG_UNLOCK	SVC_XPRT_FLAG_UNLOCK
+#define XPRT_PRIVATE_FLAG_INCREQ	0x00040000
+#define XPRT_PRIVATE_FLAG_DECREQ	0x00080000
+
 typedef struct gsh_xprt_private {
 	SVCXPRT *xprt;
-	uint32_t flags;
 	struct glist_head stallq;
+	uint16_t flags;
 } gsh_xprt_private_t;
 
 static inline gsh_xprt_private_t *alloc_gsh_xprt_private(SVCXPRT *xprt,
@@ -174,38 +178,29 @@ static inline void free_gsh_xprt_private(SVCXPRT *xprt)
 	}
 }
 
-static inline bool gsh_xprt_ref(SVCXPRT *xprt, uint32_t flags,
+static inline void gsh_xprt_ref(SVCXPRT *xprt, uint32_t flags,
 				const char *tag,
 				const int line)
 {
-	bool refd;
-
-	if (!(flags & XPRT_PRIVATE_FLAG_LOCKED))
-		PTHREAD_MUTEX_lock(&xprt->xp_lock);
-
 	if (flags & XPRT_PRIVATE_FLAG_INCREQ)
 		atomic_inc_uint32_t(&xprt->xp_requests);
 
-	refd = SVC_REF2(xprt, SVC_REF_FLAG_LOCKED, tag, line);
-
+	SVC_REF2(xprt, flags, tag, line);
 	/* !LOCKED */
 
 	LogFullDebugAlt(COMPONENT_DISPATCH, COMPONENT_RPC,
-		"xprt %p xp_requests=%u xp_refcnt=%u ag=%s line=%d",
-		xprt, xprt->xp_requests, xprt->xp_refcnt, tag, line);
-
-	return refd;
+		"xprt %p xp_requests=%" PRIu32 " xp_refs=%" PRIu32
+		" tag=%s line=%d",
+		xprt, xprt->xp_requests, xprt->xp_refs, tag, line);
 }
 
 static inline void gsh_xprt_unref(SVCXPRT *xprt, uint32_t flags,
 				  const char *tag, const int line)
 {
 	LogFullDebugAlt(COMPONENT_DISPATCH, COMPONENT_RPC,
-		"xprt %p prerelease xp_requests=%u xp_refcnt=%u tag=%s line=%d",
-		xprt, xprt->xp_requests, xprt->xp_refcnt, tag, line);
-
-	if (!(flags & XPRT_PRIVATE_FLAG_LOCKED))
-		PTHREAD_MUTEX_lock(&xprt->xp_lock);
+		"xprt %p prerelease xp_requests=%" PRIu32 " xp_refs=%" PRIu32
+		" tag=%s line=%d",
+		xprt, xprt->xp_requests, xprt->xp_refs, tag, line);
 
 	if (flags & XPRT_PRIVATE_FLAG_DECREQ)
 		atomic_dec_uint32_t(&xprt->xp_requests);
@@ -213,26 +208,24 @@ static inline void gsh_xprt_unref(SVCXPRT *xprt, uint32_t flags,
 	if (flags & XPRT_PRIVATE_FLAG_DECODING) {
 		gsh_xprt_private_t *xu = (gsh_xprt_private_t *) xprt->xp_u1;
 
-		if (xu->flags & XPRT_PRIVATE_FLAG_DECODING)
-			xu->flags &= ~XPRT_PRIVATE_FLAG_DECODING;
+		if (xu)
+			atomic_clear_uint16_t_bits(&xu->flags,
+						   XPRT_PRIVATE_FLAG_DECODING);
 	}
 
-	/* release xprt refcnt */
-	SVC_RELEASE2(xprt, SVC_RELEASE_FLAG_LOCKED, tag, line);
+	SVC_RELEASE2(xprt, flags, tag, line);
 	/* !LOCKED */
 
 	LogFullDebugAlt(COMPONENT_DISPATCH, COMPONENT_RPC,
-		"xprt %p postrelease xp_requests=%u xp_refcnt=%u tag=%s line=%d",
-		xprt, xprt->xp_requests, xprt->xp_refcnt, tag, line);
+		"xprt %p postrelease xp_requests=%" PRIu32 " xp_refs=%" PRIu32
+		" tag=%s line=%d",
+		xprt, xprt->xp_requests, xprt->xp_refs, tag, line);
 }
 
 static inline bool gsh_xprt_decoder_guard(SVCXPRT *xprt, uint32_t flags)
 {
 	gsh_xprt_private_t *xu = (gsh_xprt_private_t *)xprt->xp_u1;
 	bool rslt = false;
-
-	if (!(flags & XPRT_PRIVATE_FLAG_LOCKED))
-		PTHREAD_MUTEX_lock(&xprt->xp_lock);
 
 	if (xu->flags & XPRT_PRIVATE_FLAG_DECODING) {
 		LogDebug(COMPONENT_DISPATCH, "guard failed: flag %s",
@@ -246,11 +239,11 @@ static inline bool gsh_xprt_decoder_guard(SVCXPRT *xprt, uint32_t flags)
 		goto unlock;
 	}
 
-	xu->flags |= XPRT_PRIVATE_FLAG_DECODING;
+	atomic_set_uint16_t_bits(&xu->flags, XPRT_PRIVATE_FLAG_DECODING);
 	rslt = true;
 
  unlock:
-	if (!(flags & XPRT_PRIVATE_FLAG_LOCKED))
+	if (flags & XPRT_PRIVATE_FLAG_LOCKED)
 		PTHREAD_MUTEX_unlock(&xprt->xp_lock);
 
 	return rslt;
@@ -258,18 +251,16 @@ static inline bool gsh_xprt_decoder_guard(SVCXPRT *xprt, uint32_t flags)
 
 static inline void gsh_xprt_clear_flag(SVCXPRT *xprt, uint32_t flags)
 {
-	if (!(flags & XPRT_PRIVATE_FLAG_LOCKED))
-		PTHREAD_MUTEX_lock(&xprt->xp_lock);
-
 	if (flags & XPRT_PRIVATE_FLAG_DECODING) {
 		gsh_xprt_private_t *xu = (gsh_xprt_private_t *)xprt->xp_u1;
 
-		if (xu->flags & XPRT_PRIVATE_FLAG_DECODING)
-			xu->flags &= ~XPRT_PRIVATE_FLAG_DECODING;
+		if (xu)
+			atomic_clear_uint16_t_bits(&xu->flags,
+						   XPRT_PRIVATE_FLAG_DECODING);
 	}
 
-	/* unconditional */
-	PTHREAD_MUTEX_unlock(&xprt->xp_lock);
+	if (flags & XPRT_PRIVATE_FLAG_LOCKED)
+		PTHREAD_MUTEX_unlock(&xprt->xp_lock);
 }
 
 #define DISP_SLOCK(x)							\

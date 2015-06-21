@@ -1076,8 +1076,8 @@ void thr_stallq(struct fridgethr_context *thr_ctx)
 				if (xu->flags & XPRT_PRIVATE_FLAG_STALLED) {
 					glist_del(&xu->stallq);
 					--(nfs_req_st.stallq.stalled);
-					xu->flags &=
-						~XPRT_PRIVATE_FLAG_STALLED;
+					atomic_clear_uint16_t_bits(&xu->flags,
+						XPRT_PRIVATE_FLAG_STALLED);
 					(void)svc_rqst_rearm_events(
 						xprt, SVC_RQST_FLAG_NONE);
 					/* drop stallq ref */
@@ -1103,9 +1103,10 @@ static bool nfs_rpc_cond_stall_xprt(SVCXPRT *xprt)
 	/* check per-xprt quota */
 	if (likely(nreqs < nfs_param.core_param.dispatch_max_reqs_xprt)) {
 		LogDebug(COMPONENT_DISPATCH,
-			 "xprt %p refcnt %d has %d reqs active (max %d)",
+			 "xprt %p xp_refs %" PRIu32 " has %" PRIu32
+			 " reqs active (max %d)",
 			 xprt,
-			 xprt->xp_refcnt,
+			 xprt->xp_refs,
 			 nreqs,
 			 nfs_param.core_param.dispatch_max_reqs_xprt);
 		return false;
@@ -1130,7 +1131,7 @@ static bool nfs_rpc_cond_stall_xprt(SVCXPRT *xprt)
 
 	glist_add_tail(&nfs_req_st.stallq.q, &xu->stallq);
 	++(nfs_req_st.stallq.stalled);
-	xu->flags |= XPRT_PRIVATE_FLAG_STALLED;
+	atomic_set_uint16_t_bits(&xu->flags, XPRT_PRIVATE_FLAG_STALLED);
 	PTHREAD_MUTEX_unlock(&xprt->xp_lock);
 
 	/* if no thread is servicing the stallq, start one */
@@ -1835,11 +1836,7 @@ enum xprt_stat thr_decode_rpc_request(void *context, SVCXPRT *xprt)
 	if (!nfs_rpc_get_args(&reqdata->r_u.req))
 		goto finish;
 
-	/* update accounting */
-	if (!gsh_xprt_ref(xprt, XPRT_PRIVATE_FLAG_INCREQ, __func__, __LINE__)) {
-		stat = XPRT_DIED;
-		goto unlock;
-	}
+	gsh_xprt_ref(xprt, XPRT_PRIVATE_FLAG_INCREQ, __func__, __LINE__);
 
 	/* XXX as above, the call has already passed is_rpc_call_valid,
 	 * the former check here is removed. */
@@ -1848,8 +1845,6 @@ enum xprt_stat thr_decode_rpc_request(void *context, SVCXPRT *xprt)
 
  finish:
 	stat = SVC_STAT(xprt);
-
- unlock:
 	DISP_RUNLOCK(xprt);
 
  done:
@@ -2037,7 +2032,7 @@ static bool nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */)
 			     "Decode dispatch timed out, rearming. xprt=%p",
 			     xprt);
 
-		svc_rqst_rearm_events(xprt, SVC_RQST_FLAG_NONE);
+		(void)svc_rqst_rearm_events(xprt, SVC_RQST_FLAG_NONE);
 		gsh_xprt_unref(xprt, XPRT_PRIVATE_FLAG_DECODING, __func__,
 			       __LINE__);
 	} else if (code != 0) {
