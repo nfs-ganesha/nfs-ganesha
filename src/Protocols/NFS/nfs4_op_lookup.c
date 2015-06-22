@@ -96,7 +96,7 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t *data,
 	if (res_LOOKUP4->status != NFS4_OK)
 		goto out;
 
-	LogFullDebug(COMPONENT_NFS_V4,
+	LogDebug(COMPONENT_NFS_V4,
 		     "name=%s",
 		     name);
 

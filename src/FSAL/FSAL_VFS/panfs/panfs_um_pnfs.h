@@ -19,6 +19,10 @@
  * -------------
  */
 
+#ifndef __PANFS_UM_PNFS_H
+#define __PANFS_UM_PNFS_H
+
+#include "fsal_types.h"
 #include "fsal_pnfs.h"
 #include "panfs_pnfs_ioctl.h"
 
@@ -58,3 +62,12 @@ int panfs_um_recieve_layoutrecall(int fd,
 				  int max_events, int *num_events);
 
 int panfs_um_cancel_recalls(int fd, int debug_magic);
+
+struct pan_attrs;
+struct pan_stor_obj_id_s;
+
+fsal_status_t panfs_um_get_attr(int fd, struct pan_attrs *pan_attrs);
+
+fsal_status_t panfs_um_set_attr(int fd, struct pan_attrs *pan_attrs);
+
+#endif /* __PANFS_UM_PNFS_H */

@@ -130,11 +130,11 @@ int vfs_sub_init_handle(struct vfs_fsal_export *vfs_export,
 		const char *path)
 {
 	struct panfs_fsal_export *myself = EXPORT_PANFS_FROM_VFS(vfs_export);
-	/*struct panfs_fsal_obj_handle *hdl = OBJ_PANFS_FROM_VFS(vfs_hdl);*/
+	struct panfs_fsal_obj_handle *hdl = OBJ_PANFS_FROM_VFS(vfs_hdl);
 
 	if (myself->pnfs_enabled)
 		handle_ops_pnfs(&vfs_hdl->obj_handle.obj_ops);
 
-	/* XXX dang lookup OID */
+	panfs_handle_ops_init(hdl);
 	return 0;
 }
