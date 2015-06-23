@@ -806,19 +806,6 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 			/* setting the ACL will set the */
 			/* mode-bits too if not already passed */
 			FSAL_SET_MASK(mask, GLAPI_SET_ATTR_MODE);
-		} else if (mask & GLAPI_SET_ATTR_MODE) {
-#if 0
-			bool is_dir = 0;
-			switch (obj_hdl->type) {
-			case REGULAR_FILE:
-				is_dir = 0; break;
-			case DIRECTORY:
-				is_dir = 1; break;
-			default:
-				break;
-			}
-#endif
-
 		}
 	} else if (FSAL_TEST_MASK(attrs->mask, ATTR_ACL)) {
 		status = fsalstat(ERR_FSAL_ATTRNOTSUPP, 0);
