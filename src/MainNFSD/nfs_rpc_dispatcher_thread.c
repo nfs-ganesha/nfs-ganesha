@@ -859,14 +859,17 @@ void nfs_Init_svc(void)
 		 "Socket numbers are: rquota_udp=%u  rquota_tcp=%u",
 		 udp_socket[P_RQUOTA], tcp_socket[P_RQUOTA]);
 
-	/* Bind the tcp and udp sockets */
-	Bind_sockets();
+	if ((nfs_param.core_param.core_options &
+	     CORE_OPTION_ALL_NFS_VERS) != 0) {
+		/* Bind the tcp and udp sockets */
+		Bind_sockets();
 
-	/* Unregister from portmapper/rpcbind */
-	unregister_rpc();
+		/* Unregister from portmapper/rpcbind */
+		unregister_rpc();
 
-	/* Set up well-known xprt handles */
-	Create_SVCXPRTs();
+		/* Set up well-known xprt handles */
+		Create_SVCXPRTs();
+	}
 
 #ifdef _HAVE_GSSAPI
 	/* Acquire RPCSEC_GSS basis if needed */
