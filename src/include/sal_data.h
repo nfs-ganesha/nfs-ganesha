@@ -213,8 +213,6 @@ struct state_refer {
  */
 typedef struct grace {
 	pthread_mutex_t g_mutex;	/*< Mutex */
-	time_t g_start;		/*< Start of grace period */
-	time_t g_duration;	/*< Duration of grace period */
 	struct glist_head g_clid_list;	/*< Clients */
 } grace_t;
 
