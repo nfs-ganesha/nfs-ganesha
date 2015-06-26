@@ -47,6 +47,7 @@
 
 char v4_recov_dir[PATH_MAX];
 char v4_old_dir[PATH_MAX];
+time_t current_grace;
 
 /**
  * @brief Grace period control data
@@ -71,6 +72,8 @@ static void nfs_release_v4_client(char *ip);
  */
 void nfs4_start_grace(nfs_grace_start_t *gsp)
 {
+	time_t current_time;
+
 	if (nfs_param.nfsv4_param.graceless) {
 		LogEvent(COMPONENT_STATE,
 			 "NFS Server skipping GRACE (Graceless is true)");
@@ -84,11 +87,11 @@ void nfs4_start_grace(nfs_grace_start_t *gsp)
 	 * seconds Lease_Lifetime should be set to a smaller value for those
 	 * setups.
 	 */
-	grace.g_start = time(NULL);
-	grace.g_duration = nfs_param.nfsv4_param.lease_lifetime;
+	current_time = time(NULL);
+	atomic_store_uint64_t(&current_grace, current_time);
 
 	LogEvent(COMPONENT_STATE, "NFS Server Now IN GRACE, duration %d",
-		 (int)grace.g_duration);
+		 (int)nfs_param.nfsv4_param.lease_lifetime);
 	/*
 	 * if called from failover code and given a nodeid, then this node
 	 * is doing a take over.  read in the client ids from the failing node
@@ -126,9 +129,8 @@ int nfs_in_grace(void)
 	if (nfs_param.nfsv4_param.graceless)
 		return 0;
 
-	PTHREAD_MUTEX_lock(&grace.g_mutex);
-
-	in_grace = ((grace.g_start + grace.g_duration) > time(NULL));
+	in_grace = ((atomic_fetch_time_t(&current_grace) +
+		     nfs_param.nfsv4_param.lease_lifetime) > time(NULL));
 
 	if (in_grace != last_grace) {
 		LogEvent(COMPONENT_STATE, "NFS Server Now %s",
@@ -137,8 +139,6 @@ int nfs_in_grace(void)
 	} else if (in_grace) {
 		LogDebug(COMPONENT_STATE, "NFS Server IN GRACE");
 	}
-
-	PTHREAD_MUTEX_unlock(&grace.g_mutex);
 
 	return in_grace;
 }
