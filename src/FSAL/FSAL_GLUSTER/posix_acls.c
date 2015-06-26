@@ -316,10 +316,16 @@ fsal_acl_2_posix_acl(fsal_acl_t *p_fsalacl, acl_type_t type)
 		LogWarn(COMPONENT_FSAL, "Invalid type for the acl");
 	}
 
-	if (entries > 0)
-		p_acl = acl_init(entries + 1);
-	else
+	if (entries == 0)
 		return NULL;
+
+	/*
+	 * The given fsal_acl list may not contains all required entries
+	 * (OWNER@, @GROUP, @EVERYONE) so for a safer approach we may
+	 * allocate three more than required. This problem may occur more
+	 * prominently inherit acl
+	 */
+	p_acl = acl_init(entries + 3);
 
 	/* To store values of EVERYONE ACE, a duumy acl entry is used and
 	 * it freed at the end */
