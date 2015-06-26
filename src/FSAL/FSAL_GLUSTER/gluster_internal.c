@@ -269,16 +269,11 @@ int construct_handle(struct glusterfs_export *glexport, const struct stat *sb,
 
 	stat2fsal_attributes(sb, &constructing->attributes);
 
-	switch (constructing->handle.type) {
-	case REGULAR_FILE:
-		buffxstat.is_dir = false;
-		break;
-	case DIRECTORY:
+	if (constructing->attributes.type == DIRECTORY)
 		buffxstat.is_dir = true;
-		break;
-	default:
-		break;
-	}
+	else
+		buffxstat.is_dir = false;
+
 	status = glusterfs_get_acl(glexport, glhandle, &buffxstat,
 				   &constructing->attributes);
 

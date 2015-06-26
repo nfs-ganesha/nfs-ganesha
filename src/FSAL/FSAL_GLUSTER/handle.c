@@ -681,16 +681,11 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl)
 
 	fsalattr = &objhandle->attributes;
 	stat2fsal_attributes(&buffxstat.buffstat, fsalattr);
-	switch (obj_hdl->type) {
-	case REGULAR_FILE:
-		buffxstat.is_dir = false;
-		break;
-	case DIRECTORY:
+	if (obj_hdl->type == DIRECTORY)
 		buffxstat.is_dir = true;
-		break;
-	default:
-		break;
-	}
+	else
+		buffxstat.is_dir = false;
+
 	status = glusterfs_get_acl(glfs_export, objhandle->glhandle,
 				   &buffxstat, fsalattr);
 
@@ -791,16 +786,11 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 
 	if (NFSv4_ACL_SUPPORT) {
 		if (FSAL_TEST_MASK(attrs->mask, ATTR_ACL)) {
-			switch (obj_hdl->type) {
-			case REGULAR_FILE:
-				buffxstat.is_dir = false;
-				break;
-			case DIRECTORY:
+			if (obj_hdl->type == DIRECTORY)
 				buffxstat.is_dir = true;
-				break;
-			default:
-				break;
-			}
+			else
+				buffxstat.is_dir = false;
+
 			FSAL_SET_MASK(attr_valid, XATTR_ACL);
 			status =
 			  glusterfs_process_acl(glfs_export->gl_fs,
