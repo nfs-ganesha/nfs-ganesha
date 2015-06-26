@@ -279,9 +279,14 @@ int construct_handle(struct glusterfs_export *glexport, const struct stat *sb,
 
 	if (FSAL_IS_ERROR(status)) {
 		/* TODO: Is the error appropriate */
-		errno = EINVAL;
-		gsh_free(constructing);
-		return -1;
+
+		/* For dead links , we should not return error */
+		if (!(constructing->attributes.type == SYMBOLIC_LINK
+					&& status.minor == ENOENT)) {
+			errno = EINVAL;
+			gsh_free(constructing);
+			return -1;
+		}
 	}
 
 	constructing->glhandle = glhandle;

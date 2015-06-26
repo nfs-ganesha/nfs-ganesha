@@ -689,6 +689,10 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl)
 	status = glusterfs_get_acl(glfs_export, objhandle->glhandle,
 				   &buffxstat, fsalattr);
 
+	/* for dead links we should not return error */
+	if (obj_hdl->type == SYMBOLIC_LINK && status.minor == ENOENT)
+		status = fsalstat(ERR_FSAL_NO_ERROR, 0);
+
  out:
 #ifdef GLTIMING
 	now(&e_time);
