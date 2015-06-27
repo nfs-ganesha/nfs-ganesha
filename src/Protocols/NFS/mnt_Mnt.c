@@ -84,7 +84,8 @@ int mnt_Mnt(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	/* If the path ends with a '/', get rid of it */
 	/** @todo: should it be a while()?? */
-	if (arg->arg_mnt[strlen(arg->arg_mnt) - 1] == '/')
+	if ((strlen(arg->arg_mnt) > 1) &&
+	    (arg->arg_mnt[strlen(arg->arg_mnt) - 1] == '/'))
 		arg->arg_mnt[strlen(arg->arg_mnt) - 1] = '\0';
 
 	/*  Find the export for the dirname (using as well Path or Tag) */
