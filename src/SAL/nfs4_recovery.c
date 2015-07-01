@@ -229,7 +229,6 @@ void nfs4_create_clid_name(nfs_client_record_t *cl_rec,
 			LogEvent(COMPONENT_CLIENTID, "Mem_Alloc FAILED");
 			return;
 		}
-		memset(clientid->cid_recov_dir, 0, total_len);
 
 		(void) snprintf(clientid->cid_recov_dir, total_len,
 				"%s-(%s:%s)",
@@ -278,7 +277,6 @@ void nfs4_create_clid_name41(nfs_client_record_t *cl_rec,
 			LogEvent(COMPONENT_CLIENTID, "Mem_Alloc FAILED");
 			return;
 		}
-		memset(clientid->cid_recov_dir, 0, total_len);
 
 		(void) snprintf(clientid->cid_recov_dir, total_len,
 				"%s-(%s:%s)",
