@@ -390,6 +390,14 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 						upflags);
 			break;
 
+		case THREAD_PAUSE:
+			/* File system image is probably going away, but
+			 * we don't need to do anything here as we
+			 * eventually get other errors that stop this
+			 * thread.
+			 */
+			continue; /* get next event */
+
 		default:
 			LogWarn(COMPONENT_FSAL_UP, "Unknown event: %d", reason);
 			continue;
