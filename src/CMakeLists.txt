@@ -135,9 +135,10 @@ include(CPack)
 if (FREEBSD)
 #default gcc doesn't like using -Wuninitialized without -O on FreeBSD
     set(PLATFORM "FREEBSD")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O -ggdb")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O2 -ggdb")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-omit-frame-pointer")
-    set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -rdynamic")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-optimize-sibling-calls")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--export-dynamic")
     set(OS_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/include/os/freebsd")
     find_library(LIBDL c)  # libc suffices on freebsd
 endif(FREEBSD)

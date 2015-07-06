@@ -32,7 +32,7 @@
 #define HANDLE_FREEBSD_H
 
 #include <fsal_convert.h>
-#include "../os/freebsd/syscalls.h"
+#include "syscalls.h"
 
 #ifndef O_PATH
 #define O_PATH 0
@@ -52,6 +52,7 @@
 static inline int vfs_stat_by_handle(int mountfd, vfs_file_handle_t *fh,
 				     struct stat *buf, int flags)
 {
+	int ret;
 	/* BSD doesn't (yet) have AT_EMPTY_PATH support, so just use fstat() */
 	ret = fstat(mountfd, buf);
 	return ret;
@@ -62,7 +63,7 @@ static inline int vfs_link_by_handle(vfs_file_handle_t *fh,
 				     int destdirfd,
 				     const char *dname)
 {
-	struct fhandle *handle = (struct fhandle *)fh->handle;
+	struct fhandle *handle = (struct fhandle *)fh->handle_data;
 
 	return fhlink(handle, destdirfd, dname);
 }
@@ -71,7 +72,7 @@ static inline int vfs_readlink_by_handle(vfs_file_handle_t *fh, int srcfd,
 					 const char *sname, char *buf,
 					 size_t bufsize)
 {
-	struct fhandle *handle = (struct fhandle *)fh->handle;
+	struct fhandle *handle = (struct fhandle *)fh->handle_data;
 
 	return fhreadlink(handle, buf, bufsize);
 }

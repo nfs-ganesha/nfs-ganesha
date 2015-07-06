@@ -23,7 +23,7 @@
 
 /**
  * @file    syscalls.h
- * @brief   platform dependant syscalls
+ * @brief   platform dependent syscalls
  */
 
 #ifndef _SYSCALLS_FREEBSD_H
@@ -43,7 +43,7 @@
 
 #if __FreeBSD_cc_version  >= 800001
 /* getfhat() is not implemented in FreeBSD kernel yet */
-int getfhat(int fd, const char *path, fhandle_t *fhp);
+int getfhat(int fd, char *path, fhandle_t *fhp, int flag);
 int fhlink(struct fhandle *fhp, int tofd, const char *to);
 int fhreadlink(struct fhandle *fhp, char *buf, size_t bufsize);
 #endif				/* __FreeBSD_cc_version */

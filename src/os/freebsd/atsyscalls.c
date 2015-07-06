@@ -26,37 +26,96 @@
  * @brief   platform dependent syscalls
  */
 
+#include <errno.h>
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/syscall.h>
 #include "syscalls.h"
+#include <sys/types.h>
+#include <sys/module.h>
 
 #if __FreeBSD_cc_version  >= 800001
 /* Fllowing syscalls are not yet implemented in vanilla FreeBSD kernels  */
-int getfhat(int fd, const char *path, fhandle_t *fhp)
+int getfhat(int dir_fd, char *fname, struct fhandle *fhp, int flag)
 {
-	/* currently this is only a stub untill we implement getfhat() */
-	/* in FreeBSD kernel */
-	return ENOTSUP;
+	int mod, err;
+	int syscall_num;
+	struct module_stat stat;
+
+	stat.version = sizeof(stat);
+	/* modstat will retrieve the module_stat structure for our module named
+	 * syscall (see the SYSCALL_MODULE macro which sets the name to syscall)
+	 */
+	mod = modfind("sys/getfhat");
+	if (mod == -1)
+		return errno;
+
+	err = modstat(mod, &stat);
+	if (err)
+		return errno;
+
+	/* extract the slot (syscall) number */
+	syscall_num = stat.data.intval;
+	/* int getfhat(int fd, char *path, struct fhandle *fhp, int flag); */
+	return syscall(syscall_num, dir_fd, fname, fhp, flag);
 }
 
 int fhlink(struct fhandle *fhp, int tofd, const char *to)
 {
-	return ENOTSUP;
+	int mod, err;
+	int syscall_num;
+	struct module_stat stat;
+
+	stat.version = sizeof(stat);
+	/* modstat will retrieve the module_stat structure for our module named
+	 * syscall (see the SYSCALL_MODULE macro which sets the name to syscall)
+	 */
+	mod = modfind("sys/fhlink");
+	if (mod == -1)
+		return errno;
+
+	err = modstat(mod, &stat);
+	if (err)
+		return errno;
+
+	/* extract the slot (syscall) number */
+	syscall_num = stat.data.intval;
+	/* int fhlink(struct fhandle *fhp, int tofd, const char *to); */
+	return syscall(syscall_num, fhp, tofd, to);
 }
 
 int fhreadlink(struct fhandle *fhp, char *buf, size_t bufsize)
 {
-	return ENOTSUP;
+	int mod, err;
+	int syscall_num;
+	struct module_stat stat;
+
+	stat.version = sizeof(stat);
+	/* modstat will retrieve the module_stat structure for our module named
+	 * syscall (see the SYSCALL_MODULE macro which sets the name to syscall)
+	 */
+	mod = modfind("sys/fhreadlink");
+	if (mod == -1)
+		return errno;
+
+	err = modstat(mod, &stat);
+	if (err)
+		return errno;
+
+	/* extract the slot (syscall) number */
+	syscall_num = stat.data.intval;
+	/* int fhreadlink(struct fhandle *fhp, char *buf, size_t bufsize); */
+	return syscall(syscall_num, fhp, buf, bufsize);
 }
 
 #endif
 
 #ifndef SYS_openat
 /*
- *  * Allow compliation (only) on FreeBSD versions without these syscalls
- *   * These numbers match the modified FreeBSD 7.2 used by Panasas
- *    */
+ * Allow compliation (only) on FreeBSD versions without these syscalls
+ * These numbers match the modified FreeBSD 10.1 used by Panasas
+ *
+ */
 
 #define SYS_faccessat   512
 #define SYS_fchmodat    513
