@@ -1574,6 +1574,7 @@ static inline enum auth_stat AuthenticateRequest(nfs_request_t *reqnfs,
 	return AUTH_OK;
 }
 
+#if 0
 static inline enum xprt_stat nfs_rpc_continue_decoding(SVCXPRT *xprt,
 						       enum xprt_stat stat)
 {
@@ -1599,6 +1600,7 @@ static inline enum xprt_stat nfs_rpc_continue_decoding(SVCXPRT *xprt,
 
 	return stat;
 }
+#endif
 
 /**
  * @brief Helper function to validate rpc calls.

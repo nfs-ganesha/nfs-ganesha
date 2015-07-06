@@ -579,7 +579,7 @@ CIDR *cidr_from_str(const char *addr)
 			 * <http://www.opengroup.org/onlinepubs/007908799/xns/inet_addr.html>
 			 * for details.
 			 */
-			if (octet < 0 || (nocts != 0 && octet > 255)
+			if ((nocts != 0 && octet > 255)
 			    || (nocts == 0
 				&& octet > (0xffffffff >> (8 * (nsect - 1))))) {
 				cidr_free(toret);
@@ -766,7 +766,7 @@ CIDR *cidr_from_str(const char *addr)
 					/* Should be a [decimal] octet right after here */
 					octet = strtoul(addr + i + 1, NULL, 10);
 					/* Be sure */
-					if (octet < 0 || octet > 255) {
+					if (octet > 255) {
 						cidr_free(toret);
 						errno = EINVAL;
 						return (NULL);
@@ -841,7 +841,7 @@ CIDR *cidr_from_str(const char *addr)
 			buf2 = NULL;
 
 			/* Remember, this is TWO octets */
-			if (octet < 0 || octet > 0xffff) {
+			if (octet > 0xffff) {
 				cidr_free(toret);
 				errno = EINVAL;
 				return (NULL);
@@ -898,7 +898,7 @@ CIDR *cidr_from_str(const char *addr)
 				buf2 = NULL;
 
 				/* Sanity (again, 2 octets) */
-				if (octet < 0 || octet > 0xffff) {
+				if (octet > 0xffff) {
 					cidr_free(toret);
 					errno = EINVAL;
 					return (NULL);
