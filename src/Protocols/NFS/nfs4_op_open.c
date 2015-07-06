@@ -350,10 +350,10 @@ static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t *data,
 static nfsstat4 open4_create_fh(compound_data_t *data, cache_entry_t *entry)
 {
 	nfs_fh4 newfh4;
-	struct alloc_file_handle_v4 new_handle;
+	char new_handle[NFS4_FHSIZE];
 
-	newfh4.nfs_fh4_val = (caddr_t) &new_handle;
-	newfh4.nfs_fh4_len = sizeof(struct alloc_file_handle_v4);
+	newfh4.nfs_fh4_val = new_handle;
+	newfh4.nfs_fh4_len = sizeof(new_handle);
 
 	/* Building a new fh */
 	if (!nfs4_FSALToFhandle(&newfh4,

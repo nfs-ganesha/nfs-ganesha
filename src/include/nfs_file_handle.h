@@ -43,18 +43,6 @@
 #include "nfs_fh.h"
 
 /**
- * @brief A struct with the size of the largest v3 handle
- *
- * Used for allocations, sizeof, and memset only.  The pad space is
- * where the opaque handle expands into.  Pad is struct aligned.
- */
-
-struct alloc_file_handle_v3 {
-	struct file_handle_v3 handle;	/*< The real handle */
-	uint8_t pad[58];	/*< Pad to mandatory max 64 bytes */
-};
-
-/**
  * @brief Get the actual size of a v3 handle based on the sized fsopaque
  *
  * @return The filehandle size
@@ -70,23 +58,11 @@ static inline size_t nfs3_sizeof_handle(struct file_handle_v3 *hdl)
 	/* correct packet's fh length so it's divisible by 4 to trick dNFS into
 	   working. This is essentially sending the padding. */
 	padding = (4 - (hsize % 4)) % 4;
-	if ((hsize + padding) <= sizeof(struct alloc_file_handle_v3))
+	if ((hsize + padding) <= NFS3_FHSIZE)
 		hsize += padding;
 
 	return hsize;
 }
-
-/**
- * @brief A struct with the size of the largest v4 handle
- *
- * Used for allocations, sizeof, and memset only.  The pad space is
- * where the opaque handle expands into.  Pad is struct aligned.
- */
-
-struct __attribute__ ((__packed__)) alloc_file_handle_v4 {
-	struct file_handle_v4 handle;	/*< The real handle */
-	uint8_t pad[123];	/*< Pad to mandatory max 128 bytes */
-};
 
 int nfs3_AllocateFH(nfs_fh3 *);
 int nfs4_AllocateFH(nfs_fh4 *);

@@ -42,8 +42,7 @@
 /* Atomic uint64_t that is used to generate inode numbers in the Pseudo FS */
 uint64_t inode_number;
 
-#define V4_FH_OPAQUE_SIZE (sizeof(struct alloc_file_handle_v4) - \
-			   sizeof(struct file_handle_v4))
+#define V4_FH_OPAQUE_SIZE (NFS4_FHSIZE - sizeof(struct file_handle_v4))
 
 /* helpers
  */

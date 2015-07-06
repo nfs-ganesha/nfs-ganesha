@@ -102,7 +102,7 @@ int nfs3_lookup(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	if (entry_file && (cache_status == CACHE_INODE_SUCCESS)) {
 		/* Build FH */
 		res->res_lookup3.LOOKUP3res_u.resok.object.data.data_val =
-		    gsh_malloc(sizeof(struct alloc_file_handle_v3));
+		    gsh_malloc(NFS3_FHSIZE);
 
 		if (res->res_lookup3.LOOKUP3res_u.resok.object.data.data_val ==
 		    NULL)

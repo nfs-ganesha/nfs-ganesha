@@ -57,7 +57,7 @@
 int nfs3_AllocateFH(nfs_fh3 *fh)
 {
 	/* Allocating the filehandle in memory */
-	fh->data.data_len = sizeof(struct alloc_file_handle_v3);
+	fh->data.data_len = NFS3_FHSIZE;
 
 	fh->data.data_val = gsh_malloc(fh->data.data_len);
 
@@ -87,7 +87,7 @@ int nfs3_AllocateFH(nfs_fh3 *fh)
 int nfs4_AllocateFH(nfs_fh4 *fh)
 {
 	/* Allocating the filehandle in memory */
-	fh->nfs_fh4_len = sizeof(struct alloc_file_handle_v4);
+	fh->nfs_fh4_len = NFS4_FHSIZE;
 
 	fh->nfs_fh4_val = gsh_malloc(fh->nfs_fh4_len);
 
@@ -189,7 +189,7 @@ bool nfs4_FSALToFhandle(nfs_fh4 *fh4,
 	struct gsh_buffdesc fh_desc;
 
 	/* reset the buffer to be used as handle */
-	fh4->nfs_fh4_len = sizeof(struct alloc_file_handle_v4);
+	fh4->nfs_fh4_len = NFS4_FHSIZE;
 	memset(fh4->nfs_fh4_val, 0, fh4->nfs_fh4_len);
 	file_handle = (file_handle_v4_t *) fh4->nfs_fh4_val;
 
@@ -245,7 +245,7 @@ bool nfs3_FSALToFhandle(nfs_fh3 *fh3,
 	struct gsh_buffdesc fh_desc;
 
 	/* reset the buffer to be used as handle */
-	fh3->data.data_len = sizeof(struct alloc_file_handle_v3);
+	fh3->data.data_len = NFS3_FHSIZE;
 	memset(fh3->data.data_val, 0, fh3->data.data_len);
 	file_handle = (file_handle_v3_t *) fh3->data.data_val;
 
@@ -314,8 +314,6 @@ int nfs4_Is_Fh_Invalid(nfs_fh4 *fh)
 {
 	file_handle_v4_t *pfile_handle;
 
-	BUILD_BUG_ON(sizeof(struct alloc_file_handle_v4) != NFS4_FHSIZE);
-
 	if (fh == NULL) {
 		LogMajor(COMPONENT_FILEHANDLE, "INVALID HANDLE: fh==NULL");
 		return NFS4ERR_BADHANDLE;
@@ -334,7 +332,7 @@ int nfs4_Is_Fh_Invalid(nfs_fh4 *fh)
 	if (pfile_handle == NULL || fh->nfs_fh4_len == 0
 	    || pfile_handle->fhversion != GANESHA_FH_VERSION
 	    || fh->nfs_fh4_len < offsetof(struct file_handle_v4, fsopaque)
-	    || fh->nfs_fh4_len > sizeof(struct alloc_file_handle_v4)
+	    || fh->nfs_fh4_len > NFS4_FHSIZE
 	    || fh->nfs_fh4_len != nfs4_sizeof_handle(pfile_handle)) {
 		if (isInfo(COMPONENT_FILEHANDLE)) {
 			if (pfile_handle == NULL) {
@@ -356,12 +354,11 @@ int nfs4_Is_Fh_Invalid(nfs_fh4 *fh)
 					(int)offsetof(struct file_handle_v4,
 						      fsopaque));
 			} else if (fh->nfs_fh4_len >
-				   sizeof(struct alloc_file_handle_v4)) {
+				   NFS4_FHSIZE) {
 				LogInfo(COMPONENT_FILEHANDLE,
 					"INVALID HANDLE: data.data_len=%d is greater than %d",
 					fh->nfs_fh4_len,
-					(int)sizeof(struct
-						    alloc_file_handle_v4));
+					(int)NFS4_FHSIZE);
 			} else if (fh->nfs_fh4_len !=
 				   nfs4_sizeof_handle(pfile_handle)) {
 				LogInfo(COMPONENT_FILEHANDLE,
@@ -393,8 +390,6 @@ int nfs3_Is_Fh_Invalid(nfs_fh3 *fh3)
 {
 	file_handle_v3_t *pfile_handle;
 
-	BUILD_BUG_ON(sizeof(struct alloc_file_handle_v3) != NFS3_FHSIZE);
-
 	if (fh3 == NULL) {
 		LogMajor(COMPONENT_FILEHANDLE, "INVALID HANDLE: fh3==NULL");
 		return NFS3ERR_BADHANDLE;
@@ -410,7 +405,7 @@ int nfs3_Is_Fh_Invalid(nfs_fh3 *fh3)
 	if (pfile_handle == NULL || fh3->data.data_len == 0
 	    || pfile_handle->fhversion != GANESHA_FH_VERSION
 	    || fh3->data.data_len < sizeof(file_handle_v3_t)
-	    || fh3->data.data_len > sizeof(struct alloc_file_handle_v3)
+	    || fh3->data.data_len > NFS3_FHSIZE
 	    || fh3->data.data_len != nfs3_sizeof_handle(pfile_handle)) {
 		if (isInfo(COMPONENT_FILEHANDLE)) {
 			if (pfile_handle == NULL) {
@@ -431,12 +426,11 @@ int nfs3_Is_Fh_Invalid(nfs_fh3 *fh3)
 					fh3->data.data_len,
 					(int)sizeof(file_handle_v3_t));
 			} else if (fh3->data.data_len >
-				   sizeof(struct alloc_file_handle_v3)) {
+				   NFS3_FHSIZE) {
 				LogInfo(COMPONENT_FILEHANDLE,
 					"INVALID HANDLE: data.data_len=%d is greater than %d",
 					fh3->data.data_len,
-					(int)sizeof(struct
-						    alloc_file_handle_v3));
+					(int)NFS3_FHSIZE);
 			} else if (fh3->data.data_len !=
 				   nfs3_sizeof_handle(pfile_handle)) {
 				LogInfo(COMPONENT_FILEHANDLE,
