@@ -75,7 +75,8 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t *data,
 	/* Owner of conflicting lock */
 	state_owner_t *conflict_owner = NULL;
 	/* Description of lock to test */
-	fsal_lock_param_t lock_desc = { FSAL_NO_LOCK, 0, 0 };
+	fsal_lock_param_t lock_desc = {
+				FSAL_POSIX_LOCK, FSAL_NO_LOCK, 0, 0, false };
 	/* Description of conflicting lock */
 	fsal_lock_param_t conflict_desc;
 	/* return code from id confirm calls */

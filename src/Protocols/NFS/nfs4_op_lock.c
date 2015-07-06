@@ -303,7 +303,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 				 PRIu16" request for export %"PRIu16,
 				 state_export_id(lock_state),
 				 op_ctx->export->export_id);
-			res_LOCK4->status = STATE_INVALID_ARGUMENT;
+			res_LOCK4->status = NFS4ERR_INVAL;
 			goto out2;
 		}
 

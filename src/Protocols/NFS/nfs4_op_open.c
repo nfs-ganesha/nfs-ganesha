@@ -261,7 +261,7 @@ static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t *data,
 				 state_export_id(file_state),
 				 op_ctx->export->export_id);
 			dec_state_t_ref(file_state);
-			return STATE_INVALID_ARGUMENT;
+			return NFS4ERR_INVAL;
 		}
 	}
 
