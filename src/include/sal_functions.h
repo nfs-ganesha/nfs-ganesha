@@ -784,7 +784,7 @@ void update_delegation_stats(cache_entry_t *entry,
 			     state_owner_t *owner,
 			     struct state_t *deleg);
 state_status_t delegrecall_impl(cache_entry_t *entry);
-state_status_t deleg_revoke(cache_entry_t *entry, struct state_t *deleg_state);
+nfsstat4 deleg_revoke(cache_entry_t *entry, struct state_t *deleg_state);
 void state_deleg_revoke(cache_entry_t *entry, state_t *state);
 bool state_deleg_conflict(cache_entry_t *entry, bool write);
 

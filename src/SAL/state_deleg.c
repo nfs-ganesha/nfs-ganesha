@@ -427,7 +427,7 @@ void get_deleg_perm(cache_entry_t *entry, nfsace4 *permissions,
  * @param[in] deleg state lock entry.
  * Should be called with state lock held.
  */
-state_status_t deleg_revoke(cache_entry_t *entry, struct state_t *deleg_state)
+nfsstat4 deleg_revoke(cache_entry_t *entry, struct state_t *deleg_state)
 {
 	state_status_t state_status;
 	struct nfs_client_id_t *clid;
@@ -493,7 +493,7 @@ state_status_t deleg_revoke(cache_entry_t *entry, struct state_t *deleg_state)
 	dec_state_owner_ref(owner);
 	put_gsh_export(export);
 
-	return STATE_SUCCESS;
+	return NFS4_OK;
 }
 
 /**

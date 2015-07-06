@@ -1330,7 +1330,7 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 {
 	char *fh = NULL;
 	enum recall_resp_action resp_act;
-	state_status_t rc = STATE_SUCCESS;
+	nfsstat4 rc = NFS4_OK;
 	struct delegrecall_context *deleg_ctx = arg;
 	struct state_t *state;
 	cache_entry_t *entry = NULL;
@@ -1420,7 +1420,7 @@ out_revoke:
 
 	PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
-	if (rc != STATE_SUCCESS) {
+	if (rc != NFS4_OK) {
 		LogCrit(COMPONENT_NFS_V4,
 			"Delegation could not be revoked for %s", str);
 	} else {
@@ -1584,7 +1584,7 @@ out:
 	p_cargs->drc_clid->num_revokes++;
 	inc_revokes(p_cargs->drc_clid->gsh_client);
 
-	if (deleg_revoke(entry, state) != STATE_SUCCESS) {
+	if (deleg_revoke(entry, state) != NFS4_OK) {
 		LogDebug(COMPONENT_FSAL_UP,
 			 "Failed to revoke delegation %s.", str);
 	} else {
@@ -1603,7 +1603,7 @@ out:
 
 static void delegrevoke_check(void *ctx)
 {
-	uint32_t rc = 0;
+	nfsstat4 rc = NFS4_OK;
 	struct delegrecall_context *deleg_ctx = ctx;
 	cache_entry_t *entry = NULL;
 	struct state_t *state = NULL;
@@ -1642,7 +1642,7 @@ static void delegrevoke_check(void *ctx)
 
 		PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
-		if (rc != STATE_SUCCESS) {
+		if (rc != NFS4_OK) {
 			if (!str_valid)
 				display_stateid(&dspbuf, state);
 
