@@ -67,23 +67,6 @@
 #include "fsal_private.h"
 #include "fsal_convert.h"
 
-/* fsal_module to fsal_export helpers
- */
-
-static uint32_t ace_modes[3][3] = {
-	{ /* owner */
-		S_IRUSR, S_IWUSR, S_IXUSR
-	},
-	{ /* group */
-		S_IRGRP, S_IWGRP, S_IXGRP
-	},
-	{ /* everyone */
-		S_IRUSR | S_IRGRP | S_IROTH,
-		S_IWUSR | S_IWGRP | S_IWOTH,
-		S_IXUSR | S_IXGRP | S_IXOTH,
-	}
-};
-
 /* fsal_attach_export
  * called from the FSAL's create_export method with a reference on the fsal.
  */
@@ -1720,14 +1703,6 @@ fsal_status_t fsal_rename_access(struct fsal_obj_handle *src_dir_hdl,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-static inline void setmode(struct attrlist *attrs, uint32_t mode, bool allow)
-{
-	if (allow)
-		attrs->mode |= mode;
-	else
-		attrs->mode &= ~(mode);
-}
-
 static fsal_status_t
 fsal_mode_set_ace(fsal_ace_t *deny, fsal_ace_t *allow, uint32_t mode)
 {
@@ -1913,6 +1888,31 @@ fsal_status_t fsal_mode_to_acl(struct attrlist *attrs, fsal_acl_t *sacl)
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
+/* fsal_acl_to_mode helpers
+ */
+
+static uint32_t ace_modes[3][3] = {
+	{ /* owner */
+		S_IRUSR, S_IWUSR, S_IXUSR
+	},
+	{ /* group */
+		S_IRGRP, S_IWGRP, S_IXGRP
+	},
+	{ /* everyone */
+		S_IRUSR | S_IRGRP | S_IROTH,
+		S_IWUSR | S_IWGRP | S_IWOTH,
+		S_IXUSR | S_IXGRP | S_IXOTH,
+	}
+};
+
+static inline void set_mode(struct attrlist *attrs, uint32_t mode, bool allow)
+{
+	if (allow)
+		attrs->mode |= mode;
+	else
+		attrs->mode &= ~(mode);
+}
+
 fsal_status_t fsal_acl_to_mode(struct attrlist *attrs)
 {
 	fsal_ace_t *ace = NULL;
@@ -1935,12 +1935,12 @@ fsal_status_t fsal_acl_to_mode(struct attrlist *attrs)
 			continue;
 
 		if (IS_FSAL_ACE_READ_DATA(*ace))
-			setmode(attrs, modes[0], IS_FSAL_ACE_ALLOW(*ace));
+			set_mode(attrs, modes[0], IS_FSAL_ACE_ALLOW(*ace));
 		if (IS_FSAL_ACE_WRITE_DATA(*ace) ||
 		    IS_FSAL_ACE_APPEND_DATA(*ace))
-			setmode(attrs, modes[1], IS_FSAL_ACE_ALLOW(*ace));
+			set_mode(attrs, modes[1], IS_FSAL_ACE_ALLOW(*ace));
 		if (IS_FSAL_ACE_EXECUTE(*ace))
-			setmode(attrs, modes[2], IS_FSAL_ACE_ALLOW(*ace));
+			set_mode(attrs, modes[2], IS_FSAL_ACE_ALLOW(*ace));
 
 	}
 
