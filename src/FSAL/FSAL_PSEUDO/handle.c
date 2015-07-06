@@ -97,26 +97,6 @@ avltree_inline_name_lookup(
 	return NULL;
 }
 
-static inline struct avltree_node *
-avltree_inline_index_lookup(
-	const struct avltree_node *key,
-	const struct avltree *tree)
-{
-	struct avltree_node *node = tree->root;
-	int res = 0;
-
-	while (node) {
-		res = pseudofs_i_cmpf(node, key);
-		if (res == 0)
-			return node;
-		if (res > 0)
-			node = node->left;
-		else
-			node = node->right;
-	}
-	return NULL;
-}
-
 /**
  * @brief Construct the fs opaque part of a pseudofs nfsv4 handle
  *

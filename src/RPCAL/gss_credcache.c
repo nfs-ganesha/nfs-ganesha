@@ -810,12 +810,6 @@ static int find_keytab_entry(krb5_context context, krb5_keytab kt,
 	return retval;
 }
 
-static inline int data_is_equal(krb5_data d1, krb5_data d2)
-{
-	return (d1.length == d2.length
-		&& memcmp(d1.data, d2.data, d1.length) == 0);
-}
-
 /*
  * A common routine for getting the Kerberos error message
  */
