@@ -130,11 +130,7 @@ cache_inode_getattr(cache_entry_t *entry,
 					 junction_export->export_id,
 					 cache_inode_err_str(status));
 				/* Need to signal problem to callback */
-				(void) cb(opaque,
-					  junction_entry,
-					  NULL,
-					  0,
-					  CB_PROBLEM);
+				(void) cb(opaque, NULL, NULL, 0, CB_PROBLEM);
 				return status;
 			}
 		} else {
@@ -142,7 +138,7 @@ cache_inode_getattr(cache_entry_t *entry,
 				 "A junction became stale");
 			status = CACHE_INODE_ESTALE;
 			/* Need to signal problem to callback */
-			(void) cb(opaque, junction_entry, NULL, 0, CB_PROBLEM);
+			(void) cb(opaque, NULL, NULL, 0, CB_PROBLEM);
 			return status;
 		}
 

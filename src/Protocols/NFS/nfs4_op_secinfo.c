@@ -110,7 +110,7 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 			/* Export has gone bad. */
 			/* Release attr_lock */
 			PTHREAD_RWLOCK_unlock(&entry_src->attr_lock);
-			LogDebug(NFS4ERR_STALE,
+			LogDebug(COMPONENT_EXPORT,
 				 "NFS4ERR_STALE On Export_Id %d Path %s",
 				 entry_src->object.dir
 					.junction_export->export_id,
