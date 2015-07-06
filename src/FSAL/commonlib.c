@@ -49,7 +49,11 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/statvfs.h>
+#if __FreeBSD__
+#include <sys/mount.h>
+#else
 #include <sys/vfs.h>
+#endif
 #include <os/quota.h>
 
 #include "common_utils.h"
@@ -840,13 +844,21 @@ static bool posix_get_fsid(struct fsal_filesystem *fs)
 	struct blkid_struct_dev *dev;
 #endif
 
+	LogFullDebug(COMPONENT_FSAL,
+		     "statfs of %s pathlen %d",
+		     fs->path, fs->pathlen);
+
 	if (statfs(fs->path, &stat_fs) != 0) {
 		LogCrit(COMPONENT_FSAL,
 			"stat_fs of %s resulted in error %s(%d)",
 			fs->path, strerror(errno), errno);
 	}
 
+#if __FreeBSD__
+	fs->namelen = stat_fs.f_namemax;
+#else
 	fs->namelen = stat_fs.f_namelen;
+#endif
 
 	if (stat(fs->path, &mnt_stat) != 0) {
 		LogCrit(COMPONENT_FSAL,
@@ -917,8 +929,13 @@ static bool posix_get_fsid(struct fsal_filesystem *fs)
 #endif
 
 	fs->fsid_type = FSID_TWO_UINT32;
+#if __FreeBSD__
+	fs->fsid.major = (unsigned) stat_fs.f_fsid.val[0];
+	fs->fsid.minor = (unsigned) stat_fs.f_fsid.val[1];
+#else
 	fs->fsid.major = (unsigned) stat_fs.f_fsid.__val[0];
 	fs->fsid.minor = (unsigned) stat_fs.f_fsid.__val[1];
+#endif
 
 	if ((fs->fsid.major == 0) && (fs->fsid.minor == 0)) {
 		fs->fsid.major = fs->dev.major;

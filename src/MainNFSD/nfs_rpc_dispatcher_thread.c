@@ -739,7 +739,11 @@ void nfs_Init_svc(void)
 
 	memset(&svc_params, 0, sizeof(svc_params));
 
+#ifdef __FreeBSD__
+	v6disabled = true;
+#else
 	v6disabled = false;
+#endif
 
 	/* New TI-RPC package init function */
 	svc_params.flags = SVC_INIT_EPOLL;	/* use EPOLL event mgmt */

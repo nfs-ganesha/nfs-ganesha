@@ -292,7 +292,7 @@ static fsal_status_t fsal_acl_2_panfs_acl(struct attrlist *attrib,
 	     ace < attrib->acl->aces + attrib->acl->naces; ace++, panace++) {
 		fsal_print_ace(COMPONENT_FSAL, NIV_DEBUG, ace);
 		panace->info = fsal_to_panace_info(ace->type, ace->flag);
-		if (panace->info == (uint32_t)-1) {
+		if (panace->info == (uint16_t)-1) {
 			ret = ERR_FSAL_INVAL;
 			goto fail;
 		}

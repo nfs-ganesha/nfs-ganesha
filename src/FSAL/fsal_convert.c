@@ -174,7 +174,9 @@ int posix2fsal_error(int posix_errorcode)
 		/* Error code that needs a retry */
 	case EAGAIN:
 	case EBUSY:
+#ifdef ETIME
 	case ETIME:
+#endif
 		LogInfo(COMPONENT_FSAL, "Mapping %d to ERR_FSAL_DELAY",
 			posix_errorcode);
 		return ERR_FSAL_DELAY;
@@ -191,8 +193,10 @@ int posix2fsal_error(int posix_errorcode)
 	case EINTR:
 		return ERR_FSAL_INTERRUPT;
 
+#ifdef ENODATA
 	case ENODATA:
 		return ERR_FSAL_NO_DATA;
+#endif
 
 	default:
 		LogCrit(COMPONENT_FSAL,

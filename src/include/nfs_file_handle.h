@@ -39,7 +39,6 @@
 #include "sal_data.h"
 #include "cache_inode.h"
 #include "export_mgr.h"
-#include "byteswap.h"
 #include "nfs_fh.h"
 
 /**

@@ -72,6 +72,8 @@
 #define NFS_V42_NB_OPERATION (NFS4_OP_WRITE_SAME + 1)
 #define _9P_NB_COMMAND 33
 
+#ifdef USE_DBUS
+
 struct op_name {
 	char *name;
 };
@@ -214,6 +216,8 @@ static const struct op_name optabv4[] = {
 	[NFS4_OP_SEEK] = {.name = "SEEK",},
 	[NFS4_OP_WRITE_SAME] = {.name = "WRITE_SAME",},
 };
+
+#endif
 
 /* Classify protocol ops for stats purposes
  */
