@@ -424,7 +424,7 @@ cih_remove_checked(cache_entry_t *entry)
 
 	PTHREAD_RWLOCK_wrlock(&cp->lock);
 	node = cih_fhcache_inline_lookup(&cp->t, &entry->fh_hk.node_k);
-	if (node) {
+	if (entry->fh_hk.inavl && node) {
 		avltree_remove(node, &cp->t);
 		cp->cache[cih_cache_offsetof(&cih_fhcache,
 					     entry->fh_hk.key.hk)] = NULL;
