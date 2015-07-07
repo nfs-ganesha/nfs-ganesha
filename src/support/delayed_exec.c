@@ -46,7 +46,7 @@
 #include "delayed_exec.h"
 #include "log.h"
 #include "avltree.h"
-#include "sys/queue.h"
+#include "misc/queue.h"
 #include "gsh_intrinsic.h"
 #include "common_utils.h"
 

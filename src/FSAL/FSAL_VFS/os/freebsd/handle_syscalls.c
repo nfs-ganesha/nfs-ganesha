@@ -28,6 +28,7 @@
  * @brief System calls for the FreeBSD handle calls
  */
 
+#include <misc/queue.h> /* avoid conflicts with sys/queue.h */
 #include <sys/mount.h>
 #include "fsal_convert.h"
 #include "fsal_api.h"
