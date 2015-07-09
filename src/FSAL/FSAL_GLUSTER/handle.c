@@ -244,7 +244,7 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 	/* FIXME: what else from attrib should we use? */
 	glhandle =
 	    glfs_h_creat(glfs_export->gl_fs, parenthandle->glhandle, name,
-			 O_CREAT, fsal2unix_mode(attrib->mode), &sb);
+			 O_CREAT | O_EXCL, fsal2unix_mode(attrib->mode), &sb);
 
 	rc = setglustercreds(glfs_export, NULL, NULL, 0, NULL);
 	if (rc != 0) {
