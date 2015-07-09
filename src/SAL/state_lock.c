@@ -996,8 +996,17 @@ static state_status_t subtract_lock_from_entry(cache_entry_t *entry,
 		}
 
 		found_entry_right->sle_lock.lock_start = range_end + 1;
-		found_entry_right->sle_lock.lock_length =
-		    found_entry_end - range_end;
+
+		/* found_entry_end being UINT64_MAX indicates that the
+		 * sle_lock.lock_length is zero and the lock is held till
+		 * the end of the file. In such case assign the split lock
+		 * length too to zero to indicate the file end.
+		 */
+		if (found_entry_end == UINT64_MAX)
+			found_entry_right->sle_lock.lock_length = 0;
+		else
+			found_entry_right->sle_lock.lock_length =
+			    found_entry_end - range_end;
 		LogEntry("Right split", found_entry_right);
 		glist_add_tail(split_list, &(found_entry_right->sle_list));
 	}
