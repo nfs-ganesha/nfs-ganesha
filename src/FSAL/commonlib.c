@@ -336,6 +336,8 @@ const char *msg_fsal_err(fsal_errors_t fsal_err)
 		return "No Data";
 	case ERR_FSAL_NO_ACE:
 		return "No matching ACE";
+	case ERR_FSAL_BAD_RANGE:
+		return "Lock not in allowable range";
 	}
 
 	return "Unknown FSAL error";

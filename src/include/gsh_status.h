@@ -86,6 +86,7 @@ typedef enum state_status {
 	STATE_FSAL_SHARE_DENIED,
 	STATE_IN_GRACE,
 	STATE_BADHANDLE,
+	STATE_BAD_RANGE,
 } state_status_t;
 
 #define STATE_FSAL_ESTALE STATE_ESTALE
@@ -140,6 +141,7 @@ typedef enum cache_inode_status {
 	CACHE_INODE_IN_GRACE = 43,
 	CACHE_INODE_BADHANDLE = 44,
 	CACHE_INODE_NO_DATA = 45,
+	CACHE_INODE_BAD_RANGE = 46,
 } cache_inode_status_t;
 
 #endif				/* !GSH_STATUS_H */
