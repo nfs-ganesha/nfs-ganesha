@@ -329,11 +329,12 @@ void dec_nlm_state_ref(state_t *state)
 /**
  * @brief Get an NLM State
  *
- * @param[in] state_type  type of state (LOCK or SHARE)
- * @param[in] state_entry cache inode state applies to
- * @param[in] state_owner NLM owner of the state
- * @param[in] nsm_state   NSM state value for locks
- * @param[out] pstate     Pointer to return the found state in
+ * @param[in] state_type        type of state (LOCK or SHARE)
+ * @param[in] state_entry       cache inode state applies to
+ * @param[in] state_owner       NLM owner of the state
+ * @param[in] nsm_state_applies True if nsm_state is available
+ * @param[in] nsm_state         NSM state value for locks
+ * @param[out] pstate           Pointer to return the found state in
  *
  * @return NLM Status code or 0 if no special return
  */

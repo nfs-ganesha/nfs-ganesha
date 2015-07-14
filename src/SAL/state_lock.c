@@ -147,13 +147,20 @@ state_status_t state_lock_init(void)
 
 	status = state_async_init();
 
-	state_owner_pool =
-	    pool_init("NFSv4 state owners", sizeof(state_owner_t),
-		      pool_basic_substrate, NULL, NULL, NULL);
+	state_owner_pool = pool_init("NFSv4 state owners",
+				     sizeof(state_owner_t),
+				     pool_basic_substrate,
+				     NULL,
+				     NULL,
+				     NULL);
 
-	state_v4_pool =
-	    pool_init("NFSv4 files states", sizeof(state_t),
-		      pool_basic_substrate, NULL, NULL, NULL);
+	state_v4_pool = pool_init("NFSv4 files states",
+				  sizeof(state_t),
+				  pool_basic_substrate,
+				  NULL,
+				  NULL,
+				  NULL);
+
 	return status;
 }
 
@@ -362,9 +369,10 @@ static bool LogList(const char *reason, cache_entry_t *entry,
 		}
 
 		glist_for_each(glist, list) {
-			found_entry =
-				glist_entry(glist, state_lock_entry_t,
-					    sle_list);
+			found_entry = glist_entry(glist,
+						  state_lock_entry_t,
+						  sle_list);
+
 			LogEntry(reason, found_entry);
 			if (found_entry->sle_entry == NULL)
 				break;
@@ -406,6 +414,7 @@ static bool LogBlockedList(const char *reason, cache_entry_t *entry,
 		glist_for_each(glist, list) {
 			block_entry =
 			    glist_entry(glist, state_block_data_t, sbd_list);
+
 			found_entry = block_entry->sbd_lock_entry;
 			LogEntry(reason, found_entry);
 			if (found_entry->sle_entry == NULL)
@@ -1079,10 +1088,13 @@ static state_status_t subtract_lock_from_list(cache_entry_t *entry,
 		 * to found_entry, we don't inc the ref count because we want
 		 * to drop the lock entry.
 		 */
-		status =
-		    subtract_lock_from_entry(entry, found_entry, lock,
-					     &split_lock_list, &remove_list,
-					     &removed_one);
+		status = subtract_lock_from_entry(entry,
+						  found_entry,
+						  lock,
+						  &split_lock_list,
+						  &remove_list,
+						  &removed_one);
+
 		*removed |= removed_one;
 
 		if (status != STATE_SUCCESS) {
@@ -1141,10 +1153,14 @@ static state_status_t subtract_list_from_list(cache_entry_t *entry,
 	glist_for_each_safe(glist, glistn, source) {
 		found_entry = glist_entry(glist, state_lock_entry_t, sle_list);
 
-		status =
-		    subtract_lock_from_list(entry, NULL, false, 0,
-					    &found_entry->sle_lock, &removed,
-					    target);
+		status = subtract_lock_from_list(entry,
+						 NULL,
+						 false,
+						 0,
+						 &found_entry->sle_lock,
+						 &removed,
+						 target);
+
 		if (status != STATE_SUCCESS)
 			break;
 	}
@@ -2184,9 +2200,10 @@ state_status_t do_unlock_no_owner(cache_entry_t *entry,
 
 	LogEntry("Generating FSAL Unlock List", unlock_entry);
 
-	status =
-	    subtract_list_from_list(entry, &fsal_unlock_list,
-				    &entry->object.file.lock_list);
+	status = subtract_list_from_list(entry,
+					 &fsal_unlock_list,
+					 &entry->object.file.lock_list);
+
 	if (status != STATE_SUCCESS) {
 		/* We ran out of memory while trying to build the unlock list.
 		 * We have already released the locks from cache inode lock
@@ -2207,8 +2224,10 @@ state_status_t do_unlock_no_owner(cache_entry_t *entry,
 
 		fsal_status =
 		    entry->obj_handle->obj_ops.lock_op(entry->obj_handle,
-						    NULL, FSAL_OP_UNLOCK,
-						    punlock, NULL);
+						       NULL,
+						       FSAL_OP_UNLOCK,
+						       punlock,
+						       NULL);
 
 		if (fsal_status.major == ERR_FSAL_STALE)
 			cache_inode_kill_entry(entry);
@@ -2291,13 +2310,13 @@ state_status_t do_lock_op(cache_entry_t *entry,
 
 	memset(&conflicting_lock, 0, sizeof(conflicting_lock));
 
-	if (fsal_export->exp_ops.
-	    fs_supports(fsal_export, fso_lock_support_owner)
+	if (fsal_export->exp_ops.fs_supports(fsal_export,
+					     fso_lock_support_owner)
 	    || lock_op != FSAL_OP_UNLOCK) {
 		if (lock_op == FSAL_OP_LOCKB &&
 		    !fsal_export->exp_ops.fs_supports(
-				fsal_export,
-				fso_lock_support_async_block))
+						fsal_export,
+						fso_lock_support_async_block))
 			lock_op = FSAL_OP_LOCK;
 
 		/* In the case of ip move the source node may be still
@@ -2667,8 +2686,8 @@ state_status_t state_lock(cache_entry_t *entry,
 					 * GRANT_RESP, that will be just fine.
 					 */
 					grant_blocked_lock_immediate(
-						entry,
-						found_entry);
+								entry,
+								found_entry);
 				}
 
 				LogEntry("Found existing", found_entry);
@@ -2920,9 +2939,13 @@ state_status_t state_unlock(cache_entry_t *entry,
 	cancel_blocked_locks_range(entry, owner, state_applies, state, lock);
 
 	/* Release the lock from cache inode lock list for entry */
-	status =
-	    subtract_lock_from_list(entry, owner, state_applies, state, lock,
-				    &removed, &entry->object.file.lock_list);
+	status = subtract_lock_from_list(entry,
+					 owner,
+					 state_applies,
+					 state,
+					 lock,
+					 &removed,
+					 &entry->object.file.lock_list);
 
 	/* If the lock list has become zero; decrement the pin ref count pt
 	 * placed. Do this here just in case subtract_lock_from_list has made
