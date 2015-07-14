@@ -112,8 +112,8 @@ static inline int _get_obj_fd(struct fsal_obj_handle *obj_hdl)
 	struct vfs_fsal_obj_handle *myself;
 
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
-	if (myself->u.file.openflags != FSAL_O_CLOSED)
-		return myself->u.file.fd;
+	if (myself->u.file.fd.openflags != FSAL_O_CLOSED)
+		return myself->u.file.fd.fd;
 	else
 		return -1;
 }

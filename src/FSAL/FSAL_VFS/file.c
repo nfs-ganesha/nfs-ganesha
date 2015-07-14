@@ -49,12 +49,14 @@ fsal_status_t vfs_open(struct fsal_obj_handle *obj_hdl,
 		       fsal_openflags_t openflags)
 {
 	struct vfs_fsal_obj_handle *myself;
+	struct vfs_fd *my_fd;
 	int fd;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int posix_flags = 0;
 	int retval = 0;
 
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
+	my_fd = &myself->u.file.fd;
 
 	if (obj_hdl->fsal != obj_hdl->fs->fsal) {
 		LogDebug(COMPONENT_FSAL,
@@ -65,11 +67,13 @@ fsal_status_t vfs_open(struct fsal_obj_handle *obj_hdl,
 		return fsalstat(fsal_error, retval);
 	}
 
-	/* Take write lock on object to protect file descriptor. */
+	/* Take write lock on object to protect file descriptor.
+	 * This can block over an I/O operation.
+	 */
 	PTHREAD_RWLOCK_wrlock(&obj_hdl->lock);
 
-	assert(myself->u.file.fd == -1
-	       && myself->u.file.openflags == FSAL_O_CLOSED && openflags != 0);
+	assert(my_fd->fd == -1
+	       && my_fd->openflags == FSAL_O_CLOSED && openflags != 0);
 
 	fsal2posix_openflags(openflags, &posix_flags);
 	LogFullDebug(COMPONENT_FSAL, "open_by_handle_at flags from %x to %x",
@@ -78,8 +82,8 @@ fsal_status_t vfs_open(struct fsal_obj_handle *obj_hdl,
 	if (fd < 0) {
 		retval = -fd;
 	} else {
-		myself->u.file.fd = fd;
-		myself->u.file.openflags = openflags;
+		my_fd->fd = fd;
+		my_fd->openflags = openflags;
 	}
 
 	PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
@@ -94,10 +98,12 @@ fsal_status_t vfs_open(struct fsal_obj_handle *obj_hdl,
 fsal_openflags_t vfs_status(struct fsal_obj_handle *obj_hdl)
 {
 	struct vfs_fsal_obj_handle *myself;
+	struct vfs_fd *my_fd;
 
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
+	my_fd = &myself->u.file.fd;
 
-	return myself->u.file.openflags;
+	return my_fd->openflags;
 }
 
 /* vfs_read
@@ -110,11 +116,13 @@ fsal_status_t vfs_read(struct fsal_obj_handle *obj_hdl,
 		       bool *end_of_file)
 {
 	struct vfs_fsal_obj_handle *myself;
+	struct vfs_fd *my_fd;
 	ssize_t nb_read;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval = 0;
 
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
+	my_fd = &myself->u.file.fd;
 
 	if (obj_hdl->fsal != obj_hdl->fs->fsal) {
 		LogDebug(COMPONENT_FSAL,
@@ -128,10 +136,9 @@ fsal_status_t vfs_read(struct fsal_obj_handle *obj_hdl,
 	/* Take read lock on object to protect file descriptor. */
 	PTHREAD_RWLOCK_rdlock(&obj_hdl->lock);
 
-	assert(myself->u.file.fd >= 0
-	       && myself->u.file.openflags != FSAL_O_CLOSED);
+	assert(my_fd->fd >= 0 && my_fd->openflags != FSAL_O_CLOSED);
 
-	nb_read = pread(myself->u.file.fd, buffer, buffer_size, offset);
+	nb_read = pread(my_fd->fd, buffer, buffer_size, offset);
 
 	if (offset == -1 || nb_read == -1) {
 		retval = errno;
@@ -163,11 +170,13 @@ fsal_status_t vfs_write(struct fsal_obj_handle *obj_hdl,
 			bool *fsal_stable)
 {
 	struct vfs_fsal_obj_handle *myself;
+	struct vfs_fd *my_fd;
 	ssize_t nb_written;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval = 0;
 
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
+	my_fd = &myself->u.file.fd;
 
 	if (obj_hdl->fsal != obj_hdl->fs->fsal) {
 		LogDebug(COMPONENT_FSAL,
@@ -181,11 +190,10 @@ fsal_status_t vfs_write(struct fsal_obj_handle *obj_hdl,
 	/* Take read lock on object to protect file descriptor. */
 	PTHREAD_RWLOCK_rdlock(&obj_hdl->lock);
 
-	assert(myself->u.file.fd >= 0
-	       && myself->u.file.openflags != FSAL_O_CLOSED);
+	assert(my_fd->fd >= 0 && my_fd->openflags != FSAL_O_CLOSED);
 
 	fsal_set_credentials(op_ctx->creds);
-	nb_written = pwrite(myself->u.file.fd, buffer, buffer_size, offset);
+	nb_written = pwrite(my_fd->fd, buffer, buffer_size, offset);
 
 	if (offset == -1 || nb_written == -1) {
 		retval = errno;
@@ -197,7 +205,7 @@ fsal_status_t vfs_write(struct fsal_obj_handle *obj_hdl,
 
 	/* attempt stability */
 	if (fsal_stable != NULL && *fsal_stable) {
-		retval = fsync(myself->u.file.fd);
+		retval = fsync(my_fd->fd);
 		if (retval == -1) {
 			retval = errno;
 			fsal_error = posix2fsal_error(retval);
@@ -222,10 +230,12 @@ fsal_status_t vfs_commit(struct fsal_obj_handle *obj_hdl,	/* sync */
 			 off_t offset, size_t len)
 {
 	struct vfs_fsal_obj_handle *myself;
+	struct vfs_fd *my_fd;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval = 0;
 
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
+	my_fd = &myself->u.file.fd;
 
 	if (obj_hdl->fsal != obj_hdl->fs->fsal) {
 		LogDebug(COMPONENT_FSAL,
@@ -239,10 +249,9 @@ fsal_status_t vfs_commit(struct fsal_obj_handle *obj_hdl,	/* sync */
 	/* Take read lock on object to protect file descriptor. */
 	PTHREAD_RWLOCK_rdlock(&obj_hdl->lock);
 
-	assert(myself->u.file.fd >= 0
-	       && myself->u.file.openflags != FSAL_O_CLOSED);
+	assert(my_fd->fd >= 0 && my_fd->openflags != FSAL_O_CLOSED);
 
-	retval = fsync(myself->u.file.fd);
+	retval = fsync(my_fd->fd);
 	if (retval == -1) {
 		retval = errno;
 		fsal_error = posix2fsal_error(retval);
@@ -266,12 +275,14 @@ fsal_status_t vfs_lock_op(struct fsal_obj_handle *obj_hdl,
 			  fsal_lock_param_t *conflicting_lock)
 {
 	struct vfs_fsal_obj_handle *myself;
+	struct vfs_fd *my_fd;
 	struct flock lock_args;
 	int fcntl_comm;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval = 0;
 
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
+	my_fd = &myself->u.file.fd;
 
 	if (obj_hdl->fsal != obj_hdl->fs->fsal) {
 		LogDebug(COMPONENT_FSAL,
@@ -285,8 +296,7 @@ fsal_status_t vfs_lock_op(struct fsal_obj_handle *obj_hdl,
 	/* Take read lock on object to protect file descriptor. */
 	PTHREAD_RWLOCK_rdlock(&obj_hdl->lock);
 
-	if (myself->u.file.fd < 0 ||
-	    myself->u.file.openflags == FSAL_O_CLOSED) {
+	if (my_fd->fd < 0 || my_fd->openflags == FSAL_O_CLOSED) {
 		LogDebug(COMPONENT_FSAL,
 			 "Attempting to lock with no file descriptor open");
 		fsal_error = ERR_FSAL_FAULT;
@@ -344,12 +354,12 @@ fsal_status_t vfs_lock_op(struct fsal_obj_handle *obj_hdl,
 	}
 
 	errno = 0;
-	retval = fcntl(myself->u.file.fd, fcntl_comm, &lock_args);
+	retval = fcntl(my_fd->fd, fcntl_comm, &lock_args);
 	if (retval && lock_op == FSAL_OP_LOCK) {
 		retval = errno;
 		if (conflicting_lock != NULL) {
 			fcntl_comm = F_GETLK;
-			if (fcntl(myself->u.file.fd, fcntl_comm, &lock_args)) {
+			if (fcntl(my_fd->fd, fcntl_comm, &lock_args)) {
 				retval = errno;	/* we lose the inital error */
 				LogCrit(COMPONENT_FSAL,
 					"After failing a lock request, I couldn't even get the details of who owns the lock.");
@@ -395,11 +405,13 @@ fsal_status_t vfs_lock_op(struct fsal_obj_handle *obj_hdl,
 fsal_status_t vfs_close(struct fsal_obj_handle *obj_hdl)
 {
 	struct vfs_fsal_obj_handle *myself;
+	struct vfs_fd *my_fd;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval = 0;
 
 	assert(obj_hdl->type == REGULAR_FILE);
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
+	my_fd = &myself->u.file.fd;
 
 	if (obj_hdl->fsal != obj_hdl->fs->fsal) {
 		LogDebug(COMPONENT_FSAL,
@@ -410,18 +422,19 @@ fsal_status_t vfs_close(struct fsal_obj_handle *obj_hdl)
 		return fsalstat(fsal_error, retval);
 	}
 
-	/* Take write lock on object to protect file descriptor. */
+	/* Take write lock on object to protect file descriptor.
+	 * This can block over an I/O operation.
+	 */
 	PTHREAD_RWLOCK_wrlock(&obj_hdl->lock);
 
-	if (myself->u.file.fd >= 0 &&
-	    myself->u.file.openflags != FSAL_O_CLOSED) {
-		retval = close(myself->u.file.fd);
+	if (my_fd->fd >= 0 && my_fd->openflags != FSAL_O_CLOSED) {
+		retval = close(my_fd->fd);
 		if (retval < 0) {
 			retval = errno;
 			fsal_error = posix2fsal_error(retval);
 		}
-		myself->u.file.fd = -1;
-		myself->u.file.openflags = FSAL_O_CLOSED;
+		my_fd->fd = -1;
+		my_fd->openflags = FSAL_O_CLOSED;
 	}
 
 	PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
@@ -439,10 +452,12 @@ fsal_status_t vfs_lru_cleanup(struct fsal_obj_handle *obj_hdl,
 			      lru_actions_t requests)
 {
 	struct vfs_fsal_obj_handle *myself;
+	struct vfs_fd *my_fd;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval = 0;
 
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
+	my_fd = &myself->u.file.fd;
 
 	if (obj_hdl->fsal != obj_hdl->fs->fsal) {
 		LogDebug(COMPONENT_FSAL,
@@ -456,10 +471,10 @@ fsal_status_t vfs_lru_cleanup(struct fsal_obj_handle *obj_hdl,
 	/* Take read lock on object to protect file descriptor. */
 	PTHREAD_RWLOCK_rdlock(&obj_hdl->lock);
 
-	if (obj_hdl->type == REGULAR_FILE && myself->u.file.fd >= 0) {
-		retval = close(myself->u.file.fd);
-		myself->u.file.fd = -1;
-		myself->u.file.openflags = FSAL_O_CLOSED;
+	if (obj_hdl->type == REGULAR_FILE && my_fd->fd >= 0) {
+		retval = close(my_fd->fd);
+		my_fd->fd = -1;
+		my_fd->openflags = FSAL_O_CLOSED;
 	}
 	if (retval == -1) {
 		retval = errno;

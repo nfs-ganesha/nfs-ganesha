@@ -91,8 +91,8 @@ static struct vfs_fsal_obj_handle *alloc_handle(int dirfd,
 	hdl->obj_handle.attrs = &hdl->attributes;
 
 	if (hdl->obj_handle.type == REGULAR_FILE) {
-		hdl->u.file.fd = -1;	/* no open on this yet */
-		hdl->u.file.openflags = FSAL_O_CLOSED;
+		hdl->u.file.fd.fd = -1;	/* no open on this yet */
+		hdl->u.file.fd.openflags = FSAL_O_CLOSED;
 	} else if (hdl->obj_handle.type == SYMBOLIC_LINK) {
 		ssize_t retlink;
 		size_t len = stat->st_size + 1;
@@ -923,8 +923,8 @@ static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
 	PTHREAD_RWLOCK_rdlock(&obj_hdl->lock);
 
 	if (obj_hdl->type == REGULAR_FILE &&
-	    myself->u.file.openflags != FSAL_O_CLOSED) {
-		srcfd = myself->u.file.fd;
+	    myself->u.file.fd.openflags != FSAL_O_CLOSED) {
+		srcfd = myself->u.file.fd.fd;
 	} else {
 		srcfd = vfs_fsal_open(myself, flags, &fsal_error);
 		if (srcfd < 0) {
@@ -973,7 +973,7 @@ static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
 	close(destdirfd);
 
  fileerr:
-	if (!(obj_hdl->type == REGULAR_FILE && myself->u.file.fd >= 0))
+	if (!(obj_hdl->type == REGULAR_FILE && myself->u.file.fd.fd >= 0))
 		close(srcfd);
 
  out_unlock:
@@ -1205,11 +1205,11 @@ static struct closefd vfs_fsal_open_and_stat(struct fsal_export *exp,
 		 * mode. If not, open a temporary file descriptor.
 		 *
 		 * Note that FSAL_O_REOPEN will never be set in
-		 * myself->u.file.openflags and thus forces a re-open.
+		 * myself->u.file.fd.openflags and thus forces a re-open.
 		 */
 		if (((flags & FSAL_O_ANY) != 0 &&
-		     (myself->u.file.openflags & FSAL_O_RDWR) == 0) ||
-		    ((myself->u.file.openflags & flags) != flags)) {
+		     (myself->u.file.fd.openflags & FSAL_O_RDWR) == 0) ||
+		    ((myself->u.file.fd.openflags & flags) != flags)) {
 			/* no file open at the moment */
 			cfd.fd = vfs_fsal_open(myself, open_flags, fsal_error);
 			if (cfd.fd < 0) {
@@ -1220,7 +1220,7 @@ static struct closefd vfs_fsal_open_and_stat(struct fsal_export *exp,
 			}
 			cfd.close_fd = true;
 		} else {
-			cfd.fd = myself->u.file.fd;
+			cfd.fd = myself->u.file.fd.fd;
 		}
 		retval = fstat(cfd.fd, stat);
 		func = "fstat";
