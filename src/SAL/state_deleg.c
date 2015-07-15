@@ -133,6 +133,48 @@ void init_new_deleg_state(union state_data *deleg_state,
 }
 
 /**
+ * @brief Perform a lease lock operation
+ *
+ * We do state management and call down to the FSAL as appropriate, so
+ * that the caller has a single entry point.
+ *
+ * @param[in]  entry    File on which to operate
+ * @param[in]  lock_op  Operation to perform
+ * @param[in]  owner    Lock operation
+ * @param[in]  lock     Lock description
+ *
+ * @return State status.
+ */
+state_status_t do_lease_op(cache_entry_t *entry,
+			  fsal_lock_op_t lock_op,
+			  state_owner_t *owner,
+			  fsal_lock_param_t *lock)
+{
+	fsal_status_t fsal_status;
+	state_status_t status;
+
+	LogLock(COMPONENT_STATE, NIV_FULL_DEBUG,
+		lock_op == FSAL_OP_LOCK
+			? "FSAL_OP_LOCK  "
+			: "FSAL_OP_UNLOCK",
+		entry, owner, lock);
+
+	fsal_status = entry->obj_handle->obj_ops.lock_op(
+				entry->obj_handle,
+				convert_lock_owner(op_ctx->fsal_export, owner),
+				lock_op,
+				lock,
+				NULL);
+
+	status = state_error_convert(fsal_status);
+
+	LogFullDebug(COMPONENT_STATE, "FSAL_lock_op returned %s",
+		     state_err_str(status));
+
+	return status;
+}
+
+/**
  * @brief Attempt to acquire a lease lock (delegation)
  *
  * @param[in]  entry      Cache entry to get lease lock on
@@ -159,9 +201,7 @@ state_status_t acquire_lease_lock(cache_entry_t *entry,
 		lock_desc.lock_type = FSAL_LOCK_R;
 
 	/* Create a new deleg data object */
-	status = do_lock_op(entry, FSAL_OP_LOCK,
-			    owner, &lock_desc,
-			    NULL, NULL, false, FSAL_LEASE_LOCK);
+	status = do_lease_op(entry, FSAL_OP_LOCK, owner, &lock_desc);
 
 	if (status == STATE_SUCCESS) {
 		update_delegation_stats(entry, owner, state);
@@ -200,9 +240,7 @@ state_status_t release_lease_lock(cache_entry_t *entry, state_t *state)
 	LogLock(COMPONENT_NFS_V4_LOCK, NIV_FULL_DEBUG, "DELEGRETURN",
 		entry, owner, &lock_desc);
 
-	status = do_lock_op(entry, FSAL_OP_UNLOCK,
-			    owner, &lock_desc, NULL, NULL,
-			    false, FSAL_LEASE_LOCK);
+	status = do_lease_op(entry, FSAL_OP_UNLOCK, owner, &lock_desc);
 
 	if (status != STATE_SUCCESS)
 		LogMajor(COMPONENT_STATE, "Unable to unlock FSAL, error=%s",

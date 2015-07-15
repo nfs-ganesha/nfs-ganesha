@@ -2335,10 +2335,6 @@ state_status_t do_lock_op(cache_entry_t *entry,
 			status = STATE_FSAL_ERROR;
 		}
 	} else {
-		/** @todo FSF: there is lots of bad here...
-		 * This WON'T be right for LEASE_LOCK...
-		 */
-		assert(sle_type == FSAL_POSIX_LOCK);
 		status = do_unlock_no_owner(entry, lock);
 	}
 
