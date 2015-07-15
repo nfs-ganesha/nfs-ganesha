@@ -636,6 +636,9 @@ struct state_t *nfs4_State_Get_Entry(cache_entry_t *entry,
 	buffkey.addr = &state_key;
 	buffkey.len = sizeof(state_key);
 
+	state_key.state_owner = owner;
+	state_key.state_entry = entry;
+
 	rc = hashtable_getlatch(ht_state_entry,
 				&buffkey,
 				&buffval,

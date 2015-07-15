@@ -183,6 +183,7 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t *data,
 	/* Now we have a lock owner and a stateid.  Go ahead and push
 	   unlock into SAL (and FSAL). */
 	state_status = state_unlock(data->current_entry,
+				    state_found,
 				    lock_owner,
 				    false,
 				    0,

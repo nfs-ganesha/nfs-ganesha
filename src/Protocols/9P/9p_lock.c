@@ -175,7 +175,8 @@ int _9p_lock(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		break;
 
 	case _9P_LOCK_TYPE_UNLCK:
-		if (state_unlock(pfid->pentry, powner, false, 0, &lock)
+		if (state_unlock(pfid->pentry, &pfid->state,
+				 powner, false, 0, &lock)
 			    != STATE_SUCCESS)
 			status = _9P_LOCK_ERROR;
 		else

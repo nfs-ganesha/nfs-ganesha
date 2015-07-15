@@ -81,6 +81,8 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t *data,
 	fsal_lock_param_t conflict_desc;
 	/* return code from id confirm calls */
 	int rc;
+	/* stateid if available matching owner and entry */
+	state_t *state;
 
 	LogDebug(COMPONENT_NFS_V4_LOCK,
 		 "Entering NFS v4 LOCKT handler ----------------------------");
@@ -192,11 +194,15 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t *data,
 		    &lock_owner->so_owner.so_nfs4_owner.so_clientid;
 	}
 
+	/* Get the stateid, if any, related to this entry and owner */
+	state = nfs4_State_Get_Entry(data->current_entry, lock_owner);
+
 	/* Now we have a lock owner and a stateid.  Go ahead and test
 	 * the lock in SAL (and FSAL).
 	 */
 
 	state_status = state_test(data->current_entry,
+				  state,
 				  lock_owner,
 				  &lock_desc,
 				  &conflict_owner,
@@ -218,6 +224,10 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* Release NFS4 Open Owner reference */
 	dec_state_owner_ref(lock_owner);
+
+	/* Release stateid reference */
+	if (state != NULL)
+		dec_state_t_ref(state);
 
 	/* Return result */
 	res_LOCKT4->status = nfs4_Errno_state(state_status);

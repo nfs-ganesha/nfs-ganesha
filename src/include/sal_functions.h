@@ -565,6 +565,7 @@ state_status_t state_cancel_grant(state_cookie_entry_t *cookie_entry);
 
 state_status_t state_release_grant(state_cookie_entry_t *cookie_entry);
 state_status_t state_test(cache_entry_t *entry,
+			  state_t *state,
 			  state_owner_t *owner,
 			  fsal_lock_param_t *lock,
 			  /* owner that holds conflicting lock */
@@ -591,9 +592,10 @@ state_status_t do_lock_op(cache_entry_t *entry,
 			  enum fsal_sle_type sle_type);
 
 state_status_t state_unlock(cache_entry_t *entry,
+			    state_t *state,
 			    state_owner_t *owner,
 			    bool state_applies,
-			    int32_t state,
+			    int32_t nsm_state,
 			    fsal_lock_param_t *lock);
 
 state_status_t state_cancel(cache_entry_t *entry,

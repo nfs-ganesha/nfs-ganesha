@@ -53,6 +53,7 @@ int nlm4_Test(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	state_owner_t *nlm_owner, *holder;
 	fsal_lock_param_t lock, conflict;
 	int rc;
+	state_t *state;
 
 	/* NLM doesn't have a BADHANDLE error, nor can rpc_execute deal with
 	 * responding to an NLM_*_MSG call, so we check here if the export is
@@ -109,7 +110,7 @@ int nlm4_Test(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 				    NULL,
 				    false,
 				    0,
-				    NULL);
+				    &state);
 
 	if (rc >= 0) {
 		/* resent the error back to the client */
@@ -121,6 +122,7 @@ int nlm4_Test(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	}
 
 	state_status = state_test(pentry,
+				  state,
 				  nlm_owner,
 				  &lock,
 				  &holder,
@@ -141,6 +143,10 @@ int nlm4_Test(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	}
 
 	LogFullDebug(COMPONENT_NLM, "Back from state_test");
+
+	/* Release state_t reference if we got one */
+	if (state != NULL)
+		dec_nlm_state_ref(state);
 
 	/* Release the NLM Client and NLM Owner references we have */
 	dec_nsm_client_ref(nsm_client);

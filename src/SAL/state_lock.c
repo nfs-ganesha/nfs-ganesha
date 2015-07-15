@@ -2394,7 +2394,7 @@ void copy_conflict(state_lock_entry_t *found_entry, state_owner_t **holder,
  * out.
  *
  * @param[in]  entry    Entry to test
- * @param[in]  export   Export through which the entry is accessed
+ * @param[in]  state    Optional state_t to relate this test to a fsal_fd
  * @param[in]  owner    Lock owner making the test
  * @param[in]  lock     Lock description
  * @param[out] holder   Owner that holds conflicting lock
@@ -2403,6 +2403,7 @@ void copy_conflict(state_lock_entry_t *found_entry, state_owner_t **holder,
  * @return State status.
  */
 state_status_t state_test(cache_entry_t *entry,
+			  state_t *state,
 			  state_owner_t *owner,
 			  fsal_lock_param_t *lock, state_owner_t **holder,
 			  fsal_lock_param_t *conflict)
@@ -2872,15 +2873,18 @@ state_status_t state_lock(cache_entry_t *entry,
 /**
  * @brief Release a lock
  *
- * @param[in] entry    File to unlock
- * @param[in] owner    Owner of lock
- * @param[in] state    Associated state
- * @param[in] lock     Lock description
+ * @param[in] entry         File to unlock
+ * @param[in] state         Associated state_t (if any)
+ * @param[in] owner         Owner of lock
+ * @param[in] state_applies Indicator if nsm_state is relevant
+ * @param[in] nsm_state     NSM state number
+ * @param[in] lock          Lock description
  */
 state_status_t state_unlock(cache_entry_t *entry,
+			    state_t *state,
 			    state_owner_t *owner,
 			    bool state_applies,
-			    int32_t state,
+			    int32_t nsm_state,
 			    fsal_lock_param_t *lock)
 {
 	bool empty = false;
@@ -2924,13 +2928,17 @@ state_status_t state_unlock(cache_entry_t *entry,
 	/* First cancel any blocking locks that might
 	 * overlap the unlocked range.
 	 */
-	cancel_blocked_locks_range(entry, owner, state_applies, state, lock);
+	cancel_blocked_locks_range(entry,
+				   owner,
+				   state_applies,
+				   nsm_state,
+				   lock);
 
 	/* Release the lock from cache inode lock list for entry */
 	status = subtract_lock_from_list(entry,
 					 owner,
 					 state_applies,
-					 state,
+					 nsm_state,
 					 lock,
 					 &removed,
 					 &entry->object.file.lock_list);
@@ -3086,15 +3094,15 @@ state_status_t state_cancel(cache_entry_t *entry,
  *
  * Also used to handle NLM_FREE_ALL
  *
- * @param[in] nsmclient NSM client data
- * @param[in] from_client true if from protocol, false from async events
- * @param[in] state     Associated state
+ * @param[in] nsmclient     NSM client data
+ * @param[in] state_applies Indicates if nsm_state is valid
+ * @param[in] nsm_state     NSM state value
  *
  * @return State status.
  */
 state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 				bool state_applies,
-				int32_t state)
+				int32_t nsm_state)
 {
 	state_owner_t *owner;
 	state_lock_entry_t *found_entry;
@@ -3106,6 +3114,7 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 	state_status_t status = 0;
 	struct root_op_context root_op_context;
 	struct gsh_export *export;
+	state_t *state;
 
 	/* Initialize a context */
 	init_root_op_context(&root_op_context, NULL, NULL,
@@ -3152,7 +3161,7 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 		 * will not set the state_applies flag).
 		 */
 		if (state_applies &&
-		    found_entry->sle_state->state_seqid == state) {
+		    found_entry->sle_state->state_seqid == nsm_state) {
 			/* This is a new lock acquired since the client
 			 * rebooted, retain it.
 			 *
@@ -3189,6 +3198,7 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 		entry = found_entry->sle_entry;
 		owner = found_entry->sle_owner;
 		export = found_entry->sle_export;
+		state = found_entry->sle_state;
 
 		root_op_context.req_ctx.export = export;
 		root_op_context.req_ctx.fsal_export = export->fsal_export;
@@ -3214,6 +3224,9 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 		/* Get a reference to the owner */
 		inc_state_owner_ref(owner);
 
+		/* Get a reference to the state_t */
+		inc_state_t_ref(state);
+
 		/* Move this entry to the end of the list
 		 * (this will help if errors occur)
 		 */
@@ -3235,8 +3248,8 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 			/* Remove all locks held by this NLM Client on
 			 * the file.
 			 */
-			status = state_unlock(entry, owner, state_applies,
-					      state, &lock);
+			status = state_unlock(entry, state, owner,
+					      state_applies, nsm_state, &lock);
 		} else {
 			/* The export is being removed, we didn't bother
 			 * calling state_unlock() because export cleanup
@@ -3251,6 +3264,7 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 		put_gsh_export(export);
 		dec_state_owner_ref(owner);
 		cache_inode_lru_unref(entry, LRU_FLAG_NONE);
+		dec_state_t_ref(state);
 
 		if (!state_unlock_err_ok(status)) {
 			/* Increment the error count and try the next lock,
@@ -3463,7 +3477,7 @@ void state_nfs4_owner_unlock_all(state_owner_t *owner)
 		lock.lock_length = 0;
 
 		/* Remove all locks held by this owner on the file */
-		status = state_unlock(entry, owner, false, 0, &lock);
+		status = state_unlock(entry, state, owner, false, 0, &lock);
 
 		if (!state_unlock_err_ok(status)) {
 			/* Increment the error count and try the next lock,
@@ -3542,9 +3556,8 @@ void state_export_unlock_all(void)
 		owner = found_entry->sle_owner;
 		state = found_entry->sle_state;
 
-		/* If it's an NFS v4 lock, take a reference on the state_t */
-		if (owner->so_type == STATE_LOCK_OWNER_NFSV4)
-			inc_state_t_ref(state);
+		/* take a reference on the state_t */
+		inc_state_t_ref(state);
 
 		/* Get a reference to the cache inode while we still hold
 		 * the ssc_mutex (since we hold this mutex, any other function
@@ -3581,11 +3594,10 @@ void state_export_unlock_all(void)
 		/* Remove all locks held by this NLM Client on
 		 * the file.
 		 */
-		status = state_unlock(entry, owner, false, 0, &lock);
+		status = state_unlock(entry, state, owner, false, 0, &lock);
 
 		/* Release the refcounts we took above. */
-		if (owner->so_type == STATE_LOCK_OWNER_NFSV4)
-			dec_state_t_ref(state);
+		dec_state_t_ref(state);
 		dec_state_owner_ref(owner);
 		cache_inode_lru_unref(entry, LRU_FLAG_NONE);
 
