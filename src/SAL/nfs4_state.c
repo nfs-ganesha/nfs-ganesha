@@ -163,6 +163,16 @@ state_status_t state_add_impl(cache_entry_t *entry, enum state_type state_type,
 
 	glist_init(&pnew_state->state_list);
 
+	/* We need to initialize state_owner and state_entry now so that
+	 * the state can be indexed by owner/entry. We don't insert into
+	 * lists and take references yet since no one else can see this
+	 * state until we are completely done since we hold the state_lock.
+	 * Might as well grab export now also...
+	 */
+	pnew_state->state_export = op_ctx->export;
+	pnew_state->state_entry = entry;
+	pnew_state->state_owner = owner_input;
+
 	/* Add the state to the related hashtable */
 	if (!nfs4_State_Set(pnew_state)) {
 		if (!str_valid)
@@ -190,7 +200,6 @@ state_status_t state_add_impl(cache_entry_t *entry, enum state_type state_type,
 	/* Attach this to an export */
 	PTHREAD_RWLOCK_wrlock(&op_ctx->export->lock);
 	PTHREAD_MUTEX_lock(&pnew_state->state_mutex);
-	pnew_state->state_export = op_ctx->export;
 	glist_add_tail(&op_ctx->export->exp_state_list,
 		       &pnew_state->state_export_list);
 	PTHREAD_MUTEX_unlock(&pnew_state->state_mutex);
@@ -199,14 +208,12 @@ state_status_t state_add_impl(cache_entry_t *entry, enum state_type state_type,
 	/* Add state to list for cache entry */
 	PTHREAD_MUTEX_lock(&pnew_state->state_mutex);
 	glist_add_tail(&entry->list_of_states, &pnew_state->state_list);
-	pnew_state->state_entry = entry;
 	PTHREAD_MUTEX_unlock(&pnew_state->state_mutex);
 
 	/* Add state to list for owner */
 	PTHREAD_MUTEX_lock(&owner_input->so_mutex);
 	PTHREAD_MUTEX_lock(&pnew_state->state_mutex);
 
-	pnew_state->state_owner = owner_input;
 	inc_state_owner_ref(owner_input);
 
 	glist_add_tail(&owner_input->so_owner.so_nfs4_owner.so_state_list,

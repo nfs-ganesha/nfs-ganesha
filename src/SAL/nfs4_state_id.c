@@ -65,6 +65,7 @@
  * @brief Hash table for stateids.
  */
 hash_table_t *ht_state_id;
+hash_table_t *ht_state_entry;
 
 /**
  * @brief All-zeroes stateid4.other
@@ -219,7 +220,7 @@ int display_state_id_val(struct gsh_buffdesc *buff, char *str)
 }
 
 /**
- * @brief Compare to stateids
+ * @brief Compare two stateids
  *
  * @param[in] buff1 One key
  * @param[in] buff2 Another key
@@ -306,6 +307,108 @@ static hash_parameter_t state_id_param = {
 };
 
 /**
+ * @brief Compare two stateids by entry/owner
+ *
+ * @param[in] buff1 One key
+ * @param[in] buff2 Another key
+ *
+ * @retval 0 if equal.
+ * @retval 1 if not equal.
+ */
+int compare_state_entry(struct gsh_buffdesc *buff1, struct gsh_buffdesc *buff2)
+{
+	state_t *state1 = buff1->addr;
+	state_t *state2 = buff2->addr;
+
+	if (state1 == NULL || state2 == NULL)
+		return 1;
+
+	return state1->state_entry != state2->state_entry ||
+	       compare_nfs4_owner(state1->state_owner, state2->state_owner);
+}
+
+/**
+ * @brief Hash index for a stateid by entry/owner
+ *
+ * @param[in] hparam Hash parameter
+ * @param[in] key    Key to hash
+ *
+ * @return The hash index.
+ */
+uint32_t state_entry_value_hash_func(hash_parameter_t *hparam,
+				     struct gsh_buffdesc *key)
+{
+	unsigned int sum = 0;
+	unsigned int i = 0;
+	unsigned char c = 0;
+	uint32_t res = 0;
+
+	state_t *pkey = key->addr;
+
+	/* Compute the sum of all the characters */
+	for (i = 0; i < pkey->state_owner->so_owner_len; i++) {
+		c = ((char *)pkey->state_owner->so_owner_val)[i];
+		sum += c;
+	}
+
+	res = ((uint32_t) pkey->state_owner->so_owner.so_nfs4_owner.so_clientid
+	      + (uint32_t) sum + pkey->state_owner->so_owner_len
+	      + (uint32_t) pkey->state_owner->so_type
+	      + (uint32_t) (uint64_t) pkey->state_entry)
+						% (uint32_t) hparam->index_size;
+
+	if (isDebug(COMPONENT_HASHTABLE))
+		LogFullDebug(COMPONENT_STATE, "value = %" PRIu32, res);
+
+	return res;
+}
+
+/**
+ * @brief RBT hash for a stateid by entry/owner
+ *
+ * @param[in] hparam Hash parameter
+ * @param[in] key    Key to hash
+ *
+ * @return The RBT hash.
+ */
+uint64_t state_entry_rbt_hash_func(hash_parameter_t *hparam,
+				   struct gsh_buffdesc *key)
+{
+	state_t *pkey = key->addr;
+
+	unsigned int sum = 0;
+	unsigned int i = 0;
+	unsigned char c = 0;
+	uint64_t res = 0;
+
+	/* Compute the sum of all the characters */
+	for (i = 0; i < pkey->state_owner->so_owner_len; i++) {
+		c = ((char *)pkey->state_owner->so_owner_val)[i];
+		sum += c;
+	}
+
+	res = (uint64_t) pkey->state_owner->so_owner.so_nfs4_owner.so_clientid
+	      + (uint64_t) sum + pkey->state_owner->so_owner_len
+	      + (uint64_t) pkey->state_owner->so_type
+	      + (uint64_t) pkey->state_entry;
+
+	if (isDebug(COMPONENT_HASHTABLE))
+		LogFullDebug(COMPONENT_STATE, "rbt = %" PRIu64, res);
+
+	return res;
+}
+
+static hash_parameter_t state_entry_param = {
+	.index_size = PRIME_STATE,
+	.hash_func_key = state_entry_value_hash_func,
+	.hash_func_rbt = state_entry_rbt_hash_func,
+	.compare_key = compare_state_entry,
+	.key_to_str = display_state_id_val,
+	.val_to_str = display_state_id_val,
+	.flags = HT_FLAG_CACHE,
+};
+
+/**
  * @brief Init the hashtable for stateids
  *
  * @retval 0 if successful.
@@ -321,6 +424,13 @@ int nfs4_Init_state_id(void)
 
 	if (ht_state_id == NULL) {
 		LogCrit(COMPONENT_STATE, "Cannot init State Id cache");
+		return -1;
+	}
+
+	ht_state_entry = hashtable_init(&state_entry_param);
+
+	if (ht_state_entry == NULL) {
+		LogCrit(COMPONENT_STATE, "Cannot init State Entry cache");
 		return -1;
 	}
 
@@ -405,12 +515,50 @@ int nfs4_State_Set(state_t *state)
 	buffval.addr = state;
 	buffval.len = sizeof(state_t);
 
-	if (hashtable_test_and_set
-	    (ht_state_id, &buffkey, &buffval,
-	     HASHTABLE_SET_HOW_SET_NO_OVERWRITE) != HASHTABLE_SUCCESS) {
+	if (hashtable_test_and_set(ht_state_id,
+				   &buffkey,
+				   &buffval,
+				   HASHTABLE_SET_HOW_SET_NO_OVERWRITE)
+	    != HASHTABLE_SUCCESS) {
 		LogCrit(COMPONENT_STATE,
 			"hashtable_test_and_set failed for key %p",
 			buffkey.addr);
+		return 0;
+	}
+
+	/* If stateid is a LOCK state, we also index by entry/owner */
+	if (state->state_type != STATE_TYPE_LOCK)
+		return 1;
+
+	buffkey.addr = state;
+	buffkey.len = sizeof(state_t);
+
+	buffval.addr = state;
+	buffval.len = sizeof(state_t);
+
+	if (hashtable_test_and_set(ht_state_entry,
+				   &buffkey,
+				   &buffval,
+				   HASHTABLE_SET_HOW_SET_NO_OVERWRITE)
+	    != HASHTABLE_SUCCESS) {
+		struct gsh_buffdesc buffkey, old_key, old_value;
+		hash_error_t err;
+
+		buffkey.addr = state->stateid_other;
+		buffkey.len = OTHERSIZE;
+
+		LogCrit(COMPONENT_STATE,
+			"hashtable_test_and_set failed for key %p",
+			buffkey.addr);
+
+		err = HashTable_Del(ht_state_id, &buffkey,
+				    &old_key, &old_value);
+
+		if (err != HASHTABLE_SUCCESS) {
+			LogDebug(COMPONENT_STATE,
+				 "Failure to delete stateid %s",
+				 hash_table_err_to_str(err));
+		}
 		return 0;
 	}
 
@@ -456,6 +604,52 @@ struct state_t *nfs4_State_Get_Pointer(char *other)
 }
 
 /**
+ * @brief Get the state from the stateid by entry/owner
+ *
+ * @param[in]  other      stateid4.other
+ *
+ * @returns The found state_t or NULL if not found.
+ */
+struct state_t *nfs4_State_Get_Entry(cache_entry_t *entry,
+				     state_owner_t *owner)
+{
+	state_t state_key;
+	struct gsh_buffdesc buffkey;
+	struct gsh_buffdesc buffval;
+	hash_error_t rc;
+	struct hash_latch latch;
+	struct state_t *state;
+
+	memset(&state_key, 0, sizeof(state_key));
+
+	buffkey.addr = &state_key;
+	buffkey.len = sizeof(state_key);
+
+	rc = hashtable_getlatch(ht_state_entry,
+				&buffkey,
+				&buffval,
+				true,
+				&latch);
+
+	if (rc != HASHTABLE_SUCCESS) {
+		if (rc == HASHTABLE_ERROR_NO_SUCH_KEY)
+			hashtable_releaselatched(ht_state_entry, &latch);
+		LogDebug(COMPONENT_STATE, "HashTable_Get returned %d", rc);
+		return NULL;
+	}
+
+	state = buffval.addr;
+
+	/* Take a reference under latch */
+	inc_state_t_ref(state);
+
+	/* Release latch */
+	hashtable_releaselatched(ht_state_entry, &latch);
+
+	return state;
+}
+
+/**
  * @brief Remove a state from the stateid table
  *
  * @param[in] other stateid4.other
@@ -467,11 +661,33 @@ bool nfs4_State_Del(char *other)
 {
 	struct gsh_buffdesc buffkey, old_key, old_value;
 	hash_error_t err;
+	state_t *state;
 
 	buffkey.addr = other;
 	buffkey.len = OTHERSIZE;
 
 	err = HashTable_Del(ht_state_id, &buffkey, &old_key, &old_value);
+
+	if (err != HASHTABLE_SUCCESS) {
+		LogDebug(COMPONENT_STATE,
+			 "Failure to delete stateid %s",
+			 hash_table_err_to_str(err));
+		return false;
+	}
+
+	state = old_value.addr;
+
+	/* If stateid is a LOCK state, we had also indexed by entry/owner */
+	if (state->state_type != STATE_TYPE_LOCK)
+		return true;
+
+	/* Delete the stateid hashed by entry/owner.
+	 * Use the old_value from above as the key.
+	 */
+	buffkey.addr = old_value.addr;
+	buffkey.len = old_value.len;
+
+	err = HashTable_Del(ht_state_entry, &buffkey, &old_key, &old_value);
 
 	if (err != HASHTABLE_SUCCESS) {
 		LogDebug(COMPONENT_STATE,

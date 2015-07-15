@@ -411,6 +411,9 @@ struct state_t *nfs4_State_Get_Pointer(char *other);
 bool nfs4_State_Del(char *other);
 void nfs_State_PrintAll(void);
 
+struct state_t *nfs4_State_Get_Entry(cache_entry_t *entry,
+				     state_owner_t *owner);
+
 int display_state_id_val(struct gsh_buffdesc *buff, char *str);
 int display_state_id_key(struct gsh_buffdesc *buff, char *str);
 
