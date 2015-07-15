@@ -427,6 +427,12 @@ int get_nlm_state(enum state_type state_type,
 
  new_state:
 
+	/* If the nsm state doesn't apply, we don't want to create a new
+	 * state_t if one didn't exist already.
+	 */
+	if (!nsm_state_applies)
+		return 0;
+
 	state = gsh_malloc(sizeof(*state));
 
 	if (state == NULL) {
