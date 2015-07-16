@@ -77,7 +77,6 @@ static struct fsal_staticfsinfo_t default_gpfs_info = {
 	.umask = 0,
 	.auth_exportpath_xdev = true,
 	.xattr_access_rights = 0,
-	.accesscheck_support = true,
 	.share_support = true,
 	.share_support_owner = false,
 	.delegations = FSAL_OPTION_FILE_READ_DELEG, /* not working with pNFS */

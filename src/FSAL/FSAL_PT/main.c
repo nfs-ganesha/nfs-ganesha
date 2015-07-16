@@ -121,7 +121,6 @@ static struct fsal_staticfsinfo_t default_posix_info = {
 	.cansettime = true,
 	.homogenous = true,
 	.supported_attrs = PT_SUPPORTED_ATTRIBUTES,
-	.accesscheck_support = true,
 	.share_support = false,
 	.share_support_owner = false,
 	.link_supports_permission_checks = true,

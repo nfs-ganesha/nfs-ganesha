@@ -596,7 +596,6 @@ typedef enum enum_fsal_fsinfo_options {
 	fso_auth_exportpath_xdev,
 	fso_delegations_r,
 	fso_delegations_w,
-	fso_accesscheck_support,
 	fso_share_support,
 	fso_share_support_owner,
 	fso_pnfs_ds_supported,
@@ -644,8 +643,6 @@ typedef struct fsal_staticfsinfo_t {
 
 	uint32_t xattr_access_rights;	/*< This indicates who is allowed
 					   to read/modify xattrs value. */
-	bool accesscheck_support;	/*< This indicates whether access check
-					   will be done in FSAL. */
 	bool share_support;	/*< FS supports share reservation? */
 	bool share_support_owner;	/*< FS supports share reservation
 					   with open owners ? */
