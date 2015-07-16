@@ -346,6 +346,11 @@ typedef struct nfs_core_param {
 	bool enable_RQUOTA;
 	/** Whether to use fast stats.  Defaults to false. */
 	bool enable_FASTSTATS;
+	/** Whether to use short NFS file handle to accommodate VMware
+	    NFS client. Enable this if you have a VMware NFSv3 client.
+	    VMware NFSv3 client has a max limit of 56 byte file handles!
+	    Defaults to false. */
+	bool short_file_handle;
 	/** How long the server will trust information it got by
 	    calling getgroups() when "Manage_Gids = TRUE" is
 	    used in a export entry. */

@@ -133,7 +133,7 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 	if (!path)
 		return fsalstat(ERR_FSAL_FAULT, 0);
 	memset(fh, 0, sizeof(struct gpfs_file_handle));
-	fh->handle_size = OPENHANDLE_HANDLE_LEN;
+	fh->handle_size = gpfs_max_fh_size;
 	if (!parent->obj_ops.handle_is(parent, DIRECTORY)) {
 		LogCrit(COMPONENT_FSAL,
 			"Parent handle is not a directory. hdl = 0x%p", parent);
@@ -190,7 +190,7 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 		return fsalstat(ERR_FSAL_NOTDIR, 0);
 	}
 	memset(fh, 0, sizeof(struct gpfs_file_handle));
-	fh->handle_size = OPENHANDLE_HANDLE_LEN;
+	fh->handle_size = gpfs_max_fh_size;
 
 	attrib->mask = op_ctx->fsal_export->exp_ops.
 		fs_supported_attrs(op_ctx->fsal_export);
@@ -232,7 +232,7 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 		return fsalstat(ERR_FSAL_NOTDIR, 0);
 	}
 	memset(fh, 0, sizeof(struct gpfs_file_handle));
-	fh->handle_size = OPENHANDLE_HANDLE_LEN;
+	fh->handle_size = gpfs_max_fh_size;
 
 	attrib->mask = op_ctx->fsal_export->exp_ops.
 		fs_supported_attrs(op_ctx->fsal_export);
@@ -277,7 +277,7 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 		return fsalstat(ERR_FSAL_NOTDIR, 0);
 	}
 	memset(fh, 0, sizeof(struct gpfs_file_handle));
-	fh->handle_size = OPENHANDLE_HANDLE_LEN;
+	fh->handle_size = gpfs_max_fh_size;
 
 	attrib->mask = op_ctx->fsal_export->exp_ops.
 		fs_supported_attrs(op_ctx->fsal_export);
@@ -327,7 +327,7 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 		return fsalstat(ERR_FSAL_NOTDIR, 0);
 	}
 	memset(fh, 0, sizeof(struct gpfs_file_handle));
-	fh->handle_size = OPENHANDLE_HANDLE_LEN;
+	fh->handle_size = gpfs_max_fh_size;
 
 	attrib->mask = op_ctx->fsal_export->exp_ops.
 		fs_supported_attrs(op_ctx->fsal_export);
@@ -792,7 +792,7 @@ fsal_status_t gpfs_lookup_path(struct fsal_export *exp_hdl,
 	struct fsal_fsid__ fsid;
 
 	memset(fh, 0, sizeof(struct gpfs_file_handle));
-	fh->handle_size = OPENHANDLE_HANDLE_LEN;
+	fh->handle_size = gpfs_max_fh_size;
 
 	*handle = NULL;	/* poison it */
 
