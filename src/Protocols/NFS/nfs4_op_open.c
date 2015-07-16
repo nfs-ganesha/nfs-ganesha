@@ -1422,7 +1422,9 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 		openflags = FSAL_O_READ;
 		break;
 	case OPEN4_SHARE_ACCESS_WRITE:
-		/* clients may read as well due to buffer cache constraints */
+		/* Clients may read as well due to buffer cache constraints.
+		 * This is based on text on page 112 of RFC 7530.
+		 */
 		/* Fallthrough */
 	case OPEN4_SHARE_ACCESS_BOTH:
 	default:

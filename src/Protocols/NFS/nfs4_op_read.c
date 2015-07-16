@@ -312,10 +312,11 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 		    && (state_open->state_data.share.
 			share_access & OPEN4_SHARE_ACCESS_READ) == 0) {
 			/* Even if file is open for write, the client
-			   may do accidently read operation (caching).
-			   Because of this, READ is allowed if not
-			   explicitely denied.  See page 72 in RFC3530
-			   for more details */
+			 * may do accidently read operation (caching).
+			 * Because of this, READ is allowed if not
+			 * explicitly denied.  See page 112 in RFC 7530
+			 * for more details.
+			 */
 
 			if (state_open->state_data.share.
 			    share_deny & OPEN4_SHARE_DENY_READ) {
