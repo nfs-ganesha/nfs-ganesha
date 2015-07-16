@@ -228,10 +228,17 @@ static struct gpfs_fsal_module GPFS;
 /* linkage to the exports and handle ops initializers
  */
 
+int gpfs_max_fh_size;
+
 MODULE_INIT void gpfs_init(void)
 {
 	int retval;
 	struct fsal_module *myself = &GPFS.fsal;
+
+	if (nfs_param.core_param.short_file_handle)
+		gpfs_max_fh_size = OPENHANDLE_SHORT_HANDLE_LEN;
+	else
+		gpfs_max_fh_size = OPENHANDLE_HANDLE_LEN;
 
 	retval = register_fsal(myself, myname, FSAL_MAJOR_VERSION,
 			       FSAL_MINOR_VERSION, FSAL_ID_GPFS);

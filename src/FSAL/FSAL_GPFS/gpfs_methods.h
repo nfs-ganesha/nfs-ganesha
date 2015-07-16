@@ -65,13 +65,13 @@ void gpfs_unexport_filesystems(struct gpfs_fsal_export *exp);
 	do {								\
 		(fh) = alloca(sizeof(struct gpfs_file_handle));		\
 		memset((fh), 0, (sizeof(struct gpfs_file_handle)));	\
-		(fh)->handle_size = OPENHANDLE_HANDLE_LEN;		\
+		(fh)->handle_size = gpfs_max_fh_size;		\
 	} while (0)
 
 #define gpfs_malloc_handle(fh)						\
 	do {								\
 		(fh) = gsh_calloc(1, sizeof(struct gpfs_file_handle));	\
-		(fh)->handle_size = OPENHANDLE_HANDLE_LEN;		\
+		(fh)->handle_size = gpfs_max_fh_size;		\
 	} while (0)
 
 /*

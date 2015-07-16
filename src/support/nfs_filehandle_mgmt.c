@@ -276,6 +276,12 @@ bool nfs3_FSALToFhandle(nfs_fh3 *fh3,
 	LogFullDebugOpaque(COMPONENT_FILEHANDLE, "NFS3 Handle %s", LEN_FH_STR,
 			   fh3->data.data_val, fh3->data.data_len);
 
+	/* Check VMware NFSv3 client's 56 byte file handle size restriction */
+	if (nfs_param.core_param.short_file_handle && fh3->data.data_len > 56)
+		LogWarnOnce(COMPONENT_FILEHANDLE,
+			    "Short file handle option is enabled but file handle size computed is: %d",
+			fh3->data.data_len);
+
 	return true;
 }
 
