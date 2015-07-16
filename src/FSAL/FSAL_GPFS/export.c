@@ -450,7 +450,8 @@ int open_root_fd(struct gpfs_filesystem *gpfs_fs)
 	fsal_status_t status;
 	struct gpfs_file_handle *fh;
 
-	gpfs_alloc_handle(fh);
+	fh = alloca(sizeof(*fh));
+	memset(fh, 0, sizeof(*fh));
 
 	gpfs_fs->root_fd = open(gpfs_fs->fs->path, O_RDONLY | O_DIRECTORY);
 
