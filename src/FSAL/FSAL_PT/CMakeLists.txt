@@ -12,7 +12,6 @@ SET(fsalpt_LIB_SRCS
   fsal_internal.h
   fsal_lookup.c
   fsal_rename.c
-  fsal_symlinks.c
   fsal_truncate.c
   fsal_unlink.c
   fsi_ipc_ccl.h

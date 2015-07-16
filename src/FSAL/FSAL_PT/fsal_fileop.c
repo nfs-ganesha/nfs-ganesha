@@ -331,11 +331,6 @@ fsal_status_t PTFSAL_close(int p_file_descriptor)
 
 }
 
-unsigned int PTFSAL_GetFileno(int pfile)
-{
-	return pfile;
-}
-
 /**
  * FSAL_commit:
  * This function is used for processing stable writes and COMMIT requests.
