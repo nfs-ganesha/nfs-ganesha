@@ -580,6 +580,8 @@ make DESTDIR=%{buildroot} install
 %{_bindir}/manage_exports
 %{_bindir}/manage_logger
 %{_bindir}/ganeshactl
+%{_bindir}/client_stats_9pOps
+%{_bindir}/export_stats_9pOps
 %endif
 %{_bindir}/fake_recall
 %{_bindir}/get_clientids
@@ -588,8 +590,6 @@ make DESTDIR=%{buildroot} install
 %{_bindir}/ganesha_stats
 %{_bindir}/sm_notify.ganesha
 %{_bindir}/ganesha_mgr
-%{_bindir}/client_stats_9pOps
-%{_bindir}/export_stats_9pOps
 %endif
 
 %changelog
