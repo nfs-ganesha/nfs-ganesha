@@ -168,6 +168,7 @@ be used with NFS-Ganesha to support PROXY based filesystems
 %package utils
 Summary: The NFS-GANESHA's util scripts
 Group: Applications/System
+Requires:	dbus-python, pygobject2
 %if %{with gui_utils}
 BuildRequires:	PyQt4-devel
 Requires:	PyQt4
