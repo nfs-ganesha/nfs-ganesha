@@ -128,13 +128,10 @@ cache_inode_lookup_impl(cache_entry_t *parent,
 						    &dirent->ckey,
 						    CIG_KEYED_FLAG_NONE,
 						    &status);
-					if (*entry) {
-						/* We have our entry and a
-						 * valid reference.
-						 * Declare victory. */
-						status = CACHE_INODE_SUCCESS;
-						goto out;
-					}
+					/* We either have an entry or an error
+					 * to return (ESTALE or ENOMEM).
+					 */
+					goto out;
 				} else {	/* ! dirent */
 					if (trust_negative_cache(parent)) {
 						/* If the dirent cache is both
@@ -145,11 +142,9 @@ cache_inode_lookup_impl(cache_entry_t *parent,
 						status = CACHE_INODE_NOT_FOUND;
 						goto out;
 					}
-					/* XXX keep going? */
+					/* keep going to eventual FSAL lookup */
 				}
-			} else if (write_locked
-				   && !(parent->
-					flags & CACHE_INODE_TRUST_CONTENT)) {
+			} else if (write_locked) {
 				/* We have the write lock and the content is
 				   still invalid.  Empty it out and mark it
 				   * valid in preparation for caching the
@@ -203,6 +198,15 @@ cache_inode_lookup_impl(cache_entry_t *parent,
 	status = cache_inode_add_cached_dirent(parent, name, *entry, NULL);
 	if (status == CACHE_INODE_ENTRY_EXISTS)
 		status = CACHE_INODE_SUCCESS;
+
+	if (status != CACHE_INODE_SUCCESS) {
+		/* Release the reference we got since we aren't returning
+		 * the entry.
+		 */
+		cache_inode_put(*entry);
+		*entry = NULL;
+		goto out;
+	}
 
 	if ((*entry)->type == DIRECTORY) {
 		/* Insert Parent's key */
