@@ -275,21 +275,22 @@ cache_inode_get_keyed(cache_inode_key_t *key,
 		      uint32_t flags,
 		      cache_inode_status_t *status)
 {
-	cache_entry_t *entry = NULL;
+	cache_entry_t *entry;
 	cih_latch_t latch;
 
 	if (key->kv.addr == NULL) {
 		LogDebug(COMPONENT_CACHE_INODE,
 			 "Attempt to use NULL key");
+		*status = CACHE_INODE_INVALID_ARGUMENT;
 		return NULL;
 	}
 
 	/* Check if the entry already exists */
-	entry =
-	    cih_get_by_key_latched(key, &latch,
-				   CIH_GET_RLOCK | CIH_GET_UNLOCK_ON_MISS,
-				   __func__, __LINE__);
-	if (likely(entry)) {
+	entry = cih_get_by_key_latched(key, &latch,
+				       CIH_GET_RLOCK | CIH_GET_UNLOCK_ON_MISS,
+				       __func__, __LINE__);
+
+	if (likely(entry != NULL)) {
 		/* Ref entry */
 		(void) cache_inode_lru_ref(entry, LRU_REQ_INITIAL);
 		/* Release the subtree hash table lock */
@@ -298,51 +299,57 @@ cache_inode_get_keyed(cache_inode_key_t *key,
 		if (!check_mapping(entry, op_ctx->export)) {
 			/* Return error instead of entry */
 			cache_inode_put(entry);
+			*status = CACHE_INODE_MALLOC_ERROR;
 			return NULL;
 		}
 
-		goto out;
+		*status = CACHE_INODE_SUCCESS;
+		return entry;
 	}
+
 	/* Cache miss, allocate a new entry */
-	if (!(flags & CIG_KEYED_FLAG_CACHED_ONLY)) {
+	if ((flags & CIG_KEYED_FLAG_CACHED_ONLY) == 0) {
 		struct fsal_obj_handle *new_hdl;
 		struct fsal_export *exp_hdl;
 		fsal_status_t fsal_status;
 
 		exp_hdl = op_ctx->fsal_export;
-		fsal_status =
-		    exp_hdl->exp_ops.create_handle(exp_hdl, &key->kv,
-						&new_hdl);
+		fsal_status = exp_hdl->exp_ops.create_handle(exp_hdl,
+							     &key->kv,
+							     &new_hdl);
 
 		if (unlikely(FSAL_IS_ERROR(fsal_status))) {
 			*status = cache_inode_error_convert(fsal_status);
 			LogDebug(COMPONENT_CACHE_INODE,
 				 "could not get create_handle object %s",
 				 cache_inode_err_str(*status));
-			goto out;
+			return NULL;
 		}
 
 		LogFullDebug(COMPONENT_CACHE_INODE, "Creating entry");
 
 		/* if all else fails, create a new entry */
-		*status =
-		    cache_inode_new_entry(new_hdl, CACHE_INODE_FLAG_NONE,
-					  &entry);
+		*status = cache_inode_new_entry(new_hdl,
+						CACHE_INODE_FLAG_NONE,
+						&entry);
 
-		if (unlikely(!entry))
-			goto out;
+		if (unlikely(entry == NULL))
+			return NULL;
 
 		*status = cache_inode_lock_trust_attrs(entry, false);
+
 		if (unlikely(*status != CACHE_INODE_SUCCESS)) {
 			cache_inode_put(entry);
-			entry = NULL;
-			goto out;
+			return NULL;
 		}
 
 		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+		return entry;
 	}			/* ! cached only */
- out:
-	return entry;
+
+	/* Was not interested in entry if not cached. */
+	*status = CACHE_INODE_NOT_FOUND;
+	return NULL;
 }
 
 /** @} */
