@@ -580,6 +580,8 @@ make DESTDIR=%{buildroot} install
 %{_bindir}/manage_exports
 %{_bindir}/manage_logger
 %{_bindir}/ganeshactl
+%{_bindir}/client_stats_9pOps
+%{_bindir}/export_stats_9pOps
 %endif
 %{_bindir}/fake_recall
 %{_bindir}/get_clientids
