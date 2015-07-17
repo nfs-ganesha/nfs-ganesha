@@ -77,6 +77,7 @@ struct fsal_export;
 struct fsal_obj_handle;
 struct gsh_export;
 struct io_info;
+struct fsal_fd;
 
 /**
  * @defgroup config_cache_inode Structure and defaults for Cache_Inode
@@ -759,6 +760,11 @@ void cache_inode_create_set_verifier(struct attrlist *sattr, uint32_t verf_hi,
 
 bool cache_inode_create_verify(cache_entry_t *entry,
 			       uint32_t verf_hi, uint32_t verf_lo);
+
+cache_inode_status_t cache_inode_find_by_name(cache_entry_t *parent,
+					      const char *name,
+					      uint32_t flags,
+					      cache_entry_t **entry);
 
 cache_inode_status_t cache_inode_lookup_impl(cache_entry_t *entry_parent,
 					     const char *name,
