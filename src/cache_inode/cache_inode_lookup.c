@@ -94,6 +94,7 @@ cache_inode_status_t cache_inode_find_by_name(cache_entry_t *parent,
 	cache_inode_dir_entry_t *dirent = NULL;
 	cache_inode_status_t status = CACHE_INODE_SUCCESS;
 	int write_locked = 0;
+	bool invalidate_dir;
 
 	/* We first try avltree_lookup by name. If that fails, we
 	 * dispatch to the FSAL.
@@ -110,16 +111,26 @@ cache_inode_status_t cache_inode_find_by_name(cache_entry_t *parent,
 				*entry = cache_inode_get_keyed(&dirent->ckey,
 							       flags,
 							       &status);
-				if (status != CACHE_INODE_NOT_FOUND) {
+				if (status != CACHE_INODE_NOT_FOUND &&
+				    status != CACHE_INODE_ESTALE) {
 					/* We either have an entry or an error
-					 * to return (ESTALE or ENOMEM).
+					 * to return. We ignore ESTALE because
+					 * that would reflect a broken dirent
+					 * and we will handle that below.
 					 */
 					return status;
 				}
 
-				/* If CACHE_INODE_NOT_FOUND, we need to try
+				/* If CACHE_INODE_NOT_FOUND or
+				 * CACHE_INODE_ESTALE, we need to try
 				 * again with write lock, so fall through.
+				 *
+				 * If either of these errors occur once we
+				 * hold the write lock, we will invalidate the
+				 * directory since there is now definitely a
+				 * dirent that is bad.
 				 */
+				invalidate_dir = write_locked;
 			} else {
 				if (trust_negative_cache(parent)) {
 					/* If the dirent cache is both fully
@@ -129,9 +140,16 @@ cache_inode_status_t cache_inode_find_by_name(cache_entry_t *parent,
 					*entry = NULL;
 					return CACHE_INODE_SUCCESS;
 				}
-				/* keep going to eventual dispatch to FSAL */
+				/* Keep going to eventual dispatch to FSAL.
+				 * Don't invalidate the directory in this case.
+				 */
+				invalidate_dir = false;
 			}
-		} else if (write_locked) {
+		} else {
+			/* Invalidate the directory if we're write locked */
+			invalidate_dir = write_locked;
+		}
+		if (invalidate_dir) {
 			/* We have the write lock and the content is still
 			 * invalid.  Empty it out and mark it valid in
 			 * preparation for caching the result of this lookup.
