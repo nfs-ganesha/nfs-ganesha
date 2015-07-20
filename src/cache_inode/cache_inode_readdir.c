@@ -725,6 +725,7 @@ cache_inode_readdir(cache_entry_t *directory,
 		dirent =
 		    avltree_container_of(dirent_node, cache_inode_dir_entry_t,
 					 node_hk);
+		retry_stale = true;
 
  estale_retry:
 		LogFullDebug(COMPONENT_NFS_READDIR,
