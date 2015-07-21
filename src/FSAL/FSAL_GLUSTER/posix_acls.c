@@ -139,12 +139,12 @@ posix_acl_2_fsal_acl(acl_t p_posixacl, fsal_acl_t **p_falacl)
 	bool executemask = true;
 
 	if (!p_posixacl)
-		return fsalstat(ERR_FSAL_FAULT, ret);
+		return fsalstat(ERR_FSAL_NOENT, ret);
 
 	acldata.naces = acl_entries(p_posixacl);
 
 	if (!acldata.naces)
-		return fsalstat(ERR_FSAL_FAULT, ret);
+		return fsalstat(ERR_FSAL_NO_ACE, ret);
 
 	mask = find_entry(p_posixacl, ACL_MASK, 0);
 	if (mask) {
@@ -265,7 +265,7 @@ posix_acl_2_fsal_acl(acl_t p_posixacl, fsal_acl_t **p_falacl)
 	if (pacl == NULL) {
 		LogCrit(COMPONENT_FSAL,
 		"posix_acl_2_fsal_acl: failed to create a new acl entry");
-		return fsalstat(ERR_FSAL_FAULT, ret);
+		return fsalstat(ERR_FSAL_FAULT, status);
 	} else {
 		*p_falacl = pacl;
 		return fsalstat(ERR_FSAL_NO_ERROR, ret);
@@ -682,7 +682,7 @@ posix_acl_2_fsal_acl_for_dir(acl_t e_acl, acl_t i_acl, fsal_acl_t **p_falacl)
 	bool i_executemask = true;
 
 	if (!e_acl)
-		return fsalstat(ERR_FSAL_FAULT, ret);
+		return fsalstat(ERR_FSAL_NOENT, ret);
 	/* *
 	 * Here both effective acl and default acl need to be converted,
 	 * then store it fsal acl, order for ACE entries doesnot matter
@@ -721,7 +721,7 @@ posix_acl_2_fsal_acl_for_dir(acl_t e_acl, acl_t i_acl, fsal_acl_t **p_falacl)
 
 	acldata.naces = ne + ni;
 	if (!acldata.naces)
-		return fsalstat(ERR_FSAL_FAULT, ret);
+		return fsalstat(ERR_FSAL_NO_ACE, ret);
 
 	acldata.aces = (fsal_ace_t *) nfs4_ace_alloc(acldata.naces);
 
@@ -922,7 +922,7 @@ posix_acl_2_fsal_acl_for_dir(acl_t e_acl, acl_t i_acl, fsal_acl_t **p_falacl)
 	if (pacl == NULL) {
 		LogCrit(COMPONENT_FSAL,
 		"posix_acl_2_fsal_acl_for_dir: failed to create a new acl entry");
-		return fsalstat(ERR_FSAL_FAULT, ret);
+		return fsalstat(ERR_FSAL_FAULT, status);
 	} else {
 		*p_falacl = pacl;
 		return fsalstat(ERR_FSAL_NO_ERROR, ret);

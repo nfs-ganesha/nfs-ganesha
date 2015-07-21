@@ -431,7 +431,7 @@ fsal_status_t glusterfs_get_acl(struct glusterfs_export *glfs_export,
 		} else {
 			/* some real error occurred */
 			LogMajor(COMPONENT_FSAL, "failed to fetch ACL");
-			return fsalstat(ERR_FSAL_SERVERFAULT, errno);
+			status = gluster2fsal_error(errno);
 		}
 
 	}
