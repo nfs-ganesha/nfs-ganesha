@@ -26,13 +26,9 @@ static int gpfs_acl_2_fsal_acl(struct attrlist *p_object_attributes,
 			       gpfs_acl_t *p_gpfsacl);
 #endif				/* _USE_NFS4_ACL */
 
-fsal_status_t posix2fsal_attributes(const struct stat *p_buffstat,
-				    struct attrlist *p_fsalattr_out)
+void posix2fsal_attributes(const struct stat *p_buffstat,
+			   struct attrlist *p_fsalattr_out)
 {
-	/* sanity checks */
-	if (!p_buffstat || !p_fsalattr_out)
-		return fsalstat(ERR_FSAL_FAULT, 0);
-
 	/* Initialize ACL regardless of whether ACL was asked or not.
 	 * This is needed to make sure ACL attribute is initialized. */
 	p_fsalattr_out->acl = NULL;
@@ -91,8 +87,6 @@ fsal_status_t posix2fsal_attributes(const struct stat *p_buffstat,
 		p_fsalattr_out->rawdev = posix2fsal_devt(p_buffstat->st_rdev);
 
 	/* everything has been copied ! */
-
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /* Same function as posixstat64_2_fsal_attributes. When NFS4 ACL support

@@ -83,7 +83,6 @@ static struct zfs_fsal_obj_handle *alloc_handle(struct zfs_file_handle *fh,
 						struct fsal_export *exp_hdl)
 {
 	struct zfs_fsal_obj_handle *hdl;
-	fsal_status_t st;
 
 	hdl = gsh_malloc(sizeof(struct zfs_fsal_obj_handle) +
 			 sizeof(struct zfs_file_handle));
@@ -111,9 +110,7 @@ static struct zfs_fsal_obj_handle *alloc_handle(struct zfs_file_handle *fh,
 
 	hdl->attributes.mask = exp_hdl->exp_ops.fs_supported_attrs(exp_hdl);
 
-	st = posix2fsal_attributes(stat, &hdl->attributes);
-	if (FSAL_IS_ERROR(st))
-		goto spcerr;
+	posix2fsal_attributes(stat, &hdl->attributes);
 
 	fsal_obj_handle_init(&hdl->obj_handle,
 			     exp_hdl,
@@ -688,7 +685,6 @@ static fsal_status_t tank_getattrs(struct fsal_obj_handle *obj_hdl)
 	struct zfs_fsal_obj_handle *myself;
 	struct stat stat;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
-	fsal_status_t st;
 	int retval = 0;
 	int type = 0;
 	creden_t cred;
@@ -738,14 +734,7 @@ static fsal_status_t tank_getattrs(struct fsal_obj_handle *obj_hdl)
 
 	/* convert attributes */
  ok_file_opened_and_deleted:
-	st = posix2fsal_attributes(&stat, &myself->attributes);
-	if (FSAL_IS_ERROR(st)) {
-		FSAL_CLEAR_MASK(myself->attributes.mask);
-		FSAL_SET_MASK(myself->attributes.mask, ATTR_RDATTR_ERR);
-		fsal_error = st.major;
-		retval = st.minor;
-		goto out;
-	}
+	posix2fsal_attributes(&stat, &myself->attributes);
 	goto out;
 
  errout:

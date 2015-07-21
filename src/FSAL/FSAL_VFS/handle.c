@@ -80,7 +80,6 @@ static struct vfs_fsal_obj_handle *alloc_handle(int dirfd,
 	struct vfs_fsal_export *myself =
 	    container_of(exp_hdl, struct vfs_fsal_export, export);
 	struct vfs_fsal_obj_handle *hdl;
-	fsal_status_t st;
 
 	hdl = vfs_sub_alloc_handle();
 	if (hdl == NULL)
@@ -134,9 +133,7 @@ static struct vfs_fsal_obj_handle *alloc_handle(int dirfd,
 			goto spcerr;
 	}
 	hdl->attributes.mask = exp_hdl->exp_ops.fs_supported_attrs(exp_hdl);
-	st = posix2fsal_attributes(stat, &hdl->attributes);
-	if (FSAL_IS_ERROR(st))
-		goto spcerr;
+	posix2fsal_attributes(stat, &hdl->attributes);
 	hdl->attributes.fsid = fs->fsid;
 	fsal_obj_handle_init(&hdl->obj_handle, exp_hdl,
 			     posix2fsal_type(stat->st_mode));
@@ -415,6 +412,7 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 	dir_fd = vfs_fsal_open(myself, flags, &status.major);
 	if (dir_fd < 0)
 		return fsalstat(status.major, -dir_fd);
+	/** @todo: not sure what this accomplishes... */
 	retval = vfs_stat_by_handle(dir_fd, myself->handle, &stat, flags);
 	if (retval < 0) {
 		retval = errno;
@@ -1310,15 +1308,8 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl)
 				     FSAL_O_ANY, &fsal_error);
 	if (cfd.fd >= 0) {
 		request_mask = myself->attributes.mask;
-		st = posix2fsal_attributes(&stat, &myself->attributes);
-		if (FSAL_IS_ERROR(st)) {
-			FSAL_CLEAR_MASK(myself->attributes.mask);
-			FSAL_SET_MASK(myself->attributes.mask, ATTR_RDATTR_ERR);
-			fsal_error = st.major;
-			retval = st.minor;
-		} else {
-			myself->attributes.fsid = obj_hdl->fs->fsid;
-		}
+		posix2fsal_attributes(&stat, &myself->attributes);
+		myself->attributes.fsid = obj_hdl->fs->fsid;
 		if (myself->sub_ops && myself->sub_ops->getattrs) {
 			st = myself->sub_ops->getattrs(myself, cfd.fd,
 						       request_mask);

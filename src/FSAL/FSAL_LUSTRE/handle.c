@@ -94,7 +94,6 @@ static struct lustre_fsal_obj_handle *alloc_handle(
 	struct lustre_fsal_export *myself =
 	    container_of(exp_hdl, struct lustre_fsal_export, export);
 	struct lustre_fsal_obj_handle *hdl;
-	fsal_status_t st;
 
 	hdl =
 	    gsh_malloc(sizeof(struct lustre_fsal_obj_handle) +
@@ -139,9 +138,7 @@ static struct lustre_fsal_obj_handle *alloc_handle(
 	}
 
 	hdl->attributes.mask = exp_hdl->exp_ops.fs_supported_attrs(exp_hdl);
-	st = posix2fsal_attributes(stat, &hdl->attributes);
-	if (FSAL_IS_ERROR(st))
-		goto spcerr;
+	posix2fsal_attributes(stat, &hdl->attributes);
 	fsal_obj_handle_init(&hdl->obj_handle, exp_hdl,
 			     posix2fsal_type(stat->st_mode));
 	lustre_handle_ops_init(&hdl->obj_handle.obj_ops);
@@ -898,7 +895,6 @@ static fsal_status_t lustre_getattrs(struct fsal_obj_handle *obj_hdl)
 	int open_flags = O_RDONLY;
 	struct stat stat;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
-	fsal_status_t st;
 	int rc = 0;
 
 	myself =
@@ -923,14 +919,7 @@ static fsal_status_t lustre_getattrs(struct fsal_obj_handle *obj_hdl)
 		goto errout;
 
 	/* convert attributes */
-	st = posix2fsal_attributes(&stat, &myself->attributes);
-	if (FSAL_IS_ERROR(st)) {
-		FSAL_CLEAR_MASK(myself->attributes.mask);
-		FSAL_SET_MASK(myself->attributes.mask, ATTR_RDATTR_ERR);
-		fsal_error = st.major;
-		rc = st.minor;
-		goto out;
-	}
+	posix2fsal_attributes(&stat, &myself->attributes);
 	goto out;
 
  errout:

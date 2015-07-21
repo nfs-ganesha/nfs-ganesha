@@ -412,13 +412,9 @@ const char *object_file_type_to_str(object_file_type_t type)
 	return "unexpected type";
 }
 
-fsal_status_t posix2fsal_attributes(const struct stat *buffstat,
-				    struct attrlist *fsalattr)
+void posix2fsal_attributes(const struct stat *buffstat,
+			   struct attrlist *fsalattr)
 {
-	/* sanity checks */
-	if (!buffstat || !fsalattr)
-		return fsalstat(ERR_FSAL_FAULT, 0);
-
 	FSAL_CLEAR_MASK(fsalattr->mask);
 
 	/* Fills the output struct */
@@ -474,8 +470,6 @@ fsal_status_t posix2fsal_attributes(const struct stat *buffstat,
 
 	fsalattr->rawdev = posix2fsal_devt(buffstat->st_rdev);
 	FSAL_SET_MASK(fsalattr->mask, ATTR_RAWDEV);
-
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /** @} */
