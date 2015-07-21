@@ -2336,12 +2336,10 @@ state_status_t do_lock_op(cache_entry_t *entry,
 		}
 	} else {
 		/** @todo FSF: there is lots of bad here...
-		 * This CAN'T be right for 9P...
 		 * This WON'T be right for LEASE_LOCK...
 		 */
 		assert(sle_type == FSAL_POSIX_LOCK);
-		if (!LOCK_OWNER_9P(owner))
-			status = do_unlock_no_owner(entry, lock);
+		status = do_unlock_no_owner(entry, lock);
 	}
 
 	if (status == STATE_LOCK_CONFLICT) {
