@@ -284,9 +284,7 @@ fsal_status_t lustre_lock_op(struct fsal_obj_handle *obj_hdl,
 		rc = errno;
 		if (conflicting_lock != NULL) {
 			fcntl_comm = F_GETLK;
-			rc =
-			    fcntl(myself->u.file.fd, fcntl_comm, &lock_args);
-			if (rc) {
+			if (fcntl(myself->u.file.fd, fcntl_comm, &lock_args)) {
 				rc = errno;	/* we lose the inital error */
 				LogCrit(COMPONENT_FSAL,
 					"After failing a lock request, I couldn't even get the details of who owns the lock.");
