@@ -39,6 +39,7 @@
 #include "gsh_list.h"
 #include "fsal.h"
 #include "FSAL/fsal_init.h"
+#include "fsal_handle_syscalls.h"
 
 /* VFS FSAL module private storage
  */
@@ -70,7 +71,7 @@ static struct fsal_staticfsinfo_t default_posix_info = {
 	.chown_restricted = true,
 	.case_insensitive = false,
 	.case_preserving = true,
-	.lock_support = true,
+	.lock_support = false,
 	.lock_support_owner = false,
 	.lock_support_async_block = false,
 	.named_attr = true,
@@ -137,8 +138,44 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 {
 	struct vfs_fsal_module *vfs_me =
 	    container_of(fsal_hdl, struct vfs_fsal_module, fsal);
+#ifdef F_OFD_GETLK
+	int fd, rc;
+	struct flock lock;
+#endif
 
 	vfs_me->fs_info = default_posix_info;	/* copy the consts */
+
+#ifdef F_OFD_GETLK
+	/* If on a system that might support OFD locks, verify them.
+	 * Only if they exist will we declare lock support.
+	 */
+	LogInfo(COMPONENT_FSAL, "FSAL_VFS testing OFD Locks");
+	fd = open("/tmp/ganesha.nfsd.locktest", O_CREAT | O_RDWR, 0600);
+	if (fd >= 0) {
+		lock.l_whence = SEEK_SET;
+		lock.l_type = F_RDLCK;
+		lock.l_start = 0;
+		lock.l_len = 0;
+		lock.l_pid = 0;
+
+		rc = fcntl(fd, F_OFD_GETLK, &lock);
+
+		if (rc == 0)
+			vfs_me->fs_info.lock_support = true;
+		else
+			LogInfo(COMPONENT_FSAL, "Could not use OFD locks");
+
+		close(fd);
+	} else {
+		LogInfo(COMPONENT_FSAL, "Could not open file");
+	}
+#endif
+
+	if (vfs_me->fs_info.lock_support)
+		LogInfo(COMPONENT_FSAL, "FSAL_VFS enabling OFD Locks");
+	else
+		LogInfo(COMPONENT_FSAL, "FSAL_VFS disabling lock support");
+
 	(void) load_config_from_parse(config_struct,
 				      &vfs_param,
 				      &vfs_me->fs_info,

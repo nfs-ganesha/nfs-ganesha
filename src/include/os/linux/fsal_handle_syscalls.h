@@ -114,5 +114,18 @@ static inline int vfs_readlink_by_handle(vfs_file_handle_t *fh, int srcfd,
 	return readlinkat(srcfd, sname, buf, bufsize);
 }
 
+/* If not otherwise defined, define OFD locks */
+#ifndef F_OFD_GETLK
+#define F_OFD_GETLK	36
+#endif
+
+#ifndef F_OFD_SETLK
+#define F_OFD_SETLK	37
+#endif
+
+#ifndef F_OFD_SETLKW
+#define F_OFD_SETLKW	38
+#endif
+
 #endif				/* HANDLE_LINUX_H */
 /** @} */
