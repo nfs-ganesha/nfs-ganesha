@@ -302,6 +302,19 @@ fsal_status_t vfs_lock_op(struct fsal_obj_handle *obj_hdl,
 	lock_args.l_start = request_lock->lock_start;
 	lock_args.l_whence = SEEK_SET;
 
+	/* flock.l_len being signed long integer, larger lock ranges may
+	 * get mapped to negative values. As per 'man 3 fcntl', posix
+	 * locks can accept negative l_len values which may lead to
+	 * unlocking an unintended range. Better bail out to prevent that.
+	 */
+	if (lock_args.l_len < 0) {
+		LogCrit(COMPONENT_FSAL,
+			"The requested lock length is out of range- lock_args.l_len(%ld), request_lock_length(%lu)",
+			lock_args.l_len, request_lock->lock_length);
+		fsal_error = ERR_FSAL_BAD_RANGE;
+		goto out;
+	}
+
 	errno = 0;
 	retval = fcntl(myself->u.file.fd, fcntl_comm, &lock_args);
 	if (retval && lock_op == FSAL_OP_LOCK) {

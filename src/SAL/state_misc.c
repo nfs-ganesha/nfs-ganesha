@@ -166,6 +166,8 @@ const char *state_err_str(state_status_t err)
 		return "STATE_IN_GRACE";
 	case STATE_BADHANDLE:
 		return "STATE_BADHANDLE";
+	case STATE_BAD_RANGE:
+		return "STATE_BAD_RANGE";
 	}
 	return "unknown";
 }
@@ -267,6 +269,8 @@ state_status_t cache_inode_status_to_state_status(cache_inode_status_t status)
 		return STATE_IN_GRACE;
 	case CACHE_INODE_BADHANDLE:
 		return STATE_BADHANDLE;
+	case CACHE_INODE_BAD_RANGE:
+		return STATE_BAD_RANGE;
 	}
 	return STATE_CACHE_INODE_ERR;
 }
@@ -361,6 +365,9 @@ state_status_t state_error_convert(fsal_status_t fsal_status)
 
 	case ERR_FSAL_BADHANDLE:
 		return STATE_BADHANDLE;
+
+	case ERR_FSAL_BAD_RANGE:
+		return STATE_BAD_RANGE;
 
 	case ERR_FSAL_DQUOT:
 	case ERR_FSAL_NAMETOOLONG:
@@ -557,6 +564,10 @@ nfsstat4 nfs4_Errno_state(state_status_t error)
 		nfserror = NFS4ERR_BADHANDLE;
 		break;
 
+	case STATE_BAD_RANGE:
+		nfserror = NFS4ERR_BAD_RANGE;
+		break;
+
 	case STATE_INVALID_ARGUMENT:
 	case STATE_CACHE_INODE_ERR:
 	case STATE_INCONSISTENT_ENTRY:
@@ -724,6 +735,7 @@ nfsstat3 nfs3_Errno_state(state_status_t error)
 	case STATE_LOCK_DEADLOCK:
 	case STATE_GRACE_PERIOD:
 	case STATE_SIGNAL_ERROR:
+	case STATE_BAD_RANGE:
 		/* Should not occur */
 		LogCrit(COMPONENT_NFSPROTO,
 			"Unexpected status for conversion = %s",

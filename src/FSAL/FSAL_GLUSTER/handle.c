@@ -1251,6 +1251,21 @@ static fsal_status_t lock_op(struct fsal_obj_handle *obj_hdl,
 	flock.l_start = request_lock->lock_start;
 	flock.l_whence = SEEK_SET;
 
+	/* flock.l_len being signed long integer, larger lock ranges may
+	 * get mapped to negative values. As per 'man 3 fcntl', posix
+	 * locks can accept negative l_len values which may lead to
+	 * unlocking an unintended range. Better bail out to prevent that.
+	 *
+	 * TODO: How do we support larger ranges (>INT64_MAX) then?
+	 */
+	if (flock.l_len < 0) {
+		LogCrit(COMPONENT_FSAL,
+			"The requested lock length is out of range- flock.l_len(%ld), request_lock_length(%lu)",
+			flock.l_len, request_lock->lock_length);
+		status.major = ERR_FSAL_BAD_RANGE;
+		goto out;
+	}
+
 	rc = glfs_posix_lock(objhandle->glfd, cmd, &flock);
 	if (rc != 0 && lock_op == FSAL_OP_LOCK
 	    && conflicting_lock && (errno == EACCES || errno == EAGAIN)) {

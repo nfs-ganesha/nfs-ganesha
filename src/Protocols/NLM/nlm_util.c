@@ -537,6 +537,7 @@ nlm4_stats nlm_convert_state_error(state_status_t status)
 	case STATE_ESTALE:
 		return NLM4_STALE_FH;
 	case STATE_FILE_BIG:
+	case STATE_BAD_RANGE:
 		return NLM4_FBIG;
 	default:
 		return NLM4_FAILED;

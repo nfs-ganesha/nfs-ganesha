@@ -327,6 +327,8 @@ const char *msg_fsal_err(fsal_errors_t fsal_err)
 		return "Union Not Supported";
 	case ERR_FSAL_IN_GRACE:
 		return "Server in Grace";
+        case ERR_FSAL_BAD_RANGE:
+                return "Lock not in allowable range";
 	}
 
 	return "Unknown FSAL error";

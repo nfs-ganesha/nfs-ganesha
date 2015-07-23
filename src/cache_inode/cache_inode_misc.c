@@ -149,6 +149,8 @@ cache_inode_err_str(cache_inode_status_t err)
 		return "CACHE_INODE_CROSS_JUNCTION";
 	case CACHE_INODE_BADHANDLE:
 		return "CACHE_INODE_BADHANDLE";
+	case CACHE_INODE_BAD_RANGE:
+		return "CACHE_INODE_BAD_RANGE";
 	}
 	return "unknown";
 }
@@ -685,6 +687,9 @@ cache_inode_error_convert(fsal_status_t fsal_status)
 
 	case ERR_FSAL_BADHANDLE:
 		return CACHE_INODE_BADHANDLE;
+
+	case ERR_FSAL_BAD_RANGE:
+		return CACHE_INODE_BAD_RANGE;
 
 	case ERR_FSAL_BLOCKED:
 	case ERR_FSAL_INTERRUPT:
