@@ -400,6 +400,7 @@ void vfs_export_ops_init(struct export_ops *ops)
 	ops->fs_xattr_access_rights = fs_xattr_access_rights;
 	ops->get_quota = get_quota;
 	ops->set_quota = set_quota;
+	ops->alloc_state = vfs_alloc_state;
 }
 
 void free_vfs_filesystem(struct vfs_filesystem *vfs_fs)

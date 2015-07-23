@@ -40,6 +40,318 @@
 #include <fcntl.h>
 #include "FSAL/fsal_commonlib.h"
 #include "vfs_methods.h"
+#include "os/subr.h"
+#include "sal_data.h"
+
+fsal_status_t vfs_open_my_fd(struct vfs_fsal_obj_handle *myself,
+			     fsal_openflags_t openflags,
+			     int posix_flags,
+			     struct vfs_fd *my_fd)
+{
+	int fd;
+	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
+	int retval = 0;
+
+	LogFullDebug(COMPONENT_FSAL,
+		     "my_fd->fd = %d openflags = %x, posix_flags = %x",
+		     my_fd->fd, openflags, posix_flags);
+
+	assert(my_fd->fd == -1
+	       && my_fd->openflags == FSAL_O_CLOSED && openflags != 0);
+
+	LogFullDebug(COMPONENT_FSAL,
+		     "openflags = %x, posix_flags = %x",
+		     openflags, posix_flags);
+
+	fd = vfs_fsal_open(myself, posix_flags, &fsal_error);
+
+	if (fd < 0) {
+		retval = -fd;
+	} else {
+		/* Save the file descriptor, make sure we only save the
+		 * open modes that actually represent the open file.
+		 */
+		LogFullDebug(COMPONENT_FSAL,
+			     "fd = %d, new openflags = %x",
+			     fd, openflags);
+		if (fd == 0)
+			LogCrit(COMPONENT_FSAL,
+				"fd = %d, new openflags = %x",
+				fd, openflags);
+		my_fd->fd = fd;
+		my_fd->openflags = openflags;
+	}
+
+	return fsalstat(fsal_error, retval);
+}
+
+fsal_status_t vfs_close_my_fd(struct vfs_fd *my_fd)
+{
+	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
+	int retval = 0;
+
+	if (my_fd->fd >= 0 && my_fd->openflags != FSAL_O_CLOSED) {
+		retval = close(my_fd->fd);
+		if (retval < 0) {
+			retval = errno;
+			fsal_error = posix2fsal_error(retval);
+		}
+		my_fd->fd = -1;
+		my_fd->openflags = FSAL_O_CLOSED;
+	}
+
+	return fsalstat(fsal_error, retval);
+}
+
+static inline bool not_open_correct(struct vfs_fd *my_fd,
+				    fsal_openflags_t openflags)
+{
+	/* 1. my_fd->openflags will NEVER be FSAL_O_ANY.
+	 * 2. If openflags == FSAL_O_ANY, the first half will be true if the
+	 *    file is closed, and the second half MUST be true (per statement 1)
+	 * 3. If openflags is anything else, the first half will be true and
+	 *    the second half will be true if my_fd->openflags does not include
+	 *    the requested modes.
+	 */
+	return (openflags != FSAL_O_ANY || my_fd->openflags == FSAL_O_CLOSED)
+	       && ((my_fd->openflags & openflags) != openflags);
+}
+
+static inline bool open_correct(struct vfs_fd *my_fd,
+				fsal_openflags_t openflags)
+{
+	return (openflags == FSAL_O_ANY && my_fd->openflags != FSAL_O_CLOSED)
+	       || (openflags != FSAL_O_ANY
+		   && (my_fd->openflags & openflags & FSAL_O_RDWR)
+						== (openflags & FSAL_O_RDWR));
+}
+
+/**
+ * @brief Reopen the fd associated with the object handle.
+ *
+ * This function assures that the fd is open in the mode requested. If
+ * the fd was already open, it closes it and reopens with the OR of the
+ * requested modes.
+ *
+ * This function will return with the object handle lock held for read
+ * if successful.
+ *
+ * @param[in]  myself      File on which to operate
+ * @param[in]  check_share Indicates we must check for share conflict
+ * @param[in]  openflags   Mode for open
+ * @param[out] fd          File descriptor that is to be used
+ * @param[out] has_lock    Indicates that obj_hdl->lock is held read
+ * @param[out] closefd     Indicates that file descriptor must be closed
+ *
+ * @return FSAL status.
+ */
+
+fsal_status_t vfs_reopen_obj(struct fsal_obj_handle *obj_hdl,
+			     bool check_share,
+			     bool bypass,
+			     fsal_openflags_t openflags,
+			     int *fd,
+			     bool *has_lock,
+			     bool *closefd)
+{
+	struct vfs_fsal_obj_handle *myself;
+	int posix_flags = 0;
+	struct vfs_fd *my_fd;
+	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
+	int rc;
+	bool retried = false;
+	fsal_openflags_t try_openflags;
+
+	/* Use the global file descriptor. */
+	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
+	my_fd = &myself->u.file.fd;
+	*closefd = false;
+
+	/* Take read lock on object to protect file descriptor.
+	 * We only take a read lock because we are not changing the
+	 * state of the file descriptor.
+	 */
+	PTHREAD_RWLOCK_rdlock(&obj_hdl->lock);
+
+	if (check_share) {
+		/* Note we will check again if we drop and re-acquire the lock
+		 * just to be on the safe side.
+		 */
+		status = check_share_conflict(&myself->u.file.share,
+					      openflags,
+					      bypass);
+
+		if (FSAL_IS_ERROR(status)) {
+			PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+			*has_lock = false;
+			return status;
+		}
+	}
+
+again:
+
+	LogFullDebug(COMPONENT_FSAL,
+		     "Open mode = %x, desired mode = %x",
+		     (int) my_fd->openflags,
+		     (int) openflags);
+
+	if (not_open_correct(my_fd, openflags)) {
+
+		/* Drop the rwlock */
+		PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+
+		if (retried) {
+			/* This really should never occur, it could occur
+			 * if there was some race with closing the file.
+			 */
+			LogDebug(COMPONENT_FSAL,
+				 "Retry failed, returning EBADF");
+			*has_lock = false;
+			return fsalstat(posix2fsal_error(EBADF), EBADF);
+		}
+
+		/* Switch to write lock on object to protect file descriptor.
+		 * By using trylock, we don't block if another thread is using
+		 * the file descriptor right now. In that case, we just open
+		 * a temporary file descriptor.
+		 *
+		 * This prevents us from blocking for the duration of an
+		 * I/O request.
+		 */
+		rc = pthread_rwlock_trywrlock(&obj_hdl->lock);
+		if (rc == EBUSY) {
+			/* Someone else is using the file descriptor.
+			 * Just provide a temporary file descriptor.
+			 * We still take a read lock so we can protect the
+			 * share reservation for the duration of the caller's
+			 * operation if we needed to check.
+			 */
+			if (check_share) {
+				PTHREAD_RWLOCK_rdlock(&obj_hdl->lock);
+
+				status =
+				    check_share_conflict(&myself->u.file.share,
+							 openflags,
+							 bypass);
+
+				if (FSAL_IS_ERROR(status)) {
+					PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+					*has_lock = false;
+					return status;
+				}
+			}
+
+			fsal2posix_openflags(openflags, &posix_flags);
+
+			rc = vfs_fsal_open(myself, posix_flags, &status.major);
+
+			if (rc < 0) {
+				LogDebug(COMPONENT_FSAL,
+					 "vfs_fsal_open failed with %s openflags 0x%08x",
+					 strerror(-rc), openflags);
+				*has_lock = false;
+				return fsalstat(posix2fsal_error(-rc), -rc);
+			}
+
+			*fd = rc;
+			*closefd = true;
+			*has_lock = check_share;
+			return fsalstat(ERR_FSAL_NO_ERROR, 0);
+
+		} else if (rc != 0) {
+			LogCrit(COMPONENT_RW_LOCK,
+				"Error %d, read locking %p", rc, myself);
+			abort();
+		}
+
+		if (check_share) {
+			status = check_share_conflict(&myself->u.file.share,
+						      openflags,
+						      bypass);
+
+			if (FSAL_IS_ERROR(status)) {
+				PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+				*has_lock = false;
+				return status;
+			}
+		}
+
+		LogFullDebug(COMPONENT_FSAL,
+			     "Open mode = %x, desired mode = %x",
+			     (int) my_fd->openflags,
+			     (int) openflags);
+
+		if (not_open_correct(my_fd, openflags)) {
+			if (my_fd->openflags != FSAL_O_CLOSED) {
+				/* Add desired mode to existing mode. */
+				try_openflags = openflags | my_fd->openflags;
+
+				/* Now close the already open descriptor. */
+				status = vfs_close_my_fd(my_fd);
+
+				if (FSAL_IS_ERROR(status)) {
+					PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+					LogDebug(COMPONENT_FSAL,
+						 "vfs_close_my_fd failed with %s",
+						 strerror(status.minor));
+					*has_lock = false;
+					return status;
+				}
+			} else if (openflags == FSAL_O_ANY) {
+				try_openflags = FSAL_O_READ;
+			} else {
+				try_openflags = openflags;
+			}
+
+			fsal2posix_openflags(try_openflags, &posix_flags);
+
+			LogFullDebug(COMPONENT_FSAL,
+				     "try_openflags = %x, posix_flags = %x",
+				     try_openflags, posix_flags);
+
+			/* Actually open the file */
+			status = vfs_open_my_fd(myself, try_openflags,
+						posix_flags, my_fd);
+
+			if (FSAL_IS_ERROR(status)) {
+				PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+				LogDebug(COMPONENT_FSAL,
+					 "vfs_open_my_fd failed with %s",
+					 strerror(status.minor));
+				*has_lock = false;
+				return status;
+			}
+		}
+
+		/* Ok, now we should be in the correct mode.
+		 * Switch back to read lock and try again.
+		 * We don't want to hold the write lock because that would
+		 * block other users of the file descriptor.
+		 * Since we dropped the lock, we need to verify mode is still'
+		 * good after we re-aquire the read lock, thus the retry.
+		 */
+		PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+		PTHREAD_RWLOCK_rdlock(&obj_hdl->lock);
+		retried = true;
+
+		if (check_share) {
+			status = check_share_conflict(&myself->u.file.share,
+						      openflags,
+						      bypass);
+
+			if (FSAL_IS_ERROR(status)) {
+				PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+				*has_lock = false;
+				return status;
+			}
+		}
+		goto again;
+	}
+
+	*fd = my_fd->fd;
+	*has_lock = true;
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
 
 /** vfs_open
  * called with appropriate locks taken at the cache inode level
@@ -50,10 +362,10 @@ fsal_status_t vfs_open(struct fsal_obj_handle *obj_hdl,
 {
 	struct vfs_fsal_obj_handle *myself;
 	struct vfs_fd *my_fd;
-	int fd;
-	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
+	fsal_status_t status;
 	int posix_flags = 0;
-	int retval = 0;
+
+	fsal2posix_openflags(openflags, &posix_flags);
 
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
 	my_fd = &myself->u.file.fd;
@@ -62,9 +374,7 @@ fsal_status_t vfs_open(struct fsal_obj_handle *obj_hdl,
 		LogDebug(COMPONENT_FSAL,
 			 "FSAL %s operation for handle belonging to FSAL %s, return EXDEV",
 			 obj_hdl->fsal->name, obj_hdl->fs->fsal->name);
-		retval = EXDEV;
-		fsal_error = posix2fsal_error(retval);
-		return fsalstat(fsal_error, retval);
+		return fsalstat(posix2fsal_error(EXDEV), EXDEV);
 	}
 
 	/* Take write lock on object to protect file descriptor.
@@ -72,23 +382,11 @@ fsal_status_t vfs_open(struct fsal_obj_handle *obj_hdl,
 	 */
 	PTHREAD_RWLOCK_wrlock(&obj_hdl->lock);
 
-	assert(my_fd->fd == -1
-	       && my_fd->openflags == FSAL_O_CLOSED && openflags != 0);
-
-	fsal2posix_openflags(openflags, &posix_flags);
-	LogFullDebug(COMPONENT_FSAL, "open_by_handle_at flags from %x to %x",
-		     openflags, posix_flags);
-	fd = vfs_fsal_open(myself, posix_flags, &fsal_error);
-	if (fd < 0) {
-		retval = -fd;
-	} else {
-		my_fd->fd = fd;
-		my_fd->openflags = openflags;
-	}
+	status = vfs_open_my_fd(myself, openflags, posix_flags, my_fd);
 
 	PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
 
-	return fsalstat(fsal_error, retval);
+	return status;
 }
 
 /* vfs_status
@@ -405,21 +703,16 @@ fsal_status_t vfs_lock_op(struct fsal_obj_handle *obj_hdl,
 fsal_status_t vfs_close(struct fsal_obj_handle *obj_hdl)
 {
 	struct vfs_fsal_obj_handle *myself;
-	struct vfs_fd *my_fd;
-	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
-	int retval = 0;
+	fsal_status_t status;
 
 	assert(obj_hdl->type == REGULAR_FILE);
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
-	my_fd = &myself->u.file.fd;
 
 	if (obj_hdl->fsal != obj_hdl->fs->fsal) {
 		LogDebug(COMPONENT_FSAL,
 			 "FSAL %s operation for handle belonging to FSAL %s, return EXDEV",
 			 obj_hdl->fsal->name, obj_hdl->fs->fsal->name);
-		retval = EXDEV;
-		fsal_error = posix2fsal_error(retval);
-		return fsalstat(fsal_error, retval);
+		return fsalstat(posix2fsal_error(EXDEV), EXDEV);
 	}
 
 	/* Take write lock on object to protect file descriptor.
@@ -427,19 +720,11 @@ fsal_status_t vfs_close(struct fsal_obj_handle *obj_hdl)
 	 */
 	PTHREAD_RWLOCK_wrlock(&obj_hdl->lock);
 
-	if (my_fd->fd >= 0 && my_fd->openflags != FSAL_O_CLOSED) {
-		retval = close(my_fd->fd);
-		if (retval < 0) {
-			retval = errno;
-			fsal_error = posix2fsal_error(retval);
-		}
-		my_fd->fd = -1;
-		my_fd->openflags = FSAL_O_CLOSED;
-	}
+	status = vfs_close_my_fd(&myself->u.file.fd);
 
 	PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
 
-	return fsalstat(fsal_error, retval);
+	return status;
 }
 
 /* vfs_lru_cleanup
@@ -484,4 +769,1722 @@ fsal_status_t vfs_lru_cleanup(struct fsal_obj_handle *obj_hdl,
 	PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
 
 	return fsalstat(fsal_error, retval);
+}
+
+/**
+ * @brief Allocate a state_t structure
+ *
+ * Note that this is not expected to fail since memory allocation is
+ * expected to abort on failure.
+ *
+ * @param[in] exp_hdl               Export state_t will be associated with
+ * @param[in] state_type            Type of state to allocate
+ * @param[in] related_state         Related state if appropriate
+ *
+ * @returns a state structure.
+ */
+
+struct state_t *vfs_alloc_state(struct fsal_export *exp_hdl,
+				enum state_type state_type,
+				struct state_t *related_state)
+{
+	struct state_t *state;
+	size_t extra = sizeof(struct vfs_fd);
+	struct vfs_fd *my_fd;
+
+	state = gsh_calloc(1, sizeof(struct state_t) + extra);
+
+	my_fd = (struct vfs_fd *)(state + 1);
+
+	state->state_exp = exp_hdl;
+	state->state_type = state_type;
+
+	if (state_type == STATE_TYPE_LOCK ||
+	    state_type == STATE_TYPE_NLM_LOCK)
+		state->state_data.lock.openstate = related_state;
+
+	my_fd->fd = -1;
+
+	return state;
+}
+
+/**
+ * @brief Merge a duplicate handle with an original handle
+ *
+ * This function is used if an upper layer detects that a duplicate
+ * object handle has been created. It allows the FSAL to merge anything
+ * from the duplicate back into the original, and then release the
+ * duplicate.
+ *
+ * @param[in]  orig_hdl  Original handle
+ * @param[in]  dupe_hdl Handle to merge into original
+ *
+ * @return FSAL status.
+ *
+ */
+
+fsal_status_t vfs_merge(struct fsal_obj_handle *orig_hdl,
+			struct fsal_obj_handle *dupe_hdl)
+{
+	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
+
+	if (orig_hdl->type == REGULAR_FILE &&
+	    dupe_hdl->type == REGULAR_FILE) {
+		/* We need to merge the share reservations on this file.
+		 * This could result in ERR_FSAL_SHARE_DENIED.
+		 */
+		struct vfs_fsal_obj_handle *orig, *dupe;
+
+		orig = container_of(orig_hdl,
+				    struct vfs_fsal_obj_handle,
+				    obj_handle);
+		dupe = container_of(dupe_hdl,
+				    struct vfs_fsal_obj_handle,
+				    obj_handle);
+
+		/* This can block over an I/O operation. */
+		PTHREAD_RWLOCK_wrlock(&orig_hdl->lock);
+
+		status = merge_share(&orig->u.file.share, &dupe->u.file.share);
+
+		PTHREAD_RWLOCK_unlock(&orig_hdl->lock);
+	}
+
+	return status;
+}
+
+/**
+ * @brief Open a file descriptor for read or write and possibly create
+ *
+ * This function opens a file for read or write, possibly creating it.
+ * If the caller is passing a state, it must hold the state_lock
+ * exclusive.
+ *
+ * state can be NULL which indicates a stateless open (such as via the
+ * NFS v3 CREATE operation), in which case the FSAL must assure protection
+ * of any resources. If the file is being created, such protection is
+ * simple since no one else will have access to the object yet, however,
+ * in the case of an exclusive create, the common resources may still need
+ * protection.
+ *
+ * If Name is NULL, obj_hdl is the file itself, otherwise obj_hdl is the
+ * parent directory.
+ *
+ * On an exclusive create, the upper layer may know the object handle
+ * already, so it MAY call with name == NULL. In this case, the caller
+ * expects just to check the verifier. The caller must hold the attr_lock
+ * since the FSAL will update the attributes in checking the verifier.
+ *
+ * On a call with an existing object handle for an UNCHECKED create,
+ * we can set the size to 0, because of this, the caller must hold the
+ * attr_lock to update the attributes.
+ *
+ * If attributes are not set on create, the FSAL will set some minimal
+ * attributes (for example, mode might be set to 0600).
+ *
+ * If an open by name succeeds and did not result in Ganesha creating a file,
+ * the caller will need to do a subsequent permission check to confirm the
+ * open. This is because the permission attributes were not available
+ * beforehand.
+ *
+ * @param[in] obj_hdl               File to open or parent directory
+ * @param[in,out] state             state_t to use for this operation
+ * @param[in] openflags             Mode for open
+ * @param[in] createmode            Mode for create
+ * @param[in] name                  Name for file if being created or opened
+ * @param[in] attrib_set            Attributes to set on created file
+ * @param[in] verifier              Verifier to use for exclusive create
+ * @param[in,out] new_obj           Newly created object
+ * @param[in,out] caller_perm_check The caller must do a permission check
+ *
+ * @return FSAL status.
+ */
+
+fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
+			struct state_t *state,
+			fsal_openflags_t openflags,
+			enum fsal_create_mode createmode,
+			const char *name,
+			struct attrlist *attrib_set,
+			fsal_verifier_t verifier,
+			struct fsal_obj_handle **new_obj,
+			bool *caller_perm_check)
+{
+	int posix_flags = 0;
+	int fd, dir_fd;
+	int retval = 0;
+	mode_t unix_mode;
+	fsal_status_t status = {0, 0};
+	struct vfs_fd *my_fd = NULL;
+	struct vfs_fsal_obj_handle *myself, *hdl = NULL;
+	struct stat stat;
+	vfs_file_handle_t *fh = NULL;
+	bool truncated;
+	bool setattrs = attrib_set != NULL;
+	bool created = false;
+	struct attrlist verifier_attr;
+
+	if (state != NULL)
+		my_fd = (struct vfs_fd *)(state + 1);
+
+	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
+
+	fsal2posix_openflags(openflags, &posix_flags);
+
+	if (createmode != FSAL_NO_CREATE && setattrs &&
+	    FSAL_TEST_MASK(attrib_set->mask, ATTR_SIZE) &&
+	    attrib_set->filesize == 0) {
+		LogFullDebug(COMPONENT_FSAL, "Truncate");
+		/* Handle truncate to zero on open */
+		posix_flags |= O_TRUNC;
+		/* Don't set the size if we later set the attributes */
+		FSAL_UNSET_MASK(attrib_set->mask, ATTR_SIZE);
+	}
+
+	truncated = (posix_flags & O_TRUNC) != 0;
+
+	/* Now fixup attrs for verifier if exclusive create */
+	if (createmode >= FSAL_EXCLUSIVE) {
+		if (!setattrs) {
+			/* We need to use verifier_attr */
+			attrib_set = &verifier_attr;
+			memset(&verifier_attr, 0, sizeof(verifier_attr));
+		}
+
+		set_common_verifier(attrib_set, verifier);
+	}
+
+	if (name == NULL) {
+		/* This is an open by handle */
+		struct vfs_fsal_obj_handle *myself;
+
+		myself = container_of(obj_hdl,
+				      struct vfs_fsal_obj_handle,
+				      obj_handle);
+
+		if (obj_hdl->fsal != obj_hdl->fs->fsal) {
+			LogDebug(COMPONENT_FSAL,
+				 "FSAL %s operation for handle belonging to FSAL %s, return EXDEV",
+				 obj_hdl->fsal->name, obj_hdl->fs->fsal->name);
+			return fsalstat(posix2fsal_error(EXDEV), EXDEV);
+		}
+
+		if (state != NULL) {
+			/* Prepare to take the share reservation, but only if we
+			 * are called with a valid state (if state is NULL the
+			 * caller is a stateless create such as NFS v3 CREATE).
+			 */
+
+			/* This can block over an I/O operation. */
+			PTHREAD_RWLOCK_wrlock(&obj_hdl->lock);
+
+			/* Check share reservation conflicts. */
+			status = check_share_conflict(&myself->u.file.share,
+						      openflags,
+						      false);
+
+			if (FSAL_IS_ERROR(status)) {
+				PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+				return status;
+			}
+
+			/* Take the share reservation now by updating the
+			 * counters.
+			 */
+			update_share_counters(&myself->u.file.share,
+					      FSAL_O_CLOSED,
+					      openflags);
+
+			PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+		} else {
+			/* We need to use the global fd to continue, and take
+			 * the lock to protect it.
+			 */
+			my_fd = &hdl->u.file.fd;
+			PTHREAD_RWLOCK_wrlock(&obj_hdl->lock);
+		}
+
+		status = vfs_open_my_fd(myself, openflags, posix_flags, my_fd);
+
+		if (FSAL_IS_ERROR(status)) {
+			if (state == NULL) {
+				/* Release the lock taken above, and return
+				 * since there is nothing to undo.
+				 */
+				PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+				return status;
+			} else {
+				/* Error - need to release the share */
+				goto undo_share;
+			}
+		}
+
+		if (createmode >= FSAL_EXCLUSIVE || truncated) {
+			/* Refresh the attributes */
+			struct stat stat;
+			attrmask_t request_mask;
+
+			retval = fstat(my_fd->fd, &stat);
+
+			if (retval == 0) {
+				request_mask = myself->attributes.mask;
+				posix2fsal_attributes(&stat,
+						      &myself->attributes);
+				myself->attributes.fsid = obj_hdl->fs->fsid;
+				if (myself->sub_ops &&
+				    myself->sub_ops->getattrs) {
+					status = myself->sub_ops->getattrs(
+							myself, my_fd->fd,
+							request_mask);
+					if (FSAL_IS_ERROR(status)) {
+						FSAL_CLEAR_MASK(
+						    myself->attributes.mask);
+						FSAL_SET_MASK(
+						    myself->attributes.mask,
+						    ATTR_RDATTR_ERR);
+						/** @todo: should handle this
+						 * better.
+						 */
+					}
+				}
+				LogFullDebug(COMPONENT_FSAL,
+					     "New size = %"PRIx64,
+					     myself->attributes.filesize);
+			} else {
+				if (errno == EBADF)
+					errno = ESTALE;
+				status = fsalstat(posix2fsal_error(errno),
+						  errno);
+			}
+
+			/* Now check verifier for exclusive, but not for
+			 * FSAL_EXCLUSIVE_9P.
+			 */
+			if (!FSAL_IS_ERROR(status) &&
+			    createmode >= FSAL_EXCLUSIVE &&
+			    createmode != FSAL_EXCLUSIVE_9P &&
+			    !obj_hdl->obj_ops.check_verifier(obj_hdl,
+							     verifier)) {
+				/* Verifier didn't match, return EEXIST */
+				status =
+				    fsalstat(posix2fsal_error(EEXIST), EEXIST);
+			}
+		}
+
+		if (state == NULL) {
+			/* If no state, release the lock taken above and return
+			 * status.
+			 */
+			PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+			return status;
+		}
+
+		if (!FSAL_IS_ERROR(status)) {
+			/* Return success. */
+			return status;
+		}
+
+		(void) vfs_close_my_fd(my_fd);
+
+ undo_share:
+
+		/* Can only get here with state not NULL and an error */
+
+		/* On error we need to release our share reservation
+		 * and undo the update of the share counters.
+		 * This can block over an I/O operation.
+		 */
+		PTHREAD_RWLOCK_wrlock(&obj_hdl->lock);
+
+		update_share_counters(&myself->u.file.share,
+				      openflags,
+				      FSAL_O_CLOSED);
+
+		PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+
+		return status;
+	}
+
+	/* In this path where we are opening by name, we can't check share
+	 * reservation yet since we don't have an object_handle yet. If we
+	 * indeed create the object handle (there is no race with another
+	 * open by name), then there CAN NOT be a share conflict, otherwise
+	 * the share conflict will be resolved when the object handles are
+	 * merged.
+	 */
+
+	/* Now add in O_CREAT and O_EXCL.
+	 * Even with FSAL_UNGUARDED we try exclusive create first so
+	 * we can safely set attributes.
+	 */
+	if (createmode != FSAL_NO_CREATE) {
+		posix_flags |= O_CREAT;
+
+		if (createmode >= FSAL_GUARDED || setattrs)
+			posix_flags |= O_EXCL;
+	}
+
+	if (setattrs && FSAL_TEST_MASK(attrib_set->mask, ATTR_MODE)) {
+		unix_mode = fsal2unix_mode(attrib_set->mode) &
+		    ~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
+		/* Don't set the mode if we later set the attributes */
+		FSAL_UNSET_MASK(attrib_set->mask, ATTR_MODE);
+	} else {
+		/* Default to mode 0600 */
+		unix_mode = 0600;
+	}
+
+	dir_fd = vfs_fsal_open(myself, O_PATH | O_NOACCESS, &status.major);
+
+	if (dir_fd < 0)
+		return fsalstat(status.major, -dir_fd);
+
+	/** @todo: not sure what this accomplishes... */
+	retval = vfs_stat_by_handle(dir_fd, &stat);
+
+	if (retval < 0) {
+		retval = errno;
+		status = fsalstat(posix2fsal_error(retval), retval);
+		goto direrr;
+	}
+
+	/* Become the user because we are creating an object in this dir.
+	 */
+	if (createmode != FSAL_NO_CREATE)
+		fsal_set_credentials(op_ctx->creds);
+
+	if ((posix_flags & O_CREAT) != 0)
+		fd = openat(dir_fd, name, posix_flags, unix_mode);
+	else
+		fd = openat(dir_fd, name, posix_flags);
+
+	if (fd == -1 && errno == EEXIST && createmode == FSAL_UNCHECKED) {
+		/* We tried to create O_EXCL to set attributes and failed.
+		 * Remove O_EXCL and retry, also remember not to set attributes.
+		 * We still try O_CREAT again just in case file disappears out
+		 * from under us.
+		 */
+		posix_flags &= ~O_EXCL;
+		setattrs = false;
+		fd = openat(dir_fd, name, posix_flags, unix_mode);
+	}
+
+	/* Preserve errno */
+	retval = errno;
+
+	/* If we were creating, restore credentials now. */
+	if (createmode != FSAL_NO_CREATE)
+		fsal_restore_ganesha_credentials();
+
+	if (fd < 0) {
+		status = fsalstat(posix2fsal_error(retval), retval);
+		goto direrr;
+	}
+
+	/* Remember if we were responsible for creating the file.
+	 * Note that in an UNCHECKED retry we MIGHT have re-created the
+	 * file and won't remember that. Oh well, so in that rare case we
+	 * leak a partially created file if we have a subsequent error in here.
+	 * Also notify caller to do permission check if we DID NOT create the
+	 * file. Note it IS possible in the case of a race between an UNCHECKED
+	 * open and an external unlink, we did create the file, but we will
+	 * still force a permission check. Of course that permission check
+	 * SHOULD succeed since we also won't set the mode the caller requested
+	 * and the default file create permissions SHOULD allow the owner
+	 * read/write.
+	 */
+	created = (posix_flags & O_EXCL) != 0;
+	*caller_perm_check = !created;
+
+	vfs_alloc_handle(fh);
+
+	retval = vfs_name_to_handle(dir_fd, obj_hdl->fs, name, fh);
+
+	if (retval < 0) {
+		retval = errno;
+		status = fsalstat(posix2fsal_error(retval), retval);
+		goto fileerr;
+	}
+
+	retval = fstat(fd, &stat);
+
+	if (retval < 0) {
+		retval = errno;
+		status = fsalstat(posix2fsal_error(retval), retval);
+		goto fileerr;
+	}
+
+	/* allocate an obj_handle and fill it up */
+	hdl = alloc_handle(dir_fd, fh, obj_hdl->fs, &stat, myself->handle, name,
+			   op_ctx->fsal_export);
+
+	if (hdl == NULL) {
+		status = fsalstat(posix2fsal_error(ENOMEM), ENOMEM);
+		goto fileerr;
+	}
+
+	/* If we didn't have a state above, use the global fd. At this point,
+	 * since we just created the global fd, no one else can have a
+	 * reference to it, and thus we can mamnipulate unlocked which is
+	 * handy since we can then call setattr2 which WILL take the lock
+	 * without a double locking deadlock.
+	 */
+	if (my_fd == NULL)
+		my_fd = &hdl->u.file.fd;
+
+	my_fd->fd = fd;
+	my_fd->openflags = openflags;
+
+	*new_obj = &hdl->obj_handle;
+
+	if (setattrs && attrib_set->mask != 0) {
+		/* Set attributes using our newly opened file descriptor as the
+		 * share_fd if there are any left to set (mode and truncate
+		 * have already been handled).
+		 *
+		 * Note that we only set the attributes if we were responsible
+		 * for creating the file.
+		 */
+		status = (*new_obj)->obj_ops.setattr2(*new_obj,
+						      false,
+						      state,
+						      attrib_set);
+
+		if (FSAL_IS_ERROR(status)) {
+			/* Release the handle we just allocated. */
+			(*new_obj)->obj_ops.release(*new_obj);
+			*new_obj = NULL;
+			goto fileerr;
+		}
+	}
+
+	close(dir_fd);
+
+	if (state != NULL) {
+		/* Prepare to take the share reservation, but only if we are
+		 * called with a valid state (if state is NULL the caller is
+		 * a stateless create such as NFS v3 CREATE).
+		 */
+
+		/* This can block over an I/O operation. */
+		PTHREAD_RWLOCK_wrlock(&(*new_obj)->lock);
+
+		/* Take the share reservation now by updating the counters. */
+		update_share_counters(&hdl->u.file.share,
+				      FSAL_O_CLOSED,
+				      openflags);
+
+		PTHREAD_RWLOCK_unlock(&(*new_obj)->lock);
+	}
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+
+ fileerr:
+
+	close(fd);
+
+	/* Delete the file if we actually created it. */
+	if (created)
+		unlinkat(dir_fd, name, 0);
+
+ direrr:
+
+	close(dir_fd);
+	return fsalstat(posix2fsal_error(retval), retval);
+}
+
+/**
+ * @brief Return open status of a state.
+ *
+ * This function returns open flags representing the current open
+ * status for a state. The state_lock must be held.
+ *
+ * @param[in] state File state to interrogate
+ *
+ * @retval Flags representing current open status
+ */
+
+fsal_openflags_t vfs_status2(struct state_t *state)
+{
+	struct vfs_fd *my_fd = (struct vfs_fd *)(state + 1);
+
+	return my_fd->openflags;
+}
+
+/**
+ * @brief Re-open a file that may be already opened
+ *
+ * This function supports changing the access mode of a share reservation and
+ * thus should only be called with a share state. The state_lock must be held.
+ *
+ * This MAY be used to open a file the first time if there is no need for
+ * open by name or create semantics. One example would be 9P lopen.
+ *
+ * @param[in] obj_hdl     File on which to operate
+ * @param[in] state       state_t to use for this operation
+ * @param[in] openflags   Mode for re-open
+ *
+ * @return FSAL status.
+ */
+
+fsal_status_t vfs_reopen2(struct fsal_obj_handle *obj_hdl,
+			  struct state_t *state,
+			  fsal_openflags_t openflags)
+{
+	struct vfs_fd fd, *my_fd = &fd, *my_share_fd;
+	struct vfs_fsal_obj_handle *myself;
+	fsal_status_t status = {0, 0};
+	int posix_flags = 0;
+	fsal_openflags_t old_openflags;
+	bool truncated;
+
+	my_share_fd = (struct vfs_fd *)(state + 1);
+
+	fsal2posix_openflags(openflags, &posix_flags);
+
+	truncated = (posix_flags & O_TRUNC) != 0;
+
+	memset(my_fd, 0, sizeof(*my_fd));
+	fd.fd = -1;
+
+	myself  = container_of(obj_hdl,
+			       struct vfs_fsal_obj_handle,
+			       obj_handle);
+
+	if (obj_hdl->fsal != obj_hdl->fs->fsal) {
+		LogDebug(COMPONENT_FSAL,
+			 "FSAL %s operation for handle belonging to FSAL %s, return EXDEV",
+			 obj_hdl->fsal->name, obj_hdl->fs->fsal->name);
+		return fsalstat(posix2fsal_error(EXDEV), EXDEV);
+	}
+
+	/* This can block over an I/O operation. */
+	PTHREAD_RWLOCK_wrlock(&obj_hdl->lock);
+
+	old_openflags = my_share_fd->openflags;
+
+	/* We can conflict with old share, so go ahead and check now. */
+	status = check_share_conflict(&myself->u.file.share, openflags, false);
+
+	if (FSAL_IS_ERROR(status)) {
+		PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+
+		return status;
+	}
+
+	/* Set up the new share so we can drop the lock and not have a
+	 * conflicting share be asserted, updating the share counters.
+	 */
+	update_share_counters(&myself->u.file.share, old_openflags, openflags);
+
+	PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+
+	status = vfs_open_my_fd(myself, openflags, posix_flags, my_fd);
+
+	if (!FSAL_IS_ERROR(status)) {
+		/* Close the existing file descriptor and copy the new
+		 * one over.
+		 */
+		vfs_close_my_fd(my_share_fd);
+		*my_share_fd = fd;
+
+		if (truncated) {
+			/* Refresh the attributes */
+			struct stat stat;
+			attrmask_t request_mask;
+			int retval;
+
+			retval = fstat(my_share_fd->fd, &stat);
+
+			if (retval == 0) {
+				request_mask = myself->attributes.mask;
+				posix2fsal_attributes(&stat,
+						      &myself->attributes);
+				myself->attributes.fsid = obj_hdl->fs->fsid;
+				if (myself->sub_ops &&
+				    myself->sub_ops->getattrs) {
+					status = myself->sub_ops->getattrs(
+							myself, my_share_fd->fd,
+							request_mask);
+					if (FSAL_IS_ERROR(status)) {
+						FSAL_CLEAR_MASK(
+						    myself->attributes.mask);
+						FSAL_SET_MASK(
+						    myself->attributes.mask,
+						    ATTR_RDATTR_ERR);
+						/** @todo: should handle this
+						 * better.
+						 */
+					}
+				}
+			} else {
+				if (errno == EBADF)
+					errno = ESTALE;
+				status = fsalstat(posix2fsal_error(errno),
+						  errno);
+			}
+		}
+	} else {
+		/* We had a failure on open - we need to revert the share.
+		 * This can block over an I/O operation.
+		 */
+		PTHREAD_RWLOCK_wrlock(&obj_hdl->lock);
+
+		update_share_counters(&myself->u.file.share,
+				      openflags,
+				      old_openflags);
+
+		PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+	}
+
+	return status;
+}
+
+fsal_status_t find_fd(int *fd,
+		      struct fsal_obj_handle *obj_hdl,
+		      bool bypass,
+		      struct state_t *state,
+		      fsal_openflags_t openflags,
+		      bool *has_lock,
+		      bool *need_fsync,
+		      bool *closefd,
+		      bool open_for_locks)
+{
+	struct vfs_fsal_obj_handle *myself;
+	struct vfs_filesystem *vfs_fs;
+	struct vfs_fd *my_fd = NULL;
+	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
+	int rc, posix_flags;
+
+	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
+	vfs_fs = myself->obj_handle.fs->private;
+
+	fsal2posix_openflags(openflags, &posix_flags);
+
+	/* Handle nom-regular files */
+	switch (obj_hdl->type) {
+	case SOCKET_FILE:
+	case CHARACTER_FILE:
+	case BLOCK_FILE:
+		rc = vfs_open_by_handle(vfs_fs,
+					myself->u.unopenable.dir,
+					O_PATH | O_NOACCESS,
+					&status.major);
+		if (rc < 0) {
+			LogDebug(COMPONENT_FSAL,
+				 "Failed with %s openflags 0x%08x",
+				 strerror(-rc), O_PATH | O_NOACCESS);
+			return fsalstat(posix2fsal_error(-rc), -rc);
+		}
+		*fd = rc;
+		*closefd = true;
+		return status;
+
+	case REGULAR_FILE:
+		/* Handle below */
+		break;
+
+	case SYMBOLIC_LINK:
+		posix_flags |= (O_PATH | O_RDWR | O_NOFOLLOW);
+		goto vfos_open;
+
+	case FIFO_FILE:
+		posix_flags |= O_NONBLOCK;
+		/* fall through */
+
+	case DIRECTORY:
+ vfos_open:
+		rc = vfs_fsal_open(myself, posix_flags, &status.major);
+		if (rc < 0) {
+			LogDebug(COMPONENT_FSAL,
+				 "Failed with %s openflags 0x%08x",
+				 strerror(-rc), openflags);
+			return fsalstat(posix2fsal_error(-rc), -rc);
+		}
+
+		LogFullDebug(COMPONENT_FSAL,
+			     "Opened fd=%d for file of type %s",
+			     rc, object_file_type_to_str(obj_hdl->type));
+
+		*fd = rc;
+		*closefd = true;
+		return status;
+	case NO_FILE_TYPE:
+	case EXTENDED_ATTR:
+		return fsalstat(posix2fsal_error(EINVAL), EINVAL);
+	}
+
+	if (state == NULL)
+		goto global;
+
+	/* State was valid, check it's fd */
+	my_fd = (struct vfs_fd *)(state + 1);
+
+	LogFullDebug(COMPONENT_FSAL,
+		     "my_fd->openflags = %d openflags = %d",
+		     my_fd->openflags, openflags);
+
+	if (open_correct(my_fd, openflags)) {
+		/* It was valid, return it.
+		 * Since we found a valid fd in the sate, no need to
+		 * check deny modes.
+		 */
+		LogFullDebug(COMPONENT_FSAL, "Use state fd");
+		*fd = my_fd->fd;
+		*need_fsync = (openflags & FSAL_O_SYNC) != 0;
+		return status;
+	}
+
+	if (open_for_locks) {
+		if (my_fd->openflags != FSAL_O_CLOSED) {
+			LogCrit(COMPONENT_FSAL,
+				"Conflicting open, can not re-open fd with locks");
+			return fsalstat(posix2fsal_error(EINVAL), EINVAL);
+		}
+
+		/* This is being opened for locks, we will not be able to
+		 * re-open so open for read/write unless openstate indicates
+		 * something different.
+		 */
+		if (state->state_data.lock.openstate != NULL) {
+			struct vfs_fd *related_fd = (struct vfs_fd *)
+					(state->state_data.lock.openstate + 1);
+
+			openflags = related_fd->openflags & FSAL_O_RDWR;
+		} else {
+			/* No associated open, open read/write. */
+			openflags = FSAL_O_RDWR;
+		}
+
+		fsal2posix_openflags(openflags, &posix_flags);
+
+		status = vfs_open_my_fd(myself, openflags, posix_flags, my_fd);
+
+		if (FSAL_IS_ERROR(status)) {
+			LogCrit(COMPONENT_FSAL,
+				"Open for locking failed");
+		} else {
+			*fd = my_fd->fd;
+			*need_fsync = false;
+		}
+
+		return status;
+	}
+
+	if ((state->state_type == STATE_TYPE_LOCK ||
+	     state->state_type == STATE_TYPE_NLM_LOCK) &&
+	    state->state_data.lock.openstate != NULL) {
+		my_fd = (struct vfs_fd *)(state->state_data.lock.openstate + 1);
+
+		if (open_correct(my_fd, openflags)) {
+			/* It was valid, return it.
+			 * Since we found a valid fd in the sate, no need to
+			 * check deny modes.
+			 */
+			LogFullDebug(COMPONENT_FSAL, "Use open state fd");
+			*fd = my_fd->fd;
+			*need_fsync = (openflags & FSAL_O_SYNC) != 0;
+			return status;
+		}
+	}
+
+ global:
+
+	/* No useable state_t so return the global file descriptor. */
+	LogFullDebug(COMPONENT_FSAL,
+		     "Use global fd openflags = %x",
+		     openflags);
+
+	/* We will take the object handle lock in vfs_reopen_obj.
+	 * And we won't have to fsync.
+	 */
+	*need_fsync = false;
+
+	/* Make sure global is open as necessary otherwise return a
+	 * temporary file descriptor. Check share reservation if not
+	 * opening FSAL_O_ANY.
+	 */
+	return vfs_reopen_obj(obj_hdl, openflags != FSAL_O_ANY, bypass,
+			      openflags, fd, has_lock, closefd);
+}
+
+/**
+ * @brief Read data from a file
+ *
+ * This function reads data from the given file. The FSAL must be able to
+ * perform the read whether a state is presented or not. This function also
+ * is expected to handle properly bypassing or not share reservations.
+ *
+ * @param[in]     obj_hdl        File on which to operate
+ * @param[in]     bypass         If state doesn't indicate a share reservation,
+ *                               bypass any deny read
+ * @param[in]     state          state_t to use for this operation
+ * @param[in]     offset         Position from which to read
+ * @param[in]     buffer_size    Amount of data to read
+ * @param[out]    buffer         Buffer to which data are to be copied
+ * @param[out]    read_amount    Amount of data read
+ * @param[out]    end_of_file    true if the end of file has been reached
+ * @param[in,out] info           more information about the data
+ *
+ * @return FSAL status.
+ */
+
+fsal_status_t vfs_read2(struct fsal_obj_handle *obj_hdl,
+			bool bypass,
+			struct state_t *state,
+			uint64_t offset,
+			size_t buffer_size,
+			void *buffer,
+			size_t *read_amount,
+			bool *end_of_file,
+			struct io_info *info)
+{
+	struct vfs_fsal_obj_handle *myself;
+	int my_fd = -1;
+	ssize_t nb_read;
+	fsal_status_t status;
+	int retval = 0;
+	bool has_lock = false;
+	bool need_fsync = false;
+	bool closefd = false;
+
+	if (info != NULL) {
+		/* Currently we don't support READ_PLUS */
+		return fsalstat(ERR_FSAL_NOTSUPP, 0);
+	}
+
+	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
+
+	if (obj_hdl->fsal != obj_hdl->fs->fsal) {
+		LogDebug(COMPONENT_FSAL,
+			 "FSAL %s operation for handle belonging to FSAL %s, return EXDEV",
+			 obj_hdl->fsal->name, obj_hdl->fs->fsal->name);
+		return fsalstat(posix2fsal_error(EXDEV), EXDEV);
+	}
+
+	/* Get a usable file descriptor */
+	status = find_fd(&my_fd, obj_hdl, bypass, state, FSAL_O_READ,
+			 &has_lock, &need_fsync, &closefd, false);
+
+	if (FSAL_IS_ERROR(status))
+		goto out;
+
+	nb_read = pread(my_fd, buffer, buffer_size, offset);
+
+	if (offset == -1 || nb_read == -1) {
+		retval = errno;
+		status = fsalstat(posix2fsal_error(retval), retval);
+		goto out;
+	}
+
+	*read_amount = nb_read;
+
+	/* dual eof condition */
+	*end_of_file = ((nb_read == 0) /* most clients */ ||	/* ESXi */
+			(((offset + nb_read) >= myself->attributes.filesize)));
+
+#if 0
+	/** @todo
+	 *
+	 * Is this all we really need to do to support READ_PLUS? Will anyone
+	 * ever get upset that we don't return holes, even for blocks of all
+	 * zeroes?
+	 *
+	 */
+	if (info != NULL) {
+		info->io_content.what = NFS4_CONTENT_DATA;
+		info->io_content.data.d_offset = offset + nb_read;
+		info->io_content.data.d_data.data_len = nb_read;
+		info->io_content.data.d_data.data_val = buffer;
+	}
+#endif
+
+ out:
+
+	if (closefd)
+		close(my_fd);
+
+	if (has_lock)
+		PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+
+	return status;
+}
+
+/**
+ * @brief Write data to a file
+ *
+ * This function writes data to a file. The FSAL must be able to
+ * perform the write whether a state is presented or not. This function also
+ * is expected to handle properly bypassing or not share reservations. Even
+ * with bypass == true, it will enforce a mandatory (NFSv4) deny_write if
+ * an appropriate state is not passed).
+ *
+ * The FSAL is expected to enforce sync if necessary.
+ *
+ * @param[in]     obj_hdl        File on which to operate
+ * @param[in]     bypass         If state doesn't indicate a share reservation,
+ *                               bypass any non-mandatory deny write
+ * @param[in]     state          state_t to use for this operation
+ * @param[in]     offset         Position at which to write
+ * @param[in]     buffer         Data to be written
+ * @param[in,out] fsal_stable    In, if on, the fsal is requested to write data
+ *                               to stable store. Out, the fsal reports what
+ *                               it did.
+ * @param[in,out] info           more information about the data
+ *
+ * @return FSAL status.
+ */
+
+fsal_status_t vfs_write2(struct fsal_obj_handle *obj_hdl,
+			 bool bypass,
+			 struct state_t *state,
+			 uint64_t offset,
+			 size_t buffer_size,
+			 void *buffer,
+			 size_t *wrote_amount,
+			 bool *fsal_stable,
+			 struct io_info *info)
+{
+	ssize_t nb_written;
+	fsal_status_t status;
+	int retval = 0;
+	int my_fd = -1;
+	bool has_lock = false;
+	bool need_fsync = false;
+	bool closefd = false;
+	fsal_openflags_t openflags = FSAL_O_WRITE;
+
+	if (info != NULL) {
+		/* Currently we don't support WRITE_PLUS */
+		return fsalstat(ERR_FSAL_NOTSUPP, 0);
+	}
+
+	if (obj_hdl->fsal != obj_hdl->fs->fsal) {
+		LogDebug(COMPONENT_FSAL,
+			 "FSAL %s operation for handle belonging to FSAL %s, return EXDEV",
+			 obj_hdl->fsal->name, obj_hdl->fs->fsal->name);
+		return fsalstat(posix2fsal_error(EXDEV), EXDEV);
+	}
+
+	if (*fsal_stable)
+		openflags |= FSAL_O_SYNC;
+
+	/* Get a usable file descriptor */
+	status = find_fd(&my_fd, obj_hdl, bypass, state, openflags,
+			 &has_lock, &need_fsync, &closefd, false);
+
+	if (FSAL_IS_ERROR(status))
+		goto out;
+
+	fsal_set_credentials(op_ctx->creds);
+
+	nb_written = pwrite(my_fd, buffer, buffer_size, offset);
+
+	if (nb_written == -1) {
+		retval = errno;
+		status = fsalstat(posix2fsal_error(retval), retval);
+		goto out;
+	}
+
+	*wrote_amount = nb_written;
+
+	/* attempt stability if we aren't using an O_SYNC fd */
+	if (need_fsync) {
+		retval = fsync(my_fd);
+		if (retval == -1) {
+			retval = errno;
+			status = fsalstat(posix2fsal_error(retval), retval);
+		}
+	}
+
+ out:
+
+	if (closefd)
+		close(my_fd);
+
+	if (has_lock)
+		PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+
+	fsal_restore_ganesha_credentials();
+	return status;
+}
+
+/**
+ * @brief Commit written data
+ *
+ * This function flushes possibly buffered data to a file. This method
+ * differs from commit due to the need to interact with share reservations
+ * and the fact that the FSAL manages the state of "file descriptors". The
+ * FSAL must be able to perform this operation without being passed a specific
+ * state.
+ *
+ * @param[in] obj_hdl          File on which to operate
+ * @param[in] state            state_t to use for this operation
+ * @param[in] offset           Start of range to commit
+ * @param[in] len              Length of range to commit
+ *
+ * @return FSAL status.
+ */
+
+fsal_status_t vfs_commit2(struct fsal_obj_handle *obj_hdl,
+			  off_t offset,
+			  size_t len)
+{
+	fsal_status_t status;
+	int retval;
+	int my_fd = -1;
+	bool has_lock = false;
+	bool closefd = false;
+
+	/* Make sure file is open in appropriate mode.
+	 * Do not check share reservation.
+	 */
+	status = vfs_reopen_obj(obj_hdl,
+				false,
+				false,
+				FSAL_O_WRITE,
+				&my_fd,
+				&has_lock,
+				&closefd);
+
+	if (!FSAL_IS_ERROR(status)) {
+
+		fsal_set_credentials(op_ctx->creds);
+
+		retval = fsync(my_fd);
+
+		if (retval == -1) {
+			retval = errno;
+			status = fsalstat(posix2fsal_error(retval), retval);
+		}
+
+		fsal_restore_ganesha_credentials();
+	}
+
+	if (closefd)
+		close(my_fd);
+
+	if (has_lock)
+		PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+
+	return status;
+}
+
+#ifdef F_OFD_GETLK
+/**
+ * @brief Perform a lock operation
+ *
+ * This function performs a lock operation (lock, unlock, test) on a
+ * file. This method assumes the FSAL is able to support lock owners,
+ * though it need not support asynchronous blocking locks. Passing the
+ * lock state allows the FSAL to associate information with a specific
+ * lock owner for each file (which may include use of a "file descriptor".
+ *
+ * For FSAL_VFS etc. we ignore owner, implicitly we have a lock_fd per
+ * lock owner (i.e. per state).
+ *
+ * @param[in]  obj_hdl          File on which to operate
+ * @param[in]  state            state_t to use for this operation
+ * @param[in]  owner            Lock owner
+ * @param[in]  lock_op          Operation to perform
+ * @param[in]  request_lock     Lock to take/release/test
+ * @param[out] conflicting_lock Conflicting lock
+ *
+ * @return FSAL status.
+ */
+fsal_status_t vfs_lock_op2(struct fsal_obj_handle *obj_hdl,
+			   struct state_t *state,
+			   void *owner,
+			   fsal_lock_op_t lock_op,
+			   fsal_lock_param_t *request_lock,
+			   fsal_lock_param_t *conflicting_lock)
+{
+	struct flock lock_args;
+	int fcntl_comm;
+	fsal_status_t status = {0, 0};
+	int retval = 0;
+	int my_fd = -1;
+	bool has_lock = false;
+	bool need_fsync = false;
+	bool closefd = false;
+	bool bypass = false;
+	fsal_openflags_t openflags = FSAL_O_RDWR;
+
+	if (obj_hdl->fsal != obj_hdl->fs->fsal) {
+		LogDebug(COMPONENT_FSAL,
+			 "FSAL %s operation for handle belonging to FSAL %s, return EXDEV",
+			 obj_hdl->fsal->name, obj_hdl->fs->fsal->name);
+		return fsalstat(posix2fsal_error(EXDEV), EXDEV);
+	}
+
+	LogFullDebug(COMPONENT_FSAL,
+		     "Locking: op:%d type:%d start:%" PRIu64 " length:%lu ",
+		     lock_op, request_lock->lock_type, request_lock->lock_start,
+		     request_lock->lock_length);
+
+	if (lock_op == FSAL_OP_LOCKT) {
+		fcntl_comm = F_OFD_GETLK;
+		/* We may end up using global fd, don't fail on a deny mode */
+		bypass = true;
+		openflags = FSAL_O_ANY;
+	} else if (lock_op == FSAL_OP_LOCK) {
+		fcntl_comm = F_OFD_SETLK;
+
+		if (request_lock->lock_type == FSAL_LOCK_R)
+			openflags = FSAL_O_READ;
+		else if (request_lock->lock_type == FSAL_LOCK_W)
+			openflags = FSAL_O_WRITE;
+	} else if (lock_op == FSAL_OP_UNLOCK) {
+		fcntl_comm = F_OFD_SETLK;
+		openflags = FSAL_O_ANY;
+	} else {
+		LogDebug(COMPONENT_FSAL,
+			 "ERROR: Lock operation requested was not TEST, READ, or WRITE.");
+		return fsalstat(ERR_FSAL_NOTSUPP, 0);
+	}
+
+	if (lock_op != FSAL_OP_LOCKT && state == NULL) {
+		LogCrit(COMPONENT_FSAL, "Non TEST operation with NULL state");
+		return fsalstat(posix2fsal_error(EINVAL), EINVAL);
+	}
+
+	if (request_lock->lock_type == FSAL_LOCK_R) {
+		lock_args.l_type = F_RDLCK;
+	} else if (request_lock->lock_type == FSAL_LOCK_W) {
+		lock_args.l_type = F_WRLCK;
+	} else {
+		LogDebug(COMPONENT_FSAL,
+			 "ERROR: The requested lock type was not read or write.");
+		return fsalstat(ERR_FSAL_NOTSUPP, 0);
+	}
+
+	if (lock_op == FSAL_OP_UNLOCK)
+		lock_args.l_type = F_UNLCK;
+
+	lock_args.l_pid = 0;
+	lock_args.l_len = request_lock->lock_length;
+	lock_args.l_start = request_lock->lock_start;
+	lock_args.l_whence = SEEK_SET;
+
+	/* flock.l_len being signed long integer, larger lock ranges may
+	 * get mapped to negative values. As per 'man 3 fcntl', posix
+	 * locks can accept negative l_len values which may lead to
+	 * unlocking an unintended range. Better bail out to prevent that.
+	 */
+	if (lock_args.l_len < 0) {
+		LogCrit(COMPONENT_FSAL,
+			"The requested lock length is out of range- lock_args.l_len(%ld), request_lock_length(%lu)",
+			lock_args.l_len, request_lock->lock_length);
+		return fsalstat(ERR_FSAL_BAD_RANGE, 0);
+	}
+
+	/* Get a usable file descriptor */
+	status = find_fd(&my_fd, obj_hdl, bypass, state, openflags,
+			 &has_lock, &need_fsync, &closefd, true);
+
+	if (FSAL_IS_ERROR(status)) {
+		LogCrit(COMPONENT_FSAL, "Unable to find fd for lock operation");
+		return status;
+	}
+
+	errno = 0;
+	retval = fcntl(my_fd, fcntl_comm, &lock_args);
+
+	if (retval /* && lock_op == FSAL_OP_LOCK */) {
+		retval = errno;
+
+		LogDebug(COMPONENT_FSAL,
+			 "fcntl returned %d %s",
+			 retval, strerror(retval));
+
+		if (conflicting_lock != NULL) {
+			/* Get the conflicting lock */
+			retval = fcntl(my_fd, F_GETLK, &lock_args);
+
+			if (retval) {
+				retval = errno;	/* we lose the initial error */
+				LogCrit(COMPONENT_FSAL,
+					"After failing a lock request, I couldn't even get the details of who owns the lock.");
+				goto err;
+			}
+
+			if (conflicting_lock != NULL) {
+				conflicting_lock->lock_length = lock_args.l_len;
+				conflicting_lock->lock_start =
+				    lock_args.l_start;
+				conflicting_lock->lock_type = lock_args.l_type;
+			}
+		}
+
+		goto err;
+	}
+
+	/* F_UNLCK is returned then the tested operation would be possible. */
+	if (conflicting_lock != NULL) {
+		if (lock_op == FSAL_OP_LOCKT && lock_args.l_type != F_UNLCK) {
+			conflicting_lock->lock_length = lock_args.l_len;
+			conflicting_lock->lock_start = lock_args.l_start;
+			conflicting_lock->lock_type = lock_args.l_type;
+		} else {
+			conflicting_lock->lock_length = 0;
+			conflicting_lock->lock_start = 0;
+			conflicting_lock->lock_type = FSAL_NO_LOCK;
+		}
+	}
+
+	/* Fall through (retval == 0) */
+
+ err:
+
+	if (closefd)
+		close(my_fd);
+
+	if (has_lock)
+		PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+
+	return fsalstat(posix2fsal_error(retval), retval);
+}
+#endif
+
+fsal_status_t fetch_attrs(struct vfs_fsal_obj_handle *myself,
+			  int my_fd)
+{
+	struct stat stat;
+	int retval = 0;
+	fsal_status_t status = {0, 0};
+	const char *func = "unknown";
+
+	/* Now stat the file as appropriate */
+	switch (myself->obj_handle.type) {
+	case SOCKET_FILE:
+	case CHARACTER_FILE:
+	case BLOCK_FILE:
+		retval = fstatat(my_fd, myself->u.unopenable.name, &stat,
+				 AT_SYMLINK_NOFOLLOW);
+		func = "fstatat";
+		break;
+
+	case REGULAR_FILE:
+		retval = fstat(my_fd, &stat);
+		func = "fstat";
+		break;
+
+	case SYMBOLIC_LINK:
+	case FIFO_FILE:
+	case DIRECTORY:
+		retval = vfs_stat_by_handle(my_fd, &stat);
+		func = "vfs_stat_by_handle";
+		break;
+
+	case NO_FILE_TYPE:
+	case EXTENDED_ATTR:
+		/* Caught during open with EINVAL */
+		break;
+	}
+
+	if (retval < 0) {
+		if (errno == ENOENT)
+			retval = ESTALE;
+		else
+			retval = errno;
+
+		LogDebug(COMPONENT_FSAL, "%s failed with %s", func,
+			 strerror(retval));
+
+		return fsalstat(posix2fsal_error(retval), retval);
+	}
+
+	posix2fsal_attributes(&stat, &myself->attributes);
+	myself->attributes.fsid = myself->obj_handle.fs->fsid;
+
+	if (myself->sub_ops && myself->sub_ops->getattrs) {
+		status = myself->sub_ops->getattrs(myself, my_fd,
+						   myself->attributes.mask);
+		if (FSAL_IS_ERROR(status)) {
+			FSAL_CLEAR_MASK(myself->attributes.mask);
+			FSAL_SET_MASK(myself->attributes.mask, ATTR_RDATTR_ERR);
+		}
+	}
+
+	return status;
+}
+
+/**
+ * @brief Get attributes
+ *
+ * This function freshens the cached attributes stored on the handle.
+ * Since the caller can take the attribute lock and read them off the
+ * public filehandle, they are not copied out.
+ *
+ * @param[in]  obj_hdl  Object to query
+ *
+ * @return FSAL status.
+ */
+
+/** @todo FSF: this should replace getattrs in order to more correctly work
+ *             with the multiple file descriptor stuff.
+ */
+
+fsal_status_t vfs_getattr2(struct fsal_obj_handle *obj_hdl)
+{
+	struct vfs_fsal_obj_handle *myself;
+	fsal_status_t status = {0, 0};
+	bool has_lock = false;
+	bool need_fsync = false;
+	bool closefd = false;
+	int my_fd;
+
+	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
+
+	if (obj_hdl->fsal != obj_hdl->fs->fsal) {
+		LogDebug(COMPONENT_FSAL,
+			 "FSAL %s getattr for handle belonging to FSAL %s, ignoring",
+			 obj_hdl->fsal->name,
+			 obj_hdl->fs->fsal != NULL
+				? obj_hdl->fs->fsal->name
+				: "(none)");
+		goto out;
+	}
+
+	/* Get a usable file descriptor (don't need to bypass - FSAL_O_ANY
+	 * won't conflict with any share reservation).
+	 */
+	status = find_fd(&my_fd, obj_hdl, false, NULL, FSAL_O_ANY,
+			 &has_lock, &need_fsync, &closefd, false);
+
+	if (FSAL_IS_ERROR(status)) {
+		if (obj_hdl->type == SYMBOLIC_LINK &&
+		    status.major == ERR_FSAL_PERM) {
+			/* You cannot open_by_handle (XFS on linux) a symlink
+			 * and it throws an EPERM error for it.
+			 * open_by_handle_at does not throw that error for
+			 * symlinks so we play a game here.  Since there is
+			 * not much we can do with symlinks anyway,
+			 * say that we did it but don't actually
+			 * do anything.  In this case, return the stat we got
+			 * at lookup time.  If you *really* want to tweek things
+			 * like owners, get a modern linux kernel...
+			 */
+			status = fsalstat(ERR_FSAL_NO_ERROR, 0);
+		}
+		goto out;
+	}
+
+	status = fetch_attrs(myself, my_fd);
+
+ out:
+
+	if (closefd)
+		close(my_fd);
+
+	if (has_lock)
+		PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+
+	return status;
+}
+
+/**
+ * @brief Set attributes on an object
+ *
+ * This function sets attributes on an object.  Which attributes are
+ * set is determined by attrib_set->mask. The FSAL must manage bypass
+ * or not of share reservations, and a state may be passed.
+ *
+ * @param[in] obj_hdl    File on which to operate
+ * @param[in] state      state_t to use for this operation
+ * @param[in] attrib_set Attributes to set
+ *
+ * @return FSAL status.
+ */
+fsal_status_t vfs_setattr2(struct fsal_obj_handle *obj_hdl,
+			   bool bypass,
+			   struct state_t *state,
+			   struct attrlist *attrib_set)
+{
+	struct vfs_fsal_obj_handle *myself;
+	fsal_status_t status = {0, 0};
+	int retval = 0;
+	fsal_openflags_t openflags = FSAL_O_ANY;
+	bool has_lock = false;
+	bool need_fsync = false;
+	bool closefd = false;
+	int my_fd;
+	const char *func;
+
+	/* apply umask, if mode attribute is to be changed */
+	if (FSAL_TEST_MASK(attrib_set->mask, ATTR_MODE))
+		attrib_set->mode &=
+		    ~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
+
+	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
+
+	if (obj_hdl->fsal != obj_hdl->fs->fsal) {
+		LogDebug(COMPONENT_FSAL,
+			 "FSAL %s operation for handle belonging to FSAL %s, return EXDEV",
+			 obj_hdl->fsal->name,
+			 obj_hdl->fs->fsal != NULL
+				? obj_hdl->fs->fsal->name
+				: "(none)");
+		return fsalstat(posix2fsal_error(EXDEV), EXDEV);
+	}
+
+#ifdef ENABLE_RFC_ACL
+	if (FSAL_TEST_MASK(attrib_set->mask, ATTR_MODE) &&
+	    !FSAL_TEST_MASK(attrib_set->mask, ATTR_ACL)) {
+		/* Set ACL from MODE */
+		status = fsal_mode_to_acl(attrib_set, myself->attributes.acl);
+	} else {
+		/* If ATTR_ACL is set, mode needs to be adjusted no matter what.
+		 * See 7530 s 6.4.1.3 */
+		if (!FSAL_TEST_MASK(attrib_set->mask, ATTR_MODE))
+			attrib_set->mode = myself->attributes.mode;
+		status = fsal_acl_to_mode(attrib_set);
+	}
+
+	if (FSAL_IS_ERROR(status))
+		return status;
+#endif /* ENABLE_RFC_ACL */
+
+
+	/* This is yet another "you can't get there from here".  If this object
+	 * is a socket (AF_UNIX), an fd on the socket s useless _period_.
+	 * If it is for a symlink, without O_PATH, you will get an ELOOP error
+	 * and (f)chmod doesn't work for a symlink anyway - not that it matters
+	 * because access checking is not done on the symlink but the final
+	 * target.
+	 * AF_UNIX sockets are also ozone material.  If the socket is already
+	 * active listeners et al, you can manipulate the mode etc.  If it is
+	 * just sitting there as in you made it with a mknod.
+	 * (one of those leaky abstractions...)
+	 * or the listener forgot to unlink it, it is lame duck.
+	 */
+
+	/* Test if size is being set, make sure file is regular and if so,
+	 * require a read/write file descriptor.
+	 */
+	if (FSAL_TEST_MASK(attrib_set->mask, ATTR_SIZE)) {
+		if (obj_hdl->type != REGULAR_FILE)
+			return fsalstat(ERR_FSAL_INVAL, EINVAL);
+		openflags = FSAL_O_RDWR;
+	}
+
+	/* Get a usable file descriptor. Share conflict is only possible if
+	 * size is being set.
+	 */
+	status = find_fd(&my_fd, obj_hdl, bypass, state, openflags,
+			 &has_lock, &need_fsync, &closefd, false);
+
+	if (FSAL_IS_ERROR(status)) {
+		if (obj_hdl->type == SYMBOLIC_LINK &&
+		    status.major == ERR_FSAL_PERM) {
+			/* You cannot open_by_handle (XFS) a symlink and it
+			 * throws an EPERM error for it.  open_by_handle_at
+			 * does not throw that error for symlinks so we play a
+			 * game here.  Since there is not much we can do with
+			 * symlinks anyway, say that we did it
+			 * but don't actually do anything.
+			 * If you *really* want to tweek things
+			 * like owners, get a modern linux kernel...
+			 */
+			status = fsalstat(ERR_FSAL_NO_ERROR, 0);
+		}
+		goto out;
+	}
+
+	/** TRUNCATE **/
+	if (FSAL_TEST_MASK(attrib_set->mask, ATTR_SIZE)) {
+		retval = ftruncate(my_fd, attrib_set->filesize);
+		if (retval != 0) {
+			/** @todo FSF: is this still necessary?
+			 *
+			 * XXX ESXi volume creation pattern reliably
+			 * reached this point in the past, however now that we
+			 * only use the already open file descriptor if it is
+			 * open read/write, this may no longer fail.
+			 * If there is some other error from ftruncate, then
+			 * we will needlessly retry, but without more detail
+			 * of the original failure, we can't be sure.
+			 * Fortunately permission checking is done by
+			 * Ganesha before calling here, so we won't get an
+			 * EACCES since this call is done as root. We could
+			 * get EFBIG, EPERM, or EINVAL.
+			 */
+			/** @todo FSF: re-open if we really still need this
+			 */
+
+			retval = ftruncate(my_fd, attrib_set->filesize);
+			if (retval != 0) {
+				func = "truncate";
+				goto fileerr;
+			}
+		}
+	}
+
+	/** CHMOD **/
+	if (FSAL_TEST_MASK(attrib_set->mask, ATTR_MODE)) {
+		/* The POSIX chmod call doesn't affect the symlink object, but
+		 * the entry it points to. So we must ignore it.
+		 */
+		if (obj_hdl->type != SYMBOLIC_LINK) {
+			if (vfs_unopenable_type(obj_hdl->type))
+				retval = fchmodat(
+					my_fd,
+					myself->u.unopenable.name,
+					fsal2unix_mode(attrib_set->mode),
+					0);
+			else
+				retval = fchmod(
+					my_fd,
+					fsal2unix_mode(attrib_set->mode));
+
+			if (retval != 0) {
+				func = "chmod";
+				goto fileerr;
+			}
+		}
+	}
+
+	/**  CHOWN  **/
+	if (FSAL_TEST_MASK(attrib_set->mask, ATTR_OWNER | ATTR_GROUP)) {
+		uid_t user = FSAL_TEST_MASK(attrib_set->mask, ATTR_OWNER)
+		    ? (int)attrib_set->owner : -1;
+		gid_t group = FSAL_TEST_MASK(attrib_set->mask, ATTR_GROUP)
+		    ? (int)attrib_set->group : -1;
+
+		if (vfs_unopenable_type(obj_hdl->type))
+			retval = fchownat(my_fd, myself->u.unopenable.name,
+					  user, group, AT_SYMLINK_NOFOLLOW);
+		else if (obj_hdl->type == SYMBOLIC_LINK)
+			retval = fchownat(my_fd, "", user, group,
+					  AT_SYMLINK_NOFOLLOW | AT_EMPTY_PATH);
+		else
+			retval = fchown(my_fd, user, group);
+
+		if (retval) {
+			func = "chown";
+			goto fileerr;
+		}
+	}
+
+	/**  UTIME  **/
+	if (FSAL_TEST_MASK(attrib_set->mask, ATTRS_SET_TIME)) {
+		struct timespec timebuf[2];
+
+		if (obj_hdl->type == SYMBOLIC_LINK)
+			goto out; /* Setting time on symlinks is illegal */
+		/* Atime */
+		if (FSAL_TEST_MASK(attrib_set->mask, ATTR_ATIME_SERVER)) {
+			timebuf[0].tv_sec = 0;
+			timebuf[0].tv_nsec = UTIME_NOW;
+		} else if (FSAL_TEST_MASK(attrib_set->mask, ATTR_ATIME)) {
+			timebuf[0] = attrib_set->atime;
+		} else {
+			timebuf[0].tv_sec = 0;
+			timebuf[0].tv_nsec = UTIME_OMIT;
+		}
+
+		/* Mtime */
+		if (FSAL_TEST_MASK(attrib_set->mask, ATTR_MTIME_SERVER)) {
+			timebuf[1].tv_sec = 0;
+			timebuf[1].tv_nsec = UTIME_NOW;
+		} else if (FSAL_TEST_MASK(attrib_set->mask, ATTR_MTIME)) {
+			timebuf[1] = attrib_set->mtime;
+		} else {
+			timebuf[1].tv_sec = 0;
+			timebuf[1].tv_nsec = UTIME_OMIT;
+		}
+		if (vfs_unopenable_type(obj_hdl->type))
+			retval = vfs_utimesat(my_fd, myself->u.unopenable.name,
+					      timebuf, AT_SYMLINK_NOFOLLOW);
+		else
+			retval = vfs_utimes(my_fd, timebuf);
+		if (retval != 0) {
+			func = "utimes";
+			goto fileerr;
+		}
+	}
+
+	/** SUBFSAL **/
+	if (myself->sub_ops && myself->sub_ops->setattrs) {
+		status = myself->sub_ops->setattrs(
+					myself,
+					my_fd,
+					attrib_set->mask, attrib_set);
+		if (FSAL_IS_ERROR(status))
+			goto out;
+	}
+
+	status = fetch_attrs(myself, my_fd);
+
+	if (FSAL_IS_ERROR(status)) {
+		LogDebug(COMPONENT_FSAL,
+			 "fetch_attrs failed");
+		goto out;
+	}
+
+	errno = 0;
+
+ fileerr:
+
+	retval = errno;
+
+	if (retval != 0) {
+		LogDebug(COMPONENT_FSAL,
+			 "%s returned %s",
+			 func, strerror(retval));
+	}
+
+	status = fsalstat(posix2fsal_error(retval), retval);
+
+ out:
+
+	if (closefd)
+		close(my_fd);
+
+	if (has_lock)
+		PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+
+	return status;
+}
+
+/**
+ * @brief Manage closing a file when a state is no longer needed.
+ *
+ * When the upper layers are ready to dispense with a state, this method is
+ * called to allow the FSAL to close any file descriptors or release any other
+ * resources associated with the state. A call to free_state should be assumed
+ * to follow soon.
+ *
+ * @param[in] obj_hdl    File on which to operate
+ * @param[in] state      state_t to use for this operation
+ *
+ * @return FSAL status.
+ */
+
+fsal_status_t vfs_close2(struct fsal_obj_handle *obj_hdl,
+			 struct state_t *state)
+{
+	struct vfs_fd *my_fd = (struct vfs_fd *)(state + 1);
+	struct vfs_fsal_obj_handle *myself = NULL;
+
+	myself = container_of(obj_hdl,
+			      struct vfs_fsal_obj_handle,
+			      obj_handle);
+
+	if (state->state_type == STATE_TYPE_SHARE ||
+	    state->state_type == STATE_TYPE_NLM_SHARE ||
+	    state->state_type == STATE_TYPE_9P_FID) {
+		/* This is a share state, we must update the share counters */
+
+		/* This can block over an I/O operation. */
+		PTHREAD_RWLOCK_wrlock(&obj_hdl->lock);
+
+		update_share_counters(&myself->u.file.share,
+				      my_fd->openflags,
+				      FSAL_O_CLOSED);
+
+		PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+	}
+
+	return vfs_close_my_fd(my_fd);
 }

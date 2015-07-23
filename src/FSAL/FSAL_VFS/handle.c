@@ -69,13 +69,13 @@ int vfs_fsal_open(struct vfs_fsal_obj_handle *hdl,
  * @param[in] exp_hdl	Export containing new handle
  * @return VFS OBJ handle on success, NULL on failure
  */
-static struct vfs_fsal_obj_handle *alloc_handle(int dirfd,
-						vfs_file_handle_t *fh,
-						struct fsal_filesystem *fs,
-						struct stat *stat,
-						vfs_file_handle_t *dir_fh,
-						const char *path,
-						struct fsal_export *exp_hdl)
+struct vfs_fsal_obj_handle *alloc_handle(int dirfd,
+					 vfs_file_handle_t *fh,
+					 struct fsal_filesystem *fs,
+					 struct stat *stat,
+					 vfs_file_handle_t *dir_fh,
+					 const char *path,
+					 struct fsal_export *exp_hdl)
 {
 	struct vfs_fsal_export *myself =
 	    container_of(exp_hdl, struct vfs_fsal_export, export);
@@ -1164,11 +1164,11 @@ static fsal_status_t renamefile(struct fsal_obj_handle *obj_hdl,
  * @return The file descriptor plus indication if it needs to be closed.
  *
  */
-static struct closefd vfs_fsal_open_and_stat(struct fsal_export *exp,
-					     struct vfs_fsal_obj_handle *myself,
-					     struct stat *stat,
-					     fsal_openflags_t flags,
-					     fsal_errors_t *fsal_error)
+struct closefd vfs_fsal_open_and_stat(struct fsal_export *exp,
+				      struct vfs_fsal_obj_handle *myself,
+				      struct stat *stat,
+				      fsal_openflags_t flags,
+				      fsal_errors_t *fsal_error)
 {
 	struct fsal_obj_handle *obj_hdl = &myself->obj_handle;
 	struct closefd cfd = { .fd = -1, .close_fd = false };
@@ -1734,7 +1734,16 @@ static void release(struct fsal_obj_handle *obj_hdl)
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
 
 	if (type == REGULAR_FILE) {
-		fsal_status_t st = vfs_close(obj_hdl);
+		fsal_status_t st;
+
+		/* Take write lock on object to protect file descriptor.
+		 * This can block over an I/O operation.
+		 */
+		PTHREAD_RWLOCK_wrlock(&obj_hdl->lock);
+
+		st = vfs_close_my_fd(&myself->u.file.fd);
+
+		PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
 
 		if (FSAL_IS_ERROR(st)) {
 			LogCrit(COMPONENT_FSAL,
@@ -1761,6 +1770,7 @@ static void release(struct fsal_obj_handle *obj_hdl)
 void vfs_handle_ops_init(struct fsal_obj_ops *ops)
 {
 	ops->release = release;
+	ops->merge = vfs_merge;
 	ops->lookup = lookup;
 	ops->readdir = read_dirents;
 	ops->create = create;
@@ -1769,6 +1779,7 @@ void vfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->symlink = makesymlink;
 	ops->readlink = readsymlink;
 	ops->test_access = fsal_test_access;
+	/** @todo need to convert to vfs_getattr2 to enable multi-fd */
 	ops->getattrs = getattrs;
 	ops->setattrs = setattrs;
 	ops->link = linkfile;
@@ -1784,6 +1795,15 @@ void vfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->lru_cleanup = vfs_lru_cleanup;
 	ops->handle_digest = handle_digest;
 	ops->handle_to_key = handle_to_key;
+	ops->open2 = vfs_open2;
+	ops->status2 = vfs_status2;
+	ops->reopen2 = vfs_reopen2;
+	ops->read2 = vfs_read2;
+	ops->write2 = vfs_write2;
+	ops->commit2 = vfs_commit2;
+	ops->lock_op2 = vfs_lock_op2;
+	ops->setattr2 = vfs_setattr2;
+	ops->close2 = vfs_close2;
 
 	/* xattr related functions */
 	ops->list_ext_attrs = vfs_list_ext_attrs;
