@@ -106,6 +106,14 @@ state_owner_t unknown_owner = {
 	.so_mutex = PTHREAD_MUTEX_INITIALIZER
 };
 
+static state_status_t do_lock_op(cache_entry_t *entry,
+				 state_t *state,
+				 fsal_lock_op_t lock_op,
+				 state_owner_t *owner,
+				 fsal_lock_param_t *lock,
+				 state_owner_t **holder,
+				 fsal_lock_param_t *conflict,
+				 bool overlap);
 /**
  * @brief Blocking lock cookies
  */
@@ -1467,20 +1475,24 @@ state_status_t state_add_grant_cookie(cache_entry_t *entry,
 		/* Now that we are sure we can continue, acquire the FSAL lock.
 		 * If we get STATE_LOCK_BLOCKED we need to return...
 		 */
-		status = do_lock_op(entry, FSAL_OP_LOCKB,
+		status = do_lock_op(entry,
+				    lock_entry->sle_state,
+				    FSAL_OP_LOCKB,
 				    lock_entry->sle_owner,
 				    &lock_entry->sle_lock,
-				    NULL, NULL, false, FSAL_POSIX_LOCK);
+				    NULL, NULL, false);
 		break;
 
 	case STATE_GRANT_INTERNAL:
 		/* Now that we are sure we can continue, acquire the FSAL lock.
 		 * If we get STATE_LOCK_BLOCKED we need to return...
 		 */
-		status = do_lock_op(entry, FSAL_OP_LOCK,
+		status = do_lock_op(entry,
+				    lock_entry->sle_state,
+				    FSAL_OP_LOCK,
 				    lock_entry->sle_owner,
 				    &lock_entry->sle_lock,
-				    NULL, NULL, false, FSAL_POSIX_LOCK);
+				    NULL, NULL, false);
 		break;
 
 	case STATE_GRANT_FSAL:
@@ -1532,13 +1544,13 @@ state_status_t state_cancel_grant(state_cookie_entry_t *cookie_entry)
 	state_status_t status = 0;
 	/* We had acquired an FSAL lock, need to release it. */
 	status = do_lock_op(cookie_entry->sce_entry,
+			    cookie_entry->sce_lock_entry->sle_state,
 			    FSAL_OP_UNLOCK,
 			    cookie_entry->sce_lock_entry->sle_owner,
 			    &cookie_entry->sce_lock_entry->sle_lock,
 			    NULL,	/* no conflict expected */
 			    NULL,
-			    false,
-			    FSAL_POSIX_LOCK);
+			    false);
 
 	if (status != STATE_SUCCESS)
 		LogMajor(COMPONENT_STATE,
@@ -1916,13 +1928,13 @@ void cancel_blocked_lock(cache_entry_t *entry,
 		 * the lock must still be in a state of needing cancelling.
 		 */
 		state_status = do_lock_op(entry,
+					  lock_entry->sle_state,
 					  FSAL_OP_CANCEL,
 					  lock_entry->sle_owner,
 					  &lock_entry->sle_lock,
 					  NULL,	/* no conflict expected */
 					  NULL,
-					  false, /* overlap not relevant */
-					  FSAL_POSIX_LOCK);
+					  false); /* overlap not relevant */
 
 		if (state_status != STATE_SUCCESS) {
 			/* Unable to cancel,
@@ -2040,13 +2052,13 @@ state_status_t state_release_grant(state_cookie_entry_t *cookie_entry)
 
 		/* We had acquired an FSAL lock, need to release it. */
 		status = do_lock_op(entry,
+				    lock_entry->sle_state,
 				    FSAL_OP_UNLOCK,
 				    lock_entry->sle_owner,
 				    &lock_entry->sle_lock,
 				    NULL, /* no conflict expected */
 				    NULL,
-				    false,
-				    FSAL_POSIX_LOCK);
+				    false);
 
 		if (status != STATE_SUCCESS)
 			LogMajor(COMPONENT_STATE,
@@ -2134,9 +2146,7 @@ static inline const char *fsal_lock_op_str(fsal_lock_op_t op)
  * helpful for some callers of FSAL_OP_UNLOCK.
  *
  * @param[in] entry    File on which to operate
- * @param[in] export   Export through which the file is accessed
  * @param[in] lock     Lock descriptor
- * @param[in] sle_type Lock type
  */
 state_status_t do_unlock_no_owner(cache_entry_t *entry,
 				  fsal_lock_param_t *lock)
@@ -2220,32 +2230,31 @@ state_status_t do_unlock_no_owner(cache_entry_t *entry,
  * that the caller has a single entry point.
  *
  * @param[in]  entry    File on which to operate
- * @param[in]  export   Export holding file
+ * @param[in]  state    state_t associated with lock if any
  * @param[in]  lock_op  Operation to perform
  * @param[in]  owner    Lock operation
  * @param[in]  lock     Lock description
  * @param[out] holder   Owner of conflicting lock
  * @param[out] conflict Description of conflicting lock
  * @param[in]  overlap  Hint that lock overlaps
- * @param[in]  sle_type Lock type
  *
  * @return State status.
  */
 state_status_t do_lock_op(cache_entry_t *entry,
+			  state_t *state,
 			  fsal_lock_op_t lock_op,
 			  state_owner_t *owner,
 			  fsal_lock_param_t *lock,
 			  state_owner_t **holder,
 			  fsal_lock_param_t *conflict,
-			  bool overlap,
-			  enum fsal_sle_type sle_type)
+			  bool overlap)
 {
 	fsal_status_t fsal_status;
 	state_status_t status = STATE_SUCCESS;
 	fsal_lock_param_t conflicting_lock;
 	struct fsal_export *fsal_export = op_ctx->fsal_export;
 
-	lock->lock_sle_type = sle_type;
+	lock->lock_sle_type = FSAL_POSIX_LOCK;
 
 	/* Quick exit if:
 	 * Locks are not supported by FSAL
@@ -2293,14 +2302,26 @@ state_status_t do_lock_op(cache_entry_t *entry,
 						fso_lock_support_async_block))
 			lock_op = FSAL_OP_LOCK;
 
-		fsal_status = entry->obj_handle->obj_ops.lock_op(
-				entry->obj_handle,
-				fsal_export->exp_ops.fs_supports(
-					fsal_export,
-					fso_lock_support_owner)
-				? owner : NULL, lock_op,
-				lock,
-				&conflicting_lock);
+		if (!entry->obj_handle->fsal->m_ops.support_ex()) {
+			/* Call legacy lock_op */
+			fsal_status = entry->obj_handle->obj_ops.lock_op(
+					entry->obj_handle,
+					convert_lock_owner(fsal_export, owner),
+					lock_op,
+					lock,
+					&conflicting_lock);
+		} else {
+			/* Perform this lock operation using the new
+			 * multiple file-descriptors lock op.
+			 */
+			fsal_status = entry->obj_handle->obj_ops.lock_op2(
+					entry->obj_handle,
+					state,
+					owner,
+					lock_op,
+					lock,
+					&conflicting_lock);
+		}
 
 		status = state_error_convert(fsal_status);
 
@@ -2396,11 +2417,17 @@ state_status_t state_test(cache_entry_t *entry,
 		return status;
 	}
 
-	cache_status = cache_inode_open(entry, FSAL_O_READ, 0);
-	if (cache_status != CACHE_INODE_SUCCESS) {
-		status = cache_inode_status_to_state_status(cache_status);
-		LogFullDebug(COMPONENT_STATE, "Could not open file");
-		goto out;
+	if (state == NULL && !entry->obj_handle->fsal->m_ops.support_ex()) {
+		/* The FSAL doesn't support multiple file descriptors, so
+		 * use the legacy cache_inode_open.
+		 */
+		cache_status = cache_inode_open(entry, FSAL_O_READ, 0);
+		if (cache_status != CACHE_INODE_SUCCESS) {
+			status =
+			    cache_inode_status_to_state_status(cache_status);
+			LogFullDebug(COMPONENT_STATE, "Could not open file");
+			goto out;
+		}
 	}
 
 	PTHREAD_RWLOCK_rdlock(&entry->state_lock);
@@ -2414,9 +2441,8 @@ state_status_t state_test(cache_entry_t *entry,
 		status = STATE_LOCK_CONFLICT;
 	} else {
 		/* Prepare to make call to FSAL for this lock */
-		status = do_lock_op(entry, FSAL_OP_LOCKT, owner,
-				    lock, holder, conflict, false,
-				    FSAL_POSIX_LOCK);
+		status = do_lock_op(entry, state, FSAL_OP_LOCKT, owner,
+				    lock, holder, conflict, false);
 
 		if (status != STATE_SUCCESS && status != STATE_LOCK_CONFLICT) {
 			LogMajor(COMPONENT_STATE,
@@ -2497,33 +2523,42 @@ state_status_t state_lock(cache_entry_t *entry,
 		return status;
 	}
 
-	/*
-	 * If we already have a read lock, and then get a write lock
-	 * request, we need to close the file that was already open for
-	 * read, and then open the file for readwrite for the write lock
-	 * request.  Closing the file loses all lock state, so we just
-	 * open the file for readwrite for any kind of lock request.
-	 *
-	 * If the FSAL supports atomicaly updating the read only fd to
-	 * readwrite fd, then we don't need to open a file for readwrite
-	 * for read only lock request. This helps with delegations as
-	 * well.
+	/* If the FSAL doesn't support multiple file descriptors, we must
+	 * use the legacy cache_inode_open. Otherwise, the FSAL will manage
+	 * the file descriptor during calls to lock_op_fd.
 	 */
-	if (lock->lock_type == FSAL_LOCK_R &&
-	    fsal_export->exp_ops.fs_supports(fsal_export, fso_reopen_method))
-		openflags = FSAL_O_READ;
-	else
-		openflags = FSAL_O_RDWR;
+	if (!entry->obj_handle->fsal->m_ops.support_ex()) {
+		/*
+		 * If we already have a read lock, and then get a write lock
+		 * request, we need to close the file that was already open for
+		 * read, and then open the file for readwrite for the write lock
+		 * request.  Closing the file loses all lock state, so we just
+		 * open the file for readwrite for any kind of lock request.
+		 *
+		 * If the FSAL supports atomicaly updating the read only fd to
+		 * readwrite fd, then we don't need to open a file for readwrite
+		 * for read only lock request. This helps with delegations as
+		 * well.
+		 */
+		if (lock->lock_type == FSAL_LOCK_R &&
+		    fsal_export->exp_ops.fs_supports(fsal_export,
+						     fso_reopen_method))
+			openflags = FSAL_O_READ;
+		else
+			openflags = FSAL_O_RDWR;
 
-	cache_status = cache_inode_open(entry,
-					openflags,
-					lock->lock_reclaim ?
-						CACHE_INODE_FLAG_RECLAIM : 0);
+		cache_status = cache_inode_open(entry,
+						openflags,
+						lock->lock_reclaim
+						    ? CACHE_INODE_FLAG_RECLAIM
+						    : 0);
 
-	if (cache_status != CACHE_INODE_SUCCESS) {
-		status = cache_inode_status_to_state_status(cache_status);
-		LogFullDebug(COMPONENT_STATE, "Could not open file");
-		goto out;
+		if (cache_status != CACHE_INODE_SUCCESS) {
+			status =
+			    cache_inode_status_to_state_status(cache_status);
+			LogFullDebug(COMPONENT_STATE, "Could not open file");
+			goto out;
+		}
 	}
 
 	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
@@ -2751,13 +2786,13 @@ state_status_t state_lock(cache_entry_t *entry,
 					     fso_lock_support_async_block)) {
 		/* Prepare to make call to FSAL for this lock */
 		status = do_lock_op(entry,
+				    state,
 				    lock_op,
 				    owner,
 				    lock,
 				    allow ? holder : NULL,
 				    allow ? conflict : NULL,
-				    overlap,
-				    FSAL_POSIX_LOCK);
+				    overlap);
 	} else
 		status = STATE_LOCK_BLOCKED;
 
@@ -2938,13 +2973,13 @@ state_status_t state_unlock(cache_entry_t *entry,
 	 * in the process of being granted.
 	 */
 	status = do_lock_op(entry,
+			    state,
 			    FSAL_OP_UNLOCK,
 			    owner,
 			    lock,
 			    NULL, /* no conflict expected */
 			    NULL,
-			    false,
-			    FSAL_POSIX_LOCK);
+			    false);
 
 	if (status != STATE_SUCCESS)
 		LogMajor(COMPONENT_STATE, "Unable to unlock FSAL, error=%s",
