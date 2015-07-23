@@ -253,6 +253,19 @@ extern struct log_component_info LogComponents[COMPONENT_COUNT];
 						 NIV_WARN, format, ## args); \
 	} while (0)
 
+#define LogWarnOnce(component, format, args...) \
+	do { \
+		static bool warned; \
+		if (unlikely(!warned) && likely(component_log_level[component] \
+		    >= NIV_WARN)) { \
+			warned = true; \
+			DisplayLogComponentLevel(component, (char *) __FILE__, \
+						 __LINE__, \
+						 (char *) __func__, \
+						 NIV_WARN, format, ## args); \
+		} \
+	} while (0)
+
 #define LogEvent(component, format, args...) \
 	do { \
 		if (likely(component_log_level[component] \
