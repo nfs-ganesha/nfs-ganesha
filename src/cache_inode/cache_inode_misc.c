@@ -229,13 +229,15 @@ cache_inode_set_time_current(struct timespec *time)
  * @param[in]  new_obj Object handle to be added to the cache
  * @param[in]  flags   Vary the function's operation
  * @param[out] entry   Newly instantiated cache entry
+ * @param[in]  state   state to be associated with this entry if any
  *
  * @return CACHE_INODE_SUCCESS or errors.
  */
 cache_inode_status_t
-cache_inode_new_entry(struct fsal_obj_handle *new_obj,
-		      uint32_t flags,
-		      cache_entry_t **entry)
+cache_inode_new_entry_ex(struct fsal_obj_handle *new_obj,
+			 uint32_t flags,
+			 cache_entry_t **entry,
+			 struct state_t *state)
 {
 	cache_inode_status_t status;
 	cache_entry_t *oentry, *nentry = NULL;
@@ -244,6 +246,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 	bool has_hashkey = false;
 	int rc = 0;
 	cache_inode_key_t key;
+	fsal_status_t fsal_status;
 
 	*entry = NULL;
 
@@ -268,7 +271,6 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 		status = cache_inode_lru_ref(oentry, LRU_FLAG_NONE);
 		if (status == CACHE_INODE_SUCCESS) {
 			status = CACHE_INODE_ENTRY_EXISTS;
-			*entry = oentry;
 			(void)atomic_inc_uint64_t(&cache_stp->inode_conf);
 		}
 		/* Release the subtree hash table lock */
@@ -307,7 +309,6 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 		status = cache_inode_lru_ref(oentry, LRU_FLAG_NONE);
 		if (status == CACHE_INODE_SUCCESS) {
 			status = CACHE_INODE_ENTRY_EXISTS;
-			*entry = oentry;
 			(void)atomic_inc_uint64_t(&cache_stp->inode_conf);
 		}
 		/* Release the subtree hash table lock */
@@ -428,7 +429,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
  out:
 
 	if (status == CACHE_INODE_ENTRY_EXISTS)
-		check_mapping(*entry, op_ctx->export);
+		check_mapping(oentry, op_ctx->export);
 
 	if (nentry != NULL) {
 		/* Deconstruct the object */
@@ -446,6 +447,41 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 
 		/* Release the new entry we acquired. */
 		cache_inode_lru_putback(nentry, LRU_FLAG_NONE);
+	}
+
+	if (status == CACHE_INODE_ENTRY_EXISTS) {
+		/* Give the FSAL a chance to merge new_obj into
+		 * oentry->obj_handle since we will be using
+		 * oentry->obj_handle for all access to the oject.
+		 */
+		struct fsal_obj_handle *obj_hdl = oentry->obj_handle;
+
+		fsal_status = obj_hdl->obj_ops.merge(obj_hdl, new_obj);
+
+		if (FSAL_IS_ERROR(fsal_status)) {
+			/* Report this error and unref the entry */
+			status = cache_inode_error_convert(fsal_status);
+			cache_inode_put(oentry);
+		} else {
+			/* We will return the oentry we found above. new_obj
+			 * has already been released as a result of the merge.
+			 */
+			*entry = oentry;
+			return status;
+		}
+	}
+
+	if (state != NULL) {
+		/* Our caller passed in a state for an open file, since
+		 * there is not a valid entry to use, or a merge failed
+		 * we must close that file before disposing of new_obj.
+		 */
+		fsal_status = new_obj->obj_ops.close2(new_obj, state);
+
+		LogDebug(COMPONENT_CACHE_INODE,
+			 "Close of state during error processing returned %s",
+			 cache_inode_err_str(
+				cache_inode_error_convert(fsal_status)));
 	}
 
 	/* must free new_obj if no new entry was created to reference it. */

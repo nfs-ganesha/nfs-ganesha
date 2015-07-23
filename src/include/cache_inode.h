@@ -78,6 +78,7 @@ struct fsal_obj_handle;
 struct gsh_export;
 struct io_info;
 struct fsal_fd;
+struct state_t;
 
 /**
  * @defgroup config_cache_inode Structure and defaults for Cache_Inode
@@ -755,6 +756,35 @@ cache_inode_status_t cache_inode_create(cache_entry_t *entry_parent,
 					cache_inode_create_arg_t *create_arg,
 					cache_entry_t **created);
 
+static inline
+enum fsal_create_mode nfs4_createmode_to_fsal(createmode4 createmode)
+{
+	return (enum fsal_create_mode) 1 + (unsigned int) createmode;
+}
+
+static inline
+enum fsal_create_mode nfs3_createmode_to_fsal(createmode3 createmode)
+{
+	return (enum fsal_create_mode) 1 + (unsigned int) createmode;
+}
+
+cache_inode_status_t cache_inode_verify2(cache_entry_t *entry,
+					 fsal_verifier_t verifier);
+
+cache_inode_status_t cache_inode_open2(cache_entry_t *in_entry,
+				       struct state_t *state,
+				       fsal_openflags_t openflags,
+				       enum fsal_create_mode createmode,
+				       const char *name,
+				       struct attrlist *attr,
+				       fsal_verifier_t verifier,
+				       cache_entry_t **entry);
+
+cache_inode_status_t cache_inode_reopen2(cache_entry_t *entry,
+					 struct state_t *state,
+					 fsal_openflags_t openflags,
+					 bool check_permission);
+
 cache_inode_status_t cache_inode_getattr(cache_entry_t *entry,
 					 void *opaque,
 					 cache_inode_getattr_cb_t cb,
@@ -824,9 +854,18 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t *entry,
 
 cache_inode_status_t cache_inode_error_convert(fsal_status_t fsal_status);
 
+cache_inode_status_t cache_inode_new_entry_ex(struct fsal_obj_handle *new_obj,
+					      uint32_t flags,
+					      cache_entry_t **entry,
+					      struct state_t *state);
+
+static inline
 cache_inode_status_t cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 					   uint32_t flags,
-					   cache_entry_t **entry);
+					   cache_entry_t **entry)
+{
+	return cache_inode_new_entry_ex(new_obj, flags, entry, NULL);
+}
 
 cache_inode_status_t cache_inode_rdwr(cache_entry_t *entry,
 				      cache_inode_io_direction_t io_direction,
