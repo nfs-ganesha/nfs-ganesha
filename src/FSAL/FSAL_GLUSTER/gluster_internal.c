@@ -405,7 +405,7 @@ fsal_status_t glusterfs_get_acl(struct glusterfs_export *glfs_export,
 	fsal_acl_data_t acldata;
 	fsal_acl_status_t aclstatus;
 	fsal_ace_t *pace = NULL;
-	int e_count = 0, i_count = 0, ret = 0;
+	int e_count = 0, i_count = 0, new_count = 0, new_i_count = 0;
 
 	fsalattr->acl = NULL;
 	if (NFSv4_ACL_SUPPORT && FSAL_TEST_MASK(fsalattr->mask, ATTR_ACL)) {
@@ -423,7 +423,8 @@ fsal_status_t glusterfs_get_acl(struct glusterfs_export *glfs_export,
 			i_count = ace_count(buffxstat->i_acl);
 		}
 
-		acldata.naces = e_count + i_count;
+		/* Allocating memory for both ALLOW and DENY entries */
+		acldata.naces = 2 * (e_count  + i_count);
 
 		LogDebug(COMPONENT_FSAL, "No of aces present in fsal_acl_t = %d"
 					, acldata.naces);
@@ -435,13 +436,30 @@ fsal_status_t glusterfs_get_acl(struct glusterfs_export *glfs_export,
 		acldata.aces = (fsal_ace_t *) nfs4_ace_alloc(acldata.naces);
 		pace = acldata.aces;
 
-		ret = posix_acl_2_fsal_acl(buffxstat->e_acl,
+		new_count = posix_acl_2_fsal_acl(buffxstat->e_acl,
 					buffxstat->is_dir, false, &pace);
-		if (i_count > 0)
-			ret = posix_acl_2_fsal_acl(buffxstat->i_acl,
-						true, true, &pace);
-		if (ret < 0)
+		if (new_count < 0)
 			return fsalstat(ERR_FSAL_NO_ACE, -1);
+
+		if (i_count > 0) {
+			new_i_count = posix_acl_2_fsal_acl(buffxstat->i_acl,
+							true, true, &pace);
+			if (new_i_count > 0)
+				new_count += new_i_count;
+			else
+				LogDebug(COMPONENT_FSAL,
+				"Inherit acl is not set for this directory");
+		}
+
+		/* Reallocating acldata into the required size */
+		acldata.aces = (fsal_ace_t *) gsh_realloc(acldata.aces,
+				new_count*sizeof(fsal_ace_t));
+		acldata.naces = new_count;
+		if (acldata.aces == NULL) {
+			LogCrit(COMPONENT_FSAL,
+			"failed to create a new acl list");
+			return fsalstat(ERR_FSAL_NOMEM, -1);
+		}
 
 		fsalattr->acl = nfs4_acl_new_entry(&acldata, &aclstatus);
 		LogDebug(COMPONENT_FSAL, "fsal acl = %p, fsal_acl_status = %u",

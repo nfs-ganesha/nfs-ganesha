@@ -188,27 +188,28 @@ get_entry(acl_t acl, acl_tag_t tag, unsigned int id) {
  * @param[in]  ace		Stores the starting of fsal_acl_t
  * @param[out] ace		Stores last ace entry in fsal_acl_t
  *
- * @return 0 on success and -1 on failure
+ * @returns no of entries on success and -1 on failure
  */
 
 int
 posix_acl_2_fsal_acl(acl_t p_posixacl, bool is_dir, bool is_inherit,
 			fsal_ace_t **ace)
 {
-	int ret = 0, ent;
-	fsal_ace_t *pace = NULL;
-	acl_entry_t entry, mask;
+	int ret = 0, ent, d_ent, total = 0;
+	fsal_ace_t *pace_deny = NULL, *pace_allow = NULL;
+	acl_t dup_acl;
+	acl_entry_t entry, mask, other, d_entry;
 	acl_tag_t tag;
 	acl_permset_t p_permset;
-	bool readmask = true;
-	bool writemask = true;
-	bool executemask = true;
+	bool readmask = true, readother = false, readcurrent = true;
+	bool writemask = true, writeother = false, writecurrent = true;
+	bool executemask = true, executeother = false, executecurrent = true;
 
 	if (!p_posixacl)
 		return -1;
 
-	pace = *ace;
-
+	pace_deny = *ace;
+	pace_allow = (pace_deny + 1);
 	/* Store the mask entry values */
 	mask = find_entry(p_posixacl, ACL_MASK, 0);
 	if (mask) {
@@ -223,14 +224,32 @@ posix_acl_2_fsal_acl(acl_t p_posixacl, bool is_dir, bool is_inherit,
 		if (acl_get_perm(p_permset, ACL_EXECUTE) == 0)
 			executemask = false;
 	}
-	/* *
-	 * Only ALLOW ACL Entries considered right now
-	 * TODO : How to display DENY ACL Entries
-	 * */
 
-	/*
+	other = find_entry(p_posixacl, ACL_OTHER, 0);
+	if (other) {
+		ret = acl_get_permset(other, &p_permset);
+		if (ret)
+			LogWarn(COMPONENT_FSAL,
+			"Cannot retrieve permission set for the Mask Entry");
+		if (acl_get_perm(p_permset, ACL_READ) == 1)
+			readother = true;
+		if (acl_get_perm(p_permset, ACL_WRITE) == 1)
+			writeother = true;
+		if (acl_get_perm(p_permset, ACL_EXECUTE) == 1)
+			executeother = true;
+	}
+
+	/* *
 	 * Converts each entry in posix acl into fsal_ace by filling type, flag,
 	 * perm, iflag, flag and who(uid, gid) appropiately
+	 *
+	 * Corresponding to each posix acl entry, there is a possiblity of two
+	 * fsal_aces, it can either be ALLOW or DENY. The DENY added to list
+	 * depending on the permission set set of other entries.
+	 *
+	 * Here both entries are created for a posix acl entry and filled up
+	 * correspondingly. Then at the end unnecessary DENY entries are removed
+	 * from the list.
 	 */
 	for (ent = ACL_FIRST_ENTRY; ; ent = ACL_NEXT_ENTRY) {
 
@@ -249,42 +268,51 @@ posix_acl_2_fsal_acl(acl_t p_posixacl, bool is_dir, bool is_inherit,
 		if (tag == ACL_MASK)
 			continue;
 
-		pace->type = FSAL_ACE_TYPE_ALLOW;
+		pace_deny->type = FSAL_ACE_TYPE_DENY;
+		pace_allow->type = FSAL_ACE_TYPE_ALLOW;
 
 		if (is_inherit)
-			pace->flag = FSAL_ACE_FLAG_INHERIT;
+			pace_allow->flag = pace_deny->flag =
+				FSAL_ACE_FLAG_INHERIT;
 		else
-			pace->flag = 0;
+			pace_allow->flag = pace_deny->flag = 0;
 
 		/* Finding uid for the fsal_acl entry */
 		switch (tag) {
 		case  ACL_USER_OBJ:
-			pace->who.uid =  FSAL_ACE_SPECIAL_OWNER;
-			pace->iflag = FSAL_ACE_IFLAG_SPECIAL_ID;
+			pace_allow->who.uid = pace_deny->who.uid =
+						FSAL_ACE_SPECIAL_OWNER;
+			pace_allow->iflag = pace_deny->iflag =
+						FSAL_ACE_IFLAG_SPECIAL_ID;
 			break;
 		case  ACL_GROUP_OBJ:
-			pace->who.uid =  FSAL_ACE_SPECIAL_GROUP;
-			pace->iflag = FSAL_ACE_IFLAG_SPECIAL_ID;
+			pace_allow->who.uid = pace_deny->who.uid =
+						FSAL_ACE_SPECIAL_GROUP;
+			pace_allow->iflag = pace_deny->iflag =
+						FSAL_ACE_IFLAG_SPECIAL_ID;
 			break;
 		case  ACL_OTHER:
-			pace->who.uid =  FSAL_ACE_SPECIAL_EVERYONE;
-			pace->iflag = FSAL_ACE_IFLAG_SPECIAL_ID;
+			pace_allow->who.uid = pace_deny->who.uid =
+						FSAL_ACE_SPECIAL_EVERYONE;
+			pace_allow->iflag = pace_deny->iflag =
+						FSAL_ACE_IFLAG_SPECIAL_ID;
 			break;
 		case  ACL_USER:
-			pace->who.uid =
-				*(uid_t *)acl_get_qualifier(entry);
+			pace_allow->who.uid = pace_deny->who.uid =
+					*(uid_t *)acl_get_qualifier(entry);
 			break;
 		case  ACL_GROUP:
-			pace->who.gid =
-				*(gid_t *)acl_get_qualifier(entry);
-			pace->flag |= FSAL_ACE_FLAG_GROUP_ID;
+			pace_allow->who.gid = pace_deny->who.gid =
+					*(gid_t *)acl_get_qualifier(entry);
+			pace_allow->flag = pace_deny->flag |=
+						FSAL_ACE_FLAG_GROUP_ID;
 			break;
 		default:
 			LogWarn(COMPONENT_FSAL, "Invalid tag for the acl");
 		}
 
 		/* *
-		 * Finding permission set for the fsal_acl entry.
+		 * Finding permission set for the fsal_acl ALLOW entry.
 		 * Conversion purely is based on
 		 * http://tools.ietf.org/html/draft-ietf-nfsv4-acl-mapping-05
 		 * */
@@ -294,7 +322,8 @@ posix_acl_2_fsal_acl(acl_t p_posixacl, bool is_dir, bool is_inherit,
 		 * permissions
 		 * */
 
-		pace->perm = FSAL_ACE_PERM_SET_DEFAULT;
+		pace_allow->perm = FSAL_ACE_PERM_SET_DEFAULT;
+		pace_deny->perm = 0;
 
 		ret = acl_get_permset(entry, &p_permset);
 		if (ret) {
@@ -308,27 +337,122 @@ posix_acl_2_fsal_acl(acl_t p_posixacl, bool is_dir, bool is_inherit,
 		 * */
 		if (acl_get_perm(p_permset, ACL_READ)) {
 			if (tag == ACL_USER_OBJ || tag == ACL_OTHER || readmask)
-				pace->perm |= FSAL_ACE_PERM_READ_DATA;
-		}
+				pace_allow->perm |= FSAL_ACE_PERM_READ_DATA;
+		} else
+			readcurrent = false;
+
 		if (acl_get_perm(p_permset, ACL_WRITE)) {
 			if (tag == ACL_USER_OBJ || tag == ACL_OTHER ||
 						writemask)
-				pace->perm |= FSAL_ACE_PERM_SET_DEFAULT_WRITE;
+				pace_allow->perm |=
+					FSAL_ACE_PERM_SET_DEFAULT_WRITE;
 			if (tag == ACL_USER_OBJ)
-				pace->perm |= FSAL_ACE_PERM_SET_OWNER_WRITE;
+				pace_allow->perm |=
+					FSAL_ACE_PERM_SET_OWNER_WRITE;
 			if (is_dir)
-				pace->perm |= FSAL_ACE_PERM_DELETE_CHILD;
-		}
+				pace_allow->perm |=
+					FSAL_ACE_PERM_DELETE_CHILD;
+		} else
+			writecurrent = false;
+
 		if (acl_get_perm(p_permset, ACL_EXECUTE)) {
 			if (tag == ACL_USER_OBJ || tag == ACL_OTHER ||
 						executemask)
-				pace->perm |= FSAL_ACE_PERM_EXECUTE;
+				pace_allow->perm |= FSAL_ACE_PERM_EXECUTE;
+		} else
+			executecurrent = false;
+
+		/* *
+		 * Filling up permission set for DENY entries based on ALLOW
+		 * entries , if it is applicable.
+		 * If the tag is ACL_USER_OBJ or ACL_USER then all later posix
+		 * acl entries should be considered.
+		 * If the tag is either ACL_GROUP_OBJ or ACL_GROUP then consider
+		 * only ACL_OTHER.
+		 */
+		if (tag == ACL_USER_OBJ || tag == ACL_USER) {
+			dup_acl = acl_dup(p_posixacl);
+
+			/*
+			 * Do not consider ACL_MASK entry in the following loop
+			 */
+			acl_delete_entry(dup_acl, mask);
+			if (tag == ACL_USER_OBJ) {
+				d_entry = find_entry(dup_acl, ACL_USER_OBJ, 0);
+				ret = acl_get_entry(dup_acl, ACL_NEXT_ENTRY,
+						&d_entry);
+			} else
+				d_entry = find_entry(dup_acl, ACL_GROUP_OBJ, 0);
+
+			for (d_ent = ACL_NEXT_ENTRY; ; d_ent = ACL_NEXT_ENTRY) {
+				ret = acl_get_permset(d_entry, &p_permset);
+				if (ret) {
+					LogWarn(COMPONENT_FSAL,
+					"Cannot retrieve permission set");
+					continue;
+				}
+
+				if (!readcurrent &&
+					acl_get_perm(p_permset, ACL_READ))
+					pace_deny->perm |=
+						FSAL_ACE_PERM_READ_DATA;
+				if (!writecurrent &&
+					acl_get_perm(p_permset, ACL_WRITE)) {
+					pace_deny->perm |=
+						FSAL_ACE_PERM_SET_DEFAULT_WRITE;
+					if (tag == ACL_USER_OBJ)
+						pace_deny->perm |=
+						FSAL_ACE_PERM_SET_OWNER_WRITE;
+					if (is_dir)
+						pace_deny->perm |=
+						FSAL_ACE_PERM_DELETE_CHILD;
+				}
+				if (!executecurrent &&
+					acl_get_perm(p_permset, ACL_EXECUTE))
+					pace_deny->perm |=
+						FSAL_ACE_PERM_EXECUTE;
+				ret = acl_get_entry(dup_acl, d_ent, &d_entry);
+				if (ret == 0 || ret == -1) {
+					LogDebug(COMPONENT_FSAL,
+					"No more ACL entires remaining");
+					break;
+				}
+			}
+			acl_free(dup_acl);
+
+		} else if (tag == ACL_GROUP_OBJ || tag == ACL_GROUP) {
+			if (!readcurrent && readother)
+				pace_deny->perm |= FSAL_ACE_PERM_READ_DATA;
+			if (!writecurrent && writeother) {
+				pace_deny->perm |=
+					FSAL_ACE_PERM_SET_DEFAULT_WRITE;
+				if (is_dir)
+					pace_deny->perm |=
+						FSAL_ACE_PERM_DELETE_CHILD;
+			}
+			if (!executecurrent && executeother)
+				pace_deny->perm |= FSAL_ACE_PERM_EXECUTE;
 		}
-		pace++;
+		readcurrent = writecurrent = executecurrent = true;
+
+		/* Removing DENY entries if it is not present */
+		if (pace_deny->perm == 0) {
+			*pace_deny = *pace_allow;
+			memset(pace_allow, 0, sizeof(fsal_ace_t));
+			total += 1;
+			pace_deny += 1;
+			pace_allow += 1;
+		} else {
+			total += 2;
+			pace_deny += 2;
+			pace_allow += 2;
+		}
+
+
 	}
 
-	*ace = pace;
-	return 0;
+	*ace = pace_allow - 1;/* Returns last entry in the list */
+	return total; /* Returning no of entries in the list */
 }
 
 /*
