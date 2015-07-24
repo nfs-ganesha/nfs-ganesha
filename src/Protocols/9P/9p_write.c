@@ -128,10 +128,10 @@ int _9p_write(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 		outcount = *count;
 	} else {
-		cache_status =
-		    cache_inode_rdwr(pfid->pentry, CACHE_INODE_WRITE, *offset,
-				     size, &written_size, databuffer, &eof_met,
-				     &sync);
+		cache_status = cache_inode_rdwr(pfid->pentry, CACHE_INODE_WRITE,
+						*offset, size, &written_size,
+						databuffer, &eof_met, &sync,
+						NULL);
 
 		/* Get the handle, for stats */
 		struct gsh_client *client = req9p->pconn->client;

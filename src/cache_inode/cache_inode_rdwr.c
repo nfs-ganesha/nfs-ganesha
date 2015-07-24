@@ -69,17 +69,20 @@
  * @param[out]    eof          Whether a READ encountered the end of file.  May
  *                             be NULL for writes.
  * @param[in]     sync         Whether the write is synchronous or not
+ * @param[in]     info         io_info for READ_PLUS/WRITE_PLUS
  *
  * @return CACHE_INODE_SUCCESS or various errors
  */
 
-cache_inode_status_t
-cache_inode_rdwr_plus(cache_entry_t *entry,
-		      cache_inode_io_direction_t io_direction,
-		      uint64_t offset, size_t io_size,
-		      size_t *bytes_moved, void *buffer,
-		      bool *eof,
-		      bool *sync, struct io_info *info)
+cache_inode_status_t cache_inode_rdwr(cache_entry_t *entry,
+				      cache_inode_io_direction_t io_direction,
+				      uint64_t offset,
+				      size_t io_size,
+				      size_t *bytes_moved,
+				      void *buffer,
+				      bool *eof,
+				      bool *sync,
+				      struct io_info *info)
 {
 	/* Error return from FSAL calls */
 	fsal_status_t fsal_status = { 0, 0 };
@@ -290,18 +293,6 @@ cache_inode_rdwr_plus(cache_entry_t *entry,
 	}
 
 	return status;
-}
-
-cache_inode_status_t
-cache_inode_rdwr(cache_entry_t *entry,
-		 cache_inode_io_direction_t io_direction,
-		 uint64_t offset, size_t io_size,
-		 size_t *bytes_moved, void *buffer,
-		 bool *eof,
-		 bool *sync)
-{
-	return cache_inode_rdwr_plus(entry, io_direction, offset, io_size,
-				     bytes_moved, buffer, eof, sync, NULL);
 }
 
 /** @} */

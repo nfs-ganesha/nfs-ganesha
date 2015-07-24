@@ -413,8 +413,8 @@ static const struct nfs4_op_desc optabv4[] = {
 				.exp_perm_flags = 0},
 	[NFS4_OP_WRITE_SAME] = {
 				.name = "OP_WRITE_SAME",
-				.funct = nfs4_op_write_plus,
-				.free_res = nfs4_op_write_Free,
+				.funct = nfs4_op_write_same,
+				.free_res = nfs4_op_write_same_Free,
 				.exp_perm_flags = 0},
 };
 

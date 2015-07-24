@@ -477,9 +477,8 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 		}
 	}
 
-	cache_status =
-	    cache_inode_rdwr_plus(entry, io, offset, size, &read_size,
-				  bufferdata, &eof_met, &sync, info);
+	cache_status = cache_inode_rdwr(entry, io, offset, size, &read_size,
+					bufferdata, &eof_met, &sync, info);
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		res_READ4->status = nfs4_Errno(cache_status);
 		gsh_free(bufferdata);

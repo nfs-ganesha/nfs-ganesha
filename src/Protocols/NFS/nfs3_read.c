@@ -231,7 +231,8 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 						&read_size,
 						data,
 						&eof_met,
-						&sync);
+						&sync,
+						NULL);
 
 		state_share_anonymous_io_done(entry, OPEN4_SHARE_ACCESS_READ);
 

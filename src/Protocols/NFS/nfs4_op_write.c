@@ -405,7 +405,7 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 		}
 	}
 
-	cache_status = cache_inode_rdwr_plus(entry,
+	cache_status = cache_inode_rdwr(entry,
 					io,
 					offset,
 					size,
@@ -512,15 +512,15 @@ void nfs4_op_write_Free(nfs_resop4 *resp)
  *
  */
 
-int nfs4_op_write_plus(struct nfs_argop4 *op, compound_data_t *data,
+int nfs4_op_write_same(struct nfs_argop4 *op, compound_data_t *data,
 		  struct nfs_resop4 *resp)
 {
-	WRITE_SAME4res * const res_WPLUS = &resp->nfs_resop4_u.opwrite_plus;
+	WRITE_SAME4res * const res_WSAME = &resp->nfs_resop4_u.opwrite_plus;
 
 	resp->resop = NFS4_OP_WRITE_SAME;
-	res_WPLUS->wpr_status =  NFS4ERR_NOTSUPP;
+	res_WSAME->wpr_status =  NFS4ERR_NOTSUPP;
 
-	return res_WPLUS->wpr_status;
+	return res_WSAME->wpr_status;
 }
 
 /**

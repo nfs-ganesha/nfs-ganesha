@@ -229,7 +229,8 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 		cache_status =
 		    cache_inode_rdwr(entry, CACHE_INODE_WRITE, offset, size,
-				     &written_size, data, &eof_met, &sync);
+				     &written_size, data, &eof_met, &sync,
+				     NULL);
 
 		state_share_anonymous_io_done(entry, OPEN4_SHARE_ACCESS_WRITE);
 

@@ -817,17 +817,13 @@ cache_inode_status_t cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 
 cache_inode_status_t cache_inode_rdwr(cache_entry_t *entry,
 				      cache_inode_io_direction_t io_direction,
-				      uint64_t offset, size_t io_size,
-				      size_t *bytes_moved, void *buffer,
+				      uint64_t offset,
+				      size_t io_size,
+				      size_t *bytes_moved,
+				      void *buffer,
 				      bool *eof,
-				      bool *sync);
-
-cache_inode_status_t cache_inode_rdwr_plus(cache_entry_t *entry,
-				      cache_inode_io_direction_t io_direction,
-				      uint64_t offset, size_t io_size,
-				      size_t *bytes_moved, void *buffer,
-				      bool *eof,
-				      bool *sync, struct io_info *info);
+				      bool *sync,
+				      struct io_info *info);
 
 cache_inode_status_t cache_inode_commit(cache_entry_t *entry, uint64_t offset,
 					size_t count);

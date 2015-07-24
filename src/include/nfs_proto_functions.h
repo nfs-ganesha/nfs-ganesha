@@ -308,10 +308,10 @@ int nfs4_op_test_stateid(struct nfs_argop4 *, compound_data_t *,
 int nfs4_op_write(struct nfs_argop4 *, compound_data_t *, struct nfs_resop4 *);
 
 /* NFSv4.2 */
-int nfs4_op_write_plus(struct nfs_argop4 *, compound_data_t *,
+int nfs4_op_write_same(struct nfs_argop4 *, compound_data_t *,
 		      struct nfs_resop4 *);
 
-void nfs4_op_write_plus_Free(nfs_resop4 *resp);
+void nfs4_op_write_same_Free(nfs_resop4 *resp);
 
 int nfs4_op_read_plus(struct nfs_argop4 *, compound_data_t *,
 		      struct nfs_resop4 *);
