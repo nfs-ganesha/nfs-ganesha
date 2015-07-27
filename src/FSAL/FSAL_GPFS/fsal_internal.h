@@ -31,8 +31,6 @@
  *          defined in fsal_internal.c.
  */
 
-#define _USE_NFS4_ACL
-
 #include <sys/stat.h>
 #include "fsal.h"
 #include "gsh_list.h"
@@ -110,13 +108,8 @@ fsal_status_t fsal_internal_get_handle_at(int dfd,
 
 fsal_status_t gpfsfsal_xstat_2_fsal_attributes(
 					gpfsfsal_xstat_t *p_buffxstat,
-					struct attrlist *p_fsalattr_out);
-
-fsal_status_t fsal_get_xstat_by_handle(int dirfd,
-				       struct gpfs_file_handle *p_handle,
-				       gpfsfsal_xstat_t *p_buffxstat,
-				       uint32_t *expire_time_attr,
-				       bool expire);
+					struct attrlist *p_fsalattr_out,
+					bool use_acl);
 
 /**
  * Gets a fd from a handle
@@ -180,7 +173,7 @@ fsal_status_t fsal_get_xstat_by_handle(int dirfd,
 				       struct gpfs_file_handle *p_handle,
 				       gpfsfsal_xstat_t *p_buffxstat,
 				       uint32_t *expire_time_attr,
-				       bool expire);
+				       bool expire, bool use_acl);
 
 fsal_status_t fsal_set_xstat_by_handle(int dirfd,
 				       const struct req_op_context *p_context,

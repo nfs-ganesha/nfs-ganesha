@@ -30,6 +30,7 @@ struct gpfs_fsal_export {
 	struct glist_head filesystems;
 	bool pnfs_ds_enabled;
 	bool pnfs_mds_enabled;
+	bool use_acl;
 };
 
 /*

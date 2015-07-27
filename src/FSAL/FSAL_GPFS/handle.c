@@ -789,6 +789,7 @@ fsal_status_t gpfs_lookup_path(struct fsal_export *exp_hdl,
 	struct gpfs_file_handle *fh = alloca(sizeof(struct gpfs_file_handle));
 	enum fsid_type fsid_type;
 	struct fsal_fsid__ fsid;
+	struct gpfs_fsal_export *gpfs_export;
 
 	memset(fh, 0, sizeof(struct gpfs_file_handle));
 	fh->handle_size = gpfs_max_fh_size;
@@ -809,12 +810,15 @@ fsal_status_t gpfs_lookup_path(struct fsal_export *exp_hdl,
 	if (FSAL_IS_ERROR(fsal_status))
 		goto fileerr;
 
+	gpfs_export = container_of(exp_hdl, struct gpfs_fsal_export, export);
 	attributes.mask = exp_hdl->exp_ops.fs_supported_attrs(exp_hdl);
 	fsal_status = fsal_get_xstat_by_handle(dir_fd, fh, &buffxstat,
-					       NULL, false);
+					       NULL, false,
+					       gpfs_export->use_acl);
 	if (FSAL_IS_ERROR(fsal_status))
 		goto fileerr;
-	fsal_status = gpfsfsal_xstat_2_fsal_attributes(&buffxstat, &attributes);
+	fsal_status = gpfsfsal_xstat_2_fsal_attributes(&buffxstat, &attributes,
+						       gpfs_export->use_acl);
 	LogFullDebug(COMPONENT_FSAL,
 		     "fsid=0x%016"PRIx64".0x%016"PRIx64,
 		     attributes.fsid.major,

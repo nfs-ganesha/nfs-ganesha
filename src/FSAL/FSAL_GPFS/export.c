@@ -840,6 +840,8 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 			op_ctx->export->fullpath);
 		export_ops_pnfs(&myself->export.exp_ops);
 	}
+	myself->use_acl =
+		!(op_ctx->export->options & EXPORT_OPTION_DISABLE_ACL);
 	return status;
 
 detach:

@@ -47,10 +47,6 @@
 
 #include "include/gpfs.h"
 
-#ifdef _USE_NFS4_ACL
-#define ACL_DEBUG_BUF_SIZE 256
-#endif				/* _USE_NFS4_ACL */
-
 /* credential lifetime (1h) */
 uint32_t CredentialLifetime = 3600;
 
@@ -702,31 +698,30 @@ fsal_status_t fsal_get_xstat_by_handle(int dirfd,
 				       struct gpfs_file_handle *p_handle,
 				       gpfsfsal_xstat_t *p_buffxstat,
 				       uint32_t *expire_time_attr,
-				       bool expire)
+				       bool expire, bool use_acl)
 {
 	int rc;
 	struct xstat_arg xstatarg;
 	int errsv = 0;
-#ifdef _USE_NFS4_ACL
-	gpfs_acl_t *pacl_gpfs;
-#endif				/* _USE_NFS4_ACL */
 
 	if (!p_handle || !p_buffxstat)
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
-#ifdef _USE_NFS4_ACL
 	/* Initialize acl header so that GPFS knows what we want. */
-	pacl_gpfs = (gpfs_acl_t *) p_buffxstat->buffacl;
-	pacl_gpfs->acl_level = 0;
-	pacl_gpfs->acl_version = GPFS_ACL_VERSION_NFS4;
-	pacl_gpfs->acl_type = GPFS_ACL_TYPE_NFS4;
-	pacl_gpfs->acl_len = GPFS_ACL_BUF_SIZE;
-	xstatarg.acl = pacl_gpfs;
-	xstatarg.attr_valid = XATTR_STAT | XATTR_ACL;
-#else
-	xstatarg.acl = NULL;
-	xstatarg.attr_valid = XATTR_STAT;
-#endif /* _USE_NFS4_ACL */
+	if (use_acl) {
+		gpfs_acl_t *pacl_gpfs;
+
+		pacl_gpfs = (gpfs_acl_t *) p_buffxstat->buffacl;
+		pacl_gpfs->acl_level = 0;
+		pacl_gpfs->acl_version = GPFS_ACL_VERSION_NFS4;
+		pacl_gpfs->acl_type = GPFS_ACL_TYPE_NFS4;
+		pacl_gpfs->acl_len = GPFS_ACL_BUF_SIZE;
+		xstatarg.acl = pacl_gpfs;
+		xstatarg.attr_valid = XATTR_STAT | XATTR_ACL;
+	} else {
+		xstatarg.acl = NULL;
+		xstatarg.attr_valid = XATTR_STAT;
+	}
 	if (expire)
 		xstatarg.attr_valid |= XATTR_EXPIRE;
 
@@ -765,11 +760,11 @@ fsal_status_t fsal_get_xstat_by_handle(int dirfd,
 			return fsalstat(posix2fsal_error(errsv), errsv);
 		}
 	}
-#ifdef _USE_NFS4_ACL
-	p_buffxstat->attr_valid = XATTR_FSID | XATTR_STAT | XATTR_ACL;
-#else
-	p_buffxstat->attr_valid = XATTR_FSID | XATTR_STAT;
-#endif
+
+	if (use_acl)
+		p_buffxstat->attr_valid = XATTR_FSID | XATTR_STAT | XATTR_ACL;
+	else
+		p_buffxstat->attr_valid = XATTR_FSID | XATTR_STAT;
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
