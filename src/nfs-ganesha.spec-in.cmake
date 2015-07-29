@@ -25,6 +25,9 @@
 # %bcond_with means you add a "--with" option, default = without this feature
 # %bcond_without adds a"--without" so the feature is enabled by default
 
+@BCOND_NULLFS@ nullfs
+%global use_fsal_null %{on_off_switch nullfs}
+
 @BCOND_GPFS@ gpfs
 %global use_fsal_gpfs %{on_off_switch gpfs}
 
@@ -145,15 +148,6 @@ Requires: nfs-ganesha = %{version}-%{release}
 This package contains a FSAL shared object to
 be used with NFS-Ganesha to support VFS based filesystems
 
-%package nullfs
-Summary: The NFS-GANESHA's NULLFS Stackable FSAL
-Group: Applications/System
-Requires: nfs-ganesha = %{version}-%{release}
-
-%description nullfs
-This package contains a Stackable FSAL shared object to
-be used with NFS-Ganesha. This is mostly a template for future (more sophisticated) stackable FSALs
-
 %package proxy
 Summary: The NFS-GANESHA's PROXY FSAL
 Group: Applications/System
@@ -193,6 +187,18 @@ to the ganesha.nfsd server, it makes it possible to trace using LTTng.
 
 # Option packages start here. use "rpmbuild --with lustre" (or equivalent)
 # for activating this part of the spec file
+
+# NULL
+%if %{with nullfs}
+%package nullfs
+Summary: The NFS-GANESHA's NULLFS Stackable FSAL
+Group: Applications/System
+Requires: nfs-ganesha = %{version}-%{release}
+
+%description nullfs
+This package contains a Stackable FSAL shared object to
+be used with NFS-Ganesha. This is mostly a template for future (more sophisticated) stackable FSALs
+%endif
 
 # GPFS
 %if %{with gpfs}
@@ -332,6 +338,7 @@ be used with NFS-Ganesha to support Gluster
 %build
 cmake .	-DCMAKE_BUILD_TYPE=Debug			\
 	-DBUILD_CONFIG=rpmbuild				\
+	-DUSE_FSAL_NULL=%{use_fsal_null}		\
 	-DUSE_FSAL_ZFS=%{use_fsal_zfs}			\
 	-DUSE_FSAL_XFS=%{use_fsal_xfs}			\
 	-DUSE_FSAL_CEPH=%{use_fsal_ceph}		\
@@ -480,16 +487,17 @@ make DESTDIR=%{buildroot} install
 %config(noreplace) %{_sysconfdir}/ganesha/vfs.conf
 
 
-%files nullfs
-%defattr(-,root,root,-)
-%{_libdir}/ganesha/libfsalnull*
-
-
 %files proxy
 %defattr(-,root,root,-)
 %{_libdir}/ganesha/libfsalproxy*
 
 # Optional packages
+%if %{with nullfs}
+%files nullfs
+%defattr(-,root,root,-)
+%{_libdir}/ganesha/libfsalnull*
+%endif
+
 %if %{with gpfs}
 %files gpfs
 %defattr(-,root,root,-)
