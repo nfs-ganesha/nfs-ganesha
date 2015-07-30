@@ -92,6 +92,9 @@ struct cache_inode_parameter {
 	/** Partitions in the Cache_Inode tree.  Defaults to 7,
 	 * settable with NParts. */
 	uint32_t nparts;
+	/** Per-partition hash table size.  Defaults to 32633,
+	 * settable with Cache_Size. */
+	uint32_t cache_size;
 	/** Expiration time interval in seconds for attributes.  Settable with
 	    Attr_Expiration_Time. */
 	int32_t  expire_time_attr;

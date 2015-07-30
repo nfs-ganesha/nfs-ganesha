@@ -53,8 +53,10 @@
 struct cache_inode_parameter cache_param;
 
 static struct config_item cache_inode_params[] = {
-	CONF_ITEM_UI32("NParts", 1, 20, 7,
+	CONF_ITEM_UI32("NParts", 1, 32633, 7,
 		       cache_inode_parameter, nparts),
+	CONF_ITEM_UI32("Cache_Size", 1, UINT32_MAX, 32633,
+		       cache_inode_parameter, cache_size),
 	CONF_ITEM_I32("Attr_Expiration_Time", -1, INT32_MAX, 60,
 		       cache_inode_parameter, expire_time_attr),
 	CONF_ITEM_BOOL("Use_Getattr_Directory_Invalidation", false,

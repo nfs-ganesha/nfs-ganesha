@@ -422,7 +422,9 @@ LOG { FORMAT {} }
 CACHEINODE
 ----------
 
-	NParts(uint32, range 1 to 20, default 7)
+	NParts(uint32, range 1 to 32633, default 7)
+
+	Cache_Size(uint32, range 1 to UINT32_MAX, default 32633)
 
 	Attr_Expiration_Time(int32, range -1 to INT32_MAX, default 60)
 
