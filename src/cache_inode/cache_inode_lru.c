@@ -305,7 +305,8 @@ lru_queue_of(cache_entry_t *entry)
 static inline uint32_t
 lru_lane_of_entry(cache_entry_t *entry)
 {
-	return (uint32_t) (((uintptr_t) entry) % LRU_N_Q_LANES);
+	return (uint32_t) ((((uintptr_t) entry) / 2*sizeof(uintptr_t))
+				% LRU_N_Q_LANES);
 }
 
 /**
