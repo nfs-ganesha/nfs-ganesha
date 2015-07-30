@@ -155,9 +155,6 @@ static const size_t FILEHANDLE_MAX_LEN_V3 = 64;
 /** Maximum size of NFSv4 handle */
 static const size_t FILEHANDLE_MAX_LEN_V4 = 128;
 
-/** Size for Ganesha unstable write buffers*/
-static const size_t CACHE_INODE_UNSTABLE_BUFFERSIZE = 100 * 1024 * 1024;
-
 /**
  * Data for tracking a cache entry's position the LRU.
  */
