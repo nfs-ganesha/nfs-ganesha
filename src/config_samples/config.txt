@@ -430,6 +430,8 @@ CACHEINODE
 
 	Use_Getattr_Directory_Invalidation(bool, default false)
 
+	Dir_Max_Deleted(uint32, range 1 to UINT32_MAX, default 65536)
+
 	Entries_HWMark(uint32, range 1 to UINT32_MAX, default 100000)
 
 	LRU_Run_Interval(uint32, range 1 to 24 * 3600, default 90)

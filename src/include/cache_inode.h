@@ -102,6 +102,11 @@ struct cache_inode_parameter {
 	/** Use getattr for directory invalidation.  Defaults to
 	    false.  Settable with Use_Getattr_Directory_Invalidation. */
 	bool getattr_dir_invalidation;
+	struct {
+		/** Max size of per-directory cache of removed
+		    entries */
+		uint32_t avl_max_deleted;
+	} dir;
 	/** High water mark for cache entries.  Defaults to 100000,
 	    settable by Entries_HWMark. */
 	uint32_t entries_hwmark;
