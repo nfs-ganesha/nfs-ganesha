@@ -760,7 +760,8 @@ void nfs_Init_svc(void)
 	svc_params.ioq_thrd_max = /* max ioq worker threads */
 		nfs_param.core_param.rpc.ioq_thrd_max;
 
-	svc_init(&svc_params);
+	if (!svc_init(&svc_params))
+		LogFatal(COMPONENT_INIT, "SVC initialization failed");
 
 	/* Redirect TI-RPC allocators, log channel */
 	if (!tirpc_control(TIRPC_SET_WARNX, (warnx_t) rpc_warnx))
