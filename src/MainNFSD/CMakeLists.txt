@@ -18,6 +18,7 @@ SET(MainServices_STAT_SRCS
    nfs_rpc_dispatcher_thread.c
    nfs_rpc_tcp_socket_manager_thread.c
    nfs_init.c
+   nfs_lib.c
    nfs_reaper_thread.c
    ../support/client_mgr.c
 )
