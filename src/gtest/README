@@ -1,0 +1,26 @@
+Google publishes gmock and gtest from the official/external
+Chromium repositories.
+
+I found that these repositories are not linked, but that the
+gmock source expects gtest to be checked out within.  (The
+Ceph developers maintain a pair of linked repositories where
+this is already done, and do pullups from the external
+repositories.)
+
+The provided CMakeLists.txt files just work, but don't provide
+an install target.  I did an in-tree build in gmock and assumed
+that the build tree would be dropped into some public location
+(e.g., /opt/gmock).
+
+Sources:
+
+ git clone https://chromium.googlesource.com/external/gmock
+ git clone https://chromium.googlesource.com/external/gtest
+
+I created a minimal example test driver with a single true
+assertion for reference (src/gtest/test_example.cc).
+
+For more information on how to use Google Test, see:
+    http://code.google.com/p/googletest/wiki/Primer
+
+Matt

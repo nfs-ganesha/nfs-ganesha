@@ -266,6 +266,19 @@ if(USE_BLKIN)
   set(SYSTEM_LIBRARIES ${LTTNG}  ${SYSTEM_LIBRARIES})
 endif(USE_BLKIN)
 
+# GTest
+option(USE_GTEST "Use Google Test test framework" OFF)
+option(GTEST_PREFIX "Google Test installation prefix"
+  "/opt/gmock/gtest")
+if(USE_GTEST)
+  if (NOT GTEST_PREFIX)
+    set(GTEST_PREFIX "/opt/gmock/gtest")
+  endif(NOT GTEST_PREFIX)
+  set(GTEST_PREFIX ${GTEST_PREFIX} CACHE PATH "Google Test path")
+  find_library(GTEST NAMES gtest PATHS "${GTEST_PREFIX}")
+  find_library(GTEST_MAIN NAMES gtest_main PATHS "${GTEST_PREFIX}")
+endif(USE_GTEST)
+
 # NFS RDMA
 option(USE_NFS_RDMA "enable NFS/RDMA support" OFF)
 
@@ -884,6 +897,9 @@ add_subdirectory(log)
 add_subdirectory(config_parsing)
 add_subdirectory(cidr)
 add_subdirectory(test)
+if(USE_GTEST)
+  add_subdirectory(gtest)
+endif(USE_GTEST)
 add_subdirectory(avl)
 add_subdirectory(hashtable)
 add_subdirectory(NodeList)
@@ -954,6 +970,9 @@ message(STATUS "PROXY_HANDLE_MAPPING = ${PROXY_HANDLE_MAPPING}")
 message(STATUS "DEBUG_SYMS = ${DEBUG_SYMS}")
 message(STATUS "COVERAGE = ${COVERAGE}")
 message(STATUS "ENFORCE_GCC = ${ENFORCE_GCC}")
+message(STATUS "USE_GTEST = ${USE_GTEST}")
+message(STATUS "GTEST_PREFIX = ${GTEST_PREFIX}")
+message(STATUS "GTEST_MAIN = ${GTEST_MAIN}")
 message(STATUS "PROFILING = ${PROFILING}")
 message(STATUS "USE_GSS = ${USE_GSS}")
 message(STATUS "TIRPC_EPOLL = ${TIRPC_EPOLL}")
@@ -1317,7 +1336,6 @@ if(DOXYGEN_FOUND)
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     )
 endif(DOXYGEN_FOUND)
-
 
 # Include thread-sanitizer module
 include(${CMAKE_SOURCE_DIR}/cmake/tsan.cmake)
