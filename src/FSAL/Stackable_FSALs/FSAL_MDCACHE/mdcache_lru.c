@@ -1209,7 +1209,7 @@ err_open:
 	lru_state.futility = 0;
 
 	lru_state.per_lane_work =
-	    (mdcache_param.reaper_work / LRU_N_Q_LANES);
+	    (mdcache_param.reaper_work + LRU_N_Q_LANES - 1) / LRU_N_Q_LANES;
 	lru_state.biggest_window =
 	    (mdcache_param.biggest_window *
 	     lru_state.fds_system_imposed) / 100;
