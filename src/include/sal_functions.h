@@ -408,7 +408,7 @@ static inline void dec_state_t_ref(struct state_t *state)
 
 int nfs4_State_Set(state_t *state_data);
 struct state_t *nfs4_State_Get_Pointer(char *other);
-bool nfs4_State_Del(char *other);
+bool nfs4_State_Del(state_t *state);
 void nfs_State_PrintAll(void);
 
 struct state_t *nfs4_State_Get_Entry(cache_entry_t *entry,

@@ -193,13 +193,24 @@ int display_stateid(struct display_buffer *dspbuf, state_t *state)
 	if (b_left <= 0)
 		return b_left;
 
+	b_left = display_printf(dspbuf,
+				" STATE %p entry=%p type=%s seqid=%"PRIu32
+				" owner={",
+				state,
+				entry,
+				str_state_type(state),
+				state->state_seqid);
+
+	if (b_left <= 0)
+		return b_left;
+
+	b_left = display_nfs4_owner(dspbuf, state->state_owner);
+
+	if (b_left <= 0)
+		return b_left;
+
 	return display_printf(dspbuf,
-			      " STATE %p entry=%p type=%s seqid=%"PRIu32
-			      " refccount=%"PRId32,
-			      state,
-			      entry,
-			      str_state_type(state),
-			      state->state_seqid,
+			      "} refccount=%"PRId32,
 			      atomic_fetch_int32_t(&state->state_refcount));
 }
 
@@ -657,25 +668,30 @@ struct state_t *nfs4_State_Get_Entry(cache_entry_t *entry,
  * @retval true if success
  * @retval false if failure
  */
-bool nfs4_State_Del(char *other)
+bool nfs4_State_Del(state_t *state)
 {
 	struct gsh_buffdesc buffkey, old_key, old_value;
 	hash_error_t err;
-	state_t *state;
 
-	buffkey.addr = other;
+	buffkey.addr = state->stateid_other;
 	buffkey.len = OTHERSIZE;
 
 	err = HashTable_Del(ht_state_id, &buffkey, &old_key, &old_value);
 
 	if (err != HASHTABLE_SUCCESS) {
+		char str[LOG_BUFF_LEN];
+		struct display_buffer dspbuf = {sizeof(str), str, str};
+
+		display_stateid(&dspbuf, state);
+
 		LogDebug(COMPONENT_STATE,
-			 "Failure to delete stateid %s",
+			 "Failure to delete stateid %s %s",
+			 str,
 			 hash_table_err_to_str(err));
 		return false;
 	}
 
-	state = old_value.addr;
+	assert(state == old_value.addr);
 
 	/* If stateid is a LOCK state, we had also indexed by entry/owner */
 	if (state->state_type != STATE_TYPE_LOCK)

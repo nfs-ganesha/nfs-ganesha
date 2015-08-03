@@ -333,7 +333,7 @@ void state_del_locked(state_t *state)
 	/* Remove the entry from the HashTable. If it fails, we have lost the
 	 * race with another caller of state_del/state_del_locked.
 	 */
-	if (!nfs4_State_Del(state->stateid_other)) {
+	if (!nfs4_State_Del(state)) {
 		if (str_valid)
 			LogDebug(COMPONENT_STATE,
 				 "Racing to delete %s", str);
