@@ -1,7 +1,7 @@
 # Set CMAKE_CXX_FLAGS, for gtest presently
 set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -std=c++11 -Wnon-virtual-dtor -Wno-invalid-offsetof")
 
-set(UNITTEST_LIBS ${GTEST_MAIN} ${GTEST} boost_system ${PTHREAD_LIBS})
+set(UNITTEST_LIBS ${GTEST_MAIN} ${GTEST} boost_program_options boost_system ${PTHREAD_LIBS})
 set(UNITTEST_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I${GTEST_PREFIX}/include -fno-strict-aliasing")
 
 # generic test

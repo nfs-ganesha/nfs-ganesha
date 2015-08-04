@@ -87,7 +87,7 @@ int detach_flag = true;
  *
  */
 
-int nfs_libmain()
+int nfs_libmain(const char *ganesha_conf)
 {
 	char localmachine[MAXHOSTNAMELEN + 1];
 	int dsc;
