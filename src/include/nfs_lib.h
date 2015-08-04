@@ -35,7 +35,10 @@
 
 extern char *config_path;
 
-extern int nfs_libmain(const char *config_path);
+extern int nfs_libmain(
+	const char *config_path,
+	const char *log_path,
+	const int debug_level);
 
 #endif				/* !NFS_LIB_H */
 /** @} */

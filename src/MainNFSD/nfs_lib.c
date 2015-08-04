@@ -87,7 +87,9 @@ int detach_flag = true;
  *
  */
 
-int nfs_libmain(const char *ganesha_conf)
+int nfs_libmain(const char *ganesha_conf,
+		const char *lpath,
+		const int dlevel)
 {
 	char localmachine[MAXHOSTNAMELEN + 1];
 	int dsc;
@@ -101,6 +103,11 @@ int nfs_libmain(const char *ganesha_conf)
 
 	if (ganesha_conf)
 		config_path = gsh_strdup(ganesha_conf);
+
+	if (lpath)
+		log_path = gsh_strdup(lpath);
+
+	debug_level = dlevel;
 
 	/* get host name */
 	if (gethostname(localmachine, sizeof(localmachine)) != 0) {
