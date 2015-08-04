@@ -99,6 +99,9 @@ int nfs_libmain(const char *ganesha_conf)
 	now(&ServerBootTime);
 	ServerEpoch = (time_t) ServerBootTime.tv_sec;
 
+	if (ganesha_conf)
+		config_path = gsh_strdup(ganesha_conf);
+
 	/* get host name */
 	if (gethostname(localmachine, sizeof(localmachine)) != 0) {
 		fprintf(stderr, "Could not get local host name, exiting...\n");

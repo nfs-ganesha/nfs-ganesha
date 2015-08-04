@@ -68,8 +68,6 @@ add_library(MainServices STATIC ${MainServices_STAT_SRCS})
 # FSAL core sources
 # fsal_manager and fsal_destroyer are the only objects referenced by the
 # core server all the rest are for the common support of fsal plugins.
-# we put them here in the core rather than in a lib so that they are always
-# present and available for runtime linkage.
 
 set(fsal_CORE_SRCS
    ../FSAL/fsal_convert.c
@@ -84,6 +82,7 @@ set(fsal_CORE_SRCS
    ../FSAL_UP/fsal_up_top.c
    ../FSAL_UP/fsal_up_async.c
 )
+add_library(FsalCore STATIC ${fsal_CORE_SRCS})
 
 ########### next target ###############
 

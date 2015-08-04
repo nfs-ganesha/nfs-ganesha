@@ -21,13 +21,16 @@ set_target_properties(test_example PROPERTIES COMPILE_FLAGS
 # Test using ganesha internals
 set(test_ci_hash_dist1_SRCS
   test_ci_hash_dist1.cc
-)
-add_executable(test_ci_hash_dist1 EXCLUDE_FROM_ALL
+  )
+
+message( STATUS "fsal_CORE_SRCS: ${fsal_CORE_SRCS}" )
+
+add_executable(test_ci_hash_dist1
   ${test_ci_hash_dist1_SRCS})
+
 target_link_libraries(test_ci_hash_dist1
-  ${CMAKE_THREAD_LIBS_INIT}
-  ${fsal_CORE_SRCS}
   MainServices
+  FsalCore
   ${PROTOCOLS}
   ${GANESHA_CORE}
   config_parsing
