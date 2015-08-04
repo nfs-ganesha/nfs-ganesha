@@ -385,8 +385,8 @@ fsal_status_t open2_by_name(struct fsal_obj_handle *in_obj,
 	if (FSAL_IS_ERROR(status)) {
 		LogFullDebug(COMPONENT_FSAL,
 			     "FSAL %d %s returned %s",
-			     (int) op_ctx->export->export_id,
-			     op_ctx->export->fullpath,
+			     (int) op_ctx->ctx_export->export_id,
+			     op_ctx->ctx_export->fullpath,
 			     fsal_err_txt(status));
 		return status;
 	}
@@ -704,7 +704,7 @@ fsal_status_t fsal_lookupp(struct fsal_obj_handle *obj,
 		fsal_status_t status = {0, 0};
 		struct fsal_obj_handle *root_obj = NULL;
 
-		status = nfs_export_get_root_entry(op_ctx->export, &root_obj);
+		status = nfs_export_get_root_entry(op_ctx->ctx_export, &root_obj);
 		if (FSAL_IS_ERROR(status))
 			return status;
 
@@ -1863,7 +1863,7 @@ fsal_status_t fsal_statfs(struct fsal_obj_handle *obj,
 	fsal_status_t fsal_status;
 	struct fsal_export *export;
 
-	export = op_ctx->export->fsal_export;
+	export = op_ctx->ctx_export->fsal_export;
 	/* Get FSAL to get dynamic info */
 	fsal_status =
 	    export->exp_ops.get_fs_dynamic_info(export, obj, dynamicinfo);

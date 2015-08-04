@@ -632,7 +632,7 @@ static int32_t layoutrec_completion(rpc_call_t *call, rpc_call_hook hook,
 
 		root_op_context.req_ctx.clientid =
 			&owner->so_owner.so_nfs4_owner.so_clientid;
-		root_op_context.req_ctx.export = export;
+		root_op_context.req_ctx.ctx_export = export;
 		root_op_context.req_ctx.fsal_export = export->fsal_export;
 
 		nfs4_return_one_state(obj,
@@ -705,7 +705,7 @@ static void return_one_async(void *arg)
 
 		root_op_context.req_ctx.clientid =
 			&owner->so_owner.so_nfs4_owner.so_clientid;
-		root_op_context.req_ctx.export = export;
+		root_op_context.req_ctx.ctx_export = export;
 		root_op_context.req_ctx.fsal_export = export->fsal_export;
 
 		nfs4_return_one_state(obj, LAYOUTRETURN4_FILE,
@@ -769,7 +769,7 @@ static void layoutrecall_one_call(void *arg)
 
 		root_op_context.req_ctx.clientid =
 		    &owner->so_owner.so_nfs4_owner.so_clientid;
-		root_op_context.req_ctx.export = export;
+		root_op_context.req_ctx.ctx_export = export;
 		root_op_context.req_ctx.fsal_export = export->fsal_export;
 
 		code = nfs_rpc_v41_single(cb_data->client, &cb_data->arg,

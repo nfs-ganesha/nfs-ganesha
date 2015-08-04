@@ -479,7 +479,8 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 
 	if (nentry->attrs.expire_time_attr == 0) {
 		nentry->attrs.expire_time_attr =
-		    atomic_fetch_uint32_t(&op_ctx->export->expire_time_attr);
+		    atomic_fetch_uint32_t(
+			    &op_ctx->ctx_export->expire_time_attr);
 	}
 
 	/* Validate the attributes we just set. */

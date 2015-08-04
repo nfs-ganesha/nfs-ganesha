@@ -850,7 +850,7 @@ fsal_status_t find_fd(int *fd,
 	int rc, posix_flags;
 
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
-	vfs_fs = myself->obj_handle.fs->private;
+	vfs_fs = myself->obj_handle.fs->private_data;
 
 	fsal2posix_openflags(openflags, &posix_flags);
 

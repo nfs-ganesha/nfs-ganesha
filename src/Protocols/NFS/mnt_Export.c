@@ -63,7 +63,7 @@ static bool proc_export(struct gsh_export *export, void *arg)
 	/* If client does not have any access to the export,
 	 * don't add it to the list
 	 */
-	op_ctx->export = export;
+	op_ctx->ctx_export = export;
 	op_ctx->fsal_export = export->fsal_export;
 	export_check_access();
 	if (!(op_ctx->export_perms->options & EXPORT_OPTION_ACCESS_MASK)) {
@@ -85,7 +85,7 @@ static bool proc_export(struct gsh_export *export, void *arg)
 	new_expnode = gsh_calloc(1, sizeof(struct exportnode));
 	new_expnode->ex_dir = gsh_strdup(export->fullpath);
 
-	PTHREAD_RWLOCK_rdlock(&op_ctx->export->lock);
+	PTHREAD_RWLOCK_rdlock(&op_ctx->ctx_export->lock);
 
 	glist_for_each(glist_item, &export->clients) {
 		client =
@@ -150,7 +150,7 @@ static bool proc_export(struct gsh_export *export, void *arg)
 		group->gr_name = gsh_strdup(grp_name);
 	}
 
-	PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
+	PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->lock);
 
 	if (state->head == NULL)
 		state->head = new_expnode;
@@ -186,7 +186,7 @@ int mnt_Export(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 			"Processing exports failed. error = \"%s\" (%d)",
 			strerror(proc_state.retval), proc_state.retval);
 	}
-	op_ctx->export = NULL;
+	op_ctx->ctx_export = NULL;
 	op_ctx->fsal_export = NULL;
 	res->res_mntexport = proc_state.head;
 	return NFS_REQ_OK;

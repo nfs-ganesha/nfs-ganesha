@@ -531,12 +531,14 @@ typedef enum {
 
 static inline fsal_accessflags_t FSAL_MODE_MASK(fsal_accessflags_t access)
 {
-	return access & FSAL_MODE_BIT_MASK;
+	unsigned long acc = access & FSAL_MODE_BIT_MASK;
+	return (fsal_accessflags_t) acc;
 }
 
 static inline fsal_accessflags_t FSAL_ACE4_MASK(fsal_accessflags_t access)
 {
-	return access & FSAL_ACE4_BIT_MASK;
+	unsigned long acc = access & FSAL_ACE4_BIT_MASK;
+	return (fsal_accessflags_t) acc;
 }
 
 #define FSAL_MODE_MASK_SET(access) (access | FSAL_MODE_MASK_FLAG)

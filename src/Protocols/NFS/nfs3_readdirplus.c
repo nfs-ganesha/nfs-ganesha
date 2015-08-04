@@ -457,7 +457,7 @@ fsal_errors_t nfs3_readdirplus_callback(void *opaque,
 		if (!nfs3_FSALToFhandle(true,
 					&ep3->name_handle.post_op_fh3_u.handle,
 					obj,
-					op_ctx->export)) {
+					op_ctx->ctx_export)) {
 			tracker->error = NFS3ERR_SERVERFAULT;
 			gsh_free(ep3->name);
 			cb_parms->in_result = false;

@@ -91,18 +91,18 @@ int _9p_attach(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	snprintf(exppath, MAXPATHLEN, "%.*s", (int)*aname_len, aname_str);
 
 	if (exppath[0] == '/')
-		op_ctx->export = get_gsh_export_by_path(exppath, false);
+		op_ctx->ctx_export = get_gsh_export_by_path(exppath, false);
 	else
-		op_ctx->export = get_gsh_export_by_tag(exppath);
+		op_ctx->ctx_export = get_gsh_export_by_tag(exppath);
 
 	/* Did we find something ? */
-	if (op_ctx->export == NULL) {
+	if (op_ctx->ctx_export == NULL) {
 		err = ENOENT;
 		goto errout;
 	}
 
 	/* Fill in more of the op_ctx */
-	op_ctx->fsal_export = op_ctx->export->fsal_export;
+	op_ctx->fsal_export = op_ctx->ctx_export->fsal_export;
 	op_ctx->caller_addr = &req9p->pconn->addrpeer;
 
 	/* We store the export_perms in pconn so we only have to evaluate
@@ -135,7 +135,7 @@ int _9p_attach(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	pfid = gsh_calloc(1, sizeof(struct _9p_fid));
 
 	/* Copy the export into the pfid with reference. */
-	pfid->export = op_ctx->export;
+	pfid->export = op_ctx->ctx_export;
 	get_gsh_export_ref(pfid->export);
 
 	pfid->fid = *fid;
@@ -164,12 +164,13 @@ int _9p_attach(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	}
 
 	if (exppath[0] != '/' ||
-	    !strcmp(exppath, op_ctx->export->fullpath)) {
+	    !strcmp(exppath, op_ctx->ctx_export->fullpath)) {
 		/* Check if root object is correctly set, fetch it, and take an
 		 * LRU reference.
 		 */
 		fsal_status =
-		    nfs_export_get_root_entry(op_ctx->export, &pfid->pentry);
+		    nfs_export_get_root_entry(op_ctx->ctx_export,
+					    &pfid->pentry);
 
 		if (FSAL_IS_ERROR(fsal_status)) {
 			err = _9p_tools_errno(fsal_status);

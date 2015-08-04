@@ -387,7 +387,7 @@ int get_nlm_state(enum state_type state_type,
 
 	key.state_type = state_type;
 	key.state_owner = state_owner;
-	key.state_export = op_ctx->export;
+	key.state_export = op_ctx->ctx_export;
 	key.state_seqid = nsm_state;
 	/* Temporarily use buffkey */
 	buffkey.addr = &key.state_obj.digest;
@@ -476,7 +476,7 @@ int get_nlm_state(enum state_type state_type,
 	/* Copy everything over */
 	memcpy(&state->state_obj, &key.state_obj, sizeof(state->state_obj));
 	state->state_owner = state_owner;
-	state->state_export = op_ctx->export;
+	state->state_export = op_ctx->ctx_export;
 	state->state_seqid = nsm_state;
 
 	assert(pthread_mutex_init(&state->state_mutex, NULL) == 0);

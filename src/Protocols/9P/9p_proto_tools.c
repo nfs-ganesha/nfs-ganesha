@@ -120,8 +120,8 @@ void _9p_init_opctx(struct _9p_fid *pfid, struct _9p_request_data *req9p)
 {
 	if (pfid->export != NULL) {
 		/* export affectation (require refcount handling). */
-		if (op_ctx->export != pfid->export) {
-			if (op_ctx->export != NULL) {
+		if (op_ctx->ctx_export != pfid->export) {
+			if (op_ctx->ctx_export != NULL) {
 				LogCrit(COMPONENT_9P,
 					"Op_ctx was already initialized, or was not allocated/cleaned up properly.");
 				/* This tells there's an error in the code.
@@ -135,8 +135,8 @@ void _9p_init_opctx(struct _9p_fid *pfid, struct _9p_request_data *req9p)
 			}
 
 			get_gsh_export_ref(pfid->export);
-			op_ctx->export = pfid->export;
-			op_ctx->fsal_export = op_ctx->export->fsal_export;
+			op_ctx->ctx_export = pfid->export;
+			op_ctx->fsal_export = op_ctx->ctx_export->fsal_export;
 		}
 	}
 
@@ -148,9 +148,9 @@ void _9p_init_opctx(struct _9p_fid *pfid, struct _9p_request_data *req9p)
 
 void _9p_release_opctx(void)
 {
-	if (op_ctx->export != NULL) {
-		put_gsh_export(op_ctx->export);
-		op_ctx->export = NULL;
+	if (op_ctx->ctx_export != NULL) {
+		put_gsh_export(op_ctx->ctx_export);
+		op_ctx->ctx_export = NULL;
 	}
 
 	if (op_ctx->creds != NULL) {

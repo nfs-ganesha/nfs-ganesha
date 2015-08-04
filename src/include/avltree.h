@@ -87,7 +87,7 @@ struct bstree_node *bstree_lookup(const struct bstree_node *key,
 struct bstree_node *bstree_insert(struct bstree_node *node,
 				  struct bstree *tree);
 void bstree_remove(struct bstree_node *node, struct bstree *tree);
-void bstree_replace(struct bstree_node *old, struct bstree_node *new,
+void bstree_replace(struct bstree_node *old, struct bstree_node *newe,
 		    struct bstree *tree);
 int bstree_init(struct bstree *tree, bstree_cmp_fn_t cmp, unsigned long flags);
 
@@ -136,7 +136,7 @@ struct rbtree_node *rbtree_lookup(const struct rbtree_node *key,
 struct rbtree_node *rbtree_insert(struct rbtree_node *node,
 				  struct rbtree *tree);
 void rbtree_remove(struct rbtree_node *node, struct rbtree *tree);
-void rbtree_replace(struct rbtree_node *old, struct rbtree_node *new,
+void rbtree_replace(struct rbtree_node *old, struct rbtree_node *newe,
 		    struct rbtree *tree);
 int rbtree_init(struct rbtree *tree, rbtree_cmp_fn_t cmp, unsigned long flags);
 
@@ -188,7 +188,7 @@ struct avltree_node *avltree_sup(const struct avltree_node *key,
 struct avltree_node *avltree_insert(struct avltree_node *node,
 				    struct avltree *tree);
 void avltree_remove(struct avltree_node *node, struct avltree *tree);
-void avltree_replace(struct avltree_node *old, struct avltree_node *new,
+void avltree_replace(struct avltree_node *old, struct avltree_node *newe,
 		     struct avltree *tree);
 int avltree_init(struct avltree *tree, avltree_cmp_fn_t cmp,
 		 unsigned long flags);
@@ -232,7 +232,7 @@ struct splaytree_node *splaytree_lookup(const struct splaytree_node *key,
 struct splaytree_node *splaytree_insert(struct splaytree_node *node,
 					struct splaytree *tree);
 void splaytree_remove(struct splaytree_node *node, struct splaytree *tree);
-void splaytree_replace(struct splaytree_node *old, struct splaytree_node *new,
+void splaytree_replace(struct splaytree_node *old, struct splaytree_node *newe,
 		       struct splaytree *tree);
 int splaytree_init(struct splaytree *tree, splaytree_cmp_fn_t cmp,
 		   unsigned long flags);

@@ -67,7 +67,7 @@ GPFSFSAL_rename(struct fsal_obj_handle *old_hdl, const char *old_name,
 	    container_of(old_hdl, struct gpfs_fsal_obj_handle, obj_handle);
 	new_gpfs_hdl =
 	    container_of(new_hdl, struct gpfs_fsal_obj_handle, obj_handle);
-	gpfs_fs = old_hdl->fs->private;
+	gpfs_fs = old_hdl->fs->private_data;
 
 	/* build file paths */
 	status = fsal_internal_stat_name(gpfs_fs->root_fd, old_gpfs_hdl->handle,

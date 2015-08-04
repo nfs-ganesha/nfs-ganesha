@@ -105,7 +105,7 @@ struct config_error_type {
 	bool parse:1;		/*< parser rules */
 	bool init:1;		/*< block initialization */
 	bool fsal:1;		/*< fsal load failure */
-	bool export:1;		/*< export create failure */
+	bool export_:1;		/*< export create failure */
 	bool resource:1;	/*< system resource */
 	bool unique:1;		/*< unique block/param */
 	bool invalid:1;		/*< invalid param value */
@@ -142,7 +142,7 @@ static inline bool config_error_is_fatal(struct config_error_type *err_type)
 static inline bool config_error_is_crit(struct config_error_type *err_type)
 {
 	return config_error_is_fatal(err_type) || err_type->internal ||
-		err_type->invalid || err_type->export || err_type->missing;
+		err_type->invalid || err_type->export_ || err_type->missing;
 }
 
 /**

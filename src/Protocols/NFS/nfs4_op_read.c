@@ -213,9 +213,10 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 	bool anonymous_started = false;
 	state_owner_t *owner = NULL;
 	bool bypass = false;
-	uint64_t MaxRead = atomic_fetch_uint64_t(&op_ctx->export->MaxRead);
+	uint64_t MaxRead = atomic_fetch_uint64_t(&op_ctx->ctx_export->MaxRead);
 	uint64_t MaxOffsetRead =
-			atomic_fetch_uint64_t(&op_ctx->export->MaxOffsetRead);
+			atomic_fetch_uint64_t(
+				&op_ctx->ctx_export->MaxOffsetRead);
 
 	/* Say we are managing NFS4_OP_READ */
 	resp->resop = NFS4_OP_READ;
@@ -414,8 +415,7 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 				 "A client tryed to violate max file size %"
 				 PRIu64 " for exportid #%hu",
 				 MaxOffsetRead,
-				 op_ctx->export->export_id);
-
+				 op_ctx->ctx_export->export_id);
 			res_READ4->status = NFS4ERR_FBIG;
 			goto done;
 		}

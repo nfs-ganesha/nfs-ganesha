@@ -347,7 +347,7 @@ fsal_status_t pseudofs_create_export(struct fsal_module *fsal_hdl,
 	myself->export.fsal = fsal_hdl;
 
 	/* Save the export path. */
-	myself->export_path = gsh_strdup(op_ctx->export->fullpath);
+	myself->export_path = gsh_strdup(op_ctx->ctx_export->fullpath);
 	op_ctx->fsal_export = &myself->export;
 
 	/* Stack MDCACHE on top */

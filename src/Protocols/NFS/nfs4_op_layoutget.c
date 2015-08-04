@@ -417,7 +417,7 @@ int nfs4_op_layoutget(struct nfs_argop4 *op, compound_data_t *data,
 
 	arg.type = arg_LAYOUTGET4->loga_layout_type;
 	arg.minlength = arg_LAYOUTGET4->loga_minlength;
-	arg.export_id = op_ctx->export->export_id;
+	arg.export_id = op_ctx->ctx_export->export_id;
 	arg.maxcount = arg_LAYOUTGET4->loga_maxcount;
 
 	/* Guaranteed on the first call */

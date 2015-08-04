@@ -124,7 +124,7 @@ int nfs4_op_getdevicelist(struct nfs_argop4 *op, compound_data_t *data,
 
 	cb_opaque.count = 0;
 	cb_opaque.max = 32;
-	cb_opaque.swexport = nfs_htonl64(op_ctx->export->export_id);
+	cb_opaque.swexport = nfs_htonl64(op_ctx->ctx_export->export_id);
 
 	res_GETDEVICELIST4->GETDEVICELIST4res_u.gdlr_resok4.
 	     gdlr_deviceid_list.gdlr_deviceid_list_val =

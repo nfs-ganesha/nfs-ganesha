@@ -282,7 +282,7 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op, compound_data_t *data,
 			/* Set up the root op context for this state */
 			root_op_context.req_ctx.clientid =
 			    &clientid_owner->so_owner.so_nfs4_owner.so_clientid;
-			root_op_context.req_ctx.export = export;
+			root_op_context.req_ctx.ctx_export = export;
 			root_op_context.req_ctx.fsal_export =
 							export->fsal_export;
 

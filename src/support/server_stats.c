@@ -987,10 +987,10 @@ void server_stats_9p_done(u8 opc, struct _9p_request_data *req9p)
 		record_op(sp->opcodes[opc], 0, 0, true, false);
 	}
 
-	if (op_ctx->export) {
+	if (op_ctx->ctx_export) {
 		struct export_stats *exp_st;
 
-		export = op_ctx->export;
+		export = op_ctx->ctx_export;
 		exp_st = container_of(export, struct export_stats, export);
 		sp = get_9p(&exp_st->st, &export->lock);
 		if (sp->opcodes[opc] == NULL)
@@ -1039,15 +1039,16 @@ void server_stats_nfs_done(request_data_t *reqdata, int rc, bool dup)
 			     rc == NFS_REQ_OK, dup, true);
 		(void)atomic_store_uint64_t(&client->last_update, stop_time);
 	}
-	if (!dup && op_ctx->export != NULL) {
+	if (!dup && op_ctx->ctx_export != NULL) {
 		struct export_stats *exp_st;
 
 		exp_st =
-		    container_of(op_ctx->export, struct export_stats, export);
-		record_stats(&exp_st->st, &op_ctx->export->lock, reqdata,
+		    container_of(op_ctx->ctx_export, struct export_stats,
+			    export);
+		record_stats(&exp_st->st, &op_ctx->ctx_export->lock, reqdata,
 			     stop_time - op_ctx->start_time,
 			     op_ctx->queue_wait, rc == NFS_REQ_OK, dup, false);
-		(void)atomic_store_uint64_t(&op_ctx->export->last_update,
+		(void)atomic_store_uint64_t(&op_ctx->ctx_export->last_update,
 					    stop_time);
 	}
 }
@@ -1094,15 +1095,17 @@ void server_stats_nfsv4_op_done(int proto_op,
 		record_op(&global_st.nfsv42.compounds, stop_time - start_time,
 			  op_ctx->queue_wait, status == NFS4_OK, false);
 
-	if (op_ctx->export != NULL) {
+	if (op_ctx->ctx_export != NULL) {
 		struct export_stats *exp_st;
 
 		exp_st =
-		    container_of(op_ctx->export, struct export_stats, export);
-		record_nfsv4_op(&exp_st->st, &op_ctx->export->lock, proto_op,
+		    container_of(op_ctx->ctx_export, struct export_stats,
+			    export);
+		record_nfsv4_op(&exp_st->st, &op_ctx->ctx_export->lock,
+				proto_op,
 				op_ctx->nfs_minorvers, stop_time - start_time,
 				op_ctx->queue_wait, status);
-		(void)atomic_store_uint64_t(&op_ctx->export->last_update,
+		(void)atomic_store_uint64_t(&op_ctx->ctx_export->last_update,
 					    stop_time);
 	}
 }
@@ -1131,16 +1134,17 @@ void server_stats_compound_done(int num_ops, int status)
 				op_ctx->queue_wait, status == NFS4_OK);
 		(void)atomic_store_uint64_t(&client->last_update, stop_time);
 	}
-	if (op_ctx->export != NULL) {
+	if (op_ctx->ctx_export != NULL) {
 		struct export_stats *exp_st;
 
 		exp_st =
-		    container_of(op_ctx->export, struct export_stats, export);
-		record_compound(&exp_st->st, &op_ctx->export->lock,
+		    container_of(op_ctx->ctx_export, struct export_stats,
+			    export);
+		record_compound(&exp_st->st, &op_ctx->ctx_export->lock,
 				op_ctx->nfs_minorvers, num_ops,
 				stop_time - op_ctx->start_time,
 				op_ctx->queue_wait, status == NFS4_OK);
-		(void)atomic_store_uint64_t(&op_ctx->export->last_update,
+		(void)atomic_store_uint64_t(&op_ctx->ctx_export->last_update,
 					    stop_time);
 	}
 }
@@ -1164,12 +1168,13 @@ void server_stats_io_done(size_t requested,
 				requested, transferred, success,
 				is_write);
 	}
-	if (op_ctx->export != NULL) {
+	if (op_ctx->ctx_export != NULL) {
 		struct export_stats *exp_st;
 
 		exp_st =
-		    container_of(op_ctx->export, struct export_stats, export);
-		record_io_stats(&exp_st->st, &op_ctx->export->lock,
+		    container_of(op_ctx->ctx_export, struct export_stats,
+			    export);
+		record_io_stats(&exp_st->st, &op_ctx->ctx_export->lock,
 				requested, transferred, success, is_write);
 	}
 }

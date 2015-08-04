@@ -103,7 +103,7 @@ state_status_t state_add_impl(struct fsal_obj_handle *obj,
 	}
 
 	/* Attempt to get a reference to the export. */
-	if (!export_ready(op_ctx->export)) {
+	if (!export_ready(op_ctx->ctx_export)) {
 		/* If we could not get a reference, return stale.
 		 * Release attr_lock
 		 */
@@ -112,7 +112,7 @@ state_status_t state_add_impl(struct fsal_obj_handle *obj,
 		goto errout;
 	}
 
-	get_gsh_export_ref(op_ctx->export);
+	get_gsh_export_ref(op_ctx->ctx_export);
 
 	got_export_ref = true;
 
@@ -160,7 +160,7 @@ state_status_t state_add_impl(struct fsal_obj_handle *obj,
 	 * until we are completely done since we hold the state_lock.  Might as
 	 * well grab export now also...
 	 */
-	pnew_state->state_export = op_ctx->export;
+	pnew_state->state_export = op_ctx->ctx_export;
 	pnew_state->state_owner = owner_input;
 	fh_desc.addr = &pnew_state->state_obj.digest;
 	fh_desc.len = sizeof(pnew_state->state_obj.digest);
@@ -192,12 +192,12 @@ state_status_t state_add_impl(struct fsal_obj_handle *obj,
 	 */
 
 	/* Attach this to an export */
-	PTHREAD_RWLOCK_wrlock(&op_ctx->export->lock);
+	PTHREAD_RWLOCK_wrlock(&op_ctx->ctx_export->lock);
 	PTHREAD_MUTEX_lock(&pnew_state->state_mutex);
-	glist_add_tail(&op_ctx->export->exp_state_list,
-		       &pnew_state->state_export_list);
+	glist_add_tail(&op_ctx->ctx_export->exp_state_list,
+		&pnew_state->state_export_list);
 	PTHREAD_MUTEX_unlock(&pnew_state->state_mutex);
-	PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
+	PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->lock);
 
 	/* Add state to list for file */
 	PTHREAD_MUTEX_lock(&pnew_state->state_mutex);
@@ -255,7 +255,7 @@ errout:
 	}
 
 	if (got_export_ref)
-		put_gsh_export(op_ctx->export);
+		put_gsh_export(op_ctx->ctx_export);
 
 	*state = NULL;
 
@@ -784,7 +784,7 @@ void release_openstate(state_owner_t *owner)
 		PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
 
 		if (state->state_type == STATE_TYPE_SHARE) {
-			op_ctx->export = export;
+			op_ctx->ctx_export = export;
 			op_ctx->fsal_export = export->fsal_export;
 
 			state_status = state_share_remove(obj, owner, state);
@@ -928,10 +928,11 @@ void state_export_release_nfs4_state(void)
 
  again:
 	first = NULL;
-	PTHREAD_RWLOCK_wrlock(&op_ctx->export->lock);
+	PTHREAD_RWLOCK_wrlock(&op_ctx->ctx_export->lock);
 	hold_export_lock = true;
 
-	glist_for_each_safe(glist, glistn, &op_ctx->export->exp_state_list) {
+	glist_for_each_safe(glist, glistn,
+			&op_ctx->ctx_export->exp_state_list) {
 		struct fsal_obj_handle *obj = NULL;
 		state_owner_t *owner = NULL;
 		bool deleted = false;
@@ -959,7 +960,7 @@ void state_export_release_nfs4_state(void)
 		 * we restart the loop.
 		 */
 		glist_del(&state->state_export_list);
-		glist_add_tail(&op_ctx->export->exp_state_list,
+		glist_add_tail(&op_ctx->ctx_export->exp_state_list,
 			       &state->state_export_list);
 
 		if (state->state_type != STATE_TYPE_LAYOUT) {
@@ -978,7 +979,7 @@ void state_export_release_nfs4_state(void)
 
 		inc_state_t_ref(state);
 
-		PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
+		PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->lock);
 		hold_export_lock = false;
 
 		PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
@@ -1022,11 +1023,11 @@ void state_export_release_nfs4_state(void)
 		state_owner_t *owner = NULL;
 
 		if (!hold_export_lock) {
-			PTHREAD_RWLOCK_wrlock(&op_ctx->export->lock);
+			PTHREAD_RWLOCK_wrlock(&op_ctx->ctx_export->lock);
 			hold_export_lock = true;
 		}
 
-		state = glist_first_entry(&op_ctx->export->exp_state_list,
+		state = glist_first_entry(&op_ctx->ctx_export->exp_state_list,
 					  state_t,
 					  state_export_list);
 
@@ -1037,7 +1038,7 @@ void state_export_release_nfs4_state(void)
 		 * occurs or the state is going stale.
 		 */
 		glist_del(&state->state_export_list);
-		glist_add_tail(&op_ctx->export->exp_state_list,
+		glist_add_tail(&op_ctx->ctx_export->exp_state_list,
 			       &state->state_export_list);
 
 		if (!get_state_obj_export_owner_refs(state, &obj, NULL,
@@ -1050,7 +1051,7 @@ void state_export_release_nfs4_state(void)
 
 		inc_state_t_ref(state);
 
-		PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
+		PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->lock);
 		hold_export_lock = false;
 
 		PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
@@ -1090,12 +1091,12 @@ void state_export_release_nfs4_state(void)
 	}
 
 	if (hold_export_lock)
-		PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
+		PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->lock);
 
 	if (errcnt == STATE_ERR_MAX) {
 		LogFatal(COMPONENT_STATE,
 			 "Could not complete cleanup of layouts for export %s",
-			 op_ctx->export->fullpath);
+			 op_ctx->ctx_export->fullpath);
 	}
 }
 

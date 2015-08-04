@@ -93,20 +93,22 @@ int nfs3_fsinfo(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	FSINFO3resok * const FSINFO_FIELD =
 		&res->res_fsinfo3.FSINFO3res_u.resok;
 
-	FSINFO_FIELD->rtmax = atomic_fetch_uint64_t(&op_ctx->export->MaxRead);
-	FSINFO_FIELD->rtpref = atomic_fetch_uint64_t(&op_ctx->export->PrefRead);
+	FSINFO_FIELD->rtmax =
+		atomic_fetch_uint64_t(&op_ctx->ctx_export->MaxRead);
+	FSINFO_FIELD->rtpref =
+		atomic_fetch_uint64_t(&op_ctx->ctx_export->PrefRead);
 	/* This field is generally unused, it will be removed in V4 */
 	FSINFO_FIELD->rtmult = DEV_BSIZE;
 
-	FSINFO_FIELD->wtmax = atomic_fetch_uint64_t(&op_ctx->export->MaxWrite);
+	FSINFO_FIELD->wtmax =
+		atomic_fetch_uint64_t(&op_ctx->ctx_export->MaxWrite);
 	FSINFO_FIELD->wtpref =
-			atomic_fetch_uint64_t(&op_ctx->export->PrefWrite);
+		atomic_fetch_uint64_t(&op_ctx->ctx_export->PrefWrite);
 	/* This field is generally unused, it will be removed in V4 */
 	FSINFO_FIELD->wtmult = DEV_BSIZE;
 
 	FSINFO_FIELD->dtpref =
-			atomic_fetch_uint64_t(&op_ctx->export->PrefReaddir);
-
+		atomic_fetch_uint64_t(&op_ctx->ctx_export->PrefReaddir);
 	FSINFO_FIELD->maxfilesize =
 	    op_ctx->fsal_export->exp_ops.fs_maxfilesize(op_ctx->fsal_export);
 	FSINFO_FIELD->time_delta.tv_sec = 1;

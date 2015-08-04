@@ -121,9 +121,10 @@ GPFSFSAL_getattrs(struct fsal_export *export, struct gpfs_filesystem *gpfs_fs,
 	buffxstat.fsal_fsid.major = 0;
 	buffxstat.fsal_fsid.minor = 0;
 
-	expire = atomic_fetch_uint32_t(&op_ctx->export->expire_time_attr) > 0;
-	gpfs_export = container_of(export, struct gpfs_fsal_export, export);
+	expire = atomic_fetch_uint32_t(
+		&op_ctx->ctx_export->expire_time_attr) > 0;
 
+	gpfs_export = container_of(export, struct gpfs_fsal_export, export);
 	st = fsal_get_xstat_by_handle(gpfs_fs->root_fd, gpfs_fh,
 				      &buffxstat, &expire_time_attr, expire,
 				      (obj_attr->mask & ATTR_ACL) != 0);
@@ -231,7 +232,7 @@ GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
 	myself = container_of(dir_hdl, struct gpfs_fsal_obj_handle, obj_handle);
-	gpfs_fs = dir_hdl->fs->private;
+	gpfs_fs = dir_hdl->fs->private_data;
 	gpfs_export = container_of(ro_ctx->fsal_export,
 				   struct gpfs_fsal_export, export);
 	use_acl = gpfs_export->use_acl;

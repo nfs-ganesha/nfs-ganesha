@@ -80,7 +80,7 @@ struct fsal_obj_handle *nfs3_FhandleToCache(nfs_fh3 *fh3,
 	/* Cast the fh as a non opaque structure */
 	v3_handle = (file_handle_v3_t *) (fh3->data.data_val);
 
-	assert(ntohs(v3_handle->exportid) == op_ctx->export->export_id);
+	assert(ntohs(v3_handle->exportid) == op_ctx->ctx_export->export_id);
 
 	export = op_ctx->fsal_export;
 

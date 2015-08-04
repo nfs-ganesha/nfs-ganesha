@@ -537,8 +537,8 @@ nfsstat4 nfs4_export_check_access(struct svc_req *req)
 	     EXPORT_OPTION_ACCESS_MASK) == 0) {
 		LogInfoAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
 			"Access not allowed on Export_Id %d %s for client %s",
-			op_ctx->export->export_id,
-			op_ctx->export->fullpath,
+			op_ctx->ctx_export->export_id,
+			op_ctx->ctx_export->fullpath,
 			op_ctx->client
 				? op_ctx->client->hostaddr_str
 				: "unknown client");
@@ -549,8 +549,8 @@ nfsstat4 nfs4_export_check_access(struct svc_req *req)
 	if ((op_ctx->export_perms->options & EXPORT_OPTION_NFSV4) == 0) {
 		LogInfoAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
 			"NFS4 not allowed on Export_Id %d %s for client %s",
-			op_ctx->export->export_id,
-			op_ctx->export->fullpath,
+			op_ctx->ctx_export->export_id,
+			op_ctx->ctx_export->fullpath,
 			op_ctx->client
 				? op_ctx->client->hostaddr_str
 				: "unknown client");
@@ -568,8 +568,8 @@ nfsstat4 nfs4_export_check_access(struct svc_req *req)
 		LogInfoAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
 			"NFS4 over %s not allowed on Export_Id %d %s for client %s",
 			xprt_type_to_str(xprt_type),
-			op_ctx->export->export_id,
-			op_ctx->export->fullpath,
+			op_ctx->ctx_export->export_id,
+			op_ctx->ctx_export->fullpath,
 			op_ctx->client
 				? op_ctx->client->hostaddr_str
 				: "unknown client");
@@ -582,8 +582,8 @@ nfsstat4 nfs4_export_check_access(struct svc_req *req)
 	    && (port >= IPPORT_RESERVED)) {
 		LogInfoAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
 			"Non-reserved Port %d is not allowed on Export_Id %d %s for client %s",
-			port, op_ctx->export->export_id,
-			op_ctx->export->fullpath,
+			port, op_ctx->ctx_export->export_id,
+			op_ctx->ctx_export->fullpath,
 			op_ctx->client
 				? op_ctx->client->hostaddr_str
 				: "unknown client");
@@ -594,8 +594,8 @@ nfsstat4 nfs4_export_check_access(struct svc_req *req)
 	if (export_check_security(req) == false) {
 		LogInfoAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
 			"NFS4 auth not allowed on Export_Id %d %s for client %s",
-			op_ctx->export->export_id,
-			op_ctx->export->fullpath,
+			op_ctx->ctx_export->export_id,
+			op_ctx->ctx_export->fullpath,
 			op_ctx->client
 				? op_ctx->client->hostaddr_str
 				: "unknown client");

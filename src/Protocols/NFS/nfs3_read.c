@@ -95,9 +95,9 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	bool eof_met = false;
 	int rc = NFS_REQ_OK;
 	bool sync = false;
-	uint64_t MaxRead = atomic_fetch_uint64_t(&op_ctx->export->MaxRead);
+	uint64_t MaxRead = atomic_fetch_uint64_t(&op_ctx->ctx_export->MaxRead);
 	uint64_t MaxOffsetRead =
-			atomic_fetch_uint64_t(&op_ctx->export->MaxOffsetRead);
+		atomic_fetch_uint64_t(&op_ctx->ctx_export->MaxOffsetRead);
 
 	if (isDebug(COMPONENT_NFSPROTO)) {
 		char str[LEN_FH_STR];
@@ -176,7 +176,7 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 				 "A client tryed to violate max file size %"
 				 PRIu64 " for exportid #%hu",
 				 MaxOffsetRead,
-				 op_ctx->export->export_id);
+				 op_ctx->ctx_export->export_id);
 
 			res->res_read3.status = NFS3ERR_FBIG;
 

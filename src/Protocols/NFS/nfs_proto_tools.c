@@ -594,8 +594,8 @@ static fattr_xdr_result encode_fsid(XDR *xdr, struct xdr_attrs_args *args)
 
 	if (args->data != NULL &&
 	    op_ctx_export_has_option_set(EXPORT_OPTION_FSID_SET)) {
-		fsid.major = op_ctx->export->filesystem_id.major;
-		fsid.minor = op_ctx->export->filesystem_id.minor;
+		fsid.major = op_ctx->ctx_export->filesystem_id.major;
+		fsid.minor = op_ctx->ctx_export->filesystem_id.minor;
 	} else {
 		fsid.major = args->fsid.major;
 		fsid.minor = args->fsid.minor;
@@ -1390,7 +1390,7 @@ static fattr_xdr_result decode_maxname(XDR *xdr, struct xdr_attrs_args *args)
 
 static fattr_xdr_result encode_maxread(XDR *xdr, struct xdr_attrs_args *args)
 {
-	uint64_t MaxRead = atomic_fetch_uint64_t(&op_ctx->export->MaxRead);
+	uint64_t MaxRead = atomic_fetch_uint64_t(&op_ctx->ctx_export->MaxRead);
 
 	if (!inline_xdr_u_int64_t(xdr, &MaxRead))
 		return FATTR_XDR_FAILED;
@@ -1408,7 +1408,8 @@ static fattr_xdr_result decode_maxread(XDR *xdr, struct xdr_attrs_args *args)
 
 static fattr_xdr_result encode_maxwrite(XDR *xdr, struct xdr_attrs_args *args)
 {
-	uint64_t MaxWrite = atomic_fetch_uint64_t(&op_ctx->export->MaxWrite);
+	uint64_t MaxWrite =
+		atomic_fetch_uint64_t(&op_ctx->ctx_export->MaxWrite);
 
 	if (!inline_xdr_u_int64_t(xdr, &MaxWrite))
 		return FATTR_XDR_FAILED;
@@ -3273,14 +3274,14 @@ nfsstat4 file_To_Fattr(compound_data_t *data,
 	}
 
 	if (attribute_is_set(Bitmap, FATTR4_MOUNTED_ON_FILEID)) {
-		PTHREAD_RWLOCK_rdlock(&op_ctx->export->lock);
+		PTHREAD_RWLOCK_rdlock(&op_ctx->ctx_export->lock);
 
-		if (data->current_obj == op_ctx->export->exp_root_obj) {
+		if (data->current_obj == op_ctx->ctx_export->exp_root_obj) {
 			/* This is the root of the current export, find our
 			 * mounted_on_fileid and use that.
 			 */
 			args.mounted_on_fileid =
-					op_ctx->export->exp_mounted_on_file_id;
+				op_ctx->ctx_export->exp_mounted_on_file_id;
 		} else {
 			/* This is not the root of the current export, just
 			 * use fileid.
@@ -3288,7 +3289,7 @@ nfsstat4 file_To_Fattr(compound_data_t *data,
 			args.mounted_on_fileid = data->current_obj->fileid;
 		}
 
-		PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
+		PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->lock);
 	}
 
 	/* Fill in fileid and fsid into args */
@@ -3732,17 +3733,17 @@ void nfs3_FSALattr_To_Fattr(struct fsal_obj_handle *obj,
 		 * on-wire fsid.
 		 */
 		Fattr->fsid = (nfs3_uint64) squash_fsid(
-					&op_ctx->export->filesystem_id);
+					&op_ctx->ctx_export->filesystem_id);
 
 		LogFullDebug(COMPONENT_NFSPROTO,
 			     "Compressing export filesystem_id for NFS v3 from fsid major %#"
 			     PRIX64 " (%" PRIu64 "), minor %#"
 			     PRIX64 " (%" PRIu64 ") to nfs3_fsid = %#" PRIX64
 			     " (%" PRIu64 ")",
-			     op_ctx->export->filesystem_id.major,
-			     op_ctx->export->filesystem_id.major,
-			     op_ctx->export->filesystem_id.minor,
-			     op_ctx->export->filesystem_id.minor,
+			     op_ctx->ctx_export->filesystem_id.major,
+			     op_ctx->ctx_export->filesystem_id.major,
+			     op_ctx->ctx_export->filesystem_id.minor,
+			     op_ctx->ctx_export->filesystem_id.minor,
 			     (uint64_t) Fattr->fsid, (uint64_t) Fattr->fsid);
 	}
 }

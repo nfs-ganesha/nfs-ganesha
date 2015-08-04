@@ -166,9 +166,10 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 	bool anonymous_started = false;
 	struct gsh_buffdesc verf_desc;
 	state_owner_t *owner = NULL;
-	uint64_t MaxWrite = atomic_fetch_uint64_t(&op_ctx->export->MaxWrite);
+	uint64_t MaxWrite =
+		atomic_fetch_uint64_t(&op_ctx->ctx_export->MaxWrite);
 	uint64_t MaxOffsetWrite =
-			atomic_fetch_uint64_t(&op_ctx->export->MaxOffsetWrite);
+		atomic_fetch_uint64_t(&op_ctx->ctx_export->MaxOffsetWrite);
 
 	/* Lock are not supported */
 	resp->resop = NFS4_OP_WRITE;
@@ -194,7 +195,7 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 	   allows inode creation or not */
 	fsal_status = op_ctx->fsal_export->exp_ops.check_quota(
 						op_ctx->fsal_export,
-						op_ctx->export->fullpath,
+						op_ctx->ctx_export->fullpath,
 						FSAL_QUOTA_INODES);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
@@ -345,8 +346,7 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 				 "A client tryed to violate max file size %"
 				 PRIu64 " for exportid #%hu",
 				 MaxOffsetWrite,
-				 op_ctx->export->export_id);
-
+				 op_ctx->ctx_export->export_id);
 			res_WRITE4->status = NFS4ERR_FBIG;
 			goto done;
 		}

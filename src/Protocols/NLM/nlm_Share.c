@@ -60,7 +60,7 @@ int nlm4_Share(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	 * responding to an NLM_*_MSG call, so we check here if the export is
 	 * NULL and if so, handle the response.
 	 */
-	if (op_ctx->export == NULL) {
+	if (op_ctx->ctx_export == NULL) {
 		res->res_nlm4share.stat = NLM4_STALE_FH;
 		LogInfo(COMPONENT_NLM, "INVALID HANDLE: nlm4_Share");
 		return NFS_REQ_OK;

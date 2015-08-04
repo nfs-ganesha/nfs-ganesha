@@ -183,7 +183,7 @@ typedef enum log_header_t {
  * @brief Prototype for special log facility logging functions
  */
 
-typedef int (lf_function_t) (log_header_t headers, void *private,
+typedef int (lf_function_t) (log_header_t headers, void *priv,
 			     log_levels_t level,
 			     struct display_buffer *buffer, char *compstr,
 			     char *message);

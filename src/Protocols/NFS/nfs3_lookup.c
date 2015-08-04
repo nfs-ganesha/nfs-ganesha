@@ -119,7 +119,7 @@ int nfs3_lookup(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 			    true,
 			    &res->res_lookup3.LOOKUP3res_u.resok.object,
 			    obj_file,
-			    op_ctx->export)) {
+			    op_ctx->ctx_export)) {
 			/* Build entry attributes */
 			nfs_SetPostOpAttr(obj_file,
 					  &res->res_lookup3.LOOKUP3res_u.

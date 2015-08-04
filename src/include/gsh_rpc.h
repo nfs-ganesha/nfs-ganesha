@@ -160,7 +160,8 @@ typedef struct gsh_xprt_private {
 static inline gsh_xprt_private_t *alloc_gsh_xprt_private(SVCXPRT *xprt,
 							 uint32_t flags)
 {
-	gsh_xprt_private_t *xu = gsh_malloc(sizeof(gsh_xprt_private_t));
+	gsh_xprt_private_t *xu = (gsh_xprt_private_t *)
+		gsh_malloc(sizeof(gsh_xprt_private_t));
 
 	xu->xprt = xprt;
 	xu->flags = flags;

@@ -122,7 +122,7 @@ static inline void init_root_op_context(struct root_op_context *ctx,
 	ctx->req_ctx.nfs_minorvers = nfs_minorvers;
 	ctx->req_ctx.req_type = req_type;
 
-	ctx->req_ctx.export = exp;
+	ctx->req_ctx.ctx_export = exp;
 	ctx->req_ctx.fsal_export = fsal_exp;
 	if (fsal_exp)
 		ctx->req_ctx.fsal_module = fsal_exp->fsal;

@@ -427,7 +427,6 @@ fsal_status_t nullfs_create_export(struct fsal_module *fsal_hdl,
 	}
 
 	myself = gsh_calloc(1, sizeof(struct nullfs_fsal_export));
-
 	expres = fsal_stack->m_ops.create_export(fsal_stack,
 						 nullfsal.subfsal.fsal_node,
 						 err_type,

@@ -127,7 +127,7 @@ char *err_type_str(struct config_error_type *err_type)
 		fputs("block init, ", fp);
 	if (err_type->fsal)
 		fputs("fsal load, ", fp);
-	if (err_type->export)
+	if (err_type->export_)
 		fputs("export create, ", fp);
 	if (err_type->resource)
 		fputs("resource alloc, ", fp);

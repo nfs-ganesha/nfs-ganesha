@@ -123,10 +123,10 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 
 		/* Save the compound data context */
 		save_export_perms = *op_ctx->export_perms;
-		saved_gsh_export = op_ctx->export;
+		saved_gsh_export = op_ctx->ctx_export;
 
-		op_ctx->export = junction_export;
-		op_ctx->fsal_export = op_ctx->export->fsal_export;
+		op_ctx->ctx_export = junction_export;
+		op_ctx->fsal_export = op_ctx->ctx_export->fsal_export;
 
 		/* Build credentials */
 		res_SECINFO4->status = nfs4_export_check_access(data->req);
@@ -139,8 +139,8 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 			 */
 			LogDebug(COMPONENT_EXPORT,
 				 "NFS4ERR_ACCESS Hiding Export_Id %d Path %s with NFS4ERR_NOENT",
-				 op_ctx->export->export_id,
-				 op_ctx->export->fullpath);
+				 op_ctx->ctx_export->export_id,
+				 op_ctx->ctx_export->fullpath);
 			res_SECINFO4->status = NFS4ERR_NOENT;
 			goto out;
 		}
@@ -148,14 +148,14 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 		/* Only other error is NFS4ERR_WRONGSEC which is actually
 		 * what we expect here. Finish crossing the junction.
 		 */
-
-		fsal_status = nfs_export_get_root_entry(op_ctx->export, &obj);
+		fsal_status = nfs_export_get_root_entry(op_ctx->ctx_export,
+							&obj);
 
 		if (FSAL_IS_ERROR(fsal_status)) {
 			LogMajor(COMPONENT_EXPORT,
 				 "PSEUDO FS JUNCTION TRAVERSAL: Failed to get root for %s, id=%d, status = %s",
-				 op_ctx->export->fullpath,
-				 op_ctx->export->export_id,
+				 op_ctx->ctx_export->fullpath,
+				 op_ctx->ctx_export->export_id,
 				 fsal_err_txt(fsal_status));
 
 			res_SECINFO4->status = nfs4_Errno_status(fsal_status);
@@ -164,8 +164,8 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 
 		LogDebug(COMPONENT_EXPORT,
 			 "PSEUDO FS JUNCTION TRAVERSAL: Crossed to %s, id=%d for name=%s",
-			 op_ctx->export->fullpath,
-			 op_ctx->export->export_id,
+			 op_ctx->ctx_export->fullpath,
+			 op_ctx->ctx_export->export_id,
 			 secinfo_fh_name);
 
 		/* Swap in the obj on the other side of the junction. */
@@ -260,9 +260,9 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 		data->currentFH.nfs_fh4_len = 0;
 
 		/* Release CurrentFH reference to export. */
-		if (op_ctx->export) {
-			put_gsh_export(op_ctx->export);
-			op_ctx->export = NULL;
+		if (op_ctx->ctx_export) {
+			put_gsh_export(op_ctx->ctx_export);
+			op_ctx->ctx_export = NULL;
 			op_ctx->fsal_export = NULL;
 		}
 
@@ -279,12 +279,12 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (saved_gsh_export != NULL) {
 		/* Restore export stuff */
-		if (op_ctx->export)
-			put_gsh_export(op_ctx->export);
+		if (op_ctx->ctx_export)
+			put_gsh_export(op_ctx->ctx_export);
 
 		*op_ctx->export_perms = save_export_perms;
-		op_ctx->export = saved_gsh_export;
-		op_ctx->fsal_export = op_ctx->export->fsal_export;
+		op_ctx->ctx_export = saved_gsh_export;
+		op_ctx->fsal_export = op_ctx->ctx_export->fsal_export;
 
 		/* Restore creds */
 		if (nfs_req_creds(data->req) != NFS4_OK) {

@@ -1,5 +1,5 @@
 /*
- * vim:noexpandtab:shiftwidth=8:tabstop=8:
+ * Vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright CEA/DAM/DIF  (2008)
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
@@ -110,13 +110,13 @@ int nfs4_op_restorefh(struct nfs_argop4 *op, compound_data_t *data,
 
 	data->currentFH.nfs_fh4_len = data->savedFH.nfs_fh4_len;
 
-	if (op_ctx->export != NULL)
-		put_gsh_export(op_ctx->export);
+	if (op_ctx->ctx_export != NULL)
+		put_gsh_export(op_ctx->ctx_export);
 
 	/* Restore the export information */
-	op_ctx->export = data->saved_export;
-	if (op_ctx->export != NULL)
-		op_ctx->fsal_export = op_ctx->export->fsal_export;
+	op_ctx->ctx_export = data->saved_export;
+	if (op_ctx->ctx_export != NULL)
+		op_ctx->fsal_export = op_ctx->ctx_export->fsal_export;
 
 	*op_ctx->export_perms = data->saved_export_perms;
 

@@ -173,9 +173,9 @@ int nfs4_op_secinfo_no_name(struct nfs_argop4 *op, compound_data_t *data,
 	data->currentFH.nfs_fh4_len = 0;
 
 	/* Release CurrentFH reference to export. */
-	if (op_ctx->export) {
-		put_gsh_export(op_ctx->export);
-		op_ctx->export = NULL;
+	if (op_ctx->ctx_export) {
+		put_gsh_export(op_ctx->ctx_export);
+		op_ctx->ctx_export = NULL;
 		op_ctx->fsal_export = NULL;
 	}
 

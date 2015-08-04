@@ -730,7 +730,7 @@ static inline size_t lru_run_lane(size_t lane, uint64_t *const totalclosed)
 		exp = atomic_fetch_voidptr(&entry->first_export);
 		export = &exp->export;
 		op_ctx->fsal_export = export;
-		op_ctx->export = NULL;
+		op_ctx->ctx_export = NULL;
 
 		not_support_ex = !entry->obj_handle.fsal->m_ops.support_ex(
 							&entry->obj_handle);

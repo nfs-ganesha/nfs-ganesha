@@ -77,9 +77,10 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	bool eof_met = false;
 	bool sync = false;
 	int rc = NFS_REQ_OK;
-	uint64_t MaxWrite = atomic_fetch_uint64_t(&op_ctx->export->MaxWrite);
+	uint64_t MaxWrite =
+		atomic_fetch_uint64_t(&op_ctx->ctx_export->MaxWrite);
 	uint64_t MaxOffsetWrite =
-			atomic_fetch_uint64_t(&op_ctx->export->MaxOffsetWrite);
+		atomic_fetch_uint64_t(&op_ctx->ctx_export->MaxOffsetWrite);
 
 	offset = arg->arg_write3.offset;
 	size = arg->arg_write3.count;
@@ -155,7 +156,7 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	   FSAL allows inode creation or not */
 	fsal_status =
 	    op_ctx->fsal_export->exp_ops.check_quota(op_ctx->fsal_export,
-						   op_ctx->export->fullpath,
+						   op_ctx->ctx_export->fullpath,
 						   FSAL_QUOTA_BLOCKS);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
@@ -185,7 +186,7 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 				 "A client tryed to violate max file size %"
 				 PRIu64 " for exportid #%hu",
 				 MaxOffsetWrite,
-				 op_ctx->export->export_id);
+				 op_ctx->ctx_export->export_id);
 
 			res->res_write3.status = NFS3ERR_FBIG;
 

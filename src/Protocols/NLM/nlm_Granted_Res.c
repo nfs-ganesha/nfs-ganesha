@@ -78,14 +78,15 @@ int nlm4_Granted_Res(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	 * We take an export reference even if the export is stale because
 	 * we want to properly clean up the cookie_entry.
 	 */
-	op_ctx->export = cookie_entry->sce_lock_entry->sle_export;
-	op_ctx->fsal_export = op_ctx->export->fsal_export;
-	get_gsh_export_ref(op_ctx->export);
+	op_ctx->ctx_export = cookie_entry->sce_lock_entry->sle_export;
+	op_ctx->fsal_export = op_ctx->ctx_export->fsal_export;
+	get_gsh_export_ref(op_ctx->ctx_export);
 
 	/* If the client returned an error or the export has gone stale,
 	 * release the grant to properly clean up cookie_entry.
 	 */
-	if (arg->stat.stat != NLM4_GRANTED || !export_ready(op_ctx->export)) {
+	if (arg->stat.stat != NLM4_GRANTED ||
+		!export_ready(op_ctx->ctx_export)) {
 		LogMajor(COMPONENT_NLM,
 			 "Granted call failed due to %s, releasing lock",
 			 arg->stat.stat != NLM4_GRANTED

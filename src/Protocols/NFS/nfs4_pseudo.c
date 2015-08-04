@@ -127,18 +127,18 @@ void cleanup_pseudofs_node(char *pseudopath,
 	 * exp_root_obj so we can check if we have reached the root of
 	 * the mounted on export.
 	 */
-	PTHREAD_RWLOCK_rdlock(&op_ctx->export->lock);
+	PTHREAD_RWLOCK_rdlock(&op_ctx->ctx_export->lock);
 
-	if (parent_obj == op_ctx->export->exp_root_obj) {
+	if (parent_obj == op_ctx->ctx_export->exp_root_obj) {
 		LogDebug(COMPONENT_EXPORT,
 			 "Reached root of PseudoFS %s",
-			 op_ctx->export->pseudopath);
+			 op_ctx->ctx_export->pseudopath);
 
-		PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
+		PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->lock);
 		goto out;
 	}
 
-	PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
+	PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->lock);
 
 	/* Truncate the pseudopath to be the path to the parent */
 	*pos = '\0';
@@ -200,9 +200,9 @@ retry:
 		return false;
 	}
 
-	if (strncmp(op_ctx->export->fsal_export->exp_ops.get_name(
-				 op_ctx->export->fsal_export),
-		   "PSEUDO", 6) != 0) {
+	if (strncmp(op_ctx->ctx_export->fsal_export->exp_ops.get_name(
+				op_ctx->ctx_export->fsal_export),
+			"PSEUDO", 6) != 0) {
 		/* Only allowed to create directories on FSAL_PSEUDO */
 		LogCrit(COMPONENT_EXPORT,
 			"BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s LOOKUP %s failed with %s (can't create directory on non-PSEUDO FSAL)",
@@ -318,15 +318,15 @@ bool pseudo_mount_export(struct gsh_export *export)
 		 tmp_pseudopath);
 
 	/* Now find the export we are mounted on */
-	op_ctx->export = get_gsh_export_by_pseudo(tmp_pseudopath, false);
+	op_ctx->ctx_export = get_gsh_export_by_pseudo(tmp_pseudopath, false);
 
-	if (op_ctx->export == NULL) {
+	if (op_ctx->ctx_export == NULL) {
 		LogFatal(COMPONENT_EXPORT,
 			 "Could not find mounted on export for %s, tmp=%s",
 			 export->pseudopath, tmp_pseudopath);
 	}
 
-	op_ctx->fsal_export = op_ctx->export->fsal_export;
+	op_ctx->fsal_export = op_ctx->ctx_export->fsal_export;
 
 	/* Put the slash back in */
 	*last_slash = '/';
@@ -334,11 +334,11 @@ bool pseudo_mount_export(struct gsh_export *export)
 	/* Point to the portion of this export's pseudo path that is beyond the
 	 * mounted on export's pseudo path.
 	 */
-	if (op_ctx->export->pseudopath[1] == '\0')
+	if (op_ctx->ctx_export->pseudopath[1] == '\0')
 		rest = tmp_pseudopath + 1;
 	else
 		rest = tmp_pseudopath +
-		       strlen(op_ctx->export->pseudopath) + 1;
+		       strlen(op_ctx->ctx_export->pseudopath) + 1;
 
 	LogDebug(COMPONENT_EXPORT,
 		 "BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s Rest %s",
@@ -346,7 +346,7 @@ bool pseudo_mount_export(struct gsh_export *export)
 		 export->pseudopath, rest);
 
 	/* Get the root inode of the mounted on export */
-	fsal_status = nfs_export_get_root_entry(op_ctx->export, &state.obj);
+	fsal_status = nfs_export_get_root_entry(op_ctx->ctx_export, &state.obj);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		LogCrit(COMPONENT_EXPORT,
@@ -355,7 +355,7 @@ bool pseudo_mount_export(struct gsh_export *export)
 			export->pseudopath);
 
 		/* Release the reference on the mounted on export. */
-		put_gsh_export(op_ctx->export);
+		put_gsh_export(op_ctx->ctx_export);
 		return false;
 	}
 
@@ -371,7 +371,7 @@ bool pseudo_mount_export(struct gsh_export *export)
 			 * and the mounted on export
 			 */
 			state.obj->obj_ops.put_ref(state.obj);
-			put_gsh_export(op_ctx->export);
+			put_gsh_export(op_ctx->ctx_export);
 			return false;
 		}
 	}
@@ -389,13 +389,13 @@ bool pseudo_mount_export(struct gsh_export *export)
 	export->exp_mounted_on_file_id = state.obj->fileid;
 	/* Pass ref off to export */
 	export->exp_junction_obj = state.obj;
-	export->exp_parent_exp = op_ctx->export;
+	export->exp_parent_exp = op_ctx->ctx_export;
 
 	/* Add ourselves to the list of exports mounted on parent */
-	PTHREAD_RWLOCK_wrlock(&op_ctx->export->lock);
-	glist_add_tail(&op_ctx->export->mounted_exports_list,
+	PTHREAD_RWLOCK_wrlock(&op_ctx->ctx_export->lock);
+	glist_add_tail(&op_ctx->ctx_export->mounted_exports_list,
 		       &export->mounted_exports_node);
-	PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
+	PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->lock);
 
 	PTHREAD_RWLOCK_unlock(&export->lock);
 

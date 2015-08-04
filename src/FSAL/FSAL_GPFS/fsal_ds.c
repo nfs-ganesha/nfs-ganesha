@@ -518,7 +518,7 @@ static nfsstat4 make_ds_handle(struct fsal_pnfs_ds *const pds,
 
 	ds->connected = false;
 
-	ds->gpfs_fs = fs->private;
+	ds->gpfs_fs = fs->private_data;
 
 	memcpy(&ds->wire, desc->addr, desc->len);
 	return NFS4_OK;

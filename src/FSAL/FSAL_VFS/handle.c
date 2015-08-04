@@ -55,7 +55,7 @@ int vfs_fsal_open(struct vfs_fsal_obj_handle *hdl,
 		  int openflags,
 		  fsal_errors_t *fsal_error)
 {
-	struct vfs_filesystem *vfs_fs = hdl->obj_handle.fs->private;
+	struct vfs_filesystem *vfs_fs = hdl->obj_handle.fs->private_data;
 
 	return vfs_open_by_handle(vfs_fs, hdl->handle, openflags, fsal_error);
 }
@@ -1250,7 +1250,7 @@ struct closefd vfs_fsal_open_and_stat(struct fsal_export *exp,
 	struct closefd cfd = { .fd = -1, .close_fd = false };
 	int retval = 0;
 	const char *func = "unknown";
-	struct vfs_filesystem *vfs_fs = myself->obj_handle.fs->private;
+	struct vfs_filesystem *vfs_fs = myself->obj_handle.fs->private_data;
 	int open_flags;
 
 	fsal2posix_openflags(flags, &open_flags);
@@ -1764,7 +1764,8 @@ fsal_status_t vfs_create_handle(struct fsal_export *exp_hdl,
 		fd = -1;
 		retval = stat(fs->path, &obj_stat);
 	} else {
-		fd = vfs_open_by_handle(fs->private, fh, flags, &fsal_error);
+		fd = vfs_open_by_handle(fs->private_data, fh, flags,
+					&fsal_error);
 
 		if (fd < 0) {
 			retval = -fd;

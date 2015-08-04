@@ -77,7 +77,7 @@ fsal_status_t GPFSFSAL_lock_op(struct fsal_export *export,
 	}
 
 	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
-	gpfs_fs = obj_hdl->fs->private;
+	gpfs_fs = obj_hdl->fs->private_data;
 	glock_args.lfd = myself->u.file.fd.fd;
 
 	LogFullDebug(COMPONENT_FSAL,

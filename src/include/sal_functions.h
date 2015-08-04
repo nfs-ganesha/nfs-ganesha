@@ -719,14 +719,14 @@ static inline struct fsal_obj_handle *get_state_obj_ref(state_t *state)
 	struct fsal_obj_handle *obj = NULL;
 	fsal_status_t fsal_status;
 	struct gsh_buffdesc fh_desc;
-	struct gsh_export *save_exp = op_ctx->export;
+	struct gsh_export *save_exp = op_ctx->ctx_export;
 	struct fsal_export *save_fsal = op_ctx->fsal_export;
 
 	if (state->state_export == NULL)
 		return NULL;
 
 	/* Need to look up in the correct export */
-	op_ctx->export = state->state_export;
+	op_ctx->ctx_export = state->state_export;
 	op_ctx->fsal_export = state->state_export->fsal_export;
 
 	fh_desc.addr = state->state_obj.digest;
@@ -735,7 +735,7 @@ static inline struct fsal_obj_handle *get_state_obj_ref(state_t *state)
 	  state->state_export->fsal_export->exp_ops.create_handle(
 		state->state_export->fsal_export, &fh_desc, &obj, NULL);
 
-	op_ctx->export = save_exp;
+	op_ctx->ctx_export = save_exp;
 	op_ctx->fsal_export = save_fsal;
 
 	if (FSAL_IS_ERROR(fsal_status))

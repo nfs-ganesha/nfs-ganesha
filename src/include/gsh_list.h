@@ -71,25 +71,25 @@ static inline void glist_init(struct glist_head *head)
 
 /* Add the new element between left and right */
 static inline void __glist_add(struct glist_head *left,
-			       struct glist_head *right, struct glist_head *new)
+			       struct glist_head *right, struct glist_head *elt)
 {
-	new->prev = left;
-	new->next = right;
-	left->next = new;
-	right->prev = new;
+	elt->prev = left;
+	elt->next = right;
+	left->next = elt;
+	right->prev = elt;
 }
 
 static inline void glist_add_tail(struct glist_head *head,
-				  struct glist_head *new)
+				  struct glist_head *elt)
 {
 
-	__glist_add(head->prev, head, new);
+	__glist_add(head->prev, head, elt);
 }
 
 /* add after the specified entry*/
-static inline void glist_add(struct glist_head *head, struct glist_head *new)
+static inline void glist_add(struct glist_head *head, struct glist_head *elt)
 {
-	__glist_add(head, head->next, new);
+	__glist_add(head, head->next, elt);
 }
 
 static inline void glist_del(struct glist_head *node)
@@ -126,12 +126,12 @@ static inline int glist_null(struct glist_head *head)
 }
 
 static inline void glist_add_list_tail(struct glist_head *list,
-				       struct glist_head *new)
+				       struct glist_head *elt)
 {
-	struct glist_head *first = new->next;
-	struct glist_head *last = new->prev;
+	struct glist_head *first = elt->next;
+	struct glist_head *last = elt->prev;
 
-	if (glist_empty(new)) {
+	if (glist_empty(elt)) {
 		/* nothing to add */
 		return;
 	}
@@ -231,21 +231,21 @@ static inline size_t glist_length(struct glist_head *head)
 	     node = noden, noden = node->next)
 
 static inline void glist_insert_sorted(struct glist_head *head,
-				       struct glist_head *new,
+				       struct glist_head *elt,
 				       glist_compare compare)
 {
 	struct glist_head *next = NULL;
 
 	if (glist_empty(head)) {
-		glist_add_tail(head, new);
+		glist_add_tail(head, elt);
 		return;
 	}
 	glist_for_each(next, head) {
-		if (compare(next, new) >= 0)
+		if (compare(next, elt) >= 0)
 			break;
 	}
 
-	__glist_add(next->prev, next, new);
+	__glist_add(next->prev, next, elt);
 }
 
 #endif				/* _GANESHA_LIST_H */

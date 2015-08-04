@@ -1863,7 +1863,7 @@ static void grant_blocked_locks(struct state_hdl *ostate)
 {
 	state_lock_entry_t *found_entry;
 	struct glist_head *glist, *glistn;
-	struct fsal_export *export = op_ctx->export->fsal_export;
+	struct fsal_export *export = op_ctx->ctx_export->fsal_export;
 
 	if (!ostate)
 		return;
@@ -2173,11 +2173,11 @@ state_status_t do_unlock_no_owner(struct fsal_obj_handle *obj,
 	fsal_lock_param_t *punlock;
 
 	unlock_entry = create_state_lock_entry(obj,
-					       op_ctx->export,
-					       STATE_NON_BLOCKING,
-					       &unknown_owner,
-					       NULL, /* no real state */
-					       lock);
+					op_ctx->ctx_export,
+					STATE_NON_BLOCKING,
+					&unknown_owner,
+					NULL, /* no real state */
+					lock);
 
 	glist_init(&fsal_unlock_list);
 
@@ -2562,13 +2562,13 @@ state_status_t state_lock(struct fsal_obj_handle *obj,
 			 * already has a lock on this file via a different
 			 * export.
 			 */
-			if (found_entry->sle_export != op_ctx->export) {
+			if (found_entry->sle_export != op_ctx->ctx_export) {
 				LogEvent(COMPONENT_STATE,
 					 "Lock Owner Export Conflict, Lock held for export %d (%s), request for export %d (%s)",
 					 found_entry->sle_export->export_id,
 					 found_entry->sle_export->fullpath,
-					 op_ctx->export->export_id,
-					 op_ctx->export->fullpath);
+					 op_ctx->ctx_export->export_id,
+					 op_ctx->ctx_export->fullpath);
 				LogEntry(
 					"Found lock entry belonging to another export",
 					found_entry);
@@ -2597,14 +2597,14 @@ state_status_t state_lock(struct fsal_obj_handle *obj,
 		/* Need to reject lock request if this lock owner already has
 		 * a lock on this file via a different export.
 		 */
-		if (found_entry->sle_export != op_ctx->export
+		if (found_entry->sle_export != op_ctx->ctx_export
 		    && !different_owners(found_entry->sle_owner, owner)) {
 			LogEvent(COMPONENT_STATE,
 				 "Lock Owner Export Conflict, Lock held for export %d (%s), request for export %d (%s)",
 				 found_entry->sle_export->export_id,
 				 found_entry->sle_export->fullpath,
-				 op_ctx->export->export_id,
-				 op_ctx->export->fullpath);
+				 op_ctx->ctx_export->export_id,
+				 op_ctx->ctx_export->fullpath);
 
 			LogEntry("Found lock entry belonging to another export",
 				 found_entry);
@@ -2752,11 +2752,11 @@ state_status_t state_lock(struct fsal_obj_handle *obj,
 	 * Provisionally mark this lock as granted.
 	 */
 	found_entry = create_state_lock_entry(obj,
-					      op_ctx->export,
-					      STATE_NON_BLOCKING,
-					      owner,
-					      state,
-					      lock);
+					op_ctx->ctx_export,
+					STATE_NON_BLOCKING,
+					owner,
+					state,
+					lock);
 
 	/* Check for async blocking lock support. */
 	async = fsal_export->exp_ops.fs_supports(fsal_export,
@@ -3143,7 +3143,7 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 		export = found_entry->sle_export;
 		state = found_entry->sle_state;
 
-		root_op_context.req_ctx.export = export;
+		root_op_context.req_ctx.ctx_export = export;
 		root_op_context.req_ctx.fsal_export = export->fsal_export;
 
 		/* Get a reference to the export while we still hold the
@@ -3246,7 +3246,7 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 		owner = found_share->state_owner;
 		export = found_share->state_export;
 
-		root_op_context.req_ctx.export = export;
+		root_op_context.req_ctx.ctx_export = export;
 		root_op_context.req_ctx.fsal_export = export->fsal_export;
 
 		/* Get a reference to the export while we still hold the
@@ -3347,7 +3347,7 @@ void state_nfs4_owner_unlock_all(state_owner_t *owner)
 	struct fsal_obj_handle *obj;
 	int errcnt = 0;
 	state_status_t status = 0;
-	struct gsh_export *saved_export = op_ctx->export;
+	struct gsh_export *saved_export = op_ctx->ctx_export;
 	struct gsh_export *export;
 	state_t *state;
 	bool ok;
@@ -3393,7 +3393,7 @@ void state_nfs4_owner_unlock_all(state_owner_t *owner)
 		}
 
 		/* Set up the op_context with the proper export */
-		op_ctx->export = export;
+		op_ctx->ctx_export = export;
 		op_ctx->fsal_export = export->fsal_export;
 
 		/* Make lock that covers the whole file.
@@ -3437,10 +3437,10 @@ void state_nfs4_owner_unlock_all(state_owner_t *owner)
 			 str);
 	}
 
-	op_ctx->export = saved_export;
+	op_ctx->ctx_export = saved_export;
 
 	if (saved_export != NULL)
-		op_ctx->fsal_export = op_ctx->export->fsal_export;
+		op_ctx->fsal_export = op_ctx->ctx_export->fsal_export;
 }
 
 /**
@@ -3460,18 +3460,19 @@ void state_export_unlock_all(void)
 
 	/* Only accept so many errors before giving up. */
 	while (errcnt < STATE_ERR_MAX) {
-		PTHREAD_RWLOCK_wrlock(&op_ctx->export->lock);
+		PTHREAD_RWLOCK_wrlock(&op_ctx->ctx_export->lock);
 
 		/* We just need to find any file this owner has locks on.
 		 * We pick the first lock the owner holds, and use it's file.
 		 */
-		found_entry = glist_first_entry(&op_ctx->export->exp_lock_list,
-						state_lock_entry_t,
-						sle_export_locks);
+		found_entry = glist_first_entry(
+			&op_ctx->ctx_export->exp_lock_list,
+			state_lock_entry_t,
+			sle_export_locks);
 
 		/* If we don't find any entries, then we are done. */
 		if (found_entry == NULL) {
-			PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
+			PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->lock);
 			break;
 		}
 
@@ -3499,12 +3500,12 @@ void state_export_unlock_all(void)
 		 * (this will help if errors occur)
 		 */
 		glist_del(&found_entry->sle_export_locks);
-		glist_add_tail(&op_ctx->export->exp_lock_list,
+		glist_add_tail(&op_ctx->ctx_export->exp_lock_list,
 			       &found_entry->sle_export_locks);
 
 		/* Now we are done with this specific entry, release the lock.
 		 */
-		PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
+		PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->lock);
 
 		/* Make lock that covers the whole file.
 		 * type doesn't matter for unlock
@@ -3536,7 +3537,7 @@ void state_export_unlock_all(void)
 	if (errcnt == STATE_ERR_MAX) {
 		LogFatal(COMPONENT_STATE,
 			 "Could not complete cleanup of locks for %s",
-			 op_ctx->export->fullpath);
+			 op_ctx->ctx_export->fullpath);
 	}
 }
 
@@ -3739,11 +3740,11 @@ void cancel_all_nlm_blocked(void)
 
 		PTHREAD_MUTEX_unlock(&blocked_locks_mutex);
 
-		root_op_context.req_ctx.export = found_entry->sle_export;
+		root_op_context.req_ctx.ctx_export = found_entry->sle_export;
 		root_op_context.req_ctx.fsal_export =
-			root_op_context.req_ctx.export->fsal_export;
+			root_op_context.req_ctx.ctx_export->fsal_export;
 
-		get_gsh_export_ref(root_op_context.req_ctx.export);
+		get_gsh_export_ref(root_op_context.req_ctx.ctx_export);
 
 		/** @todo also look at the LRU ref for pentry */
 
@@ -3759,7 +3760,7 @@ void cancel_all_nlm_blocked(void)
 
 		LogEntry("Canceled Lock", found_entry);
 
-		put_gsh_export(root_op_context.req_ctx.export);
+		put_gsh_export(root_op_context.req_ctx.ctx_export);
 
 		lock_entry_dec_ref(found_entry);
 

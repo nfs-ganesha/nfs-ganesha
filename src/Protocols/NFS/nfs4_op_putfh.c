@@ -80,25 +80,25 @@ static int nfs4_ds_putfh(compound_data_t *data)
 	}
 
 	/* If old CurrentFH had a related export, release reference. */
-	if (op_ctx->export != NULL) {
-		changed = op_ctx->export != pds->mds_export;
-		put_gsh_export(op_ctx->export);
+	if (op_ctx->ctx_export != NULL) {
+		changed = op_ctx->ctx_export != pds->mds_export;
+		put_gsh_export(op_ctx->ctx_export);
 	}
 
 	if (pds->mds_export == NULL) {
 		/* most likely */
-		op_ctx->export = NULL;
+		op_ctx->ctx_export = NULL;
 		op_ctx->fsal_export = NULL;
 	} else if (pds->pnfs_ds_status == PNFS_DS_READY) {
 		/* special case: avoid lookup of related export.
 		 * get_gsh_export_ref() was bumped in pnfs_ds_get()
 		 */
-		op_ctx->export = pds->mds_export;
-		op_ctx->fsal_export = op_ctx->export->fsal_export;
+		op_ctx->ctx_export = pds->mds_export;
+		op_ctx->fsal_export = op_ctx->ctx_export->fsal_export;
 	} else {
 		/* export reference has been dropped. */
 		put_gsh_export(pds->mds_export);
-		op_ctx->export = NULL;
+		op_ctx->ctx_export = NULL;
 		op_ctx->fsal_export = NULL;
 		return NFS4ERR_STALE;
 	}
@@ -162,10 +162,10 @@ static int nfs4_mds_putfh(compound_data_t *data)
 	}
 
 	/* If old CurrentFH had a related export, release reference. */
-	if (op_ctx->export != NULL) {
+	if (op_ctx->ctx_export != NULL) {
 		changed = ntohs(v4_handle->id.exports) !=
-				 op_ctx->export->export_id;
-		put_gsh_export(op_ctx->export);
+				 op_ctx->ctx_export->export_id;
+		put_gsh_export(op_ctx->ctx_export);
 	}
 
 	/* If old CurrentFH had a related server, release reference. */
@@ -178,7 +178,7 @@ static int nfs4_mds_putfh(compound_data_t *data)
 	set_current_entry(data, NULL);
 
 	/* update _ctx fields needed by nfs4_export_check_access */
-	op_ctx->export = exporting;
+	op_ctx->ctx_export = exporting;
 
 	if (changed) {
 		int status;

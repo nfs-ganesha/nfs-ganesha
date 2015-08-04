@@ -413,7 +413,7 @@ struct req_op_context {
 	uint32_t nfs_minorvers;	/*< NFSv4 minor version */
 	uint32_t req_type;	/*< request_type NFS | 9P */
 	struct gsh_client *client;	/*< client host info including stats */
-	struct gsh_export *export;	/*< current export */
+	struct gsh_export *ctx_export;	/*< current export */
 	struct fsal_export *fsal_export;	/*< current fsal export */
 	struct export_perms *export_perms;	/*< Effective export perms */
 	nsecs_elapsed_t start_time;	/*< start time of this op/request */
@@ -2920,7 +2920,7 @@ struct fsal_filesystem {
 					    file systems */
 	struct fsal_filesystem *parent;	/*< Parent file system */
 	struct fsal_module *fsal;	/*< Link back to fsal module */
-	void *private;			/*< Private data for owning FSAL */
+	void *private_data;		/*< Private data for owning FSAL */
 	char *path;			/*< Path to root of this file system */
 	char *device;			/*< Path to block device */
 	char *type;			/*< fs type */

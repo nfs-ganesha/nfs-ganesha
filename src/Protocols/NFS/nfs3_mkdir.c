@@ -118,7 +118,7 @@ int nfs3_mkdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	   FSAL allows inode creation or not */
 	fsal_status =
 	    op_ctx->fsal_export->exp_ops.check_quota(op_ctx->fsal_export,
-						   op_ctx->export->fullpath,
+						   op_ctx->ctx_export->fullpath,
 						   FSAL_QUOTA_INODES);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
@@ -162,7 +162,7 @@ int nfs3_mkdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	if (!nfs3_FSALToFhandle(true,
 				&d3ok->obj.post_op_fh3_u.handle,
 				dir_obj,
-				op_ctx->export)) {
+				op_ctx->ctx_export)) {
 		res->res_mkdir3.status = NFS3ERR_BADHANDLE;
 		rc = NFS_REQ_OK;
 		goto out;

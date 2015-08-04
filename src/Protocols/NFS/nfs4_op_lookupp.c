@@ -64,7 +64,7 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 	struct fsal_obj_handle *file_obj;
 	struct fsal_obj_handle *root_obj;
 	fsal_status_t status;
-	struct gsh_export *original_export = op_ctx->export;
+	struct gsh_export *original_export = op_ctx->ctx_export;
 
 	resp->resop = NFS4_OP_LOOKUPP;
 	res_LOOKUPP4->status = NFS4_OK;
@@ -165,8 +165,8 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 
 		/* Stash parent export in opctx while still holding the lock.
 		 */
-		op_ctx->export = parent_exp;
-		op_ctx->fsal_export = op_ctx->export->fsal_export;
+		op_ctx->ctx_export = parent_exp;
+		op_ctx->fsal_export = op_ctx->ctx_export->fsal_export;
 
 		/* Now we are safely transitioned to the parent export and can
 		 * release the lock.
@@ -207,8 +207,8 @@ not_junction:
 	if (file_obj != NULL) {
 		/* Convert it to a file handle */
 		if (!nfs4_FSALToFhandle(false, &data->currentFH,
-					file_obj,
-					op_ctx->export)) {
+						file_obj,
+						op_ctx->ctx_export)) {
 			res_LOOKUPP4->status = NFS4ERR_SERVERFAULT;
 			file_obj->obj_ops.put_ref(file_obj);
 			return res_LOOKUPP4->status;

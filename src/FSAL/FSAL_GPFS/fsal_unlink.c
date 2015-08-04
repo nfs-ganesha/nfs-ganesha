@@ -60,7 +60,7 @@ GPFSFSAL_unlink(struct fsal_obj_handle *dir_hdl, const char *object_name,
 
 	gpfs_hdl =
 	    container_of(dir_hdl, struct gpfs_fsal_obj_handle, obj_handle);
-	gpfs_fs = dir_hdl->fs->private;
+	gpfs_fs = dir_hdl->fs->private_data;
 
 	/* get file metadata */
 	status = fsal_internal_stat_name(gpfs_fs->root_fd, gpfs_hdl->handle,

@@ -932,9 +932,9 @@ void compound_data_Free(compound_data_t *data)
 	}
 
 	/* Release CurrentFH reference to export. */
-	if (op_ctx->export) {
-		put_gsh_export(op_ctx->export);
-		op_ctx->export = NULL;
+	if (op_ctx->ctx_export) {
+		put_gsh_export(op_ctx->ctx_export);
+		op_ctx->ctx_export = NULL;
 		op_ctx->fsal_export = NULL;
 	}
 

@@ -56,7 +56,7 @@ static void fs_layouttypes(struct fsal_export *export_hdl, int32_t *count,
 	 * filesystem, this will not work for sub-mounted filesystems.
 	 */
 	myself = container_of(export_hdl, struct gpfs_fsal_export, export);
-	gpfs_fs = myself->root_fs->private;
+	gpfs_fs = myself->root_fs->private_data;
 
 	arg.mountdirfd = gpfs_fs->root_fd;
 	rc = gpfs_ganesha(OPENHANDLE_LAYOUT_TYPE, &arg);
@@ -351,7 +351,7 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_hdl,
 	nfs_status =
 	     FSAL_encode_file_layout(loc_body, &deviceid, util,
 				     file_layout.lg_first_stripe_index, 0,
-				     &req_ctx->export->export_id, 1,
+				     &req_ctx->ctx_export->export_id, 1,
 				     &ds_desc);
 	if (nfs_status) {
 		if (arg->maxcount <=
