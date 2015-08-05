@@ -747,6 +747,16 @@ void nfs_rpc_execute(request_data_t *reqdata)
 	op_ctx->req_type = reqdata->rtype;
 	op_ctx->export_perms = &export_perms;
 
+	/* start the processing clock
+	 * we measure all time stats as intervals (elapsed nsecs) from
+	 * server boot time.  This gets high precision with simple 64 bit math.
+	 */
+	now(&timer_start);
+	op_ctx->start_time = timespec_diff(&ServerBootTime, &timer_start);
+	op_ctx->queue_wait =
+	    op_ctx->start_time - timespec_diff(&ServerBootTime,
+					       &reqdata->time_queued);
+
 	/* Initialized user_credentials */
 	init_credentials();
 
@@ -780,22 +790,12 @@ void nfs_rpc_execute(request_data_t *reqdata)
 			 reqdata->r_u.req.svc.rq_xid);
 	}
 
-	/* start the processing clock
-	 * we measure all time stats as intervals (elapsed nsecs) from
-	 * server boot time.  This gets high precision with simple 64 bit math.
-	 */
 #if defined(HAVE_BLKIN)
 	BLKIN_TIMESTAMP(
 		&reqdata->r_u.req.svc.bl_trace,
 		&reqdata->r_u.req.xprt->blkin.endp,
 		"rpc_execute-have-clientid");
 #endif
-	now(&timer_start);
-	op_ctx->start_time = timespec_diff(&ServerBootTime, &timer_start);
-	op_ctx->queue_wait =
-	    op_ctx->start_time - timespec_diff(&ServerBootTime,
-					       &reqdata->time_queued);
-
 	/* If req is uncacheable, or if req is v41+, nfs_dupreq_start will do
 	 * nothing but allocate a result object and mark the request (ie, the
 	 * path is short, lockless, and does no hash/search). */
