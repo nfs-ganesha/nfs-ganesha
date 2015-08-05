@@ -334,6 +334,10 @@ static void do_shutdown(void)
 	LogEvent(COMPONENT_MAIN, "Stopping request listener threads.");
 	nfs_rpc_dispatch_stop();
 
+	LogEvent(COMPONENT_MAIN, "Unregistering ports used by NFS service");
+	/* finalize RPC package */
+	Clean_RPC();
+
 	LogEvent(COMPONENT_MAIN, "Stopping request decoder threads");
 	rc = fridgethr_sync_command(req_fridge, fridgethr_comm_stop, 120);
 
@@ -364,8 +368,6 @@ static void do_shutdown(void)
 			 "Worker threads successfully shut down.");
 	}
 
-	/* finalize RPC package */
-	Clean_RPC(); /* we MUST do this first */
 	(void)svc_shutdown(SVC_SHUTDOWN_FLAG_NONE);
 
 	rc = general_fridge_shutdown();
