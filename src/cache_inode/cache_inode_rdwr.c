@@ -295,4 +295,149 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t *entry,
 	return status;
 }
 
+/**
+ * @brief Reads through the cache layer
+ *
+ * @param[in]     entry        File to be read or written
+ * @param[in]     bypass       If state doesn't indicate a share reservation,
+ *                             bypass any deny read
+ * @param[in]     state        state_t associated with the operation
+ * @param[in]     offset       Absolute file position for I/O
+ * @param[in]     io_size      Amount of data to be read or written
+ * @param[out]    bytes_moved  The length of data successfuly read
+ * @param[in,out] buffer       Where in memory to read data
+ * @param[out]    eof          Whether a READ encountered the end of file
+ * @param[in]     info         io_info for READ_PLUS
+ *
+ * @return CACHE_INODE_SUCCESS or various errors
+ */
+
+cache_inode_status_t cache_inode_read(cache_entry_t *entry,
+				      bool bypass,
+				      struct state_t *state,
+				      uint64_t offset,
+				      size_t io_size,
+				      size_t *bytes_moved,
+				      void *buffer,
+				      bool *eof,
+				      struct io_info *info)
+{
+	/* Error return from FSAL calls */
+	fsal_status_t fsal_status = { 0, 0 };
+	struct fsal_obj_handle *obj_hdl = entry->obj_handle;
+	cache_inode_status_t status;
+
+	fsal_status = obj_hdl->obj_ops.read2(obj_hdl, bypass, state, offset,
+					     io_size, buffer, bytes_moved, eof,
+					     info);
+
+	status = cache_inode_error_convert(fsal_status);
+
+	/* Fixup CACHE_INODE_SHARE_DENIED status */
+	if (status == CACHE_INODE_SHARE_DENIED)
+		status = CACHE_INODE_LOCKED;
+
+	LogFullDebug(COMPONENT_FSAL,
+		     "FSAL READ operation returned %s, asked_size=%zu, effective_size=%zu",
+		     cache_inode_err_str(status), io_size, *bytes_moved);
+
+	if (status != CACHE_INODE_SUCCESS) {
+		*bytes_moved = 0;
+
+		if (status == CACHE_INODE_ESTALE)
+			cache_inode_kill_entry(entry);
+
+		return status;
+	}
+
+	LogFullDebug(COMPONENT_CACHE_INODE,
+		     "inode/direct: io_size=%zu, bytes_moved=%zu, offset=%"
+		     PRIu64,
+		     io_size, *bytes_moved, offset);
+
+	PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
+
+	cache_inode_set_time_current(&obj_hdl->attrs->atime);
+
+	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+
+	return CACHE_INODE_SUCCESS;
+}
+
+/**
+ * @briefWrites through the cache layer
+ *
+ * @param[in]     entry        File to be read or written
+ * @param[in]     bypass       If state doesn't indicate a share reservation,
+ *                             bypass any non-mandatory deny write
+ * @param[in]     state        state_t associated with the operation
+ * @param[in]     offset       Absolute file position for I/O
+ * @param[in]     io_size      Amount of data to be written
+ * @param[out]    bytes_moved  The length of data successfuly written
+ * @param[in,out] buffer       Where in memory to write data
+ * @param[in]     sync         Whether the write is synchronous or not
+ * @param[in]     info         io_info for WRITE_PLUS
+ *
+ * @return CACHE_INODE_SUCCESS or various errors
+ */
+
+cache_inode_status_t cache_inode_write(cache_entry_t *entry,
+				       bool bypass,
+				       struct state_t *state,
+				       uint64_t offset,
+				       size_t io_size,
+				       size_t *bytes_moved,
+				       void *buffer,
+				       bool *sync,
+				       struct io_info *info)
+{
+	/* Error return from FSAL calls */
+	fsal_status_t fsal_status = { 0, 0 };
+	struct fsal_obj_handle *obj_hdl = entry->obj_handle;
+	cache_inode_status_t status;
+
+	if (op_ctx->export->export_perms.options & EXPORT_OPTION_COMMIT) {
+		/* Force sync if export requires it */
+		*sync = true;
+	}
+
+	fsal_status = obj_hdl->obj_ops.write2(obj_hdl,
+					      bypass,
+					      state,
+					      offset,
+					      io_size,
+					      buffer,
+					      bytes_moved,
+					      sync,
+					      info);
+
+	status = cache_inode_error_convert(fsal_status);
+
+	/* Fixup CACHE_INODE_SHARE_DENIED status */
+	if (status == CACHE_INODE_SHARE_DENIED)
+		status = CACHE_INODE_LOCKED;
+
+	LogFullDebug(COMPONENT_FSAL,
+		     "FSAL WRITE operation returned %s, asked_size=%zu, effective_size=%zu",
+		     cache_inode_err_str(status), io_size, *bytes_moved);
+
+	if (status != CACHE_INODE_SUCCESS) {
+		*bytes_moved = 0;
+
+		if (status == CACHE_INODE_ESTALE)
+			cache_inode_kill_entry(entry);
+
+		return status;
+	}
+
+	LogFullDebug(COMPONENT_CACHE_INODE,
+		     "inode/direct: io_size=%zu, bytes_moved=%zu, offset=%"
+		     PRIu64,
+		     io_size, *bytes_moved, offset);
+
+	atomic_clear_uint32_t_bits(&entry->flags, CACHE_INODE_TRUST_ATTRS);
+
+	return CACHE_INODE_SUCCESS;
+}
+
 /** @} */

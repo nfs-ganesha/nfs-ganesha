@@ -232,10 +232,30 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 			goto out;
 		}
 
-		cache_status =
-		    cache_inode_rdwr(entry, CACHE_INODE_WRITE, offset, size,
-				     &written_size, data, &eof_met, &sync,
-				     NULL);
+		if (entry->obj_handle->fsal->m_ops.support_ex()) {
+			/* Call the new cache_inode_write */
+			/** @todo for now pass NULL state */
+			cache_status = cache_inode_write(entry,
+							 true,
+							 NULL,
+							 offset,
+							 size,
+							 &written_size,
+							 data,
+							 &sync,
+							 NULL);
+		} else {
+			/* Call legacy cache_inode_rdwr */
+			cache_status = cache_inode_rdwr(entry,
+							CACHE_INODE_WRITE,
+							offset,
+							size,
+							&written_size,
+							data,
+							&eof_met,
+							&sync,
+							NULL);
+		}
 
 		state_share_anonymous_io_done(entry, OPEN4_SHARE_ACCESS_WRITE);
 

@@ -877,7 +877,28 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t *entry,
 				      bool *sync,
 				      struct io_info *info);
 
-cache_inode_status_t cache_inode_commit(cache_entry_t *entry, uint64_t offset,
+cache_inode_status_t cache_inode_read(cache_entry_t *entry,
+				      bool bypass,
+				      struct state_t *state,
+				      uint64_t offset,
+				      size_t io_size,
+				      size_t *bytes_moved,
+				      void *buffer,
+				      bool *eof,
+				      struct io_info *info);
+
+cache_inode_status_t cache_inode_write(cache_entry_t *entry,
+				       bool bypass,
+				       struct state_t *state,
+				       uint64_t offset,
+				       size_t io_size,
+				       size_t *bytes_moved,
+				       void *buffer,
+				       bool *sync,
+				       struct io_info *info);
+
+cache_inode_status_t cache_inode_commit(cache_entry_t *entry,
+					uint64_t offset,
 					size_t count);
 
 cache_inode_status_t cache_inode_readdir(cache_entry_t *directory,

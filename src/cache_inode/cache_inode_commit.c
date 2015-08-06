@@ -62,8 +62,9 @@
  * @return CACHE_INODE_SUCCESS or various errors
  */
 
-cache_inode_status_t
-cache_inode_commit(cache_entry_t *entry, uint64_t offset, size_t count)
+cache_inode_status_t cache_inode_commit_legacy(cache_entry_t *entry,
+					       uint64_t offset,
+					       size_t count)
 {
 	/* Error return from FSAL operations */
 	fsal_status_t fsal_status = { 0, 0 };
@@ -162,6 +163,57 @@ cache_inode_commit(cache_entry_t *entry, uint64_t offset, size_t count)
 		PTHREAD_RWLOCK_unlock(&entry->content_lock);
 
 	return status;
+}
+
+/**
+ * @brief Commits a write operation to stable storage
+ *
+ * This function commits writes from unstable to stable storage.
+ *
+ * @param[in] entry        File whose data should be committed
+ * @param[in] offset       Start of region to commit
+ * @param[in] count        Number of bytes to commit
+ *
+ * @return CACHE_INODE_SUCCESS or various errors
+ */
+
+cache_inode_status_t cache_inode_commit(cache_entry_t *entry,
+					uint64_t offset,
+					size_t count)
+{
+	/* Error return from FSAL operations */
+	fsal_status_t fsal_status = { 0, 0 };
+	cache_inode_status_t status;
+
+	if (!entry->obj_handle->fsal->m_ops.support_ex()) {
+		/* Call legacy cache_inode_rdwr */
+		return cache_inode_commit_legacy(entry, offset, count);
+	}
+
+
+	if ((uint64_t) count > ~(uint64_t) offset)
+		return CACHE_INODE_INVALID_ARGUMENT;
+
+	fsal_status = entry->obj_handle->obj_ops.commit2(entry->obj_handle,
+							 offset,
+							 count);
+
+	status = cache_inode_error_convert(fsal_status);
+
+	LogFullDebug(COMPONENT_FSAL,
+		     "FSAL WRITE operation returned %s",
+		     cache_inode_err_str(status));
+
+	if (status != CACHE_INODE_SUCCESS) {
+		if (status == CACHE_INODE_ESTALE)
+			cache_inode_kill_entry(entry);
+
+		return status;
+	}
+
+	atomic_clear_uint32_t_bits(&entry->flags, CACHE_INODE_TRUST_ATTRS);
+
+	return CACHE_INODE_SUCCESS;
 }
 
 /** @} */
