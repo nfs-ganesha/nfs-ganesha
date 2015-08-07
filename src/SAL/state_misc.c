@@ -118,8 +118,6 @@ const char *state_err_str(state_status_t err)
 		return "STATE_ESTALE";
 	case STATE_FSAL_ERR_SEC:
 		return "STATE_FSAL_ERR_SEC";
-	case STATE_STATE_CONFLICT:
-		return "STATE_STATE_CONFLICT";
 	case STATE_QUOTA_EXCEEDED:
 		return "STATE_QUOTA_EXCEEDED";
 	case STATE_ASYNC_POST_ERROR:
@@ -152,8 +150,8 @@ const char *state_err_str(state_status_t err)
 		return "STATE_SIGNAL_ERROR";
 	case STATE_FILE_OPEN:
 		return "STATE_FILE_OPEN";
-	case STATE_FSAL_SHARE_DENIED:
-		return "STATE_FSAL_SHARE_DENIED";
+	case STATE_SHARE_DENIED:
+		return "STATE_SHARE_DENIED";
 	case STATE_MLINK:
 		return "STATE_MLINK";
 	case STATE_SERVERFAULT:
@@ -234,8 +232,6 @@ state_status_t cache_inode_status_to_state_status(cache_inode_status_t status)
 		return STATE_ESTALE;
 	case CACHE_INODE_FSAL_ERR_SEC:
 		return STATE_FSAL_ERR_SEC;
-	case CACHE_INODE_STATE_CONFLICT:
-		return STATE_STATE_CONFLICT;
 	case CACHE_INODE_QUOTA_EXCEEDED:
 		return STATE_QUOTA_EXCEEDED;
 	case CACHE_INODE_ASYNC_POST_ERROR:
@@ -255,8 +251,8 @@ state_status_t cache_inode_status_to_state_status(cache_inode_status_t status)
 		return STATE_FILE_BIG;
 	case CACHE_INODE_FILE_OPEN:
 		return STATE_FILE_OPEN;
-	case CACHE_INODE_FSAL_SHARE_DENIED:
-		return STATE_FSAL_SHARE_DENIED;
+	case CACHE_INODE_SHARE_DENIED:
+		return STATE_SHARE_DENIED;
 	case CACHE_INODE_FSAL_MLINK:
 		return STATE_MLINK;
 	case CACHE_INODE_NO_DATA:
@@ -356,7 +352,7 @@ state_status_t state_error_convert(fsal_status_t fsal_status)
 		return STATE_FILE_OPEN;
 
 	case ERR_FSAL_SHARE_DENIED:
-		return STATE_FSAL_SHARE_DENIED;
+		return STATE_SHARE_DENIED;
 
 	case ERR_FSAL_BLOCKED:
 		return STATE_LOCK_BLOCKED;
@@ -497,8 +493,7 @@ nfsstat4 nfs4_Errno_state(state_status_t error)
 		nfserror = NFS4ERR_STALE;
 		break;
 
-	case STATE_STATE_CONFLICT:
-	case STATE_FSAL_SHARE_DENIED:
+	case STATE_SHARE_DENIED:
 		nfserror = NFS4ERR_SHARE_DENIED;
 		break;
 
@@ -681,7 +676,7 @@ nfsstat3 nfs3_Errno_state(state_status_t error)
 		break;
 
 	case STATE_FSAL_DELAY:
-	case STATE_FSAL_SHARE_DENIED:
+	case STATE_SHARE_DENIED:
 		nfserror = NFS3ERR_JUKEBOX;
 		break;
 
@@ -732,7 +727,6 @@ nfsstat3 nfs3_Errno_state(state_status_t error)
 	case STATE_HASH_TABLE_ERROR:
 	case STATE_ASYNC_POST_ERROR:
 	case STATE_STATE_ERROR:
-	case STATE_STATE_CONFLICT:
 	case STATE_LOCK_CONFLICT:
 	case STATE_LOCK_BLOCKED:
 	case STATE_LOCK_DEADLOCK:

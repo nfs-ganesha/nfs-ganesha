@@ -109,8 +109,6 @@ cache_inode_err_str(cache_inode_status_t err)
 		return "CACHE_INODE_ESTALE";
 	case CACHE_INODE_FSAL_ERR_SEC:
 		return "CACHE_INODE_FSAL_ERR_SEC";
-	case CACHE_INODE_STATE_CONFLICT:
-		return "CACHE_INODE_STATE_CONFLICT";
 	case CACHE_INODE_QUOTA_EXCEEDED:
 		return "CACHE_INODE_QUOTA_EXCEEDED";
 	case CACHE_INODE_ASYNC_POST_ERROR:
@@ -139,8 +137,8 @@ cache_inode_err_str(cache_inode_status_t err)
 		return "CACHE_INODE_SERVERFAULT";
 	case CACHE_INODE_TOOSMALL:
 		return "CACHE_INODE_TOOSMALL";
-	case CACHE_INODE_FSAL_SHARE_DENIED:
-		return "CACHE_INODE_FSAL_SHARE_DENIED";
+	case CACHE_INODE_SHARE_DENIED:
+		return "CACHE_INODE_SHARE_DENIED";
 	case CACHE_INODE_BADNAME:
 		return "CACHE_INODE_BADNAME";
 	case CACHE_INODE_IN_GRACE:
@@ -680,7 +678,7 @@ cache_inode_error_convert(fsal_status_t fsal_status)
 		return CACHE_INODE_TOOSMALL;
 
 	case ERR_FSAL_SHARE_DENIED:
-		return CACHE_INODE_FSAL_SHARE_DENIED;
+		return CACHE_INODE_SHARE_DENIED;
 
 	case ERR_FSAL_IN_GRACE:
 		return CACHE_INODE_IN_GRACE;

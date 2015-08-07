@@ -542,7 +542,7 @@ state_status_t state_share_check_conflict(cache_entry_t *entry,
  out_conflict:
 
 	LogDebug(COMPONENT_STATE, "Share conflict detected: %s", cause);
-	return STATE_STATE_CONFLICT;
+	return STATE_SHARE_DENIED;
 }
 
 /**

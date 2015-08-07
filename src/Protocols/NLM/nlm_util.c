@@ -570,7 +570,7 @@ nlm4_stats nlm_convert_state_error(state_status_t status)
 		return NLM4_GRANTED;
 	case STATE_LOCK_CONFLICT:
 		return NLM4_DENIED;
-	case STATE_STATE_CONFLICT:
+	case STATE_SHARE_DENIED:
 		return NLM4_DENIED;
 	case STATE_MALLOC_ERROR:
 		return NLM4_DENIED_NOLOCKS;
