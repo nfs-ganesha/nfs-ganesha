@@ -1,11 +1,32 @@
 multilock test tool
 
+Copyright IBM Corporation, 2012
+ Contributor: Frank Filz  <ffilz@us.ibm.com>
+
+
+This software is a server that implements the NFS protocol.
+
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 3 of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
 OVERVIEW
 --------
 
 Multilock is a test tool for testing functionality of POSIX locks. It is
 directed at testing NFS server and client implementations. The architecture of
-the tool is a console program (ml_console) and client programs (currently 
+the tool is a console program (ml_console) and client programs (currently
 ml_posix_chold). The console directs any number of clients in a sequence of
 lock operations. The communication between the console and clients is a TCP
 connection, so the clients may be run on multiple hosts (for example, multiple
@@ -189,7 +210,7 @@ LOCK
 ----
 
 Lock requests a non-blocking lock. If the lock can not be granted, the command
-will return immediately with DENIED status. Locks may be read or write locks 
+will return immediately with DENIED status. Locks may be read or write locks
 (aka shared or exclusive).
 
 LOCKW
@@ -226,7 +247,7 @@ the clients.
 HELLO
 -----
 
-This is another do nothing command. It's real purpose is a response place holder 
+This is another do nothing command. It's real purpose is a response place holder
 for the console to be able to receive initial "HELLO" communications from the
 clients.
 
@@ -300,7 +321,7 @@ OPEN
 ----
 
 Returns OK or ERRNO. A successful OPEN will respond with the file number that
-results from opening the file. This should not be relied on to be any specific 
+results from opening the file. This should not be relied on to be any specific
 value and is merely provided for edification.
 
 CLOSE
@@ -504,7 +525,7 @@ WRITE, COMMENT, ALARM, HELLO, and QUIT. READ must specify the expected string,
 and the length of that string is sent to the client as the expected length. OPEN
 accepts any file_number.
 
-GRANTED is only valid with LOCK, and UNLOCK. 
+GRANTED is only valid with LOCK, and UNLOCK.
 
 AVAILABLE is only valid for TEST and LIST. For LIST, an empty list is expected.
 
