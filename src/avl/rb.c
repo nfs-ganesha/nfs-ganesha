@@ -1,22 +1,19 @@
 /*
  * rbtree - Implements a red-black tree with parent pointers.
  *
- * Copyright (C) 2010 Franck Bui-Huu <fbuihuu@gmail.com>
+ * Copyright (C) 2010-2014 Franck Bui-Huu <fbuihuu@gmail.com>
  *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public License
- * as published by the Free Software Foundation; version 2 of the
- * License.
+ * This file is part of libtree which is free software; you can
+ * redistribute it and/or modify it under the terms of the GNU Lesser
+ * General Public License as published by the Free Software
+ * Foundation; either version 2.1 of the License, or (at your option)
+ * any later version.
  *
  * This library is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
- * USA
+ * See the LICENSE file for license rights and limitations.
  */
 
 /*
@@ -28,7 +25,6 @@
  *     4. Path from a node to any leafs has the same number of BLACK nodes.
  *
  */
-#include "config.h"
 #include "avltree.h"
 
 /*
@@ -460,7 +456,7 @@ void rbtree_replace(struct rbtree_node *old, struct rbtree_node *new,
 	struct rbtree_node *parent = get_parent(old);
 
 	if (parent)
-		set_child(parent, new, parent->left == old);
+		set_child(new, parent, parent->left == old);
 	else
 		tree->root = new;
 

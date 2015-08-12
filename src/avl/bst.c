@@ -1,24 +1,20 @@
 /*
  * bstree - Implements a threaded binary search tree.
  *
- * Copyright (C) 2010 Franck Bui-Huu <fbuihuu@gmail.com>
+ * Copyright (C) 2010-2014 Franck Bui-Huu <fbuihuu@gmail.com>
  *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public License
- * as published by the Free Software Foundation; version 2 of the
- * License.
+ * This file is part of libtree which is free software; you can
+ * redistribute it and/or modify it under the terms of the GNU Lesser
+ * General Public License as published by the Free Software
+ * Foundation; either version 2.1 of the License, or (at your option)
+ * any later version.
  *
  * This library is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
- * USA
+ * See the LICENSE file for license rights and limitations.
  */
-#include "config.h"
 #include "avltree.h"
 
 /*
@@ -189,7 +185,8 @@ struct bstree_node *bstree_prev(const struct bstree_node *node)
  */
 static struct bstree_node *do_lookup(const struct bstree_node *key,
 				     const struct bstree *tree,
-				     struct bstree_node **pparent, int *is_left)
+				     struct bstree_node **pparent,
+				     int *is_left)
 {
 	struct bstree_node *node = tree->root;
 
@@ -325,19 +322,32 @@ void bstree_remove(struct bstree_node *node, struct bstree *tree)
 void bstree_replace(struct bstree_node *old, struct bstree_node *new,
 		    struct bstree *tree)
 {
-	struct bstree_node *parent;
+	struct bstree_node *parent, *next, *prev;
 	int is_left;
-
-	do_lookup(old, tree, &parent, &is_left);
-	if (parent)
-		set_child(new, parent, is_left);
-	else
-		tree->root = new;
 
 	if (tree->first == old)
 		tree->first = new;
 	if (tree->last == old)
 		tree->last = new;
+	if (tree->root == old)
+		tree->root = new;
+	else {
+		/*
+		 * Update the parent: do a full lookup to retrieve
+		 * it. There's probably a better way but it's bst...
+		 */
+		do_lookup(old, tree, &parent, &is_left);
+		if (parent)
+			set_child(new, parent, is_left);
+	}
+
+	/* update the thread links */
+	prev = bstree_prev(old);
+	if (prev && get_next(prev) == old)
+		set_next(new, prev);
+	next = bstree_next(old);
+	if (next && get_prev(next) == old)
+		set_prev(new, next);
 
 	*new = *old;
 }
