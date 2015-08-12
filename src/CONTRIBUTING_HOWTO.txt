@@ -1,10 +1,10 @@
+Contributing and Using Git
 
-Contributing and Using Git  -   Paul Sheer <paulsheer@gmail.com>   -   18 October 2012
-
-
+	Paul Sheer <paulsheer@gmail.com> - 18 October 2012
+	Dominique Martinet <dominique.martinet@cea.fr> - 2015-02-26
+	Frank Filz <ffilzlnx@mindspring.com> - 2015-08-12
 
 If you would like to contribute to nfs-ganesha development:
-
 
 There is a process to dumping the source (using git), modifying the
 source, and pushing your changes back. This process is quite simple and
@@ -24,21 +24,46 @@ First you need to fetch the code you wish to work on:
     git clone git://github.com/codeleader/nfs-ganesha.git --branch new-unstable-dev-project
     cd nfs-ganesha
 
+The current (as of 2015-08-12) branch for development is:
+
+    git clone git://github.com/nfs-ganesha/nfs-ganesha.git --branch next
+
 Now check what you have:
 
+    cd nfs-ganesha
     git status
 
-Now visit README.building for instructions on building and running.
+Now visit COMPILING_HOWTO.txt for instructions on building and running.
 
 Now fetch the latest updates:
 
     git remote update
 
+You will also need to pull in the libntirpc submodule:
+
+    git submodule update --init
+
+We also have several commit hooks, please install them:
+
+    src/scripts/git_hooks/install_git_hooks.sh
+
+Install the Gerrithub change id commit hook
+
+    scp -p -P 29418 USERNAMEHERE@review.gerrithub.io:hooks/commit-msg .git/hooks/
+
+You may also want to do the following so you don't have to always provide your
+identity:
+
+    git config user.name "Your Real Name"
+    git config user.email "you@some.place"
+
+You can use the --global option to set these for all your git repos.
+
 Now do your development work.
 
 When you are developing, testing etc.:
 
-    git commit -a
+    git commit --signoff -a
 
 There may be updates from other developers. Update to their new branch
 "more-stable-dev-project" to include other work other people may have
@@ -46,18 +71,55 @@ done:
 
     git rebase origin/more-stable-dev-project
 
-Then push your work up as follows:
+Then push your work up to your github as follows:
 
     ssh-keygen
     cat ~/.ssh/id_rsa.pub
 
 Copy the output into your ssh keys in your github.com account.
 
-Then,
+Pushing to your github is optional, but does provide some backup for your work.
 
-    git remote add paul_github git@github.com:paulsheer/nfs-ganesha.git
-    git push paul_github new-unstable-dev-project:more-stable-dev-project
+To push to the project, we now use Gerrithub for code submission and review.
 
+First, when creating a gerrithub account (first time sign-in), do NOT copy your
+ganesha repo unless you plan to receive changes from someone else. It makes NO
+sense to push changes to your own repo (except for the gatekeeper)
 
+Now you have an account, you want to push some patch for us to review to
+ffilz/nfs-ganesha - you need to start by adding a new remote.
 
+You have a list of targets (anonymous http, ssh, http) to add on the project
+page:
+
+    https://review.gerrithub.io/#/admin/projects/ffilz/nfs-ganesha
+
+If your network allows it, ssh is easier. http needs you to setup a generated
+password (settings page, "HTTP Password" menu on the left) Also make sure you
+use https (not http)
+
+so taking an example:
+
+    git remote add gerrit ssh://USERNAMEHERE@review.gerrithub.io:29418/ffilz/nfs-ganesha
+    git fetch gerrit
+    git log gerrit/next..HEAD
+
+This should ONLY list the commits you want to push! Also, all should have a Change-Id.
+
+Finally push your patches to Gerrithub:
+
+    git push gerrit HEAD:refs/for/next
+
+That's it. If you edit a commit, just push it again, gerrit will notice it has
+the same Change-Id and update your change with a new patch set. Please make
+sure you don't change the Change-Id if you update the patch otherwise this
+creates disconnected review.
+
+If you want specific people to review your code, please go to Gerrithub and
+add them.
+
+Please note that you can only push changes to another repo that you wrote,
+gerrithub will check the mail address you're using and ask you to add any
+different mail address to your profile (settings -> Contact information).
+Well, just read the text if you get an error, it's usually clear enough :)
 
