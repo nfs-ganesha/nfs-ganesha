@@ -49,8 +49,7 @@
 #define AT_EMPTY_PATH 0x1000
 #endif
 
-static inline int vfs_stat_by_handle(int mountfd, vfs_file_handle_t *fh,
-				     struct stat *buf, int flags)
+static inline int vfs_stat_by_handle(int mountfd, struct stat *buf)
 {
 	int ret;
 	/* BSD doesn't (yet) have AT_EMPTY_PATH support, so just use fstat() */

@@ -413,7 +413,7 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 	if (dir_fd < 0)
 		return fsalstat(status.major, -dir_fd);
 	/** @todo: not sure what this accomplishes... */
-	retval = vfs_stat_by_handle(dir_fd, myself->handle, &stat, flags);
+	retval = vfs_stat_by_handle(dir_fd, &stat);
 	if (retval < 0) {
 		retval = errno;
 		goto direrr;
@@ -529,7 +529,7 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 	dir_fd = vfs_fsal_open(myself, flags, &status.major);
 	if (dir_fd < 0)
 		return fsalstat(status.major, -dir_fd);
-	retval = vfs_stat_by_handle(dir_fd, myself->handle, &stat, flags);
+	retval = vfs_stat_by_handle(dir_fd, &stat);
 	if (retval < 0) {
 		retval = errno;
 		goto direrr;
@@ -676,7 +676,7 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 	dir_fd = vfs_fsal_open(myself, flags, &status.major);
 	if (dir_fd < 0)
 		goto errout;
-	retval = vfs_stat_by_handle(dir_fd, myself->handle, &stat, flags);
+	retval = vfs_stat_by_handle(dir_fd, &stat);
 	if (retval < 0) {
 		retval = errno;
 		goto direrr;
@@ -784,7 +784,7 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 		return fsalstat(status.major, -dir_fd);
 	flags |= O_NOFOLLOW;	/* BSD needs O_NOFOLLOW for
 				 * fhopen() of symlinks */
-	retval = vfs_stat_by_handle(dir_fd, myself->handle, &stat, flags);
+	retval = vfs_stat_by_handle(dir_fd, &stat);
 	if (retval < 0) {
 		retval = errno;
 		goto direrr;
@@ -1264,8 +1264,7 @@ static struct closefd vfs_fsal_open_and_stat(struct fsal_export *exp,
 			return cfd;
 		}
 		cfd.close_fd = true;
-		retval = vfs_stat_by_handle(cfd.fd, myself->handle,
-					    stat, open_flags);
+		retval = vfs_stat_by_handle(cfd.fd, stat);
 		func = "vfs_stat_by_handle";
 		break;
 	}
@@ -2021,7 +2020,7 @@ fsal_status_t vfs_create_handle(struct fsal_export *exp_hdl,
 			goto errout;
 		}
 
-		retval = vfs_stat_by_handle(fd, fh, &obj_stat, flags);
+		retval = vfs_stat_by_handle(fd, &obj_stat);
 	}
 
 	/* Test the result of stat */
