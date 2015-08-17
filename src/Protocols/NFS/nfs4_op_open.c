@@ -91,10 +91,6 @@ static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t *data,
 	state_status_t state_status = STATE_SUCCESS;
 	/* Return value of Cache inode operations */
 	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
-	/* Iterator for state list */
-	struct glist_head *glist = NULL;
-	/* Current state being investigated */
-	state_t *state_iterate = NULL;
 	/* The open state for the file */
 	state_t *file_state = NULL;
 	/* Tracking data for the open state */
@@ -186,57 +182,21 @@ static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t *data,
 	/* Try to find if the same open_owner already has acquired a
 	 * stateid for this file
 	 */
-	glist_for_each(glist, &data->current_entry->list_of_states) {
-		state_iterate = glist_entry(glist, state_t, state_list);
-		state_owner_t *si_owner;
+	file_state = nfs4_State_Get_Entry(data->current_entry, owner);
 
-		if (state_iterate->state_type != STATE_TYPE_SHARE)
-			continue;
-
-		si_owner = get_state_owner_ref(state_iterate);
-
-		if (si_owner == NULL) {
-			/* This state is going stale, can't be same owner. */
-			continue;
-		}
+	if (file_state != NULL) {
+		*new_state = false;
 
 		if (isFullDebug(COMPONENT_STATE)) {
-			char str1[LOG_BUFF_LEN / 3];
-			char str2[LOG_BUFF_LEN / 3];
-			char str3[LOG_BUFF_LEN / 3];
-			struct display_buffer dspbuf1 = {
-						sizeof(str1), str1, str1};
-			struct display_buffer dspbuf2 = {
-						sizeof(str2), str2, str2};
-			struct display_buffer dspbuf3 = {
-						sizeof(str3), str3, str3};
+			char str[LOG_BUFF_LEN];
+			struct display_buffer dspbuf = {sizeof(str), str, str};
 
-			display_owner(&dspbuf1, si_owner);
-			display_owner(&dspbuf2, owner);
-			display_stateid(&dspbuf3, state_iterate);
+			display_stateid(&dspbuf, file_state);
 
 			LogFullDebug(COMPONENT_STATE,
-				     "Comparing %s owner %s to open owner %s",
-				     str3, str1, str2);
+				     "Found existing state %s",
+				     str);
 		}
-
-		/* Check if open_owner is the same.  Since owners are
-		 * created/looked up we should be able to just
-		 * compare pointers.
-		 */
-		if (si_owner == owner) {
-			/* We'll be re-using the found state */
-			file_state = state_iterate;
-			*new_state = false;
-			inc_state_t_ref(file_state);
-
-			/* Release the owner ref taken above */
-			dec_state_owner_ref(si_owner);
-			break;
-		}
-
-		/* Release the owner ref taken above */
-		dec_state_owner_ref(si_owner);
 	}
 
 	if (*new_state) {

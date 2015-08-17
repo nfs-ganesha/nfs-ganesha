@@ -537,8 +537,9 @@ int nfs4_State_Set(state_t *state)
 		return 0;
 	}
 
-	/* If stateid is a LOCK state, we also index by entry/owner */
-	if (state->state_type != STATE_TYPE_LOCK)
+	/* If stateid is a LOCK or SHARE state, we also index by entry/owner */
+	if (state->state_type != STATE_TYPE_LOCK &&
+	    state->state_type != STATE_TYPE_SHARE)
 		return 1;
 
 	buffkey.addr = state;
@@ -696,8 +697,11 @@ bool nfs4_State_Del(state_t *state)
 
 	assert(state == old_value.addr);
 
-	/* If stateid is a LOCK state, we had also indexed by entry/owner */
-	if (state->state_type != STATE_TYPE_LOCK)
+	/* If stateid is a LOCK or SHARE state, we had also indexed by
+	 * entry/owner
+	 */
+	if (state->state_type != STATE_TYPE_LOCK &&
+	    state->state_type != STATE_TYPE_SHARE)
 		return true;
 
 	/* Delete the stateid hashed by entry/owner.
