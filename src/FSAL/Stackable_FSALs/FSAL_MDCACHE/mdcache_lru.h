@@ -107,11 +107,6 @@ extern pool_t *mdcache_entry_pool;
 #define LRU_REQ_INITIAL  0x0002
 
 /**
- * The caller is doing something that doesn't care if entry is dead
- */
-#define LRU_REQ_STALE_OK  0x0004
-
-/**
  * qlane is locked
  */
 #define LRU_UNREF_QLOCKED 0x0008
@@ -154,10 +149,9 @@ void mdcache_lru_cleanup_try_push(mdcache_entry_t *entry);
 void mdcache_lru_unref(mdcache_entry_t *entry, uint32_t flags);
 void mdcache_lru_putback(mdcache_entry_t *entry, uint32_t flags);
 void lru_wake_thread(void);
-fsal_status_t mdcache_inc_pin_ref(mdcache_entry_t *entry);
-void mdcache_unpinnable(mdcache_entry_t *entry);
-void mdcache_dec_pin_ref(mdcache_entry_t *entry, bool closefile);
-bool mdcache_is_pinned(mdcache_entry_t *entry);
+fsal_status_t mdcache_inc_noscan_ref(mdcache_entry_t *entry);
+void mdcache_dec_noscan_ref(mdcache_entry_t *entry);
+bool mdcache_is_noscan(mdcache_entry_t *entry);
 void mdcache_lru_kill_for_shutdown(mdcache_entry_t *entry);
 
 /**

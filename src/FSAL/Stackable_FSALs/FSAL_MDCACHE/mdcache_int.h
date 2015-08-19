@@ -77,11 +77,12 @@ enum lru_q_id {
 	LRU_ENTRY_NONE = 0, /* entry not queued */
 	LRU_ENTRY_L1,
 	LRU_ENTRY_L2,
-	LRU_ENTRY_PINNED,
+	LRU_ENTRY_NOSCAN,
 	LRU_ENTRY_CLEANUP
 };
 
-#define LRU_CLEANED 0x00000001
+#define LRU_CLEANUP 0x00000001 /* Entry is on cleanup queue */
+#define LRU_CLEANED 0x00000002 /* Entry has been cleaned */
 
 typedef struct mdcache_lru__ {
 	struct glist_head q;	/*< Link in the physical deque
@@ -90,7 +91,7 @@ typedef struct mdcache_lru__ {
 	enum lru_q_id qid;	/*< Queue identifier */
 	int32_t refcnt;		/*< Reference count.  This is signed to make
 				   mistakes easy to see. */
-	int32_t pin_refcnt;	/*< Unpin it only if this goes down to zero */
+	int32_t noscan_refcnt;	/*< Count of times marked noscan */
 	uint32_t flags;		/*< Status flags; MUST use atomic ops */
 	uint32_t lane;		/*< The lane in which an entry currently
 				 *< resides, so we can lock the deque and
@@ -152,8 +153,8 @@ static const uint32_t MDCACHE_FLAG_ATTR_HAVE = 0x10;
 static const uint32_t MDCACHE_FLAG_CONTENT_HAVE = 0x20;
 /** Close a file even with caching enabled */
 static const uint32_t MDCACHE_FLAG_REALLYCLOSE = 0x80;
-/** File can't be pinned, so close need not check. */
-static const uint32_t MDCACHE_FLAG_NOT_PINNED = 0x100;
+/*[>* File can't be pinned, so close need not check. <]*/
+/*static const uint32_t MDCACHE_FLAG_NOT_PINNED = 0x100;*/
 /** Open for reclaim. */
 static const uint32_t MDCACHE_FLAG_RECLAIM = 0x200;
 /** File is being cleaned up so close need not take content_lock */
