@@ -151,6 +151,8 @@ cache_inode_err_str(cache_inode_status_t err)
 		return "CACHE_INODE_NO_DATA";
 	case CACHE_INODE_BAD_RANGE:
 		return "CACHE_INODE_BAD_RANGE";
+	case CACHE_INODE_LOCKED:
+		return "CACHE_INODE_LOCKED";
 	}
 	return "unknown";
 }
@@ -679,6 +681,9 @@ cache_inode_error_convert(fsal_status_t fsal_status)
 
 	case ERR_FSAL_SHARE_DENIED:
 		return CACHE_INODE_SHARE_DENIED;
+
+	case ERR_FSAL_LOCKED:
+		return CACHE_INODE_LOCKED;
 
 	case ERR_FSAL_IN_GRACE:
 		return CACHE_INODE_IN_GRACE;

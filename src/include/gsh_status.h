@@ -140,6 +140,7 @@ typedef enum cache_inode_status {
 	CACHE_INODE_BADHANDLE = 44,
 	CACHE_INODE_NO_DATA = 45,
 	CACHE_INODE_BAD_RANGE = 46,
+	CACHE_INODE_LOCKED = 47,
 } cache_inode_status_t;
 
 #endif				/* !GSH_STATUS_H */

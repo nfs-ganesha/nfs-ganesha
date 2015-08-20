@@ -268,6 +268,8 @@ state_status_t cache_inode_status_to_state_status(cache_inode_status_t status)
 		return STATE_BADHANDLE;
 	case CACHE_INODE_BAD_RANGE:
 		return STATE_BAD_RANGE;
+	case CACHE_INODE_LOCKED:
+		return STATE_LOCKED;
 	}
 	return STATE_CACHE_INODE_ERR;
 }
@@ -365,6 +367,9 @@ state_status_t state_error_convert(fsal_status_t fsal_status)
 
 	case ERR_FSAL_BAD_RANGE:
 		return STATE_BAD_RANGE;
+
+	case ERR_FSAL_LOCKED:
+		return STATE_LOCKED;
 
 	case ERR_FSAL_DQUOT:
 	case ERR_FSAL_NAMETOOLONG:

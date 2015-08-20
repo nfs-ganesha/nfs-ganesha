@@ -221,6 +221,7 @@ bool nfs_RetryableError(cache_inode_status_t cache_status)
 	case CACHE_INODE_FSAL_MLINK:
 	case CACHE_INODE_TOOSMALL:
 	case CACHE_INODE_SHARE_DENIED:
+	case CACHE_INODE_LOCKED:
 	case CACHE_INODE_SERVERFAULT:
 	case CACHE_INODE_BADNAME:
 	case CACHE_INODE_CROSS_JUNCTION:

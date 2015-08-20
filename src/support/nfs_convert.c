@@ -609,6 +609,10 @@ nfsstat4 nfs4_Errno_verbose(cache_inode_status_t error, const char *where)
 		nfserror = NFS4ERR_SHARE_DENIED;
 		break;
 
+	case CACHE_INODE_LOCKED:
+		nfserror = NFS4ERR_LOCKED;
+		break;
+
 	case CACHE_INODE_IN_GRACE:
 		nfserror = NFS4ERR_GRACE;
 		break;
@@ -733,6 +737,7 @@ nfsstat3 nfs3_Errno_verbose(cache_inode_status_t error, const char *where)
 
 	case CACHE_INODE_DELAY:
 	case CACHE_INODE_SHARE_DENIED:
+	case CACHE_INODE_LOCKED:
 		nfserror = NFS3ERR_JUKEBOX;
 		break;
 

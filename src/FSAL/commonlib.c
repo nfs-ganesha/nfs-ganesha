@@ -324,6 +324,8 @@ const char *msg_fsal_err(fsal_errors_t fsal_err)
 		return "Lock Blocked";
 	case ERR_FSAL_SHARE_DENIED:
 		return "Share Denied";
+	case ERR_FSAL_LOCKED:
+		return "Locked";
 	case ERR_FSAL_TIMEOUT:
 		return "Timeout";
 	case ERR_FSAL_FILE_OPEN:
