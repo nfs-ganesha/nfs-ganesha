@@ -6,21 +6,10 @@ SET( CMAKE_C_FLAGS_MAINTAINER "-Werror -Wall -Wimplicit -Wformat -Wmissing-brace
     "Flags used by the C compiler during maintainer builds."
     FORCE )
 
-# These ultimately must be conditional, and of course are also toolchain
-# specific (*sigh*).  Maybe at some point we should build up a token list and
-# then expand it into the linker args (and likewise other fixed strings here)
-IF (GOLD_LINKER)
-  SET(WARN_ONCE "")
-ELSE(GOLD_LINKER)
-  SET(WARN_ONCE ",--warn-once")
-ENDIF(GOLD_LINKER)
-
-SET( CMAKE_EXE_LINKER_FLAGS_MAINTAINER
-    "-Wl,--warn-unresolved-symbols" CACHE STRING
+SET( CMAKE_EXE_LINKER_FLAGS_MAINTAINER CACHE STRING
     "Flags used for linking binaries during maintainer builds."
     FORCE )
-SET( CMAKE_SHARED_LINKER_FLAGS_MAINTAINER
-    "-Wl,--warn-unresolved-symbols${WARN_ONCE}" CACHE STRING
+SET( CMAKE_SHARED_LINKER_FLAGS_MAINTAINER CACHE STRING
     "Flags used by the shared libraries linker during maintainer builds."
     FORCE )
 MARK_AS_ADVANCED(
