@@ -524,6 +524,20 @@ int nfs4_op_write_same(struct nfs_argop4 *op, compound_data_t *data,
 }
 
 /**
+ * @brief Free memory allocated for WRITE_SAME result
+ *
+ * This function frees any memory allocated for the result of the
+ * NFS4_OP_WRITE_SAME operation.
+ *
+ * @param[in,out] resp nfs4_op results
+*
+ */
+void nfs4_op_write_same_Free(nfs_resop4 *resp)
+{
+	/* Nothing to be done */
+}
+
+/**
  * @brief The NFS4_OP_ALLOCATE
  * This functions handles the NFS4_OP_ALLOCATE operation in NFSv4.2. This
  * function can be called only from nfs4_Compound.
