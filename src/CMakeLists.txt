@@ -237,6 +237,29 @@ endif( "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_GREATER "2.6" )
 # CUnit
 option(USE_CUNIT "Use Cunit test framework" OFF)
 
+# Blkin (Zipkin) Tracing
+option(USE_BLKIN "Use Blkin/Zipkin trace framework" OFF)
+option(BLKIN_PREFIX "Blkin installation prefix" "/opt/blkin")
+if(USE_BLKIN)
+  find_package(LTTng)
+  if(LTTNG_FOUND)
+  else(LTTNG_FOUND)
+    message(WARNING "LTTng libraries not found. Disabling USE_BLKIN")
+    set(USE_BLKIN OFF)
+  endif(LTTNG_FOUND)
+  if (NOT BLKIN_PREFIX)
+    set(BLKIN_PREFIX "/opt/blkin")
+  endif(NOT BLKIN_PREFIX)
+  set(BLKIN_PREFIX ${BLKIN_PREFIX} CACHE PATH "Blkin path")
+  find_library(BLKIN NAMES blkin PATHS "${BLKIN_PREFIX}/lib" REQUIRED)
+  find_library(BLKIN_INIT NAMES blkin_init PATHS "${BLKIN_REFIX}/lib" REQUIRED)
+  find_library(LTTNG NAMES lttng-ust REQUIRED)
+  # build flags
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DHAVE_BLKIN -I${BLKIN_PREFIX}/include")
+  set(SYSTEM_LIBRARIES ${BLKIN} ${SYSTEM_LIBRARIES})
+  set(SYSTEM_LIBRARIES ${LTTNG}  ${SYSTEM_LIBRARIES})
+endif(USE_BLKIN)
+
 # NFS RDMA
 option(USE_NFS_MSK "enable NFS/MSK support" OFF)
 
@@ -1008,6 +1031,7 @@ message(STATUS "USE_GUI_ADMIN_TOOLS = ${USE_GUI_ADMIN_TOOLS}")
 message(STATUS "MODULES_PATH = ${MODULES_PATH}")
 message(STATUS "USE_TSAN = ${USE_TSAN}")
 message(STATUS "USE_LTTNG = ${USE_LTTNG}")
+message(STATUS "USE_BLKIN = ${USE_BLKIN}")
 
 #force command line options to be stored in cache
 set(USE_FSAL_VFS ${USE_FSAL_VFS}

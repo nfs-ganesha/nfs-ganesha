@@ -1221,6 +1221,13 @@ void nfs_rpc_enqueue_req(request_data_t *reqdata)
 	struct req_q_pair *qpair;
 	struct req_q *q;
 
+#if defined(HAVE_BLKIN)
+	BLKIN_TIMESTAMP(
+		&reqdata->r_u.req.svc.bl_trace,
+		&reqdata->r_u.req.xprt->blkin.endp,
+		"enqueue-enter");
+#endif
+
 	nfs_request_q = &nfs_req_st.reqs.nfs_request_q;
 
 	switch (reqdata->rtype) {
@@ -1264,6 +1271,20 @@ void nfs_rpc_enqueue_req(request_data_t *reqdata)
 
 	atomic_inc_uint32_t(&enqueued_reqs);
 
+#if defined(HAVE_BLKIN)
+	/* log the queue depth */
+	BLKIN_KEYVAL_INTEGER(
+		&reqdata->r_u.req.svc.bl_trace,
+		&reqdata->r_u.req.xprt->blkin.endp,
+		"reqs-est",
+		nfs_rpc_outstanding_reqs_est()
+		);
+
+	BLKIN_TIMESTAMP(
+		&reqdata->r_u.req.svc.bl_trace,
+		&reqdata->r_u.req.xprt->blkin.endp,
+		"enqueue-exit");
+#endif
 	LogDebug(COMPONENT_DISPATCH,
 		 "enqueued req, q %p (%s %p:%p) size is %d (enq %u deq %u)",
 		 q, qpair->s, &qpair->producer, &qpair->consumer, q->size,
@@ -1465,8 +1486,22 @@ request_data_t *nfs_rpc_dequeue_req(nfs_worker_data_t *worker)
 		PTHREAD_MUTEX_unlock(&wqe->lwe.mtx);
 		LogFullDebug(COMPONENT_DISPATCH, "wqe wakeup %p", wqe);
 		goto retry_deq;
-	}
+	} /* !reqdata */
 
+#if defined(HAVE_BLKIN)
+	/* thread id */
+	BLKIN_KEYVAL_INTEGER(
+		&reqdata->r_u.req.svc.bl_trace,
+		&reqdata->r_u.req.xprt->blkin.endp,
+		"worker-id",
+		worker->worker_index
+		);
+
+	BLKIN_TIMESTAMP(
+		&reqdata->r_u.req.svc.bl_trace,
+		&reqdata->r_u.req.xprt->blkin.endp,
+		"dequeue-req");
+#endif
 	return reqdata;
 }
 
@@ -1764,9 +1799,31 @@ enum xprt_stat thr_decode_rpc_request(void *context, SVCXPRT *xprt)
 		 xprt, context);
 
 	reqdata = alloc_nfs_request(xprt);	/* ! NULL */
+#if HAVE_BLKIN
+	blkin_init_new_trace(&reqdata->r_u.req.svc.bl_trace, "nfs-ganesha",
+			&xprt->blkin.endp);
+#endif
+
 
 	DISP_RLOCK(xprt);
+
+#if defined(HAVE_BLKIN)
+	BLKIN_TIMESTAMP(
+		&reqdata->r_u.req.svc.bl_trace, &xprt->blkin.endp, "pre-recv");
+#endif
+
 	recv_status = SVC_RECV(xprt, &reqdata->r_u.req.svc);
+
+#if defined(HAVE_BLKIN)
+	BLKIN_TIMESTAMP(
+		&reqdata->r_u.req.svc.bl_trace, &xprt->blkin.endp, "post-recv");
+
+	BLKIN_KEYVAL_INTEGER(
+		&reqdata->r_u.req.svc.bl_trace,
+		&reqdata->r_u.req.xprt->blkin.endp,
+		"rq-xid",
+		reqdata->r_u.req.svc.rq_xid);
+#endif
 
 	LogFullDebug(COMPONENT_DISPATCH,
 		     "SVC_RECV on socket %d returned %s, xid=%u", xprt->xp_fd,

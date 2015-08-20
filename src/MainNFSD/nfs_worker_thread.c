@@ -726,6 +726,13 @@ void nfs_rpc_execute(request_data_t *reqdata)
 	tracepoint(nfs_rpc, start, reqdata);
 #endif
 
+#if defined(HAVE_BLKIN)
+	BLKIN_TIMESTAMP(
+		&reqdata->r_u.req.svc.bl_trace,
+		&reqdata->r_u.req.xprt->blkin.endp,
+		"rpc_execute-start");
+#endif
+
 	/* Initialize permissions to allow nothing */
 	export_perms.options = 0;
 	export_perms.anonymous_uid = (uid_t) ANON_UID;
@@ -778,6 +785,12 @@ void nfs_rpc_execute(request_data_t *reqdata)
 	 * we measure all time stats as intervals (elapsed nsecs) from
 	 * server boot time.  This gets high precision with simple 64 bit math.
 	 */
+#if defined(HAVE_BLKIN)
+	BLKIN_TIMESTAMP(
+		&reqdata->r_u.req.svc.bl_trace,
+		&reqdata->r_u.req.xprt->blkin.endp,
+		"rpc_execute-have-clientid");
+#endif
 	now(&timer_start);
 	op_ctx->start_time = timespec_diff(&ServerBootTime, &timer_start);
 	op_ctx->queue_wait =
@@ -1252,13 +1265,40 @@ void nfs_rpc_execute(request_data_t *reqdata)
 			   (op_ctx->export != NULL
 			    ? op_ctx->export->export_id : -1));
 #endif
+
+#if defined(HAVE_BLKIN)
+		BLKIN_TIMESTAMP(
+			&reqdata->r_u.req.svc.bl_trace,
+			&reqdata->r_u.req.xprt->blkin.endp,
+			"rpc_execute-pre-service");
+
+		BLKIN_KEYVAL_STRING(
+			&reqdata->r_u.req.svc.bl_trace,
+			&reqdata->r_u.req.xprt->blkin.endp,
+			"op-name",
+			reqdesc->funcname
+			);
+
+		BLKIN_KEYVAL_INTEGER(
+			&reqdata->r_u.req.svc.bl_trace,
+			&reqdata->r_u.req.xprt->blkin.endp,
+			"export-id",
+			(op_ctx->export != NULL)
+			? op_ctx->export->export_id : -1);
+#endif
 		rc = reqdesc->service_function(arg_nfs, &reqdata->r_u.req.svc,
-						res_nfs);
+					res_nfs);
 
 #ifdef USE_LTTNG
-		tracepoint(nfs_rpc, op_end, reqdata);
+	tracepoint(nfs_rpc, op_end, reqdata);
 #endif
 
+#if defined(HAVE_BLKIN)
+		BLKIN_TIMESTAMP(
+			&reqdata->r_u.req.svc.bl_trace,
+			&reqdata->r_u.req.xprt->blkin.endp,
+			"rpc_execute-post-service");
+#endif
 	}
 
  req_error:
