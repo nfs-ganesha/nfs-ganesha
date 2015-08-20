@@ -453,6 +453,11 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 	status.major = ERR_FSAL_NO_ERROR;
 #ifdef ENABLE_VFS_DEBUG_ACL
 	status = (*handle)->obj_ops.setattrs(*handle, attrib);
+	if (FSAL_IS_ERROR(status)) {
+		/* Release the handle we just allocated. */
+		(*handle)->obj_ops.release(*handle);
+		*handle = NULL;
+	}
 #endif /* ENABLE_VFS_DEBUG_ACL */
 	return status;
 
@@ -564,6 +569,11 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 	status.major = ERR_FSAL_NO_ERROR;
 #ifdef ENABLE_VFS_DEBUG_ACL
 	status = (*handle)->obj_ops.setattrs(*handle, attrib);
+	if (FSAL_IS_ERROR(status)) {
+		/* Release the handle we just allocated. */
+		(*handle)->obj_ops.release(*handle);
+		*handle = NULL;
+	}
 #endif /* ENABLE_VFS_DEBUG_ACL */
 	return status;
 
@@ -691,6 +701,11 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 		status.major = ERR_FSAL_NO_ERROR;
 #ifdef ENABLE_VFS_DEBUG_ACL
 		status = (*handle)->obj_ops.setattrs(*handle, attrib);
+		if (FSAL_IS_ERROR(status)) {
+			/* Release the handle we just allocated. */
+			(*handle)->obj_ops.release(*handle);
+			*handle = NULL;
+		}
 #endif /* ENABLE_VFS_DEBUG_ACL */
 		return status;
 	}
@@ -810,6 +825,11 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 	status.major = ERR_FSAL_NO_ERROR;
 #ifdef ENABLE_VFS_DEBUG_ACL
 	status = (*handle)->obj_ops.setattrs(*handle, attrib);
+	if (FSAL_IS_ERROR(status)) {
+		/* Release the handle we just allocated. */
+		(*handle)->obj_ops.release(*handle);
+		*handle = NULL;
+	}
 #endif /* ENABLE_VFS_DEBUG_ACL */
 	return status;
 
