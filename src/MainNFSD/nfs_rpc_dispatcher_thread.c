@@ -1617,34 +1617,6 @@ static inline enum auth_stat AuthenticateRequest(nfs_request_t *reqnfs,
 	return AUTH_OK;
 }
 
-#if 0
-static inline enum xprt_stat nfs_rpc_continue_decoding(SVCXPRT *xprt,
-						       enum xprt_stat stat)
-{
-	/* check per-xprt quota */
-	if (unlikely(xprt->xp_requests
-		     > nfs_param.core_param.dispatch_max_reqs_xprt))
-		return stat;
-
-	switch (stat) {
-	case XPRT_IDLE:
-		{
-			struct pollfd fd;
-
-			fd.fd = xprt->xp_fd;
-			fd.events = POLLIN;
-			if (poll(&fd, 1, 0) > 0) /* ms, ie, now */
-				stat = XPRT_MOREREQS;
-		}
-		break;
-	default:
-		break;
-	}			/* switch */
-
-	return stat;
-}
-#endif
-
 /**
  * @brief Helper function to validate rpc calls.
  *
@@ -1908,14 +1880,6 @@ enum xprt_stat thr_decode_rpc_request(void *context, SVCXPRT *xprt)
 	/* if recv failed, request is not enqueued */
 	if (!enqueued)
 		free_nfs_request(reqdata);
-
-#if 0
-	/* XXX dont bother re-arming epoll for xprt if there is data
-	 * waiting.  this is logically harmless, since the predicate observes
-	 * request quotas.  however, empirically, the function is infrequently
-	 * effective. */
-	stat = nfs_rpc_continue_decoding(xprt, stat);
-#endif
 
 	return stat;
 }
