@@ -853,9 +853,6 @@ state_status_t state_share_downgrade(cache_entry_t *entry,
 state_status_t state_share_set_prev(state_t *state,
 				    union state_data *state_data);
 
-state_status_t state_share_check_prev(state_t *state,
-				      union state_data *state_data);
-
 enum share_bypass_modes {
 	SHARE_BYPASS_NONE,
 	SHARE_BYPASS_READ,

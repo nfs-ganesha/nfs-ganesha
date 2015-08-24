@@ -468,30 +468,6 @@ state_status_t state_share_set_prev(state_t *state,
 }
 
 /**
- * @brief Check if the state has seen the share modes before
- *
- * This is needed when we check validity of open downgrade.
- *
- * @param[in] state      State to check
- * @param[in] state_data Alleged previous mode
- */
-state_status_t state_share_check_prev(state_t *state,
-				      union state_data *state_data)
-{
-	state_status_t status = STATE_SUCCESS;
-
-	if ((state->state_data.share.
-	     share_access_prev & (1 << state_data->share.share_access)) == 0)
-		return STATE_STATE_ERROR;
-
-	if ((state->state_data.share.
-	     share_deny_prev & (1 << state_data->share.share_deny)) == 0)
-		return STATE_STATE_ERROR;
-
-	return status;
-}
-
-/**
  * @brief Check for share conflict
  *
  * The state lock _must_ be held for this call.
