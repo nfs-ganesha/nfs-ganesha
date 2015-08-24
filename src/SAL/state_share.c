@@ -746,8 +746,167 @@ void remove_nlm_share(state_t *state, bool *unpin)
 
 	PTHREAD_MUTEX_unlock(&owner->so_mutex);
 
-	/* Release the state_t reference for active share. */
+	/* Release the state_t reference for active share. If extended FSAL
+	 * operations are supported, this will close the file when the last
+	 * reference is released.
+	 */
 	dec_state_t_ref(state);
+}
+
+/**
+ * @brief Implement NLM share call with FSAL extended ops
+ *
+ * @param[in,out] entry        File on which to operate
+ * @param[in]     export       Export through which file is accessed
+ * @param[in]     share_access Share mode requested
+ * @param[in]     share_deny   Deny mode requested
+ * @param[in]     owner        Share owner
+ * @param[in]     state        state_t to manage the share
+ * @param[in]     reclaim      Indicates if this is a reclaim
+ * @param[in]     unshare      Indicates if this was an unshare
+ *
+ * @return State status.
+ */
+static state_status_t state_nlm_share2(cache_entry_t *entry,
+				       int share_access,
+				       int share_deny,
+				       state_owner_t *owner,
+				       state_t *state,
+				       bool reclaim,
+				       bool unshare)
+{
+	cache_inode_status_t cache_status;
+	fsal_openflags_t openflags = 0;
+	bool unpin = true;
+	state_nlm_client_t *client = owner->so_owner.so_nlm_owner.so_client;
+
+	cache_status = cache_inode_lru_ref(entry, LRU_FLAG_NONE);
+
+	if (cache_status != CACHE_INODE_SUCCESS) {
+		LogDebug(COMPONENT_STATE, "Could not ref file");
+		return cache_inode_status_to_state_status(cache_status);
+	}
+
+	cache_status = cache_inode_inc_pin_ref(entry);
+
+	if (cache_status != CACHE_INODE_SUCCESS) {
+		LogDebug(COMPONENT_STATE, "Could not pin file");
+		cache_inode_lru_unref(entry, LRU_FLAG_NONE);
+		return cache_inode_status_to_state_status(cache_status);
+	}
+
+	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
+
+	if (unshare) {
+		unsigned int old_access;
+		unsigned int old_deny;
+
+		old_access = state->state_data.nlm_share.share_access;
+		old_deny = state->state_data.nlm_share.share_deny;
+
+		/* Remove share_access from old_access */
+		share_access = old_access - (old_access & share_access);
+
+		/* Remove share_deny from old_deny */
+		share_deny = old_deny - (old_deny & share_deny);
+	}
+
+	/* Assume new access/deny is update in determining the openflags. */
+	if ((share_access & fsa_R) != 0)
+		openflags |= FSAL_O_READ;
+
+	if ((share_access & fsa_W) != 0)
+		openflags |= FSAL_O_WRITE;
+
+	if (openflags == FSAL_O_CLOSED) {
+		/* This share or unshare is removing the final share. The file
+		 * will be closed when the final reference to the state is
+		 * released.
+		 */
+		remove_nlm_share(state, &unpin);
+		cache_status = CACHE_INODE_SUCCESS;
+		goto out_unlock;
+	}
+
+	if ((share_deny & fsm_DR) != 0)
+		openflags |= FSAL_O_DENY_READ;
+
+	if ((share_deny & fsm_DW) != 0)
+		openflags |= FSAL_O_DENY_WRITE;
+
+	if (reclaim)
+		openflags |= FSAL_O_RECLAIM;
+
+	/* Use reopen2 to open or re-open the file and check for share
+	 * conflict.
+	 */
+	cache_status = cache_inode_reopen2(entry, state, openflags, true);
+
+	if (cache_status != CACHE_INODE_SUCCESS) {
+		LogDebug(COMPONENT_STATE,
+			 "cache_inode_reopen2 failed with %s",
+			 cache_inode_err_str(cache_status));
+		goto out_unlock;
+	}
+
+	/* Add share to list for NLM Owner */
+	PTHREAD_MUTEX_lock(&owner->so_mutex);
+
+	glist_add_tail(&owner->so_owner.so_nlm_owner.so_nlm_shares,
+		       &state->state_owner_list);
+
+	PTHREAD_MUTEX_unlock(&owner->so_mutex);
+
+	/* Add share to list for NSM Client */
+	inc_nsm_client_ref(client->slc_nsm_client);
+
+	PTHREAD_MUTEX_lock(&client->slc_nsm_client->ssc_mutex);
+
+	glist_add_tail(&client->slc_nsm_client->ssc_share_list,
+		       &state->state_data.nlm_share.share_perclient);
+
+	PTHREAD_MUTEX_unlock(&client->slc_nsm_client->ssc_mutex);
+
+	if (glist_empty(&entry->object.file.nlm_share_list))
+		unpin = false;
+
+	/* Add share to list for file. */
+	glist_add_tail(&entry->object.file.nlm_share_list,
+		       &state->state_list);
+
+	/* Add to share list for export */
+	PTHREAD_RWLOCK_wrlock(&op_ctx->export->lock);
+	glist_add_tail(&op_ctx->export->exp_nlm_share_list,
+		       &state->state_export_list);
+	PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
+
+	/* If we had never had a share, take a reference on the state_t
+	 * to retain it.
+	 */
+	if (state->state_data.nlm_share.share_access != OPEN4_SHARE_ACCESS_NONE)
+		inc_state_t_ref(state);
+
+	/* Update the current share type */
+	state->state_data.nlm_share.share_access = share_access;
+	state->state_data.nlm_share.share_deny = share_deny;
+
+	LogFullDebug(COMPONENT_STATE, "added share_access %u, share_deny %u",
+		     share_access, share_deny);
+
+ out_unlock:
+
+	PTHREAD_RWLOCK_unlock(&entry->state_lock);
+
+	if (unpin) {
+		/* We don't need to retain the pin and LRU ref we took at the
+		 * top because the file was already pinned for shares or we
+		 * did not add a share to the file.
+		 */
+		cache_inode_dec_pin_ref(entry, false);
+		cache_inode_lru_unref(entry, LRU_FLAG_NONE);
+	}
+
+	return cache_inode_status_to_state_status(cache_status);
 }
 
 /**
@@ -783,6 +942,11 @@ state_status_t state_nlm_share(cache_entry_t *entry,
 	struct fsal_export *fsal_export = op_ctx->fsal_export;
 	bool unpin = true;
 	state_nlm_client_t *client = owner->so_owner.so_nlm_owner.so_client;
+
+	if (entry->obj_handle->fsal->m_ops.support_ex()) {
+		return state_nlm_share2(entry, share_access, share_deny,
+					owner, state, reclaim, false);
+	}
 
 	if (share_access == OPEN4_SHARE_ACCESS_NONE) {
 		/* An update to no access is considered the same as
@@ -991,6 +1155,16 @@ state_status_t state_nlm_unshare(cache_entry_t *entry,
 	fsal_share_param_t share_param;
 	cache_inode_status_t cache_status;
 	state_status_t status = 0;
+
+	if (entry->obj_handle->fsal->m_ops.support_ex()) {
+		return state_nlm_share2(entry,
+					share_access,
+					share_deny,
+					owner,
+					state,
+					false,
+					true);
+	}
 
 	cache_status = cache_inode_inc_pin_ref(entry);
 
