@@ -305,13 +305,18 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	/* Close the file in FSAL through the cache inode */
-	cache_status = cache_inode_close(data->current_entry,
-					 CACHE_INODE_FLAG_REALLYCLOSE);
+	if (!data->current_entry->obj_handle->fsal->m_ops.support_ex()) {
+		/* Only need to call cache_inode_close if extended ops support
+		 * is not enabled for the FSAL.
+		 */
+		cache_status = cache_inode_close(data->current_entry,
+						 CACHE_INODE_FLAG_REALLYCLOSE);
 
-	if (cache_status != CACHE_INODE_SUCCESS) {
-		res_CLOSE4->status = nfs4_Errno(cache_status);
-		PTHREAD_RWLOCK_unlock(&data->current_entry->state_lock);
-		goto out;
+		if (cache_status != CACHE_INODE_SUCCESS) {
+			res_CLOSE4->status = nfs4_Errno(cache_status);
+			PTHREAD_RWLOCK_unlock(&data->current_entry->state_lock);
+			goto out;
+		}
 	}
 
 	if (data->minorversion == 0)

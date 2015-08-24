@@ -84,13 +84,15 @@ cache_inode_remove(cache_entry_t *entry, const char *name)
 		goto out;
 	}
 
-	/* Factor this somewhat.  In the case where the directory hasn't
-	   been populated, the entry may not exist in the cache and we'd
-	   be bringing it in just to dispose of it. */
+	/* In the case where the directory hasn't been populated, the entry may
+	 * not exist in the cache and we'd be bringing it in just to dispose of
+	 * it. Unfortunately, since there is no guarantee the entry is NOT
+	 * present in the cache, we MUST do a lookup so that we can properly
+	 * handle closing the file if open.
+	 */
 
 	/* Looks up for the entry to remove */
-	status =
-	    cache_inode_lookup_impl(entry, name, &to_remove_entry);
+	status = cache_inode_lookup_impl(entry, name, &to_remove_entry);
 
 	if (to_remove_entry == NULL) {
 		LogFullDebug(COMPONENT_CACHE_INODE, "lookup %s failure %s",
@@ -127,20 +129,30 @@ cache_inode_remove(cache_entry_t *entry, const char *name)
 
 	LogDebug(COMPONENT_CACHE_INODE, "%s", name);
 
-	if (is_open(to_remove_entry)) {
-		/* entry is not locked and seems to be open for fd caching
-		 * purpose.
-		 * candidate for closing since unlink of an open file results
-		 * in 'silly rename' on certain platforms */
-		status =
-		    cache_inode_close(to_remove_entry,
-				      CACHE_INODE_FLAG_REALLYCLOSE);
-		if (status != CACHE_INODE_SUCCESS) {
-			/* non-fatal error. log the warning and move on */
-			LogCrit(COMPONENT_CACHE_INODE,
-				"Error closing %s before unlink: %s.", name,
-				cache_inode_err_str(status));
+	/* Close the file in FSAL through the cache inode */
+	if (!to_remove_entry->obj_handle->fsal->m_ops.support_ex()) {
+		if (is_open(to_remove_entry)) {
+			/* entry is not locked and seems to be open for
+			 * fd caching purpose. Candidate for closing since
+			 * unlink of an open file results in 'silly rename'
+			 * on certain platforms.
+			 */
+			status =
+			    cache_inode_close(to_remove_entry,
+					      CACHE_INODE_FLAG_REALLYCLOSE);
 		}
+	} else {
+		/* Make sure the to_remove_entry is closed since unlink of an
+		 * open file results in 'silly rename' on certain platforms.
+		 */
+		status = cache_inode_close2(to_remove_entry);
+	}
+
+	if (status != CACHE_INODE_SUCCESS) {
+		/* non-fatal error. log the warning and move on */
+		LogCrit(COMPONENT_CACHE_INODE,
+			"Error closing %s before unlink: %s.", name,
+			cache_inode_err_str(status));
 	}
 
 #ifdef ENABLE_RFC_ACL
