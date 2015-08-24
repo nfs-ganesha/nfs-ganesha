@@ -38,6 +38,7 @@
 #include "sal_functions.h"
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
+#include "fsal.h"
 
 /**
  * @brief NFS4_OP_OPEN_DOWNGRADE
@@ -202,15 +203,22 @@ static nfsstat4 nfs4_do_open_downgrade(struct nfs_argop4 *op,
 				       state_owner_t *owner, state_t *state,
 				       char **cause)
 {
-	union state_data candidate_data;
-
 	state_status_t state_status;
 	OPEN_DOWNGRADE4args *args = &op->nfs_argop4_u.opopen_downgrade;
 
-	candidate_data.share.share_access = args->share_access;
-	candidate_data.share.share_deny = args->share_deny;
-
 	PTHREAD_RWLOCK_wrlock(&data->current_entry->state_lock);
+
+	LogFullDebug(COMPONENT_STATE,
+		     "Open downgrade current access=%x deny=%x access_prev=%x deny_prev=%x",
+		     state->state_data.share.share_access,
+		     state->state_data.share.share_deny,
+		     state->state_data.share.share_access_prev,
+		     state->state_data.share.share_deny_prev);
+
+	LogFullDebug(COMPONENT_STATE,
+		     "Open downgrade to access=%x deny=%x",
+		     args->share_access,
+		     args->share_deny);
 
 	/* Check if given share access is subset of current share access */
 	if ((state->state_data.share.share_access & args->share_access) !=
@@ -244,8 +252,40 @@ static nfsstat4 nfs4_do_open_downgrade(struct nfs_argop4 *op,
 		return NFS4ERR_INVAL;
 	}
 
-	state_status = state_share_downgrade(data->current_entry,
-					     &candidate_data, owner, state);
+	if (data->current_entry->obj_handle->fsal->m_ops.support_ex()) {
+		cache_inode_status_t cache_status;
+		fsal_openflags_t openflags = 0;
+
+		if ((args->share_access & OPEN4_SHARE_ACCESS_READ) != 0)
+			openflags |= FSAL_O_READ;
+
+		if ((args->share_access & OPEN4_SHARE_ACCESS_WRITE) != 0)
+			openflags |= FSAL_O_WRITE;
+
+		if ((args->share_deny & OPEN4_SHARE_DENY_READ) != 0)
+			openflags |= FSAL_O_DENY_READ;
+
+		if ((args->share_deny & OPEN4_SHARE_DENY_WRITE) != 0)
+			openflags |= FSAL_O_DENY_WRITE_MAND;
+
+
+		cache_status = cache_inode_reopen2(data->current_entry,
+						   state,
+						   openflags,
+						   true);
+
+		state_status = cache_inode_status_to_state_status(cache_status);
+	} else {
+		union state_data candidate_data;
+
+		candidate_data.share.share_access = args->share_access;
+		candidate_data.share.share_deny = args->share_deny;
+
+		state_status = state_share_downgrade(data->current_entry,
+						     &candidate_data,
+						     owner,
+						     state);
+	}
 
 	if (state_status != STATE_SUCCESS) {
 		*cause = " (state_share_downgrade failed)";
