@@ -248,6 +248,8 @@ int nfs3_mknod(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		sattr.mask &= CREATE_MASK_NON_REG_NFS3 | ATTRS_CREDS;
 
 		cache_status = cache_inode_setattr(node_entry,
+						   false,
+						   NULL,
 						   &sattr,
 						   false);
 

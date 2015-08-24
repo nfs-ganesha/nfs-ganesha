@@ -164,7 +164,12 @@ int nfs3_setattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 				goto out_fail;
 		}
 
+		/* For now we don't look for states, so indicate bypass so
+		 * we will get through an NLM_SHARE with deny.
+		 */
 		cache_status = cache_inode_setattr(entry,
+						   true,
+						   NULL,
 						   &setattr,
 						   false);
 

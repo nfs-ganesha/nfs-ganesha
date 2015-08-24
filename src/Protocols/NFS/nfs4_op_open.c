@@ -748,10 +748,13 @@ static nfsstat4 open4_create(OPEN4args *arg, compound_data_t *data,
 			/* mask off flags handled by create */
 			sattr.mask &= CREATE_MASK_REG_NFS4 | ATTRS_CREDS;
 
-			cache_status =
-			    cache_inode_setattr(entry_newfile, &sattr,
-					(arg->share_access &
-					 OPEN4_SHARE_ACCESS_WRITE) != 0);
+			cache_status = cache_inode_setattr(
+					entry_newfile,
+					false,
+					NULL,
+					&sattr,
+					(arg->share_access
+					    & OPEN4_SHARE_ACCESS_WRITE) != 0);
 
 			if (cache_status != CACHE_INODE_SUCCESS)
 				return nfs4_Errno(cache_status);

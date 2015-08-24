@@ -227,6 +227,8 @@ int nfs4_op_setattr(struct nfs_argop4 *op, compound_data_t *data,
 	 * we have an open owner.
 	 */
 	cache_status = cache_inode_setattr(data->current_entry,
+					   false,
+					   state_found,
 					   &sattr,
 					   state_open != NULL);
 

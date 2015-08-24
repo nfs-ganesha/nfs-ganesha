@@ -163,7 +163,7 @@ int nfs3_mkdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		sattr.mask &= CREATE_MASK_NON_REG_NFS3 | ATTRS_CREDS;
 
 		cache_status =
-		    cache_inode_setattr(dir_entry, &sattr, false);
+		    cache_inode_setattr(dir_entry, false, NULL, &sattr, false);
 
 		if (cache_status != CACHE_INODE_SUCCESS)
 			goto out_fail;

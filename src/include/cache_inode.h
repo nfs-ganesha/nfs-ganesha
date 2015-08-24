@@ -849,6 +849,8 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *entry,
 					const char *newname);
 
 cache_inode_status_t cache_inode_setattr(cache_entry_t *entry,
+					 bool bypass,
+					 struct state_t *state,
 					 struct attrlist *attr,
 					 bool is_open_write);
 

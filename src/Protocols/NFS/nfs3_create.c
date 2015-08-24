@@ -226,6 +226,8 @@ int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 			/* A call to cache_inode_setattr is required */
 			cache_status = cache_inode_setattr(file_entry,
+							   false,
+							   NULL,
 							   &sattr,
 							   false);
 

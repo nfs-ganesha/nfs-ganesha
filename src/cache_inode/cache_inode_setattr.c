@@ -50,15 +50,19 @@
  * This function sets the attributes of a file, both in the cache and
  * in the underlying filesystem.
  *
- * @param[in]     entry   Entry whose attributes are to be set
- * @param[in,out] attr    Attributes to set/result of set
+ * @param[in]     entry         Entry whose attributes are to be set
+ * @param[in]     bypass        Bypass share reservation checking
+ * @param[in]     state         Possible state associated with the entry
+ * @param[in,out] attr          Attributes to set/result of set
+ * @param[in]     is_open_write Caller knows file is open for write
  *
  * @retval CACHE_INODE_SUCCESS if operation is a success
  */
-cache_inode_status_t
-cache_inode_setattr(cache_entry_t *entry,
-		    struct attrlist *attr,
-		    bool is_open_write)
+cache_inode_status_t cache_inode_setattr(cache_entry_t *entry,
+					 bool bypass,
+					 struct state_t *state,
+					 struct attrlist *attr,
+					 bool is_open_write)
 {
 	struct fsal_obj_handle *obj_handle = entry->obj_handle;
 	fsal_status_t fsal_status = { 0, 0 };
@@ -167,6 +171,26 @@ cache_inode_setattr(cache_entry_t *entry,
 
 	saved_acl = entry->obj_handle->attrs->acl;
 	before = entry->obj_handle->attrs->change;
+
+	if (obj_handle->fsal->m_ops.support_ex()) {
+		fsal_status = obj_handle->obj_ops.setattr2(obj_handle,
+							   bypass,
+							   state,
+							   attr);
+
+		if (FSAL_IS_ERROR(fsal_status)) {
+			status = cache_inode_error_convert(fsal_status);
+			if (fsal_status.major == ERR_FSAL_STALE) {
+				LogEvent(COMPONENT_CACHE_INODE,
+					 "FSAL returned STALE from setattr2");
+				cache_inode_kill_entry(entry);
+			}
+			goto unlock;
+		}
+
+		goto finish;
+	}
+
 	fsal_status = obj_handle->obj_ops.setattrs(obj_handle, attr);
 	if (FSAL_IS_ERROR(fsal_status)) {
 		status = cache_inode_error_convert(fsal_status);
@@ -188,6 +212,9 @@ cache_inode_setattr(cache_entry_t *entry,
 		}
 		goto unlock;
 	}
+
+finish:
+
 	if (before == entry->obj_handle->attrs->change)
 		entry->obj_handle->attrs->change++;
 	/* Decrement refcount on saved ACL */
