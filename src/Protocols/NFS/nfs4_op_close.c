@@ -274,7 +274,11 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	/* File is closed, release the share state */
-	if (state_found->state_type == STATE_TYPE_SHARE) {
+	if (state_found->state_type == STATE_TYPE_SHARE &&
+	    !data->current_entry->obj_handle->fsal->m_ops.support_ex()) {
+		/* Only need to call state_share_remove if extended ops support
+		 * is not enabled for the FSAL.
+		 */
 		state_status = state_share_remove(data->current_entry,
 						  open_owner,
 						  state_found);
