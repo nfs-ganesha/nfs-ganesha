@@ -140,4 +140,15 @@ fsal_status_t fsal_acl_to_mode(struct attrlist *attrs);
 
 void set_common_verifier(struct attrlist *attrs, fsal_verifier_t verifier);
 
+void update_share_counters(struct fsal_share *share,
+			   fsal_openflags_t old_openflags,
+			   fsal_openflags_t new_openflags);
+
+fsal_status_t check_share_conflict(struct fsal_share *share,
+				   fsal_openflags_t openflags,
+				   bool bypass);
+
+fsal_status_t merge_share(struct fsal_share *orig_share,
+			  struct fsal_share *dupe_share);
+
 #endif				/* FSAL_COMMONLIB_H */

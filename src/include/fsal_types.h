@@ -850,5 +850,24 @@ typedef struct fsal_share_param_t {
 
 typedef char fsal_verifier_t[8];
 
+/**
+ * @brief The ref counted share reservation state.
+ *
+ * Each field represents the count of instances of that flag being present
+ * in a share reservation.
+ *
+ * There is a separate count of mandatory deny write flags so that they can be
+ * enforced against all writes (non-mandatory deny write is only enforced
+ * against indicated operations).
+ */
+struct fsal_share {
+	unsigned int share_access_read;
+	unsigned int share_access_write;
+	unsigned int share_deny_read;
+	unsigned int share_deny_write;
+	/**< Count of mandatory share deny write */
+	unsigned int share_deny_write_mand;
+};
+
 #endif				/* _FSAL_TYPES_H */
 /** @} */

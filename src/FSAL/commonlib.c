@@ -1958,4 +1958,179 @@ void set_common_verifier(struct attrlist *attrs, fsal_verifier_t verifier)
 	FSAL_SET_MASK(attrs->mask, ATTR_ATIME | ATTR_MTIME);
 }
 
+/**
+ * @brief Update the ref counter of share state
+ *
+ * The caller is responsible for protecting the share.
+ *
+ * @param[in] share         Share to update
+ * @param[in] old_openflags Previous access/deny mode
+ * @param[in] new_openflags Current access/deny mode
+ */
+
+void update_share_counters(struct fsal_share *share,
+			   fsal_openflags_t old_openflags,
+			   fsal_openflags_t new_openflags)
+{
+	int access_read_inc =
+		((int)(new_openflags & FSAL_O_READ) != 0) -
+		((int)(old_openflags & FSAL_O_READ) != 0);
+
+	int access_write_inc =
+		((int)(new_openflags & FSAL_O_WRITE) != 0) -
+		((int)(old_openflags & FSAL_O_WRITE) != 0);
+
+	int deny_read_inc =
+		((int)(new_openflags & FSAL_O_DENY_READ) != 0) -
+		((int)(old_openflags & FSAL_O_DENY_READ) != 0);
+
+	/* Combine both FSAL_O_DENY_WRITE and FSAL_O_DENY_WRITE_MAND */
+	int deny_write_inc =
+		((int)(new_openflags & FSAL_O_DENY_WRITE) != 0) -
+		((int)(old_openflags & FSAL_O_DENY_WRITE) != 0) +
+		((int)(new_openflags & FSAL_O_DENY_WRITE_MAND) != 0) -
+		((int)(old_openflags & FSAL_O_DENY_WRITE_MAND) != 0);
+
+	int deny_write_mand_inc =
+		((int)(new_openflags & FSAL_O_DENY_WRITE_MAND) != 0) -
+		((int)(old_openflags & FSAL_O_DENY_WRITE_MAND) != 0);
+
+	share->share_access_read += access_read_inc;
+	share->share_access_write += access_write_inc;
+	share->share_deny_read += deny_read_inc;
+	share->share_deny_write += deny_write_inc;
+	share->share_deny_write_mand += deny_write_mand_inc;
+
+	LogFullDebug(COMPONENT_FSAL,
+		     "share counter: access_read %u, access_write %u, deny_read %u, deny_write %u, deny_write_v4 %u",
+		     share->share_access_read,
+		     share->share_access_write,
+		     share->share_deny_read,
+		     share->share_deny_write,
+		     share->share_deny_write_mand);
+}
+
+/**
+ * @brief Check for share conflict
+ *
+ * The caller is responsible for protecting the share.
+ *
+ * This function is NOT called if the caller holds a share reservation covering
+ * the requested access.
+ *
+ * @param[in] share        File to query
+ * @param[in] openflags    Desired access and deny mode
+ * @param[in] bypass       Bypasses share_deny_read and share_deny_write but
+ *                         not share_deny_write_mand
+ *
+ * @retval ERR_FSAL_SHARE_DENIED - a conflict occurred.
+ *
+ */
+
+fsal_status_t check_share_conflict(struct fsal_share *share,
+				   fsal_openflags_t openflags,
+				   bool bypass)
+{
+	char *cause = "";
+
+	if ((openflags & FSAL_O_READ) != 0
+	    && share->share_deny_read > 0
+	    && !bypass) {
+		cause = "access read denied by existing deny read";
+		goto out_conflict;
+	}
+
+	if ((openflags & FSAL_O_WRITE) != 0
+	    && (share->share_deny_write_mand > 0 ||
+		(!bypass && share->share_deny_write > 0))) {
+		cause = "access write denied by existing deny write";
+		goto out_conflict;
+	}
+
+	if ((openflags & FSAL_O_DENY_READ) != 0
+	    && share->share_access_read > 0) {
+		cause = "deny read denied by existing access read";
+		goto out_conflict;
+	}
+
+	if (((openflags & FSAL_O_DENY_WRITE) != 0 ||
+	     (openflags & FSAL_O_DENY_WRITE_MAND) != 0)
+	    && share->share_access_write > 0) {
+		cause = "deny write denied by existing access write";
+		goto out_conflict;
+	}
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+
+ out_conflict:
+
+	LogDebug(COMPONENT_STATE, "Share conflict detected: %s", cause);
+
+	return fsalstat(ERR_FSAL_SHARE_DENIED, 0);
+}
+
+/**
+ * @brief Check two shares for conflict and merge.
+ *
+ * The caller is responsible for protecting the share.
+ *
+ * When two object handles are merged that both contain shares, we must
+ * check if the duplicate has a share conflict with the original. If
+ * so, we will return ERR_FSAL_SHARE_DENIED.
+ *
+ * @param[in] orig_share   Original share
+ * @param[in] dupe_share   Duplicate share
+ *
+ * @retval ERR_FSAL_SHARE_DENIED - a conflict occurred.
+ *
+ */
+
+fsal_status_t merge_share(struct fsal_share *orig_share,
+			  struct fsal_share *dupe_share)
+{
+	char *cause = "";
+
+	if (dupe_share->share_access_read > 0 &&
+	    orig_share->share_deny_read > 0) {
+		cause = "access read denied by existing deny read";
+		goto out_conflict;
+	}
+
+	if (dupe_share->share_deny_read > 0 &&
+	    orig_share->share_access_read > 0) {
+		cause = "deny read denied by existing access read";
+		goto out_conflict;
+	}
+
+	/* When checking deny write, we ONLY need to look at share_deny_write
+	 * since it counts BOTH FSAL_O_DENY_WRITE and FSAL_O_DENY_WRITE_MAND.
+	 */
+	if (dupe_share->share_access_write > 0 &&
+	    orig_share->share_deny_write > 0) {
+		cause = "access write denied by existing deny write";
+		goto out_conflict;
+	}
+
+	if (dupe_share->share_deny_write > 0 &&
+	    orig_share->share_access_write > 0) {
+		cause = "deny write denied by existing access write";
+		goto out_conflict;
+	}
+
+	/* Now that we are ok, merge the share counters in the original */
+	orig_share->share_access_read += dupe_share->share_access_read;
+	orig_share->share_access_write += dupe_share->share_access_write;
+	orig_share->share_deny_read += dupe_share->share_deny_read;
+	orig_share->share_deny_write += dupe_share->share_deny_write;
+	orig_share->share_deny_write_mand += dupe_share->share_deny_write_mand;
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+
+ out_conflict:
+
+	LogDebug(COMPONENT_STATE, "Share conflict detected: %s", cause);
+
+	return fsalstat(ERR_FSAL_SHARE_DENIED, 0);
+}
+
 /** @} */
