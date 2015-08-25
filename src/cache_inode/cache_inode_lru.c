@@ -620,6 +620,126 @@ void cache_inode_lru_cleanup_try_push(cache_entry_t *entry)
 	}
 }
 
+#define CL_FLAGS \
+	(CACHE_INODE_FLAG_REALLYCLOSE| \
+	 CACHE_INODE_FLAG_NOT_PINNED| \
+	 CACHE_INODE_FLAG_CONTENT_HAVE| \
+	 CACHE_INODE_FLAG_CONTENT_HOLD)
+
+/**
+ * @brief Function that executes in the lru thread to process one lane
+ *
+ * @param[in]     lane          The lane to process
+ * @param[in,out] totalclosed   Track the number of file closes
+ *
+ * @returns the number of files worked on (workdone)
+ *
+ */
+
+static inline size_t lru_run_lane(size_t lane, uint64_t *const totalclosed)
+{
+	struct lru_q *q;
+	/* The amount of work done on this lane on this pass. */
+	size_t workdone = 0;
+	/* The entry being examined */
+	cache_inode_lru_t *lru = NULL;
+	/* Number of entries closed in this run. */
+	size_t closed = 0;
+	/* a cache_status */
+	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
+	/* a cache entry */
+	cache_entry_t *entry;
+	/* Current queue lane */
+	struct lru_q_lane *qlane = &LRU[lane];
+	/* entry refcnt */
+	uint32_t refcnt;
+
+	q = &qlane->L1;
+
+	/* ACTIVE */
+	QLOCK(qlane);
+	qlane->iter.active = true;
+
+	/* While for_each_safe per se is NOT MT-safe,
+	 * the iteration can be made so by the
+	 * convention that any competing thread which
+	 * would invalidate the iteration also adjusts
+	 * glist and (in particular) glistn */
+	glist_for_each_safe(qlane->iter.glist, qlane->iter.glistn, &q->q) {
+		struct lru_q *q;
+
+		/* check per-lane work */
+		if (workdone >= lru_state.per_lane_work)
+			goto out;
+
+		lru = glist_entry(qlane->iter.glist, cache_inode_lru_t, q);
+
+		refcnt = atomic_inc_int32_t(&lru->refcnt);
+
+		/* get entry early */
+		entry = container_of(lru, cache_entry_t, lru);
+
+		/* check refcnt in range */
+		if (unlikely(refcnt > 2)) {
+			cache_inode_lru_unref(entry, LRU_UNREF_QLOCKED);
+			/* but count it */
+			workdone++;
+			/* qlane LOCKED, lru refcnt is restored */
+			continue;
+		}
+
+		/* Move entry to MRU of L2 */
+		q = &qlane->L1;
+		LRU_DQ_SAFE(lru, q);
+		lru->qid = LRU_ENTRY_L2;
+		q = &qlane->L2;
+		glist_add(&q->q, &lru->q);
+		++(q->size);
+
+		/* Drop the lane lock while performing (slow) operations on
+		 * entry
+		 */
+		QUNLOCK(qlane);
+
+		/* Acquire the content lock first; we may need to look at fds
+		 * and close it.
+		 */
+		PTHREAD_RWLOCK_wrlock(&entry->content_lock);
+
+		if (is_open(entry)) {
+			cache_status = cache_inode_close(entry, CL_FLAGS);
+			if (cache_status != CACHE_INODE_SUCCESS) {
+				LogCrit(COMPONENT_CACHE_INODE_LRU,
+					"Error closing file in LRU thread.");
+			} else {
+				++(*totalclosed);
+				++closed;
+			}
+		}
+
+		PTHREAD_RWLOCK_unlock(&entry->content_lock);
+
+		QLOCK(qlane);
+		/* QLOCKED */
+
+		cache_inode_lru_unref(entry, LRU_UNREF_QLOCKED);
+
+		++workdone;
+	} /* for_each_safe lru */
+
+out:
+
+	/* !ACTIVE */
+	qlane->iter.active = false;
+	QUNLOCK(qlane);
+
+	LogDebug(COMPONENT_CACHE_INODE_LRU,
+		 "Actually processed %zd entries on lane %zd closing %zd descriptors",
+		 workdone, lane, closed);
+
+	return workdone;
+}
+
 /**
  * @brief Function that executes in the lru thread
  *
@@ -670,12 +790,6 @@ void cache_inode_lru_cleanup_try_push(cache_entry_t *entry)
  * @param[in] ctx Fridge context
  */
 
-#define CL_FLAGS \
-	(CACHE_INODE_FLAG_REALLYCLOSE| \
-	 CACHE_INODE_FLAG_NOT_PINNED| \
-	 CACHE_INODE_FLAG_CONTENT_HAVE| \
-	 CACHE_INODE_FLAG_CONTENT_HOLD)
-
 static void
 lru_run(struct fridgethr_context *ctx)
 {
@@ -696,7 +810,6 @@ lru_run(struct fridgethr_context *ctx)
 	uint64_t totalclosed = 0;
 	/* The current count (after reaping) of open FDs */
 	size_t currentopen = 0;
-	struct lru_q *q;
 	time_t new_thread_wait;
 
 	SetNameFunction("cache_lru");
@@ -764,121 +877,18 @@ lru_run(struct fridgethr_context *ctx)
 		do {
 			workpass = 0;
 			for (lane = 0; lane < LRU_N_Q_LANES; ++lane) {
-				/* The amount of work done on this lane on
-				   this pass. */
-				size_t workdone = 0;
-				/* The entry being examined */
-				cache_inode_lru_t *lru = NULL;
-				/* Number of entries closed in this run. */
-				size_t closed = 0;
-				/* a cache_status */
-				cache_inode_status_t cache_status =
-				    CACHE_INODE_SUCCESS;
-				/* a cache entry */
-				cache_entry_t *entry;
-				/* Current queue lane */
-				struct lru_q_lane *qlane = &LRU[lane];
-				/* entry refcnt */
-				uint32_t refcnt;
-
-				q = &qlane->L1;
-
 				LogDebug(COMPONENT_CACHE_INODE_LRU,
 					 "Reaping up to %d entries from lane %zd",
 					 lru_state.per_lane_work, lane);
 
 				LogFullDebug(COMPONENT_CACHE_INODE_LRU,
-					     "formeropen=%zd totalwork=%zd workpass=%zd closed:%zd totalclosed:%"
+					     "formeropen=%zd totalwork=%zd workpass=%zd totalclosed:%"
 					     PRIu64,
 					     formeropen, totalwork, workpass,
-					     closed, totalclosed);
+					     totalclosed);
 
-				QLOCK(qlane);
-				qlane->iter.active = true;	/* ACTIVE */
-				/* While for_each_safe per se is NOT MT-safe,
-				 * the iteration can be made so by the
-				 * convention that any competing thread which
-				 * would invalidate the iteration also adjusts
-				 * glist and (in particular) glistn */
-				glist_for_each_safe(qlane->iter.glist,
-						    qlane->iter.glistn, &q->q) {
-					struct lru_q *q;
-
-					/* check per-lane work */
-					if (workdone >= lru_state.per_lane_work)
-						goto next_lane;
-
-					lru =
-					    glist_entry(qlane->iter.glist,
-							cache_inode_lru_t, q);
-					refcnt =
-					    atomic_inc_int32_t(&lru->refcnt);
-
-					/* get entry early */
-					entry =
-					    container_of(lru, cache_entry_t,
-							 lru);
-
-					/* check refcnt in range */
-					if (unlikely(refcnt > 2)) {
-						cache_inode_lru_unref(
-							entry,
-							LRU_UNREF_QLOCKED);
-						workdone++; /* but count it */
-						/* qlane LOCKED, lru refcnt is
-						 * restored */
-						continue;
-					}
-
-					/* Move entry to MRU of L2 */
-					q = &qlane->L1;
-					LRU_DQ_SAFE(lru, q);
-					lru->qid = LRU_ENTRY_L2;
-					q = &qlane->L2;
-					glist_add(&q->q, &lru->q);
-					++(q->size);
-
-					/* Drop the lane lock while performing
-					 * (slow) operations on entry */
-					QUNLOCK(qlane);
-
-					/* Acquire the content lock first; we
-					 * may need to look at fds and close
-					 * it. */
-					PTHREAD_RWLOCK_wrlock(&entry->
-							      content_lock);
-					if (is_open(entry)) {
-						cache_status =
-						    cache_inode_close(
-							    entry, CL_FLAGS);
-						if (cache_status !=
-						    CACHE_INODE_SUCCESS) {
-							LogCrit(
-						      COMPONENT_CACHE_INODE_LRU,
-							"Error closing file in LRU thread.");
-						} else {
-							++totalclosed;
-							++closed;
-						}
-					}
-					PTHREAD_RWLOCK_unlock(&entry->
-							      content_lock);
-
-					QLOCK(qlane);	/* QLOCKED */
-					cache_inode_lru_unref(
-						entry,
-						LRU_UNREF_QLOCKED);
-					++workdone;
-				} /* for_each_safe lru */
-
- next_lane:
-				qlane->iter.active = false; /* !ACTIVE */
-				QUNLOCK(qlane);
-				LogDebug(COMPONENT_CACHE_INODE_LRU,
-					 "Actually processed %zd entries on lane %zd closing %zd descriptors",
-					 workdone, lane, closed);
-				workpass += workdone;
-			}	/* foreach lane */
+				workpass += lru_run_lane(lane, &totalclosed);
+			}
 			totalwork += workpass;
 		} while (extremis && (workpass >= lru_state.per_lane_work)
 			 && (totalwork < lru_state.biggest_window));
