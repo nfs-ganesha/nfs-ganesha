@@ -364,7 +364,8 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 
 					if ((flags & UP_NLINK)
 					    && (attr.numlinks == 0)) {
-						upflags = fsal_up_nlink;
+						upflags = fsal_up_nlink |
+							  fsal_up_close;
 						attr.mask = 0;
 						rc = up_async_update
 						    (general_fridge,

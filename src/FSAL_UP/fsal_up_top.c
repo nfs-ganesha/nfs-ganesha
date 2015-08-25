@@ -70,13 +70,19 @@ static int schedule_delegrevoke_check(struct delegrecall_context *ctx,
 static int schedule_delegrecall_task(struct delegrecall_context *ctx,
 				     uint32_t delay);
 
-/**
- * @brief Invalidate a cached entry
+/** Invalidate some or all of a cache entry and close if open
  *
- * @param[in] key    Key to specify object
- * @param[in] flags  Flags to pass to cache_inode_invalidate
+ * This version should NOT be used if an FSAL supports extended
+ * operations, instead, the FSAL may directly close the file as
+ * necessary.
+ *
+ * @param[in] fsal   The fsal_module
+ * @param[in] up_ops The up call operations vector
+ * @param[in] obj    The file to invalidate
+ * @param[in] flags  Flags governing invalidation
  *
  * @return CACHE_INODE_SUCCESS or errors.
+ *
  */
 
 static cache_inode_status_t invalidate_close(struct fsal_module *fsal,
@@ -101,6 +107,16 @@ static cache_inode_status_t invalidate_close(struct fsal_module *fsal,
 
 	return rc;
 }
+
+/** Invalidate some or all of a cache entry
+ *
+ * @param[in] fsal   The fsal_module
+ * @param[in] obj    The file to invalidate
+ * @param[in] flags  Flags governing invalidation
+ *
+ * @return CACHE_INODE_SUCCESS or errors.
+ *
+ */
 
 cache_inode_status_t fsal_invalidate(struct fsal_module *fsal,
 				     struct gsh_buffdesc *handle,
@@ -152,7 +168,7 @@ static cache_inode_status_t update(struct fsal_module *fsal,
 	    ~(fsal_up_update_filesize_inc | fsal_up_update_atime_inc |
 	      fsal_up_update_creation_inc | fsal_up_update_ctime_inc |
 	      fsal_up_update_mtime_inc | fsal_up_update_chgtime_inc |
-	      fsal_up_update_spaceused_inc | fsal_up_nlink)) {
+	      fsal_up_update_spaceused_inc | fsal_up_nlink | fsal_up_close)) {
 		return CACHE_INODE_INVALID_ARGUMENT;
 	}
 
@@ -161,11 +177,12 @@ static cache_inode_status_t update(struct fsal_module *fsal,
 		return rc;
 
 	/* Knock things out if the link count falls to 0. */
-
 	if ((flags & fsal_up_nlink) && (attr->numlinks == 0)) {
-		rc = cache_inode_invalidate(entry,
-					    (CACHE_INODE_INVALIDATE_ATTRS |
-					     CACHE_INODE_INVALIDATE_CLOSE));
+		uint32_t cflags = CACHE_INODE_INVALIDATE_ATTRS;
+
+		if (flags & fsal_up_close)
+			cflags |= CACHE_INODE_INVALIDATE_CLOSE;
+		rc = cache_inode_invalidate(entry, cflags);
 	}
 
 	if (rc != 0 || attr->mask == 0)

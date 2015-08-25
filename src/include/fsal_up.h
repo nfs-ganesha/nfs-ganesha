@@ -88,6 +88,11 @@ enum {
 };
 
 /**
+ * Close any open file.
+ */
+static const uint32_t fsal_up_close = 0x0100;
+
+/**
  * @brief Optional stuff for layoutreturn
  * @{
  */
@@ -129,6 +134,8 @@ struct fsal_up_vector {
 	 * @param[in] fsal   The fsal_module
 	 * @param[in] obj    The file to invalidate
 	 * @param[in] flags  Flags governing invalidation
+	 *
+	 * @return CACHE_INODE_SUCCESS or errors.
 	 *
 	 */
 	cache_inode_status_t (*invalidate)(struct fsal_module *fsal,
@@ -223,10 +230,16 @@ struct fsal_up_vector {
 
 	/** Invalidate some or all of a cache entry and close if open
 	 *
+	 * This version should NOT be used if an FSAL supports extended
+	 * operations, instead, the FSAL may directly close the file as
+	 * necessary.
+	 *
 	 * @param[in] fsal   The fsal_module
 	 * @param[in] up_ops The up call operations vector
 	 * @param[in] obj    The file to invalidate
 	 * @param[in] flags  Flags governing invalidation
+	 *
+	 * @return CACHE_INODE_SUCCESS or errors.
 	 *
 	 */
 	cache_inode_status_t (*invalidate_close)(
