@@ -77,6 +77,7 @@ int _9p_lopen(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	}
 
 	_9p_openflags2FSAL(flags, &openflags);
+
 	pfid->state->state_data.fid.share_access =
 		_9p_openflags_to_share_access(flags);
 
@@ -92,12 +93,37 @@ int _9p_lopen(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 						  plenout, preply);
 		}
 
-		cache_status =
-		    cache_inode_open(pfid->pentry, openflags, 0);
-		if (cache_status != CACHE_INODE_SUCCESS)
+		if (pfid->pentry->obj_handle->fsal->m_ops.support_ex()) {
+			if (*flags & 0x10) {
+				openflags |= FSAL_O_TRUNC;
+				/* FSAL is going to refresh attributes. */
+				PTHREAD_RWLOCK_wrlock(&pfid->pentry->attr_lock);
+			}
+
+			cache_status = cache_inode_reopen2(pfid->pentry,
+							   pfid->state,
+							   openflags,
+							   true);
+
+			if (*flags & 0x10) {
+				/* We tried to refresh attributes. */
+				if (cache_status == CACHE_INODE_SUCCESS ||
+				    cache_status == CACHE_INODE_ENTRY_EXISTS) {
+					/* FSAL has refreshed attributes. */
+					cache_inode_fixup_md(pfid->pentry);
+				}
+
+				PTHREAD_RWLOCK_unlock(&pfid->pentry->attr_lock);
+			}
+		} else {
+			cache_status = cache_inode_open(pfid->pentry,
+							openflags, 0);
+		}
+		if (cache_status != CACHE_INODE_SUCCESS) {
 			return _9p_rerror(req9p, msgtag,
 					  _9p_tools_errno(cache_status),
 					  plenout, preply);
+		}
 
 	}
 

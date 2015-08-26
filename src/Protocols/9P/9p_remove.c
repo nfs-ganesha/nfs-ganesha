@@ -91,21 +91,29 @@ int _9p_remove(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 				  preply);
 
 	/* If object is an opened file, close it */
-	if ((pfid->pentry->type == REGULAR_FILE) && is_open(pfid->pentry)) {
-		if (pfid->opens) {
+	if ((pfid->pentry->type == REGULAR_FILE) && pfid->opens) {
 			cache_inode_dec_pin_ref(pfid->pentry, false);
 			pfid->opens = 0;	/* dead */
 
+		if (pfid->pentry->obj_handle->fsal->m_ops.support_ex()) {
+			fsal_status_t fsal_status =
+			    pfid->pentry->obj_handle->obj_ops.close2(
+						pfid->pentry->obj_handle,
+						pfid->state);
+
+			cache_status = cache_inode_error_convert(fsal_status);
+		} else {
 			/* Under this flag, pin ref is still checked */
 			cache_status =
 			    cache_inode_close(pfid->pentry,
 					      CACHE_INODE_FLAG_REALLYCLOSE);
-			if (cache_status != CACHE_INODE_SUCCESS) {
-				FREE_FID(pfid, fid, req9p);
-				return _9p_rerror(req9p, msgtag,
-						  _9p_tools_errno(cache_status),
-						  plenout, preply);
-			}
+		}
+
+		if (cache_status != CACHE_INODE_SUCCESS) {
+			FREE_FID(pfid, fid, req9p);
+			return _9p_rerror(req9p, msgtag,
+					  _9p_tools_errno(cache_status),
+					  plenout, preply);
 		}
 	}
 

@@ -99,38 +99,89 @@ int _9p_lcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 	snprintf(file_name, MAXNAMLEN, "%.*s", *name_len, name_str);
 
-	/* Create the file */
-
-	/* BUGAZOMEU: @todo : the gid parameter is not used yet,
-	 * flags is not yet used */
-	cache_status =
-	    cache_inode_create(pfid->pentry, file_name, REGULAR_FILE, *mode,
-			       NULL, &pentry_newfile);
-	if (pentry_newfile == NULL)
-		return _9p_rerror(req9p, msgtag,
-				  _9p_tools_errno(cache_status), plenout,
-				  preply);
-
-	fileid = cache_inode_fileid(pentry_newfile);
-
 	_9p_openflags2FSAL(flags, &openflags);
 	pfid->state->state_data.fid.share_access =
 		_9p_openflags_to_share_access(flags);
 
-	cache_status = cache_inode_open(pentry_newfile, openflags, 0);
-	if (cache_status != CACHE_INODE_SUCCESS) {
-		return _9p_rerror(req9p, msgtag,
-				  _9p_tools_errno(cache_status),
-				  plenout, preply);
+	if (pfid->pentry->obj_handle->fsal->m_ops.support_ex()) {
+		struct attrlist sattr;
+		fsal_verifier_t verifier;
+		enum fsal_create_mode createmode = FSAL_UNCHECKED;
+
+		memset(&sattr, 0, sizeof(sattr));
+		memset(&verifier, 0, sizeof(verifier));
+
+		sattr.mode = *mode;
+		sattr.group = *gid;
+		sattr.mask = ATTR_MODE | ATTR_GROUP;
+
+		if (*flags & 0x10) {
+			/* Filesize is already 0. */
+			sattr.mask |= ATTR_SIZE;
+		}
+
+		if (*flags & 0x1000) {
+			/* If OEXCL, use FSAL_EXCLUSIVE_9P create mode
+			 * so that we can pass the attributes specified
+			 * above. Verifier is ignored for this create mode
+			 * because we don't have to deal with retry.
+			 */
+			createmode = FSAL_EXCLUSIVE_9P;
+		}
+
+		cache_status = cache_inode_open2(pfid->pentry,
+						 pfid->state,
+						 openflags,
+						 createmode,
+						 file_name,
+						 &sattr,
+						 verifier,
+						 &pentry_newfile);
+
+		if (cache_status != CACHE_INODE_SUCCESS)
+			return _9p_rerror(req9p, msgtag,
+					  _9p_tools_errno(cache_status),
+					  plenout, preply);
+	} else {
+		/* Create the file */
+
+		/* BUGAZOMEU: @todo : the gid parameter is not used yet,
+		 * flags is not yet used
+		 */
+		cache_status = cache_inode_create(pfid->pentry, file_name,
+						  REGULAR_FILE, *mode, NULL,
+						  &pentry_newfile);
+		if (pentry_newfile == NULL)
+			return _9p_rerror(req9p, msgtag,
+					  _9p_tools_errno(cache_status),
+					  plenout, preply);
+
+		cache_status = cache_inode_open(pentry_newfile, openflags, 0);
+		if (cache_status != CACHE_INODE_SUCCESS) {
+			cache_inode_put(pentry_newfile);
+			return _9p_rerror(req9p, msgtag,
+					  _9p_tools_errno(cache_status),
+					  plenout, preply);
+		}
 	}
 
-	/* Pin as well. We probably want to close the file if this fails,
-	 * but it won't happen - right?! */
+	fileid = cache_inode_fileid(pentry_newfile);
+
+	/* Pin as well. */
 	cache_status = cache_inode_inc_pin_ref(pentry_newfile);
-	if (cache_status != CACHE_INODE_SUCCESS)
+	if (cache_status != CACHE_INODE_SUCCESS) {
+		/* If pin failed, we must close the file. */
+		if (pfid->pentry->obj_handle->fsal->m_ops.support_ex()) {
+			(void) pentry_newfile->obj_handle->obj_ops.close2(
+						pentry_newfile->obj_handle,
+						pfid->state);
+		}
+
+		cache_inode_put(pentry_newfile);
 		return _9p_rerror(req9p, msgtag,
 				  _9p_tools_errno(cache_status), plenout,
 				  preply);
+	}
 
 	/* put parent directory entry */
 	cache_inode_put(pfid->pentry);

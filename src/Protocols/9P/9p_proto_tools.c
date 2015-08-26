@@ -418,11 +418,23 @@ int _9p_tools_clunk(struct _9p_fid *pfid)
 	}
 
 	/* If object is an opened file, close it */
-	if ((pfid->pentry->type == REGULAR_FILE) && is_open(pfid->pentry)) {
-		if (pfid->opens) {
-			cache_inode_dec_pin_ref(pfid->pentry, false);
-			pfid->opens = 0;	/* dead */
+	if ((pfid->pentry->type == REGULAR_FILE) && pfid->opens) {
+		cache_inode_dec_pin_ref(pfid->pentry, false);
+		pfid->opens = 0;	/* dead */
 
+		if (pfid->pentry->obj_handle->fsal->m_ops.support_ex()) {
+			fsal_status =
+			    pfid->pentry->obj_handle->obj_ops.close2(
+						pfid->pentry->obj_handle,
+						pfid->state);
+
+			cache_status = cache_inode_error_convert(fsal_status);
+
+			if (cache_status != CACHE_INODE_SUCCESS) {
+				free_fid(pfid);
+				return _9p_tools_errno(cache_status);
+			}
+		} else {
 			/* Under this flag, pin ref is still checked */
 			cache_status =
 			    cache_inode_close(pfid->pentry,
