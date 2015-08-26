@@ -198,11 +198,7 @@ int _9p_attach(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		}
 	}
 
-	cache_status = cache_inode_fileid(pfid->pentry, &fileid);
-	if (cache_status != CACHE_INODE_SUCCESS) {
-		err = _9p_tools_errno(cache_status);
-		goto errout;
-	}
+	fileid = cache_inode_fileid(pfid->pentry);
 
 	/* Compute the qid */
 	pfid->qid.type = _9P_QTDIR;

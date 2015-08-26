@@ -751,8 +751,7 @@ cache_inode_status_t cache_inode_getattr(cache_entry_t *entry,
 					 cache_inode_getattr_cb_t cb,
 					 enum cb_state cb_state);
 
-cache_inode_status_t cache_inode_fileid(cache_entry_t *entry,
-					uint64_t *fileid);
+uint64_t cache_inode_fileid(cache_entry_t *entry);
 
 cache_inode_status_t cache_inode_fsid(cache_entry_t *entry,
 				      fsal_fsid_t *fsid);

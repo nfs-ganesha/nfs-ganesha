@@ -161,40 +161,29 @@ cache_inode_getattr(cache_entry_t *entry,
  * Gets the filied for a cached entry.
  *
  * @param[in]  entry   Entry to be managed.
- * @param[out] fileid  The file ID.
  *
- * @return Errors from cache_inode_lock_trust_attributes.
+ * @return The fileid
  *
  */
-cache_inode_status_t
-cache_inode_fileid(cache_entry_t *entry,
-		   uint64_t *fileid)
+uint64_t cache_inode_fileid(cache_entry_t *entry)
 {
-	cache_inode_status_t status;
+	uint64_t fileid;
 
 	PTHREAD_RWLOCK_rdlock(&op_ctx->export->lock);
 
 	if (entry == op_ctx->export->exp_root_cache_inode) {
 
-		*fileid = op_ctx->export->exp_mounted_on_file_id;
-		status = CACHE_INODE_SUCCESS;
+		fileid = op_ctx->export->exp_mounted_on_file_id;
 
 		PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
 	} else {
 		PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
 
-		/* Lock (and refresh if necessary) the attributes, copy them
-		   out, and unlock. */
-		status = cache_inode_lock_trust_attrs(entry, false);
-
-		if (status == CACHE_INODE_SUCCESS) {
-			*fileid = entry->obj_handle->attrs->fileid;
-
-			PTHREAD_RWLOCK_unlock(&entry->attr_lock);
-		}
+		/* No need to lock the attrs, fileid doesn't change. */
+		fileid = entry->obj_handle->attrs->fileid;
 	}
 
-	return status;
+	return fileid;
 }
 
 /**
