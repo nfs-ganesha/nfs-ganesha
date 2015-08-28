@@ -478,7 +478,7 @@ fsal_acl_2_posix_acl(fsal_acl_t *p_fsalacl, acl_type_t type)
 	bool deny_e_r = false, deny_e_w = false, deny_e_x = false;
 
 
-	if (p_fsalacl == NULL || p_fsalacl->naces < 0)
+	if (p_fsalacl == NULL)
 		return NULL;
 
 	/* *
