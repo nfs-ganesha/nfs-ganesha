@@ -16,7 +16,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * -------------
  */
@@ -67,6 +68,8 @@ static struct fsal_staticfsinfo_t default_rgw_info = {
 };
 
 static struct config_item rgw_items[] = {
+	CONF_ITEM_PATH("ceph_conf", 1, MAXPATHLEN, NULL,
+		rgw_fsal_module, conf_path),
 	CONF_ITEM_MODE("umask", 0,
 			rgw_fsal_module, fs_info.umask),
 	CONF_ITEM_MODE("xattr_access_rights", 0,
@@ -82,6 +85,8 @@ struct config_block rgw_block = {
 	.blk_desc.u.blk.params = rgw_items,
 	.blk_desc.u.blk.commit = noop_conf_commit
 };
+
+static pthread_mutex_t init_mtx = PTHREAD_MUTEX_INITIALIZER;
 
 /* Module methods
  */
@@ -115,7 +120,7 @@ static fsal_status_t init_config(struct fsal_module *module_in,
 /**
  * @brief Create a new export under this FSAL
  *
- * This function creates a new export object for the Ceph FSAL.
+ * This function creates a new export object for the RGW FSAL.
  *
  * @todo ACE: We do not handle re-exports of the same cluster in a
  * sane way.  Currently we create multiple handles and cache objects
@@ -133,6 +138,26 @@ static fsal_status_t init_config(struct fsal_module *module_in,
  * @return FSAL status.
  */
 
+static struct config_item export_params[] = {
+	CONF_ITEM_NOOP("name"),
+	CONF_ITEM_STR("user_id", 0, MAXUIDLEN, NULL,
+		      rgw_export, rgw_user_id),
+	CONF_ITEM_STR("access_key_id", 0, MAXKEYLEN, NULL,
+		      rgw_export, rgw_access_key_id),
+	CONF_ITEM_STR("secret_access_key", 0, MAXSECRETLEN, NULL,
+		      rgw_export, rgw_secret_access_key),
+	CONFIG_EOL
+};
+
+static struct config_block export_param_block = {
+	.dbus_interface_name = "org.ganesha.nfsd.config.fsal.rgw-export%d",
+	.blk_desc.name = "FSAL",
+	.blk_desc.type = CONFIG_BLOCK,
+	.blk_desc.u.blk.init = noop_conf_init,
+	.blk_desc.u.blk.params = export_params,
+	.blk_desc.u.blk.commit = noop_conf_commit
+};
+
 static fsal_status_t create_export(struct fsal_module *module_in,
 				   void *parse_node,
 				   struct config_error_type *err_type,
@@ -140,22 +165,46 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 {
 	/* The status code to return */
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
-	/* A fake argument list for Ceph */
-	const char *argv[] = { "FSAL_CEPH", op_ctx->export->fullpath };
 	/* The internal export object */
-	struct rgw_export *export = gsh_calloc(1, sizeof(struct rgw_export));
+	struct rgw_export *export;
 	/* The 'private' root handle */
 	struct rgw_handle *handle = NULL;
 	/* Stat for root */
 	struct stat st;
 	/* Return code */
 	int rc;
-	/* Return code from Ceph calls */
+	/* Return code from RGW calls */
 	int rgw_status;
 	/* True if we have called fsal_export_init */
 	bool initialized = false;
-	uint64_t i;
 
+	/* once */
+	if (!RGWFSM.rgw) {
+		PTHREAD_MUTEX_lock(&init_mtx);
+		if (!RGWFSM.rgw) {
+			int argc = 1;
+			char *argv[2] = { "nfs-ganesha", NULL };
+			char *conf_path = NULL;
+
+			if (RGWFSM.conf_path) {
+				int clen = strlen(RGWFSM.conf_path) + 4;
+				conf_path = (char *) gsh_malloc(clen);
+				sprintf(conf_path, "-c %s", RGWFSM.conf_path);
+				argc = 2;
+				argv[1] = conf_path;
+			}
+
+			rc = librgw_create(&RGWFSM.rgw, argc, argv);
+			if (rc != 0) {
+				LogCrit(COMPONENT_FSAL,
+					"RGW module: librgw init failed (%d)",
+					rc);
+			}
+		}
+		PTHREAD_MUTEX_unlock(&init_mtx);
+	}
+
+	export = gsh_calloc(1, sizeof(struct rgw_export));
 	if (export == NULL) {
 		status.major = ERR_FSAL_NOMEM;
 		LogCrit(COMPONENT_FSAL,
@@ -174,32 +223,30 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 	export_ops_init(&export->export.exp_ops);
 	export->export.up_ops = up_ops;
 
+	/* get params for this export, if any */
+	if (parse_node) {
+		rc = load_config_from_node(parse_node,
+					   &export_param_block,
+					   export,
+					   true,
+					   err_type);
+		if (rc != 0) {
+			gsh_free(export);
+			return fsalstat(ERR_FSAL_INVAL, 0);
+		}
+	}
+
 	initialized = true;
 
-	rgw_status = rgw_conf_read_file(export, NULL);
+	rgw_status = rgw_mount(RGWFSM.rgw,
+			export->rgw_user_id,
+			export->rgw_access_key_id,
+			export->rgw_secret_access_key,
+			&export->rgw_fs);
 	if (rgw_status != 0) {
 		status.major = ERR_FSAL_SERVERFAULT;
 		LogCrit(COMPONENT_FSAL,
-			"Unable to read Ceph configuration for %s.",
-			op_ctx->export->fullpath);
-		goto error;
-	}
-
-	rgw_status = rgw_conf_parse_argv(export, 2, argv);
-	if (rgw_status != 0) {
-		status.major = ERR_FSAL_SERVERFAULT;
-		LogCrit(COMPONENT_FSAL,
-			"Unable to parse Ceph configuration for %s.",
-			op_ctx->export->fullpath);
-		goto error;
-	}
-
-	rgw_status = rgw_mount(export->rgw_user_id, export->rgw_access_key_id,
-			       export->rgw_secret_access_key, &i);
-	if (rgw_status != 0) {
-		status.major = ERR_FSAL_SERVERFAULT;
-		LogCrit(COMPONENT_FSAL,
-			"Unable to mount Ceph cluster for %s.",
+			"Unable to mount RGW cluster for %s.",
 			op_ctx->export->fullpath);
 		goto error;
 	}
@@ -218,13 +265,16 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 		 "RGW module export %s.",
 		 op_ctx->export->fullpath);
 
-	rc = construct_handle(&st, i, export, &handle);
+	rc = rgw_getattr(export->rgw_fs, export->rgw_fs->root_fh, &st);
+	if (rc < 0)
+		return rgw2fsal_error(rc);
+
+	rc = construct_handle(export, export->rgw_fs->root_fh, &st, &handle);
 	if (rc < 0) {
 		status = rgw2fsal_error(rc);
 		goto error;
 	}
 
-	export->root = handle;
 	op_ctx->fsal_export = &export->export;
 	return status;
 
@@ -243,7 +293,7 @@ static fsal_status_t create_export(struct fsal_module *module_in,
  * @brief Initialize and register the FSAL
  *
  * This function initializes the FSAL module handle, being called
- * before any configuration or even mounting of a Ceph cluster.  It
+ * before any configuration or even mounting of a RGW cluster.  It
  * exists solely to produce a properly constructed FSAL module
  * handle.
  */
@@ -253,17 +303,17 @@ MODULE_INIT void init(void)
 	struct fsal_module *myself = &RGWFSM.fsal;
 
 	LogDebug(COMPONENT_FSAL,
-		 "Ceph module registering.");
+		 "RGW module registering.");
 
 	/* register_fsal seems to expect zeroed memory. */
 	memset(myself, 0, sizeof(*myself));
 
 	if (register_fsal(myself, module_name, FSAL_MAJOR_VERSION,
-			  FSAL_MINOR_VERSION, FSAL_ID_CEPH) != 0) {
+			  FSAL_MINOR_VERSION, FSAL_ID_RGW) != 0) {
 		/* The register_fsal function prints its own log
 		   message if it fails */
 		LogCrit(COMPONENT_FSAL,
-			"Ceph module failed to register.");
+			"RGW module failed to register.");
 	}
 
 	/* Set up module operations */
@@ -274,20 +324,26 @@ MODULE_INIT void init(void)
 /**
  * @brief Release FSAL resources
  *
- * This function unregisters the FSAL and frees its module handle.
- * The Ceph FSAL has no other resources to release on the per-FSAL
- * level.
+ * This function unregisters the FSAL and frees its module handle.  The
+ * FSAL also has an open instance of the rgw library, so we also need to
+ * release that.
  */
 
 MODULE_FINI void finish(void)
 {
+	int ret;
+
 	LogDebug(COMPONENT_FSAL,
 		 "RGW module finishing.");
 
-	if (unregister_fsal(&RGWFSM.fsal) != 0) {
+	ret = unregister_fsal(&RGWFSM.fsal);
+	if (ret != 0) {
 		LogCrit(COMPONENT_FSAL,
-			"Unable to unload RGW FSAL.  Dying with extreme "
-			"prejudice.");
-		abort();
+			"RGW: unregister_fsal failed (%d)", ret);
+	}
+
+	/* release the library */
+	if (RGWFSM.rgw) {
+		librgw_shutdown(RGWFSM.rgw);
 	}
 }

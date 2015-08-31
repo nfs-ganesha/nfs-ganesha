@@ -38,11 +38,15 @@
 #define RGW_INTERNAL_C
 #include "internal.h"
 
+
+struct rgw_fsal_module RGWFSM;
+
+
 /**
  * The attributes tis FSAL can interpret or supply.
  */
 
-const attrmask_t supported_attributes = (
+const attrmask_t rgw_supported_attributes = (
 	ATTR_TYPE      | ATTR_SIZE     | ATTR_FSID  | ATTR_FILEID |
 	ATTR_MODE      | ATTR_NUMLINKS | ATTR_OWNER | ATTR_GROUP  |
 	ATTR_ATIME     | ATTR_RAWDEV   | ATTR_CTIME | ATTR_MTIME  |
@@ -52,7 +56,7 @@ const attrmask_t supported_attributes = (
  * The attributes this FSAL can set.
  */
 
-const attrmask_t settable_attributes = (
+const attrmask_t rgw_settable_attributes = (
 	ATTR_MODE  | ATTR_OWNER | ATTR_GROUP | ATTR_ATIME	 |
 	ATTR_CTIME | ATTR_MTIME | ATTR_SIZE  | ATTR_MTIME_SERVER |
 	ATTR_ATIME_SERVER);
@@ -253,17 +257,22 @@ void rgw2fsal_attributes(const struct stat *buffstat,
  *
  * This function constructs a new RGW FSAL object handle and attaches
  * it to the export.  After this call the attributes have been filled
- * in and the handdle is up-to-date and usable.
+ * in and the handle is up-to-date and usable.
  *
- * @param[in]  st     Stat data for the file
  * @param[in]  export Export on which the object lives
+ * @param[in]  rgw_fh Concise representation of the object name,
+ *                    in RGW notation
+ * @param[inout] st   Object attributes
  * @param[out] obj    Object created
  *
  * @return 0 on success, negative error codes on failure.
  */
 
-int construct_handle(const struct stat *st, uint64_t nfs_handle,
-		     struct rgw_export *export, struct rgw_handle **obj)
+int construct_handle(struct rgw_export *export,
+		     struct rgw_file_handle *rgw_fh,
+		     struct stat *st,
+		     struct rgw_handle **obj)
+
 {
 	/* Poitner to the handle under construction */
 	struct rgw_handle *constructing = NULL;
@@ -273,29 +282,17 @@ int construct_handle(const struct stat *st, uint64_t nfs_handle,
 	if (constructing == NULL)
 		return -ENOMEM;
 
-	constructing->nfs_handle = nfs_handle;
-	constructing->up_ops = export->export.up_ops;
-
-	rgw2fsal_attributes(st, &constructing->handle.attributes);
+	constructing->rgw_fh = rgw_fh;
+	constructing->up_ops = export->export.up_ops; /* XXXX going away */
+	constructing->handle.attrs = &constructing->attributes;
+	rgw2fsal_attributes(st, &constructing->attributes);
 
 	fsal_obj_handle_init(&constructing->handle, &export->export,
-			     constructing->handle.attributes.type);
-
+			     constructing->attributes.type);
+	handle_ops_init(&constructing->handle.obj_ops);
 	constructing->export = export;
 
 	*obj = constructing;
 
 	return 0;
-}
-
-/**
- * @brief Release all resrouces for a handle
- *
- * @param[in] obj Handle to release
- */
-
-void deconstruct_handle(struct rgw_handle *obj)
-{
-	fsal_obj_handle_uninit(&obj->handle);
-	gsh_free(obj);
 }

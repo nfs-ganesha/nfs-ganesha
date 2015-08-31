@@ -28,16 +28,20 @@
  * variables, and constants for the RGW FSAL.
  */
 
-#ifndef FSAL_RGW_INTERNAL_INTERNAL__
-#define FSAL_RGW_INTERNAL_INTERNAL__
+#ifndef FSAL_RGW_INTERNAL_INTERNAL
+#define FSAL_RGW_INTERNAL_INTERNAL
 
 #include <stdbool.h>
 #include <uuid/uuid.h>
+#include <dirent.h> /* NAME_MAX */
 
 #include "fsal.h"
 #include "fsal_types.h"
 #include "fsal_api.h"
 #include "fsal_convert.h"
+
+#include <include/rados/librgw.h>
+#include <include/rados/rgw_file.h>
 
 
 /**
@@ -47,6 +51,8 @@
 struct rgw_fsal_module {
 	struct fsal_module fsal;
 	fsal_staticfsinfo_t fs_info;
+	char *conf_path;
+	librgw_t rgw;
 };
 extern struct rgw_fsal_module RGWFSM;
 
@@ -61,10 +67,11 @@ extern struct rgw_fsal_module RGWFSM;
 
 struct rgw_export {
 	struct fsal_export export;	/*< The public export object */
-	struct rgw_handle *root;	/*< The root handle */
-	char rgw_user_id[MAXUIDLEN + 1];
-	char rgw_access_key_id[MAXKEYLEN + 1];
-	char rgw_secret_access_key[MAXSECRETLEN + 1];
+	struct rgw_fs *rgw_fs;		/*< "Opaque" fs handle */
+	char *rgw_name;
+	char *rgw_user_id;
+	char *rgw_access_key_id;
+	char *rgw_secret_access_key;
 };
 
 /**
@@ -73,11 +80,13 @@ struct rgw_export {
 
 struct rgw_handle {
 	struct fsal_obj_handle handle;	/*< The public handle */
-	fsal_openflags_t openflags;
+	struct rgw_file_handle *rgw_fh;  /*< RGW-internal file handle */
+	struct attrlist attributes;
+	/* XXXX remove ptr to up-ops--we can always follow export! */
 	const struct fsal_up_vector *up_ops;	/*< Upcall operations */
 	struct rgw_export *export;	/*< The first export this handle
 					 *< belongs to */
-	uint64_t nfs_handle;
+	fsal_openflags_t openflags;
 };
 
 #ifndef RGW_INTERNAL_C
@@ -102,9 +111,10 @@ static inline fsal_staticfsinfo_t *rgw_staticinfo(struct fsal_module *hdl)
 }
 
 /* Prototypes */
-int construct_handle(const struct stat *st, uint64_t nfs_handle,
-		     struct rgw_export *export, struct rgw_handle **obj);
-void deconstruct_handle(struct rgw_handle *obj);
+int construct_handle(struct rgw_export *export,
+		     struct rgw_file_handle *rgw_file_handle,
+		     struct stat *st,
+		     struct rgw_handle **obj);
 
 fsal_status_t rgw2fsal_error(const int errorcode);
 void rgw2fsal_attributes(const struct stat *buffstat,
@@ -112,4 +122,4 @@ void rgw2fsal_attributes(const struct stat *buffstat,
 void export_ops_init(struct export_ops *ops);
 void handle_ops_init(struct fsal_obj_ops *ops);
 
-#endif				/* !FSAL_RGW_INTERNAL_INTERNAL__ */
+#endif				/* !FSAL_RGW_INTERNAL_INTERNAL */
