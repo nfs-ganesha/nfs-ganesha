@@ -20,6 +20,7 @@ CEPH {}
 GPFS {}
 LUSTRE {}
 LUSTRE { PNFS { DATASERVER {} } }
+RGW {}
 VFS {}
 XFS {}
 PT {}
@@ -522,6 +523,10 @@ LUSTRE {}
 
 	xattr_access_rights(mode, range 0 to 0777, default 0400)
 
+RGW {}
+-------
+
+	Ceph_Conf(path, default "")
 
 VFS {}
 ------

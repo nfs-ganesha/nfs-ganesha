@@ -29,7 +29,6 @@
 #include <limits.h>
 #include <stdint.h>
 #include <sys/statvfs.h>
-#include <rados/rgw_file.h>
 #include "abstract_mem.h"
 #include "fsal.h"
 #include "fsal_types.h"
@@ -56,14 +55,16 @@ static void release(struct fsal_export *export_pub)
 	struct rgw_export *export =
 	    container_of(export_pub, struct rgw_export, export);
 
-	deconstruct_handle(export->root);
-	export->root = 0;
+	int rc = rgw_umount(export->rgw_fs);
+	assert(rc == 0);
+	export->rgw_fs = NULL;
 
 	fsal_detach_export(export->export.fsal, &export->export.exports);
 	free_export_ops(&export->export);
 
-	rgw_shutdown(export->cmount);
-	export->cmount = NULL;
+	/* XXX we might need/want an rgw_unmount here, but presently,
+	 * it wouldn't do anything */
+
 	gsh_free(export);
 	export = NULL;
 }
@@ -72,10 +73,7 @@ static void release(struct fsal_export *export_pub)
  * @brief Return a handle corresponding to a path
  *
  * This function looks up the given path and supplies an FSAL object
- * handle.  Because the root path specified for the export is a Ceph
- * style root as supplied to mount -t ceph of ceph-fuse (of the form
- * host:/path), we check to see if the path begins with / and, if not,
- * skip until we find one.
+ * handle.
  *
  * @param[in]  export_pub The export in which to look up the file
  * @param[in]  path       The path to look up
@@ -99,37 +97,28 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 	struct stat st;
 	/* Return code from Ceph */
 	int rc;
-	/* Find the actual path in the supplied path */
-	const char *realpath;
-	uint64_t i;
-
-	if (*path != '/') {
-		realpath = strchr(path, ':');
-		if (realpath == NULL) {
-			status.major = ERR_FSAL_INVAL;
-			return status;
-		}
-		if (*(++realpath) != '/') {
-			status.major = ERR_FSAL_INVAL;
-			return status;
-		}
-	} else {
-		realpath = path;
-	}
+	/* temp filehandle */
+	struct rgw_file_handle *rgw_fh;
 
 	*pub_handle = NULL;
 
-	if (strcmp(realpath, "/") == 0) {
-		assert(export->root);
-		*pub_handle = &export->root->handle;
-		return status;
-	}
-
-	rc = rgw_lookup(export->cmount, realpath, &i, &st);
+	/* XXX in FSAL_CEPH, the equivalent code here looks for path == "/"
+	 * and returns the root handle with no extra ref.  That seems
+	 * suspicious, so let RGW figure it out (hopefully, that does not
+	 * leak refs)
+	 */
+	rc = rgw_lookup(export->rgw_fs, export->rgw_fs->root_fh, path,
+			&rgw_fh, 0 /* flags */);
 	if (rc < 0)
 		return rgw2fsal_error(rc);
 
-	rc = construct_handle(&st, i, export, &handle);
+	/* get Unix attrs */
+	rc = rgw_getattr(export->rgw_fs, rgw_fh, &st);
+	if (rc < 0) {
+		return rgw2fsal_error(rc);
+	}
+
+	rc = construct_handle(export, rgw_fh, &st, &handle);
 	if (rc < 0) {
 		return rgw2fsal_error(rc);
 	}
@@ -157,7 +146,7 @@ static fsal_status_t extract_handle(struct fsal_export *exp_hdl,
 	case FSAL_DIGEST_NFSV3:
 	case FSAL_DIGEST_NFSV4:
 		/* wire handles */
-		fh_desc->len = sizeof(vinodeno_t);
+		fh_desc->len = sizeof(struct rgw_fh_hk);
 		break;
 	default:
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
@@ -194,26 +183,29 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 	struct stat st;
 	/* Handle to be created */
 	struct rgw_handle *handle = NULL;
-	uint64_t nfs_handle = *(uint64_t *)(desc->addr);
-
+	/* RGW fh hash key */
+	struct rgw_fh_hk fh_hk;
+	/* RGW file handle instance */
+	struct rgw_file_handle *rgw_fh;
 
 	*pub_handle = NULL;
 
-	if (desc->len != sizeof(vinodeno_t)) {
+	if (desc->len != sizeof(struct rgw_fh_hk)) {
 		status.major = ERR_FSAL_INVAL;
 		return status;
 	}
 
-	rc = rgw_check_handle(export, desc, &nfs_handle);
-	if (!rc) {
-		return rgw2fsal_error(-ESTALE);
-	}
+	memcpy((char *) &fh_hk, desc->addr, desc->len);
 
-	rc = rgw_getattr(export, nfs_handle, &st);
+	rc = rgw_lookup_handle(export->rgw_fs, &fh_hk, &rgw_fh, 0 /* flags */);
+	if (rc < 0)
+		return rgw2fsal_error(-ESTALE);
+
+	rc = rgw_getattr(export->rgw_fs, rgw_fh, &st);
 	if (rc < 0)
 		return rgw2fsal_error(rc);
 
-	rc = construct_handle(&st, nfs_handle, export, &handle);
+	rc = construct_handle(export, rgw_fh, &st, &handle);
 	if (rc < 0) {
 		return rgw2fsal_error(rc);
 	}
@@ -241,15 +233,21 @@ static fsal_status_t get_fs_dynamic_info(struct fsal_export *export_pub,
 	/* Full 'private' export */
 	struct rgw_export *export =
 	    container_of(export_pub, struct rgw_export, export);
-	/* Return value from Ceph calls */
-	int rc = 0;
-	/* Filesystem stat */
-	struct statvfs vfs_st;
 
+	int rc = 0;
+
+<<<<<<< HEAD
 	rc = rgw_statfs(export->cmount, export->root->i, &vfs_st);
+=======
+	/* Filesystem stat */
+	struct rgw_statvfs vfs_st;
+
+	rc = rgw_statfs(export->rgw_fs, export->rgw_fs->root_fh, &vfs_st);
+>>>>>>> 5df12b6... FSAL_RGW: finalize draft FSAL
 	if (rc < 0)
 		return rgw2fsal_error(rc);
 
+	/* TODO: implement in rgw_file */
 	memset(info, 0, sizeof(fsal_dynamicfsinfo_t));
 	info->total_bytes = vfs_st.f_frsize * vfs_st.f_blocks;
 	info->free_bytes = vfs_st.f_frsize * vfs_st.f_bfree;
@@ -487,14 +485,3 @@ void export_ops_init(struct export_ops *ops)
 	ops->fs_umask = fs_umask;
 	ops->fs_xattr_access_rights = fs_xattr_access_rights;
 }
-
-static struct config_item export_params[] = {
-	CONF_ITEM_NOOP("name"),
-	CONF_ITEM_STRING("rgw_user_id", 0, MAXUIDLEN, NULL,
-		       rgw_fsal_export, rgw_export_uid),
-	CONF_ITEM_STRING("rgw_access_key_id", 0, MAXKEYLEN, NULL,
-		       rgw_fsal_export, rgw_access_key_id),
-	CONF_ITEM_STRING("rgw_secret_access_key", 0, MAXSECRETLEN, NULL,
-		       rgw_fsal_export, rgw_secret_access_key),
-	CONFIG_EOL
-};
