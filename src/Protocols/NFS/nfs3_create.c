@@ -153,11 +153,48 @@ int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 			rc = NFS_REQ_OK;
 			goto out;
 		}
+	}
 
-		/* Mode is managed in cache_inode_create,
-		   there is no need to manage it */
-		FSAL_UNSET_MASK(sattr.mask, ATTR_MODE);
-	} else if (arg->arg_create3.how.mode == EXCLUSIVE) {
+	if (parent_entry->obj_handle->fsal->m_ops.support_ex()) {
+		fsal_verifier_t verifier;
+		enum fsal_create_mode createmode;
+
+		/* Set the createmode */
+		createmode = nfs3_createmode_to_fsal(arg->arg_create3.how.mode);
+
+		if (createmode == FSAL_EXCLUSIVE) {
+			/* Set the verifier if EXCLUSIVE */
+			memcpy(verifier,
+			       &arg->arg_create3.how.createhow3_u.verf,
+			       sizeof(fsal_verifier_t));
+		}
+
+		/* If owner or owner_group are set, and the credential was
+		 * squashed, then we must squash the set owner and owner_group.
+		 */
+		squash_setattr(&sattr);
+
+		/* Stateless open, assume Read/Write. */
+		cache_status = cache_inode_open2(parent_entry,
+						 NULL,
+						 FSAL_O_RDWR,
+						 createmode,
+						 file_name,
+						 &sattr,
+						 verifier,
+						 &file_entry);
+
+		if (cache_status != CACHE_INODE_SUCCESS)
+			goto out_fail;
+
+		goto make_handle;
+	}
+
+	/* Mode is managed in cache_inode_create,
+	   there is no need to manage it */
+	FSAL_UNSET_MASK(sattr.mask, ATTR_MODE);
+
+	if (arg->arg_create3.how.mode == EXCLUSIVE) {
 		const char *verf =
 		    (const char *)&(arg->arg_create3.how.createhow3_u.verf);
 		/* If we knew all our FSALs could store a 64 bit
@@ -235,6 +272,8 @@ int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 				goto out_fail;
 		}
 	}
+
+ make_handle:
 
 	/* Build file handle and set Post Op Fh3 structure */
 	if (!nfs3_FSALToFhandle(
