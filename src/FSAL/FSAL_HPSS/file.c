@@ -91,15 +91,7 @@ fsal_status_t hpss_open(struct fsal_obj_handle *fsal_obj_hdl,
 		return fsalstat(ERR_FSAL_INVAL, 0);
 
 	/* convert fsal open flags to hpss open flags */
-	rc = fsal2hpss_openflags(openflags, &hpss_flags);
-
-	/* flags conflicts. */
-	if (rc) {
-		LogEvent(COMPONENT_FSAL,
-			 "Invalid/conflicting flags : %#X", openflags);
-		return fsalstat(rc, 0);
-	}
-
+	fsal2posix_openflags(openflags, &hpss_flags);
 
 	rc = hpss_OpenHandle(&(obj_hdl->handle->ns_handle),
 			     NULL,

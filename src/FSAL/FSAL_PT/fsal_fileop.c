@@ -97,7 +97,6 @@ fsal_status_t PTFSAL_open(struct fsal_obj_handle *obj_hdl,
 			  struct attrlist *p_file_attributes)
 {
 
-	int rc;
 	fsal_status_t status;
 
 	int posix_flags = 0;
@@ -115,14 +114,7 @@ fsal_status_t PTFSAL_open(struct fsal_obj_handle *obj_hdl,
 	myself = container_of(obj_hdl, struct pt_fsal_obj_handle, obj_handle);
 
 	/* convert fsal open flags to posix open flags */
-	rc = fsal2posix_openflags(openflags, &posix_flags);
-
-	/* flags conflicts. */
-	if (rc) {
-		LogWarn(COMPONENT_FSAL, "Invalid/conflicting flags : %#X",
-			openflags);
-		return fsalstat(rc, 0);
-	}
+	fsal2posix_openflags(openflags, &posix_flags);
 
 	status =
 	    fsal_internal_handle2fd(p_context, myself, file_desc, posix_flags);

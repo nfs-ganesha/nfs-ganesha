@@ -353,13 +353,12 @@ fsal_dev_t posix2fsal_devt(dev_t posix_devid)
  * @retval ERR_FSAL_INVAL, invalid or incompatible input flags.
  */
 
-int fsal2posix_openflags(fsal_openflags_t fsal_flags, int *p_posix_flags)
+void fsal2posix_openflags(fsal_openflags_t fsal_flags, int *p_posix_flags)
 {
-	/* check that all used flags exist */
-	if (fsal_flags &
-	    ~(FSAL_O_READ | FSAL_O_RDWR | FSAL_O_WRITE | FSAL_O_SYNC |
-	      FSAL_O_REOPEN | FSAL_O_ANY))
-		return ERR_FSAL_INVAL;
+	/* Ignore any flags that are not actually used, there are flags
+	 * that are passed to FSAL operations that don't convert to
+	 * POSIX open flags, which is fine.
+	 */
 
 	/* conversion */
 	*p_posix_flags = 0;
@@ -375,8 +374,6 @@ int fsal2posix_openflags(fsal_openflags_t fsal_flags, int *p_posix_flags)
 
 	if (fsal_flags & FSAL_O_SYNC)
 		*p_posix_flags |= O_SYNC;
-
-	return ERR_FSAL_NO_ERROR;
 }
 
 /**

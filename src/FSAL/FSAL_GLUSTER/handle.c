@@ -996,7 +996,6 @@ static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
 static fsal_status_t file_open(struct fsal_obj_handle *obj_hdl,
 			       fsal_openflags_t openflags)
 {
-	int rc = 0;
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	struct glfs_fd *glfd = NULL;
 	int p_flags = 0;
@@ -1013,11 +1012,7 @@ static fsal_status_t file_open(struct fsal_obj_handle *obj_hdl,
 	if (objhandle->openflags != FSAL_O_CLOSED)
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 
-	rc = fsal2posix_openflags(openflags, &p_flags);
-	if (rc != 0) {
-		status.major = rc;
-		goto out;
-	}
+	fsal2posix_openflags(openflags, &p_flags);
 
 	glfd = glfs_h_open(glfs_export->gl_fs, objhandle->glhandle, p_flags);
 	if (glfd == NULL) {
