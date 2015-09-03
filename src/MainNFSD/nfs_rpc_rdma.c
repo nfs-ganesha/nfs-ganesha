@@ -1,35 +1,34 @@
 /*
- * Copyright CEA/DAM/DIF  (2012)
+ * Copyright © 2015, CohortFS, LLC.
  *
+ * contributeur : William Allen Simpson <bill@cohortfs.com>
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street,
- * Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
- * ---------------------------------------
+ * -------------
  */
 
 /**
- * \file    nfs_rpc_msk.c
- * \author  $Author: Dominique Martinet $
- * \date    $Date: 2012/08/31 12:33:05 $
- * \version #Revision: 0.1 #
- * \brief   Contains the 'rpc_msk_dispatcher_thread' routine for the nfsd.
+ * @file    nfs_rpc_rdma.c
+ * @author  William Allen Simpson <bill@cohortfs.com>
+ * @date    2015/02/12 15:18:52
+ * @brief   Contains the 'nfs_rdma_dispatcher_thread' routine for the nfsd.
  *
- * nfs_rpc_msk.c : The file that contain the 'rpc_msk_dispatcher_thread'
- * routine for the nfsd (and all the related stuff).
- *
+ * @note    Extracted from previous work by
+ *          Dominique Martinet <dominique.martinet@cea.fr>
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -39,42 +38,20 @@
 #include "solaris_port.h"
 #endif
 
-#include <stdio.h>
-#include <string.h>
-#include <pthread.h>
-#include <fcntl.h>
-#include <sys/file.h>	   /* for having FNDELAY */
-#include <sys/select.h>
-#include <poll.h>
-#include <assert.h>
-#include "log.h"
 #include "gsh_rpc.h"
-#include "nfs23.h"
-#include "nfs4.h"
-#include "mount.h"
-#include "nlm4.h"
-#include "rquota.h"
 #include "nfs_init.h"
-#include "nfs_core.h"
-#include "cache_inode.h"
-#include "nfs_exports.h"
-#include "nfs_creds.h"
-#include "nfs_proto_functions.h"
-#include "nfs_dupreq.h"
-#include "nfs_file_handle.h"
-#include <mooshika.h>
 
-
-struct clx {
-	pthread_mutex_t lock;
-	pthread_cond_t cond;
-	SVCXPRT *xprt;
-};
-
-void nfs_msk_callback_disconnect(msk_trans_t *trans)
+/**
+ * rpc_rdma_disconnect_callback: placeholder
+ *
+ * @param[inout] xprt	must be init first
+ */
+static void
+rpc_rdma_disconnect_callback(SVCXPRT *xprt)
 {
 }
 
+#ifdef REMOVEOLDCODE
 void nfs_msk_callback(void *arg)
 {
 	struct clx *clx = arg;
@@ -127,78 +104,74 @@ void *nfs_msk_thread(void *arg)
 
 	return NULL;
 }
+#endif
 
-void *nfs_msk_dispatcher_thread(void *nullarg)
+/**
+ * rpc_rdma_dispatcher_thread: setup NFS/RDMA engine
+ *
+ * Initially creates a listener and its connection manager epoll thread.
+ *
+ * Each connection request creates a child.
+ *
+ * The completion queue epoll thread is shared among all children.
+ *
+ * @param[in] xa	must be init first
+ *
+ * @return NULL
+ */
+void *
+nfs_rdma_dispatcher_thread(void *nullarg)
 {
-	msk_trans_t *trans;	/* connection main trans */
-	msk_trans_t *child_trans;  /* child trans */
-	pthread_attr_t attr_thr;
-	int rc;
-	msk_trans_attr_t trans_attr;
-	pthread_t thrid_handle_trans;
+	struct rpc_rdma_attr xa = {
+		.statistics_prefix = NULL,
+		.node = "::",
+		.port = "20049",
+		.disconnect_cb = rpc_rdma_disconnect_callback,
+		.request_cb = thr_decode_rpc_request,
+		.timeout = 30000,		/* in ms */
+		.sq_depth = 32,			/* default was 50 */
+		.max_send_sge = 32,		/* minimum 2 */
+		.rq_depth = 32,			/* default was 50 */
+		.max_recv_sge = 31,		/* minimum 1 */
+		.backlog = 10,			/* minimum 2 */
+		.credits = 30,			/* default 10 */
+		.worker_count = 4,		/* default 0 */
+		.worker_queue_size = 256,	/* default 0 */
+		.destroy_on_disconnect = true,
+		.use_srq = false,
+	};
+	SVCXPRT *l_xprt = rpc_rdma_create(&xa);
 
-	memset(&trans_attr, 0, sizeof(trans_attr));
-	trans_attr.debug = MSK_DEBUG_EVENT;
-	trans_attr.server = 10;
-	trans_attr.rq_depth = 32;
-	trans_attr.sq_depth = 32;
-	trans_attr.max_send_sge = 2;
-	trans_attr.port = "20049";
-	trans_attr.node = "::";
-	trans_attr.disconnect_callback = nfs_msk_callback_disconnect;
-	trans_attr.worker_count = 4;
-	trans_attr.worker_queue_size = 256;
+	if (!l_xprt) {
+		LogCrit(COMPONENT_DISPATCH,
+			"NFS/RDMA dispatcher could not start engine");
+		return NULL;
+	}
+	LogEvent(COMPONENT_DISPATCH,
+		"NFS/RDMA engine initialized");
 
-	/* Init for thread parameter (mostly for scheduling) */
-	if (pthread_attr_init(&attr_thr))
-		LogDebug(COMPONENT_NFS_MSK,
-			"can't init pthread's attributes");
-
-	if (pthread_attr_setscope(&attr_thr, PTHREAD_SCOPE_SYSTEM))
-		LogDebug(COMPONENT_NFS_MSK,
-			"can't set pthread's scope");
-
-	if (pthread_attr_setdetachstate(&attr_thr, PTHREAD_CREATE_JOINABLE))
-		LogDebug(COMPONENT_NFS_MSK,
-			"can't set pthread's join state");
-
-	/* Init RDMA via mooshika */
-	if (msk_init(&trans, &trans_attr))
-		LogFatal(COMPONENT_NFS_MSK,
-			"9P/RDMA dispatcher could not start mooshika engine");
-	else
-		LogEvent(COMPONENT_NFS_MSK,
-			"Mooshika engine is started");
-
-	/* Bind Mooshika */
-	if (msk_bind_server(trans))
-		LogFatal(COMPONENT_NFS_MSK,
-			"9P/RDMA dispatcher could not bind mooshika engine");
-	else
-		LogEvent(COMPONENT_NFS_MSK,
-			"Mooshika engine is bound");
-
-
-	while (1) {
-		child_trans = msk_accept_one(trans);
-		if (child_trans == NULL)
-			LogMajor(COMPONENT_NFS_MSK,
-				"NFS/RDMA: dispatcher failed to accept a new client");
-		else {
-			LogDebug(COMPONENT_NFS_MSK,
-				"Got a new connection, spawning a polling thread");
-			rc = pthread_create(&thrid_handle_trans,
-					&attr_thr, nfs_msk_thread, child_trans);
-			if (rc)
-				LogMajor(COMPONENT_NFS_MSK,
-					"NFS/RDMA: dipatcher accepted a new client but could not spawn a related thread");
-			else
-				LogEvent(COMPONENT_NFS_MSK,
-					"NFS/RDMA: thread %u spawned to manage a new child_trans",
-					(unsigned int)thrid_handle_trans);
+	/* All clones and large allocations are done in this loop,
+	 * avoiding contention in the heap(s), serialized by the
+	 * connection_requests queue.
+	 */
+	while (l_xprt->xp_refs > 0) {
+		/* values used in Mooshika were 8*1024, 4*8*1024;
+		 * should be configurable.
+		 */
+		SVCXPRT *c_xprt = svc_rdma_create(l_xprt, 4*1024, 4*1024,
+							SVC_XPRT_FLAG_NONE);
+		if (!c_xprt) {
+			/* message already logged */
+			continue;
 		}
-	} /* while (1) */
+
+		LogEvent(COMPONENT_DISPATCH,
+			"cloned (child) transport %p",
+			c_xprt);
+	}
+
+	/* We never get here, xp_refs is always > 0 until destroy */
+	SVC_DESTROY(l_xprt);
 
 	return NULL;
-} /* nfs_msk_dispatched_thread */
-
+} /* rpc_rdma_dispatcher_thread */

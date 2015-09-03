@@ -1778,6 +1778,9 @@ enum xprt_stat thr_decode_rpc_request(void *context, SVCXPRT *xprt)
 #endif
 
 
+	/* pass private context to _recv */
+	reqdata->r_u.req.svc.rq_context = context;
+
 	DISP_RLOCK(xprt);
 
 #if defined(HAVE_BLKIN)
@@ -1865,6 +1868,13 @@ enum xprt_stat thr_decode_rpc_request(void *context, SVCXPRT *xprt)
 
 	if (!nfs_rpc_get_args(&reqdata->r_u.req))
 		goto finish;
+
+	if (context) {
+		/* already running worker thread, do not enqueue */
+		DISP_RUNLOCK(xprt);
+		nfs_rpc_execute(reqdata);
+		return XPRT_IDLE;
+	}
 
 	gsh_xprt_ref(xprt, XPRT_PRIVATE_FLAG_INCREQ, __func__, __LINE__);
 

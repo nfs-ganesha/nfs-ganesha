@@ -265,7 +265,8 @@ if(USE_BLKIN)
 endif(USE_BLKIN)
 
 # NFS RDMA
-option(USE_NFS_MSK "enable NFS/MSK support" OFF)
+option(USE_NFS_MSK "enable NFS/Mooshika support" OFF)
+option(USE_NFS_RDMA "enable NFS/RDMA support" OFF)
 
 # Enable 9P Support
 option(USE_9P "enable 9P support" ON)
@@ -410,6 +411,7 @@ IF(MOOSHIKA_PREFIX)
   set(MOOSHIKA_PREFIX ${MOOSHIKA_PREFIX} CACHE PATH "Path to Mooshika installation")
   set(ENV{PKG_CONFIG_PATH} "${PKG_CONFIG_PATH}:${MOOSHIKA_PREFIX}/lib/pkgconfig")
 ENDIF()
+
 IF(LIBIBVERBS_PREFIX)
   set(LIBIBVERBS_PREFIX ${LIBIBVERBS_PREFIX} CACHE PATH "Path to libibverbs installation")
   LIST(APPEND CMAKE_REQUIRED_INCLUDES "${LIBIBVERBS_PREFIX}/include")
@@ -421,7 +423,20 @@ IF(LIBRDMACM_PREFIX)
   include_directories("${LIBRDMACM_PREFIX}/include")
 ENDIF()
 
-
+if(USE_NFS_RDMA)
+  find_library(LIBIBVERBS ibverbs)
+  if(LIBIBVERBS)
+    set(SYSTEM_LIBRARIES ${SYSTEM_LIBRARIES} ${LIBIBVERBS})
+  else(LIBIBVERBS)
+    message(FATAL_ERROR "libibverbs not found")
+  endif(LIBIBVERBS)
+  find_library(LIBRDMACM rdmacm)
+  if(LIBRDMACM)
+    set(SYSTEM_LIBRARIES ${SYSTEM_LIBRARIES} ${LIBRDMACM})
+  else(LIBRDMACM)
+    message(FATAL_ERROR "librdmacm not found")
+  endif(LIBRDMACM)
+endif(USE_NFS_RDMA)
 
 if(USE_CB_SIMULATOR AND NOT USE_DBUS)
   message(WARNING "The callback simulator needs DBUS.  Enabling DBUS")
@@ -1016,6 +1031,7 @@ message(STATUS "TIRPC_EPOLL = ${TIRPC_EPOLL}")
 message(STATUS "USE_9P = ${USE_9P}")
 message(STATUS "_USE_9P = ${_USE_9P}")
 message(STATUS "_USE_9P_RDMA = ${_USE_9P_RDMA}")
+message(STATUS "USE_NFS_RDMA = ${USE_NFS_RDMA}")
 message(STATUS "KRB5_PREFIX = ${KRB5_PREFIX}")
 message(STATUS "CEPH_PREFIX = ${CEPH_PREFIX}")
 message(STATUS "HPSS_PREFIX = ${HPSS_PREFIX}")
@@ -1206,6 +1222,16 @@ set(USE_NFS_MSK ${USE_NFS_MSK}
 set(_USE_NFS_MSK ${USE_NFS_MSK}
   CACHE BOOL
   "enable nfs Mooshika in config"
+  FORCE)
+
+set(USE_NFS_RDMA ${USE_NFS_RDMA}
+  CACHE BOOL
+  "enable nfs RDMA"
+  FORCE)
+
+set(_USE_NFS_RDMA ${USE_NFS_RDMA}
+  CACHE BOOL
+  "enable nfs RDMA in config"
   FORCE)
 
 # Now create a useable config.h

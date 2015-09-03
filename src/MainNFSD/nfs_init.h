@@ -73,4 +73,10 @@ void nfs_start(nfs_start_info_t *p_start_info);
 
 enum xprt_stat thr_decode_rpc_request(void *context, SVCXPRT *xprt);
 
+#ifdef _USE_NFS_RDMA
+/* in nfs_rpc_rdma.c */
+
+void *nfs_rdma_dispatcher_thread(void *nullarg);
+#endif
+
 #endif				/* !NFS_INIT_H */
