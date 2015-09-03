@@ -976,6 +976,8 @@ state_nsm_client_t *get_nsm_client(care_t care, SVCXPRT *xprt,
 		display_nsm_client(&dspbuf, &key);
 		LogCrit(COMPONENT_STATE, "No memory for {%s}", str);
 
+		hashtable_releaselatched(ht_nsm_client, &latch);
+
 		return NULL;
 	}
 
@@ -990,6 +992,7 @@ state_nsm_client_t *get_nsm_client(care_t care, SVCXPRT *xprt,
 		/* Discard the created client */
 		PTHREAD_MUTEX_destroy(&pclient->ssc_mutex);
 		free_nsm_client(pclient);
+		hashtable_releaselatched(ht_nsm_client, &latch);
 		return NULL;
 	}
 

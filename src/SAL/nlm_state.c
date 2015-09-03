@@ -430,8 +430,10 @@ int get_nlm_state(enum state_type state_type,
 	/* If the nsm state doesn't apply, we don't want to create a new
 	 * state_t if one didn't exist already.
 	 */
-	if (!nsm_state_applies)
+	if (!nsm_state_applies) {
+		hashtable_releaselatched(ht_nlm_states, &latch);
 		return 0;
+	}
 
 	state = gsh_malloc(sizeof(*state));
 
@@ -440,6 +442,8 @@ int get_nlm_state(enum state_type state_type,
 		LogCrit(COMPONENT_STATE, "No memory for {%s}", str);
 
 		*pstate = NULL;
+
+		hashtable_releaselatched(ht_nlm_states, &latch);
 
 		return NLM4_DENIED_NOLOCKS;
 	}
@@ -466,6 +470,7 @@ int get_nlm_state(enum state_type state_type,
 
 	if (cache_inode_lru_ref(state->state_entry, LRU_FLAG_NONE) !=
 	    CACHE_INODE_SUCCESS) {
+		hashtable_releaselatched(ht_nlm_states, &latch);
 		*pstate = NULL;
 		gsh_free(state);
 		return NLM4_STALE_FH;
