@@ -101,6 +101,19 @@ fsal_status_t GPFSFSAL_open(struct fsal_obj_handle *obj_hdl,
 	status = fsal_internal_handle2fd(gpfs_fs->root_fd, myself->handle,
 					 file_desc, posix_flags, reopen);
 
+	if (FSAL_IS_ERROR(status)) {
+		/* In some environments, "root" is denied write access,
+		 * so try with the request credentials if the above call
+		 * fails.
+		 */
+		fsal_set_credentials(p_context->creds);
+		status = fsal_internal_handle2fd(gpfs_fs->root_fd,
+						 myself->handle,
+						 file_desc, posix_flags,
+						 reopen);
+		fsal_restore_ganesha_credentials();
+	}
+
 	if (FSAL_IS_ERROR(status))
 		return status;
 
