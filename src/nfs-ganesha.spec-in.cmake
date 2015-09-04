@@ -398,7 +398,6 @@ install -m 644 scripts/init.d/sysconfig/ganesha		%{buildroot}%{_sysconfdir}/sysc
 %endif
 
 %if %{with pt}
-install -m 755 ganesha.pt.init %{buildroot}%{_sysconfdir}/init.d/nfs-ganesha-pt
 install -m 644 config_samples/pt.conf %{buildroot}%{_sysconfdir}/ganesha
 %endif
 
@@ -568,7 +567,6 @@ make DESTDIR=%{buildroot} install
 %files pt
 %defattr(-,root,root,-)
 %{_libdir}/ganesha/libfsalpt*
-%config(noreplace) %{_sysconfdir}/init.d/nfs-ganesha-pt
 %config(noreplace) %{_sysconfdir}/ganesha/pt.conf
 %endif
 
