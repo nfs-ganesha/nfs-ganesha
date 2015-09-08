@@ -236,6 +236,11 @@ struct closefd vfs_fsal_open_and_stat(struct fsal_export *exp,
 				      fsal_openflags_t flags,
 				      fsal_errors_t *fsal_error);
 
+/* State storage */
+void vfs_state_init(void);
+void vfs_state_release(struct gsh_buffdesc *key);
+struct state_hdl *vfs_state_locate(struct fsal_obj_handle *obj);
+
 	/* I/O management */
 fsal_status_t vfs_close_my_fd(struct vfs_fd *my_fd);
 

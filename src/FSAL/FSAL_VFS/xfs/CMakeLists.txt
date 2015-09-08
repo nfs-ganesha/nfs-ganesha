@@ -10,6 +10,7 @@ SET(fsalxfs_LIB_SRCS
    handle_syscalls.c
    ../file.c
    ../xattrs.c
+   ../state.c
    ../vfs_methods.h
    subfsal_xfs.c
   )

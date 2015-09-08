@@ -11,6 +11,7 @@ SET(fsalvfs_LIB_SRCS
    ../file.c
    ../xattrs.c
    ../vfs_methods.h
+   ../state.c
    subfsal_vfs.c
   )
 

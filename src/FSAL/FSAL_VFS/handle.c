@@ -130,6 +130,7 @@ struct vfs_fsal_obj_handle *alloc_handle(int dirfd,
 	hdl->attributes.fsid = fs->fsid;
 	fsal_obj_handle_init(&hdl->obj_handle, exp_hdl,
 			     posix2fsal_type(stat->st_mode));
+	hdl->obj_handle.state_hdl = vfs_state_locate(&hdl->obj_handle);
 	vfs_handle_ops_init(&hdl->obj_handle.obj_ops);
 	if (vfs_sub_init_handle(myself, hdl, path) < 0)
 		goto spcerr;
@@ -1763,6 +1764,11 @@ static void release(struct fsal_obj_handle *obj_hdl)
 	if (type == SYMBOLIC_LINK) {
 		if (myself->u.symlink.link_content != NULL)
 			gsh_free(myself->u.symlink.link_content);
+	} else if (type == REGULAR_FILE) {
+		struct gsh_buffdesc key;
+
+		handle_to_key(obj_hdl, &key);
+		vfs_state_release(&key);
 	} else if (vfs_unopenable_type(type)) {
 		if (myself->u.unopenable.name != NULL)
 			gsh_free(myself->u.unopenable.name);

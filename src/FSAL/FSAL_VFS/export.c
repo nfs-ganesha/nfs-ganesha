@@ -557,6 +557,8 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 	struct vfs_fsal_export *myself;
 	int retval = 0;
 
+	vfs_state_init();
+
 	myself = gsh_calloc(1, sizeof(struct vfs_fsal_export));
 
 	glist_init(&myself->filesystems);
