@@ -154,15 +154,19 @@ if (MSVC)
    add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 endif(MSVC)
 
+# Library path name
+if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+	set(LIB_INSTALL_DIR lib64 CACHE PATH
+		"Specify name of libdir inside install path")
+else( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+	set(LIB_INSTALL_DIR lib CACHE PATH
+		"Specify name of libdir inside install path")
+endif( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+
 IF(FSAL_DESTINATION)
     set( FSAL_DESTINATION ${FSAL_DESTINATION} )
 ELSE()
-    # Library destination, 32 bits / 64 bits switch is done here
-    if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-        set( FSAL_DESTINATION "lib64/ganesha" )
-    else( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-        set( FSAL_DESTINATION "lib/ganesha" )
-    endif( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+    set( FSAL_DESTINATION "${LIB_INSTALL_DIR}/ganesha")
 ENDIF()
 
 # FSAL selection
@@ -922,7 +926,7 @@ install(DIRECTORY config_samples DESTINATION share/doc/ganesha)
 # pre-create PREFIX/var/run/ganesha
 install(DIRECTORY DESTINATION ${SYSSTATEDIR}/run/ganesha)
 
-IF( NOT EXISTS ${PROJECT_SOURCE_DIR}/libntirpc/CMakeLists.txt )
+IF( NOT EXISTS ${PROJECT_SOURCE_DIR}/libntirpc/ganesha/CMakeLists.txt )
 message( FATAL_ERROR
 "No CMakeLists.txt found in libntirpc
 This probably means that the directory was not properly populated.
@@ -930,7 +934,7 @@ Please run the following command to do that and use cmake again:
     git submodule update --init
 Alternatively, if you are not using git, get the current version at
     https://github.com/nfs-ganesha/ntirpc" )
-ENDIF( NOT EXISTS ${PROJECT_SOURCE_DIR}/libntirpc/CMakeLists.txt )
+ENDIF( NOT EXISTS ${PROJECT_SOURCE_DIR}/libntirpc/ganesha/CMakeLists.txt )
 
 add_subdirectory(log)
 add_subdirectory(config_parsing)
@@ -941,7 +945,7 @@ add_subdirectory(hashtable)
 add_subdirectory(NodeList)
 add_subdirectory(cache_inode)
 add_subdirectory(SAL)
-add_subdirectory(libntirpc)
+add_subdirectory(libntirpc/ganesha)
 add_subdirectory(RPCAL)
 add_subdirectory(Protocols)
 add_subdirectory(support)

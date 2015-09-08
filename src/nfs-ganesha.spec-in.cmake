@@ -458,7 +458,9 @@ make DESTDIR=%{buildroot} install
 %files
 %defattr(-,root,root,-)
 %{_bindir}/ganesha.nfsd
-%{_bindir}/libntirpc.a
+%{_libdir}/libntirpc.so.1.3.0
+%{_libdir}/libntirpc.so.1.3
+%{_libdir}/libntirpc.so
 %config %{_sysconfdir}/dbus-1/system.d/org.ganesha.nfsd.conf
 %config(noreplace) %{_sysconfdir}/sysconfig/ganesha
 %config(noreplace) %{_sysconfdir}/logrotate.d/ganesha
