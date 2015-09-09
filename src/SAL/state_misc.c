@@ -1220,8 +1220,13 @@ state_owner_t *get_state_owner(care_t care, state_owner_t *key,
 	owner->so_refcount = 1;
 
 	if (isFullDebug(COMPONENT_STATE)) {
+		display_reset_buffer(&dspbuf);
 		display_owner(&dspbuf, owner);
 		LogFullDebug(COMPONENT_STATE, "New {%s}", str);
+		str_valid = true;
+	} else {
+		/* If we had the key, we don't want it anymore */
+		str_valid = false;
 	}
 
 	buffkey.addr = owner;
@@ -1234,7 +1239,8 @@ state_owner_t *get_state_owner(care_t care, state_owner_t *key,
 
 	/* An error occurred, return NULL */
 	if (rc != HASHTABLE_SUCCESS) {
-		display_owner(&dspbuf, owner);
+		if (!str_valid)
+			display_owner(&dspbuf, owner);
 
 		LogCrit(COMPONENT_STATE, "Error %s, inserting {%s}",
 			hash_table_err_to_str(rc), str);

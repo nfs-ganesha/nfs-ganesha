@@ -92,6 +92,12 @@ state_status_t state_add_impl(cache_entry_t *entry, enum state_type state_type,
 	state_status_t status = 0;
 	bool mutex_init = false;
 
+	if (isFullDebug(COMPONENT_STATE)) {
+		display_stateid(&dspbuf, pnew_state);
+		LogFullDebug(COMPONENT_STATE, "pnew_state=%s", str);
+		display_reset_buffer(&dspbuf);
+	}
+
 	/* Take a cache inode reference for the state */
 	cache_status = cache_inode_lru_ref(entry, LRU_FLAG_NONE);
 
@@ -156,9 +162,13 @@ state_status_t state_add_impl(cache_entry_t *entry, enum state_type state_type,
 	if (refer)
 		pnew_state->state_refer = *refer;
 
-	if (isDebug(COMPONENT_STATE)) {
+	if (isFullDebug(COMPONENT_STATE)) {
 		display_stateid_other(&dspbuf, pnew_state->stateid_other);
 		str_valid = true;
+
+		LogFullDebug(COMPONENT_STATE,
+			     "About to call nfs4_State_Set for %s",
+			     str);
 	}
 
 	glist_init(&pnew_state->state_list);
@@ -572,6 +582,14 @@ enum nfsstat4 release_lock_owner(state_owner_t *owner)
 		PTHREAD_MUTEX_unlock(&owner->so_mutex);
 
 		return NFS4ERR_LOCKS_HELD;
+	}
+
+	if (isDebug(COMPONENT_STATE)) {
+		char str[LOG_BUFF_LEN];
+		struct display_buffer dspbuf = {sizeof(str), str, str};
+
+		display_owner(&dspbuf, owner);
+		LogCrit(COMPONENT_STATE, "Removing state for %s", str);
 	}
 
 	while (true) {

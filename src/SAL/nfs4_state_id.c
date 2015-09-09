@@ -100,7 +100,7 @@ int display_stateid_other(struct display_buffer *dspbuf, char *other)
 	if (b_left <= 0)
 		return b_left;
 
-	b_left = display_cat(dspbuf, " {CLIENTID ");
+	b_left = display_cat(dspbuf, " {{CLIENTID ");
 
 	if (b_left <= 0)
 		return b_left;
@@ -110,7 +110,7 @@ int display_stateid_other(struct display_buffer *dspbuf, char *other)
 	if (b_left <= 0)
 		return b_left;
 
-	return display_printf(dspbuf, " StateIdCounter=0x%08"PRIx32"}", count);
+	return display_printf(dspbuf, "} StateIdCounter=0x%08"PRIx32"}", count);
 }
 
 /**
@@ -188,15 +188,20 @@ int display_stateid(struct display_buffer *dspbuf, state_t *state)
 	entry = state->state_entry;
 	PTHREAD_MUTEX_unlock(&state->state_mutex);
 
+	b_left = display_printf(dspbuf,
+				"STATE %p ",
+				state);
+
+	if (b_left <= 0)
+		return b_left;
+
 	b_left = display_stateid_other(dspbuf, state->stateid_other);
 
 	if (b_left <= 0)
 		return b_left;
 
 	b_left = display_printf(dspbuf,
-				" STATE %p entry=%p type=%s seqid=%"PRIu32
-				" owner={",
-				state,
+				" entry=%p type=%s seqid=%"PRIu32" owner={",
 				entry,
 				str_state_type(state),
 				state->state_seqid);
@@ -519,6 +524,7 @@ int nfs4_State_Set(state_t *state)
 {
 	struct gsh_buffdesc buffkey;
 	struct gsh_buffdesc buffval;
+	hash_error_t err;
 
 	buffkey.addr = state->stateid_other;
 	buffkey.len = OTHERSIZE;
@@ -526,14 +532,15 @@ int nfs4_State_Set(state_t *state)
 	buffval.addr = state;
 	buffval.len = sizeof(state_t);
 
-	if (hashtable_test_and_set(ht_state_id,
-				   &buffkey,
-				   &buffval,
-				   HASHTABLE_SET_HOW_SET_NO_OVERWRITE)
-	    != HASHTABLE_SUCCESS) {
+	err = hashtable_test_and_set(ht_state_id,
+				     &buffkey,
+				     &buffval,
+				     HASHTABLE_SET_HOW_SET_NO_OVERWRITE);
+
+	if (err != HASHTABLE_SUCCESS) {
 		LogCrit(COMPONENT_STATE,
-			"hashtable_test_and_set failed for key %p",
-			buffkey.addr);
+			"hashtable_test_and_set failed %s for key %p",
+			hash_table_err_to_str(err), buffkey.addr);
 		return 0;
 	}
 
@@ -548,20 +555,39 @@ int nfs4_State_Set(state_t *state)
 	buffval.addr = state;
 	buffval.len = sizeof(state_t);
 
-	if (hashtable_test_and_set(ht_state_entry,
-				   &buffkey,
-				   &buffval,
-				   HASHTABLE_SET_HOW_SET_NO_OVERWRITE)
-	    != HASHTABLE_SUCCESS) {
+	err = hashtable_test_and_set(ht_state_entry,
+				     &buffkey,
+				     &buffval,
+				     HASHTABLE_SET_HOW_SET_NO_OVERWRITE);
+
+	if (err != HASHTABLE_SUCCESS) {
 		struct gsh_buffdesc buffkey, old_key, old_value;
-		hash_error_t err;
 
 		buffkey.addr = state->stateid_other;
 		buffkey.len = OTHERSIZE;
 
 		LogCrit(COMPONENT_STATE,
-			"hashtable_test_and_set failed for key %p",
-			buffkey.addr);
+			"hashtable_test_and_set failed %s for key %p",
+			hash_table_err_to_str(err), buffkey.addr);
+
+		if (isFullDebug(COMPONENT_STATE)) {
+			char str[LOG_BUFF_LEN];
+			struct display_buffer dspbuf = {sizeof(str), str, str};
+			state_t *state2;
+
+			display_stateid(&dspbuf, state);
+			LogCrit(COMPONENT_STATE, "State %s", str);
+			state2 = nfs4_State_Get_Entry(state->state_entry,
+						      state->state_owner);
+			if (state2 != NULL) {
+				display_reset_buffer(&dspbuf);
+				display_stateid(&dspbuf, state2);
+
+				LogCrit(COMPONENT_STATE,
+					"Duplicate State %s",
+					str);
+			}
+		}
 
 		err = HashTable_Del(ht_state_id, &buffkey,
 				    &old_key, &old_value);

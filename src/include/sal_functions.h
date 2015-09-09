@@ -339,7 +339,7 @@ void nfs41_Session_PrintAll(void);
  *
  ******************************************************************************/
 
-#define DISPLAY_STATEID_OTHER_SIZE (DISPLAY_CLIENTID_SIZE + 48)
+#define DISPLAY_STATEID_OTHER_SIZE (DISPLAY_CLIENTID_SIZE + 72)
 
 int display_stateid_other(struct display_buffer *dspbuf, char *other);
 int display_stateid(struct display_buffer *dspbuf, state_t *state);

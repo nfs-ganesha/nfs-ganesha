@@ -458,6 +458,14 @@ state_owner_t *create_nfs4_owner(state_nfs4_owner_name_t *name,
 		key.so_owner.so_nfs4_owner.so_confirmed = 1;
 #endif
 
+	if (isFullDebug(COMPONENT_STATE)) {
+		char str[LOG_BUFF_LEN];
+		struct display_buffer dspbuf = {sizeof(str), str, str};
+
+		display_owner(&dspbuf, &key);
+		LogFullDebug(COMPONENT_STATE, "Key=%s", str);
+	}
+
 	owner = get_state_owner(care, &key, init_nfs4_owner, &isnew);
 
 	if (owner != NULL && related_owner != NULL) {
