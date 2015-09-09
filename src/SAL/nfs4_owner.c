@@ -69,9 +69,14 @@ int display_nfs4_owner_key(struct gsh_buffdesc *buff, char *str)
  */
 int display_nfs4_owner(struct display_buffer *dspbuf, state_owner_t *owner)
 {
-	int b_left = display_printf(dspbuf,  "%s %p:",
-				    state_owner_type_to_str(owner->so_type),
-				    owner);
+	int b_left;
+
+	if (owner == NULL)
+		return display_cat(dspbuf, "<NULL>");
+
+	b_left = display_printf(dspbuf,  "%s %p:",
+				state_owner_type_to_str(owner->so_type),
+				owner);
 
 	if (b_left <= 0)
 		return b_left;
