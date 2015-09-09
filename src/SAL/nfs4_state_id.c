@@ -323,6 +323,7 @@ static hash_parameter_t state_id_param = {
 	.key_to_str = display_state_id_key,
 	.val_to_str = display_state_id_val,
 	.flags = HT_FLAG_CACHE,
+	.ht_log_component = COMPONENT_STATE,
 };
 
 /**
@@ -424,6 +425,7 @@ static hash_parameter_t state_entry_param = {
 	.key_to_str = display_state_id_val,
 	.val_to_str = display_state_id_val,
 	.flags = HT_FLAG_CACHE,
+	.ht_log_component = COMPONENT_STATE,
 };
 
 /**
