@@ -57,6 +57,7 @@ void open_socket(void)
 	int rc;
 
 	rc = socket(AF_INET, SOCK_STREAM, 0);
+
 	if (rc == -1)
 		fatal("socket failed with ERRNO %d \"%s\"\n",
 		      errno, strerror(errno));
@@ -194,6 +195,7 @@ int receive(bool watchin, long int timeout_secs)
 		if (timeout_secs > 0) {
 			timeout.tv_nsec = 0;
 			timeout.tv_sec = timeend - time(NULL);
+
 			if (timeout.tv_sec == 0)
 				return -2;
 		} else if (timeout_secs == 0) {
@@ -318,6 +320,7 @@ struct response *process_client_response(struct client *client)
 	client_resp = alloc_resp(client);
 
 	len = readln(client->c_input, line, MAXSTR * 2);
+
 	if (len >= 0) {
 		sprintf(client_resp->r_original, "%s %s", client->c_name, line);
 		fprintf(output, "%s\n", client_resp->r_original);
@@ -352,6 +355,7 @@ struct response *receive_response(bool watchin, long int timeout_secs)
 	struct client *client;
 
 	fd = receive(watchin, timeout_secs);
+
 	if (fd == -2 && timeout_secs >= 0) {
 		/* Expected timeout */
 		return NULL;
@@ -450,6 +454,7 @@ void wait_for_expected_responses(const char *label, int count,
 	bool fatal = false;
 
 	fprintf(output, "Waiting for %d %s...\n", count, label);
+
 	while (expected_responses != NULL
 	       && (client_list != NULL || could_quit)) {
 		client_resp = receive_response(false, -1);
@@ -470,6 +475,7 @@ void wait_for_expected_responses(const char *label, int count,
 			free_response(client_resp, NULL);
 		} else if (client_resp->r_cmd != CMD_QUIT) {
 			errno = 0;
+
 			if (err_accounting)
 				fprintf(stderr, "%s\nResp:      %s\n", last,
 					client_resp->r_original);
@@ -853,14 +859,15 @@ void mcmd_expect(struct master_state *ms)
 
 	ms->expect_resp = alloc_resp(ms->client);
 
-	if (script)
+	if (script) {
 		sprintf(ms->expect_resp->r_original,
 			"Line %4ld: EXPECT %s %s",
 			lno, ms->client->c_name, ms->rest);
-	else
+	} else {
 		sprintf(ms->expect_resp->r_original,
 			"EXPECT %s %s",
 			ms->client->c_name, ms->rest);
+	}
 
 	ms->rest = parse_response(ms->rest, ms->expect_resp);
 
@@ -1149,30 +1156,35 @@ int main(int argc, char **argv)
 	sigact.sa_handler = sighandler;
 
 	rc = sigaction(SIGINT, &sigact, NULL);
+
 	if (rc == -1)
 		fatal(
 		    "sigaction(SIGINT, &sigact, NULL) returned -1 errno %d \"%s\"\n",
 		    errno, strerror(errno));
 
 	rc = sigaction(SIGTERM, &sigact, NULL);
+
 	if (rc == -1)
 		fatal(
 		    "sigaction(SIGTERM, &sigact, NULL) returned -1 errno %d \"%s\"\n",
 		    errno, strerror(errno));
 
 	rc = sigaction(SIGUSR1, &sigact, NULL);
+
 	if (rc == -1)
 		fatal(
 		    "sigaction(SIGUSR1, &sigact, NULL) returned -1 errno %d \"%s\"\n",
 		    errno, strerror(errno));
 
 	rc = sigaction(SIGPIPE, &sigact, NULL);
+
 	if (rc == -1)
 		fatal(
 		    "sigaction(SIGPIPE, &sigact, NULL) returned -1 errno %d \"%s\"\n",
 		    errno, strerror(errno));
 
 	rc = sigfillset(&full_signal_set);
+
 	if (rc == -1)
 		fatal(
 		    "sigfillset(&full_signal_set) returned -1 errno %d \"%s\"\n",
