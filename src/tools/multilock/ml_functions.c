@@ -41,6 +41,7 @@ struct command_def commands[NUM_COMMANDS + 1] = {
 	{"COMMENT", 7},
 	{"ALARM", 5},
 	{"HELLO", 5},
+	{"FORK", 4},
 	{"QUIT", 4},
 	{"UNKNOWN", 0},
 };
@@ -738,6 +739,7 @@ void sprintf_resp(char *line, const char *lead, struct response *resp)
 		switch (resp->r_cmd) {
 		case CMD_COMMENT:
 		case CMD_HELLO:
+		case CMD_FORK:
 			sprintf(rest, " \"%s\"\n", resp->r_data);
 			break;
 
@@ -881,6 +883,7 @@ char *parse_response(char *line, struct response *resp)
 		switch (resp->r_cmd) {
 		case CMD_COMMENT:
 		case CMD_HELLO:
+		case CMD_FORK:
 			rest =
 			    get_str(rest, resp->r_data, &resp->r_length,
 				    REQUIRES_NO_MORE);
@@ -1126,6 +1129,7 @@ int compare_responses(struct response *expected, struct response *received)
 		switch (expected->r_cmd) {
 		case CMD_COMMENT:
 		case CMD_HELLO:
+		case CMD_FORK:
 			/* could check string, but not worth it - HELLO has
 			 * already set client name and that has been checked
 			 */
@@ -1438,6 +1442,7 @@ parse_function_t parse_functions[NUM_COMMANDS] = {
 	parse_string,		/* comment */
 	parse_alarm,
 	parse_string,		/* hello */
+	parse_string,		/* fork */
 	parse_empty,		/* quit */
 };
 
@@ -1475,6 +1480,7 @@ char *parse_request(char *line, struct response *req, int no_tag)
 	case CMD_READ:
 	case CMD_WRITE:
 	case CMD_HELLO:
+	case CMD_FORK:
 	case CMD_COMMENT:
 	case CMD_ALARM:
 	case CMD_QUIT:
@@ -1518,6 +1524,7 @@ void sprintf_req(char *line, const char *lead, struct response *req)
 	switch (req->r_cmd) {
 	case CMD_COMMENT:
 	case CMD_HELLO:
+	case CMD_FORK:
 		sprintf(rest, " \"%s\"\n", req->r_data);
 		break;
 

@@ -158,6 +158,7 @@ The commands and specific parameters are:
 [tag] UNHOP   file_pos start length
 [tag] COMMENT "string"
 [tag] HELLO   "name"
+[tag] FORK    "name"
 [tag] ALARM   seconds
 [tag] QUIT
 
@@ -422,6 +423,12 @@ HELLO
 Returns OK and reflects back the original comment. Clients are expected to send
 a HELLO response to identify themselves when first connecting to the console.
 
+FORK
+-----
+
+Causes the client to fork, open a new socket back to the console and send a
+HELLO response on that socket with the forked name.
+
 ALARM
 -----
 
@@ -458,6 +465,7 @@ AVAILABLE name command parameters
 DENIED    name command parameters
 DEADLOCK  name command parameters
 CLIENTS   name name...
+FORK      name1 name2
 {
 }
 
@@ -534,10 +542,19 @@ DENIED is only valid with LOCK.
 DEADLOCK is only valus with LOCKW.
 
 CLIENTS
---------
+-------
 
 This command creates a list of EXPECT {name} * HELLO OK {name} for each client
 named on the command.
+
+FORK
+----
+
+This command sents a FORK message to client name1 with name2 as the parameter.
+It then creates a list:
+
+	EXPECT {name1} * FORK OK {name2}
+	EXPECT {name2} * HELLO OK {name2}
 
 { and }
 -------

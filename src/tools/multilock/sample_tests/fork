@@ -1,0 +1,27 @@
+#
+CLIENTS client1
+
+FORK client1 client2
+
+OK client1 OPEN 1 rw create lock1
+OK client2 OPEN 1 rw lock1
+
+GRANTED client1 LOCK 1 write 0 100
+GRANTED client2 LOCK 1 write 100 100
+
+# Now test the locks
+
+client1 $ TEST 1 read 0 100
+EXPECT client1 $ TEST GRANTED 1 read 0 100
+client1 $ TEST 1 read 100 100
+EXPECT client1 $ TEST CONFLICT 1 * write 100 100
+
+client2 $ TEST 1 read 0 100
+EXPECT client2 $ TEST CONFLICT 1 * write 0 100
+client2 $ TEST 1 read 100 100
+EXPECT client2 $ TEST GRANTED 1 read 100 100
+
+OK client2 QUIT
+OK client1 QUIT
+
+QUIT

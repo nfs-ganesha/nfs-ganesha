@@ -146,6 +146,54 @@ void openserver(void)
 	respond(&resp);
 }
 
+bool do_fork(struct response *resp, bool use_server)
+{
+	pid_t forked;
+
+	if (!use_server) {
+		fprintf_stderr("FORK may only be used in server mode\n");
+		return false;
+	}
+
+	forked = fork();
+
+	if (forked < 0) {
+		/* Error */
+		resp->r_status = STATUS_OK;
+		resp->r_errno = errno;
+
+		if (!quiet)
+			fprintf(stdout, "fork failed %d (%s)\n",
+				(int) resp->r_errno, strerror(resp->r_errno));
+
+		return true;
+	} else if (forked == 0) {
+		/* Parent sends a FORK response */
+		sprintf(resp->r_data, "%s", name);
+		resp->r_status = STATUS_OK;
+		if (!quiet)
+			fprintf(stdout, "fork succeeded\n");
+		return true;
+	}
+
+	if (!quiet)
+		fprintf(stdout, "forked\n");
+
+	/* This is the forked process */
+
+	/* First close the old output. */
+	fclose(output);
+
+	/* Setup the new client name. */
+	strncpy(name, resp->r_data, MAXSTR);
+
+	/* Then open a new connection to the server. */
+	openserver();
+
+	/* Response already sent. */
+	return false;
+}
+
 void command(void)
 {
 }
@@ -1191,7 +1239,8 @@ int main(int argc, char **argv)
 				fprintf(stdout, "%s\n", rest);
 
 			/* If line doesn't start with a tag, that's ok */
-			no_tag = (!isdigit(*rest) && (*rest != '$'));
+			no_tag = (!isdigit(*rest) && (*rest != '$') &&
+				  (*rest != '-'));
 
 			/* Parse request into response structure */
 			rest = parse_request(rest, &resp, no_tag);
@@ -1247,6 +1296,9 @@ int main(int argc, char **argv)
 					break;
 				case CMD_ALARM:
 					do_alarm(&resp);
+					break;
+				case CMD_FORK:
+					complete = do_fork(&resp, oflags == 7);
 					break;
 
 				case CMD_HELLO:

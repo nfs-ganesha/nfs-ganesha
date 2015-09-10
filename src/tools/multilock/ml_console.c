@@ -412,6 +412,7 @@ enum master_cmd {
 	MCMD_SIMPLE_DENIED,
 	MCMD_SIMPLE_DEADLOCK,
 	MCMD_CLIENTS,
+	MCMD_FORK,
 };
 
 struct token master_commands[] = {
@@ -428,6 +429,7 @@ struct token master_commands[] = {
 	{"DENIED", 6, MCMD_SIMPLE_DENIED},
 	{"DEADLOCK", 8, MCMD_SIMPLE_DEADLOCK},
 	{"CLIENTS", 7, MCMD_CLIENTS},
+	{"FORK", 4, MCMD_FORK},
 	{"", 0, MCMD_CLIENT_CMD}
 };
 
@@ -758,6 +760,90 @@ void mcmd_clients(struct master_state *ms)
 	ms->count = 0;
 }
 
+void mcmd_fork(struct master_state *ms)
+{
+	if (ms->inbrace) {
+		errno = 0;
+		strcpy(errdetail,
+		       "FORK command not allowed inside brace");
+		ms->rest = NULL;
+		return;
+	}
+
+	/* Get the client to send FORK to */
+	ms->rest = get_client(ms->rest,
+			      &ms->client,
+			      syntax,
+			      REQUIRES_MORE);
+
+	if (ms->rest == NULL)
+		return;
+
+	/* Build an EXPECT client * FORK OK "client" */
+	ms->client_cmd = alloc_resp(ms->client);
+	ms->client_cmd->r_cmd = CMD_FORK;
+	ms->client_cmd->r_tag = -1;
+	ms->client_cmd->r_status = STATUS_OK;
+
+	ms->count++;
+
+	/* Get the client that will be created */
+	ms->rest = get_client(ms->rest,
+			      &ms->client,
+			      true,
+			      REQUIRES_NO_MORE);
+
+	if (ms->rest == NULL)
+		return;
+
+	/* Build an EXPECT client * HELLO OK "client" */
+	ms->expect_resp = alloc_resp(ms->client);
+	ms->expect_resp->r_cmd = CMD_HELLO;
+	ms->expect_resp->r_tag = -1;
+	ms->expect_resp->r_status = STATUS_OK;
+
+	/* Use the created client's name as the FORK data */
+	strcpy(ms->client_cmd->r_data, ms->expect_resp->r_client->c_name);
+	strcpy(ms->expect_resp->r_data, ms->expect_resp->r_client->c_name);
+
+	sprintf(ms->client_cmd->r_original,
+		"EXPECT %s * FORK OK \"%s\"",
+		ms->client->c_name, ms->client->c_name);
+
+	sprintf(ms->expect_resp->r_original,
+		"EXPECT %s * HELLO OK \"%s\"",
+		ms->client->c_name, ms->client->c_name);
+
+	ms->count++;
+
+	if (syntax) {
+		free_response(ms->client_cmd, NULL);
+		free_response(ms->expect_resp, NULL);
+	} else {
+		/* Send the command */
+		send_cmd(ms->client_cmd);
+
+		/* Now fixup to expect client name as FORK OK data */
+		strcpy(ms->client_cmd->r_data,
+		       ms->client_cmd->r_client->c_name);
+
+		/* Add responses to list of expected responses */
+		add_response(ms->client_cmd, &expected_responses);
+		add_response(ms->expect_resp, &expected_responses);
+	}
+
+	if (!syntax) {
+		wait_for_expected_responses("clients",
+					    ms->count,
+					    ms->last,
+					    true);
+		fprintf(output,
+			"All clients responded OK\n");
+	}
+
+	ms->count = 0;
+}
+
 void mcmd_expect(struct master_state *ms)
 {
 	ms->rest = get_client(ms->rest, &ms->client, true, REQUIRES_MORE);
@@ -894,6 +980,11 @@ void mcmd_simple(struct master_state *ms)
 		}
 		break;
 
+	case CMD_FORK:
+		sprintf(errdetail,
+			"FORK not compatible with a simple command");
+		break;
+
 	case NUM_COMMANDS:
 		strcpy(errdetail, "Invalid command");
 		errno = 0;
@@ -990,6 +1081,10 @@ void master_command(void)
 
 			case MCMD_EXPECT:
 				mcmd_expect(&ms);
+				break;
+
+			case MCMD_FORK:
+				mcmd_fork(&ms);
 				break;
 
 			case MCMD_SIMPLE_OK:
