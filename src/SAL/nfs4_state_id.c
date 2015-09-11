@@ -373,8 +373,7 @@ uint32_t state_entry_value_hash_func(hash_parameter_t *hparam,
 	res = ((uint32_t) pkey->state_owner->so_owner.so_nfs4_owner.so_clientid
 	      + (uint32_t) sum + pkey->state_owner->so_owner_len
 	      + (uint32_t) pkey->state_owner->so_type
-	      + (uint32_t) (uint64_t) pkey->state_entry)
-						% (uint32_t) hparam->index_size;
+	      + (uintptr_t) pkey->state_entry) % (uint32_t) hparam->index_size;
 
 	if (isDebug(COMPONENT_HASHTABLE))
 		LogFullDebug(COMPONENT_STATE, "value = %" PRIu32, res);
@@ -409,7 +408,7 @@ uint64_t state_entry_rbt_hash_func(hash_parameter_t *hparam,
 	res = (uint64_t) pkey->state_owner->so_owner.so_nfs4_owner.so_clientid
 	      + (uint64_t) sum + pkey->state_owner->so_owner_len
 	      + (uint64_t) pkey->state_owner->so_type
-	      + (uint64_t) pkey->state_entry;
+	      + (uintptr_t) pkey->state_entry;
 
 	if (isDebug(COMPONENT_HASHTABLE))
 		LogFullDebug(COMPONENT_STATE, "rbt = %" PRIu64, res);
