@@ -87,6 +87,49 @@ static admin_status_t admin_status;
 #ifdef USE_DBUS
 
 /**
+ * @brief Dbus method get grace period status
+ *
+ * @param[in]  args  dbus args
+ * @param[out] reply dbus reply message with grace period status
+ */
+static bool admin_dbus_get_grace(DBusMessageIter *args,
+				 DBusMessage *reply,
+				 DBusError *error)
+{
+	char *errormsg = "get grace success";
+	bool success = true;
+	DBusMessageIter iter;
+	dbus_bool_t ingrace;
+
+	dbus_message_iter_init_append(reply, &iter);
+	if (args != NULL) {
+		errormsg = "Get grace takes no arguments.";
+		success = false;
+		LogWarn(COMPONENT_DBUS, "%s", errormsg);
+		goto out;
+	}
+
+	ingrace = nfs_in_grace();
+	dbus_message_iter_append_basic(&iter, DBUS_TYPE_BOOLEAN, &ingrace);
+
+ out:
+	dbus_status_reply(&iter, success, errormsg);
+	return success;
+}
+
+static struct gsh_dbus_method method_get_grace = {
+	.name = "get_grace",
+	.method = admin_dbus_get_grace,
+	.args = {
+		 {.name = "isgrace",
+		  .type = "b",
+		  .direction = "out",
+		 },
+		 STATUS_REPLY,
+		 END_ARG_LIST}
+};
+
+/**
  * @brief Dbus method start grace period
  *
  * @param[in]  args  Unused
@@ -228,6 +271,7 @@ static struct gsh_dbus_method method_purge_gids = {
 static struct gsh_dbus_method *admin_methods[] = {
 	&method_shutdown,
 	&method_grace_period,
+	&method_get_grace,
 	&method_purge_gids,
 	NULL
 };
