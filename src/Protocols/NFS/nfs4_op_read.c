@@ -418,7 +418,7 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 	if (op_ctx->export->MaxOffsetRead < UINT64_MAX) {
 		LogFullDebug(COMPONENT_NFS_V4,
 			     "Read offset=%" PRIu64
-			     " count=%zd MaxOffSet=%" PRIu64,
+			     " size=%" PRIu64 " MaxOffSet=%" PRIu64,
 			     offset, size,
 			     op_ctx->export->MaxOffsetRead);
 
@@ -710,7 +710,7 @@ int nfs4_op_io_advise(struct nfs_argop4 *op, compound_data_t *data,
 	}
 done:
 	LogDebug(COMPONENT_NFS_V4,
-		 "Status  %s hints 0x%X offset %ld count %ld ",
+		 "Status  %s hints 0x%X offset %" PRIu64 " count %" PRIu64,
 		 nfsstat4_to_str(res_IO_ADVISE->iaa_status),
 		 hints.hints, hints.offset, hints.count);
 
@@ -792,7 +792,7 @@ int nfs4_op_seek(struct nfs_argop4 *op, compound_data_t *data,
 	}
 done:
 	LogDebug(COMPONENT_NFS_V4,
-		 "Status  %s type %d offset %ld ",
+		 "Status  %s type %d offset %" PRIu64,
 		 nfsstat4_to_str(res_SEEK->sr_status), arg_SEEK->sa_what,
 		 arg_SEEK->sa_offset);
 

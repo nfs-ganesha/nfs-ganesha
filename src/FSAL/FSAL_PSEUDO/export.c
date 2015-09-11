@@ -253,7 +253,7 @@ static fsal_status_t extract_handle(struct fsal_export *exp_hdl,
 
 	if (fh_desc->len < fh_min) {
 		LogMajor(COMPONENT_FSAL,
-			 "Size mismatch for handle.  should be >= %lu, got %lu",
+			 "Size mismatch for handle.  should be >= %zu, got %zu",
 			 fh_min, fh_desc->len);
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 	}

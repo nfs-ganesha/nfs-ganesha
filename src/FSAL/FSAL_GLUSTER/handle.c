@@ -1248,7 +1248,8 @@ static fsal_status_t lock_op(struct fsal_obj_handle *obj_hdl,
 	 */
 	if (flock.l_len < 0) {
 		LogCrit(COMPONENT_FSAL,
-			"The requested lock length is out of range- flock.l_len(%ld), request_lock_length(%lu)",
+			"The requested lock length is out of range- flock.l_len(%"
+			PRIi64 "), request_lock_length(%" PRIu64 ")",
 			flock.l_len, request_lock->lock_length);
 		status.major = ERR_FSAL_BAD_RANGE;
 		goto out;
@@ -1515,7 +1516,7 @@ static fsal_status_t handle_digest(const struct fsal_obj_handle *obj_hdl,
 		fh_size = GLAPI_HANDLE_LENGTH;
 		if (fh_desc->len < fh_size) {
 			LogMajor(COMPONENT_FSAL,
-				 "Space too small for handle.  need %lu, have %lu",
+				 "Space too small for handle.  need %zu, have %zu",
 				 fh_size, fh_desc->len);
 			status.major = ERR_FSAL_TOOSMALL;
 			goto out;

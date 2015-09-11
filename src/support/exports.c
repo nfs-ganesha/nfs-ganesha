@@ -818,7 +818,7 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 		export->fullpath, export->FS_tag, perms);
 
 	LogInfo(COMPONENT_CONFIG,
-		"Export %d has %ld defined clients", export->export_id,
+		"Export %d has %zd defined clients", export->export_id,
 		glist_length(&export->clients));
 	put_gsh_export(export);
 	return 0;

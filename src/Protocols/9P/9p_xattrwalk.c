@@ -56,7 +56,7 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	u32 *attrfid = NULL;
 	u16 *name_len;
 	char *name_str;
-	u64 attrsize = 0LL;
+	size_t attrsize = 0;
 
 	fsal_status_t fsal_status;
 	char name[MAXNAMLEN];
@@ -152,7 +152,7 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		}
 
 		xattr_cursor = pxattrfid->specdata.xattr.xattr_content;
-		attrsize = 0LL;
+		attrsize = 0;
 		for (i = 0; i < nb_xattrs_read; i++) {
 			tmplen =
 			    snprintf(xattr_cursor, MAXNAMLEN, "%s",

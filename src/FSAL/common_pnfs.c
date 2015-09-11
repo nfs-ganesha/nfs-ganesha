@@ -291,7 +291,7 @@ nfsstat4 FSAL_encode_file_layout(XDR *xdrs,
 						 *(ds_ids + i),
 						 &handle);
 		if (nfs_status != NFS4_OK) {
-			LogMajor(COMPONENT_PNFS, "Failed converting FH %lu.",
+			LogMajor(COMPONENT_PNFS, "Failed converting FH %zu.",
 				 i);
 			return nfs_status;
 		}
@@ -300,7 +300,7 @@ nfsstat4 FSAL_encode_file_layout(XDR *xdrs,
 			       (char **)&handle.nfs_fh4_val,
 			       &handle.nfs_fh4_len,
 			       handle.nfs_fh4_len)) {
-			LogMajor(COMPONENT_PNFS, "Failed encoding FH %lu.", i);
+			LogMajor(COMPONENT_PNFS, "Failed encoding FH %zu.", i);
 			return NFS4ERR_SERVERFAULT;
 		}
 	}

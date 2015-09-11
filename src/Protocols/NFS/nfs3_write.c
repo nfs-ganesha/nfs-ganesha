@@ -109,7 +109,7 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 		LogDebug(COMPONENT_NFSPROTO,
 			 "REQUEST PROCESSING: Calling nfs_Write handle: %s start: %"
-			 PRIx64 " len: %" PRIx64 " %s",
+			 PRIx64 " len: %zx %s",
 			 str, offset, size, stables);
 	}
 
@@ -180,7 +180,7 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	/* Do not exceed maxium WRITE offset if set */
 	if (op_ctx->export->MaxOffsetWrite < UINT64_MAX) {
 		LogFullDebug(COMPONENT_NFSPROTO,
-			     "Write offset=%" PRIu64 " count=%" PRIu64
+			     "Write offset=%" PRIu64 " size=%zu"
 			     " MaxOffSet=%" PRIu64, offset, size,
 			     op_ctx->export->MaxOffsetWrite);
 

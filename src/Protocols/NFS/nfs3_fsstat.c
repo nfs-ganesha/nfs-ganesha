@@ -99,7 +99,9 @@ int nfs3_fsstat(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	if (cache_status == CACHE_INODE_SUCCESS) {
 		LogFullDebug(COMPONENT_NFSPROTO,
-			     "nfs_Fsstat --> dynamicinfo.total_bytes=%zu dynamicinfo.free_bytes=%zu dynamicinfo.avail_bytes=%zu",
+			     "nfs_Fsstat --> dynamicinfo.total_bytes=%" PRIu64
+			     " dynamicinfo.free_bytes=%" PRIu64
+			     " dynamicinfo.avail_bytes=%" PRIu64,
 			     dynamicinfo.total_bytes, dynamicinfo.free_bytes,
 			     dynamicinfo.avail_bytes);
 		LogFullDebug(COMPONENT_NFSPROTO,

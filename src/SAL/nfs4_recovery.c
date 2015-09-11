@@ -66,8 +66,6 @@ static void nfs_release_v4_client(char *ip);
  */
 void nfs4_start_grace(nfs_grace_start_t *gsp)
 {
-	time_t current_time;
-
 	if (nfs_param.nfsv4_param.graceless) {
 		LogEvent(COMPONENT_STATE,
 			 "NFS Server skipping GRACE (Graceless is true)");
@@ -81,8 +79,7 @@ void nfs4_start_grace(nfs_grace_start_t *gsp)
 	 * seconds Lease_Lifetime should be set to a smaller value for those
 	 * setups.
 	 */
-	current_time = time(NULL);
-	atomic_store_uint64_t(&current_grace, current_time);
+	atomic_store_time_t(&current_grace, time(NULL));
 
 	LogEvent(COMPONENT_STATE, "NFS Server Now IN GRACE, duration %d",
 		 (int)nfs_param.nfsv4_param.lease_lifetime);
@@ -220,7 +217,7 @@ void nfs4_create_clid_name(nfs_client_record_t *cl_rec,
 					     PATH_MAX) > 0) {
 		/* convert_opaque_value_max_for_dir does not prefix
 		 * the "(<length>:". So we need to do it here */
-		sprintf(cidstr_len, "%ld", strlen(cidstr));
+		snprintf(cidstr_len, sizeof(cidstr_len), "%zd", strlen(cidstr));
 		total_len = strlen(cidstr) + strlen(str_client_addr) + 5 +
 			    strlen(cidstr_len);
 		/* hold both long form clientid and IP */
@@ -268,7 +265,7 @@ void nfs4_create_clid_name41(nfs_client_record_t *cl_rec,
 					     PATH_MAX) > 0) {
 		/* convert_opaque_value_max_for_dir does not prefix
 		 * the "(<length>:". So we need to do it here */
-		sprintf(cidstr_len, "%ld", strlen(cidstr));
+		snprintf(cidstr_len, sizeof(cidstr_len), "%zd", strlen(cidstr));
 		total_len = strlen(cidstr) + strlen(buf) + 5 +
 			    strlen(cidstr_len);
 		/* hold both long form clientid and IP */
@@ -371,7 +368,10 @@ void nfs4_rm_revoked_handles(char *path)
 				dentp->d_name[0] != '\x1') {
 			continue;
 		}
-		sprintf(del_path, "%s/%s", path, dentp->d_name);
+
+		snprintf(del_path, sizeof(del_path), "%s/%s",
+			 path, dentp->d_name);
+
 		if (unlink(del_path) < 0) {
 			LogEvent(COMPONENT_CLIENTID,
 					"unlink of %s failed errno: %d",
@@ -576,7 +576,7 @@ void nfs4_cp_pop_revoked_delegs(clid_entry_t *clid_ent,
 			char lopath[PATH_MAX];
 			int fd;
 
-			sprintf(lopath, "%s/", tgtdir);
+			snprintf(lopath, sizeof(lopath), "%s/", tgtdir);
 			strncat(lopath, dentp->d_name, strlen(dentp->d_name));
 			fd = creat(lopath, 0700);
 			if (fd < 0) {
@@ -613,7 +613,9 @@ void nfs4_cp_pop_revoked_delegs(clid_entry_t *clid_ent,
 		if (del) {
 			char del_path[PATH_MAX];
 
-			sprintf(del_path, "%s/%s", path, dentp->d_name);
+			snprintf(del_path, sizeof(del_path), "%s/%s",
+				 path, dentp->d_name);
+
 			if (unlink(del_path) < 0) {
 				LogEvent(COMPONENT_CLIENTID,
 						"unlink of %s failed errno: %d",
@@ -1018,7 +1020,9 @@ void nfs4_clean_old_recov_dir(char *parent_path)
 		if (dentp->d_name[0] == '\x1') {
 			char del_path[PATH_MAX];
 
-			sprintf(del_path, "%s/%s", parent_path, dentp->d_name);
+			snprintf(del_path, sizeof(del_path), "%s/%s",
+				 parent_path, dentp->d_name);
+
 			if (unlink(del_path) < 0) {
 				LogEvent(COMPONENT_CLIENTID,
 						"unlink of %s failed errno: %d",

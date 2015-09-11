@@ -471,7 +471,7 @@ fsal_acl_2_posix_acl(fsal_acl_t *p_fsalacl, acl_type_t type)
 	acl_t allow_acl, deny_acl;
 	acl_entry_t a_entry, d_entry;
 	acl_permset_t a_permset, e_a_permset, d_permset, e_d_permset;
-	acl_tag_t tag;
+	acl_tag_t tag = -1;
 	char *acl_str;
 	unsigned int id;
 	bool mask = false;

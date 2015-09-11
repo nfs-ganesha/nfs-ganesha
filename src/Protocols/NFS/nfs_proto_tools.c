@@ -3715,7 +3715,8 @@ bool nfs3_FSALattr_To_Fattr(struct gsh_export *export,
 	nfs3_FSALattr_To_PartialFattr(FSAL_attr, &got, Fattr);
 	if (want & ~got) {
 		LogCrit(COMPONENT_NFSPROTO,
-			"Likely bug: FSAL did not fill in a standard NFSv3 attribute: missing %lx",
+			"Likely bug: FSAL did not fill in a standard NFSv3 attribute: missing %"
+			PRIx64,
 			want & ~got);
 	}
 
@@ -4206,6 +4207,9 @@ bool is_sticky_bit_set(const struct attrlist *attr)
 	if (!(attr->mode & S_ISVTX))
 		return false;
 
-	LogDebug(COMPONENT_NFS_V4, "sticky bit is set on %ld", attr->fileid);
+	LogDebug(COMPONENT_NFS_V4,
+		 "sticky bit is set on %" PRIi64,
+		 attr->fileid);
+
 	return true;
 }

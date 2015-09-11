@@ -106,7 +106,7 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		nfs_FhandleToStr(req->rq_vers, &arg->arg_read3.file, NULL, str);
 		LogDebug(COMPONENT_NFSPROTO,
 			 "REQUEST PROCESSING: Calling nfs_Read handle: %s start: %"
-			 PRIu64 " len: %" PRIu64,
+			 PRIu64 " len: %zu",
 			 str, offset, size);
 	}
 

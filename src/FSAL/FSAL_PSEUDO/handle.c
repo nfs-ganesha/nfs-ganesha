@@ -675,8 +675,9 @@ static fsal_status_t handle_digest(const struct fsal_obj_handle *obj_hdl,
 	case FSAL_DIGEST_NFSV4:
 		if (fh_desc->len < V4_FH_OPAQUE_SIZE) {
 			LogMajor(COMPONENT_FSAL,
-				 "Space too small for handle.  need %lu, have %lu",
-				 V4_FH_OPAQUE_SIZE, fh_desc->len);
+				 "Space too small for handle.  need %lu, have %zu",
+				 ((unsigned long) V4_FH_OPAQUE_SIZE),
+				 fh_desc->len);
 			return fsalstat(ERR_FSAL_TOOSMALL, 0);
 		}
 
@@ -850,9 +851,9 @@ fsal_status_t pseudofs_create_handle(struct fsal_export *exp_hdl,
 
 	if (hdl_desc->len != V4_FH_OPAQUE_SIZE) {
 		LogCrit(COMPONENT_FSAL,
-			"Invalid handle size %lu expected %zu",
+			"Invalid handle size %zu expected %lu",
 			hdl_desc->len,
-			V4_FH_OPAQUE_SIZE);
+			((unsigned long) V4_FH_OPAQUE_SIZE));
 
 		return fsalstat(ERR_FSAL_BADHANDLE, 0);
 	}
