@@ -196,12 +196,12 @@ void nfs_print_param_config(void)
 	printf("\tDRC_UDP_Checksum = %u ;\n",
 	       nfs_param.core_param.drc.udp.checksum);
 	printf("\tDecoder_Fridge_Expiration_Delay = %" PRIu64 " ;\n",
-	       nfs_param.core_param.decoder_fridge_expiration_delay);
+	       (uint64_t) nfs_param.core_param.decoder_fridge_expiration_delay);
 	printf("\tDecoder_Fridge_Block_Timeout = %" PRIu64 " ;\n",
-	       nfs_param.core_param.decoder_fridge_block_timeout);
+	       (uint64_t) nfs_param.core_param.decoder_fridge_block_timeout);
 
 	printf("\tManage_Gids_Expiration = %" PRIu64 " ;\n",
-	       nfs_param.core_param.manage_gids_expiration);
+	       (uint64_t) nfs_param.core_param.manage_gids_expiration);
 
 	if (nfs_param.core_param.drop_io_errors)
 		printf("\tDrop_IO_Errors = true ;\n");
