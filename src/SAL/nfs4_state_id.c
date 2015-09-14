@@ -184,6 +184,9 @@ int display_stateid(struct display_buffer *dspbuf, state_t *state)
 	int b_left;
 	cache_entry_t *entry;
 
+	if (state == NULL)
+		return display_cat(dspbuf, "STATE <NULL>");
+
 	PTHREAD_MUTEX_lock(&state->state_mutex);
 	entry = state->state_entry;
 	PTHREAD_MUTEX_unlock(&state->state_mutex);

@@ -92,7 +92,7 @@ state_status_t state_add_impl(cache_entry_t *entry, enum state_type state_type,
 	state_status_t status = 0;
 	bool mutex_init = false;
 
-	if (isFullDebug(COMPONENT_STATE)) {
+	if (isFullDebug(COMPONENT_STATE) && pnew_state != NULL) {
 		display_stateid(&dspbuf, pnew_state);
 		LogFullDebug(COMPONENT_STATE, "pnew_state=%s", str);
 		display_reset_buffer(&dspbuf);

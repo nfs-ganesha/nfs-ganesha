@@ -1483,8 +1483,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 
  out3:
 
-	if (clientid != NULL)
-		dec_client_id_ref(clientid);
+	dec_client_id_ref(clientid);
 
 	return res_OPEN4->status;
 }				/* nfs4_op_open */
