@@ -1330,13 +1330,13 @@ static fsal_status_t file_close(struct fsal_obj_handle *obj_hdl)
 	rc = glfs_close(objhandle->glfd);
 	if (rc != 0) {
 		status = gluster2fsal_error(errno);
-		goto out;
+		LogCrit(COMPONENT_FSAL,
+			"Error : close returns with %s", strerror(errno));
 	}
 
 	objhandle->glfd = NULL;
 	objhandle->openflags = FSAL_O_CLOSED;
 
- out:
 #ifdef GLTIMING
 	now(&e_time);
 	latency_update(&s_time, &e_time, lat_file_close);
