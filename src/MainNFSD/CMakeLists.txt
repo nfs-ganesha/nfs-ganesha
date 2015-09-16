@@ -39,13 +39,6 @@ if(USE_9P AND USE_9P_RDMA)
     9p_rdma_callbacks.c)
 endif(USE_9P AND USE_9P_RDMA)
 
-if(USE_NFS_MSK)
-  add_definitions(-D_USE_NFS_MSK)
-  SET(MainServices_STAT_SRCS
-    ${MainServices_STAT_SRCS}
-    nfs_rpc_msk.c)
-endif(USE_NFS_MSK)
-
 if(USE_NFS_RDMA)
   add_definitions(-D_USE_NFS_RDMA)
   SET(MainServices_STAT_SRCS

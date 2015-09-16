@@ -51,61 +51,6 @@ rpc_rdma_disconnect_callback(SVCXPRT *xprt)
 {
 }
 
-#ifdef REMOVEOLDCODE
-void nfs_msk_callback(void *arg)
-{
-	struct clx *clx = arg;
-
-	PTHREAD_MUTEX_lock(&clx->lock);
-	thr_decode_rpc_request(NULL, clx->xprt);
-	pthread_cond_signal(&clx->cond);
-	PTHREAD_MUTEX_unlock(&clx->lock);
-}
-
-void *nfs_msk_thread(void *arg)
-{
-	msk_trans_t *trans = arg;
-	SVCXPRT *xprt;
-	struct clx clx;
-	/*** alloc onfsreq ***/
-
-	if (arg == NULL) {
-		LogMajor(COMPONENT_NFS_MSK,
-			"NFS/RDMA: handle thread started but no child_trans");
-		return NULL;
-	}
-
-	PTHREAD_COND_init(&clx.cond, NULL);
-	PTHREAD_MUTEX_init(&clx.lock, NULL);
-
-	PTHREAD_MUTEX_lock(&clx.lock);
-
-	xprt = svc_msk_create(arg, 30, nfs_msk_callback, &clx);
-	clx.xprt = xprt;
-
-	/* It's still safe to set stuff here that will be used in
-	   dispatch_rpc_request because of the lock
-	*/
-	xprt->xp_u1 = alloc_gsh_xprt_private(xprt, XPRT_PRIVATE_FLAG_NONE);
-	/* fixme: put something here, but make it not work on fd operations. */
-	xprt->xp_fd = -1;
-
-	/*
-	while (trans->state == MSK_CONNECTED) {
-	 ** use SVC_STAT(msk_xprt)
-	 */
-	while (SVC_STAT(xprt) == XPRT_IDLE)
-		pthread_cond_wait(&clx.cond, &clx.lock);
-
-	PTHREAD_MUTEX_unlock(&clx.lock);
-
-	/* We never get here for some reason */
-	msk_destroy_trans(&trans);
-
-	return NULL;
-}
-#endif
-
 /**
  * rpc_rdma_dispatcher_thread: setup NFS/RDMA engine
  *

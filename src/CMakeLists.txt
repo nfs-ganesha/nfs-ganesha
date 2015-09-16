@@ -265,7 +265,6 @@ if(USE_BLKIN)
 endif(USE_BLKIN)
 
 # NFS RDMA
-option(USE_NFS_MSK "enable NFS/Mooshika support" OFF)
 option(USE_NFS_RDMA "enable NFS/RDMA support" OFF)
 
 # Enable 9P Support
@@ -915,13 +914,13 @@ endif(USE_DBUS)
 
 set(GANESHA_CORE ${GANESHA_CORE} NodeList)
 
-if(USE_9P_RDMA OR USE_NFS_MSK)
+if(USE_9P_RDMA)
   find_package(PkgConfig)
   pkg_check_modules(MOOSHIKA REQUIRED libmooshika>=0.6)
   set(GANESHA_CORE ${GANESHA_CORE} ${MOOSHIKA_LIBRARIES})
   include_directories(${MOOSHIKA_INCLUDE_DIRS})
   link_directories (${MOOSHIKA_LIBRARY_DIRS})
-endif(USE_9P_RDMA OR USE_NFS_MSK)
+endif(USE_9P_RDMA)
 
 # All the plumbing in the basement
 set(SYSTEM_LIBRARIES
@@ -1212,16 +1211,6 @@ set(USE_TSAN ${USE_TSAN}
 set(USE_LTTNG ${USE_LTTNG}
   CACHE BOOL
   "Enable LTTng tracing"
-  FORCE)
-
-set(USE_NFS_MSK ${USE_NFS_MSK}
-  CACHE BOOL
-  "enable nfs Mooshika"
-  FORCE)
-
-set(_USE_NFS_MSK ${USE_NFS_MSK}
-  CACHE BOOL
-  "enable nfs Mooshika in config"
   FORCE)
 
 set(USE_NFS_RDMA ${USE_NFS_RDMA}

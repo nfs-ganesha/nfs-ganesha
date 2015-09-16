@@ -153,10 +153,6 @@ void _9p_rdma_process_request(struct _9p_request_data *req9p);
 void _9p_rdma_cleanup_conn(msk_trans_t *trans);
 #endif
 
-#ifdef _USE_NFS_MSK
-void *nfs_msk_dispatcher_thread(void *UnusedArg);
-#endif
-
 /* in nfs_rpc_dispatcher_thread.c */
 
 void Clean_RPC(void);
