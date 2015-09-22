@@ -835,14 +835,10 @@ int enable_log_facility(char *name)
 		LogInfo(COMPONENT_LOG, "Facility %s does not exist", name);
 		return -ENOENT;
 	}
-	if (!glist_null(&facility->lf_active)) {
-		PTHREAD_RWLOCK_unlock(&log_rwlock);
-		LogCrit(COMPONENT_LOG,
-			 "Log facility (%s) is already enabled",
-			 name);
-		return -EINVAL;
-	}
-	glist_add_tail(&active_facility_list, &facility->lf_active);
+
+	if (glist_null(&facility->lf_active))
+		glist_add_tail(&active_facility_list, &facility->lf_active);
+
 	if (facility->lf_headers > max_headers)
 		max_headers = facility->lf_headers;
 	PTHREAD_RWLOCK_unlock(&log_rwlock);
