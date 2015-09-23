@@ -478,6 +478,8 @@ pool_basic_initializer(size_t size __attribute__ ((unused)),
 static inline void
 pool_basic_destroy(pool_t *pool)
 {
+	if (pool->name)
+		gsh_free(pool->name);
 	gsh_free(pool);
 }
 
