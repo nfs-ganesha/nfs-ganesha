@@ -180,8 +180,12 @@ fsal_status_t GPFSFSAL_read(int fd,
 
 	/* read operation */
 
+	fsal_set_credentials(op_ctx->creds);
+
 	nb_read = gpfs_ganesha(OPENHANDLE_READ_BY_FD, &rarg);
 	errsv = errno;
+
+	fsal_restore_ganesha_credentials();
 
 	if (nb_read == -1) {
 		if (errsv == EUNATCH)
@@ -285,6 +289,8 @@ fsal_status_t GPFSFSAL_alloc(int fd,
 		aarg.options = IO_ALLOCATE;
 	else
 		aarg.options = IO_DEALLOCATE;
+
+	fsal_set_credentials(op_ctx->creds);
 
 	rc = gpfs_ganesha(OPENHANDLE_ALLOCATE_BY_FD, &aarg);
 	errsv = errno;

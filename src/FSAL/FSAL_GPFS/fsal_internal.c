@@ -800,8 +800,12 @@ fsal_status_t fsal_set_xstat_by_handle(int dirfd,
 	   implements sparse files, so blocks of all 0 will not actually
 	   be allocated.
 	 */
+	fsal_set_credentials(p_context->creds);
+
 	rc = gpfs_ganesha(OPENHANDLE_SET_XSTAT, &xstatarg);
 	errsv = errno;
+
+	fsal_restore_ganesha_credentials();
 
 	LogDebug(COMPONENT_FSAL, "gpfs_ganesha: SET_XSTAT returned, rc = %d",
 		 rc);
