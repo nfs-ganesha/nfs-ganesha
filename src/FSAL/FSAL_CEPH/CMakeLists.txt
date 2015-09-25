@@ -12,6 +12,11 @@ SET(fsalceph_LIB_SRCS
    internal.h
 )
 
+if(CEPH_PREFIX)
+  include_directories("${CEPH_PREFIX}/include")
+  link_directories(${CEPH_PREFIX}/lib)
+endif(CEPH_PREFIX)
+
 add_library(fsalceph SHARED ${fsalceph_LIB_SRCS})
 
 target_link_libraries(fsalceph cephfs ${SYSTEM_LIBRARIES})
