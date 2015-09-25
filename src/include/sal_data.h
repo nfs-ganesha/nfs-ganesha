@@ -809,7 +809,8 @@ struct state_block_data_t {
 struct state_lock_entry_t {
 	struct glist_head sle_list;	/*< Locks on this file */
 	struct glist_head sle_owner_locks; /*< Link on the owner lock list */
-	struct glist_head sle_locks;	/*< Locks on this state/client */
+	struct glist_head sle_client_locks;	/*< Locks on this client */
+	struct glist_head sle_state_locks;	/*< Locks on this state */
 #ifdef DEBUG_SAL
 	struct glist_head sle_all_locks; /*< Link on the global lock list */
 #endif				/* DEBUG_SAL */
@@ -865,9 +866,6 @@ struct state_layout_recall_file {
 	void *recall_cookie;	/*< Cookie returned to FSAL on return of last
 				   segment satisfying the layout */
 };
-
-#define sle_client_locks sle_locks
-#define sle_state_locks  sle_locks
 
 /**
  * @brief Blocking lock cookie entry
