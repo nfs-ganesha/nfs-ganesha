@@ -16,6 +16,7 @@ LOG { FACILITY {} }
 LOG { FORMAT {} }
 9P {}
 CACHEINODE
+CEPH {}
 GPFS {}
 LUSTRE {}
 LUSTRE { PNFS { DATASERVER {} } }
@@ -28,7 +29,7 @@ PROXY { Remote_Server {} }
 
 Notably the following FSALs do not have a global config block:
 
-PSEUDO, CEPH, PROXY, NULL, GLUSTER
+PSEUDO, PROXY, NULL, GLUSTER
 
 NFS_CORE_PARAM {}
 -----------------
@@ -470,6 +471,11 @@ CACHEINODE
 	_9P_RDMA_Inpool_size(uint16, range 1 to UINT16_MAX, default 64)
 
 	_9P_RDMA_Outpool_Size(uint16, range 1 to UINT16_MAX, default 32)
+
+CEPH {}
+-------
+
+	Ceph_Conf(path, default "")
 
 GPFS {}
 -------

@@ -75,6 +75,8 @@ static fsal_staticfsinfo_t default_ceph_info = {
 };
 
 static struct config_item ceph_items[] = {
+	CONF_ITEM_PATH("ceph_conf", 1, MAXPATHLEN, NULL,
+		ceph_fsal_module, conf_path),
 	CONF_ITEM_MODE("umask", 0,
 			ceph_fsal_module, fs_info.umask),
 	CONF_ITEM_MODE("xattr_access_rights", 0,
@@ -197,7 +199,7 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 		goto error;
 	}
 
-	ceph_status = ceph_conf_read_file(export->cmount, NULL);
+	ceph_status = ceph_conf_read_file(export->cmount, CephFSM.conf_path);
 	if (ceph_status != 0) {
 		status.major = ERR_FSAL_SERVERFAULT;
 		LogCrit(COMPONENT_FSAL,
