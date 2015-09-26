@@ -15,7 +15,8 @@ Build-Depends: debhelper (>> 9),
                libwbclient-dev,
                dh-python,
                python-qt4,
-               pyqt4-dev-tools
+               pyqt4-dev-tools,
+               libkrb5-dev
 Vcs-Git: https://github.com/nfs-ganesha/nfs-ganesha.git
 
 Package: nfs-ganesha
