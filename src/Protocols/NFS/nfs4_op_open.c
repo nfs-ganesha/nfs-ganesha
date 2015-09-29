@@ -677,6 +677,7 @@ static nfsstat4 open4_create(OPEN4args *arg, compound_data_t *data,
 
 		if (!sattr_provided) {
 			memset(&sattr, 0, sizeof(struct attrlist));
+			sattr.mask = ATTR_MODE;
 			sattr.mode = mode;
 			sattr_provided = true;
 		}
@@ -1407,6 +1408,13 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 	memset(&res_OPEN4->OPEN4res_u.resok4.attrset,
 	       0,
 	       sizeof(struct bitmap4));
+	if (arg_OPEN4->openhow.openflag4_u.how.mode == EXCLUSIVE4 ||
+	    arg_OPEN4->openhow.openflag4_u.how.mode == EXCLUSIVE4_1) {
+		struct bitmap4 *bits = &res_OPEN4->OPEN4res_u.resok4.attrset;
+
+		set_attribute_in_bitmap(bits, FATTR4_TIME_ACCESS);
+		set_attribute_in_bitmap(bits, FATTR4_TIME_MODIFY);
+	}
 
 	/* If server use OPEN_CONFIRM4, set the correct flag,
 	 * but not for 4.1 */
