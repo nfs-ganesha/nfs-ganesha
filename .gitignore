@@ -8,6 +8,7 @@ src/autom4te.cache/
 src/build-aux/
 src/rpm/
 src/pkg-deb/
+src/libntirpc/
 .deps/
 .libs/
 CMakeFiles/
