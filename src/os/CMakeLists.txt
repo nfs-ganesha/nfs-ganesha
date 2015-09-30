@@ -1,10 +1,6 @@
 # All we need to do here is control the
 # build of chosen platform
 
-include_directories(
-  ${LIBTIRPC_INCLUDE_DIR}
-)
-
 if(FREEBSD)
   SET(gos_STAT_SRCS
       freebsd/atsyscalls.c

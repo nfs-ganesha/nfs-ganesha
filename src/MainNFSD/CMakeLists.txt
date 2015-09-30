@@ -3,10 +3,6 @@ add_definitions(
   -D_GNU_SOURCE
 )
 
-include_directories(
-  ${LIBTIRPC_INCLUDE_DIR}
-)
-
 if(USE_DBUS)
   include_directories(
     ${DBUS_INCLUDE_DIRS}

@@ -75,6 +75,9 @@
 @BCOND_GUI_UTILS@ gui_utils
 %global use_gui_utils %{on_off_switch gui_utils}
 
+@BCOND_NTIRPC@ ntirpc
+%global use_ntirpc %{on_off_switch ntirpc}
+
 %global dev_version %{lua: extraver = string.gsub('@GANESHA_EXTRA_VERSION@', '%-', '.'); print(extraver) }
 
 %define sourcename @CPACK_SOURCE_PACKAGE_FILE_NAME@
@@ -458,9 +461,13 @@ make DESTDIR=%{buildroot} install
 %files
 %defattr(-,root,root,-)
 %{_bindir}/ganesha.nfsd
+%if %{with ntirpc}
 %{_libdir}/libntirpc.so.1.3.0
 %{_libdir}/libntirpc.so.1.3
 %{_libdir}/libntirpc.so
+%{_libdir}/pkgconfig/libntirpc.pc
+%{_includedir}/ntirpc/
+%endif
 %config %{_sysconfdir}/dbus-1/system.d/org.ganesha.nfsd.conf
 %config(noreplace) %{_sysconfdir}/sysconfig/ganesha
 %config(noreplace) %{_sysconfdir}/logrotate.d/ganesha

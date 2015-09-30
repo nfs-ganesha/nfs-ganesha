@@ -95,6 +95,9 @@ include(${CMAKE_SOURCE_DIR}/cmake/maintainer_mode.cmake)
 # For libraries that provide pkg-config files
 include(FindPkgConfig)
 
+# For ntirpc's external project
+include(ExternalProject)
+
 # If we are in a git tree, then this CMakeLists.txt is in "src/" and go .git is in "src/.."
 IF( EXISTS ${CMAKE_SOURCE_DIR}/../.git/HEAD  )
   message( STATUS "Compilation from within a git repository. Using git rev-parse HEAD")
@@ -781,7 +784,6 @@ endif( "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_LESS "2.8" )
 
 include_directories(
   "${PROJECT_BINARY_DIR}/include"
-  "${PROJECT_SOURCE_DIR}/libntirpc/ntirpc/"
   "${PROJECT_SOURCE_DIR}/include"
   "${OS_INCLUDE_DIR}"
   "${KRB5_INCLUDE_DIRS}"
@@ -795,14 +797,6 @@ if(USE_CB_SIMULATOR)
   set(_USE_CB_SIMULATOR ON)
 endif(USE_CB_SIMULATOR)
 
-
-#callers add:
-#  target_link_libraries(your_library ${LIBTIRPC_LIBRARIES})
-set(LIBTIRPC_INCLUDE_DIR
-  "${PROJECT_BINARY_DIR}/libtirpc/ntirpc"
-  "${PROJECT_BINARY_DIR}/libtirpc/ntirpc/rpc"
-)
-set(LIBTIRPC_LIBRARIES ntirpc)
 
 # Find misc system libs
 find_library(LIBRT rt)  # extended Pthreads functions
@@ -922,6 +916,36 @@ if(USE_9P_RDMA)
   link_directories (${MOOSHIKA_LIBRARY_DIRS})
 endif(USE_9P_RDMA)
 
+find_package(NTIRPC 1.3.0)
+
+if (NOT NTIRPC_FOUND)
+  set(NTIRPC_CLONE_URL "https://github.com/nfs-ganesha/ntirpc.git" CACHE
+    STRING "URL to clone ntirpc from")
+  ExternalProject_Add(project_ntirpc
+    GIT_REPOSITORY ${NTIRPC_CLONE_URL}
+    GIT_TAG 93fc447716624bd6c92b3b11b4c6b574d9b2aaa7
+    CMAKE_ARGS -DOVERRIDE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX} -DTIRPC_EPOLL=${TIRPC_EPOLL} -DUSE_GSS=${USE_GSS}
+    INSTALL_COMMAND make VERBOSE=1 DESTDIR=${CMAKE_CURRENT_BINARY_DIR}/externals install
+    )
+  ExternalProject_Get_Property(project_ntirpc BINARY_DIR)
+  message("BINARY_DIR: ${BINARY_DIR}")
+  install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/externals/${CMAKE_INSTALL_PREFIX}/ DESTINATION "./")
+  add_library(ntirpc SHARED IMPORTED)
+  set_property(TARGET ntirpc PROPERTY IMPORTED_LOCATION ${CMAKE_CURRENT_BINARY_DIR}/externals/${CMAKE_INSTALL_PREFIX}/${LIB_INSTALL_DIR}/libntirpc.so)
+  add_dependencies(ntirpc project_ntirpc)
+  set(NTIRPC_LIBRARY ntirpc)
+  set(NTIRPC_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/externals/${CMAKE_INSTALL_PREFIX}/include/ntirpc/")
+  # This is slight hack to make sure ntirpc is downloaded before anything is
+  # built
+  function(add_library targetName)
+    _add_library(${targetName} ${ARGN})
+    add_dependencies(${targetName} project_ntirpc)
+  endfunction()
+  message(STATUS "Checking NTIRPC out into source tree")
+endif(NOT NTIRPC_FOUND)
+message(${NTIRPC_INCLUDE_DIR})
+include_directories(${NTIRPC_INCLUDE_DIR})
+
 # All the plumbing in the basement
 set(SYSTEM_LIBRARIES
   ${SYSTEM_LIBRARIES}
@@ -930,6 +954,7 @@ set(SYSTEM_LIBRARIES
   ${KRB5_LIBRARIES}
   ${CMAKE_THREAD_LIBS_INIT}
   ${LIBRT}
+  ${NTIRPC_LIBRARY}
 )
 
 # Config file; make sure it doesn't clobber an existing one
@@ -940,16 +965,6 @@ install(DIRECTORY config_samples DESTINATION share/doc/ganesha)
 # pre-create PREFIX/var/run/ganesha
 install(DIRECTORY DESTINATION ${SYSSTATEDIR}/run/ganesha)
 
-IF( NOT EXISTS ${PROJECT_SOURCE_DIR}/libntirpc/ganesha/CMakeLists.txt )
-message( FATAL_ERROR
-"No CMakeLists.txt found in libntirpc
-This probably means that the directory was not properly populated.
-Please run the following command to do that and use cmake again:
-    git submodule update --init
-Alternatively, if you are not using git, get the current version at
-    https://github.com/nfs-ganesha/ntirpc" )
-ENDIF( NOT EXISTS ${PROJECT_SOURCE_DIR}/libntirpc/ganesha/CMakeLists.txt )
-
 add_subdirectory(log)
 add_subdirectory(config_parsing)
 add_subdirectory(cidr)
@@ -959,7 +974,6 @@ add_subdirectory(hashtable)
 add_subdirectory(NodeList)
 add_subdirectory(cache_inode)
 add_subdirectory(SAL)
-add_subdirectory(libntirpc/ganesha)
 add_subdirectory(RPCAL)
 add_subdirectory(Protocols)
 add_subdirectory(support)
@@ -1341,6 +1355,12 @@ if(USE_GUI_ADMIN_TOOLS)
 else(USE_GUI_ADMIN_TOOLS)
     set(BCOND_GUI_UTILS "%bcond_with")
 endif(USE_GUI_ADMIN_TOOLS)
+
+if (NOT NTIRPC_FOUND)
+  set(BCOND_NTIRPC "%bcond_without")
+else(NOT NTIRPC_FOUND)
+  set(BCOND_NTIRPC "%bcond_with")
+endif(NOT NTIRPC_FOUND)
 
 # Now create a useable specfile
 configure_file(

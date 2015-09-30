@@ -1,7 +1,3 @@
-include_directories(
-  ${LIBTIRPC_INCLUDE_DIR}
-)
-
 ########### next target ###############
 
 SET(sal_STAT_SRCS

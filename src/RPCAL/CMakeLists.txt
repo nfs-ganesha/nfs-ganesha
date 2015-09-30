@@ -1,7 +1,3 @@
-include_directories(
-  ${LIBTIRPC_INCLUDE_DIR}
-)
-
 ########### next target ###############
 
 SET(rpcal_STAT_SRCS

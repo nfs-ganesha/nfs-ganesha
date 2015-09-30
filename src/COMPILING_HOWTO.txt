@@ -5,62 +5,55 @@ This HOWTO covers what is necessary to download, configure, and build
 the nfs-ganesha NFS server software.
 
 There are two major components to the software, nfs-ganesha itself, and
-the libntirpc library which is used for the transport layer.  The server
-and the libtirpc library are in separate git repositories.  For the build,
-the libtirpc source is a 'git submodule' of nfs-ganesha.
+the ntirpc library which is used for the transport layer.  The server
+and the ntirpc library are in separate git repositories.  There are two ways
+that ganesha and ntirpc can be build: separately, or with ntirpc as a CMake
+external project for ganesha.
 
-The first step in building is to download (clone) the nfs-ganesha repository
-from its official location on github.com into the place in my home directory
-where I keep my git trees.
+To build separately:
 
-   $ cd ~/git
-   $ git clone --recursive git://github.com/nfs-ganesha.git
+Install ntirpc:
+cd <basedir>
+git clone git://github.com/nfs-ganesha/ntirpc.git
+cd <ntirpc-build-sandbox>
+cmake -DCMAKE_INSTALL_PREFIX=<install-prefix> <basedir>/ntirpc
+make
+make install
 
-Note the '--recursive' option which clones and initializes the submodule
-for libntirpc.  If you do not use this option, you will have to use the
-git submodule command below before building.  If you forget, the 'cmake'
-step below will terminate with an error message reminding you that you
-forgot.
+(Note, to install into the main system, leave -DCMAKE_INSTALL_PREFIX off; the
+install step must be done as root).
 
-The git submodule
------------------
+Install ganesha:
+cd <basedir>
+git clone git://github.com/nfs-ganesha/nfs-ganesha.git
+cd <ganesha-build-sandbox>
+cmake -DCMAKE_INSTALL_PREFIX=<install-prefix> <basedir>/nfs-ganesha/src
+make
+make install
 
-If you are building from a release source archive rather than from
-git, skip to the next section.  However, if you are building from git,
-you must initialize the submodule after clone and after pulling a new
-update by going to the root of your repository and typing
+(Note, to install into the main system, leave -DCMAKE_INSTALL_PREFIX off; the
+install step must be done as root).
 
-  git submodule update --init
+The CMake step for Ganesha will detect that an appropriate version of ntirpc is
+installed in the prefix, and use it.
 
-Also, please note that the current HEAD of the ntirpc directory is a
-piece of tracked state.  Please do not commit a change to the state
-unintentionally.
 
-NOTE:
-	The submodule can get out of step with the main project.  This
-	can occur if you make a change to the nfs-ganesha working
-	directory such as doing a checkout of another branch or a rebase
-	of your work from an upstream update. In these cases you must
-	do a 'git update' to make sure you are building nfs-ganesha with
-	the correct version of libntirpc.
+To build together:
+cd <basedir>
+git clone git://github.com/nfs-ganesha/nfs-ganesha.git
+cd <ganesha-build-sandbox>
+cmake -DCMAKE_INSTALL_PREFIX=<install-prefix> <basedir>/nfs-ganesha/src
+make
+make install
 
-CMAKE Build Instructions
-------------------------
+(Note, to install into the main system, leave -DCMAKE_INSTALL_PREFIX off; the
+install step must be done as root).
 
-Cmake can and does prefer to build out- of-source.  In other words,
-your build tree is over here and your git source tree is over there.
-The Makefiles are created by Cmake in the build tree, the objects and
-targets are in the build tree but the source is referenced "over
-there".  For example, in a Ganesha build, we would do:
+CMake will detect that there is no suitable ntirpc, and will clone the correct
+version into <ganesha-build-sandbox> and build and install it as part of the
+ganesha build.
 
-   $ cd some-build-sandbox
-   $ rm -rf build_dir; mkdir build_dir
-   $ cd build_dir
-   $ cmake ~/git/nfs-ganesha/src
-   $ make
-   $ make install
-
-This gets the build completely away from where the git repo is. Note
+These instructions get the build completely away from where the git repo is. Note
 that I have thoroughly scrubbed the area before doing the build.  You can
 also build in-tree but this litters the git repo with extra files just like
 autotools.  See the Cmake manual for the details and restrictions.
