@@ -504,37 +504,49 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 
 			PTHREAD_MUTEX_unlock(&lock_owner->so_mutex);
 
+			/* Lock owner is known, see if we also already have
+			 * a stateid. Do this here since it's impossible for
+			 * there to be such a state if the lock owner was
+			 * previously unknown.
+			 */
+			lock_state = nfs4_State_Get_Entry(data->current_entry,
+							  lock_owner);
 		}
 
-		/* Prepare state management structure */
-		memset(&candidate_data, 0, sizeof(candidate_data));
-		candidate_data.lock.openstate = state_open;
+		if (lock_state == NULL) {
+			/* Prepare state management structure */
+			memset(&candidate_data, 0, sizeof(candidate_data));
+			candidate_data.lock.openstate = state_open;
 
-		/* Add the lock state to the lock table */
-		state_status = state_add(data->current_entry,
-					 STATE_TYPE_LOCK,
-					 &candidate_data,
-					 lock_owner,
-					 &lock_state,
-					 data->minorversion > 0 ?
-						&refer : NULL);
+			/* Add the lock state to the lock table */
+			state_status = state_add(data->current_entry,
+						 STATE_TYPE_LOCK,
+						 &candidate_data,
+						 lock_owner,
+						 &lock_state,
+						 data->minorversion > 0 ?
+							&refer : NULL);
 
-		if (state_status != STATE_SUCCESS) {
-			res_LOCK4->status = NFS4ERR_RESOURCE;
+			if (state_status != STATE_SUCCESS) {
+				res_LOCK4->status = NFS4ERR_RESOURCE;
 
-			LogLock(COMPONENT_NFS_V4_LOCK, NIV_DEBUG,
-				"LOCK failed to add new stateid",
-				data->current_entry, lock_owner, &lock_desc);
+				LogLock(COMPONENT_NFS_V4_LOCK, NIV_DEBUG,
+					"LOCK failed to add new stateid",
+					data->current_entry, lock_owner,
+					&lock_desc);
 
-			goto out2;
+				goto out2;
+			}
+
+			glist_init(&lock_state->state_data.lock.state_locklist);
+
+			/* Add lock state to the list of lock states belonging
+			   to the open state */
+			glist_add_tail(
+				&state_open->state_data.share.share_lockstates,
+				&lock_state->state_data.lock.state_sharelist);
+
 		}
-
-		glist_init(&lock_state->state_data.lock.state_locklist);
-
-		/* Add lock state to the list of lock states belonging
-		   to the open state */
-		glist_add_tail(&state_open->state_data.share.share_lockstates,
-			       &lock_state->state_data.lock.state_sharelist);
 	}
 
 	if (data->minorversion == 0) {
