@@ -330,7 +330,7 @@ be used with NFS-Ganesha to support PT
 Summary: The NFS-GANESHA's GLUSTER FSAL
 Group: Applications/System
 Requires:	nfs-ganesha = %{version}-%{release}
-BuildRequires:        glusterfs-api-devel >= 3.7
+BuildRequires:        glusterfs-api-devel >= 3.7.4
 BuildRequires:        libattr-devel, libacl-devel
 
 %description gluster
@@ -434,14 +434,6 @@ install -m 644 config_samples/gpfs.ganesha.exports.conf	%{buildroot}%{_sysconfdi
 mkdir -p %{buildroot}%{_sysconfdir}/init.d
 install -m 755 scripts/init.d/nfs-ganesha.gpfs		%{buildroot}%{_sysconfdir}/init.d/nfs-ganesha-gpfs
 %endif
-%endif
-
-%if %{with utils}
-pushd .
-cd scripts/ganeshactl/
-python setup.py --quiet install --root=%{buildroot}
-popd
-install -m 755 Protocols/NLM/sm_notify.ganesha		%{buildroot}%{_bindir}/sm_notify.ganesha
 %endif
 
 make DESTDIR=%{buildroot} install
