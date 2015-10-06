@@ -3,7 +3,7 @@
 find_program(PYTHON "python")
 
 # PyQT based class modules
-set(GANESHA_SRCS
+set(GANESHA_BASE_SRCS
   Ganesha/__init__.py
   Ganesha/admin.py
   Ganesha/client_mgr.py
@@ -49,14 +49,16 @@ if(PYTHON)
   set(OUTPUT      "${CMAKE_CURRENT_BINARY_DIR}/build/timestamp")
 
   # Generate rules for compiling .ui -> .py
+  set(GANESHA_SRCS)
   set(UI_PY_FILES)
   if(USE_GUI_ADMIN_TOOLS)
+    set(GANESHA_SRCS ${GANESHA_BASE_SRCS})
     foreach(ui_file ${UI_SRC})
       string(REPLACE ".ui" ".py" py_file ${ui_file})
       add_custom_command(
         OUTPUT ${py_file}
         COMMAND mkdir -p build/lib/Ganesha/QtUI
-        COMMAND pyuic4 "${CMAKE_CURRENT_SOURCE_DIR}/${ui_file}" -o "build/lib/${py_file}"
+        COMMAND ${PYUIC} "${CMAKE_CURRENT_SOURCE_DIR}/${ui_file}" -o "build/lib/${py_file}"
         DEPENDS ${ui_file}
         )
       set(UI_PY_FILES ${UI_PY_FILES} "${py_file}")

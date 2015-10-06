@@ -508,6 +508,20 @@ else(KRB5_FOUND AND HAVE_GSSAPI_H)
   message(FATAL_ERROR "Cannot find kerberos or GSS libraries")
 endif(KRB5_FOUND AND HAVE_GSSAPI_H)
 
+if (USE_ADMIN_TOOLS)
+  find_package(PythonInterp)
+  if (NOT PYTHONINTERP_FOUND)
+    message(FATAL_ERROR "Cannot find python for enabling admin tools")
+  endif (NOT PYTHONINTERP_FOUND)
+  if (USE_GUI_ADMIN_TOOLS)
+    find_program(PYUIC NAMES pyuic4 DOC "PyQT UI-compiler executable")
+    if (NOT PYUIC)
+      message(STATUS "Cannot find PyQt4.  Disabling GUI admin tools")
+      set(USE_GUI_ADMIN_TOOLS OFF)
+    endif (NOT PYUIC)
+  endif (USE_GUI_ADMIN_TOOLS)
+endif (USE_ADMIN_TOOLS)
+
 # Validate fsal dependencies
 
 if(USE_FSAL_GLUSTER)
