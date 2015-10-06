@@ -252,7 +252,6 @@ int construct_handle(struct glusterfs_export *glexport, const struct stat *sb,
 		     const char *vol_uuid)
 {
 	struct glusterfs_handle *constructing = NULL;
-	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	glusterfs_fsal_xstat_t buffxstat;
 
 	*obj = NULL;
@@ -269,26 +268,6 @@ int construct_handle(struct glusterfs_export *glexport, const struct stat *sb,
 		glexport->export.exp_ops.fs_supported_attrs(&glexport->export);
 
 	stat2fsal_attributes(sb, &constructing->attributes);
-
-	if (constructing->attributes.type == DIRECTORY)
-		buffxstat.is_dir = true;
-	else
-		buffxstat.is_dir = false;
-
-	status = glusterfs_get_acl(glexport, glhandle, &buffxstat,
-				   &constructing->attributes);
-
-	if (FSAL_IS_ERROR(status)) {
-		/* TODO: Is the error appropriate */
-
-		/* For dead links , we should not return error */
-		if (!(constructing->attributes.type == SYMBOLIC_LINK
-					&& status.minor == ENOENT)) {
-			errno = EINVAL;
-			gsh_free(constructing);
-			return -1;
-		}
-	}
 
 	constructing->glhandle = glhandle;
 	memcpy(constructing->globjhdl, vol_uuid, GLAPI_UUID_LENGTH);
