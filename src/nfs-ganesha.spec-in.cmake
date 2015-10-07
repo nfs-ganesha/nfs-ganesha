@@ -75,8 +75,8 @@
 @BCOND_GUI_UTILS@ gui_utils
 %global use_gui_utils %{on_off_switch gui_utils}
 
-@BCOND_NTIRPC@ ntirpc
-%global use_ntirpc %{on_off_switch ntirpc}
+@BCOND_NTIRPC@ system_ntirpc
+%global use_system_ntirpc %{on_off_switch system_ntirpc}
 
 %global dev_version %{lua: extraver = string.gsub('@GANESHA_EXTRA_VERSION@', '%-', '.'); print(extraver) }
 
@@ -101,6 +101,9 @@ BuildRequires:	dbus-devel
 BuildRequires:	libcap-devel
 BuildRequires:	libblkid-devel
 BuildRequires:	libuuid-devel
+%if %{with system_ntirpc}
+BuildRequires: libntirpc-devel >= 1.3.0
+%endif
 Requires:	dbus
 Requires:	nfs-utils
 %if %{with_nfsidmap}
@@ -352,6 +355,7 @@ cmake .	-DCMAKE_BUILD_TYPE=Debug			\
 	-DUSE_FSAL_PANFS=%{use_fsal_panfs}		\
 	-DUSE_FSAL_PT=%{use_fsal_pt}			\
 	-DUSE_FSAL_GLUSTER=%{use_fsal_gluster}		\
+	-DUSE_SYSTEM_NTIRPC=%{use_system_ntirpc}	\
 	-DUSE_9P_RDMA=%{use_rdma}			\
 	-DUSE_FSAL_LUSTRE_UP=%{use_lustre_up}		\
 	-DUSE_LTTNG=%{use_lttng}			\
@@ -461,7 +465,7 @@ make DESTDIR=%{buildroot} install
 %files
 %defattr(-,root,root,-)
 %{_bindir}/ganesha.nfsd
-%if %{with ntirpc}
+%if ! %{with system_ntirpc}
 %{_libdir}/libntirpc.so.1.3.0
 %{_libdir}/libntirpc.so.1.3
 %{_libdir}/libntirpc.so

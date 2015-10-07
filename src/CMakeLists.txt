@@ -95,9 +95,6 @@ include(${CMAKE_SOURCE_DIR}/cmake/maintainer_mode.cmake)
 # For libraries that provide pkg-config files
 include(FindPkgConfig)
 
-# For ntirpc's external project
-include(ExternalProject)
-
 # If we are in a git tree, then this CMakeLists.txt is in "src/" and go .git is in "src/.."
 IF( EXISTS ${CMAKE_SOURCE_DIR}/../.git/HEAD  )
   message( STATUS "Compilation from within a git repository. Using git rev-parse HEAD")
@@ -196,7 +193,8 @@ option(USE_FSAL_SHOOK "build SHOOK FSAL" ON)
 # Activate FSAL Upcalls for FSAL_LUSTRE
 option(USE_FSAL_LUSTRE_UP "add Upcalls support for LUSTRE FSAL" OFF)
 
-# From TI-RPC
+# nTIRPC
+option(USE_SYSTEM_NTIRPC "Use the system nTIRPC, rather than the submodule" OFF)
 option (USE_GSS "enable RPCSEC_GSS support" ON)
 option(TIRPC_EPOLL "platform supports EPOLL or emulation" ON)
 
@@ -896,37 +894,17 @@ if(USE_9P_RDMA)
   link_directories (${MOOSHIKA_LIBRARY_DIRS})
 endif(USE_9P_RDMA)
 
-find_package(NTIRPC 1.3.0)
-
-if (NOT NTIRPC_FOUND)
-  set(NTIRPC_CLONE_URL "https://github.com/nfs-ganesha/ntirpc.git" CACHE
-    STRING "URL to clone ntirpc from")
-  set(NTIRPC_CLONE_TAG 1d53070e72b79476c1fdf300f6d9485f9c235e99 CACHE
-    STRING "NTIRPC tag/commit to clone")
-  if (RDMA_PATH_HINT)
-    set(NTIRPC_EXTRA_ARGS "-DRDMA_PATH_HINT=${RDMA_PATH_HINT}")
-  endif(RDMA_PATH_HINT)
-  ExternalProject_Add(project_ntirpc
-    GIT_REPOSITORY ${NTIRPC_CLONE_URL}
-    GIT_TAG ${NTIRPC_CLONE_TAG}
-    CMAKE_ARGS -DOVERRIDE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX} -DTIRPC_EPOLL=${TIRPC_EPOLL} -DUSE_GSS=${USE_GSS} -DUSE_RPC_RDMA=${USE_NFS_RDMA} ${NTIRPC_EXTRA_ARGS}
-    INSTALL_COMMAND make VERBOSE=1 DESTDIR=${CMAKE_CURRENT_BINARY_DIR}/externals install
-    )
-  ExternalProject_Get_Property(project_ntirpc BINARY_DIR)
-  install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/externals/${CMAKE_INSTALL_PREFIX}/ DESTINATION "./")
-  add_library(ntirpc SHARED IMPORTED)
-  set_property(TARGET ntirpc PROPERTY IMPORTED_LOCATION ${CMAKE_CURRENT_BINARY_DIR}/externals/${CMAKE_INSTALL_PREFIX}/${LIB_INSTALL_DIR}/libntirpc.so)
-  add_dependencies(ntirpc project_ntirpc)
+if (USE_SYSTEM_NTIRPC)
+  find_package(NTIRPC 1.3.0 REQUIRED)
+else (USE_SYSTEM_NTIRPC)
+  # Set options for submodule
+  option(USE_RPC_RDMA "Use RDMA" ${USE_NFS_RDMA})
+  option(USE_TIRPC_EPOLL "Use EPOLL" ${USE_TIRPC_EPOLL})
+  add_subdirectory(libntirpc)
   set(NTIRPC_LIBRARY ntirpc)
-  set(NTIRPC_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/externals/${CMAKE_INSTALL_PREFIX}/include/ntirpc/")
-  # This is slight hack to make sure ntirpc is downloaded before anything is
-  # built
-  function(add_library targetName)
-    _add_library(${targetName} ${ARGN})
-    add_dependencies(${targetName} project_ntirpc)
-  endfunction()
-  message(STATUS "Checking NTIRPC out into source tree")
-endif(NOT NTIRPC_FOUND)
+  set(NTIRPC_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/libntirpc/ntirpc/")
+  message(STATUS "Using ntirpc submodule")
+endif (USE_SYSTEM_NTIRPC)
 message(${NTIRPC_INCLUDE_DIR})
 include_directories(${NTIRPC_INCLUDE_DIR})
 
@@ -1001,6 +979,7 @@ message(STATUS "USE_FSAL_SHOOK = ${USE_FSAL_SHOOK}")
 message(STATUS "USE_FSAL_LUSTRE_UP = ${USE_FSAL_LUSTRE_UP}")
 message(STATUS "USE_FSAL_GLUSTER = ${USE_FSAL_GLUSTER}")
 message(STATUS "USE_FSAL_NULL = ${USE_FSAL_NULL}")
+message(STATUS "USE_SYSTEM_NTIRPC = ${USE_SYSTEM_NTIRPC}")
 message(STATUS "USE_DBUS = ${USE_DBUS}")
 message(STATUS "USE_CB_SIMULATOR = ${USE_CB_SIMULATOR}")
 message(STATUS "USE_NFSIDMAP = ${USE_NFSIDMAP}")
@@ -1340,11 +1319,11 @@ else(USE_GUI_ADMIN_TOOLS)
     set(BCOND_GUI_UTILS "%bcond_with")
 endif(USE_GUI_ADMIN_TOOLS)
 
-if (NOT NTIRPC_FOUND)
+if (USE_SYSTEM_NTIRPC)
   set(BCOND_NTIRPC "%bcond_without")
-else(NOT NTIRPC_FOUND)
+else(USE_SYSTEM_NTIRPC)
   set(BCOND_NTIRPC "%bcond_with")
-endif(NOT NTIRPC_FOUND)
+endif(USE_SYSTEM_NTIRPC)
 
 # Now create a useable specfile
 configure_file(
