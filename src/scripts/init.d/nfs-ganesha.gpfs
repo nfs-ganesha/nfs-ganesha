@@ -126,6 +126,21 @@ start() {
 	        return $RETVAL
 	fi
 
+	#Check if Ganesha is in zombie state
+	result=`ps -eLo pid,tid,comm,stat|awk '$4 ~ /[Zz]/ && $3 ~ /ganesha/ {printf("%d,%d\n",$1,$2)}'`
+	if [ "$result" ]; then
+		echo "GPFS Ganesha is in zombie state."
+		echo "$result" | while read -r line; do
+			IFS=, read PID TID <<< "$line"
+			echo "vvvvvvvv $PID, $TID vvvvvvvvv"
+			cat /proc/$PID/task/$TID/stack | while read -r RL; do
+				echo "$RL"
+			done;
+			echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+		done;
+		start_ganesha=0
+	fi
+
 	# Check if Ganesha is already running
 	result=`pidof "$PATHPROG"`
 	if [ ! $result ]; then
