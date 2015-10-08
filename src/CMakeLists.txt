@@ -20,7 +20,7 @@ set(GANESHA_MAJOR_VERSION 2)
 set(GANESHA_MINOR_VERSION 3)
 
 # needs to come after project()
-IF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+IF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR CMAKE_INSTALL_PREFIX STREQUAL "/usr")
 	SET(CMAKE_INSTALL_PREFIX "/usr" CACHE PATH "Install prefix for common files" FORCE)
 	message(STATUS "override default CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX}")
 	SET(SYSCONFDIR "/etc" CACHE PATH "Install prefix for common files" FORCE)
@@ -29,7 +29,7 @@ ELSE()
 	message(STATUS "was set CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX}")
 	SET(SYSCONFDIR "${CMAKE_INSTALL_PREFIX}/etc" CACHE PATH "Install prefix for common files" FORCE)
 	SET(SYSSTATEDIR "${CMAKE_INSTALL_PREFIX}/var" CACHE PATH "Install prefix for common files" FORCE)
-ENDIF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+ENDIF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR CMAKE_INSTALL_PREFIX STREQUAL "/usr")
 # Patch level is always ".0" for mainline (master).  It is blank for development.
 # When starting a stable maintenance branch, this becomes ".N"
 # where N is monotonically increasing starting at 1. Remember to include the "." !!
@@ -156,10 +156,10 @@ endif(MSVC)
 
 # Library path name
 if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-	set(LIB_INSTALL_DIR lib64 CACHE PATH
+	set(LIB_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/lib64 CACHE PATH
 		"Specify name of libdir inside install path")
 else( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-	set(LIB_INSTALL_DIR lib CACHE PATH
+	set(LIB_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/lib CACHE PATH
 		"Specify name of libdir inside install path")
 endif( CMAKE_SIZEOF_VOID_P EQUAL 8 )
 
@@ -283,13 +283,6 @@ option(USE_ADMIN_TOOLS "Package Admin scripts" OFF)
 
 # Build and package Python gui admin scripts for managing via DBus
 option(USE_GUI_ADMIN_TOOLS "Package GUI Admin scripts" ON)
-
-# Final location for server modules such as FSAL shared objects
-# We do this separately because packaging (RPM) installs in a
-# "build root" but installs somewhere else (/usr)
-set(MODULES_PATH ${CMAKE_INSTALL_PREFIX}
-  CACHE PATH
-  "Path prefix for dlopen loaded modules")
 
 # Enable GCC Thread-sanitizer
 option(USE_TSAN "Enable GCC Thread-Sanitizer" OFF)
