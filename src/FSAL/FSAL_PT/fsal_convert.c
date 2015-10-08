@@ -10,7 +10,7 @@
  * ----------------------------------------------------------------------------
  */
 /*
- * vim:noexpandtab:shiftwidth=4:tabstop=4:
+ * vim:noexpandtab:shiftwidth=8:tabstop=8:
  */
 
 #ifdef HAVE_CONFIG_H
