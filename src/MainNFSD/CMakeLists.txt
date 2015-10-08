@@ -104,10 +104,6 @@ target_link_libraries(ganesha.nfsd
   ${SYSTEM_LIBRARIES}
 )
 
-if(USE_9P AND USE_9P_RDMA)
-  target_link_libraries(ganesha.nfsd  mooshika ibverbs rdmacm )
-endif(USE_9P AND USE_9P_RDMA)
-
 install(TARGETS ganesha.nfsd COMPONENT daemon DESTINATION bin)
 
 
