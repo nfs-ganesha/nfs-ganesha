@@ -31,6 +31,10 @@
 
 #include "config.h"
 #include <stdio.h>
+#include <sys/socket.h>
+#ifdef RPC_VSOCK
+#include <linux/vm_sockets.h>
+#endif /* VSOCK */
 #include <sys/types.h>
 #include <ctype.h> /* for having isalnum */
 #include <stdlib.h> /* for having atoi */
@@ -54,6 +58,9 @@
 #include "nfs_exports.h"
 #include "nfs_file_handle.h"
 #include "nfs_dupreq.h"
+
+/* XXX doesn't ntirpc have an equivalent for all of the following?
+ */
 
 const char *str_sock_type(int st)
 {
@@ -96,6 +103,10 @@ const char *str_af(int af)
 		return "AF_INET ";
 	case AF_INET6:
 		return "AF_INET6";
+#ifdef RPC_VSOCK
+	case AF_VSOCK:
+		return "AF_VSOCK";
+#endif /* VSOCK */
 	}
 	sprintf(buf, "%d", af);
 	return buf;
@@ -116,6 +127,10 @@ const char *xprt_type_to_str(xprt_type_t type)
 		return "sctp";
 	case XPRT_RDMA:
 		return "rdma";
+	case XPRT_VSOCK:
+		return "vsock";
+	case XPRT_VSOCK_RENDEZVOUS:
+		return "vsock rendezvous";
 	}
 	return "INVALID";
 }
@@ -146,6 +161,8 @@ bool copy_xprt_addr(sockaddr_t *addr, SVCXPRT *xprt)
  * This creates a native pointer size (unsigned long int) hash value
  * from the sockaddr_t structure. It supports both IPv4 and IPv6,
  * other types can be added in time.
+ *
+ * XXX is this hash...good?
  *
  * @param[in] addr        sockaddr_t address to hash
  * @param[in] ignore_port Whether to ignore the port
@@ -184,6 +201,17 @@ uint64_t hash_sockaddr(sockaddr_t *addr, bool ignore_port)
 			}
 			break;
 		}
+#ifdef RPC_VSOCK
+	case AF_VSOCK:
+	{
+		struct sockaddr_vm *svm; /* XXX checkpatch horror */
+
+		svm = (struct sockaddr_vm *) addr;
+		addr_hash = svm->svm_cid;
+		if (!ignore_port)
+			addr_hash ^= svm->svm_port;
+	}
+#endif /* VSOCK */
 	default:
 		break;
 	}
@@ -382,6 +410,10 @@ int get_port(sockaddr_t *addr)
 		return ntohs(((struct sockaddr_in *)addr)->sin_port);
 	case AF_INET6:
 		return ntohs(((struct sockaddr_in6 *)addr)->sin6_port);
+#ifdef RPC_VSOCK
+	case AF_VSOCK:
+		return ((struct sockaddr_vm *)addr)->svm_port;
+#endif /* VSOCK */
 	default:
 		return -1;
 	}

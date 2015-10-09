@@ -36,6 +36,11 @@
 #include <sys/file.h>		/* for having FNDELAY */
 #include <sys/select.h>
 #include <poll.h>
+#ifdef RPC_VSOCK
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <linux/vm_sockets.h>
+#endif
 #include <assert.h>
 #include "hashtable.h"
 #include "log.h"
@@ -115,6 +120,7 @@ const char *tags[] = {
 	"MNT",
 	"NLM",
 	"RQUOTA",
+	"NFS_VSOCK",
 };
 
 typedef struct proto_data {
@@ -145,6 +151,7 @@ SVCXPRT *tcp_xprt[P_COUNT];
 
 /* Flag to indicate if V6 interfaces on the host are enabled */
 bool v6disabled;
+bool vsock;
 
 /**
  * @brief Unregister an RPC program.
@@ -185,10 +192,16 @@ static void unregister_rpc(void)
 	}
 }
 
-#define test_for_additional_nfs_protocols(p) \
-	((p != P_MNT && p != P_NLM && p != P_RQUOTA) ||		   \
-	 (nfs_param.core_param.core_options & (CORE_OPTION_NFSV3 | \
-					       CORE_OPTION_NFSV4)))
+static inline bool test_for_additional_nfs_protocols(protos p)
+{
+	/* always skip VSOCK in scans */
+	if (p == P_NFS_VSOCK)
+		return false;
+
+	return ((p != P_MNT && p != P_NLM && p != P_RQUOTA) ||
+		(nfs_param.core_param.core_options &
+			(CORE_OPTION_NFSV3 | CORE_OPTION_NFSV4)));
+}
 
 /**
  * @brief Close file descriptors used for RPC services.
@@ -211,6 +224,8 @@ static void close_rpc_fd(void)
 		if (tcp_socket[p] != -1)
 			close(tcp_socket[p]);
 	}
+	if (vsock)
+		close(tcp_socket[P_NFS_VSOCK]);
 }
 
 void Create_udp(protos prot)
@@ -274,6 +289,42 @@ void Create_tcp(protos prot)
 				       XPRT_PRIVATE_FLAG_NONE);
 }
 
+void create_vsock(void)
+{
+	tcp_xprt[P_NFS_VSOCK] =
+		svc_vc_create2(tcp_socket[P_NFS_VSOCK],
+			       nfs_param.core_param.rpc.max_send_buffer_size,
+			       nfs_param.core_param.rpc.max_recv_buffer_size,
+			       SVC_VC_CREATE_LISTEN);
+	if (tcp_xprt[P_NFS_VSOCK] == NULL)
+		LogFatal(COMPONENT_DISPATCH,
+			"Cannot allocate %s/TCP VSOCK SVCXPRT",
+			 tags[P_NFS_VSOCK]);
+
+	/* bind xprt to channel--unregister it from the global event
+	 * channel (if applicable) */
+	(void)svc_rqst_evchan_reg(rpc_evchan[TCP_RDVS_CHAN].chan_id,
+				  tcp_xprt[P_NFS_VSOCK],
+				SVC_RQST_FLAG_XPRT_UREG);
+
+	/* Hook xp_getreq */
+	(void)SVC_CONTROL(tcp_xprt[P_NFS_VSOCK], SVCSET_XP_GETREQ,
+			nfs_rpc_getreq_ng);
+
+	/* Hook xp_recv_user_data -- allocate new xprts to event channels */
+	(void)SVC_CONTROL(tcp_xprt[P_NFS_VSOCK], SVCSET_XP_RECV_USER_DATA,
+			  nfs_rpc_recv_user_data);
+
+	/* Hook xp_free_user_data (finalize/free private data) */
+	(void)SVC_CONTROL(tcp_xprt[P_NFS_VSOCK], SVCSET_XP_FREE_USER_DATA,
+			  nfs_rpc_free_user_data);
+
+	/* Setup private data */
+	(tcp_xprt[P_NFS_VSOCK])->xp_u1 =
+		alloc_gsh_xprt_private(tcp_xprt[P_NFS_VSOCK],
+				       XPRT_PRIVATE_FLAG_NONE);
+}
+
 /**
  * @brief Create the SVCXPRT for each protocol in use
  */
@@ -287,6 +338,10 @@ void Create_SVCXPRTs(void)
 			Create_udp(p);
 			Create_tcp(p);
 		}
+#ifdef RPC_VSOCK
+	if (vsock)
+		create_vsock();
+#endif /* RPC_VSOCK */
 }
 
 /**
@@ -465,9 +520,31 @@ static int Bind_sockets_V4(void)
 	return rc;
 }
 
+#ifdef RPC_VSOCK
+int bind_sockets_vsock(void)
+{
+	int rc = 0;
+
+	struct sockaddr_vm sa_listen = {
+		.svm_family = AF_VSOCK,
+		.svm_cid = VMADDR_CID_ANY,
+		.svm_port = nfs_param.core_param.port[P_NFS],
+	};
+
+	rc = bind(tcp_socket[P_NFS_VSOCK], (struct sockaddr *)
+		(struct sockaddr *)&sa_listen, sizeof(sa_listen));
+	if (rc == -1) {
+		LogWarn(COMPONENT_DISPATCH,
+			"cannot bind %s stream socket, error %d(%s)",
+			tags[P_NFS_VSOCK], errno, strerror(errno));
+	}
+	return rc;
+}
+#endif /* RPC_VSOCK */
+
 void Bind_sockets(void)
 {
-	int	rc = 0;
+	int rc = 0;
 
 	/*
 	 * See Allocate_sockets(), which should already
@@ -484,9 +561,17 @@ void Bind_sockets(void)
 			LogFatal(COMPONENT_DISPATCH,
 				 "Error binding to V6 interface. Cannot continue.");
 	}
-
+#ifdef RPC_VSOCK
+	if (vsock) {
+		rc = bind_sockets_vsock();
+		if (rc)
+			LogMajor(COMPONENT_DISPATCH,
+				"AF_VSOCK bind failed (continuing startup)");
+	}
+#endif /* RPC_VSOCK */
 	LogInfo(COMPONENT_DISPATCH,
-		"Bind_sockets() successful, v6disabled = %d", v6disabled);
+		"Bind_sockets() successful, v6disabled = %d, vsock = %d",
+		v6disabled, vsock);
 }
 
 /**
@@ -571,6 +656,35 @@ static int Allocate_sockets_V4(int p)
 
 }
 
+#ifdef RPC_VSOCK
+/**
+ * @brief Create vmci stream socket
+ */
+static int allocate_socket_vsock(void)
+{
+	int one = 1;
+
+	tcp_socket[P_NFS_VSOCK] = socket(AF_VSOCK, SOCK_STREAM, 0);
+	if (tcp_socket[P_NFS_VSOCK] == -1) {
+		LogWarn(COMPONENT_DISPATCH,
+			"socket create failed for %s, error %d(%s)",
+			tags[P_NFS_VSOCK], errno, strerror(errno));
+		return -1;
+	}
+	if (setsockopt(tcp_socket[P_NFS_VSOCK],
+			SOL_SOCKET, SO_REUSEADDR,
+			&one, sizeof(one))) {
+		LogWarn(COMPONENT_DISPATCH,
+			"bad tcp socket options for %s, error %d(%s)",
+			tags[P_NFS_VSOCK], errno, strerror(errno));
+
+		return -1;
+	}
+
+	return 0;
+}
+#endif /* RPC_VSOCK */
+
 /**
  * @brief Allocate the tcp and udp sockets for the nfs daemon
  */
@@ -652,6 +766,10 @@ try_V4:
 			}
 		}
 	}
+#ifdef RPC_VSOCK
+	if (vsock)
+		allocate_socket_vsock();
+#endif /* RPC_VSOCK */
 }
 
 /* The following routine must ONLY be called from the shutdown
@@ -762,6 +880,9 @@ void nfs_Init_svc(void)
 	/* Redirect TI-RPC allocators, log channel */
 	if (!tirpc_control(TIRPC_PUT_PARAMETERS, &ntirpc_pp))
 		LogCrit(COMPONENT_INIT, "Setting nTI-RPC parameters failed");
+#ifdef RPC_VSOCK
+	vsock = nfs_param.core_param.core_options & CORE_OPTION_NFS_VSOCK;
+#endif
 
 	/* New TI-RPC package init function */
 	svc_params.flags = SVC_INIT_EPOLL;	/* use EPOLL event mgmt */
@@ -838,16 +959,22 @@ void nfs_Init_svc(void)
 		/* Some log that can be useful when debug ONC/RPC
 		 * and RPCSEC_GSS matter */
 		LogDebug(COMPONENT_DISPATCH,
-			 "Socket numbers are: nfs_udp=%u  nfs_tcp=%u mnt_udp=%u  mnt_tcp=%u nlm_tcp=%u nlm_udp=%u",
-			 udp_socket[P_NFS], tcp_socket[P_NFS],
-			 udp_socket[P_MNT], tcp_socket[P_MNT],
-			 udp_socket[P_NLM], tcp_socket[P_NLM]);
+			"Socket numbers are: nfs_udp=%u nfs_tcp=%u nfs_vsock=%u mnt_udp=%u mnt_tcp=%u nlm_tcp=%u nlm_udp=%u",
+			udp_socket[P_NFS],
+			tcp_socket[P_NFS],
+			tcp_socket[P_NFS_VSOCK],
+			udp_socket[P_MNT],
+			tcp_socket[P_MNT],
+			udp_socket[P_NLM],
+			tcp_socket[P_NLM]);
 	} else {
 		/* Some log that can be useful when debug ONC/RPC
 		 * and RPCSEC_GSS matter */
 		LogDebug(COMPONENT_DISPATCH,
-			 "Socket numbers are: nfs_udp=%u  nfs_tcp=%u",
-			 udp_socket[P_NFS], tcp_socket[P_NFS]);
+			 "Socket numbers are: nfs_udp=%u nfs_tcp=%u nfs_vsock=%u",
+			udp_socket[P_NFS],
+			tcp_socket[P_NFS],
+			tcp_socket[P_NFS_VSOCK]);
 	}
 
 	/* Some log that can be useful when debug ONC/RPC

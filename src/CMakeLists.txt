@@ -274,6 +274,12 @@ option(USE_NFS_RDMA "enable NFS/RDMA support" OFF)
 option(USE_9P "enable 9P support" ON)
 option(USE_9P_RDMA "enable 9P_RDMA support" OFF)
 
+# AF_VSOCK host support (NFS)
+option(USE_VSOCK "enable AF_VSOCK listener" OFF)
+if (USE_VSOCK)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DRPC_VSOCK")
+endif(LINUX)
+
 # This option will stop cmake compilation if a requested FSAL could not be built
 option(STRICT_PACKAGE "Enable strict packaging behavior" OFF )
 
@@ -1072,6 +1078,7 @@ message(STATUS "MODULES_PATH = ${MODULES_PATH}")
 message(STATUS "USE_TSAN = ${USE_TSAN}")
 message(STATUS "USE_LTTNG = ${USE_LTTNG}")
 message(STATUS "USE_BLKIN = ${USE_BLKIN}")
+message(STATUS "USE_VSOCK = ${USE_VSOCK}")
 
 #force command line options to be stored in cache
 set(USE_FSAL_VFS ${USE_FSAL_VFS}

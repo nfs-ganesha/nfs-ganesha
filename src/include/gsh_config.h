@@ -58,6 +58,7 @@ typedef enum protos {
 	P_MNT,			/*< Mount (for v3) */
 	P_NLM,			/*< NLM (for v3) */
 	P_RQUOTA,		/*< RQUOTA (for v3) */
+	P_NFS_VSOCK,		/*< NFS over vmware, qemu vmci sockets */
 	P_COUNT			/*< Number of protocols */
 } protos;
 
@@ -171,7 +172,12 @@ typedef enum protos {
 /**
  * @brief Support 9p
  */
-#define CORE_OPTION_9P 0x00000004	/*< NFSv4 operations are supported */
+#define CORE_OPTION_9P 0x00000004	/*< 9P operations are supported */
+
+/**
+ * @brief NFS AF_VSOCK
+ */
+#define CORE_OPTION_NFS_VSOCK 0x00000008 /*< AF_VSOCK NFS listener */
 
 /**
  * @brief Support NFSv3 and NFSv4.
@@ -181,8 +187,10 @@ typedef enum protos {
 /**
  * @brief Support all protocols
  */
-#define CORE_OPTION_ALL_VERS (CORE_OPTION_NFSV3 | CORE_OPTION_NFSV4 | \
-			      CORE_OPTION_9P)
+#define CORE_OPTION_ALL_VERS (CORE_OPTION_NFSV3 |			\
+				CORE_OPTION_NFSV4 |			\
+				CORE_OPTION_NFS_VSOCK |			\
+				CORE_OPTION_9P)
 
 typedef struct nfs_core_param {
 	/** An array of port numbers, one for each protocol.  Set by
