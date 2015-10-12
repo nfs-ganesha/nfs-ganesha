@@ -520,7 +520,11 @@ endif (USE_ADMIN_TOOLS)
 # Validate fsal dependencies
 
 if(USE_FSAL_GLUSTER)
-  pkg_check_modules(GFAPI glusterfs-api>=7.3.7)
+  find_package(PkgConfig)
+  IF(GLUSTER_PREFIX)
+    set(ENV{PKG_CONFIG_PATH} "${PKG_CONFIG_PATH}:${GLUSTER_PREFIX}/lib/pkgconfig")
+  ENDIF(GLUSTER_PREFIX)
+  pkg_check_modules(GFAPI REQUIRED glusterfs-api>=7.3.7)
   if(NOT GFAPI_FOUND)
     if(STRICT_PACKAGE)
       message(FATAL_ERROR "STRICT PACKAGE: Cannot find GLUSTER GFAPI runtime. Disabling GLUSTER fsal build")
@@ -528,6 +532,13 @@ if(USE_FSAL_GLUSTER)
       message(WARNING "Cannot find GLUSTER GFAPI runtime. Disabling GLUSTER fsal build")
       set(USE_FSAL_GLUSTER OFF)
     endif(STRICT_PACKAGE)
+  else(NOT GFAPI_FOUND)
+    message(STATUS "GFAPI_INCLUDE_DIRS=${GFAPI_INCLUDE_DIRS}")
+    message(STATUS "GFAPI_LIBRARY_DIRS=${GFAPI_LIBRARY_DIRS}")
+    include_directories(${GFAPI_INCLUDE_DIRS})
+    # missing directory not provided by current version of GlusterFS
+    include_directories(${GFAPI_PREFIX}/include)
+    link_directories (${GFAPI_LIBRARY_DIRS})
   endif(NOT GFAPI_FOUND)
 
   if(USE_FSAL_GLUSTER)
@@ -756,6 +767,7 @@ if(USE_LTTNG)
   # if your LTTng is not in a standard place
   find_package(LTTng)
   if(LTTNG_FOUND)
+    include_directories(${LTTNG_INCLUDE_DIR})
   else(LTTNG_FOUND)
     message(WARNING "LTTng libraries not found. Disabling USE_LTTNG")
     set(USE_LTTNG OFF)
@@ -897,8 +909,20 @@ set(GANESHA_CORE ${GANESHA_CORE} NodeList)
 
 if(USE_9P_RDMA)
   find_package(PkgConfig)
+  IF(MOOSHIKA_PREFIX)
+    set(ENV{PKG_CONFIG_PATH} "${PKG_CONFIG_PATH}:${MOOSHIKA_PREFIX}/lib/pkgconfig")
+  ENDIF()
   pkg_check_modules(MOOSHIKA REQUIRED libmooshika>=0.6)
-  set(GANESHA_CORE ${GANESHA_CORE} ${MOOSHIKA_LIBRARIES})
+  # Remove rdma and ibverbs libraries that have already been found by FindRDMA
+  #
+  # TODO: this temporary workaround will no longer be required
+  # with future mooshika versions (>1.0)
+  # Original code is: set(GANESHA_CORE ${GANESHA_CORE} ${MOOSHIKA_LIBRARIES})
+  #
+  set(MOOSHIKA_LIBS_EXCEPT_RDMA ${MOOSHIKA_LIBRARIES})
+  list(REMOVE_ITEM MOOSHIKA_LIBS_EXCEPT_RDMA rdmacm ibverbs)
+  set(GANESHA_CORE ${GANESHA_CORE} ${MOOSHIKA_LIBS_EXCEPT_RDMA})
+
   include_directories(${MOOSHIKA_INCLUDE_DIRS})
   link_directories (${MOOSHIKA_LIBRARY_DIRS})
 endif(USE_9P_RDMA)
