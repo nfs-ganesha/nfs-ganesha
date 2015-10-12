@@ -155,13 +155,14 @@ if (MSVC)
 endif(MSVC)
 
 # Library path name
-if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+get_property(USE_LIB64 GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS)
+if (USE_LIB64)
 	set(LIB_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/lib64 CACHE PATH
 		"Specify name of libdir inside install path")
-else( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+else (USE_LIB64)
 	set(LIB_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/lib CACHE PATH
 		"Specify name of libdir inside install path")
-endif( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+endif (USE_LIB64)
 
 IF(FSAL_DESTINATION)
     set( FSAL_DESTINATION ${FSAL_DESTINATION} )
