@@ -282,9 +282,9 @@ void dupreq2_pkginit(void)
 	tcp_drc_pool = pool_init("TCP DRC Pool", sizeof(drc_t),
 				 pool_basic_substrate,
 				 NULL, NULL, NULL);
-	if (!(dupreq_pool))
+	if (unlikely(!(tcp_drc_pool)))
 		LogFatal(COMPONENT_INIT,
-			 "Error while allocating duplicate request pool");
+			 "Error while allocating TCP DRC pool");
 
 	drc_st = gsh_calloc(1, sizeof(struct drc_st));
 
