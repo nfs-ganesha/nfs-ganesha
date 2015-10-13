@@ -66,7 +66,6 @@
 #endif
 
 pool_t *request_pool;
-pool_t *dupreq_pool;
 
 static struct fridgethr *worker_fridge;
 

@@ -122,7 +122,6 @@ typedef struct request_data {
 } request_data_t;
 
 extern pool_t *request_pool;
-extern pool_t *dupreq_pool;	/* XXX hide */
 
 /* ServerEpoch is ServerBootTime unless overriden by -E command line option */
 extern struct timespec ServerBootTime;

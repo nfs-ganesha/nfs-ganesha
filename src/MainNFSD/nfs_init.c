@@ -544,13 +544,6 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 		LogFatal(COMPONENT_INIT,
 			 "Error while allocating request pool");
 
-	dupreq_pool =
-	    pool_init("Duplicate Request Pool", sizeof(dupreq_entry_t),
-		      pool_basic_substrate, NULL, NULL, NULL);
-	if (!(dupreq_pool))
-		LogFatal(COMPONENT_INIT,
-			"Error while allocating duplicate request pool");
-
 	/* If rpcsec_gss is used, set the path to the keytab */
 #ifdef _HAVE_GSSAPI
 #ifdef HAVE_KRB5
