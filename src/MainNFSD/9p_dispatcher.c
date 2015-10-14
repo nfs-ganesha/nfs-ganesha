@@ -276,6 +276,11 @@ void *_9p_socket_thread(void *Arg)
 
 		/* Message is good. */
 		req = pool_alloc(request_pool, NULL);
+		if (req == NULL) {
+			LogCrit(COMPONENT_9P,
+				"Could not allocate memory from request pool");
+			goto end;
+		}
 
 		req->rtype = _9P_REQUEST;
 		req->r_u._9p._9pmsg = _9pmsg;
