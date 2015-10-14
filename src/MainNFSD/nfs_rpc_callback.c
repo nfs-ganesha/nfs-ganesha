@@ -902,6 +902,9 @@ rpc_call_t *alloc_rpc_call(void)
 {
 	request_data_t *reqdata = pool_alloc(request_pool, NULL);
 
+	if (reqdata == NULL)
+		return NULL;
+
 	reqdata->rtype = NFS_CALL;
 	return &reqdata->r_u.call;
 }
