@@ -199,6 +199,11 @@ void _9p_rdma_callback_recv(msk_trans_t *trans, msk_data_t *data, void *arg)
 	char *_9pmsg = NULL;
 
 	req = pool_alloc(request_pool, NULL);
+	if (req == NULL) {
+		_9p_rdma_callback_recv_err(trans, data, arg);
+		return;
+	}
+
 
 	req->rtype = _9P_REQUEST;
 	req->r_u._9p._9pmsg = _9pmsg;
