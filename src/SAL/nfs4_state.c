@@ -589,7 +589,7 @@ enum nfsstat4 release_lock_owner(state_owner_t *owner)
 		struct display_buffer dspbuf = {sizeof(str), str, str};
 
 		display_owner(&dspbuf, owner);
-		LogCrit(COMPONENT_STATE, "Removing state for %s", str);
+		LogDebug(COMPONENT_STATE, "Removing state for %s", str);
 	}
 
 	while (true) {
