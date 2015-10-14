@@ -969,6 +969,12 @@ dupreq_status_t nfs_dupreq_start(nfs_request_t *reqnfs,
 	}
 
 	dk = alloc_dupreq();
+	if (dk == NULL) {
+		release_dk = false;
+		status = DUPREQ_ERROR;
+		goto release_dk;
+	}
+
 	dk->hin.drc = drc;	/* trans. call path ref to dv */
 
 	switch (drc->type) {
