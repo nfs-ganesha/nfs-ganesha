@@ -380,7 +380,9 @@ int nlm_process_parameters(struct svc_req *req, bool exclusive,
 		}
 	}
 
-	/* Fill in plock */
+	/* Fill in plock (caller will reset reclaim if appropriate) */
+	plock->lock_sle_type = FSAL_POSIX_LOCK;
+	plock->lock_reclaim = false;
 	plock->lock_type = exclusive ? FSAL_LOCK_W : FSAL_LOCK_R;
 	plock->lock_start = alock->l_offset;
 	plock->lock_length = alock->l_len;

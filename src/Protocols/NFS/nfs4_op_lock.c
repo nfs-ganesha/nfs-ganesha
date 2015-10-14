@@ -145,6 +145,8 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	lock_desc.lock_start = arg_LOCK4->offset;
+	lock_desc.lock_sle_type = FSAL_POSIX_LOCK;
+	lock_desc.lock_reclaim = arg_LOCK4->reclaim;
 
 	if (arg_LOCK4->length != STATE_LOCK_OFFSET_EOF)
 		lock_desc.lock_length = arg_LOCK4->length;

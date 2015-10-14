@@ -114,7 +114,6 @@ int nlm4_Lock(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 			 proc_name, lock_result_str(res->res_nlm4.stat.stat));
 		return NFS_REQ_OK;
 	}
-	lock.lock_reclaim = arg->reclaim;
 
 	rc = nlm_process_parameters(req,
 				    arg->exclusive,
@@ -129,6 +128,8 @@ int nlm4_Lock(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 				    req->rq_proc != NLMPROC4_NM_LOCK,
 				    arg->state,
 				    &nlm_state);
+
+	lock.lock_reclaim = arg->reclaim;
 
 	if (rc >= 0) {
 		/* Present the error back to the client */
