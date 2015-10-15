@@ -522,7 +522,9 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 	LogDebug(COMPONENT_INIT, "Now building NFSv4 ACL cache");
 	if (nfs4_acls_init() != 0)
 		LogFatal(COMPONENT_INIT, "Error while initializing NFSv4 ACLs");
-	LogInfo(COMPONENT_INIT, "NFSv4 ACL cache successfully initialized");
+	else
+		LogInfo(COMPONENT_INIT,
+			"NFSv4 ACL cache successfully initialized");
 
 	/* finish the job with exports by caching the root entries
 	 */
@@ -561,10 +563,10 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 			LogFatal(COMPONENT_INIT,
 				 "Error setting krb5 keytab to value %s is %s",
 				 nfs_param.krb5_param.keytab, GssError);
-		}
-		LogInfo(COMPONENT_INIT,
-			"krb5 keytab path successfully set to %s",
-			nfs_param.krb5_param.keytab);
+		} else
+			LogInfo(COMPONENT_INIT,
+				"krb5 keytab path successfully set to %s",
+				nfs_param.krb5_param.keytab);
 #endif				/* HAVE_KRB5 */
 
 		/* Set up principal to be use for GSSAPPI within GSSRPC/KRB5 */
@@ -586,9 +588,10 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 		if (nfs_param.krb5_param.svc.gss_name == GSS_C_NO_NAME)
 			LogInfo(COMPONENT_INIT,
 				"Regression:  svc.gss_name == GSS_C_NO_NAME");
-
-		LogInfo(COMPONENT_INIT, "gss principal \"%s\" successfully set",
-			nfs_param.krb5_param.svc.principal);
+		else
+			LogInfo(COMPONENT_INIT,
+				"gss principal \"%s\" successfully set",
+				nfs_param.krb5_param.svc.principal);
 
 		/* Set the principal to GSSRPC */
 		if (!svcauth_gss_set_svc_name
@@ -614,13 +617,12 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 
 	/* Init the NFSv4 Clientid cache */
 	LogDebug(COMPONENT_INIT, "Now building NFSv4 clientid cache");
-	if (nfs_Init_client_id() !=
-	    CLIENT_ID_SUCCESS) {
+	if (nfs_Init_client_id() != CLIENT_ID_SUCCESS) {
 		LogFatal(COMPONENT_INIT,
 			 "Error while initializing NFSv4 clientid cache");
-	}
-	LogInfo(COMPONENT_INIT,
-		"NFSv4 clientid cache successfully initialized");
+	} else
+		LogInfo(COMPONENT_INIT,
+			"NFSv4 clientid cache successfully initialized");
 
 	/* Init duplicate request cache */
 	dupreq2_pkginit();
@@ -632,18 +634,18 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 	if (nfs4_Init_state_id() != 0) {
 		LogFatal(COMPONENT_INIT,
 			 "Error while initializing NFSv4 State Id cache");
-	}
-	LogInfo(COMPONENT_INIT,
-		"NFSv4 State Id cache successfully initialized");
+	} else
+		LogInfo(COMPONENT_INIT,
+			"NFSv4 State Id cache successfully initialized");
 
 	/* Init The NFSv4 Open Owner cache */
 	LogDebug(COMPONENT_INIT, "Now building NFSv4 Owner cache");
 	if (Init_nfs4_owner() != 0) {
 		LogFatal(COMPONENT_INIT,
 			 "Error while initializing NFSv4 Owner cache");
-	}
-	LogInfo(COMPONENT_INIT,
-		"NFSv4 Open Owner cache successfully initialized");
+	} else
+		LogInfo(COMPONENT_INIT,
+			"NFSv4 Open Owner cache successfully initialized");
 
 	if (nfs_param.core_param.enable_NLM) {
 		/* Init The NLM Owner cache */
@@ -651,17 +653,17 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 		if (Init_nlm_hash() != 0) {
 			LogFatal(COMPONENT_INIT,
 				 "Error while initializing NLM Owner cache");
-		}
-		LogInfo(COMPONENT_INIT,
-			"NLM Owner cache successfully initialized");
+		} else
+			LogInfo(COMPONENT_INIT,
+				"NLM Owner cache successfully initialized");
 		/* Init The NLM Owner cache */
 		LogDebug(COMPONENT_INIT, "Now building NLM State cache");
 		if (Init_nlm_state_hash() != 0) {
 			LogFatal(COMPONENT_INIT,
 				 "Error while initializing NLM State cache");
-		}
-		LogInfo(COMPONENT_INIT,
-			"NLM State cache successfully initialized");
+		} else
+			LogInfo(COMPONENT_INIT,
+				"NLM State cache successfully initialized");
 		nlm_init();
 	}
 #ifdef _USE_9P
@@ -670,17 +672,18 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 	if (Init_9p_hash() != 0) {
 		LogFatal(COMPONENT_INIT,
 			 "Error while initializing 9P Owner cache");
-	}
-	LogInfo(COMPONENT_INIT, "9P Owner cache successfully initialized");
+	} else
+		LogInfo(COMPONENT_INIT,
+			"9P Owner cache successfully initialized");
 #endif
 
 	LogDebug(COMPONENT_INIT, "Now building NFSv4 Session Id cache");
 	if (nfs41_Init_session_id() != 0) {
 		LogFatal(COMPONENT_INIT,
 			 "Error while initializing NFSv4 Session Id cache");
-	}
-	LogInfo(COMPONENT_INIT,
-		"NFSv4 Session Id cache successfully initialized");
+	} else
+		LogInfo(COMPONENT_INIT,
+			"NFSv4 Session Id cache successfully initialized");
 
 #ifdef _USE_9P
 	LogDebug(COMPONENT_INIT, "Now building 9P resources");
@@ -688,8 +691,9 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 		LogCrit(COMPONENT_INIT,
 			"Error while initializing 9P Resources");
 		exit(1);
-	}
-	LogInfo(COMPONENT_INIT, "9P resources successfully initialized");
+	} else
+		LogInfo(COMPONENT_INIT,
+			"9P resources successfully initialized");
 #endif				/* _USE_9P */
 
 	/* Creates the pseudo fs */
