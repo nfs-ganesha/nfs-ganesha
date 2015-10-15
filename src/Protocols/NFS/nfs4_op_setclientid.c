@@ -152,17 +152,25 @@ int nfs4_op_setclientid(struct nfs_argop4 *op, compound_data_t *data,
 	conf = client_record->cr_confirmed_rec;
 
 	if (conf != NULL) {
+		bool credmatch;
+
 		/* Need a reference to the confirmed record for below */
 		inc_client_id_ref(conf);
 
 		clientid = conf->cid_clientid;
 		display_clientid(&dspbuf_clientid4, clientid);
 
-		if (!nfs_compare_clientcred(&conf->cid_credential,
-					    &data->credential)
-		    || op_ctx->client == NULL
-		    || conf->gsh_client == NULL
-		    || op_ctx->client != conf->gsh_client) {
+		credmatch = nfs_compare_clientcred(&conf->cid_credential,
+						   &data->credential)
+			    && op_ctx->client != NULL
+			    && conf->gsh_client != NULL
+			    && op_ctx->client == conf->gsh_client;
+
+		/* Only reject if the principal doesn't match and the
+		 * clientid has live state associated. Per RFC 7530
+		 * Section 9.1.2. Server Release of Client ID.
+		 */
+		if (!credmatch && clientid_has_state(conf)) {
 			/* CASE 1:
 			 *
 			 * Confirmed record exists and not the same principal
@@ -193,9 +201,9 @@ int nfs4_op_setclientid(struct nfs_argop4 *op, compound_data_t *data,
 		}
 
 		/* Check if confirmed record is for (v, x, c, l, s) */
-		if (memcmp
-		    (arg_SETCLIENTID4->client.verifier,
-		     conf->cid_incoming_verifier, NFS4_VERIFIER_SIZE) == 0) {
+		if (credmatch && memcmp(arg_SETCLIENTID4->client.verifier,
+					conf->cid_incoming_verifier,
+					NFS4_VERIFIER_SIZE) == 0) {
 			/* CASE 2:
 			 *
 			 * A confirmed record exists for this long

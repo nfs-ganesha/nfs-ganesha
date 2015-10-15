@@ -793,6 +793,47 @@ clientid_status_t nfs_client_id_confirm(nfs_client_id_t *clientid,
 }
 
 /**
+ * @brief Check if a clientid has state associated with it.
+ *
+ * @param[in] clientid The client id of interest
+ *
+ * @retval true if the clientid has associated state.
+ */
+bool clientid_has_state(nfs_client_id_t *clientid)
+{
+	bool live_state = false;
+	struct glist_head *glist;
+
+	PTHREAD_MUTEX_lock(&clientid->cid_mutex);
+
+	/* Don't bother checking lock owners, there must ALSO be an
+	 * open owner with active open state in order for there to be
+	 * active lock state.
+	 */
+
+	/* Check if any open owners have active open state. */
+	glist_for_each(glist, &clientid->cid_openowners) {
+		live_state = owner_has_state(glist_entry(
+			glist,
+			state_owner_t,
+			so_owner.so_nfs4_owner.so_perclient));
+
+		if (live_state)
+			break;
+	}
+
+	/* Delegations and Layouts are owned by clientid, so check for
+	 * active state held by the cid_owner.
+	 */
+	if (!live_state)
+		live_state = owner_has_state(&clientid->cid_owner);
+
+	PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
+
+	return live_state;
+}
+
+/**
  * @brief Client expires, need to take care of owners
  *
  * This function assumes caller holds record->cr_mutex and holds a
