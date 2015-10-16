@@ -1361,12 +1361,9 @@ bool fridgethr_you_should_break(struct fridgethr_context *ctx)
 	struct fridgethr_entry *fe = container_of(ctx, struct fridgethr_entry,
 						  ctx);
 	struct fridgethr *fr = fe->fr;
-	bool rc;
 
-	PTHREAD_MUTEX_lock(&fr->mtx);
-	rc = fr->transitioning;
-	PTHREAD_MUTEX_unlock(&fr->mtx);
-	return rc;
+	/* No locking is needed as it is only read */
+	return fr->transitioning;
 }
 
 /**
