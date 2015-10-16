@@ -325,7 +325,8 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (rc != CLIENT_ID_SUCCESS) {
 		/* Record is already freed, return. */
-		res_EXCHANGE_ID4->eir_status = clientid_error_to_nfsstat(rc);
+		res_EXCHANGE_ID4->eir_status =
+					clientid_error_to_nfsstat_no_expire(rc);
 
 		goto out;
 	}

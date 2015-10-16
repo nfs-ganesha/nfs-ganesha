@@ -335,7 +335,8 @@ int nfs4_op_setclientid(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (rc != CLIENT_ID_SUCCESS) {
 		/* Record is already freed, return. */
-		res_SETCLIENTID4->status = clientid_error_to_nfsstat(rc);
+		res_SETCLIENTID4->status =
+					clientid_error_to_nfsstat_no_expire(rc);
 		goto out;
 	}
 

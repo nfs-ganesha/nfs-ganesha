@@ -136,7 +136,7 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op, compound_data_t *data,
 				 "%s clientid = %s",
 				 clientid_error_to_str(rc), str_clientid4);
 			res_SETCLIENTID_CONFIRM4->status =
-			    clientid_error_to_nfsstat(rc);
+			    clientid_error_to_nfsstat_no_expire(rc);
 
 			return res_SETCLIENTID_CONFIRM4->status;
 		}
@@ -430,7 +430,7 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op, compound_data_t *data,
 
 		if (rc != CLIENT_ID_SUCCESS) {
 			res_SETCLIENTID_CONFIRM4->status =
-			    clientid_error_to_nfsstat(rc);
+			    clientid_error_to_nfsstat_no_expire(rc);
 
 			LogEvent(COMPONENT_CLIENTID,
 				 "FAILED to confirm client");

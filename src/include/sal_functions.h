@@ -216,6 +216,17 @@ int get_nlm_state(enum state_type state_type,
 
 nfsstat4 clientid_error_to_nfsstat(clientid_status_t err);
 
+static inline
+nfsstat4 clientid_error_to_nfsstat_no_expire(clientid_status_t err)
+{
+	nfsstat4 rc = clientid_error_to_nfsstat(err);
+
+	if (rc == NFS4ERR_EXPIRED)
+		rc = NFS4ERR_STALE_CLIENTID;
+
+	return rc;
+}
+
 const char *clientid_error_to_str(clientid_status_t err);
 
 int nfs_Init_client_id(void);

@@ -142,7 +142,7 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 				rc = CLIENT_ID_STALE;
 
 			res_CREATE_SESSION4->csr_status =
-			    clientid_error_to_nfsstat(rc);
+			    clientid_error_to_nfsstat_no_expire(rc);
 
 			return res_CREATE_SESSION4->csr_status;
 		}
@@ -446,7 +446,7 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 
 		if (rc != CLIENT_ID_SUCCESS) {
 			res_CREATE_SESSION4->csr_status =
-			    clientid_error_to_nfsstat(rc);
+			    clientid_error_to_nfsstat_no_expire(rc);
 
 			/* Need to destroy the session */
 			if (!nfs41_Session_Del(nfs41_session->session_id))
