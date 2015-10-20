@@ -38,12 +38,6 @@
 #include "gsh_list.h"
 #include "wait_queue.h"
 
-/* XXX moving to gsh_intrinsic.h */
-#ifndef CACHE_LINE_SIZE
-#define CACHE_LINE_SIZE 64	/* XXX arch-specific define */
-#endif
-#define CACHE_PAD(_n) char __pad ## _n [CACHE_LINE_SIZE]
-
 struct req_q {
 	pthread_spinlock_t sp;
 	struct glist_head q;	/* LIFO */
@@ -54,11 +48,11 @@ struct req_q {
 
 struct req_q_pair {
 	const char *s;
-	 CACHE_PAD(0);
+	GSH_CACHE_PAD(0);
 	struct req_q producer;	/* from decoder */
-	 CACHE_PAD(1);
+	GSH_CACHE_PAD(1);
 	struct req_q consumer;	/* to executor */
-	 CACHE_PAD(2);
+	GSH_CACHE_PAD(2);
 };
 
 #define REQ_Q_MOUNT 0
@@ -82,7 +76,7 @@ struct nfs_req_st {
 		struct glist_head wait_list;
 		uint32_t waiters;
 	} reqs;
-	 CACHE_PAD(1);
+	GSH_CACHE_PAD(1);
 	struct {
 		pthread_mutex_t mtx;
 		struct glist_head q;

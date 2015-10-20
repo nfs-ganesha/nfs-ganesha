@@ -70,7 +70,7 @@ typedef struct cih_partition {
 		uint32_t line;
 	} locktrace;
 #endif
-	 CACHE_PAD(0);
+	GSH_CACHE_PAD(0);
 } cih_partition_t;
 
 /**
@@ -79,7 +79,7 @@ typedef struct cih_partition {
  * This is the structure corresponding to a single table of weakrefs.
  */
 struct cih_lookup_table {
-	CACHE_PAD(0);
+	GSH_CACHE_PAD(0);
 	cih_partition_t *partition;
 	uint32_t npart;
 	uint32_t cache_sz;
