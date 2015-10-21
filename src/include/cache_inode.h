@@ -899,8 +899,6 @@ cache_inode_fixup_md(cache_entry_t *entry)
 	entry->change_time =
 	    timespec_to_nsecs(&entry->obj_handle->attrs->chgtime);
 
-	/* Almost certainly not necessary */
-	entry->type = entry->obj_handle->attrs->type;
 	/* We have just loaded the attributes from the FSAL. */
 	entry->flags |= CACHE_INODE_TRUST_ATTRS;
 }
