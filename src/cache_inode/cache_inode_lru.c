@@ -116,19 +116,26 @@ struct lru_q_lane {
 		struct glist_head *glist;
 		struct glist_head *glistn;
 	} iter;
+#ifdef ENABLE_LOCKTRACE
 	struct {
 		char *func;
 		uint32_t line;
 	} locktrace;
+#endif
 	 CACHE_PAD(0);
 };
 
+#ifdef ENABLE_LOCKTRACE
 #define QLOCK(qlane) \
 	do { \
 		PTHREAD_MUTEX_lock(&(qlane)->mtx); \
 		(qlane)->locktrace.func = (char *) __func__; \
 		(qlane)->locktrace.line = __LINE__; \
 	} while (0)
+#else
+#define QLOCK(qlane) \
+	PTHREAD_MUTEX_lock(&(qlane)->mtx)
+#endif
 
 #define QUNLOCK(qlane) \
 	PTHREAD_MUTEX_unlock(&(qlane)->mtx)

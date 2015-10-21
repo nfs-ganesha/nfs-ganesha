@@ -64,10 +64,12 @@ typedef struct cih_partition {
 	pthread_rwlock_t lock;
 	struct avltree t;
 	struct avltree_node **cache;
+#ifdef ENABLE_LOCKTRACE
 	struct {
 		char *func;
 		uint32_t line;
 	} locktrace;
+#endif
 	 CACHE_PAD(0);
 } cih_partition_t;
 
@@ -297,8 +299,10 @@ cih_get_by_key_latched(cache_inode_key_t *key, cih_latch_t *latch,
 	else
 		PTHREAD_RWLOCK_rdlock(&cp->lock);	/* SUBTREE_RLOCK */
 
+#ifdef ENABLE_LOCKTRACE
 	cp->locktrace.func = (char *)func;
 	cp->locktrace.line = line;
+#endif
 
 	/* check cache */
 	cache_slot = (void **)
@@ -360,8 +364,10 @@ cih_latch_entry(cache_entry_t *entry, cih_latch_t *latch, uint32_t flags,
 	else
 		PTHREAD_RWLOCK_rdlock(&cp->lock);	/* SUBTREE_RLOCK */
 
+#ifdef ENABLE_LOCKTRACE
 	cp->locktrace.func = (char *)func;
 	cp->locktrace.line = line;
+#endif
 
 	return true;
 }
