@@ -1,0 +1,292 @@
+# run with valgrind --suppressions=tools/helgrind-suppressions
+# to auto-generate more run with --gen-suppressions=all
+
+###############################################################################################
+#
+# Ignore known ntirpc issues
+#
+###############################################################################################
+
+{
+   <tirpc_control>
+   Helgrind:Race
+   fun:tirpc_control
+   fun:nfs_Init_svc
+   fun:nfs_Init
+   fun:nfs_start
+   fun:main
+}
+{
+   <svc_rqst_thrd_run_epoll>
+   Helgrind:Race
+   fun:svc_rqst_thrd_run_epoll
+   fun:svc_rqst_thrd_run
+   fun:rpc_dispatcher_thread
+   fun:mythread_wrapper
+   fun:start_thread
+   fun:clone
+}
+{
+   <work_pool_submit>
+   Helgrind:Race
+   fun:work_pool_submit
+   fun:svc_ioq_append
+   fun:svc_vc_reply
+   fun:svc_sendreply
+   fun:nfs_rpc_execute
+   fun:worker_run
+   fun:fridgethr_start_routine
+   fun:mythread_wrapper
+   fun:start_thread
+   fun:clone
+}
+{
+   <work_pool_thread>
+   Helgrind:Race
+   fun:work_pool_thread
+   fun:mythread_wrapper
+   fun:start_thread
+   fun:clone
+}
+{
+   <svc_rqst_handle_event>
+   Helgrind:Race
+   fun:svc_rqst_handle_event
+   fun:svc_rqst_thrd_run_epoll
+   fun:svc_rqst_thrd_run
+   fun:rpc_dispatcher_thread
+   fun:mythread_wrapper
+   fun:start_thread
+   fun:clone
+}
+{
+   <nfs_rpc_getreq_ng>
+   Helgrind:Race
+   fun:nfs_rpc_getreq_ng
+   fun:svc_rqst_handle_event
+   fun:svc_rqst_thrd_run_epoll
+   fun:svc_rqst_thrd_run
+   fun:rpc_dispatcher_thread
+   fun:mythread_wrapper
+   fun:start_thread
+   fun:clone
+}
+{
+   <gsh_xprt_decoder_guard>
+   Helgrind:Race
+   fun:gsh_xprt_decoder_guard
+   fun:nfs_rpc_getreq_ng
+   fun:svc_rqst_handle_event
+   fun:svc_rqst_thrd_run_epoll
+   fun:svc_rqst_thrd_run
+   fun:rpc_dispatcher_thread
+   fun:mythread_wrapper
+   fun:start_thread
+   fun:clone
+}
+{
+   <nfs_rpc_cond_stall_xprt>
+   Helgrind:Race
+   fun:nfs_rpc_cond_stall_xprt
+   fun:nfs_rpc_getreq_ng
+   fun:svc_rqst_handle_event
+   fun:svc_rqst_thrd_run_epoll
+   fun:svc_rqst_thrd_run
+   fun:rpc_dispatcher_thread
+   fun:mythread_wrapper
+   fun:start_thread
+   fun:clone
+}
+{
+   <svc_rqst_rearm_events>
+   Helgrind:Race
+   fun:svc_rqst_rearm_events
+   fun:thr_decode_rpc_requests
+   fun:fridgethr_start_routine
+   fun:mythread_wrapper
+   fun:start_thread
+   fun:clone
+}
+{
+   <svc_vc_override_ops>
+   Helgrind:Race
+   fun:svc_vc_override_ops
+   fun:rendezvous_request
+   fun:thr_decode_rpc_request
+   fun:thr_decode_rpc_requests
+   fun:fridgethr_start_routine
+   fun:mythread_wrapper
+   fun:start_thread
+   fun:clone
+}
+
+# This one should be fixed
+
+{
+   <thread-still-holds-lock-should-be-fixed>
+   Helgrind:Misc
+   obj:/usr/lib64/libpthread-2.17.so
+   fun:svc_read_vc
+   fun:generic_read_vc
+   fun:fill_input_buf
+   fun:get_input_bytes
+   fun:set_input_fragment
+   fun:xdr_inrec_getbytes
+   fun:xdr_inrec_getlong
+   fun:xdr_getuint32
+   fun:xdr_dplx_decode
+   fun:svc_vc_recv
+   fun:thr_decode_rpc_request
+}
+
+# This one should be fixed
+
+{
+   <evchan_unreg_impl-needs-fixing>
+   Helgrind:LockOrder
+   fun:mutex_lock_WRK
+   fun:pthread_mutex_lock
+   fun:evchan_unreg_impl
+   fun:xprt_unregister
+   fun:svc_vc_destroy
+   fun:svc_release_it
+   fun:gsh_xprt_unref
+   fun:thr_decode_rpc_requests
+   fun:fridgethr_start_routine
+   fun:mythread_wrapper
+   fun:start_thread
+   fun:clone
+}
+
+###############################################################################################
+#
+# Ignore some issues in stats collection
+#
+# These are probably harmless but may need a bit more investigation
+#
+###############################################################################################
+
+{
+   <record_latency>
+   Helgrind:Race
+   fun:record_latency
+   ...
+}
+{
+   <server_stats_nfsv4_op_done>
+   Helgrind:Race
+   fun:server_stats_nfsv4_op_done
+   fun:nfs4_Compound
+   fun:nfs_rpc_execute
+   fun:worker_run
+   fun:fridgethr_start_routine
+   fun:mythread_wrapper
+   fun:start_thread
+   fun:clone
+}
+{
+   <Copy_nfs4_state_req-this-one-needs-owner-serialization>
+   Helgrind:Race
+   fun:Copy_nfs4_state_req
+   fun:nfs4_op_close
+   fun:nfs4_Compound
+   fun:nfs_rpc_execute
+   fun:worker_run
+   fun:fridgethr_start_routine
+   fun:mythread_wrapper
+   fun:start_thread
+   fun:clone
+}
+
+###############################################################################################
+#
+# The following are issues where a variable is used in a possibly racy way in a log
+# message. It is not worth adding a lock just to protect these.
+#
+###############################################################################################
+
+{
+   <reserve_lease>
+   Helgrind:Race
+   fun:reserve_lease
+  ...
+}
+{
+   <update_lease>
+   Helgrind:Race
+   fun:update_lease
+   ...
+}
+
+{
+   <display_client_id_rec>
+   Helgrind:Race
+   ...
+   fun:display_client_id_rec
+   ...
+}
+{
+   <display_nfs4_owner>
+   Helgrind:Race
+   ...
+   fun:display_nfs4_owner
+   ...
+}
+
+###############################################################################################
+#
+# Atomic variables should not contribute to data races. This MIGHT obscure a situation
+# where an atomic variable is used without an atomic primitive. However, there are many
+# places where sometimes the atomic is accessed under a lock, and sometimes not, and helgrind
+# doesn't properly identify that as safe.
+#
+###############################################################################################
+
+{
+   <atomic_fetch_uint16_t>
+   Helgrind:Race
+   fun:atomic_fetch_uint16_t
+   ...
+}
+{
+   <atomic_fetch_uint32_t>
+   Helgrind:Race
+   fun:atomic_fetch_uint32_t
+   ...
+}
+{
+   <atomic_store_uint32_t>
+   Helgrind:Race
+   fun:atomic_store_uint32_t
+   ...
+}
+{
+   <atomic_store_uint64_t>
+   Helgrind:Race
+   fun:atomic_store_uint64_t
+   ...
+}
+{
+   <atomic_fetch_voidptr>
+   Helgrind:Race
+   fun:atomic_fetch_voidptr
+   ...
+}
+{
+   <atomic_store_voidptr>
+   Helgrind:Race
+   fun:atomic_store_voidptr
+   ...
+}
+{
+   <atomic_fetch_time_t>
+   Helgrind:Race
+   fun:atomic_fetch_time_t
+   ...
+}
+{
+   <atomic_store_time_t>
+   Helgrind:Race
+   fun:atomic_store_time_t
+   ...
+}
