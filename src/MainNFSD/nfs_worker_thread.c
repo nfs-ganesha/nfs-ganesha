@@ -1446,6 +1446,7 @@ static void _9p_execute(request_data_t *reqdata)
 	else if (req9p->pconn->trans_type == _9P_RDMA)
 		_9p_rdma_process_request(req9p);
 #endif
+	op_ctx = NULL;
 }				/* _9p_execute */
 
 /**
