@@ -1175,11 +1175,6 @@ static struct config_item fsal_params[] = {
 
 /**
  * @brief Table of EXPORT block parameters
- *
- * NOTE: the Client and FSAL sub-blocks must be the *last*
- * two entries in the list.  This is so all other
- * parameters have been processed before these sub-blocks
- * are processed.
  */
 
 static struct config_item export_params[] = {
@@ -1218,12 +1213,18 @@ static struct config_item export_params[] = {
 		false, EXPORT_OPTION_TRUST_READIR_NEGATIVE_CACHE,
 		gsh_export, options, options_set),
 	CONF_EXPORT_PERMS(gsh_export, export_perms),
-	CONF_ITEM_BLOCK("Client", client_params,
-			client_init, client_commit,
-			gsh_export, clients),
 	CONF_ITEM_I32_SET("Attr_Expiration_Time", -1, INT32_MAX, 60,
 		       gsh_export, expire_time_attr,
 		       EXPORT_OPTION_EXPIRE_SET,  options_set),
+
+	/* NOTE: the Client and FSAL sub-blocks must be the *last*
+	 * two entries in the list.  This is so all other
+	 * parameters have been processed before these sub-blocks
+	 * are processed.
+	 */
+	CONF_ITEM_BLOCK("Client", client_params,
+			client_init, client_commit,
+			gsh_export, clients),
 	CONF_RELAX_BLOCK("FSAL", fsal_params,
 			 fsal_init, fsal_commit,
 			 gsh_export, fsal_export),
