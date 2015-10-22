@@ -532,11 +532,6 @@ static fsal_status_t tank_linkfile(struct fsal_obj_handle *obj_hdl,
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	creden_t cred;
 
-	if (!op_ctx->fsal_export->exp_ops.
-	    fs_supports(op_ctx->fsal_export, fso_link_support)) {
-		fsal_error = ERR_FSAL_NOTSUPP;
-		goto out;
-	}
 	myself = container_of(obj_hdl, struct zfs_fsal_obj_handle, obj_handle);
 
 	destdir =
@@ -551,7 +546,7 @@ static fsal_status_t tank_linkfile(struct fsal_obj_handle *obj_hdl,
 				 myself->handle->zfs_handle, name);
 	if (retval)
 		fsal_error = posix2fsal_error(retval);
- out:
+
 	return fsalstat(fsal_error, retval);
 }
 
