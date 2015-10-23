@@ -678,8 +678,7 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 	glfsexport->savedgid = getegid();
 	glfsexport->export.fsal = fsal_hdl;
 	glfsexport->acl_enable =
-		((op_ctx->export->export_perms.options &
-		  EXPORT_OPTION_DISABLE_ACL) ? 0 : 1);
+		!(op_ctx->export->options & EXPORT_OPTION_DISABLE_ACL);
 	glfsexport->destroy_mode = 0;
 
 	op_ctx->fsal_export = &glfsexport->export;

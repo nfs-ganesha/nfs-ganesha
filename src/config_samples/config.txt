@@ -206,10 +206,6 @@ EXPORT_DEFAULTS {}
 	Delegations(enum, values [None, read, write, readwrite, r, w, rw],
 		    default None)
 
-	Disable_ACL(bool, default false)
-
-	Trust_Readdir_Negative_Cache(bool, default false)
-
 EXPORT {}
 ---------
 
@@ -240,6 +236,12 @@ EXPORT {}
 	Filesystem_id(fsid, format is uint64.uint64, default 666.666)
 
 	UseCookieVerifier(bool, default true)
+
+	DisableReaddirPlus(bool, default false)
+
+	Trust_Readdir_Negative_Cache(bool, default false)
+
+	Disable_ACL(bool, default false)
 
 	Attr_Expiration_Time(int32, range -1 to INT32_MAX, default 60)
 
