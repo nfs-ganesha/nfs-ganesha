@@ -102,7 +102,7 @@ BuildRequires:	libcap-devel
 BuildRequires:	libblkid-devel
 BuildRequires:	libuuid-devel
 %if %{with system_ntirpc}
-BuildRequires: libntirpc-devel >= 1.3.0
+BuildRequires: libntirpc-devel >= @NTIRPC_VERSION@
 %endif
 Requires:	dbus
 Requires:	nfs-utils
@@ -458,7 +458,7 @@ make DESTDIR=%{buildroot} install
 %defattr(-,root,root,-)
 %{_bindir}/ganesha.nfsd
 %if ! %{with system_ntirpc}
-%{_libdir}/libntirpc.so.1.3.0
+%{_libdir}/libntirpc.so.@NTIRPC_VERSION@
 %{_libdir}/libntirpc.so.1.3
 %{_libdir}/libntirpc.so
 %{_libdir}/pkgconfig/libntirpc.pc

@@ -927,8 +927,9 @@ if(USE_9P_RDMA)
   link_directories (${MOOSHIKA_LIBRARY_DIRS})
 endif(USE_9P_RDMA)
 
+set(NTIRPC_VERSION 1.3.1)
 if (USE_SYSTEM_NTIRPC)
-  find_package(NTIRPC 1.3.0 REQUIRED)
+  find_package(NTIRPC ${NTIRPC_VERSION} REQUIRED)
 else (USE_SYSTEM_NTIRPC)
   # Set options for submodule
   option(USE_RPC_RDMA "Use RDMA" ${USE_NFS_RDMA})
