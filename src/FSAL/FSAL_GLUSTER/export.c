@@ -113,7 +113,7 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 	*pub_handle = NULL;
 
 	if (strcmp(path, glfs_export->mount_path) == 0) {
-		realpath = strdup(glfs_export->export_path);
+		realpath = gsh_strdup(glfs_export->export_path);
 	} else {
 		/*
 		 *  mount path is not same as the exported one. Should be subdir
@@ -178,13 +178,13 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 	*pub_handle = &objhandle->handle;
 
 	if (realpath)
-		free(realpath);
+		gsh_free(realpath);
 
 	return status;
  out:
 	gluster_cleanup_vars(glhandle);
 	if (realpath)
-		free(realpath);
+		gsh_free(realpath);
 
 	return status;
 }
