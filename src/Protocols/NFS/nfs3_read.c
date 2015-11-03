@@ -207,10 +207,6 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		goto out;
 	} else {
 		data = gsh_malloc(size);
-		if (data == NULL) {
-			rc = NFS_REQ_DROP;
-			goto out;
-		}
 
 		res->res_read3.status = nfs3_Errno_state(
 				state_share_anonymous_io_start(

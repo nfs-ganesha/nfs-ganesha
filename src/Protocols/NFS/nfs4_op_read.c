@@ -87,11 +87,6 @@ static int op_dsread(struct nfs_argop4 *op, compound_data_t *data,
 	/* Construct the FSAL file handle */
 
 	buffer = gsh_malloc_aligned(4096, arg_READ4->count);
-	if (buffer == NULL) {
-		LogEvent(COMPONENT_NFS_V4, "FAILED to allocate read buffer");
-		res_READ4->status = NFS4ERR_SERVERFAULT;
-		return res_READ4->status;
-	}
 
 	res_READ4->READ4res_u.resok4.data.data_val = buffer;
 
@@ -163,11 +158,6 @@ static int op_dsread_plus(struct nfs_argop4 *op, compound_data_t *data,
 	/* Construct the FSAL file handle */
 
 	buffer = gsh_malloc_aligned(4096, arg_READ4->count);
-	if (buffer == NULL) {
-		LogEvent(COMPONENT_NFS_V4, "FAILED to allocate read buffer");
-		res_RPLUS->rpr_status = NFS4ERR_SERVERFAULT;
-		return res_RPLUS->rpr_status;
-	}
 
 	nfs_status = data->current_ds->dsh_ops.read_plus(
 				data->current_ds,
@@ -462,12 +452,6 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* Some work is to be done */
 	bufferdata = gsh_malloc_aligned(4096, size);
-
-	if (bufferdata == NULL) {
-		LogEvent(COMPONENT_NFS_V4, "FAILED to allocate bufferdata");
-		res_READ4->status = NFS4ERR_SERVERFAULT;
-		goto done;
-	}
 
 	if (!anonymous_started && data->minorversion == 0) {
 		owner = get_state_owner_ref(state_found);
