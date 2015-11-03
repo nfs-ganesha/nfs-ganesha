@@ -126,15 +126,20 @@ start() {
 	        return $RETVAL
 	fi
 
-	#Check if Ganesha is in zombie state
-	result=`ps -eLo pid,tid,comm,stat|awk '$4 ~ /[Zz]/ && $3 ~ /ganesha/ {printf("%d,%d\n",$1,$2)}'`
+	# Check if Ganesha is in zombie state
+	#
+	# Put "stat" format specifier before "comm" to avoid dealing
+	# with blanks in comm!  Also specify column width for "comm"
+	# field to have enough chars for matching with 'ganesha'
+	result=`ps -eLo pid,stat,comm:30|awk '$2 ~ /[Zz]/ && $3 ~ /ganesha/ {print $1}'`
 	if [ "$result" ]; then
 		echo "GPFS Ganesha is in zombie state."
-		echo "$result" | while read -r line; do
-			IFS=, read PID TID <<< "$line"
-			echo "vvvvvvvv $PID, $TID vvvvvvvvv"
-			cat /proc/$PID/task/$TID/stack | while read -r RL; do
-				echo "$RL"
+		echo "$result" | while read -r PID; do
+			for TID in /proc/$PID/task/*; do
+				echo "vvvvvvvv $TID vvvvvvvvv"
+				cat $TID/stack | while read -r RL; do
+					echo "$RL"
+				done;
 			done;
 			echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
 		done;
