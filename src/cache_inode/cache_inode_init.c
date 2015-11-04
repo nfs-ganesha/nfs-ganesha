@@ -58,10 +58,6 @@ cache_inode_init(void)
 	cache_inode_entry_pool =
 	    pool_init("Entry Pool", sizeof(cache_entry_t), pool_basic_substrate,
 		      NULL, NULL, NULL);
-	if (!(cache_inode_entry_pool)) {
-		LogCrit(COMPONENT_CACHE_INODE, "Can't init Entry Pool");
-		status = CACHE_INODE_INVALID_ARGUMENT;
-	}
 
 	cih_pkginit();
 

@@ -418,19 +418,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 	}
 
 	/* Map this new entry and the active export */
-	if (!check_mapping(nentry, op_ctx->export)) {
-		LogCrit(COMPONENT_CACHE_INODE,
-			"Unable to create export mapping on new entry");
-		/* Release the LRU reference and return error.
-		 * This could leave a dangling cache entry belonging
-		 * to no export, however, such an entry definitely has
-		 * no open files, unless another cache_inode_get is
-		 * successful, so is safe to allow LRU to eventually
-		 * clean up this entry.
-		 */
-		cache_inode_put(nentry);
-		return CACHE_INODE_MALLOC_ERROR;
-	}
+	check_mapping(nentry, op_ctx->export);
 
 	LogDebug(COMPONENT_CACHE_INODE, "New entry %p added", nentry);
 	*entry = nentry;
@@ -439,13 +427,8 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 
  out:
 
-	if (status == CACHE_INODE_ENTRY_EXISTS) {
-		if (!check_mapping(*entry, op_ctx->export)) {
-			LogCrit(COMPONENT_CACHE_INODE,
-				"Unable to create export mapping on existing entry");
-			status = CACHE_INODE_MALLOC_ERROR;
-		}
-	}
+	if (status == CACHE_INODE_ENTRY_EXISTS)
+		check_mapping(*entry, op_ctx->export);
 
 	if (nentry != NULL) {
 		/* Deconstruct the object */

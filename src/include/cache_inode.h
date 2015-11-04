@@ -291,21 +291,16 @@ typedef struct cache_inode_key {
  *
  * @return 0 on success.
  */
-static inline int
+static inline void
 cache_inode_key_dup(cache_inode_key_t *tgt,
 		    cache_inode_key_t *src)
 {
 	tgt->kv.len = src->kv.len;
 	tgt->kv.addr = gsh_malloc(src->kv.len);
 
-	if (!tgt->kv.addr)
-		return ENOMEM;
-
 	memcpy(tgt->kv.addr, src->kv.addr, src->kv.len);
 	tgt->hk = src->hk;
 	tgt->fsal = src->fsal;
-
-	return 0;
 }
 
 /**
@@ -666,8 +661,7 @@ cache_inode_status_t cache_inode_init(void);
 #define CIG_KEYED_FLAG_NONE         0x0000
 #define CIG_KEYED_FLAG_CACHED_ONLY  0x0001
 
-bool check_mapping(cache_entry_t *entry,
-		   struct gsh_export *export);
+void check_mapping(cache_entry_t *entry, struct gsh_export *export);
 void clean_mapping(cache_entry_t *entry);
 cache_inode_status_t cache_inode_get(cache_inode_fsal_data_t *fsdata,
 				     cache_entry_t **entry);

@@ -1149,32 +1149,22 @@ fail:
 static cache_inode_status_t
 alloc_cache_entry(cache_entry_t **entry)
 {
-	cache_inode_status_t status;
 	cache_entry_t *nentry;
 
 	nentry = pool_alloc(cache_inode_entry_pool, NULL);
-	if (!nentry) {
-		LogCrit(COMPONENT_CACHE_INODE_LRU,
-			"can't allocate a new entry from cache pool");
-		status = CACHE_INODE_MALLOC_ERROR;
-		goto out;
-	}
 
 	/* Initialize the entry locks */
 	if (!init_rw_locks(nentry)) {
 		/* Recycle */
-		status = CACHE_INODE_INIT_ENTRY_FAILED;
 		pool_free(cache_inode_entry_pool, nentry);
-		nentry = NULL;
-		goto out;
+		*entry = NULL;
+		return CACHE_INODE_INIT_ENTRY_FAILED;
 	}
 
-	status = CACHE_INODE_SUCCESS;
 	atomic_inc_int64_t(&lru_state.entries_used);
 
- out:
 	*entry = nentry;
-	return status;
+	return CACHE_INODE_SUCCESS;
 }
 
 /**

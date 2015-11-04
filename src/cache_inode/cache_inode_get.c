@@ -64,13 +64,9 @@
  * @param[in]  entry     The cache inode
  * @param[in]  export    The active export
  *
- * @retval true if successful
- * @retval false if new mapping was necessary and memory alloc failed
- *
  */
 
-bool check_mapping(cache_entry_t *entry,
-		   struct gsh_export *export)
+void check_mapping(cache_entry_t *entry, struct gsh_export *export)
 {
 	struct glist_head *glist;
 	struct entry_export_map *expmap;
@@ -78,7 +74,7 @@ bool check_mapping(cache_entry_t *entry,
 
 	/* Fast path check to see if this export is already mapped */
 	if (atomic_fetch_voidptr(&entry->first_export) == export)
-		return true;
+		return;
 
 	PTHREAD_RWLOCK_rdlock(&entry->attr_lock);
 
@@ -93,7 +89,7 @@ again:
 		/* Found active export on list */
 		if (expmap->export == export) {
 			PTHREAD_RWLOCK_unlock(&entry->attr_lock);
-			return true;
+			return;
 		}
 	}
 
@@ -113,13 +109,6 @@ again:
 
 	expmap = gsh_calloc(1, sizeof(*expmap));
 
-	if (expmap == NULL) {
-		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
-		LogCrit(COMPONENT_CACHE_INODE,
-			 "Out of memory");
-		return false;
-	}
-
 	PTHREAD_RWLOCK_wrlock(&export->lock);
 
 	/* If export_list is empty, store this export as first */
@@ -136,8 +125,6 @@ again:
 
 	PTHREAD_RWLOCK_unlock(&export->lock);
 	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
-
-	return true;
 }
 
 /**
@@ -222,12 +209,7 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
 		(void) cache_inode_lru_ref(*entry, LRU_REQ_INITIAL);
 		cih_latch_rele(&latch);
 
-		if (!check_mapping(*entry, op_ctx->export)) {
-			/* Return error instead of entry */
-			cache_inode_put(*entry);
-			*entry = NULL;
-			return CACHE_INODE_MALLOC_ERROR;
-		}
+		check_mapping(*entry, op_ctx->export);
 		(void)atomic_inc_uint64_t(&cache_stp->inode_hit);
 
 		return CACHE_INODE_SUCCESS;
@@ -296,12 +278,7 @@ cache_inode_get_keyed(cache_inode_key_t *key,
 		/* Release the subtree hash table lock */
 		cih_latch_rele(&latch);
 
-		if (!check_mapping(entry, op_ctx->export)) {
-			/* Return error instead of entry */
-			cache_inode_put(entry);
-			*status = CACHE_INODE_MALLOC_ERROR;
-			return NULL;
-		}
+		check_mapping(entry, op_ctx->export);
 
 		*status = CACHE_INODE_SUCCESS;
 		return entry;

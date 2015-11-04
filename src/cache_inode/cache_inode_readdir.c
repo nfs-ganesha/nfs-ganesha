@@ -285,10 +285,6 @@ cache_inode_add_cached_dirent(cache_entry_t *parent,
 
 	/* in cache inode avl, we always insert on pentry_parent */
 	new_dir_entry = gsh_malloc(sizeof(cache_inode_dir_entry_t) + namesize);
-	if (new_dir_entry == NULL) {
-		status = CACHE_INODE_MALLOC_ERROR;
-		return status;
-	}
 
 	new_dir_entry->flags = DIR_ENTRY_FLAG_NONE;
 

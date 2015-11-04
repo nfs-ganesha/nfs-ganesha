@@ -234,8 +234,6 @@ cih_hash_key(cache_inode_key_t *key,
 		/* XXX dups fh_desc */
 		key->kv.len = fh_desc->len;
 		key->kv.addr = gsh_malloc(fh_desc->len);
-		if (key->kv.addr == NULL)
-			return false;
 		memcpy(key->kv.addr, fh_desc->addr, fh_desc->len);
 	}
 
