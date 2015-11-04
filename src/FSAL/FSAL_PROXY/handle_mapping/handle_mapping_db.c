@@ -922,9 +922,6 @@ int handlemap_db_reaload_all(hash_table_t *target_hash)
 
 		PTHREAD_MUTEX_unlock(&db_thread[i].pool_mutex);
 
-		if (!new_task)
-			return HANDLEMAP_SYSTEM_ERROR;
-
 		/* can you fill it ? */
 		new_task->op_type = LOAD;
 		new_task->op_arg.hash = target_hash;
@@ -967,9 +964,6 @@ int handlemap_db_insert(nfs23_map_handle_t *p_in_nfs23_digest,
 
 		PTHREAD_MUTEX_unlock(&db_thread[i].pool_mutex);
 
-		if (!new_task)
-			return HANDLEMAP_SYSTEM_ERROR;
-
 		/* fill the task info */
 		new_task->op_type = INSERT;
 		new_task->op_arg.fh_info.nfs23_digest = *p_in_nfs23_digest;
@@ -1008,9 +1002,6 @@ int handlemap_db_delete(nfs23_map_handle_t *p_in_nfs23_digest)
 	new_task = pool_alloc(db_thread[i].dbop_pool, NULL);
 
 	PTHREAD_MUTEX_unlock(&db_thread[i].pool_mutex);
-
-	if (!new_task)
-		return HANDLEMAP_SYSTEM_ERROR;
 
 	/* fill the task info */
 	new_task->op_type = DELETE;

@@ -68,8 +68,6 @@ static digest_pool_entry_t *digest_alloc()
 	p_new = pool_alloc(digest_pool, NULL);
 	PTHREAD_MUTEX_unlock(&digest_pool_mutex);
 
-	memset(p_new, 0, sizeof(digest_pool_entry_t));
-
 	return p_new;
 }
 
@@ -89,8 +87,6 @@ static handle_pool_entry_t *handle_alloc()
 	PTHREAD_MUTEX_lock(&handle_pool_mutex);
 	p_new = pool_alloc(handle_pool, NULL);
 	PTHREAD_MUTEX_unlock(&handle_pool_mutex);
-
-	memset(p_new, 0, sizeof(handle_pool_entry_t));
 
 	return p_new;
 }

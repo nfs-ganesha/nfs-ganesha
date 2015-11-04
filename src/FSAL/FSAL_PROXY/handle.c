@@ -1487,9 +1487,6 @@ static fsal_status_t pxy_readlink(struct fsal_obj_handle *obj_hdl,
 				    : fsal_default_linksize;
 	link_content->addr = gsh_malloc(link_content->len);
 
-	if (link_content->addr == NULL)
-		return fsalstat(ERR_FSAL_NOMEM, 0);
-
 	rlok = &resoparray[opcnt].nfs_resop4_u.opreadlink.READLINK4res_u.resok4;
 	rlok->link.utf8string_val = link_content->addr;
 	rlok->link.utf8string_len = link_content->len;
@@ -2097,12 +2094,7 @@ fsal_status_t pxy_lookup_path(struct fsal_export *exp_hdl,
 	char *p;
 	struct user_cred *creds = op_ctx->creds;
 
-	if (!path || path[0] != '/')
-		return fsalstat(ERR_FSAL_INVAL, EINVAL);
-
 	pcopy = gsh_strdup(path);
-	if (!pcopy)
-		return fsalstat(ERR_FSAL_NOMEM, ENOMEM);
 
 	p = strtok_r(pcopy, "/", &saved);
 	while (p) {
