@@ -400,8 +400,6 @@ static void destroy_recall(struct state_layout_recall_file *recall)
  * @retval STATE_SUCCESS if successfully queued.
  * @retval STATE_INVALID_ARGUMENT if the range is zero or overflows.
  * @retval STATE_NOT_FOUND if no layouts satisfying the range exist.
- * @retval STATE_MALLOC_ERROR if there was insufficient memory to construct the
- *         recall state.
  */
 
 static state_status_t create_file_recall(cache_entry_t *entry,
@@ -421,9 +419,6 @@ static state_status_t create_file_recall(cache_entry_t *entry,
 	/* The recall object referenced by future returns */
 	struct state_layout_recall_file *recall =
 	    gsh_malloc(sizeof(struct state_layout_recall_file));
-
-	if (!recall)
-		return STATE_MALLOC_ERROR;
 
 	glist_init(&recall->state_list);
 	recall->entry_link.next = NULL;
@@ -509,10 +504,7 @@ static state_status_t create_file_recall(cache_entry_t *entry,
 			 */
 			list_entry =
 			    gsh_malloc(sizeof(struct recall_state_list));
-			if (!list_entry) {
-				rc = STATE_MALLOC_ERROR;
-				goto out;
-			}
+
 			list_entry->state = s;
 			glist_add_tail(&recall->state_list, &list_entry->link);
 			inc_state_t_ref(s);
@@ -622,10 +614,6 @@ state_status_t layoutrecall(struct fsal_module *fsal,
 		layoutrecall_file4 *layout;
 
 		cb_data = gsh_malloc(sizeof(struct layoutrecall_cb_data));
-		if (cb_data == NULL) {
-			rc = STATE_MALLOC_ERROR;
-			goto out;
-		}
 
 		arg = &cb_data->arg;
 		arg->argop = NFS4_OP_CB_LAYOUTRECALL;
@@ -1127,8 +1115,6 @@ static bool devnotify_client_callback(nfs_client_id_t *clientid,
 
 	/* free in notifydev_completion */
 	arg = gsh_malloc(sizeof(struct cb_notify));
-	if (arg == NULL)
-		return false;
 
 	cb_notify_dev = &arg->arg.nfs_cb_argop4_u.opcbnotify_deviceid;
 
@@ -1177,10 +1163,7 @@ state_status_t notify_device(notify_deviceid_type4 notify_type,
 	struct devnotify_cb_data *cb_data;
 
 	cb_data = gsh_malloc(sizeof(struct devnotify_cb_data));
-	if (cb_data == NULL) {
-		LogCrit(COMPONENT_NFS_CB, "malloc failed for notify_device");
-		return STATE_MALLOC_ERROR;
-	}
+
 	cb_data->notify_type = notify_type;
 	cb_data->layout_type = layout_type;
 	cb_data->devid = devid;
@@ -1510,11 +1493,6 @@ void delegrecall_one(cache_entry_t *entry,
 	/* allocate a new call--freed in completion hook */
 	call = alloc_rpc_call();
 
-	if (!call) {
-		LogCrit(COMPONENT_NFS_CB, "Could not allocate rpc call");
-		goto out;
-	}
-
 	call->chan = chan;
 
 	/* setup a compound */
@@ -1527,10 +1505,6 @@ void delegrecall_one(cache_entry_t *entry,
 	argop->nfs_cb_argop4_u.opcbrecall.truncate = false;
 
 	maxfh = gsh_malloc(NFS4_FHSIZE); /* free in cb_completion_func() */
-	if (maxfh == NULL) {
-		LogDebug(COMPONENT_FSAL_UP, "FSAL_UP_DELEG: no mem, aborting.");
-		goto out;
-	}
 
 	/* Convert it to a file handle */
 	argop->nfs_cb_argop4_u.opcbrecall.fh.nfs_fh4_len = 0;
@@ -1775,11 +1749,6 @@ state_status_t delegrecall_impl(cache_entry_t *entry)
 		*deleg_state = DELEG_RECALL_WIP;
 
 		drc_ctx = gsh_malloc(sizeof(struct delegrecall_context));
-
-		if (drc_ctx == NULL) {
-			LogFatal(COMPONENT_FSAL_UP,
-				 "Could not allocate delegation recal context");
-		}
 
 		/* Get references on the owner and the the export. The
 		 * export reference we will hold while we perform the recall.

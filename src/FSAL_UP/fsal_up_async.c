@@ -100,10 +100,6 @@ int up_async_invalidate(struct fridgethr *fr,
 	int rc = 0;
 
 	args = gsh_malloc(sizeof(struct invalidate_args) + obj->len);
-	if (!args) {
-		rc = ENOMEM;
-		goto out;
-	}
 
 	args->up_ops = up_ops;
 	args->flags = flags;
@@ -115,7 +111,6 @@ int up_async_invalidate(struct fridgethr *fr,
 	args->fsal = fsal;
 
 	rc = fridgethr_submit(fr, queue_invalidate, args);
- out:
 
 	if (rc != 0 && args)
 		gsh_free(args);
@@ -161,10 +156,6 @@ int up_async_update(struct fridgethr *fr,
 	int rc = 0;
 
 	args = gsh_malloc(sizeof(struct update_args) + obj->len);
-	if (!args) {
-		rc = ENOMEM;
-		goto out;
-	}
 
 	args->up_ops = up_ops;
 	args->attr = *attr;
@@ -177,7 +168,6 @@ int up_async_update(struct fridgethr *fr,
 	args->fsal = fsal;
 
 	rc = fridgethr_submit(fr, queue_update, args);
- out:
 
 	if (rc != 0 && args)
 		gsh_free(args);
@@ -224,10 +214,6 @@ int up_async_lock_grant(struct fridgethr *fr,
 	int rc = 0;
 
 	args = gsh_malloc(sizeof(struct lock_grant_args) + file->len);
-	if (!args) {
-		rc = ENOMEM;
-		goto out;
-	}
 
 	args->up_ops = up_ops;
 	args->owner = owner;
@@ -240,7 +226,6 @@ int up_async_lock_grant(struct fridgethr *fr,
 	args->fsal = fsal;
 
 	rc = fridgethr_submit(fr, queue_lock_grant, args);
- out:
 
 	if (rc != 0 && args)
 		gsh_free(args);
@@ -287,10 +272,6 @@ int up_async_lock_avail(struct fridgethr *fr,
 	int rc = 0;
 
 	args = gsh_malloc(sizeof(struct lock_avail_args) + file->len);
-	if (!args) {
-		rc = ENOMEM;
-		goto out;
-	}
 
 	args->up_ops = up_ops;
 	args->owner = owner;
@@ -303,7 +284,6 @@ int up_async_lock_avail(struct fridgethr *fr,
 	args->fsal = fsal;
 
 	rc = fridgethr_submit(fr, queue_lock_avail, args);
- out:
 
 	if (rc != 0 && args)
 		gsh_free(args);
@@ -361,10 +341,6 @@ int up_async_layoutrecall(struct fridgethr *fr,
 	int rc = 0;
 
 	args = gsh_malloc(sizeof(struct layoutrecall_args) + handle->len);
-	if (!args) {
-		rc = ENOMEM;
-		goto out;
-	}
 
 	args->up_ops = up_ops;
 	args->cb = cb;
@@ -387,8 +363,6 @@ int up_async_layoutrecall(struct fridgethr *fr,
 		args->spec.how = layoutrecall_not_specced;
 
 	rc = fridgethr_submit(fr, queue_layoutrecall, args);
-
- out:
 
 	if (rc != 0 && args)
 		gsh_free(args);
@@ -437,10 +411,6 @@ int up_async_notify_device(struct fridgethr *fr,
 	int rc = 0;
 
 	args = gsh_malloc(sizeof(struct notify_device_args));
-	if (!args) {
-		rc = ENOMEM;
-		goto out;
-	}
 
 	args->up_ops = up_ops;
 	args->cb = cb;
@@ -451,8 +421,6 @@ int up_async_notify_device(struct fridgethr *fr,
 	args->immediate = immediate;
 
 	rc = fridgethr_submit(fr, queue_notify_device, args);
-
- out:
 
 	if (rc != 0 && args)
 		gsh_free(args);
@@ -509,10 +477,6 @@ int up_async_delegrecall(struct fridgethr *fr,
 	int rc = 0;
 
 	args = gsh_malloc(sizeof(struct delegrecall_args) + handle->len);
-	if (!args) {
-		rc = ENOMEM;
-		goto out;
-	}
 
 	args->up_ops = up_ops;
 	args->cb = cb;
@@ -529,7 +493,6 @@ int up_async_delegrecall(struct fridgethr *fr,
 	if (rc != 0)
 		gsh_free(args);
 
- out:
 	return rc;
 }
 
