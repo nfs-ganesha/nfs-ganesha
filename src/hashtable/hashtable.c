@@ -104,8 +104,6 @@ hash_table_err_to_str(hash_error_t err)
 		return "HASHTABLE_SUCCESS";
 	case HASHTABLE_UNKNOWN_HASH_TYPE:
 		return "HASHTABLE_UNKNOWN_HASH_TYPE";
-	case HASHTABLE_INSERT_MALLOC_ERROR:
-		return "HASHTABLE_INSERT_MALLOC_ERROR";
 	case HASHTABLE_ERROR_NO_SUCH_KEY:
 		return "HASHTABLE_ERROR_NO_SUCH_KEY";
 	case HASHTABLE_ERROR_KEY_ALREADY_EXISTS:
@@ -318,8 +316,6 @@ hashtable_init(struct hash_param *hparam)
 	ht = gsh_calloc(1, sizeof(struct hash_table) +
 			(sizeof(struct hash_partition) *
 			 hparam->index_size));
-	if (ht == NULL)
-		goto deconstruct;
 
 	/* Fixup entry size */
 	if (hparam->flags & HT_FLAG_CACHE) {
@@ -341,27 +337,19 @@ hashtable_init(struct hash_param *hparam)
 		}
 
 		/* Allocate a cache if requested */
-		if (hparam->flags & HT_FLAG_CACHE) {
+		if (hparam->flags & HT_FLAG_CACHE)
 			partition->cache = gsh_calloc(1, cache_page_size(ht));
-			if (!(partition->cache)) {
-				PTHREAD_RWLOCK_destroy(&partition->lock);
-				goto deconstruct;
-			}
-		}
+
 		completed++;
 	}
 
 	ht->node_pool =
 	    pool_init(NULL, sizeof(rbt_node_t), pool_basic_substrate, NULL,
 		      NULL, NULL);
-	if (!(ht->node_pool))
-		goto deconstruct;
 
 	ht->data_pool =
 	    pool_init(NULL, sizeof(struct hash_data), pool_basic_substrate,
 		      NULL, NULL, NULL);
-	if (!(ht->data_pool))
-		goto deconstruct;
 
 	pthread_rwlockattr_destroy(&rwlockattr);
 	return ht;
@@ -664,17 +652,8 @@ hashtable_setlatched(struct hash_table *ht,
 	RBT_FIND(&ht->partitions[latch->index].rbt, locator, latch->rbt_hash);
 
 	mutator = pool_alloc(ht->node_pool, NULL);
-	if (mutator == NULL) {
-		rc = HASHTABLE_INSERT_MALLOC_ERROR;
-		goto out;
-	}
 
 	descriptors = pool_alloc(ht->data_pool, NULL);
-	if (descriptors == NULL) {
-		pool_free(ht->node_pool, mutator);
-		rc = HASHTABLE_INSERT_MALLOC_ERROR;
-		goto out;
-	}
 
 	RBT_OPAQ(mutator) = descriptors;
 	RBT_VALUE(mutator) = latch->rbt_hash;
