@@ -82,8 +82,7 @@ static struct vfs_fsal_obj_handle *alloc_handle(int dirfd,
 	struct vfs_fsal_obj_handle *hdl;
 
 	hdl = vfs_sub_alloc_handle();
-	if (hdl == NULL)
-		return NULL;
+
 	memcpy(hdl->handle, fh, sizeof(vfs_file_handle_t));
 	hdl->obj_handle.type = posix2fsal_type(stat->st_mode);
 	hdl->dev = posix2fsal_devt(stat->st_dev);
@@ -98,9 +97,6 @@ static struct vfs_fsal_obj_handle *alloc_handle(int dirfd,
 		ssize_t retlink;
 		size_t len = stat->st_size + 1;
 		char *link_content = gsh_malloc(len);
-
-		if (link_content == NULL)
-			goto spcerr;
 
 		retlink =
 		    vfs_readlink_by_handle(fh, dirfd, path, link_content, len);
@@ -124,13 +120,10 @@ static struct vfs_fsal_obj_handle *alloc_handle(int dirfd,
 				goto spcerr;
 		}
 		hdl->u.unopenable.dir = gsh_malloc(sizeof(vfs_file_handle_t));
-		if (hdl->u.unopenable.dir == NULL)
-			goto spcerr;
+
 		memcpy(hdl->u.unopenable.dir, dir_fh,
 		       sizeof(vfs_file_handle_t));
 		hdl->u.unopenable.name = gsh_strdup(path);
-		if (hdl->u.unopenable.name == NULL)
-			goto spcerr;
 	}
 	hdl->attributes.mask = exp_hdl->exp_ops.fs_supported_attrs(exp_hdl);
 	posix2fsal_attributes(stat, &hdl->attributes);
@@ -883,10 +876,7 @@ static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
 
 	link_content->len = myself->u.symlink.link_size;
 	link_content->addr = gsh_malloc(myself->u.symlink.link_size);
-	if (link_content->addr == NULL) {
-		fsal_error = ERR_FSAL_NOMEM;
-		goto out;
-	}
+
 	memcpy(link_content->addr, myself->u.symlink.link_content,
 	       link_content->len);
 
@@ -1141,26 +1131,14 @@ static fsal_status_t renamefile(struct fsal_obj_handle *obj_hdl,
 	} else if (vfs_unopenable_type(obj->obj_handle.type)) {
 		/* A block, char, or socket has been renamed. Fixup
 		 * our information in the handle so we can still stat it.
-		 * Save the name in case we have to sort of undo.
+		 * Go ahead and discard the old name (we will abort if
+		 * gsh_strdup fails to copy the new name).
 		 */
-		char *saved_name = obj->u.unopenable.name;
+		gsh_free(obj->u.unopenable.name);
 
 		memcpy(obj->u.unopenable.dir, newdir->handle,
 		       sizeof(vfs_file_handle_t));
 		obj->u.unopenable.name = gsh_strdup(new_name);
-		if (obj->u.unopenable.name != NULL) {
-			/* Discard saved_name */
-			gsh_free(saved_name);
-		} else {
-			/* It's a bad day, we're going to be messed up
-			 * no matter what we try and do, maybe leave
-			 * things not completely hosed.
-			 */
-			LogCrit(COMPONENT_FSAL,
-				"Failed to allocate memory to rename special inode from %s to %s",
-				old_name, new_name);
-			obj->u.unopenable.name = saved_name;
-		}
 	}
 	fsal_restore_ganesha_credentials();
  out:

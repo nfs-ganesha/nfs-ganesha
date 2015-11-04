@@ -218,13 +218,10 @@ int vfs_readlink(struct vfs_fsal_obj_handle *hdl,
 	ldata[retval] = '\0';
 
 	hdl->u.symlink.link_content = gsh_strdup(ldata);
-	if (hdl->u.symlink.link_content == NULL) {
-		*ferr = ERR_FSAL_NOMEM;
-		retval = -ENOMEM;
-	} else {
-		hdl->u.symlink.link_size = retval + 1;
-		retval = 0;
-	}
+
+	hdl->u.symlink.link_size = retval + 1;
+	retval = 0;
+
  out:
 	return retval;
 }

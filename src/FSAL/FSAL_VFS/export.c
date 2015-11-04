@@ -420,14 +420,6 @@ int vfs_claim_filesystem(struct fsal_filesystem *fs, struct fsal_export *exp)
 
 	map = gsh_calloc(1, sizeof(*map));
 
-	if (map == NULL) {
-		LogCrit(COMPONENT_FSAL,
-			"Out of memory to claim file system %s",
-			fs->path);
-		retval = ENOMEM;
-		goto errout;
-	}
-
 	if (fs->fsal != NULL) {
 		vfs_fs = fs->private;
 		if (vfs_fs == NULL) {
@@ -442,14 +434,6 @@ int vfs_claim_filesystem(struct fsal_filesystem *fs, struct fsal_export *exp)
 	}
 
 	vfs_fs = gsh_calloc(1, sizeof(*vfs_fs));
-
-	if (vfs_fs == NULL) {
-		LogCrit(COMPONENT_FSAL,
-			"Out of memory to claim file system %s",
-			fs->path);
-		retval = ENOMEM;
-		goto errout;
-	}
 
 	glist_init(&vfs_fs->exports);
 	vfs_fs->root_fd = -1;
@@ -574,11 +558,6 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 
 	myself = gsh_calloc(1, sizeof(struct vfs_fsal_export));
-	if (myself == NULL) {
-		LogMajor(COMPONENT_FSAL,
-			 "out of memory for object");
-		return fsalstat(posix2fsal_error(errno), errno);
-	}
 
 	glist_init(&myself->filesystems);
 

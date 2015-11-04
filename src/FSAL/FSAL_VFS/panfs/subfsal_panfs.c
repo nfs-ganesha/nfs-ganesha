@@ -118,8 +118,6 @@ struct vfs_fsal_obj_handle *vfs_sub_alloc_handle(void)
 	hdl = gsh_calloc(1,
 			 (sizeof(struct panfs_fsal_obj_handle) +
 			  sizeof(vfs_file_handle_t)));
-	if (hdl == NULL)
-		return NULL;
 
 	hdl->vfs_obj_handle.handle = (vfs_file_handle_t *) &hdl[1];
 	return &hdl->vfs_obj_handle;

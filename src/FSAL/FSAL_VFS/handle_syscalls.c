@@ -68,8 +68,6 @@ int vfs_readlink(struct vfs_fsal_obj_handle *myself,
 	myself->u.symlink.link_size = st.st_size + 1;
 	myself->u.symlink.link_content =
 	    gsh_malloc(myself->u.symlink.link_size);
-	if (myself->u.symlink.link_content == NULL)
-		goto error;
 
 	retlink =
 	    vfs_readlink_by_handle(myself->handle, fd, "",

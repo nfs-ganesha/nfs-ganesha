@@ -344,8 +344,6 @@ static fsal_status_t panfs_acl_2_fsal_acl(struct pan_fs_acl_s *panacl,
 
 	/* Create fsal acl data. */
 	acldata.aces = (fsal_ace_t *) nfs4_ace_alloc(acldata.naces);
-	if (!acldata.aces)
-		return fsalstat(ERR_FSAL_NOMEM, ENOMEM);
 
 	LogDebug(COMPONENT_FSAL, "Converting %u aces:", acldata.naces);
 	ace = acldata.aces;

@@ -351,8 +351,6 @@ static int _start_callback_thread(int root_fd, void **pnfs_data)
 	int err;
 
 	_rt = gsh_calloc(1, sizeof(*_rt));
-	if (!_rt)
-		return ENOMEM;
 
 	_rt->fd = root_fd;
 
