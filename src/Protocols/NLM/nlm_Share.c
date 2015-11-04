@@ -75,15 +75,7 @@ int nlm4_Share(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 		 buffer,
 		 arg->reclaim ? "yes" : "no");
 
-	if (!copy_netobj(&res->res_nlm4share.cookie, &arg->cookie)) {
-		res->res_nlm4share.stat = NLM4_FAILED;
-
-		LogDebug(COMPONENT_NLM,
-			 "REQUEST RESULT: nlm4_Share %s",
-			 lock_result_str(res->res_nlm4share.stat));
-
-		return NFS_REQ_OK;
-	}
+	copy_netobj(&res->res_nlm4share.cookie, &arg->cookie);
 
 	/* Allow only reclaim share request during recovery and visa versa.
 	 * Note: NLM_SHARE is indicated to be non-monitored, however, it does

@@ -30,7 +30,7 @@
 #include "sal_data.h"
 
 extern const char *lock_result_str(int rc);
-extern netobj *copy_netobj(netobj *dst, netobj *src);
+extern void copy_netobj(netobj *dst, netobj *src);
 extern void netobj_free(netobj *obj);
 extern void netobj_to_string(netobj *obj, char *buffer, int maxlen);
 

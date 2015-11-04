@@ -51,11 +51,6 @@ bool nsm_connect(void)
 	}
 
 	nodename = gsh_strdup(utsname.nodename);
-	if (nodename == NULL) {
-		LogCrit(COMPONENT_NLM,
-			"failed to allocate memory for nodename");
-		return false;
-	}
 
 	nsm_clnt = gsh_clnt_create("localhost", SM_PROG, SM_VERS, "tcp");
 

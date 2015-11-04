@@ -21,7 +21,9 @@
 static struct timeval TIMEOUT = { 25, 0 };
 
 /* This function is dragged in by the use of abstract_mem.h, so
- * we define a simple version that does a printf.
+ * we define a simple version that does a printf rather than
+ * pull in the entirety of log_functions.c into this standalone
+ * program.
  */
 void LogMallocFailure(const char *file, int line, const char *function,
 		      char *allocator)

@@ -94,42 +94,31 @@ inline uint64_t lock_end(uint64_t start, uint64_t len)
 		return start + len - 1;
 }
 
-bool fill_netobj(netobj *dst, char *data, int len)
+void fill_netobj(netobj *dst, char *data, int len)
 {
 	dst->n_len = 0;
 	dst->n_bytes = NULL;
 	if (len != 0) {
 		dst->n_bytes = gsh_malloc(len);
-		if (dst->n_bytes != NULL) {
-			dst->n_len = len;
-			memcpy(dst->n_bytes, data, len);
-		} else
-			return false;
+		dst->n_len = len;
+		memcpy(dst->n_bytes, data, len);
 	}
-	return true;
 }
 
-netobj *copy_netobj(netobj *dst, netobj *src)
+void copy_netobj(netobj *dst, netobj *src)
 {
-	if (dst == NULL)
-		return NULL;
-	dst->n_len = 0;
 	if (src->n_len != 0) {
 		dst->n_bytes = gsh_malloc(src->n_len);
-		if (!dst->n_bytes)
-			return NULL;
 		memcpy(dst->n_bytes, src->n_bytes, src->n_len);
 	} else
 		dst->n_bytes = NULL;
 
 	dst->n_len = src->n_len;
-	return dst;
 }
 
 void netobj_free(netobj *obj)
 {
-	if (obj->n_bytes)
-		gsh_free(obj->n_bytes);
+	gsh_free(obj->n_bytes);
 }
 
 void netobj_to_string(netobj *obj, char *buffer, int maxlen)
@@ -158,9 +147,7 @@ void free_grant_arg(state_async_queue_t *arg)
 	netobj_free(&nlm_arg->nlm_async_args.nlm_async_grant.cookie);
 	netobj_free(&nlm_arg->nlm_async_args.nlm_async_grant.alock.oh);
 	netobj_free(&nlm_arg->nlm_async_args.nlm_async_grant.alock.fh);
-	if (nlm_arg->nlm_async_args.nlm_async_grant.alock.caller_name != NULL)
-		gsh_free(nlm_arg->nlm_async_args.nlm_async_grant.alock.
-			 caller_name);
+	gsh_free(nlm_arg->nlm_async_args.nlm_async_grant.alock.caller_name);
 	gsh_free(arg);
 }
 
@@ -361,23 +348,18 @@ int nlm_process_parameters(struct svc_req *req, bool exclusive,
 	}
 
 	if (block_data != NULL) {
-		state_block_data_t *bdat = gsh_malloc(sizeof(*bdat));
+		state_block_data_t *bdat = gsh_calloc(1, sizeof(*bdat));
 		*block_data = bdat;
 
-		/* Fill in the block data, if we don't get one, we will just
-		 * proceed without (which will mean the lock doesn't block.
-		 */
-		if (bdat != NULL) {
-			memset(bdat, 0, sizeof(*bdat));
-			bdat->sbd_granted_callback = nlm_granted_callback;
-			bdat->sbd_prot.sbd_nlm.sbd_nlm_fh.n_bytes =
-				bdat->sbd_prot.sbd_nlm.sbd_nlm_fh_buf;
-			bdat->sbd_prot.sbd_nlm.sbd_nlm_fh.n_len =
-				alock->fh.n_len;
-			memcpy(bdat->sbd_prot.sbd_nlm.sbd_nlm_fh_buf,
-			       alock->fh.n_bytes,
-			       alock->fh.n_len);
-		}
+		/* Fill in the block data. */
+		bdat->sbd_granted_callback = nlm_granted_callback;
+		bdat->sbd_prot.sbd_nlm.sbd_nlm_fh.n_bytes =
+			bdat->sbd_prot.sbd_nlm.sbd_nlm_fh_buf;
+		bdat->sbd_prot.sbd_nlm.sbd_nlm_fh.n_len =
+			alock->fh.n_len;
+		memcpy(bdat->sbd_prot.sbd_nlm.sbd_nlm_fh_buf,
+		       alock->fh.n_bytes,
+		       alock->fh.n_len);
 	}
 
 	/* Fill in plock (caller will reset reclaim if appropriate) */
@@ -611,17 +593,7 @@ state_status_t nlm_granted_callback(cache_entry_t *pentry,
 	state_status_t state_status;
 	state_status_t state_status_int;
 
-	arg = gsh_malloc(sizeof(*arg));
-	if (arg == NULL) {
-		/* If we fail allocation the best is to delete the block entry
-		 * so that client can try again and get the lock. May be
-		 * by then we are able to allocate objects
-		 */
-		state_status = STATE_MALLOC_ERROR;
-		return state_status;
-	}
-
-	memset(arg, 0, sizeof(*arg));
+	arg = gsh_calloc(1, sizeof(*arg));
 
 	/* Get a cookie to use for this grant */
 	next_granted_cookie(&nlm_grant_cookie);
@@ -650,24 +622,18 @@ state_status_t nlm_granted_callback(cache_entry_t *pentry,
 	inarg = &arg->state_async_data.state_nlm_async_data.nlm_async_args.
 		nlm_async_grant;
 
-	if (!copy_netobj(&inarg->alock.fh, &nlm_block_data->sbd_nlm_fh))
-		goto grant_fail_malloc;
+	copy_netobj(&inarg->alock.fh, &nlm_block_data->sbd_nlm_fh);
 
-	if (!fill_netobj(&inarg->alock.oh,
-			 lock_entry->sle_owner->so_owner_val,
-			 lock_entry->sle_owner->so_owner_len))
-		goto grant_fail_malloc;
+	fill_netobj(&inarg->alock.oh,
+		    lock_entry->sle_owner->so_owner_val,
+		    lock_entry->sle_owner->so_owner_len);
 
-	if (!fill_netobj(&inarg->cookie,
-			 (char *)&nlm_grant_cookie,
-			 sizeof(nlm_grant_cookie)))
-		goto grant_fail_malloc;
+	fill_netobj(&inarg->cookie,
+		    (char *)&nlm_grant_cookie,
+		    sizeof(nlm_grant_cookie));
 
 	inarg->alock.caller_name =
 	    gsh_strdup(nlm_grant_client->slc_nlm_caller_name);
-
-	if (!inarg->alock.caller_name)
-		goto grant_fail_malloc;
 
 	inarg->exclusive = lock_entry->sle_lock.lock_type == FSAL_LOCK_W;
 	inarg->alock.svid = nlm_grant_owner->so_nlm_svid;
@@ -693,9 +659,6 @@ state_status_t nlm_granted_callback(cache_entry_t *pentry,
 		goto grant_fail;
 
 	return state_status;
-
- grant_fail_malloc:
-	state_status = STATE_MALLOC_ERROR;
 
  grant_fail:
 

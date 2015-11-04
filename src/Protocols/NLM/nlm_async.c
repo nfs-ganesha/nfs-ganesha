@@ -45,24 +45,14 @@ int nlm_send_async_res_nlm4(state_nlm_client_t *host, state_async_func_t func,
 	state_nlm_async_data_t *nlm_arg;
 	state_status_t status;
 
-	if (arg != NULL) {
-		nlm_arg = &arg->state_async_data.state_nlm_async_data;
-		memset(arg, 0, sizeof(*arg));
-		arg->state_async_func = func;
-		nlm_arg->nlm_async_host = host;
-		nlm_arg->nlm_async_args.nlm_async_res = *pres;
-		if (!copy_netobj
-		    (&nlm_arg->nlm_async_args.nlm_async_res.res_nlm4.cookie,
-		     &pres->res_nlm4.cookie)) {
-			LogCrit(COMPONENT_NLM,
-				"Unable to copy async response file handle");
-			gsh_free(arg);
-			return NFS_REQ_DROP;
-		}
-	} else {
-		LogCrit(COMPONENT_NLM, "Unable to allocate async response");
-		return NFS_REQ_DROP;
-	}
+	nlm_arg = &arg->state_async_data.state_nlm_async_data;
+	memset(arg, 0, sizeof(*arg));
+	arg->state_async_func = func;
+	nlm_arg->nlm_async_host = host;
+	nlm_arg->nlm_async_args.nlm_async_res = *pres;
+
+	copy_netobj(&nlm_arg->nlm_async_args.nlm_async_res.res_nlm4.cookie,
+		    &pres->res_nlm4.cookie);
 
 	status = state_async_schedule(arg);
 
@@ -81,36 +71,21 @@ int nlm_send_async_res_nlm4test(state_nlm_client_t *host,
 	state_nlm_async_data_t *nlm_arg;
 	state_status_t status;
 
-	if (arg != NULL) {
-		nlm_arg = &arg->state_async_data.state_nlm_async_data;
-		memset(arg, 0, sizeof(*arg));
-		arg->state_async_func = func;
-		nlm_arg->nlm_async_host = host;
-		nlm_arg->nlm_async_args.nlm_async_res = *pres;
-		if (!copy_netobj(
-		     &nlm_arg->nlm_async_args.nlm_async_res.res_nlm4test.cookie,
-		     &pres->res_nlm4test.cookie)) {
-			LogCrit(COMPONENT_NLM,
-				"Unable to copy async response file handle");
-			gsh_free(arg);
-			return NFS_REQ_DROP;
-		} else if (pres->res_nlm4test.test_stat.stat == NLM4_DENIED) {
-			if (!copy_netobj(
-			     &nlm_arg->nlm_async_args.nlm_async_res.
-			      res_nlm4test.test_stat.nlm4_testrply_u.holder.oh,
-			     &pres->res_nlm4test.test_stat.nlm4_testrply_u.
-			      holder.oh)) {
-				LogCrit(COMPONENT_NLM,
-					"Unable to copy async response oh");
-				netobj_free(&nlm_arg->nlm_async_args.
-					    nlm_async_res.res_nlm4test.cookie);
-				gsh_free(arg);
-				return NFS_REQ_DROP;
-			}
-		}
-	} else {
-		LogCrit(COMPONENT_NLM, "Unable to allocate async response");
-		return NFS_REQ_DROP;
+	nlm_arg = &arg->state_async_data.state_nlm_async_data;
+	memset(arg, 0, sizeof(*arg));
+	arg->state_async_func = func;
+	nlm_arg->nlm_async_host = host;
+	nlm_arg->nlm_async_args.nlm_async_res = *pres;
+
+	copy_netobj(&nlm_arg->nlm_async_args.nlm_async_res.res_nlm4test.cookie,
+		    &pres->res_nlm4test.cookie);
+
+	if (pres->res_nlm4test.test_stat.stat == NLM4_DENIED) {
+		copy_netobj(
+		     &nlm_arg->nlm_async_args.nlm_async_res.
+		      res_nlm4test.test_stat.nlm4_testrply_u.holder.oh,
+		     &pres->res_nlm4test.test_stat.nlm4_testrply_u.
+		      holder.oh);
 	}
 
 	status = state_async_schedule(arg);
