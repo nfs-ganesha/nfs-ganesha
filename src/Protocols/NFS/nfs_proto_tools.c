@@ -3280,9 +3280,6 @@ int nfs4_Fattr_Fill_Error(fattr4 *Fattr, nfsstat4 rdattr_error)
 	Fattr->attr_vals.attrlist4_val =
 	    gsh_malloc(fattr4tab[FATTR4_RDATTR_ERROR].size_fattr4);
 
-	if (Fattr->attr_vals.attrlist4_val == NULL)
-		return -1;
-
 	LastOffset = 0;
 	memset(&attr_body, 0, sizeof(attr_body));
 	xdrmem_create(&attr_body, Fattr->attr_vals.attrlist4_val,
@@ -3358,9 +3355,6 @@ int nfs4_FSALattr_To_Fattr(struct xdr_attrs_args *args, struct bitmap4 *Bitmap,
 		return 0;	/* they ask for nothing, they get nothing */
 
 	Fattr->attr_vals.attrlist4_val = gsh_malloc(NFS4_ATTRVALS_BUFFLEN);
-
-	if (Fattr->attr_vals.attrlist4_val == NULL)
-		return -1;
 
 	max_attr_idx = nfs4_max_attr_index(args->data);
 	LogFullDebug(COMPONENT_NFS_V4, "Maximum allowed attr index = %d",
@@ -4180,9 +4174,6 @@ nfsstat4 nfs4_utf8string2dynamic(const utf8string *input,
 		return NFS4ERR_NAMETOOLONG;
 
 	char *name = gsh_malloc(input->utf8string_len + 1);
-
-	if (name == NULL)
-		return NFS4ERR_SERVERFAULT;
 
 	memcpy(name, input->utf8string_val, input->utf8string_len);
 	name[input->utf8string_len] = '\0';

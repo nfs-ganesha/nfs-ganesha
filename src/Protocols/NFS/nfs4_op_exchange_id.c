@@ -346,12 +346,7 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op, compound_data_t *data,
 	len = strlen(unconf->cid_server_owner);
 	temp = gsh_malloc(len);
 
-	if (temp == NULL) {
-		/** @todo FSF: not the best way to handle this but
-		    keeps from crashing */
-		len = 0;
-	} else
-		memcpy(temp, unconf->cid_server_owner, len);
+	memcpy(temp, unconf->cid_server_owner, len);
 
 	res_EXCHANGE_ID4_ok->eir_server_owner.so_major_id.so_major_id_len = len;
 	res_EXCHANGE_ID4_ok->eir_server_owner.so_major_id.so_major_id_val =
@@ -361,12 +356,8 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op, compound_data_t *data,
 
 	len = strlen(unconf->cid_server_scope);
 	temp = gsh_malloc(len);
-	if (temp == NULL) {
-		/** @todo FSF: not the best way to handle this but
-		    keeps from crashing */
-		len = 0;
-	} else
-		memcpy(temp, unconf->cid_server_scope, len);
+
+	memcpy(temp, unconf->cid_server_scope, len);
 
 	res_EXCHANGE_ID4_ok->eir_server_scope.eir_server_scope_len = len;
 	res_EXCHANGE_ID4_ok->eir_server_scope.eir_server_scope_val = temp;

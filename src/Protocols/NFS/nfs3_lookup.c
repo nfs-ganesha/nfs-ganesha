@@ -101,30 +101,23 @@ int nfs3_lookup(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	if (entry_file && (cache_status == CACHE_INODE_SUCCESS)) {
 		/* Build FH */
-		res->res_lookup3.LOOKUP3res_u.resok.object.data.data_val =
-		    gsh_malloc(NFS3_FHSIZE);
+		(void)
+		   nfs3_AllocateFH(&res->res_lookup3.LOOKUP3res_u.resok.object);
 
-		if (res->res_lookup3.LOOKUP3res_u.resok.object.data.data_val ==
-		    NULL)
-			res->res_lookup3.status = NFS3ERR_INVAL;
-		else {
-			if (nfs3_FSALToFhandle(
-				    &res->res_lookup3.LOOKUP3res_u.resok.object,
-				    entry_file->obj_handle,
-				    op_ctx->export)) {
-				/* Build entry attributes */
-				nfs_SetPostOpAttr(entry_file,
-						  &(res->res_lookup3.
-						    LOOKUP3res_u.resok.
-						    obj_attributes));
+		if (nfs3_FSALToFhandle(
+			    &res->res_lookup3.LOOKUP3res_u.resok.object,
+			    entry_file->obj_handle,
+			    op_ctx->export)) {
+			/* Build entry attributes */
+			nfs_SetPostOpAttr(entry_file,
+					  &res->res_lookup3.LOOKUP3res_u.
+						resok.obj_attributes);
 
-				/* Build directory attributes */
-				nfs_SetPostOpAttr(entry_dir,
-						  &(res->res_lookup3.
-						    LOOKUP3res_u.resok.
-						    dir_attributes));
-				res->res_lookup3.status = NFS3_OK;
-			}
+			/* Build directory attributes */
+			nfs_SetPostOpAttr(entry_dir,
+					  &res->res_lookup3.
+					     LOOKUP3res_u.resok.dir_attributes);
+			res->res_lookup3.status = NFS3_OK;
 		}
 	} else {
 		/* If we are here, there was an error */

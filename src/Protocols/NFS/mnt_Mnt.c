@@ -207,11 +207,6 @@ int mnt_Mnt(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	RES_MOUNTINFO->auth_flavors.auth_flavors_val =
 		gsh_calloc(index_auth, sizeof(int));
 
-	if (RES_MOUNTINFO->auth_flavors.auth_flavors_val == NULL) {
-		retval = NFS_REQ_DROP;
-		goto out;
-	}
-
 	RES_MOUNTINFO->auth_flavors.auth_flavors_len = index_auth;
 	for (i = 0; i < index_auth; i++)
 		RES_MOUNTINFO->auth_flavors.auth_flavors_val[i] =

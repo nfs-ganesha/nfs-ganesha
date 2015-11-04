@@ -140,11 +140,6 @@ int nfs4_op_getdeviceinfo(struct nfs_argop4 *op, compound_data_t *data,
 
 	da_buffer = gsh_malloc(da_addr_size);
 
-	if (da_buffer == NULL) {
-		nfs_status = NFS4ERR_SERVERFAULT;
-		goto out;
-	}
-
 	xdrmem_create(&da_addr_body, da_buffer, da_addr_size, XDR_ENCODE);
 
 	da_beginning = xdr_getpos(&da_addr_body);

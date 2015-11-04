@@ -205,11 +205,6 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 	res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val =
 	     gsh_calloc(num_entry, sizeof(secinfo4));
 
-	if (res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val == NULL) {
-		res_SECINFO4->status = NFS4ERR_SERVERFAULT;
-		goto out;
-	}
-
 	/**
 	 * @todo We have the opportunity to associate a preferred
 	 * security triple with a specific fs/export.  For now, list

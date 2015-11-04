@@ -481,9 +481,6 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		res->res_compound4.tag.utf8string_val =
 		    gsh_malloc(res->res_compound4.tag.utf8string_len + 1);
 
-		if (!res->res_compound4.tag.utf8string_val)
-			return NFS_REQ_DROP;
-
 		memcpy(res->res_compound4.tag.utf8string_val,
 		       arg->arg_compound4.tag.utf8string_val,
 		       res->res_compound4.tag.utf8string_len);
@@ -547,9 +544,6 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	/* Allocating the reply nfs_resop4 */
 	res->res_compound4.resarray.resarray_val =
 		gsh_calloc(argarray_len, sizeof(struct nfs_resop4));
-
-	if (res->res_compound4.resarray.resarray_val == NULL)
-		return NFS_REQ_DROP;
 
 	res->res_compound4.resarray.resarray_len = argarray_len;
 	resarray = res->res_compound4.resarray.resarray_val;

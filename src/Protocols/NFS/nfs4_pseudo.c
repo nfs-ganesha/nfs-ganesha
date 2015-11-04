@@ -604,25 +604,19 @@ void pseudo_unmount_export(struct gsh_export *export)
 		    && junction_inode != NULL) {
 			char *pseudopath = gsh_strdup(export->pseudopath);
 
-			if (pseudopath != NULL) {
-				/* Initialize req_ctx */
-				init_root_op_context(
-					&root_op_context,
-					mounted_on_export,
-					mounted_on_export->fsal_export,
-					NFS_V4, 0, NFS_REQUEST);
+			/* Initialize req_ctx */
+			init_root_op_context(
+				&root_op_context,
+				mounted_on_export,
+				mounted_on_export->fsal_export,
+				NFS_V4, 0, NFS_REQUEST);
 
-				/* Remove the unused PseudoFS nodes */
-				cleanup_pseudofs_node(pseudopath,
-						      junction_inode);
+			/* Remove the unused PseudoFS nodes */
+			cleanup_pseudofs_node(pseudopath,
+					      junction_inode);
 
-				gsh_free(pseudopath);
-				release_root_op_context();
-			} else {
-				LogCrit(COMPONENT_EXPORT,
-					"Could not clean up PseudoFS for %s, out of memory",
-					export->pseudopath);
-			}
+			gsh_free(pseudopath);
+			release_root_op_context();
 		}
 
 		/* Release our reference to the export we are mounted on. */

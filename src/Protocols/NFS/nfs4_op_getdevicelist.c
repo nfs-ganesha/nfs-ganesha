@@ -129,13 +129,7 @@ int nfs4_op_getdevicelist(struct nfs_argop4 *op, compound_data_t *data,
 
 	res_GETDEVICELIST4->GETDEVICELIST4res_u.gdlr_resok4.
 	     gdlr_deviceid_list.gdlr_deviceid_list_val =
-	     gsh_malloc(cb_opaque.max * sizeof(deviceid4));
-
-	if (res_GETDEVICELIST4->GETDEVICELIST4res_u.gdlr_resok4.
-	     gdlr_deviceid_list.gdlr_deviceid_list_val == NULL) {
-		nfs_status = NFS4ERR_SERVERFAULT;
-		goto out;
-	}
+				gsh_malloc(cb_opaque.max * sizeof(deviceid4));
 
 	cb_opaque.buffer =
 	    res_GETDEVICELIST4->GETDEVICELIST4res_u.gdlr_resok4.

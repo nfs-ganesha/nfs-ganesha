@@ -425,11 +425,6 @@ int nfs4_op_layoutget(struct nfs_argop4 *op, compound_data_t *data,
 	 */
 	layouts = gsh_calloc(max_segment_count, sizeof(layout4));
 
-	if (layouts == NULL) {
-		nfs_status = NFS4ERR_SERVERFAULT;
-		goto out;
-	}
-
 	arg.type = arg_LAYOUTGET4->loga_layout_type;
 	arg.minlength = arg_LAYOUTGET4->loga_minlength;
 	arg.export_id = op_ctx->export->export_id;

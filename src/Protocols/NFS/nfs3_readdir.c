@@ -229,12 +229,6 @@ int nfs3_readdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	}
 
 	tracker.entries = gsh_calloc(estimated_num_entries, sizeof(entry3));
-
-	if (tracker.entries == NULL) {
-		rc = NFS_REQ_DROP;
-		goto out;
-	}
-
 	tracker.total_entries = estimated_num_entries;
 	tracker.mem_left = count - sizeof(READDIR3resok);
 	tracker.count = 0;
@@ -420,11 +414,6 @@ cache_inode_status_t nfs3_readdir_callback(void *opaque,
 
 	e3->fileid = attr->fileid;
 	e3->name = gsh_strdup(cb_parms->name);
-	if (e3->name == NULL) {
-		tracker->error = NFS3ERR_SERVERFAULT;
-		cb_parms->in_result = false;
-		return CACHE_INODE_SUCCESS;
-	}
 	e3->cookie = cb_parms->cookie;
 
 	if (tracker->count > 0)

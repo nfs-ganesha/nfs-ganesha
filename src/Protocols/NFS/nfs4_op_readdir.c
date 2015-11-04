@@ -301,11 +301,6 @@ not_junction:
 	tracker_entry->name.utf8string_len = namelen;
 	tracker_entry->name.utf8string_val = gsh_malloc(namelen + 1);
 
-	if (tracker_entry->name.utf8string_val == NULL) {
-		/* Could not allocate name */
-		goto server_fault;
-	}
-
 	memcpy(tracker_entry->name.utf8string_val,
 	       cb_parms->name,
 	       namelen);

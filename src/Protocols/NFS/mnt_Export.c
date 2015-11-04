@@ -83,19 +83,13 @@ static bool proc_export(struct gsh_export *export, void *arg)
 	}
 
 	new_expnode = gsh_calloc(1, sizeof(struct exportnode));
-	if (new_expnode == NULL)
-		goto nomem;
 	new_expnode->ex_dir = gsh_strdup(export->fullpath);
-	if (new_expnode->ex_dir == NULL)
-		goto nomem;
+
 	glist_for_each(glist_item, &export->clients) {
 		client =
 		    glist_entry(glist_item, exportlist_client_entry_t,
 				cle_list);
 		group = gsh_calloc(1, sizeof(struct groupnode));
-
-		if (group == NULL)
-			goto nomem;
 
 		if (grp_tail == NULL)
 			new_expnode->ex_groups = group;
@@ -152,8 +146,6 @@ static bool proc_export(struct gsh_export *export, void *arg)
 			     "Export %s client %s",
 			     export->fullpath, grp_name);
 		group->gr_name = gsh_strdup(grp_name);
-		if (group->gr_name == NULL)
-			goto nomem;
 	}
 
 	if (state->head == NULL)
@@ -163,23 +155,6 @@ static bool proc_export(struct gsh_export *export, void *arg)
 
 	state->tail = new_expnode;
 	return true;
-
- nomem:
-	if (new_expnode != NULL) {
-		if (new_expnode->ex_dir != NULL)
-			gsh_free(new_expnode->ex_dir);
-		for (group = new_expnode->ex_groups;
-		     group != NULL;
-		     group = grp_tail) {
-			grp_tail = group->gr_next;
-			if (group->gr_name != NULL)
-				gsh_free(group->gr_name);
-			gsh_free(group);
-		}
-		gsh_free(new_expnode);
-	}
-	state->retval = errno;
-	return false;
 }
 
 /**
