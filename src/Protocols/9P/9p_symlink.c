@@ -101,8 +101,6 @@ int _9p_symlink(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	snprintf(symlink_name, MAXNAMLEN, "%.*s", *name_len, name_str);
 
 	create_arg.link_content = gsh_malloc(MAXPATHLEN);
-	if (create_arg.link_content == NULL)
-		return _9p_rerror(req9p, msgtag, EFAULT, plenout, preply);
 
 	snprintf(create_arg.link_content, MAXPATHLEN, "%.*s", *linkcontent_len,
 		 linkcontent_str);

@@ -103,8 +103,6 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	}
 
 	pxattrfid = gsh_calloc(1, sizeof(struct _9p_fid));
-	if (pxattrfid == NULL)
-		return _9p_rerror(req9p, msgtag, ENOMEM, plenout, preply);
 
 	/* set op_ctx, it will be useful if FSAL is later called */
 	_9p_init_opctx(pfid, req9p);
@@ -115,10 +113,6 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	snprintf(name, MAXNAMLEN, "%.*s", *name_len, name_str);
 
 	pxattrfid->specdata.xattr.xattr_content = gsh_malloc(XATTR_BUFFERSIZE);
-	if (pxattrfid->specdata.xattr.xattr_content == NULL) {
-		gsh_free(pxattrfid);
-		return _9p_rerror(req9p, msgtag, ENOMEM, plenout, preply);
-	}
 
 	if (*name_len == 0) {
 		/* xattrwalk is used with an empty name,

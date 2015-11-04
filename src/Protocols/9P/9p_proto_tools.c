@@ -57,8 +57,7 @@ static struct _9p_user_cred *new_9p_user_creds()
 	struct _9p_user_cred *result =
 		gsh_calloc(sizeof(struct _9p_user_cred), 1);
 
-	if (result != NULL)
-		result->refcount = 1;
+	result->refcount = 1;
 
 	return result;
 }
@@ -175,8 +174,6 @@ int _9p_tools_get_req_context_by_uid(u32 uid, struct _9p_fid *pfid)
 		return -ENOENT;
 
 	pfid->ucred = new_9p_user_creds();
-	if (pfid->ucred == NULL)
-		return -ENOMEM;
 
 	pfid->gdata = grpdata;
 	pfid->ucred->creds.caller_uid = grpdata->uid;
@@ -208,8 +205,6 @@ int _9p_tools_get_req_context_by_name(int uname_len, char *uname_str,
 		return -ENOENT;
 
 	pfid->ucred = new_9p_user_creds();
-	if (pfid->ucred == NULL)
-		return -ENOMEM;
 
 	pfid->gdata = grpdata;
 	pfid->ucred->creds.caller_uid = grpdata->uid;

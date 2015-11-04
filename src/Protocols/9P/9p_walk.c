@@ -88,8 +88,6 @@ int _9p_walk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	}
 	_9p_init_opctx(pfid, req9p);
 	pnewfid = gsh_calloc(1, sizeof(struct _9p_fid));
-	if (pnewfid == NULL)
-		return _9p_rerror(req9p, msgtag, ERANGE, plenout, preply);
 
 	/* Initialize state_t embeded in fid. The refcount is initialized
 	 * to one to represent the state_t being embeded in the fid. This

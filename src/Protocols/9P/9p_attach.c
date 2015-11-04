@@ -118,10 +118,6 @@ int _9p_attach(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 	/* Set export and fid id in fid */
 	pfid = gsh_calloc(1, sizeof(struct _9p_fid));
-	if (pfid == NULL) {
-		err = ENOMEM;
-		goto errout;
-	}
 
 	/* Initialize state_t embeded in fid. The refcount is initialized
 	 * to one to represent the state_t being embeded in the fid. This

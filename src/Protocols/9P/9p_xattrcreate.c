@@ -123,9 +123,6 @@ int _9p_xattrcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		/* Create the xattr at the FSAL level and cache result */
 		pfid->specdata.xattr.xattr_content =
 		     gsh_malloc(XATTR_BUFFERSIZE);
-		if (pfid->specdata.xattr.xattr_content == NULL)
-			return _9p_rerror(req9p, msgtag, ENOMEM,
-					  plenout, preply);
 		/* Special Value */
 		pfid->specdata.xattr.xattr_id = ACL_ACCESS_XATTR_ID;
 	} else {
@@ -134,9 +131,6 @@ int _9p_xattrcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		/* Create the xattr at the FSAL level and cache result */
 		pfid->specdata.xattr.xattr_content =
 		     gsh_malloc(XATTR_BUFFERSIZE);
-		if (pfid->specdata.xattr.xattr_content == NULL)
-			return _9p_rerror(req9p, msgtag, ENOMEM,
-					  plenout, preply);
 
 		/* try to create if flag doesn't have REPLACE bit */
 		if ((*flag & XATTR_REPLACE) == 0)
