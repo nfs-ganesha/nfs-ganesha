@@ -437,17 +437,6 @@ int get_nlm_state(enum state_type state_type,
 
 	state = gsh_malloc(sizeof(*state));
 
-	if (state == NULL) {
-		display_nlm_state(&dspbuf, &key);
-		LogCrit(COMPONENT_STATE, "No memory for {%s}", str);
-
-		*pstate = NULL;
-
-		hashtable_releaselatched(ht_nlm_states, &latch);
-
-		return NLM4_DENIED_NOLOCKS;
-	}
-
 	/* Copy everything over */
 	memcpy(state, &key, sizeof(key));
 

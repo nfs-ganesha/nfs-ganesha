@@ -514,13 +514,6 @@ nfs_client_id_t *create_client_id(clientid4 clientid,
 	nfs_client_id_t *client_rec = pool_alloc(client_id_pool, NULL);
 	state_owner_t *owner;
 
-	if (client_rec == NULL) {
-		LogCrit(COMPONENT_CLIENTID,
-			"Unable to allocate memory for clientid %" PRIx64,
-			clientid);
-		return NULL;
-	}
-
 	PTHREAD_MUTEX_init(&client_rec->cid_mutex, NULL);
 
 	owner = &client_rec->cid_owner;
@@ -1287,12 +1280,6 @@ int nfs_Init_client_id(void)
 	    pool_init("NFS4 Client ID Pool", sizeof(nfs_client_id_t),
 		      pool_basic_substrate, NULL, NULL, NULL);
 
-	if (client_id_pool == NULL) {
-		LogCrit(COMPONENT_INIT,
-			"NFS CLIENT_ID: Cannot init Client Id Pool");
-		return -1;
-	}
-
 	return CLIENT_ID_SUCCESS;
 }
 
@@ -1630,9 +1617,6 @@ nfs_client_record_t *get_client_record(const char *const value,
 
 	record = gsh_malloc(sizeof(nfs_client_record_t) + len);
 
-	if (record == NULL)
-		return NULL;
-
 	record->cr_refcount = 1;
 	record->cr_client_val_len = len;
 	record->cr_confirmed_rec = NULL;
@@ -1747,14 +1731,8 @@ nfs41_foreach_client_callback(bool(*cb) (nfs_client_id_t *cl, void *state),
 
 			if (pclientid->cid_minorversion > 0) {
 				cb_arg = gsh_malloc(
-						sizeof(struct
-							client_callback_arg));
-				if (cb_arg == NULL) {
-					LogCrit(COMPONENT_CLIENTID,
-						"malloc failed for %p",
-						pclientid);
-					continue;
-				}
+					sizeof(struct client_callback_arg));
+
 				cb_arg->cb = cb;
 				cb_arg->state = state;
 				cb_arg->pclientid = pclientid;

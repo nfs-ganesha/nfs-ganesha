@@ -230,10 +230,6 @@ void nfs4_create_clid_name(nfs_client_record_t *cl_rec,
 			    strlen(cidstr_len);
 		/* hold both long form clientid and IP */
 		clientid->cid_recov_dir = gsh_malloc(total_len);
-		if (clientid->cid_recov_dir == NULL) {
-			LogEvent(COMPONENT_CLIENTID, "Mem_Alloc FAILED");
-			return;
-		}
 
 		(void) snprintf(clientid->cid_recov_dir, total_len,
 				"%s-(%s:%s)",
@@ -278,10 +274,6 @@ void nfs4_create_clid_name41(nfs_client_record_t *cl_rec,
 			    strlen(cidstr_len);
 		/* hold both long form clientid and IP */
 		clientid->cid_recov_dir = gsh_malloc(total_len);
-		if (clientid->cid_recov_dir == NULL) {
-			LogEvent(COMPONENT_CLIENTID, "Mem_Alloc FAILED");
-			return;
-		}
 
 		(void) snprintf(clientid->cid_recov_dir, total_len,
 				"%s-(%s:%s)",
@@ -308,12 +300,6 @@ void nfs4_add_clid(nfs_client_id_t *clientid)
 
 	if (clientid->cid_minorversion > 0)
 		nfs4_create_clid_name41(clientid->cid_client_record, clientid);
-
-	if (clientid->cid_recov_dir == NULL) {
-		LogEvent(COMPONENT_CLIENTID,
-			 "Failed to create client in recovery dir, no name");
-		return;
-	}
 
 	/* break clientid down if it is greater than max dir name */
 	/* and create a directory hierachy to represent the clientid. */
@@ -417,12 +403,6 @@ void nfs4_rm_clid(const char *recov_dir, char *parent_path, int position)
 		return;
 	}
 	segment = gsh_malloc(NAME_MAX+1);
-	if (segment == NULL) {
-		LogEvent(COMPONENT_CLIENTID,
-			 "Failed to remove client in recovery dir (%s), ENOMEM",
-			  recov_dir);
-		return;
-	}
 
 	memset(segment, 0, NAME_MAX+1);
 	strncpy(segment, &recov_dir[position], NAME_MAX);
@@ -432,13 +412,7 @@ void nfs4_rm_clid(const char *recov_dir, char *parent_path, int position)
 	/* which is parent path + '/' + new segment */
 	total_len = strlen(parent_path) + segment_len + 2;
 	path = gsh_malloc(total_len);
-	if (path == NULL) {
-		LogEvent(COMPONENT_CLIENTID,
-			 "Failed to remove client in recovery dir (%s), ENOMEM",
-			  recov_dir);
-		gsh_free(segment);
-		return;
-	}
+
 	memset(path, 0, total_len);
 	(void) snprintf(path, total_len, "%s/%s",
 			parent_path, segment);
@@ -597,19 +571,10 @@ void nfs4_cp_pop_revoked_delegs(clid_entry_t *clid_ent,
 		}
 
 		new_ent = gsh_malloc(sizeof(rdel_fh_t));
-		if (new_ent == NULL) {
-			LogEvent(COMPONENT_CLIENTID, "Alloc Failed: rdel_fh_t");
-			continue;
-		}
 
 		/* Ignore the beginning \x1 and copy the rest (file handle) */
 		new_ent->rdfh_handle_str = gsh_strdup(dentp->d_name+1);
-		if (new_ent->rdfh_handle_str == NULL) {
-			gsh_free(new_ent);
-			LogEvent(COMPONENT_CLIENTID,
-				"Alloc Failed: rdel_fh_t->rdfh_handle_str");
-			continue;
-		}
+
 		glist_add(&clid_ent->cl_rfh_list, &new_ent->rdfh_list);
 		LogFullDebug(COMPONENT_CLIENTID,
 			"revoked handle: %s",
@@ -697,13 +662,7 @@ static int nfs4_read_recov_clids(DIR *dp,
 		segment_len = strlen(dentp->d_name);
 		total_len = segment_len + 2 + strlen(parent_path);
 		path = gsh_malloc(total_len);
-		/* if failed on this subdirectory, move to next */
-		/* we might be lucky */
-		if (path == NULL) {
-			LogEvent(COMPONENT_CLIENTID,
-				 "malloc faied errno=%d", errno);
-			continue;
-		}
+
 		memset(path, 0, total_len);
 
 		strcpy(path, parent_path);
@@ -716,13 +675,7 @@ static int nfs4_read_recov_clids(DIR *dp,
 			total_tgt_len = segment_len + 2 +
 					strlen(tgtdir);
 			new_path = gsh_malloc(total_tgt_len);
-			if (new_path == NULL) {
-				LogEvent(COMPONENT_CLIENTID,
-					 "malloc faied errno=%d",
-					 errno);
-				gsh_free(path);
-				continue;
-			}
+
 			memset(new_path, 0, total_tgt_len);
 			strcpy(new_path, tgtdir);
 			strcat(new_path, "/");
@@ -742,12 +695,7 @@ static int nfs4_read_recov_clids(DIR *dp,
 		else
 			total_clid_len = segment_len + 1;
 		build_clid = gsh_malloc(total_clid_len);
-		if (build_clid == NULL) {
-			LogEvent(COMPONENT_CLIENTID,
-				 "malloc faied errno=%d", errno);
-			free_heap(path, new_path, NULL);
-			continue;
-		}
+
 		memset(build_clid, 0, total_clid_len);
 		if (clid_str)
 			strcpy(build_clid, clid_str);
@@ -831,18 +779,9 @@ static int nfs4_read_recov_clids(DIR *dp,
 			temp[len] = 0;
 			cid_len = atoi(temp);
 			len = strlen(ptr2);
-			if ((len == (cid_len+2)) &&
-			    (ptr2[len-1] == ')')) {
-				new_ent =
-				    gsh_malloc(sizeof(clid_entry_t));
-				if (new_ent == NULL) {
-					LogEvent(COMPONENT_CLIENTID,
-						 "Unable to allocate memory.");
-					free_heap(path,
-						  NULL,
-						  build_clid);
-					continue;
-				}
+			if ((len == (cid_len+2)) && (ptr2[len-1] == ')')) {
+				new_ent = gsh_malloc(sizeof(clid_entry_t));
+
 				nfs4_cp_pop_revoked_delegs(new_ent,
 							path,
 							tgtdir,
@@ -1044,11 +983,6 @@ void nfs4_clean_old_recov_dir(char *parent_path)
 		/* This is a directory, we need process files in it! */
 		total_len = strlen(parent_path) + strlen(dentp->d_name) + 2;
 		path = gsh_malloc(total_len);
-		if (path == NULL) {
-			LogEvent(COMPONENT_CLIENTID,
-				 "Unable to allocate memory.");
-			continue;
-		}
 
 		snprintf(path, total_len, "%s/%s", parent_path, dentp->d_name);
 

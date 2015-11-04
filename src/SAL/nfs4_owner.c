@@ -532,16 +532,10 @@ void Process_nfs4_conflict(LOCK4denied *denied, state_owner_t *holder,
 	else
 		denied->locktype = WRITE_LT;
 
-	if (holder != NULL && holder->so_owner_len != 0)
+	if (holder != NULL && holder->so_owner_len != 0) {
 		denied->owner.owner.owner_val =
 		    gsh_malloc(holder->so_owner_len);
-	else
-		denied->owner.owner.owner_val = NULL;
 
-	LogFullDebug(COMPONENT_STATE, "denied->owner.owner.owner_val = %p",
-		     denied->owner.owner.owner_val);
-
-	if (denied->owner.owner.owner_val != NULL) {
 		denied->owner.owner.owner_len = holder->so_owner_len;
 
 		memcpy(denied->owner.owner.owner_val, holder->so_owner_val,
@@ -550,6 +544,9 @@ void Process_nfs4_conflict(LOCK4denied *denied, state_owner_t *holder,
 		denied->owner.owner.owner_len = unknown_owner.so_owner_len;
 		denied->owner.owner.owner_val = unknown_owner.so_owner_val;
 	}
+
+	LogFullDebug(COMPONENT_STATE, "denied->owner.owner.owner_val = %p",
+		     denied->owner.owner.owner_val);
 
 	if (holder != NULL && holder->so_type == STATE_LOCK_OWNER_NFSV4)
 		denied->owner.clientid =
@@ -591,10 +588,9 @@ void Copy_nfs4_denied(LOCK4denied *denied_dst, LOCK4denied *denied_src)
 		LogFullDebug(COMPONENT_STATE,
 			     "denied_dst->owner.owner.owner_val = %p",
 			     denied_dst->owner.owner.owner_val);
-		if (denied_dst->owner.owner.owner_val)
-			memcpy(denied_dst->owner.owner.owner_val,
-			       denied_src->owner.owner.owner_val,
-			       denied_src->owner.owner.owner_len);
+		memcpy(denied_dst->owner.owner.owner_val,
+		       denied_src->owner.owner.owner_val,
+		       denied_src->owner.owner.owner_len);
 	}
 
 	if (denied_dst->owner.owner.owner_val == NULL) {

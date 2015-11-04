@@ -523,6 +523,8 @@ void dump_all_locks(const char *label)
 /**
  * @brief Create a lock entry
  *
+ * This function aborts (in gsh_malloc) if no memory is available.
+ *
  * @param[in] entry    Cache entry to lock
  * @param[in] export   Export being accessed
  * @param[in] blocked  Blocking status
@@ -530,7 +532,7 @@ void dump_all_locks(const char *label)
  * @param[in] state    State associated with lock
  * @param[in] lock     Lock description
  *
- * @return The new entry or NULL.
+ * @return The new entry.
  */
 static state_lock_entry_t *create_state_lock_entry(cache_entry_t *entry,
 						   struct gsh_export *export,
@@ -542,8 +544,6 @@ static state_lock_entry_t *create_state_lock_entry(cache_entry_t *entry,
 	state_lock_entry_t *new_entry;
 
 	new_entry = gsh_malloc(sizeof(*new_entry));
-	if (!new_entry)
-		return NULL;
 
 	LogFullDebug(COMPONENT_STATE, "new_entry = %p owner %p", new_entry,
 		     owner);
@@ -616,7 +616,7 @@ static state_lock_entry_t *create_state_lock_entry(cache_entry_t *entry,
  *
  * @param[in] orig_entry Entry to duplicate
  *
- * @return New entry or NULL.
+ * @return New entry.
  */
 static inline state_lock_entry_t *
 state_lock_entry_t_dup(state_lock_entry_t *orig_entry)
@@ -844,16 +844,6 @@ static void merge_lock_entry(cache_entry_t *entry,
 				/* Need to split old lock */
 				check_entry_right =
 				    state_lock_entry_t_dup(check_entry);
-				if (check_entry_right == NULL) {
-					/** @todo FSF: OOPS....
-					 * Leave old lock in place, it may cause
-					 * false conflicts, but should
-					 * eventually be released
-					 */
-					LogMajor(COMPONENT_STATE,
-						 "Memory allocation failure during lock upgrade/downgrade");
-					continue;
-				}
 				glist_add_tail(&entry->object.file.lock_list,
 					       &(check_entry_right->sle_list));
 			} else {
@@ -982,12 +972,6 @@ static state_status_t subtract_lock_from_entry(cache_entry_t *entry,
 	/* Delete the old entry and add one or two new entries */
 	if (lock->lock_start > found_entry->sle_lock.lock_start) {
 		found_entry_left = state_lock_entry_t_dup(found_entry);
-		if (found_entry_left == NULL) {
-			free_list(split_list);
-			*removed = false;
-			status = STATE_MALLOC_ERROR;
-			return status;
-		}
 
 		found_entry_left->sle_lock.lock_length =
 		    lock->lock_start - found_entry->sle_lock.lock_start;
@@ -997,12 +981,6 @@ static state_status_t subtract_lock_from_entry(cache_entry_t *entry,
 
 	if (range_end < found_entry_end) {
 		found_entry_right = state_lock_entry_t_dup(found_entry);
-		if (found_entry_right == NULL) {
-			free_list(split_list);
-			*removed = false;
-			status = STATE_MALLOC_ERROR;
-			return status;
-		}
 
 		found_entry_right->sle_lock.lock_start = range_end + 1;
 
@@ -1437,25 +1415,10 @@ state_status_t state_add_grant_cookie(cache_entry_t *entry,
 	}
 
 	hash_entry = gsh_malloc(sizeof(*hash_entry));
-	if (hash_entry == NULL) {
-		if (str_valid)
-			LogFullDebug(COMPONENT_STATE,
-				     "KEY {%s} NO MEMORY", str);
-		status = STATE_MALLOC_ERROR;
-		return status;
-	}
 
 	memset(hash_entry, 0, sizeof(*hash_entry));
 
 	buffkey.addr = gsh_malloc(cookie_size);
-	if (buffkey.addr == NULL) {
-		if (str_valid)
-			LogFullDebug(COMPONENT_STATE,
-				     "KEY {%s} NO MEMORY", str);
-		gsh_free(hash_entry);
-		status = STATE_MALLOC_ERROR;
-		return status;
-	}
 
 	hash_entry->sce_entry = entry;
 	hash_entry->sce_lock_entry = lock_entry;
@@ -2191,9 +2154,6 @@ state_status_t do_unlock_no_owner(cache_entry_t *entry,
 					       NULL, /* no real state */
 					       lock);
 
-	if (unlock_entry == NULL)
-		return STATE_MALLOC_ERROR;
-
 	glist_init(&fsal_unlock_list);
 
 	glist_add_tail(&fsal_unlock_list, &unlock_entry->sle_list);
@@ -2768,10 +2728,6 @@ state_status_t state_lock(cache_entry_t *entry,
 					      owner,
 					      state,
 					      lock);
-	if (!found_entry) {
-		status = STATE_MALLOC_ERROR;
-		goto out_unlock;
-	}
 
 	/* If no conflict in lock list, or FSAL supports async blocking locks,
 	 * make FSAL call. Don't ask for conflict if we know about a conflict.

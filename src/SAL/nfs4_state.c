@@ -136,15 +136,6 @@ state_status_t state_add_impl(cache_entry_t *entry, enum state_type state_type,
 
 	pnew_state = pool_alloc(state_v4_pool, NULL);
 
-	if (pnew_state == NULL) {
-		LogCrit(COMPONENT_STATE,
-			"Can't allocate a new file state from cache pool");
-
-		/* stat */
-		status = STATE_MALLOC_ERROR;
-		goto errout;
-	}
-
 	PTHREAD_MUTEX_init(&pnew_state->state_mutex, NULL);
 
 	mutex_init = true;

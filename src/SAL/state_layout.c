@@ -83,8 +83,6 @@ state_status_t state_add_segment(state_t *state, struct pnfs_segment *segment,
 	}
 
 	new_segment = gsh_calloc(1, sizeof(*new_segment));
-	if (!new_segment)
-		return STATE_MALLOC_ERROR;
 
 	new_segment->sls_fsal_data = fsal_data;
 	new_segment->sls_state = state;

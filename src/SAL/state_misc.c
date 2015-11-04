@@ -1176,14 +1176,6 @@ state_owner_t *get_state_owner(care_t care, state_owner_t *key,
 
 	owner = pool_alloc(state_owner_pool, NULL);
 
-	if (owner == NULL) {
-		if (!str_valid)
-			display_owner(&dspbuf, key);
-		LogCrit(COMPONENT_STATE, "No memory for {%s}", str);
-
-		return NULL;
-	}
-
 	/* Copy everything over */
 	memcpy(owner, key, sizeof(*key));
 
@@ -1201,19 +1193,14 @@ state_owner_t *get_state_owner(care_t care, state_owner_t *key,
 	if (init_owner != NULL)
 		init_owner(owner);
 
-	owner->so_owner_val = gsh_malloc(key->so_owner_len);
 
-	if (owner->so_owner_val == NULL) {
-		/* Discard the created owner */
-		if (!str_valid)
-			display_owner(&dspbuf, key);
-		LogCrit(COMPONENT_STATE, "No memory for {%s}", str);
+	if (key->so_owner_len != 0) {
+		owner->so_owner_val = gsh_malloc(key->so_owner_len);
 
-		free_state_owner(owner);
-		return NULL;
+		memcpy(owner->so_owner_val,
+		       key->so_owner_val,
+		       key->so_owner_len);
 	}
-
-	memcpy(owner->so_owner_val, key->so_owner_val, key->so_owner_len);
 
 	glist_init(&owner->so_lock_list);
 
