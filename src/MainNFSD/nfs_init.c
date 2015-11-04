@@ -531,18 +531,12 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 	nfs41_session_pool =
 	    pool_init("NFSv4.1 session pool", sizeof(nfs41_session_t),
 		      pool_basic_substrate, NULL, NULL, NULL);
-	if (!nfs41_session_pool)
-		LogFatal(COMPONENT_INIT,
-			 "Error while allocating NFSv4.1 session pool");
 
 	request_pool =
 	    pool_init("Request pool", sizeof(request_data_t),
 		      pool_basic_substrate, NULL,
 		      NULL, /* FASTER constructor_request_data_t */
 		      NULL);
-	if (!request_pool)
-		LogFatal(COMPONENT_INIT,
-			 "Error while allocating request pool");
 
 	/* If rpcsec_gss is used, set the path to the keytab */
 #ifdef _HAVE_GSSAPI

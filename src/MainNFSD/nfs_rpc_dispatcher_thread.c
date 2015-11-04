@@ -1517,12 +1517,6 @@ static inline request_data_t *alloc_nfs_request(SVCXPRT *xprt)
 {
 	request_data_t *reqdata = pool_alloc(request_pool, NULL);
 
-	if (!reqdata) {
-		LogMajor(COMPONENT_DISPATCH,
-			 "Unable to allocate request. Exiting...");
-		Fatal();
-	}
-
 	/* set the request as NFS already-read */
 	reqdata->rtype = NFS_REQUEST;
 

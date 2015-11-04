@@ -132,24 +132,14 @@ void *_9p_rdma_thread(void *Arg)
 	struct _9p_outqueue *outqueue = trans->private_data;
 	struct sockaddr *addrpeer;
 
-	priv = gsh_malloc(sizeof(*priv));
-	if (priv == NULL) {
-		LogFatal(COMPONENT_9P,
-			 "9P/RDMA: trans handler could not malloc private structure");
-		goto error;
-	}
-	memset(priv, 0, sizeof(*priv));
+	priv = gsh_calloc(1, sizeof(*priv));
+
 	trans->private_data = priv;
 	priv->pernic = msk_getpd(trans)->private;
 	priv->outqueue = outqueue;
 
-	p_9p_conn = gsh_malloc(sizeof(*p_9p_conn));
-	if (p_9p_conn == NULL) {
-		LogFatal(COMPONENT_9P,
-			 "9P/RDMA: trans handler could not malloc _9p_conn");
-		goto error;
-	}
-	memset(p_9p_conn, 0, sizeof(*p_9p_conn));
+	p_9p_conn = gsh_calloc(1, sizeof(*p_9p_conn));
+
 	priv->pconn = p_9p_conn;
 
 	for (i = 0; i < FLUSH_BUCKETS; i++) {
@@ -210,13 +200,7 @@ static void _9p_rdma_setup_pernic(msk_trans_t *trans, uint8_t *outrdmabuf)
 	if (msk_getpd(trans)->private)
 		return;
 
-	pernic = gsh_malloc(sizeof(*pernic));
-	if (!pernic) {
-		LogFatal(COMPONENT_9P,
-			 "9P/RDMA: pernic setup could not allocate pernic");
-		return;
-	}
-	memset(pernic, 0, sizeof(*pernic));
+	pernic = gsh_calloc(1, sizeof(*pernic));
 
 	/* register output buffers */
 	pernic->outmr = msk_reg_mr(trans, outrdmabuf,
@@ -234,11 +218,6 @@ static void _9p_rdma_setup_pernic(msk_trans_t *trans, uint8_t *outrdmabuf)
 	/* Alloc rdmabuf */
 	pernic->rdmabuf = gsh_malloc(_9p_param._9p_rdma_inpool_size *
 				     _9p_param._9p_rdma_msize);
-	if (pernic->rdmabuf == NULL) {
-		LogFatal(COMPONENT_9P,
-			 "9P/RDMA: pernic setup could not malloc rdmabuf");
-		goto error;
-	}
 
 	/* Register rdmabuf */
 	pernic->inmr = msk_reg_mr(trans, pernic->rdmabuf,
@@ -255,15 +234,8 @@ static void _9p_rdma_setup_pernic(msk_trans_t *trans, uint8_t *outrdmabuf)
 
 	/* Get prepared to recv data */
 
-	pernic->rdata = gsh_malloc(_9p_param._9p_rdma_inpool_size
-					* sizeof(*pernic->rdata));
-	if (pernic->rdata == NULL) {
-		LogFatal(COMPONENT_9P,
-			 "9P/RDMA: trans handler could not malloc rdata");
-		goto error;
-	}
-	memset(pernic->rdata, 0, _9p_param._9p_rdma_inpool_size
-					* sizeof(*pernic->rdata));
+	pernic->rdata = gsh_calloc(_9p_param._9p_rdma_inpool_size,
+				   sizeof(*pernic->rdata));
 
 	for (i = 0; i < _9p_param._9p_rdma_inpool_size; i++) {
 		pernic->rdata[i].data = pernic->rdmabuf +
@@ -309,20 +281,11 @@ static void _9p_rdma_setup_global(uint8_t **poutrdmabuf, msk_data_t **pwdata,
 
 	outrdmabuf = gsh_malloc(_9p_param._9p_rdma_outpool_size
 				* _9p_param._9p_rdma_msize);
-	if (outrdmabuf == NULL) {
-		LogFatal(COMPONENT_9P,
-			 "9P/RDMA: trans handler could not malloc rdmabuf");
-		return;
-	}
+
 	*poutrdmabuf = outrdmabuf;
 
 	wdata = gsh_malloc(_9p_param._9p_rdma_outpool_size
 			   * sizeof(*wdata));
-	if (wdata == NULL) {
-		LogFatal(COMPONENT_9P,
-			 "9P/RDMA: trans handler could not malloc wdata");
-		return;
-	}
 
 	for (i = 0; i < _9p_param._9p_rdma_outpool_size; i++) {
 		wdata[i].data = outrdmabuf +
@@ -336,11 +299,7 @@ static void _9p_rdma_setup_global(uint8_t **poutrdmabuf, msk_data_t **pwdata,
 	*pwdata = wdata;
 
 	outqueue = gsh_malloc(sizeof(*outqueue));
-	if (outqueue == NULL) {
-		LogFatal(COMPONENT_9P,
-			 "9P/RDMA: trans handler could not malloc outqueue");
-		return;
-	}
+
 	PTHREAD_MUTEX_init(&outqueue->lock, NULL);
 	PTHREAD_COND_init(&outqueue->cond, NULL);
 	outqueue->data = wdata;

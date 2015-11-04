@@ -103,6 +103,18 @@ char usage[] =
 	"PidFile    : "GANESHA_PIDFILE_PATH"\n"
 	"DebugLevel : NIV_EVENT\n" "ConfigFile : "GANESHA_CONFIG_PATH"\n";
 
+static inline char *main_strdup(const char *var, const char *str)
+{
+	char *s = strdup(str);
+
+	if (s == NULL) {
+		fprintf(stderr, "strdup failed for %s value %s\n", var, str);
+		abort();
+	}
+
+	return s;
+}
+
 /**
  * main: simply the main function.
  *
@@ -136,14 +148,8 @@ int main(int argc, char *argv[])
 	ServerEpoch = (time_t) ServerBootTime.tv_sec;
 
 	tempo_exec_name = strrchr(argv[0], '/');
-	if (tempo_exec_name != NULL) {
-		exec_name = gsh_strdup(tempo_exec_name + 1);
-		if (!exec_name) {
-			fprintf(stderr,
-				"Unable to allocate memory for exec name, exiting...\n");
-			exit(1);
-		}
-	}
+	if (tempo_exec_name != NULL)
+		exec_name = main_strdup("exec_name", tempo_exec_name + 1);
 
 	if (*exec_name == '\0')
 		exec_name = argv[0];
@@ -153,12 +159,7 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "Could not get local host name, exiting...\n");
 		exit(1);
 	} else {
-		host_name = gsh_strdup(localmachine);
-		if (!host_name) {
-			fprintf(stderr,
-				"Unable to allocate memory for hostname, exiting...\n");
-			exit(1);
-		}
+		host_name = main_strdup("host_name", localmachine);
 	}
 
 	/* now parsing options with getopt */
@@ -178,12 +179,7 @@ int main(int argc, char *argv[])
 
 		case 'L':
 			/* Default Log */
-			log_path = gsh_strdup(optarg);
-			if (!log_path) {
-				fprintf(stderr,
-					"Unable to allocate memory for log path.\n");
-				exit(1);
-			}
+			log_path = main_strdup("log_path", optarg);
 			break;
 
 		case 'N':
@@ -199,23 +195,12 @@ int main(int argc, char *argv[])
 		case 'f':
 			/* config file */
 
-			config_path = gsh_strdup(optarg);
-			if (!config_path) {
-				fprintf(stderr,
-					"Unable to allocate memory for config path.\n");
-				exit(1);
-			}
+			config_path = main_strdup("config_path", optarg);
 			break;
 
 		case 'p':
 			/* PID file */
-			pidfile_path = gsh_strdup(optarg);
-			if (!pidfile_path) {
-				fprintf(stderr,
-					"Path %s too long for option 'f'.\n",
-					optarg);
-				exit(1);
-			}
+			pidfile_path = main_strdup("pidfile_path", optarg);
 			break;
 
 		case 'F':
