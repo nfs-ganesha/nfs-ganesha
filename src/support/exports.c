@@ -288,11 +288,7 @@ static int add_client(struct glist_head *client_list,
 	int rc;
 
 	cli = gsh_calloc(sizeof(struct exportlist_client_entry__), 1);
-	if (cli == NULL) {
-		config_proc_error(cnode, err_type,
-				  "Allocate of client space failed");
-		goto out;
-	}
+
 	glist_init(&cli->cle_list);
 	switch (type_hint) {
 	case TERM_V4_ANY:
@@ -372,14 +368,6 @@ static int add_client(struct glist_head *client_list,
 						sizeof(struct
 						    exportlist_client_entry__),
 						1);
-					if (cli == NULL) {
-						config_proc_error(cnode,
-								  err_type,
-								  "Allocate of client space failed");
-						err_type->resource = true;
-						errcnt++;
-						break;
-					}
 					glist_init(&cli->cle_list);
 				}
 				if (ap->ai_family == AF_INET &&
@@ -483,8 +471,7 @@ static void *client_init(void *link_mem, void *self_struct)
 		return self_struct;
 	} else if (self_struct == NULL) {
 		cli = gsh_calloc(sizeof(struct exportlist_client_entry__), 1);
-		if (cli == NULL)
-			return NULL;
+
 		glist_init(&cli->cle_list);
 		cli->type = PROTO_CLIENT;
 		return cli;
@@ -651,8 +638,6 @@ static void *export_init(void *link_mem, void *self_struct)
 
 	if (self_struct == NULL) {
 		export = alloc_export();
-		if (export == NULL)
-			return NULL;
 		return export;
 	} else { /* free resources case */
 		export = self_struct;
@@ -1317,12 +1302,6 @@ static int build_default_root(struct config_error_type *err_type)
 	LogDebug(COMPONENT_CONFIG,
 		 "Allocating Pseudo root export");
 	export = alloc_export();
-
-	if (export == NULL) {
-		LogCrit(COMPONENT_CONFIG,
-			"Could not allocate space for pseudoroot export");
-		return -1;
-	}
 
 	/* Initialize req_ctx */
 	init_root_op_context(&root_op_context, export, NULL, 0, 0,

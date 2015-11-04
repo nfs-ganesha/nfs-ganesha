@@ -393,12 +393,6 @@ nfsstat4 nfs_req_creds(struct svc_req *req)
 					gsh_malloc(op_ctx->creds->caller_glen *
 						   sizeof(gid_t));
 
-				if ((*garray_copy) == NULL) {
-					LogCrit(COMPONENT_DISPATCH,
-						"Attempt to sqaush caller_garray failed - no memory");
-					return NFS4ERR_ACCESS;
-				}
-
 				memcpy((*garray_copy),
 				       op_ctx->creds->caller_garray,
 				       op_ctx->creds->caller_glen *

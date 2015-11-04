@@ -195,9 +195,6 @@ struct gsh_client *get_gsh_client(sockaddr_t *client_ipaddr, bool lookup_only)
 
 	server_st = gsh_calloc(1, (sizeof(struct server_stats) + addr_len));
 
-	if (server_st == NULL)
-		return NULL;
-
 	cl = &server_st->client;
 	memcpy(cl->addrbuf, addr, addr_len);
 	cl->addr.addr = cl->addrbuf;

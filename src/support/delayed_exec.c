@@ -282,10 +282,6 @@ void delayed_start(void)
 		    gsh_malloc(sizeof(struct delayed_thread));
 		int rc = 0;
 
-		if (thread == NULL) {
-			LogFatal(COMPONENT_THREAD,
-				 "Unable to start delayed executor: no memory.");
-		}
 		rc = pthread_create(&thread->id, &attr, delayed_thread, thread);
 		if (rc != 0) {
 			LogFatal(COMPONENT_THREAD,
@@ -347,21 +343,7 @@ int delayed_submit(void (*func) (void *), void *arg, nsecs_elapsed_t delay)
 	struct avltree_node *first = NULL;
 
 	mul = gsh_malloc(sizeof(struct delayed_multi));
-
-	if (mul == NULL) {
-		LogMajor(COMPONENT_THREAD,
-			 "Unable to allocate memory for delayed task.");
-		return ENOMEM;
-	}
-
 	task = gsh_malloc(sizeof(struct delayed_task));
-
-	if (task == NULL) {
-		gsh_free(mul);
-		LogMajor(COMPONENT_THREAD,
-			 "Unable to allocate memory for delayed task.");
-		return ENOMEM;
-	}
 
 	now(&mul->realtime);
 	timespec_add_nsecs(delay, &mul->realtime);

@@ -212,7 +212,7 @@ static void uid2grp_remove_user(struct cache_info *info)
  * @retval true on success.
  * @retval false if our reach exceeds our grasp.
  */
-bool uid2grp_add_user(struct group_data *gdata)
+void uid2grp_add_user(struct group_data *gdata)
 {
 	struct avltree_node *name_node;
 	struct avltree_node *id_node;
@@ -222,10 +222,7 @@ bool uid2grp_add_user(struct group_data *gdata)
 	struct cache_info *tmp;
 
 	info = gsh_malloc(sizeof(struct cache_info));
-	if (!info) {
-		LogEvent(COMPONENT_IDMAPPER, "memory alloc failed");
-		return false;
-	}
+
 	info->uid = gdata->uid;
 	info->uname.addr = gdata->uname.addr;
 	info->uname.len = gdata->uname.len;
@@ -266,8 +263,6 @@ bool uid2grp_add_user(struct group_data *gdata)
 		LogWarn(COMPONENT_IDMAPPER, "shouldn't happen, internal error");
 	if ((name_node && name_node2) || (id_node && id_node2))
 		LogWarn(COMPONENT_IDMAPPER, "shouldn't happen, internal error");
-
-	return true;
 }
 
 

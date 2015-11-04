@@ -441,7 +441,7 @@ struct cache_stats *cache_stp = &cache_st;
  * @param stats [IN] the stats structure to dereference in
  * @param lock  [IN] the lock in the stats owning struct
  *
- * @return pointer to proto struct, NULL on OOM
+ * @return pointer to proto struct
  *
  * @TODO make them inlines for release
  */
@@ -631,27 +631,19 @@ static void record_io_stats(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
 		if (op_ctx->nfs_vers == NFS_V3) {
 			struct nfsv3_stats *sp = get_v3(gsh_st, lock);
 
-			if (sp == NULL)
-				return;
 			iop = is_write ? &sp->write : &sp->read;
 		} else if (op_ctx->nfs_vers == NFS_V4) {
 			if (op_ctx->nfs_minorvers == 0) {
 				struct nfsv40_stats *sp = get_v40(gsh_st, lock);
 
-				if (sp == NULL)
-					return;
 				iop = is_write ? &sp->write : &sp->read;
 			} else if (op_ctx->nfs_minorvers == 1) {
 				struct nfsv41_stats *sp = get_v41(gsh_st, lock);
 
-				if (sp == NULL)
-					return;
 				iop = is_write ? &sp->write : &sp->read;
 			} else if (op_ctx->nfs_minorvers == 2) {
 				struct nfsv41_stats *sp = get_v42(gsh_st, lock);
 
-				if (sp == NULL)
-					return;
 				iop = is_write ? &sp->write : &sp->read;
 			}
 			/* the frightening thought is someday minor == 3 */
@@ -662,8 +654,6 @@ static void record_io_stats(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
 	} else if (op_ctx->req_type == _9P_REQUEST) {
 		struct _9p_stats *sp = get_9p(gsh_st, lock);
 
-		if (sp == NULL)
-			return;
 		iop = is_write ? &sp->write : &sp->read;
 #endif
 	} else {
@@ -742,8 +732,6 @@ static void record_nfsv4_op(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
 	if (minorversion == 0) {
 		struct nfsv40_stats *sp = get_v40(gsh_st, lock);
 
-		if (sp == NULL)
-			return;
 		/* record stuff */
 		switch (nfsv40_optype[proto_op]) {
 		case READ_OP:
@@ -761,8 +749,6 @@ static void record_nfsv4_op(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
 	} else if (minorversion == 1) {
 		struct nfsv41_stats *sp = get_v41(gsh_st, lock);
 
-		if (sp == NULL)
-			return;
 		/* record stuff */
 		switch (nfsv41_optype[proto_op]) {
 		case READ_OP:
@@ -783,8 +769,6 @@ static void record_nfsv4_op(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
 	} else if (minorversion == 2) {
 		struct nfsv41_stats *sp = get_v42(gsh_st, lock);
 
-		if (sp == NULL)
-			return;
 		/* record stuff */
 		switch (nfsv42_optype[proto_op]) {
 		case READ_OP:
@@ -819,8 +803,6 @@ static void record_compound(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
 
 		struct nfsv40_stats *sp = get_v40(gsh_st, lock);
 
-		if (sp == NULL)
-			return;
 		/* record stuff */
 		record_op(&sp->compounds, request_time, qwait_time, success,
 			  false);
@@ -828,8 +810,6 @@ static void record_compound(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
 	} else if (minorversion == 1) {
 		struct nfsv41_stats *sp = get_v41(gsh_st, lock);
 
-		if (sp == NULL)
-			return;
 		/* record stuff */
 		record_op(&sp->compounds, request_time, qwait_time, success,
 			  false);
@@ -837,8 +817,6 @@ static void record_compound(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
 	} else if (minorversion == 2) {
 		struct nfsv41_stats *sp = get_v42(gsh_st, lock);
 
-		if (sp == NULL)
-			return;
 		/* record stuff */
 		record_op(&sp->compounds, request_time, qwait_time, success,
 			  false);
@@ -876,8 +854,6 @@ static void record_stats(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
 		if (req->rq_vers == NFS_V3) {
 			struct nfsv3_stats *sp = get_v3(gsh_st, lock);
 
-			if (sp == NULL)
-				return;
 			/* record stuff */
 			if (global)
 				record_op(&global_st.nfsv3.cmds, request_time,
@@ -909,8 +885,6 @@ static void record_stats(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
 			record_op(&global_st.mnt.v3_ops, request_time,
 				  qwait_time, success, dup);
 
-		if (sp == NULL)
-			return;
 		/* record stuff */
 		if (req->rq_vers == MOUNT_V1)
 			record_op(&sp->v1_ops, request_time, qwait_time,
@@ -924,8 +898,6 @@ static void record_stats(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
 		if (global)
 			record_op(&global_st.nlm4.ops, request_time,
 				  qwait_time, success, dup);
-		if (sp == NULL)
-			return;
 		/* record stuff */
 		record_op(&sp->ops, request_time, qwait_time, success, dup);
 	} else if (req->rq_prog == nfs_param.core_param.program[P_RQUOTA]) {
@@ -934,8 +906,6 @@ static void record_stats(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
 		if (global)
 			record_op(&global_st.rquota.ops, request_time,
 				  qwait_time, success, dup);
-		if (sp == NULL)
-			return;
 		/* record stuff */
 		if (req->rq_vers == RQUOTAVERS)
 			record_op(&sp->ops, request_time, qwait_time, success,
@@ -1007,13 +977,10 @@ void server_stats_9p_done(u8 opc, struct _9p_request_data *req9p)
 
 		server_st = container_of(client, struct server_stats, client);
 		sp = get_9p(&server_st->st, &client->lock);
-		if (sp != NULL) {
-			if (sp->opcodes[opc] == NULL)
-				sp->opcodes[opc] =
-					gsh_calloc(sizeof(struct proto_op), 1);
-			if (sp->opcodes[opc] != NULL)
-				record_op(sp->opcodes[opc], 0, 0, true, false);
-		}
+		if (sp->opcodes[opc] == NULL)
+			sp->opcodes[opc] =
+				gsh_calloc(sizeof(struct proto_op), 1);
+		record_op(sp->opcodes[opc], 0, 0, true, false);
 	}
 
 	if (op_ctx->export) {
@@ -1022,13 +989,10 @@ void server_stats_9p_done(u8 opc, struct _9p_request_data *req9p)
 		export = op_ctx->export;
 		exp_st = container_of(export, struct export_stats, export);
 		sp = get_9p(&exp_st->st, &export->lock);
-		if (sp != NULL) {
-			if (sp->opcodes[opc] == NULL)
-				sp->opcodes[opc] =
-					gsh_calloc(sizeof(struct proto_op), 1);
-			if (sp->opcodes[opc] != NULL)
-				record_op(sp->opcodes[opc], 0, 0, true, false);
-		}
+		if (sp->opcodes[opc] == NULL)
+			sp->opcodes[opc] =
+				gsh_calloc(sizeof(struct proto_op), 1);
+		record_op(sp->opcodes[opc], 0, 0, true, false);
 	}
 }
 #endif

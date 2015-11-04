@@ -63,12 +63,6 @@ fsal_acl_t *nfs4_acl_alloc()
 
 	acl = pool_alloc(fsal_acl_pool, NULL);
 
-	if (acl == NULL) {
-		LogCrit(COMPONENT_NFS_V4_ACL,
-			"Can't allocate a new entry from fsal ACL pool");
-		return NULL;
-	}
-
 	return acl;
 }
 

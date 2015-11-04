@@ -65,7 +65,7 @@ extern pthread_rwlock_t uid2grp_user_lock;
 
 void uid2grp_cache_init(void);
 
-bool uid2grp_add_user(struct group_data *);
+void uid2grp_add_user(struct group_data *);
 bool uid2grp_lookup_by_uname(const struct gsh_buffdesc *, uid_t *,
 			     struct group_data **);
 bool uid2grp_lookup_by_uid(const uid_t, struct group_data **);

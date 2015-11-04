@@ -61,12 +61,6 @@ int nfs3_AllocateFH(nfs_fh3 *fh)
 
 	fh->data.data_val = gsh_malloc(fh->data.data_len);
 
-	if (fh->data.data_val == NULL) {
-		LogCrit(COMPONENT_NFSPROTO,
-			"Could not allocate space for filehandle");
-		return NFS3ERR_SERVERFAULT;
-	}
-
 	memset((char *)fh->data.data_val, 0, fh->data.data_len);
 
 	return NFS3_OK;
@@ -90,12 +84,6 @@ int nfs4_AllocateFH(nfs_fh4 *fh)
 	fh->nfs_fh4_len = NFS4_FHSIZE;
 
 	fh->nfs_fh4_val = gsh_malloc(fh->nfs_fh4_len);
-
-	if (fh->nfs_fh4_val == NULL) {
-		LogCrit(COMPONENT_NFS_V4,
-			"Could not allocate memory for filehandle");
-		return NFS4ERR_RESOURCE;
-	}
 
 	memset(fh->nfs_fh4_val, 0, fh->nfs_fh4_len);
 

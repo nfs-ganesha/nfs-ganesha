@@ -158,14 +158,7 @@ int nfs_ip_name_add(sockaddr_t *ipaddr, char *hostname, size_t size)
 
 	nfs_ip_name = gsh_malloc(sizeof(nfs_ip_name_t));
 
-	if (nfs_ip_name == NULL)
-		return IP_NAME_INSERT_MALLOC_ERROR;
-
 	pipaddr = gsh_malloc(sizeof(sockaddr_t));
-	if (pipaddr == NULL) {
-		gsh_free(nfs_ip_name);
-		return IP_NAME_INSERT_MALLOC_ERROR;
-	}
 
 	/* I have to keep an integer as key, I wil use the pointer buffkey->addr
 	 * for this, this also means that buffkey->len will be 0

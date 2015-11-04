@@ -93,12 +93,7 @@ int fridgethr_init(struct fridgethr **frout, const char *s,
 	}
 
 	*frout = NULL;
-	if (frobj == NULL) {
-		LogMajor(COMPONENT_THREAD,
-			 "Unable to allocate thread fridge for %s", s);
-		rc = ENOMEM;
-		goto out;
-	}
+
 	frobj->p = *p;
 
 	frobj->s = NULL;
@@ -140,12 +135,6 @@ int fridgethr_init(struct fridgethr **frout, const char *s,
 	mutexinit = true;
 
 	frobj->s = gsh_strdup(s);
-	if (!frobj->s) {
-		LogMajor(COMPONENT_THREAD,
-			 "Unable to allocate memory in fridge %s", s);
-		rc = ENOMEM;
-		goto out;
-	}
 
 	frobj->command = fridgethr_comm_run;
 	frobj->transitioning = false;
@@ -604,8 +593,6 @@ static int fridgethr_spawn(struct fridgethr *fr,
 	bool conditioned = false;
 
 	fe = gsh_calloc(sizeof(struct fridgethr_entry), 1);
-	if (fe == NULL)
-		goto create_err;
 
 	glist_init(&fe->thread_link);
 	fe->fr = fr;
@@ -692,13 +679,7 @@ static int fridgethr_queue(struct fridgethr *fr,
 	assert(fr->p.deferment == fridgethr_defer_queue);
 
 	q = gsh_malloc(sizeof(struct fridgethr_work));
-	if (q == NULL) {
-		PTHREAD_MUTEX_unlock(&fr->mtx);
-		LogMajor(COMPONENT_THREAD,
-			 "Unable to allocate memory for work queue item in fridge %s",
-			 fr->s);
-		return ENOMEM;
-	}
+
 	glist_init(&q->link);
 	q->func = func;
 	q->arg = arg;
@@ -1402,10 +1383,6 @@ int fridgethr_populate(struct fridgethr *fr,
 		int rc = 0;
 
 		fe = gsh_calloc(sizeof(struct fridgethr_entry), 1);
-		if (fe == NULL) {
-			PTHREAD_MUTEX_unlock(&fr->mtx);
-			return ENOMEM;
-		}
 
 		/* Make a new thread */
 		++(fr->nthreads);

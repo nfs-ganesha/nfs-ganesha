@@ -210,7 +210,7 @@ static int export_id_cmpf(const struct avltree_node *lhs,
  * This is the ONLY function that should allocate gsh_exports
  *
  * @return pointer to gsh_export.
- * NULL on allocation errors.
+ *
  */
 
 struct gsh_export *alloc_export(void)
@@ -219,8 +219,6 @@ struct gsh_export *alloc_export(void)
 	struct gsh_export *export;
 
 	export_st = gsh_calloc(sizeof(struct export_stats), 1);
-	if (export_st == NULL)
-		return NULL;
 
 	export = &export_st->export;
 
@@ -266,7 +264,7 @@ void free_export(struct gsh_export *export)
  *
  * @param exp [IN] the exportlist entry to insert
  *
- * @return pointer to ref locked export.  Return NULL on error
+ * @retval  false on error
  */
 
 bool insert_gsh_export(struct gsh_export *export)
