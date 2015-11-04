@@ -361,8 +361,7 @@ int ganeshun_yy_init_parser(char *srcfile, struct parser_state *st)
 	int rc = ENOMEM;
 
 	confroot = gsh_calloc(1, sizeof(struct config_root));
-	if (confroot == NULL)
-		goto nospc;
+
 	glist_init(&confroot->root.node);
 	glist_init(&confroot->root.u.nterm.sub_nodes);
 	confroot->root.type = TYPE_ROOT;
@@ -371,10 +370,6 @@ int ganeshun_yy_init_parser(char *srcfile, struct parser_state *st)
 	rc = new_file(srcfile, st);
 	if (rc == 0)
 		confroot->root.filename = gsh_strdup(srcfile);
-	return rc;
-
-nospc:
-	st->err_type->resource = true;
 	return rc;
 }
 
@@ -419,18 +414,13 @@ static int new_file(char *name_tok,
 		} else {
 			confroot->conf_dir = gsh_strdup(".");
 		}
-		if (confroot->conf_dir == NULL)
-			goto errout;
 	}
 	if (filename[0] == '/') {
 		fullpath = gsh_strdup(filename);
-		if (fullpath == NULL)
-			goto errout;
 	} else {
 		fullpath = gsh_calloc(1, (strlen(filename) +
 					  strlen(confroot->conf_dir) + 2));
-		if (fullpath == NULL)
-			goto errout;
+
 		sprintf(fullpath, "%s/%s", confroot->conf_dir, filename);
 	}
 	/* loop detection */
@@ -444,13 +434,9 @@ static int new_file(char *name_tok,
 		}
 	}
 	bs = gsh_calloc(1, sizeof(struct bufstack));
-	if (bs == NULL) {
-		goto errout;
-	}
+
 	flist = gsh_calloc(1, sizeof(struct file_list));
-	if (flist == NULL) {
-		goto errout;
-	}
+
 	in_file = fopen(fullpath, "r" );
 	if (in_file == NULL) {
 		rc = errno;

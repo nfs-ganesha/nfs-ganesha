@@ -1565,8 +1565,6 @@ static char *parse_args(char *arg_str, struct expr_parse_arg **argp)
 	saved_char = *sp;
 	*sp = '\0';
 	arg = gsh_calloc(1, sizeof(struct expr_parse_arg));
-	if (arg == NULL)
-		return NULL;
 	arg->name = gsh_strdup(name);
 	arg->value = gsh_strdup(val);
 	*argp = arg;
