@@ -197,11 +197,8 @@ static fsal_status_t fsal_pnfs_ds(struct fsal_module *const fsal_hdl,
 				  struct fsal_pnfs_ds **const handle)
 {
 	LogDebug(COMPONENT_PNFS, "Default pNFS DS creation!");
-	if (*handle == NULL) {
+	if (*handle == NULL)
 		*handle = pnfs_ds_alloc();
-		if (*handle == NULL)
-			return fsalstat(ERR_FSAL_NOMEM, ENOMEM);
-	}
 
 	fsal_pnfs_ds_init(*handle, fsal_hdl);
 	op_ctx->fsal_pnfs_ds = *handle;
@@ -1151,8 +1148,6 @@ static nfsstat4 pds_handle(struct fsal_pnfs_ds *const pds,
 {
 	LogCrit(COMPONENT_PNFS, "Unimplemented DS handle creation!");
 	*handle = gsh_calloc(sizeof(struct fsal_ds_handle), 1);
-	if (*handle == NULL)
-		return NFS4ERR_SERVERFAULT;
 
 	fsal_ds_handle_init(*handle, pds);
 	return NFS4_OK;

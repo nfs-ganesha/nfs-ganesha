@@ -644,15 +644,9 @@ void remove_fs(struct fsal_filesystem *fs)
 
 void free_fs(struct fsal_filesystem *fs)
 {
-	if (fs->path != NULL)
-		gsh_free(fs->path);
-
-	if (fs->device != NULL)
-		gsh_free(fs->device);
-
-	if (fs->type != NULL)
-		gsh_free(fs->type);
-
+	gsh_free(fs->path);
+	gsh_free(fs->device);
+	gsh_free(fs->type);
 	gsh_free(fs);
 }
 
@@ -962,21 +956,9 @@ static void posix_create_file_system(struct mntent *mnt)
 
 	fs = gsh_calloc(1, sizeof(*fs));
 
-	if (fs == NULL) {
-		LogFatal(COMPONENT_FSAL,
-			 "mem alloc for %s failed",
-			 mnt->mnt_dir);
-	}
-
 	fs->path = gsh_strdup(mnt->mnt_dir);
 	fs->device = gsh_strdup(mnt->mnt_fsname);
 	fs->type = gsh_strdup(mnt->mnt_type);
-
-	if (fs->path == NULL) {
-		LogFatal(COMPONENT_FSAL,
-			 "mem alloc for %s failed",
-			 mnt->mnt_dir);
-	}
 
 	if (!posix_get_fsid(fs)) {
 		free_fs(fs);
@@ -1581,16 +1563,9 @@ fsal_errors_t fsal_inherit_acls(struct attrlist *attrs, fsal_acl_t *sacl,
 		return ERR_FSAL_NO_ERROR;
 
 	attrs->acl = nfs4_acl_alloc();
-	if (!attrs->acl)
-		return ERR_FSAL_NOMEM;
 	attrs->acl->aces = (fsal_ace_t *) nfs4_ace_alloc(naces);
-	if (!attrs->acl->aces) {
-		nfs4_acl_free(attrs->acl);
-		attrs->acl = NULL;
-		return ERR_FSAL_NOMEM;
-	}
-
 	dace = attrs->acl->aces;
+
 	for (sace = sacl->aces; sace < sacl->aces + sacl->naces; sace++) {
 		if (IS_FSAL_ACE_FLAG(*sace, inherit)) {
 			*dace = *sace;
@@ -1791,15 +1766,8 @@ static fsal_status_t
 fsal_mode_gen_acl(struct attrlist *attrs)
 {
 	attrs->acl = nfs4_acl_alloc();
-	if (!attrs->acl)
-		return fsalstat(ERR_FSAL_NOMEM, 0);
 	attrs->acl->naces = 6;
 	attrs->acl->aces = (fsal_ace_t *) nfs4_ace_alloc(attrs->acl->naces);
-	if (!attrs->acl->aces) {
-		nfs4_acl_free(attrs->acl);
-		attrs->acl = NULL;
-		return fsalstat(ERR_FSAL_NOMEM, 0);
-	}
 
 	fsal_mode_gen_set(attrs->acl->aces, attrs->mode);
 
@@ -1847,17 +1815,10 @@ fsal_status_t fsal_mode_to_acl(struct attrlist *attrs, fsal_acl_t *sacl)
 	naces += 6;
 
 	attrs->acl = nfs4_acl_alloc();
-	if (!attrs->acl)
-		return fsalstat(ERR_FSAL_NOMEM, 0);
 	attrs->acl->aces = (fsal_ace_t *) nfs4_ace_alloc(naces);
-	if (!attrs->acl->aces) {
-		nfs4_acl_free(attrs->acl);
-		attrs->acl = NULL;
-		return fsalstat(ERR_FSAL_NOMEM, 0);
-	}
-
 	attrs->acl->naces = 0;
 	dace = attrs->acl->aces;
+
 	for (sace = sacl->aces; sace < sacl->aces + sacl->naces;
 	     sace++, dace++) {
 		if (IS_FSAL_ACE_MODE_GEN(*sace))
