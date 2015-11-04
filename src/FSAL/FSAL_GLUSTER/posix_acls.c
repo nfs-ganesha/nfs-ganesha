@@ -647,21 +647,19 @@ fsal_acl_2_posix_acl(fsal_acl_t *p_fsalacl, acl_type_t type)
 				if (IS_FSAL_ACE_EXECUTE(*f_ace))
 					acl_add_perm(d_permset, ACL_EXECUTE);
 			}
-			if (IS_FSAL_ACE_ALLOW(*f_ace)) {
-				ret = acl_get_permset(a_entry, &a_permset);
+			ret = acl_get_permset(a_entry, &a_permset);
 
-				if (isallow(f_ace, e_a_permset, ACL_READ)
-				&& !isdeny(d_permset, e_d_permset, ACL_READ))
-					acl_add_perm(a_permset, ACL_READ);
+			if (isallow(f_ace, e_a_permset, ACL_READ)
+			&& !isdeny(d_permset, e_d_permset, ACL_READ))
+				acl_add_perm(a_permset, ACL_READ);
 
-				if (isallow(f_ace, e_a_permset, ACL_WRITE)
-				&& !isdeny(d_permset, e_d_permset, ACL_WRITE))
-					acl_add_perm(a_permset, ACL_WRITE);
+			if (isallow(f_ace, e_a_permset, ACL_WRITE)
+			&& !isdeny(d_permset, e_d_permset, ACL_WRITE))
+				acl_add_perm(a_permset, ACL_WRITE);
 
-				if (isallow(f_ace, e_a_permset, ACL_EXECUTE)
-				&& !isdeny(d_permset, e_d_permset, ACL_EXECUTE))
-					acl_add_perm(a_permset, ACL_EXECUTE);
-			}
+			if (isallow(f_ace, e_a_permset, ACL_EXECUTE)
+			&& !isdeny(d_permset, e_d_permset, ACL_EXECUTE))
+				acl_add_perm(a_permset, ACL_EXECUTE);
 
 
 	}
