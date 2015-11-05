@@ -1420,11 +1420,8 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 			attrs->mode = myself->attributes.mode;
 		fsal_status = fsal_acl_to_mode(attrs);
 	}
-	if (FSAL_IS_ERROR(fsal_status)) {
-		fsal_error = fsal_status.major;
-		retval = fsal_status.minor;
-		goto hdlerr;
-	}
+	if (FSAL_IS_ERROR(fsal_status))
+		return fsal_status;
 #endif /* ENABLE_RFC_ACL */
 
 
