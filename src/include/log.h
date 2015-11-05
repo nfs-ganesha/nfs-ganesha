@@ -73,8 +73,7 @@ typedef enum log_components {
 				 * components */
 	COMPONENT_LOG,		/* Keep this first, some code depends on it
 				 * being the first component */
-	COMPONENT_LOG_EMERG,	/* Component for logging emergency log
-				 * messages - avoid infinite recursion */
+	COMPONENT_MEM_ALLOC,
 	COMPONENT_MEMLEAKS,
 	COMPONENT_FSAL,
 	COMPONENT_NFSPROTO,
@@ -152,6 +151,9 @@ void DisplayLogComponentLevel(log_components_t component, char *file, int line,
 			      __attribute__ ((format(printf, 6, 7)));
 			      /* 6=format 7=params */
 
+void LogMallocFailure(const char *file, int line, const char *function,
+		      char *allocator);
+
 int read_log_config(config_file_t in_config,
 		    struct config_error_type *err_type);
 void reread_log_config(void);
@@ -203,14 +205,10 @@ extern log_levels_t *component_log_level;
 extern struct log_component_info LogComponents[COMPONENT_COUNT];
 
 #define LogAlways(component, format, args...) \
-	do { \
-		if (likely(component_log_level[component] \
-		    <= NIV_FULL_DEBUG)) \
-			DisplayLogComponentLevel(component, (char *) __FILE__, \
-						 __LINE__, \
-						 (char *) __func__, \
-						 NIV_NULL, format, ## args); \
-	} while (0)
+	DisplayLogComponentLevel(component, (char *) __FILE__, \
+				 __LINE__, \
+				 (char *) __func__, \
+				 NIV_NULL, format, ## args); \
 
 #define LogTest(format, args...) \
 	DisplayLogComponentLevel(COMPONENT_ALL, (char *) __FILE__, \

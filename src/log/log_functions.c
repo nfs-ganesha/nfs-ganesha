@@ -1469,7 +1469,7 @@ void display_log_component_level(log_components_t component, char *file,
 static log_levels_t default_log_levels[] = {
 	[COMPONENT_ALL] = NIV_NULL,
 	[COMPONENT_LOG] = NIV_EVENT,
-	[COMPONENT_LOG_EMERG] = NIV_EVENT,
+	[COMPONENT_MEM_ALLOC] = NIV_EVENT,
 	[COMPONENT_MEMLEAKS] = NIV_EVENT,
 	[COMPONENT_FSAL] = NIV_EVENT,
 	[COMPONENT_NFSPROTO] = NIV_EVENT,
@@ -1514,9 +1514,9 @@ struct log_component_info LogComponents[COMPONENT_COUNT] = {
 	[COMPONENT_LOG] = {
 		.comp_name = "COMPONENT_LOG",
 		.comp_str = "LOG",},
-	[COMPONENT_LOG_EMERG] = {
-		.comp_name = "COMPONENT_LOG_EMERG",
-		.comp_str = "LOG_EMERG",},
+	[COMPONENT_MEM_ALLOC] = {
+		.comp_name = "COMPONENT_MEM_ALLOC",
+		.comp_str = "MEM ALLOC",},
 	[COMPONENT_MEMLEAKS] = {
 		.comp_name = "COMPONENT_MEMLEAKS",
 		.comp_str = "LEAKS",},
@@ -1632,6 +1632,15 @@ void DisplayLogComponentLevel(log_components_t component, char *file, int line,
 	va_end(arguments);
 }
 
+void LogMallocFailure(const char *file, int line, const char *function,
+		      char *allocator)
+{
+	DisplayLogComponentLevel(COMPONENT_MEM_ALLOC, (char *) file, line,
+				 (char *)function, NIV_NULL,
+				 "Aborting %s due to out of memory",
+				 allocator);
+}
+
 /*
  *  Re-export component logging to TI-RPC internal logging
  */
@@ -1732,7 +1741,7 @@ static struct gsh_dbus_prop COMPONENT_##component##_prop = {	\
 
 HANDLE_PROP(ALL);
 HANDLE_PROP(LOG);
-HANDLE_PROP(LOG_EMERG);
+HANDLE_PROP(MEM_ALLOC);
 HANDLE_PROP(MEMLEAKS);
 HANDLE_PROP(FSAL);
 HANDLE_PROP(NFSPROTO);
@@ -1770,7 +1779,7 @@ HANDLE_PROP(NFS_MSK);
 static struct gsh_dbus_prop *log_props[] = {
 	LOG_PROPERTY_ITEM(ALL),
 	LOG_PROPERTY_ITEM(LOG),
-	LOG_PROPERTY_ITEM(LOG_EMERG),
+	LOG_PROPERTY_ITEM(MEM_ALLOC),
 	LOG_PROPERTY_ITEM(MEMLEAKS),
 	LOG_PROPERTY_ITEM(FSAL),
 	LOG_PROPERTY_ITEM(NFSPROTO),
@@ -2004,8 +2013,8 @@ static struct config_item component_levels[] = {
 			 COMPONENT_ALL, int),
 	CONF_INDEX_TOKEN("LOG", NB_LOG_LEVEL, log_levels,
 			 COMPONENT_LOG, int),
-	CONF_INDEX_TOKEN("LOG_EMERG", NB_LOG_LEVEL, log_levels,
-			 COMPONENT_LOG_EMERG, int),
+	CONF_INDEX_TOKEN("MEM_ALLOC", NB_LOG_LEVEL, log_levels,
+			 COMPONENT_MEM_ALLOC, int),
 	CONF_INDEX_TOKEN("MEMLEAKS", NB_LOG_LEVEL, log_levels,
 			 COMPONENT_MEMLEAKS, int),
 	CONF_INDEX_TOKEN("LEAKS", NB_LOG_LEVEL, log_levels,
