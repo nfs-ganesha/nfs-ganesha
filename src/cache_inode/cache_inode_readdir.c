@@ -687,6 +687,7 @@ cache_inode_readdir(cache_entry_t *directory,
 				/* yup, it was the last entry */
 				LogFullDebug(COMPONENT_NFS_READDIR,
 					     "EOD because empty result");
+				*nbfound = 0;
 				*eod_met = true;
 				goto unlock_dir;
 			}
