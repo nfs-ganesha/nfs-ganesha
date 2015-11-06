@@ -326,8 +326,13 @@ int nfs3_readdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		     PRIu64 " -> num_entries = %u",
 		     cache_inode_cookie, num_entries);
 
-	RES_READDIR3_OK->reply.entries = tracker.entries;
-	RES_READDIR3_OK->reply.eof = eod_met;
+	if ((num_entries == 0) && (cookie > 1)) {
+		RES_READDIR3_OK->reply.entries = NULL;
+		RES_READDIR3_OK->reply.eof = TRUE;
+	} else {
+		RES_READDIR3_OK->reply.entries = tracker.entries;
+		RES_READDIR3_OK->reply.eof = eod_met;
+	}
 	nfs_SetPostOpAttr(dir_entry, &RES_READDIR3_OK->dir_attributes);
 	memcpy(RES_READDIR3_OK->cookieverf, cookie_verifier,
 	       sizeof(cookieverf3));
@@ -344,8 +349,9 @@ int nfs3_readdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		cache_inode_put(parent_dir_entry);
 
 	/* Deallocate memory in the event of an error */
-	if (((res->res_readdir3.status != NFS3_OK) || (rc != NFS_REQ_OK))
-	    && (tracker.entries != NULL)) {
+	if (((res->res_readdir3.status != NFS3_OK) || (rc != NFS_REQ_OK) ||
+	    ((num_entries == 0) && (cookie > 1))) &&
+	    (tracker.entries != NULL)) {
 		free_entry3s(tracker.entries);
 		RES_READDIR3_OK->reply.entries = NULL;
 	}
