@@ -192,9 +192,9 @@ cache_inode_avl_insert_impl(cache_entry_t *entry,
 	default:
 		/* already inserted, or, keep trying at current j, j2 */
 		LogDebug(COMPONENT_CACHE_INODE,
-			 "Already existent when inserting new dirent on entry=%p cookie=%"
-			 PRIu64 " this should never happen.",
-			 entry, v->hk.k);
+			"Already existent when inserting new dirent on entry=%p name=%s, cookie=%"
+			PRIu64 " this should never happen.",
+			entry, v->name, v->hk.k);
 		break;
 	}
 	return code;
@@ -250,6 +250,19 @@ cache_inode_avl_qp_insert(cache_entry_t *entry,
 		code = cache_inode_avl_insert_impl(entry, v, j, 0);
 		if (code >= 0)
 			return code;
+		/* detect name conflict */
+		if (j == 0) {
+			cache_inode_dir_entry_t *v2 =
+				cache_inode_avl_lookup_k(entry, v->hk.k,
+						  CACHE_INODE_FLAG_ONLY_ACTIVE);
+			assert(v != v2);
+			if (v2 && (strcmp(v->name, v2->name) == 0)) {
+				LogCrit(COMPONENT_CACHE_INODE,
+					"cache_inode_avl_qp_insert_s: name conflict (%s, %s)",
+					v->name, v2->name);
+				return -2;
+			}
+		}
 	}
 
 	LogCrit(COMPONENT_CACHE_INODE,
@@ -301,6 +314,10 @@ cache_inode_avl_lookup_k(cache_entry_t *entry, uint64_t k, uint32_t flags)
 		}
 	}
 
+	/* only the forward AVL is valid for conflict checking */
+	if (flags & CACHE_INODE_FLAG_ONLY_ACTIVE)
+		goto done;
+
 	/* Try the deleted AVL.  If a node with hk.k == v->hk.k is found,
 	 * return its least upper bound in -t-, if any. */
 	if (!node) {
@@ -311,12 +328,13 @@ cache_inode_avl_lookup_k(cache_entry_t *entry, uint64_t k, uint32_t flags)
 			 "node %p found deleted supremum %p", node2, node);
 	}
 
+done:
 	if (node)
 		dirent =
 		    avltree_container_of(node, cache_inode_dir_entry_t,
 					 node_hk);
 
- out:
+out:
 	return dirent;
 }
 
