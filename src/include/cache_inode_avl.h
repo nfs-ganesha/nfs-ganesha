@@ -80,7 +80,9 @@ void cache_inode_avl_init(cache_entry_t *entry);
 int cache_inode_avl_qp_insert(cache_entry_t *entry,
 			      cache_inode_dir_entry_t *v);
 
+#define CACHE_INODE_FLAG_NONE        0x0000
 #define CACHE_INODE_FLAG_NEXT_ACTIVE 0x0001
+#define CACHE_INODE_FLAG_ONLY_ACTIVE 0x0002
 
 cache_inode_dir_entry_t *cache_inode_avl_lookup_k(cache_entry_t *entry,
 						  uint64_t k, uint32_t flags);
