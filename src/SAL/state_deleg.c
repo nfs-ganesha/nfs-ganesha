@@ -487,20 +487,8 @@ nfsstat4 deleg_revoke(cache_entry_t *entry, struct state_t *deleg_state)
 
 	clid = owner->so_owner.so_nfs4_owner.so_clientrec;
 
-	/* Allocation of a new file handle */
-	if (nfs4_AllocateFH(&fhandle) != NFS4_OK) {
-		LogDebug(COMPONENT_NFS_V4_LOCK, "nfs4_AllocateFH failed");
-
-		/* Release references taken above */
-		dec_state_owner_ref(owner);
-		put_gsh_export(export);
-		return NFS4ERR_SERVERFAULT;
-	}
-
 	/* Building a new fh ; Ignore return code, should not fail*/
-	(void) nfs4_FSALToFhandle(&fhandle,
-				  entry->obj_handle,
-				  export);
+	(void) nfs4_FSALToFhandle(true, &fhandle, entry->obj_handle, export);
 
 	deleg_heuristics_recall(entry, owner, deleg_state);
 

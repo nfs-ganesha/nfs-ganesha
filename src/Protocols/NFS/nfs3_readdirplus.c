@@ -438,15 +438,13 @@ cache_inode_status_t nfs3_readdirplus_callback(void *opaque,
 
 	if (cb_parms->attr_allowed) {
 		ep3->name_handle.handle_follows = TRUE;
-		(void) nfs3_AllocateFH(&ep3->name_handle.post_op_fh3_u.handle);
 
-		if (!nfs3_FSALToFhandle(&ep3->name_handle.post_op_fh3_u.handle,
+		if (!nfs3_FSALToFhandle(true,
+					&ep3->name_handle.post_op_fh3_u.handle,
 					entry->obj_handle,
 					op_ctx->export)) {
 			tracker->error = NFS3ERR_SERVERFAULT;
 			gsh_free(ep3->name);
-			gsh_free(ep3->name_handle.post_op_fh3_u.handle.data.
-				 data_val);
 			cb_parms->in_result = false;
 			return CACHE_INODE_SUCCESS;
 		}

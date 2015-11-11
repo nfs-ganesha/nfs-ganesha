@@ -71,7 +71,6 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 	cache_entry_t *entry_parent = NULL;
 	cache_entry_t *entry_new = NULL;
 	struct attrlist sattr;
-	nfs_fh4 newfh4;
 	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
 	int convrc = 0;
 	uint32_t mode = 0;
@@ -351,15 +350,9 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 		goto out;
 	}			/* switch( arg_CREATE4.objtype.type ) */
 
-	/* Allocation of a new file handle */
-	if (nfs4_AllocateFH(&newfh4) != NFS4_OK) {
-		res_CREATE4->status = NFS4ERR_SERVERFAULT;
-		cache_inode_put(entry_new);
-		goto out;
-	}
-
-	/* Building the new file handle */
-	if (!nfs4_FSALToFhandle(&newfh4,
+	/* Building the new file handle to replace the current FH */
+	if (!nfs4_FSALToFhandle(false,
+				&data->currentFH,
 				entry_new->obj_handle,
 				op_ctx->export)) {
 		res_CREATE4->status = NFS4ERR_SERVERFAULT;
@@ -367,18 +360,8 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 		goto out;
 	}
 
-	/* This new fh replaces the current FH */
-	data->currentFH.nfs_fh4_len = newfh4.nfs_fh4_len;
-
-	memcpy(data->currentFH.nfs_fh4_val,
-	       newfh4.nfs_fh4_val,
-	       newfh4.nfs_fh4_len);
-
 	/* Mark current_stateid as invalid */
 	data->current_stateid_valid = false;
-
-	/* No do not need newfh any more */
-	gsh_free(newfh4.nfs_fh4_val);
 
 	/* Set the mode if requested */
 	/* Use the same fattr mask for reply, if one attribute was not
@@ -448,11 +431,8 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 
  out:
 
-	if (name != NULL)
-		gsh_free(name);
-
-	if (link_content != NULL)
-		gsh_free(link_content);
+	gsh_free(name);
+	gsh_free(link_content);
 
 	return res_CREATE4->status;
 }				/* nfs4_op_create */

@@ -45,56 +45,6 @@
 
 /**
  *
- * @brief Allocates a buffer to be used for storing a NFSv4 filehandle.
- *
- * Allocates a buffer to be used for storing a NFSv3 filehandle.
- *
- * @param fh [INOUT] the filehandle to manage.
- *
- * @return NFS3_OK if successful, NFS3ERR_SERVERFAULT, otherwise.
- *
- */
-int nfs3_AllocateFH(nfs_fh3 *fh)
-{
-	/* Allocating the filehandle in memory */
-	fh->data.data_len = NFS3_FHSIZE;
-
-	fh->data.data_val = gsh_malloc(fh->data.data_len);
-
-	memset((char *)fh->data.data_val, 0, fh->data.data_len);
-
-	return NFS3_OK;
-}				/* nfs4_AllocateFH */
-
-/**
- *
- * @brief Allocates a buffer to be used for storing a NFSv4 filehandle.
- *
- * Allocates a buffer to be used for storing a NFSv4 filehandle.
- *
- * @param fh [INOUT] the filehandle to manage.
- *
- * @return NFS4_OK if successful, NFS3ERR_SERVERFAULT, NFS4ERR_RESOURCE or
- *                 NFS4ERR_STALE  otherwise.
- *
- */
-int nfs4_AllocateFH(nfs_fh4 *fh)
-{
-	/* Allocating the filehandle in memory */
-	fh->nfs_fh4_len = NFS4_FHSIZE;
-
-	fh->nfs_fh4_val = gsh_malloc(fh->nfs_fh4_len);
-
-	memset(fh->nfs_fh4_val, 0, fh->nfs_fh4_len);
-
-	LogFullDebugOpaque(COMPONENT_FILEHANDLE, "NFS4 Handle %s", LEN_FH_STR,
-			   fh->nfs_fh4_val, fh->nfs_fh4_len);
-
-	return NFS4_OK;
-}
-
-/**
- *
  *  nfs3_FhandleToCache: gets the cache entry from the NFSv3 file handle.
  *
  * Validates and Converts a V3 file handle and then gets the cache entry.
@@ -168,28 +118,36 @@ cache_entry_t *nfs3_FhandleToCache(nfs_fh3 *fh3,
  *
  * @return true if successful, false otherwise
  */
-bool nfs4_FSALToFhandle(nfs_fh4 *fh4,
+bool nfs4_FSALToFhandle(bool allocate,
+			nfs_fh4 *fh4,
 			const struct fsal_obj_handle *fsalhandle,
 			struct gsh_export *exp)
 {
-	fsal_status_t fsal_status;
 	file_handle_v4_t *file_handle;
 	struct gsh_buffdesc fh_desc;
 
-	/* reset the buffer to be used as handle */
-	fh4->nfs_fh4_len = NFS4_FHSIZE;
-	memset(fh4->nfs_fh4_val, 0, fh4->nfs_fh4_len);
+	if (allocate) {
+		/* Allocating the filehandle in memory */
+		nfs4_AllocateFH(fh4);
+	} else {
+		/* reset the buffer to be used as handle */
+		fh4->nfs_fh4_len = NFS4_FHSIZE;
+		memset(fh4->nfs_fh4_val, 0, NFS4_FHSIZE);
+	}
+
 	file_handle = (file_handle_v4_t *) fh4->nfs_fh4_val;
 
 	/* Fill in the fs opaque part */
 	fh_desc.addr = &file_handle->fsopaque;
 	fh_desc.len = fh4->nfs_fh4_len - offsetof(file_handle_v4_t, fsopaque);
-	fsal_status =
-	    fsalhandle->obj_ops.handle_digest(fsalhandle, FSAL_DIGEST_NFSV4,
-					   &fh_desc);
-	if (FSAL_IS_ERROR(fsal_status)) {
+
+	if (FSAL_IS_ERROR(fsalhandle->obj_ops.handle_digest(fsalhandle,
+							    FSAL_DIGEST_NFSV4,
+							    &fh_desc))) {
 		LogDebug(COMPONENT_FILEHANDLE,
 			 "handle_digest FSAL_DIGEST_NFSV4 failed");
+		if (allocate)
+			nfs4_freeFH(fh4);
 		return false;
 	}
 
@@ -224,28 +182,36 @@ bool nfs4_FSALToFhandle(nfs_fh4 *fh4,
  * @todo Do we have to worry about buffer alignment and memcpy to
  * compensate??
  */
-bool nfs3_FSALToFhandle(nfs_fh3 *fh3,
+bool nfs3_FSALToFhandle(bool allocate,
+			nfs_fh3 *fh3,
 			const struct fsal_obj_handle *fsalhandle,
 			struct gsh_export *exp)
 {
-	fsal_status_t fsal_status;
 	file_handle_v3_t *file_handle;
 	struct gsh_buffdesc fh_desc;
 
-	/* reset the buffer to be used as handle */
-	fh3->data.data_len = NFS3_FHSIZE;
-	memset(fh3->data.data_val, 0, fh3->data.data_len);
+	if (allocate) {
+		/* Allocating the filehandle in memory */
+		nfs3_AllocateFH(fh3);
+	} else {
+		/* reset the buffer to be used as handle */
+		fh3->data.data_len = NFS3_FHSIZE;
+		memset(fh3->data.data_val, 0, NFS3_FHSIZE);
+	}
+
 	file_handle = (file_handle_v3_t *) fh3->data.data_val;
 
 	/* Fill in the fs opaque part */
 	fh_desc.addr = &file_handle->fsopaque;
-	fh_desc.len = fh3->data.data_len - offsetof(file_handle_v3_t, fsopaque);
-	fsal_status =
-	    fsalhandle->obj_ops.handle_digest(fsalhandle, FSAL_DIGEST_NFSV3,
-					   &fh_desc);
-	if (FSAL_IS_ERROR(fsal_status)) {
+	fh_desc.len = NFS3_FHSIZE - offsetof(file_handle_v3_t, fsopaque);
+
+	if (FSAL_IS_ERROR(fsalhandle->obj_ops.handle_digest(fsalhandle,
+							    FSAL_DIGEST_NFSV3,
+							    &fh_desc))) {
 		LogDebug(COMPONENT_FILEHANDLE,
 			 "handle_digest FSAL_DIGEST_NFSV3 failed");
+		if (allocate)
+			nfs3_freeFH(fh3);
 		return false;
 	}
 

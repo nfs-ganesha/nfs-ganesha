@@ -80,11 +80,8 @@ int nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t *data,
 		return res_SAVEFH->status;
 
 	/* If the savefh is not allocated, do it now */
-	if (data->savedFH.nfs_fh4_val == NULL) {
-		res_SAVEFH->status = nfs4_AllocateFH(&(data->savedFH));
-		if (res_SAVEFH->status != NFS4_OK)
-			return res_SAVEFH->status;
-	}
+	if (data->savedFH.nfs_fh4_val == NULL)
+		nfs4_AllocateFH(&data->savedFH);
 
 	/* Determine if we can get a new export reference. If there is
 	 * no op_ctx->export, don't get a reference.
@@ -155,6 +152,8 @@ int nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t *data,
 		sprint_fhandle4(str, &data->savedFH);
 		LogFullDebug(COMPONENT_NFS_V4, "SAVE FH: Saved FH %s", str);
 	}
+
+	res_SAVEFH->status = NFS4_OK;
 
 	return NFS4_OK;
 }				/* nfs4_op_savefh */

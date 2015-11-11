@@ -309,25 +309,14 @@ static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t *data,
 
 static nfsstat4 open4_create_fh(compound_data_t *data, cache_entry_t *entry)
 {
-	nfs_fh4 newfh4;
-	char new_handle[NFS4_FHSIZE];
-
-	newfh4.nfs_fh4_val = new_handle;
-	newfh4.nfs_fh4_len = sizeof(new_handle);
-
 	/* Building a new fh */
-	if (!nfs4_FSALToFhandle(&newfh4,
+	if (!nfs4_FSALToFhandle(false,
+				&data->currentFH,
 				entry->obj_handle,
 				op_ctx->export)) {
 		cache_inode_put(entry);
 		return NFS4ERR_SERVERFAULT;
 	}
-
-	/* This new fh replaces the current FH */
-	data->currentFH.nfs_fh4_len = newfh4.nfs_fh4_len;
-	memcpy(data->currentFH.nfs_fh4_val,
-	       newfh4.nfs_fh4_val,
-	       newfh4.nfs_fh4_len);
 
 	/* Update the current entry */
 	set_current_entry(data, entry);

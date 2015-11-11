@@ -187,20 +187,11 @@ int nfs3_symlink(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 			goto out_fail;
 	}
 
-	res->res_symlink3.status = nfs3_AllocateFH(
-	       &res->res_symlink3.SYMLINK3res_u.resok.obj.post_op_fh3_u.handle);
-
-	if (res->res_symlink3.status != NFS3_OK) {
-		rc = NFS_REQ_OK;
-		goto out;
-	}
-
 	if (!nfs3_FSALToFhandle(
+	     true,
 	     &res->res_symlink3.SYMLINK3res_u.resok.obj.post_op_fh3_u.handle,
 	     symlink_entry->obj_handle,
 	     op_ctx->export)) {
-		gsh_free(res->res_symlink3.SYMLINK3res_u.resok.obj.
-			 post_op_fh3_u.handle.data.data_val);
 		res->res_symlink3.status = NFS3ERR_BADHANDLE;
 		rc = NFS_REQ_OK;
 		goto out;

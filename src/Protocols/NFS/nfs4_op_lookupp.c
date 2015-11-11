@@ -204,7 +204,8 @@ not_junction:
 
 	if (file_entry != NULL) {
 		/* Convert it to a file handle */
-		if (!nfs4_FSALToFhandle(&data->currentFH,
+		if (!nfs4_FSALToFhandle(false,
+					&data->currentFH,
 					file_entry->obj_handle,
 					op_ctx->export)) {
 			res_LOOKUPP4->status = NFS4ERR_SERVERFAULT;

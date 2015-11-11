@@ -83,11 +83,9 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t *data,
 		return res_PUTFH4->status;
 
 	/* If no currentFH were set, allocate one */
-	if (data->currentFH.nfs_fh4_val == NULL) {
-		res_PUTFH4->status = nfs4_AllocateFH(&(data->currentFH));
-		if (res_PUTFH4->status != NFS4_OK)
-			return res_PUTFH4->status;
-	}
+	if (data->currentFH.nfs_fh4_val == NULL)
+		nfs4_AllocateFH(&data->currentFH);
+
 	v4_handle = (struct file_handle_v4 *)data->currentFH.nfs_fh4_val;
 
 	LogFullDebug(COMPONENT_FILEHANDLE, "NFS4 Handle 0x%X export id %d",
@@ -265,6 +263,8 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t *data,
 			     object_file_type_to_str(data->current_filetype),
 			     data->current_filetype);
 	}
+
+	res_PUTFH4->status = NFS4_OK;
 
 	return NFS4_OK;
 }				/* nfs4_op_putfh */

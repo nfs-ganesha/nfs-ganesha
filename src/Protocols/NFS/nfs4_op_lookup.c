@@ -96,9 +96,7 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t *data,
 	if (res_LOOKUP4->status != NFS4_OK)
 		goto out;
 
-	LogDebug(COMPONENT_NFS_V4,
-		     "name=%s",
-		     name);
+	LogDebug(COMPONENT_NFS_V4, "name=%s", name);
 
 	/* Do the lookup in the FSAL */
 	file_entry = NULL;
@@ -106,8 +104,7 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* Sanity check: dir_entry should be ACTUALLY a directory */
 
-	cache_status =
-	    cache_inode_lookup(dir_entry, name, &file_entry);
+	cache_status = cache_inode_lookup(dir_entry, name, &file_entry);
 
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		res_LOOKUP4->status = nfs4_Errno(cache_status);
@@ -214,7 +211,8 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	/* Convert it to a file handle */
-	if (!nfs4_FSALToFhandle(&data->currentFH,
+	if (!nfs4_FSALToFhandle(false,
+				&data->currentFH,
 				file_entry->obj_handle,
 				op_ctx->export)) {
 		res_LOOKUP4->status = NFS4ERR_SERVERFAULT;
@@ -234,8 +232,7 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t *data,
 	if (file_entry)
 		cache_inode_put(file_entry);
 
-	if (name)
-		gsh_free(name);
+	gsh_free(name);
 
 	return res_LOOKUP4->status;
 }				/* nfs4_op_lookup */

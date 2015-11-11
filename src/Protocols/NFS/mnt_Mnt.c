@@ -152,16 +152,12 @@ int mnt_Mnt(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	 * The mountinfo.fhandle definition is an overlay on/of nfs_fh3.
 	 * redefine and eliminate one or the other.
 	 */
-	res->res_mnt3.fhs_status = nfs3_AllocateFH(fh3);
-
-	if (res->res_mnt3.fhs_status == MNT3_OK) {
-		if (!nfs3_FSALToFhandle(fh3, pfsal_handle, export)) {
-			res->res_mnt3.fhs_status = MNT3ERR_INVAL;
-		} else {
-			if (isDebug(COMPONENT_NFSPROTO))
-				sprint_fhandle3(dumpfh, fh3);
-			res->res_mnt3.fhs_status = MNT3_OK;
-		}
+	if (!nfs3_FSALToFhandle(true, fh3, pfsal_handle, export)) {
+		res->res_mnt3.fhs_status = MNT3ERR_INVAL;
+	} else {
+		if (isDebug(COMPONENT_NFSPROTO))
+			sprint_fhandle3(dumpfh, fh3);
+		res->res_mnt3.fhs_status = MNT3_OK;
 	}
 
 	if (entry != NULL) {

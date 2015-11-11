@@ -70,11 +70,7 @@ int nfs4_op_getfh(struct nfs_argop4 *op, compound_data_t *data,
 		return res_GETFH->status;
 
 	/* Copy the filehandle to the reply structure */
-	res_GETFH->status =
-	    nfs4_AllocateFH(&res_GETFH->GETFH4res_u.resok4.object);
-
-	if (res_GETFH->status != NFS4_OK)
-		return res_GETFH->status;
+	nfs4_AllocateFH(&res_GETFH->GETFH4res_u.resok4.object);
 
 	/* Put the data in place */
 	res_GETFH->GETFH4res_u.resok4.object.nfs_fh4_len =
@@ -87,6 +83,7 @@ int nfs4_op_getfh(struct nfs_argop4 *op, compound_data_t *data,
 	LogHandleNFS4("NFS4 GETFH AFTER: %s",
 		      &res_GETFH->GETFH4res_u.resok4.object);
 
+	res_GETFH->status = NFS4_OK;
 	return NFS4_OK;
 }				/* nfs4_op_getfh */
 

@@ -316,13 +316,11 @@ not_junction:
 		goto skip;
 	}
 
-	if (cb_parms->attr_allowed
-	    && attribute_is_set(tracker->req_attr, FATTR4_FILEHANDLE)) {
-		if (!nfs4_FSALToFhandle(&entryFH,
-					entry->obj_handle,
-					op_ctx->export))
-			goto server_fault;
-	}
+	if (cb_parms->attr_allowed &&
+	    attribute_is_set(tracker->req_attr, FATTR4_FILEHANDLE) &&
+	    !nfs4_FSALToFhandle(false, &entryFH, entry->obj_handle,
+				op_ctx->export))
+		goto server_fault;
 
 	if (!cb_parms->attr_allowed) {
 		/* cache_inode_readdir is signaling us that client didn't have
@@ -345,8 +343,7 @@ not_junction:
 	/* cache_inode_readdir holds attr_lock while making callback,
 	 * so we need to do access check with no mutex.
 	 */
-	attr_status =
-	    cache_inode_access_no_mutex(entry, access_mask_attr);
+	attr_status = cache_inode_access_no_mutex(entry, access_mask_attr);
 
 	if (attr_status != CACHE_INODE_SUCCESS) {
 		LogFullDebug(COMPONENT_NFS_READDIR,

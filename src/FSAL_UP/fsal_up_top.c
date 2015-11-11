@@ -629,13 +629,6 @@ state_status_t layoutrecall(struct fsal_module *fsal,
 		layout->lor_offset = segment->offset;
 		layout->lor_length = segment->length;
 
-		if (nfs4_AllocateFH(&layout->lor_fh) != NFS4_OK) {
-			PTHREAD_RWLOCK_unlock(&entry->state_lock);
-			gsh_free(cb_data);
-			rc = STATE_MALLOC_ERROR;
-			goto out;
-		}
-
 		if (!get_state_entry_export_owner_refs(s,
 						       NULL,
 						       &exp,
@@ -649,12 +642,9 @@ state_status_t layoutrecall(struct fsal_module *fsal,
 			continue;
 		}
 
-		if (!nfs4_FSALToFhandle(
-				&layout->lor_fh,
-				entry->obj_handle,
-				exp)) {
+		if (!nfs4_FSALToFhandle(true, &layout->lor_fh,
+					entry->obj_handle, exp)) {
 			PTHREAD_RWLOCK_unlock(&entry->state_lock);
-			gsh_free(layout->lor_fh.nfs_fh4_val);
 			gsh_free(cb_data);
 			put_gsh_export(exp);
 			dec_state_owner_ref(owner);
@@ -1446,7 +1436,6 @@ void delegrecall_one(cache_entry_t *entry,
 		     struct state_t *state,
 		     struct delegrecall_context *p_cargs)
 {
-	char *maxfh = NULL;
 	rpc_call_channel_t *chan;
 	rpc_call_t *call = NULL;
 	nfs_cb_argop4 argop[1];
@@ -1504,14 +1493,8 @@ void delegrecall_one(cache_entry_t *entry,
 	COPY_STATEID(&argop->nfs_cb_argop4_u.opcbrecall.stateid, state);
 	argop->nfs_cb_argop4_u.opcbrecall.truncate = false;
 
-	maxfh = gsh_malloc(NFS4_FHSIZE); /* free in cb_completion_func() */
-
 	/* Convert it to a file handle */
-	argop->nfs_cb_argop4_u.opcbrecall.fh.nfs_fh4_len = 0;
-	argop->nfs_cb_argop4_u.opcbrecall.fh.nfs_fh4_val = maxfh;
-
-	/* Building a new fh */
-	if (!nfs4_FSALToFhandle(&argop->nfs_cb_argop4_u.opcbrecall.fh,
+	if (!nfs4_FSALToFhandle(true, &argop->nfs_cb_argop4_u.opcbrecall.fh,
 				entry->obj_handle,
 				p_cargs->drc_exp)) {
 		LogCrit(COMPONENT_FSAL_UP,
@@ -1534,8 +1517,7 @@ out:
 
 	inc_failed_recalls(p_cargs->drc_clid->gsh_client);
 
-	if (maxfh)
-		gsh_free(maxfh);
+	nfs4_freeFH(&argop->nfs_cb_argop4_u.opcbrecall.fh);
 
 	if (call)
 		free_rpc_call(call);
