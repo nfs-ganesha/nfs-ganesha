@@ -476,8 +476,7 @@ int open_root_fd(struct gpfs_filesystem *gpfs_fs)
 
 	gpfs_extract_fsid(fh, &fsid_type, &fsid);
 
-	retval = re_index_fs_fsid(gpfs_fs->fs, fsid_type,
-				  fsid.major, fsid.minor);
+	retval = re_index_fs_fsid(gpfs_fs->fs, fsid_type, &fsid);
 
 	if (retval < 0) {
 		LogCrit(COMPONENT_FSAL,

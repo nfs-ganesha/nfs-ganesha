@@ -91,8 +91,7 @@ void release_posix_file_systems(void);
 
 int re_index_fs_fsid(struct fsal_filesystem *fs,
 		     enum fsid_type fsid_type,
-		     uint64_t major,
-		     uint64_t minor);
+		     struct fsal_fsid__ *fsid);
 
 int re_index_fs_dev(struct fsal_filesystem *fs,
 		    struct fsal_dev__ *dev);

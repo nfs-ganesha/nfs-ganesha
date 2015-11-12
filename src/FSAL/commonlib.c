@@ -658,8 +658,7 @@ void free_fs(struct fsal_filesystem *fs)
 
 int re_index_fs_fsid(struct fsal_filesystem *fs,
 		     enum fsid_type fsid_type,
-		     uint64_t major,
-		     uint64_t minor)
+		     struct fsal_fsid__ *fsid)
 {
 	struct avltree_node *node;
 	struct fsal_fsid__ old_fsid = fs->fsid;
@@ -670,7 +669,7 @@ int re_index_fs_fsid(struct fsal_filesystem *fs,
 		 " to 0x%016"PRIx64".0x%016"PRIx64,
 		 fs->path,
 		 fs->fsid.major, fs->fsid.minor,
-		 major, minor);
+		 fsid->major, fsid->minor);
 
 	/* It is not valid to use this routine to
 	 * remove fs from index.
@@ -681,8 +680,8 @@ int re_index_fs_fsid(struct fsal_filesystem *fs,
 	if (fs->in_fsid_avl)
 		avltree_remove(&fs->avl_fsid, &avl_fsid);
 
-	fs->fsid.major = major;
-	fs->fsid.minor = minor;
+	fs->fsid.major = fsid->major;
+	fs->fsid.minor = fsid->minor;
 	fs->fsid_type = fsid_type;
 
 	node = avltree_insert(&fs->avl_fsid, &avl_fsid);
@@ -752,7 +751,7 @@ int re_index_fs_dev(struct fsal_filesystem *fs,
 int change_fsid_type(struct fsal_filesystem *fs,
 		     enum fsid_type fsid_type)
 {
-	uint64_t major = 0, minor = 0;
+	struct fsal_fsid__ fsid = {0};
 	bool valid = false;
 
 	if (fs->fsid_type == fsid_type)
@@ -762,24 +761,24 @@ int change_fsid_type(struct fsal_filesystem *fs,
 	case FSID_ONE_UINT64:
 		if (fs->fsid_type == FSID_TWO_UINT64) {
 			/* Use the same compression we use for NFS v3 fsid */
-			major = squash_fsid(&fs->fsid);
+			fsid.major = squash_fsid(&fs->fsid);
 			valid = true;
 		} else if (fs->fsid_type == FSID_TWO_UINT32) {
 			/* Put major in the high order 32 bits and minor
 			 * in the low order 32 bits.
 			 */
-			major = fs->fsid.major << 32 |
-				fs->fsid.minor;
+			fsid.major = fs->fsid.major << 32 |
+				     fs->fsid.minor;
 			valid = true;
 		}
-		minor = 0;
+		fsid.minor = 0;
 		break;
 
 	case FSID_MAJOR_64:
 		/* Nothing to do, will ignore fsid.minor in index */
 		valid = true;
-		major = fs->fsid.major;
-		minor = fs->fsid.minor;
+		fsid.major = fs->fsid.major;
+		fsid.minor = fs->fsid.minor;
 		break;
 
 	case FSID_TWO_UINT64:
@@ -787,8 +786,8 @@ int change_fsid_type(struct fsal_filesystem *fs,
 			/* Must re-index since minor was not indexed
 			 * previously.
 			 */
-			major = fs->fsid.major;
-			minor = fs->fsid.minor;
+			fsid.major = fs->fsid.major;
+			fsid.minor = fs->fsid.minor;
 			valid = true;
 		} else {
 			/* Nothing to do, FSID_TWO_UINT32 will just have high
@@ -801,8 +800,8 @@ int change_fsid_type(struct fsal_filesystem *fs,
 		break;
 
 	case FSID_DEVICE:
-		major = fs->dev.major;
-		minor = fs->dev.minor;
+		fsid.major = fs->dev.major;
+		fsid.minor = fs->dev.minor;
 		valid = true;
 
 	case FSID_TWO_UINT32:
@@ -810,17 +809,17 @@ int change_fsid_type(struct fsal_filesystem *fs,
 			/* Shrink each 64 bit quantity to 32 bits by xoring the
 			 * two halves.
 			 */
-			major = (fs->fsid.major & MASK_32) ^
-				(fs->fsid.major >> 32);
-			minor = (fs->fsid.minor & MASK_32) ^
-				(fs->fsid.minor >> 32);
+			fsid.major = (fs->fsid.major & MASK_32) ^
+				     (fs->fsid.major >> 32);
+			fsid.minor = (fs->fsid.minor & MASK_32) ^
+				     (fs->fsid.minor >> 32);
 			valid = true;
 		} else if (fs->fsid_type == FSID_ONE_UINT64) {
 			/* Split 64 bit that is in major into two 32 bit using
 			 * the high order 32 bits as major.
 			 */
-			major = fs->fsid.major >> 32;
-			minor = fs->fsid.major & MASK_32;
+			fsid.major = fs->fsid.major >> 32;
+			fsid.minor = fs->fsid.major & MASK_32;
 			valid = true;
 		}
 
@@ -834,7 +833,7 @@ int change_fsid_type(struct fsal_filesystem *fs,
 	if (!valid)
 		return -EINVAL;
 
-	return re_index_fs_fsid(fs, fsid_type, major, minor);
+	return re_index_fs_fsid(fs, fsid_type, &fsid);
 }
 
 static bool posix_get_fsid(struct fsal_filesystem *fs)

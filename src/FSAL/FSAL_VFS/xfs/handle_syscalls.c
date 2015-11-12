@@ -415,8 +415,7 @@ int vfs_get_root_handle(struct vfs_filesystem *vfs_fs,
 
 	(void) vfs_extract_fsid(fh, &fsid_type, &fsid);
 
-	retval = re_index_fs_fsid(vfs_fs->fs, fsid_type,
-				  fsid.major, fsid.minor);
+	retval = re_index_fs_fsid(vfs_fs->fs, fsid_type, &fsid);
 
 	if (retval < 0) {
 		LogCrit(COMPONENT_FSAL,
