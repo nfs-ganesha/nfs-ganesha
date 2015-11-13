@@ -157,11 +157,8 @@ int compare_9p_owner(state_owner_t *owner1, state_owner_t *owner2)
 		return 1;
 #endif
 
-	if (owner1->so_owner_len != owner2->so_owner_len)
-		return 1;
-
-	return memcmp(owner1->so_owner_val, owner2->so_owner_val,
-		      owner1->so_owner_len);
+	/* so_owner_len is always 0, don't compare so_owner_val */
+	return 0;
 }
 
 /**
@@ -192,28 +189,25 @@ int compare_9p_owner_key(struct gsh_buffdesc *buff1, struct gsh_buffdesc *buff2)
 uint32_t _9p_owner_value_hash_func(hash_parameter_t *hparam,
 				   struct gsh_buffdesc *key)
 {
-	unsigned int sum = 0;
-	unsigned int i;
 	unsigned long res;
 	state_owner_t *pkey = key->addr;
 
 	struct sockaddr_in *paddr =
 	    (struct sockaddr_in *)&pkey->so_owner.so_9p_owner.client_addr;
 
-	/* Compute the sum of all the characters */
-	for (i = 0; i < pkey->so_owner_len; i++)
-		sum += (unsigned char)pkey->so_owner_val[i];
+	/* so_owner_len is always zero so don't bother with so_owner_val */
 
-	res =
-	    (unsigned long)(pkey->so_owner.so_9p_owner.proc_id) +
-	    (unsigned long)paddr->sin_addr.s_addr + (unsigned long)sum +
-	    (unsigned long)pkey->so_owner_len;
+	/** @todo using sin_addr.s_addr as an int makes this only work for
+	 *        IPv4.
+	 */
+	res = (unsigned long)(pkey->so_owner.so_9p_owner.proc_id) +
+	      (unsigned long)paddr->sin_addr.s_addr;
 
 	if (isDebug(COMPONENT_HASHTABLE))
 		LogFullDebug(COMPONENT_STATE, "value = %lu",
 			     res % hparam->index_size);
 
-	return (unsigned long)(res % hparam->index_size);
+	return (uint32_t)(res % hparam->index_size);
 
 }
 
@@ -229,22 +223,19 @@ uint32_t _9p_owner_value_hash_func(hash_parameter_t *hparam,
 uint64_t _9p_owner_rbt_hash_func(hash_parameter_t *hparam,
 				 struct gsh_buffdesc *key)
 {
-	unsigned int sum = 0;
-	unsigned int i;
-	unsigned long res;
+	uint64_t res;
 	state_owner_t *pkey = key->addr;
 
 	struct sockaddr_in *paddr =
 	    (struct sockaddr_in *)&pkey->so_owner.so_9p_owner.client_addr;
 
-	/* Compute the sum of all the characters */
-	for (i = 0; i < pkey->so_owner_len; i++)
-		sum += (unsigned char)pkey->so_owner_val[i];
+	/* so_owner_len is always zero so don't bother with so_owner_val */
 
-	res =
-	    (unsigned long)(pkey->so_owner.so_9p_owner.proc_id) +
-	    (unsigned long)paddr->sin_addr.s_addr + (unsigned long)sum +
-	    (unsigned long)pkey->so_owner_len;
+	/** @todo using sin_addr.s_addr as an int makes this only work for
+	 *        IPv4.
+	 */
+	res = (uint64_t)(pkey->so_owner.so_9p_owner.proc_id) +
+	      (uint64_t)paddr->sin_addr.s_addr;
 
 	if (isDebug(COMPONENT_HASHTABLE))
 		LogFullDebug(COMPONENT_STATE, "rbt = %lu", res);
