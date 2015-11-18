@@ -182,16 +182,14 @@ typedef int (lf_function_t) (log_header_t headers, void *private,
 			     struct display_buffer *buffer, char *compstr,
 			     char *message);
 
-int create_log_facility(char *name,
-			lf_function_t *log_func,
-			log_levels_t max_level,
-			log_header_t header,
+int create_log_facility(const char *name, lf_function_t *log_func,
+			log_levels_t max_level, log_header_t header,
 			void *private);
-void release_log_facility(char *name);
-int enable_log_facility(char *name);
-int disable_log_facility(char *name);
-int set_log_destination(char *name, char *dest);
-int set_log_level(char *name, log_levels_t max_level);
+void release_log_facility(const char *name);
+int enable_log_facility(const char *name);
+int disable_log_facility(const char *name);
+int set_log_destination(const char *name, char *dest);
+int set_log_level(const char *name, log_levels_t max_level);
 void set_const_log_str(void);
 
 struct log_component_info {
