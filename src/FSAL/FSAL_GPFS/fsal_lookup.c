@@ -76,7 +76,6 @@ fsal_status_t GPFSFSAL_lookup(const struct req_op_context *p_context,
 	int parent_fd;
 	struct gpfs_fsal_obj_handle *parent_hdl;
 	struct gpfs_filesystem *gpfs_fs;
-	enum fsid_type fsid_type;
 	struct fsal_fsid__ fsid;
 
 	if (!parent || !p_filename)
@@ -124,11 +123,11 @@ fsal_status_t GPFSFSAL_lookup(const struct req_op_context *p_context,
 	 * correct gpfs_fs to pass to GPFSFSAL_getattrs. We also return
 	 * the correct fs to the caller.
 	 */
-	gpfs_extract_fsid(fh, &fsid_type, &fsid);
+	gpfs_extract_fsid(fh, &fsid);
 
 	if (fsid.major != parent_hdl->attributes.fsid.major) {
 		/* XDEV */
-		*new_fs = lookup_fsid(&fsid, fsid_type);
+		*new_fs = lookup_fsid(&fsid, GPFS_FSID_TYPE);
 		if (*new_fs == NULL) {
 			LogDebug(COMPONENT_FSAL,
 				 "Lookup of %s crosses filesystem boundary to unknown file system fsid=0x%016"

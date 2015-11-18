@@ -433,18 +433,14 @@ void free_gpfs_filesystem(struct gpfs_filesystem *gpfs_fs)
 	gsh_free(gpfs_fs);
 }
 
-void gpfs_extract_fsid(struct gpfs_file_handle *fh,
-		       enum fsid_type *fsid_type,
-		       struct fsal_fsid__ *fsid)
+void gpfs_extract_fsid(struct gpfs_file_handle *fh, struct fsal_fsid__ *fsid)
 {
-	*fsid_type = FSID_MAJOR_64;
 	memcpy(&fsid->major, fh->handle_fsid, sizeof(fsid->major));
 	fsid->minor = 0;
 }
 
 int open_root_fd(struct gpfs_filesystem *gpfs_fs)
 {
-	enum fsid_type fsid_type;
 	struct fsal_fsid__ fsid;
 	int retval;
 	fsal_status_t status;
@@ -474,9 +470,9 @@ int open_root_fd(struct gpfs_filesystem *gpfs_fs)
 		goto errout;
 	}
 
-	gpfs_extract_fsid(fh, &fsid_type, &fsid);
+	gpfs_extract_fsid(fh, &fsid);
 
-	retval = re_index_fs_fsid(gpfs_fs->fs, fsid_type, &fsid);
+	retval = re_index_fs_fsid(gpfs_fs->fs, GPFS_FSID_TYPE, &fsid);
 
 	if (retval < 0) {
 		LogCrit(COMPONENT_FSAL,

@@ -958,7 +958,6 @@ fsal_status_t gpfs_lookup_path(struct fsal_export *exp_hdl,
 	struct attrlist attributes;
 	gpfsfsal_xstat_t buffxstat;
 	struct gpfs_file_handle *fh = alloca(sizeof(struct gpfs_file_handle));
-	enum fsid_type fsid_type;
 	struct fsal_fsid__ fsid;
 	struct gpfs_fsal_export *gpfs_export;
 
@@ -999,9 +998,9 @@ fsal_status_t gpfs_lookup_path(struct fsal_export *exp_hdl,
 
 	close(dir_fd);
 
-	gpfs_extract_fsid(fh, &fsid_type, &fsid);
+	gpfs_extract_fsid(fh, &fsid);
 
-	fs = lookup_fsid(&fsid, fsid_type);
+	fs = lookup_fsid(&fsid, GPFS_FSID_TYPE);
 
 	if (fs == NULL) {
 		LogInfo(COMPONENT_FSAL,
@@ -1063,7 +1062,6 @@ fsal_status_t gpfs_create_handle(struct fsal_export *exp_hdl,
 	char *link_content = NULL;
 	ssize_t retlink = PATH_MAX - 1;
 	char link_buff[PATH_MAX];
-	enum fsid_type fsid_type;
 	struct fsal_fsid__ fsid;
 	struct fsal_filesystem *fs;
 	struct gpfs_filesystem *gpfs_fs;
@@ -1075,9 +1073,9 @@ fsal_status_t gpfs_create_handle(struct fsal_export *exp_hdl,
 	fh = alloca(hdl_desc->len);
 	memcpy(fh, hdl_desc->addr, hdl_desc->len); /* struct aligned copy */
 
-	gpfs_extract_fsid(fh, &fsid_type, &fsid);
+	gpfs_extract_fsid(fh, &fsid);
 
-	fs = lookup_fsid(&fsid, fsid_type);
+	fs = lookup_fsid(&fsid, GPFS_FSID_TYPE);
 
 	if (fs == NULL) {
 		LogInfo(COMPONENT_FSAL,

@@ -76,6 +76,9 @@ struct gpfs_ds {
 /* Define the buffer size for GPFS NFS4 ACL. */
 #define GPFS_ACL_BUF_SIZE 0x1000
 
+/* Define the standard fsid_type for GPFS*/
+#define GPFS_FSID_TYPE FSID_MAJOR_64
+
 /* A set of buffers to retrieve multiple attributes at the same time. */
 typedef struct fsal_xstat__ {
 	int attr_valid;

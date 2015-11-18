@@ -56,9 +56,7 @@ struct gpfs_filesystem_export_map {
 	struct glist_head on_filesystems;
 };
 
-void gpfs_extract_fsid(struct gpfs_file_handle *fh,
-		       enum fsid_type *fsid_type,
-		       struct fsal_fsid__ *fsid);
+void gpfs_extract_fsid(struct gpfs_file_handle *fh, struct fsal_fsid__ *fsid);
 
 void gpfs_unexport_filesystems(struct gpfs_fsal_export *exp);
 

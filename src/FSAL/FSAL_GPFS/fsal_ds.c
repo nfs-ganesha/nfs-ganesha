@@ -463,7 +463,6 @@ static nfsstat4 make_ds_handle(struct fsal_pnfs_ds *const pds,
 	struct gpfs_ds *ds;		/* Handle to be created */
 	struct fsal_filesystem *fs;
 	struct fsal_fsid__ fsid;
-	enum fsid_type fsid_type;
 
 	*handle = NULL;
 
@@ -490,9 +489,9 @@ static nfsstat4 make_ds_handle(struct fsal_pnfs_ds *const pds,
 	   flags, fh->handle_size, fh->handle_type, fh->handle_version,
 	   fh->handle_key_size, fh->handle_fsid[0], fh->handle_fsid[1]);
 
-	gpfs_extract_fsid(fh, &fsid_type, &fsid);
+	gpfs_extract_fsid(fh, &fsid);
 
-	fs = lookup_fsid(&fsid, fsid_type);
+	fs = lookup_fsid(&fsid, GPFS_FSID_TYPE);
 	if (fs == NULL) {
 		LogInfo(COMPONENT_FSAL,
 			"Could not find filesystem for fsid=0x%016"PRIx64
