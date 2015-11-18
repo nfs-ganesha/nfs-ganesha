@@ -132,6 +132,12 @@ fsal_status_t gpfs_close(struct fsal_obj_handle *obj_hdl);
 fsal_status_t gpfs_lru_cleanup(struct fsal_obj_handle *obj_hdl,
 			       lru_actions_t requests);
 
+/* Internal GPFS method linkage to export object */
+fsal_status_t
+gpfs_create_export(struct fsal_module *fsal_hdl, void *parse_node,
+		   struct config_error_type *err_type,
+		   const struct fsal_up_vector *up_ops);
+
 /* extended attributes management */
 fsal_status_t gpfs_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
 				  const struct req_op_context *opctx,
