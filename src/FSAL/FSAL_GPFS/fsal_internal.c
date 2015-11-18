@@ -225,7 +225,7 @@ fsal_status_t fsal_internal_get_handle(const char *p_fsalpath,	/* IN */
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
 	harg.handle = p_handle;
-	harg.handle->handle_size = gpfs_max_fh_size;
+	harg.handle->handle_size = GPFS_MAX_FH_SIZE;
 	harg.handle->handle_key_size = OPENHANDLE_KEY_LEN;
 	harg.handle->handle_version = OPENHANDLE_VERSION;
 	harg.name = p_fsalpath;
@@ -271,7 +271,7 @@ fsal_status_t fsal_internal_get_handle_at(int dfd, const char *p_fsalname,
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
 	harg.handle = p_handle;
-	harg.handle->handle_size = gpfs_max_fh_size;
+	harg.handle->handle_size = GPFS_MAX_FH_SIZE;
 	harg.handle->handle_version = OPENHANDLE_VERSION;
 	harg.handle->handle_key_size = OPENHANDLE_KEY_LEN;
 	harg.name = p_fsalname;
@@ -323,7 +323,7 @@ fsal_status_t fsal_internal_get_fh(int dirfd,	/* IN  */
 	harg.mountdirfd = dirfd;
 	harg.dir_fh = p_dir_fh;
 	harg.out_fh = p_out_fh;
-	harg.out_fh->handle_size = gpfs_max_fh_size;
+	harg.out_fh->handle_size = GPFS_MAX_FH_SIZE;
 	harg.out_fh->handle_version = OPENHANDLE_VERSION;
 	harg.out_fh->handle_key_size = OPENHANDLE_KEY_LEN;
 	harg.len = strlen(p_fsalname);
@@ -365,7 +365,7 @@ fsal_status_t fsal_internal_fd2handle(int fd,
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
 	harg.handle = p_handle;
-	harg.handle->handle_size = gpfs_max_fh_size;
+	harg.handle->handle_size = GPFS_MAX_FH_SIZE;
 	harg.handle->handle_key_size = OPENHANDLE_KEY_LEN;
 	harg.handle->handle_version = OPENHANDLE_VERSION;
 	harg.name = NULL;
@@ -562,7 +562,7 @@ fsal_status_t fsal_internal_create(struct fsal_obj_handle *dir_hdl,
 	crarg.name = p_stat_name;
 	crarg.dir_fh = gpfs_hdl->handle;
 	crarg.new_fh = p_new_handle;
-	crarg.new_fh->handle_size = gpfs_max_fh_size;
+	crarg.new_fh->handle_size = GPFS_MAX_FH_SIZE;
 	crarg.new_fh->handle_key_size = OPENHANDLE_KEY_LEN;
 	crarg.new_fh->handle_version = OPENHANDLE_VERSION;
 	crarg.buf = buf;

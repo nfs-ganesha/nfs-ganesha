@@ -85,7 +85,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 			     "Requesting event from FSAL Callback interface for %d.",
 			     gpfs_fs->root_fd);
 
-		handle.handle_size = gpfs_max_fh_size;
+		handle.handle_size = GPFS_MAX_FH_SIZE;
 		handle.handle_key_size = OPENHANDLE_KEY_LEN;
 		handle.handle_version = OPENHANDLE_VERSION;
 
