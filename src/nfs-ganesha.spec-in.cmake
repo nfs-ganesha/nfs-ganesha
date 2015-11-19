@@ -106,6 +106,11 @@ BuildRequires: libntirpc-devel >= @NTIRPC_VERSION@
 %endif
 Requires:	dbus
 Requires:	nfs-utils
+%if ( 0%{?fedora} ) || ( 0%{?rhel} && 0%{?rhel} >= 6 )
+Requires:	rpcbind
+%else
+Requires:	portmap
+%endif
 %if %{with_nfsidmap}
 BuildRequires:	libnfsidmap-devel
 %else
