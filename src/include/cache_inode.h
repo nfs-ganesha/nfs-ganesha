@@ -322,7 +322,7 @@ cache_inode_key_delete(cache_inode_key_t *key)
 {
 	key->kv.len = 0;
 	gsh_free(key->kv.addr);
-	key->kv.addr = (void *)0xdeaddeaddeaddead;
+	key->kv.addr = NULL;
 }
 
 /**
