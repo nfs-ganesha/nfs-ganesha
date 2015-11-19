@@ -195,7 +195,7 @@ int display_sockaddr(struct display_buffer *dspbuf, sockaddr_t *addr)
 {
 	const char *name = NULL;
 	char ipname[SOCK_NAME_MAX];
-	int port;
+	int port = 0;
 	int b_left = display_start(dspbuf);
 
 	if (b_left <= 0)

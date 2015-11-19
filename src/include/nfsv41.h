@@ -29,8 +29,8 @@ extern "C" {
 #define NFS4_VERIFIER_SIZE 8
 #define NFS4_OPAQUE_LIMIT 1024
 #define NFS4_SESSIONID_SIZE 16
-#define NFS4_INT64_MAX 0x7fffffffffffffff
-#define NFS4_UINT64_MAX 0xffffffffffffffff
+#define NFS4_INT64_MAX 0x7fffffffffffffffLL
+#define NFS4_UINT64_MAX 0xffffffffffffffffLL
 #define NFS4_INT32_MAX 0x7fffffff
 #define NFS4_UINT32_MAX 0xffffffff
 #define NFS4_MAXFILELEN 0xffffffffffffffff
