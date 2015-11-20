@@ -51,15 +51,13 @@ static void memstream_grow(struct memstream *ms, size_t newsize)
 
 	if (newsize > *ms->lenp) {
 		buf = gsh_realloc(*ms->cp, newsize + 1);
-		if (buf != NULL) {
 #ifdef DEBUG
-			fprintf(stderr, "MS: %p growing from %zd to %zd\n", ms,
-				*ms->lenp, newsize);
+		fprintf(stderr, "MS: %p growing from %zd to %zd\n", ms,
+			*ms->lenp, newsize);
 #endif
-			memset(buf + *ms->lenp + 1, 0, newsize - *ms->lenp);
-			*ms->cp = buf;
-			*ms->lenp = newsize;
-		}
+		memset(buf + *ms->lenp + 1, 0, newsize - *ms->lenp);
+		*ms->cp = buf;
+		*ms->lenp = newsize;
 	}
 }
 

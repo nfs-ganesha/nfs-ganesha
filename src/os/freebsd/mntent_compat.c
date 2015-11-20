@@ -117,8 +117,6 @@ static char *catopt(char *s0, const char *s1)
 	if (s0 != NULL) {
 		newlen = strlen(s0) + strlen(s1) + 1 + 1;
 		cp = gsh_realloc(s0, newlen);
-		if (cp == NULL)
-			return NULL;
 
 		strcat(cp, " ");
 		strcat(cp, s1);
