@@ -266,9 +266,6 @@ static nfsstat4 make_ds_handle(struct fsal_pnfs_ds *const pds,
 
 	ds = gsh_calloc(1, sizeof(struct glfs_ds_handle));
 
-	if (ds == NULL)
-		return NFS4ERR_SERVERFAULT;
-
 	*handle = &ds->ds;
 	fsal_ds_handle_init(*handle, pds);
 

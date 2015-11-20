@@ -246,22 +246,17 @@ struct fsal_staticfsinfo_t *gluster_staticinfo(struct fsal_module *hdl)
  * @return 0 on success, negative error codes on failure.
  */
 
-int construct_handle(struct glusterfs_export *glexport, const struct stat *sb,
-		     struct glfs_object *glhandle, unsigned char *globjhdl,
-		     int len, struct glusterfs_handle **obj,
-		     const char *vol_uuid)
+void construct_handle(struct glusterfs_export *glexport, const struct stat *sb,
+		      struct glfs_object *glhandle, unsigned char *globjhdl,
+		      int len, struct glusterfs_handle **obj,
+		      const char *vol_uuid)
 {
 	struct glusterfs_handle *constructing = NULL;
 	glusterfs_fsal_xstat_t buffxstat;
 
-	*obj = NULL;
 	memset(&buffxstat, 0, sizeof(glusterfs_fsal_xstat_t));
 
 	constructing = gsh_calloc(1, sizeof(struct glusterfs_handle));
-	if (constructing == NULL) {
-		errno = ENOMEM;
-		return -1;
-	}
 
 	constructing->handle.attrs = &constructing->attributes;
 	constructing->attributes.mask =
@@ -280,8 +275,6 @@ int construct_handle(struct glusterfs_export *glexport, const struct stat *sb,
 	handle_ops_init(&constructing->handle.obj_ops);
 
 	*obj = constructing;
-
-	return 0;
 }
 
 void gluster_cleanup_vars(struct glfs_object *glhandle)
@@ -312,10 +305,6 @@ bool fs_specific_has(const char *fs_specific, const char *key, char *val,
 		return false;
 
 	fso_dup = gsh_strdup(fs_specific);
-	if (!fso_dup) {
-		LogCrit(COMPONENT_FSAL, "strdup(%s) failed", fs_specific);
-		return false;
-	}
 
 	for (option = strtok_r(fso_dup, ",", &next_comma); option;
 	     option = strtok_r(NULL, ",", &next_comma)) {
@@ -434,11 +423,6 @@ fsal_status_t glusterfs_get_acl(struct glusterfs_export *glfs_export,
 		acldata.aces = (fsal_ace_t *) gsh_realloc(acldata.aces,
 				new_count*sizeof(fsal_ace_t));
 		acldata.naces = new_count;
-		if (acldata.aces == NULL) {
-			LogCrit(COMPONENT_FSAL,
-			"failed to create a new acl list");
-			return fsalstat(ERR_FSAL_NOMEM, -1);
-		}
 
 		fsalattr->acl = nfs4_acl_new_entry(&acldata, &aclstatus);
 		LogDebug(COMPONENT_FSAL, "fsal acl = %p, fsal_acl_status = %u",

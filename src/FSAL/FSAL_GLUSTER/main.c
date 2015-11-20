@@ -127,11 +127,6 @@ MODULE_INIT void glusterfs_init(void)
 {
 	/* register_fsal seems to expect zeroed memory. */
 	glfsal_module = gsh_calloc(1, sizeof(struct glusterfs_fsal_module));
-	if (glfsal_module == NULL) {
-		LogCrit(COMPONENT_FSAL,
-			"Unable to allocate memory for Gluster FSAL module.");
-		return;
-	}
 
 	if (register_fsal(&glfsal_module->fsal, glfsal_name, FSAL_MAJOR_VERSION,
 			  FSAL_MINOR_VERSION, FSAL_ID_GLUSTER) != 0) {

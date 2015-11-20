@@ -165,10 +165,11 @@ void *GLUSTERFSAL_UP_Thread(void *Arg)
 			} else {
 				switch (errsv) {
 				case ENOMEM:
-					LogFatal(COMPONENT_FSAL_UP,
+					LogMajor(COMPONENT_FSAL_UP,
 						 "Memory allocation failed during poll_upcall for (%p).",
 						 glfsexport->gl_fs);
-					break;
+					abort();
+
 				case ENOTSUP:
 					LogEvent(COMPONENT_FSAL_UP,
 						 "Upcall feature is not supported for (%p).",

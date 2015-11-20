@@ -212,10 +212,10 @@ void stat2fsal_attributes(const struct stat *buffstat,
 
 struct fsal_staticfsinfo_t *gluster_staticinfo(struct fsal_module *hdl);
 
-int construct_handle(struct glusterfs_export *glexport, const struct stat *st,
-		     struct glfs_object *glhandle, unsigned char *globjhdl,
-		     int len, struct glusterfs_handle **obj,
-		     const char *vol_uuid);
+void construct_handle(struct glusterfs_export *glexport, const struct stat *st,
+		      struct glfs_object *glhandle, unsigned char *globjhdl,
+		      int len, struct glusterfs_handle **obj,
+		      const char *vol_uuid);
 
 fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 				      void *parse_node,

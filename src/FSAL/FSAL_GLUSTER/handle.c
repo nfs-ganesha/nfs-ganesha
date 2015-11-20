@@ -127,12 +127,8 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 		goto out;
 	}
 
-	rc = construct_handle(glfs_export, &sb, glhandle, globjhdl,
-			      GLAPI_HANDLE_LENGTH, &objhandle, vol_uuid);
-	if (rc != 0) {
-		status = gluster2fsal_error(rc);
-		goto out;
-	}
+	construct_handle(glfs_export, &sb, glhandle, globjhdl,
+			 GLAPI_HANDLE_LENGTH, &objhandle, vol_uuid);
 
 	*handle = &objhandle->handle;
 
@@ -274,12 +270,8 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 		goto out;
 	}
 
-	rc = construct_handle(glfs_export, &sb, glhandle, globjhdl,
-			      GLAPI_HANDLE_LENGTH, &objhandle, vol_uuid);
-	if (rc != 0) {
-		status = gluster2fsal_error(rc);
-		goto out;
-	}
+	construct_handle(glfs_export, &sb, glhandle, globjhdl,
+			 GLAPI_HANDLE_LENGTH, &objhandle, vol_uuid);
 
 	*handle = &objhandle->handle;
 	*attrib = objhandle->attributes;
@@ -360,12 +352,8 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 		goto out;
 	}
 
-	rc = construct_handle(glfs_export, &sb, glhandle, globjhdl,
-			      GLAPI_HANDLE_LENGTH, &objhandle, vol_uuid);
-	if (rc != 0) {
-		status = gluster2fsal_error(rc);
-		goto out;
-	}
+	construct_handle(glfs_export, &sb, glhandle, globjhdl,
+			 GLAPI_HANDLE_LENGTH, &objhandle, vol_uuid);
 
 	*handle = &objhandle->handle;
 	*attrib = objhandle->attributes;
@@ -474,12 +462,8 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 		goto out;
 	}
 
-	rc = construct_handle(glfs_export, &sb, glhandle, globjhdl,
-			      GLAPI_HANDLE_LENGTH, &objhandle, vol_uuid);
-	if (rc != 0) {
-		status = gluster2fsal_error(rc);
-		goto out;
-	}
+	construct_handle(glfs_export, &sb, glhandle, globjhdl,
+			 GLAPI_HANDLE_LENGTH, &objhandle, vol_uuid);
 
 	*handle = &objhandle->handle;
 	*attrib = objhandle->attributes;
@@ -559,12 +543,8 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 		goto out;
 	}
 
-	rc = construct_handle(glfs_export, &sb, glhandle, globjhdl,
-			      GLAPI_HANDLE_LENGTH, &objhandle, vol_uuid);
-	if (rc != 0) {
-		status = gluster2fsal_error(rc);
-		goto out;
-	}
+	construct_handle(glfs_export, &sb, glhandle, globjhdl,
+			 GLAPI_HANDLE_LENGTH, &objhandle, vol_uuid);
 
 	*handle = &objhandle->handle;
 	*attrib = objhandle->attributes;
@@ -603,10 +583,6 @@ static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
 
 	link_content->len = MAXPATHLEN; /* Max link path */
 	link_content->addr = gsh_malloc(link_content->len);
-	if (link_content->addr == NULL) {
-		status = gluster2fsal_error(ENOMEM);
-		goto out;
-	}
 
 	rc = glfs_h_readlink(glfs_export->gl_fs, objhandle->glhandle,
 			     link_content->addr, link_content->len);
