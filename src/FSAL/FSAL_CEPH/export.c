@@ -139,11 +139,7 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 	if (rc < 0)
 		return ceph2fsal_error(rc);
 
-	rc = construct_handle(&st, i, export, &handle);
-	if (rc < 0) {
-		ceph_ll_put(export->cmount, i);
-		return ceph2fsal_error(rc);
-	}
+	construct_handle(&st, i, export, &handle);
 
 	*pub_handle = &handle->handle;
 	return status;
@@ -227,11 +223,7 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 	if (rc < 0)
 		return ceph2fsal_error(rc);
 
-	rc = construct_handle(&st, i, export, &handle);
-	if (rc < 0) {
-		ceph_ll_put(export->cmount, i);
-		return ceph2fsal_error(rc);
-	}
+	construct_handle(&st, i, export, &handle);
 
 	*pub_handle = &handle->handle;
 	return status;

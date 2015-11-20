@@ -90,12 +90,7 @@ static fsal_status_t lookup(struct fsal_obj_handle *dir_pub,
 	if (rc < 0)
 		return ceph2fsal_error(rc);
 
-	rc = construct_handle(&st, i, export, &obj);
-
-	if (rc < 0) {
-		ceph_ll_put(export->cmount, i);
-		return ceph2fsal_error(rc);
-	}
+	construct_handle(&st, i, export, &obj);
 
 	*obj_pub = &obj->handle;
 
@@ -224,12 +219,7 @@ static fsal_status_t fsal_create(struct fsal_obj_handle *dir_pub,
 	if (rc < 0)
 		return ceph2fsal_error(rc);
 
-	rc = construct_handle(&st, i, export, &obj);
-
-	if (rc < 0) {
-		ceph_ll_put(export->cmount, i);
-		return ceph2fsal_error(rc);
-	}
+	construct_handle(&st, i, export, &obj);
 
 	*obj_pub = &obj->handle;
 	*attrib = obj->attributes;
@@ -277,12 +267,7 @@ static fsal_status_t fsal_mkdir(struct fsal_obj_handle *dir_pub,
 	if (rc < 0)
 		return ceph2fsal_error(rc);
 
-	rc = construct_handle(&st, i, export, &obj);
-
-	if (rc < 0) {
-		ceph_ll_put(export->cmount, i);
-		return ceph2fsal_error(rc);
-	}
+	construct_handle(&st, i, export, &obj);
 
 	*obj_pub = &obj->handle;
 	*attrib = obj->attributes;
@@ -328,11 +313,7 @@ static fsal_status_t fsal_symlink(struct fsal_obj_handle *dir_pub,
 	if (rc < 0)
 		return ceph2fsal_error(rc);
 
-	rc = construct_handle(&st, i, export, &obj);
-	if (rc < 0) {
-		ceph_ll_put(export->cmount, i);
-		return ceph2fsal_error(rc);
-	}
+	construct_handle(&st, i, export, &obj);
 
 	*obj_pub = &obj->handle;
 	*attrib = obj->attributes;
@@ -378,10 +359,8 @@ static fsal_status_t fsal_readlink(struct fsal_obj_handle *link_pub,
 		return ceph2fsal_error(rc);
 
 	content_buf->len = (strlen(content) + 1);
-	content_buf->addr = gsh_malloc(content_buf->len);
-	if (content_buf->addr == NULL)
-		return fsalstat(ERR_FSAL_NOMEM, 0);
-	memcpy(content_buf->addr, content, content_buf->len);
+	content_buf->addr = gsh_strdup(content);
+
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 

@@ -142,8 +142,8 @@ static inline fsal_staticfsinfo_t *ceph_staticinfo(struct fsal_module *hdl)
 
 /* Prototypes */
 
-int construct_handle(const struct stat *st, struct Inode *i,
-		     struct export *export, struct handle **obj);
+void construct_handle(const struct stat *st, struct Inode *i,
+		      struct export *export, struct handle **obj);
 void deconstruct_handle(struct handle *obj);
 
 /**

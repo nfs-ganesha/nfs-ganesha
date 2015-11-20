@@ -139,18 +139,15 @@ void ceph2fsal_attributes(const struct stat *buffstat,
  * @return 0 on success, negative error codes on failure.
  */
 
-int construct_handle(const struct stat *st, struct Inode *i,
-		     struct export *export, struct handle **obj)
+void construct_handle(const struct stat *st, struct Inode *i,
+		      struct export *export, struct handle **obj)
 {
 	/* Pointer to the handle under construction */
 	struct handle *constructing = NULL;
 
 	assert(i);
-	*obj = NULL;
 
 	constructing = gsh_calloc(1, sizeof(struct handle));
-	if (constructing == NULL)
-		return -ENOMEM;
 
 	constructing->vi.ino.val = st->st_ino;
 #ifdef CEPH_NOSNAP
@@ -169,8 +166,6 @@ int construct_handle(const struct stat *st, struct Inode *i,
 	constructing->export = export;
 
 	*obj = constructing;
-
-	return 0;
 }
 
 /**

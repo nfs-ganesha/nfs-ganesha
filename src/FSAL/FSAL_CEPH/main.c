@@ -169,14 +169,6 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 	/* True if we have called fsal_export_init */
 	bool initialized = false;
 
-	if (export == NULL) {
-		status.major = ERR_FSAL_NOMEM;
-		LogCrit(COMPONENT_FSAL,
-			"Unable to allocate export object for %s.",
-			op_ctx->export->fullpath);
-		goto error;
-	}
-
 	if (fsal_export_init(&export->export) != 0) {
 		status.major = ERR_FSAL_NOMEM;
 		LogCrit(COMPONENT_FSAL,
@@ -256,11 +248,7 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 		goto error;
 	}
 
-	rc = construct_handle(&st, i, export, &handle);
-	if (rc < 0) {
-		status = ceph2fsal_error(rc);
-		goto error;
-	}
+	construct_handle(&st, i, export, &handle);
 
 	export->root = handle;
 	op_ctx->fsal_export = &export->export;
