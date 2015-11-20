@@ -66,20 +66,20 @@ static struct nullfs_fsal_obj_handle *nullfs_alloc_handle(
 		struct fsal_obj_handle *sub_handle,
 		struct fsal_filesystem *fs)
 {
-	struct nullfs_fsal_obj_handle *result =
-		gsh_calloc(1, sizeof(struct nullfs_fsal_obj_handle));
-	if (result) {
-		/* attributes */
-		result->obj_handle.attrs = sub_handle->attrs;
-		/* default handlers */
-		fsal_obj_handle_init(&result->obj_handle, &export->export,
-				     sub_handle->type);
-		/* nullfs handlers */
-		nullfs_handle_ops_init(&result->obj_handle.obj_ops);
-		result->sub_handle = sub_handle;
-		result->obj_handle.type = sub_handle->type;
-		result->obj_handle.fs = fs;
-	}
+	struct nullfs_fsal_obj_handle *result;
+
+	result = gsh_calloc(1, sizeof(struct nullfs_fsal_obj_handle));
+
+	/* attributes */
+	result->obj_handle.attrs = sub_handle->attrs;
+	/* default handlers */
+	fsal_obj_handle_init(&result->obj_handle, &export->export,
+			     sub_handle->type);
+	/* nullfs handlers */
+	nullfs_handle_ops_init(&result->obj_handle.obj_ops);
+	result->sub_handle = sub_handle;
+	result->obj_handle.type = sub_handle->type;
+	result->obj_handle.fs = fs;
 
 	return result;
 }
@@ -110,16 +110,11 @@ static fsal_status_t nullfs_alloc_and_check_handle(
 	fsal_status_t status = subfsal_status;
 
 	if (!FSAL_IS_ERROR(subfsal_status)) {
-		struct nullfs_fsal_obj_handle *null_handle =
-			nullfs_alloc_handle(export, sub_handle, fs);
-		if (null_handle == NULL) {
-			status = fsalstat(ERR_FSAL_NOMEM, ENOMEM);
-			LogCrit(COMPONENT_FSAL, "Out of memory");
+		struct nullfs_fsal_obj_handle *null_handle;
 
-			sub_handle->obj_ops.release(sub_handle);
-		} else {
-			*new_handle = &null_handle->obj_handle;
-		}
+		null_handle = nullfs_alloc_handle(export, sub_handle, fs);
+
+		*new_handle = &null_handle->obj_handle;
 	}
 	return status;
 }

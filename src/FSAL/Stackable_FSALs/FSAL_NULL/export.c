@@ -416,12 +416,6 @@ fsal_status_t nullfs_create_export(struct fsal_module *fsal_hdl,
 	}
 
 	myself = gsh_calloc(1, sizeof(struct nullfs_fsal_export));
-	if (myself == NULL) {
-		LogMajor(COMPONENT_FSAL,
-			 "Could not allocate memory for export %s",
-			 op_ctx->export->fullpath);
-		return fsalstat(ERR_FSAL_NOMEM, ENOMEM);
-	}
 
 	expres = fsal_stack->m_ops.create_export(fsal_stack,
 						 nullfsal.subfsal.fsal_node,
