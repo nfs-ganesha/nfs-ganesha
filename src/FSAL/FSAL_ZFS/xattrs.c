@@ -375,10 +375,8 @@ static int xattr_format_value(caddr_t buffer, size_t *datalen, size_t maxlen)
 	} else {
 		/* 2 bytes per initial byte +'0x' +\n +\0 */
 		char *curr_out;
-		char *tmp_buf = (char *)gsh_malloc(3 * size_in + 4);
+		char *tmp_buf = (char *) gsh_malloc(3 * size_in + 4);
 
-		if (!tmp_buf)
-			return ERR_FSAL_NOMEM;
 		curr_out = tmp_buf;
 		curr_out += sprintf(curr_out, "0x");
 		/* hexa representation */

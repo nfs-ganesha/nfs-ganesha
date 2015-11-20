@@ -302,11 +302,6 @@ fsal_status_t zfs_create_export(struct fsal_module *fsal_hdl,
 	libzfswrap_vfs_t *p_zfs = NULL;
 
 	myself = gsh_calloc(1, sizeof(struct zfs_fsal_export));
-	if (myself == NULL) {
-		LogMajor(COMPONENT_FSAL,
-			 "zfs_fsal_create: out of memory for object");
-		return fsalstat(posix2fsal_error(errno), errno);
-	}
 
 	retval = fsal_export_init(&myself->export);
 	if (retval != 0)
