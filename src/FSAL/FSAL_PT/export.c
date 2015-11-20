@@ -280,13 +280,7 @@ fsal_status_t pt_create_export(struct fsal_module *fsal_hdl,
 	int retval = 0;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 
-	myself = gsh_malloc(sizeof(struct pt_fsal_export));
-	if (myself == NULL) {
-		LogMajor(COMPONENT_FSAL,
-			 "pt_fsal_create: out of memory for object");
-		return fsalstat(posix2fsal_error(errno), errno);
-	}
-	memset(myself, 0, sizeof(struct pt_fsal_export));
+	myself = gsh_calloc(1, sizeof(struct pt_fsal_export));
 
 	retval = fsal_export_init(&myself->export);
 	if (retval != 0) {

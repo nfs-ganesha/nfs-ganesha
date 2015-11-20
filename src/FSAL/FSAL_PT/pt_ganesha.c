@@ -84,18 +84,12 @@ ptfsal_threadcontext_t *ptfsal_get_thread_context(void)
 		p_cur_context = gsh_malloc(sizeof(ptfsal_threadcontext_t));
 		FSI_TRACE(FSI_NOTICE, "malloc %lu bytes fsal specific data",
 			  sizeof(ptfsal_threadcontext_t));
-		if (p_cur_context != NULL) {
-			/* we init our stuff for the first time */
-			p_cur_context->cur_namecache_handle_index = -1;
-			p_cur_context->cur_fsi_handle_index = -1;
-			/* now set the thread context */
-			pthread_setspecific(ptfsal_thread_key,
-					    (void *)p_cur_context);
-		} else {
-			FSI_TRACE(FSI_FATAL,
-				  "cannot malloc fsal pthread key errno=%d",
-				  errno);
-		}
+		/* we init our stuff for the first time */
+		p_cur_context->cur_namecache_handle_index = -1;
+		p_cur_context->cur_fsi_handle_index = -1;
+		/* now set the thread context */
+		pthread_setspecific(ptfsal_thread_key,
+				    (void *)p_cur_context);
 	}
 	return p_cur_context;
 }
@@ -1589,13 +1583,6 @@ int fsi_cache_table_init(CACHE_TABLE_T *cacheTableToInit,
 	    gsh_malloc(sizeof(CACHE_TABLE_ENTRY_T) *
 		       cacheTableInitParam->maxNumOfCacheEntries);
 
-	if (cacheTableToInit->cacheEntries == NULL) {
-		FSI_TRACE(FSI_ERR,
-			  "Unable to allocate memory for cache table (cache id = %d",
-			  cacheTableInitParam->cacheTableID);
-		return -1;
-	}
-
 	cacheTableToInit->cacheMetaData.keyLengthInBytes =
 	    cacheTableInitParam->keyLengthInBytes;
 	cacheTableToInit->cacheMetaData.dataSizeInBytes =
@@ -1762,18 +1749,11 @@ int fsi_cache_insertEntry(CACHE_TABLE_T *cacheTable,
 		 whereToInsert) * sizeof(CACHE_TABLE_ENTRY_T));
 
 	ptr = gsh_malloc(cacheTable->cacheMetaData.keyLengthInBytes);
-	if (ptr == NULL) {
-		FSI_TRACE(FSI_ERR, "Failed allocate memory for inserting key");
-		return -1;
-	}
+
 	cacheTable->cacheEntries[whereToInsert].key = ptr;
 
 	ptr = gsh_malloc(cacheTable->cacheMetaData.dataSizeInBytes);
-	if (ptr == NULL) {
-		gsh_free(cacheTable->cacheEntries[whereToInsert].key);
-		FSI_TRACE(FSI_ERR, "Failed allocate memory for inserting data");
-		return -1;
-	}
+
 	cacheTable->cacheEntries[whereToInsert].data = ptr;
 
 	memcpy(cacheTable->cacheEntries[whereToInsert].key, whatToInsert->key,
