@@ -197,12 +197,6 @@ static struct pseudo_fsal_obj_handle
 	hdl = gsh_calloc(1, sizeof(struct pseudo_fsal_obj_handle) +
 			    V4_FH_OPAQUE_SIZE);
 
-	if (hdl == NULL) {
-		LogDebug(COMPONENT_FSAL,
-			 "Could not allocate handle");
-		return NULL;
-	}
-
 	hdl->obj_handle.attrs = &hdl->attributes;
 
 	/* Establish tree details for this directory */
@@ -414,9 +408,6 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 				     name,
 				     op_ctx->fsal_export,
 				     unix_mode);
-
-	if (hdl == NULL)
-		return fsalstat(ERR_FSAL_NOMEM, ENOMEM);
 
 	numlinks = atomic_inc_uint32_t(&myself->numlinks);
 
@@ -815,11 +806,6 @@ fsal_status_t pseudofs_lookup_path(struct fsal_export *exp_hdl,
 					       myself->export_path,
 					       exp_hdl,
 					       0755);
-
-		if (myself->root_handle == NULL) {
-			/* alloc handle failed. */
-			return fsalstat(ERR_FSAL_NOMEM, ENOMEM);
-		}
 	}
 
 	*handle = &myself->root_handle->obj_handle;
