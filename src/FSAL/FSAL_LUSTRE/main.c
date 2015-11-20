@@ -89,8 +89,6 @@ static void *dataserver_init(void *link_mem, void *self_struct)
 	} else if (self_struct == NULL) {
 		child_param = gsh_calloc(1,
 				 sizeof(struct lustre_pnfs_ds_parameter));
-		if (child_param == NULL)
-			return NULL;
 
 		glist_init(&child_param->ds_list);
 		return (void *)child_param;

@@ -485,13 +485,6 @@ int lustre_claim_filesystem(struct fsal_filesystem *fs, struct fsal_export *exp)
 
 	map = gsh_calloc(1, sizeof(*map));
 
-	if (map == NULL) {
-		LogCrit(COMPONENT_FSAL,
-			"Out of memory to claim file system %s",
-			fs->path);
-		return ENOMEM;
-	}
-
 	if (fs->fsal != NULL) {
 		lustre_fs = fs->private;
 		if (lustre_fs == NULL) {
@@ -513,14 +506,6 @@ int lustre_claim_filesystem(struct fsal_filesystem *fs, struct fsal_export *exp)
 
 	lustre_fs = gsh_calloc(1, sizeof(*lustre_fs));
 
-	if (lustre_fs == NULL) {
-		LogCrit(COMPONENT_FSAL,
-			"Out of memory to claim file system %s",
-			fs->path);
-		retval = ENOMEM;
-		goto errout;
-	}
-
 	glist_init(&lustre_fs->exports);
 
 	lustre_fs->fs = fs;
@@ -528,13 +513,6 @@ int lustre_claim_filesystem(struct fsal_filesystem *fs, struct fsal_export *exp)
 	/* Call llapi to get Lustre fs name
 	 * This is not the fsname is the mntent */
 	lustre_fs->fsname = gsh_malloc(MAXPATHLEN);
-	if (lustre_fs->fsname == NULL) {
-		LogCrit(COMPONENT_FSAL,
-			"Out of memory to claim file system %s",
-			fs->path);
-		retval = ENOMEM;
-		goto errout;
-	}
 
 	/* Get information from llapi */
 	retval = llapi_search_fsname(fs->path, lustre_fs->fsname);
@@ -599,8 +577,7 @@ already_claimed:
 
 errout:
 
-	if (map != NULL)
-		gsh_free(map);
+	gsh_free(map);
 
 	if (lustre_fs != NULL)
 		free_lustre_filesystem(lustre_fs);
@@ -720,13 +697,8 @@ fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	struct lustre_fsal_export *myself;
 
-	myself = gsh_malloc(sizeof(struct lustre_fsal_export));
-	if (myself == NULL) {
-		LogMajor(COMPONENT_FSAL,
-			 "lustre_fsal_create: out of memory for object");
-		return fsalstat(posix2fsal_error(errno), errno);
-	}
-	memset(myself, 0, sizeof(struct lustre_fsal_export));
+	myself = gsh_calloc(1, sizeof(struct lustre_fsal_export));
+
 	glist_init(&myself->filesystems);
 
 	status.minor = fsal_export_init(&myself->export);
