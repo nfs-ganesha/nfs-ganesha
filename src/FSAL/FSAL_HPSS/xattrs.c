@@ -808,9 +808,7 @@ fsal_status_t hpss_getextattr_value_by_name(
 	if (fsal_xattr_name_2_uda(xattr_name, attrpath) == 0) {
 		attr.len = 1;
 		/* use malloc because HPSS may free it */
-		attr.Pair = malloc(sizeof(hpss_userattr_t));
-		if (attr.Pair == NULL)
-			return fsalstat(ERR_FSAL_NOMEM, errno);
+		attr.Pair = gsh_malloc(sizeof(hpss_userattr_t));
 
 		attr.Pair[0].Key = attrpath;
 		attr.Pair[0].Value = attrval;
@@ -921,9 +919,7 @@ fsal_status_t hpss_setextattr_value(struct fsal_obj_handle *fsal_obj_hdl,
 	if (fsal_xattr_name_2_uda(xattr_name, attrpath) == 0) {
 		attr.len = 1;
 		/* use malloc because HPSS may free it */
-		attr.Pair = malloc(sizeof(hpss_userattr_t));
-		if (attr.Pair == NULL)
-			return fsalstat(ERR_FSAL_NOMEM, errno);
+		attr.Pair = gsh_malloc(sizeof(hpss_userattr_t));
 
 		attr.Pair[0].Key = attrpath;
 		attr.Pair[0].Value = buffer_addr;

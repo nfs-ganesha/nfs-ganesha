@@ -293,11 +293,6 @@ fsal_status_t hpss_create_export(struct fsal_module *fsal_hdl,
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 
 	myself = gsh_calloc(1, sizeof(struct hpss_fsal_export));
-	if (myself == NULL) {
-		LogMajor(COMPONENT_FSAL,
-			 "hpss_fsal_create: out of memory for object");
-		return fsalstat(ERR_FSAL_NOMEM, errno);
-	}
 
 	retval = fsal_export_init(&myself->export);
 	if (retval != 0)

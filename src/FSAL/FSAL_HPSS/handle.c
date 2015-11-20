@@ -52,14 +52,9 @@ static struct hpss_fsal_obj_handle *hpss_alloc_handle(
 {
 	struct hpss_fsal_obj_handle *hdl;
 
-	hdl = malloc(sizeof(struct hpss_fsal_obj_handle) +
-		     sizeof(struct hpss_file_handle));
+	hdl = calloc(1, sizeof(struct hpss_fsal_obj_handle) +
+			sizeof(struct hpss_file_handle));
 
-	if (hdl == NULL || attr == NULL)
-		return NULL;
-
-	memset(hdl, 0, (sizeof(struct hpss_fsal_obj_handle) +
-			sizeof(struct hpss_file_handle)));
 
 	hdl->handle = (struct hpss_file_handle *)&hdl[1];
 
@@ -71,14 +66,8 @@ static struct hpss_fsal_obj_handle *hpss_alloc_handle(
 
 	if ((hdl->obj_handle.type == SYMBOLIC_LINK) &&
 	    (link_content != NULL)) {
-		size_t len = strlen(link_content) + 1;
-
-		hdl->u.symlink.link_content = gsh_malloc(len);
-		if (hdl->u.symlink.link_content == NULL)
-			goto spcerr;
-
-		memcpy(hdl->u.symlink.link_content, link_content, len);
-		hdl->u.symlink.link_size = len;
+		hdl->u.symlink.link_content = gsh_strdup(link_content);
+		hdl->u.symlink.link_size = strlen(link_content) + 1;
 	}
 
 	hdl->attributes.mask = exp_hdl->exp_ops.fs_supported_attrs(exp_hdl);
@@ -91,13 +80,6 @@ static struct hpss_fsal_obj_handle *hpss_alloc_handle(
 	hpss_handle_ops_init(&hdl->obj_handle.obj_ops);
 	return hdl;
 
-spcerr:
-	if (hdl->obj_handle.type == SYMBOLIC_LINK)
-		if (hdl->u.symlink.link_content != NULL)
-			gsh_free(hdl->u.symlink.link_content);
-
-	gsh_free(hdl);  /* elvis has left the building */
-	return NULL;
 }
 
 /* handle methods
@@ -203,9 +185,6 @@ static fsal_status_t hpss_lookup(struct fsal_obj_handle *parent,      /* IN */
 	/* set output handle */
 	hdl = hpss_alloc_handle(NULL, &fsal_attr, NULL, op_ctx->fsal_export);
 
-	if (hdl == NULL)
-		return fsalstat(ERR_FSAL_NOMEM, 0);
-
 	hdl->handle->obj_type = hpss2fsal_type(obj_hdl.Type);
 	hdl->handle->ns_handle = obj_hdl;
 
@@ -244,9 +223,6 @@ fsal_status_t hpss_lookup_path(struct fsal_export *exp_hdl,
 
 	/* set output handle */
 	hdl = hpss_alloc_handle(NULL, &fsal_attr, NULL, op_ctx->fsal_export);
-
-	if (hdl == NULL)
-		return fsalstat(ERR_FSAL_NOMEM, 0);
 
 	hdl->handle->obj_type = hpss2fsal_type(hpss_attr.ObjectHandle.Type);
 	hdl->handle->ns_handle = hpss_attr.ObjectHandle;
@@ -392,9 +368,6 @@ static fsal_status_t hpss_create(struct fsal_obj_handle *dir_hdl,
 	/* set output handle */
 	hdl = hpss_alloc_handle(NULL, attrib, NULL, op_ctx->fsal_export);
 
-	if (hdl == NULL)
-		return fsalstat(ERR_FSAL_NOMEM, 0);
-
 	hdl->handle->obj_type = REGULAR_FILE;
 	hdl->handle->ns_handle = new_hdl;
 
@@ -505,9 +478,6 @@ static fsal_status_t hpss_mkdir(struct fsal_obj_handle *dir_hdl,
 
 	/* set output handle   */
 	hdl = hpss_alloc_handle(NULL, attrib, NULL, op_ctx->fsal_export);
-
-	if (hdl == NULL)
-		return fsalstat(ERR_FSAL_NOMEM, 0);
 
 	hdl->handle->obj_type = DIRECTORY;
 	hdl->handle->ns_handle = newdir_hdl;
@@ -626,9 +596,6 @@ static fsal_status_t hpss_makesymlink(struct fsal_obj_handle *dir_hdl,
 	/* set output handle */
 	hdl = hpss_alloc_handle(NULL, attrib, NULL, op_ctx->fsal_export);
 
-	if (hdl == NULL)
-		return fsalstat(ERR_FSAL_NOMEM, 0);
-
 	hdl->handle->obj_type = SYMBOLIC_LINK;
 	hdl->handle->ns_handle = lnk_hdl;
 
@@ -683,11 +650,11 @@ static fsal_status_t hpss_readsymlink(struct fsal_obj_handle *lnk_fsal_hdl,
 			       obj_handle);
 	HPSSFSAL_ucreds_from_opctx(op_ctx, &ucreds);
 
-	link_content->len = lnk_hdl->attributes.filesize ?
-			lnk_hdl->attributes.filesize + 1 :
-	fsal_default_linksize;
-	link_content->addr = gsh_malloc(link_content->len);
+	link_content->len = lnk_hdl->attributes.filesize
+				? lnk_hdl->attributes.filesize + 1
+				: fsal_default_linksize;
 
+	link_content->addr = gsh_malloc(link_content->len);
 
 	/* call to the API */
 	rc = hpss_ReadlinkHandle(&(lnk_hdl->handle->ns_handle),
@@ -1594,9 +1561,6 @@ fsal_status_t hpss_create_handle(struct fsal_export *exp_hdl,
 
 	/* set output handle */
 	hdl = hpss_alloc_handle(&fh, &fsal_attr, link_content, exp_hdl);
-
-	if (hdl == NULL)
-		return fsalstat(ERR_FSAL_NOMEM, 0);
 
 	*handle = &hdl->obj_handle;
 
