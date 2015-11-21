@@ -14,8 +14,6 @@ CIDR *cidr_addr_network(const CIDR * addr)
 	CIDR *toret;
 
 	toret = cidr_alloc();
-	if (toret == NULL)
-		return (NULL);	/* Preserve errno */
 	toret->proto = addr->proto;
 
 	/* The netmask is the same */
@@ -48,8 +46,6 @@ CIDR *cidr_addr_broadcast(const CIDR * addr)
 	CIDR *toret;
 
 	toret = cidr_alloc();
-	if (toret == NULL)
-		return (NULL);	/* Preserve errno */
 	toret->proto = addr->proto;
 
 	/* The netmask is the same */

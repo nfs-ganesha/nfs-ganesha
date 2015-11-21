@@ -61,10 +61,6 @@ uint8_t *cidr_get_addr(const CIDR * addr)
 	uint8_t *toret;
 
 	toret = gsh_calloc(16, sizeof(uint8_t));
-	if (toret == NULL) {
-		errno = ENOMEM;
-		return (NULL);
-	}
 
 	/* Copy 'em in */
 	memcpy(toret, addr->addr, sizeof(addr->addr));
@@ -78,10 +74,6 @@ uint8_t *cidr_get_mask(const CIDR * addr)
 	uint8_t *toret;
 
 	toret = gsh_calloc(16, sizeof(uint8_t));
-	if (toret == NULL) {
-		errno = ENOMEM;
-		return (NULL);
-	}
 
 	/* Copy 'em in */
 	memcpy(toret, addr->mask, sizeof(addr->mask));

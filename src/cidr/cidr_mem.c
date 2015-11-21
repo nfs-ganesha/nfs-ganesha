@@ -13,16 +13,7 @@
 /* Allocate a struct cidr_addr */
 CIDR *cidr_alloc(void)
 {
-	CIDR *toret;
-
-	toret = gsh_malloc(sizeof(CIDR));
-	if (toret == NULL) {
-		errno = ENOMEM;
-		return (NULL);
-	}
-	memset(toret, 0, sizeof(CIDR));
-
-	return (toret);
+	return gsh_calloc(1, sizeof(CIDR));
 }
 
 /* Duplicate a CIDR */
@@ -31,8 +22,7 @@ CIDR *cidr_dup(const CIDR * src)
 	CIDR *toret;
 
 	toret = cidr_alloc();
-	if (toret == NULL)
-		return (NULL);	/* Preserve errno */
+
 	memcpy(toret, src, sizeof(CIDR));
 
 	return (toret);

@@ -70,10 +70,6 @@ CIDR **cidr_net_subnets(const CIDR * addr)
 	}
 
 	toret = gsh_calloc(2, sizeof(CIDR *));
-	if (toret == NULL) {
-		errno = ENOMEM;
-		return (NULL);
-	}
 
 	/* Get a blank-ish slate for the first kid */
 	toret[0] = cidr_addr_network(addr);

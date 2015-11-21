@@ -54,12 +54,7 @@ char *cidr_to_str(const CIDR * block, int flags)
 	 * consumers of the library can count on this behavior...  well, I
 	 * haven't decided yet.  Lemme alone.
 	 */
-	toret = gsh_malloc(128);
-	if (toret == NULL) {
-		errno = ENOMEM;
-		return (NULL);
-	}
-	memset(toret, 0, 128);
+	toret = gsh_calloc(1, 128);
 
 	/*
 	 * If it's a v4 address, we mask off everything but the last 4
@@ -313,10 +308,7 @@ char *cidr_to_str(const CIDR * block, int flags)
 				 * just call ourselves recurively for this.
 				 */
 				nmtmp = cidr_alloc();
-				if (nmtmp == NULL) {
-					gsh_free(toret);
-					return (NULL);	/* Preserve errno */
-				}
+
 				nmtmp->proto = block->proto;
 				for (i = 0; i <= 15; i++)
 					if (flags & CIDR_WILDCARD)

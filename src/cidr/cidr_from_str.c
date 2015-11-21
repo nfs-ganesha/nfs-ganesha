@@ -40,8 +40,6 @@ CIDR *cidr_from_str(const char *addr)
 	}
 
 	toret = cidr_alloc();
-	if (toret == NULL)
-		return (NULL);	/* Preserve errno */
 
 	/* First check if we're a PTR-style string */
 	/*
