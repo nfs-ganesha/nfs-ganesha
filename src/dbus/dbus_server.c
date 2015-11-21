@@ -175,12 +175,6 @@ struct dbus_bcast_item *add_dbus_broadcast(
 
 	new_bcast = (struct dbus_bcast_item *)
 		gsh_malloc(sizeof(struct dbus_bcast_item));
-	if (!new_bcast) {
-		LogCrit(COMPONENT_DBUS,
-			"Failed to allocate broadcast entry: %s",
-			strerror(errno));
-		goto out;
-	}
 
 	now(&new_bcast->next_bcast_time);
 	new_bcast->bcast_interval = bcast_interval;
@@ -193,7 +187,7 @@ struct dbus_bcast_item *add_dbus_broadcast(
 			    &(new_bcast->dbus_bcast_q),
 			    &dbus_bcast_item_compare);
 	PTHREAD_MUTEX_unlock(&dbus_bcast_lock);
-out:
+
 	return new_bcast;
 }
 
