@@ -71,8 +71,6 @@ bool idmapper_init(void)
 			return false;
 		}
 		owner_domain.addr = gsh_malloc(NFS4_MAX_DOMAIN_LEN + 1);
-		if (owner_domain.addr == NULL)
-			return false;
 
 		if (nfs4_get_default_domain
 		    (NULL, owner_domain.addr, NFS4_MAX_DOMAIN_LEN) != 0) {
@@ -85,9 +83,6 @@ bool idmapper_init(void)
 	if (nfs_param.nfsv4_param.use_getpwnam) {
 		owner_domain.addr = gsh_strdup(nfs_param.nfsv4_param
 					       .domainname);
-		if (owner_domain.addr == NULL)
-			return false;
-
 		owner_domain.len = strlen(nfs_param.nfsv4_param.domainname);
 	}
 
@@ -346,12 +341,6 @@ static int name_to_gid(const char *name, gid_t *gid)
 
 	do {
 		buf = gsh_malloc(buflen);
-		if (buf == NULL) {
-			LogCrit(COMPONENT_IDMAPPER,
-				"gsh_malloc failed, buflen: %zu", buflen);
-
-			return ENOMEM;
-		}
 
 		err = getgrnam_r(name, &g, buf, buflen, &gres);
 		if (err == ERANGE) {

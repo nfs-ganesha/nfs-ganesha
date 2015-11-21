@@ -301,14 +301,10 @@ bool idmapper_add_user(const struct gsh_buffdesc *name, uid_t uid,
 	struct avltree_node *found_name;
 	struct avltree_node *found_id;
 	struct cache_user *tmp;
-	struct cache_user *new =
-	    gsh_malloc(sizeof(struct cache_user) + name->len);
+	struct cache_user *new;
 
-	if (new == NULL) {
-		LogMajor(COMPONENT_IDMAPPER,
-			 "Unable to allocate memory for new node. This is not wonderful.");
-		return false;
-	}
+	new = gsh_malloc(sizeof(struct cache_user) + name->len);
+
 	new->uname.addr = (char *)new + sizeof(struct cache_user);
 	new->uname.len = name->len;
 	new->uid = uid;
@@ -390,14 +386,10 @@ bool idmapper_add_group(const struct gsh_buffdesc *name, const gid_t gid)
 	struct avltree_node *found_name;
 	struct avltree_node *found_id;
 	struct cache_group *tmp;
-	struct cache_group *new =
-	    gsh_malloc(sizeof(struct cache_group) + name->len);
+	struct cache_group *new;
 
-	if (new == NULL) {
-		LogMajor(COMPONENT_IDMAPPER,
-			 "Unable to allocate memory for new node. This is not wonderful.");
-		return false;
-	}
+	new = gsh_malloc(sizeof(struct cache_group) + name->len);
+
 	new->gname.addr = (char *)new + sizeof(struct cache_group);
 	new->gname.len = name->len;
 	new->gid = gid;
