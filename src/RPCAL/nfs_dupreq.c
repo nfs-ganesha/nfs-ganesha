@@ -245,13 +245,6 @@ static inline void init_shared_drc(void)
 		drc->xt.cachesz = drc->cachesz;
 		xp->cache =
 		    gsh_calloc(drc->cachesz, sizeof(struct opr_rbtree_node *));
-		if (unlikely(!xp->cache)) {
-			LogCrit(COMPONENT_DUPREQ,
-				"UDP DRC hash partition allocation failed (ix=%d)",
-				ix);
-			drc->cachesz = 0;
-			break;
-		}
 	}
 }
 
@@ -359,11 +352,6 @@ static inline drc_t *alloc_tcp_drc(enum drc_type dtype)
 	drc_t *drc = pool_alloc(tcp_drc_pool, NULL);
 	int ix, code __attribute__ ((unused)) = 0;
 
-	if (unlikely(!drc)) {
-		LogCrit(COMPONENT_DUPREQ, "alloc TCP DRC failed");
-		goto out;
-	}
-
 	drc->type = dtype;	/* DRC_TCP_V3 or DRC_TCP_V4 */
 	drc->refcnt = 0;
 	drc->retwnd = 0;
@@ -394,16 +382,8 @@ static inline drc_t *alloc_tcp_drc(enum drc_type dtype)
 		drc->xt.cachesz = drc->cachesz;
 		xp->cache =
 		    gsh_calloc(drc->cachesz, sizeof(struct opr_rbtree_node *));
-		if (unlikely(!xp->cache)) {
-			LogCrit(COMPONENT_DUPREQ,
-				"TCP DRC hash partition allocation failed (ix=%d)",
-				ix);
-			drc->cachesz = 0;
-			break;
-		}
 	}
 
- out:
 	return drc;
 }
 
@@ -787,14 +767,9 @@ static inline dupreq_entry_t *alloc_dupreq(void)
 	dupreq_entry_t *dv;
 
 	dv = pool_alloc(dupreq_pool, NULL);
-	if (!dv) {
-		LogCrit(COMPONENT_DUPREQ, "alloc dupreq_entry_t failed");
-		goto out;
-	}
-	memset(dv, 0, sizeof(dupreq_entry_t));	/* XXX pool_zalloc */
 	gsh_mutex_init(&dv->mtx, NULL);
 	TAILQ_INIT_ENTRY(dv, fifo_q);
-out:
+
 	return dv;
 }
 
@@ -970,11 +945,6 @@ dupreq_status_t nfs_dupreq_start(nfs_request_t *reqnfs,
 	}
 
 	dk = alloc_dupreq();
-	if (dk == NULL) {
-		release_dk = false;
-		status = DUPREQ_ERROR;
-		goto release_dk;
-	}
 
 	dk->hin.drc = drc;	/* trans. call path ref to dv */
 

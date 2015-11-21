@@ -261,13 +261,7 @@ static int gssd_get_single_krb5_cred(krb5_context context, krb5_keytab kt,
 	if (ple->ccname != NULL)
 		gsh_free(ple->ccname);
 	ple->ccname = gsh_strdup(cc_name);
-	if (ple->ccname == NULL) {
-		printerr(0,
-			 "ERROR: no storage to duplicate credentials cache name '%s'\n",
-			 cc_name);
-		code = ENOMEM;
-		goto out;
-	}
+
 	code = krb5_cc_resolve(context, cc_name, &ccache);
 	if (code != 0) {
 		k5err = gssd_k5_err_msg(context, code);
@@ -366,21 +360,14 @@ static struct gssd_k5_kt_princ *new_ple(krb5_context context,
 	char *default_realm;
 	int is_default_realm = 0;
 
-	ple = gsh_malloc(sizeof(struct gssd_k5_kt_princ));
-	if (ple == NULL)
-		goto outerr;
-	memset(ple, 0, sizeof(*ple));
+	ple = gsh_calloc(1, sizeof(struct gssd_k5_kt_princ));
 
 #ifdef HAVE_KRB5
 	ple->realm = gsh_malloc(princ->realm.length + 1);
-	if (ple->realm == NULL)
-		goto outerr;
 	memcpy(ple->realm, princ->realm.data, princ->realm.length);
 	ple->realm[princ->realm.length] = '\0';
 #else
 	ple->realm = gsh_strdup(princ->realm);
-	if (ple->realm == NULL)
-		goto outerr;
 #endif
 	code = krb5_copy_principal(context, princ, &ple->princ);
 	if (code)
@@ -414,8 +401,7 @@ static struct gssd_k5_kt_princ *new_ple(krb5_context context,
 	return ple;
  outerr:
 	if (ple) {
-		if (ple->realm)
-			gsh_free(ple->realm);
+		gsh_free(ple->realm);
 		gsh_free(ple);
 	}
 	return NULL;
