@@ -27,8 +27,6 @@
  */
 #include "config.h"
 
-#include <stdlib.h>		/* for malloc */
-#include <ctype.h>		/* for isdigit */
 #include <pthread.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -735,28 +733,16 @@ int create_log_facility(char *name,
 
 	facility = gsh_calloc(1, sizeof(*facility));
 
-	if (facility == NULL) {
-		PTHREAD_RWLOCK_unlock(&log_rwlock);
-
-		LogCrit(COMPONENT_LOG, "Can not allocate a facility for %s",
-			 name);
-
-		return -ENOMEM;
-	}
 	facility->lf_name = gsh_strdup(name);
 	facility->lf_func = log_func;
 	facility->lf_max_level = max_level;
 	facility->lf_headers = header;
-	if (log_func == log_to_file && private != NULL) {
-		facility->lf_private = gsh_strdup(private);
-		if (facility->lf_private == NULL) {
-			PTHREAD_RWLOCK_unlock(&log_rwlock);
-			gsh_free(facility);
 
-			return -ENOMEM;
-		}
-	} else
+	if (log_func == log_to_file && private != NULL)
+		facility->lf_private = gsh_strdup(private);
+	else
 		facility->lf_private = private;
+
 	glist_add_tail(&facility_list, &facility->lf_list);
 
 	PTHREAD_RWLOCK_unlock(&log_rwlock);
@@ -1003,15 +989,7 @@ int set_log_destination(char *name, char *dest)
 			return -errno;
 		}
 		logfile = gsh_strdup(dest);
-		if (logfile == NULL) {
-			PTHREAD_RWLOCK_unlock(&log_rwlock);
-			LogCrit(COMPONENT_LOG,
-				"No memory for log file name (%s) for %s",
-				dest, facility->lf_name);
-			return -ENOMEM;
-		}
-		if (facility->lf_private != NULL)
-			gsh_free(facility->lf_private);
+		gsh_free(facility->lf_private);
 		facility->lf_private = logfile;
 	} else if (facility->lf_func == log_to_stream) {
 		FILE *out;
