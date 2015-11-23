@@ -53,48 +53,37 @@ int nl_map(nl_nl_t *nodelist,
 		if (suffix != NULL)
 			node_string_size += strlen(suffix);
 		node_string_size += MAX_LONG_INT_STRING_SIZE;
-		node_string =
-		    gsh_malloc(node_string_size * sizeof(char));
-		if (node_string != NULL) {
-
-			if (nlist->pattern.basic == 1) {
-				/* add basic node */
-				snprintf(node_string, node_string_size,
-					 "%s%s",
-					 (prefix == NULL) ? "" : prefix,
-					 (suffix ==
-					  NULL) ? "" : suffix);
-				fstatus = map_function(node_string,
-						       other_params);
-			} else {
-				/* add enumerated nodes */
-				for (i = 0;
-				     i < nlist->rangelist.ranges_nb;
-				     i++) {
-					for (j =
-					     nlist->rangelist.array[i].
-					     from;
-					     j <=
-					     nlist->rangelist.array[i].
-					     to; j++) {
-						snprintf(node_string,
-							 node_string_size,
-							 id_print_format,
-							 (prefix ==
-							  NULL) ? "" :
-							 prefix, j,
-							 (suffix ==
-							  NULL) ? "" :
-							 suffix);
-						fstatus = map_function(
-								node_string,
-								other_params);
-					}
+		node_string = gsh_malloc(node_string_size);
+		if (nlist->pattern.basic == 1) {
+			/* add basic node */
+			snprintf(node_string, node_string_size,
+				 "%s%s",
+				 (prefix == NULL) ? "" : prefix,
+				 (suffix == NULL) ? "" : suffix);
+			fstatus = map_function(node_string,
+					       other_params);
+		} else {
+			/* add enumerated nodes */
+			for (i = 0; i < nlist->rangelist.ranges_nb; i++) {
+				for (j = nlist->rangelist.array[i].from;
+				     j <= nlist->rangelist.array[i].to;
+				     j++) {
+					snprintf(node_string,
+						 node_string_size,
+						 id_print_format,
+						 (prefix == NULL)
+							? "" : prefix,
+						 j,
+						 (suffix == NULL)
+							? "" : suffix);
+					fstatus = map_function(node_string,
+							       other_params);
 				}
 			}
-
-			gsh_free(node_string);
 		}
+
+		gsh_free(node_string);
+
 		if (fstatus != 0)
 			break;
 
@@ -110,21 +99,16 @@ int nl_map_condensed(char *src_list,
 		     void *other_params)
 {
 
-	int fstatus, status;
+	int fstatus;
 
 	nl_nl_t nodelist;
 
-	status = nl_nl_init(&nodelist, &src_list, 1);
-	if (status == 0) {
-		if (nl_map(&nodelist, map_function, other_params)
-		    == 0)
-			fstatus = nl_nl_nodes_quantity(&nodelist);
-		else
-			fstatus = -1;
-		nl_nl_free_contents(&nodelist);
-	} else {
+	nl_nl_init(&nodelist, &src_list, 1);
+	if (nl_map(&nodelist, map_function, other_params) == 0)
+		fstatus = nl_nl_nodes_quantity(&nodelist);
+	else
 		fstatus = -1;
-	}
+	nl_nl_free_contents(&nodelist);
 
 	return fstatus;
 }

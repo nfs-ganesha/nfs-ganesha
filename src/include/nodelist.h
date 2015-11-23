@@ -4,11 +4,11 @@
 #include "avltree.h"
 
 /* define a macro that make an advanced free on pointer */
-#define xfree(a)				\
-	if (a != NULL) {			\
-		gsh_free(a);			\
-		a = NULL;			\
-	}
+#define xfree(a)		\
+	do {			\
+		gsh_free(a);	\
+		a = NULL;	\
+	} while (0)
 
 /*! \addtogroup NODELIST_RANGE
  *  @{
@@ -29,9 +29,9 @@ typedef struct nl_range {
  * \param v1 from value
  * \param v2 to value
  *
- * \retval  0 should not return an other value
 */
-int nl_range_set(nl_range_t *r1, long int v1, long int v2);
+void nl_range_set(nl_range_t *r1, long int v1, long int v2);
+
 /*!
  * \ingroup NODELIST_RANGE
  * \brief Indicate if the range is a valid one. That is to say if from value
@@ -138,29 +138,24 @@ typedef struct nl_rangelist {
 	nl_range_t *array;
 	size_t pre_allocated_ranges;
 } nl_rangelist_t;
-int nl_rangelist_init(nl_rangelist_t *array);
-int nl_rangelist_init_by_copy(nl_rangelist_t *array,
-				    nl_rangelist_t *a2c);
+void nl_rangelist_init(nl_rangelist_t *array);
+void nl_rangelist_init_by_copy(nl_rangelist_t *array,  nl_rangelist_t *a2c);
 /*!
  * \ingroup BATCH_MANAGER
  * \brief Free a bridge ranges array structure contents
  *
  * \param array pointer on a bridge ranges array structure to finalize
  *
- * \retval  0 operation successfully done
- * \retval -1 operation failed
 */
-int nl_rangelist_free_contents(nl_rangelist_t *array);
+void nl_rangelist_free_contents(nl_rangelist_t *array);
 /*!
  * \ingroup BATCH_MANAGER
  * \brief Increment a bridge ranges array storage zone
  *
  * \param array pointer on a bridge ranges array structure to increment
  *
- * \retval  0 operation successfully done
- * \retval -1 operation failed
 */
-int nl_rangelist_incremente_size(nl_rangelist_t *array);
+void nl_rangelist_incremente_size(nl_rangelist_t *array);
 /*!
  * \ingroup BATCH_MANAGER
  * \brief Add a range to a bridge ranges array
@@ -170,11 +165,9 @@ int nl_rangelist_incremente_size(nl_rangelist_t *array);
  * \param array pointer on a bridge ranges array structure to use for add-on
  * \param r range that will be add to the array
  *
- * \retval  0 operation successfully done
- * \retval -1 operation failed
 */
-int nl_rangelist_add_range(nl_rangelist_t *array,
-				 nl_range_t *r);
+void nl_rangelist_add_range(nl_rangelist_t *array, nl_range_t *r);
+
 /*!
  * \ingroup BATCH_MANAGER
  * \brief Add a list of values to a bridge ranges array
@@ -188,16 +181,16 @@ int nl_rangelist_add_range(nl_rangelist_t *array,
  * \retval -1 operation failed
 */
 int nl_rangelist_add_list(nl_rangelist_t *array, char *list);
+
 /*!
  * \ingroup BATCH_MANAGER
  * \brief Sort a bridge ranges array
  *
  * \param array pointer on a bridge ranges array structure to sort
  *
- * \retval  0 operation successfully done
- * \retval -1 operation failed
  */
-int nl_rangelist_sort(nl_rangelist_t *array);
+void nl_rangelist_sort(nl_rangelist_t *array);
+
 /*!
  * @}
 */
@@ -312,10 +305,8 @@ typedef struct nl_nodepattern {
  *
  * \param np pointer on a bridge node pattern structure to initialize
  *
- * \retval  0 operation successfully done
- * \retval -1 operation failed
 */
-int nl_nodepattern_init(nl_nodepattern_t *np);
+void nl_nodepattern_init(nl_nodepattern_t *np);
 /*!
  * \brief Initialize a bridge node pattern structure by dumping an other one
  *
@@ -325,32 +316,59 @@ int nl_nodepattern_init(nl_nodepattern_t *np);
  * \param np pointer on a bridge node pattern structure to initialize
  * \param npin pointer on a bridge node pattern to copy
  *
- * \retval  0 operation successfully done
- * \retval -1 operation failed
 */
-int nl_nodepattern_init_by_copy(nl_nodepattern_t *np,
-				      nl_nodepattern_t *npin);
+void nl_nodepattern_init_by_copy(nl_nodepattern_t *np, nl_nodepattern_t *npin);
 /*!
  * \brief Clean a bridge node pattern structure
  *
  * \param np pointer on a bridge node pattern structure to free
  *
- * \retval  0 operation successfully done
- * \retval -1 operation failed
 */
-int nl_nodepattern_free_contents(nl_nodepattern_t *np);
+void nl_nodepattern_free_contents(nl_nodepattern_t *np);
 /*!
  * \brief Set bridge node pattern padding
  *
  * \param np pointer on a bridge node pattern structure to free
  * \param padding padding value of the pattern
  *
- * \retval  0 operation successfully done
- * \retval -1 operation failed
 */
-int nl_nodepattern_set_padding(nl_nodepattern_t *np, int padding);
-int nl_nodepattern_set_prefix(nl_nodepattern_t *np, char *prefix);
-int nl_nodepattern_set_suffix(nl_nodepattern_t *np, char *suffix);
+static inline void nl_nodepattern_set_padding(nl_nodepattern_t *np, int padding)
+{
+	np->padding = padding;
+}
+
+/*!
+ * \brief Set bridge node pattern prefix
+ *
+ * \param np pointer on a bridge node pattern structure
+ * \param prefix node pattern prefix
+ *
+*/
+static inline
+void nl_nodepattern_set_prefix(nl_nodepattern_t *np, char *prefix)
+{
+	if (prefix != NULL) {
+		gsh_free(np->prefix);
+		np->prefix = gsh_strdup(prefix);
+	}
+}
+
+/*!
+ * \brief Set bridge node pattern suffix
+ *
+ * \param np pointer on a bridge node pattern structure
+ * \param suffix node pattern suffix
+ *
+*/
+static inline
+void nl_nodepattern_set_suffix(nl_nodepattern_t *np, char *suffix)
+{
+	if (suffix != NULL) {
+		gsh_free(np->suffix);
+		np->suffix = gsh_strdup(suffix);
+	}
+}
+
 int nl_nodepattern_equals(nl_nodepattern_t *np1,
 				nl_nodepattern_t *np2);
 /*!
@@ -377,21 +395,17 @@ typedef struct nl_nodelist {
  * \param lists array of strings containing nodes to add to this list
  * \param lists_nb quanity of string in the array
  *
- * \retval  0 operation successfully done
- * \retval -1 operation failed
 */
-int nl_nl_init(nl_nl_t *nodelist, char **lists,
-			   int lists_nb);
+void nl_nl_init(nl_nl_t *nodelist, char **lists, int lists_nb);
 /*!
  * \ingroup NODELIST_NODELIST
  * \brief Free a bridge nodes list structure
  *
  * \param nodelist pointer on a bridge nodes list structure to finalize
  *
- * \retval  0 operation successfully done
- * \retval -1 operation failed
 */
-int nl_nl_free_contents(nl_nl_t *nodelist);
+void nl_nl_free_contents(nl_nl_t *nodelist);
+
 /*!
  * \ingroup NODELIST_NODELIST
  * \brief Add a nodes list to a bridge nodes list structure
@@ -399,24 +413,12 @@ int nl_nl_free_contents(nl_nl_t *nodelist);
  * \param nodelist pointer on a bridge nodes list structure
  * \param list nodes list to add to this bridge nodes list
  *
- * \retval  0 operation successfully done
- * \retval -1 operation failed
 */
-int nl_nl_add_nodes(nl_nl_t *nodelist, char *list);
-/*!
- * \ingroup NODELIST_NODELIST
- * \brief Check a nodes list versus another one according to required operation
- * operation can be inclusion or intersection
- *
- * \param nodelist pointer on the first bridge nodes list structure
- * \param nodelist pointer on the second bridge nodes list structure
- * \param operation on of VERSUS_OPERATION_INCLUDE or VERSUS_OPERATION_INTERSECT
- *
- * \retval  0 operation successfully done
- * \retval -1 operation failed
-*/
+void nl_nl_add_nodes(nl_nl_t *nodelist, char *list);
+
 #define VERSUS_OPERATION_INCLUDE         1
 #define VERSUS_OPERATION_INTERSECT       2
+
 /*!
  * \ingroup NODELIST_NODELIST
  * \brief Get nodes quantity

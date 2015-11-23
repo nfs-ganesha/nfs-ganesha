@@ -25,21 +25,16 @@
  * \param idlist the ids list to add (string representation)
  *
  * \retval  n padding length if operation successfully done
- * \retval  1 error during the operation
+ * \retval -1 error during the operation
 */
-int nl_nl_add_ids(nl_nl_t *nodelist, char *idlist)
+static inline int nl_nl_add_ids(nl_nl_t *nodelist, char *idlist)
 {
-	int fstatus = 0;
-	fstatus = nl_rangelist_add_list(&(nodelist->rangelist), idlist);
-	return fstatus;
+	return nl_rangelist_add_list(&nodelist->rangelist, idlist);
 }
 
-int nl_common_split_nl_entry(char *list, char **p_prefix,
-					 char **p_idlist, char **p_suffix)
+void nl_common_split_nl_entry(char *list, char **p_prefix,
+			      char **p_idlist, char **p_suffix)
 {
-
-	int fstatus = 0;
-
 	char *list_end;
 
 	char *prefix = NULL;
@@ -58,20 +53,13 @@ int nl_common_split_nl_entry(char *list, char **p_prefix,
 	prefix_end = list;
 
 	/* get prefix */
-	prefix = gsh_malloc((strlen(list) + 1) * sizeof(char));
-	if (prefix != NULL) {
-		while (*prefix_end != '[' && !isdigit(*prefix_end)
-		       && prefix_end < list_end)
-			prefix_end++;
-		if (prefix_end != prefix_begin && prefix_end <= list_end) {
-			memcpy(prefix, list,
-			       (prefix_end - prefix_begin) * sizeof(char));
-			prefix[prefix_end - prefix_begin] = '\0';
-		} else {
-			xfree(prefix);
-		}
-	} else {
-		fstatus = -1;
+	while (*prefix_end != '[' && !isdigit(*prefix_end)
+	       && prefix_end < list_end)
+		prefix_end++;
+	if (prefix_end != prefix_begin && prefix_end <= list_end) {
+		prefix = gsh_malloc(prefix_end - prefix_begin + 1);
+		memcpy(prefix, list, prefix_end - prefix_begin);
+		prefix[prefix_end - prefix_begin] = '\0';
 	}
 
 	/* get idlist */
@@ -97,16 +85,9 @@ int nl_common_split_nl_entry(char *list, char **p_prefix,
 				idlist_end--;
 		}
 		/* dump idlist */
-		idlist =
-		    gsh_malloc((idlist_end - idlist_begin + 1) *
-			       sizeof(char));
-		if (idlist != NULL) {
-			memcpy(idlist, idlist_begin,
-			       (idlist_end - idlist_begin) * sizeof(char));
-			idlist[idlist_end - idlist_begin] = '\0';
-		} else {
-			fstatus = -1;
-		}
+		idlist = gsh_malloc(idlist_end - idlist_begin + 1);
+		memcpy(idlist, idlist_begin, idlist_end - idlist_begin);
+		idlist[idlist_end - idlist_begin] = '\0';
 	}
 
 	/* get suffix */
@@ -116,102 +97,68 @@ int nl_common_split_nl_entry(char *list, char **p_prefix,
 		suffix_begin++;
 	/* dump suffix */
 	if (suffix_begin != list_end) {
-		suffix =
-		    gsh_malloc((list_end - suffix_begin + 1) *
-			       sizeof(char));
-		if (suffix != NULL) {
-			memcpy(suffix, suffix_begin,
-			       (list_end - suffix_begin) * sizeof(char));
-			suffix[list_end - suffix_begin] = '\0';
-		} else {
-			fstatus = -1;
-		}
-	}
-
-	if (fstatus != 0) {
-		xfree(prefix);
-		xfree(idlist);
-		xfree(suffix);
+		suffix = gsh_malloc(list_end - suffix_begin + 1);
+		memcpy(suffix, suffix_begin, list_end - suffix_begin);
+		suffix[list_end - suffix_begin] = '\0';
 	}
 
 	*p_prefix = prefix;
 	*p_idlist = idlist;
 	*p_suffix = suffix;
-
-	return fstatus;
 }
 
-int nl_nl_init(nl_nl_t *nodelist, char **lists,
-			   int lists_nb)
+void nl_nl_init(nl_nl_t *nodelist, char **lists, int lists_nb)
 {
-
-	int fstatus = 0;
 	int i;
 	char *list;
 
 	int operation = 1;	/* 1=add 2=remove */
 
 	nodelist->next = NULL;
-	fstatus += nl_rangelist_init(&(nodelist->rangelist));
-	fstatus += nl_nodepattern_init(&(nodelist->pattern));
+	nl_rangelist_init(&(nodelist->rangelist));
+	nl_nodepattern_init(&(nodelist->pattern));
 
-	if (fstatus == 0) {
-		for (i = 0; i < lists_nb; i++) {
-			list = lists[i];
+	for (i = 0; i < lists_nb; i++) {
+		list = lists[i];
 
-			/* set operation if required */
-			if (strlen(list) == 1) {
-				if (*list == '-') {
-					operation = 2;
-					continue;
-				}
-				if (*list == '+') {
-					operation = 1;
-					continue;
-				} else
-					operation = 1;
+		/* set operation if required */
+		if (strlen(list) == 1) {
+			if (*list == '-') {
+				operation = 2;
+				continue;
 			}
-
-			/* do action */
-			switch (operation) {
-
-			case 1:
-				fstatus +=
-				    nl_nl_add_nodes(nodelist, list);
-				break;
-
-			case 2:
-				nl_nl_remove_nodes(nodelist, list);
-				break;
-
-			}
-
-			/* setting default operation */
-			operation = 1;
+			if (*list == '+') {
+				operation = 1;
+				continue;
+			} else
+				operation = 1;
 		}
-	}
 
-	if (fstatus)
-		return -1;
-	else
-		return fstatus;
+		/* do action */
+		switch (operation) {
+
+		case 1:
+			nl_nl_add_nodes(nodelist, list);
+			break;
+
+		case 2:
+			nl_nl_remove_nodes(nodelist, list);
+			break;
+
+		}
+
+		/* setting default operation */
+		operation = 1;
+	}
 }
 
-int nl_nl_free_contents(nl_nl_t *nodelist)
+void nl_nl_free_contents(nl_nl_t *nodelist)
 {
-
-	int fstatus = -1;
-
 	if (nodelist->next != NULL)
 		nl_nl_free_contents(nodelist->next);
 	nodelist->next = NULL;
 	nl_nodepattern_free_contents(&(nodelist->pattern));
 	nl_rangelist_free_contents(&(nodelist->rangelist));
-
-	fstatus = 0;
-
-	return fstatus;
-
 }
 
 /*!
@@ -221,62 +168,40 @@ int nl_nl_free_contents(nl_nl_t *nodelist)
  * \param dest_list the input/output nodes list
  * \param src_list the second list to copy into the first one
  *
- * \retval  0 success
- * \retval -1 failure
 */
-int nl_nl_copy(nl_nl_t *dest_list,
-			   nl_nl_t *src_list)
+void nl_nl_copy(nl_nl_t *dest_list, nl_nl_t *src_list)
 {
-	int fstatus = -1;
-
 	nl_nl_t **pwldest;
 	nl_nl_t **pwlsrc;
 
 	nl_nl_free_contents(dest_list);
 
 	pwldest = &dest_list;
-	if (nl_nl_init(*pwldest, NULL, 0) == 0) {
+	nl_nl_init(*pwldest, NULL, 0);
 
-		if (src_list->pattern.prefix == NULL
-		    && src_list->pattern.suffix == NULL) {
-			/* second list is empty... so initialization will be sufficient */
-			fstatus = 0;
-		} else {
-
-			pwlsrc = &src_list;
-			while (*pwlsrc != NULL) {
-				fstatus = -1;
-
-				if (nl_nodepattern_init_by_copy
-				    (&((*pwldest)->pattern),
-				     &((*pwlsrc)->pattern)) != 0) {
-					/* unable to copy pattern, break */
-					fstatus = -2;
-					break;
-				} else {
-					if ((*pwlsrc)->pattern.basic != 1) {
-						/* add ids */
-						if (nl_rangelist_init_by_copy(&((*pwldest)->rangelist), &((*pwlsrc)->rangelist)) != 0) {
-							/* unable to copy range list, break */
-							fstatus = -3;
-							break;
-						}
-					}
-					pwldest = &((*pwldest)->next);
-					fstatus = 0;
-				}
-
-				pwlsrc = &((*pwlsrc)->next);
-			}
-
-			if (fstatus != 0)
-				nl_nl_free_contents(dest_list);
-
-		}
-
+	if (src_list->pattern.prefix == NULL &&
+	    src_list->pattern.suffix == NULL) {
+		/* second list is empty... so initialization will
+		 * be sufficient
+		 */
+		return;
 	}
 
-	return fstatus;
+	pwlsrc = &src_list;
+	while (*pwlsrc != NULL) {
+		nl_nodepattern_init_by_copy(
+		    &(*pwldest)->pattern, &(*pwlsrc)->pattern);
+
+		if ((*pwlsrc)->pattern.basic != 1) {
+			/* add ids */
+			nl_rangelist_init_by_copy(&(*pwldest)->rangelist,
+						  &(*pwlsrc)->rangelist);
+		}
+
+		pwldest = &((*pwldest)->next);
+
+		pwlsrc = &((*pwlsrc)->next);
+	}
 }
 
 /*!
@@ -307,90 +232,66 @@ int nl_nl_is_empty(nl_nl_t *nodelist)
  * \param nodelist the input/output nodes list
  * \param nodelist the second list to add to the first one
  *
- * \retval  0 success
- * \retval -1 failure
 */
-int nl_nl_add_nodelist(nl_nl_t *nodelist,
-				   nl_nl_t *second_list)
+void nl_nl_add_nodelist(nl_nl_t *nodelist, nl_nl_t *second_list)
 {
-	int fstatus = -1;
-
 	nl_nl_t **pwldest;
 	nl_nl_t **pwlsrc;
 
 	/* If second list is emty, nothing to add */
 	if (nl_nl_is_empty(second_list))
-		return 0;
+		return;
 
 	/* If nodelist is empty, duplicate second_list! */
-	if (nl_nl_is_empty(nodelist))
-		fstatus = nl_nl_copy(nodelist, second_list);
-
-	/* we have to add each second list sublist to the first one */
-	else {
-
-		pwlsrc = &second_list;
-		while (*pwlsrc != NULL) {
-
-			/* try to add src sublist to an existant dest list sublist */
-			pwldest = &nodelist;
-			while (*pwldest != NULL) {
-
-				/* if patterns equal, try to add ids and break */
-				if (nl_nodepattern_equals
-				    ((&(*pwldest)->pattern),
-				     &((*pwlsrc)->pattern))) {
-					if ((*pwldest)->pattern.padding <
-					    (*pwlsrc)->pattern.padding)
-						nl_nodepattern_set_padding
-						    (&((*pwldest)->pattern),
-						     (*pwlsrc)->pattern.
-						     padding);
-					fstatus =
-					    nl_rangelist_add_rangelist(&
-									     ((*pwldest)->rangelist), &((*pwlsrc)->rangelist));
-					break;
-				}
-
-				pwldest = &((*pwldest)->next);	/* increment dst sublist */
-			}
-
-			/* add a new sublist to dest list if no equivalent pattern list was found */
-			if (*pwldest == NULL) {
-				*pwldest =
-				    gsh_malloc(sizeof(nl_nl_t));
-				if (*pwldest != NULL) {
-					fstatus =
-					    nl_nl_init(*pwldest,
-								   NULL, 0);
-					if (fstatus == 0) {
-						fstatus =
-						    nl_nodepattern_init_by_copy
-						    (&((*pwldest)->pattern),
-						     &((*pwlsrc)->pattern));
-						if (fstatus == 0) {
-							fstatus =
-							    nl_rangelist_add_rangelist
-							    (&
-							     ((*pwldest)->
-							      rangelist),
-							     &((*pwlsrc)->
-							       rangelist));
-						}
-					}
-				}
-			}
-
-			/* fstatus != 0 means that an error occured, break */
-			if (fstatus != 0)
-				break;
-
-			pwlsrc = &((*pwlsrc)->next);	/* increment src sublist */
-		}
-
+	if (nl_nl_is_empty(nodelist)) {
+		nl_nl_copy(nodelist, second_list);
+		return;
 	}
 
-	return fstatus;
+	/* we have to add each second list sublist to the first one */
+	pwlsrc = &second_list;
+	while (*pwlsrc != NULL) {
+
+		/* try to add src sublist to an existing dest list sublist */
+		pwldest = &nodelist;
+		while (*pwldest != NULL) {
+
+			/* if patterns equal, try to add ids and break */
+			if (nl_nodepattern_equals(&(*pwldest)->pattern,
+						  &(*pwlsrc)->pattern)) {
+				if ((*pwldest)->pattern.padding <
+				    (*pwlsrc)->pattern.padding) {
+					nl_nodepattern_set_padding(
+					    &(*pwldest)->pattern,
+					    (*pwlsrc)->pattern.padding);
+				}
+
+				nl_rangelist_add_rangelist(
+					&(*pwldest)->rangelist,
+					&(*pwlsrc)->rangelist);
+				break;
+			}
+
+			/* increment dst sublist */
+			pwldest = &(*pwldest)->next;
+		}
+
+		/* add a new sublist to dest list if no
+		 * equivalent pattern list was found
+		 */
+		if (*pwldest == NULL) {
+			*pwldest = gsh_malloc(sizeof(nl_nl_t));
+			nl_nl_init(*pwldest, NULL, 0);
+
+			nl_nodepattern_init_by_copy(&((*pwldest)->pattern),
+						    &((*pwlsrc)->pattern));
+
+			nl_rangelist_add_rangelist(&(*pwldest)->rangelist,
+						   &(*pwlsrc)->rangelist);
+		}
+
+		pwlsrc = &((*pwlsrc)->next);	/* increment src sublist */
+	}
 }
 
 /*!
@@ -400,14 +301,9 @@ int nl_nl_add_nodelist(nl_nl_t *nodelist,
  * \param nodelist the input/output nodes list
  * \param nodelist the second list to remove from the first one
  *
- * \retval  0 success
- * \retval -1 failure
 */
-int nl_nl_remove_nodelist(nl_nl_t *nodelist,
-				      nl_nl_t *second_list)
+void nl_nl_remove_nodelist(nl_nl_t *nodelist, nl_nl_t *second_list)
 {
-	int fstatus = -1;
-
 	int add_flag;
 
 	nl_nl_t worklist;
@@ -416,83 +312,52 @@ int nl_nl_remove_nodelist(nl_nl_t *nodelist,
 
 	/* If second list is emty, nothing to remove */
 	if (nl_nl_is_empty(second_list))
-		return 0;
+		return;
 
 	/* If nodelist is empty, nothing to remove */
 	if (nl_nl_is_empty(nodelist))
-		return 0;
+		return;
 
 	/* we have to remove each second list sublist from the first one */
-	else {
 
-		/* initialize work list by copying the first nodelist */
-		fstatus = nl_nl_init(&worklist, NULL, 0);
-		if (fstatus == 0) {
+	/* initialize work list by copying the first nodelist */
+	nl_nl_init(&worklist, NULL, 0);
 
-			pwldest = &nodelist;
-			while (*pwldest != NULL) {
+	pwldest = &nodelist;
+	while (*pwldest != NULL) {
 
-				add_flag = 1;
-				pwlsrc = &second_list;
-				while (*pwlsrc != NULL) {
+		add_flag = 1;
+		pwlsrc = &second_list;
+		while (*pwlsrc != NULL) {
 
-					/* if patterns equal, try to remove ids and break */
-					if (nl_nodepattern_equals
-					    ((&(*pwldest)->pattern),
-					     &((*pwlsrc)->pattern))) {
-						add_flag = 0;
-						if ((*pwldest)->pattern.basic ==
-						    0) {
-							fstatus +=
-							    nl_rangelist_remove_rangelist
-							    (&
-							     ((*pwldest)->
-							      rangelist),
-							     &((*pwlsrc)->rangelist));
-						} else
-							fstatus = 0;
-						fprintf(stdout, "fstatus %d\n",
-							fstatus);
-						break;
-					}
-
-					pwlsrc = &((*pwlsrc)->next);	/* incr src sublist */
+			/* if patterns equal, try to remove ids and break */
+			if (nl_nodepattern_equals(&(*pwldest)->pattern,
+						  &(*pwlsrc)->pattern)) {
+				add_flag = 0;
+				if ((*pwldest)->pattern.basic == 0) {
+					nl_rangelist_remove_rangelist(
+					    &(*pwldest)->rangelist,
+					    &(*pwlsrc)->rangelist);
 				}
-
-				if (fstatus)
-					break;
-
-				if (add_flag == 1) {
-					fstatus +=
-					    nl_nl_add_nodelist
-					    (&worklist, *pwldest);
-				}
-
-				if (fstatus)
-					break;
-
-				pwldest = &((*pwldest)->next);	/* incr dest sublist */
+				break;
 			}
 
-			if (fstatus == 0) {
-				fstatus =
-				    nl_nl_copy(nodelist, &worklist);
-			}
-
-			nl_nl_free_contents(&worklist);
+			pwlsrc = &((*pwlsrc)->next);	/* incr src sublist */
 		}
 
+		if (add_flag == 1)
+			nl_nl_add_nodelist(&worklist, *pwldest);
+
+		pwldest = &((*pwldest)->next);	/* incr dest sublist */
 	}
 
-	return fstatus;
+	nl_nl_copy(nodelist, &worklist);
+
+	nl_nl_free_contents(&worklist);
 }
 
-int nl_nl_add_nodes(nl_nl_t *nodelist, char *list)
+void nl_nl_add_nodes(nl_nl_t *nodelist, char *list)
 {
-
-	int fstatus = -1;
-	int status;
-
 	char *prefix;
 	char *idlist;
 	char *suffix;
@@ -502,71 +367,47 @@ int nl_nl_add_nodes(nl_nl_t *nodelist, char *list)
 
 	nl_nl_t wlist;
 
-	if (nl_common_string_get_tokens_quantity(list, ",", &token_nb) ==
-	    0) {
-		token = NULL;
+	if (nl_common_string_get_tokens_quantity(list, ",", &token_nb) == 0) {
 
 		for (i = 1; i <= token_nb; i++) {
-			if (nl_common_string_get_token
-			    (list, ",", i, &token) == 0) {
+			token = NULL;
+			if (nl_common_string_get_token(list, ",", i, &token)
+			    == 0) {
 
-				status =
-				    nl_common_split_nl_entry(token,
-									 &prefix,
-									 &idlist,
-									 &suffix);
-				if (status) {
-					fstatus = -1;
-				} else {
-					fstatus =
-					    nl_nl_init(&wlist, NULL,
-								   0);
-					if (fstatus == 0) {
-						nl_nodepattern_set_prefix
-						    (&(wlist.pattern), prefix);
-						nl_nodepattern_set_suffix
-						    (&(wlist.pattern), suffix);
-						if (idlist != NULL) {
-							wlist.pattern.basic = 0;
-							fstatus =
-							    nl_nl_add_ids
-							    (&wlist, idlist);
-							nl_nodepattern_set_padding
-							    (&(wlist.pattern),
-							     fstatus);
-							fstatus = 0;
-						}
+				nl_common_split_nl_entry(token, &prefix,
+							 &idlist, &suffix);
+				nl_nl_init(&wlist, NULL, 0);
 
-						fstatus =
-						    nl_nl_add_nodelist
-						    (nodelist, &wlist);
+				nl_nodepattern_set_prefix
+					(&wlist.pattern, prefix);
+				nl_nodepattern_set_suffix
+					(&wlist.pattern, suffix);
+				if (idlist != NULL) {
+					int padding;
 
-						nl_nl_free_contents
-						    (&wlist);
-					}
-
-					xfree(prefix);
-					xfree(suffix);
-					xfree(idlist);
+					wlist.pattern.basic = 0;
+					padding = nl_nl_add_ids(
+						&wlist, idlist);
+					nl_nodepattern_set_padding(
+						&wlist.pattern, padding);
 				}
+
+				nl_nl_add_nodelist(nodelist, &wlist);
+
+				nl_nl_free_contents(&wlist);
+
+				xfree(prefix);
+				xfree(suffix);
+				xfree(idlist);
 
 				gsh_free(token);
 			}
-			token = NULL;
 		}
-
 	}
-
-	return fstatus;
-
 }
 
-int nl_nl_remove_nodes(nl_nl_t *nodelist, char *list)
+void nl_nl_remove_nodes(nl_nl_t *nodelist, char *list)
 {
-
-	int fstatus = -1;
-	int status;
-
 	char *prefix;
 	char *idlist;
 	char *suffix;
@@ -576,66 +417,46 @@ int nl_nl_remove_nodes(nl_nl_t *nodelist, char *list)
 
 	nl_nl_t wlist;
 
-	if (nl_common_string_get_tokens_quantity(list, ",", &token_nb) ==
-	    0) {
-		token = NULL;
+	if (nl_common_string_get_tokens_quantity(list, ",", &token_nb) == 0) {
 		for (i = 1; i <= token_nb; i++) {
-			if (nl_common_string_get_token
-			    (list, ",", i, &token) == 0) {
+			token = NULL;
 
-				status =
-				    nl_common_split_nl_entry(token,
-									 &prefix,
-									 &idlist,
-									 &suffix);
-				if (status) {
-					fstatus = -1;
-				} else {
-					fstatus =
-					    nl_nl_init(&wlist, NULL,
-								   0);
-					if (fstatus == 0) {
-						nl_nodepattern_set_prefix
-						    (&(wlist.pattern), prefix);
-						nl_nodepattern_set_suffix
-						    (&(wlist.pattern), suffix);
-						if (idlist != NULL) {
-							wlist.pattern.basic = 0;
-							fstatus =
-							  nl_nl_add_ids
-							  (&wlist, idlist);
-							nl_nodepattern_set_padding
-							    (&(wlist.pattern),
-							     fstatus);
-							fstatus = 0;
-						}
+			if (nl_common_string_get_token(list, ",", i, &token)
+			    == 0) {
 
-						fstatus =
-						    nl_nl_remove_nodelist
-						    (nodelist, &wlist);
+				nl_common_split_nl_entry(token, &prefix,
+							 &idlist, &suffix);
+				nl_nl_init(&wlist, NULL, 0);
 
-						nl_nl_free_contents
-						    (&wlist);
-					}
+				nl_nodepattern_set_prefix(
+					&wlist.pattern, prefix);
+				nl_nodepattern_set_suffix(
+					&wlist.pattern, suffix);
+				if (idlist != NULL) {
+					int padding;
 
-					xfree(prefix);
-					xfree(suffix);
-					xfree(idlist);
+					wlist.pattern.basic = 0;
+					padding = nl_nl_add_ids(
+						&wlist, idlist);
+					nl_nodepattern_set_padding(
+					    &wlist.pattern, padding);
 				}
+
+				nl_nl_remove_nodelist(nodelist, &wlist);
+
+				nl_nl_free_contents(&wlist);
+
+				xfree(prefix);
+				xfree(suffix);
+				xfree(idlist);
 
 				gsh_free(token);
 			}
-			token = NULL;
 		}
-
 	}
-
-	return fstatus;
-
 }
 
-long int nl_nl_non_recursive_nodes_quantity(nl_nl_t *
-							nodelist)
+long int nl_nl_non_recursive_nodes_quantity(nl_nl_t *nodelist)
 {
 
 	long int quantity;
@@ -685,16 +506,13 @@ long int nl_nl_nodes_quantity(nl_nl_t *nodelist)
  *
  * \param np pointer on a bridge node pattern structure to initialize
  *
- * \retval  0 operation successfully done
- * \retval -1 operation failed
 */
-int nl_nodepattern_init(nl_nodepattern_t *np)
+void nl_nodepattern_init(nl_nodepattern_t *np)
 {
 	np->padding = 0;
 	np->prefix = NULL;
 	np->suffix = NULL;
 	np->basic = 1;
-	return 0;
 }
 
 /*!
@@ -706,33 +524,18 @@ int nl_nodepattern_init(nl_nodepattern_t *np)
  * \param np pointer on a bridge node pattern structure to initialize
  * \param npin pointer on a bridge node pattern to copy
  *
- * \retval  0 operation successfully done
- * \retval -1 operation failed
 */
-int nl_nodepattern_init_by_copy(nl_nodepattern_t *np,
-				      nl_nodepattern_t *npin)
+void nl_nodepattern_init_by_copy(nl_nodepattern_t *np, nl_nodepattern_t *npin)
 {
-	int fstatus = -1;
 	np->padding = npin->padding;
 	np->basic = npin->basic;
 	np->prefix = NULL;
 	np->suffix = NULL;
-	if (npin->prefix != NULL) {
+	if (npin->prefix != NULL)
 		np->prefix = gsh_strdup(npin->prefix);
-		if (np->prefix == NULL) {
-			nl_nodepattern_free_contents(np);
-			return fstatus;
-		}
-	}
-	if (npin->suffix != NULL) {
+
+	if (npin->suffix != NULL)
 		np->suffix = gsh_strdup(npin->suffix);
-		if (np->suffix == NULL) {
-			nl_nodepattern_free_contents(np);
-			return fstatus;
-		}
-	}
-	fstatus = 0;
-	return fstatus;
 }
 
 /*!
@@ -740,68 +543,13 @@ int nl_nodepattern_init_by_copy(nl_nodepattern_t *np,
  *
  * \param np pointer on a bridge node pattern structure to free
  *
- * \retval  0 operation successfully done
- * \retval -1 operation failed
 */
-int nl_nodepattern_free_contents(nl_nodepattern_t *np)
+void nl_nodepattern_free_contents(nl_nodepattern_t *np)
 {
 	np->padding = 0;
 	xfree(np->prefix);
 	xfree(np->suffix);
 	np->basic = 1;
-	return 0;
-}
-
-/*!
- * \brief Set bridge node pattern padding
- *
- * \param np pointer on a bridge node pattern structure to free
- * \param padding padding value of the pattern
- *
- * \retval  0 operation successfully done
- * \retval -1 operation failed
-*/
-int nl_nodepattern_set_padding(nl_nodepattern_t *np, int padding)
-{
-	int fstatus = -1;
-	if (np != NULL) {
-		np->padding = padding;
-		fstatus = 0;
-	}
-	return fstatus;
-}
-
-/*!
- * \brief Set bridge node pattern prefix
- *
- * \param np pointer on a bridge node pattern structure
- * \param prefix node pattern prefix
- *
- * \retval  0 operation successfully done
- * \retval -1 operation failed
-*/
-int nl_nodepattern_set_prefix(nl_nodepattern_t *np, char *prefix)
-{
-	int fstatus = -1;
-	if (np != NULL && prefix != NULL) {
-		xfree(np->prefix);
-		np->prefix = gsh_strdup(prefix);
-		if (np->prefix != NULL)
-			fstatus = 0;
-	}
-	return fstatus;
-}
-
-int nl_nodepattern_set_suffix(nl_nodepattern_t *np, char *suffix)
-{
-	int fstatus = -1;
-	if (np != NULL && suffix != NULL) {
-		xfree(np->suffix);
-		np->suffix = gsh_strdup(suffix);
-		if (np->suffix != NULL)
-			fstatus = 0;
-	}
-	return fstatus;
 }
 
 /*!

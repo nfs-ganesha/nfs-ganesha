@@ -130,17 +130,11 @@ int _nl_common_string_get_token_common(char *string,
 						copy_length =
 						    (size_t) (best_pointer -
 							      old_pointer);
-					*p_token =
-					    gsh_malloc((copy_length + 1) *
-						       sizeof(char));
-					if (*p_token != NULL) {
-						(*p_token)[copy_length] = '\0';
-						strncpy(*p_token, old_pointer,
-							copy_length);
-						fstatus++;
-					} else {
-						fstatus = -2;
-					}
+					*p_token = gsh_malloc(copy_length + 1);
+					(*p_token)[copy_length] = '\0';
+					memcpy(*p_token, old_pointer,
+						copy_length);
+					fstatus++;
 				}
 				/*
 				   If no more occurences, break the loop
