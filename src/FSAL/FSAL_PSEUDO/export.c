@@ -323,15 +323,7 @@ fsal_status_t pseudofs_create_export(struct fsal_module *fsal_hdl,
 		return fsalstat(posix2fsal_error(errno), errno);
 	}
 
-	retval = fsal_export_init(&myself->export);
-
-	if (retval != 0) {
-		LogMajor(COMPONENT_FSAL,
-			 "Could not initialize export");
-		gsh_free(myself);
-		return fsalstat(posix2fsal_error(retval), retval);
-	}
-
+	fsal_export_init(&myself->export);
 	pseudofs_export_ops_init(&myself->export.exp_ops);
 	myself->export.up_ops = up_ops;
 
@@ -341,7 +333,12 @@ fsal_status_t pseudofs_create_export(struct fsal_module *fsal_hdl,
 		/* seriously bad */
 		LogMajor(COMPONENT_FSAL,
 			 "Could not attach export");
-		goto errout;
+		gsh_free(myself->export_path);
+		gsh_free(myself->root_handle);
+		free_export_ops(&myself->export);
+		gsh_free(myself);	/* elvis has left the building */
+
+		return fsalstat(posix2fsal_error(retval), retval);
 	}
 
 	myself->export.fsal = fsal_hdl;
@@ -355,18 +352,4 @@ fsal_status_t pseudofs_create_export(struct fsal_module *fsal_hdl,
 		 myself, myself->export_path);
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
-
- errout:
-
-	if (myself->export_path != NULL)
-		gsh_free(myself->export_path);
-
-	if (myself->root_handle != NULL)
-		gsh_free(myself->root_handle);
-
-	free_export_ops(&myself->export);
-
-	gsh_free(myself);	/* elvis has left the building */
-
-	return fsalstat(posix2fsal_error(retval), retval);
 }

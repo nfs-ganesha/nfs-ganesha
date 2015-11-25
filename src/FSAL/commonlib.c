@@ -113,10 +113,9 @@ void fsal_detach_export(struct fsal_module *fsal_hdl,
  *
  */
 
-int fsal_export_init(struct fsal_export *exp)
+void fsal_export_init(struct fsal_export *exp)
 {
 	memcpy(&exp->exp_ops, &def_export_ops, sizeof(struct export_ops));
-	return 0;
 }
 
 /**

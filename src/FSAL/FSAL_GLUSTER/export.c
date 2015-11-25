@@ -593,14 +593,7 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 
 	glfsexport = gsh_calloc(1, sizeof(struct glusterfs_export));
 
-	if (fsal_export_init(&glfsexport->export) != 0) {
-		status.major = ERR_FSAL_NOMEM;
-		LogCrit(COMPONENT_FSAL,
-			"Unable to allocate export ops vectors.  Export: %s",
-			op_ctx->export->fullpath);
-		goto out;
-	}
-
+	fsal_export_init(&glfsexport->export);
 	export_ops_init(&glfsexport->export.exp_ops);
 
 	fs = glfs_new(params.glvolname);

@@ -555,19 +555,12 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 {
 	struct vfs_fsal_export *myself;
 	int retval = 0;
-	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 
 	myself = gsh_calloc(1, sizeof(struct vfs_fsal_export));
 
 	glist_init(&myself->filesystems);
 
-	retval = fsal_export_init(&myself->export);
-	if (retval != 0) {
-		LogMajor(COMPONENT_FSAL,
-			 "out of memory for object");
-		gsh_free(myself);
-		return fsalstat(posix2fsal_error(retval), retval);
-	}
+	fsal_export_init(&myself->export);
 	vfs_export_ops_init(&myself->export.exp_ops);
 	myself->export.up_ops = up_ops;
 
@@ -576,16 +569,16 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 				       myself,
 				       true,
 				       err_type);
-	if (retval != 0)
-		return fsalstat(ERR_FSAL_INVAL, 0);
+	if (retval != 0) {
+		retval = EINVAL;
+		goto errout;
+	}
 	myself->export.fsal = fsal_hdl;
 	vfs_sub_init_export_ops(myself, op_ctx->export->fullpath);
 
 	retval = fsal_attach_export(fsal_hdl, &myself->export.exports);
-	if (retval != 0) {
-		fsal_error = posix2fsal_error(retval);
-		goto errout;	/* seriously bad */
-	}
+	if (retval != 0)
+		goto errout;
 
 	retval = populate_posix_file_systems();
 
@@ -593,7 +586,6 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 		LogCrit(COMPONENT_FSAL,
 			"populate_posix_file_systems returned %s (%d)",
 			strerror(retval), retval);
-		fsal_error = posix2fsal_error(retval);
 		goto errout;
 	}
 
@@ -609,15 +601,12 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 			"claim_posix_filesystems(%s) returned %s (%d)",
 			op_ctx->export->fullpath,
 			strerror(retval), retval);
-		fsal_error = posix2fsal_error(retval);
 		goto errout;
 	}
 
 	retval = vfs_sub_init_export(myself);
-	if (retval != 0) {
-		fsal_error = posix2fsal_error(retval);
+	if (retval != 0)
 		goto errout;
-	}
 
 	op_ctx->fsal_export = &myself->export;
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
@@ -628,5 +617,5 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 
 	free_export_ops(&myself->export);
 	gsh_free(myself);	/* elvis has left the building */
-	return fsalstat(fsal_error, retval);
+	return fsalstat(posix2fsal_error(retval), retval);
 }

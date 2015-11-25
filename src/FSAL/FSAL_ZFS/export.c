@@ -303,10 +303,7 @@ fsal_status_t zfs_create_export(struct fsal_module *fsal_hdl,
 
 	myself = gsh_calloc(1, sizeof(struct zfs_fsal_export));
 
-	retval = fsal_export_init(&myself->export);
-	if (retval != 0)
-		goto errout;
-
+	fsal_export_init(&myself->export);
 	zfs_export_ops_init(&myself->export.exp_ops);
 	myself->export.up_ops = up_ops;
 
@@ -367,9 +364,8 @@ err_locked:
 	if (myself->export.fsal != NULL)
 		fsal_detach_export(fsal_hdl, &myself->export.exports);
 errout:
-	if (myself != NULL) {
-		/* elvis has left the building */
-		gsh_free(myself);
-	}
+	/* elvis has left the building */
+	gsh_free(myself);
+
 	return fsalstat(fsal_error, retval);
 }

@@ -456,11 +456,7 @@ fsal_status_t nullfs_create_export(struct fsal_module *fsal_hdl,
 #endif				/* EXPORT_OPS_INIT */
 	next_ops.up_ops = up_ops;
 
-	retval = fsal_export_init(&myself->export);
-	if (retval) {
-		gsh_free(myself);
-		return fsalstat(posix2fsal_error(retval), retval);
-	}
+	fsal_export_init(&myself->export);
 	nullfs_export_ops_init(&myself->export.exp_ops);
 #ifdef EXPORT_OPS_INIT
 	/*** FIX ME!!!

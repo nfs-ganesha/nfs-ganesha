@@ -169,13 +169,7 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 	/* True if we have called fsal_export_init */
 	bool initialized = false;
 
-	if (fsal_export_init(&export->export) != 0) {
-		status.major = ERR_FSAL_NOMEM;
-		LogCrit(COMPONENT_FSAL,
-			"Unable to allocate export ops vectors for %s.",
-			op_ctx->export->fullpath);
-		goto error;
-	}
+	fsal_export_init(&export->export);
 	export_ops_init(&export->export.exp_ops);
 	export->export.up_ops = up_ops;
 

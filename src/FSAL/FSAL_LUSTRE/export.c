@@ -701,14 +701,7 @@ fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
 
 	glist_init(&myself->filesystems);
 
-	status.minor = fsal_export_init(&myself->export);
-	if (status.minor != 0) {
-		LogMajor(COMPONENT_FSAL,
-			 "out of memory for object");
-		gsh_free(myself);
-		status.major = posix2fsal_error(status.minor);
-		return status;
-	}
+	fsal_export_init(&myself->export);
 	lustre_export_ops_init(&myself->export.exp_ops);
 	myself->export.up_ops = up_ops;
 

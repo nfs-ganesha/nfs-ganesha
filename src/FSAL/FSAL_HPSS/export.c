@@ -294,10 +294,7 @@ fsal_status_t hpss_create_export(struct fsal_module *fsal_hdl,
 
 	myself = gsh_calloc(1, sizeof(struct hpss_fsal_export));
 
-	retval = fsal_export_init(&myself->export);
-	if (retval != 0)
-		goto errout;
-
+	fsal_export_init(&myself->export);
 	hpss_export_ops_init(&myself->export.exp_ops);
 	myself->export.up_ops = up_ops;
 
@@ -309,17 +306,14 @@ fsal_status_t hpss_create_export(struct fsal_module *fsal_hdl,
 
 	if (retval != 0) {
 		fsal_error = posix2fsal_error(retval);
-		goto errout; /* seriously bad */
+		free(myself);  /* elvis has left the building */
+		return fsalstat(fsal_error, retval);
 	}
 	myself->export.fsal = fsal_hdl;
 
 	op_ctx->fsal_export = &myself->export;
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
-
-errout:
-	free(myself);  /* elvis has left the building */
-	return fsalstat(fsal_error, retval);
 }
 
 

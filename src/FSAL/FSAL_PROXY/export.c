@@ -162,10 +162,7 @@ fsal_status_t pxy_create_export(struct fsal_module *fsal_hdl,
 	struct pxy_fsal_module *pxy =
 	    container_of(fsal_hdl, struct pxy_fsal_module, module);
 
-	if (fsal_export_init(&exp->exp) != 0) {
-		gsh_free(exp);
-		return fsalstat(ERR_FSAL_NOMEM, ENOMEM);
-	}
+	fsal_export_init(&exp->exp);
 	pxy_export_ops_init(&exp->exp.exp_ops);
 	exp->exp.up_ops = up_ops;
 	exp->info = &pxy->special;

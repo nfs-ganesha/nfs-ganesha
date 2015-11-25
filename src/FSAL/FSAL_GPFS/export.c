@@ -713,14 +713,7 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 		status.minor, op_ctx->export->export_perms.options,
 		op_ctx->export->export_id);
 
-	status.minor = fsal_export_init(&myself->export);
-	if (status.minor != 0) {
-		LogMajor(COMPONENT_FSAL,
-			 "out of memory for object");
-		gsh_free(myself);
-		status.major = posix2fsal_error(status.minor);
-		return status;
-	}
+	fsal_export_init(&myself->export);
 	gpfs_export_ops_init(&myself->export.exp_ops);
 	myself->export.up_ops = up_ops;
 
