@@ -1,4 +1,8 @@
-/*
+/**
+ * @file    fsal_unlink.c
+ * @date    $Date: 2006/01/24 13:45:37 $
+ * @brief   object removing function.
+ *
  * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright CEA/DAM/DIF  (2008)
@@ -23,15 +27,7 @@
  * -------------
  */
 
-/**
- *
- * \file    fsal_unlink.c
- * \date    $Date: 2006/01/24 13:45:37 $
- * \brief   object removing function.
- *
- */
 #include "config.h"
-
 #include "fsal.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
@@ -39,31 +35,19 @@
 #include <unistd.h>
 
 /**
- * FSAL_unlink:
- * Remove a filesystem object .
+ *  @brief Remove a filesystem object .
  *
- * \param dir_hdl (input):
- *        Handle of the parent directory of the object to be deleted.
- * \param p_object_name (input):
- *        Name of the object to be removed.
- * \param p_context (input):
- *        Authentication context for the operation (user,...).
- * \param p_parent_attributes (optionnal input/output):
- *        Post operation attributes of the parent directory.
- *        As input, it defines the attributes that the caller
- *        wants to retrieve (by positioning flags into this structure)
- *        and the output is built considering this input
- *        (it fills the structure according to the flags it contains).
- *        May be NULL.
+ *  @param dir_hdl  Handle of the parent directory of the object to be deleted.
+ *  @param object_name Name of the object to be removed.
+ *  @param op_ctx Authentication context for the operation (user,...).
  *
- * \return Major error codes :
+ *  @return Major error codes :
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-
-fsal_status_t GPFSFSAL_unlink(struct fsal_obj_handle *dir_hdl,
-			      const char *p_object_name,
-			      const struct req_op_context *p_context)
+fsal_status_t
+GPFSFSAL_unlink(struct fsal_obj_handle *dir_hdl, const char *object_name,
+		const struct req_op_context *op_ctx)
 {
 
 	fsal_status_t status;
@@ -71,36 +55,31 @@ fsal_status_t GPFSFSAL_unlink(struct fsal_obj_handle *dir_hdl,
 	struct gpfs_fsal_obj_handle *gpfs_hdl;
 	struct gpfs_filesystem *gpfs_fs;
 
-	/* sanity checks. */
-	if (!dir_hdl || !p_context || !p_object_name)
+	if (!dir_hdl || !op_ctx || !object_name)
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
 	gpfs_hdl =
 	    container_of(dir_hdl, struct gpfs_fsal_obj_handle, obj_handle);
 	gpfs_fs = dir_hdl->fs->private;
 
-	/* build the child path */
-
 	/* get file metadata */
 	status = fsal_internal_stat_name(gpfs_fs->root_fd, gpfs_hdl->handle,
-					 p_object_name, &buffxstat.buffstat);
+					 object_name, &buffxstat.buffstat);
 	if (FSAL_IS_ERROR(status))
 		return status;
 
   /******************************
    * DELETE FROM THE FILESYSTEM *
    ******************************/
-	fsal_set_credentials(p_context->creds);
+	fsal_set_credentials(op_ctx->creds);
 
 	status = fsal_internal_unlink(gpfs_fs->root_fd, gpfs_hdl->handle,
-				      p_object_name, &buffxstat.buffstat);
+				      object_name, &buffxstat.buffstat);
 
 	fsal_restore_ganesha_credentials();
 
 	if (FSAL_IS_ERROR(status))
 		return status;
 
-	/* OK */
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
-
 }
