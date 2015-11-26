@@ -1,4 +1,5 @@
-/*
+/** @file fsal_lock.s
+ *
  * Copyright IBM Corporation, 2010
  *  Contributor: Aneesh Kumar K.v  <aneesh.kumar@linux.vnet.ibm.com>
  *
@@ -20,37 +21,32 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
- *
  */
-#include "config.h"
 
+#include "config.h"
 #include "fsal.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 #include "gpfs_methods.h"
 
 /**
- * GPFSFSAL_lock_op:
- * Lock/unlock/test an owner independent (anonymous) lock for region in a file.
+ *  @brief Lock/unlock/test an owner independent (anonymous) lock
+ *  for region in a file.
  *
- * \param obj_hdl (input):
- *        File handle of the file to lock.
- * \param p_owner (input):
- *        Owner for the requested lock; Opaque to FSAL.
- * \param lock_op (input):
- *        Can be either FSAL_OP_LOCKT, FSAL_OP_LOCK, FSAL_OP_UNLOCK.
- *        The operations are test if a file region is locked, lock a
- *        file region, unlock a file region.
- * \param request_lock (input):
- *        Lock information, type, byte range....
- * \param conflicting_lock (output):
- *        Conflicting lock information, type, byte range....
+ *  @param export Export object
+ *  @param obj_hdl File handle of the file to lock.
+ *  @param p_owner Owner for the requested lock; Opaque to FSAL.
+ *  @param lock_op Can be either FSAL_OP_LOCKT, FSAL_OP_LOCK, FSAL_OP_UNLOCK.
+ *                The operations are test if a file region is locked, lock a
+ *                file region, unlock a file region.
+ *  @param request_lock Lock information, type, byte range....
+ *  @param conflicting_lock Conflicting lock information, type, byte range....
  *
- * \return Major error codes:
- *      - ERR_FSAL_NO_ERROR: no error.
- *      - ERR_FSAL_FAULT: One of the in put parameters is NULL.
- *      - ERR_FSAL_PERM: lock_op was FSAL_OP_LOCKT and the result was that the
- *                       operation would not be possible.
+ *  @return - ERR_FSAL_NO_ERROR: no error.
+ *          - ERR_FSAL_FAULT: One of the in put parameters is NULL.
+ *          - ERR_FSAL_PERM: lock_op was FSAL_OP_LOCKT and the result was uhe
+ *                           operation would not be possible.
+ *
  */
 fsal_status_t GPFSFSAL_lock_op(struct fsal_export *export,
 			       struct fsal_obj_handle *obj_hdl,
