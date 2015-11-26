@@ -1,4 +1,6 @@
-/*
+/** @file export.c
+ *  @brief GPFS FSAL module export functions.
+ *
  * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright (C) Panasas Inc., 2011
@@ -23,10 +25,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
  * -------------
- */
-
-/* export.c
- * GPFS FSAL export object
  */
 
 #include "config.h"
@@ -386,22 +384,29 @@ static fsal_status_t gpfs_extract_handle(struct fsal_export *exp_hdl,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-verifier4 GPFS_write_verifier;	/* NFS V4 write verifier */
+/** \var GPFS_write_verifier
+ *  @brief NFS V4 write verifier
+ */
+verifier4 GPFS_write_verifier;
 
 static void gpfs_verifier(struct gsh_buffdesc *verf_desc)
 {
 	memcpy(verf_desc->addr, &GPFS_write_verifier, verf_desc->len);
 }
 
+/**
+ *  @brief set the global GPFS_write_verfier according to \a verifier
+ *  @param verfier verifier4 type
+ */
 void set_gpfs_verifier(verifier4 *verifier)
 {
 	memcpy(&GPFS_write_verifier, verifier, sizeof(verifier4));
 }
 
-/* gpfs_export_ops_init
- * overwrite vector entries with the methods that we support
+/**
+ *  @brief overwrite vector entries with the methods that we support
+ *  @param ops tpye of struct export_ops
  */
-
 void gpfs_export_ops_init(struct export_ops *ops)
 {
 	ops->release = release;
@@ -426,19 +431,29 @@ void gpfs_export_ops_init(struct export_ops *ops)
 	ops->get_write_verifier = gpfs_verifier;
 }
 
-void free_gpfs_filesystem(struct gpfs_filesystem *gpfs_fs)
+static void free_gpfs_filesystem(struct gpfs_filesystem *gpfs_fs)
 {
 	if (gpfs_fs->root_fd >= 0)
 		close(gpfs_fs->root_fd);
 	gsh_free(gpfs_fs);
 }
 
+/**
+ *  @brief Extract major from from fsid
+ *  @param fh GPFS file handle
+ *  @param fsid FSAL ID
+ */
 void gpfs_extract_fsid(struct gpfs_file_handle *fh, struct fsal_fsid__ *fsid)
 {
 	memcpy(&fsid->major, fh->handle_fsid, sizeof(fsid->major));
 	fsid->minor = 0;
 }
 
+/**
+ *  @brief Open root fd
+ *  @param gpfs_fs GPFS filesystem
+ *  @return 0(zero) on success, otherwise error.
+ */
 int open_root_fd(struct gpfs_filesystem *gpfs_fs)
 {
 	struct fsal_fsid__ fsid;
@@ -492,6 +507,12 @@ errout:
 	return retval;
 }
 
+/**
+ *  @brief Claim GPFS filesystem
+ *  @param fs FSAL filesystem
+ *  @param exp FSAL export
+ *  @return 0(zero) on success, otherwise error.
+ */
 int gpfs_claim_filesystem(struct fsal_filesystem *fs, struct fsal_export *exp)
 {
 	struct gpfs_filesystem *gpfs_fs = NULL;
@@ -601,6 +622,10 @@ errout:
 	return retval;
 }
 
+/**
+ *  @brief Unclaim filesystem
+ *  @param fs FSAL filesystem
+ */
 void gpfs_unclaim_filesystem(struct fsal_filesystem *fs)
 {
 	struct gpfs_filesystem *gpfs_fs = fs->private;
@@ -651,6 +676,10 @@ void gpfs_unclaim_filesystem(struct fsal_filesystem *fs)
 		fs->path);
 }
 
+/**
+ *  @brief Unexport filesystem
+ *  @param exp FSAL export
+ */
 void gpfs_unexport_filesystems(struct gpfs_fsal_export *exp)
 {
 	struct glist_head *glist, *glistn;
@@ -681,13 +710,16 @@ void gpfs_unexport_filesystems(struct gpfs_fsal_export *exp)
 	PTHREAD_RWLOCK_unlock(&fs_lock);
 }
 
-/* create_export
- * Create an export point and return a handle to it to be kept
- * in the export list.
- * First lookup the fsal, then create the export and then put the fsal back.
- * returns the export with one reference taken.
+/**
+ * @brief create_export
+ *
+ *  Create an export point and return a handle to it to be kept
+ *  in the export list.
+ *  First lookup the fsal, then create the export and then put the fsal back.
+ *  returns the export with one reference taken.
+ *
+ *  @return FSAL status
  */
-
 fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 				 void *parse_node,
 				 struct config_error_type *err_type,
