@@ -42,7 +42,6 @@
  *                        freed or modified and must not be dereferenced
  *                        after export reference is relinquished
  */
-
 static void fs_layouttypes(struct fsal_export *export_hdl, int32_t *count,
 			   const layouttype4 **types)
 {
@@ -143,7 +142,6 @@ size_t fs_da_addr_size(struct fsal_module *fsal_hdl)
  *
  * @return Valid error codes in RFC 5661, p. 365.
  */
-
 nfsstat4 getdeviceinfo(struct fsal_module *fsal_hdl,
 		       XDR *da_addr_body, const layouttype4 type,
 		       const struct pnfs_deviceid *deviceid)
@@ -210,7 +208,6 @@ nfsstat4 getdeviceinfo(struct fsal_module *fsal_hdl,
  *
  * @return Valid error codes in RFC 5661, pp. 365-6.
  */
-
 static nfsstat4 getdevicelist(struct fsal_export *export_pub, layouttype4 type,
 			      void *opaque, bool(*cb) (void *opaque,
 						       const uint64_t id),
@@ -220,6 +217,10 @@ static nfsstat4 getdevicelist(struct fsal_export *export_pub, layouttype4 type,
 	return NFS4_OK;
 }
 
+/**
+ * @brief set export options
+ * @param ops reference to struct export_ops
+ */
 void export_ops_pnfs(struct export_ops *ops)
 {
 	ops->getdevicelist = getdevicelist;
@@ -246,7 +247,6 @@ void export_ops_pnfs(struct export_ops *ops)
  *
  * @return Valid error codes in RFC 5661, pp. 366-7.
  */
-
 static nfsstat4 layoutget(struct fsal_obj_handle *obj_hdl,
 			  struct req_op_context *req_ctx, XDR *loc_body,
 			  const struct fsal_layoutget_arg *arg,
@@ -407,7 +407,6 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_hdl,
  *
  * @return Valid error codes in RFC 5661, p. 367.
  */
-
 static nfsstat4 layoutreturn(struct fsal_obj_handle *obj_hdl,
 			     struct req_op_context *req_ctx, XDR *lrf_body,
 			     const struct fsal_layoutreturn_arg *arg)
@@ -471,7 +470,6 @@ static nfsstat4 layoutreturn(struct fsal_obj_handle *obj_hdl,
  *
  * @return Valid error codes in RFC 5661, p. 366.
  */
-
 static nfsstat4 layoutcommit(struct fsal_obj_handle *obj_hdl,
 			     struct req_op_context *req_ctx, XDR *lou_body,
 			     const struct fsal_layoutcommit_arg *arg,
@@ -526,6 +524,11 @@ static nfsstat4 layoutcommit(struct fsal_obj_handle *obj_hdl,
 	return NFS4_OK;
 }
 
+/**
+ * @brief set ops layout
+ *
+ * @param ops reference to object
+ */
 void handle_ops_pnfs(struct fsal_obj_ops *ops)
 {
 	ops->layoutget = layoutget;
