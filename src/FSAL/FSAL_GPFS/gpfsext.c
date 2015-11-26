@@ -1,4 +1,7 @@
-/*-------------------------------------------------------------------------
+/**------------------------------------------------------------------------
+ * @file gpfsext.c
+ * @brief Use ioctl to call into the GPFS kernel module.
+ *
  * NAME:        gpfs_ganesha()
  *
  * FUNCTION:    Use ioctl to call into the GPFS kernel module.
@@ -14,7 +17,6 @@
  *-------------------------------------------------------------------------*/
 
 #include "config.h"
-
 #include <sys/errno.h>
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
@@ -129,6 +131,12 @@ static void valgrind_kganesha(struct kxArgs *args)
 }
 #endif
 
+/**
+ *  @param op Operation
+ *  @param *oarg Arguments
+ *
+ *  @return Result
+*/
 int gpfs_ganesha(int op, void *oarg)
 {
 	int rc;
