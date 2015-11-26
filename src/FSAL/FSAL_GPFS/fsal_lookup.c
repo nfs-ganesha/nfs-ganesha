@@ -1,4 +1,8 @@
-/*
+/**
+ * @file    fsal_lookup.c
+ * @date    $Date: 2006/01/24 13:45:37 $
+ * @brief   Lookup operations.
+ *
  * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright CEA/DAM/DIF  (2008)
@@ -23,14 +27,7 @@
  * -------------
  */
 
-/**
- * \file    fsal_lookup.c
- * \date    $Date: 2006/01/24 13:45:37 $
- * \brief   Lookup operations.
- *
- */
 #include "config.h"
-
 #include <string.h>
 #include "fsal.h"
 #include "FSAL/fsal_commonlib.h"
@@ -39,38 +36,26 @@
 #include "gpfs_methods.h"
 
 /**
- * FSAL_lookup :
- * Looks up for an object into a directory.
+ *  @brief Looks up for an object into a directory.
  *
- * Note : if parent handle and filename are NULL,
+ *        if parent handle and filename are NULL,
  *        this retrieves root's handle.
  *
- * \param parent_directory_handle (input)
- *        Handle of the parent directory to search the object in.
- * \param filename (input)
- *        The name of the object to find.
- * \param p_context (input)
- *        Authentication context for the operation (user,...).
- * \param object_handle (output)
- *        The handle of the object corresponding to filename.
- * \param object_attributes (optional input/output)
- *        Pointer to the attributes of the object we found.
- *        As input, it defines the attributes that the caller
- *        wants to retrieve (by positioning flags into this structure)
- *        and the output is built considering this input
- *        (it fills the structure according to the flags it contains).
- *        It can be NULL (increases performances).
+ *  @param op_ctx Authentication context for the operation (user,...).
+ *  @param parent Handle of the parent directory to search the object in.
+ *  @param filename The name of the object to find.
+ *  @param fsal_attr Pointer to the attributes of the object we found.
+ *  @param fh The handle of the object corresponding to filename.
+ *  @param new_fs New FS
  *
- * \return - ERR_FSAL_NO_ERROR, if no error.
- *         - Another error code else.
- *
+ *  @return - ERR_FSAL_NO_ERROR, if no error.
+ *          - Another error code else.
  */
-fsal_status_t GPFSFSAL_lookup(const struct req_op_context *p_context,
-			      struct fsal_obj_handle *parent,
-			      const char *p_filename,
-			      struct attrlist *p_object_attr,
-			      struct gpfs_file_handle *fh,
-			      struct fsal_filesystem **new_fs)
+fsal_status_t
+GPFSFSAL_lookup(const struct req_op_context *op_ctx,
+		struct fsal_obj_handle *parent, const char *filename,
+		struct attrlist *fsal_attr, struct gpfs_file_handle *fh,
+		struct fsal_filesystem **new_fs)
 {
 	fsal_status_t status;
 	int parent_fd;
@@ -78,7 +63,7 @@ fsal_status_t GPFSFSAL_lookup(const struct req_op_context *p_context,
 	struct gpfs_filesystem *gpfs_fs;
 	struct fsal_fsid__ fsid;
 
-	if (!parent || !p_filename)
+	if (!parent || !filename)
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
 	assert(*new_fs == parent->fs);
@@ -112,7 +97,7 @@ fsal_status_t GPFSFSAL_lookup(const struct req_op_context *p_context,
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 	}
 
-	status = fsal_internal_get_handle_at(parent_fd, p_filename, fh);
+	status = fsal_internal_get_handle_at(parent_fd, filename, fh);
 	if (FSAL_IS_ERROR(status)) {
 		close(parent_fd);
 		return status;
@@ -132,14 +117,14 @@ fsal_status_t GPFSFSAL_lookup(const struct req_op_context *p_context,
 			LogDebug(COMPONENT_FSAL,
 				 "Lookup of %s crosses filesystem boundary to unknown file system fsid=0x%016"
 				 PRIx64".0x%016"PRIx64,
-				 p_filename, fsid.major, fsid.minor);
+				 filename, fsid.major, fsid.minor);
 			return fsalstat(ERR_FSAL_XDEV, EXDEV);
 		}
 
 		if ((*new_fs)->fsal != parent->fsal) {
 			LogDebug(COMPONENT_FSAL,
 				 "Lookup of %s crosses filesystem boundary to file system %s into FSAL %s",
-				 p_filename, (*new_fs)->path,
+				 filename, (*new_fs)->path,
 				 (*new_fs)->fsal != NULL
 					? (*new_fs)->fsal->name
 					: "(none)");
@@ -147,21 +132,21 @@ fsal_status_t GPFSFSAL_lookup(const struct req_op_context *p_context,
 		} else {
 			LogDebug(COMPONENT_FSAL,
 				 "Lookup of %s crosses filesystem boundary to file system %s",
-				 p_filename, (*new_fs)->path);
+				 filename, (*new_fs)->path);
 		}
 		gpfs_fs = (*new_fs)->private;
 	}
 
 	/* get object attributes */
-	if (p_object_attr) {
-		p_object_attr->mask =
-		    p_context->fsal_export->exp_ops.
-		    fs_supported_attrs(p_context->fsal_export);
-		status = GPFSFSAL_getattrs(p_context->fsal_export, gpfs_fs,
-					   p_context, fh, p_object_attr);
+	if (fsal_attr) {
+		fsal_attr->mask =
+		    op_ctx->fsal_export->exp_ops.
+		    fs_supported_attrs(op_ctx->fsal_export);
+		status = GPFSFSAL_getattrs(op_ctx->fsal_export, gpfs_fs,
+					   op_ctx, fh, fsal_attr);
 		if (FSAL_IS_ERROR(status)) {
-			FSAL_CLEAR_MASK(p_object_attr->mask);
-			FSAL_SET_MASK(p_object_attr->mask, ATTR_RDATTR_ERR);
+			FSAL_CLEAR_MASK(fsal_attr->mask);
+			FSAL_SET_MASK(fsal_attr->mask, ATTR_RDATTR_ERR);
 		}
 	}
 	close(parent_fd);
