@@ -112,7 +112,7 @@ int up_async_invalidate(struct fridgethr *fr,
 
 	rc = fridgethr_submit(fr, queue_invalidate, args);
 
-	if (rc != 0 && args)
+	if (rc != 0)
 		gsh_free(args);
 
 	return rc;
@@ -169,7 +169,7 @@ int up_async_update(struct fridgethr *fr,
 
 	rc = fridgethr_submit(fr, queue_update, args);
 
-	if (rc != 0 && args)
+	if (rc != 0)
 		gsh_free(args);
 
 	return rc;
@@ -227,7 +227,7 @@ int up_async_lock_grant(struct fridgethr *fr,
 
 	rc = fridgethr_submit(fr, queue_lock_grant, args);
 
-	if (rc != 0 && args)
+	if (rc != 0)
 		gsh_free(args);
 
 	return rc;
@@ -285,7 +285,7 @@ int up_async_lock_avail(struct fridgethr *fr,
 
 	rc = fridgethr_submit(fr, queue_lock_avail, args);
 
-	if (rc != 0 && args)
+	if (rc != 0)
 		gsh_free(args);
 
 	return rc;
@@ -364,7 +364,7 @@ int up_async_layoutrecall(struct fridgethr *fr,
 
 	rc = fridgethr_submit(fr, queue_layoutrecall, args);
 
-	if (rc != 0 && args)
+	if (rc != 0)
 		gsh_free(args);
 
 	return rc;
@@ -422,7 +422,7 @@ int up_async_notify_device(struct fridgethr *fr,
 
 	rc = fridgethr_submit(fr, queue_notify_device, args);
 
-	if (rc != 0 && args)
+	if (rc != 0)
 		gsh_free(args);
 
 	return rc;
