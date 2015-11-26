@@ -531,6 +531,9 @@ static nfsstat4 pds_permissions(struct fsal_pnfs_ds *const pds,
 	return nfs4_export_check_access(req);
 }
 
+/**
+ *  @param ops FSAL pNFS ds ops
+ */
 void pnfs_ds_ops_init(struct fsal_pnfs_ds_ops *ops)
 {
 	memcpy(ops, &def_pnfs_ds_ops, sizeof(struct fsal_pnfs_ds_ops));
