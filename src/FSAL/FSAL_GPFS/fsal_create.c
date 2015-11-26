@@ -1,16 +1,11 @@
-/*
+/** @file fsal_create
+ *  @brief GPFS FSAL Filesystem objects creation functions
+ *
  * vim:noexpandtab:shiftwidth=8:tabstop=8:
+ *
  */
 
-/**
- *
- * \file    fsal_create.c
- * \date    $Date: 2006/01/24 13:45:36 $
- * \brief   Filesystem objects creation functions.
- *
- */
 #include "config.h"
-
 #include "fsal.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
@@ -21,79 +16,59 @@
 #include "FSAL/access_check.h"
 
 /**
- * FSAL_create:
- * Create a regular file.
+ *  @brief Create a regular file.
  *
- * \param parent_hdl (input):
- *        Handle of the parent directory where the file is to be created.
- * \param p_filename (input):
- *        Pointer to the name of the file to be created.
- * \param p_context (input):
- *        Authentication context for the operation (user,...).
- * \param accessmode (input):
- *        Mode for the file to be created.
- *        (the umask defined into the FSAL configuration file
- *        will be applied on it).
- * \param p_object_handle (output):
- *        Pointer to the handle of the created file.
- * \param p_object_attributes (optional input/output):
- *        The attributes of the created file.
- *        As input, it defines the attributes that the caller
- *        wants to retrieve (by positioning flags into this structure)
- *        and the output is built considering this input
- *        (it fills the structure according to the flags it contains).
- *        May be NULL.
+ *  @param dir_hdl Handle of parent directory where the file is to be created.
+ *  @param filename Pointer to the name of the file to be created.
+ *  @param op_ctx Authentication context for the operation (user,...).
+ *  @param accessmode Mode for the file to be created.
+ *  @param gpfs_fh Pointer to the handle of the created file.
+ *  @param fsal_attr Attributes of the created file.
+ *  @return ERR_FSAL_NO_ERROR on success, otherwise error
  *
- * \return Major error codes :
- *        - ERR_FSAL_NO_ERROR     (no error)
- *        - Another error code if an error occurred.
  */
-fsal_status_t GPFSFSAL_create(struct fsal_obj_handle *dir_hdl,	/* IN */
-			      const char *p_filename,	/* IN */
-			      const struct req_op_context *p_context,	/* IN */
-			      uint32_t accessmode,	/* IN */
-			      struct gpfs_file_handle *p_object_handle, /*OUT*/
-			      struct attrlist *p_object_attributes)
-{				/* IN/OUT */
+fsal_status_t
+GPFSFSAL_create(struct fsal_obj_handle *dir_hdl, const char *filename,
+		const struct req_op_context *op_ctx, uint32_t accessmode,
+		struct gpfs_file_handle *gpfs_fh, struct attrlist *fsal_attr)
+{
 	fsal_status_t status;
 	mode_t unix_mode;
 
-	/* sanity checks.
-	 * note : object_attributes is optional.
-	 */
-	if (!dir_hdl || !p_context || !p_object_handle || !p_filename)
+	/* note : fsal_attr is optional. */
+	if (!dir_hdl || !op_ctx || !gpfs_fh || !filename)
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
 	/* convert fsal mode to unix mode. */
 	unix_mode = fsal2unix_mode(accessmode);
 
 	/* Apply umask */
-	unix_mode = unix_mode & ~p_context->fsal_export->exp_ops.
-			fs_umask(p_context->fsal_export);
+	unix_mode = unix_mode & ~op_ctx->fsal_export->exp_ops.
+			fs_umask(op_ctx->fsal_export);
 
 	LogFullDebug(COMPONENT_FSAL, "Creation mode: 0%o", accessmode);
 
 	/* call to filesystem */
 
-	fsal_set_credentials(p_context->creds);
-	status = fsal_internal_create(dir_hdl, p_filename, unix_mode | S_IFREG,
-				      0, p_object_handle, NULL);
+	fsal_set_credentials(op_ctx->creds);
+	status = fsal_internal_create(dir_hdl, filename, unix_mode | S_IFREG,
+				      0, gpfs_fh, NULL);
 	fsal_restore_ganesha_credentials();
 	if (FSAL_IS_ERROR(status))
 		return status;
 
 	/* retrieve file attributes */
-	if (p_object_attributes) {
+	if (fsal_attr) {
 		status =
-		    GPFSFSAL_getattrs(p_context->fsal_export,
+		    GPFSFSAL_getattrs(op_ctx->fsal_export,
 				      dir_hdl->fs->private,
-				      p_context,
-				      p_object_handle, p_object_attributes);
+				      op_ctx,
+				      gpfs_fh, fsal_attr);
 
 		/* on error, we set a special bit in the mask. */
 		if (FSAL_IS_ERROR(status)) {
-			FSAL_CLEAR_MASK(p_object_attributes->mask);
-			FSAL_SET_MASK(p_object_attributes->mask,
+			FSAL_CLEAR_MASK(fsal_attr->mask);
+			FSAL_SET_MASK(fsal_attr->mask,
 				      ATTR_RDATTR_ERR);
 		}
 
@@ -102,150 +77,108 @@ fsal_status_t GPFSFSAL_create(struct fsal_obj_handle *dir_hdl,	/* IN */
 	/* sleep(61); */
 	/* OK */
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
-
 }
 
 /**
- * FSAL_mkdir:
- * Create a directory.
+ *  @brief Create a directory.
  *
- * \param dir_hdl (input):
- *        Handle of the parent directory where
- *        the subdirectory is to be created.
- * \param p_dirname (input):
- *        Pointer to the name of the directory to be created.
- * \param p_context (input):
- *        Authentication context for the operation (user,...).
- * \param accessmode (input):
- *        Mode for the directory to be created.
- *        (the umask defined into the FSAL configuration file
- *        will be applied on it).
- * \param p_object_handle (output):
- *        Pointer to the handle of the created directory.
- * \param p_object_attributes (optionnal input/output):
- *        The attributes of the created directory.
- *        As input, it defines the attributes that the caller
- *        wants to retrieve (by positioning flags into this structure)
- *        and the output is built considering this input
- *        (it fills the structure according to the flags it contains).
- *        May be NULL.
+ *  @param dir_hdl Handle of the parent directory
+ *  @param dir_name Pointer to the name of the directory to be created.
+ *  @param op_ctx Authentication context for the operation (user,...).
+ *  @param accessmode Mode for the directory to be created.
+ *  @param gpfs_fh Pointer to the handle of the created directory.
+ *  @param fsal_attr Attributes of the created directory.
+ *  @return ERR_FSAL_NO_ERROR on success, error otherwise
  *
- * \return Major error codes :
- *        - ERR_FSAL_NO_ERROR     (no error)
- *        - Another error code if an error occured.
  */
-fsal_status_t GPFSFSAL_mkdir(struct fsal_obj_handle *dir_hdl,	/* IN */
-			     const char *p_dirname,	/* IN */
-			     const struct req_op_context *p_context, /* IN */
-			     uint32_t accessmode,	/* IN */
-			     struct gpfs_file_handle *p_object_handle, /* OUT */
-			     struct attrlist *p_object_attributes) /* IN/OUT */
+fsal_status_t
+GPFSFSAL_mkdir(struct fsal_obj_handle *dir_hdl, const char *dir_name,
+	       const struct req_op_context *op_ctx, uint32_t accessmode,
+	       struct gpfs_file_handle *gpfs_fh, struct attrlist *obj_attr)
 {
-/*   int setgid_bit = 0; */
 	mode_t unix_mode;
 	fsal_status_t status;
 
-	/* sanity checks.
-	 * note : object_attributes is optional.
-	 */
-	if (!dir_hdl || !p_context || !p_object_handle || !p_dirname)
+	/* note : obj_attr is optional. */
+	if (!dir_hdl || !op_ctx || !gpfs_fh || !dir_name)
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
 	/* convert FSAL mode to unix mode. */
 	unix_mode = fsal2unix_mode(accessmode);
 
 	/* Apply umask */
-	unix_mode = unix_mode & ~p_context->fsal_export->exp_ops.
-			fs_umask(p_context->fsal_export);
+	unix_mode = unix_mode &
+		~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
 
 	/* build new entry path */
 
 	/* creates the directory and get its handle */
 
-	fsal_set_credentials(p_context->creds);
-	status = fsal_internal_create(dir_hdl, p_dirname, unix_mode | S_IFDIR,
-				      0, p_object_handle, NULL);
+	fsal_set_credentials(op_ctx->creds);
+	status = fsal_internal_create(dir_hdl, dir_name, unix_mode | S_IFDIR,
+				      0, gpfs_fh, NULL);
 	fsal_restore_ganesha_credentials();
 
 	if (FSAL_IS_ERROR(status))
 		return status;
 
 	/* retrieve file attributes */
-	if (p_object_attributes) {
-		status = GPFSFSAL_getattrs(p_context->fsal_export,
+	if (obj_attr) {
+		status = GPFSFSAL_getattrs(op_ctx->fsal_export,
 					   dir_hdl->fs->private,
-					   p_context, p_object_handle,
-					   p_object_attributes);
+					   op_ctx, gpfs_fh, obj_attr);
 
 		/* on error, we set a special bit in the mask. */
 		if (FSAL_IS_ERROR(status)) {
-			FSAL_CLEAR_MASK(p_object_attributes->mask);
-			FSAL_SET_MASK(p_object_attributes->mask,
-				      ATTR_RDATTR_ERR);
+			FSAL_CLEAR_MASK(obj_attr->mask);
+			FSAL_SET_MASK(obj_attr->mask, ATTR_RDATTR_ERR);
 		}
 	}
-	/* OK */
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /**
- * FSAL_link:
- * Create a hardlink.
+ *  @brief Create a hardlink.
  *
- * \param destdir_hdl (input):
- *        Handle of the target object.
- * \param target_handle (input):
- *        Pointer to the directory handle where
- *        the hardlink is to be created.
- * \param p_link_name (input):
- *        Pointer to the name of the hardlink to be created.
- * \param p_context (input):
- *        Authentication context for the operation (user,...).
- * \param p_attributes (optionnal input/output):
- *        The post_operation attributes of the linked object.
- *        As input, it defines the attributes that the caller
- *        wants to retrieve (by positioning flags into this structure)
- *        and the output is built considering this input
- *        (it fills the structure according to the flags it contains).
- *        May be NULL.
+ *  @param dir_hdl Handle of the target object.
+ *  @param gpfs_fh Pointer to the directory handle where hardlink is to be created.
+ *  @param linkname Pointer to the name of the hardlink to be created.
+ *  @param op_ctx Authentication context for the operation (user,...).
+ *  @param fsal_attr The post_operation attributes of the linked object.
+ *  @return ERR_FSAL_NO_ERROR on success, error otherwise
  *
- * \return Major error codes :
- *        - ERR_FSAL_NO_ERROR     (no error)
- *        - Another error code if an error occured.
  */
-fsal_status_t GPFSFSAL_link(struct fsal_obj_handle *destdir_hdl,	/* IN */
-			    struct gpfs_file_handle *target_handle,	/* IN */
-			    const char *p_link_name,	/* IN */
-			    const struct req_op_context *p_context,  /* IN */
-			    struct attrlist *p_attributes)          /* IN/OUT */
+fsal_status_t
+GPFSFSAL_link(struct fsal_obj_handle *dir_hdl, struct gpfs_file_handle *gpfs_fh,
+	      const char *linkname, const struct req_op_context *op_ctx,
+	      struct attrlist *fsal_attr)
 {
 	struct gpfs_filesystem *gpfs_fs;
 	fsal_status_t status;
 	struct gpfs_fsal_obj_handle *dest_dir;
 
-	/* sanity checks.
-	 * note : attributes is optional.
+	/* note : fsal_attr is optional.
 	 */
-	if (!destdir_hdl || !target_handle || !p_context || !p_link_name)
+	if (!dir_hdl || !gpfs_fh || !op_ctx || !linkname)
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
 	dest_dir =
-	    container_of(destdir_hdl, struct gpfs_fsal_obj_handle, obj_handle);
-	gpfs_fs = destdir_hdl->fs->private;
+	    container_of(dir_hdl, struct gpfs_fsal_obj_handle, obj_handle);
+	gpfs_fs = dir_hdl->fs->private;
 
 	/* Tests if hardlinking is allowed by configuration. */
 
-	if (!p_context->fsal_export->exp_ops.
-	    fs_supports(p_context->fsal_export,
+	if (!op_ctx->fsal_export->exp_ops.
+	    fs_supports(op_ctx->fsal_export,
 			fso_link_support))
 		return fsalstat(ERR_FSAL_NOTSUPP, 0);
 
 	/* Create the link on the filesystem */
 
-	fsal_set_credentials(p_context->creds);
-	status = fsal_internal_link_fh(gpfs_fs->root_fd, target_handle,
-				       dest_dir->handle, p_link_name);
+	fsal_set_credentials(op_ctx->creds);
+	status = fsal_internal_link_fh(gpfs_fs->root_fd, gpfs_fh,
+				       dest_dir->handle, linkname);
 
 	fsal_restore_ganesha_credentials();
 
@@ -254,16 +187,16 @@ fsal_status_t GPFSFSAL_link(struct fsal_obj_handle *destdir_hdl,	/* IN */
 
 	/* optionnaly get attributes */
 
-	if (p_attributes) {
-		status = GPFSFSAL_getattrs(p_context->fsal_export,
+	if (fsal_attr) {
+		status = GPFSFSAL_getattrs(op_ctx->fsal_export,
 					   gpfs_fs,
-					   p_context, target_handle,
-					   p_attributes);
+					   op_ctx, gpfs_fh,
+					   fsal_attr);
 
 		/* on error, we set a special bit in the mask. */
 		if (FSAL_IS_ERROR(status)) {
-			FSAL_CLEAR_MASK(p_attributes->mask);
-			FSAL_SET_MASK(p_attributes->mask, ATTR_RDATTR_ERR);
+			FSAL_CLEAR_MASK(fsal_attr->mask);
+			FSAL_SET_MASK(fsal_attr->mask, ATTR_RDATTR_ERR);
 		}
 	}
 
@@ -276,62 +209,38 @@ fsal_status_t GPFSFSAL_link(struct fsal_obj_handle *destdir_hdl,	/* IN */
 }
 
 /**
- * FSAL_mknode:
- * Create a special object in the filesystem.
+ *  @brief Create a special object in the filesystem.
  *
- * \param dir_hdl (input):
- *        Handle of the parent directory where the file is to be created.
- * \param p_node_name (input):
- *        Pointer to the name of the file to be created.
- * \param p_context (input):
- *        Authentication context for the operation (user,...).
- * \param accessmode (input):
- *        Mode for the file to be created.
- *        (the umask defined into the FSAL configuration file
- *        will be applied on it).
- * \param nodetype (input):
- *        Type of file to create.
- * \param dev (input):
- *        Device id of file to create.
- * \param p_object_handle (output):
- *        Pointer to the handle of the created file.
- * \param p_object_attributes (optional input/output):
- *        The attributes of the created file.
- *        As input, it defines the attributes that the caller
- *        wants to retrieve (by positioning flags into this structure)
- *        and the output is built considering this input
- *        (it fills the structure according to the flags it contains).
- *        May be NULL.
- *
- * \return Major error codes :
- *        - ERR_FSAL_NO_ERROR     (no error)
- *        - Another error code if an error occurred.
+ *  @param dir_hdl Handle of the parent dir where the file is to be created.
+ *  @param node_name Pointer to the name of the file to be created.
+ *  @param op_ctx Authentication context for the operation (user,...).
+ *  @param accessmode Mode for the file to be created.
+ *  @param node_type Type of file to create.
+ *  @param dev Device id of file to create.
+ *  @param gpfs_fh Pointer to the handle of the created file.
+ *  @param fsal_attr Attributes of the created file.
+ *  @return ERR_FSAL_NO_ERROR on success, error otherwise
  *
  */
-fsal_status_t GPFSFSAL_mknode(struct fsal_obj_handle *dir_hdl,	/* IN */
-			      const char *p_node_name,	/* IN */
-			      const struct req_op_context *p_context,	/* IN */
-			      uint32_t accessmode,	/* IN */
-			      mode_t nodetype,	/* IN */
-			      fsal_dev_t *dev,	/* IN */
-			      struct gpfs_file_handle *p_object_handle,/* OUT */
-			      struct attrlist *node_attributes) /* IN/OUT */
+fsal_status_t
+GPFSFSAL_mknode(struct fsal_obj_handle *dir_hdl, const char *node_name,
+		const struct req_op_context *op_ctx, uint32_t accessmode,
+		mode_t nodetype, fsal_dev_t *dev,
+		struct gpfs_file_handle *gpfs_fh, struct attrlist *fsal_attr)
 {
 	fsal_status_t status;
 	mode_t unix_mode = 0;
 	dev_t unix_dev = 0;
 
-	/* sanity checks.
-	 * note : link_attributes is optional.
-	 */
-	if (!dir_hdl || !p_context || !p_node_name)
+	/* note : fsal_attr is optional. */
+	if (!dir_hdl || !op_ctx || !node_name)
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
 	unix_mode = fsal2unix_mode(accessmode);
 
 	/* Apply umask */
-	unix_mode = unix_mode & ~p_context->fsal_export->exp_ops.
-			fs_umask(p_context->fsal_export);
+	unix_mode = unix_mode & ~op_ctx->fsal_export->exp_ops.
+			fs_umask(op_ctx->fsal_export);
 
 	switch (nodetype) {
 	case BLOCK_FILE:
@@ -362,9 +271,9 @@ fsal_status_t GPFSFSAL_mknode(struct fsal_obj_handle *dir_hdl,	/* IN */
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	}
 
-	fsal_set_credentials(p_context->creds);
-	status = fsal_internal_create(dir_hdl, p_node_name, unix_mode, unix_dev,
-				      p_object_handle, NULL);
+	fsal_set_credentials(op_ctx->creds);
+	status = fsal_internal_create(dir_hdl, node_name, unix_mode, unix_dev,
+				      gpfs_fh, NULL);
 
 	fsal_restore_ganesha_credentials();
 
@@ -372,23 +281,21 @@ fsal_status_t GPFSFSAL_mknode(struct fsal_obj_handle *dir_hdl,	/* IN */
 		return status;
 
 	/* Fills the attributes if needed */
-	if (node_attributes) {
+	if (fsal_attr) {
 
-		status = GPFSFSAL_getattrs(p_context->fsal_export,
+		status = GPFSFSAL_getattrs(op_ctx->fsal_export,
 					   dir_hdl->fs->private,
-					   p_context, p_object_handle,
-					   node_attributes);
+					   op_ctx, gpfs_fh,
+					   fsal_attr);
 
 		/* on error, we set a special bit in the mask. */
 
 		if (FSAL_IS_ERROR(status)) {
-			FSAL_CLEAR_MASK(node_attributes->mask);
-			FSAL_SET_MASK(node_attributes->mask, ATTR_RDATTR_ERR);
+			FSAL_CLEAR_MASK(fsal_attr->mask);
+			FSAL_SET_MASK(fsal_attr->mask, ATTR_RDATTR_ERR);
 		}
 
 	}
 
-	/* Finished */
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
-
 }
