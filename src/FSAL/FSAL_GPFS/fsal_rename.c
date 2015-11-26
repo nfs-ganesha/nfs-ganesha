@@ -1,4 +1,8 @@
-/*
+/**
+ * @file    fsal_rename.c
+ * @date    $Date: 2006/01/24 13:45:37 $
+ * @brief   object renaming/moving function.
+ *
  * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright CEA/DAM/DIF  (2008)
@@ -23,45 +27,29 @@
  * -------------
  */
 
-/**
- *
- * \file    fsal_rename.c
- * \date    $Date: 2006/01/24 13:45:37 $
- * \brief   object renaming/moving function.
- *
- */
 #include "config.h"
-
 #include "fsal.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 #include "gpfs_methods.h"
 
 /**
- * FSAL_rename:
- * Change name and/or parent dir of a filesystem object.
+ *  @brief Change name and/or parent dir of a filesystem object.
  *
- * \param old_hdl (input):
- *        Source parent directory of the object is to be moved/renamed.
- * \param p_old_name (input):
- *        Pointer to the current name of the object to be moved/renamed.
- * \param new_hdl (input):
- *        Target parent directory for the object.
- * \param p_new_name (input):
- *        Pointer to the new name for the object.
- * \param p_context (input):
- *        Authentication context for the operation (user,...).
+ *  @param old_hdl Source parent directory of the object is to be moved/renamed.
+ *  @param old_name Current name of the object to be moved/renamed.
+ *  @param new_hdl Target parent directory for the object.
+ *  @param new_name New name for the object.
+ *  @param op_ctx Authentication context for the operation (user,...).
  *
- * \return Major error codes :
+ *  @return Major error codes :
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-
-fsal_status_t GPFSFSAL_rename(struct fsal_obj_handle *old_hdl,
-			      const char *p_old_name,
-			      struct fsal_obj_handle *new_hdl,
-			      const char *p_new_name,
-			      const struct req_op_context *p_context)
+fsal_status_t
+GPFSFSAL_rename(struct fsal_obj_handle *old_hdl, const char *old_name,
+		struct fsal_obj_handle *new_hdl, const char *new_name,
+		const struct req_op_context *op_ctx)
 {
 
 	fsal_status_t status;
@@ -72,7 +60,7 @@ fsal_status_t GPFSFSAL_rename(struct fsal_obj_handle *old_hdl,
 	/* sanity checks.
 	 * note : src/tgt_dir_attributes are optional.
 	 */
-	if (!old_hdl || !new_hdl || !p_old_name || !p_new_name || !p_context)
+	if (!old_hdl || !new_hdl || !old_name || !new_name || !op_ctx)
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
 	old_gpfs_hdl =
@@ -83,25 +71,23 @@ fsal_status_t GPFSFSAL_rename(struct fsal_obj_handle *old_hdl,
 
 	/* build file paths */
 	status = fsal_internal_stat_name(gpfs_fs->root_fd, old_gpfs_hdl->handle,
-					 p_old_name, &buffstat);
+					 old_name, &buffstat);
 	if (FSAL_IS_ERROR(status))
 		return status;
 
   /*************************************
    * Rename the file on the filesystem *
    *************************************/
-	fsal_set_credentials(p_context->creds);
+	fsal_set_credentials(op_ctx->creds);
 
 	status = fsal_internal_rename_fh(gpfs_fs->root_fd, old_gpfs_hdl->handle,
-					 new_gpfs_hdl->handle, p_old_name,
-					 p_new_name);
+					 new_gpfs_hdl->handle, old_name,
+					 new_name);
 
 	fsal_restore_ganesha_credentials();
 
 	if (FSAL_IS_ERROR(status))
 		return status;
 
-	/* OK */
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
-
 }
