@@ -344,9 +344,8 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op, compound_data_t *data,
 	res_EXCHANGE_ID4_ok->eir_state_protect.spr_how = SP4_NONE;
 
 	len = strlen(unconf->cid_server_owner);
-	temp = gsh_malloc(len);
-
-	memcpy(temp, unconf->cid_server_owner, len);
+	temp = gsh_malloc(len + 1);
+	memcpy(temp, unconf->cid_server_owner, len + 1);
 
 	res_EXCHANGE_ID4_ok->eir_server_owner.so_major_id.so_major_id_len = len;
 	res_EXCHANGE_ID4_ok->eir_server_owner.so_major_id.so_major_id_val =
@@ -355,9 +354,8 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op, compound_data_t *data,
 	res_EXCHANGE_ID4_ok->eir_server_owner.so_minor_id = 0;
 
 	len = strlen(unconf->cid_server_scope);
-	temp = gsh_malloc(len);
-
-	memcpy(temp, unconf->cid_server_scope, len);
+	temp = gsh_malloc(len + 1);
+	memcpy(temp, unconf->cid_server_scope, len + 1);
 
 	res_EXCHANGE_ID4_ok->eir_server_scope.eir_server_scope_len = len;
 	res_EXCHANGE_ID4_ok->eir_server_scope.eir_server_scope_val = temp;
