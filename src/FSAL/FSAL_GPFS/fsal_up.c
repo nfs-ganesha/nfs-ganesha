@@ -1,4 +1,7 @@
-/*
+/**
+ * @file    fsal_up.c
+ * @brief   FSAL Upcall Interface
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
  * as published by the Free Software Foundation; either version 3 of
@@ -17,12 +20,7 @@
  * ---------------------------------------
  */
 
-/**
- * @file    fsal_up.c
- * @brief   FSAL Upcall Interface
- */
 #include "config.h"
-
 #include "fsal.h"
 #include "fsal_up.h"
 #include "fsal_internal.h"
@@ -33,6 +31,12 @@
 #include <utime.h>
 #include <sys/time.h>
 
+/**
+ * @brief Up Thread
+ *
+ * @param Arg reference to void
+ *
+ */
 void *GPFSFSAL_UP_Thread(void *Arg)
 {
 	struct gpfs_filesystem *gpfs_fs = Arg;
