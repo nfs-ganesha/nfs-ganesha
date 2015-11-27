@@ -693,9 +693,13 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl)
 	status = glusterfs_get_acl(glfs_export, objhandle->glhandle,
 				   &buffxstat, fsalattr);
 
-	/* for dead links we should not return error */
-	if (obj_hdl->type == SYMBOLIC_LINK && status.minor == ENOENT)
-		status = fsalstat(ERR_FSAL_NO_ERROR, 0);
+	/*
+	 * The error ENOENT is not an expected error for GETATTRS.
+	 * Due to this, operations such as RENAME will fail when it
+	 * calls GETATTRS on removed file.
+	 */
+	if (status.minor == ENOENT)
+		status = gluster2fsal_error(ESTALE);
 
  out:
 #ifdef GLTIMING
