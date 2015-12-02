@@ -52,6 +52,7 @@
 #include "export_mgr.h"
 #include "fsal_up.h"
 #include "sal_functions.h"
+#include "pnfs_utils.h"
 
 struct global_export_perms export_opt = {
 	.def.anonymous_uid = ANON_UID,
@@ -656,7 +657,22 @@ static void *export_init(void *link_mem, void *self_struct)
 		return export;
 	} else { /* free resources case */
 		export = self_struct;
-		free_export(export);
+		/* As part of create_export(), FSAL shall take
+		 * reference to the export if it supports pNFS.
+		 */
+		if (export->has_pnfs_ds) {
+			assert(export->refcnt == 1);
+			/* export is not yet added to the export
+			 * manager. Hence there shall not be any
+			 * other thread racing here. So no need
+			 * to take lock. */
+			export->has_pnfs_ds = false;
+			pnfs_ds_remove(export->export_id, true);
+		} else {
+			assert(export->refcnt == 0);
+			free_export(export);
+		}
+
 		return NULL;
 	}
 }
