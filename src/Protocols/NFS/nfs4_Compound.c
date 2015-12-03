@@ -416,6 +416,33 @@ static const struct nfs4_op_desc optabv4[] = {
 				.funct = nfs4_op_write_same,
 				.free_res = nfs4_op_write_same_Free,
 				.exp_perm_flags = 0},
+	[NFS4_OP_CLONE] = {
+				.name = "OP_CLONE",
+				.funct = nfs4_op_notsupp,
+				.free_res = nfs4_op_notsupp_Free,
+				.exp_perm_flags = 0},
+
+	/* NFSv4.3 */
+	[NFS4_OP_GETXATTR] = {
+				.name = "OP_GETXATTR",
+				.funct = nfs4_op_getxattr,
+				.free_res = nfs4_op_getxattr_Free,
+				.exp_perm_flags = 0},
+	[NFS4_OP_SETXATTR] = {
+				.name = "OP_SETXATTR",
+				.funct = nfs4_op_setxattr,
+				.free_res = nfs4_op_setxattr_Free,
+				.exp_perm_flags = 0},
+	[NFS4_OP_LISTXATTR] = {
+				.name = "OP_LISTXATTR",
+				.funct = nfs4_op_listxattr,
+				.free_res = nfs4_op_listxattr_Free,
+				.exp_perm_flags = 0},
+	[NFS4_OP_REMOVEXATTR] = {
+				.name = "OP_REMOVEXATTR",
+				.funct = nfs4_op_removexattr,
+				.free_res = nfs4_op_removexattr_Free,
+				.exp_perm_flags = 0},
 };
 
 /** Define the last valid NFS v4 op for each minor version.
@@ -1046,6 +1073,14 @@ void nfs4_Compound_CopyResOne(nfs_resop4 *res_dst, nfs_resop4 *res_src)
 	case NFS4_OP_READ_PLUS:
 	case NFS4_OP_SEEK:
 	case NFS4_OP_WRITE_SAME:
+	case NFS4_OP_CLONE:
+
+	/* NFSv4.3 */
+	case NFS4_OP_GETXATTR:
+	case NFS4_OP_SETXATTR:
+	case NFS4_OP_LISTXATTR:
+	case NFS4_OP_REMOVEXATTR:
+
 	case NFS4_OP_LAST_ONE:
 		break;
 

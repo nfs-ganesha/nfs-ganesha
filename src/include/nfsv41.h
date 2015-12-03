@@ -330,6 +330,8 @@ extern "C" {
 #define ACE4_GENERIC_READ 0x00120081
 #define ACE4_GENERIC_WRITE 0x00160106
 #define ACE4_GENERIC_EXECUTE 0x001200A0
+#define ACE4_READ_XATTRS 0x00200000
+#define ACE4_WRITE_XATTRS 0x00400000
 
 	struct nfsace4 {
 		acetype4 type;
@@ -824,9 +826,13 @@ extern "C" {
 #define FATTR4_FS_CHARSET_CAP 76
 
 /* NFSv4.2 */
-#define FATTR4_SPACE_FREED 77
-#define FATTR4_CHANGE_ATTR_TYPE 78
-#define FATTR4_SEC_LABEL 79
+#define FATTR4_CLONE_BLKSIZE 77
+#define FATTR4_SPACE_FREED 78
+#define FATTR4_CHANGE_ATTR_TYPE 79
+#define FATTR4_SEC_LABEL 80
+
+/* NFSv4.3 */
+#define FATTR4_XATTR_SUPPORT 81
 
 	struct fattr4 {
 		struct bitmap4 attrmask;
@@ -1098,6 +1104,8 @@ extern "C" {
 #define ACCESS4_EXTEND 0x00000008
 #define ACCESS4_DELETE 0x00000010
 #define ACCESS4_EXECUTE 0x00000020
+#define ACCESS4_XAREAD  0x00000040
+#define ACCESS4_XAWRITE 0x00000080
 
 	struct ACCESS4args {
 		uint32_t access;
@@ -2820,11 +2828,124 @@ extern "C" {
 		NFS4_OP_READ_PLUS = 68,
 		NFS4_OP_SEEK = 69,
 		NFS4_OP_WRITE_SAME = 70,
-		NFS4_OP_LAST_ONE = 71,
+		NFS4_OP_CLONE = 71,
+
+		/* NFSv4.3 */
+		NFS4_OP_GETXATTR = 72,
+		NFS4_OP_SETXATTR = 73,
+		NFS4_OP_LISTXATTR = 74,
+		NFS4_OP_REMOVEXATTR = 75,
+
+		NFS4_OP_LAST_ONE = 76,
 
 		NFS4_OP_ILLEGAL = 10044,
 	};
 	typedef enum nfs_opnum4 nfs_opnum4;
+
+	typedef component4 xattrname4;
+	typedef component4 xattrvalue4;
+
+	enum setxattr_type4 {
+		SETXATTR4_CREATE = 0,
+		SETXATTR4_REPLACE = 1,
+	};
+	typedef enum setxattr_type4 setxattr_type4;
+
+	struct xattr4 {
+		xattrname4 xa_name;
+		xattrvalue4 xa_value;
+	};
+	typedef struct xattr4 xattr4;
+
+	struct xattrentry4 {
+		component4 name;
+		struct entry4 *nextentry;
+	};
+	typedef struct xattrentry4 xattrentry4;
+
+	struct xattrlist4 {
+		xattrentry4 *entries;
+	};
+	typedef struct xattrlist4 xattrlist4;
+
+
+	struct GETXATTR4args {
+		xattrname4 ga_name;
+	};
+	typedef struct GETXATTR4args GETXATTR4args;
+
+	struct GETXATTR4resok {
+		xattrvalue4 gr_value;
+	};
+	typedef struct GETXATTR4resok GETXATTR4resok;
+
+	struct GETXATTR4res {
+		nfsstat4 status;
+		union {
+			GETXATTR4resok resok4;
+		} GETXATTRres_u;
+	};
+	typedef struct GETXATTR4res GETXATTR4res;
+
+	struct SETXATTR4args {
+		setxattr_type4 sa_type;
+		xattr4 sa_xattr;
+	};
+	typedef struct SETXATTR4args SETXATTR4args;
+
+	struct SETXATTR4resok {
+		change_info4 sr_info;
+	};
+	typedef struct SETXATTR4resok SETXATTR4resok;
+
+	struct SETXATTR4res {
+		nfsstat4 status;
+		union {
+			SETXATTR4resok resok4;
+		} SETXATTRres_u;
+	};
+	typedef struct SETXATTR4res SETXATTR4res;
+
+	struct LISTXATTR4args {
+		nfs_cookie4 la_cookie;
+		verifier4 la_cookieverf;
+		count4 la_maxcount;
+	};
+	typedef struct LISTXATTR4args LISTXATTR4args;
+
+	struct LISTXATTR4resok {
+		nfs_cookie4 lr_cookie;
+		verifier4 lr_cookieverf;
+		bool_t lr_eof;
+		xattrlist4 lr_names;
+	};
+	typedef struct LISTXATTR4resok LISTXATTR4resok;
+
+	struct LISTXATTR4res {
+		nfsstat4 status;
+		union {
+			LISTXATTR4resok resok4;
+		} LISTXATTR4res_u;
+	};
+	typedef struct LISTXATTR4res LISTXATTR4res;
+
+	struct REMOVEXATTR4args {
+		xattrname4 ra_name;
+	};
+	typedef struct REMOVEXATTR4args REMOVEXATTR4args;
+
+	struct REMOVEXATTR4resok {
+		change_info4 rr_info;
+	};
+	typedef struct REMOVEXATTR4resok REMOVEXATTR4resok;
+
+	struct REMOVEXATTR4res {
+		nfsstat4 status;
+		union {
+			REMOVEXATTR4resok resok4;
+		} REMOVEXATTRres_u;
+	};
+	typedef struct REMOVEXATTR4res REMOVEXATTR4res;
 
 	typedef struct {
 		deviceid4       de_deviceid;
@@ -3052,6 +3173,13 @@ extern "C" {
 			IO_ADVISE4args opio_advise;
 			LAYOUTERROR4args oplayouterror;
 			LAYOUTSTATS4args oplayoutstats;
+
+			/* NFSv4.3 */
+			GETXATTR4args opgetxattr;
+			SETXATTR4args opsetxattr;
+			LISTXATTR4args oplistxattr;
+			REMOVEXATTR4args opremovexattr;
+
 		} nfs_argop4_u;
 	};
 	typedef struct nfs_argop4 nfs_argop4;
@@ -3130,6 +3258,12 @@ extern "C" {
 			IO_ADVISE4res opio_advise;
 			LAYOUTERROR4res oplayouterror;
 			LAYOUTSTATS4res oplayoutstats;
+
+			/* NFSv4.3 */
+			GETXATTR4res opgetxattr;
+			SETXATTR4res opsetxattr;
+			LISTXATTR4res oplistxattr;
+			REMOVEXATTR4res opremovexattr;
 
 			ILLEGAL4res opillegal;
 		} nfs_resop4_u;
@@ -5402,6 +5536,137 @@ extern "C" {
 	{
 		if (!xdr_nfsstat4(xdrs, &objp->status))
 			return false;
+		return true;
+	}
+
+	/* NFSv4.2 */
+	static inline bool xdr_GETXATTR4args(XDR * xdrs, GETXATTR4args *objp)
+	{
+		if (!xdr_component4(xdrs, &objp->ga_name))
+			return false;
+		return true;
+	}
+	static inline bool xdr_GETXATTR4res(XDR * xdrs, GETXATTR4res *objp)
+	{
+		if (!xdr_nfsstat4(xdrs, &objp->status))
+			return false;
+		switch (objp->status) {
+		case NFS4_OK:
+			if (!xdr_component4(xdrs,
+					&objp->GETXATTRres_u.resok4.gr_value))
+				return false;
+			break;
+		default:
+			break;
+		}
+		return true;
+	}
+
+	static inline bool xdr_SETXATTR4args(XDR * xdrs, SETXATTR4args *objp)
+	{
+		if (!inline_xdr_enum(xdrs, (enum_t *) &objp->sa_type))
+			return false;
+		if (!xdr_component4(xdrs, &objp->sa_xattr.xa_name))
+			return false;
+		if (!xdr_component4(xdrs,
+				&objp->sa_xattr.xa_value))
+			return false;
+		return true;
+	}
+	static inline bool xdr_SETXATTR4res(XDR * xdrs, SETXATTR4res *objp)
+	{
+		if (!xdr_nfsstat4(xdrs, &objp->status))
+			return false;
+		switch (objp->status) {
+		case NFS4_OK:
+			if (!xdr_change_info4(xdrs,
+					&objp->SETXATTRres_u.resok4.sr_info))
+				return false;
+			break;
+		default:
+			break;
+		}
+		return true;
+	}
+	static inline bool xdr_LISTXATTR4args(XDR * xdrs, LISTXATTR4args *objp)
+	{
+		if (!xdr_nfs_cookie4(xdrs, &objp->la_cookie))
+			return false;
+		if (!xdr_verifier4(xdrs, objp->la_cookieverf))
+			return false;
+		if (!xdr_count4(xdrs, &objp->la_maxcount))
+			return false;
+		return true;
+	}
+
+	static inline bool xdr_xattrentry4(XDR * xdrs, xattrentry4 *objp)
+	{
+		if (!xdr_component4(xdrs, &objp->name))
+			return false;
+		if (!xdr_pointer
+		    (xdrs, (char **)&objp->nextentry, sizeof(xattrentry4),
+		     (xdrproc_t) xdr_xattrentry4))
+			return false;
+		return true;
+	}
+
+	static inline bool xdr_listxattr4(XDR * xdrs, xattrlist4 *objp)
+	{
+		if (!xdr_pointer
+		    (xdrs, (char **)&objp->entries, sizeof(xattrentry4),
+		     (xdrproc_t) xdr_xattrentry4))
+			return false;
+		return true;
+	}
+	static inline bool xdr_LISTXATTR4resok(XDR * xdrs,
+						LISTXATTR4resok *objp)
+	{
+		if (!xdr_nfs_cookie4(xdrs, &objp->lr_cookie))
+			return false;
+		if (!xdr_verifier4(xdrs, objp->lr_cookieverf))
+			return false;
+		if (!inline_xdr_bool(xdrs, &objp->lr_eof))
+			return false;
+		if (!xdr_listxattr4(xdrs, &objp->lr_names))
+			return false;
+		return true;
+	}
+	static inline bool xdr_LISTXATTR4res(XDR * xdrs, LISTXATTR4res *objp)
+	{
+		if (!xdr_nfsstat4(xdrs, &objp->status))
+			return false;
+		switch (objp->status) {
+		case NFS4_OK:
+			if (!xdr_LISTXATTR4resok
+			    (xdrs, &objp->LISTXATTR4res_u.resok4))
+				return false;
+			break;
+		default:
+			break;
+		}
+		return true;
+	}
+	static inline bool xdr_REMOVEXATTR4args(XDR * xdrs,
+						REMOVEXATTR4args *objp)
+	{
+		if (!xdr_component4(xdrs, &objp->ra_name))
+			return false;
+		return true;
+	}
+	static inline bool xdr_REMOVEXATTR4res(XDR * xdrs,
+						REMOVEXATTR4res *objp)
+	{
+		if (!xdr_nfsstat4(xdrs, &objp->status))
+			return false;
+		switch (objp->status) {
+		case NFS4_OK:
+			if (!xdr_change_info4(xdrs,
+					&objp->REMOVEXATTRres_u.resok4.rr_info))
+				return false;
+			break;
+		default:
+			break;
+		}
 		return true;
 	}
 
@@ -8288,6 +8553,29 @@ extern "C" {
 		case NFS4_OP_COPY_NOTIFY:
 		case NFS4_OP_OFFLOAD_CANCEL:
 		case NFS4_OP_OFFLOAD_STATUS:
+		case NFS4_OP_CLONE:
+			break;
+
+		/* NFSv4.3 */
+		case NFS4_OP_GETXATTR:
+			if (!xdr_GETXATTR4args(xdrs,
+					&objp->nfs_argop4_u.opgetxattr))
+				return false;
+			break;
+		case NFS4_OP_SETXATTR:
+			if (!xdr_SETXATTR4args(xdrs,
+					&objp->nfs_argop4_u.opsetxattr))
+				return false;
+			break;
+		case NFS4_OP_LISTXATTR:
+			if (!xdr_LISTXATTR4args(xdrs,
+					&objp->nfs_argop4_u.oplistxattr))
+				return false;
+			break;
+		case NFS4_OP_REMOVEXATTR:
+			if (!xdr_REMOVEXATTR4args(xdrs,
+					&objp->nfs_argop4_u.opremovexattr))
+				return false;
 			break;
 
 		case NFS4_OP_ILLEGAL:
@@ -8615,6 +8903,23 @@ extern "C" {
 		case NFS4_OP_COPY_NOTIFY:
 		case NFS4_OP_OFFLOAD_CANCEL:
 		case NFS4_OP_OFFLOAD_STATUS:
+		case NFS4_OP_CLONE:
+
+		/* NFSv4.3 */
+		case NFS4_OP_GETXATTR:
+			if (!xdr_GETXATTR4res(xdrs,
+					&objp->nfs_resop4_u.opgetxattr))
+				return false;
+			break;
+		case NFS4_OP_SETXATTR:
+				return false;
+			break;
+		case NFS4_OP_LISTXATTR:
+				return false;
+			break;
+		case NFS4_OP_REMOVEXATTR:
+				return false;
+			break;
 
 		case NFS4_OP_ILLEGAL:
 			if (!xdr_ILLEGAL4res
@@ -10034,6 +10339,17 @@ extern "C" {
 	static inline bool xdr_nfs_cb_resop4();
 	static inline bool xdr_CB_COMPOUND4args();
 	static inline bool xdr_CB_COMPOUND4res();
+	static inline bool xdr_LISTXATTR4args();
+	static inline bool xdr_xattrentry4();
+	static inline bool xdr_listxattr4();
+	static inline bool xdr_GETXATTR4args();
+	static inline bool xdr_GETXATTR4res();
+	static inline bool xdr_SETXATTR4args();
+	static inline bool xdr_SETXATTR4res();
+	static inline bool xdr_LISTXATTR4args();
+	static inline bool xdr_LISTXATTR4res();
+	static inline bool xdr_REMOVEXATTR4args();
+	static inline bool xdr_REMOVEXATTR4res();
 
 #endif				/* K&R C */
 

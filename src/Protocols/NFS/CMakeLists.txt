@@ -78,6 +78,7 @@ SET(nfsproto_STAT_SRCS
    nfs4_op_sequence.c
    nfs4_op_set_ssv.c
    nfs4_op_setattr.c
+   nfs4_op_xattr.c
    nfs4_op_setclientid.c
    nfs4_op_setclientid_confirm.c
    nfs4_op_destroy_clientid.c
