@@ -45,121 +45,12 @@
  * @return FSAL status.
  */
 
-fsal_status_t gluster2fsal_error(const int gluster_errorcode)
+fsal_status_t gluster2fsal_error(const int err)
 {
 	fsal_status_t status;
 
-	status.minor = gluster_errorcode;
-
-	switch (gluster_errorcode) {
-
-	case 0:
-		status.major = ERR_FSAL_NO_ERROR;
-		break;
-
-	case EPERM:
-		status.major = ERR_FSAL_PERM;
-		break;
-
-	case ENOENT:
-		status.major = ERR_FSAL_NOENT;
-		break;
-
-	case ECONNREFUSED:
-	case ECONNABORTED:
-	case ECONNRESET:
-	case EIO:
-	case ENFILE:
-	case EMFILE:
-	case EPIPE:
-		status.major = ERR_FSAL_IO;
-		break;
-
-	case ENODEV:
-	case ENXIO:
-		status.major = ERR_FSAL_NXIO;
-		break;
-
-	case EBADF:
-			/**
-			 * @todo: The EBADF error also happens when file is
-			 *	  opened for reading, and we try writting in
-			 *	  it.  In this case, we return
-			 *	  ERR_FSAL_NOT_OPENED, but it doesn't seems to
-			 *	  be a correct error translation.
-			 */
-		status.major = ERR_FSAL_NOT_OPENED;
-		break;
-
-	case ENOMEM:
-		status.major = ERR_FSAL_NOMEM;
-		break;
-
-	case EACCES:
-		status.major = ERR_FSAL_ACCESS;
-		break;
-
-	case EFAULT:
-		status.major = ERR_FSAL_FAULT;
-		break;
-
-	case EEXIST:
-		status.major = ERR_FSAL_EXIST;
-		break;
-
-	case EXDEV:
-		status.major = ERR_FSAL_XDEV;
-		break;
-
-	case ENOTDIR:
-		status.major = ERR_FSAL_NOTDIR;
-		break;
-
-	case EISDIR:
-		status.major = ERR_FSAL_ISDIR;
-		break;
-
-	case EINVAL:
-		status.major = ERR_FSAL_INVAL;
-		break;
-
-	case EFBIG:
-		status.major = ERR_FSAL_FBIG;
-		break;
-
-	case ENOSPC:
-		status.major = ERR_FSAL_NOSPC;
-		break;
-
-	case EMLINK:
-		status.major = ERR_FSAL_MLINK;
-		break;
-
-	case EDQUOT:
-		status.major = ERR_FSAL_DQUOT;
-		break;
-
-	case ENAMETOOLONG:
-		status.major = ERR_FSAL_NAMETOOLONG;
-		break;
-
-	case ENOTEMPTY:
-		status.major = ERR_FSAL_NOTEMPTY;
-		break;
-
-	case ESTALE:
-		status.major = ERR_FSAL_STALE;
-		break;
-
-	case EAGAIN:
-	case EBUSY:
-		status.major = ERR_FSAL_DELAY;
-		break;
-
-	default:
-		status.major = ERR_FSAL_SERVERFAULT;
-		break;
-	}
+	status.minor = err;
+	status.major = posix2fsal_error(err);
 
 	return status;
 }
