@@ -1,3 +1,4 @@
 LOGFILE=/var/log/ganesha.log
 CONFFILE=/etc/ganesha/ganesha.conf
+EPOCH_EXEC=/bin/true
 

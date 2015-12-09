@@ -17,11 +17,14 @@ After=rpcbind.service nfs-ganesha-lock.service
 Wants=rpcbind.service nfs-ganesha-lock.service
 Conflicts=nfs.target
 
+After=nfs-ganesha-config.service
+Wants=nfs-ganesha-config.service
+
 [Service]
 Type=forking
 Environment="NOFILE=1048576"
-EnvironmentFile=/etc/sysconfig/ganesha
-ExecStart=/usr/bin/ganesha.nfsd $OPTIONS
+EnvironmentFile=-/run/sysconfig/ganesha
+ExecStart=/usr/bin/ganesha.nfsd $OPTIONS ${EPOCH}
 ExecStartPost=-/bin/bash -c "prlimit --pid $MAINPID --nofile=$NOFILE:$NOFILE"
 ExecReload=/bin/dbus-send --system   --dest=org.ganesha.nfsd --type=method_call /org/ganesha/nfsd/admin  org.ganesha.nfsd.admin.reload
 ExecStop=/bin/dbus-send --system   --dest=org.ganesha.nfsd --type=method_call /org/ganesha/nfsd/admin org.ganesha.nfsd.admin.shutdown
