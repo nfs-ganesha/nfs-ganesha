@@ -215,6 +215,12 @@ static const struct op_name optabv4[] = {
 	[NFS4_OP_READ_PLUS] = {.name = "READ_PLUS",},
 	[NFS4_OP_SEEK] = {.name = "SEEK",},
 	[NFS4_OP_WRITE_SAME] = {.name = "WRITE_SAME",},
+	[NFS4_OP_CLONE] = {.name = "OP_CLONE",},
+	/* NFSv4.3 */
+	[NFS4_OP_GETXATTR] = {.name = "OP_GETXATTR",},
+	[NFS4_OP_SETXATTR] = {.name = "OP_SETXATTR",},
+	[NFS4_OP_LISTXATTR] = {.name = "OP_LISTXATTR",},
+	[NFS4_OP_REMOVEXATTR] = {.name = "OP_REMOVEXATTR",},
 };
 
 #endif
