@@ -1929,9 +1929,33 @@ void cancel_blocked_lock(struct fsal_obj_handle *obj,
 			/* Unable to cancel,
 			 * assume that granted upcall is on it's way.
 			 */
+			LogFullDebug(COMPONENT_STATE,
+				     "Unable to cancel lock %d", state_status);
 			LogEntry("Unable to cancel (grant upcall expected)",
 				 lock_entry);
-			return;
+		}
+
+		/* If there is a pending upcall at this point, the
+		 * following request will release it. The upcall
+		 * processing code can just ignore the granted lock, if
+		 * a lock isn't found in the state_blocked_lock list.
+		 *
+		 * @todo: Maybe an issue if this was a lock upgrade?
+		 */
+		state_status = do_lock_op(obj,
+					  lock_entry->sle_state,
+					  FSAL_OP_UNLOCK,
+					  lock_entry->sle_owner,
+					  &lock_entry->sle_lock,
+					  NULL,	/* no conflict expected */
+					  NULL,
+					  false); /* overlap not relevant */
+
+		if (state_status != STATE_SUCCESS) {
+			/* lock was probably not granted */
+			LogFullDebug(COMPONENT_STATE,
+				     "Unable to unlock a blocked lock %d",
+				     state_status);
 		}
 	}
 
@@ -3545,10 +3569,20 @@ static void find_blocked_lock_upcall(struct fsal_obj_handle *obj, void *owner,
 
 	PTHREAD_MUTEX_unlock(&blocked_locks_mutex);
 
-	/* We must be out of sync with FSAL, this is fatal */
-	LogLockDesc(COMPONENT_STATE, NIV_MAJ, "Blocked Lock Not Found for",
+	if (isFullDebug(COMPONENT_STATE) && isFullDebug(COMPONENT_MEMLEAKS)) {
+		STATELOCK_lock(obj);
+
+		LogList("File Lock List", obj, &obj->state_hdl->file.lock_list);
+
+		STATELOCK_unlock(obj);
+	}
+
+	/* It is likely that we got an upcall before the cancel request.
+	 * The cancel code will also unlock, so there is nothing to do
+	 * even if this is a granted lock.
+	 */
+	LogLockDesc(COMPONENT_STATE, NIV_EVENT, "Blocked Lock Not Found for",
 		    obj, owner, lock);
-	LogFatal(COMPONENT_STATE, "Locks out of sync with FSAL");
 }
 
 /**
