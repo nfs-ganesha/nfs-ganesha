@@ -155,6 +155,7 @@ static struct group_data *uid2grp_allocate_by_name(
 	struct group_data *gdata = NULL;
 	char *buff;
 	long buff_size;
+	int retval;
 
 	memcpy(namebuff, name->addr, name->len);
 	*(namebuff + name->len) = '\0';
@@ -166,9 +167,17 @@ static struct group_data *uid2grp_allocate_by_name(
 	}
 
 	buff = alloca(buff_size);
-	if ((getpwnam_r(namebuff, &p, buff, buff_size, &pp) != 0)
-	    || (pp == NULL)) {
-		LogEvent(COMPONENT_IDMAPPER, "getpwnam_r %s failed", namebuff);
+	retval = getpwnam_r(namebuff, &p, buff, buff_size, &pp);
+	if (retval != 0) {
+		LogEvent(COMPONENT_IDMAPPER,
+			 "getpwnam_r for %s failed, error %d",
+			 namebuff, retval);
+		return gdata;
+	}
+	if (pp == NULL) {
+		LogEvent(COMPONENT_IDMAPPER,
+			 "No matching password record found for name %s",
+			 namebuff);
 		return gdata;
 	}
 
@@ -202,6 +211,7 @@ static struct group_data *uid2grp_allocate_by_uid(uid_t uid)
 	struct group_data *gdata = NULL;
 	char *buff;
 	long buff_size;
+	int retval;
 
 	buff_size = sysconf(_SC_GETPW_R_SIZE_MAX);
 	if (buff_size == -1) {
@@ -210,8 +220,15 @@ static struct group_data *uid2grp_allocate_by_uid(uid_t uid)
 	}
 
 	buff = alloca(buff_size);
-	if ((getpwuid_r(uid, &p, buff, buff_size, &pp) != 0) || (pp == NULL)) {
-		LogEvent(COMPONENT_IDMAPPER, "getpwuid_r %u failed", uid);
+	retval = getpwuid_r(uid, &p, buff, buff_size, &pp);
+	if (retval != 0) {
+		LogEvent(COMPONENT_IDMAPPER,
+			 "getpwuid_r for uid %u failed, error %d", uid, retval);
+		return gdata;
+	}
+	if (pp == NULL) {
+		LogEvent(COMPONENT_IDMAPPER,
+			 "No matching password record found for uid %u", uid);
 		return gdata;
 	}
 
