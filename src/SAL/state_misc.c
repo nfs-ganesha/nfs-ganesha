@@ -371,6 +371,9 @@ state_status_t state_error_convert(fsal_status_t fsal_status)
 	case ERR_FSAL_LOCKED:
 		return STATE_LOCKED;
 
+	case ERR_FSAL_TOOSMALL:
+		return STATE_TOOSMALL;
+
 	case ERR_FSAL_DQUOT:
 	case ERR_FSAL_NAMETOOLONG:
 	case ERR_FSAL_EXIST:
@@ -384,7 +387,6 @@ state_status_t state_error_convert(fsal_status_t fsal_status)
 	case ERR_FSAL_NO_QUOTA:
 	case ERR_FSAL_XDEV:
 	case ERR_FSAL_MLINK:
-	case ERR_FSAL_TOOSMALL:
 	case ERR_FSAL_TIMEOUT:
 	case ERR_FSAL_SERVERFAULT:
 	case ERR_FSAL_NO_DATA:

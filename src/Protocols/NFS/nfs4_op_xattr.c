@@ -1,9 +1,8 @@
 /*
  * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
- * Copyright CEA/DAM/DIF  (2008)
- * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
- *                Thomas LEIBOVICI  thomas.leibovici@cea.fr
+ * Copyright IBM Corporation, 2015
+ *  Contributor: Marc Eshel <eshel@us.ibm.com>
  *
  *
  * This program is free software; you can redistribute it and/or
@@ -43,6 +42,8 @@
 #include "sal_functions.h"
 #include "nfs_creds.h"
 
+#define XATTR_VALUE_SIZE 1024
+
 /**
  * @brief The NFS4_OP_GETXATTR operation.
  *
@@ -53,13 +54,15 @@
  * @param[in,out] data Compound request's data
  * @param[out]    resp Results for nfs4_op
  *
- * @return per RFC5661, p. 373-4
  */
 int nfs4_op_getxattr(struct nfs_argop4 *op, compound_data_t *data,
-		    struct nfs_resop4 *resp)
+		     struct nfs_resop4 *resp)
 {
 	GETXATTR4args * const arg_GETXATTR4 = &op->nfs_argop4_u.opgetxattr;
 	GETXATTR4res * const res_GETXATTR4 = &resp->nfs_resop4_u.opgetxattr;
+	xattrvalue4 gr_value;
+	fsal_status_t fsal_status;
+	struct fsal_obj_handle *obj_handle = data->current_entry->obj_handle;
 
 	resp->resop = NFS4_OP_GETXATTR;
 	res_GETXATTR4->status = NFS4_OK;
@@ -69,23 +72,58 @@ int nfs4_op_getxattr(struct nfs_argop4 *op, compound_data_t *data,
 		 arg_GETXATTR4->ga_name.utf8string_len,
 		 arg_GETXATTR4->ga_name.utf8string_val);
 
+	res_GETXATTR4->GETXATTR4res_u.resok4.gr_value.utf8string_len = 0;
+	res_GETXATTR4->GETXATTR4res_u.resok4.gr_value.utf8string_val = NULL;
+
+	gr_value.utf8string_len = XATTR_VALUE_SIZE;
+	gr_value.utf8string_val = gsh_malloc(gr_value.utf8string_len);
+
 	/* Do basic checks on a filehandle */
 	res_GETXATTR4->status = nfs4_sanity_check_FH(data, NO_FILE_TYPE, false);
 
 	if (res_GETXATTR4->status != NFS4_OK)
 		return res_GETXATTR4->status;
 
-	/* Don't allow attribute change while we are in grace period.
-	 * Required for delegation reclaims and may be needed for other
-	 * reclaimable states as well.
-	 */
-	if (nfs_in_grace()) {
-		res_GETXATTR4->status = NFS4ERR_GRACE;
-		return res_GETXATTR4->status;
+	fsal_status = obj_handle->obj_ops.getxattrs(obj_handle,
+						    &arg_GETXATTR4->ga_name,
+						    &gr_value);
+	if (FSAL_IS_ERROR(fsal_status)) {
+		if (fsal_status.major == ERR_FSAL_TOOSMALL) {
+			LogDebug(COMPONENT_FSAL,
+				 "FSAL buffer len %d too small",
+				  XATTR_VALUE_SIZE);
+			/* Get size of xattr value  */
+			gsh_free(gr_value.utf8string_val);
+			gr_value.utf8string_len = 0;
+			gr_value.utf8string_val = NULL;
+			fsal_status = obj_handle->obj_ops.getxattrs(obj_handle,
+						    &arg_GETXATTR4->ga_name,
+						    &gr_value);
+			if (FSAL_IS_ERROR(fsal_status))
+				return res_GETXATTR4->status = nfs4_Errno_state(
+					state_error_convert(fsal_status));
+			LogDebug(COMPONENT_FSAL,
+				 "FSAL buffer new len %d",
+				  gr_value.utf8string_len);
+			/* Try again with a bigger buffer */
+			gr_value.utf8string_val = gsh_malloc(
+						      gr_value.utf8string_len);
+			fsal_status = obj_handle->obj_ops.getxattrs(obj_handle,
+						    &arg_GETXATTR4->ga_name,
+						    &gr_value);
+			if (FSAL_IS_ERROR(fsal_status))
+				return res_GETXATTR4->status = nfs4_Errno_state(
+					state_error_convert(fsal_status));
+		}
 	}
-	res_GETXATTR4->status = NFS4ERR_NOTSUPP;
+	res_GETXATTR4->status = NFS4_OK;
+	res_GETXATTR4->GETXATTR4res_u.resok4.gr_value.utf8string_len =
+							gr_value.utf8string_len;
+	res_GETXATTR4->GETXATTR4res_u.resok4.gr_value.utf8string_val =
+							gr_value.utf8string_val;
 	return res_GETXATTR4->status;
 }
+
 /**
  * @brief Free memory allocated for GETXATTR result
  *
@@ -96,7 +134,11 @@ int nfs4_op_getxattr(struct nfs_argop4 *op, compound_data_t *data,
  */
 void nfs4_op_getxattr_Free(nfs_resop4 *resp)
 {
-	/* Nothing to be done */
+	GETXATTR4res * const res_GETXATTR4 = &resp->nfs_resop4_u.opgetxattr;
+
+	if (res_GETXATTR4->GETXATTR4res_u.resok4.gr_value.utf8string_val)
+		gsh_free(res_GETXATTR4->
+			     GETXATTR4res_u.resok4.gr_value.utf8string_val);
 }
 
 /**
@@ -109,13 +151,14 @@ void nfs4_op_getxattr_Free(nfs_resop4 *resp)
  * @param[in,out] data Compound request's data
  * @param[out]    resp Results for nfs4_op
  *
- * @return per RFC5661, p. 373-4
  */
 int nfs4_op_setxattr(struct nfs_argop4 *op, compound_data_t *data,
-		    struct nfs_resop4 *resp)
+		     struct nfs_resop4 *resp)
 {
 	SETXATTR4args * const arg_SETXATTR4 = &op->nfs_argop4_u.opsetxattr;
 	SETXATTR4res * const res_SETXATTR4 = &resp->nfs_resop4_u.opsetxattr;
+	fsal_status_t fsal_status;
+	struct fsal_obj_handle *obj_handle = data->current_entry->obj_handle;
 
 	resp->resop = NFS4_OP_SETXATTR;
 	res_SETXATTR4->status = NFS4_OK;
@@ -140,9 +183,16 @@ int nfs4_op_setxattr(struct nfs_argop4 *op, compound_data_t *data,
 		res_SETXATTR4->status = NFS4ERR_GRACE;
 		return res_SETXATTR4->status;
 	}
-	res_SETXATTR4->status = NFS4ERR_NOTSUPP;
+	fsal_status = obj_handle->obj_ops.setxattrs(obj_handle,
+					arg_SETXATTR4->sa_type,
+					&arg_SETXATTR4->sa_xattr.xa_name,
+					&arg_SETXATTR4->sa_xattr.xa_value);
+	if (FSAL_IS_ERROR(fsal_status))
+		return res_SETXATTR4->status = nfs4_Errno_state(
+					state_error_convert(fsal_status));
 	return res_SETXATTR4->status;
 }
+
 /**
  * @brief Free memory allocated for SETXATTR result
  *
@@ -166,13 +216,18 @@ void nfs4_op_setxattr_Free(nfs_resop4 *resp)
  * @param[in,out] data Compound request's data
  * @param[out]    resp Results for nfs4_op
  *
- * @return per RFC5661, p. 373-4
  */
 int nfs4_op_listxattr(struct nfs_argop4 *op, compound_data_t *data,
-		    struct nfs_resop4 *resp)
+		      struct nfs_resop4 *resp)
 {
 	LISTXATTR4args * const arg_LISTXATTR4 = &op->nfs_argop4_u.oplistxattr;
 	LISTXATTR4res * const res_LISTXATTR4 = &resp->nfs_resop4_u.oplistxattr;
+	fsal_status_t fsal_status;
+	struct fsal_obj_handle *obj_handle = data->current_entry->obj_handle;
+	xattrlist4 list;
+	nfs_cookie4 la_cookie;
+	verifier4 la_cookieverf;
+	bool_t lr_eof;
 
 	resp->resop = NFS4_OP_LISTXATTR;
 	res_LISTXATTR4->status = NFS4_OK;
@@ -188,17 +243,27 @@ int nfs4_op_listxattr(struct nfs_argop4 *op, compound_data_t *data,
 	if (res_LISTXATTR4->status != NFS4_OK)
 		return res_LISTXATTR4->status;
 
-	/* Don't allow attribute change while we are in grace period.
-	 * Required for delegation reclaims and may be needed for other
-	 * reclaimable states as well.
-	 */
-	if (nfs_in_grace()) {
-		res_LISTXATTR4->status = NFS4ERR_GRACE;
+	/* Do basic checks on a filehandle */
+	res_LISTXATTR4->status = nfs4_sanity_check_FH(data, NO_FILE_TYPE,
+									false);
+
+	if (res_LISTXATTR4->status != NFS4_OK)
 		return res_LISTXATTR4->status;
-	}
-	res_LISTXATTR4->status = NFS4ERR_NOTSUPP;
+
+	list.entries = (xattrentry4 *)gsh_malloc(arg_LISTXATTR4->la_maxcount);
+
+	fsal_status = obj_handle->obj_ops.listxattrs(obj_handle,
+						arg_LISTXATTR4->la_maxcount,
+						&la_cookie,
+						&la_cookieverf,
+						&lr_eof,
+						&list);
+	if (FSAL_IS_ERROR(fsal_status))
+		res_LISTXATTR4->status =
+			nfs4_Errno_state(state_error_convert(fsal_status));
 	return res_LISTXATTR4->status;
 }
+
 /**
  * @brief Free memory allocated for LISTXATTR result
  *
@@ -209,7 +274,11 @@ int nfs4_op_listxattr(struct nfs_argop4 *op, compound_data_t *data,
  */
 void nfs4_op_listxattr_Free(nfs_resop4 *resp)
 {
-	/* Nothing to be done */
+	LISTXATTR4res * const res_LISTXATTR4 = &resp->nfs_resop4_u.oplistxattr;
+
+	if (res_LISTXATTR4->LISTXATTR4res_u.resok4.lr_names.entries)
+		gsh_free(res_LISTXATTR4->
+			     LISTXATTR4res_u.resok4.lr_names.entries);
 }
 
 /**
@@ -225,12 +294,14 @@ void nfs4_op_listxattr_Free(nfs_resop4 *resp)
  * @return per RFC5661, p. 373-4
  */
 int nfs4_op_removexattr(struct nfs_argop4 *op, compound_data_t *data,
-		    struct nfs_resop4 *resp)
+			struct nfs_resop4 *resp)
 {
 	REMOVEXATTR4args * const arg_REMOVEXATTR4 =
 					&op->nfs_argop4_u.opremovexattr;
 	REMOVEXATTR4res * const res_REMOVEXATTR4 =
 					&resp->nfs_resop4_u.opremovexattr;
+	fsal_status_t fsal_status;
+	struct fsal_obj_handle *obj_handle = data->current_entry->obj_handle;
 
 	resp->resop = NFS4_OP_REMOVEXATTR;
 	res_REMOVEXATTR4->status = NFS4_OK;
@@ -255,9 +326,14 @@ int nfs4_op_removexattr(struct nfs_argop4 *op, compound_data_t *data,
 		res_REMOVEXATTR4->status = NFS4ERR_GRACE;
 		return res_REMOVEXATTR4->status;
 	}
-	res_REMOVEXATTR4->status = NFS4ERR_NOTSUPP;
+	fsal_status = obj_handle->obj_ops.removexattrs(obj_handle,
+					&arg_REMOVEXATTR4->ra_name);
+	if (FSAL_IS_ERROR(fsal_status))
+		return res_REMOVEXATTR4->status = nfs4_Errno_state(
+					state_error_convert(fsal_status));
 	return res_REMOVEXATTR4->status;
 }
+
 /**
  * @brief Free memory allocated for REMOVEXATTR result
  *

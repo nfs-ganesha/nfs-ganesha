@@ -90,9 +90,14 @@ struct flock
 #define OPENHANDLE_FADVISE_BY_FD  141
 #define OPENHANDLE_SEEK_BY_FD     142
 #define OPENHANDLE_STATFS_BY_FH   143
+#define OPENHANDLE_GETXATTRS      144
+#define OPENHANDLE_SETXATTRS      145
+#define OPENHANDLE_REMOVEXATTRS   146
+#define OPENHANDLE_LISTXATTRS     147
+#define OPENHANDLE_FS_LOCATIONS   148
+#define OPENHANDLE_reserved       149
 #define OPENHANDLE_TRACE_ME       150
 #define OPENHANDLE_QUOTA          151
-#define OPENHANDLE_FS_LOCATIONS   152
 
 struct trace_arg
 {
@@ -666,6 +671,42 @@ struct xstat_arg
     struct stat *buf;
     struct fsal_fsid *fsid;
     uint32_t *expire_attr;
+};
+
+struct getxattr_arg {
+	int mountdirfd;
+	struct gpfs_file_handle *handle;
+	uint32_t name_len;
+	char *name;
+	uint32_t value_len;
+	void *value;
+};
+
+struct setxattr_arg {
+	int mountdirfd;
+	struct gpfs_file_handle *handle;
+	int type;
+	uint32_t name_len;
+	char *name;
+	uint32_t value_len;
+	void *value;
+};
+
+struct removexattr_arg {
+	int mountdirfd;
+	struct gpfs_file_handle *handle;
+	uint32_t name_len;
+	char *name;
+};
+
+struct listxattr_arg {
+	int mountdirfd;
+	struct gpfs_file_handle *handle;
+	uint64_t cookie;
+	uint64_t verifier;
+	uint32_t eof;
+	uint32_t name_len;
+	void *names;
 };
 
 struct fs_loc_arg {

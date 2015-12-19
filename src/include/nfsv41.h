@@ -2859,7 +2859,7 @@ extern "C" {
 
 	struct xattrentry4 {
 		component4 name;
-		struct entry4 *nextentry;
+		struct xattrentry4 *nextentry;
 	};
 	typedef struct xattrentry4 xattrentry4;
 
@@ -2883,7 +2883,7 @@ extern "C" {
 		nfsstat4 status;
 		union {
 			GETXATTR4resok resok4;
-		} GETXATTRres_u;
+		} GETXATTR4res_u;
 	};
 	typedef struct GETXATTR4res GETXATTR4res;
 
@@ -2902,7 +2902,7 @@ extern "C" {
 		nfsstat4 status;
 		union {
 			SETXATTR4resok resok4;
-		} SETXATTRres_u;
+		} SETXATTR4res_u;
 	};
 	typedef struct SETXATTR4res SETXATTR4res;
 
@@ -2943,7 +2943,7 @@ extern "C" {
 		nfsstat4 status;
 		union {
 			REMOVEXATTR4resok resok4;
-		} REMOVEXATTRres_u;
+		} REMOVEXATTR4res_u;
 	};
 	typedef struct REMOVEXATTR4res REMOVEXATTR4res;
 
@@ -5553,7 +5553,7 @@ extern "C" {
 		switch (objp->status) {
 		case NFS4_OK:
 			if (!xdr_component4(xdrs,
-					&objp->GETXATTRres_u.resok4.gr_value))
+					&objp->GETXATTR4res_u.resok4.gr_value))
 				return false;
 			break;
 		default:
@@ -5580,7 +5580,7 @@ extern "C" {
 		switch (objp->status) {
 		case NFS4_OK:
 			if (!xdr_change_info4(xdrs,
-					&objp->SETXATTRres_u.resok4.sr_info))
+					&objp->SETXATTR4res_u.resok4.sr_info))
 				return false;
 			break;
 		default:
@@ -5661,7 +5661,7 @@ extern "C" {
 		switch (objp->status) {
 		case NFS4_OK:
 			if (!xdr_change_info4(xdrs,
-					&objp->REMOVEXATTRres_u.resok4.rr_info))
+				&objp->REMOVEXATTR4res_u.resok4.rr_info))
 				return false;
 			break;
 		default:
@@ -8912,12 +8912,18 @@ extern "C" {
 				return false;
 			break;
 		case NFS4_OP_SETXATTR:
+			if (!xdr_SETXATTR4res(xdrs,
+					&objp->nfs_resop4_u.opsetxattr))
 				return false;
 			break;
 		case NFS4_OP_LISTXATTR:
+			if (!xdr_LISTXATTR4res(xdrs,
+					&objp->nfs_resop4_u.oplistxattr))
 				return false;
 			break;
 		case NFS4_OP_REMOVEXATTR:
+			if (!xdr_REMOVEXATTR4res(xdrs,
+					&objp->nfs_resop4_u.opremovexattr))
 				return false;
 			break;
 

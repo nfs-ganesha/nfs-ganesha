@@ -636,6 +636,53 @@ static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 
+/* getxattrs
+ * default case not supported
+ */
+
+static fsal_status_t getxattrs(struct fsal_obj_handle *obj_hdl,
+				xattrname4 *xa_name,
+				xattrvalue4 *xa_value)
+{
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
+}
+
+/* setxattrs
+ * default case not supported
+ */
+
+static fsal_status_t setxattrs(struct fsal_obj_handle *obj_hdl,
+				setxattr_type4 sa_type,
+				xattrname4 *xa_name,
+				xattrvalue4 *xa_value)
+{
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
+}
+
+/* removexattrs
+ * default case not supported
+ */
+
+static fsal_status_t removexattrs(struct fsal_obj_handle *obj_hdl,
+				xattrname4 *xa_name)
+{
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
+}
+
+/* listxattrs
+ * default case not supported
+ */
+
+static fsal_status_t listxattrs(struct fsal_obj_handle *obj_hdl,
+				count4 la_maxcount,
+				nfs_cookie4 *la_cookie,
+				verifier4 *la_cookieverf,
+				bool_t *lr_eof,
+				xattrlist4 *lr_names)
+{
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
+}
+
 /* getattrs
  * default case not supported
  */
@@ -1059,6 +1106,7 @@ struct fsal_obj_ops def_handle_ops = {
 	.readlink = readsymlink,
 	.test_access = fsal_test_access,	/* default is use common test */
 	.getattrs = getattrs,
+	.getattrs = getattrs,
 	.setattrs = setattrs,
 	.link = linkfile,
 	.rename = renamefile,
@@ -1092,7 +1140,11 @@ struct fsal_obj_ops def_handle_ops = {
 	.handle_to_key = handle_to_key,
 	.layoutget = layoutget,
 	.layoutreturn = layoutreturn,
-	.layoutcommit = layoutcommit
+	.layoutcommit = layoutcommit,
+	.getxattrs = getxattrs,
+	.setxattrs = setxattrs,
+	.removexattrs = removexattrs,
+	.listxattrs = listxattrs
 };
 
 /* fsal_pnfs_ds common methods */

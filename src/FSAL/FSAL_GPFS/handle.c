@@ -485,6 +485,236 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl)
 }
 
 /*
+ * getxattrs
+ */
+
+static fsal_status_t getxattrs(struct fsal_obj_handle *obj_hdl,
+				xattrname4 *xa_name,
+				xattrvalue4 *xa_value)
+{
+	int rc;
+	int errsv;
+	struct getxattr_arg gxarg;
+	struct gpfs_fsal_obj_handle *myself;
+	struct gpfs_filesystem *gpfs_fs = obj_hdl->fs->private;
+
+	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle,
+				obj_handle);
+
+	gxarg.mountdirfd = gpfs_fs->root_fd;
+	gxarg.handle = myself->handle;
+	gxarg.name_len = xa_name->utf8string_len;
+	gxarg.name = xa_name->utf8string_val;
+	gxarg.value_len = xa_value->utf8string_len;
+	gxarg.value = xa_value->utf8string_val;
+
+	rc = gpfs_ganesha(OPENHANDLE_GETXATTRS, &gxarg);
+	errsv = errno;
+	if (rc < 0) {
+		LogDebug(COMPONENT_FSAL,
+			"GETXATTRS returned rc %d errsv %d", rc, errsv);
+
+		if (errsv == ERANGE)
+			return fsalstat(ERR_FSAL_TOOSMALL, 0);
+		return fsalstat(posix2fsal_error(errsv), errsv);
+	}
+	LogDebug(COMPONENT_FSAL,
+		"GETXATTRS returned value %s len %d rc %d errsv %d",
+		(char *)gxarg.value, gxarg.value_len, rc, errsv);
+
+	xa_value->utf8string_len = gxarg.value_len;
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
+/*
+ * setxattrs
+ */
+
+static fsal_status_t setxattrs(struct fsal_obj_handle *obj_hdl,
+				setxattr_type4 sa_type,
+				xattrname4 *xa_name,
+				xattrvalue4 *xa_value)
+{
+	int rc;
+	int errsv = 0;
+	struct setxattr_arg sxarg;
+	struct gpfs_fsal_obj_handle *myself;
+	struct gpfs_filesystem *gpfs_fs = obj_hdl->fs->private;
+
+	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle,
+				obj_handle);
+
+	sxarg.mountdirfd = gpfs_fs->root_fd;
+	sxarg.handle = myself->handle;
+	sxarg.name_len = xa_name->utf8string_len;
+	sxarg.name = xa_name->utf8string_val;
+	sxarg.value_len = xa_value->utf8string_len;
+	sxarg.value = xa_value->utf8string_val;
+
+	rc = gpfs_ganesha(OPENHANDLE_SETXATTRS, &sxarg);
+	errsv = errno;
+	LogDebug(COMPONENT_FSAL,
+		"SETXATTRS returned rc %d errsv %d",
+		rc, errsv);
+
+	if (rc < 0)
+		return fsalstat(posix2fsal_error(errsv), errsv);
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
+/*
+ * removexattrs
+ */
+
+static fsal_status_t removexattrs(struct fsal_obj_handle *obj_hdl,
+				xattrname4 *xa_name)
+{
+	int rc;
+	int errsv = 0;
+	struct removexattr_arg rxarg;
+	struct gpfs_fsal_obj_handle *myself;
+	struct gpfs_filesystem *gpfs_fs = obj_hdl->fs->private;
+
+	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle,
+				obj_handle);
+
+	rxarg.mountdirfd = gpfs_fs->root_fd;
+	rxarg.handle = myself->handle;
+	rxarg.name_len = xa_name->utf8string_len;
+	rxarg.name = xa_name->utf8string_val;
+
+	rc = gpfs_ganesha(OPENHANDLE_REMOVEXATTRS, &rxarg);
+	errsv = errno;
+	LogDebug(COMPONENT_FSAL,
+		"REMOVEXATTRS returned rc %d errsv %d",
+		rc, errsv);
+
+	if (rc < 0)
+		return fsalstat(posix2fsal_error(errsv), errsv);
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
+/*
+ * listxattrs
+ */
+static fsal_status_t listxattrs(struct fsal_obj_handle *obj_hdl,
+				count4 la_maxcount,
+				nfs_cookie4 *la_cookie,
+				verifier4 *la_cookieverf,
+				bool_t *lr_eof,
+				xattrlist4 *lr_names)
+{
+	int rc;
+	int errsv = 0;
+	char *nameP, *nextP, *endP;
+	int bufLen = 0;
+	char *bufP = NULL;
+	struct listxattr_arg lxarg;
+	struct gpfs_fsal_obj_handle *myself;
+	struct gpfs_filesystem *gpfs_fs = obj_hdl->fs->private;
+	xattrentry4 *entry = lr_names->entries;
+
+	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle,
+				obj_handle);
+	#define MAXCOUNT (1024*64)
+	bufP = gsh_malloc(MAXCOUNT);
+
+	lxarg.mountdirfd = gpfs_fs->root_fd;
+	lxarg.handle = myself->handle;
+	lxarg.cookie = *la_cookie;
+	lxarg.verifier = *((uint64_t *)la_cookieverf);
+	lxarg.eof = false;
+	lxarg.name_len = MAXCOUNT;
+	lxarg.names = bufP;
+
+	LogFullDebug(COMPONENT_FSAL,
+		"in cookie %llu len %d cookieverf %llx",
+		(unsigned long long)lxarg.cookie, la_maxcount,
+		(unsigned long long)lxarg.verifier);
+
+	rc = gpfs_ganesha(OPENHANDLE_LISTXATTRS, &lxarg);
+	errsv = errno;
+	LogDebug(COMPONENT_FSAL,
+		"LISTXATTRS returned rc %d errsv %d",
+		rc, errsv);
+
+	if (rc < 0) {
+		gsh_free(bufP);
+		if (errsv == ERANGE)
+			return fsalstat(ERR_FSAL_TOOSMALL, 0);
+		return fsalstat(posix2fsal_error(errsv), errsv);
+	}
+	/* Only return names that the caller can read via getxattr */
+	nameP = bufP;
+	endP = bufP + rc;
+	bufLen = 0;
+
+	while (nameP < endP) {
+		nextP = strchr(nameP, '\0');
+		if (nextP == NULL)
+			break;
+		nextP += 1;
+		if (nextP > endP)
+			break;
+
+		LogDebug(COMPONENT_FSAL,
+		"nameP %s at offset %d", nameP, bufLen);
+
+		bufLen += (nextP - nameP);
+		if (bufLen > la_maxcount) {
+			gsh_free(bufP);
+			memset(la_cookieverf, 0, NFS4_VERIFIER_SIZE);
+			*la_cookie = la_maxcount;
+			*lr_eof = false;
+
+			LogFullDebug(COMPONENT_FSAL,
+			   "out1 cookie %llu off %d eof %d cookieverf %llx",
+			   (unsigned long long)*la_cookie,
+			   bufLen, *lr_eof,
+			   (unsigned long long)*((uint64_t *)la_cookieverf));
+
+			return fsalstat(ERR_FSAL_NO_ERROR, 0);
+		}
+		if (bufLen > *la_cookie) {
+			entry->name.utf8string_len = nextP - nameP;
+			entry->name.utf8string_val =
+					(char *)entry + sizeof(xattrentry4);
+			entry->nextentry =
+				(xattrentry4 *)(entry->name.utf8string_val +
+						entry->name.utf8string_len);
+			strcpy(entry->name.utf8string_val, nameP);
+
+			LogFullDebug(COMPONENT_FSAL,
+				"entry %p len %d next %p name %s",
+				entry, entry->name.utf8string_len,
+				entry->nextentry, entry->name.utf8string_val);
+		}
+		/* Advance to next name in original buffer */
+		nameP = nextP;
+
+		entry = entry->nextentry;
+		entry->name.utf8string_len = 0;
+		entry->name.utf8string_val = NULL;
+		entry->nextentry = NULL;
+	}
+	memset(la_cookieverf, 0, NFS4_VERIFIER_SIZE);
+	*la_cookie = 0;
+	*lr_eof = true;
+
+	gsh_free(bufP);
+
+	LogFullDebug(COMPONENT_FSAL,
+		"out2 cookie %llu len %d eof %d cookieverf %llx",
+		(unsigned long long)*la_cookie,
+		bufLen, *lr_eof,
+		(unsigned long long)*((uint64_t *)la_cookieverf));
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
+/*
  * NOTE: this is done under protection of the attributes rwlock in cache entry.
  */
 
@@ -701,6 +931,10 @@ void gpfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->handle_digest = handle_digest;
 	ops->handle_to_key = handle_to_key;
 	handle_ops_pnfs(ops);
+	ops->getxattrs = getxattrs;
+	ops->setxattrs = setxattrs;
+	ops->removexattrs = removexattrs;
+	ops->listxattrs = listxattrs;
 }
 
 /* export methods that create object handles

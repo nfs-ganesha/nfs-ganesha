@@ -1945,6 +1945,73 @@ struct fsal_obj_ops {
 				 XDR * lou_body,
 				 const struct fsal_layoutcommit_arg *arg,
 				 struct fsal_layoutcommit_res *res);
+
+/**
+ * @brief Get Extended Attribute
+ *
+ * This function gets an extended attribute of an object.
+ *
+ * @param[in]  obj_hdl  Input object to query
+ * @param[in]  xa_name  Input xattr name
+ * @param[out] xa_value Output xattr value
+ *
+ * @return FSAL status.
+ */
+	 fsal_status_t (*getxattrs)(struct fsal_obj_handle *obj_hdl,
+				    xattrname4 *xa_name,
+				    xattrvalue4 *xa_value);
+
+/**
+ * @brief Set Extended Attribute
+ *
+ * This function sets an extended attribute of an object.
+ *
+ * @param[in]  obj_hdl  Input object to set
+ * @param[in]  xa_name  Input xattr name to set
+ * @param[in]  xa_value Input xattr value to set
+ *
+ * @return FSAL status.
+ */
+	 fsal_status_t (*setxattrs)(struct fsal_obj_handle *obj_hdl,
+				    setxattr_type4 sa_type,
+				    xattrname4 *xa_name,
+				    xattrvalue4 *xa_value);
+
+/**
+ * @brief Remove Extended Attribute
+ *
+ * This function remove an extended attribute of an object.
+ *
+ * @param[in]  obj_hdl  Input object to set
+ * @param[in]  xa_name  Input xattr name to remove
+ *
+ * @return FSAL status.
+ */
+	 fsal_status_t (*removexattrs)(struct fsal_obj_handle *obj_hdl,
+				    xattrname4 *xa_name);
+
+/**
+ * @brief List Extended Attributes
+ *
+ * This function list the extended attributes of an object.
+ *
+ * @param[in]      obj_hdl       Input object to list
+ * @param[in]      la_maxcount   Input maximum number of bytes for the result
+ * @param[in,out]  la_cookie     In/out cookie
+ * @param[in,out]  la_cookieverf In/out cookie verifier
+ * @param[out]     lr_eof        Output eof set if no more extended attributes
+ * @param[out]     lr_names      Output list of extended attribute names
+ *
+ * @return FSAL status.
+ */
+	 fsal_status_t (*listxattrs)(struct fsal_obj_handle *obj_hdl,
+				     count4 la_maxcount,
+				     nfs_cookie4 *la_cookie,
+				     verifier4 *la_cookieverf,
+				     bool_t *la_eof,
+				     xattrlist4 *la_names);
+
+
 /**@}*/
 };
 

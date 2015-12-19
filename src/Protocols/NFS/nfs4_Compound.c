@@ -451,7 +451,7 @@ static const struct nfs4_op_desc optabv4[] = {
 nfs_opnum4 LastOpcode[] = {
 	NFS4_OP_RELEASE_LOCKOWNER,
 	NFS4_OP_RECLAIM_COMPLETE,
-	NFS4_OP_WRITE_SAME
+	NFS4_OP_REMOVEXATTR
 };
 
 /**
