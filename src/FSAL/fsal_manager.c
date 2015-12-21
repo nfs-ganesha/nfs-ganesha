@@ -187,7 +187,7 @@ static const char *pathfmt = "%s/libfsal%s.so";
 int load_fsal(const char *name,
 	      struct fsal_module **fsal_hdl_p)
 {
-	void *dl;
+	void *dl = NULL;
 	int retval = EBUSY;	/* already loaded */
 	char *dl_path;
 	struct fsal_module *fsal;

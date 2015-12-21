@@ -460,7 +460,7 @@ void avltree_remove(struct avltree_node *node, struct avltree *tree)
 	struct avltree_node *left = node->left;
 	struct avltree_node *right = node->right;
 	struct avltree_node *next;
-	int is_left = is_left;
+	int is_left = 0;
 
 	if (node == tree->first)
 		tree->first = avltree_next(node);

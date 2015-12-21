@@ -210,7 +210,7 @@ void nfs4_create_clid_name(nfs_client_record_t *cl_rec,
 			   nfs_client_id_t *clientid, struct svc_req *svc)
 {
 	const char *str_client_addr = "(unknown)";
-	char cidstr[PATH_MAX];
+	char cidstr[PATH_MAX] = { 0, };
 	struct display_buffer dspbuf = {sizeof(cidstr), cidstr, cidstr};
 	char cidstr_len[10];
 	int total_len;
@@ -254,7 +254,7 @@ void nfs4_create_clid_name41(nfs_client_record_t *cl_rec,
 			     nfs_client_id_t *clientid)
 {
 	char *buf = "unknown";
-	char cidstr[PATH_MAX];
+	char cidstr[PATH_MAX] = { 0, };
 	struct display_buffer       dspbuf = {sizeof(cidstr), cidstr, cidstr};
 	char                         cidstr_len[10];
 	int total_len;
