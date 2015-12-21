@@ -426,7 +426,7 @@ bool vfs_valid_handle(struct gsh_buffdesc *desc)
 	if (!fsid_type_ok) {
 		LogDebug(COMPONENT_FSAL,
 			 "FSID Type %02hhx invalid",
-			 handle0 & HANDLE_FSID_MASK);
+			 (uint8_t) (handle0 & HANDLE_FSID_MASK));
 		return false;
 	}
 
@@ -457,7 +457,7 @@ bool vfs_valid_handle(struct gsh_buffdesc *desc)
 	default:
 		LogDebug(COMPONENT_FSAL,
 			 "Handle Type %02hhx invalid",
-			 handle0 & HANDLE_TYPE_MASK);
+			 (uint8_t) (handle0 & HANDLE_TYPE_MASK));
 		return false;
 	}
 
