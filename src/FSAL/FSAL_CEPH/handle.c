@@ -349,17 +349,15 @@ static fsal_status_t fsal_readlink(struct fsal_obj_handle *link_pub,
 	/* Pointer to the Ceph link content */
 	char content[PATH_MAX];
 
-	/* Content points into a static buffer in the Ceph client's
-	   cache, so we don't have to free it. */
-
-	rc = ceph_ll_readlink(export->cmount, link->i, content,
-			      sizeof(content), 0, 0);
-
+	rc = ceph_ll_readlink(export->cmount, link->i, content, PATH_MAX, 0, 0);
 	if (rc < 0)
 		return ceph2fsal_error(rc);
 
-	content_buf->len = (strlen(content) + 1);
-	content_buf->addr = gsh_strdup(content);
+	/* XXX in Ceph through 1/2016, ceph_ll_readlink returns the
+	 * length of the path copied (truncated to 32 bits) in rc,
+	 * and it cannot exceed the passed buffer size */
+	content_buf->addr = gsh_strldup(content, MIN(rc, (PATH_MAX-1)),
+					&content_buf->len);
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
