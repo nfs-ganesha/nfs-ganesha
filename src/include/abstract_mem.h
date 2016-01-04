@@ -153,6 +153,35 @@ gsh_strdup(const char *s)
 }
 
 /**
+ * @brief Duplicate a string to newly allocated memory (bounded)
+ *
+ * This function allocates a new block of memory sufficient to contain
+ * the supplied string, then copies the string into that buffer.
+ *
+ * This function aborts if no memory is available.
+ *
+ * @param[in] s String to duplicate
+ * @param[in] length Size of the returned string shall be <= length+1
+ * @param[out] copied Number of bytes copied
+ *
+ * @return Pointer to new copy of string.
+ */
+static inline char *
+gsh_strldup(const char *s, size_t length, size_t *copied)
+{
+	char *p = (char *) gsh_malloc(length+1);
+
+	if (p == NULL)
+		abort();
+
+	memcpy(p, s, length);
+	p[length] = '\0';
+	*copied = length;
+
+	return p;
+}
+
+/**
  * @brief Free a block of memory
  *
  * This function frees a block of memory allocated with gsh_malloc,
