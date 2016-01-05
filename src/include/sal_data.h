@@ -148,12 +148,10 @@ typedef struct nfs41_cb_session_slot {
 /**
  * Flag indicating that the backchannel is up
  */
-static const uint32_t session_bc_up = 0x01;
-/**
- * Flag indicating that there is an irrecoverable fault with the
- * backchannel
- */
-static const uint32_t session_bc_fault = 0x02;
+enum {
+	session_bc_up = 0x01,
+	session_bc_fault = 0x02, /* not actually used anywhere */
+};
 
 /**
  * @brief Structure representing an NFSv4.1 session

@@ -42,7 +42,7 @@
 #include "uid2grp.h"
 
 /* Cookie to be used in FSAL_ListXAttrs() to bypass RO xattr */
-static const uint32_t FSAL_XATTR_RW_COOKIE = ~0;
+#define FSAL_XATTR_RW_COOKIE (~0)
 
 /**
  * @brief Object file type within the system

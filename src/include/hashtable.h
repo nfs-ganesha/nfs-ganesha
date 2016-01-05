@@ -187,7 +187,7 @@ typedef enum hash_set_how {
 } hash_set_how_t;
 
 /* How many character used to display a key or value */
-static const size_t HASHTABLE_DISPLAY_STRLEN = 8192;
+#define HASHTABLE_DISPLAY_STRLEN 8192
 
 /* Possible errors */
 typedef enum hash_error {

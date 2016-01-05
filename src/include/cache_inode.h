@@ -159,11 +159,6 @@ struct cache_inode_parameter {
 extern struct config_block cache_inode_param_blk;
 extern struct cache_inode_parameter cache_param;
 
-/** Maximum size of NFSv3 handle */
-static const size_t FILEHANDLE_MAX_LEN_V3 = 64;
-/** Maximum size of NFSv4 handle */
-static const size_t FILEHANDLE_MAX_LEN_V4 = 128;
-
 /**
  * Data for tracking a cache entry's position the LRU.
  */
@@ -241,13 +236,18 @@ typedef enum cache_inode_avl_which__ {
 } cache_inode_avl_which_t;
 
 /* Flags set on cache_entry_t::flags*/
+enum {
+	/** Trust stored attributes */
+	CACHE_INODE_TRUST_ATTRS = 0x00000001,
 
-/** Trust stored attributes */
-static const uint32_t CACHE_INODE_TRUST_ATTRS = 0x00000001;
-/** Trust inode content (for the moment, directory and symlink) */
-static const uint32_t CACHE_INODE_TRUST_CONTENT = 0x00000002;
-/** The directory has been populated (negative lookups are meaningful) */
-static const uint32_t CACHE_INODE_DIR_POPULATED = 0x00000004;
+	/** Trust inode content (for the moment, directory and
+	    symlink) */
+	CACHE_INODE_TRUST_CONTENT = 0x00000002,
+
+	/** The directory has been populated (negative lookups
+	    are meaningful) */
+	CACHE_INODE_DIR_POPULATED = 0x00000004,
+};
 
 /**
  * @brief The ref counted share reservation state.
@@ -569,41 +569,56 @@ typedef union cache_inode_create_arg {
  * Flags
  */
 
-/** The null flag */
-static const uint32_t CACHE_INODE_FLAG_NONE = 0x00;
-/** Indicate that this inode newly created, rather than just being
-    loaded into the cache */
-static const uint32_t CACHE_INODE_FLAG_CREATE = 0x01;
-/** Instruct the called function to take a lock on the entry */
-static const uint32_t CACHE_INODE_FLAG_LOCK = 0x02;
-/** For a function called with the attribute lock held, do not release
-    the attribute lock before returning */
-static const uint32_t CACHE_INODE_FLAG_ATTR_HOLD = 0x04;
-/** For a function called with the content lock held, do not release
-    the content lock before returning */
-static const uint32_t CACHE_INODE_FLAG_CONTENT_HOLD = 0x08;
-/** For a function, indicates that the attribute lock is held */
-static const uint32_t CACHE_INODE_FLAG_ATTR_HAVE = 0x10;
-/** For a function, indicates that the content lock is held */
-static const uint32_t CACHE_INODE_FLAG_CONTENT_HAVE = 0x20;
-/** Close a file even with caching enabled */
-static const uint32_t CACHE_INODE_FLAG_REALLYCLOSE = 0x80;
-/** File can't be pinned, so close need not check. */
-static const uint32_t CACHE_INODE_FLAG_NOT_PINNED = 0x100;
-/** Open for reclaim. */
-static const uint32_t CACHE_INODE_FLAG_RECLAIM = 0x200;
-/** File is being cleaned up so close need not take content_lock */
-static const uint32_t CACHE_INODE_FLAG_CLEANUP = 0x400;
-/** Don't kill entry on ESTALE */
-static const uint32_t CACHE_INODE_DONT_KILL = 0x800;
+enum {
+	/** The null flag */
+	CACHE_INODE_FLAG_NONE = 0x00,
+
+	/** Indicate that this inode newly created, rather than just
+	    being loaded into the cache */
+	CACHE_INODE_FLAG_CREATE = 0x01,
+
+	/** Instruct the called function to take a lock on the entry */
+	CACHE_INODE_FLAG_LOCK = 0x02,
+
+	/** For a function called with the attribute lock held, do not
+	    release the attribute lock before returning */
+	CACHE_INODE_FLAG_ATTR_HOLD = 0x04,
+
+	/** For a function called with the content lock held, do not
+	    release the content lock before returning */
+	CACHE_INODE_FLAG_CONTENT_HOLD = 0x08,
+
+	/** For a function, indicates that the attribute lock is held */
+	CACHE_INODE_FLAG_ATTR_HAVE = 0x10,
+
+	/** For a function, indicates that the content lock is held */
+	CACHE_INODE_FLAG_CONTENT_HAVE = 0x20,
+
+	/** Close a file even with caching enabled */
+	CACHE_INODE_FLAG_REALLYCLOSE = 0x80,
+
+	/** File can't be pinned, so close need not check. */
+	CACHE_INODE_FLAG_NOT_PINNED = 0x100,
+
+	/** Open for reclaim. */
+	CACHE_INODE_FLAG_RECLAIM = 0x200,
+
+	/** File is being cleaned up so close need not take content_lock */
+	CACHE_INODE_FLAG_CLEANUP = 0x400,
+
+	/** Don't kill entry on ESTALE */
+	CACHE_INODE_DONT_KILL = 0x800,
+};
 
 /**
  * Flags to cache_inode_invalidate
  */
-static const uint32_t CACHE_INODE_INVALIDATE_ATTRS = 0x01;
-static const uint32_t CACHE_INODE_INVALIDATE_CONTENT = 0x02;
-static const uint32_t CACHE_INODE_INVALIDATE_CLOSE = 0x04;
-static const uint32_t CACHE_INODE_INVALIDATE_GOT_LOCK = 0x08;
+enum {
+	CACHE_INODE_INVALIDATE_ATTRS = 0x01,
+	CACHE_INODE_INVALIDATE_CONTENT = 0x02,
+	CACHE_INODE_INVALIDATE_CLOSE = 0x04,
+	CACHE_INODE_INVALIDATE_GOT_LOCK = 0x08,
+};
 
 enum cb_state {
 	CB_ORIGINAL,

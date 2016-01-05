@@ -42,9 +42,11 @@
 
 typedef uint64_t nsecs_elapsed_t;
 
-static const nsecs_elapsed_t NS_PER_USEC = 1000;
-static const nsecs_elapsed_t NS_PER_MSEC = 1000000;
-static const nsecs_elapsed_t NS_PER_SEC = 1000000000;
+enum {
+	NS_PER_USEC = 1000,
+	NS_PER_MSEC = 1000000,
+	NS_PER_SEC = 1000000000,
+};
 
 /**
  * @brief Buffer descriptor

@@ -51,57 +51,41 @@
 #include "fsal_api.h"
 #include "cache_inode.h"
 
-/**
- * Empty flags.
- */
-static const uint32_t fsal_up_update_null = 0x0000;
+enum {
+	/* empty flags */
+	fsal_up_update_null = 0x0000,
 
-/**
- * Update the filesize only if the new size is greater than that
- * currently set.
- */
-static const uint32_t fsal_up_update_filesize_inc = 0x0001;
+	/* Update the filesize only if the new size is greater
+	 * than that currently set */
+	fsal_up_update_filesize_inc = 0x0001,
 
-/**
- * Update the atime only if the new time is later than the currently
- * set time.
- */
-static const uint32_t fsal_up_update_atime_inc = 0x0002;
+	/* Update the atime only if the new time is later than
+	 * the currently set time. */
+	fsal_up_update_atime_inc = 0x0002,
 
-/**
- * Update the creation time only if the new time is later than the
- * currently set time.
- */
-static const uint32_t fsal_up_update_creation_inc = 0x0004;
+	/* Update the creation time only if the new time is
+	 * later than the currently set time. */
+	fsal_up_update_creation_inc = 0x0004,
 
-/**
- * Update the ctime only if the new time is later than that currently
- * set.
- */
-static const uint32_t fsal_up_update_ctime_inc = 0x0008;
+	/* Update the ctime only if the new time is later
+	 * than that currently * set */
+	fsal_up_update_ctime_inc = 0x0008,
 
-/**
- * Update the mtime only if the new time is later than that currently
- * set.
- */
-static const uint32_t fsal_up_update_mtime_inc = 0x0010;
+	/* Update the mtime only if the new time is later
+	 * than that currently set. */
+	fsal_up_update_mtime_inc = 0x0010,
 
-/**
- * Update the chgtime only if the new time is later than that
- * currently set.
- */
-static const uint32_t fsal_up_update_chgtime_inc = 0x0020;
+	/* Update the chgtime only if the new time is later
+	 * than that currently set. */
+	fsal_up_update_chgtime_inc = 0x0020,
 
-/**
- * Update the spaceused only if the new size is greater than that
- * currently set.
- */
-static const uint32_t fsal_up_update_spaceused_inc = 0x0040;
+	/* Update the spaceused only if the new size is greater
+	 * than that currently set. */
+	fsal_up_update_spaceused_inc = 0x0040,
 
-/**
- * The file link count is zero.
- */
-static const uint32_t fsal_up_nlink = 0x0080;
+	/* The file link count is zero. */
+	fsal_up_nlink = 0x0080,
+};
 
 /**
  * @brief Optional stuff for layoutreturn

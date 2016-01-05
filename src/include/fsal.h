@@ -45,7 +45,7 @@
  * this value.
  */
 
-static const size_t fsal_default_linksize = 4096;
+#define fsal_default_linksize (4096)
 
 /**
  * @brief Pointer to FSAL module by number.
