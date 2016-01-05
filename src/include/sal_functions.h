@@ -452,6 +452,7 @@ bool valid_lease(nfs_client_id_t *clientid);
  *
  ******************************************************************************/
 
+void uncache_nfs4_owner(struct state_nfs4_owner_t *nfs4_owner);
 void free_nfs4_owner(state_owner_t *owner);
 int display_nfs4_owner(struct display_buffer *dspbuf, state_owner_t *owner);
 int display_nfs4_owner_val(struct gsh_buffdesc *buff, char *str);
@@ -526,6 +527,11 @@ bool Check_nfs4_seqid(state_owner_t *owner, seqid4 seqid, nfs_argop4 *args,
 /**
  * @brief Determine if an NFS v4 owner has state associated with it
  *
+ * Note that this function is racy and is only suitable for calling
+ * from places that should not have other activity pending against
+ * the owner. Currently it is only called from setclientid which should
+ * be fine.
+ *
  * @param[in] owner The owner of interest
  *
  * @retval true if the owner has state
@@ -533,10 +539,17 @@ bool Check_nfs4_seqid(state_owner_t *owner, seqid4 seqid, nfs_argop4 *args,
 static inline bool owner_has_state(state_owner_t *owner)
 {
 	bool live_state;
+	struct state_nfs4_owner_t *nfs4_owner = &owner->so_owner.so_nfs4_owner;
+
+	/* If the owner is on the cached owners list, there can't be
+	 * active state.
+	 */
+	if (atomic_fetch_time_t(&nfs4_owner->cache_expire) != 0)
+		return false;
 
 	PTHREAD_MUTEX_lock(&owner->so_mutex);
 
-	live_state = !glist_empty(&owner->so_owner.so_nfs4_owner.so_state_list);
+	live_state = !glist_empty(&nfs4_owner->so_state_list);
 
 	PTHREAD_MUTEX_unlock(&owner->so_mutex);
 

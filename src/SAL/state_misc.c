@@ -50,6 +50,10 @@
 #include "nfs_core.h"
 #include "sal_functions.h"
 
+struct glist_head cached_open_owners = GLIST_HEAD_INIT(cached_open_owners);
+
+pthread_mutex_t cached_open_owners_lock = PTHREAD_MUTEX_INITIALIZER;
+
 pool_t *state_owner_pool;	/*< Pool for NFSv4 files's open owner */
 
 #ifdef DEBUG_SAL
@@ -1007,23 +1011,6 @@ void dec_state_owner_ref(state_owner_t *owner)
 		return;
 	}
 
-	/*
-	 * NFSv4 Open Owner is cached beyond CLOSE op for lease period
-	 * so that it can be used if the client re-opens the file thus
-	 * avoiding the need to confirm the OPEN. If not re-used, these
-	 * objects will later be cleaned up by the reaper thread.
-	 */
-	if ((owner->so_type == STATE_OPEN_OWNER_NFSV4) &&
-	    (atomic_fetch_time_t(&owner->so_owner.so_nfs4_owner.
-				 last_close_time) == 0)) {
-		atomic_store_time_t(&owner->so_owner.so_nfs4_owner.
-				    last_close_time, time(NULL));
-		LogFullDebug(COMPONENT_STATE,
-			     "Cached open owner {%s}",
-			     str);
-		return;
-	}
-
 	ht_owner = get_state_owner_hash_table(owner);
 
 	if (ht_owner == NULL) {
@@ -1080,6 +1067,69 @@ void dec_state_owner_ref(state_owner_t *owner)
 		LogFullDebug(COMPONENT_STATE, "Free {%s}", str);
 
 	free_state_owner(owner);
+}
+
+/** @brief Remove an NFS 4 open owner from the cached owners list.
+ *
+ * The caller MUST hold the cached_open_owners_lock.
+ *
+ * If this owner is being revived, the refcount should have already been
+ * incremented for the new primary reference. This function will release
+ * the refcount that held it in the cache.
+ *
+ * @param[in] nfs4_owner The owner to release.
+ *
+ */
+void uncache_nfs4_owner(struct state_nfs4_owner_t *nfs4_owner)
+{
+	state_owner_t *owner = container_of(nfs4_owner,
+					    state_owner_t,
+					    so_owner.so_nfs4_owner);
+
+	/* This owner is to be removed from the open owner cache:
+	 * 1. Remove it from the list.
+	 * 2. Make sure this is now a proper list head again.
+	 * 3. Indicate it is no longer cached.
+	 * 4. Release the reference held on behalf of the cache.
+	 */
+	if (isFullDebug(COMPONENT_STATE)) {
+		char str[LOG_BUFF_LEN];
+		struct display_buffer dspbuf = {sizeof(str), str, str};
+
+		display_owner(&dspbuf, owner);
+
+		LogFullDebug(COMPONENT_STATE, "Uncache {%s}", str);
+	}
+
+	glist_del(&nfs4_owner->so_state_list);
+
+	glist_init(&nfs4_owner->so_state_list);
+
+	atomic_store_time_t(&nfs4_owner->cache_expire, 0);
+
+	dec_state_owner_ref(owner);
+}
+
+static inline
+void refresh_nfs4_open_owner(struct state_nfs4_owner_t *nfs4_owner)
+{
+	time_t cache_expire;
+
+	/* Since this owner is active, reset cache_expire. */
+	cache_expire = atomic_fetch_time_t(&nfs4_owner->cache_expire);
+
+	if (cache_expire != 0) {
+		PTHREAD_MUTEX_lock(&cached_open_owners_lock);
+
+		/* Check again while holding the mutex. */
+
+		if (atomic_fetch_time_t(&nfs4_owner->cache_expire) != 0) {
+			/* This is a cached open owner, uncache it for use. */
+			uncache_nfs4_owner(nfs4_owner);
+		}
+
+		PTHREAD_MUTEX_unlock(&cached_open_owners_lock);
+	}
 }
 
 /**
@@ -1147,8 +1197,15 @@ state_owner_t *get_state_owner(care_t care, state_owner_t *key,
 		 * a race occurs.
 		 */
 		inc_state_owner_ref(owner);
-		atomic_store_time_t(&owner->so_owner.so_nfs4_owner.
-				    last_close_time, 0);
+
+		/* Refresh an nfs4 open owner if needed. */
+		if (owner->so_type == STATE_OPEN_OWNER_NFSV4) {
+			PTHREAD_MUTEX_lock(&owner->so_mutex);
+
+			refresh_nfs4_open_owner(&owner->so_owner.so_nfs4_owner);
+
+			PTHREAD_MUTEX_unlock(&owner->so_mutex);
+		}
 
 		hashtable_releaselatched(ht_owner, &latch);
 

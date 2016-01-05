@@ -71,6 +71,8 @@ int display_nfs4_owner_key(struct gsh_buffdesc *buff, char *str)
 int display_nfs4_owner(struct display_buffer *dspbuf, state_owner_t *owner)
 {
 	int b_left;
+	time_t texpire;
+	struct state_nfs4_owner_t *nfs4_owner = &owner->so_owner.so_nfs4_owner;
 
 	if (owner == NULL)
 		return display_cat(dspbuf, "<NULL>");
@@ -87,8 +89,7 @@ int display_nfs4_owner(struct display_buffer *dspbuf, state_owner_t *owner)
 	if (b_left <= 0)
 		return b_left;
 
-	b_left = display_client_id_rec(dspbuf, owner->so_owner.so_nfs4_owner
-						.so_clientrec);
+	b_left = display_client_id_rec(dspbuf, nfs4_owner->so_clientrec);
 
 	if (b_left <= 0)
 		return b_left;
@@ -106,21 +107,20 @@ int display_nfs4_owner(struct display_buffer *dspbuf, state_owner_t *owner)
 		return b_left;
 
 	b_left = display_printf(dspbuf, " confirmed=%u seqid=%u",
-		    owner->so_owner.so_nfs4_owner.so_confirmed,
-		    owner->so_owner.so_nfs4_owner.so_seqid);
+				nfs4_owner->so_confirmed,
+				nfs4_owner->so_seqid);
 
 	if (b_left <= 0)
 		return b_left;
 
-	if (owner->so_owner.so_nfs4_owner.so_related_owner != NULL) {
+	if (nfs4_owner->so_related_owner != NULL) {
 		b_left = display_printf(dspbuf, " related_owner={");
 
 		if (b_left <= 0)
 			return b_left;
 
 		b_left =
-		    display_nfs4_owner(dspbuf, owner->so_owner
-					       .so_nfs4_owner.so_related_owner);
+		    display_nfs4_owner(dspbuf, nfs4_owner->so_related_owner);
 
 		if (b_left <= 0)
 			return b_left;
@@ -129,6 +129,17 @@ int display_nfs4_owner(struct display_buffer *dspbuf, state_owner_t *owner)
 
 		if (b_left <= 0)
 			return b_left;
+	}
+
+	if (b_left <= 0)
+		return b_left;
+
+	texpire = atomic_fetch_time_t(&nfs4_owner->cache_expire);
+
+	if (texpire != 0) {
+		b_left = display_printf(dspbuf,
+					" cached(expires in %d secs)",
+					texpire - time(NULL));
 	}
 
 	return display_printf(dspbuf, " refcount=%d",

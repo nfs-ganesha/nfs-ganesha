@@ -359,16 +359,61 @@ void state_del_locked(state_t *state)
 	PTHREAD_MUTEX_unlock(&state->state_mutex);
 
 	if (owner != NULL) {
+		bool owner_retain = false;
+		struct state_nfs4_owner_t *nfs4_owner;
+
+		nfs4_owner = &owner->so_owner.so_nfs4_owner;
+
 		/* Remove from list of states owned by owner and
 		 * release the state owner reference.
 		 */
 		PTHREAD_MUTEX_lock(&owner->so_mutex);
 		PTHREAD_MUTEX_lock(&state->state_mutex);
+
 		glist_del(&state->state_owner_list);
 		state->state_owner = NULL;
+
+		/* If we are dropping the last open state from an open
+		 * owner, we will want to retain a refcount and let the
+		 * reaper thread clean up with owner. */
+		owner_retain = owner->so_type == STATE_OPEN_OWNER_NFSV4 &&
+		    glist_empty(&nfs4_owner->so_state_list);
+
 		PTHREAD_MUTEX_unlock(&state->state_mutex);
-		PTHREAD_MUTEX_unlock(&owner->so_mutex);
-		dec_state_owner_ref(owner);
+
+		if (owner_retain) {
+			/* Retain the reference held by the state, and track
+			 * when this owner was last closed.
+			 */
+			PTHREAD_MUTEX_lock(&cached_open_owners_lock);
+
+			atomic_store_time_t(&nfs4_owner->cache_expire,
+					    nfs_param.nfsv4_param.lease_lifetime
+						+ time(NULL));
+			glist_add_tail(&cached_open_owners,
+				       &nfs4_owner->so_state_list);
+
+			if (isFullDebug(COMPONENT_STATE)) {
+				char str[LOG_BUFF_LEN];
+				struct display_buffer dspbuf = {
+						sizeof(str), str, str};
+
+				display_owner(&dspbuf, owner);
+
+				LogFullDebug(COMPONENT_STATE,
+					     "Caching open owner {%s}",
+					     str);
+			}
+
+			PTHREAD_MUTEX_unlock(&cached_open_owners_lock);
+
+			PTHREAD_MUTEX_unlock(&owner->so_mutex);
+		} else {
+			/* Drop the reference held by the state. */
+			PTHREAD_MUTEX_unlock(&owner->so_mutex);
+
+			dec_state_owner_ref(owner);
+		}
 	}
 
 	/* Remove from the list of states for a particular cache entry */
@@ -619,6 +664,16 @@ void release_openstate(state_owner_t *owner)
 	state_status_t state_status;
 	int errcnt = 0;
 	bool ok;
+	struct state_nfs4_owner_t *nfs4_owner = &owner->so_owner.so_nfs4_owner;
+
+	if (isFullDebug(COMPONENT_STATE)) {
+		char str[LOG_BUFF_LEN];
+		struct display_buffer dspbuf = {sizeof(str), str, str};
+
+		display_owner(&dspbuf, owner);
+
+		LogFullDebug(COMPONENT_STATE, "Release {%s}", str);
+	}
 
 	/* Only accept so many errors before giving up. */
 	while (errcnt < STATE_ERR_MAX) {
@@ -628,8 +683,40 @@ void release_openstate(state_owner_t *owner)
 
 		PTHREAD_MUTEX_lock(&owner->so_mutex);
 
-		state = glist_first_entry(&owner->so_owner.so_nfs4_owner
-								.so_state_list,
+		if (atomic_fetch_time_t(&nfs4_owner->cache_expire) != 0) {
+			/* This owner has no state, it is a cached open owner.
+			 * Take cached_open_owners_lock and verify.
+			 *
+			 * We have to check every iteration since the state
+			 * list may have become empty and we are now cached.
+			 */
+			PTHREAD_MUTEX_lock(&cached_open_owners_lock);
+
+			if (atomic_fetch_time_t(&nfs4_owner->cache_expire)
+			    != 0) {
+				/* We aren't racing with the reaper thread or
+				 * with get_state_owner.
+				 *
+				 * NOTE: We could be called from the reaper
+				 *       thead or this could be a clientid
+				 *       expire due to SETCLIENTID.
+				 */
+
+				/* This cached owner has expired, uncache it. */
+				uncache_nfs4_owner(nfs4_owner);
+			}
+
+			PTHREAD_MUTEX_unlock(&cached_open_owners_lock);
+
+			/* We should be done, but will fall through anyway
+			 * to remove any remote possibility of a race with
+			 * get_state_owner.
+			 *
+			 * At this point, so_state_list is now properly a list.
+			 */
+		}
+
+		state = glist_first_entry(&nfs4_owner->so_state_list,
 					  state_t,
 					  state_owner_list);
 
@@ -640,7 +727,7 @@ void release_openstate(state_owner_t *owner)
 
 		/* Move to end of list in case of error to ease retries */
 		glist_del(&state->state_owner_list);
-		glist_add_tail(&owner->so_owner.so_nfs4_owner.so_state_list,
+		glist_add_tail(&nfs4_owner->so_state_list,
 			       &state->state_owner_list);
 
 		/* Get references to the cache entry and export */

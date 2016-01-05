@@ -41,97 +41,6 @@ unsigned int reaper_delay = REAPER_DELAY;
 
 static struct fridgethr *reaper_fridge;
 
-static int reap_expired_open_owners(hash_table_t *ht_reap)
-{
-	struct rbt_head *head_rbt;
-	struct hash_data *addr = NULL;
-	uint32_t i;
-	int rc;
-	struct rbt_node *pn;
-	int count = 0;
-	char str[LOG_BUFF_LEN];
-	struct display_buffer dspbuf = {
-			sizeof(str), str, str};
-	state_owner_t *powner;
-	time_t tnow, tclose, texpire;
-	struct gsh_buffdesc buffkey;
-	struct gsh_buffdesc old_value;
-	struct gsh_buffdesc old_key;
-
-	/* For each bucket of the requested hashtable */
-	for (i = 0; i < ht_reap->parameter.index_size; i++) {
-		head_rbt = &ht_reap->partitions[i].rbt;
-
- restart:
-		/* Use the time at the start or restart of a bucket to
-		 * check for validity (don't call time() too many times).
-		 */
-		tnow = time(NULL);
-
-		/* acquire mutex */
-		PTHREAD_RWLOCK_wrlock(&ht_reap->partitions[i].lock);
-
-		/* go through all entries in the red-black-tree */
-		RBT_LOOP(head_rbt, pn) {
-			addr = RBT_OPAQ(pn);
-
-
-			powner = addr->val.addr;
-			count++;
-
-			if (powner->so_type != STATE_OPEN_OWNER_NFSV4) {
-				RBT_INCREMENT(pn);
-				continue;
-			}
-
-			display_owner(&dspbuf, powner);
-
-			/* Cleanup the open owner only if its refcount is zero
-			 * and its last_close_time exceeds the lease_lifetime
-			 */
-			tclose = atomic_fetch_time_t(&powner->so_owner.
-						     so_nfs4_owner.
-						     last_close_time);
-			texpire = tclose + nfs_param.nfsv4_param.lease_lifetime;
-
-			if ((tclose == 0) || (texpire > tnow)) {
-				if (tclose != 0 &&
-					isFullDebug(COMPONENT_STATE)) {
-					LogFullDebug(COMPONENT_STATE,
-							"Did not release CLOSE_PENDING %s, %d seconds left",
-							str,
-							(int) (texpire - tnow));
-				}
-				RBT_INCREMENT(pn);
-				continue;
-			}
-			LogFullDebug(COMPONENT_STATE, "Free {%s}", str);
-			buffkey.addr = powner;
-			buffkey.len = sizeof(*powner);
-
-			atomic_inc_int32_t(&powner->so_refcount);
-			PTHREAD_RWLOCK_unlock(&ht_reap->partitions[i].
-					      lock);
-			rc = HashTable_Del(ht_reap, &buffkey,
-					   &old_key, &old_value);
-
-			if (rc != HASHTABLE_SUCCESS) {
-				LogCrit(COMPONENT_CLIENTID,
-					"Could not remove expired owner %s error=%s",
-					str, hash_table_err_to_str(rc));
-			}
-
-			atomic_dec_int32_t(&powner->so_refcount);
-			free_state_owner(powner);
-			goto restart;
-
-		}
-		PTHREAD_RWLOCK_unlock(&ht_reap->partitions[i].lock);
-	}
-
-	return count;
-}
-
 static int reap_hash_table(hash_table_t *ht_reap)
 {
 	struct rbt_head *head_rbt;
@@ -222,6 +131,77 @@ static int reap_hash_table(hash_table_t *ht_reap)
 	return count;
 }
 
+static int reap_expired_open_owners(void)
+{
+	int count = 0;
+	time_t tnow = time(NULL);
+	time_t texpire;
+	state_owner_t *owner;
+
+	PTHREAD_MUTEX_lock(&cached_open_owners_lock);
+
+	/* Walk the list of cached NFS 4 open owners. Because we hold
+	 * the mutex while walking this list, it is impossible for another
+	 * thread to get a primary reference to these owners while we
+	 * process, and thus prevent them from expiring.
+	 */
+
+	owner = glist_first_entry(&cached_open_owners,
+				  state_owner_t,
+				  so_owner.so_nfs4_owner.so_state_list);
+
+	while (owner != NULL) {
+		struct state_nfs4_owner_t *nfs4_owner;
+
+		nfs4_owner = &owner->so_owner.so_nfs4_owner;
+
+		texpire = atomic_fetch_time_t(&nfs4_owner->cache_expire);
+
+		if (texpire > tnow) {
+			/* This owner has not yet expired. */
+			if (isFullDebug(COMPONENT_STATE)) {
+				char str[LOG_BUFF_LEN];
+				struct display_buffer dspbuf = {
+						sizeof(str), str, str};
+
+				display_owner(&dspbuf, owner);
+
+				LogFullDebug(COMPONENT_STATE,
+					     "Did not release CLOSE_PENDING %d seconds left for {%s}",
+					     (int) (texpire - tnow),
+					     str);
+			}
+
+			/* Because entries are not moved on this list, and
+			 * they are added when they first become eligible,
+			 * the entries are in order of expiration time, and
+			 * thus once we hit one that is not expired yet, the
+			 * rest are also not expired.
+			 */
+			break;
+		} else {
+			/* This cached owner has expired, uncache it. */
+			PTHREAD_MUTEX_lock(&owner->so_mutex);
+
+			uncache_nfs4_owner(nfs4_owner);
+
+			PTHREAD_MUTEX_unlock(&owner->so_mutex);
+
+			count++;
+
+			/* Get the next owner to examine. */
+			owner = glist_first_entry(
+					&cached_open_owners,
+					state_owner_t,
+					so_owner.so_nfs4_owner.so_state_list);
+		}
+	}
+
+	PTHREAD_MUTEX_unlock(&cached_open_owners_lock);
+
+	return count;
+}
+
 struct reaper_state {
 	bool old_state_cleaned;
 	size_t count;
@@ -269,7 +249,7 @@ static void reaper_run(struct fridgethr_context *ctx)
 	    (reap_hash_table(ht_confirmed_client_id) +
 	     reap_hash_table(ht_unconfirmed_client_id));
 
-	rst->count += reap_expired_open_owners(ht_nfs4_owner);
+	rst->count += reap_expired_open_owners();
 }
 
 int reaper_init(void)
