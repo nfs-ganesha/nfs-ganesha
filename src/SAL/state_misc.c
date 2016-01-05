@@ -1015,7 +1015,7 @@ void dec_state_owner_ref(state_owner_t *owner)
 
 	if (ht_owner == NULL) {
 		if (!str_valid)
-			display_owner(&dspbuf, owner);
+			display_printf(&dspbuf, "Invalid owner %p", owner);
 
 		LogCrit(COMPONENT_STATE, "Unexpected owner {%s}", str);
 
@@ -1035,23 +1035,10 @@ void dec_state_owner_ref(state_owner_t *owner)
 			hashtable_releaselatched(ht_owner, &latch);
 
 		if (!str_valid)
-			display_owner(&dspbuf, owner);
+			display_printf(&dspbuf, "Invalid owner %p", owner);
 
 		LogCrit(COMPONENT_STATE, "Error %s, could not find {%s}",
 			hash_table_err_to_str(rc), str);
-
-		return;
-	}
-
-	refcount = atomic_fetch_int32_t(&owner->so_refcount);
-
-	if (refcount > 0) {
-		if (str_valid)
-			LogDebug(COMPONENT_STATE,
-				 "Did not release {%s} refcount now=%" PRId32,
-				 str, refcount);
-
-		hashtable_releaselatched(ht_owner, &latch);
 
 		return;
 	}
@@ -1180,23 +1167,84 @@ state_owner_t *get_state_owner(care_t care, state_owner_t *key,
 	buffkey.addr = key;
 	buffkey.len = sizeof(*key);
 
+ again:
+
 	rc = hashtable_getlatch(ht_owner, &buffkey, &buffval, true, &latch);
 
 	/* If we found it, return it */
 	if (rc == HASHTABLE_SUCCESS) {
+		int32_t refcount;
+
 		owner = buffval.addr;
 
 		/* Return the found NSM Client */
 		if (isFullDebug(COMPONENT_STATE)) {
 			display_owner(&dspbuf, owner);
-			LogFullDebug(COMPONENT_STATE, "Found {%s}", str);
+			str_valid = true;
 		}
 
-		/* Increment refcount under hash latch.
-		 * This prevents dec ref from removing this entry from hash if
-		 * a race occurs.
+		/* Increment refcount under hash latch. This protects against
+		 * a race with dec_state_owner_ref removing the final
+		 * reference. If we have that race however, we defer to
+		 * the other thread and pretend we did NOT find the owner.
 		 */
-		inc_state_owner_ref(owner);
+		refcount = atomic_inc_int32_t(&owner->so_refcount);
+
+		if (refcount == 1) {
+			/* This owner is in the process of being freed.
+			 * If care is not CARE_NOT, we will go back and
+			 * retry, otherwise we will return NULL.
+			 *
+			 * If we care, the retry may cycle a time or two
+			 * until the old owner manages to get out of the
+			 * table, and then if multiple get_state_owner
+			 * calls are racing, one of them will get the
+			 * latch, not find the owner, and create it, the
+			 * rest will then in turn find that new owner.
+			 */
+			if (isDebug(COMPONENT_STATE)) {
+				if (!str_valid) {
+					/* Since we still hold the latch,
+					 * owner MUST still be valid,
+					 * dec_state_owner_ref has not even
+					 * removed from the hash table yet,
+					 * let alone destroyed the object.
+					 */
+					display_owner(&dspbuf, owner);
+				}
+
+				LogDebug(COMPONENT_STATE,
+					 "Found owner in process of deconstruction, will %s {%s}",
+					 care == CARE_NOT
+						? "return NULL (CARE_NOT)"
+						: "retry",
+					 str);
+			}
+
+			/* Drop the reference we just got. */
+			refcount = atomic_dec_int32_t(&owner->so_refcount);
+
+			/* Just for kicks, validate the refcount */
+			if (refcount != 0) {
+				display_owner(&dspbuf, owner);
+				LogCrit(COMPONENT_STATE,
+					"Deconstructed state owner has gained a reference {%s}",
+					str);
+			}
+
+			/* Now drop the hash table latch and try again or exit.
+			 */
+			hashtable_releaselatched(ht_owner, &latch);
+
+			/* If we don't care, return NULL at this point,
+			 * otherwise retry.
+			 */
+			/** @todo should we nanosleep before retry? */
+			if (care == CARE_NOT)
+				return NULL;
+			else
+				goto again;
+		}
 
 		/* Refresh an nfs4 open owner if needed. */
 		if (owner->so_type == STATE_OPEN_OWNER_NFSV4) {
@@ -1207,10 +1255,20 @@ state_owner_t *get_state_owner(care_t care, state_owner_t *key,
 			PTHREAD_MUTEX_unlock(&owner->so_mutex);
 		}
 
+		if (isFullDebug(COMPONENT_STATE)) {
+			if (!str_valid)
+				display_owner(&dspbuf, owner);
+
+			LogFullDebug(COMPONENT_STATE,
+				     "Found {%s} refcount now=%" PRId32,
+				     str, refcount);
+		}
+
 		hashtable_releaselatched(ht_owner, &latch);
 
 		return owner;
 	}
+
 	/* An error occurred, return NULL */
 	if (rc != HASHTABLE_ERROR_NO_SUCH_KEY) {
 		if (!str_valid)
@@ -1224,7 +1282,6 @@ state_owner_t *get_state_owner(care_t care, state_owner_t *key,
 
 	/* Not found, but we don't care, return NULL */
 	if (care == CARE_NOT) {
-		/* Return the found NSM Client */
 		if (str_valid)
 			LogFullDebug(COMPONENT_STATE, "Ignoring {%s}", str);
 
