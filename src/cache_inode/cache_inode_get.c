@@ -179,6 +179,9 @@ void clean_mapping(cache_entry_t *entry)
 		gsh_free(expmap);
 	}
 
+	/* Reset first_export as the entry may get re-used */
+	atomic_store_voidptr(&entry->first_export, NULL);
+
 	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 }
 

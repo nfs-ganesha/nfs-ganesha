@@ -505,7 +505,8 @@ lru_reap_impl(enum lru_q_id qid)
 			 * correctly with reclaim case */
 			cache_inode_lru_unref(entry, LRU_UNREF_QLOCKED);
 		} else {
-			/* ! QLOCKED */
+			/* ! QLOCKED but needs to be Unref'ed */
+			cache_inode_lru_unref(entry, LRU_FLAG_NONE);
 			continue;
 		}
  next_lane:
