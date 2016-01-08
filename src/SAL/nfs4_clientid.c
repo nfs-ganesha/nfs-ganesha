@@ -511,7 +511,7 @@ nfs_client_id_t *create_client_id(clientid4 clientid,
 				  nfs_client_cred_t *credential,
 				  uint32_t minorversion)
 {
-	nfs_client_id_t *client_rec = pool_alloc(client_id_pool, NULL);
+	nfs_client_id_t *client_rec = pool_alloc(client_id_pool);
 	state_owner_t *owner;
 
 	PTHREAD_MUTEX_init(&client_rec->cid_mutex, NULL);
@@ -1277,8 +1277,7 @@ int nfs_Init_client_id(void)
 	}
 
 	client_id_pool =
-	    pool_init("NFS4 Client ID Pool", sizeof(nfs_client_id_t),
-		      pool_basic_substrate, NULL, NULL, NULL);
+	    pool_basic_init("NFS4 Client ID Pool", sizeof(nfs_client_id_t));
 
 	return CLIENT_ID_SUCCESS;
 }

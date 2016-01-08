@@ -912,7 +912,7 @@ static inline void free_resop(nfs_cb_resop4 *op)
 
 rpc_call_t *alloc_rpc_call(void)
 {
-	request_data_t *reqdata = pool_alloc(request_pool, NULL);
+	request_data_t *reqdata = pool_alloc(request_pool);
 
 	reqdata->rtype = NFS_CALL;
 	return &reqdata->r_u.call;

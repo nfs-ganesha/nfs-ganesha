@@ -65,7 +65,7 @@ static digest_pool_entry_t *digest_alloc()
 	digest_pool_entry_t *p_new;
 
 	PTHREAD_MUTEX_lock(&digest_pool_mutex);
-	p_new = pool_alloc(digest_pool, NULL);
+	p_new = pool_alloc(digest_pool);
 	PTHREAD_MUTEX_unlock(&digest_pool_mutex);
 
 	return p_new;
@@ -85,7 +85,7 @@ static handle_pool_entry_t *handle_alloc()
 	handle_pool_entry_t *p_new;
 
 	PTHREAD_MUTEX_lock(&handle_pool_mutex);
-	p_new = pool_alloc(handle_pool, NULL);
+	p_new = pool_alloc(handle_pool);
 	PTHREAD_MUTEX_unlock(&handle_pool_mutex);
 
 	return p_new;
@@ -268,12 +268,10 @@ int HandleMap_Init(const handle_map_param_t *p_param)
 	/* initialize memory pool of digests and handles */
 
 	digest_pool =
-	    pool_init(NULL, sizeof(digest_pool_entry_t), pool_basic_substrate,
-		      NULL, NULL, NULL);
+	    pool_basic_init("digest_pool", sizeof(digest_pool_entry_t));
 
 	handle_pool =
-	    pool_init(NULL, sizeof(handle_pool_entry_t), pool_basic_substrate,
-		      NULL, NULL, NULL);
+	    pool_basic_init("handle_pool", sizeof(handle_pool_entry_t));
 
 	/* create hash table */
 

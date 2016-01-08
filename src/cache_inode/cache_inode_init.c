@@ -56,8 +56,7 @@ cache_inode_init(void)
 	cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
 	cache_inode_entry_pool =
-	    pool_init("Entry Pool", sizeof(cache_entry_t), pool_basic_substrate,
-		      NULL, NULL, NULL);
+	    pool_basic_init("Entry Pool", sizeof(cache_entry_t));
 
 	cih_pkginit();
 

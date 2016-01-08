@@ -1515,7 +1515,7 @@ request_data_t *nfs_rpc_dequeue_req(nfs_worker_data_t *worker)
  */
 static inline request_data_t *alloc_nfs_request(SVCXPRT *xprt)
 {
-	request_data_t *reqdata = pool_alloc(request_pool, NULL);
+	request_data_t *reqdata = pool_alloc(request_pool);
 
 	/* set the request as NFS already-read */
 	reqdata->rtype = NFS_REQUEST;

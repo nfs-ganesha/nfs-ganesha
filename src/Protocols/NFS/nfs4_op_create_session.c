@@ -303,7 +303,7 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	/* Record session related information at the right place */
-	nfs41_session = pool_alloc(nfs41_session_pool, NULL);
+	nfs41_session = pool_alloc(nfs41_session_pool);
 
 	if (nfs41_session == NULL) {
 		LogCrit(component, "Could not allocate memory for a session");

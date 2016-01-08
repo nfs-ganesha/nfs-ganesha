@@ -269,7 +269,7 @@ void *_9p_socket_thread(void *Arg)
 					    0, 0, 0);
 
 		/* Message is good. */
-		req = pool_alloc(request_pool, NULL);
+		req = pool_alloc(request_pool);
 
 		req->rtype = _9P_REQUEST;
 		req->r_u._9p._9pmsg = _9pmsg;

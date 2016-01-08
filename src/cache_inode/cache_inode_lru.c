@@ -1152,7 +1152,7 @@ alloc_cache_entry(cache_entry_t **entry)
 {
 	cache_entry_t *nentry;
 
-	nentry = pool_alloc(cache_inode_entry_pool, NULL);
+	nentry = pool_alloc(cache_inode_entry_pool);
 
 	/* Initialize the entry locks */
 	if (!init_rw_locks(nentry)) {

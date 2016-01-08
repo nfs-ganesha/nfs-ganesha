@@ -59,11 +59,7 @@ fsal_ace_t *nfs4_ace_alloc(int nace)
 
 fsal_acl_t *nfs4_acl_alloc()
 {
-	fsal_acl_t *acl = NULL;
-
-	acl = pool_alloc(fsal_acl_pool, NULL);
-
-	return acl;
+	return pool_alloc(fsal_acl_pool);
 }
 
 void nfs4_ace_free(fsal_ace_t *ace)
@@ -318,9 +314,7 @@ int nfs4_acls_init(void)
 		 sizeof(fsal_ace_t), sizeof(fsal_acl_t));
 
 	/* Initialize memory pool of ACLs. */
-	fsal_acl_pool =
-	    pool_init(NULL, sizeof(fsal_acl_t), pool_basic_substrate, NULL,
-		      NULL, NULL);
+	fsal_acl_pool = pool_basic_init("acl_pool", sizeof(fsal_acl_t));
 
 	/* Create hash table. */
 	fsal_acl_hash = hashtable_init(&fsal_acl_hash_config);

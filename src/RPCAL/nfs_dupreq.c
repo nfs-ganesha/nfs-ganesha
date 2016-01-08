@@ -255,26 +255,12 @@ void dupreq2_pkginit(void)
 {
 	int code __attribute__ ((unused)) = 0;
 
-	dupreq_pool = pool_init("Duplicate Request Pool",
-				sizeof(dupreq_entry_t),
-				pool_basic_substrate, NULL, NULL, NULL);
-	if (unlikely(!(dupreq_pool)))
-		LogFatal(COMPONENT_INIT,
-			 "Error while allocating duplicate request pool");
+	dupreq_pool =
+	    pool_basic_init("Duplicate Request Pool", sizeof(dupreq_entry_t));
 
-	nfs_res_pool = pool_init("nfs_res_t pool", sizeof(nfs_res_t),
-				 pool_basic_substrate,
-				 NULL, NULL, NULL);
-	if (unlikely(!(nfs_res_pool)))
-		LogFatal(COMPONENT_INIT,
-			 "Error while allocating nfs_res_t pool");
+	nfs_res_pool = pool_basic_init("nfs_res_t pool", sizeof(nfs_res_t));
 
-	tcp_drc_pool = pool_init("TCP DRC Pool", sizeof(drc_t),
-				 pool_basic_substrate,
-				 NULL, NULL, NULL);
-	if (unlikely(!(tcp_drc_pool)))
-		LogFatal(COMPONENT_INIT,
-			 "Error while allocating TCP DRC pool");
+	tcp_drc_pool = pool_basic_init("TCP DRC Pool", sizeof(drc_t));
 
 	drc_st = gsh_calloc(1, sizeof(struct drc_st));
 
@@ -349,7 +335,7 @@ static inline enum drc_type get_drc_type(struct svc_req *req)
  */
 static inline drc_t *alloc_tcp_drc(enum drc_type dtype)
 {
-	drc_t *drc = pool_alloc(tcp_drc_pool, NULL);
+	drc_t *drc = pool_alloc(tcp_drc_pool);
 	int ix, code __attribute__ ((unused)) = 0;
 
 	drc->type = dtype;	/* DRC_TCP_V3 or DRC_TCP_V4 */
@@ -766,7 +752,7 @@ static inline dupreq_entry_t *alloc_dupreq(void)
 {
 	dupreq_entry_t *dv;
 
-	dv = pool_alloc(dupreq_pool, NULL);
+	dv = pool_alloc(dupreq_pool);
 	gsh_mutex_init(&dv->mtx, NULL);
 	TAILQ_INIT_ENTRY(dv, fifo_q);
 

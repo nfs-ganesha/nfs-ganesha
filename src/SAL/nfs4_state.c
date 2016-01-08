@@ -134,7 +134,7 @@ state_status_t state_add_impl(cache_entry_t *entry, enum state_type state_type,
 		got_pinned = true;
 	}
 
-	pnew_state = pool_alloc(state_v4_pool, NULL);
+	pnew_state = pool_alloc(state_v4_pool);
 
 	PTHREAD_MUTEX_init(&pnew_state->state_mutex, NULL);
 

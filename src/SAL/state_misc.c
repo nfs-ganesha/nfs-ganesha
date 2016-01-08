@@ -1176,7 +1176,7 @@ state_owner_t *get_state_owner(care_t care, state_owner_t *key,
 		return NULL;
 	}
 
-	owner = pool_alloc(state_owner_pool, NULL);
+	owner = pool_alloc(state_owner_pool);
 
 	/* Copy everything over */
 	memcpy(owner, key, sizeof(*key));

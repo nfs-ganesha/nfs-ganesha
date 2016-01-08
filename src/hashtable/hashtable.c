@@ -343,13 +343,8 @@ hashtable_init(struct hash_param *hparam)
 		completed++;
 	}
 
-	ht->node_pool =
-	    pool_init(NULL, sizeof(rbt_node_t), pool_basic_substrate, NULL,
-		      NULL, NULL);
-
-	ht->data_pool =
-	    pool_init(NULL, sizeof(struct hash_data), pool_basic_substrate,
-		      NULL, NULL, NULL);
+	ht->node_pool = pool_basic_init(NULL, sizeof(rbt_node_t));
+	ht->data_pool = pool_basic_init(NULL, sizeof(struct hash_data));
 
 	pthread_rwlockattr_destroy(&rwlockattr);
 	return ht;
@@ -651,9 +646,9 @@ hashtable_setlatched(struct hash_table *ht,
 
 	RBT_FIND(&ht->partitions[latch->index].rbt, locator, latch->rbt_hash);
 
-	mutator = pool_alloc(ht->node_pool, NULL);
+	mutator = pool_alloc(ht->node_pool);
 
-	descriptors = pool_alloc(ht->data_pool, NULL);
+	descriptors = pool_alloc(ht->data_pool);
 
 	RBT_OPAQ(mutator) = descriptors;
 	RBT_VALUE(mutator) = latch->rbt_hash;

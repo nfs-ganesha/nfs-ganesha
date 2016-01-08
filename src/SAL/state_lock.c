@@ -147,19 +147,10 @@ state_status_t state_lock_init(void)
 
 	status = state_async_init();
 
-	state_owner_pool = pool_init("NFSv4 state owners",
-				     sizeof(state_owner_t),
-				     pool_basic_substrate,
-				     NULL,
-				     NULL,
-				     NULL);
+	state_owner_pool =
+	    pool_basic_init("NFSv4 state owners", sizeof(state_owner_t));
 
-	state_v4_pool = pool_init("NFSv4 files states",
-				  sizeof(state_t),
-				  pool_basic_substrate,
-				  NULL,
-				  NULL,
-				  NULL);
+	state_v4_pool = pool_basic_init("NFSv4 files states", sizeof(state_t));
 
 	return status;
 }

@@ -529,14 +529,10 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 	exports_pkginit();
 
 	nfs41_session_pool =
-	    pool_init("NFSv4.1 session pool", sizeof(nfs41_session_t),
-		      pool_basic_substrate, NULL, NULL, NULL);
+	    pool_basic_init("NFSv4.1 session pool", sizeof(nfs41_session_t));
 
 	request_pool =
-	    pool_init("Request pool", sizeof(request_data_t),
-		      pool_basic_substrate, NULL,
-		      NULL, /* FASTER constructor_request_data_t */
-		      NULL);
+	    pool_basic_init("Request pool", sizeof(request_data_t));
 
 	/* If rpcsec_gss is used, set the path to the keytab */
 #ifdef _HAVE_GSSAPI
