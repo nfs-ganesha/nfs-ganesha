@@ -237,23 +237,15 @@ enum rfc_5665_nc_type {
 };
 typedef enum rfc_5665_nc_type nc_type;
 
-static const struct __netid_nc_table {
+struct __netid_nc_table {
 	const char *netid;
 	int netid_len;
 	/* nc_type */
 	const nc_type nc;
 	int af;
-} netid_nc_table[] = {
-	{
-	"-", 1, _NC_ERR, 0}, {
-	"tcp", 3, _NC_TCP, AF_INET}, {
-	"tcp6", 4, _NC_TCP6, AF_INET6}, {
-	"rdma", 4, _NC_RDMA, AF_INET}, {
-	"rdma6", 5, _NC_RDMA6, AF_INET6}, {
-	"sctp", 4, _NC_SCTP, AF_INET}, {
-	"sctp6", 5, _NC_SCTP6, AF_INET6}, {
-	"udp", 3, _NC_UDP, AF_INET}, {
-	"udp6", 4, _NC_UDP6, AF_INET6},};
+};
+
+extern const struct __netid_nc_table netid_nc_table[9];
 
 nc_type nfs_netid_to_nc(const char *netid);
 void nfs_set_client_location(nfs_client_id_t *pclientid,

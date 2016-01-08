@@ -56,6 +56,18 @@
 #include "sal_data.h"
 #include <misc/timespec.h>
 
+const struct __netid_nc_table netid_nc_table[9] = {
+	{
+	"-", 1, _NC_ERR, 0}, {
+	"tcp", 3, _NC_TCP, AF_INET}, {
+	"tcp6", 4, _NC_TCP6, AF_INET6}, {
+	"rdma", 4, _NC_RDMA, AF_INET}, {
+	"rdma6", 5, _NC_RDMA6, AF_INET6}, {
+	"sctp", 4, _NC_SCTP, AF_INET}, {
+	"sctp6", 5, _NC_SCTP6, AF_INET6}, {
+	"udp", 3, _NC_UDP, AF_INET}, {
+	"udp6", 4, _NC_UDP6, AF_INET6},};
+
 /* forward declaration in lieu of moving code */
 static void _nfs_rpc_destroy_chan(rpc_call_channel_t *chan);
 
@@ -133,37 +145,37 @@ void nfs_rpc_cb_pkgshutdown(void)
 
 nc_type nfs_netid_to_nc(const char *netid)
 {
-	if (!strncmp(netid, netid_nc_table[_NC_TCP].netid,
-		     netid_nc_table[_NC_TCP].netid_len))
-		return _NC_TCP;
-
 	if (!strncmp(netid, netid_nc_table[_NC_TCP6].netid,
 		     netid_nc_table[_NC_TCP6].netid_len))
 		return _NC_TCP6;
 
-	if (!strncmp(netid, netid_nc_table[_NC_UDP].netid,
-		     netid_nc_table[_NC_UDP].netid_len))
-		return _NC_UDP;
+	if (!strncmp(netid, netid_nc_table[_NC_TCP].netid,
+		     netid_nc_table[_NC_TCP].netid_len))
+		return _NC_TCP;
 
 	if (!strncmp(netid, netid_nc_table[_NC_UDP6].netid,
 		     netid_nc_table[_NC_UDP6].netid_len))
 		return _NC_UDP6;
 
-	if (!strncmp(netid, netid_nc_table[_NC_RDMA].netid,
-		     netid_nc_table[_NC_RDMA].netid_len))
-		return _NC_RDMA;
+	if (!strncmp(netid, netid_nc_table[_NC_UDP].netid,
+		     netid_nc_table[_NC_UDP].netid_len))
+		return _NC_UDP;
 
 	if (!strncmp(netid, netid_nc_table[_NC_RDMA6].netid,
 		     netid_nc_table[_NC_RDMA6].netid_len))
 		return _NC_RDMA6;
 
-	if (!strncmp(netid, netid_nc_table[_NC_SCTP].netid,
-		     netid_nc_table[_NC_SCTP].netid_len))
-		return _NC_SCTP;
+	if (!strncmp(netid, netid_nc_table[_NC_RDMA].netid,
+		     netid_nc_table[_NC_RDMA].netid_len))
+		return _NC_RDMA;
 
 	if (!strncmp(netid, netid_nc_table[_NC_SCTP6].netid,
 		     netid_nc_table[_NC_SCTP6].netid_len))
 		return _NC_SCTP6;
+
+	if (!strncmp(netid, netid_nc_table[_NC_SCTP].netid,
+		     netid_nc_table[_NC_SCTP].netid_len))
+		return _NC_SCTP;
 
 	return _NC_ERR;
 }
