@@ -745,7 +745,6 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 
 	op_ctx->fsal_export = &myself->export;
 
-	gpfs_ganesha(OPENHANDLE_GET_VERIFIER, &GPFS_write_verifier);
 	gpfs_fs = myself->root_fs->private;
 	varg.fd = gpfs_fs->root_fd;
 	varg.buffer = (char *)&GPFS_write_verifier;
