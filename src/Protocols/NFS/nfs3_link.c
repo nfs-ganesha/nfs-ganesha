@@ -152,13 +152,15 @@ int nfs3_link(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		goto out;
 	}
 
-	if (link_name == NULL || *link_name == '\0')
+	if (link_name == NULL || *link_name == '\0') {
 		res->res_link3.status = NFS3ERR_INVAL;
-	else {
+		goto out;
+	} else {
 		/* Both objects have to be in the same filesystem */
-		if (to_exportid != from_exportid)
+		if (to_exportid != from_exportid) {
 			res->res_link3.status = NFS3ERR_XDEV;
-		else {
+			goto out;
+		} else {
 			cache_status = cache_inode_link(target_entry,
 							parent_entry,
 							link_name);
