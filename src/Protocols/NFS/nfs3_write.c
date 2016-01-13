@@ -213,6 +213,11 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	if (size == 0) {
 		cache_status = CACHE_INODE_SUCCESS;
 		written_size = 0;
+		res->res_write3.status = NFS3_OK;
+		nfs_SetWccData(NULL, entry,
+			       &res->res_write3.WRITE3res_u.resfail.file_wcc);
+		rc = NFS_REQ_OK;
+		goto out;
 	} else {
 		/* An actual write is to be made, prepare it */
 
