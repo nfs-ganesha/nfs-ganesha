@@ -63,7 +63,7 @@ static void fs_layouttypes(struct fsal_export *export_hdl, int32_t *count,
 	rc = gpfs_ganesha(OPENHANDLE_LAYOUT_TYPE, &arg);
 	errsv = errno;
 	if (rc < 0 || (rc != LAYOUT4_NFSV4_1_FILES)) {
-		LogDebug(COMPONENT_PNFS, "fs_layouttypes rc %d\n", rc);
+		LogDebug(COMPONENT_PNFS, "fs_layouttypes rc %d", rc);
 		if (errsv == EUNATCH)
 			LogFatal(COMPONENT_PNFS, "GPFS Returned EUNATCH");
 		*count = 0;
@@ -172,16 +172,18 @@ nfsstat4 getdeviceinfo(struct fsal_module *fsal_hdl,
 			+ ((ds_buffer - da_beginning) / BYTES_PER_XDR_UNIT));
 
 	LogDebug(COMPONENT_PNFS,
-		"getdeviceinfo p %p end %p da_length %lu ds_buffer %lu seq %d fd %d fsid 0x%lx\n",
-		darg.xdr.p, darg.xdr.end, da_beginning, ds_buffer,
-		deviceid->device_id2, deviceid->device_id4,
+		"getdeviceinfo p %p end %p da_length %zu ds_buffer %zu seq %d fd %d fsid 0x%"
+		PRIx64, darg.xdr.p, darg.xdr.end,
+		da_beginning, ds_buffer,
+		deviceid->device_id2,
+		deviceid->device_id4,
 		deviceid->devid);
 
 	rc = gpfs_ganesha(OPENHANDLE_GET_DEVICEINFO, &darg);
 	errsv = errno;
 	if (rc < 0) {
 
-		LogDebug(COMPONENT_PNFS, "getdeviceinfo rc %d\n", rc);
+		LogDebug(COMPONENT_PNFS, "getdeviceinfo rc %d", rc);
 		if (errsv == EUNATCH)
 			LogFatal(COMPONENT_PNFS, "GPFS Returned EUNATCH");
 		return NFS4ERR_RESOURCE;
@@ -189,8 +191,8 @@ nfsstat4 getdeviceinfo(struct fsal_module *fsal_hdl,
 	(void)xdr_inline(da_addr_body, rc);
 	da_length = xdr_getpos(da_addr_body) - da_beginning;
 
-	LogDebug(COMPONENT_PNFS, "getdeviceinfo rc %d da_length %ld\n", rc,
-		 da_length);
+	LogDebug(COMPONENT_PNFS, "getdeviceinfo rc %d da_length %zd",
+		rc, da_length);
 
 	return NFS4_OK;
 }
@@ -301,7 +303,7 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_hdl,
 
 	fh = (int *)&(gpfs_ds_handle.f_handle);
 	LogDebug(COMPONENT_PNFS,
-		 "fh in len %d type %d key %d: %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x\n",
+		 "fh in len %d type %d key %d: %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x",
 		 gpfs_ds_handle.handle_size, gpfs_ds_handle.handle_type,
 		 gpfs_ds_handle.handle_key_size, fh[0], fh[1], fh[2], fh[3],
 		 fh[4], fh[5], fh[6], fh[7], fh[8], fh[9]);
@@ -309,14 +311,14 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_hdl,
 	rc = gpfs_ganesha(OPENHANDLE_LAYOUT_GET, &larg);
 	errsv = errno;
 	if (rc != 0) {
-		LogDebug(COMPONENT_PNFS, "GPFSFSAL_layoutget rc %d\n", rc);
+		LogDebug(COMPONENT_PNFS, "GPFSFSAL_layoutget rc %d", rc);
 		if (errsv == EUNATCH)
 			LogFatal(COMPONENT_PNFS, "GPFS Returned EUNATCH");
 		return NFS4ERR_UNKNOWN_LAYOUTTYPE;
 	}
 	fh = (int *)&(gpfs_ds_handle.f_handle);
 	LogDebug(COMPONENT_PNFS,
-		 "fh out len %d type %d key %d: %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x\n",
+		 "fh out len %d type %d key %d: %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x",
 		 gpfs_ds_handle.handle_size, gpfs_ds_handle.handle_type,
 		 gpfs_ds_handle.handle_key_size, fh[0], fh[1], fh[2], fh[3],
 		 fh[4], fh[5], fh[6], fh[7], fh[8], fh[9]);
@@ -336,7 +338,8 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_hdl,
 	deviceid.devid = file_layout.device_id.devid;
 	/* last_possible_byte = NFS4_UINT64_MAX; strict. set but unused */
 
-	LogDebug(COMPONENT_PNFS, "fsal_id %d seq %d fd %d fsid 0x%lx index %d",
+	LogDebug(COMPONENT_PNFS,
+		"fsal_id %d seq %d fd %d fsid 0x%" PRIx64 " index %d",
 		deviceid.fsal_id, deviceid.device_id2,
 		deviceid.device_id4, deviceid.devid,
 		file_layout.lg_first_stripe_index);
@@ -383,7 +386,7 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_hdl,
 	errsv = errno;
 	LogDebug(COMPONENT_PNFS, "GPFSFSAL_layoutreturn rc %d", rc);
 	if (rc != 0) {
-		LogDebug(COMPONENT_PNFS, "GPFSFSAL_layoutget rc %d\n", rc);
+		LogDebug(COMPONENT_PNFS, "GPFSFSAL_layoutget rc %d", rc);
 		if (errsv == EUNATCH)
 			LogFatal(COMPONENT_PNFS, "GPFS Returned EUNATCH");
 	}
@@ -443,7 +446,7 @@ static nfsstat4 layoutreturn(struct fsal_obj_handle *obj_hdl,
 		errsv = errno;
 		if (rc != 0) {
 			LogDebug(COMPONENT_PNFS,
-				 "GPFSFSAL_layoutreturn rc %d\n", rc);
+				 "GPFSFSAL_layoutreturn rc %d", rc);
 			if (errsv == EUNATCH)
 				LogFatal(COMPONENT_PNFS,
 					"GPFS Returned EUNATCH");
@@ -512,7 +515,7 @@ static nfsstat4 layoutcommit(struct fsal_obj_handle *obj_hdl,
 	rc = gpfs_ganesha(OPENHANDLE_LAYOUT_COMMIT, &targ);
 	errsv = errno;
 	if (rc != 0) {
-		LogDebug(COMPONENT_PNFS, "GPFSFSAL_layoutcommit rc %d\n", rc);
+		LogDebug(COMPONENT_PNFS, "GPFSFSAL_layoutcommit rc %d", rc);
 		if (errsv == EUNATCH)
 			LogFatal(COMPONENT_PNFS, "GPFS Returned EUNATCH");
 		return posix2nfs4_error(-rc);

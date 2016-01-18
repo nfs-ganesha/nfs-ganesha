@@ -378,7 +378,7 @@ static fsal_status_t gpfs_extract_handle(struct fsal_export *exp_hdl,
 	fh_size = gpfs_sizeof_handle(hdl);
 	if (fh_desc->len != fh_size) {
 		LogMajor(COMPONENT_FSAL,
-			 "Size mismatch for handle.  should be %lu, got %lu",
+			 "Size mismatch for handle.  should be %zu, got %zu",
 			 fh_size, fh_desc->len);
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 	}

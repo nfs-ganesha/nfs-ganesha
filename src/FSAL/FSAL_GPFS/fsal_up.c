@@ -253,9 +253,12 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 
 		case LAYOUT_NOTIFY_DEVICEID:	/* Device update Event */
 			LogDebug(COMPONENT_FSAL_UP,
-				"layout dev update: flags:%x ino %ld seq %d fd %d fsid 0x%lx",
-				flags, callback.buf->st_ino, devid.device_id2,
-				devid.device_id4, devid.devid);
+				"layout dev update: flags:%x ino %ld seq %d fd %d fsid 0x%"
+				PRIx64, flags,
+				callback.buf->st_ino,
+				devid.device_id2,
+				devid.device_id4,
+				devid.devid);
 
 			memset(&devid, 0, sizeof(devid));
 			devid.fsal_id = FSAL_ID_GPFS;

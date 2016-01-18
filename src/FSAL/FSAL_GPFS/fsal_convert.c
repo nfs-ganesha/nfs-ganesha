@@ -133,7 +133,7 @@ fsal_status_t gpfsfsal_xstat_2_fsal_attributes(gpfsfsal_xstat_t *p_buffxstat,
 	}
 	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_FILEID)) {
 		p_fsalattr_out->fileid = (uint64_t) (p_buffstat->st_ino);
-		LogFullDebug(COMPONENT_FSAL, "fileid = %lu",
+		LogFullDebug(COMPONENT_FSAL, "fileid = %" PRIu64,
 			     p_fsalattr_out->fileid);
 	}
 
@@ -149,12 +149,12 @@ fsal_status_t gpfsfsal_xstat_2_fsal_attributes(gpfsfsal_xstat_t *p_buffxstat,
 	}
 	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_OWNER)) {
 		p_fsalattr_out->owner = p_buffstat->st_uid;
-		LogFullDebug(COMPONENT_FSAL, "owner = %lu",
+		LogFullDebug(COMPONENT_FSAL, "owner = %" PRIu64,
 			     p_fsalattr_out->owner);
 	}
 	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_GROUP)) {
 		p_fsalattr_out->group = p_buffstat->st_gid;
-		LogFullDebug(COMPONENT_FSAL, "group = %lu",
+		LogFullDebug(COMPONENT_FSAL, "group = %" PRIu64,
 			     p_fsalattr_out->group);
 	}
 	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_ATIME)) {

@@ -805,8 +805,8 @@ static fsal_status_t handle_digest(const struct fsal_obj_handle *obj_hdl,
 
  errout:
 	LogMajor(COMPONENT_FSAL,
-		 "Space too small for handle.  need %lu, have %lu", fh_size,
-		 fh_desc->len);
+		 "Space too small for handle.  need %zu, have %zu",
+		 fh_size, fh_desc->len);
 
 	return fsalstat(ERR_FSAL_TOOSMALL, 0);
 }

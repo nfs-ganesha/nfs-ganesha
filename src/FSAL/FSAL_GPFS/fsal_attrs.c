@@ -324,16 +324,18 @@ fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,	/* IN */
 	if (FSAL_TEST_MASK(p_object_attributes->mask, ATTR_OWNER)) {
 		attr_changed |= XATTR_UID;
 		buffxstat.buffstat.st_uid = (int)p_object_attributes->owner;
-		LogDebug(COMPONENT_FSAL, "current uid = %ld, new uid = %d",
-			 myself->attributes.owner, buffxstat.buffstat.st_uid);
+		LogDebug(COMPONENT_FSAL,
+			"current uid = %" PRIu64 ", new uid = %d",
+			myself->attributes.owner, buffxstat.buffstat.st_uid);
 	}
 
 	/* Fill wanted group. */
 	if (FSAL_TEST_MASK(p_object_attributes->mask, ATTR_GROUP)) {
 		attr_changed |= XATTR_GID;
 		buffxstat.buffstat.st_gid = (int)p_object_attributes->group;
-		LogDebug(COMPONENT_FSAL, "current gid = %ld, new gid = %d",
-			 myself->attributes.group, buffxstat.buffstat.st_gid);
+		LogDebug(COMPONENT_FSAL,
+			"current gid = %" PRIu64 ", new gid = %d",
+			myself->attributes.group, buffxstat.buffstat.st_gid);
 	}
 
   /***********

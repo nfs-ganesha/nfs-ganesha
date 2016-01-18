@@ -435,8 +435,9 @@ fsal_status_t gpfs_lock_op(struct fsal_obj_handle *obj_hdl,
 		goto out;
 	}
 	LogFullDebug(COMPONENT_FSAL,
-		"Locking: op:%d type:%d claim:%d start:%" PRIu64 " length:%lu ",
-		lock_op, request_lock->lock_type,
+		"Locking: op:%d type:%d claim:%d start:%" PRIu64 " length:%"
+		PRIu64, lock_op,
+		request_lock->lock_type,
 		request_lock->lock_reclaim,
 		request_lock->lock_start,
 		request_lock->lock_length);
