@@ -856,10 +856,10 @@ int disable_log_facility(const char *name)
 	}
 	if (glist_null(&facility->lf_active)) {
 		PTHREAD_RWLOCK_unlock(&log_rwlock);
-		LogCrit(COMPONENT_LOG,
+		LogDebug(COMPONENT_LOG,
 			 "Log facility (%s) is already disabled",
 			 name);
-		return -EINVAL;
+		return 0;
 	}
 	if (facility == default_facility) {
 		PTHREAD_RWLOCK_unlock(&log_rwlock);
