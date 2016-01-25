@@ -1,0 +1,85 @@
+#! /bin/sh
+### BEGIN INIT INFO
+# Provides:          ganesha
+# Required-Start:    $local_fs $named $time $network
+# Required-Stop:     $local_fs $named $time $network
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: NFS-GANESHA
+# Description:       NFS-GANESHA
+### END INIT INFO
+
+PATH=/sbin:/usr/sbin:/bin:/usr/bin
+NAME=ganesha.nfsd
+SCRIPTNAME=/etc/init.d/$NAME
+DAEMON=/usr/bin/$NAME
+PIDFILE=/var/run/$NAME.pid
+LOGFILE=/var/log/ganesha.log
+CONFFILE=/etc/ganesha/ganesha.conf
+GANESHA_OPTS="-L $LOGFILE -f $CONFFILE -N NIV_EVENT"
+PID=`test -f $PIDFILE && cat $PIDFILE`
+
+# Gracefully exit if the package has been removed.
+test -x $DAEMON || exit 0
+
+# Define LSB log_* functions.
+. /lib/lsb/init-functions
+
+[ -z "$NOFILE" ] && NOFILE=1048576
+
+do_start()
+{
+    pidofproc -p $PIDFILE $DAEMON >/dev/null
+    status=$?
+    if [ $status -eq 0 ]; then
+      log_success_msg "ganesha service is already running with pid $PID"
+    else
+      log_daemon_msg "Starting ganesha service" "ganesha"
+      ulimit -n $NOFILE
+      start-stop-daemon --start --quiet --oknodo --pidfile $PIDFILE --startas $DAEMON -- -p $PIDFILE $GANESHA_OPTS
+      log_end_msg $?
+    fi
+}
+
+do_stop()
+{
+    log_daemon_msg "Stopping ganesha service" "ganesha"
+    start-stop-daemon --stop --quiet --oknodo --pidfile $PIDFILE
+    log_end_msg $?
+    rm -f $PIDFILE
+    killproc -p $PIDFILE $DAEMON
+    return $?
+}
+
+do_status()
+{
+     pidofproc -p $PIDFILE $DAEMON >/dev/null
+     status=$?
+     if [ $status -eq 0 ]; then
+       log_success_msg "ganesha service is running with pid $PID"
+     else
+       log_failure_msg "ganesha service is not running."
+     fi
+     exit $status
+}
+
+case "$1" in
+  start)
+        do_start
+        ;;
+  stop)
+        do_stop
+        ;;
+  status)
+        do_status;
+        ;;
+  restart|force-reload)
+        do_stop
+        sleep 2
+        do_start
+        ;;
+  *)
+        echo "Usage: $SCRIPTNAME {start|stop|status|restart|force-reload}" >&2
+        exit 3
+        ;;
+esac
