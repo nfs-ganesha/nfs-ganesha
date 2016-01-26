@@ -91,7 +91,7 @@ static register_get_set snmp_error_injection[] = {
 
 #define SNMPADM_ERROR_INJECTION_COUNT 2
 
-int init_error_injector()
+int init_error_injector(void)
 {
 	if (snmp_adm_register_get_set_function
 	    (INJECT_OID, snmp_error_injection, SNMPADM_ERROR_INJECTION_COUNT)) {

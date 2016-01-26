@@ -3,10 +3,6 @@ add_definitions(
   -D_GNU_SOURCE
 )
 
-include_directories(
-  ${LIBTIRPC_INCLUDE_DIR}
-)
-
 ########### next target ###############
 
 SET(cache_inode_STAT_SRCS

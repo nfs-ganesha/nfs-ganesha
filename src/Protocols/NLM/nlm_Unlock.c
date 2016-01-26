@@ -36,15 +36,11 @@
  * @brief Free a range lock
  *
  * @param[in]  args
- * @param[in]  export
- * @param[in]  worker
  * @param[in]  req
  * @param[out] res
  */
 
-int nlm4_Unlock(nfs_arg_t *args,
-		nfs_worker_data_t *worker,
-		struct svc_req *req, nfs_res_t *res)
+int nlm4_Unlock(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 {
 	nlm4_unlockargs *arg = &args->arg_nlm4_unlock;
 	cache_entry_t *pentry;
@@ -55,6 +51,7 @@ int nlm4_Unlock(nfs_arg_t *args,
 	state_owner_t *nlm_owner;
 	fsal_lock_param_t lock;
 	int rc;
+	state_t *state;
 
 	/* NLM doesn't have a BADHANDLE error, nor can rpc_execute deal with
 	 * responding to an NLM_*_MSG call, so we check here if the export is
@@ -100,7 +97,10 @@ int nlm4_Unlock(nfs_arg_t *args,
 				    &nsm_client,
 				    &nlm_client,
 				    &nlm_owner,
-				    NULL);
+				    NULL,
+				    false,
+				    0,
+				    &state);
 
 	if (rc >= 0) {
 		/* resent the error back to the client */
@@ -111,7 +111,11 @@ int nlm4_Unlock(nfs_arg_t *args,
 		return NFS_REQ_OK;
 	}
 
-	state_status = state_unlock(pentry, nlm_owner, NULL, &lock);
+	if (state != NULL)
+		state_status =
+			state_unlock(pentry, state, nlm_owner, false, 0, &lock);
+	else
+		state_status = STATE_SUCCESS;
 
 	if (state_status != STATE_SUCCESS) {
 		/* Unlock could fail in the FSAL and make a bit of a mess,
@@ -125,6 +129,8 @@ int nlm4_Unlock(nfs_arg_t *args,
 	}
 
 	/* Release the NLM Client and NLM Owner references we have */
+	if (state != NULL)
+		dec_state_t_ref(state);
 	dec_nsm_client_ref(nsm_client);
 	dec_nlm_client_ref(nlm_client);
 	dec_state_owner_ref(nlm_owner);
@@ -166,15 +172,11 @@ static void nlm4_unlock_message_resp(state_async_queue_t *arg)
  * @brief Unlock Message
  *
  * @param[in]  args
- * @param[in]  export
- * @param[in]  worker
  * @param[in]  req
  * @param[out] res
  *
  */
-int nlm4_Unlock_Message(nfs_arg_t *args,
-			nfs_worker_data_t *worker, struct svc_req *req,
-			nfs_res_t *res)
+int nlm4_Unlock_Message(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 {
 	state_nlm_client_t *nlm_client = NULL;
 	state_nsm_client_t *nsm_client;
@@ -196,7 +198,7 @@ int nlm4_Unlock_Message(nfs_arg_t *args,
 	if (nlm_client == NULL)
 		rc = NFS_REQ_DROP;
 	else
-		rc = nlm4_Unlock(args, worker, req, res);
+		rc = nlm4_Unlock(args, req, res);
 
 	if (rc == NFS_REQ_OK)
 		rc = nlm_send_async_res_nlm4(nlm_client,

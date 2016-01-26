@@ -306,8 +306,7 @@ bool idmapper_add_user(const struct gsh_buffdesc *name, uid_t uid,
 
 	if (new == NULL) {
 		LogMajor(COMPONENT_IDMAPPER,
-			 "Unable to allocate memory for new node. "
-			 "This is not wonderful.");
+			 "Unable to allocate memory for new node. This is not wonderful.");
 		return false;
 	}
 	new->uname.addr = (char *)new + sizeof(struct cache_user);
@@ -396,8 +395,7 @@ bool idmapper_add_group(const struct gsh_buffdesc *name, const gid_t gid)
 
 	if (new == NULL) {
 		LogMajor(COMPONENT_IDMAPPER,
-			 "Unable to allocate memory for new node. "
-			 "This is not wonderful.");
+			 "Unable to allocate memory for new node. This is not wonderful.");
 		return false;
 	}
 	new->gname.addr = (char *)new + sizeof(struct cache_group);

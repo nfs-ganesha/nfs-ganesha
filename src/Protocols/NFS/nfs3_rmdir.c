@@ -54,7 +54,6 @@
  * Implements the NFSPROC3_RMDIR function.
  *
  * @param[in]  arg     NFS arguments union
- * @param[in]  worker  Worker thread data
  * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call
  *
@@ -64,9 +63,7 @@
  *
  */
 
-int nfs3_rmdir(nfs_arg_t *arg,
-	       nfs_worker_data_t *worker,
-	       struct svc_req *req, nfs_res_t *res)
+int nfs3_rmdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
 	cache_entry_t *parent_entry = NULL;
 	cache_entry_t *child_entry = NULL;
@@ -86,8 +83,8 @@ int nfs3_rmdir(nfs_arg_t *arg,
 				 str);
 
 		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling nfs3_rmdir handle: %s "
-			 "name: %s", str, name);
+			 "REQUEST PROCESSING: Calling nfs3_rmdir handle: %s name: %s",
+			 str, name);
 	}
 
 	/* Convert file handle into a pentry */
@@ -184,5 +181,5 @@ int nfs3_rmdir(nfs_arg_t *arg,
  */
 void nfs3_rmdir_free(nfs_res_t *res)
 {
-	return;
+	/* Nothing to do here */
 }

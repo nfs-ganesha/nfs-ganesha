@@ -45,8 +45,7 @@
 #include "fsal.h"
 #include "9p.h"
 
-int _9p_lopen(struct _9p_request_data *req9p, void *worker_data,
-	      u32 *plenout, char *preply)
+int _9p_lopen(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 	u16 *msgtag = NULL;
@@ -67,27 +66,28 @@ int _9p_lopen(struct _9p_request_data *req9p, void *worker_data,
 		 (u32) *msgtag, *fid, *flags);
 
 	if (*fid >= _9P_FID_PER_CONN)
-		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, ERANGE, plenout, preply);
 
 	pfid = req9p->pconn->fids[*fid];
 
 	/* Check that it is a valid fid */
 	if (pfid == NULL || pfid->pentry == NULL) {
 		LogDebug(COMPONENT_9P, "request on invalid fid=%u", *fid);
-		return _9p_rerror(req9p, worker_data, msgtag, EIO, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, EIO, plenout, preply);
 	}
 
 	_9p_openflags2FSAL(flags, &openflags);
-	op_ctx = &pfid->op_context;
+	pfid->state.state_data.fid.share_access =
+		_9p_openflags_to_share_access(flags);
+
+	_9p_init_opctx(pfid, req9p);
 	if (pfid->pentry->type == REGULAR_FILE) {
 		/** @todo: Maybe other types (FIFO, SOCKET,...) require
 		 * to be opened too */
 		if (!atomic_postinc_uint32_t(&pfid->opens)) {
 			cache_status = cache_inode_inc_pin_ref(pfid->pentry);
 			if (cache_status != CACHE_INODE_SUCCESS)
-				return _9p_rerror(req9p, worker_data, msgtag,
+				return _9p_rerror(req9p, msgtag,
 						  _9p_tools_errno(cache_status),
 						  plenout, preply);
 		}
@@ -95,7 +95,7 @@ int _9p_lopen(struct _9p_request_data *req9p, void *worker_data,
 		cache_status =
 		    cache_inode_open(pfid->pentry, openflags, 0);
 		if (cache_status != CACHE_INODE_SUCCESS)
-			return _9p_rerror(req9p, worker_data, msgtag,
+			return _9p_rerror(req9p, msgtag,
 					  _9p_tools_errno(cache_status),
 					  plenout, preply);
 

@@ -54,7 +54,6 @@
  * Implements the NFSPROC3_CREATE function.
  *
  * @param[in]  arg     NFS arguments union
- * @param[in]  worker  Worker thread data
  * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call
  *
@@ -64,9 +63,7 @@
  *
  */
 
-int nfs3_create(nfs_arg_t *arg,
-		nfs_worker_data_t *worker,
-		struct svc_req *req, nfs_res_t *res)
+int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
 	const char *file_name = arg->arg_create3.where.name;
 	uint32_t mode = 0;
@@ -88,8 +85,8 @@ int nfs3_create(nfs_arg_t *arg,
 		nfs_FhandleToStr(req->rq_vers, &(arg->arg_create3.where.dir),
 				 NULL, str);
 		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling nfs3_create handle: "
-			 "%s name: %s", str, file_name ? file_name : "");
+			 "REQUEST PROCESSING: Calling nfs3_create handle: %s name: %s",
+			 str, file_name ? file_name : "");
 	}
 
 	memset(&sattr, 0, sizeof(struct attrlist));
@@ -218,12 +215,15 @@ int nfs3_create(nfs_arg_t *arg,
 		 */
 		squash_setattr(&sattr);
 
-		if ((sattr.mask & (ATTR_ATIME | ATTR_MTIME | ATTR_CTIME |
-				   ATTR_SIZE))
+		if ((sattr.mask & CREATE_MASK_REG_NFS3)
 		    || ((sattr.mask & ATTR_OWNER)
 			&& (op_ctx->creds->caller_uid != sattr.owner))
 		    || ((sattr.mask & ATTR_GROUP)
 			&& (op_ctx->creds->caller_gid != sattr.group))) {
+
+			/* mask off flags handled by create */
+			sattr.mask &= CREATE_MASK_REG_NFS3 | ATTRS_CREDS;
+
 			/* A call to cache_inode_setattr is required */
 			cache_status = cache_inode_setattr(file_entry,
 							   &sattr,

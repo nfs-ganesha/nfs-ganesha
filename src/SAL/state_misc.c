@@ -118,8 +118,6 @@ const char *state_err_str(state_status_t err)
 		return "STATE_ESTALE";
 	case STATE_FSAL_ERR_SEC:
 		return "STATE_FSAL_ERR_SEC";
-	case STATE_STATE_CONFLICT:
-		return "STATE_STATE_CONFLICT";
 	case STATE_QUOTA_EXCEEDED:
 		return "STATE_QUOTA_EXCEEDED";
 	case STATE_ASYNC_POST_ERROR:
@@ -152,8 +150,8 @@ const char *state_err_str(state_status_t err)
 		return "STATE_SIGNAL_ERROR";
 	case STATE_FILE_OPEN:
 		return "STATE_FILE_OPEN";
-	case STATE_FSAL_SHARE_DENIED:
-		return "STATE_FSAL_SHARE_DENIED";
+	case STATE_SHARE_DENIED:
+		return "STATE_SHARE_DENIED";
 	case STATE_MLINK:
 		return "STATE_MLINK";
 	case STATE_SERVERFAULT:
@@ -166,6 +164,8 @@ const char *state_err_str(state_status_t err)
 		return "STATE_IN_GRACE";
 	case STATE_BADHANDLE:
 		return "STATE_BADHANDLE";
+	case STATE_BAD_RANGE:
+		return "STATE_BAD_RANGE";
 	}
 	return "unknown";
 }
@@ -232,8 +232,6 @@ state_status_t cache_inode_status_to_state_status(cache_inode_status_t status)
 		return STATE_ESTALE;
 	case CACHE_INODE_FSAL_ERR_SEC:
 		return STATE_FSAL_ERR_SEC;
-	case CACHE_INODE_STATE_CONFLICT:
-		return STATE_STATE_CONFLICT;
 	case CACHE_INODE_QUOTA_EXCEEDED:
 		return STATE_QUOTA_EXCEEDED;
 	case CACHE_INODE_ASYNC_POST_ERROR:
@@ -253,10 +251,11 @@ state_status_t cache_inode_status_to_state_status(cache_inode_status_t status)
 		return STATE_FILE_BIG;
 	case CACHE_INODE_FILE_OPEN:
 		return STATE_FILE_OPEN;
-	case CACHE_INODE_FSAL_SHARE_DENIED:
-		return STATE_FSAL_SHARE_DENIED;
+	case CACHE_INODE_SHARE_DENIED:
+		return STATE_SHARE_DENIED;
 	case CACHE_INODE_FSAL_MLINK:
 		return STATE_MLINK;
+	case CACHE_INODE_NO_DATA:
 	case CACHE_INODE_SERVERFAULT:
 		return STATE_SERVERFAULT;
 	case CACHE_INODE_TOOSMALL:
@@ -267,6 +266,10 @@ state_status_t cache_inode_status_to_state_status(cache_inode_status_t status)
 		return STATE_IN_GRACE;
 	case CACHE_INODE_BADHANDLE:
 		return STATE_BADHANDLE;
+	case CACHE_INODE_BAD_RANGE:
+		return STATE_BAD_RANGE;
+	case CACHE_INODE_LOCKED:
+		return STATE_LOCKED;
 	}
 	return STATE_CACHE_INODE_ERR;
 }
@@ -351,7 +354,7 @@ state_status_t state_error_convert(fsal_status_t fsal_status)
 		return STATE_FILE_OPEN;
 
 	case ERR_FSAL_SHARE_DENIED:
-		return STATE_FSAL_SHARE_DENIED;
+		return STATE_SHARE_DENIED;
 
 	case ERR_FSAL_BLOCKED:
 		return STATE_LOCK_BLOCKED;
@@ -361,6 +364,12 @@ state_status_t state_error_convert(fsal_status_t fsal_status)
 
 	case ERR_FSAL_BADHANDLE:
 		return STATE_BADHANDLE;
+
+	case ERR_FSAL_BAD_RANGE:
+		return STATE_BAD_RANGE;
+
+	case ERR_FSAL_LOCKED:
+		return STATE_LOCKED;
 
 	case ERR_FSAL_DQUOT:
 	case ERR_FSAL_NAMETOOLONG:
@@ -378,6 +387,8 @@ state_status_t state_error_convert(fsal_status_t fsal_status)
 	case ERR_FSAL_TOOSMALL:
 	case ERR_FSAL_TIMEOUT:
 	case ERR_FSAL_SERVERFAULT:
+	case ERR_FSAL_NO_DATA:
+	case ERR_FSAL_NO_ACE:
 		/* These errors should be handled inside state
 		 * (or should never be seen by state)
 		 */
@@ -487,8 +498,7 @@ nfsstat4 nfs4_Errno_state(state_status_t error)
 		nfserror = NFS4ERR_STALE;
 		break;
 
-	case STATE_STATE_CONFLICT:
-	case STATE_FSAL_SHARE_DENIED:
+	case STATE_SHARE_DENIED:
 		nfserror = NFS4ERR_SHARE_DENIED;
 		break;
 
@@ -555,6 +565,10 @@ nfsstat4 nfs4_Errno_state(state_status_t error)
 
 	case STATE_BADHANDLE:
 		nfserror = NFS4ERR_BADHANDLE;
+		break;
+
+	case STATE_BAD_RANGE:
+		nfserror = NFS4ERR_BAD_RANGE;
 		break;
 
 	case STATE_INVALID_ARGUMENT:
@@ -667,7 +681,7 @@ nfsstat3 nfs3_Errno_state(state_status_t error)
 		break;
 
 	case STATE_FSAL_DELAY:
-	case STATE_FSAL_SHARE_DENIED:
+	case STATE_SHARE_DENIED:
 		nfserror = NFS3ERR_JUKEBOX;
 		break;
 
@@ -718,12 +732,12 @@ nfsstat3 nfs3_Errno_state(state_status_t error)
 	case STATE_HASH_TABLE_ERROR:
 	case STATE_ASYNC_POST_ERROR:
 	case STATE_STATE_ERROR:
-	case STATE_STATE_CONFLICT:
 	case STATE_LOCK_CONFLICT:
 	case STATE_LOCK_BLOCKED:
 	case STATE_LOCK_DEADLOCK:
 	case STATE_GRACE_PERIOD:
 	case STATE_SIGNAL_ERROR:
+	case STATE_BAD_RANGE:
 		/* Should not occur */
 		LogCrit(COMPONENT_NFSPROTO,
 			"Unexpected status for conversion = %s",
@@ -1054,21 +1068,11 @@ void dec_state_owner_ref(state_owner_t *owner)
 	}
 
 	/* use the key to delete the entry */
-	rc = hashtable_deletelatched(ht_owner, &buffkey, &latch, &old_key,
-				     &old_value);
+	hashtable_deletelatched(ht_owner, &buffkey, &latch, &old_key,
+				&old_value);
 
-	if (rc != HASHTABLE_SUCCESS) {
-		if (rc == HASHTABLE_ERROR_NO_SUCH_KEY)
-			hashtable_releaselatched(ht_owner, &latch);
-
-		if (!str_valid)
-			display_owner(&dspbuf, owner);
-
-		LogCrit(COMPONENT_STATE, "Error %s, could not remove {%s}",
-			hash_table_err_to_str(rc), str);
-
-		return;
-	}
+	/* Release the latch */
+	hashtable_releaselatched(ht_owner, &latch);
 
 	if (str_valid)
 		LogFullDebug(COMPONENT_STATE, "Free {%s}", str);
@@ -1216,8 +1220,13 @@ state_owner_t *get_state_owner(care_t care, state_owner_t *key,
 	owner->so_refcount = 1;
 
 	if (isFullDebug(COMPONENT_STATE)) {
+		display_reset_buffer(&dspbuf);
 		display_owner(&dspbuf, owner);
 		LogFullDebug(COMPONENT_STATE, "New {%s}", str);
+		str_valid = true;
+	} else {
+		/* If we had the key, we don't want it anymore */
+		str_valid = false;
 	}
 
 	buffkey.addr = owner;
@@ -1230,7 +1239,8 @@ state_owner_t *get_state_owner(care_t care, state_owner_t *key,
 
 	/* An error occurred, return NULL */
 	if (rc != HASHTABLE_SUCCESS) {
-		display_owner(&dspbuf, owner);
+		if (!str_valid)
+			display_owner(&dspbuf, owner);
 
 		LogCrit(COMPONENT_STATE, "Error %s, inserting {%s}",
 			hash_table_err_to_str(rc), str);

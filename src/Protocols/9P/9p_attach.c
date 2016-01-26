@@ -46,8 +46,7 @@
 #include "nfs_exports.h"
 #include "9p.h"
 
-int _9p_attach(struct _9p_request_data *req9p, void *worker_data,
-	       u32 *plenout, char *preply)
+int _9p_attach(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 	u16 *msgtag = NULL;
@@ -124,6 +123,14 @@ int _9p_attach(struct _9p_request_data *req9p, void *worker_data,
 		goto errout;
 	}
 
+	/* Initialize state_t embeded in fid. The refcount is initialized
+	 * to one to represent the state_t being embeded in the fid. This
+	 * prevents it from ever being reduced to zero by dec_state_t_ref.
+	 */
+	glist_init(&pfid->state.state_data.fid.state_locklist);
+	pfid->state.state_type = STATE_TYPE_9P_FID;
+	pfid->state.state_refcount = 1;
+
 	pfid->fid = *fid;
 	req9p->pconn->fids[*fid] = pfid;
 
@@ -150,12 +157,13 @@ int _9p_attach(struct _9p_request_data *req9p, void *worker_data,
 	}
 
 	/* Keep track of the export in the req_ctx */
-	pfid->op_context.export = export;
-	pfid->op_context.fsal_export = export->fsal_export;
-	pfid->op_context.caller_addr = &req9p->pconn->addrpeer;
-	pfid->op_context.export_perms = &req9p->pconn->export_perms;
+	pfid->export = export;
+	get_gsh_export_ref(export);
+	op_ctx->export = export;
+	op_ctx->fsal_export = export->fsal_export;
+	op_ctx->caller_addr = &req9p->pconn->addrpeer;
+	op_ctx->export_perms = &req9p->pconn->export_perms;
 
-	op_ctx =  &pfid->op_context;
 	export_check_access();
 
 	if (exppath[0] != '/' ||
@@ -190,14 +198,7 @@ int _9p_attach(struct _9p_request_data *req9p, void *worker_data,
 		}
 	}
 
-	/* This fid is a special one: it comes from TATTACH */
-	pfid->from_attach = true;
-
-	cache_status = cache_inode_fileid(pfid->pentry, &fileid);
-	if (cache_status != CACHE_INODE_SUCCESS) {
-		err = _9p_tools_errno(cache_status);
-		goto errout;
-	}
+	fileid = cache_inode_fileid(pfid->pentry);
 
 	/* Compute the qid */
 	pfid->qid.type = _9P_QTDIR;
@@ -229,8 +230,11 @@ errout:
 	if (pfid != NULL) {
 		if (pfid->pentry != NULL)
 			cache_inode_put(pfid->pentry);
+		if (pfid->ucred != NULL)
+			release_9p_user_cred_ref(pfid->ucred);
+
 		gsh_free(pfid);
 	}
 
-	return _9p_rerror(req9p, worker_data, msgtag, err, plenout, preply);
+	return _9p_rerror(req9p, msgtag, err, plenout, preply);
 }

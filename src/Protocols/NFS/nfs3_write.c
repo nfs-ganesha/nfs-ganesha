@@ -55,7 +55,6 @@
  * Implements the NFSPROC3_WRITE function.
  *
  * @param[in]  arg     NFS argument union
- * @param[in]  worker  Worker thread data
  * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call
  *
@@ -65,9 +64,7 @@
  *
  */
 
-int nfs3_write(nfs_arg_t *arg,
-	       nfs_worker_data_t *worker,
-	       struct svc_req *req, nfs_res_t *res)
+int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
 	cache_entry_t *entry;
 	pre_op_attr pre_attr = {
@@ -111,9 +108,9 @@ int nfs3_write(nfs_arg_t *arg,
 				 str);
 
 		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling nfs_Write handle: %s "
-			 "start: %" PRIx64 " len: %" PRIx64 " %s", str, offset,
-			 size, stables);
+			 "REQUEST PROCESSING: Calling nfs_Write handle: %s start: %"
+			 PRIx64 " len: %zx %s",
+			 str, offset, size, stables);
 	}
 
 	/* to avoid setting it on each error case */
@@ -136,7 +133,7 @@ int nfs3_write(nfs_arg_t *arg,
 	/** @todo this is racy, use cache_inode_lock_trust_attrs and
 	 *        cache_inode_access_no_mutex
 	 */
-	if (entry->obj_handle->attributes.owner != op_ctx->creds->caller_uid) {
+	if (entry->obj_handle->attrs->owner != op_ctx->creds->caller_uid) {
 		cache_status = cache_inode_access(entry,
 						  FSAL_WRITE_ACCESS);
 
@@ -183,14 +180,14 @@ int nfs3_write(nfs_arg_t *arg,
 	/* Do not exceed maxium WRITE offset if set */
 	if (op_ctx->export->MaxOffsetWrite < UINT64_MAX) {
 		LogFullDebug(COMPONENT_NFSPROTO,
-			     "Write offset=%" PRIu64 " count=%" PRIu64
+			     "Write offset=%" PRIu64 " size=%zu"
 			     " MaxOffSet=%" PRIu64, offset, size,
 			     op_ctx->export->MaxOffsetWrite);
 
 		if ((offset + size) > op_ctx->export->MaxOffsetWrite) {
 			LogEvent(COMPONENT_NFSPROTO,
-				 "A client tryed to violate max "
-				 "file size %" PRIu64 " for exportid #%hu",
+				 "A client tryed to violate max file size %"
+				 PRIu64 " for exportid #%hu",
 				 op_ctx->export->MaxOffsetWrite,
 				 op_ctx->export->export_id);
 
@@ -232,7 +229,8 @@ int nfs3_write(nfs_arg_t *arg,
 
 		cache_status =
 		    cache_inode_rdwr(entry, CACHE_INODE_WRITE, offset, size,
-				     &written_size, data, &eof_met, &sync);
+				     &written_size, data, &eof_met, &sync,
+				     NULL);
 
 		state_share_anonymous_io_done(entry, OPEN4_SHARE_ACCESS_WRITE);
 
@@ -304,5 +302,5 @@ int nfs3_write(nfs_arg_t *arg,
  */
 void nfs3_write_free(nfs_res_t *res)
 {
-	return;
+	/* Nothing to do here */
 }

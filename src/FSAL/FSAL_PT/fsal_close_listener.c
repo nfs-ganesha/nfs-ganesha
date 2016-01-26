@@ -1,7 +1,20 @@
 /*
  * -----------------------------------------------------------------------------
  * Copyright IBM Corp. 2010, 2011
- * All Rights Reserved
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  * -----------------------------------------------------------------------------
  * -----------------------------------------------------------------------------
  * Filename:    pt_ganesha.c
@@ -30,8 +43,7 @@ int ptfsal_closeHandle_attach_to_queues(void)
 	g_closeHandle_req_msgq = msgget(FSI_CCL_IPC_CLOSE_HANDLE_REQ_Q_KEY, 0);
 	if (g_closeHandle_req_msgq < 0) {
 		FSI_TRACE(FSI_FATAL,
-			  "error getting close handle Req Msg Q "
-			  "id %d (errno = %d)",
+			  "error getting close handle Req Msg Q id %d (errno = %d)",
 			  FSI_CCL_IPC_CLOSE_HANDLE_REQ_Q_KEY, errno);
 		/*
 		 * cleanup the attach made earlier,
@@ -49,8 +61,7 @@ int ptfsal_closeHandle_attach_to_queues(void)
 	g_closeHandle_rsp_msgq = msgget(FSI_CCL_IPC_CLOSE_HANDLE_RSP_Q_KEY, 0);
 	if (g_closeHandle_rsp_msgq < 0) {
 		FSI_TRACE(FSI_FATAL,
-			  "error getting close handle Rsp Msg Q "
-			  "id %d (errno = %d)",
+			  "error getting close handle Rsp Msg Q id %d (errno = %d)",
 			  FSI_CCL_IPC_CLOSE_HANDLE_RSP_Q_KEY, errno);
 		/*
 		 * cleanup the attach made earlier, nothing
@@ -75,6 +86,7 @@ void *ptfsal_closeHandle_listener_thread(void *args)
 	SetNameFunction("PT Cls Handler");
 
 	int rc = ptfsal_closeHandle_attach_to_queues();
+
 	if (rc == -1)
 		exit(1);
 
@@ -107,6 +119,7 @@ void ptfsal_close_timedout_handle_bkg(void)
 		struct ccl_msg_t msg;
 		int rc;
 		int lock_rc;
+
 		GET_ANY_IO_RESPONSES(index, &rc, &msg);
 
 		/*
@@ -115,9 +128,7 @@ void ptfsal_close_timedout_handle_bkg(void)
 		 */
 		if (g_poll_for_timeouts) {
 			FSI_TRACE(FSI_INFO,
-				  "Last IO time[%ld] handle index [%d]"
-				  "current_time[%ld] handle state[%d]"
-				  "m_hndl_in_use[%d]",
+				  "Last IO time[%ld] handle index [%d] current_time[%ld] handle state[%d] m_hndl_in_use[%d]",
 				  g_fsi_handles_fsal->m_handle[index].
 				  m_last_io_time, index, current_time,
 				  g_fsi_handles_fsal->m_handle[index].
@@ -132,6 +143,7 @@ void ptfsal_close_timedout_handle_bkg(void)
 					  lock_rc);
 			} else {
 				bool can_close = 0;
+
 				can_close = CCL_CAN_CLOSE_HANDLE(index,
 				      polling_thread_handle_timeout_sec);
 				if (can_close) {
@@ -140,8 +152,7 @@ void ptfsal_close_timedout_handle_bkg(void)
 						index, CCL_CLOSE_STYLE_NORMAL);
 					if (close_rc == -1) {
 						FSI_TRACE(FSI_ERR,
-						"Failed to implicitly"
-						"close handle[%d]",
+						"Failed to implicitly close handle[%d]",
 						index);
 					}
 				}
@@ -154,8 +165,6 @@ void ptfsal_close_timedout_handle_bkg(void)
 
 	if (g_poll_for_timeouts)
 		g_poll_for_timeouts = false;
-
-	return;
 }
 
 void *ptfsal_polling_closeHandler_thread(void *args)
@@ -222,7 +231,7 @@ int ptfsal_implicit_close_for_nfs(int handle_index_to_close, int close_style)
 	return close_rc;
 }
 
-void ptfsal_terminate_ptfsal_threads()
+void ptfsal_terminate_ptfsal_threads(void)
 {
 	g_terminate_ptfsal_threads = true;
 }

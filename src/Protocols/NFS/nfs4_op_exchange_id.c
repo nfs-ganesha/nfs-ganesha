@@ -40,7 +40,7 @@
 
 int get_raddr(SVCXPRT *xprt)
 {
-	struct sockaddr_storage *ss = xprt->xp_ltaddr.buf;
+	struct sockaddr_storage *ss = svc_getrpclocal(xprt);
 	int addr = 0;
 
 	if (ss == NULL)
@@ -49,9 +49,8 @@ int get_raddr(SVCXPRT *xprt)
 	switch (ss->ss_family) {
 	case AF_INET6:
 		{
-			void *ab;
-			ab = &(((struct sockaddr_in6 *)ss)->sin6_addr.
-			       s6_addr[12]);
+			void *ab = &(((struct sockaddr_in6 *)ss)->
+					sin6_addr.s6_addr[12]);
 			addr = ntohl(*(uint32_t *) ab);
 		}
 		break;
@@ -89,14 +88,15 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op, compound_data_t *data,
 	int len;
 	char *temp;
 	bool update;
+	uint32_t pnfs_flags;
+	in_addr_t server_addr = 0;
+	/* Arguments and response */
 	EXCHANGE_ID4args * const arg_EXCHANGE_ID4 =
 	    &op->nfs_argop4_u.opexchange_id;
 	EXCHANGE_ID4res * const res_EXCHANGE_ID4 =
 	    &resp->nfs_resop4_u.opexchange_id;
 	EXCHANGE_ID4resok * const res_EXCHANGE_ID4_ok =
 	    (&resp->nfs_resop4_u.opexchange_id.EXCHANGE_ID4res_u.eir_resok4);
-	uint32_t pnfs_flags;
-	in_addr_t server_addr = 0;
 
 	resp->resop = NFS4_OP_EXCHANGE_ID;
 
@@ -325,7 +325,8 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (rc != CLIENT_ID_SUCCESS) {
 		/* Record is already freed, return. */
-		res_EXCHANGE_ID4->eir_status = clientid_error_to_nfsstat(rc);
+		res_EXCHANGE_ID4->eir_status =
+					clientid_error_to_nfsstat_no_expire(rc);
 
 		goto out;
 	}

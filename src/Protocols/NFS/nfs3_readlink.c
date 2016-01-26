@@ -53,7 +53,6 @@
  * This function implements the NFSPROC3_READLINK function.
  *
  * @param[in]  arg     NFS argument union
- * @param[in]  worker  Client resource to be used
  * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call
  *
@@ -64,9 +63,7 @@
  * @retval NFS_REQ_FAILED if failed and not retryable
  */
 
-int nfs3_readlink(nfs_arg_t *arg,
-		  nfs_worker_data_t *worker,
-		  struct svc_req *req, nfs_res_t *res)
+int nfs3_readlink(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
 	cache_entry_t *entry = NULL;
 	cache_inode_status_t cache_status;

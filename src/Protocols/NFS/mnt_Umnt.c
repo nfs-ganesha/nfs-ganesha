@@ -40,16 +40,12 @@
  * @brief The Mount proc umount function, for all versions.
  *
  * @param[in]  arg
- * @param[in]  export
- * @param[in]  worker
  * @param[in]  req
  * @param[out] res
  *
  */
 
-int mnt_Umnt(nfs_arg_t *arg,
-	     nfs_worker_data_t *worker,
-	     struct svc_req *req, nfs_res_t *res)
+int mnt_Umnt(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
 	LogDebug(COMPONENT_NFSPROTO,
 		 "REQUEST PROCESSING: Calling mnt_Umnt path %s", arg->arg_mnt);
@@ -70,5 +66,4 @@ int mnt_Umnt(nfs_arg_t *arg,
 void mnt_Umnt_Free(nfs_res_t *res)
 {
 	/* Nothing to do */
-	return;
-}				/* mnt_Umnt_Free */
+}

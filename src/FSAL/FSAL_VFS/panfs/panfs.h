@@ -44,4 +44,17 @@ struct panfs_fsal_export {
 #define EXPORT_PANFS_FROM_FSAL(fsal) \
 	EXPORT_PANFS_FROM_VFS(EXPORT_VFS_FROM_FSAL((fsal)))
 
+struct panfs_fsal_obj_handle {
+	struct vfs_fsal_obj_handle vfs_obj_handle;
+	struct vfs_subfsal_obj_ops panfs_ops;
+};
+
+#define OBJ_PANFS_FROM_VFS(vfs) \
+	container_of((vfs), struct panfs_fsal_obj_handle, vfs_obj_handle)
+
+#define OBJ_PANFS_FROM_FSAL(fsal) \
+	OBJ_PANFS_FROM_VFS(OBJ_VFS_FROM_FSAL((fsal)))
+
+void panfs_handle_ops_init(struct panfs_fsal_obj_handle *panfs_hdl);
+
 #endif /* PANFS_H */

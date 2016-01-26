@@ -153,6 +153,7 @@ int nfs4_op_restorefh(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (isFullDebug(COMPONENT_NFS_V4)) {
 		char str[LEN_FH_STR];
+
 		sprint_fhandle4(str, &data->currentFH);
 		LogFullDebug(COMPONENT_NFS_V4,
 			     "RESTORE FH: Current FH %s",
@@ -173,5 +174,4 @@ int nfs4_op_restorefh(struct nfs_argop4 *op, compound_data_t *data,
 void nfs4_op_restorefh_Free(nfs_resop4 *resp)
 {
 	/* Nothing to be done */
-	return;
-}				/* nfs4_op_restorefh_Free */
+}

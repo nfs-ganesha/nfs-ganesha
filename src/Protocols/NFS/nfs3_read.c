@@ -75,7 +75,6 @@ static void nfs_read_ok(struct svc_req *req,
  * Implements the NFSPROC3_READ function.
  *
  * @param[in]  arg     NFS arguments union
- * @param[in]  worker  Worker thread data
  * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call
  *
@@ -85,9 +84,7 @@ static void nfs_read_ok(struct svc_req *req,
  *
  */
 
-int nfs3_read(nfs_arg_t *arg,
-	      nfs_worker_data_t *worker,
-	      struct svc_req *req, nfs_res_t *res)
+int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
 	cache_entry_t *entry;
 	pre_op_attr pre_attr;
@@ -108,8 +105,9 @@ int nfs3_read(nfs_arg_t *arg,
 
 		nfs_FhandleToStr(req->rq_vers, &arg->arg_read3.file, NULL, str);
 		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling nfs_Read handle: %s "
-			 "start: %" PRIu64 " len: %" PRIu64, str, offset, size);
+			 "REQUEST PROCESSING: Calling nfs_Read handle: %s start: %"
+			 PRIu64 " len: %zu",
+			 str, offset, size);
 	}
 
 	/* to avoid setting it on each error case */
@@ -134,7 +132,7 @@ int nfs3_read(nfs_arg_t *arg,
 	/** @todo this is racy, use cache_inode_lock_trust_attrs and
 	 *        cache_inode_access_no_mutex
 	 */
-	if (entry->obj_handle->attributes.owner != op_ctx->creds->caller_uid) {
+	if (entry->obj_handle->attrs->owner != op_ctx->creds->caller_uid) {
 		cache_status =
 		    cache_inode_access(entry, FSAL_READ_ACCESS);
 
@@ -172,14 +170,14 @@ int nfs3_read(nfs_arg_t *arg,
 	/* do not exceed maxium READ offset if set */
 	if (op_ctx->export->MaxOffsetRead < UINT64_MAX) {
 		LogFullDebug(COMPONENT_NFSPROTO,
-			     "Read offset=%" PRIu64 " count=%zd "
-			     "MaxOffSet=%" PRIu64, offset, size,
-			     op_ctx->export->MaxOffsetRead);
+			     "Read offset=%" PRIu64
+			     " count=%zd MaxOffSet=%" PRIu64,
+			     offset, size, op_ctx->export->MaxOffsetRead);
 
 		if ((offset + size) > op_ctx->export->MaxOffsetRead) {
 			LogEvent(COMPONENT_NFSPROTO,
-				 "A client tryed to violate max "
-				 "file size %" PRIu64 " for exportid #%hu",
+				 "A client tryed to violate max file size %"
+				 PRIu64 " for exportid #%hu",
 				 op_ctx->export->MaxOffsetRead,
 				 op_ctx->export->export_id);
 
@@ -233,7 +231,8 @@ int nfs3_read(nfs_arg_t *arg,
 						&read_size,
 						data,
 						&eof_met,
-						&sync);
+						&sync,
+						NULL);
 
 		state_share_anonymous_io_done(entry, OPEN4_SHARE_ACCESS_READ);
 

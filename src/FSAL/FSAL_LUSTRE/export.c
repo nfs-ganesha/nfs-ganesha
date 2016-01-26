@@ -442,6 +442,31 @@ void free_lustre_filesystem(struct lustre_filesystem *lustre_fs)
 	gsh_free(lustre_fs);
 }
 
+static void check_lustre_fid_permissions(char *fspath)
+{
+	char lustrefid[MAXPATHLEN];
+	struct stat st;
+	int rc;
+
+	rc = snprintf(lustrefid, MAXPATHLEN, "%s/.lustre/fid", fspath);
+	assert(rc >= 0 && rc <= MAXPATHLEN);
+
+	rc = stat(lustrefid, &st);
+	if (rc < 0) {
+		/* Shouldn't happen with previous checks... */
+		LogWarn(COMPONENT_FSAL,
+			"Couldn't stat %s, not a lustre filesystem?",
+			lustrefid);
+		return;
+	}
+
+	if (!(st.st_mode & (S_IXGRP|S_IXOTH))) {
+		LogWarn(COMPONENT_FSAL,
+			"%s isn't group/other executable, users will not be able to access this mount",
+			lustrefid);
+	}
+}
+
 int lustre_claim_filesystem(struct fsal_filesystem *fs, struct fsal_export *exp)
 {
 	struct lustre_filesystem *lustre_fs = fs->private;
@@ -515,6 +540,9 @@ int lustre_claim_filesystem(struct fsal_filesystem *fs, struct fsal_export *exp)
 	retval = llapi_search_fsname(fs->path, lustre_fs->fsname);
 	if (retval)
 		goto errout;
+
+	/* Warn if users don't have access to <fs>/.lustre/fid */
+	check_lustre_fid_permissions(fs->path);
 
 	/* Lustre_fs is ready, store it in the FS */
 	fs->private = lustre_fs;

@@ -51,6 +51,7 @@ struct zfs_fsal_export {
 
 struct zfs_fsal_obj_handle {
 	struct fsal_obj_handle obj_handle;
+	struct attrlist attributes;
 	struct zfs_file_handle *handle;
 	union {
 		struct {

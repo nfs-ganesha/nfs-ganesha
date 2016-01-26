@@ -45,11 +45,21 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "gsh_list.h"
+#include "wait_queue.h"
 
 struct fridgethr;
 
 /*< Decoder thread pool */
 extern struct fridgethr *req_fridge;
+
+/**
+ * @brief Per-worker data.  Some of this will be destroyed.
+ */
+
+typedef struct nfs_worker_data {
+	wait_q_entry_t wqe;	/*< Queue for coordinating with decoder */
+	unsigned int worker_index;	/*< Index for log messages */
+} nfs_worker_data_t;
 
 /**
  * @brief A given thread in the fridge
@@ -60,22 +70,24 @@ struct fridgethr_entry {
 	 * @brief Thread context
 	 */
 	struct fridgethr_context {
-		uint32_t uflags; /*< Flags (for any use) */
-		pthread_t id;	/*< Thread ID */
+		struct nfs_worker_data wd;	/*< Work queue data */
 		pthread_mutex_t mtx;	/*< Mutex for fiddling this
 					   thread */
 		pthread_cond_t cv;	/*< Condition variable to wait for sync
 					 */
 		sigset_t sigmask;	/*< This thread's signal mask */
-		bool woke;	/*< Set to false on first run and if wait
-				   in fridgethr_freeze didn't time out. */
 		void *thread_info;	/*< Information belonging to the
 					   user and associated with the
 					   thread.  Never modified by the
 					   fridgethr code. */
-		void (*func) (struct fridgethr_context *); /*< Function being
+		void (*func)(struct fridgethr_context *); /*< Function being
 							       executed */
 		void *arg;	/*< Functions argument */
+
+		pthread_t id;	/*< Thread ID */
+		uint32_t uflags; /*< Flags (for any use) */
+		bool woke;	/*< Set to false on first run and if wait
+				   in fridgethr_freeze didn't time out. */
 	} ctx;
 	uint32_t flags; /*< Thread-fridge flags (for handoff) */
 	bool frozen; /*< Thread is frozen */
@@ -204,7 +216,7 @@ struct fridgethr {
 	uint32_t nidle;		/*< Number of idle threads */
 	uint32_t flags;		/*< Fridge-wide flags */
 	fridgethr_comm_t command;	/*< Command state */
-	void (*cb_func) (void *);	/*< Callback on command completion */
+	void (*cb_func)(void *);	/*< Callback on command completion */
 	void *cb_arg;		/*< Argument for completion callback */
 	pthread_mutex_t *cb_mtx;	/*< Mutex for completion condition
 					    variable */

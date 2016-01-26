@@ -14,7 +14,7 @@
 #define _GIT_HEAD_COMMIT "@_GIT_HEAD_COMMIT@"
 #define _GIT_DESCRIBE "@_GIT_DESCRIBE@"
 #define BUILD_HOST "@BUILD_HOST_NAME@"
-#define FSAL_MODULE_LOC "@MODULES_PATH@/@FSAL_DESTINATION@"
+#define FSAL_MODULE_LOC "@FSAL_DESTINATION@"
 /* Build controls */
 
 #cmakedefine _MSPAC_SUPPORT 1
@@ -26,7 +26,7 @@
 #cmakedefine PROXY_HANDLE_MAPPING 1
 #cmakedefine _USE_9P 1
 #cmakedefine _USE_9P_RDMA 1
-#cmakedefine _USE_NFS_MSK 1
+#cmakedefine _USE_NFS_RDMA 1
 #cmakedefine USE_FSAL_SHOOK 1
 #cmakedefine USE_FSAL_LUSTRE_UP 1
 #cmakedefine DEBUG_SAL 1
@@ -49,8 +49,12 @@
 #cmakedefine HAVE_XATTR_H 1
 #cmakedefine HAVE_INCLUDE_LUSTREAPI_H 1
 #cmakedefine HAVE_INCLUDE_LIBLUSTREAPI_H 1
+#cmakedefine _LUSTRE_API_HEADER 1
 #cmakedefine HAVE_DAEMON 1
 #cmakedefine USE_LTTNG 1
+#cmakedefine ENABLE_VFS_DEBUG_ACL 1
+#cmakedefine ENABLE_RFC_ACL 1
+#cmakedefine USE_GLUSTER_SYMLINK_MOUNT 1
 
 #define NFS_GANESHA 1
 

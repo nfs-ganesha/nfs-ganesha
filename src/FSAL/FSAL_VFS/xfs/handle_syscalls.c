@@ -47,8 +47,8 @@ void display_xfs_handle(struct display_buffer *dspbuf,
 	xfs_handle_t *hdl = (xfs_handle_t *) fh->handle_data;
 
 	(void) display_printf(dspbuf,
-			      "Handle len %hhu:"
-			      " fsid=0x%016"PRIx32".0x%016"PRIx32
+			      "Handle len %hhu: fsid=0x%016"
+			      PRIx32".0x%016"PRIx32
 			      " fid_len=%"PRIu16
 			      " fid_pad=%"PRIu16
 			      " fid_gen=%"PRIu32
@@ -204,6 +204,7 @@ int vfs_readlink(struct vfs_fsal_obj_handle *hdl,
 {
 	char ldata[MAXPATHLEN + 1];
 	int retval;
+
 	LogXFSHandle(hdl->handle);
 	retval = readlink_by_handle(hdl->handle->handle_data,
 				    hdl->handle->handle_len,
@@ -326,8 +327,8 @@ bool vfs_valid_handle(struct gsh_buffdesc *desc)
 		struct display_buffer dspbuf = {sizeof(buf), buf, buf};
 
 		(void) display_printf(&dspbuf,
-				      "Handle len %d: "
-				      " fsid=0x%016"PRIx32".0x%016"PRIx32
+				      "Handle len %d: fsid=0x%016"
+				      PRIx32".0x%016"PRIx32
 				      " fid_len=%"PRIu16
 				      " fid_pad=%"PRIu16
 				      " fid_gen=%"PRIu32

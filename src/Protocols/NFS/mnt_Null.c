@@ -42,16 +42,12 @@
  * The MOUNT proc null function, for all versions.
  *
  * @param[in]  arg     ignored
- * @param[in]  export  ignored
- * @param[in]  worker  ignored
  * @param[in]  req     ignored
  * @param[out] res     ignored
  *
  */
 
-int mnt_Null(nfs_arg_t *arg,
-	     nfs_worker_data_t *worker,
-	     struct svc_req *req, nfs_res_t *res)
+int mnt_Null(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
 	LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling mnt_Null");
 	return MNT3_OK;
@@ -65,5 +61,5 @@ int mnt_Null(nfs_arg_t *arg,
  */
 void mnt_Null_Free(nfs_res_t *res)
 {
-	return;
+	/* return */
 }

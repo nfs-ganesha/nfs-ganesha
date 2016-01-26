@@ -52,7 +52,6 @@
  * Implements the NFSPROC3_RENAME function.
  *
  * @param[in]  arg     NFS argument union
- * @param[in]  worker  Worker thread data
  * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call
  *
@@ -62,9 +61,7 @@
  *
  */
 
-int nfs3_rename(nfs_arg_t *arg,
-		nfs_worker_data_t *worker,
-		struct svc_req *req, nfs_res_t *res)
+int nfs3_rename(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
 	const char *entry_name = arg->arg_rename3.from.name;
 	const char *new_entry_name = arg->arg_rename3.to.name;
@@ -96,9 +93,8 @@ int nfs3_rename(nfs_arg_t *arg,
 				 strto);
 
 		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling nfs_Rename from "
-			 "handle: %s name %s to handle: %s name: %s", strfrom,
-			 entry_name, strto, new_entry_name);
+			 "REQUEST PROCESSING: Calling nfs_Rename from handle: %s name %s to handle: %s name: %s",
+			 strfrom, entry_name, strto, new_entry_name);
 	}
 
 	/* to avoid setting it on each error case */
@@ -218,5 +214,5 @@ int nfs3_rename(nfs_arg_t *arg,
  */
 void nfs3_rename_free(nfs_res_t *res)
 {
-	return;
+	/* Nothing to do here */
 }

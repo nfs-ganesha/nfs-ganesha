@@ -36,15 +36,11 @@
  * @brief Free All Locks
  *
  * @param[in]  arg
- * @param[in]  export
- * @param[in]  worker
  * @param[in]  req
  * @param[out] res
  */
 
-int nlm4_Free_All(nfs_arg_t *args,
-		  nfs_worker_data_t *worker,
-		  struct svc_req *req, nfs_res_t *res)
+int nlm4_Free_All(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 {
 	nlm4_free_allargs *arg = &args->arg_nlm4_free_allargs;
 	state_status_t state_status = STATE_SUCCESS;
@@ -63,8 +59,7 @@ int nlm4_Free_All(nfs_arg_t *args,
 		 * by this NLM_FREE_ALL.
 		 */
 		state_status =
-		    state_nlm_notify(nsm_client, true,
-				     (void *)(ptrdiff_t) arg->state);
+		    state_nlm_notify(nsm_client, false, 0);
 		if (state_status != STATE_SUCCESS) {
 			/* NLM_FREE_ALL has void result so all we can do is
 			 * log error
@@ -92,5 +87,5 @@ int nlm4_Free_All(nfs_arg_t *args,
  */
 void nlm4_Free_All_Free(nfs_res_t *res)
 {
-	return;
+	/* Nothing to do */
 }

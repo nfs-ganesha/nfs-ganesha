@@ -117,6 +117,7 @@ struct pxy_handle_blob {
 
 struct pxy_obj_handle {
 	struct fsal_obj_handle obj;
+	struct attrlist attributes;
 	nfs_fh4 fh4;
 #ifdef PROXY_HANDLE_MAPPING
 	nfs23_map_handle_t h23;
@@ -390,6 +391,7 @@ static int pxy_rpc_read_reply(int sock)
 
 	while (cnt < 8) {
 		int bc = read(sock, buf + cnt, 8 - cnt);
+
 		if (bc < 0)
 			return -errno;
 		cnt += bc;
@@ -458,8 +460,10 @@ static int pxy_connect(struct pxy_client_params *info,
 		       struct sockaddr_in *dest)
 {
 	int sock;
+
 	if (info->use_privileged_client_port) {
 		int priv_port = 0;
+
 		sock = rresvport(&priv_port);
 		if (sock < 0)
 			LogCrit(COMPONENT_FSAL,
@@ -504,6 +508,7 @@ static void *pxy_rpc_recv(void *arg)
 
 	for (;;) {
 		int nsleeps = 0;
+
 		PTHREAD_MUTEX_lock(&listlock);
 		do {
 			rpc_sock = pxy_connect(info, &addr_rpc);
@@ -522,8 +527,7 @@ static void *pxy_rpc_recv(void *arg)
 				PTHREAD_MUTEX_lock(&listlock);
 			} else {
 				LogDebug(COMPONENT_FSAL,
-					 "Connected after %d sleeps, "
-					 "resending outstanding calls",
+					 "Connected after %d sleeps, resending outstanding calls",
 					 nsleeps);
 			}
 		} while (rpc_sock < 0);
@@ -545,8 +549,7 @@ static void *pxy_rpc_recv(void *arg)
 			default:
 				if (pfd.revents & POLLRDHUP) {
 					LogEvent(COMPONENT_FSAL,
-						 "Other end has closed "
-						 "connection, reconnecting...");
+						 "Other end has closed connection, reconnecting...");
 				} else if (pfd.revents & POLLNVAL) {
 					LogEvent(COMPONENT_FSAL,
 						 "Socket is closed");
@@ -579,6 +582,7 @@ static enum clnt_stat pxy_process_reply(struct pxy_rpc_io_context *ctx,
 
 	while (!ctx->iodone) {
 		int w = pthread_cond_timedwait(&ctx->iowait, &ctx->iolock, &ts);
+
 		if (w == ETIMEDOUT) {
 			PTHREAD_MUTEX_unlock(&ctx->iolock);
 			return RPC_TIMEDOUT;
@@ -721,12 +725,14 @@ static int pxy_compoundv4_call(struct pxy_rpc_io_context *pcontext,
 		do {
 			int bc = 0;
 			char *buf = pcontext->sendbuf;
+
 			LogDebug(COMPONENT_FSAL, "%ssend XID %u with %d bytes",
 				 (first_try ? "First attempt to " : "Re"),
 				 rmsg.rm_xid, pos);
 			PTHREAD_MUTEX_lock(&listlock);
 			while (bc < pos) {
 				int wc = write(rpc_sock, buf, pos - bc);
+
 				if (wc <= 0) {
 					close(rpc_sock);
 					break;
@@ -901,7 +907,7 @@ static void *pxy_clientid_renewer(void *Arg)
 
 		if (!needed && pxy_rpc_renewer_wait(lease_time - 5)) {
 			/* Simply renew the client id you've got */
-			LogDebug(COMPONENT_FSAL, "Renewing client id %lx",
+			LogDebug(COMPONENT_FSAL, "Renewing client id %" PRIx64,
 				 pxy_clientid);
 			arg.argop = NFS4_OP_RENEW;
 			arg.nfs_argop4_u.oprenew.clientid = pxy_clientid;
@@ -909,7 +915,8 @@ static void *pxy_clientid_renewer(void *Arg)
 						    &res);
 			if (rc == NFS4_OK) {
 				LogDebug(COMPONENT_FSAL,
-					 "Renewed client id %lx", pxy_clientid);
+					 "Renewed client id %" PRIx64,
+					 pxy_clientid);
 				continue;
 			}
 		}
@@ -931,9 +938,11 @@ static void *pxy_clientid_renewer(void *Arg)
 static void free_io_contexts(void)
 {
 	struct glist_head *cur, *n;
+
 	glist_for_each_safe(cur, n, &free_contexts) {
 		struct pxy_rpc_io_context *c =
 		    container_of(cur, struct pxy_rpc_io_context, calls);
+
 		glist_del(cur);
 		gsh_free(c);
 	}
@@ -1247,7 +1256,7 @@ static fsal_status_t pxy_create(struct fsal_obj_handle *dir_hdl,
 			     &fhok->object, handle);
 	if (FSAL_IS_ERROR(st))
 		return st;
-	*attrib = (*handle)->attributes;
+	*attrib = *(*handle)->attrs;
 	return st;
 }
 
@@ -1305,7 +1314,7 @@ static fsal_status_t pxy_mkdir(struct fsal_obj_handle *dir_hdl,
 			     &atok->obj_attributes,
 			     &fhok->object, handle);
 	if (!FSAL_IS_ERROR(st))
-		*attrib = (*handle)->attributes;
+		*attrib = *(*handle)->attrs;
 	return st;
 }
 
@@ -1390,7 +1399,7 @@ static fsal_status_t pxy_mknod(struct fsal_obj_handle *dir_hdl,
 			     &atok->obj_attributes,
 			     &fhok->object, handle);
 	if (!FSAL_IS_ERROR(st))
-		*attrib = (*handle)->attributes;
+		*attrib = *(*handle)->attrs;
 	return st;
 }
 
@@ -1449,7 +1458,7 @@ static fsal_status_t pxy_symlink(struct fsal_obj_handle *dir_hdl,
 			     &atok->obj_attributes,
 			     &fhok->object, handle);
 	if (!FSAL_IS_ERROR(st))
-		*attrib = (*handle)->attributes;
+		*attrib = *(*handle)->attrs;
 	return st;
 }
 
@@ -1474,8 +1483,8 @@ static fsal_status_t pxy_readlink(struct fsal_obj_handle *obj_hdl,
 	   the file handle. */
 
 	link_content->len =
-	    obj_hdl->attributes.filesize ? (obj_hdl->attributes.filesize +
-					    1) : fsal_default_linksize;
+	    ph->attributes.filesize ? (ph->attributes.filesize + 1)
+				    : fsal_default_linksize;
 	link_content->addr = gsh_malloc(link_content->len);
 
 	if (link_content->addr == NULL)
@@ -1681,7 +1690,7 @@ static fsal_status_t pxy_getattrs(struct fsal_obj_handle *obj_hdl)
 	st = pxy_getattrs_impl(op_ctx->creds, op_ctx->fsal_export,
 			       &ph->fh4, &obj_attr);
 	if (!FSAL_IS_ERROR(st))
-		obj_hdl->attributes = obj_attr;
+		ph->attributes = obj_attr;
 	return st;
 }
 
@@ -1735,10 +1744,10 @@ static fsal_status_t pxy_setattrs(struct fsal_obj_handle *obj_hdl,
 	rc = nfs4_Fattr_To_FSAL_attr(&attrs_after, &atok->obj_attributes, NULL);
 	if (rc != NFS4_OK) {
 		LogWarn(COMPONENT_FSAL,
-			"Attribute conversion fails with %d, "
-			"ignoring attibutes after making changes", rc);
+			"Attribute conversion fails with %d, ignoring attibutes after making changes",
+			rc);
 	} else {
-		obj_hdl->attributes = attrs_after;
+		ph->attributes = attrs_after;
 	}
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
@@ -1779,7 +1788,7 @@ static fsal_status_t pxy_unlink(struct fsal_obj_handle *dir_hdl,
 
 	if (nfs4_Fattr_To_FSAL_attr(&dirattr, &atok->obj_attributes, NULL) ==
 	    NFS4_OK)
-		dir_hdl->attributes = dirattr;
+		ph->attributes = dirattr;
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -2049,11 +2058,13 @@ static struct pxy_obj_handle *pxy_alloc_handle(struct fsal_export *exp,
 		n->fh4 = *fh;
 		n->fh4.nfs_fh4_val = n->blob.bytes;
 		memcpy(n->blob.bytes, fh->nfs_fh4_val, fh->nfs_fh4_len);
-		n->obj.attributes = *attr;
+		n->obj.attrs = &n->attributes;
+		n->attributes = *attr;
 		n->blob.len = fh->nfs_fh4_len + sizeof(n->blob);
 		n->blob.type = attr->type;
 #ifdef PROXY_HANDLE_MAPPING
 		int rc;
+
 		memset(&n->h23, 0, sizeof(n->h23));
 		n->h23.len = sizeof(n->h23);
 		n->h23.type = PXY_HANDLE_MAPPED;
@@ -2213,7 +2224,7 @@ fsal_status_t pxy_extract_handle(struct fsal_export *exp_hdl,
 #endif
 	if (fh_desc->len != fh_size) {
 		LogMajor(COMPONENT_FSAL,
-			 "Size mismatch for handle.  should be %lu, got %lu",
+			 "Size mismatch for handle.  should be %zu, got %zu",
 			 fh_size, fh_desc->len);
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 	}

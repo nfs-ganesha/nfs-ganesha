@@ -1,5 +1,3 @@
-add_subdirectory(HPSSclapiExt)
-
 ########### next target ###############
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror")
@@ -23,6 +21,7 @@ SET(fsalhpss_LIB_SRCS
 add_library(fsalhpss SHARED ${fsalhpss_LIB_SRCS})
 
 target_link_libraries(fsalhpss
+  tirpc
   ${HPSS_LIBRARIES}
   ${SYSTEM_LIBRARIES}
 )

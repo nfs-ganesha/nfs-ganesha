@@ -119,6 +119,7 @@ int display_nsm_client(struct display_buffer *dspbuf, state_nsm_client_t *key)
 int display_nsm_client_key(struct gsh_buffdesc *buff, char *str)
 {
 	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
+
 	display_nsm_client(&dspbuf, buff->addr);
 	return display_buffer_len(&dspbuf);
 }
@@ -134,6 +135,7 @@ int display_nsm_client_key(struct gsh_buffdesc *buff, char *str)
 int display_nsm_client_val(struct gsh_buffdesc *buff, char *str)
 {
 	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
+
 	display_nsm_client(&dspbuf, buff->addr);
 	return display_buffer_len(&dspbuf);
 }
@@ -332,6 +334,7 @@ int display_nlm_client(struct display_buffer *dspbuf, state_nlm_client_t *key)
 int display_nlm_client_key(struct gsh_buffdesc *buff, char *str)
 {
 	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
+
 	display_nlm_client(&dspbuf, buff->addr);
 	return display_buffer_len(&dspbuf);
 }
@@ -347,6 +350,7 @@ int display_nlm_client_key(struct gsh_buffdesc *buff, char *str)
 int display_nlm_client_val(struct gsh_buffdesc *buff, char *str)
 {
 	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
+
 	display_nlm_client(&dspbuf, buff->addr);
 	return display_buffer_len(&dspbuf);
 }
@@ -538,6 +542,7 @@ int display_nlm_owner(struct display_buffer *dspbuf, state_owner_t *owner)
 int display_nlm_owner_key(struct gsh_buffdesc *buff, char *str)
 {
 	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
+
 	display_nlm_owner(&dspbuf, buff->addr);
 	return display_buffer_len(&dspbuf);
 }
@@ -553,6 +558,7 @@ int display_nlm_owner_key(struct gsh_buffdesc *buff, char *str)
 int display_nlm_owner_val(struct gsh_buffdesc *buff, char *str)
 {
 	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
+
 	display_nlm_owner(&dspbuf, buff->addr);
 	return display_buffer_len(&dspbuf);
 }
@@ -848,21 +854,11 @@ void dec_nsm_client_ref(state_nsm_client_t *client)
 	}
 
 	/* use the key to delete the entry */
-	rc = hashtable_deletelatched(ht_nsm_client, &buffkey, &latch, &old_key,
-				     &old_value);
+	hashtable_deletelatched(ht_nsm_client, &buffkey, &latch, &old_key,
+				&old_value);
 
-	if (rc != HASHTABLE_SUCCESS) {
-		if (rc == HASHTABLE_ERROR_NO_SUCH_KEY)
-			hashtable_releaselatched(ht_nsm_client, &latch);
-
-		if (!str_valid)
-			display_nsm_client(&dspbuf, client);
-
-		LogCrit(COMPONENT_STATE, "Error %s, could not remove {%s}",
-			hash_table_err_to_str(rc), str);
-
-		return;
-	}
+	/* Release the latch */
+	hashtable_releaselatched(ht_nsm_client, &latch);
 
 	LogFullDebug(COMPONENT_STATE, "Free {%s}", str);
 
@@ -980,6 +976,8 @@ state_nsm_client_t *get_nsm_client(care_t care, SVCXPRT *xprt,
 		display_nsm_client(&dspbuf, &key);
 		LogCrit(COMPONENT_STATE, "No memory for {%s}", str);
 
+		hashtable_releaselatched(ht_nsm_client, &latch);
+
 		return NULL;
 	}
 
@@ -994,6 +992,7 @@ state_nsm_client_t *get_nsm_client(care_t care, SVCXPRT *xprt,
 		/* Discard the created client */
 		PTHREAD_MUTEX_destroy(&pclient->ssc_mutex);
 		free_nsm_client(pclient);
+		hashtable_releaselatched(ht_nsm_client, &latch);
 		return NULL;
 	}
 
@@ -1145,21 +1144,11 @@ void dec_nlm_client_ref(state_nlm_client_t *client)
 	}
 
 	/* use the key to delete the entry */
-	rc = hashtable_deletelatched(ht_nlm_client, &buffkey, &latch, &old_key,
-				     &old_value);
+	hashtable_deletelatched(ht_nlm_client, &buffkey, &latch, &old_key,
+				&old_value);
 
-	if (rc != HASHTABLE_SUCCESS) {
-		if (rc == HASHTABLE_ERROR_NO_SUCH_KEY)
-			hashtable_releaselatched(ht_nlm_client, &latch);
-
-		if (!str_valid)
-			display_nlm_client(&dspbuf, client);
-
-		LogCrit(COMPONENT_STATE, "Error %s, could not remove {%s}",
-			hash_table_err_to_str(rc), str);
-
-		return;
-	}
+	/* Release the latch */
+	hashtable_releaselatched(ht_nlm_client, &latch);
 
 	if (str_valid)
 		LogFullDebug(COMPONENT_STATE, "Free {%s}", str);

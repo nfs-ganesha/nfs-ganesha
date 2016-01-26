@@ -109,8 +109,6 @@ cache_inode_err_str(cache_inode_status_t err)
 		return "CACHE_INODE_ESTALE";
 	case CACHE_INODE_FSAL_ERR_SEC:
 		return "CACHE_INODE_FSAL_ERR_SEC";
-	case CACHE_INODE_STATE_CONFLICT:
-		return "CACHE_INODE_STATE_CONFLICT";
 	case CACHE_INODE_QUOTA_EXCEEDED:
 		return "CACHE_INODE_QUOTA_EXCEEDED";
 	case CACHE_INODE_ASYNC_POST_ERROR:
@@ -139,8 +137,8 @@ cache_inode_err_str(cache_inode_status_t err)
 		return "CACHE_INODE_SERVERFAULT";
 	case CACHE_INODE_TOOSMALL:
 		return "CACHE_INODE_TOOSMALL";
-	case CACHE_INODE_FSAL_SHARE_DENIED:
-		return "CACHE_INODE_FSAL_SHARE_DENIED";
+	case CACHE_INODE_SHARE_DENIED:
+		return "CACHE_INODE_SHARE_DENIED";
 	case CACHE_INODE_BADNAME:
 		return "CACHE_INODE_BADNAME";
 	case CACHE_INODE_IN_GRACE:
@@ -149,6 +147,12 @@ cache_inode_err_str(cache_inode_status_t err)
 		return "CACHE_INODE_CROSS_JUNCTION";
 	case CACHE_INODE_BADHANDLE:
 		return "CACHE_INODE_BADHANDLE";
+	case CACHE_INODE_NO_DATA:
+		return "CACHE_INODE_NO_DATA";
+	case CACHE_INODE_BAD_RANGE:
+		return "CACHE_INODE_BAD_RANGE";
+	case CACHE_INODE_LOCKED:
+		return "CACHE_INODE_LOCKED";
 	}
 	return "unknown";
 }
@@ -259,8 +263,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 	if (oentry) {
 		/* Entry is already in the cache, do not add it */
 		LogDebug(COMPONENT_CACHE_INODE,
-			 "Trying to add an already existing "
-			 "entry 1. Found entry %p type: %d, New type: %d",
+			 "Trying to add an already existing entry 1. Found entry %p type: %d, New type: %d",
 			 oentry, oentry->type, new_obj->type);
 		status = cache_inode_lru_ref(oentry, LRU_FLAG_NONE);
 		if (status == CACHE_INODE_SUCCESS) {
@@ -374,7 +377,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 	case BLOCK_FILE:
 	case CHARACTER_FILE:
 		LogDebug(COMPONENT_CACHE_INODE,
-			 "Adding a special file of type %d " "entry=%p",
+			 "Adding a special file of type %d entry=%p",
 			 nentry->type, nentry);
 		break;
 
@@ -389,8 +392,8 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 
 	nentry->obj_handle = new_obj;
 
-	if (nentry->obj_handle->attributes.expire_time_attr == 0) {
-		nentry->obj_handle->attributes.expire_time_attr =
+	if (nentry->obj_handle->attrs->expire_time_attr == 0) {
+		nentry->obj_handle->attrs->expire_time_attr =
 					op_ctx->export->expire_time_attr;
 	}
 
@@ -649,8 +652,7 @@ cache_inode_error_convert(fsal_status_t fsal_status)
 
 	case ERR_FSAL_NOT_OPENED:
 		LogDebug(COMPONENT_CACHE_INODE,
-			 "Conversion of ERR_FSAL_NOT_OPENED to "
-			 "CACHE_INODE_FSAL_ERROR");
+			 "Conversion of ERR_FSAL_NOT_OPENED to CACHE_INODE_FSAL_ERROR");
 		return CACHE_INODE_FSAL_ERROR;
 
 	case ERR_FSAL_ISDIR:
@@ -678,7 +680,10 @@ cache_inode_error_convert(fsal_status_t fsal_status)
 		return CACHE_INODE_TOOSMALL;
 
 	case ERR_FSAL_SHARE_DENIED:
-		return CACHE_INODE_FSAL_SHARE_DENIED;
+		return CACHE_INODE_SHARE_DENIED;
+
+	case ERR_FSAL_LOCKED:
+		return CACHE_INODE_LOCKED;
 
 	case ERR_FSAL_IN_GRACE:
 		return CACHE_INODE_IN_GRACE;
@@ -686,17 +691,23 @@ cache_inode_error_convert(fsal_status_t fsal_status)
 	case ERR_FSAL_BADHANDLE:
 		return CACHE_INODE_BADHANDLE;
 
+	case ERR_FSAL_NO_DATA:
+		return CACHE_INODE_NO_DATA;
+
+	case ERR_FSAL_BAD_RANGE:
+		return CACHE_INODE_BAD_RANGE;
+
 	case ERR_FSAL_BLOCKED:
 	case ERR_FSAL_INTERRUPT:
 	case ERR_FSAL_NOT_INIT:
 	case ERR_FSAL_ALREADY_INIT:
 	case ERR_FSAL_BAD_INIT:
 	case ERR_FSAL_TIMEOUT:
+	case ERR_FSAL_NO_ACE:
 		/* These errors should be handled inside Cache Inode (or
 		 * should never be seen by Cache Inode) */
 		LogDebug(COMPONENT_CACHE_INODE,
-			 "Conversion of FSAL error %d,%d to "
-			 "CACHE_INODE_FSAL_ERROR",
+			 "Conversion of FSAL error %d,%d to CACHE_INODE_FSAL_ERROR",
 			 fsal_status.major, fsal_status.minor);
 		return CACHE_INODE_FSAL_ERROR;
 	}
@@ -704,9 +715,7 @@ cache_inode_error_convert(fsal_status_t fsal_status)
 	/* We should never reach this line, this may produce a warning with
 	 * certain compiler */
 	LogCrit(COMPONENT_CACHE_INODE,
-		"cache_inode_error_convert: default conversion to "
-		"CACHE_INODE_FSAL_ERROR for error %d, line %u should never be "
-		"reached",
+		"cache_inode_error_convert: default conversion to CACHE_INODE_FSAL_ERROR for error %d, line %u should never be reached",
 		fsal_status.major, __LINE__);
 	return CACHE_INODE_FSAL_ERROR;
 }
@@ -856,14 +865,14 @@ cache_inode_lock_trust_attrs(cache_entry_t *entry,
 			goto out;
 	}
 
-	oldmtime = entry->obj_handle->attributes.mtime.tv_sec;
+	oldmtime = entry->obj_handle->attrs->mtime.tv_sec;
 
 	cache_status = cache_inode_refresh_attrs(entry);
 	if (cache_status != CACHE_INODE_SUCCESS)
 		goto unlock;
 
 	if ((entry->type == DIRECTORY)
-	    && (oldmtime < entry->obj_handle->attributes.mtime.tv_sec)) {
+	    && (oldmtime < entry->obj_handle->attrs->mtime.tv_sec)) {
 		PTHREAD_RWLOCK_wrlock(&entry->content_lock);
 
 		cache_status = cache_inode_invalidate_all_cached_dirent(entry);
@@ -872,8 +881,8 @@ cache_inode_lock_trust_attrs(cache_entry_t *entry,
 
 		if (cache_status != CACHE_INODE_SUCCESS) {
 			LogCrit(COMPONENT_CACHE_INODE,
-				"cache_inode_invalidate_all_cached_dirent "
-				"returned %d (%s)", cache_status,
+				"cache_inode_invalidate_all_cached_dirent returned %d (%s)",
+				cache_status,
 				cache_inode_err_str(cache_status));
 			goto unlock;
 		}

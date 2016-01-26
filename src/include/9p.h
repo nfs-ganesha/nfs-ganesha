@@ -35,10 +35,12 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <sys/select.h>
+#include <fcntl.h>
 
 #include "9p_types.h"
 #include "fsal_types.h"
 #include "cache_inode.h"
+#include "sal_data.h"
 
 #ifdef _USE_9P_RDMA
 #include <infiniband/arch.h>
@@ -281,17 +283,30 @@ struct _9p_qid {
 				 *  for a file system element */
 };
 
+/**
+ * @brief Internal 9P structure containing client credentials.
+ *
+ * This structure wraps struct user_cred, adding a refcounter to know when it
+ * should be released (it is shared between several op_ctx and fids).
+ */
+struct _9p_user_cred {
+	struct user_cred creds; /*< Credentials. */
+	int64_t refcount; /*< Counter of references (to the container or the
+			   * creds field). */
+};
+
 struct _9p_fid {
 	u32 fid;
-	struct req_op_context op_context;
-	struct user_cred ucred;
+	/** Ganesha export of the file (refcounted). */
+	struct gsh_export *export;
+	struct _9p_user_cred *ucred; /*< Client credentials (refcounted). */
 	struct group_data *gdata;
 	cache_entry_t *pentry;
 	struct _9p_qid qid;
+	struct state_t state;
 	cache_entry_t *ppentry;
 	char name[MAXNAMLEN];
 	u32 opens;
-	bool from_attach;
 	union {
 		u32 iounit;
 		struct _9p_xattr_desc {
@@ -390,7 +405,7 @@ struct _9p_request_data {
 };
 
 typedef int (*_9p_function_t) (struct _9p_request_data *req9p,
-			       void *worker_data, u32 *plenout, char *preply);
+			       u32 *plenout, char *preply);
 
 struct _9p_function_desc {
 	_9p_function_t service_function;
@@ -646,6 +661,53 @@ extern struct config_block _9p_param_blk;
 int _9p_init(void);
 
 /* Tools functions */
+
+/**
+ * @brief Increment the refcounter of a _9p_user_cred structure.
+ *
+ * @param creds Reference that is being copied.
+ */
+void get_9p_user_cred_ref(struct _9p_user_cred *creds);
+
+/**
+ * @brief Release a reference to an _9p_user_cred structure.
+ *
+ * This function decrements the refcounter of the containing _9p_user_cred
+ * structure. If this counter reaches 0, the structure is freed.
+ *
+ * @param creds The reference that is released.
+ */
+void release_9p_user_cred_ref(struct _9p_user_cred *creds);
+
+/**
+ * @brief Initialize op_ctx for the current request.
+ *
+ * op_ctx must point to an allocated structure.
+ *
+ * @param pfid fid used to initialize the context.
+ * @param req9p request date used to initialize export_perms. It can be NULL,
+ * in this case export_perms will be uninitialized.
+ */
+void _9p_init_opctx(struct _9p_fid *pfid, struct _9p_request_data *req9p);
+
+/**
+ * @brief Release resources taken by _9p_init_opctx.
+ *
+ * op_ctx contains several pointers to refcounted objects. This function
+ * decrements these counters and sets the associated fields to NULL.
+ */
+void _9p_release_opctx(void);
+
+/**
+ * @brief Free this fid after releasing its resources.
+ *
+ * This function can be used to free a partially allocated fid, when an error
+ * occurs. To release a valid fid, use _9p_tools_clunk instead.
+ *
+ * @param[in,out] pfid pointer to fid entry.
+ */
+void free_fid(struct _9p_fid *pfid);
+
 int _9p_tools_get_req_context_by_uid(u32 uid, struct _9p_fid *pfid);
 int _9p_tools_get_req_context_by_name(int uname_len, char *uname_str,
 				      struct _9p_fid *pfid);
@@ -653,6 +715,20 @@ int _9p_tools_errno(cache_inode_status_t cache_status);
 void _9p_openflags2FSAL(u32 *inflags, fsal_openflags_t *outflags);
 int _9p_tools_clunk(struct _9p_fid *pfid);
 void _9p_cleanup_fids(struct _9p_conn *conn);
+
+static inline unsigned int _9p_openflags_to_share_access(u32 *inflags)
+{
+	switch ((*inflags) & O_ACCMODE) {
+	case O_RDONLY:
+		return OPEN4_SHARE_ACCESS_READ;
+	case O_WRONLY:
+		return OPEN4_SHARE_ACCESS_WRITE;
+	case O_RDWR:
+		return OPEN4_SHARE_ACCESS_READ | OPEN4_SHARE_ACCESS_WRITE;
+	default:
+		return 0;
+	}
+}
 
 #ifdef _USE_9P_RDMA
 /* 9P/RDMA callbacks */
@@ -674,94 +750,65 @@ void _9p_ReleaseFlushHook(struct _9p_request_data *req);
 void _9p_DiscardFlushHook(struct _9p_request_data *req);
 
 /* Protocol functions */
-int _9p_not_2000L(struct _9p_request_data *req9p, void *worker_data,
-		u32 *plenout, char *preply);
+int _9p_not_2000L(struct _9p_request_data *req9p, u32 *plenout, char *preply);
 
-int _9p_clunk(struct _9p_request_data *req9p, void *worker_data,
-	      u32 *plenout, char *preply);
+int _9p_clunk(struct _9p_request_data *req9p, u32 *plenout, char *preply);
 
-int _9p_attach(struct _9p_request_data *req9p, void *worker_data,
+int _9p_attach(struct _9p_request_data *req9p, u32 *plenout, char *preply);
+
+int _9p_auth(struct _9p_request_data *req9p, u32 *plenout, char *preply);
+
+int _9p_lcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply);
+
+int _9p_flush(struct _9p_request_data *req9p, u32 *plenout, char *preply);
+
+int _9p_getattr(struct _9p_request_data *req9p, u32 *plenout, char *preply);
+
+int _9p_getlock(struct _9p_request_data *req9p, u32 *plenout, char *preply);
+
+int _9p_link(struct _9p_request_data *req9p, u32 *plenout, char *preply);
+
+int _9p_lock(struct _9p_request_data *req9p, u32 *plenout, char *preply);
+
+int _9p_lopen(struct _9p_request_data *req9p, u32 *plenout, char *preply);
+
+int _9p_mkdir(struct _9p_request_data *req9p, u32 *plenout, char *preply);
+
+int _9p_mknod(struct _9p_request_data *req9p, u32 *plenout, char *preply);
+
+int _9p_read(struct _9p_request_data *req9p, u32 *plenout, char *preply);
+
+int _9p_readdir(struct _9p_request_data *req9p, u32 *plenout, char *preply);
+
+int _9p_readlink(struct _9p_request_data *req9p, u32 *plenout, char *preply);
+
+int _9p_setattr(struct _9p_request_data *req9p, u32 *plenout, char *preply);
+
+int _9p_symlink(struct _9p_request_data *req9p, u32 *plenout, char *preply);
+
+int _9p_remove(struct _9p_request_data *req9p, u32 *plenout, char *preply);
+
+int _9p_rename(struct _9p_request_data *req9p, u32 *plenout, char *preply);
+
+int _9p_renameat(struct _9p_request_data *req9p, u32 *plenout, char *preply);
+
+int _9p_statfs(struct _9p_request_data *req9p, u32 *plenout, char *preply);
+
+int _9p_fsync(struct _9p_request_data *req9p, u32 *plenout, char *preply);
+
+int _9p_unlinkat(struct _9p_request_data *req9p, u32 *plenout, char *preply);
+
+int _9p_version(struct _9p_request_data *req9p, u32 *plenout, char *preply);
+
+int _9p_walk(struct _9p_request_data *req9p, u32 *plenout, char *preply);
+
+int _9p_write(struct _9p_request_data *req9p, u32 *plenout, char *preply);
+
+int _9p_xattrcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply);
+
+int _9p_xattrwalk(struct _9p_request_data *req9p, u32 *plenout, char *preply);
+
+int _9p_rerror(struct _9p_request_data *req9p, u16 *msgtag, u32 err,
 	       u32 *plenout, char *preply);
-
-int _9p_auth(struct _9p_request_data *req9p, void *worker_data,
-	     u32 *plenout, char *preply);
-
-int _9p_lcreate(struct _9p_request_data *req9p, void *worker_data,
-		u32 *plenout, char *preply);
-
-int _9p_flush(struct _9p_request_data *req9p, void *worker_data,
-	      u32 *plenout, char *preply);
-
-int _9p_getattr(struct _9p_request_data *req9p, void *worker_data,
-		u32 *plenout, char *preply);
-
-int _9p_getlock(struct _9p_request_data *req9p, void *worker_data,
-		u32 *plenout, char *preply);
-
-int _9p_link(struct _9p_request_data *req9p, void *worker_data,
-	     u32 *plenout, char *preply);
-
-int _9p_lock(struct _9p_request_data *req9p, void *worker_data,
-	     u32 *plenout, char *preply);
-
-int _9p_lopen(struct _9p_request_data *req9p, void *worker_data,
-	      u32 *plenout, char *preply);
-
-int _9p_mkdir(struct _9p_request_data *req9p, void *worker_data,
-	      u32 *plenout, char *preply);
-
-int _9p_mknod(struct _9p_request_data *req9p, void *worker_data,
-	      u32 *plenout, char *preply);
-
-int _9p_read(struct _9p_request_data *req9p, void *worker_data,
-	     u32 *plenout, char *preply);
-
-int _9p_readdir(struct _9p_request_data *req9p, void *worker_data,
-		u32 *plenout, char *preply);
-
-int _9p_readlink(struct _9p_request_data *req9p, void *worker_data,
-		 u32 *plenout, char *preply);
-
-int _9p_setattr(struct _9p_request_data *req9p, void *worker_data,
-		u32 *plenout, char *preply);
-
-int _9p_symlink(struct _9p_request_data *req9p, void *worker_data,
-		u32 *plenout, char *preply);
-
-int _9p_remove(struct _9p_request_data *req9p, void *worker_data,
-	       u32 *plenout, char *preply);
-
-int _9p_rename(struct _9p_request_data *req9p, void *worker_data,
-	       u32 *plenout, char *preply);
-
-int _9p_renameat(struct _9p_request_data *req9p, void *worker_data,
-		u32 *plenout, char *preply);
-
-int _9p_statfs(struct _9p_request_data *req9p, void *worker_data,
-	       u32 *plenout, char *preply);
-
-int _9p_fsync(struct _9p_request_data *req9p, void *worker_data,
-	      u32 *plenout, char *preply);
-
-int _9p_unlinkat(struct _9p_request_data *req9p, void *worker_data,
-		 u32 *plenout, char *preply);
-
-int _9p_version(struct _9p_request_data *req9p, void *worker_data,
-		u32 *plenout, char *preply);
-
-int _9p_walk(struct _9p_request_data *req9p, void *worker_data,
-	     u32 *plenout, char *preply);
-
-int _9p_write(struct _9p_request_data *req9p, void *worker_data,
-	      u32 *plenout, char *preply);
-
-int _9p_xattrcreate(struct _9p_request_data *req9p, void *worker_data,
-		    u32 *plenout, char *preply);
-
-int _9p_xattrwalk(struct _9p_request_data *req9p, void *worker_data,
-		  u32 *plenout, char *preply);
-
-int _9p_rerror(struct _9p_request_data *req9p, void *worker_data, u16 *msgtag,
-	       u32 err, u32 *plenout, char *preply);
 
 #endif				/* _9P_H */

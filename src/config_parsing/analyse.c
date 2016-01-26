@@ -191,7 +191,7 @@ void print_parse_tree(FILE *output, struct config_root *tree)
 
 	assert(tree->root.type == TYPE_ROOT);
 	fprintf(output, "<SUMMARY>\n");
-	fprintf(output, "   <BLOCK_COUNT> %ld </BLOCKCOUNT>\n",
+	fprintf(output, "   <BLOCK_COUNT> %zd </BLOCKCOUNT>\n",
 		glist_length(&tree->root.u.nterm.sub_nodes));
 	fprintf(output, "   <CONFIGURATION_FILES>\n");
 	for (file = tree->files; file != NULL; file = file->next)

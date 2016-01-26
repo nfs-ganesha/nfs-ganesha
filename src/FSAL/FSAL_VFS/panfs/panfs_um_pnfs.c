@@ -24,10 +24,13 @@
 #include <stdbool.h>
 #include <sys/ioctl.h>
 
+#include "fsal_convert.h"
+
 /* Implementing this */
 #include "panfs_um_pnfs.h"
 /* With this */
 #include "panfs_pnfs_ioctl.h"
+#include "attrs.h"
 
 /**
  * @file   panfs_um_pnfs.c
@@ -157,4 +160,71 @@ int panfs_um_cancel_recalls(int fd, int debug_magic)
 		return errno;
 
 	return pcri.hdr.nfsstat;
+}
+
+fsal_status_t panfs_um_get_attr(int fd, struct pan_attrs *pan_attrs)
+{
+	fsal_errors_t error = ERR_FSAL_NO_ERROR;
+	int ret;
+	pan_fs_client_ioctl_get_attr_args_t args;
+	struct pan_fs_client_ioctl_get_attr_args_holder_s get_attrs;
+	int num_aces;
+
+	memset(&args, 0, sizeof(args));
+	get_attrs.get_attr_args = &args;
+
+	args.flags = PAN_FS_CLIENT_IOCTL_GET_F__GET_CACHED |
+		PAN_FS_CLIENT_IOCTL_GET_F__OPT_ATTRS |
+		PAN_FS_CLIENT_IOCTL_GET_F__SORT_V1_ACL |
+		PAN_FS_CLIENT_IOCTL_GET_F__CACHE_ACL;
+	args.acl_version = PAN_FS_ACL_VERSION;
+
+	ret = ioctl(fd, PAN_FS_CLIENT_IOC_ATTR_GET, &get_attrs);
+	if (ret) {
+		ret = errno;
+		error = posix2fsal_error(ret);
+		return fsalstat(error, ret);
+	}
+
+	if (args.acl_version < PAN_FS_ACL_VERSION_MIN  ||
+	    args.acl_version > PAN_FS_ACL_VERSION_MAX) {
+		ret = -EINVAL;
+		error = posix2fsal_error(ret);
+		return fsalstat(error, ret);
+	}
+
+	num_aces = MIN(args.num_aces, PAN_FS_ACL_LEN_MAX);
+	memcpy(pan_attrs->acls.aces, args.panfs_acl,
+			num_aces * sizeof(struct pan_fs_ace_s));
+	pan_attrs->acls.naces = num_aces;
+
+	return fsalstat(error, 0);
+}
+
+fsal_status_t panfs_um_set_attr(int fd, struct pan_attrs *pan_attrs)
+{
+	fsal_errors_t error = ERR_FSAL_NO_ERROR;
+	int ret;
+	pan_fs_client_ioctl_set_attr_args_t args;
+	struct pan_fs_client_ioctl_set_attr_args_holder_s set_attrs;
+	int num_aces;
+
+	memset(&args, 0, sizeof(args));
+	set_attrs.set_attr_args = &args;
+
+	num_aces = MIN(pan_attrs->acls.naces, PAN_FS_ACL_LEN_MAX);
+	memcpy(args.panfs_acl, pan_attrs->acls.aces,
+			num_aces * sizeof(struct pan_fs_ace_s));
+	args.num_aces = num_aces;
+	args.attr_mask |= PAN_FS_CLIENT_IOCTL_SET_ATTR_ACL_REPLACE;
+	args.acl_version = PAN_FS_ACL_VERSION;
+
+	ret = ioctl(fd, PAN_FS_CLIENT_IOC_ATTR_SET, &set_attrs);
+	if (ret) {
+		ret = errno;
+		error = posix2fsal_error(ret);
+		return fsalstat(error, ret);
+	}
+
+	return fsalstat(error, 0);
 }

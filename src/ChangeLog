@@ -582,3 +582,24 @@
       - Code cleanup (checkpatch and Coverity)
       - ntirpc improvements
       - FSAL_GLUSTER updated with pNFS and ACL support and more
+
+2.3.0 - Tue 27 Oct 2015
+      - Numerous bug fixes - this release is fundamentally a stability
+        improvement
+      - Update Checkpatch
+      - FSAL_GLUSTER ACL support using POSIX ACLs underneath
+      - FSAL_GLUSTER Upcall Interface
+      - FSAL_GLUSTER Performance Improvements (including pNFS performance)
+      - Send SECINFO_NO_NAME in preferred order.
+      - Build and Packaging Improvements
+      - In Memory NFS v4 ACLs for FSAL_VFS for experimentation/testing
+      - libntirpc Performance Improvements
+      - Allow Multiple DSes
+      - Cache Inode Tuning
+      - Licensing Cleanup
+      - Config improvements in FSAL_GLUSTER and FSAL_GPFS (including ability
+        to disable ACL support in config)
+      - Build properly on 32 bit and Big Endian platforms
+      - FSAL_GPFS fix regression for short handles to work with VMWare clients
+      - FSAL_GPFS fix regression for short handles to work with some NFS v3
+        clients that don't conform to RFC and only allow 56 byte handles

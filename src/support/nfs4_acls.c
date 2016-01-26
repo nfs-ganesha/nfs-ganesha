@@ -57,7 +57,7 @@ fsal_ace_t *nfs4_ace_alloc(int nace)
 	return ace;
 }
 
-static fsal_acl_t *nfs4_acl_alloc()
+fsal_acl_t *nfs4_acl_alloc()
 {
 	fsal_acl_t *acl = NULL;
 
@@ -82,7 +82,7 @@ void nfs4_ace_free(fsal_ace_t *ace)
 	gsh_free(ace);
 }
 
-static void nfs4_acl_free(fsal_acl_t *acl)
+void nfs4_acl_free(fsal_acl_t *acl)
 {
 	if (!acl)
 		return;
@@ -232,12 +232,12 @@ void nfs4_acl_release_entry(fsal_acl_t *acl, fsal_acl_status_t *status)
 		}
 
 		/* use the key to delete the entry */
-		rc = hashtable_deletelatched(fsal_acl_hash, &key, &latch,
-					     &old_key, &old_value);
-		if (rc == HASHTABLE_SUCCESS)
-			break;
+		hashtable_deletelatched(fsal_acl_hash, &key, &latch,
+					&old_key, &old_value);
 
-		/* Fall through to default case */
+		/* Release the latch */
+		hashtable_releaselatched(fsal_acl_hash, &latch);
+		break;
 
 	default:
 		LogCrit(COMPONENT_NFS_V4_ACL,
@@ -256,7 +256,7 @@ void nfs4_acl_release_entry(fsal_acl_t *acl, fsal_acl_status_t *status)
 	nfs4_acl_free(acl);
 }
 
-static void nfs4_acls_test()
+static void nfs4_acls_test(void)
 {
 	int i = 0;
 	fsal_acl_data_t acldata, acldata2;
@@ -316,7 +316,7 @@ static void nfs4_acls_test()
 	nfs4_acl_release_entry(acl, &status);
 }
 
-int nfs4_acls_init()
+int nfs4_acls_init(void)
 {
 	LogDebug(COMPONENT_NFS_V4_ACL, "Initialize NFSv4 ACLs");
 	LogDebug(COMPONENT_NFS_V4_ACL,

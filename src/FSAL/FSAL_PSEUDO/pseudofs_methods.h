@@ -61,6 +61,7 @@ fsal_status_t pseudofs_create_handle(struct fsal_export *exp_hdl,
 
 struct pseudo_fsal_obj_handle {
 	struct fsal_obj_handle obj_handle;
+	struct attrlist attributes;
 	char *handle;
 	struct pseudo_fsal_obj_handle *parent;
 	struct avltree avl_name;

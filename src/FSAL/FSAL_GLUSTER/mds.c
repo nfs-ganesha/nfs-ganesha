@@ -150,7 +150,6 @@ static nfsstat4 pnfs_layout_get(struct fsal_obj_handle          *obj_pub,
 
 	struct glusterfs_handle *handle =
 		container_of(obj_pub, struct glusterfs_handle, handle);
-	int    p_flags = 0;
 	int    rc = 0;
 	/* Structure containing the storage parameters of the file within
 	   glusterfs. */
@@ -219,13 +218,12 @@ static nfsstat4 pnfs_layout_get(struct fsal_obj_handle          *obj_pub,
 		return posix2nfs4_error(-rc);
 	}
 
-	fsal2posix_openflags(handle->openflags, &p_flags);
-	ds_wire.flags    = p_flags;
 	ds_wire.layout   = file_layout;
 	ds_desc.addr     = &ds_wire;
 	ds_desc.len      = sizeof(struct glfs_ds_wire);
 	nfs_status = FSAL_encode_file_layout(loc_body, &deviceid, util, 0, 0,
-					     arg->export_id, 1, &ds_desc);
+					     &req_ctx->export->export_id, 1,
+					     &ds_desc);
 	if (nfs_status) {
 		LogMajor(COMPONENT_PNFS,
 			  "Failed to encode nfsv4_1_file_layout.");
@@ -313,11 +311,8 @@ static nfsstat4 pnfs_layout_commit(struct fsal_obj_handle *obj_pub,
 	}
 
 	/* Gets previous status of file in the MDS */
-	if (objhandle->openflags != FSAL_O_CLOSED)
-		rc = glfs_fstat(objhandle->glfd, &old_stat);
-	else
-		rc = glfs_h_stat(glfs_export->gl_fs,
-				 objhandle->glhandle, &old_stat);
+	rc = glfs_h_stat(glfs_export->gl_fs,
+			 objhandle->glhandle, &old_stat);
 
 	if (rc != 0) {
 		LogMajor(COMPONENT_PNFS,
@@ -413,8 +408,8 @@ nfsstat4 getdeviceinfo(struct fsal_module *fsal_hdl,
 
 	if (!inline_xdr_u_int32_t(da_addr_body, &num_ds)) {
 		LogMajor(COMPONENT_PNFS,
-			 "Failed to encode length of "
-			 "multipath_ds_list array: %u", num_ds);
+			 "Failed to encode length of multipath_ds_list array: %u",
+			 num_ds);
 		return NFS4ERR_SERVERFAULT;
 	}
 	memset(&host, 0, sizeof(fsal_multipath_member_t));
@@ -433,7 +428,7 @@ nfsstat4 getdeviceinfo(struct fsal_module *fsal_hdl,
 	 *        is only send from MDS.If that Data-Server is down then
 	 *        read or write will performed through MDS.
 	 *        Instead should we send the information about all
-	 *        the available data-servers , so that these fops will
+	 *        the available data-servers, so that these fops will
 	 *        always performed through Data-Servers.
 	 *        (Like in replicated volume contains more than ONE DS)
 	 */
@@ -455,7 +450,7 @@ nfsstat4 getdeviceinfo(struct fsal_module *fsal_hdl,
  */
 static nfsstat4 getdevicelist(struct fsal_export *export_pub, layouttype4 type,
 			      void *opaque,
-			      bool(*cb) (void *opaque, const uint64_t id),
+			      bool (*cb)(void *opaque, const uint64_t id),
 			      struct fsal_getdevicelist_res *res)
 {
 	res->eof = true;
@@ -535,11 +530,11 @@ out:
  * The data server address will be send from here
  *
  * The information about the first server present
- * in the PATH_INFO_KEY will be returned , since
+ * in the PATH_INFO_KEY will be returned, since
  * entire file is consistent over the servers
  * (Striped volumes are not considered right now)
  *
- * On success , returns zero with ip address of
+ * On success, returns zero with ip address of
  * the server will be send
  */
 int
@@ -555,11 +550,11 @@ glfs_get_ds_addr(struct glfs *fs, struct glfs_object *object, uint32_t *ds_addr)
 
 	ret = glfs_h_getxattrs(fs, object, pathinfokey, pathinfo, 1024);
 
-	LogDebug(COMPONENT_PNFS, "pathinfo %s" , pathinfo);
+	LogDebug(COMPONENT_PNFS, "pathinfo %s", pathinfo);
 
 	ret = get_pathinfo_host(pathinfo, hostname, sizeof(hostname));
 	if (ret) {
-		LogMajor(COMPONENT_PNFS , "cannot get hostname");
+		LogMajor(COMPONENT_PNFS, "cannot get hostname");
 		goto out;
 	}
 
@@ -568,7 +563,7 @@ glfs_get_ds_addr(struct glfs *fs, struct glfs_object *object, uint32_t *ds_addr)
 	hints.ai_family = AF_INET;
 	ret = getaddrinfo(hostname, NULL, &hints, &res);
 	if (ret != 0) {
-		LogMajor(COMPONENT_PNFS , "error %d\n", ret);
+		LogMajor(COMPONENT_PNFS, "error %d\n", ret);
 		goto out;
 	}
 

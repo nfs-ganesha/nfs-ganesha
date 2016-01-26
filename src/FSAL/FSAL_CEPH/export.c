@@ -295,6 +295,7 @@ static bool fs_supports(struct fsal_export *export_pub,
 			fsal_fsinfo_options_t option)
 {
 	struct fsal_staticfsinfo_t *info = ceph_staticinfo(export_pub->fsal);
+
 	return fsal_supports(info, option);
 }
 

@@ -54,7 +54,6 @@
  * Implements the NFSPROC3_MKDIR.
  *
  * @param[in]  arg     NFS arguments union
- * @param[in]  worker  Worker thread data
  * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call
  *
@@ -64,9 +63,7 @@
  *
  */
 
-int nfs3_mkdir(nfs_arg_t *arg,
-	       nfs_worker_data_t *worker,
-	       struct svc_req *req, nfs_res_t *res)
+int nfs3_mkdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
 	const char *dir_name = arg->arg_mkdir3.where.name;
 	uint32_t mode = 0;
@@ -87,8 +84,8 @@ int nfs3_mkdir(nfs_arg_t *arg,
 				 NULL, str);
 
 		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling nfs3_mkdir handle: %s "
-			 "name: %s", str, dir_name);
+			 "REQUEST PROCESSING: Calling nfs3_mkdir handle: %s name: %s",
+			 str, dir_name);
 	}
 
 	/* to avoid setting it on each error case */
@@ -156,11 +153,15 @@ int nfs3_mkdir(nfs_arg_t *arg,
 	/*Set attributes if required */
 	squash_setattr(&sattr);
 
-	if ((sattr.mask & (ATTR_ATIME | ATTR_MTIME | ATTR_CTIME))
+	if ((sattr.mask & CREATE_MASK_NON_REG_NFS3)
 	    || ((sattr.mask & ATTR_OWNER)
 		&& (op_ctx->creds->caller_uid != sattr.owner))
 	    || ((sattr.mask & ATTR_GROUP)
 		&& (op_ctx->creds->caller_gid != sattr.group))) {
+
+		/* mask off flags handled by create */
+		sattr.mask &= CREATE_MASK_NON_REG_NFS3 | ATTRS_CREDS;
+
 		cache_status =
 		    cache_inode_setattr(dir_entry, &sattr, false);
 

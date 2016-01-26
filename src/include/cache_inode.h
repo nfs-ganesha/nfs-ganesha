@@ -77,6 +77,7 @@ struct fsal_export;
 struct fsal_obj_handle;
 struct gsh_export;
 struct io_info;
+struct fsal_fd;
 
 /**
  * @defgroup config_cache_inode Structure and defaults for Cache_Inode
@@ -92,18 +93,26 @@ struct cache_inode_parameter {
 	/** Partitions in the Cache_Inode tree.  Defaults to 7,
 	 * settable with NParts. */
 	uint32_t nparts;
+	/** Per-partition hash table size.  Defaults to 32633,
+	 * settable with Cache_Size. */
+	uint32_t cache_size;
 	/** Expiration time interval in seconds for attributes.  Settable with
 	    Attr_Expiration_Time. */
 	int32_t  expire_time_attr;
 	/** Use getattr for directory invalidation.  Defaults to
 	    false.  Settable with Use_Getattr_Directory_Invalidation. */
 	bool getattr_dir_invalidation;
+	struct {
+		/** Max size of per-directory cache of removed
+		    entries */
+		uint32_t avl_max_deleted;
+	} dir;
 	/** High water mark for cache entries.  Defaults to 100000,
 	    settable by Entries_HWMark. */
 	uint32_t entries_hwmark;
 	/** Base interval in seconds between runs of the LRU cleaner
 	    thread. Defaults to 60, settable with LRU_Run_Interval. */
-	time_t lru_run_interval;
+	uint32_t lru_run_interval;
 	/** Whether to cache open files.  Defaults to true, settable
 	    with Cache_FDs. */
 	bool use_fd_cache;
@@ -155,9 +164,6 @@ static const size_t FILEHANDLE_MAX_LEN_V3 = 64;
 /** Maximum size of NFSv4 handle */
 static const size_t FILEHANDLE_MAX_LEN_V4 = 128;
 
-/** Size for Ganesha unstable write buffers*/
-static const size_t CACHE_INODE_UNSTABLE_BUFFERSIZE = 100 * 1024 * 1024;
-
 /**
  * Data for tracking a cache entry's position the LRU.
  */
@@ -166,7 +172,7 @@ static const size_t CACHE_INODE_UNSTABLE_BUFFERSIZE = 100 * 1024 * 1024;
  * Valid LRU queues.
  */
 enum lru_q_id {
-	LRU_ENTRY_NONE = 0 /* entry not queued */ ,
+	LRU_ENTRY_NONE = 0, /* entry not queued */
 	LRU_ENTRY_L1,
 	LRU_ENTRY_L2,
 	LRU_ENTRY_PINNED,
@@ -745,8 +751,7 @@ cache_inode_status_t cache_inode_getattr(cache_entry_t *entry,
 					 cache_inode_getattr_cb_t cb,
 					 enum cb_state cb_state);
 
-cache_inode_status_t cache_inode_fileid(cache_entry_t *entry,
-					uint64_t *fileid);
+uint64_t cache_inode_fileid(cache_entry_t *entry);
 
 cache_inode_status_t cache_inode_fsid(cache_entry_t *entry,
 				      fsal_fsid_t *fsid);
@@ -759,6 +764,11 @@ void cache_inode_create_set_verifier(struct attrlist *sattr, uint32_t verf_hi,
 
 bool cache_inode_create_verify(cache_entry_t *entry,
 			       uint32_t verf_hi, uint32_t verf_lo);
+
+cache_inode_status_t cache_inode_find_by_name(cache_entry_t *parent,
+					      const char *name,
+					      uint32_t flags,
+					      cache_entry_t **entry);
 
 cache_inode_status_t cache_inode_lookup_impl(cache_entry_t *entry_parent,
 					     const char *name,
@@ -811,17 +821,13 @@ cache_inode_status_t cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 
 cache_inode_status_t cache_inode_rdwr(cache_entry_t *entry,
 				      cache_inode_io_direction_t io_direction,
-				      uint64_t offset, size_t io_size,
-				      size_t *bytes_moved, void *buffer,
+				      uint64_t offset,
+				      size_t io_size,
+				      size_t *bytes_moved,
+				      void *buffer,
 				      bool *eof,
-				      bool *sync);
-
-cache_inode_status_t cache_inode_rdwr_plus(cache_entry_t *entry,
-				      cache_inode_io_direction_t io_direction,
-				      uint64_t offset, size_t io_size,
-				      size_t *bytes_moved, void *buffer,
-				      bool *eof,
-				      bool *sync, struct io_info *info);
+				      bool *sync,
+				      struct io_info *info);
 
 cache_inode_status_t cache_inode_commit(cache_entry_t *entry, uint64_t offset,
 					size_t count);
@@ -880,7 +886,7 @@ static inline void
 cache_inode_fixup_md(cache_entry_t *entry)
 {
 	/* Set the refresh time for the cache entry */
-	if (entry->obj_handle->attributes.expire_time_attr > 0)
+	if (entry->obj_handle->attrs->expire_time_attr > 0)
 		entry->attr_time = time(NULL);
 	else
 		entry->attr_time = 0;
@@ -891,10 +897,8 @@ cache_inode_fixup_md(cache_entry_t *entry)
 	 * Also, fsal attrs has a changetime.
 	 * (Matt). */
 	entry->change_time =
-	    timespec_to_nsecs(&entry->obj_handle->attributes.chgtime);
+	    timespec_to_nsecs(&entry->obj_handle->attrs->chgtime);
 
-	/* Almost certainly not necessary */
-	entry->type = entry->obj_handle->attributes.type;
 	/* We have just loaded the attributes from the FSAL. */
 	entry->flags |= CACHE_INODE_TRUST_ATTRS;
 }
@@ -913,20 +917,21 @@ cache_inode_is_attrs_valid(const cache_entry_t *entry)
 	if (!(entry->flags & CACHE_INODE_TRUST_ATTRS))
 		return false;
 
-	if (FSAL_TEST_MASK(entry->obj_handle->attributes.mask, ATTR_RDATTR_ERR))
+	if (FSAL_TEST_MASK(entry->obj_handle->attrs->mask, ATTR_RDATTR_ERR))
 		return false;
 
 	if (entry->type == DIRECTORY
 	    && cache_param.getattr_dir_invalidation)
 		return false;
 
-	if (entry->obj_handle->attributes.expire_time_attr == 0)
+	if (entry->obj_handle->attrs->expire_time_attr == 0)
 		return false;
 
-	if (entry->obj_handle->attributes.expire_time_attr > 0) {
+	if (entry->obj_handle->attrs->expire_time_attr > 0) {
 		time_t current_time = time(NULL);
+
 		if (current_time - entry->attr_time >
-		    entry->obj_handle->attributes.expire_time_attr)
+		    entry->obj_handle->attrs->expire_time_attr)
 			return false;
 	}
 
@@ -951,24 +956,25 @@ cache_inode_refresh_attrs(cache_entry_t *entry)
 	fsal_status_t fsal_status = { ERR_FSAL_NO_ERROR, 0 };
 	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
 
-	if (entry->obj_handle->attributes.acl) {
+	if (entry->obj_handle->attrs->acl) {
 		fsal_acl_status_t acl_status = 0;
 
-		nfs4_acl_release_entry(entry->obj_handle->attributes.acl,
+		nfs4_acl_release_entry(entry->obj_handle->attrs->acl,
 				       &acl_status);
 		if (acl_status != NFS_V4_ACL_SUCCESS) {
 			LogEvent(COMPONENT_CACHE_INODE,
 				 "Failed to release old acl, status=%d",
 				 acl_status);
 		}
-		entry->obj_handle->attributes.acl = NULL;
+		entry->obj_handle->attrs->acl = NULL;
 	}
 
 	fsal_status =
 	    entry->obj_handle->obj_ops.getattrs(entry->obj_handle);
 	if (FSAL_IS_ERROR(fsal_status)) {
-		cache_inode_kill_entry(entry);
 		cache_status = cache_inode_error_convert(fsal_status);
+		if (cache_status == CACHE_INODE_ESTALE)
+			cache_inode_kill_entry(entry);
 		LogDebug(COMPONENT_CACHE_INODE, "Failed on entry %p %s", entry,
 			 cache_inode_err_str(cache_status));
 		goto out;
@@ -1018,6 +1024,7 @@ cache_inode_get_changeid4(cache_entry_t *entry)
 {
 	cache_inode_status_t status;
 	changeid4 changeid;
+
 	status = cache_inode_lock_trust_attrs(entry, false);
 
 	changeid = (changeid4) entry->change_time;

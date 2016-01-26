@@ -1,5 +1,28 @@
 #!/bin/sh
 
+#-------------------------------------------------------------------------------
+# Copyright Panasas, 2013
+# Contributor: Frank Filz  <ffilzlnx@mindspring.com>
+#
+#
+# This software is a server that implements the NFS protocol.
+#
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 3 of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+#-------------------------------------------------------------------------------
+
 # Find directory where runcp.sh lives for checkpatch will be there too
 # We keep that in CURDIR
 CURDIR=$(dirname $(readlink -m $0))
@@ -40,6 +63,15 @@ check_one_file()
 			EXTRA_OPT="$EXTRA_OPT --ignore SPACING"
 		fi
 
+		egrep $NO_MACRO_W_FLOW_FILES $OUTFILE 2>&1 >/dev/null
+
+		RC=$?
+
+		if [ $RC -eq 0 ]
+		then
+			EXTRA_OPT="$EXTRA_OPT --ignore MACRO_WITH_FLOW_CONTROL"
+		fi
+
 		egrep $NO_COMPLEX_MACRO_FILES $OUTFILE 2>&1 >/dev/null
 
 		RC=$?
@@ -66,6 +98,33 @@ check_one_file()
 		then
 			EXTRA_OPT="$EXTRA_OPT --ignore BRACKET_SPACE"
 		fi
+
+		egrep $NO_DATE_TIME_FILES $OUTFILE 2>&1 >/dev/null
+
+		RC=$?
+
+		if [ $RC -eq 0 ]
+		then
+			EXTRA_OPT="$EXTRA_OPT --ignore DATE_TIME"
+		fi
+
+		egrep $NO_STATIC_CONST_CHAR_ARRAY_FILES $OUTFILE 2>&1 >/dev/null
+
+		RC=$?
+
+		if [ $RC -eq 0 ]
+		then
+			EXTRA_OPT="$EXTRA_OPT --ignore STATIC_CONST_CHAR_ARRAY"
+		fi
+
+		egrep $NO_ENOSYS_FILES $OUTFILE 2>&1 >/dev/null
+
+		RC=$?
+
+		if [ $RC -eq 0 ]
+		then
+			EXTRA_OPT="$EXTRA_OPT --ignore ENOSYS"
+		fi
 	fi
 
 	$CURDIR/checkpatch.pl $TYPEDEF $EXTRA_OPT \
@@ -85,7 +144,15 @@ check_one_file()
 	then
 		if [ $ONEFILE -eq 1 ]
 		then
-			cat $OUTFILE >>$REPORT_FILE
+			echo "=========================================================================================================================" >>$REPORT_FILE
+			if [ $NO_CRUFT -eq 1 ]
+			then
+				cat $OUTFILE | \
+					egrep -v "NOTE: Ignored message|If any of these errors|them to the maintainer" \
+					>>$REPORT_FILE
+			else
+				cat $OUTFILE >>$REPORT_FILE
+			fi
 			cat $ERROR_FILE >>$REPORT_FILE
 		else
 			echo $1 $RESULT >>$REPORT_FILE
@@ -169,6 +236,7 @@ CLEAN=0
 DIR="."
 
 ALWAYS="libtirpc|libntirpc|CMakeFiles|tools/test_findlog.c|include/config.h"
+ALWAYS="$ALWAYS|nfsv41.h|nlm4.h|nsm.h|rquota.h"
 
 EXTERNAL="murmur3.h|cidr.h|cidr/|atomic_x86_64.h|include/city|avltree.h"
 EXTERNAL="$EXTERNAL|test/test_atomic_x86_86.c|avl/|FSAL/FSAL_GPFS/include"
@@ -188,6 +256,7 @@ REPORT=0
 FIND=check_find
 COMMIT=HEAD
 TYPEDEF=""
+NO_CRUFT=0
 
 NO_SPACING_FILES="nfs23.h|nfsv41.h|nlm4.h|nsm.h|rquota.h"
 
@@ -197,13 +266,24 @@ NO_COMPLEX_MACRO_FILES="$NO_COMPLEX_MACRO_FILES|support/exports.c"
 NO_COMPLEX_MACRO_FILES="$NO_COMPLEX_MACRO_FILES|support/export_mgr.c"
 NO_COMPLEX_MACRO_FILES="$NO_COMPLEX_MACRO_FILES|include/gsh_dbus.h"
 
+NO_MACRO_W_FLOW_FILES="FSAL/FSAL_PROXY/handle_mapping/handle_mapping_db.c"
+NO_MACRO_W_FLOW_FILES="$NO_MACRO_W_FLOW_FILES|FSAL/FSAL_PT/fsi_ipc_ccl.h"
+NO_MACRO_W_FLOW_FILES="$NO_MACRO_W_FLOW_FILES|include/9p.h"
+NO_MACRO_W_FLOW_FILES="$NO_MACRO_W_FLOW_FILES|multilock/ml_functions.c"
+
 NO_DEEP_INDENTATION_FILES="cache_inode/cache_inode_lru.c|include/rbt_tree.h"
 
 NO_BRACKET_SPACE_FILES="include/nfs_req_queue.h"
 
+NO_DATE_TIME_FILES="MainNFSD/nfs_main.c"
+
+NO_STATIC_CONST_CHAR_ARRAY_FILES="FSAL_CEPH/main.c"
+
+NO_ENOSYS_FILES="FSAL_GPFS/fsal_up.c|FSAL_GPFS/gpfsext.c"
+
 NO_SPACING=1
 
-while getopts "cd:x:qo:?w1rgk:tiev" OPT; do
+while getopts "cd:x:qo:?w1rgk:tievK" OPT; do
 	case $OPT in
 		c)	CLEAN=1
 			;;
@@ -232,6 +312,8 @@ while getopts "cd:x:qo:?w1rgk:tiev" OPT; do
 		t)	TYPEDEF="--ignore NEW_TYPEDEFS"
 			;;
 		v)	NO_SPACING=0
+			;;
+		K)	NO_CRUFT=1
 			;;
 		?)	show_help
 			exit
@@ -280,8 +362,12 @@ then
 	echo >> $REPORT_FILE
 	echo "NO_SPACING_FILES=$NO_SPACING_FILES" >> $REPORT_FILE
 	echo "NO_COMPLEX_MACRO_FILES=$NO_COMPLEX_MACRO_FILES" >> $REPORT_FILE
+	echo "NO_MACRO_W_FLOW_FILES=$NO_MACRO_W_FLOW_FILES" >> $REPORT_FILE
 	echo "NO_DEEP_INDENTATION_FILES=$NO_DEEP_INDENTATION_FILES" >> $REPORT_FILE
 	echo "NO_BRACKET_SPACE_FILES=$NO_BRACKET_SPACE_FILES" >> $REPORT_FILE
+	echo "NO_DATE_TIME_FILES=$NO_DATE_TIME_FILES" >> $REPORT_FILE
+	echo "NO_STATIC_CONST_CHAR_ARRAY_FILES=$NO_STATIC_CONST_CHAR_ARRAY_FILES" >> $REPORT_FILE
+	echo "NO_ENOSYS_FILES=$NO_ENOSYS_FILES" >> $REPORT_FILE
 fi
 
 if [ -n "$EXCLUDE" ]

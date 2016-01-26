@@ -41,12 +41,24 @@ extern struct config_block *vfs_sub_export_param;
 
 void vfs_sub_fini(struct vfs_fsal_export *myself);
 
-void vfs_sub_init_handle_ops(struct vfs_fsal_export *myself,
-			      struct fsal_obj_ops *ops);
-
 void vfs_sub_init_export_ops(struct vfs_fsal_export *myself,
 			      const char *export_path);
 
 int vfs_sub_init_export(struct vfs_fsal_export *myself);
 
+/**
+ * @brief Allocate the SubFSAL object handle
+ *
+ * Allocate the SubFSAL object handle.  It must be large enough to hold a
+ * vfs_file_handle_t after the end of the normal handle, and the @a handle field
+ * of the vfs_fsal_obj_handle must point to the correct location for the
+ * vfs_file_handle_t.
+ *
+ * @return VFS object handle on success, NULL on failure
+ */
+struct vfs_fsal_obj_handle *vfs_sub_alloc_handle(void);
+
+int vfs_sub_init_handle(struct vfs_fsal_export *myself,
+		struct vfs_fsal_obj_handle *hdl,
+		const char *path);
 #endif /* SUBFSAL_H */

@@ -102,7 +102,7 @@ static bool fsal_check_ace_applicable(fsal_ace_t *pace,
 	/* To be applicable, the entry should not be INHERIT_ONLY. */
 	if (IS_FSAL_ACE_INHERIT_ONLY(*pace)) {
 		LogFullDebug(COMPONENT_NFS_V4_ACL,
-			     "Not applicable, " "inherit only");
+			     "Not applicable, inherit only");
 		return false;
 	}
 
@@ -134,6 +134,127 @@ static bool fsal_check_ace_applicable(fsal_ace_t *pace,
 			     "Not applicable to given user");
 
 	return is_applicable;
+}
+
+static const char *fsal_ace_type(fsal_acetype_t type)
+{
+	switch (type) {
+	case FSAL_ACE_TYPE_ALLOW:
+		return "A";
+	case FSAL_ACE_TYPE_DENY:
+		return "D ";
+	case FSAL_ACE_TYPE_AUDIT:
+		return "U";
+	case FSAL_ACE_TYPE_ALARM:
+		return "L";
+	default:
+		return "unknown";
+	}
+}
+
+static const char *fsal_ace_perm(fsal_aceperm_t perm)
+{
+	static char buf[64];
+	char *c = buf;
+
+	if (perm & FSAL_ACE_PERM_READ_DATA)
+		*c++ = 'r';
+	if (perm & FSAL_ACE_PERM_WRITE_DATA)
+		*c++ = 'w';
+	if (perm & FSAL_ACE_PERM_APPEND_DATA)
+		*c++ = 'a';
+	if (perm & FSAL_ACE_PERM_EXECUTE)
+		*c++ = 'x';
+	if (perm & FSAL_ACE_PERM_DELETE)
+		*c++ = 'd';
+	if (perm & FSAL_ACE_PERM_DELETE_CHILD)
+		*c++ = 'D';
+	if (perm & FSAL_ACE_PERM_READ_ATTR)
+		*c++ = 't';
+	if (perm & FSAL_ACE_PERM_WRITE_ATTR)
+		*c++ = 'T';
+	if (perm & FSAL_ACE_PERM_READ_NAMED_ATTR)
+		*c++ = 'n';
+	if (perm & FSAL_ACE_PERM_WRITE_NAMED_ATTR)
+		*c++ = 'N';
+	if (perm & FSAL_ACE_PERM_READ_ACL)
+		*c++ = 'c';
+	if (perm & FSAL_ACE_PERM_WRITE_ACL)
+		*c++ = 'C';
+	if (perm & FSAL_ACE_PERM_WRITE_OWNER)
+		*c++ = 'o';
+	if (perm & FSAL_ACE_PERM_SYNCHRONIZE)
+		*c++ = 'y';
+	*c = '\0';
+
+	return buf;
+}
+
+static const char *fsal_ace_flag(char *buf, fsal_aceflag_t flag)
+{
+	char *c = buf;
+
+	if (flag & FSAL_ACE_FLAG_GROUP_ID)
+		*c++ = 'g';
+	if (flag & FSAL_ACE_FLAG_FILE_INHERIT)
+		*c++ = 'f';
+	if (flag & FSAL_ACE_FLAG_DIR_INHERIT)
+		*c++ = 'd';
+	if (flag & FSAL_ACE_FLAG_NO_PROPAGATE)
+		*c++ = 'n';
+	if (flag & FSAL_ACE_FLAG_INHERIT_ONLY)
+		*c++ = 'i';
+	if (flag & FSAL_ACE_FLAG_SUCCESSFUL)
+		*c++ = 'S';
+	if (flag & FSAL_ACE_FLAG_FAILED)
+		*c++ = 'F';
+	if (flag & FSAL_ACE_FLAG_INHERITED)
+		*c++ = 'I';
+	if (flag & FSAL_ACE_IFLAG_EXCLUDE_FILES)
+		*c++ = 'x';
+	if (flag & FSAL_ACE_IFLAG_EXCLUDE_DIRS)
+		*c++ = 'X';
+	if (flag & FSAL_ACE_IFLAG_SPECIAL_ID)
+		*c++ = 'S';
+	if (flag & FSAL_ACE_IFLAG_MODE_GEN)
+		*c++ = 'G';
+	*c = '\0';
+
+	return buf;
+}
+
+void fsal_print_ace_int(log_components_t component, log_levels_t debug,
+			fsal_ace_t *ace, char *file, int line,
+			char *function)
+{
+	char fbuf[16];
+	char ibuf[16];
+
+	if (!isLevel(component, debug))
+		return;
+
+	DisplayLogComponentLevel(component, file, line, function, debug,
+				 "ACE %s:%s(%s):%u:%s",
+				 fsal_ace_type(ace->type),
+				 fsal_ace_flag(fbuf, ace->flag),
+				 fsal_ace_flag(ibuf, ace->iflag),
+				 ace->who.uid,
+				 fsal_ace_perm(ace->perm));
+}
+
+void fsal_print_acl_int(log_components_t component, log_levels_t debug,
+			fsal_acl_t *acl, char *file, int line,
+			char *function)
+{
+	fsal_ace_t *ace = NULL;
+
+	if (!isLevel(component, debug))
+		return;
+
+	DisplayLogComponentLevel(component, file, line, function, debug,
+				 "ACL naces: %u aces:", acl->naces);
+	for (ace = acl->aces; ace < acl->aces + acl->naces; ace++)
+		fsal_print_ace_int(component, debug, ace, file, line, function);
 }
 
 int display_fsal_inherit_flags(struct display_buffer *dspbuf, fsal_ace_t *pace)
@@ -277,9 +398,9 @@ static void fsal_print_access_by_acl(int naces, int ace_number,
 	if (!isFullDebug(COMPONENT_NFS_V4_ACL))
 		return;
 
-	if ((access_result == ERR_FSAL_NO_ERROR))
+	if (access_result == ERR_FSAL_NO_ERROR)
 		b_left = display_cat(&dspbuf, "access granted");
-	else if ((access_result == ERR_FSAL_PERM))
+	else if (access_result == ERR_FSAL_PERM)
 		b_left = display_cat(&dspbuf, "access denied (EPERM)");
 	else
 		b_left = display_cat(&dspbuf, "access denied (EACCESS)");
@@ -307,7 +428,7 @@ static void fsal_print_access_by_acl(int naces, int ace_number,
  * @param[in] denied
  * @param[in] p_object_attributes
  *
- * @return ERR_FSAL_NO_ERROR or ERR_FSAL_ACCESS
+ * @return ERR_FSAL_NO_ERROR, ERR_FSAL_ACCESS, or ERR_FSAL_NO_ACE
  */
 
 static fsal_status_t fsal_check_access_acl(struct user_cred *creds,
@@ -333,6 +454,13 @@ static fsal_status_t fsal_check_access_acl(struct user_cred *creds,
 
 	if (denied != NULL)
 		*denied = 0;
+
+	if (!p_object_attributes->acl) {
+		/* Means that FSAL_ACE4_REQ_FLAG was set, but no ACLs */
+		LogFullDebug(COMPONENT_NFS_V4_ACL,
+			     "Allow ACE required, but no ACLs");
+		return fsalstat(ERR_FSAL_NO_ACE, 0);
+	}
 
 	/* unsatisfied flags */
 	missing_access = v4mask & ~FSAL_ACE4_PERM_CONTINUE;
@@ -411,7 +539,7 @@ static fsal_status_t fsal_check_access_acl(struct user_cred *creds,
 			return fsalstat(ERR_FSAL_NO_ERROR, 0);
 		}
 	}
-	/** @TODO@ Even if user is admin, audit/alarm checks should be done. */
+	/** @todo Even if user is admin, audit/alarm checks should be done. */
 
 	for (pace = pacl->aces; pace < pacl->aces + pacl->naces; pace++) {
 		ace_number += 1;
@@ -466,12 +594,14 @@ static fsal_status_t fsal_check_access_acl(struct user_cred *creds,
 					ace_number,
 					pace,
 					v4mask,
+#ifndef ENABLE_RFC_ACL
 					(pace->perm & missing_access &
 					 (FSAL_ACE_PERM_WRITE_ATTR |
 					  FSAL_ACE_PERM_WRITE_ACL |
 					  FSAL_ACE_PERM_WRITE_OWNER))
 					    != 0 ?
 					    ERR_FSAL_PERM :
+#endif /* ENABLE_RFC_ACL */
 					    ERR_FSAL_ACCESS,
 					is_dir,
 					creds);
@@ -481,6 +611,7 @@ static fsal_status_t fsal_check_access_acl(struct user_cred *creds,
 				if (denied == NULL ||
 				    (v4mask &
 				     FSAL_ACE4_PERM_CONTINUE) == 0) {
+#ifndef ENABLE_RFC_ACL
 					if ((pace->perm & missing_access &
 					    (FSAL_ACE_PERM_WRITE_ATTR |
 					     FSAL_ACE_PERM_WRITE_ACL |
@@ -488,16 +619,19 @@ static fsal_status_t fsal_check_access_acl(struct user_cred *creds,
 					    != 0) {
 						LogDebug(COMPONENT_NFS_V4_ACL,
 							 "access denied (EPERM)");
-						return
-						    fsalstat
-						    (ERR_FSAL_PERM, 0);
+						return fsalstat(ERR_FSAL_PERM,
+							0);
 					} else {
 						LogDebug(COMPONENT_NFS_V4_ACL,
 							 "access denied (EACCESS)");
-						return fsalstat(
-						     ERR_FSAL_ACCESS,
-						     0);
+						return fsalstat(ERR_FSAL_ACCESS,
+							0);
 					}
+#else /* ENABLE_RFC_ACL */
+					LogDebug(COMPONENT_NFS_V4_ACL,
+						 "access denied (EACCESS)");
+					return fsalstat(ERR_FSAL_ACCESS, 0);
+#endif /* ENABLE_RFC_ACL */
 				}
 
 				missing_access &=
@@ -515,17 +649,26 @@ static fsal_status_t fsal_check_access_acl(struct user_cred *creds,
 		}
 	}
 
-	if (missing_access || (denied != NULL && *denied != 0)) {
+	if (IS_FSAL_ACE4_REQ(v4mask) && missing_access) {
+		LogDebug(COMPONENT_NFS_V4_ACL, "final access unknown (NO_ACE)");
+		return fsalstat(ERR_FSAL_NO_ACE, 0);
+	} else if (missing_access || (denied != NULL && *denied != 0)) {
+#ifndef ENABLE_RFC_ACL
 		if ((missing_access &
 		     (FSAL_ACE_PERM_WRITE_ATTR | FSAL_ACE_PERM_WRITE_ACL |
 		      FSAL_ACE_PERM_WRITE_OWNER)) != 0) {
-			LogDebug(COMPONENT_NFS_V4_ACL, "access denied (EPERM)");
+			LogDebug(COMPONENT_NFS_V4_ACL,
+				 "final access denied (EPERM)");
 			return fsalstat(ERR_FSAL_PERM, 0);
 		} else {
 			LogDebug(COMPONENT_NFS_V4_ACL,
-				 "access denied (EACCESS)");
+				 "final access denied (EACCESS)");
 			return fsalstat(ERR_FSAL_ACCESS, 0);
 		}
+#else /* ENABLE_RFC_ACL */
+		LogDebug(COMPONENT_NFS_V4_ACL, "final access denied (EACCESS)");
+		return fsalstat(ERR_FSAL_ACCESS, 0);
+#endif /* ENABLE_RFC_ACL */
 	} else {
 		LogFullDebug(COMPONENT_NFS_V4_ACL, "access granted");
 		return fsalstat(ERR_FSAL_NO_ERROR, 0);
@@ -573,9 +716,10 @@ fsal_check_access_no_acl(struct user_cred *creds,
 	mode = p_object_attributes->mode;
 
 	LogFullDebug(COMPONENT_NFS_V4_ACL,
-		     "file Mode=%#o, file uid=%u, file gid= %u, "
-		     "user uid=%u, user gid= %u, access_type=0X%x", mode, uid,
-		     gid, creds->caller_uid, creds->caller_gid, access_type);
+		     "file Mode=%#o, file uid=%u, file gid= %u, user uid=%u, user gid= %u, access_type=0X%x",
+		     mode, uid, gid,
+		     creds->caller_uid, creds->caller_gid,
+		     access_type);
 
 	if (creds->caller_uid == 0) {
 		if (p_object_attributes->type == DIRECTORY) {
@@ -674,16 +818,16 @@ fsal_status_t fsal_test_access(struct fsal_obj_handle *obj_hdl,
 			       fsal_accessflags_t *allowed,
 			       fsal_accessflags_t *denied)
 {
-	struct attrlist *attribs = &obj_hdl->attributes;
-
-	if (attribs->acl && IS_FSAL_ACE4_MASK_VALID(access_type)) {
+	if (IS_FSAL_ACE4_REQ(access_type) ||
+	    (obj_hdl->attrs->acl && IS_FSAL_ACE4_MASK_VALID(access_type))) {
 		return fsal_check_access_acl(op_ctx->creds,
 					     FSAL_ACE4_MASK(access_type),
-					     allowed, denied, attribs);
+					     allowed, denied, obj_hdl->attrs);
 	} else {		/* fall back to use mode to check access. */
 		return fsal_check_access_no_acl(op_ctx->creds,
 						FSAL_MODE_MASK(access_type),
-						allowed, denied, attribs);
+						allowed, denied,
+						obj_hdl->attrs);
 	}
 }
 
@@ -700,10 +844,11 @@ void fsal_set_credentials(const struct user_cred *creds)
 	setuser(creds->caller_uid);
 }
 
-void fsal_save_ganesha_credentials()
+void fsal_save_ganesha_credentials(void)
 {
 	int i;
 	char buffer[1024], *p = buffer;
+
 	ganesha_uid = setuser(0);
 	setuser(ganesha_uid);
 	ganesha_gid = setgroup(0);
@@ -739,7 +884,7 @@ void fsal_save_ganesha_credentials()
 	LogInfo(COMPONENT_FSAL, "%s", buffer);
 }
 
-void fsal_restore_ganesha_credentials()
+void fsal_restore_ganesha_credentials(void)
 {
 	setuser(ganesha_uid);
 	setgroup(ganesha_gid);

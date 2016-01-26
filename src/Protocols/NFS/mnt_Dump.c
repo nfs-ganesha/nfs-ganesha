@@ -40,16 +40,12 @@
  * @brief The Mount proc Dump function, for all versions.
  *
  * @param[in]  parg     Arguments (ignored)
- * @param[in]  pexport  Ignored
- * @param[in]  pworker  Ignored
  * @param[in]  preq     Ignored
  * @param[out] pres     Pointer to results
  *
  */
 
-int mnt_Dump(nfs_arg_t *arg,
-	     nfs_worker_data_t *worker,
-	     struct svc_req *req, nfs_res_t *res)
+int mnt_Dump(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
 	LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling mnt_Dump");
 
@@ -71,5 +67,4 @@ int mnt_Dump(nfs_arg_t *arg,
 void mnt_Dump_Free(nfs_res_t *res)
 {
 	/* Nothing to do */
-	return;
-}				/* mnt_Dump_Free */
+}

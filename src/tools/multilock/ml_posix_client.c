@@ -26,7 +26,7 @@
 #include <pthread.h>
 #include <assert.h>
 #include "multilock.h"
-#include "../../include/ganesha_list.h"
+#include "../../include/gsh_list.h"
 
 /* command line syntax */
 
@@ -87,7 +87,7 @@ pthread_cond_t work_cond = PTHREAD_COND_INITIALIZER;
 enum thread_type a_worker = THREAD_WORKER;
 enum thread_type a_poller = THREAD_POLL;
 
-void openserver()
+void openserver(void)
 {
 	struct addrinfo *addr;
 	int rc;
@@ -144,10 +144,57 @@ void openserver()
 	resp.r_tag = 0;
 	sprintf(resp.r_data, "%s", name);
 	respond(&resp);
-	return;
 }
 
-void command()
+bool do_fork(struct response *resp, bool use_server)
+{
+	pid_t forked;
+
+	if (!use_server) {
+		fprintf_stderr("FORK may only be used in server mode\n");
+		return false;
+	}
+
+	forked = fork();
+
+	if (forked < 0) {
+		/* Error */
+		resp->r_status = STATUS_OK;
+		resp->r_errno = errno;
+
+		if (!quiet)
+			fprintf(stdout, "fork failed %d (%s)\n",
+				(int) resp->r_errno, strerror(resp->r_errno));
+
+		return true;
+	} else if (forked == 0) {
+		/* Parent sends a FORK response */
+		sprintf(resp->r_data, "%s", name);
+		resp->r_status = STATUS_OK;
+		if (!quiet)
+			fprintf(stdout, "fork succeeded\n");
+		return true;
+	}
+
+	if (!quiet)
+		fprintf(stdout, "forked\n");
+
+	/* This is the forked process */
+
+	/* First close the old output. */
+	fclose(output);
+
+	/* Setup the new client name. */
+	strncpy(name, resp->r_data, MAXSTR);
+
+	/* Then open a new connection to the server. */
+	openserver();
+
+	/* Response already sent. */
+	return false;
+}
+
+void command(void)
 {
 }
 
@@ -387,7 +434,7 @@ void cancel_work(struct response *req)
 	struct work_item *work;
 	bool start_over = true;
 
-	PTHREAD_MUTEX_lock(&work_mutex);
+	pthread_mutex_lock(&work_mutex);
 
 	while (start_over) {
 		start_over = false;
@@ -406,7 +453,7 @@ void cancel_work(struct response *req)
 		}
 	}
 
-	PTHREAD_MUTEX_unlock(&work_mutex);
+	pthread_mutex_unlock(&work_mutex);
 }
 
 /* Must only be called from main thread...*/
@@ -419,7 +466,7 @@ int schedule_work(struct response *resp)
 		return -1;
 	}
 
-	PTHREAD_MUTEX_lock(&work_mutex);
+	pthread_mutex_lock(&work_mutex);
 
 	memcpy(&work->resp, resp, sizeof(*resp));
 
@@ -430,7 +477,7 @@ int schedule_work(struct response *resp)
 	/* Signal to the worker and polling threads there is new work */
 	pthread_cond_broadcast(&work_cond);
 
-	PTHREAD_MUTEX_unlock(&work_mutex);
+	pthread_mutex_unlock(&work_mutex);
 
 	return 0;
 }
@@ -802,7 +849,7 @@ struct test_list {
 struct test_list *tl_head;
 struct test_list *tl_tail;
 
-void remove_test_list_head()
+void remove_test_list_head(void)
 {
 	struct test_list *item = tl_head;
 
@@ -978,13 +1025,13 @@ void *worker(void *t_type)
 	bool complete, cancelled = false;
 	enum thread_type thread_type = *((enum thread_type *) t_type);
 
-	PTHREAD_MUTEX_lock(&work_mutex);
+	pthread_mutex_lock(&work_mutex);
 
 	while (true) {
 		/* Look for work */
 		work = get_work(thread_type);
 
-		PTHREAD_MUTEX_unlock(&work_mutex);
+		pthread_mutex_unlock(&work_mutex);
 
 		assert(work != NULL);
 
@@ -1003,7 +1050,7 @@ void *worker(void *t_type)
 		if (complete)
 			respond(&work->resp);
 
-		PTHREAD_MUTEX_lock(&work_mutex);
+		pthread_mutex_lock(&work_mutex);
 
 		if (complete) {
 			/* Remember if the main thread was trying to cancel
@@ -1192,7 +1239,8 @@ int main(int argc, char **argv)
 				fprintf(stdout, "%s\n", rest);
 
 			/* If line doesn't start with a tag, that's ok */
-			no_tag = (!isdigit(*rest) && (*rest != '$'));
+			no_tag = (!isdigit(*rest) && (*rest != '$') &&
+				  (*rest != '-'));
 
 			/* Parse request into response structure */
 			rest = parse_request(rest, &resp, no_tag);
@@ -1248,6 +1296,9 @@ int main(int argc, char **argv)
 					break;
 				case CMD_ALARM:
 					do_alarm(&resp);
+					break;
+				case CMD_FORK:
+					complete = do_fork(&resp, oflags == 7);
 					break;
 
 				case CMD_HELLO:

@@ -54,7 +54,6 @@
  * Implements the NFSPROC3_FSSTAT.
  *
  * @param[in]  arg     NFS argument union
- * @param[in]  worker  Worker thread data
  * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call
  *
@@ -64,9 +63,7 @@
  *
  */
 
-int nfs3_fsstat(nfs_arg_t *arg,
-		nfs_worker_data_t *worker,
-		struct svc_req *req, nfs_res_t *res)
+int nfs3_fsstat(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
 	fsal_dynamicfsinfo_t dynamicinfo;
 	cache_inode_status_t cache_status;
@@ -75,6 +72,7 @@ int nfs3_fsstat(nfs_arg_t *arg,
 
 	if (isDebug(COMPONENT_NFSPROTO)) {
 		char str[LEN_FH_STR];
+
 		nfs_FhandleToStr(req->rq_vers, &(arg->arg_fsstat3.fsroot), NULL,
 				 str);
 		LogDebug(COMPONENT_NFSPROTO,
@@ -101,15 +99,15 @@ int nfs3_fsstat(nfs_arg_t *arg,
 
 	if (cache_status == CACHE_INODE_SUCCESS) {
 		LogFullDebug(COMPONENT_NFSPROTO,
-			     "nfs_Fsstat --> dynamicinfo.total_bytes "
-			     "= %zu dynamicinfo.free_bytes = %zu "
-			     "dynamicinfo.avail_bytes = %zu",
+			     "nfs_Fsstat --> dynamicinfo.total_bytes=%" PRIu64
+			     " dynamicinfo.free_bytes=%" PRIu64
+			     " dynamicinfo.avail_bytes=%" PRIu64,
 			     dynamicinfo.total_bytes, dynamicinfo.free_bytes,
 			     dynamicinfo.avail_bytes);
 		LogFullDebug(COMPONENT_NFSPROTO,
-			     "nfs_Fsstat --> " "dynamicinfo.total_files = %"
-			     PRIu64 " dynamicinfo.free_files = %" PRIu64
-			     " dynamicinfo.avail_files = %" PRIu64,
+			     "nfs_Fsstat --> dynamicinfo.total_files=%" PRIu64
+			     " dynamicinfo.free_files=%" PRIu64
+			     " dynamicinfo.avail_files=%" PRIu64,
 			     dynamicinfo.total_files, dynamicinfo.free_files,
 			     dynamicinfo.avail_files);
 
@@ -135,15 +133,13 @@ int nfs3_fsstat(nfs_arg_t *arg,
 		res->res_fsstat3.status = NFS3_OK;
 
 		LogFullDebug(COMPONENT_NFSPROTO,
-			     "nfs_Fsstat --> tbytes=%llu "
-			     "fbytes=%llu abytes=%llu",
+			     "nfs_Fsstat --> tbytes=%llu fbytes=%llu abytes=%llu",
 			     res->res_fsstat3.FSSTAT3res_u.resok.tbytes,
 			     res->res_fsstat3.FSSTAT3res_u.resok.fbytes,
 			     res->res_fsstat3.FSSTAT3res_u.resok.abytes);
 
 		LogFullDebug(COMPONENT_NFSPROTO,
-			     "nfs_Fsstat --> tfiles=%llu "
-			     "fffiles=%llu afiles=%llu",
+			     "nfs_Fsstat --> tfiles=%llu fffiles=%llu afiles=%llu",
 			     res->res_fsstat3.FSSTAT3res_u.resok.tfiles,
 			     res->res_fsstat3.FSSTAT3res_u.resok.ffiles,
 			     res->res_fsstat3.FSSTAT3res_u.resok.afiles);
@@ -180,5 +176,4 @@ int nfs3_fsstat(nfs_arg_t *arg,
 void nfs3_fsstat_free(nfs_res_t *res)
 {
 	/* Nothing to do here */
-	return;
 }

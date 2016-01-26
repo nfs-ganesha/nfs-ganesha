@@ -92,6 +92,12 @@ state_status_t state_add_impl(cache_entry_t *entry, enum state_type state_type,
 	state_status_t status = 0;
 	bool mutex_init = false;
 
+	if (isFullDebug(COMPONENT_STATE) && pnew_state != NULL) {
+		display_stateid(&dspbuf, pnew_state);
+		LogFullDebug(COMPONENT_STATE, "pnew_state=%s", str);
+		display_reset_buffer(&dspbuf);
+	}
+
 	/* Take a cache inode reference for the state */
 	cache_status = cache_inode_lru_ref(entry, LRU_FLAG_NONE);
 
@@ -156,12 +162,26 @@ state_status_t state_add_impl(cache_entry_t *entry, enum state_type state_type,
 	if (refer)
 		pnew_state->state_refer = *refer;
 
-	if (isDebug(COMPONENT_STATE)) {
+	if (isFullDebug(COMPONENT_STATE)) {
 		display_stateid_other(&dspbuf, pnew_state->stateid_other);
 		str_valid = true;
+
+		LogFullDebug(COMPONENT_STATE,
+			     "About to call nfs4_State_Set for %s",
+			     str);
 	}
 
 	glist_init(&pnew_state->state_list);
+
+	/* We need to initialize state_owner and state_entry now so that
+	 * the state can be indexed by owner/entry. We don't insert into
+	 * lists and take references yet since no one else can see this
+	 * state until we are completely done since we hold the state_lock.
+	 * Might as well grab export now also...
+	 */
+	pnew_state->state_export = op_ctx->export;
+	pnew_state->state_entry = entry;
+	pnew_state->state_owner = owner_input;
 
 	/* Add the state to the related hashtable */
 	if (!nfs4_State_Set(pnew_state)) {
@@ -190,7 +210,6 @@ state_status_t state_add_impl(cache_entry_t *entry, enum state_type state_type,
 	/* Attach this to an export */
 	PTHREAD_RWLOCK_wrlock(&op_ctx->export->lock);
 	PTHREAD_MUTEX_lock(&pnew_state->state_mutex);
-	pnew_state->state_export = op_ctx->export;
 	glist_add_tail(&op_ctx->export->exp_state_list,
 		       &pnew_state->state_export_list);
 	PTHREAD_MUTEX_unlock(&pnew_state->state_mutex);
@@ -199,14 +218,12 @@ state_status_t state_add_impl(cache_entry_t *entry, enum state_type state_type,
 	/* Add state to list for cache entry */
 	PTHREAD_MUTEX_lock(&pnew_state->state_mutex);
 	glist_add_tail(&entry->list_of_states, &pnew_state->state_list);
-	pnew_state->state_entry = entry;
 	PTHREAD_MUTEX_unlock(&pnew_state->state_mutex);
 
 	/* Add state to list for owner */
 	PTHREAD_MUTEX_lock(&owner_input->so_mutex);
 	PTHREAD_MUTEX_lock(&pnew_state->state_mutex);
 
-	pnew_state->state_owner = owner_input;
 	inc_state_owner_ref(owner_input);
 
 	glist_add_tail(&owner_input->so_owner.so_nfs4_owner.so_state_list,
@@ -326,7 +343,7 @@ void state_del_locked(state_t *state)
 	/* Remove the entry from the HashTable. If it fails, we have lost the
 	 * race with another caller of state_del/state_del_locked.
 	 */
-	if (!nfs4_State_Del(state->stateid_other)) {
+	if (!nfs4_State_Del(state)) {
 		if (str_valid)
 			LogDebug(COMPONENT_STATE,
 				 "Racing to delete %s", str);
@@ -546,10 +563,10 @@ void state_nfs4_state_wipe(cache_entry_t *entry)
 
 	glist_for_each_safe(glist, glistn, &entry->list_of_states) {
 		state = glist_entry(glist, state_t, state_list);
+		if (state->state_type > STATE_TYPE_LAYOUT)
+			continue;
 		state_del_locked(state);
 	}
-
-	return;
 }
 
 /**
@@ -565,6 +582,14 @@ enum nfsstat4 release_lock_owner(state_owner_t *owner)
 		PTHREAD_MUTEX_unlock(&owner->so_mutex);
 
 		return NFS4ERR_LOCKS_HELD;
+	}
+
+	if (isDebug(COMPONENT_STATE)) {
+		char str[LOG_BUFF_LEN];
+		struct display_buffer dspbuf = {sizeof(str), str, str};
+
+		display_owner(&dspbuf, owner);
+		LogDebug(COMPONENT_STATE, "Removing state for %s", str);
 	}
 
 	while (true) {

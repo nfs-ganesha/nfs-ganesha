@@ -37,16 +37,12 @@
  * @brief Test lock
  *
  * @param[in]  args
- * @param[in]  export
- * @param[in]  worker
  * @param[in]  req
  * @param[out] res
  *
  */
 
-int nlm4_Test(nfs_arg_t *args,
-	      nfs_worker_data_t *worker,
-	      struct svc_req *req, nfs_res_t *res)
+int nlm4_Test(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 {
 	nlm4_testargs *arg = &args->arg_nlm4_test;
 	cache_entry_t *pentry;
@@ -57,6 +53,7 @@ int nlm4_Test(nfs_arg_t *args,
 	state_owner_t *nlm_owner, *holder;
 	fsal_lock_param_t lock, conflict;
 	int rc;
+	state_t *state;
 
 	/* NLM doesn't have a BADHANDLE error, nor can rpc_execute deal with
 	 * responding to an NLM_*_MSG call, so we check here if the export is
@@ -110,7 +107,10 @@ int nlm4_Test(nfs_arg_t *args,
 				    &nsm_client,
 				    &nlm_client,
 				    &nlm_owner,
-				    NULL);
+				    NULL,
+				    false,
+				    0,
+				    &state);
 
 	if (rc >= 0) {
 		/* resent the error back to the client */
@@ -122,6 +122,7 @@ int nlm4_Test(nfs_arg_t *args,
 	}
 
 	state_status = state_test(pentry,
+				  state,
 				  nlm_owner,
 				  &lock,
 				  &holder,
@@ -142,6 +143,10 @@ int nlm4_Test(nfs_arg_t *args,
 	}
 
 	LogFullDebug(COMPONENT_NLM, "Back from state_test");
+
+	/* Release state_t reference if we got one */
+	if (state != NULL)
+		dec_nlm_state_ref(state);
 
 	/* Release the NLM Client and NLM Owner references we have */
 	dec_nsm_client_ref(nsm_client);
@@ -190,16 +195,12 @@ static void nlm4_test_message_resp(state_async_queue_t *arg)
  * @brief Test lock Message
  *
  * @param[in]  args
- * @param[in]  export
- * @param[in]  worker
  * @param[in]  req
  * @param[out] res
  *
  */
 
-int nlm4_Test_Message(nfs_arg_t *args,
-		      nfs_worker_data_t *worker, struct svc_req *req,
-		      nfs_res_t *res)
+int nlm4_Test_Message(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 {
 	state_nlm_client_t *nlm_client = NULL;
 	state_nsm_client_t *nsm_client;
@@ -221,7 +222,7 @@ int nlm4_Test_Message(nfs_arg_t *args,
 	if (nlm_client == NULL)
 		rc = NFS_REQ_DROP;
 	else
-		rc = nlm4_Test(args, worker, req, res);
+		rc = nlm4_Test(args, req, res);
 
 	if (rc == NFS_REQ_OK)
 		rc = nlm_send_async_res_nlm4test(nlm_client,

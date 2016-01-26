@@ -33,7 +33,9 @@
 #ifndef NFS_FH_H
 #define NFS_FH_H
 
+#ifndef __FreeBSD__
 #include "byteswap.h"
+#endif
 
 /*
  * Structure of the filehandle

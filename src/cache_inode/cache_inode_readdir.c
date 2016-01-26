@@ -196,6 +196,7 @@ cache_inode_operate_cached_dirent(cache_entry_t *directory,
 				/* overwrite, replace entry and expire the
 				 * old */
 				cache_entry_t *oldentry;
+
 				avl_dirent_set_deleted(directory, dirent);
 				cache_inode_key_dup(&dirent2->ckey,
 						    &dirent->ckey);
@@ -471,8 +472,7 @@ cache_inode_readdir_populate(cache_entry_t *directory)
 	if ((directory->flags & CACHE_INODE_DIR_POPULATED)
 	    && (directory->flags & CACHE_INODE_TRUST_CONTENT)) {
 		LogFullDebug(COMPONENT_NFS_READDIR,
-			     "CACHE_INODE_DIR_POPULATED and CACHE_INODE_TRUST_CONTENT"
-			     );
+			     "CACHE_INODE_DIR_POPULATED and CACHE_INODE_TRUST_CONTENT");
 		status = CACHE_INODE_SUCCESS;
 		return status;
 	}
@@ -632,8 +632,7 @@ cache_inode_readdir(cache_entry_t *directory,
 							  access_mask_attr);
 		if (attr_status != CACHE_INODE_SUCCESS) {
 			LogFullDebug(COMPONENT_NFS_READDIR,
-				     "permission check for attributes "
-				     "status=%s",
+				     "permission check for attributes status=%s",
 				     cache_inode_err_str(attr_status));
 		}
 	} else
@@ -708,9 +707,9 @@ cache_inode_readdir(cache_entry_t *directory,
 	}
 
 	LogFullDebug(COMPONENT_NFS_READDIR,
-		     "About to readdir in cache_inode_readdir: directory=%p "
-		     "cookie=%" PRIu64 " collisions %d", directory, cookie,
-		     directory->object.dir.avl.collisions);
+		     "About to readdir in cache_inode_readdir: directory=%p cookie=%"
+		     PRIu64 " collisions %d",
+		     directory, cookie, directory->object.dir.avl.collisions);
 
 	/* Now satisfy the request from the cached readdir--stop when either
 	 * the requested sequence or dirent sequence is exhausted */
@@ -726,6 +725,7 @@ cache_inode_readdir(cache_entry_t *directory,
 		dirent =
 		    avltree_container_of(dirent_node, cache_inode_dir_entry_t,
 					 node_hk);
+		retry_stale = true;
 
  estale_retry:
 		LogFullDebug(COMPONENT_NFS_READDIR,
@@ -743,8 +743,7 @@ cache_inode_readdir(cache_entry_t *directory,
 			if (retry_stale
 			    && tmp_status == CACHE_INODE_ESTALE) {
 				LogDebug(COMPONENT_NFS_READDIR,
-					 "cache_inode_get_keyed returned %s "
-					 "for %s - retrying entry",
+					 "cache_inode_get_keyed returned %s for %s - retrying entry",
 					 cache_inode_err_str(tmp_status),
 					 dirent->name);
 				retry_stale = false; /* only one retry per
@@ -761,8 +760,7 @@ cache_inode_readdir(cache_entry_t *directory,
 					&directory->flags,
 					CACHE_INODE_TRUST_CONTENT);
 				LogDebug(COMPONENT_NFS_READDIR,
-					 "cache_inode_get_keyed returned %s "
-					 "for %s - skipping entry",
+					 "cache_inode_get_keyed returned %s for %s - skipping entry",
 					 cache_inode_err_str(tmp_status),
 					 dirent->name);
 				continue;
@@ -771,8 +769,7 @@ cache_inode_readdir(cache_entry_t *directory,
 				   probably an inconsistency. */
 				status = tmp_status;
 				LogCrit(COMPONENT_NFS_READDIR,
-					"cache_inode_get_keyed returned %s "
-					"for %s - bailing out",
+					"cache_inode_get_keyed returned %s for %s - bailing out",
 					cache_inode_err_str(status),
 					dirent->name);
 				goto unlock_dir;
@@ -780,8 +777,9 @@ cache_inode_readdir(cache_entry_t *directory,
 		}
 
 		LogFullDebug(COMPONENT_NFS_READDIR,
-			     "cache_inode_readdir: dirent=%p name=%s "
-			     "cookie=%" PRIu64 " (probes %d)", dirent,
+			     "cache_inode_readdir: dirent=%p name=%s cookie=%"
+			     PRIu64 " (probes %d)",
+			     dirent,
 			     dirent->name, dirent->hk.k, dirent->hk.p);
 
 		cb_parms.name = dirent->name;
@@ -796,8 +794,7 @@ cache_inode_readdir(cache_entry_t *directory,
 			if (tmp_status == CACHE_INODE_ESTALE) {
 				if (retry_stale) {
 					LogDebug(COMPONENT_NFS_READDIR,
-						 "cache_inode_getattr returned "
-						 "%s for %s - retrying entry",
+						 "cache_inode_getattr returned %s for %s - retrying entry",
 						 cache_inode_err_str
 						 (tmp_status), dirent->name);
 					retry_stale = false; /* only one retry
@@ -813,8 +810,7 @@ cache_inode_readdir(cache_entry_t *directory,
 					CACHE_INODE_TRUST_CONTENT);
 
 				LogDebug(COMPONENT_NFS_READDIR,
-					 "cache_inode_lock_trust_attrs "
-					 "returned %s for %s - skipping entry",
+					 "cache_inode_lock_trust_attrs returned %s for %s - skipping entry",
 					 cache_inode_err_str(tmp_status),
 					 dirent->name);
 				continue;
@@ -823,8 +819,7 @@ cache_inode_readdir(cache_entry_t *directory,
 			status = tmp_status;
 
 			LogCrit(COMPONENT_NFS_READDIR,
-				"cache_inode_lock_trust_attrs returned %s for "
-				"%s - bailing out",
+				"cache_inode_lock_trust_attrs returned %s for %s - bailing out",
 				cache_inode_err_str(status), dirent->name);
 
 			goto unlock_dir;

@@ -19,7 +19,7 @@ find_path(WBCLIENT_INCLUDE_DIR wbclient.h
   /usr/local/include
   )
 
-set(CMAKE_REQUIRED_INCLUDES ${WBCLIENT_INCLUDE_DIR})
+LIST(APPEND CMAKE_REQUIRED_INCLUDES ${WBCLIENT_INCLUDE_DIR})
 
 find_library(WBCLIENT_LIBRARIES NAMES wbclient
   PATHS
@@ -37,7 +37,7 @@ check_library_exists(
 check_include_files("stdint.h;stdbool.h;wbclient.h" WBCLIENT_H)
 
 # XXX this check is doing the heavy lifting
-set(CMAKE_REQUIRED_LIBRARIES ${WBCLIENT_LIBRARIES})
+LIST(APPEND CMAKE_REQUIRED_LIBRARIES ${WBCLIENT_LIBRARIES})
 if(WBCLIENT_H)
   check_c_source_compiles("
 /* do the enum */

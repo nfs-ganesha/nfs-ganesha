@@ -42,7 +42,7 @@ static void print_glist(struct glist_head *head)
 	}
 }
 
-void basic_test()
+void basic_test(void)
 {
 	struct myteststruct node1;
 	struct myteststruct node2;
@@ -50,6 +50,7 @@ void basic_test()
 	struct myteststruct node4;
 	struct myteststruct node1_new;
 	struct myteststruct node2_new;
+
 	glist_init(&mytestglist);
 	glist_init(&mytestglist_new);
 	node1.value = 10;
@@ -81,7 +82,7 @@ void basic_test()
 	print_glist(&mytestglist);
 }
 
-void splice_tail_test()
+void splice_tail_test(void)
 {
 	struct myteststruct nodes[10];
 	int ix;
@@ -91,6 +92,7 @@ void splice_tail_test()
 
 	for (ix = 0; ix < 10; ++ix) {
 		struct myteststruct *node = &nodes[ix];
+
 		node->value = ix + 1;
 		/* add nodes 1-5 to mytestglist */
 		if (ix < 5) {

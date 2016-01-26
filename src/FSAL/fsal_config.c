@@ -94,8 +94,6 @@ bool fsal_supports(struct fsal_staticfsinfo_t *info,
 		return !!info->pnfs_mds;
 	case fso_pnfs_ds_supported:
 		return !!info->pnfs_ds;
-	case fso_accesscheck_support:
-		return !!info->accesscheck_support;
 	case fso_share_support:
 		return !!info->share_support;
 	case fso_share_support_owner:

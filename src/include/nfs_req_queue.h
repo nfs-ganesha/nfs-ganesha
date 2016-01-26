@@ -38,12 +38,6 @@
 #include "gsh_list.h"
 #include "wait_queue.h"
 
-/* XXX moving to gsh_intrinsic.h */
-#ifndef CACHE_LINE_SIZE
-#define CACHE_LINE_SIZE 64	/* XXX arch-specific define */
-#endif
-#define CACHE_PAD(_n) char __pad ## _n [CACHE_LINE_SIZE]
-
 struct req_q {
 	pthread_spinlock_t sp;
 	struct glist_head q;	/* LIFO */
@@ -54,11 +48,11 @@ struct req_q {
 
 struct req_q_pair {
 	const char *s;
-	 CACHE_PAD(0);
+	GSH_CACHE_PAD(0);
 	struct req_q producer;	/* from decoder */
-	 CACHE_PAD(1);
+	GSH_CACHE_PAD(1);
 	struct req_q consumer;	/* to executor */
-	 CACHE_PAD(2);
+	GSH_CACHE_PAD(2);
 };
 
 #define REQ_Q_MOUNT 0
@@ -82,7 +76,7 @@ struct nfs_req_st {
 		struct glist_head wait_list;
 		uint32_t waiters;
 	} reqs;
-	 CACHE_PAD(1);
+	GSH_CACHE_PAD(1);
 	struct {
 		pthread_mutex_t mtx;
 		struct glist_head q;
@@ -106,6 +100,7 @@ static inline void nfs_rpc_q_init(struct req_q *q)
 static inline uint32_t nfs_rpc_q_next_slot(void)
 {
 	uint32_t ix = atomic_inc_uint32_t(&nfs_req_st.reqs.ctr);
+
 	if (!ix)
 		ix = atomic_inc_uint32_t(&nfs_req_st.reqs.ctr);
 	return ix;
@@ -120,6 +115,7 @@ static inline void nfs_rpc_queue_awaken(void *arg)
 	pthread_spin_lock(&st->reqs.sp);
 	glist_for_each_safe(g, n, &st->reqs.wait_list) {
 		wait_q_entry_t *wqe = glist_entry(g, wait_q_entry_t, waitq);
+
 		pthread_cond_signal(&wqe->lwe.cv);
 		pthread_cond_signal(&wqe->rwe.cv);
 	}

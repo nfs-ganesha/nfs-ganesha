@@ -122,6 +122,7 @@ static nfsstat4 acquire_layout_state(compound_data_t *data,
 		/* For share, delegation, and lock states, create a
 		   new layout state. */
 		union state_data layout_data;
+
 		memset(&layout_data, 0, sizeof(layout_data));
 
 		PTHREAD_RWLOCK_wrlock(&data->current_entry->state_lock);
@@ -398,8 +399,7 @@ int nfs4_op_layoutget(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (max_segment_count == 0) {
 		LogWarn(COMPONENT_PNFS,
-			"The FSAL must specify a non-zero "
-			"fs_maximum_segments.");
+			"The FSAL must specify a non-zero fs_maximum_segments.");
 		nfs_status = NFS4ERR_LAYOUTUNAVAILABLE;
 		goto out;
 	}
@@ -547,7 +547,8 @@ int nfs4_op_layouterror(struct nfs_argop4 *op, compound_data_t *data,
 	nfsstat4 nfs_status = 0;
 
 	LogEvent(COMPONENT_PNFS,
-		 "LAYOUTERROR OP %d status %d offset: %lu length: %lu",
+		 "LAYOUTERROR OP %d status %d offset: %" PRIu64
+		 " length: %" PRIu64,
 		 arg_LAYOUTERROR4->lea_errors.de_opnum,
 		 arg_LAYOUTERROR4->lea_errors.de_status,
 		 arg_LAYOUTERROR4->lea_offset,
@@ -577,12 +578,13 @@ int nfs4_op_layoutstats(struct nfs_argop4 *op, compound_data_t *data,
 	nfsstat4 nfs_status = 0;
 
 	LogEvent(COMPONENT_PNFS,
-		 "LAYOUTSTATS offset %lu length %lu",
+		 "LAYOUTSTATS offset %" PRIu64 " length %" PRIu64,
 		 arg_LAYOUTSTATS4->lsa_offset,
 		 arg_LAYOUTSTATS4->lsa_length);
 
 	LogEvent(COMPONENT_PNFS,
-		 "LAYOUTSTATS read count %u bytes %lu write count %u bytes %lu",
+		 "LAYOUTSTATS read count %u bytes %" PRIu64
+		 " write count %u bytes %" PRIu64,
 		 arg_LAYOUTSTATS4->lsa_read.ii_count,
 		 arg_LAYOUTSTATS4->lsa_read.ii_bytes,
 		 arg_LAYOUTSTATS4->lsa_write.ii_count,

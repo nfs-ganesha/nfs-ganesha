@@ -23,8 +23,6 @@ matrix:
 before_install:
  - git submodule update --init --recursive
  - sudo add-apt-repository -y ppa:gluster/glusterfs-3.6
- - wget -q -O- 'https://ceph.com/git/?p=ceph.git;a=blob_plain;f=keys/release.asc' | sudo apt-key add -
- - echo deb http://eu.ceph.com/debian-firefly/ $(lsb_release -sc) main | sudo tee /etc/apt/sources.list.d/ceph.list
  - sudo apt-add-repository -y ppa:lttng/ppa
  - sudo apt-get update -q
  - sudo apt-get install -y libnfsidmap2
@@ -45,7 +43,7 @@ before_install:
  - sudo apt-get install -y uuid-dev
  - sudo apt-get install -y libblkid-dev
  - sudo apt-get install -y xfslibs-dev
- - sudo apt-get install -y libcephfs-dev
+# - sudo apt-get install -y libcephfs-dev
  - sudo apt-get install -y libwbclient-dev
  - sudo apt-get install -y lttng-tools
  - sudo apt-get install -y liblttng-ust-dev
@@ -64,7 +62,7 @@ install:
  - if [[ ${CC} == 'gcc' ]]; then cd contrib/libzfswrap && aclocal -I m4 && libtoolize --force --copy && autoconf && autoheader && automake -a --add-missing -Wall && ./configure --prefix=/tmp/libzfswrap && make && make install && cd $TRAVIS_BUILD_DIR ; fi
 
 script:
- - mkdir ../build && cd ../build && cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DBUILD_CONFIG=everything -DUSE_FSAL_PT=ON -DUSE_FSAL_CEPH=ON -DUSE_ADMIN_TOOLS=ON -DUSE_LTTNG=ON -DUSE_TIRPC_IPV6=ON -DUSE_9P_RDMA=ON -D_USE_9P_RDMA=ON -DLUSTRE_PREFIX=/tmp/lustre/usr -DZFS_PREFIX=/tmp/libzfswrap -DMOOSHIKA_PREFIX=/tmp/mooshika ../nfs-ganesha/src/ && make
+ - mkdir ../build && cd ../build && cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DBUILD_CONFIG=everything -DUSE_FSAL_PT=ON -DUSE_FSAL_CEPH=OFF -DUSE_ADMIN_TOOLS=ON -DUSE_LTTNG=ON -DUSE_TIRPC_IPV6=ON -DUSE_9P_RDMA=ON -D_USE_9P_RDMA=ON -DLUSTRE_PREFIX=/tmp/lustre/usr -DZFS_PREFIX=/tmp/libzfswrap -DMOOSHIKA_PREFIX=/tmp/mooshika ../nfs-ganesha/src/ && make
 
 #notifications:
 #  email:

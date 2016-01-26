@@ -1,7 +1,20 @@
 /*
  * ----------------------------------------------------------------------------
  * Copyright IBM Corp. 2012, 2012
- * All Rights Reserved
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  * ----------------------------------------------------------------------------
  * ----------------------------------------------------------------------------
  * Filename:    fsal_internal.c
@@ -60,11 +73,6 @@ uint32_t CredentialLifetime = 3600;
  * it is read-only, except during initialization.
  */
 struct fsal_staticfsinfo_t global_fs_info;
-
-static fsal_status_t fsal_internal_testAccess_no_acl(
-		const struct req_op_context *p_context,	/* IN */
-		fsal_accessflags_t access_type,	/* IN */
-		struct attrlist *p_object_attributes);	/* IN */
 
 /**
  * fsal_internal_handle2fd:
@@ -188,9 +196,9 @@ fsal_status_t fsal_internal_handle2fd_at(const struct req_op_context *
  */
 fsal_status_t fsal_internal_get_handle(const struct req_op_context *p_context,
 				       struct fsal_export *export,
-				       const char *p_fsalpath,	/* IN */
+				       const char *p_fsalpath,
 				       ptfsal_handle_t *p_handle)
-{				/* OUT */
+{
 	int rc;
 	fsi_stat_struct buffstat;
 	uint64_t *handlePtr;
@@ -305,79 +313,6 @@ fsal_status_t fsal_internal_fd2handle(int fd, ptfsal_handle_t *p_handle)
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-/**
- * fsal_readlink_by_handle:
- * Reads the contents of the link
- *
- *
- * \return status of operation
- */
-fsal_status_t fsal_readlink_by_handle(const struct req_op_context *p_context,
-				      struct fsal_export *export,
-				      ptfsal_handle_t *p_handle, char *__buf,
-				      size_t maxlen)
-{
-	int rc;
-
-	FSI_TRACE(FSI_DEBUG, "Begin - readlink_by_handle\n");
-
-	memset(__buf, 0, maxlen);
-	rc = ptfsal_readlink(p_handle, export, p_context, __buf);
-
-	if (rc < 0)
-		return fsalstat(rc, 0);
-
-	FSI_TRACE(FSI_DEBUG, "End - readlink_by_handle\n");
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
-}
-
-/* Check the access by using NFS4 ACL if it exists. Otherwise, use mode. */
-fsal_status_t fsal_internal_testAccess(const struct req_op_context *p_context,
-				       fsal_accessflags_t access_type,	/* IN */
-				       struct attrlist *
-				       p_object_attributes/* IN */)
-{
-	if (!p_object_attributes)
-		return fsalstat(ERR_FSAL_FAULT, 0);
-
-	/* The root user ignores the mode/uid/gid of the file */
-	if (p_context->creds->caller_uid == 0)
-		return fsalstat(ERR_FSAL_NO_ERROR, 0);
-
-	/* Use mode to check access. */
-	return fsal_internal_testAccess_no_acl(p_context,
-					       FSAL_MODE_MASK(access_type),
-					       p_object_attributes);
-}
-
-/* Check the access at the file system. It is called when Use_Test_Access
- * = 0.
- */
-fsal_status_t fsal_internal_access(int mntfd,	/* IN */
-				   const struct req_op_context *p_context,
-				   ptfsal_handle_t *p_handle,	/* IN */
-				   fsal_accessflags_t access_type,	/* IN */
-				   struct attrlist *p_object_attributes)
-{				/* IN */
-	fsal_status_t status;
-/*	mode_t mode = 0; */
-
-	FSI_TRACE(FSI_DEBUG, "FSI - access\n");
-
-	/* sanity checks. */
-	if (!p_context || !p_handle)
-		return fsalstat(ERR_FSAL_FAULT, 0);
-
-/*	if (IS_FSAL_MODE_MASK_VALID(access_type)) */
-/*		mode = FSAL_MODE_MASK(access_type); */
-
-	status =
-	    fsal_internal_testAccess(p_context, access_type,
-				     p_object_attributes);
-
-	return status;
-}
-
 /* Get NFS4 ACL as well as stat. For now, get stat only until NFS4 ACL
  * support is enabled. */
 fsal_status_t fsal_get_xstat_by_handle(int dirfd,
@@ -410,124 +345,6 @@ fsal_status_t fsal_set_xstat_by_handle(int dirfd,
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
-}
-
-static fsal_status_t
-fsal_internal_testAccess_no_acl(const struct req_op_context *p_context,
-				fsal_accessflags_t access_type,	/* IN */
-				struct attrlist
-				*p_object_attributes)
-{				/* IN */
-	fsal_accessflags_t missing_access;
-	unsigned int is_grp, i;
-	uid_t uid;
-	gid_t gid;
-	mode_t mode;
-
-	FSI_TRACE(FSI_DEBUG, "FSI - testAccess_no_acl\n");
-
-	/* unsatisfied flags */
-	missing_access = access_type;
-	if (!missing_access) {
-		LogDebug(COMPONENT_FSAL, "Nothing was requested");
-		return fsalstat(ERR_FSAL_NO_ERROR, 0);
-	}
-
-	uid = p_object_attributes->owner;
-	gid = p_object_attributes->group;
-	mode = p_object_attributes->mode;
-
-	LogDebug(COMPONENT_FSAL, "file Mode=%#o, file uid=%d, file gid= %d",
-		 mode, uid, gid);
-	LogDebug(COMPONENT_FSAL, "user uid=%d, user gid= %d, access_type=0X%x",
-		 p_context->creds->caller_uid, p_context->creds->caller_gid,
-		 access_type);
-
-	/* If the uid of the file matches the uid of the user,
-	 * then the uid mode bits take precedence. */
-	if (p_context->creds->caller_uid == uid) {
-
-		LogDebug(COMPONENT_FSAL, "File belongs to user %d", uid);
-
-		if (mode & S_IRUSR)
-			missing_access &= ~FSAL_R_OK;
-
-		if (mode & S_IWUSR)
-			missing_access &= ~FSAL_W_OK;
-
-		if (mode & S_IXUSR)
-			missing_access &= ~FSAL_X_OK;
-
-		if (missing_access == 0)
-			return fsalstat(ERR_FSAL_NO_ERROR, 0);
-		else {
-			LogDebug(COMPONENT_FSAL,
-				 "Mode=%#o, Access=0X%x, Rights missing: 0X%x",
-				 mode, access_type, missing_access);
-			return fsalstat(ERR_FSAL_ACCESS, 0);
-		}
-
-	}
-
-	/* Test if the file belongs to user's group. */
-	is_grp = (p_context->creds->caller_gid == gid);
-	if (is_grp)
-		LogDebug(COMPONENT_FSAL, "File belongs to user's group %d",
-			 p_context->creds->caller_gid);
-
-	/* Test if file belongs to alt user's groups */
-	if (!is_grp) {
-		for (i = 0; i < p_context->creds->caller_glen; i++) {
-			is_grp = (p_context->creds->caller_garray[i] == gid);
-			if (is_grp)
-				LogDebug(COMPONENT_FSAL,
-					 "File belongs to user's alt group %d",
-					 p_context->creds->caller_garray[i]);
-			if (is_grp)
-				break;
-		}
-	}
-	/* If the gid of the file matches the gid of the user or
-	 * one of the alternatve gids of the user, then the uid mode
-	 * bits take precedence. */
-	if (is_grp) {
-		if (mode & S_IRGRP)
-			missing_access &= ~FSAL_R_OK;
-
-		if (mode & S_IWGRP)
-			missing_access &= ~FSAL_W_OK;
-
-		if (mode & S_IXGRP)
-			missing_access &= ~FSAL_X_OK;
-
-		if (missing_access == 0)
-			return fsalstat(ERR_FSAL_NO_ERROR, 0);
-		else
-			return fsalstat(ERR_FSAL_ACCESS, 0);
-
-	}
-
-	/* If the user uid is not 0, the uid does not match the file's, and
-	 * the user's gids do not match the file's gid, we apply the "other"
-	 * mode bits to the user. */
-	if (mode & S_IROTH)
-		missing_access &= ~FSAL_R_OK;
-
-	if (mode & S_IWOTH)
-		missing_access &= ~FSAL_W_OK;
-
-	if (mode & S_IXOTH)
-		missing_access &= ~FSAL_X_OK;
-
-	if (missing_access == 0)
-		return fsalstat(ERR_FSAL_NO_ERROR, 0);
-	else {
-		LogDebug(COMPONENT_FSAL,
-			 "Mode=%#o, Access=0X%x, Rights missing: 0X%x", mode,
-			 access_type, missing_access);
-		return fsalstat(ERR_FSAL_ACCESS, 0);
-	}
-
 }
 
 /**

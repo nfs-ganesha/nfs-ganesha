@@ -1,6 +1,50 @@
 /*
- *  Copyright (C) The Internet Society (1998-2003).
- *  All Rights Reserved.
+ * This file was machine generated for [RFC7530].
+ *
+ * Last updated Tue Mar 10 11:51:21 PDT 2015.
+ */
+
+/*
+ * Copyright (c) 2015 IETF Trust and the persons identified
+ * as authors of the code.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with
+ * or without modification, are permitted provided that the
+ * following conditions are met:
+ *
+ * - Redistributions of source code must retain the above
+ *   copyright notice, this list of conditions and the
+ *   following disclaimer.
+ *
+ * - Redistributions in binary form must reproduce the above
+ *   copyright notice, this list of conditions and the
+ *   following disclaimer in the documentation and/or other
+ *   materials provided with the distribution.
+ *
+ * - Neither the name of Internet Society, IETF or IETF
+ *   Trust, nor the names of specific contributors, may be
+ *   used to endorse or promote products derived from this
+ *   software without specific prior written permission.
+ *
+ *   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS
+ *   AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ *   WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ *   IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ *   FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO
+ *   EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ *   LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ *   EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ *   NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ *   SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *   INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ *   LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ *   OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ *   IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ *   ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * This code was derived from RFC 7531.
  */
 
 /*
@@ -13,17 +57,25 @@
 /*
  * Basic typedefs for RFC 1832 data type definitions
  */
-typedef int		int32_t;
-typedef unsigned int	uint32_t;
-typedef hyper		int64_t;
-typedef unsigned hyper	uint64_t;
+/*
+ * typedef int			int32_t;
+ * typedef unsigned int		uint32_t;
+ * typedef hyper		int64_t;
+ * typedef unsigned hyper       uint64_t;
+ */
 
 /*
  * Sizes
  */
 const NFS4_FHSIZE		= 128;
 const NFS4_VERIFIER_SIZE	= 8;
+const NFS4_OTHER_SIZE		= 12;
 const NFS4_OPAQUE_LIMIT		= 1024;
+
+const NFS4_INT64_MAX		= 0x7fffffffffffffff;
+const NFS4_UINT64_MAX		= 0xffffffffffffffff;
+const NFS4_INT32_MAX		= 0x7fffffff;
+const NFS4_UINT32_MAX		= 0xffffffff;
 
 /*
  * File types
@@ -102,39 +154,43 @@ enum nfsstat4 {
 	NFS4ERR_LOCKS_HELD	= 10037,/* file locks held at CLOSE*/
 	NFS4ERR_OPENMODE	= 10038,/* conflict in OPEN and I/O*/
 	NFS4ERR_BADOWNER	= 10039,/* owner translation bad   */
-	NFS4ERR_BADCHAR		= 10040,/* utf-8 char not supported*/
+	NFS4ERR_BADCHAR		= 10040,/* UTF-8 char not supported*/
 	NFS4ERR_BADNAME		= 10041,/* name not supported      */
 	NFS4ERR_BAD_RANGE	= 10042,/* lock range not supported*/
 	NFS4ERR_LOCK_NOTSUPP	= 10043,/* no atomic up/downgrade  */
 	NFS4ERR_OP_ILLEGAL	= 10044,/* undefined operation     */
 	NFS4ERR_DEADLOCK	= 10045,/* file locking deadlock   */
 	NFS4ERR_FILE_OPEN	= 10046,/* open file blocks op.    */
-	NFS4ERR_ADMIN_REVOKED	= 10047,/* lockowner state revoked */
+	NFS4ERR_ADMIN_REVOKED	= 10047,/* lock-owner state revoked */
 	NFS4ERR_CB_PATH_DOWN    = 10048 /* callback path down      */
 };
 
 /*
  * Basic data types
  */
+typedef opaque		attrlist4<>;
 typedef uint32_t	bitmap4<>;
-typedef uint64_t	offset4;
-typedef uint32_t	count4;
-typedef	uint64_t	length4;
+typedef uint64_t	changeid4;
 typedef uint64_t	clientid4;
+typedef uint32_t	count4;
+typedef uint64_t	length4;
+typedef uint32_t	mode4;
+typedef uint64_t	nfs_cookie4;
+typedef opaque		nfs_fh4<NFS4_FHSIZE>;
+typedef uint32_t	nfs_lease4;
+typedef uint64_t	offset4;
+typedef uint32_t	qop4;
+typedef opaque		sec_oid4<>;
 typedef uint32_t	seqid4;
 typedef opaque		utf8string<>;
-typedef utf8string	utf8str_cis;
-typedef utf8string	utf8str_cs;
-typedef utf8string	utf8str_mixed;
-typedef utf8str_cs	component4;
-typedef	component4	pathname4<>;
+typedef utf8string      utf8str_cis;
+typedef utf8string      utf8str_cs;
+typedef utf8string      utf8str_mixed;
+typedef utf8str_cs      component4;
+typedef opaque		linktext4<>;
+typedef utf8string      ascii_REQUIRED4;
+typedef component4      pathname4<>;
 typedef uint64_t	nfs_lockid4;
-typedef	uint64_t	nfs_cookie4;
-typedef	utf8str_cs	linktext4;
-typedef opaque		sec_oid4<>;
-typedef uint32_t	qop4;
-typedef	uint32_t	mode4;
-typedef	uint64_t	changeid4;
 typedef opaque		verifier4[NFS4_VERIFIER_SIZE];
 
 /* 
@@ -193,19 +249,18 @@ struct fs_locations4 {
  */
 
 /*
- * Mask that indicates which Access Control Entries are supported.
- * Values for the fattr4_aclsupport attribute.
+ * Mask that indicates which Access Control Entries
+ * are supported.  Values for the fattr4_aclsupport attribute.
  */
 const ACL4_SUPPORT_ALLOW_ACL	= 0x00000001;
 const ACL4_SUPPORT_DENY_ACL	= 0x00000002;
 const ACL4_SUPPORT_AUDIT_ACL	= 0x00000004;
 const ACL4_SUPPORT_ALARM_ACL	= 0x00000008;
 
-
 typedef	uint32_t	acetype4;
 
 /*
- * acetype4 values, others can be added as needed.
+ * acetype4 values; others can be added as needed.
  */
 const ACE4_ACCESS_ALLOWED_ACE_TYPE	= 0x00000000;
 const ACE4_ACCESS_DENIED_ACE_TYPE	= 0x00000001;
@@ -258,7 +313,7 @@ const ACE4_WRITE_OWNER		= 0x00080000;
 const ACE4_SYNCHRONIZE		= 0x00100000;
 
 /*
- * ACE4_GENERIC_READ -- defined as combination of
+ * ACE4_GENERIC_READ - defined as a combination of
  *	ACE4_READ_ACL |
  *	ACE4_READ_DATA |
  *	ACE4_READ_ATTRIBUTES |
@@ -268,7 +323,7 @@ const ACE4_SYNCHRONIZE		= 0x00100000;
 const ACE4_GENERIC_READ	= 0x00120081;
 
 /*
- * ACE4_GENERIC_WRITE -- defined as combination of
+ * ACE4_GENERIC_WRITE - defined as a combination of
  *	ACE4_READ_ACL |
  *	ACE4_WRITE_DATA |
  *	ACE4_WRITE_ATTRIBUTES |
@@ -278,16 +333,14 @@ const ACE4_GENERIC_READ	= 0x00120081;
  */
 const ACE4_GENERIC_WRITE = 0x00160106;
 
-
 /*
- * ACE4_GENERIC_EXECUTE -- defined as combination of
+ * ACE4_GENERIC_EXECUTE - defined as a combination of
  *	ACE4_READ_ACL
  *	ACE4_READ_ATTRIBUTES
  *	ACE4_EXECUTE
  *	ACE4_SYNCHRONIZE
  */
 const ACE4_GENERIC_EXECUTE = 0x001200A0;
-
 
 /*
  * Access Control Entry definition
@@ -333,7 +386,6 @@ const	FH4_VOLATILE_ANY	= 0x00000002;
 const	FH4_VOL_MIGRATION	= 0x00000004;
 const	FH4_VOL_RENAME		= 0x00000008;
 
-
 typedef bitmap4		fattr4_supported_attrs;
 typedef nfs_ftype4	fattr4_type;
 typedef	uint32_t	fattr4_fh_expire_type;
@@ -344,7 +396,7 @@ typedef	bool		fattr4_symlink_support;
 typedef bool		fattr4_named_attr;
 typedef fsid4		fattr4_fsid;
 typedef	bool		fattr4_unique_handles;
-typedef uint32_t	fattr4_lease_time;
+typedef nfs_lease4	fattr4_lease_time;
 typedef	nfsstat4	fattr4_rdattr_error;
 
 typedef nfsace4		fattr4_acl<>;
@@ -367,7 +419,7 @@ typedef uint32_t	fattr4_maxlink;
 typedef uint32_t	fattr4_maxname;
 typedef uint64_t	fattr4_maxread;
 typedef uint64_t	fattr4_maxwrite;
-typedef	utf8str_cs	fattr4_mimetype;
+typedef	ascii_REQUIRED4	fattr4_mimetype;
 typedef mode4		fattr4_mode;
 typedef uint64_t	fattr4_mounted_on_fileid;
 typedef	bool		fattr4_no_trunc;
@@ -392,9 +444,8 @@ typedef nfstime4	fattr4_time_metadata;
 typedef nfstime4	fattr4_time_modify;
 typedef settime4	fattr4_time_modify_set;
 
-
 /*
- * Mandatory Attributes
+ * Mandatory attributes
  */
 const FATTR4_SUPPORTED_ATTRS	= 0;
 const FATTR4_TYPE		= 1;
@@ -411,7 +462,7 @@ const FATTR4_RDATTR_ERROR	= 11;
 const FATTR4_FILEHANDLE		= 19;
 
 /*
- * Recommended Attributes
+ * Recommended attributes
  */
 const FATTR4_ACL		= 12;
 const FATTR4_ACLSUPPORT		= 13;
@@ -457,8 +508,6 @@ const FATTR4_TIME_MODIFY	= 53;
 const FATTR4_TIME_MODIFY_SET	= 54;
 const FATTR4_MOUNTED_ON_FILEID	= 55;
 
-typedef	opaque	attrlist4<>;
-
 /*
  * File attribute container
  */
@@ -495,7 +544,7 @@ struct cb_client4 {
  */
 struct stateid4 {
 	uint32_t	seqid;
-	opaque		other[12];
+	opaque		other[NFS4_OTHER_SIZE];
 };
 
 /*
@@ -578,7 +627,6 @@ struct COMMIT4args {
 struct COMMIT4resok {
 	verifier4	writeverf;
 };
-
 
 union COMMIT4res switch (nfsstat4 status) {
  case NFS4_OK:
@@ -823,6 +871,18 @@ struct NVERIFY4res {
 };
 
 /*
+ * Share Access and Deny constants for open argument
+ */
+const OPEN4_SHARE_ACCESS_READ	= 0x00000001;
+const OPEN4_SHARE_ACCESS_WRITE	= 0x00000002;
+const OPEN4_SHARE_ACCESS_BOTH	= 0x00000003;
+
+const OPEN4_SHARE_DENY_NONE	= 0x00000000;
+const OPEN4_SHARE_DENY_READ	= 0x00000001;
+const OPEN4_SHARE_DENY_WRITE	= 0x00000002;
+const OPEN4_SHARE_DENY_BOTH	= 0x00000003;
+
+/*
  * Various definitions for OPEN
  */
 enum createmode4 {
@@ -872,18 +932,6 @@ union nfs_space_limit4 switch (limit_by4 limitby) {
 	 nfs_modified_limit4	mod_blocks;
 } ;
 
-/*
- * Share Access and Deny constants for open argument
- */
-const OPEN4_SHARE_ACCESS_READ	= 0x00000001;
-const OPEN4_SHARE_ACCESS_WRITE	= 0x00000002;
-const OPEN4_SHARE_ACCESS_BOTH	= 0x00000003;
-
-const OPEN4_SHARE_DENY_NONE	= 0x00000000;
-const OPEN4_SHARE_DENY_READ	= 0x00000001;
-const OPEN4_SHARE_DENY_WRITE	= 0x00000002;
-const OPEN4_SHARE_DENY_BOTH	= 0x00000003;
-
 enum open_delegation_type4 {
 	OPEN_DELEGATE_NONE	= 0,
 	OPEN_DELEGATE_READ	= 1,
@@ -904,31 +952,36 @@ struct open_claim_delegate_cur4 {
 
 union open_claim4 switch (open_claim_type4 claim) {
  /*
-  * No special rights to file. Ordinary OPEN of the specified file.
+  * No special rights to file.
+  * Ordinary OPEN of the specified file.
   */
  case CLAIM_NULL:
 	/* CURRENT_FH: directory */
 	component4	file;
 
  /*
-  * Right to the file established by an open previous to server
-  * reboot.  File identified by filehandle obtained at that time
-  * rather than by name.
+  * Right to the file established by an
+  * open previous to server reboot.  File
+  * identified by filehandle obtained at
+  * that time rather than by name.
   */
  case CLAIM_PREVIOUS:
 	/* CURRENT_FH: file being reclaimed */
 	open_delegation_type4	delegate_type;
 
  /*
-  * Right to file based on a delegation granted by the server.
-  * File is specified by name.
+  * Right to file based on a delegation
+  * granted by the server.  File is
+  * specified by name.
   */
  case CLAIM_DELEGATE_CUR:
 	/* CURRENT_FH: directory */
 	open_claim_delegate_cur4	delegate_cur_info;
  
- /* Right to file based on a delegation granted to a previous boot
-  * instance of the client.  File is specified by name.
+ /*
+  * Right to file based on a delegation
+  * granted to a previous boot instance
+  * of the client.  File is specified by name.
   */
  case CLAIM_DELEGATE_PREV:
 	 /* CURRENT_FH: directory */
@@ -951,25 +1004,22 @@ struct open_read_delegation4 {
 	stateid4	stateid;	/* Stateid for delegation*/
 	bool		recall;		/* Pre-recalled flag for
 					   delegations obtained
-					   by reclaim
-					   (CLAIM_PREVIOUS) */
+					   by reclaim (CLAIM_PREVIOUS). */
 	nfsace4		permissions;	/* Defines users who don't
 					   need an ACCESS call to
-					   open for read */
+					   open for read. */
 };
 
 struct open_write_delegation4 {
 	stateid4	stateid;	/* Stateid for delegation */
 	bool		recall;		/* Pre-recalled flag for
 					   delegations obtained
-					   by reclaim
-					   (CLAIM_PREVIOUS) */
+					   by reclaim (CLAIM_PREVIOUS). */
 	nfs_space_limit4 space_limit;	/* Defines condition that
 					   the client must check to
 					   determine whether the
 					   file needs to be flushed
-					   to the server on close.
-					   */
+					   to the server on close. */
 	nfsace4		permissions;	/* Defines users who don't
 					   need an ACCESS call as
 					   part of a delegated
@@ -989,6 +1039,7 @@ switch (open_delegation_type4 delegation_type) {
 /*
  * Result flags
  */
+
 /* Client must confirm open */
 const OPEN4_RESULT_CONFIRM	= 0x00000002;
 /* Type of file locking behavior at the server */
@@ -996,7 +1047,7 @@ const OPEN4_RESULT_LOCKTYPE_POSIX = 0x00000004;
 
 struct OPEN4resok {
 	stateid4	stateid;	/* Stateid for open */
-	change_info4	cinfo;		/* Directory Change Info */
+	change_info4	cinfo;		/* Directory change info */
 	uint32_t	rflags;		/* Result flags */
 	bitmap4		attrset;	/* attribute set for create*/
 	open_delegation4 delegation;	/* Info on any open
@@ -1145,7 +1196,6 @@ struct READDIR4resok {
 	dirlist4	reply;
 };
 
-
 union READDIR4res switch (nfsstat4 status) {
  case NFS4_OK:
 	 READDIR4resok	resok4;
@@ -1260,7 +1310,7 @@ struct rpcsec_gss_info {
 	rpc_gss_svc_t	service;
 };  
  
-/* RPCSEC_GSS has a value of '6' - See RFC 2203 */
+/* RPCSEC_GSS has a value of '6'. See RFC 2203 */
 union secinfo4 switch (uint32_t flavor) {
  case RPCSEC_GSS:
 	 rpcsec_gss_info	flavor_info;
@@ -1540,10 +1590,8 @@ program NFS4_PROGRAM {
 	} = 4;
 } = 100003;
 
-
-
 /*
- * NFS4 Callback Procedure Definitions and Program
+ * NFS4 callback procedure definitions and program
  */
 
 /*
@@ -1621,7 +1669,7 @@ struct CB_COMPOUND4res {
 
 
 /*
- * Program number is in the transient range since the client
+ * Program number is in the transient range, since the client
  * will assign the exact transient program number and provide
  * that to the server via the SETCLIENTID operation.
  */

@@ -95,6 +95,7 @@ int display_9p_owner(struct display_buffer *dspbuf, state_owner_t *owner)
 int display_9p_owner_key(struct gsh_buffdesc *buff, char *str)
 {
 	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
+
 	display_9p_owner(&dspbuf, buff->addr);
 	return display_buffer_len(&dspbuf);
 }
@@ -111,6 +112,7 @@ int display_9p_owner_key(struct gsh_buffdesc *buff, char *str)
 int display_9p_owner_val(struct gsh_buffdesc *buff, char *str)
 {
 	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
+
 	display_9p_owner(&dspbuf, buff->addr);
 	return display_buffer_len(&dspbuf);
 }

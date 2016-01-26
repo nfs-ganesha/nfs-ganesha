@@ -53,7 +53,6 @@
  * retrieving information from the FSAL as it ought.
  *
  * @param[in]  arg     NFS arguments union
- * @param[in]  worker  Worker thread data
  * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call
  *
@@ -62,15 +61,14 @@
  * @retval NFS_REQ_FAILED if failed and not retryable
  */
 
-int nfs3_fsinfo(nfs_arg_t *arg,
-		nfs_worker_data_t *worker,
-		struct svc_req *req, nfs_res_t *res)
+int nfs3_fsinfo(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
 	cache_entry_t *entry = NULL;
 	int rc = NFS_REQ_OK;
 
 	if (isDebug(COMPONENT_NFSPROTO)) {
 		char str[LEN_FH_STR];
+
 		sprint_fhandle3(str, &(arg->arg_fsinfo3.fsroot));
 		LogDebug(COMPONENT_NFSPROTO,
 			 "REQUEST PROCESSING: Calling nfs3_fsinfo handle: %s",
@@ -152,5 +150,5 @@ int nfs3_fsinfo(nfs_arg_t *arg,
  */
 void nfs3_fsinfo_free(nfs_res_t *res)
 {
-	return;
+	/* Nothing to do here */
 }

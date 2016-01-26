@@ -107,22 +107,21 @@ typedef enum request_type {
 
 typedef struct request_data {
 	struct glist_head req_q;	/* chaining of pending requests */
+	struct timespec time_queued;	/*< The time at which a request was
+					 *  added to the worker thread queue.
+					 */
 	request_type_t rtype;
+
 	union request_content {
-		rpc_call_t *call;
-		nfs_request_data_t *nfs;
+		rpc_call_t call;
+		nfs_request_t req;
 #ifdef _USE_9P
 		struct _9p_request_data _9p;
 #endif
 	} r_u;
-	struct timespec time_queued;	/*< The time at which a request was
-					 *  added to the worker thread queue.
-					 */
 } request_data_t;
 
 extern pool_t *request_pool;
-extern pool_t *request_data_pool;
-extern pool_t *dupreq_pool;	/* XXX hide */
 
 /* ServerEpoch is ServerBootTime unless overriden by -E command line option */
 extern struct timespec ServerBootTime;
@@ -131,33 +130,17 @@ extern time_t ServerEpoch;
 extern verifier4 NFS4_write_verifier;	/*< NFS V4 write verifier */
 extern writeverf3 NFS3_write_verifier;	/*< NFS V3 write verifier */
 
-extern nfs_worker_data_t *workers_data;
 extern char *config_path;
 extern char *pidfile_path;
 
 /*
- * function prototypes
- */
-request_data_t *nfs_rpc_get_nfsreq(uint32_t flags);
-void nfs_rpc_enqueue_req(request_data_t *req);
-
-uint32_t get_enqueue_count();
-uint32_t get_dequeue_count();
-
-/*
  * Thread entry functions
  */
-void *rpc_dispatcher_thread(void *UnusedArg);
-void *admin_thread(void *UnusedArg);
-void *reaper_thread(void *UnusedArg);
-void *sigmgr_thread(void *UnusedArg);
 
 #ifdef _USE_9P
 void *_9p_dispatcher_thread(void *arg);
-void _9p_tcp_process_request(struct _9p_request_data *req9p,
-			     nfs_worker_data_t *worker_data);
-int _9p_process_buffer(struct _9p_request_data *req9p,
-		       nfs_worker_data_t *worker_data, char *replydata,
+void _9p_tcp_process_request(struct _9p_request_data *req9p);
+int _9p_process_buffer(struct _9p_request_data *req9p, char *replydata,
 		       u32 *poutlen);
 
 void DispatchWork9P(request_data_t *req);
@@ -165,21 +148,29 @@ void DispatchWork9P(request_data_t *req);
 
 #ifdef _USE_9P_RDMA
 void *_9p_rdma_dispatcher_thread(void *arg);
-void _9p_rdma_process_request(struct _9p_request_data *req9p,
-			      nfs_worker_data_t *worker_data);
+void _9p_rdma_process_request(struct _9p_request_data *req9p);
 void _9p_rdma_cleanup_conn(msk_trans_t *trans);
 #endif
 
-#ifdef _USE_NFS_MSK
-void *nfs_msk_dispatcher_thread(void *UnusedArg);
-#endif
+/* in nfs_rpc_dispatcher_thread.c */
 
+void Clean_RPC(void);
 void nfs_Init_svc(void);
-int nfs_Init_worker_data(nfs_worker_data_t *pdata);
-int nfs_Init_request_data(nfs_request_data_t *pdata);
 void nfs_rpc_dispatch_threads(pthread_attr_t *attr_thr);
 void nfs_rpc_dispatch_stop(void);
-void Clean_RPC(void);
+
+request_data_t *nfs_rpc_dequeue_req(nfs_worker_data_t *worker);
+void nfs_rpc_enqueue_req(request_data_t *req);
+uint32_t get_dequeue_count(void);
+uint32_t get_enqueue_count(void);
+
+/* in nfs_worker_thread.c */
+
+void nfs_rpc_execute(request_data_t *req);
+const nfs_function_desc_t *nfs_rpc_get_funcdesc(nfs_request_t *);
+
+int worker_init(void);
+int worker_shutdown(void);
 
 /* Config parsing routines */
 extern config_file_t config_struct;
@@ -190,9 +181,10 @@ extern struct config_block krb5_param;
 #endif
 extern struct config_block version4_param;
 
-/* Admin thread control */
+/* in nfs_admin_thread.c */
 
 void nfs_Init_admin_thread(void);
+void *admin_thread(void *UnusedArg);
 void admin_replace_exports(void);
 void admin_halt(void);
 
@@ -214,8 +206,5 @@ int32_t nfs_rpc_dispatch_call(rpc_call_t *call, uint32_t flags);
 
 int reaper_init(void);
 int reaper_shutdown(void);
-
-int worker_init(void);
-int worker_shutdown(void);
 
 #endif				/* !NFS_CORE_H */

@@ -119,5 +119,5 @@ int nfs4_op_destroy_session(struct nfs_argop4 *op, compound_data_t *data,
  */
 void nfs4_op_destroy_session_Free(nfs_resop4 *resp)
 {
-	return;
-}				/* nfs41_op_destroy_session_Free */
+	/* Nothing to be done */
+}

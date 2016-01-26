@@ -6,21 +6,10 @@ SET( CMAKE_C_FLAGS_MAINTAINER "-Werror -Wall -Wimplicit -Wformat -Wmissing-brace
     "Flags used by the C compiler during maintainer builds."
     FORCE )
 
-# These ultimately must be conditional, and of course are also toolchain
-# specific (*sigh*).  Maybe at some point we should build up a token list and
-# then expand it into the linker args (and likewise other fixed strings here)
-IF (GOLD_LINKER)
-  SET(WARN_ONCE "")
-ELSE(GOLD_LINKER)
-  SET(WARN_ONCE ",--warn-once")
-ENDIF(GOLD_LINKER)
-
-SET( CMAKE_EXE_LINKER_FLAGS_MAINTAINER
-    "-Wl,--warn-unresolved-symbols" CACHE STRING
+SET( CMAKE_EXE_LINKER_FLAGS_MAINTAINER CACHE STRING
     "Flags used for linking binaries during maintainer builds."
     FORCE )
-SET( CMAKE_SHARED_LINKER_FLAGS_MAINTAINER
-    "-Wl,--warn-unresolved-symbols${WARN_ONCE}" CACHE STRING
+SET( CMAKE_SHARED_LINKER_FLAGS_MAINTAINER CACHE STRING
     "Flags used by the shared libraries linker during maintainer builds."
     FORCE )
 MARK_AS_ADVANCED(
@@ -28,6 +17,21 @@ MARK_AS_ADVANCED(
     CMAKE_C_FLAGS_MAINTAINER
     CMAKE_EXE_LINKER_FLAGS_MAINTAINER
     CMAKE_SHARED_LINKER_FLAGS_MAINTAINER )
+
+# Debug wants the same flags, plus -g
+SET( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_MAINTAINER} -g" CACHE STRING
+     "Debug CXX flags" FORCE )
+SET( CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_MAINTAINER} -g" CACHE STRING
+     "Debug C FLAGS" FORCE )
+SET( CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_MAINTAINER}"
+     CACHE STRING "Debug exe linker flags" FORCE )
+SET( CMAKE_SHARED_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_MAINTAINER}"
+     CACHE STRING "Debug exe linker flags" FORCE )
+MARK_AS_ADVANCED(
+    CMAKE_CXX_FLAGS_DEBUG
+    CMAKE_C_FLAGS_DEBUG
+    CMAKE_EXE_LINKER_FLAGS_DEBUG
+    CMAKE_SHARED_LINKER_FLAGS_DEBUG )
 
 SET(ALLOWED_BUILD_TYPES None Debug Release RelWithDebInfo MinSizeRel Maintainer)
 STRING(REGEX REPLACE ";" " " ALLOWED_BUILD_TYPES_PRETTY "${ALLOWED_BUILD_TYPES}")

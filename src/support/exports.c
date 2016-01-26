@@ -575,6 +575,7 @@ static int fsal_commit(void *node, void *link_mem, void *self_struct,
 	 */
 	if (export->fullpath[0] == '/') {
 		int pathlen;
+
 		pathlen = strlen(export->fullpath);
 		while ((export->fullpath[pathlen - 1] == '/') &&
 		       (pathlen > 1))
@@ -817,7 +818,7 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 		export->fullpath, export->FS_tag, perms);
 
 	LogInfo(COMPONENT_CONFIG,
-		"Export %d has %ld defined clients", export->export_id,
+		"Export %d has %zd defined clients", export->export_id,
 		glist_length(&export->clients));
 	put_gsh_export(export);
 	return 0;
@@ -1085,10 +1086,7 @@ struct config_item_list deleg_types[] =  {
 		_struct_, _perms_.options, _perms_.set),		\
 	CONF_ITEM_ENUM_BITS_SET("Delegations",				\
 		EXPORT_OPTION_NO_DELEGATIONS, EXPORT_OPTION_DELEGATIONS,\
-		delegations, _struct_, _perms_.options, _perms_.set),	\
-	CONF_ITEM_BOOLBIT_SET("Disable_ACL",				\
-		false, EXPORT_OPTION_DISABLE_ACL,			\
-		_struct_, _perms_.options, _perms_.set)
+		delegations, _struct_, _perms_.options, _perms_.set)
 
 /**
  * @brief Process a list of clients for a client block
@@ -1174,11 +1172,6 @@ static struct config_item fsal_params[] = {
 
 /**
  * @brief Table of EXPORT block parameters
- *
- * NOTE: the Client and FSAL sub-blocks must be the *last*
- * two entries in the list.  This is so all other
- * parameters have been processed before these sub-blocks
- * are processed.
  */
 
 static struct config_item export_params[] = {
@@ -1216,13 +1209,22 @@ static struct config_item export_params[] = {
 	CONF_ITEM_BOOLBIT_SET("Trust_Readdir_Negative_Cache",
 		false, EXPORT_OPTION_TRUST_READIR_NEGATIVE_CACHE,
 		gsh_export, options, options_set),
+	CONF_ITEM_BOOLBIT_SET("Disable_ACL",
+		false, EXPORT_OPTION_DISABLE_ACL,
+		gsh_export, options, options_set),
 	CONF_EXPORT_PERMS(gsh_export, export_perms),
-	CONF_ITEM_BLOCK("Client", client_params,
-			client_init, client_commit,
-			gsh_export, clients),
 	CONF_ITEM_I32_SET("Attr_Expiration_Time", -1, INT32_MAX, 60,
 		       gsh_export, expire_time_attr,
 		       EXPORT_OPTION_EXPIRE_SET,  options_set),
+
+	/* NOTE: the Client and FSAL sub-blocks must be the *last*
+	 * two entries in the list.  This is so all other
+	 * parameters have been processed before these sub-blocks
+	 * are processed.
+	 */
+	CONF_ITEM_BLOCK("Client", client_params,
+			client_init, client_commit,
+			gsh_export, clients),
 	CONF_RELAX_BLOCK("FSAL", fsal_params,
 			 fsal_init, fsal_commit,
 			 gsh_export, fsal_export),
@@ -1467,6 +1469,7 @@ static void FreeClientList(struct glist_head *clients)
 
 	glist_for_each_safe(glist, glistn, clients) {
 		exportlist_client_entry_t *client;
+
 		client =
 		    glist_entry(glist, exportlist_client_entry_t, cle_list);
 		glist_del(&client->cle_list);
@@ -1496,6 +1499,7 @@ void free_export_resources(struct gsh_export *export)
 	FreeClientList(&export->clients);
 	if (export->fsal_export != NULL) {
 		struct fsal_module *fsal = export->fsal_export->fsal;
+
 		export->fsal_export->exp_ops.release(export->fsal_export);
 		fsal_put(fsal);
 	}
@@ -2118,6 +2122,7 @@ bool export_check_security(struct svc_req *req)
 		} else {
 			struct svc_rpc_gss_data *gd;
 			rpc_gss_svc_t svc;
+
 			gd = SVCAUTH_PRIVATE(req->rq_auth);
 			svc = gd->sec.svc;
 			LogFullDebug(COMPONENT_EXPORT, "Testing svc %d",
@@ -2195,6 +2200,7 @@ sockaddr_t *convert_ipv6_to_ipv4(sockaddr_t *ipv6, sockaddr_t *ipv4)
 	    && (psockaddr_in6->sin6_addr.s6_addr[10] == 0xFF)
 	    && (psockaddr_in6->sin6_addr.s6_addr[11] == 0xFF)) {
 		void *ab;
+
 		memset(ipv4, 0, sizeof(*ipv4));
 		ab = &(psockaddr_in6->sin6_addr.s6_addr[12]);
 
@@ -2326,6 +2332,7 @@ void export_check_access(void)
 
 	if (isMidDebug(COMPONENT_EXPORT)) {
 		char perms[1024];
+
 		if (client != NULL) {
 			StrExportOptions(&client->client_perms, perms);
 			LogMidDebug(COMPONENT_EXPORT,

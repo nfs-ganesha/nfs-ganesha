@@ -48,8 +48,7 @@
 
 #define XATTRS_ARRAY_LEN 100
 
-int _9p_xattrwalk(struct _9p_request_data *req9p, void *worker_data,
-		  u32 *plenout, char *preply)
+int _9p_xattrwalk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 	u16 *msgtag = NULL;
@@ -57,7 +56,7 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, void *worker_data,
 	u32 *attrfid = NULL;
 	u16 *name_len;
 	char *name_str;
-	u64 attrsize = 0LL;
+	size_t attrsize = 0;
 
 	fsal_status_t fsal_status;
 	char name[MAXNAMLEN];
@@ -91,28 +90,24 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, void *worker_data,
 			 (u32) *msgtag, *fid, *attrfid, *name_len, name_str);
 
 	if (*fid >= _9P_FID_PER_CONN)
-		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, ERANGE, plenout, preply);
 
 	if (*attrfid >= _9P_FID_PER_CONN)
-		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, ERANGE, plenout, preply);
 
 	pfid = req9p->pconn->fids[*fid];
 	/* Check that it is a valid fid */
 	if (pfid == NULL || pfid->pentry == NULL) {
 		LogDebug(COMPONENT_9P, "request on invalid fid=%u", *fid);
-		return _9p_rerror(req9p, worker_data, msgtag, EIO, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, EIO, plenout, preply);
 	}
 
 	pxattrfid = gsh_calloc(1, sizeof(struct _9p_fid));
 	if (pxattrfid == NULL)
-		return _9p_rerror(req9p, worker_data, msgtag, ENOMEM, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, ENOMEM, plenout, preply);
 
 	/* set op_ctx, it will be useful if FSAL is later called */
-	op_ctx = &pfid->op_context;
+	_9p_init_opctx(pfid, req9p);
 
 	/* Initiate xattr's fid by copying file's fid in it */
 	memcpy((char *)pxattrfid, (char *)pfid, sizeof(struct _9p_fid));
@@ -122,8 +117,7 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, void *worker_data,
 	pxattrfid->specdata.xattr.xattr_content = gsh_malloc(XATTR_BUFFERSIZE);
 	if (pxattrfid->specdata.xattr.xattr_content == NULL) {
 		gsh_free(pxattrfid);
-		return _9p_rerror(req9p, worker_data, msgtag, ENOMEM, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, ENOMEM, plenout, preply);
 	}
 
 	if (*name_len == 0) {
@@ -142,7 +136,7 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, void *worker_data,
 		if (FSAL_IS_ERROR(fsal_status)) {
 			gsh_free(pxattrfid->specdata.xattr.xattr_content);
 			gsh_free(pxattrfid);
-			return _9p_rerror(req9p, worker_data, msgtag,
+			return _9p_rerror(req9p, msgtag,
 					  _9p_tools_errno
 					  (cache_inode_error_convert
 					   (fsal_status)), plenout, preply);
@@ -153,12 +147,12 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, void *worker_data,
 		if (eod_met != true) {
 			gsh_free(pxattrfid->specdata.xattr.xattr_content);
 			gsh_free(pxattrfid);
-			return _9p_rerror(req9p, worker_data, msgtag, ERANGE,
+			return _9p_rerror(req9p, msgtag, ERANGE,
 					  plenout, preply);
 		}
 
 		xattr_cursor = pxattrfid->specdata.xattr.xattr_content;
-		attrsize = 0LL;
+		attrsize = 0;
 		for (i = 0; i < nb_xattrs_read; i++) {
 			tmplen =
 			    snprintf(xattr_cursor, MAXNAMLEN, "%s",
@@ -173,8 +167,8 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, void *worker_data,
 				gsh_free(pxattrfid->specdata.xattr.
 					 xattr_content);
 				gsh_free(pxattrfid);
-				return _9p_rerror(req9p, worker_data, msgtag,
-						  ERANGE, plenout, preply);
+				return _9p_rerror(req9p, msgtag, ERANGE,
+						  plenout, preply);
 			}
 		}
 	} else {
@@ -192,10 +186,10 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, void *worker_data,
 
 			/* ENOENT for xattr is ENOATTR */
 			if (fsal_status.major == ERR_FSAL_NOENT)
-				return _9p_rerror(req9p, worker_data, msgtag,
-						  ENOATTR, plenout, preply);
+				return _9p_rerror(req9p, msgtag, ENOATTR,
+						  plenout, preply);
 			else
-				return _9p_rerror(req9p, worker_data, msgtag,
+				return _9p_rerror(req9p, msgtag,
 						  _9p_tools_errno
 						  (cache_inode_error_convert
 						   (fsal_status)), plenout,
@@ -211,47 +205,12 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, void *worker_data,
 					     &attrsize);
 
 		if (FSAL_IS_ERROR(fsal_status)) {
+			gsh_free(pxattrfid->specdata.xattr.xattr_content);
+			gsh_free(pxattrfid);
 
-			/* Hook dedicated to ACL management. When attributes
-			 * system.posix_acl_access is used, it can't be
-			 * created, but can be written anyway.
-			 * To do this, return ENODATA instead of ENOATTR
-			 * In this case, we do created what's needed to
-			 * setxattr() into the special xattr */
-			if (fsal_status.minor == ENODATA) {
-				if (!strncmp(name,
-					     "system.posix_acl_access",
-					     MAXNAMLEN))
-					attrsize = 0LL;
-				else if (!strncmp(name,
-						  "security.selinux",
-						  MAXNAMLEN))
-					attrsize = 0LL;
-				else {
-					gsh_free(pxattrfid->specdata.
-						xattr.xattr_content);
-					gsh_free(pxattrfid);
-					return _9p_rerror(req9p,
-							  worker_data,
-							  msgtag,
-							  ENODATA,
-							  plenout,
-							  preply);
-				}
-			} else {
-				gsh_free(pxattrfid->specdata.
-					 xattr.xattr_content);
-				gsh_free(pxattrfid);
-
-				return _9p_rerror(req9p,
-						  worker_data,
-						  msgtag,
-						  _9p_tools_errno
-						  (cache_inode_error_convert
-						   (fsal_status)),
-						  plenout,
-						  preply);
-			}
+			/* fsal_status.minor is a valid errno code */
+			return _9p_rerror(req9p, msgtag,
+					  fsal_status.minor, plenout, preply);
 		}
 	}
 
@@ -260,11 +219,11 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, void *worker_data,
 	/* Increments refcount as we're manually making a new copy */
 	(void) cache_inode_lru_ref(pfid->pentry, LRU_REQ_STALE_OK);
 
-	/* fid doesn't come from attach, don't put export on clunk... */
-	pxattrfid->from_attach = false;
-
 	/* hold reference on gdata */
 	uid2grp_hold_group_data(pxattrfid->gdata);
+
+	get_gsh_export_ref(pfid->export);
+	get_9p_user_cred_ref(pfid->ucred);
 
 	/* Build the reply */
 	_9p_setinitptr(cursor, preply, _9P_RXATTRWALK);

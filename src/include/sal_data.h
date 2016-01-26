@@ -205,20 +205,6 @@ struct state_refer {
  *****************************************************************************/
 
 /**
- * @brief Grace period control structure
- *
- * This could be expanded to implement grace instances, where a new
- * grace period is started for every failover.  for now keep it
- * simple, just a global used by all clients.
- */
-typedef struct grace {
-	pthread_mutex_t g_mutex;	/*< Mutex */
-	time_t g_start;		/*< Start of grace period */
-	time_t g_duration;	/*< Duration of grace period */
-	struct glist_head g_clid_list;	/*< Clients */
-} grace_t;
-
-/**
  * @brief Revoked filehandle list
  */
 typedef struct rdel_fh {
@@ -254,17 +240,35 @@ enum state_type {
 	STATE_TYPE_NONE = 0,
 	STATE_TYPE_SHARE = 1,
 	STATE_TYPE_DELEG = 2,
-	STATE_TYPE_LOCK = 4,
-	STATE_TYPE_LAYOUT = 5
+	STATE_TYPE_LOCK = 3,
+	STATE_TYPE_LAYOUT = 4,
+	STATE_TYPE_NLM_LOCK = 5,
+	STATE_TYPE_NLM_SHARE = 6,
+	STATE_TYPE_9P_FID = 7,
 };
 
 /**
- * @brief Data for a share reservation/open
+ * @brief Data for an NFS v4 share reservation/open
  */
 
 struct state_share {
 	struct glist_head share_lockstates;	/*< Lock states for this
-						   open state */
+						   open state
+						   This field MUST be first */
+	unsigned int share_access;	/*< The NFSv4 Share Access state */
+	unsigned int share_deny;	/*< The NFSv4 Share Deny state */
+	unsigned int share_access_prev;	/*< Previous share access state */
+	unsigned int share_deny_prev;	/*< Previous share deny state   */
+};
+
+/**
+ * @brief Data for an NLM share reservation/open
+ */
+
+struct state_nlm_share {
+	struct glist_head share_perclient;	/*< Lock states for this
+						    open state
+						    This field MUST be first */
 	unsigned int share_access;	/*< The NFSv4 Share Access state */
 	unsigned int share_deny;	/*< The NFSv4 Share Deny state */
 	unsigned int share_access_prev;	/*< Previous share access state */
@@ -277,10 +281,23 @@ struct state_share {
 
 struct state_lock {
 	struct glist_head state_locklist;	/*< List of locks owned by
-						   this stateid */
+						   this stateid
+						   This field MUST be first */
 	struct glist_head state_sharelist;	/*< List of states related
 						   to a share */
 	state_t *openstate;	/*< The related open-state */
+};
+
+/**
+ * @brief Data for a 9p fid
+ */
+
+struct state_9p_fid {
+	struct glist_head state_locklist;	/*< List of locks owned by
+						   this fid
+						   This field MUST be first */
+	unsigned int share_access;	/*< The 9p Access state */
+	unsigned int share_deny;	/*< Will always be 0 */
 };
 
 /**
@@ -334,9 +351,11 @@ struct state_layout {
 
 union state_data {
 	struct state_share share;
+	struct state_nlm_share nlm_share;
 	struct state_lock lock;
 	struct state_deleg deleg;
 	struct state_layout layout;
+	struct state_9p_fid fid;
 	uint32_t io_advise;
 };
 
@@ -790,7 +809,8 @@ struct state_block_data_t {
 struct state_lock_entry_t {
 	struct glist_head sle_list;	/*< Locks on this file */
 	struct glist_head sle_owner_locks; /*< Link on the owner lock list */
-	struct glist_head sle_locks;	/*< Locks on this state/client */
+	struct glist_head sle_client_locks;	/*< Locks on this client */
+	struct glist_head sle_state_locks;	/*< Locks on this state */
 #ifdef DEBUG_SAL
 	struct glist_head sle_all_locks; /*< Link on the global lock list */
 #endif				/* DEBUG_SAL */
@@ -846,9 +866,6 @@ struct state_layout_recall_file {
 	void *recall_cookie;	/*< Cookie returned to FSAL on return of last
 				   segment satisfying the layout */
 };
-
-#define sle_client_locks sle_locks
-#define sle_state_locks  sle_locks
 
 /**
  * @brief Blocking lock cookie entry
@@ -969,22 +986,6 @@ typedef struct nfs_grace_start {
 
 extern pool_t *state_owner_pool;	/*< Pool for NFSv4 files's open owner */
 extern pool_t *state_v4_pool;	/*< Pool for NFSv4 files's states */
-
-/**
- * @brief NLM share reservation
- */
-
-typedef struct state_nlm_share {
-	struct glist_head sns_share_per_file;	/*< Shares on this file */
-	struct glist_head sns_share_per_owner;	/*< Shares for this owner */
-	struct glist_head sns_share_per_client;	/*< Shares for this client */
-	struct glist_head sns_share_per_export;	/*< Shares for this export */
-	state_owner_t *sns_owner;	/*< State owner */
-	cache_entry_t *sns_entry;	/*< File */
-	struct gsh_export *sns_export;	/*< Export */
-	int sns_access;		/*< Access mode */
-	int sns_deny;		/*< Deny mode */
-} state_nlm_share_t;
 
 #ifdef DEBUG_SAL
 extern struct glist_head state_v4_all;

@@ -98,15 +98,15 @@ void nfs_SetPreOpAttr(cache_entry_t *entry, pre_op_attr *attr)
 		attr->attributes_follow = false;
 	} else {
 		attr->pre_op_attr_u.attributes.size =
-		    entry->obj_handle->attributes.filesize;
+		    entry->obj_handle->attrs->filesize;
 		attr->pre_op_attr_u.attributes.mtime.tv_sec =
-		    entry->obj_handle->attributes.mtime.tv_sec;
+		    entry->obj_handle->attrs->mtime.tv_sec;
 		attr->pre_op_attr_u.attributes.mtime.tv_nsec =
-		    entry->obj_handle->attributes.mtime.tv_nsec;
+		    entry->obj_handle->attrs->mtime.tv_nsec;
 		attr->pre_op_attr_u.attributes.ctime.tv_sec =
-		    entry->obj_handle->attributes.ctime.tv_sec;
+		    entry->obj_handle->attrs->ctime.tv_sec;
 		attr->pre_op_attr_u.attributes.ctime.tv_nsec =
-		    entry->obj_handle->attributes.ctime.tv_nsec;
+		    entry->obj_handle->attrs->ctime.tv_nsec;
 		attr->attributes_follow = TRUE;
 		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 	}
@@ -182,7 +182,6 @@ bool nfs_RetryableError(cache_inode_status_t cache_status)
 		LogCrit(COMPONENT_NFSPROTO,
 			"Possible implementation error: CACHE_INODE_SUCCESS managed as an error");
 		return false;
-		break;
 
 	case CACHE_INODE_MALLOC_ERROR:
 	case CACHE_INODE_POOL_MUTEX_INIT_ERROR:
@@ -196,7 +195,6 @@ bool nfs_RetryableError(cache_inode_status_t cache_status)
 	case CACHE_INODE_INSERT_ERROR:
 		/* Internal error, should be dropped and retryed */
 		return true;
-		break;
 
 	case CACHE_INODE_NOT_A_DIRECTORY:
 	case CACHE_INODE_BAD_TYPE:
@@ -214,7 +212,6 @@ bool nfs_RetryableError(cache_inode_status_t cache_status)
 	case CACHE_INODE_NOT_SUPPORTED:
 	case CACHE_INODE_UNION_NOTSUPP:
 	case CACHE_INODE_NAME_TOO_LONG:
-	case CACHE_INODE_STATE_CONFLICT:
 	case CACHE_INODE_ASYNC_POST_ERROR:
 	case CACHE_INODE_STATE_ERROR:
 	case CACHE_INODE_BAD_COOKIE:
@@ -223,15 +220,17 @@ bool nfs_RetryableError(cache_inode_status_t cache_status)
 	case CACHE_INODE_FSAL_XDEV:
 	case CACHE_INODE_FSAL_MLINK:
 	case CACHE_INODE_TOOSMALL:
-	case CACHE_INODE_FSAL_SHARE_DENIED:
+	case CACHE_INODE_SHARE_DENIED:
+	case CACHE_INODE_LOCKED:
 	case CACHE_INODE_SERVERFAULT:
 	case CACHE_INODE_BADNAME:
 	case CACHE_INODE_CROSS_JUNCTION:
 	case CACHE_INODE_IN_GRACE:
 	case CACHE_INODE_BADHANDLE:
+	case CACHE_INODE_NO_DATA:
+	case CACHE_INODE_BAD_RANGE:
 		/* Non retryable error, return error to client */
 		return false;
-		break;
 	}
 
 	/* Should never reach this */
@@ -258,6 +257,7 @@ static inline int nfs4_max_attr_index(compound_data_t *data)
 {
 	if (data) {
 		enum nfs4_minor_vers minorversion = data->minorversion;
+
 		switch (minorversion) {
 		case NFS4_MINOR_VERS_0:
 			return FATTR4_MOUNTED_ON_FILEID;
@@ -305,6 +305,7 @@ static fattr_xdr_result encode_supported_attrs(XDR *xdr,
 	     attr++) {
 		if (fattr4tab[attr].supported) {
 			bool res = set_attribute_in_bitmap(&bits, attr);
+
 			assert(res);
 		}
 	}
@@ -695,6 +696,7 @@ static fattr_xdr_result encode_acl(XDR *xdr, struct xdr_attrs_args *args)
 		}		/* for ace... */
 	} else {
 		uint32_t noacls = 0;
+
 		if (!inline_xdr_u_int32_t(xdr, &noacls))
 			return FATTR_XDR_FAILED;
 	}
@@ -709,6 +711,7 @@ static fattr_xdr_result decode_acl(XDR *xdr, struct xdr_attrs_args *args)
 	char buffer[MAXNAMLEN + 1];
 	char *buffp = buffer;
 	utf8string utf8buffer;
+	fattr_xdr_result res = FATTR_XDR_FAILED;
 	int who = 0;		/* not ACE_SPECIAL anything */
 
 	acldata.naces = 0;
@@ -723,13 +726,19 @@ static fattr_xdr_result decode_acl(XDR *xdr, struct xdr_attrs_args *args)
 		args->nfs_status = NFS4ERR_SERVERFAULT;
 		return FATTR_XDR_FAILED;
 	}
-	memset(acldata.aces, 0, acldata.naces * sizeof(fsal_ace_t));
 	for (ace = acldata.aces; ace < acldata.aces + acldata.naces; ace++) {
 		int i;
+
 		who = 0;
 
 		if (!inline_xdr_u_int32_t(xdr, &ace->type))
 			goto baderr;
+		if (ace->type >= FSAL_ACE_TYPE_MAX) {
+			LogFullDebug(COMPONENT_NFS_V4, "Bad ACE type 0x%x",
+				     ace->type);
+			res = FATTR_XDR_NOOP;
+			goto baderr;
+		}
 		if (!inline_xdr_u_int32_t(xdr, &ace->flag))
 			goto baderr;
 		if (!inline_xdr_u_int32_t(xdr, &ace->perm))
@@ -821,7 +830,7 @@ static fattr_xdr_result decode_acl(XDR *xdr, struct xdr_attrs_args *args)
 
  baderr:
 	nfs4_ace_free(acldata.aces);
-	return FATTR_XDR_FAILED;
+	return res;
 }
 
 /*
@@ -1159,9 +1168,9 @@ static fattr_xdr_result encode_fs_locations(XDR *xdr,
 	component4 fs_path;
 	component4 fs_root;
 	component4 fs_server;
-	char root[MNTNAMLEN];
-	char path[MNTNAMLEN];
-	char server[MNTNAMLEN];
+	char root[MAXPATHLEN];
+	char path[MAXPATHLEN];
+	char server[MAXHOSTNAMELEN];
 
 	if (args->data == NULL || args->data->current_entry == NULL)
 		return FATTR_XDR_NOOP;
@@ -1169,13 +1178,13 @@ static fattr_xdr_result encode_fs_locations(XDR *xdr,
 	if (args->data->current_entry->type != DIRECTORY)
 		return FATTR_XDR_NOOP;
 
-	fs_root.utf8string_len = MNTNAMLEN;
+	fs_root.utf8string_len = sizeof(root);
 	fs_root.utf8string_val = root;
-	fs_path.utf8string_len = MNTNAMLEN;
+	fs_path.utf8string_len = sizeof(path);
 	fs_path.utf8string_val = path;
 	fs_locs.fs_root.pathname4_len = 1;
 	fs_locs.fs_root.pathname4_val = &fs_path;
-	fs_server.utf8string_len = MNTNAMLEN;
+	fs_server.utf8string_len = sizeof(server);
 	fs_server.utf8string_val = server;
 	fs_loc.server.server_len = 1;
 	fs_loc.server.server_val = &fs_server;
@@ -1185,15 +1194,21 @@ static fattr_xdr_result encode_fs_locations(XDR *xdr,
 	fs_locs.locations.locations_val = &fs_loc;
 
 	/* For now allow for one fs locations, fs_locations() should set:
-	   root and update its length, can not be bigger than MNTNAMLEN
-	   path and update its length, can not be bigger than MNTNAMLEN
-	   server and update its length, can not be bigger than MNTNAMELEN
+	   root and update its length, can not be bigger than MAXPATHLEN
+	   path and update its length, can not be bigger than MAXPATHLEN
+	   server and update its length, can not be bigger than MAXHOSTNAMELEN
 	*/
 	st = args->data->current_entry->obj_handle->obj_ops.fs_locations(
 					args->data->current_entry->obj_handle,
 					&fs_locs);
-	if (FSAL_IS_ERROR(st))
-		return FATTR_XDR_NOOP;
+	if (FSAL_IS_ERROR(st)) {
+		strcpy(root, "not_supported");
+		strcpy(path, "not_supported");
+		strcpy(server, "not_supported");
+		fs_root.utf8string_len = strlen(root);
+		fs_path.utf8string_len = strlen(path);
+		fs_server.utf8string_len = strlen(server);
+	}
 
 	if (!xdr_fs_locations4(xdr, &fs_locs))
 		return FATTR_XDR_FAILED;
@@ -1767,6 +1782,7 @@ static inline fattr_xdr_result encode_time(XDR *xdr, struct timespec *ts)
 {
 	uint64_t seconds = ts->tv_sec;
 	uint32_t nseconds = ts->tv_nsec;
+
 	if (!inline_xdr_u_int64_t(xdr, &seconds))
 		return FATTR_XDR_FAILED;
 	if (!inline_xdr_u_int32_t(xdr, &nseconds))
@@ -2092,10 +2108,11 @@ static fattr_xdr_result encode_fs_layout_types(XDR *xdr,
 					       struct xdr_attrs_args *args)
 {
 	struct fsal_export *export;
-	const layouttype4 *layouttypes = NULL;
 	layouttype4 layout_type;
 	int32_t typecount = 0;
 	int32_t index = 0;
+	/* layouts */
+	const layouttype4 *layouttypes = NULL;
 
 	if (args->data == NULL)
 		return FATTR_XDR_NOOP;
@@ -2333,16 +2350,17 @@ static fattr_xdr_result encode_support_exclusive_create(XDR *xdr,
 {
 	struct bitmap4 bits;
 	int attr, offset;
+	bool res;
 
 	memset(&bits, 0, sizeof(bits));
 	for (attr = FATTR4_SUPPORTED_ATTRS; attr <= FATTR4_SEC_LABEL;
 	     attr++) {
 		if (fattr4tab[attr].supported) {
-			bool res = set_attribute_in_bitmap(&bits, attr);
+			res = set_attribute_in_bitmap(&bits, attr);
 			assert(res);
 		}
 	}
-	bool res = clear_attribute_in_bitmap(&bits, FATTR4_TIME_ACCESS_SET);
+	res = clear_attribute_in_bitmap(&bits, FATTR4_TIME_ACCESS_SET);
 	assert(res);
 	res = clear_attribute_in_bitmap(&bits, FATTR4_TIME_MODIFY_SET);
 	assert(res);
@@ -3205,7 +3223,7 @@ nfsstat4 cache_entry_To_Fattr(cache_entry_t *entry, fattr4 *Fattr,
 	/* Permissiomn check only if ACL is asked for.
 	 * NOTE: We intentionally do NOT check ACE4_READ_ATTR.
 	 */
-	if (attribute_is_set(Bitmap, ATTR_ACL)) {
+	if (attribute_is_set(Bitmap, FATTR4_ACL)) {
 		cache_inode_status_t status;
 
 		LogDebug(COMPONENT_NFS_V4_ACL,
@@ -3223,8 +3241,27 @@ nfsstat4 cache_entry_To_Fattr(cache_entry_t *entry, fattr4 *Fattr,
 			return nfs4_Errno(status);
 		}
 	} else {
+#ifdef ENABLE_RFC_ACL
+		cache_inode_status_t status;
+
+		LogDebug(COMPONENT_NFS_V4_ACL,
+			 "Permission check for ATTR for entry %p", entry);
+
+		status =
+		    cache_inode_access(entry,
+				       FSAL_ACE4_MASK_SET
+				       (FSAL_ACE_PERM_READ_ATTR));
+
+		if (status != CACHE_INODE_SUCCESS) {
+			LogDebug(COMPONENT_NFS_V4_ACL,
+				 "Permission check for ATTR for entry %p failed with %s",
+				 entry, cache_inode_err_str(status));
+			return nfs4_Errno(status);
+		}
+#else /* ENABLE_RFC_ACL */
 		LogDebug(COMPONENT_NFS_V4_ACL,
 			 "No permission check for ACL for entry %p", entry);
+#endif /* ENABLE_RFC_ACL */
 	}
 
 	return nfs4_Errno(
@@ -3587,8 +3624,8 @@ static void nfs3_FSALattr_To_PartialFattr(const struct attrlist *FSAL_attr,
 		Fattr->fsid = (nfs3_uint64) squash_fsid(&FSAL_attr->fsid);
 
 		LogFullDebug(COMPONENT_NFSPROTO,
-			     "Compressing fsid for NFS v3 from "
-			     "fsid major %#" PRIX64 " (%" PRIu64 "), minor %#"
+			     "Compressing fsid for NFS v3 from fsid major %#"
+			     PRIX64 " (%" PRIu64 "), minor %#"
 			     PRIX64 " (%" PRIu64 ") to nfs3_fsid = %#" PRIX64
 			     " (%" PRIu64 ")",
 			     FSAL_attr->fsid.major,
@@ -3640,10 +3677,11 @@ static void nfs3_FSALattr_To_PartialFattr(const struct attrlist *FSAL_attr,
 bool cache_entry_to_nfs3_Fattr(cache_entry_t *entry, fattr3 *Fattr)
 {
 	bool rc = false;
+
 	if (entry && (cache_inode_lock_trust_attrs(entry, false)
 		      == CACHE_INODE_SUCCESS)) {
 		rc = nfs3_FSALattr_To_Fattr(op_ctx->export,
-					    &entry->obj_handle->attributes,
+					    entry->obj_handle->attrs,
 					    Fattr);
 		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 	}
@@ -3677,8 +3715,9 @@ bool nfs3_FSALattr_To_Fattr(struct gsh_export *export,
 	nfs3_FSALattr_To_PartialFattr(FSAL_attr, &got, Fattr);
 	if (want & ~got) {
 		LogCrit(COMPONENT_NFSPROTO,
-			"Likely bug: FSAL did not fill in a standard NFSv3 "
-			"attribute: missing %lx", want & ~got);
+			"Likely bug: FSAL did not fill in a standard NFSv3 attribute: missing %"
+			PRIx64,
+			want & ~got);
 	}
 
 	if ((export->options_set & EXPORT_OPTION_FSID_SET) != 0) {
@@ -3689,8 +3728,8 @@ bool nfs3_FSALattr_To_Fattr(struct gsh_export *export,
 					&export->filesystem_id);
 
 		LogFullDebug(COMPONENT_NFSPROTO,
-			     "Compressing export filesystem_id for NFS v3 from "
-			     "fsid major %#" PRIX64 " (%" PRIu64 "), minor %#"
+			     "Compressing export filesystem_id for NFS v3 from fsid major %#"
+			     PRIX64 " (%" PRIu64 "), minor %#"
 			     PRIX64 " (%" PRIu64 ") to nfs3_fsid = %#" PRIX64
 			     " (%" PRIu64 ")",
 			     export->filesystem_id.major,
@@ -3717,6 +3756,7 @@ bool nfs3_FSALattr_To_Fattr(struct gsh_export *export,
 bool nfs4_Fattr_Check_Access_Bitmap(struct bitmap4 *bitmap, int access)
 {
 	int attribute;
+
 	assert((access == FATTR4_ATTR_READ) || (access == FATTR4_ATTR_WRITE));
 
 	for (attribute = next_attr_from_bitmap(bitmap, -1); attribute != -1;
@@ -3977,7 +4017,6 @@ int nfs4_Fattr_cmp(fattr4 *Fattr1, fattr4 *Fattr2)
 
 		default:
 			return 0;
-			break;
 		}
 	}
 	return 1;
@@ -4038,7 +4077,7 @@ static int Fattr4_To_FSAL_attr(struct attrlist *attrs, fattr4 *Fattr,
 
 		if (attribute_to_set > FATTR4_SEC_LABEL) {
 			nfs_status = NFS4ERR_BADXDR;	/* undefined attr */
-			break;
+			goto decodeerr;
 		}
 		xdr_res = f4e->decode(&attr_body, &args);
 
@@ -4062,7 +4101,7 @@ static int Fattr4_To_FSAL_attr(struct attrlist *attrs, fattr4 *Fattr,
 				/* preserve previous error */
 				nfs_status = NFS4ERR_ATTRNOTSUPP;
 			}
-			break;
+			goto decodeerr;
 		} else {
 			LogFullDebug(COMPONENT_NFS_V4,
 				     "Decode attr FAILED: %d, name = %s",
@@ -4071,11 +4110,12 @@ static int Fattr4_To_FSAL_attr(struct attrlist *attrs, fattr4 *Fattr,
 				nfs_status = NFS4ERR_BADXDR;
 			else
 				nfs_status = args.nfs_status;
-			break;
+			goto decodeerr;
 		}
 	}
 	if (xdr_getpos(&attr_body) < Fattr->attr_vals.attrlist4_len)
 		nfs_status = NFS4ERR_BADXDR;	/* underrun on attribute */
+decodeerr:
 	xdr_destroy(&attr_body);
 	return nfs_status;
 }
@@ -4167,6 +4207,9 @@ bool is_sticky_bit_set(const struct attrlist *attr)
 	if (!(attr->mode & S_ISVTX))
 		return false;
 
-	LogDebug(COMPONENT_NFS_V4, "sticky bit is set on %ld", attr->fileid);
+	LogDebug(COMPONENT_NFS_V4,
+		 "sticky bit is set on %" PRIi64,
+		 attr->fileid);
+
 	return true;
 }

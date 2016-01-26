@@ -173,34 +173,31 @@ static cache_inode_status_t update(struct fsal_module *fsal,
 
 	PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
 
+	struct attrlist *entry_attrs = entry->obj_handle->attrs;
+
 	if (attr->expire_time_attr != 0)
-		entry->obj_handle->attributes.expire_time_attr =
-							attr->expire_time_attr;
+		entry_attrs->expire_time_attr = attr->expire_time_attr;
+
 	if (FSAL_TEST_MASK(attr->mask, ATTR_SIZE)) {
 		if (flags & fsal_up_update_filesize_inc) {
-			if (attr->filesize >
-			    entry->obj_handle->attributes.filesize) {
-				entry->obj_handle->attributes.filesize =
-					attr->filesize;
+			if (attr->filesize > entry_attrs->filesize) {
+				entry_attrs->filesize = attr->filesize;
 				mutatis_mutandis = true;
 			}
 		} else {
-			entry->obj_handle->attributes.filesize = attr->filesize;
+			entry_attrs->filesize = attr->filesize;
 			mutatis_mutandis = true;
 		}
 	}
 
 	if (FSAL_TEST_MASK(attr->mask, ATTR_SPACEUSED)) {
 		if (flags & fsal_up_update_spaceused_inc) {
-			if (attr->spaceused >
-			    entry->obj_handle->attributes.spaceused) {
-				entry->obj_handle->attributes.spaceused =
-					attr->spaceused;
+			if (attr->spaceused > entry_attrs->spaceused) {
+				entry_attrs->spaceused = attr->spaceused;
 				mutatis_mutandis = true;
 			}
 		} else {
-			entry->obj_handle->attributes.spaceused =
-			   attr->spaceused;
+			entry_attrs->spaceused = attr->spaceused;
 			mutatis_mutandis = true;
 		}
 	}
@@ -217,82 +214,74 @@ static cache_inode_status_t update(struct fsal_module *fsal,
 		/* This idiom is evil. */
 		fsal_acl_status_t acl_status;
 
-		nfs4_acl_release_entry(entry->obj_handle->attributes.acl,
-				       &acl_status);
+		nfs4_acl_release_entry(entry_attrs->acl, &acl_status);
 
-		entry->obj_handle->attributes.acl = attr->acl;
+		entry_attrs->acl = attr->acl;
 		mutatis_mutandis = true;
 	}
 
 	if (FSAL_TEST_MASK(attr->mask, ATTR_MODE)) {
-		entry->obj_handle->attributes.mode = attr->mode;
+		entry_attrs->mode = attr->mode;
 		mutatis_mutandis = true;
 	}
 
 	if (FSAL_TEST_MASK(attr->mask, ATTR_NUMLINKS)) {
-		entry->obj_handle->attributes.numlinks = attr->numlinks;
+		entry_attrs->numlinks = attr->numlinks;
 		mutatis_mutandis = true;
 	}
 
 	if (FSAL_TEST_MASK(attr->mask, ATTR_OWNER)) {
-		entry->obj_handle->attributes.owner = attr->owner;
+		entry_attrs->owner = attr->owner;
 		mutatis_mutandis = true;
 	}
 
 	if (FSAL_TEST_MASK(attr->mask, ATTR_GROUP)) {
-		entry->obj_handle->attributes.group = attr->group;
+		entry_attrs->group = attr->group;
 		mutatis_mutandis = true;
 	}
 
 	if (FSAL_TEST_MASK(attr->mask, ATTR_ATIME)
 	    && ((flags & ~fsal_up_update_atime_inc)
 		||
-		(gsh_time_cmp
-		 (&attr->atime, &entry->obj_handle->attributes.atime) == 1))) {
-		entry->obj_handle->attributes.atime = attr->atime;
+		(gsh_time_cmp(&attr->atime, &entry_attrs->atime) == 1))) {
+		entry_attrs->atime = attr->atime;
 		mutatis_mutandis = true;
 	}
 
 	if (FSAL_TEST_MASK(attr->mask, ATTR_CREATION)
 	    && ((flags & ~fsal_up_update_creation_inc)
 		||
-		(gsh_time_cmp
-		 (&attr->creation,
-		  &entry->obj_handle->attributes.creation) == 1))) {
-		entry->obj_handle->attributes.creation = attr->creation;
+		(gsh_time_cmp(&attr->creation, &entry_attrs->creation) == 1))) {
+		entry_attrs->creation = attr->creation;
 		mutatis_mutandis = true;
 	}
 
 	if (FSAL_TEST_MASK(attr->mask, ATTR_CTIME)
 	    && ((flags & ~fsal_up_update_ctime_inc)
 		||
-		(gsh_time_cmp
-		 (&attr->ctime, &entry->obj_handle->attributes.ctime) == 1))) {
-		entry->obj_handle->attributes.ctime = attr->ctime;
+		(gsh_time_cmp(&attr->ctime, &entry_attrs->ctime) == 1))) {
+		entry_attrs->ctime = attr->ctime;
 		mutatis_mutandis = true;
 	}
 
 	if (FSAL_TEST_MASK(attr->mask, ATTR_MTIME)
 	    && ((flags & ~fsal_up_update_mtime_inc)
 		||
-		(gsh_time_cmp
-		 (&attr->mtime, &entry->obj_handle->attributes.mtime) == 1))) {
-		entry->obj_handle->attributes.mtime = attr->mtime;
+		(gsh_time_cmp(&attr->mtime, &entry_attrs->mtime) == 1))) {
+		entry_attrs->mtime = attr->mtime;
 		mutatis_mutandis = true;
 	}
 
 	if (FSAL_TEST_MASK(attr->mask, ATTR_CHGTIME)
 	    && ((flags & ~fsal_up_update_chgtime_inc)
 		||
-		(gsh_time_cmp
-		 (&attr->chgtime,
-		  &entry->obj_handle->attributes.chgtime) == 1))) {
-		entry->obj_handle->attributes.chgtime = attr->chgtime;
+		(gsh_time_cmp(&attr->chgtime, &entry_attrs->chgtime) == 1))) {
+		entry_attrs->chgtime = attr->chgtime;
 		mutatis_mutandis = true;
 	}
 
 	if (FSAL_TEST_MASK(attr->mask, ATTR_CHANGE)) {
-		entry->obj_handle->attributes.change = attr->change;
+		entry_attrs->change = attr->change;
 		mutatis_mutandis = true;
 	}
 
@@ -470,6 +459,11 @@ static state_status_t create_file_recall(cache_entry_t *entry,
 			continue;
 		}
 
+		if ((s->state_type != STATE_TYPE_LAYOUT)
+		    || (s->state_data.layout.state_layout_type != type)) {
+			continue;
+		}
+
 		if (spec) {
 			switch (spec->how) {
 			case layoutrecall_howspec_exactly:
@@ -495,10 +489,6 @@ static state_status_t create_file_recall(cache_entry_t *entry,
 
 		dec_state_owner_ref(owner);
 
-		if ((s->state_type != STATE_TYPE_LAYOUT)
-		    || (s->state_data.layout.state_layout_type != type)) {
-			continue;
-		}
 		glist_for_each(seg_iter,
 			       &s->state_data.layout.state_segments) {
 			state_layout_segment_t *g = glist_entry(
@@ -1340,7 +1330,7 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 {
 	char *fh = NULL;
 	enum recall_resp_action resp_act;
-	state_status_t rc = STATE_SUCCESS;
+	nfsstat4 rc = NFS4_OK;
 	struct delegrecall_context *deleg_ctx = arg;
 	struct state_t *state;
 	cache_entry_t *entry = NULL;
@@ -1378,7 +1368,9 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 		fh = call->cbt.v_u.v4.args.argarray.argarray_val->
 				nfs_cb_argop4_u.opcbrecall.fh.nfs_fh4_val;
 		if (call->stat != RPC_SUCCESS) {
-			LogEvent(COMPONENT_NFS_CB, "Callback channel down");
+			LogEvent(COMPONENT_NFS_CB,
+				 "Call stat: %d, marking CB channel down",
+				 call->stat);
 			set_cb_chan_down(deleg_ctx->drc_clid, true);
 			resp_act = DELEG_RECALL_SCHED;
 		} else
@@ -1387,8 +1379,8 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 							  call);
 		break;
 	default:
-		LogDebug(COMPONENT_NFS_CB, "%p unknown hook %d", call, hook);
-
+		LogEvent(COMPONENT_NFS_CB,
+			 "Unknown hook %d, marking CB channel down", hook);
 		set_cb_chan_down(deleg_ctx->drc_clid, true);
 		/* Mark the recall as failed */
 		resp_act = DELEG_RECALL_SCHED;
@@ -1408,7 +1400,6 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 		if (schedule_delegrevoke_check(deleg_ctx, 1))
 			goto out_revoke;
 		goto out_free;
-		break;
 	case REVOKE:
 		goto out_revoke;
 	}
@@ -1429,7 +1420,7 @@ out_revoke:
 
 	PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
-	if (rc != STATE_SUCCESS) {
+	if (rc != NFS4_OK) {
 		LogCrit(COMPONENT_NFS_V4,
 			"Delegation could not be revoked for %s", str);
 	} else {
@@ -1593,7 +1584,7 @@ out:
 	p_cargs->drc_clid->num_revokes++;
 	inc_revokes(p_cargs->drc_clid->gsh_client);
 
-	if (deleg_revoke(entry, state) != STATE_SUCCESS) {
+	if (deleg_revoke(entry, state) != NFS4_OK) {
 		LogDebug(COMPONENT_FSAL_UP,
 			 "Failed to revoke delegation %s.", str);
 	} else {
@@ -1612,7 +1603,7 @@ out:
 
 static void delegrevoke_check(void *ctx)
 {
-	uint32_t rc = 0;
+	nfsstat4 rc = NFS4_OK;
 	struct delegrecall_context *deleg_ctx = ctx;
 	cache_entry_t *entry = NULL;
 	struct state_t *state = NULL;
@@ -1651,7 +1642,7 @@ static void delegrevoke_check(void *ctx)
 
 		PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
-		if (rc != STATE_SUCCESS) {
+		if (rc != NFS4_OK) {
 			if (!str_valid)
 				display_stateid(&dspbuf, state);
 

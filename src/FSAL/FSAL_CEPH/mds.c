@@ -132,7 +132,7 @@ static nfsstat4 getdeviceinfo(struct fsal_export *export_pub,
 
 	if (!inline_xdr_u_int32_t(da_addr_body, &stripes)) {
 		LogCrit(COMPONENT_PNFS,
-			"Failed to encode length of " "stripe_indices array: %"
+			"Failed to encode length of stripe_indices array: %"
 			PRIu32 ".", stripes);
 		return NFS4ERR_SERVERFAULT;
 	}
@@ -145,8 +145,8 @@ static nfsstat4 getdeviceinfo(struct fsal_export *export_pub,
 					   &file_layout);
 		if (stripe_osd < 0) {
 			LogCrit(COMPONENT_PNFS,
-				"Failed to retrieve OSD for "
-				"stripe %lu of file %" PRIu64 ".  Error: %u",
+				"Failed to retrieve OSD for stripe %lu of file %"
+				PRIu64 ".  Error: %u",
 				stripe, deviceid->devid, -stripe_osd);
 			return NFS4ERR_SERVERFAULT;
 		}
@@ -162,8 +162,8 @@ static nfsstat4 getdeviceinfo(struct fsal_export *export_pub,
 
 	if (!inline_xdr_u_int32_t(da_addr_body, &num_osds)) {
 		LogCrit(COMPONENT_PNFS,
-			"Failed to encode length of "
-			"multipath_ds_list array: %u", num_osds);
+			"Failed to encode length of multipath_ds_list array: %u",
+			num_osds);
 		return NFS4ERR_SERVERFAULT;
 	}
 
@@ -172,6 +172,7 @@ static nfsstat4 getdeviceinfo(struct fsal_export *export_pub,
 
 	for (osd = 0; osd < num_osds; osd++) {
 		fsal_multipath_member_t host;
+
 		memset(&host, 0, sizeof(fsal_multipath_member_t));
 		host.proto = 6;
 		if (ceph_ll_osdaddr(export->cmount, osd, &host.addr) < 0) {
@@ -388,10 +389,9 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_pub,
 		if (pnfs_segments_overlap
 		    (&smallest_acceptable, &forbidden_area)) {
 			LogCrit(COMPONENT_PNFS,
-				"Required layout extends beyond allowed "
-				"region. offset: %" PRIu64 ", minlength: %"
-				PRIu64 ".", res->segment.offset,
-				arg->minlength);
+				"Required layout extends beyond allowed region. offset: %"
+				PRIu64 ", minlength: %" PRIu64 ".",
+				res->segment.offset, arg->minlength);
 			return NFS4ERR_BADLAYOUT;
 		}
 		res->segment.offset = 0;
@@ -409,8 +409,8 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_pub,
 
 	if ((stripe_width & ~NFL4_UFLG_STRIPE_UNIT_SIZE_MASK) != 0) {
 		LogCrit(COMPONENT_PNFS,
-			"Ceph returned stripe width that is disallowed by "
-			"NFS: %" PRIu32 ".", stripe_width);
+			"Ceph returned stripe width that is disallowed by NFS: %"
+			PRIu32 ".", stripe_width);
 		return NFS4ERR_SERVERFAULT;
 	}
 	util = stripe_width;
@@ -421,6 +421,7 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_pub,
 	PTHREAD_RWLOCK_wrlock(&handle->handle.lock);
 	if (res->segment.io_mode == LAYOUTIOMODE4_READ) {
 		int32_t r = 0;
+
 		if (handle->rd_issued == 0) {
 #if 0
 			/* (ceph part might be here: thunderbeast mbarrier1) */
@@ -436,6 +437,7 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_pub,
 		++handle->rd_issued;
 	} else {
 		int32_t r = 0;
+
 		if (handle->rw_issued == 0) {
 #if 0
 			r = ceph_ll_hold_rw(export->cmount, handle->wire.vi,
@@ -478,7 +480,7 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_pub,
 	ds_wire.snapseq = ceph_ll_snap_seq(export->cmount, handle->wire.vi);
 
 	nfs_status = FSAL_encode_file_layout(loc_body, &deviceid, util, 0, 0,
-					     req_ctx->export->export_id, 1,
+					     &req_ctx->export->export_id, 1,
 					     &ds_desc);
 	if (nfs_status != NFS4_OK) {
 		LogCrit(COMPONENT_PNFS,
@@ -633,7 +635,7 @@ static nfsstat4 layoutcommit(struct fsal_obj_handle *obj_pub,
 				      &stold, 0, 0);
 	if (ceph_status < 0) {
 		LogCrit(COMPONENT_PNFS,
-			"Error %d in attempt to get attributes of " "file %"
+			"Error %d in attempt to get attributes of file %"
 			PRIu64 ".", -ceph_status, handle->wire.vi.ino.val);
 		return posix2nfs4_error(-ceph_status);
 	}
@@ -660,7 +662,7 @@ static nfsstat4 layoutcommit(struct fsal_obj_handle *obj_pub,
 				      &stnew, attrmask, 0, 0);
 	if (ceph_status < 0) {
 		LogCrit(COMPONENT_PNFS,
-			"Error %d in attempt to get attributes of " "file %"
+			"Error %d in attempt to get attributes of file %"
 			PRIu64 ".", -ceph_status, handle->wire.vi.ino.val);
 		return posix2nfs4_error(-ceph_status);
 	}

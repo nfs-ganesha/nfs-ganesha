@@ -174,8 +174,9 @@ static int file_attributes_to_xattr_attrs(struct attrlist *file_attrs,
 
 	if (unsupp) {
 		LogDebug(COMPONENT_FSAL,
-			 "Asking for unsupported attributes: %#llX removing it from asked attributes",
-			 (long long unsigned int)unsupp);
+			 "Asking for unsupported attributes: 0x%"PRIx64
+			 " removing it from asked attributes",
+			 unsupp);
 
 		xattr_attrs->mask &= (~unsupp);
 	}
@@ -375,6 +376,7 @@ static int xattr_format_value(caddr_t buffer, size_t *datalen, size_t maxlen)
 		/* 2 bytes per initial byte +'0x' +\n +\0 */
 		char *curr_out;
 		char *tmp_buf = (char *)gsh_malloc(3 * size_in + 4);
+
 		if (!tmp_buf)
 			return ERR_FSAL_NOMEM;
 		curr_out = tmp_buf;
@@ -382,6 +384,7 @@ static int xattr_format_value(caddr_t buffer, size_t *datalen, size_t maxlen)
 		/* hexa representation */
 		for (i = 0; i < size_in; i++) {
 			unsigned char *p8 = (unsigned char *)(buffer + i);
+
 			if ((i % 4 == 3) && (i != size_in - 1))
 				curr_out += sprintf(curr_out, "%02hhX.", *p8);
 			else
@@ -434,7 +437,7 @@ fsal_status_t tank_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
 	for (index = cookie, out_index = 0;
 	     index < XATTR_COUNT && out_index < xattrs_tabsize; index++) {
 		if (do_match_type(xattr_list[index].flags,
-				  obj_hdl->attributes.type)) {
+				  obj_handle->attributes.type)) {
 			/* fills an xattr entry */
 			xattrs_tab[out_index].xattr_id = index;
 			strncpy(xattr_list[index].xattr_name,
@@ -444,9 +447,9 @@ fsal_status_t tank_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
 
 			/* set asked attributes (all supported) */
 			xattrs_tab[out_index].attributes.mask =
-			    obj_hdl->attributes.mask;
+			    obj_handle->attributes.mask;
 
-			if (file_attributes_to_xattr_attrs(&obj_hdl->attributes,
+			if (file_attributes_to_xattr_attrs(obj_hdl->attrs,
 							   &xattrs_tab
 							   [out_index]
 							   .attributes,
@@ -501,10 +504,10 @@ fsal_status_t tank_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
 
 			/* set asked attributes (all supported) */
 			xattrs_tab[out_index].attributes.mask =
-			    obj_hdl->attributes.mask;
+			    obj_handle->attributes.mask;
 
 			if (file_attributes_to_xattr_attrs
-			    (&obj_hdl->attributes,
+			    (&obj_handle->attributes,
 			     &xattrs_tab[out_index].attributes, index)) {
 				/* set error flag */
 				xattrs_tab[out_index].attributes.mask =
@@ -593,7 +596,7 @@ fsal_status_t tank_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 	/* check that this index match the type of entry */
 	if ((xattr_id < XATTR_COUNT)
 	    && !do_match_type(xattr_list[xattr_id].flags,
-			      obj_hdl->attributes.type)) {
+			      obj_handle->attributes.type)) {
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	} else if (xattr_id >= XATTR_COUNT) {
 		char attr_name[MAXPATHLEN];
@@ -656,7 +659,7 @@ fsal_status_t tank_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
 	/* look for this name */
 	for (index = 0; index < XATTR_COUNT; index++) {
 		if (do_match_type(xattr_list[index].flags,
-				  obj_hdl->attributes.type)
+				  obj_handle->attributes.type)
 		    && !strcmp(xattr_list[index].xattr_name,
 			       xattr_name)) {
 			return tank_getextattr_value_by_id(obj_hdl,
@@ -746,16 +749,20 @@ fsal_status_t tank_getextattr_attrs(struct fsal_obj_handle *obj_hdl,
 				    unsigned int xattr_id,
 				    struct attrlist *p_attrs)
 {
+	struct zfs_fsal_obj_handle *obj_handle = NULL;
 	int rc;
 
 	/* sanity checks */
 	if (!obj_hdl || !p_attrs)
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
+	obj_handle =
+	    container_of(obj_hdl, struct zfs_fsal_obj_handle, obj_handle);
+
 	/* check that this index match the type of entry */
 	if (xattr_id < XATTR_COUNT
 	    && !do_match_type(xattr_list[xattr_id].flags,
-			      obj_hdl->attributes.type)) {
+			      obj_handle->attributes.type)) {
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	} else if (xattr_id >= XATTR_COUNT) {
 		/* This is user defined xattr */
@@ -763,7 +770,7 @@ fsal_status_t tank_getextattr_attrs(struct fsal_obj_handle *obj_hdl,
 			     xattr_id - XATTR_COUNT);
 	}
 
-	rc = file_attributes_to_xattr_attrs(&obj_hdl->attributes, p_attrs,
+	rc = file_attributes_to_xattr_attrs(&obj_handle->attributes, p_attrs,
 					    xattr_id);
 	if (rc)
 		return fsalstat(ERR_FSAL_INVAL, rc);

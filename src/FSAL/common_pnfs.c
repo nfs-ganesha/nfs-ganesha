@@ -145,18 +145,18 @@ nfsstat4 FSAL_encode_ipv4_netaddr(XDR *xdrs, uint16_t proto, uint32_t addr,
 
 	/* Then we convert the address and port to a string and encode it. */
 
-	written_length =
-	    snprintf(addrbuff, v4_addrbuff_len, "%hhu.%hhu.%hhu.%hhu.%hhu.%hhu",
-		     ((addr & 0xff000000) >> 0x18),
-		     ((addr & 0x00ff0000) >> 0x10),
-		     ((addr & 0x0000ff00) >> 0x08), (addr & 0x000000ff),
-		     ((port & 0xff00) >> 0x08), (port & 0x00ff));
+	written_length = snprintf(addrbuff, v4_addrbuff_len,
+				  "%u.%u.%u.%u.%u.%u",
+				  (unsigned int) ((addr & 0xff000000) >> 0x18),
+				  (unsigned int) ((addr & 0x00ff0000) >> 0x10),
+				  (unsigned int) ((addr & 0x0000ff00) >> 0x08),
+				  (unsigned int) (addr & 0x000000ff),
+				  (unsigned int) ((port & 0xff00) >> 0x08),
+				  (unsigned int) (port & 0x00ff));
 	if (written_length >= v4_addrbuff_len) {
 		LogCrit(COMPONENT_FSAL,
-			"Programming error in FSAL_encode_ipv4_netaddr "
-			"defined in %s:%u %s causing"
-			"snprintf to overflow address buffer.", __FILE__,
-			__LINE__, __func__);
+			"Programming error in FSAL_encode_ipv4_netaddr defined in %s:%u %s causing snprintf to overflow address buffer.",
+			__FILE__, __LINE__, __func__);
 		return NFS4ERR_SERVERFAULT;
 	}
 
@@ -234,7 +234,7 @@ static nfsstat4 make_file_handle_ds(const struct gsh_buffdesc *fh_desc,
  * @param[in]  util      Stripe width and flags for the layout
  * @param[in]  first_idx First stripe index
  * @param[in]  ptrn_ofst Pattern offset
- * @param[in]  export_id Export ID (export on Data Server)
+ * @param[in]  ds_ids	 Server IDs of DSs for each file handle
  * @param[in]  num_fhs   Number of file handles in array
  * @param[in]  fhs       Array if buffer descriptors holding opaque DS
  *                       handles
@@ -244,7 +244,7 @@ nfsstat4 FSAL_encode_file_layout(XDR *xdrs,
 				 const struct pnfs_deviceid *deviceid,
 				 nfl_util4 util, const uint32_t first_idx,
 				 const offset4 ptrn_ofst,
-				 const uint16_t server_id,
+				 const uint16_t *ds_ids,
 				 const uint32_t num_fhs,
 				 const struct gsh_buffdesc *fhs)
 {
@@ -281,16 +281,17 @@ nfsstat4 FSAL_encode_file_layout(XDR *xdrs,
 
 	for (i = 0; i < num_fhs; i++) {
 		nfs_fh4 handle;
-		struct alloc_file_handle_v4 buffer;
-		handle.nfs_fh4_val = (char *)&buffer;
+		char buffer[NFS4_FHSIZE];
+
+		handle.nfs_fh4_val = buffer;
 		handle.nfs_fh4_len = sizeof(buffer);
-		memset(&buffer, 0, sizeof(buffer));
+		memset(buffer, 0, sizeof(buffer));
 
 		nfs_status = make_file_handle_ds(fhs + i,
-						 server_id,
+						 *(ds_ids + i),
 						 &handle);
 		if (nfs_status != NFS4_OK) {
-			LogMajor(COMPONENT_PNFS, "Failed converting FH %lu.",
+			LogMajor(COMPONENT_PNFS, "Failed converting FH %zu.",
 				 i);
 			return nfs_status;
 		}
@@ -299,7 +300,7 @@ nfsstat4 FSAL_encode_file_layout(XDR *xdrs,
 			       (char **)&handle.nfs_fh4_val,
 			       &handle.nfs_fh4_len,
 			       handle.nfs_fh4_len)) {
-			LogMajor(COMPONENT_PNFS, "Failed encoding FH %lu.", i);
+			LogMajor(COMPONENT_PNFS, "Failed encoding FH %zu.", i);
 			return NFS4ERR_SERVERFAULT;
 		}
 	}

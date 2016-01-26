@@ -39,15 +39,18 @@
 
 #include "config.h"
 #include <os/freebsd/mntent.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/param.h>
 #include <sys/ucred.h>
 #include <sys/mount.h>
 #include "abstract_mem.h"
+#include "log.h"
 
 static int pos = -1;
 static int mntsize = -1;
+static struct statfs *_mntbuf;
 static struct mntent _mntent;
 
 struct {
@@ -160,16 +163,21 @@ static struct mntent *statfs_to_mntent(struct statfs *mntbuf)
 
 struct mntent *getmntent(FILE *fp)
 {
-	struct statfs *mntbuf;
+	int i;
 
 	if (pos == -1 || mntsize == -1)
-		mntsize = getmntinfo(&mntbuf, MNT_NOWAIT);
+		mntsize = getmntinfo(&_mntbuf, MNT_WAIT);
+
+	for (i = 0; i < mntsize; i++)
+		LogFullDebug(COMPONENT_FSAL,
+			     "%s", _mntbuf[i].f_mntfromname);
 
 	++pos;
+
 	if (pos == mntsize) {
 		pos = mntsize = -1;
 		return NULL;
 	}
 
-	return statfs_to_mntent(&mntbuf[pos]);
+	return statfs_to_mntent(&_mntbuf[pos]);
 }

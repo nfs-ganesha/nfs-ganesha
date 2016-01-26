@@ -134,7 +134,7 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 
 static void dump_config(struct fsal_module *fsal_hdl, int log_fd)
 {
-	return;
+	/* return */
 }
 
 /* create_export
@@ -157,7 +157,7 @@ static fsal_status_t create_export(struct fsal_module *fsal_hdl,
 
 static void emergency_cleanup(void)
 {
-	return;
+	/* return */
 }
 
 /**
@@ -242,7 +242,7 @@ struct fsal_ops def_fsal_ops = {
 
 static void export_release(struct fsal_export *exp_hdl)
 {
-	return;
+	/* return */
 }
 
 /* lookup_path
@@ -558,7 +558,7 @@ static bool handle_is(struct fsal_obj_handle *obj_hdl, object_file_type_t type)
 
 static void handle_release(struct fsal_obj_handle *obj_hdl)
 {
-	return;
+	/* return */
 }
 
 /* lookup

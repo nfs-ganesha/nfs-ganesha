@@ -2,16 +2,6 @@ add_definitions(
   -D_FILE_OFFSET_BITS=64
 )
 
-########### next target ###############
-
-# Build source locations and parameters
-IF(CEPH_PREFIX)
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I${CEPH_PREFIX}/include")
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -L${CEPH_PREFIX}/lib")
-ELSE()
-  message(WARNING "no ceph prefix")
-ENDIF()
-
 SET(fsalceph_LIB_SRCS
    main.c
    export.c
@@ -21,6 +11,11 @@ SET(fsalceph_LIB_SRCS
    internal.c
    internal.h
 )
+
+if(CEPH_PREFIX)
+  include_directories("${CEPH_PREFIX}/include")
+  link_directories(${CEPH_PREFIX}/lib)
+endif(CEPH_PREFIX)
 
 add_library(fsalceph SHARED ${fsalceph_LIB_SRCS})
 

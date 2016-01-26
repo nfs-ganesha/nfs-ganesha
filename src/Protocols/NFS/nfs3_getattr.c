@@ -53,7 +53,6 @@
  * Get attributes for a file. Implements NFSPROC3_GETATTR.
  *
  * @param[in]  arg     NFS arguments union
- * @param[in]  worker  Data belonging to the worker thread
  * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call
  *
@@ -62,15 +61,14 @@
  * @retval NFS_REQ_FAILED if failed and not retryable
  */
 
-int nfs3_getattr(nfs_arg_t *arg,
-		 nfs_worker_data_t *worker,
-		 struct svc_req *req, nfs_res_t *res)
+int nfs3_getattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
 	cache_entry_t *entry = NULL;
 	int rc = NFS_REQ_OK;
 
 	if (isDebug(COMPONENT_NFSPROTO)) {
 		char str[LEN_FH_STR];
+
 		nfs_FhandleToStr(req->rq_vers, &(arg->arg_getattr3.object),
 				 NULL, str);
 		LogDebug(COMPONENT_NFSPROTO,
@@ -126,5 +124,4 @@ int nfs3_getattr(nfs_arg_t *arg,
 void nfs3_getattr_free(nfs_res_t *resp)
 {
 	/* Nothing to do here */
-	return;
 }

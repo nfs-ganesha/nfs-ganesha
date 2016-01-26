@@ -306,6 +306,7 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op, compound_data_t *data,
 
 			if (return_fsid) {
 				fsal_fsid_t this_fsid;
+
 				cache_status =
 				    cache_inode_fsid(entry, &this_fsid);
 
@@ -411,8 +412,8 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op, compound_data_t *data,
 
 void nfs4_op_layoutreturn_Free(nfs_resop4 *resp)
 {
-	return;
-}				/* nfs41_op_layoutreturn_Free */
+	/* Nothing to be done */
+}
 
 /**
  * @brief Handle recalls corresponding to one stateid

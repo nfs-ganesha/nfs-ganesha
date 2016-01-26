@@ -103,9 +103,13 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 	now(&s_time);
 #endif
 
-	glhandle =
-	    glfs_h_lookupat(glfs_export->gl_fs, parenthandle->glhandle, path,
-			    &sb);
+#ifdef USE_GLUSTER_SYMLINK_MOUNT
+		glhandle = glfs_h_lookupat(glfs_export->gl_fs,
+					parenthandle->glhandle, path, &sb, 0);
+#else
+		glhandle = glfs_h_lookupat(glfs_export->gl_fs,
+					parenthandle->glhandle, path, &sb);
+#endif
 	if (glhandle == NULL) {
 		status = gluster2fsal_error(errno);
 		goto out;
@@ -244,7 +248,7 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 	/* FIXME: what else from attrib should we use? */
 	glhandle =
 	    glfs_h_creat(glfs_export->gl_fs, parenthandle->glhandle, name,
-			 O_CREAT, fsal2unix_mode(attrib->mode), &sb);
+			 O_CREAT | O_EXCL, fsal2unix_mode(attrib->mode), &sb);
 
 	rc = setglustercreds(glfs_export, NULL, NULL, 0, NULL);
 	if (rc != 0) {
@@ -278,7 +282,7 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 	}
 
 	*handle = &objhandle->handle;
-	*attrib = objhandle->handle.attributes;
+	*attrib = objhandle->attributes;
 
  out:
 	if (status.major != ERR_FSAL_NO_ERROR)
@@ -364,7 +368,7 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 	}
 
 	*handle = &objhandle->handle;
-	*attrib = objhandle->handle.attributes;
+	*attrib = objhandle->attributes;
 
  out:
 	if (status.major != ERR_FSAL_NO_ERROR)
@@ -478,7 +482,7 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 	}
 
 	*handle = &objhandle->handle;
-	*attrib = objhandle->handle.attributes;
+	*attrib = objhandle->attributes;
 
  out:
 	if (status.major != ERR_FSAL_NO_ERROR)
@@ -563,7 +567,7 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 	}
 
 	*handle = &objhandle->handle;
-	*attrib = objhandle->handle.attributes;
+	*attrib = objhandle->attributes;
 
  out:
 	if (status.major != ERR_FSAL_NO_ERROR)
@@ -655,13 +659,21 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl)
 	now(&s_time);
 #endif
 
-	/* FIXME: Should we hold the fd so that any async op does
-	 * not close it */
-	if (objhandle->openflags != FSAL_O_CLOSED)
-		rc = glfs_fstat(objhandle->glfd, &buffxstat.buffstat);
-	else
-		rc = glfs_h_stat(glfs_export->gl_fs,
-				objhandle->glhandle, &buffxstat.buffstat);
+	/*
+	 * There is a kind of race here when the glfd part of the
+	 * FSAL GLUSTER object handle is destroyed during a close
+	 * coming in from another NFSv3 WRITE thread which does
+	 * cache_inode_open(). Since the context/fd is destroyed
+	 * we cannot depend on glfs_fstat assuming glfd is valid.
+
+	 * Fixing the issue by removing the glfs_fstat call here.
+
+	 * So default to glfs_h_stat and re-optimize if a better
+	 * way is found - that may involve introducing locks in
+	 * the gfapi's for close and getattrs etc.
+	 */
+	rc = glfs_h_stat(glfs_export->gl_fs,
+			 objhandle->glhandle, &buffxstat.buffstat);
 	if (rc != 0) {
 		if (errno == ENOENT)
 			status = gluster2fsal_error(ESTALE);
@@ -671,11 +683,19 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl)
 		goto out;
 	}
 
-	fsalattr = &objhandle->handle.attributes;
+	fsalattr = &objhandle->attributes;
 	stat2fsal_attributes(&buffxstat.buffstat, fsalattr);
+	if (obj_hdl->type == DIRECTORY)
+		buffxstat.is_dir = true;
+	else
+		buffxstat.is_dir = false;
 
 	status = glusterfs_get_acl(glfs_export, objhandle->glhandle,
 				   &buffxstat, fsalattr);
+
+	/* for dead links we should not return error */
+	if (obj_hdl->type == SYMBOLIC_LINK && status.minor == ENOENT)
+		status = fsalstat(ERR_FSAL_NO_ERROR, 0);
 
  out:
 #ifdef GLTIMING
@@ -698,7 +718,6 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 	glusterfs_fsal_xstat_t buffxstat;
 	int mask = 0;
 	int attr_valid = 0;
-	bool is_dir = 0;
 	struct glusterfs_export *glfs_export =
 	    container_of(op_ctx->fsal_export, struct glusterfs_export, export);
 	struct glusterfs_handle *objhandle =
@@ -775,6 +794,11 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 
 	if (NFSv4_ACL_SUPPORT) {
 		if (FSAL_TEST_MASK(attrs->mask, ATTR_ACL)) {
+			if (obj_hdl->type == DIRECTORY)
+				buffxstat.is_dir = true;
+			else
+				buffxstat.is_dir = false;
+
 			FSAL_SET_MASK(attr_valid, XATTR_ACL);
 			status =
 			  glusterfs_process_acl(glfs_export->gl_fs,
@@ -786,22 +810,6 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 			/* setting the ACL will set the */
 			/* mode-bits too if not already passed */
 			FSAL_SET_MASK(mask, GLAPI_SET_ATTR_MODE);
-		} else if (mask & GLAPI_SET_ATTR_MODE) {
-			switch (obj_hdl->type) {
-			case REGULAR_FILE:
-				is_dir = 0; break;
-			case DIRECTORY:
-				is_dir = 1; break;
-			default:
-				break;
-			}
-			status =
-			 mode_bits_to_acl(glfs_export->gl_fs, objhandle,
-					  attrs, &attr_valid,
-					  &buffxstat, is_dir);
-
-			if (FSAL_IS_ERROR(status))
-				goto out;
 		}
 	} else if (FSAL_TEST_MASK(attrs->mask, ATTR_ACL)) {
 		status = fsalstat(ERR_FSAL_ATTRNOTSUPP, 0);
@@ -817,15 +825,15 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 				     objhandle->glhandle,
 				     &buffxstat.buffstat,
 				     mask);
-		GLUSTER_VALIDATE_RETURN_STATUS(rc);
+		if (rc != 0) {
+			status = gluster2fsal_error(errno);
+			goto out;
+		}
 	}
 
-	if (FSAL_TEST_MASK(attr_valid, XATTR_ACL)) {
-		status = glusterfs_set_acl(glfs_export,
-					   objhandle, &buffxstat);
-		if (FSAL_IS_ERROR(status))
-			goto out;
-	}
+	if (FSAL_TEST_MASK(attr_valid, XATTR_ACL))
+		status = glusterfs_set_acl(glfs_export, objhandle, &buffxstat);
+
 out:
 #ifdef GLTIMING
 	now(&e_time);
@@ -1231,6 +1239,22 @@ static fsal_status_t lock_op(struct fsal_obj_handle *obj_hdl,
 	flock.l_start = request_lock->lock_start;
 	flock.l_whence = SEEK_SET;
 
+	/* flock.l_len being signed long integer, larger lock ranges may
+	 * get mapped to negative values. As per 'man 3 fcntl', posix
+	 * locks can accept negative l_len values which may lead to
+	 * unlocking an unintended range. Better bail out to prevent that.
+	 *
+	 * TODO: How do we support larger ranges (>INT64_MAX) then?
+	 */
+	if (flock.l_len < 0) {
+		LogCrit(COMPONENT_FSAL,
+			"The requested lock length is out of range- flock.l_len(%"
+			PRIi64 "), request_lock_length(%" PRIu64 ")",
+			flock.l_len, request_lock->lock_length);
+		status.major = ERR_FSAL_BAD_RANGE;
+		goto out;
+	}
+
 	rc = glfs_posix_lock(objhandle->glfd, cmd, &flock);
 	if (rc != 0 && lock_op == FSAL_OP_LOCK
 	    && conflicting_lock && (errno == EACCES || errno == EAGAIN)) {
@@ -1240,8 +1264,7 @@ static fsal_status_t lock_op(struct fsal_obj_handle *obj_hdl,
 		rc = glfs_posix_lock(objhandle->glfd, cmd, &flock);
 		if (rc) {
 			LogCrit(COMPONENT_FSAL,
-				"Failed to get conflicting lock post lock"
-				" failure");
+				"Failed to get conflicting lock post lock failure");
 			status = gluster2fsal_error(errno);
 			goto out;
 		}
@@ -1307,13 +1330,13 @@ static fsal_status_t file_close(struct fsal_obj_handle *obj_hdl)
 	rc = glfs_close(objhandle->glfd);
 	if (rc != 0) {
 		status = gluster2fsal_error(errno);
-		goto out;
+		LogCrit(COMPONENT_FSAL,
+			"Error : close returns with %s", strerror(errno));
 	}
 
 	objhandle->glfd = NULL;
 	objhandle->openflags = FSAL_O_CLOSED;
 
- out:
 #ifdef GLTIMING
 	now(&e_time);
 	latency_update(&s_time, &e_time, lat_file_close);
@@ -1493,7 +1516,7 @@ static fsal_status_t handle_digest(const struct fsal_obj_handle *obj_hdl,
 		fh_size = GLAPI_HANDLE_LENGTH;
 		if (fh_desc->len < fh_size) {
 			LogMajor(COMPONENT_FSAL,
-				 "Space too small for handle.  need %lu, have %lu",
+				 "Space too small for handle.  need %zu, have %zu",
 				 fh_size, fh_desc->len);
 			status.major = ERR_FSAL_TOOSMALL;
 			goto out;
@@ -1536,8 +1559,6 @@ static void handle_to_key(struct fsal_obj_handle *obj_hdl,
 	now(&e_time);
 	latency_update(&s_time, &e_time, lat_handle_to_key);
 #endif
-
-	return;
 }
 
 /**

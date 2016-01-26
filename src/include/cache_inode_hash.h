@@ -64,11 +64,13 @@ typedef struct cih_partition {
 	pthread_rwlock_t lock;
 	struct avltree t;
 	struct avltree_node **cache;
+#ifdef ENABLE_LOCKTRACE
 	struct {
 		char *func;
 		uint32_t line;
 	} locktrace;
-	 CACHE_PAD(0);
+#endif
+	GSH_CACHE_PAD(0);
 } cih_partition_t;
 
 /**
@@ -77,7 +79,7 @@ typedef struct cih_partition {
  * This is the structure corresponding to a single table of weakrefs.
  */
 struct cih_lookup_table {
-	CACHE_PAD(0);
+	GSH_CACHE_PAD(0);
 	cih_partition_t *partition;
 	uint32_t npart;
 	uint32_t cache_sz;
@@ -297,8 +299,10 @@ cih_get_by_key_latched(cache_inode_key_t *key, cih_latch_t *latch,
 	else
 		PTHREAD_RWLOCK_rdlock(&cp->lock);	/* SUBTREE_RLOCK */
 
+#ifdef ENABLE_LOCKTRACE
 	cp->locktrace.func = (char *)func;
 	cp->locktrace.line = line;
+#endif
 
 	/* check cache */
 	cache_slot = (void **)
@@ -360,8 +364,10 @@ cih_latch_entry(cache_entry_t *entry, cih_latch_t *latch, uint32_t flags,
 	else
 		PTHREAD_RWLOCK_rdlock(&cp->lock);	/* SUBTREE_RLOCK */
 
+#ifdef ENABLE_LOCKTRACE
 	cp->locktrace.func = (char *)func;
 	cp->locktrace.line = line;
+#endif
 
 	return true;
 }
@@ -424,7 +430,7 @@ cih_remove_checked(cache_entry_t *entry)
 
 	PTHREAD_RWLOCK_wrlock(&cp->lock);
 	node = cih_fhcache_inline_lookup(&cp->t, &entry->fh_hk.node_k);
-	if (node) {
+	if (entry->fh_hk.inavl && node) {
 		avltree_remove(node, &cp->t);
 		cp->cache[cih_cache_offsetof(&cih_fhcache,
 					     entry->fh_hk.key.hk)] = NULL;

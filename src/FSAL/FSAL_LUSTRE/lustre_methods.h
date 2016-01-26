@@ -150,6 +150,7 @@ fsal_status_t lustre_create_handle(struct fsal_export *exp_hdl,
 
 struct lustre_fsal_obj_handle {
 	struct fsal_obj_handle obj_handle;
+	struct attrlist attributes;
 	fsal_dev_t dev;
 	struct lustre_file_handle *handle;
 	union {
@@ -188,7 +189,7 @@ fsal_status_t lustre_lock_op(struct fsal_obj_handle *obj_hdl,
 			     fsal_lock_param_t *request_lock,
 			     fsal_lock_param_t *conflicting_lock);
 fsal_status_t lustre_share_op(struct fsal_obj_handle *obj_hdl,
-			      void *p_owner,	/* IN (opaque to FSAL) */
+			      void *p_owner,
 			      fsal_share_param_t request_share);
 fsal_status_t lustre_close(struct fsal_obj_handle *obj_hdl);
 fsal_status_t lustre_lru_cleanup(struct fsal_obj_handle *obj_hdl,

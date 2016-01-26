@@ -36,7 +36,7 @@ AUTH *nsm_auth;
 unsigned long nsm_count;
 char *nodename;
 
-bool nsm_connect()
+bool nsm_connect(void)
 {
 	struct utsname utsname;
 
@@ -71,7 +71,7 @@ bool nsm_connect()
 	return nsm_clnt != NULL;
 }
 
-void nsm_disconnect()
+void nsm_disconnect(void)
 {
 	if (nsm_count == 0 && nsm_clnt != NULL) {
 		gsh_clnt_destroy(nsm_clnt);
@@ -100,6 +100,7 @@ bool nsm_monitor(state_nsm_client_t *host)
 		return true;
 	}
 
+	memset(&nsm_mon, 0, sizeof(nsm_mon));
 	nsm_mon.mon_id.mon_name = host->ssc_nlm_caller_name;
 	nsm_mon.mon_id.my_id.my_prog = NLMPROG;
 	nsm_mon.mon_id.my_id.my_vers = NLM4_VERS;

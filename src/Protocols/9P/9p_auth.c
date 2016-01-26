@@ -44,8 +44,7 @@
 #include "fsal.h"
 #include "9p.h"
 
-int _9p_auth(struct _9p_request_data *req9p, void *worker_data,
-	     u32 *plenout, char *preply)
+int _9p_auth(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 	u16 *msgtag = NULL;
@@ -70,10 +69,8 @@ int _9p_auth(struct _9p_request_data *req9p, void *worker_data,
 		 (int) *aname_len, aname_str, *n_aname);
 
 	if (*afid >= _9P_FID_PER_CONN)
-		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, ERANGE, plenout, preply);
 
 	/* This message is not implemented yet, return ENOTSUPP */
-	return _9p_rerror(req9p, worker_data, msgtag, EOPNOTSUPP,
-			  plenout, preply);
+	return _9p_rerror(req9p, msgtag, EOPNOTSUPP, plenout, preply);
 }

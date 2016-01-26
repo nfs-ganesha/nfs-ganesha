@@ -224,6 +224,7 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 	 */
 	if (state_found != NULL) {
 		struct state_deleg *sdeleg;
+
 		if (info)
 			info->io_advise = state_found->state_data.io_advise;
 		switch (state_found->state_type) {
@@ -318,7 +319,7 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 	 *        cache_inode_access_no_mutex
 	 */
 	if (state_open == NULL
-	    && entry->obj_handle->attributes.owner !=
+	    && entry->obj_handle->attrs->owner !=
 	    op_ctx->creds->caller_uid) {
 		cache_status = cache_inode_access(entry,
 						  FSAL_WRITE_ACCESS);
@@ -345,8 +346,8 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 
 		if ((offset + size) > op_ctx->export->MaxOffsetWrite) {
 			LogEvent(COMPONENT_NFS_V4,
-				 "A client tryed to violate max "
-				 "file size %" PRIu64 " for exportid #%hu",
+				 "A client tryed to violate max file size %"
+				 PRIu64 " for exportid #%hu",
 				 op_ctx->export->MaxOffsetWrite,
 				 op_ctx->export->export_id);
 
@@ -404,7 +405,7 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 		}
 	}
 
-	cache_status = cache_inode_rdwr_plus(entry,
+	cache_status = cache_inode_rdwr(entry,
 					io,
 					offset,
 					size,
@@ -497,8 +498,7 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t *data,
 void nfs4_op_write_Free(nfs_resop4 *resp)
 {
 	/* Nothing to be done */
-	return;
-}				/* nfs4_op_write_Free */
+}
 
 /**
  * @brief The NFS4_OP_WRITE_SAME operation
@@ -512,15 +512,29 @@ void nfs4_op_write_Free(nfs_resop4 *resp)
  *
  */
 
-int nfs4_op_write_plus(struct nfs_argop4 *op, compound_data_t *data,
+int nfs4_op_write_same(struct nfs_argop4 *op, compound_data_t *data,
 		  struct nfs_resop4 *resp)
 {
-	WRITE_SAME4res * const res_WPLUS = &resp->nfs_resop4_u.opwrite_plus;
+	WRITE_SAME4res * const res_WSAME = &resp->nfs_resop4_u.opwrite_plus;
 
 	resp->resop = NFS4_OP_WRITE_SAME;
-	res_WPLUS->wpr_status =  NFS4ERR_NOTSUPP;
+	res_WSAME->wpr_status =  NFS4ERR_NOTSUPP;
 
-	return res_WPLUS->wpr_status;
+	return res_WSAME->wpr_status;
+}
+
+/**
+ * @brief Free memory allocated for WRITE_SAME result
+ *
+ * This function frees any memory allocated for the result of the
+ * NFS4_OP_WRITE_SAME operation.
+ *
+ * @param[in,out] resp nfs4_op results
+*
+ */
+void nfs4_op_write_same_Free(nfs_resop4 *resp)
+{
+	/* Nothing to be done */
 }
 
 /**
@@ -540,6 +554,7 @@ int nfs4_op_allocate(struct nfs_argop4 *op, compound_data_t *data,
 	struct nfs_resop4 res;
 	struct nfs_argop4 arg;
 	struct io_info info;
+	/* Arguments and response */
 	ALLOCATE4args * const arg_ALLOC = &op->nfs_argop4_u.opallocate;
 	ALLOCATE4res * const res_ALLOC = &resp->nfs_resop4_u.opallocate;
 
@@ -579,6 +594,7 @@ int nfs4_op_deallocate(struct nfs_argop4 *op, compound_data_t *data,
 	struct nfs_resop4 res;
 	struct nfs_argop4 arg;
 	struct io_info info;
+	/* Arguments and response */
 	DEALLOCATE4args * const arg_DEALLOC = &op->nfs_argop4_u.opdeallocate;
 	DEALLOCATE4res * const res_DEALLOC = &resp->nfs_resop4_u.opdeallocate;
 

@@ -1,7 +1,6 @@
 # dirs
 oldtars/
 linuxbox-ceph/
-src/libtirpc/
 src/Docs/html/
 src/Docs/latex/
 src/autom4te.cache/

@@ -37,6 +37,7 @@ void pt_handle_ops_init(struct fsal_obj_ops *ops);
 
 struct pt_fsal_obj_handle {
 	struct fsal_obj_handle obj_handle;
+	struct attrlist attributes;
 	ptfsal_handle_t *handle;
 	union {
 		struct {
@@ -78,52 +79,12 @@ fsal_status_t pt_write(struct fsal_obj_handle *obj_hdl,
 		       size_t buffer_size, void *buffer, size_t *wrote_amount,
 		       bool *fsal_stable);
 
-fsal_status_t pt_commit(struct fsal_obj_handle *obj_hdl,	/* sync */
+/* sync */
+fsal_status_t pt_commit(struct fsal_obj_handle *obj_hdl,
 			off_t offset, size_t len);
 
-fsal_status_t pt_lock_op(struct fsal_obj_handle *obj_hdl,
-			 const struct req_op_context *opctx, void *p_owner,
-			 fsal_lock_op_t lock_op,
-			 fsal_lock_param_t *request_lock,
-			 fsal_lock_param_t *conflicting_lock);
-
-fsal_status_t pt_share_op(struct fsal_obj_handle *obj_hdl,
-			  void *p_owner,	/* IN (opaque to FSAL) */
-			  fsal_share_param_t request_share);
 fsal_status_t pt_close(struct fsal_obj_handle *obj_hdl);
 fsal_status_t pt_lru_cleanup(struct fsal_obj_handle *obj_hdl,
 			     lru_actions_t requests);
 
-/* extended attributes management */
-fsal_status_t pt_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
-				unsigned int cookie,
-				fsal_xattrent_t *xattrs_tab,
-				unsigned int xattrs_tabsize,
-				unsigned int *p_nb_returned, int *end_of_list);
-fsal_status_t pt_getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
-				       const char *xattr_name,
-				       unsigned int *pxattr_id);
-fsal_status_t pt_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
-					  const char *xattr_name,
-					  caddr_t buffer_addr,
-					  size_t buffer_size,
-					  size_t *p_output_size);
-fsal_status_t pt_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
-					unsigned int xattr_id,
-					caddr_t buffer_addr, size_t buffer_size,
-					size_t *p_output_size);
-fsal_status_t pt_setextattr_value(struct fsal_obj_handle *obj_hdl,
-				  const char *xattr_name, caddr_t buffer_addr,
-				  size_t buffer_size, int create);
-fsal_status_t pt_setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
-					unsigned int xattr_id,
-					caddr_t buffer_addr,
-					size_t buffer_size);
-fsal_status_t pt_getextattr_attrs(struct fsal_obj_handle *obj_hdl,
-				  unsigned int xattr_id,
-				  struct attrlist *p_attrs);
-fsal_status_t pt_remove_extattr_by_id(struct fsal_obj_handle *obj_hdl,
-				      unsigned int xattr_id);
-fsal_status_t pt_remove_extattr_by_name(struct fsal_obj_handle *obj_hdl,
-					const char *xattr_name);
 #endif				/* PT_METHODS_H */

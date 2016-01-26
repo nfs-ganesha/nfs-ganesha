@@ -54,7 +54,6 @@
  * Implements the NFSPROC3_SYMLINK function.
  *
  * @param[in]  arg     NFS argument union
- * @param[in]  worker  Worker thread data
  * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call
  *
@@ -64,9 +63,7 @@
  *
  */
 
-int nfs3_symlink(nfs_arg_t *arg,
-		 nfs_worker_data_t *worker,
-		 struct svc_req *req, nfs_res_t *res)
+int nfs3_symlink(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
 	const char *symlink_name = arg->arg_symlink3.where.name;
 	char *target_path = arg->arg_symlink3.symlink.symlink_data;
@@ -90,9 +87,8 @@ int nfs3_symlink(nfs_arg_t *arg,
 				 str);
 
 		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling nfs_Symlink handle: "
-			 "%s name: %s target: %s", str, symlink_name,
-			 target_path);
+			 "REQUEST PROCESSING: Calling nfs_Symlink handle: %s name: %s target: %s",
+			 str, symlink_name, target_path);
 	}
 
 	/* to avoid setting it on each error case */
@@ -173,11 +169,15 @@ int nfs3_symlink(nfs_arg_t *arg,
 	 */
 	squash_setattr(&sattr);
 
-	if ((sattr.mask & (ATTR_ATIME | ATTR_MTIME | ATTR_CTIME))
+	if ((sattr.mask & CREATE_MASK_NON_REG_NFS3)
 	    || ((sattr.mask & ATTR_OWNER)
 		&& (op_ctx->creds->caller_uid != sattr.owner))
 	    || ((sattr.mask & ATTR_GROUP)
 		&& (op_ctx->creds->caller_gid != sattr.group))) {
+
+		/* mask off flags handled by create */
+		sattr.mask &= CREATE_MASK_NON_REG_NFS3 | ATTRS_CREDS;
+
 		/* A call to cache_inode_setattr is required */
 		cache_status = cache_inode_setattr(symlink_entry,
 						   &sattr,

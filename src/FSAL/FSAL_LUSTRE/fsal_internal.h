@@ -97,7 +97,7 @@ fsal_status_t lustre_shook_restore(struct fsal_obj_handle *obj_hdl,
 void fsal_increment_nbcall(int function_index, fsal_status_t status);
 
 void set_credentials(struct user_cred *creds);
-void set_creds_to_root();
+void set_creds_to_root(void);
 
 struct lustre_ds {
 	struct fsal_ds_handle ds; /*< Public DS handle */

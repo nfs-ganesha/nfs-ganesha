@@ -218,7 +218,7 @@ nfsstat4 FSAL_encode_file_layout(XDR *xdrs,
 				 const struct pnfs_deviceid *deviceid,
 				 nfl_util4 util, const uint32_t first_idx,
 				 const offset4 ptrn_ofst,
-				 const uint16_t server_id,
+				 const uint16_t *ds_ids,
 				 const uint32_t num_fhs,
 				 const struct gsh_buffdesc *fhs);
 

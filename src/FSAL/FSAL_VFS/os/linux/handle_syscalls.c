@@ -49,7 +49,7 @@
 #define HANDLE_TYPE_32 0xC0
 #define HANDLE_TYPE_MASK 0xC0
 #define HANDLE_DUMMY 0x20
-#define HANDE_FSID_MASK (~(HANDLE_TYPE_MASK | HANDLE_DUMMY))
+#define HANDLE_FSID_MASK (~(HANDLE_TYPE_MASK | HANDLE_DUMMY))
  /*
  * 0, 8, or 16 bytes	fsid type
  * 1,2 or 4 bytes	handle type
@@ -77,7 +77,7 @@ int display_vfs_handle(struct display_buffer *dspbuf,
 	if (b_left <= 0)
 		return b_left;
 
-	switch ((enum fsid_type) fh->handle_data[0] & HANDE_FSID_MASK) {
+	switch ((enum fsid_type) fh->handle_data[0] & HANDLE_FSID_MASK) {
 	case FSID_NO_TYPE:
 		b_left = display_cat(dspbuf, "no fsid");
 		break;
@@ -192,6 +192,7 @@ int vfs_map_name_to_handle_at(int fd,
 
 	if (rc < 0) {
 		int err = errno;
+
 		LogDebug(COMPONENT_FSAL,
 			 "Error %s (%d) bytes = %d",
 			 strerror(err), err, (int) kernel_fh->handle_bytes);
@@ -227,6 +228,7 @@ int vfs_map_name_to_handle_at(int fd,
 		   kernel_fh->handle_type >= INT16_MIN) {
 		/* Type fits in 16 bits */
 		int16_t handle_type_16 = kernel_fh->handle_type;
+
 		memcpy(fh->handle_data + fh->handle_len,
 		       &handle_type_16,
 		       sizeof(handle_type_16));
@@ -343,7 +345,7 @@ int vfs_extract_fsid(vfs_file_handle_t *fh,
 {
 	LogVFSHandle(fh);
 
-	*fsid_type = (enum fsid_type) fh->handle_data[0] & HANDE_FSID_MASK;
+	*fsid_type = (enum fsid_type) fh->handle_data[0] & HANDLE_FSID_MASK;
 
 	if (decode_fsid(fh->handle_data + 1,
 			fh->handle_len - 1,
@@ -408,7 +410,7 @@ bool vfs_valid_handle(struct gsh_buffdesc *desc)
 
 	handle0 = *((uint8_t *) (desc->addr));
 
-	switch ((enum fsid_type) handle0 & HANDE_FSID_MASK) {
+	switch ((enum fsid_type) handle0 & HANDLE_FSID_MASK) {
 	case FSID_NO_TYPE:
 	case FSID_ONE_UINT64:
 	case FSID_MAJOR_64:
@@ -417,14 +419,14 @@ bool vfs_valid_handle(struct gsh_buffdesc *desc)
 	case FSID_DEVICE:
 		fsid_type_ok = true;
 		len += sizeof_fsid((enum fsid_type) handle0 &
-						    HANDE_FSID_MASK);
+						    HANDLE_FSID_MASK);
 		break;
 	}
 
 	if (!fsid_type_ok) {
 		LogDebug(COMPONENT_FSAL,
 			 "FSID Type %02hhx invalid",
-			 handle0 & HANDE_FSID_MASK);
+			 handle0 & HANDLE_FSID_MASK);
 		return false;
 	}
 

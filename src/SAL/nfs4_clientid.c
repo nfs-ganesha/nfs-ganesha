@@ -6,7 +6,7 @@
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
- * as published by the Free Software F oundation; either version 3 of
+ * as published by the Free Software Foundation; either version 3 of
  * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but
@@ -330,9 +330,8 @@ void free_client_id(nfs_client_id_t *clientid)
 
 	PTHREAD_MUTEX_destroy(&clientid->cid_mutex);
 	PTHREAD_MUTEX_destroy(&clientid->cid_owner.so_mutex);
-	if (clientid->cid_minorversion == 0) {
+	if (clientid->cid_minorversion == 0)
 		PTHREAD_MUTEX_destroy(&clientid->cid_cb.v40.cb_chan.mtx);
-	}
 
 	put_gsh_client(clientid->gsh_client);
 
@@ -454,6 +453,7 @@ int compare_client_id(struct gsh_buffdesc *buff1, struct gsh_buffdesc *buff2)
 {
 	clientid4 cl1 = *((clientid4 *) (buff1->addr));
 	clientid4 cl2 = *((clientid4 *) (buff2->addr));
+
 	return (cl1 == cl2) ? 0 : 1;
 }
 
@@ -747,8 +747,8 @@ clientid_status_t nfs_client_id_confirm(nfs_client_id_t *clientid,
 			display_client_id_rec(&dspbuf, clientid);
 
 			LogCrit(COMPONENT_CLIENTID,
-				"Unexpected problem %s, could not remove "
-				"{%s}", hash_table_err_to_str(rc), str);
+				"Unexpected problem %s, could not remove {%s}",
+				hash_table_err_to_str(rc), str);
 		}
 
 		return CLIENT_ID_INVALID_ARGUMENT;
@@ -768,8 +768,8 @@ clientid_status_t nfs_client_id_confirm(nfs_client_id_t *clientid,
 			display_client_id_rec(&dspbuf, clientid);
 
 			LogCrit(COMPONENT_CLIENTID,
-				"Unexpected problem %s, could not "
-				"insert {%s}", hash_table_err_to_str(rc), str);
+				"Unexpected problem %s, could not insert {%s}",
+				hash_table_err_to_str(rc), str);
 		}
 
 		/* Set this up so this client id record will be
@@ -790,6 +790,47 @@ clientid_status_t nfs_client_id_confirm(nfs_client_id_t *clientid,
 	nfs4_add_clid(clientid);
 
 	return CLIENT_ID_SUCCESS;
+}
+
+/**
+ * @brief Check if a clientid has state associated with it.
+ *
+ * @param[in] clientid The client id of interest
+ *
+ * @retval true if the clientid has associated state.
+ */
+bool clientid_has_state(nfs_client_id_t *clientid)
+{
+	bool live_state = false;
+	struct glist_head *glist;
+
+	PTHREAD_MUTEX_lock(&clientid->cid_mutex);
+
+	/* Don't bother checking lock owners, there must ALSO be an
+	 * open owner with active open state in order for there to be
+	 * active lock state.
+	 */
+
+	/* Check if any open owners have active open state. */
+	glist_for_each(glist, &clientid->cid_openowners) {
+		live_state = owner_has_state(glist_entry(
+			glist,
+			state_owner_t,
+			so_owner.so_nfs4_owner.so_perclient));
+
+		if (live_state)
+			break;
+	}
+
+	/* Delegations and Layouts are owned by clientid, so check for
+	 * active state held by the cid_owner.
+	 */
+	if (!live_state)
+		live_state = owner_has_state(&clientid->cid_owner);
+
+	PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
+
+	return live_state;
 }
 
 /**
@@ -1023,7 +1064,7 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid, bool make_stale)
 		}
 	}
 
-	if (clientid->cid_recov_dir != NULL) {
+	if (clientid->cid_recov_dir != NULL && !make_stale) {
 		nfs4_rm_clid(clientid->cid_recov_dir, v4_recov_dir, 0);
 		gsh_free(clientid->cid_recov_dir);
 		clientid->cid_recov_dir = NULL;
@@ -1110,7 +1151,6 @@ clientid_status_t nfs_client_id_get(hash_table_t *ht, clientid4 clientid,
 			/* Stale client becuse of ip detach and attach to
 			 * same node */
 			status = CLIENT_ID_STALE;
-			dec_client_id_ref(pclientid);
 			pclientid->cid_confirmed = EXPIRED_CLIENT_ID;
 			rc = HashTable_Del(ht, &buffkey, NULL, NULL);
 			if (rc != HASHTABLE_SUCCESS) {
@@ -1431,20 +1471,11 @@ int32_t dec_client_record_ref(nfs_client_record_t *record)
 	}
 
 	/* use the key to delete the entry */
-	rc = hashtable_deletelatched(ht_client_record, &buffkey, &latch,
-				     &old_key, &old_value);
+	hashtable_deletelatched(ht_client_record, &buffkey, &latch,
+				&old_key, &old_value);
 
-	if (rc != HASHTABLE_SUCCESS) {
-		if (rc == HASHTABLE_ERROR_NO_SUCH_KEY)
-			hashtable_releaselatched(ht_client_record, &latch);
-
-		display_client_record(&dspbuf, record);
-
-		LogCrit(COMPONENT_CLIENTID, "Error %s, could not remove {%s}",
-			hash_table_err_to_str(rc), str);
-
-		return refcount;
-	}
+	/* Release the latch */
+	hashtable_releaselatched(ht_client_record, &latch);
 
 	LogFullDebug(COMPONENT_CLIENTID, "Free {%s}", str);
 
@@ -1742,7 +1773,6 @@ nfs41_foreach_client_callback(bool(*cb) (nfs_client_id_t *cl, void *state),
 		}
 		PTHREAD_RWLOCK_unlock(&(ht->partitions[i].lock));
 	}
-	return;
 }
 
 /** @} */

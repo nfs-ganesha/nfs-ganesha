@@ -65,6 +65,7 @@
  * @brief Hash table for stateids.
  */
 hash_table_t *ht_state_id;
+hash_table_t *ht_state_entry;
 
 /**
  * @brief All-zeroes stateid4.other
@@ -99,7 +100,7 @@ int display_stateid_other(struct display_buffer *dspbuf, char *other)
 	if (b_left <= 0)
 		return b_left;
 
-	b_left = display_cat(dspbuf, " {CLIENTID ");
+	b_left = display_cat(dspbuf, " {{CLIENTID ");
 
 	if (b_left <= 0)
 		return b_left;
@@ -109,7 +110,7 @@ int display_stateid_other(struct display_buffer *dspbuf, char *other)
 	if (b_left <= 0)
 		return b_left;
 
-	return display_printf(dspbuf, " StateIdCounter=0x%08"PRIx32"}", count);
+	return display_printf(dspbuf, "} StateIdCounter=0x%08"PRIx32"}", count);
 }
 
 /**
@@ -123,6 +124,7 @@ int display_stateid_other(struct display_buffer *dspbuf, char *other)
 int display_state_id_key(struct gsh_buffdesc *buff, char *str)
 {
 	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
+
 	display_stateid_other(&dspbuf, buff->addr);
 	return display_buffer_len(&dspbuf);
 }
@@ -158,6 +160,12 @@ const char *str_state_type(state_t *state)
 		return "LOCK";
 	case STATE_TYPE_LAYOUT:
 		return "LAYOUT";
+	case STATE_TYPE_NLM_LOCK:
+		return "NLM_LOCK";
+	case STATE_TYPE_NLM_SHARE:
+		return "NLM_SHARE";
+	case STATE_TYPE_9P_FID:
+		return "9P_FID";
 	}
 
 	return "UNKNOWN";
@@ -176,22 +184,41 @@ int display_stateid(struct display_buffer *dspbuf, state_t *state)
 	int b_left;
 	cache_entry_t *entry;
 
+	if (state == NULL)
+		return display_cat(dspbuf, "STATE <NULL>");
+
 	PTHREAD_MUTEX_lock(&state->state_mutex);
 	entry = state->state_entry;
 	PTHREAD_MUTEX_unlock(&state->state_mutex);
+
+	b_left = display_printf(dspbuf,
+				"STATE %p ",
+				state);
+
+	if (b_left <= 0)
+		return b_left;
 
 	b_left = display_stateid_other(dspbuf, state->stateid_other);
 
 	if (b_left <= 0)
 		return b_left;
 
+	b_left = display_printf(dspbuf,
+				" entry=%p type=%s seqid=%"PRIu32" owner={",
+				entry,
+				str_state_type(state),
+				state->state_seqid);
+
+	if (b_left <= 0)
+		return b_left;
+
+	b_left = display_nfs4_owner(dspbuf, state->state_owner);
+
+	if (b_left <= 0)
+		return b_left;
+
 	return display_printf(dspbuf,
-			      " STATE %p entry=%p type=%s seqid=%"PRIu32
-			      " refccount=%"PRId32,
-			      state,
-			      entry,
-			      str_state_type(state),
-			      state->state_seqid,
+			      "} refccount=%"PRId32,
 			      atomic_fetch_int32_t(&state->state_refcount));
 }
 
@@ -206,12 +233,13 @@ int display_stateid(struct display_buffer *dspbuf, state_t *state)
 int display_state_id_val(struct gsh_buffdesc *buff, char *str)
 {
 	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
+
 	display_stateid(&dspbuf, buff->addr);
 	return display_buffer_len(&dspbuf);
 }
 
 /**
- * @brief Compare to stateids
+ * @brief Compare two stateids
  *
  * @param[in] buff1 One key
  * @param[in] buff2 Another key
@@ -295,6 +323,109 @@ static hash_parameter_t state_id_param = {
 	.key_to_str = display_state_id_key,
 	.val_to_str = display_state_id_val,
 	.flags = HT_FLAG_CACHE,
+	.ht_log_component = COMPONENT_STATE,
+};
+
+/**
+ * @brief Compare two stateids by entry/owner
+ *
+ * @param[in] buff1 One key
+ * @param[in] buff2 Another key
+ *
+ * @retval 0 if equal.
+ * @retval 1 if not equal.
+ */
+int compare_state_entry(struct gsh_buffdesc *buff1, struct gsh_buffdesc *buff2)
+{
+	state_t *state1 = buff1->addr;
+	state_t *state2 = buff2->addr;
+
+	if (state1 == NULL || state2 == NULL)
+		return 1;
+
+	return state1->state_entry != state2->state_entry ||
+	       compare_nfs4_owner(state1->state_owner, state2->state_owner);
+}
+
+/**
+ * @brief Hash index for a stateid by entry/owner
+ *
+ * @param[in] hparam Hash parameter
+ * @param[in] key    Key to hash
+ *
+ * @return The hash index.
+ */
+uint32_t state_entry_value_hash_func(hash_parameter_t *hparam,
+				     struct gsh_buffdesc *key)
+{
+	unsigned int sum = 0;
+	unsigned int i = 0;
+	unsigned char c = 0;
+	uint32_t res = 0;
+
+	state_t *pkey = key->addr;
+
+	/* Compute the sum of all the characters */
+	for (i = 0; i < pkey->state_owner->so_owner_len; i++) {
+		c = ((char *)pkey->state_owner->so_owner_val)[i];
+		sum += c;
+	}
+
+	res = ((uint32_t) pkey->state_owner->so_owner.so_nfs4_owner.so_clientid
+	      + (uint32_t) sum + pkey->state_owner->so_owner_len
+	      + (uint32_t) pkey->state_owner->so_type
+	      + (uintptr_t) pkey->state_entry) % (uint32_t) hparam->index_size;
+
+	if (isDebug(COMPONENT_HASHTABLE))
+		LogFullDebug(COMPONENT_STATE, "value = %" PRIu32, res);
+
+	return res;
+}
+
+/**
+ * @brief RBT hash for a stateid by entry/owner
+ *
+ * @param[in] hparam Hash parameter
+ * @param[in] key    Key to hash
+ *
+ * @return The RBT hash.
+ */
+uint64_t state_entry_rbt_hash_func(hash_parameter_t *hparam,
+				   struct gsh_buffdesc *key)
+{
+	state_t *pkey = key->addr;
+
+	unsigned int sum = 0;
+	unsigned int i = 0;
+	unsigned char c = 0;
+	uint64_t res = 0;
+
+	/* Compute the sum of all the characters */
+	for (i = 0; i < pkey->state_owner->so_owner_len; i++) {
+		c = ((char *)pkey->state_owner->so_owner_val)[i];
+		sum += c;
+	}
+
+	res = (uint64_t) pkey->state_owner->so_owner.so_nfs4_owner.so_clientid
+	      + (uint64_t) sum + pkey->state_owner->so_owner_len
+	      + (uint64_t) pkey->state_owner->so_type
+	      + (uintptr_t) pkey->state_entry;
+
+	if (isDebug(COMPONENT_HASHTABLE))
+		LogFullDebug(COMPONENT_STATE, "rbt = %" PRIu64, res);
+
+	return res;
+}
+
+static hash_parameter_t state_entry_param = {
+	.index_size = PRIME_STATE,
+	.hash_func_key = state_entry_value_hash_func,
+	.hash_func_rbt = state_entry_rbt_hash_func,
+	.compare_key = compare_state_entry,
+	.key_to_str = display_state_id_val,
+	.val_to_str = display_state_id_val,
+	.flags = HT_FLAG_CACHE,
+	.ht_log_component = COMPONENT_STATE,
 };
 
 /**
@@ -313,6 +444,13 @@ int nfs4_Init_state_id(void)
 
 	if (ht_state_id == NULL) {
 		LogCrit(COMPONENT_STATE, "Cannot init State Id cache");
+		return -1;
+	}
+
+	ht_state_entry = hashtable_init(&state_entry_param);
+
+	if (ht_state_entry == NULL) {
+		LogCrit(COMPONENT_STATE, "Cannot init State Entry cache");
 		return -1;
 	}
 
@@ -342,21 +480,11 @@ void nfs4_BuildStateId_Other(nfs_client_id_t *clientid, char *other)
 }
 
 /**
- * @brief Take a reference on state_t
- *
- * @param[in] state The state_t to ref
- */
-void inc_state_t_ref(struct state_t *state)
-{
-	atomic_inc_int32_t(&state->state_refcount);
-}
-
-/**
  * @brief Relinquish a reference on a state_t
  *
  * @param[in] state The state_t to release
  */
-void dec_state_t_ref(struct state_t *state)
+void dec_nfs4_state_ref(struct state_t *state)
 {
 	char str[LOG_BUFF_LEN];
 	struct display_buffer dspbuf = {sizeof(str), str, str};
@@ -400,6 +528,7 @@ int nfs4_State_Set(state_t *state)
 {
 	struct gsh_buffdesc buffkey;
 	struct gsh_buffdesc buffval;
+	hash_error_t err;
 
 	buffkey.addr = state->stateid_other;
 	buffkey.len = OTHERSIZE;
@@ -407,12 +536,71 @@ int nfs4_State_Set(state_t *state)
 	buffval.addr = state;
 	buffval.len = sizeof(state_t);
 
-	if (hashtable_test_and_set
-	    (ht_state_id, &buffkey, &buffval,
-	     HASHTABLE_SET_HOW_SET_NO_OVERWRITE) != HASHTABLE_SUCCESS) {
+	err = hashtable_test_and_set(ht_state_id,
+				     &buffkey,
+				     &buffval,
+				     HASHTABLE_SET_HOW_SET_NO_OVERWRITE);
+
+	if (err != HASHTABLE_SUCCESS) {
 		LogCrit(COMPONENT_STATE,
-			"hashtable_test_and_set failed for key %p",
-			buffkey.addr);
+			"hashtable_test_and_set failed %s for key %p",
+			hash_table_err_to_str(err), buffkey.addr);
+		return 0;
+	}
+
+	/* If stateid is a LOCK or SHARE state, we also index by entry/owner */
+	if (state->state_type != STATE_TYPE_LOCK &&
+	    state->state_type != STATE_TYPE_SHARE)
+		return 1;
+
+	buffkey.addr = state;
+	buffkey.len = sizeof(state_t);
+
+	buffval.addr = state;
+	buffval.len = sizeof(state_t);
+
+	err = hashtable_test_and_set(ht_state_entry,
+				     &buffkey,
+				     &buffval,
+				     HASHTABLE_SET_HOW_SET_NO_OVERWRITE);
+
+	if (err != HASHTABLE_SUCCESS) {
+		struct gsh_buffdesc buffkey, old_key, old_value;
+
+		buffkey.addr = state->stateid_other;
+		buffkey.len = OTHERSIZE;
+
+		LogCrit(COMPONENT_STATE,
+			"hashtable_test_and_set failed %s for key %p",
+			hash_table_err_to_str(err), buffkey.addr);
+
+		if (isFullDebug(COMPONENT_STATE)) {
+			char str[LOG_BUFF_LEN];
+			struct display_buffer dspbuf = {sizeof(str), str, str};
+			state_t *state2;
+
+			display_stateid(&dspbuf, state);
+			LogCrit(COMPONENT_STATE, "State %s", str);
+			state2 = nfs4_State_Get_Entry(state->state_entry,
+						      state->state_owner);
+			if (state2 != NULL) {
+				display_reset_buffer(&dspbuf);
+				display_stateid(&dspbuf, state2);
+
+				LogCrit(COMPONENT_STATE,
+					"Duplicate State %s",
+					str);
+			}
+		}
+
+		err = HashTable_Del(ht_state_id, &buffkey,
+				    &old_key, &old_value);
+
+		if (err != HASHTABLE_SUCCESS) {
+			LogDebug(COMPONENT_STATE,
+				 "Failure to delete stateid %s",
+				 hash_table_err_to_str(err));
+		}
 		return 0;
 	}
 
@@ -458,6 +646,55 @@ struct state_t *nfs4_State_Get_Pointer(char *other)
 }
 
 /**
+ * @brief Get the state from the stateid by entry/owner
+ *
+ * @param[in]  other      stateid4.other
+ *
+ * @returns The found state_t or NULL if not found.
+ */
+struct state_t *nfs4_State_Get_Entry(cache_entry_t *entry,
+				     state_owner_t *owner)
+{
+	state_t state_key;
+	struct gsh_buffdesc buffkey;
+	struct gsh_buffdesc buffval;
+	hash_error_t rc;
+	struct hash_latch latch;
+	struct state_t *state;
+
+	memset(&state_key, 0, sizeof(state_key));
+
+	buffkey.addr = &state_key;
+	buffkey.len = sizeof(state_key);
+
+	state_key.state_owner = owner;
+	state_key.state_entry = entry;
+
+	rc = hashtable_getlatch(ht_state_entry,
+				&buffkey,
+				&buffval,
+				true,
+				&latch);
+
+	if (rc != HASHTABLE_SUCCESS) {
+		if (rc == HASHTABLE_ERROR_NO_SUCH_KEY)
+			hashtable_releaselatched(ht_state_entry, &latch);
+		LogDebug(COMPONENT_STATE, "HashTable_Get returned %d", rc);
+		return NULL;
+	}
+
+	state = buffval.addr;
+
+	/* Take a reference under latch */
+	inc_state_t_ref(state);
+
+	/* Release latch */
+	hashtable_releaselatched(ht_state_entry, &latch);
+
+	return state;
+}
+
+/**
  * @brief Remove a state from the stateid table
  *
  * @param[in] other stateid4.other
@@ -465,15 +702,45 @@ struct state_t *nfs4_State_Get_Pointer(char *other)
  * @retval true if success
  * @retval false if failure
  */
-bool nfs4_State_Del(char *other)
+bool nfs4_State_Del(state_t *state)
 {
 	struct gsh_buffdesc buffkey, old_key, old_value;
 	hash_error_t err;
 
-	buffkey.addr = other;
+	buffkey.addr = state->stateid_other;
 	buffkey.len = OTHERSIZE;
 
 	err = HashTable_Del(ht_state_id, &buffkey, &old_key, &old_value);
+
+	if (err != HASHTABLE_SUCCESS) {
+		char str[LOG_BUFF_LEN];
+		struct display_buffer dspbuf = {sizeof(str), str, str};
+
+		display_stateid(&dspbuf, state);
+
+		LogDebug(COMPONENT_STATE,
+			 "Failure to delete stateid %s %s",
+			 str,
+			 hash_table_err_to_str(err));
+		return false;
+	}
+
+	assert(state == old_value.addr);
+
+	/* If stateid is a LOCK or SHARE state, we had also indexed by
+	 * entry/owner
+	 */
+	if (state->state_type != STATE_TYPE_LOCK &&
+	    state->state_type != STATE_TYPE_SHARE)
+		return true;
+
+	/* Delete the stateid hashed by entry/owner.
+	 * Use the old_value from above as the key.
+	 */
+	buffkey.addr = old_value.addr;
+	buffkey.len = old_value.len;
+
+	err = HashTable_Del(ht_state_entry, &buffkey, &old_key, &old_value);
 
 	if (err != HASHTABLE_SUCCESS) {
 		LogDebug(COMPONENT_STATE,
@@ -821,8 +1088,8 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, cache_entry_t *entry,
 			/* OLD_STATEID */
 			if (str_valid)
 				LogDebug(COMPONENT_STATE,
-					 "Check %s stateid found OLD stateid %s"
-					 ", expected seqid %"PRIu32,
+					 "Check %s stateid found OLD stateid %s, expected seqid %"
+					 PRIu32,
 					 tag, str,
 					 state2->state_seqid);
 			status = NFS4ERR_OLD_STATEID;
@@ -845,8 +1112,8 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, cache_entry_t *entry,
 			/* BAD_STATEID */
 			if (str_valid)
 				LogDebug(COMPONENT_STATE,
-					 "Check %s stateid found BAD stateid %s"
-					 ", expected seqid %"PRIu32,
+					 "Check %s stateid found BAD stateid %s, expected seqid %"
+					 PRIu32,
 					 tag, str,
 					 state2->state_seqid);
 			status = NFS4ERR_BAD_STATEID;
@@ -869,6 +1136,11 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, cache_entry_t *entry,
 			}
 			PTHREAD_RWLOCK_unlock(&entry2->state_lock);
 			/* Fall through for failure */
+
+		case STATE_TYPE_NLM_LOCK:
+		case STATE_TYPE_NLM_SHARE:
+		case STATE_TYPE_9P_FID:
+			/* Fall through - don't expect these types */
 
 		case STATE_TYPE_NONE:
 		case STATE_TYPE_SHARE:

@@ -90,13 +90,13 @@ cache_inode_getattr(cache_entry_t *entry,
 	if (entry == op_ctx->export->exp_root_cache_inode)
 		mounted_on_fileid = op_ctx->export->exp_mounted_on_file_id;
 	else
-		mounted_on_fileid = entry->obj_handle->attributes.fileid;
+		mounted_on_fileid = entry->obj_handle->attrs->fileid;
 
 	PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
 
 	status = cb(opaque,
 		    entry,
-		    &entry->obj_handle->attributes,
+		    entry->obj_handle->attrs,
 		    mounted_on_fileid,
 		    cb_state);
 
@@ -130,11 +130,7 @@ cache_inode_getattr(cache_entry_t *entry,
 					 junction_export->export_id,
 					 cache_inode_err_str(status));
 				/* Need to signal problem to callback */
-				(void) cb(opaque,
-					  junction_entry,
-					  NULL,
-					  0,
-					  CB_PROBLEM);
+				(void) cb(opaque, NULL, NULL, 0, CB_PROBLEM);
 				return status;
 			}
 		} else {
@@ -142,7 +138,7 @@ cache_inode_getattr(cache_entry_t *entry,
 				 "A junction became stale");
 			status = CACHE_INODE_ESTALE;
 			/* Need to signal problem to callback */
-			(void) cb(opaque, junction_entry, NULL, 0, CB_PROBLEM);
+			(void) cb(opaque, NULL, NULL, 0, CB_PROBLEM);
 			return status;
 		}
 
@@ -165,40 +161,29 @@ cache_inode_getattr(cache_entry_t *entry,
  * Gets the filied for a cached entry.
  *
  * @param[in]  entry   Entry to be managed.
- * @param[out] fileid  The file ID.
  *
- * @return Errors from cache_inode_lock_trust_attributes.
+ * @return The fileid
  *
  */
-cache_inode_status_t
-cache_inode_fileid(cache_entry_t *entry,
-		   uint64_t *fileid)
+uint64_t cache_inode_fileid(cache_entry_t *entry)
 {
-	cache_inode_status_t status;
+	uint64_t fileid;
 
 	PTHREAD_RWLOCK_rdlock(&op_ctx->export->lock);
 
 	if (entry == op_ctx->export->exp_root_cache_inode) {
 
-		*fileid = op_ctx->export->exp_mounted_on_file_id;
-		status = CACHE_INODE_SUCCESS;
+		fileid = op_ctx->export->exp_mounted_on_file_id;
 
 		PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
 	} else {
 		PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
 
-		/* Lock (and refresh if necessary) the attributes, copy them
-		   out, and unlock. */
-		status = cache_inode_lock_trust_attrs(entry, false);
-
-		if (status == CACHE_INODE_SUCCESS) {
-			*fileid = entry->obj_handle->attributes.fileid;
-
-			PTHREAD_RWLOCK_unlock(&entry->attr_lock);
-		}
+		/* No need to lock the attrs, fileid doesn't change. */
+		fileid = entry->obj_handle->attrs->fileid;
 	}
 
-	return status;
+	return fileid;
 }
 
 /**
@@ -227,7 +212,7 @@ cache_inode_fsid(cache_entry_t *entry,
 	if (status != CACHE_INODE_SUCCESS)
 		goto out;
 
-	*fsid = entry->obj_handle->attributes.fsid;
+	*fsid = entry->obj_handle->attrs->fsid;
 
 	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 
@@ -262,7 +247,7 @@ cache_inode_size(cache_entry_t *entry,
 	if (status != CACHE_INODE_SUCCESS)
 		goto out;
 
-	*size = entry->obj_handle->attributes.filesize;
+	*size = entry->obj_handle->attrs->filesize;
 
 	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 

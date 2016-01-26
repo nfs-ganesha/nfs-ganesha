@@ -25,6 +25,9 @@
 # %bcond_with means you add a "--with" option, default = without this feature
 # %bcond_without adds a"--without" so the feature is enabled by default
 
+@BCOND_NULLFS@ nullfs
+%global use_fsal_null %{on_off_switch nullfs}
+
 @BCOND_GPFS@ gpfs
 %global use_fsal_gpfs %{on_off_switch gpfs}
 
@@ -72,6 +75,9 @@
 @BCOND_GUI_UTILS@ gui_utils
 %global use_gui_utils %{on_off_switch gui_utils}
 
+@BCOND_NTIRPC@ system_ntirpc
+%global use_system_ntirpc %{on_off_switch system_ntirpc}
+
 %global dev_version %{lua: extraver = string.gsub('@GANESHA_EXTRA_VERSION@', '%-', '.'); print(extraver) }
 
 %define sourcename @CPACK_SOURCE_PACKAGE_FILE_NAME@
@@ -95,6 +101,9 @@ BuildRequires:	dbus-devel
 BuildRequires:	libcap-devel
 BuildRequires:	libblkid-devel
 BuildRequires:	libuuid-devel
+%if %{with system_ntirpc}
+BuildRequires: libntirpc-devel >= @NTIRPC_VERSION@
+%endif
 Requires:	dbus
 Requires:	nfs-utils
 %if %{with_nfsidmap}
@@ -145,15 +154,6 @@ Requires: nfs-ganesha = %{version}-%{release}
 This package contains a FSAL shared object to
 be used with NFS-Ganesha to support VFS based filesystems
 
-%package nullfs
-Summary: The NFS-GANESHA's NULLFS Stackable FSAL
-Group: Applications/System
-Requires: nfs-ganesha = %{version}-%{release}
-
-%description nullfs
-This package contains a Stackable FSAL shared object to
-be used with NFS-Ganesha. This is mostly a template for future (more sophisticated) stackable FSALs
-
 %package proxy
 Summary: The NFS-GANESHA's PROXY FSAL
 Group: Applications/System
@@ -168,6 +168,7 @@ be used with NFS-Ganesha to support PROXY based filesystems
 %package utils
 Summary: The NFS-GANESHA's util scripts
 Group: Applications/System
+Requires:	dbus-python, pygobject2
 %if %{with gui_utils}
 BuildRequires:	PyQt4-devel
 Requires:	PyQt4
@@ -192,6 +193,18 @@ to the ganesha.nfsd server, it makes it possible to trace using LTTng.
 
 # Option packages start here. use "rpmbuild --with lustre" (or equivalent)
 # for activating this part of the spec file
+
+# NULL
+%if %{with nullfs}
+%package nullfs
+Summary: The NFS-GANESHA's NULLFS Stackable FSAL
+Group: Applications/System
+Requires: nfs-ganesha = %{version}-%{release}
+
+%description nullfs
+This package contains a Stackable FSAL shared object to
+be used with NFS-Ganesha. This is mostly a template for future (more sophisticated) stackable FSALs
+%endif
 
 # GPFS
 %if %{with gpfs}
@@ -317,8 +330,8 @@ be used with NFS-Ganesha to support PT
 Summary: The NFS-GANESHA's GLUSTER FSAL
 Group: Applications/System
 Requires:	nfs-ganesha = %{version}-%{release}
-BuildRequires:	glusterfs-api-devel >= 3.5.1
-BuildRequires:	libattr-devel
+BuildRequires:        glusterfs-api-devel >= 3.7.4
+BuildRequires:        libattr-devel, libacl-devel
 
 %description gluster
 This package contains a FSAL shared object to
@@ -331,6 +344,7 @@ be used with NFS-Ganesha to support Gluster
 %build
 cmake .	-DCMAKE_BUILD_TYPE=Debug			\
 	-DBUILD_CONFIG=rpmbuild				\
+	-DUSE_FSAL_NULL=%{use_fsal_null}		\
 	-DUSE_FSAL_ZFS=%{use_fsal_zfs}			\
 	-DUSE_FSAL_XFS=%{use_fsal_xfs}			\
 	-DUSE_FSAL_CEPH=%{use_fsal_ceph}		\
@@ -341,6 +355,7 @@ cmake .	-DCMAKE_BUILD_TYPE=Debug			\
 	-DUSE_FSAL_PANFS=%{use_fsal_panfs}		\
 	-DUSE_FSAL_PT=%{use_fsal_pt}			\
 	-DUSE_FSAL_GLUSTER=%{use_fsal_gluster}		\
+	-DUSE_SYSTEM_NTIRPC=%{use_system_ntirpc}	\
 	-DUSE_9P_RDMA=%{use_rdma}			\
 	-DUSE_FSAL_LUSTRE_UP=%{use_lustre_up}		\
 	-DUSE_LTTNG=%{use_lttng}			\
@@ -390,7 +405,6 @@ install -m 644 scripts/init.d/sysconfig/ganesha		%{buildroot}%{_sysconfdir}/sysc
 %endif
 
 %if %{with pt}
-install -m 755 ganesha.pt.init %{buildroot}%{_sysconfdir}/init.d/nfs-ganesha-pt
 install -m 644 config_samples/pt.conf %{buildroot}%{_sysconfdir}/ganesha
 %endif
 
@@ -416,14 +430,10 @@ install -m 644 config_samples/gpfs.ganesha.nfsd.conf %{buildroot}%{_sysconfdir}/
 install -m 644 config_samples/gpfs.ganesha.main.conf %{buildroot}%{_sysconfdir}/ganesha
 install -m 644 config_samples/gpfs.ganesha.log.conf %{buildroot}%{_sysconfdir}/ganesha
 install -m 644 config_samples/gpfs.ganesha.exports.conf	%{buildroot}%{_sysconfdir}/ganesha
+%if ! %{with_systemd}
+mkdir -p %{buildroot}%{_sysconfdir}/init.d
+install -m 755 scripts/init.d/nfs-ganesha.gpfs		%{buildroot}%{_sysconfdir}/init.d/nfs-ganesha-gpfs
 %endif
-
-%if %{with utils}
-pushd .
-cd scripts/ganeshactl/
-python setup.py --quiet install --root=%{buildroot}
-popd
-install -m 755 Protocols/NLM/sm_notify.ganesha		%{buildroot}%{_bindir}/sm_notify.ganesha
 %endif
 
 make DESTDIR=%{buildroot} install
@@ -447,7 +457,13 @@ make DESTDIR=%{buildroot} install
 %files
 %defattr(-,root,root,-)
 %{_bindir}/ganesha.nfsd
-%{_bindir}/libntirpc.a
+%if ! %{with system_ntirpc}
+%{_libdir}/libntirpc.so.@NTIRPC_VERSION@
+%{_libdir}/libntirpc.so.1.3
+%{_libdir}/libntirpc.so
+%{_libdir}/pkgconfig/libntirpc.pc
+%{_includedir}/ntirpc/
+%endif
 %config %{_sysconfdir}/dbus-1/system.d/org.ganesha.nfsd.conf
 %config(noreplace) %{_sysconfdir}/sysconfig/ganesha
 %config(noreplace) %{_sysconfdir}/logrotate.d/ganesha
@@ -475,16 +491,17 @@ make DESTDIR=%{buildroot} install
 %config(noreplace) %{_sysconfdir}/ganesha/vfs.conf
 
 
-%files nullfs
-%defattr(-,root,root,-)
-%{_libdir}/ganesha/libfsalnull*
-
-
 %files proxy
 %defattr(-,root,root,-)
 %{_libdir}/ganesha/libfsalproxy*
 
 # Optional packages
+%if %{with nullfs}
+%files nullfs
+%defattr(-,root,root,-)
+%{_libdir}/ganesha/libfsalnull*
+%endif
+
 %if %{with gpfs}
 %files gpfs
 %defattr(-,root,root,-)
@@ -494,6 +511,9 @@ make DESTDIR=%{buildroot} install
 %config(noreplace) %{_sysconfdir}/ganesha/gpfs.ganesha.main.conf
 %config(noreplace) %{_sysconfdir}/ganesha/gpfs.ganesha.log.conf
 %config(noreplace) %{_sysconfdir}/ganesha/gpfs.ganesha.exports.conf
+%if ! %{with_systemd}
+%{_sysconfdir}/init.d/nfs-ganesha-gpfs
+%endif
 %endif
 
 %if %{with zfs}
@@ -552,7 +572,6 @@ make DESTDIR=%{buildroot} install
 %files pt
 %defattr(-,root,root,-)
 %{_libdir}/ganesha/libfsalpt*
-%config(noreplace) %{_sysconfdir}/init.d/nfs-ganesha-pt
 %config(noreplace) %{_sysconfdir}/ganesha/pt.conf
 %endif
 
@@ -573,6 +592,8 @@ make DESTDIR=%{buildroot} install
 %{_bindir}/manage_exports
 %{_bindir}/manage_logger
 %{_bindir}/ganeshactl
+%{_bindir}/client_stats_9pOps
+%{_bindir}/export_stats_9pOps
 %endif
 %{_bindir}/fake_recall
 %{_bindir}/get_clientids

@@ -61,6 +61,114 @@ static inline bool trust_negative_cache(cache_entry_t *parent)
 
 /**
  *
+ * @brief Find a cache entry by name.
+ *
+ * This function looks up a filename in the given directory. It
+ * implements the functionality of cache_inode_lookup. It expects the
+ * cache inode content_lock to be held read.
+ *
+ * If a cache entry is returned, its refcount is incremented by 1.
+ * A return with a NULL entry and CACHE_INODE_SUCCESS indicates that there
+ * is a trusted negative entry.
+ *
+ * If CACHE_INODE_NOT_FOUND is returned, the caller will have to make a
+ * call to the FSAL to complete the operation. The content_lock WILL be held
+ * write.
+ *
+ * On any other result, the read/write status of the content_lock is
+ * indeterminate, but callers are expected to return the result (error or
+ * success) without further manipulation using the content_lock.
+ *
+ * @param[in]  parent  The directory to search
+ * @param[in]  name    The name to be looked up
+ * @param[in]  flags   Flags to pass to cache_inode_get_keyed
+ * @param[out] entry   Found entry
+ *
+ * @return CACHE_INDOE_SUCCESS or error.
+ */
+cache_inode_status_t cache_inode_find_by_name(cache_entry_t *parent,
+					      const char *name,
+					      uint32_t flags,
+					      cache_entry_t **entry)
+{
+	cache_inode_dir_entry_t *dirent = NULL;
+	cache_inode_status_t status = CACHE_INODE_SUCCESS;
+	int write_locked = 0;
+	bool invalidate_dir;
+
+	/* We first try avltree_lookup by name. If that fails, we
+	 * dispatch to the FSAL.
+	 */
+	/* XXX this ++write_locked idiom is not good style */
+	for (write_locked = 0; write_locked < 2; ++write_locked) {
+		/* If the dirent cache is untrustworthy, don't even ask it */
+		if (parent->flags & CACHE_INODE_TRUST_CONTENT) {
+			dirent = cache_inode_avl_qp_lookup_s(parent, name, 1);
+			if (dirent) {
+				/* Pass flags from caller, if caller doesn't
+				 * want to go to FSAL for entry, take a pass.
+				 */
+				*entry = cache_inode_get_keyed(&dirent->ckey,
+							       flags,
+							       &status);
+				if (status != CACHE_INODE_NOT_FOUND &&
+				    status != CACHE_INODE_ESTALE) {
+					/* We either have an entry or an error
+					 * to return. We ignore ESTALE because
+					 * that would reflect a broken dirent
+					 * and we will handle that below.
+					 */
+					return status;
+				}
+
+				/* If CACHE_INODE_NOT_FOUND or
+				 * CACHE_INODE_ESTALE, we need to try
+				 * again with write lock, so fall through.
+				 *
+				 * If either of these errors occur once we
+				 * hold the write lock, we will invalidate the
+				 * directory since there is now definitely a
+				 * dirent that is bad.
+				 */
+				invalidate_dir = write_locked;
+			} else {
+				if (trust_negative_cache(parent)) {
+					/* If the dirent cache is both fully
+					 * populated and valid, it can serve
+					 * negative lookups.
+					 */
+					*entry = NULL;
+					return CACHE_INODE_SUCCESS;
+				}
+				/* Keep going to eventual dispatch to FSAL.
+				 * Don't invalidate the directory in this case.
+				 */
+				invalidate_dir = false;
+			}
+		} else {
+			/* Invalidate the directory if we're write locked */
+			invalidate_dir = write_locked;
+		}
+		if (invalidate_dir) {
+			/* We have the write lock and the content is still
+			 * invalid.  Empty it out and mark it valid in
+			 * preparation for caching the result of this lookup.
+			 */
+			cache_inode_invalidate_all_cached_dirent(parent);
+		}
+		if (!write_locked) {
+			/* Get a write lock and do it again. */
+			PTHREAD_RWLOCK_unlock(&parent->content_lock);
+			PTHREAD_RWLOCK_wrlock(&parent->content_lock);
+		}
+	}
+
+	LogDebug(COMPONENT_CACHE_INODE, "Cache Miss detected");
+	return CACHE_INODE_NOT_FOUND;
+}
+
+/**
+ *
  * @brief Do the work of looking up a name in a directory.
  *
  * This function looks up a filename in the given directory.  It
@@ -80,7 +188,6 @@ cache_inode_lookup_impl(cache_entry_t *parent,
 			const char *name,
 			cache_entry_t **entry)
 {
-	cache_inode_dir_entry_t *dirent = NULL;
 	fsal_status_t fsal_status = { 0, 0 };
 	struct fsal_obj_handle *object_handle = NULL;
 	struct fsal_obj_handle *dir_handle;
@@ -111,59 +218,19 @@ cache_inode_lookup_impl(cache_entry_t *parent,
 		status = cache_inode_lookupp_impl(parent, entry);
 		goto out;
 	} else {
-		int write_locked = 0;
-		/* We first try avltree_lookup by name.  If that fails, we
-		 * dispatch to the FSAL. */
-		/* XXX this ++write_locked idiom is not good style */
-		for (write_locked = 0; write_locked < 2; ++write_locked) {
-			/* If the dirent cache is untrustworthy, don't even ask
-			 * it */
-			if (parent->flags & CACHE_INODE_TRUST_CONTENT) {
-				dirent =
-				    cache_inode_avl_qp_lookup_s(parent, name,
-								1);
-				if (dirent) {
-					*entry =
-					    cache_inode_get_keyed(
-						    &dirent->ckey,
-						    CIG_KEYED_FLAG_NONE,
-						    &status);
-					if (*entry) {
-						/* We have our entry and a
-						 * valid reference.
-						 * Declare victory. */
-						status = CACHE_INODE_SUCCESS;
-						goto out;
-					}
-				} else {	/* ! dirent */
-					if (trust_negative_cache(parent)) {
-						/* If the dirent cache is both
-						 * fully populated and valid,
-						 * it can serve negative
-						 * lookups. */
-						*entry = NULL;
-						status = CACHE_INODE_NOT_FOUND;
-						goto out;
-					}
-					/* XXX keep going? */
-				}
-			} else if (write_locked
-				   && !(parent->
-					flags & CACHE_INODE_TRUST_CONTENT)) {
-				/* We have the write lock and the content is
-				   still invalid.  Empty it out and mark it
-				   * valid in preparation for caching the
-				   * result of this lookup. */
-				cache_inode_invalidate_all_cached_dirent
-				    (parent);
-			}
-			if (!write_locked) {
-				/* Get a write lock and do it again. */
-				PTHREAD_RWLOCK_unlock(&parent->content_lock);
-				PTHREAD_RWLOCK_wrlock(&parent->content_lock);
-			}
+		status = cache_inode_find_by_name(parent,
+						  name,
+						  CIG_KEYED_FLAG_NONE,
+						  entry);
+		if (status == CACHE_INODE_SUCCESS && *entry == NULL) {
+			status = CACHE_INODE_NOT_FOUND;
+			goto out;
+		} else if (status != CACHE_INODE_NOT_FOUND) {
+			/* Success or some error. If success entry is
+			 * set appropriately.
+			 */
+			goto out;
 		}
-		LogDebug(COMPONENT_CACHE_INODE, "Cache Miss detected");
 	}
 
 	dir_handle = parent->obj_handle;
@@ -203,6 +270,15 @@ cache_inode_lookup_impl(cache_entry_t *parent,
 	status = cache_inode_add_cached_dirent(parent, name, *entry, NULL);
 	if (status == CACHE_INODE_ENTRY_EXISTS)
 		status = CACHE_INODE_SUCCESS;
+
+	if (status != CACHE_INODE_SUCCESS) {
+		/* Release the reference we got since we aren't returning
+		 * the entry.
+		 */
+		cache_inode_put(*entry);
+		*entry = NULL;
+		goto out;
+	}
 
 	if ((*entry)->type == DIRECTORY) {
 		/* Insert Parent's key */

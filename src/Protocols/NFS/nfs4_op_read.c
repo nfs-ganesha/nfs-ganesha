@@ -257,6 +257,7 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (state_found != NULL) {
 		struct state_deleg *sdeleg;
+
 		if (info)
 			info->io_advise = state_found->state_data.io_advise;
 		switch (state_found->state_type) {
@@ -311,10 +312,11 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 		    && (state_open->state_data.share.
 			share_access & OPEN4_SHARE_ACCESS_READ) == 0) {
 			/* Even if file is open for write, the client
-			   may do accidently read operation (caching).
-			   Because of this, READ is allowed if not
-			   explicitely denied.  See page 72 in RFC3530
-			   for more details */
+			 * may do accidently read operation (caching).
+			 * Because of this, READ is allowed if not
+			 * explicitly denied.  See page 112 in RFC 7530
+			 * for more details.
+			 */
 
 			if (state_open->state_data.share.
 			    share_deny & OPEN4_SHARE_DENY_READ) {
@@ -362,7 +364,6 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 			 * test */
 			res_READ4->status = NFS4ERR_BAD_STATEID;
 			goto out;
-			break;
 		}
 	} else {
 		/* Special stateid, no open state, check to see if any
@@ -389,7 +390,7 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 	 *        cache_inode_access_no_mutex
 	 */
 	if (state_open == NULL &&
-	    entry->obj_handle->attributes.owner !=
+	    entry->obj_handle->attrs->owner !=
 	    op_ctx->creds->caller_uid) {
 		/* Need to permission check the read. */
 		cache_status =
@@ -416,14 +417,15 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (op_ctx->export->MaxOffsetRead < UINT64_MAX) {
 		LogFullDebug(COMPONENT_NFS_V4,
-			     "Read offset=%" PRIu64 " count=%zd "
-			     "MaxOffSet=%" PRIu64, offset, size,
+			     "Read offset=%" PRIu64
+			     " size=%" PRIu64 " MaxOffSet=%" PRIu64,
+			     offset, size,
 			     op_ctx->export->MaxOffsetRead);
 
 		if ((offset + size) > op_ctx->export->MaxOffsetRead) {
 			LogEvent(COMPONENT_NFS_V4,
-				 "A client tryed to violate max "
-				 "file size %" PRIu64 " for exportid #%hu",
+				 "A client tryed to violate max file size %"
+				 PRIu64 " for exportid #%hu",
 				 op_ctx->export->MaxOffsetRead,
 				 op_ctx->export->export_id);
 
@@ -475,9 +477,8 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 		}
 	}
 
-	cache_status =
-	    cache_inode_rdwr_plus(entry, io, offset, size, &read_size,
-				  bufferdata, &eof_met, &sync, info);
+	cache_status = cache_inode_rdwr(entry, io, offset, size, &read_size,
+					bufferdata, &eof_met, &sync, info);
 	if (cache_status != CACHE_INODE_SUCCESS) {
 		res_READ4->status = nfs4_Errno(cache_status);
 		gsh_free(bufferdata);
@@ -573,8 +574,7 @@ void nfs4_op_read_Free(nfs_resop4 *res)
 	if (resp->status == NFS4_OK)
 		if (resp->READ4res_u.resok4.data.data_val != NULL)
 			gsh_free(resp->READ4res_u.resok4.data.data_val);
-	return;
-}				/* nfs4_op_read_Free */
+}
 
 /**
  * @brief The NFS4_OP_READ_PLUS operation
@@ -594,9 +594,11 @@ int nfs4_op_read_plus(struct nfs_argop4 *op, compound_data_t *data,
 {
 	struct nfs_resop4 res;
 	struct io_info info;
+	/* Response */
 	READ_PLUS4res * const res_RPLUS = &resp->nfs_resop4_u.opread_plus;
 	READ4res *res_READ4 = &res.nfs_resop4_u.opread;
 	contents *contentp = &res_RPLUS->rpr_resok4.rpr_contents;
+
 	resp->resop = NFS4_OP_READ_PLUS;
 
 	nfs4_read(op, data, &res, CACHE_INODE_READ_PLUS, &info);
@@ -632,9 +634,7 @@ void nfs4_op_read_plus_Free(nfs_resop4 *res)
 	if (resp->rpr_status == NFS4_OK && conp->what == NFS4_CONTENT_DATA)
 		if (conp->data.d_data.data_val != NULL)
 			gsh_free(conp->data.d_data.data_val);
-
-	return;
-}				/* nfs4_op_read_Free */
+}
 
 /**
  * @brief The NFS4_OP_IO_ADVISE operation
@@ -710,7 +710,7 @@ int nfs4_op_io_advise(struct nfs_argop4 *op, compound_data_t *data,
 	}
 done:
 	LogDebug(COMPONENT_NFS_V4,
-		 "Status  %s hints 0x%X offset %ld count %ld ",
+		 "Status  %s hints 0x%X offset %" PRIu64 " count %" PRIu64,
 		 nfsstat4_to_str(res_IO_ADVISE->iaa_status),
 		 hints.hints, hints.offset, hints.count);
 
@@ -731,8 +731,7 @@ done:
 void nfs4_op_io_advise_Free(nfs_resop4 *resp)
 {
 	/* Nothing to be done */
-	return;
-}				/* nfs4_op_io_advise_Free */
+}
 
 
 int nfs4_op_seek(struct nfs_argop4 *op, compound_data_t *data,
@@ -793,7 +792,7 @@ int nfs4_op_seek(struct nfs_argop4 *op, compound_data_t *data,
 	}
 done:
 	LogDebug(COMPONENT_NFS_V4,
-		 "Status  %s type %d offset %ld ",
+		 "Status  %s type %d offset %" PRIu64,
 		 nfsstat4_to_str(res_SEEK->sr_status), arg_SEEK->sa_what,
 		 arg_SEEK->sa_offset);
 

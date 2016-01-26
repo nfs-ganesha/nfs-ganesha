@@ -219,9 +219,8 @@ static bool xdr_encode_nfs4_princ(XDR *xdrs, uint32_t id, bool group)
 		if (!looked_up) {
 			if (nfs_param.nfsv4_param.allow_numeric_owners) {
 				LogInfo(COMPONENT_IDMAPPER,
-					"Lookup for %d failed, "
-					"using numeric %s", id,
-					(group ? "group" : "owner"));
+					"Lookup for %d failed, using numeric %s",
+					id, (group ? "group" : "owner"));
 				/* 2**32 is 10 digits long in decimal */
 				sprintf(namebuff, "%u", id);
 				new_name.len = strlen(namebuff);
@@ -691,6 +690,7 @@ bool principal2uid(char *principal, uid_t *uid, gid_t *gid)
 #ifdef _MSPAC_SUPPORT
 			bool found_uid = false;
 			bool found_gid = false;
+
 			if (gd->flags & SVC_RPC_GSS_FLAG_MSPAC) {
 				struct wbcAuthUserParams params;
 				wbcErr wbc_err;

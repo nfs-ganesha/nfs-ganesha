@@ -64,8 +64,7 @@ char *strtype[] = { "RDLOCK", "WRLOCK", "UNLOCK" };
  */
 char *strstatus[] = { "SUCCESS", "BLOCKED", "ERROR", "GRACE" };
 
-int _9p_lock(struct _9p_request_data *req9p, void *worker_data,
-	     u32 *plenout, char *preply)
+int _9p_lock(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 	u16 *msgtag = NULL;
@@ -83,9 +82,11 @@ int _9p_lock(struct _9p_request_data *req9p, void *worker_data,
 	state_status_t state_status = STATE_SUCCESS;
 	state_owner_t *holder;
 	state_owner_t *powner;
-	state_t state;
 	fsal_lock_param_t lock;
 	fsal_lock_param_t conflict;
+
+	memset(&lock, 0, sizeof(lock));
+	memset(&conflict, 0, sizeof(conflict));
 
 	char name[MAXNAMLEN];
 
@@ -112,18 +113,16 @@ int _9p_lock(struct _9p_request_data *req9p, void *worker_data,
 		 *proc_id, *client_id_len, client_id_str);
 
 	if (*fid >= _9P_FID_PER_CONN)
-		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, ERANGE, plenout, preply);
 
 	pfid = req9p->pconn->fids[*fid];
 
 	/* Check that it is a valid fid */
 	if (pfid == NULL || pfid->pentry == NULL) {
 		LogDebug(COMPONENT_9P, "request on invalid fid=%u", *fid);
-		return _9p_rerror(req9p, worker_data, msgtag, EIO, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, EIO, plenout, preply);
 	}
-	op_ctx = &pfid->op_context;
+	_9p_init_opctx(pfid, req9p);
 
 	/* Tmp hook to avoid lock issue when compiling kernels.
 	 * This should not impact ONE client only
@@ -133,8 +132,7 @@ int _9p_lock(struct _9p_request_data *req9p, void *worker_data,
 	memset((char *)&hints, 0, sizeof(struct addrinfo));
 	hints.ai_family = AF_INET;
 	if (getaddrinfo(name, NULL, &hints, &result))
-		return _9p_rerror(req9p, worker_data, msgtag, EINVAL, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, EINVAL, plenout, preply);
 
 	memcpy((char *)&client_addr,
 	       (char *)result->ai_addr,
@@ -145,8 +143,7 @@ int _9p_lock(struct _9p_request_data *req9p, void *worker_data,
 
 	powner = get_9p_owner(&client_addr, *proc_id);
 	if (powner == NULL)
-		return _9p_rerror(req9p, worker_data, msgtag, EINVAL, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, EINVAL, plenout, preply);
 
 	/* Do the job */
 	switch (*type) {
@@ -164,7 +161,7 @@ int _9p_lock(struct _9p_request_data *req9p, void *worker_data,
 		}
 
 		state_status = state_lock(pfid->pentry,
-					  powner, &state,
+					  powner, &pfid->state,
 					  STATE_NON_BLOCKING, NULL, &lock,
 					  &holder, &conflict);
 
@@ -178,7 +175,8 @@ int _9p_lock(struct _9p_request_data *req9p, void *worker_data,
 		break;
 
 	case _9P_LOCK_TYPE_UNLCK:
-		if (state_unlock(pfid->pentry, powner, NULL, &lock)
+		if (state_unlock(pfid->pentry, &pfid->state,
+				 powner, false, 0, &lock)
 			    != STATE_SUCCESS)
 			status = _9P_LOCK_ERROR;
 		else
@@ -187,8 +185,7 @@ int _9p_lock(struct _9p_request_data *req9p, void *worker_data,
 		break;
 
 	default:
-		return _9p_rerror(req9p, worker_data, msgtag, EINVAL, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, EINVAL, plenout, preply);
 		break;
 	}			/* switch( *type ) */
 

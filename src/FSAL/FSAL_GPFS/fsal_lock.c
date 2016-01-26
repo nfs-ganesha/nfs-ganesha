@@ -53,12 +53,12 @@
  *                       operation would not be possible.
  */
 fsal_status_t GPFSFSAL_lock_op(struct fsal_export *export,
-			       struct fsal_obj_handle *obj_hdl,	/* IN */
-			       void *p_owner,	/* IN */
-			       fsal_lock_op_t lock_op,	/* IN */
-			       fsal_lock_param_t request_lock,	/* IN */
+			       struct fsal_obj_handle *obj_hdl,
+			       void *p_owner,
+			       fsal_lock_op_t lock_op,
+			       fsal_lock_param_t request_lock,
 			       fsal_lock_param_t *conflicting_lock)
-{				/* OUT */
+{
 	int retval;
 	struct glock glock_args;
 	struct set_get_lock_arg gpfs_sg_arg;
@@ -144,10 +144,12 @@ fsal_status_t GPFSFSAL_lock_op(struct fsal_export *export,
 		if ((conflicting_lock != NULL)
 		    && (lock_op == FSAL_OP_LOCK || lock_op == FSAL_OP_LOCKB)) {
 			int retval2;
+
 			glock_args.cmd = F_GETLK;
 			retval2 =
 			    gpfs_ganesha(OPENHANDLE_GET_LOCK, &gpfs_sg_arg);
 			int errsv2 = errno;
+
 			if (retval2) {
 				LogCrit(COMPONENT_FSAL,
 					"After failing a set lock request, An attempt to get the current owner details also failed.");

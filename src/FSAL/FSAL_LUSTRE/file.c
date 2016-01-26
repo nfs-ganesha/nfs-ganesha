@@ -75,6 +75,7 @@ fsal_status_t lustre_open(struct fsal_obj_handle *obj_hdl,
 #ifdef USE_FSAL_SHOOK
 	/* Do Shook Magic */
 	fsal_status_t st;
+
 	st = lustre_shook_restore(obj_hdl,
 				  posix_flags & O_TRUNC,
 				  NULL);
@@ -84,37 +85,13 @@ fsal_status_t lustre_open(struct fsal_obj_handle *obj_hdl,
 	/* now, we can open file directly */
 #endif
 
-	fd = CRED_WRAP(op_ctx->creds, int, lustre_open_by_handle,
-		       obj_hdl->fs->path, myself->handle,
-		       posix_flags);
+	fd = lustre_open_by_handle(obj_hdl->fs->path, myself->handle,
+				   posix_flags);
 
 	if (fd < 0) {
-		if ((errno == EACCES)
-		    && (((obj_hdl->attributes.mode & 0700) == 0400)
-			|| ((obj_hdl->attributes.mode & 0200) == 0000))
-		    && (obj_hdl->attributes.owner ==
-			op_ctx->creds->caller_uid)) {
-			/* If the file is r-xYYYYYY or --xYYYYYY (a binary c
-			 * copied from another FS it is not writable (because
-			 * no W flag) but it should be opened because POSIX
-			 * says you can do that on a O_CREAT (nfs looses
-			 * the O_CREAT flag quite easily */
-
-			/* File has been created with 04XY, POSIX said
-			 * it is writable so we default on root's
-			 * superpower to open it */
-			fd = lustre_open_by_handle(obj_hdl->fs->path,
-					myself->handle, posix_flags);
-			if (fd < 0) {
-				fsal_error = posix2fsal_error(errno);
-				rc = errno;
-				goto out;
-			}
-		} else {
-			fsal_error = posix2fsal_error(errno);
-			rc = errno;
-			goto out;
-		}
+		fsal_error = posix2fsal_error(errno);
+		rc = errno;
+		goto out;
 	}
 	myself->u.file.fd = fd;
 	myself->u.file.openflags = openflags;
@@ -264,8 +241,7 @@ fsal_status_t lustre_lock_op(struct fsal_obj_handle *obj_hdl,
 	}
 	if (conflicting_lock == NULL && lock_op == FSAL_OP_LOCKT) {
 		LogDebug(COMPONENT_FSAL,
-			 "conflicting_lock argument can't"
-			 " be NULL with lock_op  = LOCKT");
+			 "conflicting_lock argument can't be NULL with lock_op  = LOCKT");
 		fsal_error = ERR_FSAL_FAULT;
 		goto out;
 	}
@@ -308,13 +284,10 @@ fsal_status_t lustre_lock_op(struct fsal_obj_handle *obj_hdl,
 		rc = errno;
 		if (conflicting_lock != NULL) {
 			fcntl_comm = F_GETLK;
-			rc =
-			    fcntl(myself->u.file.fd, fcntl_comm, &lock_args);
-			if (rc) {
+			if (fcntl(myself->u.file.fd, fcntl_comm, &lock_args)) {
 				rc = errno;	/* we lose the inital error */
 				LogCrit(COMPONENT_FSAL,
-					"After failing a lock request, I couldn't even"
-					" get the details of who owns the lock.");
+					"After failing a lock request, I couldn't even get the details of who owns the lock.");
 				fsal_error = posix2fsal_error(rc);
 				goto out;
 			}

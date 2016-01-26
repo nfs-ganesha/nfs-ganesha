@@ -63,6 +63,7 @@ libzfswrap_vfs_t *ZFSFSAL_GetVFS(zfs_file_handle_t *handle)
 
 	/* Handle the indirection */
 	int i;
+
 	for (i = 1; i < i_snapshots + 1; i++) {
 		if (p_snapshots[i].index == handle->i_snap) {
 			LogFullDebug(COMPONENT_FSAL,
@@ -82,7 +83,6 @@ static struct zfs_fsal_obj_handle *alloc_handle(struct zfs_file_handle *fh,
 						struct fsal_export *exp_hdl)
 {
 	struct zfs_fsal_obj_handle *hdl;
-	fsal_status_t st;
 
 	hdl = gsh_malloc(sizeof(struct zfs_fsal_obj_handle) +
 			 sizeof(struct zfs_file_handle));
@@ -94,6 +94,7 @@ static struct zfs_fsal_obj_handle *alloc_handle(struct zfs_file_handle *fh,
 	hdl->handle = (struct zfs_file_handle *)&hdl[1];
 	memcpy(hdl->handle, fh, sizeof(struct zfs_file_handle));
 
+	hdl->obj_handle.attrs = &hdl->attributes;
 	hdl->obj_handle.type = posix2fsal_type(stat->st_mode);
 
 	if ((hdl->obj_handle.type == SYMBOLIC_LINK) &&
@@ -107,12 +108,9 @@ static struct zfs_fsal_obj_handle *alloc_handle(struct zfs_file_handle *fh,
 		hdl->u.symlink.link_size = len;
 	}
 
-	hdl->obj_handle.attributes.mask =
-	    exp_hdl->exp_ops.fs_supported_attrs(exp_hdl);
+	hdl->attributes.mask = exp_hdl->exp_ops.fs_supported_attrs(exp_hdl);
 
-	st = posix2fsal_attributes(stat, &hdl->obj_handle.attributes);
-	if (FSAL_IS_ERROR(st))
-		goto spcerr;
+	posix2fsal_attributes(stat, &hdl->attributes);
 
 	fsal_obj_handle_init(&hdl->obj_handle,
 			     exp_hdl,
@@ -189,6 +187,7 @@ static fsal_status_t tank_lookup(struct fsal_obj_handle *parent,
 			 "Lookup inside the .zfs/ pseudo-directory");
 
 		int i;
+
 		for (i = 1; i < i_snapshots + 1; i++)
 			if (!strcmp(p_snapshots[i].psz_name, path) &&
 			    (i == i_snapshots + 1))
@@ -499,8 +498,8 @@ static fsal_status_t tank_readsymlink(struct fsal_obj_handle *obj_hdl,
 	/* The link length should be cached in the file handle */
 
 	link_content->len =
-	    obj_hdl->attributes.filesize ? (obj_hdl->attributes.filesize +
-					    1) : fsal_default_linksize;
+	    myself->attributes.filesize ? (myself->attributes.filesize +
+					   1) : fsal_default_linksize;
 	link_content->addr = gsh_malloc(link_content->len);
 
 	if (link_content->addr == NULL)
@@ -686,7 +685,6 @@ static fsal_status_t tank_getattrs(struct fsal_obj_handle *obj_hdl)
 	struct zfs_fsal_obj_handle *myself;
 	struct stat stat;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
-	fsal_status_t st;
 	int retval = 0;
 	int type = 0;
 	creden_t cred;
@@ -736,14 +734,7 @@ static fsal_status_t tank_getattrs(struct fsal_obj_handle *obj_hdl)
 
 	/* convert attributes */
  ok_file_opened_and_deleted:
-	st = posix2fsal_attributes(&stat, &obj_hdl->attributes);
-	if (FSAL_IS_ERROR(st)) {
-		FSAL_CLEAR_MASK(obj_hdl->attributes.mask);
-		FSAL_SET_MASK(obj_hdl->attributes.mask, ATTR_RDATTR_ERR);
-		fsal_error = st.major;
-		retval = st.minor;
-		goto out;
-	}
+	posix2fsal_attributes(&stat, &myself->attributes);
 	goto out;
 
  errout:
@@ -971,6 +962,7 @@ static void release(struct fsal_obj_handle *obj_hdl)
 	if (type == REGULAR_FILE &&
 	    myself->u.file.openflags != FSAL_O_CLOSED) {
 		fsal_status_t st = tank_close(obj_hdl);
+
 		if (FSAL_IS_ERROR(st)) {
 			LogCrit(COMPONENT_FSAL,
 				"Could not close, error %s(%d)",

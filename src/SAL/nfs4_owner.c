@@ -55,6 +55,7 @@ hash_table_t *ht_nfs4_owner;
 int display_nfs4_owner_key(struct gsh_buffdesc *buff, char *str)
 {
 	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
+
 	display_nfs4_owner(&dspbuf, buff->addr);
 	return display_buffer_len(&dspbuf);
 }
@@ -69,9 +70,14 @@ int display_nfs4_owner_key(struct gsh_buffdesc *buff, char *str)
  */
 int display_nfs4_owner(struct display_buffer *dspbuf, state_owner_t *owner)
 {
-	int b_left = display_printf(dspbuf,  "%s %p:",
-				    state_owner_type_to_str(owner->so_type),
-				    owner);
+	int b_left;
+
+	if (owner == NULL)
+		return display_cat(dspbuf, "<NULL>");
+
+	b_left = display_printf(dspbuf,  "%s %p:",
+				state_owner_type_to_str(owner->so_type),
+				owner);
 
 	if (b_left <= 0)
 		return b_left;
@@ -140,6 +146,7 @@ int display_nfs4_owner(struct display_buffer *dspbuf, state_owner_t *owner)
 int display_nfs4_owner_val(struct gsh_buffdesc *buff, char *str)
 {
 	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
+
 	display_nfs4_owner(&dspbuf, buff->addr);
 	return display_buffer_len(&dspbuf);
 }
@@ -171,16 +178,6 @@ int compare_nfs4_owner(state_owner_t *owner1, state_owner_t *owner2)
 
 	if (owner1 == owner2)
 		return 0;
-
-	if (owner1->so_type == STATE_LOCK_OWNER_NFSV4
-	    && owner2->so_type == STATE_OPEN_OWNER_NFSV4)
-		return compare_nfs4_owner(owner1->so_owner.so_nfs4_owner.
-					  so_related_owner, owner2);
-
-	if (owner2->so_type == STATE_LOCK_OWNER_NFSV4
-	    && owner1->so_type == STATE_OPEN_OWNER_NFSV4)
-		return compare_nfs4_owner(owner2->so_owner.so_nfs4_owner.
-					  so_related_owner, owner1);
 
 	if (owner1->so_type != owner2->so_type)
 		return 1;
@@ -450,6 +447,14 @@ state_owner_t *create_nfs4_owner(state_nfs4_owner_name_t *name,
 	if (type == STATE_LOCK_OWNER_NFSV4)
 		key.so_owner.so_nfs4_owner.so_confirmed = 1;
 #endif
+
+	if (isFullDebug(COMPONENT_STATE)) {
+		char str[LOG_BUFF_LEN];
+		struct display_buffer dspbuf = {sizeof(str), str, str};
+
+		display_owner(&dspbuf, &key);
+		LogFullDebug(COMPONENT_STATE, "Key=%s", str);
+	}
 
 	owner = get_state_owner(care, &key, init_nfs4_owner, &isnew);
 

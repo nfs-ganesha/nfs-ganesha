@@ -6,8 +6,8 @@ the nfs-ganesha NFS server software.
 
 There are two major components to the software, nfs-ganesha itself, and
 the libntirpc library which is used for the transport layer.  The server
-and the libtirpc library are in separate git repositories.  For the build,
-the libtirpc source is a 'git submodule' of nfs-ganesha.
+and the libntirpc library are in separate git repositories.  For the build,
+the libntirpc source is a 'git submodule' of nfs-ganesha.
 
 The first step in building is to download (clone) the nfs-ganesha repository
 from its official location on github.com into the place in my home directory
@@ -85,6 +85,13 @@ separate build area allows you to do a couple of thing safely.
   * You can easily build multiple configurations.  Simply create one build
     directory, enter it, and run Cmake with one set of parameters.  Repeat
     in another build directory with a different set of parameters.  Nice.
+
+System-wide NTIRPC
+------------------
+
+libntirpc may be installed separately on the system, and ganesha build with the
+-DUSE_SYSTEM_NTIRPC option.  This does not require the submodule, and will not
+build ntirpc.
 
 Configuration Tweaking
 ----------------------

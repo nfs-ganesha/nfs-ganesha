@@ -19,9 +19,9 @@ void zfs_handle_ops_init(struct fsal_obj_ops *ops);
 /* libzfswrap handler, used only when the FSAL is created and destroyed */
 extern libzfswrap_handle_t *p_zhd;
 
-void ZFSFSAL_VFS_RDLock();
-void ZFSFSAL_VFS_RDLock();
-void ZFSFSAL_VFS_Unlock();
+void ZFSFSAL_VFS_RDLock(void);
+void ZFSFSAL_VFS_RDLock(void);
+void ZFSFSAL_VFS_Unlock(void);
 
 typedef struct zfs_file_handle {
 	inogen_t zfs_handle;

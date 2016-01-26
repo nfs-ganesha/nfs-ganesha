@@ -465,9 +465,7 @@ static void free_entries(entry4 *entries)
 			gsh_free(entry->name.utf8string_val);
 	}
 	gsh_free(entries);
-
-	return;
-}				/* free_entries */
+}
 
 /**
  * @brief NFS4_OP_READDIR
@@ -527,8 +525,8 @@ int nfs4_op_readdir(struct nfs_argop4 *op, compound_data_t *data,
 	tracker.total_entries = estimated_num_entries;
 
 	LogFullDebug(COMPONENT_NFS_READDIR,
-		     "--- nfs4_op_readdir ---> dircount=%lu maxcount=%lu "
-		     "cookie=%" PRIu64 " estimated_num_entries=%u",
+		     "dircount=%lu maxcount=%lu cookie=%" PRIu64
+		     " estimated_num_entries=%u",
 		     dircount, maxcount, cookie, estimated_num_entries);
 
 	/* Since we never send a cookie of 1 or 2, we shouldn't ever get

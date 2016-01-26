@@ -3,7 +3,7 @@
 find_program(PYTHON "python")
 
 # PyQT based class modules
-set(GANESHA_SRCS
+set(GANESHA_BASE_SRCS
   Ganesha/__init__.py
   Ganesha/admin.py
   Ganesha/client_mgr.py
@@ -33,6 +33,8 @@ set(GUI_SCRIPT_SRC
   manage_clients.py
   manage_logger.py
   manage_exports.py
+  client_stats_9pOps.py
+  export_stats_9pOps.py
   )
 
 # Qt Designer files that get compiled into .py scripts
@@ -47,14 +49,16 @@ if(PYTHON)
   set(OUTPUT      "${CMAKE_CURRENT_BINARY_DIR}/build/timestamp")
 
   # Generate rules for compiling .ui -> .py
+  set(GANESHA_SRCS)
   set(UI_PY_FILES)
   if(USE_GUI_ADMIN_TOOLS)
+    set(GANESHA_SRCS ${GANESHA_BASE_SRCS})
     foreach(ui_file ${UI_SRC})
       string(REPLACE ".ui" ".py" py_file ${ui_file})
       add_custom_command(
         OUTPUT ${py_file}
         COMMAND mkdir -p build/lib/Ganesha/QtUI
-        COMMAND pyuic4 "${CMAKE_CURRENT_SOURCE_DIR}/${ui_file}" -o "build/lib/${py_file}"
+        COMMAND ${PYUIC} "${CMAKE_CURRENT_SOURCE_DIR}/${ui_file}" -o "build/lib/${py_file}"
         DEPENDS ${ui_file}
         )
       set(UI_PY_FILES ${UI_PY_FILES} "${py_file}")
@@ -122,6 +126,6 @@ if(PYTHON)
 
   install(
     CODE
-    "execute_process(WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR} COMMAND ${PYTHON} ${SETUP_PY} install --skip-build --prefix=$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX})"
+    "execute_process(WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR} COMMAND ${PYTHON} ${SETUP_PY} install --skip-build --prefix=\$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX})"
     )
 endif(PYTHON)

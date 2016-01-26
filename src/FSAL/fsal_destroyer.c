@@ -89,6 +89,7 @@ static void shutdown_ds_handles(struct fsal_pnfs_ds *pds)
 						       struct fsal_ds_handle,
 						       ds_handle);
 		int64_t refcount = atomic_fetch_int64_t(&h->refcount);
+
 		if (refcount != 0) {
 			LogDebug(COMPONENT_FSAL,
 				 "Extra references (%"PRIi64") hanging around.",
@@ -120,8 +121,11 @@ static void shutdown_pnfs_ds(struct fsal_module *fsal)
 		struct fsal_pnfs_ds *h = glist_entry(hi,
 						     struct fsal_pnfs_ds,
 						     server);
+		int32_t refcount;
+
 		shutdown_ds_handles(h);
-		int32_t refcount = atomic_fetch_int32_t(&h->refcount);
+		refcount = atomic_fetch_int32_t(&h->refcount);
+
 		if (refcount != 0) {
 			LogDebug(COMPONENT_FSAL,
 				 "Extra references (%"PRIi32") hanging around.",
@@ -141,6 +145,7 @@ static void shutdown_pnfs_ds(struct fsal_module *fsal)
 static void shutdown_export(struct fsal_export *export)
 {
 	struct fsal_module *fsal = export->fsal;
+
 	LogDebug(COMPONENT_FSAL,
 		 "Releasing export");
 

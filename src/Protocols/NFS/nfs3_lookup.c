@@ -51,7 +51,6 @@
  * Implements the NFS3_LOOKUP function.
  *
  * @param[in]  arg     NFS arguments union
- * @param[in]  worker  Worker thread data
  * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call
  *
@@ -61,9 +60,7 @@
  *
  */
 
-int nfs3_lookup(nfs_arg_t *arg,
-		nfs_worker_data_t *worker,
-		struct svc_req *req, nfs_res_t *res)
+int nfs3_lookup(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
 	cache_entry_t *entry_dir = NULL;
 	cache_entry_t *entry_file = NULL;
@@ -79,8 +76,8 @@ int nfs3_lookup(nfs_arg_t *arg,
 		nfs_FhandleToStr(req->rq_vers, &(arg->arg_lookup3.what.dir),
 				 NULL, str);
 		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling nfs_Lookup handle: %s "
-			 " name: %s", str, name);
+			 "REQUEST PROCESSING: Calling nfs_Lookup handle: %s name: %s",
+			 str, name);
 	}
 
 	/* to avoid setting it on each error case */
@@ -105,7 +102,7 @@ int nfs3_lookup(nfs_arg_t *arg,
 	if (entry_file && (cache_status == CACHE_INODE_SUCCESS)) {
 		/* Build FH */
 		res->res_lookup3.LOOKUP3res_u.resok.object.data.data_val =
-		    gsh_malloc(sizeof(struct alloc_file_handle_v3));
+		    gsh_malloc(NFS3_FHSIZE);
 
 		if (res->res_lookup3.LOOKUP3res_u.resok.object.data.data_val ==
 		    NULL)

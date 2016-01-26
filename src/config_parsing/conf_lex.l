@@ -456,7 +456,7 @@ static int new_file(char *name_tok,
 		rc = errno;
 		config_parse_error(yylloc, st,
 			"new file (%s) open error (%s), ignored",
-			strerror(rc));
+			fullpath, strerror(rc));
 		goto errout;
 	}
 	bs->bs = ganeshun_yy_create_buffer(in_file,

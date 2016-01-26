@@ -53,6 +53,7 @@
 struct ceph_fsal_module {
 	struct fsal_module fsal;
 	fsal_staticfsinfo_t fs_info;
+	char *conf_path;
 };
 extern struct ceph_fsal_module CephFSM;
 
@@ -74,6 +75,7 @@ struct export {
 
 struct handle {
 	struct fsal_obj_handle handle;	/*< The public handle */
+	struct attrlist attributes;
 	Fh *fd;
 	struct Inode *i;	/*< The Ceph inode */
 	const struct fsal_up_vector *up_ops;	/*< Upcall operations */

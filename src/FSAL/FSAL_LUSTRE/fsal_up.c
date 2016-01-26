@@ -261,8 +261,7 @@ void *LUSTREFSAL_UP_Thread(void *Arg)
 		rc = lcap_changelog_start(&ctx, flags, mdtname, last_idx);
 		if (rc) {
 			LogFatal(COMPONENT_FSAL_UP,
-				 "could not read changelog, "
-				 "lcap_changelog_start:(%d,%s)",
+				 "could not read changelog, lcap_changelog_start:(%d,%s)",
 				 rc, strerror(-rc));
 			return NULL;
 		}
@@ -283,8 +282,7 @@ void *LUSTREFSAL_UP_Thread(void *Arg)
 					rc = lcap_changelog_free(ctx, &rec);
 					if (rc)
 						LogFatal(COMPONENT_FSAL_UP,
-							 "lcap_changelog_free: "
-							 "%d,%s\n",
+							 "lcap_changelog_free: %d,%s\n",
 							 rc, strerror(-rc));
 					continue;
 				}
@@ -294,8 +292,7 @@ void *LUSTREFSAL_UP_Thread(void *Arg)
 					rc = lcap_changelog_free(ctx, &rec);
 					if (rc)
 						LogFatal(COMPONENT_FSAL_UP,
-							 "lcap_changelog_free: "
-							 "%d,%s\n",
+							 "lcap_changelog_free: %d,%s\n",
 							 rc, strerror(-rc));
 					continue;
 				}
@@ -305,8 +302,7 @@ void *LUSTREFSAL_UP_Thread(void *Arg)
 							     rec);
 				if (rc)
 					LogMajor(COMPONENT_FSAL,
-						   "error occured when dealing"
-						   " with a changelog record");
+						   "error occurred when dealing with a changelog record");
 
 				rc = lcap_changelog_free(ctx, &rec);
 				if (rc)
@@ -323,8 +319,7 @@ void *LUSTREFSAL_UP_Thread(void *Arg)
 							  last_idx);
 				if (rc)
 					LogDebug(COMPONENT_FSAL_UP,
-					 "lcap_changelog_clear() exited"
-					 " with status %d, %s",
+					 "lcap_changelog_clear() exited with status %d, %s",
 					 rc, strerror(-rc));
 				else
 					LogDebug(COMPONENT_FSAL_UP,
@@ -336,8 +331,7 @@ void *LUSTREFSAL_UP_Thread(void *Arg)
 
 		if (rc < 0)
 			LogDebug(COMPONENT_FSAL_UP,
-				 "lcap_changelog_recv() loop exited"
-				 " with status %d, %s",
+				 "lcap_changelog_recv() loop exited with status %d, %s",
 				 rc, strerror(-rc));
 
 		/* Close changelog file */

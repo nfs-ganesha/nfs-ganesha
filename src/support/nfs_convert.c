@@ -548,10 +548,6 @@ nfsstat4 nfs4_Errno_verbose(cache_inode_status_t error, const char *where)
 		nfserror = NFS4ERR_STALE;
 		break;
 
-	case CACHE_INODE_STATE_CONFLICT:
-		nfserror = NFS4ERR_PERM;
-		break;
-
 	case CACHE_INODE_QUOTA_EXCEEDED:
 		nfserror = NFS4ERR_DQUOT;
 		break;
@@ -588,6 +584,7 @@ nfsstat4 nfs4_Errno_verbose(cache_inode_status_t error, const char *where)
 		nfserror = NFS4ERR_TOOSMALL;
 		break;
 
+	case CACHE_INODE_NO_DATA:
 	case CACHE_INODE_SERVERFAULT:
 		nfserror = NFS4ERR_SERVERFAULT;
 		break;
@@ -608,12 +605,20 @@ nfsstat4 nfs4_Errno_verbose(cache_inode_status_t error, const char *where)
 		nfserror = NFS4ERR_MLINK;
 		break;
 
-	case CACHE_INODE_FSAL_SHARE_DENIED:
+	case CACHE_INODE_SHARE_DENIED:
 		nfserror = NFS4ERR_SHARE_DENIED;
+		break;
+
+	case CACHE_INODE_LOCKED:
+		nfserror = NFS4ERR_LOCKED;
 		break;
 
 	case CACHE_INODE_IN_GRACE:
 		nfserror = NFS4ERR_GRACE;
+		break;
+
+	case CACHE_INODE_BAD_RANGE:
+		nfserror = NFS4ERR_BAD_RANGE;
 		break;
 
 	case CACHE_INODE_INCONSISTENT_ENTRY:
@@ -622,9 +627,8 @@ nfsstat4 nfs4_Errno_verbose(cache_inode_status_t error, const char *where)
 	case CACHE_INODE_CROSS_JUNCTION:
 		/* Should not occur */
 		LogDebug(COMPONENT_NFS_V4,
-			 "Line %u should never be reached in nfs4_Errno"
-			 " from %s for cache_status=%u", __LINE__, where,
-			 error);
+			 "Line %u should never be reached in nfs4_Errno from %s for cache_status=%u",
+			 __LINE__, where, error);
 		nfserror = NFS4ERR_INVAL;
 		break;
 	}
@@ -732,14 +736,15 @@ nfsstat3 nfs3_Errno_verbose(cache_inode_status_t error, const char *where)
 		break;
 
 	case CACHE_INODE_DELAY:
-	case CACHE_INODE_FSAL_SHARE_DENIED:
+	case CACHE_INODE_SHARE_DENIED:
+	case CACHE_INODE_LOCKED:
 		nfserror = NFS3ERR_JUKEBOX;
 		break;
 
 	case CACHE_INODE_IO_ERROR:
 		LogCrit(COMPONENT_NFSPROTO,
-			"Error CACHE_INODE_IO_ERROR in %s converted to NFS3ERR_IO"
-			" but was set non-retryable", where);
+			"Error CACHE_INODE_IO_ERROR in %s converted to NFS3ERR_IO but was set non-retryable",
+			where);
 		nfserror = NFS3ERR_IO;
 		break;
 
@@ -759,6 +764,7 @@ nfsstat3 nfs3_Errno_verbose(cache_inode_status_t error, const char *where)
 		nfserror = NFS3ERR_TOOSMALL;
 		break;
 
+	case CACHE_INODE_NO_DATA:
 	case CACHE_INODE_SERVERFAULT:
 		nfserror = NFS3ERR_SERVERFAULT;
 		break;
@@ -785,15 +791,14 @@ nfsstat3 nfs3_Errno_verbose(cache_inode_status_t error, const char *where)
 
 	case CACHE_INODE_INCONSISTENT_ENTRY:
 	case CACHE_INODE_HASH_TABLE_ERROR:
-	case CACHE_INODE_STATE_CONFLICT:
 	case CACHE_INODE_ASYNC_POST_ERROR:
 	case CACHE_INODE_STATE_ERROR:
 	case CACHE_INODE_CROSS_JUNCTION:
+	case CACHE_INODE_BAD_RANGE:
 		/* Should not occur */
 		LogDebug(COMPONENT_NFSPROTO,
-			 "Line %u should never be reached in nfs3_Errno"
-			 " from %s for cache_status=%u", __LINE__, where,
-			 error);
+			 "Line %u should never be reached in nfs3_Errno from %s for cache_status=%u",
+			 __LINE__, where, error);
 		nfserror = NFS3ERR_INVAL;
 		break;
 	}

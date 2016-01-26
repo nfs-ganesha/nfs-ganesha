@@ -43,6 +43,7 @@ int avl_unit_cmpf(const struct avltree_node *lhs,
 avl_unit_val_t *avl_unit_new_val(unsigned long intval)
 {
 	avl_unit_val_t *v = gsh_malloc(sizeof(avl_unit_val_t));
+
 	memset(v, 0, sizeof(avl_unit_val_t));
 	v->val = (intval + 1);
 
@@ -75,7 +76,7 @@ void avl_unit_clear_tree(struct avltree *t)
 /* dne */
 void avltree_destroy(struct avltree *t)
 {
-	return;
+	/* return */
 }
 
 void avl_unit_clear_and_destroy_tree(struct avltree *t)
@@ -249,6 +250,7 @@ void inserts_tree_1(void)
 void check_tree_1(void)
 {
 	int code = 0;
+
 	CU_ASSERT_EQUAL(code, 0);
 }
 
@@ -337,6 +339,7 @@ void inserts_tree_2r(void)
 void check_tree_2(void)
 {
 	int code = 0;
+
 	CU_ASSERT_EQUAL(code, 0);
 }
 
@@ -504,6 +507,7 @@ void inserts_tree_100(void)
 void check_tree_100(void)
 {
 	int code = 0;
+
 	CU_ASSERT_EQUAL(code, 0);
 }
 
@@ -592,6 +596,7 @@ void inserts_tree_10000(void)
 void check_tree_10000(void)
 {
 	int code = 0;
+
 	CU_ASSERT_EQUAL(code, 0);
 }
 
@@ -825,7 +830,7 @@ void check_min_2(void)
  * Returns a CUE_SUCCESS on successful running, another
  * CUnit error code on failure.
  */
-int main()
+int main(int argc, char *argv[])
 {
 	/* initialize the CUnit test registry...  get this party started */
 	if (CUE_SUCCESS != CU_initialize_registry())

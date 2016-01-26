@@ -71,6 +71,7 @@ static struct gpfs_fsal_obj_handle *alloc_handle(struct gpfs_file_handle *fh,
 	       (sizeof(struct gpfs_fsal_obj_handle) +
 		sizeof(struct gpfs_file_handle)));
 	hdl->handle = (struct gpfs_file_handle *)&hdl[1];
+	hdl->obj_handle.attrs = &hdl->attributes;
 	hdl->obj_handle.fs = fs;
 	memcpy(hdl->handle, fh, sizeof(struct gpfs_file_handle));
 	hdl->obj_handle.type = attributes->type;
@@ -89,10 +90,8 @@ static struct gpfs_fsal_obj_handle *alloc_handle(struct gpfs_file_handle *fh,
 		hdl->u.symlink.link_size = len;
 	}
 
-	hdl->obj_handle.attributes.mask =
-	    exp_hdl->exp_ops.fs_supported_attrs(exp_hdl);
-	memcpy(&hdl->obj_handle.attributes, attributes,
-	       sizeof(struct attrlist));
+	hdl->attributes.mask = exp_hdl->exp_ops.fs_supported_attrs(exp_hdl);
+	memcpy(&hdl->attributes, attributes, sizeof(struct attrlist));
 
 	fsal_obj_handle_init(&hdl->obj_handle, exp_hdl, attributes->type);
 	gpfs_handle_ops_init(&hdl->obj_handle.obj_ops);
@@ -133,7 +132,7 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 	if (!path)
 		return fsalstat(ERR_FSAL_FAULT, 0);
 	memset(fh, 0, sizeof(struct gpfs_file_handle));
-	fh->handle_size = OPENHANDLE_HANDLE_LEN;
+	fh->handle_size = gpfs_max_fh_size;
 	if (!parent->obj_ops.handle_is(parent, DIRECTORY)) {
 		LogCrit(COMPONENT_FSAL,
 			"Parent handle is not a directory. hdl = 0x%p", parent);
@@ -147,7 +146,7 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 		retval = EXDEV;
 		goto hdlerr;
 	}
-	attrib.mask = parent->attributes.mask;
+	attrib.mask = parent->attrs->mask;
 	status = GPFSFSAL_lookup(op_ctx, parent, path, &attrib, fh, &fs);
 	if (FSAL_IS_ERROR(status))
 		return status;
@@ -190,7 +189,7 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 		return fsalstat(ERR_FSAL_NOTDIR, 0);
 	}
 	memset(fh, 0, sizeof(struct gpfs_file_handle));
-	fh->handle_size = OPENHANDLE_HANDLE_LEN;
+	fh->handle_size = gpfs_max_fh_size;
 
 	attrib->mask = op_ctx->fsal_export->exp_ops.
 		fs_supported_attrs(op_ctx->fsal_export);
@@ -232,7 +231,7 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 		return fsalstat(ERR_FSAL_NOTDIR, 0);
 	}
 	memset(fh, 0, sizeof(struct gpfs_file_handle));
-	fh->handle_size = OPENHANDLE_HANDLE_LEN;
+	fh->handle_size = gpfs_max_fh_size;
 
 	attrib->mask = op_ctx->fsal_export->exp_ops.
 		fs_supported_attrs(op_ctx->fsal_export);
@@ -277,7 +276,7 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 		return fsalstat(ERR_FSAL_NOTDIR, 0);
 	}
 	memset(fh, 0, sizeof(struct gpfs_file_handle));
-	fh->handle_size = OPENHANDLE_HANDLE_LEN;
+	fh->handle_size = gpfs_max_fh_size;
 
 	attrib->mask = op_ctx->fsal_export->exp_ops.
 		fs_supported_attrs(op_ctx->fsal_export);
@@ -327,7 +326,7 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 		return fsalstat(ERR_FSAL_NOTDIR, 0);
 	}
 	memset(fh, 0, sizeof(struct gpfs_file_handle));
-	fh->handle_size = OPENHANDLE_HANDLE_LEN;
+	fh->handle_size = gpfs_max_fh_size;
 
 	attrib->mask = op_ctx->fsal_export->exp_ops.
 		fs_supported_attrs(op_ctx->fsal_export);
@@ -536,14 +535,14 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl)
 	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle,
 			      obj_handle);
 
-	obj_hdl->attributes.mask = op_ctx->fsal_export->exp_ops.
+	myself->attributes.mask = op_ctx->fsal_export->exp_ops.
 		fs_supported_attrs(op_ctx->fsal_export);
 	status = GPFSFSAL_getattrs(op_ctx->fsal_export, obj_hdl->fs->private,
 				   op_ctx, myself->handle,
-				   &obj_hdl->attributes);
+				   &myself->attributes);
 	if (FSAL_IS_ERROR(status)) {
-		FSAL_CLEAR_MASK(obj_hdl->attributes.mask);
-		FSAL_SET_MASK(obj_hdl->attributes.mask, ATTR_RDATTR_ERR);
+		FSAL_CLEAR_MASK(myself->attributes.mask);
+		FSAL_SET_MASK(myself->attributes.mask, ATTR_RDATTR_ERR);
 	}
 	return status;
 }
@@ -717,16 +716,16 @@ static fsal_status_t gpfs_fs_locations(struct fsal_obj_handle *obj_hdl,
 	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle,
 			      obj_handle);
 
-	obj_hdl->attributes.mask = op_ctx->fsal_export->exp_ops.
+	myself->attributes.mask = op_ctx->fsal_export->exp_ops.
 		fs_supported_attrs(op_ctx->fsal_export);
 
 	status = GPFSFSAL_fs_loc(op_ctx->fsal_export, obj_hdl->fs->private,
 				 op_ctx, myself->handle,
-				 &obj_hdl->attributes, fs_locs);
+				 &myself->attributes, fs_locs);
 
 	if (FSAL_IS_ERROR(status)) {
-		FSAL_CLEAR_MASK(obj_hdl->attributes.mask);
-		FSAL_SET_MASK(obj_hdl->attributes.mask, ATTR_RDATTR_ERR);
+		FSAL_CLEAR_MASK(myself->attributes.mask);
+		FSAL_SET_MASK(myself->attributes.mask, ATTR_RDATTR_ERR);
 	}
 	return status;
 }
@@ -790,9 +789,10 @@ fsal_status_t gpfs_lookup_path(struct fsal_export *exp_hdl,
 	struct gpfs_file_handle *fh = alloca(sizeof(struct gpfs_file_handle));
 	enum fsid_type fsid_type;
 	struct fsal_fsid__ fsid;
+	struct gpfs_fsal_export *gpfs_export;
 
 	memset(fh, 0, sizeof(struct gpfs_file_handle));
-	fh->handle_size = OPENHANDLE_HANDLE_LEN;
+	fh->handle_size = gpfs_max_fh_size;
 
 	*handle = NULL;	/* poison it */
 
@@ -810,12 +810,15 @@ fsal_status_t gpfs_lookup_path(struct fsal_export *exp_hdl,
 	if (FSAL_IS_ERROR(fsal_status))
 		goto fileerr;
 
+	gpfs_export = container_of(exp_hdl, struct gpfs_fsal_export, export);
 	attributes.mask = exp_hdl->exp_ops.fs_supported_attrs(exp_hdl);
 	fsal_status = fsal_get_xstat_by_handle(dir_fd, fh, &buffxstat,
-					       NULL, false);
+					       NULL, false,
+					       gpfs_export->use_acl);
 	if (FSAL_IS_ERROR(fsal_status))
 		goto fileerr;
-	fsal_status = gpfsfsal_xstat_2_fsal_attributes(&buffxstat, &attributes);
+	fsal_status = gpfsfsal_xstat_2_fsal_attributes(&buffxstat, &attributes,
+						       gpfs_export->use_acl);
 	LogFullDebug(COMPONENT_FSAL,
 		     "fsid=0x%016"PRIx64".0x%016"PRIx64,
 		     attributes.fsid.major,
@@ -910,18 +913,16 @@ fsal_status_t gpfs_create_handle(struct fsal_export *exp_hdl,
 
 	if (fs == NULL) {
 		LogInfo(COMPONENT_FSAL,
-			"Could not find filesystem for "
-			"fsid=0x%016"PRIx64".0x%016"PRIx64
-			" from handle",
+			"Could not find filesystem for fsid=0x%016"PRIx64
+			".0x%016"PRIx64" from handle",
 			fsid.major, fsid.minor);
 		return fsalstat(ERR_FSAL_STALE, ESTALE);
 	}
 
 	if (fs->fsal != exp_hdl->fsal) {
 		LogInfo(COMPONENT_FSAL,
-			"Non GPFS filesystem "
-			"fsid=0x%016"PRIx64".0x%016"PRIx64
-			" from handle",
+			"Non GPFS filesystem fsid=0x%016"PRIx64
+			".0x%016"PRIx64" from handle",
 			fsid.major, fsid.minor);
 		return fsalstat(ERR_FSAL_STALE, ESTALE);
 	}

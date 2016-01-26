@@ -42,10 +42,9 @@
 #include <sys/time.h>
 #include "export_mgr.h"
 
-#ifdef _USE_NFS4_ACL
-extern fsal_status_t fsal_acl_2_gpfs_acl(fsal_acl_t *p_fsalacl,
+extern fsal_status_t fsal_acl_2_gpfs_acl(struct fsal_obj_handle *dir_hdl,
+					 fsal_acl_t *p_fsalacl,
 					 gpfsfsal_xstat_t *p_buffxstat);
-#endif				/* _USE_NFS4_ACL */
 
 /**
  * GPFSFSAL_fs_loc:
@@ -118,15 +117,18 @@ fsal_status_t GPFSFSAL_getattrs(struct fsal_export *export,	/* IN */
 	gpfsfsal_xstat_t buffxstat;
 	bool expire;
 	uint32_t expire_time_attr = 0;	/*< Expiration time for attributes. */
+	struct gpfs_fsal_export *gpfs_export;
 
 	/* Initialize fsal_fsid to 0.0 in case older GPFS */
 	buffxstat.fsal_fsid.major = 0;
 	buffxstat.fsal_fsid.minor = 0;
 
 	expire = p_context->export->expire_time_attr > 0;
+	gpfs_export = container_of(export, struct gpfs_fsal_export, export);
 
 	st = fsal_get_xstat_by_handle(gpfs_fs->root_fd, p_filehandle,
-				      &buffxstat, &expire_time_attr, expire);
+				      &buffxstat, &expire_time_attr, expire,
+				      gpfs_export->use_acl);
 	if (FSAL_IS_ERROR(st))
 		return st;
 
@@ -140,7 +142,8 @@ fsal_status_t GPFSFSAL_getattrs(struct fsal_export *export,	/* IN */
 	if (buffxstat.fsal_fsid.major == 0 && buffxstat.fsal_fsid.minor == 0)
 		buffxstat.fsal_fsid = gpfs_fs->fs->fsid;
 
-	st = gpfsfsal_xstat_2_fsal_attributes(&buffxstat, p_object_attributes);
+	st = gpfsfsal_xstat_2_fsal_attributes(&buffxstat, p_object_attributes,
+					      gpfs_export->use_acl);
 	if (FSAL_IS_ERROR(st)) {
 		FSAL_CLEAR_MASK(p_object_attributes->mask);
 		FSAL_SET_MASK(p_object_attributes->mask, ATTR_RDATTR_ERR);
@@ -221,6 +224,8 @@ fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,	/* IN */
 	struct gpfs_fsal_obj_handle *myself;
 	gpfsfsal_xstat_t buffxstat;
 	struct gpfs_filesystem *gpfs_fs;
+	struct gpfs_fsal_export *gpfs_export;
+	bool use_acl;
 
 	/* Indicate if stat or acl or both should be changed. */
 	int attr_valid = 0;
@@ -236,6 +241,9 @@ fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,	/* IN */
 
 	myself = container_of(dir_hdl, struct gpfs_fsal_obj_handle, obj_handle);
 	gpfs_fs = dir_hdl->fs->private;
+	gpfs_export = container_of(p_context->fsal_export,
+				   struct gpfs_fsal_export, export);
+	use_acl = gpfs_export->use_acl;
 
 	/* First, check that FSAL attributes changes are allowed. */
 
@@ -268,7 +276,7 @@ fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,	/* IN */
 		/* Fill wanted mode. */
 		buffxstat.buffstat.st_size = p_object_attributes->filesize;
 		LogDebug(COMPONENT_FSAL, "current size = %llu, new size = %llu",
-			 (unsigned long long)dir_hdl->attributes.filesize,
+			 (unsigned long long)myself->attributes.filesize,
 			 (unsigned long long)buffxstat.buffstat.st_size);
 	}
 
@@ -281,7 +289,7 @@ fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,	/* IN */
 		/* Fill wanted mode. */
 		buffxstat.buffstat.st_size = p_object_attributes->filesize;
 		LogDebug(COMPONENT_FSAL, "current size = %llu, new size = %llu",
-			 (unsigned long long)dir_hdl->attributes.filesize,
+			 (unsigned long long)myself->attributes.filesize,
 			 (unsigned long long)buffxstat.buffstat.st_size);
 	}
 
@@ -301,7 +309,7 @@ fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,	/* IN */
 			    fsal2unix_mode(p_object_attributes->mode);
 			LogDebug(COMPONENT_FSAL,
 				 "current mode = %o, new mode = %o",
-				 fsal2unix_mode(dir_hdl->attributes.mode),
+				 fsal2unix_mode(myself->attributes.mode),
 				 buffxstat.buffstat.st_mode);
 
 		}
@@ -317,7 +325,7 @@ fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,	/* IN */
 		attr_changed |= XATTR_UID;
 		buffxstat.buffstat.st_uid = (int)p_object_attributes->owner;
 		LogDebug(COMPONENT_FSAL, "current uid = %ld, new uid = %d",
-			 dir_hdl->attributes.owner, buffxstat.buffstat.st_uid);
+			 myself->attributes.owner, buffxstat.buffstat.st_uid);
 	}
 
 	/* Fill wanted group. */
@@ -325,7 +333,7 @@ fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,	/* IN */
 		attr_changed |= XATTR_GID;
 		buffxstat.buffstat.st_gid = (int)p_object_attributes->group;
 		LogDebug(COMPONENT_FSAL, "current gid = %ld, new gid = %d",
-			 dir_hdl->attributes.group, buffxstat.buffstat.st_gid);
+			 myself->attributes.group, buffxstat.buffstat.st_gid);
 	}
 
   /***********
@@ -340,7 +348,7 @@ fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,	/* IN */
 		buffxstat.buffstat.st_atim.tv_nsec =
 		    p_object_attributes->atime.tv_nsec;
 		LogDebug(COMPONENT_FSAL, "current atime = %lu, new atime = %lu",
-			 (unsigned long)dir_hdl->attributes.atime.tv_sec,
+			 (unsigned long)myself->attributes.atime.tv_sec,
 			 (unsigned long)buffxstat.buffstat.st_atime);
 	}
 
@@ -352,32 +360,27 @@ fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,	/* IN */
 		buffxstat.buffstat.st_mtim.tv_nsec =
 		    p_object_attributes->mtime.tv_nsec;
 		LogDebug(COMPONENT_FSAL, "current mtime = %lu, new mtime = %lu",
-			 (unsigned long)dir_hdl->attributes.mtime.tv_sec,
+			 (unsigned long)myself->attributes.mtime.tv_sec,
 			 (unsigned long)buffxstat.buffstat.st_mtime);
 	}
 	/* Asking to set atime to NOW */
 	if (FSAL_TEST_MASK(p_object_attributes->mask, ATTR_ATIME_SERVER)) {
 		attr_changed |= XATTR_ATIME | XATTR_ATIME_NOW;
 		LogDebug(COMPONENT_FSAL, "current atime = %lu, new atime = NOW",
-			 (unsigned long)dir_hdl->attributes.atime.tv_sec);
+			 (unsigned long)myself->attributes.atime.tv_sec);
 	}
 	/* Asking to set atime to NOW */
 	if (FSAL_TEST_MASK(p_object_attributes->mask, ATTR_MTIME_SERVER)) {
 		attr_changed |= XATTR_MTIME | XATTR_MTIME_NOW;
 		LogDebug(COMPONENT_FSAL, "current mtime = %lu, new mtime = NOW",
-			 (unsigned long)dir_hdl->attributes.atime.tv_sec);
+			 (unsigned long)myself->attributes.atime.tv_sec);
 	}
 
 	/* If any stat changed, indicate that */
 	if (attr_changed != 0)
 		attr_valid |= XATTR_STAT;
 
-#ifdef _USE_NFS4_ACL
-   /***********
-   *  ACL  *
-   ***********/
-
-	if (FSAL_TEST_MASK(p_object_attributes->mask, ATTR_ACL)) {
+	if (use_acl && FSAL_TEST_MASK(p_object_attributes->mask, ATTR_ACL)) {
 		if (p_object_attributes->acl) {
 			attr_valid |= XATTR_ACL;
 			LogDebug(COMPONENT_FSAL, "setattr acl = %p",
@@ -385,7 +388,8 @@ fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,	/* IN */
 
 			/* Convert FSAL ACL to GPFS NFS4 ACL and fill buffer. */
 			status =
-			    fsal_acl_2_gpfs_acl(p_object_attributes->acl,
+			    fsal_acl_2_gpfs_acl(dir_hdl,
+						p_object_attributes->acl,
 						&buffxstat);
 
 			if (FSAL_IS_ERROR(status))
@@ -395,7 +399,6 @@ fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,	/* IN */
 			return fsalstat(ERR_FSAL_FAULT, 0);
 		}
 	}
-#endif				/* _USE_NFS4_ACL */
 
 	/* If there is any change in stat or acl or both, send it down to fs. */
 	if (attr_valid != 0) {

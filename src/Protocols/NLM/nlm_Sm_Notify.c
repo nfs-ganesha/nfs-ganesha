@@ -36,15 +36,11 @@
  * @brief NSM notification
  *
  * @param[in]  args
- * @param[in]  export
- * @param[in]  worker
  * @param[in]  req
  * @param[out] res
  */
 
-int nlm4_Sm_Notify(nfs_arg_t *args,
-		   nfs_worker_data_t *worker,
-		   struct svc_req *req, nfs_res_t *res)
+int nlm4_Sm_Notify(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 {
 	nlm4_sm_notifyargs *arg = &args->arg_nlm4_sm_notify;
 	state_status_t state_status = STATE_SUCCESS;
@@ -61,9 +57,7 @@ int nlm4_Sm_Notify(nfs_arg_t *args,
 		 * locks from a client that has rebooted from being released
 		 * by this SM_NOTIFY.
 		 */
-		state_status = state_nlm_notify(nsm_client,
-						true,
-						(void *)(ptrdiff_t) arg->state);
+		state_status = state_nlm_notify(nsm_client, true, arg->state);
 
 		if (state_status != STATE_SUCCESS) {
 			/** @todo FSF: Deal with error
@@ -89,5 +83,5 @@ int nlm4_Sm_Notify(nfs_arg_t *args,
  */
 void nlm4_Sm_Notify_Free(nfs_res_t *res)
 {
-	return;
+	/* Nothing to do */
 }

@@ -94,7 +94,6 @@ static struct lustre_fsal_obj_handle *alloc_handle(
 	struct lustre_fsal_export *myself =
 	    container_of(exp_hdl, struct lustre_fsal_export, export);
 	struct lustre_fsal_obj_handle *hdl;
-	fsal_status_t st;
 
 	hdl =
 	    gsh_malloc(sizeof(struct lustre_fsal_obj_handle) +
@@ -106,6 +105,7 @@ static struct lustre_fsal_obj_handle *alloc_handle(
 		sizeof(struct lustre_file_handle)));
 	hdl->handle = (struct lustre_file_handle *)&hdl[1];
 	memcpy(hdl->handle, fh, sizeof(struct lustre_file_handle));
+	hdl->obj_handle.attrs = &hdl->attributes;
 	hdl->obj_handle.type = posix2fsal_type(stat->st_mode);
 	hdl->dev = posix2fsal_devt(stat->st_dev);
 	hdl->obj_handle.fs = fs;
@@ -137,11 +137,8 @@ static struct lustre_fsal_obj_handle *alloc_handle(
 		strcpy(hdl->u.sock.sock_name, sock_name);
 	}
 
-	hdl->obj_handle.attributes.mask =
-	    exp_hdl->exp_ops.fs_supported_attrs(exp_hdl);
-	st = posix2fsal_attributes(stat, &hdl->obj_handle.attributes);
-	if (FSAL_IS_ERROR(st))
-		goto spcerr;
+	hdl->attributes.mask = exp_hdl->exp_ops.fs_supported_attrs(exp_hdl);
+	posix2fsal_attributes(stat, &hdl->attributes);
 	fsal_obj_handle_init(&hdl->obj_handle, exp_hdl,
 			     posix2fsal_type(stat->st_mode));
 	lustre_handle_ops_init(&hdl->obj_handle.obj_ops);
@@ -439,8 +436,7 @@ static fsal_status_t lustre_makedir(struct fsal_obj_handle *dir_hdl,
 	fsal_error = posix2fsal_error(rc);
 	if (rmdir(newpath))		/* remove the evidence on errors */
 		LogFullDebug(COMPONENT_FSAL,
-			     "lustre_makedir failed, calling rmdir to "
-			     "remove evidence of failure returned error=%d",
+			     "lustre_makedir failed, calling rmdir to remove evidence of failure returned error=%d",
 			     errno);
  errout:
 	return fsalstat(fsal_error, rc);
@@ -899,7 +895,6 @@ static fsal_status_t lustre_getattrs(struct fsal_obj_handle *obj_hdl)
 	int open_flags = O_RDONLY;
 	struct stat stat;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
-	fsal_status_t st;
 	int rc = 0;
 
 	myself =
@@ -924,14 +919,7 @@ static fsal_status_t lustre_getattrs(struct fsal_obj_handle *obj_hdl)
 		goto errout;
 
 	/* convert attributes */
-	st = posix2fsal_attributes(&stat, &obj_hdl->attributes);
-	if (FSAL_IS_ERROR(st)) {
-		FSAL_CLEAR_MASK(obj_hdl->attributes.mask);
-		FSAL_SET_MASK(obj_hdl->attributes.mask, ATTR_RDATTR_ERR);
-		fsal_error = st.major;
-		rc = st.minor;
-		goto out;
-	}
+	posix2fsal_attributes(&stat, &myself->attributes);
 	goto out;
 
  errout:
@@ -1010,6 +998,7 @@ static fsal_status_t lustre_setattrs(struct fsal_obj_handle *obj_hdl,
 #ifdef USE_FSAL_SHOOK
 		/* Do Shook Magic */
 		fsal_status_t st;
+
 		st = lustre_shook_restore(obj_hdl,
 					 (attrs->filesize == 0),
 					 &trunc_done);
@@ -1244,6 +1233,7 @@ static void release(struct fsal_obj_handle *obj_hdl)
 	    && (myself->u.file.fd >= 0
 		|| myself->u.file.openflags != FSAL_O_CLOSED)) {
 		fsal_status_t status;
+
 		status = lustre_close(obj_hdl);
 		if (FSAL_IS_ERROR(status)) {
 			LogCrit(COMPONENT_FSAL,
@@ -1433,9 +1423,8 @@ fsal_status_t lustre_create_handle(struct fsal_export *exp_hdl,
 		fs = lookup_fsid(&fsid, fsid_type);
 		if (fs == NULL) {
 			LogInfo(COMPONENT_FSAL,
-				"Could not map "
-				"fsid=0x%016"PRIx64".0x%016"PRIx64
-				" to filesytem",
+				"Could not map fsid=0x%016"PRIx64
+				".0x%016"PRIx64" to filesytem",
 				fsid.major, fsid.minor);
 			rc = ESTALE;
 			return fsalstat(posix2fsal_error(rc), rc);

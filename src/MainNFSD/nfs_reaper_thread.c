@@ -117,9 +117,8 @@ static int reap_expired_open_owners(hash_table_t *ht_reap)
 
 			if (rc != HASHTABLE_SUCCESS) {
 				LogCrit(COMPONENT_CLIENTID,
-					"Could not remove expired owner %s"
-					" error=%s", str,
-					hash_table_err_to_str(rc));
+					"Could not remove expired owner %s error=%s",
+					str, hash_table_err_to_str(rc));
 			}
 
 			atomic_dec_int32_t(&powner->so_refcount);

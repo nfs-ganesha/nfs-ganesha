@@ -168,6 +168,7 @@ cache_inode_lookupp(cache_entry_t *entry,
 		    cache_entry_t **parent)
 {
 	cache_inode_status_t status;
+
 	PTHREAD_RWLOCK_rdlock(&entry->content_lock);
 	status = cache_inode_lookupp_impl(entry, parent);
 	PTHREAD_RWLOCK_unlock(&entry->content_lock);

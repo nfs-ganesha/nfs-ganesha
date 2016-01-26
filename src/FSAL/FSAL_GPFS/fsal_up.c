@@ -54,7 +54,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 	int errsv = 0;
 
 #ifdef _VALGRIND_MEMCHECK
-		memset(handle.f_handle, 0, sizeof(handle.f_handle));
+		memset(&handle, 0, sizeof(handle));
 		memset(&buf, 0, sizeof(buf));
 		memset(&fl, 0, sizeof(fl));
 		memset(&devid, 0, sizeof(devid));
@@ -85,7 +85,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 			     "Requesting event from FSAL Callback interface for %d.",
 			     gpfs_fs->root_fd);
 
-		handle.handle_size = OPENHANDLE_HANDLE_LEN;
+		handle.handle_size = gpfs_max_fh_size;
 		handle.handle_key_size = OPENHANDLE_KEY_LEN;
 		handle.handle_version = OPENHANDLE_VERSION;
 
@@ -111,8 +111,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 				return NULL;
 			}
 			LogCrit(COMPONENT_FSAL_UP,
-				"OPENHANDLE_INODE_UPDATE failed for %d."
-				" rc %d, errno %d (%s) reason %d",
+				"OPENHANDLE_INODE_UPDATE failed for %d. rc %d, errno %d (%s) reason %d",
 				gpfs_fs->root_fd, rc, errsv,
 				strerror(errsv), reason);
 
@@ -143,9 +142,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 			 rc, reason, callback.buf->st_ino, flags);
 
 		LogFullDebug(COMPONENT_FSAL_UP,
-			     "inode update: flags:%x callback.handle:%p"
-			     " handle size = %u handle_type:%d handle_version:%d"
-			     " key_size = %u handle_fsid=%d.%d f_handle:%p expire: %d",
+			     "inode update: flags:%x callback.handle:%p handle size = %u handle_type:%d handle_version:%d key_size = %u handle_fsid=%d.%d f_handle:%p expire: %d",
 			     *callback.flags, callback.handle,
 			     callback.handle->handle_size,
 			     callback.handle->handle_type,
@@ -392,6 +389,14 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 						&key,
 						upflags);
 			break;
+
+		case THREAD_PAUSE:
+			/* File system image is probably going away, but
+			 * we don't need to do anything here as we
+			 * eventually get other errors that stop this
+			 * thread.
+			 */
+			continue; /* get next event */
 
 		default:
 			LogWarn(COMPONENT_FSAL_UP, "Unknown event: %d", reason);

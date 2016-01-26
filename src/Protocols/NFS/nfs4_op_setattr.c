@@ -265,5 +265,5 @@ int nfs4_op_setattr(struct nfs_argop4 *op, compound_data_t *data,
  */
 void nfs4_op_setattr_Free(nfs_resop4 *resp)
 {
-	return;
-}				/* nfs4_op_setattr_Free */
+	/* Nothing to be done */
+}

@@ -30,6 +30,7 @@ struct gpfs_fsal_export {
 	struct glist_head filesystems;
 	bool pnfs_ds_enabled;
 	bool pnfs_mds_enabled;
+	bool use_acl;
 };
 
 /*
@@ -61,19 +62,6 @@ void gpfs_extract_fsid(struct gpfs_file_handle *fh,
 
 void gpfs_unexport_filesystems(struct gpfs_fsal_export *exp);
 
-#define gpfs_alloc_handle(fh)						\
-	do {								\
-		(fh) = alloca(sizeof(struct gpfs_file_handle));		\
-		memset((fh), 0, (sizeof(struct gpfs_file_handle)));	\
-		(fh)->handle_size = OPENHANDLE_HANDLE_LEN;		\
-	} while (0)
-
-#define gpfs_malloc_handle(fh)						\
-	do {								\
-		(fh) = gsh_calloc(1, sizeof(struct gpfs_file_handle));	\
-		(fh)->handle_size = OPENHANDLE_HANDLE_LEN;		\
-	} while (0)
-
 /*
  * GPFS internal object handle
  * handle is a pointer because
@@ -90,6 +78,7 @@ void gpfs_unexport_filesystems(struct gpfs_fsal_export *exp);
 
 struct gpfs_fsal_obj_handle {
 	struct fsal_obj_handle obj_handle;
+	struct attrlist attributes;
 	struct gpfs_file_handle *handle;
 	union {
 		struct {

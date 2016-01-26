@@ -28,10 +28,13 @@
  * @brief System calls for the FreeBSD handle calls
  */
 
+#include <misc/queue.h> /* avoid conflicts with sys/queue.h */
 #include <sys/mount.h>
 #include "fsal_convert.h"
+#include "fsal_api.h"
+#include "FSAL/fsal_commonlib.h"
 #include "../../vfs_methods.h"
-#include "include/os/freebsd/syscalls.h"
+#include <syscalls.h>
 
 /*
  * Currently all FreeBSD versions define MAXFIDSZ to be 16 which is not
@@ -80,8 +83,8 @@ void display_vfs_handle(struct display_buffer *dspbuf,
 	int b_left;
 
 	b_left = display_printf(dspbuf,
-				"Handle len %hhu:"
-				" fsid=0x%016"PRIx32".0x%016"PRIx32
+				"Handle len %hhu: fsid=0x%016"
+				PRIx32".0x%016"PRIx32
 				" fid_len=%"PRIu16
 				" fid_pad=%"PRIu16,
 				fh->handle_len,
@@ -111,13 +114,13 @@ void display_vfs_handle(struct display_buffer *dspbuf,
 		}							\
 	} while (0)
 
-static inline int vfs_fd_to_handle(int fd, struct fsal_filesystem *fs,
-				   vfs_file_handle_t *fh, int *mnt_id)
+int vfs_fd_to_handle(int fd, struct fsal_filesystem *fs,
+		     vfs_file_handle_t *fh)
 {
 	int error;
 	struct v_fhandle *handle = (struct v_fhandle *) fh->handle_data;
 
-	error = getfhat(fd, NULL, handle, AT_SYMLINK_FOLLOW);
+	error = getfhat(fd, NULL, (struct fhandle *) handle, AT_SYMLINK_FOLLOW);
 
 	if (error == 0)
 		fh->handle_len = vfs_sizeof_handle(handle);
@@ -133,7 +136,8 @@ int vfs_name_to_handle(int atfd,
 	int error;
 	struct v_fhandle *handle = (struct v_fhandle *) fh->handle_data;
 
-	error = getfhat(atfd, (char *)name, handle, AT_SYMLINK_NOFOLLOW);
+	error = getfhat(atfd, (char *)name, (struct fhandle *) handle,
+			AT_SYMLINK_NOFOLLOW);
 
 	if (error == 0)
 		fh->handle_len = vfs_sizeof_handle(handle);
@@ -147,7 +151,7 @@ int vfs_open_by_handle(struct vfs_filesystem *fs,
 {
 	int fd;
 
-	fd = fhopen((struct fhandle *)fh->handle_data, openflags);
+	fd = fhopen((struct fhandle *) fh->handle_data, openflags);
 
 	if (fd < 0) {
 		fd = -errno;
@@ -167,13 +171,13 @@ int vfs_extract_fsid(vfs_file_handle_t *fh,
 
 	LogVFSHandle(fh);
 
-	if (hdl->ha_fid.fid_reserved != 0) {
+	if (hdl->fh_fid.fid_reserved != 0) {
 		int rc;
 
-		*fsid_type = (enum fsid_type) (hdl->ha_fid.fid_reserved - 1);
+		*fsid_type = (enum fsid_type) (hdl->fh_fid.fid_reserved - 1);
 
-		rc = decode_fsid(hdl->handle_data,
-				 sizeof(hdl->handle_data),
+		rc = decode_fsid(fh->handle_data,
+				 sizeof(fh->handle_data),
 				 fsid,
 				 *fsid_type);
 		if (rc < 0) {
@@ -212,7 +216,7 @@ int vfs_encode_dummy_handle(vfs_file_handle_t *fh,
 	hdl->fh_fid.fid_reserved = fs->fsid_type + 1;
 	hdl->fh_fid.fid_len = rc;
 
-	fh->handle_len = vfs_sizeof_handle(handle);
+	fh->handle_len = vfs_sizeof_handle(hdl);
 
 	LogVFSHandle(fh);
 
@@ -223,7 +227,7 @@ bool vfs_is_dummy_handle(vfs_file_handle_t *fh)
 {
 	struct v_fhandle *hdl = (struct v_fhandle *) fh->handle_data;
 
-	return hdl->ha_fid.fid_reserved != 0;
+	return hdl->fh_fid.fid_reserved != 0;
 }
 
 bool vfs_valid_handle(struct gsh_buffdesc *desc)
@@ -232,8 +236,8 @@ bool vfs_valid_handle(struct gsh_buffdesc *desc)
 
 	if ((desc->addr == NULL) ||
 	    (desc->len < (sizeof(fsid_t) +
-			  sizeof(fh->fh_fid.fid_len)
-			  sizeof(fh->fh_fid.fid_reserved))))
+			  sizeof(hdl->fh_fid.fid_len) +
+			  sizeof(hdl->fh_fid.fid_reserved))))
 		return false;
 
 	if (isMidDebug(COMPONENT_FSAL)) {
@@ -242,10 +246,10 @@ bool vfs_valid_handle(struct gsh_buffdesc *desc)
 		int b_left;
 
 		b_left = display_printf(&dspbuf,
-					"Handle len %d: "
-					" fsid=0x%016"PRIx32".0x%016"PRIx32
+					"Handle len %d: fsid=0x%016"
+					PRIx32".0x%016"PRIx32
 					" fid_len=%"PRIu16
-					" fid_pad=%"PRIu16
+					" fid_pad=%"PRIu16,
 					(int) desc->len,
 					hdl->fh_fsid.val[0],
 					hdl->fh_fsid.val[1],
@@ -253,7 +257,7 @@ bool vfs_valid_handle(struct gsh_buffdesc *desc)
 					hdl->fh_fid.fid_reserved);
 
 		if (b_left > 0) {
-			display_opaque_value(dspbuf,
+			display_opaque_value(&dspbuf,
 					     hdl->fh_fid.fid_data,
 					     hdl->fh_fid.fid_len);
 		}
@@ -261,8 +265,10 @@ bool vfs_valid_handle(struct gsh_buffdesc *desc)
 		LogMidDebug(COMPONENT_FSAL, "%s", buf);
 	}
 
-	if (hdl->ha_fid.fid_reserved != 0) {
-		switch ((enum fsid_type) (hdl->ha_fid.fid_reserved - 1)) {
+	if (hdl->fh_fid.fid_reserved != 0) {
+		bool fsid_type_ok = false;
+
+		switch ((enum fsid_type) (hdl->fh_fid.fid_reserved - 1)) {
 		case FSID_NO_TYPE:
 		case FSID_ONE_UINT64:
 		case FSID_MAJOR_64:
@@ -276,13 +282,13 @@ bool vfs_valid_handle(struct gsh_buffdesc *desc)
 		if (!fsid_type_ok) {
 			LogDebug(COMPONENT_FSAL,
 				 "FSID Type %02"PRIu16" invalid",
-				 hdl->ha_fid.fid_pad - 1);
+				 hdl->fh_fid.fid_reserved - 1);
 			return false;
 		}
 	}
-
 	return (desc->len >= (sizeof(fsid_t) +
-			      sizeof(hdl->sizeof(hdl->fh_fid.fid_len))) &&
+			  sizeof(hdl->fh_fid.fid_len) +
+			  sizeof(hdl->fh_fid.fid_reserved))) &&
 	       (desc->len == vfs_sizeof_handle(hdl));
 }
 

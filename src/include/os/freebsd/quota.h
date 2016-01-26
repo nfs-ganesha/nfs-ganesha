@@ -28,7 +28,7 @@
 #include <ufs/ufs/quota.h>
 
 #define QUOTACTL(cmd, path, id, addr) \
-	quotactl(path, (cmd), id, (void *)addr);
+	quotactl(path, (cmd), id, (void *)addr)
 
 /*
  * kludge to account for differently named member variable

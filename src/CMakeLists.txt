@@ -17,10 +17,10 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules/")
 project(nfs-ganesha C)
 # Project versioning
 set(GANESHA_MAJOR_VERSION 2)
-set(GANESHA_MINOR_VERSION 2)
+set(GANESHA_MINOR_VERSION 3)
 
 # needs to come after project()
-IF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+IF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR CMAKE_INSTALL_PREFIX STREQUAL "/usr")
 	SET(CMAKE_INSTALL_PREFIX "/usr" CACHE PATH "Install prefix for common files" FORCE)
 	message(STATUS "override default CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX}")
 	SET(SYSCONFDIR "/etc" CACHE PATH "Install prefix for common files" FORCE)
@@ -29,7 +29,7 @@ ELSE()
 	message(STATUS "was set CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX}")
 	SET(SYSCONFDIR "${CMAKE_INSTALL_PREFIX}/etc" CACHE PATH "Install prefix for common files" FORCE)
 	SET(SYSSTATEDIR "${CMAKE_INSTALL_PREFIX}/var" CACHE PATH "Install prefix for common files" FORCE)
-ENDIF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+ENDIF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR CMAKE_INSTALL_PREFIX STREQUAL "/usr")
 # Patch level is always ".0" for mainline (master).  It is blank for development.
 # When starting a stable maintenance branch, this becomes ".N"
 # where N is monotonically increasing starting at 1. Remember to include the "." !!
@@ -38,7 +38,7 @@ set(GANESHA_PATCH_LEVEL .0)
 # Extra version is for naming development/RC.  It is blank in master/stable branches
 # so it can be available to end-users to name local variants/versions
 # If used, it is always of the form "-whateveryouwant"
-set(GANESHA_EXTRA_VERSION )
+set(GANESHA_EXTRA_VERSION)
 
 set(GANESHA_VERSION ${GANESHA_MAJOR_VERSION}.${GANESHA_MINOR_VERSION}${GANESHA_PATCH_LEVEL}${GANESHA_EXTRA_VERSION})
 set(GANESHA_BASE_VERSION ${GANESHA_MAJOR_VERSION}.${GANESHA_MINOR_VERSION}${GANESHA_PATCH_LEVEL})
@@ -92,6 +92,9 @@ find_package(Toolchain REQUIRED)
 # Add maintainer mode for (mainly) strict builds
 include(${CMAKE_SOURCE_DIR}/cmake/maintainer_mode.cmake)
 
+# For libraries that provide pkg-config files
+include(FindPkgConfig)
+
 # If we are in a git tree, then this CMakeLists.txt is in "src/" and go .git is in "src/.."
 IF( EXISTS ${CMAKE_SOURCE_DIR}/../.git/HEAD  )
   message( STATUS "Compilation from within a git repository. Using git rev-parse HEAD")
@@ -132,9 +135,10 @@ include(CPack)
 if (FREEBSD)
 #default gcc doesn't like using -Wuninitialized without -O on FreeBSD
     set(PLATFORM "FREEBSD")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O -ggdb")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O2 -ggdb")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-omit-frame-pointer")
-    set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -rdynamic")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-optimize-sibling-calls")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--export-dynamic")
     set(OS_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/include/os/freebsd")
     find_library(LIBDL c)  # libc suffices on freebsd
 endif(FREEBSD)
@@ -150,15 +154,20 @@ if (MSVC)
    add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 endif(MSVC)
 
+# Library path name
+get_property(USE_LIB64 GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS)
+if (USE_LIB64)
+	set(LIB_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/lib64 CACHE PATH
+		"Specify name of libdir inside install path")
+else (USE_LIB64)
+	set(LIB_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/lib CACHE PATH
+		"Specify name of libdir inside install path")
+endif (USE_LIB64)
+
 IF(FSAL_DESTINATION)
     set( FSAL_DESTINATION ${FSAL_DESTINATION} )
 ELSE()
-    # Library destination, 32 bits / 64 bits switch is done here
-    if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-        set( FSAL_DESTINATION "lib64/ganesha" )
-    else( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-        set( FSAL_DESTINATION "lib/ganesha" )
-    endif( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+    set( FSAL_DESTINATION "${LIB_INSTALL_DIR}/ganesha")
 ENDIF()
 
 # FSAL selection
@@ -173,6 +182,7 @@ option(USE_FSAL_LUSTRE "build LUSTRE FSAL" ON)
 option(USE_FSAL_XFS "build XFS support in VFS FSAL" ON)
 option(USE_FSAL_PANFS "build PanFS support in VFS FSAL" ON)
 option(USE_FSAL_GLUSTER "build GLUSTER FSAL shared library" ON)
+option(USE_FSAL_NULL "build NULL FSAL shared library" ON)
 
 # FSALs which are disabled by default
 option(USE_FSAL_PT "build PT FSAL" OFF)
@@ -184,7 +194,8 @@ option(USE_FSAL_SHOOK "build SHOOK FSAL" ON)
 # Activate FSAL Upcalls for FSAL_LUSTRE
 option(USE_FSAL_LUSTRE_UP "add Upcalls support for LUSTRE FSAL" OFF)
 
-# From TI-RPC
+# nTIRPC
+option(USE_SYSTEM_NTIRPC "Use the system nTIRPC, rather than the submodule" OFF)
 option (USE_GSS "enable RPCSEC_GSS support" ON)
 option(TIRPC_EPOLL "platform supports EPOLL or emulation" ON)
 
@@ -194,9 +205,10 @@ option(USE_DBUS "enable DBUS protocol support" OFF)
 # Various DBUS enabled features
 option(USE_CB_SIMULATOR "enable callback simulator thread" OFF)
 
-option(USE_TIRPC_IPV6 "enable IPv6 support (via IPv6)" OFF)
 option(USE_NFSIDMAP "Use of libnfsidmap for name resolution" ON)
 option(ENABLE_ERROR_INJECTION "enable error injection" OFF)
+option(ENABLE_VFS_DEBUG_ACL "Enable debug ACL store for VFS" OFF)
+option(ENABLE_RFC_ACL "Use all RFC ACL checks" OFF)
 
 # Electric Fence (-lefence) link flag
 option(USE_EFENCE "link with efence memory debug library" OFF)
@@ -207,6 +219,7 @@ option(_NO_PORTMAPPER "disable registration on portmapper" ON)
 option(_NO_XATTRD "disable ghost xattr directory and files support" ON)
 option(DEBUG_SAL "enable debugging of SAL by keeping list of all locks, stateids, and state owners" OFF)
 option(_VALGRIND_MEMCHECK "Initialize buffers passed to GPFS ioctl that valgrind doesn't understand" OFF)
+option(ENABLE_LOCKTRACE "Enable lock trace" OFF)
 option(PROXY_HANDLE_MAPPING "enable NFSv3 handle mapping for PROXY FSAL" OFF)
 
 # Debug symbols (-g) build flag
@@ -231,8 +244,31 @@ endif( "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_GREATER "2.6" )
 # CUnit
 option(USE_CUNIT "Use Cunit test framework" OFF)
 
+# Blkin (Zipkin) Tracing
+option(USE_BLKIN "Use Blkin/Zipkin trace framework" OFF)
+option(BLKIN_PREFIX "Blkin installation prefix" "/opt/blkin")
+if(USE_BLKIN)
+  find_package(LTTng)
+  if(LTTNG_FOUND)
+  else(LTTNG_FOUND)
+    message(WARNING "LTTng libraries not found. Disabling USE_BLKIN")
+    set(USE_BLKIN OFF)
+  endif(LTTNG_FOUND)
+  if (NOT BLKIN_PREFIX)
+    set(BLKIN_PREFIX "/opt/blkin")
+  endif(NOT BLKIN_PREFIX)
+  set(BLKIN_PREFIX ${BLKIN_PREFIX} CACHE PATH "Blkin path")
+  find_library(BLKIN NAMES blkin PATHS "${BLKIN_PREFIX}/lib" REQUIRED)
+  find_library(BLKIN_INIT NAMES blkin_init PATHS "${BLKIN_REFIX}/lib" REQUIRED)
+  find_library(LTTNG NAMES lttng-ust REQUIRED)
+  # build flags
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DHAVE_BLKIN -I${BLKIN_PREFIX}/include")
+  set(SYSTEM_LIBRARIES ${BLKIN} ${SYSTEM_LIBRARIES})
+  set(SYSTEM_LIBRARIES ${LTTNG}  ${SYSTEM_LIBRARIES})
+endif(USE_BLKIN)
+
 # NFS RDMA
-option(USE_NFS_MSK "enable NFS/MSK support" OFF)
+option(USE_NFS_RDMA "enable NFS/RDMA support" OFF)
 
 # Enable 9P Support
 option(USE_9P "enable 9P support" ON)
@@ -249,13 +285,6 @@ option(USE_ADMIN_TOOLS "Package Admin scripts" OFF)
 
 # Build and package Python gui admin scripts for managing via DBus
 option(USE_GUI_ADMIN_TOOLS "Package GUI Admin scripts" ON)
-
-# Final location for server modules such as FSAL shared objects
-# We do this separately because packaging (RPM) installs in a
-# "build root" but installs somewhere else (/usr)
-set(MODULES_PATH ${CMAKE_INSTALL_PREFIX}
-  CACHE PATH
-  "Path prefix for dlopen loaded modules")
 
 # Enable GCC Thread-sanitizer
 option(USE_TSAN "Enable GCC Thread-Sanitizer" OFF)
@@ -332,7 +361,7 @@ IF(USE_FSAL_HPSS)
   IF(HPSS_PREFIX)
     set(HPSS_PREFIX ${HPSS_PREFIX} CACHE PATH "Path to HPSS installation")
   ELSE()
-    set(HPSS_PREFIX "/usr" CACHE PATH "Path to HPSS installation")
+    set(HPSS_PREFIX "/opt/hpss" CACHE PATH "Path to HPSS installation")
   ENDIF()
 
   # If you are not using hpss with krb5, remove the hpsskrb5auth here.
@@ -377,27 +406,17 @@ IF(MOOSHIKA_PREFIX)
   set(MOOSHIKA_PREFIX ${MOOSHIKA_PREFIX} CACHE PATH "Path to Mooshika installation")
   set(ENV{PKG_CONFIG_PATH} "${PKG_CONFIG_PATH}:${MOOSHIKA_PREFIX}/lib/pkgconfig")
 ENDIF()
-IF(LIBIBVERBS_PREFIX)
-  set(LIBIBVERBS_PREFIX ${LIBIBVERBS_PREFIX} CACHE PATH "Path to libibverbs installation")
-  LIST(APPEND CMAKE_REQUIRED_INCLUDES "${LIBIBVERBS_PREFIX}/include")
-  include_directories("${LIBIBVERBS_PREFIX}/usr/include")
-ENDIF()
-IF(LIBRDMACM_PREFIX)
-  set(LIBRDMACM_PREFIX ${LIBRDMACM_PREFIX} CACHE PATH "Path to librdmacm installation")
-  LIST(APPEND CMAKE_REQUIRED_INCLUDES "${LIBRDMACM_PREFIX}/include")
-  include_directories("${LIBRDMACM_PREFIX}/include")
-ENDIF()
 
-
+if(USE_NFS_RDMA OR USE_9P_RDMA)
+  find_package(RDMA REQUIRED)
+  include_directories(${RDMA_INCLUDE_DIR})
+  set(SYSTEM_LIBRARIES ${SYSTEM_LIBRARIES} ${RDMA_LIBRARY})
+endif(USE_NFS_RDMA OR USE_9P_RDMA)
 
 if(USE_CB_SIMULATOR AND NOT USE_DBUS)
   message(WARNING "The callback simulator needs DBUS.  Enabling DBUS")
   set(USE_DBUS ON)
 endif(USE_CB_SIMULATOR AND NOT USE_DBUS)
-
-if(USE_TIRPC_IPV6)
-  set(_USE_TIRPC_IPV6 ON)
-endif(USE_TIRPC_IPV6)
 
 if(USE_9P_RDMA AND NOT USE_9P)
   message(WARNING "The support of 9P/RDMA needs 9P protocol support. Enabling 9P")
@@ -440,11 +459,18 @@ IF(PROXY_HANDLE_MAPPING)
     ""
     HAVE_SQLITE3
     )
-  if(NOT HAVE_SQLITE3 OR HAVE_SQLITE3_H)
+  if(NOT HAVE_SQLITE3 OR NOT HAVE_SQLITE3_H)
     message(WARNING "Cannot find sqlite3.h or the library. Disabling proxy handle mapping")
     set(PROXY_HANDLE_MAPPING OFF)
-  endif(NOT HAVE_SQLITE3 OR HAVE_SQLITE3_H)
+  endif(NOT HAVE_SQLITE3 OR NOT HAVE_SQLITE3_H)
 ENDIF(PROXY_HANDLE_MAPPING)
+
+IF(_VALGRIND_MEMCHECK)
+  check_include_files(valgrind/memcheck.h HAVE_MEMCHECK_H)
+  if(NOT HAVE_MEMCHECK_H)
+	  message(FATAL_ERROR "Cannot find valgrind/memcheck.h, install valgrind-devel package to enable _VALGRIND_MEMCHECK")
+  ENDIF(NOT HAVE_MEMCHECK_H)
+ENDIF(_VALGRIND_MEMCHECK)
 
 # X_ATTRD requires the kernel to have xattrs...DBUS_STATS
 if(NOT _NO_XATTRD)
@@ -477,25 +503,43 @@ else(KRB5_FOUND AND HAVE_GSSAPI_H)
   message(FATAL_ERROR "Cannot find kerberos or GSS libraries")
 endif(KRB5_FOUND AND HAVE_GSSAPI_H)
 
+if (USE_ADMIN_TOOLS)
+  find_package(PythonInterp)
+  if (NOT PYTHONINTERP_FOUND)
+    message(FATAL_ERROR "Cannot find python for enabling admin tools")
+  endif (NOT PYTHONINTERP_FOUND)
+  if (USE_GUI_ADMIN_TOOLS)
+    find_program(PYUIC NAMES pyuic4 DOC "PyQT UI-compiler executable")
+    if (NOT PYUIC)
+      message(STATUS "Cannot find PyQt4.  Disabling GUI admin tools")
+      set(USE_GUI_ADMIN_TOOLS OFF)
+    endif (NOT PYUIC)
+  endif (USE_GUI_ADMIN_TOOLS)
+endif (USE_ADMIN_TOOLS)
+
 # Validate fsal dependencies
 
 if(USE_FSAL_GLUSTER)
-  find_library(HAVE_GFAPI gfapi)
-  check_library_exists(
-    gfapi
-    glfs_h_lookupat
-    ""
-    HAVE_GFAPI
-    )
-  check_include_files("glusterfs/api/glfs.h" HAVE_GLUSTER_H)
-  if((NOT HAVE_GFAPI) OR (NOT HAVE_GLUSTER_H))
+  find_package(PkgConfig)
+  IF(GLUSTER_PREFIX)
+    set(ENV{PKG_CONFIG_PATH} "${PKG_CONFIG_PATH}:${GLUSTER_PREFIX}/lib/pkgconfig")
+  ENDIF(GLUSTER_PREFIX)
+  pkg_check_modules(GFAPI glusterfs-api>=7.3.7)
+  if(NOT GFAPI_FOUND)
     if(STRICT_PACKAGE)
       message(FATAL_ERROR "STRICT PACKAGE: Cannot find GLUSTER GFAPI runtime. Disabling GLUSTER fsal build")
     else(STRICT_PACKAGE)
       message(WARNING "Cannot find GLUSTER GFAPI runtime. Disabling GLUSTER fsal build")
       set(USE_FSAL_GLUSTER OFF)
     endif(STRICT_PACKAGE)
-  endif((NOT HAVE_GFAPI) OR (NOT HAVE_GLUSTER_H))
+  else(NOT GFAPI_FOUND)
+    message(STATUS "GFAPI_INCLUDE_DIRS=${GFAPI_INCLUDE_DIRS}")
+    message(STATUS "GFAPI_LIBRARY_DIRS=${GFAPI_LIBRARY_DIRS}")
+    include_directories(${GFAPI_INCLUDE_DIRS})
+    # missing directory not provided by current version of GlusterFS
+    include_directories(${GFAPI_PREFIX}/include)
+    link_directories (${GFAPI_LIBRARY_DIRS})
+  endif(NOT GFAPI_FOUND)
 
   if(USE_FSAL_GLUSTER)
     check_include_files("unistd.h;attr/xattr.h" HAVE_XATTR_H)
@@ -507,7 +551,22 @@ if(USE_FSAL_GLUSTER)
         set(USE_FSAL_GLUSTER OFF)
       endif(STRICT_PACKAGE)
     endif(NOT HAVE_XATTR_H)
+    check_include_files("acl/libacl.h" HAVE_ACL_H)
+    if(HAVE_ACL_H)
+	set(USE_POSIX_ACLS ON)
+    else()
+	set(USE_POSIX_ACLS OFF)
+	set(USE_FSAL_GLUSTER OFF)
+	message(STATUS "Could not find libacl, disabling GLUSTER fsal build")
+    endif(HAVE_ACL_H)
   endif(USE_FSAL_GLUSTER)
+  pkg_check_modules(GLFS_H_LOOKUPAT_WITH_FOLLOW glusterfs-api>=7.3.7.4)
+  if(NOT GLFS_H_LOOKUPAT_WITH_FOLLOW_FOUND)
+	set(USE_GLUSTER_SYMLINK_MOUNT OFF)
+	message(WARNING "Disabling symlink mount for FSAL GLUSTER")
+  else()
+	set(USE_GLUSTER_SYMLINK_MOUNT ON)
+  endif(NOT GLFS_H_LOOKUPAT_WITH_FOLLOW_FOUND)
 endif(USE_FSAL_GLUSTER)
 
 if(USE_FSAL_CEPH)
@@ -566,6 +625,7 @@ else(USE_FSAL_LUSTRE)
 endif(USE_FSAL_LUSTRE)
 
 if(USE_FSAL_LUSTRE AND USE_FSAL_SHOOK)
+  find_library(HAVE_SHOOK shooksvr)
   check_library_exists(
     shooksvr
     shook_restore
@@ -581,6 +641,10 @@ if(USE_FSAL_LUSTRE AND USE_FSAL_SHOOK)
       set(USE_FSAL_SHOOK OFF)
     endif(STRICT_PACKAGE)
   endif((NOT HAVE_SHOOK) OR (NOT HAVE_SHOOK_XATTRS))
+  if(USE_FSAL_SHOOK AND HAVE_INCLUDE_LUSTREAPI_H)
+    # shook uses a different define than us for this flag
+    set(_LUSTRE_API_HEADER 1)
+  endif(USE_FSAL_SHOOK AND HAVE_INCLUDE_LUSTREAPI_H)
 endif(USE_FSAL_LUSTRE AND USE_FSAL_SHOOK)
 
 IF(USE_FSAL_LUSTRE_UP)
@@ -635,7 +699,7 @@ endif(USE_FSAL_ZFS)
 if(${ALLOCATOR} STREQUAL "jemalloc")
   find_package(JeMalloc)
   if(JEMALLOC_FOUND)
-    set(SYSTEM_LIBRARIES ${JEMALLOC_LIBRARIES})
+    set(SYSTEM_LIBRARIES ${JEMALLOC_LIBRARIES} ${SYSTEM_LIBRARIES})
   else(JEMALLOC_FOUND)
     message(WARNING "jemalloc not found, falling back to libc")
     set(ALLOCATOR "libc")
@@ -643,7 +707,7 @@ if(${ALLOCATOR} STREQUAL "jemalloc")
 elseif(${ALLOCATOR} STREQUAL "tcmalloc")
   find_package(TcMalloc)
   if(TCMALLOC_FOUND)
-    set(SYSTEM_LIBRARIES ${TCMALLOC_LIBRARIES})
+    set(SYSTEM_LIBRARIES ${TCMALLOC_LIBRARIES} ${SYSTEM_LIBRARIES})
   else(TCMALLOC_FOUND)
     message(WARNING "tcmalloc not found, falling back to libc")
     set(ALLOCATOR "libc")
@@ -703,6 +767,7 @@ if(USE_LTTNG)
   # if your LTTng is not in a standard place
   find_package(LTTng)
   if(LTTNG_FOUND)
+    include_directories(${LTTNG_INCLUDE_DIR})
   else(LTTNG_FOUND)
     message(WARNING "LTTng libraries not found. Disabling USE_LTTNG")
     set(USE_LTTNG OFF)
@@ -718,7 +783,6 @@ endif( "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_LESS "2.8" )
 
 include_directories(
   "${PROJECT_BINARY_DIR}/include"
-  "${PROJECT_SOURCE_DIR}/libntirpc/ntirpc/"
   "${PROJECT_SOURCE_DIR}/include"
   "${OS_INCLUDE_DIR}"
   "${KRB5_INCLUDE_DIRS}"
@@ -732,14 +796,6 @@ if(USE_CB_SIMULATOR)
   set(_USE_CB_SIMULATOR ON)
 endif(USE_CB_SIMULATOR)
 
-
-#callers add:
-#  target_link_libraries(your_library ${LIBTIRPC_LIBRARIES})
-set(LIBTIRPC_INCLUDE_DIR
-  "${PROJECT_BINARY_DIR}/libtirpc/ntirpc"
-  "${PROJECT_BINARY_DIR}/libtirpc/ntirpc/rpc"
-)
-set(LIBTIRPC_LIBRARIES "${PROJECT_BINARY_DIR}/libntirpc/src/libntirpc.a")
 
 # Find misc system libs
 find_library(LIBRT rt)  # extended Pthreads functions
@@ -851,13 +907,40 @@ endif(USE_DBUS)
 
 set(GANESHA_CORE ${GANESHA_CORE} NodeList)
 
-if(USE_9P_RDMA OR USE_NFS_MSK)
+if(USE_9P_RDMA)
   find_package(PkgConfig)
+  IF(MOOSHIKA_PREFIX)
+    set(ENV{PKG_CONFIG_PATH} "${PKG_CONFIG_PATH}:${MOOSHIKA_PREFIX}/lib/pkgconfig")
+  ENDIF()
   pkg_check_modules(MOOSHIKA REQUIRED libmooshika>=0.6)
-  set(GANESHA_CORE ${GANESHA_CORE} ${MOOSHIKA_LIBRARIES})
+  # Remove rdma and ibverbs libraries that have already been found by FindRDMA
+  #
+  # TODO: this temporary workaround will no longer be required
+  # with future mooshika versions (>1.0)
+  # Original code is: set(GANESHA_CORE ${GANESHA_CORE} ${MOOSHIKA_LIBRARIES})
+  #
+  set(MOOSHIKA_LIBS_EXCEPT_RDMA ${MOOSHIKA_LIBRARIES})
+  list(REMOVE_ITEM MOOSHIKA_LIBS_EXCEPT_RDMA rdmacm ibverbs)
+  set(GANESHA_CORE ${GANESHA_CORE} ${MOOSHIKA_LIBS_EXCEPT_RDMA})
+
   include_directories(${MOOSHIKA_INCLUDE_DIRS})
   link_directories (${MOOSHIKA_LIBRARY_DIRS})
-endif(USE_9P_RDMA OR USE_NFS_MSK)
+endif(USE_9P_RDMA)
+
+set(NTIRPC_VERSION 1.3.1)
+if (USE_SYSTEM_NTIRPC)
+  find_package(NTIRPC ${NTIRPC_VERSION} REQUIRED)
+else (USE_SYSTEM_NTIRPC)
+  # Set options for submodule
+  option(USE_RPC_RDMA "Use RDMA" ${USE_NFS_RDMA})
+  option(USE_TIRPC_EPOLL "Use EPOLL" ${USE_TIRPC_EPOLL})
+  add_subdirectory(libntirpc)
+  set(NTIRPC_LIBRARY ntirpc)
+  set(NTIRPC_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/libntirpc/ntirpc/")
+  message(STATUS "Using ntirpc submodule")
+endif (USE_SYSTEM_NTIRPC)
+message(${NTIRPC_INCLUDE_DIR})
+include_directories(${NTIRPC_INCLUDE_DIR})
 
 # All the plumbing in the basement
 set(SYSTEM_LIBRARIES
@@ -867,6 +950,7 @@ set(SYSTEM_LIBRARIES
   ${KRB5_LIBRARIES}
   ${CMAKE_THREAD_LIBS_INIT}
   ${LIBRT}
+  ${NTIRPC_LIBRARY}
 )
 
 # Config file; make sure it doesn't clobber an existing one
@@ -877,16 +961,6 @@ install(DIRECTORY config_samples DESTINATION share/doc/ganesha)
 # pre-create PREFIX/var/run/ganesha
 install(DIRECTORY DESTINATION ${SYSSTATEDIR}/run/ganesha)
 
-IF( NOT EXISTS ${PROJECT_SOURCE_DIR}/libntirpc/CMakeLists.txt )
-message( FATAL_ERROR
-"No CMakeLists.txt found in libntirpc
-This probably means that the directory was not properly populated.
-Please run the following command to do that and use cmake again:
-    git submodule update --init
-Alternatively, if you are not using git, get the current version at
-    https://github.com/nfs-ganesha/ntirpc" )
-ENDIF( NOT EXISTS ${PROJECT_SOURCE_DIR}/libntirpc/CMakeLists.txt )
-
 add_subdirectory(log)
 add_subdirectory(config_parsing)
 add_subdirectory(cidr)
@@ -896,7 +970,6 @@ add_subdirectory(hashtable)
 add_subdirectory(NodeList)
 add_subdirectory(cache_inode)
 add_subdirectory(SAL)
-add_subdirectory(libntirpc)
 add_subdirectory(RPCAL)
 add_subdirectory(Protocols)
 add_subdirectory(support)
@@ -939,10 +1012,14 @@ message(STATUS "USE_FSAL_LUSTRE = ${USE_FSAL_LUSTRE}")
 message(STATUS "USE_FSAL_SHOOK = ${USE_FSAL_SHOOK}")
 message(STATUS "USE_FSAL_LUSTRE_UP = ${USE_FSAL_LUSTRE_UP}")
 message(STATUS "USE_FSAL_GLUSTER = ${USE_FSAL_GLUSTER}")
+message(STATUS "USE_FSAL_NULL = ${USE_FSAL_NULL}")
+message(STATUS "USE_SYSTEM_NTIRPC = ${USE_SYSTEM_NTIRPC}")
 message(STATUS "USE_DBUS = ${USE_DBUS}")
 message(STATUS "USE_CB_SIMULATOR = ${USE_CB_SIMULATOR}")
 message(STATUS "USE_NFSIDMAP = ${USE_NFSIDMAP}")
 message(STATUS "ENABLE_ERROR_INJECTION = ${ENABLE_ERROR_INJECTION}")
+message(STATUS "ENABLE_VFS_DEBUG_ACL = ${ENABLE_VFS_DEBUG_ACL}")
+message(STATUS "ENABLE_RFC_ACL = ${ENABLE_RFC_ACL}")
 message(STATUS "USE_CAPS = ${USE_CAPS}")
 message(STATUS "USE_BLKID = ${USE_BLKID}")
 message(STATUS "STRICT_PACKAGE = ${STRICT_PACKAGE}")
@@ -964,6 +1041,7 @@ message(STATUS "TIRPC_EPOLL = ${TIRPC_EPOLL}")
 message(STATUS "USE_9P = ${USE_9P}")
 message(STATUS "_USE_9P = ${_USE_9P}")
 message(STATUS "_USE_9P_RDMA = ${_USE_9P_RDMA}")
+message(STATUS "USE_NFS_RDMA = ${USE_NFS_RDMA}")
 message(STATUS "KRB5_PREFIX = ${KRB5_PREFIX}")
 message(STATUS "CEPH_PREFIX = ${CEPH_PREFIX}")
 message(STATUS "HPSS_PREFIX = ${HPSS_PREFIX}")
@@ -983,6 +1061,7 @@ message(STATUS "USE_GUI_ADMIN_TOOLS = ${USE_GUI_ADMIN_TOOLS}")
 message(STATUS "MODULES_PATH = ${MODULES_PATH}")
 message(STATUS "USE_TSAN = ${USE_TSAN}")
 message(STATUS "USE_LTTNG = ${USE_LTTNG}")
+message(STATUS "USE_BLKIN = ${USE_BLKIN}")
 
 #force command line options to be stored in cache
 set(USE_FSAL_VFS ${USE_FSAL_VFS}
@@ -1085,6 +1164,16 @@ set(ENABLE_ERROR_INJECTION ${ENABLE_ERROR_INJECTION}
    "enable error injection"
    FORCE)
 
+set(ENABLE_VFS_DEBUG_ACL ${ENABLE_VFS_DEBUG_ACL}
+  CACHE BOOL
+   "Enable debug ACL store for VFS"
+   FORCE)
+
+set(ENABLE_RFC_ACL ${ENABLE_RFC_ACL}
+  CACHE BOOL
+   "Enable debug ACL store for VFS"
+   FORCE)
+
 set(_MSPAC_SUPPORT ${_MSPAC_SUPPORT}
   CACHE BOOL
    "enable mspac winbind support"
@@ -1135,14 +1224,14 @@ set(USE_LTTNG ${USE_LTTNG}
   "Enable LTTng tracing"
   FORCE)
 
-set(USE_NFS_MSK ${USE_NFS_MSK}
+set(USE_NFS_RDMA ${USE_NFS_RDMA}
   CACHE BOOL
-  "enable nfs Mooshika"
+  "enable nfs RDMA"
   FORCE)
 
-set(_USE_NFS_MSK ${USE_NFS_MSK}
+set(_USE_NFS_RDMA ${USE_NFS_RDMA}
   CACHE BOOL
-  "enable nfs Mooshika in config"
+  "enable nfs RDMA in config"
   FORCE)
 
 # Now create a useable config.h
@@ -1228,6 +1317,12 @@ else(USE_FSAL_PT)
     set(BCOND_PT "%bcond_with")
 endif(USE_FSAL_PT)
 
+if(USE_FSAL_NULL)
+    set(BCOND_NULLFS "%bcond_without")
+else(USE_FSAL_NULL)
+    set(BCOND_NULLFS "%bcond_with")
+endif(USE_FSAL_NULL)
+
 if(USE_9P_RDMA)
     set(BCOND_RDMA "%bcond_without")
 else(USE_9P_RDMA)
@@ -1257,6 +1352,12 @@ if(USE_GUI_ADMIN_TOOLS)
 else(USE_GUI_ADMIN_TOOLS)
     set(BCOND_GUI_UTILS "%bcond_with")
 endif(USE_GUI_ADMIN_TOOLS)
+
+if (USE_SYSTEM_NTIRPC)
+  set(BCOND_NTIRPC "%bcond_without")
+else(USE_SYSTEM_NTIRPC)
+  set(BCOND_NTIRPC "%bcond_with")
+endif(USE_SYSTEM_NTIRPC)
 
 # Now create a useable specfile
 configure_file(

@@ -1,0 +1,71 @@
+The following RFCs are useful references for Ganesha
+
+RPC Version 2
+	https://datatracker.ietf.org/doc/rfc5531/
+
+RPC Bind
+	https://datatracker.ietf.org/doc/rfc1833/
+
+NFS v2
+	We no longer implement V2 but for reference
+	https://www.rfc-editor.org/info/rfc1094
+
+NFS v3
+	https://www.rfc-editor.org/info/rfc1813
+
+NFS v4.0
+	https://www.rfc-editor.org/info/rfc7530
+
+	obsolete but we coded to it originally
+	https://www.rfc-editor.org/info/rfc3530
+
+NFS v4.0 XDR
+	https://www.rfc-editor.org/info/rfc7531
+
+NFS v4.0 Migration
+	https://datatracker.ietf.org/doc/draft-ietf-nfsv4-rfc3530-migration-update/
+	https://datatracker.ietf.org/doc/draft-ietf-nfsv4-migration-issues/
+
+NFS v4.1
+	https://www.rfc-editor.org/info/rfc5661
+
+NFS v4.1 XDR
+	https://www.rfc-editor.org/info/rfc5662
+
+NFS v4.1 PNFS Block Layout
+	https://www.rfc-editor.org/info/rfc5663
+
+NFS v4.1 PNFS Object Layout
+	https://www.rfc-editor.org/info/rfc5664
+
+NFS v4.1 PNFS Flex Files Layout
+	http://datatracker.ietf.org/doc/draft-ietf-nfsv4-flex-files/
+
+NFS v4.2
+	https://datatracker.ietf.org/doc/draft-ietf-nfsv4-minorversion2/
+
+NFS v4.2 XDR
+	https://datatracker.ietf.org/doc/draft-ietf-nfsv4-minorversion2-dot-x/
+
+NFS v4.x Versioning
+	https://datatracker.ietf.org/doc/draft-ietf-nfsv4-versioning/
+
+NFS V4 XATTRS
+	https://datatracker.ietf.org/doc/draft-ietf-nfsv4-xattrs/
+
+IANA Considerations for Remote Procedure Call (RPC) Network Identifiers and
+Universal Address Formats
+	https://www.rfc-editor.org/info/rfc5665
+
+Kerberos/GSS
+	https://www.rfc-editor.org/info/rfc1964
+	https://www.rfc-editor.org/info/rfc2025
+	https://www.rfc-editor.org/info/rfc2203
+	https://www.rfc-editor.org/info/rfc2623
+	https://www.rfc-editor.org/info/rfc4120
+	https://www.rfc-editor.org/info/rfc4121
+	https://www.rfc-editor.org/info/rfc5403
+	https://www.rfc-editor.org/info/rfc6112
+	https://www.rfc-editor.org/info/rfc6542
+	https://www.rfc-editor.org/info/rfc6649
+	and more...

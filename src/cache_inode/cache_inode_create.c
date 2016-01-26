@@ -161,7 +161,6 @@ cache_inode_create(cache_entry_t *parent,
 		LogFullDebug(COMPONENT_CACHE_INODE,
 			     "create failed because inconsistent entry");
 		goto out;
-		break;
 	}
 
 	/* Refresh the parent's attributes */
@@ -180,8 +179,7 @@ cache_inode_create(cache_entry_t *parent,
 			if (*entry != NULL) {
 				status = CACHE_INODE_ENTRY_EXISTS;
 				LogFullDebug(COMPONENT_CACHE_INODE,
-					     "create failed because it already "
-					     "exists");
+					     "create failed because it already exists");
 				if ((*entry)->type != type) {
 					/* Incompatible types, returns NULL */
 					cache_inode_put(*entry);
@@ -292,12 +290,12 @@ cache_inode_create_verify(cache_entry_t *entry,
 
 	if (cache_inode_lock_trust_attrs(entry, false)
 	    == CACHE_INODE_SUCCESS) {
-		if (FSAL_TEST_MASK
-		    (entry->obj_handle->attributes.mask, ATTR_ATIME)
-		    && FSAL_TEST_MASK(entry->obj_handle->attributes.mask,
-				      ATTR_MTIME)
-		    && entry->obj_handle->attributes.atime.tv_sec == verf_hi
-		    && entry->obj_handle->attributes.mtime.tv_sec == verf_lo) {
+		struct attrlist *attributes = entry->obj_handle->attrs;
+
+		if (FSAL_TEST_MASK(attributes->mask, ATTR_ATIME)
+		    && FSAL_TEST_MASK(attributes->mask, ATTR_MTIME)
+		    && attributes->atime.tv_sec == verf_hi
+		    && attributes->mtime.tv_sec == verf_lo) {
 			verified = true;
 		}
 		PTHREAD_RWLOCK_unlock(&entry->attr_lock);

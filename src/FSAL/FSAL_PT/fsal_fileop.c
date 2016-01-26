@@ -1,7 +1,20 @@
 /*
  * ----------------------------------------------------------------------------
  * Copyright IBM Corp. 2012, 2012
- * All Rights Reserved
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  * ----------------------------------------------------------------------------
  * ----------------------------------------------------------------------------
  * Filename:    fsal_fileop.c
@@ -77,12 +90,11 @@
  *      - ERR_FSAL_NO_ERROR: no error.
  *      - Another error code if an error occured during this call.
  */
-fsal_status_t PTFSAL_open(struct fsal_obj_handle *obj_hdl,	/* IN */
-			  const struct req_op_context *p_context,	/* IN */
-			  fsal_openflags_t openflags,	/* IN */
-			  int *file_desc,	/* OUT */
-			  struct attrlist *p_file_attributes	/* IN/OUT */
-			)
+fsal_status_t PTFSAL_open(struct fsal_obj_handle *obj_hdl,
+			  const struct req_op_context *p_context,
+			  fsal_openflags_t openflags,
+			  int *file_desc,
+			  struct attrlist *p_file_attributes)
 {
 
 	int rc;
@@ -164,14 +176,13 @@ fsal_status_t PTFSAL_open(struct fsal_obj_handle *obj_hdl,	/* IN */
  *      - ERR_FSAL_NO_ERROR: no error.
  *      - Another error code if an error occured during this call.
  */
-fsal_status_t PTFSAL_read(struct pt_fsal_obj_handle *myself,	/* IN */
+fsal_status_t PTFSAL_read(struct pt_fsal_obj_handle *myself,
 			  const struct req_op_context *opctx,
-			  uint64_t offset,	/* [IN] */
-			  size_t buffer_size,	/* IN */
-			  caddr_t buffer,	/* OUT */
-			  size_t *p_read_amount,	/* OUT */
-			  bool *p_end_of_file	/* OUT */
-			)
+			  uint64_t offset,
+			  size_t buffer_size,
+			  caddr_t buffer,
+			  size_t *p_read_amount,
+			  bool *p_end_of_file)
 {
 
 	ssize_t nb_read;
@@ -232,12 +243,12 @@ fsal_status_t PTFSAL_read(struct pt_fsal_obj_handle *myself,	/* IN */
  */
 fsal_status_t PTFSAL_write(struct pt_fsal_obj_handle *p_file_descriptor,
 			   const struct req_op_context *opctx,
-			   uint64_t offset,	/* IN */
-			   size_t buffer_size,	/* IN */
-			   caddr_t buffer,	/* IN */
-			   size_t *p_write_amount,	/* OUT */
+			   uint64_t offset,
+			   size_t buffer_size,
+			   caddr_t buffer,
+			   size_t *p_write_amount,
 			   bool *fsal_stable)
-{				/* IN/OUT */
+{
 
 	size_t nb_written;
 	size_t i_size;
@@ -307,7 +318,7 @@ fsal_status_t PTFSAL_write(struct pt_fsal_obj_handle *p_file_descriptor,
  */
 
 fsal_status_t PTFSAL_close(int p_file_descriptor)
-{				/* IN */
+{
 
 	FSI_TRACE(FSI_DEBUG, "FSI - Begin PTFSAL close---------------\n");
 
@@ -331,11 +342,6 @@ fsal_status_t PTFSAL_close(int p_file_descriptor)
 	FSI_TRACE(FSI_DEBUG, "FSI - End PTFSAL close-----------------\n");
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
-}
-
-unsigned int PTFSAL_GetFileno(int pfile)
-{
-	return pfile;
 }
 
 /**

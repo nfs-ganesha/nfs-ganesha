@@ -132,6 +132,7 @@ typedef uint32_t fsal_acetype_t;
 #define FSAL_ACE_TYPE_DENY  1
 #define FSAL_ACE_TYPE_AUDIT 2
 #define FSAL_ACE_TYPE_ALARM 3
+#define FSAL_ACE_TYPE_MAX   4
 
 /** ACE flag */
 
@@ -148,6 +149,7 @@ typedef uint32_t fsal_aceflag_t;
 
 /** ACE internal flags */
 
+#define FSAL_ACE_IFLAG_MODE_GEN       0x10000000
 #define FSAL_ACE_IFLAG_EXCLUDE_FILES  0x40000000
 #define FSAL_ACE_IFLAG_EXCLUDE_DIRS   0x20000000
 #define FSAL_ACE_IFLAG_SPECIAL_ID     0x80000000
@@ -237,25 +239,29 @@ typedef struct fsal_acl_data__ {
 	IS_FSAL_ACE_TYPE(ACE, FSAL_ACE_TYPE_AUDIT)
 #define IS_FSAL_ACE_ALRAM(ACE) \
 	IS_FSAL_ACE_TYPE(ACE, FSAL_ACE_TYPE_ALARM)
+#define IS_FSAL_ACE_PERM(ACE) \
+	(IS_FSAL_ACE_ALLOW(ACE) || IS_FSAL_ACE_DENY(ACE))
 
+#define IS_FSAL_ACE_FLAG(ACE, BIT) \
+	IS_FSAL_ACE_BIT(GET_FSAL_ACE_FLAG(ACE), (BIT))
 #define IS_FSAL_ACE_FILE_INHERIT(ACE) \
-	IS_FSAL_ACE_BIT(GET_FSAL_ACE_FLAG(ACE), FSAL_ACE_FLAG_FILE_INHERIT)
+	IS_FSAL_ACE_FLAG(ACE, FSAL_ACE_FLAG_FILE_INHERIT)
 #define IS_FSAL_ACE_DIR_INHERIT(ACE) \
-	IS_FSAL_ACE_BIT(GET_FSAL_ACE_FLAG(ACE), FSAL_ACE_FLAG_DIR_INHERIT)
+	IS_FSAL_ACE_FLAG(ACE, FSAL_ACE_FLAG_DIR_INHERIT)
 #define IS_FSAL_ACE_NO_PROPAGATE(ACE) \
-	IS_FSAL_ACE_BIT(GET_FSAL_ACE_FLAG(ACE), FSAL_ACE_FLAG_NO_PROPAGATE)
+	IS_FSAL_ACE_FLAG(ACE, FSAL_ACE_FLAG_NO_PROPAGATE)
 #define IS_FSAL_ACE_INHERIT_ONLY(ACE) \
-	IS_FSAL_ACE_BIT(GET_FSAL_ACE_FLAG(ACE), FSAL_ACE_FLAG_INHERIT_ONLY)
+	IS_FSAL_ACE_FLAG(ACE, FSAL_ACE_FLAG_INHERIT_ONLY)
 #define IS_FSAL_ACE_FLAG_SUCCESSFUL(ACE) \
-	IS_FSAL_ACE_BIT(GET_FSAL_ACE_FLAG(ACE), FSAL_ACE_FLAG_SUCCESSFUL)
+	IS_FSAL_ACE_FLAG(ACE, FSAL_ACE_FLAG_SUCCESSFUL)
 #define IS_FSAL_ACE_AUDIT_FAILURE(ACE) \
-	IS_FSAL_ACE_BIT(GET_FSAL_ACE_FLAG(ACE), FSAL_ACE_FLAG_FAILED)
+	IS_FSAL_ACE_FLAG(ACE, FSAL_ACE_FLAG_FAILED)
 #define IS_FSAL_ACE_GROUP_ID(ACE) \
-	IS_FSAL_ACE_BIT(GET_FSAL_ACE_FLAG(ACE), FSAL_ACE_FLAG_GROUP_ID)
+	IS_FSAL_ACE_FLAG(ACE, FSAL_ACE_FLAG_GROUP_ID)
 #define IS_FSAL_ACE_INHERIT(ACE) \
-	IS_FSAL_ACE_BIT(GET_FSAL_ACE_FLAG(ACE), FSAL_ACE_FLAG_INHERIT)
+	IS_FSAL_ACE_FLAG(ACE, FSAL_ACE_FLAG_INHERIT)
 #define IS_FSAL_ACE_INHERTED(ACE) \
-	IS_FSAL_ACE_BIT(GET_FSAL_ACE_FLAG(ACE), FSAL_ACE_FLAG_INHERITED)
+	IS_FSAL_ACE_FLAG(ACE, FSAL_ACE_FLAG_INHERITED)
 
 #define GET_FSAL_ACE_WHO_TYPE(ACE) \
 	(IS_FSAL_ACE_GROUP_ID(ACE) ? "gid" : "uid")
@@ -268,9 +274,16 @@ typedef struct fsal_acl_data__ {
 	IS_FSAL_ACE_USER(ACE, FSAL_ACE_SPECIAL_GROUP)
 #define IS_FSAL_ACE_SPECIAL_EVERYONE(ACE) \
 	  IS_FSAL_ACE_USER(ACE, FSAL_ACE_SPECIAL_EVERYONE)
+#define IS_FSAL_ACE_SPECIAL(ACE) \
+	(IS_FSAL_ACE_SPECIAL_OWNER(ACE) || \
+	 IS_FSAL_ACE_SPECIAL_GROUP(ACE) || \
+	 IS_FSAL_ACE_SPECIAL_EVERYONE(ACE))
 
 /* Macros for internal NFS4 ACE flags. */
 
+#define IS_FSAL_ACE_MODE_GEN(ACE) \
+	IS_FSAL_ACE_BIT(GET_FSAL_ACE_IFLAG(ACE), \
+			FSAL_ACE_IFLAG_MODE_GEN)
 #define IS_FSAL_ACE_SPECIAL_ID(ACE) \
 	IS_FSAL_ACE_BIT(GET_FSAL_ACE_IFLAG(ACE), \
 			FSAL_ACE_IFLAG_SPECIAL_ID)
@@ -387,6 +400,16 @@ typedef uint64_t attrmask_t;
 		      ATTR_ATIME    | ATTR_MTIME    | \
 		      ATTR_CTIME    | ATTR_SPACEUSED)
 
+#define ATTRS_TIME (ATTR_ATIME | ATTR_MTIME | ATTR_CTIME)
+#define ATTRS_CREDS (ATTR_OWNER | ATTR_GROUP)
+
+#define CREATE_MASK_NON_REG_NFS3 (ATTRS_TIME)
+#define CREATE_MASK_NON_REG_NFS4 (ATTRS_TIME | ATTR_ACL)
+
+#define CREATE_MASK_REG_NFS3 (CREATE_MASK_NON_REG_NFS3 | ATTR_SIZE)
+#define CREATE_MASK_REG_NFS4 (CREATE_MASK_NON_REG_NFS4 | ATTR_SIZE)
+
+
 /**
  * @brief A list of FS object's attributes.
  */
@@ -430,17 +453,17 @@ struct attrlist {
  *  example :
  *  FSAL_TEST_MASK( attrib_list.mask, FSAL_ATTR_CREATION )
  */
-#define FSAL_TEST_MASK(_attrib_mask_ , _attr_const_) \
+#define FSAL_TEST_MASK(_attrib_mask_, _attr_const_) \
 	((_attrib_mask_) & (_attr_const_))
 
 /** this macro sets an attribute
  *  example :
  *  FSAL_SET_MASK( attrib_list.mask, FSAL_ATTR_CREATION )
  */
-#define FSAL_SET_MASK(_attrib_mask_ , _attr_const_) \
+#define FSAL_SET_MASK(_attrib_mask_, _attr_const_) \
 	((_attrib_mask_) |= (_attr_const_))
 
-#define FSAL_UNSET_MASK(_attrib_mask_ , _attr_const_) \
+#define FSAL_UNSET_MASK(_attrib_mask_, _attr_const_) \
 	((_attrib_mask_) &= ~(_attr_const_))
 
 /** this macro clears the attribute mask
@@ -489,11 +512,12 @@ typedef enum {
 	FSAL_ACCESS_OK = 0x00000000,	/*< Allow */
 	FSAL_ACCESS_FLAG_BIT_MASK = 0x80000000,
 	FSAL_MODE_BIT_MASK = 0x07000000,
-	FSAL_ACE4_BIT_MASK = 0x40FFFFFF,
+	FSAL_ACE4_BIT_MASK = 0x50FFFFFF,
 	FSAL_MODE_MASK_FLAG = 0x00000000,
 	FSAL_ACE4_MASK_FLAG = 0x80000000,
-	FSAL_ACE4_PERM_CONTINUE = 0x40000000	/*< Indicate ACL evaluation
+	FSAL_ACE4_PERM_CONTINUE = 0x40000000,	/*< Indicate ACL evaluation
 						 * should continue */
+	FSAL_ACE4_REQ_FLAG = 0x10000000, /*< Indicate required ACL allow */
 } fsal_accessflags_t;
 
 static inline fsal_accessflags_t FSAL_MODE_MASK(fsal_accessflags_t access)
@@ -513,6 +537,8 @@ static inline fsal_accessflags_t FSAL_ACE4_MASK(fsal_accessflags_t access)
 	((access & FSAL_ACCESS_FLAG_BIT_MASK) == FSAL_MODE_MASK_FLAG)
 #define IS_FSAL_ACE4_MASK_VALID(access) \
 	((access & FSAL_ACCESS_FLAG_BIT_MASK) == FSAL_ACE4_MASK_FLAG)
+
+#define IS_FSAL_ACE4_REQ(access) (access & FSAL_ACE4_REQ_FLAG)
 
 #define FSAL_WRITE_ACCESS (FSAL_MODE_MASK_SET(FSAL_W_OK) | \
 			   FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_DATA | \
@@ -545,6 +571,8 @@ typedef uint16_t fsal_openflags_t;
 						     * be used as a mask */
 #define FSAL_O_SYNC     0x0004	/* sync */
 #define FSAL_O_RECLAIM  0x0008	/* open reclaim */
+#define FSAL_O_REOPEN   0x0010  /* re-open */
+#define FSAL_O_ANY      0x0020  /* any open file descriptor is usable */
 
 /** File system static info. */
 
@@ -568,7 +596,6 @@ typedef enum enum_fsal_fsinfo_options {
 	fso_auth_exportpath_xdev,
 	fso_delegations_r,
 	fso_delegations_w,
-	fso_accesscheck_support,
 	fso_share_support,
 	fso_share_support_owner,
 	fso_pnfs_ds_supported,
@@ -616,8 +643,6 @@ typedef struct fsal_staticfsinfo_t {
 
 	uint32_t xattr_access_rights;	/*< This indicates who is allowed
 					   to read/modify xattrs value. */
-	bool accesscheck_support;	/*< This indicates whether access check
-					   will be done in FSAL. */
 	bool share_support;	/*< FS supports share reservation? */
 	bool share_support_owner;	/*< FS supports share reservation
 					   with open owners ? */
@@ -653,6 +678,7 @@ typedef enum fsal_errors_t {
 	ERR_FSAL_ROFS = 30,
 	ERR_FSAL_MLINK = 31,
 	ERR_FSAL_DQUOT = 49,
+	ERR_FSAL_NO_DATA = 61,
 	ERR_FSAL_NAMETOOLONG = 78,
 	ERR_FSAL_NOTEMPTY = 93,
 	ERR_FSAL_STALE = 151,
@@ -663,10 +689,12 @@ typedef enum fsal_errors_t {
 	ERR_FSAL_SERVERFAULT = 10006,
 	ERR_FSAL_BADTYPE = 10007,
 	ERR_FSAL_DELAY = 10008,
+	ERR_FSAL_LOCKED = 10012,
 	ERR_FSAL_FHEXPIRED = 10014,
 	ERR_FSAL_SHARE_DENIED = 10015,
 	ERR_FSAL_SYMLINK = 10029,
 	ERR_FSAL_ATTRNOTSUPP = 10032,
+	ERR_FSAL_BAD_RANGE = 10042,
 	ERR_FSAL_NOT_INIT = 20001,
 	ERR_FSAL_ALREADY_INIT = 20002,
 	ERR_FSAL_BAD_INIT = 20003,
@@ -681,6 +709,7 @@ typedef enum fsal_errors_t {
 	ERR_FSAL_FILE_OPEN = 10046,
 	ERR_FSAL_UNION_NOTSUPP = 10094,
 	ERR_FSAL_IN_GRACE = 10095,
+	ERR_FSAL_NO_ACE = 10096,
 } fsal_errors_t;
 
 /**

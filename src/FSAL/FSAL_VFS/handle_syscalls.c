@@ -61,7 +61,7 @@ int vfs_readlink(struct vfs_fsal_obj_handle *myself,
 	if (fd < 0)
 		return fd;
 
-	retval = vfs_stat_by_handle(fd, myself->handle, &st, flags);
+	retval = vfs_stat_by_handle(fd, &st);
 	if (retval < 0)
 		goto error;
 
@@ -122,8 +122,8 @@ int vfs_get_root_handle(struct vfs_filesystem *vfs_fs,
 		}
 
 		LogInfo(COMPONENT_FSAL,
-			"Reindexed filesystem %s to "
-			"fsid=0x%016"PRIx64".0x%016"PRIx64,
+			"Reindexed filesystem %s to fsid=0x%016"
+			PRIx64".0x%016"PRIx64,
 			vfs_fs->fs->path,
 			vfs_fs->fs->fsid.major,
 			vfs_fs->fs->fsid.minor);

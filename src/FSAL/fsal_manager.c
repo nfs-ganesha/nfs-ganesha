@@ -246,8 +246,9 @@ int load_fsal(const char *name,
 /* now it is the module's turn to register itself */
 
 
-	if (load_state == loading) {	/* constructor didn't fire */
-		void (*module_init) (void);
+	if (load_state == loading) {
+		/* constructor didn't fire */
+		void (*module_init)(void);
 		char *sym_error;
 
 		module_init = dlsym(dl, "fsal_init");
@@ -256,15 +257,15 @@ int load_fsal(const char *name,
 			dl_error = gsh_strdup(sym_error);
 			so_error = ENOENT;
 			LogCrit(COMPONENT_INIT,
-				"Could not execute symbol fsal_init"
-				" from module:%s Error:%s", path, dl_error);
+				"Could not execute symbol fsal_init from module:%s Error:%s",
+				path, dl_error);
 			goto dlerr;
 		}
 		if ((void *)module_init == NULL) {
 			so_error = EFAULT;
 			LogCrit(COMPONENT_INIT,
-				"Could not execute symbol fsal_init"
-				" from module:%s Error:%s", path, dl_error);
+				"Could not execute symbol fsal_init from module:%s Error:%s",
+				path, dl_error);
 			goto dlerr;
 		}
 		PTHREAD_MUTEX_unlock(&fsal_lock);
@@ -276,15 +277,15 @@ int load_fsal(const char *name,
 	if (load_state == error) {	/* we are in registration hell */
 		retval = so_error;	/* this is the registration error */
 		LogCrit(COMPONENT_INIT,
-			"Could not execute symbol fsal_init"
-			" from module:%s Error:%s", path, dl_error);
+			"Could not execute symbol fsal_init from module:%s Error:%s",
+			path, dl_error);
 		goto dlerr;
 	}
 	if (load_state != registered) {
 		retval = EPERM;
 		LogCrit(COMPONENT_INIT,
-			"Could not execute symbol fsal_init"
-			" from module:%s Error:%s", path, dl_error);
+			"Could not execute symbol fsal_init from module:%s Error:%s",
+			path, dl_error);
 		goto dlerr;
 	}
 
@@ -385,8 +386,8 @@ int register_fsal(struct fsal_module *fsal_hdl, const char *name,
 	    || (minor_version > FSAL_MINOR_VERSION)) {
 		so_error = EINVAL;
 		LogCrit(COMPONENT_INIT,
-			"FSAL \"%s\" failed to register because "
-			"of version mismatch core = %d.%d, fsal = %d.%d", name,
+			"FSAL \"%s\" failed to register because of version mismatch core = %d.%d, fsal = %d.%d",
+			name,
 			FSAL_MAJOR_VERSION, FSAL_MINOR_VERSION, major_version,
 			minor_version);
 		load_state = error;

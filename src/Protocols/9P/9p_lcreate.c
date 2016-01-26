@@ -46,8 +46,7 @@
 #include "fsal.h"
 #include "9p.h"
 
-int _9p_lcreate(struct _9p_request_data *req9p, void *worker_data,
-		u32 *plenout, char *preply)
+int _9p_lcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 	u16 *msgtag = NULL;
@@ -83,24 +82,21 @@ int _9p_lcreate(struct _9p_request_data *req9p, void *worker_data,
 		 *gid);
 
 	if (*fid >= _9P_FID_PER_CONN)
-		return _9p_rerror(req9p, worker_data, msgtag, ERANGE, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, ERANGE, plenout, preply);
 
 	pfid = req9p->pconn->fids[*fid];
 
 	/* Check that it is a valid fid */
 	if (pfid == NULL || pfid->pentry == NULL) {
 		LogDebug(COMPONENT_9P, "request on invalid fid=%u", *fid);
-		return _9p_rerror(req9p, worker_data, msgtag, EIO, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, EIO, plenout, preply);
 	}
 
-	if ((pfid->op_context.export_perms->options &
+	_9p_init_opctx(pfid, req9p);
+	if ((op_ctx->export_perms->options &
 				 EXPORT_OPTION_WRITE_ACCESS) == 0)
-		return _9p_rerror(req9p, worker_data, msgtag, EROFS, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, EROFS, plenout, preply);
 
-	op_ctx = &pfid->op_context;
 	snprintf(file_name, MAXNAMLEN, "%.*s", *name_len, name_str);
 
 	/* Create the file */
@@ -111,68 +107,28 @@ int _9p_lcreate(struct _9p_request_data *req9p, void *worker_data,
 	    cache_inode_create(pfid->pentry, file_name, REGULAR_FILE, *mode,
 			       NULL, &pentry_newfile);
 	if (pentry_newfile == NULL)
-		return _9p_rerror(req9p, worker_data, msgtag,
+		return _9p_rerror(req9p, msgtag,
 				  _9p_tools_errno(cache_status), plenout,
 				  preply);
 
-	cache_status =
-	    cache_inode_fileid(pentry_newfile, &fileid);
-	if (cache_status != CACHE_INODE_SUCCESS)
-		return _9p_rerror(req9p, worker_data, msgtag,
-				  _9p_tools_errno(cache_status), plenout,
-				  preply);
+	fileid = cache_inode_fileid(pentry_newfile);
 
 	_9p_openflags2FSAL(flags, &openflags);
+	pfid->state.state_data.fid.share_access =
+		_9p_openflags_to_share_access(flags);
 
 	cache_status = cache_inode_open(pentry_newfile, openflags, 0);
 	if (cache_status != CACHE_INODE_SUCCESS) {
-		/* Owner override..
-		 * deal with this stupid 04xy mode corner case */
-		/** @todo this is racy, use cache_inode_lock_trust_attrs
-		 *        also, this owner override check is not
-		 *        strictly true, this is not the only mode
-		 *        that could be in play.
-		 */
-		if ((cache_status == CACHE_INODE_FSAL_EACCESS)
-		    && (pfid->op_context.creds->caller_uid ==
-			pentry_newfile->obj_handle->attributes.owner)
-		    && ((*mode & 0400) == 0400)) {
-			/* If we reach this piece of code, this means that
-			 * a user did open( O_CREAT, 04xy) on a file the
-			 * file was created in 04xy mode by the forme
-			 * cache_inode code, but for the mode is 04xy
-			 * the user is not allowed to open it.
-			 * Becoming root override this */
-			uid_t saved_uid = pfid->op_context.creds->caller_uid;
-
-			/* Become root */
-			pfid->op_context.creds->caller_uid = 0;
-
-			/* Do the job as root */
-			cache_status =
-			    cache_inode_open(pentry_newfile, openflags, 0);
-
-			/* Back to standard user */
-			pfid->op_context.creds->caller_uid = saved_uid;
-
-			if (cache_status != CACHE_INODE_SUCCESS)
-				return _9p_rerror(req9p, worker_data, msgtag,
-						  _9p_tools_errno(cache_status),
-						  plenout, preply);
-		} else
-			return _9p_rerror(req9p, worker_data, msgtag,
-					  _9p_tools_errno(cache_status),
-					  plenout, preply);
+		return _9p_rerror(req9p, msgtag,
+				  _9p_tools_errno(cache_status),
+				  plenout, preply);
 	}
-
-	/* This is not a TATTACH fid */
-	pfid->from_attach = false;
 
 	/* Pin as well. We probably want to close the file if this fails,
 	 * but it won't happen - right?! */
 	cache_status = cache_inode_inc_pin_ref(pentry_newfile);
 	if (cache_status != CACHE_INODE_SUCCESS)
-		return _9p_rerror(req9p, worker_data, msgtag,
+		return _9p_rerror(req9p, msgtag,
 				  _9p_tools_errno(cache_status), plenout,
 				  preply);
 

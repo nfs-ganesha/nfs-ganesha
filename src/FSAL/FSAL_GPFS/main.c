@@ -77,7 +77,6 @@ static struct fsal_staticfsinfo_t default_gpfs_info = {
 	.umask = 0,
 	.auth_exportpath_xdev = true,
 	.xattr_access_rights = 0,
-	.accesscheck_support = true,
 	.share_support = true,
 	.share_support_owner = false,
 	.delegations = FSAL_OPTION_FILE_READ_DELEG, /* not working with pNFS */
@@ -228,10 +227,17 @@ static struct gpfs_fsal_module GPFS;
 /* linkage to the exports and handle ops initializers
  */
 
+int gpfs_max_fh_size;
+
 MODULE_INIT void gpfs_init(void)
 {
 	int retval;
 	struct fsal_module *myself = &GPFS.fsal;
+
+	if (nfs_param.core_param.short_file_handle)
+		gpfs_max_fh_size = OPENHANDLE_SHORT_HANDLE_LEN;
+	else
+		gpfs_max_fh_size = OPENHANDLE_HANDLE_LEN;
 
 	retval = register_fsal(myself, myname, FSAL_MAJOR_VERSION,
 			       FSAL_MINOR_VERSION, FSAL_ID_GPFS);

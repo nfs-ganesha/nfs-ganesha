@@ -37,16 +37,12 @@
  * @brief Cancel a blocked range lock
  *
  * @param[in]  arg
- * @param[in]  export
- * @param[in]  worker
  * @param[in]  req
  * @param[out] res
  *
  */
 
-int nlm4_Cancel(nfs_arg_t *args,
-		nfs_worker_data_t *worker,
-		struct svc_req *req, nfs_res_t *res)
+int nlm4_Cancel(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 {
 	nlm4_cancargs *arg = &args->arg_nlm4_cancel;
 	cache_entry_t *entry;
@@ -101,6 +97,9 @@ int nlm4_Cancel(nfs_arg_t *args,
 				    &nsm_client,
 				    &nlm_client,
 				    &nlm_owner,
+				    NULL,
+				    false,
+				    0,
 				    NULL);
 
 	if (rc >= 0) {
@@ -143,6 +142,7 @@ static void nlm4_cancel_message_resp(state_async_queue_t *arg)
 
 	if (isFullDebug(COMPONENT_NLM)) {
 		char buffer[1024];
+
 		netobj_to_string(&nlm_arg->nlm_async_args.nlm_async_res.
 				 res_nlm4test.cookie, buffer, 1024);
 		LogFullDebug(COMPONENT_NLM,
@@ -165,15 +165,11 @@ static void nlm4_cancel_message_resp(state_async_queue_t *arg)
  * @brief Cancel Lock Message
  *
  *  @param[in]  arg
- *  @param[in]  export
- *  @param[in]  worker
  *  @param[in]  req
  *  @param[out] res
  *
  */
-int nlm4_Cancel_Message(nfs_arg_t *args,
-			nfs_worker_data_t *worker, struct svc_req *req,
-			nfs_res_t *res)
+int nlm4_Cancel_Message(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 {
 	state_nlm_client_t *nlm_client = NULL;
 	state_nsm_client_t *nsm_client;
@@ -196,7 +192,7 @@ int nlm4_Cancel_Message(nfs_arg_t *args,
 	if (nlm_client == NULL)
 		rc = NFS_REQ_DROP;
 	else
-		rc = nlm4_Cancel(args, worker, req, res);
+		rc = nlm4_Cancel(args, req, res);
 
 	if (rc == NFS_REQ_OK)
 		rc = nlm_send_async_res_nlm4(nlm_client,

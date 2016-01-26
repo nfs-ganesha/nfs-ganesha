@@ -177,8 +177,8 @@ nfsstat4 lustre_getdeviceinfo(struct fsal_module *fsal_hdl,
 
 	if (!inline_xdr_u_int32_t(da_addr_body, &stripe_count)) {
 		LogCrit(COMPONENT_PNFS,
-			"Failed to encode length of "
-			"stripe_indices array: %" PRIu32 ".",
+			"Failed to encode length of stripe_indices array: %"
+			PRIu32 ".",
 			stripe_count);
 		return NFS4ERR_SERVERFAULT;
 	}
@@ -376,7 +376,7 @@ lustre_layoutget(struct fsal_obj_handle *obj_hdl,
 			util,
 			0,
 			0,
-			req_ctx->export->export_id,
+			&req_ctx->export->export_id,
 			1,
 			&ds_desc);
 	if (nfs_status) {

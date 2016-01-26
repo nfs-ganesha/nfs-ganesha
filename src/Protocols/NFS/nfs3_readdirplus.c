@@ -90,7 +90,7 @@ nfsstat3 nfs_readdir_dot_entry(cache_entry_t *entry, const char *name,
 	cb_parms.in_result = true;
 	cache_status = cb(&cb_parms,
 			  entry,
-			  &entry->obj_handle->attributes,
+			  entry->obj_handle->attrs,
 			  0,
 			  CB_ORIGINAL);
 
@@ -106,7 +106,6 @@ nfsstat3 nfs_readdir_dot_entry(cache_entry_t *entry, const char *name,
  * Implements the NFSPROC3_READDIRPLUS function
  *
  * @param[in]  arg     NFS argument union
- * @param[in]  worker  Worker thread
  * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call
  *
@@ -115,9 +114,7 @@ nfsstat3 nfs_readdir_dot_entry(cache_entry_t *entry, const char *name,
  * @retval NFS_REQ_FAILED if failed and not retryable
  */
 
-int nfs3_readdirplus(nfs_arg_t *arg,
-		     nfs_worker_data_t *worker,
-		     struct svc_req *req, nfs_res_t *res)
+int nfs3_readdirplus(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
 	cache_entry_t *dir_entry = NULL;
 	uint64_t begin_cookie = 0;
@@ -179,8 +176,8 @@ int nfs3_readdirplus(nfs_arg_t *arg,
 	tracker.total_entries = estimated_num_entries;
 
 	LogFullDebug(COMPONENT_NFS_READDIR,
-		     "nfs3_readdirplus: dircount=%u " "begin_cookie=%" PRIu64
-		     " " "estimated_num_entries=%lu, mem_left=%zd",
+		     "nfs3_readdirplus: dircount=%u begin_cookie=%" PRIu64
+		     " estimated_num_entries=%lu, mem_left=%zd",
 		     arg->arg_readdirplus3.dircount, begin_cookie,
 		     estimated_num_entries, tracker.mem_left);
 
@@ -265,6 +262,7 @@ int nfs3_readdirplus(nfs_arg_t *arg,
 	/* Fill in ".." */
 	if (begin_cookie <= 1) {
 		cache_entry_t *parent_dir_entry = NULL;
+
 		cache_status_gethandle = cache_inode_lookupp(dir_entry,
 							     &parent_dir_entry);
 
@@ -522,6 +520,4 @@ static void free_entryplus3s(entryplus3 *entryplus3s)
 	}
 
 	gsh_free(entryplus3s);
-
-	return;
-}				/* free_entryplus3s */
+}

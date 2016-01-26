@@ -47,14 +47,9 @@
 
 char v4_recov_dir[PATH_MAX];
 char v4_old_dir[PATH_MAX];
-
-/**
- * @brief Grace period control data
- */
-static grace_t grace = {
-	.g_clid_list = GLIST_HEAD_INIT(grace.g_clid_list),
-	.g_mutex = PTHREAD_MUTEX_INITIALIZER
-};
+time_t current_grace;
+pthread_mutex_t grace_mutex = PTHREAD_MUTEX_INITIALIZER;        /*< Mutex */
+struct glist_head clid_list = GLIST_HEAD_INIT(clid_list);  /*< Clients */
 
 static void nfs4_load_recov_clids_nolock(nfs_grace_start_t *gsp);
 static void nfs_release_nlm_state(char *release_ip);
@@ -77,18 +72,17 @@ void nfs4_start_grace(nfs_grace_start_t *gsp)
 		return;
 	}
 
-	PTHREAD_MUTEX_lock(&grace.g_mutex);
+	PTHREAD_MUTEX_lock(&grace_mutex);
 
 	/* grace should always be greater than or equal to lease time,
 	 * some clients are known to have problems with grace greater than 60
 	 * seconds Lease_Lifetime should be set to a smaller value for those
 	 * setups.
 	 */
-	grace.g_start = time(NULL);
-	grace.g_duration = nfs_param.nfsv4_param.lease_lifetime;
+	atomic_store_time_t(&current_grace, time(NULL));
 
 	LogEvent(COMPONENT_STATE, "NFS Server Now IN GRACE, duration %d",
-		 (int)grace.g_duration);
+		 (int)nfs_param.nfsv4_param.lease_lifetime);
 	/*
 	 * if called from failover code and given a nodeid, then this node
 	 * is doing a take over.  read in the client ids from the failing node
@@ -108,10 +102,8 @@ void nfs4_start_grace(nfs_grace_start_t *gsp)
 				nfs4_load_recov_clids_nolock(gsp);
 		}
 	}
-	PTHREAD_MUTEX_unlock(&grace.g_mutex);
+	PTHREAD_MUTEX_unlock(&grace_mutex);
 }
-
-int last_grace = -1;
 
 /**
  * @brief Check if we are in the grace period
@@ -122,13 +114,13 @@ int last_grace = -1;
 int nfs_in_grace(void)
 {
 	int in_grace;
+	static int last_grace  = -1;
 
 	if (nfs_param.nfsv4_param.graceless)
 		return 0;
 
-	PTHREAD_MUTEX_lock(&grace.g_mutex);
-
-	in_grace = ((grace.g_start + grace.g_duration) > time(NULL));
+	in_grace = ((atomic_fetch_time_t(&current_grace) +
+		     nfs_param.nfsv4_param.lease_lifetime) > time(NULL));
 
 	if (in_grace != last_grace) {
 		LogEvent(COMPONENT_STATE, "NFS Server Now %s",
@@ -137,8 +129,6 @@ int nfs_in_grace(void)
 	} else if (in_grace) {
 		LogDebug(COMPONENT_STATE, "NFS Server IN GRACE");
 	}
-
-	PTHREAD_MUTEX_unlock(&grace.g_mutex);
 
 	return in_grace;
 }
@@ -227,7 +217,7 @@ void nfs4_create_clid_name(nfs_client_record_t *cl_rec,
 					     PATH_MAX) > 0) {
 		/* convert_opaque_value_max_for_dir does not prefix
 		 * the "(<length>:". So we need to do it here */
-		sprintf(cidstr_len, "%ld", strlen(cidstr));
+		snprintf(cidstr_len, sizeof(cidstr_len), "%zd", strlen(cidstr));
 		total_len = strlen(cidstr) + strlen(str_client_addr) + 5 +
 			    strlen(cidstr_len);
 		/* hold both long form clientid and IP */
@@ -236,7 +226,6 @@ void nfs4_create_clid_name(nfs_client_record_t *cl_rec,
 			LogEvent(COMPONENT_CLIENTID, "Mem_Alloc FAILED");
 			return;
 		}
-		memset(clientid->cid_recov_dir, 0, total_len);
 
 		(void) snprintf(clientid->cid_recov_dir, total_len,
 				"%s-(%s:%s)",
@@ -276,7 +265,7 @@ void nfs4_create_clid_name41(nfs_client_record_t *cl_rec,
 					     PATH_MAX) > 0) {
 		/* convert_opaque_value_max_for_dir does not prefix
 		 * the "(<length>:". So we need to do it here */
-		sprintf(cidstr_len, "%ld", strlen(cidstr));
+		snprintf(cidstr_len, sizeof(cidstr_len), "%zd", strlen(cidstr));
 		total_len = strlen(cidstr) + strlen(buf) + 5 +
 			    strlen(cidstr_len);
 		/* hold both long form clientid and IP */
@@ -285,7 +274,6 @@ void nfs4_create_clid_name41(nfs_client_record_t *cl_rec,
 			LogEvent(COMPONENT_CLIENTID, "Mem_Alloc FAILED");
 			return;
 		}
-		memset(clientid->cid_recov_dir, 0, total_len);
 
 		(void) snprintf(clientid->cid_recov_dir, total_len,
 				"%s-(%s:%s)",
@@ -328,6 +316,7 @@ void nfs4_add_clid(nfs_client_id_t *clientid)
 		/* if the (remaining) clientid is shorter than 255 */
 		/* create the last level of dir and break out */
 		int len = strlen(&clientid->cid_recov_dir[position]);
+
 		if (len <= NAME_MAX) {
 			strcat(path, "/");
 			strncat(path, &clientid->cid_recov_dir[position], len);
@@ -379,7 +368,10 @@ void nfs4_rm_revoked_handles(char *path)
 				dentp->d_name[0] != '\x1') {
 			continue;
 		}
-		sprintf(del_path, "%s/%s", path, dentp->d_name);
+
+		snprintf(del_path, sizeof(del_path), "%s/%s",
+			 path, dentp->d_name);
+
 		if (unlink(del_path) < 0) {
 			LogEvent(COMPONENT_CLIENTID,
 					"unlink of %s failed errno: %d",
@@ -479,7 +471,7 @@ void  nfs4_chk_clid_impl(nfs_client_id_t *clientid, clid_entry_t **clid_ent_arg)
 		return;
 
 	/* If there were no clients at time of restart, we're done */
-	if (glist_empty(&grace.g_clid_list))
+	if (glist_empty(&clid_list))
 		return;
 
 	/*
@@ -487,7 +479,7 @@ void  nfs4_chk_clid_impl(nfs_client_id_t *clientid, clid_entry_t **clid_ent_arg)
 	 * find it, mark it to allow reclaims.  perhaps the client should
 	 * be removed from the list at this point to make the list shorter?
 	 */
-	glist_for_each(node, &grace.g_clid_list) {
+	glist_for_each(node, &clid_list) {
 		clid_ent = glist_entry(node, clid_entry_t, cl_list);
 		LogDebug(COMPONENT_CLIENTID, "compare %s to %s",
 			 clid_ent->cl_name, clientid->cid_recov_dir);
@@ -519,10 +511,9 @@ void  nfs4_chk_clid(nfs_client_id_t *clientid)
 	/* If we aren't in grace period, then reclaim is not possible */
 	if (!nfs_in_grace())
 		return;
-	PTHREAD_MUTEX_lock(&grace.g_mutex);
+	PTHREAD_MUTEX_lock(&grace_mutex);
 	nfs4_chk_clid_impl(clientid, &dummy_clid_ent);
-	PTHREAD_MUTEX_unlock(&grace.g_mutex);
-	return;
+	PTHREAD_MUTEX_unlock(&grace_mutex);
 }
 
 static void free_heap(char *path, char *new_path, char *build_clid)
@@ -584,7 +575,8 @@ void nfs4_cp_pop_revoked_delegs(clid_entry_t *clid_ent,
 		if (tgtdir) {
 			char lopath[PATH_MAX];
 			int fd;
-			sprintf(lopath, "%s/", tgtdir);
+
+			snprintf(lopath, sizeof(lopath), "%s/", tgtdir);
 			strncat(lopath, dentp->d_name, strlen(dentp->d_name));
 			fd = creat(lopath, 0700);
 			if (fd < 0) {
@@ -620,7 +612,10 @@ void nfs4_cp_pop_revoked_delegs(clid_entry_t *clid_ent,
 		 */
 		if (del) {
 			char del_path[PATH_MAX];
-			sprintf(del_path, "%s/%s", path, dentp->d_name);
+
+			snprintf(del_path, sizeof(del_path), "%s/%s",
+				 path, dentp->d_name);
+
 			if (unlink(del_path) < 0) {
 				LogEvent(COMPONENT_CLIENTID,
 						"unlink of %s failed errno: %d",
@@ -845,7 +840,7 @@ static int nfs4_read_recov_clids(DIR *dp,
 							tgtdir,
 							!takeover);
 				strcpy(new_ent->cl_name, build_clid);
-				glist_add(&grace.g_clid_list,
+				glist_add(&clid_list,
 					  &new_ent->cl_list);
 				LogDebug(COMPONENT_CLIENTID,
 					 "added %s to clid list",
@@ -887,8 +882,8 @@ static void nfs4_load_recov_clids_nolock(nfs_grace_start_t *gsp)
 
 	if (gsp == NULL) {
 		/* when not doing a takeover, start with an empty list */
-		if (!glist_empty(&grace.g_clid_list)) {
-			glist_for_each(node, &grace.g_clid_list) {
+		if (!glist_empty(&clid_list)) {
+			glist_for_each(node, &clid_list) {
 				glist_del(node);
 				clid_entry =
 				    glist_entry(node, clid_entry_t, cl_list);
@@ -988,11 +983,11 @@ static void nfs4_load_recov_clids_nolock(nfs_grace_start_t *gsp)
  */
 void nfs4_load_recov_clids(nfs_grace_start_t *gsp)
 {
-	PTHREAD_MUTEX_lock(&grace.g_mutex);
+	PTHREAD_MUTEX_lock(&grace_mutex);
 
 	nfs4_load_recov_clids_nolock(gsp);
 
-	PTHREAD_MUTEX_unlock(&grace.g_mutex);
+	PTHREAD_MUTEX_unlock(&grace_mutex);
 }
 
 /**
@@ -1025,7 +1020,9 @@ void nfs4_clean_old_recov_dir(char *parent_path)
 		if (dentp->d_name[0] == '\x1') {
 			char del_path[PATH_MAX];
 
-			sprintf(del_path, "%s/%s", parent_path, dentp->d_name);
+			snprintf(del_path, sizeof(del_path), "%s/%s",
+				 parent_path, dentp->d_name);
+
 			if (unlink(del_path) < 0) {
 				LogEvent(COMPONENT_CLIENTID,
 						"unlink of %s failed errno: %d",
@@ -1159,6 +1156,7 @@ void nfs4_record_revoke(nfs_client_id_t *delr_clid, nfs_fh4 *delr_handle)
 	length = strlen(delr_clid->cid_recov_dir);
 	while (position < length) {
 		int len = strlen(&delr_clid->cid_recov_dir[position]);
+
 		if (len <= NAME_MAX) {
 			strcat(path, "/");
 			strncat(path, &delr_clid->cid_recov_dir[position], len);
@@ -1206,10 +1204,10 @@ bool nfs4_check_deleg_reclaim(nfs_client_id_t *clid, nfs_fh4 *fhandle)
 				  rhdlstr, sizeof(rhdlstr));
 	assert(retval != -1);
 
-	PTHREAD_MUTEX_lock(&grace.g_mutex);
+	PTHREAD_MUTEX_lock(&grace_mutex);
 	nfs4_chk_clid_impl(clid, &clid_ent);
 	if (clid_ent == NULL || glist_empty(&clid_ent->cl_rfh_list)) {
-		PTHREAD_MUTEX_unlock(&grace.g_mutex);
+		PTHREAD_MUTEX_unlock(&grace_mutex);
 		return true;
 	}
 
@@ -1217,7 +1215,7 @@ bool nfs4_check_deleg_reclaim(nfs_client_id_t *clid, nfs_fh4 *fhandle)
 		rfh_entry = glist_entry(node, rdel_fh_t, rdfh_list);
 		assert(rfh_entry != NULL);
 		if (!strcmp(rhdlstr, rfh_entry->rdfh_handle_str)) {
-			PTHREAD_MUTEX_unlock(&grace.g_mutex);
+			PTHREAD_MUTEX_unlock(&grace_mutex);
 			LogFullDebug(COMPONENT_CLIENTID,
 				"Can't reclaim revoked fh:%s",
 				rfh_entry->rdfh_handle_str);
@@ -1225,7 +1223,7 @@ bool nfs4_check_deleg_reclaim(nfs_client_id_t *clid, nfs_fh4 *fhandle)
 		}
 	}
 
-	PTHREAD_MUTEX_unlock(&grace.g_mutex);
+	PTHREAD_MUTEX_unlock(&grace_mutex);
 	LogFullDebug(COMPONENT_CLIENTID, "Returning TRUE");
 	return true;
 }
@@ -1240,7 +1238,7 @@ static void nlm_releasecall(struct fridgethr_context *ctx)
 	state_status_t err;
 
 	nsm_cp = ctx->arg;
-	err = state_nlm_notify(nsm_cp, false, NULL);
+	err = state_nlm_notify(nsm_cp, false, 0);
 	if (err != STATE_SUCCESS)
 		LogDebug(COMPONENT_STATE,
 			"state_nlm_notify failed with %d",
@@ -1252,6 +1250,7 @@ void extractv4(char *ipv6, char *ipv4)
 {
 	char *token, *saveptr;
 	char *delim = ":";
+
 	token = strtok_r(ipv6, delim, &saveptr);
 	while (token != NULL) {
 		/* IPv4 delimiter is '.' */
@@ -1340,7 +1339,6 @@ static void nfs_release_nlm_state(char *release_ip)
 		}
 		PTHREAD_RWLOCK_unlock(&ht->partitions[i].lock);
 	}
-	return;
 }
 
 static int ip_match(char *ip, nfs_client_id_t *cid)

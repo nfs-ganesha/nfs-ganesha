@@ -138,9 +138,12 @@ cache_inode_avl_insert_impl(cache_entry_t *entry,
 	/* first check for a previously-deleted entry */
 	node = avltree_inline_lookup(&v->node_hk, c);
 
-	/* XXX we must not allow persist-cookies to overrun resource
-	 * management processes (ie, more coming in CIR/LRU) */
-	if ((!node) && (avltree_size(c) > 65535)) {
+	/* We must not allow persist-cookies to overrun resource
+	 * management processes.  Note this is not a limit on
+	 * directory size, but rather indirectly on the lifetime
+	 * of cookie offsets of directories under mutation. */
+	if ((!node) && (avltree_size(c) >
+			cache_param.dir.avl_max_deleted)) {
 		/* ie, recycle the smallest deleted entry */
 		node = avltree_first(c);
 	}
@@ -189,9 +192,9 @@ cache_inode_avl_insert_impl(cache_entry_t *entry,
 	default:
 		/* already inserted, or, keep trying at current j, j2 */
 		LogDebug(COMPONENT_CACHE_INODE,
-			 "Already existant when inserting new dirent on entry=%p "
-			 "cookie=%" PRIu64 " this should never happen.", entry,
-			 v->hk.k);
+			 "Already existent when inserting new dirent on entry=%p cookie=%"
+			 PRIu64 " this should never happen.",
+			 entry, v->hk.k);
 		break;
 	}
 	return code;
@@ -231,7 +234,7 @@ cache_inode_avl_qp_insert(cache_entry_t *entry,
 	/* tmp hook : it seems like client running v9fs dislike "negative"
 	 * cookies just kill the sign bit, making
 	 * cookies 63 bits... */
-	v->hk.k &= ~(1L << 63);
+	v->hk.k &= ~(1ULL << 63);
 #endif
 
 	/* XXX would we really wait for UINT64_MAX?  if not, how many
@@ -256,7 +259,7 @@ cache_inode_avl_qp_insert(cache_entry_t *entry,
 #ifdef _USE_9P
 	/* tmp hook : it seems like client running v9fs dislike "negative"
 	 * cookies  */
-	v->hk.k &= ~(1L << 63);
+	v->hk.k &= ~(1ULL << 63);
 #endif
 	for (j2 = 1 /* tried j=0 */; j2 < UINT64_MAX; j2++) {
 		v->hk.k = v->hk.k + j2;
@@ -343,7 +346,7 @@ cache_inode_avl_qp_lookup_s(cache_entry_t *entry, const char *name, int maxj)
 #ifdef _USE_9P
 	/* tmp hook : it seems like client running v9fs dislike "negative"
 	 * cookies */
-	v.hk.k &= ~(1L << 63);
+	v.hk.k &= ~(1ULL << 63);
 #endif
 
 	for (j = 0; j < maxj; j++) {

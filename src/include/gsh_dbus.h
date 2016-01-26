@@ -33,6 +33,10 @@
 #include <dbus/dbus.h>
 #include "log.h"
 
+#ifdef _USE_9P
+#include "9p_types.h"
+#endif
+
 /**
  *
  * \file gsh_dbus.h
@@ -136,8 +140,8 @@ struct gsh_dbus_prop {
 	const char *name;
 	dbus_prop_access_t access;
 	const char *type;
-	 bool(*get) (DBusMessageIter *reply);
-	 bool(*set) (DBusMessageIter *args);
+	 bool (*get)(DBusMessageIter *reply);
+	 bool (*set)(DBusMessageIter *args);
 };
 
 struct gsh_dbus_arg {
@@ -148,7 +152,7 @@ struct gsh_dbus_arg {
 
 struct gsh_dbus_method {
 	const char *name;
-	 bool(*method) (DBusMessageIter *args,
+	 bool (*method)(DBusMessageIter *args,
 			DBusMessage *reply,
 			DBusError *error);
 	struct gsh_dbus_arg args[];
@@ -156,7 +160,7 @@ struct gsh_dbus_method {
 
 struct gsh_dbus_signal {
 	const char *name;
-	 bool(*signal) (DBusMessageIter *args, DBusMessage *reply);
+	bool (*signal)(DBusMessageIter *args, DBusMessage *reply);
 	struct gsh_dbus_arg args[];
 };
 
@@ -199,7 +203,7 @@ void del_dbus_broadcast(struct dbus_bcast_item *to_remove);
 
 /* heartbeat function call back */
 int dbus_heartbeat_cb(void *arg);
-void init_heartbeat();
+void init_heartbeat(void);
 
 void gsh_dbus_pkginit(void);
 void gsh_dbus_pkgshutdown(void);
@@ -213,5 +217,9 @@ int32_t gsh_dbus_register_path(const char *name,
 int gsh_dbus_broadcast(char *obj_name, char *int_name,
 		       char *sig_name, int type, ...);
 /* more to come */
+
+#ifdef _USE_9P
+bool arg_9p_op(DBusMessageIter *args, u8 *opcode, char **errormsg);
+#endif
 
 #endif				/* GSH_DBUS_H */

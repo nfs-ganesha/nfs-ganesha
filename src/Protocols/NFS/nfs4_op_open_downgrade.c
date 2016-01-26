@@ -113,7 +113,8 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op, compound_data_t *data,
 	PTHREAD_MUTEX_lock(&open_owner->so_mutex);
 
 	/* Check seqid */
-	if (!Check_nfs4_seqid(open_owner,
+	if (data->minorversion == 0 &&
+	    !Check_nfs4_seqid(open_owner,
 			      arg_OPEN_DOWNGRADE4->seqid,
 			      op,
 			      data->current_entry,
@@ -157,12 +158,14 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op, compound_data_t *data,
 		       tag);
 
 	/* Save the response in the open owner */
-	Copy_nfs4_state_req(open_owner,
-			    arg_OPEN_DOWNGRADE4->seqid,
-			    op,
-			    data->current_entry,
-			    resp,
-			    tag);
+	if (data->minorversion == 0) {
+		Copy_nfs4_state_req(open_owner,
+				    arg_OPEN_DOWNGRADE4->seqid,
+				    op,
+				    data->current_entry,
+				    resp,
+				    tag);
+	}
 
  out:
 
@@ -186,14 +189,12 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op, compound_data_t *data,
 void nfs4_op_open_downgrade_Free(nfs_resop4 *resp)
 {
 	/* Nothing to be done */
-	return;
-}				/* nfs4_op_open_downgrade_Free */
+}
 
 void nfs4_op_open_downgrade_CopyRes(OPEN_DOWNGRADE4res *res_dst,
 				    OPEN_DOWNGRADE4res *res_src)
 {
-	/* Nothing to be done */
-	return;
+	/* Nothing to deep copy */
 }
 
 static nfsstat4 nfs4_do_open_downgrade(struct nfs_argop4 *op,
@@ -202,6 +203,7 @@ static nfsstat4 nfs4_do_open_downgrade(struct nfs_argop4 *op,
 				       char **cause)
 {
 	union state_data candidate_data;
+
 	state_status_t state_status;
 	OPEN_DOWNGRADE4args *args = &op->nfs_argop4_u.opopen_downgrade;
 
@@ -233,7 +235,10 @@ static nfsstat4 nfs4_do_open_downgrade(struct nfs_argop4 *op,
 	}
 
 	/* Check if given share access is previously seen */
-	if (state_share_check_prev(state, &candidate_data) != STATE_SUCCESS) {
+	if (((state->state_data.share.share_access_prev &
+	      (1 << args->share_access)) == 0) ||
+	     ((state->state_data.share.share_deny_prev &
+	      (1 << args->share_deny)) == 0)) {
 		*cause = " (share access or deny never seen before)";
 		PTHREAD_RWLOCK_unlock(&data->current_entry->state_lock);
 		return NFS4ERR_INVAL;

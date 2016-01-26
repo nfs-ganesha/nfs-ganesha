@@ -75,8 +75,7 @@ int nfs4_op_illegal(struct nfs_argop4 *op, compound_data_t *data,
 void nfs4_op_illegal_Free(nfs_resop4 *resp)
 {
 	/* Nothing to be done */
-	return;
-}				/* nfs4_op_illegal_Free */
+}
 
 /**
  * @brief Always fail
@@ -110,5 +109,4 @@ int nfs4_op_notsupp(struct nfs_argop4 *op, compound_data_t *data,
 void nfs4_op_notsupp_Free(nfs_resop4 *resp)
 {
 	/* Nothing to be done */
-	return;
-}				/* nfs4_op_notsupp_Free */
+}

@@ -75,21 +75,15 @@ struct config_block *vfs_sub_export_param = &export_param_block;
 void vfs_sub_fini(struct vfs_fsal_export *vfs)
 {
 	struct panfs_fsal_export *myself = EXPORT_PANFS_FROM_VFS(vfs);
-	pnfs_panfs_fini(myself->pnfs_data);
-}
 
-void vfs_sub_init_handle_ops(struct vfs_fsal_export *vfs,
-			      struct fsal_obj_ops *ops)
-{
-	struct panfs_fsal_export *myself = EXPORT_PANFS_FROM_VFS(vfs);
-	if (myself->pnfs_enabled)
-		handle_ops_pnfs(ops);
+	pnfs_panfs_fini(myself->pnfs_data);
 }
 
 void vfs_sub_init_export_ops(struct vfs_fsal_export *vfs,
 			      const char *export_path)
 {
 	struct panfs_fsal_export *myself = EXPORT_PANFS_FROM_VFS(vfs);
+
 	if (myself->pnfs_enabled) {
 		LogInfo(COMPONENT_FSAL,
 			"pnfs_panfs was enabled for [%s]",
@@ -115,4 +109,32 @@ int vfs_sub_init_export(struct vfs_fsal_export *vfs)
 	}
 
 	return retval;
+}
+
+struct vfs_fsal_obj_handle *vfs_sub_alloc_handle(void)
+{
+	struct panfs_fsal_obj_handle *hdl;
+
+	hdl = gsh_calloc(1,
+			 (sizeof(struct panfs_fsal_obj_handle) +
+			  sizeof(vfs_file_handle_t)));
+	if (hdl == NULL)
+		return NULL;
+
+	hdl->vfs_obj_handle.handle = (vfs_file_handle_t *) &hdl[1];
+	return &hdl->vfs_obj_handle;
+}
+
+int vfs_sub_init_handle(struct vfs_fsal_export *vfs_export,
+		struct vfs_fsal_obj_handle *vfs_hdl,
+		const char *path)
+{
+	struct panfs_fsal_export *myself = EXPORT_PANFS_FROM_VFS(vfs_export);
+	struct panfs_fsal_obj_handle *hdl = OBJ_PANFS_FROM_VFS(vfs_hdl);
+
+	if (myself->pnfs_enabled)
+		handle_ops_pnfs(&vfs_hdl->obj_handle.obj_ops);
+
+	panfs_handle_ops_init(hdl);
+	return 0;
 }

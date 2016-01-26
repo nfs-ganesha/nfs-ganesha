@@ -124,8 +124,8 @@ int nfs4_op_destroy_clientid(struct nfs_argop4 *op, compound_data_t *data,
 		display_client_record(&dspbuf, client_record);
 
 		LogFullDebug(COMPONENT_CLIENTID,
-			     "Client Record %s cr_confirmed_rec=%p "
-			     "cr_unconfirmed_rec=%p", str,
+			     "Client Record %s cr_confirmed_rec=%p cr_unconfirmed_rec=%p",
+			     str,
 			     client_record->cr_confirmed_rec,
 			     client_record->cr_unconfirmed_rec);
 	}
@@ -214,5 +214,5 @@ int nfs4_op_destroy_clientid(struct nfs_argop4 *op, compound_data_t *data,
 
 void nfs4_op_destroy_clientid_Free(nfs_resop4 *resp)
 {
-	return;
+	/* Nothing to be done */
 }

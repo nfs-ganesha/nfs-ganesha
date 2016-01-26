@@ -1,0 +1,48 @@
+# .mailmap, see 'git shortlog --help' for details
+#
+# Listing of contributors that filed patches with different email addresses.
+# Format: <name> <main-email> <alias>
+#
+
+Allison Henderson <achender@linux.vnet.ibm.com> <achender@vnet.linux.ibm.com>
+Daniel Gryniewicz <dang@redhat.com> <dang@cohortfs.com>
+Daniel Gryniewicz <dang@redhat.com> <dang@fprintf.net>
+Daniel Gryniewicz <dang@redhat.com> <dang@linuxbox.com>
+Dominique Martinet <dominique.martinet@cea.fr> <asmadeus@codewreck.org>
+Frank S. Filz <ffilzlnx@mindspring.com> <ffilz@us.ibm.com>
+Frank S. Filz <ffilzlnx@mindspring.com> <ffilzlnx@us.ibm.com>
+Frank S. Filz <ffilzlnx@mindspring.com> <root@elm3c48.beaverton.ibm.com>
+Jeremy Bongio <jbongio@us.ibm.com> <bongiojp@gmail.com>
+Jeremy Bongio <jbongio@us.ibm.com> <jbongio@linux.vnet.ibm.com>
+Jeremy Bongio <jbongio@us.ibm.com> <root@sonas12.(none)>
+Jim Lieb <lieb@sea-troll.net> <jlieb@panasas.com>
+Manfred Haubrich <haubrich@de.ibm.com>
+Marc Eshel <eshel@us.ibm.com> <eshel@almaden.ibm.com>
+Matt Benjamin <mbenjamin@redhat.com> <matt@cohortfs.com>
+Matt Benjamin <mbenjamin@redhat.com> <matt@linuxbox.com>
+Matt Benjamin <mbenjamin@redhat.com> matt <matt@localhost.localdomain>
+Meghana Madhusudhan <mmadhusu@redhat.com>
+Philippe DENIEL <philippe.deniel@cea.fr>
+Philippe DENIEL <philippe.deniel@cea.fr> <deniel@aury62.vm.c-aury.ocre.cea.fr>
+Philippe DENIEL <philippe.deniel@cea.fr> <deniel@galion23.ocre.cea.fr>
+Philippe DENIEL <philippe.deniel@cea.fr> <phdeniel@cchsvli001.in2p3.fr>
+Philippe DENIEL <philippe.deniel@cea.fr> <phil@phdbox.(none)>
+Philippe DENIEL <philippe.deniel@cea.fr> <philippe.deniel@free.fr>
+Philippe DENIEL <philippe.deniel@cea.fr> <root@aury60.vm.c-aury.ocre.cea.fr>
+Philippe DENIEL <philippe.deniel@cea.fr> <root@petrea3.(none)>
+Philippe DENIEL <philippe.deniel@cea.fr> <root@rdma1.vm.c-aury.ocre.cea.fr>
+Philippe DENIEL <philippe.deniel@cea.fr> <root@scratchy.ocre.cea.fr>
+Rong Zeng <rongzeng@us.ibm.com>
+Rong Zeng <rongzeng@us.ibm.com> <rongzeng@oc1354525745.ibm.com>
+Rong Zeng <rongzeng@us.ibm.com> <rongzeng@oc1547780626.ibm.com>
+Rong Zeng <rongzeng@us.ibm.com> <rongzeng@us.ibm.com>
+Suhrud Patankar <supatank@in.ibm.com>
+Thomas LEIBOVICI <thomas.leibovici@cea.fr>
+Thomas LEIBOVICI <thomas.leibovici@cea.fr> <leibovi@fortoy0.c-fortoy.ocre.cea.fr>
+Thomas LEIBOVICI <thomas.leibovici@cea.fr> <leibovi@fortoy197.c-fortoy.ocre.cea.fr>
+Thomas LEIBOVICI <thomas.leibovici@cea.fr> <leibovi@fortoy198.c-fortoy.ocre.cea.fr>
+Thomas LEIBOVICI <thomas.leibovici@cea.fr> <leibovi@petrea3.(none)>
+Thomas LEIBOVICI <thomas.leibovici@cea.fr> <thleibov@cchsvli001.in2p3.fr>
+Venkateswararao Jujjuri (JV) <jvrao@linux.vnet.ibm.com> <jvrao@ganesha20.sonasdomain.com>
+William Allen Simpson <wsimpson@redhat.com> <bill@CohortFS.com>
+William Allen Simpson <wsimpson@redhat.com> <bill@cohortfs.com>

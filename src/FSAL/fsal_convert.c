@@ -174,7 +174,9 @@ int posix2fsal_error(int posix_errorcode)
 		/* Error code that needs a retry */
 	case EAGAIN:
 	case EBUSY:
+#ifdef ETIME
 	case ETIME:
+#endif
 		LogInfo(COMPONENT_FSAL, "Mapping %d to ERR_FSAL_DELAY",
 			posix_errorcode);
 		return ERR_FSAL_DELAY;
@@ -190,6 +192,11 @@ int posix2fsal_error(int posix_errorcode)
 
 	case EINTR:
 		return ERR_FSAL_INTERRUPT;
+
+#ifdef ENODATA
+	case ENODATA:
+		return ERR_FSAL_NO_DATA;
+#endif
 
 	default:
 		LogCrit(COMPONENT_FSAL,
@@ -350,7 +357,8 @@ int fsal2posix_openflags(fsal_openflags_t fsal_flags, int *p_posix_flags)
 {
 	/* check that all used flags exist */
 	if (fsal_flags &
-	    ~(FSAL_O_READ | FSAL_O_RDWR | FSAL_O_WRITE | FSAL_O_SYNC))
+	    ~(FSAL_O_READ | FSAL_O_RDWR | FSAL_O_WRITE | FSAL_O_SYNC |
+	      FSAL_O_REOPEN | FSAL_O_ANY))
 		return ERR_FSAL_INVAL;
 
 	/* conversion */
@@ -362,6 +370,8 @@ int fsal2posix_openflags(fsal_openflags_t fsal_flags, int *p_posix_flags)
 		*p_posix_flags |= O_RDONLY;
 	else if ((fsal_flags & FSAL_O_RDWR) == FSAL_O_WRITE)
 		*p_posix_flags |= O_WRONLY;
+	else if ((fsal_flags & FSAL_O_ANY) != 0)
+		*p_posix_flags |= O_RDONLY;
 
 	if (fsal_flags & FSAL_O_SYNC)
 		*p_posix_flags |= O_SYNC;
@@ -402,13 +412,9 @@ const char *object_file_type_to_str(object_file_type_t type)
 	return "unexpected type";
 }
 
-fsal_status_t posix2fsal_attributes(const struct stat *buffstat,
-				    struct attrlist *fsalattr)
+void posix2fsal_attributes(const struct stat *buffstat,
+			   struct attrlist *fsalattr)
 {
-	/* sanity checks */
-	if (!buffstat || !fsalattr)
-		return fsalstat(ERR_FSAL_FAULT, 0);
-
 	FSAL_CLEAR_MASK(fsalattr->mask);
 
 	/* Fills the output struct */
@@ -464,8 +470,6 @@ fsal_status_t posix2fsal_attributes(const struct stat *buffstat,
 
 	fsalattr->rawdev = posix2fsal_devt(buffstat->st_rdev);
 	FSAL_SET_MASK(fsalattr->mask, ATTR_RAWDEV);
-
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /** @} */

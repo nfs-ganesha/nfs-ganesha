@@ -40,6 +40,7 @@
  */
 #include "config.h"
 
+#include <misc/queue.h> /* avoid conflicts with sys/queue.h */
 #include <libgen.h>		/* used for 'dirname' */
 #include <pthread.h>
 #include <sys/stat.h>
@@ -49,7 +50,11 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/statvfs.h>
+#if __FreeBSD__
+#include <sys/mount.h>
+#else
 #include <sys/vfs.h>
+#endif
 #include <os/quota.h>
 
 #include "common_utils.h"
@@ -63,11 +68,9 @@
 #endif
 #include "fsal_api.h"
 #include "FSAL/fsal_commonlib.h"
+#include "FSAL/access_check.h"
 #include "fsal_private.h"
 #include "fsal_convert.h"
-
-/* fsal_module to fsal_export helpers
- */
 
 /* fsal_attach_export
  * called from the FSAL's create_export method with a reference on the fsal.
@@ -138,10 +141,12 @@ void fsal_obj_handle_init(struct fsal_obj_handle *obj, struct fsal_export *exp,
 {
 	pthread_rwlockattr_t attrs;
 
+	assert(obj->attrs != NULL);
+
 	memcpy(&obj->obj_ops, &def_handle_ops, sizeof(struct fsal_obj_ops));
 	obj->fsal = exp->fsal;
 	obj->type = type;
-	obj->attributes.expire_time_attr = 0;
+	obj->attrs->expire_time_attr = 0;
 	pthread_rwlockattr_init(&attrs);
 #ifdef GLIBC
 	pthread_rwlockattr_setkind_np(
@@ -319,6 +324,8 @@ const char *msg_fsal_err(fsal_errors_t fsal_err)
 		return "Lock Blocked";
 	case ERR_FSAL_SHARE_DENIED:
 		return "Share Denied";
+	case ERR_FSAL_LOCKED:
+		return "Locked";
 	case ERR_FSAL_TIMEOUT:
 		return "Timeout";
 	case ERR_FSAL_FILE_OPEN:
@@ -327,6 +334,12 @@ const char *msg_fsal_err(fsal_errors_t fsal_err)
 		return "Union Not Supported";
 	case ERR_FSAL_IN_GRACE:
 		return "Server in Grace";
+	case ERR_FSAL_NO_DATA:
+		return "No Data";
+	case ERR_FSAL_NO_ACE:
+		return "No matching ACE";
+	case ERR_FSAL_BAD_RANGE:
+		return "Lock not in allowable range";
 	}
 
 	return "Unknown FSAL error";
@@ -377,8 +390,6 @@ void display_fsinfo(struct fsal_staticfsinfo_t *info)
 		 info->auth_exportpath_xdev);
 	LogDebug(COMPONENT_FSAL, "  xattr_access_rights = %#o ",
 		 info->xattr_access_rights);
-	LogDebug(COMPONENT_FSAL, "  accesscheck_support  = %d  ",
-		 info->accesscheck_support);
 	LogDebug(COMPONENT_FSAL, "  share_support  = %d  ",
 		 info->share_support);
 	LogDebug(COMPONENT_FSAL, "  share_support_owner  = %d  ",
@@ -836,13 +847,21 @@ static bool posix_get_fsid(struct fsal_filesystem *fs)
 	struct blkid_struct_dev *dev;
 #endif
 
+	LogFullDebug(COMPONENT_FSAL,
+		     "statfs of %s pathlen %d",
+		     fs->path, fs->pathlen);
+
 	if (statfs(fs->path, &stat_fs) != 0) {
 		LogCrit(COMPONENT_FSAL,
 			"stat_fs of %s resulted in error %s(%d)",
 			fs->path, strerror(errno), errno);
 	}
 
+#if __FreeBSD__
+	fs->namelen = stat_fs.f_namemax;
+#else
 	fs->namelen = stat_fs.f_namelen;
+#endif
 
 	if (stat(fs->path, &mnt_stat) != 0) {
 		LogCrit(COMPONENT_FSAL,
@@ -913,8 +932,13 @@ static bool posix_get_fsid(struct fsal_filesystem *fs)
 #endif
 
 	fs->fsid_type = FSID_TWO_UINT32;
+#if __FreeBSD__
+	fs->fsid.major = (unsigned) stat_fs.f_fsid.val[0];
+	fs->fsid.minor = (unsigned) stat_fs.f_fsid.val[1];
+#else
 	fs->fsid.major = (unsigned) stat_fs.f_fsid.__val[0];
 	fs->fsid.minor = (unsigned) stat_fs.f_fsid.__val[1];
+#endif
 
 	if ((fs->fsid.major == 0) && (fs->fsid.minor == 0)) {
 		fs->fsid.major = fs->dev.major;
@@ -973,9 +997,8 @@ static void posix_create_file_system(struct mntent *mnt)
 					   avl_fsid);
 
 		LogDebug(COMPONENT_FSAL,
-			 "Skipped duplicate %s namelen=%d "
-			 "fsid=0x%016"PRIx64".0x%016"PRIx64
-			 " %"PRIu64".%"PRIu64,
+			 "Skipped duplicate %s namelen=%d fsid=0x%016"PRIx64
+			 ".0x%016"PRIx64" %"PRIu64".%"PRIu64,
 			 fs->path, (int) fs->namelen,
 			 fs->fsid.major, fs->fsid.minor,
 			 fs->fsid.major, fs->fsid.minor);
@@ -1072,6 +1095,14 @@ static void posix_find_parent(struct fsal_filesystem *this)
 		if (strncmp(fs->path, this->path, fs->pathlen) != 0)
 			continue;
 
+		/* Differentiate between /fs1 and /fs10 for parent of
+		 * /fs10/fs2, however, if fs->path is "/", we need to
+		 * special case.
+		 */
+		if (fs->pathlen != 1 &&
+		    this->path[fs->pathlen] != '/')
+			continue;
+
 		this->parent = fs;
 		plen = fs->pathlen;
 	}
@@ -1094,6 +1125,7 @@ void show_tree(struct fsal_filesystem *this, int nest)
 {
 	struct glist_head *glist;
 	char blanks[1024];
+
 	memset(blanks, ' ', nest * 2);
 	blanks[nest * 2] = '\0';
 
@@ -1194,6 +1226,7 @@ struct fsal_filesystem *lookup_fsid_locked(struct fsal_fsid__ *fsid,
 					   enum fsid_type fsid_type)
 {
 	struct fsal_filesystem key;
+
 	key.fsid = *fsid;
 	key.fsid_type = fsid_type;
 	return avltree_inline_fsid_lookup(&key.avl_fsid);
@@ -1202,6 +1235,7 @@ struct fsal_filesystem *lookup_fsid_locked(struct fsal_fsid__ *fsid,
 struct fsal_filesystem *lookup_dev_locked(struct fsal_dev__ *dev)
 {
 	struct fsal_filesystem key;
+
 	key.dev = *dev;
 	return avltree_inline_dev_lookup(&key.avl_dev);
 }
@@ -1492,6 +1526,446 @@ int decode_fsid(char *buf,
 	}
 
 	return sizeof_fsid(fsid_type);
+}
+
+
+static inline bool is_dup_ace(fsal_ace_t *ace, fsal_aceflag_t inherit)
+{
+	if (!IS_FSAL_ACE_INHERIT(*ace))
+		return false;
+	if (inherit != FSAL_ACE_FLAG_DIR_INHERIT)
+		/* Only dup on directories */
+		return false;
+	if (IS_FSAL_ACE_NO_PROPAGATE(*ace))
+		return false;
+	if (IS_FSAL_ACE_FILE_INHERIT(*ace) && !IS_FSAL_ACE_DIR_INHERIT(*ace))
+		return false;
+	if (!IS_FSAL_ACE_PERM(*ace))
+		return false;
+
+	return true;
+}
+
+static fsal_errors_t dup_ace(fsal_ace_t *sace, fsal_ace_t *dace)
+{
+	*dace = *sace;
+
+	GET_FSAL_ACE_FLAG(*sace) |= FSAL_ACE_FLAG_INHERIT_ONLY;
+
+	GET_FSAL_ACE_FLAG(*dace) &= ~(FSAL_ACE_FLAG_INHERIT |
+				      FSAL_ACE_FLAG_NO_PROPAGATE);
+
+	return ERR_FSAL_NO_ERROR;
+}
+
+fsal_errors_t fsal_inherit_acls(struct attrlist *attrs, fsal_acl_t *sacl,
+				fsal_aceflag_t inherit)
+{
+	int naces;
+	fsal_ace_t *sace, *dace;
+
+	if (!sacl || !sacl->aces || sacl->naces == 0)
+		return ERR_FSAL_NO_ERROR;
+
+	if (attrs->acl && attrs->acl->aces && attrs->acl->naces > 0)
+		return ERR_FSAL_EXIST;
+
+	naces = 0;
+	for (sace = sacl->aces; sace < sacl->aces + sacl->naces; sace++) {
+		if (IS_FSAL_ACE_FLAG(*sace, inherit))
+			naces++;
+		if (is_dup_ace(sace, inherit))
+			naces++;
+	}
+
+	if (naces == 0)
+		return ERR_FSAL_NO_ERROR;
+
+	attrs->acl = nfs4_acl_alloc();
+	if (!attrs->acl)
+		return ERR_FSAL_NOMEM;
+	attrs->acl->aces = (fsal_ace_t *) nfs4_ace_alloc(naces);
+	if (!attrs->acl->aces) {
+		nfs4_acl_free(attrs->acl);
+		attrs->acl = NULL;
+		return ERR_FSAL_NOMEM;
+	}
+
+	dace = attrs->acl->aces;
+	for (sace = sacl->aces; sace < sacl->aces + sacl->naces; sace++) {
+		if (IS_FSAL_ACE_FLAG(*sace, inherit)) {
+			*dace = *sace;
+			if (IS_FSAL_ACE_NO_PROPAGATE(*dace))
+				GET_FSAL_ACE_FLAG(*dace) &=
+					~(FSAL_ACE_FLAG_INHERIT |
+					  FSAL_ACE_FLAG_NO_PROPAGATE);
+			else if (inherit == FSAL_ACE_FLAG_DIR_INHERIT &&
+				 IS_FSAL_ACE_FILE_INHERIT(*dace) &&
+				 !IS_FSAL_ACE_DIR_INHERIT(*dace))
+				GET_FSAL_ACE_FLAG(*dace) |=
+					FSAL_ACE_FLAG_NO_PROPAGATE;
+			else if (is_dup_ace(dace, inherit)) {
+				dup_ace(dace, dace + 1);
+				dace++;
+			}
+			dace++;
+		}
+	}
+	attrs->acl->naces = naces;
+	FSAL_SET_MASK(attrs->mask, ATTR_ACL);
+
+	return ERR_FSAL_NO_ERROR;
+}
+
+fsal_status_t fsal_remove_access(struct fsal_obj_handle *dir_hdl,
+				 struct fsal_obj_handle *rem_hdl,
+				 bool isdir)
+{
+	fsal_status_t fsal_status = { 0, 0 };
+	fsal_status_t del_status = { 0, 0 };
+
+	/* draft-ietf-nfsv4-acls section 12 */
+	/* If no execute on dir, deny */
+	fsal_status = dir_hdl->obj_ops.test_access(
+				dir_hdl,
+				FSAL_MODE_MASK_SET(FSAL_X_OK) |
+				FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_EXECUTE),
+				NULL, NULL);
+	if (FSAL_IS_ERROR(fsal_status)) {
+		LogFullDebug(COMPONENT_FSAL,
+			 "Could not delete: No execute permession on parent: %s",
+			 msg_fsal_err(fsal_status.major));
+		return fsal_status;
+	}
+
+	/* We can delete if we have *either* ACE_PERM_DELETE or
+	 * ACE_PERM_DELETE_CHILD.  7530 - 6.2.1.3.2 */
+	del_status = rem_hdl->obj_ops.test_access(
+				rem_hdl,
+				FSAL_MODE_MASK_SET(FSAL_W_OK) |
+				FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_DELETE) |
+				FSAL_ACE4_REQ_FLAG,
+				NULL, NULL);
+	fsal_status = dir_hdl->obj_ops.test_access(
+				dir_hdl,
+				FSAL_MODE_MASK_SET(FSAL_W_OK) |
+				FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_DELETE_CHILD) |
+				FSAL_ACE4_REQ_FLAG,
+				NULL, NULL);
+	if (FSAL_IS_ERROR(fsal_status) && FSAL_IS_ERROR(del_status)) {
+		/* Neither was explicitly allowed */
+		if (fsal_status.major != ERR_FSAL_NO_ACE) {
+			/* Explicitly denied */
+			LogFullDebug(COMPONENT_FSAL,
+				 "Could not delete (DELETE_CHILD) %s",
+				 msg_fsal_err(fsal_status.major));
+			return fsal_status;
+		}
+		if (del_status.major != ERR_FSAL_NO_ACE) {
+			/* Explicitly denied */
+			LogFullDebug(COMPONENT_FSAL,
+				 "Could not delete (DELETE) %s",
+				 msg_fsal_err(del_status.major));
+			return del_status;
+		}
+
+		/* Neither ACE_PERM_DELETE nor ACE_PERM_DELETE_CHILD are set.
+		 * Check for ADD_FILE in parent */
+		fsal_status = dir_hdl->obj_ops.test_access(
+				dir_hdl,
+				FSAL_MODE_MASK_SET(FSAL_W_OK) |
+				FSAL_ACE4_MASK_SET(isdir ?
+					   FSAL_ACE_PERM_ADD_SUBDIRECTORY
+					   : FSAL_ACE_PERM_ADD_FILE),
+				NULL, NULL);
+
+		if (FSAL_IS_ERROR(fsal_status)) {
+			LogFullDebug(COMPONENT_FSAL,
+				 "Could not delete (ADD_CHILD) %s",
+				 msg_fsal_err(fsal_status.major));
+			return fsal_status;
+		}
+		/* Allowed; fall through */
+	}
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
+fsal_status_t fsal_rename_access(struct fsal_obj_handle *src_dir_hdl,
+				 struct fsal_obj_handle *src_obj_hdl,
+				 struct fsal_obj_handle *dst_dir_hdl,
+				 struct fsal_obj_handle *dst_obj_hdl,
+				 bool isdir)
+{
+	fsal_status_t status = {0, 0};
+	fsal_accessflags_t access_type;
+
+	status = fsal_remove_access(src_dir_hdl, src_obj_hdl, isdir);
+	if (FSAL_IS_ERROR(status))
+		return status;
+
+	if (dst_obj_hdl) {
+		status = fsal_remove_access(dst_dir_hdl, dst_obj_hdl, isdir);
+		if (FSAL_IS_ERROR(status))
+			return status;
+	}
+
+	access_type = FSAL_MODE_MASK_SET(FSAL_W_OK);
+	if (isdir)
+		access_type |=
+			FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_SUBDIRECTORY);
+	else
+		access_type |= FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_FILE);
+	status = fsal_test_access(dst_dir_hdl, access_type, NULL, NULL);
+	if (FSAL_IS_ERROR(status))
+		return status;
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
+static fsal_status_t
+fsal_mode_set_ace(fsal_ace_t *deny, fsal_ace_t *allow, uint32_t mode)
+{
+	GET_FSAL_ACE_TYPE(*allow) = FSAL_ACE_TYPE_ALLOW;
+	GET_FSAL_ACE_TYPE(*deny) = FSAL_ACE_TYPE_DENY;
+
+	if (mode & S_IRUSR)
+		GET_FSAL_ACE_PERM(*allow) |= FSAL_ACE_PERM_READ_DATA;
+	else
+		GET_FSAL_ACE_PERM(*deny) |= FSAL_ACE_PERM_READ_DATA;
+	if (mode & S_IWUSR)
+		GET_FSAL_ACE_PERM(*allow) |=
+			FSAL_ACE_PERM_WRITE_DATA | FSAL_ACE_PERM_APPEND_DATA;
+	else
+		GET_FSAL_ACE_PERM(*deny) |=
+			FSAL_ACE_PERM_WRITE_DATA | FSAL_ACE_PERM_APPEND_DATA;
+	if (mode & S_IXUSR)
+		GET_FSAL_ACE_PERM(*allow) |= FSAL_ACE_PERM_EXECUTE;
+	else
+		GET_FSAL_ACE_PERM(*deny) |= FSAL_ACE_PERM_EXECUTE;
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
+static fsal_status_t
+fsal_mode_gen_set(fsal_ace_t *ace, uint32_t mode)
+{
+	fsal_ace_t *allow, *deny;
+
+	/* @OWNER */
+	deny = ace;
+	allow = deny + 1;
+	GET_FSAL_ACE_USER(*allow) = FSAL_ACE_SPECIAL_OWNER;
+	GET_FSAL_ACE_IFLAG(*allow) |= (FSAL_ACE_IFLAG_MODE_GEN |
+				       FSAL_ACE_IFLAG_SPECIAL_ID);
+	GET_FSAL_ACE_USER(*deny) = FSAL_ACE_SPECIAL_OWNER;
+	GET_FSAL_ACE_IFLAG(*deny) |= (FSAL_ACE_IFLAG_MODE_GEN |
+				      FSAL_ACE_IFLAG_SPECIAL_ID);
+	fsal_mode_set_ace(deny, allow, mode & S_IRWXU);
+	/* @GROUP */
+	deny += 2;
+	allow = deny + 1;
+	GET_FSAL_ACE_USER(*allow) = FSAL_ACE_SPECIAL_GROUP;
+	GET_FSAL_ACE_IFLAG(*allow) |= (FSAL_ACE_IFLAG_MODE_GEN |
+				       FSAL_ACE_IFLAG_SPECIAL_ID);
+	GET_FSAL_ACE_FLAG(*allow) = FSAL_ACE_FLAG_GROUP_ID;
+	GET_FSAL_ACE_USER(*deny) = FSAL_ACE_SPECIAL_GROUP;
+	GET_FSAL_ACE_IFLAG(*deny) |= (FSAL_ACE_IFLAG_MODE_GEN |
+				      FSAL_ACE_IFLAG_SPECIAL_ID);
+	GET_FSAL_ACE_FLAG(*deny) = FSAL_ACE_FLAG_GROUP_ID;
+	fsal_mode_set_ace(deny, allow, (mode & S_IRWXG) << 3);
+	/* @EVERYONE */
+	deny += 2;
+	allow = deny + 1;
+	GET_FSAL_ACE_USER(*allow) = FSAL_ACE_SPECIAL_EVERYONE;
+	GET_FSAL_ACE_IFLAG(*allow) |= (FSAL_ACE_IFLAG_MODE_GEN |
+				       FSAL_ACE_IFLAG_SPECIAL_ID);
+	GET_FSAL_ACE_USER(*deny) = FSAL_ACE_SPECIAL_EVERYONE;
+	GET_FSAL_ACE_IFLAG(*deny) |= (FSAL_ACE_IFLAG_MODE_GEN |
+				      FSAL_ACE_IFLAG_SPECIAL_ID);
+	fsal_mode_set_ace(deny, allow, (mode & S_IRWXO) << 6);
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
+static fsal_status_t
+fsal_mode_gen_acl(struct attrlist *attrs)
+{
+	attrs->acl = nfs4_acl_alloc();
+	if (!attrs->acl)
+		return fsalstat(ERR_FSAL_NOMEM, 0);
+	attrs->acl->naces = 6;
+	attrs->acl->aces = (fsal_ace_t *) nfs4_ace_alloc(attrs->acl->naces);
+	if (!attrs->acl->aces) {
+		nfs4_acl_free(attrs->acl);
+		attrs->acl = NULL;
+		return fsalstat(ERR_FSAL_NOMEM, 0);
+	}
+
+	fsal_mode_gen_set(attrs->acl->aces, attrs->mode);
+
+	FSAL_SET_MASK(attrs->mask, ATTR_ACL);
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
+fsal_status_t fsal_mode_to_acl(struct attrlist *attrs, fsal_acl_t *sacl)
+{
+	int naces;
+	fsal_ace_t *sace, *dace;
+
+	if (!FSAL_TEST_MASK(attrs->mask, ATTR_MODE))
+		return fsalstat(ERR_FSAL_NO_ERROR, 0);
+
+	if (!sacl || sacl->naces == 0)
+		return fsal_mode_gen_acl(attrs);
+
+	naces = 0;
+	for (sace = sacl->aces; sace < sacl->aces + sacl->naces; sace++) {
+		if (IS_FSAL_ACE_MODE_GEN(*sace)) {
+			/* Don't copy mode geneated ACEs; will be re-created */
+			continue;
+		}
+
+		naces++;
+		if (IS_FSAL_ACE_INHERIT_ONLY(*sace))
+			continue;
+		if (!IS_FSAL_ACE_PERM(*sace))
+			continue;
+		if (IS_FSAL_ACE_INHERIT(*sace)) {
+			/* Dup this ACE */
+			naces++;
+		}
+		/* XXX dang dup for non-special case */
+	}
+
+	if (naces == 0) {
+		/* Only mode generate aces */
+		return fsal_mode_gen_acl(attrs);
+	}
+
+	/* Space for generated ACEs at the end */
+	naces += 6;
+
+	attrs->acl = nfs4_acl_alloc();
+	if (!attrs->acl)
+		return fsalstat(ERR_FSAL_NOMEM, 0);
+	attrs->acl->aces = (fsal_ace_t *) nfs4_ace_alloc(naces);
+	if (!attrs->acl->aces) {
+		nfs4_acl_free(attrs->acl);
+		attrs->acl = NULL;
+		return fsalstat(ERR_FSAL_NOMEM, 0);
+	}
+
+	attrs->acl->naces = 0;
+	dace = attrs->acl->aces;
+	for (sace = sacl->aces; sace < sacl->aces + sacl->naces;
+	     sace++, dace++) {
+		if (IS_FSAL_ACE_MODE_GEN(*sace))
+			continue;
+
+		*dace = *sace;
+		attrs->acl->naces++;
+
+		if (IS_FSAL_ACE_INHERIT_ONLY(*dace) ||
+		    (!IS_FSAL_ACE_PERM(*dace)))
+			continue;
+
+		if (IS_FSAL_ACE_INHERIT(*dace)) {
+			/* Need to duplicate */
+			GET_FSAL_ACE_FLAG(*dace) |= FSAL_ACE_FLAG_INHERIT_ONLY;
+			dace++;
+			*dace = *sace;
+			attrs->acl->naces++;
+			GET_FSAL_ACE_FLAG(*dace) &= ~(FSAL_ACE_FLAG_INHERIT);
+		}
+
+		if (IS_FSAL_ACE_SPECIAL(*dace)) {
+			GET_FSAL_ACE_PERM(*dace) &=
+				~(FSAL_ACE_PERM_READ_DATA |
+				  FSAL_ACE_PERM_LIST_DIR |
+				  FSAL_ACE_PERM_WRITE_DATA |
+				  FSAL_ACE_PERM_ADD_FILE |
+				  FSAL_ACE_PERM_APPEND_DATA |
+				  FSAL_ACE_PERM_ADD_SUBDIRECTORY |
+				  FSAL_ACE_PERM_EXECUTE);
+		} else {
+			/* Do non-special stuff */
+		}
+	}
+
+	if (naces - attrs->acl->naces != 6) {
+		LogDebug(COMPONENT_FSAL, "Bad naces: %d not %d",
+			 attrs->acl->naces, naces - 6);
+		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
+	}
+
+	fsal_mode_gen_set(dace, attrs->mode);
+
+	attrs->acl->naces = naces;
+	FSAL_SET_MASK(attrs->mask, ATTR_ACL);
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
+/* fsal_acl_to_mode helpers
+ */
+
+static uint32_t ace_modes[3][3] = {
+	{ /* owner */
+		S_IRUSR, S_IWUSR, S_IXUSR
+	},
+	{ /* group */
+		S_IRGRP, S_IWGRP, S_IXGRP
+	},
+	{ /* everyone */
+		S_IRUSR | S_IRGRP | S_IROTH,
+		S_IWUSR | S_IWGRP | S_IWOTH,
+		S_IXUSR | S_IXGRP | S_IXOTH,
+	}
+};
+
+static inline void set_mode(struct attrlist *attrs, uint32_t mode, bool allow)
+{
+	if (allow)
+		attrs->mode |= mode;
+	else
+		attrs->mode &= ~(mode);
+}
+
+fsal_status_t fsal_acl_to_mode(struct attrlist *attrs)
+{
+	fsal_ace_t *ace = NULL;
+	uint32_t *modes;
+
+	if (!FSAL_TEST_MASK(attrs->mask, ATTR_ACL))
+		return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	if (!attrs->acl || attrs->acl->naces == 0)
+		return fsalstat(ERR_FSAL_NO_ERROR, 0);
+
+	for (ace = attrs->acl->aces; ace < attrs->acl->aces + attrs->acl->naces;
+	     ace++) {
+		if (IS_FSAL_ACE_SPECIAL_OWNER(*ace))
+			modes = ace_modes[0];
+		else if (IS_FSAL_ACE_SPECIAL_GROUP(*ace))
+			modes = ace_modes[1];
+		else if (IS_FSAL_ACE_SPECIAL_EVERYONE(*ace))
+			modes = ace_modes[2];
+		else
+			continue;
+
+		if (IS_FSAL_ACE_READ_DATA(*ace))
+			set_mode(attrs, modes[0], IS_FSAL_ACE_ALLOW(*ace));
+		if (IS_FSAL_ACE_WRITE_DATA(*ace) ||
+		    IS_FSAL_ACE_APPEND_DATA(*ace))
+			set_mode(attrs, modes[1], IS_FSAL_ACE_ALLOW(*ace));
+		if (IS_FSAL_ACE_EXECUTE(*ace))
+			set_mode(attrs, modes[2], IS_FSAL_ACE_ALLOW(*ace));
+
+	}
+
+	FSAL_SET_MASK(attrs->mask, ATTR_MODE);
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /** @} */

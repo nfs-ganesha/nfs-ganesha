@@ -83,7 +83,6 @@ void DispatchWork9P(request_data_t *req)
 			LogCrit(COMPONENT_DISPATCH,
 				"/!\\ Implementation error, bad 9P transport type");
 			return;
-			break;
 		}
 		break;
 
@@ -91,7 +90,6 @@ void DispatchWork9P(request_data_t *req)
 		LogCrit(COMPONENT_DISPATCH,
 			"/!\\ Implementation error, 9P Dispatch function is called for non-9P request !!!!");
 		return;
-		break;
 	}
 
 	/* increase connection refcount */
@@ -278,6 +276,11 @@ void *_9p_socket_thread(void *Arg)
 
 		/* Message is good. */
 		req = pool_alloc(request_pool, NULL);
+		if (req == NULL) {
+			LogCrit(COMPONENT_9P,
+				"Could not allocate memory from request pool");
+			goto end;
+		}
 
 		req->rtype = _9P_REQUEST;
 		req->r_u._9p._9pmsg = _9pmsg;

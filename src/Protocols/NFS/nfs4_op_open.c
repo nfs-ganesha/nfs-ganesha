@@ -91,10 +91,6 @@ static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t *data,
 	state_status_t state_status = STATE_SUCCESS;
 	/* Return value of Cache inode operations */
 	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
-	/* Iterator for state list */
-	struct glist_head *glist = NULL;
-	/* Current state being investigated */
-	state_t *state_iterate = NULL;
 	/* The open state for the file */
 	state_t *file_state = NULL;
 	/* Tracking data for the open state */
@@ -186,57 +182,21 @@ static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t *data,
 	/* Try to find if the same open_owner already has acquired a
 	 * stateid for this file
 	 */
-	glist_for_each(glist, &data->current_entry->list_of_states) {
-		state_iterate = glist_entry(glist, state_t, state_list);
-		state_owner_t *si_owner;
+	file_state = nfs4_State_Get_Entry(data->current_entry, owner);
 
-		if (state_iterate->state_type != STATE_TYPE_SHARE)
-			continue;
-
-		si_owner = get_state_owner_ref(state_iterate);
-
-		if (si_owner == NULL) {
-			/* This state is going stale, can't be same owner. */
-			continue;
-		}
+	if (file_state != NULL) {
+		*new_state = false;
 
 		if (isFullDebug(COMPONENT_STATE)) {
-			char str1[LOG_BUFF_LEN / 3];
-			char str2[LOG_BUFF_LEN / 3];
-			char str3[LOG_BUFF_LEN / 3];
-			struct display_buffer dspbuf1 = {
-						sizeof(str1), str1, str1};
-			struct display_buffer dspbuf2 = {
-						sizeof(str2), str2, str2};
-			struct display_buffer dspbuf3 = {
-						sizeof(str3), str3, str3};
+			char str[LOG_BUFF_LEN];
+			struct display_buffer dspbuf = {sizeof(str), str, str};
 
-			display_owner(&dspbuf1, si_owner);
-			display_owner(&dspbuf2, owner);
-			display_stateid(&dspbuf3, state_iterate);
+			display_stateid(&dspbuf, file_state);
 
 			LogFullDebug(COMPONENT_STATE,
-				     "Comparing %s owner %s to open owner %s",
-				     str3, str1, str2);
+				     "Found existing state %s",
+				     str);
 		}
-
-		/* Check if open_owner is the same.  Since owners are
-		 * created/looked up we should be able to just
-		 * compare pointers.
-		 */
-		if (si_owner == owner) {
-			/* We'll be re-using the found state */
-			file_state = state_iterate;
-			*new_state = false;
-			inc_state_t_ref(file_state);
-
-			/* Release the owner ref taken above */
-			dec_state_owner_ref(si_owner);
-			break;
-		}
-
-		/* Release the owner ref taken above */
-		dec_state_owner_ref(si_owner);
 	}
 
 	if (*new_state) {
@@ -261,7 +221,7 @@ static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t *data,
 				 state_export_id(file_state),
 				 op_ctx->export->export_id);
 			dec_state_t_ref(file_state);
-			return STATE_INVALID_ARGUMENT;
+			return NFS4ERR_INVAL;
 		}
 	}
 
@@ -297,8 +257,8 @@ static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t *data,
 			if (cache_status != CACHE_INODE_SUCCESS) {
 				/* Log bad close and continue. */
 				LogEvent(COMPONENT_STATE,
-					 "Failed to close cache inode: "
-					 "status=%d", cache_status);
+					 "Failed to close cache inode: status=%d",
+					 cache_status);
 			}
 
 			return nfs4_Errno_state(state_status);
@@ -350,10 +310,10 @@ static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t *data,
 static nfsstat4 open4_create_fh(compound_data_t *data, cache_entry_t *entry)
 {
 	nfs_fh4 newfh4;
-	struct alloc_file_handle_v4 new_handle;
+	char new_handle[NFS4_FHSIZE];
 
-	newfh4.nfs_fh4_val = (caddr_t) &new_handle;
-	newfh4.nfs_fh4_len = sizeof(struct alloc_file_handle_v4);
+	newfh4.nfs_fh4_val = new_handle;
+	newfh4.nfs_fh4_len = sizeof(new_handle);
 
 	/* Building a new fh */
 	if (!nfs4_FSALToFhandle(&newfh4,
@@ -530,6 +490,7 @@ bool open4_open_owner(struct nfs_argop4 *op, compound_data_t *data,
 			if (res_OPEN4->status == NFS4_OK) {
 				utf8string *utfile;
 				open_claim4 *oc = &arg_OPEN4->claim;
+
 				switch (oc->claim) {
 				case CLAIM_NULL:
 					utfile = &oc->open_claim4_u.file;
@@ -716,6 +677,7 @@ static nfsstat4 open4_create(OPEN4args *arg, compound_data_t *data,
 
 		if (!sattr_provided) {
 			memset(&sattr, 0, sizeof(struct attrlist));
+			sattr.mask = ATTR_MODE;
 			sattr.mode = mode;
 			sattr_provided = true;
 		}
@@ -788,13 +750,14 @@ static nfsstat4 open4_create(OPEN4args *arg, compound_data_t *data,
 		/* Skip setting attributes if all asked attributes
 		 * are handled by create
 		 */
-		if ((sattr.mask &
-		     (ATTR_ACL | ATTR_ATIME | ATTR_MTIME | ATTR_CTIME |
-		      ATTR_SIZE)) ||
-		    ((sattr.mask & ATTR_OWNER)
+		if ((sattr.mask & CREATE_MASK_REG_NFS4)
+		    || ((sattr.mask & ATTR_OWNER)
 			&& (op_ctx->creds->caller_uid != sattr.owner))
 		    || ((sattr.mask & ATTR_GROUP)
 			&& (op_ctx->creds->caller_gid != sattr.group))) {
+
+			/* mask off flags handled by create */
+			sattr.mask &= CREATE_MASK_REG_NFS4 | ATTRS_CREDS;
 
 			cache_status =
 			    cache_inode_setattr(entry_newfile, &sattr,
@@ -850,7 +813,7 @@ static nfsstat4 open4_claim_null(OPEN4args *arg, compound_data_t *data,
 	parent = data->current_entry;
 
 	/* Parent must be a directory */
-	if ((parent->type != DIRECTORY)) {
+	if (parent->type != DIRECTORY) {
 		if (parent->type == SYMBOLIC_LINK) {
 			nfs_status = NFS4ERR_SYMLINK;
 			goto out;
@@ -1051,8 +1014,7 @@ static void get_delegation(compound_data_t *data, OPEN4args *args,
 						  new_state);
 		if (state_status != STATE_SUCCESS) {
 			LogDebug(COMPONENT_NFS_V4_LOCK,
-				 "get_delegation call added state but failed to"
-				 " lock with status %s",
+				 "get_delegation call added state but failed to lock with status %s",
 				 state_err_str(state_status));
 			state_del_locked(new_state);
 			dec_state_t_ref(new_state);
@@ -1191,7 +1153,6 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 	state_t *file_state = NULL;
 	/* True if the state was newly created */
 	bool new_state = false;
-	cache_entry_t *entry_parent = data->current_entry;
 	int retval;
 	bool created = false;
 
@@ -1241,18 +1202,6 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 	if (res_OPEN4->status != NFS4_OK)
 		return res_OPEN4->status;
 
-	if (data->current_entry == NULL) {
-		/* This should be impossible, as PUTFH fills in the
-		 * current entry and previous checks weed out handles
-		 * in the PseudoFS and DS handles.
-		 */
-		res_OPEN4->status = NFS4ERR_SERVERFAULT;
-		LogCrit(COMPONENT_NFS_V4,
-			"Impossible condition in compound data at %s:%u.",
-			__FILE__, __LINE__);
-		goto out3;
-	}
-
 	/* It this a known client id? */
 	LogDebug(COMPONENT_STATE,
 		 "OPEN Client id = %" PRIx64,
@@ -1268,7 +1217,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 		res_OPEN4->status = clientid_error_to_nfsstat(retval);
 		LogDebug(COMPONENT_NFS_V4,
 			 "nfs_client_id_get_confirmed failed");
-		goto out3;
+		return res_OPEN4->status;
 	}
 
 	/* Check if lease is expired and reserve it */
@@ -1284,7 +1233,6 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 	PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
 
 	/* Get the open owner */
-
 	if (!open4_open_owner(op, data, resp, clientid, &owner)) {
 		LogDebug(COMPONENT_NFS_V4, "open4_open_owner failed");
 		goto out2;
@@ -1311,12 +1259,11 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 		goto out2;
 	}
 
-	/* So we still have a reference even after we repalce the
-	 * current FH.
-	 */
+	/* So we still have a reference even after we repalce the current FH. */
 	entry_change = data->current_entry;
 	(void) cache_inode_lru_ref(entry_change, LRU_REQ_STALE_OK);
 
+	/* Update the change info for entry_change. */
 	res_OPEN4->OPEN4res_u.resok4.cinfo.before =
 	    cache_inode_get_changeid4(entry_change);
 
@@ -1342,6 +1289,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 	case CLAIM_NULL:
 		{
 			cache_entry_t *entry = NULL;
+
 			res_OPEN4->status = open4_claim_null(arg_OPEN4,
 							     data,
 							     res_OPEN4,
@@ -1420,7 +1368,9 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 		openflags = FSAL_O_READ;
 		break;
 	case OPEN4_SHARE_ACCESS_WRITE:
-		/* clients may read as well due to buffer cache constraints */
+		/* Clients may read as well due to buffer cache constraints.
+		 * This is based on text on page 112 of RFC 7530.
+		 */
 		/* Fallthrough */
 	case OPEN4_SHARE_ACCESS_BOTH:
 	default:
@@ -1458,6 +1408,13 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 	memset(&res_OPEN4->OPEN4res_u.resok4.attrset,
 	       0,
 	       sizeof(struct bitmap4));
+	if (arg_OPEN4->openhow.openflag4_u.how.mode == EXCLUSIVE4 ||
+	    arg_OPEN4->openhow.openflag4_u.how.mode == EXCLUSIVE4_1) {
+		struct bitmap4 *bits = &res_OPEN4->OPEN4res_u.resok4.attrset;
+
+		set_attribute_in_bitmap(bits, FATTR4_TIME_ACCESS);
+		set_attribute_in_bitmap(bits, FATTR4_TIME_MODIFY);
+	}
 
 	/* If server use OPEN_CONFIRM4, set the correct flag,
 	 * but not for 4.1 */
@@ -1476,8 +1433,6 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 	/* Update change_info4 */
 	res_OPEN4->OPEN4res_u.resok4.cinfo.after =
 		cache_inode_get_changeid4(entry_change);
-	cache_inode_put(entry_change);
-	entry_change = NULL;
 	res_OPEN4->OPEN4res_u.resok4.cinfo.atomic = FALSE;
 
 	/* Handle open stateid/seqid for success */
@@ -1485,8 +1440,6 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 		       &res_OPEN4->OPEN4res_u.resok4.stateid,
 		       data,
 		       open_tag);
-
-
 
  out:
 
@@ -1496,7 +1449,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	/* Save the response in the open owner.
-	 * entry_parent is either the parent directory or for a CLAIM_PREV is
+	 * entry_change is either the parent directory or for a CLAIM_PREV is
 	 * the entry itself. In either case, it's the right entry to use in
 	 * saving the request results.
 	 */
@@ -1504,7 +1457,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 		Copy_nfs4_state_req(owner,
 				    arg_OPEN4->seqid,
 				    op,
-				    entry_parent,
+				    entry_change,
 				    resp,
 				    open_tag);
 	}
@@ -1517,11 +1470,6 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 		update_lease(clientid);
 		PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
 	}
-
- out3:
-
-	if (clientid != NULL)
-		dec_client_id_ref(clientid);
 
 	if (file_state != NULL)
 		dec_state_t_ref(file_state);
@@ -1541,6 +1489,10 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 		dec_state_owner_ref(owner);
 	}
 
+ out3:
+
+	dec_client_id_ref(clientid);
+
 	return res_OPEN4->status;
 }				/* nfs4_op_open */
 
@@ -1554,5 +1506,5 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
  */
 void nfs4_op_open_Free(nfs_resop4 *resp)
 {
-	return;
-}				/* nfs4_op_open_Free */
+	/* Nothing to be done */
+}

@@ -31,11 +31,11 @@
 /**
  * GPFSFSAL_share_op:
  */
-fsal_status_t GPFSFSAL_share_op(int mntfd,	/* IN */
-				int fd,	/* IN */
-				void *p_owner,	/* IN */
+fsal_status_t GPFSFSAL_share_op(int mntfd,
+				int fd,
+				void *p_owner,
 				fsal_share_param_t request_share)
-{				/* IN */
+{
 	int rc = 0;
 	struct share_reserve_arg share_arg;
 	int errsv = 0;

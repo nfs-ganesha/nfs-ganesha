@@ -41,6 +41,10 @@
 #include "nfs_exports.h"
 #include "export_mgr.h"
 #include "pnfs_utils.h"
+/* The default location of gfapi log
+ * if glfs_log param is not defined in
+ * the export file */
+#define GFAPI_LOG_LOCATION "/var/log/ganesha-gfapi.log"
 
 /**
  * @brief Implements GLUSTER FSAL exportoperation release
@@ -50,6 +54,8 @@ static void export_release(struct fsal_export *exp_hdl)
 {
 	struct glusterfs_export *glfs_export =
 	    container_of(exp_hdl, struct glusterfs_export, export);
+	int *retval = NULL;
+	int err     = 0;
 
 	/* check activity on the export */
 
@@ -57,6 +63,22 @@ static void export_release(struct fsal_export *exp_hdl)
 	fsal_detach_export(glfs_export->export.fsal,
 			   &glfs_export->export.exports);
 	free_export_ops(&glfs_export->export);
+
+	atomic_add_int8_t (&glfs_export->destroy_mode, 1);
+
+	/* Wait for up_thread to exit */
+	err = pthread_join(glfs_export->up_thread, (void **)&retval);
+
+	if (retval && *retval) {
+		LogDebug(COMPONENT_FSAL, "Up_thread join returned value %d",
+			 *retval);
+	}
+
+	if (err) {
+		LogCrit(COMPONENT_FSAL, "Up_thread join failed (%s)",
+			strerror(err));
+		return;
+	}
 
 	/* Gluster and memory cleanup */
 	glfs_fini(glfs_export->gl_fs);
@@ -122,7 +144,13 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 		goto out;
 	}
 
-	glhandle = glfs_h_lookupat(glfs_export->gl_fs, NULL, realpath, &sb);
+#ifdef USE_GLUSTER_SYMLINK_MOUNT
+		glhandle = glfs_h_lookupat(glfs_export->gl_fs, NULL, realpath,
+					&sb, 1);
+#else
+		glhandle = glfs_h_lookupat(glfs_export->gl_fs, NULL, realpath,
+					&sb);
+#endif
 	if (glhandle == NULL) {
 		status = gluster2fsal_error(errno);
 		goto out;
@@ -184,7 +212,7 @@ static fsal_status_t extract_handle(struct fsal_export *exp_hdl,
 	fh_size = GLAPI_HANDLE_LENGTH;
 	if (fh_desc->len != fh_size) {
 		LogMajor(COMPONENT_FSAL,
-			 "Size mismatch for handle.  should be %lu, got %lu",
+			 "Size mismatch for handle.  should be %zu, got %zu",
 			 fh_size, fh_desc->len);
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 	}
@@ -528,7 +556,7 @@ static struct config_item export_params[] = {
 		      glexport_params, glhostname),
 	CONF_ITEM_PATH("volpath", 1, MAXPATHLEN, "/",
 		      glexport_params, glvolpath),
-	CONF_ITEM_PATH("glfs_log", 1, MAXPATHLEN, "/tmp/gfapi.log",
+	CONF_ITEM_PATH("glfs_log", 1, MAXPATHLEN, GFAPI_LOG_LOCATION,
 		       glexport_params, glfs_log),
 	CONFIG_EOL
 };
@@ -552,7 +580,7 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 				      struct config_error_type *err_type,
 				      const struct fsal_up_vector *up_ops)
 {
-	int rc;
+	int rc = 0;
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	struct glusterfs_export *glfsexport = NULL;
 	glfs_t *fs = NULL;
@@ -598,7 +626,6 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 	}
 
 	export_ops_init(&glfsexport->export.exp_ops);
-	glfsexport->export.up_ops = up_ops;
 
 	fs = glfs_new(params.glvolname);
 	if (!fs) {
@@ -651,8 +678,8 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 	glfsexport->savedgid = getegid();
 	glfsexport->export.fsal = fsal_hdl;
 	glfsexport->acl_enable =
-		((op_ctx->export->export_perms.options &
-		  EXPORT_OPTION_DISABLE_ACL) ? 0 : 1);
+		!(op_ctx->export->options & EXPORT_OPTION_DISABLE_ACL);
+	glfsexport->destroy_mode = 0;
 
 	op_ctx->fsal_export = &glfsexport->export;
 
@@ -693,6 +720,19 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 			 op_ctx->export->fullpath);
 		export_ops_pnfs(&glfsexport->export.exp_ops);
 		fsal_ops_pnfs(&glfsexport->export.fsal->m_ops);
+	}
+
+	if (up_ops) {
+		glfsexport->export.up_ops = up_ops;
+		rc = initiate_up_thread(glfsexport);
+
+		if (rc != 0) {
+			LogCrit(COMPONENT_FSAL,
+				"Unable to create GLUSTERFSAL_UP_Thread. Export: %s",
+				op_ctx->export->fullpath);
+			status.major = ERR_FSAL_FAULT;
+			goto out;
+		}
 	}
 
  out:

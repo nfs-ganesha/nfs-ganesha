@@ -337,6 +337,11 @@ static int32_t cbsim_fake_cbrecall(clientid4 clientid)
 
 	/* allocate a new call--freed in completion hook */
 	call = alloc_rpc_call();
+	if (call == NULL) {
+		LogCrit(COMPONENT_NFS_CB, "alloc_rpc_call failed (pool_alloc)");
+		goto out;
+	}
+
 	call->chan = chan;
 
 	/* setup a compound */
@@ -457,5 +462,5 @@ void nfs_rpc_cbsim_pkginit(void)
  */
 void nfs_rpc_cbsim_pkgshutdown(void)
 {
-	return;
+	/* return */
 }

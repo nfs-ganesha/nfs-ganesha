@@ -136,5 +136,4 @@ int nfs4_op_remove(struct nfs_argop4 *op, compound_data_t *data,
 void nfs4_op_remove_Free(nfs_resop4 *resp)
 {
 	/* Nothing to be done */
-	return;
-}				/* nfs4_op_remove_Free */
+}

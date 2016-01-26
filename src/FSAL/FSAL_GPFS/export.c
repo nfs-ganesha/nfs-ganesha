@@ -450,7 +450,8 @@ int open_root_fd(struct gpfs_filesystem *gpfs_fs)
 	fsal_status_t status;
 	struct gpfs_file_handle *fh;
 
-	gpfs_alloc_handle(fh);
+	fh = alloca(sizeof(*fh));
+	memset(fh, 0, sizeof(*fh));
 
 	gpfs_fs->root_fd = open(gpfs_fs->fs->path, O_RDONLY | O_DIRECTORY);
 
@@ -839,6 +840,8 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 			op_ctx->export->fullpath);
 		export_ops_pnfs(&myself->export.exp_ops);
 	}
+	myself->use_acl =
+		!(op_ctx->export->options & EXPORT_OPTION_DISABLE_ACL);
 	return status;
 
 detach:

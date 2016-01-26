@@ -109,6 +109,7 @@ int vfs_utimes(int fd, const struct timespec *ts)
 uid_t setuser(uid_t uid)
 {
 	uid_t orig_uid = setfsuid(uid);
+
 	if (uid != setfsuid(uid))
 		LogCrit(COMPONENT_FSAL, "Could not set user identity");
 
@@ -118,6 +119,7 @@ uid_t setuser(uid_t uid)
 gid_t setgroup(gid_t gid)
 {
 	gid_t orig_gid = setfsgid(gid);
+
 	if (gid != setfsgid(gid))
 		LogCrit(COMPONENT_FSAL, "Could not set group identity");
 

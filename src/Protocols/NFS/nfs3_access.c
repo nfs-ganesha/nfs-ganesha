@@ -54,7 +54,6 @@
  * This function implements NFSPROC3_ACCESS.
  *
  * @param[in]  arg     NFS arguments union
- * @param[in]  worker  Worker thread data
  * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call
  *
@@ -64,9 +63,7 @@
  *
  */
 
-int nfs3_access(nfs_arg_t *arg,
-		nfs_worker_data_t *worker,
-		struct svc_req *req, nfs_res_t *res)
+int nfs3_access(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
 	cache_inode_status_t cache_status;
 	cache_entry_t *entry = NULL;
@@ -74,6 +71,7 @@ int nfs3_access(nfs_arg_t *arg,
 
 	if (isDebug(COMPONENT_NFSPROTO)) {
 		char str[LEN_FH_STR];
+
 		sprint_fhandle3(str, &(arg->arg_access3.object));
 		LogDebug(COMPONENT_NFSPROTO,
 			 "REQUEST PROCESSING: Calling nfs3_access handle: %s",
@@ -140,5 +138,4 @@ int nfs3_access(nfs_arg_t *arg,
 void nfs3_access_free(nfs_res_t *res)
 {
 	/* Nothing to do */
-	return;
 }

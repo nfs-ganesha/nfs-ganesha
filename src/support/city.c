@@ -39,6 +39,7 @@
 static uint64 UNALIGNED_LOAD64(const char *p)
 {
 	uint64 result;
+
 	memcpy(&result, p, sizeof(result));
 	return result;
 }
@@ -46,6 +47,7 @@ static uint64 UNALIGNED_LOAD64(const char *p)
 static uint32 UNALIGNED_LOAD32(const char *p)
 {
 	uint32 result;
+
 	memcpy(&result, p, sizeof(result));
 	return result;
 }
@@ -109,8 +111,11 @@ static inline uint64 Hash128to64(const uint128 x)
 	/* Murmur-inspired hashing. */
 	const uint64 kMul = 0x9ddfea08eb382d69ULL;
 	uint64 a = (Uint128Low64(x) ^ Uint128High64(x)) * kMul;
+
 	a ^= (a >> 47);
+
 	uint64 b = (Uint128High64(x) ^ a) * kMul;
+
 	b ^= (b >> 47);
 	b *= kMul;
 	return b;
@@ -142,6 +147,7 @@ static uint64 ShiftMix(uint64 val)
 static uint64 HashLen16(uint64 u, uint64 v)
 {
 	uint128 result;
+
 	result.first = u;
 	result.second = v;
 	return Hash128to64(result);
@@ -152,10 +158,12 @@ static uint64 HashLen0to16(const char *s, size_t len)
 	if (len > 8) {
 		uint64 a = Fetch64(s);
 		uint64 b = Fetch64(s + len - 8);
+
 		return HashLen16(a, RotateByAtLeast1(b + len, len)) ^ b;
 	}
 	if (len >= 4) {
 		uint64 a = Fetch32(s);
+
 		return HashLen16(len + (a << 3), Fetch32(s + len - 4));
 	}
 	if (len > 0) {
@@ -164,6 +172,7 @@ static uint64 HashLen0to16(const char *s, size_t len)
 		uint8 c = s[len - 1];
 		uint32 y = (uint32) (a) + ((uint32) (b) << 8);
 		uint32 z = len + ((uint32) (c) << 2);
+
 		return ShiftMix(y * k2 ^ z * k3) * k2;
 	}
 	return k2;
@@ -178,6 +187,7 @@ static uint64 HashLen17to32(const char *s, size_t len)
 	uint64 b = Fetch64(s + 8);
 	uint64 c = Fetch64(s + len - 8) * k2;
 	uint64 d = Fetch64(s + len - 16) * k0;
+
 	return HashLen16(Rotate(a - b, 43) + Rotate(c, 30) + d,
 			 a + Rotate(b ^ k3, 20) - c + len);
 }
@@ -191,12 +201,15 @@ uint128 WeakHashLen32WithSeeds6(uint64 w, uint64 x, uint64 y, uint64 z,
 {
 	a += w;
 	b = Rotate(b + a + z, 21);
+
 	uint64 c = a;
+
 	a += x;
 	a += y;
 	b += Rotate(a, 44);
 
 	uint128 result;
+
 	result.first = (uint64) (a + z);
 	result.second = (uint64) (b + c);
 	return result;
@@ -219,11 +232,14 @@ static uint64 HashLen33to64(const char *s, size_t len)
 	uint64 a = Fetch64(s) + (len + Fetch64(s + len - 16)) * k0;
 	uint64 b = Rotate(a + z, 52);
 	uint64 c = Rotate(a, 37);
+
 	a += Fetch64(s + 8);
 	c += Rotate(a, 7);
 	a += Fetch64(s + 16);
+
 	uint64 vf = a + z;
 	uint64 vs = b + Rotate(a, 31) + c;
+
 	a = Fetch64(s + 16) + Fetch64(s + len - 32);
 	z = Fetch64(s + len - 8);
 	b = Rotate(a + z, 52);
@@ -231,9 +247,11 @@ static uint64 HashLen33to64(const char *s, size_t len)
 	a += Fetch64(s + len - 24);
 	c += Rotate(a, 7);
 	a += Fetch64(s + len - 16);
+
 	uint64 wf = a + z;
 	uint64 ws = b + Rotate(a, 31) + c;
 	uint64 r = ShiftMix((vf + ws) * k2 + (wf + vs) * k0);
+
 	return ShiftMix(r * k0 + vs) * k2;
 }
 
@@ -257,6 +275,7 @@ uint64 CityHash64(const char *s, size_t len)
 	uint64 temp;
 	uint128 v = WeakHashLen32WithSeeds(s + len - 64, len, z);
 	uint128 w = WeakHashLen32WithSeeds(s + len - 32, y + k1, x);
+
 	x = x * k1 + Fetch64(s);
 
 	/* Decrease len to the nearest multiple of 64,
@@ -303,6 +322,7 @@ static uint128 CityMurmur(const char *s, size_t len, uint128 seed)
 	uint64 c = 0;
 	uint64 d = 0;
 	signed long l = len - 16;
+
 	if (l <= 0) {		/* len <= 16 */
 		a = ShiftMix(a * k1) * k1;
 		c = b * k1 + HashLen0to16(s, len);
@@ -326,6 +346,7 @@ static uint128 CityMurmur(const char *s, size_t len, uint128 seed)
 	b = HashLen16(d, b);
 
 	uint128 result;
+
 	result.first = (uint64) (a ^ b);
 	result.second = (uint64) (HashLen16(b, a));
 	return result;
@@ -344,6 +365,7 @@ uint128 CityHash128WithSeed(const char *s, size_t len, uint128 seed)
 	uint64 y = Uint128High64(seed);
 	uint64 z = len * k1;
 	uint64 temp;
+
 	v.first = Rotate(y ^ k1, 49) * k1 + Fetch64(s);
 	v.second = Rotate(v.first, 42) * k1 + Fetch64(s + 8);
 	w.first = Rotate(y + z, 35) * k1 + x;
@@ -383,6 +405,7 @@ uint128 CityHash128WithSeed(const char *s, size_t len, uint128 seed)
 	 * of 32 bytes each from the end of s.
 	 */
 	size_t tail_done;
+
 	for (tail_done = 0; tail_done < len;) {
 		tail_done += 32;
 		y = Rotate(x + y, 42) * k0 + v.second;
@@ -401,6 +424,7 @@ uint128 CityHash128WithSeed(const char *s, size_t len, uint128 seed)
 	y = HashLen16(y + z, w.first);
 
 	uint128 result;
+
 	result.first = (uint64) (HashLen16(x + v.second, w.second) + y);
 	result.second = (uint64) HashLen16(x + w.second, y + v.second);
 	return result;
@@ -409,6 +433,7 @@ uint128 CityHash128WithSeed(const char *s, size_t len, uint128 seed)
 uint128 CityHash128(const char *s, size_t len)
 {
 	uint128 r;
+
 	if (len >= 16) {
 		r.first = (uint64) (Fetch64(s) ^ k3);
 		r.second = (uint64) (Fetch64(s + 8));
@@ -450,11 +475,14 @@ static void CityHashCrc256Long(const char *s, size_t len, uint32 seed,
 
 	/* 240 bytes of input per iter. */
 	size_t iters = len / 240;
+
 	len -= iters * 240;
 	do {
+
 #define CHUNK(multiplier, z)						\
 	do {								\
 		uint64 old_a = a;					\
+									\
 		a = Rotate(b, 41 ^ z) * multiplier + Fetch64(s);	\
 		b = Rotate(c, 27 ^ z) * multiplier + Fetch64(s + 8);	\
 		c = Rotate(d, 41 ^ z) * multiplier + Fetch64(s + 16);	\
@@ -510,6 +538,7 @@ static void CityHashCrc256Long(const char *s, size_t len, uint32 seed,
 static void CityHashCrc256Short(const char *s, size_t len, uint64 *result)
 {
 	char buf[240];
+
 	memcpy(buf, s, len);
 	memset(buf + len, 0, 240 - len);
 	CityHashCrc256Long(buf, 240, ~(uint32) (len), result);
@@ -529,10 +558,13 @@ uint128 CityHashCrc128WithSeed(const char *s, size_t len, uint128 seed)
 		return CityHash128WithSeed(s, len, seed);
 	} else {
 		uint64 result[4];
+
 		CityHashCrc256(s, len, result);
+
 		uint64 u = Uint128High64(seed) + result[0];
 		uint64 v = Uint128Low64(seed) + result[1];
 		uint128 crc;
+
 		crc.first = (uint64) (HashLen16(u, v + result[2]));
 		crc.second =
 		    (uint64) (HashLen16(Rotate(v, 32), u * k0 + result[3]));
@@ -546,8 +578,11 @@ uint128 CityHashCrc128(const char *s, size_t len)
 		return CityHash128(s, len);
 	} else {
 		uint64 result[4];
+
 		CityHashCrc256(s, len, result);
+
 		uint128 crc;
+
 		crc.first = (uint64) result[2];
 		crc.second = (uint64) result[3];
 		return crc;

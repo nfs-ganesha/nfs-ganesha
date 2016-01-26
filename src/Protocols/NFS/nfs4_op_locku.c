@@ -111,6 +111,8 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	lock_desc.lock_start = arg_LOCKU4->offset;
+	lock_desc.lock_sle_type = FSAL_POSIX_LOCK;
+	lock_desc.lock_reclaim = false;
 
 	if (arg_LOCKU4->length != STATE_LOCK_OFFSET_EOF)
 		lock_desc.lock_length = arg_LOCKU4->length;
@@ -183,8 +185,10 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t *data,
 	/* Now we have a lock owner and a stateid.  Go ahead and push
 	   unlock into SAL (and FSAL). */
 	state_status = state_unlock(data->current_entry,
-				    lock_owner,
 				    state_found,
+				    lock_owner,
+				    false,
+				    0,
 				    &lock_desc);
 
 	if (state_status != STATE_SUCCESS) {
@@ -236,11 +240,10 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t *data,
  */
 void nfs4_op_locku_Free(nfs_resop4 *resp)
 {
-	return;
-}				/* nfs4_op_locku_Free */
+	/* Nothing to be done */
+}
 
 void nfs4_op_locku_CopyRes(LOCKU4res *res_dst, LOCKU4res *res_src)
 {
 	/* Nothing to deep copy */
-	return;
-}				/* nfs4_op_locku_CopyRes */
+}

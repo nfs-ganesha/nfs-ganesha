@@ -33,7 +33,7 @@
 
 #include <stdlib.h>
 #include <sys/types.h>
-#include <sys/queue.h>
+#include <misc/queue.h>
 #include <rpc/rpc.h>
 #include <rpc/auth_gss.h>
 #include <krb5.h>

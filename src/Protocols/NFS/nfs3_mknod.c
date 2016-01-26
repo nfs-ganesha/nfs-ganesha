@@ -55,7 +55,6 @@
  * Implements NFSPROC3_MKNOD.
  *
  * @param[in]  arg     NFS arguments union
- * @param[in]  worker  Worker thread data
  * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call
  *
@@ -64,9 +63,7 @@
  * @retval NFS_REQ_FAILED if failed and not retryable
  */
 
-int nfs3_mknod(nfs_arg_t *arg,
-	       nfs_worker_data_t *worker,
-	       struct svc_req *req, nfs_res_t *res)
+int nfs3_mknod(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
 	cache_entry_t *parent_entry = NULL;
 	pre_op_attr pre_parent;
@@ -91,8 +88,8 @@ int nfs3_mknod(nfs_arg_t *arg,
 			"<empty name>" : file_name;
 		sprint_fhandle3(str, &(arg->arg_mknod3.where.dir));
 		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling nfs3_mknod handle: %s "
-			 "name: %s", str, fname);
+			 "REQUEST PROCESSING: Calling nfs3_mknod handle: %s name: %s",
+			 str, fname);
 	}
 
 	/* to avoid setting them on each error case */
@@ -249,11 +246,15 @@ int nfs3_mknod(nfs_arg_t *arg,
 	/*Set attributes if required */
 	squash_setattr(&sattr);
 
-	if ((sattr.mask & (ATTR_ATIME | ATTR_MTIME | ATTR_CTIME))
+	if ((sattr.mask & CREATE_MASK_NON_REG_NFS3)
 	    || ((sattr.mask & ATTR_OWNER)
 		&& (op_ctx->creds->caller_uid != sattr.owner))
 	    || ((sattr.mask & ATTR_GROUP)
 		&& (op_ctx->creds->caller_gid != sattr.group))) {
+
+		/* mask off flags handled by create */
+		sattr.mask &= CREATE_MASK_NON_REG_NFS3 | ATTRS_CREDS;
+
 		cache_status = cache_inode_setattr(node_entry,
 						   &sattr,
 						   false);
