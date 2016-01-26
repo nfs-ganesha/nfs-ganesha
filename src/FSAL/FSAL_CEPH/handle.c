@@ -368,6 +368,7 @@ static fsal_status_t fsal_readlink(struct fsal_obj_handle *link_pub,
 	/* Pointer to the Ceph link content */
 	char content[PATH_MAX];
 
+	memset(content, 0, sizeof(content));
 	/* Content points into a static buffer in the Ceph client's
 	   cache, so we don't have to free it. */
 
