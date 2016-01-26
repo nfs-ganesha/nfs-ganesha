@@ -922,11 +922,11 @@ static void record_stats(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
 	}
 }
 
+#ifdef _USE_9P
 /**
  * @brief Record transport stats
  *
  */
-#ifdef _USE_9P
 static void record_transport_stats(struct transport_stats *t_st,
 				   uint64_t rx_bytes, uint64_t rx_pkt,
 				   uint64_t rx_err, uint64_t tx_bytes,
@@ -946,12 +946,12 @@ static void record_transport_stats(struct transport_stats *t_st,
 		atomic_add_uint64_t(&t_st->tx_err, tx_err);
 }
 #endif
+#ifdef _USE_9P
 /**
  * @brief record 9P tcp transport stats
  *
  * Called from 9P functions doing send/recv
  */
-#ifdef _USE_9P
 void server_stats_transport_done(struct gsh_client *client,
 				uint64_t rx_bytes, uint64_t rx_pkt,
 				uint64_t rx_err, uint64_t tx_bytes,
@@ -1299,6 +1299,7 @@ void server_stats_summary(DBusMessageIter *iter, struct gsh_stats *st)
 				       &stats_available);
 }
 
+#ifdef _USE_9P
 /** @brief Report protocol operation statistics
  *
  * struct proto_op {
@@ -1323,6 +1324,7 @@ static void server_dbus_op_stats(struct proto_op *op, DBusMessageIter *iter)
 				       op == NULL ? &zero : &op->errors);
 	dbus_message_iter_close_container(iter, &struct_iter);
 }
+#endif
 
 /**
  * @brief Report I/O statistics as a struct
@@ -1361,6 +1363,7 @@ static void server_dbus_iostats(struct xfer_op *iop, DBusMessageIter *iter)
 	dbus_message_iter_close_container(iter, &struct_iter);
 }
 
+#ifdef _USE_9P
 static void server_dbus_transportstats(struct transport_stats *tstats,
 				       DBusMessageIter *iter)
 {
@@ -1382,6 +1385,7 @@ static void server_dbus_transportstats(struct transport_stats *tstats,
 				       &tstats->tx_err);
 	dbus_message_iter_close_container(iter, &struct_iter);
 }
+#endif
 
 void server_dbus_total(struct export_stats *export_st, DBusMessageIter *iter)
 {
