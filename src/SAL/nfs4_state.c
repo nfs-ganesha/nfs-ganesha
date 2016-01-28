@@ -702,8 +702,16 @@ void release_openstate(state_owner_t *owner)
 				 *       expire due to SETCLIENTID.
 				 */
 
-				/* This cached owner has expired, uncache it. */
+				/* This cached owner has expired, uncache it.
+				 * uncache_nfs4_owner may destroy the
+				 * owner, so unlock so_mutex prior to
+				 * the call. so_state_list should be
+				 * empty as well, so return early.
+				 */
+				PTHREAD_MUTEX_unlock(&owner->so_mutex);
 				uncache_nfs4_owner(nfs4_owner);
+				PTHREAD_MUTEX_unlock(&cached_open_owners_lock);
+				return;
 			}
 
 			PTHREAD_MUTEX_unlock(&cached_open_owners_lock);

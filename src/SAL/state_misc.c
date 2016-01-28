@@ -1058,11 +1058,12 @@ void dec_state_owner_ref(state_owner_t *owner)
 
 /** @brief Remove an NFS 4 open owner from the cached owners list.
  *
- * The caller MUST hold the cached_open_owners_lock.
+ * The caller MUST hold the cached_open_owners_lock, also must NOT hold
+ * so_mutex as the so_mutex may get destroyed after this call.
  *
  * If this owner is being revived, the refcount should have already been
- * incremented for the new primary reference. This function will release
- * the refcount that held it in the cache.
+ * incremented for the new primary reference. This function will release the
+ * refcount that held it in the cache.
  *
  * @param[in] nfs4_owner The owner to release.
  *
@@ -1248,11 +1249,7 @@ state_owner_t *get_state_owner(care_t care, state_owner_t *key,
 
 		/* Refresh an nfs4 open owner if needed. */
 		if (owner->so_type == STATE_OPEN_OWNER_NFSV4) {
-			PTHREAD_MUTEX_lock(&owner->so_mutex);
-
 			refresh_nfs4_open_owner(&owner->so_owner.so_nfs4_owner);
-
-			PTHREAD_MUTEX_unlock(&owner->so_mutex);
 		}
 
 		if (isFullDebug(COMPONENT_STATE)) {

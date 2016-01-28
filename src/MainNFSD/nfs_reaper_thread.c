@@ -181,11 +181,7 @@ static int reap_expired_open_owners(void)
 			break;
 		} else {
 			/* This cached owner has expired, uncache it. */
-			PTHREAD_MUTEX_lock(&owner->so_mutex);
-
 			uncache_nfs4_owner(nfs4_owner);
-
-			PTHREAD_MUTEX_unlock(&owner->so_mutex);
 
 			count++;
 
