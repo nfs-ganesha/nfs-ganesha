@@ -1199,7 +1199,7 @@ static nfsstat4 pds_handle(struct fsal_pnfs_ds *const pds,
 			   int flags)
 {
 	LogCrit(COMPONENT_PNFS, "Unimplemented DS handle creation!");
-	*handle = gsh_calloc(sizeof(struct fsal_ds_handle), 1);
+	*handle = gsh_calloc(1, sizeof(struct fsal_ds_handle));
 
 	fsal_ds_handle_init(*handle, pds);
 	return NFS4_OK;

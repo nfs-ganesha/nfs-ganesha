@@ -409,7 +409,7 @@ static nfsstat4 make_ds_handle(struct fsal_pnfs_ds *const pds,
 	if (dsw->layout.fl_stripe_unit == 0)
 		return NFS4ERR_BADHANDLE;
 
-	ds = gsh_calloc(sizeof(struct ds), 1);
+	ds = gsh_calloc(1, sizeof(struct ds));
 
 	*handle = &ds->ds;
 	fsal_ds_handle_init(*handle, pds);

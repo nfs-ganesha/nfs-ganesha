@@ -218,7 +218,7 @@ struct gsh_export *alloc_export(void)
 	struct export_stats *export_st;
 	struct gsh_export *export;
 
-	export_st = gsh_calloc(sizeof(struct export_stats), 1);
+	export_st = gsh_calloc(1, sizeof(struct export_stats));
 
 	export = &export_st->export;
 

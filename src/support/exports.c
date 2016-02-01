@@ -288,7 +288,7 @@ static int add_client(struct glist_head *client_list,
 	uint32_t addr;
 	int rc;
 
-	cli = gsh_calloc(sizeof(struct exportlist_client_entry__), 1);
+	cli = gsh_calloc(1, sizeof(struct exportlist_client_entry__));
 
 	glist_init(&cli->cle_list);
 	switch (type_hint) {
@@ -365,10 +365,9 @@ static int add_client(struct glist_head *client_list,
 					     (int) ap->ai_addrlen,
 					     ap->ai_canonname);
 				if (cli == NULL) {
-					cli = gsh_calloc(
+					cli = gsh_calloc(1,
 						sizeof(struct
-						    exportlist_client_entry__),
-						1);
+						    exportlist_client_entry__));
 					glist_init(&cli->cle_list);
 				}
 				if (ap->ai_family == AF_INET &&
@@ -471,7 +470,7 @@ static void *client_init(void *link_mem, void *self_struct)
 	if (link_mem == NULL) {
 		return self_struct;
 	} else if (self_struct == NULL) {
-		cli = gsh_calloc(sizeof(struct exportlist_client_entry__), 1);
+		cli = gsh_calloc(1, sizeof(struct exportlist_client_entry__));
 
 		glist_init(&cli->cle_list);
 		cli->type = PROTO_CLIENT;

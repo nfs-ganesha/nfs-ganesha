@@ -55,7 +55,7 @@
 static struct _9p_user_cred *new_9p_user_creds()
 {
 	struct _9p_user_cred *result =
-		gsh_calloc(sizeof(struct _9p_user_cred), 1);
+		gsh_calloc(1, sizeof(struct _9p_user_cred));
 
 	result->refcount = 1;
 

@@ -89,7 +89,7 @@ static struct vfs_acl_entry *vfs_acl_locate(struct fsal_obj_handle *obj)
 	}
 
 	LogDebug(COMPONENT_FSAL, "create");
-	fa_entry = gsh_calloc(sizeof(struct vfs_acl_entry), 1);
+	fa_entry = gsh_calloc(1, sizeof(struct vfs_acl_entry));
 
 	fa_entry->fa_key = key;
 	node = avltree_insert(&fa_entry->fa_node, &vfs_acl_tree);

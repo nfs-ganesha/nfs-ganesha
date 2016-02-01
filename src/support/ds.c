@@ -89,7 +89,7 @@ static int server_id_cmpf(const struct avltree_node *lhs,
 
 struct fsal_pnfs_ds *pnfs_ds_alloc(void)
 {
-	return gsh_calloc(sizeof(struct fsal_pnfs_ds), 1);
+	return gsh_calloc(1, sizeof(struct fsal_pnfs_ds));
 }
 
 /**

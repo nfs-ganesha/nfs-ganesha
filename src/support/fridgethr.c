@@ -592,7 +592,7 @@ static int fridgethr_spawn(struct fridgethr *fr,
 	/* The condition variable has/not been initialized */
 	bool conditioned = false;
 
-	fe = gsh_calloc(sizeof(struct fridgethr_entry), 1);
+	fe = gsh_calloc(1, sizeof(struct fridgethr_entry));
 
 	glist_init(&fe->thread_link);
 	fe->fr = fr;
@@ -1381,7 +1381,7 @@ int fridgethr_populate(struct fridgethr *fr,
 		struct fridgethr_entry *fe = NULL;
 		int rc = 0;
 
-		fe = gsh_calloc(sizeof(struct fridgethr_entry), 1);
+		fe = gsh_calloc(1, sizeof(struct fridgethr_entry));
 
 		/* Make a new thread */
 		++(fr->nthreads);

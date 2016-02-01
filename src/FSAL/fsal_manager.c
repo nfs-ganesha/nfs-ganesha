@@ -482,7 +482,7 @@ void *fsal_init(void *link_mem, void *self_struct)
 	if (link_mem == NULL) {
 		return self_struct; /* NOP */
 	} else if (self_struct == NULL) {
-		return gsh_calloc(sizeof(struct fsal_args), 1);
+		return gsh_calloc(1, sizeof(struct fsal_args));
 	} else {
 		fp = self_struct;
 		gsh_free(fp->name);

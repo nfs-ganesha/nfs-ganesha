@@ -133,16 +133,16 @@ gsh_malloc_aligned__(size_t a, size_t n,
  *
  * This function aborts if no memory is available.
  *
- * @param[in] s Size of object
  * @param[in] n Number of objects in block
+ * @param[in] s Size of object
  *
  * @return Pointer to a block of zeroed memory.
  */
 static inline void *
-gsh_calloc__(size_t s, size_t n,
+gsh_calloc__(size_t n, size_t s,
 	     const char *file, int line, const char *function)
 {
-	void *p = calloc(s, n);
+	void *p = calloc(n, s);
 
 	if (p == NULL) {
 		LogMallocFailure(file, line, function, "gsh_calloc");
@@ -152,7 +152,7 @@ gsh_calloc__(size_t s, size_t n,
 	return p;
 }
 
-#define gsh_calloc(s, n) gsh_calloc__(s, n, __FILE__, __LINE__, __func__)
+#define gsh_calloc(n, s) gsh_calloc__(n, s, __FILE__, __LINE__, __func__)
 
 /**
  * @brief Resize a block of memory
