@@ -46,6 +46,36 @@
 #include "client_mgr.h"
 
 /**
+ *  @brief Helper to verify validity of export ID's
+ *
+ *  @l3_arg  NFS argument
+ *  @req     SVC request
+ *
+ *  @return nfsstat3
+ */
+static enum nfsstat3
+nfs3_verify_exportid(struct LINK3args *l3_arg, struct svc_req *req)
+{
+	const short to_exportid = nfs3_FhandleToExportId(&l3_arg->link.dir);
+	const short from_exportid = nfs3_FhandleToExportId(&l3_arg->file);
+
+	if (to_exportid < 0 || from_exportid < 0) {
+		LogInfo(COMPONENT_DISPATCH,
+			"NFS%d LINK Request from client %s has badly formed handle for link dir",
+			req->rq_vers, op_ctx->client ?
+					op_ctx->client->hostaddr_str :
+					"unknown client");
+		return NFS3ERR_BADHANDLE;
+	}
+
+	/* Both objects have to be in the same filesystem */
+	if (to_exportid != from_exportid)
+		return NFS3ERR_XDEV;
+
+	return NFS3_OK;
+}
+
+/**
  *
  * @brief The NFSPROC3_LINK
  *
@@ -60,32 +90,22 @@
  * @retval NFS_REQ_FAILED if failed and not retryable
  *
  */
-
 int nfs3_link(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
-	const char *link_name = arg->arg_link3.link.name;
-	cache_entry_t *target_entry = NULL;
-	cache_entry_t *parent_entry = NULL;
-	pre_op_attr pre_parent = {
-		.attributes_follow = false
-	};
-	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
-	int to_exportid = 0;
-	int from_exportid = 0;
+	struct LINK3args *l3_arg = &arg->arg_link3;
+	struct LINK3res *l3_res = &res->res_link3;
+	const char *link_name = l3_arg->link.name;
+	cache_entry_t *target = NULL;
+	cache_entry_t *parent = NULL;
+	pre_op_attr pre_parent = {0};
+	cache_inode_status_t cache_status;
 	int rc = NFS_REQ_OK;
 
 	if (isDebug(COMPONENT_NFSPROTO)) {
 		char strto[LEN_FH_STR], strfrom[LEN_FH_STR];
 
-		nfs_FhandleToStr(req->rq_vers,
-				 &(arg->arg_link3.file),
-				 NULL,
-				 strfrom);
-
-		nfs_FhandleToStr(req->rq_vers,
-				 &(arg->arg_link3.link.dir),
-				 NULL,
-				 strto);
+		nfs_FhandleToStr(req->rq_vers, &l3_arg->file, NULL, strfrom);
+		nfs_FhandleToStr(req->rq_vers, &l3_arg->link.dir, NULL, strto);
 
 		LogDebug(COMPONENT_NFSPROTO,
 			 "REQUEST PROCESSING: Calling nfs3_link handle: %s to handle: %s name: %s",
@@ -93,92 +113,45 @@ int nfs3_link(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	}
 
 	/* to avoid setting it on each error case */
-	res->res_link3.LINK3res_u.resfail.file_attributes.attributes_follow =
-	    FALSE;
-	res->res_link3.LINK3res_u.resfail.linkdir_wcc.before.attributes_follow =
-	    FALSE;
-	res->res_link3.LINK3res_u.resfail.linkdir_wcc.after.attributes_follow =
-	    FALSE;
+	l3_res->LINK3res_u.resfail.file_attributes.attributes_follow = FALSE;
+	l3_res->LINK3res_u.resfail.linkdir_wcc.before.attributes_follow = FALSE;
+	l3_res->LINK3res_u.resfail.linkdir_wcc.after.attributes_follow = FALSE;
 
-	/* Get the exportids for the two handles. */
-	to_exportid = nfs3_FhandleToExportId(&(arg->arg_link3.link.dir));
-	from_exportid = nfs3_FhandleToExportId(&(arg->arg_link3.file));
+	l3_res->status = nfs3_verify_exportid(l3_arg, req);
+	if (l3_res->status != NFS3_OK)
+		return rc;
 
-	/* Validate the to_exportid */
-	if (to_exportid < 0 || from_exportid < 0) {
-		LogInfo(COMPONENT_DISPATCH,
-			"NFS%d LINK Request from client %s has badly formed handle for link dir",
-			req->rq_vers,
-			op_ctx->client
-				? op_ctx->client->hostaddr_str
-				: "unknown client");
+	parent = nfs3_FhandleToCache(&l3_arg->link.dir, &l3_res->status, &rc);
+	if (parent == NULL)
+		return rc;  /* Status and rc are set by nfs3_FhandleToCache */
 
-		/* Bad handle, report to client */
-		res->res_link3.status = NFS3ERR_BADHANDLE;
-		goto out;
+	nfs_SetPreOpAttr(parent, &pre_parent);
+
+	target = nfs3_FhandleToCache(&l3_arg->file, &l3_res->status, &rc);
+	if (target == NULL) {
+		cache_inode_put(parent);
+		return rc;  /* Status and rc are set by nfs3_FhandleToCache */
 	}
 
-	/* Both objects have to be in the same filesystem */
-	if (to_exportid != from_exportid) {
-		res->res_link3.status = NFS3ERR_XDEV;
-		goto out;
-	}
-
-	/* Get entry for parent directory */
-	parent_entry = nfs3_FhandleToCache(&arg->arg_link3.link.dir,
-					   &res->res_link3.status,
-					   &rc);
-
-	if (parent_entry == NULL) {
-		/* Status and rc have been set by nfs3_FhandleToCache */
-		goto out;
-	}
-
-	nfs_SetPreOpAttr(parent_entry, &pre_parent);
-
-	target_entry = nfs3_FhandleToCache(&arg->arg_link3.file,
-					   &res->res_link3.status,
-					   &rc);
-
-	if (target_entry == NULL) {
-		/* Status and rc have been set by nfs3_FhandleToCache */
-		goto out;
-	}
-
-	/* Sanity checks: */
-	if (parent_entry->type != DIRECTORY) {
-		res->res_link3.status = NFS3ERR_NOTDIR;
-		rc = NFS_REQ_OK;
+	if (parent->type != DIRECTORY) {
+		l3_res->status = NFS3ERR_NOTDIR;
 		goto out;
 	}
 
 	if (link_name == NULL || *link_name == '\0') {
-		res->res_link3.status = NFS3ERR_INVAL;
+		l3_res->status = NFS3ERR_INVAL;
 		goto out;
-	} else {
-		/* Both objects have to be in the same filesystem */
-		if (to_exportid != from_exportid) {
-			res->res_link3.status = NFS3ERR_XDEV;
-			goto out;
-		} else {
-			cache_status = cache_inode_link(target_entry,
-							parent_entry,
-							link_name);
+	}
 
-			if (cache_status == CACHE_INODE_SUCCESS) {
-				nfs_SetPostOpAttr(target_entry,
-						  &(res->res_link3.LINK3res_u.
-						    resok.file_attributes));
+	cache_status = cache_inode_link(target, parent, link_name);
+	if (cache_status == CACHE_INODE_SUCCESS) {
+		nfs_SetPostOpAttr(target,
+				  &l3_res->LINK3res_u.resok.file_attributes);
 
-				nfs_SetWccData(&pre_parent,
-					       parent_entry,
-					       &(res->res_link3.LINK3res_u.
-						 resok.linkdir_wcc));
-				res->res_link3.status = NFS3_OK;
-				rc = NFS_REQ_OK;
-				goto out;
-			}
-		}		/* else */
+		nfs_SetWccData(&pre_parent, parent,
+			       &l3_res->LINK3res_u.resok.linkdir_wcc);
+		l3_res->status = NFS3_OK;
+		goto out;
 	}
 
 	/* If we are here, there was an error */
@@ -187,25 +160,16 @@ int nfs3_link(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		goto out;
 	}
 
-	res->res_link3.status = nfs3_Errno(cache_status);
-	nfs_SetPostOpAttr(target_entry,
-			  &(res->res_link3.LINK3res_u.resfail.file_attributes));
+	l3_res->status = nfs3_Errno(cache_status);
+	nfs_SetPostOpAttr(target, &l3_res->LINK3res_u.resfail.file_attributes);
 
-	nfs_SetWccData(&pre_parent, parent_entry,
-		       &res->res_link3.LINK3res_u.resfail.linkdir_wcc);
-
-	rc = NFS_REQ_OK;
+	nfs_SetWccData(&pre_parent, parent,
+		       &l3_res->LINK3res_u.resfail.linkdir_wcc);
 
  out:
-	/* return references */
-	if (target_entry)
-		cache_inode_put(target_entry);
-
-	if (parent_entry)
-		cache_inode_put(parent_entry);
-
+	cache_inode_put(target);
+	cache_inode_put(parent);
 	return rc;
-
 }				/* nfs3_link */
 
 /**
