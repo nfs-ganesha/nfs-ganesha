@@ -34,8 +34,10 @@
 #include "config.h"
 #include "log.h"
 #include "nfs4.h"
+#include "fsal.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
+#include "nfs_exports.h"
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
 #include "nfs_convert.h"
@@ -89,7 +91,7 @@ int nfs4_op_getxattr(struct nfs_argop4 *op, compound_data_t *data,
 						    &gr_value);
 	if (FSAL_IS_ERROR(fsal_status)) {
 		if (fsal_status.major == ERR_FSAL_TOOSMALL) {
-			LogDebug(COMPONENT_FSAL,
+			LogDebug(COMPONENT_NFS_V4,
 				 "FSAL buffer len %d too small",
 				  XATTR_VALUE_SIZE);
 			/* Get size of xattr value  */
@@ -102,7 +104,7 @@ int nfs4_op_getxattr(struct nfs_argop4 *op, compound_data_t *data,
 			if (FSAL_IS_ERROR(fsal_status))
 				return res_GETXATTR4->status = nfs4_Errno_state(
 					state_error_convert(fsal_status));
-			LogDebug(COMPONENT_FSAL,
+			LogDebug(COMPONENT_NFS_V4,
 				 "FSAL buffer new len %d",
 				  gr_value.utf8string_len);
 			/* Try again with a bigger buffer */
@@ -114,7 +116,9 @@ int nfs4_op_getxattr(struct nfs_argop4 *op, compound_data_t *data,
 			if (FSAL_IS_ERROR(fsal_status))
 				return res_GETXATTR4->status = nfs4_Errno_state(
 					state_error_convert(fsal_status));
-		}
+		} else
+			return res_GETXATTR4->status = nfs4_Errno_state(
+					state_error_convert(fsal_status));
 	}
 	res_GETXATTR4->status = NFS4_OK;
 	res_GETXATTR4->GETXATTR4res_u.resok4.gr_value.utf8string_len =
@@ -183,6 +187,9 @@ int nfs4_op_setxattr(struct nfs_argop4 *op, compound_data_t *data,
 		res_SETXATTR4->status = NFS4ERR_GRACE;
 		return res_SETXATTR4->status;
 	}
+	res_SETXATTR4->SETXATTR4res_u.resok4.sr_info.atomic = false;
+	res_SETXATTR4->SETXATTR4res_u.resok4.sr_info.before =
+				cache_inode_get_changeid4(data->current_entry);
 	fsal_status = obj_handle->obj_ops.setxattrs(obj_handle,
 					arg_SETXATTR4->sa_type,
 					&arg_SETXATTR4->sa_xattr.xa_name,
@@ -190,6 +197,8 @@ int nfs4_op_setxattr(struct nfs_argop4 *op, compound_data_t *data,
 	if (FSAL_IS_ERROR(fsal_status))
 		return res_SETXATTR4->status = nfs4_Errno_state(
 					state_error_convert(fsal_status));
+	res_SETXATTR4->SETXATTR4res_u.resok4.sr_info.after =
+				cache_inode_get_changeid4(data->current_entry);
 	return res_SETXATTR4->status;
 }
 
@@ -228,6 +237,8 @@ int nfs4_op_listxattr(struct nfs_argop4 *op, compound_data_t *data,
 	nfs_cookie4 la_cookie;
 	verifier4 la_cookieverf;
 	bool_t lr_eof;
+	component4 *entry;
+	int i;
 
 	resp->resop = NFS4_OP_LISTXATTR;
 	res_LISTXATTR4->status = NFS4_OK;
@@ -239,28 +250,56 @@ int nfs4_op_listxattr(struct nfs_argop4 *op, compound_data_t *data,
 	/* Do basic checks on a filehandle */
 	res_LISTXATTR4->status = nfs4_sanity_check_FH(data, NO_FILE_TYPE,
 						      false);
-
 	if (res_LISTXATTR4->status != NFS4_OK)
 		return res_LISTXATTR4->status;
 
 	/* Do basic checks on a filehandle */
 	res_LISTXATTR4->status = nfs4_sanity_check_FH(data, NO_FILE_TYPE,
 									false);
-
 	if (res_LISTXATTR4->status != NFS4_OK)
 		return res_LISTXATTR4->status;
 
-	list.entries = (xattrentry4 *)gsh_malloc(arg_LISTXATTR4->la_maxcount);
+	/* Double buf size, one half for compound and on half for names. */
+	list.entries = (component4 *)gsh_malloc(2*arg_LISTXATTR4->la_maxcount);
+	la_cookie = arg_LISTXATTR4->la_cookie;
+	memset(la_cookieverf, 0, NFS4_VERIFIER_SIZE);
 
+	if ((la_cookie == 0) &&
+	    (op_ctx->export->options & EXPORT_OPTION_USE_COOKIE_VERIFIER)) {
+		if (memcmp(la_cookieverf, arg_LISTXATTR4->la_cookieverf,
+			   NFS4_VERIFIER_SIZE) != 0) {
+			res_LISTXATTR4->status = NFS4ERR_BAD_COOKIE;
+			LogFullDebug(COMPONENT_NFS_V4,
+				     "Bad cookie");
+			return res_LISTXATTR4->status;
+		}
+	}
 	fsal_status = obj_handle->obj_ops.listxattrs(obj_handle,
 						arg_LISTXATTR4->la_maxcount,
 						&la_cookie,
 						&la_cookieverf,
 						&lr_eof,
 						&list);
-	if (FSAL_IS_ERROR(fsal_status))
+	if (FSAL_IS_ERROR(fsal_status)) {
 		res_LISTXATTR4->status =
 			nfs4_Errno_state(state_error_convert(fsal_status));
+		gsh_free(list.entries);
+		res_LISTXATTR4->LISTXATTR4res_u.resok4.lr_names.entries = NULL;
+		return res_LISTXATTR4->status;
+	}
+	res_LISTXATTR4->LISTXATTR4res_u.resok4.lr_cookie = la_cookie;
+	res_LISTXATTR4->LISTXATTR4res_u.resok4.lr_eof = lr_eof;
+	memcpy(res_LISTXATTR4->LISTXATTR4res_u.resok4.lr_cookieverf,
+		la_cookieverf, NFS4_VERIFIER_SIZE);
+	res_LISTXATTR4->LISTXATTR4res_u.resok4.lr_names = list;
+	entry = list.entries;
+	for (i = 0; i < list.entryCount; i++) {
+		LogFullDebug(COMPONENT_FSAL,
+			"entry %d at %p len %d at %p name %s",
+			i, entry, entry->utf8string_len,
+			entry->utf8string_val, entry->utf8string_val);
+		entry += 1;
+	}
 	return res_LISTXATTR4->status;
 }
 
@@ -326,11 +365,16 @@ int nfs4_op_removexattr(struct nfs_argop4 *op, compound_data_t *data,
 		res_REMOVEXATTR4->status = NFS4ERR_GRACE;
 		return res_REMOVEXATTR4->status;
 	}
+	res_REMOVEXATTR4->REMOVEXATTR4res_u.resok4.rr_info.atomic = false;
+	res_REMOVEXATTR4->REMOVEXATTR4res_u.resok4.rr_info.before =
+				cache_inode_get_changeid4(data->current_entry);
 	fsal_status = obj_handle->obj_ops.removexattrs(obj_handle,
 					&arg_REMOVEXATTR4->ra_name);
 	if (FSAL_IS_ERROR(fsal_status))
 		return res_REMOVEXATTR4->status = nfs4_Errno_state(
 					state_error_convert(fsal_status));
+	res_REMOVEXATTR4->REMOVEXATTR4res_u.resok4.rr_info.after =
+				cache_inode_get_changeid4(data->current_entry);
 	return res_REMOVEXATTR4->status;
 }
 

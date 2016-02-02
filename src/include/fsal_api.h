@@ -1967,6 +1967,7 @@ struct fsal_obj_ops {
  * This function sets an extended attribute of an object.
  *
  * @param[in]  obj_hdl  Input object to set
+ * @param[in]  xa_type  Input xattr type
  * @param[in]  xa_name  Input xattr name to set
  * @param[in]  xa_value Input xattr value to set
  *
@@ -1996,11 +1997,13 @@ struct fsal_obj_ops {
  * This function list the extended attributes of an object.
  *
  * @param[in]      obj_hdl       Input object to list
- * @param[in]      la_maxcount   Input maximum number of bytes for the result
+ * @param[in]      la_maxcount   Input maximum number of bytes for names
  * @param[in,out]  la_cookie     In/out cookie
  * @param[in,out]  la_cookieverf In/out cookie verifier
  * @param[out]     lr_eof        Output eof set if no more extended attributes
  * @param[out]     lr_names      Output list of extended attribute names
+ *				 this buffer size is double the size of
+ *				 la_maxcount to allow for component4 overhead
  *
  * @return FSAL status.
  */
@@ -2008,8 +2011,8 @@ struct fsal_obj_ops {
 				     count4 la_maxcount,
 				     nfs_cookie4 *la_cookie,
 				     verifier4 *la_cookieverf,
-				     bool_t *la_eof,
-				     xattrlist4 *la_names);
+				     bool_t *lr_eof,
+				     xattrlist4 * lr_names);
 
 
 /**@}*/

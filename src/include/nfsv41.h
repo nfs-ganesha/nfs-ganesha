@@ -2857,14 +2857,9 @@ extern "C" {
 	};
 	typedef struct xattr4 xattr4;
 
-	struct xattrentry4 {
-		component4 name;
-		struct xattrentry4 *nextentry;
-	};
-	typedef struct xattrentry4 xattrentry4;
-
 	struct xattrlist4 {
-		xattrentry4 *entries;
+		count4 entryCount;
+		component4 *entries;
 	};
 	typedef struct xattrlist4 xattrlist4;
 
@@ -5599,25 +5594,16 @@ extern "C" {
 		return true;
 	}
 
-	static inline bool xdr_xattrentry4(XDR * xdrs, xattrentry4 *objp)
+	static inline bool xdr_listxattr4(XDR * xdrs, xattrlist4 *objp)
 	{
-		if (!xdr_component4(xdrs, &objp->name))
-			return false;
-		if (!xdr_pointer
-		    (xdrs, (char **)&objp->nextentry, sizeof(xattrentry4),
-		     (xdrproc_t) xdr_xattrentry4))
+		if (!xdr_array
+		    (xdrs, (char **)&objp->entries,
+		     (u_int *) &objp->entryCount, ~0, sizeof(component4),
+		     (xdrproc_t) xdr_component4))
 			return false;
 		return true;
 	}
 
-	static inline bool xdr_listxattr4(XDR * xdrs, xattrlist4 *objp)
-	{
-		if (!xdr_pointer
-		    (xdrs, (char **)&objp->entries, sizeof(xattrentry4),
-		     (xdrproc_t) xdr_xattrentry4))
-			return false;
-		return true;
-	}
 	static inline bool xdr_LISTXATTR4resok(XDR * xdrs,
 						LISTXATTR4resok *objp)
 	{
@@ -10346,7 +10332,6 @@ extern "C" {
 	static inline bool xdr_CB_COMPOUND4args();
 	static inline bool xdr_CB_COMPOUND4res();
 	static inline bool xdr_LISTXATTR4args();
-	static inline bool xdr_xattrentry4();
 	static inline bool xdr_listxattr4();
 	static inline bool xdr_GETXATTR4args();
 	static inline bool xdr_GETXATTR4res();
