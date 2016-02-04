@@ -180,7 +180,7 @@ option(USE_FSAL_GPFS "build GPFS FSAL" ON)
 option(USE_FSAL_ZFS "build ZFS FSAL" ON)
 option(USE_FSAL_LUSTRE "build LUSTRE FSAL" ON)
 option(USE_FSAL_XFS "build XFS support in VFS FSAL" ON)
-option(USE_FSAL_PANFS "build PanFS support in VFS FSAL" ON)
+option(USE_FSAL_PANFS "build PanFS support in VFS FSAL" OFF)
 option(USE_FSAL_GLUSTER "build GLUSTER FSAL shared library" ON)
 option(USE_FSAL_NULL "build NULL FSAL shared library" ON)
 
