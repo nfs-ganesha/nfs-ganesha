@@ -718,6 +718,17 @@ void Register_program(protos prot, int flag, int vers)
 	}
 }
 
+static tirpc_pkg_params ntirpc_pp = {
+	0,
+	0,
+	(mem_format_t)rpc_warnx,
+	gsh_free_size,
+	gsh_malloc__,
+	gsh_malloc_aligned__,
+	gsh_calloc__,
+	gsh_realloc__,
+};
+
 /**
  * @brief Init the svc descriptors for the nfs daemon
  *
@@ -745,6 +756,13 @@ void nfs_Init_svc(void)
 	v6disabled = false;
 #endif
 
+	/* Set TIRPC debug flags */
+	ntirpc_pp.debug_flags = nfs_param.core_param.rpc.debug_flags;
+
+	/* Redirect TI-RPC allocators, log channel */
+	if (!tirpc_control(TIRPC_PUT_PARAMETERS, &ntirpc_pp))
+		LogCrit(COMPONENT_INIT, "Setting nTI-RPC parameters failed");
+
 	/* New TI-RPC package init function */
 	svc_params.flags = SVC_INIT_EPOLL;	/* use EPOLL event mgmt */
 	svc_params.flags |= SVC_INIT_NOREG_XPRTS; /* don't call xprt_register */
@@ -753,37 +771,15 @@ void nfs_Init_svc(void)
 	svc_params.svc_ioq_maxbuf =
 	    nfs_param.core_param.rpc.max_send_buffer_size;
 	svc_params.idle_timeout = nfs_param.core_param.rpc.idle_timeout_s;
-	svc_params.warnx = NULL;
 	svc_params.gss_ctx_hash_partitions = 17;
 	svc_params.gss_max_idle_gen = 1024;	/* GSS ctx cache expiration */
 	svc_params.gss_max_gc = 200;
 	svc_params.ioq_thrd_max = /* max ioq worker threads */
 		nfs_param.core_param.rpc.ioq_thrd_max;
 
+	/* Only after TI-RPC allocators, log channel are setup */
 	if (!svc_init(&svc_params))
 		LogFatal(COMPONENT_INIT, "SVC initialization failed");
-
-	/* Redirect TI-RPC allocators, log channel */
-	if (!tirpc_control(TIRPC_SET_WARNX, (warnx_t) rpc_warnx))
-		LogCrit(COMPONENT_INIT, "Failed redirecting TI-RPC __warnx");
-
-	/* Set TIRPC debug flags */
-	uint32_t tirpc_debug_flags = nfs_param.core_param.rpc.debug_flags;
-
-	if (!tirpc_control(TIRPC_SET_DEBUG_FLAGS, &tirpc_debug_flags))
-		LogCrit(COMPONENT_INIT, "Failed setting TI-RPC debug flags");
-
-#define TIRPC_SET_ALLOCATORS 0
-#if TIRPC_SET_ALLOCATORS
-	if (!tirpc_control(TIRPC_SET_MALLOC, (mem_alloc_t) gsh_malloc))
-		LogCrit(COMPONENT_INIT, "Failed redirecting TI-RPC alloc");
-
-	if (!tirpc_control(TIRPC_SET_MEM_FREE, (mem_free_t) gsh_free_size))
-		LogCrit(COMPONENT_INIT, "Failed redirecting TI-RPC mem_free");
-
-	if (!tirpc_control(TIRPC_SET_FREE, (std_free_t) gsh_free))
-		LogCrit(COMPONENT_INIT, "Failed redirecting TI-RPC __free");
-#endif				/* TIRPC_SET_ALLOCATORS */
 
 	for (ix = 0; ix < N_EVENT_CHAN; ++ix) {
 		rpc_evchan[ix].chan_id = 0;
