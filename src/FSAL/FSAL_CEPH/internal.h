@@ -123,14 +123,6 @@ extern attrmask_t supported_attributes;
 extern attrmask_t settable_attributes;
 #endif				/* !CEPH_INTERNAL_C */
 
-/**
- * Linux supports a stripe pattern with no more than 4096 stripes, but
- * for now we stick to 1024 to keep them da_addrs from being too
- * gigantic.
- */
-
-static const size_t BIGGEST_PATTERN = 1024;
-
 /* private helper for export object */
 
 static inline fsal_staticfsinfo_t *ceph_staticinfo(struct fsal_module *hdl)

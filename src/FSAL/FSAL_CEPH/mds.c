@@ -34,6 +34,14 @@
 #ifdef CEPH_PNFS
 
 /**
+ * Linux supports a stripe pattern with no more than 4096 stripes, but
+ * for now we stick to 1024 to keep them da_addrs from being too
+ * gigantic.
+ */
+
+static const size_t BIGGEST_PATTERN = 1024;
+
+/**
  * @file   FSAL_CEPH/mds.c
  * @author Adam C. Emerson <aemerson@linuxbox.com>
  * @date Wed Oct 22 13:24:33 2014

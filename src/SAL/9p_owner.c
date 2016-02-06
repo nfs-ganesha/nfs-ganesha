@@ -238,7 +238,7 @@ uint64_t _9p_owner_rbt_hash_func(hash_parameter_t *hparam,
 	      (uint64_t)paddr->sin_addr.s_addr;
 
 	if (isDebug(COMPONENT_HASHTABLE))
-		LogFullDebug(COMPONENT_STATE, "rbt = %lu", res);
+		LogFullDebug(COMPONENT_STATE, "rbt = %" PRIu64, res);
 
 	return res;
 }
