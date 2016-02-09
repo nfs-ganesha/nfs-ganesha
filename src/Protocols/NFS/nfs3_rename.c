@@ -68,8 +68,8 @@ int nfs3_rename(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	cache_entry_t *parent_entry = NULL;
 	cache_entry_t *new_parent_entry = NULL;
 	cache_inode_status_t cache_status;
-	short to_exportid = 0;
-	short from_exportid = 0;
+	int to_exportid = 0;
+	int from_exportid = 0;
 	int rc = NFS_REQ_OK;
 
 	pre_op_attr pre_parent = {

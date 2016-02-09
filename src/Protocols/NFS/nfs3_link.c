@@ -70,8 +70,8 @@ int nfs3_link(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		.attributes_follow = false
 	};
 	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
-	short to_exportid = 0;
-	short from_exportid = 0;
+	int to_exportid = 0;
+	int from_exportid = 0;
 	int rc = NFS_REQ_OK;
 
 	if (isDebug(COMPONENT_NFSPROTO)) {

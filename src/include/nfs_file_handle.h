@@ -152,7 +152,7 @@ int nfs3_Is_Fh_Invalid(nfs_fh3 *);
  * @return the export id.
  *
  */
-static inline short nfs3_FhandleToExportId(nfs_fh3 *pfh3)
+static inline int nfs3_FhandleToExportId(nfs_fh3 *pfh3)
 {
 	file_handle_v3_t *pfile_handle;
 
@@ -164,7 +164,7 @@ static inline short nfs3_FhandleToExportId(nfs_fh3 *pfh3)
 	return pfile_handle->exportid;
 }				/* nfs3_FhandleToExportId */
 
-static inline short nlm4_FhandleToExportId(netobj *pfh3)
+static inline int nlm4_FhandleToExportId(netobj *pfh3)
 {
 	nfs_fh3 fh3;
 
