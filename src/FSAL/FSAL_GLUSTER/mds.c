@@ -37,6 +37,9 @@
 #include <sys/socket.h>
 #include <netdb.h>
 
+#define get16bits(d) (*((const uint16_t *) (d)))
+#define MAX_DS_COUNT 100
+
 /**
  * @brief Get layout types supported by export
  *
@@ -480,34 +483,114 @@ void export_ops_pnfs(struct export_ops *ops)
 	ops->fs_loc_body_size           = fs_loc_body_size;
 }
 
+/* *
+ * Calculates  a hash value for a given string buffer
+ */
+uint32_t superfasthash(const unsigned char *data, uint32_t len)
+{
+	uint32_t hash = len, tmp;
+	int32_t rem;
+
+	rem = len & 3;
+	len >>= 2;
+
+	/* Main loop */
+	for (; len > 0; len--) {
+		hash  += get16bits(data);
+		tmp    = (get16bits(data+2) << 11) ^ hash;
+		hash   = (hash << 16) ^ tmp;
+		data  += 2*sizeof(uint16_t);
+		hash  += hash >> 11;
+	}
+
+	/* Handle end cases */
+	switch (rem) {
+	case 3:
+		hash += get16bits(data);
+		hash ^= hash << 16;
+		hash ^= data[sizeof(uint16_t)] << 18;
+		hash += hash >> 11;
+		break;
+	case 2:
+		hash += get16bits(data);
+		hash ^= hash << 11;
+		hash += hash >> 17;
+		break;
+	case 1:
+		hash += *data;
+		hash ^= hash << 10;
+		hash += hash >> 1;
+	}
+
+	/* Force "avalanching" of final 127 bits */
+	hash ^= hash << 3;
+	hash += hash >> 5;
+	hash ^= hash << 4;
+	hash += hash >> 17;
+	hash ^= hash << 25;
+	hash += hash >> 6;
+
+	return hash;
+}
 /**
  * It will extract hostname from pathinfo.PATH_INFO_KEYS gives
  * details about all the servers and path in that server where
  * file resides.
- * With the help of some basic string manipulations we can find
- * hostname from the pathinfo
+ * First it selects the DS based on distributed hashing, then
+ * with the help of some basic string manipulations, the hostname
+ * can be fetched from the pathinfo
  *
  * Returns zero and valid hostname on success
  */
 
 int
-get_pathinfo_host(char *pathinfo, char *hostname, size_t size)
+select_ds(struct glfs_object *object, char *pathinfo, char *hostname,
+	  size_t size)
 {
+	/* Represents starting of each server in the list*/
 	const char posix[10]    = "POSIX";
+	/* Array of pathinfo of available dses */
+	char	*ds_path_info[MAX_DS_COUNT];
+	/* Key for hashing */
+	unsigned char key[16];
 	/* Starting of first brick path in the pathinfo */
-	char *first_brick_path_beg    = NULL;
+	char	*tmp		= NULL;
 	/* Stores starting of hostname */
 	char    *start          = NULL;
 	/* Stores ending of hostname */
 	char    *end            = NULL;
 	int     ret             = -1;
 	int     i               = 0;
+	/* counts no of available ds */
+	int	no_of_ds	= 0;
 
 	if (!pathinfo || !size)
 		goto out;
 
-	first_brick_path_beg = strstr(pathinfo, posix);
-	start = strchr(first_brick_path_beg, ':');
+	tmp = pathinfo;
+	while ((tmp = strstr(tmp, posix))) {
+		ds_path_info[no_of_ds] = tmp;
+		tmp++;
+		no_of_ds++;
+		/* *
+		 * If no of dses reaches maxmium count, then
+		 * perform load balance on current list
+		 */
+		if (no_of_ds == MAX_DS_COUNT)
+			break;
+	}
+
+	ret = glfs_h_extract_handle(object, key, GFAPI_HANDLE_LENGTH);
+	if (ret < 0)
+		goto out;
+
+	/* Pick DS from the list */
+	if (no_of_ds == 1)
+		ret = 0;
+	else
+		ret = superfasthash(key, 16) % no_of_ds;
+
+	start = strchr(ds_path_info[ret], ':');
 	if (!start)
 		goto out;
 	end = start + 1;
@@ -547,14 +630,13 @@ glfs_get_ds_addr(struct glfs *fs, struct glfs_object *object, uint32_t *ds_addr)
 	struct in_addr  addr                 = {0, };
 	const char      *pathinfokey         = "trusted.glusterfs.pathinfo";
 
-
 	ret = glfs_h_getxattrs(fs, object, pathinfokey, pathinfo, 1024);
 
 	LogDebug(COMPONENT_PNFS, "pathinfo %s", pathinfo);
 
-	ret = get_pathinfo_host(pathinfo, hostname, sizeof(hostname));
+	ret = select_ds(object, pathinfo, hostname, sizeof(hostname));
 	if (ret) {
-		LogMajor(COMPONENT_PNFS, "cannot get hostname");
+		LogMajor(COMPONENT_PNFS, "No DS found");
 		goto out;
 	}
 
