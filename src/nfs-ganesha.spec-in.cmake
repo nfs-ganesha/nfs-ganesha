@@ -433,6 +433,7 @@ install -m 755 config_samples/lustre.conf %{buildroot}%{_sysconfdir}/ganesha
 %endif
 
 %if %{with gpfs}
+install -m 755 scripts/gpfs-epoch %{buildroot}%{_libexecdir}/ganesha
 install -m 644 config_samples/gpfs.conf	%{buildroot}%{_sysconfdir}/ganesha
 install -m 644 config_samples/gpfs.ganesha.nfsd.conf %{buildroot}%{_sysconfdir}/ganesha
 install -m 644 config_samples/gpfs.ganesha.main.conf %{buildroot}%{_sysconfdir}/ganesha
@@ -524,6 +525,7 @@ killall -SIGHUP dbus-daemon 2>&1 > /dev/null
 %config(noreplace) %{_sysconfdir}/ganesha/gpfs.ganesha.main.conf
 %config(noreplace) %{_sysconfdir}/ganesha/gpfs.ganesha.log.conf
 %config(noreplace) %{_sysconfdir}/ganesha/gpfs.ganesha.exports.conf
+%{_libexecdir}/ganesha/gpfs-epoch
 %if ! %{with_systemd}
 %{_sysconfdir}/init.d/nfs-ganesha-gpfs
 %endif
