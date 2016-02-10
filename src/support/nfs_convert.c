@@ -448,13 +448,11 @@ const char *auth_stat2str(enum auth_stat why)
 	case AUTH_FAILED:
 		return "AUTH_FAILED";
 
-#ifdef _HAVE_GSSAPI
 	case RPCSEC_GSS_CREDPROBLEM:
 		return "RPCSEC_GSS_CREDPROBLEM";
 
 	case RPCSEC_GSS_CTXPROBLEM:
 		return "RPCSEC_GSS_CTXPROBLEM";
-#endif
 	}
 
 	return "UNKNOWN AUTH";
