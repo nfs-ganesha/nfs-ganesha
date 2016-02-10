@@ -494,13 +494,23 @@ endif( "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_GREATER "2.6" )
 
 find_package(Krb5 REQUIRED gssapi)
 check_include_files(gssapi.h HAVE_GSSAPI_H)
+if (NOT HAVE_GSSAPI_H)
+  # Debian/Ubuntu 12 magic
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I/usr/include/mit-krb5/")
+  check_include_files(gssapi.h HAVE_GSSAPI_H)
+endif(NOT HAVE_GSSAPI_H)
 
 if(KRB5_FOUND AND HAVE_GSSAPI_H)
   set(HAVE_KRB5 ON)
   set(KRB5_VERSION 194)  # hand code until we do krb5-config --version magic
   set(_HAVE_GSSAPI ON)
 else(KRB5_FOUND AND HAVE_GSSAPI_H)
-  message(FATAL_ERROR "Cannot find kerberos or GSS libraries")
+  if (NOT KRB5_FOUND)
+    message(FATAL_ERROR "Cannot find kerberos libraries")
+  endif(NOT KRB5_FOUND)
+  if (NOT HAVE_GSSAPI_H)
+    message(FATAL_ERROR "Cannot find GSS libraries")
+  endif (NOT HAVE_GSSAPI_H)
 endif(KRB5_FOUND AND HAVE_GSSAPI_H)
 
 if (USE_ADMIN_TOOLS)
