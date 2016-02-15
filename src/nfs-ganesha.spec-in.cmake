@@ -469,7 +469,7 @@ killall -SIGHUP dbus-daemon 2>&1 > /dev/null
 %{_bindir}/ganesha.nfsd
 %if ! %{with system_ntirpc}
 %{_libdir}/libntirpc.so.@NTIRPC_VERSION@
-%{_libdir}/libntirpc.so.1.3
+%{_libdir}/libntirpc.so.1.4
 %{_libdir}/libntirpc.so
 %{_libdir}/pkgconfig/libntirpc.pc
 %{_includedir}/ntirpc/
