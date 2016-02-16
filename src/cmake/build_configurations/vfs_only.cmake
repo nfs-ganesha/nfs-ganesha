@@ -1,4 +1,4 @@
-# Only build VFS fsal and other pnfs useful options
+# Only build VFS fsal and other useful options
 
 set(USE_FSAL_PROXY  OFF)
 set(USE_FSAL_CEPH OFF)
@@ -9,4 +9,4 @@ set(_MSPAC_SUPPORT OFF)
 set(USE_9P OFF)
 set(USE_DBUS ON)
 
-message(STATUS "Building vfs_pnfs_only configuration")
+message(STATUS "Building vfs_only configuration")
