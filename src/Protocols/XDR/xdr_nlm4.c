@@ -10,14 +10,20 @@
 
 void xdr_handle_decode(XDR * xdrs, netobj * obj)
 {
-	file_handle_v3_t *fh = (file_handle_v3_t *)obj->n_bytes;
-	fh->exportid = ntohs(fh->exportid);
+	if (obj->n_len >= offsetof(file_handle_v3_t, fsopaque)) {
+		file_handle_v3_t *fh = (file_handle_v3_t *)obj->n_bytes;
+
+		fh->exportid = ntohs(fh->exportid);
+	}
 }
 
 void xdr_handle_encode(XDR * xdrs, netobj * obj)
 {
-	file_handle_v3_t *fh = (file_handle_v3_t *)obj->n_bytes;
-	fh->exportid = htons(fh->exportid);
+	if (obj->n_len >= offsetof(file_handle_v3_t, fsopaque)) {
+		file_handle_v3_t *fh = (file_handle_v3_t *)obj->n_bytes;
+
+		fh->exportid = htons(fh->exportid);
+	}
 }
 
 bool xdr_nlm4_stats(XDR * xdrs, nlm4_stats * objp)

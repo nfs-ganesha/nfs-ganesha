@@ -410,7 +410,7 @@ int nfs3_Is_Fh_Invalid(nfs_fh3 *fh3)
 	/* validate the filehandle  */
 	if (pfile_handle == NULL || fh3->data.data_len == 0
 	    || pfile_handle->fhversion != GANESHA_FH_VERSION
-	    || fh3->data.data_len < sizeof(file_handle_v3_t)
+	    || fh3->data.data_len < offsetof(file_handle_v3_t, fsopaque)
 	    || fh3->data.data_len > NFS3_FHSIZE
 	    || fh3->data.data_len != nfs3_sizeof_handle(pfile_handle)) {
 		if (isInfo(COMPONENT_FILEHANDLE)) {
@@ -430,7 +430,8 @@ int nfs3_Is_Fh_Invalid(nfs_fh3 *fh3)
 				LogInfo(COMPONENT_FILEHANDLE,
 					"INVALID HANDLE: data.data_len=%d is less than %d",
 					fh3->data.data_len,
-					(int)sizeof(file_handle_v3_t));
+					(int)offsetof(file_handle_v3_t,
+						      fsopaque));
 			} else if (fh3->data.data_len >
 				   NFS3_FHSIZE) {
 				LogInfo(COMPONENT_FILEHANDLE,
