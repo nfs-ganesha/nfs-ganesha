@@ -15,5 +15,12 @@ if test -r ${CONFIGFILE}; then
 	{
 		cat ${CONFIGFILE}
 		[ -n "${EPOCHVALUE}" ] && echo EPOCH=\"-E $EPOCHVALUE\"
+
+		# Set NUMA options if numactl is present
+		NUMACTL=$(command -v numactl 2>/dev/null)
+		if [ -n "${NUMACTL}" ]; then
+			echo NUMACTL=$NUMACTL
+			echo NUMAOPTS=--interleave=all
+		fi
 	} > /run/sysconfig/ganesha
 fi
