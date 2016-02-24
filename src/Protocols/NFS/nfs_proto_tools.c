@@ -3654,7 +3654,7 @@ static void nfs3_FSALattr_To_PartialFattr(const struct attrlist *FSAL_attr,
 			     FSAL_attr->fsid.minor,
 			     (uint64_t) Fattr->fsid, (uint64_t) Fattr->fsid);
 
-		*mask |= ATTR_FILEID;
+		*mask |= ATTR_FSID;
 	}
 
 	if (FSAL_attr->mask & ATTR_FILEID) {

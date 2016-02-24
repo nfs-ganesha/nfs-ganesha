@@ -125,8 +125,8 @@ struct vfs_fsal_obj_handle *alloc_handle(int dirfd,
 		       sizeof(vfs_file_handle_t));
 		hdl->u.unopenable.name = gsh_strdup(path);
 	}
-	hdl->attributes.mask = exp_hdl->exp_ops.fs_supported_attrs(exp_hdl);
 	posix2fsal_attributes(stat, &hdl->attributes);
+	hdl->attributes.mask = exp_hdl->exp_ops.fs_supported_attrs(exp_hdl);
 	hdl->attributes.fsid = fs->fsid;
 	fsal_obj_handle_init(&hdl->obj_handle, exp_hdl,
 			     posix2fsal_type(stat->st_mode));
