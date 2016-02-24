@@ -24,69 +24,6 @@
 static int gpfs_acl_2_fsal_acl(struct attrlist *p_object_attributes,
 			       gpfs_acl_t *p_gpfsacl);
 
-void posix2fsal_attributes(const struct stat *p_buffstat,
-			   struct attrlist *p_fsalattr_out)
-{
-	/* Initialize ACL regardless of whether ACL was asked or not.
-	 * This is needed to make sure ACL attribute is initialized. */
-	p_fsalattr_out->acl = NULL;
-
-	/* Fills the output struct */
-	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_TYPE))
-		p_fsalattr_out->type = posix2fsal_type(p_buffstat->st_mode);
-
-	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_SIZE))
-		p_fsalattr_out->filesize = p_buffstat->st_size;
-
-	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_FSID))
-		p_fsalattr_out->fsid = posix2fsal_fsid(p_buffstat->st_dev);
-
-	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_ACL))
-		p_fsalattr_out->acl = NULL;
-
-	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_FILEID))
-		p_fsalattr_out->fileid = (uint64_t) (p_buffstat->st_ino);
-
-	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_MODE))
-		p_fsalattr_out->mode = unix2fsal_mode(p_buffstat->st_mode);
-
-	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_NUMLINKS))
-		p_fsalattr_out->numlinks = p_buffstat->st_nlink;
-
-	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_OWNER))
-		p_fsalattr_out->owner = p_buffstat->st_uid;
-
-	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_GROUP))
-		p_fsalattr_out->group = p_buffstat->st_gid;
-
-	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_ATIME))
-		p_fsalattr_out->atime = p_buffstat->st_atim;
-
-	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_CTIME))
-		p_fsalattr_out->ctime = p_buffstat->st_ctim;
-
-	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_MTIME))
-		p_fsalattr_out->mtime = p_buffstat->st_mtim;
-
-	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_CHGTIME)) {
-		p_fsalattr_out->chgtime =
-		    (gsh_time_cmp(&p_buffstat->st_mtim, &p_buffstat->st_ctim) >
-		     0) ? p_buffstat->st_mtim : p_buffstat->st_ctim;
-		/* XXX */
-		p_fsalattr_out->change =
-		    p_fsalattr_out->chgtime.tv_sec +
-		    p_fsalattr_out->chgtime.tv_nsec;
-	}
-
-	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_SPACEUSED))
-		p_fsalattr_out->spaceused = p_buffstat->st_blocks * S_BLKSIZE;
-
-	if (FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_RAWDEV))
-		p_fsalattr_out->rawdev = posix2fsal_devt(p_buffstat->st_rdev);
-
-	/* everything has been copied ! */
-}
-
 /* Same function as posixstat64_2_fsal_attributes. When NFS4 ACL support
  * is enabled, this will replace posixstat64_2_fsal_attributes. */
 fsal_status_t gpfsfsal_xstat_2_fsal_attributes(gpfsfsal_xstat_t *p_buffxstat,

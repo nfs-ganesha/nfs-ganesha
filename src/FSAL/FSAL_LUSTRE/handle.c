@@ -137,8 +137,8 @@ static struct lustre_fsal_obj_handle *alloc_handle(
 		strcpy(hdl->u.sock.sock_name, sock_name);
 	}
 
-	hdl->attributes.mask = exp_hdl->exp_ops.fs_supported_attrs(exp_hdl);
 	posix2fsal_attributes(stat, &hdl->attributes);
+	hdl->attributes.mask = exp_hdl->exp_ops.fs_supported_attrs(exp_hdl);
 	fsal_obj_handle_init(&hdl->obj_handle, exp_hdl,
 			     posix2fsal_type(stat->st_mode));
 	lustre_handle_ops_init(&hdl->obj_handle.obj_ops);

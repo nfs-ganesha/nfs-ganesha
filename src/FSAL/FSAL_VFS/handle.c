@@ -132,8 +132,8 @@ static struct vfs_fsal_obj_handle *alloc_handle(int dirfd,
 		if (hdl->u.unopenable.name == NULL)
 			goto spcerr;
 	}
-	hdl->attributes.mask = exp_hdl->exp_ops.fs_supported_attrs(exp_hdl);
 	posix2fsal_attributes(stat, &hdl->attributes);
+	hdl->attributes.mask = exp_hdl->exp_ops.fs_supported_attrs(exp_hdl);
 	hdl->attributes.fsid = fs->fsid;
 	fsal_obj_handle_init(&hdl->obj_handle, exp_hdl,
 			     posix2fsal_type(stat->st_mode));

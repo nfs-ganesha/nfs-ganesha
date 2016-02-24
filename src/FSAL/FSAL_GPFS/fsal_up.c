@@ -316,6 +316,17 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 						CACHE_INODE_INVALIDATE_ATTRS |
 						CACHE_INODE_INVALIDATE_CONTENT);
 				} else {
+					/* buf may not have all attributes set.
+					 * Since posix2fsal_attributes() copies
+					 * all attributes and also sets
+					 * attr.mask, correct attr.mask with
+					 * valid upcall flags only before
+					 * passing the attr to update() which
+					 * actually updates the cache_inode
+					 * object attributes.
+					 */
+					posix2fsal_attributes(&buf, &attr);
+					/* Set the mask to what is changed */
 					attr.mask = 0;
 					if (flags & UP_SIZE)
 						attr.mask |=
@@ -347,7 +358,6 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 						   ATTR_CHGTIME | ATTR_CHANGE |
 						   ATTR_ATIME;
 
-					posix2fsal_attributes(&buf, &attr);
 					attr.expire_time_attr =
 					    expire_time_attr;
 

@@ -108,9 +108,8 @@ static struct zfs_fsal_obj_handle *alloc_handle(struct zfs_file_handle *fh,
 		hdl->u.symlink.link_size = len;
 	}
 
-	hdl->attributes.mask = exp_hdl->exp_ops.fs_supported_attrs(exp_hdl);
-
 	posix2fsal_attributes(stat, &hdl->attributes);
+	hdl->attributes.mask = exp_hdl->exp_ops.fs_supported_attrs(exp_hdl);
 
 	fsal_obj_handle_init(&hdl->obj_handle,
 			     exp_hdl,
