@@ -559,11 +559,14 @@ int nfs4_op_readdir(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	/* If a cookie verifier is used, then a non-trivial value is
-	 * returned to the client.  This value is the mtime of the
+	 * returned to the client.  This value is the change_time of the
 	 * directory.  If verifier is unused (as in many NFS Servers)
 	 * then only a set of zeros is returned (trivial value)
 	 */
 	memset(cookie_verifier, 0, NFS4_VERIFIER_SIZE);
+	if (op_ctx->export->options & EXPORT_OPTION_USE_COOKIE_VERIFIER)
+		memcpy(cookie_verifier, &(dir_entry->change_time),
+		       sizeof(dir_entry->change_time));
 
 	/* Cookie delivered by the server and used by the client SHOULD
 	 * not be 0, 1 or 2 because these values are reserved (see RFC
