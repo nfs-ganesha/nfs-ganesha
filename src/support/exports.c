@@ -1201,7 +1201,7 @@ static struct config_item export_params[] = {
 	CONF_ITEM_UI64("MaxOffsetRead", 512, UINT64_MAX, UINT64_MAX,
 		       gsh_export, MaxOffsetRead),
 	CONF_ITEM_BOOLBIT_SET("UseCookieVerifier",
-		true, EXPORT_OPTION_USE_COOKIE_VERIFIER,
+		false, EXPORT_OPTION_USE_COOKIE_VERIFIER,
 		gsh_export, options, options_set),
 	CONF_ITEM_BOOLBIT_SET("DisableReaddirPlus",
 		false, EXPORT_OPTION_NO_READDIR_PLUS,

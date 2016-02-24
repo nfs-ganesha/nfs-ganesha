@@ -205,10 +205,10 @@ int nfs3_readdirplus(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	memset(cookie_verifier, 0, sizeof(cookieverf3));
 
 	/* If cookie verifier is used, then an non-trivial value is
-	   returned to the client This value is the mtime of the
-	   directory. If verifier is unused (as in many NFS Servers) then
-	   only a set of zeros is returned (trivial value) */
-
+	 * returned to the client This value is the change_time of the
+	 * directory. If verifier is unused (as in many NFS Servers) then
+	 * only a set of zeros is returned (trivial value)
+	 */
 	if (op_ctx->export->options & EXPORT_OPTION_USE_COOKIE_VERIFIER)
 		memcpy(cookie_verifier,
 		       &(dir_entry->change_time),

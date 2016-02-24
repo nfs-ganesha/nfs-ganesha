@@ -211,9 +211,6 @@ int nfs3_readdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		       &dir_entry->change_time,
 		       sizeof(dir_entry->change_time));
 
-	/* Nothing to do if != 0 because the area is already full of
-	 * zero
-	 */
 	if ((cookie != 0) &&
 	    (op_ctx->export->options & EXPORT_OPTION_USE_COOKIE_VERIFIER)) {
 		/* Not the first call, so we have to check the cookie
