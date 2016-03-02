@@ -8150,7 +8150,8 @@ extern "C" {
 			return false;
 		if (!xdr_nfsstat4(xdrs, &objp->lea_errors.de_status))
 			return false;
-		if (!inline_xdr_enum(xdrs, (enum_t *)objp->lea_errors.de_opnum))
+		if (!inline_xdr_enum(xdrs,
+				     (enum_t *)&objp->lea_errors.de_opnum))
 			return false;
 		return true;
 	}
