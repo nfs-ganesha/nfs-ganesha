@@ -66,6 +66,12 @@ struct nfs_request_lookahead {
 			  NFS_LOOKAHEAD_LAYOUTCOMMIT |	\
 			  NFS_LOOKAHEAD_READDIR)))
 
+
+#define XDR_ARRAY_MAXLEN 1024
+#define XDR_BYTES_MAXLEN (1024*1024)
+#define XDR_BYTES_MAXLEN_IO (64*1024*1024)
+#define XDR_STRING_MAXLEN (8*1024)
+
 void socket_setoptions(int);
 
 typedef struct sockaddr_storage sockaddr_t;
