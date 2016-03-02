@@ -212,8 +212,8 @@ mountres3_ok *objp;
 		return (false);
 	if (!xdr_array
 	    (xdrs, (char **)&objp->auth_flavors.auth_flavors_val,
-	     (u_int *) & objp->auth_flavors.auth_flavors_len, ~0, sizeof(int),
-	     (xdrproc_t) xdr_int))
+	     &objp->auth_flavors.auth_flavors_len, XDR_ARRAY_MAXLEN,
+	     sizeof(int), (xdrproc_t) xdr_int))
 		return (false);
 	return (true);
 }
