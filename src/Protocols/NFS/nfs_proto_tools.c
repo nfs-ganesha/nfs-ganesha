@@ -3203,14 +3203,13 @@ static cache_inode_status_t Fattr_filler(void *opaque,
 					 uint64_t mounted_on_fileid,
 					 enum cb_state cb_state)
 {
-	struct xdr_attrs_args args;
 	struct Fattr_filler_opaque *f = (struct Fattr_filler_opaque *)opaque;
-
-	memset(&args, 0, sizeof(args));
-	args.attrs = (struct attrlist *)attr;
-	args.data = f->data;
-	args.hdl4 = f->objFH;
-	args.mounted_on_fileid = mounted_on_fileid;
+	struct xdr_attrs_args args = {
+		.attrs = (struct attrlist *)attr,
+		.data = f->data,
+		.hdl4 = f->objFH,
+		.mounted_on_fileid = mounted_on_fileid
+	};
 
 	if (nfs4_FSALattr_To_Fattr(&args, f->Bitmap, f->Fattr) != 0)
 		return CACHE_INODE_IO_ERROR;
@@ -3247,7 +3246,7 @@ nfsstat4 cache_entry_To_Fattr(cache_entry_t *entry, fattr4 *Fattr,
 		.Bitmap = Bitmap
 	};
 
-	/* Permissiomn check only if ACL is asked for.
+	/* Permission check only if ACL is asked for.
 	 * NOTE: We intentionally do NOT check ACE4_READ_ATTR.
 	 */
 	if (attribute_is_set(Bitmap, FATTR4_ACL)) {
@@ -3376,7 +3375,7 @@ int nfs4_FSALattr_To_Fattr(struct xdr_attrs_args *args, struct bitmap4 *Bitmap,
 	fattr_xdr_result xdr_res;
 
 	/* basic init */
-	memset(&Fattr->attrmask, 0, sizeof(Fattr->attrmask));
+	memset(Fattr, 0, sizeof(*Fattr));
 
 	if (Bitmap->bitmap4_len == 0)
 		return 0;	/* they ask for nothing, they get nothing */
@@ -3910,6 +3909,18 @@ int nfs4_Fattr_cmp(fattr4 *Fattr1, fattr4 *Fattr2)
 	LastOffset = 0;
 	len = 0;
 
+	if (Fattr1->attr_vals.attrlist4_len !=
+			Fattr2->attr_vals.attrlist4_len) {
+		/* can't trust Fattr to be constructed properly
+		 * as it can come from client */
+		return 0;
+	}
+
+	if (Fattr1->attr_vals.attrlist4_len == 0) {
+		/* Could have no attrlist if all the flags in bitmask
+		 * are invalid, both buffers are empty so equal */
+		return 1;
+	}
   /** There has got to be a better way to do this but we do have to cope
    *  with unaligned buffers for opaque data
    */
