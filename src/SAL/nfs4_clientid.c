@@ -1628,6 +1628,13 @@ nfs_client_record_t *get_client_record(const char *const value,
 	struct hash_latch latch;
 	hash_error_t rc;
 
+
+	if (len == 0) {
+		LogInfo(COMPONENT_CLIENTID,
+			"Refusing to create a record with an empty client_val, stopping.");
+		return NULL;
+	}
+
 	record = gsh_malloc(sizeof(nfs_client_record_t) + len);
 
 	if (record == NULL)
