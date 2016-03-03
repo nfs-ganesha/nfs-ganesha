@@ -187,7 +187,8 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op, compound_data_t *data,
 			}
 		}
 
-		dec_state_t_ref(layout_state);
+		if (!arg_LAYOUTRETURN4->lora_reclaim)
+			dec_state_t_ref(layout_state);
 
 		break;
 
@@ -572,7 +573,6 @@ nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
 	memset(arg, 0, sizeof(struct fsal_layoutreturn_arg));
 
 	arg->circumstance = circumstance;
-	arg->lo_type = layout_state->state_data.layout.state_layout_type;
 	arg->return_type = return_type;
 	arg->spec_segment = spec_segment;
 	arg->ncookies = 0;
@@ -591,6 +591,9 @@ nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
 	 */
 
 	if (circumstance != circumstance_reclaim) {
+		arg->lo_type =
+			layout_state->state_data.layout.state_layout_type;
+
 		/* The _safe version of glist_for_each allows us to
 		 * delete segments while we iterate.
 		 */
