@@ -2239,7 +2239,7 @@ state_status_t do_lock_op(cache_entry_t *entry,
 			  fsal_lock_param_t *lock,
 			  state_owner_t **holder,
 			  fsal_lock_param_t *conflict,
-			  bool_t overlap,
+			  bool overlap,
 			  enum fsal_sle_type sle_type)
 {
 	fsal_status_t fsal_status;
@@ -2252,10 +2252,13 @@ state_status_t do_lock_op(cache_entry_t *entry,
 	/* Quick exit if:
 	 * Locks are not supported by FSAL
 	 * Async blocking locks are not supported and this is a cancel
-	 * Async blocking locks are not supported and this lock overlaps
 	 * Lock owners are not supported and hint tells us that lock fully
 	 *   overlaps a lock we already have (no need to make another FSAL
 	 *   call in that case)
+	 *
+	 * We do NOT need to quick exit if async blocking locks are not
+	 * supported and there is an overlap because we won't get here if
+	 * the overlap includes a write lock (which would cause a block).
 	 */
 	LogFullDebug(COMPONENT_STATE,
 		     "Reasons to quick exit fso_lock_support=%s fso_lock_support_async_block=%s fso_lock_support_owner=%s overlap=%s",
@@ -2273,9 +2276,6 @@ state_status_t do_lock_op(cache_entry_t *entry,
 	    || (!fsal_export->exp_ops.
 		fs_supports(fsal_export, fso_lock_support_async_block)
 		&& lock_op == FSAL_OP_CANCEL)
-	    || (!fsal_export->exp_ops.
-		fs_supports(fsal_export, fso_lock_support_async_block)
-		&& overlap)
 	    || (!fsal_export->exp_ops.
 		fs_supports(fsal_export, fso_lock_support_owner)
 		&& overlap))

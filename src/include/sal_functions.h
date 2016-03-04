@@ -634,7 +634,7 @@ state_status_t do_lock_op(cache_entry_t *entry,
 			  fsal_lock_param_t *lock,
 			  state_owner_t **holder,
 			  fsal_lock_param_t *conflict,
-			  bool_t overlap,
+			  bool overlap,
 			  enum fsal_sle_type sle_type);
 
 state_status_t state_unlock(cache_entry_t *entry,
