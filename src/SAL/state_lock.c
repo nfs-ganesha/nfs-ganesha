@@ -295,7 +295,8 @@ static inline bool different_lock(fsal_lock_param_t *lock1,
  * @param[in] le     Entry to log
  */
 static void
-LogEntryRefCount(const char *reason, state_lock_entry_t *le, int32_t refcount)
+log_entry_ref_count(const char *reason, state_lock_entry_t *le,
+		    int32_t refcount, char *file, int line, char *function)
 {
 	if (isFullDebug(COMPONENT_STATE)) {
 		char owner[LOG_BUFF_LEN];
@@ -303,22 +304,27 @@ LogEntryRefCount(const char *reason, state_lock_entry_t *le, int32_t refcount)
 
 		display_owner(&dspbuf, le->sle_owner);
 
-		LogFullDebug(COMPONENT_STATE,
-			     "%s Entry: %p entry=%p, fileid=%" PRIu64
-			     ", export=%u, type=%s, start=0x%"PRIx64
-			     ", end=0x%"PRIx64
-			     ", blocked=%s/%p, state=%p, refcount=%"PRIu32
-			     ", owner={%s}",
-			     reason, le, le->sle_entry,
-			     (uint64_t) le->sle_entry->obj_handle->attrs->
-			     fileid, (unsigned int)le->sle_export->export_id,
-			     str_lockt(le->sle_lock.lock_type),
-			     le->sle_lock.lock_start,
-			     lock_end(&le->sle_lock),
-			     str_blocked(le->sle_blocked), le->sle_block_data,
-			     le->sle_state, refcount, owner);
+		DisplayLogComponentLevel(COMPONENT_STATE, file, line, function,
+			NIV_FULL_DEBUG,
+			"%s Entry: %p entry=%p, fileid=%" PRIu64
+			", export=%u, type=%s, start=0x%"PRIx64
+			", end=0x%"PRIx64
+			", blocked=%s/%p, state=%p, refcount=%"PRIu32
+			", owner={%s}",
+			reason, le, le->sle_entry,
+			(uint64_t) le->sle_entry->obj_handle->attrs->
+			fileid, (unsigned int)le->sle_export->export_id,
+			str_lockt(le->sle_lock.lock_type),
+			le->sle_lock.lock_start,
+			lock_end(&le->sle_lock),
+			str_blocked(le->sle_blocked), le->sle_block_data,
+			le->sle_state, refcount, owner);
 	}
 }
+
+#define LogEntryRefCount(reason, le, refcount) \
+	log_entry_ref_count(reason, le, refcount, \
+	(char *) __FILE__, __LINE__, (char *) __func__)
 
 /**
  * @brief Log a lock entry
@@ -326,10 +332,10 @@ LogEntryRefCount(const char *reason, state_lock_entry_t *le, int32_t refcount)
  * @param[in] reason Arbitrary string
  * @param[in] le     Entry to log
  */
-static inline void LogEntry(const char *reason, state_lock_entry_t *le)
-{
-	LogEntryRefCount(reason, le, atomic_fetch_int32_t(&le->sle_ref_count));
-}
+#define LogEntry(reason, le) \
+	log_entry_ref_count(reason, le, \
+	atomic_fetch_int32_t(&le->sle_ref_count), \
+	(char *) __FILE__, __LINE__, (char *) __func__)
 
 /**
  * @brief Log a list of locks
@@ -467,16 +473,23 @@ void log_lock(log_components_t component,
  * @param[in] owner     Lock owner
  * @param[in] lock      Lock description
  */
-void LogLockDesc(log_components_t component, log_levels_t debug,
-		 const char *reason, cache_entry_t *entry, void *owner,
-		 fsal_lock_param_t *lock)
+void log_lock_desc(log_components_t component, log_levels_t debug,
+		   const char *reason, cache_entry_t *entry, void *owner,
+		   fsal_lock_param_t *lock, char *file, int line,
+		   char *function)
 {
-	LogAtLevel(component, debug,
-		   "%s Lock: entry=%p, owner=%p, type=%s, start=0x%llx, end=0x%llx",
-		   reason, entry, owner, str_lockt(lock->lock_type),
-		   (unsigned long long)lock->lock_start,
-		   (unsigned long long)lock_end(lock));
+	if (isLevel(component, debug)) {
+		DisplayLogComponentLevel(component, file, line, function, debug,
+			"%s Lock: entry=%p, owner=%p, type=%s, start=0x%llx, end=0x%llx",
+			reason, entry, owner, str_lockt(lock->lock_type),
+			(unsigned long long)lock->lock_start,
+			(unsigned long long)lock_end(lock));
+	}
 }
+
+#define LogLockDesc(component, debug, reason, entry, owner, lock) \
+	log_lock_desc(component, debug, reason, entry, owner, lock, \
+		      (char *) __FILE__, __LINE__, (char *) __func__)
 
 /**
  * @brief Log all locks
@@ -2244,6 +2257,18 @@ state_status_t do_lock_op(cache_entry_t *entry,
 	 *   overlaps a lock we already have (no need to make another FSAL
 	 *   call in that case)
 	 */
+	LogFullDebug(COMPONENT_STATE,
+		     "Reasons to quick exit fso_lock_support=%s fso_lock_support_async_block=%s fso_lock_support_owner=%s overlap=%s",
+		     fsal_export->exp_ops.
+			fs_supports(fsal_export, fso_lock_support)
+				? "yes" : "no",
+		     fsal_export->exp_ops.
+			fs_supports(fsal_export, fso_lock_support_async_block)
+				? "yes" : "no",
+		     fsal_export->exp_ops.
+			fs_supports(fsal_export, fso_lock_support_owner)
+				? "yes" : "no",
+		     overlap ? "yes" : "no");
 	if (!fsal_export->exp_ops.fs_supports(fsal_export, fso_lock_support)
 	    || (!fsal_export->exp_ops.
 		fs_supports(fsal_export, fso_lock_support_async_block)
