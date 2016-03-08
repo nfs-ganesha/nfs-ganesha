@@ -73,7 +73,6 @@ enum config_type {
 	CONFIG_PATH,
 	CONFIG_LIST,
 	CONFIG_ENUM,
-	CONFIG_ENUM_SET,
 	CONFIG_TOKEN,
 	CONFIG_BOOL,
 	CONFIG_BOOLBIT,
@@ -331,7 +330,6 @@ struct config_item {
 			uint32_t def;
 			uint32_t mask;
 			struct config_item_list *tokens;
-			uint32_t bit;
 			size_t set_off;
 		} lst;
 		struct { /* CONFIG_BOOLBIT */
@@ -532,26 +530,10 @@ struct config_item {
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
 
-#define CONF_ITEM_ENUM(_name_, _def_, _tokens_, _struct_, _mem_) \
-	{ .name = _name_,			    \
-	  .type = CONFIG_ENUM,			    \
-	  .u.lst.def = _def_,			    \
-	  .u.lst.tokens = _tokens_,		    \
-	  .off = offsetof(struct _struct_, _mem_)   \
-	}
-
-#define CONF_ITEM_ENUM_SET(_name_, _def_, _tokens_, _struct_, _mem_, \
-			   _bit_, _set_)		   \
-	{ .name = _name_,			    \
-	  .type = CONFIG_ENUM_SET,		    \
-	  .flags = CONFIG_MARK_SET,			\
-	  .u.lst.def = _def_,			    \
-	  .u.lst.mask = UINT32_MAX,		    \
-	  .u.lst.tokens = _tokens_,		    \
-	  .u.lst.bit = _bit_,			    \
-	  .u.lst.set_off = offsetof(struct _struct_, _set_),   \
-	  .off = offsetof(struct _struct_, _mem_)   \
-	}
+/* Use CONF_ITEM_TOKEN for a variable that is set to a single enum
+ * value. The CONF_ITEM_ENUM_* macros are for setting one or more
+ * bits within a field (I know, a bit confusing...).
+ */
 
 #define CONF_ITEM_ENUM_BITS(_name_, _def_, _mask_, _tokens_, _struct_, _mem_) \
 	{ .name = _name_,			    \
@@ -570,15 +552,6 @@ struct config_item {
 	  .u.lst.def = _def_,			    \
 	  .u.lst.mask = _mask_,			    \
 	  .u.lst.set_off = offsetof(struct _struct_, _set_),   \
-	  .u.lst.tokens = _tokens_,		    \
-	  .off = offsetof(struct _struct_, _mem_)   \
-	}
-
-#define CONF_UNIQ_ENUM(_name_, _def_, _tokens_, _struct_, _mem_) \
-	{ .name = _name_,			    \
-	  .type = CONFIG_ENUM,		    \
-	  .flags = CONFIG_UNIQUE,		    \
-	  .u.lst.def = _def_,			    \
 	  .u.lst.tokens = _tokens_,		    \
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
