@@ -98,8 +98,8 @@ static struct config_item proxy_remote_params[] = {
 		      pxy_client_params, keytab),
 	CONF_ITEM_UI32("Credential_LifeTime", 0, 86400*2, 86400,
 		       pxy_client_params, cred_lifetime),
-	CONF_ITEM_ENUM("Sec_Type", RPCSEC_GSS_SVC_NONE, sec_types,
-		       pxy_client_params, sec_type),
+	CONF_ITEM_TOKEN("Sec_Type", RPCSEC_GSS_SVC_NONE, sec_types,
+			pxy_client_params, sec_type),
 	CONF_ITEM_BOOL("Active_krb5", false,
 		       pxy_client_params, active_krb5),
 #endif

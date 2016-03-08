@@ -1855,10 +1855,10 @@ static struct config_item_list timeformats[] = {
  */
 
 static struct config_item format_options[] = {
-	CONF_ITEM_ENUM("date_format", TD_GANESHA, timeformats,
-		       logfields, datefmt),
-	CONF_ITEM_ENUM("time_format", TD_GANESHA, timeformats,
-		       logfields, timefmt),
+	CONF_ITEM_TOKEN("date_format", TD_GANESHA, timeformats,
+			logfields, datefmt),
+	CONF_ITEM_TOKEN("time_format", TD_GANESHA, timeformats,
+			logfields, timefmt),
 	CONF_ITEM_STR("user_date_format", 1, MAX_TD_FMT_LEN, NULL,
 		       logfields, user_date_fmt),
 	CONF_ITEM_STR("user_time_format", 1, MAX_TD_FMT_LEN, NULL,
