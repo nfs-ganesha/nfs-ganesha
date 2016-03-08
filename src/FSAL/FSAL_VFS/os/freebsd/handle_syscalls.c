@@ -312,6 +312,10 @@ int vfs_re_index(struct vfs_filesystem *vfs_fs,
 		goto errout;
 	}
 
+	/* Extract fsid from the root handle and re-index the filesystem
+	 * using it. This is because the file handle already has an fsid in
+	 * it.
+	 */
 	(void) vfs_extract_fsid(fh, &fsid_type, &fsid);
 
 	retval = re_index_fs_fsid(vfs_fs->fs, fsid_type, &fsid);

@@ -52,9 +52,9 @@ struct config_item export_params[] = {
 	CONF_ITEM_NOOP("name"),
 	CONF_ITEM_BOOL("pnfs", false,
 		       panfs_fsal_export, pnfs_enabled),
-	CONF_ITEM_ENUM("fsid_type", -1,
-		       fsid_types,
-		       panfs_fsal_export, vfs_export.fsid_type),
+	CONF_ITEM_TOKEN("fsid_type", FSID_NO_TYPE,
+			fsid_types,
+			panfs_fsal_export, vfs_export.fsid_type),
 	CONFIG_EOL
 };
 

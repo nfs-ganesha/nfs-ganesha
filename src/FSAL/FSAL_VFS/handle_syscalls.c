@@ -108,7 +108,7 @@ int vfs_get_root_handle(struct vfs_filesystem *vfs_fs,
 	}
 
 	/* Check if we have to re-index the fsid based on config */
-	if (exp->fsid_type != -1 &&
+	if (exp->fsid_type != FSID_NO_TYPE &&
 	    exp->fsid_type != vfs_fs->fs->fsid_type) {
 		retval = -change_fsid_type(vfs_fs->fs, exp->fsid_type);
 		if (retval != 0) {
