@@ -51,6 +51,7 @@ int _9p_getattr(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	u16 *msgtag = NULL;
 	u32 *fid = NULL;
 	u64 *request_mask = NULL;
+	cache_inode_status_t cache_status;
 
 	struct _9p_fid *pfid = NULL;
 
@@ -94,6 +95,17 @@ int _9p_getattr(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	}
 
 	_9p_init_opctx(pfid, req9p);
+
+	cache_status = cache_inode_lock_trust_attrs(pfid->pentry, false);
+
+	if (cache_status != CACHE_INODE_SUCCESS) {
+		LogDebug(COMPONENT_9P,
+			 "cache_inode_lock_trust_attrs failed %s",
+			 cache_inode_err_str(cache_status));
+		return _9p_rerror(req9p, msgtag,
+				  _9p_tools_errno(cache_status), plenout,
+				  preply);
+	}
 
 	/* Attach point is found, build the requested attributes */
 
@@ -163,6 +175,8 @@ int _9p_getattr(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		(u64) pfid->pentry->obj_handle->attrs->ctime.tv_sec :
 		0LL;
 	ctime_nsec = 0LL;
+
+	PTHREAD_RWLOCK_unlock(&pfid->pentry->attr_lock);
 
 	/* Not yet supported attributes */
 	btime_sec = 0LL;
