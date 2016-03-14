@@ -15,11 +15,11 @@
 # The nfs-ganesha.service depends on this unit.
 #
 
-.include /usr/lib/systemd/system/nfs-lock.service
+.include /usr/lib/systemd/system/rpc-statd.service
 
 [Unit]
 Before=nfs-ganesha.service
-Conflicts=nfs-lock.service
+Conflicts=nfs-lock.service rpc-statd.service
 
 [Service]
 ExecStartPre=

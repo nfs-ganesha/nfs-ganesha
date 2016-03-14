@@ -52,21 +52,29 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
   set(LINUX ON)
   set(UNIX ON)
   # Now detects the Linux's distro
-  set(DISTRO "NOT_RH")
- EXECUTE_PROCESS(
-      COMMAND cat /etc/system-release
+  set(DISTRO "UNKNOWN")
+  set(LIBEXECDIR "/usr/libexec")
+
+  EXECUTE_PROCESS(
+      COMMAND awk -F=  "/^NAME=/ { print $2 }" /etc/os-release
       OUTPUT_VARIABLE SYS_RELEASE
       ERROR_QUIET
    )
+# Red Hat Enterprise Linux versions before 7.0 will be detected as UNKNOWN
+
   if( ${SYS_RELEASE} MATCHES "Red Hat" )
      message( STATUS "Detected a Linux Red Hat machine" )
      set(DISTRO "RED_HAT")
   elseif( ${SYS_RELEASE} MATCHES "Fedora" )
      message( STATUS "Detected a Linux Fedora machine" )
      set(DISTRO "FEDORA")
+  elseif( ${SYS_RELEASE} MATCHES "SLES" )
+     message( STATUS "Detected a Linux SLES machine" )
+     set(DISTRO "SLES")
+     set(LIBEXECDIR "/usr/lib")
   else( ${SYS_RELEASE} MATCHES "Red Hat" )
-     message( STATUS "Detected a non Red hat based" )
-     set(DISTRO "NOT_RH")
+     message( STATUS "Detected an UNKNOWN Linux machine" )
+     set(DISTRO "UNKNOWN")
   endif( ${SYS_RELEASE} MATCHES "Red Hat" )
 endif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
@@ -957,7 +965,11 @@ set(SYSTEM_LIBRARIES
 include(${CMAKE_SOURCE_DIR}/cmake/modules/InstallPackageConfigFile.cmake)
 InstallPackageConfigFile(${CMAKE_SOURCE_DIR}/config_samples/vfs.conf ${SYSCONFDIR}/ganesha ganesha.conf)
 # Sample config files
-install(DIRECTORY config_samples DESTINATION share/doc/ganesha)
+if( ${DISTRO} MATCHES "SLES" )
+  install(DIRECTORY config_samples DESTINATION share/doc/packages/ganesha)
+else( ${DISTRO} MATCHES "SLES" )
+  install(DIRECTORY config_samples DESTINATION share/doc/ganesha)
+endif( ${DISTRO} MATCHES "SLES" )
 # pre-create PREFIX/var/run/ganesha
 install(DIRECTORY DESTINATION ${SYSSTATEDIR}/run/ganesha)
 
@@ -1363,6 +1375,11 @@ endif(USE_SYSTEM_NTIRPC)
 configure_file(
   "${PROJECT_SOURCE_DIR}/nfs-ganesha.spec-in.cmake"
   "${PROJECT_SOURCE_DIR}/nfs-ganesha.spec"
+)
+
+configure_file(
+  "${PROJECT_SOURCE_DIR}/scripts/systemd/nfs-ganesha-config.service-in.cmake"
+  "${PROJECT_SOURCE_DIR}/scripts/systemd/nfs-ganesha-config.service"
 )
 
 add_custom_target( rpm DEPENDS dist)

@@ -4,4 +4,4 @@ DefaultDependencies=no
 
 [Service]
 Type=oneshot
-ExecStart=/usr/libexec/ganesha/nfs-ganesha-config.sh
+ExecStart=@LIBEXECDIR@/ganesha/nfs-ganesha-config.sh
