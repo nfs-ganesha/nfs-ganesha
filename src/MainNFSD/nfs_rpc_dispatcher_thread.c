@@ -1671,67 +1671,6 @@ static inline void free_nfs_request(request_data_t *reqdata)
 	pool_free(request_pool, reqdata);
 }
 
-static inline enum auth_stat AuthenticateRequest(nfs_request_t *reqnfs,
-						 bool *no_dispatch)
-{
-	struct rpc_msg *msg = reqnfs->svc.rq_msg;
-	SVCXPRT *xprt = reqnfs->xprt;
-	enum auth_stat why;
-	bool rlocked = true;
-	bool slocked = false;
-
-	/* A few words of explanation are required here:
-	 * In authentication is AUTH_NONE or AUTH_UNIX, then the value of
-	 * no_dispatch remains false and the request is proceeded normally.
-	 * If authentication is RPCSEC_GSS, no_dispatch may have value true,
-	 * this means that gc->gc_proc != RPCSEC_GSS_DATA and that the message
-	 * is in fact an internal negociation message from RPCSEC_GSS using
-	 * GSSAPI. It then should not be proceed by the worker and SVC_STAT
-	 * should be returned to the dispatcher.
-	 */
-
-	*no_dispatch = false;
-
-	reqnfs->svc.rq_xprt = reqnfs->xprt;
-	reqnfs->svc.rq_prog = msg->rm_call.cb_prog;
-	reqnfs->svc.rq_vers = msg->rm_call.cb_vers;
-	reqnfs->svc.rq_proc = msg->rm_call.cb_proc;
-	reqnfs->svc.rq_xid = msg->rm_xid;
-
-	LogFullDebug(COMPONENT_DISPATCH,
-		     "About to authenticate Prog=%d, vers=%d, proc=%d xid=%u xprt=%p",
-		     (int)reqnfs->svc.rq_prog,
-		     (int)reqnfs->svc.rq_vers,
-		     (int)reqnfs->svc.rq_proc,
-		     reqnfs->svc.rq_xid,
-		     reqnfs->svc.rq_xprt);
-
-	why = svc_auth_authenticate(&reqnfs->svc, msg, no_dispatch);
-	if (why != AUTH_OK) {
-		LogInfo(COMPONENT_DISPATCH,
-			"Could not authenticate request... rejecting with AUTH_STAT=%s",
-			auth_stat2str(why));
-		DISP_SLOCK2(xprt);
-		svcerr_auth(xprt, &reqnfs->svc, why);
-		DISP_SUNLOCK(xprt);
-		*no_dispatch = true;
-		return why;
-	} else {
-#ifdef _HAVE_GSSAPI
-		struct rpc_gss_cred *gc;
-
-		if (reqnfs->svc.rq_verf.oa_flavor == RPCSEC_GSS) {
-			gc = (struct rpc_gss_cred *)reqnfs->svc.rq_clntcred;
-			LogFullDebug(COMPONENT_DISPATCH,
-				     "AuthenticateRequest no_dispatch=%d gc->gc_proc=(%u) %s",
-				     *no_dispatch, gc->gc_proc,
-				     str_gc_proc(gc->gc_proc));
-		}
-#endif
-	} /* else from if( ( why = _authenticate( preq, pmsg) ) != AUTH_OK) */
-	return AUTH_OK;
-}
-
 /**
  * @brief Helper function to validate rpc calls.
  *
@@ -1875,8 +1814,9 @@ static bool is_rpc_call_valid(nfs_request_t *reqnfs)
 enum xprt_stat thr_decode_rpc_request(void *context, SVCXPRT *xprt)
 {
 	request_data_t *reqdata;
+	enum auth_stat why;
 	enum xprt_stat stat = XPRT_IDLE;
-	bool no_dispatch = true;
+	bool no_dispatch = false;
 	bool rlocked = false;
 	bool enqueued = false;
 	bool recv_status;
@@ -1976,9 +1916,45 @@ enum xprt_stat thr_decode_rpc_request(void *context, SVCXPRT *xprt)
 		goto finish;
 
 	reqdata->r_u.req.funcdesc = nfs_rpc_get_funcdesc(&reqdata->r_u.req);
-	if (AuthenticateRequest(&reqdata->r_u.req, &no_dispatch) != AUTH_OK
-	 || no_dispatch)
+
+	LogFullDebug(COMPONENT_DISPATCH,
+		     "About to authenticate Prog=%d, vers=%d, proc=%d xid=%u xprt=%p",
+		     (int)reqdata->r_u.req.svc.rq_prog,
+		     (int)reqdata->r_u.req.svc.rq_vers,
+		     (int)reqdata->r_u.req.svc.rq_proc,
+		     reqdata->r_u.req.svc.rq_xid,
+		     xprt);
+
+	/* If authentication is AUTH_NONE or AUTH_UNIX, then the value of
+	 * no_dispatch remains false and the request proceeds normally.
+	 *
+	 * If authentication is RPCSEC_GSS, no_dispatch may have value true,
+	 * this means that gc->gc_proc != RPCSEC_GSS_DATA and that the message
+	 * is in fact an internal negotiation message from RPCSEC_GSS using
+	 * GSSAPI. It should not be processed by the worker and SVC_STAT
+	 * should be returned to the dispatcher.
+	 */
+	why = svc_auth_authenticate(&reqdata->r_u.req.svc,
+				    reqdata->r_u.req.svc.rq_msg,
+				    &no_dispatch);
+	if (why != AUTH_OK) {
+		LogInfo(COMPONENT_DISPATCH,
+			"Could not authenticate request... rejecting with AUTH_STAT=%s",
+			auth_stat2str(why));
+		svcerr_auth(xprt, &reqdata->r_u.req.svc, why);
 		goto finish;
+#ifdef _HAVE_GSSAPI
+	} else if (reqdata->r_u.req.svc.rq_verf.oa_flavor == RPCSEC_GSS) {
+		struct rpc_gss_cred *gc = (struct rpc_gss_cred *)
+			reqdata->r_u.req.svc.rq_clntcred;
+		LogFullDebug(COMPONENT_DISPATCH,
+			     "RPCSEC_GSS no_dispatch=%d gc->gc_proc=(%u) %s",
+			     no_dispatch, gc->gc_proc,
+			     str_gc_proc(gc->gc_proc));
+		if (no_dispatch)
+			goto finish;
+#endif
+	}
 
 	/*
 	 * Extract RPC argument.
