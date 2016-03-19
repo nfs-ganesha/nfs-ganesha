@@ -1671,9 +1671,6 @@ static inline void free_nfs_request(request_data_t *reqdata)
 	pool_free(request_pool, reqdata);
 }
 
-/* forward declaration in lieu of moving code */
-static int nfs_rpc_get_args(nfs_request_t *);
-
 static inline enum auth_stat AuthenticateRequest(nfs_request_t *reqnfs,
 						 bool *no_dispatch)
 {
@@ -1983,8 +1980,29 @@ enum xprt_stat thr_decode_rpc_request(void *context, SVCXPRT *xprt)
 	 || no_dispatch)
 		goto finish;
 
-	if (!nfs_rpc_get_args(&reqdata->r_u.req))
+	/*
+	 * Extract RPC argument.
+	 */
+	memset(&reqdata->r_u.req.arg_nfs, 0, sizeof(nfs_arg_t));
+
+	LogFullDebug(COMPONENT_DISPATCH,
+		     "Before SVC_GETARGS on socket %d, xprt=%p",
+		     xprt->xp_fd, xprt);
+
+	if (!SVC_GETARGS(xprt, &reqdata->r_u.req.svc,
+			 reqdata->r_u.req.funcdesc->xdr_decode_func,
+			 &reqdata->r_u.req.arg_nfs,
+			 &reqdata->r_u.req.lookahead)) {
+		LogInfo(COMPONENT_DISPATCH,
+			"SVC_GETARGS failed for Program %d, Version %d, Function %d xid=%u",
+			(int)reqdata->r_u.req.svc.rq_prog,
+			(int)reqdata->r_u.req.svc.rq_vers,
+			(int)reqdata->r_u.req.svc.rq_proc,
+			reqdata->r_u.req.svc.rq_xid);
+
+		svcerr_decode(xprt, &reqdata->r_u.req.svc);
 		goto finish;
+	}
 
 	if (context) {
 		/* already running worker thread, do not enqueue */
@@ -2219,37 +2237,3 @@ static void *rpc_dispatcher_thread(void *arg)
 
 	return NULL;
 }				/* rpc_dispatcher_thread */
-
-/*
- * Extract RPC argument.
- */
-static int nfs_rpc_get_args(nfs_request_t *reqnfs)
-{
-	SVCXPRT *xprt = reqnfs->xprt;
-	nfs_arg_t *arg_nfs = &reqnfs->arg_nfs;
-	bool rlocked = true;
-	bool slocked = false;
-
-	memset(arg_nfs, 0, sizeof(nfs_arg_t));
-
-	LogFullDebug(COMPONENT_DISPATCH,
-		     "Before svc_getargs on socket %d, xprt=%p",
-		     xprt->xp_fd, xprt);
-
-	if (!svc_getargs(xprt, &reqnfs->svc, reqnfs->funcdesc->xdr_decode_func,
-			(caddr_t) arg_nfs, &reqnfs->lookahead)) {
-		LogInfo(COMPONENT_DISPATCH,
-			"svc_getargs failed for Program %d, Version %d, Function %d xid=%u",
-			(int)reqnfs->svc.rq_prog,
-			(int)reqnfs->svc.rq_vers,
-			(int)reqnfs->svc.rq_proc,
-			reqnfs->svc.rq_xid);
-		/* XXX move this, removing need for thr_ctx */
-		DISP_SLOCK2(xprt);
-		svcerr_decode(xprt, &reqnfs->svc);
-		DISP_SUNLOCK(xprt);
-		return false;
-	}
-
-	return true;
-}
