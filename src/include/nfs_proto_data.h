@@ -191,7 +191,6 @@ typedef struct nfs_function_desc__ {
 } nfs_function_desc_t;
 
 typedef struct nfs_request {
-	SVCXPRT *xprt;
 	struct svc_req svc;
 	struct nfs_request_lookahead lookahead;
 	nfs_arg_t arg_nfs;

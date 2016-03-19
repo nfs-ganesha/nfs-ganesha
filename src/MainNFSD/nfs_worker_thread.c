@@ -707,7 +707,7 @@ void nfs_rpc_execute(request_data_t *reqdata)
 	const char *progname = "unknown";
 	const nfs_function_desc_t *reqdesc = reqdata->r_u.req.funcdesc;
 	nfs_arg_t *arg_nfs = &reqdata->r_u.req.arg_nfs;
-	SVCXPRT *xprt = reqdata->r_u.req.xprt;
+	SVCXPRT *xprt = reqdata->r_u.req.svc.rq_xprt;
 	nfs_res_t *res_nfs;
 	struct export_perms export_perms;
 	struct user_cred user_credentials;
@@ -728,7 +728,7 @@ void nfs_rpc_execute(request_data_t *reqdata)
 #if defined(HAVE_BLKIN)
 	BLKIN_TIMESTAMP(
 		&reqdata->r_u.req.svc.bl_trace,
-		&reqdata->r_u.req.xprt->blkin.endp,
+		&reqdata->r_u.req.svc.rq_xprt->blkin.endp,
 		"rpc_execute-start");
 #endif
 
@@ -793,7 +793,7 @@ void nfs_rpc_execute(request_data_t *reqdata)
 #if defined(HAVE_BLKIN)
 	BLKIN_TIMESTAMP(
 		&reqdata->r_u.req.svc.bl_trace,
-		&reqdata->r_u.req.xprt->blkin.endp,
+		&reqdata->r_u.req.svc.rq_xprt->blkin.endp,
 		"rpc_execute-have-clientid");
 #endif
 	/* If req is uncacheable, or if req is v41+, nfs_dupreq_start will do
@@ -1268,19 +1268,19 @@ void nfs_rpc_execute(request_data_t *reqdata)
 #if defined(HAVE_BLKIN)
 		BLKIN_TIMESTAMP(
 			&reqdata->r_u.req.svc.bl_trace,
-			&reqdata->r_u.req.xprt->blkin.endp,
+			&reqdata->r_u.req.svc.rq_xprt->blkin.endp,
 			"rpc_execute-pre-service");
 
 		BLKIN_KEYVAL_STRING(
 			&reqdata->r_u.req.svc.bl_trace,
-			&reqdata->r_u.req.xprt->blkin.endp,
+			&reqdata->r_u.req.svc.rq_xprt->blkin.endp,
 			"op-name",
 			reqdesc->funcname
 			);
 
 		BLKIN_KEYVAL_INTEGER(
 			&reqdata->r_u.req.svc.bl_trace,
-			&reqdata->r_u.req.xprt->blkin.endp,
+			&reqdata->r_u.req.svc.rq_xprt->blkin.endp,
 			"export-id",
 			(op_ctx->export != NULL)
 			? op_ctx->export->export_id : -1);
@@ -1295,7 +1295,7 @@ void nfs_rpc_execute(request_data_t *reqdata)
 #if defined(HAVE_BLKIN)
 		BLKIN_TIMESTAMP(
 			&reqdata->r_u.req.svc.bl_trace,
-			&reqdata->r_u.req.xprt->blkin.endp,
+			&reqdata->r_u.req.svc.rq_xprt->blkin.endp,
 			"rpc_execute-post-service");
 #endif
 	}
@@ -1532,7 +1532,7 @@ static void worker_run(struct fridgethr_context *ctx)
 			break;
 		case NFS_REQUEST:
 			/* check for destroyed xprts */
-			if (reqdata->r_u.req.xprt->
+			if (reqdata->r_u.req.svc.rq_xprt->
 			    xp_flags & SVC_XPRT_FLAG_DESTROYED) {
 				/* Idempotent: once set, the DESTROYED flag
 				 * is never cleared. No lock needed.
@@ -1543,8 +1543,8 @@ static void worker_run(struct fridgethr_context *ctx)
 			LogDebug(COMPONENT_DISPATCH,
 				 "NFS protocol request, reqdata=%p xprt=%p requests=%d",
 				 reqdata,
-				 reqdata->r_u.req.xprt,
-				 reqdata->r_u.req.xprt->xp_requests);
+				 reqdata->r_u.req.svc.rq_xprt,
+				 reqdata->r_u.req.svc.rq_xprt->xp_requests);
 			nfs_rpc_execute(reqdata);
 			break;
 
@@ -1568,7 +1568,7 @@ static void worker_run(struct fridgethr_context *ctx)
 		switch (reqdata->rtype) {
 		case NFS_REQUEST:
 			/* adjust request count and return xprt ref */
-			gsh_xprt_unref(reqdata->r_u.req.xprt,
+			gsh_xprt_unref(reqdata->r_u.req.svc.rq_xprt,
 				       XPRT_PRIVATE_FLAG_DECREQ, __func__,
 				       __LINE__);
 			break;

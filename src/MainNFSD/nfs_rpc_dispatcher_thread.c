@@ -109,7 +109,7 @@ const char *xprt_stat_s[4] = {
  * @param[in] ptr_req Unused
  * @param[in] ptr_svc Unused
  */
-void nfs_rpc_dispatch_dummy(struct svc_req *ptr_req, SVCXPRT *ptr_svc)
+void nfs_rpc_dispatch_dummy(struct svc_req *req, SVCXPRT *xprt)
 {
 	LogMajor(COMPONENT_DISPATCH,
 		 "NFS DISPATCH DUMMY: Possible error, function nfs_rpc_dispatch_dummy should never be called");
@@ -1648,9 +1648,6 @@ static inline request_data_t *alloc_nfs_request(SVCXPRT *xprt)
 	reqdata->r_u.req.svc.rq_daddr_len = 0;
 	reqdata->r_u.req.svc.rq_raddr_len = 0;
 
-	/* set up xprt */
-	reqdata->r_u.req.xprt = xprt;
-
 	return reqdata;
 }
 
@@ -1678,31 +1675,29 @@ static inline void free_nfs_request(request_data_t *reqdata)
  * Reply at svc level on errors.  On return false will bypass straight to
  * returning error.
  *
- * @param[in] reqnfs Request to validate
+ * @param[in] req Request to validate
  *
  * @return True if the request is valid, false otherwise.
  */
-static bool is_rpc_call_valid(nfs_request_t *reqnfs)
+static bool is_rpc_call_valid(struct svc_req *req)
 {
-	bool slocked = false;
 	/* This function is only ever called from one point, and the
 	   read-lock is always held at that call.  If this changes,
 	   we'll have to pass in the value of rlocked. */
-	bool rlocked = true;
 	int lo_vers, hi_vers;
 
-	if (reqnfs->svc.rq_prog == nfs_param.core_param.program[P_NFS]) {
-		if (reqnfs->svc.rq_vers == NFS_V3) {
+	if (req->rq_prog == nfs_param.core_param.program[P_NFS]) {
+		if (req->rq_vers == NFS_V3) {
 			if ((nfs_param.core_param.
 			     core_options & CORE_OPTION_NFSV3)
-			    && reqnfs->svc.rq_proc <= NFSPROC3_COMMIT)
+			    && req->rq_proc <= NFSPROC3_COMMIT)
 				return true;
 			else
 				goto noproc_err;
-		} else if (reqnfs->svc.rq_vers == NFS_V4) {
+		} else if (req->rq_vers == NFS_V4) {
 			if ((nfs_param.core_param.
 			     core_options & CORE_OPTION_NFSV4)
-			    && reqnfs->svc.rq_proc <= NFSPROC4_COMPOUND)
+			    && req->rq_proc <= NFSPROC4_COMPOUND)
 				return true;
 			else
 				goto noproc_err;
@@ -1717,11 +1712,11 @@ static bool is_rpc_call_valid(nfs_request_t *reqnfs)
 				hi_vers = NFS_V4;
 			goto progvers_err;
 		}
-	} else if (reqnfs->svc.rq_prog == nfs_param.core_param.program[P_NLM]
+	} else if (req->rq_prog == nfs_param.core_param.program[P_NLM]
 		   && ((nfs_param.core_param.core_options & CORE_OPTION_NFSV3)
 		       != 0)) {
-		if (reqnfs->svc.rq_vers == NLM4_VERS) {
-			if (reqnfs->svc.rq_proc <= NLMPROC4_FREE_ALL)
+		if (req->rq_vers == NLM4_VERS) {
+			if (req->rq_proc <= NLMPROC4_FREE_ALL)
 				return true;
 			else
 				goto noproc_err;
@@ -1730,7 +1725,7 @@ static bool is_rpc_call_valid(nfs_request_t *reqnfs)
 			hi_vers = NLM4_VERS;
 			goto progvers_err;
 		}
-	} else if (reqnfs->svc.rq_prog == nfs_param.core_param.program[P_MNT]
+	} else if (req->rq_prog == nfs_param.core_param.program[P_MNT]
 		   && ((nfs_param.core_param.core_options & CORE_OPTION_NFSV3)
 		       != 0)) {
 		/* Some clients may use the wrong mount version to umount, so
@@ -1739,14 +1734,14 @@ static bool is_rpc_call_valid(nfs_request_t *reqnfs)
 		 * dump and export, so just disallow mount if version not
 		 * supported.
 		 */
-		if (reqnfs->svc.rq_vers == MOUNT_V3) {
-			if (reqnfs->svc.rq_proc <= MOUNTPROC3_EXPORT)
+		if (req->rq_vers == MOUNT_V3) {
+			if (req->rq_proc <= MOUNTPROC3_EXPORT)
 				return true;
 			else
 				goto noproc_err;
-		} else if (reqnfs->svc.rq_vers == MOUNT_V1) {
-			if (reqnfs->svc.rq_proc <= MOUNTPROC2_EXPORT
-			    && reqnfs->svc.rq_proc != MOUNTPROC2_MNT)
+		} else if (req->rq_vers == MOUNT_V1) {
+			if (req->rq_proc <= MOUNTPROC2_EXPORT
+			    && req->rq_proc != MOUNTPROC2_MNT)
 				return true;
 			else
 				goto noproc_err;
@@ -1755,15 +1750,15 @@ static bool is_rpc_call_valid(nfs_request_t *reqnfs)
 			hi_vers = MOUNT_V3;
 			goto progvers_err;
 		}
-	} else if (reqnfs->svc.rq_prog
+	} else if (req->rq_prog
 		   == nfs_param.core_param.program[P_RQUOTA]) {
-		if (reqnfs->svc.rq_vers == RQUOTAVERS) {
-			if (reqnfs->svc.rq_proc <= RQUOTAPROC_SETACTIVEQUOTA)
+		if (req->rq_vers == RQUOTAVERS) {
+			if (req->rq_proc <= RQUOTAPROC_SETACTIVEQUOTA)
 				return true;
 			else
 				goto noproc_err;
-		} else if (reqnfs->svc.rq_vers == EXT_RQUOTAVERS) {
-			if (reqnfs->svc.rq_proc <= RQUOTAPROC_SETACTIVEQUOTA)
+		} else if (req->rq_vers == EXT_RQUOTAVERS) {
+			if (req->rq_proc <= RQUOTAPROC_SETACTIVEQUOTA)
 				return true;
 			else
 				goto noproc_err;
@@ -1773,41 +1768,26 @@ static bool is_rpc_call_valid(nfs_request_t *reqnfs)
 			goto progvers_err;
 		}
 	} else {		/* No such program */
-		/* xprt == NULL??? */
-		if (reqnfs->xprt != NULL) {
-			LogFullDebug(COMPONENT_DISPATCH,
-				     "Invalid Program number #%d",
-				     (int)reqnfs->svc.rq_prog);
-			DISP_SLOCK2(reqnfs->xprt);
-			svcerr_noprog(reqnfs->xprt, &reqnfs->svc);
-			DISP_SUNLOCK2(reqnfs->xprt);
-		}
+		LogFullDebug(COMPONENT_DISPATCH,
+			     "Invalid Program number #%d",
+			     (int)req->rq_prog);
+		svcerr_noprog(req->rq_xprt, req);
 		return false;
 	}
 
  progvers_err:
-	/* xprt == NULL??? */
-	if (reqnfs->xprt != NULL) {
-		LogFullDebug(COMPONENT_DISPATCH,
-			     "Invalid protocol Version #%d for program number #%d",
-			     (int)reqnfs->svc.rq_vers,
-			     (int)reqnfs->svc.rq_prog);
-		DISP_SLOCK(reqnfs->xprt);
-		svcerr_progvers(reqnfs->xprt, &reqnfs->svc, lo_vers, hi_vers);
-		DISP_SUNLOCK(reqnfs->xprt);
-	}
+	LogFullDebug(COMPONENT_DISPATCH,
+		     "Invalid protocol Version #%d for program number #%d",
+		     (int)req->rq_vers,
+		     (int)req->rq_prog);
+	svcerr_progvers(req->rq_xprt, req, lo_vers, hi_vers);
 	return false;
 
  noproc_err:
-	/* xprt == NULL??? */
-	if (reqnfs->xprt != NULL) {
-		LogFullDebug(COMPONENT_DISPATCH,
-			     "Invalid protocol program number #%d",
-			     (int)reqnfs->svc.rq_prog);
-		DISP_SLOCK(reqnfs->xprt);
-		svcerr_noproc(reqnfs->xprt, &reqnfs->svc);
-		DISP_SUNLOCK(reqnfs->xprt);
-	}
+	LogFullDebug(COMPONENT_DISPATCH,
+		     "Invalid protocol program number #%d",
+		     (int)req->rq_prog);
+	svcerr_noproc(req->rq_xprt, req);
 	return false;
 }				/* is_rpc_call_valid */
 
@@ -1821,6 +1801,11 @@ enum xprt_stat thr_decode_rpc_request(void *context, SVCXPRT *xprt)
 	bool enqueued = false;
 	bool recv_status;
 
+	if (!xprt) {
+		LogCrit(COMPONENT_DISPATCH,
+			"missing xprt!");
+		return XPRT_DIED;
+	}
 	LogDebug(COMPONENT_DISPATCH,
 		 "%p context %p",
 		 xprt, context);
@@ -1912,7 +1897,7 @@ enum xprt_stat thr_decode_rpc_request(void *context, SVCXPRT *xprt)
 	/* XXX so long as nfs_rpc_get_funcdesc calls is_rpc_call_valid
 	 * and fails if that call fails, there is no reason to call that
 	 * function again, below */
-	if (!is_rpc_call_valid(&reqdata->r_u.req))
+	if (!is_rpc_call_valid(&reqdata->r_u.req.svc))
 		goto finish;
 
 	reqdata->r_u.req.funcdesc = nfs_rpc_get_funcdesc(&reqdata->r_u.req);
