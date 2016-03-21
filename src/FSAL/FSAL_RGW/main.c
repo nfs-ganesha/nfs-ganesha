@@ -213,13 +213,7 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 		goto error;
 	}
 
-	if (fsal_export_init(&export->export) != 0) {
-		status.major = ERR_FSAL_NOMEM;
-		LogCrit(COMPONENT_FSAL,
-			"Unable to allocate export ops vectors for %s.",
-			op_ctx->export->fullpath);
-		goto error;
-	}
+	fsal_export_init(&export->export);
 	export_ops_init(&export->export.exp_ops);
 	export->export.up_ops = up_ops;
 
@@ -242,7 +236,8 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 			export->rgw_user_id,
 			export->rgw_access_key_id,
 			export->rgw_secret_access_key,
-			&export->rgw_fs);
+			&export->rgw_fs,
+			RGW_MOUNT_FLAG_NONE);
 	if (rgw_status != 0) {
 		status.major = ERR_FSAL_SERVERFAULT;
 		LogCrit(COMPONENT_FSAL,
@@ -265,7 +260,8 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 		 "RGW module export %s.",
 		 op_ctx->export->fullpath);
 
-	rc = rgw_getattr(export->rgw_fs, export->rgw_fs->root_fh, &st);
+	rc = rgw_getattr(export->rgw_fs, export->rgw_fs->root_fh, &st,
+			RGW_GETATTR_FLAG_NONE);
 	if (rc < 0)
 		return rgw2fsal_error(rc);
 

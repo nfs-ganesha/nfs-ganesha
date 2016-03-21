@@ -55,7 +55,7 @@ static void release(struct fsal_export *export_pub)
 	struct rgw_export *export =
 	    container_of(export_pub, struct rgw_export, export);
 
-	int rc = rgw_umount(export->rgw_fs);
+	int rc = rgw_umount(export->rgw_fs, RGW_UMOUNT_FLAG_NONE);
 	assert(rc == 0);
 	export->rgw_fs = NULL;
 
@@ -113,7 +113,7 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 		return rgw2fsal_error(rc);
 
 	/* get Unix attrs */
-	rc = rgw_getattr(export->rgw_fs, rgw_fh, &st);
+	rc = rgw_getattr(export->rgw_fs, rgw_fh, &st, RGW_GETATTR_FLAG_NONE);
 	if (rc < 0) {
 		return rgw2fsal_error(rc);
 	}
@@ -201,7 +201,7 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 	if (rc < 0)
 		return rgw2fsal_error(-ESTALE);
 
-	rc = rgw_getattr(export->rgw_fs, rgw_fh, &st);
+	rc = rgw_getattr(export->rgw_fs, rgw_fh, &st, RGW_GETATTR_FLAG_NONE);
 	if (rc < 0)
 		return rgw2fsal_error(rc);
 
@@ -236,14 +236,11 @@ static fsal_status_t get_fs_dynamic_info(struct fsal_export *export_pub,
 
 	int rc = 0;
 
-<<<<<<< HEAD
-	rc = rgw_statfs(export->cmount, export->root->i, &vfs_st);
-=======
 	/* Filesystem stat */
 	struct rgw_statvfs vfs_st;
 
-	rc = rgw_statfs(export->rgw_fs, export->rgw_fs->root_fh, &vfs_st);
->>>>>>> 5df12b6... FSAL_RGW: finalize draft FSAL
+	rc = rgw_statfs(export->rgw_fs, export->rgw_fs->root_fh, &vfs_st,
+			RGW_STATFS_FLAG_NONE);
 	if (rc < 0)
 		return rgw2fsal_error(rc);
 
