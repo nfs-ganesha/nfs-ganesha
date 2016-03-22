@@ -32,7 +32,6 @@
 
 #include "config.h"
 #include "log.h"
-#include "cache_inode.h"
 
 /**
  *

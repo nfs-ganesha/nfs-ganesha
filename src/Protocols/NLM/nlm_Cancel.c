@@ -45,7 +45,7 @@
 int nlm4_Cancel(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 {
 	nlm4_cancargs *arg = &args->arg_nlm4_cancel;
-	cache_entry_t *entry;
+	struct fsal_obj_handle *obj;
 	state_status_t state_status = STATE_SUCCESS;
 	char buffer[MAXNETOBJ_SZ * 2];
 	state_nsm_client_t *nsm_client;
@@ -86,7 +86,7 @@ int nlm4_Cancel(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 				    arg->exclusive,
 				    &arg->alock,
 				    &lock,
-				    &entry,
+				    &obj,
 				    CARE_NOT,
 				    &nsm_client,
 				    &nlm_client,
@@ -105,7 +105,7 @@ int nlm4_Cancel(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 		return NFS_REQ_OK;
 	}
 
-	state_status = state_cancel(entry, nlm_owner, &lock);
+	state_status = state_cancel(obj, nlm_owner, &lock);
 	if (state_status != STATE_SUCCESS) {
 		/* Cancel could fail in the FSAL and make a bit of a mess,
 		 * especially if we are in out of memory situation. Such an
@@ -121,7 +121,7 @@ int nlm4_Cancel(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	dec_nsm_client_ref(nsm_client);
 	dec_nlm_client_ref(nlm_client);
 	dec_state_owner_ref(nlm_owner);
-	cache_inode_put(entry);
+	obj->obj_ops.put_ref(obj);
 
 	LogDebug(COMPONENT_NLM,
 		 "REQUEST RESULT: nlm4_Cancel %s",

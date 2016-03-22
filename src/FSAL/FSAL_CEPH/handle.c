@@ -114,7 +114,7 @@ static fsal_status_t lookup(struct fsal_obj_handle *dir_pub,
  * @return FSAL status.
  */
 
-static fsal_status_t fsal_readdir(struct fsal_obj_handle *dir_pub,
+static fsal_status_t ceph_fsal_readdir(struct fsal_obj_handle *dir_pub,
 				  fsal_cookie_t *whence, void *dir_state,
 				  fsal_readdir_cb cb, bool *eof)
 {
@@ -152,13 +152,21 @@ static fsal_status_t fsal_readdir(struct fsal_obj_handle *dir_pub,
 			fsal_status = ceph2fsal_error(rc);
 			goto closedir;
 		} else if (rc == 1) {
+			struct fsal_obj_handle *obj;
+
 			/* skip . and .. */
 			if ((strcmp(de.d_name, ".") == 0)
 			    || (strcmp(de.d_name, "..") == 0)) {
 				continue;
 			}
 
-			if (!cb(de.d_name, dir_state, de.d_off))
+			fsal_status = lookup(dir_pub, de.d_name, &obj);
+			if (FSAL_IS_ERROR(fsal_status)) {
+				rc = 0; /* Return fsal_status directly */
+				goto closedir;
+			}
+
+			if (!cb(de.d_name, obj, dir_state, de.d_off))
 				goto closedir;
 
 		} else if (rc == 0) {
@@ -192,7 +200,7 @@ static fsal_status_t fsal_readdir(struct fsal_obj_handle *dir_pub,
  * @return FSAL status.
  */
 
-static fsal_status_t fsal_create(struct fsal_obj_handle *dir_pub,
+static fsal_status_t ceph_fsal_create(struct fsal_obj_handle *dir_pub,
 				 const char *name, struct attrlist *attrib,
 				 struct fsal_obj_handle **obj_pub)
 {
@@ -240,7 +248,7 @@ static fsal_status_t fsal_create(struct fsal_obj_handle *dir_pub,
  * @return FSAL status.
  */
 
-static fsal_status_t fsal_mkdir(struct fsal_obj_handle *dir_pub,
+static fsal_status_t ceph_fsal_mkdir(struct fsal_obj_handle *dir_pub,
 				const char *name, struct attrlist *attrib,
 				struct fsal_obj_handle **obj_pub)
 {
@@ -289,7 +297,7 @@ static fsal_status_t fsal_mkdir(struct fsal_obj_handle *dir_pub,
  * @return FSAL status.
  */
 
-static fsal_status_t fsal_symlink(struct fsal_obj_handle *dir_pub,
+static fsal_status_t ceph_fsal_symlink(struct fsal_obj_handle *dir_pub,
 				  const char *name, const char *link_path,
 				  struct attrlist *attrib,
 				  struct fsal_obj_handle **obj_pub)
@@ -335,7 +343,7 @@ static fsal_status_t fsal_symlink(struct fsal_obj_handle *dir_pub,
  * @return FSAL status.
  */
 
-static fsal_status_t fsal_readlink(struct fsal_obj_handle *link_pub,
+static fsal_status_t ceph_fsal_readlink(struct fsal_obj_handle *link_pub,
 				   struct gsh_buffdesc *content_buf,
 				   bool refresh)
 {
@@ -509,7 +517,7 @@ static fsal_status_t setattrs(struct fsal_obj_handle *handle_pub,
  * @return FSAL status.
  */
 
-static fsal_status_t fsal_link(struct fsal_obj_handle *handle_pub,
+static fsal_status_t ceph_fsal_link(struct fsal_obj_handle *handle_pub,
 			       struct fsal_obj_handle *destdir_pub,
 			       const char *name)
 {
@@ -549,7 +557,7 @@ static fsal_status_t fsal_link(struct fsal_obj_handle *handle_pub,
  * @return FSAL status.
  */
 
-static fsal_status_t fsal_rename(struct fsal_obj_handle *obj_hdl,
+static fsal_status_t ceph_fsal_rename(struct fsal_obj_handle *obj_hdl,
 				 struct fsal_obj_handle *olddir_pub,
 				 const char *old_name,
 				 struct fsal_obj_handle *newdir_pub,
@@ -588,7 +596,7 @@ static fsal_status_t fsal_rename(struct fsal_obj_handle *obj_hdl,
  * @return FSAL status.
  */
 
-static fsal_status_t fsal_unlink(struct fsal_obj_handle *dir_pub,
+static fsal_status_t ceph_fsal_unlink(struct fsal_obj_handle *dir_pub,
 				 const char *name)
 {
 	/* Generic status return */
@@ -627,7 +635,7 @@ static fsal_status_t fsal_unlink(struct fsal_obj_handle *dir_pub,
  * @return FSAL status.
  */
 
-static fsal_status_t fsal_open(struct fsal_obj_handle *handle_pub,
+static fsal_status_t ceph_fsal_open(struct fsal_obj_handle *handle_pub,
 			       fsal_openflags_t openflags)
 {
 	/* Generic status return */
@@ -702,7 +710,7 @@ static fsal_openflags_t status(struct fsal_obj_handle *handle_pub)
  * @return FSAL status.
  */
 
-static fsal_status_t fsal_read(struct fsal_obj_handle *handle_pub,
+static fsal_status_t ceph_fsal_read(struct fsal_obj_handle *handle_pub,
 			       uint64_t offset, size_t buffer_size,
 			       void *buffer, size_t *read_amount,
 			       bool *end_of_file)
@@ -747,7 +755,7 @@ static fsal_status_t fsal_read(struct fsal_obj_handle *handle_pub,
  * @return FSAL status.
  */
 
-static fsal_status_t fsal_write(struct fsal_obj_handle *handle_pub,
+static fsal_status_t ceph_fsal_write(struct fsal_obj_handle *handle_pub,
 				uint64_t offset, size_t buffer_size,
 				void *buffer, size_t *write_amount,
 				bool *fsal_stable)
@@ -818,7 +826,7 @@ static fsal_status_t commit(struct fsal_obj_handle *handle_pub,
  * @return FSAL status.
  */
 
-static fsal_status_t fsal_close(struct fsal_obj_handle *handle_pub)
+static fsal_status_t ceph_fsal_close(struct fsal_obj_handle *handle_pub)
 {
 	/* Generic status return */
 	int rc = 0;
@@ -912,22 +920,22 @@ void handle_ops_init(struct fsal_obj_ops *ops)
 {
 	ops->release = release;
 	ops->lookup = lookup;
-	ops->create = fsal_create;
-	ops->mkdir = fsal_mkdir;
-	ops->readdir = fsal_readdir;
-	ops->symlink = fsal_symlink;
-	ops->readlink = fsal_readlink;
+	ops->create = ceph_fsal_create;
+	ops->mkdir = ceph_fsal_mkdir;
+	ops->readdir = ceph_fsal_readdir;
+	ops->symlink = ceph_fsal_symlink;
+	ops->readlink = ceph_fsal_readlink;
 	ops->getattrs = getattrs;
 	ops->setattrs = setattrs;
-	ops->link = fsal_link;
-	ops->rename = fsal_rename;
-	ops->unlink = fsal_unlink;
-	ops->open = fsal_open;
+	ops->link = ceph_fsal_link;
+	ops->rename = ceph_fsal_rename;
+	ops->unlink = ceph_fsal_unlink;
+	ops->open = ceph_fsal_open;
 	ops->status = status;
-	ops->read = fsal_read;
-	ops->write = fsal_write;
+	ops->read = ceph_fsal_read;
+	ops->write = ceph_fsal_write;
 	ops->commit = commit;
-	ops->close = fsal_close;
+	ops->close = ceph_fsal_close;
 	ops->handle_digest = handle_digest;
 	ops->handle_to_key = handle_to_key;
 #ifdef CEPH_PNFS

@@ -39,6 +39,7 @@
 #include <ctype.h>
 #include <netdb.h>
 
+#include "gsh_config.h"
 #include "sal_functions.h"
 #include "nsm.h"
 #include "log.h"

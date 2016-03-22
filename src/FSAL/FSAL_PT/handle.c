@@ -357,6 +357,8 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 
 	*eof = 0;
 	while (*eof == 0) {
+		struct fsal_obj_handle *obj;
+
 		/***********************/
 		/* read the next entry */
 		/***********************/
@@ -392,6 +394,10 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 			continue;
 		}
 
+		status = pt_lookup(dir_hdl, fsi_name, &obj);
+		if (FSAL_IS_ERROR(status))
+			break;
+
 		entry_cookie->data.cookie = readdir_record;
 
 		FSI_TRACE(FSI_DEBUG, "readdir [%s] rec %d\n", fsi_dname,
@@ -401,6 +407,7 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 
 		/* callback to cache inode */
 		if (!cb(fsi_dname,
+			obj,
 			dir_state,
 			entry_cookie->data.cookie)) {
 				FSI_TRACE(FSI_DEBUG, "callback failed\n");

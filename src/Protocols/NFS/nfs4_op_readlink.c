@@ -34,7 +34,6 @@
 #include "log.h"
 #include "nfs4.h"
 #include "nfs_core.h"
-#include "cache_inode.h"
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
 #include "nfs_convert.h"
@@ -60,7 +59,7 @@ int nfs4_op_readlink(struct nfs_argop4 *op, compound_data_t *data,
 		     struct nfs_resop4 *resp)
 {
 	READLINK4res * const res_READLINK4 = &resp->nfs_resop4_u.opreadlink;
-	cache_inode_status_t cache_status;
+	fsal_status_t fsal_status = {0, 0};
 	struct gsh_buffdesc link_buffer = {.addr = NULL,
 		.len = 0
 	};
@@ -78,11 +77,9 @@ int nfs4_op_readlink(struct nfs_argop4 *op, compound_data_t *data,
 	if (res_READLINK4->status != NFS4_OK)
 		return res_READLINK4->status;
 
-	/* Using cache_inode_readlink */
-	cache_status = cache_inode_readlink(data->current_entry, &link_buffer);
-
-	if (cache_status != CACHE_INODE_SUCCESS) {
-		res_READLINK4->status = nfs4_Errno(cache_status);
+	fsal_status = fsal_readlink(data->current_obj, &link_buffer);
+	if (FSAL_IS_ERROR(fsal_status)) {
+		res_READLINK4->status = nfs4_Errno_status(fsal_status);
 		return res_READLINK4->status;
 	}
 

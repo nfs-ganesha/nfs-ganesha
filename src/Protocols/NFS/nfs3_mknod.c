@@ -41,7 +41,6 @@
 #include "log.h"
 #include "fsal.h"
 #include "nfs_core.h"
-#include "cache_inode.h"
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
@@ -65,14 +64,13 @@
 
 int nfs3_mknod(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
-	cache_entry_t *parent_entry = NULL;
+	struct fsal_obj_handle *parent_obj = NULL;
+	struct fsal_obj_handle *node_obj = NULL;
 	pre_op_attr pre_parent;
 	object_file_type_t nodetype;
 	const char *file_name = arg->arg_mknod3.where.name;
-	cache_inode_status_t cache_status;
 	uint32_t mode = 0;
-	cache_entry_t *node_entry = NULL;
-	cache_inode_create_arg_t create_arg;
+	fsal_create_arg_t create_arg;
 	int rc = NFS_REQ_OK;
 	fsal_status_t fsal_status;
 	struct attrlist sattr;
@@ -99,21 +97,21 @@ int nfs3_mknod(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	    FALSE;
 
 	/* retrieve parent entry */
-	parent_entry = nfs3_FhandleToCache(&arg->arg_mknod3.where.dir,
+	parent_obj = nfs3_FhandleToCache(&arg->arg_mknod3.where.dir,
 					   &res->res_mknod3.status,
 					   &rc);
 
-	if (parent_entry == NULL) {
+	if (parent_obj == NULL) {
 		/* Status and rc have been set by nfs3_FhandleToCache */
 		goto out;
 	}
 
-	nfs_SetPreOpAttr(parent_entry, &pre_parent);
+	nfs_SetPreOpAttr(parent_obj, &pre_parent);
 
 	/* Sanity checks: new node name must be non-null; parent must
 	   be a directory. */
 
-	if (parent_entry->type != DIRECTORY) {
+	if (parent_obj->type != DIRECTORY) {
 		res->res_mknod3.status = NFS3ERR_NOTDIR;
 		rc = NFS_REQ_OK;
 		goto out;
@@ -210,14 +208,10 @@ int nfs3_mknod(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	}
 
 	/* Try to create it */
-	cache_status = cache_inode_create(parent_entry,
-					  file_name,
-					  nodetype,
-					  mode,
-					  &create_arg,
-					  &node_entry);
+	fsal_status = fsal_create(parent_obj, file_name, nodetype, mode,
+				  &create_arg, &node_obj);
 
-	if (cache_status != CACHE_INODE_SUCCESS)
+	if (FSAL_IS_ERROR(fsal_status))
 		goto out_fail;
 
 	MKNOD3resok * const rok = &res->res_mknod3.MKNOD3res_u.resok;
@@ -225,7 +219,7 @@ int nfs3_mknod(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	/* Build file handle */
 	if (!nfs3_FSALToFhandle(true,
 				&rok->obj.post_op_fh3_u.handle,
-				node_entry->obj_handle,
+				node_obj,
 				op_ctx->export) == 0) {
 		res->res_mknod3.status = NFS3ERR_BADHANDLE;
 		rc = NFS_REQ_OK;
@@ -247,21 +241,17 @@ int nfs3_mknod(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		/* mask off flags handled by create */
 		sattr.mask &= CREATE_MASK_NON_REG_NFS3 | ATTRS_CREDS;
 
-		cache_status = cache_inode_setattr(node_entry,
-						   false,
-						   NULL,
-						   &sattr,
-						   false);
+		fsal_status = fsal_setattr(node_obj, false, NULL, &sattr);
 
-		if (cache_status != CACHE_INODE_SUCCESS)
+		if (FSAL_IS_ERROR(fsal_status))
 			goto out_fail;
 	}
 
 	/* Build entry attributes */
-	nfs_SetPostOpAttr(node_entry, &rok->obj_attributes);
+	nfs_SetPostOpAttr(node_obj, &rok->obj_attributes);
 
 	/* Build Weak Cache Coherency data */
-	nfs_SetWccData(&pre_parent, parent_entry, &rok->dir_wcc);
+	nfs_SetWccData(&pre_parent, parent_obj, &rok->dir_wcc);
 
 	res->res_mknod3.status = NFS3_OK;
 
@@ -269,20 +259,20 @@ int nfs3_mknod(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	goto out;
 
  out_fail:
-	res->res_mknod3.status = nfs3_Errno(cache_status);
-	nfs_SetWccData(&pre_parent, parent_entry,
+	res->res_mknod3.status = nfs3_Errno_status(fsal_status);
+	nfs_SetWccData(&pre_parent, parent_obj,
 		       &res->res_mknod3.MKNOD3res_u.resfail.dir_wcc);
 
-	if (nfs_RetryableError(cache_status))
+	if (nfs_RetryableError(fsal_status.major))
 		rc = NFS_REQ_DROP;
 
  out:
 	/* return references */
-	if (parent_entry)
-		cache_inode_put(parent_entry);
+	if (parent_obj)
+		parent_obj->obj_ops.put_ref(parent_obj);
 
-	if (node_entry)
-		cache_inode_put(node_entry);
+	if (node_obj)
+		node_obj->obj_ops.put_ref(node_obj);
 
 	return rc;
 }				/* nfs3_mknod */

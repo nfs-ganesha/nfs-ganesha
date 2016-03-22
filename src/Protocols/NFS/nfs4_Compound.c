@@ -905,11 +905,8 @@ void nfs4_Compound_Free(nfs_res_t *res)
 void compound_data_Free(compound_data_t *data)
 {
 	/* Release refcounted cache entries */
-	if (data->current_entry)
-		cache_inode_put(data->current_entry);
-
-	if (data->saved_entry)
-		cache_inode_put(data->saved_entry);
+	data->current_obj = NULL;
+	data->saved_obj = NULL;
 
 	if (data->current_ds) {
 		ds_handle_put(data->current_ds);

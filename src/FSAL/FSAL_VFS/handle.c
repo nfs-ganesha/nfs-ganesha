@@ -1003,7 +1003,7 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 {
 	struct vfs_fsal_obj_handle *myself;
 	int dirfd;
-	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
+	fsal_status_t status = {0, 0};
 	int retval = 0;
 	off_t seekloc = 0;
 	off_t baseloc = 0;
@@ -1023,10 +1023,10 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 				? dir_hdl->fs->fsal->name
 				: "(none)");
 		retval = EXDEV;
-		fsal_error = posix2fsal_error(retval);
+		status = posix2fsal_status(retval);
 		goto out;
 	}
-	dirfd = vfs_fsal_open(myself, O_RDONLY | O_DIRECTORY, &fsal_error);
+	dirfd = vfs_fsal_open(myself, O_RDONLY | O_DIRECTORY, &status.major);
 	if (dirfd < 0) {
 		retval = -dirfd;
 		goto out;
@@ -1034,7 +1034,7 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 	seekloc = lseek(dirfd, seekloc, SEEK_SET);
 	if (seekloc < 0) {
 		retval = errno;
-		fsal_error = posix2fsal_error(retval);
+		status = posix2fsal_status(retval);
 		goto done;
 	}
 
@@ -1043,19 +1043,24 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 		nread = vfs_readents(dirfd, buf, BUF_SIZE, &seekloc);
 		if (nread < 0) {
 			retval = errno;
-			fsal_error = posix2fsal_error(retval);
+			status = posix2fsal_status(retval);
 			goto done;
 		}
 		if (nread == 0)
 			break;
 		for (bpos = 0; bpos < nread;) {
+			struct fsal_obj_handle *hdl;
 			if (!to_vfs_dirent(buf, bpos, dentryp, baseloc)
 			    || strcmp(dentryp->vd_name, ".") == 0
 			    || strcmp(dentryp->vd_name, "..") == 0)
 				goto skip;	/* must skip '.' and '..' */
 
+			status = lookup(dir_hdl, dentryp->vd_name, &hdl);
+			if (FSAL_IS_ERROR(status))
+				goto done;
+
 			/* callback to cache inode */
-			if (!cb(dentryp->vd_name, dir_state,
+			if (!cb(dentryp->vd_name, hdl, dir_state,
 				(fsal_cookie_t) dentryp->vd_offset)) {
 				goto done;
 			}
@@ -1069,7 +1074,8 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 	close(dirfd);
 
  out:
-	return fsalstat(fsal_error, retval);
+	status.minor = retval;
+	return status;
 }
 
 static fsal_status_t renamefile(struct fsal_obj_handle *obj_hdl,

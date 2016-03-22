@@ -40,7 +40,6 @@
 #include "log.h"
 #include "fsal.h"
 #include "nfs_core.h"
-#include "cache_inode.h"
 #include "nfs_exports.h"
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
@@ -61,7 +60,7 @@
 
 int nfs3_pathconf(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
-	cache_entry_t *entry = NULL;
+	struct fsal_obj_handle *obj = NULL;
 	int rc = NFS_REQ_OK;
 	struct fsal_export *exp_hdl = op_ctx->fsal_export;
 
@@ -79,11 +78,11 @@ int nfs3_pathconf(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	    attributes_follow = FALSE;
 
 	/* Convert file handle into a fsal_handle */
-	entry = nfs3_FhandleToCache(&arg->arg_pathconf3.object,
+	obj = nfs3_FhandleToCache(&arg->arg_pathconf3.object,
 				    &res->res_pathconf3.status,
 				    &rc);
 
-	if (entry == NULL) {
+	if (obj == NULL) {
 		/* Status and rc have been set by nfs3_FhandleToCache */
 		goto out;
 	}
@@ -102,14 +101,14 @@ int nfs3_pathconf(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	    exp_hdl->exp_ops.fs_supports(exp_hdl, fso_case_preserving);
 
 	/* Build post op file attributes */
-	nfs_SetPostOpAttr(entry,
+	nfs_SetPostOpAttr(obj,
 			  &(res->res_pathconf3.PATHCONF3res_u.resok.
 			    obj_attributes));
 
  out:
 
-	if (entry)
-		cache_inode_put(entry);
+	if (obj)
+		obj->obj_ops.put_ref(obj);
 
 	return rc;
 }				/* nfs3_pathconf */

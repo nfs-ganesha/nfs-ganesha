@@ -57,10 +57,6 @@
 #include "nfs_core.h"
 #include "log.h"
 #include "fsal.h"
-#include "cache_inode.h"
-#include "cache_inode_avl.h"
-#include "cache_inode_lru.h"
-#include "cache_inode_hash.h"
 #include "fsal_up.h"
 #include "sal_functions.h"
 #include "pnfs_utils.h"
@@ -441,14 +437,14 @@ struct delegrecall_args {
 
 static void queue_delegrecall(struct fridgethr_context *ctx)
 {
-	cache_entry_t *entry = ctx->arg;
+	struct fsal_obj_handle *obj = ctx->arg;
 
-	(void)delegrecall_impl(entry);
+	(void)delegrecall_impl(obj);
 }
 
-int async_delegrecall(struct fridgethr *fr, cache_entry_t *entry)
+int async_delegrecall(struct fridgethr *fr, struct fsal_obj_handle *obj)
 {
-	int rc = fridgethr_submit(fr, queue_delegrecall, entry);
+	int rc = fridgethr_submit(fr, queue_delegrecall, obj);
 	return rc;
 }
 

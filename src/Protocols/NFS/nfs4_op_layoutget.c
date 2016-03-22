@@ -38,7 +38,6 @@
 #include "nfs4.h"
 #include "mount.h"
 #include "nfs_core.h"
-#include "cache_inode.h"
 #include "export_mgr.h"
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
@@ -84,7 +83,6 @@ static nfsstat4 acquire_layout_state(compound_data_t *data,
 	state_t *condemned_state = NULL;
 	/* Tracking data for the layout state */
 	struct state_refer refer;
-	bool lock_held = false;
 
 	memcpy(refer.session, data->session->session_id, sizeof(sessionid4));
 	refer.sequence = data->sequence;
@@ -96,7 +94,7 @@ static nfsstat4 acquire_layout_state(compound_data_t *data,
 	 * and, if necessary, create a new layout state
 	 */
 	nfs_status = nfs4_Check_Stateid(supplied_stateid,
-					data->current_entry,
+					data->current_obj,
 					&supplied_state,
 					data,
 					STATEID_SPECIAL_CURRENT,
@@ -125,12 +123,9 @@ static nfsstat4 acquire_layout_state(compound_data_t *data,
 
 		memset(&layout_data, 0, sizeof(layout_data));
 
-		PTHREAD_RWLOCK_wrlock(&data->current_entry->state_lock);
-		lock_held = true;
-
 		/* See if a layout state already exists */
 		state_status =
-		    state_lookup_layout_state(data->current_entry,
+		    state_lookup_layout_state(data->current_obj,
 					      clientid_owner,
 					      layout_type,
 					      &condemned_state);
@@ -158,7 +153,7 @@ static nfsstat4 acquire_layout_state(compound_data_t *data,
 			}
 
 			nfs_status =
-			     nfs4_return_one_state(data->current_entry,
+			     nfs4_return_one_state(data->current_obj,
 						   0,
 						   circumstance_forgotten,
 						   condemned_state,
@@ -183,7 +178,7 @@ static nfsstat4 acquire_layout_state(compound_data_t *data,
 		layout_data.layout.state_layout_type = layout_type;
 		layout_data.layout.state_return_on_close = false;
 
-		state_status = state_add_impl(data->current_entry,
+		state_status = state_add(data->current_obj,
 					      STATE_TYPE_LAYOUT,
 					      &layout_data,
 					      clientid_owner,
@@ -206,9 +201,6 @@ static nfsstat4 acquire_layout_state(compound_data_t *data,
 
 	/* We are done with the supplied_state, release the reference. */
 	dec_state_t_ref(supplied_state);
-
-	if (lock_held)
-		PTHREAD_RWLOCK_unlock(&data->current_entry->state_lock);
 
 	return nfs_status;
 }
@@ -240,7 +232,7 @@ void free_layouts(layout4 *layouts, uint32_t numlayouts)
  * This is a wrapper around the FSAL call that populates one entry in
  * the logr_layout array and adds one segment to the state list.
  *
- * @param[in]     handle  File handle
+ * @param[in]     obj     File handle
  * @param[in]     arg     Input arguments to the FSAL
  * @param[in,out] res     Input/output and output arguments to the FSAL
  * @param[out]    current Current entry in the logr_layout array.
@@ -248,7 +240,7 @@ void free_layouts(layout4 *layouts, uint32_t numlayouts)
  * @return NFS4_OK if successfull, other values show an error.
  */
 
-static nfsstat4 one_segment(cache_entry_t *entry,
+static nfsstat4 one_segment(struct fsal_obj_handle *obj,
 			    state_t *layout_state,
 			    const struct fsal_layoutget_arg *arg,
 			    struct fsal_layoutget_res *res, layout4 *current)
@@ -286,17 +278,10 @@ static nfsstat4 one_segment(cache_entry_t *entry,
 
 	start_position = xdr_getpos(&loc_body);
 
-	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 	++layout_state->state_data.layout.granting;
-	PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
-	nfs_status = entry->obj_handle->obj_ops.layoutget(entry->obj_handle,
-						      op_ctx,
-						      &loc_body,
-						      arg,
-						      res);
+	nfs_status = obj->obj_ops.layoutget(obj, op_ctx, &loc_body, arg, res);
 
-	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 	--layout_state->state_data.layout.granting;
 
 	current->lo_content.loc_body.loc_body_len =
@@ -304,10 +289,8 @@ static nfsstat4 one_segment(cache_entry_t *entry,
 
 	xdr_destroy(&loc_body);
 
-	if (nfs_status != NFS4_OK) {
-		PTHREAD_RWLOCK_unlock(&entry->state_lock);
+	if (nfs_status != NFS4_OK)
 		goto out;
-	}
 
 	current->lo_offset = res->segment.offset;
 	current->lo_length = res->segment.length;
@@ -317,8 +300,6 @@ static nfsstat4 one_segment(cache_entry_t *entry,
 					 &res->segment,
 					 res->fsal_seg_data,
 					 res->return_on_close);
-
-	PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
 	if (state_status != STATE_SUCCESS) {
 		nfs_status = nfs4_Errno_state(state_status);
@@ -451,7 +432,7 @@ int nfs4_op_layoutget(struct nfs_argop4 *op, compound_data_t *data,
 		/* Clear anything from a previous segment */
 		res.fsal_seg_data = NULL;
 
-		nfs_status = one_segment(data->current_entry,
+		nfs_status = one_segment(data->current_obj,
 					 layout_state,
 					 &arg,
 					 &res,

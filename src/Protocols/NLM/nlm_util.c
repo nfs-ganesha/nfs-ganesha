@@ -214,18 +214,13 @@ static void nlm4_send_grant_msg(state_async_queue_t *arg)
 		goto out;
 	}
 
-	PTHREAD_RWLOCK_wrlock(&cookie_entry->sce_entry->state_lock);
-
 	if (cookie_entry->sce_lock_entry->sle_block_data == NULL) {
 		/* Wow, we're not doing well... */
-		PTHREAD_RWLOCK_unlock(&cookie_entry->sce_entry->state_lock);
 		LogFullDebug(COMPONENT_NLM,
 			     "Could not find block data for cookie=%s (must be an old NLM_GRANTED_RES)",
 			     buffer);
 		goto out;
 	}
-
-	PTHREAD_RWLOCK_unlock(&cookie_entry->sce_entry->state_lock);
 
 	/* Initialize a context, it is ok if the export is stale because
 	 * we must clean up the cookie_entry.
@@ -255,7 +250,7 @@ static void nlm4_send_grant_msg(state_async_queue_t *arg)
 
 int nlm_process_parameters(struct svc_req *req, bool exclusive,
 			   nlm4_lock *alock, fsal_lock_param_t *plock,
-			   cache_entry_t **ppentry,
+			   struct fsal_obj_handle **ppobj,
 			   care_t care, state_nsm_client_t **ppnsm_client,
 			   state_nlm_client_t **ppnlm_client,
 			   state_owner_t **ppowner,
@@ -275,12 +270,12 @@ int nlm_process_parameters(struct svc_req *req, bool exclusive,
 	if (state != NULL)
 		*state = NULL;
 
-	/* Convert file handle into a cache entry */
-	*ppentry = nfs3_FhandleToCache((struct nfs_fh3 *)&alock->fh,
+	/* Convert file handle into a fsal object */
+	*ppobj = nfs3_FhandleToCache((struct nfs_fh3 *)&alock->fh,
 				       &nfsstat3,
 				       &rc);
 
-	if (*ppentry == NULL) {
+	if (*ppobj == NULL) {
 		/* handle is not valid */
 		return NLM4_STALE_FH;
 	}
@@ -335,7 +330,7 @@ int nlm_process_parameters(struct svc_req *req, bool exclusive,
 
 	if (state != NULL) {
 		rc = get_nlm_state(STATE_TYPE_NLM_LOCK,
-				   *ppentry,
+				   *ppobj,
 				   *ppowner,
 				   nsm_state_applies,
 				   nsm_state,
@@ -375,7 +370,7 @@ int nlm_process_parameters(struct svc_req *req, bool exclusive,
 
  out_put:
 
-	cache_inode_put(*ppentry);
+	(*ppobj)->obj_ops.put_ref((*ppobj));
 
 	if (*ppnsm_client != NULL) {
 		dec_nsm_client_ref(*ppnsm_client);
@@ -392,13 +387,13 @@ int nlm_process_parameters(struct svc_req *req, bool exclusive,
 		*ppowner = NULL;
 	}
 
-	*ppentry = NULL;
+	*ppobj = NULL;
 	return rc;
 }
 
 int nlm_process_share_parms(struct svc_req *req, nlm4_share *share,
 			    struct fsal_export *exp_hdl,
-			    cache_entry_t **ppentry, care_t care,
+			    struct fsal_obj_handle **ppobj, care_t care,
 			    state_nsm_client_t **ppnsm_client,
 			    state_nlm_client_t **ppnlm_client,
 			    state_owner_t **ppowner,
@@ -412,12 +407,12 @@ int nlm_process_share_parms(struct svc_req *req, nlm4_share *share,
 	*ppnlm_client = NULL;
 	*ppowner = NULL;
 
-	/* Convert file handle into a cache entry */
-	*ppentry = nfs3_FhandleToCache((struct nfs_fh3 *)&share->fh,
+	/* Convert file handle into a fsal object */
+	*ppobj = nfs3_FhandleToCache((struct nfs_fh3 *)&share->fh,
 				       &nfsstat3,
 				       &rc);
 
-	if (*ppentry == NULL) {
+	if (*ppobj == NULL) {
 		/* handle is not valid */
 		return NLM4_STALE_FH;
 	}
@@ -472,7 +467,7 @@ int nlm_process_share_parms(struct svc_req *req, nlm4_share *share,
 
 	if (state != NULL) {
 		rc = get_nlm_state(STATE_TYPE_NLM_SHARE,
-				   *ppentry,
+				   *ppobj,
 				   *ppowner,
 				   false,
 				   0,
@@ -505,8 +500,8 @@ int nlm_process_share_parms(struct svc_req *req, nlm4_share *share,
 		*ppowner = NULL;
 	}
 
-	cache_inode_put(*ppentry);
-	*ppentry = NULL;
+	(*ppobj)->obj_ops.put_ref((*ppobj));
+	*ppobj = NULL;
 	return rc;
 }
 
@@ -578,7 +573,7 @@ nlm4_stats nlm_convert_state_error(state_status_t status)
 	}
 }
 
-state_status_t nlm_granted_callback(cache_entry_t *pentry,
+state_status_t nlm_granted_callback(struct fsal_obj_handle *obj,
 				    state_lock_entry_t *lock_entry)
 {
 	state_block_data_t *block_data = lock_entry->sle_block_data;
@@ -602,7 +597,7 @@ state_status_t nlm_granted_callback(cache_entry_t *pentry,
 	 * It will also request lock from FSAL.
 	 * Could return STATE_LOCK_BLOCKED because FSAL would have had to block.
 	 */
-	state_status = state_add_grant_cookie(pentry,
+	state_status = state_add_grant_cookie(obj,
 					      &nlm_grant_cookie,
 					      sizeof(nlm_grant_cookie),
 					      lock_entry,

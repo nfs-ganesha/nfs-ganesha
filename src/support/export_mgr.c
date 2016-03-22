@@ -288,7 +288,6 @@ bool insert_gsh_export(struct gsh_export *export)
 	atomic_store_voidptr(cache_slot, &export->node_k);
 	glist_add_tail(&exportlist, &export->exp_list);
 	get_gsh_export_ref(export);		/* == 2 */
-	glist_init(&export->entry_list);
 
 	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
 	return true;

@@ -40,7 +40,6 @@
 #include "nfs_core.h"
 #include "nfs_exports.h"
 #include "log.h"
-#include "cache_inode.h"
 #include "fsal.h"
 #include "9p.h"
 
@@ -62,7 +61,7 @@ int _9p_setattr(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	struct _9p_fid *pfid = NULL;
 
 	struct attrlist fsalattr;
-	cache_inode_status_t cache_status;
+	fsal_status_t fsal_status;
 
 	struct timeval t;
 
@@ -177,12 +176,10 @@ int _9p_setattr(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		FSAL_SET_MASK(fsalattr.mask, ATTR_SIZE);
 
 	/* Now set the attr */
-	cache_status = cache_inode_setattr(pfid->pentry, false, pfid->state,
-					   &fsalattr, false);
-
-	if (cache_status != CACHE_INODE_SUCCESS)
+	fsal_status = fsal_setattr(pfid->pentry, false, pfid->state, &fsalattr);
+	if (FSAL_IS_ERROR(fsal_status))
 		return _9p_rerror(req9p, msgtag,
-				  _9p_tools_errno(cache_status), plenout,
+				  _9p_tools_errno(fsal_status), plenout,
 				  preply);
 
 	/* Build the reply */

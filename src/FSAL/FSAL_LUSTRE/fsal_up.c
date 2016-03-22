@@ -53,7 +53,6 @@
 #include "fsal_handle.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
-#include "cache_inode.h"
 #include "lustre_methods.h"
 #include <lcap_client.h>
 

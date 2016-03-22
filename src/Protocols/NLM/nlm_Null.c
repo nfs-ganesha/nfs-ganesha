@@ -28,7 +28,6 @@
 #include "log.h"
 #include "gsh_rpc.h"
 #include "nlm4.h"
-#include "cache_inode.h"
 #include "nlm_util.h"
 #include "nlm_async.h"
 

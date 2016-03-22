@@ -83,7 +83,7 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* Check stateid correctness and get pointer to state */
 	rc =  nfs4_Check_Stateid(&arg_OPEN_CONFIRM4->open_stateid,
-				 data->current_entry,
+				 data->current_obj,
 				 &state_found,
 				 data,
 				 STATEID_SPECIAL_FOR_LOCK,
@@ -112,7 +112,7 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op, compound_data_t *data,
 	if (!Check_nfs4_seqid(open_owner,
 			      arg_OPEN_CONFIRM4->seqid,
 			      op,
-			      data->current_entry,
+			      data->current_obj,
 			      resp,
 			      tag)) {
 		/* Response is all setup for us and LogDebug
@@ -142,7 +142,7 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op, compound_data_t *data,
 	Copy_nfs4_state_req(open_owner,
 			    arg_OPEN_CONFIRM4->seqid,
 			    op,
-			    data->current_entry,
+			    data->current_obj,
 			    resp,
 			    tag);
 

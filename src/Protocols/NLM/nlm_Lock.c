@@ -44,7 +44,7 @@
 int nlm4_Lock(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 {
 	nlm4_lockargs *arg = &args->arg_nlm4_lock;
-	cache_entry_t *entry;
+	struct fsal_obj_handle *obj;
 	state_status_t state_status = STATE_SUCCESS;
 	char buffer[MAXNETOBJ_SZ * 2];
 	state_nsm_client_t *nsm_client;
@@ -113,7 +113,7 @@ int nlm4_Lock(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 				    arg->exclusive,
 				    &arg->alock,
 				    &lock,
-				    &entry,
+				    &obj,
 				    care,
 				    &nsm_client,
 				    &nlm_client,
@@ -136,23 +136,23 @@ int nlm4_Lock(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	}
 
 	/* Check if v4 delegations conflict with v3 op */
-	PTHREAD_RWLOCK_rdlock(&entry->state_lock);
-	if (state_deleg_conflict(entry, lock.lock_type == FSAL_LOCK_W)) {
-		PTHREAD_RWLOCK_unlock(&entry->state_lock);
+	PTHREAD_RWLOCK_rdlock(&obj->state_hdl->state_lock);
+	if (state_deleg_conflict(obj, lock.lock_type == FSAL_LOCK_W)) {
+		PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
 		LogDebug(COMPONENT_NLM,
 			 "NLM lock request DROPPED due to delegation conflict");
 		rc = NFS_REQ_DROP;
 		goto out;
 	} else {
-		atomic_inc_uint32_t(&entry->object.file.anon_ops);
-		PTHREAD_RWLOCK_unlock(&entry->state_lock);
+		atomic_inc_uint32_t(&obj->state_hdl->file.anon_ops);
+		PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
 	}
 
 	/* Cast the state number into a state pointer to protect
 	 * locks from a client that has rebooted from the SM_NOTIFY
 	 * that will release old locks
 	 */
-	state_status = state_lock(entry,
+	state_status = state_lock(obj,
 				  nlm_owner,
 				  nlm_state,
 				  arg->block ? STATE_NLM_BLOCKING :
@@ -166,7 +166,7 @@ int nlm4_Lock(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	 * the lock. However, when attempting to get a delegation in the
 	 * future existing locks will result in a conflict. Thus, we can
 	 * decrement the anonymous operations counter now. */
-	atomic_dec_uint32_t(&entry->object.file.anon_ops);
+	atomic_dec_uint32_t(&obj->state_hdl->file.anon_ops);
 
 	if (state_status != STATE_SUCCESS) {
 		res->res_nlm4test.test_stat.stat =
@@ -202,7 +202,7 @@ int nlm4_Lock(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	dec_nsm_client_ref(nsm_client);
 	dec_nlm_client_ref(nlm_client);
 	dec_state_owner_ref(nlm_owner);
-	cache_inode_put(entry);
+	obj->obj_ops.put_ref(obj);
 	dec_nlm_state_ref(nlm_state);
 
 	LogDebug(COMPONENT_NLM,

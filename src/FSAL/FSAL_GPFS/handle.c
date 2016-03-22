@@ -408,13 +408,20 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 		if (nread == 0)
 			break;
 		for (bpos = 0; bpos < nread;) {
+			struct fsal_obj_handle *hdl;
 			dentry = (struct dirent64 *)(buf + bpos);
 			if (strcmp(dentry->d_name, ".") == 0
 			    || strcmp(dentry->d_name, "..") == 0)
 				goto skip;	/* must skip '.' and '..' */
 
+			status = lookup(dir_hdl, dentry->d_name, &hdl);
+			if (FSAL_IS_ERROR(status)) {
+				fsal_error = status.major;
+				goto done;
+			}
+
 			/* callback to cache inode */
-			if (!cb(dentry->d_name, dir_state,
+			if (!cb(dentry->d_name, hdl, dir_state,
 				(fsal_cookie_t) dentry->d_off)) {
 				goto done;
 			}

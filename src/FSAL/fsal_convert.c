@@ -69,14 +69,12 @@ int posix2fsal_error(int posix_errorcode)
 		/* all shown as IO errors */
 		if (getrlimit(RLIMIT_NOFILE, &rlim) != 0) {
 			LogInfo(COMPONENT_FSAL,
-				"Mapping %d to ERR_FSAL_IO, open_fd_count=%ld getrlimit failed",
-				posix_errorcode,
-				(long) atomic_fetch_size_t(&open_fd_count));
+				"Mapping %d to ERR_FSAL_IO, getrlimit failed",
+				posix_errorcode);
 		} else {
 			LogInfo(COMPONENT_FSAL,
-				"Mapping %d to ERR_FSAL_IO, open_fd_count=%ld rlim_cur=%ld rlim_max=%ld",
+				"Mapping %d to ERR_FSAL_IO, rlim_cur=%ld rlim_max=%ld",
 				+posix_errorcode,
-				(long) atomic_fetch_size_t(&open_fd_count),
 				rlim.rlim_cur,
 				rlim.rlim_max);
 		}

@@ -35,8 +35,6 @@
 #include "log.h"
 #include "fsal.h"
 #include "nfs_core.h"
-#include "cache_inode.h"
-#include "cache_inode_lru.h"
 #include "nfs_exports.h"
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
@@ -115,12 +113,12 @@ int nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t *data,
 	data->saved_export_perms = *op_ctx->export_perms;
 
 	/* If saved and current entry are equal, skip the following. */
-	if (data->saved_entry == data->current_entry)
+	if (data->saved_obj == data->current_obj)
 		goto out;
 
-	if (data->saved_entry) {
-		cache_inode_put(data->saved_entry);
-		data->saved_entry = NULL;
+	if (data->saved_obj) {
+		data->saved_obj->obj_ops.release(data->saved_obj);
+		data->saved_obj = NULL;
 	}
 
 	if (data->saved_ds) {
@@ -128,7 +126,7 @@ int nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t *data,
 		data->saved_ds = NULL;
 	}
 
-	data->saved_entry = data->current_entry;
+	data->saved_obj = data->current_obj;
 	data->saved_filetype = data->current_filetype;
 
 	/* Make SAVEFH work right for DS handle */
@@ -136,13 +134,6 @@ int nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t *data,
 		data->saved_ds = data->current_ds;
 		ds_handle_get_ref(data->saved_ds);
 	}
-
-	/* Take another reference.  As of now the filehandle is both saved
-	 * and current and both must be counted.  Guard this, in case we
-	 * have a pseudofs handle.
-	 */
-	if (data->saved_entry)
-		(void) cache_inode_lru_ref(data->saved_entry, LRU_REQ_STALE_OK);
 
  out:
 

@@ -41,8 +41,6 @@
 #include <sys/xattr.h>
 #include "nfs_core.h"
 #include "log.h"
-#include "cache_inode.h"
-#include "cache_inode_lru.h"
 #include "fsal.h"
 #include "9p.h"
 
@@ -121,8 +119,7 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		/* xattrwalk is used with an empty name,
 		 * this is a listxattr request */
 		fsal_status =
-		    pxattrfid->pentry->obj_handle->obj_ops.list_ext_attrs(
-			pxattrfid->pentry->obj_handle,
+		    pxattrfid->pentry->obj_ops.list_ext_attrs(pxattrfid->pentry,
 			FSAL_XATTR_RW_COOKIE,	/* Start with RW cookie,
 						 * hiding RO ones */
 			 xattrs_arr,
@@ -134,9 +131,8 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 			gsh_free(pxattrfid->specdata.xattr.xattr_content);
 			gsh_free(pxattrfid);
 			return _9p_rerror(req9p, msgtag,
-					  _9p_tools_errno
-					  (cache_inode_error_convert
-					   (fsal_status)), plenout, preply);
+					  _9p_tools_errno(fsal_status), plenout,
+					  preply);
 		}
 
 		/* if all xattrent are not read,
@@ -171,8 +167,8 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	} else {
 		/* xattrwalk has a non-empty name, use regular setxattr */
 		fsal_status =
-		    pxattrfid->pentry->obj_handle->obj_ops.
-		    getextattr_id_by_name(pxattrfid->pentry->obj_handle,
+		    pxattrfid->pentry->obj_ops.getextattr_id_by_name(
+					  pxattrfid->pentry,
 					  name,
 					  &pxattrfid->specdata.xattr.xattr_id);
 
@@ -187,15 +183,13 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 						  plenout, preply);
 			else
 				return _9p_rerror(req9p, msgtag,
-						  _9p_tools_errno
-						  (cache_inode_error_convert
-						   (fsal_status)), plenout,
-						  preply);
+						  _9p_tools_errno(fsal_status),
+						  plenout, preply);
 		}
 
 		fsal_status =
-		    pxattrfid->pentry->obj_handle->obj_ops.
-		    getextattr_value_by_name(pxattrfid->pentry->obj_handle,
+		    pxattrfid->pentry->obj_ops.getextattr_value_by_name(
+					     pxattrfid->pentry,
 					     name,
 					     pxattrfid->specdata.xattr.
 					     xattr_content, XATTR_BUFFERSIZE,
@@ -214,7 +208,7 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	req9p->pconn->fids[*attrfid] = pxattrfid;
 
 	/* Increments refcount as we're manually making a new copy */
-	(void) cache_inode_lru_ref(pfid->pentry, LRU_REQ_STALE_OK);
+	pfid->pentry->obj_ops.get_ref(pfid->pentry);
 
 	/* hold reference on gdata */
 	uid2grp_hold_group_data(pxattrfid->gdata);

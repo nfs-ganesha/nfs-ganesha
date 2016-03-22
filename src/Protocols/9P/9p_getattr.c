@@ -40,7 +40,6 @@
 #include <sys/stat.h>
 #include "nfs_core.h"
 #include "log.h"
-#include "cache_inode.h"
 #include "export_mgr.h"
 #include "fsal.h"
 #include "9p.h"
@@ -51,7 +50,7 @@ int _9p_getattr(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	u16 *msgtag = NULL;
 	u32 *fid = NULL;
 	u64 *request_mask = NULL;
-	cache_inode_status_t cache_status;
+	fsal_status_t fsal_status;
 
 	struct _9p_fid *pfid = NULL;
 
@@ -96,14 +95,14 @@ int _9p_getattr(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 	_9p_init_opctx(pfid, req9p);
 
-	cache_status = cache_inode_lock_trust_attrs(pfid->pentry, false);
+	fsal_status = fsal_refresh_attrs(pfid->pentry);
 
-	if (cache_status != CACHE_INODE_SUCCESS) {
+	if (FSAL_IS_ERROR(fsal_status)) {
 		LogDebug(COMPONENT_9P,
-			 "cache_inode_lock_trust_attrs failed %s",
-			 cache_inode_err_str(cache_status));
+			 "fsal_refresh_attrs failed %s",
+			 fsal_err_txt(fsal_status));
 		return _9p_rerror(req9p, msgtag,
-				  _9p_tools_errno(cache_status), plenout,
+				  _9p_tools_errno(fsal_status), plenout,
 				  preply);
 	}
 
@@ -112,20 +111,20 @@ int _9p_getattr(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	valid = _9P_GETATTR_BASIC;	/* FSAL covers all basic attributes */
 
 	if (*request_mask & _9P_GETATTR_RDEV) {
-		mode = (u32) pfid->pentry->obj_handle->attrs->mode;
-		if (pfid->pentry->obj_handle->attrs->type == DIRECTORY)
+		mode = (u32) pfid->pentry->attrs->mode;
+		if (pfid->pentry->attrs->type == DIRECTORY)
 			mode |= __S_IFDIR;
-		if (pfid->pentry->obj_handle->attrs->type == REGULAR_FILE)
+		if (pfid->pentry->attrs->type == REGULAR_FILE)
 			mode |= __S_IFREG;
-		if (pfid->pentry->obj_handle->attrs->type == SYMBOLIC_LINK)
+		if (pfid->pentry->attrs->type == SYMBOLIC_LINK)
 			mode |= __S_IFLNK;
-		if (pfid->pentry->obj_handle->attrs->type == SOCKET_FILE)
+		if (pfid->pentry->attrs->type == SOCKET_FILE)
 			mode |= __S_IFSOCK;
-		if (pfid->pentry->obj_handle->attrs->type == BLOCK_FILE)
+		if (pfid->pentry->attrs->type == BLOCK_FILE)
 			mode |= __S_IFBLK;
-		if (pfid->pentry->obj_handle->attrs->type == CHARACTER_FILE)
+		if (pfid->pentry->attrs->type == CHARACTER_FILE)
 			mode |= __S_IFCHR;
-		if (pfid->pentry->obj_handle->attrs->type == FIFO_FILE)
+		if (pfid->pentry->attrs->type == FIFO_FILE)
 			mode |= __S_IFIFO;
 	} else
 		mode = 0;
@@ -133,18 +132,18 @@ int _9p_getattr(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	/** @todo this is racy, use cache_inode_lock_trust_attrs */
 	uid =
 	    (*request_mask & _9P_GETATTR_UID) ?
-		(u32) pfid->pentry->obj_handle->attrs->owner :
+		(u32) pfid->pentry->attrs->owner :
 		0;
 	gid =
 	    (*request_mask & _9P_GETATTR_GID) ?
-		(u32) pfid->pentry->obj_handle->attrs->group :
+		(u32) pfid->pentry->attrs->group :
 		0;
 	nlink =
 	    (*request_mask & _9P_GETATTR_NLINK) ?
-		(u64) pfid->pentry->obj_handle->attrs->numlinks :
+		(u64) pfid->pentry->attrs->numlinks :
 		0LL;
 	/* rdev = (*request_mask & _9P_GETATTR_RDEV) ?
-	 *     (u64) pfid->pentry->obj_handle->attrs->rawdev.major :
+	 *     (u64) pfid->pentry->attrs->rawdev.major :
 	 *     0LL; */
 	rdev =
 	    (*request_mask & _9P_GETATTR_RDEV) ?
@@ -152,31 +151,29 @@ int _9p_getattr(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		0LL;
 	size =
 	    (*request_mask & _9P_GETATTR_SIZE) ?
-		(u64) pfid->pentry->obj_handle->attrs->filesize :
+		(u64) pfid->pentry->attrs->filesize :
 		0LL;
 	blksize =
 	    (*request_mask & _9P_GETATTR_BLOCKS) ? (u64) _9P_BLK_SIZE : 0LL;
 	blocks =
 	    (*request_mask & _9P_GETATTR_BLOCKS)
-	    ? (u64) (pfid->pentry->obj_handle->attrs->filesize / DEV_BSIZE)
+	    ? (u64) (pfid->pentry->attrs->filesize / DEV_BSIZE)
 	    : 0LL;
 	atime_sec =
 	    (*request_mask & _9P_GETATTR_ATIME) ?
-		(u64) pfid->pentry->obj_handle->attrs->atime.tv_sec :
+		(u64) pfid->pentry->attrs->atime.tv_sec :
 		0LL;
 	atime_nsec = 0LL;
 	mtime_sec =
 	    (*request_mask & _9P_GETATTR_MTIME) ?
-		(u64) pfid->pentry->obj_handle->attrs->mtime.tv_sec :
+		(u64) pfid->pentry->attrs->mtime.tv_sec :
 		0LL;
 	mtime_nsec = 0LL;
 	ctime_sec =
 	    (*request_mask & _9P_GETATTR_CTIME) ?
-		(u64) pfid->pentry->obj_handle->attrs->ctime.tv_sec :
+		(u64) pfid->pentry->attrs->ctime.tv_sec :
 		0LL;
 	ctime_nsec = 0LL;
-
-	PTHREAD_RWLOCK_unlock(&pfid->pentry->attr_lock);
 
 	/* Not yet supported attributes */
 	btime_sec = 0LL;

@@ -177,24 +177,22 @@ fsal_acl_t *nfs4_acl_new_entry(fsal_acl_data_t *acldata,
 	return acl;
 }
 
-void nfs4_acl_release_entry(fsal_acl_t *acl, fsal_acl_status_t *status)
+fsal_acl_status_t nfs4_acl_release_entry(fsal_acl_t *acl)
 {
 	struct gsh_buffdesc key, old_key;
 	struct gsh_buffdesc old_value;
 	int rc;
 	struct hash_latch latch;
-
-	/* Set the return default to NFS_V4_ACL_SUCCESS */
-	*status = NFS_V4_ACL_SUCCESS;
+	fsal_acl_status_t status = NFS_V4_ACL_SUCCESS;
 
 	if (!acl)
-		return;
+		return status;
 
 	PTHREAD_RWLOCK_wrlock(&acl->lock);
 	if (acl->ref > 1) {
 		nfs4_acl_entry_dec_ref(acl);
 		PTHREAD_RWLOCK_unlock(&acl->lock);
-		return;
+		return status;
 	} else
 		LogDebug(COMPONENT_NFS_V4_ACL, "Free ACL %p", acl);
 
@@ -209,7 +207,7 @@ void nfs4_acl_release_entry(fsal_acl_t *acl, fsal_acl_status_t *status)
 	switch (rc) {
 	case HASHTABLE_ERROR_NO_SUCH_KEY:
 		hashtable_releaselatched(fsal_acl_hash, &latch);
-		return;
+		return status;
 
 	case HASHTABLE_SUCCESS:
 		PTHREAD_RWLOCK_wrlock(&acl->lock);
@@ -218,7 +216,7 @@ void nfs4_acl_release_entry(fsal_acl_t *acl, fsal_acl_status_t *status)
 			/* Did not actually release last reference */
 			hashtable_releaselatched(fsal_acl_hash, &latch);
 			PTHREAD_RWLOCK_unlock(&acl->lock);
-			return;
+			return status;
 		}
 
 		/* use the key to delete the entry */
@@ -233,7 +231,7 @@ void nfs4_acl_release_entry(fsal_acl_t *acl, fsal_acl_status_t *status)
 		LogCrit(COMPONENT_NFS_V4_ACL,
 			"ACL entry could not be deleted, status=%s",
 			hash_table_err_to_str(rc));
-		return;
+		return NFS_V4_ACL_ERROR;
 	}
 
 	/* Sanity check: old_value.addr is expected to be equal to acl,
@@ -244,6 +242,7 @@ void nfs4_acl_release_entry(fsal_acl_t *acl, fsal_acl_status_t *status)
 
 	/* Release acl */
 	nfs4_acl_free(acl);
+	return status;
 }
 
 static void nfs4_acls_test(void)
@@ -296,14 +295,14 @@ static void nfs4_acls_test(void)
 		 status);
 	PTHREAD_RWLOCK_unlock(&acl->lock);
 
-	nfs4_acl_release_entry(acl, &status);
+	status = nfs4_acl_release_entry(acl);
 	PTHREAD_RWLOCK_rdlock(&acl->lock);
 	LogDebug(COMPONENT_NFS_V4_ACL,
 		 "release: acl = %p, ref = %u, status = %u", acl, acl->ref,
 		 status);
 	PTHREAD_RWLOCK_unlock(&acl->lock);
 
-	nfs4_acl_release_entry(acl, &status);
+	status = nfs4_acl_release_entry(acl);
 }
 
 int nfs4_acls_init(void)

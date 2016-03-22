@@ -14,9 +14,15 @@ SET(sal_STAT_SRCS
    nfs4_recovery.c
    nfs41_session_id.c
    nfs4_owner.c
-   nlm_owner.c
-   nlm_state.c
 )
+
+if(USE_NLM)
+  set(sal_STAT_SRCS
+    ${sal_STAT_SRCS}
+    nlm_owner.c
+    nlm_state.c
+    )
+endif(USE_NLM)
 
 if(USE_9P)
   set(sal_STAT_SRCS

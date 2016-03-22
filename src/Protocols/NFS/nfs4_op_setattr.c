@@ -36,7 +36,7 @@
 #include "log.h"
 #include "nfs4.h"
 #include "nfs_core.h"
-#include "cache_inode.h"
+#include "fsal.h"
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
 #include "nfs_convert.h"
@@ -62,11 +62,11 @@ int nfs4_op_setattr(struct nfs_argop4 *op, compound_data_t *data,
 	SETATTR4args * const arg_SETATTR4 = &op->nfs_argop4_u.opsetattr;
 	SETATTR4res * const res_SETATTR4 = &resp->nfs_resop4_u.opsetattr;
 	struct attrlist sattr;
-	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
+	fsal_status_t fsal_status = {0, 0};
 	const char *tag = "SETATTR";
 	state_t *state_found = NULL;
 	state_t *state_open = NULL;
-	cache_entry_t *entry = NULL;
+	struct fsal_obj_handle *obj = NULL;
 	bool anonymous_started = false;
 
 	resp->resop = NFS4_OP_SETATTR;
@@ -121,17 +121,17 @@ int nfs4_op_setattr(struct nfs_argop4 *op, compound_data_t *data,
 		}
 
 		/* Object should be a file */
-		if (data->current_entry->type != REGULAR_FILE) {
+		if (data->current_obj->type != REGULAR_FILE) {
 			res_SETATTR4->status = NFS4ERR_INVAL;
 			return res_SETATTR4->status;
 		}
 
-		entry = data->current_entry;
+		obj = data->current_obj;
 
 		/* Check stateid correctness and get pointer to state */
 		res_SETATTR4->status =
 		    nfs4_Check_Stateid(&arg_SETATTR4->stateid,
-				       data->current_entry,
+				       data->current_obj,
 				       &state_found,
 				       data,
 				       STATEID_SPECIAL_ANY,
@@ -191,7 +191,7 @@ int nfs4_op_setattr(struct nfs_argop4 *op, compound_data_t *data,
 			 */
 			res_SETATTR4->status = nfs4_Errno_state(
 				state_share_anonymous_io_start(
-					entry,
+					obj,
 					OPEN4_SHARE_ACCESS_WRITE,
 					SHARE_BYPASS_NONE));
 
@@ -226,14 +226,13 @@ int nfs4_op_setattr(struct nfs_argop4 *op, compound_data_t *data,
 	 * is_open_write is simple at this stage, it's just a check that
 	 * we have an open owner.
 	 */
-	cache_status = cache_inode_setattr(data->current_entry,
-					   false,
-					   state_found,
-					   &sattr,
-					   state_open != NULL);
+	fsal_status = fsal_setattr(data->current_obj,
+				   false,
+				   state_found,
+				   &sattr);
 
-	if (cache_status != CACHE_INODE_SUCCESS) {
-		res_SETATTR4->status = nfs4_Errno(cache_status);
+	if (FSAL_IS_ERROR(fsal_status)) {
+		res_SETATTR4->status = nfs4_Errno_status(fsal_status);
 		goto done;
 	}
 
@@ -246,7 +245,7 @@ int nfs4_op_setattr(struct nfs_argop4 *op, compound_data_t *data,
  done:
 
 	if (anonymous_started)
-		state_share_anonymous_io_done(entry, OPEN4_SHARE_ACCESS_WRITE);
+		state_share_anonymous_io_done(obj, OPEN4_SHARE_ACCESS_WRITE);
 
 	if (state_found != NULL)
 		dec_state_t_ref(state_found);

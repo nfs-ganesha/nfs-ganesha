@@ -219,94 +219,89 @@ int _9p_tools_get_req_context_by_name(int uname_len, char *uname_str,
 	return 0;
 }				/* _9p_tools_get_fsal_cred */
 
-int _9p_tools_errno(cache_inode_status_t cache_status)
+int _9p_tools_errno(fsal_status_t fsal_status)
 {
 	int rc = 0;
 
-	switch (cache_status) {
-	case CACHE_INODE_SUCCESS:
+	switch (fsal_status.major) {
+	case ERR_FSAL_NO_ERROR:
 		rc = 0;
 		break;
 
-	case CACHE_INODE_MALLOC_ERROR:
+	case ERR_FSAL_NOMEM:
 		rc = ENOMEM;
 		break;
 
-	case CACHE_INODE_NOT_A_DIRECTORY:
+	case ERR_FSAL_NOTDIR:
 		rc = ENOTDIR;
 		break;
 
-	case CACHE_INODE_ENTRY_EXISTS:
+	case ERR_FSAL_EXIST:
 		rc = EEXIST;
 		break;
 
-	case CACHE_INODE_DIR_NOT_EMPTY:
+	case ERR_FSAL_NOTEMPTY:
 		rc = ENOTEMPTY;
 		break;
 
-	case CACHE_INODE_NOT_FOUND:
+	case ERR_FSAL_NOENT:
 		rc = ENOENT;
 		break;
 
-	case CACHE_INODE_IS_A_DIRECTORY:
+	case ERR_FSAL_ISDIR:
 		rc = EISDIR;
 		break;
 
-	case CACHE_INODE_FSAL_EPERM:
-	case CACHE_INODE_FSAL_ERR_SEC:
+	case ERR_FSAL_PERM:
+	case ERR_FSAL_SEC:
 		rc = EPERM;
 		break;
 
-	case CACHE_INODE_INVALID_ARGUMENT:
-	case CACHE_INODE_NAME_TOO_LONG:
-	case CACHE_INODE_INCONSISTENT_ENTRY:
-	case CACHE_INODE_FSAL_ERROR:
-	case CACHE_INODE_BAD_TYPE:
-	case CACHE_INODE_STATE_ERROR:
-	case CACHE_INODE_POOL_MUTEX_INIT_ERROR:
-	case CACHE_INODE_INIT_ENTRY_FAILED:
+	case ERR_FSAL_INVAL:
+	case ERR_FSAL_NAMETOOLONG:
+	case ERR_FSAL_NOT_OPENED:
+	case ERR_FSAL_BADTYPE:
+	case ERR_FSAL_SYMLINK:
 		rc = EINVAL;
 		break;
 
-	case CACHE_INODE_NO_SPACE_LEFT:
+	case ERR_FSAL_NOSPC:
 		rc = ENOSPC;
 		break;
 
-	case CACHE_INODE_READ_ONLY_FS:
+	case ERR_FSAL_ROFS:
 		rc = EROFS;
 		break;
 
-	case CACHE_INODE_ESTALE:
+	case ERR_FSAL_STALE:
+	case ERR_FSAL_FHEXPIRED:
 		rc = ESTALE;
 		break;
 
-	case CACHE_INODE_QUOTA_EXCEEDED:
+	case ERR_FSAL_DQUOT:
+	case ERR_FSAL_NO_QUOTA:
 		rc = EDQUOT;
 		break;
 
-	case CACHE_INODE_IO_ERROR:
-	case CACHE_INODE_ASYNC_POST_ERROR:
-	case CACHE_INODE_GET_NEW_LRU_ENTRY:
-	case CACHE_INODE_LRU_ERROR:
-	case CACHE_INODE_HASH_SET_ERROR:
-	case CACHE_INODE_INSERT_ERROR:
-	case CACHE_INODE_HASH_TABLE_ERROR:
+	case ERR_FSAL_IO:
+	case ERR_FSAL_NXIO:
 		rc = EIO;
 		break;
 
-	case CACHE_INODE_NOT_SUPPORTED:
+	case ERR_FSAL_NOTSUPP:
+	case ERR_FSAL_ATTRNOTSUPP:
 		rc = ENOTSUP;
 		break;
 
-	case CACHE_INODE_FSAL_EACCESS:
+	case ERR_FSAL_ACCESS:
 		rc = EACCES;
 		break;
 
-	case CACHE_INODE_DELAY:
+	case ERR_FSAL_DELAY:
 		rc = EAGAIN;
 		break;
 
-	case CACHE_INODE_NO_DATA:
+	case ERR_FSAL_NO_DATA:
 		rc = ENODATA;
 		break;
 
@@ -336,11 +331,11 @@ void _9p_openflags2FSAL(u32 *inflags, fsal_openflags_t *outflags)
 void free_fid(struct _9p_fid *pfid)
 {
 	if (pfid->state != NULL) {
-		if (pfid->pentry->obj_handle->fsal->m_ops.support_ex()) {
+		if (pfid->pentry->fsal->m_ops.support_ex()) {
 			/* We need to close the state before freeing the state.
 			 */
-			(void) pfid->pentry->obj_handle->obj_ops.close2(
-						pfid->pentry->obj_handle,
+			(void) pfid->pentry->obj_ops.close2(
+						pfid->pentry,
 						pfid->state);
 		}
 
@@ -348,7 +343,7 @@ void free_fid(struct _9p_fid *pfid)
 	}
 
 	if (pfid->pentry != NULL)
-		cache_inode_put(pfid->pentry);
+		pfid->pentry->obj_ops.put_ref(pfid->pentry);
 
 	if (pfid->export != NULL)
 		put_gsh_export(pfid->export);
@@ -363,7 +358,6 @@ void free_fid(struct _9p_fid *pfid)
 int _9p_tools_clunk(struct _9p_fid *pfid)
 {
 	fsal_status_t fsal_status;
-	cache_inode_status_t cache_status;
 
 	/* pentry may be null in the case of an aborted TATTACH
 	 * this would happens when trying to mount a non-existing
@@ -391,60 +385,53 @@ int _9p_tools_clunk(struct _9p_fid *pfid)
 		/* Do we handle system.posix_acl_access */
 		if (pfid->specdata.xattr.xattr_id == ACL_ACCESS_XATTR_ID) {
 			fsal_status =
-			    pfid->pentry->obj_handle->obj_ops.setextattr_value(
-					pfid->pentry->obj_handle,
+			    pfid->pentry->obj_ops.setextattr_value(
+					pfid->pentry,
 					"system.posix_acl_access",
 					pfid->specdata.xattr.xattr_content,
 					pfid->specdata.xattr.xattr_size,
 					false);
 		} else {
 			/* Write the xattr content */
-			fsal_status = pfid->pentry->obj_handle->obj_ops.
-				setextattr_value_by_id(pfid->pentry->obj_handle,
+			fsal_status =
+				pfid->pentry->obj_ops.setextattr_value_by_id(
+					pfid->pentry,
 					pfid->specdata.xattr.xattr_id,
 					pfid->specdata.xattr.xattr_content,
 					pfid->specdata.xattr.xattr_size);
 			if (FSAL_IS_ERROR(fsal_status)) {
 				free_fid(pfid);
-				return _9p_tools_errno(
-					   cache_inode_error_convert(
-					       fsal_status));
+				return _9p_tools_errno(fsal_status);
 			}
 		}
 	}
 
 	/* If object is an opened file, close it */
 	if ((pfid->pentry->type == REGULAR_FILE) && pfid->opens) {
-		cache_inode_dec_pin_ref(pfid->pentry, false);
+		pfid->pentry->obj_ops.put_ref(pfid->pentry);
 		pfid->opens = 0;	/* dead */
 
-		if (pfid->pentry->obj_handle->fsal->m_ops.support_ex()) {
+		if (pfid->pentry->fsal->m_ops.support_ex()) {
 			fsal_status =
-			    pfid->pentry->obj_handle->obj_ops.close2(
-						pfid->pentry->obj_handle,
-						pfid->state);
+			    pfid->pentry->obj_ops.close2(pfid->pentry,
+							 pfid->state);
 
-			cache_status = cache_inode_error_convert(fsal_status);
-
-			if (cache_status != CACHE_INODE_SUCCESS) {
+			if (FSAL_IS_ERROR(fsal_status)) {
 				free_fid(pfid);
-				return _9p_tools_errno(cache_status);
+				return _9p_tools_errno(fsal_status);
 			}
 		} else {
 			/* Under this flag, pin ref is still checked */
-			cache_status =
-			    cache_inode_close(pfid->pentry,
-					      CACHE_INODE_FLAG_REALLYCLOSE);
-			if (cache_status != CACHE_INODE_SUCCESS) {
+			fsal_status = fsal_close(pfid->pentry);
+			if (FSAL_IS_ERROR(fsal_status)) {
 				free_fid(pfid);
-				return _9p_tools_errno(cache_status);
+				return _9p_tools_errno(fsal_status);
 			}
-			cache_status =
-			    cache_inode_refresh_attrs_locked(pfid->pentry);
-			if (cache_status != CACHE_INODE_SUCCESS
-			    && cache_status != CACHE_INODE_ESTALE) {
+			fsal_status = fsal_refresh_attrs(pfid->pentry);
+			if (FSAL_IS_ERROR(fsal_status) &&
+			    fsal_status.major != ERR_FSAL_STALE) {
 				free_fid(pfid);
-				return _9p_tools_errno(cache_status);
+				return _9p_tools_errno(fsal_status);
 			}
 		}
 	}

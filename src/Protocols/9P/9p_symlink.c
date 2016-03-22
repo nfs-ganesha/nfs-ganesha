@@ -41,7 +41,6 @@
 #include "nfs_core.h"
 #include "nfs_exports.h"
 #include "log.h"
-#include "cache_inode.h"
 #include "fsal.h"
 #include "9p.h"
 
@@ -59,12 +58,12 @@ int _9p_symlink(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	struct _9p_fid *pfid = NULL;
 	struct _9p_qid qid_symlink;
 
-	cache_entry_t *pentry_symlink = NULL;
+	struct fsal_obj_handle *pentry_symlink = NULL;
 	char symlink_name[MAXNAMLEN];
 	uint64_t fileid;
-	cache_inode_status_t cache_status;
+	fsal_status_t fsal_status;
 	uint32_t mode = 0777;
-	cache_inode_create_arg_t create_arg;
+	fsal_create_arg_t create_arg;
 
 	memset(&create_arg, 0, sizeof(create_arg));
 
@@ -108,22 +107,20 @@ int _9p_symlink(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	/* Let's do the job */
 	/* BUGAZOMEU: @todo : the gid parameter is not used yet,
 	 * flags is not yet used */
-	cache_status =
-	    cache_inode_create(pfid->pentry, symlink_name, SYMBOLIC_LINK, mode,
-			       &create_arg, &pentry_symlink);
+	fsal_status = fsal_create(pfid->pentry, symlink_name, SYMBOLIC_LINK,
+				  mode, &create_arg, &pentry_symlink);
 
 	if (create_arg.link_content != NULL)
 		gsh_free(create_arg.link_content);
 	if (pentry_symlink == NULL) {
 		return _9p_rerror(req9p, msgtag,
-				  _9p_tools_errno(cache_status), plenout,
+				  _9p_tools_errno(fsal_status), plenout,
 				  preply);
 	}
 
-	fileid = cache_inode_fileid(pentry_symlink);
+	fileid = fsal_fileid(pentry_symlink);
 
-	/* put the entry. */
-	cache_inode_put(pentry_symlink);
+	pentry_symlink->obj_ops.put_ref(pentry_symlink);
 
 	/* Build the qid */
 	qid_symlink.type = _9P_QTSYMLINK;

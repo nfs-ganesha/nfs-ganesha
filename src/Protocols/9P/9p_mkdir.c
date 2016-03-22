@@ -40,7 +40,6 @@
 #include "nfs_core.h"
 #include "nfs_exports.h"
 #include "log.h"
-#include "cache_inode.h"
 #include "fsal.h"
 #include "9p.h"
 
@@ -57,10 +56,10 @@ int _9p_mkdir(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	struct _9p_fid *pfid = NULL;
 	struct _9p_qid qid_newdir;
 
-	cache_entry_t *pentry_newdir = NULL;
+	struct fsal_obj_handle *pentry_newdir = NULL;
 	char dir_name[MAXNAMLEN];
 	uint64_t fileid;
-	cache_inode_status_t cache_status;
+	fsal_status_t fsal_status;
 
 	/* Get data */
 	_9p_getptr(cursor, msgtag, u16);
@@ -94,18 +93,16 @@ int _9p_mkdir(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	snprintf(dir_name, MAXNAMLEN, "%.*s", *name_len, name_str);
 	/* Create the directory */
 	/* BUGAZOMEU: @todo : the gid parameter is not used yet */
-	cache_status =
-	    cache_inode_create(pfid->pentry, dir_name, DIRECTORY, *mode, NULL,
-			       &pentry_newdir);
-	if (pentry_newdir == NULL)
+	fsal_status = fsal_create(pfid->pentry, dir_name, DIRECTORY, *mode,
+				  NULL, &pentry_newdir);
+	if (FSAL_IS_ERROR(fsal_status))
 		return _9p_rerror(req9p, msgtag,
-				  _9p_tools_errno(cache_status), plenout,
+				  _9p_tools_errno(fsal_status), plenout,
 				  preply);
 
-	fileid = cache_inode_fileid(pentry_newdir);
+	fileid = fsal_fileid(pentry_newdir);
 
-	/* put the entry. */
-	cache_inode_put(pentry_newdir);
+	pentry_newdir->obj_ops.put_ref(pentry_newdir);
 
 	/* Build the qid */
 	qid_newdir.type = _9P_QTDIR;

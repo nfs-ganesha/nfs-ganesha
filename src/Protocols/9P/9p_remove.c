@@ -39,13 +39,12 @@
 #include "nfs_core.h"
 #include "nfs_exports.h"
 #include "log.h"
-#include "cache_inode.h"
 #include "fsal.h"
 #include "9p.h"
 
 #define FREE_FID(pfid, fid, req9p) do {                                 \
-	/* Tell cache_inode that the entry is no longer reachable */    \
-	cache_inode_put(pfid->pentry);                                  \
+	/* mark object no longer reachable */				\
+	pfid->pentry->obj_ops.put_ref(pfid->pentry);			\
 	pfid->pentry = NULL;						\
 	/* Free the fid */                                              \
 	free_fid(pfid);							\
@@ -59,7 +58,7 @@ int _9p_remove(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	u16 *msgtag = NULL;
 	u32 *fid = NULL;
 	struct _9p_fid *pfid = NULL;
-	cache_inode_status_t cache_status;
+	fsal_status_t fsal_status;
 
 	/* Get data */
 	_9p_getptr(cursor, msgtag, u16);
@@ -84,35 +83,27 @@ int _9p_remove(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 				 EXPORT_OPTION_WRITE_ACCESS) == 0)
 		return _9p_rerror(req9p, msgtag, EROFS, plenout, preply);
 
-	cache_status = cache_inode_remove(pfid->ppentry, pfid->name);
-	if (cache_status != CACHE_INODE_SUCCESS)
+	fsal_status = fsal_remove(pfid->ppentry, pfid->name);
+	if (FSAL_IS_ERROR(fsal_status))
 		return _9p_rerror(req9p, msgtag,
-				  _9p_tools_errno(cache_status), plenout,
+				  _9p_tools_errno(fsal_status), plenout,
 				  preply);
 
 	/* If object is an opened file, close it */
 	if ((pfid->pentry->type == REGULAR_FILE) && pfid->opens) {
-			cache_inode_dec_pin_ref(pfid->pentry, false);
+			pfid->pentry->obj_ops.put_ref(pfid->pentry);
 			pfid->opens = 0;	/* dead */
 
-		if (pfid->pentry->obj_handle->fsal->m_ops.support_ex()) {
-			fsal_status_t fsal_status =
-			    pfid->pentry->obj_handle->obj_ops.close2(
-						pfid->pentry->obj_handle,
-						pfid->state);
+		if (pfid->pentry->fsal->m_ops.support_ex())
+			fsal_status = pfid->pentry->obj_ops.close2(pfid->pentry,
+								   pfid->state);
+		else
+			fsal_status = fsal_close(pfid->pentry);
 
-			cache_status = cache_inode_error_convert(fsal_status);
-		} else {
-			/* Under this flag, pin ref is still checked */
-			cache_status =
-			    cache_inode_close(pfid->pentry,
-					      CACHE_INODE_FLAG_REALLYCLOSE);
-		}
-
-		if (cache_status != CACHE_INODE_SUCCESS) {
+		if (FSAL_IS_ERROR(fsal_status)) {
 			FREE_FID(pfid, fid, req9p);
 			return _9p_rerror(req9p, msgtag,
-					  _9p_tools_errno(cache_status),
+					  _9p_tools_errno(fsal_status),
 					  plenout, preply);
 		}
 	}

@@ -196,8 +196,8 @@ state_status_t cache_inode_status_to_state_status(cache_inode_status_t status)
 		return STATE_INIT_ENTRY_FAILED;
 	case CACHE_INODE_FSAL_ERROR:
 		return STATE_FSAL_ERROR;
-	case CACHE_INODE_LRU_ERROR:
-		return STATE_LRU_ERROR;
+	/*case CACHE_INODE_LRU_ERROR:*/
+		/*return STATE_LRU_ERROR;*/
 	case CACHE_INODE_HASH_SET_ERROR:
 		return STATE_HASH_SET_ERROR;
 	case CACHE_INODE_NOT_A_DIRECTORY:
@@ -216,10 +216,10 @@ state_status_t cache_inode_status_to_state_status(cache_inode_status_t status)
 	case CACHE_INODE_INVALID_ARGUMENT:
 	case CACHE_INODE_CROSS_JUNCTION:
 		return STATE_INVALID_ARGUMENT;
-	case CACHE_INODE_INSERT_ERROR:
-		return STATE_INSERT_ERROR;
-	case CACHE_INODE_HASH_TABLE_ERROR:
-		return STATE_HASH_TABLE_ERROR;
+	/*case CACHE_INODE_INSERT_ERROR:*/
+		/*return STATE_INSERT_ERROR;*/
+	/*case CACHE_INODE_HASH_TABLE_ERROR:*/
+		/*return STATE_HASH_TABLE_ERROR;*/
 	case CACHE_INODE_FSAL_EACCESS:
 		return STATE_FSAL_EACCESS;
 	case CACHE_INODE_IS_A_DIRECTORY:
@@ -238,13 +238,13 @@ state_status_t cache_inode_status_to_state_status(cache_inode_status_t status)
 		return STATE_FSAL_ERR_SEC;
 	case CACHE_INODE_QUOTA_EXCEEDED:
 		return STATE_QUOTA_EXCEEDED;
-	case CACHE_INODE_ASYNC_POST_ERROR:
-		return STATE_ASYNC_POST_ERROR;
+	/*case CACHE_INODE_ASYNC_POST_ERROR:*/
+		/*return STATE_ASYNC_POST_ERROR;*/
 	case CACHE_INODE_NOT_SUPPORTED:
 	case CACHE_INODE_UNION_NOTSUPP:
 		return STATE_NOT_SUPPORTED;
-	case CACHE_INODE_STATE_ERROR:
-		return STATE_STATE_ERROR;
+	/*case CACHE_INODE_STATE_ERROR:*/
+		/*return STATE_STATE_ERROR;*/
 	case CACHE_INODE_DELAY:
 		return STATE_FSAL_DELAY;
 	case CACHE_INODE_NAME_TOO_LONG:
@@ -395,6 +395,8 @@ state_status_t state_error_convert(fsal_status_t fsal_status)
 	case ERR_FSAL_SERVERFAULT:
 	case ERR_FSAL_NO_DATA:
 	case ERR_FSAL_NO_ACE:
+	case ERR_FSAL_CROSS_JUNCTION:
+	case ERR_FSAL_BADNAME:
 		/* These errors should be handled inside state
 		 * (or should never be seen by state)
 		 */
@@ -776,8 +778,10 @@ const char *state_owner_type_to_str(state_owner_type_t type)
 	switch (type) {
 	case STATE_LOCK_OWNER_UNKNOWN:
 		return "STATE_LOCK_OWNER_UNKNOWN";
+#ifdef _USE_NLM
 	case STATE_LOCK_OWNER_NLM:
 		return "STATE_LOCK_OWNER_NLM";
+#endif /* _USE_NLM */
 #ifdef _USE_9P
 	case STATE_LOCK_OWNER_9P:
 		return "STALE_LOCK_OWNER_9P";
@@ -814,8 +818,10 @@ bool different_owners(state_owner_t *owner1, state_owner_t *owner2)
 		return true;
 
 	switch (owner1->so_type) {
+#ifdef _USE_NLM
 	case STATE_LOCK_OWNER_NLM:
 		return compare_nlm_owner(owner1, owner2);
+#endif /* _USE_NLM */
 #ifdef _USE_9P
 	case STATE_LOCK_OWNER_9P:
 		return compare_9p_owner(owner1, owner2);
@@ -846,8 +852,10 @@ int display_owner(struct display_buffer *dspbuf, state_owner_t *owner)
 		return display_printf(dspbuf, "<NULL>");
 
 	switch (owner->so_type) {
+#ifdef _USE_NLM
 	case STATE_LOCK_OWNER_NLM:
 		return display_nlm_owner(dspbuf, owner);
+#endif /* _USE_NLM */
 
 #ifdef _USE_9P
 	case STATE_LOCK_OWNER_9P:
@@ -909,9 +917,11 @@ void free_state_owner(state_owner_t *owner)
 	struct display_buffer dspbuf = {sizeof(str), str, str};
 
 	switch (owner->so_type) {
+#ifdef _USE_NLM
 	case STATE_LOCK_OWNER_NLM:
 		free_nlm_owner(owner);
 		break;
+#endif /* _USE_NLM */
 
 #ifdef _USE_9P
 	case STATE_LOCK_OWNER_9P:
@@ -955,8 +965,10 @@ void free_state_owner(state_owner_t *owner)
 hash_table_t *get_state_owner_hash_table(state_owner_t *owner)
 {
 	switch (owner->so_type) {
+#ifdef _USE_NLM
 	case STATE_LOCK_OWNER_NLM:
 		return ht_nlm_owner;
+#endif /* _USE_NLM */
 
 #ifdef _USE_9P
 	case STATE_LOCK_OWNER_9P:
@@ -1363,9 +1375,9 @@ state_owner_t *get_state_owner(care_t care, state_owner_t *key,
  * entry->state_lock.  It will now be reliably called in cleanup
  * processing.
  *
- * @param[in,out] entry File to be wiped
+ * @param[in,out] obj File to be wiped
  */
-void state_wipe_file(cache_entry_t *entry)
+void state_wipe_file(struct fsal_obj_handle *obj)
 {
 	/*
 	 * currently, only REGULAR files can have state; byte range locks and
@@ -1373,16 +1385,18 @@ void state_wipe_file(cache_entry_t *entry)
 	 * delegations, which is state.  At that point, we may need to modify
 	 * this routine to clear state on directories.
 	 */
-	if (entry->type != REGULAR_FILE)
+	if (obj->type != REGULAR_FILE)
 		return;
 
-	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
+	PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
 
-	state_lock_wipe(entry);
-	state_share_wipe(entry);
-	state_nfs4_state_wipe(entry);
+	state_lock_wipe(obj->state_hdl);
+#ifdef _USE_NLM
+	state_share_wipe(obj->state_hdl);
+#endif /* _USE_NLM */
+	state_nfs4_state_wipe(obj->state_hdl);
 
-	PTHREAD_RWLOCK_unlock(&entry->state_lock);
+	PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
 
 #ifdef DEBUG_SAL
 	dump_all_states();
@@ -1438,7 +1452,9 @@ void state_release_export(struct gsh_export *export)
 
 	state_export_unlock_all();
 	state_export_release_nfs4_state();
+#ifdef _USE_NLM
 	state_export_unshare_all();
+#endif /* _USE_NLM */
 	release_root_op_context();
 }
 

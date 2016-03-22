@@ -32,7 +32,6 @@
 
 #include "config.h"
 #include "log.h"
-#include "cache_inode.h"
 #include "wait_queue.h"
 #include "nfs_core.h"
 

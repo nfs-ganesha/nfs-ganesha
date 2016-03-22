@@ -39,7 +39,6 @@
 
 #include "9p_types.h"
 #include "fsal_types.h"
-#include "cache_inode.h"
 #include "sal_data.h"
 
 #ifdef _USE_9P_RDMA
@@ -301,10 +300,10 @@ struct _9p_fid {
 	struct gsh_export *export;
 	struct _9p_user_cred *ucred; /*< Client credentials (refcounted). */
 	struct group_data *gdata;
-	cache_entry_t *pentry;
+	struct fsal_obj_handle *pentry;
 	struct _9p_qid qid;
 	struct state_t *state;
-	cache_entry_t *ppentry;
+	struct fsal_obj_handle *ppentry;
 	char name[MAXNAMLEN];
 	u32 opens;
 	union {
@@ -711,7 +710,7 @@ void free_fid(struct _9p_fid *pfid);
 int _9p_tools_get_req_context_by_uid(u32 uid, struct _9p_fid *pfid);
 int _9p_tools_get_req_context_by_name(int uname_len, char *uname_str,
 				      struct _9p_fid *pfid);
-int _9p_tools_errno(cache_inode_status_t cache_status);
+int _9p_tools_errno(fsal_status_t fsal_status);
 void _9p_openflags2FSAL(u32 *inflags, fsal_openflags_t *outflags);
 int _9p_tools_clunk(struct _9p_fid *pfid);
 void _9p_cleanup_fids(struct _9p_conn *conn);

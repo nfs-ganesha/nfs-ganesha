@@ -635,8 +635,39 @@ struct export_ops {
 /**@{*/
 
 /**
+* Export information
+*/
+
+/**
+ * @brief Get the name of the FSAL provisioning the export
+ *
+ * This function is used to find the name of the ultimate FSAL providing the
+ * filesystem.  If FSALs are stacked, then the super-FSAL may want to pass this
+ * through to the sub-FSAL to get the name, or add the sub-FSAL's name onto it's
+ * own name.
+ *
+ * @param[in] exp_hdl The export to query.
+ * @return Name of FSAL provisioning export
+ */
+	 const char *(*get_name)(struct fsal_export *exp_hdl);
+/**@}*/
+
+/**@{*/
+
+/**
 * Export lifecycle management.
 */
+
+/**
+ * @brief Clean up an export when it's unexported
+ *
+ * This function is called when the export is unexported.  It should release any
+ * working data that is not necessary when unexported, but not free the export
+ * itself, as there are still references to it.
+ *
+ * @param[in] exp_hdl The export to unexport.
+ */
+	 void (*unexport)(struct fsal_export *exp_hdl);
 
 /**
  * @brief Finalize an export
@@ -1132,8 +1163,8 @@ static inline int sizeof_fsid(enum fsid_type type)
 
 typedef uint64_t fsal_cookie_t;
 
-typedef bool (*fsal_readdir_cb)(const char *name, void *dir_state,
-				fsal_cookie_t cookie);
+typedef bool (*fsal_readdir_cb)(const char *name, struct fsal_obj_handle *obj,
+				void *dir_state, fsal_cookie_t cookie);
 /**
  * @brief FSAL object operations vector
  */
@@ -1146,11 +1177,30 @@ struct fsal_obj_ops {
  */
 
 /**
+ * @brief Get a reference to a handle
+ *
+ * If refcounting is done, get a reference.  Initial handle should have a
+ * reference already taken.
+ *
+ * @param[in] obj_hdl Handle to release
+ */
+	 void (*get_ref)(struct fsal_obj_handle *obj_hdl);
+
+/**
+ * @brief Put a reference to a handle
+ *
+ * If refcounting is done, put a reference.
+ *
+ * @param[in] obj_hdl Handle to release
+ */
+	 void (*put_ref)(struct fsal_obj_handle *obj_hdl);
+
+/**
  * @brief Clean up a filehandle
  *
  * This function cleans up private resources associated with a
  * filehandle and deallocates it.  Implement this method or you will
- * leak.
+ * leak.  Refcount (if used) should be 1
  *
  * @param[in] obj_hdl Handle to release
  */
@@ -1907,6 +1957,18 @@ struct fsal_obj_ops {
  */
 	void (*handle_to_key)(struct fsal_obj_handle *obj_hdl,
 			      struct gsh_buffdesc *fh_desc);
+/**
+ * @brief Compare two handles
+ *
+ * This function compares two handles to see if they reference the same file
+ *
+ * @param[in]     obj_hdl1    The first handle to compare
+ * @param[in]     obj_hdl2    The second handle to compare
+ *
+ * @return True if match, false otherwise
+ */
+	 bool (*handle_cmp)(struct fsal_obj_handle *obj_hdl1,
+			    struct fsal_obj_handle *obj_hdl2);
 /**@}*/
 
 /**@{*/
@@ -2123,6 +2185,8 @@ struct fsal_obj_ops {
  * open. This is because the permission attributes were not available
  * beforehand.
  *
+ * @note If the file was created, @a new_obj has been ref'd
+ *
  * @param[in] obj_hdl               File to open or parent directory
  * @param[in,out] state             state_t to use for this operation
  * @param[in] openflags             Mode for open
@@ -2162,11 +2226,13 @@ struct fsal_obj_ops {
  * This function returns open flags representing the current open
  * status for a state. The state_lock must be held.
  *
+ * @param[in] obj_hdl     File owning state
  * @param[in] state File state to interrogate
  *
  * @retval Flags representing current open status
  */
-	fsal_openflags_t (*status2)(struct state_t *state);
+	fsal_openflags_t (*status2)(struct fsal_obj_handle *obj_hdl,
+				    struct state_t *state);
 
 /**
  * @brief Re-open a file that may be already opened
@@ -2640,6 +2706,18 @@ struct fsal_module {
 };
 
 /**
+ * @brief Get a reference to a module
+ *
+ * @param[in] fsal_hdl FSAL on which to acquire reference.
+ */
+
+static inline void fsal_get(struct fsal_module *fsal_hdl)
+{
+	atomic_inc_int32_t(&fsal_hdl->refcount);
+	assert(fsal_hdl->refcount > 0);
+}
+
+/**
  * @brief Relinquish a reference to the module
  *
  * This function relinquishes one reference to the FSAL.  After the
@@ -2758,6 +2836,7 @@ struct fsal_obj_handle {
 	struct attrlist *attrs;
 
 	object_file_type_t type;	/*< Object file type */
+	struct state_hdl *state_hdl;	/*< State related to this handle */
 };
 
 /**

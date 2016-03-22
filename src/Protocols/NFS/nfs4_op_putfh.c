@@ -36,7 +36,6 @@
 #include "log.h"
 #include "fsal.h"
 #include "nfs_core.h"
-#include "cache_inode.h"
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
@@ -135,14 +134,17 @@ static int nfs4_mds_putfh(compound_data_t *data)
 	struct file_handle_v4 *v4_handle =
 		(struct file_handle_v4 *)data->currentFH.nfs_fh4_val;
 	struct gsh_export *exporting;
-	cache_inode_fsal_data_t fsal_data;
-	fsal_status_t fsal_status;
-	cache_inode_status_t cache_status;
-	cache_entry_t *file_entry;
+	struct fsal_export *export;
+	struct gsh_buffdesc fh_desc;
+	struct fsal_obj_handle *new_hdl;
+	fsal_status_t fsal_status = { 0, 0 };
 	bool changed = true;
 
-	LogFullDebug(COMPONENT_FILEHANDLE, "NFS4 Handle 0x%X export id %d",
+	LogFullDebug(COMPONENT_FILEHANDLE,
+		     "NFS4 Handle flags 0x%X export id %d",
 		v4_handle->fhflags1, v4_handle->id.exports);
+	LogFullDebugOpaque(COMPONENT_FILEHANDLE, "NFS4 FSAL Handle %s",
+			   LEN_FH_STR, v4_handle->fsopaque, v4_handle->fs_len);
 
 	/* Find any existing export by the "id" from the handle,
 	 * before releasing the old export (to prevent thrashing).
@@ -185,24 +187,29 @@ static int nfs4_mds_putfh(compound_data_t *data)
 			return status;
 	}
 
-	op_ctx->fsal_export = fsal_data.export = exporting->fsal_export;
-	fsal_data.fh_desc.len = v4_handle->fs_len;
-	fsal_data.fh_desc.addr = &v4_handle->fsopaque;
+	op_ctx->fsal_export = export = exporting->fsal_export;
+	fh_desc.len = v4_handle->fs_len;
+	fh_desc.addr = &v4_handle->fsopaque;
 
 	/* adjust the handle opaque into a cache key */
-	fsal_status = fsal_data.export->exp_ops.extract_handle(fsal_data.export,
-			       FSAL_DIGEST_NFSV4, &fsal_data.fh_desc,
-			       v4_handle->fhflags1);
+	fsal_status = export->exp_ops.extract_handle(export,
+						     FSAL_DIGEST_NFSV4,
+						     &fh_desc,
+						     v4_handle->fhflags1);
 	if (FSAL_IS_ERROR(fsal_status))
-		return nfs4_Errno(cache_inode_error_convert(fsal_status));
+		return nfs4_Errno_status(fsal_status);
 
-	/* Build the pentry.  Refcount +1. */
-	cache_status = cache_inode_get(&fsal_data, &file_entry);
-	if (cache_status != CACHE_INODE_SUCCESS)
-		return nfs4_Errno(cache_status);
+	fsal_status = export->exp_ops.create_handle(export,
+						    &fh_desc,
+						    &new_hdl);
+	if (FSAL_IS_ERROR(fsal_status)) {
+		LogDebug(COMPONENT_FILEHANDLE,
+			 "could not get create_handle object");
+		return nfs4_Errno_status(fsal_status);
+	}
 
 	/* Set the current entry using the ref from get */
-	set_current_entry(data, file_entry);
+	set_current_entry(data, new_hdl);
 
 	LogFullDebug(COMPONENT_FILEHANDLE,
 		     "File handle is of type %s(%d)",

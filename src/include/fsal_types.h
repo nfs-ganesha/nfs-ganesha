@@ -731,6 +731,8 @@ typedef enum fsal_errors_t {
 	ERR_FSAL_UNION_NOTSUPP = 10094,
 	ERR_FSAL_IN_GRACE = 10095,
 	ERR_FSAL_NO_ACE = 10096,
+	ERR_FSAL_CROSS_JUNCTION = 10097,
+	ERR_FSAL_BADNAME = 10098,
 } fsal_errors_t;
 
 /**

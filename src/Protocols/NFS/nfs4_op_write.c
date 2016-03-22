@@ -147,7 +147,7 @@ static int op_dswrite_plus(struct nfs_argop4 *op, compound_data_t *data,
  */
 
 static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
-		     struct nfs_resop4 *resp, cache_inode_io_direction_t io,
+		     struct nfs_resop4 *resp, fsal_io_direction_t io,
 		     struct io_info *info)
 {
 	WRITE4args * const arg_WRITE4 = &op->nfs_argop4_u.opwrite;
@@ -161,9 +161,8 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 	stable_how4 stable_how;
 	state_t *state_found = NULL;
 	state_t *state_open = NULL;
-	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
-	cache_entry_t *entry = NULL;
-	fsal_status_t fsal_status;
+	fsal_status_t fsal_status = {0, 0};
+	struct fsal_obj_handle *obj = NULL;
 	bool anonymous_started = false;
 	struct gsh_buffdesc verf_desc;
 	state_owner_t *owner = NULL;
@@ -174,7 +173,7 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 
 	if ((data->minorversion > 0)
 	     && (nfs4_Is_Fh_DSHandle(&data->currentFH))) {
-		if (io == CACHE_INODE_WRITE)
+		if (io == FSAL_IO_WRITE)
 			return op_dswrite(op, data, resp);
 		else
 			return op_dswrite_plus(op, data, resp, info);
@@ -202,13 +201,13 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 
 
 	/* vnode to manage is the current one */
-	entry = data->current_entry;
+	obj = data->current_obj;
 
 	/* Check stateid correctness and get pointer to state
 	 * (also checks for special stateids)
 	 */
 	res_WRITE4->status = nfs4_Check_Stateid(&arg_WRITE4->stateid,
-						entry,
+						obj,
 						&state_found,
 						data,
 						STATEID_SPECIAL_ANY,
@@ -305,7 +304,7 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 		 */
 		res_WRITE4->status = nfs4_Errno_state(
 				state_share_anonymous_io_start(
-					entry,
+					obj,
 					OPEN4_SHARE_ACCESS_WRITE,
 					SHARE_BYPASS_NONE));
 
@@ -319,13 +318,11 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 	 *        cache_inode_access_no_mutex
 	 */
 	if (state_open == NULL
-	    && entry->obj_handle->attrs->owner !=
-	    op_ctx->creds->caller_uid) {
-		cache_status = cache_inode_access(entry,
-						  FSAL_WRITE_ACCESS);
+	    && obj->attrs->owner != op_ctx->creds->caller_uid) {
+		fsal_status = fsal_access(obj, FSAL_WRITE_ACCESS, NULL, NULL);
 
-		if (cache_status != CACHE_INODE_SUCCESS) {
-			res_WRITE4->status = nfs4_Errno(cache_status);
+		if (FSAL_IS_ERROR(fsal_status)) {
+			res_WRITE4->status = nfs4_Errno_status(fsal_status);
 			goto done;
 		}
 	}
@@ -405,35 +402,21 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 		}
 	}
 
-	if (entry->obj_handle->fsal->m_ops.support_ex()) {
-		/* Call the new cache_inode_write */
-		cache_status = cache_inode_write(entry,
-						 false,
-						 state_found,
-						 offset,
-						 size,
-						 &written_size,
-						 bufferdata,
-						 &sync,
-						 info);
+	if (obj->fsal->m_ops.support_ex()) {
+		/* Call the new fsal_write */
+		fsal_status = fsal_write2(obj, false, state_found, offset, size,
+					  &written_size, bufferdata, &sync,
+					  info);
 	} else {
-		/* Call legacy cache_inode_rdwr */
-		cache_status = cache_inode_rdwr(entry,
-						io,
-						offset,
-						size,
-						&written_size,
-						bufferdata,
-						&eof_met,
-						&sync,
-						info);
+		/* Call legacy fsal_rdwr */
+		fsal_status = fsal_rdwr(obj, io, offset, size, &written_size,
+					bufferdata, &eof_met, &sync, info);
 	}
 
-	if (cache_status != CACHE_INODE_SUCCESS) {
-		LogDebug(COMPONENT_NFS_V4,
-			 "cache_inode_rdwr returned %s",
-			 cache_inode_err_str(cache_status));
-		res_WRITE4->status = nfs4_Errno(cache_status);
+	if (FSAL_IS_ERROR(fsal_status)) {
+		LogDebug(COMPONENT_NFS_V4, "write returned %s",
+			 fsal_err_txt(fsal_status));
+		res_WRITE4->status = nfs4_Errno_status(fsal_status);
 		goto done;
 	}
 
@@ -457,7 +440,7 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
  done:
 
 	if (anonymous_started)
-		state_share_anonymous_io_done(entry, OPEN4_SHARE_ACCESS_WRITE);
+		state_share_anonymous_io_done(obj, OPEN4_SHARE_ACCESS_WRITE);
 
 	server_stats_io_done(size, written_size,
 			     (res_WRITE4->status == NFS4_OK) ? true : false,
@@ -495,7 +478,7 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t *data,
 {
 	int err;
 
-	err = nfs4_write(op, data, resp, CACHE_INODE_WRITE, NULL);
+	err = nfs4_write(op, data, resp, FSAL_IO_WRITE, NULL);
 
 	return err;
 }
@@ -587,7 +570,7 @@ int nfs4_op_allocate(struct nfs_argop4 *op, compound_data_t *data,
 	info.io_advise = 0;
 
 	res_ALLOC->ar_status = nfs4_write(&arg, data, &res,
-					   CACHE_INODE_WRITE_PLUS, &info);
+					   FSAL_IO_WRITE_PLUS, &info);
 	return res_ALLOC->ar_status;
 }
 
@@ -627,6 +610,6 @@ int nfs4_op_deallocate(struct nfs_argop4 *op, compound_data_t *data,
 	info.io_advise = 0;
 
 	res_DEALLOC->dr_status = nfs4_write(&arg, data, &res,
-					   CACHE_INODE_WRITE_PLUS, &info);
+					   FSAL_IO_WRITE_PLUS, &info);
 	return res_DEALLOC->dr_status;
 }

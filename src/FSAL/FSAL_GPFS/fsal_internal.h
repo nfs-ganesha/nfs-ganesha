@@ -38,6 +38,7 @@
 #include "fcntl.h"
 #include "include/gpfs_nfs.h"
 #include "fsal_up.h"
+#include "gsh_config.h"
 
 struct gpfs_filesystem;
 

@@ -71,6 +71,7 @@
 #include "FSAL/access_check.h"
 #include "fsal_private.h"
 #include "fsal_convert.h"
+#include "nfs4_acls.h"
 
 /* fsal_attach_export
  * called from the FSAL's create_export method with a reference on the fsal.
@@ -339,6 +340,10 @@ const char *msg_fsal_err(fsal_errors_t fsal_err)
 		return "No matching ACE";
 	case ERR_FSAL_BAD_RANGE:
 		return "Lock not in allowable range";
+	case ERR_FSAL_CROSS_JUNCTION:
+		return "Crossed Junction";
+	case ERR_FSAL_BADNAME:
+		return "Invalid Name";
 	}
 
 	return "Unknown FSAL error";

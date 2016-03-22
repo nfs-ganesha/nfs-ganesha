@@ -292,7 +292,7 @@ void pnfs_ds_remove(uint16_t id_servers, bool final)
  * fsal method can process the rest of the parameters in the block
  */
 
-static int fsal_commit(void *node, void *link_mem, void *self_struct,
+static int fsal_cfg_commit(void *node, void *link_mem, void *self_struct,
 		       struct config_error_type *err_type)
 {
 	struct fsal_args *fp = self_struct;
@@ -322,7 +322,7 @@ static int fsal_commit(void *node, void *link_mem, void *self_struct,
 	}
 
 	LogEvent(COMPONENT_CONFIG,
-		 "DS %d fsal_commit at FSAL (%s) with path (%s)",
+		 "DS %d fsal_cfg_commit at FSAL (%s) with path (%s)",
 		 pds->id_servers, pds->fsal->name, pds->fsal->path);
 
 err:
@@ -404,7 +404,7 @@ static void pds_display(const char *step, void *node,
  * @brief Table of FSAL sub-block parameters
  *
  * NOTE: this points to a struct that is private to
- * fsal_commit.
+ * fsal_cfg_commit.
  */
 
 static struct config_item fsal_params[] = {
@@ -426,7 +426,7 @@ static struct config_item pds_items[] = {
 	CONF_ITEM_UI16("Number", 0, UINT16_MAX, 0,
 		       fsal_pnfs_ds, id_servers),
 	CONF_RELAX_BLOCK("FSAL", fsal_params,
-			 fsal_init, fsal_commit,
+			 fsal_init, fsal_cfg_commit,
 			 fsal_pnfs_ds, fsal),
 	CONFIG_EOL
 };

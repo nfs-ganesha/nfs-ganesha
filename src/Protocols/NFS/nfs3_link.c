@@ -37,7 +37,6 @@
 #include "log.h"
 #include "fsal.h"
 #include "nfs_core.h"
-#include "cache_inode.h"
 #include "nfs_exports.h"
 #include "nfs_proto_functions.h"
 #include "nfs_convert.h"
@@ -95,10 +94,10 @@ int nfs3_link(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	struct LINK3args *l3_arg = &arg->arg_link3;
 	struct LINK3res *l3_res = &res->res_link3;
 	const char *link_name = l3_arg->link.name;
-	cache_entry_t *target = NULL;
-	cache_entry_t *parent = NULL;
+	struct fsal_obj_handle *target_obj = NULL;
+	struct fsal_obj_handle *parent_obj = NULL;
 	pre_op_attr pre_parent = {0};
-	cache_inode_status_t cache_status;
+	fsal_status_t fsal_status = {0, 0};
 	int rc = NFS_REQ_OK;
 
 	if (isDebug(COMPONENT_NFSPROTO)) {
@@ -121,19 +120,20 @@ int nfs3_link(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	if (l3_res->status != NFS3_OK)
 		return rc;
 
-	parent = nfs3_FhandleToCache(&l3_arg->link.dir, &l3_res->status, &rc);
-	if (parent == NULL)
+	parent_obj = nfs3_FhandleToCache(&l3_arg->link.dir, &l3_res->status,
+					 &rc);
+	if (parent_obj == NULL)
 		return rc;  /* Status and rc are set by nfs3_FhandleToCache */
 
-	nfs_SetPreOpAttr(parent, &pre_parent);
+	nfs_SetPreOpAttr(parent_obj, &pre_parent);
 
-	target = nfs3_FhandleToCache(&l3_arg->file, &l3_res->status, &rc);
-	if (target == NULL) {
-		cache_inode_put(parent);
+	target_obj = nfs3_FhandleToCache(&l3_arg->file, &l3_res->status, &rc);
+	if (target_obj == NULL) {
+		parent_obj->obj_ops.put_ref(parent_obj);
 		return rc;  /* Status and rc are set by nfs3_FhandleToCache */
 	}
 
-	if (parent->type != DIRECTORY) {
+	if (parent_obj->type != DIRECTORY) {
 		l3_res->status = NFS3ERR_NOTDIR;
 		goto out;
 	}
@@ -143,32 +143,38 @@ int nfs3_link(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		goto out;
 	}
 
-	cache_status = cache_inode_link(target, parent, link_name);
-	if (cache_status == CACHE_INODE_SUCCESS) {
-		nfs_SetPostOpAttr(target,
+	fsal_status = fsal_link(target_obj, parent_obj, link_name);
+	if (FSAL_IS_ERROR(fsal_status)) {
+		nfs_SetPostOpAttr(target_obj,
 				  &l3_res->LINK3res_u.resok.file_attributes);
 
-		nfs_SetWccData(&pre_parent, parent,
+		nfs_SetWccData(&pre_parent, parent_obj,
 			       &l3_res->LINK3res_u.resok.linkdir_wcc);
 		l3_res->status = NFS3_OK;
 		goto out;
 	}
 
 	/* If we are here, there was an error */
-	if (nfs_RetryableError(cache_status)) {
+	if (nfs_RetryableError(fsal_status.major)) {
 		rc = NFS_REQ_DROP;
 		goto out;
 	}
 
-	l3_res->status = nfs3_Errno(cache_status);
-	nfs_SetPostOpAttr(target, &l3_res->LINK3res_u.resfail.file_attributes);
+	l3_res->status = nfs3_Errno_status(fsal_status);
+	nfs_SetPostOpAttr(target_obj,
+			  &l3_res->LINK3res_u.resfail.file_attributes);
 
-	nfs_SetWccData(&pre_parent, parent,
+	nfs_SetWccData(&pre_parent, parent_obj,
 		       &l3_res->LINK3res_u.resfail.linkdir_wcc);
 
  out:
-	cache_inode_put(target);
-	cache_inode_put(parent);
+	/* return references */
+	if (target_obj)
+		target_obj->obj_ops.put_ref(target_obj);
+
+	if (parent_obj)
+		parent_obj->obj_ops.put_ref(parent_obj);
+
 	return rc;
 }				/* nfs3_link */
 

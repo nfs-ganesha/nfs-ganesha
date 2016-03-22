@@ -40,7 +40,6 @@
 #include "nfs_core.h"
 #include "abstract_mem.h"
 #include "log.h"
-#include "cache_inode.h"
 #include "sal_functions.h"
 #include "fsal.h"
 #include "9p.h"

@@ -54,7 +54,7 @@
  * each segment returned by FSAL_layoutget to an existing state of
  * type STATE_TYPE_LAYOUT.
  *
- * Must hold the state_lock in write mode.
+ * @note state_lock must be held for write.
  *
  * @param[in] state           The layout state.
  * @param[in] segment         Layout segment itself granted by the FSAL
@@ -119,19 +119,21 @@ state_status_t state_delete_segment(state_layout_segment_t *segment)
 /**
  * @brief Find pre-existing layouts
  *
- * This function finds a state corresponding to a given file,
+ * This function finds a layout corresponding to a given file,
  * clientid, and layout type if one exists.
  *
- * @param[in]  entry Cache inode entry for the file
- * @param[in]  owner The state owner.  This must be a clientid owner.
- * @param[in]  type  Layout type specified by the client.
- * @param[out] state The found state, NULL if not found.
+ * @note state_lock MUST be held for read
+ *
+ * @param[in]  obj    File
+ * @param[in]  owner  The state owner.  This must be a clientid owner.
+ * @param[in]  type   Layout type specified by the client.
+ * @param[out] state  The found state, NULL if not found.
  *
  * @return STATE_SUCCESS if the layout is found, STATE_NOT_FOUND if it
  *         isn't, and an appropriate code if other bad things happen.
  */
 
-state_status_t state_lookup_layout_state(cache_entry_t *entry,
+state_status_t state_lookup_layout_state(struct fsal_obj_handle *obj,
 					 state_owner_t *owner,
 					 layouttype4 type,
 					 state_t **state)
@@ -141,7 +143,7 @@ state_status_t state_lookup_layout_state(cache_entry_t *entry,
 	/* The state under inspection in the loop */
 	state_t *state_iter = NULL;
 
-	glist_for_each(glist_iter, &entry->list_of_states) {
+	glist_for_each(glist_iter, &obj->state_hdl->file.list_of_states) {
 		state_iter = glist_entry(glist_iter, state_t, state_list);
 		if (state_iter->state_type == STATE_TYPE_LAYOUT &&
 		    state_same_owner(state_iter, owner) &&
@@ -163,7 +165,7 @@ state_status_t state_lookup_layout_state(cache_entry_t *entry,
 void revoke_owner_layouts(state_owner_t *client_owner)
 {
 	state_t *state, *first;
-	cache_entry_t *entry;
+	struct fsal_obj_handle *obj;
 	int errcnt = 0;
 	struct glist_head *glist, *glistn;
 	bool so_mutex_held;
@@ -206,25 +208,25 @@ void revoke_owner_layouts(state_owner_t *client_owner)
 		if (state->state_type != STATE_TYPE_LAYOUT)
 			continue;
 
-		/* Safely access the cache inode associated with the state.
+		/* Safely access the cache inode associated with the state217.
 		 * This will get an LRU reference protecting our access
 		 * even after state_deleg_revoke releases the reference it
 		 * holds.
 		 */
-		entry = get_state_entry_ref(state);
+		obj = get_state_obj_ref(state);
 
-		if (entry == NULL) {
+		if (obj == NULL) {
 			LogDebug(COMPONENT_STATE,
-				 "Stale state or cache entry");
+				 "Stale state or file");
 			continue;
 		}
 
 		PTHREAD_MUTEX_unlock(&client_owner->so_mutex);
 		so_mutex_held = false;
 
-		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
+		PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
 
-		(void) nfs4_return_one_state(entry,
+		(void) nfs4_return_one_state(obj,
 					     LAYOUTRETURN4_FILE,
 					     circumstance_revoke,
 					     state,
@@ -239,9 +241,7 @@ void revoke_owner_layouts(state_owner_t *client_owner)
 				"Layout state not destroyed during lease expiry.");
 		}
 
-		PTHREAD_RWLOCK_unlock(&entry->state_lock);
-
-		cache_inode_lru_unref(entry, LRU_FLAG_NONE);
+		PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
 
 		if (errcnt < STATE_ERR_MAX) {
 			/* Loop again, but since we droped the so_mutex, we

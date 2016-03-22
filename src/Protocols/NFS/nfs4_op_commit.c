@@ -42,7 +42,6 @@
 #include "log.h"
 #include "fsal.h"
 #include "nfs_core.h"
-#include "cache_inode.h"
 #include "nfs_exports.h"
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
@@ -71,7 +70,7 @@ int nfs4_op_commit(struct nfs_argop4 *op, compound_data_t *data,
 {
 	COMMIT4args * const arg_COMMIT4 = &op->nfs_argop4_u.opcommit;
 	COMMIT4res * const res_COMMIT4 = &resp->nfs_resop4_u.opcommit;
-	cache_inode_status_t cache_status;
+	fsal_status_t fsal_status = { 0, 0 };
 	struct gsh_buffdesc verf_desc;
 
 	resp->resop = NFS4_OP_COMMIT;
@@ -93,12 +92,10 @@ int nfs4_op_commit(struct nfs_argop4 *op, compound_data_t *data,
 	if (res_COMMIT4->status != NFS4_OK)
 		return res_COMMIT4->status;
 
-	cache_status = cache_inode_commit(data->current_entry,
-					  arg_COMMIT4->offset,
-					  arg_COMMIT4->count);
-
-	if (cache_status != CACHE_INODE_SUCCESS) {
-		res_COMMIT4->status = nfs4_Errno(cache_status);
+	fsal_status = fsal_commit(data->current_obj, arg_COMMIT4->offset,
+				  arg_COMMIT4->count);
+	if (FSAL_IS_ERROR(fsal_status)) {
+		res_COMMIT4->status = nfs4_Errno_status(fsal_status);
 		return res_COMMIT4->status;
 	}
 

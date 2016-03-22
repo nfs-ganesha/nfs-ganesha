@@ -38,7 +38,6 @@
 #include "log.h"
 #include "fsal.h"
 #include "nfs_core.h"
-#include "cache_inode.h"
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
@@ -67,14 +66,13 @@ int nfs3_symlink(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
 	const char *symlink_name = arg->arg_symlink3.where.name;
 	char *target_path = arg->arg_symlink3.symlink.symlink_data;
-	cache_inode_create_arg_t create_arg;
+	fsal_create_arg_t create_arg;
 	uint32_t mode = 0777;
-	cache_entry_t *symlink_entry = NULL;
-	cache_entry_t *parent_entry;
+	struct fsal_obj_handle *symlink_obj = NULL;
+	struct fsal_obj_handle *parent_obj;
 	pre_op_attr pre_parent;
-	cache_inode_status_t cache_status;
-	int rc = NFS_REQ_OK;
 	fsal_status_t fsal_status;
+	int rc = NFS_REQ_OK;
 
 	memset(&create_arg, 0, sizeof(create_arg));
 
@@ -97,18 +95,18 @@ int nfs3_symlink(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	res->res_symlink3.SYMLINK3res_u.resfail.dir_wcc.after.
 	    attributes_follow = false;
 
-	parent_entry = nfs3_FhandleToCache(&arg->arg_symlink3.where.dir,
+	parent_obj = nfs3_FhandleToCache(&arg->arg_symlink3.where.dir,
 					   &res->res_symlink3.status,
 					   &rc);
 
-	if (parent_entry == NULL) {
+	if (parent_obj == NULL) {
 		/* Status and rc have been set by nfs3_FhandleToCache */
 		goto out;
 	}
 
-	nfs_SetPreOpAttr(parent_entry, &pre_parent);
+	nfs_SetPreOpAttr(parent_obj, &pre_parent);
 
-	if (parent_entry->type != DIRECTORY) {
+	if (parent_obj->type != DIRECTORY) {
 		res->res_symlink3.status = NFS3ERR_NOTDIR;
 		rc = NFS_REQ_OK;
 		goto out;
@@ -130,7 +128,7 @@ int nfs3_symlink(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	if (symlink_name == NULL || *symlink_name == '\0' || target_path == NULL
 	    || *target_path == '\0') {
-		cache_status = CACHE_INODE_INVALID_ARGUMENT;
+		fsal_status = fsalstat(ERR_FSAL_INVAL, 0);
 		goto out_fail;
 	}
 
@@ -141,14 +139,10 @@ int nfs3_symlink(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 			set_mode3_u.mode;
 
 	/* Make the symlink */
-	cache_status = cache_inode_create(parent_entry,
-					  symlink_name,
-					  SYMBOLIC_LINK,
-					  mode,
-					  &create_arg,
-					  &symlink_entry);
+	fsal_status = fsal_create(parent_obj, symlink_name, SYMBOLIC_LINK, mode,
+				  &create_arg, &symlink_obj);
 
-	if (cache_status != CACHE_INODE_SUCCESS)
+	if (FSAL_IS_ERROR(fsal_status))
 		goto out_fail;
 
 	struct attrlist sattr;
@@ -178,21 +172,17 @@ int nfs3_symlink(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		/* mask off flags handled by create */
 		sattr.mask &= CREATE_MASK_NON_REG_NFS3 | ATTRS_CREDS;
 
-		/* A call to cache_inode_setattr is required */
-		cache_status = cache_inode_setattr(symlink_entry,
-						   false,
-						   NULL,
-						   &sattr,
-						   false);
+		/* A call to fsal_setattr is required */
+		fsal_status = fsal_setattr(symlink_obj, false, NULL, &sattr);
 
-		if (cache_status != CACHE_INODE_SUCCESS)
+		if (FSAL_IS_ERROR(fsal_status))
 			goto out_fail;
 	}
 
 	if (!nfs3_FSALToFhandle(
 	     true,
 	     &res->res_symlink3.SYMLINK3res_u.resok.obj.post_op_fh3_u.handle,
-	     symlink_entry->obj_handle,
+	     symlink_obj,
 	     op_ctx->export)) {
 		res->res_symlink3.status = NFS3ERR_BADHANDLE;
 		rc = NFS_REQ_OK;
@@ -202,12 +192,12 @@ int nfs3_symlink(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	res->res_symlink3.SYMLINK3res_u.resok.obj.handle_follows = TRUE;
 
 	/* Build entry attributes */
-	nfs_SetPostOpAttr(symlink_entry,
+	nfs_SetPostOpAttr(symlink_obj,
 			  &res->res_symlink3.SYMLINK3res_u.resok.
 			  obj_attributes);
 
 	/* Build Weak Cache Coherency data */
-	nfs_SetWccData(&pre_parent, parent_entry,
+	nfs_SetWccData(&pre_parent, parent_obj,
 		       &res->res_symlink3.SYMLINK3res_u.resok.dir_wcc);
 
 	res->res_symlink3.status = NFS3_OK;
@@ -216,21 +206,21 @@ int nfs3_symlink(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	goto out;
 
  out_fail:
-	res->res_symlink3.status = nfs3_Errno(cache_status);
+	res->res_symlink3.status = nfs3_Errno_status(fsal_status);
 
-	nfs_SetWccData(&pre_parent, parent_entry,
+	nfs_SetWccData(&pre_parent, parent_obj,
 		       &res->res_symlink3.SYMLINK3res_u.resfail.dir_wcc);
 
-	if (nfs_RetryableError(cache_status))
+	if (nfs_RetryableError(fsal_status.major))
 		rc = NFS_REQ_DROP;
 
  out:
 	/* return references */
-	if (parent_entry)
-		cache_inode_put(parent_entry);
+	if (parent_obj)
+		parent_obj->obj_ops.put_ref(parent_obj);
 
-	if (symlink_entry)
-		cache_inode_put(symlink_entry);
+	if (symlink_obj)
+		symlink_obj->obj_ops.put_ref(symlink_obj);
 
 	return rc;
 }				/* nfs3_symlink */

@@ -36,7 +36,6 @@
 #include "nfs4.h"
 #include "fsal.h"
 #include "nfs_core.h"
-#include "cache_inode.h"
 #include "nfs_exports.h"
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
@@ -64,7 +63,7 @@ int nfs4_op_getxattr(struct nfs_argop4 *op, compound_data_t *data,
 	GETXATTR4res * const res_GETXATTR4 = &resp->nfs_resop4_u.opgetxattr;
 	xattrvalue4 gr_value;
 	fsal_status_t fsal_status;
-	struct fsal_obj_handle *obj_handle = data->current_entry->obj_handle;
+	struct fsal_obj_handle *obj_handle = data->current_obj;
 
 	resp->resop = NFS4_OP_GETXATTR;
 	res_GETXATTR4->status = NFS4_OK;
@@ -162,7 +161,7 @@ int nfs4_op_setxattr(struct nfs_argop4 *op, compound_data_t *data,
 	SETXATTR4args * const arg_SETXATTR4 = &op->nfs_argop4_u.opsetxattr;
 	SETXATTR4res * const res_SETXATTR4 = &resp->nfs_resop4_u.opsetxattr;
 	fsal_status_t fsal_status;
-	struct fsal_obj_handle *obj_handle = data->current_entry->obj_handle;
+	struct fsal_obj_handle *obj_handle = data->current_obj;
 
 	resp->resop = NFS4_OP_SETXATTR;
 	res_SETXATTR4->status = NFS4_OK;
@@ -189,7 +188,7 @@ int nfs4_op_setxattr(struct nfs_argop4 *op, compound_data_t *data,
 	}
 	res_SETXATTR4->SETXATTR4res_u.resok4.sr_info.atomic = false;
 	res_SETXATTR4->SETXATTR4res_u.resok4.sr_info.before =
-				cache_inode_get_changeid4(data->current_entry);
+				fsal_get_changeid4(data->current_obj);
 	fsal_status = obj_handle->obj_ops.setxattrs(obj_handle,
 					arg_SETXATTR4->sa_type,
 					&arg_SETXATTR4->sa_xattr.xa_name,
@@ -198,7 +197,7 @@ int nfs4_op_setxattr(struct nfs_argop4 *op, compound_data_t *data,
 		return res_SETXATTR4->status = nfs4_Errno_state(
 					state_error_convert(fsal_status));
 	res_SETXATTR4->SETXATTR4res_u.resok4.sr_info.after =
-				cache_inode_get_changeid4(data->current_entry);
+				fsal_get_changeid4(data->current_obj);
 	return res_SETXATTR4->status;
 }
 
@@ -232,7 +231,7 @@ int nfs4_op_listxattr(struct nfs_argop4 *op, compound_data_t *data,
 	LISTXATTR4args * const arg_LISTXATTR4 = &op->nfs_argop4_u.oplistxattr;
 	LISTXATTR4res * const res_LISTXATTR4 = &resp->nfs_resop4_u.oplistxattr;
 	fsal_status_t fsal_status;
-	struct fsal_obj_handle *obj_handle = data->current_entry->obj_handle;
+	struct fsal_obj_handle *obj_handle = data->current_obj;
 	xattrlist4 list;
 	nfs_cookie4 la_cookie;
 	verifier4 la_cookieverf;
@@ -340,7 +339,7 @@ int nfs4_op_removexattr(struct nfs_argop4 *op, compound_data_t *data,
 	REMOVEXATTR4res * const res_REMOVEXATTR4 =
 					&resp->nfs_resop4_u.opremovexattr;
 	fsal_status_t fsal_status;
-	struct fsal_obj_handle *obj_handle = data->current_entry->obj_handle;
+	struct fsal_obj_handle *obj_handle = data->current_obj;
 
 	resp->resop = NFS4_OP_REMOVEXATTR;
 	res_REMOVEXATTR4->status = NFS4_OK;
@@ -367,14 +366,14 @@ int nfs4_op_removexattr(struct nfs_argop4 *op, compound_data_t *data,
 	}
 	res_REMOVEXATTR4->REMOVEXATTR4res_u.resok4.rr_info.atomic = false;
 	res_REMOVEXATTR4->REMOVEXATTR4res_u.resok4.rr_info.before =
-				cache_inode_get_changeid4(data->current_entry);
+				fsal_get_changeid4(data->current_obj);
 	fsal_status = obj_handle->obj_ops.removexattrs(obj_handle,
 					&arg_REMOVEXATTR4->ra_name);
 	if (FSAL_IS_ERROR(fsal_status))
 		return res_REMOVEXATTR4->status = nfs4_Errno_state(
 					state_error_convert(fsal_status));
 	res_REMOVEXATTR4->REMOVEXATTR4res_u.resok4.rr_info.after =
-				cache_inode_get_changeid4(data->current_entry);
+				fsal_get_changeid4(data->current_obj);
 	return res_REMOVEXATTR4->status;
 }
 

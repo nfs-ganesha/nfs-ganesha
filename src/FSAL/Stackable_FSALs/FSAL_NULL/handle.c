@@ -330,14 +330,14 @@ static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
  *
  * @return Result coming from the upper layer.
  */
-static bool nullfs_readdir_cb(const char *name, void *dir_state,
-			       fsal_cookie_t cookie)
+static bool nullfs_readdir_cb(const char *name, struct fsal_obj_handle *obj,
+			      void *dir_state, fsal_cookie_t cookie)
 {
 	struct nullfs_readdir_state *state =
 		(struct nullfs_readdir_state *) dir_state;
 
 	op_ctx->fsal_export = &state->exp->export;
-	bool result = state->cb(name, state->dir_state, cookie);
+	bool result = state->cb(name, obj, state->dir_state, cookie);
 
 	op_ctx->fsal_export = state->exp->sub_export;
 

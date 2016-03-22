@@ -202,6 +202,8 @@ static fsal_status_t nfsstat4_to_fsal(nfsstat4 nfsstatus)
 		return fsalstat(ERR_FSAL_SYMLINK, (int)nfsstatus);
 	case NFS4ERR_ATTRNOTSUPP:
 		return fsalstat(ERR_FSAL_ATTRNOTSUPP, (int)nfsstatus);
+	case NFS4ERR_BADNAME:
+		return fsalstat(ERR_FSAL_BADNAME, (int)nfsstatus);
 	case NFS4ERR_INVAL:
 	case NFS4ERR_CLID_INUSE:
 	case NFS4ERR_MOVED:
@@ -219,7 +221,6 @@ static fsal_status_t nfsstat4_to_fsal(nfsstat4 nfsstatus)
 	case NFS4ERR_RECLAIM_CONFLICT:
 	case NFS4ERR_BADXDR:
 	case NFS4ERR_BADCHAR:
-	case NFS4ERR_BADNAME:
 	case NFS4ERR_BAD_RANGE:
 	case NFS4ERR_BADOWNER:
 	case NFS4ERR_OP_ILLEGAL:
@@ -1577,6 +1578,7 @@ static fsal_status_t pxy_do_readdir(struct pxy_obj_handle *ph,
 	for (e4 = rdok->reply.entries; e4; e4 = e4->nextentry) {
 		struct attrlist attr;
 		char name[MAXNAMLEN + 1];
+		struct fsal_obj_handle *handle;
 
 		/* UTF8 name does not include trailing 0 */
 		if (e4->name.utf8string_len > sizeof(name) - 1)
@@ -1589,7 +1591,12 @@ static fsal_status_t pxy_do_readdir(struct pxy_obj_handle *ph,
 
 		*cookie = e4->cookie;
 
-		if (!cb(name, cbarg, e4->cookie))
+		st = pxy_lookup_impl(&ph->obj, op_ctx->fsal_export,
+				     op_ctx->creds, name, &handle);
+		if (FSAL_IS_ERROR(st))
+			break;
+
+		if (!cb(name, handle, cbarg, e4->cookie))
 			break;
 	}
 	xdr_free((xdrproc_t) xdr_readdirres, resoparray);

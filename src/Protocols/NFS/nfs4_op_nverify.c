@@ -36,7 +36,6 @@
 #include "log.h"
 #include "nfs4.h"
 #include "nfs_core.h"
-#include "cache_inode.h"
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
 
@@ -85,12 +84,12 @@ int nfs4_op_nverify(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	res_NVERIFY4->status =
-	    cache_entry_To_Fattr(data->current_entry,
-				 &file_attr4,
-				 data,
-				 &(data->currentFH),
-				 &(arg_NVERIFY4->obj_attributes.attrmask));
-
+		file_To_Fattr(data->current_obj,
+			      &file_attr4,
+			      data,
+			      &(data->currentFH),
+			      &(arg_NVERIFY4->obj_attributes.attrmask));
+;
 	if (res_NVERIFY4->status != NFS4_OK)
 		return res_NVERIFY4->status;
 

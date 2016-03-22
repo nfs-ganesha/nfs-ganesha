@@ -42,7 +42,6 @@
 #include "gsh_rpc.h"
 #include "nfs4.h"
 #include "nfs_core.h"
-#include "cache_inode.h"
 #include "nfs_exports.h"
 #include "nfs_file_handle.h"
 #include "nfs_proto_functions.h"
@@ -94,7 +93,7 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t *data,
 	/* Check stateid correctness and get pointer to state */
 	res_DELEGRETURN4->status = nfs4_Check_Stateid(&arg_DELEGRETURN4->
 						      deleg_stateid,
-						      data->current_entry,
+						      data->current_obj,
 						      &state_found,
 						      data,
 						      STATEID_SPECIAL_FOR_LOCK,
@@ -105,8 +104,6 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t *data,
 	if (res_DELEGRETURN4->status != NFS4_OK)
 		return res_DELEGRETURN4->status;
 
-	PTHREAD_RWLOCK_wrlock(&data->current_entry->state_lock);
-
 	owner = get_state_owner_ref(state_found);
 
 	if (owner == NULL) {
@@ -116,16 +113,17 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t *data,
 		goto out_unlock;
 	}
 
-	deleg_heuristics_recall(data->current_entry, owner, state_found);
+	deleg_heuristics_recall(data->current_obj, owner, state_found);
 
 	/* Release reference taken above. */
 	dec_state_owner_ref(owner);
 
+	PTHREAD_RWLOCK_wrlock(&data->current_obj->state_hdl->state_lock);
 	/* Now we have a lock owner and a stateid.
 	 * Go ahead and push unlock into SAL (and FSAL) to return
 	 * the delegation.
 	 */
-	state_status = release_lease_lock(data->current_entry, state_found);
+	state_status = release_lease_lock(data->current_obj, state_found);
 
 	res_DELEGRETURN4->status = nfs4_Errno_state(state_status);
 
@@ -135,10 +133,9 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t *data,
 
 		state_del_locked(state_found);
 	}
+	PTHREAD_RWLOCK_unlock(&data->current_obj->state_hdl->state_lock);
 
  out_unlock:
-
-	PTHREAD_RWLOCK_unlock(&data->current_entry->state_lock);
 
 	dec_state_t_ref(state_found);
 

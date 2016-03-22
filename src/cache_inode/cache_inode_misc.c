@@ -707,6 +707,9 @@ cache_inode_error_convert(fsal_status_t fsal_status)
 	case ERR_FSAL_IN_GRACE:
 		return CACHE_INODE_IN_GRACE;
 
+	case ERR_FSAL_CROSS_JUNCTION:
+		return CACHE_INODE_CROSS_JUNCTION;
+
 	case ERR_FSAL_BADHANDLE:
 		return CACHE_INODE_BADHANDLE;
 

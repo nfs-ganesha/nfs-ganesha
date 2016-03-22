@@ -40,8 +40,6 @@
 #include <sys/stat.h>
 #include "nfs_core.h"
 #include "log.h"
-#include "cache_inode.h"
-#include "cache_inode_lru.h"
 #include "fsal.h"
 #include "9p.h"
 
@@ -52,7 +50,7 @@ int _9p_lopen(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	u32 *fid = NULL;
 	u32 *flags = NULL;
 
-	cache_inode_status_t cache_status;
+	fsal_status_t fsal_status;
 	fsal_openflags_t openflags = 0;
 
 	struct _9p_fid *pfid = NULL;
@@ -85,44 +83,23 @@ int _9p_lopen(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	if (pfid->pentry->type == REGULAR_FILE) {
 		/** @todo: Maybe other types (FIFO, SOCKET,...) require
 		 * to be opened too */
-		if (!atomic_postinc_uint32_t(&pfid->opens)) {
-			cache_status = cache_inode_inc_pin_ref(pfid->pentry);
-			if (cache_status != CACHE_INODE_SUCCESS)
-				return _9p_rerror(req9p, msgtag,
-						  _9p_tools_errno(cache_status),
-						  plenout, preply);
-		}
-
-		if (pfid->pentry->obj_handle->fsal->m_ops.support_ex()) {
-			if (*flags & 0x10) {
+		if (pfid->pentry->fsal->m_ops.support_ex()) {
+			if (*flags & 0x10)
 				openflags |= FSAL_O_TRUNC;
-				/* FSAL is going to refresh attributes. */
-				PTHREAD_RWLOCK_wrlock(&pfid->pentry->attr_lock);
-			}
 
-			cache_status = cache_inode_reopen2(pfid->pentry,
-							   pfid->state,
-							   openflags,
-							   true);
+			fsal_status = fsal_reopen2(pfid->pentry, pfid->state,
+						   openflags, true);
+		} else
+			fsal_status = fsal_open(pfid->pentry, openflags);
 
-			if (*flags & 0x10) {
-				/* We tried to refresh attributes. */
-				if (cache_status == CACHE_INODE_SUCCESS ||
-				    cache_status == CACHE_INODE_ENTRY_EXISTS) {
-					/* FSAL has refreshed attributes. */
-					cache_inode_fixup_md(pfid->pentry);
-				}
-
-				PTHREAD_RWLOCK_unlock(&pfid->pentry->attr_lock);
-			}
-		} else {
-			cache_status = cache_inode_open(pfid->pentry,
-							openflags, 0);
-		}
-		if (cache_status != CACHE_INODE_SUCCESS) {
+		if (FSAL_IS_ERROR(fsal_status))
 			return _9p_rerror(req9p, msgtag,
-					  _9p_tools_errno(cache_status),
+					  _9p_tools_errno(fsal_status),
 					  plenout, preply);
+
+		if (!atomic_postinc_uint32_t(&pfid->opens)) {
+			/* Get the open ref */
+			pfid->pentry->obj_ops.get_ref(pfid->pentry);
 		}
 
 	}

@@ -39,7 +39,6 @@
 #include <sys/stat.h>
 #include "nfs_core.h"
 #include "log.h"
-#include "cache_inode.h"
 #include "fsal.h"
 #include "9p.h"
 
@@ -51,7 +50,7 @@ int _9p_readlink(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 	struct _9p_fid *pfid = NULL;
 
-	cache_inode_status_t cache_status;
+	fsal_status_t fsal_status;
 	struct gsh_buffdesc link_buffer = {.addr = NULL,
 		.len = 0
 	};
@@ -77,12 +76,10 @@ int _9p_readlink(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	_9p_init_opctx(pfid, req9p);
 
 	/* let's do the job */
-	cache_status =
-	    cache_inode_readlink(pfid->pentry, &link_buffer);
-
-	if (cache_status != CACHE_INODE_SUCCESS)
+	fsal_status = fsal_readlink(pfid->pentry, &link_buffer);
+	if (FSAL_IS_ERROR(fsal_status))
 		return _9p_rerror(req9p, msgtag,
-				  _9p_tools_errno(cache_status), plenout,
+				  _9p_tools_errno(fsal_status), plenout,
 				  preply);
 
 	/* Build the reply */

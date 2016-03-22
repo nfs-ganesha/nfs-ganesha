@@ -60,8 +60,8 @@
 int nfs4_op_putrootfh(struct nfs_argop4 *op, compound_data_t *data,
 		      struct nfs_resop4 *resp)
 {
-	cache_inode_status_t cache_status;
-	cache_entry_t *file_entry;
+	fsal_status_t status = {0, 0};
+	struct fsal_obj_handle *file_obj;
 
 	PUTROOTFH4res * const res_PUTROOTFH4 = &resp->nfs_resop4_u.opputrootfh;
 
@@ -112,27 +112,25 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	/* Get the Pesudo Root inode of the mounted on export */
-	cache_status = nfs_export_get_root_entry(op_ctx->export,
-						 &file_entry);
-
-	if (cache_status != CACHE_INODE_SUCCESS) {
+	status = nfs_export_get_root_entry(op_ctx->export, &file_obj);
+	if (FSAL_IS_ERROR(status)) {
 		LogCrit(COMPONENT_EXPORT,
 			"Could not get root inode for Pseudo Root");
 
-		res_PUTROOTFH4->status = nfs4_Errno(cache_status);
+		res_PUTROOTFH4->status = nfs4_Errno_status(status);
 		return res_PUTROOTFH4->status;
 	}
 
 	LogMidDebug(COMPONENT_EXPORT,
-		    "Root node %p", data->current_entry);
+		    "Root node %p", data->current_obj);
 
 	/* Set the current entry using the ref from get */
-	set_current_entry(data, file_entry);
+	set_current_entry(data, file_obj);
 
 	/* Convert it to a file handle */
 	if (!nfs4_FSALToFhandle(data->currentFH.nfs_fh4_val == NULL,
 				&data->currentFH,
-				data->current_entry->obj_handle,
+				data->current_obj,
 				op_ctx->export)) {
 		LogCrit(COMPONENT_EXPORT,
 			"Could not get handle for Pseudo Root");

@@ -25,6 +25,7 @@
 #include "fsal_up.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
+#include "cache_inode.h"
 #include "gpfs_methods.h"
 #include <sys/types.h>
 #include <unistd.h>

@@ -40,6 +40,7 @@
 #include "nfs_convert.h"
 #include "nfs_file_handle.h"
 #include "sal_functions.h"
+#include "fsal.h"
 
 /**
  * @brief The NFS4_OP_REMOVE operation.
@@ -59,9 +60,9 @@ int nfs4_op_remove(struct nfs_argop4 *op, compound_data_t *data,
 {
 	REMOVE4args * const arg_REMOVE4 = &op->nfs_argop4_u.opremove;
 	REMOVE4res * const res_REMOVE4 = &resp->nfs_resop4_u.opremove;
-	cache_entry_t *parent_entry = NULL;
+	struct fsal_obj_handle *parent_obj = NULL;
 	char *name = NULL;
-	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
+	fsal_status_t fsal_status = {0, 0};
 
 	resp->resop = NFS4_OP_REMOVE;
 	res_REMOVE4->status = NFS4_OK;
@@ -87,8 +88,8 @@ int nfs4_op_remove(struct nfs_argop4 *op, compound_data_t *data,
 		goto out;
 	}
 
-	/* Get the parent entry (aka the current one in the compound data) */
-	parent_entry = data->current_entry;
+	/* Get the parent obj (aka the current one in the compound data) */
+	parent_obj = data->current_obj;
 
 	/* We have to keep track of the 'change' file attribute
 	 * for reply structure
@@ -98,17 +99,16 @@ int nfs4_op_remove(struct nfs_argop4 *op, compound_data_t *data,
 	       sizeof(changeid4));
 
 	res_REMOVE4->REMOVE4res_u.resok4.cinfo.before =
-	    cache_inode_get_changeid4(parent_entry);
+	    fsal_get_changeid4(parent_obj);
 
-	cache_status = cache_inode_remove(parent_entry, name);
-
-	if (cache_status != CACHE_INODE_SUCCESS) {
-		res_REMOVE4->status = nfs4_Errno(cache_status);
+	fsal_status = fsal_remove(parent_obj, name);
+	if (FSAL_IS_ERROR(fsal_status)) {
+		res_REMOVE4->status = nfs4_Errno_status(fsal_status);
 		goto out;
 	}
 
 	res_REMOVE4->REMOVE4res_u.resok4.cinfo.after =
-	    cache_inode_get_changeid4(parent_entry);
+	    fsal_get_changeid4(parent_obj);
 
 	/* Operation was not atomic .... */
 	res_REMOVE4->REMOVE4res_u.resok4.cinfo.atomic = FALSE;

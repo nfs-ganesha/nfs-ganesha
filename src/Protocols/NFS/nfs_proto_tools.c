@@ -32,12 +32,12 @@
  */
 #include "log.h"
 #include "fsal.h"
-#include "cache_inode.h"
 #include "fsal_convert.h"
 #include "nfs_core.h"
 #include "nfs_convert.h"
 #include "nfs_exports.h"
 #include "nfs_proto_tools.h"
+#include "nfs4_acls.h"
 #include "idmapper.h"
 #include "export_mgr.h"
 
@@ -64,21 +64,21 @@ static struct {
 	},
 };
 
+#ifdef _USE_NFS3
 /**
  * Converts FSAL Attributes to NFSv3 PostOp Attributes structure.
  *
  * This function converts FSAL Attributes to NFSv3 PostOp Attributes
  * structure.
  *
- * @param[in]  entry Cache entry
+ * @param[in]  obj   FSAL object
  * @param[out] attr  NFSv3 PostOp structure attributes.
  *
  */
-void nfs_SetPostOpAttr(cache_entry_t *entry, post_op_attr *attr)
+void nfs_SetPostOpAttr(struct fsal_obj_handle *obj, post_op_attr *attr)
 {
-	attr->attributes_follow =
-	    cache_entry_to_nfs3_Fattr(entry,
-				      &(attr->post_op_attr_u.attributes));
+	attr->attributes_follow = file_to_nfs3_Fattr(obj,
+				   &(attr->post_op_attr_u.attributes));
 }				/* nfs_SetPostOpAttr */
 
 /**
@@ -87,28 +87,29 @@ void nfs_SetPostOpAttr(cache_entry_t *entry, post_op_attr *attr)
  * This function Converts FSAL Attributes to NFSv3 PreOp Attributes
  * structure.
  *
- * @param[in]  entry Cache entry
+ * @param[in]  obj   FSAL object
  * @param[out] attr  NFSv3 PreOp structure attributes.
  */
 
-void nfs_SetPreOpAttr(cache_entry_t *entry, pre_op_attr *attr)
+void nfs_SetPreOpAttr(struct fsal_obj_handle *obj, pre_op_attr *attr)
 {
-	if ((entry == NULL) || (cache_inode_lock_trust_attrs(entry, false)
-				!= CACHE_INODE_SUCCESS)) {
+	fsal_status_t status;
+
+	status = fsal_refresh_attrs(obj);
+	if (FSAL_IS_ERROR(status))
 		attr->attributes_follow = false;
-	} else {
+	else {
 		attr->pre_op_attr_u.attributes.size =
-		    entry->obj_handle->attrs->filesize;
+		    obj->attrs->filesize;
 		attr->pre_op_attr_u.attributes.mtime.tv_sec =
-		    entry->obj_handle->attrs->mtime.tv_sec;
+		    obj->attrs->mtime.tv_sec;
 		attr->pre_op_attr_u.attributes.mtime.tv_nsec =
-		    entry->obj_handle->attrs->mtime.tv_nsec;
+		    obj->attrs->mtime.tv_nsec;
 		attr->pre_op_attr_u.attributes.ctime.tv_sec =
-		    entry->obj_handle->attrs->ctime.tv_sec;
+		    obj->attrs->ctime.tv_sec;
 		attr->pre_op_attr_u.attributes.ctime.tv_nsec =
-		    entry->obj_handle->attrs->ctime.tv_nsec;
+		    obj->attrs->ctime.tv_nsec;
 		attr->attributes_follow = TRUE;
-		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 	}
 }				/* nfs_SetPreOpAttr */
 
@@ -118,37 +119,39 @@ void nfs_SetPreOpAttr(cache_entry_t *entry, pre_op_attr *attr)
  * This function sets NFSv3 Weak Cache Coherency structure.
  *
  * @param[in]  before_attr Pre-op attrs for before state
- * @param[in]  entry       The cache entry after operation
+ * @param[in]  obj         The FSAL object after operation
  * @param[out] wcc_data    the Weak Cache Coherency structure
  *
  */
 void nfs_SetWccData(const struct pre_op_attr *before_attr,
-		    cache_entry_t *entry,
+		    struct fsal_obj_handle *obj,
 		    wcc_data *wcc_data)
 {
 	if (before_attr == NULL)
 		wcc_data->before.attributes_follow = false;
 
 	/* Build directory post operation attributes */
-	nfs_SetPostOpAttr(entry, &(wcc_data->after));
+	nfs_SetPostOpAttr(obj, &(wcc_data->after));
 }				/* nfs_SetWccData */
+#endif /* _USE_NFS3 */
 
 /**
  * @brief Indicate if an error is retryable
  *
  * This function indicates if an error is retryable or not.
  *
- * @param cache_status [IN] input Cache Inode Status value, to be tested.
+ * @param fsal_errors [IN] input FSAL error value, to be tested.
  *
  * @return true if retryable, false otherwise.
  *
  * @todo: Not implemented for NOW BUGAZEOMEU
  *
  */
-bool nfs_RetryableError(cache_inode_status_t cache_status)
+bool nfs_RetryableError(fsal_errors_t fsal_errors)
 {
-	switch (cache_status) {
-	case CACHE_INODE_IO_ERROR:
+	switch (fsal_errors) {
+	case ERR_FSAL_IO:
+	case ERR_FSAL_NXIO:
 		if (nfs_param.core_param.drop_io_errors) {
 			/* Drop the request */
 			return true;
@@ -158,7 +161,8 @@ bool nfs_RetryableError(cache_inode_status_t cache_status)
 		}
 		break;
 
-	case CACHE_INODE_INVALID_ARGUMENT:
+	case ERR_FSAL_INVAL:
+	case ERR_FSAL_OVERFLOW:
 		if (nfs_param.core_param.drop_inval_errors) {
 			/* Drop the request */
 			return true;
@@ -168,7 +172,7 @@ bool nfs_RetryableError(cache_inode_status_t cache_status)
 		}
 		break;
 
-	case CACHE_INODE_DELAY:
+	case ERR_FSAL_DELAY:
 		if (nfs_param.core_param.drop_delay_errors) {
 			/* Drop the request */
 			return true;
@@ -178,65 +182,68 @@ bool nfs_RetryableError(cache_inode_status_t cache_status)
 		}
 		break;
 
-	case CACHE_INODE_SUCCESS:
+	case ERR_FSAL_NO_ERROR:
 		LogCrit(COMPONENT_NFSPROTO,
-			"Possible implementation error: CACHE_INODE_SUCCESS managed as an error");
+			"Possible implementation error: ERR_FSAL_NO_ERROR managed as an error");
 		return false;
 
-	case CACHE_INODE_MALLOC_ERROR:
-	case CACHE_INODE_POOL_MUTEX_INIT_ERROR:
-	case CACHE_INODE_GET_NEW_LRU_ENTRY:
-	case CACHE_INODE_INIT_ENTRY_FAILED:
-	case CACHE_INODE_FSAL_ERROR:
-	case CACHE_INODE_LRU_ERROR:
-	case CACHE_INODE_HASH_SET_ERROR:
-	case CACHE_INODE_INCONSISTENT_ENTRY:
-	case CACHE_INODE_HASH_TABLE_ERROR:
-	case CACHE_INODE_INSERT_ERROR:
+	case ERR_FSAL_NOMEM:
+	case ERR_FSAL_NOT_OPENED:
 		/* Internal error, should be dropped and retryed */
 		return true;
 
-	case CACHE_INODE_NOT_A_DIRECTORY:
-	case CACHE_INODE_BAD_TYPE:
-	case CACHE_INODE_ENTRY_EXISTS:
-	case CACHE_INODE_DIR_NOT_EMPTY:
-	case CACHE_INODE_NOT_FOUND:
-	case CACHE_INODE_FSAL_EACCESS:
-	case CACHE_INODE_IS_A_DIRECTORY:
-	case CACHE_INODE_FSAL_EPERM:
-	case CACHE_INODE_NO_SPACE_LEFT:
-	case CACHE_INODE_READ_ONLY_FS:
-	case CACHE_INODE_ESTALE:
-	case CACHE_INODE_FSAL_ERR_SEC:
-	case CACHE_INODE_QUOTA_EXCEEDED:
-	case CACHE_INODE_NOT_SUPPORTED:
-	case CACHE_INODE_UNION_NOTSUPP:
-	case CACHE_INODE_NAME_TOO_LONG:
-	case CACHE_INODE_ASYNC_POST_ERROR:
-	case CACHE_INODE_STATE_ERROR:
-	case CACHE_INODE_BAD_COOKIE:
-	case CACHE_INODE_FILE_BIG:
-	case CACHE_INODE_FILE_OPEN:
-	case CACHE_INODE_FSAL_XDEV:
-	case CACHE_INODE_FSAL_MLINK:
-	case CACHE_INODE_TOOSMALL:
-	case CACHE_INODE_SHARE_DENIED:
-	case CACHE_INODE_LOCKED:
-	case CACHE_INODE_SERVERFAULT:
-	case CACHE_INODE_BADNAME:
-	case CACHE_INODE_CROSS_JUNCTION:
-	case CACHE_INODE_IN_GRACE:
-	case CACHE_INODE_BADHANDLE:
-	case CACHE_INODE_NO_DATA:
-	case CACHE_INODE_BAD_RANGE:
+	case ERR_FSAL_NOTDIR:
+	case ERR_FSAL_SYMLINK:
+	case ERR_FSAL_BADTYPE:
+	case ERR_FSAL_EXIST:
+	case ERR_FSAL_NOTEMPTY:
+	case ERR_FSAL_NOENT:
+	case ERR_FSAL_ACCESS:
+	case ERR_FSAL_ISDIR:
+	case ERR_FSAL_PERM:
+	case ERR_FSAL_NOSPC:
+	case ERR_FSAL_ROFS:
+	case ERR_FSAL_STALE:
+	case ERR_FSAL_FHEXPIRED:
+	case ERR_FSAL_SEC:
+	case ERR_FSAL_DQUOT:
+	case ERR_FSAL_NO_QUOTA:
+	case ERR_FSAL_NOTSUPP:
+	case ERR_FSAL_ATTRNOTSUPP:
+	case ERR_FSAL_UNION_NOTSUPP:
+	case ERR_FSAL_NAMETOOLONG:
+	case ERR_FSAL_BADCOOKIE:
+	case ERR_FSAL_FBIG:
+	case ERR_FSAL_FILE_OPEN:
+	case ERR_FSAL_XDEV:
+	case ERR_FSAL_MLINK:
+	case ERR_FSAL_TOOSMALL:
+	case ERR_FSAL_SHARE_DENIED:
+	case ERR_FSAL_LOCKED:
+	case ERR_FSAL_FAULT:
+	case ERR_FSAL_SERVERFAULT:
+	case ERR_FSAL_DEADLOCK:
+	case ERR_FSAL_BADNAME:
+	case ERR_FSAL_CROSS_JUNCTION:
+	case ERR_FSAL_IN_GRACE:
+	case ERR_FSAL_BADHANDLE:
+	case ERR_FSAL_NO_DATA:
+	case ERR_FSAL_BLOCKED:
+	case ERR_FSAL_INTERRUPT:
+	case ERR_FSAL_NOT_INIT:
+	case ERR_FSAL_ALREADY_INIT:
+	case ERR_FSAL_BAD_INIT:
+	case ERR_FSAL_TIMEOUT:
+	case ERR_FSAL_NO_ACE:
+	case ERR_FSAL_BAD_RANGE:
 		/* Non retryable error, return error to client */
 		return false;
 	}
 
 	/* Should never reach this */
 	LogDebug(COMPONENT_NFSPROTO,
-		 "cache_inode_status=%u not managed properly in nfs_RetryableError, line %u should never be reached",
-		 cache_status, __LINE__);
+		 "fsal_errors=%u not managed properly in nfs_RetryableError, line %u should never be reached",
+		 fsal_errors, __LINE__);
 	return false;
 }
 /**
@@ -815,13 +822,13 @@ static fattr_xdr_result decode_acl(XDR *xdr, struct xdr_attrs_args *args)
 	args->attrs->acl = nfs4_acl_new_entry(&acldata, &status);
 	if (args->attrs->acl == NULL) {
 		LogCrit(COMPONENT_NFS_V4,
-			"Failed to create a new entry for ACL");
+			"Failed to create a new obj for ACL");
 		args->nfs_status = NFS4ERR_SERVERFAULT;
 		/* acldata has already been freed */
 		return FATTR_XDR_FAILED;
 	} else {
 		LogFullDebug(COMPONENT_NFS_V4,
-			     "Successfully created a new entry for ACL, status = %u",
+			     "Successfully created a new obj for ACL, status = %u",
 			     status);
 	}
 	/* Set new ACL */
@@ -1064,12 +1071,11 @@ static fattr_xdr_result decode_fileid(XDR *xdr, struct xdr_attrs_args *args)
 
 static fattr_xdr_result encode_fetch_fsinfo(struct xdr_attrs_args *args)
 {
-	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
+	fsal_status_t fsal_status = {0, 0};
 
-	if (args->data != NULL && args->data->current_entry != NULL) {
-		cache_status =
-		    cache_inode_statfs(args->data->current_entry,
-				       args->dynamicinfo);
+	if (args->data != NULL && args->data->current_obj != NULL) {
+		fsal_status = fsal_statfs(args->data->current_obj,
+					  args->dynamicinfo);
 	} else {
 		args->dynamicinfo->avail_files = 512;
 		args->dynamicinfo->free_files = 512;
@@ -1078,12 +1084,11 @@ static fattr_xdr_result encode_fetch_fsinfo(struct xdr_attrs_args *args)
 		args->dynamicinfo->free_bytes = 512000;
 		args->dynamicinfo->avail_bytes = 512000;
 	}
-	if (cache_status == CACHE_INODE_SUCCESS) {
-		args->statfscalled = true;
-		return TRUE;
-	} else {
+	if (FSAL_IS_ERROR(fsal_status))
 		return FATTR_XDR_FAILED;
-	}
+
+	args->statfscalled = true;
+	return TRUE;
 }
 
 /*
@@ -1175,10 +1180,10 @@ static fattr_xdr_result encode_fs_locations(XDR *xdr,
 	char path[MAXPATHLEN];
 	char server[MAXHOSTNAMELEN];
 
-	if (args->data == NULL || args->data->current_entry == NULL)
+	if (args->data == NULL || args->data->current_obj == NULL)
 		return FATTR_XDR_NOOP;
 
-	if (args->data->current_entry->type != DIRECTORY)
+	if (args->data->current_obj->type != DIRECTORY)
 		return FATTR_XDR_NOOP;
 
 	fs_root.utf8string_len = sizeof(root);
@@ -1201,8 +1206,8 @@ static fattr_xdr_result encode_fs_locations(XDR *xdr,
 	   path and update its length, can not be bigger than MAXPATHLEN
 	   server and update its length, can not be bigger than MAXHOSTNAMELEN
 	*/
-	st = args->data->current_entry->obj_handle->obj_ops.fs_locations(
-					args->data->current_entry->obj_handle,
+	st = args->data->current_obj->obj_ops.fs_locations(
+					args->data->current_obj,
 					&fs_locs);
 	if (FSAL_IS_ERROR(st)) {
 		strcpy(root, "not_supported");
@@ -3188,19 +3193,19 @@ struct Fattr_filler_opaque {
 /**
  * @brief Callback to fill a fattr
  *
- * This function is the callback for cache_entry_To_Fattr.
+ * This function is the callback for file_To_Fattr.
  *
  * @param[in] opaque Opaque structure
  * @param[in] attr   Attribute list
  *
- * @retval CACHE_INODE_SUCCESS on success.
- * @retval CACHE_INODE_IO_ERROR on error.
+ * @retval FSAL status
  */
 
-static cache_inode_status_t Fattr_filler(void *opaque,
-					 cache_entry_t *entry,
+static fsal_errors_t Fattr_filler(void *opaque,
+					 struct fsal_obj_handle *obj,
 					 const struct attrlist *attr,
 					 uint64_t mounted_on_fileid,
+					 uint64_t cookie,
 					 enum cb_state cb_state)
 {
 	struct Fattr_filler_opaque *f = (struct Fattr_filler_opaque *)opaque;
@@ -3212,17 +3217,17 @@ static cache_inode_status_t Fattr_filler(void *opaque,
 	};
 
 	if (nfs4_FSALattr_To_Fattr(&args, f->Bitmap, f->Fattr) != 0)
-		return CACHE_INODE_IO_ERROR;
+		return ERR_FSAL_IO;
 
-	return CACHE_INODE_SUCCESS;
+	return ERR_FSAL_NO_ERROR;
 }
 
 /**
- * @brief Fill NFSv4 Fattr from cache entry
+ * @brief Fill NFSv4 Fattr from a file
  *
- * This function fills an NFSv4 Fattr from a cache entry.
+ * This function fills an NFSv4 Fattr from a file.
  *
- * @param[in]  entry   Cache entry
+ * @param[in]  obj     File
  * @param[out] Fattr   NFSv4 Fattr buffer
  *		       Memory for bitmap_val and attr_val is
  *                     dynamically allocated,
@@ -3232,10 +3237,10 @@ static cache_inode_status_t Fattr_filler(void *opaque,
  *                     attributes are requested
  * @param[in]  Bitmap  Bitmap of attributes being requested
  *
- * @retval cache status
+ * @retval NFSv4 status
  */
 
-nfsstat4 cache_entry_To_Fattr(cache_entry_t *entry, fattr4 *Fattr,
+nfsstat4 file_To_Fattr(struct fsal_obj_handle *obj, fattr4 *Fattr,
 			      compound_data_t *data, nfs_fh4 *objFH,
 			      struct bitmap4 *Bitmap)
 {
@@ -3250,48 +3255,44 @@ nfsstat4 cache_entry_To_Fattr(cache_entry_t *entry, fattr4 *Fattr,
 	 * NOTE: We intentionally do NOT check ACE4_READ_ATTR.
 	 */
 	if (attribute_is_set(Bitmap, FATTR4_ACL)) {
-		cache_inode_status_t status;
+		fsal_status_t status;
 
 		LogDebug(COMPONENT_NFS_V4_ACL,
-			 "Permission check for ACL for entry %p", entry);
+			 "Permission check for ACL for obj %p", obj);
 
-		status =
-		    cache_inode_access(entry,
-				       FSAL_ACE4_MASK_SET
-				       (FSAL_ACE_PERM_READ_ACL));
+		status = fsal_access(obj,
+				     FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_READ_ACL),
+				     NULL, NULL);
 
-		if (status != CACHE_INODE_SUCCESS) {
+		if (FSAL_IS_ERROR(status)) {
 			LogDebug(COMPONENT_NFS_V4_ACL,
-				 "Permission check for ACL for entry %p failed with %s",
-				 entry, cache_inode_err_str(status));
-			return nfs4_Errno(status);
+				 "Permission check for ACL for obj %p failed with %s",
+				 obj, msg_fsal_err(status.major));
+			return nfs4_Errno_status(status);
 		}
 	} else {
 #ifdef ENABLE_RFC_ACL
-		cache_inode_status_t status;
+		fsal_status_t status;
 
 		LogDebug(COMPONENT_NFS_V4_ACL,
-			 "Permission check for ATTR for entry %p", entry);
+			 "Permission check for ATTR for obj %p", obj);
 
-		status =
-		    cache_inode_access(entry,
-				       FSAL_ACE4_MASK_SET
-				       (FSAL_ACE_PERM_READ_ATTR));
+		status = fsal_access(obj, FSAL_ACE4_MASK_SET(
+					     FSAL_ACE_PERM_READ_ATTR));
 
-		if (status != CACHE_INODE_SUCCESS) {
+		if (FSAL_IS_ERROR(status)) {
 			LogDebug(COMPONENT_NFS_V4_ACL,
-				 "Permission check for ATTR for entry %p failed with %s",
-				 entry, cache_inode_err_str(status));
+				 "Permission check for ATTR for obj %p failed with %s",
+				 obj, fsal_err_txt(status));
 			return nfs4_Errno(status);
 		}
 #else /* ENABLE_RFC_ACL */
 		LogDebug(COMPONENT_NFS_V4_ACL,
-			 "No permission check for ACL for entry %p", entry);
+			 "No permission check for ACL for obj %p", obj);
 #endif /* ENABLE_RFC_ACL */
 	}
 
-	return nfs4_Errno(
-		cache_inode_getattr(entry, &f, Fattr_filler, CB_ORIGINAL));
+	return nfs4_Errno(fsal_getattr(obj, &f, Fattr_filler, CB_ORIGINAL));
 }
 
 int nfs4_Fattr_Fill_Error(fattr4 *Fattr, nfsstat4 rdattr_error)
@@ -3681,33 +3682,33 @@ static void nfs3_FSALattr_To_PartialFattr(const struct attrlist *FSAL_attr,
 	}
 }				/* nfs3_FSALattr_To_PartialFattr */
 
+#ifdef _USE_NFS3
 /**
- * @brief Fill out an NFSv3 Fattr from a cache entry
+ * @brief Fill out an NFSv3 Fattr from a FSAL object
  *
- * This function locks and refreshes the cache entry then calls out to
- * fill the Fattr.
+ * This function refreshes the object then calls out to fill the Fattr.
  *
- * @param[in]  entry The cache entry
+ * @param[in]  obj The FSAL object
  * @param[out] Fattr NFSv3 Fattr
  *
  * @retval true on success.
  * @retval false on failure.
  */
 
-bool cache_entry_to_nfs3_Fattr(cache_entry_t *entry, fattr3 *Fattr)
+bool file_to_nfs3_Fattr(struct fsal_obj_handle *obj, fattr3 *Fattr)
 {
-	bool rc = false;
+	fsal_status_t status;
 
-	if (entry && (cache_inode_lock_trust_attrs(entry, false)
-		      == CACHE_INODE_SUCCESS)) {
-		rc = nfs3_FSALattr_To_Fattr(op_ctx->export,
-					    entry->obj_handle->attrs,
-					    Fattr);
-		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
-	}
+	if (!obj)
+		return false;
 
-	return rc;
+	status = fsal_refresh_attrs(obj);
+	if (FSAL_IS_ERROR(status))
+		return false;
+
+	return nfs3_FSALattr_To_Fattr(op_ctx->export, obj->attrs, Fattr);
 }
+#endif /* _USE_NFS3 */
 
 /**
  * @brief Convert FSAL Attributes to NFSv3 attributes.

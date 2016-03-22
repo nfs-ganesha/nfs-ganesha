@@ -39,7 +39,6 @@
 #include "nfs_core.h"
 #include "nfs_exports.h"
 #include "log.h"
-#include "cache_inode.h"
 #include "fsal.h"
 #include "9p.h"
 
@@ -55,7 +54,7 @@ int _9p_unlinkat(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 	struct _9p_fid *pdfid = NULL;
 
-	cache_inode_status_t cache_status;
+	fsal_status_t fsal_status;
 	char name[MAXNAMLEN];
 
 	/* Get data */
@@ -88,10 +87,10 @@ int _9p_unlinkat(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	/* Let's do the job */
 	snprintf(name, MAXNAMLEN, "%.*s", *name_len, name_str);
 
-	cache_status = cache_inode_remove(pdfid->pentry, name);
-	if (cache_status != CACHE_INODE_SUCCESS)
+	fsal_status = fsal_remove(pdfid->pentry, name);
+	if (FSAL_IS_ERROR(fsal_status))
 		return _9p_rerror(req9p, msgtag,
-				  _9p_tools_errno(cache_status), plenout,
+				  _9p_tools_errno(fsal_status), plenout,
 				  preply);
 
 	/* Build the reply */

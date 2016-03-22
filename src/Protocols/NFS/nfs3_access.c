@@ -41,7 +41,6 @@
 #include "nfs4.h"
 #include "mount.h"
 #include "nfs_core.h"
-#include "cache_inode.h"
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
@@ -65,8 +64,8 @@
 
 int nfs3_access(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
-	cache_inode_status_t cache_status;
-	cache_entry_t *entry = NULL;
+	fsal_errors_t fsal_errors;
+	struct fsal_obj_handle *entry = NULL;
 	int rc = NFS_REQ_OK;
 
 	if (isDebug(COMPONENT_NFSPROTO)) {
@@ -93,12 +92,12 @@ int nfs3_access(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	}
 
 	/* Perform the 'access' call */
-	cache_status =
+	fsal_errors =
 	    nfs_access_op(entry, arg->arg_access3.access,
 			  &res->res_access3.ACCESS3res_u.resok.access, NULL);
 
-	if (cache_status == CACHE_INODE_SUCCESS
-	    || cache_status == CACHE_INODE_FSAL_EACCESS) {
+	if (fsal_errors == ERR_FSAL_NO_ERROR ||
+	    fsal_errors == ERR_FSAL_ACCESS) {
 		/* Build Post Op Attributes */
 		nfs_SetPostOpAttr(entry,
 				  &(res->res_access3.ACCESS3res_u.resok.
@@ -110,19 +109,19 @@ int nfs3_access(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	}
 
 	/* If we are here, there was an error */
-	if (nfs_RetryableError(cache_status)) {
+	if (nfs_RetryableError(fsal_errors)) {
 		rc = NFS_REQ_DROP;
 		goto out;
 	}
 
-	res->res_access3.status = nfs3_Errno(cache_status);
+	res->res_access3.status = nfs3_Errno(fsal_errors);
 	nfs_SetPostOpAttr(entry,
 			  &(res->res_access3.ACCESS3res_u.resfail.
 			    obj_attributes));
  out:
 
 	if (entry)
-		cache_inode_put(entry);
+		entry->obj_ops.put_ref(entry);
 
 	return rc;
 }				/* nfs3_access */

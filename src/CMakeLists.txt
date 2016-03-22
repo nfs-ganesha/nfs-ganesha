@@ -283,6 +283,12 @@ option(USE_NFS_RDMA "enable NFS/RDMA support" OFF)
 option(USE_9P "enable 9P support" ON)
 option(USE_9P_RDMA "enable 9P_RDMA support" OFF)
 
+# Enable NFSv3 Support
+option(USE_NFS3 "enable NFSv3 support" ON)
+
+# Enable NLM Support
+option(USE_NLM "enable NLM support" ON)
+
 # AF_VSOCK host support (NFS)
 option(USE_VSOCK "enable AF_VSOCK listener" OFF)
 if(USE_VSOCK)
@@ -847,6 +853,8 @@ include_directories(
 # Fixup loose bits of autotools legacy
 set(_USE_9P ${USE_9P})
 set(_USE_9P_RDMA ${USE_9P_RDMA})
+set(_USE_NFS3 ${USE_NFS3})
+set(_USE_NLM ${USE_NLM})
 
 if(USE_CB_SIMULATOR)
   set(_USE_CB_SIMULATOR ON)
@@ -926,9 +934,12 @@ check_library_exists(
 #Protocols we support
 set(PROTOCOLS
   nfsproto
-  nlm
   rquota
 )
+
+if(USE_NLM)
+  set(PROTOCOLS ${PROTOCOLS} nlm)
+endif(USE_NLM)
 
 if(USE_9P)
   set(PROTOCOLS ${PROTOCOLS} 9p)
@@ -942,7 +953,6 @@ set(PROTOCOLS
 # Core subsystems
 set(GANESHA_CORE
   sal
-  cache_inode
   idmap
   avltree
   hashtable
@@ -956,6 +966,10 @@ set(GANESHA_CORE
   uid2grp
   fsalpseudo
   )
+
+if(USE_CACHE_INODE)
+  set(GANESHA_CORE ${GANESHA_CORE} cache_inode)
+endif(USE_CACHE_INODE)
 
 if(USE_DBUS)
   set(GANESHA_CORE ${GANESHA_CORE} gshdbus)
@@ -1028,7 +1042,9 @@ add_subdirectory(test)
 add_subdirectory(avl)
 add_subdirectory(hashtable)
 add_subdirectory(NodeList)
-add_subdirectory(cache_inode)
+if(USE_CACHE_INODE)
+  add_subdirectory(cache_inode)
+endif(USE_CACHE_INODE)
 add_subdirectory(SAL)
 add_subdirectory(RPCAL)
 add_subdirectory(Protocols)
@@ -1103,6 +1119,8 @@ message(STATUS "USE_9P = ${USE_9P}")
 message(STATUS "_USE_9P = ${_USE_9P}")
 message(STATUS "_USE_9P_RDMA = ${_USE_9P_RDMA}")
 message(STATUS "USE_NFS_RDMA = ${USE_NFS_RDMA}")
+message(STATUS "USE_NFS3 = ${USE_NFS3}")
+message(STATUS "USE_NLM = ${USE_NLM}")
 message(STATUS "KRB5_PREFIX = ${KRB5_PREFIX}")
 message(STATUS "CEPH_PREFIX = ${CEPH_PREFIX}")
 message(STATUS "RGW_PREFIX = ${RGW_PREFIX}")
@@ -1270,6 +1288,16 @@ set(_USE_9P ${_USE_9P}
 set(_USE_9P_RDMA ${_USE_9P_RDMA}
   CACHE BOOL
    "enable 9P_RDMA support"
+   FORCE)
+
+set(USE_NFS3 ${USE_NFS3}
+  CACHE BOOL
+   "enable NFSv3 support"
+   FORCE)
+
+set(USE_NLM ${USE_NLM}
+  CACHE BOOL
+   "enable NLM support"
    FORCE)
 
 set(USE_ADMIN_TOOLS ${USE_ADMIN_TOOLS}

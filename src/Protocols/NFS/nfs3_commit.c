@@ -42,7 +42,6 @@
 #include "nfs4.h"
 #include "mount.h"
 #include "nfs_core.h"
-#include "cache_inode.h"
 #include "nfs_exports.h"
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
@@ -65,8 +64,8 @@
 
 int nfs3_commit(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
-	cache_inode_status_t cache_status;
-	cache_entry_t *entry = NULL;
+	fsal_status_t fsal_status;
+	struct fsal_obj_handle *obj = NULL;
 	int rc = NFS_REQ_OK;
 
 	if (isDebug(COMPONENT_NFSPROTO)) {
@@ -84,23 +83,22 @@ int nfs3_commit(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	res->res_commit3.COMMIT3res_u.resfail.file_wcc.after.attributes_follow =
 	    FALSE;
 
-	entry = nfs3_FhandleToCache(&arg->arg_commit3.file,
+	obj = nfs3_FhandleToCache(&arg->arg_commit3.file,
 				    &res->res_commit3.status,
 				    &rc);
 
-	if (entry == NULL) {
+	if (obj == NULL) {
 		/* Status and rc have been set by nfs3_FhandleToCache */
 		goto out;
 	}
 
-	cache_status = cache_inode_commit(entry,
-					  arg->arg_commit3.offset,
-					  arg->arg_commit3.count);
+	fsal_status = fsal_commit(obj, arg->arg_commit3.offset,
+				  arg->arg_commit3.count);
 
-	if (cache_status != CACHE_INODE_SUCCESS) {
-		res->res_commit3.status = nfs3_Errno(cache_status);
+	if (FSAL_IS_ERROR(fsal_status)) {
+		res->res_commit3.status = nfs3_Errno_status(fsal_status);
 
-		nfs_SetWccData(NULL, entry,
+		nfs_SetWccData(NULL, obj,
 			       &(res->res_commit3.COMMIT3res_u.resfail.
 				 file_wcc));
 
@@ -108,7 +106,7 @@ int nfs3_commit(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		goto out;
 	}
 
-	nfs_SetWccData(NULL, entry,
+	nfs_SetWccData(NULL, obj,
 		       &(res->res_commit3.COMMIT3res_u.resok.file_wcc));
 
 	/* Set the write verifier */
@@ -118,8 +116,8 @@ int nfs3_commit(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
  out:
 
-	if (entry)
-		cache_inode_put(entry);
+	if (obj)
+		obj->obj_ops.put_ref(obj);
 
 	return rc;
 }				/* nfs3_commit */

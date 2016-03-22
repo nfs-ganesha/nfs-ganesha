@@ -37,6 +37,7 @@
 #include <ctype.h>
 #include <netdb.h>
 
+#include "city.h"
 #include "sal_functions.h"
 #include "nsm.h"
 #include "log.h"
@@ -138,8 +139,9 @@ int compare_nlm_state(state_t *state1, state_t *state2)
 
 	return state1->state_type != state2->state_type ||
 	       state1->state_owner != state2->state_owner ||
-	       state1->state_entry != state2->state_entry ||
-	       state1->state_export != state2->state_export;
+	       state1->state_export != state2->state_export ||
+	       memcmp(&state1->state_obj, &state2->state_obj,
+		      sizeof(state1->state_obj));
 }
 
 /**
@@ -172,17 +174,22 @@ uint32_t nlm_state_value_hash_func(hash_parameter_t *hparam,
 				   struct gsh_buffdesc *key)
 {
 	state_t *pkey = key->addr;
-	uint32_t res = (long int) pkey->state_entry ^
-		       (long int) pkey->state_owner;
+	uint64_t hk;
+	char *addr = (char *)&pkey->state_owner;
+
+	/* We hash based on the owner pointer, and the object key.  This depends
+	 * on them being sequential in memory. */
+	hk = CityHash64WithSeed(addr, sizeof(pkey->state_owner)
+				+ sizeof(pkey->state_obj), 557);
 
 	if (pkey->state_type == STATE_TYPE_NLM_SHARE)
-		res = ~res;
+		hk = ~hk;
 
 	if (isDebug(COMPONENT_HASHTABLE))
 		LogFullDebug(COMPONENT_STATE, "value = %"PRIx32,
-			     res % hparam->index_size);
+			     (uint32_t)(hk % hparam->index_size));
 
-	return res % hparam->index_size;
+	return hk % hparam->index_size;
 }
 
 /**
@@ -199,17 +206,22 @@ uint64_t nlm_state_rbt_hash_func(hash_parameter_t *hparam,
 				 struct gsh_buffdesc *key)
 {
 	state_t *pkey = key->addr;
-	uint64_t res = (long int) pkey->state_entry ^
-		       (long int) pkey->state_owner;
+	uint64_t hk;
+	char *addr = (char *)&pkey->state_owner;
+
+	/* We hash based on the owner pointer, and the object key.  This depends
+	 * on them being sequential in memory. */
+	hk = CityHash64WithSeed(addr, sizeof(pkey->state_owner) +
+				sizeof(pkey->state_obj), 557);
 
 	if (pkey->state_type == STATE_TYPE_NLM_SHARE)
-		res = ~res;
+		hk = ~hk;
 
 	if (isDebug(COMPONENT_HASHTABLE))
 		LogFullDebug(COMPONENT_STATE, "value = %"PRIx64,
-			     res);
+			     hk % hparam->index_size);
 
-	return res;
+	return hk % hparam->index_size;
 }
 
 static hash_parameter_t nlm_state_hash_param = {
@@ -255,7 +267,7 @@ void dec_nlm_state_ref(state_t *state)
 	struct gsh_buffdesc old_value;
 	struct gsh_buffdesc old_key;
 	int32_t refcount;
-	cache_entry_t *entry = state->state_entry;
+	struct fsal_obj_handle *obj;
 
 	if (isDebug(COMPONENT_STATE)) {
 		display_nlm_state(&dspbuf, state);
@@ -322,22 +334,25 @@ void dec_nlm_state_ref(state_t *state)
 
 	put_gsh_export(state->state_export);
 
-	if (entry->obj_handle->fsal->m_ops.support_ex()) {
+	obj = get_state_obj_ref(state);
+	if (obj->fsal->m_ops.support_ex()) {
 		/* We need to close the state before freeing the state. */
-		(void) entry->obj_handle->obj_ops.close2(entry->obj_handle,
-							 state);
+		(void) obj->obj_ops.close2(obj, state);
 	}
 
 	state->state_exp->exp_ops.free_state(state);
 
-	cache_inode_lru_unref(entry, LRU_FLAG_NONE);
+	/* Release 2 refs: our sentinal one, plus the one from
+	 * get_state_obj_ref() */
+	obj->obj_ops.put_ref(obj);
+	obj->obj_ops.put_ref(obj);
 }
 
 /**
  * @brief Get an NLM State
  *
  * @param[in] state_type        type of state (LOCK or SHARE)
- * @param[in] entry             cache inode state applies to
+ * @param[in] state_obj         FSAL obj state applies to
  * @param[in] state_owner       NLM owner of the state
  * @param[in] nsm_state_applies True if nsm_state is available
  * @param[in] nsm_state         NSM state value for locks
@@ -346,7 +361,7 @@ void dec_nlm_state_ref(state_t *state)
  * @return NLM Status code or 0 if no special return
  */
 int get_nlm_state(enum state_type state_type,
-		  cache_entry_t *entry,
+		  struct fsal_obj_handle *state_obj,
 		  state_owner_t *state_owner,
 		  bool nsm_state_applies,
 		  uint32_t nsm_state,
@@ -364,10 +379,14 @@ int get_nlm_state(enum state_type state_type,
 	memset(&key, 0, sizeof(key));
 
 	key.state_type = state_type;
-	key.state_entry = entry;
 	key.state_owner = state_owner;
 	key.state_export = op_ctx->export;
 	key.state_seqid = nsm_state;
+	/* Temporarily use buffkey */
+	buffkey.addr = &key.state_obj.digest;
+	buffkey.len = sizeof(key.state_obj.digest);
+	state_obj->obj_ops.handle_digest(state_obj, FSAL_DIGEST_NFSV4,
+					 &buffkey);
 
 	if (isFullDebug(COMPONENT_STATE)) {
 		display_nlm_state(&dspbuf, &key);
@@ -447,7 +466,7 @@ int get_nlm_state(enum state_type state_type,
 							 NULL);
 
 	/* Copy everything over */
-	state->state_entry = entry;
+	memcpy(&state->state_obj, &key.state_obj, sizeof(state->state_obj));
 	state->state_owner = state_owner;
 	state->state_export = op_ctx->export;
 	state->state_seqid = nsm_state;
@@ -469,14 +488,7 @@ int get_nlm_state(enum state_type state_type,
 	buffval.addr = state;
 	buffval.len = sizeof(*state);
 
-	if (cache_inode_lru_ref(entry, LRU_FLAG_NONE) !=
-	    CACHE_INODE_SUCCESS) {
-		hashtable_releaselatched(ht_nlm_states, &latch);
-		*pstate = NULL;
-		/* No need to close here, the state was never opened. */
-		state->state_exp->exp_ops.free_state(state);
-		return NLM4_STALE_FH;
-	}
+	state_obj->obj_ops.get_ref(state_obj);
 
 	rc = hashtable_setlatched(ht_nlm_states, &buffval, &buffval, &latch,
 				  false, NULL, NULL);
@@ -490,12 +502,11 @@ int get_nlm_state(enum state_type state_type,
 
 		assert(pthread_mutex_destroy(&state->state_mutex) == 0);
 
-		/* Free the LRU ref taken above and the state.
+		/* Free the ref taken above and the state.
 		 * No need to close here, the state was never opened.
 		 */
 		state->state_exp->exp_ops.free_state(state);
-
-		cache_inode_lru_unref(entry, LRU_FLAG_NONE);
+		state_obj->obj_ops.put_ref(state_obj);
 
 		*pstate = NULL;
 

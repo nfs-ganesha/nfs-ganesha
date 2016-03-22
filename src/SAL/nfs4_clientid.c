@@ -46,7 +46,6 @@
 #include "nfs4.h"
 #include "fsal.h"
 #include "sal_functions.h"
-#include "cache_inode_lru.h"
 #include "abstract_atomic.h"
 #include "city.h"
 #include "client_mgr.h"

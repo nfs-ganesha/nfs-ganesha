@@ -81,8 +81,8 @@ int upcall_inode_invalidate(struct glusterfs_export *glfsexport,
 	LogDebug(COMPONENT_FSAL_UP, "Received event to process for %p",
 		 fs);
 
-	upflags = CACHE_INODE_INVALIDATE_ATTRS |
-		  CACHE_INODE_INVALIDATE_CONTENT;
+	upflags = FSAL_UP_INVALIDATE_ATTRS |
+		  FSAL_UP_INVALIDATE_CONTENT;
 	event_func = glfsexport->export.up_ops;
 
 	rc = event_func->invalidate_close(

@@ -246,9 +246,26 @@ struct fsal_ops def_fsal_ops = {
 	.support_ex = support_ex,
 };
 
+/* get_name
+ * default case is to return the name of the FSAL
+ */
+
+static const char *get_name(struct fsal_export *exp_hdl)
+{
+	return exp_hdl->fsal->name;
+}
+
+/* export_unexport
+ * Nothing to do in the default case
+ */
+
+static void export_unexport(struct fsal_export *exp_hdl)
+{
+	/* return */
+}
+
 /* export_release
- * default case is to throw a fault error.
- * creating an export is not supported so getting here is bad
+ * Nothing to do in the default case
  */
 
 static void export_release(struct fsal_export *exp_hdl)
@@ -550,7 +567,6 @@ struct state_t *alloc_state(struct fsal_export *exp_hdl,
 /**
  * @brief Free a state_t structure
  *
- * @param[in] exp_hdl               Export state_t is associated with
  * @param[in] state                 state_t structure to free.
  *
  * @returns NULL on failure otherwise a state structure.
@@ -566,6 +582,8 @@ void free_state(struct state_t *state)
  */
 
 struct export_ops def_export_ops = {
+	.get_name = get_name,
+	.unexport = export_unexport,
 	.release = export_release,
 	.lookup_path = lookup_path,
 	.lookup_junction = lookup_junction,
@@ -607,6 +625,24 @@ struct export_ops def_export_ops = {
 static bool handle_is(struct fsal_obj_handle *obj_hdl, object_file_type_t type)
 {
 	return obj_hdl->type == type;
+}
+
+/* get_ref
+ * default case is no refcounting
+ */
+
+static void handle_get_ref(struct fsal_obj_handle *obj_hdl)
+{
+	/* return */
+}
+
+/* put_ref
+ * default case is no refcounting
+ */
+
+static void handle_put_ref(struct fsal_obj_handle *obj_hdl)
+{
+	/* return */
 }
 
 /* handle_release
@@ -1101,7 +1137,29 @@ static fsal_status_t handle_digest(const struct fsal_obj_handle *obj_hdl,
 }
 
 /**
- * handle_digest
+ * handle_cmp
+ * default case compare with handle_to_key
+ */
+static bool handle_cmp(struct fsal_obj_handle *obj_hdl1,
+		       struct fsal_obj_handle *obj_hdl2)
+{
+	struct gsh_buffdesc key1, key2;
+
+	if (obj_hdl1 == NULL || obj_hdl2 == NULL)
+		return false;
+
+	if (obj_hdl1 == obj_hdl2)
+		return true;
+
+	obj_hdl1->obj_ops.handle_to_key(obj_hdl1, &key1);
+	obj_hdl2->obj_ops.handle_to_key(obj_hdl2, &key2);
+	if (key1.len != key2.len)
+		return false;
+	return !memcmp(key1.addr, key2.addr, key1.len);
+}
+
+/**
+ * handle_to_key
  * default case return a safe empty key
  */
 
@@ -1231,7 +1289,8 @@ static bool check_verifier(struct fsal_obj_handle *obj_hdl,
  * default case return 0
  */
 
-static fsal_openflags_t status2(struct state_t *state)
+static fsal_openflags_t status2(struct fsal_obj_handle *obj_hdl,
+				struct state_t *state)
 {
 	return 0;
 }
@@ -1356,6 +1415,8 @@ static fsal_status_t close2(struct fsal_obj_handle *obj_hdl,
  */
 
 struct fsal_obj_ops def_handle_ops = {
+	.get_ref = handle_get_ref,
+	.put_ref = handle_put_ref,
 	.release = handle_release,
 	.merge = handle_merge,
 	.lookup = lookup,
@@ -1398,6 +1459,7 @@ struct fsal_obj_ops def_handle_ops = {
 	.handle_is = handle_is,
 	.lru_cleanup = lru_cleanup,
 	.handle_digest = handle_digest,
+	.handle_cmp = handle_cmp,
 	.handle_to_key = handle_to_key,
 	.layoutget = layoutget,
 	.layoutreturn = layoutreturn,

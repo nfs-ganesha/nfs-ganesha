@@ -1304,7 +1304,8 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
  * @retval Flags representing current open status
  */
 
-fsal_openflags_t vfs_status2(struct state_t *state)
+fsal_openflags_t vfs_status2(struct fsal_obj_handle *obj_hdl,
+			     struct state_t *state)
 {
 	struct vfs_fd *my_fd = (struct vfs_fd *)(state + 1);
 

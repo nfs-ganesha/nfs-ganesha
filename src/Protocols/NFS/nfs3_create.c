@@ -37,7 +37,6 @@
 #include "log.h"
 #include "fsal.h"
 #include "nfs_core.h"
-#include "cache_inode.h"
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
@@ -67,15 +66,14 @@ int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
 	const char *file_name = arg->arg_create3.where.name;
 	uint32_t mode = 0;
-	cache_entry_t *file_entry = NULL;
-	cache_entry_t *parent_entry = NULL;
+	struct fsal_obj_handle *file_obj = NULL;
+	struct fsal_obj_handle *parent_obj = NULL;
 	pre_op_attr pre_parent = {
 		.attributes_follow = false
 	};
 	struct attrlist sattr;
-	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
+	fsal_status_t fsal_status = {0, 0};
 	int rc = NFS_REQ_OK;
-	fsal_status_t fsal_status;
 	/* Client provided verifier, split into two pieces */
 	uint32_t verf_hi = 0, verf_lo = 0;
 
@@ -97,21 +95,21 @@ int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	res->res_create3.CREATE3res_u.resfail.dir_wcc.after.attributes_follow =
 	    FALSE;
 
-	parent_entry = nfs3_FhandleToCache(&arg->arg_create3.where.dir,
+	parent_obj = nfs3_FhandleToCache(&arg->arg_create3.where.dir,
 					   &res->res_create3.status,
 					   &rc);
 
-	if (parent_entry == NULL) {
+	if (parent_obj == NULL) {
 		/* Status and rc have been set by nfs3_FhandleToCache */
 		goto out;
 	}
 
 	/* get directory attributes before action (for V3 reply) */
-	nfs_SetPreOpAttr(parent_entry, &pre_parent);
+	nfs_SetPreOpAttr(parent_obj, &pre_parent);
 
 	/* Sanity checks: new file name must be non-null; parent must
 	   be a directory. */
-	if (parent_entry->type != DIRECTORY) {
+	if (parent_obj->type != DIRECTORY) {
 		res->res_create3.status = NFS3ERR_NOTDIR;
 		rc = NFS_REQ_OK;
 		goto out;
@@ -131,7 +129,7 @@ int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	}
 
 	if (file_name == NULL || *file_name == '\0') {
-		cache_status = CACHE_INODE_INVALID_ARGUMENT;
+		fsal_status = fsalstat(ERR_FSAL_INVAL, 0);
 		goto out_fail;
 	}
 
@@ -155,7 +153,7 @@ int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		}
 	}
 
-	if (parent_entry->obj_handle->fsal->m_ops.support_ex()) {
+	if (parent_obj->fsal->m_ops.support_ex()) {
 		fsal_verifier_t verifier;
 		enum fsal_create_mode createmode;
 
@@ -175,22 +173,22 @@ int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		squash_setattr(&sattr);
 
 		/* Stateless open, assume Read/Write. */
-		cache_status = cache_inode_open2(parent_entry,
-						 NULL,
-						 FSAL_O_RDWR,
-						 createmode,
-						 file_name,
-						 &sattr,
-						 verifier,
-						 &file_entry);
+		fsal_status = fsal_open2(parent_obj,
+					 NULL,
+					 FSAL_O_RDWR,
+					 createmode,
+					 file_name,
+					 &sattr,
+					 verifier,
+					 &file_obj);
 
-		if (cache_status != CACHE_INODE_SUCCESS)
+		if (FSAL_IS_ERROR(fsal_status))
 			goto out_fail;
 
 		goto make_handle;
 	}
 
-	/* Mode is managed in cache_inode_create,
+	/* Mode is managed in fsal_create,
 	   there is no need to manage it */
 	FSAL_UNSET_MASK(sattr.mask, ATTR_MODE);
 
@@ -203,30 +201,23 @@ int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		memcpy(&verf_hi, verf, sizeof(uint32_t));
 		memcpy(&verf_lo, verf + sizeof(uint32_t), sizeof(uint32_t));
 
-		cache_inode_create_set_verifier(&sattr, verf_hi, verf_lo);
+		fsal_create_set_verifier(&sattr, verf_hi, verf_lo);
 	}
 
-	cache_status = cache_inode_create(parent_entry,
-					  file_name,
-					  REGULAR_FILE,
-					  mode,
-					  NULL,
-					  &file_entry);
+	fsal_status = fsal_create(parent_obj, file_name, REGULAR_FILE, mode,
+				  NULL, &file_obj);
 
 	/* Complete failure */
-	if (((cache_status != CACHE_INODE_SUCCESS)
-	     && (cache_status != CACHE_INODE_ENTRY_EXISTS))
-	    || (file_entry == NULL)) {
+	if ((FSAL_IS_ERROR(fsal_status) && fsal_status.major != ERR_FSAL_EXIST)
+	    || (file_obj == NULL)) {
 		goto out_fail;
 	}
 
-	if (cache_status == CACHE_INODE_ENTRY_EXISTS) {
+	if (fsal_status.major == ERR_FSAL_EXIST) {
 		if (arg->arg_create3.how.mode == GUARDED) {
 			goto out_fail;
 		} else if (arg->arg_create3.how.mode == EXCLUSIVE
-			   && !cache_inode_create_verify(file_entry,
-							 verf_hi,
-							 verf_lo)) {
+			   && !fsal_create_verify(file_obj, verf_hi, verf_lo)) {
 			goto out_fail;
 		}
 
@@ -242,7 +233,7 @@ int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		}
 
 		/* Clear error code */
-		cache_status = CACHE_INODE_SUCCESS;
+		fsal_status = fsalstat(ERR_FSAL_NO_ERROR, 0);
 	}
 
 	/* Are there any attributes left to set? */
@@ -261,14 +252,11 @@ int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 			/* mask off flags handled by create */
 			sattr.mask &= CREATE_MASK_REG_NFS3 | ATTRS_CREDS;
 
-			/* A call to cache_inode_setattr is required */
-			cache_status = cache_inode_setattr(file_entry,
-							   false,
-							   NULL,
-							   &sattr,
-							   false);
+			/* A call to fsal_setattr is required */
+			fsal_status = fsal_setattr(file_obj, false, NULL,
+						   &sattr);
 
-			if (cache_status != CACHE_INODE_SUCCESS)
+			if (FSAL_IS_ERROR(fsal_status))
 				goto out_fail;
 		}
 	}
@@ -279,8 +267,7 @@ int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	if (!nfs3_FSALToFhandle(
 	     true,
 	     &res->res_create3.CREATE3res_u.resok.obj.post_op_fh3_u.handle,
-	     file_entry->obj_handle,
-	     op_ctx->export)) {
+	     file_obj, op_ctx->export)) {
 		res->res_create3.status = NFS3ERR_BADHANDLE;
 		rc = NFS_REQ_OK;
 		goto out;
@@ -290,10 +277,10 @@ int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	res->res_create3.CREATE3res_u.resok.obj.handle_follows = TRUE;
 
 	/* Build entry attributes */
-	nfs_SetPostOpAttr(file_entry,
+	nfs_SetPostOpAttr(file_obj,
 			  &res->res_create3.CREATE3res_u.resok.obj_attributes);
 
-	nfs_SetWccData(&pre_parent, parent_entry,
+	nfs_SetWccData(&pre_parent, parent_obj,
 		       &res->res_create3.CREATE3res_u.resok.dir_wcc);
 
 	res->res_create3.status = NFS3_OK;
@@ -302,21 +289,21 @@ int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
  out:
 	/* return references */
-	if (file_entry)
-		cache_inode_put(file_entry);
+	if (file_obj)
+		file_obj->obj_ops.put_ref(file_obj);
 
-	if (parent_entry)
-		cache_inode_put(parent_entry);
+	if (parent_obj)
+		parent_obj->obj_ops.put_ref(parent_obj);
 
 	return rc;
 
  out_fail:
-	if (nfs_RetryableError(cache_status)) {
+	if (nfs_RetryableError(fsal_status.major)) {
 		rc = NFS_REQ_DROP;
 	} else {
-		res->res_create3.status = nfs3_Errno(cache_status);
+		res->res_create3.status = nfs3_Errno_status(fsal_status);
 
-		nfs_SetWccData(&pre_parent, parent_entry,
+		nfs_SetWccData(&pre_parent, parent_obj,
 			       &res->res_create3.CREATE3res_u.resfail.dir_wcc);
 	}
 	goto out;

@@ -40,7 +40,6 @@
 #include "nfs_core.h"
 #include "nfs_exports.h"
 #include "log.h"
-#include "cache_inode.h"
 #include "fsal.h"
 #include "9p.h"
 
@@ -59,12 +58,12 @@ int _9p_mknod(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	struct _9p_fid *pfid = NULL;
 	struct _9p_qid qid_newobj;
 
-	cache_entry_t *pentry_newobj = NULL;
+	struct fsal_obj_handle *pentry_newobj = NULL;
 	char obj_name[MAXNAMLEN];
 	uint64_t fileid = 0LL;
-	cache_inode_status_t cache_status;
+	fsal_status_t fsal_status;
 	object_file_type_t nodetype;
-	cache_inode_create_arg_t create_arg;
+	fsal_create_arg_t create_arg;
 
 	memset(&create_arg, 0, sizeof(create_arg));
 
@@ -119,16 +118,14 @@ int _9p_mknod(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 	/* Create the directory */
    /**  @todo  BUGAZOMEU the gid parameter is not used yet */
-	cache_status =
-	    cache_inode_create(pfid->pentry, obj_name, nodetype, *mode,
-			       &create_arg, &pentry_newobj);
-	if (pentry_newobj == NULL)
-		return _9p_rerror(req9p, msgtag,
-				  _9p_tools_errno(cache_status), plenout,
-				  preply);
+	fsal_status = fsal_create(pfid->pentry, obj_name, nodetype, *mode,
+				  &create_arg, &pentry_newobj);
+	if (FSAL_IS_ERROR(fsal_status))
+		return _9p_rerror(req9p, msgtag, _9p_tools_errno(fsal_status),
+				  plenout, preply);
 
 	/* we don't keep a reference to the entry */
-	cache_inode_put(pentry_newobj);
+	pentry_newobj->obj_ops.put_ref(pentry_newobj);
 
 	/* Build the qid */
 	qid_newobj.type = _9P_QTTMP;

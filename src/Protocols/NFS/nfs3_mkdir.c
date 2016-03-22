@@ -38,7 +38,6 @@
 #include "log.h"
 #include "fsal.h"
 #include "nfs_core.h"
-#include "cache_inode.h"
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
@@ -67,14 +66,13 @@ int nfs3_mkdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
 	const char *dir_name = arg->arg_mkdir3.where.name;
 	uint32_t mode = 0;
-	cache_entry_t *dir_entry = NULL;
-	cache_entry_t *parent_entry = NULL;
+	struct fsal_obj_handle *dir_obj = NULL;
+	struct fsal_obj_handle *parent_obj = NULL;
 	pre_op_attr pre_parent = {
 		.attributes_follow = false
 	};
-	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
+	fsal_status_t fsal_status = {0, 0};
 	int rc = NFS_REQ_OK;
-	fsal_status_t fsal_status;
 	struct attrlist sattr;
 
 	if (isDebug(COMPONENT_NFSPROTO)) {
@@ -94,17 +92,17 @@ int nfs3_mkdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	res->res_mkdir3.MKDIR3res_u.resfail.dir_wcc.after.attributes_follow =
 	    FALSE;
 
-	parent_entry = nfs3_FhandleToCache(&arg->arg_mkdir3.where.dir,
+	parent_obj = nfs3_FhandleToCache(&arg->arg_mkdir3.where.dir,
 					   &res->res_mkdir3.status,
 					   &rc);
 
-	if (parent_entry == NULL) {
+	if (parent_obj == NULL) {
 		/* Status and rc have been set by nfs3_FhandleToCache */
 		goto out;
 	}
 
 	/* Sanity checks */
-	if (parent_entry->type != DIRECTORY) {
+	if (parent_obj->type != DIRECTORY) {
 		res->res_mkdir3.status = NFS3ERR_NOTDIR;
 
 		rc = NFS_REQ_OK;
@@ -126,7 +124,7 @@ int nfs3_mkdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	}
 
 	if (dir_name == NULL || *dir_name == '\0') {
-		cache_status = CACHE_INODE_INVALID_ARGUMENT;
+		fsal_status = fsalstat(ERR_FSAL_INVAL, 0);
 		goto out_fail;
 	}
 
@@ -136,17 +134,16 @@ int nfs3_mkdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		mode = 0;
 
 	/* Try to create the directory */
-	cache_status =
-	    cache_inode_create(parent_entry, dir_name, DIRECTORY, mode, NULL,
-			       &dir_entry);
+	fsal_status = fsal_create(parent_obj, dir_name, DIRECTORY, mode, NULL,
+				  &dir_obj);
 
-	if (cache_status != CACHE_INODE_SUCCESS)
+	if (FSAL_IS_ERROR(fsal_status))
 		goto out_fail;
 
 	memset(&sattr, 0, sizeof(sattr));
 
 	if (nfs3_Sattr_To_FSALattr(&sattr, &arg->arg_mkdir3.attributes) == 0) {
-		cache_status = CACHE_INODE_INVALID_ARGUMENT;
+		fsal_status = fsalstat(ERR_FSAL_INVAL, 0);
 		goto out_fail;
 	}
 
@@ -162,10 +159,9 @@ int nfs3_mkdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		/* mask off flags handled by create */
 		sattr.mask &= CREATE_MASK_NON_REG_NFS3 | ATTRS_CREDS;
 
-		cache_status =
-		    cache_inode_setattr(dir_entry, false, NULL, &sattr, false);
+		fsal_status = fsal_setattr(dir_obj, false, NULL, &sattr);
 
-		if (cache_status != CACHE_INODE_SUCCESS)
+		if (FSAL_IS_ERROR(fsal_status))
 			goto out_fail;
 	}
 
@@ -174,7 +170,7 @@ int nfs3_mkdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	/* Build file handle */
 	if (!nfs3_FSALToFhandle(true,
 				&d3ok->obj.post_op_fh3_u.handle,
-				dir_entry->obj_handle,
+				dir_obj,
 				op_ctx->export)) {
 		res->res_mkdir3.status = NFS3ERR_BADHANDLE;
 		rc = NFS_REQ_OK;
@@ -185,10 +181,10 @@ int nfs3_mkdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	d3ok->obj.handle_follows = true;
 
 	/* Build entry attributes */
-	nfs_SetPostOpAttr(dir_entry, &d3ok->obj_attributes);
+	nfs_SetPostOpAttr(dir_obj, &d3ok->obj_attributes);
 
 	/* Build Weak Cache Coherency data */
-	nfs_SetWccData(&pre_parent, parent_entry, &d3ok->dir_wcc);
+	nfs_SetWccData(&pre_parent, parent_obj, &d3ok->dir_wcc);
 
 	res->res_mkdir3.status = NFS3_OK;
 	rc = NFS_REQ_OK;
@@ -196,20 +192,20 @@ int nfs3_mkdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	goto out;
 
  out_fail:
-	res->res_mkdir3.status = nfs3_Errno(cache_status);
-	nfs_SetWccData(&pre_parent, parent_entry,
+	res->res_mkdir3.status = nfs3_Errno_status(fsal_status);
+	nfs_SetWccData(&pre_parent, parent_obj,
 		       &res->res_mkdir3.MKDIR3res_u.resfail.dir_wcc);
 
-	if (nfs_RetryableError(cache_status))
+	if (nfs_RetryableError(fsal_status.major))
 		rc = NFS_REQ_DROP;
 
  out:
 	/* return references */
-	if (dir_entry)
-		cache_inode_put(dir_entry);
+	if (dir_obj)
+		dir_obj->obj_ops.put_ref(dir_obj);
 
-	if (parent_entry)
-		cache_inode_put(parent_entry);
+	if (parent_obj)
+		parent_obj->obj_ops.put_ref(parent_obj);
 
 	return rc;
 }

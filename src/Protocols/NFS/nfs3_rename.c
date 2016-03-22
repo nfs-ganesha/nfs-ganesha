@@ -38,7 +38,6 @@
 #include "log.h"
 #include "fsal.h"
 #include "nfs_core.h"
-#include "cache_inode.h"
 #include "nfs_exports.h"
 #include "nfs_proto_functions.h"
 #include "nfs_convert.h"
@@ -65,9 +64,9 @@ int nfs3_rename(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
 	const char *entry_name = arg->arg_rename3.from.name;
 	const char *new_entry_name = arg->arg_rename3.to.name;
-	cache_entry_t *parent_entry = NULL;
-	cache_entry_t *new_parent_entry = NULL;
-	cache_inode_status_t cache_status;
+	struct fsal_obj_handle *parent_obj = NULL;
+	struct fsal_obj_handle *new_parent_obj = NULL;
+	fsal_status_t fsal_status;
 	int to_exportid = 0;
 	int from_exportid = 0;
 	int rc = NFS_REQ_OK;
@@ -131,50 +130,48 @@ int nfs3_rename(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		goto out;
 	}
 
-	/* Convert fromdir file handle into a cache_entry */
-	parent_entry = nfs3_FhandleToCache(&arg->arg_rename3.from.dir,
+	/* Convert fromdir file handle into a FSAL obj */
+	parent_obj = nfs3_FhandleToCache(&arg->arg_rename3.from.dir,
 					   &res->res_create3.status,
 					   &rc);
 
-	if (parent_entry == NULL) {
+	if (parent_obj == NULL) {
 		/* Status and rc have been set by nfs3_FhandleToCache */
 		goto out;
 	}
 
-	nfs_SetPreOpAttr(parent_entry, &pre_parent);
+	nfs_SetPreOpAttr(parent_obj, &pre_parent);
 
-	/* Convert todir file handle into a cache_entry */
-	new_parent_entry = nfs3_FhandleToCache(&arg->arg_rename3.to.dir,
+	/* Convert todir file handle into a FSAL obj */
+	new_parent_obj = nfs3_FhandleToCache(&arg->arg_rename3.to.dir,
 					       &res->res_create3.status,
 					       &rc);
 
-	if (new_parent_entry == NULL) {
+	if (new_parent_obj == NULL) {
 		/* Status and rc have been set by nfs3_FhandleToCache */
 		goto out;
 	}
 
-	nfs_SetPreOpAttr(new_parent_entry, &pre_new_parent);
+	nfs_SetPreOpAttr(new_parent_obj, &pre_new_parent);
 
 	if (entry_name == NULL || *entry_name == '\0' || new_entry_name == NULL
 	    || *new_entry_name == '\0') {
-		cache_status = CACHE_INODE_INVALID_ARGUMENT;
+		fsal_status = fsalstat(ERR_FSAL_INVAL, 0);
 		goto out_fail;
 	}
 
-	cache_status = cache_inode_rename(parent_entry,
-					  entry_name,
-					  new_parent_entry,
-					  new_entry_name);
+	fsal_status = fsal_rename(parent_obj, entry_name, new_parent_obj,
+				  new_entry_name);
 
-	if (cache_status != CACHE_INODE_SUCCESS)
+	if (FSAL_IS_ERROR(fsal_status))
 		goto out_fail;
 
 	res->res_rename3.status = NFS3_OK;
 
-	nfs_SetWccData(&pre_parent, parent_entry,
+	nfs_SetWccData(&pre_parent, parent_obj,
 		       &res->res_rename3.RENAME3res_u.resok.fromdir_wcc);
 
-	nfs_SetWccData(&pre_new_parent, new_parent_entry,
+	nfs_SetWccData(&pre_new_parent, new_parent_obj,
 		       &res->res_rename3.RENAME3res_u.resok.todir_wcc);
 
 	rc = NFS_REQ_OK;
@@ -182,24 +179,24 @@ int nfs3_rename(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	goto out;
 
  out_fail:
-	res->res_rename3.status = nfs3_Errno(cache_status);
+	res->res_rename3.status = nfs3_Errno_status(fsal_status);
 
-	nfs_SetWccData(&pre_parent, parent_entry,
+	nfs_SetWccData(&pre_parent, parent_obj,
 		       &res->res_rename3.RENAME3res_u.resfail.fromdir_wcc);
 
-	nfs_SetWccData(&pre_new_parent, new_parent_entry,
+	nfs_SetWccData(&pre_new_parent, new_parent_obj,
 		       &res->res_rename3.RENAME3res_u.resfail.todir_wcc);
 
 	/* If we are here, there was an error */
-	if (nfs_RetryableError(cache_status))
+	if (nfs_RetryableError(fsal_status.major))
 		rc = NFS_REQ_DROP;
 
  out:
-	if (parent_entry)
-		cache_inode_put(parent_entry);
+	if (parent_obj)
+		parent_obj->obj_ops.put_ref(parent_obj);
 
-	if (new_parent_entry)
-		cache_inode_put(new_parent_entry);
+	if (new_parent_obj)
+		new_parent_obj->obj_ops.put_ref(new_parent_obj);
 
 	return rc;
 }

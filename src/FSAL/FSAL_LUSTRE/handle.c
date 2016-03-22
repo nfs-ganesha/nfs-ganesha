@@ -765,6 +765,7 @@ static fsal_status_t lustre_read_dirents(struct fsal_obj_handle *dir_hdl,
 		if (nread == 0)
 			break;
 		for (bpos = 0; bpos < nread;) {
+			struct fsal_obj_handle *obj;
 			dentry = (struct linux_dirent *)(buf + bpos);
 			if (strcmp(dentry->d_name, ".") == 0
 			    || strcmp(dentry->d_name, "..") == 0)
@@ -777,8 +778,13 @@ static fsal_status_t lustre_read_dirents(struct fsal_obj_handle *dir_hdl,
 				goto skip;
 			}
 
+			if (FSAL_IS_ERROR(lustre_lookup(dir_hdl, dentry->d_name,
+							&obj)))
+				goto done;
+
 			/* callback to cache inode */
 			if (!cb(dentry->d_name,
+				obj,
 				dir_state,
 				(fsal_cookie_t) dentry->d_off))
 					goto done;

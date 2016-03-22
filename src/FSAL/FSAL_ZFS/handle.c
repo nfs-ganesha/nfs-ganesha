@@ -564,6 +564,9 @@ static fsal_status_t tank_readdir(struct fsal_obj_handle *dir_hdl,
 		goto out;
 	*eof = false;
 	do {
+		struct fsal_obj_handle *obj;
+		fsal_status_t fsal_status;
+
 		retval = libzfswrap_readdir(p_vfs, &cred, pvnode, dirents,
 					    MAX_ENTRIES, &seekloc);
 		if (retval)
@@ -581,8 +584,15 @@ static fsal_status_t tank_readdir(struct fsal_obj_handle *dir_hdl,
 			    || !strcmp(dirents[index].psz_filename, ".."))
 				continue;
 
+			fsal_status = tank_lookup(dir_hdl,
+						  dirents[index].psz_filename,
+						  &obj);
+			if (FSAL_IS_ERROR(fsal_status))
+				goto done;
+
 			/* callback to cache inode */
 			if (!cb(dirents[index].psz_filename,
+				obj,
 				dir_state,
 				(fsal_cookie_t) index))
 				goto done;

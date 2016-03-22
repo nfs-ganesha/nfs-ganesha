@@ -225,6 +225,10 @@ static struct pseudo_fsal_obj_handle
 
 	hdl->obj_handle.type = DIRECTORY;
 
+	/* State handle */
+	state_hdl_init(&hdl->ostate, DIRECTORY, &hdl->obj_handle);
+	hdl->obj_handle.state_hdl = &hdl->ostate;
+
 	/* Fills the output struct */
 	hdl->attributes.type = DIRECTORY;
 	FSAL_SET_MASK(hdl->attributes.mask, ATTR_TYPE);
@@ -524,7 +528,7 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 		if (hdl->index < seekloc)
 			continue;
 
-		if (!cb(hdl->name, dir_state, hdl->index)) {
+		if (!cb(hdl->name, &hdl->obj_handle, dir_state, hdl->index)) {
 			*eof = false;
 			break;
 		}

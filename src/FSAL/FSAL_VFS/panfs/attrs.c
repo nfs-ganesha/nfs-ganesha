@@ -270,7 +270,6 @@ static fsal_status_t fsal_acl_2_panfs_acl(struct attrlist *attrib,
 		struct pan_fs_acl_s *panacl)
 {
 	fsal_errors_t ret = ERR_FSAL_NO_ERROR;
-	fsal_acl_status_t status;
 	struct pan_fs_ace_s *panace;
 	fsal_ace_t *ace = NULL;
 	fsal_acl_t *acl = NULL;
@@ -302,7 +301,7 @@ static fsal_status_t fsal_acl_2_panfs_acl(struct attrlist *attrib,
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 fail:
-	nfs4_acl_release_entry(acl, &status);
+	(void)nfs4_acl_release_entry(acl);
 	return fsalstat(ret, 0);
 }
 

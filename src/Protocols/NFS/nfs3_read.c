@@ -37,7 +37,6 @@
 #include "log.h"
 #include "fsal.h"
 #include "nfs_core.h"
-#include "cache_inode.h"
 #include "nfs_exports.h"
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
@@ -46,9 +45,8 @@
 #include "export_mgr.h"
 #include "sal_functions.h"
 
-static void nfs_read_ok(struct svc_req *req,
-			nfs_res_t *res,
-			char *data, uint32_t read_size, cache_entry_t *entry,
+static void nfs_read_ok(struct svc_req *req, nfs_res_t *res, char *data,
+			uint32_t read_size, struct fsal_obj_handle *obj,
 			int eof)
 {
 	if ((read_size == 0) && (data != NULL)) {
@@ -57,7 +55,7 @@ static void nfs_read_ok(struct svc_req *req,
 	}
 
 	/* Build Post Op Attributes */
-	nfs_SetPostOpAttr(entry,
+	nfs_SetPostOpAttr(obj,
 			  &res->res_read3.READ3res_u.resok.file_attributes);
 
 	res->res_read3.READ3res_u.resok.eof = eof;
@@ -86,9 +84,9 @@ static void nfs_read_ok(struct svc_req *req,
 
 int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
-	cache_entry_t *entry;
+	struct fsal_obj_handle *obj;
 	pre_op_attr pre_attr;
-	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
+	fsal_status_t fsal_status = {0, 0};
 	size_t size = 0;
 	size_t read_size = 0;
 	uint64_t offset = 0;
@@ -119,42 +117,38 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	res->res_read3.READ3res_u.resok.data.data_val = NULL;
 	res->res_read3.READ3res_u.resok.data.data_len = 0;
 	res->res_read3.status = NFS3_OK;
-	entry = nfs3_FhandleToCache(&arg->arg_read3.file,
+	obj = nfs3_FhandleToCache(&arg->arg_read3.file,
 				    &res->res_read3.status, &rc);
 
-	if (entry == NULL) {
+	if (obj == NULL) {
 		/* Status and rc have been set by nfs3_FhandleToCache */
 		goto out;
 	}
 
-	nfs_SetPreOpAttr(entry, &pre_attr);
+	nfs_SetPreOpAttr(obj, &pre_attr);
 
-	/** @todo this is racy, use cache_inode_lock_trust_attrs and
-	 *        cache_inode_access_no_mutex
-	 */
-	if (entry->obj_handle->attrs->owner != op_ctx->creds->caller_uid) {
-		cache_status =
-		    cache_inode_access(entry, FSAL_READ_ACCESS);
+	if (obj->attrs->owner != op_ctx->creds->caller_uid) {
+		fsal_status = fsal_access(obj, FSAL_READ_ACCESS, NULL, NULL);
 
-		if (cache_status == CACHE_INODE_FSAL_EACCESS) {
+		if (fsal_status.major == ERR_FSAL_ACCESS) {
 			/* Test for execute permission */
-			cache_status =
-			    cache_inode_access(entry,
+			fsal_status = fsal_access(obj,
 					       FSAL_MODE_MASK_SET(FSAL_X_OK) |
 					       FSAL_ACE4_MASK_SET
-					       (FSAL_ACE_PERM_EXECUTE));
+					       (FSAL_ACE_PERM_EXECUTE),
+					       NULL, NULL);
 		}
 
-		if (cache_status != CACHE_INODE_SUCCESS) {
-			res->res_read3.status = nfs3_Errno(cache_status);
+		if (FSAL_IS_ERROR(fsal_status)) {
+			res->res_read3.status = nfs3_Errno_status(fsal_status);
 			rc = NFS_REQ_OK;
 			goto out;
 		}
 	}
 
 	/* Sanity check: read only from a regular file */
-	if (entry->type != REGULAR_FILE) {
-		if (entry->type == DIRECTORY)
+	if (obj->type != REGULAR_FILE) {
+		if (obj->type == DIRECTORY)
 			res->res_read3.status = NFS3ERR_ISDIR;
 		else
 			res->res_read3.status = NFS3ERR_INVAL;
@@ -183,7 +177,7 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 			res->res_read3.status = NFS3ERR_FBIG;
 
-			nfs_SetPostOpAttr(entry,
+			nfs_SetPostOpAttr(obj,
 					  &res->res_read3.READ3res_u.resfail.
 					  file_attributes);
 
@@ -202,7 +196,7 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	}
 
 	if (size == 0) {
-		nfs_read_ok(req, res, NULL, 0, entry, 0);
+		nfs_read_ok(req, res, NULL, 0, obj, 0);
 		rc = NFS_REQ_OK;
 		goto out;
 	} else {
@@ -210,7 +204,7 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 		res->res_read3.status = nfs3_Errno_state(
 				state_share_anonymous_io_start(
-					entry,
+					obj,
 					OPEN4_SHARE_ACCESS_READ,
 					SHARE_BYPASS_READ));
 
@@ -220,36 +214,35 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 			goto out;
 		}
 
-		if (entry->obj_handle->fsal->m_ops.support_ex()) {
-			/* Call the new cache_inode_read */
+		if (obj->fsal->m_ops.support_ex()) {
+			/* Call the new fsal_read2 */
 			/** @todo for now pass NULL state */
-			cache_status = cache_inode_read(entry,
-							true,
-							NULL,
-							offset,
-							size,
-							&read_size,
-							data,
-							&eof_met,
-							NULL);
+			fsal_status = fsal_read2(obj,
+						  true,
+						  NULL,
+						  offset,
+						  size,
+						  &read_size,
+						  data,
+						  &eof_met,
+						  NULL);
 		} else {
-			/* Call legacy cache_inode_rdwr */
-			cache_status = cache_inode_rdwr(entry,
-							CACHE_INODE_READ,
-							offset,
-							size,
-							&read_size,
-							data,
-							&eof_met,
-							&sync,
-							NULL);
+			/* Call legacy fsal_rdwr */
+			fsal_status = fsal_rdwr(obj,
+						FSAL_IO_READ,
+						offset,
+						size,
+						&read_size,
+						data,
+						&eof_met,
+						&sync,
+						NULL);
 		}
 
-		state_share_anonymous_io_done(entry, OPEN4_SHARE_ACCESS_READ);
+		state_share_anonymous_io_done(obj, OPEN4_SHARE_ACCESS_READ);
 
-		if (cache_status == CACHE_INODE_SUCCESS) {
-			nfs_read_ok(req, res, data, read_size,
-				    entry, eof_met);
+		if (!FSAL_IS_ERROR(fsal_status)) {
+			nfs_read_ok(req, res, data, read_size, obj, eof_met);
 			rc = NFS_REQ_OK;
 			goto out;
 		}
@@ -257,22 +250,22 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	}
 
 	/* If we are here, there was an error */
-	if (nfs_RetryableError(cache_status)) {
+	if (nfs_RetryableError(fsal_status.major)) {
 		rc = NFS_REQ_DROP;
 		goto out;
 	}
 
-	res->res_read3.status = nfs3_Errno(cache_status);
+	res->res_read3.status = nfs3_Errno_status(fsal_status);
 
-	nfs_SetPostOpAttr(entry,
+	nfs_SetPostOpAttr(obj,
 			  &res->res_read3.READ3res_u.resfail.file_attributes);
 
 	rc = NFS_REQ_OK;
 
  out:
 	/* return references */
-	if (entry)
-		cache_inode_put(entry);
+	if (obj)
+		obj->obj_ops.put_ref(obj);
 
 	server_stats_io_done(size, read_size,
 			     (rc == NFS_REQ_OK) ? true : false,

@@ -624,7 +624,7 @@ void Copy_nfs4_denied(LOCK4denied *denied_dst, LOCK4denied *denied_src)
  * @param[in]     tag   Arbitrary string for logging/debugging
  */
 void Copy_nfs4_state_req(state_owner_t *owner, seqid4 seqid, nfs_argop4 *args,
-			 cache_entry_t *entry, nfs_resop4 *resp,
+			 struct fsal_obj_handle *obj, nfs_resop4 *resp,
 			 const char *tag)
 {
 	/* Simplify use of this function when we may not be keeping any data
@@ -654,7 +654,7 @@ void Copy_nfs4_state_req(state_owner_t *owner, seqid4 seqid, nfs_argop4 *args,
 	/* Copy new file, note we don't take any reference, so this entry
 	 * might not remain valid, but the pointer value suffices here.
 	 */
-	owner->so_owner.so_nfs4_owner.so_last_entry = entry;
+	owner->so_owner.so_nfs4_owner.so_last_entry = obj;
 
 	/** @todo Deep copy OPEN args?
 	 * if (args->argop == NFS4_OP_OPEN)
@@ -685,7 +685,8 @@ void Copy_nfs4_state_req(state_owner_t *owner, seqid4 seqid, nfs_argop4 *args,
  * @retval false if the caller should immediately return the provides response.
  */
 bool Check_nfs4_seqid(state_owner_t *owner, seqid4 seqid, nfs_argop4 *args,
-		      cache_entry_t *entry, nfs_resop4 *resp, const char *tag)
+		      struct fsal_obj_handle *obj, nfs_resop4 *resp,
+		      const char *tag)
 {
 	seqid4 next;
 	char str[LOG_BUFF_LEN];
@@ -747,7 +748,7 @@ bool Check_nfs4_seqid(state_owner_t *owner, seqid4 seqid, nfs_argop4 *args,
 		return false;
 	}
 
-	if (owner->so_owner.so_nfs4_owner.so_last_entry != entry) {
+	if (owner->so_owner.so_nfs4_owner.so_last_entry != obj) {
 		if (str_valid)
 			LogDebug(COMPONENT_STATE,
 				 "%s: Invalid seqid %u in request (not replay - wrong file), expected seqid for {%s}, returning NFS4ERR_BAD_SEQID",

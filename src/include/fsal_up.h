@@ -49,7 +49,6 @@
 
 #include "gsh_status.h"
 #include "fsal_api.h"
-#include "cache_inode.h"
 
 enum {
 	/* empty flags */
@@ -110,6 +109,10 @@ struct layoutrecall_spec {
 };
 
 /** @} */
+
+static const uint32_t FSAL_UP_INVALIDATE_ATTRS = 0x01;
+static const uint32_t FSAL_UP_INVALIDATE_CONTENT = 0x02;
+static const uint32_t FSAL_UP_INVALIDATE_CLOSE = 0x04;
 
 /**
  * @brief Possible upcall functions
@@ -306,14 +309,14 @@ int up_async_delegrecall(struct fridgethr *fr,
 			 void *cb_arg);
 
 /** @} */
-int async_delegrecall(struct fridgethr *fr, cache_entry_t *entry);
+int async_delegrecall(struct fridgethr *fr, struct fsal_obj_handle *obj);
 cache_inode_status_t fsal_invalidate(struct fsal_module *fsal,
 				     struct gsh_buffdesc *handle,
 				     uint32_t flags);
 
 cache_inode_status_t up_get(struct fsal_module *fsal,
 			    struct gsh_buffdesc *handle,
-			    cache_entry_t **entry);
+			    struct fsal_obj_handle **obj);
 
 #endif /* FSAL_UP_H */
 /** @} */

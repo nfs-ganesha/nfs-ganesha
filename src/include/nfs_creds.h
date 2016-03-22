@@ -40,7 +40,6 @@
 #include <sys/param.h>
 
 #include "fsal_types.h"
-#include "cache_inode.h"
 #include "sal_data.h"
 
 void init_credentials(void);
@@ -52,7 +51,7 @@ nfsstat4 nfs_req_creds(struct svc_req *req);
 
 nfsstat4 nfs4_export_check_access(struct svc_req *req);
 
-cache_inode_status_t nfs_access_op(cache_entry_t *entry,
+fsal_errors_t nfs_access_op(struct fsal_obj_handle *hdl,
 				   uint32_t requested_access,
 				   uint32_t *granted_access,
 				   uint32_t *supported_access);

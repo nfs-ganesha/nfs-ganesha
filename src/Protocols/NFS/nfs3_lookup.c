@@ -38,7 +38,6 @@
 #include "log.h"
 #include "fsal.h"
 #include "nfs_core.h"
-#include "cache_inode.h"
 #include "nfs_exports.h"
 #include "nfs_proto_functions.h"
 #include "nfs_convert.h"
@@ -62,9 +61,9 @@
 
 int nfs3_lookup(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
-	cache_entry_t *entry_dir = NULL;
-	cache_entry_t *entry_file = NULL;
-	cache_inode_status_t cache_status;
+	struct fsal_obj_handle *obj_dir = NULL;
+	struct fsal_obj_handle *obj_file = NULL;
+	fsal_status_t fsal_status;
 	char *name = NULL;
 	int rc = NFS_REQ_OK;
 
@@ -84,63 +83,61 @@ int nfs3_lookup(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	res->res_lookup3.LOOKUP3res_u.resfail.dir_attributes.attributes_follow =
 	    FALSE;
 
-	entry_dir = nfs3_FhandleToCache(&arg->arg_lookup3.what.dir,
+	obj_dir = nfs3_FhandleToCache(&arg->arg_lookup3.what.dir,
 					&res->res_lookup3.status,
 					&rc);
 
-	if (entry_dir == NULL) {
+	if (obj_dir == NULL) {
 		/* Status and rc have been set by nfs3_FhandleToCache */
 		goto out;
 	}
 
 	name = arg->arg_lookup3.what.name;
 
-	cache_status = cache_inode_lookup(entry_dir,
-					  name,
-					  &entry_file);
+	fsal_status = fsal_lookup(obj_dir, name, &obj_file);
 
-	if (entry_file && (cache_status == CACHE_INODE_SUCCESS)) {
+	if (FSAL_IS_ERROR(fsal_status)) {
+		/* If we are here, there was an error */
+		if (nfs_RetryableError(fsal_status.major)) {
+			rc = NFS_REQ_DROP;
+			goto out;
+		}
+
+		res->res_lookup3.status = nfs3_Errno_status(fsal_status);
+		nfs_SetPostOpAttr(obj_dir,
+				  &res->res_lookup3.LOOKUP3res_u.resfail.
+				  dir_attributes);
+	} else {
 		/* Build FH */
 		if (nfs3_FSALToFhandle(
 			    true,
 			    &res->res_lookup3.LOOKUP3res_u.resok.object,
-			    entry_file->obj_handle,
+			    obj_file,
 			    op_ctx->export)) {
 			/* Build entry attributes */
-			nfs_SetPostOpAttr(entry_file,
+			nfs_SetPostOpAttr(obj_file,
 					  &res->res_lookup3.LOOKUP3res_u.
 						resok.obj_attributes);
 
 			/* Build directory attributes */
-			nfs_SetPostOpAttr(entry_dir,
+			nfs_SetPostOpAttr(obj_dir,
 					  &res->res_lookup3.
 					     LOOKUP3res_u.resok.dir_attributes);
 			res->res_lookup3.status = NFS3_OK;
 		} else {
 			res->res_lookup3.status = NFS3ERR_BADHANDLE;
 		}
-	} else {
-		/* If we are here, there was an error */
-		if (nfs_RetryableError(cache_status)) {
-			rc = NFS_REQ_DROP;
-			goto out;
-		}
-
-		res->res_lookup3.status = nfs3_Errno(cache_status);
-		nfs_SetPostOpAttr(entry_dir,
-				  &res->res_lookup3.LOOKUP3res_u.resfail.
-				  dir_attributes);
 	}
 
 	rc = NFS_REQ_OK;
 
  out:
 	/* return references */
-	if (entry_dir)
-		cache_inode_put(entry_dir);
+	if (obj_dir)
+		obj_dir->obj_ops.put_ref(obj_dir);
 
-	if (entry_file)
-		cache_inode_put(entry_file);
+	if (obj_file)
+		obj_file->obj_ops.put_ref(obj_file);
 
 	return rc;
 }				/* nfs3_lookup */

@@ -887,13 +887,22 @@ static fsal_status_t hpss_readdir(struct fsal_obj_handle *dir_hdl,
 
 		/* Process dirent */
 		for (i = 0; i < returned; i++) {
+			struct fsal_obj_handle *obj;
+			fsal_status_t fsal_status;
+
 			/* Skip . and .. */
 			if (!strcmp(dirent[i].Name, ".") ||
 			    !strcmp(dirent[i].Name, ".."))
 				continue;
 
+			fsal_status = hpss_lookup(dir_hdl, dirent[i].Name,
+						  &obj);
+			if (FSAL_IS_ERROR(fsal_status))
+				return fsal_status;
+
 			/* callback to cache inode - stop if it returns 0 */
 			if (!cb(dirent[i].Name,
+				obj,
 				dir_state,
 				(fsal_cookie_t)cookie))
 				goto done;

@@ -40,7 +40,6 @@
 #include "nfs4.h"
 #include "mount.h"
 #include "nfs_core.h"
-#include "cache_inode.h"
 #include "nfs_exports.h"
 #include "nfs_proto_functions.h"
 #include "nfs_convert.h"
@@ -56,7 +55,7 @@
  * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call
  *
- * @see cache_inode_readlink
+ * @see fsal_readlink
  *
  * @retval NFS_REQ_OK if successfull
  * @retval NFS_REQ_DROP if failed but retryable
@@ -65,8 +64,8 @@
 
 int nfs3_readlink(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
-	cache_entry_t *entry = NULL;
-	cache_inode_status_t cache_status;
+	struct fsal_obj_handle *obj = NULL;
+	fsal_status_t fsal_status;
 	struct gsh_buffdesc link_buffer = {
 		.addr = NULL,
 		.len = 0
@@ -89,31 +88,31 @@ int nfs3_readlink(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	res->res_readlink3.READLINK3res_u.resfail.symlink_attributes.
 	    attributes_follow = false;
 
-	entry = nfs3_FhandleToCache(&arg->arg_readlink3.symlink,
+	obj = nfs3_FhandleToCache(&arg->arg_readlink3.symlink,
 				    &res->res_readlink3.status,
 				    &rc);
 
-	if (entry == NULL) {
+	if (obj == NULL) {
 		/* Status and rc have been set by nfs3_FhandleToCache */
 		goto out;
 	}
 
-	/* Sanity Check: the entry must be a link */
-	if (entry->type != SYMBOLIC_LINK) {
+	/* Sanity Check: the obj must be a link */
+	if (obj->type != SYMBOLIC_LINK) {
 		res->res_readlink3.status = NFS3ERR_INVAL;
 		rc = NFS_REQ_OK;
 		goto out;
 	}
 
-	cache_status = cache_inode_readlink(entry, &link_buffer);
+	fsal_status = fsal_readlink(obj, &link_buffer);
 
-	if (cache_status != CACHE_INODE_SUCCESS) {
-		res->res_readlink3.status = nfs3_Errno(cache_status);
-		nfs_SetPostOpAttr(entry,
+	if (FSAL_IS_ERROR(fsal_status)) {
+		res->res_readlink3.status = nfs3_Errno_status(fsal_status);
+		nfs_SetPostOpAttr(obj,
 				  &res->res_readlink3.READLINK3res_u.resfail.
 				  symlink_attributes);
 
-		if (nfs_RetryableError(cache_status))
+		if (nfs_RetryableError(fsal_status.major))
 			rc = NFS_REQ_DROP;
 
 		goto out;
@@ -122,7 +121,7 @@ int nfs3_readlink(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	/* Reply to the client */
 	res->res_readlink3.READLINK3res_u.resok.data = link_buffer.addr;
 
-	nfs_SetPostOpAttr(entry,
+	nfs_SetPostOpAttr(obj,
 			  &res->res_readlink3.READLINK3res_u.
 			  resok.symlink_attributes);
 	res->res_readlink3.status = NFS3_OK;
@@ -131,8 +130,8 @@ int nfs3_readlink(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
  out:
 	/* return references */
-	if (entry)
-		cache_inode_put(entry);
+	if (obj)
+		obj->obj_ops.put_ref(obj);
 
 	return rc;
 }				/* nfs3_readlink */

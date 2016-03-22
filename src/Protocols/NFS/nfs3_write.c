@@ -39,7 +39,6 @@
 #include "log.h"
 #include "fsal.h"
 #include "nfs_core.h"
-#include "cache_inode.h"
 #include "nfs_exports.h"
 #include "nfs_proto_functions.h"
 #include "nfs_convert.h"
@@ -66,11 +65,11 @@
 
 int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
-	cache_entry_t *entry;
+	struct fsal_obj_handle *obj;
 	pre_op_attr pre_attr = {
 		.attributes_follow = false
 	};
-	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
+	fsal_status_t fsal_status = {0, 0};
 	size_t size = 0;
 	size_t written_size = 0;
 	uint64_t offset = 0;
@@ -78,7 +77,6 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	bool eof_met = false;
 	bool sync = false;
 	int rc = NFS_REQ_OK;
-	fsal_status_t fsal_status;
 
 	offset = arg->arg_write3.offset;
 	size = arg->arg_write3.count;
@@ -119,34 +117,30 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	res->res_write3.WRITE3res_u.resfail.file_wcc.after.attributes_follow =
 	    false;
 
-	entry = nfs3_FhandleToCache(&arg->arg_write3.file,
+	obj = nfs3_FhandleToCache(&arg->arg_write3.file,
 				    &res->res_write3.status,
 				    &rc);
 
-	if (entry == NULL) {
+	if (obj == NULL) {
 		/* Status and rc have been set by nfs3_FhandleToCache */
 		goto out;
 	}
 
-	nfs_SetPreOpAttr(entry, &pre_attr);
+	nfs_SetPreOpAttr(obj, &pre_attr);
 
-	/** @todo this is racy, use cache_inode_lock_trust_attrs and
-	 *        cache_inode_access_no_mutex
-	 */
-	if (entry->obj_handle->attrs->owner != op_ctx->creds->caller_uid) {
-		cache_status = cache_inode_access(entry,
-						  FSAL_WRITE_ACCESS);
+	if (obj->attrs->owner != op_ctx->creds->caller_uid) {
+		fsal_status = fsal_access(obj, FSAL_WRITE_ACCESS, NULL, NULL);
 
-		if (cache_status != CACHE_INODE_SUCCESS) {
-			res->res_write3.status = nfs3_Errno(cache_status);
+		if (FSAL_IS_ERROR(fsal_status)) {
+			res->res_write3.status = nfs3_Errno_status(fsal_status);
 			rc = NFS_REQ_OK;
 			goto out;
 		}
 	}
 
 	/* Sanity check: write only a regular file */
-	if (entry->type != REGULAR_FILE) {
-		if (entry->type == DIRECTORY)
+	if (obj->type != REGULAR_FILE) {
+		if (obj->type == DIRECTORY)
 			res->res_write3.status = NFS3ERR_ISDIR;
 		else
 			res->res_write3.status = NFS3ERR_INVAL;
@@ -193,7 +187,7 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 			res->res_write3.status = NFS3ERR_FBIG;
 
-			nfs_SetWccData(NULL, entry,
+			nfs_SetWccData(NULL, obj,
 				       &res->res_write3.WRITE3res_u.resfail.
 				       file_wcc);
 
@@ -209,10 +203,10 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	}
 
 	if (size == 0) {
-		cache_status = CACHE_INODE_SUCCESS;
+		fsal_status = fsalstat(ERR_FSAL_NO_ERROR, 0);
 		written_size = 0;
 		res->res_write3.status = NFS3_OK;
-		nfs_SetWccData(NULL, entry,
+		nfs_SetWccData(NULL, obj,
 			       &res->res_write3.WRITE3res_u.resfail.file_wcc);
 		rc = NFS_REQ_OK;
 		goto out;
@@ -221,7 +215,7 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 		res->res_write3.status = nfs3_Errno_state(
 				state_share_anonymous_io_start(
-					entry,
+					obj,
 					OPEN4_SHARE_ACCESS_WRITE,
 					SHARE_BYPASS_V3_WRITE));
 
@@ -230,36 +224,36 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 			goto out;
 		}
 
-		if (entry->obj_handle->fsal->m_ops.support_ex()) {
-			/* Call the new cache_inode_write */
+		if (obj->fsal->m_ops.support_ex()) {
+			/* Call the new fsal_write */
 			/** @todo for now pass NULL state */
-			cache_status = cache_inode_write(entry,
-							 true,
-							 NULL,
-							 offset,
-							 size,
-							 &written_size,
-							 data,
-							 &sync,
-							 NULL);
+			fsal_status = fsal_write2(obj,
+						  true,
+						  NULL,
+						  offset,
+						  size,
+						  &written_size,
+						  data,
+						  &sync,
+						  NULL);
 		} else {
-			/* Call legacy cache_inode_rdwr */
-			cache_status = cache_inode_rdwr(entry,
-							CACHE_INODE_WRITE,
-							offset,
-							size,
-							&written_size,
-							data,
-							&eof_met,
-							&sync,
-							NULL);
+			/* Call legacy fsal_rdwr */
+			fsal_status = fsal_rdwr(obj,
+						FSAL_IO_WRITE,
+						offset,
+						size,
+						&written_size,
+						data,
+						&eof_met,
+						&sync,
+						NULL);
 		}
 
-		state_share_anonymous_io_done(entry, OPEN4_SHARE_ACCESS_WRITE);
+		state_share_anonymous_io_done(obj, OPEN4_SHARE_ACCESS_WRITE);
 
-		if (cache_status == CACHE_INODE_SUCCESS) {
+		if (FSAL_IS_ERROR(fsal_status)) {
 			/* Build Weak Cache Coherency data */
-			nfs_SetWccData(NULL, entry,
+			nfs_SetWccData(NULL, obj,
 				       &res->res_write3.WRITE3res_u.resok.
 				       file_wcc);
 
@@ -287,26 +281,26 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	}
 
 	LogFullDebug(COMPONENT_NFSPROTO,
-		     "failed write: cache_status=%s",
-		     cache_inode_err_str(cache_status));
+		     "failed write: fsal_status=%s",
+		     fsal_err_txt(fsal_status));
 
 	/* If we are here, there was an error */
-	if (nfs_RetryableError(cache_status)) {
+	if (nfs_RetryableError(fsal_status.major)) {
 		rc = NFS_REQ_DROP;
 		goto out;
 	}
 
-	res->res_write3.status = nfs3_Errno(cache_status);
+	res->res_write3.status = nfs3_Errno_status(fsal_status);
 
-	nfs_SetWccData(NULL, entry,
+	nfs_SetWccData(NULL, obj,
 		       &res->res_write3.WRITE3res_u.resfail.file_wcc);
 
 	rc = NFS_REQ_OK;
 
  out:
 	/* return references */
-	if (entry)
-		cache_inode_put(entry);
+	if (obj)
+		obj->obj_ops.put_ref(obj);
 
 	server_stats_io_done(size, written_size,
 			     (rc == NFS_REQ_OK) ? true : false,

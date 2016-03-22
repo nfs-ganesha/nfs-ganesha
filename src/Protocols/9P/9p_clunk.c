@@ -39,8 +39,6 @@
 #include <pthread.h>
 #include "nfs_core.h"
 #include "log.h"
-#include "cache_inode.h"
-#include "cache_inode_lru.h"
 #include "9p.h"
 
 int _9p_clunk(struct _9p_request_data *req9p, u32 *plenout, char *preply)

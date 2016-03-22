@@ -32,6 +32,7 @@
 #include "fsal_internal.h"
 #include "FSAL/fsal_init.h"
 #include "gpfs_methods.h"
+#include "gsh_config.h"
 
 static const char myname[] = "GPFS";
 

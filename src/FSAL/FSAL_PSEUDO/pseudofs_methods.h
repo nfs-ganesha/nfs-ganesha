@@ -31,6 +31,7 @@
 
 #include "avltree.h"
 #include "gsh_list.h"
+#include "sal_functions.h"
 
 struct pseudo_fsal_obj_handle;
 
@@ -73,6 +74,7 @@ struct pseudo_fsal_obj_handle {
 	uint32_t numlinks;
 	char *name;
 	bool inavl;
+	struct state_hdl ostate;
 };
 
 int pseudofs_fsal_open(struct pseudo_fsal_obj_handle *, int, fsal_errors_t *);

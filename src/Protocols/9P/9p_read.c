@@ -39,7 +39,6 @@
 #include <sys/stat.h>
 #include "nfs_core.h"
 #include "log.h"
-#include "cache_inode.h"
 #include "fsal.h"
 #include "9p.h"
 #include "server_stats.h"
@@ -60,7 +59,7 @@ int _9p_read(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 	size_t read_size = 0;
 	bool eof_met;
-	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
+	fsal_status_t fsal_status;
 	/* uint64_t stable_flag = CACHE_INODE_SAFE_WRITE_TO_FS; */
 	bool sync = false;
 
@@ -106,28 +105,28 @@ int _9p_read(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 		outcount = (u32) *count;
 	} else {
-		if (pfid->pentry->obj_handle->fsal->m_ops.support_ex()) {
-			/* Call the new cache_inode_read */
-			cache_status = cache_inode_read(pfid->pentry,
-							false,
-							pfid->state,
-							*offset,
-							*count,
-							&read_size,
-							databuffer,
-							&eof_met,
-							NULL);
+		if (pfid->pentry->fsal->m_ops.support_ex()) {
+			/* Call the new fsal_read */
+			fsal_status = fsal_read2(pfid->pentry,
+						false,
+						pfid->state,
+						*offset,
+						*count,
+						&read_size,
+						databuffer,
+						&eof_met,
+						NULL);
 		} else {
-			/* Call legacy cache_inode_rdwr */
-			cache_status = cache_inode_rdwr(pfid->pentry,
-							CACHE_INODE_READ,
-							*offset,
-							*count,
-							&read_size,
-							databuffer,
-							&eof_met,
-							&sync,
-							NULL);
+			/* Call legacy fsal_rdwr */
+			fsal_status = fsal_rdwr(pfid->pentry,
+						 FSAL_IO_READ,
+						 *offset,
+						 *count,
+						 &read_size,
+						 databuffer,
+						 &eof_met,
+						 &sync,
+						 NULL);
 		}
 
 		/* Get the handle, for stats */
@@ -139,17 +138,13 @@ int _9p_read(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		} else {
 			op_ctx->client = client;
 
-			server_stats_io_done(*count,
-					     read_size,
-					     (cache_status ==
-					      CACHE_INODE_SUCCESS) ?
-					      true : false,
-					     false);
+			server_stats_io_done(*count, read_size,
+					     FSAL_IS_ERROR(fsal_status), false);
 		}
 
-		if (cache_status != CACHE_INODE_SUCCESS)
+		if (FSAL_IS_ERROR(fsal_status))
 			return _9p_rerror(req9p, msgtag,
-					  _9p_tools_errno(cache_status),
+					  _9p_tools_errno(fsal_status),
 					  plenout, preply);
 
 		outcount = (u32) read_size;

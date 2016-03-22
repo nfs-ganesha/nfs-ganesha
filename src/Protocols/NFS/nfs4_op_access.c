@@ -39,7 +39,6 @@
 #include "gsh_rpc.h"
 #include "nfs4.h"
 #include "nfs_core.h"
-#include "cache_inode.h"
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
@@ -65,7 +64,7 @@ int nfs4_op_access(struct nfs_argop4 *op, compound_data_t *data,
 {
 	ACCESS4args * const arg_ACCESS4 = &op->nfs_argop4_u.opaccess;
 	ACCESS4res * const res_ACCESS4 = &resp->nfs_resop4_u.opaccess;
-	cache_inode_status_t cache_status;
+	fsal_errors_t fsal_status;
 	uint32_t max_access = (ACCESS4_READ | ACCESS4_LOOKUP |
 			       ACCESS4_MODIFY | ACCESS4_EXTEND |
 			       ACCESS4_DELETE | ACCESS4_EXECUTE);
@@ -89,16 +88,16 @@ int nfs4_op_access(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	/* Perform the 'access' call */
-	cache_status =
-	    nfs_access_op(data->current_entry, arg_ACCESS4->access,
+	fsal_status =
+	    nfs_access_op(data->current_obj, arg_ACCESS4->access,
 			  &res_ACCESS4->ACCESS4res_u.resok4.access,
 			  &res_ACCESS4->ACCESS4res_u.resok4.supported);
 
-	if (cache_status == CACHE_INODE_SUCCESS
-	    || cache_status == CACHE_INODE_FSAL_EACCESS)
+	if (fsal_status == ERR_FSAL_NO_ERROR
+	    || fsal_status == ERR_FSAL_ACCESS)
 		res_ACCESS4->status = NFS4_OK;
 	else
-		res_ACCESS4->status = nfs4_Errno(cache_status);
+		res_ACCESS4->status = nfs4_Errno(fsal_status);
 
 	return res_ACCESS4->status;
 }				/* nfs4_op_access */

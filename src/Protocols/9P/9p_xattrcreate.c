@@ -42,7 +42,6 @@
 #include "nfs_core.h"
 #include "nfs_exports.h"
 #include "log.h"
-#include "cache_inode.h"
 #include "fsal.h"
 #include "9p.h"
 
@@ -102,15 +101,13 @@ int _9p_xattrcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 			 (u32) *msgtag, *fid, name);
 
 		fsal_status =
-		    pfid->pentry->obj_handle->obj_ops.remove_extattr_by_name(
-			pfid->pentry->obj_handle,
-			name);
+		    pfid->pentry->obj_ops.remove_extattr_by_name(pfid->pentry,
+								 name);
 
 		if (FSAL_IS_ERROR(fsal_status))
 			return _9p_rerror(req9p, msgtag,
-					  _9p_tools_errno
-					  (cache_inode_error_convert
-					   (fsal_status)), plenout, preply);
+					  _9p_tools_errno(fsal_status), plenout,
+					  preply);
 	} else if (!strncmp(name, "system.posix_acl_access", MAXNAMLEN)) {
 		/* /!\  POSIX_ACL RELATED HOOK
 		 * Setting a POSIX ACL (using setfacl for example) means
@@ -139,19 +136,16 @@ int _9p_xattrcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 			create = false;
 
 		fsal_status =
-		    pfid->pentry->obj_handle->obj_ops.setextattr_value(
-			pfid->pentry->obj_handle,
-			name,
-			pfid->specdata.xattr.xattr_content,
-			*size, create);
+		    pfid->pentry->obj_ops.setextattr_value(pfid->pentry, name,
+				pfid->specdata.xattr.xattr_content,
+				*size, create);
 
 		/* Try again with create = false if flag was set to 0
 		 * and create failed because attribute already exists */
 		if (FSAL_IS_ERROR(fsal_status)
 		    && fsal_status.major == ERR_FSAL_EXIST && (*flag == 0)) {
 			fsal_status =
-			    pfid->pentry->obj_handle->obj_ops.
-			    setextattr_value(pfid->pentry->obj_handle,
+			    pfid->pentry->obj_ops.setextattr_value(pfid->pentry,
 					     name,
 					     pfid->specdata.xattr.xattr_content,
 					     *size, false);
@@ -159,21 +153,18 @@ int _9p_xattrcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 		if (FSAL_IS_ERROR(fsal_status))
 			return _9p_rerror(req9p, msgtag,
-					  _9p_tools_errno
-					  (cache_inode_error_convert
-					   (fsal_status)), plenout, preply);
+					  _9p_tools_errno(fsal_status), plenout,
+					  preply);
 
 		fsal_status =
-		    pfid->pentry->obj_handle->obj_ops.getextattr_id_by_name(
-			pfid->pentry->obj_handle,
+		    pfid->pentry->obj_ops.getextattr_id_by_name(pfid->pentry,
 			name,
 			&pfid->specdata.xattr.xattr_id);
 
 		if (FSAL_IS_ERROR(fsal_status))
 			return _9p_rerror(req9p, msgtag,
-					  _9p_tools_errno
-					  (cache_inode_error_convert
-					   (fsal_status)), plenout, preply);
+					  _9p_tools_errno(fsal_status), plenout,
+					  preply);
 	}
 
 	/* Remember the size of the xattr to be written,

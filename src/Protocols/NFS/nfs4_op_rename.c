@@ -42,6 +42,7 @@
 #include "nfs_convert.h"
 #include "nfs_file_handle.h"
 #include "sal_functions.h"
+#include "fsal.h"
 
 /**
  * @brief The NFS4_OP_RENAME operation
@@ -61,9 +62,10 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t *data,
 {
 	RENAME4args * const arg_RENAME4 = &op->nfs_argop4_u.oprename;
 	RENAME4res * const res_RENAME4 = &resp->nfs_resop4_u.oprename;
-	cache_entry_t *dst_entry = NULL;
-	cache_entry_t *src_entry = NULL;
-	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
+	struct fsal_obj_handle *dst_obj = NULL;
+	struct fsal_obj_handle *src_obj = NULL;
+	nfsstat4 status = NFS4_OK;
+	fsal_status_t fsal_status = {0, 0};
 	char *oldname = NULL;
 	char *newname = NULL;
 
@@ -102,21 +104,19 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t *data,
 		goto out;
 	}
 
-	dst_entry = data->current_entry;
-	src_entry = data->saved_entry;
+	dst_obj = data->current_obj;
+	src_obj = data->saved_obj;
 
 	res_RENAME4->RENAME4res_u.resok4.source_cinfo.before =
-	    cache_inode_get_changeid4(src_entry);
+	    fsal_get_changeid4(src_obj);
 	res_RENAME4->RENAME4res_u.resok4.target_cinfo.before =
-	    cache_inode_get_changeid4(dst_entry);
+	    fsal_get_changeid4(dst_obj);
 
-	cache_status = cache_inode_rename(src_entry,
-					  oldname,
-					  dst_entry,
-					  newname);
+	status = nfs4_Errno_status(fsal_rename(src_obj, oldname, dst_obj,
+					       newname));
 
-	if (cache_status != CACHE_INODE_SUCCESS) {
-		res_RENAME4->status = nfs4_Errno(cache_status);
+	if (status != NFS4_OK) {
+		res_RENAME4->status = status;
 		goto out;
 	}
 
@@ -125,12 +125,12 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t *data,
 	 * for both directories
 	 */
 	res_RENAME4->RENAME4res_u.resok4.source_cinfo.after =
-	    cache_inode_get_changeid4(src_entry);
+	    fsal_get_changeid4(src_obj);
 	res_RENAME4->RENAME4res_u.resok4.target_cinfo.after =
-	    cache_inode_get_changeid4(dst_entry);
+	    fsal_get_changeid4(dst_obj);
 	res_RENAME4->RENAME4res_u.resok4.target_cinfo.atomic = FALSE;
 	res_RENAME4->RENAME4res_u.resok4.source_cinfo.atomic = FALSE;
-	res_RENAME4->status = nfs4_Errno(cache_status);
+	res_RENAME4->status = nfs4_Errno_status(fsal_status);
 
  out:
 	if (oldname)

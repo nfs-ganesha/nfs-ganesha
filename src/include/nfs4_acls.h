@@ -51,7 +51,7 @@ void nfs4_acl_entry_inc_ref(fsal_acl_t *pacl);
 fsal_acl_t *nfs4_acl_new_entry(fsal_acl_data_t *pacldata,
 			       fsal_acl_status_t *pstatus);
 
-void nfs4_acl_release_entry(fsal_acl_t *pacl, fsal_acl_status_t *pstatus);
+fsal_acl_status_t nfs4_acl_release_entry(fsal_acl_t *pacl);
 
 int nfs4_acls_init(void);
 

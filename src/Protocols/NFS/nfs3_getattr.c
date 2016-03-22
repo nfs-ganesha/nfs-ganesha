@@ -40,7 +40,6 @@
 #include "nfs4.h"
 #include "mount.h"
 #include "nfs_core.h"
-#include "cache_inode.h"
 #include "nfs_exports.h"
 #include "nfs_proto_functions.h"
 #include "nfs_convert.h"
@@ -63,7 +62,7 @@
 
 int nfs3_getattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
-	cache_entry_t *entry = NULL;
+	struct fsal_obj_handle *obj = NULL;
 	int rc = NFS_REQ_OK;
 
 	if (isDebug(COMPONENT_NFSPROTO)) {
@@ -76,11 +75,11 @@ int nfs3_getattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 			 str);
 	}
 
-	entry = nfs3_FhandleToCache(&arg->arg_getattr3.object,
+	obj = nfs3_FhandleToCache(&arg->arg_getattr3.object,
 				    &res->res_getattr3.status,
 				    &rc);
 
-	if (entry == NULL) {
+	if (obj == NULL) {
 		/* Status and rc have been set by nfs3_FhandleToCache */
 		LogFullDebug(COMPONENT_NFSPROTO,
 			     "nfs_Getattr returning %d",
@@ -88,11 +87,10 @@ int nfs3_getattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		goto out;
 	}
 
-	if (!cache_entry_to_nfs3_Fattr(
-		       entry,
+	if (!file_to_nfs3_Fattr(
+		       obj,
 		       &res->res_getattr3.GETATTR3res_u.resok.obj_attributes)) {
-		res->res_getattr3.status =
-		    nfs3_Errno(CACHE_INODE_INVALID_ARGUMENT);
+		res->res_getattr3.status = nfs3_Errno(ERR_FSAL_INVAL);
 
 		LogFullDebug(COMPONENT_NFSPROTO,
 			     "nfs_Getattr set failed status v3");
@@ -108,8 +106,8 @@ int nfs3_getattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
  out:
 	/* return references */
-	if (entry)
-		cache_inode_put(entry);
+	if (obj)
+		obj->obj_ops.put_ref(obj);
 
 	return rc;
 

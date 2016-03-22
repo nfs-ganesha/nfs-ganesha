@@ -41,7 +41,7 @@
 #include "gsh_rpc.h"
 #include "nfs4.h"
 #include "nfs_core.h"
-#include "cache_inode.h"
+#include "fsal.h"
 #include "nfs_exports.h"
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
@@ -66,9 +66,9 @@ int nfs4_op_link(struct nfs_argop4 *op, compound_data_t *data,
 {
 	LINK4args * const arg_LINK4 = &op->nfs_argop4_u.oplink;
 	LINK4res * const res_LINK4 = &resp->nfs_resop4_u.oplink;
-	cache_entry_t *dir_entry = NULL;
-	cache_entry_t *file_entry = NULL;
-	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
+	struct fsal_obj_handle *dir_obj = NULL;
+	struct fsal_obj_handle *file_obj = NULL;
+	fsal_status_t status = {0, 0};
 	char *newname = NULL;
 
 	resp->resop = NFS4_OP_LINK;
@@ -100,24 +100,20 @@ int nfs4_op_link(struct nfs_argop4 *op, compound_data_t *data,
 		goto out;
 
 	/* get info from compound data */
-	dir_entry = data->current_entry;
+	dir_obj = data->current_obj;
 
-	res_LINK4->LINK4res_u.resok4.cinfo.before =
-	    cache_inode_get_changeid4(dir_entry);
+	res_LINK4->LINK4res_u.resok4.cinfo.before = fsal_get_changeid4(dir_obj);
 
-	file_entry = data->saved_entry;
+	file_obj = data->saved_obj;
 
 	/* make the link */
-	cache_status =
-	    cache_inode_link(file_entry, dir_entry, newname);
-
-	if (cache_status != CACHE_INODE_SUCCESS) {
-		res_LINK4->status = nfs4_Errno(cache_status);
+	status = fsal_link(file_obj, dir_obj, newname);
+	if (FSAL_IS_ERROR(status)) {
+		res_LINK4->status = nfs4_Errno_status(status);
 		goto out;
 	}
 
-	res_LINK4->LINK4res_u.resok4.cinfo.after =
-	    cache_inode_get_changeid4(dir_entry);
+	res_LINK4->LINK4res_u.resok4.cinfo.after = fsal_get_changeid4(dir_obj);
 	res_LINK4->LINK4res_u.resok4.cinfo.atomic = FALSE;
 
 	res_LINK4->status = NFS4_OK;

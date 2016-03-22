@@ -41,7 +41,6 @@
 #include "nfs4.h"
 #include "mount.h"
 #include "nfs_core.h"
-#include "cache_inode.h"
 #include "nfs_exports.h"
 #include "nfs_proto_functions.h"
 #include "nfs_convert.h"
@@ -66,8 +65,8 @@
 int nfs3_fsstat(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
 	fsal_dynamicfsinfo_t dynamicinfo;
-	cache_inode_status_t cache_status;
-	cache_entry_t *entry = NULL;
+	fsal_status_t fsal_status;
+	struct fsal_obj_handle *obj = NULL;
 	int rc = NFS_REQ_OK;
 
 	if (isDebug(COMPONENT_NFSPROTO)) {
@@ -84,20 +83,19 @@ int nfs3_fsstat(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	res->res_fsstat3.FSSTAT3res_u.resfail.obj_attributes.attributes_follow =
 	    FALSE;
 
-	entry = nfs3_FhandleToCache(&arg->arg_fsstat3.fsroot,
+	obj = nfs3_FhandleToCache(&arg->arg_fsstat3.fsroot,
 				    &res->res_fsstat3.status,
 				    &rc);
 
-	if (entry == NULL) {
+	if (obj == NULL) {
 		/* Status and rc have been set by nfs3_FhandleToCache */
 		goto out;
 	}
 
-	/* Get statistics and convert from cache */
-	cache_status = cache_inode_statfs(entry,
-					  &dynamicinfo);
+	/* Get statistics and convert from FSAL */
+	fsal_status = fsal_statfs(obj, &dynamicinfo);
 
-	if (cache_status == CACHE_INODE_SUCCESS) {
+	if (FSAL_IS_ERROR(fsal_status)) {
 		LogFullDebug(COMPONENT_NFSPROTO,
 			     "nfs_Fsstat --> dynamicinfo.total_bytes=%" PRIu64
 			     " dynamicinfo.free_bytes=%" PRIu64
@@ -111,7 +109,7 @@ int nfs3_fsstat(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 			     dynamicinfo.total_files, dynamicinfo.free_files,
 			     dynamicinfo.avail_files);
 
-		nfs_SetPostOpAttr(entry,
+		nfs_SetPostOpAttr(obj,
 				  &(res->res_fsstat3.FSSTAT3res_u.resok.
 				    obj_attributes));
 
@@ -149,18 +147,18 @@ int nfs3_fsstat(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	}
 
 	/* At this point we met an error */
-	if (nfs_RetryableError(cache_status)) {
+	if (nfs_RetryableError(fsal_status.major)) {
 		rc = NFS_REQ_DROP;
 		goto out;
 	}
 
-	res->res_fsstat3.status = nfs3_Errno(cache_status);
+	res->res_fsstat3.status = nfs3_Errno_status(fsal_status);
 	rc = NFS_REQ_OK;
 
  out:
 	/* return references */
-	if (entry)
-		cache_inode_put(entry);
+	if (obj)
+		obj->obj_ops.put_ref(obj);
 
 	return rc;
 }				/* nfs3_fsstat */

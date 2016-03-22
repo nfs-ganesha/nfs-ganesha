@@ -688,9 +688,11 @@ static inline const nfs_function_desc_t *nfs_dupreq_func(dupreq_entry_t *dv)
 
 	if (dv->hin.rq_prog == nfs_param.core_param.program[P_NFS]) {
 		switch (dv->hin.rq_vers) {
+#ifdef _USE_NFS3
 		case NFS_V3:
 			func = &nfs3_func_desc[dv->hin.rq_proc];
 			break;
+#endif /* _USE_NFS3 */
 		case NFS_V4:
 			func = &nfs4_func_desc[dv->hin.rq_proc];
 			break;
@@ -715,12 +717,14 @@ static inline const nfs_function_desc_t *nfs_dupreq_func(dupreq_entry_t *dv)
 				 (int)dv->hin.rq_vers);
 			break;
 		}
+#ifdef _USE_NLM
 	} else if (dv->hin.rq_prog == nfs_param.core_param.program[P_NLM]) {
 		switch (dv->hin.rq_vers) {
 		case NLM4_VERS:
 			func = &nlm4_func_desc[dv->hin.rq_proc];
 			break;
 		}
+#endif /* _USE_NLM */
 	} else if (dv->hin.rq_prog == nfs_param.core_param.program[P_RQUOTA]) {
 		switch (dv->hin.rq_vers) {
 		case RQUOTAVERS:

@@ -37,7 +37,6 @@
 
 #include "log.h"
 #include "sal_data.h"
-#include "cache_inode.h"
 #include "export_mgr.h"
 #include "nfs_fh.h"
 
@@ -125,8 +124,9 @@ static inline size_t nfs4_sizeof_handle(struct file_handle_v4 *hdl)
 #define LEN_FH_STR 1024
 
 /* File handle translation utility */
-cache_entry_t *nfs3_FhandleToCache(nfs_fh3 *,
-				   nfsstat3 *, int *);
+#ifdef _USE_NFS3
+struct fsal_obj_handle *nfs3_FhandleToCache(nfs_fh3 *, nfsstat3 *, int *);
+#endif
 
 bool nfs4_FSALToFhandle(bool allocate,
 			nfs_fh4 *fh4,

@@ -45,6 +45,11 @@
 /* convert error codes */
 int posix2fsal_error(int posix_errorcode);
 
+static inline fsal_status_t posix2fsal_status(int posix_errorcode)
+{
+	return fsalstat(posix2fsal_error(posix_errorcode), posix_errorcode);
+}
+
 /** converts an fsal open flag to an hpss open flag. */
 void fsal2posix_openflags(fsal_openflags_t fsal_flags, int *p_posix_flags);
 

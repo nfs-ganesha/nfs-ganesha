@@ -35,7 +35,6 @@
 #include "log.h"
 #include "fsal.h"
 #include "nfs_core.h"
-#include "cache_inode.h"
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
 #include "nfs_convert.h"
@@ -67,8 +66,6 @@ int nfs4_op_layoutcommit(struct nfs_argop4 *op, compound_data_t *data,
 	/* Convenience alias for response */
 	LAYOUTCOMMIT4res * const res_LAYOUTCOMMIT4 =
 	    &resp->nfs_resop4_u.oplayoutcommit;
-	/* Return from cache_inode calls */
-	cache_inode_status_t cache_status = 0;
 	/* NFS4 return code */
 	nfsstat4 nfs_status = 0;
 	/* State indicated by client */
@@ -136,7 +133,7 @@ int nfs4_op_layoutcommit(struct nfs_argop4 *op, compound_data_t *data,
 	/* Retrieve state corresponding to supplied ID */
 
 	nfs_status = nfs4_Check_Stateid(&arg_LAYOUTCOMMIT4->loca_stateid,
-					data->current_entry,
+					data->current_obj,
 					&layout_state, data,
 					STATEID_SPECIAL_CURRENT,
 					0,
@@ -148,8 +145,7 @@ int nfs4_op_layoutcommit(struct nfs_argop4 *op, compound_data_t *data,
 
 	arg.type = layout_state->state_data.layout.state_layout_type;
 
-	PTHREAD_RWLOCK_wrlock(&data->current_entry->state_lock);
-
+	PTHREAD_RWLOCK_wrlock(&data->current_obj->state_hdl->state_lock);
 	glist_for_each(glist, &layout_state->state_data.layout.state_segments) {
 		segment = glist_entry(glist,
 				      state_layout_segment_t,
@@ -158,15 +154,16 @@ int nfs4_op_layoutcommit(struct nfs_argop4 *op, compound_data_t *data,
 		arg.segment = segment->sls_segment;
 		arg.fsal_seg_data = segment->sls_fsal_data;
 
-		nfs_status = data->current_entry->obj_handle->
-			   obj_ops.layoutcommit(data->current_entry->obj_handle,
+		nfs_status = data->current_obj->obj_ops.layoutcommit(
+						data->current_obj,
 						op_ctx,
 						&lou_body,
 						&arg,
 						&res);
 
 		if (nfs_status != NFS4_OK) {
-			PTHREAD_RWLOCK_unlock(&data->current_entry->state_lock);
+			PTHREAD_RWLOCK_unlock(
+				&data->current_obj->state_hdl->state_lock);
 			goto out;
 		}
 
@@ -178,20 +175,7 @@ int nfs4_op_layoutcommit(struct nfs_argop4 *op, compound_data_t *data,
 		xdr_setpos(&lou_body, beginning);
 	}
 
-	PTHREAD_RWLOCK_unlock(&data->current_entry->state_lock);
-
-	if (arg_LAYOUTCOMMIT4->loca_time_modify.nt_timechanged
-	    || arg_LAYOUTCOMMIT4->loca_last_write_offset.no_newoffset
-	    || res.size_supplied) {
-		cache_status =
-		     cache_inode_invalidate(data->current_entry,
-					    CACHE_INODE_INVALIDATE_ATTRS);
-
-		if (cache_status != CACHE_INODE_SUCCESS) {
-			nfs_status = nfs4_Errno(cache_status);
-			goto out;
-		}
-	}
+	PTHREAD_RWLOCK_unlock(&data->current_obj->state_hdl->state_lock);
 
 	res_LAYOUTCOMMIT4->LAYOUTCOMMIT4res_u.locr_resok4.locr_newsize.
 		ns_sizechanged = res.size_supplied;

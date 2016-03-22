@@ -49,7 +49,6 @@
 #include "abstract_mem.h"
 #include "abstract_atomic.h"
 #include "nfs_core.h"
-#include "cache_inode.h"
 #include "nfs_exports.h"
 #include "nfs_proto_functions.h"
 #include "nfs_dupreq.h"

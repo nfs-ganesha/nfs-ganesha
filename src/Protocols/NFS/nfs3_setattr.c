@@ -41,7 +41,6 @@
 #include "nfs4.h"
 #include "mount.h"
 #include "nfs_core.h"
-#include "cache_inode.h"
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
@@ -67,11 +66,11 @@
 int nfs3_setattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
 	struct attrlist setattr;
-	cache_entry_t *entry = NULL;
+	struct fsal_obj_handle *obj = NULL;
 	pre_op_attr pre_attr = {
 		.attributes_follow = false
 	};
-	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
+	fsal_status_t fsal_status = {0, 0};
 	int rc = NFS_REQ_OK;
 
 	if (isDebug(COMPONENT_NFSPROTO)) {
@@ -93,11 +92,11 @@ int nfs3_setattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	res->res_setattr3.SETATTR3res_u.resfail.obj_wcc.after.
 	    attributes_follow = FALSE;
 
-	entry = nfs3_FhandleToCache(&arg->arg_setattr3.object,
+	obj = nfs3_FhandleToCache(&arg->arg_setattr3.object,
 				    &res->res_setattr3.status,
 				    &rc);
 
-	if (entry == NULL) {
+	if (obj == NULL) {
 		/* Status and rc have been set by nfs3_FhandleToCache */
 		goto out;
 	}
@@ -113,7 +112,7 @@ int nfs3_setattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		goto out;
 	}
 
-	nfs_SetPreOpAttr(entry, &pre_attr);
+	nfs_SetPreOpAttr(obj, &pre_attr);
 
 	if (arg->arg_setattr3.guard.check) {
 		/* This pack of lines implements the "guard check" setattr. This
@@ -156,7 +155,7 @@ int nfs3_setattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		if (arg->arg_setattr3.new_attributes.size.set_it) {
 			res->res_setattr3.status = nfs3_Errno_state(
 					state_share_anonymous_io_start(
-						entry,
+						obj,
 						OPEN4_SHARE_ACCESS_WRITE,
 						SHARE_BYPASS_V3_WRITE));
 
@@ -167,18 +166,15 @@ int nfs3_setattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		/* For now we don't look for states, so indicate bypass so
 		 * we will get through an NLM_SHARE with deny.
 		 */
-		cache_status = cache_inode_setattr(entry,
-						   true,
-						   NULL,
-						   &setattr,
-						   false);
+		fsal_status = fsal_setattr(obj, true, NULL, &setattr);
 
 		if (arg->arg_setattr3.new_attributes.size.set_it)
-			state_share_anonymous_io_done(entry,
+			state_share_anonymous_io_done(obj,
 						      OPEN4_SHARE_ACCESS_WRITE);
 
-		if (cache_status != CACHE_INODE_SUCCESS) {
-			res->res_setattr3.status = nfs3_Errno(cache_status);
+		if (FSAL_IS_ERROR(fsal_status)) {
+			res->res_setattr3.status =
+				nfs3_Errno_status(fsal_status);
 			goto out_fail;
 		}
 	}
@@ -193,32 +189,32 @@ int nfs3_setattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		res->res_setattr3.SETATTR3res_u.resfail.obj_wcc.after.
 		    attributes_follow = FALSE;
 	} else {
-		nfs_SetWccData(&pre_attr, entry,
+		nfs_SetWccData(&pre_attr, obj,
 			       &res->res_setattr3.SETATTR3res_u.resok.obj_wcc);
 	}
 
 	rc = NFS_REQ_OK;
  out:
 	/* return references */
-	if (entry)
-		cache_inode_put(entry);
+	if (obj)
+		obj->obj_ops.put_ref(obj);
 
 	return rc;
 
  out_fail:
 	LogFullDebug(COMPONENT_NFSPROTO, "nfs_Setattr: failed");
 
-	nfs_SetWccData(&pre_attr, entry,
+	nfs_SetWccData(&pre_attr, obj,
 		       &res->res_setattr3.SETATTR3res_u.resfail.obj_wcc);
 
-	if (nfs_RetryableError(cache_status)) {
+	if (nfs_RetryableError(fsal_status.major)) {
 		rc = NFS_REQ_DROP;
 		goto out;
 	}
 
 	/* return references */
-	if (entry)
-		cache_inode_put(entry);
+	if (obj)
+		obj->obj_ops.put_ref(obj);
 
 	return rc;
 }				/* nfs3_setattr */

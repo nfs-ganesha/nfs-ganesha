@@ -570,29 +570,29 @@ nfsstat4 nfs4_export_check_access(struct svc_req *req)
 /**
  * @brief Perform version independent ACCESS operation.
  *
- * This function wraps a call to cache_inode_access, determining the appropriate
+ * This function wraps a call to fsal_access, determining the appropriate
  * access_mask to use to check all the requested access bits. It requests the
  * allowed and denied access so that it can respond for each requested access
  * with a single access call.
  *
- * @param[in]  entry The cache inode entry to check access for
+ * @param[in]  obj Object handle to check access for
  * @param[in]  requested_access The ACCESS3 or ACCESS4 bits requested
  * @param[out] granted_access   The bits granted
  * @param[out] supported_access The bits supported for this inode
  *
- * @return cache inode status
- * @retval CACHE_INODE_SUCCESS all access was granted
- * @retval CACHE_INODE_FSAL_EACCESS one or more access bits were denied
- * @retval other values indicate a cache inode failure
+ * @return FSAL error
+ * @retval ERR_FSAL_NO_ERROR all access was granted
+ * @retval ERR_FSAL_ACCESS one or more access bits were denied
+ * @retval other values indicate a FSAL failure
  *
  */
 
-cache_inode_status_t nfs_access_op(cache_entry_t *entry,
+fsal_errors_t nfs_access_op(struct fsal_obj_handle *obj,
 				   uint32_t requested_access,
 				   uint32_t *granted_access,
 				   uint32_t *supported_access)
 {
-	cache_inode_status_t status;
+	fsal_status_t fsal_status;
 	fsal_accessflags_t access_mask;
 	fsal_accessflags_t access_allowed;
 	fsal_accessflags_t access_denied;
@@ -624,21 +624,21 @@ cache_inode_status_t nfs_access_op(cache_entry_t *entry,
 		access_mask |= FSAL_R_OK | FSAL_ACE_PERM_READ_DATA;
 
 	if (requested_access & ACCESS3_LOOKUP) {
-		if (entry->type == DIRECTORY)
+		if (obj->type == DIRECTORY)
 			access_mask |= FSAL_X_OK | FSAL_ACE_PERM_EXECUTE;
 		else
 			granted_mask &= ~ACCESS3_LOOKUP;
 	}
 
 	if (requested_access & ACCESS3_MODIFY) {
-		if (entry->type == DIRECTORY)
+		if (obj->type == DIRECTORY)
 			access_mask |= FSAL_W_OK | FSAL_ACE_PERM_DELETE_CHILD;
 		else
 			access_mask |= FSAL_W_OK | FSAL_ACE_PERM_WRITE_DATA;
 	}
 
 	if (requested_access & ACCESS3_EXTEND) {
-		if (entry->type == DIRECTORY)
+		if (obj->type == DIRECTORY)
 			access_mask |=
 			    FSAL_W_OK | FSAL_ACE_PERM_ADD_FILE |
 			    FSAL_ACE_PERM_ADD_SUBDIRECTORY;
@@ -647,14 +647,14 @@ cache_inode_status_t nfs_access_op(cache_entry_t *entry,
 	}
 
 	if (requested_access & ACCESS3_DELETE) {
-		if (entry->type == DIRECTORY)
+		if (obj->type == DIRECTORY)
 			access_mask |= FSAL_W_OK | FSAL_ACE_PERM_DELETE_CHILD;
 		else
 			granted_mask &= ~ACCESS3_DELETE;
 	}
 
 	if (requested_access & ACCESS3_EXECUTE) {
-		if (entry->type != DIRECTORY)
+		if (obj->type != DIRECTORY)
 			access_mask |= FSAL_X_OK | FSAL_ACE_PERM_EXECUTE;
 		else
 			granted_mask &= ~ACCESS3_EXECUTE;
@@ -671,11 +671,11 @@ cache_inode_status_t nfs_access_op(cache_entry_t *entry,
 		    FSAL_TEST_MASK(access_mask, FSAL_W_OK) ? 'w' : '-',
 		    FSAL_TEST_MASK(access_mask, FSAL_X_OK) ? 'x' : '-',
 		    FSAL_TEST_MASK(access_mask, FSAL_ACE_PERM_READ_DATA) ?
-			entry->type == DIRECTORY ?
+			obj->type == DIRECTORY ?
 			"list_dir" : "read_data" : "-",
 		    FSAL_TEST_MASK(access_mask,
 				   FSAL_ACE_PERM_WRITE_DATA) ?
-			entry->type == DIRECTORY ?
+			obj->type == DIRECTORY ?
 			"add_file" : "write_data" : "-",
 		    FSAL_TEST_MASK(access_mask, FSAL_ACE_PERM_EXECUTE) ?
 			"execute" : "-",
@@ -685,12 +685,11 @@ cache_inode_status_t nfs_access_op(cache_entry_t *entry,
 		    FSAL_TEST_MASK(access_mask, FSAL_ACE_PERM_DELETE_CHILD) ?
 			"delete_child" : "-");
 
-	status =
-	    cache_inode_access_sw(entry, access_mask, &access_allowed,
-				  &access_denied, true);
-
-	if (status == CACHE_INODE_SUCCESS ||
-	    status == CACHE_INODE_FSAL_EACCESS) {
+	fsal_status = obj->obj_ops.test_access(obj, access_mask,
+					       &access_allowed,
+					       &access_denied);
+	if (fsal_status.major == ERR_FSAL_NO_ERROR ||
+	    fsal_status.major == ERR_FSAL_ACCESS) {
 		/* Define granted access based on granted mode bits. */
 		if (access_allowed & FSAL_R_OK)
 			*granted_access |= ACCESS3_READ;
@@ -706,7 +705,7 @@ cache_inode_status_t nfs_access_op(cache_entry_t *entry,
 		if (access_allowed & FSAL_ACE_PERM_READ_DATA)
 			*granted_access |= ACCESS3_READ;
 
-		if (entry->type == DIRECTORY) {
+		if (obj->type == DIRECTORY) {
 			if (access_allowed & FSAL_ACE_PERM_DELETE_CHILD)
 				*granted_access |=
 				    ACCESS3_MODIFY | ACCESS3_DELETE;
@@ -766,5 +765,5 @@ cache_inode_status_t nfs_access_op(cache_entry_t *entry,
 					   ACCESS3_EXECUTE) ? "EXECUTE" : "-");
 	}
 
-	return status;
+	return fsal_status.major;
 }

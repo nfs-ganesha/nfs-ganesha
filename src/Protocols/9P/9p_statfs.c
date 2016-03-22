@@ -39,7 +39,6 @@
 #include <sys/stat.h>
 #include "nfs_core.h"
 #include "log.h"
-#include "cache_inode.h"
 #include "fsal.h"
 #include "9p.h"
 
@@ -52,7 +51,7 @@ int _9p_statfs(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	struct _9p_fid *pfid = NULL;
 
 	u32 type = 0x01021997;	/* V9FS_MAGIC */
-	u32 bsize = 1;		/* cache_inode_statfs and
+	u32 bsize = 1;		/* fsal_statfs and
 				 * FSAL already care for blocksize */
 	u64 *blocks = NULL;
 	u64 *bfree = NULL;
@@ -64,7 +63,7 @@ int _9p_statfs(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	u32 namelen = MAXNAMLEN;
 
 	fsal_dynamicfsinfo_t dynamicinfo;
-	cache_inode_status_t cache_status;
+	fsal_status_t fsal_status;
 
 	/* Get data */
 	_9p_getptr(cursor, msgtag, u16);
@@ -80,10 +79,10 @@ int _9p_statfs(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		return _9p_rerror(req9p, msgtag, EINVAL, plenout, preply);
 	_9p_init_opctx(pfid, req9p);
 	/* Get the FS's stats */
-	cache_status = cache_inode_statfs(pfid->pentry, &dynamicinfo);
-	if (cache_status != CACHE_INODE_SUCCESS)
+	fsal_status = fsal_statfs(pfid->pentry, &dynamicinfo);
+	if (FSAL_IS_ERROR(fsal_status))
 		return _9p_rerror(req9p, msgtag,
-				  _9p_tools_errno(cache_status), plenout,
+				  _9p_tools_errno(fsal_status), plenout,
 				  preply);
 
 	blocks = (u64 *) &dynamicinfo.total_bytes;
@@ -91,7 +90,7 @@ int _9p_statfs(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	bavail = (u64 *) &dynamicinfo.avail_bytes;
 	files = (u64 *) &dynamicinfo.total_files;
 	ffree = (u64 *) &dynamicinfo.free_files;
-	fsid = (u64) pfid->pentry->obj_handle->attrs->rawdev.major;
+	fsid = (u64) pfid->pentry->attrs->rawdev.major;
 
 	/* Build the reply */
 	_9p_setinitptr(cursor, preply, _9P_RSTATFS);

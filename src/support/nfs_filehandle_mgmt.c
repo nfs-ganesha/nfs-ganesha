@@ -43,30 +43,30 @@
 #include "export_mgr.h"
 #include "fsal_convert.h"
 
+#ifdef _USE_NFS3
 /**
  *
- *  nfs3_FhandleToCache: gets the cache entry from the NFSv3 file handle.
+ *  nfs3_FhandleToCache: gets the FSAL obj from the NFSv3 file handle.
  *
- * Validates and Converts a V3 file handle and then gets the cache entry.
+ * Validates and Converts a V3 file handle and then gets the FSAL obj.
  *
  * @param fh3 [IN] pointer to the file handle to be converted
  * @param exp_list [IN] export fsal to use
  * @param status [OUT] protocol status
  * @param rc [OUT] operation status
  *
- * @return cache entry or NULL on failure
+ * @return FSAL obj or NULL on failure
  *
  */
-cache_entry_t *nfs3_FhandleToCache(nfs_fh3 *fh3,
+struct fsal_obj_handle *nfs3_FhandleToCache(nfs_fh3 *fh3,
 				   nfsstat3 *status,
 				   int *rc)
 {
 	fsal_status_t fsal_status;
 	file_handle_v3_t *v3_handle;
 	struct fsal_export *export;
-	cache_entry_t *entry = NULL;
-	cache_inode_fsal_data_t fsal_data;
-	cache_inode_status_t cache_status;
+	struct fsal_obj_handle *obj = NULL;
+	struct gsh_buffdesc fh_desc;
 
 	/* Default behaviour */
 	*rc = NFS_REQ_OK;
@@ -85,30 +85,29 @@ cache_entry_t *nfs3_FhandleToCache(nfs_fh3 *fh3,
 	export = op_ctx->fsal_export;
 
 	/* Give the export a crack at it */
-	fsal_data.export = export;
-	fsal_data.fh_desc.len = v3_handle->fs_len;
-	fsal_data.fh_desc.addr = &v3_handle->fsopaque;
+	fh_desc.len = v3_handle->fs_len;
+	fh_desc.addr = &v3_handle->fsopaque;
 
 	/* adjust the handle opaque into a cache key */
 	fsal_status =
 	    export->exp_ops.extract_handle(export, FSAL_DIGEST_NFSV3,
-					   &fsal_data.fh_desc,
+					   &fh_desc,
 					   v3_handle->fhflags1);
 
-	if (FSAL_IS_ERROR(fsal_status))
-		cache_status = cache_inode_error_convert(fsal_status);
-	else
-		cache_status = cache_inode_get(&fsal_data, &entry);
+	if (!FSAL_IS_ERROR(fsal_status))
+		fsal_status = export->exp_ops.create_handle(export, &fh_desc,
+							    &obj);
 
-	if (cache_status != CACHE_INODE_SUCCESS) {
-		*status = nfs3_Errno(cache_status);
-		if (nfs_RetryableError(cache_status))
+	if (FSAL_IS_ERROR(fsal_status)) {
+		*status = nfs3_Errno_status(fsal_status);
+		if (nfs_RetryableError(fsal_status.major))
 			*rc = NFS_REQ_DROP;
 	}
 
  badhdl:
-	return entry;
+	return obj;
 }
+#endif /* _USE_NFS3 */
 
 /**
  * @brief Converts an FSAL object to an NFSv4 file handle
@@ -584,7 +583,7 @@ nfsstat4 nfs4_sanity_check_FH(compound_data_t *data,
 	if (fh_status != NFS4_OK)
 		return fh_status;
 
-	assert(data->current_entry != NULL &&
+	assert(data->current_obj != NULL &&
 	       data->current_filetype != NO_FILE_TYPE);
 
 	/* If the filehandle is invalid */

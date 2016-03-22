@@ -113,6 +113,25 @@ static fsal_status_t lookup(struct fsal_obj_handle *dir_pub,
 	return fsalstat(0, 0);
 }
 
+struct rgw_cb_arg {
+	fsal_readdir_cb cb;
+	void *fsal_arg;
+	struct fsal_obj_handle *dir_pub;
+};
+
+static bool rgw_cb(const char *name, void *arg, uint64_t offset)
+{
+	struct rgw_cb_arg *rgw_cb_arg = arg;
+	struct fsal_obj_handle *obj;
+	fsal_status_t status;
+
+	status = lookup(rgw_cb_arg->dir_pub, name, &obj);
+	if (FSAL_IS_ERROR(status))
+		return false;
+
+	return rgw_cb_arg->cb(name, obj, arg, offset);
+}
+
 /**
  * @brief Read a directory
  *
@@ -130,7 +149,7 @@ static fsal_status_t lookup(struct fsal_obj_handle *dir_pub,
  * @return FSAL status.
  */
 
-static fsal_status_t fsal_readdir(struct fsal_obj_handle *dir_pub,
+static fsal_status_t rgw_fsal_readdir(struct fsal_obj_handle *dir_pub,
 				  fsal_cookie_t *whence, void *cb_arg,
 				  fsal_readdir_cb cb, bool *eof)
 {
@@ -142,12 +161,13 @@ static fsal_status_t fsal_readdir(struct fsal_obj_handle *dir_pub,
 	/* The private 'full' directory handle */
 	struct rgw_handle *dir = container_of(dir_pub, struct rgw_handle,
 					      handle);
+	struct rgw_cb_arg rgw_cb_arg = { cb, cb_arg, dir_pub };
 	/* Return status */
 	fsal_status_t fsal_status = { ERR_FSAL_NO_ERROR, 0 };
 
 	uint64_t r_whence = (whence) ? *whence : 0;
-	rc = rgw_readdir(export->rgw_fs, dir->rgw_fh, &r_whence, cb,
-			cb_arg, eof, RGW_READDIR_FLAG_NONE);
+	rc = rgw_readdir(export->rgw_fs, dir->rgw_fh, &r_whence, rgw_cb,
+			&rgw_cb_arg, eof, RGW_READDIR_FLAG_NONE);
 	if (rc < 0)
 		return rgw2fsal_error(rc);
 
@@ -167,7 +187,7 @@ static fsal_status_t fsal_readdir(struct fsal_obj_handle *dir_pub,
  * @return FSAL status.
  */
 
-static fsal_status_t fsal_create(struct fsal_obj_handle *dir_pub,
+static fsal_status_t rgw_fsal_create(struct fsal_obj_handle *dir_pub,
 				 const char *name, struct attrlist *attrib,
 				 struct fsal_obj_handle **obj_pub)
 {
@@ -225,7 +245,7 @@ static fsal_status_t fsal_create(struct fsal_obj_handle *dir_pub,
  * @return FSAL status.
  */
 
-static fsal_status_t fsal_mkdir(struct fsal_obj_handle *dir_pub,
+static fsal_status_t rgw_fsal_mkdir(struct fsal_obj_handle *dir_pub,
 				const char *name, struct attrlist *attrib,
 				struct fsal_obj_handle **obj_pub)
 {
@@ -419,7 +439,7 @@ static fsal_status_t setattrs(struct fsal_obj_handle *handle_pub,
  * @return FSAL status.
  */
 
-static fsal_status_t fsal_rename(struct fsal_obj_handle *obj_hdl,
+static fsal_status_t rgw_fsal_rename(struct fsal_obj_handle *obj_hdl,
 				 struct fsal_obj_handle *olddir_pub,
 				 const char *old_name,
 				 struct fsal_obj_handle *newdir_pub,
@@ -459,7 +479,7 @@ static fsal_status_t fsal_rename(struct fsal_obj_handle *obj_hdl,
  * @return FSAL status.
  */
 
-static fsal_status_t fsal_unlink(struct fsal_obj_handle *dir_pub,
+static fsal_status_t rgw_fsal_unlink(struct fsal_obj_handle *dir_pub,
 				 const char *name)
 {
 	/* Generic status return */
@@ -492,7 +512,7 @@ static fsal_status_t fsal_unlink(struct fsal_obj_handle *dir_pub,
  * @return FSAL status.
  */
 
-static fsal_status_t fsal_open(struct fsal_obj_handle *handle_pub,
+static fsal_status_t rgw_fsal_open(struct fsal_obj_handle *handle_pub,
 			       fsal_openflags_t openflags)
 {
 	/* Generic status return */
@@ -567,7 +587,7 @@ static fsal_openflags_t status(struct fsal_obj_handle *handle_pub)
  * @return FSAL status.
  */
 
-static fsal_status_t fsal_read(struct fsal_obj_handle *handle_pub,
+static fsal_status_t rgw_fsal_read(struct fsal_obj_handle *handle_pub,
 			       uint64_t offset, size_t buffer_size,
 			       void *buffer, size_t *read_amount,
 			       bool *end_of_file)
@@ -608,7 +628,7 @@ static fsal_status_t fsal_read(struct fsal_obj_handle *handle_pub,
  * @return FSAL status.
  */
 
-static fsal_status_t fsal_write(struct fsal_obj_handle *handle_pub,
+static fsal_status_t rgw_fsal_write(struct fsal_obj_handle *handle_pub,
 				uint64_t offset, size_t buffer_size,
 				void *buffer, size_t *write_amount,
 				bool *fsal_stable)
@@ -676,7 +696,7 @@ static fsal_status_t commit(struct fsal_obj_handle *handle_pub,
  * @return FSAL status.
  */
 
-static fsal_status_t fsal_close(struct fsal_obj_handle *handle_pub)
+static fsal_status_t rgw_fsal_close(struct fsal_obj_handle *handle_pub)
 {
 	/* Generic status return */
 	int rc = 0;
@@ -774,19 +794,19 @@ void handle_ops_init(struct fsal_obj_ops *ops)
 {
 	ops->release = release;
 	ops->lookup = lookup;
-	ops->create = fsal_create;
-	ops->mkdir = fsal_mkdir;
-	ops->readdir = fsal_readdir;
+	ops->create = rgw_fsal_create;
+	ops->mkdir = rgw_fsal_mkdir;
+	ops->readdir = rgw_fsal_readdir;
 	ops->getattrs = getattrs;
 	ops->setattrs = setattrs;
-	ops->rename = fsal_rename;
-	ops->unlink = fsal_unlink;
-	ops->open = fsal_open;
+	ops->rename = rgw_fsal_rename;
+	ops->unlink = rgw_fsal_unlink;
+	ops->open = rgw_fsal_open;
 	ops->status = status;
-	ops->read = fsal_read;
-	ops->write = fsal_write;
+	ops->read = rgw_fsal_read;
+	ops->write = rgw_fsal_write;
 	ops->commit = commit;
-	ops->close = fsal_close;
+	ops->close = rgw_fsal_close;
 	ops->handle_digest = handle_digest;
 	ops->handle_to_key = handle_to_key;
 }

@@ -44,7 +44,7 @@
 int nlm4_Unshare(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 {
 	nlm4_shareargs *arg = &args->arg_nlm4_share;
-	cache_entry_t *pentry;
+	struct fsal_obj_handle *obj;
 	state_status_t state_status = STATE_SUCCESS;
 	char buffer[MAXNETOBJ_SZ * 2];
 	state_nsm_client_t *nsm_client;
@@ -92,7 +92,7 @@ int nlm4_Unshare(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	rc = nlm_process_share_parms(req,
 				     &arg->share,
 				     op_ctx->fsal_export,
-				     &pentry,
+				     &obj,
 				     CARE_NOT,
 				     &nsm_client,
 				     &nlm_client,
@@ -108,7 +108,7 @@ int nlm4_Unshare(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 		return NFS_REQ_OK;
 	}
 
-	state_status = state_nlm_unshare(pentry,
+	state_status = state_nlm_unshare(obj,
 					 arg->share.access,
 					 arg->share.mode,
 					 nlm_owner,
@@ -125,7 +125,7 @@ int nlm4_Unshare(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	dec_nsm_client_ref(nsm_client);
 	dec_nlm_client_ref(nlm_client);
 	dec_state_owner_ref(nlm_owner);
-	cache_inode_put(pentry);
+	obj->obj_ops.put_ref(obj);
 	dec_nlm_state_ref(nlm_state);
 
 	LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Unshare %s",

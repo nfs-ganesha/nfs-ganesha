@@ -39,7 +39,6 @@
 #include <sys/stat.h>
 #include "nfs_core.h"
 #include "log.h"
-#include "cache_inode.h"
 #include "fsal.h"
 #include "9p.h"
 
@@ -50,7 +49,7 @@ int _9p_fsync(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	u32 *fid = NULL;
 
 	struct _9p_fid *pfid = NULL;
-	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
+	fsal_status_t fsal_status;
 
 	/* Get data */
 	_9p_getptr(cursor, msgtag, u16);
@@ -71,15 +70,14 @@ int _9p_fsync(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 	_9p_init_opctx(pfid, req9p);
 
-	cache_status =
-	    cache_inode_commit(pfid->pentry,
-			       0LL,	/* start at beginning of file */
-			       0LL);	/* Mimic sync_file_range's behavior: */
+	fsal_status = fsal_commit(pfid->pentry,
+				  0LL,	/* start at beginning of file */
+				  0LL);	/* Mimic sync_file_range's behavior: */
 					/* count=0 means "whole file" */
 
-	if (cache_status != CACHE_INODE_SUCCESS)
+	if (FSAL_IS_ERROR(fsal_status))
 		return _9p_rerror(req9p, msgtag,
-				  _9p_tools_errno(cache_status), plenout,
+				  _9p_tools_errno(fsal_status), plenout,
 				  preply);
 
 	/* Build the reply */
