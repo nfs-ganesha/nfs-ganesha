@@ -1070,6 +1070,7 @@ static fsal_status_t lustre_setattrs(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t lustre_file_unlink(struct fsal_obj_handle *dir_hdl,
+					struct fsal_obj_handle *obj_hdl,
 					const char *name)
 {
 	struct lustre_fsal_obj_handle *myself;
@@ -1232,7 +1233,6 @@ void lustre_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->commit = lustre_commit;
 	ops->lock_op = lustre_lock_op;
 	ops->close = lustre_close;
-	ops->lru_cleanup = lustre_lru_cleanup;
 	ops->handle_digest = lustre_handle_digest;
 	ops->handle_to_key = lustre_handle_to_key;
 

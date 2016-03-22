@@ -225,10 +225,6 @@ static struct pseudo_fsal_obj_handle
 
 	hdl->obj_handle.type = DIRECTORY;
 
-	/* State handle */
-	state_hdl_init(&hdl->ostate, DIRECTORY, &hdl->obj_handle);
-	hdl->obj_handle.state_hdl = &hdl->ostate;
-
 	/* Fills the output struct */
 	hdl->attributes.type = DIRECTORY;
 	FSAL_SET_MASK(hdl->attributes.mask, ATTR_TYPE);
@@ -599,48 +595,44 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
+				 struct fsal_obj_handle *obj_hdl,
 				 const char *name)
 {
 	struct pseudo_fsal_obj_handle *myself, *hdl;
 	fsal_errors_t error = ERR_FSAL_NOENT;
-	struct pseudo_fsal_obj_handle key[1];
-	struct avltree_node *node;
 	uint32_t numlinks;
 
 	myself = container_of(dir_hdl,
 			      struct pseudo_fsal_obj_handle,
 			      obj_handle);
+	hdl = container_of(obj_hdl,
+			      struct pseudo_fsal_obj_handle,
+			      obj_handle);
 
 	PTHREAD_RWLOCK_wrlock(&dir_hdl->lock);
 
-	key->name = (char *) name;
-	node = avltree_inline_name_lookup(&key->avl_n, &myself->avl_name);
-	if (node) {
-		hdl = avltree_container_of(node, struct pseudo_fsal_obj_handle,
-					   avl_n);
-		/* Check if directory is empty */
-		numlinks = atomic_fetch_uint32_t(&hdl->numlinks);
-		if (numlinks != 2) {
-			LogFullDebug(COMPONENT_FSAL,
-				     "%s numlinks %"PRIu32,
-				     hdl->name, numlinks);
-			error = ERR_FSAL_NOTEMPTY;
-			goto unlock;
-		}
-
-		/* We need to update the numlinks. */
-		numlinks = atomic_dec_uint32_t(&myself->numlinks);
+	/* Check if directory is empty */
+	numlinks = atomic_fetch_uint32_t(&hdl->numlinks);
+	if (numlinks != 2) {
 		LogFullDebug(COMPONENT_FSAL,
 			     "%s numlinks %"PRIu32,
-			     myself->name, numlinks);
-
-		/* Remove from directory's name and index avls */
-		avltree_remove(&hdl->avl_n, &myself->avl_name);
-		avltree_remove(&hdl->avl_i, &myself->avl_index);
-		hdl->inavl = false;
-
-		error = ERR_FSAL_NO_ERROR;
+			     hdl->name, numlinks);
+		error = ERR_FSAL_NOTEMPTY;
+		goto unlock;
 	}
+
+	/* We need to update the numlinks. */
+	numlinks = atomic_dec_uint32_t(&myself->numlinks);
+	LogFullDebug(COMPONENT_FSAL,
+		     "%s numlinks %"PRIu32,
+		     myself->name, numlinks);
+
+	/* Remove from directory's name and index avls */
+	avltree_remove(&hdl->avl_n, &myself->avl_name);
+	avltree_remove(&hdl->avl_i, &myself->avl_index);
+	hdl->inavl = false;
+
+	error = ERR_FSAL_NO_ERROR;
 
 unlock:
 	PTHREAD_RWLOCK_unlock(&dir_hdl->lock);
@@ -763,7 +755,6 @@ void pseudofs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->commit = pseudofs_commit;
 	ops->lock_op = pseudofs_lock_op;
 	ops->close = pseudofs_close;
-	ops->lru_cleanup = pseudofs_lru_cleanup;
 	ops->handle_digest = handle_digest;
 	ops->handle_to_key = handle_to_key;
 

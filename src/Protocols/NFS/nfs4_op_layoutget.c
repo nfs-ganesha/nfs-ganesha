@@ -83,6 +83,7 @@ static nfsstat4 acquire_layout_state(compound_data_t *data,
 	state_t *condemned_state = NULL;
 	/* Tracking data for the layout state */
 	struct state_refer refer;
+	bool lock_held = false;
 
 	memcpy(refer.session, data->session->session_id, sizeof(sessionid4));
 	refer.sequence = data->sequence;
@@ -122,6 +123,10 @@ static nfsstat4 acquire_layout_state(compound_data_t *data,
 		union state_data layout_data;
 
 		memset(&layout_data, 0, sizeof(layout_data));
+
+		PTHREAD_RWLOCK_wrlock(
+			&data->current_obj->state_hdl->state_lock);
+		lock_held = true;
 
 		/* See if a layout state already exists */
 		state_status =
@@ -201,6 +206,10 @@ static nfsstat4 acquire_layout_state(compound_data_t *data,
 
 	/* We are done with the supplied_state, release the reference. */
 	dec_state_t_ref(supplied_state);
+
+	if (lock_held)
+		PTHREAD_RWLOCK_unlock(
+			&data->current_obj->state_hdl->state_lock);
 
 	return nfs_status;
 }

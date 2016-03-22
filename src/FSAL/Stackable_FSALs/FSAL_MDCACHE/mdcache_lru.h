@@ -28,19 +28,19 @@
  */
 
 /**
- * @addtogroup cache_inode
+ * @addtogroup FSAL_MDCACHE
  * @{
  */
 
-#ifndef CACHE_INODE_LRU_H
-#define CACHE_INODE_LRU_H
+#ifndef MDCACHE_LRU_H
+#define MDCACHE_LRU_H
 
 #include "config.h"
 #include "log.h"
-#include "cache_inode.h"
+#include "mdcache_int.h"
 
 /**
- * @file cache_inode_lru.h
+ * @file mdcache_lru.h
  * @author Matt Benjamin
  * @brief Constant-time cache inode cache management implementation
  *
@@ -83,6 +83,9 @@ struct lru_state {
 };
 
 extern struct lru_state lru_state;
+
+/** Cache entries pool */
+extern pool_t *mdcache_entry_pool;
 
 /**
  * Flags for functions in the LRU package
@@ -135,34 +138,45 @@ extern struct lru_state lru_state;
  */
 #define LRU_N_Q_LANES  17
 
-extern int cache_inode_lru_pkginit(void);
-extern int cache_inode_lru_pkgshutdown(void);
+fsal_status_t mdcache_lru_pkginit(void);
+fsal_status_t mdcache_lru_pkgshutdown(void);
 
 extern size_t open_fd_count;
 
-cache_inode_status_t cache_inode_lru_get(struct cache_entry_t **entry);
-cache_inode_status_t cache_inode_lru_ref(cache_entry_t *entry, uint32_t flags);
+fsal_status_t mdcache_lru_get(mdcache_entry_t **entry);
+fsal_status_t mdcache_lru_ref(mdcache_entry_t *entry, uint32_t flags);
 
 /* XXX */
-void cache_inode_lru_kill(cache_entry_t *entry);
-void cache_inode_lru_cleanup_push(cache_entry_t *entry);
-void cache_inode_lru_cleanup_try_push(cache_entry_t *entry);
+void mdcache_lru_kill(mdcache_entry_t *entry);
+void mdcache_lru_cleanup_push(mdcache_entry_t *entry);
+void mdcache_lru_cleanup_try_push(mdcache_entry_t *entry);
 
-void cache_inode_lru_unref(cache_entry_t *entry, uint32_t flags);
-void cache_inode_lru_putback(cache_entry_t *entry, uint32_t flags);
+void mdcache_lru_unref(mdcache_entry_t *entry, uint32_t flags);
+void mdcache_lru_putback(mdcache_entry_t *entry, uint32_t flags);
 void lru_wake_thread(void);
-cache_inode_status_t cache_inode_inc_pin_ref(cache_entry_t *entry);
-void cache_inode_unpinnable(cache_entry_t *entry);
-void cache_inode_dec_pin_ref(cache_entry_t *entry, bool closefile);
-bool cache_inode_is_pinned(cache_entry_t *entry);
-void cache_inode_lru_kill_for_shutdown(cache_entry_t *entry);
+fsal_status_t mdcache_inc_pin_ref(mdcache_entry_t *entry);
+void mdcache_unpinnable(mdcache_entry_t *entry);
+void mdcache_dec_pin_ref(mdcache_entry_t *entry, bool closefile);
+bool mdcache_is_pinned(mdcache_entry_t *entry);
+void mdcache_lru_kill_for_shutdown(mdcache_entry_t *entry);
+
+/**
+ *
+ * @brief Get a logical reference to a cache entry
+ *
+ * @param[in] entry Cache entry being returned
+ */
+static inline fsal_status_t mdcache_get(mdcache_entry_t *entry)
+{
+	return mdcache_lru_ref(entry, LRU_FLAG_NONE);
+}
 
 /**
  *
  * @brief Release logical reference to a cache entry
  *
  * This function releases a logical reference to a cache entry
- * acquired by a previous call to cache_inode_get.
+ * acquired by a previous mdcache handle op (such as lookup, create, etc.)
  *
  * The result is typically to decrement the reference count on entry,
  * but additional side effects include LRU adjustment, movement
@@ -173,9 +187,9 @@ void cache_inode_lru_kill_for_shutdown(cache_entry_t *entry);
  *
  * @param[in] entry Cache entry being returned
  */
-static inline void cache_inode_put(cache_entry_t *entry)
+static inline void mdcache_put(mdcache_entry_t *entry)
 {
-	cache_inode_lru_unref(entry, LRU_FLAG_NONE);
+	mdcache_lru_unref(entry, LRU_FLAG_NONE);
 }
 
 /**
@@ -184,7 +198,7 @@ static inline void cache_inode_put(cache_entry_t *entry)
  * current FD count is above the high water mark.
  */
 
-static inline bool cache_inode_lru_fds_available(void)
+static inline bool mdcache_lru_fds_available(void)
 {
 	if ((atomic_fetch_size_t(&open_fd_count) >= lru_state.fds_hard_limit)
 	    && lru_state.caching_fds) {
@@ -207,9 +221,9 @@ static inline bool cache_inode_lru_fds_available(void)
  * Return true if we are currently caching file descriptors.
  */
 
-static inline bool cache_inode_lru_caching_fds(void)
+static inline bool mdcache_lru_caching_fds(void)
 {
 	return lru_state.caching_fds;
 }
-#endif				/* CACHE_INODE_LRU_H */
+#endif				/* MDCACHE_LRU_H */
 /** @} */

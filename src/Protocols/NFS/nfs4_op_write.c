@@ -402,7 +402,7 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 		}
 	}
 
-	if (obj->fsal->m_ops.support_ex()) {
+	if (obj->fsal->m_ops.support_ex(obj)) {
 		/* Call the new fsal_write */
 		fsal_status = fsal_write2(obj, false, state_found, offset, size,
 					  &written_size, bufferdata, &sync,

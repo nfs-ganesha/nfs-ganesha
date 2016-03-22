@@ -84,7 +84,5 @@ fsal_status_t pt_commit(struct fsal_obj_handle *obj_hdl,
 			off_t offset, size_t len);
 
 fsal_status_t pt_close(struct fsal_obj_handle *obj_hdl);
-fsal_status_t pt_lru_cleanup(struct fsal_obj_handle *obj_hdl,
-			     lru_actions_t requests);
 
 #endif				/* PT_METHODS_H */

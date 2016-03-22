@@ -250,7 +250,7 @@ void server_dbus_total_ops(struct export_stats *export_st,
 			   DBusMessageIter *iter);
 void global_dbus_total_ops(DBusMessageIter *iter);
 void server_dbus_fast_ops(DBusMessageIter *iter);
-void cache_inode_dbus_show(DBusMessageIter *iter);
+void mdcache_dbus_show(DBusMessageIter *iter);
 
 #ifdef _USE_9P
 void server_dbus_9p_iostats(struct _9p_stats *_9pp, DBusMessageIter *iter);

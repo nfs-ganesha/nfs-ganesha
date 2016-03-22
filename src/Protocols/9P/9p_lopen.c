@@ -83,7 +83,7 @@ int _9p_lopen(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	if (pfid->pentry->type == REGULAR_FILE) {
 		/** @todo: Maybe other types (FIFO, SOCKET,...) require
 		 * to be opened too */
-		if (pfid->pentry->fsal->m_ops.support_ex()) {
+		if (pfid->pentry->fsal->m_ops.support_ex(pfid->pentry)) {
 			if (*flags & 0x10)
 				openflags |= FSAL_O_TRUNC;
 

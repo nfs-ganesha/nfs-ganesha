@@ -231,29 +231,3 @@ fsal_status_t nullfs_close(struct fsal_obj_handle *obj_hdl)
 	return status;
 }
 
-/* nullfs_lru_cleanup
- * free non-essential resources at the request of cache inode's
- * LRU processing identifying this handle as stale enough for resource
- * trimming.
- */
-
-fsal_status_t nullfs_lru_cleanup(struct fsal_obj_handle *obj_hdl,
-				 lru_actions_t requests)
-{
-	struct nullfs_fsal_obj_handle *handle =
-		container_of(obj_hdl, struct nullfs_fsal_obj_handle,
-			     obj_handle);
-
-	struct nullfs_fsal_export *export =
-		container_of(op_ctx->fsal_export, struct nullfs_fsal_export,
-			     export);
-
-	/* calling subfsal method */
-	op_ctx->fsal_export = export->sub_export;
-	fsal_status_t status =
-		handle->sub_handle->obj_ops.lru_cleanup(handle->sub_handle,
-							requests);
-	op_ctx->fsal_export = &export->export;
-
-	return status;
-}

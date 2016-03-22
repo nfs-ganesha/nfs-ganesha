@@ -819,6 +819,7 @@ static fsal_status_t tank_setattrs(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t tank_unlink(struct fsal_obj_handle *dir_hdl,
+				 struct fsal_obj_handle *obj_hdl,
 				 const char *name)
 {
 	struct zfs_fsal_obj_handle *myself;
@@ -975,7 +976,6 @@ void zfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->commit = tank_commit;
 	ops->lock_op = tank_lock_op;
 	ops->close = tank_close;
-	ops->lru_cleanup = tank_lru_cleanup;
 	ops->handle_digest = tank_handle_digest;
 	ops->handle_to_key = tank_handle_to_key;
 

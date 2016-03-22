@@ -431,10 +431,6 @@ struct deleg_stats {
 };
 
 static struct global_stats global_st;
-#if DFG_LATER
-struct cache_stats cache_st;
-struct cache_stats *cache_stp = &cache_st;
-#endif /* DFG_LATER */
 
 /* include the top level server_stats struct definition
  */
@@ -1703,48 +1699,6 @@ void global_dbus_total_ops(DBusMessageIter *iter)
 	global_dbus_total(iter);
 }
 
-void cache_inode_dbus_show(DBusMessageIter *iter)
-{
-	struct timespec timestamp;
-	DBusMessageIter struct_iter;
-#if DFG_LATER
-	char *type;
-#endif /* DFG_LATER */
-
-	now(&timestamp);
-	dbus_append_timestamp(iter, &timestamp);
-
-	dbus_message_iter_open_container(iter, DBUS_TYPE_STRUCT, NULL,
-					 &struct_iter);
-#if DFG_LATER
-	type = "cache_req";
-	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &type);
-	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
-					&cache_st.inode_req);
-	type = "cache_hit";
-	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &type);
-	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
-					&cache_st.inode_hit);
-	type = "cache_miss";
-	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &type);
-	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
-					&cache_st.inode_miss);
-	type = "cache_conf";
-	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &type);
-	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
-					&cache_st.inode_conf);
-	type = "cache_added";
-	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &type);
-	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
-					&cache_st.inode_added);
-	type = "cache_mapping";
-	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &type);
-	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
-					&cache_st.inode_mapping);
-#endif /* DFG_LATER */
-
-	dbus_message_iter_close_container(iter, &struct_iter);
-}
 
 #ifdef _USE_9P
 void server_dbus_9p_iostats(struct _9p_stats *_9pp, DBusMessageIter *iter)

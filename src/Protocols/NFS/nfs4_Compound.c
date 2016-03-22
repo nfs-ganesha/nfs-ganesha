@@ -739,8 +739,7 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		 */
 		resarray[i].nfs_resop4_u.opaccess.status = status;
 
-		server_stats_nfsv4_op_done(opcode,
-					   op_start_time, status == NFS4_OK);
+		server_stats_nfsv4_op_done(opcode, op_start_time, status);
 
 		if (status != NFS4_OK) {
 			/* An error occured, we do not manage the other requests
@@ -905,8 +904,14 @@ void nfs4_Compound_Free(nfs_res_t *res)
 void compound_data_Free(compound_data_t *data)
 {
 	/* Release refcounted cache entries */
-	data->current_obj = NULL;
-	data->saved_obj = NULL;
+	if (data->current_obj) {
+		set_current_entry(data, NULL);
+		data->current_obj = NULL;
+	}
+	if (data->saved_obj) {
+		set_saved_entry(data, NULL);
+		data->saved_obj = NULL;
+	}
 
 	if (data->current_ds) {
 		ds_handle_put(data->current_ds);

@@ -57,8 +57,6 @@ const char *state_err_str(state_status_t err);
 
 state_status_t state_error_convert(fsal_status_t fsal_status);
 
-state_status_t cache_inode_status_to_state_status(cache_inode_status_t status);
-
 nfsstat4 nfs4_Errno_state(state_status_t error);
 nfsstat3 nfs3_Errno_state(state_status_t error);
 

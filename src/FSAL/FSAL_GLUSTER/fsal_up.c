@@ -47,6 +47,7 @@ int upcall_inode_invalidate(struct glusterfs_export *glfsexport,
 	unsigned char   globjhdl[GLAPI_HANDLE_LENGTH];
 	struct gsh_buffdesc         key;
 	const struct fsal_up_vector *event_func;
+	fsal_status_t fsal_status = {0, 0};
 
 	fs = glfsexport->gl_fs;
 	if (!fs) {
@@ -85,13 +86,13 @@ int upcall_inode_invalidate(struct glusterfs_export *glfsexport,
 		  FSAL_UP_INVALIDATE_CONTENT;
 	event_func = glfsexport->export.up_ops;
 
-	rc = event_func->invalidate_close(
-					glfsexport->export.fsal,
-					event_func,
+	fsal_status = event_func->invalidate_close(
+					&glfsexport->export,
 					&key,
 					upflags);
 
-	if (rc && rc != CACHE_INODE_NOT_FOUND) {
+	rc = fsal_status.major;
+	if (FSAL_IS_ERROR(fsal_status) && fsal_status.major != ERR_FSAL_NOENT) {
 		LogWarn(COMPONENT_FSAL_UP,
 			"Inode_Invalidate event could not be processed for fd %p, rc %d",
 			glfsexport->gl_fs, rc);

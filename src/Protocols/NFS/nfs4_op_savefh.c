@@ -116,18 +116,7 @@ int nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t *data,
 	if (data->saved_obj == data->current_obj)
 		goto out;
 
-	if (data->saved_obj) {
-		data->saved_obj->obj_ops.release(data->saved_obj);
-		data->saved_obj = NULL;
-	}
-
-	if (data->saved_ds) {
-		ds_handle_put(data->saved_ds);
-		data->saved_ds = NULL;
-	}
-
-	data->saved_obj = data->current_obj;
-	data->saved_filetype = data->current_filetype;
+	set_saved_entry(data, data->current_obj);
 
 	/* Make SAVEFH work right for DS handle */
 	if (data->current_ds != NULL) {

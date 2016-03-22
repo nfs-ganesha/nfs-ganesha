@@ -23,12 +23,12 @@
  */
 
 /**
- * @addtogroup cache_inode
+ * @addtogroup FSAL_MDCACHE
  * @{
  */
 
 /**
- * @file cache_inode_avl.h
+ * @file mdcache_avl.h
  * @author Matt Benjamin
  * @brief Definitions supporting AVL dirent representation
  *
@@ -48,21 +48,27 @@
  *
  */
 
-#ifndef CACHE_INODE_AVL_H
-#define CACHE_INODE_AVL_H
+#ifndef MDCACHE_AVL_H
+#define MDCACHE_AVL_H
 
 #include "config.h"
 #include "log.h"
-#include "cache_inode.h"
+#include "mdcache_int.h"
 #include "avltree.h"
+
+typedef enum {
+	MDCACHE_AVL_NAMES = 1,
+	MDCACHE_AVL_COOKIES = 2,
+	MDCACHE_AVL_BOTH = 3
+} mdcache_avl_which_t;
 
 static inline int avl_dirent_hk_cmpf(const struct avltree_node *lhs,
 				     const struct avltree_node *rhs)
 {
-	cache_inode_dir_entry_t *lk, *rk;
+	mdcache_dir_entry_t *lk, *rk;
 
-	lk = avltree_container_of(lhs, cache_inode_dir_entry_t, node_hk);
-	rk = avltree_container_of(rhs, cache_inode_dir_entry_t, node_hk);
+	lk = avltree_container_of(lhs, mdcache_dir_entry_t, node_hk);
+	rk = avltree_container_of(rhs, mdcache_dir_entry_t, node_hk);
 
 	if (lk->hk.k < rk->hk.k)
 		return -1;
@@ -73,29 +79,20 @@ static inline int avl_dirent_hk_cmpf(const struct avltree_node *lhs,
 	return 1;
 }
 
-void avl_dirent_set_deleted(cache_entry_t *entry, cache_inode_dir_entry_t *v);
-void avl_dirent_clear_deleted(cache_entry_t *entry,
-			      cache_inode_dir_entry_t *v);
-void cache_inode_avl_init(cache_entry_t *entry);
-int cache_inode_avl_qp_insert(cache_entry_t *entry,
-			      cache_inode_dir_entry_t *v);
+void avl_dirent_set_deleted(mdcache_entry_t *entry, mdcache_dir_entry_t *v);
+void avl_dirent_clear_deleted(mdcache_entry_t *entry, mdcache_dir_entry_t *v);
+void mdcache_avl_init(mdcache_entry_t *entry);
+int mdcache_avl_qp_insert(mdcache_entry_t *entry, mdcache_dir_entry_t *v);
 
-#define CACHE_INODE_FLAG_NONE        0x0000
-#define CACHE_INODE_FLAG_NEXT_ACTIVE 0x0001
-#define CACHE_INODE_FLAG_ONLY_ACTIVE 0x0002
+#define MDCACHE_FLAG_NONE        0x0000
+#define MDCACHE_FLAG_NEXT_ACTIVE 0x0001
+#define MDCACHE_FLAG_ONLY_ACTIVE 0x0002
 
-cache_inode_dir_entry_t *cache_inode_avl_lookup_k(cache_entry_t *entry,
-						  uint64_t k, uint32_t flags);
-cache_inode_dir_entry_t *cache_inode_avl_qp_lookup_s(cache_entry_t *entry,
-						     const char *name,
-						     int maxj);
+mdcache_dir_entry_t *mdcache_avl_lookup_k(mdcache_entry_t *entry, uint64_t k,
+					  uint32_t flags);
+mdcache_dir_entry_t *mdcache_avl_qp_lookup_s(mdcache_entry_t *entry,
+					     const char *name, int maxj);
 
-static inline void cache_inode_avl_remove(cache_entry_t *entry,
-					  cache_inode_dir_entry_t *v)
-{
-	avltree_remove(&v->node_hk, &entry->object.dir.avl.t);
-}
-
-#endif				/* CACHE_INODE_AVL_H */
+#endif				/* MDCACHE_AVL_H */
 
 /** @} */

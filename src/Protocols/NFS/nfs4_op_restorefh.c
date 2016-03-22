@@ -104,7 +104,7 @@ int nfs4_op_restorefh(struct nfs_argop4 *op, compound_data_t *data,
 		get_gsh_export_ref(data->saved_export);
 	}
 
-	/* Copy the data from current FH to saved FH */
+	/* Copy the data from saved FH to current FH */
 	memcpy(data->currentFH.nfs_fh4_val, data->savedFH.nfs_fh4_val,
 	       data->savedFH.nfs_fh4_len);
 

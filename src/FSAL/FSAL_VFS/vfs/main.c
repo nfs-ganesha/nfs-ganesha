@@ -211,7 +211,7 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
  * @retval true if extended operations are supported.
  */
 
-bool vfs_support_ex(void)
+bool vfs_support_ex(struct fsal_obj_handle *obj)
 {
 	return true;
 }

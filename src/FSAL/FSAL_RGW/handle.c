@@ -480,6 +480,7 @@ static fsal_status_t rgw_fsal_rename(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t rgw_fsal_unlink(struct fsal_obj_handle *dir_pub,
+				     struct fsal_obj_handle *obj_pub,
 				 const char *name)
 {
 	/* Generic status return */

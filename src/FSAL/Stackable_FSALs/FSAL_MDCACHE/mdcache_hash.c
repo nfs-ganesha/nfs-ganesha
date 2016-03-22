@@ -39,17 +39,17 @@
 #include "fsal.h"
 #include "nfs_core.h"
 #include "log.h"
-#include "cache_inode.h"
-#include "cache_inode_hash.h"
+#include "mdcache_int.h"
+#include "mdcache_hash.h"
 
 /**
- * @addtogroup cache_inode
+ * @addtogroup FSAL_MDCACHE
  * @{
  */
 
 /**
  *
- * @file cache_inode_hash.c
+ * @file mdcache_hash.c
  * @author Matt Benjamin
  * @brief Cache inode hashed dictionary package
  *
@@ -80,10 +80,10 @@ cih_pkginit(void)
 		&rwlock_attr,
 		PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
 #endif
-	cih_fhcache.npart = cache_param.nparts;
+	cih_fhcache.npart = mdcache_param.nparts;
 	cih_fhcache.partition =
 		gsh_calloc(cih_fhcache.npart, sizeof(cih_partition_t));
-	cih_fhcache.cache_sz = cache_param.cache_size;
+	cih_fhcache.cache_sz = mdcache_param.cache_size;
 	for (ix = 0; ix < cih_fhcache.npart; ++ix) {
 		cp = &cih_fhcache.partition[ix];
 		cp->part_ix = ix;

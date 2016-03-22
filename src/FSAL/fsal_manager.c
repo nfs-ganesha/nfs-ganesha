@@ -93,24 +93,27 @@ static enum load_state {
 
 
 /**
- * @brief Start the PSEUDOFS FSAL
+ * @brief Start a static FSAL
  *
- * The pseudofs fsal is static (always present) so it needs its own
- * startup.  This is a stripped down version of load_fsal() that is
- * done very early in server startup.
+ * Start a FSAL that's statically linked in.
+ *
+ * @param[in] name	FSAL name
+ * @param[in] init	Initialization function for FSAL
  */
 
-static void load_fsal_pseudo(void)
+static void load_fsal_static(const char *name, void (*init)(void))
 {
+	char pname[24];
 	char *dl_path;
 	struct fsal_module *fsal;
 
-	dl_path = gsh_strdup("Builtin-PseudoFS");
+	snprintf(pname, sizeof(pname), "Builtin-%s", name);
+	dl_path = gsh_strdup(pname);
 
 	PTHREAD_MUTEX_lock(&fsal_lock);
 
 	if (load_state != idle)
-		LogFatal(COMPONENT_INIT, "Couldn't Register FSAL_PSEUDO");
+		LogFatal(COMPONENT_INIT, "Couldn't Register FSAL_%s", name);
 
 	if (dl_error) {
 		gsh_free(dl_error);
@@ -122,12 +125,12 @@ static void load_fsal_pseudo(void)
 	PTHREAD_MUTEX_unlock(&fsal_lock);
 
 	/* now it is the module's turn to register itself */
-	pseudo_fsal_init();
+	init();
 
 	PTHREAD_MUTEX_lock(&fsal_lock);
 
 	if (load_state != registered)
-		LogFatal(COMPONENT_INIT, "Couldn't Register FSAL_PSEUDO");
+		LogFatal(COMPONENT_INIT, "Couldn't Register FSAL_%s", name);
 
 	/* we now finish things up, doing things the module can't see */
 
@@ -153,8 +156,11 @@ void start_fsals(void)
 	/* .init was a long time ago... */
 	load_state = idle;
 
+	/* Load FSAL_MDCACHE */
+	load_fsal_static("MDCACHE", mdcache_fsal_init);
+
 	/* Load FSAL_PSEUDO */
-	load_fsal_pseudo();
+	load_fsal_static("PSEUDO", pseudo_fsal_init);
 }
 
 /**
@@ -292,7 +298,7 @@ int load_fsal(const char *name,
 	new_fsal = NULL;
 
 	/* take initial ref so we can pass it back... */
-	atomic_inc_int32_t(&fsal->refcount);
+	fsal_get(fsal);
 
 	fsal->path = dl_path;
 	fsal->dl_handle = dl;
@@ -335,7 +341,7 @@ struct fsal_module *lookup_fsal(const char *name)
 	glist_for_each(entry, &fsal_list) {
 		fsal = glist_entry(entry, struct fsal_module, fsals);
 		if (strcasecmp(name, fsal->name) == 0) {
-			atomic_inc_int32_t(&fsal->refcount);
+			fsal_get(fsal);
 			PTHREAD_MUTEX_unlock(&fsal_lock);
 			op_ctx->fsal_module = fsal;
 			return fsal;

@@ -27,7 +27,6 @@
 #include "gsh_rpc.h"
 #include "fsal.h"
 #include "nfs_core.h"
-/*#include "cache_inode.h"*/
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
@@ -125,7 +124,154 @@ fsal_errors_t nfs4_readdir_callback(void *opaque,
 	if (tracker->total_entries == tracker->count)
 		goto not_inresult;
 
-	/* XXX dang Junction */
+	/* Test if this is a junction.
+	 *
+	 * NOTE: If there is a junction within a file system (perhaps setting
+	 *       up different permissions for part of the file system), the
+	 *       junction inode will ALSO be the root of the nested export.
+	 *       By testing cb_state, we allow the call back to process
+	 *       that root inode to proceed rather than getting stuck in a
+	 *       junction crossing infinite loop.
+	 */
+	PTHREAD_RWLOCK_rdlock(&obj->state_hdl->state_lock);
+	if (cb_parms->attr_allowed &&
+	    obj->type == DIRECTORY &&
+	    obj->state_hdl->dir.junction_export != NULL &&
+	    cb_state == CB_ORIGINAL) {
+		/* This is a junction. Code used to not recognize this
+		 * which resulted in readdir giving different attributes
+		 * (including FH, FSid, etc...) to clients from a
+		 * lookup. AIX refused to list the directory because of
+		 * this. Now we go to the junction to get the
+		 * attributes.
+		 */
+		LogDebug(COMPONENT_EXPORT,
+			 "Offspring DIR %s is a junction Export_id %d Path %s",
+			 cb_parms->name,
+			 obj->state_hdl->dir.junction_export->export_id,
+			 obj->state_hdl->dir.junction_export->fullpath);
+
+		/* Get a reference to the export and stash it in
+		 * compound data.
+		 */
+		if (!export_ready(obj->state_hdl->dir.junction_export)) {
+			/* Export is in the process of being released.
+			 * Pretend it's not actually a junction.
+			 */
+			goto not_junction;
+		}
+
+		get_gsh_export_ref(obj->state_hdl->dir.junction_export);
+
+		/* Save the compound data context */
+		tracker->save_export_perms = *op_ctx->export_perms;
+		tracker->saved_gsh_export = op_ctx->export;
+
+		/* Cross the junction */
+		op_ctx->export = obj->state_hdl->dir.junction_export;
+		op_ctx->fsal_export = op_ctx->export->fsal_export;
+
+		/* Build the credentials */
+		rdattr_error = nfs4_export_check_access(data->req);
+
+		if (rdattr_error == NFS4ERR_ACCESS) {
+			/* If return is NFS4ERR_ACCESS then this client
+			 * doesn't have access to this export, quietly
+			 * skip the export.
+			 */
+			LogDebug(COMPONENT_EXPORT,
+				 "NFS4ERR_ACCESS Skipping Export_Id %d Path %s",
+				 op_ctx->export->export_id,
+				 op_ctx->export->fullpath);
+
+			/* Restore export and creds */
+			restore_data(tracker);
+
+			/* Indicate success without adding another entry */
+			cb_parms->in_result = true;
+			PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
+			return ERR_FSAL_NO_ERROR;
+		}
+
+		if (rdattr_error == NFS4ERR_WRONGSEC) {
+			/* Client isn't using the right SecType for this export,
+			 * we will report NFS4ERR_WRONGSEC in
+			 * FATTR4_RDATTR_ERROR.
+			 *
+			 * If the ONLY attributes requested are
+			 * FATTR4_RDATTR_ERROR and FATTR4_MOUNTED_ON_FILEID we
+			 * will not return an error and instead will return
+			 * success with FATTR4_MOUNTED_ON_FILEID. AIX clients
+			 * make this request and expect it to succeed.
+			 */
+
+			if (check_for_wrongsec_ok_attr(tracker->req_attr)) {
+				/* Client is requesting attr that are allowed
+				 * when NFS4ERR_WRONGSEC occurs.
+				 */
+				LogDebug(COMPONENT_EXPORT,
+					 "Ignoring NFS4ERR_WRONGSEC (only asked for MOUNTED_IN_FILEID) On ReadDir Export_Id %d Path %s",
+					 op_ctx->export->export_id,
+					 op_ctx->export->fullpath);
+
+				/* Because we are not asking for any attributes
+				 * which are a property of the exported file
+				 * system's root, really just asking for
+				 * MOUNTED_ON_FILEID, we can just get the attr
+				 * for this node since it will result in the
+				 * correct value for MOUNTED_ON_FILEID since
+				 * the fileid of the junction node is the
+				 * MOUNTED_ON_FILEID of the root across the
+				 * junction, and the mounted_on_filed passed
+				 * is the fileid of the junction (since the
+				 * node can't be the root of the current
+				 * export).
+				 *
+				 * Go ahead and proceed without an error.
+				 */
+				rdattr_error = NFS4_OK;
+			} else {
+				/* We really must report the NFS4ERR_WRONGSEC.
+				 * We will report it below, but we need to get
+				 * the name into the entry.
+				 */
+				LogDebug(COMPONENT_EXPORT,
+					 "NFS4ERR_WRONGSEC On ReadDir Export_Id %d Path %s",
+					 op_ctx->export->export_id,
+					 op_ctx->export->fullpath);
+			}
+		} else if (rdattr_error == NFS4_OK) {
+			/* Now we must traverse the junction to get the
+			 * attributes. We have already set up the compound data.
+			 *
+			 * Signal to cache_inode_getattr to call back with the
+			 * root node of the export across the junction. Also
+			 * signal to ourselves that the call back will be
+			 * across the junction.
+			 */
+			LogDebug(COMPONENT_EXPORT,
+				 "Need to cross junction to Export_Id %d Path %s",
+				 op_ctx->export->export_id,
+				 op_ctx->export->fullpath);
+			PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
+			return ERR_FSAL_CROSS_JUNCTION;
+		}
+
+		/* An error occurred and we will report it, but we need to get
+		 * the name into the entry to proceed.
+		 *
+		 * Restore export and creds.
+		 */
+		LogDebug(COMPONENT_EXPORT,
+			 "Need to report error for junction to Export_Id %d Path %s",
+			 op_ctx->export->export_id,
+			 op_ctx->export->fullpath);
+		restore_data(tracker);
+	}
+
+not_junction:
+	PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
+
 
 	/* Now process the entry */
 	memset(val_fh, 0, NFS4_FHSIZE);

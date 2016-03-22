@@ -949,6 +949,7 @@ static fsal_status_t renamefile(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
+				 struct fsal_obj_handle *obj_hdl,
 				 const char *name)
 {
 	int rc = 0, credrc = 0;
@@ -1442,33 +1443,6 @@ static fsal_status_t remove_extattr_by_name(struct fsal_obj_handle *obj_hdl,
 }
 */
 /**
- * @brief Implements GLUSTER FSAL objectoperation lru_cleanup
- *
- * For now this function closed the fd if open as a part of the lru_cleanup.
- */
-
-fsal_status_t lru_cleanup(struct fsal_obj_handle *obj_hdl,
-			  lru_actions_t requests)
-{
-	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
-	struct glusterfs_handle *objhandle =
-	    container_of(obj_hdl, struct glusterfs_handle, handle);
-#ifdef GLTIMING
-	struct timespec s_time, e_time;
-
-	now(&s_time);
-#endif
-
-	if (objhandle->glfd != NULL)
-		status = file_close(obj_hdl);
-#ifdef GLTIMING
-	now(&e_time);
-	latency_update(&s_time, &e_time, lat_lru_cleanup);
-#endif
-	return status;
-}
-
-/**
  * @brief Implements GLUSTER FSAL objectoperation handle_digest
  */
 
@@ -1567,7 +1541,6 @@ void handle_ops_init(struct fsal_obj_ops *ops)
 	ops->commit = commit;
 	ops->lock_op = lock_op;
 	ops->close = file_close;
-	ops->lru_cleanup = lru_cleanup;
 	ops->handle_digest = handle_digest;
 	ops->handle_to_key = handle_to_key;
 	handle_ops_pnfs(ops);

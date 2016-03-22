@@ -33,7 +33,6 @@
 #include "config.h"
 #include "fsal.h"
 #include "nfs_core.h"
-/*#include "cache_inode.h"*/
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
@@ -95,13 +94,87 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 		goto out;
 	}
 
-#if 0
+	/* Get state lock for junction_export */
+	PTHREAD_RWLOCK_rdlock(&obj_src->state_hdl->state_lock);
+
 	if (obj_src->type == DIRECTORY &&
-	    obj_src->object.dir.junction_export != NULL) {
-		/* XXX dang handle junction */
+	    obj_src->state_hdl->dir.junction_export != NULL) {
 		/* Handle junction */
+		struct gsh_export *junction_export =
+			obj_src->state_hdl->dir.junction_export;
+		struct fsal_obj_handle *obj = NULL;
+
+		/* Try to get a reference to the export. */
+		if (!export_ready(junction_export)) {
+			/* Export has gone bad. */
+			LogDebug(COMPONENT_EXPORT,
+				 "NFS4ERR_STALE On Export_Id %d Path %s",
+				 junction_export->export_id,
+				 junction_export->fullpath);
+			res_SECINFO4->status = NFS4ERR_STALE;
+			PTHREAD_RWLOCK_unlock(&obj_src->state_hdl->state_lock);
+			goto out;
+		}
+
+		get_gsh_export_ref(junction_export);
+
+		PTHREAD_RWLOCK_unlock(&obj_src->state_hdl->state_lock);
+
+		/* Save the compound data context */
+		save_export_perms = *op_ctx->export_perms;
+		saved_gsh_export = op_ctx->export;
+
+		op_ctx->export = junction_export;
+		op_ctx->fsal_export = op_ctx->export->fsal_export;
+
+		/* Build credentials */
+		res_SECINFO4->status = nfs4_export_check_access(data->req);
+
+		/* Test for access error (export should not be visible). */
+		if (res_SECINFO4->status == NFS4ERR_ACCESS) {
+			/* If return is NFS4ERR_ACCESS then this client doesn't
+			 * have access to this export, return NFS4ERR_NOENT to
+			 * hide it. It was not visible in READDIR response.
+			 */
+			LogDebug(COMPONENT_EXPORT,
+				 "NFS4ERR_ACCESS Hiding Export_Id %d Path %s with NFS4ERR_NOENT",
+				 op_ctx->export->export_id,
+				 op_ctx->export->fullpath);
+			res_SECINFO4->status = NFS4ERR_NOENT;
+			goto out;
+		}
+
+		/* Only other error is NFS4ERR_WRONGSEC which is actually
+		 * what we expect here. Finish crossing the junction.
+		 */
+
+		fsal_status = nfs_export_get_root_entry(op_ctx->export, &obj);
+
+		if (FSAL_IS_ERROR(fsal_status)) {
+			LogMajor(COMPONENT_EXPORT,
+				 "PSEUDO FS JUNCTION TRAVERSAL: Failed to get root for %s, id=%d, status = %s",
+				 op_ctx->export->fullpath,
+				 op_ctx->export->export_id,
+				 fsal_err_txt(fsal_status));
+
+			res_SECINFO4->status = nfs4_Errno_status(fsal_status);
+			goto out;
+		}
+
+		LogDebug(COMPONENT_EXPORT,
+			 "PSEUDO FS JUNCTION TRAVERSAL: Crossed to %s, id=%d for name=%s",
+			 op_ctx->export->fullpath,
+			 op_ctx->export->export_id,
+			 secinfo_fh_name);
+
+		/* Swap in the obj on the other side of the junction. */
+		obj_src->obj_ops.put_ref(obj_src);
+
+		obj_src = obj;
+	} else {
+		/* Not a junction, release lock */
+		PTHREAD_RWLOCK_unlock(&obj_src->state_hdl->state_lock);
 	}
-#endif
 
 	/* Get the number of entries */
 	if (op_ctx->export_perms->options & EXPORT_OPTION_AUTH_NONE)

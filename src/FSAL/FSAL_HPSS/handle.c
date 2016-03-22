@@ -1240,11 +1240,10 @@ static fsal_status_t hpss_setattrs(struct fsal_obj_handle *fsal_obj_hdl,
  */
 
 static fsal_status_t hpss_unlink(struct fsal_obj_handle *dir_hdl,
+				 struct fsal_obj_handle *obj_hdl,
 				 char *name)
 {
 	int rc;
-	fsal_status_t st;
-	struct fsal_obj_handle *fsal_obj_hdl;
 	struct hpss_fsal_obj_handle *dir_obj_hdl;
 	sec_cred_t ucreds;
 
@@ -1256,15 +1255,7 @@ static fsal_status_t hpss_unlink(struct fsal_obj_handle *dir_hdl,
 		 container_of(dir_hdl, struct hpss_fsal_obj_handle, obj_handle);
 	HPSSFSAL_ucreds_from_opctx(op_ctx, &ucreds);
 
-	/* Action depends on the object type to be deleted.
-	 * To know that, weet fsal object handle.
-	 */
-	st = dir_hdl->obj_ops.lookup(dir_hdl, name, &fsal_obj_hdl);
-
-	if (FSAL_IS_ERROR(st))
-		return fsalstat(st.major, st.minor);
-
-	switch (fsal_obj_hdl->type) {
+	switch (obj_hdl->type) {
 	case DIRECTORY:
 		/* remove a directory */
 
@@ -1301,7 +1292,7 @@ static fsal_status_t hpss_unlink(struct fsal_obj_handle *dir_hdl,
 	case SOCKET_FILE:
 	default:
 		LogCrit(COMPONENT_FSAL, "Unexpected object type : %d\n",
-			fsal_obj_hdl->type);
+			obj_hdl->type);
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 
 	}
@@ -1461,6 +1452,7 @@ void hpss_handle_ops_init(struct fsal_obj_ops *ops)
 					struct fsal_obj_handle *,
 					const char *))hpss_rename;
 	ops->unlink = (fsal_status_t (*)(struct fsal_obj_handle *,
+					 struct fsal_obj_handle *,
 					 const char *))hpss_unlink;
 	ops->open = hpss_open;
 	ops->status = hpss_status;
@@ -1469,7 +1461,6 @@ void hpss_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->commit = hpss_commit;
 	ops->lock_op = hpss_lock_op;
 	ops->close = hpss_close;
-	ops->lru_cleanup = hpss_lru_cleanup;
 	ops->handle_digest = hpss_handle_digest;
 	ops->handle_to_key = hpss_handle_to_key;
 

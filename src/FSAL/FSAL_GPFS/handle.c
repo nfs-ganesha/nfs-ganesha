@@ -743,6 +743,7 @@ bool gpfs_compare(struct fsal_obj_handle *obj_hdl,
  * unlink the named file in the directory
  */
 static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
+				 struct fsal_obj_handle *obj_hdl,
 				 const char *name)
 {
 	fsal_status_t status;
@@ -912,7 +913,6 @@ void gpfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->lock_op = gpfs_lock_op;
 	ops->share_op = share_op;
 	ops->close = gpfs_close;
-	ops->lru_cleanup = gpfs_lru_cleanup;
 	ops->handle_digest = handle_digest;
 	ops->handle_to_key = handle_to_key;
 	handle_ops_pnfs(ops);

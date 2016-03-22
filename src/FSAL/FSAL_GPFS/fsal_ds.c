@@ -296,13 +296,10 @@ static nfsstat4 ds_write(struct fsal_ds_handle *const ds_pub,
 
 	key.addr = gpfs_handle;
 	key.len = gpfs_handle->handle_key_size;
-	fsal_invalidate(req_ctx->fsal_export->fsal, &key,
-#if DFG_LATER
-			CACHE_INODE_INVALIDATE_ATTRS |
-			CACHE_INODE_INVALIDATE_CONTENT);
-#else
-	0);
-#endif
+	req_ctx->fsal_export->up_ops->invalidate(
+			req_ctx->fsal_export, &key,
+			FSAL_UP_INVALIDATE_ATTRS |
+			FSAL_UP_INVALIDATE_CONTENT);
 
 	set_gpfs_verifier(writeverf);
 
@@ -391,13 +388,10 @@ static nfsstat4 ds_write_plus(struct fsal_ds_handle *const ds_pub,
 
 	key.addr = gpfs_handle;
 	key.len = gpfs_handle->handle_key_size;
-	fsal_invalidate(req_ctx->fsal_export->fsal, &key,
-#if DFG_LATER
-			CACHE_INODE_INVALIDATE_ATTRS |
-			CACHE_INODE_INVALIDATE_CONTENT);
-#else
-	0);
-#endif
+	req_ctx->fsal_export->up_ops->invalidate(
+			req_ctx->fsal_export, &key,
+			FSAL_UP_INVALIDATE_ATTRS |
+			FSAL_UP_INVALIDATE_CONTENT);
 
 	set_gpfs_verifier(writeverf);
 

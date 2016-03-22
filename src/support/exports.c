@@ -52,6 +52,9 @@
 #include "sal_functions.h"
 #include "pnfs_utils.h"
 
+/* XXX dang this should be removed at some point */
+#include "../FSAL/Stackable_FSALs/FSAL_MDCACHE/mdcache_ext.h"
+
 struct global_export_perms export_opt = {
 	.def.anonymous_uid = ANON_UID,
 	.def.anonymous_gid = ANON_GID,
@@ -570,10 +573,10 @@ static int fsal_cfg_commit(void *node, void *link_mem, void *self_struct,
 	status = fsal->m_ops.create_export(fsal,
 					   node, err_type,
 					  &fsal_up_top);
-#ifdef _USE_CACHE_INODE
+
+	/* XXX dang - Move this outside of MDCACHE ? */
 	if ((export->options_set & EXPORT_OPTION_EXPIRE_SET) == 0)
 		export->expire_time_attr = mdcache_param.expire_time_attr;
-#endif /* _USE_CACHE_INODE */
 
 	if (FSAL_IS_ERROR(status)) {
 		fsal_put(fsal);
@@ -1580,7 +1583,6 @@ int init_export_root(struct gsh_export *export)
 	struct root_op_context root_op_context;
 	int my_status;
 
-	/* XXX dang no longer pinning, but keeping reference instead */
 	/* Initialize req_ctx */
 	init_root_op_context(&root_op_context, export, export->fsal_export,
 			     0, 0, UNKNOWN_REQUEST);

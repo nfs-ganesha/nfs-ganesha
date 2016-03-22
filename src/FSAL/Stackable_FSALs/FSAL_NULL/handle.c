@@ -462,10 +462,14 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
+				 struct fsal_obj_handle *obj_hdl,
 				 const char *name)
 {
 	struct nullfs_fsal_obj_handle *nullfs_dir =
 		container_of(dir_hdl, struct nullfs_fsal_obj_handle,
+			     obj_handle);
+	struct nullfs_fsal_obj_handle *nullfs_obj =
+		container_of(obj_hdl, struct nullfs_fsal_obj_handle,
 			     obj_handle);
 	struct nullfs_fsal_export *export =
 		container_of(op_ctx->fsal_export, struct nullfs_fsal_export,
@@ -474,7 +478,7 @@ static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
 	/* calling subfsal method */
 	op_ctx->fsal_export = export->sub_export;
 	fsal_status_t status = nullfs_dir->sub_handle->obj_ops.unlink(
-		nullfs_dir->sub_handle, name);
+		nullfs_dir->sub_handle, nullfs_obj->sub_handle, name);
 	op_ctx->fsal_export = &export->export;
 
 	return status;
@@ -580,7 +584,6 @@ void nullfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->commit = nullfs_commit;
 	ops->lock_op = nullfs_lock_op;
 	ops->close = nullfs_close;
-	ops->lru_cleanup = nullfs_lru_cleanup;
 	ops->handle_digest = handle_digest;
 	ops->handle_to_key = handle_to_key;
 

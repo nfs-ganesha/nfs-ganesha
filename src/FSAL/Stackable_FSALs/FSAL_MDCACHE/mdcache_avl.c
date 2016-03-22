@@ -28,12 +28,12 @@
  */
 
 /**
- * @addtogroup cache_inode
+ * @addtogroup FSAL_MDCACHE
  * @{
  */
 
 /**
- * @file cache_inode_avl.c
+ * @file mdcache_avl.c
  * @brief AVL tree for caching directory entries
  */
 
@@ -41,8 +41,8 @@
 
 #include "log.h"
 #include "fsal.h"
-#include "cache_inode.h"
-#include "cache_inode_avl.h"
+#include "mdcache_int.h"
+#include "mdcache_avl.h"
 #include "murmur3.h"
 #include "city.h"
 
@@ -54,11 +54,11 @@
 #include <assert.h>
 
 void
-cache_inode_avl_init(cache_entry_t *entry)
+mdcache_avl_init(mdcache_entry_t *entry)
 {
-	avltree_init(&entry->object.dir.avl.t, avl_dirent_hk_cmpf,
+	avltree_init(&entry->fsobj.fsdir.avl.t, avl_dirent_hk_cmpf,
 		     0 /* flags */);
-	avltree_init(&entry->object.dir.avl.c, avl_dirent_hk_cmpf,
+	avltree_init(&entry->fsobj.fsdir.avl.c, avl_dirent_hk_cmpf,
 		     0 /* flags */);
 }
 
@@ -83,16 +83,16 @@ avltree_inline_lookup(
 }
 
 void
-avl_dirent_set_deleted(cache_entry_t *entry, cache_inode_dir_entry_t *v)
+avl_dirent_set_deleted(mdcache_entry_t *entry, mdcache_dir_entry_t *v)
 {
-	struct avltree *t = &entry->object.dir.avl.t;
+	struct avltree *t = &entry->fsobj.fsdir.avl.t;
 	struct avltree_node *node;
 
 	assert(!(v->flags & DIR_ENTRY_FLAG_DELETED));
 
 	node = avltree_inline_lookup(&v->node_hk, t);
 	assert(node);
-	avltree_remove(&v->node_hk, &entry->object.dir.avl.t);
+	avltree_remove(&v->node_hk, &entry->fsobj.fsdir.avl.t);
 
 #if EXTRA_CHECK_DELETED_WORKED
 	node = avltree_inline_lookup(&v->node_hk, c);
@@ -100,18 +100,17 @@ avl_dirent_set_deleted(cache_entry_t *entry, cache_inode_dir_entry_t *v)
 #endif
 
 	v->flags |= DIR_ENTRY_FLAG_DELETED;
-	cache_inode_key_delete(&v->ckey);
+	mdcache_key_delete(&v->ckey);
 
 	/* save cookie in deleted avl */
-	avltree_insert(&v->node_hk, &entry->object.dir.avl.c);
+	avltree_insert(&v->node_hk, &entry->fsobj.fsdir.avl.c);
 }
 
 void
-avl_dirent_clear_deleted(cache_entry_t *entry,
-			 cache_inode_dir_entry_t *v)
+avl_dirent_clear_deleted(mdcache_entry_t *entry, mdcache_dir_entry_t *v)
 {
-	struct avltree *t = &entry->object.dir.avl.t;
-	struct avltree *c = &entry->object.dir.avl.c;
+	struct avltree *t = &entry->fsobj.fsdir.avl.t;
+	struct avltree *c = &entry->fsobj.fsdir.avl.c;
 	struct avltree_node *node;
 
 	node = avltree_inline_lookup(&v->node_hk, c);
@@ -126,14 +125,13 @@ avl_dirent_clear_deleted(cache_entry_t *entry,
 }
 
 static inline int
-cache_inode_avl_insert_impl(cache_entry_t *entry,
-			    cache_inode_dir_entry_t *v,
-			    int j, int j2)
+mdcache_avl_insert_impl(mdcache_entry_t *entry, mdcache_dir_entry_t *v,
+			int j, int j2)
 {
 	int code = -1;
 	struct avltree_node *node;
-	struct avltree *t = &entry->object.dir.avl.t;
-	struct avltree *c = &entry->object.dir.avl.c;
+	struct avltree *t = &entry->fsobj.fsdir.avl.t;
+	struct avltree *c = &entry->fsobj.fsdir.avl.c;
 
 	/* first check for a previously-deleted entry */
 	node = avltree_inline_lookup(&v->node_hk, c);
@@ -143,7 +141,7 @@ cache_inode_avl_insert_impl(cache_entry_t *entry,
 	 * directory size, but rather indirectly on the lifetime
 	 * of cookie offsets of directories under mutation. */
 	if ((!node) && (avltree_size(c) >
-			cache_param.dir.avl_max_deleted)) {
+			mdcache_param.dir.avl_max_deleted)) {
 		/* ie, recycle the smallest deleted entry */
 		node = avltree_first(c);
 	}
@@ -154,7 +152,7 @@ cache_inode_avl_insert_impl(cache_entry_t *entry,
 	if (node) {
 		/* reuse the slot */
 		v_exist =
-		    avltree_container_of(node, cache_inode_dir_entry_t,
+		    avltree_container_of(node, mdcache_dir_entry_t,
 					 node_hk);
 		FSAL_namecpy(&v_exist->name, &v->name);
 		v_exist->entry = v->entry;
@@ -170,6 +168,7 @@ cache_inode_avl_insert_impl(cache_entry_t *entry,
 #endif				/* 0 */
 
 	if (node) {
+		/* XXX dang I think this leaks */
 		avltree_remove(node, c);
 		node = NULL;
 	}
@@ -181,13 +180,13 @@ cache_inode_avl_insert_impl(cache_entry_t *entry,
 	case 0:
 		/* success, note iterations */
 		v->hk.p = j + j2;
-		if (entry->object.dir.avl.collisions < v->hk.p)
-			entry->object.dir.avl.collisions = v->hk.p;
+		if (entry->fsobj.fsdir.avl.collisions < v->hk.p)
+			entry->fsobj.fsdir.avl.collisions = v->hk.p;
 
 		LogDebug(COMPONENT_CACHE_INODE,
-			 "inserted new dirent on entry=%p cookie=%" PRIu64
-			 " collisions %d", entry, v->hk.k,
-			 entry->object.dir.avl.collisions);
+			 "inserted new dirent for %s on entry=%p cookie=%"
+			 PRIu64 " collisions %d", v->name, entry, v->hk.k,
+			 entry->fsobj.fsdir.avl.collisions);
 		break;
 	default:
 		/* already inserted, or, keep trying at current j, j2 */
@@ -214,8 +213,7 @@ cache_inode_avl_insert_impl(cache_entry_t *entry,
  * count in v->hk.p.
  **/
 int
-cache_inode_avl_qp_insert(cache_entry_t *entry,
-			  cache_inode_dir_entry_t *v)
+mdcache_avl_qp_insert(mdcache_entry_t *entry, mdcache_dir_entry_t *v)
 {
 #if AVL_HASH_MURMUR3
 	uint32_t hk[4];
@@ -247,26 +245,25 @@ cache_inode_avl_qp_insert(cache_entry_t *entry,
 		if (v->hk.k < MIN_COOKIE_VAL)
 			continue;
 
-		code = cache_inode_avl_insert_impl(entry, v, j, 0);
+		code = mdcache_avl_insert_impl(entry, v, j, 0);
 		if (code >= 0)
 			return code;
 		/* detect name conflict */
 		if (j == 0) {
-			cache_inode_dir_entry_t *v2 =
-				cache_inode_avl_lookup_k(entry, v->hk.k,
-						  CACHE_INODE_FLAG_ONLY_ACTIVE);
+			mdcache_dir_entry_t *v2 =
+				mdcache_avl_lookup_k(entry, v->hk.k,
+						  MDCACHE_FLAG_ONLY_ACTIVE);
 			assert(v != v2);
 			if (v2 && (strcmp(v->name, v2->name) == 0)) {
 				LogCrit(COMPONENT_CACHE_INODE,
-					"cache_inode_avl_qp_insert_s: name conflict (%s, %s)",
+					"name conflict (%s, %s)",
 					v->name, v2->name);
 				return -2;
 			}
 		}
 	}
 
-	LogCrit(COMPONENT_CACHE_INODE,
-		"cache_inode_avl_qp_insert_s: could not insert at j=%d (%s)", j,
+	LogCrit(COMPONENT_CACHE_INODE, "could not insert at j=%d (%s)", j,
 		v->name);
 
 #ifdef _USE_9P
@@ -276,32 +273,32 @@ cache_inode_avl_qp_insert(cache_entry_t *entry,
 #endif
 	for (j2 = 1 /* tried j=0 */; j2 < UINT64_MAX; j2++) {
 		v->hk.k = v->hk.k + j2;
-		code = cache_inode_avl_insert_impl(entry, v, j, j2);
+		code = mdcache_avl_insert_impl(entry, v, j, j2);
 		if (code >= 0)
 			return code;
 		j2++;
 	}
 
 	LogCrit(COMPONENT_CACHE_INODE,
-		"cache_inode_avl_qp_insert_s: could not insert at j=%d (%s)", j,
+		"could not insert at j=%d (%s)", j,
 		v->name);
 
 	return -1;
 }
 
-cache_inode_dir_entry_t *
-cache_inode_avl_lookup_k(cache_entry_t *entry, uint64_t k, uint32_t flags)
+mdcache_dir_entry_t *
+mdcache_avl_lookup_k(mdcache_entry_t *entry, uint64_t k, uint32_t flags)
 {
-	struct avltree *t = &entry->object.dir.avl.t;
-	struct avltree *c = &entry->object.dir.avl.c;
-	cache_inode_dir_entry_t dirent_key[1], *dirent = NULL;
+	struct avltree *t = &entry->fsobj.fsdir.avl.t;
+	struct avltree *c = &entry->fsobj.fsdir.avl.c;
+	mdcache_dir_entry_t dirent_key[1], *dirent = NULL;
 	struct avltree_node *node, *node2;
 
 	dirent_key->hk.k = k;
 
 	node = avltree_inline_lookup(&dirent_key->node_hk, t);
 	if (node) {
-		if (flags & CACHE_INODE_FLAG_NEXT_ACTIVE)
+		if (flags & MDCACHE_FLAG_NEXT_ACTIVE)
 			/* client wants the cookie -after- the last we sent, and
 			 * the Linux 3.0 and 3.1.0-rc7 clients misbehave if we
 			 * resend the last one */
@@ -315,7 +312,7 @@ cache_inode_avl_lookup_k(cache_entry_t *entry, uint64_t k, uint32_t flags)
 	}
 
 	/* only the forward AVL is valid for conflict checking */
-	if (flags & CACHE_INODE_FLAG_ONLY_ACTIVE)
+	if (flags & MDCACHE_FLAG_ONLY_ACTIVE)
 		goto done;
 
 	/* Try the deleted AVL.  If a node with hk.k == v->hk.k is found,
@@ -331,25 +328,24 @@ cache_inode_avl_lookup_k(cache_entry_t *entry, uint64_t k, uint32_t flags)
 done:
 	if (node)
 		dirent =
-		    avltree_container_of(node, cache_inode_dir_entry_t,
-					 node_hk);
+		    avltree_container_of(node, mdcache_dir_entry_t, node_hk);
 
 out:
 	return dirent;
 }
 
-cache_inode_dir_entry_t *
-cache_inode_avl_qp_lookup_s(cache_entry_t *entry, const char *name, int maxj)
+mdcache_dir_entry_t *
+mdcache_avl_qp_lookup_s(mdcache_entry_t *entry, const char *name, int maxj)
 {
-	struct avltree *t = &entry->object.dir.avl.t;
+	struct avltree *t = &entry->fsobj.fsdir.avl.t;
 	struct avltree_node *node;
-	cache_inode_dir_entry_t *v2;
+	mdcache_dir_entry_t *v2;
 #if AVL_HASH_MURMUR3
 	uint32_t hashbuff[4];
 #endif
 	int j;
 	size_t namelen = strlen(name);
-	cache_inode_dir_entry_t v;
+	mdcache_dir_entry_t v;
 
 #if AVL_HASH_MURMUR3
 	MurmurHash3_x64_128(name, namelen, 67, hashbuff);
@@ -372,7 +368,7 @@ cache_inode_avl_qp_lookup_s(cache_entry_t *entry, const char *name, int maxj)
 		node = avltree_lookup(&v.node_hk, t);
 		if (node) {
 			/* ensure that node is related to v */
-			v2 = avltree_container_of(node, cache_inode_dir_entry_t,
+			v2 = avltree_container_of(node, mdcache_dir_entry_t,
 						  node_hk);
 			if (strcmp(name, v2->name) == 0) {
 				assert(!(v2->flags & DIR_ENTRY_FLAG_DELETED));
@@ -381,9 +377,8 @@ cache_inode_avl_qp_lookup_s(cache_entry_t *entry, const char *name, int maxj)
 		}
 	}
 
-	LogFullDebug(COMPONENT_CACHE_INODE,
-		     "cache_inode_avl_qp_lookup_s: entry not found at j=%d (%s)",
-		     j, name);
+	LogFullDebug(COMPONENT_CACHE_INODE, "entry not found at j=%d (%s)", j,
+		     name);
 
 	return NULL;
 }

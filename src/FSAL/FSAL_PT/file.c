@@ -175,23 +175,3 @@ fsal_status_t pt_close(struct fsal_obj_handle *obj_hdl)
 	return status;
 }
 
-/* pt_lru_cleanup
- * free non-essential resources at the request of cache inode's
- * LRU processing identifying this handle as stale enough for resource
- * trimming.
- */
-
-fsal_status_t pt_lru_cleanup(struct fsal_obj_handle *obj_hdl,
-			     lru_actions_t requests)
-{
-	struct pt_fsal_obj_handle *myself;
-	fsal_status_t status = fsalstat(ERR_FSAL_NO_ERROR, 0);
-
-	myself = container_of(obj_hdl, struct pt_fsal_obj_handle, obj_handle);
-	if (obj_hdl->type == REGULAR_FILE && myself->u.file.fd >= 0) {
-		status = PTFSAL_close(myself->u.file.fd);
-		myself->u.file.fd = -1;
-		myself->u.file.openflags = FSAL_O_CLOSED;
-	}
-	return status;
-}

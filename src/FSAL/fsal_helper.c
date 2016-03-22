@@ -610,7 +610,7 @@ fsal_status_t fsal_setattr(struct fsal_obj_handle *obj, bool bypass,
 	saved_acl = obj->attrs->acl;
 	before = obj->attrs->change;
 
-	if (obj->fsal->m_ops.support_ex()) {
+	if (obj->fsal->m_ops.support_ex(obj)) {
 		status = obj->obj_ops.setattr2(obj, bypass, state, attr);
 		if (FSAL_IS_ERROR(status)) {
 			if (status.major == ERR_FSAL_STALE) {
@@ -1630,7 +1630,7 @@ fsal_remove(struct fsal_obj_handle *parent, const char *name)
 	if (FSAL_IS_ERROR(status)) {
 		LogFullDebug(COMPONENT_FSAL, "lookup %s failure %s",
 			     name, fsal_err_txt(status));
-		goto out;
+		return status;
 	}
 
 	/* Do not remove a junction node or an export root. */
@@ -1656,19 +1656,27 @@ fsal_remove(struct fsal_obj_handle *parent, const char *name)
 		PTHREAD_RWLOCK_unlock(&to_remove_obj->state_hdl->state_lock);
 	}
 
-	LogDebug(COMPONENT_FSAL, "%s", name);
+	LogFullDebug(COMPONENT_FSAL, "%s", name);
 
-	if (fsal_is_open(to_remove_obj)) {
-		/* obj is not locked and seems to be open for fd caching
-		 * purpose.  candidate for closing since unlink of an open file
-		 * results in 'silly rename' on certain platforms */
-		status = fsal_close(to_remove_obj);
-		if (FSAL_IS_ERROR(status)) {
-			/* non-fatal error. log the warning and move on */
-			LogCrit(COMPONENT_FSAL,
-				"Error closing %s before unlink: %s.", name,
-				fsal_err_txt(status));
+	if (!to_remove_obj->fsal->m_ops.support_ex(to_remove_obj)) {
+		if (fsal_is_open(to_remove_obj)) {
+			/* obj is not locked and seems to be open for fd caching
+			 * purpose.  candidate for closing since unlink of an
+			 * open file results in 'silly rename' on certain
+			 * platforms */
+			status = fsal_close(to_remove_obj);
 		}
+	} else {
+		/* Make sure the to_remove_obj is closed since unlink of an
+		 * open file results in 'silly rename' on certain platforms.
+		 */
+		status = fsal_close2(to_remove_obj);
+	}
+	if (FSAL_IS_ERROR(status)) {
+		/* non-fatal error. log the warning and move on */
+		LogCrit(COMPONENT_FSAL,
+			"Error closing %s before unlink: %s.",
+			name, fsal_err_txt(status));
 	}
 
 #ifdef ENABLE_RFC_ACL
@@ -1677,7 +1685,7 @@ fsal_remove(struct fsal_obj_handle *parent, const char *name)
 		goto out;
 #endif /* ENABLE_RFC_ACL */
 
-	status = parent->obj_ops.unlink(parent, name);
+	status = parent->obj_ops.unlink(parent, to_remove_obj, name);
 
 	if (FSAL_IS_ERROR(status)) {
 		LogFullDebug(COMPONENT_FSAL, "unlink %s failure %s",
@@ -1688,22 +1696,16 @@ fsal_remove(struct fsal_obj_handle *parent, const char *name)
 	status = fsal_refresh_attrs(parent);
 	if (FSAL_IS_ERROR(status)) {
 		LogFullDebug(COMPONENT_FSAL,
-			     "not sure this code makes sense %s failure %s",
-			     name, fsal_err_txt(status));
+			     "could not refresh attributes of parent %p %s failure %s",
+			     parent, name, fsal_err_txt(status));
 		goto out;
 	}
 
-	status = fsal_refresh_attrs(to_remove_obj);
-	if (FSAL_IS_ERROR(status)) {
-		LogFullDebug(COMPONENT_FSAL,
-			     "not sure this code makes sense %s failure %s",
-			     name, fsal_err_txt(status));
-		goto out;
-	}
+	/* If entry wasn't actually removed, refresh attributes */
+	(void)fsal_refresh_attrs(to_remove_obj);
 
 out:
-	if (to_remove_obj)
-		to_remove_obj->obj_ops.put_ref(to_remove_obj);
+	to_remove_obj->obj_ops.put_ref(to_remove_obj);
 
 	LogFullDebug(COMPONENT_FSAL, "remove %s: status=%s", name,
 		     fsal_err_txt(status));
@@ -2074,7 +2076,7 @@ fsal_status_t fsal_commit(struct fsal_obj_handle *obj, off_t offset,
 	if ((uint64_t) len > ~(uint64_t) offset)
 		return fsalstat(ERR_FSAL_INVAL, 0);
 
-	if (obj->fsal->m_ops.support_ex())
+	if (obj->fsal->m_ops.support_ex(obj))
 		return obj->obj_ops.commit2(obj, offset, len);
 
 	if (!fsal_is_open(obj)) {
@@ -2120,165 +2122,6 @@ fsal_status_t fsal_verify2(struct fsal_obj_handle *obj,
 	}
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
-}
-
-/**
- * @brief Converts an FSAL error to the corresponding cache_inode error
- *
- * This function converts an FSAL error to the corresponding
- * cache_inode error.
- *
- * @param[in] fsal_status FSAL error to be converted
- *
- * @return the result of the conversion.
- *
- */
-cache_inode_status_t
-cache_inode_errors_convert(fsal_errors_t fsal_errors)
-{
-	switch (fsal_errors) {
-	case ERR_FSAL_NO_ERROR:
-		return CACHE_INODE_SUCCESS;
-
-	case ERR_FSAL_NOENT:
-		return CACHE_INODE_NOT_FOUND;
-
-	case ERR_FSAL_EXIST:
-		return CACHE_INODE_ENTRY_EXISTS;
-
-	case ERR_FSAL_ACCESS:
-		return CACHE_INODE_FSAL_EACCESS;
-
-	case ERR_FSAL_PERM:
-		return CACHE_INODE_FSAL_EPERM;
-
-	case ERR_FSAL_NOSPC:
-		return CACHE_INODE_NO_SPACE_LEFT;
-
-	case ERR_FSAL_NOTEMPTY:
-		return CACHE_INODE_DIR_NOT_EMPTY;
-
-	case ERR_FSAL_ROFS:
-		return CACHE_INODE_READ_ONLY_FS;
-
-	case ERR_FSAL_NOTDIR:
-		return CACHE_INODE_NOT_A_DIRECTORY;
-
-	case ERR_FSAL_IO:
-	case ERR_FSAL_NXIO:
-		return CACHE_INODE_IO_ERROR;
-
-	case ERR_FSAL_STALE:
-	case ERR_FSAL_FHEXPIRED:
-		return CACHE_INODE_ESTALE;
-
-	case ERR_FSAL_INVAL:
-	case ERR_FSAL_OVERFLOW:
-		return CACHE_INODE_INVALID_ARGUMENT;
-
-	case ERR_FSAL_DQUOT:
-	case ERR_FSAL_NO_QUOTA:
-		return CACHE_INODE_QUOTA_EXCEEDED;
-
-	case ERR_FSAL_NO_DATA:
-		return CACHE_INODE_NO_DATA;
-
-	case ERR_FSAL_SEC:
-		return CACHE_INODE_FSAL_ERR_SEC;
-
-	case ERR_FSAL_NOTSUPP:
-	case ERR_FSAL_ATTRNOTSUPP:
-		return CACHE_INODE_NOT_SUPPORTED;
-
-	case ERR_FSAL_UNION_NOTSUPP:
-		return CACHE_INODE_UNION_NOTSUPP;
-
-	case ERR_FSAL_DELAY:
-		return CACHE_INODE_DELAY;
-
-	case ERR_FSAL_NAMETOOLONG:
-		return CACHE_INODE_NAME_TOO_LONG;
-
-	case ERR_FSAL_NOMEM:
-		return CACHE_INODE_MALLOC_ERROR;
-
-	case ERR_FSAL_BADCOOKIE:
-		return CACHE_INODE_BAD_COOKIE;
-
-	case ERR_FSAL_FILE_OPEN:
-		return CACHE_INODE_FILE_OPEN;
-
-	case ERR_FSAL_NOT_OPENED:
-		LogDebug(COMPONENT_CACHE_INODE,
-			 "Conversion of ERR_FSAL_NOT_OPENED to CACHE_INODE_FSAL_ERROR");
-		return CACHE_INODE_FSAL_ERROR;
-
-	case ERR_FSAL_ISDIR:
-		return CACHE_INODE_IS_A_DIRECTORY;
-
-	case ERR_FSAL_SYMLINK:
-	case ERR_FSAL_BADTYPE:
-		return CACHE_INODE_BAD_TYPE;
-
-	case ERR_FSAL_FBIG:
-		return CACHE_INODE_FILE_BIG;
-
-	case ERR_FSAL_XDEV:
-		return CACHE_INODE_FSAL_XDEV;
-
-	case ERR_FSAL_MLINK:
-		return CACHE_INODE_FSAL_MLINK;
-
-	case ERR_FSAL_FAULT:
-	case ERR_FSAL_SERVERFAULT:
-	case ERR_FSAL_DEADLOCK:
-		return CACHE_INODE_SERVERFAULT;
-
-	case ERR_FSAL_TOOSMALL:
-		return CACHE_INODE_TOOSMALL;
-
-	case ERR_FSAL_SHARE_DENIED:
-		return CACHE_INODE_SHARE_DENIED;
-
-	case ERR_FSAL_LOCKED:
-		return CACHE_INODE_LOCKED;
-
-	case ERR_FSAL_IN_GRACE:
-		return CACHE_INODE_IN_GRACE;
-
-	case ERR_FSAL_CROSS_JUNCTION:
-		return CACHE_INODE_CROSS_JUNCTION;
-
-	case ERR_FSAL_BADHANDLE:
-		return CACHE_INODE_BADHANDLE;
-
-	case ERR_FSAL_BAD_RANGE:
-		return CACHE_INODE_BAD_RANGE;
-
-	case ERR_FSAL_BADNAME:
-		return CACHE_INODE_BADNAME;
-
-	case ERR_FSAL_BLOCKED:
-	case ERR_FSAL_INTERRUPT:
-	case ERR_FSAL_NOT_INIT:
-	case ERR_FSAL_ALREADY_INIT:
-	case ERR_FSAL_BAD_INIT:
-	case ERR_FSAL_TIMEOUT:
-	case ERR_FSAL_NO_ACE:
-		/* These errors should be handled inside Cache Inode (or
-		 * should never be seen by Cache Inode) */
-		LogDebug(COMPONENT_CACHE_INODE,
-			 "Conversion of FSAL error %d to CACHE_INODE_FSAL_ERROR",
-			 fsal_errors);
-		return CACHE_INODE_FSAL_ERROR;
-	}
-
-	/* We should never reach this line, this may produce a warning with
-	 * certain compiler */
-	LogCrit(COMPONENT_CACHE_INODE,
-		"cache_inode_error_convert: default conversion to CACHE_INODE_FSAL_ERROR for error %d, line %u should never be reached",
-		fsal_errors, __LINE__);
-	return CACHE_INODE_FSAL_ERROR;
 }
 
 /** @} */

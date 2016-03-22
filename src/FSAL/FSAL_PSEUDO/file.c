@@ -141,15 +141,3 @@ fsal_status_t pseudofs_close(struct fsal_obj_handle *obj_hdl)
 	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
-/* pseudofs_lru_cleanup
- * free non-essential resources at the request of cache inode's
- * LRU processing identifying this handle as stale enough for resource
- * trimming.
- */
-
-fsal_status_t pseudofs_lru_cleanup(struct fsal_obj_handle *obj_hdl,
-				 lru_actions_t requests)
-{
-	/* Unused, but also nothing to do. */
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
-}

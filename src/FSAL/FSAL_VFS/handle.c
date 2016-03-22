@@ -130,7 +130,9 @@ struct vfs_fsal_obj_handle *alloc_handle(int dirfd,
 	hdl->attributes.fsid = fs->fsid;
 	fsal_obj_handle_init(&hdl->obj_handle, exp_hdl,
 			     posix2fsal_type(stat->st_mode));
+#ifdef VFS_NO_MDCACHE
 	hdl->obj_handle.state_hdl = vfs_state_locate(&hdl->obj_handle);
+#endif /* VFS_NO_MDCACHE */
 	vfs_handle_ops_init(&hdl->obj_handle.obj_ops);
 	if (vfs_sub_init_handle(myself, hdl, path) < 0)
 		goto spcerr;
@@ -195,13 +197,18 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 	fs = parent->fs;
 	dirfd = vfs_fsal_open(parent_hdl, O_PATH | O_NOACCESS, &fsal_error);
 
-	if (dirfd < 0)
+	if (dirfd < 0) {
+		LogDebug(COMPONENT_FSAL, "Failed to open parent: %s",
+			 msg_fsal_err(fsal_error));
 		return fsalstat(fsal_error, -dirfd);
+	}
 
 	retval = fstatat(dirfd, path, &stat, AT_SYMLINK_NOFOLLOW);
 
 	if (retval < 0) {
 		retval = errno;
+		LogDebug(COMPONENT_FSAL, "Failed to open stat %s: %s", path,
+			 msg_fsal_err(posix2fsal_error(retval)));
 		goto direrr;
 	}
 
@@ -1610,6 +1617,7 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
+				 struct fsal_obj_handle *obj_hdl,
 				 const char *name)
 {
 	struct vfs_fsal_obj_handle *myself;
@@ -1804,7 +1812,6 @@ void vfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->commit = vfs_commit;
 	ops->lock_op = vfs_lock_op;
 	ops->close = vfs_close;
-	ops->lru_cleanup = vfs_lru_cleanup;
 	ops->handle_digest = handle_digest;
 	ops->handle_to_key = handle_to_key;
 	ops->open2 = vfs_open2;

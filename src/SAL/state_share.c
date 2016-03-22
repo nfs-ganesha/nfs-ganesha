@@ -890,7 +890,7 @@ state_status_t state_nlm_share(struct fsal_obj_handle *obj,
 	struct fsal_export *fsal_export = op_ctx->fsal_export;
 	state_nlm_client_t *client = owner->so_owner.so_nlm_owner.so_client;
 
-	if (obj->fsal->m_ops.support_ex()) {
+	if (obj->fsal->m_ops.support_ex(obj)) {
 		return state_nlm_share2(obj, share_access, share_deny,
 					owner, state, reclaim, false);
 	}
@@ -1070,7 +1070,7 @@ state_status_t state_nlm_unshare(struct fsal_obj_handle *obj,
 	fsal_share_param_t share_param;
 	state_status_t status = 0;
 
-	if (obj->fsal->m_ops.support_ex()) {
+	if (obj->fsal->m_ops.support_ex(obj)) {
 		return state_nlm_share2(obj,
 					share_access,
 					share_deny,

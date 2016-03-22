@@ -1,5 +1,5 @@
 /*
- * Vim:noexpandtab:shiftwidth=8:tabstop=8:
+ * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright (C) 2010, The Linux Box Corporation
  * Contributor : Matt Benjamin <matt@linuxbox.com>
@@ -28,7 +28,7 @@
  */
 
 /**
- * @addtogroup cache_inode
+ * @addtogroup FSAL_MDCACHE
  * @{
  */
 
@@ -46,19 +46,20 @@
 #include <stdint.h>
 #include <unistd.h>
 #include "fsal.h"
+#include "fsal_convert.h"
+#include "FSAL/fsal_commonlib.h"
 #include "nfs_core.h"
 #include "log.h"
-#include "cache_inode.h"
-#include "cache_inode_lru.h"
+#include "mdcache_lru.h"
+#include "mdcache_hash.h"
 #include "abstract_atomic.h"
-#include "cache_inode_hash.h"
 #include "gsh_intrinsic.h"
 #include "sal_functions.h"
 #include "nfs_exports.h"
 
 /**
  *
- * @file cache_inode_lru.c
+ * @file mdcache_lru.c
  * @author Matt Benjamin <matt@linuxbox.com>
  * @brief Constant-time cache inode cache management implementation
  */
@@ -152,18 +153,6 @@ struct lru_q_lane {
 static struct lru_q_lane LRU[LRU_N_Q_LANES];
 
 /**
- * This is a global counter of files opened by cache_inode.  This is
- * preliminary expected to go away.  Problems with this method are
- * that it overcounts file descriptors for FSALs that don't use them
- * for open files, and, under the Lieb Rearchitecture, FSALs will be
- * responsible for caching their own file descriptors, with
- * interfaces for Cache_Inode to interrogate them as to usage or
- * instruct them to close them.
- */
-
-size_t open_fd_count = 0;
-
-/**
  * The refcount mechanism distinguishes 3 key object states:
  *
  * 1. unreferenced (unreachable)
@@ -189,8 +178,8 @@ size_t open_fd_count = 0;
 static struct fridgethr *lru_fridge;
 
 enum lru_edge {
-	LRU_HEAD,		/* LRU */
-	LRU_TAIL		/* MRU */
+	LRU_LRU,	/* LRU */
+	LRU_MRU		/* MRU */
 };
 
 static const uint32_t FD_FALLBACK_LIMIT = 0x400;
@@ -266,14 +255,14 @@ lru_init_queues(void)
  * This function returns a pointer to the queue on which entry is linked,
  * or NULL if entry is not on any queue.
  *
- * The lane lock corresponding to entry is LOCKED.
+ * @note The caller @a MUST hold the lane lock
  *
  * @param[in] entry  The entry.
  *
  * @return A pointer to entry's current queue, NULL if none.
  */
 static inline struct lru_q *
-lru_queue_of(cache_entry_t *entry)
+lru_queue_of(mdcache_entry_t *entry)
 {
 	struct lru_q *q;
 
@@ -300,7 +289,7 @@ lru_queue_of(cache_entry_t *entry)
 }
 
 /**
- * @brief Get the appropriate lane for a cache_entry
+ * @brief Get the appropriate lane for a cache entry
  *
  * This function gets the LRU lane by taking the modulus of the
  * supplied pointer.
@@ -310,7 +299,7 @@ lru_queue_of(cache_entry_t *entry)
  * @return The LRU lane in which that entry should be stored.
  */
 static inline uint32_t
-lru_lane_of_entry(cache_entry_t *entry)
+lru_lane_of_entry(mdcache_entry_t *entry)
 {
 	return (uint32_t) ((((uintptr_t) entry) / 2*sizeof(uintptr_t))
 				% LRU_N_Q_LANES);
@@ -325,33 +314,36 @@ lru_lane_of_entry(cache_entry_t *entry)
  *
  * The caller MUST NOT hold a lock on the queue lane.
  *
- * @param[in] entry  The entry to insert
+ * @param[in] lru    The LRU entry to insert
  * @param[in] q      The queue to insert on
- * @param[in] lane   The lane corresponding to entry address
- * @param[in] edge   One of LRU_HEAD (LRU) or LRU_TAIL (MRU)
+ * @param[in] edge   One of LRU_LRU or LRU_MRU
  */
 static inline void
-lru_insert_entry(cache_entry_t *entry, struct lru_q *q,
-		 uint32_t lane, enum lru_edge edge)
+lru_insert(mdcache_lru_t *lru, struct lru_q *q, enum lru_edge edge)
 {
-	cache_inode_lru_t *lru = &entry->lru;
-	struct lru_q_lane *qlane = &LRU[lane];
-
-	lru->lane = lane;	/* permanently fix lane */
 	lru->qid = q->id;	/* initial */
 
-	QLOCK(qlane);
-
 	switch (edge) {
-	case LRU_HEAD:
+	case LRU_LRU:
 		glist_add(&q->q, &lru->q);
 		break;
-	case LRU_TAIL:
+	case LRU_MRU:
 	default:
 		glist_add_tail(&q->q, &lru->q);
 		break;
 	}
 	++(q->size);
+}
+
+static inline void
+lru_insert_entry(mdcache_entry_t *entry, struct lru_q *q, enum lru_edge edge)
+{
+	mdcache_lru_t *lru = &entry->lru;
+	struct lru_q_lane *qlane = &LRU[lru->lane];
+
+	QLOCK(qlane);
+
+	lru_insert(lru, q, edge);
 
 	QUNLOCK(qlane);
 }
@@ -359,17 +351,16 @@ lru_insert_entry(cache_entry_t *entry, struct lru_q *q,
 /**
  * @brief pin an entry
  *
- * Pins an entry.  The corresponding q lane is LOCKED.  The entry is NOT
- * on the CLEANUP queue.
+ * @note The caller @a MUST hold the lane lock
+ * @note The entry @a MUST @a NOT be on the CLEANUP queue
  *
  * @param[in] entry  The entry to pin
- * @param[in] entry  Its qlane (which we just computed)
  * @param[in] flags  (TBD)
  */
 static inline void
-cond_pin_entry(cache_entry_t *entry, uint32_t flags)
+cond_pin_entry(mdcache_entry_t *entry, uint32_t flags)
 {
-	cache_inode_lru_t *lru = &entry->lru;
+	mdcache_lru_t *lru = &entry->lru;
 
 	if (!(lru->qid == LRU_ENTRY_PINNED)) {
 		struct lru_q *q;
@@ -379,9 +370,8 @@ cond_pin_entry(cache_entry_t *entry, uint32_t flags)
 		LRU_DQ_SAFE(lru, q);
 
 		/* in with the new */
-		lru->qid = LRU_ENTRY_PINNED;
 		q = &LRU[(lru->lane)].pinned;
-		glist_add(&q->q, &lru->q);
+		lru_insert(lru, q, LRU_LRU);
 		++(q->size);
 
 	} /* ! PINNED  (&& !CLEANUP) */
@@ -395,51 +385,56 @@ cond_pin_entry(cache_entry_t *entry, uint32_t flags)
  * @param[in] entry  The entry to clean
  */
 static inline void
-cache_inode_lru_clean(cache_entry_t *entry)
+mdcache_lru_clean(mdcache_entry_t *entry)
 {
-	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
+	fsal_status_t status;
 
-	if (entry->obj_handle->fsal->m_ops.support_ex()) {
+	if (entry->obj_handle.fsal->m_ops.support_ex(&entry->obj_handle)) {
 		/* Make sure any FSAL global file descriptor is closed. */
-		cache_status = cache_inode_close2(entry);
+		status = fsal_close2(&entry->obj_handle);
 
-		if (cache_status != CACHE_INODE_SUCCESS) {
+		if (FSAL_IS_ERROR(status)) {
 			LogCrit(COMPONENT_CACHE_INODE_LRU,
 				"Error closing file in cleanup: %s",
-				cache_inode_err_str(cache_status));
+				fsal_err_txt(status));
 		}
 	} else {
-		if (is_open(entry)) {
-			cache_status =
-			    cache_inode_close(entry,
-					      CACHE_INODE_FLAG_REALLYCLOSE |
-					      CACHE_INODE_FLAG_NOT_PINNED |
-					      CACHE_INODE_FLAG_CLEANUP |
-					      CACHE_INODE_DONT_KILL);
-			if (cache_status != CACHE_INODE_SUCCESS) {
+		if (fsal_is_open(&entry->obj_handle)) {
+			status = fsal_close(&entry->obj_handle);
+			if (FSAL_IS_ERROR(status)) {
 				LogCrit(COMPONENT_CACHE_INODE_LRU,
 					"Error closing file in cleanup: %s",
-					cache_inode_err_str(cache_status));
+					fsal_err_txt(status));
 			}
 		}
 	}
 
-	if (entry->type == DIRECTORY)
-		cache_inode_release_dirents(entry, CACHE_INODE_AVL_BOTH);
-
-	/* Free FSAL resources */
-	if (entry->obj_handle) {
-		entry->obj_handle->obj_ops.release(entry->obj_handle);
-		entry->obj_handle = NULL;
+	if (entry->obj_handle.type == DIRECTORY) {
+		status = mdcache_dirent_invalidate_all(entry);
+		if (FSAL_IS_ERROR(status)) {
+			LogCrit(COMPONENT_CACHE_INODE_LRU,
+				"Error releasing dirents in cleanup: %s.",
+				fsal_err_txt(status));
+		}
 	}
 
+	/* Free FSAL resources */
+	if (entry->sub_handle) {
+		subcall(
+			entry->sub_handle->obj_ops.release(entry->sub_handle)
+		       );
+		entry->sub_handle = NULL;
+	}
+
+	/* Clean our handle */
+	fsal_obj_handle_fini(&entry->obj_handle);
+
 	/* Clean out the export mapping before deconstruction */
-	clean_mapping(entry);
+	mdc_clean_mapping(entry);
 
 	/* Finalize last bits of the cache entry */
-	cache_inode_key_delete(&entry->fh_hk.key);
+	mdcache_key_delete(&entry->fh_hk.key);
 	PTHREAD_RWLOCK_destroy(&entry->content_lock);
-	PTHREAD_RWLOCK_destroy(&entry->state_lock);
 	PTHREAD_RWLOCK_destroy(&entry->attr_lock);
 }
 
@@ -448,24 +443,28 @@ cache_inode_lru_clean(cache_entry_t *entry)
  *
  * This function examines the end of the specified queue and if the
  * entry found there can be re-used, it returns with the entry
- * locked.  Otherwise, it returns NULL.  The caller MUST NOT hold a
- * lock on the queue when this function is called.
+ * locked.  Otherwise, it returns NULL.
  *
- * This function follows the locking discipline detailed above.  it
+ * This function follows the locking discipline detailed above.  It
  * returns an lru entry removed from the queue system and which we are
  * permitted to dispose or recycle.
+ *
+ * @note The caller @a MUST @a NOT hold the lane lock
+ *
+ * @param[in] qid  Queue to reap
+ * @return Available entry if found, NULL otherwise
  */
 
 static uint32_t reap_lane;
 
-static inline cache_inode_lru_t *
+static inline mdcache_lru_t *
 lru_reap_impl(enum lru_q_id qid)
 {
 	uint32_t lane;
 	struct lru_q_lane *qlane;
 	struct lru_q *lq;
-	cache_inode_lru_t *lru;
-	cache_entry_t *entry;
+	mdcache_lru_t *lru;
+	mdcache_entry_t *entry;
 	uint32_t refcnt;
 	cih_latch_t latch;
 	int ix;
@@ -476,21 +475,21 @@ lru_reap_impl(enum lru_q_id qid)
 		lq = (qid == LRU_ENTRY_L1) ? &qlane->L1 : &qlane->L2;
 
 		QLOCK(qlane);
-		lru = glist_first_entry(&lq->q, cache_inode_lru_t, q);
+		lru = glist_first_entry(&lq->q, mdcache_lru_t, q);
 		if (!lru)
 			goto next_lane;
 		refcnt = atomic_inc_int32_t(&lru->refcnt);
-		entry = container_of(lru, cache_entry_t, lru);
+		entry = container_of(lru, mdcache_entry_t, lru);
 		if (unlikely(refcnt != (LRU_SENTINEL_REFCOUNT + 1))) {
 			/* cant use it. */
-			cache_inode_lru_unref(entry, LRU_UNREF_QLOCKED);
+			mdcache_lru_unref(entry, LRU_UNREF_QLOCKED);
 			goto next_lane;
 		}
 		/* potentially reclaimable */
 		QUNLOCK(qlane);
 		/* entry must be unreachable from CIH when recycled */
-		if (cih_latch_entry
-		    (entry, &latch, CIH_GET_WLOCK, __func__, __LINE__)) {
+		if (cih_latch_entry(&entry->fh_hk.key, &latch, CIH_GET_WLOCK,
+				    __func__, __LINE__)) {
 			QLOCK(qlane);
 			refcnt = atomic_fetch_int32_t(&entry->lru.refcnt);
 			/* there are two cases which permit reclaim,
@@ -508,16 +507,23 @@ lru_reap_impl(enum lru_q_id qid)
 				LRU_DQ_SAFE(lru, q);
 				entry->lru.qid = LRU_ENTRY_NONE;
 				QUNLOCK(qlane);
-				cih_latch_rele(&latch);
+				cih_hash_release(&latch);
+				/* Note, we're not releasing our ref here.
+				 * cih_remove_latched() called
+				 * mdcache_lru_unref(), which released the
+				 * sentinal ref, leaving just the one ref we
+				 * took earlier.  Returning this as is leaves it
+				 * with a ref of 1 (ie, just the sentinal ref)
+				 * */
 				goto out;
 			}
-			cih_latch_rele(&latch);
+			cih_hash_release(&latch);
 			/* return the ref we took above--unref deals
 			 * correctly with reclaim case */
-			cache_inode_lru_unref(entry, LRU_UNREF_QLOCKED);
+			mdcache_lru_unref(entry, LRU_UNREF_QLOCKED);
 		} else {
 			/* ! QLOCKED but needs to be Unref'ed */
-			cache_inode_lru_unref(entry, LRU_FLAG_NONE);
+			mdcache_lru_unref(entry, LRU_FLAG_NONE);
 			continue;
 		}
  next_lane:
@@ -530,14 +536,15 @@ lru_reap_impl(enum lru_q_id qid)
 	return lru;
 }
 
-static inline cache_inode_lru_t *
+static inline mdcache_lru_t *
 lru_try_reap_entry(void)
 {
-	cache_inode_lru_t *lru;
+	mdcache_lru_t *lru;
 
 	if (lru_state.entries_used < lru_state.entries_hiwat)
 		return NULL;
 
+	/* XXX dang why not start with the cleanup list? */
 	lru = lru_reap_impl(LRU_ENTRY_L2);
 	if (!lru)
 		lru = lru_reap_impl(LRU_ENTRY_L1);
@@ -546,18 +553,17 @@ lru_try_reap_entry(void)
 }
 
 /**
- * @brief Push a cache_inode_killed entry to the cleanup queue
- * for out-of-line cleanup
+ * @brief Push a killed entry to the cleanup queue for out-of-line cleanup
  *
- * This function appends entry to the appropriate lane of the
- * global cleanup queue, and marks the entry.
+ * This function appends entry to the appropriate lane of the global cleanup
+ * queue, and marks the entry.
  *
  * @param[in] entry  The entry to clean
  */
 void
-cache_inode_lru_cleanup_push(cache_entry_t *entry)
+mdcache_lru_cleanup_push(mdcache_entry_t *entry)
 {
-	cache_inode_lru_t *lru = &entry->lru;
+	mdcache_lru_t *lru = &entry->lru;
 	struct lru_q_lane *qlane = &LRU[lru->lane];
 
 	QLOCK(qlane);
@@ -570,9 +576,8 @@ cache_inode_lru_cleanup_push(cache_entry_t *entry)
 		LRU_DQ_SAFE(lru, q);
 
 		/* in with the new */
-		lru->qid = LRU_ENTRY_CLEANUP;
 		q = &qlane->cleanup;
-		glist_add(&q->q, &lru->q);
+		lru_insert(lru, q, LRU_LRU);
 		++(q->size);
 	}
 
@@ -592,17 +597,18 @@ cache_inode_lru_cleanup_push(cache_entry_t *entry)
  * However, it is possible the entry is still accessible via another
  * export, and an LRU reference might be gained before we can lock the
  * AVL tree. In that case, the entry must be left alone (thus
- * cache_inode_kill_entry is NOT suitable for this purpose).
+ * mdcache_kill_entry is NOT suitable for this purpose).
  *
  * @param[in] entry  The entry to clean
  */
-void cache_inode_lru_cleanup_try_push(cache_entry_t *entry)
+void
+mdcache_lru_cleanup_try_push(mdcache_entry_t *entry)
 {
-	cache_inode_lru_t *lru = &entry->lru;
+	mdcache_lru_t *lru = &entry->lru;
 	struct lru_q_lane *qlane = &LRU[lru->lane];
 	cih_latch_t latch;
 
-	if (cih_latch_entry(entry, &latch, CIH_GET_WLOCK,
+	if (cih_latch_entry(&entry->fh_hk.key, &latch, CIH_GET_WLOCK,
 			    __func__, __LINE__)) {
 		uint32_t refcnt;
 
@@ -623,19 +629,16 @@ void cache_inode_lru_cleanup_try_push(cache_entry_t *entry)
 					   CIH_REMOVE_QLOCKED);
 			LRU_DQ_SAFE(lru, q);
 			entry->lru.qid = LRU_ENTRY_CLEANUP;
+			/* Note: we didn't take a ref here, so the only ref left
+			 * is the one owned by mdcache_unexport().  When it
+			 * unref's, that will free this object. */
 		}
 
 		QUNLOCK(qlane);
 
-		cih_latch_rele(&latch);
+		cih_hash_release(&latch);
 	}
 }
-
-#define CL_FLAGS \
-	(CACHE_INODE_FLAG_REALLYCLOSE| \
-	 CACHE_INODE_FLAG_NOT_PINNED| \
-	 CACHE_INODE_FLAG_CONTENT_HAVE| \
-	 CACHE_INODE_FLAG_CONTENT_HOLD)
 
 /**
  * @brief Function that executes in the lru thread to process one lane
@@ -653,13 +656,12 @@ static inline size_t lru_run_lane(size_t lane, uint64_t *const totalclosed)
 	/* The amount of work done on this lane on this pass. */
 	size_t workdone = 0;
 	/* The entry being examined */
-	cache_inode_lru_t *lru = NULL;
+	mdcache_lru_t *lru = NULL;
 	/* Number of entries closed in this run. */
 	size_t closed = 0;
-	/* a cache_status */
-	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
+	fsal_status_t status;
 	/* a cache entry */
-	cache_entry_t *entry;
+	mdcache_entry_t *entry;
 	/* Current queue lane */
 	struct lru_q_lane *qlane = &LRU[lane];
 	/* entry refcnt */
@@ -667,32 +669,35 @@ static inline size_t lru_run_lane(size_t lane, uint64_t *const totalclosed)
 
 	q = &qlane->L1;
 
+	LogDebug(COMPONENT_CACHE_INODE_LRU,
+		 "Reaping up to %d entries from lane %zd",
+		 lru_state.per_lane_work, lane);
+
 	/* ACTIVE */
 	QLOCK(qlane);
 	qlane->iter.active = true;
 
-	/* While for_each_safe per se is NOT MT-safe,
-	 * the iteration can be made so by the
-	 * convention that any competing thread which
-	 * would invalidate the iteration also adjusts
-	 * glist and (in particular) glistn */
+	/* While for_each_safe per se is NOT MT-safe, the iteration can be made
+	 * so by the convention that any competing thread which would invalidate
+	 * the iteration also adjusts glist and (in particular) glistn */
 	glist_for_each_safe(qlane->iter.glist, qlane->iter.glistn, &q->q) {
 		struct lru_q *q;
 
 		/* check per-lane work */
 		if (workdone >= lru_state.per_lane_work)
-			goto out;
+			goto next_lane;
 
-		lru = glist_entry(qlane->iter.glist, cache_inode_lru_t, q);
-
+		lru = glist_entry(qlane->iter.glist, mdcache_lru_t, q);
+		/* XXX dang open-coded ref... */
 		refcnt = atomic_inc_int32_t(&lru->refcnt);
 
 		/* get entry early */
-		entry = container_of(lru, cache_entry_t, lru);
+		entry = container_of(lru, mdcache_entry_t, lru);
 
 		/* check refcnt in range */
 		if (unlikely(refcnt > 2)) {
-			cache_inode_lru_unref(entry, LRU_UNREF_QLOCKED);
+			/* XXX dang but calls unref function... */
+			mdcache_lru_unref(entry, LRU_UNREF_QLOCKED);
 			/* but count it */
 			workdone++;
 			/* qlane LOCKED, lru refcnt is restored */
@@ -708,16 +713,16 @@ static inline size_t lru_run_lane(size_t lane, uint64_t *const totalclosed)
 		++(q->size);
 
 		/* Drop the lane lock while performing (slow) operations on
-		 * entry
-		 */
+		 * entry */
 		QUNLOCK(qlane);
 
-		if (entry->obj_handle->fsal->m_ops.support_ex()) {
+		if (entry->obj_handle.fsal->m_ops.support_ex(
+						&entry->obj_handle)) {
 			/* Make sure any FSAL global file descriptor is closed.
 			 */
-			cache_status = cache_inode_close2(entry);
+			status = fsal_close2(&entry->obj_handle);
 
-			if (cache_status != CACHE_INODE_SUCCESS) {
+			if (FSAL_IS_ERROR(status)) {
 				LogCrit(COMPONENT_CACHE_INODE_LRU,
 					"Error closing file in LRU thread.");
 			} else {
@@ -729,12 +734,9 @@ static inline size_t lru_run_lane(size_t lane, uint64_t *const totalclosed)
 			 * at fds and close it.
 			 */
 			PTHREAD_RWLOCK_wrlock(&entry->content_lock);
-
-			if (is_open(entry)) {
-				cache_status =
-					cache_inode_close(entry, CL_FLAGS);
-
-				if (cache_status != CACHE_INODE_SUCCESS) {
+			if (fsal_is_open(&entry->obj_handle)) {
+				status = fsal_close(&entry->obj_handle);
+				if (FSAL_IS_ERROR(status)) {
 					LogCrit(COMPONENT_CACHE_INODE_LRU,
 						"Error closing file in LRU thread.");
 				} else {
@@ -742,24 +744,18 @@ static inline size_t lru_run_lane(size_t lane, uint64_t *const totalclosed)
 					++closed;
 				}
 			}
-
 			PTHREAD_RWLOCK_unlock(&entry->content_lock);
 		}
 
-		QLOCK(qlane);
-		/* QLOCKED */
-
-		cache_inode_lru_unref(entry, LRU_UNREF_QLOCKED);
-
+		QLOCK(qlane); /* QLOCKED */
+		/* XXX dang here too */
+		mdcache_lru_unref(entry, LRU_UNREF_QLOCKED);
 		++workdone;
 	} /* for_each_safe lru */
 
-out:
-
-	/* !ACTIVE */
-	qlane->iter.active = false;
+next_lane:
+	qlane->iter.active = false; /* !ACTIVE */
 	QUNLOCK(qlane);
-
 	LogDebug(COMPONENT_CACHE_INODE_LRU,
 		 "Actually processed %zd entries on lane %zd closing %zd descriptors",
 		 workdone, lane, closed);
@@ -843,7 +839,7 @@ lru_run(struct fridgethr_context *ctx)
 
 	fds_avg = (lru_state.fds_hiwat - lru_state.fds_lowat) / 2;
 
-	if (cache_param.use_fd_cache)
+	if (mdcache_param.use_fd_cache)
 		extremis = (atomic_fetch_size_t(&open_fd_count) >
 			    lru_state.fds_hiwat);
 
@@ -864,13 +860,15 @@ lru_run(struct fridgethr_context *ctx)
 	   permanent.  (It will have to adapt heavily to the new FSAL
 	   API, for example.) */
 
-	if ((atomic_fetch_size_t(&open_fd_count) < lru_state.fds_lowat)
-	    && cache_param.use_fd_cache) {
+	/* XXX dang do this or currentope will be 0 below */
+	currentopen = atomic_fetch_size_t(&open_fd_count);
+	if ((currentopen < lru_state.fds_lowat)
+	    && mdcache_param.use_fd_cache) {
 		LogDebug(COMPONENT_CACHE_INODE_LRU,
 			 "FD count is %zd and low water mark is %d: not reaping.",
 			 atomic_fetch_size_t(&open_fd_count),
 			 lru_state.fds_lowat);
-		if (cache_param.use_fd_cache
+		if (mdcache_param.use_fd_cache
 		    && !lru_state.caching_fds) {
 			lru_state.caching_fds = true;
 			LogEvent(COMPONENT_CACHE_INODE_LRU,
@@ -926,10 +924,10 @@ lru_run(struct fridgethr_context *ctx)
 			|| (formeropen - currentopen <
 			    (((formeropen -
 			       lru_state.fds_hiwat) *
-			      cache_param.required_progress) /
+			      mdcache_param.required_progress) /
 			     100)))) {
 			if (++lru_state.futility >
-			    cache_param.futility_count) {
+			    mdcache_param.futility_count) {
 				LogCrit(COMPONENT_CACHE_INODE_LRU,
 					"Futility count exceeded.  The LRU thread is unable to make progress in reclaiming FDs.  Disabling FD cache.");
 				lru_state.caching_fds = false;
@@ -961,8 +959,8 @@ lru_run(struct fridgethr_context *ctx)
 
 	new_thread_wait = threadwait * fdwait_ratio;
 
-	if (new_thread_wait < cache_param.lru_run_interval / 10)
-		new_thread_wait = cache_param.lru_run_interval / 10;
+	if (new_thread_wait < mdcache_param.lru_run_interval / 10)
+		new_thread_wait = mdcache_param.lru_run_interval / 10;
 
 	fridgethr_setwait(ctx, new_thread_wait);
 
@@ -984,8 +982,8 @@ lru_run(struct fridgethr_context *ctx)
 /**
  * Initialize subsystem
  */
-int
-cache_inode_lru_pkginit(void)
+fsal_status_t
+mdcache_lru_pkginit(void)
 {
 	/* Return code from system calls */
 	int code = 0;
@@ -999,14 +997,14 @@ cache_inode_lru_pkginit(void)
 	memset(&frp, 0, sizeof(struct fridgethr_params));
 	frp.thr_max = 1;
 	frp.thr_min = 1;
-	frp.thread_delay = cache_param.lru_run_interval;
+	frp.thread_delay = mdcache_param.lru_run_interval;
 	frp.flavor = fridgethr_flavor_looper;
 
 	atomic_store_size_t(&open_fd_count, 0);
 
-	/* Set high and low watermark for cache entries.  This seems a
+	/* Set high and low watermark for cache entries.  XXX This seems a
 	   bit fishy, so come back and revisit this. */
-	lru_state.entries_hiwat = cache_param.entries_hwmark;
+	lru_state.entries_hiwat = mdcache_param.entries_hwmark;
 	lru_state.entries_used = 0;
 
 	/* Find out the system-imposed file descriptor limit */
@@ -1078,25 +1076,25 @@ err_open:
 	}
 
 	lru_state.fds_hard_limit =
-	    (cache_param.fd_limit_percent *
+	    (mdcache_param.fd_limit_percent *
 	     lru_state.fds_system_imposed) / 100;
 	lru_state.fds_hiwat =
-	    (cache_param.fd_hwmark_percent *
+	    (mdcache_param.fd_hwmark_percent *
 	     lru_state.fds_system_imposed) / 100;
 	lru_state.fds_lowat =
-	    (cache_param.fd_lwmark_percent *
+	    (mdcache_param.fd_lwmark_percent *
 	     lru_state.fds_system_imposed) / 100;
 	lru_state.futility = 0;
 
 	lru_state.per_lane_work =
-	    (cache_param.reaper_work / LRU_N_Q_LANES);
+	    (mdcache_param.reaper_work / LRU_N_Q_LANES);
 	lru_state.biggest_window =
-	    (cache_param.biggest_window *
+	    (mdcache_param.biggest_window *
 	     lru_state.fds_system_imposed) / 100;
 
 	lru_state.prev_fd_count = 0;
 
-	lru_state.caching_fds = cache_param.use_fd_cache;
+	lru_state.caching_fds = mdcache_param.use_fd_cache;
 
 	/* init queue complex */
 	lru_init_queues();
@@ -1107,17 +1105,17 @@ err_open:
 		LogMajor(COMPONENT_CACHE_INODE_LRU,
 			 "Unable to initialize LRU fridge, error code %d.",
 			 code);
-		return code;
+		return fsalstat(posix2fsal_error(code), code);
 	}
 
 	code = fridgethr_submit(lru_fridge, lru_run, NULL);
 	if (code != 0) {
 		LogMajor(COMPONENT_CACHE_INODE_LRU,
 			 "Unable to start LRU thread, error code %d.", code);
-		return code;
+		return fsalstat(posix2fsal_error(code), code);
 	}
 
-	return 0;
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /**
@@ -1125,8 +1123,8 @@ err_open:
  *
  * @return 0 on success, POSIX errors on failure.
  */
-int
-cache_inode_lru_pkgshutdown(void)
+fsal_status_t
+mdcache_lru_pkgshutdown(void)
 {
 	int rc = fridgethr_sync_command(lru_fridge,
 					fridgethr_comm_stop,
@@ -1140,14 +1138,13 @@ cache_inode_lru_pkgshutdown(void)
 		LogMajor(COMPONENT_CACHE_INODE_LRU,
 			 "Failed shutting down LRU thread: %d", rc);
 	}
-	return rc;
+	return fsalstat(posix2fsal_error(rc), rc);
 }
 
-static inline bool init_rw_locks(cache_entry_t *entry)
+static inline bool init_rw_locks(mdcache_entry_t *entry)
 {
 	int rc;
 	bool attr_lock_init = false;
-	bool content_lock_init = false;
 
 	/* Initialize the entry locks */
 	rc = pthread_rwlock_init(&entry->attr_lock, NULL);
@@ -1158,13 +1155,6 @@ static inline bool init_rw_locks(cache_entry_t *entry)
 	attr_lock_init = true;
 
 	rc = pthread_rwlock_init(&entry->content_lock, NULL);
-
-	if (rc != 0)
-		goto fail;
-
-	content_lock_init = true;
-
-	rc = pthread_rwlock_init(&entry->state_lock, NULL);
 
 	if (rc == 0)
 		return true;
@@ -1178,64 +1168,59 @@ fail:
 	if (attr_lock_init)
 		PTHREAD_RWLOCK_destroy(&entry->attr_lock);
 
-	if (content_lock_init)
-		PTHREAD_RWLOCK_destroy(&entry->content_lock);
-
 	return false;
 }
 
-static cache_inode_status_t
-alloc_cache_entry(cache_entry_t **entry)
+static fsal_status_t
+alloc_cache_entry(mdcache_entry_t **entry)
 {
-	cache_entry_t *nentry;
+	mdcache_entry_t *nentry;
 
-	nentry = pool_alloc(cache_inode_entry_pool);
+	nentry = pool_alloc(mdcache_entry_pool);
 
 	/* Initialize the entry locks */
 	if (!init_rw_locks(nentry)) {
 		/* Recycle */
-		pool_free(cache_inode_entry_pool, nentry);
+		pool_free(mdcache_entry_pool, nentry);
 		*entry = NULL;
-		return CACHE_INODE_INIT_ENTRY_FAILED;
+		return fsalstat(ERR_FSAL_BAD_INIT, 0);
 	}
 
 	atomic_inc_int64_t(&lru_state.entries_used);
-
 	*entry = nentry;
-	return CACHE_INODE_SUCCESS;
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /**
  * @brief Re-use or allocate an entry
  *
- * This function repurposes a resident entry in the LRU system if the
- * system is above low-water mark, and allocates a new one otherwise.
- * On success, this function always returns an entry with two
- * references (one for the sentinel, one to allow the caller's use.)
+ * This function repurposes a resident entry in the LRU system if the system is
+ * above the high-water mark, and allocates a new one otherwise.  On success,
+ * this function always returns an entry with two references (one for the
+ * sentinel, one to allow the caller's use.)
  *
  * @param[out] entry Returned status
  *
  * @return CACHE_INODE_SUCCESS or error.
  */
-cache_inode_status_t
-cache_inode_lru_get(cache_entry_t **entry)
+fsal_status_t
+mdcache_lru_get(mdcache_entry_t **entry)
 {
-	cache_inode_lru_t *lru;
-	cache_inode_status_t status = CACHE_INODE_SUCCESS;
-	cache_entry_t *nentry = NULL;
-	uint32_t lane;
+	mdcache_lru_t *lru;
+	fsal_status_t status = {0, 0};
+	mdcache_entry_t *nentry = NULL;
 
 	lru = lru_try_reap_entry();
 	if (lru) {
 		/* we uniquely hold entry */
-		nentry = container_of(lru, cache_entry_t, lru);
+		nentry = container_of(lru, mdcache_entry_t, lru);
 		LogFullDebug(COMPONENT_CACHE_INODE_LRU,
 			     "Recycling entry at %p.", nentry);
-		cache_inode_lru_clean(nentry);
+		mdcache_lru_clean(nentry);
 		if (!init_rw_locks(nentry)) {
 			/* Recycle */
-			status = CACHE_INODE_INIT_ENTRY_FAILED;
-			pool_free(cache_inode_entry_pool, nentry);
+			status = fsalstat(ERR_FSAL_BAD_INIT, 0);
+			pool_free(mdcache_entry_pool, nentry);
 			nentry = NULL;
 			goto out;
 		}
@@ -1250,10 +1235,10 @@ cache_inode_lru_get(cache_entry_t **entry)
 	nentry->lru.refcnt = 2;
 	nentry->lru.pin_refcnt = 0;
 	nentry->lru.cf = 0;
+	nentry->lru.lane = lru_lane_of_entry(nentry);
 
 	/* Enqueue. */
-	lane = lru_lane_of_entry(nentry);
-	lru_insert_entry(nentry, &LRU[lane].L1, lane, LRU_HEAD);
+	lru_insert_entry(nentry, &LRU[nentry->lru.lane].L1, LRU_LRU);
 
  out:
 	*entry = nentry;
@@ -1268,11 +1253,10 @@ cache_inode_lru_get(cache_entry_t **entry)
  *
  * @param[in] entry  The entry to be moved
  *
- * @retval CACHE_INODE_SUCCESS if the entry was moved.
- * @retval CACHE_INODE_ESTALE  if the entry is in the process of disposal
+ * @return FSAL status
  */
-cache_inode_status_t
-cache_inode_inc_pin_ref(cache_entry_t *entry)
+fsal_status_t
+mdcache_inc_pin_ref(mdcache_entry_t *entry)
 {
 	uint32_t lane = entry->lru.lane;
 	struct lru_q_lane *qlane = &LRU[lane];
@@ -1282,7 +1266,7 @@ cache_inode_inc_pin_ref(cache_entry_t *entry)
 	QLOCK(qlane);
 	if (entry->lru.qid == LRU_ENTRY_CLEANUP) {
 		QUNLOCK(qlane);
-		return CACHE_INODE_ESTALE;
+		return fsalstat(ERR_FSAL_STALE, 0);
 	}
 
 	/* Pin if not pinned already */
@@ -1293,7 +1277,7 @@ cache_inode_inc_pin_ref(cache_entry_t *entry)
 
 	QUNLOCK(qlane);		/* !LOCKED (lane) */
 
-	return CACHE_INODE_SUCCESS;
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /**
@@ -1309,10 +1293,11 @@ cache_inode_inc_pin_ref(cache_entry_t *entry)
  * @param[in] closefile  Indicates if file should be closed=
  *
  */
-void cache_inode_dec_pin_ref(cache_entry_t *entry, bool closefile)
+/* XXX dang remove closefile, if pinning kept */
+void mdcache_dec_pin_ref(mdcache_entry_t *entry, bool closefile)
 {
 	uint32_t lane = entry->lru.lane;
-	cache_inode_lru_t *lru = &entry->lru;
+	mdcache_lru_t *lru = &entry->lru;
 	struct lru_q_lane *qlane = &LRU[lane];
 
 	/* Pin ref is infrequent, and never concurrent because SAL invariantly
@@ -1330,20 +1315,13 @@ void cache_inode_dec_pin_ref(cache_entry_t *entry, bool closefile)
 			glist_del(&lru->q);
 			--(q->size);
 			/* add to MRU of L1 */
-			lru->qid = LRU_ENTRY_L1;
 			q = &qlane->L1;
-			glist_add_tail(&q->q, &lru->q);
+			lru_insert(lru, q, LRU_MRU);
 			++(q->size);
 		}
 
-		if (closefile == true) {
-			cache_inode_close(entry,
-					  CACHE_INODE_FLAG_REALLYCLOSE |
-					  CACHE_INODE_FLAG_NOT_PINNED |
-					  CACHE_INODE_FLAG_CONTENT_HAVE |
-					  CACHE_INODE_FLAG_CONTENT_HOLD |
-					  CACHE_INODE_DONT_KILL);
-		}
+		if (closefile == true)
+			fsal_close(&entry->obj_handle);
 	}
 
 	QUNLOCK(qlane);
@@ -1359,7 +1337,7 @@ void cache_inode_dec_pin_ref(cache_entry_t *entry, bool closefile)
  * @return true if pinned, false otherwise.
  */
 bool
-cache_inode_is_pinned(cache_entry_t *entry)
+mdcache_is_pinned(mdcache_entry_t *entry)
 {
 	uint32_t lane = entry->lru.lane;
 	struct lru_q_lane *qlane = &LRU[lane];
@@ -1378,23 +1356,25 @@ cache_inode_is_pinned(cache_entry_t *entry)
  * This function acquires a reference on the given cache entry.
  *
  * @param[in] entry  The entry on which to get a reference
- * @param[in] flags  One of LRU_REQ_INITIAL, LRU_REQ_SCAN, else LRU_FLAG_NONE
+ * @param[in] flags  LRU_REQ_INITIAL, LRU_REQ_STALE_OK, else LRU_FLAG_NONE
  *
- * A flags value of LRU_REQ_INITIAL or LRU_REQ_SCAN indicates an initial
+ * A flags value of LRU_REQ_INITIAL indicates an initial
  * reference.  A non-initial reference is an "extra" reference in some call
- * path, hence does not influence LRU, and is lockless.
+ * path, hence does not influence LRU, and is lockless. XXX dang not true.
  *
  * A flags value of LRU_REQ_INITIAL indicates an ordinary initial reference,
- * and strongly influences LRU.  LRU_REQ_SCAN indicates a scan reference
- * (currently, READDIR) and weakly influences LRU.  Ascan reference should not
- * be taken by call paths which may open a file descriptor.  In both cases, the
- * L1->L2 boundary is sticky (scan resistence).
+ * and strongly influences LRU.  LRU_REQ_STALE_OK indicates that a reference
+ * should be taken even if the entry is on the cleanup queue.
  *
- * @retval CACHE_INODE_SUCCESS if the reference was acquired
+ * XXX dang this doesn't do what it's supposed to anymore.  It usually locks, it
+ * doesn't move things within L2 (only between).
+ *
+ * @return FSAL status
  */
-cache_inode_status_t cache_inode_lru_ref(cache_entry_t *entry, uint32_t flags)
+fsal_status_t
+mdcache_lru_ref(mdcache_entry_t *entry, uint32_t flags)
 {
-	cache_inode_lru_t *lru = &entry->lru;
+	mdcache_lru_t *lru = &entry->lru;
 	struct lru_q_lane *qlane = &LRU[lru->lane];
 	struct lru_q *q;
 
@@ -1402,7 +1382,7 @@ cache_inode_status_t cache_inode_lru_ref(cache_entry_t *entry, uint32_t flags)
 		QLOCK(qlane);
 		if (lru->qid == LRU_ENTRY_CLEANUP) {
 			QUNLOCK(qlane);
-			return CACHE_INODE_ESTALE;
+			return fsalstat(ERR_FSAL_STALE, 0);
 		}
 		QUNLOCK(qlane);
 	}
@@ -1421,31 +1401,19 @@ cache_inode_status_t cache_inode_lru_ref(cache_entry_t *entry, uint32_t flags)
 		switch (lru->qid) {
 		case LRU_ENTRY_L1:
 			q = lru_queue_of(entry);
-			if (flags & LRU_REQ_INITIAL) {
-				/* advance entry to MRU (of L1) */
-				LRU_DQ_SAFE(lru, q);
-				glist_add_tail(&q->q, &lru->q);
-				--(q->size);
-			} else {
-				/* do not advance entry in L1 on LRU_REQ_SCAN
-				 * (scan resistence) */
-			}
+			/* advance entry to MRU (of L1) */
+			LRU_DQ_SAFE(lru, q);
+			lru_insert(lru, q, LRU_MRU);
+			++(q->size);
 			break;
 		case LRU_ENTRY_L2:
 			q = lru_queue_of(entry);
-			if (flags & LRU_REQ_INITIAL) {
-				/* move entry to LRU of L1 */
-				glist_del(&lru->q);	/* skip L1 fixups */
-				--(q->size);
-				lru->qid = LRU_ENTRY_L1;
-				q = &qlane->L1;
-				glist_add(&q->q, &lru->q);
-				++(q->size);
-			} else {
-				/* advance entry to MRU of L2 */
-				glist_del(&lru->q);	/* skip L1 fixups */
-				glist_add_tail(&q->q, &lru->q);
-			}
+			/* move entry to LRU of L1 */
+			glist_del(&lru->q);	/* skip L1 fixups */
+			--(q->size);
+			q = &qlane->L1;
+			lru_insert(lru, q, LRU_LRU);
+			++(q->size);
 			break;
 		default:
 			/* do nothing */
@@ -1454,7 +1422,7 @@ cache_inode_status_t cache_inode_lru_ref(cache_entry_t *entry, uint32_t flags)
 		QUNLOCK(qlane);
 	}			/* initial ref */
  out:
-	return CACHE_INODE_SUCCESS;
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /**
@@ -1473,7 +1441,7 @@ cache_inode_status_t cache_inode_lru_ref(cache_entry_t *entry, uint32_t flags)
  *                   lock for this entry.)
  */
 void
-cache_inode_lru_unref(cache_entry_t *entry, uint32_t flags)
+mdcache_lru_unref(mdcache_entry_t *entry, uint32_t flags)
 {
 	int32_t refcnt;
 	bool do_cleanup = false;
@@ -1495,9 +1463,7 @@ cache_inode_lru_unref(cache_entry_t *entry, uint32_t flags)
 			LogDebug(COMPONENT_CACHE_INODE,
 				 "LRU_ENTRY_CLEANUP of entry %p",
 				 entry);
-			state_wipe_file(entry);
-			kill_export_root_entry(entry);
-			kill_export_junction_entry(entry);
+			state_wipe_file(&entry->obj_handle);
 		}
 	}
 
@@ -1508,10 +1474,10 @@ cache_inode_lru_unref(cache_entry_t *entry, uint32_t flags)
 		struct lru_q *q;
 
 		/* we MUST recheck that refcount is still 0 */
-		if (!qlocked)
+		if (!qlocked) {
 			QLOCK(qlane);
-
-		refcnt = atomic_fetch_int32_t(&entry->lru.refcnt);
+			refcnt = atomic_fetch_int32_t(&entry->lru.refcnt);
+		}
 
 		if (unlikely(refcnt > 0)) {
 			if (!qlocked)
@@ -1530,8 +1496,8 @@ cache_inode_lru_unref(cache_entry_t *entry, uint32_t flags)
 		if (!qlocked)
 			QUNLOCK(qlane);
 
-		cache_inode_lru_clean(entry);
-		pool_free(cache_inode_entry_pool, entry);
+		mdcache_lru_clean(entry);
+		pool_free(mdcache_entry_pool, entry);
 
 		atomic_dec_int64_t(&lru_state.entries_used);
 	}			/* refcnt == 0 */
@@ -1543,7 +1509,7 @@ cache_inode_lru_unref(cache_entry_t *entry, uint32_t flags)
  * @brief Put back a raced initial reference
  *
  * This function returns an entry previously returned from
- * cache_inode_lru_get, in the uncommon circumstance that it will not
+ * @ref mdcache_lru_get, in the uncommon circumstance that it will not
  * be used.
  *
  * @param[in] entry  The entry on which to release a reference
@@ -1552,7 +1518,7 @@ cache_inode_lru_unref(cache_entry_t *entry, uint32_t flags)
  *                   lock for this entry.)
  */
 void
-cache_inode_lru_putback(cache_entry_t *entry, uint32_t flags)
+mdcache_lru_putback(mdcache_entry_t *entry, uint32_t flags)
 {
 	bool qlocked = flags & LRU_UNREF_QLOCKED;
 	uint32_t lane = entry->lru.lane;
@@ -1570,7 +1536,7 @@ cache_inode_lru_putback(cache_entry_t *entry, uint32_t flags)
 	}
 
 	/* We do NOT call lru_clean_entry, since it was never initialized. */
-	pool_free(cache_inode_entry_pool, entry);
+	pool_free(mdcache_entry_pool, entry);
 	atomic_dec_int64_t(&lru_state.entries_used);
 
 	if (!qlocked)

@@ -419,7 +419,7 @@ void state_del_locked(state_t *state)
 	memset(&state->state_obj, 0, sizeof(state->state_obj));
 	PTHREAD_MUTEX_unlock(&state->state_mutex);
 
-	if (obj->fsal->m_ops.support_ex()) {
+	if (obj->fsal->m_ops.support_ex(obj)) {
 		/* We need to close the state at this point. The state will
 		 * eventually be freed and it must be closed before free. This
 		 * is the last point we have a valid reference to the object
@@ -632,6 +632,7 @@ enum nfsstat4 release_lock_owner(state_owner_t *owner)
 
 	while (true) {
 		state_t *state;
+		struct fsal_export *save_exp;
 
 		state = glist_first_entry(&owner->so_owner.so_nfs4_owner
 								.so_state_list,
@@ -648,7 +649,15 @@ enum nfsstat4 release_lock_owner(state_owner_t *owner)
 
 		PTHREAD_MUTEX_unlock(&owner->so_mutex);
 
+		/* Set the fsal_export properly, since this can be called from
+		 * ops that don't do a putfh */
+		save_exp = op_ctx->fsal_export;
+		op_ctx->fsal_export = state->state_exp;
+
 		state_del(state);
+
+		/* Restore fsal_export */
+		op_ctx->fsal_export = save_exp;
 
 		dec_state_t_ref(state);
 
@@ -780,7 +789,7 @@ void release_openstate(state_owner_t *owner)
 
 		dec_state_t_ref(state);
 
-		if (!obj->fsal->m_ops.support_ex()) {
+		if (!obj->fsal->m_ops.support_ex(obj)) {
 			/* Close the file in FSAL */
 			obj->obj_ops.close(obj);
 		}
@@ -869,7 +878,7 @@ void revoke_owner_delegs(state_owner_t *client_owner)
 		state_deleg_revoke(obj, state);
 		PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
 
-		if (!obj->fsal->m_ops.support_ex()) {
+		if (!obj->fsal->m_ops.support_ex(obj)) {
 			/* Close the file in FSAL */
 			obj->obj_ops.close(obj);
 		}

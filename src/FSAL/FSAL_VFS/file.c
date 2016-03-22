@@ -727,50 +727,6 @@ fsal_status_t vfs_close(struct fsal_obj_handle *obj_hdl)
 	return status;
 }
 
-/* vfs_lru_cleanup
- * free non-essential resources at the request of cache inode's
- * LRU processing identifying this handle as stale enough for resource
- * trimming.
- */
-
-fsal_status_t vfs_lru_cleanup(struct fsal_obj_handle *obj_hdl,
-			      lru_actions_t requests)
-{
-	struct vfs_fsal_obj_handle *myself;
-	struct vfs_fd *my_fd;
-	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
-	int retval = 0;
-
-	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
-	my_fd = &myself->u.file.fd;
-
-	if (obj_hdl->fsal != obj_hdl->fs->fsal) {
-		LogDebug(COMPONENT_FSAL,
-			 "FSAL %s operation for handle belonging to FSAL %s, return EXDEV",
-			 obj_hdl->fsal->name, obj_hdl->fs->fsal->name);
-		retval = EXDEV;
-		fsal_error = posix2fsal_error(retval);
-		return fsalstat(fsal_error, retval);
-	}
-
-	/* Take read lock on object to protect file descriptor. */
-	PTHREAD_RWLOCK_rdlock(&obj_hdl->lock);
-
-	if (obj_hdl->type == REGULAR_FILE && my_fd->fd >= 0) {
-		retval = close(my_fd->fd);
-		my_fd->fd = -1;
-		my_fd->openflags = FSAL_O_CLOSED;
-	}
-	if (retval == -1) {
-		retval = errno;
-		fsal_error = posix2fsal_error(retval);
-	}
-
-	PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
-
-	return fsalstat(fsal_error, retval);
-}
-
 /**
  * @brief Allocate a state_t structure
  *

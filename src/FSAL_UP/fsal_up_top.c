@@ -72,266 +72,56 @@ static int schedule_delegrecall_task(struct delegrecall_context *ctx,
  * operations, instead, the FSAL may directly close the file as
  * necessary.
  *
- * @param[in] fsal   The fsal_module
- * @param[in] up_ops The up call operations vector
- * @param[in] obj    The file to invalidate
+ * @param[in] export The export
+ * @param[in] handle Handle being invalidated
  * @param[in] flags  Flags governing invalidation
  *
- * @return CACHE_INODE_SUCCESS or errors.
+ * @return FSAL status
  *
  */
 
-static cache_inode_status_t invalidate_close(struct fsal_module *fsal,
-					    const struct fsal_up_vector *up_ops,
-					    struct gsh_buffdesc *handle,
-					    uint32_t flags)
+static fsal_status_t invalidate_close(struct fsal_export *export,
+				      struct gsh_buffdesc *handle,
+				      uint32_t flags)
 {
-#if 0
-	cache_entry_t *entry = NULL;
-	cache_inode_status_t rc = 0;
-
-	rc = up_get(fsal, handle, &entry);
-	if (rc == 0) {
-		if (is_open(entry))
-			rc = up_async_invalidate(general_fridge, up_ops, fsal,
-						 handle,
-						 CACHE_INODE_INVALIDATE_CLOSE,
-						 NULL, NULL);
-		else
-			(void) cache_inode_invalidate(entry, flags);
-		cache_inode_put(entry);
-	}
-
-	return rc;
-#else
-	/* No need to invalidate with no cache */
-	return 0;
-#endif
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /** Invalidate some or all of a cache entry
  *
- * @param[in] fsal   The fsal_module
- * @param[in] obj    The file to invalidate
+ * @param[in] export The export
+ * @param[in] handle Handle being invalidated
  * @param[in] flags  Flags governing invalidation
  *
- * @return CACHE_INODE_SUCCESS or errors.
+ * @return FSAL status
  *
  */
 
-cache_inode_status_t fsal_invalidate(struct fsal_module *fsal,
-				     struct gsh_buffdesc *handle,
-				     uint32_t flags)
+fsal_status_t invalidate(struct fsal_export *export,
+			 struct gsh_buffdesc *handle,
+			 uint32_t flags)
 {
-#if 0
-	cache_entry_t *entry = NULL;
-	cache_inode_status_t rc = 0;
-
-	rc = up_get(fsal, handle, &entry);
-	if (rc == 0) {
-		rc = cache_inode_invalidate(entry, flags);
-		cache_inode_put(entry);
-	}
-
-	return rc;
-#else
 	/* No need to invalidate with no cache */
-	return 0;
-#endif
-
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /**
  * @brief Update cached attributes
  *
+ * @param[in] export The export
  * @param[in] obj    Key to specify object
  * @param[in] attr   New attributes
  * @param[in] flags  Flags to govern update
  *
- * @return CACHE_INODE_SUCCESS or errors.
+ * @return FSAL status
  */
 
-static cache_inode_status_t update(struct fsal_module *fsal,
-				   struct gsh_buffdesc *obj,
-				   struct attrlist *attr, uint32_t flags)
+static fsal_status_t update(struct fsal_export *export,
+			    struct gsh_buffdesc *obj,
+			    struct attrlist *attr, uint32_t flags)
 {
-#if 0
-	cache_entry_t *entry = NULL;
-	int rc = 0;
-	/* Have necessary changes been made? */
-	bool mutatis_mutandis = false;
-
-	/* These cannot be updated, changing any of them is
-	   tantamount to destroying and recreating the file. */
-	if (FSAL_TEST_MASK
-	    (attr->mask,
-	     ATTR_TYPE | ATTR_FSID | ATTR_FILEID | ATTR_RAWDEV | ATTR_RDATTR_ERR
-	     | ATTR_GENERATION)) {
-		return CACHE_INODE_INVALID_ARGUMENT;
-	}
-
-	/* Filter out garbage flags */
-
-	if (flags &
-	    ~(fsal_up_update_filesize_inc | fsal_up_update_atime_inc |
-	      fsal_up_update_creation_inc | fsal_up_update_ctime_inc |
-	      fsal_up_update_mtime_inc | fsal_up_update_chgtime_inc |
-	      fsal_up_update_spaceused_inc | fsal_up_nlink | fsal_up_close)) {
-		return CACHE_INODE_INVALID_ARGUMENT;
-	}
-
-	rc = up_get(fsal, obj, &entry);
-	if (rc != 0)
-		return rc;
-
-	/* Knock things out if the link count falls to 0. */
-	if ((flags & fsal_up_nlink) && (attr->numlinks == 0)) {
-		uint32_t cflags = CACHE_INODE_INVALIDATE_ATTRS;
-
-		if (flags & fsal_up_close)
-			cflags |= CACHE_INODE_INVALIDATE_CLOSE;
-		rc = cache_inode_invalidate(entry, cflags);
-	}
-
-	if (rc != 0 || attr->mask == 0)
-		goto out;
-
-	PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
-
-	struct attrlist *entry_attrs = entry->obj_handle->attrs;
-
-	if (attr->expire_time_attr != 0)
-		entry_attrs->expire_time_attr = attr->expire_time_attr;
-
-	if (FSAL_TEST_MASK(attr->mask, ATTR_SIZE)) {
-		if (flags & fsal_up_update_filesize_inc) {
-			if (attr->filesize > entry_attrs->filesize) {
-				entry_attrs->filesize = attr->filesize;
-				mutatis_mutandis = true;
-			}
-		} else {
-			entry_attrs->filesize = attr->filesize;
-			mutatis_mutandis = true;
-		}
-	}
-
-	if (FSAL_TEST_MASK(attr->mask, ATTR_SPACEUSED)) {
-		if (flags & fsal_up_update_spaceused_inc) {
-			if (attr->spaceused > entry_attrs->spaceused) {
-				entry_attrs->spaceused = attr->spaceused;
-				mutatis_mutandis = true;
-			}
-		} else {
-			entry_attrs->spaceused = attr->spaceused;
-			mutatis_mutandis = true;
-		}
-	}
-
-	if (FSAL_TEST_MASK(attr->mask, ATTR_ACL)) {
-		/**
-		 * @todo Someone who knows the ACL code, please look
-		 * over this.  We assume that the FSAL takes a
-		 * reference on the supplied ACL that we can then hold
-		 * onto.  This seems the most reasonable approach in
-		 * an asynchronous call.
-		 */
-
-		/* This idiom is evil. */
-		fsal_acl_status_t acl_status;
-
-		nfs4_acl_release_entry(entry_attrs->acl, &acl_status);
-
-		entry_attrs->acl = attr->acl;
-		mutatis_mutandis = true;
-	}
-
-	if (FSAL_TEST_MASK(attr->mask, ATTR_MODE)) {
-		entry_attrs->mode = attr->mode;
-		mutatis_mutandis = true;
-	}
-
-	if (FSAL_TEST_MASK(attr->mask, ATTR_NUMLINKS)) {
-		entry_attrs->numlinks = attr->numlinks;
-		mutatis_mutandis = true;
-	}
-
-	if (FSAL_TEST_MASK(attr->mask, ATTR_OWNER)) {
-		entry_attrs->owner = attr->owner;
-		mutatis_mutandis = true;
-	}
-
-	if (FSAL_TEST_MASK(attr->mask, ATTR_GROUP)) {
-		entry_attrs->group = attr->group;
-		mutatis_mutandis = true;
-	}
-
-	if (FSAL_TEST_MASK(attr->mask, ATTR_ATIME)
-	    && ((flags & ~fsal_up_update_atime_inc)
-		||
-		(gsh_time_cmp(&attr->atime, &entry_attrs->atime) == 1))) {
-		entry_attrs->atime = attr->atime;
-		mutatis_mutandis = true;
-	}
-
-	if (FSAL_TEST_MASK(attr->mask, ATTR_CREATION)
-	    && ((flags & ~fsal_up_update_creation_inc)
-		||
-		(gsh_time_cmp(&attr->creation, &entry_attrs->creation) == 1))) {
-		entry_attrs->creation = attr->creation;
-		mutatis_mutandis = true;
-	}
-
-	if (FSAL_TEST_MASK(attr->mask, ATTR_CTIME)
-	    && ((flags & ~fsal_up_update_ctime_inc)
-		||
-		(gsh_time_cmp(&attr->ctime, &entry_attrs->ctime) == 1))) {
-		entry_attrs->ctime = attr->ctime;
-		mutatis_mutandis = true;
-	}
-
-	if (FSAL_TEST_MASK(attr->mask, ATTR_MTIME)
-	    && ((flags & ~fsal_up_update_mtime_inc)
-		||
-		(gsh_time_cmp(&attr->mtime, &entry_attrs->mtime) == 1))) {
-		entry_attrs->mtime = attr->mtime;
-		mutatis_mutandis = true;
-	}
-
-	if (FSAL_TEST_MASK(attr->mask, ATTR_CHGTIME)
-	    && ((flags & ~fsal_up_update_chgtime_inc)
-		||
-		(gsh_time_cmp(&attr->chgtime, &entry_attrs->chgtime) == 1))) {
-		entry_attrs->chgtime = attr->chgtime;
-		mutatis_mutandis = true;
-	}
-
-	if (FSAL_TEST_MASK(attr->mask, ATTR_CHANGE)) {
-		entry_attrs->change = attr->change;
-		mutatis_mutandis = true;
-	}
-
-	if (mutatis_mutandis) {
-		cache_inode_fixup_md(entry);
-		/* If directory can not trust content anymore. */
-		if (entry->type == DIRECTORY)
-			cache_inode_invalidate(entry,
-					       CACHE_INODE_INVALIDATE_CONTENT |
-					       CACHE_INODE_INVALIDATE_GOT_LOCK);
-	} else {
-		cache_inode_invalidate(entry,
-				       CACHE_INODE_INVALIDATE_ATTRS |
-				       CACHE_INODE_INVALIDATE_GOT_LOCK);
-		rc = CACHE_INODE_INCONSISTENT_ENTRY;
-	}
-	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
-
- out:
-	cache_inode_put(entry);
-	return rc;
-#else
 	/* No need to update with no cache */
-	return 0;
-#endif
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /**
@@ -344,19 +134,20 @@ static cache_inode_status_t update(struct fsal_module *fsal,
  * @return STATE_SUCCESS or errors.
  */
 
-static state_status_t lock_grant(struct fsal_module *fsal,
+static state_status_t lock_grant(struct fsal_export *export,
 				 struct gsh_buffdesc *file,
 				 void *owner,
 				 fsal_lock_param_t *lock_param)
 {
 	struct fsal_obj_handle *obj;
-	cache_inode_status_t cache_status;
+	fsal_status_t status;
 
-	cache_status = up_get(fsal, file, &obj);
-	if (cache_status != CACHE_INODE_SUCCESS)
+	status = export->exp_ops.create_handle(export, file, &obj);
+	if (FSAL_IS_ERROR(status))
 		return STATE_NOT_FOUND;
 
 	grant_blocked_lock_upcall(obj, owner, lock_param);
+	obj->obj_ops.put_ref(obj);
 	return STATE_SUCCESS;
 }
 
@@ -370,22 +161,24 @@ static state_status_t lock_grant(struct fsal_module *fsal,
  * @return STATE_SUCCESS or errors.
  */
 
-static state_status_t lock_avail(struct fsal_module *fsal,
+static state_status_t lock_avail(struct fsal_export *export,
 				 struct gsh_buffdesc *file,
 				 void *owner,
 				 fsal_lock_param_t *lock_param)
 {
 	struct fsal_obj_handle *obj;
-	cache_inode_status_t cache_status;
+	fsal_status_t status;
 
-	cache_status = up_get(fsal, file, &obj);
-	if (cache_status != CACHE_INODE_SUCCESS)
+	status = export->exp_ops.create_handle(export, file, &obj);
+	if (FSAL_IS_ERROR(status))
 		return STATE_NOT_FOUND;
 
 	available_blocked_lock_upcall(obj, owner, lock_param);
+	obj->obj_ops.put_ref(obj);
 	return STATE_SUCCESS;
 }
 
+/* @note The state_lock MUST be held for write */
 static void destroy_recall(struct state_layout_recall_file *recall)
 {
 	if (recall == NULL)
@@ -411,8 +204,9 @@ static void destroy_recall(struct state_layout_recall_file *recall)
  * @brief Create layout recall state
  *
  * This function creates the layout recall state and work list for a
- * LAYOUTRECALL operation on a file.  The state lock on the entry must
- * be held for write when this function is called.
+ * LAYOUTRECALL operation on a file.
+ *
+ * @note the state_lock MUST be held for write
  *
  * @param[in,out] obj     The file on which to send the recall
  * @param[in]     type    The layout type
@@ -594,7 +388,7 @@ struct layoutrecall_cb_data {
  * @retval STATE_MALLOC_ERROR if there was insufficient memory to construct the
  *         recall state.
  */
-state_status_t layoutrecall(struct fsal_module *fsal,
+state_status_t layoutrecall(struct fsal_export *export,
 			    struct gsh_buffdesc *handle,
 			    layouttype4 layout_type, bool changed,
 			    const struct pnfs_segment *segment, void *cookie,
@@ -611,14 +405,17 @@ state_status_t layoutrecall(struct fsal_module *fsal,
 	struct gsh_export *exp = NULL;
 	state_owner_t *owner = NULL;
 
-	rc = cache_inode_status_to_state_status(up_get(fsal, handle, &obj));
+	rc = state_error_convert(export->exp_ops.create_handle(export, handle,
+							       &obj));
 	if (rc != STATE_SUCCESS)
 		return rc;
 
+	PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
 	/* We build up the list before consuming it so that we have
 	   every state on the list before we start executing returns. */
 	rc = create_file_recall(obj, layout_type, segment, cookie, spec,
 				&recall);
+	PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
 	if (rc != STATE_SUCCESS)
 		goto out;
 
@@ -653,10 +450,8 @@ state_status_t layoutrecall(struct fsal_module *fsal,
 		layout->lor_offset = segment->offset;
 		layout->lor_length = segment->length;
 
-		if (!get_state_obj_export_owner_refs(s,
-						       NULL,
-						       &exp,
-						       &owner)) {
+
+		if (!get_state_obj_export_owner_refs(s, NULL, &exp, &owner)) {
 			/* The export, owner, or state_t has gone stale,
 			 * skip this entry
 			 */
@@ -691,6 +486,7 @@ state_status_t layoutrecall(struct fsal_module *fsal,
 
 	/* Free the recall list resources */
 	destroy_recall(recall);
+	obj->obj_ops.put_ref(obj);
 
 	return rc;
 }
@@ -832,6 +628,8 @@ static int32_t layoutrec_completion(rpc_call_t *call, rpc_call_hook hook,
 		 * return, otherwise we count it as an error.
 		 */
 
+		PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
+
 		root_op_context.req_ctx.clientid =
 			&owner->so_owner.so_nfs4_owner.so_clientid;
 		root_op_context.req_ctx.export = export;
@@ -841,6 +639,8 @@ static int32_t layoutrec_completion(rpc_call_t *call, rpc_call_hook hook,
 				      LAYOUTRETURN4_FILE, circumstance,
 				      state, cb_data->segment, 0, NULL,
 				      &deleted);
+
+		PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
 	}
 
 	if (state != NULL) {
@@ -858,6 +658,9 @@ out:
 	if (ok) {
 		/* Release the export */
 		put_gsh_export(export);
+
+		/* Release object ref */
+		obj->obj_ops.put_ref(obj);
 
 		/* Release the owner */
 		dec_state_owner_ref(owner);
@@ -898,6 +701,8 @@ static void return_one_async(void *arg)
 	ok = get_state_obj_export_owner_refs(state, &obj, &export, &owner);
 
 	if (ok) {
+		PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
+
 		root_op_context.req_ctx.clientid =
 			&owner->so_owner.so_nfs4_owner.so_clientid;
 		root_op_context.req_ctx.export = export;
@@ -906,6 +711,8 @@ static void return_one_async(void *arg)
 		nfs4_return_one_state(obj, LAYOUTRETURN4_FILE,
 				      circumstance_revoke, state,
 				      cb_data->segment, 0, NULL, &deleted);
+
+		PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
 	}
 
 	release_root_op_context();
@@ -919,6 +726,9 @@ static void return_one_async(void *arg)
 	if (ok) {
 		/* Release the export */
 		put_gsh_export(export);
+
+		/* Release object ref */
+		obj->obj_ops.put_ref(obj);
 
 		/* Release the owner */
 		dec_state_owner_ref(owner);
@@ -955,6 +765,8 @@ static void layoutrecall_one_call(void *arg)
 	ok = get_state_obj_export_owner_refs(state, &obj, &export, &owner);
 
 	if (ok) {
+		PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
+
 		root_op_context.req_ctx.clientid =
 		    &owner->so_owner.so_nfs4_owner.so_clientid;
 		root_op_context.req_ctx.export = export;
@@ -1010,6 +822,8 @@ static void layoutrecall_one_call(void *arg)
 			++cb_data->attempts;
 		}
 
+		PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
+
 	} else {
 		gsh_free(cb_data);
 	}
@@ -1024,6 +838,9 @@ static void layoutrecall_one_call(void *arg)
 	if (ok) {
 		/* Release the export */
 		put_gsh_export(export);
+
+		/* Release object ref */
+		obj->obj_ops.put_ref(obj);
 
 		/* Release the owner */
 		dec_state_owner_ref(owner);
@@ -1680,6 +1497,7 @@ state_status_t delegrecall_impl(struct fsal_obj_handle *obj)
 		 "FSAL_UP_DELEG: obj %p type %u",
 		 obj, obj->type);
 
+	PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
 	glist_for_each_safe(glist, glist_n,
 			    &obj->state_hdl->file.list_of_states) {
 		state = glist_entry(glist, struct state_t, state_list);
@@ -1710,10 +1528,9 @@ state_status_t delegrecall_impl(struct fsal_obj_handle *obj)
 		 * The owner reference will be used to get access to the
 		 * clientid and reserve the lease.
 		 */
-		if (!get_state_obj_export_owner_refs(state,
-						       NULL,
-						       &drc_ctx->drc_exp,
-						       &owner)) {
+		if (!get_state_obj_export_owner_refs(state, NULL,
+						     &drc_ctx->drc_exp,
+						     &owner)) {
 			LogDebug(COMPONENT_FSAL_UP,
 				 "Something is going stale, no need to recall delegation");
 			gsh_free(drc_ctx);
@@ -1745,6 +1562,7 @@ state_status_t delegrecall_impl(struct fsal_obj_handle *obj)
 
 		delegrecall_one(obj, state, drc_ctx);
 	}
+	PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
 	return rc;
 }
 
@@ -1755,7 +1573,7 @@ state_status_t delegrecall_impl(struct fsal_obj_handle *obj)
  *
  * @return STATE_SUCCESS or errors.
  */
-state_status_t delegrecall(struct fsal_module *fsal,
+state_status_t delegrecall(struct fsal_export *export,
 			   struct gsh_buffdesc *handle)
 {
 	struct fsal_obj_handle *obj = NULL;
@@ -1767,7 +1585,8 @@ state_status_t delegrecall(struct fsal_module *fsal,
 		return STATE_SUCCESS;
 	}
 
-	rc = cache_inode_status_to_state_status(up_get(fsal, handle, &obj));
+	rc = state_error_convert(export->exp_ops.create_handle(export, handle,
+							       &obj));
 	if (rc != STATE_SUCCESS) {
 		LogDebug(COMPONENT_FSAL_UP,
 			 "FSAL_UP_DELEG: cache inode get failed, rc %d", rc);
@@ -1777,6 +1596,7 @@ state_status_t delegrecall(struct fsal_module *fsal,
 	}
 
 	rc = delegrecall_impl(obj);
+	obj->obj_ops.put_ref(obj);
 	return rc;
 }
 
@@ -1784,12 +1604,17 @@ state_status_t delegrecall(struct fsal_module *fsal,
 
 /**
  * @brief The top level vector of operations
+ *
+ * This is the basis for UP calls.  It should not be used directly, but copied
+ * into a per-export structure, overridden if necessary, and fsal_export set.
+ * FSAL_MDCACHE does this, so any cached FSALs don't need to worry.
  */
 
 struct fsal_up_vector fsal_up_top = {
+	.export = NULL,
 	.lock_grant = lock_grant,
 	.lock_avail = lock_avail,
-	.invalidate = fsal_invalidate,
+	.invalidate = invalidate,
 	.update = update,
 	.layoutrecall = layoutrecall,
 	.notify_device = notify_device,

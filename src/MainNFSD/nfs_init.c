@@ -69,6 +69,8 @@
 #endif
 #include "uid2grp.h"
 #include "pnfs_utils.h"
+#include "mdcache.h"
+
 
 /* global information exported to all layers (as extern vars) */
 nfs_parameter_t nfs_param;
@@ -104,6 +106,8 @@ pthread_t nfs_rdma_dispatcher_thrid;
 char *config_path = GANESHA_CONFIG_PATH;
 
 char *pidfile_path = GANESHA_PIDFILE_PATH;
+
+struct config_block mdcache_param_blk;
 
 /**
  * @brief This thread is in charge of signal management
@@ -304,10 +308,9 @@ int nfs_set_param_from_conf(config_file_t parse_tree,
 	}
 #endif
 
-#ifdef _USE_CACHE_INODE
 	/* Cache inode client parameters */
 	(void) load_config_from_parse(parse_tree,
-				      &cache_inode_param_blk,
+				      &mdcache_param_blk,
 				      NULL,
 				      true,
 				      err_type);
@@ -316,7 +319,6 @@ int nfs_set_param_from_conf(config_file_t parse_tree,
 			"Error while parsing 9P specific configuration");
 		return -1;
 	}
-#endif /* _USE_CACHE_INODE */
 
 	LogEvent(COMPONENT_INIT, "Configuration file successfully parsed");
 
@@ -325,24 +327,20 @@ int nfs_set_param_from_conf(config_file_t parse_tree,
 
 int init_server_pkgs(void)
 {
-#ifdef _USE_CACHE_INODE
-	cache_inode_status_t cache_status;
-#endif /* _USE_CACHE_INODE */
+	fsal_status_t fsal_status;
 	state_status_t state_status;
 
 	/* init uid2grp cache */
 	uid2grp_cache_init();
 
-#ifdef _USE_CACHE_INODE
-	/* Cache Inode Initialisation */
-	cache_status = cache_inode_init();
-	if (cache_status != CACHE_INODE_SUCCESS) {
+	/* MDCACHE Initialisation */
+	fsal_status = mdcache_pkginit();
+	if (FSAL_IS_ERROR(fsal_status)) {
 		LogCrit(COMPONENT_INIT,
-			"Cache Inode Layer could not be initialized, status=%s",
-			cache_inode_err_str(cache_status));
+			"MDCACHE FSAL could not be initialized, status=%s",
+			fsal_err_txt(fsal_status));
 		return -1;
 	}
-#endif /* _USE_CACHE_INODE */
 
 	state_status = state_lock_init();
 	if (state_status != STATE_SUCCESS) {
@@ -502,9 +500,6 @@ static void nfs_Start_threads(void)
 
 static void nfs_Init(const nfs_start_info_t *p_start_info)
 {
-#ifdef _USE_CACHE_INODE
-	int rc = 0;
-#endif /* _USE_CACHE_INODE */
 #ifdef _HAVE_GSSAPI
 	gss_buffer_desc gss_service_buf;
 	OM_uint32 maj_stat, min_stat;
@@ -517,16 +512,6 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 	dbus_export_init();
 	dbus_client_init();
 #endif
-
-#ifdef _USE_CACHE_INODE
-	/* Cache Inode LRU (call this here, rather than as part of
-	   cache_inode_init() so the GC policy has been set */
-	rc = cache_inode_lru_pkginit();
-	if (rc != 0) {
-		LogFatal(COMPONENT_INIT,
-			 "Unable to initialize LRU subsystem: %d.", rc);
-	}
-#endif /* _USE_CACHE_INODE */
 
 	/* acls cache may be needed by exports_pkginit */
 	LogDebug(COMPONENT_INIT, "Now building NFSv4 ACL cache");

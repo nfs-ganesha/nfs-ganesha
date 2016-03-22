@@ -101,7 +101,7 @@ int _9p_lcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	pfid->state->state_data.fid.share_access =
 		_9p_openflags_to_share_access(flags);
 
-	if (pfid->pentry->fsal->m_ops.support_ex()) {
+	if (pfid->pentry->fsal->m_ops.support_ex(pfid->pentry)) {
 		struct attrlist sattr;
 		fsal_verifier_t verifier;
 		enum fsal_create_mode createmode = FSAL_UNCHECKED;

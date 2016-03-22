@@ -109,88 +109,112 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t *data,
 		goto out;
 	}
 
-	if (file_obj->type == DIRECTORY &&
-	    file_obj->state_hdl->dir.junction_export != NULL) {
-		/* Handle junction */
-		struct fsal_obj_handle *obj = NULL;
+	if (file_obj->type == DIRECTORY) {
+		PTHREAD_RWLOCK_rdlock(&file_obj->state_hdl->state_lock);
 
-		/* Attempt to get a reference to the export across the
-		 * junction.
-		 */
-		if (!export_ready(file_obj->state_hdl->dir.junction_export)) {
-			/* If we could not get a reference, return stale.
-			 * Release attr_lock
+		if (file_obj->state_hdl->dir.junction_export != NULL) {
+			/* Handle junction */
+			struct fsal_obj_handle *obj = NULL;
+
+			/* Attempt to get a reference to the export across the
+			 * junction.
 			 */
+			if (!export_ready(
+				file_obj->state_hdl->dir.junction_export)) {
+				/* If we could not get a reference, return
+				 * stale.  Release state_lock
+				 */
+				LogDebug(COMPONENT_EXPORT,
+					 "NFS4ERR_STALE on LOOKUP of %s", name);
+				res_LOOKUP4->status = NFS4ERR_STALE;
+				PTHREAD_RWLOCK_unlock(
+					&file_obj->state_hdl->state_lock);
+				goto out;
+			}
+
+			get_gsh_export_ref(
+				file_obj->state_hdl->dir.junction_export);
+
+			/* Release any old export reference */
+			if (op_ctx->export != NULL)
+				put_gsh_export(op_ctx->export);
+
+			/* Stash the new export in the compound data. */
+			op_ctx->export =
+				file_obj->state_hdl->dir.junction_export;
+			op_ctx->fsal_export = op_ctx->export->fsal_export;
+
+			PTHREAD_RWLOCK_unlock(&file_obj->state_hdl->state_lock);
+			/* Build credentials */
+			res_LOOKUP4->status =
+				nfs4_export_check_access(data->req);
+
+			/* Test for access error (export should not be visible).
+			 */
+			if (res_LOOKUP4->status == NFS4ERR_ACCESS) {
+				/* If return is NFS4ERR_ACCESS then this client
+				 * doesn't have access to this export, return
+				 * NFS4ERR_NOENT to hide it. It was not visible
+				 * in READDIR response.
+				 */
+				LogDebug(COMPONENT_EXPORT,
+					"NFS4ERR_ACCESS Hiding Export_Id %d Path %s with NFS4ERR_NOENT",
+					op_ctx->export->export_id,
+					op_ctx->export->fullpath);
+				res_LOOKUP4->status = NFS4ERR_NOENT;
+				PTHREAD_RWLOCK_unlock(
+					&file_obj->state_hdl->state_lock);
+				goto out;
+			}
+
+			if (res_LOOKUP4->status == NFS4ERR_WRONGSEC) {
+				/* LogInfo already documents why */
+				PTHREAD_RWLOCK_unlock(
+					&file_obj->state_hdl->state_lock);
+				goto out;
+			}
+
+			if (res_LOOKUP4->status != NFS4_OK) {
+				/* Should never get here,
+				 * nfs4_export_check_access can only return
+				 * NFS4_OK, NFS4ERR_ACCESS or NFS4ERR_WRONGSEC.
+				 */
+				LogMajor(COMPONENT_EXPORT,
+					"PSEUDO FS JUNCTION TRAVERSAL: Failed with %s for %s, id=%d",
+					nfsstat4_to_str(res_LOOKUP4->status),
+					op_ctx->export->fullpath,
+					op_ctx->export->export_id);
+				PTHREAD_RWLOCK_unlock(
+				      &file_obj->state_hdl->state_lock);
+				goto out;
+			}
+
+			status = nfs_export_get_root_entry(op_ctx->export,
+							   &obj);
+
+			if (FSAL_IS_ERROR(status)) {
+				LogMajor(COMPONENT_EXPORT,
+					"PSEUDO FS JUNCTION TRAVERSAL: Failed to get root for %s, id=%d, status = %s",
+					op_ctx->export->fullpath,
+					op_ctx->export->export_id,
+					msg_fsal_err(status.major));
+
+				res_LOOKUP4->status = nfs4_Errno_status(status);
+				PTHREAD_RWLOCK_unlock(
+				      &file_obj->state_hdl->state_lock);
+				goto out;
+			}
+
 			LogDebug(COMPONENT_EXPORT,
-				 "NFS4ERR_STALE on LOOKUP of %s", name);
-			res_LOOKUP4->status = NFS4ERR_STALE;
-			goto out;
+				"PSEUDO FS JUNCTION TRAVERSAL: Crossed to %s, id=%d for name=%s",
+				op_ctx->export->fullpath,
+				op_ctx->export->export_id, name);
+
+			file_obj->obj_ops.put_ref(file_obj);
+			file_obj = obj;
+		} else {
+			PTHREAD_RWLOCK_unlock(&file_obj->state_hdl->state_lock);
 		}
-
-		get_gsh_export_ref(file_obj->state_hdl->dir.junction_export);
-
-		/* Release any old export reference */
-		if (op_ctx->export != NULL)
-			put_gsh_export(op_ctx->export);
-
-		/* Stash the new export in the compound data. */
-		op_ctx->export = file_obj->state_hdl->dir.junction_export;
-		op_ctx->fsal_export = op_ctx->export->fsal_export;
-
-		/* Build credentials */
-		res_LOOKUP4->status = nfs4_export_check_access(data->req);
-
-		/* Test for access error (export should not be visible). */
-		if (res_LOOKUP4->status == NFS4ERR_ACCESS) {
-			/* If return is NFS4ERR_ACCESS then this client doesn't
-			 * have access to this export, return NFS4ERR_NOENT to
-			 * hide it. It was not visible in READDIR response.
-			 */
-			LogDebug(COMPONENT_EXPORT,
-				 "NFS4ERR_ACCESS Hiding Export_Id %d Path %s with NFS4ERR_NOENT",
-				 op_ctx->export->export_id,
-				 op_ctx->export->fullpath);
-			res_LOOKUP4->status = NFS4ERR_NOENT;
-			goto out;
-		}
-
-		if (res_LOOKUP4->status == NFS4ERR_WRONGSEC) {
-			/* LogInfo already documents why */
-			goto out;
-		}
-
-		if (res_LOOKUP4->status != NFS4_OK) {
-			/* Should never get here, nfs4_export_check_access can
-			 * only return NFS4_OK, NFS4ERR_ACCESS or
-			 * NFS4ERR_WRONGSEC.
-			 */
-			LogMajor(COMPONENT_EXPORT,
-				 "PSEUDO FS JUNCTION TRAVERSAL: Failed with %s for %s, id=%d",
-				 nfsstat4_to_str(res_LOOKUP4->status),
-				 op_ctx->export->fullpath,
-				 op_ctx->export->export_id);
-			goto out;
-		}
-
-		status = nfs_export_get_root_entry(op_ctx->export, &obj);
-
-		if (FSAL_IS_ERROR(status)) {
-			LogMajor(COMPONENT_EXPORT,
-				 "PSEUDO FS JUNCTION TRAVERSAL: Failed to get root for %s, id=%d, status = %s",
-				 op_ctx->export->fullpath,
-				 op_ctx->export->export_id,
-				 msg_fsal_err(status.major));
-
-			res_LOOKUP4->status = nfs4_Errno_status(status);
-			goto out;
-		}
-
-		LogDebug(COMPONENT_EXPORT,
-			 "PSEUDO FS JUNCTION TRAVERSAL: Crossed to %s, id=%d for name=%s",
-			 op_ctx->export->fullpath,
-			 op_ctx->export->export_id, name);
-
-		file_obj = obj;
 	}
 
 	/* Convert it to a file handle */
@@ -202,6 +226,9 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* Keep the pointer within the compound data */
 	set_current_entry(data, file_obj);
+
+	/* Put our ref */
+	file_obj->obj_ops.put_ref(file_obj);
 	file_obj = NULL;
 
 	/* Return successfully */

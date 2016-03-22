@@ -224,7 +224,7 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 			goto out;
 		}
 
-		if (obj->fsal->m_ops.support_ex()) {
+		if (obj->fsal->m_ops.support_ex(obj)) {
 			/* Call the new fsal_write */
 			/** @todo for now pass NULL state */
 			fsal_status = fsal_write2(obj,

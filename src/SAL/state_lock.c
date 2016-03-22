@@ -2270,7 +2270,7 @@ state_status_t do_lock_op(struct fsal_obj_handle *obj,
 						fso_lock_support_async_block))
 			lock_op = FSAL_OP_LOCK;
 
-		if (!obj->fsal->m_ops.support_ex()) {
+		if (!obj->fsal->m_ops.support_ex(obj)) {
 			/* Call legacy lock_op */
 			fsal_status = obj->obj_ops.lock_op(
 					obj,
@@ -2377,7 +2377,7 @@ state_status_t state_test(struct fsal_obj_handle *obj,
 
 	LogLock(COMPONENT_STATE, NIV_FULL_DEBUG, "TEST", obj, owner, lock);
 
-	if (state == NULL && !obj->fsal->m_ops.support_ex()) {
+	if (state == NULL && !obj->fsal->m_ops.support_ex(obj)) {
 		/* The FSAL doesn't support multiple file descriptors, so
 		 * use the legacy fsal_open.
 		 */
@@ -2464,7 +2464,7 @@ state_status_t state_lock(struct fsal_obj_handle *obj,
 	 * use the legacy fsal_open. Otherwise, the FSAL will manage
 	 * the file descriptor during calls to lock_op_fd.
 	 */
-	if (!obj->fsal->m_ops.support_ex()) {
+	if (!obj->fsal->m_ops.support_ex(obj)) {
 		/*
 		 * If we already have a read lock, and then get a write lock
 		 * request, we need to close the file that was already open for

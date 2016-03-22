@@ -265,8 +265,6 @@ fsal_status_t vfs_lock_op(struct fsal_obj_handle *obj_hdl,
 fsal_status_t vfs_share_op(struct fsal_obj_handle *obj_hdl, void *p_owner,
 			   fsal_share_param_t request_share);
 fsal_status_t vfs_close(struct fsal_obj_handle *obj_hdl);
-fsal_status_t vfs_lru_cleanup(struct fsal_obj_handle *obj_hdl,
-			      lru_actions_t requests);
 
 /* Multiple file descriptor methods */
 struct state_t *vfs_alloc_state(struct fsal_export *exp_hdl,

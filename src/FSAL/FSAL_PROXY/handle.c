@@ -1764,6 +1764,7 @@ static bool pxy_handle_is(struct fsal_obj_handle *obj_hdl,
 }
 
 static fsal_status_t pxy_unlink(struct fsal_obj_handle *dir_hdl,
+				struct fsal_obj_handle *obj_hdl,
 				const char *name)
 {
 	int opcnt = 0;

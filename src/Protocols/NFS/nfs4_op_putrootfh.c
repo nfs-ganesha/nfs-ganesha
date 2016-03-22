@@ -124,8 +124,10 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op, compound_data_t *data,
 	LogMidDebug(COMPONENT_EXPORT,
 		    "Root node %p", data->current_obj);
 
-	/* Set the current entry using the ref from get */
 	set_current_entry(data, file_obj);
+
+	/* Put our ref */
+	file_obj->obj_ops.put_ref(file_obj);
 
 	/* Convert it to a file handle */
 	if (!nfs4_FSALToFhandle(data->currentFH.nfs_fh4_val == NULL,

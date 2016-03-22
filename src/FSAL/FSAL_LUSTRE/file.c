@@ -342,29 +342,3 @@ fsal_status_t lustre_close(struct fsal_obj_handle *obj_hdl)
 	return fsalstat(fsal_error, rc);
 }
 
-/* lustre_lru_cleanup
- * free non-essential resources at the request of cache inode's
- * LRU processing identifying this handle as stale enough for resource
- * trimming.
- */
-
-fsal_status_t lustre_lru_cleanup(struct fsal_obj_handle *obj_hdl,
-				 lru_actions_t requests)
-{
-	struct lustre_fsal_obj_handle *myself;
-	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
-	int rc = 0;
-
-	myself =
-	    container_of(obj_hdl, struct lustre_fsal_obj_handle, obj_handle);
-	if (myself->u.file.fd >= 0) {
-		rc = close(myself->u.file.fd);
-		myself->u.file.fd = -1;
-		myself->u.file.openflags = FSAL_O_CLOSED;
-	}
-	if (rc == -1) {
-		rc = errno;
-		fsal_error = posix2fsal_error(rc);
-	}
-	return fsalstat(fsal_error, rc);
-}

@@ -128,7 +128,7 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 		 */
 		PTHREAD_RWLOCK_rdlock(&original_export->lock);
 
-		/* Get the junction inode into dir_entry and parent_exp
+		/* Get the junction inode into dir_obj and parent_exp
 		 * for reference.
 		 */
 		dir_obj = original_export->exp_junction_obj;
@@ -152,12 +152,15 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 
 		get_gsh_export_ref(parent_exp);
 
-		/* XXX dang get refcount on obj */
+		dir_obj->obj_ops.get_ref(dir_obj);
 
 		/* Set up dir_obj as current obj with an LRU reference
 		 * while still holding the lock.
 		 */
 		set_current_entry(data, dir_obj);
+
+		/* Put our ref */
+		dir_obj->obj_ops.put_ref(dir_obj);
 
 		/* Stash parent export in opctx while still holding the lock.
 		 */
@@ -193,6 +196,9 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 		PTHREAD_RWLOCK_unlock(&original_export->lock);
 	}
 
+	/* Return our ref from above */
+	root_obj->obj_ops.put_ref(root_obj);
+
 not_junction:
 
 	status = fsal_lookupp(dir_obj, &file_obj);
@@ -209,6 +215,9 @@ not_junction:
 
 		/* Keep the pointer within the compound data */
 		set_current_entry(data, file_obj);
+
+		/* Put our ref */
+		file_obj->obj_ops.put_ref(file_obj);
 
 		/* Return successfully */
 		res_LOOKUPP4->status = NFS4_OK;

@@ -66,6 +66,8 @@ void nfs4_op_open_CopyRes(OPEN4res *res_dst, OPEN4res *res_src)
  * This function performs the actual open operation in cache_inode and
  * the State Abstraction layer.
  *
+ * @note state_lock MUST be held for write
+ *
  * @param[in]     op        Arguments to the OPEN operation
  * @param[in,out] data      Compound's data
  * @param[in]     owner     The open owner
@@ -300,6 +302,9 @@ static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t *data,
  * This function creates an NFSv4 filehandle from the supplied file
  * and sets it to be the current filehandle.
  *
+ * @note This calls @ref set_current_entry which takes a ref; this then drops
+ * it's ref.
+ *
  * @param[in,out] data   Compound's data
  * @param[in]     obj    File
  *
@@ -318,6 +323,9 @@ static nfsstat4 open4_create_fh(compound_data_t *data,
 
 	/* Update the current entry */
 	set_current_entry(data, obj);
+
+	/* Put our ref */
+	obj->obj_ops.put_ref(obj);
 
 	return NFS4_OK;
 }
@@ -1843,7 +1851,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 		goto out;
 	}
 
-	if (data->current_obj->fsal->m_ops.support_ex()) {
+	if (data->current_obj->fsal->m_ops.support_ex(data->current_obj)) {
 		/* Utilize the extended FSAL APU functionality to
 		 * perform the open.
 		 */
@@ -1868,10 +1876,6 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 							     &obj,
 							     &created);
 			if (res_OPEN4->status == NFS4_OK) {
-				/* Decrement the current entry here, because
-				 * nfs4_create_fh replaces the current fh.
-				 */
-				set_current_entry(data, NULL);
 				res_OPEN4->status = open4_create_fh(data, obj);
 			}
 		}
@@ -1951,6 +1955,8 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 	if (arg_OPEN4->claim.claim)
 		openflags |= FSAL_O_RECLAIM;
 
+	PTHREAD_RWLOCK_wrlock(&data->current_obj->state_hdl->state_lock);
+
 	res_OPEN4->status = open4_do_open(op,
 					  data,
 					  owner,
@@ -1962,6 +1968,8 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 	if (res_OPEN4->status == NFS4_OK)
 		do_delegation(arg_OPEN4, res_OPEN4, data, owner, file_state,
 			      clientid);
+
+	PTHREAD_RWLOCK_unlock(&data->current_obj->state_hdl->state_lock);
 
 	if (res_OPEN4->status != NFS4_OK) {
 		LogDebug(COMPONENT_NFS_V4, "open4_do_open failed");

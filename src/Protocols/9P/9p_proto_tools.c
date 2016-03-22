@@ -331,7 +331,7 @@ void _9p_openflags2FSAL(u32 *inflags, fsal_openflags_t *outflags)
 void free_fid(struct _9p_fid *pfid)
 {
 	if (pfid->state != NULL) {
-		if (pfid->pentry->fsal->m_ops.support_ex()) {
+		if (pfid->pentry->fsal->m_ops.support_ex(pfid->pentry)) {
 			/* We need to close the state before freeing the state.
 			 */
 			(void) pfid->pentry->obj_ops.close2(
@@ -411,7 +411,7 @@ int _9p_tools_clunk(struct _9p_fid *pfid)
 		pfid->pentry->obj_ops.put_ref(pfid->pentry);
 		pfid->opens = 0;	/* dead */
 
-		if (pfid->pentry->fsal->m_ops.support_ex()) {
+		if (pfid->pentry->fsal->m_ops.support_ex(pfid->pentry)) {
 			fsal_status =
 			    pfid->pentry->obj_ops.close2(pfid->pentry,
 							 pfid->state);

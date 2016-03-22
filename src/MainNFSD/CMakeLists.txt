@@ -82,7 +82,6 @@ set(fsal_CORE_SRCS
    ../FSAL/fsal_helper.c
    ../FSAL_UP/fsal_up_top.c
    ../FSAL_UP/fsal_up_async.c
-   ../FSAL_UP/fsal_up_utils.c
 )
 
 ########### next target ###############

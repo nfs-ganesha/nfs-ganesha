@@ -153,7 +153,7 @@ int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		}
 	}
 
-	if (parent_obj->fsal->m_ops.support_ex()) {
+	if (parent_obj->fsal->m_ops.support_ex(parent_obj)) {
 		fsal_verifier_t verifier;
 		enum fsal_create_mode createmode;
 

@@ -218,6 +218,8 @@ static nfsstat4 nfs4_do_open_downgrade(struct nfs_argop4 *op,
 		     args->share_access,
 		     args->share_deny);
 
+	PTHREAD_RWLOCK_wrlock(&data->current_obj->state_hdl->state_lock);
+
 	/* Check if given share access is subset of current share access */
 	if ((state->state_data.share.share_access & args->share_access) !=
 	    (args->share_access)) {
@@ -225,6 +227,8 @@ static nfsstat4 nfs4_do_open_downgrade(struct nfs_argop4 *op,
 		 * downgrade share access
 		 */
 		*cause = " (invalid share access for downgrade)";
+		PTHREAD_RWLOCK_unlock(
+			&data->current_obj->state_hdl->state_lock);
 		return NFS4ERR_INVAL;
 	}
 
@@ -235,6 +239,8 @@ static nfsstat4 nfs4_do_open_downgrade(struct nfs_argop4 *op,
 		 * downgrade share deny
 		 */
 		*cause = " (invalid share deny for downgrade)";
+		PTHREAD_RWLOCK_unlock(
+			&data->current_obj->state_hdl->state_lock);
 		return NFS4ERR_INVAL;
 	}
 
@@ -244,10 +250,12 @@ static nfsstat4 nfs4_do_open_downgrade(struct nfs_argop4 *op,
 	     ((state->state_data.share.share_deny_prev &
 	      (1 << args->share_deny)) == 0)) {
 		*cause = " (share access or deny never seen before)";
+		PTHREAD_RWLOCK_unlock(
+			&data->current_obj->state_hdl->state_lock);
 		return NFS4ERR_INVAL;
 	}
 
-	if (data->current_obj->fsal->m_ops.support_ex()) {
+	if (data->current_obj->fsal->m_ops.support_ex(data->current_obj)) {
 		fsal_status_t fsal_status;
 		fsal_openflags_t openflags = 0;
 
@@ -282,10 +290,11 @@ static nfsstat4 nfs4_do_open_downgrade(struct nfs_argop4 *op,
 						     state);
 	}
 
+	PTHREAD_RWLOCK_unlock(&data->current_obj->state_hdl->state_lock);
+
 	if (state_status != STATE_SUCCESS) {
 		*cause = " (state_share_downgrade failed)";
 		return NFS4ERR_SERVERFAULT;
 	}
-
 	return NFS4_OK;
 }

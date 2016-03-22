@@ -461,7 +461,7 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 		}
 	}
 
-	if (obj->fsal->m_ops.support_ex()) {
+	if (obj->fsal->m_ops.support_ex(obj)) {
 		/* Call the new fsal_read2 */
 		fsal_status = fsal_read2(obj, bypass, state_found, offset, size,
 					 &read_size, bufferdata, &eof_met,

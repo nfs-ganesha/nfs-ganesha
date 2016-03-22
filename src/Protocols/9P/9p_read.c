@@ -105,7 +105,7 @@ int _9p_read(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 		outcount = (u32) *count;
 	} else {
-		if (pfid->pentry->fsal->m_ops.support_ex()) {
+		if (pfid->pentry->fsal->m_ops.support_ex(pfid->pentry)) {
 			/* Call the new fsal_read */
 			fsal_status = fsal_read2(pfid->pentry,
 						false,

@@ -126,7 +126,7 @@ int _9p_write(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 		outcount = *count;
 	} else {
-		if (pfid->pentry->fsal->m_ops.support_ex()) {
+		if (pfid->pentry->fsal->m_ops.support_ex(pfid->pentry)) {
 			/* Call the new fsal_write */
 			fsal_status = fsal_write2(pfid->pentry,
 						 false,

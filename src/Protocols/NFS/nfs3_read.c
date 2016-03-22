@@ -214,7 +214,7 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 			goto out;
 		}
 
-		if (obj->fsal->m_ops.support_ex()) {
+		if (obj->fsal->m_ops.support_ex(obj)) {
 			/* Call the new fsal_read2 */
 			/** @todo for now pass NULL state */
 			fsal_status = fsal_read2(obj,

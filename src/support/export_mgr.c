@@ -1487,7 +1487,7 @@ static bool show_cache_inode_stats(DBusMessageIter *args,
 	dbus_message_iter_init_append(reply, &iter);
 	dbus_status_reply(&iter, success, errormsg);
 
-	cache_inode_dbus_show(&iter);
+	mdcache_dbus_show(&iter);
 
 	return true;
 }

@@ -110,7 +110,6 @@ typedef enum {
 	lat_file_write,
 	lat_commit,
 	lat_file_close,
-	lat_lru_cleanup,
 	lat_makesymlink,
 	lat_readsymlink,
 	lat_linkfile,
