@@ -649,7 +649,7 @@ static struct config_block export_param = {
  * @return FSAL status
  */
 fsal_status_t
-mdcache_init_export(struct fsal_module *fsal_hdl,
+mdc_init_export(struct fsal_module *fsal_hdl,
 		    const struct fsal_up_vector *mdc_up_ops)
 {
 	struct mdcache_fsal_export *myself;
@@ -746,8 +746,8 @@ mdcache_fsal_create_export(struct fsal_module *fsal_hdl, void *parse_node,
 	}
 
 	/* Wrap sub export with MDCACHE export */
-	status = mdcache_init_export(fsal_hdl, &my_up_ops);
-	/* mdcache_init_export took a ref on sub_fsal */
+	status = mdc_init_export(fsal_hdl, &my_up_ops);
+	/* mdc_init_export took a ref on sub_fsal */
 	fsal_put(sub_fsal);
 
 	return status;

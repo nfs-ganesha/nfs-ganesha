@@ -29,6 +29,7 @@
 #include "FSAL/fsal_commonlib.h"
 #include "FSAL/fsal_config.h"
 #include "nfs_exports.h"
+#include "mdcache.h"
 
 /*
  * VFS internal export
@@ -290,7 +291,7 @@ fsal_status_t hpss_create_export(struct fsal_module *fsal_hdl,
 {
 	struct hpss_fsal_export *myself;
 	int retval = 0;
-	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
+	fsal_status_t fsal_status = {0, 0};
 
 	myself = gsh_calloc(1, sizeof(struct hpss_fsal_export));
 
@@ -305,13 +306,20 @@ fsal_status_t hpss_create_export(struct fsal_module *fsal_hdl,
 				       err_type);
 
 	if (retval != 0) {
-		fsal_error = posix2fsal_error(retval);
+		fsal_status = fsalstat(posix2fsal_error(retval), retval);
 		free(myself);  /* elvis has left the building */
-		return fsalstat(fsal_error, retval);
+		return fsal_status;
 	}
 	myself->export.fsal = fsal_hdl;
 
 	op_ctx->fsal_export = &myself->export;
+
+	/* Stack MDCACHE on top */
+	fsal_status = mdcache_export_init(up_ops, &myself->export.up_ops);
+	if (FSAL_IS_ERROR(fsal_status)) {
+		LogDebug(COMPONENT_FSAL, "MDCACHE creation failed for HPSS");
+		return fsal_status;
+	}
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }

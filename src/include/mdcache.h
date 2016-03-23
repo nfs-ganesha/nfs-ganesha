@@ -38,6 +38,8 @@
 /* Initialize MDCACHE stacked on top of the curren export */
 fsal_status_t mdcache_export_init(const struct fsal_up_vector *super_up_ops,
 				  const struct fsal_up_vector **mdc_up_ops);
+/* Clean up on init failure */
+void mdcache_export_uninit(void);
 
 /* Initialize the MDCACHE package. */
 fsal_status_t mdcache_pkginit(void);

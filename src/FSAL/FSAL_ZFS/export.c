@@ -42,6 +42,7 @@
 #include "zfs_methods.h"
 #include "nfs_exports.h"
 #include "export_mgr.h"
+#include "mdcache.h"
 
 libzfswrap_handle_t *p_zhd = NULL;
 size_t i_snapshots = 0;
@@ -298,22 +299,23 @@ fsal_status_t zfs_create_export(struct fsal_module *fsal_hdl,
 {
 	struct zfs_fsal_export *myself = NULL;
 	int retval = 0;
-	fsal_errors_t fsal_error = ERR_FSAL_INVAL;
+	fsal_status_t fsal_status = { ERR_FSAL_INVAL, 0 };
 	libzfswrap_vfs_t *p_zfs = NULL;
 
 	myself = gsh_calloc(1, sizeof(struct zfs_fsal_export));
 
 	fsal_export_init(&myself->export);
 	zfs_export_ops_init(&myself->export.exp_ops);
-	myself->export.up_ops = up_ops;
 
 	retval = load_config_from_node(parse_node,
 				       &export_param,
 				       myself,
 				       true,
 				       err_type);
-	if (retval != 0)
+	if (retval != 0) {
+		fsal_status = fsalstat(ERR_FSAL_INVAL, retval);
 		goto errout;
+	}
 
 	if (!myself->zpool)
 		LogFatal(COMPONENT_FSAL,
@@ -323,8 +325,10 @@ fsal_status_t zfs_create_export(struct fsal_module *fsal_hdl,
 			 "Export is using %s as a ZFS tank", myself->zpool);
 
 	retval = fsal_attach_export(fsal_hdl, &myself->export.exports);
-	if (retval != 0)
+	if (retval != 0) {
+		fsal_status = posix2fsal_status(retval);
 		goto err_locked;	/* seriously bad */
+	}
 	myself->export.fsal = fsal_hdl;
 
 	if (p_zhd == NULL) {
@@ -358,6 +362,13 @@ fsal_status_t zfs_create_export(struct fsal_module *fsal_hdl,
 	myself->p_vfs = p_snapshots[0].p_vfs;
 	op_ctx->fsal_export = &myself->export;
 
+	/* Stack MDCACHE on top */
+	fsal_status = mdcache_export_init(up_ops, &myself->export.up_ops);
+	if (FSAL_IS_ERROR(fsal_status)) {
+		LogDebug(COMPONENT_FSAL, "MDCACHE creation failed for ZFS");
+		goto err_locked;
+	}
+
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
 err_locked:
@@ -367,5 +378,5 @@ errout:
 	/* elvis has left the building */
 	gsh_free(myself);
 
-	return fsalstat(fsal_error, retval);
+	return fsal_status;
 }

@@ -44,6 +44,7 @@
 #include "gsh_dbus.h"
 #endif
 #include "FSAL/fsal_init.h"
+#include "FSAL/fsal_commonlib.h"
 #include "mdcache_hash.h"
 #include "mdcache_lru.h"
 
@@ -178,7 +179,7 @@ mdcache_fsal_init_config(struct fsal_module *fsal_hdl,
  * @return FSAL status
  */
 fsal_status_t mdcache_export_init(const struct fsal_up_vector *super_up_ops,
-				  struct fsal_up_vector **mdc_up_ops)
+				  const struct fsal_up_vector **mdc_up_ops)
 {
 	struct mdcache_fsal_export *exp;
 	struct fsal_up_vector my_up_ops;
@@ -186,7 +187,7 @@ fsal_status_t mdcache_export_init(const struct fsal_up_vector *super_up_ops,
 
 	*mdc_up_ops = NULL;
 	mdcache_export_up_ops_init(&my_up_ops, super_up_ops);
-	status =  mdcache_init_export(&MDCACHE.fsal, &my_up_ops);
+	status =  mdc_init_export(&MDCACHE.fsal, &my_up_ops);
 	if (FSAL_IS_ERROR(status))
 		return status;
 
@@ -196,6 +197,32 @@ fsal_status_t mdcache_export_init(const struct fsal_up_vector *super_up_ops,
 	*mdc_up_ops = &exp->up_ops;
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
+/**
+ * @brief Clean up caching for a FSAL export on error
+ *
+ * If init has an error after @ref mdcache_export_init is called, this should be
+ * called to clean up any MDCACHE state on the export.  This is only intended to
+ * be called on startup error.
+ *
+ */
+void mdcache_export_uninit(void)
+{
+	struct mdcache_fsal_export *exp = mdc_cur_export();
+	struct fsal_export *sub_export = exp->sub_export;
+
+	fsal_put(exp->sub_export->fsal);
+
+	fsal_detach_export(op_ctx->fsal_export->fsal,
+			   &op_ctx->fsal_export->exports);
+	free_export_ops(op_ctx->fsal_export);
+
+	gsh_free(exp);
+
+	/* Put back sub export */
+	op_ctx->fsal_export = sub_export;
+	op_ctx->fsal_module = sub_export->fsal;
 }
 
 /* Internal MDCACHE method linkage to export object

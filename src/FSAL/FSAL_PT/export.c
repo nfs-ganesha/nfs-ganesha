@@ -48,6 +48,7 @@
 #include "fsal_types.h"
 #include "nfs_exports.h"
 #include "export_mgr.h"
+#include "mdcache.h"
 #include "pt_ganesha.h"
 
 /* helpers to/from other PT objects
@@ -278,13 +279,12 @@ fsal_status_t pt_create_export(struct fsal_module *fsal_hdl,
 {
 	struct pt_fsal_export *myself;
 	int retval = 0;
-	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
+	fsal_status_t fsal_status = {0, 0};
 
 	myself = gsh_calloc(1, sizeof(struct pt_fsal_export));
 
 	fsal_export_init(&myself->export);
 	pt_export_ops_init(&myself->export.exp_ops);
-	myself->export.up_ops = up_ops;
 
 	retval = fsal_attach_export(fsal_hdl, &myself->export.exports);
 	if (retval != 0)
@@ -297,15 +297,22 @@ fsal_status_t pt_create_export(struct fsal_module *fsal_hdl,
 				       true,
 				       err_type);
 	if (retval != 0) {
-		retval = EINVAL;
+		fsal_status = posix2fsal_status(retval);
 		goto errout;
 	}
 	op_ctx->fsal_export = &myself->export;
+
+	/* Stack MDCACHE on top */
+	fsal_status = mdcache_export_init(up_ops, &myself->export.up_ops);
+	if (FSAL_IS_ERROR(fsal_status)) {
+		LogDebug(COMPONENT_FSAL, "MDCACHE creation failed for PT");
+		goto errout;
+	}
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
  errout:
 	free_export_ops(&myself->export);
 	gsh_free(myself);	/* elvis has left the building */
-	return fsalstat(fsal_error, retval);
+	return fsal_status;
 }

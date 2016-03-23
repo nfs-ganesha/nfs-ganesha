@@ -46,6 +46,7 @@
 #include "nfs_exports.h"
 #include "export_mgr.h"
 #include "pnfs_utils.h"
+#include "mdcache.h"
 
 /* export object methods
  */
@@ -743,7 +744,6 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 
 	fsal_export_init(&myself->export);
 	gpfs_export_ops_init(&myself->export.exp_ops);
-	myself->export.up_ops = up_ops;
 
 	status.minor = fsal_attach_export(fsal_hdl, &myself->export.exports);
 	if (status.minor != 0) {
@@ -751,6 +751,15 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 		goto errout;	/* seriously bad */
 	}
 	myself->export.fsal = fsal_hdl;
+	op_ctx->fsal_export = &myself->export;
+
+	/* Stack MDCACHE on top */
+	status = mdcache_export_init(up_ops, &myself->export.up_ops);
+	if (FSAL_IS_ERROR(status)) {
+		LogDebug(COMPONENT_FSAL, "MDCACHE creation failed for GPFS");
+		goto detach;
+	}
+
 
 	status.minor = populate_posix_file_systems();
 	if (status.minor != 0) {
@@ -758,7 +767,7 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 			"populate_posix_file_systems returned %s (%d)",
 			strerror(status.minor), status.minor);
 		status.major = posix2fsal_error(status.minor);
-		goto detach;
+		goto uninit;
 	}
 
 	status.minor = claim_posix_filesystems(op_ctx->export->fullpath,
@@ -772,10 +781,8 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 			op_ctx->export->fullpath,
 			strerror(status.minor), status.minor);
 		status.major = posix2fsal_error(status.minor);
-		goto detach;
+		goto uninit;
 	}
-
-	op_ctx->fsal_export = &myself->export;
 
 	gpfs_fs = myself->root_fs->private;
 	varg.fd = gpfs_fs->root_fd;
@@ -813,7 +820,7 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 		status = fsal_hdl->m_ops.
 			fsal_pnfs_ds(fsal_hdl, parse_node, &pds);
 		if (status.major != ERR_FSAL_NO_ERROR)
-			goto detach;
+			goto uninit;
 
 		/* special case: server_id matches export_id */
 		pds->id_servers = op_ctx->export->export_id;
@@ -826,23 +833,21 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 			status.major = ERR_FSAL_EXIST;
 			fsal_pnfs_ds_fini(pds);
 			gsh_free(pds);
-			goto detach;
+			goto uninit;
 		}
 
 		LogInfo(COMPONENT_FSAL,
 			"gpfs_fsal_create: pnfs ds was enabled for [%s]",
 			op_ctx->export->fullpath);
-	}
-	if (myself->pnfs_mds_enabled) {
-		LogInfo(COMPONENT_FSAL,
-			"gpfs_fsal_create: pnfs mds was enabled for [%s]",
-			op_ctx->export->fullpath);
 		export_ops_pnfs(&myself->export.exp_ops);
 	}
 	myself->use_acl =
 		!(op_ctx->export->options & EXPORT_OPTION_DISABLE_ACL);
+
 	return status;
 
+uninit:
+	mdcache_export_uninit();
 detach:
 	fsal_detach_export(fsal_hdl, &myself->export.exports);
 errout:

@@ -41,6 +41,7 @@
 #include "nfs_exports.h"
 #include "export_mgr.h"
 #include "pnfs_utils.h"
+#include "mdcache.h"
 /* The default location of gfapi log
  * if glfs_log param is not defined in
  * the export file */
@@ -691,17 +692,19 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 		fsal_ops_pnfs(&glfsexport->export.fsal->m_ops);
 	}
 
-	if (up_ops) {
-		glfsexport->export.up_ops = up_ops;
-		rc = initiate_up_thread(glfsexport);
+	status = mdcache_export_init(up_ops, &glfsexport->export.up_ops);
+	if (FSAL_IS_ERROR(status)) {
+		LogDebug(COMPONENT_FSAL, "MDCACHE creation failed for GLUSTER");
+		goto out;
+	}
 
-		if (rc != 0) {
-			LogCrit(COMPONENT_FSAL,
-				"Unable to create GLUSTERFSAL_UP_Thread. Export: %s",
-				op_ctx->export->fullpath);
-			status.major = ERR_FSAL_FAULT;
-			goto out;
-		}
+	rc = initiate_up_thread(glfsexport);
+	if (rc != 0) {
+		LogCrit(COMPONENT_FSAL,
+			"Unable to create GLUSTERFSAL_UP_Thread. Export: %s",
+			op_ctx->export->fullpath);
+		status.major = ERR_FSAL_FAULT;
+		goto out;
 	}
 
  out:

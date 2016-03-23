@@ -46,6 +46,7 @@
 #include "abstract_mem.h"
 #include "nfs_exports.h"
 #include "export_mgr.h"
+#include "mdcache.h"
 
 /**
  * Ceph global module object.
@@ -171,7 +172,6 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 
 	fsal_export_init(&export->export);
 	export_ops_init(&export->export.exp_ops);
-	export->export.up_ops = up_ops;
 
 	initialized = true;
 
@@ -246,6 +246,14 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 
 	export->root = handle;
 	op_ctx->fsal_export = &export->export;
+
+	/* Stack MDCACHE on top */
+	status = mdcache_export_init(up_ops, &export->export.up_ops);
+	if (FSAL_IS_ERROR(status)) {
+		LogDebug(COMPONENT_FSAL, "MDCACHE creation failed for CEPH");
+		goto error;
+	}
+
 	return status;
 
  error:

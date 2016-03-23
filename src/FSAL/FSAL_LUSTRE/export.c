@@ -47,6 +47,7 @@
 #include "nfs_exports.h"
 #include "export_mgr.h"
 #include "pnfs_utils.h"
+#include "mdcache.h"
 
 #ifdef HAVE_INCLUDE_LUSTREAPI_H
 #include <lustre/lustreapi.h>
@@ -703,7 +704,6 @@ fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
 
 	fsal_export_init(&myself->export);
 	lustre_export_ops_init(&myself->export.exp_ops);
-	myself->export.up_ops = up_ops;
 
 	status.minor = load_config_from_node(parse_node, &export_param, myself,
 					     true, err_type);
@@ -743,6 +743,13 @@ fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
 	}
 
 	op_ctx->fsal_export = &myself->export;
+
+	/* Stack MDCACHE on top */
+	status = mdcache_export_init(up_ops, &myself->export.up_ops);
+	if (FSAL_IS_ERROR(status)) {
+		LogDebug(COMPONENT_FSAL, "MDCACHE creation failed for LUSTRE");
+		goto detach;
+	}
 
 	myself->pnfs_ds_enabled =
 	    myself->export.exp_ops.fs_supports(&myself->export,

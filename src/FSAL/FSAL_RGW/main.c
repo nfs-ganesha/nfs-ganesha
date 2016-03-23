@@ -38,6 +38,7 @@
 #include "abstract_mem.h"
 #include "nfs_exports.h"
 #include "export_mgr.h"
+#include "mdcache.h"
 
 static const char *module_name = "RGW";
 
@@ -216,7 +217,6 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 
 	fsal_export_init(&export->export);
 	export_ops_init(&export->export.exp_ops);
-	export->export.up_ops = up_ops;
 
 	/* get params for this export, if any */
 	if (parse_node) {
@@ -273,6 +273,14 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 	}
 
 	op_ctx->fsal_export = &export->export;
+
+	/* Stack MDCACHE on top */
+	status = mdcache_export_init(up_ops, &export->export.up_ops);
+	if (FSAL_IS_ERROR(status)) {
+		LogDebug(COMPONENT_FSAL, "MDCACHE creation failed for RGW");
+		goto error;
+	}
+
 	return status;
 
  error:

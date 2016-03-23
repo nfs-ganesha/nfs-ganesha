@@ -32,6 +32,7 @@
 #include "pxy_fsal_methods.h"
 #include "nfs_exports.h"
 #include "export_mgr.h"
+#include "mdcache.h"
 
 static void pxy_release(struct fsal_export *exp_hdl)
 {
@@ -161,12 +162,20 @@ fsal_status_t pxy_create_export(struct fsal_module *fsal_hdl,
 	struct pxy_export *exp = gsh_calloc(1, sizeof(*exp));
 	struct pxy_fsal_module *pxy =
 	    container_of(fsal_hdl, struct pxy_fsal_module, module);
+	fsal_status_t status = {0, 0};
 
 	fsal_export_init(&exp->exp);
 	pxy_export_ops_init(&exp->exp.exp_ops);
-	exp->exp.up_ops = up_ops;
 	exp->info = &pxy->special;
 	exp->exp.fsal = fsal_hdl;
 	op_ctx->fsal_export = &exp->exp;
+
+	/* Stack MDCACHE on top */
+	status = mdcache_export_init(up_ops, &exp->exp.up_ops);
+	if (FSAL_IS_ERROR(status)) {
+		LogDebug(COMPONENT_FSAL, "MDCACHE creation failed for PROXY");
+		return status;
+	}
+
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }

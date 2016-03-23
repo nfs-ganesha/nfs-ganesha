@@ -51,6 +51,7 @@
 #include "nfs_exports.h"
 #include "export_mgr.h"
 #include "subfsal.h"
+#include "mdcache.h"
 
 /* helpers to/from other VFS objects
  */
@@ -556,6 +557,7 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 {
 	struct vfs_fsal_export *myself;
 	int retval = 0;
+	fsal_status_t fsal_status = {0, 0};
 
 	vfs_state_init();
 
@@ -565,7 +567,6 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 
 	fsal_export_init(&myself->export);
 	vfs_export_ops_init(&myself->export.exp_ops);
-	myself->export.up_ops = up_ops;
 
 	retval = load_config_from_node(parse_node,
 				       vfs_sub_export_param,
@@ -580,8 +581,10 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 	vfs_sub_init_export_ops(myself, op_ctx->export->fullpath);
 
 	retval = fsal_attach_export(fsal_hdl, &myself->export.exports);
-	if (retval != 0)
-		goto errout;
+	if (retval != 0) {
+		fsal_status = posix2fsal_status(retval);
+		goto errout;	/* seriously bad */
+	}
 
 	retval = populate_posix_file_systems();
 
@@ -589,6 +592,7 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 		LogCrit(COMPONENT_FSAL,
 			"populate_posix_file_systems returned %s (%d)",
 			strerror(retval), retval);
+		fsal_status = posix2fsal_status(retval);
 		goto errout;
 	}
 
@@ -604,14 +608,25 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 			"claim_posix_filesystems(%s) returned %s (%d)",
 			op_ctx->export->fullpath,
 			strerror(retval), retval);
+		fsal_status = posix2fsal_status(retval);
 		goto errout;
 	}
 
 	retval = vfs_sub_init_export(myself);
-	if (retval != 0)
+	if (retval != 0) {
+		fsal_status = posix2fsal_status(retval);
 		goto errout;
+	}
 
 	op_ctx->fsal_export = &myself->export;
+
+	/* Stack MDCACHE on top */
+	fsal_status = mdcache_export_init(up_ops, &myself->export.up_ops);
+	if (FSAL_IS_ERROR(fsal_status)) {
+		LogDebug(COMPONENT_FSAL, "MDCACHE creation failed for PSEUDO");
+		goto errout;
+	}
+
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
  errout:
@@ -620,5 +635,5 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 
 	free_export_ops(&myself->export);
 	gsh_free(myself);	/* elvis has left the building */
-	return fsalstat(posix2fsal_error(retval), retval);
+	return fsal_status;
 }
