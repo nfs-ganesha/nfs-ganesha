@@ -183,14 +183,20 @@ static fsal_status_t fsal_create(struct fsal_obj_handle *dir_pub,
 	struct rgw_file_handle *rgw_fh;
 	/* Status after create */
 	struct stat st;
-	mode_t unix_mode;
 	/* Newly created object */
 	struct rgw_handle *obj;
 
-	unix_mode = fsal2unix_mode(attrib->mode)
+	memset(&st, 0, sizeof(struct stat));
+
+	st.st_uid = op_ctx->creds->caller_uid;
+	st.st_gid = op_ctx->creds->caller_gid;
+	st.st_mode = fsal2unix_mode(attrib->mode)
 	    & ~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
 
-	rc = rgw_create(export->rgw_fs, dir->rgw_fh, name, unix_mode, &st,
+	uint32_t create_mask =
+		RGW_SETATTR_UID | RGW_SETATTR_GID | RGW_SETATTR_MODE;
+
+	rc = rgw_create(export->rgw_fs, dir->rgw_fh, name, &st, create_mask,
 			&rgw_fh, RGW_CREATE_FLAG_NONE);
 	if (rc < 0)
 		return rgw2fsal_error(rc);
@@ -235,14 +241,20 @@ static fsal_status_t fsal_mkdir(struct fsal_obj_handle *dir_pub,
 	struct rgw_file_handle *rgw_fh;
 	/* Stat result */
 	struct stat st;
-	mode_t unix_mode;
 	/* Newly created object */
 	struct rgw_handle *obj = NULL;
 
-	unix_mode = fsal2unix_mode(attrib->mode)
-		& ~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
+	memset(&st, 0, sizeof(struct stat));
 
-	rc = rgw_mkdir(export->rgw_fs, dir->rgw_fh, name, unix_mode, &st,
+	st.st_uid = op_ctx->creds->caller_uid;
+	st.st_gid = op_ctx->creds->caller_gid;
+	st.st_mode = fsal2unix_mode(attrib->mode)
+	    & ~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
+
+	uint32_t create_mask =
+		RGW_SETATTR_UID | RGW_SETATTR_GID | RGW_SETATTR_MODE;
+
+	rc = rgw_mkdir(export->rgw_fs, dir->rgw_fh, name, &st, create_mask,
 		&rgw_fh, RGW_MKDIR_FLAG_NONE);
 	if (rc < 0)
 		return rgw2fsal_error(rc);
