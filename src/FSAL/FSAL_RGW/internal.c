@@ -43,25 +43,6 @@ struct rgw_fsal_module RGWFSM;
 
 
 /**
- * The attributes tis FSAL can interpret or supply.
- */
-
-const attrmask_t rgw_supported_attributes = (
-	ATTR_TYPE      | ATTR_SIZE     | ATTR_FSID  | ATTR_FILEID |
-	ATTR_MODE      | ATTR_NUMLINKS | ATTR_OWNER | ATTR_GROUP  |
-	ATTR_ATIME     | ATTR_RAWDEV   | ATTR_CTIME | ATTR_MTIME  |
-	ATTR_SPACEUSED | ATTR_CHGTIME);
-
-/**
- * The attributes this FSAL can set.
- */
-
-const attrmask_t rgw_settable_attributes = (
-	ATTR_MODE  | ATTR_OWNER | ATTR_GROUP | ATTR_ATIME	 |
-	ATTR_CTIME | ATTR_MTIME | ATTR_SIZE  | ATTR_MTIME_SERVER |
-	ATTR_ATIME_SERVER);
-
-/**
  * @brief FSAL status from RGW error
  *
  * This function returns a fsal_status_t with the FSAL error as the

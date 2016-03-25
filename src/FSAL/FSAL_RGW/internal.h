@@ -89,11 +89,22 @@ struct rgw_handle {
 	fsal_openflags_t openflags;
 };
 
-#ifndef RGW_INTERNAL_C
-/* Keep internal.c from clashing with itself */
-extern attrmask_t rgw_supported_attributes;
-extern attrmask_t rgw_settable_attributes;
-#endif				/* !RGW_INTERNAL_C */
+/**
+ * The attributes this FSAL can interpret or supply.
+ */
+#define rgw_supported_attributes (\
+	ATTR_TYPE      | ATTR_SIZE     | ATTR_FSID  | ATTR_FILEID |\
+	ATTR_MODE      | ATTR_NUMLINKS | ATTR_OWNER | ATTR_GROUP  |\
+	ATTR_ATIME     | ATTR_RAWDEV   | ATTR_CTIME | ATTR_MTIME  |\
+	ATTR_SPACEUSED | ATTR_CHGTIME)
+
+/**
+ * The attributes this FSAL can set.
+ */
+#define rgw_settable_attributes (\
+	ATTR_MODE  | ATTR_OWNER | ATTR_GROUP | ATTR_ATIME	 |\
+	ATTR_CTIME | ATTR_MTIME | ATTR_SIZE  | ATTR_MTIME_SERVER |\
+	ATTR_ATIME_SERVER)
 
 /**
  * Linux supports a stripe pattern with no more than 4096 stripes, but
