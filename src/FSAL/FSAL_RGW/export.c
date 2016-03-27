@@ -108,7 +108,7 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 	 * leak refs)
 	 */
 	rc = rgw_lookup(export->rgw_fs, export->rgw_fs->root_fh, path,
-			&rgw_fh, 0 /* flags */);
+			&rgw_fh, RGW_LOOKUP_FLAG_NONE);
 	if (rc < 0)
 		return rgw2fsal_error(rc);
 
@@ -197,7 +197,8 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 
 	memcpy((char *) &fh_hk, desc->addr, desc->len);
 
-	rc = rgw_lookup_handle(export->rgw_fs, &fh_hk, &rgw_fh, 0 /* flags */);
+	rc = rgw_lookup_handle(export->rgw_fs, &fh_hk, &rgw_fh,
+			RGW_LOOKUP_FLAG_NONE);
 	if (rc < 0)
 		return rgw2fsal_error(-ESTALE);
 

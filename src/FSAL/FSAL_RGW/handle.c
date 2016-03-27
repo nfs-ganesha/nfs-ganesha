@@ -658,8 +658,7 @@ static fsal_status_t commit(struct fsal_obj_handle *handle_pub,
 	struct rgw_handle *handle = container_of(handle_pub, struct rgw_handle,
 						 handle);
 
-	rc = rgw_fsync(export->rgw_fs, handle->rgw_fh,
-		RGW_FSYNC_FLAG_NONE);
+	rc = rgw_fsync(export->rgw_fs, handle->rgw_fh, RGW_FSYNC_FLAG_NONE);
 	if (rc < 0)
 		return rgw2fsal_error(rc);
 
@@ -688,7 +687,7 @@ static fsal_status_t fsal_close(struct fsal_obj_handle *handle_pub)
 	struct rgw_handle *handle = container_of(handle_pub, struct rgw_handle,
 						 handle);
 
-	rc = rgw_close(export->rgw_fs, handle->rgw_fh, 0 /* flags */);
+	rc = rgw_close(export->rgw_fs, handle->rgw_fh, RGW_CLOSE_FLAG_NONE);
 	if (rc < 0)
 		return rgw2fsal_error(rc);
 
