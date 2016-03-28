@@ -47,3 +47,4 @@ Doxyfile
 *.swp
 .project
 .checkpatch.conf
+src/scripts/systemd/nfs-ganesha-config.service
