@@ -1398,6 +1398,125 @@ static fsal_status_t file_close(struct fsal_obj_handle *obj_hdl)
 	return status;
 }
 
+/* open2
+ * default case not supported
+ */
+
+static fsal_status_t glusterfs_open2(struct fsal_obj_handle *obj_hdl,
+			   struct state_t *fd,
+			   fsal_openflags_t openflags,
+			   enum fsal_create_mode createmode,
+			   const char *name,
+			   struct attrlist *attrib_set,
+			   fsal_verifier_t verifier,
+			   struct fsal_obj_handle **new_obj,
+			   struct attrlist *attrs_out,
+			   bool *caller_perm_check)
+{
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
+}
+
+/* status2
+ * default case return 0
+ */
+
+static fsal_openflags_t glusterfs_status2(struct fsal_obj_handle *obj_hdl,
+					  struct state_t *state)
+{
+	return 0;
+}
+
+/* reopen2
+ * default case not supported
+ */
+
+static fsal_status_t glusterfs_reopen2(struct fsal_obj_handle *obj_hdl,
+			     struct state_t *state,
+			     fsal_openflags_t openflags)
+{
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
+}
+
+/* read2
+ * default case not supported
+ */
+
+static fsal_status_t glusterfs_read2(struct fsal_obj_handle *obj_hdl,
+			   bool bypass,
+			   struct state_t *state,
+			   uint64_t seek_descriptor,
+			   size_t buffer_size,
+			   void *buffer, size_t *read_amount,
+			   bool *end_of_file,
+			   struct io_info *info)
+{
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
+}
+
+/* write2
+ * default case not supported
+ */
+
+static fsal_status_t glusterfs_write2(struct fsal_obj_handle *obj_hdl,
+			    bool bypass,
+			    struct state_t *state,
+			    uint64_t seek_descriptor,
+			    size_t buffer_size,
+			    void *buffer,
+			    size_t *write_amount,
+			    bool *fsal_stable,
+			    struct io_info *info)
+{
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
+}
+
+/* commit2
+ * default case not supported
+ */
+
+static fsal_status_t glusterfs_commit2(struct fsal_obj_handle *obj_hdl,
+			     off_t offset,
+			     size_t len)
+{
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
+}
+
+/* lock_op2
+ * default case not supported
+ */
+
+static fsal_status_t glusterfs_lock_op2(struct fsal_obj_handle *obj_hdl,
+			      struct state_t *state,
+			      void *p_owner,
+			      fsal_lock_op_t lock_op,
+			      fsal_lock_param_t *request_lock,
+			      fsal_lock_param_t *conflicting_lock)
+{
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
+}
+
+/* setattr2
+ * default case not supported
+ */
+
+static fsal_status_t glusterfs_setattr2(struct fsal_obj_handle *obj_hdl,
+			      bool bypass,
+			      struct state_t *state,
+			      struct attrlist *attrs)
+{
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
+}
+
+/* close2
+ * default case not supported
+ */
+
+static fsal_status_t glusterfs_close2(struct fsal_obj_handle *obj_hdl,
+			    struct state_t *fd)
+{
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
+}
+
 /**
  * @brief Implements GLUSTER FSAL objectoperation list_ext_attrs
  */
@@ -1617,5 +1736,19 @@ void handle_ops_init(struct fsal_obj_ops *ops)
 	ops->close = file_close;
 	ops->handle_digest = handle_digest;
 	ops->handle_to_key = handle_to_key;
+
+	/* fops with OpenTracking (multi-fd) enabled */
+	ops->open2 = glusterfs_open2;
+	ops->status2 = glusterfs_status2;
+	ops->reopen2 = glusterfs_reopen2;
+	ops->read2 = glusterfs_read2;
+	ops->write2 = glusterfs_write2;
+	ops->commit2 = glusterfs_commit2;
+	ops->lock_op2 = glusterfs_lock_op2;
+	ops->setattr2 = glusterfs_setattr2;
+	ops->close2 = glusterfs_close2;
+
+
+	/* pNFS related ops */
 	handle_ops_pnfs(ops);
 }
