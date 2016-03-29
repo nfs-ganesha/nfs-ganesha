@@ -144,10 +144,22 @@ struct glusterfs_export {
 	pthread_t up_thread; /* upcall thread */
 };
 
+struct glusterfs_fd {
+	/** The open and share mode etc. This MUST be first in every
+	 *  file descriptor structure.
+	 */
+	fsal_openflags_t openflags;
+
+	/** Gluster file descriptor. */
+	struct glfs_fd *glfd;
+};
+
 struct glusterfs_handle {
 	struct glfs_object *glhandle;
 	unsigned char globjhdl[GLAPI_HANDLE_LENGTH];	/* handle descriptor,
 							   for wire handle */
+
+	/* TODO: Do we need to use gluster_fd here as done in FSAL_VFS? */
 	struct glfs_fd *glfd;
 	fsal_openflags_t openflags;
 	struct fsal_obj_handle handle;	/* public FSAL handle */

@@ -43,6 +43,8 @@
 #include "export_mgr.h"
 #include "pnfs_utils.h"
 #include "mdcache.h"
+#include "sal_data.h"
+
 /* The default location of gfapi log
  * if glfs_log param is not defined in
  * the export file */
@@ -324,6 +326,37 @@ static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
 	return status;
 }
 
+/**
+ * @brief Allocate a state_t structure
+ *
+ * Note that this is not expected to fail since memory allocation is
+ * expected to abort on failure.
+ *
+ * @param[in] exp_hdl               Export state_t will be associated with
+ * @param[in] state_type            Type of state to allocate
+ * @param[in] related_state         Related state if appropriate
+ *
+ * @returns a state structure.
+ */
+
+struct state_t *glusterfs_alloc_state(struct fsal_export *exp_hdl,
+				enum state_type state_type,
+				struct state_t *related_state)
+{
+	struct state_t *state;
+	struct glusterfs_fd *my_fd;
+
+	state = init_state(gsh_calloc(1, sizeof(struct state_t)
+					 + sizeof(struct glusterfs_fd)),
+			   exp_hdl, state_type, related_state);
+
+	my_fd = (struct glusterfs_fd *)(state + 1);
+
+	my_fd->glfd = NULL;
+
+	return state;
+}
+
 /** @todo: We have gone POSIX way for the APIs below, can consider the CEPH way
  * in case all are constants across all volumes etc. */
 
@@ -540,6 +573,7 @@ void export_ops_init(struct export_ops *ops)
 	ops->fs_supported_attrs = fs_supported_attrs;
 	ops->fs_umask = fs_umask;
 	ops->fs_xattr_access_rights = fs_xattr_access_rights;
+	ops->alloc_state = glusterfs_alloc_state;
 }
 
 struct glexport_params {
@@ -745,3 +779,4 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 
 	return status;
 }
+
