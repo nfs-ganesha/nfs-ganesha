@@ -1,0 +1,5 @@
+/var/log/ganesha-gfapi.log {
+    copytruncate
+    dateext
+    compress
+}

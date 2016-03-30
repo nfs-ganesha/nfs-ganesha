@@ -482,6 +482,10 @@ install -m 644 config_samples/ceph.conf %{buildroot}%{_sysconfdir}/ganesha
 install -m 755 config_samples/lustre.conf %{buildroot}%{_sysconfdir}/ganesha
 %endif
 
+%if %{with gluster}
+install -m 644 config_samples/logrotate_fsal_gluster %{buildroot}%{_sysconfdir}/logrotate.d/ganesha-gfapi
+%endif
+
 %if %{with gpfs}
 install -m 755 scripts/gpfs-epoch %{buildroot}%{_libexecdir}/ganesha
 install -m 644 config_samples/gpfs.conf	%{buildroot}%{_sysconfdir}/ganesha
@@ -637,6 +641,7 @@ killall -SIGHUP dbus-daemon 2>&1 > /dev/null
 %if %{with gluster}
 %files gluster
 %defattr(-,root,root,-)
+%config(noreplace) %{_sysconfdir}/logrotate.d/ganesha-gfapi
 %{_libdir}/ganesha/libfsalgluster*
 %endif
 
