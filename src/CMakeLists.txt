@@ -1457,6 +1457,31 @@ add_custom_command(TARGET srpm
 		  VERBATIM
 		  DEPENDS dist)
 
+# Make a docker image
+set(DOCKER_TMP_INSTALL_PATH "${PROJECT_BINARY_DIR}/docker/root")
+find_package(LSB)
+if(LSB_RELEASE_EXECUTABLE)
+  string(TOLOWER ${LSB_RELEASE_ID_SHORT} DOCKER_DISTRO)
+  set(DOCKER_DISTRO_VERSION "${LSB_RELEASE_RELEASE_SHORT}")
+
+  configure_file(
+    "${PROJECT_SOURCE_DIR}/scripts/docker/entrypoint.sh-in.cmake"
+    "${PROJECT_BINARY_DIR}/docker/entrypoint.sh"
+    @ONLY
+    )
+  configure_file(
+    "${PROJECT_SOURCE_DIR}/scripts/docker/Dockerfile-in.cmake"
+    "${PROJECT_BINARY_DIR}/docker/Dockerfile"
+    @ONLY
+    )
+  add_custom_target(docker
+    COMMAND sh -c "make DESTDIR=${PROJECT_BINARY_DIR}/docker/root install"
+    COMMAND sh -c "docker build -t ganesha/dev ${PROJECT_BINARY_DIR}/docker"
+    VERBATIM )
+  add_dependencies(docker ganesha.nfsd )
+endif(LSB_RELEASE_EXECUTABLE)
+
+
 if(COVERAGE)
 	find_program(LCOV_EXEC lcov)
 	find_program(GENHTML_EXEC genhtml)
