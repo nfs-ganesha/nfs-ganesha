@@ -1918,7 +1918,8 @@ fsal_status_t vfs_lock_op2(struct fsal_obj_handle *obj_hdl,
 	}
 
 	LogFullDebug(COMPONENT_FSAL,
-		     "Locking: op:%d type:%d start:%" PRIu64 " length:%lu ",
+		     "Locking: op:%d type:%d start:%" PRIu64 " length:%"
+		     PRIu64 " ",
 		     lock_op, request_lock->lock_type, request_lock->lock_start,
 		     request_lock->lock_length);
 
@@ -1973,7 +1974,8 @@ fsal_status_t vfs_lock_op2(struct fsal_obj_handle *obj_hdl,
 	 */
 	if (lock_args.l_len < 0) {
 		LogCrit(COMPONENT_FSAL,
-			"The requested lock length is out of range- lock_args.l_len(%ld), request_lock_length(%lu)",
+			"The requested lock length is out of range- lock_args.l_len(%ld), request_lock_length(%"
+			PRIu64 ")",
 			lock_args.l_len, request_lock->lock_length);
 		return fsalstat(ERR_FSAL_BAD_RANGE, 0);
 	}

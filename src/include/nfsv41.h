@@ -3775,7 +3775,7 @@ extern "C" {
 				return false;
 		/* skip any further elements and lie on bitmap len */
 		for (i = mapsize; i < objp->bitmap4_len; i++) {
-			u_int crud;
+			u_int crud = 0;
 
 			if (!inline_xdr_u_int32_t(xdrs, &crud))
 				return false;
