@@ -83,14 +83,21 @@ const struct _9p_function_desc _9pfuncdesc[] = {
 int _9p_not_2000L(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 {
 	char *msgdata = req9p->_9pmsg + _9P_HDR_SIZE;
-	u8 *pmsgtype = NULL;
+	u8 msgtype = 0;
 	u16 msgtag = 0;
+	char *funcname = "inval";
 
 	/* Get message's type */
-	pmsgtype = (u8 *) msgdata;
+	msgtype = *(u8 *)msgdata;
+
+	/* TWSTAT is the last element in func_desc array, make sure
+	 * we don't lookup past it */
+	if (msgtype <= _9P_TWSTAT)
+		funcname = _9pfuncdesc[msgtype].funcname;
+
 	LogEvent(COMPONENT_9P,
 		 "(%u|%s) is not a 9P2000.L message, returning ENOTSUP",
-		 *pmsgtype, _9pfuncdesc[*pmsgtype].funcname);
+		 msgtype, funcname);
 
 	_9p_rerror(req9p, &msgtag, ENOTSUP, plenout, preply);
 
