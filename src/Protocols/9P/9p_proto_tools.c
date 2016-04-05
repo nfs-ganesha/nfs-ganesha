@@ -185,8 +185,6 @@ int _9p_tools_get_req_context_by_uid(u32 uid, struct _9p_fid *pfid)
 		release_user_cred_ref(op_ctx->creds);
 	op_ctx->creds = get_user_cred_ref(pfid->ucred);
 
-	op_ctx->caller_addr = NULL;	/* Useless for 9P, we'll see
-					 * if daemon crashes... */
 	op_ctx->req_type = _9P_REQUEST;
 
 	return 0;
@@ -216,8 +214,6 @@ int _9p_tools_get_req_context_by_name(int uname_len, char *uname_str,
 		release_user_cred_ref(op_ctx->creds);
 	op_ctx->creds = get_user_cred_ref(pfid->ucred);
 
-	op_ctx->caller_addr = NULL;	/* Useless for 9P, we'll see
-					 * if daemon crashes... */
 	op_ctx->req_type = _9P_REQUEST;
 
 	return 0;
@@ -461,6 +457,12 @@ void _9p_cleanup_fids(struct _9p_conn *conn)
 {
 	int i;
 
+	/* Allocate op_ctx, is should always be NULL here
+	 * Note we only need it if there is a non-null fid,
+	 * might be worth optimizing for huge clusters
+	 */
+	op_ctx = gsh_calloc(1, sizeof(struct req_op_context));
+
 	for (i = 0; i < _9P_FID_PER_CONN; i++) {
 		if (conn->fids[i]) {
 			_9p_init_opctx(conn->fids[i], NULL);
@@ -469,4 +471,7 @@ void _9p_cleanup_fids(struct _9p_conn *conn)
 			conn->fids[i] = NULL;	/* poison the entry */
 		}
 	}
+
+	gsh_free(op_ctx);
+	op_ctx = NULL;
 }
