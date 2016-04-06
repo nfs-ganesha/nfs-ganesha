@@ -191,9 +191,7 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 				 op_ctx->export->MaxOffsetWrite,
 				 op_ctx->export->export_id);
 
-			res->res_write3.status = NFS3ERR_INVAL;
-
-			res->res_write3.status = nfs3_Errno(cache_status);
+			res->res_write3.status = NFS3ERR_FBIG;
 
 			nfs_SetWccData(NULL, entry,
 				       &res->res_write3.WRITE3res_u.resfail.
