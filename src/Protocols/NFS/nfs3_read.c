@@ -181,7 +181,7 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 				 op_ctx->export->MaxOffsetRead,
 				 op_ctx->export->export_id);
 
-			res->res_read3.status = NFS3ERR_INVAL;
+			res->res_read3.status = NFS3ERR_FBIG;
 
 			nfs_SetPostOpAttr(entry,
 					  &res->res_read3.READ3res_u.resfail.

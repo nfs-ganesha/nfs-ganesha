@@ -429,7 +429,7 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 				 op_ctx->export->MaxOffsetRead,
 				 op_ctx->export->export_id);
 
-			res_READ4->status = NFS4ERR_DQUOT;
+			res_READ4->status = NFS4ERR_FBIG;
 			goto done;
 		}
 	}

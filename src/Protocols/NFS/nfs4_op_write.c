@@ -351,7 +351,7 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 				 op_ctx->export->MaxOffsetWrite,
 				 op_ctx->export->export_id);
 
-			res_WRITE4->status = NFS4ERR_DQUOT;
+			res_WRITE4->status = NFS4ERR_FBIG;
 			goto done;
 		}
 	}
