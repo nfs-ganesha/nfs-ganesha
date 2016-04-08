@@ -1056,7 +1056,7 @@ void nfs_rpc_execute(request_data_t *reqdata)
 
 		export_check_access();
 
-		if (export_perms.options == 0) {
+		if ((export_perms.options & EXPORT_OPTION_ACCESS_TYPE) == 0) {
 			LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 				"Client %s is not allowed to access Export_Id %d %s, vers=%d, proc=%d",
 				client_ip,

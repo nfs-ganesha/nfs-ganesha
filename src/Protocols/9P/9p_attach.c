@@ -164,6 +164,9 @@ int _9p_attach(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	op_ctx->caller_addr = &req9p->pconn->addrpeer;
 	op_ctx->export_perms = &req9p->pconn->export_perms;
 
+	/* How is this used? Will remove this comment or
+	 * adjust code if needed based on review comments!
+	 */
 	export_check_access();
 
 	if (exppath[0] != '/' ||

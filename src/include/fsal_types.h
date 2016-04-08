@@ -92,7 +92,7 @@ struct export_perms {
 	gid_t anonymous_gid;	/* root gid when no root access is available
 				 * gid when access is available but all users
 				 * are being squashed. */
-	uint32_t options;	/* avail. mnt options */
+	uint32_t options;	/* available export options */
 	uint32_t set;		/* Options that have been set */
 };
 
