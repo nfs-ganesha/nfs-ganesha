@@ -60,7 +60,7 @@
 
 /* Export permissions for root op context */
 uint32_t root_op_export_options = EXPORT_OPTION_ROOT |
-				  EXPORT_OPTION_ACCESS_TYPE |
+				  EXPORT_OPTION_ACCESS_MASK |
 				  EXPORT_OPTION_AUTH_TYPES |
 				  EXPORT_OPTION_PROTOCOLS |
 				  EXPORT_OPTION_TRANSPORTS;
@@ -68,7 +68,7 @@ uint32_t root_op_export_options = EXPORT_OPTION_ROOT |
 uint32_t root_op_export_set = EXPORT_OPTION_SQUASH_TYPES |
 			      EXPORT_OPTION_ANON_UID_SET |
 			      EXPORT_OPTION_ANON_GID_SET |
-			      EXPORT_OPTION_ACCESS_TYPE |
+			      EXPORT_OPTION_ACCESS_MASK |
 			      EXPORT_OPTION_AUTH_TYPES |
 			      EXPORT_OPTION_PROTOCOLS |
 			      EXPORT_OPTION_TRANSPORTS;
@@ -501,7 +501,7 @@ nfsstat4 nfs4_export_check_access(struct svc_req *req)
 
 	/* Check if any access at all */
 	if ((op_ctx->export_perms->options &
-	     EXPORT_OPTION_ACCESS_TYPE) == 0) {
+	     EXPORT_OPTION_ACCESS_MASK) == 0) {
 		LogInfoAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
 			"Access not allowed on Export_Id %d %s for client %s",
 			op_ctx->export->export_id,

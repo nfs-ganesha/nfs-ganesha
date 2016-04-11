@@ -653,7 +653,7 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		LogDebug(COMPONENT_NFS_V4, "Request %d: opcode %d is %s", i,
 			 argarray[i].argop, optabv4[opcode].name);
 		perm_flags =
-		    optabv4[opcode].exp_perm_flags & EXPORT_OPTION_ACCESS_TYPE;
+		    optabv4[opcode].exp_perm_flags & EXPORT_OPTION_ACCESS_MASK;
 
 		if (perm_flags != 0) {
 			status = nfs4_Is_Fh_Empty(&data.currentFH);
@@ -673,7 +673,7 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 			LogMidDebugAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
 				       "Check export perms export = %08x req = %08x",
 				       op_ctx->export_perms->options &
-						EXPORT_OPTION_ACCESS_TYPE,
+						EXPORT_OPTION_ACCESS_MASK,
 				       perm_flags);
 			if ((op_ctx->export_perms->options &
 			     perm_flags) != perm_flags) {
