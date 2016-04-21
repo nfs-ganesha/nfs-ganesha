@@ -81,6 +81,10 @@ extern int open_by_handle_fd;
 
 #endif
 
+#ifdef USE_LUSTRE_HSM
+fsal_status_t lustre_hsm_restore(struct fsal_obj_handle *obj_hdl);
+#endif
+
 #ifdef USE_FSAL_SHOOK
 /*
  * Shook related stuff

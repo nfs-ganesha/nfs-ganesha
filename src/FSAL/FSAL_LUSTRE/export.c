@@ -667,6 +667,10 @@ static struct config_item export_params[] = {
 	CONF_ITEM_BLOCK("PNFS", pnfs_params,
 			noop_conf_init, noop_conf_commit,
 			lustre_fsal_export, pnfs_param),
+#ifdef USE_LUSTRE_HSM
+	CONF_ITEM_BOOL("async_hsm_restore", true,
+		       lustre_fsal_export, async_hsm_restore),
+#endif
 	CONFIG_EOL
 };
 

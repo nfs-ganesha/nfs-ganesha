@@ -1,3 +1,7 @@
+########### lustre hsm version test ##########
+# Lustre/HSM feature needs Lustre 2.5.0. As some hsm calls were already landed as empty nutshells in 2.4
+# we rely on this new call of 2.5.0: llapi_hsm_state_get_fd().
+CHECK_LIBRARY_EXISTS(lustreapi llapi_hsm_state_get_fd "" USE_LUSTRE_HSM)
 
 ########### next target ###############
 
@@ -15,6 +19,14 @@ SET(fsallustre_LIB_SRCS
    ds.c
 )
 
+#lustre hsm adds
+if(USE_LUSTRE_HSM)
+  SET(fsallustre_LIB_SRCS
+    ${fsallustre_LIB_SRCS}
+    lustre_hsm.c
+  )
+endif(USE_LUSTRE_HSM)
+
 add_library(fsallustre SHARED ${fsallustre_LIB_SRCS})
 
 if(USE_FSAL_LUSTRE_UP)
@@ -25,7 +37,6 @@ endif(USE_FSAL_LUSTRE_UP)
 
 set_target_properties(fsallustre PROPERTIES VERSION 4.2.0 SOVERSION 4)
 install(TARGETS fsallustre COMPONENT fsal DESTINATION  ${FSAL_DESTINATION} )
-
 
 ########### next target ###############
 
@@ -43,7 +54,15 @@ if(USE_FSAL_SHOOK)
     shook_specific.c
     mds.c
     ds.c
+  )
+
+#lustre hsm adds
+  if(USE_LUSTRE_HSM)
+    SET(fsalshook_LIB_SRCS
+      ${fsalshook_LIB_SRCS}
+      lustre_hsm.c
     )
+  endif(USE_LUSTRE_HSM)
 
   add_library(fsalshook SHARED ${fsalshook_LIB_SRCS})
 

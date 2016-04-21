@@ -72,6 +72,26 @@ fsal_status_t lustre_open(struct fsal_obj_handle *obj_hdl,
 	LogFullDebug(COMPONENT_FSAL, "open_by_handle_at flags from %x to %x",
 		     openflags, posix_flags);
 
+#ifdef USE_LUSTRE_HSM
+	/* restore if needed by lustre hsm*/
+	/* no restore before an open with 0_TRUNC*/
+	if (!(posix_flags & O_TRUNC)) {
+		/* restore only if config set*/
+		struct lustre_fsal_export *lexport;
+
+		lexport = container_of(op_ctx->fsal_export,
+				struct lustre_fsal_export, export);
+		if (lexport->async_hsm_restore) {
+			fsal_status_t st_lhsm_resto;
+
+			st_lhsm_resto = lustre_hsm_restore(obj_hdl);
+
+			if (FSAL_IS_ERROR(st_lhsm_resto))
+				return st_lhsm_resto;
+		}
+	}
+#endif
+
 #ifdef USE_FSAL_SHOOK
 	/* Do Shook Magic */
 	fsal_status_t st;

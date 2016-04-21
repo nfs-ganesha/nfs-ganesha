@@ -57,6 +57,7 @@
 #cmakedefine ENABLE_VFS_DEBUG_ACL 1
 #cmakedefine ENABLE_RFC_ACL 1
 #cmakedefine USE_GLUSTER_SYMLINK_MOUNT 1
+#cmakedefine USE_LUSTRE_HSM 1
 
 #define NFS_GANESHA 1
 

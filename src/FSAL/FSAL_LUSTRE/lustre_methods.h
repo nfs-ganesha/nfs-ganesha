@@ -67,6 +67,9 @@ struct lustre_fsal_export {
 	bool pnfs_ds_enabled;
 	bool pnfs_mds_enabled;
 	struct lustre_exp_pnfs_parameter pnfs_param;
+#ifdef USE_LUSTRE_HSM
+	bool async_hsm_restore;
+#endif
 };
 
 /*

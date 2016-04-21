@@ -306,6 +306,8 @@ EXPORT { FSAL {} }
 	FSAL_LUSTRE:
 	------------
 
+        async_hsm_restore(bool, default true)
+
 	LUSTRE { PNFS { DATASERVER {} } }
 	------------
 
