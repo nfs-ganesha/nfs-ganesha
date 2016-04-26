@@ -697,11 +697,17 @@ static nfsstat4 open4_create(OPEN4args *arg, compound_data_t *data,
 			/* File existed but was not a REGULAR_FILE,
 			 * return EEXIST error.
 			 */
+			LogDebug(COMPONENT_STATE,
+				 "Created returned EXIST, %s not regular file",
+				 filename);
 			return nfs4_Errno_status(status);
 		}
 		if (arg->openhow.openflag4_u.how.mode == GUARDED4) {
 			obj_newfile->obj_ops.put_ref(obj_newfile);
 			obj_newfile = NULL;
+			LogDebug(COMPONENT_STATE,
+				 "Created returned EXIST, %s created GUARDED4",
+				 filename);
 			return nfs4_Errno_status(status);
 		} else if (verf_provided) {
 			if (!fsal_create_verify(obj_newfile,
@@ -709,6 +715,9 @@ static nfsstat4 open4_create(OPEN4args *arg, compound_data_t *data,
 						       verf_lo)) {
 				obj_newfile->obj_ops.put_ref(obj_newfile);
 				obj_newfile = NULL;
+				LogDebug(COMPONENT_STATE,
+					 "Created returned EXIST, %s verify failed",
+					 filename);
 				return NFS4ERR_EXIST;
 			}
 			/* The verifier matches so consider this a case
