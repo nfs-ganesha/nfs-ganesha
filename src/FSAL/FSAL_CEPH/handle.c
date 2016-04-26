@@ -284,6 +284,87 @@ static fsal_status_t ceph_fsal_mkdir(struct fsal_obj_handle *dir_pub,
 }
 
 /**
+ * @brief Create a special file
+ *
+ * This function creates a new special file.
+ *
+ * @param[in]     dir_hdl  Directory in which to create the object
+ * @param[in]     name     Name of object to create
+ * @param[in]     nodetype Type of special file to create
+ * @param[in]     dev      Major and minor device numbers for block or
+ *                         character special
+ * @param[in,out] attrib   Attributes to set on newly created
+ *                         object/attributes you actually got.
+ * @param[out]    new_obj  Newly created object
+ *
+ * @return FSAL status.
+ */
+static fsal_status_t ceph_fsal_mknode(struct fsal_obj_handle *dir_pub,
+				      const char *name,
+				      object_file_type_t nodetype,
+				      fsal_dev_t *dev,
+				      struct attrlist *attrib,
+				      struct fsal_obj_handle **obj_pub)
+{
+#ifdef USE_FSAL_CEPH_MKNOD
+	/* Generic status return */
+	int rc = 0;
+	/* The private 'full' export */
+	struct export *export =
+	    container_of(op_ctx->fsal_export, struct export, export);
+	/* The private 'full' directory handle */
+	struct handle *dir = container_of(dir_pub, struct handle, handle);
+	/* Newly opened file descriptor */
+	struct Inode *i = NULL;
+	/* Status after create */
+	struct stat st;
+	mode_t unix_mode;
+	dev_t unix_dev = 0;
+	/* Newly created object */
+	struct handle *obj;
+
+	unix_mode = fsal2unix_mode(attrib->mode)
+	    & ~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
+
+	switch (nodetype) {
+	case BLOCK_FILE:
+		unix_mode |= S_IFBLK;
+		unix_dev = makedev(dev->major, dev->minor);
+		break;
+	case CHARACTER_FILE:
+		unix_mode |= S_IFCHR;
+		unix_dev = makedev(dev->major, dev->minor);
+		break;
+	case FIFO_FILE:
+		unix_mode |= S_IFIFO;
+		break;
+	case SOCKET_FILE:
+		unix_mode |= S_IFSOCK;
+		break;
+	default:
+		LogMajor(COMPONENT_FSAL, "Invalid node type in FSAL_mknode: %d",
+			 nodetype);
+		return fsalstat(ERR_FSAL_INVAL, EINVAL);
+	}
+
+	rc = ceph_ll_mknod(export->cmount, dir->i, name, unix_mode, unix_dev,
+			   &st, &i, op_ctx->creds->caller_uid,
+			   op_ctx->creds->caller_gid);
+	if (rc < 0)
+		return ceph2fsal_error(rc);
+
+	construct_handle(&st, i, export, &obj);
+
+	*obj_pub = &obj->handle;
+	*attrib = obj->attributes;
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+#else
+	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+#endif
+}
+
+/**
  * @name Create a symlink
  *
  * This function creates a new symlink with the given content.
@@ -923,6 +1004,7 @@ void handle_ops_init(struct fsal_obj_ops *ops)
 	ops->lookup = lookup;
 	ops->create = ceph_fsal_create;
 	ops->mkdir = ceph_fsal_mkdir;
+	ops->mknode = ceph_fsal_mknode;
 	ops->readdir = ceph_fsal_readdir;
 	ops->symlink = ceph_fsal_symlink;
 	ops->readlink = ceph_fsal_readlink;

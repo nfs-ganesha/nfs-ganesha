@@ -622,13 +622,25 @@ if(USE_FSAL_CEPH)
     CEPH_FS
     )
   if(NOT CEPH_FS)
-if(STRICT_PACKAGE)
+    if(STRICT_PACKAGE)
       message(FATAL_ERROR "STRICT_PACKAGE : Cannot find CEPH runtime.  Disabling CEPH fsal build")
     else(STRICT_PACKAGE)
       message(WARNING "Cannot find CEPH runtime.  Disabling CEPH fsal build")
       set(USE_FSAL_CEPH OFF)
     endif(STRICT_PACKAGE)
- endif(NOT CEPH_FS)
+  endif(NOT CEPH_FS)
+  check_library_exists(
+    cephfs
+    ceph_ll_mknod
+    ${CEPH_PREFIX}
+    CEPH_FS_MKNOD
+    )
+  if(NOT CEPH_FS_MKNOD)
+      message(WARNING "Cannot find ceph_ll_mknod.  Disabling CEPH fsal mknod method")
+      set(USE_FSAL_CEPH_MKNOD OFF)
+  else(CEPH_FS_MKNOD)
+      set(USE_FSAL_CEPH_MKNOD ON)
+  endif(NOT CEPH_FS_MKNOD)
 endif(USE_FSAL_CEPH)
 
 if(USE_FSAL_RGW)
@@ -1079,6 +1091,7 @@ message(STATUS "-------------------------------------------------------")
 message(STATUS "USE_FSAL_PROXY = ${USE_FSAL_PROXY}")
 message(STATUS "USE_FSAL_VFS = ${USE_FSAL_VFS}")
 message(STATUS "USE_FSAL_CEPH = ${USE_FSAL_CEPH}")
+message(STATUS "USE_FSAL_CEPH_MKNOD = ${USE_FSAL_CEPH_MKNOD}")
 message(STATUS "USE_FSAL_RGW = ${USE_FSAL_RGW}")
 message(STATUS "USE_FSAL_HPSS = ${USE_FSAL_HPSS}")
 message(STATUS "USE_FSAL_XFS = ${USE_FSAL_XFS}")
