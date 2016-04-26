@@ -270,7 +270,7 @@ struct config_item_list {
  */
 
 struct config_item {
-	char *name;
+	const char *name;
 	enum config_type type; /* switches union */
 	int flags;
 	union {
@@ -775,7 +775,7 @@ struct config_item {
  */
 
 struct config_block {
-	char *dbus_interface_name;
+	const char *dbus_interface_name;
 	struct config_item blk_desc;
 };
 
