@@ -183,8 +183,12 @@ static int nfs4_mds_putfh(compound_data_t *data)
 		int status;
 
 		status = nfs4_export_check_access(data->req);
-		if (status != NFS4_OK)
+		if (status != NFS4_OK) {
+			LogFullDebug(COMPONENT_FILEHANDLE,
+				     "Export check access failed %s",
+				     nfsstat4_to_str(status));
 			return status;
+		}
 	}
 
 	op_ctx->fsal_export = export = exporting->fsal_export;
@@ -196,15 +200,20 @@ static int nfs4_mds_putfh(compound_data_t *data)
 						     FSAL_DIGEST_NFSV4,
 						     &fh_desc,
 						     v4_handle->fhflags1);
-	if (FSAL_IS_ERROR(fsal_status))
+	if (FSAL_IS_ERROR(fsal_status)) {
+		LogFullDebug(COMPONENT_FILEHANDLE,
+			     "extract_handle failed %s",
+			     msg_fsal_err(fsal_status.major));
 		return nfs4_Errno_status(fsal_status);
+	}
 
 	fsal_status = export->exp_ops.create_handle(export,
 						    &fh_desc,
 						    &new_hdl);
 	if (FSAL_IS_ERROR(fsal_status)) {
 		LogDebug(COMPONENT_FILEHANDLE,
-			 "could not get create_handle object");
+			 "could not get create_handle object error %s",
+			 msg_fsal_err(fsal_status.major));
 		return nfs4_Errno_status(fsal_status);
 	}
 
