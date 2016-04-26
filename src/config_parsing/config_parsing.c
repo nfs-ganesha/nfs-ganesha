@@ -1807,7 +1807,7 @@ int load_config_from_node(void *tree_node,
 			  struct config_error_type *err_type)
 {
 	struct config_node *node = (struct config_node *)tree_node;
-	char *blkname = conf_blk->blk_desc.name;
+	const char *blkname = conf_blk->blk_desc.name;
 
 	if (node == NULL) {
 		config_proc_error(NULL, err_type,
@@ -1866,7 +1866,7 @@ int load_config_from_parse(config_file_t config,
 	struct config_root *tree = (struct config_root *)config;
 	struct config_node *node = NULL;
 	struct glist_head *ns;
-	char *blkname = conf_blk->blk_desc.name;
+	const char *blkname = conf_blk->blk_desc.name;
 	int found = 0;
 	int prev_errs = err_type->errors;
 	void *blk_mem = NULL;

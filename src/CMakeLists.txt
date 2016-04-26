@@ -183,6 +183,7 @@ ENDIF()
 # during the build
 option(USE_FSAL_PROXY "build PROXY FSAL shared library" ON)
 option(USE_FSAL_VFS "build VFS FSAL shared library" ON)
+option(USE_FSAL_SCALITY "build Scality Scality shared library" ON)
 option(USE_FSAL_CEPH "build CEPH FSAL shared library" ON)
 option(USE_FSAL_GPFS "build GPFS FSAL" ON)
 option(USE_FSAL_ZFS "build ZFS FSAL" ON)
@@ -410,6 +411,37 @@ ELSE()
     set(ALLOCATOR "libc" CACHE STRING
       "specify the memory allocator to use: jemalloc|tcmalloc|libc")
   endif( "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_GREATER "2.6" )
+ENDIF()
+
+IF(USE_FSAL_SCALITY)
+  find_package(PkgConfig)
+  pkg_check_modules(CURL libcurl>=7.35)
+  IF(NOT CURL_FOUND)
+    message(FATAL_ERROR "libcurl is required by FSAL_SCALITY")
+  ENDIF(NOT CURL_FOUND)
+  message(STATUS "CURL_INCLUDE_DIRS=${CURL_INCLUDE_DIRS}")
+  message(STATUS "CURL_LIBRARY_DIRS=${CURL_LIBRARY_DIRS}")
+  include_directories(${CURL_INCLUDE_DIRS})
+  link_directories(${CURL_LIBRARY_DIRS})
+  pkg_check_modules(JANSSON jansson>=2.5)
+  IF(NOT JANSSON_FOUND)
+    message(FATAL_ERROR "libjansson is required by FSAL_SCALITY")
+  ENDIF(NOT JANSSON_FOUND)
+  message(STATUS "JANSSON_INCLUDE_DIRS=${JANSSON_INCLUDE_DIRS}")
+  message(STATUS "JANSSON_LIBRARY_DIRS=${JANSSON_LIBRARY_DIRS}")
+  include_directories(${JANSSON_INCLUDE_DIRS})
+  link_directories(${JANSSON_LIBRARY_DIRS})
+  pkg_check_modules(HIREDIS hiredis>=0.11)
+  IF(NOT HIREDIS_FOUND)
+    message(FATAL_ERROR "libhiredis is required by FSAL_SCALITY")
+  ENDIF(NOT HIREDIS_FOUND)
+  IF(NOT HIREDIS_INCLUDE_DIRS)
+    SET(HIREDIS_INCLUDE_DIRS "/usr/include/hiredis" CACHE PATH "Forced hiredis include directory" FORCE)
+  ENDIF(NOT HIREDIS_INCLUDE_DIRS)
+  message(STATUS "HIREDIS_INCLUDE_DIRS=${HIREDIS_INCLUDE_DIRS}")
+  message(STATUS "HIREDIS_LIBRARY_DIRS=${HIREDIS_LIBRARY_DIRS}")
+  include_directories(${HIREDIS_INCLUDE_DIRS})
+  link_directories(${HIREDIS_LIBRARY_DIRS})
 ENDIF()
 
 # Find packages and libs we need for building
@@ -939,6 +971,7 @@ message(STATUS "BUILD HOST = ${BUILD_HOST_NAME}")
 message(STATUS "-------------------------------------------------------")
 message(STATUS "USE_FSAL_PROXY = ${USE_FSAL_PROXY}")
 message(STATUS "USE_FSAL_VFS = ${USE_FSAL_VFS}")
+message(STATUS "USE_FSAL_SCALITY = ${USE_FSAL_SCALITY}")
 message(STATUS "USE_FSAL_CEPH = ${USE_FSAL_CEPH}")
 message(STATUS "USE_FSAL_CEPH_MKNOD = ${USE_FSAL_CEPH_MKNOD}")
 message(STATUS "USE_FSAL_CEPH_SETLK = ${USE_FSAL_CEPH_SETLK}")
@@ -1010,6 +1043,11 @@ set(USE_FSAL_VFS ${USE_FSAL_VFS}
   CACHE BOOL
    "build VFS FSAL shared library"
    FORCE)
+
+set(USE_FSAL_VISNU ${USE_FSAL_SCALITY}
+  CACHE BOOL
+  "build Scality Scality FSAL shared library"
+  FORCE)
 
 set(USE_FSAL_PROXY ${USE_FSAL_PROXY}
   CACHE BOOL
