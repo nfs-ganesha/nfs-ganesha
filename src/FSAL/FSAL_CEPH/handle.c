@@ -222,10 +222,19 @@ static fsal_status_t ceph_fsal_create(struct fsal_obj_handle *dir_pub,
 	unix_mode = fsal2unix_mode(attrib->mode)
 	    & ~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
 	rc = ceph_ll_create(export->cmount, dir->i, name, unix_mode,
-			    O_CREAT, &st, &i, NULL, op_ctx->creds->caller_uid,
+			    O_CREAT | O_EXCL, &st, &i, NULL,
+			    op_ctx->creds->caller_uid,
 			    op_ctx->creds->caller_gid);
-	if (rc < 0)
+	if (rc < 0) {
+		LogFullDebug(COMPONENT_FSAL,
+			     "Create %s failed with %s",
+			     name, strerror(-rc));
 		return ceph2fsal_error(rc);
+	}
+
+	LogFullDebug(COMPONENT_FSAL,
+		     "Created %s inode %lu Inode %p",
+		     name, st.st_ino, i);
 
 	construct_handle(&st, i, export, &obj);
 
@@ -747,6 +756,9 @@ static fsal_status_t ceph_fsal_open(struct fsal_obj_handle *handle_pub,
 			  0, 0);
 	if (rc < 0) {
 		handle->fd = NULL;
+		LogFullDebug(COMPONENT_FSAL,
+			     "open failed with %s",
+			     strerror(-rc));
 		return ceph2fsal_error(rc);
 	}
 
