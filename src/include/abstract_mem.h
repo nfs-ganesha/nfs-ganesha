@@ -226,6 +226,8 @@ gsh_strdup__(const char *s,
  *
  * This function aborts if no memory is available.
  *
+ * The returned copied value includes the terminating NUL.
+ *
  * @param[in] s String to duplicate
  * @param[in] length Size of the returned string shall be <= length+1
  * @param[out] copied Number of bytes copied
@@ -248,7 +250,7 @@ gsh_strldup__(const char *s, size_t length, size_t *copied,
 
 	memcpy(p, s, length);
 	p[length] = '\0';
-	*copied = length;
+	*copied = length + 1;
 
 	return p;
 }
