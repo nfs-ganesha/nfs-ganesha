@@ -100,6 +100,18 @@ int nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t *data,
 
 	data->savedFH.nfs_fh4_len = data->currentFH.nfs_fh4_len;
 
+	/* If saved and current entry are equal, skip the following. */
+	if (data->saved_obj != data->current_obj) {
+
+		set_saved_entry(data, data->current_obj);
+
+		/* Make SAVEFH work right for DS handle */
+		if (data->current_ds != NULL) {
+			data->saved_ds = data->current_ds;
+			ds_handle_get_ref(data->saved_ds);
+		}
+	}
+
 	/* Save the current stateid */
 	data->saved_stateid = data->current_stateid;
 	data->saved_stateid_valid = data->current_stateid_valid;
@@ -111,20 +123,6 @@ int nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t *data,
 	/* Save the export information (reference already taken above). */
 	data->saved_export = op_ctx->export;
 	data->saved_export_perms = *op_ctx->export_perms;
-
-	/* If saved and current entry are equal, skip the following. */
-	if (data->saved_obj == data->current_obj)
-		goto out;
-
-	set_saved_entry(data, data->current_obj);
-
-	/* Make SAVEFH work right for DS handle */
-	if (data->current_ds != NULL) {
-		data->saved_ds = data->current_ds;
-		ds_handle_get_ref(data->saved_ds);
-	}
-
- out:
 
 	if (isFullDebug(COMPONENT_NFS_V4)) {
 		char str[LEN_FH_STR];
