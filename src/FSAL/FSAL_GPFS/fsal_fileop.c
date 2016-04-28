@@ -151,7 +151,16 @@ GPFSFSAL_read(int fd, uint64_t offset, size_t buf_size, caddr_t buf,
 	errsv = errno;
 	fsal_restore_ganesha_credentials();
 
-	if (nb_read == -1) {
+	/* negative values mean error */
+	if (nb_read < 0) {
+		/* if nb_read is not -1, the split rc/errno didn't work */
+		if (nb_read != -1) {
+			errsv = abs(nb_read);
+			LogWarn(COMPONENT_FSAL,
+				"Received negative value (%d) from ioctl().",
+				(int) nb_read);
+		}
+
 		if (errsv == EUNATCH)
 			LogFatal(COMPONENT_FSAL, "GPFS Returned EUNATCH");
 		return fsalstat(posix2fsal_error(errsv), errsv);
