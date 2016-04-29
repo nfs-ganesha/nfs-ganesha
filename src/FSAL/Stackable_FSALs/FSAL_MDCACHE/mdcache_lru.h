@@ -146,7 +146,7 @@ void mdcache_lru_kill(mdcache_entry_t *entry);
 void mdcache_lru_cleanup_push(mdcache_entry_t *entry);
 void mdcache_lru_cleanup_try_push(mdcache_entry_t *entry);
 
-void mdcache_lru_unref(mdcache_entry_t *entry, uint32_t flags);
+bool mdcache_lru_unref(mdcache_entry_t *entry, uint32_t flags);
 void mdcache_lru_putback(mdcache_entry_t *entry, uint32_t flags);
 void lru_wake_thread(void);
 fsal_status_t mdcache_inc_noscan_ref(mdcache_entry_t *entry);

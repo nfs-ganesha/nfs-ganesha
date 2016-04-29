@@ -124,16 +124,18 @@ void mdc_clean_mapping(mdcache_entry_t *entry)
 	 */
 	glist_for_each_safe(glist, glistn, &entry->export_list) {
 		struct entry_export_map *expmap;
+		struct mdcache_fsal_export *export;
 
 		expmap = glist_entry(glist,
 				     struct entry_export_map,
 				     export_per_entry);
+		export = expmap->export;
 
-		PTHREAD_RWLOCK_wrlock(&expmap->export->mdc_exp_lock);
+		PTHREAD_RWLOCK_wrlock(&export->mdc_exp_lock);
 
 		mdc_remove_export_map(expmap);
 
-		PTHREAD_RWLOCK_unlock(&expmap->export->mdc_exp_lock);
+		PTHREAD_RWLOCK_unlock(&export->mdc_exp_lock);
 	}
 
 	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
@@ -1338,13 +1340,17 @@ mdcache_dirent_populate(mdcache_entry_t *dir)
 void
 mdcache_kill_entry(mdcache_entry_t *entry)
 {
+	bool freed;
+
 	LogDebug(COMPONENT_CACHE_INODE,
 		 "entry %p", entry);
 
-	cih_remove_checked(entry);	/* !reachable, drop sentinel ref */
+	freed = cih_remove_checked(entry); /* !reachable, drop sentinel ref */
 
-	/* queue for cleanup */
-	mdcache_lru_cleanup_push(entry);
+	if (!freed) {
+		/* queue for cleanup */
+		mdcache_lru_cleanup_push(entry);
+	}
 
 }
 

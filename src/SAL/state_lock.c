@@ -1807,11 +1807,13 @@ void process_blocked_lock_upcall(state_block_data_t *block_data)
 {
 	state_lock_entry_t *lock_entry = block_data->sbd_lock_entry;
 
+	lock_entry_inc_ref(lock_entry);
 	PTHREAD_RWLOCK_wrlock(&lock_entry->sle_obj->state_hdl->state_lock);
 
 	try_to_grant_lock(lock_entry);
 
 	PTHREAD_RWLOCK_unlock(&lock_entry->sle_obj->state_hdl->state_lock);
+	lock_entry_dec_ref(lock_entry);
 }
 
 /**

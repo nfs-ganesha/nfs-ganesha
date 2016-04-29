@@ -409,12 +409,13 @@ cih_set_latched(mdcache_entry_t *entry, cih_latch_t *latch,
  *
  * @return (void)
  */
-static inline void
+static inline bool
 cih_remove_checked(mdcache_entry_t *entry)
 {
 	struct avltree_node *node;
 	cih_partition_t *cp =
 	    cih_partition_of_scalar(&cih_fhcache, entry->fh_hk.key.hk);
+	bool freed = false;
 
 	PTHREAD_RWLOCK_wrlock(&cp->lock);
 	node = cih_fhcache_inline_lookup(&cp->t, &entry->fh_hk.node_k);
@@ -424,9 +425,11 @@ cih_remove_checked(mdcache_entry_t *entry)
 					     entry->fh_hk.key.hk)] = NULL;
 		entry->fh_hk.inavl = false;
 		/* return sentinel ref */
-		mdcache_lru_unref(entry, LRU_FLAG_NONE);
+		freed = mdcache_lru_unref(entry, LRU_FLAG_NONE);
 	}
 	PTHREAD_RWLOCK_unlock(&cp->lock);
+
+	return freed;
 }
 
 /**

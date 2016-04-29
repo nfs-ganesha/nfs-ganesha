@@ -1431,8 +1431,9 @@ mdcache_lru_ref(mdcache_entry_t *entry, uint32_t flags)
  * @param[in] flags  Currently significant are and LRU_FLAG_LOCKED
  *                   (indicating that the caller holds the LRU mutex
  *                   lock for this entry.)
+ * @return true if entry freed, false otherwise
  */
-void
+bool
 mdcache_lru_unref(mdcache_entry_t *entry, uint32_t flags)
 {
 	int32_t refcnt;
@@ -1441,6 +1442,7 @@ mdcache_lru_unref(mdcache_entry_t *entry, uint32_t flags)
 	struct lru_q_lane *qlane = &LRU[lane];
 	bool qlocked = flags & LRU_UNREF_QLOCKED;
 	bool other_lock_held = flags & LRU_UNREF_STATE_LOCK_HELD;
+	bool freed = false;
 
 	if (!qlocked && !other_lock_held) {
 		QLOCK(qlane);
@@ -1491,11 +1493,12 @@ mdcache_lru_unref(mdcache_entry_t *entry, uint32_t flags)
 
 		mdcache_lru_clean(entry);
 		pool_free(mdcache_entry_pool, entry);
+		freed = true;
 
 		atomic_dec_int64_t(&lru_state.entries_used);
 	}			/* refcnt == 0 */
  out:
-	return;
+	return freed;
 }
 
 /**
