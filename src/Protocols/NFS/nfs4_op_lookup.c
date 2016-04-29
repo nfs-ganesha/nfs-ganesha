@@ -162,15 +162,11 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t *data,
 					op_ctx->export->export_id,
 					op_ctx->export->fullpath);
 				res_LOOKUP4->status = NFS4ERR_NOENT;
-				PTHREAD_RWLOCK_unlock(
-					&file_obj->state_hdl->state_lock);
 				goto out;
 			}
 
 			if (res_LOOKUP4->status == NFS4ERR_WRONGSEC) {
 				/* LogInfo already documents why */
-				PTHREAD_RWLOCK_unlock(
-					&file_obj->state_hdl->state_lock);
 				goto out;
 			}
 
@@ -184,8 +180,6 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t *data,
 					nfsstat4_to_str(res_LOOKUP4->status),
 					op_ctx->export->fullpath,
 					op_ctx->export->export_id);
-				PTHREAD_RWLOCK_unlock(
-				      &file_obj->state_hdl->state_lock);
 				goto out;
 			}
 
@@ -200,8 +194,6 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t *data,
 					msg_fsal_err(status.major));
 
 				res_LOOKUP4->status = nfs4_Errno_status(status);
-				PTHREAD_RWLOCK_unlock(
-				      &file_obj->state_hdl->state_lock);
 				goto out;
 			}
 
