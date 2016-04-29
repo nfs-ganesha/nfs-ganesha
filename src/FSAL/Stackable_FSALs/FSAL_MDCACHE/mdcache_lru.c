@@ -678,6 +678,12 @@ static inline size_t lru_run_lane(size_t lane, uint64_t *const totalclosed)
 	struct lru_q_lane *qlane = &LRU[lane];
 	/* entry refcnt */
 	uint32_t refcnt;
+	struct req_op_context ctx = {0};
+	struct req_op_context *saved_ctx = op_ctx;
+	struct mdcache_fsal_export *exp;
+	struct fsal_export *export;
+
+	op_ctx = &ctx;
 
 	q = &qlane->L1;
 
@@ -726,6 +732,14 @@ static inline size_t lru_run_lane(size_t lane, uint64_t *const totalclosed)
 		 * entry */
 		QUNLOCK(qlane);
 
+		/** @todo FSF: hmm, this looks hairy, we need a reference
+		 *             to the export somehow?
+		 */
+		exp = atomic_fetch_voidptr(&entry->first_export);
+		export = &exp->export;
+		op_ctx->fsal_export = export;
+		op_ctx->export = NULL;
+
 		if (entry->obj_handle.fsal->m_ops.support_ex(
 						&entry->obj_handle)) {
 			/* Make sure any FSAL global file descriptor is closed.
@@ -768,6 +782,8 @@ next_lane:
 	LogDebug(COMPONENT_CACHE_INODE_LRU,
 		 "Actually processed %zd entries on lane %zd closing %zd descriptors",
 		 workdone, lane, closed);
+
+	op_ctx = saved_ctx;
 
 	return workdone;
 }
