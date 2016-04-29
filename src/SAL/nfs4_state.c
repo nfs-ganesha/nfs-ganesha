@@ -799,7 +799,7 @@ void release_openstate(state_owner_t *owner)
 
 		if (!obj->fsal->m_ops.support_ex(obj)) {
 			/* Close the file in FSAL */
-			obj->obj_ops.close(obj);
+			fsal_close(obj, true);
 		}
 
 		PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);

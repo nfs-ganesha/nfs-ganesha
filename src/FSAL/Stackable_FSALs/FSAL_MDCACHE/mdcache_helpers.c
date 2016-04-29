@@ -261,7 +261,7 @@ mdcache_invalidate(mdcache_entry_t *entry, uint32_t flags)
 
 	if ((flags & MDCACHE_INVALIDATE_CLOSE) &&
 	    (entry->obj_handle.type == REGULAR_FILE))
-		status = fsal_close(&entry->obj_handle);
+		status = fsal_close(&entry->obj_handle, false);
 
 	/* Memory copying attributes with every call is expensive.
 	   Let's not do it.  */

@@ -98,7 +98,7 @@ int _9p_remove(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 			fsal_status = pfid->pentry->obj_ops.close2(pfid->pentry,
 								   pfid->state);
 		else
-			fsal_status = fsal_close(pfid->pentry);
+			fsal_status = fsal_close(pfid->pentry, true);
 
 		if (FSAL_IS_ERROR(fsal_status)) {
 			FREE_FID(pfid, fid, req9p);

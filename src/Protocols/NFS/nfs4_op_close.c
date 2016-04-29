@@ -327,7 +327,7 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 		 * is not enabled for the FSAL.
 		 */
 		/* Close the file in FSAL */
-		fsal_status = fsal_close(data->current_obj);
+		fsal_status = fsal_close(data->current_obj, true);
 		if (FSAL_IS_ERROR(fsal_status)
 		    && (fsal_status.major != ERR_FSAL_NOT_OPENED)) {
 			res_CLOSE4->status = nfs4_Errno_status(fsal_status);

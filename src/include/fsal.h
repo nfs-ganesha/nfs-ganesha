@@ -371,13 +371,36 @@ fsal_status_t fsal_reopen2(struct fsal_obj_handle *obj,
 			   struct state_t *state,
 			   fsal_openflags_t openflags,
 			   bool check_permission);
-fsal_status_t fsal_close(struct fsal_obj_handle *obj_hdl);
-static inline fsal_status_t fsal_close2(struct fsal_obj_handle *obj)
+/**
+ * @brief Close a file
+ *
+ * This handles both support_ex case and regular case (in case of
+ * support_ex, close method is expected to manage whether file is
+ * actually open or not, in old API case, close method should only
+ * be closed if the file is open).
+ *
+ * In a change to the old way, non-regular files are just ignored.
+ *
+ * @param[in] obj	File to close
+ * @return FSAL status
+ */
+
+static inline fsal_status_t fsal_close(struct fsal_obj_handle *obj_hdl,
+				       bool skip_ex)
 {
-	if (obj->type == REGULAR_FILE)
-		return obj->obj_ops.close(obj);
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	if (obj_hdl->type != REGULAR_FILE ||
+	    ((skip_ex || !obj_hdl->fsal->m_ops.support_ex(obj_hdl)) &&
+	     obj_hdl->obj_ops.status(obj_hdl) == FSAL_O_CLOSED)) {
+		/* If not a regular file, or not support_ex and the file isn't
+		 * open, return no error.
+		 */
+		return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	} else {
+		/* Otherwise, return the result of close method. */
+		return obj_hdl->obj_ops.close(obj_hdl);
+	}
 }
+
 fsal_status_t fsal_statfs(struct fsal_obj_handle *obj,
 			  fsal_dynamicfsinfo_t *dynamicinfo);
 fsal_status_t fsal_commit(struct fsal_obj_handle *obj_hdl, off_t offset,

@@ -407,12 +407,9 @@ mdcache_lru_clean(mdcache_entry_t *entry)
 {
 	fsal_status_t status = {0, 0};
 
-	if (entry->obj_handle.fsal->m_ops.support_ex(&entry->obj_handle)) {
-		/* Make sure any FSAL global file descriptor is closed. */
-		status = fsal_close2(&entry->obj_handle);
-	} else if (fsal_is_open(&entry->obj_handle)) {
-		status = fsal_close(&entry->obj_handle);
-	}
+	/* Make sure any FSAL global file descriptor is closed. */
+	status = fsal_close(&entry->obj_handle, false);
+
 	if (FSAL_IS_ERROR(status)) {
 		LogCrit(COMPONENT_CACHE_INODE_LRU,
 			"Error closing file in cleanup: %s",
@@ -682,6 +679,7 @@ static inline size_t lru_run_lane(size_t lane, uint64_t *const totalclosed)
 	struct req_op_context *saved_ctx = op_ctx;
 	struct mdcache_fsal_export *exp;
 	struct fsal_export *export;
+	bool not_support_ex;
 
 	op_ctx = &ctx;
 
@@ -740,35 +738,30 @@ static inline size_t lru_run_lane(size_t lane, uint64_t *const totalclosed)
 		op_ctx->fsal_export = export;
 		op_ctx->export = NULL;
 
-		if (entry->obj_handle.fsal->m_ops.support_ex(
-						&entry->obj_handle)) {
-			/* Make sure any FSAL global file descriptor is closed.
-			 */
-			status = fsal_close2(&entry->obj_handle);
+		not_support_ex = !entry->obj_handle.fsal->m_ops.support_ex(
+							&entry->obj_handle);
 
-			if (FSAL_IS_ERROR(status)) {
-				LogCrit(COMPONENT_CACHE_INODE_LRU,
-					"Error closing file in LRU thread.");
-			} else {
-				++(*totalclosed);
-				++closed;
-			}
-		} else {
+		if (not_support_ex) {
 			/* Acquire the content lock first; we may need to look
 			 * at fds and close it.
 			 */
 			PTHREAD_RWLOCK_wrlock(&entry->content_lock);
-			if (fsal_is_open(&entry->obj_handle)) {
-				status = fsal_close(&entry->obj_handle);
-				if (FSAL_IS_ERROR(status)) {
-					LogCrit(COMPONENT_CACHE_INODE_LRU,
-						"Error closing file in LRU thread.");
-				} else {
-					++(*totalclosed);
-					++closed;
-				}
-			}
+		}
+
+		/* Make sure any FSAL global file descriptor is closed. */
+		status = fsal_close(&entry->obj_handle, not_support_ex);
+
+		if (not_support_ex) {
+			/* Release the content lock. */
 			PTHREAD_RWLOCK_unlock(&entry->content_lock);
+		}
+
+		if (FSAL_IS_ERROR(status)) {
+			LogCrit(COMPONENT_CACHE_INODE_LRU,
+				"Error closing file in LRU thread.");
+		} else {
+			++(*totalclosed);
+			++closed;
 		}
 
 		QLOCK(qlane); /* QLOCKED */

@@ -1658,20 +1658,11 @@ fsal_remove(struct fsal_obj_handle *parent, const char *name)
 
 	LogFullDebug(COMPONENT_FSAL, "%s", name);
 
-	if (!to_remove_obj->fsal->m_ops.support_ex(to_remove_obj)) {
-		if (fsal_is_open(to_remove_obj)) {
-			/* obj is not locked and seems to be open for fd caching
-			 * purpose.  candidate for closing since unlink of an
-			 * open file results in 'silly rename' on certain
-			 * platforms */
-			status = fsal_close(to_remove_obj);
-		}
-	} else {
-		/* Make sure the to_remove_obj is closed since unlink of an
-		 * open file results in 'silly rename' on certain platforms.
-		 */
-		status = fsal_close2(to_remove_obj);
-	}
+	/* Make sure the to_remove_obj is closed since unlink of an
+	 * open file results in 'silly rename' on certain platforms.
+	 */
+	status = fsal_close(to_remove_obj, false);
+
 	if (FSAL_IS_ERROR(status)) {
 		/* non-fatal error. log the warning and move on */
 		LogCrit(COMPONENT_FSAL,
@@ -1852,26 +1843,6 @@ fsal_status_t fsal_open(struct fsal_obj_handle *obj_hdl,
 	status = fsalstat(ERR_FSAL_NO_ERROR, 0);
 
 	return status;
-}
-
-/**
- * @brief Close a file
- *
- * @param[in] obj	File to close
- * @return FSAL status
- */
-fsal_status_t fsal_close(struct fsal_obj_handle *obj_hdl)
-{
-	if (obj_hdl->type != REGULAR_FILE) {
-		LogFullDebug(COMPONENT_FSAL,
-			     "Entry %p File not a REGULAR_FILE", obj_hdl);
-		return fsalstat(ERR_FSAL_BADTYPE, 0);
-	}
-
-	if (!fsal_is_open(obj_hdl))
-		return fsalstat(ERR_FSAL_NO_ERROR, 0);
-
-	return obj_hdl->obj_ops.close(obj_hdl);
 }
 
 /**
