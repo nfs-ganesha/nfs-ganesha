@@ -267,6 +267,20 @@ struct mdcache_fsal_obj_handle {
 	union mdcache_fsobj {
 		struct state_hdl hdl;
 		struct {
+			/** @todo FSF
+			 *
+			 * This is somewhat fragile, however, a reorganization
+			 * is possible. If state_lock was to be moved into
+			 * state_file and state_dir, and the state code was
+			 * made clear which it was working with, dhdl could
+			 * be replaced with a state_dir which would be
+			 * smaller than state_file, and then the additional
+			 * members of fsdir would basically overlay
+			 * the larger state_file that hdl is.
+			 *
+			 * Such a reorg could save memory AND make for a
+			 * crisper interface.
+			 */
 			struct state_hdl dhdl; /**< Storage for dir state */
 			/** Number of known active children */
 			uint32_t nbactive;
