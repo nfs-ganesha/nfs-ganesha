@@ -9,6 +9,9 @@ Requires: sles-release >= 12
 BuildRequires: openSUSE-release
 Requires: openSUSE-release
 %endif
+
+%define dist .sles12
+
 %endif
 
 # Conditionally enable some FSALs, disable others.
