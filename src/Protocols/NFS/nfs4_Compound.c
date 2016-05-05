@@ -490,6 +490,7 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	struct timespec ts;
 	int perm_flags;
 	char *tagname = NULL;
+	char *notag = "NO TAG";
 
 	if (compound4_minor > 2) {
 		LogCrit(COMPONENT_NFS_V4, "Bad Minor Version %d",
@@ -525,11 +526,18 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 			res->res_compound4.resarray.resarray_len = 0;
 			return NFS_REQ_OK;
 		}
-		gsh_free(tagname);
-
 	} else {
 		res->res_compound4.tag.utf8string_val = NULL;
+		tagname = notag;
 	}
+
+	/* Managing the operation list */
+	LogDebug(COMPONENT_NFS_V4,
+		 "COMPOUND: There are %d operations, res = %p, tag = %s",
+		 argarray_len, res, tagname);
+
+	if (tagname != notag)
+		gsh_free(tagname);
 
 	/* Check for empty COMPOUND request */
 	if (argarray_len == 0) {
@@ -574,11 +582,6 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	res->res_compound4.resarray.resarray_len = argarray_len;
 	resarray = res->res_compound4.resarray.resarray_val;
-
-	/* Managing the operation list */
-	LogDebug(COMPONENT_NFS_V4,
-		 "COMPOUND: There are %d operations",
-		 argarray_len);
 
 	/* Manage errors NFS4ERR_OP_NOT_IN_SESSION and NFS4ERR_NOT_ONLY_OP.
 	 * These checks apply only to 4.1 */
