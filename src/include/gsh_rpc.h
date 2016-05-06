@@ -307,7 +307,7 @@ bool copy_xprt_addr(sockaddr_t *, SVCXPRT *);
 
 int display_sockaddr(struct display_buffer *dspbuf, sockaddr_t *addr);
 
-static inline void sprint_sockaddr(sockaddr_t *addr, char *buf, int len)
+static inline void sprint_sockaddr(sockaddr_t *addr, char *buf, size_t len)
 {
 	struct display_buffer dspbuf = {len, buf, buf};
 
