@@ -122,9 +122,9 @@ static inline void display_reset_buffer(struct display_buffer *dspbuf)
  * This function is more efficient than strlen if the buffer hasn't overflowed.
  *
  */
-static inline int display_buffer_len(struct display_buffer *dspbuf)
+static inline size_t display_buffer_len(struct display_buffer *dspbuf)
 {
-	int len = dspbuf->b_current - dspbuf->b_start;
+	size_t len = dspbuf->b_current - dspbuf->b_start;
 
 	if (len == dspbuf->b_size) {
 		/* Buffer has overflowed, due to forced overflow or partial
