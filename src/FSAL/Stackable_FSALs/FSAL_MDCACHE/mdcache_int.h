@@ -177,6 +177,8 @@ static const uint32_t MDCACHE_TRUST_ATTRS = 0x00000001;
 static const uint32_t MDCACHE_TRUST_CONTENT = 0x00000002;
 /** The directory has been populated (negative lookups are meaningful) */
 static const uint32_t MDCACHE_DIR_POPULATED = 0x00000004;
+/** The entry has been removed, but not unhashed due to state */
+static const uint32_t MDCACHE_UNREACHABLE = 0x00000008;
 
 
 /**
@@ -524,6 +526,60 @@ mdc_remove_export_map(struct entry_export_map *expmap)
 	glist_del(&expmap->export_per_entry);
 	glist_del(&expmap->entry_per_export);
 	gsh_free(expmap);
+}
+
+
+/**
+ * @brief Check to see if an entry has state
+ *
+ * long description
+ *
+ * @param[in] entry	Entry to check
+ * @return true if has state, false otherwise
+ */
+static inline bool
+mdc_has_state(mdcache_entry_t *entry)
+{
+	switch (entry->obj_handle.type) {
+	case REGULAR_FILE:
+		if (!glist_empty(&entry->fsobj.hdl.file.list_of_states))
+			return true;
+		if (!glist_empty(&entry->fsobj.hdl.file.layoutrecall_list))
+			return true;
+		if (!glist_empty(&entry->fsobj.hdl.file.lock_list))
+			return true;
+		if (!glist_empty(&entry->fsobj.hdl.file.nlm_share_list))
+			return true;
+		return false;
+	case DIRECTORY:
+		if (entry->fsobj.fsdir.dhdl.dir.junction_export)
+			return true;
+		if (entry->fsobj.fsdir.dhdl.dir.exp_root_refcount)
+			return true;
+		return false;
+	default:
+		/* No state for these types */
+		return false;
+	}
+}
+
+/**
+ * @brief Mark an entry as unreachable
+ *
+ * An entry has become unreachable.  If it has no state, kill it.  Otherwise,
+ * mark it unreachable so that it can be killed when state is freed.
+ *
+ * @param[in] entry	Entry to mark
+ */
+static inline void
+mdc_unreachable(mdcache_entry_t *entry)
+{
+	if (!mdc_has_state(entry)) {
+		mdcache_kill_entry(entry);
+		return;
+	}
+
+	atomic_set_uint32_t_bits(&entry->mde_flags, MDCACHE_UNREACHABLE);
 }
 
 

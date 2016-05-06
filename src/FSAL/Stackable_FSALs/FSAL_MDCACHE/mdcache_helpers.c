@@ -377,6 +377,11 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 		LogDebug(COMPONENT_CACHE_INODE,
 			 "Trying to add an already existing entry. Found entry %p type: %d, New type: %d",
 			 *entry, (*entry)->obj_handle.type, sub_handle->type);
+
+		/* It it was unreachable before, mark it reachable */
+		atomic_clear_uint32_t_bits(&(*entry)->mde_flags,
+					 MDCACHE_UNREACHABLE);
+
 		/* Don't need a new sub_handle ref */
 		sub_handle->obj_ops.release(sub_handle);
 		return status;
@@ -402,12 +407,19 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 		LogDebug(COMPONENT_CACHE_INODE,
 			 "lost race to add entry %p type: %d, New type: %d",
 			 oentry, oentry->obj_handle.type, sub_handle->type);
+		*entry = oentry;
+
 		/* Ref it */
 		status = mdcache_lru_ref(*entry, LRU_REQ_INITIAL);
 		if (!FSAL_IS_ERROR(status)) {
 			status = fsalstat(ERR_FSAL_EXIST, 0);
 			(void)atomic_inc_uint64_t(&cache_stp->inode_conf);
 		}
+
+		/* It it was unreachable before, mark it reachable */
+		atomic_clear_uint32_t_bits(&(*entry)->mde_flags,
+					 MDCACHE_UNREACHABLE);
+
 		/* Release the subtree hash table lock */
 		cih_hash_release(&latch);
 		goto out;

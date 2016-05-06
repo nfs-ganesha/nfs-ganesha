@@ -809,11 +809,16 @@ fsal_status_t mdcache_close2(struct fsal_obj_handle *obj_hdl,
 		container_of(obj_hdl, mdcache_entry_t, obj_handle);
 	fsal_status_t status;
 
-	/* XXX dang caching FDs?  How does it interact with multi-FD */
 	subcall(
 		status = entry->sub_handle->obj_ops.close2(
 			  entry->sub_handle, state)
 	       );
+
+	if ((entry->mde_flags & MDCACHE_UNREACHABLE) &&
+	    !mdc_has_state(entry)) {
+		/* Entry was marked unreachable, and last state is gone */
+		(void)mdcache_kill_entry(entry);
+	}
 
 	return status;
 }

@@ -1730,7 +1730,6 @@ fsal_status_t fsal_rename(struct fsal_obj_handle *dir_src,
 {
 	fsal_status_t fsal_status = { 0, 0 };
 	struct fsal_obj_handle *lookup_src = NULL;
-	struct fsal_obj_handle *lookup_dst = NULL;
 
 	if ((dir_src->type != DIRECTORY) || (dir_dest->type != DIRECTORY))
 		return fsalstat(ERR_FSAL_NOTDIR, 0);
@@ -1769,28 +1768,6 @@ fsal_status_t fsal_rename(struct fsal_obj_handle *dir_src,
 		PTHREAD_RWLOCK_unlock(&lookup_src->state_hdl->state_lock);
 	}
 
-	/* Check if an object with the new name exists in the destination
-	   directory */
-	fsal_status = fsal_lookup(dir_dest, newname, &lookup_dst);
-	if (!FSAL_IS_ERROR(fsal_status)) {
-		LogDebug(COMPONENT_FSAL,
-			 "Rename (%p,%s)->(%p,%s) : destination already exists",
-			 dir_src, oldname, dir_dest, newname);
-		if (lookup_src == lookup_dst) {
-			/* Nothing to do according to POSIX and NFS3/4 If from
-			 * and to both refer to the same file (they might be
-			 * hard links of each other), then RENAME should perform
-			 * no action and return success */
-			LogDebug(COMPONENT_FSAL,
-				 "Rename (%p,%s)->(%p,%s) : same file so skipping out",
-				 dir_src, oldname, dir_dest, newname);
-			goto out;
-		}
-	} else if (fsal_status.major != ERR_FSAL_NOENT) {
-		/* Anything other than not-found is error */
-		goto out;
-	}
-
 	LogFullDebug(COMPONENT_FSAL, "about to call FSAL rename");
 
 	fsal_status = dir_src->obj_ops.rename(lookup_src, dir_src, oldname,
@@ -1807,18 +1784,9 @@ fsal_status_t fsal_rename(struct fsal_obj_handle *dir_src,
 		goto out;
 	}
 
-	if (lookup_dst) {
-		fsal_status = fsal_refresh_attrs(lookup_dst);
-		if (FSAL_IS_ERROR(fsal_status) &&
-		    fsal_status.major != ERR_FSAL_STALE)
-			goto out;
-	}
-
 out:
 	if (lookup_src)
 		lookup_src->obj_ops.put_ref(lookup_src);
-	if (lookup_dst)
-		lookup_dst->obj_ops.put_ref(lookup_dst);
 
 	return fsal_status;
 }

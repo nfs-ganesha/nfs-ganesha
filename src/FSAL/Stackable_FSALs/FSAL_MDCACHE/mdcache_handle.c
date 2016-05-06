@@ -595,40 +595,15 @@ static fsal_status_t mdcache_rename(struct fsal_obj_handle *obj_hdl,
 			     obj_handle);
 	mdcache_entry_t *mdc_obj =
 		container_of(obj_hdl, mdcache_entry_t, obj_handle);
-	struct fsal_obj_handle *lookup_dst_hdl = NULL;
 	mdcache_entry_t *mdc_lookup_dst = NULL;
 	fsal_status_t status;
 
-	status = fsal_lookup(newdir_hdl, new_name, &lookup_dst_hdl);
-	if (!FSAL_IS_ERROR(status))
-		mdc_lookup_dst = container_of(lookup_dst_hdl, mdcache_entry_t,
-					      obj_handle);
+	status = mdc_try_get_cached(mdc_newdir, new_name, &mdc_lookup_dst);
 
-#ifdef ENABLE_RFC_ACL
-	/* Get attr_locks for access checking */
-	PTHREAD_RWLOCK_rdlock(&mdc_olddir->attr_lock);
-	PTHREAD_RWLOCK_rdlock(&mdc_obj->attr_lock);
-	if (mdc_olddir != mdc_newdir)
-		PTHREAD_RWLOCK_rdlock(&mdc_newdir->attr_lock);
-	if (mdc_lookup_dst)
-		PTHREAD_RWLOCK_rdlock(&mdc_lookup_dst->attr_lock);
-	status = fsal_rename_access(olddir_hdl, obj_hdl, newdir_hdl,
-				    lookup_dst_hdl, obj_hdl->type == DIRECTORY);
-	/* Release attr_locks */
-	if (mdc_lookup_dst)
-		PTHREAD_RWLOCK_unlock(&mdc_lookup_dst->attr_lock);
-	if (mdc_olddir != mdc_newdir)
-		PTHREAD_RWLOCK_unlock(&mdc_newdir->attr_lock);
-	PTHREAD_RWLOCK_unlock(&mdc_obj->attr_lock);
-	PTHREAD_RWLOCK_unlock(&mdc_olddir->attr_lock);
-
-	if (FSAL_IS_ERROR(status)) {
-		LogFullDebug(COMPONENT_CACHE_INODE,
-			     "FSAL rename_access failed with %s",
-			     fsal_err_txt(status));
+	if (!FSAL_IS_ERROR(status) && (mdc_obj == mdc_lookup_dst)) {
+		/* Same source and destination */
 		goto out;
 	}
-#endif /* ENABLE_RFC_ACL */
 
 	subcall(
 		status = mdc_olddir->sub_handle->obj_ops.rename(
@@ -650,12 +625,6 @@ static fsal_status_t mdcache_rename(struct fsal_obj_handle *obj_hdl,
 			goto out;
 	}
 
-	if (lookup_dst_hdl) {
-		status = fsal_refresh_attrs(lookup_dst_hdl);
-		if (FSAL_IS_ERROR(status))
-			goto out;
-	}
-
 	/* Now update cached dirents.  Must take locks in the correct order */
 	mdcache_src_dest_lock(mdc_olddir, mdc_newdir);
 
@@ -669,6 +638,9 @@ static fsal_status_t mdcache_rename(struct fsal_obj_handle *obj_hdl,
 				 fsal_err_txt(status));
 			mdcache_dirent_invalidate_all(mdc_newdir);
 		}
+
+		/* Mark unreachable */
+		mdc_unreachable(mdc_lookup_dst);
 	}
 
 	if (mdc_olddir == mdc_newdir) {
@@ -727,8 +699,8 @@ static fsal_status_t mdcache_rename(struct fsal_obj_handle *obj_hdl,
 	mdcache_src_dest_unlock(mdc_olddir, mdc_newdir);
 
 out:
-	if (lookup_dst_hdl)
-		lookup_dst_hdl->obj_ops.put_ref(lookup_dst_hdl);
+	if (mdc_lookup_dst)
+		mdcache_put(mdc_lookup_dst);
 
 	return status;
 }
@@ -928,6 +900,8 @@ static fsal_status_t mdcache_unlink(struct fsal_obj_handle *dir_hdl,
 			(void)mdcache_dirent_invalidate_all(entry);
 	} else
 		(void)mdcache_invalidate(entry, MDCACHE_INVALIDATE_ATTRS);
+
+	mdc_unreachable(entry);
 
 	return status;
 }

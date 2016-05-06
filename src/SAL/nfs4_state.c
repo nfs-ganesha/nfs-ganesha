@@ -355,6 +355,11 @@ void state_del_locked(state_t *state)
 	owner = state->state_owner;
 	PTHREAD_MUTEX_unlock(&state->state_mutex);
 
+	/* Don't cleanup when ref is dropped, as this could recurse into here.
+	 * Caller must have a ref anyway.
+	 */
+	obj->state_hdl->no_cleanup = true;
+
 	if (owner != NULL) {
 		bool owner_retain = false;
 		struct state_nfs4_owner_t *nfs4_owner;
@@ -467,6 +472,8 @@ void state_del_locked(state_t *state)
 	dec_state_t_ref(state);
 
 	obj->obj_ops.put_ref(obj);
+	/* Can cleanup now */
+	obj->state_hdl->no_cleanup = false;
 }
 
 /**
@@ -785,6 +792,7 @@ void release_openstate(state_owner_t *owner)
 		/* If FSAL supports extended operations, file will be closed by
 		 * state_del_locked.
 		 */
+
 		state_del_locked(state);
 
 		dec_state_t_ref(state);

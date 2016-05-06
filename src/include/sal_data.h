@@ -923,6 +923,7 @@ struct state_dir {
 struct state_hdl {
 	/** Lock protecting state */
 	pthread_rwlock_t state_lock;
+	bool no_cleanup;
 	union {
 		struct state_file	file;
 		struct state_dir	dir;
