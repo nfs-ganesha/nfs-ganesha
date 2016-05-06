@@ -541,13 +541,13 @@ fsal_get_changeid4(struct fsal_obj_handle *obj)
 static inline
 enum fsal_create_mode nfs4_createmode_to_fsal(createmode4 createmode)
 {
-	return (enum fsal_create_mode) 1 + (unsigned int) createmode;
+	return (enum fsal_create_mode) (1 + (unsigned int) createmode);
 }
 
 static inline
 enum fsal_create_mode nfs3_createmode_to_fsal(createmode3 createmode)
 {
-	return (enum fsal_create_mode) 1 + (unsigned int) createmode;
+	return (enum fsal_create_mode) (1 + (unsigned int) createmode);
 }
 
 /**
