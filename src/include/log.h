@@ -190,7 +190,7 @@ typedef int (lf_function_t) (log_header_t headers, void *priv,
 
 int create_log_facility(const char *name, lf_function_t *log_func,
 			log_levels_t max_level, log_header_t header,
-			void *private);
+			void *private_data);
 void release_log_facility(const char *name);
 int enable_log_facility(const char *name);
 int disable_log_facility(const char *name);
