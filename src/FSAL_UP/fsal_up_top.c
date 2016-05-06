@@ -1611,7 +1611,7 @@ state_status_t delegrecall(struct fsal_export *export,
  */
 
 struct fsal_up_vector fsal_up_top = {
-	.export = NULL,
+	.up_export = NULL,
 	.lock_grant = lock_grant,
 	.lock_avail = lock_avail,
 	.invalidate = invalidate,
