@@ -230,20 +230,7 @@ extern char v4_recov_dir[PATH_MAX];
 
 extern hash_table_t *ht_state_id;
 
-/**
- * @brief Type of state
- */
-
-enum state_type {
-	STATE_TYPE_NONE = 0,
-	STATE_TYPE_SHARE = 1,
-	STATE_TYPE_DELEG = 2,
-	STATE_TYPE_LOCK = 3,
-	STATE_TYPE_LAYOUT = 4,
-	STATE_TYPE_NLM_LOCK = 5,
-	STATE_TYPE_NLM_SHARE = 6,
-	STATE_TYPE_9P_FID = 7,
-};
+#include "sal_shared.h"
 
 /**
  * @brief Data for an NFS v4 share reservation/open
