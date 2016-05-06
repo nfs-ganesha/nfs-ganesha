@@ -26,7 +26,7 @@ static struct timeval TIMEOUT = { 25, 0 };
  * program.
  */
 void LogMallocFailure(const char *file, int line, const char *function,
-		      char *allocator)
+		      const char *allocator)
 {
 	printf("Aborting %s due to out of memory", allocator);
 }
