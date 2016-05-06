@@ -203,10 +203,9 @@ gsh_realloc__(void *p, size_t n,
  * @return Pointer to new copy of string.
  */
 static inline char *
-gsh_strdup__(const char *s,
-	     const char *file, int line, const char *function)
+gsh_strdup__(const char *s, const char *file, int line, const char *function)
 {
-	void *p = strdup(s);
+	char *p = strdup(s);
 
 	if (p == NULL) {
 		LogMallocFailure(file, line, function, "gsh_strdup");
@@ -334,7 +333,8 @@ static inline pool_t *
 pool_basic_init__(const char *name, size_t object_size,
 		  const char *file, int line, const char *function)
 {
-	pool_t *pool = gsh_malloc__(sizeof(pool_t), file, line, function);
+	pool_t *pool = (pool_t *) gsh_malloc__(sizeof(pool_t), file, line,
+					function);
 
 	pool->object_size = object_size;
 
