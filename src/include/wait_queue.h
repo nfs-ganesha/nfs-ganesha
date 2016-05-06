@@ -88,11 +88,11 @@ static inline void init_wait_q_entry(wait_q_entry_t *wqe)
 	init_wait_entry(&wqe->rwe);
 }
 
-static inline void thread_delay_ms(unsigned long ms)
+static inline void thread_delay_ms(time_t ms)
 {
 	struct timespec then = {
 		.tv_sec = ms / 1000,
-		.tv_nsec = (ms % 1000) * 1000000UL
+		.tv_nsec = (ms % 1000) * 1000000U
 	};
 	nanosleep(&then, NULL);
 }
