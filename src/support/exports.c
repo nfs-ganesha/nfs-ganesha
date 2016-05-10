@@ -51,6 +51,7 @@
 #include "fsal_up.h"
 #include "sal_functions.h"
 #include "pnfs_utils.h"
+#include "netgroup_cache.h"
 
 /**
  * @brief Protect EXPORT_DEFAULTS structure for dynamic update.
@@ -2334,8 +2335,8 @@ static exportlist_client_entry_t *client_match(sockaddr_t *hostaddr,
 			/* At this point 'hostname' should contain the
 			 * name that was found
 			 */
-			if (innetgr(client->client.netgroup.netgroupname,
-				    hostname, NULL, NULL) == 1) {
+			if (ng_innetgr(client->client.netgroup.netgroupname,
+				    hostname)) {
 				return client;
 			}
 			break;

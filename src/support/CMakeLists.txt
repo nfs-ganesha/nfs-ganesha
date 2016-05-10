@@ -31,6 +31,12 @@ set( uid2grp_SRCS
 
 add_library( uid2grp STATIC ${uid2grp_SRCS} )
 
+# netgroup cache
+set(netgroup_cache_SRCS
+    netgroup_cache.c
+)
+add_library(netgroup_cache STATIC ${netgroup_cache_SRCS} )
+
 ########### next target ###############
 
 SET(support_STAT_SRCS
