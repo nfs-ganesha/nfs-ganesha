@@ -38,7 +38,8 @@
  * @brief FSAL status mapping from GlusterFS errors
  *
  * This function returns a fsal_status_t with the FSAL error as the
- * major, and the posix error as minor.
+ * major, and the posix error as minor. Please note that this routine
+ * needs to be used only in case of failures.
  *
  * @param[in] gluster_errorcode Gluster error
  *
@@ -48,9 +49,14 @@
 fsal_status_t gluster2fsal_error(const int err)
 {
 	fsal_status_t status;
+	int g_err = err;
 
-	status.minor = err;
-	status.major = posix2fsal_error(err);
+	if (!g_err) {
+		LogWarn(COMPONENT_FSAL, "appropriate errno not set");
+		g_err = EINVAL;
+	}
+	status.minor = g_err;
+	status.major = posix2fsal_error(g_err);
 
 	return status;
 }
@@ -260,7 +266,7 @@ fsal_status_t glusterfs_get_acl(struct glusterfs_export *glfs_export,
 				glusterfs_fsal_xstat_t *buffxstat,
 				struct attrlist *fsalattr)
 {
-	fsal_status_t status;
+	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	fsal_acl_data_t acldata;
 	fsal_acl_status_t aclstatus;
 	fsal_ace_t *pace = NULL;
@@ -272,7 +278,10 @@ fsal_status_t glusterfs_get_acl(struct glusterfs_export *glfs_export,
 		buffxstat->e_acl = glfs_h_acl_get(glfs_export->gl_fs,
 						glhandle, ACL_TYPE_ACCESS);
 
-		status = gluster2fsal_error(errno);
+		if (!buffxstat->e_acl) {
+			status = gluster2fsal_error(errno);
+			return status;
+		}
 
 		e_count = ace_count(buffxstat->e_acl);
 
@@ -325,7 +334,7 @@ fsal_status_t glusterfs_get_acl(struct glusterfs_export *glfs_export,
 		}
 	}
 
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	return status;
 
 }
 
