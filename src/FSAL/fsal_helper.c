@@ -1442,7 +1442,7 @@ populate_dirent(const char *name, struct fsal_obj_handle *obj, void *dir_state,
 	status = get_dirent(obj, &cb_parms, cookie, state);
 	if (status.major == ERR_FSAL_CROSS_JUNCTION) {
 		struct fsal_obj_handle *junction_obj;
-		struct gsh_export *junction_export;
+		struct gsh_export *junction_export = NULL;
 
 		PTHREAD_RWLOCK_rdlock(&obj->state_hdl->state_lock);
 
