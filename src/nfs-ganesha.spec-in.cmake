@@ -452,7 +452,7 @@ install -m 644 scripts/systemd/nfs-ganesha-config.service %{buildroot}%{_unitdir
 install -m 644 scripts/systemd/sysconfig/nfs-ganesha	%{buildroot}%{_sysconfdir}/sysconfig/ganesha
 %else
 mkdir -p %{buildroot}%{_sysconfdir}/init.d
-install -m 755 scripts/init.d/nfs-ganesha		%{buildroot}%{_sysconfdir}/init.d/nfs-ganesha
+install -m 755 scripts/init.d/nfs-ganesha.el6		%{buildroot}%{_sysconfdir}/init.d/nfs-ganesha
 install -m 644 scripts/init.d/sysconfig/ganesha		%{buildroot}%{_sysconfdir}/sysconfig/ganesha
 %endif
 
