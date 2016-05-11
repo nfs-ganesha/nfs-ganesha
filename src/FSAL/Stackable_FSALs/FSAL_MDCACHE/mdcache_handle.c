@@ -474,7 +474,7 @@ static fsal_status_t mdcache_readdir(struct fsal_obj_handle *dir_hdl,
 			LogFullDebug(COMPONENT_NFS_READDIR,
 				     "mdcache_dirent_populate status=%s",
 				     fsal_err_txt(status));
-			goto unlock_dir;
+			return status;
 		}
 	}
 
