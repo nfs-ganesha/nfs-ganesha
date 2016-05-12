@@ -2638,6 +2638,69 @@ static fsal_status_t glusterfs_lock_op2(struct fsal_obj_handle *obj_hdl,
 	return fsalstat(posix2fsal_error(retval), retval);
 }
 
+/* getattr2
+ */
+
+fsal_status_t glusterfs_getattr2(struct fsal_obj_handle *obj_hdl)
+{
+	struct glusterfs_handle *myself;
+	fsal_status_t status = {0, 0};
+	bool has_lock = false;
+	bool need_fsync = false;
+	bool closefd = false;
+	struct glusterfs_fd my_fd = {0};
+
+	myself = container_of(obj_hdl, struct glusterfs_handle, handle);
+
+#if 0
+	/* @todo: fsid work
+	 * if (obj_hdl->fsal != obj_hdl->fs->fsal) {
+	 * LogDebug(COMPONENT_FSAL,
+	 *	  "FSAL %s operation for handle belonging to
+	 *	   FSAL %s, return EXDEV",
+	 *	   obj_hdl->fsal->name, obj_hdl->fs->fsal->name);
+	 * return fsalstat(posix2fsal_error(EXDEV), EXDEV);
+	 * }
+	 */
+#endif
+
+	/* Get a usable file descriptor (don't need to bypass - FSAL_O_ANY
+	 * won't conflict with any share reservation).
+	 */
+	status = find_fd(&my_fd, obj_hdl, false, NULL, FSAL_O_ANY,
+			 &has_lock, &need_fsync, &closefd, false);
+
+	if (FSAL_IS_ERROR(status)) {
+		if (obj_hdl->type == SYMBOLIC_LINK &&
+		    status.major == ERR_FSAL_PERM) {
+			/* You cannot open_by_handle (XFS on linux) a symlink
+			 * and it throws an EPERM error for it.
+			 * open_by_handle_at does not throw that error for
+			 * symlinks so we play a game here.  Since there is
+			 * not much we can do with symlinks anyway,
+			 * say that we did it but don't actually
+			 * do anything.  In this case, return the stat we got
+			 * at lookup time.  If you *really* want to tweek things
+			 * like owners, get a modern linux kernel...
+			 */
+			status = fsalstat(ERR_FSAL_NO_ERROR, 0);
+		}
+		goto out;
+	}
+
+	status = glusterfs_fetch_attrs(myself, &my_fd);
+
+ out:
+
+	if (closefd)
+		glusterfs_close_my_fd(&my_fd);
+
+	if (has_lock)
+		PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+
+	return status;
+}
+
 /* setattr2
  * default case not supported
  */
