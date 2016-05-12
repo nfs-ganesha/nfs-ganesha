@@ -189,10 +189,13 @@ int display_client_id_rec(struct display_buffer *dspbuf,
 	if (b_left <= 0)
 		return b_left;
 
-	b_left = display_client_record(dspbuf, clientid->cid_client_record);
+	if (clientid->cid_client_record != NULL) {
+		b_left = display_client_record(dspbuf,
+					       clientid->cid_client_record);
 
-	if (b_left <= 0)
-		return b_left;
+		if (b_left <= 0)
+			return b_left;
+	}
 
 	if (clientid->cid_lease_reservations > 0)
 		delta = 0;
@@ -230,6 +233,9 @@ int display_client_id_rec(struct display_buffer *dspbuf,
 int display_clientid_name(struct display_buffer *dspbuf,
 			  nfs_client_id_t *clientid)
 {
+	if (clientid->cid_client_record == NULL)
+		return display_start(dspbuf);
+
 	return display_opaque_value(
 		dspbuf,
 		clientid->cid_client_record->cr_client_val,
@@ -653,7 +659,8 @@ int remove_confirmed_client_id(nfs_client_id_t *clientid)
 		return rc;
 	}
 
-	clientid->cid_client_record->cr_confirmed_rec = NULL;
+	if (clientid->cid_client_record != NULL)
+		clientid->cid_client_record->cr_confirmed_rec = NULL;
 
 	/* Set this up so this client id record will be freed. */
 	clientid->cid_confirmed = EXPIRED_CLIENT_ID;
@@ -696,7 +703,8 @@ int remove_unconfirmed_client_id(nfs_client_id_t *clientid)
 	/* XXX prevents calling remove_confirmed before removed_confirmed,
 	 * if we failed to maintain the invariant that the cases are
 	 * disjoint */
-	clientid->cid_client_record->cr_unconfirmed_rec = NULL;
+	if (clientid->cid_client_record != NULL)
+		clientid->cid_client_record->cr_unconfirmed_rec = NULL;
 
 	/* Set this up so this client id record will be freed. */
 	clientid->cid_confirmed = EXPIRED_CLIENT_ID;
@@ -836,7 +844,8 @@ bool clientid_has_state(nfs_client_id_t *clientid)
 /**
  * @brief Client expires, need to take care of owners
  *
- * This function assumes caller holds record->cr_mutex and holds a
+ * If there is a client_record attached to the clientid,
+ * this function assumes caller holds record->cr_mutex and holds a
  * reference to record also.
  *
  * @param[in] clientid The client id to expire
@@ -885,22 +894,31 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid, bool make_stale)
 	else
 		ht_expire = ht_unconfirmed_client_id;
 
-	if (make_stale) {
-		clientid->cid_confirmed = STALE_CLIENT_ID;
-		PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
-	} else {
-		clientid->cid_confirmed = EXPIRED_CLIENT_ID;
-		/* Need to clean up the client record. */
-		record = clientid->cid_client_record;
+	/* Need to clean up the client record. */
+	record = clientid->cid_client_record;
+	clientid->cid_client_record = NULL;
 
-		PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
-
+	if (record != NULL) {
 		/* Detach the clientid record from the client record */
 		if (record->cr_confirmed_rec == clientid)
 			record->cr_confirmed_rec = NULL;
 
 		if (record->cr_unconfirmed_rec == clientid)
 			record->cr_unconfirmed_rec = NULL;
+
+		/* the linkage was removed, update refcount */
+		dec_client_record_ref(record);
+	}
+
+	if (make_stale) {
+		/* Keep clientid hashed, but mark it as stale */
+		clientid->cid_confirmed = STALE_CLIENT_ID;
+		PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
+	} else {
+		/* unhash clientids that are truly expired */
+		clientid->cid_confirmed = EXPIRED_CLIENT_ID;
+
+		PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
 
 		buffkey.addr = &clientid->cid_clientid;
 		buffkey.len = sizeof(clientid->cid_clientid);
@@ -1112,8 +1130,6 @@ clientid_status_t nfs_client_id_get(hash_table_t *ht, clientid4 clientid,
 	uint64_t epoch_low = ServerEpoch & 0xFFFFFFFF;
 	uint64_t cid_epoch = (uint64_t) (clientid >> (clientid4) 32);
 	nfs_client_id_t *pclientid;
-	int rc;
-
 
 	/* Don't even bother to look up clientid if epochs don't match */
 	if (cid_epoch != epoch_low) {
@@ -1150,17 +1166,8 @@ clientid_status_t nfs_client_id_get(hash_table_t *ht, clientid4 clientid,
 		if (pclientid->cid_confirmed == STALE_CLIENT_ID) {
 			/* Stale client becuse of ip detach and attach to
 			 * same node */
-			status = CLIENT_ID_STALE;
-			pclientid->cid_confirmed = EXPIRED_CLIENT_ID;
-			rc = HashTable_Del(ht, &buffkey, NULL, NULL);
-			if (rc != HASHTABLE_SUCCESS) {
-				LogWarn(COMPONENT_CLIENTID,
-				"Could not remove unconfirmed clientid %" PRIx64
-				" error=%s", pclientid->cid_clientid,
-				hash_table_err_to_str(rc));
-			}
-
 			dec_client_id_ref(pclientid);
+			status = CLIENT_ID_STALE;
 			*client_rec = NULL;
 		} else {
 			*client_rec = pclientid;

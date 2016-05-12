@@ -137,88 +137,87 @@ static int reap_hash_table(hash_table_t *ht_reap)
 	struct rbt_head *head_rbt;
 	struct hash_data *addr = NULL;
 	uint32_t i;
-	int rc;
 	struct rbt_node *pn;
-	nfs_client_id_t *pclientid;
-	nfs_client_record_t *precord;
+	nfs_client_id_t *client_id;
+	nfs_client_record_t *client_rec;
 	int count = 0;
 
 	/* For each bucket of the requested hashtable */
 	for (i = 0; i < ht_reap->parameter.index_size; i++) {
 		head_rbt = &ht_reap->partitions[i].rbt;
 
- restart:
+restart:
 		/* acquire mutex */
 		PTHREAD_RWLOCK_wrlock(&ht_reap->partitions[i].lock);
 
 		/* go through all entries in the red-black-tree */
 		RBT_LOOP(head_rbt, pn) {
-			addr = RBT_OPAQ(pn);
+			char str[LOG_BUFF_LEN];
+			struct display_buffer dspbuf = {sizeof(str), str, str};
+			bool str_valid = false;
 
-			pclientid = addr->val.addr;
+			addr = RBT_OPAQ(pn);
+			client_id = addr->val.addr;
+
 			count++;
 
-			PTHREAD_MUTEX_lock(&pclientid->cid_mutex);
+			PTHREAD_MUTEX_lock(&client_id->cid_mutex);
 
-			if (!valid_lease(pclientid)) {
-				char str[LOG_BUFF_LEN];
-				struct display_buffer dspbuf = {
-					sizeof(str), str, str};
-				bool str_valid = false;
-
-				inc_client_id_ref(pclientid);
-
-				/* Take a reference to the client record */
-				precord = pclientid->cid_client_record;
-				inc_client_record_ref(precord);
-
-				PTHREAD_MUTEX_unlock(&pclientid->cid_mutex);
-
-				PTHREAD_RWLOCK_unlock(&ht_reap->partitions[i].
-						      lock);
-
-				if (isDebug(COMPONENT_CLIENTID)) {
-					display_client_id_rec(&dspbuf,
-							      pclientid);
-
-					LogFullDebug(COMPONENT_CLIENTID,
-						     "Expire index %d %s", i,
-						     str);
-					str_valid = true;
-				}
-
-				/* Take cr_mutex and expire clientid */
-				PTHREAD_MUTEX_lock(&precord->cr_mutex);
-
-				rc = nfs_client_id_expire(pclientid, false);
-
-				PTHREAD_MUTEX_unlock(&precord->cr_mutex);
-
-				dec_client_id_ref(pclientid);
-				dec_client_record_ref(precord);
-
-				if (isFullDebug(COMPONENT_CLIENTID)) {
-					if (!str_valid)
-						display_printf(&dspbuf,
-							       "clientid %p",
-							       pclientid);
-					LogFullDebug(COMPONENT_CLIENTID,
-						     "Reaper done, expired {%s}",
-						     str);
-				}
-
-				if (rc)
-					goto restart;
-			} else {
-				PTHREAD_MUTEX_unlock(&pclientid->cid_mutex);
+			if (valid_lease(client_id)) {
+				PTHREAD_MUTEX_unlock(&client_id->cid_mutex);
+				RBT_INCREMENT(pn);
+				continue;
 			}
 
-			RBT_INCREMENT(pn);
-		}
+			PTHREAD_MUTEX_unlock(&client_id->cid_mutex);
 
+			if (isDebug(COMPONENT_CLIENTID)) {
+				display_client_id_rec(&dspbuf, client_id);
+				LogFullDebug(COMPONENT_CLIENTID,
+					     "Expire index %d %s", i, str);
+				str_valid = true;
+			}
+
+			/* Get the client record */
+			client_rec = client_id->cid_client_record;
+
+			/* get a ref to client_id as we might drop the
+			 * last reference with expiring.
+			 */
+			inc_client_id_ref(client_id);
+
+			/* if record is STALE, the linkage to client_record is
+			 * removed already.
+			 */
+			if (client_rec != NULL) {
+				inc_client_record_ref(client_rec);
+				PTHREAD_MUTEX_lock(&client_rec->cr_mutex);
+			}
+
+			PTHREAD_RWLOCK_unlock(&ht_reap->partitions[i].lock);
+			nfs_client_id_expire(client_id, false);
+
+			if (client_rec != NULL) {
+				PTHREAD_MUTEX_unlock(&client_rec->cr_mutex);
+				dec_client_record_ref(client_rec);
+			}
+
+			if (isFullDebug(COMPONENT_CLIENTID)) {
+				if (!str_valid)
+					display_printf(&dspbuf, "clientid %p",
+						       client_id);
+
+				LogFullDebug(COMPONENT_CLIENTID,
+					     "Reaper done, expired {%s}", str);
+			}
+
+			/* drop our reference to the client_id */
+			dec_client_id_ref(client_id);
+
+			goto restart;
+		}
 		PTHREAD_RWLOCK_unlock(&ht_reap->partitions[i].lock);
 	}
-
 	return count;
 }
 
