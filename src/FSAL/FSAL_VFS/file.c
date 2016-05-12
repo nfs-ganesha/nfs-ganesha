@@ -740,26 +740,6 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 }
 
 /**
- * @brief Return open status of a state.
- *
- * This function returns open flags representing the current open
- * status for a state. The state_lock must be held.
- *
- * @param[in] obj_hdl     File on which to operate
- * @param[in] state       File state to interrogate
- *
- * @retval Flags representing current open status
- */
-
-fsal_openflags_t vfs_status2(struct fsal_obj_handle *obj_hdl,
-			     struct state_t *state)
-{
-	struct vfs_fd *my_fd = (struct vfs_fd *)(state + 1);
-
-	return my_fd->openflags;
-}
-
-/**
  * @brief Re-open a file that may be already opened
  *
  * This function supports changing the access mode of a share reservation and

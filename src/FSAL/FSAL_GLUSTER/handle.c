@@ -2126,16 +2126,6 @@ direrr:
 	return status;
 }
 
-/* status2
- * default case return 0
- */
-
-static fsal_openflags_t glusterfs_status2(struct fsal_obj_handle *obj_hdl,
-					  struct state_t *state)
-{
-	return 0;
-}
-
 /* reopen2
  * default case not supported
  */
@@ -2449,7 +2439,6 @@ void handle_ops_init(struct fsal_obj_ops *ops)
 
 	/* fops with OpenTracking (multi-fd) enabled */
 	ops->open2 = glusterfs_open2;
-	ops->status2 = glusterfs_status2;
 	ops->reopen2 = glusterfs_reopen2;
 	ops->read2 = glusterfs_read2;
 	ops->write2 = glusterfs_write2;

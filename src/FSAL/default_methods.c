@@ -1368,13 +1368,15 @@ static bool check_verifier(struct fsal_obj_handle *obj_hdl,
 }
 
 /* status2
- * default case return 0
+ * default case return openflags
  */
 
 static fsal_openflags_t status2(struct fsal_obj_handle *obj_hdl,
 				struct state_t *state)
 {
-	return 0;
+	struct fsal_fd *fd = (struct fsal_fd *)(state + 1);
+
+	return fd->openflags;
 }
 
 /* reopen2
