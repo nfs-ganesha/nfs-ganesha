@@ -2127,14 +2127,98 @@ direrr:
 }
 
 /* reopen2
- * default case not supported
  */
 
 static fsal_status_t glusterfs_reopen2(struct fsal_obj_handle *obj_hdl,
-			     struct state_t *state,
-			     fsal_openflags_t openflags)
+				       struct state_t *state,
+				       fsal_openflags_t openflags)
 {
-	return fsalstat(ERR_FSAL_NOTSUPP, 0);
+	struct glusterfs_fd fd = {0}, *my_fd = &fd, *my_share_fd = NULL;
+	struct glusterfs_handle *myself;
+	fsal_status_t status = {0, 0};
+	int posix_flags = 0;
+	fsal_openflags_t old_openflags;
+	bool truncated;
+
+	my_share_fd = (struct glusterfs_fd *)(state + 1);
+
+	fsal2posix_openflags(openflags, &posix_flags);
+
+	truncated = (posix_flags & O_TRUNC) != 0;
+
+	memset(my_fd, 0, sizeof(*my_fd));
+
+	myself  = container_of(obj_hdl,
+			       struct glusterfs_handle,
+			       handle);
+
+#if 0
+	/* @todo: fsid work
+	 * if (obj_hdl->fsal != obj_hdl->fs->fsal) {
+	 * LogDebug(COMPONENT_FSAL,
+	 *	  "FSAL %s operation for handle belonging to
+	 *	   FSAL %s, return EXDEV",
+	 *	   obj_hdl->fsal->name, obj_hdl->fs->fsal->name);
+	 * return fsalstat(posix2fsal_error(EXDEV), EXDEV);
+	 * }
+	 */
+#endif
+
+	/* This can block over an I/O operation. */
+	PTHREAD_RWLOCK_wrlock(&obj_hdl->lock);
+
+	old_openflags = my_share_fd->openflags;
+
+	/* We can conflict with old share, so go ahead and check now. */
+	status = check_share_conflict(&myself->share, openflags, false);
+
+	if (FSAL_IS_ERROR(status)) {
+		PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+		return status;
+	}
+
+	/* Set up the new share so we can drop the lock and not have a
+	 * conflicting share be asserted, updating the share counters.
+	 */
+	update_share_counters(&myself->share, old_openflags, openflags);
+
+	PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+
+	status = glusterfs_open_my_fd(myself, openflags, posix_flags, my_fd);
+
+	if (!FSAL_IS_ERROR(status)) {
+		/* Close the existing file descriptor and copy the new
+		 * one over.
+		 */
+		glusterfs_close_my_fd(my_share_fd);
+		*my_share_fd = fd;
+
+		if (truncated) {
+			/* Refresh the attributes */
+			status = glusterfs_fetch_attrs(myself, my_share_fd);
+			if (FSAL_IS_ERROR(status)) {
+				FSAL_CLEAR_MASK(myself->attributes.mask);
+				FSAL_SET_MASK(myself->attributes.mask,
+					       ATTR_RDATTR_ERR);
+				 /** @todo: should handle this
+				   * better.
+				   */
+			}
+		}
+	} else {
+		/* We had a failure on open - we need to revert the share.
+		 * This can block over an I/O operation.
+		 */
+		PTHREAD_RWLOCK_wrlock(&obj_hdl->lock);
+
+		update_share_counters(&myself->share,
+				      openflags,
+				      old_openflags);
+
+		PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+	}
+
+	return status;
 }
 
 /* read2
