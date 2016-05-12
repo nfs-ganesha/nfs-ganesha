@@ -1479,7 +1479,7 @@ fsal_status_t glusterfs_close_my_fd(struct glusterfs_fd *my_fd)
  *
  * @param[in]  obj_hdl     File on which to operate
  * @param[in]  openflags   Mode for open
- * @param[out] fd          File descriptor that is to be used
+ * @param[out] fd	  File descriptor that is to be used
  *
  * @return FSAL status.
  */
@@ -1503,7 +1503,7 @@ fsal_status_t glusterfs_open_func(struct fsal_obj_handle *obj_hdl,
  * @brief Function to close an fsal_obj_handle's global file descriptor.
  *
  * @param[in]  obj_hdl     File on which to operate
- * @param[in]  fd          File handle to close
+ * @param[in]  fd	  File handle to close
  *
  * @return FSAL status.
  */
@@ -1689,21 +1689,441 @@ out:
 }
 
 /* open2
- * default case not supported
  */
 
 static fsal_status_t glusterfs_open2(struct fsal_obj_handle *obj_hdl,
-			   struct state_t *fd,
-			   fsal_openflags_t openflags,
-			   enum fsal_create_mode createmode,
-			   const char *name,
-			   struct attrlist *attrib_set,
-			   fsal_verifier_t verifier,
-			   struct fsal_obj_handle **new_obj,
-			   struct attrlist *attrs_out,
-			   bool *caller_perm_check)
+				     struct state_t *state,
+				     fsal_openflags_t openflags,
+				     enum fsal_create_mode createmode,
+				     const char *name,
+				     struct attrlist *attrib_set,
+				     fsal_verifier_t verifier,
+				     struct fsal_obj_handle **new_obj,
+				     struct attrlist *attrs_out,
+				     bool *caller_perm_check)
 {
-	return fsalstat(ERR_FSAL_NOTSUPP, 0);
+	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
+	int p_flags = 0;
+	struct glusterfs_export *glfs_export =
+	    container_of(op_ctx->fsal_export, struct glusterfs_export, export);
+	struct glusterfs_handle *myself, *parenthandle = NULL;
+	struct glusterfs_fd *my_fd = NULL, tmp_fd = {0};
+	struct stat sb;
+	struct glfs_object *glhandle = NULL;
+	unsigned char globjhdl[GFAPI_HANDLE_LENGTH] = {'\0'};
+	char vol_uuid[GLAPI_UUID_LENGTH] = {'\0'};
+	bool truncated;
+	bool setattrs = attrib_set != NULL;
+	bool created = false;
+	struct attrlist verifier_attr;
+	int retval = 0;
+	mode_t unix_mode;
+
+
+#ifdef GLTIMING
+	struct timespec s_time, e_time;
+
+	now(&s_time);
+#endif
+
+	if (state != NULL)
+		my_fd = (struct glusterfs_fd *)(state + 1);
+
+	fsal2posix_openflags(openflags, &p_flags);
+
+	if (createmode != FSAL_NO_CREATE && setattrs &&
+	    FSAL_TEST_MASK(attrib_set->mask, ATTR_SIZE) &&
+	    attrib_set->filesize == 0) {
+		LogFullDebug(COMPONENT_FSAL, "Truncate");
+		/* Handle truncate to zero on open */
+		p_flags |= O_TRUNC;
+		/* Don't set the size if we later set the attributes */
+		FSAL_UNSET_MASK(attrib_set->mask, ATTR_SIZE);
+	}
+
+	truncated = (p_flags & O_TRUNC) != 0;
+
+	/* Now fixup attrs for verifier if exclusive create */
+	if (createmode >= FSAL_EXCLUSIVE) {
+		if (!setattrs) {
+			/* We need to use verifier_attr */
+			attrib_set = &verifier_attr;
+			memset(&verifier_attr, 0, sizeof(verifier_attr));
+		}
+
+		set_common_verifier(attrib_set, verifier);
+	}
+
+	if (name == NULL) {
+		/* This is an open by handle */
+		struct glusterfs_handle *myself;
+
+		myself = container_of(obj_hdl,
+				      struct glusterfs_handle,
+				      handle);
+
+#if 0
+	/** @todo: fsid work
+	 * if (obj_hdl->fsal != obj_hdl->fs->fsal) {
+	 * LogDebug(COMPONENT_FSAL,
+	 *	  "FSAL %s operation for handle belonging to
+	 *	   FSAL %s, return EXDEV",
+	 *	   obj_hdl->fsal->name, obj_hdl->fs->fsal->name);
+	 * return fsalstat(posix2fsal_error(EXDEV), EXDEV);
+	 * }
+	 */
+#endif
+
+		if (state != NULL) {
+			/* Prepare to take the share reservation, but only if we
+			 * are called with a valid state (if state is NULL the
+			 * caller is a stateless create such as NFS v3 CREATE).
+			 */
+
+			/* This can block over an I/O operation. */
+			PTHREAD_RWLOCK_wrlock(&obj_hdl->lock);
+
+			/* Check share reservation conflicts. */
+			status = check_share_conflict(&myself->share,
+						      openflags,
+						      false);
+
+			if (FSAL_IS_ERROR(status)) {
+				PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+				return status;
+			}
+
+			/* Take the share reservation now by updating the
+			 * counters.
+			 */
+			update_share_counters(&myself->share,
+					      FSAL_O_CLOSED,
+					      openflags);
+
+			PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+		} else {
+			/* We need to use the global fd to continue, and take
+			 * the lock to protect it.
+			 */
+			my_fd = &myself->globalfd;
+			PTHREAD_RWLOCK_wrlock(&obj_hdl->lock);
+		}
+
+		/* truncate is set in p_flags */
+		status = glusterfs_open_my_fd(myself, openflags, p_flags,
+					       &tmp_fd);
+
+		if (FSAL_IS_ERROR(status)) {
+			status = gluster2fsal_error(errno);
+			if (state == NULL) {
+				/* Release the lock taken above, and return
+				 * since there is nothing to undo.
+				 */
+				PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+				goto out;
+			} else {
+				/* Error - need to release the share */
+				goto undo_share;
+			}
+		}
+
+		my_fd->glfd = tmp_fd.glfd;
+		my_fd->openflags = tmp_fd.openflags;
+
+		if (createmode >= FSAL_EXCLUSIVE || truncated) {
+			/* Refresh the attributes to return client the
+			 * attributes which got set
+			 */
+			status = glusterfs_fetch_attrs(myself, my_fd);
+
+			if (FSAL_IS_ERROR(status)) {
+				FSAL_CLEAR_MASK(myself->attributes.mask);
+				FSAL_SET_MASK(myself->attributes.mask,
+					       ATTR_RDATTR_ERR);
+				/** @todo: should handle this
+				 * better.
+				 */
+			}
+			LogFullDebug(COMPONENT_FSAL, "New size = %"PRIx64,
+				     myself->attributes.filesize);
+
+			/* Now check verifier for exclusive, but not for
+			 * FSAL_EXCLUSIVE_9P.
+			 */
+			if (!FSAL_IS_ERROR(status) &&
+			    createmode >= FSAL_EXCLUSIVE &&
+			    createmode != FSAL_EXCLUSIVE_9P &&
+			    !obj_hdl->obj_ops.check_verifier(obj_hdl,
+							     verifier)) {
+				/* Verifier didn't match, return EEXIST */
+				status =
+				    fsalstat(posix2fsal_error(EEXIST), EEXIST);
+			}
+		}
+
+		if (state == NULL) {
+			/* If no state, release the lock taken above and return
+			 * status.
+			 */
+			PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+			return status;
+		}
+
+		if (!FSAL_IS_ERROR(status)) {
+			/* Return success. */
+			return status;
+		}
+
+		(void) glusterfs_close_my_fd(my_fd);
+ undo_share:
+
+		/* Can only get here with state not NULL and an error */
+
+		/* On error we need to release our share reservation
+		 * and undo the update of the share counters.
+		 * This can block over an I/O operation.
+		 */
+		PTHREAD_RWLOCK_wrlock(&obj_hdl->lock);
+
+		update_share_counters(&myself->share,
+				      openflags,
+				      FSAL_O_CLOSED);
+
+		PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+
+		return status;
+	}
+
+/* case name_not_null */
+	/* In this path where we are opening by name, we can't check share
+	 * reservation yet since we don't have an object_handle yet. If we
+	 * indeed create the object handle (there is no race with another
+	 * open by name), then there CAN NOT be a share conflict, otherwise
+	 * the share conflict will be resolved when the object handles are
+	 * merged.
+	 */
+
+	/* Now add in O_CREAT and O_EXCL.
+	 * Even with FSAL_UNGUARDED we try exclusive create first so
+	 * we can safely set attributes.
+	 */
+	if (createmode != FSAL_NO_CREATE) {
+		p_flags |= O_CREAT;
+
+		if (createmode >= FSAL_GUARDED || setattrs)
+			p_flags |= O_EXCL;
+	}
+
+	if (setattrs && FSAL_TEST_MASK(attrib_set->mask, ATTR_MODE)) {
+		unix_mode = fsal2unix_mode(attrib_set->mode) &
+		    ~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
+		/* Don't set the mode if we later set the attributes */
+		FSAL_UNSET_MASK(attrib_set->mask, ATTR_MODE);
+	} else {
+		/* Default to mode 0600 */
+		unix_mode = 0600;
+	}
+
+	/* @todo: we do not have openat implemented yet..meanwhile
+	 *  use 'glfs_h_creat'
+	 */
+
+	/* obtain parent directory handle */
+	parenthandle =
+	    container_of(obj_hdl, struct glusterfs_handle, handle);
+
+	/* Become the user because we are creating an object in this dir.
+	 */
+	if (createmode != FSAL_NO_CREATE) {
+
+		/* set proper credentials */
+		retval = setglustercreds(glfs_export,
+					&op_ctx->creds->caller_uid,
+					&op_ctx->creds->caller_gid,
+					op_ctx->creds->caller_glen,
+					op_ctx->creds->caller_garray);
+
+		if (retval != 0) {
+			status = gluster2fsal_error(EPERM);
+			LogFatal(COMPONENT_FSAL,
+				 "Could not set Ganesha credentials");
+			goto out;
+		}
+	}
+
+	/** @todo: glfs_h_creat doesn't honour NO_CREATE mode. Instead use
+	 *  glfs_h_open to verify if the file already exists.
+	 */
+	glhandle =
+	    glfs_h_creat(glfs_export->gl_fs, parenthandle->glhandle, name,
+			 p_flags, unix_mode, &sb);
+
+	if (glhandle == NULL && errno == EEXIST &&
+		 createmode == FSAL_UNCHECKED) {
+		/* We tried to create O_EXCL to set attributes and failed.
+		 * Remove O_EXCL and retry, also remember not to set attributes.
+		 * We still try O_CREAT again just in case file disappears out
+		 * from under us.
+		 */
+		p_flags &= ~O_EXCL;
+		setattrs = false;
+		glhandle =
+		    glfs_h_creat(glfs_export->gl_fs, parenthandle->glhandle,
+				 name, p_flags, unix_mode, &sb);
+	}
+
+       /* preserve errno */
+	retval = errno;
+
+	/* restore credentials */
+	if (createmode != FSAL_NO_CREATE) {
+		retval = setglustercreds(glfs_export, NULL, NULL, 0, NULL);
+		if (retval != 0) {
+			status = gluster2fsal_error(EPERM);
+			LogFatal(COMPONENT_FSAL,
+				 "Could not set Ganesha credentials");
+			goto out;
+		}
+	}
+
+	if (glhandle == NULL) {
+		status = gluster2fsal_error(errno);
+		goto out;
+	}
+
+	/* Remember if we were responsible for creating the file.
+	 * Note that in an UNCHECKED retry we MIGHT have re-created the
+	 * file and won't remember that. Oh well, so in that rare case we
+	 * leak a partially created file if we have a subsequent error in here.
+	 * Also notify caller to do permission check if we DID NOT create the
+	 * file. Note it IS possible in the case of a race between an UNCHECKED
+	 * open and an external unlink, we did create the file, but we will
+	 * still force a permission check. Of course that permission check
+	 * SHOULD succeed since we also won't set the mode the caller requested
+	 * and the default file create permissions SHOULD allow the owner
+	 * read/write.
+	 */
+	created = (p_flags & O_EXCL) != 0;
+	*caller_perm_check = !created;
+
+	/* Since the file is created, remove O_CREAT/O_EXCL flags */
+	p_flags &= ~(O_EXCL | O_CREAT);
+
+	retval = glfs_h_extract_handle(glhandle, globjhdl, GFAPI_HANDLE_LENGTH);
+	if (retval < 0) {
+		status = gluster2fsal_error(errno);
+		goto direrr;
+	}
+
+	retval = glfs_get_volumeid(glfs_export->gl_fs, vol_uuid,
+				   GLAPI_UUID_LENGTH);
+	if (retval < 0) {
+		status = gluster2fsal_error(retval);
+		goto direrr;
+	}
+
+	construct_handle(glfs_export, &sb, glhandle, globjhdl,
+			 GLAPI_HANDLE_LENGTH, &myself, vol_uuid);
+
+	/* If we didn't have a state above, use the global fd. At this point,
+	 * since we just created the global fd, no one else can have a
+	 * reference to it, and thus we can mamnipulate unlocked which is
+	 * handy since we can then call setattr2 which WILL take the lock
+	 * without a double locking deadlock.
+	 */
+	if (my_fd == NULL)
+		my_fd = &myself->globalfd;
+
+	/* now open it */
+	status = glusterfs_open_my_fd(myself, openflags, p_flags, my_fd);
+
+	if (FSAL_IS_ERROR(status))
+		goto direrr;
+
+	*new_obj = &myself->handle;
+
+	if (setattrs && attrib_set->mask != 0) {
+		/* Set attributes using our newly opened file descriptor as the
+		 * share_fd if there are any left to set (mode and truncate
+		 * have already been handled).
+		 *
+		 * Note that we only set the attributes if we were responsible
+		 * for creating the file.
+		 */
+		status = (*new_obj)->obj_ops.setattr2(*new_obj,
+						      false,
+						      state,
+						      attrib_set);
+
+		if (FSAL_IS_ERROR(status)) {
+			/* Release the handle we just allocated. */
+			(*new_obj)->obj_ops.release(*new_obj);
+			*new_obj = NULL;
+			goto fileerr;
+		}
+
+		if (attrs_out != NULL) {
+			status = (*new_obj)->obj_ops.getattrs(*new_obj,
+							      attrs_out);
+			if (FSAL_IS_ERROR(status) &&
+			    (attrs_out->mask & ATTR_RDATTR_ERR) == 0) {
+				/* Get attributes failed and caller expected
+				 * to get the attributes. Otherwise continue
+				 * with attrs_out indicating ATTR_RDATTR_ERR.
+				 */
+				goto fileerr;
+			}
+		}
+	} else if (attrs_out != NULL) {
+		/* Since we haven't set any attributes other than what was set
+		 * on create (if we even created), just use the stat results
+		 * we used to create the fsal_obj_handle.
+		 */
+		posix2fsal_attributes(&sb, attrs_out);
+
+		/* Make sure ATTR_RDATTR_ERR is cleared on success. */
+	}
+
+
+	if (state != NULL) {
+		/* Prepare to take the share reservation, but only if we are
+		 * called with a valid state (if state is NULL the caller is
+		 * a stateless create such as NFS v3 CREATE).
+		 */
+
+		/* This can block over an I/O operation. */
+		PTHREAD_RWLOCK_wrlock(&(*new_obj)->lock);
+
+		/* Take the share reservation now by updating the counters. */
+		update_share_counters(&myself->share,
+				      FSAL_O_CLOSED,
+				      openflags);
+
+		PTHREAD_RWLOCK_unlock(&(*new_obj)->lock);
+	}
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+
+
+fileerr:
+	glusterfs_close_my_fd(my_fd);
+
+direrr:
+	/* Delete the file if we actually created it. */
+	if (created)
+		glfs_h_unlink(glfs_export->gl_fs, parenthandle->glhandle, name);
+
+
+	if (status.major != ERR_FSAL_NO_ERROR)
+		gluster_cleanup_vars(glhandle);
+	return fsalstat(posix2fsal_error(retval), retval);
+
+ out:
+#ifdef GLTIMING
+	now(&e_time);
+	latency_update(&s_time, &e_time, lat_file_open);
+#endif
+	return status;
 }
 
 /* status2
