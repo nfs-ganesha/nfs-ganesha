@@ -71,6 +71,7 @@ static struct fsal_staticfsinfo_t default_gluster_info = {
 	.pnfs_mds = false,
 	.pnfs_ds = true,
 	.link_supports_permission_checks = true,
+	.lock_support_owner = true,
 };
 
 static struct glusterfs_fsal_module *glfsal_module;
