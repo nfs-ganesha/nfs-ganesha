@@ -28,6 +28,7 @@
 #include "fsal_convert.h"
 #include "pnfs_utils.h"
 #include "nfs_exports.h"
+#include "sal_data.h"
 
 /* fsal_obj_handle common methods
  */
@@ -1390,6 +1391,81 @@ static fsal_status_t file_close(struct fsal_obj_handle *obj_hdl)
 
 	objhandle->globalfd.glfd = NULL;
 	objhandle->globalfd.openflags = FSAL_O_CLOSED;
+
+#ifdef GLTIMING
+	now(&e_time);
+	latency_update(&s_time, &e_time, lat_file_close);
+#endif
+	return status;
+}
+
+fsal_status_t glusterfs_open_my_fd(struct glusterfs_handle *objhandle,
+				   fsal_openflags_t openflags,
+				   int posix_flags,
+				   struct glusterfs_fd *my_fd)
+{
+	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
+	struct glfs_fd *glfd = NULL;
+	struct glusterfs_export *glfs_export =
+	    container_of(op_ctx->fsal_export, struct glusterfs_export, export);
+#ifdef GLTIMING
+	struct timespec s_time, e_time;
+
+	now(&s_time);
+#endif
+
+	LogFullDebug(COMPONENT_FSAL,
+		     "my_fd->fd = %p openflags = %x, posix_flags = %x",
+		     my_fd->glfd, openflags, posix_flags);
+
+	assert(my_fd->glfd == NULL
+	       && my_fd->openflags == FSAL_O_CLOSED && openflags != 0);
+
+	LogFullDebug(COMPONENT_FSAL,
+		     "openflags = %x, posix_flags = %x",
+		     openflags, posix_flags);
+
+	glfd = glfs_h_open(glfs_export->gl_fs, objhandle->glhandle,
+			   posix_flags);
+	if (glfd == NULL) {
+		status = gluster2fsal_error(errno);
+		goto out;
+	}
+
+	my_fd->glfd = glfd;
+	my_fd->openflags = openflags;
+
+out:
+#ifdef GLTIMING
+	now(&e_time);
+	latency_update(&s_time, &e_time, lat_file_open);
+#endif
+	return status;
+}
+
+fsal_status_t glusterfs_close_my_fd(struct glusterfs_fd *my_fd)
+{
+	int rc = 0;
+	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
+
+#ifdef GLTIMING
+	struct timespec s_time, e_time;
+
+	now(&s_time);
+#endif
+
+	if (my_fd->glfd && my_fd->openflags != FSAL_O_CLOSED) {
+		rc = glfs_close(my_fd->glfd);
+		if (rc != 0) {
+			status = gluster2fsal_error(errno);
+			LogCrit(COMPONENT_FSAL,
+				"Error : close returns with %s",
+				strerror(errno));
+		}
+	}
+
+	my_fd->glfd = NULL;
+	my_fd->openflags = FSAL_O_CLOSED;
 
 #ifdef GLTIMING
 	now(&e_time);
