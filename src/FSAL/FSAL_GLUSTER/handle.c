@@ -2923,13 +2923,34 @@ static fsal_status_t glusterfs_setattr2(struct fsal_obj_handle *obj_hdl,
 }
 
 /* close2
- * default case not supported
  */
 
 static fsal_status_t glusterfs_close2(struct fsal_obj_handle *obj_hdl,
-			    struct state_t *fd)
+				      struct state_t *state)
 {
-	return fsalstat(ERR_FSAL_NOTSUPP, 0);
+	struct glusterfs_fd *my_fd = (struct glusterfs_fd *)(state + 1);
+	struct glusterfs_handle *myself = NULL;
+
+	myself = container_of(obj_hdl,
+			      struct glusterfs_handle,
+			      handle);
+
+	if (state->state_type == STATE_TYPE_SHARE ||
+	    state->state_type == STATE_TYPE_NLM_SHARE ||
+	    state->state_type == STATE_TYPE_9P_FID) {
+		/* This is a share state, we must update the share counters */
+
+		/* This can block over an I/O operation. */
+		PTHREAD_RWLOCK_wrlock(&obj_hdl->lock);
+
+		update_share_counters(&myself->share,
+				      my_fd->openflags,
+				      FSAL_O_CLOSED);
+
+		PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+	}
+
+	return glusterfs_close_my_fd(my_fd);
 }
 
 /**
