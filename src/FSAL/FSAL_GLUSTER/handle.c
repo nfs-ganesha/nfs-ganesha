@@ -1474,6 +1474,46 @@ fsal_status_t glusterfs_close_my_fd(struct glusterfs_fd *my_fd)
 	return status;
 }
 
+/**
+ * @brief Function to open an fsal_obj_handle's global file descriptor.
+ *
+ * @param[in]  obj_hdl     File on which to operate
+ * @param[in]  openflags   Mode for open
+ * @param[out] fd          File descriptor that is to be used
+ *
+ * @return FSAL status.
+ */
+
+fsal_status_t glusterfs_open_func(struct fsal_obj_handle *obj_hdl,
+				  fsal_openflags_t openflags,
+				  struct fsal_fd *fd)
+{
+	struct glusterfs_handle *myself;
+	int posix_flags = 0;
+
+	myself = container_of(obj_hdl, struct glusterfs_handle, handle);
+
+	fsal2posix_openflags(openflags, &posix_flags);
+
+	return glusterfs_open_my_fd(myself, openflags, posix_flags,
+				   (struct glusterfs_fd *)fd);
+}
+
+/**
+ * @brief Function to close an fsal_obj_handle's global file descriptor.
+ *
+ * @param[in]  obj_hdl     File on which to operate
+ * @param[in]  fd          File handle to close
+ *
+ * @return FSAL status.
+ */
+
+fsal_status_t glusterfs_close_func(struct fsal_obj_handle *obj_hdl,
+				   struct fsal_fd *fd)
+{
+	return glusterfs_close_my_fd((struct glusterfs_fd *)fd);
+}
+
 /* open2
  * default case not supported
  */
