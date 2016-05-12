@@ -2701,16 +2701,225 @@ fsal_status_t glusterfs_getattr2(struct fsal_obj_handle *obj_hdl)
 	return status;
 }
 
-/* setattr2
- * default case not supported
+/**
+ * @brief Set attributes on an object
+ *
+ * This function sets attributes on an object.  Which attributes are
+ * set is determined by attrib_set->mask. The FSAL must manage bypass
+ * or not of share reservations, and a state may be passed.
+ *
+ * @param[in] obj_hdl    File on which to operate
+ * @param[in] state      state_t to use for this operation
+ * @param[in] attrib_set Attributes to set
+ *
+ * @return FSAL status.
  */
 
 static fsal_status_t glusterfs_setattr2(struct fsal_obj_handle *obj_hdl,
-			      bool bypass,
-			      struct state_t *state,
-			      struct attrlist *attrs)
+					bool bypass,
+					struct state_t *state,
+					struct attrlist *attrib_set)
 {
-	return fsalstat(ERR_FSAL_NOTSUPP, 0);
+	struct glusterfs_handle *myself;
+	fsal_status_t status = {0, 0};
+	int retval = 0;
+	fsal_openflags_t openflags = FSAL_O_ANY;
+	bool has_lock = false;
+	bool need_fsync = false;
+	bool closefd = false;
+	struct glusterfs_fd my_fd = {0};
+	struct glusterfs_export *glfs_export =
+	    container_of(op_ctx->fsal_export, struct glusterfs_export, export);
+	glusterfs_fsal_xstat_t buffxstat;
+	int attr_valid = 0;
+	int mask = 0;
+
+
+	/* @todo: Handle special file symblic links etc */
+	/* apply umask, if mode attribute is to be changed */
+	if (FSAL_TEST_MASK(attrib_set->mask, ATTR_MODE))
+		attrib_set->mode &=
+		    ~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
+
+	myself = container_of(obj_hdl, struct glusterfs_handle, handle);
+
+#if 0
+	/* @todo: fsid work
+	 * if (obj_hdl->fsal != obj_hdl->fs->fsal) {
+	 * LogDebug(COMPONENT_FSAL,
+	 *	  "FSAL %s operation for handle belonging to
+	 *	   FSAL %s, return EXDEV",
+	 *	   obj_hdl->fsal->name, obj_hdl->fs->fsal->name);
+	 * return fsalstat(posix2fsal_error(EXDEV), EXDEV);
+	 * }
+	 */
+#endif
+
+	/* Test if size is being set, make sure file is regular and if so,
+	 * require a read/write file descriptor.
+	 */
+	if (FSAL_TEST_MASK(attrib_set->mask, ATTR_SIZE)) {
+		if (obj_hdl->type != REGULAR_FILE)
+			return fsalstat(ERR_FSAL_INVAL, EINVAL);
+		openflags = FSAL_O_RDWR;
+	}
+
+	/* Get a usable file descriptor. Share conflict is only possible if
+	 * size is being set. For special files, handle via handle.
+	 */
+	if ((obj_hdl->type == REGULAR_FILE) ||
+		 (obj_hdl->type == DIRECTORY)) {
+		status = find_fd(&my_fd, obj_hdl, bypass, state, openflags,
+				 &has_lock, &need_fsync, &closefd, false);
+
+		if (FSAL_IS_ERROR(status))
+			goto out;
+	}
+
+	/** TRUNCATE **/
+	if (FSAL_TEST_MASK(attrib_set->mask, ATTR_SIZE) &&
+	    (obj_hdl->type == REGULAR_FILE)) {
+		retval = glfs_ftruncate(my_fd.glfd, attrib_set->filesize);
+		if (retval != 0) {
+			if (retval != 0) {
+				status = gluster2fsal_error(errno);
+				goto out;
+			}
+		}
+	}
+
+	if (FSAL_TEST_MASK(attrib_set->mask, ATTR_MODE)) {
+		FSAL_SET_MASK(mask, GLAPI_SET_ATTR_MODE);
+		buffxstat.buffstat.st_mode = fsal2unix_mode(attrib_set->mode);
+	}
+
+	if (FSAL_TEST_MASK(attrib_set->mask, ATTR_OWNER)) {
+		FSAL_SET_MASK(mask, GLAPI_SET_ATTR_UID);
+		buffxstat.buffstat.st_uid = attrib_set->owner;
+	}
+
+	if (FSAL_TEST_MASK(attrib_set->mask, ATTR_GROUP)) {
+		FSAL_SET_MASK(mask, GLAPI_SET_ATTR_GID);
+		buffxstat.buffstat.st_gid = attrib_set->group;
+	}
+
+	if (FSAL_TEST_MASK(attrib_set->mask, ATTR_ATIME)) {
+		FSAL_SET_MASK(mask, GLAPI_SET_ATTR_ATIME);
+		buffxstat.buffstat.st_atim = attrib_set->atime;
+	}
+
+	if (FSAL_TEST_MASK(attrib_set->mask, ATTR_ATIME_SERVER)) {
+		FSAL_SET_MASK(mask, GLAPI_SET_ATTR_ATIME);
+		struct timespec timestamp;
+
+		retval = clock_gettime(CLOCK_REALTIME, &timestamp);
+		if (retval != 0) {
+			status = gluster2fsal_error(errno);
+			goto out;
+		}
+		buffxstat.buffstat.st_atim = timestamp;
+	}
+
+	/* try to look at glfs_futimens() instead as done in vfs */
+	if (FSAL_TEST_MASK(attrib_set->mask, ATTR_MTIME)) {
+		FSAL_SET_MASK(mask, GLAPI_SET_ATTR_MTIME);
+		buffxstat.buffstat.st_mtim = attrib_set->mtime;
+	}
+	if (FSAL_TEST_MASK(attrib_set->mask, ATTR_MTIME_SERVER)) {
+		FSAL_SET_MASK(mask, GLAPI_SET_ATTR_MTIME);
+		struct timespec timestamp;
+
+		retval = clock_gettime(CLOCK_REALTIME, &timestamp);
+		if (retval != 0) {
+			status = gluster2fsal_error(retval);
+			goto out;
+		}
+		buffxstat.buffstat.st_mtim = timestamp;
+	}
+
+	/* @todo: Check for attributes not supported and return */
+	/* EATTRNOTSUPP error.  */
+
+	if (NFSv4_ACL_SUPPORT) {
+		if (FSAL_TEST_MASK(attrib_set->mask, ATTR_ACL)) {
+			if (obj_hdl->type == DIRECTORY)
+				buffxstat.is_dir = true;
+			else
+				buffxstat.is_dir = false;
+
+			FSAL_SET_MASK(attr_valid, XATTR_ACL);
+			status =
+			  glusterfs_process_acl(glfs_export->gl_fs,
+						myself->glhandle,
+						attrib_set, &buffxstat);
+
+			if (FSAL_IS_ERROR(status))
+				goto out;
+			/* setting the ACL will set the */
+			/* mode-bits too if not already passed */
+			FSAL_SET_MASK(mask, GLAPI_SET_ATTR_MODE);
+		}
+	} else if (FSAL_TEST_MASK(attrib_set->mask, ATTR_ACL)) {
+		status = fsalstat(ERR_FSAL_ATTRNOTSUPP, 0);
+		goto out;
+	}
+
+	/* If any stat changed, indicate that */
+	if (mask != 0)
+		FSAL_SET_MASK(attr_valid, XATTR_STAT);
+	if (FSAL_TEST_MASK(attr_valid, XATTR_STAT)) {
+		/* Only if there is any change in attrs send them down to fs */
+		/* @todo: instead use glfs_fsetattr().... looks like there is
+		 * fix needed in there..it doesn't convert the mask flags
+		 * to corresponding gluster flags.
+		 */
+		retval = glfs_h_setattrs(glfs_export->gl_fs,
+				     myself->glhandle,
+				     &buffxstat.buffstat,
+				     mask);
+		if (retval != 0) {
+			status = gluster2fsal_error(errno);
+			goto out;
+		}
+	}
+
+	if (FSAL_TEST_MASK(attr_valid, XATTR_ACL))
+		status = glusterfs_set_acl(glfs_export, myself, &buffxstat);
+
+	if (FSAL_IS_ERROR(status)) {
+		LogDebug(COMPONENT_FSAL,
+			 "setting ACL failed");
+		goto out;
+	}
+
+	status = glusterfs_fetch_attrs(myself, &my_fd);
+
+	if (FSAL_IS_ERROR(status)) {
+		LogDebug(COMPONENT_FSAL,
+			 "fetch_attrs failed");
+		goto out;
+	}
+
+	errno = 0;
+
+ out:
+	retval = errno;
+
+	if (retval != 0) {
+		LogDebug(COMPONENT_FSAL,
+			 "setattrs failed with error %s",
+			 strerror(retval));
+	}
+
+	status = fsalstat(posix2fsal_error(retval), retval);
+
+	if (closefd)
+		glusterfs_close_my_fd(&my_fd);
+
+	if (has_lock)
+		PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+
+	return status;
 }
 
 /* close2
