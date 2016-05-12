@@ -2478,17 +2478,164 @@ out:
 }
 
 /* lock_op2
- * default case not supported
  */
 
 static fsal_status_t glusterfs_lock_op2(struct fsal_obj_handle *obj_hdl,
-			      struct state_t *state,
-			      void *p_owner,
-			      fsal_lock_op_t lock_op,
-			      fsal_lock_param_t *request_lock,
-			      fsal_lock_param_t *conflicting_lock)
+					struct state_t *state,
+					void *p_owner,
+					fsal_lock_op_t lock_op,
+					fsal_lock_param_t *request_lock,
+					fsal_lock_param_t *conflicting_lock)
 {
-	return fsalstat(ERR_FSAL_NOTSUPP, 0);
+	struct flock lock_args;
+	int fcntl_comm;
+	fsal_status_t status = {0, 0};
+	int retval = 0;
+	struct glusterfs_fd my_fd = {0};
+	bool has_lock = false;
+	bool need_fsync = false;
+	bool closefd = false;
+	bool bypass = false;
+	fsal_openflags_t openflags = FSAL_O_RDWR;
+
+#if 0
+	/* @todo: fsid work
+	 * if (obj_hdl->fsal != obj_hdl->fs->fsal) {
+	 * LogDebug(COMPONENT_FSAL,
+	 *	  "FSAL %s operation for handle belonging to
+	 *	   FSAL %s, return EXDEV",
+	 *	   obj_hdl->fsal->name, obj_hdl->fs->fsal->name);
+	 * return fsalstat(posix2fsal_error(EXDEV), EXDEV);
+	 * }
+	 */
+#endif
+
+	LogFullDebug(COMPONENT_FSAL,
+		     "Locking: op:%d type:%d start:%" PRIu64 " length:%lu ",
+		     lock_op, request_lock->lock_type, request_lock->lock_start,
+		     request_lock->lock_length);
+
+	if (lock_op == FSAL_OP_LOCKT) {
+		/* We may end up using global fd, don't fail on a deny mode */
+		bypass = true;
+		fcntl_comm = F_GETLK;
+		openflags = FSAL_O_ANY;
+	} else if (lock_op == FSAL_OP_LOCK) {
+		fcntl_comm = F_SETLK;
+
+		if (request_lock->lock_type == FSAL_LOCK_R)
+			openflags = FSAL_O_READ;
+		else if (request_lock->lock_type == FSAL_LOCK_W)
+			openflags = FSAL_O_WRITE;
+	} else if (lock_op == FSAL_OP_UNLOCK) {
+		fcntl_comm = F_SETLK;
+		openflags = FSAL_O_ANY;
+	} else {
+		LogDebug(COMPONENT_FSAL,
+			 "ERROR: Lock operation requested was not TEST, READ, or WRITE.");
+		return fsalstat(ERR_FSAL_NOTSUPP, 0);
+	}
+
+	if (lock_op != FSAL_OP_LOCKT && state == NULL) {
+		LogCrit(COMPONENT_FSAL, "Non TEST operation with NULL state");
+		return fsalstat(posix2fsal_error(EINVAL), EINVAL);
+	}
+
+	if (request_lock->lock_type == FSAL_LOCK_R) {
+		lock_args.l_type = F_RDLCK;
+	} else if (request_lock->lock_type == FSAL_LOCK_W) {
+		lock_args.l_type = F_WRLCK;
+	} else {
+		LogDebug(COMPONENT_FSAL,
+			 "ERROR: The requested lock type was not read or write.");
+		return fsalstat(ERR_FSAL_NOTSUPP, 0);
+	}
+
+	if (lock_op == FSAL_OP_UNLOCK)
+		lock_args.l_type = F_UNLCK;
+
+	lock_args.l_pid = 0;
+	lock_args.l_len = request_lock->lock_length;
+	lock_args.l_start = request_lock->lock_start;
+	lock_args.l_whence = SEEK_SET;
+
+	/* flock.l_len being signed long integer, larger lock ranges may
+	 * get mapped to negative values. As per 'man 3 fcntl', posix
+	 * locks can accept negative l_len values which may lead to
+	 * unlocking an unintended range. Better bail out to prevent that.
+	 */
+	if (lock_args.l_len < 0) {
+		LogCrit(COMPONENT_FSAL,
+			"The requested lock length is out of range- lock_args.l_len(%ld), request_lock_length(%lu)",
+			lock_args.l_len, request_lock->lock_length);
+		return fsalstat(ERR_FSAL_BAD_RANGE, 0);
+	}
+
+	/* Get a usable file descriptor */
+	status = find_fd(&my_fd, obj_hdl, bypass, state, openflags,
+			 &has_lock, &need_fsync, &closefd, true);
+
+	if (FSAL_IS_ERROR(status)) {
+		LogCrit(COMPONENT_FSAL, "Unable to find fd for lock operation");
+		return status;
+	}
+
+	/* @todo: setlkowner as well */
+	errno = 0;
+	retval = glfs_posix_lock(my_fd.glfd, fcntl_comm, &lock_args);
+
+	if (retval /* && lock_op == FSAL_OP_LOCK */) {
+		retval = errno;
+
+		LogDebug(COMPONENT_FSAL,
+			 "fcntl returned %d %s",
+			 retval, strerror(retval));
+
+		if (conflicting_lock != NULL) {
+			/* Get the conflicting lock */
+			retval = glfs_posix_lock(my_fd.glfd, F_GETLK,
+						 &lock_args);
+
+			if (retval) {
+				retval = errno; /* we lose the initial error */
+				LogCrit(COMPONENT_FSAL,
+					"After failing a lock request, I couldn't even get the details of who owns the lock.");
+				goto err;
+			}
+
+			conflicting_lock->lock_length = lock_args.l_len;
+			conflicting_lock->lock_start = lock_args.l_start;
+			conflicting_lock->lock_type = lock_args.l_type;
+		}
+
+		goto err;
+	}
+
+	/* F_UNLCK is returned then the tested operation would be possible. */
+	if (conflicting_lock != NULL) {
+		if (lock_op == FSAL_OP_LOCKT && lock_args.l_type != F_UNLCK) {
+			conflicting_lock->lock_length = lock_args.l_len;
+			conflicting_lock->lock_start = lock_args.l_start;
+			conflicting_lock->lock_type = lock_args.l_type;
+		} else {
+			conflicting_lock->lock_length = 0;
+			conflicting_lock->lock_start = 0;
+			conflicting_lock->lock_type = FSAL_NO_LOCK;
+		}
+	}
+
+
+	/* Fall through (retval == 0) */
+
+ err:
+
+	if (closefd)
+		glusterfs_close_my_fd(&my_fd);
+
+	if (has_lock)
+		PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+
+	return fsalstat(posix2fsal_error(retval), retval);
 }
 
 /* setattr2
