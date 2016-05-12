@@ -2222,19 +2222,88 @@ static fsal_status_t glusterfs_reopen2(struct fsal_obj_handle *obj_hdl,
 }
 
 /* read2
- * default case not supported
  */
 
 static fsal_status_t glusterfs_read2(struct fsal_obj_handle *obj_hdl,
-			   bool bypass,
-			   struct state_t *state,
-			   uint64_t seek_descriptor,
-			   size_t buffer_size,
-			   void *buffer, size_t *read_amount,
-			   bool *end_of_file,
-			   struct io_info *info)
+				     bool bypass,
+				     struct state_t *state,
+				     uint64_t seek_descriptor,
+				     size_t buffer_size,
+				     void *buffer, size_t *read_amount,
+				     bool *end_of_file,
+				     struct io_info *info)
 {
-	return fsalstat(ERR_FSAL_NOTSUPP, 0);
+	struct glusterfs_fd my_fd = {0};
+	ssize_t nb_read;
+	fsal_status_t status;
+	int retval = 0;
+	bool has_lock = false;
+	bool need_fsync = false;
+	bool closefd = false;
+
+	if (info != NULL) {
+		/* Currently we don't support READ_PLUS */
+		return fsalstat(ERR_FSAL_NOTSUPP, 0);
+	}
+
+#if 0
+	/* @todo: fsid work
+	 * if (obj_hdl->fsal != obj_hdl->fs->fsal) {
+	 * LogDebug(COMPONENT_FSAL,
+	 *	  "FSAL %s operation for handle belonging to
+	 *	   FSAL %s, return EXDEV",
+	 *	   obj_hdl->fsal->name, obj_hdl->fs->fsal->name);
+	 * return fsalstat(posix2fsal_error(EXDEV), EXDEV);
+	 * }
+	 */
+#endif
+
+	/* Get a usable file descriptor */
+	status = find_fd(&my_fd, obj_hdl, bypass, state, FSAL_O_READ,
+			 &has_lock, &need_fsync, &closefd, false);
+
+	if (FSAL_IS_ERROR(status))
+		goto out;
+
+	nb_read = glfs_pread(my_fd.glfd, buffer, buffer_size,
+			     seek_descriptor, 0);
+
+	if (seek_descriptor == -1 || nb_read == -1) {
+		retval = errno;
+		status = fsalstat(posix2fsal_error(retval), retval);
+		goto out;
+	}
+
+	*read_amount = nb_read;
+
+	if (nb_read < buffer_size)
+		*end_of_file = true;
+#if 0
+	/** @todo
+	 *
+	 * Is this all we really need to do to support READ_PLUS? Will anyone
+	 * ever get upset that we don't return holes, even for blocks of all
+	 * zeroes?
+	 *
+	 */
+	if (info != NULL) {
+		info->io_content.what = NFS4_CONTENT_DATA;
+		info->io_content.data.d_offset = offset + nb_read;
+		info->io_content.data.d_data.data_len = nb_read;
+		info->io_content.data.d_data.data_val = buffer;
+	}
+#endif
+
+ out:
+
+	if (closefd)
+		glusterfs_close_my_fd(&my_fd);
+
+	if (has_lock)
+		PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+
+	return status;
+
 }
 
 /* write2
