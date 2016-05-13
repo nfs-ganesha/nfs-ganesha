@@ -244,26 +244,6 @@ struct state_hdl *vfs_state_locate(struct fsal_obj_handle *obj);
 	/* I/O management */
 fsal_status_t vfs_close_my_fd(struct vfs_fd *my_fd);
 
-fsal_status_t vfs_open(struct fsal_obj_handle *obj_hdl,
-		       fsal_openflags_t openflags);
-fsal_openflags_t vfs_status(struct fsal_obj_handle *obj_hdl);
-fsal_status_t vfs_read(struct fsal_obj_handle *obj_hdl,
-		       uint64_t offset,
-		       size_t buffer_size, void *buffer, size_t *read_amount,
-		       bool *end_of_file);
-fsal_status_t vfs_write(struct fsal_obj_handle *obj_hdl,
-			uint64_t offset,
-			size_t buffer_size, void *buffer, size_t *write_amount,
-			bool *fsal_stable);
-fsal_status_t vfs_commit(struct fsal_obj_handle *obj_hdl,	/* sync */
-			 off_t offset, size_t len);
-fsal_status_t vfs_lock_op(struct fsal_obj_handle *obj_hdl,
-			  void *p_owner,
-			  fsal_lock_op_t lock_op,
-			  fsal_lock_param_t *request_lock,
-			  fsal_lock_param_t *conflicting_lock);
-fsal_status_t vfs_share_op(struct fsal_obj_handle *obj_hdl, void *p_owner,
-			   fsal_share_param_t request_share);
 fsal_status_t vfs_close(struct fsal_obj_handle *obj_hdl);
 
 /* Multiple file descriptor methods */
