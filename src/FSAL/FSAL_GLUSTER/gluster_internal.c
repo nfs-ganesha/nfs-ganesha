@@ -159,7 +159,7 @@ void construct_handle(struct glusterfs_export *glexport, const struct stat *st,
 	memcpy(constructing->globjhdl, vol_uuid, GLAPI_UUID_LENGTH);
 	memcpy(constructing->globjhdl+GLAPI_UUID_LENGTH, globjhdl,
 	       GFAPI_HANDLE_LENGTH);
-	constructing->glfd = NULL;
+	constructing->globalfd.glfd = NULL;
 
 	fsal_obj_handle_init(&constructing->handle, &glexport->export,
 			     posix2fsal_type(st->st_mode));

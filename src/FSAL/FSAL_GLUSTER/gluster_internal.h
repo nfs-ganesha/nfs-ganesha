@@ -158,11 +158,10 @@ struct glusterfs_handle {
 	struct glfs_object *glhandle;
 	unsigned char globjhdl[GLAPI_HANDLE_LENGTH];	/* handle descriptor,
 							   for wire handle */
-
-	/* TODO: Do we need to use gluster_fd here as done in FSAL_VFS? */
-	struct glfs_fd *glfd;
-	fsal_openflags_t openflags;
+	struct glusterfs_fd globalfd;
 	struct fsal_obj_handle handle;	/* public FSAL handle */
+	struct attrlist attributes; /* Attributes of this Object. */
+	struct fsal_share share; /* share_reservations */
 
 	/* following added for pNFS support */
 	uint64_t rd_issued;

@@ -52,8 +52,8 @@ static void handle_release(struct fsal_obj_handle *obj_hdl)
 
 	fsal_obj_handle_fini(&objhandle->handle);
 
-	if (objhandle->glfd) {
-		rc = glfs_close(objhandle->glfd);
+	if (objhandle->globalfd.glfd) {
+		rc = glfs_close(objhandle->globalfd.glfd);
 		if (rc) {
 			LogCrit(COMPONENT_FSAL,
 				"glfs_close returned %s(%d)",
@@ -175,6 +175,7 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 	now(&s_time);
 #endif
 
+	/** @todo : Can we use globalfd instead */
 	glfd = glfs_h_opendir(glfs_export->gl_fs, objhandle->glhandle);
 	if (glfd == NULL)
 		return gluster2fsal_error(errno);
@@ -1080,7 +1081,7 @@ static fsal_status_t file_open(struct fsal_obj_handle *obj_hdl,
 	now(&s_time);
 #endif
 
-	if (objhandle->openflags != FSAL_O_CLOSED)
+	if (objhandle->globalfd.openflags != FSAL_O_CLOSED)
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 
 	fsal2posix_openflags(openflags, &p_flags);
@@ -1091,8 +1092,8 @@ static fsal_status_t file_open(struct fsal_obj_handle *obj_hdl,
 		goto out;
 	}
 
-	objhandle->openflags = openflags;
-	objhandle->glfd = glfd;
+	objhandle->globalfd.openflags = openflags;
+	objhandle->globalfd.glfd = glfd;
 
  out:
 #ifdef GLTIMING
@@ -1111,7 +1112,7 @@ static fsal_openflags_t file_status(struct fsal_obj_handle *obj_hdl)
 	struct glusterfs_handle *objhandle =
 	    container_of(obj_hdl, struct glusterfs_handle, handle);
 
-	return objhandle->openflags;
+	return objhandle->globalfd.openflags;
 }
 
 /**
@@ -1133,7 +1134,8 @@ static fsal_status_t file_read(struct fsal_obj_handle *obj_hdl,
 	now(&s_time);
 #endif
 
-	rc = glfs_pread(objhandle->glfd, buffer, buffer_size, seek_descriptor,
+	rc = glfs_pread(objhandle->globalfd.glfd, buffer, buffer_size,
+			seek_descriptor,
 			0 /*TODO: flags is unused, so pass in something */);
 	if (rc < 0) {
 		status = gluster2fsal_error(errno);
@@ -1172,15 +1174,15 @@ static fsal_status_t file_write(struct fsal_obj_handle *obj_hdl,
 	now(&s_time);
 #endif
 
-	rc = glfs_pwrite(objhandle->glfd, buffer, buffer_size, seek_descriptor,
-			 ((*fsal_stable) ? O_SYNC : 0));
+	rc = glfs_pwrite(objhandle->globalfd.glfd, buffer, buffer_size,
+		 seek_descriptor, ((*fsal_stable) ? O_SYNC : 0));
 	if (rc < 0) {
 		status = gluster2fsal_error(errno);
 		goto out;
 	}
 
 	*write_amount = rc;
-	if (objhandle->openflags & FSAL_O_SYNC)
+	if (objhandle->globalfd.openflags & FSAL_O_SYNC)
 		*fsal_stable = true;
 
  out:
@@ -1211,7 +1213,7 @@ static fsal_status_t commit(struct fsal_obj_handle *obj_hdl,	/* sync */
 #endif
 
 	/* TODO: Everybody pretty much ignores the range sent */
-	rc = glfs_fsync(objhandle->glfd);
+	rc = glfs_fsync(objhandle->globalfd.glfd);
 	if (rc < 0)
 		status = gluster2fsal_error(errno);
 #ifdef GLTIMING
@@ -1248,7 +1250,7 @@ static fsal_status_t lock_op(struct fsal_obj_handle *obj_hdl,
 	now(&s_time);
 #endif
 
-	if (objhandle->openflags == FSAL_O_CLOSED) {
+	if (objhandle->globalfd.openflags == FSAL_O_CLOSED) {
 		LogDebug(COMPONENT_FSAL,
 			 "ERROR: Attempting to lock with no file descriptor open");
 		status.major = ERR_FSAL_FAULT;
@@ -1301,13 +1303,13 @@ static fsal_status_t lock_op(struct fsal_obj_handle *obj_hdl,
 		goto out;
 	}
 
-	rc = glfs_posix_lock(objhandle->glfd, cmd, &flock);
+	rc = glfs_posix_lock(objhandle->globalfd.glfd, cmd, &flock);
 	if (rc != 0 && lock_op == FSAL_OP_LOCK
 	    && conflicting_lock && (errno == EACCES || errno == EAGAIN)) {
 		/* process conflicting lock */
 		saverrno = errno;
 		cmd = F_GETLK;
-		rc = glfs_posix_lock(objhandle->glfd, cmd, &flock);
+		rc = glfs_posix_lock(objhandle->globalfd.glfd, cmd, &flock);
 		if (rc) {
 			LogCrit(COMPONENT_FSAL,
 				"Failed to get conflicting lock post lock failure");
@@ -1373,15 +1375,21 @@ static fsal_status_t file_close(struct fsal_obj_handle *obj_hdl)
 	now(&s_time);
 #endif
 
-	rc = glfs_close(objhandle->glfd);
+	if (objhandle->globalfd.openflags == FSAL_O_CLOSED) {
+		LogDebug(COMPONENT_FSAL,
+			 "File already closed.");
+		return status;
+	}
+
+	rc = glfs_close(objhandle->globalfd.glfd);
 	if (rc != 0) {
 		status = gluster2fsal_error(errno);
 		LogCrit(COMPONENT_FSAL,
 			"Error : close returns with %s", strerror(errno));
 	}
 
-	objhandle->glfd = NULL;
-	objhandle->openflags = FSAL_O_CLOSED;
+	objhandle->globalfd.glfd = NULL;
+	objhandle->globalfd.openflags = FSAL_O_CLOSED;
 
 #ifdef GLTIMING
 	now(&e_time);
@@ -1507,6 +1515,7 @@ static fsal_status_t remove_extattr_by_name(struct fsal_obj_handle *obj_hdl,
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 */
+
 /**
  * @brief Implements GLUSTER FSAL objectoperation handle_digest
  */
