@@ -1286,85 +1286,6 @@ struct closefd vfs_fsal_open_and_stat(struct fsal_export *exp,
 	return cfd;
 }
 
-static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl)
-{
-	struct vfs_fsal_obj_handle *myself;
-	struct closefd cfd = { .fd = -1, .close_fd = false };
-	struct stat stat;
-	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
-	fsal_status_t st;
-	int retval = 0;
-	attrmask_t request_mask;
-
-	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
-
-	if (obj_hdl->fsal != obj_hdl->fs->fsal) {
-		LogDebug(COMPONENT_FSAL,
-			 "FSAL %s getattr for handle belonging to FSAL %s, ignoring",
-			 obj_hdl->fsal->name,
-			 obj_hdl->fs->fsal != NULL
-				? obj_hdl->fs->fsal->name
-				: "(none)");
-		goto out;
-	}
-
-	/* Take read lock on object to protect file descriptor.
-	 * We only take a read lock because we are not changing the state of
-	 * the file descriptor. If the file is not already open for read,
-	 * then we will get a temporary file descriptor.
-	 */
-	PTHREAD_RWLOCK_rdlock(&obj_hdl->lock);
-
-	cfd = vfs_fsal_open_and_stat(op_ctx->fsal_export, myself, &stat,
-				     FSAL_O_ANY, &fsal_error);
-	if (cfd.fd >= 0) {
-		request_mask = myself->attributes.mask;
-		posix2fsal_attributes(&stat, &myself->attributes);
-		myself->attributes.fsid = obj_hdl->fs->fsid;
-		if (myself->sub_ops && myself->sub_ops->getattrs) {
-			st = myself->sub_ops->getattrs(myself, cfd.fd,
-						       request_mask);
-			if (FSAL_IS_ERROR(st)) {
-				FSAL_CLEAR_MASK(myself->attributes.mask);
-				FSAL_SET_MASK(myself->attributes.mask,
-						ATTR_RDATTR_ERR);
-				fsal_error = st.major;
-				retval = st.minor;
-			}
-		}
-		if (cfd.close_fd)
-			close(cfd.fd);
-	} else {
-		LogDebug(COMPONENT_FSAL, "Failed with %s, fsal_error %s",
-			 strerror(-cfd.fd),
-			 fsal_error ==
-			 ERR_FSAL_STALE ? "ERR_FSAL_STALE" : "other");
-		if (obj_hdl->type == SYMBOLIC_LINK
-		    && cfd.fd == -EPERM) {
-			/* You cannot open_by_handle (XFS on linux) a symlink
-			 * and it throws an EPERM error for it.
-			 * open_by_handle_at does not throw that error for
-			 * symlinks so we play a game here.  Since there is
-			 * not much we can do with symlinks anyway,
-			 * say that we did it but don't actually
-			 * do anything.  In this case, return the stat we got
-			 * at lookup time.  If you *really* want to tweek things
-			 * like owners, get a modern linux kernel...
-			 */
-			fsal_error = ERR_FSAL_NO_ERROR;
-			goto out_unlock;
-		}
-		retval = -cfd.fd;
-	}
-
- out_unlock:
-
-	PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
-
- out:
-	return fsalstat(fsal_error, retval);
-}
-
 /*
  * NOTE: this is done under protection of the attributes rwlock
  * in the cache entry.
@@ -1803,8 +1724,7 @@ void vfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->symlink = makesymlink;
 	ops->readlink = readsymlink;
 	ops->test_access = fsal_test_access;
-	/** @todo need to convert to vfs_getattr2 to enable multi-fd */
-	ops->getattrs = getattrs;
+	ops->getattrs = vfs_getattr2;
 	ops->setattrs = setattrs;
 	ops->link = linkfile;
 	ops->rename = renamefile;
