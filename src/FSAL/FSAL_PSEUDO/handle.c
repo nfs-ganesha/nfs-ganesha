@@ -365,17 +365,6 @@ out:
 	return fsalstat(error, 0);
 }
 
-static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
-			    const char *name,
-			    struct attrlist *attrib,
-			    struct fsal_obj_handle **handle)
-{
-	/* PSEUDOFS doesn't support non-directory inodes */
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
-}
-
 static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 			     const char *name,
 			     struct attrlist *attrib,
@@ -418,57 +407,6 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 	*handle = &hdl->obj_handle;
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
-}
-
-static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
-			      const char *name,
-			      object_file_type_t nodetype,
-			      fsal_dev_t *dev,
-			      struct attrlist *attrib,
-			      struct fsal_obj_handle **handle)
-{
-	/* PSEUDOFS doesn't support non-directory inodes */
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
-}
-
-/** makesymlink
- *  Note that we do not set mode bits on symlinks for Linux/POSIX
- *  They are not really settable in the kernel and are not checked
- *  anyway (default is 0777) because open uses that target's mode
- */
-
-static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
-				 const char *name,
-				 const char *link_path,
-				 struct attrlist *attrib,
-				 struct fsal_obj_handle **handle)
-{
-	/* PSEUDOFS doesn't support non-directory inodes */
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
-}
-
-static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
-				 struct gsh_buffdesc *link_content,
-				 bool refresh)
-{
-	/* PSEUDOFS doesn't support non-directory inodes */
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
-}
-
-static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
-			      struct fsal_obj_handle *destdir_hdl,
-			      const char *name)
-{
-	/* PSEUDOFS doesn't support non-directory inodes */
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
 /**
@@ -537,18 +475,6 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-static fsal_status_t renamefile(struct fsal_obj_handle *obj_hdl,
-				struct fsal_obj_handle *olddir_hdl,
-				const char *old_name,
-				struct fsal_obj_handle *newdir_hdl,
-				const char *new_name)
-{
-	/* PSEUDOFS doesn't support non-directory inodes */
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
-}
-
 static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl)
 {
 	struct pseudo_fsal_obj_handle *myself;
@@ -575,19 +501,6 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl)
 		     myself->attributes.numlinks);
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
-}
-
-/*
- * NOTE: this is done under protection of the attributes rwlock
- *       in the cache entry.
- */
-
-static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
-			      struct attrlist *attrs)
-{
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
 /* file_unlink
@@ -737,38 +650,12 @@ void pseudofs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->release = release;
 	ops->lookup = lookup;
 	ops->readdir = read_dirents;
-	ops->create = create;
 	ops->mkdir = makedir;
-	ops->mknode = makenode;
-	ops->symlink = makesymlink;
-	ops->readlink = readsymlink;
 	ops->test_access = fsal_test_access;
 	ops->getattrs = getattrs;
-	ops->setattrs = setattrs;
-	ops->link = linkfile;
-	ops->rename = renamefile;
 	ops->unlink = file_unlink;
-	ops->open = pseudofs_open;
-	ops->status = pseudofs_status;
-	ops->read = pseudofs_read;
-	ops->write = pseudofs_write;
-	ops->commit = pseudofs_commit;
-	ops->lock_op = pseudofs_lock_op;
-	ops->close = pseudofs_close;
 	ops->handle_digest = handle_digest;
 	ops->handle_to_key = handle_to_key;
-
-	/* xattr related functions */
-	ops->list_ext_attrs = pseudofs_list_ext_attrs;
-	ops->getextattr_id_by_name = pseudofs_getextattr_id_by_name;
-	ops->getextattr_value_by_name = pseudofs_getextattr_value_by_name;
-	ops->getextattr_value_by_id = pseudofs_getextattr_value_by_id;
-	ops->setextattr_value = pseudofs_setextattr_value;
-	ops->setextattr_value_by_id = pseudofs_setextattr_value_by_id;
-	ops->getextattr_attrs = pseudofs_getextattr_attrs;
-	ops->remove_extattr_by_id = pseudofs_remove_extattr_by_id;
-	ops->remove_extattr_by_name = pseudofs_remove_extattr_by_name;
-
 }
 
 /* export methods that create object handles
