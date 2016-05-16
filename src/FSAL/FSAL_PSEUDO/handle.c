@@ -365,6 +365,26 @@ out:
 	return fsalstat(error, 0);
 }
 
+/**
+ * @brief Create a directory
+ *
+ * This function creates a new directory.
+ *
+ * While FSAL_PSEUDO is a support_ex FSAL, it doesn't actually support
+ * setting attributes, so only the mode attribute is relevant. Any other
+ * attributes set on creation will be ignored. The owner and group will be
+ * set from the active credentials.
+ *
+ * @param[in]     dir_hdl Directory in which to create the directory
+ * @param[in]     name    Name of directory to create
+ * @param[in,out] attrib  Attributes to set on newly created
+ *                        object/attributes you actually got.
+ * @param[out]    new_obj Newly created object
+ *
+ * @note On success, @a new_obj has been ref'd
+ *
+ * @return FSAL status.
+ */
 static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 			     const char *name,
 			     struct attrlist *attrib,
