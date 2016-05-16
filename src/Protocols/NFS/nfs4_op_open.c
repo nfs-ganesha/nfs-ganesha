@@ -556,7 +556,6 @@ static nfsstat4 open4_create(OPEN4args *arg, compound_data_t *data,
 	struct attrlist sattr;
 	/* Whether the client supplied any attributes */
 	bool sattr_provided = false;
-	uint32_t mode = 0600;
 	/* Return from FSAL calls */
 	fsal_status_t status = {0, 0};
 	/* True if a verifier has been specified and we are
@@ -564,6 +563,8 @@ static nfsstat4 open4_create(OPEN4args *arg, compound_data_t *data,
 	bool verf_provided = false;
 	/* Client provided verifier, split into two piees */
 	uint32_t verf_hi = 0, verf_lo = 0;
+
+	memset(&sattr, 0, sizeof(sattr));
 
 	*obj = NULL;
 	*created = false;
@@ -604,9 +605,6 @@ static nfsstat4 open4_create(OPEN4args *arg, compound_data_t *data,
 
 			sattr_provided = true;
 
-			if (sattr.mask & ATTR_MODE)
-				mode = sattr.mode;
-
 		}
 	} else if (arg->openhow.openflag4_u.how.mode == EXCLUSIVE4_1) {
 		/**
@@ -639,9 +637,6 @@ static nfsstat4 open4_create(OPEN4args *arg, compound_data_t *data,
 				return res->status;
 
 			sattr_provided = true;
-
-			if (sattr.mask & ATTR_MODE)
-				mode = sattr.mode;
 		}
 		if (sattr_provided
 		    && ((FSAL_TEST_MASK(sattr.mask, ATTR_ATIME))
@@ -669,20 +664,21 @@ static nfsstat4 open4_create(OPEN4args *arg, compound_data_t *data,
 		memcpy(&verf_hi, verf, sizeof(uint32_t));
 		memcpy(&verf_lo, verf + sizeof(uint32_t), sizeof(uint32_t));
 
-		if (!sattr_provided) {
-			memset(&sattr, 0, sizeof(struct attrlist));
-			sattr.mask = ATTR_MODE;
-			sattr.mode = mode;
-			sattr_provided = true;
-		}
-
 		fsal_create_set_verifier(&sattr, verf_hi, verf_lo);
+	}
+
+	squash_setattr(&sattr);
+
+	if (!(sattr.mask & ATTR_MODE)) {
+		/* Make sure mode is set. */
+		sattr.mode = 0600;
+		sattr.mask |= ATTR_MODE;
 	}
 
 	status = fsal_create(parent,
 			     filename,
 			     REGULAR_FILE,
-			     mode,
+			     &sattr,
 			     NULL,
 			     &obj_newfile);
 
@@ -726,47 +722,11 @@ static nfsstat4 open4_create(OPEN4args *arg, compound_data_t *data,
 			*created = true;
 		}
 
-		/* If the object exists already size is the only attribute we
-		 * set.
-		 */
-		if (sattr_provided && (FSAL_TEST_MASK(sattr.mask, ATTR_SIZE))
-		    && (sattr.filesize == 0)) {
-			FSAL_CLEAR_MASK(sattr.mask);
-			FSAL_SET_MASK(sattr.mask, ATTR_SIZE);
-		} else {
-			sattr_provided = false;
-		}
-
 		/* Clear error code */
 		status.major = 0;
 	} else {
 		/* Successful creation */
 		*created = true;
-	}
-
-	if (sattr_provided) {
-		/* If owner or owner_group are set, and the credential was
-		 * squashed, then we must squash the set owner and owner_group.
-		 */
-		squash_setattr(&sattr);
-
-		/* Skip setting attributes if all asked attributes
-		 * are handled by create
-		 */
-		if ((sattr.mask & CREATE_MASK_REG_NFS4)
-		    || ((sattr.mask & ATTR_OWNER)
-			&& (op_ctx->creds->caller_uid != sattr.owner))
-		    || ((sattr.mask & ATTR_GROUP)
-			&& (op_ctx->creds->caller_gid != sattr.group))) {
-
-			/* mask off flags handled by create */
-			sattr.mask &= CREATE_MASK_REG_NFS4 | ATTRS_CREDS;
-
-			status = fsal_setattr(obj_newfile, false, NULL, &sattr);
-
-			if (FSAL_IS_ERROR(status))
-				return nfs4_Errno_status(status);
-		}
 	}
 
 	*obj = obj_newfile;

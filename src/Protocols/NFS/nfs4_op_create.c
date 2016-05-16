@@ -75,10 +75,9 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 	char *link_content = NULL;
 	struct fsal_export *exp_hdl;
 	fsal_status_t fsal_status;
-	struct attrlist object_attributes;
-	fsal_dev_t dev_spec;
+	object_file_type_t type;
 
-	memset(&object_attributes, 0, sizeof(object_attributes));
+	memset(&sattr, 0, sizeof(sattr));
 
 	resp->resop = NFS4_OP_CREATE;
 	res_CREATE4->status = NFS4_OK;
@@ -149,11 +148,6 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 	res_CREATE4->CREATE4res_u.resok4.cinfo.before =
 		fsal_get_changeid4(obj_parent);
 
-	FSAL_SET_MASK(object_attributes.mask,
-		      ATTR_MODE | ATTR_OWNER | ATTR_GROUP);
-	object_attributes.owner = op_ctx->creds->caller_uid;
-	object_attributes.group = op_ctx->creds->caller_gid; /* be more
-							       * selective? */
 	/* Convert the incoming fattr4 to a vattr structure,
 	 * if such arguments are supplied
 	 */
@@ -167,15 +161,13 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 			res_CREATE4->status = convrc;
 			goto out;
 		}
-
-		if (sattr.mask & ATTR_MODE)
-			object_attributes.mode = sattr.mode;
 	}
 
 	/* Create either a symbolic link or a directory */
 	switch (arg_CREATE4->objtype.type) {
 	case NF4LNK:
 		/* Convert the name to link from into a regular string */
+		type = SYMBOLIC_LINK;
 		res_CREATE4->status = nfs4_utf8string2dynamic(
 				&arg_CREATE4->objtype.createtype4_u.linkdata,
 				UTF8_SCAN_SYMLINK,
@@ -183,62 +175,31 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 
 		if (res_CREATE4->status != NFS4_OK)
 			goto out;
-
-		/* do the symlink operation */
-		fsal_status = obj_parent->obj_ops.symlink(obj_parent, name,
-					     link_content,
-					     &object_attributes,
-					     &obj_new);
 		break;
 
 	case NF4DIR:
 		/* Create a new directory */
-		fsal_status = obj_parent->obj_ops.mkdir(obj_parent, name,
-					      &object_attributes, &obj_new);
+		type = DIRECTORY;
 		break;
 
 	case NF4SOCK:
 		/* Create a new socket file */
-		fsal_status = obj_parent->obj_ops.mknode(obj_parent,
-						      name, SOCKET_FILE,
-						      NULL, /* dev_t !needed */
-						      &object_attributes,
-						      &obj_new);
+		type = SOCKET_FILE;
 		break;
 
 	case NF4FIFO:
 		/* Create a new socket file */
-		fsal_status = obj_parent->obj_ops.mknode(obj_parent,
-						      name, FIFO_FILE,
-						      NULL, /* dev_t !needed */
-						      &object_attributes,
-						      &obj_new);
+		type = FIFO_FILE;
 		break;
 
 	case NF4CHR:
-		dev_spec.major =
-		    arg_CREATE4->objtype.createtype4_u.devdata.specdata1;
-		dev_spec.minor =
-		    arg_CREATE4->objtype.createtype4_u.devdata.specdata2;
-
 		/* Create a new socket file */
-		fsal_status =
-		    obj_parent->obj_ops.mknode(obj_parent, name, CHARACTER_FILE,
-					       &dev_spec, &object_attributes,
-					       &obj_new);
+		type = CHARACTER_FILE;
 		break;
 
 	case NF4BLK:
-		dev_spec.major =
-		    arg_CREATE4->objtype.createtype4_u.devdata.specdata1;
-		dev_spec.minor =
-		    arg_CREATE4->objtype.createtype4_u.devdata.specdata2;
-
 		/* Create a new socket file */
-		fsal_status =
-		    obj_parent->obj_ops.mknode(obj_parent, name, BLOCK_FILE,
-					       &dev_spec, &object_attributes,
-					       &obj_new);
+		type = BLOCK_FILE;
 		break;
 
 	default:
@@ -248,6 +209,18 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 		res_CREATE4->status = NFS4ERR_BADTYPE;
 		goto out;
 	}			/* switch( arg_CREATE4.objtype.type ) */
+
+	if (!(sattr.mask & ATTR_MODE)) {
+		/* Make sure mode is set. */
+		if (type == DIRECTORY)
+			sattr.mode = 0700;
+		else
+			sattr.mode = 0600;
+		sattr.mask |= ATTR_MODE;
+	}
+
+	fsal_status = fsal_create(obj_parent, name, type, &sattr, link_content,
+				  &obj_new);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		res_CREATE4->status = nfs4_Errno_status(fsal_status);
@@ -271,33 +244,6 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 	    arg_CREATE4->createattrs.attrmask.bitmap4_len;
 
 	if (arg_CREATE4->createattrs.attrmask.bitmap4_len != 0) {
-		/* If owner or owner_group are set, and the credential was
-		 * squashed, then we must squash the set owner and owner_group.
-		 */
-		squash_setattr(&sattr);
-
-		/* Skip setting attributes if all asked attributes
-		 * are handled by create
-		 */
-		if ((sattr.mask & CREATE_MASK_NON_REG_NFS4)
-		    || ((sattr.mask & ATTR_OWNER)
-			&& (op_ctx->creds->caller_uid != sattr.owner))
-		    || ((sattr.mask & ATTR_GROUP)
-			&& (op_ctx->creds->caller_gid != sattr.group))) {
-
-			/* mask off flags handled by create */
-			 sattr.mask &= (CREATE_MASK_NON_REG_NFS4 |
-					ATTRS_CREDS);
-
-			fsal_status = fsal_setattr(obj_new, false, NULL,
-						   &sattr);
-			if (FSAL_IS_ERROR(fsal_status)) {
-				res_CREATE4->status =
-					nfs4_Errno_status(fsal_status);
-				goto out;
-			}
-		}
-
 		/* copy over bitmap */
 		res_CREATE4->CREATE4res_u.resok4.attrset =
 		    arg_CREATE4->createattrs.attrmask;

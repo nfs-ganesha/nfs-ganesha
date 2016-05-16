@@ -156,6 +156,7 @@ bool make_pseudofs_node(char *name, struct pseudofs_state *state)
 	struct fsal_obj_handle *new_node = NULL;
 	fsal_status_t fsal_status;
 	bool retried = false;
+	struct attrlist sattr;
 
 retry:
 
@@ -214,7 +215,11 @@ retry:
 	}
 
 	/* Node was not found and no other error, must create node. */
-	fsal_status = fsal_create(state->obj, name, DIRECTORY, 0755, NULL,
+	memset(&sattr, 0, sizeof(sattr));
+	sattr.mode = 0755;
+	sattr.mask = ATTR_MODE;
+
+	fsal_status = fsal_create(state->obj, name, DIRECTORY, &sattr, NULL,
 				  &new_node);
 
 	if (fsal_status.major == ERR_FSAL_EXIST && !retried) {

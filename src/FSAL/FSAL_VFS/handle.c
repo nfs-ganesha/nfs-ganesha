@@ -528,11 +528,19 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 	unix_mode = fsal2unix_mode(attrib->mode)
 	    & ~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
 	dir_fd = vfs_fsal_open(myself, flags, &status.major);
-	if (dir_fd < 0)
+	if (dir_fd < 0) {
+		LogFullDebug(COMPONENT_FSAL,
+			     "vfs_fsal_open returned %s",
+			     strerror(-dir_fd));
 		return fsalstat(status.major, -dir_fd);
+	}
+
 	retval = vfs_stat_by_handle(dir_fd, &stat);
 	if (retval < 0) {
 		retval = errno;
+		LogFullDebug(COMPONENT_FSAL,
+			     "vfs_stat_by_handle returned %s",
+			     strerror(retval));
 		goto direrr;
 	}
 	/* Become the user because we are creating an object in this dir.
@@ -542,6 +550,9 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 	if (retval < 0) {
 		retval = errno;
 		fsal_restore_ganesha_credentials();
+		LogFullDebug(COMPONENT_FSAL,
+			     "mkdirat returned %s",
+			     strerror(retval));
 		goto direrr;
 	}
 	fsal_restore_ganesha_credentials();
@@ -553,6 +564,9 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 	retval = fstatat(dir_fd, name, &stat, AT_SYMLINK_NOFOLLOW);
 	if (retval < 0) {
 		retval = errno;
+		LogFullDebug(COMPONENT_FSAL,
+			     "fstatat returned %s",
+			     strerror(retval));
 		goto fileerr;
 	}
 
@@ -562,20 +576,39 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 			   op_ctx->fsal_export);
 	if (hdl == NULL) {
 		retval = ENOMEM;
+		LogFullDebug(COMPONENT_FSAL,
+			     "alloc_handle returned %s",
+			     strerror(retval));
 		goto fileerr;
 	}
+
 	*handle = &hdl->obj_handle;
 
 	close(dir_fd);
-	status.major = ERR_FSAL_NO_ERROR;
-#ifdef ENABLE_VFS_DEBUG_ACL
-	status = (*handle)->obj_ops.setattr2(*handle, false, NULL, attrib);
-	if (FSAL_IS_ERROR(status)) {
-		/* Release the handle we just allocated. */
-		(*handle)->obj_ops.release(*handle);
-		*handle = NULL;
+
+	/* We handled the mode above. */
+	FSAL_UNSET_MASK(attrib->mask, ATTR_MODE);
+
+	if (attrib->mask) {
+		/* Now per support_ex API, if there are any other attributes
+		 * set, go ahead and get them set now.
+		 */
+		status = (*handle)->obj_ops.setattr2(*handle, false, NULL,
+						     attrib);
+		if (FSAL_IS_ERROR(status)) {
+			/* Release the handle we just allocated. */
+			LogFullDebug(COMPONENT_FSAL,
+				     "setattr2 status=%s",
+				     fsal_err_txt(status));
+			(*handle)->obj_ops.release(*handle);
+			*handle = NULL;
+		}
+	} else {
+		status.major = ERR_FSAL_NO_ERROR;
+		status.minor = 0;
 	}
-#endif /* ENABLE_VFS_DEBUG_ACL */
+
+	FSAL_SET_MASK(attrib->mask, ATTR_MODE);
 	return status;
 
  fileerr:
@@ -597,11 +630,9 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 	struct vfs_fsal_obj_handle *myself, *hdl;
 	int dir_fd = -1;
 	struct stat stat;
-	mode_t unix_mode, create_mode = 0;
+	mode_t unix_mode;
 	fsal_status_t status = {0, 0};
 	int retval = 0;
-	uid_t user;
-	gid_t group;
 	dev_t unix_dev = 0;
 	int flags = O_PATH | O_NOACCESS;
 #ifdef ENABLE_VFS_DEBUG_ACL
@@ -649,24 +680,23 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 		return status;
 #endif /* ENABLE_VFS_DEBUG_ACL */
 
-	user = attrib->owner;
-	group = attrib->group;
 	unix_mode = fsal2unix_mode(attrib->mode)
 	    & ~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
+
 	switch (nodetype) {
 	case BLOCK_FILE:
-		create_mode = S_IFBLK;
+		unix_mode |= S_IFBLK;
 		unix_dev = makedev(dev->major, dev->minor);
 		break;
 	case CHARACTER_FILE:
-		create_mode = S_IFCHR;
+		unix_mode |= S_IFCHR;
 		unix_dev = makedev(dev->major, dev->minor);
 		break;
 	case FIFO_FILE:
-		create_mode = S_IFIFO;
+		unix_mode |= S_IFIFO;
 		break;
 	case SOCKET_FILE:
-		create_mode = S_IFSOCK;
+		unix_mode |= S_IFSOCK;
 		break;
 	default:
 		LogMajor(COMPONENT_FSAL, "Invalid node type in FSAL_mknode: %d",
@@ -674,33 +704,67 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 		status.major = ERR_FSAL_INVAL;
 		goto errout;
 	}
+
 	dir_fd = vfs_fsal_open(myself, flags, &status.major);
+
 	if (dir_fd < 0)
 		goto errout;
+
 	retval = vfs_stat_by_handle(dir_fd, &stat);
+
 	if (retval < 0) {
 		retval = errno;
 		goto direrr;
 	}
-	if (stat.st_mode & S_ISGID)
-		group = -1;  /*setgid bit on dir propagates dir group owner */
 
-	/* create it with no access because we are root when we do this */
 	fsal_set_credentials(op_ctx->creds);
-	retval = mknodat(dir_fd, name, create_mode, unix_dev);
+
+	retval = mknodat(dir_fd, name, unix_mode, unix_dev);
+
 	if (retval < 0) {
 		retval = errno;
 		fsal_restore_ganesha_credentials();
 		goto direrr;
 	}
+
 	fsal_restore_ganesha_credentials();
-	retval = make_file_safe(myself, op_ctx, dir_fd, name,
-				unix_mode, user, group, &hdl);
-	if (!retval) {
-		close(dir_fd);	/* done with parent */
-		*handle = &hdl->obj_handle;
-		status.major = ERR_FSAL_NO_ERROR;
-#ifdef ENABLE_VFS_DEBUG_ACL
+
+	vfs_alloc_handle(fh);
+
+	retval = vfs_name_to_handle(dir_fd, myself->obj_handle.fs, name, fh);
+
+	if (retval < 0) {
+		retval = errno;
+		goto filerrr;
+	}
+
+	retval = fstatat(dir_fd, name, &stat, AT_SYMLINK_NOFOLLOW);
+
+	if (retval < 0) {
+		retval = errno;
+		goto filerrr;
+	}
+
+	/* allocate an obj_handle and fill it up */
+	hdl = alloc_handle(dir_fd, fh, myself->obj_handle.fs, &stat,
+			   myself->handle, name, op_ctx->fsal_export);
+
+	if (hdl == NULL) {
+		retval = ENOMEM;
+		goto filerrr;
+	}
+
+	*handle = &hdl->obj_handle;
+
+	close(dir_fd);
+
+	/* We handled the mode above. */
+	FSAL_UNSET_MASK(attrib->mask, ATTR_MODE);
+
+	if (attrib->mask) {
+		/* Now per support_ex API, if there are any other attributes
+		 * set, go ahead and get them set now.
+		 */
 		status = (*handle)->obj_ops.setattr2(*handle, false, NULL,
 						     attrib);
 		if (FSAL_IS_ERROR(status)) {
@@ -708,9 +772,15 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 			(*handle)->obj_ops.release(*handle);
 			*handle = NULL;
 		}
-#endif /* ENABLE_VFS_DEBUG_ACL */
-		return status;
+	} else {
+		status.major = ERR_FSAL_NO_ERROR;
+		status.minor = 0;
 	}
+
+	FSAL_SET_MASK(attrib->mask, ATTR_MODE);
+	return status;
+
+ filerrr:
 
 	unlinkat(dir_fd, name, 0);
 
@@ -782,33 +852,45 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 #endif /* ENABLE_VFS_DEBUG_ACL */
 
 	dir_fd = vfs_fsal_open(myself, flags, &status.major);
+
 	if (dir_fd < 0)
 		return fsalstat(status.major, -dir_fd);
+
 	flags |= O_NOFOLLOW;	/* BSD needs O_NOFOLLOW for
 				 * fhopen() of symlinks */
+
 	retval = vfs_stat_by_handle(dir_fd, &stat);
+
 	if (retval < 0) {
 		retval = errno;
 		goto direrr;
 	}
+
 	/* Become the user because we are creating an object in this dir.
 	 */
 	fsal_set_credentials(op_ctx->creds);
+
 	retval = symlinkat(link_path, dir_fd, name);
+
 	if (retval < 0) {
 		retval = errno;
 		fsal_restore_ganesha_credentials();
 		goto direrr;
 	}
+
 	fsal_restore_ganesha_credentials();
+
 	retval = vfs_name_to_handle(dir_fd, dir_hdl->fs, name, fh);
+
 	if (retval < 0) {
 		retval = errno;
 		goto linkerr;
 	}
+
 	/* now get attributes info,
 	 * being careful to get the link, not the target */
 	retval = fstatat(dir_fd, name, &stat, AT_SYMLINK_NOFOLLOW);
+
 	if (retval < 0) {
 		retval = errno;
 		goto linkerr;
@@ -817,22 +899,36 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 	/* allocate an obj_handle and fill it up */
 	hdl = alloc_handle(dir_fd, fh, dir_hdl->fs, &stat, NULL, name,
 			   op_ctx->fsal_export);
+
 	if (hdl == NULL) {
 		retval = ENOMEM;
 		goto linkerr;
 	}
+
 	*handle = &hdl->obj_handle;
 
 	close(dir_fd);
-	status.major = ERR_FSAL_NO_ERROR;
-#ifdef ENABLE_VFS_DEBUG_ACL
-	status = (*handle)->obj_ops.setattr2(*handle, false, NULL, attrib);
-	if (FSAL_IS_ERROR(status)) {
-		/* Release the handle we just allocated. */
-		(*handle)->obj_ops.release(*handle);
-		*handle = NULL;
+
+	/* We handled the mode above. */
+	FSAL_UNSET_MASK(attrib->mask, ATTR_MODE);
+
+	if (attrib->mask) {
+		/* Now per support_ex API, if there are any other attributes
+		 * set, go ahead and get them set now.
+		 */
+		status = (*handle)->obj_ops.setattr2(*handle, false, NULL,
+						     attrib);
+		if (FSAL_IS_ERROR(status)) {
+			/* Release the handle we just allocated. */
+			(*handle)->obj_ops.release(*handle);
+			*handle = NULL;
+		}
+	} else {
+		status.major = ERR_FSAL_NO_ERROR;
+		status.minor = 0;
 	}
-#endif /* ENABLE_VFS_DEBUG_ACL */
+
+	FSAL_SET_MASK(attrib->mask, ATTR_MODE);
 	return status;
 
  linkerr:

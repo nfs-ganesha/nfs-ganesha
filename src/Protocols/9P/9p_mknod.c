@@ -63,9 +63,9 @@ int _9p_mknod(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	uint64_t fileid = 0LL;
 	fsal_status_t fsal_status;
 	object_file_type_t nodetype;
-	fsal_create_arg_t create_arg;
+	struct attrlist object_attributes;
 
-	memset(&create_arg, 0, sizeof(create_arg));
+	memset(&object_attributes, 0, sizeof(object_attributes));
 
 	/* Get data */
 	_9p_getptr(cursor, msgtag, u16);
@@ -113,13 +113,15 @@ int _9p_mknod(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	else			/* bad type */
 		return _9p_rerror(req9p, msgtag, EINVAL, plenout, preply);
 
-	create_arg.dev_spec.major = *major;
-	create_arg.dev_spec.minor = *minor;
+	object_attributes.rawdev.major = *major;
+	object_attributes.rawdev.minor = *minor;
+	object_attributes.mode = *mode;
+	object_attributes.mask = ATTR_RAWDEV | ATTR_MODE;
 
 	/* Create the directory */
    /**  @todo  BUGAZOMEU the gid parameter is not used yet */
-	fsal_status = fsal_create(pfid->pentry, obj_name, nodetype, *mode,
-				  &create_arg, &pentry_newobj);
+	fsal_status = fsal_create(pfid->pentry, obj_name, nodetype,
+				  &object_attributes, NULL, &pentry_newobj);
 	if (FSAL_IS_ERROR(fsal_status))
 		return _9p_rerror(req9p, msgtag, _9p_tools_errno(fsal_status),
 				  plenout, preply);

@@ -60,6 +60,7 @@ int _9p_mkdir(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	char dir_name[MAXNAMLEN];
 	uint64_t fileid;
 	fsal_status_t fsal_status;
+	struct attrlist sattr;
 
 	/* Get data */
 	_9p_getptr(cursor, msgtag, u16);
@@ -91,9 +92,15 @@ int _9p_mkdir(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		return _9p_rerror(req9p, msgtag, EROFS, plenout, preply);
 
 	snprintf(dir_name, MAXNAMLEN, "%.*s", *name_len, name_str);
+
+	memset(&sattr, 0, sizeof(sattr));
+
+	sattr.mode = *mode;
+	sattr.mask = ATTR_MODE;
+
 	/* Create the directory */
 	/* BUGAZOMEU: @todo : the gid parameter is not used yet */
-	fsal_status = fsal_create(pfid->pentry, dir_name, DIRECTORY, *mode,
+	fsal_status = fsal_create(pfid->pentry, dir_name, DIRECTORY, &sattr,
 				  NULL, &pentry_newdir);
 	if (FSAL_IS_ERROR(fsal_status))
 		return _9p_rerror(req9p, msgtag,

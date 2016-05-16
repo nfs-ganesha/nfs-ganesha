@@ -142,12 +142,19 @@ int _9p_lcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 					  plenout, preply);
 	} else {
 		/* Create the file */
+		struct attrlist sattr;
+
+		memset(&sattr, 0, sizeof(sattr));
+
+		sattr.mode = *mode;
+		sattr.group = *gid;
+		sattr.mask = ATTR_MODE | ATTR_GROUP;
 
 		/* BUGAZOMEU: @todo : the gid parameter is not used yet,
 		 * flags is not yet used
 		 */
 		fsal_status = fsal_create(pfid->pentry, file_name, REGULAR_FILE,
-					  *mode, NULL, &pentry_newfile);
+					  &sattr, NULL, &pentry_newfile);
 		if (FSAL_IS_ERROR(fsal_status))
 			return _9p_rerror(req9p, msgtag,
 					  _9p_tools_errno(fsal_status),

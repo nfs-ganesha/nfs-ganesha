@@ -65,7 +65,6 @@
 int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
 	const char *file_name = arg->arg_create3.where.name;
-	uint32_t mode = 0;
 	struct fsal_obj_handle *file_obj = NULL;
 	struct fsal_obj_handle *parent_obj = NULL;
 	pre_op_attr pre_parent = {
@@ -136,14 +135,6 @@ int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	/* Check if asked attributes are correct */
 	if (arg->arg_create3.how.mode == GUARDED
 	    || arg->arg_create3.how.mode == UNCHECKED) {
-		if (arg->arg_create3.how.createhow3_u.obj_attributes.mode.
-		    set_it) {
-			mode =
-			    unix2fsal_mode(arg->arg_create3.how.createhow3_u.
-					   obj_attributes.mode.set_mode3_u.
-					   mode);
-		}
-
 		if (nfs3_Sattr_To_FSALattr(
 		     &sattr,
 		     &arg->arg_create3.how.createhow3_u.obj_attributes) == 0) {
@@ -151,6 +142,12 @@ int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 			rc = NFS_REQ_OK;
 			goto out;
 		}
+	}
+
+	if (!(sattr.mask & ATTR_MODE)) {
+		/* Make sure mode is set. */
+		sattr.mode = 0600;
+		sattr.mask |= ATTR_MODE;
 	}
 
 	if (parent_obj->fsal->m_ops.support_ex(parent_obj)) {
@@ -188,10 +185,6 @@ int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		goto make_handle;
 	}
 
-	/* Mode is managed in fsal_create,
-	   there is no need to manage it */
-	FSAL_UNSET_MASK(sattr.mask, ATTR_MODE);
-
 	if (arg->arg_create3.how.mode == EXCLUSIVE) {
 		const char *verf =
 		    (const char *)&(arg->arg_create3.how.createhow3_u.verf);
@@ -204,7 +197,12 @@ int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		fsal_create_set_verifier(&sattr, verf_hi, verf_lo);
 	}
 
-	fsal_status = fsal_create(parent_obj, file_name, REGULAR_FILE, mode,
+	/* If owner or owner_group are set, and the credential was
+	 * squashed, then we must squash the set owner and owner_group.
+	 */
+	squash_setattr(&sattr);
+
+	fsal_status = fsal_create(parent_obj, file_name, REGULAR_FILE, &sattr,
 				  NULL, &file_obj);
 
 	/* Complete failure */
@@ -234,31 +232,6 @@ int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 		/* Clear error code */
 		fsal_status = fsalstat(ERR_FSAL_NO_ERROR, 0);
-	}
-
-	/* Are there any attributes left to set? */
-	if (sattr.mask) {
-		/* If owner or owner_group are set, and the credential was
-		 * squashed, then we must squash the set owner and owner_group.
-		 */
-		squash_setattr(&sattr);
-
-		if ((sattr.mask & CREATE_MASK_REG_NFS3)
-		    || ((sattr.mask & ATTR_OWNER)
-			&& (op_ctx->creds->caller_uid != sattr.owner))
-		    || ((sattr.mask & ATTR_GROUP)
-			&& (op_ctx->creds->caller_gid != sattr.group))) {
-
-			/* mask off flags handled by create */
-			sattr.mask &= CREATE_MASK_REG_NFS3 | ATTRS_CREDS;
-
-			/* A call to fsal_setattr is required */
-			fsal_status = fsal_setattr(file_obj, false, NULL,
-						   &sattr);
-
-			if (FSAL_IS_ERROR(fsal_status))
-				goto out_fail;
-		}
 	}
 
  make_handle:

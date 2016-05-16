@@ -945,12 +945,15 @@ fsal_create_set_verifier(struct attrlist *sattr, uint32_t verf_hi,
  * returned error is ERR_FSAL_EXIST, and @a obj is set if the existing object
  * has the same type as the requested one.
  *
- * @param[in]  parent     Parent directory
- * @param[in]  name       Name of the object to create
- * @param[in]  type       Type of the object to create
- * @param[in]  mode       Mode to be used at file creation
- * @param[in]  create_arg Additional argument for object creation
- * @param[out] obj        Created file
+ * The caller is expected to set the mode. Any other specified attributes
+ * will also be set.
+ *
+ * @param[in]  parent       Parent directory
+ * @param[in]  name         Name of the object to create
+ * @param[in]  type         Type of the object to create
+ * @param[in]  attrs        Attributes to be used at file creation
+ * @param[in]  link_content Contents for symlink
+ * @param[out] obj          Created file
  *
  * @note On success, @a obj has been ref'd
  *
@@ -959,19 +962,16 @@ fsal_create_set_verifier(struct attrlist *sattr, uint32_t verf_hi,
 
 fsal_status_t fsal_create(struct fsal_obj_handle *parent,
 			  const char *name,
-			  object_file_type_t type, uint32_t mode,
-			  fsal_create_arg_t *create_arg,
+			  object_file_type_t type,
+			  struct attrlist *attrs,
+			  const char *link_content,
 			  struct fsal_obj_handle **obj)
 {
 	fsal_status_t status = { 0, 0 };
-	struct attrlist object_attributes;
-	fsal_create_arg_t zero_create_arg;
-
-	memset(&zero_create_arg, 0, sizeof(zero_create_arg));
-	memset(&object_attributes, 0, sizeof(object_attributes));
-
-	if (create_arg == NULL)
-		create_arg = &zero_create_arg;
+	attrmask_t orig_mask = attrs->mask;
+	uint64_t owner = attrs->owner;
+	uint64_t group = attrs->group;
+	bool support_ex = parent->fsal->m_ops.support_ex(parent);
 
 	if ((type != REGULAR_FILE) && (type != DIRECTORY)
 	    && (type != SYMBOLIC_LINK) && (type != SOCKET_FILE)
@@ -985,47 +985,55 @@ fsal_status_t fsal_create(struct fsal_obj_handle *parent,
 		goto out;
 	}
 
+	if (!support_ex) {
+		/* For old API, make sure owner/group attr matches op_ctx */
+		attrs->mask |= ATTR_OWNER | ATTR_GROUP;
+		attrs->owner = op_ctx->creds->caller_uid;
+		attrs->group = op_ctx->creds->caller_gid;
+	} else {
+		/* For support_ex API, turn off owner and/or group attr
+		 * if they are the same as the credentials.
+		 */
+		if ((attrs->mask & ATTR_OWNER) &&
+		    attrs->owner == op_ctx->creds->caller_uid)
+			FSAL_UNSET_MASK(attrs->mask, ATTR_OWNER);
+		if ((attrs->mask & ATTR_GROUP) &&
+		    attrs->group == op_ctx->creds->caller_gid)
+			FSAL_UNSET_MASK(attrs->mask, ATTR_GROUP);
+	}
+
 	/* Permission checking will be done by the FSAL operation. */
 
 	/* Try to create it first */
 
-	/* we pass in attributes to the create.  We will get them back below */
-	FSAL_SET_MASK(object_attributes.mask,
-		      ATTR_MODE | ATTR_OWNER | ATTR_GROUP);
-	object_attributes.owner = op_ctx->creds->caller_uid;
-	object_attributes.group = op_ctx->creds->caller_gid; /* be more
-							       * selective? */
-	object_attributes.mode = mode;
-
 	switch (type) {
 	case REGULAR_FILE:
-		status = parent->obj_ops.create(parent, name,
-						&object_attributes, obj);
+		/* NOTE: will not be called here if support_ex */
+		status = parent->obj_ops.create(parent, name, attrs, obj);
 		break;
 
 	case DIRECTORY:
-		status = parent->obj_ops.mkdir(parent, name,
-					       &object_attributes, obj);
+		status = parent->obj_ops.mkdir(parent, name, attrs, obj);
 		break;
 
 	case SYMBOLIC_LINK:
 		status = parent->obj_ops.symlink(parent, name,
-						 create_arg->link_content,
-						 &object_attributes, obj);
+						 link_content,
+						 attrs, obj);
 		break;
 
 	case SOCKET_FILE:
 	case FIFO_FILE:
 		status = parent->obj_ops.mknode(parent, name, type,
 						NULL, /* dev_t !needed */
-						&object_attributes, obj);
+						attrs, obj);
 		break;
 
 	case BLOCK_FILE:
 	case CHARACTER_FILE:
 		status = parent->obj_ops.mknode(parent, name, type,
-						&create_arg->dev_spec,
-						&object_attributes, obj);
+						&attrs->rawdev,
+						attrs, obj);
 		break;
 
 	case NO_FILE_TYPE:
@@ -1058,14 +1066,51 @@ fsal_status_t fsal_create(struct fsal_obj_handle *parent,
 					(*obj)->obj_ops.put_ref((*obj));
 					*obj = NULL;
 				}
-				goto out;
+				if (type != REGULAR_FILE)
+					goto out;
+				/* Otherwise fall through to set size if 0 */
+				if ((attrs->mask & ATTR_SIZE) &&
+				    attrs->filesize == 0)
+					attrs->mask &= ATTR_SIZE;
+				else
+					goto out;
 			}
+		} else {
+			*obj = NULL;
+			goto out;
 		}
-		*obj = NULL;
-		goto out;
+	}
+
+	if (!support_ex) {
+		/* Handle setattr for old API */
+		attrs->mask = orig_mask;
+		attrs->owner = owner;
+		attrs->group = group;
+
+		/* We already handled mode */
+		FSAL_UNSET_MASK(attrs->mask, ATTR_MODE);
+
+		/* Check if attrs->owner was same as creds */
+		if ((attrs->mask & ATTR_OWNER) &&
+		    (op_ctx->creds->caller_uid == attrs->owner))
+			FSAL_UNSET_MASK(attrs->mask, ATTR_OWNER);
+
+		/* Check if attrs->group was same as creds */
+		if ((attrs->mask & ATTR_GROUP) &&
+		    (op_ctx->creds->caller_gid == attrs->group))
+			FSAL_UNSET_MASK(attrs->mask, ATTR_GROUP);
+
+		if (attrs->mask) {
+			/* If any attributes were left to set, set them now. */
+			status = fsal_setattr(*obj, false, NULL, attrs);
+		}
 	}
 
  out:
+
+	/* Restore original mask so caller isn't bamboozled... */
+	attrs->mask = orig_mask;
+
 	LogFullDebug(COMPONENT_FSAL,
 		     "Returning obj=%p status=%s for %s FSAL=%s", *obj,
 		     fsal_err_txt(status), name, parent->fsal->name);

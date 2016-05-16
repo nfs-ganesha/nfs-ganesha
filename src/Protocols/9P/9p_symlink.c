@@ -60,12 +60,13 @@ int _9p_symlink(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 	struct fsal_obj_handle *pentry_symlink = NULL;
 	char symlink_name[MAXNAMLEN];
+	char *link_content = NULL;
 	uint64_t fileid;
 	fsal_status_t fsal_status;
 	uint32_t mode = 0777;
-	fsal_create_arg_t create_arg;
+	struct attrlist object_attributes;
 
-	memset(&create_arg, 0, sizeof(create_arg));
+	memset(&object_attributes, 0, sizeof(object_attributes));
 
 	/* Get data */
 	_9p_getptr(cursor, msgtag, u16);
@@ -99,19 +100,24 @@ int _9p_symlink(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 	snprintf(symlink_name, MAXNAMLEN, "%.*s", *name_len, name_str);
 
-	create_arg.link_content = gsh_malloc(MAXPATHLEN);
+	link_content = gsh_malloc(*linkcontent_len + 1);
 
-	snprintf(create_arg.link_content, MAXPATHLEN, "%.*s", *linkcontent_len,
-		 linkcontent_str);
+	memcpy(link_content, linkcontent_str, *linkcontent_len);
+
+	link_content[*linkcontent_len] = '\0';
+
+	object_attributes.mode = mode;
+	object_attributes.mask = ATTR_MODE;
 
 	/* Let's do the job */
 	/* BUGAZOMEU: @todo : the gid parameter is not used yet,
 	 * flags is not yet used */
 	fsal_status = fsal_create(pfid->pentry, symlink_name, SYMBOLIC_LINK,
-				  mode, &create_arg, &pentry_symlink);
+				  &object_attributes, link_content,
+				  &pentry_symlink);
 
-	if (create_arg.link_content != NULL)
-		gsh_free(create_arg.link_content);
+	gsh_free(link_content);
+
 	if (pentry_symlink == NULL) {
 		return _9p_rerror(req9p, msgtag,
 				  _9p_tools_errno(fsal_status), plenout,

@@ -65,7 +65,6 @@
 int nfs3_mkdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
 	const char *dir_name = arg->arg_mkdir3.where.name;
-	uint32_t mode = 0;
 	struct fsal_obj_handle *dir_obj = NULL;
 	struct fsal_obj_handle *parent_obj = NULL;
 	pre_op_attr pre_parent = {
@@ -74,6 +73,8 @@ int nfs3_mkdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	fsal_status_t fsal_status = {0, 0};
 	int rc = NFS_REQ_OK;
 	struct attrlist sattr;
+
+	memset(&sattr, 0, sizeof(sattr));
 
 	if (isDebug(COMPONENT_NFSPROTO)) {
 		char str[LEN_FH_STR];
@@ -128,42 +129,25 @@ int nfs3_mkdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		goto out_fail;
 	}
 
-	if (arg->arg_mkdir3.attributes.mode.set_it)
-		mode = arg->arg_mkdir3.attributes.mode.set_mode3_u.mode;
-	else
-		mode = 0;
-
-	/* Try to create the directory */
-	fsal_status = fsal_create(parent_obj, dir_name, DIRECTORY, mode, NULL,
-				  &dir_obj);
-
-	if (FSAL_IS_ERROR(fsal_status))
-		goto out_fail;
-
-	memset(&sattr, 0, sizeof(sattr));
-
 	if (nfs3_Sattr_To_FSALattr(&sattr, &arg->arg_mkdir3.attributes) == 0) {
 		fsal_status = fsalstat(ERR_FSAL_INVAL, 0);
 		goto out_fail;
 	}
 
-	/*Set attributes if required */
 	squash_setattr(&sattr);
 
-	if ((sattr.mask & CREATE_MASK_NON_REG_NFS3)
-	    || ((sattr.mask & ATTR_OWNER)
-		&& (op_ctx->creds->caller_uid != sattr.owner))
-	    || ((sattr.mask & ATTR_GROUP)
-		&& (op_ctx->creds->caller_gid != sattr.group))) {
-
-		/* mask off flags handled by create */
-		sattr.mask &= CREATE_MASK_NON_REG_NFS3 | ATTRS_CREDS;
-
-		fsal_status = fsal_setattr(dir_obj, false, NULL, &sattr);
-
-		if (FSAL_IS_ERROR(fsal_status))
-			goto out_fail;
+	if (!(sattr.mask & ATTR_MODE)) {
+		/* Make sure mode is set. */
+		sattr.mode = 0;
+		sattr.mask |= ATTR_MODE;
 	}
+
+	/* Try to create the directory */
+	fsal_status = fsal_create(parent_obj, dir_name, DIRECTORY, &sattr, NULL,
+				  &dir_obj);
+
+	if (FSAL_IS_ERROR(fsal_status))
+		goto out_fail;
 
 	MKDIR3resok *d3ok = &res->res_mkdir3.MKDIR3res_u.resok;
 

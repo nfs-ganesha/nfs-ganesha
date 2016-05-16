@@ -252,15 +252,6 @@ typedef fsal_errors_t (*fsal_getattr_cb_t)
 	 enum cb_state cb_state);
 
 /**
- * Type-specific data passed to fsal_create
- */
-
-typedef union fsal_create_arg {
-	fsal_dev_t dev_spec;	/*< Major/minor numbers for a device file */
-	char *link_content;	/*< Just stash the pointer. */
-} fsal_create_arg_t;
-
-/**
  * Indicate whether this is a read or write operation, for fsal_rdwr.
  */
 
@@ -318,8 +309,9 @@ fsal_status_t fsal_lookupp(struct fsal_obj_handle *obj,
 			   struct fsal_obj_handle **parent);
 fsal_status_t fsal_create(struct fsal_obj_handle *parent,
 			  const char *name,
-			  object_file_type_t type, uint32_t mode,
-			  fsal_create_arg_t *create_arg,
+			  object_file_type_t type,
+			  struct attrlist *attrs,
+			  const char *link_content,
 			  struct fsal_obj_handle **obj);
 void fsal_create_set_verifier(struct attrlist *sattr, uint32_t verf_hi,
 			      uint32_t verf_lo);

@@ -66,15 +66,14 @@ int nfs3_symlink(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
 	const char *symlink_name = arg->arg_symlink3.where.name;
 	char *target_path = arg->arg_symlink3.symlink.symlink_data;
-	fsal_create_arg_t create_arg;
-	uint32_t mode = 0777;
 	struct fsal_obj_handle *symlink_obj = NULL;
 	struct fsal_obj_handle *parent_obj;
 	pre_op_attr pre_parent;
 	fsal_status_t fsal_status;
 	int rc = NFS_REQ_OK;
+	struct attrlist sattr;
 
-	memset(&create_arg, 0, sizeof(create_arg));
+	memset(&sattr, 0, sizeof(sattr));
 
 	if (isDebug(COMPONENT_NFSPROTO)) {
 		char str[LEN_FH_STR];
@@ -132,21 +131,6 @@ int nfs3_symlink(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		goto out_fail;
 	}
 
-	create_arg.link_content = target_path;
-
-	if (arg->arg_mkdir3.attributes.mode.set_it)
-		mode = arg->arg_symlink3.symlink.symlink_attributes.mode.
-			set_mode3_u.mode;
-
-	/* Make the symlink */
-	fsal_status = fsal_create(parent_obj, symlink_name, SYMBOLIC_LINK, mode,
-				  &create_arg, &symlink_obj);
-
-	if (FSAL_IS_ERROR(fsal_status))
-		goto out_fail;
-
-	struct attrlist sattr;
-
 	/* Some clients (like the Spec NFS benchmark) set
 	 * attributes with the NFSPROC3_SYMLINK request
 	 */
@@ -158,26 +142,21 @@ int nfs3_symlink(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		goto out;
 	}
 
-	/* If owner or owner_group are set, and the credential was
-	 * squashed, then we must squash the set owner and owner_group.
-	 */
 	squash_setattr(&sattr);
 
-	if ((sattr.mask & CREATE_MASK_NON_REG_NFS3)
-	    || ((sattr.mask & ATTR_OWNER)
-		&& (op_ctx->creds->caller_uid != sattr.owner))
-	    || ((sattr.mask & ATTR_GROUP)
-		&& (op_ctx->creds->caller_gid != sattr.group))) {
-
-		/* mask off flags handled by create */
-		sattr.mask &= CREATE_MASK_NON_REG_NFS3 | ATTRS_CREDS;
-
-		/* A call to fsal_setattr is required */
-		fsal_status = fsal_setattr(symlink_obj, false, NULL, &sattr);
-
-		if (FSAL_IS_ERROR(fsal_status))
-			goto out_fail;
+	if (!(sattr.mask & ATTR_MODE)) {
+		/* Make sure mode is set. */
+		sattr.mode = 0777;
+		sattr.mask |= ATTR_MODE;
 	}
+
+	/* Make the symlink */
+	fsal_status = fsal_create(parent_obj, symlink_name, SYMBOLIC_LINK,
+				  &sattr, target_path, &symlink_obj);
+
+	if (FSAL_IS_ERROR(fsal_status))
+		goto out_fail;
+
 
 	if (!nfs3_FSALToFhandle(
 	     true,

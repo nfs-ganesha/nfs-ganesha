@@ -69,13 +69,10 @@ int nfs3_mknod(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	pre_op_attr pre_parent;
 	object_file_type_t nodetype;
 	const char *file_name = arg->arg_mknod3.where.name;
-	uint32_t mode = 0;
-	fsal_create_arg_t create_arg;
 	int rc = NFS_REQ_OK;
 	fsal_status_t fsal_status;
 	struct attrlist sattr;
 
-	memset(&create_arg, 0, sizeof(create_arg));
 	memset(&sattr, 0, sizeof(sattr));
 
 	if (isDebug(COMPONENT_NFSPROTO)) {
@@ -126,19 +123,6 @@ int nfs3_mknod(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	switch (arg->arg_mknod3.what.type) {
 	case NF3CHR:
 	case NF3BLK:
-		if (arg->arg_mknod3.what.mknoddata3_u.device.dev_attributes.
-		    mode.set_it) {
-			mode = arg->arg_mknod3.what.mknoddata3_u.device.
-					dev_attributes.mode.set_mode3_u.mode;
-		} else {
-			mode = 0;
-		}
-
-		create_arg.dev_spec.major =
-		    arg->arg_mknod3.what.mknoddata3_u.device.spec.specdata1;
-		create_arg.dev_spec.minor =
-		    arg->arg_mknod3.what.mknoddata3_u.device.spec.specdata2;
-
 		if (nfs3_Sattr_To_FSALattr(&sattr,
 					   &arg->arg_mknod3.what.mknoddata3_u.
 						device.dev_attributes) == 0) {
@@ -151,16 +135,6 @@ int nfs3_mknod(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	case NF3FIFO:
 	case NF3SOCK:
-		if (arg->arg_mknod3.what.mknoddata3_u.pipe_attributes.mode.
-		    set_it)
-			mode = (arg->arg_mknod3.what.mknoddata3_u.
-				pipe_attributes.mode.set_mode3_u.mode);
-		else
-			mode = 0;
-
-		create_arg.dev_spec.major = 0;
-		create_arg.dev_spec.minor = 0;
-
 		if (nfs3_Sattr_To_FSALattr(&sattr,
 					   &arg->arg_mknod3.what.mknoddata3_u.
 						pipe_attributes) == 0) {
@@ -207,9 +181,17 @@ int nfs3_mknod(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		return NFS_REQ_OK;
 	}
 
+	squash_setattr(&sattr);
+
+	if (!(sattr.mask & ATTR_MODE)) {
+		/* Make sure mode is set. */
+		sattr.mode = 0;
+		sattr.mask |= ATTR_MODE;
+	}
+
 	/* Try to create it */
-	fsal_status = fsal_create(parent_obj, file_name, nodetype, mode,
-				  &create_arg, &node_obj);
+	fsal_status = fsal_create(parent_obj, file_name, nodetype, &sattr,
+				  NULL, &node_obj);
 
 	if (FSAL_IS_ERROR(fsal_status))
 		goto out_fail;
@@ -228,24 +210,6 @@ int nfs3_mknod(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	/* Set Post Op Fh3 structure */
 	rok->obj.handle_follows = TRUE;
-
-	/*Set attributes if required */
-	squash_setattr(&sattr);
-
-	if ((sattr.mask & CREATE_MASK_NON_REG_NFS3)
-	    || ((sattr.mask & ATTR_OWNER)
-		&& (op_ctx->creds->caller_uid != sattr.owner))
-	    || ((sattr.mask & ATTR_GROUP)
-		&& (op_ctx->creds->caller_gid != sattr.group))) {
-
-		/* mask off flags handled by create */
-		sattr.mask &= CREATE_MASK_NON_REG_NFS3 | ATTRS_CREDS;
-
-		fsal_status = fsal_setattr(node_obj, false, NULL, &sattr);
-
-		if (FSAL_IS_ERROR(fsal_status))
-			goto out_fail;
-	}
 
 	/* Build entry attributes */
 	nfs_SetPostOpAttr(node_obj, &rok->obj_attributes);

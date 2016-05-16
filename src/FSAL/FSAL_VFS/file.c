@@ -2222,8 +2222,11 @@ fsal_status_t vfs_setattr2(struct fsal_obj_handle *obj_hdl,
 	 * require a read/write file descriptor.
 	 */
 	if (FSAL_TEST_MASK(attrib_set->mask, ATTR_SIZE)) {
-		if (obj_hdl->type != REGULAR_FILE)
+		if (obj_hdl->type != REGULAR_FILE) {
+			LogFullDebug(COMPONENT_FSAL,
+				     "Setting size on non-regular file");
 			return fsalstat(ERR_FSAL_INVAL, EINVAL);
+		}
 		openflags = FSAL_O_RDWR;
 	}
 
@@ -2247,6 +2250,9 @@ fsal_status_t vfs_setattr2(struct fsal_obj_handle *obj_hdl,
 			 */
 			status = fsalstat(ERR_FSAL_NO_ERROR, 0);
 		}
+		LogFullDebug(COMPONENT_FSAL,
+			     "find_fd status=%s",
+			     fsal_err_txt(status));
 		goto out;
 	}
 
