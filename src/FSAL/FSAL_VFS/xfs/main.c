@@ -38,6 +38,7 @@
 #include <sys/types.h>
 #include "fsal.h"
 #include "FSAL/fsal_init.h"
+#include "fsal_handle_syscalls.h"
 
 /* VFS FSAL module private storage
  */
@@ -70,7 +71,7 @@ static struct fsal_staticfsinfo_t default_posix_info = {
 	.case_insensitive = false,
 	.case_preserving = true,
 	.lock_support = false,
-	.lock_support_owner = false,
+	.lock_support_owner = true,
 	.lock_support_async_block = false,
 	.named_attr = true,
 	.unique_handles = true,
@@ -136,8 +137,44 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 {
 	struct xfs_fsal_module *xfs_me =
 	    container_of(fsal_hdl, struct xfs_fsal_module, fsal);
+#ifdef F_OFD_GETLK
+	int fd, rc;
+	struct flock lock;
+#endif
 
 	xfs_me->fs_info = default_posix_info;	/* copy the consts */
+
+#ifdef F_OFD_GETLK
+	/* If on a system that might support OFD locks, verify them.
+	 * Only if they exist will we declare lock support.
+	 */
+	LogInfo(COMPONENT_FSAL, "FSAL_XFS testing OFD Locks");
+	fd = open("/tmp/ganesha.nfsd.locktest", O_CREAT | O_RDWR, 0600);
+	if (fd >= 0) {
+		lock.l_whence = SEEK_SET;
+		lock.l_type = F_RDLCK;
+		lock.l_start = 0;
+		lock.l_len = 0;
+		lock.l_pid = 0;
+
+		rc = fcntl(fd, F_OFD_GETLK, &lock);
+
+		if (rc == 0)
+			xfs_me->fs_info.lock_support = true;
+		else
+			LogInfo(COMPONENT_FSAL, "Could not use OFD locks");
+
+		close(fd);
+	} else {
+		LogInfo(COMPONENT_FSAL, "Could not open file");
+	}
+#endif
+
+	if (xfs_me->fs_info.lock_support)
+		LogInfo(COMPONENT_FSAL, "FSAL_XFS enabling OFD Locks");
+	else
+		LogInfo(COMPONENT_FSAL, "FSAL_XFS disabling lock support");
+
 	(void) load_config_from_parse(config_struct,
 				      &xfs_param,
 				      &xfs_me->fs_info,
@@ -166,6 +203,17 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 				struct config_error_type *err_type,
 				const struct fsal_up_vector *up_ops);
 
+/**
+ * @brief Indicate support for extended operations.
+ *
+ * @retval true if extended operations are supported.
+ */
+
+bool vfs_support_ex(struct fsal_obj_handle *obj)
+{
+	return true;
+}
+
 /* Module initialization.
  * Called by dlopen() to register the module
  * keep a private pointer to me in myself
@@ -192,6 +240,7 @@ MODULE_INIT void xfs_init(void)
 	}
 	myself->m_ops.create_export = vfs_create_export;
 	myself->m_ops.init_config = init_config;
+	myself->m_ops.support_ex = vfs_support_ex;
 }
 
 MODULE_FINI void xfs_unload(void)
