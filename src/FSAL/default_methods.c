@@ -564,18 +564,8 @@ struct state_t *alloc_state(struct fsal_export *exp_hdl,
 			    enum state_type state_type,
 			    struct state_t *related_state)
 {
-	struct state_t *state;
-
-	state = gsh_calloc(1, sizeof(struct state_t));
-
-	state->state_exp = exp_hdl;
-	state->state_type = state_type;
-
-	if (state_type == STATE_TYPE_LOCK ||
-	    state_type == STATE_TYPE_NLM_LOCK)
-		state->state_data.lock.openstate = related_state;
-
-	return state;
+	return init_state(gsh_calloc(1, sizeof(struct state_t)),
+			  exp_hdl, state_type, related_state);
 }
 
 /**

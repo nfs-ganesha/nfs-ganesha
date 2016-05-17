@@ -37,6 +37,9 @@
 #ifndef FSAL_COMMONLIB_H
 #define FSAL_COMMONLIB_H
 
+#include "fsal_api.h"
+#include "sal_data.h"
+
 /*
  * fsal common utility functions
  */
@@ -153,5 +156,83 @@ fsal_status_t check_share_conflict(struct fsal_share *share,
 
 fsal_status_t merge_share(struct fsal_share *orig_share,
 			  struct fsal_share *dupe_share);
+
+/**
+ * @brief Function to open an fsal_obj_handle's global file descriptor.
+ *
+ * @param[in]  obj_hdl     File on which to operate
+ * @param[in]  openflags   Mode for open
+ * @param[out] fd          File descriptor that is to be used
+ *
+ * @return FSAL status.
+ */
+
+typedef fsal_status_t (*fsal_open_func)(struct fsal_obj_handle *obj_hdl,
+					fsal_openflags_t openflags,
+					struct fsal_fd *fd);
+
+/**
+ * @brief Function to close an fsal_obj_handle's global file descriptor.
+ *
+ * @param[in]  obj_hdl     File on which to operate
+ * @param[in]  fd          File handle to close
+ *
+ * @return FSAL status.
+ */
+
+typedef fsal_status_t (*fsal_close_func)(struct fsal_obj_handle *obj_hdl,
+					 struct fsal_fd *fd);
+
+fsal_status_t fsal_reopen_obj(struct fsal_obj_handle *obj_hdl,
+			      bool check_share,
+			      bool bypass,
+			      fsal_openflags_t openflags,
+			      struct fsal_fd *my_fd,
+			      struct fsal_share *share,
+			      fsal_open_func open_func,
+			      fsal_close_func close_func,
+			      struct fsal_fd **out_fd,
+			      bool *has_lock,
+			      bool *closefd);
+
+fsal_status_t fsal_find_fd(struct fsal_fd **out_fd,
+			   struct fsal_obj_handle *obj_hdl,
+			   struct fsal_fd *my_fd,
+			   struct fsal_share *share,
+			   bool bypass,
+			   struct state_t *state,
+			   fsal_openflags_t openflags,
+			   fsal_open_func open_func,
+			   fsal_close_func close_func,
+			   bool *has_lock,
+			   bool *need_fsync,
+			   bool *closefd,
+			   bool open_for_locks);
+
+/**
+ * @brief Initialize a state_t structure
+ *
+ * @param[in] state                 The state to initialize
+ * @param[in] exp_hdl               Export state_t will be associated with
+ * @param[in] state_type            Type of state to allocate
+ * @param[in] related_state         Related state if appropriate
+ *
+ * @returns the state structure for streamlined coding.
+ */
+
+static inline struct state_t *init_state(struct state_t *state,
+					 struct fsal_export *exp_hdl,
+					 enum state_type state_type,
+					 struct state_t *related_state)
+{
+	state->state_exp = exp_hdl;
+	state->state_type = state_type;
+
+	if (state_type == STATE_TYPE_LOCK ||
+	    state_type == STATE_TYPE_NLM_LOCK)
+		state->state_data.lock.openstate = related_state;
+
+	return state;
+}
 
 #endif				/* FSAL_COMMONLIB_H */

@@ -853,6 +853,16 @@ typedef struct fsal_share_param_t {
 typedef char fsal_verifier_t[8];
 
 /**
+ * @brief Generic file handle.
+ */
+struct fsal_fd {
+	/** The open and share mode etc. This MUST be first in every
+	 *  file descriptor structure.
+	 */
+	fsal_openflags_t openflags;
+};
+
+/**
  * @brief The ref counted share reservation state.
  *
  * Each field represents the count of instances of that flag being present

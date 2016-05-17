@@ -438,5 +438,56 @@ enum fsal_create_mode nfs3_createmode_to_fsal(createmode3 createmode)
 	return (enum fsal_create_mode) 1 + (unsigned int) createmode;
 }
 
+/**
+ * @brief Determine if the openflags associated with an fd indicate it
+ * is not open in a mode usable by the caller.
+ *
+ * The caller may pass FSAL_O_ANY to indicate any mode of open (RDONLY,
+ * WRONLY, or RDWR is useable - often just to fetch attributes or something).
+ *
+ * Note that FSAL_O_SYNC is considered by this function, so the caller
+ * expects the fd to be considered not usable if O_SYNC doesn't match.
+ *
+ * @param[in] fd_openflags The openflags describing the fd
+ * @param[in] to_openflags The openflags describing the desired mode
+ */
+
+static inline bool not_open_usable(fsal_openflags_t fd_openflags,
+				   fsal_openflags_t to_openflags)
+{
+	/* 1. fd_openflags will NEVER be FSAL_O_ANY.
+	 * 2. If to_openflags == FSAL_O_ANY, the first half will be true if the
+	 *    file is closed, and the second half MUST be true (per statement 1)
+	 * 3. If to_openflags is anything else, the first half will be true and
+	 *    the second half will be true if fd_openflags does not include
+	 *    the requested modes.
+	 */
+	return (to_openflags != FSAL_O_ANY || fd_openflags == FSAL_O_CLOSED)
+	       && ((fd_openflags & to_openflags) != to_openflags);
+}
+
+/**
+ * @brief Determine if the openflags associated with an fd indicate it
+ * is open in a mode usable by the caller.
+ *
+ * The caller may pass FSAL_O_ANY to indicate any mode of open (RDONLY,
+ * WRONLY, or RDWR is useable - often just to fetch attributes or something).
+ *
+ * Note that this function is not just an inversion of the above function
+ * because O_SYNC is not considered.
+ *
+ * @param[in] fd_openflags The openflags describing the fd
+ * @param[in] to_openflags The openflags describing the desired mode
+ */
+
+static inline bool open_correct(fsal_openflags_t fd_openflags,
+				fsal_openflags_t to_openflags)
+{
+	return (to_openflags == FSAL_O_ANY && fd_openflags != FSAL_O_CLOSED)
+	       || (to_openflags != FSAL_O_ANY
+		   && (fd_openflags & to_openflags & FSAL_O_RDWR)
+					== (to_openflags & FSAL_O_RDWR));
+}
+
 #endif				/* !FSAL_H */
 /** @} */
