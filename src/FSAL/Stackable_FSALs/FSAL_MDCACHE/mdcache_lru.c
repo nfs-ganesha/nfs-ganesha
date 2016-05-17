@@ -408,7 +408,7 @@ mdcache_lru_clean(mdcache_entry_t *entry)
 	fsal_status_t status = {0, 0};
 
 	/* Make sure any FSAL global file descriptor is closed. */
-	status = fsal_close(&entry->obj_handle, false);
+	status = fsal_close(&entry->obj_handle);
 
 	if (FSAL_IS_ERROR(status)) {
 		LogCrit(COMPONENT_CACHE_INODE_LRU,
@@ -749,7 +749,7 @@ static inline size_t lru_run_lane(size_t lane, uint64_t *const totalclosed)
 		}
 
 		/* Make sure any FSAL global file descriptor is closed. */
-		status = fsal_close(&entry->obj_handle, not_support_ex);
+		status = fsal_close(&entry->obj_handle);
 
 		if (not_support_ex) {
 			/* Release the content lock. */

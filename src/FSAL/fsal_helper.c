@@ -1661,7 +1661,7 @@ fsal_remove(struct fsal_obj_handle *parent, const char *name)
 	/* Make sure the to_remove_obj is closed since unlink of an
 	 * open file results in 'silly rename' on certain platforms.
 	 */
-	status = fsal_close(to_remove_obj, false);
+	status = fsal_close(to_remove_obj);
 
 	if (FSAL_IS_ERROR(status)) {
 		/* non-fatal error. log the warning and move on */

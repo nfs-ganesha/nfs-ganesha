@@ -103,6 +103,8 @@ struct root_op_context {
 	struct export_perms export_perms;
 };
 
+extern size_t open_fd_count;
+
 static inline void init_root_op_context(struct root_op_context *ctx,
 					struct gsh_export *exp,
 					struct fsal_export *fsal_exp,
@@ -385,20 +387,30 @@ fsal_status_t fsal_reopen2(struct fsal_obj_handle *obj,
  * @return FSAL status
  */
 
-static inline fsal_status_t fsal_close(struct fsal_obj_handle *obj_hdl,
-				       bool skip_ex)
+static inline fsal_status_t fsal_close(struct fsal_obj_handle *obj_hdl)
 {
-	if (obj_hdl->type != REGULAR_FILE ||
-	    ((skip_ex || !obj_hdl->fsal->m_ops.support_ex(obj_hdl)) &&
-	     obj_hdl->obj_ops.status(obj_hdl) == FSAL_O_CLOSED)) {
-		/* If not a regular file, or not support_ex and the file isn't
-		 * open, return no error.
+	bool support_ex;
+
+	if (obj_hdl->type != REGULAR_FILE) {
+		/* Can only close a regular file */
+		return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	}
+
+	support_ex = obj_hdl->fsal->m_ops.support_ex(obj_hdl);
+
+	if (!support_ex && obj_hdl->obj_ops.status(obj_hdl) == FSAL_O_CLOSED) {
+		/* If not support_ex and the file isn't open, return no error.
 		 */
 		return fsalstat(ERR_FSAL_NO_ERROR, 0);
-	} else {
-		/* Otherwise, return the result of close method. */
-		return obj_hdl->obj_ops.close(obj_hdl);
 	}
+
+	/* Otherwise, return the result of close method. */
+	fsal_status_t status = obj_hdl->obj_ops.close(obj_hdl);
+
+	if (!FSAL_IS_ERROR(status) && !support_ex)
+		atomic_dec_size_t(&open_fd_count);
+
+	return status;
 }
 
 fsal_status_t fsal_statfs(struct fsal_obj_handle *obj,

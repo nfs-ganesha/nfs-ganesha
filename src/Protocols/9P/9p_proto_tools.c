@@ -422,7 +422,7 @@ int _9p_tools_clunk(struct _9p_fid *pfid)
 			}
 		} else {
 			/* Under this flag, pin ref is still checked */
-			fsal_status = fsal_close(pfid->pentry, true);
+			fsal_status = fsal_close(pfid->pentry);
 			if (FSAL_IS_ERROR(fsal_status)) {
 				free_fid(pfid);
 				return _9p_tools_errno(fsal_status);
