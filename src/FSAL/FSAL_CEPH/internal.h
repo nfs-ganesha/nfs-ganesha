@@ -69,6 +69,13 @@ struct export {
 	struct handle *root;	/*< The root handle */
 };
 
+struct ceph_fd {
+	/** The open and share mode etc. */
+	fsal_openflags_t openflags;
+	/** The cephfs file descriptor. */
+	Fh *fd;
+};
+
 /**
  * The 'private' Ceph FSAL handle
  */
@@ -76,12 +83,11 @@ struct export {
 struct handle {
 	struct fsal_obj_handle handle;	/*< The public handle */
 	struct attrlist attributes;
-	Fh *fd;
+	struct ceph_fd fd;
 	struct Inode *i;	/*< The Ceph inode */
 	const struct fsal_up_vector *up_ops;	/*< Upcall operations */
 	struct export *export;	/*< The first export this handle belongs to */
 	vinodeno_t vi;		/*< The object identifier */
-	fsal_openflags_t openflags;
 #ifdef CEPH_PNFS
 	uint64_t rd_issued;
 	uint64_t rd_serial;

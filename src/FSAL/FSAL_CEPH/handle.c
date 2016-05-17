@@ -749,20 +749,20 @@ static fsal_status_t ceph_fsal_open(struct fsal_obj_handle *handle_pub,
 	/* We shouldn't need to lock anything, the content lock
 	   should keep the file descriptor protected. */
 
-	if (handle->openflags != FSAL_O_CLOSED)
+	if (handle->fd.openflags != FSAL_O_CLOSED)
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 
-	rc = ceph_ll_open(export->cmount, handle->i, posix_flags, &(handle->fd),
-			  0, 0);
+	rc = ceph_ll_open(export->cmount, handle->i, posix_flags,
+			  &handle->fd.fd, 0, 0);
 	if (rc < 0) {
-		handle->fd = NULL;
+		handle->fd.fd = NULL;
 		LogFullDebug(COMPONENT_FSAL,
 			     "open failed with %s",
 			     strerror(-rc));
 		return ceph2fsal_error(rc);
 	}
 
-	handle->openflags = openflags;
+	handle->fd.openflags = openflags;
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -783,7 +783,7 @@ static fsal_openflags_t status(struct fsal_obj_handle *handle_pub)
 	/* The private 'full' object handle */
 	struct handle *handle = container_of(handle_pub, struct handle, handle);
 
-	return handle->openflags;
+	return handle->fd.openflags;
 }
 
 /**
@@ -818,7 +818,7 @@ static fsal_status_t ceph_fsal_read(struct fsal_obj_handle *handle_pub,
 	int64_t nb_read = 0;
 
 	nb_read =
-	    ceph_ll_read(export->cmount, handle->fd, offset, buffer_size,
+	    ceph_ll_read(export->cmount, handle->fd.fd, offset, buffer_size,
 			 buffer);
 
 	if (nb_read < 0)
@@ -863,7 +863,7 @@ static fsal_status_t ceph_fsal_write(struct fsal_obj_handle *handle_pub,
 	int64_t nb_written = 0;
 
 	nb_written =
-	    ceph_ll_write(export->cmount, handle->fd, offset, buffer_size,
+	    ceph_ll_write(export->cmount, handle->fd.fd, offset, buffer_size,
 			  buffer);
 
 	if (nb_written < 0)
@@ -901,7 +901,7 @@ static fsal_status_t commit(struct fsal_obj_handle *handle_pub,
 	/* The private 'full' object handle */
 	struct handle *handle = container_of(handle_pub, struct handle, handle);
 
-	rc = ceph_ll_fsync(export->cmount, handle->fd, false);
+	rc = ceph_ll_fsync(export->cmount, handle->fd.fd, false);
 
 	if (rc < 0)
 		return ceph2fsal_error(rc);
@@ -927,13 +927,13 @@ static fsal_status_t ceph_fsal_close(struct fsal_obj_handle *handle_pub)
 	/* The private 'full' object handle */
 	struct handle *handle = container_of(handle_pub, struct handle, handle);
 
-	rc = ceph_ll_close(handle->export->cmount, handle->fd);
+	rc = ceph_ll_close(handle->export->cmount, handle->fd.fd);
 
 	if (rc < 0)
 		return ceph2fsal_error(rc);
 
-	handle->fd = NULL;
-	handle->openflags = FSAL_O_CLOSED;
+	handle->fd.fd = NULL;
+	handle->fd.openflags = FSAL_O_CLOSED;
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
