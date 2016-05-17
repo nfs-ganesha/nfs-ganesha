@@ -1275,6 +1275,7 @@ state_owner_t *get_state_owner(care_t care, state_owner_t *key,
  */
 void state_wipe_file(struct fsal_obj_handle *obj)
 {
+	bool release;
 	/*
 	 * currently, only REGULAR files can have state; byte range locks and
 	 * stateid (for v4).  In the future, 4.1, directories could have
@@ -1286,7 +1287,7 @@ void state_wipe_file(struct fsal_obj_handle *obj)
 
 	PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
 
-	state_lock_wipe(obj->state_hdl);
+	release = state_lock_wipe(obj->state_hdl);
 #ifdef _USE_NLM
 	state_share_wipe(obj->state_hdl);
 #endif /* _USE_NLM */
@@ -1297,6 +1298,11 @@ void state_wipe_file(struct fsal_obj_handle *obj)
 #ifdef DEBUG_SAL
 	dump_all_states();
 #endif
+
+	if (release) {
+		/* Drop the ref for the lock_list */
+		obj->obj_ops.put_ref(obj);
+	}
 }
 
 #ifdef DEBUG_SAL

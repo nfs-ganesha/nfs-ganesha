@@ -3563,13 +3563,15 @@ void available_blocked_lock_upcall(struct fsal_obj_handle *obj, void *owner,
  * @brief Free all locks on a file
  *
  * @param[in] obj File to free
+ * @return true if locks were removed, false if list was empty
  */
-void state_lock_wipe(struct state_hdl *hstate)
+bool state_lock_wipe(struct state_hdl *hstate)
 {
 	if (glist_empty(&hstate->file.lock_list))
-		return;
+		return false;
 
 	free_list(&hstate->file.lock_list);
+	return true;
 }
 
 void cancel_all_nlm_blocked(void)
