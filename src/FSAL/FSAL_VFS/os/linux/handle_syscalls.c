@@ -89,8 +89,9 @@ int display_vfs_handle(struct display_buffer *dspbuf,
 		       sizeof(u64[0]));
 		handle_cursor += sizeof(u64[0]);
 		b_left = display_printf(dspbuf,
-					"fsid=0x%016"PRIx64".0x%016"PRIx64,
-					u64[0], (uint64_t) 0);
+					"fsid=0x%016"PRIx64
+					".0x0000000000000000",
+					u64[0]);
 		break;
 
 	case FSID_TWO_UINT64:
