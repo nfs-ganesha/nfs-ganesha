@@ -1923,6 +1923,19 @@ fsal_status_t fsal_open2(struct fsal_obj_handle *in_obj,
 
 	*obj = NULL;
 
+	/* Handle attribute size = 0 here, normalize to FSAL_O_TRUNC
+	 * instead of setting ATTR_SIZE.
+	 */
+	if (attr != NULL &&
+	    FSAL_TEST_MASK(attr->mask, ATTR_SIZE) &&
+	    attr->filesize == 0) {
+		LogFullDebug(COMPONENT_FSAL, "Truncate");
+		/* Handle truncate to zero on open */
+		openflags |= FSAL_O_TRUNC;
+		/* Don't set the size if we later set the attributes */
+		FSAL_UNSET_MASK(attr->mask, ATTR_SIZE);
+	}
+
 	if (createmode >= FSAL_EXCLUSIVE && verifier == NULL)
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	if (name)

@@ -328,16 +328,6 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 
 	fsal2posix_openflags(openflags, &posix_flags);
 
-	if (createmode != FSAL_NO_CREATE && setattrs &&
-	    FSAL_TEST_MASK(attrib_set->mask, ATTR_SIZE) &&
-	    attrib_set->filesize == 0) {
-		LogFullDebug(COMPONENT_FSAL, "Truncate");
-		/* Handle truncate to zero on open */
-		posix_flags |= O_TRUNC;
-		/* Don't set the size if we later set the attributes */
-		FSAL_UNSET_MASK(attrib_set->mask, ATTR_SIZE);
-	}
-
 	truncated = (posix_flags & O_TRUNC) != 0;
 
 	/* Now fixup attrs for verifier if exclusive create */

@@ -1262,7 +1262,9 @@ static void open4_ex(OPEN4args *arg,
 					res_OPEN4->status = NFS4ERR_EXIST;
 					goto out;
 				} else {
-					/* FSAL_UNCHECKED, may be a truncate.
+					/* FSAL_UNCHECKED, may be a truncate
+					 * and we need to pass in the case
+					 * of fsal_reopen2 case.
 					 */
 					if (FSAL_TEST_MASK(sattr.mask,
 							   ATTR_SIZE) &&
