@@ -71,6 +71,11 @@ static fsal_staticfsinfo_t default_ceph_info = {
 	.no_trunc = true,
 	.chown_restricted = true,
 	.case_preserving = true,
+#ifdef USE_FSAL_CEPH_SETLK
+	.lock_support = true,
+	.lock_support_owner = true,
+	.lock_support_async_block = false,
+#endif
 	.unique_handles = true,
 	.homogenous = true,
 };
@@ -273,6 +278,17 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 }
 
 /**
+ * @brief Indicate support for extended operations.
+ *
+ * @retval true if extended operations are supported.
+ */
+
+bool ceph_support_ex(struct fsal_obj_handle *obj)
+{
+	return true;
+}
+
+/**
  * @brief Initialize and register the FSAL
  *
  * This function initializes the FSAL module handle, being called
@@ -305,6 +321,7 @@ MODULE_INIT void init(void)
 #endif				/* CEPH_PNFS */
 	myself->m_ops.create_export = create_export;
 	myself->m_ops.init_config = init_config;
+	myself->m_ops.support_ex = ceph_support_ex;
 }
 
 /**

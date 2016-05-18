@@ -88,6 +88,7 @@ struct handle {
 	const struct fsal_up_vector *up_ops;	/*< Upcall operations */
 	struct export *export;	/*< The first export this handle belongs to */
 	vinodeno_t vi;		/*< The object identifier */
+	struct fsal_share share;
 #ifdef CEPH_PNFS
 	uint64_t rd_issued;
 	uint64_t rd_serial;
@@ -169,5 +170,9 @@ void pnfs_ds_ops_init(struct fsal_pnfs_ds_ops *ops);
 void export_ops_pnfs(struct export_ops *ops);
 void handle_ops_pnfs(struct fsal_obj_ops *ops);
 #endif				/* CEPH_PNFS */
+
+struct state_t *ceph_alloc_state(struct fsal_export *exp_hdl,
+				 enum state_type state_type,
+				 struct state_t *related_state);
 
 #endif				/* !FSAL_CEPH_INTERNAL_INTERNAL__ */
