@@ -72,8 +72,6 @@ struct nfs_request_lookahead {
 #define XDR_BYTES_MAXLEN_IO (64*1024*1024)
 #define XDR_STRING_MAXLEN (8*1024)
 
-void socket_setoptions(int);
-
 typedef struct sockaddr_storage sockaddr_t;
 
 #define SOCK_NAME_MAX 128
