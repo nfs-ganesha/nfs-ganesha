@@ -326,9 +326,14 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
 
+	LogAttrlist(COMPONENT_FSAL, NIV_FULL_DEBUG,
+		    "attrib_set ", attrib_set, false);
+
 	fsal2posix_openflags(openflags, &posix_flags);
 
 	truncated = (posix_flags & O_TRUNC) != 0;
+	LogFullDebug(COMPONENT_FSAL,
+		     truncated ? "Truncate" : "No truncate");
 
 	/* Now fixup attrs for verifier if exclusive create */
 	if (createmode >= FSAL_EXCLUSIVE) {
@@ -732,6 +737,9 @@ fsal_status_t vfs_reopen2(struct fsal_obj_handle *obj_hdl,
 	fsal2posix_openflags(openflags, &posix_flags);
 
 	truncated = (posix_flags & O_TRUNC) != 0;
+
+	LogFullDebug(COMPONENT_FSAL,
+		     posix_flags & O_TRUNC ? "Truncate" : "No truncate");
 
 	memset(my_fd, 0, sizeof(*my_fd));
 	fd.fd = -1;

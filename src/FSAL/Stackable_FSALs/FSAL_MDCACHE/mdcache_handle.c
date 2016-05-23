@@ -766,6 +766,9 @@ static fsal_status_t mdcache_getattrs(struct fsal_obj_handle *obj_hdl)
 
 	mdc_fixup_md(entry);
 
+	LogAttrlist(COMPONENT_CACHE_INODE, NIV_FULL_DEBUG,
+		    "attrs ", obj_hdl->attrs, true);
+
 	if ((obj_hdl->type == DIRECTORY) &&
 	    (oldmtime < obj_hdl->attrs->mtime.tv_sec)) {
 

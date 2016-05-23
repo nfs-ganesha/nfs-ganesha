@@ -1923,6 +1923,10 @@ fsal_status_t fsal_open2(struct fsal_obj_handle *in_obj,
 
 	*obj = NULL;
 
+	if (attr != NULL)
+		LogAttrlist(COMPONENT_FSAL, NIV_FULL_DEBUG,
+			    "attrs ", attr, false);
+
 	/* Handle attribute size = 0 here, normalize to FSAL_O_TRUNC
 	 * instead of setting ATTR_SIZE.
 	 */

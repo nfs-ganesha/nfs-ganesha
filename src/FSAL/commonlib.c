@@ -433,6 +433,80 @@ void display_fsinfo(struct fsal_staticfsinfo_t *info)
 	LogDebug(COMPONENT_FSAL, "}");
 }
 
+int display_attrlist(struct display_buffer *dspbuf,
+		     struct attrlist *attr, bool is_obj)
+{
+	int b_left = display_start(dspbuf);
+
+	if (b_left > 0)
+		b_left = display_printf(dspbuf, "Mask = %08x",
+					(unsigned int) attr->mask);
+
+	if (b_left > 0 && is_obj)
+		b_left = display_printf(dspbuf, " %s",
+					object_file_type_to_str(attr->type));
+
+	if (b_left > 0 && FSAL_TEST_MASK(attr->mask, ATTR_NUMLINKS))
+		b_left = display_printf(dspbuf, " numlinks=0x%"PRIu32,
+					attr->numlinks);
+
+	if (b_left > 0 && FSAL_TEST_MASK(attr->mask, ATTR_SIZE))
+		b_left = display_printf(dspbuf, " size=0x%"PRIu64,
+					attr->filesize);
+
+	if (b_left > 0 && FSAL_TEST_MASK(attr->mask, ATTR_MODE))
+		b_left = display_printf(dspbuf, " mode=0%"PRIo32,
+					attr->mode);
+
+	if (b_left > 0 && FSAL_TEST_MASK(attr->mask, ATTR_OWNER))
+		b_left = display_printf(dspbuf, " owner=0x%"PRIu64,
+					attr->owner);
+
+	if (b_left > 0 && FSAL_TEST_MASK(attr->mask, ATTR_GROUP))
+		b_left = display_printf(dspbuf, " group=0x%"PRIu64,
+					attr->group);
+
+	if (b_left > 0 && FSAL_TEST_MASK(attr->mask, ATTR_ATIME_SERVER))
+		b_left = display_cat(dspbuf, " atime=SERVER");
+
+	if (b_left > 0 && FSAL_TEST_MASK(attr->mask, ATTR_MTIME_SERVER))
+		b_left = display_cat(dspbuf, " mtime=SERVER");
+
+	if (b_left > 0 && FSAL_TEST_MASK(attr->mask, ATTR_ATIME)) {
+		b_left = display_cat(dspbuf, " atime=");
+		if (b_left > 0)
+			b_left = display_timespec(dspbuf, &attr->atime);
+	}
+
+	if (b_left > 0 && FSAL_TEST_MASK(attr->mask, ATTR_MTIME)) {
+		b_left = display_cat(dspbuf, " mtime=");
+		if (b_left > 0)
+			b_left = display_timespec(dspbuf, &attr->mtime);
+	}
+
+	return b_left;
+}
+
+void log_attrlist(log_components_t component, log_levels_t level,
+		  const char *reason, struct attrlist *attr, bool is_obj,
+		  char *file, int line, char *function)
+{
+	char str[LOG_BUFF_LEN];
+	struct display_buffer dspbuf = {sizeof(str), str, str};
+
+	(void) display_attrlist(&dspbuf, attr, is_obj);
+
+	if (!isLevel(component, level))
+		return;
+
+
+	DisplayLogComponentLevel(component, file, line, function, level,
+		"%s %s attributes %s",
+		reason,
+		is_obj ? "obj" : "set",
+		str);
+}
+
 int open_dir_by_path_walk(int first_fd, const char *path, struct stat *stat)
 {
 	char *name, *rest, *p;
@@ -2489,7 +2563,7 @@ fsal_status_t fsal_find_fd(struct fsal_fd **out_fd,
 		 * Since we found a valid fd in the state, no need to
 		 * check deny modes.
 		 */
-		LogFullDebug(COMPONENT_FSAL, "Use state_fd");
+		LogFullDebug(COMPONENT_FSAL, "Use state_fd %p", state_fd);
 		if (out_fd)
 			*out_fd = state_fd;
 		*need_fsync = (openflags & FSAL_O_SYNC) != 0;
@@ -2524,6 +2598,8 @@ fsal_status_t fsal_find_fd(struct fsal_fd **out_fd,
 			LogCrit(COMPONENT_FSAL,
 				"Open for locking failed");
 		} else {
+			LogFullDebug(COMPONENT_FSAL,
+				     "Opened state_fd %p", state_fd);
 			*out_fd = state_fd;
 			*need_fsync = false;
 		}
@@ -2551,9 +2627,11 @@ fsal_status_t fsal_find_fd(struct fsal_fd **out_fd,
 			 * Since we found a valid fd in the open state, no
 			 * need to check deny modes.
 			 */
-			LogFullDebug(COMPONENT_FSAL, "Use related_fd");
+			LogFullDebug(COMPONENT_FSAL,
+				     "Use related_fd %p", related_fd);
 			if (out_fd)
 				*out_fd = related_fd;
+
 			*need_fsync = (openflags & FSAL_O_SYNC) != 0;
 			*has_lock = false;
 			return status;
