@@ -387,28 +387,6 @@ int get_port(sockaddr_t *addr)
 	}
 }
 
-void socket_setoptions(int socketFd)
-{
-	unsigned int SbMax = (1 << 30);	/* 1GB */
-
-	while (SbMax > 1048576) {
-		if ((setsockopt
-		     (socketFd, SOL_SOCKET, SO_SNDBUF, (char *)&SbMax,
-		      sizeof(SbMax)) < 0)
-		    ||
-		    (setsockopt
-		     (socketFd, SOL_SOCKET, SO_RCVBUF, (char *)&SbMax,
-		      sizeof(SbMax)) < 0)) {
-			SbMax >>= 1;	/* SbMax = SbMax/2 */
-			continue;
-		}
-
-		break;
-	}
-}
-
-#define SIZE_AI_ADDR sizeof(struct sockaddr)
-
 int ipstring_to_sockaddr(const char *str, sockaddr_t *addr)
 {
 	struct addrinfo *info, hints, *p;

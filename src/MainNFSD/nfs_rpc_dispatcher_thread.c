@@ -836,8 +836,6 @@ void nfs_Init_svc(void)
 	/* Allocate the UDP and TCP sockets for the RPC */
 	Allocate_sockets();
 
-	socket_setoptions(tcp_socket[P_NFS]);
-
 	if ((nfs_param.core_param.core_options & CORE_OPTION_NFSV3) != 0) {
 		/* Some log that can be useful when debug ONC/RPC
 		 * and RPCSEC_GSS matter */
