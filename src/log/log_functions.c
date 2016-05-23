@@ -612,6 +612,11 @@ void set_const_log_str(void)
 		}
 
 	}
+
+	/* Trim trailing blank from date time format. */
+	if (date_time_fmt[0] != '\0' &&
+	    date_time_fmt[strlen(date_time_fmt) - 1] == ' ')
+		date_time_fmt[strlen(date_time_fmt) - 1] = '\0';
 }
 
 static void set_logging_from_env(void)
@@ -1258,6 +1263,72 @@ static int log_to_stream(log_header_t headers, void *private,
 		return 0;
 }
 
+int display_timeval(struct display_buffer *dspbuf, struct timeval *tv)
+{
+	char *fmt = date_time_fmt;
+	int b_left = display_start(dspbuf);
+	struct tm the_date;
+	char tbuf[MAX_TD_FMT_LEN];
+	time_t tm = tv->tv_sec;
+
+	if (b_left <= 0)
+		return b_left;
+
+	if (logfields->datefmt == TD_NONE && logfields->timefmt == TD_NONE)
+		fmt = "%c ";
+
+	Localtime_r(&tm, &the_date);
+
+	/* Earlier we build the date/time format string in
+	 * date_time_fmt, now use that to format the time and/or date.
+	 * If time format is TD_SYSLOG_USEC, then we need an additional
+	 * step to add the microseconds (since strftime just takes a
+	 * struct tm which was filled in from a time_t and thus does not
+	 * have microseconds.
+	 */
+	if (strftime(tbuf, sizeof(tbuf), fmt, &the_date) != 0) {
+		if (logfields->timefmt == TD_SYSLOG_USEC)
+			b_left = display_printf(dspbuf, tbuf, tv->tv_usec);
+		else
+			b_left = display_cat(dspbuf, tbuf);
+	}
+
+	return b_left;
+}
+
+int display_timespec(struct display_buffer *dspbuf, struct timespec *ts)
+{
+	char *fmt = date_time_fmt;
+	int b_left = display_start(dspbuf);
+	struct tm the_date;
+	char tbuf[MAX_TD_FMT_LEN];
+	time_t tm = ts->tv_sec;
+
+	if (b_left <= 0)
+		return b_left;
+
+	if (logfields->datefmt == TD_NONE && logfields->timefmt == TD_NONE)
+		fmt = "%c ";
+
+	Localtime_r(&tm, &the_date);
+
+	/* Earlier we build the date/time format string in
+	 * date_time_fmt, now use that to format the time and/or date.
+	 * If time format is TD_SYSLOG_USEC, then we need an additional
+	 * step to add the microseconds (since strftime just takes a
+	 * struct tm which was filled in from a time_t and thus does not
+	 * have microseconds.
+	 */
+	if (strftime(tbuf, sizeof(tbuf), fmt, &the_date) != 0) {
+		if (logfields->timefmt == TD_SYSLOG_USEC)
+			b_left = display_printf(dspbuf, tbuf, ts->tv_nsec);
+		else
+			b_left = display_cat(dspbuf, tbuf);
+	}
+
+	return b_left;
+}
+
 static int display_log_header(struct display_buffer *dsp_log)
 {
 	int b_left = display_start(dsp_log);
@@ -1269,38 +1340,19 @@ static int display_log_header(struct display_buffer *dsp_log)
 	if (b_left > 0
 	    && (logfields->datefmt != TD_NONE
 		|| logfields->timefmt != TD_NONE)) {
-		struct tm the_date;
-		char tbuf[MAX_TD_FMT_LEN];
-		time_t tm;
 		struct timeval tv;
 
 		if (logfields->timefmt == TD_SYSLOG_USEC) {
 			gettimeofday(&tv, NULL);
-			tm = tv.tv_sec;
 		} else {
-			tm = time(NULL);
+			tv.tv_sec = time(NULL);
+			tv.tv_usec = 0;
 		}
 
-		Localtime_r(&tm, &the_date);
+		b_left = display_timeval(dsp_log, &tv);
 
-		/* Earlier we build the date/time format string in
-		 * date_time_fmt, now use that to format the time and/or date.
-		 * If time format is TD_SYSLOG_USEC, then we need an additional
-		 * step to add the microseconds (since strftime just takes a
-		 * struct tm which was filled in from a time_t and thus does not
-		 * have microseconds.
-		 */
-		if (strftime(tbuf,
-			     sizeof(tbuf),
-			     date_time_fmt,
-			     &the_date) != 0) {
-			if (logfields->timefmt == TD_SYSLOG_USEC)
-				b_left =
-				    display_printf(dsp_log, tbuf,
-						   tv.tv_usec);
-			else
-				b_left = display_cat(dsp_log, tbuf);
-		}
+		if (b_left > 0)
+			b_left = display_cat(dsp_log, " ");
 	}
 
 	if (b_left > 0 && const_log_str[0] != '\0')

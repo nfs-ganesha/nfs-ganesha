@@ -158,6 +158,12 @@ int read_log_config(config_file_t in_config,
 		    struct config_error_type *err_type);
 void reread_log_config(void);
 
+/* These functions display a timeval or timespec into the display buffer
+ * in the same format used for logging timestamp.
+ */
+int display_timeval(struct display_buffer *dspbuf, struct timeval *tv);
+int display_timespec(struct display_buffer *dspbuf, struct timespec *ts);
+
 typedef enum log_type {
 	SYSLOG = 0,
 	FILELOG,
