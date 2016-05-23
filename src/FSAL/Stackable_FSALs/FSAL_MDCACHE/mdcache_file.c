@@ -402,38 +402,63 @@ static fsal_status_t mdc_open2_by_name(mdcache_entry_t *mdc_parent,
 				       bool *caller_perm_check)
 {
 	fsal_status_t status;
-	bool uncached = false;
+	bool uncached = createmode >= FSAL_GUARDED;
+	mdcache_entry_t *entry;
+	struct fsal_obj_handle *sub_handle;
 
 	if (!name)
 		return fsalstat(ERR_FSAL_INVAL, 0);
 
-	if (createmode >= FSAL_GUARDED)
-		uncached = true;
+	status = mdc_lookup(mdc_parent, name, uncached, &entry);
 
-	status = mdc_lookup(mdc_parent, name, uncached, new_entry);
-	if (!FSAL_IS_ERROR(status)) {
-		/* Found to exist */
-		if (createmode == FSAL_GUARDED) {
-			mdcache_put(*new_entry);
-			return fsalstat(ERR_FSAL_EXIST, 0);
-		} else if (createmode == FSAL_EXCLUSIVE) {
-			/* XXX dang was *not* created; it already existed */
-			/* Exclusive create with entry found, check verifier */
-			if (!mdcache_check_verifier(&(*new_entry)->obj_handle,
-						    verifier)) {
-				/* Verifier check failed. */
-				mdcache_put(*new_entry);
-				return fsalstat(ERR_FSAL_EXIST, 0);
-			}
-			/* fall through to open2 */
-		}
-	} else if (status.major == ERR_FSAL_NOENT) {
-		if (createmode == FSAL_NO_CREATE)
-			return status;
-		/* Other create modes fall through to open2 */
-	} else {
-		/* Some real error */
+	if (FSAL_IS_ERROR(status)) {
+		/* Does not exist, or other error, return to open2 to
+		 * proceed if not found, otherwise to return the error.
+		 */
+		LogFullDebug(COMPONENT_CACHE_INODE,
+			     "Lookup failed");
+		*new_entry = NULL;
 		return status;
+	}
+
+	/* Found to exist */
+	if (createmode == FSAL_GUARDED) {
+		mdcache_put(*new_entry);
+		return fsalstat(ERR_FSAL_EXIST, 0);
+	} else if (createmode == FSAL_EXCLUSIVE) {
+		/* Exclusive create with entry found, check verifier */
+		if (!mdcache_check_verifier(&entry->obj_handle, verifier)) {
+			/* Verifier check failed. */
+			LogFullDebug(COMPONENT_CACHE_INODE,
+				     "Verifier check failed.");
+			mdcache_put(entry);
+			*new_entry = NULL;
+			return fsalstat(ERR_FSAL_EXIST, 0);
+		}
+
+		/* Verifier matches, go ahead and open the file. */
+
+	} /* else UNGUARDED, go ahead and open the file. */
+
+	subcall(
+		status = entry->sub_handle->obj_ops.open2(
+			entry->sub_handle, state, openflags, createmode,
+			NULL, attrib_set, verifier, &sub_handle,
+			caller_perm_check)
+	       );
+
+	if (FSAL_IS_ERROR(status)) {
+		/* Open failed. */
+		LogFullDebug(COMPONENT_CACHE_INODE,
+			     "Open failed %s",
+			     msg_fsal_err(status.major));
+		mdcache_put(entry);
+		*new_entry = NULL;
+	} else {
+		LogFullDebug(COMPONENT_CACHE_INODE,
+			     "Opened entry %p, sub_handle %p",
+			     entry, entry->sub_handle);
+		*new_entry = entry;
 	}
 
 	return status;
@@ -471,13 +496,33 @@ fsal_status_t mdcache_open2(struct fsal_obj_handle *obj_hdl,
 	struct fsal_obj_handle *sub_handle = NULL;
 	fsal_status_t status;
 
+	LogAttrlist(COMPONENT_CACHE_INODE, NIV_FULL_DEBUG,
+		    "attrib_set ", attrib_set, false);
+
 	if (name) {
 		status = mdc_open2_by_name(mdc_parent, state, openflags,
 					   createmode, name, attrib_set,
 					   verifier, &new_entry,
 					   caller_perm_check);
+
+		if (status.major == ERR_FSAL_NO_ERROR) {
+			/* Return the newly opened file. */
+			*new_obj = &new_entry->obj_handle;
+
+			if (openflags & FSAL_O_TRUNC) {
+				/* Mark the attributes as not-trusted, so we
+				 * will refresh the attributes on the next
+				 * getattrs.
+				 */
+				atomic_clear_uint32_t_bits(
+				    &new_entry->mde_flags, MDCACHE_TRUST_ATTRS);
+			}
+
+			return status;
+		}
+
 		if (status.major != ERR_FSAL_NOENT) {
-			/* Actual results, either success or failure */
+			/* Return the error */
 			return status;
 		}
 	}
@@ -494,18 +539,40 @@ fsal_status_t mdcache_open2(struct fsal_obj_handle *obj_hdl,
 			mdcache_kill_entry(mdc_parent);
 		if (new_entry)
 			mdcache_put(new_entry);
+		LogFullDebug(COMPONENT_CACHE_INODE,
+			     "Open failed %s",
+			     msg_fsal_err(status.major));
 		return status;
 	}
 
-	if (!name || new_entry)
+	if (!name) {
 		/* Wasn't a create and/or entry already found */
+		if (openflags & FSAL_O_TRUNC) {
+			/* Mark the attributes as not-trusted, so we will
+			 * refresh the attributes.
+			 */
+			atomic_clear_uint32_t_bits(&mdc_parent->mde_flags,
+						   MDCACHE_TRUST_ATTRS);
+		}
+
+		LogFullDebug(COMPONENT_CACHE_INODE,
+			     "Open2 of object succeeded.");
+		*new_obj = obj_hdl;
 		return status;
+	}
 
 	PTHREAD_RWLOCK_wrlock(&mdc_parent->content_lock);
 	status = mdc_add_cache(mdc_parent, name, sub_handle, &new_entry);
 	PTHREAD_RWLOCK_unlock(&mdc_parent->content_lock);
-	if (new_entry)
+	if (new_entry) {
+		atomic_clear_uint32_t_bits(&new_entry->mde_flags,
+					   MDCACHE_TRUST_ATTRS);
 		*new_obj = &new_entry->obj_handle;
+	}
+
+	LogFullDebug(COMPONENT_CACHE_INODE,
+		     "mdc_add_cache returned %s",
+		     msg_fsal_err(status.major));
 
 	return status;
 }
@@ -575,6 +642,7 @@ fsal_status_t mdcache_reopen2(struct fsal_obj_handle *obj_hdl,
 	mdcache_entry_t *entry =
 		container_of(obj_hdl, mdcache_entry_t, obj_handle);
 	fsal_status_t status;
+	bool truncated = openflags & FSAL_O_TRUNC;
 
 	subcall(
 		status = entry->sub_handle->obj_ops.reopen2(
@@ -583,6 +651,11 @@ fsal_status_t mdcache_reopen2(struct fsal_obj_handle *obj_hdl,
 
 	if (FSAL_IS_ERROR(status) && (status.major == ERR_FSAL_STALE))
 		mdcache_kill_entry(entry);
+
+	if (truncated && !FSAL_IS_ERROR(status)) {
+		atomic_clear_uint32_t_bits(&entry->mde_flags,
+					   MDCACHE_TRUST_ATTRS);
+	}
 
 	return status;
 }
