@@ -255,9 +255,9 @@ mdcache_avl_qp_insert(mdcache_entry_t *entry, mdcache_dir_entry_t *v)
 						  MDCACHE_FLAG_ONLY_ACTIVE);
 			assert(v != v2);
 			if (v2 && (strcmp(v->name, v2->name) == 0)) {
-				LogCrit(COMPONENT_CACHE_INODE,
-					"name conflict (%s, %s)",
-					v->name, v2->name);
+				LogDebug(COMPONENT_CACHE_INODE,
+					 "name conflict (%s, %s)",
+					 v->name, v2->name);
 				return -2;
 			}
 		}
