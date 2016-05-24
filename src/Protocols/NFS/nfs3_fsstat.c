@@ -89,76 +89,74 @@ int nfs3_fsstat(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	if (obj == NULL) {
 		/* Status and rc have been set by nfs3_FhandleToCache */
-		goto out;
+		return rc;
 	}
 
 	/* Get statistics and convert from FSAL */
 	fsal_status = fsal_statfs(obj, &dynamicinfo);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
+		/* At this point we met an error */
 		LogFullDebug(COMPONENT_NFSPROTO,
-			     "nfs_Fsstat --> dynamicinfo.total_bytes=%" PRIu64
-			     " dynamicinfo.free_bytes=%" PRIu64
-			     " dynamicinfo.avail_bytes=%" PRIu64,
-			     dynamicinfo.total_bytes, dynamicinfo.free_bytes,
-			     dynamicinfo.avail_bytes);
-		LogFullDebug(COMPONENT_NFSPROTO,
-			     "nfs_Fsstat --> dynamicinfo.total_files=%" PRIu64
-			     " dynamicinfo.free_files=%" PRIu64
-			     " dynamicinfo.avail_files=%" PRIu64,
-			     dynamicinfo.total_files, dynamicinfo.free_files,
-			     dynamicinfo.avail_files);
+			     "failed statfs: fsal_status=%s",
+			     fsal_err_txt(fsal_status));
 
-		nfs_SetPostOpAttr(obj,
-				  &(res->res_fsstat3.FSSTAT3res_u.resok.
-				    obj_attributes));
+		if (nfs_RetryableError(fsal_status.major)) {
+			/* Drop retryable errors. */
+			rc = NFS_REQ_DROP;
+		} else {
+			res->res_fsstat3.status =
+						nfs3_Errno_status(fsal_status);
+			rc = NFS_REQ_OK;
+		}
 
-		res->res_fsstat3.FSSTAT3res_u.resok.tbytes =
-		    dynamicinfo.total_bytes;
-		res->res_fsstat3.FSSTAT3res_u.resok.fbytes =
-		    dynamicinfo.free_bytes;
-		res->res_fsstat3.FSSTAT3res_u.resok.abytes =
-		    dynamicinfo.avail_bytes;
-		res->res_fsstat3.FSSTAT3res_u.resok.tfiles =
-		    dynamicinfo.total_files;
-		res->res_fsstat3.FSSTAT3res_u.resok.ffiles =
-		    dynamicinfo.free_files;
-		res->res_fsstat3.FSSTAT3res_u.resok.afiles =
-		    dynamicinfo.avail_files;
-		/* volatile FS */
-		res->res_fsstat3.FSSTAT3res_u.resok.invarsec = 0;
-
-		res->res_fsstat3.status = NFS3_OK;
-
-		LogFullDebug(COMPONENT_NFSPROTO,
-			     "nfs_Fsstat --> tbytes=%llu fbytes=%llu abytes=%llu",
-			     res->res_fsstat3.FSSTAT3res_u.resok.tbytes,
-			     res->res_fsstat3.FSSTAT3res_u.resok.fbytes,
-			     res->res_fsstat3.FSSTAT3res_u.resok.abytes);
-
-		LogFullDebug(COMPONENT_NFSPROTO,
-			     "nfs_Fsstat --> tfiles=%llu fffiles=%llu afiles=%llu",
-			     res->res_fsstat3.FSSTAT3res_u.resok.tfiles,
-			     res->res_fsstat3.FSSTAT3res_u.resok.ffiles,
-			     res->res_fsstat3.FSSTAT3res_u.resok.afiles);
-
-		rc = NFS_REQ_OK;
 		goto out;
 	}
 
-	/* At this point we met an error */
-	if (nfs_RetryableError(fsal_status.major)) {
-		rc = NFS_REQ_DROP;
-		goto out;
-	}
+	LogFullDebug(COMPONENT_NFSPROTO,
+		     "nfs_Fsstat --> dynamicinfo.total_bytes=%" PRIu64
+		     " dynamicinfo.free_bytes=%" PRIu64
+		     " dynamicinfo.avail_bytes=%" PRIu64,
+		     dynamicinfo.total_bytes, dynamicinfo.free_bytes,
+		     dynamicinfo.avail_bytes);
+	LogFullDebug(COMPONENT_NFSPROTO,
+		     "nfs_Fsstat --> dynamicinfo.total_files=%" PRIu64
+		     " dynamicinfo.free_files=%" PRIu64
+		     " dynamicinfo.avail_files=%" PRIu64,
+		     dynamicinfo.total_files, dynamicinfo.free_files,
+		     dynamicinfo.avail_files);
 
-	res->res_fsstat3.status = nfs3_Errno_status(fsal_status);
+	nfs_SetPostOpAttr(obj,
+			  &res->res_fsstat3.FSSTAT3res_u.resok.obj_attributes);
+
+	res->res_fsstat3.FSSTAT3res_u.resok.tbytes = dynamicinfo.total_bytes;
+	res->res_fsstat3.FSSTAT3res_u.resok.fbytes = dynamicinfo.free_bytes;
+	res->res_fsstat3.FSSTAT3res_u.resok.abytes = dynamicinfo.avail_bytes;
+	res->res_fsstat3.FSSTAT3res_u.resok.tfiles = dynamicinfo.total_files;
+	res->res_fsstat3.FSSTAT3res_u.resok.ffiles = dynamicinfo.free_files;
+	res->res_fsstat3.FSSTAT3res_u.resok.afiles = dynamicinfo.avail_files;
+	/* volatile FS */
+	res->res_fsstat3.FSSTAT3res_u.resok.invarsec = 0;
+
+	res->res_fsstat3.status = NFS3_OK;
+
+	LogFullDebug(COMPONENT_NFSPROTO,
+		     "nfs_Fsstat --> tbytes=%llu fbytes=%llu abytes=%llu",
+		     res->res_fsstat3.FSSTAT3res_u.resok.tbytes,
+		     res->res_fsstat3.FSSTAT3res_u.resok.fbytes,
+		     res->res_fsstat3.FSSTAT3res_u.resok.abytes);
+
+	LogFullDebug(COMPONENT_NFSPROTO,
+		     "nfs_Fsstat --> tfiles=%llu fffiles=%llu afiles=%llu",
+		     res->res_fsstat3.FSSTAT3res_u.resok.tfiles,
+		     res->res_fsstat3.FSSTAT3res_u.resok.ffiles,
+		     res->res_fsstat3.FSSTAT3res_u.resok.afiles);
+
 	rc = NFS_REQ_OK;
 
  out:
 	/* return references */
-	if (obj)
-		obj->obj_ops.put_ref(obj);
+	obj->obj_ops.put_ref(obj);
 
 	return rc;
 }				/* nfs3_fsstat */

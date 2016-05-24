@@ -123,7 +123,7 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	if (obj == NULL) {
 		/* Status and rc have been set by nfs3_FhandleToCache */
-		goto out;
+		return rc;
 	}
 
 	nfs_SetPreOpAttr(obj, &pre_attr);
@@ -210,97 +210,92 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 			       &res->res_write3.WRITE3res_u.resfail.file_wcc);
 		rc = NFS_REQ_OK;
 		goto out;
-	} else {
-		/* An actual write is to be made, prepare it */
-
-		res->res_write3.status = nfs3_Errno_state(
-				state_share_anonymous_io_start(
-					obj,
-					OPEN4_SHARE_ACCESS_WRITE,
-					SHARE_BYPASS_V3_WRITE));
-
-		if (res->res_write3.status != NFS3_OK) {
-			rc = NFS_REQ_OK;
-			goto out;
-		}
-
-		if (obj->fsal->m_ops.support_ex(obj)) {
-			/* Call the new fsal_write */
-			/** @todo for now pass NULL state */
-			fsal_status = fsal_write2(obj,
-						  true,
-						  NULL,
-						  offset,
-						  size,
-						  &written_size,
-						  data,
-						  &sync,
-						  NULL);
-		} else {
-			/* Call legacy fsal_rdwr */
-			fsal_status = fsal_rdwr(obj,
-						FSAL_IO_WRITE,
-						offset,
-						size,
-						&written_size,
-						data,
-						&eof_met,
-						&sync,
-						NULL);
-		}
-
-		state_share_anonymous_io_done(obj, OPEN4_SHARE_ACCESS_WRITE);
-
-		if (FSAL_IS_ERROR(fsal_status)) {
-			/* Build Weak Cache Coherency data */
-			nfs_SetWccData(NULL, obj,
-				       &res->res_write3.WRITE3res_u.resok.
-				       file_wcc);
-
-			/* Set the written size */
-			res->res_write3.WRITE3res_u.resok.count = written_size;
-
-			/* How do we commit data ? */
-			if (sync)
-				res->res_write3.WRITE3res_u.resok.committed =
-				    FILE_SYNC;
-			else
-				res->res_write3.WRITE3res_u.resok.committed =
-				    UNSTABLE;
-
-			/* Set the write verifier */
-			memcpy(res->res_write3.WRITE3res_u.resok.verf,
-			       NFS3_write_verifier,
-			       sizeof(writeverf3));
-
-			res->res_write3.status = NFS3_OK;
-
-			rc = NFS_REQ_OK;
-			goto out;
-		}
 	}
 
-	LogFullDebug(COMPONENT_NFSPROTO,
-		     "failed write: fsal_status=%s",
-		     fsal_err_txt(fsal_status));
+	/* An actual write is to be made, prepare it */
 
-	/* If we are here, there was an error */
-	if (nfs_RetryableError(fsal_status.major)) {
-		rc = NFS_REQ_DROP;
+	res->res_write3.status = nfs3_Errno_state(
+			state_share_anonymous_io_start(
+				obj,
+				OPEN4_SHARE_ACCESS_WRITE,
+				SHARE_BYPASS_V3_WRITE));
+
+	if (res->res_write3.status != NFS3_OK) {
+		rc = NFS_REQ_OK;
 		goto out;
 	}
 
-	res->res_write3.status = nfs3_Errno_status(fsal_status);
+	if (obj->fsal->m_ops.support_ex(obj)) {
+		/* Call the new fsal_write */
+		/** @todo for now pass NULL state */
+		fsal_status = fsal_write2(obj,
+					  true,
+					  NULL,
+					  offset,
+					  size,
+					  &written_size,
+					  data,
+					  &sync,
+					  NULL);
+	} else {
+		/* Call legacy fsal_rdwr */
+		fsal_status = fsal_rdwr(obj,
+					FSAL_IO_WRITE,
+					offset,
+					size,
+					&written_size,
+					data,
+					&eof_met,
+					&sync,
+					NULL);
+	}
 
-	nfs_SetWccData(NULL, obj,
-		       &res->res_write3.WRITE3res_u.resfail.file_wcc);
+	state_share_anonymous_io_done(obj, OPEN4_SHARE_ACCESS_WRITE);
+
+	if (FSAL_IS_ERROR(fsal_status)) {
+		/* If we are here, there was an error */
+		LogFullDebug(COMPONENT_NFSPROTO,
+			     "failed write: fsal_status=%s",
+			     fsal_err_txt(fsal_status));
+
+		if (nfs_RetryableError(fsal_status.major)) {
+			rc = NFS_REQ_DROP;
+			goto out;
+		}
+
+		res->res_write3.status = nfs3_Errno_status(fsal_status);
+
+		nfs_SetWccData(NULL, obj,
+			       &res->res_write3.WRITE3res_u.resfail.file_wcc);
+
+		rc = NFS_REQ_OK;
+	} else {
+		/* Build Weak Cache Coherency data */
+		nfs_SetWccData(NULL, obj,
+			       &res->res_write3.WRITE3res_u.resok.file_wcc);
+
+		/* Set the written size */
+		res->res_write3.WRITE3res_u.resok.count = written_size;
+
+		/* How do we commit data ? */
+		if (sync)
+			res->res_write3.WRITE3res_u.resok.committed = FILE_SYNC;
+		else
+			res->res_write3.WRITE3res_u.resok.committed = UNSTABLE;
+
+		/* Set the write verifier */
+		memcpy(res->res_write3.WRITE3res_u.resok.verf,
+		       NFS3_write_verifier,
+		       sizeof(writeverf3));
+
+		res->res_write3.status = NFS3_OK;
+	}
 
 	rc = NFS_REQ_OK;
 
  out:
 	/* return references */
-	if (obj)
-		obj->obj_ops.put_ref(obj);
+	obj->obj_ops.put_ref(obj);
 
 	server_stats_io_done(size, written_size,
 			     (rc == NFS_REQ_OK) ? true : false,

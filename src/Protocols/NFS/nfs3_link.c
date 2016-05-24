@@ -144,36 +144,37 @@ int nfs3_link(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	}
 
 	fsal_status = fsal_link(target_obj, parent_obj, link_name);
+
 	if (FSAL_IS_ERROR(fsal_status)) {
+		/* If we are here, there was an error */
+		LogFullDebug(COMPONENT_NFSPROTO,
+			     "failed link: fsal_status=%s",
+			     fsal_err_txt(fsal_status));
+
+		if (nfs_RetryableError(fsal_status.major)) {
+			rc = NFS_REQ_DROP;
+			goto out;
+		}
+
+		l3_res->status = nfs3_Errno_status(fsal_status);
+		nfs_SetPostOpAttr(target_obj,
+				  &l3_res->LINK3res_u.resfail.file_attributes);
+
+		nfs_SetWccData(&pre_parent, parent_obj,
+			       &l3_res->LINK3res_u.resfail.linkdir_wcc);
+	} else {
 		nfs_SetPostOpAttr(target_obj,
 				  &l3_res->LINK3res_u.resok.file_attributes);
 
 		nfs_SetWccData(&pre_parent, parent_obj,
 			       &l3_res->LINK3res_u.resok.linkdir_wcc);
 		l3_res->status = NFS3_OK;
-		goto out;
 	}
-
-	/* If we are here, there was an error */
-	if (nfs_RetryableError(fsal_status.major)) {
-		rc = NFS_REQ_DROP;
-		goto out;
-	}
-
-	l3_res->status = nfs3_Errno_status(fsal_status);
-	nfs_SetPostOpAttr(target_obj,
-			  &l3_res->LINK3res_u.resfail.file_attributes);
-
-	nfs_SetWccData(&pre_parent, parent_obj,
-		       &l3_res->LINK3res_u.resfail.linkdir_wcc);
 
  out:
 	/* return references */
-	if (target_obj)
-		target_obj->obj_ops.put_ref(target_obj);
-
-	if (parent_obj)
-		parent_obj->obj_ops.put_ref(parent_obj);
+	target_obj->obj_ops.put_ref(target_obj);
+	parent_obj->obj_ops.put_ref(parent_obj);
 
 	return rc;
 }				/* nfs3_link */
