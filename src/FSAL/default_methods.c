@@ -628,21 +628,25 @@ static bool handle_is(struct fsal_obj_handle *obj_hdl, object_file_type_t type)
 }
 
 /* get_ref
- * default case is no refcounting
+ * This MUST be handled by someone. For many FSALs, it is handled by
+ * FSAL_MDCACHE.
  */
 
 static void handle_get_ref(struct fsal_obj_handle *obj_hdl)
 {
-	/* return */
+	LogFatal(COMPONENT_FSAL,
+		 "FSAL Must support get_ref");
 }
 
 /* put_ref
- * default case is no refcounting
+ * This MUST be handled by someone. For many FSALs, it is handled by
+ * FSAL_MDCACHE.
  */
 
 static void handle_put_ref(struct fsal_obj_handle *obj_hdl)
 {
-	/* return */
+	LogFatal(COMPONENT_FSAL,
+		 "FSAL Must support put_ref");
 }
 
 /* handle_release

@@ -1183,9 +1183,8 @@ struct fsal_obj_ops {
 /**
  * @brief Get a reference to a handle
  *
- * If refcounting is done, get a reference.  Initial handle should have a
- * reference already taken.  Functions that return a pre-referenced handle are
- * listed below
+ * Refcounting is required for all FSALs. An FSAL that will have FSAL_MDCACHE
+ * stacked on top need not handle this as FSAL_MDCACHE will handle it.
  *
  * @param[in] obj_hdl Handle to release
  */
@@ -1194,7 +1193,8 @@ struct fsal_obj_ops {
 /**
  * @brief Put a reference to a handle
  *
- * If refcounting is done, put a reference.
+ * Refcounting is required for all FSALs. An FSAL that will have FSAL_MDCACHE
+ * stacked on top need not handle this as FSAL_MDCACHE will handle it.
  *
  * @param[in] obj_hdl Handle to release
  */
