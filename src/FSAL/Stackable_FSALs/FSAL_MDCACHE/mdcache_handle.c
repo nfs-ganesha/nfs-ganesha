@@ -1006,6 +1006,10 @@ static void mdcache_hdl_release(struct fsal_obj_handle *obj_hdl)
 	mdcache_entry_t *entry =
 		container_of(obj_hdl, mdcache_entry_t, obj_handle);
 
+	LogDebug(COMPONENT_CACHE_INODE,
+		 "Releasing obj_hdl=%p, entry=%p",
+		 obj_hdl, entry);
+
 	mdcache_kill_entry(entry);
 }
 

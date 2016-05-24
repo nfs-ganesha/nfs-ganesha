@@ -1784,6 +1784,10 @@ static void release(struct fsal_obj_handle *obj_hdl)
 			gsh_free(myself->u.unopenable.dir);
 	}
 
+	LogDebug(COMPONENT_FSAL,
+		 "Releasing obj_hdl=%p, myself=%p",
+		 obj_hdl, myself);
+
 	gsh_free(myself);
 }
 

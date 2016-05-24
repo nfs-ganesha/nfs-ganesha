@@ -656,8 +656,8 @@ static void release(struct fsal_obj_handle *obj_hdl)
 	fsal_obj_handle_fini(obj_hdl);
 
 	LogDebug(COMPONENT_FSAL,
-		 "Releasing hdl=%p, name=%s",
-		 myself, myself->name);
+		 "Releasing obj_hdl=%p, myself=%p, name=%s",
+		 obj_hdl, myself, myself->name);
 
 	if (myself->name != NULL)
 		gsh_free(myself->name);
