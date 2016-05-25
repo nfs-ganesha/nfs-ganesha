@@ -78,8 +78,6 @@ restart:
 				continue;
 			}
 
-			PTHREAD_MUTEX_unlock(&client_id->cid_mutex);
-
 			if (isDebug(COMPONENT_CLIENTID)) {
 				display_client_id_rec(&dspbuf, client_id);
 				LogFullDebug(COMPONENT_CLIENTID,
@@ -96,12 +94,14 @@ restart:
 			inc_client_id_ref(client_id);
 
 			/* if record is STALE, the linkage to client_record is
-			 * removed already.
+			 * removed already. Acquire a ref on client record
+			 * before we drop the mutex on clientid
 			 */
-			if (client_rec != NULL) {
+			if (client_rec != NULL)
 				inc_client_record_ref(client_rec);
+			PTHREAD_MUTEX_unlock(&client_id->cid_mutex);
+			if (client_rec != NULL)
 				PTHREAD_MUTEX_lock(&client_rec->cr_mutex);
-			}
 
 			PTHREAD_RWLOCK_unlock(&ht_reap->partitions[i].lock);
 			nfs_client_id_expire(client_id, false);
