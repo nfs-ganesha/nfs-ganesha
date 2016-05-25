@@ -1399,22 +1399,33 @@ static void nfs_release_v4_client(char *ip)
 			     && ip_match(ip, cp)) {
 				inc_client_id_ref(cp);
 
-				/* Take a reference to the client record */
+				/* Take a reference to the client record
+				 * before we drop cid_mutex. client record
+				 * may be decoupled, so check if it is still
+				 * coupled!
+				 */
 				recp = cp->cid_client_record;
-				inc_client_record_ref(recp);
+				if (recp)
+					inc_client_record_ref(recp);
 
 				PTHREAD_MUTEX_unlock(&cp->cid_mutex);
 
 				PTHREAD_RWLOCK_unlock(&ht->partitions[i].lock);
 
-				PTHREAD_MUTEX_lock(&recp->cr_mutex);
+				/* nfs_client_id_expire requires cr_mutex
+				 * if not decoupled alread
+				 */
+				if (recp)
+					PTHREAD_MUTEX_lock(&recp->cr_mutex);
 
 				nfs_client_id_expire(cp, true);
 
-				PTHREAD_MUTEX_unlock(&recp->cr_mutex);
+				if (recp) {
+					PTHREAD_MUTEX_unlock(&recp->cr_mutex);
+					dec_client_record_ref(recp);
+				}
 
 				dec_client_id_ref(cp);
-				dec_client_record_ref(recp);
 				return;
 
 			} else {
