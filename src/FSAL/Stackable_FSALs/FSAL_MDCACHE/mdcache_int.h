@@ -188,8 +188,7 @@ static const uint32_t MDCACHE_UNREACHABLE = 0x00000008;
  * is also the anchor for state held on a file.
  *
  * Regarding the locking discipline:
- * (1) attr_lock protects the attrs field, the export_list, mde_change_time, and
- *     attr_time
+ * (1) attr_lock protects the attrs field, the export_list, and attr_time
  *
  * (2) content_lock must be held for WRITE when modifying the AVL tree
  *     of a directory or any dirent contained therein.  It must be
@@ -207,10 +206,6 @@ static const uint32_t MDCACHE_UNREACHABLE = 0x00000008;
  * The flags field is unprotected, however it should be modified only
  * through the functions atomic_set_uint32_t_bits and
  * atomic_clear_uint32_t_bits.
- *
- * The change_time and attr_time fields are unprotected and must only
- * be used for simple comparisons or servicing requests returning
- * change_info4.
  *
  * The lru field has its own mutex to protect it.
  *
@@ -234,6 +229,8 @@ struct mdcache_fsal_obj_handle {
 	struct fsal_obj_handle obj_handle;
 	/** Sub-FSAL handle */
 	struct fsal_obj_handle *sub_handle;
+	/** Cached attributes */
+	struct attrlist attrs;
 	/** FH hash linkage */
 	struct {
 		struct avltree_node node_k;	/*< AVL node in tree */
@@ -244,11 +241,6 @@ struct mdcache_fsal_obj_handle {
 	uint32_t mde_flags;
 	/** refcount for number of active icreate */
 	int32_t icreate_refcnt;
-	/** The time of the last operation ganesha knows about.  We
-	    can ue this for change_info4, but atomic MUST be set to
-	    false.  Don't use it for anything else (servicing getattr,
-	    etc.) */
-	time_t mde_change_time;
 	/** Time at which we last refreshed attributes. */
 	time_t attr_time;
 	/** New style LRU link */
@@ -476,18 +468,10 @@ static inline void
 mdc_fixup_md(mdcache_entry_t *entry)
 {
 	/* Set the refresh time for the cache entry */
-	if (entry->obj_handle.attrs->expire_time_attr > 0)
+	if (entry->attrs.expire_time_attr > 0)
 		entry->attr_time = time(NULL);
 	else
 		entry->attr_time = 0;
-
-	/* I don't like using nsecs as a counter, it will be annoying in
-	 * 500 years.  I'll fix to match MS nano-intervals later.
-	 *
-	 * Also, fsal attrs has a changetime.
-	 * (Matt). */
-	entry->mde_change_time =
-	    timespec_to_nsecs(&entry->obj_handle.attrs->chgtime);
 
 	/* We have just loaded the attributes from the FSAL. */
 	atomic_set_uint32_t_bits(&entry->mde_flags, MDCACHE_TRUST_ATTRS);
@@ -507,21 +491,21 @@ mdcache_is_attrs_valid(const mdcache_entry_t *entry)
 	if (!(entry->mde_flags & MDCACHE_TRUST_ATTRS))
 		return false;
 
-	if (FSAL_TEST_MASK(entry->obj_handle.attrs->mask, ATTR_RDATTR_ERR))
+	if (FSAL_TEST_MASK(entry->attrs.mask, ATTR_RDATTR_ERR))
 		return false;
 
 	if (entry->obj_handle.type == DIRECTORY
 	    && mdcache_param.getattr_dir_invalidation)
 		return false;
 
-	if (entry->obj_handle.attrs->expire_time_attr == 0)
+	if (entry->attrs.expire_time_attr == 0)
 		return false;
 
-	if (entry->obj_handle.attrs->expire_time_attr > 0) {
+	if (entry->attrs.expire_time_attr > 0) {
 		time_t current_time = time(NULL);
 
 		if (current_time - entry->attr_time >
-		    entry->obj_handle.attrs->expire_time_attr)
+		    entry->attrs.expire_time_attr)
 			return false;
 	}
 

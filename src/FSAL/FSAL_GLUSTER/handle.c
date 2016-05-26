@@ -279,7 +279,6 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 			 GLAPI_HANDLE_LENGTH, &objhandle, vol_uuid);
 
 	*handle = &objhandle->handle;
-	*attrib = objhandle->attributes;
 
  out:
 	if (status.major != ERR_FSAL_NO_ERROR)
@@ -361,7 +360,6 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 			 GLAPI_HANDLE_LENGTH, &objhandle, vol_uuid);
 
 	*handle = &objhandle->handle;
-	*attrib = objhandle->attributes;
 
  out:
 	if (status.major != ERR_FSAL_NO_ERROR)
@@ -471,7 +469,6 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 			 GLAPI_HANDLE_LENGTH, &objhandle, vol_uuid);
 
 	*handle = &objhandle->handle;
-	*attrib = objhandle->attributes;
 
  out:
 	if (status.major != ERR_FSAL_NO_ERROR)
@@ -552,7 +549,6 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 			 GLAPI_HANDLE_LENGTH, &objhandle, vol_uuid);
 
 	*handle = &objhandle->handle;
-	*attrib = objhandle->attributes;
 
  out:
 	if (status.major != ERR_FSAL_NO_ERROR)
@@ -624,7 +620,8 @@ static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
  * @brief Implements GLUSTER FSAL objectoperation getattrs
  */
 
-static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl)
+static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
+			      struct attrlist *attrs)
 {
 	int rc = 0;
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
@@ -633,7 +630,6 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl)
 	    container_of(op_ctx->fsal_export, struct glusterfs_export, export);
 	struct glusterfs_handle *objhandle =
 	    container_of(obj_hdl, struct glusterfs_handle, handle);
-	struct attrlist *fsalattr;
 #ifdef GLTIMING
 	struct timespec s_time, e_time;
 
@@ -661,18 +657,21 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl)
 		else
 			status = gluster2fsal_error(errno);
 
+		if (attrs->mask & ATTR_RDATTR_ERR) {
+			/* Caller asked for error to be visible. */
+			attrs->mask = ATTR_RDATTR_ERR;
+		}
 		goto out;
 	}
 
-	fsalattr = &objhandle->attributes;
-	stat2fsal_attributes(&buffxstat.buffstat, fsalattr);
+	stat2fsal_attributes(&buffxstat.buffstat, attrs);
 	if (obj_hdl->type == DIRECTORY)
 		buffxstat.is_dir = true;
 	else
 		buffxstat.is_dir = false;
 
 	status = glusterfs_get_acl(glfs_export, objhandle->glhandle,
-				   &buffxstat, fsalattr);
+				   &buffxstat, attrs);
 
 	/* *
 	* The error ENOENT is not an expected error for GETATTRS
@@ -685,6 +684,16 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl)
 			status = fsalstat(ERR_FSAL_NO_ERROR, 0);
 		else
 			status = gluster2fsal_error(ESTALE);
+	}
+
+	if (FSAL_IS_ERROR(status)) {
+		if (attrs->mask & ATTR_RDATTR_ERR) {
+			/* Caller asked for error to be visible. */
+			attrs->mask = ATTR_RDATTR_ERR;
+		}
+	} else {
+		/* Make sure ATTR_RDATTR_ERR is cleared on success. */
+		attrs->mask &= ~ATTR_RDATTR_ERR;
 	}
 
  out:

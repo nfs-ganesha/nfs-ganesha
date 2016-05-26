@@ -82,7 +82,6 @@ struct ceph_fd {
 
 struct handle {
 	struct fsal_obj_handle handle;	/*< The public handle */
-	struct attrlist attributes;
 	struct ceph_fd fd;
 	struct Inode *i;	/*< The Ceph inode */
 	const struct fsal_up_vector *up_ops;	/*< Upcall operations */
@@ -160,8 +159,6 @@ static inline fsal_status_t ceph2fsal_error(const int ceph_errorcode)
 {
 	return fsalstat(posix2fsal_error(-ceph_errorcode), -ceph_errorcode);
 }
-void ceph2fsal_attributes(const struct stat *buffstat,
-			  struct attrlist *fsalattr);
 
 void export_ops_init(struct export_ops *ops);
 void handle_ops_init(struct fsal_obj_ops *ops);

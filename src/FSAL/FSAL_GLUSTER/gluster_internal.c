@@ -143,7 +143,7 @@ struct fsal_staticfsinfo_t *gluster_staticinfo(struct fsal_module *hdl)
  * @return 0 on success, negative error codes on failure.
  */
 
-void construct_handle(struct glusterfs_export *glexport, const struct stat *sb,
+void construct_handle(struct glusterfs_export *glexport, const struct stat *st,
 		      struct glfs_object *glhandle, unsigned char *globjhdl,
 		      int len, struct glusterfs_handle **obj,
 		      const char *vol_uuid)
@@ -155,12 +155,6 @@ void construct_handle(struct glusterfs_export *glexport, const struct stat *sb,
 
 	constructing = gsh_calloc(1, sizeof(struct glusterfs_handle));
 
-	constructing->handle.attrs = &constructing->attributes;
-	constructing->attributes.mask =
-		glexport->export.exp_ops.fs_supported_attrs(&glexport->export);
-
-	stat2fsal_attributes(sb, &constructing->attributes);
-
 	constructing->glhandle = glhandle;
 	memcpy(constructing->globjhdl, vol_uuid, GLAPI_UUID_LENGTH);
 	memcpy(constructing->globjhdl+GLAPI_UUID_LENGTH, globjhdl,
@@ -168,7 +162,9 @@ void construct_handle(struct glusterfs_export *glexport, const struct stat *sb,
 	constructing->glfd = NULL;
 
 	fsal_obj_handle_init(&constructing->handle, &glexport->export,
-			     constructing->attributes.type);
+			     posix2fsal_type(st->st_mode));
+	constructing->handle.fsid = posix2fsal_fsid(st->st_dev);
+	constructing->handle.fileid = st->st_ino;
 	handle_ops_init(&constructing->handle.obj_ops);
 
 	*obj = constructing;

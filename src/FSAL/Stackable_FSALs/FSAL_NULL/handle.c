@@ -70,8 +70,6 @@ static struct nullfs_fsal_obj_handle *nullfs_alloc_handle(
 
 	result = gsh_calloc(1, sizeof(struct nullfs_fsal_obj_handle));
 
-	/* attributes */
-	result->obj_handle.attrs = sub_handle->attrs;
 	/* default handlers */
 	fsal_obj_handle_init(&result->obj_handle, &export->export,
 			     sub_handle->type);
@@ -79,6 +77,8 @@ static struct nullfs_fsal_obj_handle *nullfs_alloc_handle(
 	nullfs_handle_ops_init(&result->obj_handle.obj_ops);
 	result->sub_handle = sub_handle;
 	result->obj_handle.type = sub_handle->type;
+	result->obj_handle.fsid = sub_handle->fsid;
+	result->obj_handle.fileid = sub_handle->fileid;
 	result->obj_handle.fs = fs;
 
 	return result;
@@ -413,7 +413,8 @@ static fsal_status_t renamefile(struct fsal_obj_handle *obj_hdl,
 	return status;
 }
 
-static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl)
+static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
+			      struct attrlist *attrib_get)
 {
 	struct nullfs_fsal_obj_handle *handle =
 		container_of(obj_hdl, struct nullfs_fsal_obj_handle,
@@ -426,7 +427,8 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl)
 	/* calling subfsal method */
 	op_ctx->fsal_export = export->export.sub_export;
 	fsal_status_t status =
-		handle->sub_handle->obj_ops.getattrs(handle->sub_handle);
+		handle->sub_handle->obj_ops.getattrs(handle->sub_handle,
+						     attrib_get);
 	op_ctx->fsal_export = &export->export;
 
 	return status;
@@ -571,7 +573,6 @@ void nullfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->mknode = makenode;
 	ops->symlink = makesymlink;
 	ops->readlink = readsymlink;
-	ops->test_access = fsal_test_access;
 	ops->getattrs = getattrs;
 	ops->setattrs = setattrs;
 	ops->link = linkfile;

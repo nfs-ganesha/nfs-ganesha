@@ -434,12 +434,6 @@ int _9p_tools_clunk(struct _9p_fid *pfid)
 				free_fid(pfid);
 				return _9p_tools_errno(fsal_status);
 			}
-			fsal_status = fsal_refresh_attrs(pfid->pentry);
-			if (FSAL_IS_ERROR(fsal_status) &&
-			    fsal_status.major != ERR_FSAL_STALE) {
-				free_fid(pfid);
-				return _9p_tools_errno(fsal_status);
-			}
 		}
 	}
 

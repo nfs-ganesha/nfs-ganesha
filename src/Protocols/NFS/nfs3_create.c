@@ -219,22 +219,14 @@ int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 			goto out_fail;
 		}
 
-		/* If the object exists already size is the only attribute we
-		 * set.
-		 */
-		if (FSAL_TEST_MASK(sattr.mask, ATTR_SIZE)
-		    && (sattr.filesize == 0)) {
-			FSAL_CLEAR_MASK(sattr.mask);
-			FSAL_SET_MASK(sattr.mask, ATTR_SIZE);
-		} else {
-			FSAL_CLEAR_MASK(sattr.mask);
-		}
-
 		/* Clear error code */
 		fsal_status = fsalstat(ERR_FSAL_NO_ERROR, 0);
 	}
 
  make_handle:
+
+	/* Release the attributes (may release an inherited ACL) */
+	fsal_release_attrs(&sattr);
 
 	/* Build file handle and set Post Op Fh3 structure */
 	if (!nfs3_FSALToFhandle(
@@ -271,6 +263,10 @@ int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	return rc;
 
  out_fail:
+
+	/* Release the attributes (may release an inherited ACL) */
+	fsal_release_attrs(&sattr);
+
 	if (nfs_RetryableError(fsal_status.major)) {
 		rc = NFS_REQ_DROP;
 	} else {

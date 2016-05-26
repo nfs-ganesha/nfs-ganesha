@@ -101,7 +101,6 @@ mdc_up_update(struct fsal_export *sub_export, struct gsh_buffdesc *handle,
 	/* Have necessary changes been made? */
 	bool mutatis_mutandis = false;
 	struct req_op_context *save_ctx, req_ctx = {0};
-	struct attrlist *attrs;
 	mdcache_key_t key;
 	struct mdcache_fsal_export *export =
 		mdc_export(sub_export->super_export);
@@ -160,31 +159,29 @@ mdc_up_update(struct fsal_export *sub_export, struct gsh_buffdesc *handle,
 
 	PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
 
-	attrs = entry->obj_handle.attrs;
-
 	if (attr->expire_time_attr != 0)
-		attrs->expire_time_attr = attr->expire_time_attr;
+		entry->attrs.expire_time_attr = attr->expire_time_attr;
 
 	if (FSAL_TEST_MASK(attr->mask, ATTR_SIZE)) {
 		if (flags & fsal_up_update_filesize_inc) {
-			if (attr->filesize > attrs->filesize) {
-				attrs->filesize = attr->filesize;
+			if (attr->filesize > entry->attrs.filesize) {
+				entry->attrs.filesize = attr->filesize;
 				mutatis_mutandis = true;
 			}
 		} else {
-			attrs->filesize = attr->filesize;
+			entry->attrs.filesize = attr->filesize;
 			mutatis_mutandis = true;
 		}
 	}
 
 	if (FSAL_TEST_MASK(attr->mask, ATTR_SPACEUSED)) {
 		if (flags & fsal_up_update_spaceused_inc) {
-			if (attr->spaceused > attrs->spaceused) {
-				attrs->spaceused = attr->spaceused;
+			if (attr->spaceused > entry->attrs.spaceused) {
+				entry->attrs.spaceused = attr->spaceused;
 				mutatis_mutandis = true;
 			}
 		} else {
-			attrs->spaceused = attr->spaceused;
+			entry->attrs.spaceused = attr->spaceused;
 			mutatis_mutandis = true;
 		}
 	}
@@ -198,74 +195,74 @@ mdc_up_update(struct fsal_export *sub_export, struct gsh_buffdesc *handle,
 		 * an asynchronous call.
 		 */
 
-		nfs4_acl_release_entry(attrs->acl);
+		nfs4_acl_release_entry(entry->attrs.acl);
 
-		attrs->acl = attr->acl;
+		entry->attrs.acl = attr->acl;
 		mutatis_mutandis = true;
 	}
 
 	if (FSAL_TEST_MASK(attr->mask, ATTR_MODE)) {
-		attrs->mode = attr->mode;
+		entry->attrs.mode = attr->mode;
 		mutatis_mutandis = true;
 	}
 
 	if (FSAL_TEST_MASK(attr->mask, ATTR_NUMLINKS)) {
-		attrs->numlinks = attr->numlinks;
+		entry->attrs.numlinks = attr->numlinks;
 		mutatis_mutandis = true;
 	}
 
 	if (FSAL_TEST_MASK(attr->mask, ATTR_OWNER)) {
-		attrs->owner = attr->owner;
+		entry->attrs.owner = attr->owner;
 		mutatis_mutandis = true;
 	}
 
 	if (FSAL_TEST_MASK(attr->mask, ATTR_GROUP)) {
-		attrs->group = attr->group;
+		entry->attrs.group = attr->group;
 		mutatis_mutandis = true;
 	}
 
 	if (FSAL_TEST_MASK(attr->mask, ATTR_ATIME)
 	    && ((flags & ~fsal_up_update_atime_inc)
 		||
-		(gsh_time_cmp(&attr->atime, &attrs->atime) == 1))) {
-		attrs->atime = attr->atime;
+		(gsh_time_cmp(&attr->atime, &entry->attrs.atime) == 1))) {
+		entry->attrs.atime = attr->atime;
 		mutatis_mutandis = true;
 	}
 
 	if (FSAL_TEST_MASK(attr->mask, ATTR_CREATION)
 	    && ((flags & ~fsal_up_update_creation_inc)
 		||
-		(gsh_time_cmp(&attr->creation, &attrs->creation) == 1))) {
-		attrs->creation = attr->creation;
+		(gsh_time_cmp(&attr->creation, &entry->attrs.creation) == 1))) {
+		entry->attrs.creation = attr->creation;
 		mutatis_mutandis = true;
 	}
 
 	if (FSAL_TEST_MASK(attr->mask, ATTR_CTIME)
 	    && ((flags & ~fsal_up_update_ctime_inc)
 		||
-		(gsh_time_cmp(&attr->ctime, &attrs->ctime) == 1))) {
-		attrs->ctime = attr->ctime;
+		(gsh_time_cmp(&attr->ctime, &entry->attrs.ctime) == 1))) {
+		entry->attrs.ctime = attr->ctime;
 		mutatis_mutandis = true;
 	}
 
 	if (FSAL_TEST_MASK(attr->mask, ATTR_MTIME)
 	    && ((flags & ~fsal_up_update_mtime_inc)
 		||
-		(gsh_time_cmp(&attr->mtime, &attrs->mtime) == 1))) {
-		attrs->mtime = attr->mtime;
+		(gsh_time_cmp(&attr->mtime, &entry->attrs.mtime) == 1))) {
+		entry->attrs.mtime = attr->mtime;
 		mutatis_mutandis = true;
 	}
 
 	if (FSAL_TEST_MASK(attr->mask, ATTR_CHGTIME)
 	    && ((flags & ~fsal_up_update_chgtime_inc)
 		||
-		(gsh_time_cmp(&attr->chgtime, &attrs->chgtime) == 1))) {
-		attrs->chgtime = attr->chgtime;
+		(gsh_time_cmp(&attr->chgtime, &entry->attrs.chgtime) == 1))) {
+		entry->attrs.chgtime = attr->chgtime;
 		mutatis_mutandis = true;
 	}
 
 	if (FSAL_TEST_MASK(attr->mask, ATTR_CHANGE)) {
-		attrs->change = attr->change;
+		entry->attrs.change = attr->change;
 		mutatis_mutandis = true;
 	}
 

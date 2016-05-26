@@ -146,6 +146,9 @@ int nfs3_mkdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	fsal_status = fsal_create(parent_obj, dir_name, DIRECTORY, &sattr, NULL,
 				  &dir_obj);
 
+	/* Release the attributes (may release an inherited ACL) */
+	fsal_release_attrs(&sattr);
+
 	if (FSAL_IS_ERROR(fsal_status))
 		goto out_fail;
 

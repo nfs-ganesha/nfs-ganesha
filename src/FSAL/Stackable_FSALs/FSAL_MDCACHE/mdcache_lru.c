@@ -427,6 +427,9 @@ mdcache_lru_clean(mdcache_entry_t *entry)
 		entry->sub_handle = NULL;
 	}
 
+	/* Done with the attrs */
+	fsal_release_attrs(&entry->attrs);
+
 	/* Clean our handle */
 	fsal_obj_handle_fini(&entry->obj_handle);
 
@@ -1227,6 +1230,7 @@ mdcache_lru_get(mdcache_entry_t **entry)
 		LogFullDebug(COMPONENT_CACHE_INODE_LRU,
 			     "Recycling entry at %p.", nentry);
 		mdcache_lru_clean(nentry);
+		memset(&nentry->attrs, 0, sizeof(nentry->attrs));
 		if (!init_rw_locks(nentry)) {
 			/* Recycle */
 			status = fsalstat(ERR_FSAL_BAD_INIT, 0);

@@ -838,7 +838,8 @@ static fsal_status_t listxattrs(struct fsal_obj_handle *obj_hdl,
  * default case not supported
  */
 
-static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl)
+static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
+			      struct attrlist *attrs)
 {
 	LogCrit(COMPONENT_FSAL,
 		"Invoking unsupported FSAL operation");
@@ -1326,6 +1327,13 @@ static bool check_verifier(struct fsal_obj_handle *obj_hdl,
 			   fsal_verifier_t verifier)
 {
 	uint32_t verf_hi = 0, verf_lo = 0;
+	struct attrlist attrs;
+	bool result;
+
+	fsal_prepare_attrs(&attrs, ATTR_ATIME | ATTR_MTIME);
+
+	if (FSAL_IS_ERROR(obj_hdl->obj_ops.getattrs(obj_hdl, &attrs)))
+		return false;
 
 	memcpy(&verf_hi,
 	       verifier,
@@ -1338,11 +1346,16 @@ static bool check_verifier(struct fsal_obj_handle *obj_hdl,
 		     "Passed verifier %"PRIx32" %"PRIx32
 		     " file verifier %"PRIx32" %"PRIx32,
 		     verf_hi, verf_lo,
-		     (uint32_t) obj_hdl->attrs->atime.tv_sec,
-		     (uint32_t) obj_hdl->attrs->mtime.tv_sec);
+		     (uint32_t) attrs.atime.tv_sec,
+		     (uint32_t) attrs.mtime.tv_sec);
 
-	return obj_hdl->attrs->atime.tv_sec == verf_hi &&
-	       obj_hdl->attrs->mtime.tv_sec == verf_lo;
+	result = attrs.atime.tv_sec == verf_hi &&
+		 attrs.mtime.tv_sec == verf_lo;
+
+	/* Done with the attrs */
+	fsal_release_attrs(&attrs);
+
+	return result;
 }
 
 /* status2

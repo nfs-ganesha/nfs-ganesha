@@ -171,12 +171,12 @@ int _9p_setattr(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		fsalattr.mtime.tv_nsec = *mtime_nsec;
 	}
 
-	/* Set size if needed */
-	if (*valid & _9P_SETATTR_SIZE)
-		FSAL_SET_MASK(fsalattr.mask, ATTR_SIZE);
-
 	/* Now set the attr */
 	fsal_status = fsal_setattr(pfid->pentry, false, pfid->state, &fsalattr);
+
+	/* Release the attributes (may release an inherited ACL) */
+	fsal_release_attrs(&fsalattr);
+
 	if (FSAL_IS_ERROR(fsal_status))
 		return _9p_rerror(req9p, msgtag,
 				  _9p_tools_errno(fsal_status), plenout,

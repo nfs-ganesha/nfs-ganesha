@@ -501,7 +501,8 @@ static fsal_status_t ceph_fsal_readlink(struct fsal_obj_handle *link_pub,
  * @return FSAL status.
  */
 
-static fsal_status_t getattrs(struct fsal_obj_handle *handle_pub)
+static fsal_status_t getattrs(struct fsal_obj_handle *handle_pub,
+			      struct attrlist *attrs)
 {
 	/* Generic status return */
 	int rc = 0;
@@ -515,10 +516,18 @@ static fsal_status_t getattrs(struct fsal_obj_handle *handle_pub)
 
 	rc = ceph_ll_getattr(export->cmount, handle->i, &st, 0, 0);
 
-	if (rc < 0)
+	if (rc < 0) {
+		if (attrs->mask & ATTR_RDATTR_ERR) {
+			/* Caller asked for error to be visible. */
+			attrs->mask = ATTR_RDATTR_ERR;
+		}
 		return ceph2fsal_error(rc);
+	}
 
-	ceph2fsal_attributes(&st, &handle->attributes);
+	posix2fsal_attributes(&st, attrs);
+
+	/* Make sure ATTR_RDATTR_ERR is cleared on success. */
+	attrs->mask &= ~ATTR_RDATTR_ERR;
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -995,11 +1004,9 @@ fsal_status_t ceph_open2(struct fsal_obj_handle *obj_hdl,
 						 &stat, 0, 0);
 
 			if (retval == 0) {
-				posix2fsal_attributes(&stat,
-						      &myself->attributes);
 				LogFullDebug(COMPONENT_FSAL,
 					     "New size = %"PRIx64,
-					     myself->attributes.filesize);
+					     stat.st_size);
 			} else {
 				/* Because we have an inode ref, we never
 				 * get EBADF like other FSALs might see.
@@ -1013,8 +1020,7 @@ fsal_status_t ceph_open2(struct fsal_obj_handle *obj_hdl,
 			if (!FSAL_IS_ERROR(status) &&
 			    createmode >= FSAL_EXCLUSIVE &&
 			    createmode != FSAL_EXCLUSIVE_9P &&
-			    !obj_hdl->obj_ops.check_verifier(obj_hdl,
-							     verifier)) {
+			    !check_verifier_stat(&stat, verifier)) {
 				/* Verifier didn't match, return EEXIST */
 				status =
 				    fsalstat(posix2fsal_error(EEXIST), EEXIST);
@@ -1275,13 +1281,10 @@ fsal_status_t ceph_reopen2(struct fsal_obj_handle *obj_hdl,
 	fsal_status_t status = {0, 0};
 	int posix_flags = 0;
 	fsal_openflags_t old_openflags;
-	bool truncated;
 
 	my_share_fd = (struct ceph_fd *)(state + 1);
 
 	fsal2posix_openflags(openflags, &posix_flags);
-
-	truncated = (posix_flags & O_TRUNC) != 0;
 
 	memset(my_fd, 0, sizeof(*my_fd));
 
@@ -1314,11 +1317,6 @@ fsal_status_t ceph_reopen2(struct fsal_obj_handle *obj_hdl,
 		 */
 		ceph_close_my_fd(myself, my_share_fd);
 		*my_share_fd = fd;
-
-		if (truncated) {
-			/* Refresh the attributes */
-			status = obj_hdl->obj_ops.getattrs(obj_hdl);
-		}
 	} else {
 		/* We had a failure on open - we need to revert the share.
 		 * This can block over an I/O operation.
@@ -1429,9 +1427,7 @@ fsal_status_t ceph_read2(struct fsal_obj_handle *obj_hdl,
 
 	*read_amount = nb_read;
 
-	/* dual eof condition */
-	*end_of_file = ((nb_read == 0) /* most clients */ ||	/* ESXi */
-			(((offset + nb_read) >= myself->attributes.filesize)));
+	*end_of_file = nb_read == 0;
 
 #if 0
 	/** @todo

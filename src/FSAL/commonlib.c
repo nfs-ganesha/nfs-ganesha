@@ -163,12 +163,9 @@ void fsal_obj_handle_init(struct fsal_obj_handle *obj, struct fsal_export *exp,
 {
 	pthread_rwlockattr_t attrs;
 
-	assert(obj->attrs != NULL);
-
 	memcpy(&obj->obj_ops, &def_handle_ops, sizeof(struct fsal_obj_ops));
 	obj->fsal = exp->fsal;
 	obj->type = type;
-	obj->attrs->expire_time_attr = 0;
 	pthread_rwlockattr_init(&attrs);
 #ifdef GLIBC
 	pthread_rwlockattr_setkind_np(
@@ -1708,7 +1705,7 @@ fsal_status_t fsal_remove_access(struct fsal_obj_handle *dir_hdl,
 				dir_hdl,
 				FSAL_MODE_MASK_SET(FSAL_X_OK) |
 				FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_EXECUTE),
-				NULL, NULL);
+				NULL, NULL, false);
 	if (FSAL_IS_ERROR(fsal_status)) {
 		LogFullDebug(COMPONENT_FSAL,
 			 "Could not delete: No execute permession on parent: %s",
@@ -1723,13 +1720,13 @@ fsal_status_t fsal_remove_access(struct fsal_obj_handle *dir_hdl,
 				FSAL_MODE_MASK_SET(FSAL_W_OK) |
 				FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_DELETE) |
 				FSAL_ACE4_REQ_FLAG,
-				NULL, NULL);
+				NULL, NULL, false);
 	fsal_status = dir_hdl->obj_ops.test_access(
 				dir_hdl,
 				FSAL_MODE_MASK_SET(FSAL_W_OK) |
 				FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_DELETE_CHILD) |
 				FSAL_ACE4_REQ_FLAG,
-				NULL, NULL);
+				NULL, NULL, false);
 	if (FSAL_IS_ERROR(fsal_status) && FSAL_IS_ERROR(del_status)) {
 		/* Neither was explicitly allowed */
 		if (fsal_status.major != ERR_FSAL_NO_ACE) {
@@ -1755,7 +1752,7 @@ fsal_status_t fsal_remove_access(struct fsal_obj_handle *dir_hdl,
 				FSAL_ACE4_MASK_SET(isdir ?
 					   FSAL_ACE_PERM_ADD_SUBDIRECTORY
 					   : FSAL_ACE_PERM_ADD_FILE),
-				NULL, NULL);
+				NULL, NULL, false);
 
 		if (FSAL_IS_ERROR(fsal_status)) {
 			LogFullDebug(COMPONENT_FSAL,
@@ -1794,7 +1791,8 @@ fsal_status_t fsal_rename_access(struct fsal_obj_handle *src_dir_hdl,
 			FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_SUBDIRECTORY);
 	else
 		access_type |= FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_FILE);
-	status = fsal_test_access(dst_dir_hdl, access_type, NULL, NULL);
+	status = dst_dir_hdl->obj_ops.test_access(dst_dir_hdl, access_type,
+						  NULL, NULL, false);
 	if (FSAL_IS_ERROR(status))
 		return status;
 
@@ -2657,6 +2655,39 @@ fsal_status_t fsal_find_fd(struct fsal_fd **out_fd,
 	return fsal_reopen_obj(obj_hdl, openflags != FSAL_O_ANY, bypass,
 			       openflags, obj_fd, share, open_func, close_func,
 			       out_fd, has_lock, closefd);
+}
+
+/**
+ * @brief Check the exclusive create verifier for a file.
+ *
+ * The default behavior is to check verifier against atime and mtime.
+ *
+ * @param[in] st          POSIX attributes for the file (from stat)
+ * @param[in] verifier    Verifier to use for exclusive create
+ *
+ * @retval true if verifier matches
+ */
+
+bool check_verifier_stat(struct stat *st, fsal_verifier_t verifier)
+{
+	uint32_t verf_hi = 0, verf_lo = 0;
+
+	memcpy(&verf_hi,
+	       verifier,
+	       sizeof(uint32_t));
+	memcpy(&verf_lo,
+	       verifier + sizeof(uint32_t),
+	       sizeof(uint32_t));
+
+	LogFullDebug(COMPONENT_FSAL,
+		     "Passed verifier %"PRIx32" %"PRIx32
+		     " file verifier %"PRIx32" %"PRIx32,
+		     verf_hi, verf_lo,
+		     (uint32_t) st->st_atim.tv_sec,
+		     (uint32_t) st->st_mtim.tv_sec);
+
+	return st->st_atim.tv_sec == verf_hi &&
+	       st->st_mtim.tv_sec == verf_lo;
 }
 
 /** @} */

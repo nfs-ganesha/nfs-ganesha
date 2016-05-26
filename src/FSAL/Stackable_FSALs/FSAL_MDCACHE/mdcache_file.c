@@ -173,7 +173,7 @@ fsal_status_t mdcache_read(struct fsal_obj_handle *obj_hdl, uint64_t offset,
 	       );
 
 	if (!FSAL_IS_ERROR(status))
-		mdc_set_time_current(&obj_hdl->attrs->atime);
+		mdc_set_time_current(&entry->attrs.atime);
 	else if (status.major == ERR_FSAL_DELAY)
 		mdcache_kill_entry(entry);
 
@@ -210,7 +210,7 @@ fsal_status_t mdcache_read_plus(struct fsal_obj_handle *obj_hdl,
 	       );
 
 	if (!FSAL_IS_ERROR(status))
-		mdc_set_time_current(&obj_hdl->attrs->atime);
+		mdc_set_time_current(&entry->attrs.atime);
 	else if (status.major == ERR_FSAL_DELAY)
 		mdcache_kill_entry(entry);
 
@@ -246,6 +246,9 @@ fsal_status_t mdcache_write(struct fsal_obj_handle *obj_hdl, uint64_t offset,
 
 	if (status.major == ERR_FSAL_DELAY)
 		mdcache_kill_entry(entry);
+	else if (!FSAL_IS_ERROR(status))
+		atomic_clear_uint32_t_bits(&entry->mde_flags,
+					MDCACHE_TRUST_ATTRS);
 
 	return status;
 }
@@ -458,6 +461,11 @@ static fsal_status_t mdc_open2_by_name(mdcache_entry_t *mdc_parent,
 		LogFullDebug(COMPONENT_CACHE_INODE,
 			     "Opened entry %p, sub_handle %p",
 			     entry, entry->sub_handle);
+		if (openflags & FSAL_O_TRUNC) {
+			/* Invalidate the attributes since we just truncated. */
+			atomic_clear_uint32_t_bits(&entry->mde_flags,
+						   MDCACHE_TRUST_ATTRS);
+		}
 		*new_entry = entry;
 	}
 
@@ -559,6 +567,12 @@ fsal_status_t mdcache_open2(struct fsal_obj_handle *obj_hdl,
 			     "Open2 of object succeeded.");
 		*new_obj = obj_hdl;
 		return status;
+	} else if (createmode != FSAL_NO_CREATE) {
+		/* We probably created, so let's invalidate the parent
+		 * directory's attributes.
+		 */
+		atomic_clear_uint32_t_bits(&mdc_parent->mde_flags,
+					   MDCACHE_TRUST_ATTRS);
 	}
 
 	PTHREAD_RWLOCK_wrlock(&mdc_parent->content_lock);
@@ -697,7 +711,7 @@ fsal_status_t mdcache_read2(struct fsal_obj_handle *obj_hdl,
 	       );
 
 	if (!FSAL_IS_ERROR(status))
-		mdc_set_time_current(&obj_hdl->attrs->atime);
+		mdc_set_time_current(&entry->attrs.atime);
 	else if (status.major == ERR_FSAL_DELAY)
 		mdcache_kill_entry(entry);
 

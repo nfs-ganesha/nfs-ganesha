@@ -40,6 +40,7 @@
 
 #include "fsal_api.h"
 #include "nfs23.h"
+#include "nfs4_acls.h"
 
 /**
  * @brief If we don't know how big a buffer we want for a link, use
@@ -303,11 +304,6 @@ fsal_status_t fsal_access(struct fsal_obj_handle *obj,
 			  fsal_accessflags_t *allowed,
 			  fsal_accessflags_t *denied);
 uint64_t fsal_fileid(struct fsal_obj_handle *obj);
-fsal_status_t fsal_refresh_attrs(struct fsal_obj_handle *obj);
-fsal_errors_t fsal_getattr(struct fsal_obj_handle *obj,
-				  void *opaque,
-				  fsal_getattr_cb_t cb,
-				  enum cb_state cb_state);
 fsal_status_t fsal_link(struct fsal_obj_handle *obj,
 			struct fsal_obj_handle *dest_dir,
 			const char *name);
@@ -423,6 +419,46 @@ fsal_status_t fsal_commit(struct fsal_obj_handle *obj_hdl, off_t offset,
 fsal_status_t fsal_verify2(struct fsal_obj_handle *obj,
 			   fsal_verifier_t verifier);
 bool fsal_is_open(struct fsal_obj_handle *obj);
+
+/**
+ * @brief Pepare an attrlist for fetching attributes.
+ *
+ * @param[in,out] attrs   The attrlist to work with
+ * @param[in]             The mask to use for the fetch
+ *
+ */
+
+static inline void fsal_prepare_attrs(struct attrlist *attrs,
+				      attrmask_t mask)
+{
+	memset(attrs, 0, sizeof(*attrs));
+	attrs->mask = mask;
+}
+
+/**
+ * @brief Release any extra resources from an attrlist.
+ *
+ * @param[in] attrs   The attrlist to work with
+ *
+ */
+
+static inline void fsal_release_attrs(struct attrlist *attrs)
+{
+	if (attrs->acl != NULL) {
+		int acl_status;
+
+		acl_status = nfs4_acl_release_entry(attrs->acl);
+
+		if (acl_status != NFS_V4_ACL_SUCCESS)
+			LogCrit(COMPONENT_FSAL,
+				"Failed to release old acl, status=%d",
+				acl_status);
+
+		/* Poison the acl since we no longer hold a reference. */
+		attrs->acl = NULL;
+	}
+}
+
 /**
  * @brief Return a changeid4 for this file.
  *
@@ -434,7 +470,23 @@ bool fsal_is_open(struct fsal_obj_handle *obj);
 static inline changeid4
 fsal_get_changeid4(struct fsal_obj_handle *obj)
 {
-	return (changeid4)timespec_to_nsecs(&obj->attrs->chgtime);
+	struct attrlist attrs;
+	fsal_status_t status;
+	changeid4 change;
+
+	fsal_prepare_attrs(&attrs, ATTR_CHANGE | ATTR_CHGTIME);
+
+	status = obj->obj_ops.getattrs(obj, &attrs);
+
+	if (FSAL_IS_ERROR(status))
+		return 0;
+
+	change = (changeid4) attrs.change;
+
+	/* Done with the attrs */
+	fsal_release_attrs(&attrs);
+
+	return change;
 }
 
 static inline

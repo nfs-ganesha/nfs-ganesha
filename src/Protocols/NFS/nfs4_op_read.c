@@ -208,7 +208,6 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 	fsal_status_t fsal_status = {0, 0};
 	state_t *state_found = NULL;
 	state_t *state_open = NULL;
-	uint64_t file_size = 0;
 	struct fsal_obj_handle *obj = NULL;
 	bool sync = false;
 	bool anonymous_started = false;
@@ -379,13 +378,10 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 		anonymous_started = true;
 	}
 
-	/** @todo this is racy, use cache_inode_lock_trust_attrs and
-	 *        cache_inode_access_no_mutex
-	 */
-	if (state_open == NULL &&
-	    obj->attrs->owner != op_ctx->creds->caller_uid) {
+	if (state_open == NULL) {
 		/* Need to permission check the read. */
-		fsal_status = fsal_access(obj, FSAL_READ_ACCESS, NULL, NULL);
+		fsal_status = obj->obj_ops.test_access(obj, FSAL_READ_ACCESS,
+						       NULL, NULL, true);
 
 		if (fsal_status.major == ERR_FSAL_ACCESS) {
 			/* Test for execute permission */
@@ -479,7 +475,20 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 		goto done;
 	}
 
-	file_size = obj->attrs->filesize;
+	if (!eof_met) {
+		/** @todo FSF: add a config option for this behavior?
+		 */
+		/* Need to check against filesize for ESXi clients */
+		struct attrlist attrs;
+
+		fsal_prepare_attrs(&attrs, ATTR_SIZE);
+
+		if (!FSAL_IS_ERROR(obj->obj_ops.getattrs(obj, &attrs)))
+			eof_met = (offset + read_size) >= attrs.filesize;
+
+		/* Done with the attrs */
+		fsal_release_attrs(&attrs);
+	}
 
 	if (!anonymous_started && data->minorversion == 0)
 		op_ctx->clientid = NULL;
@@ -492,9 +501,7 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 		     " read length = %zu eof=%u", offset, read_size, eof_met);
 
 	/* Is EOF met or not ? */
-	res_READ4->READ4res_u.resok4.eof = (eof_met
-					    || ((offset + read_size) >=
-						file_size));
+	res_READ4->READ4res_u.resok4.eof = eof_met;
 
 	/* Say it is ok */
 	res_READ4->status = NFS4_OK;

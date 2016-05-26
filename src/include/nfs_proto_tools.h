@@ -42,6 +42,7 @@
 #include "log.h"
 #include "nfs_file_handle.h"
 #include "sal_data.h"
+#include "fsal.h"
 
 /* Hard and soft limit for nfsv4 quotas */
 #define NFS_V4_MAX_QUOTA_SOFT 4294967296LL	/*  4 GB */
@@ -74,6 +75,12 @@ struct xdr_attrs_args {
 					   of a filesystem, the fileid of
 					   the directory on which the
 					   filesystem is mounted. */
+	/* Static attributes */
+	object_file_type_t type;	/*< Object file type */
+	fsal_fsid_t fsid;	/*< Filesystem on which this object is
+				   stored */
+	uint64_t fileid;	/*< Unique identifier for this object within
+				   the scope of the fsid, (e.g. inode number) */
 	int nfs_status;
 	compound_data_t *data;
 	bool statfscalled;
@@ -256,9 +263,13 @@ typedef enum {
 nfsstat4 nfs4_utf8string2dynamic(const utf8string *input, utf8_scantype_t scan,
 				 char **obj_name);
 
-nfsstat4 file_To_Fattr(struct fsal_obj_handle *, fattr4 *,
-			      compound_data_t *, nfs_fh4 *,
-			      struct bitmap4 *);
+int bitmap4_to_attrmask_t(bitmap4 *bitmap4, attrmask_t *mask);
+
+nfsstat4 file_To_Fattr(compound_data_t *data,
+		       attrmask_t mask,
+		       struct attrlist *attr,
+		       fattr4 *Fattr,
+		       struct bitmap4 *Bitmap);
 
 bool nfs4_Fattr_Check_Access(fattr4 *, int);
 bool nfs4_Fattr_Check_Access_Bitmap(struct bitmap4 *, int);
@@ -266,10 +277,12 @@ bool nfs4_Fattr_Supported(fattr4 *);
 bool nfs4_Fattr_Supported_Bitmap(struct bitmap4 *);
 int nfs4_Fattr_cmp(fattr4 *, fattr4 *);
 
-bool nfs3_FSALattr_To_Fattr(struct gsh_export *, const struct attrlist *,
-			    fattr3 *);
+bool nfs3_FSALattr_To_Fattr(struct fsal_obj_handle *obj,
+			    const struct attrlist *FSAL_attr,
+			    fattr3 *Fattr);
 
-bool is_sticky_bit_set(const struct attrlist *attr);
+bool is_sticky_bit_set(struct fsal_obj_handle *obj,
+		       const struct attrlist *attr);
 
 #ifdef _USE_NFS3
 bool file_to_nfs3_Fattr(struct fsal_obj_handle *, fattr3 *);

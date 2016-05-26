@@ -414,34 +414,13 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 		if (createmode >= FSAL_EXCLUSIVE || truncated) {
 			/* Refresh the attributes */
 			struct stat stat;
-			attrmask_t request_mask;
 
 			retval = fstat(my_fd->fd, &stat);
 
 			if (retval == 0) {
-				request_mask = myself->attributes.mask;
-				posix2fsal_attributes(&stat,
-						      &myself->attributes);
-				myself->attributes.fsid = obj_hdl->fs->fsid;
-				if (myself->sub_ops &&
-				    myself->sub_ops->getattrs) {
-					status = myself->sub_ops->getattrs(
-							myself, my_fd->fd,
-							request_mask);
-					if (FSAL_IS_ERROR(status)) {
-						FSAL_CLEAR_MASK(
-						    myself->attributes.mask);
-						FSAL_SET_MASK(
-						    myself->attributes.mask,
-						    ATTR_RDATTR_ERR);
-						/** @todo: should handle this
-						 * better.
-						 */
-					}
-				}
 				LogFullDebug(COMPONENT_FSAL,
 					     "New size = %"PRIx64,
-					     myself->attributes.filesize);
+					     stat.st_size);
 			} else {
 				if (errno == EBADF)
 					errno = ESTALE;
@@ -455,8 +434,7 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 			if (!FSAL_IS_ERROR(status) &&
 			    createmode >= FSAL_EXCLUSIVE &&
 			    createmode != FSAL_EXCLUSIVE_9P &&
-			    !obj_hdl->obj_ops.check_verifier(obj_hdl,
-							     verifier)) {
+			    !check_verifier_stat(&stat, verifier)) {
 				/* Verifier didn't match, return EEXIST */
 				status =
 				    fsalstat(posix2fsal_error(EEXIST), EEXIST);
@@ -730,13 +708,10 @@ fsal_status_t vfs_reopen2(struct fsal_obj_handle *obj_hdl,
 	fsal_status_t status = {0, 0};
 	int posix_flags = 0;
 	fsal_openflags_t old_openflags;
-	bool truncated;
 
 	my_share_fd = (struct vfs_fd *)(state + 1);
 
 	fsal2posix_openflags(openflags, &posix_flags);
-
-	truncated = (posix_flags & O_TRUNC) != 0;
 
 	LogFullDebug(COMPONENT_FSAL,
 		     posix_flags & O_TRUNC ? "Truncate" : "No truncate");
@@ -784,43 +759,6 @@ fsal_status_t vfs_reopen2(struct fsal_obj_handle *obj_hdl,
 		 */
 		vfs_close_my_fd(my_share_fd);
 		*my_share_fd = fd;
-
-		if (truncated) {
-			/* Refresh the attributes */
-			struct stat stat;
-			attrmask_t request_mask;
-			int retval;
-
-			retval = fstat(my_share_fd->fd, &stat);
-
-			if (retval == 0) {
-				request_mask = myself->attributes.mask;
-				posix2fsal_attributes(&stat,
-						      &myself->attributes);
-				myself->attributes.fsid = obj_hdl->fs->fsid;
-				if (myself->sub_ops &&
-				    myself->sub_ops->getattrs) {
-					status = myself->sub_ops->getattrs(
-							myself, my_share_fd->fd,
-							request_mask);
-					if (FSAL_IS_ERROR(status)) {
-						FSAL_CLEAR_MASK(
-						    myself->attributes.mask);
-						FSAL_SET_MASK(
-						    myself->attributes.mask,
-						    ATTR_RDATTR_ERR);
-						/** @todo: should handle this
-						 * better.
-						 */
-					}
-				}
-			} else {
-				if (errno == EBADF)
-					errno = ESTALE;
-				status = fsalstat(posix2fsal_error(errno),
-						  errno);
-			}
-		}
 	} else {
 		/* We had a failure on open - we need to revert the share.
 		 * This can block over an I/O operation.
@@ -956,7 +894,6 @@ fsal_status_t vfs_read2(struct fsal_obj_handle *obj_hdl,
 			bool *end_of_file,
 			struct io_info *info)
 {
-	struct vfs_fsal_obj_handle *myself;
 	int my_fd = -1;
 	ssize_t nb_read;
 	fsal_status_t status;
@@ -969,8 +906,6 @@ fsal_status_t vfs_read2(struct fsal_obj_handle *obj_hdl,
 		/* Currently we don't support READ_PLUS */
 		return fsalstat(ERR_FSAL_NOTSUPP, 0);
 	}
-
-	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
 
 	if (obj_hdl->fsal != obj_hdl->fs->fsal) {
 		LogDebug(COMPONENT_FSAL,
@@ -996,9 +931,7 @@ fsal_status_t vfs_read2(struct fsal_obj_handle *obj_hdl,
 
 	*read_amount = nb_read;
 
-	/* dual eof condition */
-	*end_of_file = ((nb_read == 0) /* most clients */ ||	/* ESXi */
-			(((offset + nb_read) >= myself->attributes.filesize)));
+	*end_of_file = (nb_read == 0);
 
 #if 0
 	/** @todo
@@ -1371,7 +1304,7 @@ fsal_status_t vfs_lock_op2(struct fsal_obj_handle *obj_hdl,
 #endif
 
 fsal_status_t fetch_attrs(struct vfs_fsal_obj_handle *myself,
-			  int my_fd)
+			  int my_fd, struct attrlist *attrs)
 {
 	struct stat stat;
 	int retval = 0;
@@ -1415,19 +1348,30 @@ fsal_status_t fetch_attrs(struct vfs_fsal_obj_handle *myself,
 		LogDebug(COMPONENT_FSAL, "%s failed with %s", func,
 			 strerror(retval));
 
+		if (attrs->mask & ATTR_RDATTR_ERR) {
+			/* Caller asked for error to be visible. */
+			attrs->mask = ATTR_RDATTR_ERR;
+		}
+
 		return fsalstat(posix2fsal_error(retval), retval);
 	}
 
-	posix2fsal_attributes(&stat, &myself->attributes);
-	myself->attributes.fsid = myself->obj_handle.fs->fsid;
+	posix2fsal_attributes(&stat, attrs);
+	attrs->fsid = myself->obj_handle.fs->fsid;
 
 	if (myself->sub_ops && myself->sub_ops->getattrs) {
-		status = myself->sub_ops->getattrs(myself, my_fd,
-						   myself->attributes.mask);
+		status =
+		   myself->sub_ops->getattrs(myself, my_fd, attrs->mask, attrs);
+
 		if (FSAL_IS_ERROR(status)) {
-			FSAL_CLEAR_MASK(myself->attributes.mask);
-			FSAL_SET_MASK(myself->attributes.mask, ATTR_RDATTR_ERR);
+			FSAL_CLEAR_MASK(attrs->mask);
+			FSAL_SET_MASK(attrs->mask, ATTR_RDATTR_ERR);
 		}
+	}
+
+	if (!FSAL_IS_ERROR(status)) {
+		/* Make sure ATTR_RDATTR_ERR is cleared on success. */
+		attrs->mask &= ~ATTR_RDATTR_ERR;
 	}
 
 	return status;
@@ -1445,7 +1389,8 @@ fsal_status_t fetch_attrs(struct vfs_fsal_obj_handle *myself,
  * @return FSAL status.
  */
 
-fsal_status_t vfs_getattr2(struct fsal_obj_handle *obj_hdl)
+fsal_status_t vfs_getattr2(struct fsal_obj_handle *obj_hdl,
+			   struct attrlist *attrs)
 {
 	struct vfs_fsal_obj_handle *myself;
 	fsal_status_t status = {0, 0};
@@ -1490,7 +1435,7 @@ fsal_status_t vfs_getattr2(struct fsal_obj_handle *obj_hdl)
 		goto out;
 	}
 
-	status = fetch_attrs(myself, my_fd);
+	status = fetch_attrs(myself, my_fd, attrs);
 
  out:
 
@@ -1548,23 +1493,36 @@ fsal_status_t vfs_setattr2(struct fsal_obj_handle *obj_hdl,
 		return fsalstat(posix2fsal_error(EXDEV), EXDEV);
 	}
 
+#ifdef ENABLE_VFS_DEBUG_ACL
 #ifdef ENABLE_RFC_ACL
 	if (FSAL_TEST_MASK(attrib_set->mask, ATTR_MODE) &&
 	    !FSAL_TEST_MASK(attrib_set->mask, ATTR_ACL)) {
 		/* Set ACL from MODE */
-		status = fsal_mode_to_acl(attrib_set, myself->attributes.acl);
+		struct attrlist attrs;
+
+		fsal_prepare_attrs(&attrs, ATTR_ACL);
+
+		status = obj_hdl->obj_ops.getattrs(obj_hdl, &attrs);
+
+		if (FSAL_IS_ERROR(status))
+			return status;
+
+		status = fsal_mode_to_acl(attrib_set, attrs.acl);
+
+		/* Done with the attrs */
+		fsal_release_attrs(&attrs);
 	} else {
 		/* If ATTR_ACL is set, mode needs to be adjusted no matter what.
 		 * See 7530 s 6.4.1.3 */
 		if (!FSAL_TEST_MASK(attrib_set->mask, ATTR_MODE))
-			attrib_set->mode = myself->attributes.mode;
+			attrib_set->mode = myself->mode;
 		status = fsal_acl_to_mode(attrib_set);
 	}
 
 	if (FSAL_IS_ERROR(status))
 		return status;
 #endif /* ENABLE_RFC_ACL */
-
+#endif
 
 	/* This is yet another "you can't get there from here".  If this object
 	 * is a socket (AF_UNIX), an fd on the socket s useless _period_.
@@ -1738,14 +1696,6 @@ fsal_status_t vfs_setattr2(struct fsal_obj_handle *obj_hdl,
 					attrib_set->mask, attrib_set);
 		if (FSAL_IS_ERROR(status))
 			goto out;
-	}
-
-	status = fetch_attrs(myself, my_fd);
-
-	if (FSAL_IS_ERROR(status)) {
-		LogDebug(COMPONENT_FSAL,
-			 "fetch_attrs failed");
-		goto out;
 	}
 
 	errno = 0;

@@ -35,6 +35,7 @@
 #include "FSAL/access_check.h"
 #include "../vfs_methods.h"
 #include "attrs.h"
+#include "nfs4_acls.h"
 
 struct vfs_acl_entry {
 	struct gsh_buffdesc	fa_key;		/**< Key for tree */
@@ -124,9 +125,9 @@ void vfs_acl_release(struct gsh_buffdesc *key)
 }
 
 fsal_status_t vfs_sub_getattrs(struct vfs_fsal_obj_handle *vfs_hdl,
-			       int fd, attrmask_t request_mask)
+			       int fd, attrmask_t request_mask,
+			       struct attrlist *attrib)
 {
-	struct attrlist *attrib = &vfs_hdl->attributes;
 	fsal_acl_status_t status;
 	struct vfs_acl_entry *fa;
 	fsal_acl_data_t acldata;
@@ -136,7 +137,6 @@ fsal_status_t vfs_sub_getattrs(struct vfs_fsal_obj_handle *vfs_hdl,
 	fa = vfs_acl_locate(&vfs_hdl->obj_handle);
 	if (!fa->fa_acl.naces) {
 		/* No ACLs yet */
-		vfs_hdl->attributes.acl = NULL;
 		FSAL_UNSET_MASK(attrib->mask, ATTR_ACL);
 
 		return fsalstat(ERR_FSAL_NO_ERROR, 0);
@@ -153,7 +153,7 @@ fsal_status_t vfs_sub_getattrs(struct vfs_fsal_obj_handle *vfs_hdl,
 	if (!acl)
 		return fsalstat(ERR_FSAL_FAULT, status);
 	fsal_print_acl(COMPONENT_FSAL, NIV_FULL_DEBUG, acl);
-	vfs_hdl->attributes.acl = acl;
+	attrib->acl = acl;
 	FSAL_SET_MASK(attrib->mask, ATTR_ACL);
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
@@ -178,6 +178,8 @@ fsal_status_t vfs_sub_setattrs(struct vfs_fsal_obj_handle *vfs_hdl,
 	       fa->fa_acl.naces * sizeof(fsal_ace_t));
 	fsal_print_acl(COMPONENT_FSAL, NIV_FULL_DEBUG,
 		       (fsal_acl_t *)&fa->fa_acl);
+	if (attrib->mask & ATTR_MODE)
+		vfs_hdl->mode = attrib->mode;
 
 	FSAL_SET_MASK(attrib->mask, ATTR_ACL);
 

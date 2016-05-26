@@ -94,24 +94,30 @@ void nfs_SetPostOpAttr(struct fsal_obj_handle *obj, post_op_attr *attr)
 void nfs_SetPreOpAttr(struct fsal_obj_handle *obj, pre_op_attr *attr)
 {
 	fsal_status_t status;
+	struct attrlist attrs;
 
-	status = fsal_refresh_attrs(obj);
+	fsal_prepare_attrs(&attrs, ATTR_SIZE | ATTR_CTIME | ATTR_MTIME);
+
+	status = obj->obj_ops.getattrs(obj, &attrs);
+
 	if (FSAL_IS_ERROR(status))
 		attr->attributes_follow = false;
 	else {
 		attr->pre_op_attr_u.attributes.size =
-		    obj->attrs->filesize;
+		    attrs.filesize;
 		attr->pre_op_attr_u.attributes.mtime.tv_sec =
-		    obj->attrs->mtime.tv_sec;
+		    attrs.mtime.tv_sec;
 		attr->pre_op_attr_u.attributes.mtime.tv_nsec =
-		    obj->attrs->mtime.tv_nsec;
+		    attrs.mtime.tv_nsec;
 		attr->pre_op_attr_u.attributes.ctime.tv_sec =
-		    obj->attrs->ctime.tv_sec;
+		    attrs.ctime.tv_sec;
 		attr->pre_op_attr_u.attributes.ctime.tv_nsec =
-		    obj->attrs->ctime.tv_nsec;
+		    attrs.ctime.tv_nsec;
 		attr->attributes_follow = TRUE;
 	}
-}				/* nfs_SetPreOpAttr */
+
+	fsal_release_attrs(&attrs);
+}
 
 /**
  * @brief Set NFSv3 Weak Cache Coherency structure
@@ -562,8 +568,8 @@ static fattr_xdr_result encode_fsid(XDR *xdr, struct xdr_attrs_args *args)
 		fsid.major = op_ctx->export->filesystem_id.major;
 		fsid.minor = op_ctx->export->filesystem_id.minor;
 	} else {
-		fsid.major = args->attrs->fsid.major;
-		fsid.minor = args->attrs->fsid.minor;
+		fsid.major = args->fsid.major;
+		fsid.minor = args->fsid.minor;
 	}
 
 	if (!xdr_u_int64_t(xdr, &fsid.major))
@@ -575,9 +581,9 @@ static fattr_xdr_result encode_fsid(XDR *xdr, struct xdr_attrs_args *args)
 
 static fattr_xdr_result decode_fsid(XDR *xdr, struct xdr_attrs_args *args)
 {
-	if (!xdr_u_int64_t(xdr, &args->attrs->fsid.major))
+	if (!xdr_u_int64_t(xdr, &args->fsid.major))
 		return FATTR_XDR_FAILED;
-	if (!xdr_u_int64_t(xdr, &args->attrs->fsid.minor))
+	if (!xdr_u_int64_t(xdr, &args->fsid.minor))
 		return FATTR_XDR_FAILED;
 	return FATTR_XDR_SUCCESS;
 }
@@ -1053,14 +1059,14 @@ static fattr_xdr_result decode_filehandle(XDR *xdr,
 
 static fattr_xdr_result encode_fileid(XDR *xdr, struct xdr_attrs_args *args)
 {
-	if (!inline_xdr_u_int64_t(xdr, &args->attrs->fileid))
+	if (!inline_xdr_u_int64_t(xdr, &args->fileid))
 		return FATTR_XDR_FAILED;
 	return FATTR_XDR_SUCCESS;
 }
 
 static fattr_xdr_result decode_fileid(XDR *xdr, struct xdr_attrs_args *args)
 {
-	if (!inline_xdr_u_int64_t(xdr, &args->attrs->fileid))
+	if (!inline_xdr_u_int64_t(xdr, &args->fileid))
 		return FATTR_XDR_FAILED;
 	return FATTR_XDR_SUCCESS;
 }
@@ -3180,78 +3186,34 @@ void nfs4_Fattr_Free(fattr4 *fattr)
 }
 
 /**
- * @brief Structure for Fattr_filler callback
- */
-
-struct Fattr_filler_opaque {
-	fattr4 *Fattr;		/*< Fattr to fill */
-	compound_data_t *data;	/*< Compound data */
-	nfs_fh4 *objFH;		/*< Object file handle */
-	struct bitmap4 *Bitmap;	/*< Bitmap of entries to fill */
-};
-
-/**
- * @brief Callback to fill a fattr
- *
- * This function is the callback for file_To_Fattr.
- *
- * @param[in] opaque Opaque structure
- * @param[in] attr   Attribute list
- *
- * @retval FSAL status
- */
-
-static fsal_errors_t Fattr_filler(void *opaque,
-				  struct fsal_obj_handle *obj,
-				  const struct attrlist *attr,
-				  uint64_t mounted_on_fileid,
-				  uint64_t cookie,
-				  enum cb_state cb_state)
-{
-	struct Fattr_filler_opaque *f = (struct Fattr_filler_opaque *)opaque;
-	struct xdr_attrs_args args = {
-		.attrs = (struct attrlist *)attr,
-		.data = f->data,
-		.hdl4 = f->objFH,
-		.mounted_on_fileid = mounted_on_fileid
-	};
-
-	if (cb_state == CB_PROBLEM)
-		return ERR_FSAL_IO;
-
-	if (nfs4_FSALattr_To_Fattr(&args, f->Bitmap, f->Fattr) != 0)
-		return ERR_FSAL_IO;
-
-	return ERR_FSAL_NO_ERROR;
-}
-
-/**
  * @brief Fill NFSv4 Fattr from a file
  *
- * This function fills an NFSv4 Fattr from a file.
+ * This function fills an NFSv4 Fattr from a file represented by
+ * data->currentFH and data->current-obj.
  *
- * @param[in]  obj     File
- * @param[out] Fattr   NFSv4 Fattr buffer
- *		       Memory for bitmap_val and attr_val is
- *                     dynamically allocated,
- *		       caller is responsible for freeing it.
- * @param[in]  data    NFSv4 compoud request's data.
- * @param[in]  objFH   The NFSv4 filehandle of the object whose
- *                     attributes are requested
- * @param[in]  Bitmap  Bitmap of attributes being requested
+ * Memory for bitmap_val and attr_val is dynamically allocated, the caller is
+ * responsible for freeing it.
+ *
+ * @param[in]     data    NFSv4 compoud request's data
+ * @param[in]     mask    The original request attribute mask
+ * @param[in/out] attr    attrlist to fill in and mask to request
+ * @param[out]    Fattr   NFSv4 Fattr buffer
+ * @param[in]     Bitmap  Bitmap of attributes being requested
  *
  * @retval NFSv4 status
  */
 
-nfsstat4 file_To_Fattr(struct fsal_obj_handle *obj, fattr4 *Fattr,
-			      compound_data_t *data, nfs_fh4 *objFH,
-			      struct bitmap4 *Bitmap)
+nfsstat4 file_To_Fattr(compound_data_t *data,
+		       attrmask_t mask,
+		       struct attrlist *attr,
+		       fattr4 *Fattr,
+		       struct bitmap4 *Bitmap)
 {
-	struct Fattr_filler_opaque f = {
-		.Fattr = Fattr,
+	fsal_status_t status;
+	struct xdr_attrs_args args = {
+		.attrs = attr,
 		.data = data,
-		.objFH = objFH,
-		.Bitmap = Bitmap
+		.hdl4 = &data->currentFH,
 	};
 
 	/* Permission check only if ACL is asked for.
@@ -3261,41 +3223,61 @@ nfsstat4 file_To_Fattr(struct fsal_obj_handle *obj, fattr4 *Fattr,
 		fsal_status_t status;
 
 		LogDebug(COMPONENT_NFS_V4_ACL,
-			 "Permission check for ACL for obj %p", obj);
+			 "Permission check for ACL for obj %p",
+			 data->current_obj);
 
-		status = fsal_access(obj,
+		status = fsal_access(data->current_obj,
 				     FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_READ_ACL),
 				     NULL, NULL);
 
 		if (FSAL_IS_ERROR(status)) {
 			LogDebug(COMPONENT_NFS_V4_ACL,
 				 "Permission check for ACL for obj %p failed with %s",
-				 obj, msg_fsal_err(status.major));
+				 data->current_obj, msg_fsal_err(status.major));
 			return nfs4_Errno_status(status);
 		}
 	} else {
 #ifdef ENABLE_RFC_ACL
-		fsal_status_t status;
-
 		LogDebug(COMPONENT_NFS_V4_ACL,
-			 "Permission check for ATTR for obj %p", obj);
+			 "Permission check for ATTR for obj %p",
+			 data->current_obj);
 
-		status = fsal_access(obj, FSAL_ACE4_MASK_SET(
-					     FSAL_ACE_PERM_READ_ATTR));
+		status = fsal_access(data->current_obj, FSAL_ACE4_MASK_SET(
+					     FSAL_ACE_PERM_READ_ATTR),
+				     NULL, NULL);
 
 		if (FSAL_IS_ERROR(status)) {
 			LogDebug(COMPONENT_NFS_V4_ACL,
 				 "Permission check for ATTR for obj %p failed with %s",
-				 obj, fsal_err_txt(status));
-			return nfs4_Errno(status);
+				 data->current_obj, fsal_err_txt(status));
+			return nfs4_Errno_status(status);
 		}
 #else /* ENABLE_RFC_ACL */
 		LogDebug(COMPONENT_NFS_V4_ACL,
-			 "No permission check for ACL for obj %p", obj);
+			 "No permission check for ACL for obj %p",
+			 data->current_obj);
 #endif /* ENABLE_RFC_ACL */
 	}
 
-	return nfs4_Errno(fsal_getattr(obj, &f, Fattr_filler, CB_ORIGINAL));
+	if (attribute_is_set(Bitmap, FATTR4_MOUNTED_ON_FILEID))
+		args.mounted_on_fileid = data->current_obj->fileid;
+
+	status = data->current_obj->obj_ops.getattrs(data->current_obj, attr);
+	if (FSAL_IS_ERROR(status))
+		return nfs4_Errno_status(status);
+
+	/* Restore originally requested mask */
+	attr->mask = mask;
+
+	if (nfs4_FSALattr_To_Fattr(&args, Bitmap, Fattr) != 0) {
+		/* Done with the attrs, caller won't release, but we did
+		 * fetch them.
+		 */
+		fsal_release_attrs(attr);
+		return NFS4ERR_IO;
+	}
+
+	return NFS4_OK;
 }
 
 int nfs4_Fattr_Fill_Error(fattr4 *Fattr, nfsstat4 rdattr_error)
@@ -3557,7 +3539,8 @@ bool nfs3_Sattr_To_FSALattr(struct attrlist *FSAL_attr, sattr3 *sattr)
  * @param[out]   Fattr      NFSv3 attributes.
  *
  */
-static void nfs3_FSALattr_To_PartialFattr(const struct attrlist *FSAL_attr,
+static void nfs3_FSALattr_To_PartialFattr(struct fsal_obj_handle *obj,
+					  const struct attrlist *FSAL_attr,
 					  attrmask_t *mask, fattr3 *Fattr)
 {
 	*mask = 0;
@@ -3642,24 +3625,24 @@ static void nfs3_FSALattr_To_PartialFattr(const struct attrlist *FSAL_attr,
 		/* xor filesystem_id major and rotated minor to create unique
 		 * on-wire fsid.
 		 */
-		Fattr->fsid = (nfs3_uint64) squash_fsid(&FSAL_attr->fsid);
+		Fattr->fsid = (nfs3_uint64) squash_fsid(&obj->fsid);
 
 		LogFullDebug(COMPONENT_NFSPROTO,
 			     "Compressing fsid for NFS v3 from fsid major %#"
 			     PRIX64 " (%" PRIu64 "), minor %#"
 			     PRIX64 " (%" PRIu64 ") to nfs3_fsid = %#" PRIX64
 			     " (%" PRIu64 ")",
-			     FSAL_attr->fsid.major,
-			     FSAL_attr->fsid.major,
-			     FSAL_attr->fsid.minor,
-			     FSAL_attr->fsid.minor,
+			     obj->fsid.major,
+			     obj->fsid.major,
+			     obj->fsid.minor,
+			     obj->fsid.minor,
 			     (uint64_t) Fattr->fsid, (uint64_t) Fattr->fsid);
 
 		*mask |= ATTR_FSID;
 	}
 
 	if (FSAL_attr->mask & ATTR_FILEID) {
-		Fattr->fileid = FSAL_attr->fileid;
+		Fattr->fileid = obj->fileid;
 		*mask |= ATTR_FILEID;
 	}
 
@@ -3698,15 +3681,21 @@ static void nfs3_FSALattr_To_PartialFattr(const struct attrlist *FSAL_attr,
 bool file_to_nfs3_Fattr(struct fsal_obj_handle *obj, fattr3 *Fattr)
 {
 	fsal_status_t status;
+	struct attrlist attrs;
+	bool rc;
 
-	if (!obj)
-		return false;
+	fsal_prepare_attrs(&attrs, ATTRS_NFS3);
 
-	status = fsal_refresh_attrs(obj);
+	status = obj->obj_ops.getattrs(obj, &attrs);
+
 	if (FSAL_IS_ERROR(status))
 		return false;
 
-	return nfs3_FSALattr_To_Fattr(op_ctx->export, obj->attrs, Fattr);
+	rc = nfs3_FSALattr_To_Fattr(obj, &attrs, Fattr);
+
+	fsal_release_attrs(&attrs);
+
+	return rc;
 }
 #endif /* _USE_NFS3 */
 
@@ -3725,15 +3714,16 @@ bool file_to_nfs3_Fattr(struct fsal_obj_handle *obj, fattr3 *Fattr)
  * @retval false  otherwise.
  *
  */
-bool nfs3_FSALattr_To_Fattr(struct gsh_export *export,
-			    const struct attrlist *FSAL_attr, fattr3 *Fattr)
+bool nfs3_FSALattr_To_Fattr(struct fsal_obj_handle *obj,
+			    const struct attrlist *FSAL_attr,
+			    fattr3 *Fattr)
 {
 	/* We want to override the FSAL fsid with the export's configured fsid
 	 */
 	attrmask_t want = ATTRS_NFS3;
 	attrmask_t got = 0;
 
-	nfs3_FSALattr_To_PartialFattr(FSAL_attr, &got, Fattr);
+	nfs3_FSALattr_To_PartialFattr(obj, FSAL_attr, &got, Fattr);
 	if (want & ~got) {
 		LogCrit(COMPONENT_NFSPROTO,
 			"Likely bug: FSAL did not fill in a standard NFSv3 attribute: missing %"
@@ -3741,22 +3731,22 @@ bool nfs3_FSALattr_To_Fattr(struct gsh_export *export,
 			want & ~got);
 	}
 
-	if ((export->options_set & EXPORT_OPTION_FSID_SET) != 0) {
+	if ((op_ctx->export->options_set & EXPORT_OPTION_FSID_SET) != 0) {
 		/* xor filesystem_id major and rotated minor to create unique
 		 * on-wire fsid.
 		 */
 		Fattr->fsid = (nfs3_uint64) squash_fsid(
-					&export->filesystem_id);
+					&op_ctx->export->filesystem_id);
 
 		LogFullDebug(COMPONENT_NFSPROTO,
 			     "Compressing export filesystem_id for NFS v3 from fsid major %#"
 			     PRIX64 " (%" PRIu64 "), minor %#"
 			     PRIX64 " (%" PRIu64 ") to nfs3_fsid = %#" PRIX64
 			     " (%" PRIu64 ")",
-			     export->filesystem_id.major,
-			     export->filesystem_id.major,
-			     export->filesystem_id.minor,
-			     export->filesystem_id.minor,
+			     op_ctx->export->filesystem_id.major,
+			     op_ctx->export->filesystem_id.major,
+			     op_ctx->export->filesystem_id.minor,
+			     op_ctx->export->filesystem_id.minor,
 			     (uint64_t) Fattr->fsid, (uint64_t) Fattr->fsid);
 	}
 
@@ -4065,10 +4055,10 @@ int nfs4_Fattr_cmp(fattr4 *Fattr1, fattr4 *Fattr2)
  *     the handle's nfs_fh4_val points inside fattr4. The pointer is valid
  *     as long as fattr4 is valid.
  *
- * @param pFSAL_attr [OUT]  pointer to FSAL attributes.
- * @param Fattr      [IN] pointer to NFSv4 attributes.
- * @param hdl4       [OUT] optional pointer to return NFSv4 file handle
- * @param dinfo      [OUT] optional pointer to return 'dynamic info' about FS
+ * @param[out] attrs  pointer to FSAL attributes.
+ * @param[in]  Fattr  pointer to NFSv4 attributes.
+ * @param[out] hdl4   optional pointer to return NFSv4 file handle
+ * @param[out] dinfo  optional pointer to return 'dynamic info' about FS
  *
  * @return NFS4_OK if successful, NFS4ERR codes if not.
  *
@@ -4154,6 +4144,45 @@ decodeerr:
 }
 
 /**
+ *
+ * @brief Converts NFSv4 attributes mask to a FSAL attribute mask.
+ *
+ * @param[in]  bitmap4  Requested attributes
+ * @param[out] mask     FSAL attribute mask
+ *
+ * @return NFS4_OK if successful, NFS4ERR codes if not.
+ *
+ */
+
+int bitmap4_to_attrmask_t(bitmap4 *bitmap4, attrmask_t *mask)
+{
+	int attribute_to_set = next_attr_from_bitmap(bitmap4, -1);
+	int nfs_status = NFS4_OK;
+
+	*mask = 0;
+
+	for (attribute_to_set = next_attr_from_bitmap(bitmap4, -1);
+	     attribute_to_set != -1;
+	     attribute_to_set =
+	     next_attr_from_bitmap(bitmap4, attribute_to_set)) {
+		const struct fattr4_dent *f4e = fattr4tab + attribute_to_set;
+
+		if (attribute_to_set > FATTR4_XATTR_SUPPORT) {
+			nfs_status = NFS4ERR_BADXDR;	/* undefined attr */
+			break;
+		}
+
+		*mask |= f4e->exp_attrmask;
+
+		LogFullDebug(COMPONENT_NFS_V4,
+			     "Request attr %d, name = %s",
+			     attribute_to_set, f4e->name);
+	}
+
+	return nfs_status;
+}
+
+/**
  * @brief Convert NFSv4 attribute buffer to an FSAL attribute list
  *
  * @param[out] FSAL_attr FSAL attributes
@@ -4229,7 +4258,8 @@ nfsstat4 nfs4_utf8string2dynamic(const utf8string *input,
  * @brief: is a directory's sticky bit set?
  *
  */
-bool is_sticky_bit_set(const struct attrlist *attr)
+bool is_sticky_bit_set(struct fsal_obj_handle *obj,
+		       const struct attrlist *attr)
 {
 	if (attr->mode & (S_IXUSR|S_IXGRP|S_IXOTH))
 		return false;
@@ -4239,7 +4269,7 @@ bool is_sticky_bit_set(const struct attrlist *attr)
 
 	LogDebug(COMPONENT_NFS_V4,
 		 "sticky bit is set on %" PRIi64,
-		 attr->fileid);
+		 obj->fileid);
 
 	return true;
 }

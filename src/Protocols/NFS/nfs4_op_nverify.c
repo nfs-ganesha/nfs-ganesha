@@ -60,6 +60,7 @@ int nfs4_op_nverify(struct nfs_argop4 *op, compound_data_t *data,
 	NVERIFY4res * const res_NVERIFY4 = &resp->nfs_resop4_u.opnverify;
 	fattr4 file_attr4;
 	int rc = 0;
+	struct attrlist attrs;
 
 	resp->resop = NFS4_OP_NVERIFY;
 	res_NVERIFY4->status = NFS4_OK;
@@ -83,15 +84,24 @@ int nfs4_op_nverify(struct nfs_argop4 *op, compound_data_t *data,
 		return res_NVERIFY4->status;
 	}
 
+	fsal_prepare_attrs(&attrs, 0);
+
 	res_NVERIFY4->status =
-		file_To_Fattr(data->current_obj,
-			      &file_attr4,
-			      data,
-			      &(data->currentFH),
-			      &(arg_NVERIFY4->obj_attributes.attrmask));
-;
+		bitmap4_to_attrmask_t(&arg_NVERIFY4->obj_attributes.attrmask,
+				      &attrs.mask);
+
 	if (res_NVERIFY4->status != NFS4_OK)
 		return res_NVERIFY4->status;
+
+	res_NVERIFY4->status =
+		file_To_Fattr(data, attrs.mask, &attrs, &file_attr4,
+			      &arg_NVERIFY4->obj_attributes.attrmask);
+
+	if (res_NVERIFY4->status != NFS4_OK)
+		return res_NVERIFY4->status;
+
+	/* Done with the attrs */
+	fsal_release_attrs(&attrs);
 
 	rc = nfs4_Fattr_cmp(&arg_NVERIFY4->obj_attributes, &file_attr4);
 

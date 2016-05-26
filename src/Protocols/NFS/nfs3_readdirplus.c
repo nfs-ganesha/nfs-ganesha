@@ -81,17 +81,23 @@ nfsstat3 nfs_readdir_dot_entry(struct fsal_obj_handle *obj, const char *name,
 {
 	struct fsal_readdir_cb_parms cb_parms;
 	fsal_status_t fsal_status;
+	struct attrlist attrs;
+
+	fsal_prepare_attrs(&attrs, ATTRS_NFS3);
+
+	fsal_status = obj->obj_ops.getattrs(obj, &attrs);
+
+	if (FSAL_IS_ERROR(fsal_status))
+		return nfs3_Errno_status(fsal_status);
 
 	cb_parms.opaque = tracker;
 	cb_parms.name = name;
 	cb_parms.attr_allowed = true;
 	cb_parms.in_result = true;
-	fsal_status.major = cb(&cb_parms,
-			  obj,
-			  obj->attrs,
-			  0,
-			  cookie,
-			  CB_ORIGINAL);
+	fsal_status.major = cb(&cb_parms, obj, &attrs, 0, cookie, CB_ORIGINAL);
+
+	/* Done with the attrs */
+	fsal_release_attrs(&attrs);
 
 	if (FSAL_IS_ERROR(fsal_status))
 		return nfs3_Errno_status(fsal_status);
@@ -204,14 +210,33 @@ int nfs3_readdirplus(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	memset(cookie_verifier, 0, sizeof(cookieverf3));
 
 	/* If cookie verifier is used, then an non-trivial value is
-	 * returned to the client This value is the change_time of the
+	 * returned to the client This value is the ctime of the
 	 * directory. If verifier is unused (as in many NFS Servers) then
 	 * only a set of zeros is returned (trivial value)
 	 */
-	if (op_ctx->export->options & EXPORT_OPTION_USE_COOKIE_VERIFIER)
+	if (op_ctx->export->options & EXPORT_OPTION_USE_COOKIE_VERIFIER) {
+		struct attrlist attrs;
+
+		fsal_prepare_attrs(&attrs, ATTR_CTIME);
+
+		fsal_status = dir_obj->obj_ops.getattrs(dir_obj, &attrs);
+
+		if (FSAL_IS_ERROR(fsal_status)) {
+			res->res_readdir3.status =
+						nfs3_Errno_status(fsal_status);
+			LogFullDebug(COMPONENT_NFS_READDIR,
+				     "getattrs returned %s",
+				     msg_fsal_err(fsal_status.major));
+			goto out;
+		}
+
 		memcpy(cookie_verifier,
-		       &dir_obj->attrs->ctime.tv_sec,
-		       sizeof(dir_obj->attrs->ctime.tv_sec));
+		       &attrs.ctime.tv_sec,
+		       sizeof(attrs.ctime.tv_sec));
+
+		/* Done with the attrs */
+		fsal_release_attrs(&attrs);
+	}
 
 	if (op_ctx->export->options & EXPORT_OPTION_USE_COOKIE_VERIFIER
 	    && (begin_cookie != 0)) {
@@ -419,7 +444,7 @@ fsal_errors_t nfs3_readdirplus_callback(void *opaque,
 		return ERR_FSAL_NO_ERROR;
 	}
 
-	ep3->fileid = attr->fileid;
+	ep3->fileid = obj->fileid;
 	ep3->name = gsh_strdup(cb_parms->name);
 	ep3->cookie = cookie;
 
@@ -444,8 +469,7 @@ fsal_errors_t nfs3_readdirplus_callback(void *opaque,
 		    ep3->name_handle.post_op_fh3_u.handle.data.data_len + 12;
 
 		ep3->name_attributes.attributes_follow =
-		    nfs3_FSALattr_To_Fattr(op_ctx->export,
-					   attr,
+		    nfs3_FSALattr_To_Fattr(obj, attr,
 					   &(ep3->name_attributes.
 					     post_op_attr_u.attributes));
 	} else {

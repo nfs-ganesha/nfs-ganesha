@@ -200,7 +200,7 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op, compound_data_t *data,
 			break;
 		}
 
-		fsid = data->current_obj->attrs->fsid;
+		fsid = data->current_obj->fsid;
 		return_fsid = true;
 
 		/* FALLTHROUGH */
@@ -296,11 +296,8 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op, compound_data_t *data,
 			so_mutex_locked = false;
 
 			if (return_fsid) {
-				fsal_fsid_t this_fsid = obj->attrs->fsid;
-
-				if (!memcmp(&fsid,
-					   &this_fsid,
-					   sizeof(fsal_fsid_t))) {
+				if (!memcmp(&fsid, &data->current_obj->fsid,
+					    sizeof(fsid))) {
 					put_gsh_export(export);
 					dec_state_t_ref(layout_state);
 

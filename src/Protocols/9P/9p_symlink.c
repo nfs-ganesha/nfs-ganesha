@@ -66,8 +66,6 @@ int _9p_symlink(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	uint32_t mode = 0777;
 	struct attrlist object_attributes;
 
-	memset(&object_attributes, 0, sizeof(object_attributes));
-
 	/* Get data */
 	_9p_getptr(cursor, msgtag, u16);
 
@@ -106,6 +104,8 @@ int _9p_symlink(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 	link_content[*linkcontent_len] = '\0';
 
+	fsal_prepare_attrs(&object_attributes, ATTR_MODE);
+
 	object_attributes.mode = mode;
 	object_attributes.mask = ATTR_MODE;
 
@@ -116,6 +116,8 @@ int _9p_symlink(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 				  &object_attributes, link_content,
 				  &pentry_symlink);
 
+	/* Release the attributes (may release an inherited ACL) */
+	fsal_release_attrs(&object_attributes);
 	gsh_free(link_content);
 
 	if (pentry_symlink == NULL) {

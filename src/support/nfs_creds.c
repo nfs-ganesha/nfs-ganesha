@@ -724,7 +724,7 @@ fsal_errors_t nfs_access_op(struct fsal_obj_handle *obj,
 
 	fsal_status = obj->obj_ops.test_access(obj, access_mask,
 					       &access_allowed,
-					       &access_denied);
+					       &access_denied, false);
 	if (fsal_status.major == ERR_FSAL_NO_ERROR ||
 	    fsal_status.major == ERR_FSAL_ACCESS) {
 		/* Define granted access based on granted mode bits. */

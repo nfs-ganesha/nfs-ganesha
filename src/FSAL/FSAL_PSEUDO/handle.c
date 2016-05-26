@@ -197,8 +197,6 @@ static struct pseudo_fsal_obj_handle
 	hdl = gsh_calloc(1, sizeof(struct pseudo_fsal_obj_handle) +
 			    V4_FH_OPAQUE_SIZE);
 
-	hdl->obj_handle.attrs = &hdl->attributes;
-
 	/* Establish tree details for this directory */
 	hdl->name = gsh_strdup(name);
 	hdl->parent = parent;
@@ -233,11 +231,11 @@ static struct pseudo_fsal_obj_handle
 	FSAL_SET_MASK(hdl->attributes.mask, ATTR_SIZE);
 
 	/* fsid will be supplied later */
-	hdl->attributes.fsid.major = 0;
-	hdl->attributes.fsid.minor = 0;
+	hdl->obj_handle.fsid.major = 0;
+	hdl->obj_handle.fsid.minor = 0;
 	FSAL_SET_MASK(hdl->attributes.mask, ATTR_FSID);
 
-	hdl->attributes.fileid = atomic_postinc_uint64_t(&inode_number);
+	hdl->obj_handle.fileid = atomic_postinc_uint64_t(&inode_number);
 	FSAL_SET_MASK(hdl->attributes.mask, ATTR_FILEID);
 
 	hdl->attributes.mode = unix2fsal_mode(unix_mode);
@@ -495,7 +493,8 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl)
+static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
+			      struct attrlist *outattrs)
 {
 	struct pseudo_fsal_obj_handle *myself;
 
@@ -513,6 +512,7 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl)
 
 	/* We need to update the numlinks under attr lock. */
 	myself->attributes.numlinks = atomic_fetch_uint32_t(&myself->numlinks);
+	*outattrs = myself->attributes;
 
 	LogFullDebug(COMPONENT_FSAL,
 		     "hdl=%p, name=%s numlinks %"PRIu32,
@@ -671,7 +671,6 @@ void pseudofs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->lookup = lookup;
 	ops->readdir = read_dirents;
 	ops->mkdir = makedir;
-	ops->test_access = fsal_test_access;
 	ops->getattrs = getattrs;
 	ops->unlink = file_unlink;
 	ops->handle_digest = handle_digest;

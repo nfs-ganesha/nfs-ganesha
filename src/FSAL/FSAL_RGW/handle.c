@@ -300,7 +300,8 @@ static fsal_status_t rgw_fsal_mkdir(struct fsal_obj_handle *dir_pub,
  *
  * @return FSAL status.
  */
-static fsal_status_t getattrs(struct fsal_obj_handle *handle_pub)
+static fsal_status_t getattrs(struct fsal_obj_handle *handle_pub,
+			      struct attrlist *attrs)
 {
 	/* Generic status return */
 	int rc = 0;
@@ -315,10 +316,19 @@ static fsal_status_t getattrs(struct fsal_obj_handle *handle_pub)
 
 	rc = rgw_getattr(export->rgw_fs, handle->rgw_fh, &st,
 			RGW_GETATTR_FLAG_NONE);
-	if (rc < 0)
-		return rgw2fsal_error(rc);
 
-	rgw2fsal_attributes(&st, &handle->attributes);
+	if (rc < 0) {
+		if (attrs->mask & ATTR_RDATTR_ERR) {
+			/* Caller asked for error to be visible. */
+			attrs->mask = ATTR_RDATTR_ERR;
+		}
+		return rgw2fsal_error(rc);
+	}
+
+	rgw2fsal_attributes(&st, attrs);
+
+	/* Make sure ATTR_RDATTR_ERR is cleared on success. */
+	attrs->mask &= ~ATTR_RDATTR_ERR;
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -606,8 +616,7 @@ static fsal_status_t rgw_fsal_read(struct fsal_obj_handle *handle_pub,
 	if (rc < 0)
 		return rgw2fsal_error(rc);
 
-	if ((offset+buffer_size) >= handle->attributes.filesize)
-		*end_of_file = true;
+	*end_of_file = (read_amount == 0);
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }

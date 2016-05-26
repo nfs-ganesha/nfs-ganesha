@@ -47,6 +47,7 @@
 #include "nfs_exports.h"
 #include "nfs4_acls.h"
 #include "sal_data.h"
+#include "FSAL/fsal_commonlib.h"
 
 /**
  * This is a global counter of files opened.
@@ -62,9 +63,7 @@ size_t open_fd_count = 0;
 
 /* XXX dang locking
  * - FD locking (open, close, is_open) - was content lock
- * - Attributes
- *	- ->attrs probably fine
- *	- ->attrs->acl is not safe (was attr_lock)
+ *   will be fixed in conversion to support_ex
  */
 
 
@@ -150,33 +149,6 @@ static fsal_status_t check_open_permission(struct fsal_obj_handle *obj,
 }
 
 /**
- *
- * @brief Set the fsal_time in an obj to the current time.
- *
- * This function is using gettimeofday.
- *
- * @param[out] time Pointer to time to be set
- *
- * @return 0 if keys if successfully build, -1 otherwise
- *
- */
-static int fsal_set_time_current(struct timespec *time)
-{
-	struct timeval t;
-
-	if (time == NULL)
-		return -1;
-
-	if (gettimeofday(&t, NULL) != 0)
-		return -1;
-
-	time->tv_sec = t.tv_sec;
-	time->tv_nsec = 1000 * t.tv_usec;
-
-	return 0;
-}
-
-/**
  * @brief Gets the fileid of an object
  *
  * @param[in]  obj   Object to be managed.
@@ -198,8 +170,7 @@ uint64_t fsal_fileid(struct fsal_obj_handle *obj)
 	} else {
 		PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
 
-		/* No need to lock the attrs, fileid doesn't change. */
-		fileid = obj->attrs->fileid;
+		fileid = obj->fileid;
 	}
 
 	return fileid;
@@ -212,12 +183,14 @@ uint64_t fsal_fileid(struct fsal_obj_handle *obj)
  * the required setattrs.
  *
  * @param[in] obj     The file to be checked
- * @param[in] attr    Attributes to set/result of set
+ * @param[in] attr    Attributes to set
+ * @param[in] current Current attributes for object
  *
  * @return FSAL status
  */
 static fsal_status_t fsal_check_setattr_perms(struct fsal_obj_handle *obj,
-					      struct attrlist *attr)
+					      struct attrlist *attr,
+					      struct attrlist *current)
 {
 	fsal_status_t status = {0, 0};
 	fsal_accessflags_t access_check = 0;
@@ -232,7 +205,15 @@ static fsal_status_t fsal_check_setattr_perms(struct fsal_obj_handle *obj,
 		goto out;
 	}
 
-	not_owner = (creds->caller_uid != obj->attrs->owner);
+	fsal_prepare_attrs(current,
+			   ATTR_MODE | ATTR_OWNER | ATTR_GROUP | ATTR_ACL);
+
+	status = obj->obj_ops.getattrs(obj, current);
+
+	if (FSAL_IS_ERROR(status))
+		return status;
+
+	not_owner = (creds->caller_uid != current->owner);
 
 	/* Only ownership change need to be checked for owner */
 	if (FSAL_TEST_MASK(attr->mask, ATTR_OWNER)) {
@@ -353,9 +334,9 @@ static fsal_status_t fsal_check_setattr_perms(struct fsal_obj_handle *obj,
 			    need_write_acl, need_write_data, need_write_attr);
 	}
 
-	if (obj->attrs->acl) {
+	if (current->acl) {
 		status = obj->obj_ops.test_access(obj, access_check, NULL,
-						  NULL);
+						  NULL, false);
 		note = " (checked ACL)";
 		goto out;
 	}
@@ -367,11 +348,16 @@ static fsal_status_t fsal_check_setattr_perms(struct fsal_obj_handle *obj,
 		goto out;
 	}
 
-	status = obj->obj_ops.test_access(obj, FSAL_W_OK, NULL, NULL);
+	status = obj->obj_ops.test_access(obj, FSAL_W_OK, NULL, NULL, false);
 
 	note = " (checked mode)";
 
  out:
+
+	if (FSAL_IS_ERROR(status)) {
+		/* Done with the current attrs, caller will not expect them. */
+		fsal_release_attrs(current);
+	}
 
 	LogDebug(COMPONENT_FSAL,
 		    "Access check returned %s%s", fsal_err_txt(status),
@@ -463,49 +449,13 @@ fsal_status_t open2_by_name(struct fsal_obj_handle *in_obj,
 }
 
 /**
- * @brief Checks permissions on an entry for setattrs
- *
- * This function checks if the supplied credentials are sufficient to perform
- * the required setattrs.
- *
- * @param[in] obj     The file to be checked
- * @param[in] attr    Attributes to set/result of set
- *
- * @return FSAL status
- */
-fsal_status_t fsal_refresh_attrs(struct fsal_obj_handle *obj)
-{
-	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
-
-	if (!obj)
-		return fsalstat(ERR_FSAL_INVAL, 0);
-
-	if (obj->attrs->acl) {
-		fsal_acl_status_t acl_status = 0;
-
-		acl_status = nfs4_acl_release_entry(obj->attrs->acl);
-		if (acl_status != NFS_V4_ACL_SUCCESS) {
-			LogEvent(COMPONENT_FSAL,
-				 "Failed to release old acl, status=%d",
-				 acl_status);
-		}
-		obj->attrs->acl = NULL;
-	}
-
-	status = obj->obj_ops.getattrs(obj);
-	if (FSAL_IS_ERROR(status)) {
-		LogDebug(COMPONENT_FSAL, "Failed on obj %p %s", obj,
-			 fsal_err_txt(status));
-		return status;
-	}
-
-	return status;
-}
-
-/**
  * @brief Set attributes on a file
  *
  * The new attributes are copied over @a attr on success.
+ *
+ * The caller is expected to invoke fsal_release_attrs to release any
+ * resources held by the set attributes. The FSAL layer MAY have added an
+ * inherited ACL.
  *
  * @param[in]     obj    File to set attributes on
  * @param[in]     bypass Bypass share reservation checking
@@ -517,10 +467,8 @@ fsal_status_t fsal_setattr(struct fsal_obj_handle *obj, bool bypass,
 			   struct state_t *state, struct attrlist *attr)
 {
 	fsal_status_t status = { 0, 0 };
-	uint64_t before;
 	const struct user_cred *creds = op_ctx->creds;
-	fsal_acl_t *saved_acl = NULL;
-	fsal_acl_status_t acl_status = 0;
+	struct attrlist current;
 
 	if ((attr->mask & (ATTR_SIZE | ATTR4_SPACE_RESERVED))
 	     && (obj->type != REGULAR_FILE)) {
@@ -538,15 +486,11 @@ fsal_status_t fsal_setattr(struct fsal_obj_handle *obj, bool bypass,
 	      (ATTR_ATIME | ATTR_CREATION | ATTR_CTIME | ATTR_MTIME))))
 		return fsalstat(ERR_FSAL_INVAL, 0);
 
-	/* Refresh attributes for perm checks */
-	status = fsal_refresh_attrs(obj);
-	if (FSAL_IS_ERROR(status)) {
-		LogWarn(COMPONENT_FSAL, "Failed to refresh attributes");
-		return status;
-	}
+	/* Do permission checks, which returns with the attributes for the
+	 * object if the caller is not root.
+	 */
+	status = fsal_check_setattr_perms(obj, attr, &current);
 
-	/* Do permission checks */
-	status = fsal_check_setattr_perms(obj, attr);
 	if (FSAL_IS_ERROR(status))
 		return status;
 
@@ -564,8 +508,8 @@ fsal_status_t fsal_setattr(struct fsal_obj_handle *obj, bool bypass,
 	if (creds->caller_uid != 0 &&
 	    (FSAL_TEST_MASK(attr->mask, ATTR_OWNER) ||
 	     FSAL_TEST_MASK(attr->mask, ATTR_GROUP)) &&
-	    ((obj->attrs->mode & (S_IXOTH | S_IXUSR | S_IXGRP)) != 0) &&
-	    ((obj->attrs->mode & (S_ISUID | S_ISGID)) != 0)) {
+	    ((current.mode & (S_IXOTH | S_IXUSR | S_IXGRP)) != 0) &&
+	    ((current.mode & (S_ISUID | S_ISGID)) != 0)) {
 		/* Non-priviledged user changing ownership on an executable
 		 * file with S_ISUID or S_ISGID bit set, need to be cleared.
 		 */
@@ -573,7 +517,7 @@ fsal_status_t fsal_setattr(struct fsal_obj_handle *obj, bool bypass,
 			/* Mode wasn't being set, so set it now, start with
 			 * the current attributes.
 			 */
-			attr->mode = obj->attrs->mode;
+			attr->mode = current.mode;
 			FSAL_SET_MASK(attr->mask, ATTR_MODE);
 		}
 
@@ -581,7 +525,7 @@ fsal_status_t fsal_setattr(struct fsal_obj_handle *obj, bool bypass,
 		 * In that case, S_ISGID indicates mandatory locking and
 		 * is not cleared by chown.
 		 */
-		if ((obj->attrs->mode & S_IXGRP) != 0)
+		if ((current.mode & S_IXGRP) != 0)
 			attr->mode &= ~S_ISGID;
 
 		/* Clear S_ISUID. */
@@ -602,13 +546,10 @@ fsal_status_t fsal_setattr(struct fsal_obj_handle *obj, bool bypass,
 	if (creds->caller_uid != 0 &&
 	    FSAL_TEST_MASK(attr->mask, ATTR_MODE) &&
 	    (attr->mode & S_ISGID) != 0 &&
-	    fsal_not_in_group_list(obj->attrs->group)) {
+	    fsal_not_in_group_list(current.group)) {
 		/* Clear S_ISGID */
 		attr->mode &= ~S_ISGID;
 	}
-
-	saved_acl = obj->attrs->acl;
-	before = obj->attrs->change;
 
 	if (obj->fsal->m_ops.support_ex(obj)) {
 		status = obj->obj_ops.setattr2(obj, bypass, state, attr);
@@ -628,25 +569,12 @@ fsal_status_t fsal_setattr(struct fsal_obj_handle *obj, bool bypass,
 			}
 			return status;
 		}
-		status = obj->obj_ops.getattrs(obj);
-		if (FSAL_IS_ERROR(status)) {
-			if (status.major == ERR_FSAL_STALE) {
-				LogEvent(COMPONENT_FSAL,
-					 "FSAL returned STALE from getattrs");
-			}
-			return status;
-		}
 	}
-	if (before == obj->attrs->change)
-		obj->attrs->change++;
-	/* Decrement refcount on saved ACL */
-	acl_status = nfs4_acl_release_entry(saved_acl);
-	if (acl_status != NFS_V4_ACL_SUCCESS)
-		LogCrit(COMPONENT_FSAL,
-			"Failed to release old acl, status=%d", acl_status);
 
-	/* Copy the complete set of new attributes out. */
-	*attr = *obj->attrs;
+	if (creds->caller_uid != 0) {
+		/* Done with the current attrs */
+		fsal_release_attrs(&current);
+	}
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -669,95 +597,8 @@ fsal_status_t fsal_access(struct fsal_obj_handle *obj,
 			  fsal_accessflags_t *allowed,
 			  fsal_accessflags_t *denied)
 {
-	fsal_status_t status = { 0, 0 };
-
-	status = fsal_refresh_attrs(obj);
-	if (FSAL_IS_ERROR(status)) {
-		LogWarn(COMPONENT_FSAL, "Failed to refresh attributes");
-		return status;
-	}
-
-	return obj->obj_ops.test_access(obj, access_type, allowed, denied);
-}
-
-/**
- * @brief Gets the cached attributes for a file
- *
- * Attributes should have been refreshed before this call (usually by calling
- * fsal_access() )
- *
- * @param[in]     obj     File to be managed.
- * @param[in,out] opaque  Opaque pointer passed to callback
- * @param[in]     cb      User supplied callback
- *
- * @return FSAL status
- *
- */
-fsal_errors_t fsal_getattr(struct fsal_obj_handle *obj,
-			   void *opaque,
-			   fsal_getattr_cb_t cb,
-			   enum cb_state cb_state)
-{
-	fsal_errors_t errors;
-	uint64_t mounted_on_fileid;
-	struct gsh_export *junction_export = NULL;
-
-	mounted_on_fileid = obj->attrs->fileid;
-
-	errors = cb(opaque,
-		    obj,
-		    obj->attrs,
-		    mounted_on_fileid,
-		    0,
-		    cb_state);
-
-	if (errors == ERR_FSAL_CROSS_JUNCTION) {
-		struct fsal_obj_handle *junction_obj;
-
-		PTHREAD_RWLOCK_rdlock(&obj->state_hdl->state_lock);
-
-		/* Get a reference to the junction_export and remember it
-		 * only if the junction export is valid.
-		 */
-		if (obj->state_hdl->dir.junction_export != NULL &&
-		    export_ready(obj->state_hdl->dir.junction_export)) {
-			get_gsh_export_ref(obj->state_hdl->dir.junction_export);
-			junction_export = obj->state_hdl->dir.junction_export;
-		}
-		PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
-
-		if (junction_export != NULL) {
-			fsal_status_t status =
-				nfs_export_get_root_entry(junction_export,
-							  &junction_obj);
-
-			if (FSAL_IS_ERROR(status)) {
-				LogMajor(COMPONENT_FSAL,
-					 "Failed to get root for %s, id=%d, status = %s",
-					 junction_export->fullpath,
-					 junction_export->export_id,
-					 fsal_err_txt(status));
-				/* Need to signal problem to callback */
-				(void) cb(opaque, NULL, NULL, 0, 0, CB_PROBLEM);
-				return status.major;
-			}
-		} else {
-			LogMajor(COMPONENT_FSAL,
-				 "A junction became stale");
-			errors = ERR_FSAL_STALE;
-			/* Need to signal problem to callback */
-			(void) cb(opaque, NULL, NULL, 0, 0, CB_PROBLEM);
-			return errors;
-		}
-
-		/* Now call the callback again with that. */
-		errors = fsal_getattr(junction_obj, opaque, cb, CB_JUNCTION);
-
-		put_gsh_export(junction_export);
-		junction_obj->obj_ops.put_ref(junction_obj);
-	}
-
-	return errors;
+	return
+	    obj->obj_ops.test_access(obj, access_type, allowed, denied, false);
 }
 
 /**
@@ -822,14 +663,7 @@ fsal_status_t fsal_link(struct fsal_obj_handle *obj,
 	/* Rather than performing a lookup first, just try to make the
 	   link and return the FSAL's error if it fails. */
 	status = obj->obj_ops.link(obj, dest_dir, name);
-	if (FSAL_IS_ERROR(status))
-		return status;
-
-	status = fsal_refresh_attrs(obj);
-	if (FSAL_IS_ERROR(status))
-		return status;
-
-	return fsal_refresh_attrs(dest_dir);
+	return status;
 }
 
 /**
@@ -948,6 +782,10 @@ fsal_create_set_verifier(struct attrlist *sattr, uint32_t verf_hi,
  * The caller is expected to set the mode. Any other specified attributes
  * will also be set.
  *
+ * The caller is expected to invoke fsal_release_attrs to release any
+ * resources held by the set attributes. The FSAL layer MAY have added an
+ * inherited ACL.
+ *
  * @param[in]  parent       Parent directory
  * @param[in]  name         Name of the object to create
  * @param[in]  type         Type of the object to create
@@ -1046,9 +884,6 @@ fsal_status_t fsal_create(struct fsal_obj_handle *parent,
 		goto out;
 	}
 
-	/* Refresh the parent's attributes */
-	fsal_refresh_attrs(parent);
-
 	/* Check for the result */
 	if (FSAL_IS_ERROR(status)) {
 		if (status.major == ERR_FSAL_STALE) {
@@ -1135,13 +970,19 @@ bool fsal_create_verify(struct fsal_obj_handle *obj, uint32_t verf_hi,
 {
 	/* True if the verifier matches */
 	bool verified = false;
+	struct attrlist attrs;
 
-	fsal_refresh_attrs(obj);
-	if (FSAL_TEST_MASK(obj->attrs->mask, ATTR_ATIME)
-	    && FSAL_TEST_MASK(obj->attrs->mask, ATTR_MTIME)
-	    && obj->attrs->atime.tv_sec == verf_hi
-	    && obj->attrs->mtime.tv_sec == verf_lo)
+	fsal_prepare_attrs(&attrs, ATTR_ATIME | ATTR_MTIME);
+
+	obj->obj_ops.getattrs(obj, &attrs);
+	if (FSAL_TEST_MASK(attrs.mask, ATTR_ATIME)
+	    && FSAL_TEST_MASK(attrs.mask, ATTR_MTIME)
+	    && attrs.atime.tv_sec == verf_hi
+	    && attrs.mtime.tv_sec == verf_lo)
 		verified = true;
+
+	/* Done with the attrs */
+	fsal_release_attrs(&attrs);
 
 	return verified;
 }
@@ -1195,8 +1036,6 @@ fsal_status_t fsal_read2(struct fsal_obj_handle *obj,
 	LogFullDebug(COMPONENT_FSAL,
 		     "inode/direct: io_size=%zu, bytes_moved=%zu, offset=%"
 		     PRIu64, io_size, *bytes_moved, offset);
-
-	fsal_set_time_current(&obj->attrs->atime);
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -1427,13 +1266,6 @@ fsal_status_t fsal_rdwr(struct fsal_obj_handle *obj,
 		}
 	}
 
-	if (io_direction == FSAL_IO_WRITE ||
-	    io_direction == FSAL_IO_WRITE_PLUS) {
-		fsal_status = fsal_refresh_attrs(obj);
-		if (FSAL_IS_ERROR(fsal_status))
-			goto out;
-	}
-
 	fsal_status = fsalstat(0, 0);
 
  out:
@@ -1448,6 +1280,7 @@ struct fsal_populate_cb_state {
 	void *opaque;
 	enum cb_state cb_state;
 	unsigned int *cb_nfound;
+	attrmask_t attrmask;
 };
 
 static fsal_status_t
@@ -1455,8 +1288,12 @@ get_dirent(struct fsal_obj_handle *obj, struct fsal_readdir_cb_parms *cb_parms,
 	   fsal_cookie_t cookie, struct fsal_populate_cb_state *state)
 {
 	fsal_status_t status = { 0, 0 };
+	struct attrlist attrs;
 
-	status = fsal_refresh_attrs(obj);
+	fsal_prepare_attrs(&attrs, state->attrmask);
+
+	status = obj->obj_ops.getattrs(obj, &attrs);
+
 	if (FSAL_IS_ERROR(status)) {
 		LogInfo(COMPONENT_FSAL,
 			"attr refresh failed on %s in dir %p with %s",
@@ -1464,8 +1301,11 @@ get_dirent(struct fsal_obj_handle *obj, struct fsal_readdir_cb_parms *cb_parms,
 		return status;
 	}
 
-	status.major = state->cb(cb_parms, obj, obj->attrs,
-				 obj->attrs->fileid, cookie, state->cb_state);
+	status.major = state->cb(cb_parms, obj, &attrs,
+				 attrs.fileid, cookie, state->cb_state);
+
+	/* Done with the attrs */
+	fsal_release_attrs(&attrs);
 
 	return status;
 }
@@ -1594,14 +1434,6 @@ fsal_status_t fsal_readdir(struct fsal_obj_handle *directory,
 		return fsalstat(ERR_FSAL_NOTDIR, 0);
 	}
 
-	fsal_status = fsal_refresh_attrs(directory);
-	if (FSAL_IS_ERROR(fsal_status)) {
-		LogDebug(COMPONENT_NFS_READDIR,
-			 "fsal_refresh_attrs status=%s",
-			 fsal_err_txt(fsal_status));
-		return fsal_status;
-	}
-
 	/* Adjust access mask if ACL is asked for.
 	 * NOTE: We intentionally do NOT check ACE4_READ_ATTR.
 	 */
@@ -1633,6 +1465,7 @@ fsal_status_t fsal_readdir(struct fsal_obj_handle *directory,
 	state.opaque = opaque;
 	state.cb_state = CB_ORIGINAL;
 	state.cb_nfound = nbfound;
+	state.attrmask = attrmask;
 
 	fsal_status = directory->obj_ops.readdir(directory, &cookie,
 						 (void *)&state,
@@ -1724,17 +1557,6 @@ fsal_remove(struct fsal_obj_handle *parent, const char *name)
 			     name, fsal_err_txt(status));
 		goto out;
 	}
-
-	status = fsal_refresh_attrs(parent);
-	if (FSAL_IS_ERROR(status)) {
-		LogFullDebug(COMPONENT_FSAL,
-			     "could not refresh attributes of parent %p %s failure %s",
-			     parent, name, fsal_err_txt(status));
-		goto out;
-	}
-
-	/* If entry wasn't actually removed, refresh attributes */
-	(void)fsal_refresh_attrs(to_remove_obj);
 
 out:
 	to_remove_obj->obj_ops.put_ref(to_remove_obj);
@@ -1895,6 +1717,10 @@ fsal_status_t fsal_open(struct fsal_obj_handle *obj_hdl,
  *
  * state can be NULL which indicates a stateless open (such as via the
  * NFS v3 CREATE operation).
+ *
+ * The caller is expected to invoke fsal_release_attrs to release any
+ * resources held by the set attributes. The FSAL layer MAY have added an
+ * inherited ACL.
  *
  * @param[in]     in_obj     Parent directory or obj
  * @param[in,out] state      state_t to operate on
@@ -2107,12 +1933,6 @@ fsal_status_t fsal_commit(struct fsal_obj_handle *obj, off_t offset,
 fsal_status_t fsal_verify2(struct fsal_obj_handle *obj,
 			   fsal_verifier_t verifier)
 {
-	fsal_status_t status;
-
-	status = fsal_refresh_attrs(obj);
-	if (FSAL_IS_ERROR(status))
-		return status;
-
 	if (!obj->obj_ops.check_verifier(obj, verifier)) {
 		/* Verifier check failed. */
 		return fsalstat(ERR_FSAL_EXIST, 0);

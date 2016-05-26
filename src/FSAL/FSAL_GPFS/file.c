@@ -139,10 +139,6 @@ gpfs_read(struct fsal_obj_handle *obj_hdl, uint64_t offset, size_t buffer_size,
 	if (FSAL_IS_ERROR(status))
 		return status;
 
-	if ((*end_of_file == false) &&
-	    ((offset + *read_amount) >= myself->attributes.filesize))
-		*end_of_file = true;
-
 	return status;
 }
 
@@ -193,6 +189,8 @@ gpfs_read_plus(struct fsal_obj_handle *obj_hdl, uint64_t offset,
 			return fsalstat(posix2fsal_error(errsv), errsv);
 
 		/* errsv == ENODATA */
+#if 0
+		/** @todo FSF: figure out how to fix this... */
 		if ((buffer_size + offset) > myself->attributes.filesize) {
 			if (offset >= myself->attributes.filesize)
 				*read_amount = 0;
@@ -204,6 +202,7 @@ gpfs_read_plus(struct fsal_obj_handle *obj_hdl, uint64_t offset,
 			*read_amount = buffer_size;
 			info->io_content.hole.di_length = buffer_size;
 		}
+#endif
 		info->io_content.what = NFS4_CONTENT_HOLE;
 		info->io_content.hole.di_offset = offset;
 	} else {
@@ -215,8 +214,7 @@ gpfs_read_plus(struct fsal_obj_handle *obj_hdl, uint64_t offset,
 	}
 
 	if (nb_read != -1 &&
-	    (nb_read == 0 || nb_read < buffer_size ||
-		 (offset + nb_read) >= myself->attributes.filesize))
+	    (nb_read == 0 || nb_read < buffer_size))
 		*end_of_file = true;
 	else
 		*end_of_file = false;

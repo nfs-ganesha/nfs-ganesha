@@ -73,6 +73,8 @@ int nfs3_setattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	fsal_status_t fsal_status = {0, 0};
 	int rc = NFS_REQ_OK;
 
+	memset(&setattr, 0, sizeof(setattr));
+
 	if (isDebug(COMPONENT_NFSPROTO)) {
 		char str[LEN_FH_STR];
 
@@ -98,6 +100,8 @@ int nfs3_setattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	if (obj == NULL) {
 		/* Status and rc have been set by nfs3_FhandleToCache */
+		LogFullDebug(COMPONENT_NFSPROTO,
+			     "nfs3_FhandleToCache failed");
 		goto out;
 	}
 
@@ -109,6 +113,8 @@ int nfs3_setattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	if (nfs_in_grace()) {
 		res->res_setattr3.status = NFS3ERR_JUKEBOX;
 		rc = NFS_REQ_OK;
+		LogFullDebug(COMPONENT_NFSPROTO,
+			     "nfs_in_grace is true");
 		goto out;
 	}
 
@@ -134,6 +140,8 @@ int nfs3_setattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 			res->res_setattr3.status = NFS3ERR_NOT_SYNC;
 			rc = NFS_REQ_OK;
+			LogFullDebug(COMPONENT_NFSPROTO,
+				     "guard check failed");
 			goto out;
 		}
 	}
@@ -143,6 +151,8 @@ int nfs3_setattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 				    &arg->arg_setattr3.new_attributes)) {
 		res->res_setattr3.status = NFS3ERR_INVAL;
 		rc = NFS_REQ_OK;
+		LogFullDebug(COMPONENT_NFSPROTO,
+			     "nfs3_Sattr_To_FSALattr failed");
 		goto out;
 	}
 
@@ -159,8 +169,11 @@ int nfs3_setattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 						OPEN4_SHARE_ACCESS_WRITE,
 						SHARE_BYPASS_V3_WRITE));
 
-			if (res->res_setattr3.status != NFS3_OK)
+			if (res->res_setattr3.status != NFS3_OK) {
+				LogFullDebug(COMPONENT_NFSPROTO,
+					     "state_share_anonymous_io_start failed");
 				goto out_fail;
+			}
 		}
 
 		/* For now we don't look for states, so indicate bypass so
@@ -175,6 +188,8 @@ int nfs3_setattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		if (FSAL_IS_ERROR(fsal_status)) {
 			res->res_setattr3.status =
 				nfs3_Errno_status(fsal_status);
+			LogFullDebug(COMPONENT_NFSPROTO,
+				     "fsal_setattr failed");
 			goto out_fail;
 		}
 	}
@@ -194,29 +209,34 @@ int nfs3_setattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	}
 
 	rc = NFS_REQ_OK;
+
  out:
+
+	/* Release the attributes (may release an inherited ACL) */
+	fsal_release_attrs(&setattr);
+
 	/* return references */
 	if (obj)
 		obj->obj_ops.put_ref(obj);
 
+	LogDebug(COMPONENT_NFSPROTO,
+		 "Result %s%s",
+		 nfsstat3_to_str(res->res_setattr3.status),
+		 rc == NFS_REQ_DROP ? " Dropping response" : "");
+
 	return rc;
 
  out_fail:
-	LogFullDebug(COMPONENT_NFSPROTO, "nfs_Setattr: failed");
 
 	nfs_SetWccData(&pre_attr, obj,
 		       &res->res_setattr3.SETATTR3res_u.resfail.obj_wcc);
 
 	if (nfs_RetryableError(fsal_status.major)) {
+		/* Drop retryable request. */
 		rc = NFS_REQ_DROP;
-		goto out;
 	}
 
-	/* return references */
-	if (obj)
-		obj->obj_ops.put_ref(obj);
-
-	return rc;
+	goto out;
 }				/* nfs3_setattr */
 
 /**

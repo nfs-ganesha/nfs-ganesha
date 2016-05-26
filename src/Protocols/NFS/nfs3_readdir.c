@@ -85,8 +85,9 @@ nfsstat3 nfs_readdir_dot_entry(struct fsal_obj_handle *obj, const char *name,
 	cb_parms.name = name;
 	cb_parms.attr_allowed = true;
 	cb_parms.in_result = true;
-	fsal_status.major = cb(&cb_parms, obj, obj->attrs, 0, cookie,
-			  CB_ORIGINAL);
+
+	/* NFS v3 READDIR does not use attributes, so pass NULL */
+	fsal_status.major = cb(&cb_parms, obj, NULL, 0, cookie, CB_ORIGINAL);
 
 	if (FSAL_IS_ERROR(fsal_status))
 		return nfs3_Errno_status(fsal_status);
@@ -197,14 +198,33 @@ int nfs3_readdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	 * non-trivial value is returned to the
 	 * client.
 	 *
-	 * This value is the mtime of the directory. If verifier is
+	 * This value is the ctime of the directory. If verifier is
 	 * unused (as in many NFS Servers) then only a set of zeros
 	 * is returned (trivial value).
 	 */
-	if (op_ctx->export->options & EXPORT_OPTION_USE_COOKIE_VERIFIER)
+	if (op_ctx->export->options & EXPORT_OPTION_USE_COOKIE_VERIFIER) {
+		struct attrlist attrs;
+
+		fsal_prepare_attrs(&attrs, ATTR_CTIME);
+
+		fsal_status = dir_obj->obj_ops.getattrs(dir_obj, &attrs);
+
+		if (FSAL_IS_ERROR(fsal_status)) {
+			res->res_readdir3.status =
+						nfs3_Errno_status(fsal_status);
+			LogFullDebug(COMPONENT_NFS_READDIR,
+				     "getattrs returned %s",
+				     msg_fsal_err(fsal_status.major));
+			goto out;
+		}
+
 		memcpy(cookie_verifier,
-		       &dir_obj->attrs->ctime.tv_sec,
-		       sizeof(dir_obj->attrs->ctime.tv_sec));
+		       &attrs.ctime.tv_sec,
+		       sizeof(attrs.ctime.tv_sec));
+
+		/* Done with the attrs */
+		fsal_release_attrs(&attrs);
+	}
 
 	if ((cookie != 0) &&
 	    (op_ctx->export->options & EXPORT_OPTION_USE_COOKIE_VERIFIER)) {
@@ -392,7 +412,7 @@ fsal_errors_t nfs3_readdir_callback(void *opaque,
 		return ERR_FSAL_NO_ERROR;
 	}
 
-	e3->fileid = attr->fileid;
+	e3->fileid = obj->fileid;
 	e3->name = gsh_strdup(cb_parms->name);
 	e3->cookie = cookie;
 

@@ -150,7 +150,7 @@ static fsal_errors_t _9p_readdir_callback(void *opaque,
 	tracker->count += 24 + name_len;
 
 	tracker->cursor =
-	    fill_entry(tracker->cursor, qid_type, attr->fileid,
+	    fill_entry(tracker->cursor, qid_type, obj->fileid,
 		       cookie, d_type, name_len, cb_parms->name);
 
 	cb_parms->in_result = true;
@@ -236,13 +236,13 @@ int _9p_readdir(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 		/* Deal with "." and ".." */
 		cursor = fill_entry(cursor, _9P_QTDIR,
-			       pfid->pentry->attrs->fileid, 1LL,
+			       pfid->pentry->fileid, 1LL,
 			       DT_DIR, strlen(pathdot), pathdot);
 		dcount += 24 + strlen(pathdot);
 
 		cursor =
 		    fill_entry(cursor, _9P_QTDIR,
-			       pentry_dot_dot->attrs->fileid,
+			       pentry_dot_dot->fileid,
 			       2LL, DT_DIR, strlen(pathdotdot), pathdotdot);
 		dcount += 24 + strlen(pathdotdot);
 
@@ -260,7 +260,7 @@ int _9p_readdir(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 		cursor =
 		    fill_entry(cursor, _9P_QTDIR,
-			       pentry_dot_dot->attrs->fileid,
+			       pentry_dot_dot->fileid,
 			       2LL, DT_DIR, strlen(pathdotdot), pathdotdot);
 		dcount += 24 + strlen(pathdotdot);
 

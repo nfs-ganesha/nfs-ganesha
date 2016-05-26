@@ -98,7 +98,8 @@ struct vfs_subfsal_obj_ops {
  * @return FSAL status.
  */
 	fsal_status_t (*getattrs)(struct vfs_fsal_obj_handle *vfs_hdl,
-				  int fd, attrmask_t request_mask);
+				  int fd, attrmask_t request_mask,
+				  struct attrlist *attrs);
 /**
  * @brief Set sub-fsal attributes on an object
  *
@@ -136,9 +137,11 @@ struct vfs_fd {
 
 struct vfs_fsal_obj_handle {
 	struct fsal_obj_handle obj_handle;
-	struct attrlist attributes; /*< Attributes of this Object. */
 	fsal_dev_t dev;
 	vfs_file_handle_t *handle;
+#ifdef ENABLE_VFS_DEBUG_ACL
+	uint32_t mode;		/*< POSIX access mode */
+#endif
 	struct vfs_subfsal_obj_ops *sub_ops;	/*< Optional subfsal ops */
 	const struct fsal_up_vector *up_ops;	/*< Upcall operations */
 	union {
@@ -304,7 +307,8 @@ fsal_status_t vfs_lock_op2(struct fsal_obj_handle *obj_hdl,
 
 fsal_status_t getattr2(struct fsal_obj_handle *obj_hdl);
 
-fsal_status_t vfs_getattr2(struct fsal_obj_handle *obj_hdl);
+fsal_status_t vfs_getattr2(struct fsal_obj_handle *obj_hdl,
+			   struct attrlist *attrs);
 
 fsal_status_t vfs_setattr2(struct fsal_obj_handle *obj_hdl,
 			   bool bypass,

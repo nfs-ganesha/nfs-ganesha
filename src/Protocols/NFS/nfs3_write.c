@@ -128,14 +128,13 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	nfs_SetPreOpAttr(obj, &pre_attr);
 
-	if (obj->attrs->owner != op_ctx->creds->caller_uid) {
-		fsal_status = fsal_access(obj, FSAL_WRITE_ACCESS, NULL, NULL);
+	fsal_status =
+	    obj->obj_ops.test_access(obj, FSAL_WRITE_ACCESS, NULL, NULL, true);
 
-		if (FSAL_IS_ERROR(fsal_status)) {
-			res->res_write3.status = nfs3_Errno_status(fsal_status);
-			rc = NFS_REQ_OK;
-			goto out;
-		}
+	if (FSAL_IS_ERROR(fsal_status)) {
+		res->res_write3.status = nfs3_Errno_status(fsal_status);
+		rc = NFS_REQ_OK;
+		goto out;
 	}
 
 	/* Sanity check: write only a regular file */

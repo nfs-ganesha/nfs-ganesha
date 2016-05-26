@@ -42,8 +42,6 @@
 #include "mdcache_hash.h"
 #include "mdcache_avl.h"
 
-static fsal_status_t mdcache_getattrs(struct fsal_obj_handle *obj_hdl);
-
 /*
  * Helper functions
  */
@@ -57,6 +55,11 @@ static fsal_status_t mdc_add_dirent(mdcache_entry_t *parent, const char *name,
 	/* Add this entry to the directory (also takes an internal ref) */
 	status = mdcache_dirent_add(parent, name, entry, NULL);
 	PTHREAD_RWLOCK_unlock(&parent->content_lock);
+
+	/* This function is called after a create, so go ahead and invalidate
+	 * the parent directory attributes.
+	 */
+	atomic_clear_uint32_t_bits(&parent->mde_flags, MDCACHE_TRUST_ATTRS);
 
 	return status;
 }
@@ -630,15 +633,13 @@ static fsal_status_t mdcache_rename(struct fsal_obj_handle *obj_hdl,
 	if (FSAL_IS_ERROR(status))
 		goto out;
 
-	/* Refresh attribute caches */
-	status = fsal_refresh_attrs(olddir_hdl);
-	if (FSAL_IS_ERROR(status))
-		goto out;
+	/* Mark directory attributes as invalid */
+	atomic_clear_uint32_t_bits(&mdc_olddir->mde_flags,
+				   MDCACHE_TRUST_ATTRS);
 
 	if (olddir_hdl != newdir_hdl) {
-		status = fsal_refresh_attrs(newdir_hdl);
-		if (FSAL_IS_ERROR(status))
-			goto out;
+		atomic_clear_uint32_t_bits(&mdc_newdir->mde_flags,
+					   MDCACHE_TRUST_ATTRS);
 	}
 
 	/* Now update cached dirents.  Must take locks in the correct order */
@@ -730,47 +731,59 @@ out:
  * @param[in] obj_hdl	Object to get attributes from
  * @return FSAL status
  */
-static fsal_status_t mdcache_getattrs(struct fsal_obj_handle *obj_hdl)
+static fsal_status_t mdcache_getattrs(struct fsal_obj_handle *obj_hdl,
+				      struct attrlist *outattrs)
 {
 	mdcache_entry_t *entry =
 		container_of(obj_hdl, mdcache_entry_t, obj_handle);
 	fsal_status_t status = {0, 0};
 	time_t oldmtime = 0;
+	fsal_acl_t *old_acl;
 
 	PTHREAD_RWLOCK_rdlock(&entry->attr_lock);
 
-	if (mdcache_is_attrs_valid(entry))
+	if (mdcache_is_attrs_valid(entry)) {
 		/* Up-to-date */
 		goto unlock;
+	}
 
 	/* Promote to write lock */
 	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 	PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
 
-	if (mdcache_is_attrs_valid(entry))
+	if (mdcache_is_attrs_valid(entry)) {
 		/* Someone beat us to it */
 		goto unlock;
+	}
 
-	oldmtime = obj_hdl->attrs->mtime.tv_sec;
+	oldmtime = entry->attrs.mtime.tv_sec;
+
+	old_acl = entry->attrs.acl;
+
+	entry->attrs.mask = op_ctx->fsal_export->exp_ops.
+		fs_supported_attrs(op_ctx->fsal_export);
 
 	subcall(
 		status = entry->sub_handle->obj_ops.getattrs(
-			entry->sub_handle)
+			entry->sub_handle, &entry->attrs)
 	       );
 
 	if (FSAL_IS_ERROR(status)) {
-		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
-		mdcache_kill_entry(entry);
-		return status;
+		/* We failed to fetch any attributes. Pass that fact back to
+		 * the caller.
+		 */
+		if (outattrs->mask & ATTR_RDATTR_ERR)
+			outattrs->mask = ATTR_RDATTR_ERR;
+		goto unlock_no_attrs;
 	}
+
+	if (old_acl != NULL)
+		nfs4_acl_release_entry(old_acl);
 
 	mdc_fixup_md(entry);
 
-	LogAttrlist(COMPONENT_CACHE_INODE, NIV_FULL_DEBUG,
-		    "attrs ", obj_hdl->attrs, true);
-
 	if ((obj_hdl->type == DIRECTORY) &&
-	    (oldmtime < obj_hdl->attrs->mtime.tv_sec)) {
+	    (oldmtime < entry->attrs.mtime.tv_sec)) {
 
 		PTHREAD_RWLOCK_wrlock(&entry->content_lock);
 		mdcache_dirent_invalidate_all(entry);
@@ -778,7 +791,31 @@ static fsal_status_t mdcache_getattrs(struct fsal_obj_handle *obj_hdl)
 	}
 
 unlock:
+
+	/* Struct copy */
+	*outattrs = entry->attrs;
+
+	if (outattrs->acl != NULL && (outattrs->mask & ATTR_ACL) != 0) {
+		/* Take reference on ACL if necessary */
+		nfs4_acl_entry_inc_ref(outattrs->acl);
+	} else {
+		/* Make sure acl is NULL and don't pass a ref back (so
+		 * caller when calling fsal_release_attrs will not have to
+		 * release the ACL reference.
+		 */
+		outattrs->acl = NULL;
+	}
+
+unlock_no_attrs:
+
 	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+
+	if (FSAL_IS_ERROR(status) && (status.major == ERR_FSAL_STALE))
+		mdcache_kill_entry(entry);
+
+	LogAttrlist(COMPONENT_CACHE_INODE, NIV_FULL_DEBUG,
+		    "attrs ", outattrs, true);
+
 	return status;
 }
 
@@ -790,13 +827,17 @@ unlock:
  * @return FSAL status
  */
 static fsal_status_t mdcache_setattrs(struct fsal_obj_handle *obj_hdl,
-			      struct attrlist *attrs)
+				      struct attrlist *attrs)
 {
 	mdcache_entry_t *entry =
 		container_of(obj_hdl, mdcache_entry_t, obj_handle);
 	fsal_status_t status;
+	fsal_acl_t *old_acl;
+	uint64_t change;
 
 	PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
+
+	change = entry->attrs.change;
 
 	subcall(
 		status = entry->sub_handle->obj_ops.setattrs(
@@ -809,15 +850,31 @@ static fsal_status_t mdcache_setattrs(struct fsal_obj_handle *obj_hdl,
 		goto unlock;
 	}
 
+	old_acl = entry->attrs.acl;
+
+	entry->attrs.mask = op_ctx->fsal_export->exp_ops.
+		fs_supported_attrs(op_ctx->fsal_export);
+
 	subcall(
 		status = entry->sub_handle->obj_ops.getattrs(
-			entry->sub_handle)
+			entry->sub_handle, &entry->attrs)
 	       );
 
 	if (FSAL_IS_ERROR(status)) {
 		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 		mdcache_kill_entry(entry);
 		return status;
+	}
+
+	if (old_acl != NULL)
+		nfs4_acl_release_entry(old_acl);
+
+	if (change == entry->attrs.change) {
+		LogDebug(COMPONENT_CACHE_INODE,
+			 "setattrs did not change change attribute before %lld after = %lld",
+			 (long long int) change,
+			 (long long int) entry->attrs.change);
+		entry->attrs.change++;
 	}
 
 	mdc_fixup_md(entry);
@@ -844,8 +901,12 @@ static fsal_status_t mdcache_setattr2(struct fsal_obj_handle *obj_hdl,
 	mdcache_entry_t *entry =
 		container_of(obj_hdl, mdcache_entry_t, obj_handle);
 	fsal_status_t status;
+	fsal_acl_t *old_acl;
+	uint64_t change;
 
 	PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
+
+	change = entry->attrs.change;
 
 	subcall(
 		status = entry->sub_handle->obj_ops.setattr2(
@@ -858,15 +919,31 @@ static fsal_status_t mdcache_setattr2(struct fsal_obj_handle *obj_hdl,
 		goto unlock;
 	}
 
+	old_acl = entry->attrs.acl;
+
+	entry->attrs.mask = op_ctx->fsal_export->exp_ops.
+		fs_supported_attrs(op_ctx->fsal_export);
+
 	subcall(
 		status = entry->sub_handle->obj_ops.getattrs(
-			entry->sub_handle)
+			entry->sub_handle, &entry->attrs)
 	       );
 
 	if (FSAL_IS_ERROR(status)) {
 		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 		mdcache_kill_entry(entry);
 		return status;
+	}
+
+	if (old_acl != NULL)
+		nfs4_acl_release_entry(old_acl);
+
+	if (change == entry->attrs.change) {
+		LogDebug(COMPONENT_CACHE_INODE,
+			 "setattr2 did not change change attribute before %lld after = %lld",
+			 (long long int) change,
+			 (long long int) entry->attrs.change);
+		entry->attrs.change++;
 	}
 
 	mdc_fixup_md(entry);
@@ -889,7 +966,7 @@ unlock:
  */
 static fsal_status_t mdcache_unlink(struct fsal_obj_handle *dir_hdl,
 				    struct fsal_obj_handle *obj_hdl,
-				 const char *name)
+				    const char *name)
 {
 	mdcache_entry_t *parent =
 		container_of(dir_hdl, mdcache_entry_t, obj_handle);
@@ -913,8 +990,13 @@ static fsal_status_t mdcache_unlink(struct fsal_obj_handle *dir_hdl,
 		else if (status.major == ERR_FSAL_NOTEMPTY &&
 			 (obj_hdl->type == DIRECTORY))
 			mdcache_dirent_invalidate_all(entry);
-	} else
-		(void)mdcache_invalidate(entry, MDCACHE_INVALIDATE_ATTRS);
+	} else {
+		/* Invalidate attributes of parent and entry */
+		atomic_clear_uint32_t_bits(&parent->mde_flags,
+					   MDCACHE_TRUST_ATTRS);
+		atomic_clear_uint32_t_bits(&entry->mde_flags,
+					   MDCACHE_TRUST_ATTRS);
+	}
 
 	mdc_unreachable(entry);
 
@@ -1028,7 +1110,6 @@ void mdcache_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->mknode = mdcache_mknode;
 	ops->symlink = mdcache_symlink;
 	ops->readlink = mdcache_readlink;
-	ops->test_access = fsal_test_access;
 	ops->getattrs = mdcache_getattrs;
 	ops->setattrs = mdcache_setattrs;
 	ops->link = mdcache_link;

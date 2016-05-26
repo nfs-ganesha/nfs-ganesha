@@ -76,7 +76,6 @@ void gpfs_unexport_filesystems(struct gpfs_fsal_export *exp);
 
 struct gpfs_fsal_obj_handle {
 	struct fsal_obj_handle obj_handle;
-	struct attrlist attributes;
 	struct gpfs_file_handle *handle;
 	union {
 		struct {

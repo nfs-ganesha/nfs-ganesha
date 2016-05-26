@@ -106,12 +106,11 @@ int _9p_lcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		fsal_verifier_t verifier;
 		enum fsal_create_mode createmode = FSAL_UNCHECKED;
 
-		memset(&sattr, 0, sizeof(sattr));
+		fsal_prepare_attrs(&sattr, ATTR_MODE | ATTR_GROUP);
 		memset(&verifier, 0, sizeof(verifier));
 
 		sattr.mode = *mode;
 		sattr.group = *gid;
-		sattr.mask = ATTR_MODE | ATTR_GROUP;
 
 		if (*flags & 0x10) {
 			/* Filesize is already 0. */
@@ -136,6 +135,9 @@ int _9p_lcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 					 verifier,
 					 &pentry_newfile);
 
+		/* Release the attributes (may release an inherited ACL) */
+		fsal_release_attrs(&sattr);
+
 		if (FSAL_IS_ERROR(fsal_status))
 			return _9p_rerror(req9p, msgtag,
 					  _9p_tools_errno(fsal_status),
@@ -144,17 +146,20 @@ int _9p_lcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		/* Create the file */
 		struct attrlist sattr;
 
-		memset(&sattr, 0, sizeof(sattr));
+		fsal_prepare_attrs(&sattr, ATTR_MODE | ATTR_GROUP);
 
 		sattr.mode = *mode;
 		sattr.group = *gid;
-		sattr.mask = ATTR_MODE | ATTR_GROUP;
 
 		/* BUGAZOMEU: @todo : the gid parameter is not used yet,
 		 * flags is not yet used
 		 */
 		fsal_status = fsal_create(pfid->pentry, file_name, REGULAR_FILE,
 					  &sattr, NULL, &pentry_newfile);
+
+		/* Release the attributes (may release an inherited ACL) */
+		fsal_release_attrs(&sattr);
+
 		if (FSAL_IS_ERROR(fsal_status))
 			return _9p_rerror(req9p, msgtag,
 					  _9p_tools_errno(fsal_status),

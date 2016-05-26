@@ -65,8 +65,6 @@ int _9p_mknod(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	object_file_type_t nodetype;
 	struct attrlist object_attributes;
 
-	memset(&object_attributes, 0, sizeof(object_attributes));
-
 	/* Get data */
 	_9p_getptr(cursor, msgtag, u16);
 
@@ -113,15 +111,20 @@ int _9p_mknod(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	else			/* bad type */
 		return _9p_rerror(req9p, msgtag, EINVAL, plenout, preply);
 
+	fsal_prepare_attrs(&object_attributes, ATTR_RAWDEV | ATTR_MODE);
+
 	object_attributes.rawdev.major = *major;
 	object_attributes.rawdev.minor = *minor;
 	object_attributes.mode = *mode;
-	object_attributes.mask = ATTR_RAWDEV | ATTR_MODE;
 
 	/* Create the directory */
-   /**  @todo  BUGAZOMEU the gid parameter is not used yet */
+	/**  @todo  BUGAZOMEU the gid parameter is not used yet */
 	fsal_status = fsal_create(pfid->pentry, obj_name, nodetype,
 				  &object_attributes, NULL, &pentry_newobj);
+
+	/* Release the attributes (may release an inherited ACL) */
+	fsal_release_attrs(&object_attributes);
+
 	if (FSAL_IS_ERROR(fsal_status))
 		return _9p_rerror(req9p, msgtag, _9p_tools_errno(fsal_status),
 				  plenout, preply);

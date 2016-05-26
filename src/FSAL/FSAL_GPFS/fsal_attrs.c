@@ -55,7 +55,7 @@ fsal_acl_2_gpfs_acl(struct fsal_obj_handle *, fsal_acl_t *, gpfsfsal_xstat_t *);
 fsal_status_t
 GPFSFSAL_fs_loc(struct fsal_export *export, struct gpfs_filesystem *gpfs_fs,
 		const struct req_op_context *op_ctx,
-		struct gpfs_file_handle *gpfs_fh, struct attrlist *obj_attr,
+		struct gpfs_file_handle *gpfs_fh,
 		struct fs_locations4 *fs_locs)
 {
 	int errsv, rc;
@@ -147,6 +147,9 @@ GPFSFSAL_getattrs(struct fsal_export *export, struct gpfs_filesystem *gpfs_fs,
 		FSAL_SET_MASK(obj_attr->mask, ATTR_RDATTR_ERR);
 		return st;
 	}
+
+	/* Make sure ATTR_RDATTR_ERR is cleared on success. */
+	obj_attr->mask &= ~ATTR_RDATTR_ERR;
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -259,10 +262,9 @@ GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,
 
 	if (FSAL_TEST_MASK(obj_attr->mask, ATTR_SIZE)) {
 		attr_changed |= XATTR_SIZE;
-		/* Fill wanted mode. */
+		/* Fill wanted size. */
 		buffxstat.buffstat.st_size = obj_attr->filesize;
-		LogDebug(COMPONENT_FSAL, "current size = %llu, new size = %llu",
-			 (unsigned long long)myself->attributes.filesize,
+		LogDebug(COMPONENT_FSAL, "new size = %llu",
 			 (unsigned long long)buffxstat.buffstat.st_size);
 	}
 
@@ -272,10 +274,9 @@ GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,
 
 	if (FSAL_TEST_MASK(obj_attr->mask, ATTR4_SPACE_RESERVED)) {
 		attr_changed |= XATTR_SPACE_RESERVED;
-		/* Fill wanted mode. */
+		/* Fill wanted space. */
 		buffxstat.buffstat.st_size = obj_attr->filesize;
-		LogDebug(COMPONENT_FSAL, "current size = %llu, new size = %llu",
-			 (unsigned long long)myself->attributes.filesize,
+		LogDebug(COMPONENT_FSAL, "new size = %llu",
 			 (unsigned long long)buffxstat.buffstat.st_size);
 	}
 
@@ -294,8 +295,7 @@ GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,
 			buffxstat.buffstat.st_mode =
 			    fsal2unix_mode(obj_attr->mode);
 			LogDebug(COMPONENT_FSAL,
-				 "current mode = %o, new mode = %o",
-				 fsal2unix_mode(myself->attributes.mode),
+				 "new mode = %o",
 				 buffxstat.buffstat.st_mode);
 
 		}
@@ -311,8 +311,8 @@ GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,
 		attr_changed |= XATTR_UID;
 		buffxstat.buffstat.st_uid = (int)obj_attr->owner;
 		LogDebug(COMPONENT_FSAL,
-			"current uid = %" PRIu64 ", new uid = %d",
-			myself->attributes.owner, buffxstat.buffstat.st_uid);
+			"new uid = %d",
+			buffxstat.buffstat.st_uid);
 	}
 
 	/* Fill wanted group. */
@@ -320,8 +320,8 @@ GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,
 		attr_changed |= XATTR_GID;
 		buffxstat.buffstat.st_gid = (int)obj_attr->group;
 		LogDebug(COMPONENT_FSAL,
-			"current gid = %" PRIu64 ", new gid = %d",
-			myself->attributes.group, buffxstat.buffstat.st_gid);
+			"new gid = %d",
+			buffxstat.buffstat.st_gid);
 	}
 
   /***********
@@ -333,8 +333,7 @@ GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,
 		attr_changed |= XATTR_ATIME;
 		buffxstat.buffstat.st_atime = (time_t) obj_attr->atime.tv_sec;
 		buffxstat.buffstat.st_atim.tv_nsec = obj_attr->atime.tv_nsec;
-		LogDebug(COMPONENT_FSAL, "current atime = %lu, new atime = %lu",
-			 (unsigned long)myself->attributes.atime.tv_sec,
+		LogDebug(COMPONENT_FSAL, "new atime = %lu",
 			 (unsigned long)buffxstat.buffstat.st_atime);
 	}
 
@@ -343,21 +342,18 @@ GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,
 		attr_changed |= XATTR_MTIME;
 		buffxstat.buffstat.st_mtime = (time_t) obj_attr->mtime.tv_sec;
 		buffxstat.buffstat.st_mtim.tv_nsec = obj_attr->mtime.tv_nsec;
-		LogDebug(COMPONENT_FSAL, "current mtime = %lu, new mtime = %lu",
-			 (unsigned long)myself->attributes.mtime.tv_sec,
+		LogDebug(COMPONENT_FSAL, "new mtime = %lu",
 			 (unsigned long)buffxstat.buffstat.st_mtime);
 	}
 	/* Asking to set atime to NOW */
 	if (FSAL_TEST_MASK(obj_attr->mask, ATTR_ATIME_SERVER)) {
 		attr_changed |= XATTR_ATIME | XATTR_ATIME_NOW;
-		LogDebug(COMPONENT_FSAL, "current atime = %lu, new atime = NOW",
-			 (unsigned long)myself->attributes.atime.tv_sec);
+		LogDebug(COMPONENT_FSAL, "new atime = NOW");
 	}
 	/* Asking to set atime to NOW */
 	if (FSAL_TEST_MASK(obj_attr->mask, ATTR_MTIME_SERVER)) {
 		attr_changed |= XATTR_MTIME | XATTR_MTIME_NOW;
-		LogDebug(COMPONENT_FSAL, "current mtime = %lu, new mtime = NOW",
-			 (unsigned long)myself->attributes.atime.tv_sec);
+		LogDebug(COMPONENT_FSAL, "new mtime = NOW");
 	}
 
 	/* If any stat changed, indicate that */

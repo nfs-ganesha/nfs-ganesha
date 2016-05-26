@@ -93,7 +93,7 @@ int _9p_mkdir(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 	snprintf(dir_name, MAXNAMLEN, "%.*s", *name_len, name_str);
 
-	memset(&sattr, 0, sizeof(sattr));
+	fsal_prepare_attrs(&sattr, ATTR_MODE);
 
 	sattr.mode = *mode;
 	sattr.mask = ATTR_MODE;
@@ -102,6 +102,10 @@ int _9p_mkdir(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	/* BUGAZOMEU: @todo : the gid parameter is not used yet */
 	fsal_status = fsal_create(pfid->pentry, dir_name, DIRECTORY, &sattr,
 				  NULL, &pentry_newdir);
+
+	/* Release the attributes (may release an inherited ACL) */
+	fsal_release_attrs(&sattr);
+
 	if (FSAL_IS_ERROR(fsal_status))
 		return _9p_rerror(req9p, msgtag,
 				  _9p_tools_errno(fsal_status), plenout,

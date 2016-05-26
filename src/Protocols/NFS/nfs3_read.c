@@ -127,23 +127,22 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	nfs_SetPreOpAttr(obj, &pre_attr);
 
-	if (obj->attrs->owner != op_ctx->creds->caller_uid) {
-		fsal_status = fsal_access(obj, FSAL_READ_ACCESS, NULL, NULL);
+	fsal_status =
+	    obj->obj_ops.test_access(obj, FSAL_READ_ACCESS, NULL, NULL, true);
 
-		if (fsal_status.major == ERR_FSAL_ACCESS) {
-			/* Test for execute permission */
-			fsal_status = fsal_access(obj,
-					       FSAL_MODE_MASK_SET(FSAL_X_OK) |
-					       FSAL_ACE4_MASK_SET
-					       (FSAL_ACE_PERM_EXECUTE),
-					       NULL, NULL);
-		}
+	if (fsal_status.major == ERR_FSAL_ACCESS) {
+		/* Test for execute permission */
+		fsal_status = fsal_access(obj,
+				       FSAL_MODE_MASK_SET(FSAL_X_OK) |
+				       FSAL_ACE4_MASK_SET
+				       (FSAL_ACE_PERM_EXECUTE),
+				       NULL, NULL);
+	}
 
-		if (FSAL_IS_ERROR(fsal_status)) {
-			res->res_read3.status = nfs3_Errno_status(fsal_status);
-			rc = NFS_REQ_OK;
-			goto out;
-		}
+	if (FSAL_IS_ERROR(fsal_status)) {
+		res->res_read3.status = nfs3_Errno_status(fsal_status);
+		rc = NFS_REQ_OK;
+		goto out;
 	}
 
 	/* Sanity check: read only from a regular file */

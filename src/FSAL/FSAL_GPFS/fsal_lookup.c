@@ -110,7 +110,7 @@ GPFSFSAL_lookup(const struct req_op_context *op_ctx,
 	 */
 	gpfs_extract_fsid(fh, &fsid);
 
-	if (fsid.major != parent_hdl->attributes.fsid.major) {
+	if (fsid.major != parent_hdl->obj_handle.fsid.major) {
 		/* XDEV */
 		*new_fs = lookup_fsid(&fsid, GPFS_FSID_TYPE);
 		if (*new_fs == NULL) {

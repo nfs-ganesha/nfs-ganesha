@@ -265,12 +265,13 @@ int construct_handle(struct rgw_export *export,
 
 	constructing->rgw_fh = rgw_fh;
 	constructing->up_ops = export->export.up_ops; /* XXXX going away */
-	constructing->handle.attrs = &constructing->attributes;
-	rgw2fsal_attributes(st, &constructing->attributes);
 
 	fsal_obj_handle_init(&constructing->handle, &export->export,
-			     constructing->attributes.type);
+			     posix2fsal_type(st->st_mode));
 	handle_ops_init(&constructing->handle.obj_ops);
+	constructing->handle.fsid = posix2fsal_fsid(st->st_dev);
+	constructing->handle.fileid = st->st_ino;
+
 	constructing->export = export;
 
 	*obj = constructing;

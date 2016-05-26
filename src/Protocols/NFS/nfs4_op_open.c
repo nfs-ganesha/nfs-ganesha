@@ -1612,6 +1612,9 @@ static void open4_ex(OPEN4args *arg,
 
  out:
 
+	/* Release the attributes (may release an inherited ACL) */
+	fsal_release_attrs(&sattr);
+
 	if (state_lock_held)
 		PTHREAD_RWLOCK_unlock(&file_obj->state_hdl->state_lock);
 

@@ -213,7 +213,7 @@ fsal_status_t vfs_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
 	for (index = cookie, out_index = 0;
 	     index < XATTR_COUNT && out_index < xattrs_tabsize; index++) {
 		if (do_match_type
-		    (xattr_list[index].flags, obj_handle->attributes.type)) {
+		    (xattr_list[index].flags, obj_handle->obj_handle.type)) {
 			/* fills an xattr entry */
 			xattrs_tab[out_index].xattr_id = index;
 			strncpy(xattr_list[index].xattr_name,
@@ -353,7 +353,7 @@ fsal_status_t vfs_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 	/* check that this index match the type of entry */
 	if ((xattr_id < XATTR_COUNT)
 	    && !do_match_type(xattr_list[xattr_id].flags,
-			      obj_handle->attributes.type)) {
+			      obj_handle->obj_handle.type)) {
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	} else if (xattr_id >= XATTR_COUNT) {
 		char attr_name[MAXPATHLEN];
@@ -422,7 +422,7 @@ fsal_status_t vfs_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
 	/* look for this name */
 	for (index = 0; index < XATTR_COUNT; index++) {
 		if (do_match_type(xattr_list[index].flags,
-				  obj_handle->attributes.type) &&
+				  obj_handle->obj_handle.type) &&
 		    !strcmp(xattr_list[index].xattr_name, xattr_name)) {
 			return vfs_getextattr_value_by_id(obj_hdl, index,
 							  buffer_addr,

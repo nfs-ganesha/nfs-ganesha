@@ -79,7 +79,7 @@ libzfswrap_vfs_t *ZFSFSAL_GetVFS(zfs_file_handle_t *handle)
 
 static struct zfs_fsal_obj_handle *alloc_handle(struct zfs_file_handle *fh,
 						struct stat *stat,
-						const char *link_content,
+						const char *link_buff,
 						struct fsal_export *exp_hdl)
 {
 	struct zfs_fsal_obj_handle *hdl;
@@ -93,24 +93,22 @@ static struct zfs_fsal_obj_handle *alloc_handle(struct zfs_file_handle *fh,
 	hdl->handle = (struct zfs_file_handle *)&hdl[1];
 	memcpy(hdl->handle, fh, sizeof(struct zfs_file_handle));
 
-	hdl->obj_handle.attrs = &hdl->attributes;
 	hdl->obj_handle.type = posix2fsal_type(stat->st_mode);
 
-	if ((hdl->obj_handle.type == SYMBOLIC_LINK) &&
-	    (link_content != NULL)) {
-		size_t len = strlen(link_content) + 1;
-
-		hdl->u.symlink.link_content = gsh_malloc(len);
-		memcpy(hdl->u.symlink.link_content, link_content, len);
-		hdl->u.symlink.link_size = len;
+	if (hdl->obj_handle.type == SYMBOLIC_LINK && link_buff != NULL) {
+		hdl->u.symlink.link_size = strlen(link_buff);
+		hdl->u.symlink.link_content =
+					gsh_malloc(hdl->u.symlink.link_size);
+		memcpy(hdl->u.symlink.link_content,
+		       link_buff,
+		       hdl->u.symlink.link_size);
 	}
-
-	posix2fsal_attributes(stat, &hdl->attributes);
-	hdl->attributes.mask = exp_hdl->exp_ops.fs_supported_attrs(exp_hdl);
 
 	fsal_obj_handle_init(&hdl->obj_handle,
 			     exp_hdl,
 			     posix2fsal_type(stat->st_mode));
+	hdl->obj_handle.fsid = posix2fsal_fsid(stat->st_dev);
+	hdl->obj_handle.fileid = stat->st_ino;
 	zfs_handle_ops_init(&hdl->obj_handle.obj_ops);
 	return hdl;
 }
@@ -135,6 +133,8 @@ static fsal_status_t tank_lookup(struct fsal_obj_handle *parent,
 	libzfswrap_vfs_t *p_vfs = NULL;
 	inogen_t object;
 	int type;
+	char link_buff[PATH_MAX];
+	char *link_content = NULL;
 
 	if (!path)
 		return fsalstat(ERR_FSAL_FAULT, 0);
@@ -214,8 +214,20 @@ static fsal_status_t tank_lookup(struct fsal_obj_handle *parent,
 		goto errout;
 	}
 
+	if (S_ISLNK(stat.st_mode)) {
+		retval = libzfswrap_readlink(
+					tank_get_root_pvfs(op_ctx->fsal_export),
+					&cred,
+					fh.zfs_handle,
+					link_buff,
+					PATH_MAX);
+		if (retval)
+			return posix2fsal_status(retval);
+		link_content = link_buff;
+	}
+
 	/* allocate an obj_handle and fill it up */
-	hdl = alloc_handle(&fh, &stat, NULL, op_ctx->fsal_export);
+	hdl = alloc_handle(&fh, &stat, link_content, op_ctx->fsal_export);
 
 	*handle = &hdl->obj_handle;
 
@@ -460,28 +472,42 @@ static fsal_status_t tank_readsymlink(struct fsal_obj_handle *obj_hdl,
 	cred.uid = op_ctx->creds->caller_uid;
 	cred.gid = op_ctx->creds->caller_gid;
 
-	/* The link length should be cached in the file handle */
+	/* The link should be cached in the file handle */
+	if (myself->u.symlink.link_content == NULL || refresh) {
+		/* The link content is not cached. */
+		char link_buff[PATH_MAX];
 
-	link_content->len =
-	    myself->attributes.filesize ? (myself->attributes.filesize +
-					   1) : fsal_default_linksize;
-	link_content->addr = gsh_malloc(link_content->len);
+		gsh_free(myself->u.symlink.link_content);
+		myself->u.symlink.link_content = NULL;
 
-	retlink = libzfswrap_readlink(tank_get_root_pvfs(op_ctx->fsal_export),
-				      &cred,
-				      myself->handle->zfs_handle,
-				      link_content->addr,
-				      link_content->len);
+		retlink = libzfswrap_readlink(
+				tank_get_root_pvfs(op_ctx->fsal_export),
+				&cred,
+				myself->handle->zfs_handle,
+				link_content->addr,
+				link_content->len);
 
-	if (retlink) {
-		fsal_error = posix2fsal_error(retlink);
-		gsh_free(link_content->addr);
-		link_content->addr = NULL;
-		link_content->len = 0;
-		goto out;
+		if (retlink) {
+			fsal_error = posix2fsal_error(retlink);
+			gsh_free(link_content->addr);
+			link_content->addr = NULL;
+			link_content->len = 0;
+			return fsalstat(fsal_error, retval);
+		}
+
+		myself->u.symlink.link_size = strlen(link_buff);
+		myself->u.symlink.link_content =
+					gsh_malloc(myself->u.symlink.link_size);
+		memcpy(myself->u.symlink.link_content,
+		       link_buff,
+		       myself->u.symlink.link_size);
 	}
 
-	link_content->len = strlen(link_content->addr) + 1;
+	link_content->addr = gsh_malloc(myself->u.symlink.link_size);
+	memcpy(link_content->addr,
+	       myself->u.symlink.link_content,
+	       myself->u.symlink.link_size);
+	link_content->len = myself->u.symlink.link_size + 1;
  out:
 	return fsalstat(fsal_error, retval);
 }
@@ -653,7 +679,8 @@ static fsal_status_t tank_rename(struct fsal_obj_handle *obj_hdl,
  * cache entry.
  */
 
-static fsal_status_t tank_getattrs(struct fsal_obj_handle *obj_hdl)
+static fsal_status_t tank_getattrs(struct fsal_obj_handle *obj_hdl,
+				   struct attrlist *attrs)
 {
 	struct zfs_fsal_obj_handle *myself;
 	struct stat stat;
@@ -701,13 +728,22 @@ static fsal_status_t tank_getattrs(struct fsal_obj_handle *obj_hdl)
 			goto ok_file_opened_and_deleted;
 		}
 
-		if (retval)
+		if (retval) {
+			if (attrs->mask & ATTR_RDATTR_ERR) {
+				/* Caller asked for error to be visible. */
+				attrs->mask = ATTR_RDATTR_ERR;
+			}
 			goto errout;
+		}
 	}
 
 	/* convert attributes */
  ok_file_opened_and_deleted:
-	posix2fsal_attributes(&stat, &myself->attributes);
+	posix2fsal_attributes(&stat, attrs);
+
+	/* Make sure ATTR_RDATTR_ERR is cleared on success. */
+	attrs->mask &= ~ATTR_RDATTR_ERR;
+
 	goto out;
 
  errout:
@@ -963,7 +999,6 @@ void zfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->mknode = tank_makenode;
 	ops->symlink = tank_makesymlink;
 	ops->readlink = tank_readsymlink;
-	ops->test_access = fsal_test_access;
 	ops->getattrs = tank_getattrs;
 	ops->setattrs = tank_setattrs;
 	ops->link = tank_linkfile;
@@ -1032,7 +1067,6 @@ fsal_status_t tank_create_handle(struct fsal_export *exp_hdl,
 	if (retval)
 		return fsalstat(posix2fsal_error(retval), retval);
 
-	link_content = NULL;
 	if (S_ISLNK(stat.st_mode)) {
 		retval = libzfswrap_readlink(tank_get_root_pvfs(exp_hdl),
 					     &cred,

@@ -1297,6 +1297,10 @@ struct fsal_obj_ops {
  *
  * This method is obsolete with support_ex.
  *
+ * The caller is expected to invoke fsal_release_attrs to release any
+ * resources held by the set attributes. The FSAL layer MAY have added an
+ * inherited ACL.
+ *
  * @param[in]     dir_hdl Directory in which to create the file
  * @param[in]     name    Name of file to create
  * @param[in]     attrib  Attributes to set on newly created object
@@ -1319,6 +1323,10 @@ struct fsal_obj_ops {
  * MUST include the mode attribute and SHOULD NOT include the owner or
  * group attributes if they are the same as the op_ctx->cred.
  *
+ * The caller is expected to invoke fsal_release_attrs to release any
+ * resources held by the set attributes. The FSAL layer MAY have added an
+ * inherited ACL.
+ *
  * @param[in]     dir_hdl Directory in which to create the directory
  * @param[in]     name    Name of directory to create
  * @param[in]     attrib  Attributes to set on newly created object
@@ -1340,6 +1348,10 @@ struct fsal_obj_ops {
  * For support_ex, this method will handle attribute setting. The caller
  * MUST include the mode attribute and SHOULD NOT include the owner or
  * group attributes if they are the same as the op_ctx->cred.
+ *
+ * The caller is expected to invoke fsal_release_attrs to release any
+ * resources held by the set attributes. The FSAL layer MAY have added an
+ * inherited ACL.
  *
  * @param[in]     dir_hdl  Directory in which to create the object
  * @param[in]     name     Name of object to create
@@ -1368,6 +1380,10 @@ struct fsal_obj_ops {
  * For support_ex, this method will handle attribute setting. The caller
  * MUST include the mode attribute and SHOULD NOT include the owner or
  * group attributes if they are the same as the op_ctx->cred.
+ *
+ * The caller is expected to invoke fsal_release_attrs to release any
+ * resources held by the set attributes. The FSAL layer MAY have added an
+ * inherited ACL.
  *
  * @param[in]     dir_hdl   Directory in which to create the object
  * @param[in]     name      Name of object to create
@@ -1426,36 +1442,50 @@ struct fsal_obj_ops {
  * allow filesystem specific semantics to be applied to cached
  * metadata.
  *
+ * This method must read attributes and/or get them from a cache.
+ *
  * @param[in] obj_hdl     Handle to check
  * @param[in] access_type Access requested
  * @param[out] allowed    Returned access that could be granted
  * @param[out] denied     Returned access that would be granted
+ * @param[in] owner_skip  Skip test if op_ctx->creds is owner
  *
  * @return FSAL status.
  */
 	 fsal_status_t (*test_access)(struct fsal_obj_handle *obj_hdl,
 				      fsal_accessflags_t access_type,
 				      fsal_accessflags_t *allowed,
-				      fsal_accessflags_t *denied);
+				      fsal_accessflags_t *denied,
+				      bool owner_skip);
 
 /**
  * @brief Get attributes
  *
- * This function freshens the cached attributes stored on the handle.
- * Since the caller can take the attribute lock and read them off the
- * public filehandle, they are not copied out.
+ * This function fetches the attributes for the object. The attributes
+ * requested in the mask are copied out (though other attributes might
+ * be copied out).
  *
- * @param[in]  obj_hdl  Object to query
+ * The caller MUST call fsal_release_attrs when done with the copied
+ * out attributes. This will release any attributes that might take
+ * additional memory.
+ *
+ * @param[in]  obj_hdl    Object to query
+ * @param[out] attrib_get Attribute list for file
  *
  * @return FSAL status.
  */
-	 fsal_status_t (*getattrs)(struct fsal_obj_handle *obj_hdl);
+	 fsal_status_t (*getattrs)(struct fsal_obj_handle *obj_hdl,
+				   struct attrlist *attrib_get);
 
 /**
  * @brief Set attributes on an object
  *
  * This function sets attributes on an object.  Which attributes are
  * set is determined by @c attrib_set->mask.
+ *
+ * The caller is expected to invoke fsal_release_attrs to release any
+ * resources held by the set attributes. The FSAL layer MAY have added an
+ * inherited ACL.
  *
  * @param[in] obj_hdl    The object to modify
  * @param[in] attrib_set Attributes to set
@@ -2182,6 +2212,10 @@ struct fsal_obj_ops {
  * open. This is because the permission attributes were not available
  * beforehand.
  *
+ * The caller is expected to invoke fsal_release_attrs to release any
+ * resources held by the set attributes. The FSAL layer MAY have added an
+ * inherited ACL.
+ *
  * @note If the file was created, @a new_obj has been ref'd
  *
  * @param[in] obj_hdl               File to open or parent directory
@@ -2394,6 +2428,10 @@ struct fsal_obj_ops {
  * This function sets attributes on an object.  Which attributes are
  * set is determined by attrib_set->mask. The FSAL must manage bypass
  * or not of share reservations, and a state may be passed.
+ *
+ * The caller is expected to invoke fsal_release_attrs to release any
+ * resources held by the set attributes. The FSAL layer MAY have added an
+ * inherited ACL.
  *
  * @param[in] obj_hdl    File on which to operate
  * @param[in] bypass     If state doesn't indicate a share reservation,
@@ -2832,9 +2870,14 @@ struct fsal_obj_handle {
 	 * some other field (for example, the underlying FSAL's attributes
 	 * in the case of FSAL_NULL).
 	 */
-	struct attrlist *attrs;
 
+	/* Static attributes */
 	object_file_type_t type;	/*< Object file type */
+	fsal_fsid_t fsid;	/*< Filesystem on which this object is
+				   stored */
+	uint64_t fileid;	/*< Unique identifier for this object within
+				   the scope of the fsid, (e.g. inode number) */
+
 	struct state_hdl *state_hdl;	/*< State related to this handle */
 };
 

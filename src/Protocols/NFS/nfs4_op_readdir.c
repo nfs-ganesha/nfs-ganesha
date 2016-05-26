@@ -345,7 +345,7 @@ not_junction:
 
 	/* Attrs were refreshed before call */
 	fsal_status = obj->obj_ops.test_access(obj, access_mask_attr, NULL,
-					       NULL);
+					       NULL, false);
 	if (FSAL_IS_ERROR(fsal_status)) {
 		LogFullDebug(COMPONENT_NFS_READDIR,
 			     "permission check for attributes status=%s",
@@ -372,7 +372,7 @@ not_junction:
 		goto server_fault;
 	}
 
-	if (obj->type == DIRECTORY && is_sticky_bit_set(attr)) {
+	if (obj->type == DIRECTORY && is_sticky_bit_set(obj, attr)) {
 		rdattr_error = NFS4ERR_MOVED;
 		LogDebug(COMPONENT_NFS_READDIR,
 			 "Skipping because of %s",
@@ -558,9 +558,28 @@ int nfs4_op_readdir(struct nfs_argop4 *op, compound_data_t *data,
 	 */
 	memset(cookie_verifier, 0, NFS4_VERIFIER_SIZE);
 	if (op_ctx->export->options & EXPORT_OPTION_USE_COOKIE_VERIFIER) {
-		time_t change_time =
-			timespec_to_nsecs(&data->current_obj->attrs->chgtime);
-		memcpy(cookie_verifier, &(change_time), sizeof(change_time));
+		time_t change_time;
+		struct attrlist attrs;
+
+		fsal_prepare_attrs(&attrs, ATTR_CHGTIME);
+
+		fsal_status =
+			data->current_obj->obj_ops.getattrs(data->current_obj,
+							    &attrs);
+
+		if (FSAL_IS_ERROR(fsal_status)) {
+			res_READDIR4->status = nfs4_Errno_status(fsal_status);
+			LogFullDebug(COMPONENT_NFS_READDIR,
+				     "getattrs returned %s",
+				     msg_fsal_err(fsal_status.major));
+			goto out;
+		}
+
+		change_time = timespec_to_nsecs(&attrs.chgtime);
+		memcpy(cookie_verifier, &change_time, sizeof(change_time));
+
+		/* Done with the attrs */
+		fsal_release_attrs(&attrs);
 	}
 
 	/* Cookie delivered by the server and used by the client SHOULD

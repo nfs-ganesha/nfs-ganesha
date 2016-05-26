@@ -83,9 +83,9 @@ static mdcache_entry_t *mdcache_alloc_handle(
 	/* Base data */
 	result->sub_handle = sub_handle;
 	result->obj_handle.type = sub_handle->type;
+	result->obj_handle.fsid = sub_handle->fsid;
+	result->obj_handle.fileid = sub_handle->fileid;
 	result->obj_handle.fs = fs;
-	/* attributes */
-	result->obj_handle.attrs = sub_handle->attrs;
 
 	/* default handlers */
 	fsal_obj_handle_init(&result->obj_handle, &export->export,
@@ -504,11 +504,10 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 	}
 
 	/* nentry not reachable yet; no need to lock */
-	if (nentry->obj_handle.attrs->expire_time_attr == 0) {
-		nentry->obj_handle.attrs->expire_time_attr =
+	if (nentry->attrs.expire_time_attr == 0) {
+		nentry->attrs.expire_time_attr =
 			op_ctx->export->expire_time_attr;
 	}
-	mdc_fixup_md(nentry);
 
 	/* Hash and insert entry */
 	rc = cih_set_latched(nentry, &latch,
@@ -658,7 +657,8 @@ mdcache_locate_keyed(mdcache_key_t *key, struct mdcache_fsal_export *export,
 	if (unlikely(FSAL_IS_ERROR(status)))
 		return status;
 
-	status = (*entry)->obj_handle.obj_ops.getattrs(&(*entry)->obj_handle);
+	status = (*entry)->obj_handle.obj_ops.getattrs(&(*entry)->obj_handle,
+						       &(*entry)->attrs);
 	if (unlikely(FSAL_IS_ERROR(status))) {
 		mdcache_put(*entry);
 		*entry = NULL;

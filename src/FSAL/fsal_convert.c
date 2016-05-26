@@ -459,9 +459,10 @@ void posix2fsal_attributes(const struct stat *buffstat,
 	FSAL_SET_MASK(fsalattr->mask, ATTR_ATIME);
 	FSAL_SET_MASK(fsalattr->mask, ATTR_CTIME);
 	FSAL_SET_MASK(fsalattr->mask, ATTR_MTIME);
+	FSAL_SET_MASK(fsalattr->mask, ATTR_CHGTIME);
 
 	fsalattr->change = timespec_to_nsecs(&fsalattr->chgtime);
-	FSAL_SET_MASK(fsalattr->mask, ATTR_CHGTIME);
+	FSAL_SET_MASK(fsalattr->mask, ATTR_CHANGE);
 
 	fsalattr->spaceused = buffstat->st_blocks * S_BLKSIZE;
 	FSAL_SET_MASK(fsalattr->mask, ATTR_SPACEUSED);

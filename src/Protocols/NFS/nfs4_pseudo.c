@@ -215,12 +215,14 @@ retry:
 	}
 
 	/* Node was not found and no other error, must create node. */
-	memset(&sattr, 0, sizeof(sattr));
+	fsal_prepare_attrs(&sattr, ATTR_MODE);
 	sattr.mode = 0755;
-	sattr.mask = ATTR_MODE;
 
 	fsal_status = fsal_create(state->obj, name, DIRECTORY, &sattr, NULL,
 				  &new_node);
+
+	/* Release the attributes (may release an inherited ACL) */
+	fsal_release_attrs(&sattr);
 
 	if (fsal_status.major == ERR_FSAL_EXIST && !retried) {
 		LogDebug(COMPONENT_EXPORT,
@@ -234,19 +236,6 @@ retry:
 		/* An error occurred */
 		LogCrit(COMPONENT_EXPORT,
 			"BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s CREATE %s failed with %s",
-			state->export->export_id,
-			state->export->fullpath,
-			state->export->pseudopath,
-			name,
-			msg_fsal_err(fsal_status.major));
-		return false;
-	}
-
-	fsal_status = fsal_refresh_attrs(state->obj);
-
-	if (FSAL_IS_ERROR(fsal_status)) {
-		LogCrit(COMPONENT_EXPORT,
-			"BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s GETATTR %s failed with %s",
 			state->export->export_id,
 			state->export->fullpath,
 			state->export->pseudopath,
@@ -387,24 +376,6 @@ bool pseudo_mount_export(struct gsh_export *export)
 		}
 	}
 
-	fsal_status = fsal_refresh_attrs(state.obj);
-
-	if (FSAL_IS_ERROR(fsal_status)) {
-		LogCrit(COMPONENT_EXPORT,
-			"BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s final GETATTR failed with %s",
-			export->export_id,
-			export->fullpath,
-			export->pseudopath,
-			msg_fsal_err(fsal_status.major));
-
-		/* Release reference on mount point inode
-		 * and the mounted on export
-		 */
-		state.obj->obj_ops.put_ref(state.obj);
-		put_gsh_export(op_ctx->export);
-		return false;
-	}
-
 	/* Now that all entries are added to pseudofs tree, and we are pointing
 	 * to the final node, make it a proper junction.
 	 */
@@ -415,7 +386,7 @@ bool pseudo_mount_export(struct gsh_export *export)
 	/* And fill in the mounted on information for the export. */
 	PTHREAD_RWLOCK_wrlock(&export->lock);
 
-	export->exp_mounted_on_file_id = state.obj->attrs->fileid;
+	export->exp_mounted_on_file_id = state.obj->fileid;
 	/* Pass ref off to export */
 	export->exp_junction_obj = state.obj;
 	export->exp_parent_exp = op_ctx->export;

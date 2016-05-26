@@ -231,6 +231,9 @@ int nfs4_op_setattr(struct nfs_argop4 *op, compound_data_t *data,
 				   state_found,
 				   &sattr);
 
+	/* Release the attributes (may release an explicit or inherited ACL) */
+	fsal_release_attrs(&sattr);
+
 	if (FSAL_IS_ERROR(fsal_status)) {
 		res_SETATTR4->status = nfs4_Errno_status(fsal_status);
 		goto done;
