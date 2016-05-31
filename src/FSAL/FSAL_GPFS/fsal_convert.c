@@ -3,7 +3,7 @@
  *
  * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
- * HPSS-FSAL type translation functions.
+ * GPFS-FSAL type translation functions.
  */
 
 #include "config.h"

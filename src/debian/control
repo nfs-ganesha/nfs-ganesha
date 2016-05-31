@@ -27,7 +27,7 @@ Depends: dbus,
 Description: nfs-ganesha is a NFS server in User Space
  NFS-GANESHA is a NFS Server running in user space with a large cache.
  It comes with various backend modules to support different file systems
- and namespaces. Supported name spaces are PROXY, HPSS, XFS and ZFS.
+ and namespaces. Supported name spaces are PROXY, XFS and ZFS.
 
 Package: nfs-ganesha-fsal
 Multi-Arch: same
@@ -37,7 +37,7 @@ Depends: ${misc:Depends}, ${shlibs:Depends}
 Description: nfs-ganesha fsal libraries
  NFS-GANESHA is a NFS Server running in user space with a large cache.
  It comes with various backend modules to support different file systems
- and namespaces. Supported name spaces are PROXY, HPSS, XFS and ZFS.
+ and namespaces. Supported name spaces are PROXY, XFS and ZFS.
 
 Package: python-nfs-ganesha
 Pre-Depends: ${misc:Pre-Depends}
@@ -52,7 +52,7 @@ Depends: python-dbus,
 Description: Python bindings for nfs-ganesha
  NFS-GANESHA is a NFS Server running in user space with a large cache.
  It comes with various backend modules to support different file systems
- and namespaces. Supported name spaces are PROXY, HPSS, XFS and ZFS.
+ and namespaces. Supported name spaces are PROXY, XFS and ZFS.
  .
  This package contains Python bindings for nfs-ganesha admin
 
@@ -62,7 +62,7 @@ Section: doc
 Description: Documentation for nfs-ganesha
  NFS-GANESHA is a NFS Server running in user space with a large cache.
  It comes with various backend modules to support different file systems
- and namespaces. Supported name spaces are PROXY, HPSS, XFS and ZFS.
+ and namespaces. Supported name spaces are PROXY, XFS and ZFS.
  .
  This package contains documentation and examples for nfs-ganesha
 

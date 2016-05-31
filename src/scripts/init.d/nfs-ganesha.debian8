@@ -25,7 +25,7 @@
 
 PATHPROG=/usr/bin/ganesha.nfsd
 
-# Default HPSS options
+# Default Ganesha options
 LOGFILE=/var/log/ganesha.log
 CONFFILE=/etc/ganesha/ganesha.conf
 

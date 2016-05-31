@@ -104,7 +104,7 @@ GPFSFSAL_readlink(struct fsal_obj_handle *dir_hdl,
  * @param linkcontent Content of the link to be created.
  * @param op_ctx Authentication context for the operation (user,...).
  * @param accessmode Mode of the link to be created.
- *                  It has no sense in HPSS nor UNIX filesystems.
+ *                  It has no sense in POSIX filesystems.
  * @param gpfs_fh Pointer to the handle of the created symlink.
  * @param link_attr Attributes of the newly created symlink.
  *                 As input, it defines the attributes that the caller

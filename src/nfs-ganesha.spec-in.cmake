@@ -54,9 +54,6 @@ Requires: sles-release >= 12
 @BCOND_GLUSTER@ gluster
 %global use_fsal_gluster %{on_off_switch gluster}
 
-@BCOND_HPSS@ hpss
-%global use_fsal_hpss %{on_off_switch hpss}
-
 @BCOND_PANFS@ panfs
 %global use_fsal_panfs %{on_off_switch panfs}
 
@@ -299,19 +296,6 @@ This package contains a shared object to be used with FSAL_VFS
 to support XFS correctly
 %endif
 
-# HPSS
-%if %{with hpss}
-%package hpss
-Summary: The NFS-GANESHA's HPSS FSAL
-Group: Applications/System
-Requires:	nfs-ganesha = %{version}-%{release}
-#BuildRequires:	hpssfs
-
-%description hpss
-This package contains a FSAL shared object to
-be used with NFS-Ganesha to support HPSS
-%endif
-
 # PANFS
 %if %{with panfs}
 %package panfs
@@ -363,7 +347,6 @@ cmake .	-DCMAKE_BUILD_TYPE=Debug			\
 	-DUSE_FSAL_CEPH=%{use_fsal_ceph}		\
 	-DUSE_FSAL_RGW=%{use_fsal_rgw}			\
 	-DUSE_FSAL_GPFS=%{use_fsal_gpfs}		\
-	-DUSE_FSAL_HPSS=%{use_fsal_hpss}		\
 	-DUSE_FSAL_PANFS=%{use_fsal_panfs}		\
 	-DUSE_FSAL_PT=%{use_fsal_pt}			\
 	-DUSE_FSAL_GLUSTER=%{use_fsal_gluster}		\
@@ -583,12 +566,6 @@ killall -SIGHUP dbus-daemon 2>&1 > /dev/null
 %defattr(-,root,root,-)
 %config(noreplace) %{_sysconfdir}/logrotate.d/ganesha-gfapi
 %{_libdir}/ganesha/libfsalgluster*
-%endif
-
-%if %{with hpss}
-%files hpss
-%defattr(-,root,root,-)
-%{_libdir}/ganesha/libfsalhpss*
 %endif
 
 %if %{with panfs}

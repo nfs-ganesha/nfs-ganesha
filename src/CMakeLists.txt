@@ -194,7 +194,6 @@ option(USE_FSAL_RGW "build RGW FSAL shared library" OFF)
 
 # FSALs which are disabled by default
 option(USE_FSAL_PT "build PT FSAL" OFF)
-option(USE_FSAL_HPSS "build HPSS FSAL" OFF)
 
 # nTIRPC
 option(USE_SYSTEM_NTIRPC "Use the system nTIRPC, rather than the submodule" OFF)
@@ -368,26 +367,6 @@ IF(USE_FSAL_GLUSTER)
     set(GLUSTER_PREFIX "/usr" CACHE PATH "Path to Gluster installation")
   ENDIF()
 ENDIF()
-
-IF(USE_FSAL_HPSS)
-  IF(HPSS_PREFIX)
-    set(HPSS_PREFIX ${HPSS_PREFIX} CACHE PATH "Path to HPSS installation")
-  ELSE()
-    set(HPSS_PREFIX "/opt/hpss" CACHE PATH "Path to HPSS installation")
-  ENDIF()
-
-  # If you are not using hpss with krb5, remove the hpsskrb5auth here.
-  # It shouldn't be needed, but dlopen() of a dlopen() seems not to work as well as one properly linked...
-  find_library(HPSS_LIBRARIES
-    NAMES hpss PATHS "${HPSS_PREFIX}/lib")
-  find_library(HPSSKRB5_LIBRARY
-    NAMES hpsskrb5auth PATHS "${HPSS_PREFIX}/lib")
-  LIST(APPEND HPSS_LIBRARIES "${HPSSKRB5_LIBRARY}")
-  if(NOT HPSS_LIBRARIES)
-    message(WARNING "Cannot find HPSS libraries. Disabling HPSS fsal build")
-    set(USE_FSAL_HPSS OFF)
-  endif(NOT HPSS_LIBRARIES)
-endif(USE_FSAL_HPSS)
 
 IF(USE_FSAL_ZFS)
   IF(ZFS_PREFIX)
@@ -999,7 +978,6 @@ message(STATUS "USE_FSAL_VFS = ${USE_FSAL_VFS}")
 message(STATUS "USE_FSAL_CEPH = ${USE_FSAL_CEPH}")
 message(STATUS "USE_FSAL_CEPH_MKNOD = ${USE_FSAL_CEPH_MKNOD}")
 message(STATUS "USE_FSAL_RGW = ${USE_FSAL_RGW}")
-message(STATUS "USE_FSAL_HPSS = ${USE_FSAL_HPSS}")
 message(STATUS "USE_FSAL_XFS = ${USE_FSAL_XFS}")
 message(STATUS "USE_FSAL_PANFS = ${USE_FSAL_PANFS}")
 message(STATUS "USE_FSAL_GPFS = ${USE_FSAL_GPFS}")
@@ -1041,7 +1019,6 @@ message(STATUS "USE_NLM = ${USE_NLM}")
 message(STATUS "KRB5_PREFIX = ${KRB5_PREFIX}")
 message(STATUS "CEPH_PREFIX = ${CEPH_PREFIX}")
 message(STATUS "RGW_PREFIX = ${RGW_PREFIX}")
-message(STATUS "HPSS_PREFIX = ${HPSS_PREFIX}")
 message(STATUS "GLUSTER_PREFIX = ${GLUSTER_PREFIX}")
 message(STATUS "ZFS_PREFIX = ${ZFS_PREFIX}")
 message(STATUS "CMAKE_PREFIX_PATH = ${CMAKE_PREFIX_PATH}")
@@ -1079,11 +1056,6 @@ set(USE_FSAL_CEPH ${USE_FSAL_CEPH}
  set(USE_FSAL_RGW ${USE_FSAL_RGW}
   CACHE BOOL
    "build RGW FSAL shared library"
-   FORCE)
-
-set(USE_HPSS_FSAL ${USE_HPSS_FSAL}
-  CACHE BOOL
-   "build HPSS FSAL"
    FORCE)
 
 set(USE_FSAL_XFS ${USE_FSAL_XFS}
@@ -1284,12 +1256,6 @@ if(USE_FSAL_GLUSTER)
 else(USE_FSAL_GLUSTER)
     set(BCOND_GLUSTER "%bcond_with")
 endif(USE_FSAL_GLUSTER)
-
-if(USE_FSAL_HPSS)
-    set(BCOND_HPSS "%bcond_without")
-else(USE_FSAL_HPSS)
-    set(BCOND_HPSS "%bcond_with")
-endif(USE_FSAL_HPSS)
 
 if(USE_FSAL_PT)
     set(BCOND_PT "%bcond_without")
