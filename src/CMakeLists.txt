@@ -192,9 +192,6 @@ option(USE_FSAL_GLUSTER "build GLUSTER FSAL shared library" ON)
 option(USE_FSAL_NULL "build NULL FSAL shared library" ON)
 option(USE_FSAL_RGW "build RGW FSAL shared library" OFF)
 
-# FSALs which are disabled by default
-option(USE_FSAL_PT "build PT FSAL" OFF)
-
 # nTIRPC
 option(USE_SYSTEM_NTIRPC "Use the system nTIRPC, rather than the submodule" OFF)
 option (USE_GSS "enable RPCSEC_GSS support" ON)
@@ -981,7 +978,6 @@ message(STATUS "USE_FSAL_RGW = ${USE_FSAL_RGW}")
 message(STATUS "USE_FSAL_XFS = ${USE_FSAL_XFS}")
 message(STATUS "USE_FSAL_PANFS = ${USE_FSAL_PANFS}")
 message(STATUS "USE_FSAL_GPFS = ${USE_FSAL_GPFS}")
-message(STATUS "USE_FSAL_PT = ${USE_FSAL_PT}")
 message(STATUS "USE_FSAL_ZFS = ${USE_FSAL_ZFS}")
 message(STATUS "USE_FSAL_GLUSTER = ${USE_FSAL_GLUSTER}")
 message(STATUS "USE_FSAL_NULL = ${USE_FSAL_NULL}")
@@ -1071,11 +1067,6 @@ set(USE_FSAL_PANFS ${USE_FSAL_PANFS}
 set(USE_FSAL_GPFS ${USE_FSAL_GPFS}
   CACHE BOOL
    "build GPFS FSAL"
-   FORCE)
-
-set(USE_FSAL_PT ${USE_FSAL_PT}
-  CACHE BOOL
-   "build PT FSAL"
    FORCE)
 
 set(USE_FSAL_ZFS ${USE_FSAL_ZFS}
@@ -1256,12 +1247,6 @@ if(USE_FSAL_GLUSTER)
 else(USE_FSAL_GLUSTER)
     set(BCOND_GLUSTER "%bcond_with")
 endif(USE_FSAL_GLUSTER)
-
-if(USE_FSAL_PT)
-    set(BCOND_PT "%bcond_without")
-else(USE_FSAL_PT)
-    set(BCOND_PT "%bcond_with")
-endif(USE_FSAL_PT)
 
 if(USE_FSAL_NULL)
     set(BCOND_NULLFS "%bcond_without")
