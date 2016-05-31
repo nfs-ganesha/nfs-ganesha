@@ -9,7 +9,6 @@ The sample FSAL files:
 
 ceph.conf
 gpfs.conf
-lustre.conf
 pt.conf
 vfs.conf
 xfs.conf

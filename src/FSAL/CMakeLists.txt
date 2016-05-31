@@ -23,10 +23,6 @@ if(USE_FSAL_RGW)
   add_subdirectory(FSAL_RGW)
 endif(USE_FSAL_RGW)
 
-if(USE_FSAL_LUSTRE)
-  add_subdirectory(FSAL_LUSTRE)
-endif(USE_FSAL_LUSTRE)
-
 if(USE_FSAL_GPFS)
   add_subdirectory(FSAL_GPFS)
 endif(USE_FSAL_GPFS)

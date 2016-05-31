@@ -51,12 +51,6 @@ Requires: sles-release >= 12
 @BCOND_RGW@ rgw
 %global use_fsal_rgw %{on_off_switch rgw}
 
-@BCOND_LUSTRE@ lustre
-%global use_fsal_lustre %{on_off_switch lustre}
-
-@BCOND_SHOOK@ shook
-%global use_fsal_shook %{on_off_switch shook}
-
 @BCOND_GLUSTER@ gluster
 %global use_fsal_gluster %{on_off_switch gluster}
 
@@ -73,9 +67,6 @@ Requires: sles-release >= 12
 %global use_rdma %{on_off_switch rdma}
 
 @BCOND_JEMALLOC@ jemalloc
-
-@BCOND_FSAL_LUSTRE_UP@ lustre_up
-%global use_lustre_up %{on_off_switch lustre_up}
 
 @BCOND_LTTNG@ lttng
 %global use_lttng %{on_off_switch lttng}
@@ -146,9 +137,6 @@ BuildRequires:	libmooshika-devel >= 0.6-0
 %endif
 %if %{with jemalloc}
 BuildRequires:	jemalloc-devel
-%endif
-%if %{with lustre_up}
-BuildRequires: lcap-devel >= 0.1-0
 %endif
 %if %{with_systemd}
 BuildRequires: systemd
@@ -230,7 +218,7 @@ This package contains the libganesha_trace.so library. When preloaded
 to the ganesha.nfsd server, it makes it possible to trace using LTTng.
 %endif
 
-# Option packages start here. use "rpmbuild --with lustre" (or equivalent)
+# Option packages start here. use "rpmbuild --with gpfs" (or equivalent)
 # for activating this part of the spec file
 
 # NULL
@@ -296,34 +284,6 @@ BuildRequires:	rgw-devel >= 0.78
 %description rgw
 This package contains a FSAL shared object to
 be used with NFS-Ganesha to support RGW
-%endif
-
-# LUSTRE
-%if %{with lustre}
-%package lustre
-Summary: The NFS-GANESHA's LUSTRE FSAL
-Group: Applications/System
-Requires:	nfs-ganesha = %{version}-%{release}
-Requires:	lustre
-BuildRequires:	libattr-devel lustre
-
-%description lustre
-This package contains a FSAL shared object to
-be used with NFS-Ganesha to support LUSTRE
-%endif
-
-# SHOOK
-%if %{with shook}
-%package shook
-Summary: The NFS-GANESHA's LUSTRE/SHOOK FSAL
-Group: Applications/System
-Requires:	nfs-ganesha = %{version}-%{release}
-Requires:	lustre shook-client
-BuildRequires:	libattr-devel lustre shook-devel
-
-%description shook
-This package contains a FSAL shared object to
-be used with NFS-Ganesha to support LUSTRE via SHOOK
 %endif
 
 # XFS
@@ -402,8 +362,6 @@ cmake .	-DCMAKE_BUILD_TYPE=Debug			\
 	-DUSE_FSAL_XFS=%{use_fsal_xfs}			\
 	-DUSE_FSAL_CEPH=%{use_fsal_ceph}		\
 	-DUSE_FSAL_RGW=%{use_fsal_rgw}			\
-	-DUSE_FSAL_LUSTRE=%{use_fsal_lustre}		\
-	-DUSE_FSAL_SHOOK=%{use_fsal_shook}		\
 	-DUSE_FSAL_GPFS=%{use_fsal_gpfs}		\
 	-DUSE_FSAL_HPSS=%{use_fsal_hpss}		\
 	-DUSE_FSAL_PANFS=%{use_fsal_panfs}		\
@@ -411,7 +369,6 @@ cmake .	-DCMAKE_BUILD_TYPE=Debug			\
 	-DUSE_FSAL_GLUSTER=%{use_fsal_gluster}		\
 	-DUSE_SYSTEM_NTIRPC=%{use_system_ntirpc}	\
 	-DUSE_9P_RDMA=%{use_rdma}			\
-	-DUSE_FSAL_LUSTRE_UP=%{use_lustre_up}		\
 	-DUSE_LTTNG=%{use_lttng}			\
 	-DUSE_ADMIN_TOOLS=%{use_utils}			\
 	-DUSE_GUI_ADMIN_TOOLS=%{use_gui_utils}		\
@@ -476,10 +433,6 @@ install -m 644 config_samples/zfs.conf %{buildroot}%{_sysconfdir}/ganesha
 
 %if %{with ceph}
 install -m 644 config_samples/ceph.conf %{buildroot}%{_sysconfdir}/ganesha
-%endif
-
-%if %{with lustre}
-install -m 755 config_samples/lustre.conf %{buildroot}%{_sysconfdir}/ganesha
 %endif
 
 %if %{with gluster}
@@ -623,19 +576,6 @@ killall -SIGHUP dbus-daemon 2>&1 > /dev/null
 %defattr(-,root,root,-)
 %{_libdir}/ganesha/libfsalrgw*
 %config(noreplace) %{_sysconfdir}/ganesha/rgw.conf
-%endif
-
-%if %{with lustre}
-%files lustre
-%defattr(-,root,root,-)
-%config(noreplace) %{_sysconfdir}/ganesha/lustre.conf
-%{_libdir}/ganesha/libfsallustre*
-%endif
-
-%if %{with shook}
-%files shook
-%defattr(-,root,root,-)
-%{_libdir}/ganesha/libfsalshook*
 %endif
 
 %if %{with gluster}

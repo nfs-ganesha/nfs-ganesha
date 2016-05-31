@@ -186,7 +186,6 @@ option(USE_FSAL_VFS "build VFS FSAL shared library" ON)
 option(USE_FSAL_CEPH "build CEPH FSAL shared library" ON)
 option(USE_FSAL_GPFS "build GPFS FSAL" ON)
 option(USE_FSAL_ZFS "build ZFS FSAL" ON)
-option(USE_FSAL_LUSTRE "build LUSTRE FSAL" ON)
 option(USE_FSAL_XFS "build XFS support in VFS FSAL" ON)
 option(USE_FSAL_PANFS "build PanFS support in VFS FSAL" OFF)
 option(USE_FSAL_GLUSTER "build GLUSTER FSAL shared library" ON)
@@ -196,12 +195,6 @@ option(USE_FSAL_RGW "build RGW FSAL shared library" OFF)
 # FSALs which are disabled by default
 option(USE_FSAL_PT "build PT FSAL" OFF)
 option(USE_FSAL_HPSS "build HPSS FSAL" OFF)
-
-# SHOOK is a variant of Lustre FSAL
-option(USE_FSAL_SHOOK "build SHOOK FSAL" ON)
-
-# Activate FSAL Upcalls for FSAL_LUSTRE
-option(USE_FSAL_LUSTRE_UP "add Upcalls support for LUSTRE FSAL" OFF)
 
 # nTIRPC
 option(USE_SYSTEM_NTIRPC "Use the system nTIRPC, rather than the submodule" OFF)
@@ -373,21 +366,6 @@ IF(USE_FSAL_GLUSTER)
     LIST(APPEND CMAKE_REQUIRED_INCLUDES "${GLUSTER_PREFIX}/include")
   ELSE()
     set(GLUSTER_PREFIX "/usr" CACHE PATH "Path to Gluster installation")
-  ENDIF()
-ENDIF()
-
-IF(USE_FSAL_LUSTRE)
-  IF(LUSTRE_PREFIX)
-    set(LUSTRE_PREFIX ${LUSTRE_PREFIX} CACHE PATH "Path to Lustre installation")
-    LIST(APPEND CMAKE_PREFIX_PATH "${LUSTRE_PREFIX}")
-    if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-        LIST(APPEND CMAKE_LIBRARY_PATH "${LUSTRE_PREFIX}/lib64")
-    else( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-        LIST(APPEND CMAKE_LIBRARY_PATH "${LUSTRE_PREFIX}/lib")
-    endif( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-    LIST(APPEND CMAKE_REQUIRED_INCLUDES "${LUSTRE_PREFIX}/include")
-  ELSE()
-    set(LUSTRE_PREFIX "/usr" CACHE PATH "Path to Lustre installation")
   ENDIF()
 ENDIF()
 
@@ -660,78 +638,6 @@ if(USE_FSAL_RGW)
     endif(STRICT_PACKAGE)
   endif(NOT LIBRGW)
 endif(USE_FSAL_RGW)
-
-if(USE_FSAL_LUSTRE)
-  find_library(HAVE_LUSTREAPI lustreapi)
-  check_library_exists(
-    lustreapi
-    llapi_is_lustre_mnt
-    ""
-    HAVE_LUSTREAPI
-    )
-  check_include_files("unistd.h;lustre/lustre_user.h" HAVE_LUSTRE_USER_H)
-  if((NOT HAVE_LUSTREAPI) OR (NOT HAVE_LUSTRE_USER_H))
-   if(STRICT_PACKAGE)
-      message(FATAL_ERROR "STRICT_PACKAGE: Cannot find LUSTRE runtime. Disabling LUSTRE fsal build")
-    else(STRICT_PACKAGE)
-      message(WARNING "Cannot find LUSTRE runtime. Disabling LUSTRE fsal build")
-      set(USE_FSAL_LUSTRE OFF)
-      set(USE_FSAL_SHOOK OFF)
-    endif(STRICT_PACKAGE)
-  else((NOT HAVE_LUSTREAPI) OR (NOT HAVE_LUSTRE_USER_H))
-    include_directories("${LUSTRE_PREFIX}/include")
-    if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-        link_directories("${LUSTRE_PREFIX}/lib64")
-    else( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-        link_directories("${LUSTRE_PREFIX}/lib")
-    endif( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-  endif((NOT HAVE_LUSTREAPI) OR (NOT HAVE_LUSTRE_USER_H))
-
-  check_include_files("lustre/lustreapi.h" HAVE_INCLUDE_LUSTREAPI_H)
-  check_include_files("lustre/liblustreapi.h" HAVE_INCLUDE_LIBLUSTREAPI_H)
-
-  if( ( NOT HAVE_INCLUDE_LUSTREAPI_H ) AND ( NOT HAVE_INCLUDE_LIBLUSTREAPI_H ) )
-    message( ERROR "Cannot find lustre header files, aborting" )
-  endif( ( NOT HAVE_INCLUDE_LUSTREAPI_H ) AND ( NOT HAVE_INCLUDE_LIBLUSTREAPI_H ) )
-else(USE_FSAL_LUSTRE)
-  message(WARNING "Disabling SHOOK because it needs LUSTRE")
-  set(USE_FSAL_SHOOK OFF)
-endif(USE_FSAL_LUSTRE)
-
-if(USE_FSAL_LUSTRE AND USE_FSAL_SHOOK)
-  find_library(HAVE_SHOOK shooksvr)
-  check_library_exists(
-    shooksvr
-    shook_restore
-    ""
-    HAVE_SHOOK
-    )
-  check_include_files("unistd.h;attr/xattr.h" HAVE_SHOOK_XATTRS)
-  if((NOT HAVE_SHOOK) OR (NOT HAVE_SHOOK_XATTRS))
-   if(STRICT_PACKAGE)
-      message(FATAL_ERROR "STRICT_PACKAGE: Cannot find SHOOK runtime. Disabling SHOOK build")
-    else(STRICT_PACKAGE)
-      message(WARNING "Cannot find SHOOK runtime. Disabling SHOOK build")
-      set(USE_FSAL_SHOOK OFF)
-    endif(STRICT_PACKAGE)
-  endif((NOT HAVE_SHOOK) OR (NOT HAVE_SHOOK_XATTRS))
-  if(USE_FSAL_SHOOK AND HAVE_INCLUDE_LUSTREAPI_H)
-    # shook uses a different define than us for this flag
-    set(_LUSTRE_API_HEADER 1)
-  endif(USE_FSAL_SHOOK AND HAVE_INCLUDE_LUSTREAPI_H)
-endif(USE_FSAL_LUSTRE AND USE_FSAL_SHOOK)
-
-IF(USE_FSAL_LUSTRE_UP)
-  find_library(HAVE_LCAP lcap)
-  check_include_files("lcap_client.h" HAVE_LCAP_CLIENT_H)
-  IF(NOT HAVE_LCAP OR NOT HAVE_LCAP_CLIENT_H)
-    message(WARNING "liblcap is to be installed to use Lustre upcalls")
-    set(USE_FSAL_LUSTRE_UP OFF)
-  ENDIF(NOT HAVE_LCAP OR NOT HAVE_LCAP_CLIENT_H)
-  IF(NOT HAVE_FSAL_LUSTRE)
-    message(WARNING "You must trigger Lustre FSAL ON to use Lustre upcalls")
-  ENDIF(NOT HAVE_FSAL_LUSTRE)
-ENDIF(USE_FSAL_LUSTRE_UP)
 
 if(USE_FSAL_XFS)
   check_library_exists(
@@ -1099,9 +1005,6 @@ message(STATUS "USE_FSAL_PANFS = ${USE_FSAL_PANFS}")
 message(STATUS "USE_FSAL_GPFS = ${USE_FSAL_GPFS}")
 message(STATUS "USE_FSAL_PT = ${USE_FSAL_PT}")
 message(STATUS "USE_FSAL_ZFS = ${USE_FSAL_ZFS}")
-message(STATUS "USE_FSAL_LUSTRE = ${USE_FSAL_LUSTRE}")
-message(STATUS "USE_FSAL_SHOOK = ${USE_FSAL_SHOOK}")
-message(STATUS "USE_FSAL_LUSTRE_UP = ${USE_FSAL_LUSTRE_UP}")
 message(STATUS "USE_FSAL_GLUSTER = ${USE_FSAL_GLUSTER}")
 message(STATUS "USE_FSAL_NULL = ${USE_FSAL_NULL}")
 message(STATUS "USE_SYSTEM_NTIRPC = ${USE_SYSTEM_NTIRPC}")
@@ -1141,7 +1044,6 @@ message(STATUS "RGW_PREFIX = ${RGW_PREFIX}")
 message(STATUS "HPSS_PREFIX = ${HPSS_PREFIX}")
 message(STATUS "GLUSTER_PREFIX = ${GLUSTER_PREFIX}")
 message(STATUS "ZFS_PREFIX = ${ZFS_PREFIX}")
-message(STATUS "LUSTRE_PREFIX = ${LUSTRE_PREFIX}")
 message(STATUS "CMAKE_PREFIX_PATH = ${CMAKE_PREFIX_PATH}")
 message(STATUS "_GIT_HEAD_COMMIT = ${_GIT_HEAD_COMMIT}")
 message(STATUS "_GIT_HEAD_COMMIT_ABBREV = ${_GIT_HEAD_COMMIT_ABBREV}")
@@ -1207,26 +1109,6 @@ set(USE_FSAL_PT ${USE_FSAL_PT}
 set(USE_FSAL_ZFS ${USE_FSAL_ZFS}
   CACHE BOOL
    "build ZFS FSAL"
-   FORCE)
-
-set(USE_FSAL_LUSTRE ${USE_FSAL_LUSTRE}
-  CACHE BOOL
-   "build LUSTRE FSAL"
-   FORCE)
-
-set(HAVE_INCLUDE_LUSTREAPI_H ${HAVE_INCLUDE_LUSTREAPI_H}
-  CACHE BOOL
-   "build LUSTRE FSAL with lustreapi.h"
-   FORCE)
-
-set(HAVE_INCLUDE_LIBLUSTREAPI_H ${HAVE_INCLUDE_LIBLUSTREAPI_H}
-  CACHE BOOL
-   "build LUSTRE FSAL with liblustreapi.h"
-   FORCE)
-
-set(USE_FSAL_SHOOK ${USE_FSAL_SHOOK}
-  CACHE BOOL
-   "build SHOOK FSAL"
    FORCE)
 
 set(USE_FSAL_GLUSTER ${USE_FSAL_GLUSTER}
@@ -1361,24 +1243,6 @@ add_custom_target(dist COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
 # %bcond_with means you add a "--with" option, default is "without this feature"
 # %bcond_without adds a"--without" so the feature is enabled by default
 # This has to be coherent with chosen FSALs
-if(USE_FSAL_LUSTRE)
-    set(BCOND_LUSTRE "%bcond_without")
-else(USE_FSAL_LUSTRE)
-    set(BCOND_LUSTRE "%bcond_with")
-endif(USE_FSAL_LUSTRE)
-
-if(USE_FSAL_LUSTRE_UP)
-    set(BCOND_FSAL_LUSTRE_UP "%bcond_without")
-else(USE_FSAL_LUSTRE_UP)
-    set(BCOND_FSAL_LUSTRE_UP "%bcond_with")
-endif(USE_FSAL_LUSTRE_UP)
-
-if(USE_FSAL_SHOOK)
-    set(BCOND_SHOOK "%bcond_without")
-else(USE_FSAL_SHOOK)
-    set(BCOND_SHOOK "%bcond_with")
-endif(USE_FSAL_SHOOK)
-
 if(USE_FSAL_ZFS)
     set(BCOND_ZFS "%bcond_without")
 else(USE_FSAL_ZFS)

@@ -18,8 +18,6 @@ LOG { FORMAT {} }
 CACHEINODE
 CEPH {}
 GPFS {}
-LUSTRE {}
-LUSTRE { PNFS { DATASERVER {} } }
 RGW {}
 VFS {}
 XFS {}
@@ -303,20 +301,6 @@ EXPORT { FSAL {} }
 
 	zpool(string, default "tank", must be supplied)
 
-	FSAL_LUSTRE:
-	------------
-
-        async_hsm_restore(bool, default true)
-
-	LUSTRE { PNFS { DATASERVER {} } }
-	------------
-
-		DS_Addr(ipv4addr, default "127.0.0.1")
-
-		DS_Port(inet_port, range 1024 to UINT16_MAX, default 3260)
-
-		DS_Id(uint32, range 1 to UINT32_MAX, default 1)
-
 	EXPORT { FSAL { PNFS { } } }
 	---------------------------
 		Stripe_Unit(uint32, range 1024 to 1024*1024, default 8192)
@@ -505,25 +489,6 @@ GPFS {}
 	fsal_trace(bool, default true)
 
 	fsal_grace(bool, default false)
-
-LUSTRE {}
----------
-
-	link_support(bool, default true)
-
-	symlink_support(bool, default true)
-
-	cansettime(bool, default true)
-
-	maxread(uint64, range 512 to 64*1024*1024, default 64*1024*1024)
-
-	maxwrite(uint64, range 512 to 64*1024*1024, default 64*1024*1024)
-
-	umask(mode, range 0 to 0777, default 0)
-
-	auth_xdev_export(bool, default false)
-
-	xattr_access_rights(mode, range 0 to 0777, default 0400)
 
 RGW {}
 -------

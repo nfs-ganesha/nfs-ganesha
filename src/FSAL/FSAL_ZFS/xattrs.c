@@ -469,7 +469,7 @@ fsal_status_t tank_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
 		return fsalstat(ERR_FSAL_NO_ERROR, 0);
 	}
 
-	/* get the path of the file in Lustre */
+	/* get the path of the file in ZFS */
 
 	/* get xattrs */
 

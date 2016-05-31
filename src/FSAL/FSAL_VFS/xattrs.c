@@ -360,7 +360,7 @@ fsal_status_t vfs_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
 		return fsalstat(ERR_FSAL_NO_ERROR, 0);
 	}
 
-	/* get the path of the file in Lustre */
+	/* get the path of the file in file system */
 	fd = (obj_hdl->type == DIRECTORY) ?
 	    vfs_fsal_open(obj_handle, O_DIRECTORY, &fe) :
 	    vfs_fsal_open(obj_handle, O_RDWR, &fe);
