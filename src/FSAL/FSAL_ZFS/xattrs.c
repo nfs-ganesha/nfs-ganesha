@@ -138,122 +138,6 @@ static void chomp_attr_value(char *str, size_t size)
 		str[len - 1] = '\0';
 }
 
-static int file_attributes_to_xattr_attrs(struct attrlist *file_attrs,
-					  struct attrlist *xattr_attrs,
-					  unsigned int attr_index)
-{
-	/* supported attributes are:
-	 * - owner (same as the objet)
-	 * - group (same as the objet)
-	 * - type FSAL_TYPE_XATTR
-	 * - fileid (attr index ? or (fileid^((index+1)<<24)) )
-	 * - mode (config & file)
-	 * - atime, mtime, ctime = these of the object ?
-	 * - size=1block, used=1block
-	 * - rdev=0
-	 * - nlink=1
-	 */
-	attrmask_t supported =
-		(ATTR_MODE | ATTR_FILEID | ATTR_TYPE |
-		 ATTR_OWNER | ATTR_GROUP |
-		 ATTR_ATIME | ATTR_MTIME | ATTR_CTIME |
-		 ATTR_CREATION | ATTR_CHGTIME
-		 | ATTR_SIZE | ATTR_SPACEUSED |
-		 ATTR_NUMLINKS | ATTR_RAWDEV |
-		 ATTR_FSID);
-	attrmask_t unsupp;
-
-	if (xattr_attrs->mask == 0) {
-		xattr_attrs->mask = supported;
-
-		LogCrit(COMPONENT_FSAL,
-			"Error: xattr_attrs->mask was 0");
-	}
-
-	unsupp = xattr_attrs->mask & (~supported);
-
-	if (unsupp) {
-		LogDebug(COMPONENT_FSAL,
-			 "Asking for unsupported attributes: 0x%"PRIx64
-			 " removing it from asked attributes",
-			 unsupp);
-
-		xattr_attrs->mask &= (~unsupp);
-	}
-
-	if (xattr_attrs->mask & ATTR_MODE) {
-		xattr_attrs->mode = file_attrs->mode;
-
-		if (attr_is_read_only(attr_index))
-			xattr_attrs->mode &= ~(0222);
-	}
-
-	if (xattr_attrs->mask & ATTR_FILEID) {
-		unsigned int i;
-		unsigned long hash = attr_index + 1;
-		char *str = (char *)&file_attrs->fileid;
-
-		for (i = 0; i < sizeof(xattr_attrs->fileid); i++, str++)
-			hash = (hash << 5) - hash + (unsigned long)(*str);
-		xattr_attrs->fileid = hash;
-	}
-
-	if (xattr_attrs->mask & ATTR_TYPE)
-		xattr_attrs->type = EXTENDED_ATTR;
-
-	if (xattr_attrs->mask & ATTR_OWNER)
-		xattr_attrs->owner = file_attrs->owner;
-
-	if (xattr_attrs->mask & ATTR_GROUP)
-		xattr_attrs->group = file_attrs->group;
-
-	if (xattr_attrs->mask & ATTR_ATIME)
-		xattr_attrs->atime = file_attrs->atime;
-
-	if (xattr_attrs->mask & ATTR_MTIME)
-		xattr_attrs->mtime = file_attrs->mtime;
-
-	if (xattr_attrs->mask & ATTR_CTIME)
-		xattr_attrs->ctime = file_attrs->ctime;
-
-	if (xattr_attrs->mask & ATTR_CREATION)
-		xattr_attrs->creation = file_attrs->creation;
-
-	if (xattr_attrs->mask & ATTR_CHGTIME) {
-		xattr_attrs->chgtime = file_attrs->chgtime;
-		xattr_attrs->change = xattr_attrs->chgtime.tv_sec;
-	}
-
-	if (xattr_attrs->mask & ATTR_SIZE)
-		xattr_attrs->filesize = DEV_BSIZE;
-
-	if (xattr_attrs->mask & ATTR_SPACEUSED)
-		xattr_attrs->spaceused = DEV_BSIZE;
-
-	if (xattr_attrs->mask & ATTR_NUMLINKS)
-		xattr_attrs->numlinks = 1;
-
-	if (xattr_attrs->mask & ATTR_RAWDEV) {
-		xattr_attrs->rawdev.major = 0;
-		xattr_attrs->rawdev.minor = 0;
-	}
-
-	if (xattr_attrs->mask & ATTR_FSID)
-		xattr_attrs->fsid = file_attrs->fsid;
-
-	/* if mode==0, then owner is set to root and mode is set to 0600 */
-	if ((xattr_attrs->mask & ATTR_OWNER)
-	    && (xattr_attrs->mask & ATTR_MODE) && (xattr_attrs->mode == 0)) {
-		xattr_attrs->owner = 0;
-		xattr_attrs->mode = 0600;
-		if (attr_is_read_only(attr_index))
-			xattr_attrs->mode &= ~(0200);
-	}
-
-	return 0;
-
-}
-
 static int xattr_id_to_name(libzfswrap_vfs_t *p_vfs, creden_t *pcred,
 			    inogen_t object, unsigned int xattr_id, char *name)
 {
@@ -443,20 +327,6 @@ fsal_status_t tank_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
 			xattr_list[index].xattr_name[MAXNAMLEN] = '\0';
 			xattrs_tab[out_index].xattr_cookie = index + 1;
 
-			/* set asked attributes (all supported) */
-			xattrs_tab[out_index].attributes.mask =
-			    obj_handle->attributes.mask;
-
-			if (file_attributes_to_xattr_attrs(obj_hdl->attrs,
-							   &xattrs_tab
-							   [out_index]
-							   .attributes,
-							   index)) {
-				/* set error flag */
-				xattrs_tab[out_index].attributes.mask =
-				    ATTR_RDATTR_ERR;
-			}
-
 			/* next output slot */
 			out_index++;
 		}
@@ -499,18 +369,6 @@ fsal_status_t tank_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
 			xattrs_tab[out_index].xattr_id = index;
 			strncpy(xattrs_tab[out_index].xattr_name, ptr, len + 1);
 			xattrs_tab[out_index].xattr_cookie = index + 1;
-
-			/* set asked attributes (all supported) */
-			xattrs_tab[out_index].attributes.mask =
-			    obj_handle->attributes.mask;
-
-			if (file_attributes_to_xattr_attrs
-			    (&obj_handle->attributes,
-			     &xattrs_tab[out_index].attributes, index)) {
-				/* set error flag */
-				xattrs_tab[out_index].attributes.mask =
-				    ATTR_RDATTR_ERR;
-			}
 
 			/* next output slot */
 			out_index++;
@@ -741,38 +599,6 @@ fsal_status_t tank_setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 
 	return tank_setextattr_value(obj_hdl, name, buffer_addr,
 				     buffer_size, false);
-}
-
-fsal_status_t tank_getextattr_attrs(struct fsal_obj_handle *obj_hdl,
-				    unsigned int xattr_id,
-				    struct attrlist *p_attrs)
-{
-	struct zfs_fsal_obj_handle *obj_handle = NULL;
-	int rc;
-
-	/* sanity checks */
-	if (!obj_hdl || !p_attrs)
-		return fsalstat(ERR_FSAL_FAULT, 0);
-
-	obj_handle =
-	    container_of(obj_hdl, struct zfs_fsal_obj_handle, obj_handle);
-
-	/* check that this index match the type of entry */
-	if (xattr_id < XATTR_COUNT
-	    && !do_match_type(xattr_list[xattr_id].flags,
-			      obj_handle->attributes.type)) {
-		return fsalstat(ERR_FSAL_INVAL, 0);
-	} else if (xattr_id >= XATTR_COUNT) {
-		/* This is user defined xattr */
-		LogFullDebug(COMPONENT_FSAL, "Getting attributes for xattr #%u",
-			     xattr_id - XATTR_COUNT);
-	}
-
-	rc = file_attributes_to_xattr_attrs(&obj_handle->attributes, p_attrs,
-					    xattr_id);
-	if (rc)
-		return fsalstat(ERR_FSAL_INVAL, rc);
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 fsal_status_t tank_remove_extattr_by_id(struct fsal_obj_handle *obj_hdl,

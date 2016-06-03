@@ -196,28 +196,6 @@ fsal_status_t nullfs_setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 	return status;
 }
 
-fsal_status_t nullfs_getextattr_attrs(struct fsal_obj_handle *obj_hdl,
-				      unsigned int xattr_id,
-				      struct attrlist *p_attrs)
-{
-	struct nullfs_fsal_obj_handle *handle =
-		container_of(obj_hdl, struct nullfs_fsal_obj_handle,
-			     obj_handle);
-
-	struct nullfs_fsal_export *export =
-		container_of(op_ctx->fsal_export, struct nullfs_fsal_export,
-			     export);
-
-	/* calling subfsal method */
-	op_ctx->fsal_export = export->export.sub_export;
-	fsal_status_t status = handle->sub_handle->obj_ops.getextattr_attrs(
-		handle->sub_handle, xattr_id,
-		p_attrs);
-	op_ctx->fsal_export = &export->export;
-
-	return status;
-}
-
 fsal_status_t nullfs_remove_extattr_by_id(struct fsal_obj_handle *obj_hdl,
 					  unsigned int xattr_id)
 {

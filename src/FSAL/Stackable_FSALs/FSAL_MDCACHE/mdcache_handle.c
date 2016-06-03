@@ -1062,7 +1062,6 @@ void mdcache_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->getextattr_value_by_id = mdcache_getextattr_value_by_id;
 	ops->setextattr_value = mdcache_setextattr_value;
 	ops->setextattr_value_by_id = mdcache_setextattr_value_by_id;
-	ops->getextattr_attrs = mdcache_getextattr_attrs;
 	ops->remove_extattr_by_id = mdcache_remove_extattr_by_id;
 	ops->remove_extattr_by_name = mdcache_remove_extattr_by_name;
 	ops->getxattrs = mdcache_getxattrs;

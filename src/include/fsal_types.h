@@ -487,7 +487,6 @@ struct attrlist {
 typedef struct fsal_xattrent {
 	uint64_t xattr_id;	/*< xattr index */
 	uint64_t xattr_cookie;	/*< cookie for the next entry */
-	struct attrlist attributes;	/*< entry attributes (if supported) */
 	char xattr_name[MAXNAMLEN + 1];	/*< attribute name  */
 } fsal_xattrent_t;
 

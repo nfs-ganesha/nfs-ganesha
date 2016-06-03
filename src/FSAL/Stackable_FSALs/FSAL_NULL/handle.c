@@ -594,7 +594,6 @@ void nullfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->getextattr_value_by_id = nullfs_getextattr_value_by_id;
 	ops->setextattr_value = nullfs_setextattr_value;
 	ops->setextattr_value_by_id = nullfs_setextattr_value_by_id;
-	ops->getextattr_attrs = nullfs_getextattr_attrs;
 	ops->remove_extattr_by_id = nullfs_remove_extattr_by_id;
 	ops->remove_extattr_by_name = nullfs_remove_extattr_by_name;
 

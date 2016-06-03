@@ -1872,21 +1872,6 @@ struct fsal_obj_ops {
 						 size_t buffer_size);
 
 /**
- * @brief Get attributes on a named attribute
- *
- * This function gets the attributes on a named attribute.
- *
- * @param[in]  obj_hdl    File to interrogate
- * @param[in]  xattr_id   ID of attribute
- * @param[out] attributes Attributes on named attribute
- *
- * @return FSAL status.
- */
-	 fsal_status_t (*getextattr_attrs)(struct fsal_obj_handle *obj_hdl,
-					   unsigned int xattr_id,
-					   struct attrlist *attrs);
-
-/**
  * @brief Remove an extended attribute by id
  *
  * This function removes an extended attribute as specified by ID.

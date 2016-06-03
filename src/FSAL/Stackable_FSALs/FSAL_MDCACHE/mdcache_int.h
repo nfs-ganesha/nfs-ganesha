@@ -745,9 +745,6 @@ fsal_status_t mdcache_setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 					    unsigned int xattr_id,
 					    caddr_t buffer_addr,
 					    size_t buffer_size);
-fsal_status_t mdcache_getextattr_attrs(struct fsal_obj_handle *obj_hdl,
-				      unsigned int xattr_id,
-				      struct attrlist *p_attrs);
 fsal_status_t mdcache_remove_extattr_by_id(struct fsal_obj_handle *obj_hdl,
 					  unsigned int xattr_id);
 fsal_status_t mdcache_remove_extattr_by_name(struct fsal_obj_handle *obj_hdl,

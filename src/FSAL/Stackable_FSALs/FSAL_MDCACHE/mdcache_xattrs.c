@@ -227,33 +227,6 @@ fsal_status_t mdcache_setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 }
 
 /**
- * @brief Get the attributes of an xattr
- *
- * Pass through to sub-FSAL
- *
- * @param[in] obj_hdl	File to search
- * @param[in] id	ID of xattr to set
- * @param[out] p_attrs	Place to store attributes
- * @return FSAL status
- */
-fsal_status_t mdcache_getextattr_attrs(struct fsal_obj_handle *obj_hdl,
-				       unsigned int id,
-				       struct attrlist *p_attrs)
-{
-	struct mdcache_fsal_obj_handle *handle =
-		container_of(obj_hdl, struct mdcache_fsal_obj_handle,
-			     obj_handle);
-	fsal_status_t status;
-
-	subcall(
-		status = handle->sub_handle->obj_ops.getextattr_attrs(
-			handle->sub_handle, id, p_attrs)
-	       );
-
-	return status;
-}
-
-/**
  * @brief Remove an xattr by ID
  *
  * Pass through to sub-FSAL

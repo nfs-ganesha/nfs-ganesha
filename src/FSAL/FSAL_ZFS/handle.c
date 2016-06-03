@@ -986,7 +986,6 @@ void zfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->getextattr_value_by_id = tank_getextattr_value_by_id;
 	ops->setextattr_value = tank_setextattr_value;
 	ops->setextattr_value_by_id = tank_setextattr_value_by_id;
-	ops->getextattr_attrs = tank_getextattr_attrs;
 	ops->remove_extattr_by_id = tank_remove_extattr_by_id;
 	ops->remove_extattr_by_name = tank_remove_extattr_by_name;
 }

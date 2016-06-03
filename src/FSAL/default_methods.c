@@ -1169,17 +1169,6 @@ static fsal_status_t setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
-/* getextattr_attrs
- * default case not supported
- */
-
-static fsal_status_t getextattr_attrs(struct fsal_obj_handle *obj_hdl,
-				      unsigned int xattr_id,
-				      struct attrlist *p_attrs)
-{
-	return fsalstat(ERR_FSAL_NOTSUPP, 0);
-}
-
 /* remove_extattr_by_id
  * default case not supported
  */
@@ -1549,7 +1538,6 @@ struct fsal_obj_ops def_handle_ops = {
 	.getextattr_value_by_id = getextattr_value_by_id,
 	.setextattr_value = setextattr_value,
 	.setextattr_value_by_id = setextattr_value_by_id,
-	.getextattr_attrs = getextattr_attrs,
 	.remove_extattr_by_id = remove_extattr_by_id,
 	.remove_extattr_by_name = remove_extattr_by_name,
 	.handle_is = handle_is,
