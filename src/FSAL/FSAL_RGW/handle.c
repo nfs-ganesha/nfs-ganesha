@@ -129,7 +129,7 @@ static bool rgw_cb(const char *name, void *arg, uint64_t offset)
 	if (FSAL_IS_ERROR(status))
 		return false;
 
-	return rgw_cb_arg->cb(name, obj, arg, offset);
+	return rgw_cb_arg->cb(name, obj, rgw_cb_arg->fsal_arg, offset);
 }
 
 /**
