@@ -483,6 +483,41 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 	 * merged.
 	 */
 
+#ifdef ENABLE_VFS_DEBUG_ACL
+	if (createmode != FSAL_NO_CREATE) {
+		/* Need to ammend attributes for inherited ACL, these will be
+		 * set later. We also need to test for permission to create
+		 * since there might be an ACL.
+		 */
+		struct attrlist attrs;
+		fsal_accessflags_t access_type;
+
+		access_type = FSAL_MODE_MASK_SET(FSAL_W_OK) |
+			FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_FILE);
+		status = obj_hdl->obj_ops.test_access(obj_hdl, access_type,
+						      NULL, NULL, false);
+
+		if (FSAL_IS_ERROR(status))
+			return status;
+
+		fsal_prepare_attrs(&attrs, ATTR_ACL);
+
+		status = obj_hdl->obj_ops.getattrs(obj_hdl, &attrs);
+
+		if (FSAL_IS_ERROR(status))
+			return status;
+
+		status.major = fsal_inherit_acls(attrib_set, attrs.acl,
+						 FSAL_ACE_FLAG_FILE_INHERIT);
+
+		/* Done with the attrs */
+		fsal_release_attrs(&attrs);
+
+		if (FSAL_IS_ERROR(status))
+			return status;
+	}
+#endif /* ENABLE_VFS_DEBUG_ACL */
+
 	/* Now add in O_CREAT and O_EXCL.
 	 * Even with FSAL_UNGUARDED we try exclusive create first so
 	 * we can safely set attributes.
@@ -614,6 +649,9 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 		 *
 		 * Note that we only set the attributes if we were responsible
 		 * for creating the file.
+		 *
+		 * Note if we have ENABLE_VFS_DEBUG_ACL an inherited ACL might
+		 * be part of the attributes we are setting here.
 		 */
 		status = (*new_obj)->obj_ops.setattr2(*new_obj,
 						      false,
