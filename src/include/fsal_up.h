@@ -112,7 +112,12 @@ struct layoutrecall_spec {
 
 static const uint32_t FSAL_UP_INVALIDATE_ATTRS = 0x01;
 static const uint32_t FSAL_UP_INVALIDATE_CONTENT = 0x02;
-static const uint32_t FSAL_UP_INVALIDATE_CLOSE = 0x04;
+static const uint32_t FSAL_UP_INVALIDATE_DIR_POPULATED = 0x04;
+static const uint32_t FSAL_UP_INVALIDATE_CLOSE = 0x100;
+#define FSAL_UP_INVALIDATE_CACHE ( \
+	FSAL_UP_INVALIDATE_ATTRS | \
+	FSAL_UP_INVALIDATE_CONTENT | \
+	FSAL_UP_INVALIDATE_DIR_POPULATED)
 
 /**
  * @brief Possible upcall functions

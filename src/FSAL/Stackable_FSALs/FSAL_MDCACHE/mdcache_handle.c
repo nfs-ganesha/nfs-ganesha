@@ -436,15 +436,8 @@ static fsal_status_t mdcache_link(struct fsal_obj_handle *obj_hdl,
 	status = mdc_add_dirent(dest, name, entry);
 
 	/* Invalidate attributes, so refresh will be forced */
-	status = mdcache_invalidate(entry, MDCACHE_INVALIDATE_ATTRS);
-	if (FSAL_IS_ERROR(status))
-		return status;
-
-	status = mdcache_invalidate(dest, MDCACHE_INVALIDATE_ATTRS);
-	if (FSAL_IS_ERROR(status))
-		return status;
-
-	/* Attributes are refreshed by fsal_link */
+	atomic_clear_uint32_t_bits(&entry->mde_flags, MDCACHE_TRUST_ATTRS);
+	atomic_clear_uint32_t_bits(&dest->mde_flags, MDCACHE_TRUST_ATTRS);
 
 	return status;
 }

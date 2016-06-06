@@ -37,6 +37,7 @@
 #include "config.h"
 #include "mdcache_ext.h"
 #include "sal_data.h"
+#include "fsal_up.h"
 
 typedef struct mdcache_fsal_obj_handle mdcache_entry_t;
 
@@ -161,21 +162,12 @@ static const uint32_t MDCACHE_FLAG_CLEANUP = 0x400;
 /** Don't kill entry on ESTALE */
 static const uint32_t MDCACHE_DONT_KILL = 0x800;
 
-/**
- * Flags to cache_inode_invalidate
- */
-static const uint32_t MDCACHE_INVALIDATE_ATTRS = 0x01;
-static const uint32_t MDCACHE_INVALIDATE_CONTENT = 0x02;
-static const uint32_t MDCACHE_INVALIDATE_CLOSE = 0x04;
-static const uint32_t MDCACHE_INVALIDATE_GOT_LOCK = 0x08;
-
-
 /** Trust stored attributes */
-static const uint32_t MDCACHE_TRUST_ATTRS = 0x00000001;
+#define MDCACHE_TRUST_ATTRS FSAL_UP_INVALIDATE_ATTRS
 /** Trust inode content (for the moment, directory and symlink) */
-static const uint32_t MDCACHE_TRUST_CONTENT = 0x00000002;
+#define MDCACHE_TRUST_CONTENT FSAL_UP_INVALIDATE_CONTENT
 /** The directory has been populated (negative lookups are meaningful) */
-static const uint32_t MDCACHE_DIR_POPULATED = 0x00000004;
+#define MDCACHE_DIR_POPULATED FSAL_UP_INVALIDATE_DIR_POPULATED
 /** The entry has been removed, but not unhashed due to state */
 static const uint32_t MDCACHE_UNREACHABLE = 0x00000008;
 
@@ -330,7 +322,6 @@ fsal_status_t mdc_lookup(mdcache_entry_t *mdc_parent, const char *name,
 fsal_status_t mdc_lookup_uncached(mdcache_entry_t *mdc_parent,
 				  const char *name,
 				  mdcache_entry_t **new_entry);
-fsal_status_t mdcache_invalidate(mdcache_entry_t *entry, uint32_t flags);
 void mdcache_src_dest_lock(mdcache_entry_t *src, mdcache_entry_t *dest);
 void mdcache_src_dest_unlock(mdcache_entry_t *src, mdcache_entry_t *dest);
 fsal_status_t mdcache_dirent_remove(mdcache_entry_t *parent, const char *name);

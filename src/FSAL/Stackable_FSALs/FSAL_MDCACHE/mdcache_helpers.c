@@ -226,62 +226,6 @@ again:
 }
 
 /**
- *
- * @brief invalidates an entry in the cache
- *
- * This function invalidates the related cache entry corresponding to a
- * FSAL handle. It is designed to be called when an FSAL upcall is
- * triggered.
- *
- * @param[in] entry  Entry to be invalidated
- * @param[in] flags  Control flags
- *
- * @return FSAL status
- */
-
-fsal_status_t
-mdcache_invalidate(mdcache_entry_t *entry, uint32_t flags)
-{
-	fsal_status_t status = {0, 0};
-
-	if (!(flags & MDCACHE_INVALIDATE_GOT_LOCK))
-		PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
-
-	/* We can invalidate entries with state just fine.  We force
-	   MDCACHE to contact the FSAL for any use of content or
-	   attributes, and if the FSAL indicates the entry is stale,
-	   it can be disposed of then. */
-
-	/* We should have a way to invalidate content and attributes
-	   separately.  Or at least a way to invalidate attributes
-	   without invalidating content (since any change in content
-	   really ought to modify mtime, at least.) */
-
-	if (flags & MDCACHE_INVALIDATE_ATTRS)
-		atomic_clear_uint32_t_bits(&entry->mde_flags,
-					   MDCACHE_TRUST_ATTRS);
-
-	if (flags & MDCACHE_INVALIDATE_CONTENT)
-		atomic_clear_uint32_t_bits(&entry->mde_flags,
-					   MDCACHE_TRUST_CONTENT |
-					   MDCACHE_DIR_POPULATED);
-
-	/* lock order requires that we release entry->attr_lock before
-	 * calling fsal_close! */
-	if (!(flags & MDCACHE_INVALIDATE_GOT_LOCK))
-		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
-
-	if ((flags & MDCACHE_INVALIDATE_CLOSE) &&
-	    (entry->obj_handle.type == REGULAR_FILE))
-		status = fsal_close(&entry->obj_handle);
-
-	/* Memory copying attributes with every call is expensive.
-	   Let's not do it.  */
-
-	return status;
-}
-
-/**
  * Release cached dirents associated with an entry.
  *
  * releases dirents associated with @a entry.  this is simple, but maybe
@@ -1131,15 +1075,15 @@ mdcache_dirent_rename(mdcache_entry_t *parent, const char *oldname,
 			avl_dirent_set_deleted(parent, dirent);
 
 			if (oldentry) {
-				/* if it is still around, mark it
-				 * gone/stale */
-				status = mdcache_invalidate(oldentry,
-					MDCACHE_INVALIDATE_ATTRS |
-					MDCACHE_INVALIDATE_CONTENT);
+				/* if it is still around, mark it gone/stale */
+				atomic_clear_uint32_t_bits(
+							&oldentry->mde_flags,
+							MDCACHE_TRUST_ATTRS |
+							MDCACHE_TRUST_CONTENT |
+							MDCACHE_DIR_POPULATED);
 				mdcache_put(oldentry);
-				return status;
 			}
-			return fsalstat(ERR_FSAL_NO_ERROR, 0);
+			return status;
 		} else
 			return fsalstat(ERR_FSAL_EXIST, 0);
 	}

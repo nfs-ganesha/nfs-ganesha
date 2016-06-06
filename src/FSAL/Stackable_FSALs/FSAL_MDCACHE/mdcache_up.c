@@ -44,7 +44,6 @@ mdc_up_invalidate(struct fsal_export *sub_export, struct gsh_buffdesc *handle,
 {
 	mdcache_entry_t *entry;
 	fsal_status_t status;
-	uint32_t mdc_flags = 0;
 	struct req_op_context *save_ctx, req_ctx = {0};
 	mdcache_key_t key;
 	struct mdcache_fsal_export *export =
@@ -67,14 +66,11 @@ mdc_up_invalidate(struct fsal_export *sub_export, struct gsh_buffdesc *handle,
 		return status;
 	}
 
-	if (flags & FSAL_UP_INVALIDATE_ATTRS)
-		mdc_flags |= MDCACHE_INVALIDATE_ATTRS;
-	if (flags & FSAL_UP_INVALIDATE_CONTENT)
-		mdc_flags |= MDCACHE_INVALIDATE_CONTENT;
-	if (flags & FSAL_UP_INVALIDATE_CLOSE)
-		mdc_flags |= MDCACHE_INVALIDATE_CLOSE;
+	atomic_clear_uint32_t_bits(&entry->mde_flags,
+				   flags & FSAL_UP_INVALIDATE_CACHE);
 
-	status = mdcache_invalidate(entry, mdc_flags);
+	if (flags & FSAL_UP_INVALIDATE_CLOSE)
+		status = fsal_close(&entry->obj_handle);
 
 	mdcache_put(entry);
 	op_ctx = save_ctx;
@@ -144,9 +140,12 @@ mdc_up_update(struct fsal_export *sub_export, struct gsh_buffdesc *handle,
 	/* Knock things out if the link count falls to 0. */
 
 	if ((flags & fsal_up_nlink) && (attr->numlinks == 0)) {
-		status = mdcache_invalidate(entry, (MDCACHE_INVALIDATE_ATTRS |
-						    MDCACHE_INVALIDATE_CONTENT |
-						    MDCACHE_INVALIDATE_CLOSE));
+		atomic_clear_uint32_t_bits(&entry->mde_flags,
+					   MDCACHE_TRUST_ATTRS |
+					   MDCACHE_TRUST_CONTENT |
+					   MDCACHE_DIR_POPULATED);
+
+		status = fsal_close(&entry->obj_handle);
 
 		if (FSAL_IS_ERROR(status))
 			goto out;
@@ -269,15 +268,18 @@ mdc_up_update(struct fsal_export *sub_export, struct gsh_buffdesc *handle,
 	if (mutatis_mutandis) {
 		mdc_fixup_md(entry);
 		/* If directory can not trust content anymore. */
-		if (entry->obj_handle.type == DIRECTORY)
-			mdcache_invalidate(entry,
-					   (MDCACHE_INVALIDATE_CONTENT |
-					    MDCACHE_INVALIDATE_GOT_LOCK));
+		if (entry->obj_handle.type == DIRECTORY) {
+			atomic_clear_uint32_t_bits(&entry->mde_flags,
+						   MDCACHE_TRUST_CONTENT |
+						   MDCACHE_DIR_POPULATED);
+		}
+		status = fsalstat(ERR_FSAL_NO_ERROR, 0);
 	} else {
-		mdcache_invalidate(entry, (MDCACHE_INVALIDATE_ATTRS |
-					   MDCACHE_INVALIDATE_GOT_LOCK));
+		atomic_clear_uint32_t_bits(&entry->mde_flags,
+					   MDCACHE_TRUST_ATTRS);
 		status = fsalstat(ERR_FSAL_INVAL, 0);
 	}
+
 	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 
  out:

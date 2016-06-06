@@ -43,7 +43,6 @@ int upcall_inode_invalidate(struct glusterfs_export *glfsexport,
 	int	     rc                             = -1;
 	glfs_t          *fs                         = NULL;
 	char            vol_uuid[GLAPI_UUID_LENGTH] = {'\0'};
-	uint32_t        upflags                     = 0;
 	unsigned char   globjhdl[GLAPI_HANDLE_LENGTH];
 	struct gsh_buffdesc         key;
 	const struct fsal_up_vector *event_func;
@@ -82,14 +81,12 @@ int upcall_inode_invalidate(struct glusterfs_export *glfsexport,
 	LogDebug(COMPONENT_FSAL_UP, "Received event to process for %p",
 		 fs);
 
-	upflags = FSAL_UP_INVALIDATE_ATTRS |
-		  FSAL_UP_INVALIDATE_CONTENT;
 	event_func = glfsexport->export.up_ops;
 
 	fsal_status = event_func->invalidate_close(
 					&glfsexport->export,
 					&key,
-					upflags);
+					FSAL_UP_INVALIDATE_CACHE);
 
 	rc = fsal_status.major;
 	if (FSAL_IS_ERROR(fsal_status) && fsal_status.major != ERR_FSAL_NOENT) {

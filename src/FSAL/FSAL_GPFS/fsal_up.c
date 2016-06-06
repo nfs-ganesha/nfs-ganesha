@@ -309,8 +309,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 				if (flags & (UP_SIZE | UP_SIZE_BIG)) {
 					fsal_status = event_func->invalidate(
 						event_func->export, &key,
-						FSAL_UP_INVALIDATE_ATTRS |
-						FSAL_UP_INVALIDATE_CONTENT);
+						FSAL_UP_INVALIDATE_CACHE);
 					break;
 				}
 
@@ -321,8 +320,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 				     UP_TIMES | UP_ATIME | UP_SIZE_BIG)) {
 					fsal_status = event_func->invalidate(
 						event_func->export, &key,
-						FSAL_UP_INVALIDATE_ATTRS |
-						FSAL_UP_INVALIDATE_CONTENT);
+						FSAL_UP_INVALIDATE_CACHE);
 				} else {
 					/* buf may not have all attributes set.
 					 * Since posix2fsal_attributes() copies
@@ -399,8 +397,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 				    "inode invalidate: flags:%x update ino %ld",
 				    flags, callback.buf->st_ino);
 
-			upflags = FSAL_UP_INVALIDATE_ATTRS |
-				  FSAL_UP_INVALIDATE_CONTENT;
+			upflags = FSAL_UP_INVALIDATE_CACHE;
 			fsal_status = event_func->invalidate_close(
 						event_func->export,
 						&key,
