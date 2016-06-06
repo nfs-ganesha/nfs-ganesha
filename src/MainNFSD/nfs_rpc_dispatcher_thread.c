@@ -185,16 +185,41 @@ static void unregister_rpc(void)
 	}
 }
 
-#define test_for_additional_nfs_protocols(p) \
-	((p != P_MNT && p != P_NLM && p != P_RQUOTA) ||		   \
-	 (nfs_param.core_param.core_options & (CORE_OPTION_NFSV3 | \
-					       CORE_OPTION_NFSV4)))
+static inline bool nfs_protocol_enabled(protos p)
+{
+	bool nfsv3 = nfs_param.core_param.core_options & CORE_OPTION_NFSV3;
+
+	switch (p) {
+	case P_NFS:
+		return true;
+
+	case P_MNT: /* valid only for NFSv3 environments */
+		if (nfsv3)
+			return true;
+		break;
+
+	case P_NLM: /* valid only for NFSv3 environments */
+		if (nfsv3 && nfs_param.core_param.enable_NLM)
+			return true;
+		break;
+
+	case P_RQUOTA:
+		if (nfs_param.core_param.enable_RQUOTA)
+			return true;
+		break;
+
+	default:
+		break;
+	}
+
+	return false;
+}
 
 /**
  * @brief Close file descriptors used for RPC services.
  *
- * So that restarting the NFS server wont encounter issues of "Addres
- * Already In Use" - this has occured even though we set the
+ * So that restarting the NFS server wont encounter issues of "Address
+ * Already In Use" - this has occurred even though we set the
  * SO_REUSEADDR option when restarting the server with a single export
  * (i.e.: a small config) & no logging at all, making the restart very
  * fast.  when closing a listening socket it will be closed
@@ -283,7 +308,7 @@ void Create_SVCXPRTs(void)
 
 	LogFullDebug(COMPONENT_DISPATCH, "Allocation of the SVCXPRT");
 	for (p = P_NFS; p < P_COUNT; p++)
-		if (test_for_additional_nfs_protocols(p)) {
+		if (nfs_protocol_enabled(p)) {
 			Create_udp(p);
 			Create_tcp(p);
 		}
@@ -298,7 +323,7 @@ static int Bind_sockets_V6(void)
 	int    rc = 0;
 
 	for (p = P_NFS; p < P_COUNT; p++) {
-		if (test_for_additional_nfs_protocols(p)) {
+		if (nfs_protocol_enabled(p)) {
 
 			proto_data *pdatap = &pdata[p];
 
@@ -386,7 +411,7 @@ static int Bind_sockets_V4(void)
 	int    rc = 0;
 
 	for (p = P_NFS; p < P_COUNT; p++) {
-		if (test_for_additional_nfs_protocols(p)) {
+		if (nfs_protocol_enabled(p)) {
 
 			proto_data *pdatap = &pdata[p];
 
@@ -582,7 +607,7 @@ static void Allocate_sockets(void)
 	LogFullDebug(COMPONENT_DISPATCH, "Allocation of the sockets");
 
 	for (p = P_NFS; p < P_COUNT; p++) {
-		if (test_for_additional_nfs_protocols(p)) {
+		if (nfs_protocol_enabled(p)) {
 			/* Initialize all the sockets to -1 because
 			 * it makes some code later easier */
 			udp_socket[p] = -1;

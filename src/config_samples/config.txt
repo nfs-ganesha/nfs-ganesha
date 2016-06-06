@@ -41,7 +41,7 @@ NFS_CORE_PARAM {}
 
 	NLM_Port (uint16, range 0 to UINT16_MAX, default 0)
 
-	Rquota_Port (uint16, range 0 to UINT16_MAX, default 0)
+	Rquota_Port (uint16, range 0 to UINT16_MAX, default 875)
 
 	Bind_addr(IP4 addr, default 0.0.0.0)
 
