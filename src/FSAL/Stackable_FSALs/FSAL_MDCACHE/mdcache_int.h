@@ -350,7 +350,34 @@ fsal_status_t mdcache_dirent_add(mdcache_entry_t *parent,
 fsal_status_t mdcache_dirent_rename(mdcache_entry_t *parent,
 				    const char *oldname,
 				    const char *newname);
-fsal_status_t mdcache_dirent_invalidate_all(mdcache_entry_t *entry);
+
+typedef enum {
+	MDCACHE_AVL_NAMES = 1,
+	MDCACHE_AVL_COOKIES = 2,
+	MDCACHE_AVL_BOTH = 3
+} mdcache_avl_which_t;
+
+void mdcache_release_dirents(mdcache_entry_t *entry, mdcache_avl_which_t which);
+
+/**
+ * @brief Invalidates all cached entries for a directory
+ *
+ * Invalidates all the entries for a cached directory.  The content
+ * lock must be held for write when this function is called.
+ *
+ * @param[in,out] entry  The directory to be managed
+ *
+ */
+
+static inline void mdcache_dirent_invalidate_all(mdcache_entry_t *entry)
+{
+	/* Get rid of entries cached in the DIRECTORY */
+	mdcache_release_dirents(entry, MDCACHE_AVL_BOTH);
+
+	/* Now we can trust the content */
+	atomic_set_uint32_t_bits(&entry->mde_flags, MDCACHE_TRUST_CONTENT);
+}
+
 fsal_status_t mdcache_dirent_populate(mdcache_entry_t *dir);
 
 static inline bool mdc_dircache_trusted(mdcache_entry_t *dir)

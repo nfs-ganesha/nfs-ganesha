@@ -753,15 +753,8 @@ static fsal_status_t mdcache_getattrs(struct fsal_obj_handle *obj_hdl)
 	    (oldmtime < obj_hdl->attrs->mtime.tv_sec)) {
 
 		PTHREAD_RWLOCK_wrlock(&entry->content_lock);
-		status = mdcache_dirent_invalidate_all(entry);
+		mdcache_dirent_invalidate_all(entry);
 		PTHREAD_RWLOCK_unlock(&entry->content_lock);
-
-		if (FSAL_IS_ERROR(status)) {
-			LogCrit(COMPONENT_CACHE_INODE,
-				"mdcache_dirent_invalidate_all returned (%s)",
-				fsal_err_txt(status));
-			goto unlock;
-		}
 	}
 
 unlock:
@@ -897,7 +890,7 @@ static fsal_status_t mdcache_unlink(struct fsal_obj_handle *dir_hdl,
 			(void)mdcache_kill_entry(parent);
 		else if (status.major == ERR_FSAL_NOTEMPTY &&
 			 (obj_hdl->type == DIRECTORY))
-			(void)mdcache_dirent_invalidate_all(entry);
+			mdcache_dirent_invalidate_all(entry);
 	} else
 		(void)mdcache_invalidate(entry, MDCACHE_INVALIDATE_ATTRS);
 

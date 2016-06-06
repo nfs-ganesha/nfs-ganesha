@@ -56,12 +56,6 @@
 #include "mdcache_int.h"
 #include "avltree.h"
 
-typedef enum {
-	MDCACHE_AVL_NAMES = 1,
-	MDCACHE_AVL_COOKIES = 2,
-	MDCACHE_AVL_BOTH = 3
-} mdcache_avl_which_t;
-
 static inline int avl_dirent_hk_cmpf(const struct avltree_node *lhs,
 				     const struct avltree_node *rhs)
 {

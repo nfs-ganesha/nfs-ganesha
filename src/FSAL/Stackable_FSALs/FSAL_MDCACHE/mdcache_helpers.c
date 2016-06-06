@@ -291,8 +291,7 @@ mdcache_invalidate(mdcache_entry_t *entry, uint32_t flags)
  * @param[in] which Caches to clear (dense, sparse, or both)
  *
  */
-static void
-mdcache_release_dirents(mdcache_entry_t *entry, mdcache_avl_which_t which)
+void mdcache_release_dirents(mdcache_entry_t *entry, mdcache_avl_which_t which)
 {
 	struct avltree_node *dirent_node = NULL;
 	struct avltree_node *next_dirent_node = NULL;
@@ -1166,33 +1165,6 @@ mdcache_dirent_rename(mdcache_entry_t *parent, const char *oldname,
 }
 
 /**
- * @brief Invalidates all cached entries for a directory
- *
- * Invalidates all the entries for a cached directory.  The content
- * lock must be held for write when this function is called.
- *
- * @param[in,out] entry  The directory to be managed
- *
- * @return FSAL status
- *
- */
-fsal_status_t
-mdcache_dirent_invalidate_all(mdcache_entry_t *entry)
-{
-	/* Only DIRECTORY entries are concerned */
-	if (entry->obj_handle.type != DIRECTORY)
-		return fsalstat(ERR_FSAL_NOTDIR, 0);
-
-	/* Get rid of entries cached in the DIRECTORY */
-	mdcache_release_dirents(entry, MDCACHE_AVL_BOTH);
-
-	/* Now we can trust the content */
-	atomic_set_uint32_t_bits(&entry->mde_flags, MDCACHE_TRUST_CONTENT);
-
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
-}
-
-/**
  * @brief State to be passed to FSAL readdir callbacks
  */
 
@@ -1296,13 +1268,7 @@ mdcache_dirent_populate(mdcache_entry_t *dir)
 	}
 
 	/* Invalidate all the dirents */
-	status = mdcache_dirent_invalidate_all(dir);
-	if (FSAL_IS_ERROR(status)) {
-		LogDebug(COMPONENT_NFS_READDIR,
-			 "mdcache_invalidate_all_cached_dirent status=%s",
-			 fsal_err_txt(status));
-		return status;
-	}
+	mdcache_dirent_invalidate_all(dir);
 
 	state.export = mdc_cur_export();
 	state.dir = dir;

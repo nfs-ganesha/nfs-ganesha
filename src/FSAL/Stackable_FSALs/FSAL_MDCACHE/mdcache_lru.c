@@ -416,6 +416,9 @@ mdcache_lru_clean(mdcache_entry_t *entry)
 			fsal_err_txt(status));
 	}
 
+	if (entry->obj_handle.type == DIRECTORY)
+		mdcache_dirent_invalidate_all(entry);
+
 	/* Free SubFSAL resources */
 	if (entry->sub_handle) {
 		subcall(
