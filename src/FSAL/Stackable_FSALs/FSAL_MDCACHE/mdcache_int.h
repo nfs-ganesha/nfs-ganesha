@@ -372,7 +372,7 @@ static inline struct mdcache_fsal_export *mdc_cur_export(void)
 	return mdc_export(op_ctx->fsal_export);
 }
 
-void mdc_clean_mapping(mdcache_entry_t *entry);
+void mdc_clean_entry(mdcache_entry_t *entry);
 void mdcache_kill_entry(mdcache_entry_t *entry);
 
 extern struct config_block mdcache_param_blk;

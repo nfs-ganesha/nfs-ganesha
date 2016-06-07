@@ -107,11 +107,11 @@ static mdcache_entry_t *mdcache_alloc_handle(
 
 /**
  *
- * @brief Cleans up the export mappings for this entry.
+ * @brief Cleans up an entry so it can be reused
  *
- * @param[in]  entry     The cache inode
+ * @param[in]  entry     The cache entry to clean
  */
-void mdc_clean_mapping(mdcache_entry_t *entry)
+void mdc_clean_entry(mdcache_entry_t *entry)
 {
 	struct glist_head *glist;
 	struct glist_head *glistn;
@@ -139,6 +139,18 @@ void mdc_clean_mapping(mdcache_entry_t *entry)
 	}
 
 	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+
+	if (entry->obj_handle.type == DIRECTORY) {
+		PTHREAD_RWLOCK_wrlock(&entry->content_lock);
+
+		/* Clean up dirents */
+		(void) mdcache_dirent_invalidate_all(entry);
+		/* Clean up parent key */
+		mdcache_key_delete(&entry->fsobj.fsdir.parent);
+
+		PTHREAD_RWLOCK_unlock(&entry->content_lock);
+	}
+
 }
 
 /**
@@ -522,7 +534,7 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 		/* We raced or failed, deconstruct the new entry */
 
 		/* Destroy the export mapping if any */
-		mdc_clean_mapping(nentry);
+		mdc_clean_entry(nentry);
 
 		/* Destroy the locks */
 		PTHREAD_RWLOCK_destroy(&nentry->attr_lock);

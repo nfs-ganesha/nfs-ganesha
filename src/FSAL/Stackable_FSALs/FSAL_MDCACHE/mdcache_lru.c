@@ -416,15 +416,6 @@ mdcache_lru_clean(mdcache_entry_t *entry)
 			fsal_err_txt(status));
 	}
 
-	if (entry->obj_handle.type == DIRECTORY) {
-		status = mdcache_dirent_invalidate_all(entry);
-		if (FSAL_IS_ERROR(status)) {
-			LogCrit(COMPONENT_CACHE_INODE_LRU,
-				"Error releasing dirents in cleanup: %s.",
-				fsal_err_txt(status));
-		}
-	}
-
 	/* Free SubFSAL resources */
 	if (entry->sub_handle) {
 		subcall(
@@ -437,7 +428,7 @@ mdcache_lru_clean(mdcache_entry_t *entry)
 	fsal_obj_handle_fini(&entry->obj_handle);
 
 	/* Clean out the export mapping before deconstruction */
-	mdc_clean_mapping(entry);
+	mdc_clean_entry(entry);
 
 	/* Finalize last bits of the cache entry */
 	mdcache_key_delete(&entry->fh_hk.key);
