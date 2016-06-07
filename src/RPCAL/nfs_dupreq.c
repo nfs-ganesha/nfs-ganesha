@@ -382,8 +382,12 @@ static inline drc_t *alloc_tcp_drc(enum drc_type dtype)
  */
 static inline void free_tcp_drc(drc_t *drc)
 {
-	if (drc->xt.tree[0].cache)
-		gsh_free(drc->xt.tree[0].cache);
+	int ix;
+
+	for (ix = 0; ix < drc->npart; ++ix) {
+		if (drc->xt.tree[ix].cache)
+			gsh_free(drc->xt.tree[ix].cache);
+	}
 	PTHREAD_MUTEX_destroy(&drc->mtx);
 	LogFullDebug(COMPONENT_DUPREQ, "free TCP drc %p", drc);
 	pool_free(tcp_drc_pool, drc);
