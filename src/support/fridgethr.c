@@ -1332,10 +1332,15 @@ int fridgethr_sync_command(struct fridgethr *fr, fridgethr_comm_t command,
 			assert(rc == 0);
 		} else {
 			rc = pthread_cond_timedwait(&cv, &mtx, &ts);
-			if (rc == ETIMEDOUT)
+			if (rc == ETIMEDOUT) {
 				LogMajor(COMPONENT_THREAD,
 					"Sync command seems to be stalled");
-			else
+				/* we timed out and the callback
+				 * was not triggered, therefore,
+				 * we must exit the loop manually.
+				 */
+				break;
+			} else
 				assert(rc == 0);
 		}
 	}
