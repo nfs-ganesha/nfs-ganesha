@@ -73,6 +73,10 @@
 #include "fsal_convert.h"
 #include "nfs4_acls.h"
 
+#ifdef USE_BLKID
+static struct blkid_struct_cache *cache;
+#endif
+
 /* fsal_attach_export
  * called from the FSAL's create_export method with a reference on the fsal.
  */
@@ -840,7 +844,6 @@ static bool posix_get_fsid(struct fsal_filesystem *fs)
 	struct stat mnt_stat;
 #ifdef USE_BLKID
 	char *dev_name = NULL, *uuid_str;
-	static struct blkid_struct_cache *cache;
 	struct blkid_struct_dev *dev;
 #endif
 
@@ -912,9 +915,11 @@ static bool posix_get_fsid(struct fsal_filesystem *fs)
 		LogInfo(COMPONENT_FSAL,
 			"uuid_parse of %s failed for uuid %s",
 			fs->path, uuid_str);
+		free(uuid_str);
 		goto no_uuid;
 	}
 
+	free(uuid_str);
 	fs->fsid_type = FSID_TWO_UINT64;
 	free(dev_name);
 
@@ -1159,6 +1164,9 @@ int populate_posix_file_systems(void)
 
 		posix_create_file_system(mnt);
 	}
+#ifdef USE_BLKID
+	blkid_put_cache(cache);
+#endif
 
 	endmntent(fp);
 
