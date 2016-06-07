@@ -90,12 +90,12 @@ static fsal_status_t mdcache_alloc_and_check_handle(
 		struct fsal_obj_handle *sub_handle,
 		mdcache_entry_t **new_handle,
 		fsal_status_t subfsal_status,
-		uint32_t flags)
+		bool new_directory)
 {
 	if (FSAL_IS_ERROR(subfsal_status))
 		return subfsal_status;
 
-	return mdcache_new_entry(export, sub_handle, flags, new_handle);
+	return mdcache_new_entry(export, sub_handle, new_directory, new_handle);
 }
 
 /**
@@ -166,8 +166,7 @@ static fsal_status_t mdcache_create(struct fsal_obj_handle *dir_hdl,
 	}
 
 	status = mdcache_alloc_and_check_handle(export, sub_handle,
-						&entry, status,
-						MDCACHE_FLAG_NONE);
+						&entry, status, false);
 	if (FSAL_IS_ERROR(status))
 		return status;
 
@@ -222,8 +221,7 @@ static fsal_status_t mdcache_mkdir(struct fsal_obj_handle *dir_hdl,
 	}
 
 	status = mdcache_alloc_and_check_handle(export, sub_handle,
-						&entry, status,
-						MDCACHE_FLAG_CREATE);
+						&entry, status, true);
 	if (FSAL_IS_ERROR(status))
 		return status;
 
@@ -286,8 +284,7 @@ static fsal_status_t mdcache_mknode(struct fsal_obj_handle *dir_hdl,
 	}
 
 	status = mdcache_alloc_and_check_handle(export, sub_handle,
-						&entry, status,
-						MDCACHE_FLAG_NONE);
+						&entry, status, false);
 	if (FSAL_IS_ERROR(status))
 		return status;
 
@@ -347,8 +344,7 @@ static fsal_status_t mdcache_symlink(struct fsal_obj_handle *dir_hdl,
 	}
 
 	status = mdcache_alloc_and_check_handle(export, sub_handle,
-						&entry, status,
-						MDCACHE_FLAG_NONE);
+						&entry, status, false);
 	if (FSAL_IS_ERROR(status))
 		return status;
 
@@ -1191,8 +1187,7 @@ fsal_status_t mdcache_lookup_path(struct fsal_export *exp_hdl,
 	       );
 
 	status = mdcache_alloc_and_check_handle(export, sub_handle,
-						&entry, status,
-						MDCACHE_FLAG_NONE);
+						&entry, status, false);
 	if (FSAL_IS_ERROR(status))
 		return status;
 

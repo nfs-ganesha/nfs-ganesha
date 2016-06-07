@@ -134,34 +134,6 @@ struct entry_export_map {
  * Flags
  */
 
-/** The null flag */
-static const uint32_t MDCACHE_FLAG_NONE = 0x00;
-/** Indicate that this inode newly created, rather than just being
-    loaded into the cache */
-static const uint32_t MDCACHE_FLAG_CREATE = 0x01;
-/** Instruct the called function to take a lock on the entry */
-static const uint32_t MDCACHE_FLAG_LOCK = 0x02;
-/** For a function called with the attribute lock held, do not release
-    the attribute lock before returning */
-static const uint32_t MDCACHE_FLAG_ATTR_HOLD = 0x04;
-/** For a function called with the content lock held, do not release
-    the content lock before returning */
-static const uint32_t MDCACHE_FLAG_CONTENT_HOLD = 0x08;
-/** For a function, indicates that the attribute lock is held */
-static const uint32_t MDCACHE_FLAG_ATTR_HAVE = 0x10;
-/** For a function, indicates that the content lock is held */
-static const uint32_t MDCACHE_FLAG_CONTENT_HAVE = 0x20;
-/** Close a file even with caching enabled */
-static const uint32_t MDCACHE_FLAG_REALLYCLOSE = 0x80;
-/*[>* File can't be pinned, so close need not check. <]*/
-/*static const uint32_t MDCACHE_FLAG_NOT_PINNED = 0x100;*/
-/** Open for reclaim. */
-static const uint32_t MDCACHE_FLAG_RECLAIM = 0x200;
-/** File is being cleaned up so close need not take content_lock */
-static const uint32_t MDCACHE_FLAG_CLEANUP = 0x400;
-/** Don't kill entry on ESTALE */
-static const uint32_t MDCACHE_DONT_KILL = 0x800;
-
 /** Trust stored attributes */
 #define MDCACHE_TRUST_ATTRS FSAL_UP_INVALIDATE_ATTRS
 /** Trust inode content (for the moment, directory and symlink) */
@@ -305,7 +277,7 @@ typedef struct mdcache_dir_entry__ {
 /* Helpers */
 fsal_status_t mdcache_new_entry(struct mdcache_fsal_export *export,
 				struct fsal_obj_handle *sub_handle,
-				uint32_t flags,
+				bool new_directory,
 				mdcache_entry_t **entry);
 fsal_status_t mdcache_find_keyed(mdcache_key_t *key, mdcache_entry_t **entry);
 fsal_status_t mdcache_locate_keyed(mdcache_key_t *key,

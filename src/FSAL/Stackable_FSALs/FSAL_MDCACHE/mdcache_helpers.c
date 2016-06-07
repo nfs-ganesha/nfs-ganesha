@@ -305,7 +305,7 @@ void mdcache_dirent_invalidate_all(mdcache_entry_t *entry)
 fsal_status_t
 mdcache_new_entry(struct mdcache_fsal_export *export,
 		  struct fsal_obj_handle *sub_handle,
-		  uint32_t flags,
+		  bool new_directory,
 		  mdcache_entry_t **entry)
 {
 	fsal_status_t status;
@@ -416,7 +416,7 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 
 		/* If the directory is newly created, it is empty.  Because
 		   we know its content, we consider it read. */
-		if (flags & MDCACHE_FLAG_CREATE) {
+		if (new_directory) {
 			atomic_set_uint32_t_bits(&nentry->mde_flags,
 						 MDCACHE_DIR_POPULATED);
 		} else {
@@ -592,8 +592,7 @@ mdcache_locate_keyed(mdcache_key_t *key, struct mdcache_fsal_export *export,
 	LogFullDebug(COMPONENT_CACHE_INODE, "Creating entry");
 
 	/* if all else fails, create a new entry */
-	status = mdcache_new_entry(export, sub_handle, MDCACHE_FLAG_NONE,
-				   entry);
+	status = mdcache_new_entry(export, sub_handle, false, entry);
 
 	if (status.major == ERR_FSAL_EXIST)
 		status = fsalstat(ERR_FSAL_NO_ERROR, 0);
@@ -637,8 +636,7 @@ fsal_status_t mdc_add_cache(mdcache_entry_t *mdc_parent,
 	*new_entry = NULL;
 	LogFullDebug(COMPONENT_CACHE_INODE, "Creating entry for %s", name);
 
-	status = mdcache_new_entry(export, sub_handle, MDCACHE_FLAG_NONE,
-				   new_entry);
+	status = mdcache_new_entry(export, sub_handle, false, new_entry);
 
 	if (FSAL_IS_ERROR(status))
 		return status;
