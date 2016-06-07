@@ -168,13 +168,16 @@ static void mdcache_unexport(struct fsal_export *exp_hdl)
 static void mdcache_exp_release(struct fsal_export *exp_hdl)
 {
 	struct mdcache_fsal_export *exp = mdc_export(exp_hdl);
+	struct fsal_module *fsal_hdl;
+
+	fsal_hdl = exp->sub_export->fsal;
 
 	/* Release the sub_export */
 	subcall_shutdown_raw(exp,
 		exp->sub_export->exp_ops.release(exp->sub_export)
 	);
 
-	fsal_put(exp->sub_export->fsal);
+	fsal_put(fsal_hdl);
 
 	fsal_detach_export(exp_hdl->fsal, &exp_hdl->exports);
 	free_export_ops(exp_hdl);
