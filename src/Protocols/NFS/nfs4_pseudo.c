@@ -151,9 +151,8 @@ out:
 	return;
 }
 
-bool make_pseudofs_node(char *name, void *arg)
+bool make_pseudofs_node(char *name, struct pseudofs_state *state)
 {
-	struct pseudofs_state *state = arg;
 	struct fsal_obj_handle *new_node = NULL;
 	fsal_status_t fsal_status;
 	bool retried = false;
@@ -520,8 +519,7 @@ void pseudo_unmount_export(struct gsh_export *export)
 	if (junction_inode != NULL) {
 		/* Clean up the junction inode */
 
-		/* Take a reference XXX dang I don't think this is necessary */
-		junction_inode->obj_ops.get_ref(junction_inode);
+		/* Don't take a reference; there is a sentinal one */
 
 		/* Release the export lock so we can take take it write */
 		PTHREAD_RWLOCK_unlock(&export->lock);
