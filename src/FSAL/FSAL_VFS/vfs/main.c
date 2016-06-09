@@ -141,6 +141,7 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 #ifdef F_OFD_GETLK
 	int fd, rc;
 	struct flock lock;
+	char *temp_name;
 #endif
 
 	vfs_me->fs_info = default_posix_info;	/* copy the consts */
@@ -150,7 +151,8 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 	 * Only if they exist will we declare lock support.
 	 */
 	LogInfo(COMPONENT_FSAL, "FSAL_VFS testing OFD Locks");
-	fd = open("/tmp/ganesha.nfsd.locktest", O_CREAT | O_RDWR, 0600);
+	temp_name = gsh_strdup("/tmp/ganesha.nfsd.locktestXXXXXX");
+	fd = mkstemp(temp_name);
 	if (fd >= 0) {
 		lock.l_whence = SEEK_SET;
 		lock.l_type = F_RDLCK;
@@ -166,9 +168,13 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 			LogInfo(COMPONENT_FSAL, "Could not use OFD locks");
 
 		close(fd);
+		unlink(temp_name);
 	} else {
-		LogInfo(COMPONENT_FSAL, "Could not open file");
+		LogCrit(COMPONENT_FSAL,
+			"Could not create file %s to test OFD locks",
+			temp_name);
 	}
+	gsh_free(temp_name);
 #endif
 
 	if (vfs_me->fs_info.lock_support)
