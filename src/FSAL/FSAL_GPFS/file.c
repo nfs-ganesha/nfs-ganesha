@@ -55,7 +55,7 @@ gpfs_open2(struct fsal_obj_handle *obj_hdl, fsal_openflags_t openflags,
 		       myself->u.file.openflags == FSAL_O_CLOSED);
 	}
 
-	status = GPFSFSAL_open(obj_hdl, op_ctx, openflags, &fd, NULL, reopen);
+	status = GPFSFSAL_open(obj_hdl, op_ctx, openflags, &fd, reopen);
 	if (FSAL_IS_ERROR(status) == false) {
 		myself->u.file.fd = fd;
 		myself->u.file.openflags = openflags;

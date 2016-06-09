@@ -52,18 +52,13 @@
  *        - FSAL_O_APPEND: always write at the end of the file.
  *        - FSAL_O_TRUNC: truncate the file to 0 on opening.
  * @param file_desc The file descriptor to be used for FSAL_read/write ops.
- * @param fsal_attr Post operation attributes.
- *        As input, it defines the attributes that the caller
- *        wants to retrieve (by positioning flags into this structure)
- *        and the output is built considering this input
- *        (it fills the structure according to the flags it contains).
  *
  * @return ERR_FSAL_NO_ERROR on success, error otherwise
  */
 fsal_status_t
 GPFSFSAL_open(struct fsal_obj_handle *obj_hdl,
 	      const struct req_op_context *op_ctx, fsal_openflags_t openflags,
-	      int *file_desc, struct attrlist *fsal_attr, bool reopen)
+	      int *file_desc, bool reopen)
 {
 	struct gpfs_fsal_obj_handle *myself;
 	struct gpfs_filesystem *gpfs_fs;
@@ -93,20 +88,6 @@ GPFSFSAL_open(struct fsal_obj_handle *obj_hdl,
 						 file_desc, posix_flags,
 						 reopen);
 		fsal_restore_ganesha_credentials();
-
-		if (FSAL_IS_ERROR(status))
-			return status;
-	}
-
-	/* output attributes */
-	if (fsal_attr) {
-		fsal_attr->mask = GPFS_SUPPORTED_ATTRIBUTES;
-		status = GPFSFSAL_getattrs(op_ctx->fsal_export, gpfs_fs,
-					   op_ctx, myself->handle, fsal_attr);
-		if (FSAL_IS_ERROR(status)) {
-			close(*file_desc);
-			return status;
-		}
 	}
 
 	return status;

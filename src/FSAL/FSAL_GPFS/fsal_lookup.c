@@ -138,19 +138,11 @@ GPFSFSAL_lookup(const struct req_op_context *op_ctx,
 	}
 
 	/* get object attributes */
-	if (fsal_attr) {
-		fsal_attr->mask =
-		    op_ctx->fsal_export->exp_ops.
-		    fs_supported_attrs(op_ctx->fsal_export);
-		status = GPFSFSAL_getattrs(op_ctx->fsal_export, gpfs_fs,
-					   op_ctx, fh, fsal_attr);
-		if (FSAL_IS_ERROR(status)) {
-			FSAL_CLEAR_MASK(fsal_attr->mask);
-			FSAL_SET_MASK(fsal_attr->mask, ATTR_RDATTR_ERR);
-		}
-	}
+	status = GPFSFSAL_getattrs(op_ctx->fsal_export, gpfs_fs,
+				   op_ctx, fh, fsal_attr);
+
 	close(parent_fd);
 
 	/* lookup complete ! */
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	return status;
 }

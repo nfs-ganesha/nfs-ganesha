@@ -237,8 +237,7 @@ fsal_status_t GPFSFSAL_mkdir(struct fsal_obj_handle *dir_hdl,
 fsal_status_t GPFSFSAL_link(struct fsal_obj_handle *dir_hdl,
 			    struct gpfs_file_handle *p_target_handle,
 			    const char *p_link_name,
-			    const struct req_op_context *p_context,
-			    struct attrlist *p_attributes);
+			    const struct req_op_context *p_context);
 
 fsal_status_t GPFSFSAL_mknode(struct fsal_obj_handle *dir_hdl,
 			      const char *p_node_name,
@@ -253,7 +252,6 @@ fsal_status_t GPFSFSAL_open(struct fsal_obj_handle *obj_hdl,
 			    const struct req_op_context *p_context,
 			    fsal_openflags_t openflags,
 			    int *p_file_descriptor,
-			    struct attrlist *p_file_attributes,
 			    bool reopen);
 
 fsal_status_t GPFSFSAL_read(int fd,
@@ -304,8 +302,7 @@ fsal_status_t GPFSFSAL_rename(struct fsal_obj_handle *old_hdl,
 fsal_status_t GPFSFSAL_readlink(struct fsal_obj_handle *dir_hdl,
 				const struct req_op_context *p_context,
 				char *p_link_content,
-				size_t *link_len,
-				struct attrlist *p_link_attributes);
+				size_t *link_len);
 
 fsal_status_t GPFSFSAL_symlink(struct fsal_obj_handle *dir_hdl,
 			       const char *p_linkname,
