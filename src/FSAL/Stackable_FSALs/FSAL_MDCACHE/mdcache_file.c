@@ -113,7 +113,7 @@ fsal_status_t mdcache_reopen(struct fsal_obj_handle *obj_hdl,
 	fsal_status_t status;
 
 	subcall(
-		status = entry->sub_handle->obj_ops.open(
+		status = entry->sub_handle->obj_ops.reopen(
 			entry->sub_handle, openflags)
 	       );
 
