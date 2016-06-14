@@ -74,7 +74,6 @@ static inline int avl_dirent_hk_cmpf(const struct avltree_node *lhs,
 }
 
 void avl_dirent_set_deleted(mdcache_entry_t *entry, mdcache_dir_entry_t *v);
-void avl_dirent_clear_deleted(mdcache_entry_t *entry, mdcache_dir_entry_t *v);
 void mdcache_avl_init(mdcache_entry_t *entry);
 int mdcache_avl_qp_insert(mdcache_entry_t *entry, mdcache_dir_entry_t *v);
 

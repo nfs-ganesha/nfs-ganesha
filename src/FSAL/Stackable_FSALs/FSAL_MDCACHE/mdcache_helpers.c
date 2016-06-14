@@ -288,37 +288,36 @@ mdcache_invalidate(mdcache_entry_t *entry, uint32_t flags)
  * should be abstracted.
  *
  * @param[in] entry Directory to have entries be released
- * @param[in] which Caches to clear (dense, sparse, or both)
  *
  */
-void mdcache_release_dirents(mdcache_entry_t *entry, mdcache_avl_which_t which)
+/**
+ * @brief Invalidates and releases all cached entries for a directory
+ *
+ * Invalidates all the entries for a cached directory.  The content
+ * lock must be held for write when this function is called.
+ *
+ * @param[in,out] entry  The directory to be managed
+ *
+ */
+
+void mdcache_dirent_invalidate_all(mdcache_entry_t *entry)
 {
 	struct avltree_node *dirent_node = NULL;
 	struct avltree_node *next_dirent_node = NULL;
-	struct avltree *tree = NULL;
+	struct avltree *tree;
 	mdcache_dir_entry_t *dirent = NULL;
+	int i;
 
 	/* Won't see this */
 	if (entry->obj_handle.type != DIRECTORY)
 		return;
 
-	switch (which) {
-	case MDCACHE_AVL_NAMES:
-		tree = &entry->fsobj.fsdir.avl.t;
-		break;
+	for (i = 0; i < 2; i++) {
+		if (i == 0)
+			tree = &entry->fsobj.fsdir.avl.t;
+		else
+			tree = &entry->fsobj.fsdir.avl.c;
 
-	case MDCACHE_AVL_COOKIES:
-		tree = &entry->fsobj.fsdir.avl.c;
-		break;
-
-	case MDCACHE_AVL_BOTH:
-		mdcache_release_dirents(entry, MDCACHE_AVL_NAMES);
-		mdcache_release_dirents(entry, MDCACHE_AVL_COOKIES);
-		/* tree == NULL */
-		break;
-	}
-
-	if (tree) {
 		dirent_node = avltree_first(tree);
 
 		while (dirent_node) {
@@ -339,6 +338,9 @@ void mdcache_release_dirents(mdcache_entry_t *entry, mdcache_avl_which_t which)
 						   MDCACHE_DIR_POPULATED);
 		}
 	}
+
+	/* Now we can trust the content */
+	atomic_set_uint32_t_bits(&entry->mde_flags, MDCACHE_TRUST_CONTENT);
 }
 
 /**
@@ -692,6 +694,7 @@ fsal_status_t mdc_add_cache(mdcache_entry_t *mdc_parent,
 
 	status = mdcache_new_entry(export, sub_handle, MDCACHE_FLAG_NONE,
 				   new_entry);
+
 	if (FSAL_IS_ERROR(status))
 		return status;
 
@@ -1045,9 +1048,11 @@ mdcache_dirent_add(mdcache_entry_t *parent, const char *name,
 	/* add to avl */
 	code = mdcache_avl_qp_insert(parent, new_dir_entry);
 	if (code < 0) {
-		/* collision, tree not updated--release both pool objects and
-		 * return err */
-		gsh_free(new_dir_entry->ckey.kv.addr);
+		/* Technically only a -2 is a name collision, however, we will
+		 * treat a hash collision (which per current code we should
+		 * never actually see) the same.
+		 */
+		mdcache_key_delete(&new_dir_entry->ckey);
 		gsh_free(new_dir_entry);
 		return fsalstat(ERR_FSAL_EXIST, 0);
 	}
@@ -1126,8 +1131,8 @@ mdcache_dirent_rename(mdcache_entry_t *parent, const char *oldname,
 
 			(void)mdcache_find_keyed(&dirent2->ckey, &oldentry);
 
-			avl_dirent_set_deleted(parent, dirent);
 			mdcache_key_dup(&dirent2->ckey, &dirent->ckey);
+			avl_dirent_set_deleted(parent, dirent);
 
 			if (oldentry) {
 				/* if it is still around, mark it
@@ -1145,20 +1150,30 @@ mdcache_dirent_rename(mdcache_entry_t *parent, const char *oldname,
 
 	/* Size (including terminating NULL) of the filename */
 	size_t newnamesize = strlen(newname) + 1;
+
 	/* try to rename--no longer in-place */
 	dirent2 = gsh_malloc(sizeof(mdcache_dir_entry_t) + newnamesize);
 	memcpy(dirent2->name, newname, newnamesize);
 	dirent2->flags = DIR_ENTRY_FLAG_NONE;
 	mdcache_key_dup(&dirent2->ckey, &dirent->ckey);
+
+	/* Delete the old entry for newname */
 	avl_dirent_set_deleted(parent, dirent);
+
+	/* Insert a new entry for newname */
 	code = mdcache_avl_qp_insert(parent, dirent2);
+
+	/* We should not be able to have a name collision. */
+	assert(code != -2);
+
 	if (code < 0) {
-		/* collision, tree state unchanged (unlikely) */
-		/* dirent is on persist tree, undelete it */
-		avl_dirent_clear_deleted(parent, dirent);
-		/* dirent3 was never inserted */
+		/* We had a hash collision (impossible for all practical
+		 * purposes). Just abandon...
+		 */
+		/* dirent2 was never inserted */
+		mdcache_key_delete(&dirent2->ckey);
 		gsh_free(dirent2);
-		return fsalstat(ERR_FSAL_EXIST, 0);
+		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 	}
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
@@ -1194,8 +1209,7 @@ static bool
 mdc_populate_dirent(const char *name, struct fsal_obj_handle *sub_handle,
 		    void *dir_state, fsal_cookie_t cookie)
 {
-	struct mdcache_populate_cb_state *state =
-	    (struct mdcache_populate_cb_state *)dir_state;
+	struct mdcache_populate_cb_state *state = dir_state;
 	mdcache_entry_t *child;
 	fsal_status_t status = { 0, 0 };
 	mdcache_entry_t *directory = container_of(&state->dir->obj_handle,
@@ -1217,7 +1231,7 @@ mdc_populate_dirent(const char *name, struct fsal_obj_handle *sub_handle,
 		LogInfo(COMPONENT_CACHE_INODE,
 			"Lookup failed on %s in dir %p with %s",
 			name, directory, fsal_err_txt(*state->status));
-		return !mdcache_param.retry_readdir;
+		return false;
 	}
 
 	/* return initial ref */

@@ -85,45 +85,34 @@ avltree_inline_lookup(
 void
 avl_dirent_set_deleted(mdcache_entry_t *entry, mdcache_dir_entry_t *v)
 {
-	struct avltree *t = &entry->fsobj.fsdir.avl.t;
 	struct avltree_node *node;
 
 	assert(!(v->flags & DIR_ENTRY_FLAG_DELETED));
 
-	node = avltree_inline_lookup(&v->node_hk, t);
+	node = avltree_inline_lookup(&v->node_hk, &entry->fsobj.fsdir.avl.t);
 	assert(node);
 	avltree_remove(&v->node_hk, &entry->fsobj.fsdir.avl.t);
-
-#if EXTRA_CHECK_DELETED_WORKED
-	node = avltree_inline_lookup(&v->node_hk, c);
-	assert(!node);
-#endif
 
 	v->flags |= DIR_ENTRY_FLAG_DELETED;
 	mdcache_key_delete(&v->ckey);
 
 	/* save cookie in deleted avl */
-	avltree_insert(&v->node_hk, &entry->fsobj.fsdir.avl.c);
-}
-
-void
-avl_dirent_clear_deleted(mdcache_entry_t *entry, mdcache_dir_entry_t *v)
-{
-	struct avltree *t = &entry->fsobj.fsdir.avl.t;
-	struct avltree *c = &entry->fsobj.fsdir.avl.c;
-	struct avltree_node *node;
-
-	node = avltree_inline_lookup(&v->node_hk, c);
-	assert(node);
-	avltree_remove(&v->node_hk, c);
-	memset(&v->node_hk, 0, sizeof(struct avltree_node));
-
-	node = avltree_insert(&v->node_hk, t);
+	node = avltree_insert(&v->node_hk, &entry->fsobj.fsdir.avl.c);
 	assert(!node);
-
-	v->flags &= ~DIR_ENTRY_FLAG_DELETED;
 }
 
+/**
+ * @brief Insert a dirent into the cache.
+ *
+ * @param[in] entry The cache entry the dirent points to
+ * @param[in] v     The dirent
+ * @param[in] j     Part of iteration count
+ * @param[in] j2    Part of iterarion count
+ *
+ * @retval 0  Success
+ * @retval -1 Failure
+ *
+ */
 static inline int
 mdcache_avl_insert_impl(mdcache_entry_t *entry, mdcache_dir_entry_t *v,
 			int j, int j2)
@@ -146,38 +135,22 @@ mdcache_avl_insert_impl(mdcache_entry_t *entry, mdcache_dir_entry_t *v,
 		node = avltree_first(c);
 	}
 
-	/* We can't really re-use slots safely, since filenames can
-	   have wildly differing lengths. */
-#if 0
 	if (node) {
-		/* reuse the slot */
-		v_exist =
-		    avltree_container_of(node, mdcache_dir_entry_t,
-					 node_hk);
-		FSAL_namecpy(&v_exist->name, &v->name);
-		v_exist->entry = v->entry;
-		avl_dirent_clear_deleted(entry, v_exist);
-		v = v_exist;
-		code = 1;	/* tell client to dispose v */
-	} else {
-		/* try to insert active */
-		node = avltree_insert(&v->node_hk, t);
-		if (!node)
-			code = 0;
-	}
-#endif				/* 0 */
+		/* We can't really re-use slots safely since filenames can
+		 * have wildly differing lengths, so remove and free the
+		 * "deleted" entry.
+		 */
+		mdcache_dir_entry_t *dirent =
+		   avltree_container_of(node, mdcache_dir_entry_t, node_hk);
 
-	if (node) {
-		/* XXX dang I think this leaks */
 		avltree_remove(node, c);
+		gsh_free(dirent);
 		node = NULL;
 	}
-	node = avltree_insert(&v->node_hk, t);
-	if (!node)
-		code = 0;
 
-	switch (code) {
-	case 0:
+	node = avltree_insert(&v->node_hk, t);
+
+	if (!node) {
 		/* success, note iterations */
 		v->hk.p = j + j2;
 		if (entry->fsobj.fsdir.avl.collisions < v->hk.p)
@@ -187,14 +160,13 @@ mdcache_avl_insert_impl(mdcache_entry_t *entry, mdcache_dir_entry_t *v,
 			 "inserted new dirent for %s on entry=%p cookie=%"
 			 PRIu64 " collisions %d", v->name, entry, v->hk.k,
 			 entry->fsobj.fsdir.avl.collisions);
-		break;
-	default:
+		code = 0;
+	} else {
 		/* already inserted, or, keep trying at current j, j2 */
 		LogDebug(COMPONENT_CACHE_INODE,
 			"Already existent when inserting new dirent on entry=%p name=%s, cookie=%"
 			PRIu64 " this should never happen.",
 			entry, v->name, v->hk.k);
-		break;
 	}
 	return code;
 }
@@ -211,6 +183,14 @@ mdcache_avl_insert_impl(mdcache_entry_t *entry, mdcache_dir_entry_t *v,
  *
  * On return, the stored key is in v->hk.k, the iteration
  * count in v->hk.p.
+ *
+ * @param[in] entry The cache entry
+ * @param[in] v     The dirent
+ *
+ * @retval 0   Success
+ * @retval -1  Hash collision after 2^65 attempts
+ * @retval -2  Name collision
+ *
  **/
 int
 mdcache_avl_qp_insert(mdcache_entry_t *entry, mdcache_dir_entry_t *v)
