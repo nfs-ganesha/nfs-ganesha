@@ -87,7 +87,8 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 		goto out;
 
 
-	fsal_status = fsal_lookup(data->current_obj, secinfo_fh_name, &obj_src);
+	fsal_status = fsal_lookup(data->current_obj, secinfo_fh_name,
+				  &obj_src, NULL);
 
 	if (obj_src == NULL) {
 		res_SECINFO4->status = nfs4_Errno_status(fsal_status);

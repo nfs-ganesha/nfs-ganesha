@@ -116,7 +116,7 @@ int _9p_walk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 			/* refcount +1 */
 			fsal_status = fsal_lookup(pentry, name,
-						  &pnewfid->pentry);
+						  &pnewfid->pentry, NULL);
 			if (FSAL_IS_ERROR(fsal_status)) {
 				gsh_free(pnewfid);
 				return _9p_rerror(req9p, msgtag,

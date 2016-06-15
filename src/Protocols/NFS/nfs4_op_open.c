@@ -507,7 +507,8 @@ bool open4_open_owner(struct nfs_argop4 *op, compound_data_t *data,
 
 				status = fsal_lookup(data->current_obj,
 						     filename,
-						     &obj_lookup);
+						     &obj_lookup,
+						     NULL);
 				if (filename) {
 					gsh_free(filename);
 					filename = NULL;
@@ -680,7 +681,8 @@ static nfsstat4 open4_create(OPEN4args *arg, compound_data_t *data,
 			     REGULAR_FILE,
 			     &sattr,
 			     NULL,
-			     &obj_newfile);
+			     &obj_newfile,
+			     NULL);
 
 	/* Complete failure */
 	if ((FSAL_IS_ERROR(status))
@@ -788,7 +790,7 @@ static nfsstat4 open4_claim_null(OPEN4args *arg, compound_data_t *data,
 		break;
 
 	case OPEN4_NOCREATE:
-		fsal_status = fsal_lookup(parent, filename, obj);
+		fsal_status = fsal_lookup(parent, filename, obj, NULL);
 
 		if (FSAL_IS_ERROR(fsal_status))
 			nfs_status = nfs4_Errno_status(fsal_status);
@@ -850,7 +852,8 @@ static nfsstat4 open4_claim_deleg(OPEN4args *arg, compound_data_t *data)
 	}
 
 	/* Does a file with this name already exist ? */
-	fsal_status = fsal_lookup(data->current_obj, filename, &obj_lookup);
+	fsal_status = fsal_lookup(data->current_obj, filename,
+				  &obj_lookup, NULL);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		LogDebug(COMPONENT_NFS_V4, "%s lookup failed.", filename);
@@ -1244,7 +1247,7 @@ static void open4_ex(OPEN4args *arg,
 				goto out;
 		}
 
-		status = fsal_lookup(parent, filename, &file_obj);
+		status = fsal_lookup(parent, filename, &file_obj, NULL);
 
 		if (!FSAL_IS_ERROR(status)) {
 			/* Check create situations. */
@@ -1434,7 +1437,8 @@ static void open4_ex(OPEN4args *arg,
 				    filename,
 				    &sattr,
 				    verifier,
-				    &out_obj);
+				    &out_obj,
+				    NULL);
 
 		if (FSAL_IS_ERROR(status)) {
 			res_OPEN4->status = nfs4_Errno_status(status);

@@ -269,12 +269,10 @@ fsal_status_t vfs_merge(struct fsal_obj_handle *orig_hdl,
  *
  * On an exclusive create, the upper layer may know the object handle
  * already, so it MAY call with name == NULL. In this case, the caller
- * expects just to check the verifier. The caller must hold the attr_lock
- * since the FSAL will update the attributes in checking the verifier.
+ * expects just to check the verifier.
  *
  * On a call with an existing object handle for an UNCHECKED create,
- * we can set the size to 0, because of this, the caller must hold the
- * attr_lock to update the attributes.
+ * we can set the size to 0.
  *
  * If attributes are not set on create, the FSAL will set some minimal
  * attributes (for example, mode might be set to 0600).
@@ -284,14 +282,29 @@ fsal_status_t vfs_merge(struct fsal_obj_handle *orig_hdl,
  * open. This is because the permission attributes were not available
  * beforehand.
  *
+ * The caller is expected to invoke fsal_release_attrs to release any
+ * resources held by the set attributes. The FSAL layer MAY have added an
+ * inherited ACL.
+ *
+ * The mask should be set in attrs_out indicating which attributes are
+ * desired. Note that since this implies a new object is created, if
+ * the attributes are not fetched, the fsal_obj_handle itself would not
+ * be able to be created and the whole request will fail.
+ *
+ * The attributes will not be returned if this is an open by object as
+ * opposed to an open by name.
+ *
+ * @note If the file was created, @a new_obj has been ref'd
+ *
  * @param[in] obj_hdl               File to open or parent directory
  * @param[in,out] state             state_t to use for this operation
  * @param[in] openflags             Mode for open
  * @param[in] createmode            Mode for create
  * @param[in] name                  Name for file if being created or opened
- * @param[in] attrib_set            Attributes to set on created file
+ * @param[in] attrs_in              Attributes to set on created file
  * @param[in] verifier              Verifier to use for exclusive create
  * @param[in,out] new_obj           Newly created object
+ * @param[in,out] attrs_out         Optional attributes for newly created object
  * @param[in,out] caller_perm_check The caller must do a permission check
  *
  * @return FSAL status.
@@ -305,6 +318,7 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 			struct attrlist *attrib_set,
 			fsal_verifier_t verifier,
 			struct fsal_obj_handle **new_obj,
+			struct attrlist *attrs_out,
 			bool *caller_perm_check)
 {
 	int posix_flags = 0;
@@ -664,6 +678,28 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 			*new_obj = NULL;
 			goto fileerr;
 		}
+
+		if (attrs_out != NULL) {
+			status = (*new_obj)->obj_ops.getattrs(*new_obj,
+							      attrs_out);
+			if (FSAL_IS_ERROR(status) &&
+			    (attrs_out->mask & ATTR_RDATTR_ERR) == 0) {
+				/* Get attributes failed and caller expected
+				 * to get the attributes. Otherwise continue
+				 * with attrs_out indicating ATTR_RDATTR_ERR.
+				 */
+				goto fileerr;
+			}
+		}
+	} else if (attrs_out != NULL) {
+		/* Since we haven't set any attributes other than what was set
+		 * on create (if we even created), just use the stat results
+		 * we used to create the fsal_obj_handle.
+		 */
+		posix2fsal_attributes(&stat, attrs_out);
+
+		/* Make sure ATTR_RDATTR_ERR is cleared on success. */
+		attrs_out->mask &= ~ATTR_RDATTR_ERR;
 	}
 
 	close(dir_fd);
@@ -1401,9 +1437,10 @@ fsal_status_t fetch_attrs(struct vfs_fsal_obj_handle *myself,
 		status =
 		   myself->sub_ops->getattrs(myself, my_fd, attrs->mask, attrs);
 
-		if (FSAL_IS_ERROR(status)) {
-			FSAL_CLEAR_MASK(attrs->mask);
-			FSAL_SET_MASK(attrs->mask, ATTR_RDATTR_ERR);
+		if (FSAL_IS_ERROR(status) &&
+		    (attrs->mask & ATTR_RDATTR_ERR) != 0) {
+			/* Caller asked for error to be visible. */
+			attrs->mask = ATTR_RDATTR_ERR;
 		}
 	}
 

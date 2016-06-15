@@ -173,67 +173,6 @@ fsal_status_t rgw2fsal_error(const int rgw_errorcode)
 }
 
 /**
- * @brief Convert a struct stat from RGW to a struct attrlist
- *
- * This function writes the content of the supplied struct stat to the
- * struct fsalsattr.
- *
- * @param[in]  buffstat Stat structure
- * @param[out] fsalattr FSAL attributes
- */
-
-void rgw2fsal_attributes(const struct stat *buffstat,
-			  struct attrlist *fsalattr)
-{
-	FSAL_CLEAR_MASK(fsalattr->mask);
-
-	/* Fills the output struct */
-	fsalattr->type = posix2fsal_type(buffstat->st_mode);
-	FSAL_SET_MASK(fsalattr->mask, ATTR_TYPE);
-
-	fsalattr->filesize = buffstat->st_size;
-	FSAL_SET_MASK(fsalattr->mask, ATTR_SIZE);
-
-	fsalattr->fsid = posix2fsal_fsid(buffstat->st_dev);
-	FSAL_SET_MASK(fsalattr->mask, ATTR_FSID);
-
-	fsalattr->fileid = buffstat->st_ino;
-	FSAL_SET_MASK(fsalattr->mask, ATTR_FILEID);
-
-	fsalattr->mode = unix2fsal_mode(buffstat->st_mode);
-	FSAL_SET_MASK(fsalattr->mask, ATTR_MODE);
-
-	fsalattr->numlinks = buffstat->st_nlink;
-	FSAL_SET_MASK(fsalattr->mask, ATTR_NUMLINKS);
-
-	fsalattr->owner = buffstat->st_uid;
-	FSAL_SET_MASK(fsalattr->mask, ATTR_OWNER);
-
-	fsalattr->group = buffstat->st_gid;
-	FSAL_SET_MASK(fsalattr->mask, ATTR_GROUP);
-
-	fsalattr->atime = posix2fsal_time(buffstat->st_atime, 0);
-	FSAL_SET_MASK(fsalattr->mask, ATTR_ATIME);
-
-	fsalattr->ctime = posix2fsal_time(buffstat->st_ctime, 0);
-	FSAL_SET_MASK(fsalattr->mask, ATTR_CTIME);
-
-	fsalattr->mtime = posix2fsal_time(buffstat->st_mtime, 0);
-	FSAL_SET_MASK(fsalattr->mask, ATTR_MTIME);
-
-	fsalattr->chgtime =
-	    posix2fsal_time(MAX(buffstat->st_mtime, buffstat->st_ctime), 0);
-	fsalattr->change = fsalattr->chgtime.tv_sec;
-	FSAL_SET_MASK(fsalattr->mask, ATTR_CHGTIME);
-
-	fsalattr->spaceused = buffstat->st_blocks * S_BLKSIZE;
-	FSAL_SET_MASK(fsalattr->mask, ATTR_SPACEUSED);
-
-	fsalattr->rawdev = posix2fsal_devt(buffstat->st_rdev);
-	FSAL_SET_MASK(fsalattr->mask, ATTR_RAWDEV);
-}
-
-/**
  * @brief Construct a new filehandle
  *
  * This function constructs a new RGW FSAL object handle and attaches

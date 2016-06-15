@@ -110,7 +110,8 @@ int nfs3_readlink(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		res->res_readlink3.status = nfs3_Errno_status(fsal_status);
 		nfs_SetPostOpAttr(obj,
 				  &res->res_readlink3.READLINK3res_u.resfail.
-				  symlink_attributes);
+					symlink_attributes,
+				  NULL);
 
 		if (nfs_RetryableError(fsal_status.major))
 			rc = NFS_REQ_DROP;
@@ -123,7 +124,8 @@ int nfs3_readlink(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	nfs_SetPostOpAttr(obj,
 			  &res->res_readlink3.READLINK3res_u.
-			  resok.symlink_attributes);
+				resok.symlink_attributes,
+			  NULL);
 	res->res_readlink3.status = NFS3_OK;
 
 	rc = NFS_REQ_OK;

@@ -142,7 +142,7 @@ static state_status_t lock_grant(struct fsal_export *export,
 	struct fsal_obj_handle *obj;
 	fsal_status_t status;
 
-	status = export->exp_ops.create_handle(export, file, &obj);
+	status = export->exp_ops.create_handle(export, file, &obj, NULL);
 	if (FSAL_IS_ERROR(status))
 		return STATE_NOT_FOUND;
 
@@ -169,7 +169,7 @@ static state_status_t lock_avail(struct fsal_export *export,
 	struct fsal_obj_handle *obj;
 	fsal_status_t status;
 
-	status = export->exp_ops.create_handle(export, file, &obj);
+	status = export->exp_ops.create_handle(export, file, &obj, NULL);
 	if (FSAL_IS_ERROR(status))
 		return STATE_NOT_FOUND;
 
@@ -406,7 +406,7 @@ state_status_t layoutrecall(struct fsal_export *export,
 	state_owner_t *owner = NULL;
 
 	rc = state_error_convert(export->exp_ops.create_handle(export, handle,
-							       &obj));
+							       &obj, NULL));
 	if (rc != STATE_SUCCESS)
 		return rc;
 
@@ -1586,7 +1586,7 @@ state_status_t delegrecall(struct fsal_export *export,
 	}
 
 	rc = state_error_convert(export->exp_ops.create_handle(export, handle,
-							       &obj));
+							       &obj, NULL));
 	if (rc != STATE_SUCCESS) {
 		LogDebug(COMPONENT_FSAL_UP,
 			 "FSAL_UP_DELEG: cache inode get failed, rc %d", rc);

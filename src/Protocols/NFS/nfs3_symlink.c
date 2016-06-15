@@ -71,7 +71,11 @@ int nfs3_symlink(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	pre_op_attr pre_parent;
 	fsal_status_t fsal_status;
 	int rc = NFS_REQ_OK;
-	struct attrlist sattr;
+	struct attrlist sattr, attrs;
+
+	/* We have the option of not sending attributes, so set ATTR_RDATTR_ERR.
+	 */
+	fsal_prepare_attrs(&attrs, ATTRS_NFS3 | ATTR_RDATTR_ERR);
 
 	memset(&sattr, 0, sizeof(sattr));
 
@@ -152,7 +156,7 @@ int nfs3_symlink(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	/* Make the symlink */
 	fsal_status = fsal_create(parent_obj, symlink_name, SYMBOLIC_LINK,
-				  &sattr, target_path, &symlink_obj);
+				  &sattr, target_path, &symlink_obj, &attrs);
 
 	/* Release the attributes (may release an inherited ACL) */
 	fsal_release_attrs(&sattr);
@@ -176,7 +180,8 @@ int nfs3_symlink(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	/* Build entry attributes */
 	nfs_SetPostOpAttr(symlink_obj,
 			  &res->res_symlink3.SYMLINK3res_u.resok.
-			  obj_attributes);
+				obj_attributes,
+			  &attrs);
 
 	/* Build Weak Cache Coherency data */
 	nfs_SetWccData(&pre_parent, parent_obj,
@@ -197,6 +202,10 @@ int nfs3_symlink(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		rc = NFS_REQ_DROP;
 
  out:
+
+	/* Release the attributes. */
+	fsal_release_attrs(&attrs);
+
 	/* return references */
 	if (parent_obj)
 		parent_obj->obj_ops.put_ref(parent_obj);

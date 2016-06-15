@@ -102,8 +102,9 @@ int nfs3_pathconf(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	/* Build post op file attributes */
 	nfs_SetPostOpAttr(obj,
-			  &(res->res_pathconf3.PATHCONF3res_u.resok.
-			    obj_attributes));
+			  &res->res_pathconf3.PATHCONF3res_u.resok.
+			    obj_attributes,
+			  NULL);
 
  out:
 

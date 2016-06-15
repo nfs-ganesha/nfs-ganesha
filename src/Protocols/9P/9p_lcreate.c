@@ -133,7 +133,8 @@ int _9p_lcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 					 file_name,
 					 &sattr,
 					 verifier,
-					 &pentry_newfile);
+					 &pentry_newfile,
+					 NULL);
 
 		/* Release the attributes (may release an inherited ACL) */
 		fsal_release_attrs(&sattr);
@@ -155,7 +156,7 @@ int _9p_lcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		 * flags is not yet used
 		 */
 		fsal_status = fsal_create(pfid->pentry, file_name, REGULAR_FILE,
-					  &sattr, NULL, &pentry_newfile);
+					  &sattr, NULL, &pentry_newfile, NULL);
 
 		/* Release the attributes (may release an inherited ACL) */
 		fsal_release_attrs(&sattr);

@@ -267,7 +267,9 @@ int nfs3_readdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	/* Fills ".." */
 	if ((cookie <= 1) && (estimated_num_entries > 1)) {
 		/* Get parent pentry */
-		fsal_status_gethandle = fsal_lookupp(dir_obj, &parent_dir_obj);
+		fsal_status_gethandle = fsal_lookupp(dir_obj,
+						     &parent_dir_obj,
+						     NULL);
 
 		if (parent_dir_obj == NULL) {
 			res->res_readdir3.status =
@@ -302,7 +304,8 @@ int nfs3_readdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		res->res_readdir3.status = nfs3_Errno_status(fsal_status);
 		nfs_SetPostOpAttr(dir_obj,
 				  &res->res_readdir3.READDIR3res_u.resfail.
-				  dir_attributes);
+					dir_attributes,
+				  NULL);
 		goto out;
 	}
 
@@ -310,7 +313,8 @@ int nfs3_readdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		res->res_readdir3.status = tracker.error;
 		nfs_SetPostOpAttr(dir_obj,
 				  &res->res_readdir3.READDIR3res_u.resfail.
-				  dir_attributes);
+					dir_attributes,
+				  NULL);
 		goto out;
 	}
 
@@ -326,7 +330,7 @@ int nfs3_readdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		RES_READDIR3_OK->reply.entries = tracker.entries;
 		RES_READDIR3_OK->reply.eof = eod_met;
 	}
-	nfs_SetPostOpAttr(dir_obj, &RES_READDIR3_OK->dir_attributes);
+	nfs_SetPostOpAttr(dir_obj, &RES_READDIR3_OK->dir_attributes, NULL);
 	memcpy(RES_READDIR3_OK->cookieverf, cookie_verifier,
 	       sizeof(cookieverf3));
 	res->res_readdir3.status = NFS3_OK;

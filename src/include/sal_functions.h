@@ -733,7 +733,7 @@ static inline struct fsal_obj_handle *get_state_obj_ref(state_t *state)
 	fh_desc.len = state->state_obj.len;
 	fsal_status =
 	  state->state_export->fsal_export->exp_ops.create_handle(
-		state->state_export->fsal_export, &fh_desc, &obj);
+		state->state_export->fsal_export, &fh_desc, &obj, NULL);
 
 	op_ctx->export = save_exp;
 	op_ctx->fsal_export = save_fsal;

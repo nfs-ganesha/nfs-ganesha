@@ -138,7 +138,7 @@ int mnt_Mnt(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		if (FSAL_IS_ERROR(op_ctx->fsal_export->exp_ops.lookup_path(
 						op_ctx->fsal_export,
 						arg->arg_mnt,
-						&obj))) {
+						&obj, NULL))) {
 			res->res_mnt3.fhs_status = MNT3ERR_ACCES;
 			goto out;
 		}

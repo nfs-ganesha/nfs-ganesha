@@ -201,7 +201,7 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 
 not_junction:
 
-	status = fsal_lookupp(dir_obj, &file_obj);
+	status = fsal_lookupp(dir_obj, &file_obj, NULL);
 
 	if (file_obj != NULL) {
 		/* Convert it to a file handle */

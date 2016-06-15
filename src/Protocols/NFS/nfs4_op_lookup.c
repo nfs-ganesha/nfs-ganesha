@@ -103,7 +103,7 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* Sanity check: dir_obj should be ACTUALLY a directory */
 
-	status = fsal_lookup(dir_obj, name, &file_obj);
+	status = fsal_lookup(dir_obj, name, &file_obj, NULL);
 	if (FSAL_IS_ERROR(status)) {
 		res_LOOKUP4->status = nfs4_Errno_status(status);
 		goto out;

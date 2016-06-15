@@ -90,7 +90,8 @@ static struct gpfs_fsal_obj_handle *alloc_handle(struct gpfs_file_handle *fh,
  * deprecated NULL parent && NULL path implies root handle
  */
 static fsal_status_t lookup(struct fsal_obj_handle *parent,
-			    const char *path, struct fsal_obj_handle **handle)
+			    const char *path, struct fsal_obj_handle **handle,
+			    struct attrlist *attrs_out)
 {
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval = 0;
@@ -130,8 +131,13 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 	/* allocate an obj_handle and fill it up */
 	hdl = alloc_handle(fh, fs, &attrib, NULL, op_ctx->fsal_export);
 
-	/* Done with the attrs */
-	fsal_release_attrs(&attrib);
+	if (attrs_out != NULL) {
+		/* Copy the attributes to caller, passing ACL ref. */
+		fsal_copy_attrs(attrs_out, &attrib, true);
+	} else {
+		/* Done with the attrs */
+		fsal_release_attrs(&attrib);
+	}
 
 	*handle = &hdl->obj_handle;
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
@@ -146,7 +152,8 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
  */
 static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 			    const char *name, struct attrlist *attr_in,
-			    struct fsal_obj_handle **handle)
+			    struct fsal_obj_handle **handle,
+			    struct attrlist *attrs_out)
 {
 	struct gpfs_fsal_obj_handle *hdl;
 	fsal_status_t status;
@@ -175,8 +182,13 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 	/* allocate an obj_handle and fill it up */
 	hdl = alloc_handle(fh, dir_hdl->fs, &attrib, NULL, op_ctx->fsal_export);
 
-	/* Done with the attrs */
-	fsal_release_attrs(&attrib);
+	if (attrs_out != NULL) {
+		/* Copy the attributes to caller, passing ACL ref. */
+		fsal_copy_attrs(attrs_out, &attrib, true);
+	} else {
+		/* Done with the attrs */
+		fsal_release_attrs(&attrib);
+	}
 
 	*handle = &hdl->obj_handle;
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
@@ -184,7 +196,8 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 
 static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 			     const char *name, struct attrlist *attr_in,
-			     struct fsal_obj_handle **handle)
+			     struct fsal_obj_handle **handle,
+			     struct attrlist *attrs_out)
 {
 	struct gpfs_fsal_obj_handle *hdl;
 	fsal_status_t status;
@@ -212,8 +225,13 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 	/* allocate an obj_handle and fill it up */
 	hdl = alloc_handle(fh, dir_hdl->fs, &attrib, NULL, op_ctx->fsal_export);
 
-	/* Done with the attrs */
-	fsal_release_attrs(&attrib);
+	if (attrs_out != NULL) {
+		/* Copy the attributes to caller, passing ACL ref. */
+		fsal_copy_attrs(attrs_out, &attrib, true);
+	} else {
+		/* Done with the attrs */
+		fsal_release_attrs(&attrib);
+	}
 
 	*handle = &hdl->obj_handle;
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
@@ -223,7 +241,8 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 			      const char *name, object_file_type_t nodetype,
 			      fsal_dev_t *dev,
 			      struct attrlist *attr_in,
-			      struct fsal_obj_handle **handle)
+			      struct fsal_obj_handle **handle,
+			      struct attrlist *attrs_out)
 {
 	fsal_status_t status;
 	struct gpfs_fsal_obj_handle *hdl;
@@ -253,8 +272,13 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 	/* allocate an obj_handle and fill it up */
 	hdl = alloc_handle(fh, dir_hdl->fs, &attrib, NULL, op_ctx->fsal_export);
 
-	/* Done with the attrs */
-	fsal_release_attrs(&attrib);
+	if (attrs_out != NULL) {
+		/* Copy the attributes to caller, passing ACL ref. */
+		fsal_copy_attrs(attrs_out, &attrib, true);
+	} else {
+		/* Done with the attrs */
+		fsal_release_attrs(&attrib);
+	}
 
 	*handle = &hdl->obj_handle;
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
@@ -268,7 +292,8 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 				 const char *name, const char *link_path,
 				 struct attrlist *attr_in,
-				 struct fsal_obj_handle **handle)
+				 struct fsal_obj_handle **handle,
+				 struct attrlist *attrs_out)
 {
 	fsal_status_t status;
 	struct gpfs_fsal_obj_handle *hdl;
@@ -297,8 +322,13 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 	hdl = alloc_handle(fh, dir_hdl->fs, &attrib, link_path,
 			   op_ctx->fsal_export);
 
-	/* Done with the attrs */
-	fsal_release_attrs(&attrib);
+	if (attrs_out != NULL) {
+		/* Copy the attributes to caller, passing ACL ref. */
+		fsal_copy_attrs(attrs_out, &attrib, true);
+	} else {
+		/* Done with the attrs */
+		fsal_release_attrs(&attrib);
+	}
 
 	*handle = &hdl->obj_handle;
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
@@ -383,7 +413,8 @@ static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
  */
 static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 				  fsal_cookie_t *whence, void *dir_state,
-				  fsal_readdir_cb cb, bool *eof)
+				  fsal_readdir_cb cb, attrmask_t attrmask,
+				  bool *eof)
 {
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval = 0;
@@ -425,22 +456,30 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 			break;
 		for (bpos = 0; bpos < nread;) {
 			struct fsal_obj_handle *hdl;
+			struct attrlist attrs;
+			bool cb_rc;
+
 			dentry = (struct dirent64 *)(buf + bpos);
 			if (strcmp(dentry->d_name, ".") == 0
 			    || strcmp(dentry->d_name, "..") == 0)
 				goto skip;	/* must skip '.' and '..' */
 
-			status = lookup(dir_hdl, dentry->d_name, &hdl);
+			fsal_prepare_attrs(&attrs, attrmask);
+
+			status = lookup(dir_hdl, dentry->d_name, &hdl, &attrs);
 			if (FSAL_IS_ERROR(status)) {
 				fsal_error = status.major;
 				goto done;
 			}
 
 			/* callback to cache inode */
-			if (!cb(dentry->d_name, hdl, dir_state,
-				(fsal_cookie_t) dentry->d_off)) {
+			cb_rc = cb(dentry->d_name, hdl, &attrs, dir_state,
+				   (fsal_cookie_t) dentry->d_off);
+
+			fsal_release_attrs(&attrs);
+
+			if (!cb_rc)
 				goto done;
-			}
  skip:
 			bpos += dentry->d_reclen;
 			cnt++;
@@ -940,7 +979,8 @@ void gpfs_handle_ops_init(struct fsal_obj_ops *ops)
  */
 fsal_status_t gpfs_lookup_path(struct fsal_export *exp_hdl,
 			       const char *path,
-			       struct fsal_obj_handle **handle)
+			       struct fsal_obj_handle **handle,
+			       struct attrlist *attrs_out)
 {
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	fsal_status_t fsal_status;
@@ -1018,11 +1058,19 @@ fsal_status_t gpfs_lookup_path(struct fsal_export *exp_hdl,
 		 "filesystem %s for path %s",
 		 fs->path, path);
 
+	/* Make sure ATTR_RDATTR_ERR is cleared on success. */
+	attributes.mask &= ~ATTR_RDATTR_ERR;
+
 	/* allocate an obj_handle and fill it up */
 	hdl = alloc_handle(fh, fs, &attributes, NULL, exp_hdl);
 
-	/* Done with attributes */
-	fsal_release_attrs(&attributes);
+	if (attrs_out != NULL) {
+		/* Copy the attributes to caller, passing ACL ref. */
+		fsal_copy_attrs(attrs_out, &attributes, true);
+	} else {
+		/* Done with the attrs */
+		fsal_release_attrs(&attributes);
+	}
 
 	*handle = &hdl->obj_handle;
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
@@ -1060,7 +1108,8 @@ fsal_status_t gpfs_lookup_path(struct fsal_export *exp_hdl,
  */
 fsal_status_t gpfs_create_handle(struct fsal_export *exp_hdl,
 				 struct gsh_buffdesc *hdl_desc,
-				 struct fsal_obj_handle **handle)
+				 struct fsal_obj_handle **handle,
+				 struct attrlist *attrs_out)
 {
 	int retval = 0;
 	fsal_status_t status;
@@ -1128,8 +1177,13 @@ fsal_status_t gpfs_create_handle(struct fsal_export *exp_hdl,
 
 	hdl = alloc_handle(fh, fs, &attrib, link_content, exp_hdl);
 
-	/* Done with attributes */
-	fsal_release_attrs(&attrib);
+	if (attrs_out != NULL) {
+		/* Copy the attributes to caller, passing ACL ref. */
+		fsal_copy_attrs(attrs_out, &attrib, true);
+	} else {
+		/* Done with the attrs */
+		fsal_release_attrs(&attrib);
+	}
 
 	*handle = &hdl->obj_handle;
 

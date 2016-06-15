@@ -281,7 +281,8 @@ static void export_release(struct fsal_export *exp_hdl)
 
 fsal_status_t lookup_path(struct fsal_export *exp_hdl,
 			  const char *path,
-			  struct fsal_obj_handle **handle)
+			  struct fsal_obj_handle **handle,
+			  struct attrlist *attrs_out)
 {
 	LogCrit(COMPONENT_FSAL,
 		"Invoking unsupported FSAL operation");
@@ -315,7 +316,8 @@ static fsal_status_t extract_handle(struct fsal_export *exp_hdl,
 
 static fsal_status_t create_handle(struct fsal_export *exp_hdl,
 				   struct gsh_buffdesc *hdl_desc,
-				   struct fsal_obj_handle **handle)
+				   struct fsal_obj_handle **handle,
+				   struct attrlist *attrs_out)
 {
 	LogCrit(COMPONENT_FSAL,
 		"Invoking unsupported FSAL operation");
@@ -692,7 +694,8 @@ static fsal_status_t handle_merge(struct fsal_obj_handle *orig_hdl,
  */
 
 static fsal_status_t lookup(struct fsal_obj_handle *parent,
-			    const char *path, struct fsal_obj_handle **handle)
+			    const char *path, struct fsal_obj_handle **handle,
+			    struct attrlist *attrs_out)
 {
 	LogCrit(COMPONENT_FSAL,
 		"Invoking unsupported FSAL operation");
@@ -705,7 +708,8 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 
 static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 				  fsal_cookie_t *whence, void *dir_state,
-				  fsal_readdir_cb cb, bool *eof)
+				  fsal_readdir_cb cb, attrmask_t attrmask,
+				  bool *eof)
 {
 	LogCrit(COMPONENT_FSAL,
 		"Invoking unsupported FSAL operation");
@@ -718,7 +722,8 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 
 static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 			    const char *name, struct attrlist *attrib,
-			    struct fsal_obj_handle **handle)
+			    struct fsal_obj_handle **handle,
+			    struct attrlist *attrs_out)
 {
 	LogCrit(COMPONENT_FSAL,
 		"Invoking unsupported FSAL operation");
@@ -731,7 +736,8 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 
 static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 			     const char *name, struct attrlist *attrib,
-			     struct fsal_obj_handle **handle)
+			     struct fsal_obj_handle **handle,
+			     struct attrlist *attrs_out)
 {
 	LogCrit(COMPONENT_FSAL,
 		"Invoking unsupported FSAL operation");
@@ -745,7 +751,8 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 			      const char *name, object_file_type_t nodetype,
 			      fsal_dev_t *dev, struct attrlist *attrib,
-			      struct fsal_obj_handle **handle)
+			      struct fsal_obj_handle **handle,
+			      struct attrlist *attrs_out)
 {
 	LogCrit(COMPONENT_FSAL,
 		"Invoking unsupported FSAL operation");
@@ -759,7 +766,8 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 				 const char *name, const char *link_path,
 				 struct attrlist *attrib,
-				 struct fsal_obj_handle **handle)
+				 struct fsal_obj_handle **handle,
+				 struct attrlist *attrs_out)
 {
 	LogCrit(COMPONENT_FSAL,
 		"Invoking unsupported FSAL operation");
@@ -1305,6 +1313,7 @@ static fsal_status_t open2(struct fsal_obj_handle *obj_hdl,
 			   struct attrlist *attrib_set,
 			   fsal_verifier_t verifier,
 			   struct fsal_obj_handle **new_obj,
+			   struct attrlist *attrs_out,
 			   bool *caller_perm_check)
 {
 	LogCrit(COMPONENT_FSAL,

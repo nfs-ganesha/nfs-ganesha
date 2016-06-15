@@ -66,6 +66,11 @@ int nfs3_lookup(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	fsal_status_t fsal_status;
 	char *name = NULL;
 	int rc = NFS_REQ_OK;
+	struct attrlist attrs;
+
+	/* We have the option of not sending attributes, so set ATTR_RDATTR_ERR.
+	 */
+	fsal_prepare_attrs(&attrs, ATTRS_NFS3 | ATTR_RDATTR_ERR);
 
 	if (isDebug(COMPONENT_NFSPROTO)) {
 		char str[LEN_FH_STR];
@@ -94,7 +99,7 @@ int nfs3_lookup(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	name = arg->arg_lookup3.what.name;
 
-	fsal_status = fsal_lookup(obj_dir, name, &obj_file);
+	fsal_status = fsal_lookup(obj_dir, name, &obj_file, &attrs);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		/* If we are here, there was an error */
@@ -106,7 +111,8 @@ int nfs3_lookup(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		res->res_lookup3.status = nfs3_Errno_status(fsal_status);
 		nfs_SetPostOpAttr(obj_dir,
 				  &res->res_lookup3.LOOKUP3res_u.resfail.
-				  dir_attributes);
+					dir_attributes,
+				  NULL);
 	} else {
 		/* Build FH */
 		if (nfs3_FSALToFhandle(
@@ -117,12 +123,14 @@ int nfs3_lookup(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 			/* Build entry attributes */
 			nfs_SetPostOpAttr(obj_file,
 					  &res->res_lookup3.LOOKUP3res_u.
-						resok.obj_attributes);
+						resok.obj_attributes,
+					  &attrs);
 
 			/* Build directory attributes */
 			nfs_SetPostOpAttr(obj_dir,
 					  &res->res_lookup3.
-					     LOOKUP3res_u.resok.dir_attributes);
+					     LOOKUP3res_u.resok.dir_attributes,
+					  NULL);
 			res->res_lookup3.status = NFS3_OK;
 		} else {
 			res->res_lookup3.status = NFS3ERR_BADHANDLE;
@@ -132,6 +140,10 @@ int nfs3_lookup(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	rc = NFS_REQ_OK;
 
  out:
+
+	/* Release the attributes. */
+	fsal_release_attrs(&attrs);
+
 	/* return references */
 	if (obj_dir)
 		obj_dir->obj_ops.put_ref(obj_dir);

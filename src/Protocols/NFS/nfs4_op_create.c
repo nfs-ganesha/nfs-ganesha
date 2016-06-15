@@ -220,7 +220,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	fsal_status = fsal_create(obj_parent, name, type, &sattr, link_content,
-				  &obj_new);
+				  &obj_new, NULL);
 
 	/* Release the attributes (may release an inherited ACL) */
 	fsal_release_attrs(&sattr);

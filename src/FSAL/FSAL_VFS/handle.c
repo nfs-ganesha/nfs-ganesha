@@ -159,7 +159,8 @@ struct vfs_fsal_obj_handle *alloc_handle(int dirfd,
  */
 
 static fsal_status_t lookup(struct fsal_obj_handle *parent,
-			    const char *path, struct fsal_obj_handle **handle)
+			    const char *path, struct fsal_obj_handle **handle,
+			    struct attrlist *attrs_out)
 {
 	struct vfs_fsal_obj_handle *parent_hdl, *hdl;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
@@ -169,6 +170,7 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 	fsal_dev_t dev;
 	struct fsal_filesystem *fs;
 	bool xfsal = false;
+	fsal_status_t status;
 
 	vfs_alloc_handle(fh);
 
@@ -188,8 +190,7 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 			 parent->fs->fsal != NULL
 				? parent->fs->fsal->name
 				: "(none)");
-		retval = EXDEV;
-		goto hdlerr;
+		return fsalstat(ERR_FSAL_XDEV, EXDEV);
 	}
 
 	fs = parent->fs;
@@ -207,6 +208,7 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 		retval = errno;
 		LogDebug(COMPONENT_FSAL, "Failed to open stat %s: %s", path,
 			 msg_fsal_err(posix2fsal_error(retval)));
+		status = posix2fsal_status(retval);
 		goto direrr;
 	}
 
@@ -221,7 +223,7 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 				 "Lookup of %s crosses filesystem boundary to unknown file system dev=%"
 				 PRIu64".%"PRIu64,
 				 path, dev.major, dev.minor);
-			retval = EXDEV;
+			status = fsalstat(ERR_FSAL_XDEV, EXDEV);
 			goto direrr;
 		}
 
@@ -267,12 +269,14 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 
 			if (retval < 0) {
 				retval = errno;
+				status = posix2fsal_status(retval);
 				goto direrr;
 			}
 
 			retval = 0;
 		} else {
 			/* Some other error */
+			status = posix2fsal_status(retval);
 			goto direrr;
 		}
 	}
@@ -280,24 +284,33 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 	/* allocate an obj_handle and fill it up */
 	hdl = alloc_handle(dirfd, fh, fs, &stat, parent_hdl->handle, path,
 			   op_ctx->fsal_export);
-	close(dirfd);
+
 	if (hdl == NULL) {
-		retval = ENOMEM;
-		goto hdlerr;
+		status = fsalstat(ERR_FSAL_NOMEM, ENOMEM);
+		goto direrr;
 	}
+
+	close(dirfd);
+
+	if (attrs_out != NULL) {
+		posix2fsal_attributes(&stat, attrs_out);
+
+		/* Make sure ATTR_RDATTR_ERR is cleared on success. */
+		attrs_out->mask &= ~ATTR_RDATTR_ERR;
+	}
+
 	*handle = &hdl->obj_handle;
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
  direrr:
 	close(dirfd);
- hdlerr:
-	fsal_error = posix2fsal_error(retval);
-	return fsalstat(fsal_error, retval);
+	return status;
 }
 
 static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 			     const char *name, struct attrlist *attrib,
-			     struct fsal_obj_handle **handle)
+			     struct fsal_obj_handle **handle,
+			     struct attrlist *attrs_out)
 {
 	struct vfs_fsal_obj_handle *myself, *hdl;
 	int dir_fd;
@@ -377,6 +390,7 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 		LogFullDebug(COMPONENT_FSAL,
 			     "vfs_stat_by_handle returned %s",
 			     strerror(retval));
+		status = posix2fsal_status(retval);
 		goto direrr;
 	}
 	/* Become the user because we are creating an object in this dir.
@@ -389,12 +403,14 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 		LogFullDebug(COMPONENT_FSAL,
 			     "mkdirat returned %s",
 			     strerror(retval));
+		status = posix2fsal_status(retval);
 		goto direrr;
 	}
 	fsal_restore_ganesha_credentials();
 	retval =  vfs_name_to_handle(dir_fd, dir_hdl->fs, name, fh);
 	if (retval < 0) {
 		retval = errno;
+		status = posix2fsal_status(retval);
 		goto fileerr;
 	}
 	retval = fstatat(dir_fd, name, &stat, AT_SYMLINK_NOFOLLOW);
@@ -403,6 +419,7 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 		LogFullDebug(COMPONENT_FSAL,
 			     "fstatat returned %s",
 			     strerror(retval));
+		status = posix2fsal_status(retval);
 		goto fileerr;
 	}
 
@@ -411,10 +428,10 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 			   myself->handle, name,
 			   op_ctx->fsal_export);
 	if (hdl == NULL) {
-		retval = ENOMEM;
 		LogFullDebug(COMPONENT_FSAL,
 			     "alloc_handle returned %s",
 			     strerror(retval));
+		status = fsalstat(ERR_FSAL_NOMEM, ENOMEM);
 		goto fileerr;
 	}
 
@@ -438,13 +455,33 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 				     fsal_err_txt(status));
 			(*handle)->obj_ops.release(*handle);
 			*handle = NULL;
+		} else if (attrs_out != NULL) {
+			status = (*handle)->obj_ops.getattrs(*handle,
+							     attrs_out);
+			if (FSAL_IS_ERROR(status) &&
+			    (attrs_out->mask & ATTR_RDATTR_ERR) == 0) {
+				/* Get attributes failed and caller expected
+				 * to get the attributes.
+				 */
+				goto fileerr;
+			}
 		}
 	} else {
 		status.major = ERR_FSAL_NO_ERROR;
 		status.minor = 0;
+
+		if (attrs_out != NULL) {
+			/* Since we haven't set any attributes other than what
+			 * was set on create, just use the stat results we used
+			 * to create the fsal_obj_handle.
+			 */
+			posix2fsal_attributes(&stat, attrs_out);
+
+			/* Make sure ATTR_RDATTR_ERR is cleared on success. */
+			attrs_out->mask &= ~ATTR_RDATTR_ERR;
+		}
 	}
 
-	FSAL_SET_MASK(attrib->mask, ATTR_MODE);
 	return status;
 
  fileerr:
@@ -461,7 +498,8 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 			      object_file_type_t nodetype,	/* IN */
 			      fsal_dev_t *dev,	/* IN */
 			      struct attrlist *attrib,
-			      struct fsal_obj_handle **handle)
+			      struct fsal_obj_handle **handle,
+			      struct attrlist *attrs_out)
 {
 	struct vfs_fsal_obj_handle *myself, *hdl;
 	int dir_fd = -1;
@@ -564,6 +602,7 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 
 	if (retval < 0) {
 		retval = errno;
+		status = posix2fsal_status(retval);
 		goto direrr;
 	}
 
@@ -574,6 +613,7 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 	if (retval < 0) {
 		retval = errno;
 		fsal_restore_ganesha_credentials();
+		status = posix2fsal_status(retval);
 		goto direrr;
 	}
 
@@ -585,14 +625,16 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 
 	if (retval < 0) {
 		retval = errno;
-		goto filerrr;
+		status = posix2fsal_status(retval);
+		goto fileerr;
 	}
 
 	retval = fstatat(dir_fd, name, &stat, AT_SYMLINK_NOFOLLOW);
 
 	if (retval < 0) {
 		retval = errno;
-		goto filerrr;
+		status = posix2fsal_status(retval);
+		goto fileerr;
 	}
 
 	/* allocate an obj_handle and fill it up */
@@ -600,8 +642,8 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 			   myself->handle, name, op_ctx->fsal_export);
 
 	if (hdl == NULL) {
-		retval = ENOMEM;
-		goto filerrr;
+		status = fsalstat(ERR_FSAL_NOMEM, ENOMEM);
+		goto fileerr;
 	}
 
 	*handle = &hdl->obj_handle;
@@ -621,16 +663,36 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 			/* Release the handle we just allocated. */
 			(*handle)->obj_ops.release(*handle);
 			*handle = NULL;
+		} else if (attrs_out != NULL) {
+			status = (*handle)->obj_ops.getattrs(*handle,
+							     attrs_out);
+			if (FSAL_IS_ERROR(status) &&
+			    (attrs_out->mask & ATTR_RDATTR_ERR) == 0) {
+				/* Get attributes failed and caller expected
+				 * to get the attributes.
+				 */
+				goto fileerr;
+			}
 		}
 	} else {
 		status.major = ERR_FSAL_NO_ERROR;
 		status.minor = 0;
+
+		if (attrs_out != NULL) {
+			/* Since we haven't set any attributes other than what
+			 * was set on create, just use the stat results we used
+			 * to create the fsal_obj_handle.
+			 */
+			posix2fsal_attributes(&stat, attrs_out);
+
+			/* Make sure ATTR_RDATTR_ERR is cleared on success. */
+			attrs_out->mask &= ~ATTR_RDATTR_ERR;
+		}
 	}
 
-	FSAL_SET_MASK(attrib->mask, ATTR_MODE);
 	return status;
 
- filerrr:
+ fileerr:
 
 	unlinkat(dir_fd, name, 0);
 
@@ -652,7 +714,8 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 				 const char *name, const char *link_path,
 				 struct attrlist *attrib,
-				 struct fsal_obj_handle **handle)
+				 struct fsal_obj_handle **handle,
+				 struct attrlist *attrs_out)
 {
 	struct vfs_fsal_obj_handle *myself, *hdl;
 	int dir_fd = -1;
@@ -726,6 +789,7 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 
 	if (retval < 0) {
 		retval = errno;
+		status = posix2fsal_status(retval);
 		goto direrr;
 	}
 
@@ -738,6 +802,7 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 	if (retval < 0) {
 		retval = errno;
 		fsal_restore_ganesha_credentials();
+		status = posix2fsal_status(retval);
 		goto direrr;
 	}
 
@@ -747,6 +812,7 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 
 	if (retval < 0) {
 		retval = errno;
+		status = posix2fsal_status(retval);
 		goto linkerr;
 	}
 
@@ -756,6 +822,7 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 
 	if (retval < 0) {
 		retval = errno;
+		status = posix2fsal_status(retval);
 		goto linkerr;
 	}
 
@@ -764,7 +831,7 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 			   op_ctx->fsal_export);
 
 	if (hdl == NULL) {
-		retval = ENOMEM;
+		status = fsalstat(ERR_FSAL_NOMEM, ENOMEM);
 		goto linkerr;
 	}
 
@@ -785,13 +852,33 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 			/* Release the handle we just allocated. */
 			(*handle)->obj_ops.release(*handle);
 			*handle = NULL;
+		} else if (attrs_out != NULL) {
+			status = (*handle)->obj_ops.getattrs(*handle,
+							     attrs_out);
+			if (FSAL_IS_ERROR(status) &&
+			    (attrs_out->mask & ATTR_RDATTR_ERR) == 0) {
+				/* Get attributes failed and caller expected
+				 * to get the attributes.
+				 */
+				goto linkerr;
+			}
 		}
 	} else {
 		status.major = ERR_FSAL_NO_ERROR;
 		status.minor = 0;
+
+		if (attrs_out != NULL) {
+			/* Since we haven't set any attributes other than what
+			 * was set on create, just use the stat results we used
+			 * to create the fsal_obj_handle.
+			 */
+			posix2fsal_attributes(&stat, attrs_out);
+
+			/* Make sure ATTR_RDATTR_ERR is cleared on success. */
+			attrs_out->mask &= ~ATTR_RDATTR_ERR;
+		}
 	}
 
-	FSAL_SET_MASK(attrib->mask, ATTR_MODE);
 	return status;
 
  linkerr:
@@ -967,7 +1054,8 @@ static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
 
 static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 				  fsal_cookie_t *whence, void *dir_state,
-				  fsal_readdir_cb cb, bool *eof)
+				  fsal_readdir_cb cb, attrmask_t attrmask,
+				  bool *eof)
 {
 	struct vfs_fsal_obj_handle *myself;
 	int dirfd;
@@ -1018,20 +1106,31 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 			break;
 		for (bpos = 0; bpos < nread;) {
 			struct fsal_obj_handle *hdl;
+			struct attrlist attrs;
+			bool cb_rc;
+
 			if (!to_vfs_dirent(buf, bpos, dentryp, baseloc)
 			    || strcmp(dentryp->vd_name, ".") == 0
 			    || strcmp(dentryp->vd_name, "..") == 0)
 				goto skip;	/* must skip '.' and '..' */
 
-			status = lookup(dir_hdl, dentryp->vd_name, &hdl);
+			fsal_prepare_attrs(&attrs, attrmask);
+
+			status = lookup(dir_hdl, dentryp->vd_name,
+					&hdl, &attrs);
+
 			if (FSAL_IS_ERROR(status))
 				goto done;
 
 			/* callback to cache inode */
-			if (!cb(dentryp->vd_name, hdl, dir_state,
-				(fsal_cookie_t) dentryp->vd_offset)) {
+			cb_rc = cb(dentryp->vd_name, hdl, &attrs, dir_state,
+				(fsal_cookie_t) dentryp->vd_offset);
+
+			fsal_release_attrs(&attrs);
+
+			if (!cb_rc)
 				goto done;
-			}
+
  skip:
 			bpos += dentryp->vd_reclen;
 		}
@@ -1473,7 +1572,8 @@ void vfs_handle_ops_init(struct fsal_obj_ops *ops)
  */
 
 fsal_status_t vfs_lookup_path(struct fsal_export *exp_hdl,
-			      const char *path, struct fsal_obj_handle **handle)
+			      const char *path, struct fsal_obj_handle **handle,
+			      struct attrlist *attrs_out)
 {
 	int dir_fd = -1;
 	struct stat stat;
@@ -1543,6 +1643,13 @@ fsal_status_t vfs_lookup_path(struct fsal_export *exp_hdl,
 	}
 
 	close(dir_fd);
+
+	if (attrs_out != NULL) {
+		posix2fsal_attributes(&stat, attrs_out);
+
+		/* Make sure ATTR_RDATTR_ERR is cleared on success. */
+		attrs_out->mask &= ~ATTR_RDATTR_ERR;
+	}
 
 	*handle = &hdl->obj_handle;
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
@@ -1628,7 +1735,8 @@ fsal_status_t vfs_check_handle(struct fsal_export *exp_hdl,
 
 fsal_status_t vfs_create_handle(struct fsal_export *exp_hdl,
 				struct gsh_buffdesc *hdl_desc,
-				struct fsal_obj_handle **handle)
+				struct fsal_obj_handle **handle,
+				struct attrlist *attrs_out)
 {
 	fsal_status_t status;
 	struct vfs_fsal_obj_handle *hdl;
@@ -1688,6 +1796,14 @@ fsal_status_t vfs_create_handle(struct fsal_export *exp_hdl,
 		fsal_error = ERR_FSAL_NOMEM;
 		goto errout;
 	}
+
+	if (attrs_out != NULL) {
+		posix2fsal_attributes(&obj_stat, attrs_out);
+
+		/* Make sure ATTR_RDATTR_ERR is cleared on success. */
+		attrs_out->mask &= ~ATTR_RDATTR_ERR;
+	}
+
 	*handle = &hdl->obj_handle;
 
  errout:

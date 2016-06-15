@@ -72,7 +72,11 @@ int nfs3_mkdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	};
 	fsal_status_t fsal_status = {0, 0};
 	int rc = NFS_REQ_OK;
-	struct attrlist sattr;
+	struct attrlist sattr, attrs;
+
+	/* We have the option of not sending attributes, so set ATTR_RDATTR_ERR.
+	 */
+	fsal_prepare_attrs(&attrs, ATTRS_NFS3 | ATTR_RDATTR_ERR);
 
 	memset(&sattr, 0, sizeof(sattr));
 
@@ -144,7 +148,7 @@ int nfs3_mkdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	/* Try to create the directory */
 	fsal_status = fsal_create(parent_obj, dir_name, DIRECTORY, &sattr, NULL,
-				  &dir_obj);
+				  &dir_obj, &attrs);
 
 	/* Release the attributes (may release an inherited ACL) */
 	fsal_release_attrs(&sattr);
@@ -168,7 +172,7 @@ int nfs3_mkdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	d3ok->obj.handle_follows = true;
 
 	/* Build entry attributes */
-	nfs_SetPostOpAttr(dir_obj, &d3ok->obj_attributes);
+	nfs_SetPostOpAttr(dir_obj, &d3ok->obj_attributes, &attrs);
 
 	/* Build Weak Cache Coherency data */
 	nfs_SetWccData(&pre_parent, parent_obj, &d3ok->dir_wcc);
@@ -187,6 +191,10 @@ int nfs3_mkdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		rc = NFS_REQ_DROP;
 
  out:
+
+	/* Release the attributes. */
+	fsal_release_attrs(&attrs);
+
 	/* return references */
 	if (dir_obj)
 		dir_obj->obj_ops.put_ref(dir_obj);

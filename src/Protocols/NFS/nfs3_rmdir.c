@@ -121,7 +121,7 @@ int nfs3_rmdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	/* Lookup to the entry to be removed to check that it is a
 	 * directory
 	 */
-	fsal_status = fsal_lookup(parent_obj, name, &child_obj);
+	fsal_status = fsal_lookup(parent_obj, name, &child_obj, NULL);
 
 	if (child_obj != NULL) {
 		/* Sanity check: make sure we are about to remove a

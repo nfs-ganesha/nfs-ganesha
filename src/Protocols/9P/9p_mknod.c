@@ -120,7 +120,8 @@ int _9p_mknod(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	/* Create the directory */
 	/**  @todo  BUGAZOMEU the gid parameter is not used yet */
 	fsal_status = fsal_create(pfid->pentry, obj_name, nodetype,
-				  &object_attributes, NULL, &pentry_newobj);
+				  &object_attributes, NULL, &pentry_newobj,
+				  NULL);
 
 	/* Release the attributes (may release an inherited ACL) */
 	fsal_release_attrs(&object_attributes);

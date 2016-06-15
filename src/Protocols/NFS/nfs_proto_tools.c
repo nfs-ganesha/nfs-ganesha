@@ -71,15 +71,43 @@ static struct {
  * This function converts FSAL Attributes to NFSv3 PostOp Attributes
  * structure.
  *
- * @param[in]  obj   FSAL object
- * @param[out] attr  NFSv3 PostOp structure attributes.
+ * If attrs is passed in, the caller MUST call fsal_release_attrs.
+ *
+ * @param[in]  obj    FSAL object
+ * @param[out] Fattr  NFSv3 PostOp structure attributes.
+ * @param[in]  attrs  Optional attributes passed in
  *
  */
-void nfs_SetPostOpAttr(struct fsal_obj_handle *obj, post_op_attr *attr)
+void nfs_SetPostOpAttr(struct fsal_obj_handle *obj,
+		       post_op_attr *Fattr,
+		       struct attrlist *attrs)
 {
-	attr->attributes_follow = file_to_nfs3_Fattr(obj,
-				   &(attr->post_op_attr_u.attributes));
-}				/* nfs_SetPostOpAttr */
+	struct attrlist attr_buf, *pattrs = attrs;
+
+	if (attrs == NULL) {
+		pattrs = &attr_buf;
+		fsal_prepare_attrs(pattrs, ATTRS_NFS3 | ATTR_RDATTR_ERR);
+
+		(void) obj->obj_ops.getattrs(obj, pattrs);
+	}
+
+	if (pattrs->mask & ATTR_RDATTR_ERR) {
+		/* Indicate no attributes follow */
+		Fattr->attributes_follow = false;
+	} else {
+		/* Place the following attributes */
+		nfs3_FSALattr_To_Fattr(obj, pattrs,
+				       &Fattr->post_op_attr_u.attributes);
+		Fattr->attributes_follow = true;
+	}
+
+	if (attrs == NULL) {
+		/* Release any attributes fetched. Caller MUST release any
+		 * attributes that were passed in.
+		 */
+		fsal_release_attrs(pattrs);
+	}
+}
 
 /**
  * @brief Converts FSAL Attributes to NFSv3 PreOp Attributes structure.
@@ -137,7 +165,7 @@ void nfs_SetWccData(const struct pre_op_attr *before_attr,
 		wcc_data->before.attributes_follow = false;
 
 	/* Build directory post operation attributes */
-	nfs_SetPostOpAttr(obj, &(wcc_data->after));
+	nfs_SetPostOpAttr(obj, &wcc_data->after, NULL);
 }				/* nfs_SetWccData */
 #endif /* _USE_NFS3 */
 
@@ -3665,40 +3693,6 @@ static void nfs3_FSALattr_To_PartialFattr(struct fsal_obj_handle *obj,
 	}
 }				/* nfs3_FSALattr_To_PartialFattr */
 
-#ifdef _USE_NFS3
-/**
- * @brief Fill out an NFSv3 Fattr from a FSAL object
- *
- * This function refreshes the object then calls out to fill the Fattr.
- *
- * @param[in]  obj The FSAL object
- * @param[out] Fattr NFSv3 Fattr
- *
- * @retval true on success.
- * @retval false on failure.
- */
-
-bool file_to_nfs3_Fattr(struct fsal_obj_handle *obj, fattr3 *Fattr)
-{
-	fsal_status_t status;
-	struct attrlist attrs;
-	bool rc;
-
-	fsal_prepare_attrs(&attrs, ATTRS_NFS3);
-
-	status = obj->obj_ops.getattrs(obj, &attrs);
-
-	if (FSAL_IS_ERROR(status))
-		return false;
-
-	rc = nfs3_FSALattr_To_Fattr(obj, &attrs, Fattr);
-
-	fsal_release_attrs(&attrs);
-
-	return rc;
-}
-#endif /* _USE_NFS3 */
-
 /**
  * @brief Convert FSAL Attributes to NFSv3 attributes.
  *
@@ -3710,11 +3704,8 @@ bool file_to_nfs3_Fattr(struct fsal_obj_handle *obj, fattr3 *Fattr)
  * @param FSAL_attr [IN]  pointer to FSAL attributes.
  * @param Fattr     [OUT] pointer to NFSv3 attributes.
  *
- * @retval true if successful.
- * @retval false  otherwise.
- *
  */
-bool nfs3_FSALattr_To_Fattr(struct fsal_obj_handle *obj,
+void nfs3_FSALattr_To_Fattr(struct fsal_obj_handle *obj,
 			    const struct attrlist *FSAL_attr,
 			    fattr3 *Fattr)
 {
@@ -3749,8 +3740,6 @@ bool nfs3_FSALattr_To_Fattr(struct fsal_obj_handle *obj,
 			     op_ctx->export->filesystem_id.minor,
 			     (uint64_t) Fattr->fsid, (uint64_t) Fattr->fsid);
 	}
-
-	return true;
 }
 
 /**

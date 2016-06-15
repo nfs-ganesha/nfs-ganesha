@@ -103,7 +103,7 @@ void cleanup_pseudofs_node(char *pseudopath,
 	LogDebug(COMPONENT_EXPORT,
 		 "Checking if pseudo node %s is needed", pseudopath);
 
-	fsal_status = fsal_lookupp(obj, &parent_obj);
+	fsal_status = fsal_lookupp(obj, &parent_obj, NULL);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		/* Truncate the pseudopath to be the path to the parent */
@@ -161,7 +161,7 @@ bool make_pseudofs_node(char *name, struct pseudofs_state *state)
 retry:
 
 	/* First, try to lookup the entry */
-	fsal_status = fsal_lookup(state->obj, name, &new_node);
+	fsal_status = fsal_lookup(state->obj, name, &new_node, NULL);
 
 	if (!FSAL_IS_ERROR(fsal_status)) {
 		/* Make sure new node is a directory */
@@ -219,7 +219,7 @@ retry:
 	sattr.mode = 0755;
 
 	fsal_status = fsal_create(state->obj, name, DIRECTORY, &sattr, NULL,
-				  &new_node);
+				  &new_node, NULL);
 
 	/* Release the attributes (may release an inherited ACL) */
 	fsal_release_attrs(&sattr);

@@ -69,14 +69,16 @@ static void release(struct fsal_obj_handle *obj_pub)
  *
  * This function looks up an object by name in a directory.
  *
- * @param[in]  dir_pub The directory in which to look up the object.
- * @param[in]  path    The name to look up.
- * @param[out] obj_pub The looked up object.
+ * @param[in]     dir_pub    The directory in which to look up the object.
+ * @param[in]     path       The name to look up.
+ * @param[in,out] obj_pub    The looked up object.
+ * @param[in,out] attrs_out  Optional attributes for newly created object
  *
  * @return FSAL status codes.
  */
 static fsal_status_t lookup(struct fsal_obj_handle *dir_pub,
-			    const char *path, struct fsal_obj_handle **obj_pub)
+			    const char *path, struct fsal_obj_handle **obj_pub,
+			    struct attrlist *attrs_out)
 {
 	/* Generic status return */
 	int rc = 0;
@@ -110,6 +112,14 @@ static fsal_status_t lookup(struct fsal_obj_handle *dir_pub,
 
 	*obj_pub = &obj->handle;
 
+	if (attrs_out != NULL) {
+		posix2fsal_attributes(&st, attrs_out);
+
+		/* Make sure ATTR_RDATTR_ERR is cleared on success. */
+		attrs_out->mask &= ~ATTR_RDATTR_ERR;
+	}
+
+
 	return fsalstat(0, 0);
 }
 
@@ -117,6 +127,7 @@ struct rgw_cb_arg {
 	fsal_readdir_cb cb;
 	void *fsal_arg;
 	struct fsal_obj_handle *dir_pub;
+	attrmask_t attrmask;
 };
 
 static bool rgw_cb(const char *name, void *arg, uint64_t offset)
@@ -124,12 +135,20 @@ static bool rgw_cb(const char *name, void *arg, uint64_t offset)
 	struct rgw_cb_arg *rgw_cb_arg = arg;
 	struct fsal_obj_handle *obj;
 	fsal_status_t status;
+	struct attrlist attrs;
+	bool cb_rc;
 
-	status = lookup(rgw_cb_arg->dir_pub, name, &obj);
+	fsal_prepare_attrs(&attrs, rgw_cb_arg->attrmask);
+
+	status = lookup(rgw_cb_arg->dir_pub, name, &obj, &attrs);
 	if (FSAL_IS_ERROR(status))
 		return false;
 
-	return rgw_cb_arg->cb(name, obj, rgw_cb_arg->fsal_arg, offset);
+	cb_rc = rgw_cb_arg->cb(name, obj, &attrs, rgw_cb_arg->fsal_arg, offset);
+
+	fsal_release_attrs(&attrs);
+
+	return cb_rc;
 }
 
 /**
@@ -151,7 +170,8 @@ static bool rgw_cb(const char *name, void *arg, uint64_t offset)
 
 static fsal_status_t rgw_fsal_readdir(struct fsal_obj_handle *dir_pub,
 				  fsal_cookie_t *whence, void *cb_arg,
-				  fsal_readdir_cb cb, bool *eof)
+				  fsal_readdir_cb cb, attrmask_t attrmask,
+				  bool *eof)
 {
 	/* Generic status return */
 	int rc = 0;
@@ -161,9 +181,9 @@ static fsal_status_t rgw_fsal_readdir(struct fsal_obj_handle *dir_pub,
 	/* The private 'full' directory handle */
 	struct rgw_handle *dir = container_of(dir_pub, struct rgw_handle,
 					      handle);
-	struct rgw_cb_arg rgw_cb_arg = { cb, cb_arg, dir_pub };
+	struct rgw_cb_arg rgw_cb_arg = {cb, cb_arg, dir_pub, attrmask};
 	/* Return status */
-	fsal_status_t fsal_status = { ERR_FSAL_NO_ERROR, 0 };
+	fsal_status_t fsal_status = {ERR_FSAL_NO_ERROR, 0};
 
 	uint64_t r_whence = (whence) ? *whence : 0;
 	rc = rgw_readdir(export->rgw_fs, dir->rgw_fh, &r_whence, rgw_cb,
@@ -179,17 +199,20 @@ static fsal_status_t rgw_fsal_readdir(struct fsal_obj_handle *dir_pub,
  *
  * This function creates an empty, regular file.
  *
- * @param[in]  dir_pub Directory in which to create the file
- * @param[in]  name    Name of file to create
- * @param[out] attrib  Attributes of newly created file
- * @param[out] obj_pub Handle for newly created file
+ * @param[in]     dir_pub    Directory in which to create the file
+ * @param[in]     name       Name of file to create
+ * @param[in]     attrs_in   Attributes of newly created file
+ * @param[in,out] obj_pub    Handle for newly created file
+ * @param[in,out] attrs_out  Optional attributes for newly created object
  *
  * @return FSAL status.
  */
 
 static fsal_status_t rgw_fsal_create(struct fsal_obj_handle *dir_pub,
-				 const char *name, struct attrlist *attrib,
-				 struct fsal_obj_handle **obj_pub)
+				      const char *name,
+				      struct attrlist *attrs_in,
+				      struct fsal_obj_handle **obj_pub,
+				      struct attrlist *attrs_out)
 {
 	/* Generic status return */
 	int rc = 0;
@@ -210,7 +233,7 @@ static fsal_status_t rgw_fsal_create(struct fsal_obj_handle *dir_pub,
 
 	st.st_uid = op_ctx->creds->caller_uid;
 	st.st_gid = op_ctx->creds->caller_gid;
-	st.st_mode = fsal2unix_mode(attrib->mode)
+	st.st_mode = fsal2unix_mode(attrs_in->mode)
 	    & ~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
 
 	uint32_t create_mask =
@@ -227,7 +250,14 @@ static fsal_status_t rgw_fsal_create(struct fsal_obj_handle *dir_pub,
 	}
 
 	*obj_pub = &obj->handle;
-	rgw2fsal_attributes(&st, attrib);
+
+	if (attrs_out != NULL) {
+		posix2fsal_attributes(&st, attrs_out);
+
+		/* Make sure ATTR_RDATTR_ERR is cleared on success. */
+		attrs_out->mask &= ~ATTR_RDATTR_ERR;
+	}
+
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -237,17 +267,19 @@ static fsal_status_t rgw_fsal_create(struct fsal_obj_handle *dir_pub,
  *
  * This funcion creates a new directory.
  *
- * @param[in]  dir_pub The parent in which to create
- * @param[in]  name    Name of the directory to create
- * @param[out] attrib  Attributes of the newly created directory
- * @param[out] obj_pub Handle of the newly created directory
+ * @param[in]     dir_pub    The parent in which to create
+ * @param[in]     name       Name of the directory to create
+ * @param[in]     attrs_in   Attributes of the newly created directory
+ * @param[in,out] obj_pub    Handle of the newly created directory
+ * @param[in,out] attrs_out  Optional attributes for newly created object
  *
  * @return FSAL status.
  */
 
 static fsal_status_t rgw_fsal_mkdir(struct fsal_obj_handle *dir_pub,
-				const char *name, struct attrlist *attrib,
-				struct fsal_obj_handle **obj_pub)
+				const char *name, struct attrlist *attrs_in,
+				struct fsal_obj_handle **obj_pub,
+				struct attrlist *attrs_out)
 {
 	/* Generic status return */
 	int rc = 0;
@@ -268,7 +300,7 @@ static fsal_status_t rgw_fsal_mkdir(struct fsal_obj_handle *dir_pub,
 
 	st.st_uid = op_ctx->creds->caller_uid;
 	st.st_gid = op_ctx->creds->caller_gid;
-	st.st_mode = fsal2unix_mode(attrib->mode)
+	st.st_mode = fsal2unix_mode(attrs_in->mode)
 	    & ~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
 
 	uint32_t create_mask =
@@ -285,7 +317,14 @@ static fsal_status_t rgw_fsal_mkdir(struct fsal_obj_handle *dir_pub,
 	}
 
 	*obj_pub = &obj->handle;
-	rgw2fsal_attributes(&st, attrib);
+
+	if (attrs_out != NULL) {
+		posix2fsal_attributes(&st, attrs_out);
+
+		/* Make sure ATTR_RDATTR_ERR is cleared on success. */
+		attrs_out->mask &= ~ATTR_RDATTR_ERR;
+	}
+
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -325,7 +364,7 @@ static fsal_status_t getattrs(struct fsal_obj_handle *handle_pub,
 		return rgw2fsal_error(rc);
 	}
 
-	rgw2fsal_attributes(&st, attrs);
+	posix2fsal_attributes(&st, attrs);
 
 	/* Make sure ATTR_RDATTR_ERR is cleared on success. */
 	attrs->mask &= ~ATTR_RDATTR_ERR;

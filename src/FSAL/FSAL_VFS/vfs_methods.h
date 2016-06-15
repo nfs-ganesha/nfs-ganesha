@@ -82,11 +82,13 @@ int vfs_get_root_fd(struct fsal_export *exp_hdl);
 
 fsal_status_t vfs_lookup_path(struct fsal_export *exp_hdl,
 			      const char *path,
-			      struct fsal_obj_handle **handle);
+			      struct fsal_obj_handle **handle,
+			      struct attrlist *attrs_out);
 
 fsal_status_t vfs_create_handle(struct fsal_export *exp_hdl,
 				struct gsh_buffdesc *hdl_desc,
-				struct fsal_obj_handle **handle);
+				struct fsal_obj_handle **handle,
+				struct attrlist *attrs_out);
 
 struct vfs_subfsal_obj_ops {
 /**
@@ -265,6 +267,7 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 			struct attrlist *attrib_set,
 			fsal_verifier_t verifier,
 			struct fsal_obj_handle **new_obj,
+			struct attrlist *attrs_out,
 			bool *caller_perm_check);
 
 fsal_openflags_t vfs_status2(struct fsal_obj_handle *obj_hdl,

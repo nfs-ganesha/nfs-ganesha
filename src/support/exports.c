@@ -1600,7 +1600,7 @@ int init_export_root(struct gsh_export *export)
 	 * the lifetime of the export. */
 	fsal_status =
 	    export->fsal_export->exp_ops.lookup_path(export->fsal_export,
-						  export->fullpath, &obj);
+						  export->fullpath, &obj, NULL);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		my_status = EINVAL;

@@ -308,7 +308,8 @@ static struct pseudo_fsal_obj_handle
 
 static fsal_status_t lookup(struct fsal_obj_handle *parent,
 			    const char *path,
-			    struct fsal_obj_handle **handle)
+			    struct fsal_obj_handle **handle,
+			    struct attrlist *attrs_out)
 {
 	struct pseudo_fsal_obj_handle *myself, *hdl;
 	struct pseudo_fsal_obj_handle key[1];
@@ -360,6 +361,13 @@ out:
 	if (op_ctx->fsal_private != parent)
 		PTHREAD_RWLOCK_unlock(&parent->lock);
 
+	if (error == ERR_FSAL_NO_ERROR && attrs_out != NULL) {
+		/* This is unlocked, however, for the most part, attributes
+		 * are read-only. Come back later and do some lock protection.
+		 */
+		fsal_copy_attrs(attrs_out, &hdl->attributes, false);
+	}
+
 	return fsalstat(error, 0);
 }
 
@@ -373,11 +381,11 @@ out:
  * attributes set on creation will be ignored. The owner and group will be
  * set from the active credentials.
  *
- * @param[in]     dir_hdl Directory in which to create the directory
- * @param[in]     name    Name of directory to create
- * @param[in,out] attrib  Attributes to set on newly created
- *                        object/attributes you actually got.
- * @param[out]    new_obj Newly created object
+ * @param[in]     dir_hdl   Directory in which to create the directory
+ * @param[in]     name      Name of directory to create
+ * @param[in]     attrs_in  Attributes to set on newly created object
+ * @param[out]    handle    Newly created object
+ * @param[in,out] attrs_out Optional attributes for newly created object
  *
  * @note On success, @a new_obj has been ref'd
  *
@@ -385,8 +393,9 @@ out:
  */
 static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 			     const char *name,
-			     struct attrlist *attrib,
-			     struct fsal_obj_handle **handle)
+			     struct attrlist *attrs_in,
+			     struct fsal_obj_handle **handle,
+			     struct attrlist *attrs_out)
 {
 	struct pseudo_fsal_obj_handle *myself, *hdl;
 	mode_t unix_mode;
@@ -407,7 +416,7 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 			      struct pseudo_fsal_obj_handle,
 			      obj_handle);
 
-	unix_mode = fsal2unix_mode(attrib->mode)
+	unix_mode = fsal2unix_mode(attrs_in->mode)
 	    & ~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
 
 	/* allocate an obj_handle and fill it up */
@@ -423,6 +432,9 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 		     myself->name, numlinks);
 
 	*handle = &hdl->obj_handle;
+
+	if (attrs_out != NULL)
+		fsal_copy_attrs(attrs_out, &hdl->attributes, false);
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -442,11 +454,14 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 				  fsal_cookie_t *whence,
 				  void *dir_state,
 				  fsal_readdir_cb cb,
+				  attrmask_t attrmask,
 				  bool *eof)
 {
 	struct pseudo_fsal_obj_handle *myself, *hdl;
 	struct avltree_node *node;
 	fsal_cookie_t seekloc;
+	struct attrlist attrs;
+	bool cb_rc;
 
 	if (whence != NULL)
 		seekloc = *whence;
@@ -480,7 +495,15 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 		if (hdl->index < seekloc)
 			continue;
 
-		if (!cb(hdl->name, &hdl->obj_handle, dir_state, hdl->index)) {
+		fsal_prepare_attrs(&attrs, attrmask);
+		fsal_copy_attrs(&attrs, &hdl->attributes, false);
+
+		cb_rc = cb(hdl->name, &hdl->obj_handle, &attrs,
+			   dir_state, hdl->index);
+
+		fsal_release_attrs(&attrs);
+
+		if (!cb_rc) {
 			*eof = false;
 			break;
 		}
@@ -687,7 +710,8 @@ void pseudofs_handle_ops_init(struct fsal_obj_ops *ops)
 
 fsal_status_t pseudofs_lookup_path(struct fsal_export *exp_hdl,
 				 const char *path,
-				 struct fsal_obj_handle **handle)
+				 struct fsal_obj_handle **handle,
+				 struct attrlist *attrs_out)
 {
 	struct pseudofs_fsal_export *myself;
 
@@ -711,6 +735,10 @@ fsal_status_t pseudofs_lookup_path(struct fsal_export *exp_hdl,
 
 	*handle = &myself->root_handle->obj_handle;
 
+	if (attrs_out != NULL)
+		fsal_copy_attrs(attrs_out, &myself->root_handle->attributes,
+				false);
+
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
@@ -728,7 +756,8 @@ fsal_status_t pseudofs_lookup_path(struct fsal_export *exp_hdl,
 
 fsal_status_t pseudofs_create_handle(struct fsal_export *exp_hdl,
 				   struct gsh_buffdesc *hdl_desc,
-				   struct fsal_obj_handle **handle)
+				   struct fsal_obj_handle **handle,
+				   struct attrlist *attrs_out)
 {
 	struct glist_head *glist;
 	struct fsal_obj_handle *hdl;
@@ -764,6 +793,11 @@ fsal_status_t pseudofs_create_handle(struct fsal_export *exp_hdl,
 			*handle = hdl;
 
 			PTHREAD_RWLOCK_unlock(&exp_hdl->fsal->lock);
+
+			if (attrs_out != NULL) {
+				fsal_copy_attrs(attrs_out, &my_hdl->attributes,
+						false);
+			}
 
 			return fsalstat(ERR_FSAL_NO_ERROR, 0);
 		}

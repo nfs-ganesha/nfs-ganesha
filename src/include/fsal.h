@@ -311,15 +311,18 @@ fsal_status_t fsal_readlink(struct fsal_obj_handle *obj,
 			    struct gsh_buffdesc *link_content);
 fsal_status_t fsal_lookup(struct fsal_obj_handle *parent,
 			  const char *name,
-			  struct fsal_obj_handle **obj);
+			  struct fsal_obj_handle **obj,
+			  struct attrlist *attrs_out);
 fsal_status_t fsal_lookupp(struct fsal_obj_handle *obj,
-			   struct fsal_obj_handle **parent);
+			   struct fsal_obj_handle **parent,
+			   struct attrlist *attrs_out);
 fsal_status_t fsal_create(struct fsal_obj_handle *parent,
 			  const char *name,
 			  object_file_type_t type,
 			  struct attrlist *attrs,
 			  const char *link_content,
-			  struct fsal_obj_handle **obj);
+			  struct fsal_obj_handle **obj,
+			  struct attrlist *attrs_out);
 void fsal_create_set_verifier(struct attrlist *sattr, uint32_t verf_hi,
 			      uint32_t verf_lo);
 bool fsal_create_verify(struct fsal_obj_handle *obj, uint32_t verf_hi,
@@ -367,7 +370,8 @@ fsal_status_t fsal_open2(struct fsal_obj_handle *in_obj,
 			 const char *name,
 			 struct attrlist *attr,
 			 fsal_verifier_t verifier,
-			 struct fsal_obj_handle **obj);
+			 struct fsal_obj_handle **obj,
+			 struct attrlist *attrs_out);
 fsal_status_t fsal_reopen2(struct fsal_obj_handle *obj,
 			   struct state_t *state,
 			   fsal_openflags_t openflags,
@@ -456,6 +460,46 @@ static inline void fsal_release_attrs(struct attrlist *attrs)
 
 		/* Poison the acl since we no longer hold a reference. */
 		attrs->acl = NULL;
+		attrs->mask &= ~ATTR_ACL;
+	}
+}
+
+/**
+ * @brief Copy a set of attributes
+ *
+ * If ACL is requested in dest->mask, then ACL reference is acquired, otherwise
+ * acl pointer is set to NULL.
+ *
+ * @param[in,out] dest       The attrlist to receive the copy (mask must be set)
+ * @param[in]     src        The attrlist to make a copy of
+ * @param[in]     pass_refs  If true, pass the ACL reference to dest.
+ *
+ */
+
+static inline void fsal_copy_attrs(struct attrlist *dest,
+				   struct attrlist *src,
+				   bool pass_refs)
+{
+	bool acl_asked = dest->mask & ATTR_ACL;
+
+	*dest = *src;
+
+	if (pass_refs) {
+		/* Pass any ACL reference to the dest, so remove from src
+		 * without adjusting the refcount.
+		 */
+		src->acl = NULL;
+		src->mask &= ~ATTR_ACL;
+	} else if (dest->acl != NULL && acl_asked) {
+		/* Take reference on ACL if necessary */
+		nfs4_acl_entry_inc_ref(dest->acl);
+	} else {
+		/* Make sure acl is NULL and don't pass a ref back (so
+		 * caller when calling fsal_release_attrs will not have to
+		 * release the ACL reference).
+		 */
+		dest->acl = NULL;
+		dest->mask &= ~ATTR_ACL;
 	}
 }
 

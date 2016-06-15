@@ -70,7 +70,7 @@ int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	pre_op_attr pre_parent = {
 		.attributes_follow = false
 	};
-	struct attrlist sattr;
+	struct attrlist sattr, attrs;
 	fsal_status_t fsal_status = {0, 0};
 	int rc = NFS_REQ_OK;
 	/* Client provided verifier, split into two pieces */
@@ -85,6 +85,10 @@ int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 			 "REQUEST PROCESSING: Calling nfs3_create handle: %s name: %s",
 			 str, file_name ? file_name : "");
 	}
+
+	/* We have the option of not sending attributes, so set ATTR_RDATTR_ERR.
+	 */
+	fsal_prepare_attrs(&attrs, ATTRS_NFS3 | ATTR_RDATTR_ERR);
 
 	memset(&sattr, 0, sizeof(struct attrlist));
 
@@ -177,7 +181,8 @@ int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 					 file_name,
 					 &sattr,
 					 verifier,
-					 &file_obj);
+					 &file_obj,
+					 &attrs);
 
 		if (FSAL_IS_ERROR(fsal_status))
 			goto out_fail;
@@ -203,7 +208,7 @@ int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	squash_setattr(&sattr);
 
 	fsal_status = fsal_create(parent_obj, file_name, REGULAR_FILE, &sattr,
-				  NULL, &file_obj);
+				  NULL, &file_obj, &attrs);
 
 	/* Complete failure */
 	if ((FSAL_IS_ERROR(fsal_status) && fsal_status.major != ERR_FSAL_EXIST)
@@ -243,7 +248,8 @@ int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	/* Build entry attributes */
 	nfs_SetPostOpAttr(file_obj,
-			  &res->res_create3.CREATE3res_u.resok.obj_attributes);
+			  &res->res_create3.CREATE3res_u.resok.obj_attributes,
+			  &attrs);
 
 	nfs_SetWccData(&pre_parent, parent_obj,
 		       &res->res_create3.CREATE3res_u.resok.dir_wcc);
@@ -264,8 +270,8 @@ int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
  out_fail:
 
-	/* Release the attributes (may release an inherited ACL) */
-	fsal_release_attrs(&sattr);
+	/* Release the attributes. */
+	fsal_release_attrs(&attrs);
 
 	if (nfs_RetryableError(fsal_status.major)) {
 		rc = NFS_REQ_DROP;

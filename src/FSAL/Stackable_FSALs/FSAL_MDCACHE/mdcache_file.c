@@ -412,7 +412,7 @@ static fsal_status_t mdc_open2_by_name(mdcache_entry_t *mdc_parent,
 	if (!name)
 		return fsalstat(ERR_FSAL_INVAL, 0);
 
-	status = mdc_lookup(mdc_parent, name, uncached, &entry);
+	status = mdc_lookup(mdc_parent, name, uncached, &entry, NULL);
 
 	if (FSAL_IS_ERROR(status)) {
 		/* Does not exist, or other error, return to open2 to
@@ -447,7 +447,7 @@ static fsal_status_t mdc_open2_by_name(mdcache_entry_t *mdc_parent,
 		status = entry->sub_handle->obj_ops.open2(
 			entry->sub_handle, state, openflags, createmode,
 			NULL, attrib_set, verifier, &sub_handle,
-			caller_perm_check)
+			NULL, caller_perm_check)
 	       );
 
 	if (FSAL_IS_ERROR(status)) {
@@ -473,29 +473,78 @@ static fsal_status_t mdc_open2_by_name(mdcache_entry_t *mdc_parent,
 }
 
 /**
- * @brief Open a file (new style)
+ * @brief Open a file descriptor for read or write and possibly create
  *
- * Delegate to sub-FSAL
+ * This function opens a file for read or write, possibly creating it.
+ * If the caller is passing a state, it must hold the state_lock
+ * exclusive.
  *
- * @param[in] obj_hdl		File to open
- * @param[in,out] state		state_t to operate on
- * @param[in] openflags		Details of how to open the file
- * @param[in] createmode	Mode if creating
- * @param[in] name		If name is not NULL, obj is the parent directory
- * @param[in] attr		Attributes to set on the file
- * @param[in] verifier		Verifier to use with exclusive create
- * @param[out] new_obj		New entry for the opened file
- * @param[out] caller_perm_check Whether caller should check permissions
- * @return FSAL status
+ * state can be NULL which indicates a stateless open (such as via the
+ * NFS v3 CREATE operation), in which case the FSAL must assure protection
+ * of any resources. If the file is being created, such protection is
+ * simple since no one else will have access to the object yet, however,
+ * in the case of an exclusive create, the common resources may still need
+ * protection.
+ *
+ * If Name is NULL, obj_hdl is the file itself, otherwise obj_hdl is the
+ * parent directory.
+ *
+ * On an exclusive create, the upper layer may know the object handle
+ * already, so it MAY call with name == NULL. In this case, the caller
+ * expects just to check the verifier.
+ *
+ * On a call with an existing object handle for an UNCHECKED create,
+ * we can set the size to 0.
+ *
+ * If attributes are not set on create, the FSAL will set some minimal
+ * attributes (for example, mode might be set to 0600).
+ *
+ * If an open by name succeeds and did not result in Ganesha creating a file,
+ * the caller will need to do a subsequent permission check to confirm the
+ * open. This is because the permission attributes were not available
+ * beforehand.
+ *
+ * The caller is expected to invoke fsal_release_attrs to release any
+ * resources held by the set attributes. The FSAL layer MAY have added an
+ * inherited ACL.
+ *
+ * The caller will set the mask in attrs_out to indicate the attributes of
+ * interest.
+ *
+ * Since this method may instantiate a new fsal_obj_handle, it will be forced
+ * to fetch at least some attributes in order to even know what the object
+ * type is (as well as it's fileid and fsid). For this reason, the operation
+ * as a whole can be expected to fail if the attributes were not able to be
+ * fetched.
+ *
+ * The attributes will not be returned if this is an open by object as
+ * opposed to an open by name.
+ *
+ * @note If the file was created, @a new_obj has been ref'd
+ *
+ * @param[in] obj_hdl               File to open or parent directory
+ * @param[in,out] state             state_t to use for this operation
+ * @param[in] openflags             Mode for open
+ * @param[in] createmode            Mode for create
+ * @param[in] name                  Name for file if being created or opened
+ * @param[in] attrs_in              Attributes to set on created file
+ * @param[in] verifier              Verifier to use for exclusive create
+ * @param[in,out] new_obj           Newly created object
+ * @param[in,out] attrs_out         Optional attributes for newly created object
+ * @param[in,out] caller_perm_check The caller must do a permission check
+ *
+ * @return FSAL status.
  */
+
 fsal_status_t mdcache_open2(struct fsal_obj_handle *obj_hdl,
 			   struct state_t *state,
 			   fsal_openflags_t openflags,
 			   enum fsal_create_mode createmode,
 			   const char *name,
-			   struct attrlist *attrib_set,
+			   struct attrlist *attrs_in,
 			   fsal_verifier_t verifier,
 			   struct fsal_obj_handle **new_obj,
+			   struct attrlist *attrs_out,
 			   bool *caller_perm_check)
 {
 	mdcache_entry_t *mdc_parent =
@@ -503,13 +552,19 @@ fsal_status_t mdcache_open2(struct fsal_obj_handle *obj_hdl,
 	mdcache_entry_t *new_entry = NULL;
 	struct fsal_obj_handle *sub_handle = NULL;
 	fsal_status_t status;
+	struct attrlist attrs;
+	const char *dispname = name != NULL ? name : "<by-handle>";
+	struct mdcache_fsal_export *export = mdc_cur_export();
 
 	LogAttrlist(COMPONENT_CACHE_INODE, NIV_FULL_DEBUG,
-		    "attrib_set ", attrib_set, false);
+		    "attrs_in ", attrs_in, false);
 
 	if (name) {
+		/* Check if we have the file already cached, in which case
+		 * we can open by object instead of by name.
+		 */
 		status = mdc_open2_by_name(mdc_parent, state, openflags,
-					   createmode, name, attrib_set,
+					   createmode, name, attrs_in,
 					   verifier, &new_entry,
 					   caller_perm_check);
 
@@ -531,25 +586,39 @@ fsal_status_t mdcache_open2(struct fsal_obj_handle *obj_hdl,
 
 		if (status.major != ERR_FSAL_NOENT) {
 			/* Return the error */
+			*new_obj = NULL;
 			return status;
 		}
 	}
 
+	/* We can survive if we don't actually succeed in fetching the
+	 * attributes.
+	 */
+	fsal_prepare_attrs(&attrs,
+			   op_ctx->fsal_export->exp_ops.
+				fs_supported_attrs(op_ctx->fsal_export) |
+				ATTR_RDATTR_ERR);
+
 	subcall(
 		status = mdc_parent->sub_handle->obj_ops.open2(
 			mdc_parent->sub_handle, state, openflags, createmode,
-			name, attrib_set, verifier, &sub_handle,
+			name, attrs_in, verifier, &sub_handle, &attrs,
 			caller_perm_check)
 	       );
 
-	if (FSAL_IS_ERROR(status)) {
-		if (status.major == ERR_FSAL_STALE)
+	if (unlikely(FSAL_IS_ERROR(status))) {
+		LogDebug(COMPONENT_CACHE_INODE,
+			 "open2 %s failed with %s",
+			 dispname, fsal_err_txt(status));
+		if (status.major == ERR_FSAL_STALE) {
+			/* If we got ERR_FSAL_STALE, the previous FSAL call
+			 * must have failed with a bad parent.
+			 */
 			mdcache_kill_entry(mdc_parent);
-		if (new_entry)
-			mdcache_put(new_entry);
-		LogFullDebug(COMPONENT_CACHE_INODE,
-			     "Open failed %s",
-			     msg_fsal_err(status.major));
+		}
+		fsal_release_attrs(attrs_in);
+		fsal_release_attrs(&attrs);
+		*new_obj = NULL;
 		return status;
 	}
 
@@ -566,27 +635,25 @@ fsal_status_t mdcache_open2(struct fsal_obj_handle *obj_hdl,
 		LogFullDebug(COMPONENT_CACHE_INODE,
 			     "Open2 of object succeeded.");
 		*new_obj = obj_hdl;
-		return status;
-	} else if (createmode != FSAL_NO_CREATE) {
-		/* We probably created, so let's invalidate the parent
-		 * directory's attributes.
+		/* We didn't actually get any attributes, but release anyway
+		 * for code consistency.
 		 */
-		atomic_clear_uint32_t_bits(&mdc_parent->mde_flags,
-					   MDCACHE_TRUST_ATTRS);
+		fsal_release_attrs(&attrs);
+		return status;
 	}
 
 	PTHREAD_RWLOCK_wrlock(&mdc_parent->content_lock);
-	status = mdc_add_cache(mdc_parent, name, sub_handle, &new_entry);
-	PTHREAD_RWLOCK_unlock(&mdc_parent->content_lock);
-	if (new_entry) {
-		atomic_clear_uint32_t_bits(&new_entry->mde_flags,
-					   MDCACHE_TRUST_ATTRS);
-		*new_obj = &new_entry->obj_handle;
-	}
 
-	LogFullDebug(COMPONENT_CACHE_INODE,
-		     "mdc_add_cache returned %s",
-		     msg_fsal_err(status.major));
+	/* We will invalidate parent attrs if we did any form of create. */
+	status = mdcache_alloc_and_check_handle(export, sub_handle,
+						new_obj, false,
+						&attrs, attrs_out,
+						"open2", mdc_parent, name,
+						createmode != FSAL_NO_CREATE);
+
+	PTHREAD_RWLOCK_unlock(&mdc_parent->content_lock);
+
+	fsal_release_attrs(&attrs);
 
 	return status;
 }

@@ -118,7 +118,7 @@ int nfs3_remove(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	}
 
 	/* Lookup the child entry to verify that it is not a directory */
-	fsal_status = fsal_lookup(parent_obj, name, &child_obj);
+	fsal_status = fsal_lookup(parent_obj, name, &child_obj, NULL);
 
 	if (!FSAL_IS_ERROR(fsal_status)) {
 		/* Sanity check: make sure we are not removing a

@@ -71,7 +71,11 @@ int nfs3_mknod(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	const char *file_name = arg->arg_mknod3.where.name;
 	int rc = NFS_REQ_OK;
 	fsal_status_t fsal_status;
-	struct attrlist sattr;
+	struct attrlist sattr, attrs;
+
+	/* We have the option of not sending attributes, so set ATTR_RDATTR_ERR.
+	 */
+	fsal_prepare_attrs(&attrs, ATTRS_NFS3 | ATTR_RDATTR_ERR);
 
 	memset(&sattr, 0, sizeof(sattr));
 
@@ -191,7 +195,7 @@ int nfs3_mknod(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	/* Try to create it */
 	fsal_status = fsal_create(parent_obj, file_name, nodetype, &sattr,
-				  NULL, &node_obj);
+				  NULL, &node_obj, &attrs);
 
 	/* Release the attributes (may release an inherited ACL) */
 	fsal_release_attrs(&sattr);
@@ -215,7 +219,7 @@ int nfs3_mknod(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	rok->obj.handle_follows = TRUE;
 
 	/* Build entry attributes */
-	nfs_SetPostOpAttr(node_obj, &rok->obj_attributes);
+	nfs_SetPostOpAttr(node_obj, &rok->obj_attributes, &attrs);
 
 	/* Build Weak Cache Coherency data */
 	nfs_SetWccData(&pre_parent, parent_obj, &rok->dir_wcc);
@@ -234,6 +238,10 @@ int nfs3_mknod(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		rc = NFS_REQ_DROP;
 
  out:
+
+	/* Release the attributes. */
+	fsal_release_attrs(&attrs);
+
 	/* return references */
 	if (parent_obj)
 		parent_obj->obj_ops.put_ref(parent_obj);

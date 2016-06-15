@@ -692,9 +692,19 @@ struct export_ops {
  * This function looks up a path within the export, it is typically
  * used to get a handle for the root directory of the export.
  *
- * @param[in]  exp_hdl The export in which to look up
- * @param[in]  path    The path to look up
- * @param[out] handle  The object found
+ * The caller will set the mask in attrs_out to indicate the attributes of
+ * interest.
+ *
+ * Since this method instantiates a new fsal_obj_handle, it will be forced
+ * to fetch at least some attributes in order to even know what the object
+ * type is (as well as it's fileid and fsid). For this reason, the operation
+ * as a whole can be expected to fail if the attributes were not able to be
+ * fetched.
+ *
+ * @param[in]     exp_hdl   The export in which to look up
+ * @param[in]     path      The path to look up
+ * @param[out]    handle    The object found
+ * @param[in,out] attrs_out Optional attributes for newly created object
  *
  * @note On success, @a handle has been ref'd
  *
@@ -702,7 +712,8 @@ struct export_ops {
  */
 	 fsal_status_t (*lookup_path)(struct fsal_export *exp_hdl,
 				      const char *path,
-				      struct fsal_obj_handle **handle);
+				      struct fsal_obj_handle **handle,
+				      struct attrlist *attrs_out);
 
 /**
  * @brief Look up a junction
@@ -758,9 +769,19 @@ struct export_ops {
  * "wire" handle (when an object is no longer in cache but the client
  * still remembers the nandle).
  *
- * @param[in]  exp_hdl  The export in which to create the handle
- * @param[in]  hdl_desc Buffer descriptor for the "wire" handle
- * @param[out] handle   FSAL object handle
+ * The caller will set the mask in attrs_out to indicate the attributes of
+ * interest.
+ *
+ * Since this method instantiates a new fsal_obj_handle, it will be forced
+ * to fetch at least some attributes in order to even know what the object
+ * type is (as well as it's fileid and fsid). For this reason, the operation
+ * as a whole can be expected to fail if the attributes were not able to be
+ * fetched.
+ *
+ * @param[in]     exp_hdl   The export in which to create the handle
+ * @param[in]     hdl_desc  Buffer descriptor for the "wire" handle
+ * @param[out]    handle    FSAL object handle
+ * @param[in,out] attrs_out Optional attributes for newly created object
  *
  * @note On success, @a handle has been ref'd
  *
@@ -768,7 +789,8 @@ struct export_ops {
  */
 	 fsal_status_t (*create_handle)(struct fsal_export *exp_hdl,
 					struct gsh_buffdesc *hdl_desc,
-					struct fsal_obj_handle **handle);
+					struct fsal_obj_handle **handle,
+					struct attrlist *attrs_out);
 /**@}*/
 
 /**@{*/
@@ -1168,6 +1190,7 @@ static inline int sizeof_fsid(enum fsid_type type)
 typedef uint64_t fsal_cookie_t;
 
 typedef bool (*fsal_readdir_cb)(const char *name, struct fsal_obj_handle *obj,
+				struct attrlist *attrs,
 				void *dir_state, fsal_cookie_t cookie);
 /**
  * @brief FSAL object operations vector
@@ -1248,9 +1271,19 @@ struct fsal_obj_ops {
  * NULL, a handle to the root of the export was returned.  This
  * special case is no longer supported and should not be implemented.
  *
- * @param[in]  dir_hdl Directory to search
- * @param[in]  path    Name to look up
- * @param[out] handle  Object found
+ * The caller will set the mask in attrs_out to indicate the attributes of
+ * interest.
+ *
+ * Since this method instantiates a new fsal_obj_handle, it will be forced
+ * to fetch at least some attributes in order to even know what the object
+ * type is (as well as it's fileid and fsid). For this reason, the operation
+ * as a whole can be expected to fail if the attributes were not able to be
+ * fetched.
+ *
+ * @param[in]     dir_hdl   Directory to search
+ * @param[in]     path      Name to look up
+ * @param[out]    handle    Object found
+ * @param[in,out] attrs_out Optional attributes for newly created object
  *
  * @note On success, @a handle has been ref'd
  *
@@ -1258,7 +1291,8 @@ struct fsal_obj_ops {
  */
 	 fsal_status_t (*lookup)(struct fsal_obj_handle *dir_hdl,
 				 const char *path,
-				 struct fsal_obj_handle **handle);
+				 struct fsal_obj_handle **handle,
+				 struct attrlist *attrs_out);
 
 /**
  * @brief Read a directory
@@ -1281,6 +1315,7 @@ struct fsal_obj_ops {
 				  fsal_cookie_t *whence,
 				  void *dir_state,
 				  fsal_readdir_cb cb,
+				  attrmask_t attrmask,
 				  bool *eof);
 /**@}*/
 
@@ -1301,18 +1336,29 @@ struct fsal_obj_ops {
  * resources held by the set attributes. The FSAL layer MAY have added an
  * inherited ACL.
  *
- * @param[in]     dir_hdl Directory in which to create the file
- * @param[in]     name    Name of file to create
- * @param[in]     attrib  Attributes to set on newly created object
- * @param[out]    new_obj Newly created object
+ * The caller will set the mask in attrs_out to indicate the attributes of
+ * interest.
+ *
+ * Since this method instantiates a new fsal_obj_handle, it will be forced
+ * to fetch at least some attributes in order to even know what the object
+ * type is (as well as it's fileid and fsid). For this reason, the operation
+ * as a whole can be expected to fail if the attributes were not able to be
+ * fetched.
+ *
+ * @param[in]     dir_hdl   Directory in which to create the file
+ * @param[in]     name      Name of file to create
+ * @param[in]     attrs_in  Attributes to set on newly created object
+ * @param[out]    new_obj   Newly created object
+ * @param[in,out] attrs_out Optional attributes for newly created object
  *
  * @note On success, @a new_obj has been ref'd
  *
  * @return FSAL status.
  */
 	 fsal_status_t (*create)(struct fsal_obj_handle *dir_hdl,
-				 const char *name, struct attrlist *attrib,
-				 struct fsal_obj_handle **new_obj);
+				 const char *name, struct attrlist *attrs_in,
+				 struct fsal_obj_handle **new_obj,
+				 struct attrlist *attrs_out);
 
 /**
  * @brief Create a directory
@@ -1327,18 +1373,29 @@ struct fsal_obj_ops {
  * resources held by the set attributes. The FSAL layer MAY have added an
  * inherited ACL.
  *
- * @param[in]     dir_hdl Directory in which to create the directory
- * @param[in]     name    Name of directory to create
- * @param[in]     attrib  Attributes to set on newly created object
- * @param[out]    new_obj Newly created object
+ * The caller will set the mask in attrs_out to indicate the attributes of
+ * interest.
+ *
+ * Since this method instantiates a new fsal_obj_handle, it will be forced
+ * to fetch at least some attributes in order to even know what the object
+ * type is (as well as it's fileid and fsid). For this reason, the operation
+ * as a whole can be expected to fail if the attributes were not able to be
+ * fetched.
+ *
+ * @param[in]     dir_hdl   Directory in which to create the directory
+ * @param[in]     name      Name of directory to create
+ * @param[in]     attrs_in  Attributes to set on newly created object
+ * @param[out]    new_obj   Newly created object
+ * @param[in,out] attrs_out Optional attributes for newly created object
  *
  * @note On success, @a new_obj has been ref'd
  *
  * @return FSAL status.
  */
 	 fsal_status_t (*mkdir)(struct fsal_obj_handle *dir_hdl,
-				const char *name, struct attrlist *attrib,
-				struct fsal_obj_handle **new_obj);
+				const char *name, struct attrlist *attrs_in,
+				struct fsal_obj_handle **new_obj,
+				struct attrlist *attrs_out);
 
 /**
  * @brief Create a special file
@@ -1353,13 +1410,23 @@ struct fsal_obj_ops {
  * resources held by the set attributes. The FSAL layer MAY have added an
  * inherited ACL.
  *
- * @param[in]     dir_hdl  Directory in which to create the object
- * @param[in]     name     Name of object to create
- * @param[in]     nodetype Type of special file to create
- * @param[in]     dev      Major and minor device numbers for block or
- *                         character special
- * @param[in]     attrib   Attributes to set on newly created object
- * @param[out]    new_obj  Newly created object
+ * The caller will set the mask in attrs_out to indicate the attributes of
+ * interest.
+ *
+ * Since this method instantiates a new fsal_obj_handle, it will be forced
+ * to fetch at least some attributes in order to even know what the object
+ * type is (as well as it's fileid and fsid). For this reason, the operation
+ * as a whole can be expected to fail if the attributes were not able to be
+ * fetched.
+ *
+ * @param[in]     dir_hdl   Directory in which to create the object
+ * @param[in]     name      Name of object to create
+ * @param[in]     nodetype  Type of special file to create
+ * @param[in]     dev       Major and minor device numbers for block or
+ *                          character special
+ * @param[in]     attrs_in  Attributes to set on newly created object
+ * @param[out]    new_obj   Newly created object
+ * @param[in,out] attrs_out Optional attributes for newly created object
  *
  * @note On success, @a new_obj has been ref'd
  *
@@ -1369,8 +1436,9 @@ struct fsal_obj_ops {
 				 const char *name,
 				 object_file_type_t nodetype,
 				 fsal_dev_t *dev,
-				 struct attrlist *attrib,
-				 struct fsal_obj_handle **new_obj);
+				 struct attrlist *attrs_in,
+				 struct fsal_obj_handle **new_obj,
+				 struct attrlist *attrs_out);
 
 /**
  * @brief Create a symbolic link
@@ -1385,11 +1453,21 @@ struct fsal_obj_ops {
  * resources held by the set attributes. The FSAL layer MAY have added an
  * inherited ACL.
  *
+ * The caller will set the mask in attrs_out to indicate the attributes of
+ * interest.
+ *
+ * Since this method instantiates a new fsal_obj_handle, it will be forced
+ * to fetch at least some attributes in order to even know what the object
+ * type is (as well as it's fileid and fsid). For this reason, the operation
+ * as a whole can be expected to fail if the attributes were not able to be
+ * fetched.
+ *
  * @param[in]     dir_hdl   Directory in which to create the object
  * @param[in]     name      Name of object to create
  * @param[in]     link_path Content of symbolic link
- * @param[in]     attrib    Attributes to set on newly created object
- * @param[out] new_obj      Newly created object
+ * @param[in]     attrs_in  Attributes to set on newly created object
+ * @param[out]    new_obj   Newly created object
+ * @param[in,out] attrs_out Optional attributes for newly created object
  *
  * @note On success, @a new_obj has been ref'd
  *
@@ -1398,8 +1476,9 @@ struct fsal_obj_ops {
 	 fsal_status_t (*symlink)(struct fsal_obj_handle *dir_hdl,
 				  const char *name,
 				  const char *link_path,
-				  struct attrlist *attrib,
-				  struct fsal_obj_handle **new_obj);
+				  struct attrlist *attrs_in,
+				  struct fsal_obj_handle **new_obj,
+				  struct attrlist *attrs_out);
 /**@}*/
 
 /**@{*/
@@ -1468,6 +1547,11 @@ struct fsal_obj_ops {
  * The caller MUST call fsal_release_attrs when done with the copied
  * out attributes. This will release any attributes that might take
  * additional memory.
+ *
+ * If ATTR_RDATTR_ERR is set in the mask, and the attribute fetch fails,
+ * then the returned attributes will have just ATTR_RDATTR_ERR in the
+ * mask and the rest of the attributes are considered invalid. Otherwise
+ * on failure, attrib_get is unchanged.
  *
  * @param[in]  obj_hdl    Object to query
  * @param[out] attrib_get Attribute list for file
@@ -2197,12 +2281,10 @@ struct fsal_obj_ops {
  *
  * On an exclusive create, the upper layer may know the object handle
  * already, so it MAY call with name == NULL. In this case, the caller
- * expects just to check the verifier. The caller must hold the attr_lock
- * since the FSAL will update the attributes in checking the verifier.
+ * expects just to check the verifier.
  *
  * On a call with an existing object handle for an UNCHECKED create,
- * we can set the size to 0, because of this, the caller must hold the
- * attr_lock to update the attributes.
+ * we can set the size to 0.
  *
  * If attributes are not set on create, the FSAL will set some minimal
  * attributes (for example, mode might be set to 0600).
@@ -2216,6 +2298,18 @@ struct fsal_obj_ops {
  * resources held by the set attributes. The FSAL layer MAY have added an
  * inherited ACL.
  *
+ * The caller will set the mask in attrs_out to indicate the attributes of
+ * interest.
+ *
+ * Since this method may instantiate a new fsal_obj_handle, it will be forced
+ * to fetch at least some attributes in order to even know what the object
+ * type is (as well as it's fileid and fsid). For this reason, the operation
+ * as a whole can be expected to fail if the attributes were not able to be
+ * fetched.
+ *
+ * The attributes will not be returned if this is an open by object as
+ * opposed to an open by name.
+ *
  * @note If the file was created, @a new_obj has been ref'd
  *
  * @param[in] obj_hdl               File to open or parent directory
@@ -2223,9 +2317,10 @@ struct fsal_obj_ops {
  * @param[in] openflags             Mode for open
  * @param[in] createmode            Mode for create
  * @param[in] name                  Name for file if being created or opened
- * @param[in] attrib_set            Attributes to set on created file
+ * @param[in] attrs_in              Attributes to set on created file
  * @param[in] verifier              Verifier to use for exclusive create
  * @param[in,out] new_obj           Newly created object
+ * @param[in,out] attrs_out         Optional attributes for newly created object
  * @param[in,out] caller_perm_check The caller must do a permission check
  *
  * @return FSAL status.
@@ -2235,9 +2330,10 @@ struct fsal_obj_ops {
 				fsal_openflags_t openflags,
 				enum fsal_create_mode createmode,
 				const char *name,
-				struct attrlist *attrib_set,
+				struct attrlist *attrs_in,
 				fsal_verifier_t verifier,
 				struct fsal_obj_handle **new_obj,
+				struct attrlist *attrs_out,
 				bool *caller_perm_check);
 
 /**

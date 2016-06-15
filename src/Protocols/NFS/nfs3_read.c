@@ -56,7 +56,8 @@ static void nfs_read_ok(struct svc_req *req, nfs_res_t *res, char *data,
 
 	/* Build Post Op Attributes */
 	nfs_SetPostOpAttr(obj,
-			  &res->res_read3.READ3res_u.resok.file_attributes);
+			  &res->res_read3.READ3res_u.resok.file_attributes,
+			  NULL);
 
 	res->res_read3.READ3res_u.resok.eof = eof;
 	res->res_read3.READ3res_u.resok.count = read_size;
@@ -178,7 +179,8 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 			nfs_SetPostOpAttr(obj,
 					  &res->res_read3.READ3res_u.resfail.
-					  file_attributes);
+						file_attributes,
+					  NULL);
 
 			rc = NFS_REQ_OK;
 			goto out;
@@ -257,7 +259,8 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	res->res_read3.status = nfs3_Errno_status(fsal_status);
 
 	nfs_SetPostOpAttr(obj,
-			  &res->res_read3.READ3res_u.resfail.file_attributes);
+			  &res->res_read3.READ3res_u.resfail.file_attributes,
+			  NULL);
 
 	rc = NFS_REQ_OK;
 

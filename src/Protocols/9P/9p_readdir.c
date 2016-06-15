@@ -104,7 +104,7 @@ static fsal_errors_t _9p_readdir_callback(void *opaque,
 		return ERR_FSAL_NO_ERROR;
 	}
 
-	switch (attr->type) {
+	switch (obj->type) {
 	case FIFO_FILE:
 		qid_type = _9P_QTFILE;
 		d_type = DT_FIFO;
@@ -228,7 +228,7 @@ int _9p_readdir(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	/* Is this the first request ? */
 	if (*offset == 0LL) {
 		/* compute the parent entry */
-		fsal_status = fsal_lookupp(pfid->pentry, &pentry_dot_dot);
+		fsal_status = fsal_lookupp(pfid->pentry, &pentry_dot_dot, NULL);
 		if (FSAL_IS_ERROR(fsal_status))
 			return _9p_rerror(req9p, msgtag,
 					  _9p_tools_errno(fsal_status),
@@ -252,7 +252,7 @@ int _9p_readdir(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		cookie = 0LL;
 	} else if (*offset == 1LL) {
 		/* compute the parent entry */
-		fsal_status = fsal_lookupp(pfid->pentry, &pentry_dot_dot);
+		fsal_status = fsal_lookupp(pfid->pentry, &pentry_dot_dot, NULL);
 		if (FSAL_IS_ERROR(fsal_status))
 			return _9p_rerror(req9p, msgtag,
 					  _9p_tools_errno(fsal_status),

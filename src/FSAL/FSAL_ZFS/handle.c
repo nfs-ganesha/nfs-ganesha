@@ -122,7 +122,8 @@ static struct zfs_fsal_obj_handle *alloc_handle(struct zfs_file_handle *fh,
 
 static fsal_status_t tank_lookup(struct fsal_obj_handle *parent,
 				 const char *path,
-				 struct fsal_obj_handle **handle)
+				 struct fsal_obj_handle **handle,
+				 struct attrlist *attrs_out)
 {
 	struct zfs_fsal_obj_handle *parent_hdl, *hdl;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
@@ -229,6 +230,13 @@ static fsal_status_t tank_lookup(struct fsal_obj_handle *parent,
 	/* allocate an obj_handle and fill it up */
 	hdl = alloc_handle(&fh, &stat, link_content, op_ctx->fsal_export);
 
+	if (attrs_out != NULL) {
+		posix2fsal_attributes(&stat, attrs_out);
+
+		/* Make sure ATTR_RDATTR_ERR is cleared on success. */
+		attrs_out->mask &= ~ATTR_RDATTR_ERR;
+	}
+
 	*handle = &hdl->obj_handle;
 
 	hdl->handle->zfs_handle = object;
@@ -245,7 +253,8 @@ static fsal_status_t tank_lookup(struct fsal_obj_handle *parent,
 
 fsal_status_t tank_lookup_path(struct fsal_export *exp_hdl,
 			       const char *path,
-			       struct fsal_obj_handle **handle)
+			       struct fsal_obj_handle **handle,
+			       struct attrlist *attrs_out)
 {
 	inogen_t object;
 	int rc = 0;
@@ -273,6 +282,13 @@ fsal_status_t tank_lookup_path(struct fsal_export *exp_hdl,
 
 	hdl = alloc_handle(&fh, &stat, NULL, exp_hdl);
 
+	if (attrs_out != NULL) {
+		posix2fsal_attributes(&stat, attrs_out);
+
+		/* Make sure ATTR_RDATTR_ERR is cleared on success. */
+		attrs_out->mask &= ~ATTR_RDATTR_ERR;
+	}
+
 	*handle = &hdl->obj_handle;
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
@@ -284,7 +300,8 @@ fsal_status_t tank_lookup_path(struct fsal_export *exp_hdl,
 
 static fsal_status_t tank_create(struct fsal_obj_handle *dir_hdl,
 				 const char *name, struct attrlist *attrib,
-				 struct fsal_obj_handle **handle)
+				 struct fsal_obj_handle **handle,
+				 struct attrlist *attrs_out)
 {
 	struct zfs_fsal_obj_handle *myself, *hdl;
 	int retval = 0;
@@ -320,6 +337,13 @@ static fsal_status_t tank_create(struct fsal_obj_handle *dir_hdl,
 	/* allocate an obj_handle and fill it up */
 	hdl = alloc_handle(&fh, &stat, NULL, op_ctx->fsal_export);
 
+	if (attrs_out != NULL) {
+		posix2fsal_attributes(&stat, attrs_out);
+
+		/* Make sure ATTR_RDATTR_ERR is cleared on success. */
+		attrs_out->mask &= ~ATTR_RDATTR_ERR;
+	}
+
 	/* >> set output handle << */
 	hdl->handle->zfs_handle = object;
 	hdl->handle->i_snap = 0;
@@ -334,7 +358,8 @@ static fsal_status_t tank_create(struct fsal_obj_handle *dir_hdl,
 
 static fsal_status_t tank_mkdir(struct fsal_obj_handle *dir_hdl,
 				const char *name, struct attrlist *attrib,
-				struct fsal_obj_handle **handle)
+				struct fsal_obj_handle **handle,
+				struct attrlist *attrs_out)
 {
 	struct zfs_fsal_obj_handle *myself, *hdl;
 	int retval = 0;
@@ -370,6 +395,13 @@ static fsal_status_t tank_mkdir(struct fsal_obj_handle *dir_hdl,
 	/* allocate an obj_handle and fill it up */
 	hdl = alloc_handle(&fh, &stat, NULL, op_ctx->fsal_export);
 
+	if (attrs_out != NULL) {
+		posix2fsal_attributes(&stat, attrs_out);
+
+		/* Make sure ATTR_RDATTR_ERR is cleared on success. */
+		attrs_out->mask &= ~ATTR_RDATTR_ERR;
+	}
+
 	/* >> set output handle << */
 	hdl->handle->zfs_handle = object;
 	hdl->handle->i_snap = 0;
@@ -387,7 +419,8 @@ static fsal_status_t tank_makenode(struct fsal_obj_handle *dir_hdl,
 				   object_file_type_t nodetype,	/* IN */
 				   fsal_dev_t *dev,	/* IN */
 				   struct attrlist *attrib,
-				   struct fsal_obj_handle **handle)
+				   struct fsal_obj_handle **handle,
+				   struct attrlist *attrs_out)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
@@ -401,7 +434,8 @@ static fsal_status_t tank_makenode(struct fsal_obj_handle *dir_hdl,
 static fsal_status_t tank_makesymlink(struct fsal_obj_handle *dir_hdl,
 				      const char *name, const char *link_path,
 				      struct attrlist *attrib,
-				      struct fsal_obj_handle **handle)
+				      struct fsal_obj_handle **handle,
+				      struct attrlist *attrs_out)
 {
 	struct zfs_fsal_obj_handle *myself, *hdl;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
@@ -438,6 +472,13 @@ static fsal_status_t tank_makesymlink(struct fsal_obj_handle *dir_hdl,
 
 	/* allocate an obj_handle and fill it up */
 	hdl = alloc_handle(&fh, &stat, link_path, op_ctx->fsal_export);
+
+	if (attrs_out != NULL) {
+		posix2fsal_attributes(&stat, attrs_out);
+
+		/* Make sure ATTR_RDATTR_ERR is cleared on success. */
+		attrs_out->mask &= ~ATTR_RDATTR_ERR;
+	}
 
 	*handle = &hdl->obj_handle;
 	hdl->handle->zfs_handle = object;
@@ -558,7 +599,8 @@ static fsal_status_t tank_linkfile(struct fsal_obj_handle *obj_hdl,
  */
 static fsal_status_t tank_readdir(struct fsal_obj_handle *dir_hdl,
 				  fsal_cookie_t *whence, void *dir_state,
-				  fsal_readdir_cb cb, bool *eof)
+				  fsal_readdir_cb cb, attrmask_t attrmask,
+				  bool *eof)
 {
 	struct zfs_fsal_obj_handle *myself;
 	int retval = 0;
@@ -598,6 +640,9 @@ static fsal_status_t tank_readdir(struct fsal_obj_handle *dir_hdl,
 		if (retval)
 			goto out;
 		for (index = 0; index < MAX_ENTRIES; index++) {
+			struct attrlist attrs;
+			bool cb_rc;
+
 			/* If psz_filename is NULL,
 			 * that's the end of the list */
 			if (dirents[index].psz_filename[0] == '\0') {
@@ -610,17 +655,21 @@ static fsal_status_t tank_readdir(struct fsal_obj_handle *dir_hdl,
 			    || !strcmp(dirents[index].psz_filename, ".."))
 				continue;
 
+			fsal_prepare_attrs(&attrs, attrmask);
+
 			fsal_status = tank_lookup(dir_hdl,
 						  dirents[index].psz_filename,
-						  &obj);
+						  &obj, &attrs);
 			if (FSAL_IS_ERROR(fsal_status))
 				goto done;
 
 			/* callback to cache inode */
-			if (!cb(dirents[index].psz_filename,
-				obj,
-				dir_state,
-				(fsal_cookie_t) index))
+			cb_rc = cb(dirents[index].psz_filename, obj, &attrs,
+				   dir_state, (fsal_cookie_t) index);
+
+			fsal_release_attrs(&attrs);
+
+			if (!cb_rc)
 				goto done;
 		}
 
@@ -739,6 +788,7 @@ static fsal_status_t tank_getattrs(struct fsal_obj_handle *obj_hdl,
 
 	/* convert attributes */
  ok_file_opened_and_deleted:
+
 	posix2fsal_attributes(&stat, attrs);
 
 	/* Make sure ATTR_RDATTR_ERR is cleared on success. */
@@ -1041,7 +1091,8 @@ void zfs_handle_ops_init(struct fsal_obj_ops *ops)
 
 fsal_status_t tank_create_handle(struct fsal_export *exp_hdl,
 				 struct gsh_buffdesc *hdl_desc,
-				 struct fsal_obj_handle **handle)
+				 struct fsal_obj_handle **handle,
+				 struct attrlist *attrs_out)
 {
 	struct zfs_fsal_obj_handle *hdl;
 	struct zfs_file_handle fh;
@@ -1078,6 +1129,13 @@ fsal_status_t tank_create_handle(struct fsal_export *exp_hdl,
 		link_content = link_buff;
 	}
 	hdl = alloc_handle(&fh, &stat, link_content, exp_hdl);
+
+	if (attrs_out != NULL) {
+		posix2fsal_attributes(&stat, attrs_out);
+
+		/* Make sure ATTR_RDATTR_ERR is cleared on success. */
+		attrs_out->mask &= ~ATTR_RDATTR_ERR;
+	}
 
 	*handle = &hdl->obj_handle;
 

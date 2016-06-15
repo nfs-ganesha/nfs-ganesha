@@ -230,7 +230,8 @@ void nfs_SetWccData(const struct pre_op_attr *before_attr,
 		    wcc_data * pwcc_data);
 
 void nfs_SetPostOpAttr(struct fsal_obj_handle *entry,
-		       post_op_attr *attr);
+		       post_op_attr *attr,
+		       struct attrlist *attrs);
 
 void nfs_SetPreOpAttr(struct fsal_obj_handle *entry,
 		      pre_op_attr *attr);
@@ -277,16 +278,12 @@ bool nfs4_Fattr_Supported(fattr4 *);
 bool nfs4_Fattr_Supported_Bitmap(struct bitmap4 *);
 int nfs4_Fattr_cmp(fattr4 *, fattr4 *);
 
-bool nfs3_FSALattr_To_Fattr(struct fsal_obj_handle *obj,
+void nfs3_FSALattr_To_Fattr(struct fsal_obj_handle *obj,
 			    const struct attrlist *FSAL_attr,
 			    fattr3 *Fattr);
 
 bool is_sticky_bit_set(struct fsal_obj_handle *obj,
 		       const struct attrlist *attr);
-
-#ifdef _USE_NFS3
-bool file_to_nfs3_Fattr(struct fsal_obj_handle *, fattr3 *);
-#endif
 
 bool nfs3_Sattr_To_FSALattr(struct attrlist *, sattr3 *);
 

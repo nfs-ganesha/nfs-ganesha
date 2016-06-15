@@ -373,7 +373,8 @@ fsal_status_t open2_by_name(struct fsal_obj_handle *in_obj,
 			    const char *name,
 			    struct attrlist *attr,
 			    fsal_verifier_t verifier,
-			    struct fsal_obj_handle **obj)
+			    struct fsal_obj_handle **obj,
+			    struct attrlist *attrs_out)
 {
 	fsal_status_t status = { 0, 0 };
 	fsal_status_t close_status = { 0, 0 };
@@ -407,6 +408,7 @@ fsal_status_t open2_by_name(struct fsal_obj_handle *in_obj,
 				       attr,
 				       verifier,
 				       obj,
+				       attrs_out,
 				       &caller_perm_check);
 	if (FSAL_IS_ERROR(status)) {
 		LogFullDebug(COMPONENT_FSAL,
@@ -680,7 +682,8 @@ fsal_status_t fsal_link(struct fsal_obj_handle *obj,
 
 fsal_status_t fsal_lookup(struct fsal_obj_handle *parent,
 			  const char *name,
-			  struct fsal_obj_handle **obj)
+			  struct fsal_obj_handle **obj,
+			  struct attrlist *attrs_out)
 {
 	fsal_status_t fsal_status = { 0, 0 };
 	fsal_accessflags_t access_mask =
@@ -703,10 +706,10 @@ fsal_status_t fsal_lookup(struct fsal_obj_handle *parent,
 		*obj = parent;
 		return fsalstat(ERR_FSAL_NO_ERROR, 0);
 	} else if (strcmp(name, "..") == 0)
-		return fsal_lookupp(parent, obj);
+		return fsal_lookupp(parent, obj, attrs_out);
 
 
-	return parent->obj_ops.lookup(parent, name, obj);
+	return parent->obj_ops.lookup(parent, name, obj, attrs_out);
 }
 
 /**
@@ -718,7 +721,8 @@ fsal_status_t fsal_lookup(struct fsal_obj_handle *parent,
  * @return FSAL status
  */
 fsal_status_t fsal_lookupp(struct fsal_obj_handle *obj,
-			   struct fsal_obj_handle **parent)
+			   struct fsal_obj_handle **parent,
+			   struct attrlist *attrs_out)
 {
 	*parent = NULL;
 
@@ -739,14 +743,22 @@ fsal_status_t fsal_lookupp(struct fsal_obj_handle *obj,
 			 * earlier.
 			 */
 			*parent = obj;
-			return fsalstat(ERR_FSAL_NO_ERROR, 0);
+			if (attrs_out != NULL) {
+				/* Need to return the attributes of the
+				 * current object.
+				 */
+				return obj->obj_ops.getattrs(obj, attrs_out);
+			} else {
+				/* Success */
+				return fsalstat(ERR_FSAL_NO_ERROR, 0);
+			}
 		} else {
 			/* Return entry from nfs_export_get_root_entry */
 			root_obj->obj_ops.put_ref(root_obj);
 		}
 	}
 
-	return obj->obj_ops.lookup(obj, "..", parent);
+	return obj->obj_ops.lookup(obj, "..", parent, attrs_out);
 }
 
 /**
@@ -803,7 +815,8 @@ fsal_status_t fsal_create(struct fsal_obj_handle *parent,
 			  object_file_type_t type,
 			  struct attrlist *attrs,
 			  const char *link_content,
-			  struct fsal_obj_handle **obj)
+			  struct fsal_obj_handle **obj,
+			  struct attrlist *attrs_out)
 {
 	fsal_status_t status = { 0, 0 };
 	attrmask_t orig_mask = attrs->mask;
@@ -847,31 +860,32 @@ fsal_status_t fsal_create(struct fsal_obj_handle *parent,
 	switch (type) {
 	case REGULAR_FILE:
 		/* NOTE: will not be called here if support_ex */
-		status = parent->obj_ops.create(parent, name, attrs, obj);
+		status = parent->obj_ops.create(parent, name, attrs,
+						obj, attrs_out);
 		break;
 
 	case DIRECTORY:
-		status = parent->obj_ops.mkdir(parent, name, attrs, obj);
+		status = parent->obj_ops.mkdir(parent, name, attrs,
+					       obj, attrs_out);
 		break;
 
 	case SYMBOLIC_LINK:
-		status = parent->obj_ops.symlink(parent, name,
-						 link_content,
-						 attrs, obj);
+		status = parent->obj_ops.symlink(parent, name, link_content,
+						 attrs, obj, attrs_out);
 		break;
 
 	case SOCKET_FILE:
 	case FIFO_FILE:
 		status = parent->obj_ops.mknode(parent, name, type,
 						NULL, /* dev_t !needed */
-						attrs, obj);
+						attrs, obj, attrs_out);
 		break;
 
 	case BLOCK_FILE:
 	case CHARACTER_FILE:
 		status = parent->obj_ops.mknode(parent, name, type,
 						&attrs->rawdev,
-						attrs, obj);
+						attrs, obj, attrs_out);
 		break;
 
 	case NO_FILE_TYPE:
@@ -891,7 +905,7 @@ fsal_status_t fsal_create(struct fsal_obj_handle *parent,
 				 "FSAL returned STALE on create type %d", type);
 		} else if (status.major == ERR_FSAL_EXIST) {
 			/* Already exists. Check if type if correct */
-			status = fsal_lookup(parent, name, obj);
+			status = fsal_lookup(parent, name, obj, attrs_out);
 			if (*obj != NULL) {
 				status = fsalstat(ERR_FSAL_EXIST, 0);
 				LogFullDebug(COMPONENT_FSAL,
@@ -1283,47 +1297,27 @@ struct fsal_populate_cb_state {
 	attrmask_t attrmask;
 };
 
-static fsal_status_t
-get_dirent(struct fsal_obj_handle *obj, struct fsal_readdir_cb_parms *cb_parms,
-	   fsal_cookie_t cookie, struct fsal_populate_cb_state *state)
-{
-	fsal_status_t status = { 0, 0 };
-	struct attrlist attrs;
-
-	fsal_prepare_attrs(&attrs, state->attrmask);
-
-	status = obj->obj_ops.getattrs(obj, &attrs);
-
-	if (FSAL_IS_ERROR(status)) {
-		LogInfo(COMPONENT_FSAL,
-			"attr refresh failed on %s in dir %p with %s",
-			cb_parms->name, obj, fsal_err_txt(status));
-		return status;
-	}
-
-	status.major = state->cb(cb_parms, obj, &attrs,
-				 attrs.fileid, cookie, state->cb_state);
-
-	/* Done with the attrs */
-	fsal_release_attrs(&attrs);
-
-	return status;
-}
-
 static bool
-populate_dirent(const char *name, struct fsal_obj_handle *obj, void *dir_state,
+populate_dirent(const char *name,
+		struct fsal_obj_handle *obj,
+		struct attrlist *attrs,
+		void *dir_state,
 		fsal_cookie_t cookie)
 {
 	struct fsal_populate_cb_state *state =
 	    (struct fsal_populate_cb_state *)dir_state;
 	struct fsal_readdir_cb_parms cb_parms = { state->opaque, name,
 		true, true };
-	fsal_status_t status = { 0, 0 };
+	fsal_status_t status = {0, 0};
 
-	status = get_dirent(obj, &cb_parms, cookie, state);
+	status.major = state->cb(&cb_parms, obj, attrs, attrs->fileid,
+				 cookie, state->cb_state);
+
 	if (status.major == ERR_FSAL_CROSS_JUNCTION) {
 		struct fsal_obj_handle *junction_obj;
 		struct gsh_export *junction_export = NULL;
+		struct fsal_export *saved_export;
+		struct attrlist attrs2;
 
 		PTHREAD_RWLOCK_rdlock(&obj->state_hdl->state_lock);
 
@@ -1365,12 +1359,36 @@ populate_dirent(const char *name, struct fsal_obj_handle *obj, void *dir_state,
 			return false;
 		}
 
-		/* Now call the callback again with that. */
-		state->cb_state = CB_JUNCTION;
-		status = get_dirent(junction_obj, &cb_parms, cookie, state);
-		state->cb_state = CB_ORIGINAL;
+		/* Now we need to get the cross-junction attributes. */
+		saved_export = op_ctx->fsal_export;
+		op_ctx->fsal_export = junction_export->fsal_export;
+
+		fsal_prepare_attrs(&attrs2,
+				   op_ctx->fsal_export->exp_ops
+					.fs_supported_attrs(op_ctx->fsal_export)
+					| ATTR_RDATTR_ERR);
+
+		status = junction_obj->obj_ops.getattrs(junction_obj, &attrs2);
+
+		if (!FSAL_IS_ERROR(status)) {
+			/* Now call the callback again with that. */
+			state->cb_state = CB_JUNCTION;
+			status.major = state->cb(&cb_parms,
+						 junction_obj,
+						 &attrs2,
+						 junction_export
+						     ->exp_mounted_on_file_id,
+						 cookie,
+						 state->cb_state);
+
+			state->cb_state = CB_ORIGINAL;
+		}
+
+		fsal_release_attrs(&attrs2);
 
 		/* Release our refs */
+		op_ctx->fsal_export = saved_export;
+
 		junction_obj->obj_ops.put_ref(junction_obj);
 		put_gsh_export(junction_export);
 	}
@@ -1470,6 +1488,7 @@ fsal_status_t fsal_readdir(struct fsal_obj_handle *directory,
 	fsal_status = directory->obj_ops.readdir(directory, &cookie,
 						 (void *)&state,
 						 populate_dirent,
+						 attrmask,
 						 eod_met);
 
 	return fsal_status;
@@ -1500,7 +1519,7 @@ fsal_remove(struct fsal_obj_handle *parent, const char *name)
 	}
 
 	/* Looks up for the entry to remove */
-	status = fsal_lookup(parent, name, &to_remove_obj);
+	status = fsal_lookup(parent, name, &to_remove_obj, NULL);
 	if (FSAL_IS_ERROR(status)) {
 		LogFullDebug(COMPONENT_FSAL, "lookup %s failure %s",
 			     name, fsal_err_txt(status));
@@ -1595,7 +1614,7 @@ fsal_status_t fsal_rename(struct fsal_obj_handle *dir_src,
 	}
 
 	/* Check for object existence in source directory */
-	fsal_status = fsal_lookup(dir_src, oldname, &lookup_src);
+	fsal_status = fsal_lookup(dir_src, oldname, &lookup_src, NULL);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		LogDebug(COMPONENT_FSAL,
@@ -1741,7 +1760,8 @@ fsal_status_t fsal_open2(struct fsal_obj_handle *in_obj,
 			 const char *name,
 			 struct attrlist *attr,
 			 fsal_verifier_t verifier,
-			 struct fsal_obj_handle **obj)
+			 struct fsal_obj_handle **obj,
+			 struct attrlist *attrs_out)
 {
 	fsal_status_t status = { 0, 0 };
 	bool caller_perm_check = false;
@@ -1770,7 +1790,7 @@ fsal_status_t fsal_open2(struct fsal_obj_handle *in_obj,
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	if (name)
 		return open2_by_name(in_obj, state, openflags, createmode, name,
-				     attr, verifier, obj);
+				     attr, verifier, obj, attrs_out);
 
 	if (createmode != FSAL_NO_CREATE)
 		return fsalstat(ERR_FSAL_INVAL, 0);
@@ -1804,6 +1824,7 @@ fsal_status_t fsal_open2(struct fsal_obj_handle *in_obj,
 				       attr,
 				       verifier,
 				       obj,
+				       attrs_out,
 				       &caller_perm_check);
 
 	if (!FSAL_IS_ERROR(status)) {

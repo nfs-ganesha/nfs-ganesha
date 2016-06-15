@@ -165,7 +165,7 @@ int _9p_attach(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		fsal_status = op_ctx->fsal_export->exp_ops.lookup_path(
 						op_ctx->fsal_export,
 						exppath,
-						&pfsal_handle);
+						&pfsal_handle, NULL);
 		if (FSAL_IS_ERROR(fsal_status)) {
 			err = _9p_tools_errno(fsal_status);
 			goto errout;
@@ -174,7 +174,8 @@ int _9p_attach(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		pfsal_handle->obj_ops.handle_to_key(pfsal_handle,
 						 &fh_desc);
 		fsal_status = export->fsal_export->exp_ops.create_handle(
-				 export->fsal_export, &fh_desc, &pfid->pentry);
+				 export->fsal_export, &fh_desc, &pfid->pentry,
+				 NULL);
 		if (FSAL_IS_ERROR(fsal_status)) {
 			err = _9p_tools_errno(fsal_status);
 			goto errout;

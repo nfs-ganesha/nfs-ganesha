@@ -96,7 +96,7 @@ struct fsal_obj_handle *nfs3_FhandleToCache(nfs_fh3 *fh3,
 
 	if (!FSAL_IS_ERROR(fsal_status))
 		fsal_status = export->exp_ops.create_handle(export, &fh_desc,
-							    &obj);
+							    &obj, NULL);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		*status = nfs3_Errno_status(fsal_status);

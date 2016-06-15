@@ -127,7 +127,8 @@ struct pxy_obj_handle {
 
 static struct pxy_obj_handle *pxy_alloc_handle(struct fsal_export *exp,
 					       const nfs_fh4 *fh,
-					       fattr4 *obj_attributes);
+					       fattr4 *obj_attributes,
+					       struct attrlist *attrs_out);
 
 static fsal_status_t nfsstat4_to_fsal(nfsstat4 nfsstatus)
 {
@@ -249,13 +250,6 @@ static struct bitmap4 pxy_bitmap_getattr = {
 	     PXY_ATTR_BIT2(FATTR4_TIME_METADATA) |
 	     PXY_ATTR_BIT2(FATTR4_TIME_MODIFY) | PXY_ATTR_BIT2(FATTR4_RAWDEV)),
 	.bitmap4_len = 2
-};
-
-/* Until readdir callback can take more information do not ask for more then
- * just type */
-static struct bitmap4 pxy_bitmap_readdir = {
-	.map[0] = PXY_ATTR_BIT(FATTR4_TYPE),
-	.bitmap4_len = 1
 };
 
 static struct bitmap4 pxy_bitmap_fsinfo = {
@@ -1012,11 +1006,12 @@ int pxy_init_rpc(const struct pxy_fsal_module *pm)
 static fsal_status_t pxy_make_object(struct fsal_export *export,
 				     fattr4 *obj_attributes,
 				     const nfs_fh4 *fh,
-				     struct fsal_obj_handle **handle)
+				     struct fsal_obj_handle **handle,
+				     struct attrlist *attrs_out)
 {
 	struct pxy_obj_handle *pxy_hdl;
 
-	pxy_hdl = pxy_alloc_handle(export, fh, obj_attributes);
+	pxy_hdl = pxy_alloc_handle(export, fh, obj_attributes, attrs_out);
 	if (pxy_hdl == NULL)
 		return fsalstat(ERR_FSAL_FAULT, 0);
 	*handle = &pxy_hdl->obj;
@@ -1033,7 +1028,8 @@ static fsal_status_t pxy_lookup_impl(struct fsal_obj_handle *parent,
 				     struct fsal_export *export,
 				     const struct user_cred *cred,
 				     const char *path,
-				     struct fsal_obj_handle **handle)
+				     struct fsal_obj_handle **handle,
+				     struct attrlist *attrs_out)
 {
 	int rc;
 	uint32_t opcnt = 0;
@@ -1094,15 +1090,16 @@ static fsal_status_t pxy_lookup_impl(struct fsal_obj_handle *parent,
 		return nfsstat4_to_fsal(rc);
 
 	return pxy_make_object(export, &atok->obj_attributes, &fhok->object,
-			       handle);
+			       handle, attrs_out);
 }
 
 static fsal_status_t pxy_lookup(struct fsal_obj_handle *parent,
 				const char *path,
-				struct fsal_obj_handle **handle)
+				struct fsal_obj_handle **handle,
+				struct attrlist *attrs_out)
 {
 	return pxy_lookup_impl(parent, op_ctx->fsal_export,
-			       op_ctx->creds, path, handle);
+			       op_ctx->creds, path, handle, attrs_out);
 }
 
 static fsal_status_t pxy_do_close(const struct user_cred *creds,
@@ -1173,7 +1170,8 @@ static uint64_t fcnt;
 
 static fsal_status_t pxy_create(struct fsal_obj_handle *dir_hdl,
 				const char *name, struct attrlist *attrib,
-				struct fsal_obj_handle **handle)
+				struct fsal_obj_handle **handle,
+				struct attrlist *attrs_out)
 {
 	int rc;
 	int opcnt = 0;
@@ -1243,9 +1241,8 @@ static fsal_status_t pxy_create(struct fsal_obj_handle *dir_hdl,
 			  &opok->stateid, op_ctx->fsal_export);
 	if (FSAL_IS_ERROR(st))
 		return st;
-	st = pxy_make_object(op_ctx->fsal_export,
-			     &atok->obj_attributes,
-			     &fhok->object, handle);
+	st = pxy_make_object(op_ctx->fsal_export, &atok->obj_attributes,
+			     &fhok->object, handle, attrs_out);
 	if (FSAL_IS_ERROR(st))
 		return st;
 
@@ -1254,7 +1251,8 @@ static fsal_status_t pxy_create(struct fsal_obj_handle *dir_hdl,
 
 static fsal_status_t pxy_mkdir(struct fsal_obj_handle *dir_hdl,
 			       const char *name, struct attrlist *attrib,
-			       struct fsal_obj_handle **handle)
+			       struct fsal_obj_handle **handle,
+			       struct attrlist *attrs_out)
 {
 	int rc;
 	int opcnt = 0;
@@ -1302,9 +1300,8 @@ static fsal_status_t pxy_mkdir(struct fsal_obj_handle *dir_hdl,
 	if (rc != NFS4_OK)
 		return nfsstat4_to_fsal(rc);
 
-	st = pxy_make_object(op_ctx->fsal_export,
-			     &atok->obj_attributes,
-			     &fhok->object, handle);
+	st = pxy_make_object(op_ctx->fsal_export, &atok->obj_attributes,
+			     &fhok->object, handle, attrs_out);
 	if (FSAL_IS_ERROR(st))
 		return st;
 
@@ -1314,7 +1311,8 @@ static fsal_status_t pxy_mkdir(struct fsal_obj_handle *dir_hdl,
 static fsal_status_t pxy_mknod(struct fsal_obj_handle *dir_hdl,
 			       const char *name, object_file_type_t nodetype,
 			       fsal_dev_t *dev, struct attrlist *attrib,
-			       struct fsal_obj_handle **handle)
+			       struct fsal_obj_handle **handle,
+			       struct attrlist *attrs_out)
 {
 	int rc;
 	int opcnt = 0;
@@ -1388,9 +1386,8 @@ static fsal_status_t pxy_mknod(struct fsal_obj_handle *dir_hdl,
 	if (rc != NFS4_OK)
 		return nfsstat4_to_fsal(rc);
 
-	st = pxy_make_object(op_ctx->fsal_export,
-			     &atok->obj_attributes,
-			     &fhok->object, handle);
+	st = pxy_make_object(op_ctx->fsal_export, &atok->obj_attributes,
+			     &fhok->object, handle, attrs_out);
 	if (FSAL_IS_ERROR(st))
 		return st;
 
@@ -1400,7 +1397,8 @@ static fsal_status_t pxy_mknod(struct fsal_obj_handle *dir_hdl,
 static fsal_status_t pxy_symlink(struct fsal_obj_handle *dir_hdl,
 				 const char *name, const char *link_path,
 				 struct attrlist *attrib,
-				 struct fsal_obj_handle **handle)
+				 struct fsal_obj_handle **handle,
+				 struct attrlist *attrs_out)
 {
 	int rc;
 	int opcnt = 0;
@@ -1448,9 +1446,8 @@ static fsal_status_t pxy_symlink(struct fsal_obj_handle *dir_hdl,
 	if (rc != NFS4_OK)
 		return nfsstat4_to_fsal(rc);
 
-	st = pxy_make_object(op_ctx->fsal_export,
-			     &atok->obj_attributes,
-			     &fhok->object, handle);
+	st = pxy_make_object(op_ctx->fsal_export, &atok->obj_attributes,
+			     &fhok->object, handle, attrs_out);
 	if (FSAL_IS_ERROR(st))
 		return st;
 
@@ -1543,7 +1540,8 @@ static bool xdr_readdirres(XDR *x, nfs_resop4 *rdres)
  */
 static fsal_status_t pxy_do_readdir(struct pxy_obj_handle *ph,
 				    nfs_cookie4 *cookie, fsal_readdir_cb cb,
-				    void *cbarg, bool *eof)
+				    void *cbarg, attrmask_t attrmask,
+				    bool *eof)
 {
 	uint32_t opcnt = 0;
 	int rc;
@@ -1558,7 +1556,7 @@ static fsal_status_t pxy_do_readdir(struct pxy_obj_handle *ph,
 	rdok = &resoparray[opcnt].nfs_resop4_u.opreaddir.READDIR4res_u.resok4;
 	rdok->reply.entries = NULL;
 	COMPOUNDV4_ARG_ADD_OP_READDIR(opcnt, argoparray, *cookie,
-				      pxy_bitmap_readdir);
+				      pxy_bitmap_getattr);
 
 	rc = pxy_nfsv4_call(ph->obj.export, op_ctx->creds, opcnt, argoparray,
 			    resoparray);
@@ -1568,9 +1566,10 @@ static fsal_status_t pxy_do_readdir(struct pxy_obj_handle *ph,
 	*eof = rdok->reply.eof;
 
 	for (e4 = rdok->reply.entries; e4; e4 = e4->nextentry) {
-		struct attrlist attr;
+		struct attrlist attrs;
 		char name[MAXNAMLEN + 1];
 		struct fsal_obj_handle *handle;
+		bool cb_rc;
 
 		/* UTF8 name does not include trailing 0 */
 		if (e4->name.utf8string_len > sizeof(name) - 1)
@@ -1578,17 +1577,26 @@ static fsal_status_t pxy_do_readdir(struct pxy_obj_handle *ph,
 		memcpy(name, e4->name.utf8string_val, e4->name.utf8string_len);
 		name[e4->name.utf8string_len] = '\0';
 
-		if (nfs4_Fattr_To_FSAL_attr(&attr, &e4->attrs, NULL))
+		if (nfs4_Fattr_To_FSAL_attr(&attrs, &e4->attrs, NULL))
 			return fsalstat(ERR_FSAL_FAULT, 0);
 
 		*cookie = e4->cookie;
 
+		/** @todo FSF: this could be handled by getting handle as part
+		 *             of readdir attributes. However, if acl is
+		 *             requested, we might get it separately to
+		 *             avoid over large READDIR response.
+		 */
 		st = pxy_lookup_impl(&ph->obj, op_ctx->fsal_export,
-				     op_ctx->creds, name, &handle);
+				     op_ctx->creds, name, &handle, NULL);
 		if (FSAL_IS_ERROR(st))
 			break;
 
-		if (!cb(name, handle, cbarg, e4->cookie))
+		cb_rc = cb(name, handle, &attrs, cbarg, e4->cookie);
+
+		fsal_release_attrs(&attrs);
+
+		if (!cb_rc)
 			break;
 	}
 	xdr_free((xdrproc_t) xdr_readdirres, resoparray);
@@ -1598,7 +1606,8 @@ static fsal_status_t pxy_do_readdir(struct pxy_obj_handle *ph,
 /* What to do about verifier if server needs one? */
 static fsal_status_t pxy_readdir(struct fsal_obj_handle *dir_hdl,
 				 fsal_cookie_t *whence, void *cbarg,
-				 fsal_readdir_cb cb, bool *eof)
+				 fsal_readdir_cb cb, attrmask_t attrmask,
+				 bool *eof)
 {
 	nfs_cookie4 cookie = 0;
 	struct pxy_obj_handle *ph;
@@ -1611,7 +1620,7 @@ static fsal_status_t pxy_readdir(struct fsal_obj_handle *dir_hdl,
 	do {
 		fsal_status_t st;
 
-		st = pxy_do_readdir(ph, &cookie, cb, cbarg, eof);
+		st = pxy_do_readdir(ph, &cookie, cb, cbarg, attrmask, eof);
 		if (FSAL_IS_ERROR(st))
 			return st;
 	} while (*eof == false);
@@ -2056,7 +2065,8 @@ static unsigned int hash_nfs_fh4(const nfs_fh4 *fh, unsigned int cookie)
 
 static struct pxy_obj_handle *pxy_alloc_handle(struct fsal_export *exp,
 					       const nfs_fh4 *fh,
-					       fattr4 *obj_attributes)
+					       fattr4 *obj_attributes,
+					       struct attrlist *attrs_out)
 {
 	struct pxy_obj_handle *n = gsh_malloc(sizeof(*n) + fh->nfs_fh4_len);
 	compound_data_t data;
@@ -2099,6 +2109,15 @@ static struct pxy_obj_handle *pxy_alloc_handle(struct fsal_export *exp,
 		n->obj.fsid = attributes.fsid;
 		n->obj.fileid = attributes.fileid;
 		pxy_handle_ops_init(&n->obj.obj_ops);
+		if (attrs_out != NULL) {
+			/* We aren't keeping ACL ref ourself, so pass it
+			 * to the caller.
+			 */
+			fsal_copy_attrs(attrs_out, &attributes, true);
+		} else {
+			/* Make sure we release the attributes. */
+			fsal_release_attrs(&attributes);
+		}
 	}
 	return n;
 }
@@ -2108,13 +2127,14 @@ static struct pxy_obj_handle *pxy_alloc_handle(struct fsal_export *exp,
 
 fsal_status_t pxy_lookup_path(struct fsal_export *exp_hdl,
 			      const char *path,
-			      struct fsal_obj_handle **handle)
+			      struct fsal_obj_handle **handle,
+			      struct attrlist *attrs_out)
 {
 	struct fsal_obj_handle *next;
 	struct fsal_obj_handle *parent = NULL;
 	char *saved;
 	char *pcopy;
-	char *p;
+	char *p, *pnext;
 	struct user_cred *creds = op_ctx->creds;
 
 	pcopy = gsh_strdup(path);
@@ -2129,17 +2149,25 @@ fsal_status_t pxy_lookup_path(struct fsal_export *exp_hdl,
 			gsh_free(pcopy);
 			return fsalstat(ERR_FSAL_ACCESS, EACCES);
 		}
-		/* Note that if any element is a symlink, the following will
-		 * fail, thus no security exposure.
+		/* Get the next token now, so we know if we are at the
+		 * terminal token or not.
 		 */
-		fsal_status_t st = pxy_lookup_impl(parent, exp_hdl,
-						   creds, p, &next);
+		pnext = strtok_r(NULL, "/", &saved);
+
+		/* Note that if any element is a symlink, the following will
+		 * fail, thus no security exposure. Only pass back the
+		 * attributes of the terminal lookup.
+		 */
+		fsal_status_t st = pxy_lookup_impl(parent, exp_hdl, creds, p,
+						   &next, p == NULL
+								? NULL :
+								attrs_out);
 		if (FSAL_IS_ERROR(st)) {
 			gsh_free(pcopy);
 			return st;
 		}
 
-		p = strtok_r(NULL, "/", &saved);
+		p = pnext;
 		parent = next;
 	}
 	/* The final element could be a symlink, but either way we are called
@@ -2158,7 +2186,8 @@ fsal_status_t pxy_lookup_path(struct fsal_export *exp_hdl,
  */
 fsal_status_t pxy_create_handle(struct fsal_export *exp_hdl,
 				struct gsh_buffdesc *hdl_desc,
-				struct fsal_obj_handle **handle)
+				struct fsal_obj_handle **handle,
+				struct attrlist *attrs_out)
 {
 	nfs_fh4 fh4;
 	struct pxy_obj_handle *ph;
@@ -2189,7 +2218,7 @@ fsal_status_t pxy_create_handle(struct fsal_export *exp_hdl,
 	if (rc != NFS4_OK)
 		return nfsstat4_to_fsal(rc);
 
-	ph = pxy_alloc_handle(exp_hdl, &fh4, &atok->obj_attributes);
+	ph = pxy_alloc_handle(exp_hdl, &fh4, &atok->obj_attributes, attrs_out);
 	if (!ph)
 		return fsalstat(ERR_FSAL_FAULT, 0);
 

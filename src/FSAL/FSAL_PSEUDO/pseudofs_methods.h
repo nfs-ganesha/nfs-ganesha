@@ -45,11 +45,13 @@ struct pseudofs_fsal_export {
 
 fsal_status_t pseudofs_lookup_path(struct fsal_export *exp_hdl,
 				 const char *path,
-				 struct fsal_obj_handle **handle);
+				 struct fsal_obj_handle **handle,
+				 struct attrlist *attrs_out);
 
 fsal_status_t pseudofs_create_handle(struct fsal_export *exp_hdl,
 				   struct gsh_buffdesc *hdl_desc,
-				   struct fsal_obj_handle **handle);
+				   struct fsal_obj_handle **handle,
+				   struct attrlist *attrs_out);
 
 /*
  * PSEUDOFS internal object handle

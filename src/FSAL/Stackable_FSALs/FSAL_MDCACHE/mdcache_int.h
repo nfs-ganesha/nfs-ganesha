@@ -302,25 +302,40 @@ typedef struct mdcache_dir_entry__ {
 } mdcache_dir_entry_t;
 
 /* Helpers */
+fsal_status_t mdcache_alloc_and_check_handle(
+		struct mdcache_fsal_export *export,
+		struct fsal_obj_handle *sub_handle,
+		struct fsal_obj_handle **new_obj,
+		bool new_directory,
+		struct attrlist *attrs_in,
+		struct attrlist *attrs_out,
+		const char *tag,
+		mdcache_entry_t *parent,
+		const char *name,
+		bool invalidate);
+
+fsal_status_t get_optional_attrs(struct fsal_obj_handle *obj_hdl,
+				 struct attrlist *attrs_out);
 fsal_status_t mdcache_new_entry(struct mdcache_fsal_export *export,
 				struct fsal_obj_handle *sub_handle,
+				struct attrlist *attrs_in,
+				struct attrlist *attrs_out,
 				bool new_directory,
 				mdcache_entry_t **entry);
 fsal_status_t mdcache_find_keyed(mdcache_key_t *key, mdcache_entry_t **entry);
 fsal_status_t mdcache_locate_keyed(mdcache_key_t *key,
 				   struct mdcache_fsal_export *export,
-				   mdcache_entry_t **entry);
-fsal_status_t mdc_add_cache(mdcache_entry_t *mdc_parent,
-			    const char *name,
-			    struct fsal_obj_handle *sub_handle,
-			    mdcache_entry_t **new_entry);
+				   mdcache_entry_t **entry,
+				   struct attrlist *attrs_out);
 fsal_status_t mdc_try_get_cached(mdcache_entry_t *mdc_parent, const char *name,
 				 mdcache_entry_t **entry);
 fsal_status_t mdc_lookup(mdcache_entry_t *mdc_parent, const char *name,
-			 bool uncached, mdcache_entry_t **new_entry);
+			 bool uncached, mdcache_entry_t **new_entry,
+			 struct attrlist *attrs_out);
 fsal_status_t mdc_lookup_uncached(mdcache_entry_t *mdc_parent,
 				  const char *name,
-				  mdcache_entry_t **new_entry);
+				  mdcache_entry_t **new_entry,
+				  struct attrlist *attrs_out);
 void mdcache_src_dest_lock(mdcache_entry_t *src, mdcache_entry_t *dest);
 void mdcache_src_dest_unlock(mdcache_entry_t *src, mdcache_entry_t *dest);
 fsal_status_t mdcache_dirent_remove(mdcache_entry_t *parent, const char *name);
@@ -456,6 +471,15 @@ mdcache_key_delete(mdcache_key_t *key)
 static inline void
 mdc_fixup_md(mdcache_entry_t *entry)
 {
+	if (entry->attrs.mask == ATTR_RDATTR_ERR) {
+		/* The attribute fetch failed, mark the attributes as
+		 * untrusted.
+		 */
+		atomic_clear_uint32_t_bits(&entry->mde_flags,
+					   MDCACHE_TRUST_ATTRS);
+		return;
+	}
+
 	/* Set the refresh time for the cache entry */
 	if (entry->attrs.expire_time_attr > 0)
 		entry->attr_time = time(NULL);
@@ -588,11 +612,13 @@ struct mdcache_readdir_state {
 
 fsal_status_t mdcache_lookup_path(struct fsal_export *exp_hdl,
 				 const char *path,
-				 struct fsal_obj_handle **handle);
+				 struct fsal_obj_handle **handle,
+				 struct attrlist *attrs_out);
 
 fsal_status_t mdcache_create_handle(struct fsal_export *exp_hdl,
 				   struct gsh_buffdesc *hdl_desc,
-				   struct fsal_obj_handle **handle);
+				   struct fsal_obj_handle **handle,
+				   struct attrlist *attrs_out);
 
 int mdcache_fsal_open(struct mdcache_fsal_obj_handle *, int, fsal_errors_t *);
 int mdcache_fsal_readlink(struct mdcache_fsal_obj_handle *, fsal_errors_t *);
@@ -647,6 +673,7 @@ fsal_status_t mdcache_open2(struct fsal_obj_handle *obj_hdl,
 			   struct attrlist *attrib_set,
 			   fsal_verifier_t verifier,
 			   struct fsal_obj_handle **new_obj,
+			   struct attrlist *attrs_out,
 			   bool *caller_perm_check);
 bool mdcache_check_verifier(struct fsal_obj_handle *obj_hdl,
 				     fsal_verifier_t verifier);

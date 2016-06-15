@@ -415,6 +415,10 @@ typedef uint64_t attrmask_t;
 #define ATTRS_SET_TIME (ATTR_ATIME | ATTR_MTIME | \
 			ATTR_ATIME_SERVER | ATTR_MTIME_SERVER)
 
+#define ATTRS_POSIX (ATTR_TYPE | ATTR_SIZE | ATTR_FSID | ATTR_FILEID |     \
+		     ATTR_MODE | ATTR_NUMLINKS | ATTR_OWNER | ATTR_GROUP | \
+		     ATTR_ATIME | ATTR_CTIME | ATTR_MTIME | ATTR_CHGTIME | \
+		     ATTR_CHANGE | ATTR_SPACEUSED | ATTR_RAWDEV)
 
 /**
  * @brief A list of FS object's attributes.

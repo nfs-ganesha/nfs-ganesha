@@ -127,8 +127,6 @@ int construct_handle(struct rgw_export *export,
 		     struct rgw_handle **obj);
 
 fsal_status_t rgw2fsal_error(const int errorcode);
-void rgw2fsal_attributes(const struct stat *buffstat,
-			  struct attrlist *fsalattr);
 void export_ops_init(struct export_ops *ops);
 void handle_ops_init(struct fsal_obj_ops *ops);
 

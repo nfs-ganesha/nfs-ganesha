@@ -73,7 +73,8 @@ static void release(struct fsal_obj_handle *obj_pub)
  * @return FSAL status codes.
  */
 static fsal_status_t lookup(struct fsal_obj_handle *dir_pub,
-			    const char *path, struct fsal_obj_handle **obj_pub)
+			    const char *path, struct fsal_obj_handle **obj_pub,
+			    struct attrlist *attrs_out)
 {
 	/* Generic status return */
 	int rc = 0;
@@ -92,6 +93,13 @@ static fsal_status_t lookup(struct fsal_obj_handle *dir_pub,
 		return ceph2fsal_error(rc);
 
 	construct_handle(&st, i, export, &obj);
+
+	if (attrs_out != NULL) {
+		posix2fsal_attributes(&st, attrs_out);
+
+		/* Make sure ATTR_RDATTR_ERR is cleared on success. */
+		attrs_out->mask &= ~ATTR_RDATTR_ERR;
+	}
 
 	*obj_pub = &obj->handle;
 
@@ -117,7 +125,8 @@ static fsal_status_t lookup(struct fsal_obj_handle *dir_pub,
 
 static fsal_status_t ceph_fsal_readdir(struct fsal_obj_handle *dir_pub,
 				  fsal_cookie_t *whence, void *dir_state,
-				  fsal_readdir_cb cb, bool *eof)
+				  fsal_readdir_cb cb, attrmask_t attrmask,
+				  bool *eof)
 {
 	/* Generic status return */
 	int rc = 0;
@@ -154,6 +163,8 @@ static fsal_status_t ceph_fsal_readdir(struct fsal_obj_handle *dir_pub,
 			goto closedir;
 		} else if (rc == 1) {
 			struct fsal_obj_handle *obj;
+			struct attrlist attrs;
+			bool cb_rc;
 
 			/* skip . and .. */
 			if ((strcmp(de.d_name, ".") == 0)
@@ -161,13 +172,19 @@ static fsal_status_t ceph_fsal_readdir(struct fsal_obj_handle *dir_pub,
 				continue;
 			}
 
-			fsal_status = lookup(dir_pub, de.d_name, &obj);
+			fsal_prepare_attrs(&attrs, attrmask);
+
+			fsal_status = lookup(dir_pub, de.d_name, &obj, &attrs);
 			if (FSAL_IS_ERROR(fsal_status)) {
 				rc = 0; /* Return fsal_status directly */
 				goto closedir;
 			}
 
-			if (!cb(de.d_name, obj, dir_state, de.d_off))
+			cb_rc = cb(de.d_name, obj, &attrs, dir_state, de.d_off);
+
+			fsal_release_attrs(&attrs);
+
+			if (!cb_rc)
 				goto closedir;
 
 		} else if (rc == 0) {
@@ -209,7 +226,8 @@ static fsal_status_t ceph_fsal_readdir(struct fsal_obj_handle *dir_pub,
 
 static fsal_status_t ceph_fsal_mkdir(struct fsal_obj_handle *dir_hdl,
 				const char *name, struct attrlist *attrib,
-				struct fsal_obj_handle **new_obj)
+				struct fsal_obj_handle **new_obj,
+				struct attrlist *attrs_out)
 {
 	/* Generic status return */
 	int rc = 0;
@@ -258,6 +276,17 @@ static fsal_status_t ceph_fsal_mkdir(struct fsal_obj_handle *dir_hdl,
 		}
 	} else {
 		status = fsalstat(ERR_FSAL_NO_ERROR, 0);
+
+		if (attrs_out != NULL) {
+			/* Since we haven't set any attributes other than what
+			 * was set on create, just use the stat results we used
+			 * to create the fsal_obj_handle.
+			 */
+			posix2fsal_attributes(&st, attrs_out);
+
+			/* Make sure ATTR_RDATTR_ERR is cleared on success. */
+			attrs_out->mask &= ~ATTR_RDATTR_ERR;
+		}
 	}
 
 	FSAL_SET_MASK(attrib->mask, ATTR_MODE);
@@ -291,7 +320,8 @@ static fsal_status_t ceph_fsal_mknode(struct fsal_obj_handle *dir_hdl,
 				      object_file_type_t nodetype,
 				      fsal_dev_t *dev,
 				      struct attrlist *attrib,
-				      struct fsal_obj_handle **new_obj)
+				      struct fsal_obj_handle **new_obj,
+				      struct attrlist *attrs_out)
 {
 #ifdef USE_FSAL_CEPH_MKNOD
 	/* Generic status return */
@@ -364,6 +394,17 @@ static fsal_status_t ceph_fsal_mknode(struct fsal_obj_handle *dir_hdl,
 		}
 	} else {
 		status = fsalstat(ERR_FSAL_NO_ERROR, 0);
+
+		if (attrs_out != NULL) {
+			/* Since we haven't set any attributes other than what
+			 * was set on create, just use the stat results we used
+			 * to create the fsal_obj_handle.
+			 */
+			posix2fsal_attributes(&st, attrs_out);
+
+			/* Make sure ATTR_RDATTR_ERR is cleared on success. */
+			attrs_out->mask &= ~ATTR_RDATTR_ERR;
+		}
 	}
 
 	FSAL_SET_MASK(attrib->mask, ATTR_MODE);
@@ -397,7 +438,8 @@ static fsal_status_t ceph_fsal_mknode(struct fsal_obj_handle *dir_hdl,
 static fsal_status_t ceph_fsal_symlink(struct fsal_obj_handle *dir_hdl,
 				  const char *name, const char *link_path,
 				  struct attrlist *attrib,
-				  struct fsal_obj_handle **new_obj)
+				  struct fsal_obj_handle **new_obj,
+				  struct attrlist *attrs_out)
 {
 	/* Generic status return */
 	int rc = 0;
@@ -442,6 +484,17 @@ static fsal_status_t ceph_fsal_symlink(struct fsal_obj_handle *dir_hdl,
 		}
 	} else {
 		status = fsalstat(ERR_FSAL_NO_ERROR, 0);
+
+		if (attrs_out != NULL) {
+			/* Since we haven't set any attributes other than what
+			 * was set on create, just use the stat results we used
+			 * to create the fsal_obj_handle.
+			 */
+			posix2fsal_attributes(&st, attrs_out);
+
+			/* Make sure ATTR_RDATTR_ERR is cleared on success. */
+			attrs_out->mask &= ~ATTR_RDATTR_ERR;
+		}
 	}
 
 	FSAL_SET_MASK(attrib->mask, ATTR_MODE);
@@ -870,12 +923,10 @@ fsal_status_t ceph_merge(struct fsal_obj_handle *orig_hdl,
  *
  * On an exclusive create, the upper layer may know the object handle
  * already, so it MAY call with name == NULL. In this case, the caller
- * expects just to check the verifier. The caller must hold the attr_lock
- * since the FSAL will update the attributes in checking the verifier.
+ * expects just to check the verifier.
  *
  * On a call with an existing object handle for an UNCHECKED create,
- * we can set the size to 0, because of this, the caller must hold the
- * attr_lock to update the attributes.
+ * we can set the size to 0.
  *
  * If attributes are not set on create, the FSAL will set some minimal
  * attributes (for example, mode might be set to 0600).
@@ -906,6 +957,7 @@ fsal_status_t ceph_open2(struct fsal_obj_handle *obj_hdl,
 			 struct attrlist *attrib_set,
 			 fsal_verifier_t verifier,
 			 struct fsal_obj_handle **new_obj,
+			 struct attrlist *attrs_out,
 			 bool *caller_perm_check)
 {
 	int posix_flags = 0;
@@ -1074,7 +1126,7 @@ fsal_status_t ceph_open2(struct fsal_obj_handle *obj_hdl,
 		struct fsal_obj_handle *temp = NULL;
 
 		/* We don't have open by name... */
-		status = obj_hdl->obj_ops.lookup(obj_hdl, name, &temp);
+		status = obj_hdl->obj_ops.lookup(obj_hdl, name, &temp, NULL);
 
 		if (FSAL_IS_ERROR(status)) {
 			LogFullDebug(COMPONENT_FSAL,
@@ -1087,6 +1139,7 @@ fsal_status_t ceph_open2(struct fsal_obj_handle *obj_hdl,
 		status = obj_hdl->obj_ops.open2(temp, state, openflags,
 						FSAL_NO_CREATE, NULL, NULL,
 						verifier, new_obj,
+						attrs_out,
 						caller_perm_check);
 
 		if (FSAL_IS_ERROR(status)) {
@@ -1200,22 +1253,33 @@ fsal_status_t ceph_open2(struct fsal_obj_handle *obj_hdl,
 						      attrib_set);
 
 		if (FSAL_IS_ERROR(status)) {
-			/* Close the file we just opened. */
-			(void) ceph_close_my_fd(container_of(*new_obj,
-							     struct handle,
-							     handle),
-						my_fd);
-			if (created) {
-				/* Remove the file we just created */
-				ceph_ll_unlink(export->cmount, myself->i,
-					       name, 0, 0);
-			}
-
 			/* Release the handle we just allocated. */
 			(*new_obj)->obj_ops.release(*new_obj);
 			*new_obj = NULL;
-			return status;
+			goto fileerr;
 		}
+
+		if (attrs_out != NULL) {
+			status = (*new_obj)->obj_ops.getattrs(*new_obj,
+							      attrs_out);
+			if (FSAL_IS_ERROR(status) &&
+			    (attrs_out->mask & ATTR_RDATTR_ERR) == 0) {
+				/* Get attributes failed and caller expected
+				 * to get the attributes. Otherwise continue
+				 * with attrs_out indicating ATTR_RDATTR_ERR.
+				 */
+				goto fileerr;
+			}
+		}
+	} else if (attrs_out != NULL) {
+		/* Since we haven't set any attributes other than what was set
+		 * on create (if we even created), just use the stat results
+		 * we used to create the fsal_obj_handle.
+		 */
+		posix2fsal_attributes(&stat, attrs_out);
+
+		/* Make sure ATTR_RDATTR_ERR is cleared on success. */
+		attrs_out->mask &= ~ATTR_RDATTR_ERR;
 	}
 
 	if (state != NULL) {
@@ -1234,6 +1298,19 @@ fsal_status_t ceph_open2(struct fsal_obj_handle *obj_hdl,
 	}
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+
+ fileerr:
+
+	/* Close the file we just opened. */
+	(void) ceph_close_my_fd(container_of(*new_obj, struct handle, handle),
+				my_fd);
+
+	if (created) {
+		/* Remove the file we just created */
+		ceph_ll_unlink(export->cmount, myself->i, name, 0, 0);
+	}
+
+	return status;
 }
 
 /**

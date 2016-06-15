@@ -207,9 +207,8 @@ static int nfs4_mds_putfh(compound_data_t *data)
 		return nfs4_Errno_status(fsal_status);
 	}
 
-	fsal_status = export->exp_ops.create_handle(export,
-						    &fh_desc,
-						    &new_hdl);
+	fsal_status = export->exp_ops.create_handle(export, &fh_desc,
+						    &new_hdl, NULL);
 	if (FSAL_IS_ERROR(fsal_status)) {
 		LogDebug(COMPONENT_FILEHANDLE,
 			 "could not get create_handle object error %s",
