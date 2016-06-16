@@ -357,7 +357,6 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 		goto out;
 	}
 
-	/* FIXME: what else from attrib should we use? */
 	glhandle =
 	    glfs_h_mkdir(glfs_export->gl_fs, parenthandle->glhandle, name,
 			 fsal2unix_mode(attrib->mode), &sb);
@@ -397,6 +396,30 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 	}
 
 	*handle = &objhandle->handle;
+
+	/* We handled the mode above. */
+	FSAL_UNSET_MASK(attrib->mask, ATTR_MODE);
+
+	if (attrib->mask) {
+		/* Now per support_ex API, if there are any other attributes
+		 * set, go ahead and get them set now.
+		 */
+		status = (*handle)->obj_ops.setattr2(*handle, false, NULL,
+						     attrib);
+		if (FSAL_IS_ERROR(status)) {
+			/* Release the handle we just allocated. */
+			LogFullDebug(COMPONENT_FSAL,
+				     "setattr2 status=%s",
+				     fsal_err_txt(status));
+			(*handle)->obj_ops.release(*handle);
+			*handle = NULL;
+		}
+	} else {
+		status.major = ERR_FSAL_NO_ERROR;
+		status.minor = 0;
+	}
+
+	FSAL_SET_MASK(attrib->mask, ATTR_MODE);
 
  out:
 	if (status.major != ERR_FSAL_NO_ERROR)
@@ -474,7 +497,6 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 		goto out;
 	}
 
-	/* FIXME: what else from attrib should we use? */
 	glhandle =
 	    glfs_h_mknod(glfs_export->gl_fs, parenthandle->glhandle, name,
 			 create_mode | fsal2unix_mode(attrib->mode), ndev, &sb);
@@ -514,6 +536,30 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 	}
 
 	*handle = &objhandle->handle;
+
+	/* We handled the mode above. */
+	FSAL_UNSET_MASK(attrib->mask, ATTR_MODE);
+
+	if (attrib->mask) {
+		/* Now per support_ex API, if there are any other attributes
+		 * set, go ahead and get them set now.
+		 */
+		status = (*handle)->obj_ops.setattr2(*handle, false, NULL,
+						     attrib);
+		if (FSAL_IS_ERROR(status)) {
+			/* Release the handle we just allocated. */
+			LogFullDebug(COMPONENT_FSAL,
+				     "setattr2 status=%s",
+				     fsal_err_txt(status));
+			(*handle)->obj_ops.release(*handle);
+			*handle = NULL;
+		}
+	} else {
+		status.major = ERR_FSAL_NO_ERROR;
+		status.minor = 0;
+	}
+
+	FSAL_SET_MASK(attrib->mask, ATTR_MODE);
 
  out:
 	if (status.major != ERR_FSAL_NO_ERROR)
@@ -562,7 +608,6 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 		goto out;
 	}
 
-	/* FIXME: what else from attrib should we use? */
 	glhandle =
 	    glfs_h_symlink(glfs_export->gl_fs, parenthandle->glhandle, name,
 			   link_path, &sb);
@@ -602,6 +647,25 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 	}
 
 	*handle = &objhandle->handle;
+
+	if (attrib->mask) {
+		/* Now per support_ex API, if there are any other attributes
+		 * set, go ahead and get them set now.
+		 */
+		status = (*handle)->obj_ops.setattr2(*handle, false, NULL,
+						     attrib);
+		if (FSAL_IS_ERROR(status)) {
+			/* Release the handle we just allocated. */
+			LogFullDebug(COMPONENT_FSAL,
+				     "setattr2 status=%s",
+				     fsal_err_txt(status));
+			(*handle)->obj_ops.release(*handle);
+			*handle = NULL;
+		}
+	} else {
+		status.major = ERR_FSAL_NO_ERROR;
+		status.minor = 0;
+	}
 
  out:
 	if (status.major != ERR_FSAL_NO_ERROR)
