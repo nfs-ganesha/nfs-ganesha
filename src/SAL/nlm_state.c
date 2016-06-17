@@ -335,6 +335,13 @@ void dec_nlm_state_ref(state_t *state)
 	put_gsh_export(state->state_export);
 
 	obj = get_state_obj_ref(state);
+
+	if (obj == NULL) {
+		LogDebug(COMPONENT_STATE,
+			 "Entry for state is stale");
+		return;
+	}
+
 	if (obj->fsal->m_ops.support_ex(obj)) {
 		/* We need to close the state before freeing the state. */
 		(void) obj->obj_ops.close2(obj, state);

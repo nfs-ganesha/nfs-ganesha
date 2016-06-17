@@ -3165,6 +3165,14 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 		 * export).
 		 */
 		obj = get_state_obj_ref(found_share);
+
+		if (obj == NULL) {
+			LogDebug(COMPONENT_STATE,
+				 "Entry for state is stale");
+			PTHREAD_MUTEX_unlock(&nsmclient->ssc_mutex);
+			break;
+		}
+
 		owner = found_share->state_owner;
 		export = found_share->state_export;
 

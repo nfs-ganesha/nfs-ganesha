@@ -351,6 +351,14 @@ void state_del_locked(state_t *state)
 	 */
 	PTHREAD_MUTEX_lock(&state->state_mutex);
 	obj = get_state_obj_ref(state);
+
+	if (obj == NULL) {
+		LogDebug(COMPONENT_STATE,
+			 "Entry for state is stale");
+		PTHREAD_MUTEX_unlock(&state->state_mutex);
+		return;
+	}
+
 	export = state->state_export;
 	owner = state->state_owner;
 	PTHREAD_MUTEX_unlock(&state->state_mutex);

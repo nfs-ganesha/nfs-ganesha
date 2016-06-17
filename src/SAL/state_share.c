@@ -1190,6 +1190,14 @@ void state_export_unshare_all(void)
 		}
 
 		obj = get_state_obj_ref(state);
+
+		if (obj == NULL) {
+			LogDebug(COMPONENT_STATE,
+				 "Entry for state is stale");
+			PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
+			break;
+		}
+
 		owner = state->state_owner;
 
 		/* Get a reference to the state_t */
