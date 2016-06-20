@@ -187,7 +187,7 @@ static struct pseudo_fsal_obj_handle
 *alloc_directory_handle(struct pseudo_fsal_obj_handle *parent,
 			const char *name,
 			struct fsal_export *exp_hdl,
-			mode_t unix_mode)
+			struct attrlist *attrs)
 {
 	struct pseudo_fsal_obj_handle *hdl;
 	char path[MAXPATHLEN];
@@ -225,53 +225,57 @@ static struct pseudo_fsal_obj_handle
 
 	/* Fills the output struct */
 	hdl->attributes.type = DIRECTORY;
-	FSAL_SET_MASK(hdl->attributes.mask, ATTR_TYPE);
 
 	hdl->attributes.filesize = 0;
-	FSAL_SET_MASK(hdl->attributes.mask, ATTR_SIZE);
 
 	/* fsid will be supplied later */
 	hdl->obj_handle.fsid.major = 0;
 	hdl->obj_handle.fsid.minor = 0;
-	FSAL_SET_MASK(hdl->attributes.mask, ATTR_FSID);
+	hdl->attributes.fsid.major = 0;
+	hdl->attributes.fsid.minor = 0;
 
 	hdl->obj_handle.fileid = atomic_postinc_uint64_t(&inode_number);
-	FSAL_SET_MASK(hdl->attributes.mask, ATTR_FILEID);
+	hdl->attributes.fileid = hdl->obj_handle.fileid;
 
-	hdl->attributes.mode = unix2fsal_mode(unix_mode);
-	FSAL_SET_MASK(hdl->attributes.mask, ATTR_MODE);
+	hdl->attributes.mode = attrs->mode & (~S_IFMT & 0xFFFF) &
+		~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
 
 	hdl->attributes.numlinks = 2;
 	hdl->numlinks = 2;
-	FSAL_SET_MASK(hdl->attributes.mask, ATTR_NUMLINKS);
 
-	hdl->attributes.owner = op_ctx->creds->caller_uid;
+	if ((attrs->mask & ATTR_OWNER) != 0)
+		hdl->attributes.owner = attrs->owner;
+	else
+		hdl->attributes.owner = op_ctx->creds->caller_uid;
 
-	FSAL_SET_MASK(hdl->attributes.mask, ATTR_OWNER);
-
-	hdl->attributes.group = op_ctx->creds->caller_gid;
-
-	FSAL_SET_MASK(hdl->attributes.mask, ATTR_GROUP);
+	if ((attrs->mask & ATTR_GROUP) != 0)
+		hdl->attributes.group = attrs->group;
+	else
+		hdl->attributes.group = op_ctx->creds->caller_gid;
 
 	/* Use full timer resolution */
-	now(&hdl->attributes.atime);
-	hdl->attributes.ctime = hdl->attributes.atime;
-	hdl->attributes.mtime = hdl->attributes.atime;
-	hdl->attributes.chgtime = hdl->attributes.atime;
-	FSAL_SET_MASK(hdl->attributes.mask, ATTR_ATIME);
-	FSAL_SET_MASK(hdl->attributes.mask, ATTR_CTIME);
-	FSAL_SET_MASK(hdl->attributes.mask, ATTR_MTIME);
+	now(&hdl->attributes.ctime);
+	hdl->attributes.chgtime = hdl->attributes.ctime;
+
+	if ((attrs->mask & ATTR_ATIME) != 0)
+		hdl->attributes.atime = attrs->atime;
+	else
+		hdl->attributes.atime = hdl->attributes.ctime;
+
+	if ((attrs->mask & ATTR_MTIME) != 0)
+		hdl->attributes.mtime = attrs->mtime;
+	else
+		hdl->attributes.mtime = hdl->attributes.ctime;
 
 	hdl->attributes.change =
 		timespec_to_nsecs(&hdl->attributes.chgtime);
-	FSAL_SET_MASK(hdl->attributes.mask, ATTR_CHGTIME);
 
 	hdl->attributes.spaceused = 0;
-	FSAL_SET_MASK(hdl->attributes.mask, ATTR_SPACEUSED);
-
 	hdl->attributes.rawdev.major = 0;
 	hdl->attributes.rawdev.minor = 0;
-	FSAL_SET_MASK(hdl->attributes.mask, ATTR_RAWDEV);
+
+	/* Set the mask at the end. */
+	hdl->attributes.mask = ATTRS_POSIX;
 
 	fsal_obj_handle_init(&hdl->obj_handle, exp_hdl, DIRECTORY);
 	pseudofs_handle_ops_init(&hdl->obj_handle.obj_ops);
@@ -398,7 +402,6 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 			     struct attrlist *attrs_out)
 {
 	struct pseudo_fsal_obj_handle *myself, *hdl;
-	mode_t unix_mode;
 	uint32_t numlinks;
 
 	LogDebug(COMPONENT_FSAL, "create %s", name);
@@ -416,14 +419,11 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 			      struct pseudo_fsal_obj_handle,
 			      obj_handle);
 
-	unix_mode = fsal2unix_mode(attrs_in->mode)
-	    & ~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
-
 	/* allocate an obj_handle and fill it up */
 	hdl = alloc_directory_handle(myself,
 				     name,
 				     op_ctx->fsal_export,
-				     unix_mode);
+				     attrs_in);
 
 	numlinks = atomic_inc_uint32_t(&myself->numlinks);
 
@@ -714,6 +714,7 @@ fsal_status_t pseudofs_lookup_path(struct fsal_export *exp_hdl,
 				 struct attrlist *attrs_out)
 {
 	struct pseudofs_fsal_export *myself;
+	struct attrlist attrs;
 
 	myself = container_of(exp_hdl, struct pseudofs_fsal_export, export);
 
@@ -725,12 +726,15 @@ fsal_status_t pseudofs_lookup_path(struct fsal_export *exp_hdl,
 		return fsalstat(ERR_FSAL_NOENT, ENOENT);
 	}
 
+	attrs.mask = ATTR_MODE;
+	attrs.mode = 0755;
+
 	if (myself->root_handle == NULL) {
 		myself->root_handle =
 			alloc_directory_handle(NULL,
 					       myself->export_path,
 					       exp_hdl,
-					       0755);
+					       &attrs);
 	}
 
 	*handle = &myself->root_handle->obj_handle;
