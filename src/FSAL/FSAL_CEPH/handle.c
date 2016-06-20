@@ -233,7 +233,7 @@ static fsal_status_t ceph_fsal_create(struct fsal_obj_handle *dir_pub,
 	}
 
 	LogFullDebug(COMPONENT_FSAL,
-		     "Created %s inode %lu Inode %p",
+		     "Created %s inode %" PRIu64 " Inode %p",
 		     name, st.st_ino, i);
 
 	construct_handle(&st, i, export, &obj);
