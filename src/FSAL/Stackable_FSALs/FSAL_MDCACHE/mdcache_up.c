@@ -35,21 +35,36 @@
 #include "config.h"
 #include "fsal.h"
 #include "nfs4_acls.h"
+#include "mdcache_hash.h"
 #include "mdcache_int.h"
 
 static fsal_status_t
-mdc_up_invalidate(struct fsal_export *export, struct gsh_buffdesc *handle,
+mdc_up_invalidate(struct fsal_export *fsal_export, struct gsh_buffdesc *handle,
 		  uint32_t flags)
 {
-	struct fsal_obj_handle *obj;
 	mdcache_entry_t *entry;
 	fsal_status_t status;
 	uint32_t mdc_flags = 0;
+	struct req_op_context *save_ctx, req_ctx = {0};
+	mdcache_key_t key;
+	struct mdcache_fsal_export *export = mdc_export(fsal_export);
 
-	status = export->exp_ops.create_handle(export, handle, &obj);
-	if (FSAL_IS_ERROR(status))
+	req_ctx.fsal_export = fsal_export;
+	save_ctx = op_ctx;
+	op_ctx = &req_ctx;
+
+	key.fsal = export->sub_export->fsal;
+	(void) cih_hash_key(&key, export->sub_export->fsal, handle,
+			    CIH_HASH_KEY_PROTOTYPE);
+
+	status = mdcache_find_keyed(&key, &entry);
+	if (status.major != ERR_FSAL_NOENT) {
+		/* Not cached, so invalidate is a success */
+		return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	} else if (FSAL_IS_ERROR(status)) {
+		/* Real error */
 		return status;
-	entry = container_of(obj, mdcache_entry_t, obj_handle);
+	}
 
 	if (flags & FSAL_UP_INVALIDATE_ATTRS)
 		mdc_flags |= MDCACHE_INVALIDATE_ATTRS;
@@ -60,14 +75,16 @@ mdc_up_invalidate(struct fsal_export *export, struct gsh_buffdesc *handle,
 
 	status = mdcache_invalidate(entry, mdc_flags);
 
-	obj->obj_ops.put_ref(obj);
+	mdcache_put(entry);
+	op_ctx = save_ctx;
 	return status;
 }
 
 /**
  * @brief Update cached attributes
  *
- * @param[in] obj    Key to specify object
+ * @param[in] export Export containing object
+ * @param[in] handle Export containing object
  * @param[in] attr   New attributes
  * @param[in] flags  Flags to govern update
  *
@@ -75,14 +92,17 @@ mdc_up_invalidate(struct fsal_export *export, struct gsh_buffdesc *handle,
  */
 
 static fsal_status_t
-mdc_up_update(struct fsal_export *export, struct gsh_buffdesc *handle,
+mdc_up_update(struct fsal_export *fsal_export, struct gsh_buffdesc *handle,
 	      struct attrlist *attr, uint32_t flags)
 {
-	struct fsal_obj_handle *obj;
 	mdcache_entry_t *entry;
 	fsal_status_t status;
 	/* Have necessary changes been made? */
 	bool mutatis_mutandis = false;
+	struct req_op_context *save_ctx, req_ctx = {0};
+	struct attrlist *attrs;
+	mdcache_key_t key;
+	struct mdcache_fsal_export *export = mdc_export(fsal_export);
 
 	/* These cannot be updated, changing any of them is
 	   tantamount to destroying and recreating the file. */
@@ -103,10 +123,22 @@ mdc_up_update(struct fsal_export *export, struct gsh_buffdesc *handle,
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	}
 
-	status = export->exp_ops.create_handle(export, handle, &obj);
-	if (FSAL_IS_ERROR(status))
+	req_ctx.fsal_export = fsal_export;
+	save_ctx = op_ctx;
+	op_ctx = &req_ctx;
+
+	key.fsal = export->sub_export->fsal;
+	(void) cih_hash_key(&key, export->sub_export->fsal, handle,
+			    CIH_HASH_KEY_PROTOTYPE);
+
+	status = mdcache_find_keyed(&key, &entry);
+	if (status.major != ERR_FSAL_NOENT) {
+		/* Not cached, so invalidate is a success */
+		return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	} else if (FSAL_IS_ERROR(status)) {
+		/* Real error */
 		return status;
-	entry = container_of(obj, mdcache_entry_t, obj_handle);
+	}
 
 	/* Knock things out if the link count falls to 0. */
 
@@ -126,29 +158,31 @@ mdc_up_update(struct fsal_export *export, struct gsh_buffdesc *handle,
 
 	PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
 
+	attrs = entry->obj_handle.attrs;
+
 	if (attr->expire_time_attr != 0)
-		obj->attrs->expire_time_attr = attr->expire_time_attr;
+		attrs->expire_time_attr = attr->expire_time_attr;
 
 	if (FSAL_TEST_MASK(attr->mask, ATTR_SIZE)) {
 		if (flags & fsal_up_update_filesize_inc) {
-			if (attr->filesize > obj->attrs->filesize) {
-				obj->attrs->filesize = attr->filesize;
+			if (attr->filesize > attrs->filesize) {
+				attrs->filesize = attr->filesize;
 				mutatis_mutandis = true;
 			}
 		} else {
-			obj->attrs->filesize = attr->filesize;
+			attrs->filesize = attr->filesize;
 			mutatis_mutandis = true;
 		}
 	}
 
 	if (FSAL_TEST_MASK(attr->mask, ATTR_SPACEUSED)) {
 		if (flags & fsal_up_update_spaceused_inc) {
-			if (attr->spaceused > obj->attrs->spaceused) {
-				obj->attrs->spaceused = attr->spaceused;
+			if (attr->spaceused > attrs->spaceused) {
+				attrs->spaceused = attr->spaceused;
 				mutatis_mutandis = true;
 			}
 		} else {
-			obj->attrs->spaceused = attr->spaceused;
+			attrs->spaceused = attr->spaceused;
 			mutatis_mutandis = true;
 		}
 	}
@@ -162,81 +196,81 @@ mdc_up_update(struct fsal_export *export, struct gsh_buffdesc *handle,
 		 * an asynchronous call.
 		 */
 
-		nfs4_acl_release_entry(obj->attrs->acl);
+		nfs4_acl_release_entry(attrs->acl);
 
-		obj->attrs->acl = attr->acl;
+		attrs->acl = attr->acl;
 		mutatis_mutandis = true;
 	}
 
 	if (FSAL_TEST_MASK(attr->mask, ATTR_MODE)) {
-		obj->attrs->mode = attr->mode;
+		attrs->mode = attr->mode;
 		mutatis_mutandis = true;
 	}
 
 	if (FSAL_TEST_MASK(attr->mask, ATTR_NUMLINKS)) {
-		obj->attrs->numlinks = attr->numlinks;
+		attrs->numlinks = attr->numlinks;
 		mutatis_mutandis = true;
 	}
 
 	if (FSAL_TEST_MASK(attr->mask, ATTR_OWNER)) {
-		obj->attrs->owner = attr->owner;
+		attrs->owner = attr->owner;
 		mutatis_mutandis = true;
 	}
 
 	if (FSAL_TEST_MASK(attr->mask, ATTR_GROUP)) {
-		obj->attrs->group = attr->group;
+		attrs->group = attr->group;
 		mutatis_mutandis = true;
 	}
 
 	if (FSAL_TEST_MASK(attr->mask, ATTR_ATIME)
 	    && ((flags & ~fsal_up_update_atime_inc)
 		||
-		(gsh_time_cmp(&attr->atime, &obj->attrs->atime) == 1))) {
-		obj->attrs->atime = attr->atime;
+		(gsh_time_cmp(&attr->atime, &attrs->atime) == 1))) {
+		attrs->atime = attr->atime;
 		mutatis_mutandis = true;
 	}
 
 	if (FSAL_TEST_MASK(attr->mask, ATTR_CREATION)
 	    && ((flags & ~fsal_up_update_creation_inc)
 		||
-		(gsh_time_cmp(&attr->creation, &obj->attrs->creation) == 1))) {
-		obj->attrs->creation = attr->creation;
+		(gsh_time_cmp(&attr->creation, &attrs->creation) == 1))) {
+		attrs->creation = attr->creation;
 		mutatis_mutandis = true;
 	}
 
 	if (FSAL_TEST_MASK(attr->mask, ATTR_CTIME)
 	    && ((flags & ~fsal_up_update_ctime_inc)
 		||
-		(gsh_time_cmp(&attr->ctime, &obj->attrs->ctime) == 1))) {
-		obj->attrs->ctime = attr->ctime;
+		(gsh_time_cmp(&attr->ctime, &attrs->ctime) == 1))) {
+		attrs->ctime = attr->ctime;
 		mutatis_mutandis = true;
 	}
 
 	if (FSAL_TEST_MASK(attr->mask, ATTR_MTIME)
 	    && ((flags & ~fsal_up_update_mtime_inc)
 		||
-		(gsh_time_cmp(&attr->mtime, &obj->attrs->mtime) == 1))) {
-		obj->attrs->mtime = attr->mtime;
+		(gsh_time_cmp(&attr->mtime, &attrs->mtime) == 1))) {
+		attrs->mtime = attr->mtime;
 		mutatis_mutandis = true;
 	}
 
 	if (FSAL_TEST_MASK(attr->mask, ATTR_CHGTIME)
 	    && ((flags & ~fsal_up_update_chgtime_inc)
 		||
-		(gsh_time_cmp(&attr->chgtime, &obj->attrs->chgtime) == 1))) {
-		obj->attrs->chgtime = attr->chgtime;
+		(gsh_time_cmp(&attr->chgtime, &attrs->chgtime) == 1))) {
+		attrs->chgtime = attr->chgtime;
 		mutatis_mutandis = true;
 	}
 
 	if (FSAL_TEST_MASK(attr->mask, ATTR_CHANGE)) {
-		obj->attrs->change = attr->change;
+		attrs->change = attr->change;
 		mutatis_mutandis = true;
 	}
 
 	if (mutatis_mutandis) {
 		mdc_fixup_md(entry);
 		/* If directory can not trust content anymore. */
-		if (obj->type == DIRECTORY)
+		if (entry->obj_handle.type == DIRECTORY)
 			mdcache_invalidate(entry,
 					   (MDCACHE_INVALIDATE_CONTENT |
 					    MDCACHE_INVALIDATE_GOT_LOCK));
@@ -248,12 +282,15 @@ mdc_up_update(struct fsal_export *export, struct gsh_buffdesc *handle,
 	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 
  out:
-	obj->obj_ops.put_ref(obj);
+	mdcache_put(entry);
+	op_ctx = save_ctx;
 	return status;
 }
 
 /**
  * @brief Invalidate a cached entry
+ *
+ * @note doesn't need op_ctx, handled in mdc_up_invalidate
  *
  * @param[in] key    Key to specify object
  * @param[in] flags  FSAL_UP_INVALIDATE*
@@ -262,24 +299,14 @@ mdc_up_update(struct fsal_export *export, struct gsh_buffdesc *handle,
  */
 
 static fsal_status_t
-mdc_up_invalidate_close(struct fsal_export *export,
+mdc_up_invalidate_close(struct fsal_export *fsal_export,
 			struct gsh_buffdesc *handle, uint32_t flags)
 {
-	struct fsal_obj_handle *obj;
 	fsal_status_t status;
 
-	status = export->exp_ops.create_handle(export, handle, &obj);
-	if (FSAL_IS_ERROR(status))
-		return status;
-
-	if (fsal_is_open(obj))
-		status = up_async_invalidate(general_fridge, export, handle,
-					     flags | FSAL_UP_INVALIDATE_CLOSE,
-					     NULL, NULL);
-	else
-		status = mdc_up_invalidate(export, handle, flags);
-
-	obj->obj_ops.put_ref(obj);
+	status = up_async_invalidate(general_fridge, fsal_export, handle,
+				     flags | FSAL_UP_INVALIDATE_CLOSE,
+				     NULL, NULL);
 	return status;
 }
 
