@@ -517,7 +517,7 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 	}
 
 	/* Validate the attributes we just set. */
-	mdc_fixup_md(nentry);
+	mdc_fixup_md(nentry, nentry->attrs.mask);
 
 	/* Hash and insert entry, after this would need attr_lock to
 	 * access attributes.

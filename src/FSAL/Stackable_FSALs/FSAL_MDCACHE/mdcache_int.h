@@ -164,6 +164,8 @@ struct entry_export_map {
 
 /** Trust stored attributes */
 #define MDCACHE_TRUST_ATTRS FSAL_UP_INVALIDATE_ATTRS
+/** Trust stored ACL */
+#define MDCACHE_TRUST_ACL FSAL_UP_INVALIDATE_ACL
 /** Trust inode content (for the moment, directory and symlink) */
 #define MDCACHE_TRUST_CONTENT FSAL_UP_INVALIDATE_CONTENT
 /** The directory has been populated (negative lookups are meaningful) */
@@ -235,6 +237,8 @@ struct mdcache_fsal_obj_handle {
 	int32_t icreate_refcnt;
 	/** Time at which we last refreshed attributes. */
 	time_t attr_time;
+	/** Time at which we last refreshed acl. */
+	time_t acl_time;
 	/** New style LRU link */
 	mdcache_lru_t lru;
 	/** Exports per entry (protected by attr_lock) */
@@ -476,25 +480,44 @@ mdcache_key_delete(mdcache_key_t *key)
  */
 
 static inline void
-mdc_fixup_md(mdcache_entry_t *entry)
+mdc_fixup_md(mdcache_entry_t *entry, attrmask_t mask)
 {
+	uint32_t flags = 0;
+
+	/* Check what attributes were originally requested for refresh. */
+	if (mask & ATTR_ACL)
+		flags |= MDCACHE_TRUST_ACL;
+
+	if (mask & ~ATTR_ACL)
+		flags |= MDCACHE_TRUST_ATTRS;
+
 	if (entry->attrs.mask == ATTR_RDATTR_ERR) {
-		/* The attribute fetch failed, mark the attributes as
+		/* The attribute fetch failed, mark the attributes and ACL as
 		 * untrusted.
 		 */
 		atomic_clear_uint32_t_bits(&entry->mde_flags,
-					   MDCACHE_TRUST_ATTRS);
+					   MDCACHE_TRUST_ACL
+					   | MDCACHE_TRUST_ATTRS);
 		return;
 	}
 
 	/* Set the refresh time for the cache entry */
-	if (entry->attrs.expire_time_attr > 0)
-		entry->attr_time = time(NULL);
-	else
-		entry->attr_time = 0;
+	if (mask & ATTR_ACL) {
+		if (entry->attrs.expire_time_attr > 0)
+			entry->acl_time = time(NULL);
+		else
+			entry->acl_time = 0;
+	}
+
+	if (mask & ~ATTR_ACL) {
+		if (entry->attrs.expire_time_attr > 0)
+			entry->attr_time = time(NULL);
+		else
+			entry->attr_time = 0;
+	}
 
 	/* We have just loaded the attributes from the FSAL. */
-	atomic_set_uint32_t_bits(&entry->mde_flags, MDCACHE_TRUST_ATTRS);
+	atomic_set_uint32_t_bits(&entry->mde_flags, flags);
 }
 
 /**
@@ -506,9 +529,19 @@ mdc_fixup_md(mdcache_entry_t *entry)
  */
 
 static inline bool
-mdcache_is_attrs_valid(const mdcache_entry_t *entry)
+mdcache_is_attrs_valid(const mdcache_entry_t *entry, attrmask_t mask)
 {
-	if (!(entry->mde_flags & MDCACHE_TRUST_ATTRS))
+	uint32_t flags = 0;
+
+	/* Check what attributes were originally requested for refresh. */
+	if (mask & ATTR_ACL)
+		flags |= MDCACHE_TRUST_ACL;
+
+	if (mask & ~ATTR_ACL)
+		flags |= MDCACHE_TRUST_ATTRS;
+
+	/* If any of the requested attributes are not valid, return. */
+	if ((entry->mde_flags & flags) != flags)
 		return false;
 
 	if (FSAL_TEST_MASK(entry->attrs.mask, ATTR_RDATTR_ERR))
@@ -518,13 +551,24 @@ mdcache_is_attrs_valid(const mdcache_entry_t *entry)
 	    && mdcache_param.getattr_dir_invalidation)
 		return false;
 
-	if (entry->attrs.expire_time_attr == 0)
+	if ((mask & ~ATTR_ACL) != 0 && entry->attrs.expire_time_attr == 0)
 		return false;
 
-	if (entry->attrs.expire_time_attr > 0) {
+	if ((mask & ~ATTR_ACL) != 0 && entry->attrs.expire_time_attr > 0) {
 		time_t current_time = time(NULL);
 
 		if (current_time - entry->attr_time >
+		    entry->attrs.expire_time_attr)
+			return false;
+	}
+
+	if ((mask & ATTR_ACL) != 0 && entry->attrs.expire_time_attr == 0)
+		return false;
+
+	if ((mask & ATTR_ACL) != 0 && entry->attrs.expire_time_attr > 0) {
+		time_t current_time = time(NULL);
+
+		if (current_time - entry->acl_time >
 		    entry->attrs.expire_time_attr)
 			return false;
 	}
