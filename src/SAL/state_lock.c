@@ -2733,15 +2733,18 @@ state_status_t state_lock(struct fsal_obj_handle *obj,
 		LogEntry("FSAL lock acquired, merging locks for",
 			 found_entry);
 
+		if (glist_empty(&obj->state_hdl->file.lock_list)) {
+			/* List was empty, get ref for list. Check before
+			 * mergining, because that can remove the last entry
+			 * from the list if we are merging with it.
+			 */
+			obj->obj_ops.get_ref(obj);
+		}
+
 		merge_lock_entry(obj->state_hdl, found_entry);
 
 		/* Insert entry into lock list */
 		LogEntry("New lock", found_entry);
-
-		if (glist_empty(&obj->state_hdl->file.lock_list)) {
-			/* List was empty, get ref for list */
-			obj->obj_ops.get_ref(obj);
-		}
 
 		glist_add_tail(&obj->state_hdl->file.lock_list,
 			       &found_entry->sle_list);
