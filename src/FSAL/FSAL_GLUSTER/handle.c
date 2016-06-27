@@ -1996,23 +1996,39 @@ static fsal_status_t glusterfs_open2(struct fsal_obj_handle *obj_hdl,
 	parenthandle =
 	    container_of(obj_hdl, struct glusterfs_handle, handle);
 
+
+	if (createmode == FSAL_NO_CREATE) {
+		/* lookup if the object exists */
+		status = (obj_hdl)->obj_ops.lookup(obj_hdl,
+						   name,
+						   new_obj,
+						   attrs_out);
+
+		if (FSAL_IS_ERROR(status)) {
+			*new_obj = NULL;
+			goto direrr;
+		}
+
+		myself = container_of(*new_obj,
+				      struct glusterfs_handle,
+				      handle);
+		goto open;
+	}
+
 	/* Become the user because we are creating an object in this dir.
 	 */
-	if (createmode != FSAL_NO_CREATE) {
+	/* set proper credentials */
+	retval = setglustercreds(glfs_export,
+				&op_ctx->creds->caller_uid,
+				&op_ctx->creds->caller_gid,
+				op_ctx->creds->caller_glen,
+				op_ctx->creds->caller_garray);
 
-		/* set proper credentials */
-		retval = setglustercreds(glfs_export,
-					&op_ctx->creds->caller_uid,
-					&op_ctx->creds->caller_gid,
-					op_ctx->creds->caller_glen,
-					op_ctx->creds->caller_garray);
-
-		if (retval != 0) {
-			status = gluster2fsal_error(EPERM);
-			LogFatal(COMPONENT_FSAL,
-				 "Could not set Ganesha credentials");
-			goto out;
-		}
+	if (retval != 0) {
+		status = gluster2fsal_error(EPERM);
+		LogFatal(COMPONENT_FSAL,
+			 "Could not set Ganesha credentials");
+		goto out;
 	}
 
 	/** @todo: glfs_h_creat doesn't honour NO_CREATE mode. Instead use
@@ -2040,14 +2056,12 @@ static fsal_status_t glusterfs_open2(struct fsal_obj_handle *obj_hdl,
 	retval = errno;
 
 	/* restore credentials */
-	if (createmode != FSAL_NO_CREATE) {
-		retval = setglustercreds(glfs_export, NULL, NULL, 0, NULL);
-		if (retval != 0) {
-			status = gluster2fsal_error(EPERM);
-			LogFatal(COMPONENT_FSAL,
-				 "Could not set Ganesha credentials");
-			goto out;
-		}
+	retval = setglustercreds(glfs_export, NULL, NULL, 0, NULL);
+	if (retval != 0) {
+		status = gluster2fsal_error(EPERM);
+		LogFatal(COMPONENT_FSAL,
+			 "Could not set Ganesha credentials");
+		goto out;
 	}
 
 	if (glhandle == NULL) {
@@ -2098,6 +2112,7 @@ static fsal_status_t glusterfs_open2(struct fsal_obj_handle *obj_hdl,
 	if (my_fd == NULL)
 		my_fd = &myself->globalfd;
 
+open:
 	/* now open it */
 	status = glusterfs_open_my_fd(myself, openflags, p_flags, my_fd);
 
