@@ -159,6 +159,7 @@ static fsal_status_t mdcache_create(struct fsal_obj_handle *dir_hdl,
 		LogEvent(COMPONENT_CACHE_INODE,
 			 "FSAL returned STALE on create");
 		mdcache_kill_entry(parent);
+		return status;
 	}
 
 	status = mdcache_alloc_and_check_handle(export, sub_handle,
@@ -213,6 +214,7 @@ static fsal_status_t mdcache_mkdir(struct fsal_obj_handle *dir_hdl,
 		LogEvent(COMPONENT_CACHE_INODE,
 			 "FSAL returned STALE on create");
 		mdcache_kill_entry(parent);
+		return status;
 	}
 
 	status = mdcache_alloc_and_check_handle(export, sub_handle,
@@ -275,6 +277,7 @@ static fsal_status_t mdcache_mknode(struct fsal_obj_handle *dir_hdl,
 		LogEvent(COMPONENT_CACHE_INODE,
 			 "FSAL returned STALE on create");
 		mdcache_kill_entry(parent);
+		return status;
 	}
 
 	status = mdcache_alloc_and_check_handle(export, sub_handle,
@@ -328,10 +331,13 @@ static fsal_status_t mdcache_symlink(struct fsal_obj_handle *dir_hdl,
 			&sub_handle)
 	       );
 
-	if (FSAL_IS_ERROR(status) && status.major == ERR_FSAL_STALE) {
-		LogEvent(COMPONENT_CACHE_INODE,
-			 "FSAL returned STALE on create");
-		mdcache_kill_entry(parent);
+	if (FSAL_IS_ERROR(status)) {
+		if (status.major == ERR_FSAL_STALE) {
+			LogEvent(COMPONENT_CACHE_INODE,
+				 "FSAL returned STALE on create");
+			mdcache_kill_entry(parent);
+		}
+		return status;
 	}
 
 	status = mdcache_alloc_and_check_handle(export, sub_handle,
@@ -471,6 +477,11 @@ static fsal_status_t mdcache_readdir(struct fsal_obj_handle *dir_hdl,
 		status = mdcache_dirent_populate(directory);
 		PTHREAD_RWLOCK_unlock(&directory->content_lock);
 		if (FSAL_IS_ERROR(status)) {
+			if (status.major == ERR_FSAL_STALE) {
+				LogEvent(COMPONENT_NFS_READDIR,
+					 "FSAL returned STALE from readdir.");
+				mdcache_kill_entry(directory);
+			}
 			LogFullDebug(COMPONENT_NFS_READDIR,
 				     "mdcache_dirent_populate status=%s",
 				     fsal_err_txt(status));
@@ -538,6 +549,11 @@ static fsal_status_t mdcache_readdir(struct fsal_obj_handle *dir_hdl,
 						     &entry);
 		}
 		if (FSAL_IS_ERROR(status)) {
+			if (status.major == ERR_FSAL_STALE) {
+				PTHREAD_RWLOCK_unlock(&directory->content_lock);
+				mdcache_kill_entry(directory);
+				return status;
+			}
 			LogFullDebug(COMPONENT_NFS_READDIR,
 				     "lookup failed status=%s",
 				     fsal_err_txt(status));
@@ -743,8 +759,9 @@ static fsal_status_t mdcache_getattrs(struct fsal_obj_handle *obj_hdl)
 	       );
 
 	if (FSAL_IS_ERROR(status)) {
+		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 		mdcache_kill_entry(entry);
-		goto unlock;
+		return status;
 	}
 
 	mdc_fixup_md(entry);
@@ -795,8 +812,9 @@ static fsal_status_t mdcache_setattrs(struct fsal_obj_handle *obj_hdl,
 	       );
 
 	if (FSAL_IS_ERROR(status)) {
+		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 		mdcache_kill_entry(entry);
-		goto unlock;
+		return status;
 	}
 
 	mdc_fixup_md(entry);
@@ -843,8 +861,9 @@ static fsal_status_t mdcache_setattr2(struct fsal_obj_handle *obj_hdl,
 	       );
 
 	if (FSAL_IS_ERROR(status)) {
+		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 		mdcache_kill_entry(entry);
-		goto unlock;
+		return status;
 	}
 
 	mdc_fixup_md(entry);

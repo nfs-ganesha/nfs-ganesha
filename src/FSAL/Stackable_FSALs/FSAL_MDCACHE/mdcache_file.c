@@ -309,8 +309,9 @@ fsal_status_t mdcache_commit(struct fsal_obj_handle *obj_hdl, off_t offset,
 
 	if (status.major == ERR_FSAL_STALE)
 		mdcache_kill_entry(entry);
-
-	atomic_clear_uint32_t_bits(&entry->mde_flags, MDCACHE_TRUST_ATTRS);
+	else
+		atomic_clear_uint32_t_bits(&entry->mde_flags,
+					   MDCACHE_TRUST_ATTRS);
 
 	return status;
 }
@@ -668,8 +669,9 @@ fsal_status_t mdcache_write2(struct fsal_obj_handle *obj_hdl,
 
 	if (status.major == ERR_FSAL_STALE)
 		mdcache_kill_entry(entry);
-
-	atomic_clear_uint32_t_bits(&entry->mde_flags, MDCACHE_TRUST_ATTRS);
+	else
+		atomic_clear_uint32_t_bits(&entry->mde_flags,
+					   MDCACHE_TRUST_ATTRS);
 
 	return status;
 }
@@ -756,8 +758,9 @@ fsal_status_t mdcache_commit2(struct fsal_obj_handle *obj_hdl, off_t offset,
 
 	if (status.major == ERR_FSAL_STALE)
 		mdcache_kill_entry(entry);
-
-	atomic_clear_uint32_t_bits(&entry->mde_flags, MDCACHE_TRUST_ATTRS);
+	else
+		atomic_clear_uint32_t_bits(&entry->mde_flags,
+					   MDCACHE_TRUST_ATTRS);
 
 	return status;
 }
