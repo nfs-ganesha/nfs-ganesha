@@ -200,7 +200,7 @@ static nfsstat4 pnfs_layout_get(struct fsal_obj_handle          *obj_pub,
 		return NFS4ERR_INVAL;
 	}
 
-	/* TODO: When more than one client tries access the same layout
+	/** @todo: When more than one client tries access the same layout
 	 *       for the write operation, then last write will overwrite
 	 *       for the write operation, then last write will overwrite
 	 *       the previous ones, the MDS should intelligently deal
@@ -427,7 +427,7 @@ nfsstat4 getdeviceinfo(struct fsal_module *fsal_hdl,
 	return nfs_status;
 	}
 
-	/* TODO : Here information about Data-Server where file resides
+	/** @todo: Here information about Data-Server where file resides
 	 *        is only send from MDS.If that Data-Server is down then
 	 *        read or write will performed through MDS.
 	 *        Instead should we send the information about all

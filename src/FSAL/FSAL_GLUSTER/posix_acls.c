@@ -579,8 +579,7 @@ fsal_acl_2_posix_acl(fsal_acl_t *p_fsalacl, acl_type_t type)
 	if (ret)
 		LogWarn(COMPONENT_FSAL, "Cannot set tag for ACL Entry");
 
-	/*
-	 * TODO: Annoymous users/groups (id = -1) should handle properly
+	/** @todo: Annoymous users/groups (id = -1) should handle properly
 	 */
 
 	/*

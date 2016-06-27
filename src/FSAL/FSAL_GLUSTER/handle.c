@@ -905,7 +905,7 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 		buffxstat.buffstat.st_mtim = timestamp;
 	}
 
-	/* TODO: Check for attributes not supported and return */
+	/** @todo: Check for attributes not supported and return */
 	/* EATTRNOTSUPP error.  */
 
 	if (NFSv4_ACL_SUPPORT) {
@@ -1127,293 +1127,6 @@ static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
 }
 
 /**
- * @brief Implements GLUSTER FSAL objectoperation open
- */
-
-static fsal_status_t file_open(struct fsal_obj_handle *obj_hdl,
-			       fsal_openflags_t openflags)
-{
-	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
-	struct glfs_fd *glfd = NULL;
-	int p_flags = 0;
-	struct glusterfs_export *glfs_export =
-	    container_of(op_ctx->fsal_export, struct glusterfs_export, export);
-	struct glusterfs_handle *objhandle =
-	    container_of(obj_hdl, struct glusterfs_handle, handle);
-#ifdef GLTIMING
-	struct timespec s_time, e_time;
-
-	now(&s_time);
-#endif
-
-	if (objhandle->globalfd.openflags != FSAL_O_CLOSED)
-		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
-
-	fsal2posix_openflags(openflags, &p_flags);
-
-	glfd = glfs_h_open(glfs_export->gl_fs, objhandle->glhandle, p_flags);
-	if (glfd == NULL) {
-		status = gluster2fsal_error(errno);
-		goto out;
-	}
-
-	objhandle->globalfd.openflags = openflags;
-	objhandle->globalfd.glfd = glfd;
-
- out:
-#ifdef GLTIMING
-	now(&e_time);
-	latency_update(&s_time, &e_time, lat_file_open);
-#endif
-	return status;
-}
-
-/**
- * @brief Implements GLUSTER FSAL objectoperation status
- */
-
-static fsal_openflags_t file_status(struct fsal_obj_handle *obj_hdl)
-{
-	struct glusterfs_handle *objhandle =
-	    container_of(obj_hdl, struct glusterfs_handle, handle);
-
-	return objhandle->globalfd.openflags;
-}
-
-/**
- * @brief Implements GLUSTER FSAL objectoperation read
- */
-
-static fsal_status_t file_read(struct fsal_obj_handle *obj_hdl,
-			       uint64_t seek_descriptor, size_t buffer_size,
-			       void *buffer, size_t *read_amount,
-			       bool *end_of_file)
-{
-	int rc = 0;
-	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
-	struct glusterfs_handle *objhandle =
-	    container_of(obj_hdl, struct glusterfs_handle, handle);
-#ifdef GLTIMING
-	struct timespec s_time, e_time;
-
-	now(&s_time);
-#endif
-
-	rc = glfs_pread(objhandle->globalfd.glfd, buffer, buffer_size,
-			seek_descriptor,
-			0 /*TODO: flags is unused, so pass in something */);
-	if (rc < 0) {
-		status = gluster2fsal_error(errno);
-		goto out;
-	}
-
-	if (rc < buffer_size)
-		*end_of_file = true;
-
-	*read_amount = rc;
-
- out:
-#ifdef GLTIMING
-	now(&e_time);
-	latency_update(&s_time, &e_time, lat_file_read);
-#endif
-	return status;
-}
-
-/**
- * @brief Implements GLUSTER FSAL objectoperation write
- */
-
-static fsal_status_t file_write(struct fsal_obj_handle *obj_hdl,
-				uint64_t seek_descriptor, size_t buffer_size,
-				void *buffer, size_t *write_amount,
-				bool *fsal_stable)
-{
-	int rc = 0;
-	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
-	struct glusterfs_handle *objhandle =
-	    container_of(obj_hdl, struct glusterfs_handle, handle);
-#ifdef GLTIMING
-	struct timespec s_time, e_time;
-
-	now(&s_time);
-#endif
-
-	rc = glfs_pwrite(objhandle->globalfd.glfd, buffer, buffer_size,
-		 seek_descriptor, ((*fsal_stable) ? O_SYNC : 0));
-	if (rc < 0) {
-		status = gluster2fsal_error(errno);
-		goto out;
-	}
-
-	*write_amount = rc;
-	if (objhandle->globalfd.openflags & FSAL_O_SYNC)
-		*fsal_stable = true;
-
- out:
-#ifdef GLTIMING
-	now(&e_time);
-	latency_update(&s_time, &e_time, lat_file_write);
-#endif
-	return status;
-}
-
-/**
- * @brief Implements GLUSTER FSAL objectoperation commit
- *
- * This function commits the entire file and ignores the range provided
- */
-
-static fsal_status_t commit(struct fsal_obj_handle *obj_hdl,	/* sync */
-			    off_t offset, size_t len)
-{
-	int rc = 0;
-	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
-	struct glusterfs_handle *objhandle =
-	    container_of(obj_hdl, struct glusterfs_handle, handle);
-#ifdef GLTIMING
-	struct timespec s_time, e_time;
-
-	now(&s_time);
-#endif
-
-	/* TODO: Everybody pretty much ignores the range sent */
-	rc = glfs_fsync(objhandle->globalfd.glfd);
-	if (rc < 0)
-		status = gluster2fsal_error(errno);
-#ifdef GLTIMING
-	now(&e_time);
-	latency_update(&s_time, &e_time, lat_commit);
-#endif
-	return status;
-}
-
-/**
- * @brief Implements GLUSTER FSAL objectoperation lock_op
- *
- * The lock operations do not yet support blocking locks, as cancel is probably
- * needed and the current implementation would block a thread that seems
- * excessive.
- */
-
-static fsal_status_t lock_op(struct fsal_obj_handle *obj_hdl,
-			     void *p_owner,
-			     fsal_lock_op_t lock_op,
-			     fsal_lock_param_t *request_lock,
-			     fsal_lock_param_t *conflicting_lock)
-{
-	int rc = 0;
-	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
-	struct glusterfs_handle *objhandle =
-	    container_of(obj_hdl, struct glusterfs_handle, handle);
-	struct flock flock;
-	int cmd;
-	int saverrno = 0;
-#ifdef GLTIMING
-	struct timespec s_time, e_time;
-
-	now(&s_time);
-#endif
-
-	if (objhandle->globalfd.openflags == FSAL_O_CLOSED) {
-		LogDebug(COMPONENT_FSAL,
-			 "ERROR: Attempting to lock with no file descriptor open");
-		status.major = ERR_FSAL_FAULT;
-		goto out;
-	}
-
-	if (lock_op == FSAL_OP_LOCKT) {
-		cmd = F_GETLK;
-	} else if (lock_op == FSAL_OP_LOCK || lock_op == FSAL_OP_UNLOCK) {
-		cmd = F_SETLK;
-	} else {
-		LogDebug(COMPONENT_FSAL,
-			 "ERROR: Unsupported lock operation %d\n", lock_op);
-		status.major = ERR_FSAL_NOTSUPP;
-		goto out;
-	}
-
-	if (request_lock->lock_type == FSAL_LOCK_R) {
-		flock.l_type = F_RDLCK;
-	} else if (request_lock->lock_type == FSAL_LOCK_W) {
-		flock.l_type = F_WRLCK;
-	} else {
-		LogDebug(COMPONENT_FSAL,
-			 "ERROR: The requested lock type was not read or write.");
-		status.major = ERR_FSAL_NOTSUPP;
-		goto out;
-	}
-
-	/* TODO: Override R/W and just provide U? */
-	if (lock_op == FSAL_OP_UNLOCK)
-		flock.l_type = F_UNLCK;
-
-	flock.l_len = request_lock->lock_length;
-	flock.l_start = request_lock->lock_start;
-	flock.l_whence = SEEK_SET;
-
-	/* flock.l_len being signed long integer, larger lock ranges may
-	 * get mapped to negative values. As per 'man 3 fcntl', posix
-	 * locks can accept negative l_len values which may lead to
-	 * unlocking an unintended range. Better bail out to prevent that.
-	 *
-	 * TODO: How do we support larger ranges (>INT64_MAX) then?
-	 */
-	if (flock.l_len < 0) {
-		LogCrit(COMPONENT_FSAL,
-			"The requested lock length is out of range- flock.l_len(%"
-			PRIi64 "), request_lock_length(%" PRIu64 ")",
-			flock.l_len, request_lock->lock_length);
-		status.major = ERR_FSAL_BAD_RANGE;
-		goto out;
-	}
-
-	rc = glfs_posix_lock(objhandle->globalfd.glfd, cmd, &flock);
-	if (rc != 0 && lock_op == FSAL_OP_LOCK
-	    && conflicting_lock && (errno == EACCES || errno == EAGAIN)) {
-		/* process conflicting lock */
-		saverrno = errno;
-		cmd = F_GETLK;
-		rc = glfs_posix_lock(objhandle->globalfd.glfd, cmd, &flock);
-		if (rc) {
-			LogCrit(COMPONENT_FSAL,
-				"Failed to get conflicting lock post lock failure");
-			status = gluster2fsal_error(errno);
-			goto out;
-		}
-
-		conflicting_lock->lock_length = flock.l_len;
-		conflicting_lock->lock_start = flock.l_start;
-		conflicting_lock->lock_type = flock.l_type;
-
-		status = gluster2fsal_error(saverrno);
-		goto out;
-	} else if (rc != 0) {
-		status = gluster2fsal_error(errno);
-		goto out;
-	}
-
-	if (conflicting_lock != NULL) {
-		if (lock_op == FSAL_OP_LOCKT && flock.l_type != F_UNLCK) {
-			conflicting_lock->lock_length = flock.l_len;
-			conflicting_lock->lock_start = flock.l_start;
-			conflicting_lock->lock_type = flock.l_type;
-		} else {
-			conflicting_lock->lock_length = 0;
-			conflicting_lock->lock_start = 0;
-			conflicting_lock->lock_type = FSAL_NO_LOCK;
-		}
-	}
-
- out:
-#ifdef GLTIMING
-	now(&e_time);
-	latency_update(&s_time, &e_time, lat_lock_op);
-#endif
-	return status;
-}
-
-/**
  * @brief Implements GLUSTER FSAL objectoperation share_op
  */
 /*
@@ -1424,44 +1137,6 @@ static fsal_status_t share_op(struct fsal_obj_handle *obj_hdl,
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 */
-/**
- * @brief Implements GLUSTER FSAL objectoperation close
- */
-
-static fsal_status_t file_close(struct fsal_obj_handle *obj_hdl)
-{
-	int rc = 0;
-	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
-	struct glusterfs_handle *objhandle =
-	    container_of(obj_hdl, struct glusterfs_handle, handle);
-#ifdef GLTIMING
-	struct timespec s_time, e_time;
-
-	now(&s_time);
-#endif
-
-	if (objhandle->globalfd.openflags == FSAL_O_CLOSED) {
-		LogDebug(COMPONENT_FSAL,
-			 "File already closed.");
-		return status;
-	}
-
-	rc = glfs_close(objhandle->globalfd.glfd);
-	if (rc != 0) {
-		status = gluster2fsal_error(errno);
-		LogCrit(COMPONENT_FSAL,
-			"Error : close returns with %s", strerror(errno));
-	}
-
-	objhandle->globalfd.glfd = NULL;
-	objhandle->globalfd.openflags = FSAL_O_CLOSED;
-
-#ifdef GLTIMING
-	now(&e_time);
-	latency_update(&s_time, &e_time, lat_file_close);
-#endif
-	return status;
-}
 
 fsal_status_t glusterfs_open_my_fd(struct glusterfs_handle *objhandle,
 				   fsal_openflags_t openflags,
@@ -1604,7 +1279,7 @@ fsal_status_t find_fd(struct glusterfs_fd *my_fd,
 	case SOCKET_FILE:
 	case CHARACTER_FILE:
 	case BLOCK_FILE:
-		/* XXX: check for O_NOACCESS. Refer vfs find_fd */
+		/** @todo: check for O_NOACCESS. Refer vfs find_fd */
 		posix_flags = O_PATH;
 		break;
 
@@ -1684,7 +1359,7 @@ fsal_status_t glusterfs_fetch_attrs(struct glusterfs_handle *myself,
 	case SOCKET_FILE:
 	case CHARACTER_FILE:
 	case BLOCK_FILE:
-	case SYMBOLIC_LINK: /* XXX: do we need glfd? */
+	case SYMBOLIC_LINK: /** @todo: do we need glfd? */
 	case FIFO_FILE:
 		retval = glfs_h_stat(glfs_export->gl_fs, myself->glhandle,
 					&buffxstat.buffstat);
@@ -1827,15 +1502,13 @@ static fsal_status_t glusterfs_open2(struct fsal_obj_handle *obj_hdl,
 				      handle);
 
 #if 0
-	/** @todo: fsid work
-	 * if (obj_hdl->fsal != obj_hdl->fs->fsal) {
-	 * LogDebug(COMPONENT_FSAL,
-	 *	  "FSAL %s operation for handle belonging to
-	 *	   FSAL %s, return EXDEV",
-	 *	   obj_hdl->fsal->name, obj_hdl->fs->fsal->name);
-	 * return fsalstat(posix2fsal_error(EXDEV), EXDEV);
-	 * }
-	 */
+	/** @todo: fsid work */
+	if (obj_hdl->fsal != obj_hdl->fs->fsal) {
+		LogDebug(COMPONENT_FSAL,
+			 "FSAL %s operation for handle belonging to FSAL %s, return EXDEV",
+			 obj_hdl->fsal->name, obj_hdl->fs->fsal->name);
+		return fsalstat(posix2fsal_error(EXDEV), EXDEV);
+	}
 #endif
 
 		if (state != NULL) {
@@ -1988,7 +1661,7 @@ static fsal_status_t glusterfs_open2(struct fsal_obj_handle *obj_hdl,
 		unix_mode = 0600;
 	}
 
-	/* @todo: we do not have openat implemented yet..meanwhile
+	/** @todo: we do not have openat implemented yet..meanwhile
 	 *  use 'glfs_h_creat'
 	 */
 
@@ -2232,15 +1905,13 @@ static fsal_status_t glusterfs_reopen2(struct fsal_obj_handle *obj_hdl,
 			       handle);
 
 #if 0
-	/* @todo: fsid work
-	 * if (obj_hdl->fsal != obj_hdl->fs->fsal) {
-	 * LogDebug(COMPONENT_FSAL,
-	 *	  "FSAL %s operation for handle belonging to
-	 *	   FSAL %s, return EXDEV",
-	 *	   obj_hdl->fsal->name, obj_hdl->fs->fsal->name);
-	 * return fsalstat(posix2fsal_error(EXDEV), EXDEV);
-	 * }
-	 */
+	/** @todo: fsid work */
+	if (obj_hdl->fsal != obj_hdl->fs->fsal) {
+		LogDebug(COMPONENT_FSAL,
+			 "FSAL %s operation for handle belonging to FSAL %s, return EXDEV",
+			 obj_hdl->fsal->name, obj_hdl->fs->fsal->name);
+		return fsalstat(posix2fsal_error(EXDEV), EXDEV);
+	}
 #endif
 
 	/* This can block over an I/O operation. */
@@ -2326,15 +1997,13 @@ static fsal_status_t glusterfs_read2(struct fsal_obj_handle *obj_hdl,
 	}
 
 #if 0
-	/* @todo: fsid work
-	 * if (obj_hdl->fsal != obj_hdl->fs->fsal) {
-	 * LogDebug(COMPONENT_FSAL,
-	 *	  "FSAL %s operation for handle belonging to
-	 *	   FSAL %s, return EXDEV",
-	 *	   obj_hdl->fsal->name, obj_hdl->fs->fsal->name);
-	 * return fsalstat(posix2fsal_error(EXDEV), EXDEV);
-	 * }
-	 */
+	/** @todo: fsid work */
+	if (obj_hdl->fsal != obj_hdl->fs->fsal) {
+		LogDebug(COMPONENT_FSAL,
+			 "FSAL %s operation for handle belonging to FSAL %s, return EXDEV",
+			 obj_hdl->fsal->name, obj_hdl->fs->fsal->name);
+		return fsalstat(posix2fsal_error(EXDEV), EXDEV);
+	}
 #endif
 
 	/* Get a usable file descriptor */
@@ -2416,15 +2085,13 @@ static fsal_status_t glusterfs_write2(struct fsal_obj_handle *obj_hdl,
 	}
 
 #if 0
-	/* @todo: fsid work
-	 * if (obj_hdl->fsal != obj_hdl->fs->fsal) {
-	 * LogDebug(COMPONENT_FSAL,
-	 *	  "FSAL %s operation for handle belonging to
-	 *	   FSAL %s, return EXDEV",
-	 *	   obj_hdl->fsal->name, obj_hdl->fs->fsal->name);
-	 * return fsalstat(posix2fsal_error(EXDEV), EXDEV);
-	 * }
-	 */
+	/** @todo: fsid work */
+	if (obj_hdl->fsal != obj_hdl->fs->fsal) {
+		LogDebug(COMPONENT_FSAL,
+			 "FSAL %s operation for handle belonging to FSAL %s, return EXDEV",
+			 obj_hdl->fsal->name, obj_hdl->fs->fsal->name);
+		return fsalstat(posix2fsal_error(EXDEV), EXDEV);
+	}
 #endif
 
 	if (*fsal_stable)
@@ -2578,15 +2245,13 @@ static fsal_status_t glusterfs_lock_op2(struct fsal_obj_handle *obj_hdl,
 	fsal_openflags_t openflags = FSAL_O_RDWR;
 
 #if 0
-	/* @todo: fsid work
-	 * if (obj_hdl->fsal != obj_hdl->fs->fsal) {
-	 * LogDebug(COMPONENT_FSAL,
-	 *	  "FSAL %s operation for handle belonging to
-	 *	   FSAL %s, return EXDEV",
-	 *	   obj_hdl->fsal->name, obj_hdl->fs->fsal->name);
-	 * return fsalstat(posix2fsal_error(EXDEV), EXDEV);
-	 * }
-	 */
+	/** @todo: fsid work */
+	if (obj_hdl->fsal != obj_hdl->fs->fsal) {
+		LogDebug(COMPONENT_FSAL,
+			 "FSAL %s operation for handle belonging to FSAL %s, return EXDEV",
+			 obj_hdl->fsal->name, obj_hdl->fs->fsal->name);
+		return fsalstat(posix2fsal_error(EXDEV), EXDEV);
+	}
 #endif
 
 	LogFullDebug(COMPONENT_FSAL,
@@ -2659,7 +2324,7 @@ static fsal_status_t glusterfs_lock_op2(struct fsal_obj_handle *obj_hdl,
 		return status;
 	}
 
-	/* @todo: setlkowner as well */
+	/** @todo: setlkowner as well */
 	errno = 0;
 	retval = glfs_posix_lock(my_fd.glfd, fcntl_comm, &lock_args);
 
@@ -2732,15 +2397,13 @@ fsal_status_t glusterfs_getattr2(struct fsal_obj_handle *obj_hdl)
 	myself = container_of(obj_hdl, struct glusterfs_handle, handle);
 
 #if 0
-	/* @todo: fsid work
-	 * if (obj_hdl->fsal != obj_hdl->fs->fsal) {
-	 * LogDebug(COMPONENT_FSAL,
-	 *	  "FSAL %s operation for handle belonging to
-	 *	   FSAL %s, return EXDEV",
-	 *	   obj_hdl->fsal->name, obj_hdl->fs->fsal->name);
-	 * return fsalstat(posix2fsal_error(EXDEV), EXDEV);
-	 * }
-	 */
+	/** @todo: fsid work */
+	if (obj_hdl->fsal != obj_hdl->fs->fsal) {
+		LogDebug(COMPONENT_FSAL,
+			 "FSAL %s operation for handle belonging to FSAL %s, return EXDEV",
+			 obj_hdl->fsal->name, obj_hdl->fs->fsal->name);
+		return fsalstat(posix2fsal_error(EXDEV), EXDEV);
+	}
 #endif
 
 	/* Get a usable file descriptor (don't need to bypass - FSAL_O_ANY
@@ -2814,7 +2477,7 @@ static fsal_status_t glusterfs_setattr2(struct fsal_obj_handle *obj_hdl,
 	int mask = 0;
 
 
-	/* @todo: Handle special file symblic links etc */
+	/** @todo: Handle special file symblic links etc */
 	/* apply umask, if mode attribute is to be changed */
 	if (FSAL_TEST_MASK(attrib_set->mask, ATTR_MODE))
 		attrib_set->mode &=
@@ -2823,15 +2486,13 @@ static fsal_status_t glusterfs_setattr2(struct fsal_obj_handle *obj_hdl,
 	myself = container_of(obj_hdl, struct glusterfs_handle, handle);
 
 #if 0
-	/* @todo: fsid work
-	 * if (obj_hdl->fsal != obj_hdl->fs->fsal) {
-	 * LogDebug(COMPONENT_FSAL,
-	 *	  "FSAL %s operation for handle belonging to
-	 *	   FSAL %s, return EXDEV",
-	 *	   obj_hdl->fsal->name, obj_hdl->fs->fsal->name);
-	 * return fsalstat(posix2fsal_error(EXDEV), EXDEV);
-	 * }
-	 */
+	/** @todo: fsid work */
+	if (obj_hdl->fsal != obj_hdl->fs->fsal) {
+		LogDebug(COMPONENT_FSAL,
+			 "FSAL %s operation for handle belonging to FSAL %s, return EXDEV",
+			 obj_hdl->fsal->name, obj_hdl->fs->fsal->name);
+		return fsalstat(posix2fsal_error(EXDEV), EXDEV);
+	}
 #endif
 
 	/* Test if size is being set, make sure file is regular and if so,
@@ -2916,7 +2577,7 @@ static fsal_status_t glusterfs_setattr2(struct fsal_obj_handle *obj_hdl,
 		buffxstat.buffstat.st_mtim = timestamp;
 	}
 
-	/* @todo: Check for attributes not supported and return */
+	/** @todo: Check for attributes not supported and return */
 	/* EATTRNOTSUPP error.  */
 
 	if (NFSv4_ACL_SUPPORT) {
@@ -2948,7 +2609,7 @@ static fsal_status_t glusterfs_setattr2(struct fsal_obj_handle *obj_hdl,
 		FSAL_SET_MASK(attr_valid, XATTR_STAT);
 	if (FSAL_TEST_MASK(attr_valid, XATTR_STAT)) {
 		/* Only if there is any change in attrs send them down to fs */
-		/* @todo: instead use glfs_fsetattr().... looks like there is
+		/** @todo: instead use glfs_fsetattr().... looks like there is
 		 * fix needed in there..it doesn't convert the mask flags
 		 * to corresponding gluster flags.
 		 */
@@ -3242,13 +2903,6 @@ void handle_ops_init(struct fsal_obj_ops *ops)
 	ops->link = linkfile;
 	ops->rename = renamefile;
 	ops->unlink = file_unlink;
-	ops->open = file_open;
-	ops->status = file_status;
-	ops->read = file_read;
-	ops->write = file_write;
-	ops->commit = commit;
-	ops->lock_op = lock_op;
-	ops->close = file_close;
 	ops->handle_digest = handle_digest;
 	ops->handle_to_key = handle_to_key;
 

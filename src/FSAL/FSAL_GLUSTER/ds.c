@@ -159,8 +159,7 @@ static nfsstat4 ds_write(struct fsal_ds_handle *const ds_pub,
 		return posix2nfs4_error(-rc);
 	}
 
-	/**
-	 * TODO:Here DS is performing the write operation, so the MDS is not
+	/** @todo:Here DS is performing the write operation, so the MDS is not
 	 *      aware of the change.We should inform MDS through upcalls about
 	 *      change in file attributes such as size and time.
 	 */

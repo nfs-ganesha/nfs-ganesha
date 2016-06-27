@@ -123,7 +123,8 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 		/*
 		 *  mount path is not same as the exported one. Should be subdir
 		 *  then.
-		 *  TODO: How do we handle symlinks if present in the path.
+		 */
+		/** @todo: How do we handle symlinks if present in the path.
 		 */
 		realpath = gsh_malloc(strlen(glfs_export->export_path) +
 				      strlen(path) + 1);
@@ -358,7 +359,8 @@ struct state_t *glusterfs_alloc_state(struct fsal_export *exp_hdl,
 }
 
 /** @todo: We have gone POSIX way for the APIs below, can consider the CEPH way
- * in case all are constants across all volumes etc. */
+ * in case all are constants across all volumes etc.
+ */
 
 /**
  * @brief Implements GLUSTER FSAL exportoperation fs_supports

@@ -173,8 +173,8 @@ void construct_handle(struct glusterfs_export *glexport, const struct stat *st,
 void gluster_cleanup_vars(struct glfs_object *glhandle)
 {
 	if (glhandle) {
-		/* Error ignored, this is a cleanup operation, can't do much.
-		 * TODO: Useful point for logging? */
+		/* Error ignored, this is a cleanup operation, can't do much. */
+		/** @todo: Useful point for logging? */
 		glfs_h_close(glhandle);
 	}
 }
@@ -363,7 +363,7 @@ fsal_status_t glusterfs_set_acl(struct glusterfs_export *glfs_export,
 	rc = glfs_h_acl_set(glfs_export->gl_fs, objhandle->glhandle,
 				ACL_TYPE_ACCESS, buffxstat->e_acl);
 	if (rc < 0) {
-		/* TODO: check if error is appropriate.*/
+		/** @todo: check if error is appropriate.*/
 		LogMajor(COMPONENT_FSAL, "failed to set access type posix acl");
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	}
