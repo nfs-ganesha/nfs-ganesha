@@ -64,7 +64,24 @@ gpfsfsal_xstat_2_fsal_attributes(gpfsfsal_xstat_t *gpfs_buf,
 			     fsal_attr->fsid.minor);
 	}
 	if (FSAL_TEST_MASK(fsal_attr->mask, ATTR_ACL)) {
-		fsal_attr->acl = NULL;
+		if (fsal_attr->acl != NULL) {
+			/* We should never be passed attributes that have an
+			 * ACL attached, but just in case some future code
+			 * path changes that assumption, let's not release the
+			 * old ACL properly.
+			 */
+			int acl_status;
+
+			acl_status = nfs4_acl_release_entry(fsal_attr->acl);
+
+			if (acl_status != NFS_V4_ACL_SUCCESS)
+				LogCrit(COMPONENT_FSAL,
+					"Failed to release old acl, status=%d",
+					acl_status);
+
+			fsal_attr->acl = NULL;
+		}
+
 		if (use_acl && gpfs_buf->attr_valid & XATTR_ACL) {
 			/* ACL is valid, so try to convert fsal acl. */
 			gpfs_acl_2_fsal_acl(fsal_attr,

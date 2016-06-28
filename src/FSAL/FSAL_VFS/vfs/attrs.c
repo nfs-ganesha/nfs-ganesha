@@ -134,6 +134,25 @@ fsal_status_t vfs_sub_getattrs(struct vfs_fsal_obj_handle *vfs_hdl,
 	fsal_acl_t *acl;
 
 	LogDebug(COMPONENT_FSAL, "Enter");
+
+	if (attrib->acl != NULL) {
+		/* We should never be passed attributes that have an
+		 * ACL attached, but just in case some future code
+		 * path changes that assumption, let's not release the
+		 * old ACL properly.
+		 */
+		int acl_status;
+
+		acl_status = nfs4_acl_release_entry(attrib->acl);
+
+		if (acl_status != NFS_V4_ACL_SUCCESS)
+			LogCrit(COMPONENT_FSAL,
+				"Failed to release old acl, status=%d",
+				acl_status);
+
+		attrib->acl = NULL;
+	}
+
 	fa = vfs_acl_locate(&vfs_hdl->obj_handle);
 	if (!fa->fa_acl.naces) {
 		/* No ACLs yet */

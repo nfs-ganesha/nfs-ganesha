@@ -268,7 +268,24 @@ fsal_status_t glusterfs_get_acl(struct glusterfs_export *glfs_export,
 	fsal_ace_t *pace = NULL;
 	int e_count = 0, i_count = 0, new_count = 0, new_i_count = 0;
 
-	fsalattr->acl = NULL;
+	if (fsalattr->acl != NULL) {
+		/* We should never be passed attributes that have an
+		 * ACL attached, but just in case some future code
+		 * path changes that assumption, let's release the
+		 * old ACL properly.
+		 */
+		int acl_status;
+
+		acl_status = nfs4_acl_release_entry(fsalattr->acl);
+
+		if (acl_status != NFS_V4_ACL_SUCCESS)
+			LogCrit(COMPONENT_FSAL,
+				"Failed to release old acl, status=%d",
+				acl_status);
+
+		fsalattr->acl = NULL;
+	}
+
 	if (NFSv4_ACL_SUPPORT && FSAL_TEST_MASK(fsalattr->mask, ATTR_ACL)) {
 
 		buffxstat->e_acl = glfs_h_acl_get(glfs_export->gl_fs,
