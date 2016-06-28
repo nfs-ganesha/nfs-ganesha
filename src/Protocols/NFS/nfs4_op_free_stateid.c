@@ -70,6 +70,7 @@ int nfs4_op_free_stateid(struct nfs_argop4 *op, compound_data_t *data,
 	FREE_STATEID4res * const res_FREE_STATEID4 =
 	    &resp->nfs_resop4_u.opfree_stateid;
 	state_t *state;
+	struct fsal_export *save_exp;
 
 	resp->resop = NFS4_OP_FREE_STATEID;
 	res_FREE_STATEID4->fsr_status = NFS4_OK;
@@ -90,8 +91,13 @@ int nfs4_op_free_stateid(struct nfs_argop4 *op, compound_data_t *data,
 	if (res_FREE_STATEID4->fsr_status != NFS4_OK)
 		return res_FREE_STATEID4->fsr_status;
 
+	save_exp = op_ctx->fsal_export;
+	op_ctx->fsal_export = state->state_exp;
+
 	state_del(state);
 	dec_state_t_ref(state);
+
+	op_ctx->fsal_export = save_exp;
 
 	return res_FREE_STATEID4->fsr_status;
 
