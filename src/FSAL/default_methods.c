@@ -670,8 +670,10 @@ static void handle_release(struct fsal_obj_handle *obj_hdl)
  *
  * This function is used if an upper layer detects that a duplicate
  * object handle has been created. It allows the FSAL to merge anything
- * from the duplicate back into the original, and then release the
- * duplicate.
+ * from the duplicate back into the original.
+ *
+ * The caller must release the object (the caller may have to close
+ * files if the merge is unsuccessful).
  *
  * @param[in]  orig_hdl  Original handle
  * @param[in]  dupe_hdl Handle to merge into original
@@ -683,9 +685,7 @@ static void handle_release(struct fsal_obj_handle *obj_hdl)
 static fsal_status_t handle_merge(struct fsal_obj_handle *orig_hdl,
 				  struct fsal_obj_handle *dupe_hdl)
 {
-	/* Default is to just release the duplicate. */
-	dupe_hdl->obj_ops.release(dupe_hdl);
-
+	/* Default is to do nothing. */
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 

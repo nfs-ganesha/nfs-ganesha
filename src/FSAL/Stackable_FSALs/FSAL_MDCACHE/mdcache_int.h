@@ -317,7 +317,8 @@ fsal_status_t mdcache_alloc_and_check_handle(
 		const char *tag,
 		mdcache_entry_t *parent,
 		const char *name,
-		bool invalidate);
+		bool invalidate,
+		struct state_t *state);
 
 fsal_status_t get_optional_attrs(struct fsal_obj_handle *obj_hdl,
 				 struct attrlist *attrs_out);
@@ -326,7 +327,8 @@ fsal_status_t mdcache_new_entry(struct mdcache_fsal_export *export,
 				struct attrlist *attrs_in,
 				struct attrlist *attrs_out,
 				bool new_directory,
-				mdcache_entry_t **entry);
+				mdcache_entry_t **entry,
+				struct state_t *state);
 fsal_status_t mdcache_find_keyed(mdcache_key_t *key, mdcache_entry_t **entry);
 fsal_status_t mdcache_locate_keyed(mdcache_key_t *key,
 				   struct mdcache_fsal_export *export,

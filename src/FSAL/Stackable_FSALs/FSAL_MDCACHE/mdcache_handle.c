@@ -67,6 +67,7 @@
  * @param[in]     parent         Parent directory to add dirent to.
  * @param[in]     name           Name of the dirent to add.
  * @param[in]     invalidate     Invalidate parent attr.
+ * @param[in]     state          Optional state_t representing open file.
  *
  * @note This returns an INITIAL ref'd entry on success
  *
@@ -82,14 +83,15 @@ fsal_status_t mdcache_alloc_and_check_handle(
 		const char *tag,
 		mdcache_entry_t *parent,
 		const char *name,
-		bool invalidate)
+		bool invalidate,
+		struct state_t *state)
 {
 	fsal_status_t status;
 	mdcache_entry_t *new_entry;
 	const char *dispname = name != NULL ? name : "<by-handle>";
 
 	status = mdcache_new_entry(export, sub_handle, attrs_in, attrs_out,
-				   new_directory, &new_entry);
+				   new_directory, &new_entry, state);
 
 	if (FSAL_IS_ERROR(status)) {
 		*new_obj = NULL;
@@ -215,10 +217,10 @@ static fsal_status_t mdcache_create(struct fsal_obj_handle *dir_hdl,
 
 	PTHREAD_RWLOCK_wrlock(&parent->content_lock);
 
-	status = mdcache_alloc_and_check_handle(export, sub_handle,
-						new_obj, false,
-						&attrs, attrs_out,
-						"create", parent, name, true);
+	status = mdcache_alloc_and_check_handle(export, sub_handle, new_obj,
+						false, &attrs, attrs_out,
+						"create", parent, name, true,
+						NULL);
 
 	PTHREAD_RWLOCK_unlock(&parent->content_lock);
 
@@ -280,10 +282,10 @@ static fsal_status_t mdcache_mkdir(struct fsal_obj_handle *dir_hdl,
 
 	PTHREAD_RWLOCK_wrlock(&parent->content_lock);
 
-	status = mdcache_alloc_and_check_handle(export, sub_handle,
-						handle, true,
-						&attrs, attrs_out,
-						"mkdir", parent, name, true);
+	status = mdcache_alloc_and_check_handle(export, sub_handle, handle,
+						true, &attrs, attrs_out,
+						"mkdir", parent, name, true,
+						NULL);
 
 	PTHREAD_RWLOCK_unlock(&parent->content_lock);
 
@@ -350,10 +352,10 @@ static fsal_status_t mdcache_mknode(struct fsal_obj_handle *dir_hdl,
 
 	PTHREAD_RWLOCK_wrlock(&parent->content_lock);
 
-	status = mdcache_alloc_and_check_handle(export, sub_handle,
-						handle, false,
-						&attrs, attrs_out,
-						"mknode", parent, name, true);
+	status = mdcache_alloc_and_check_handle(export, sub_handle, handle,
+						false, &attrs, attrs_out,
+						"mknode", parent, name, true,
+						NULL);
 
 	PTHREAD_RWLOCK_unlock(&parent->content_lock);
 
@@ -418,10 +420,10 @@ static fsal_status_t mdcache_symlink(struct fsal_obj_handle *dir_hdl,
 
 	PTHREAD_RWLOCK_wrlock(&parent->content_lock);
 
-	status = mdcache_alloc_and_check_handle(export, sub_handle,
-						handle, false,
-						&attrs, attrs_out,
-						"symlink", parent, name, true);
+	status = mdcache_alloc_and_check_handle(export, sub_handle, handle,
+						false, &attrs, attrs_out,
+						"symlink", parent, name, true,
+						NULL);
 
 	PTHREAD_RWLOCK_unlock(&parent->content_lock);
 
@@ -1308,7 +1310,7 @@ fsal_status_t mdcache_lookup_path(struct fsal_export *exp_hdl,
 	}
 
 	status = mdcache_new_entry(export, sub_handle, &attrs, attrs_out,
-				   false, &new_entry);
+				   false, &new_entry, NULL);
 
 	fsal_release_attrs(&attrs);
 

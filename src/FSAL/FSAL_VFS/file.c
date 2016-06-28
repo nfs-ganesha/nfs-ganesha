@@ -210,8 +210,10 @@ struct state_t *vfs_alloc_state(struct fsal_export *exp_hdl,
  *
  * This function is used if an upper layer detects that a duplicate
  * object handle has been created. It allows the FSAL to merge anything
- * from the duplicate back into the original, and then release the
- * duplicate.
+ * from the duplicate back into the original.
+ *
+ * The caller must release the object (the caller may have to close
+ * files if the merge is unsuccessful).
  *
  * @param[in]  orig_hdl  Original handle
  * @param[in]  dupe_hdl Handle to merge into original

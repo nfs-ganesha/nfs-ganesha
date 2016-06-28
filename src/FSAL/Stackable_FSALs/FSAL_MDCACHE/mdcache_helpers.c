@@ -345,6 +345,7 @@ void mdcache_dirent_invalidate_all(mdcache_entry_t *entry)
  * @param[in,out] attrs_out      Attributes requested for the object
  * @param[in]     new_directory  Indicate a new directory was created
  * @param[out]    entry          Newly instantiated cache entry
+ * @param[in]     state          Optional state_t representing open file.
  *
  * @note This returns an INITIAL ref'd entry on success
  *
@@ -356,7 +357,8 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 		  struct attrlist *attrs_in,
 		  struct attrlist *attrs_out,
 		  bool new_directory,
-		  mdcache_entry_t **entry)
+		  mdcache_entry_t **entry,
+		  struct state_t *state)
 {
 	fsal_status_t status;
 	mdcache_entry_t *oentry, *nentry = NULL;
@@ -590,6 +592,40 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 		}
 	}
 
+	if (!FSAL_IS_ERROR(status)) {
+		/* Give the FSAL a chance to merge new_obj into
+		 * oentry->obj_handle since we will be using
+		 * oentry->obj_handle for all access to the oject.
+		 */
+		struct fsal_obj_handle *old_sub_handle = (*entry)->sub_handle;
+
+		status =
+		    old_sub_handle->obj_ops.merge(old_sub_handle, sub_handle);
+
+		if (FSAL_IS_ERROR(status)) {
+			/* Report this error and unref the entry */
+			LogDebug(COMPONENT_CACHE_INODE,
+				 "Merge of object handles after race returned %s",
+				 fsal_err_txt(status));
+
+			mdcache_put(*entry);
+			*entry = NULL;
+		}
+	}
+
+	if (FSAL_IS_ERROR(status) && state != NULL) {
+		/* Our caller passed in a state for an open file, since
+		 * there is not a valid entry to use, or a merge failed
+		 * we must close that file before disposing of new_obj.
+		 */
+		fsal_status_t status = sub_handle->obj_ops.close2(sub_handle,
+								  state);
+
+		LogDebug(COMPONENT_CACHE_INODE,
+			 "Close of state during error processing returned %s",
+			 fsal_err_txt(status));
+	}
+
 	/* must free sub_handle if no new entry was created to reference it. */
 	sub_handle->obj_ops.release(sub_handle);
 
@@ -701,7 +737,7 @@ mdcache_locate_keyed(mdcache_key_t *key,
 	}
 
 	status = mdcache_new_entry(export, sub_handle, &attrs, attrs_out,
-				   false, entry);
+				   false, entry, NULL);
 
 	fsal_release_attrs(&attrs);
 
@@ -742,7 +778,7 @@ fsal_status_t mdc_add_cache(mdcache_entry_t *mdc_parent,
 	LogFullDebug(COMPONENT_CACHE_INODE, "Creating entry for %s", name);
 
 	status = mdcache_new_entry(export, sub_handle, attrs_in, NULL,
-				   false, &new_entry);
+				   false, &new_entry, NULL);
 
 	if (FSAL_IS_ERROR(status))
 		return status;
@@ -979,9 +1015,9 @@ fsal_status_t mdc_lookup_uncached(mdcache_entry_t *mdc_parent,
 	}
 
 	status = mdcache_alloc_and_check_handle(export, sub_handle, &new_obj,
-						false, &attrs,
-						attrs_out, "lookup", mdc_parent,
-						name, true);
+						false, &attrs, attrs_out,
+						"lookup", mdc_parent, name,
+						true, NULL);
 
 	fsal_release_attrs(&attrs);
 
