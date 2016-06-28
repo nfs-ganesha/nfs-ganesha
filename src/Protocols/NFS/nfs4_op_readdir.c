@@ -244,7 +244,7 @@ fsal_errors_t nfs4_readdir_callback(void *opaque,
 			/* Now we must traverse the junction to get the
 			 * attributes. We have already set up the compound data.
 			 *
-			 * Signal to cache_inode_getattr to call back with the
+			 * Signal to populate_dirent to call back with the
 			 * root node of the export across the junction. Also
 			 * signal to ourselves that the call back will be
 			 * across the junction.

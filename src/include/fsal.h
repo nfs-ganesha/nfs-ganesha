@@ -303,7 +303,6 @@ fsal_status_t fsal_access(struct fsal_obj_handle *obj,
 			  fsal_accessflags_t access_type,
 			  fsal_accessflags_t *allowed,
 			  fsal_accessflags_t *denied);
-uint64_t fsal_fileid(struct fsal_obj_handle *obj);
 fsal_status_t fsal_link(struct fsal_obj_handle *obj,
 			struct fsal_obj_handle *dest_dir,
 			const char *name);

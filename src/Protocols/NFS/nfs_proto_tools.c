@@ -3287,8 +3287,24 @@ nfsstat4 file_To_Fattr(compound_data_t *data,
 #endif /* ENABLE_RFC_ACL */
 	}
 
-	if (attribute_is_set(Bitmap, FATTR4_MOUNTED_ON_FILEID))
-		args.mounted_on_fileid = data->current_obj->fileid;
+	if (attribute_is_set(Bitmap, FATTR4_MOUNTED_ON_FILEID)) {
+		PTHREAD_RWLOCK_rdlock(&op_ctx->export->lock);
+
+		if (data->current_obj == op_ctx->export->exp_root_obj) {
+			/* This is the root of the current export, find our
+			 * mounted_on_fileid and use that.
+			 */
+			args.mounted_on_fileid =
+					op_ctx->export->exp_mounted_on_file_id;
+		} else {
+			/* This is not the root of the current export, just
+			 * use fileid.
+			 */
+			args.mounted_on_fileid = data->current_obj->fileid;
+		}
+
+		PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
+	}
 
 	status = data->current_obj->obj_ops.getattrs(data->current_obj, attr);
 	if (FSAL_IS_ERROR(status))

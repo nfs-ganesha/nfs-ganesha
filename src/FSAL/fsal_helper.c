@@ -149,34 +149,6 @@ static fsal_status_t check_open_permission(struct fsal_obj_handle *obj,
 }
 
 /**
- * @brief Gets the fileid of an object
- *
- * @param[in]  obj   Object to be managed.
- *
- * @return The fileid
- *
- */
-uint64_t fsal_fileid(struct fsal_obj_handle *obj)
-{
-	uint64_t fileid;
-
-	PTHREAD_RWLOCK_rdlock(&op_ctx->export->lock);
-
-	if (obj == op_ctx->export->exp_root_obj) {
-
-		fileid = op_ctx->export->exp_mounted_on_file_id;
-
-		PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
-	} else {
-		PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
-
-		fileid = obj->fileid;
-	}
-
-	return fileid;
-}
-
-/**
  * @brief Checks permissions on an entry for setattrs
  *
  * This function checks if the supplied credentials are sufficient to perform
