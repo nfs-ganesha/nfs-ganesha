@@ -124,6 +124,22 @@ void fsal_export_init(struct fsal_export *exp)
 }
 
 /**
+ * @brief Stack an export on top of another
+ *
+ * Set up export stacking for stackable FSALs
+ *
+ * @param[in] sub_export	Export being stacked on
+ * @param[in] super_export	Export stacking on top
+ * @return Return description
+ */
+void fsal_export_stack(struct fsal_export *sub_export,
+		       struct fsal_export *super_export)
+{
+	sub_export->super_export = super_export;
+	super_export->sub_export = sub_export;
+}
+
+/**
  * @brief Free export ops vectors
  *
  * Free the memory allocated by init_export_ops. Poison pointers.

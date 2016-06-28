@@ -1095,14 +1095,15 @@ fsal_status_t mdcache_lookup_path(struct fsal_export *exp_hdl,
 	struct fsal_obj_handle *sub_handle = NULL;
 	struct mdcache_fsal_export *export =
 		container_of(exp_hdl, struct mdcache_fsal_export, export);
+	struct fsal_export *sub_export = export->export.sub_export;
 	mdcache_entry_t *entry;
 	fsal_status_t status;
 
 	*handle = NULL;
 
 	subcall_raw(export,
-		status = export->sub_export->exp_ops.lookup_path(
-			export->sub_export, path, &sub_handle)
+		status = sub_export->exp_ops.lookup_path(sub_export, path,
+							 &sub_handle)
 	       );
 
 	status = mdcache_alloc_and_check_handle(export, sub_handle,
@@ -1129,14 +1130,15 @@ fsal_status_t mdcache_create_handle(struct fsal_export *exp_hdl,
 {
 	struct mdcache_fsal_export *export =
 		container_of(exp_hdl, struct mdcache_fsal_export, export);
+	struct fsal_export *sub_export = export->export.sub_export;
 	mdcache_key_t key;
 	mdcache_entry_t *entry;
 	fsal_status_t status;
 
 	*handle = NULL;
-	key.fsal = export->sub_export->fsal;
+	key.fsal = sub_export->fsal;
 
-	(void) cih_hash_key(&key, export->sub_export->fsal, hdl_desc,
+	(void) cih_hash_key(&key, sub_export->fsal, hdl_desc,
 			    CIH_HASH_KEY_PROTOTYPE);
 
 	status = mdcache_locate_keyed(&key, export, &entry);

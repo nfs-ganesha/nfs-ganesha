@@ -45,7 +45,6 @@ typedef struct mdcache_fsal_obj_handle mdcache_entry_t;
  */
 struct mdcache_fsal_export {
 	struct fsal_export export;
-	struct fsal_export *sub_export;
 	char *name;
 	/** My up_ops */
 	struct fsal_up_vector up_ops;
@@ -382,7 +381,7 @@ extern struct config_block mdcache_param_blk;
 /* Call a sub-FSAL function using it's export, safe for use during shutdown */
 #define subcall_shutdown_raw(myexp, call) do { \
 	if (op_ctx) \
-		op_ctx->fsal_export = (myexp)->sub_export; \
+		op_ctx->fsal_export = (myexp)->export.sub_export; \
 	call; \
 	if (op_ctx) \
 		op_ctx->fsal_export = &(myexp)->export; \
@@ -390,7 +389,7 @@ extern struct config_block mdcache_param_blk;
 
 /* Call a sub-FSAL function using it's export */
 #define subcall_raw(myexp, call) do { \
-	op_ctx->fsal_export = (myexp)->sub_export; \
+	op_ctx->fsal_export = (myexp)->export.sub_export; \
 	call; \
 	op_ctx->fsal_export = &(myexp)->export; \
 } while (0)
@@ -406,7 +405,7 @@ extern struct config_block mdcache_param_blk;
 	LogFullDebug(COMPONENT_CACHE_INODE, "supercall %s", myexp->name); \
 	op_ctx->fsal_export = &(myexp)->export; \
 	call; \
-	op_ctx->fsal_export = (myexp)->sub_export; \
+	op_ctx->fsal_export = (myexp)->export.sub_export; \
 } while (0)
 
 /**

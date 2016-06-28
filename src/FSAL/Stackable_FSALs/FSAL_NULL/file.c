@@ -56,7 +56,7 @@ fsal_status_t nullfs_open(struct fsal_obj_handle *obj_hdl,
 			     export);
 
 	/* calling subfsal method */
-	op_ctx->fsal_export = export->sub_export;
+	op_ctx->fsal_export = export->export.sub_export;
 	fsal_status_t status =
 		handle->sub_handle->obj_ops.open(handle->sub_handle, openflags);
 	op_ctx->fsal_export = &export->export;
@@ -79,7 +79,7 @@ fsal_openflags_t nullfs_status(struct fsal_obj_handle *obj_hdl)
 			     export);
 
 	/* calling subfsal method */
-	op_ctx->fsal_export = export->sub_export;
+	op_ctx->fsal_export = export->export.sub_export;
 	fsal_openflags_t status =
 		handle->sub_handle->obj_ops.status(handle->sub_handle);
 	op_ctx->fsal_export = &export->export;
@@ -106,7 +106,7 @@ fsal_status_t nullfs_read(struct fsal_obj_handle *obj_hdl,
 			     export);
 
 	/* calling subfsal method */
-	op_ctx->fsal_export = export->sub_export;
+	op_ctx->fsal_export = export->export.sub_export;
 	fsal_status_t status =
 		handle->sub_handle->obj_ops.read(handle->sub_handle, offset,
 						 buffer_size, buffer,
@@ -134,7 +134,7 @@ fsal_status_t nullfs_write(struct fsal_obj_handle *obj_hdl,
 			     export);
 
 	/* calling subfsal method */
-	op_ctx->fsal_export = export->sub_export;
+	op_ctx->fsal_export = export->export.sub_export;
 	fsal_status_t status =
 		handle->sub_handle->obj_ops.write(handle->sub_handle,
 						  offset,
@@ -164,7 +164,7 @@ fsal_status_t nullfs_commit(struct fsal_obj_handle *obj_hdl,	/* sync */
 			     export);
 
 	/* calling subfsal method */
-	op_ctx->fsal_export = export->sub_export;
+	op_ctx->fsal_export = export->export.sub_export;
 	fsal_status_t status =
 		handle->sub_handle->obj_ops.commit(handle->sub_handle,
 						   offset, len);
@@ -194,7 +194,7 @@ fsal_status_t nullfs_lock_op(struct fsal_obj_handle *obj_hdl,
 			     export);
 
 	/* calling subfsal method */
-	op_ctx->fsal_export = export->sub_export;
+	op_ctx->fsal_export = export->export.sub_export;
 	fsal_status_t status =
 		handle->sub_handle->obj_ops.lock_op(handle->sub_handle,
 						    p_owner,
@@ -223,7 +223,7 @@ fsal_status_t nullfs_close(struct fsal_obj_handle *obj_hdl)
 			     export);
 
 	/* calling subfsal method */
-	op_ctx->fsal_export = export->sub_export;
+	op_ctx->fsal_export = export->export.sub_export;
 	fsal_status_t status =
 		handle->sub_handle->obj_ops.close(handle->sub_handle);
 	op_ctx->fsal_export = &export->export;

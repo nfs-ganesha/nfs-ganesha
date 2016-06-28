@@ -379,7 +379,7 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 		    sub_handle->obj_ops.handle_to_key(sub_handle, &fh_desc);
 		   );
 
-	(void) cih_hash_key(&key, export->sub_export->fsal, &fh_desc,
+	(void) cih_hash_key(&key, export->export.sub_export->fsal, &fh_desc,
 			    CIH_HASH_KEY_PROTOTYPE);
 
 	/* Check if the entry already exists.  We allow the following race
@@ -443,7 +443,7 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 	/* Set cache key */
 
 	has_hashkey = cih_hash_key(&nentry->fh_hk.key,
-				   export->sub_export->fsal,
+				   export->export.sub_export->fsal,
 				   &fh_desc, CIH_HASH_NONE);
 
 	if (!has_hashkey) {
@@ -620,7 +620,7 @@ mdcache_locate_keyed(mdcache_key_t *key, struct mdcache_fsal_export *export,
 {
 	fsal_status_t status;
 	struct fsal_obj_handle *sub_handle;
-	struct fsal_export *exp_hdl;
+	struct fsal_export *sub_export;
 
 	status = mdcache_find_keyed(key, entry);
 	if (!FSAL_IS_ERROR(status))
@@ -631,10 +631,11 @@ mdcache_locate_keyed(mdcache_key_t *key, struct mdcache_fsal_export *export,
 	}
 
 	/* Cache miss, allocate a new entry */
-	exp_hdl = export->sub_export;
+	sub_export = export->export.sub_export;
 	subcall_raw(export,
-		    status = exp_hdl->exp_ops.create_handle(exp_hdl, &key->kv,
-							    &sub_handle)
+		    status = sub_export->exp_ops.create_handle(sub_export,
+							       &key->kv,
+							       &sub_handle)
 	       );
 
 	if (unlikely(FSAL_IS_ERROR(status))) {

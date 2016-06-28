@@ -60,7 +60,7 @@ fsal_status_t nullfs_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
 			     export);
 
 	/* calling subfsal method */
-	op_ctx->fsal_export = export->sub_export;
+	op_ctx->fsal_export = export->export.sub_export;
 	fsal_status_t status = handle->sub_handle->obj_ops.list_ext_attrs(
 		handle->sub_handle, argcookie,
 		xattrs_tab, xattrs_tabsize,
@@ -83,7 +83,7 @@ fsal_status_t nullfs_getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
 			     export);
 
 	/* calling subfsal method */
-	op_ctx->fsal_export = export->sub_export;
+	op_ctx->fsal_export = export->export.sub_export;
 	fsal_status_t status =
 		handle->sub_handle->obj_ops.getextattr_id_by_name(
 				handle->sub_handle, xattr_name, pxattr_id);
@@ -107,7 +107,7 @@ fsal_status_t nullfs_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 			     export);
 
 	/* calling subfsal method */
-	op_ctx->fsal_export = export->sub_export;
+	op_ctx->fsal_export = export->export.sub_export;
 	fsal_status_t status =
 	handle->sub_handle->obj_ops.getextattr_value_by_id(
 				handle->sub_handle,
@@ -134,7 +134,7 @@ fsal_status_t nullfs_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
 			     export);
 
 	/* calling subfsal method */
-	op_ctx->fsal_export = export->sub_export;
+	op_ctx->fsal_export = export->export.sub_export;
 	fsal_status_t status =
 		handle->sub_handle->obj_ops.getextattr_value_by_name(
 				handle->sub_handle,
@@ -161,7 +161,7 @@ fsal_status_t nullfs_setextattr_value(struct fsal_obj_handle *obj_hdl,
 			     export);
 
 	/* calling subfsal method */
-	op_ctx->fsal_export = export->sub_export;
+	op_ctx->fsal_export = export->export.sub_export;
 	fsal_status_t status = handle->sub_handle->obj_ops.setextattr_value(
 		handle->sub_handle, xattr_name,
 		buffer_addr, buffer_size,
@@ -185,7 +185,7 @@ fsal_status_t nullfs_setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 			     export);
 
 	/* calling subfsal method */
-	op_ctx->fsal_export = export->sub_export;
+	op_ctx->fsal_export = export->export.sub_export;
 	fsal_status_t status =
 		handle->sub_handle->obj_ops.setextattr_value_by_id(
 				handle->sub_handle,
@@ -209,7 +209,7 @@ fsal_status_t nullfs_getextattr_attrs(struct fsal_obj_handle *obj_hdl,
 			     export);
 
 	/* calling subfsal method */
-	op_ctx->fsal_export = export->sub_export;
+	op_ctx->fsal_export = export->export.sub_export;
 	fsal_status_t status = handle->sub_handle->obj_ops.getextattr_attrs(
 		handle->sub_handle, xattr_id,
 		p_attrs);
@@ -230,7 +230,7 @@ fsal_status_t nullfs_remove_extattr_by_id(struct fsal_obj_handle *obj_hdl,
 			     export);
 
 	/* calling subfsal method */
-	op_ctx->fsal_export = export->sub_export;
+	op_ctx->fsal_export = export->export.sub_export;
 	fsal_status_t status = handle->sub_handle->obj_ops.remove_extattr_by_id(
 		handle->sub_handle, xattr_id);
 	op_ctx->fsal_export = &export->export;
@@ -250,7 +250,7 @@ fsal_status_t nullfs_remove_extattr_by_name(struct fsal_obj_handle *obj_hdl,
 			     export);
 
 	/* calling subfsal method */
-	op_ctx->fsal_export = export->sub_export;
+	op_ctx->fsal_export = export->export.sub_export;
 	fsal_status_t status =
 		handle->sub_handle->obj_ops.remove_extattr_by_name(
 				handle->sub_handle, xattr_name);

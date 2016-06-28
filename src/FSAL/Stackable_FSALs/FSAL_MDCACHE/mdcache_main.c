@@ -210,9 +210,9 @@ fsal_status_t mdcache_export_init(const struct fsal_up_vector *super_up_ops,
 void mdcache_export_uninit(void)
 {
 	struct mdcache_fsal_export *exp = mdc_cur_export();
-	struct fsal_export *sub_export = exp->sub_export;
+	struct fsal_export *sub_export = exp->export.sub_export;
 
-	fsal_put(exp->sub_export->fsal);
+	fsal_put(sub_export->fsal);
 
 	fsal_detach_export(op_ctx->fsal_export->fsal,
 			   &op_ctx->fsal_export->exports);

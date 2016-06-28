@@ -39,7 +39,7 @@
 #include "mdcache_int.h"
 
 static fsal_status_t
-mdc_up_invalidate(struct fsal_export *fsal_export, struct gsh_buffdesc *handle,
+mdc_up_invalidate(struct fsal_export *sub_export, struct gsh_buffdesc *handle,
 		  uint32_t flags)
 {
 	mdcache_entry_t *entry;
@@ -47,18 +47,19 @@ mdc_up_invalidate(struct fsal_export *fsal_export, struct gsh_buffdesc *handle,
 	uint32_t mdc_flags = 0;
 	struct req_op_context *save_ctx, req_ctx = {0};
 	mdcache_key_t key;
-	struct mdcache_fsal_export *export = mdc_export(fsal_export);
+	struct mdcache_fsal_export *export =
+		mdc_export(sub_export->super_export);
 
-	req_ctx.fsal_export = fsal_export;
+	req_ctx.fsal_export = &export->export;
 	save_ctx = op_ctx;
 	op_ctx = &req_ctx;
 
-	key.fsal = export->sub_export->fsal;
-	(void) cih_hash_key(&key, export->sub_export->fsal, handle,
+	key.fsal = sub_export->fsal;
+	(void) cih_hash_key(&key, sub_export->fsal, handle,
 			    CIH_HASH_KEY_PROTOTYPE);
 
 	status = mdcache_find_keyed(&key, &entry);
-	if (status.major != ERR_FSAL_NOENT) {
+	if (status.major == ERR_FSAL_NOENT) {
 		/* Not cached, so invalidate is a success */
 		return fsalstat(ERR_FSAL_NO_ERROR, 0);
 	} else if (FSAL_IS_ERROR(status)) {
@@ -92,7 +93,7 @@ mdc_up_invalidate(struct fsal_export *fsal_export, struct gsh_buffdesc *handle,
  */
 
 static fsal_status_t
-mdc_up_update(struct fsal_export *fsal_export, struct gsh_buffdesc *handle,
+mdc_up_update(struct fsal_export *sub_export, struct gsh_buffdesc *handle,
 	      struct attrlist *attr, uint32_t flags)
 {
 	mdcache_entry_t *entry;
@@ -102,7 +103,8 @@ mdc_up_update(struct fsal_export *fsal_export, struct gsh_buffdesc *handle,
 	struct req_op_context *save_ctx, req_ctx = {0};
 	struct attrlist *attrs;
 	mdcache_key_t key;
-	struct mdcache_fsal_export *export = mdc_export(fsal_export);
+	struct mdcache_fsal_export *export =
+		mdc_export(sub_export->super_export);
 
 	/* These cannot be updated, changing any of them is
 	   tantamount to destroying and recreating the file. */
@@ -123,12 +125,12 @@ mdc_up_update(struct fsal_export *fsal_export, struct gsh_buffdesc *handle,
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	}
 
-	req_ctx.fsal_export = fsal_export;
+	req_ctx.fsal_export = &export->export;
 	save_ctx = op_ctx;
 	op_ctx = &req_ctx;
 
-	key.fsal = export->sub_export->fsal;
-	(void) cih_hash_key(&key, export->sub_export->fsal, handle,
+	key.fsal = sub_export->fsal;
+	(void) cih_hash_key(&key, sub_export->fsal, handle,
 			    CIH_HASH_KEY_PROTOTYPE);
 
 	status = mdcache_find_keyed(&key, &entry);
@@ -299,12 +301,12 @@ mdc_up_update(struct fsal_export *fsal_export, struct gsh_buffdesc *handle,
  */
 
 static fsal_status_t
-mdc_up_invalidate_close(struct fsal_export *fsal_export,
+mdc_up_invalidate_close(struct fsal_export *sub_export,
 			struct gsh_buffdesc *handle, uint32_t flags)
 {
 	fsal_status_t status;
 
-	status = up_async_invalidate(general_fridge, fsal_export, handle,
+	status = up_async_invalidate(general_fridge, sub_export, handle,
 				     flags | FSAL_UP_INVALIDATE_CLOSE,
 				     NULL, NULL);
 	return status;
