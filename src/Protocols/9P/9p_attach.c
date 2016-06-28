@@ -55,9 +55,6 @@ int _9p_attach(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	u16 *aname_len = NULL;
 	char *aname_str = NULL;
 	u32 *n_uname = NULL;
-
-	uint64_t fileid;
-
 	u32 err = 0;
 
 	struct _9p_fid *pfid = NULL;
@@ -182,8 +179,6 @@ int _9p_attach(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		}
 	}
 
-	fileid = fsal_fileid(pfid->pentry);
-
 	/* Initialize state_t embeded in fid. The refcount is initialized
 	 * to one to represent the state_t being embeded in the fid. This
 	 * prevents it from ever being reduced to zero by dec_state_t_ref.
@@ -200,7 +195,7 @@ int _9p_attach(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	pfid->qid.type = _9P_QTDIR;
 	pfid->qid.version = 0;	/* No cache, we want the client
 				 * to stay synchronous with the server */
-	pfid->qid.path = fileid;
+	pfid->qid.path = pfid->pentry->fileid;
 
 	/* Build the reply */
 	_9p_setinitptr(cursor, preply, _9P_RATTACH);

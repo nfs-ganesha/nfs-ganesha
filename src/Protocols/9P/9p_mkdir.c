@@ -58,7 +58,6 @@ int _9p_mkdir(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 	struct fsal_obj_handle *pentry_newdir = NULL;
 	char dir_name[MAXNAMLEN];
-	uint64_t fileid;
 	fsal_status_t fsal_status;
 	struct attrlist sattr;
 
@@ -111,14 +110,12 @@ int _9p_mkdir(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 				  _9p_tools_errno(fsal_status), plenout,
 				  preply);
 
-	fileid = fsal_fileid(pentry_newdir);
-
 	pentry_newdir->obj_ops.put_ref(pentry_newdir);
 
 	/* Build the qid */
 	qid_newdir.type = _9P_QTDIR;
 	qid_newdir.version = 0;
-	qid_newdir.path = fileid;
+	qid_newdir.path = pentry_newdir->fileid;
 
 	/* Build the reply */
 	_9p_setinitptr(cursor, preply, _9P_RMKDIR);

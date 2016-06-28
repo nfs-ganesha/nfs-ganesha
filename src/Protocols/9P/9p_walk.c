@@ -53,7 +53,6 @@ int _9p_walk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	u16 *nwname = NULL;
 	u16 *wnames_len;
 	char *wnames_str;
-	uint64_t fileid;
 	fsal_status_t fsal_status;
 	struct fsal_obj_handle *pentry = NULL;
 	char name[MAXNAMLEN];
@@ -144,13 +143,11 @@ int _9p_walk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		pnewfid->export = pfid->export;
 		pnewfid->ucred = pfid->ucred;
 
-		fileid = fsal_fileid(pnewfid->pentry);
-
 		/* Build the qid */
 		/* No cache, we want the client to stay synchronous
 		 * with the server */
 		pnewfid->qid.version = 0;
-		pnewfid->qid.path = fileid;
+		pnewfid->qid.path = pnewfid->pentry->fileid;
 
 		pnewfid->specdata.xattr.xattr_id = 0;
 		pnewfid->specdata.xattr.xattr_content = NULL;

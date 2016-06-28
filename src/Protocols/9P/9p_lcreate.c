@@ -61,7 +61,6 @@ int _9p_lcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 	struct fsal_obj_handle *pentry_newfile = NULL;
 	char file_name[MAXNAMLEN];
-	int64_t fileid;
 	fsal_status_t fsal_status;
 	fsal_openflags_t openflags = 0;
 
@@ -175,8 +174,6 @@ int _9p_lcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		}
 	}
 
-	fileid = fsal_fileid(pentry_newfile);
-
 	/* Get the open ref */
 	pentry_newfile->obj_ops.get_ref(pentry_newfile);
 
@@ -186,7 +183,7 @@ int _9p_lcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	/* Build the qid */
 	qid_newfile.type = _9P_QTFILE;
 	qid_newfile.version = 0;
-	qid_newfile.path = fileid;
+	qid_newfile.path = pentry_newfile->fileid;
 
 	iounit = 0;		/* default value */
 

@@ -61,7 +61,6 @@ int _9p_symlink(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	struct fsal_obj_handle *pentry_symlink = NULL;
 	char symlink_name[MAXNAMLEN];
 	char *link_content = NULL;
-	uint64_t fileid;
 	fsal_status_t fsal_status;
 	uint32_t mode = 0777;
 	struct attrlist object_attributes;
@@ -126,14 +125,12 @@ int _9p_symlink(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 				  preply);
 	}
 
-	fileid = fsal_fileid(pentry_symlink);
-
 	pentry_symlink->obj_ops.put_ref(pentry_symlink);
 
 	/* Build the qid */
 	qid_symlink.type = _9P_QTSYMLINK;
 	qid_symlink.version = 0;
-	qid_symlink.path = fileid;
+	qid_symlink.path = pentry_symlink->fileid;
 
 	/* Build the reply */
 	_9p_setinitptr(cursor, preply, _9P_RSYMLINK);
