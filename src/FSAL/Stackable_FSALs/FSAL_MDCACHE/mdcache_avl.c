@@ -87,6 +87,10 @@ avl_dirent_set_deleted(mdcache_entry_t *entry, mdcache_dir_entry_t *v)
 {
 	struct avltree_node *node;
 
+	LogFullDebug(COMPONENT_CACHE_INODE,
+		     "Delete dir entry %p %s",
+		     v, v->name);
+
 	assert(!(v->flags & DIR_ENTRY_FLAG_DELETED));
 
 	node = avltree_inline_lookup(&v->node_hk, &entry->fsobj.fsdir.avl.t);
@@ -121,6 +125,10 @@ mdcache_avl_insert_impl(mdcache_entry_t *entry, mdcache_dir_entry_t *v,
 	struct avltree_node *node;
 	struct avltree *t = &entry->fsobj.fsdir.avl.t;
 	struct avltree *c = &entry->fsobj.fsdir.avl.c;
+
+	LogFullDebug(COMPONENT_CACHE_INODE,
+		     "Insert dir entry %p %s j=%d j2=%d",
+		     v, v->name, j, j2);
 
 	/* first check for a previously-deleted entry */
 	node = avltree_inline_lookup(&v->node_hk, c);
@@ -208,6 +216,10 @@ mdcache_avl_qp_insert(mdcache_entry_t *entry, mdcache_dir_entry_t **dirent)
 	uint32_t hk[4];
 #endif
 	int j, j2, code = -1;
+
+	LogFullDebug(COMPONENT_CACHE_INODE,
+		     "Insert dir entry %p %s",
+		     v, v->name);
 
 	/* don't permit illegal cookies */
 #if AVL_HASH_MURMUR3
@@ -358,6 +370,8 @@ mdcache_avl_qp_lookup_s(mdcache_entry_t *entry, const char *name, int maxj)
 	int j;
 	size_t namelen = strlen(name);
 	mdcache_dir_entry_t v;
+
+	LogFullDebug(COMPONENT_CACHE_INODE, "Lookup %s", name);
 
 #if AVL_HASH_MURMUR3
 	MurmurHash3_x64_128(name, namelen, 67, hashbuff);

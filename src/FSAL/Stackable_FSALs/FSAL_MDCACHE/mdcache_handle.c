@@ -1037,12 +1037,19 @@ static fsal_status_t mdcache_unlink(struct fsal_obj_handle *dir_hdl,
 			parent->sub_handle, entry->sub_handle, name)
 	       );
 
+	LogFullDebug(COMPONENT_CACHE_INODE,
+		     "Unlink %p/%s (%p)",
+		     parent, name, entry);
+
 	PTHREAD_RWLOCK_wrlock(&parent->content_lock);
 	(void)mdcache_dirent_remove(parent, name);
 	PTHREAD_RWLOCK_unlock(&parent->content_lock);
 
 
 	if (FSAL_IS_ERROR(status)) {
+		LogDebug(COMPONENT_CACHE_INODE,
+			 "unlink %s returned %s",
+			  name, fsal_err_txt(status));
 		if (status.major == ERR_FSAL_STALE)
 			(void)mdcache_kill_entry(parent);
 		else if (status.major == ERR_FSAL_NOTEMPTY &&
@@ -1057,6 +1064,10 @@ static fsal_status_t mdcache_unlink(struct fsal_obj_handle *dir_hdl,
 	}
 
 	mdc_unreachable(entry);
+
+	LogFullDebug(COMPONENT_CACHE_INODE,
+		     "Unlink done %p/%s (%p)",
+		     parent, name, entry);
 
 	return status;
 }

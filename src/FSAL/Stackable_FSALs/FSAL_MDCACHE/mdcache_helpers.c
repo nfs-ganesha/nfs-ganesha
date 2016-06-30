@@ -306,6 +306,9 @@ void mdcache_dirent_invalidate_all(mdcache_entry_t *entry)
 			dirent = avltree_container_of(dirent_node,
 						      mdcache_dir_entry_t,
 						      node_hk);
+			LogFullDebug(COMPONENT_CACHE_INODE,
+				     "Invalidate %p %s",
+				     dirent, dirent->name);
 			avltree_remove(dirent_node, tree);
 			if (dirent->ckey.kv.len)
 				mdcache_key_delete(&dirent->ckey);
@@ -787,6 +790,12 @@ fsal_status_t mdc_try_get_cached(mdcache_entry_t *mdc_parent,
 	mdcache_dir_entry_t *dirent = NULL;
 	fsal_status_t status = {0, 0};
 
+	LogFullDebug(COMPONENT_CACHE_INODE,
+		     "Look in cache %s, trust content %s",
+		     name,
+		     mdc_parent->mde_flags & MDCACHE_TRUST_CONTENT
+				? "yes" : "no");
+
 	*entry = NULL;
 
 	/* If the dirent cache is untrustworthy, don't even ask it */
@@ -798,7 +807,14 @@ fsal_status_t mdc_try_get_cached(mdcache_entry_t *mdc_parent,
 		status = mdcache_find_keyed(&dirent->ckey, entry);
 		if (!FSAL_IS_ERROR(status))
 			return status;
+		LogFullDebug(COMPONENT_CACHE_INODE,
+			     "mdcache_find_keyed %s failed %s",
+			     name, fsal_err_txt(status));
 	} else {	/* ! dirent */
+		LogFullDebug(COMPONENT_CACHE_INODE,
+			     "mdcache_avl_qp_lookup_s %s failed trust negative %s",
+			     name,
+			     trust_negative_cache(mdc_parent) ? "yes" : "no");
 		if (trust_negative_cache(mdc_parent)) {
 			/* If the dirent cache is both fully populated and
 			 * valid, it can serve negative lookups. */
@@ -840,6 +856,8 @@ fsal_status_t mdc_lookup(mdcache_entry_t *mdc_parent, const char *name,
 	*new_entry = NULL;
 	fsal_status_t status;
 
+	LogFullDebug(COMPONENT_CACHE_INODE, "Lookup %s", name);
+
 	PTHREAD_RWLOCK_rdlock(&mdc_parent->content_lock);
 
 	if (!strcmp(name, "..")) {
@@ -857,6 +875,9 @@ fsal_status_t mdc_lookup(mdcache_entry_t *mdc_parent, const char *name,
 	if (status.major == ERR_FSAL_STALE) {
 		/* Get a write lock and try again */
 		PTHREAD_RWLOCK_unlock(&mdc_parent->content_lock);
+
+		LogFullDebug(COMPONENT_CACHE_INODE, "Try again %s", name);
+
 		PTHREAD_RWLOCK_wrlock(&mdc_parent->content_lock);
 
 		status = mdc_try_get_cached(mdc_parent, name, new_entry);
@@ -866,6 +887,10 @@ fsal_status_t mdc_lookup(mdcache_entry_t *mdc_parent, const char *name,
 		 * to avoid ABBA locking situation.
 		 */
 		PTHREAD_RWLOCK_unlock(&mdc_parent->content_lock);
+
+		LogFullDebug(COMPONENT_CACHE_INODE,
+			     "Found, possible getattrs %s (%s)",
+			     name, attrs_out != NULL ? "yes" : "no");
 
 		status = get_optional_attrs(&(*new_entry)->obj_handle,
 					    attrs_out);
@@ -884,6 +909,8 @@ fsal_status_t mdc_lookup(mdcache_entry_t *mdc_parent, const char *name,
 		goto out;
 	} else if (status.major != ERR_FSAL_STALE) {
 		/* Actual failure */
+		LogDebug(COMPONENT_CACHE_INODE, "Lookup %s failed %s",
+			 name, fsal_err_txt(status));
 		goto out;
 	}
 
@@ -896,7 +923,7 @@ fsal_status_t mdc_lookup(mdcache_entry_t *mdc_parent, const char *name,
 		mdcache_dirent_invalidate_all(mdc_parent);
 	}
 
-	LogDebug(COMPONENT_CACHE_INODE, "Cache Miss detected");
+	LogDebug(COMPONENT_CACHE_INODE, "Cache Miss detected for %s", name);
 
 	status = mdc_lookup_uncached(mdc_parent, name, new_entry, attrs_out);
 
@@ -1064,6 +1091,8 @@ fsal_status_t mdcache_dirent_find(mdcache_entry_t *dir, const char *name,
 {
 	mdcache_dir_entry_t *dirent;
 
+	LogFullDebug(COMPONENT_CACHE_INODE, "Find dir entry %s", name);
+
 	*direntp = NULL;
 
 	/* Sanity check */
@@ -1126,6 +1155,8 @@ mdcache_dirent_add(mdcache_entry_t *parent, const char *name,
 	size_t namesize = strlen(name) + 1;
 	int code = 0;
 
+	LogFullDebug(COMPONENT_CACHE_INODE, "Add dir entry %s", name);
+
 	/* Sanity check */
 	if (parent->obj_handle.type != DIRECTORY)
 		return fsalstat(ERR_FSAL_NOTDIR, 0);
@@ -1168,6 +1199,8 @@ mdcache_dirent_remove(mdcache_entry_t *parent, const char *name)
 	mdcache_dir_entry_t *dirent;
 	fsal_status_t status;
 
+	LogFullDebug(COMPONENT_CACHE_INODE, "Remove dir entry %s", name);
+
 	status = mdcache_dirent_find(parent, name, &dirent);
 	if (FSAL_IS_ERROR(status)) {
 		if (status.major == ERR_FSAL_NOENT)
@@ -1201,6 +1234,11 @@ mdcache_dirent_rename(mdcache_entry_t *parent, const char *oldname,
 	mdcache_dir_entry_t *dirent, *dirent2;
 	fsal_status_t status;
 	int code = 0;
+
+
+	LogFullDebug(COMPONENT_CACHE_INODE,
+		     "Rename dir entry %s to %s",
+		     oldname, newname);
 
 	status = mdcache_dirent_find(parent, oldname, &dirent);
 	if (FSAL_IS_ERROR(status))
