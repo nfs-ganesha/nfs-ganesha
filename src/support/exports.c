@@ -1686,7 +1686,7 @@ void release_export_root(struct gsh_export *export)
 	PTHREAD_RWLOCK_wrlock(&export->lock);
 
 	glist_del(&export->exp_root_list);
-
+	export->exp_root_obj->obj_ops.put_ref(export->exp_root_obj);
 	export->exp_root_obj = NULL;
 
 	atomic_dec_int32_t(&obj->state_hdl->dir.exp_root_refcount);
