@@ -157,9 +157,6 @@ void mdc_clean_entry(mdcache_entry_t *entry)
 	/* Must get attr_lock before mdc_exp_lock */
 	PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
 
-	/* Entry is unreachable and not referenced so no need to hold attr_lock
-	 * to cleanup the export map.
-	 */
 	glist_for_each_safe(glist, glistn, &entry->export_list) {
 		struct entry_export_map *expmap;
 		struct mdcache_fsal_export *export;
@@ -264,15 +261,6 @@ again:
 }
 
 /**
- * Release cached dirents associated with an entry.
- *
- * releases dirents associated with @a entry.  this is simple, but maybe
- * should be abstracted.
- *
- * @param[in] entry Directory to have entries be released
- *
- */
-/**
  * @brief Invalidates and releases all cached entries for a directory
  *
  * Invalidates all the entries for a cached directory.  The content
@@ -284,45 +272,17 @@ again:
 
 void mdcache_dirent_invalidate_all(mdcache_entry_t *entry)
 {
-	struct avltree_node *dirent_node = NULL;
-	struct avltree_node *next_dirent_node = NULL;
-	struct avltree *tree;
-	mdcache_dir_entry_t *dirent = NULL;
-	int i;
-
 	/* Won't see this */
 	if (entry->obj_handle.type != DIRECTORY)
 		return;
 
-	for (i = 0; i < 2; i++) {
-		if (i == 0)
-			tree = &entry->fsobj.fsdir.avl.t;
-		else
-			tree = &entry->fsobj.fsdir.avl.c;
+	/* First the active tree */
+	mdcache_avl_clean_tree(&entry->fsobj.fsdir.avl.t);
+	entry->fsobj.fsdir.nbactive = 0;
+	atomic_clear_uint32_t_bits(&entry->mde_flags, MDCACHE_DIR_POPULATED);
 
-		dirent_node = avltree_first(tree);
-
-		while (dirent_node) {
-			next_dirent_node = avltree_next(dirent_node);
-			dirent = avltree_container_of(dirent_node,
-						      mdcache_dir_entry_t,
-						      node_hk);
-			LogFullDebug(COMPONENT_CACHE_INODE,
-				     "Invalidate %p %s",
-				     dirent, dirent->name);
-			avltree_remove(dirent_node, tree);
-			if (dirent->ckey.kv.len)
-				mdcache_key_delete(&dirent->ckey);
-			gsh_free(dirent);
-			dirent_node = next_dirent_node;
-		}
-
-		if (tree == &entry->fsobj.fsdir.avl.t) {
-			entry->fsobj.fsdir.nbactive = 0;
-			atomic_clear_uint32_t_bits(&entry->mde_flags,
-						   MDCACHE_DIR_POPULATED);
-		}
-	}
+	/* Next the inactive tree */
+	mdcache_avl_clean_tree(&entry->fsobj.fsdir.avl.c);
 
 	/* Now we can trust the content */
 	atomic_set_uint32_t_bits(&entry->mde_flags, MDCACHE_TRUST_CONTENT);
@@ -1147,16 +1107,7 @@ fsal_status_t mdcache_dirent_find(mdcache_entry_t *dir, const char *name,
 	}
 
 	dirent = mdcache_avl_qp_lookup_s(dir, name, 1);
-	if ((!dirent) || (dirent->flags & DIR_ENTRY_FLAG_DELETED)) {
-		LogFullDebug(COMPONENT_CACHE_INODE,
-			     "dirent=%p%s dir flags%s%s", dirent,
-			     dirent ? ((dirent->flags & DIR_ENTRY_FLAG_DELETED)
-				       ? " DELETED" : "")
-			     : "",
-			     (dir->mde_flags & MDCACHE_TRUST_CONTENT)
-			     ? " TRUST" : "",
-			     (dir->mde_flags & MDCACHE_DIR_POPULATED)
-			     ? " POPULATED" : "");
+	if (!dirent) {
 		if (mdc_dircache_trusted(dir))
 			return fsalstat(ERR_FSAL_NOENT, 0);
 
@@ -1295,7 +1246,11 @@ mdcache_dirent_rename(mdcache_entry_t *parent, const char *oldname,
 
 			(void)mdcache_find_keyed(&dirent2->ckey, &oldentry);
 
+			/* dirent2 (newname) will now point to renamed entry */
+			mdcache_key_delete(&dirent2->ckey);
 			mdcache_key_dup(&dirent2->ckey, &dirent->ckey);
+
+			/* Delete dirent for oldname */
 			avl_dirent_set_deleted(parent, dirent);
 
 			if (oldentry) {
@@ -1321,10 +1276,10 @@ mdcache_dirent_rename(mdcache_entry_t *parent, const char *oldname,
 	dirent2->flags = DIR_ENTRY_FLAG_NONE;
 	mdcache_key_dup(&dirent2->ckey, &dirent->ckey);
 
-	/* Delete the old entry for newname */
+	/* Delete the entry for oldname */
 	avl_dirent_set_deleted(parent, dirent);
 
-	/* Insert a new entry for newname */
+	/* Insert the entry for newname */
 	code = mdcache_avl_qp_insert(parent, &dirent2);
 
 	/* We should not be able to have a name collision. */

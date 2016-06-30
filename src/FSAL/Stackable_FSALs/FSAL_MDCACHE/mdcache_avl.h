@@ -85,6 +85,7 @@ mdcache_dir_entry_t *mdcache_avl_lookup_k(mdcache_entry_t *entry, uint64_t k,
 					  uint32_t flags);
 mdcache_dir_entry_t *mdcache_avl_qp_lookup_s(mdcache_entry_t *entry,
 					     const char *name, int maxj);
+void mdcache_avl_clean_tree(struct avltree *tree);
 
 #endif				/* MDCACHE_AVL_H */
 

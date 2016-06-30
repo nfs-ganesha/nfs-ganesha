@@ -152,6 +152,7 @@ mdcache_avl_insert_impl(mdcache_entry_t *entry, mdcache_dir_entry_t *v,
 		   avltree_container_of(node, mdcache_dir_entry_t, node_hk);
 
 		avltree_remove(node, c);
+		/* Don't need to free ckey; it was freed when marked deleted */
 		gsh_free(dirent);
 		node = NULL;
 	}
@@ -406,6 +407,28 @@ mdcache_avl_qp_lookup_s(mdcache_entry_t *entry, const char *name, int maxj)
 		     name);
 
 	return NULL;
+}
+
+/**
+ * @brief Remove and free all dirents from a dirent tree
+ *
+ * @param[in] tree	Tree to remove from
+ */
+void mdcache_avl_clean_tree(struct avltree *tree)
+{
+	struct avltree_node *dirent_node = NULL;
+	mdcache_dir_entry_t *dirent = NULL;
+
+	while ((dirent_node = avltree_first(tree))) {
+		dirent = avltree_container_of(dirent_node, mdcache_dir_entry_t,
+					      node_hk);
+		LogFullDebug(COMPONENT_CACHE_INODE, "Invalidate %p %s",
+			     dirent, dirent->name);
+		avltree_remove(dirent_node, tree);
+		if (dirent->ckey.kv.len)
+			mdcache_key_delete(&dirent->ckey);
+		gsh_free(dirent);
+	}
 }
 
 /** @} */
