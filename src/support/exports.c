@@ -772,14 +772,18 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 		}
 	}
 	probe_exp = get_gsh_export_by_path(export->fullpath, true);
-	if (probe_exp != NULL &&
-	    export->pseudopath == NULL &&
-	    export->FS_tag == NULL) {
-		LogCrit(COMPONENT_CONFIG,
-			"Duplicate path (%s) without unique tag or Pseudo path",
-			export->fullpath);
-		err_type->invalid = true;
-		errcnt++;
+	if (probe_exp != NULL) {
+		if (export->pseudopath == NULL &&
+		    export->FS_tag == NULL) {
+			LogCrit(COMPONENT_CONFIG,
+				"Duplicate path (%s) without unique tag or Pseudo path",
+				export->fullpath);
+			err_type->invalid = true;
+			errcnt++;
+		}
+		/* If unique Tag and/or Pseudo, there is no error, but we still
+		 * need to release the export reference.
+		 */
 		put_gsh_export(probe_exp);
 	}
 	if (errcnt) {
