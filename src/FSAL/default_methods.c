@@ -1423,7 +1423,6 @@ struct fsal_obj_ops def_handle_ops = {
 	.readlink = readsymlink,
 	.test_access = fsal_test_access,	/* default is use common test */
 	.getattrs = getattrs,
-	.getattrs = getattrs,
 	.setattrs = setattrs,
 	.link = linkfile,
 	.rename = renamefile,

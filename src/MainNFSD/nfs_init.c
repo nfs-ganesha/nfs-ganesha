@@ -107,8 +107,6 @@ char *config_path = GANESHA_CONFIG_PATH;
 
 char *pidfile_path = GANESHA_PIDFILE_PATH;
 
-struct config_block mdcache_param_blk;
-
 /**
  * @brief This thread is in charge of signal management
  *
@@ -308,17 +306,8 @@ int nfs_set_param_from_conf(config_file_t parse_tree,
 	}
 #endif
 
-	/* Cache inode client parameters */
-	(void) load_config_from_parse(parse_tree,
-				      &mdcache_param_blk,
-				      NULL,
-				      true,
-				      err_type);
-	if (!config_error_is_harmless(err_type)) {
-		LogCrit(COMPONENT_INIT,
-			"Error while parsing 9P specific configuration");
+	if (mdcache_set_param_from_conf(parse_tree, err_type) < 0)
 		return -1;
-	}
 
 	LogEvent(COMPONENT_INIT, "Configuration file successfully parsed");
 

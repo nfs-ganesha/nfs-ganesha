@@ -3202,11 +3202,11 @@ struct Fattr_filler_opaque {
  */
 
 static fsal_errors_t Fattr_filler(void *opaque,
-					 struct fsal_obj_handle *obj,
-					 const struct attrlist *attr,
-					 uint64_t mounted_on_fileid,
-					 uint64_t cookie,
-					 enum cb_state cb_state)
+				  struct fsal_obj_handle *obj,
+				  const struct attrlist *attr,
+				  uint64_t mounted_on_fileid,
+				  uint64_t cookie,
+				  enum cb_state cb_state)
 {
 	struct Fattr_filler_opaque *f = (struct Fattr_filler_opaque *)opaque;
 	struct xdr_attrs_args args = {
@@ -3215,6 +3215,9 @@ static fsal_errors_t Fattr_filler(void *opaque,
 		.hdl4 = f->objFH,
 		.mounted_on_fileid = mounted_on_fileid
 	};
+
+	if (cb_state == CB_PROBLEM)
+		return ERR_FSAL_IO;
 
 	if (nfs4_FSALattr_To_Fattr(&args, f->Bitmap, f->Fattr) != 0)
 		return ERR_FSAL_IO;

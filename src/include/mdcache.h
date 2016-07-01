@@ -43,4 +43,9 @@ void mdcache_export_uninit(void);
 
 /* Initialize the MDCACHE package. */
 fsal_status_t mdcache_pkginit(void);
+
+/* Parse mdcache config */
+int mdcache_set_param_from_conf(config_file_t parse_tree,
+				struct config_error_type *err_type);
+
 #endif /* MDCACHE_H */

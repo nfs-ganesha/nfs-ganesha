@@ -105,4 +105,21 @@ struct config_block mdcache_param_blk = {
 	.blk_desc.u.blk.commit = noop_conf_commit
 };
 
+int mdcache_set_param_from_conf(config_file_t parse_tree,
+				struct config_error_type *err_type)
+{
+	(void) load_config_from_parse(parse_tree,
+				      &mdcache_param_blk,
+				      NULL,
+				      true,
+				      err_type);
+	if (!config_error_is_harmless(err_type)) {
+		LogCrit(COMPONENT_INIT,
+			"Error while parsing MDCACHE specific configuration");
+		return -1;
+	}
+
+	return 0;
+}
+
 /** @} */

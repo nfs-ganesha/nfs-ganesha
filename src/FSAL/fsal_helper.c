@@ -694,9 +694,9 @@ fsal_status_t fsal_access(struct fsal_obj_handle *obj,
  *
  */
 fsal_errors_t fsal_getattr(struct fsal_obj_handle *obj,
-				  void *opaque,
-				  fsal_getattr_cb_t cb,
-				  enum cb_state cb_state)
+			   void *opaque,
+			   fsal_getattr_cb_t cb,
+			   enum cb_state cb_state)
 {
 	fsal_errors_t errors;
 	uint64_t mounted_on_fileid;
@@ -738,10 +738,7 @@ fsal_errors_t fsal_getattr(struct fsal_obj_handle *obj,
 					 junction_export->export_id,
 					 fsal_err_txt(status));
 				/* Need to signal problem to callback */
-				(void) cb(opaque, junction_obj,
-					  junction_obj->attrs,
-					  junction_obj->attrs->fileid, 0,
-					  CB_PROBLEM);
+				(void) cb(opaque, NULL, NULL, 0, 0, CB_PROBLEM);
 				return status.major;
 			}
 		} else {
@@ -749,8 +746,7 @@ fsal_errors_t fsal_getattr(struct fsal_obj_handle *obj,
 				 "A junction became stale");
 			errors = ERR_FSAL_STALE;
 			/* Need to signal problem to callback */
-			(void) cb(opaque, junction_obj, junction_obj->attrs,
-				  junction_obj->attrs->fileid, 0, CB_PROBLEM);
+			(void) cb(opaque, NULL, NULL, 0, 0, CB_PROBLEM);
 			return errors;
 		}
 
