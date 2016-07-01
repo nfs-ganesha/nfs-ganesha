@@ -647,7 +647,8 @@ fsal_status_t mdc_add_cache(mdcache_entry_t *mdc_parent,
 
 	/* Entry was found in the FSAL, add this entry to the
 	   parent directory */
-	status = mdcache_dirent_add(mdc_parent, name, *new_entry, NULL);
+	status = mdcache_dirent_add(mdc_parent, name, *new_entry);
+
 	if (status.major == ERR_FSAL_EXIST)
 		status = fsalstat(ERR_FSAL_NO_ERROR, 0);
 	if (FSAL_IS_ERROR(status))
@@ -959,14 +960,13 @@ fsal_status_t mdcache_dirent_find(mdcache_entry_t *dir, const char *name,
  * @param[in,out] parent    Cache entry of the directory being updated
  * @param[in]     name      The name to add to the entry
  * @param[in]     entry     The cache entry associated with name
- * @param[out]    dir_entry The directory entry newly added (optional)
  *
  * @return FSAL status
  */
 
 fsal_status_t
 mdcache_dirent_add(mdcache_entry_t *parent, const char *name,
-		   mdcache_entry_t *entry, mdcache_dir_entry_t **dir_entry)
+		   mdcache_entry_t *entry)
 {
 	mdcache_dir_entry_t *new_dir_entry = NULL;
 	size_t namesize = strlen(name) + 1;
@@ -984,19 +984,14 @@ mdcache_dirent_add(mdcache_entry_t *parent, const char *name,
 	mdcache_key_dup(&new_dir_entry->ckey, &entry->fh_hk.key);
 
 	/* add to avl */
-	code = mdcache_avl_qp_insert(parent, new_dir_entry);
+	code = mdcache_avl_qp_insert(parent, &new_dir_entry);
 	if (code < 0) {
 		/* Technically only a -2 is a name collision, however, we will
 		 * treat a hash collision (which per current code we should
 		 * never actually see) the same.
 		 */
-		mdcache_key_delete(&new_dir_entry->ckey);
-		gsh_free(new_dir_entry);
 		return fsalstat(ERR_FSAL_EXIST, 0);
 	}
-
-	if (dir_entry)
-		*dir_entry = new_dir_entry;
 
 	/* we're going to succeed */
 	parent->fsobj.fsdir.nbactive++;
@@ -1099,7 +1094,7 @@ mdcache_dirent_rename(mdcache_entry_t *parent, const char *oldname,
 	avl_dirent_set_deleted(parent, dirent);
 
 	/* Insert a new entry for newname */
-	code = mdcache_avl_qp_insert(parent, dirent2);
+	code = mdcache_avl_qp_insert(parent, &dirent2);
 
 	/* We should not be able to have a name collision. */
 	assert(code != -2);
@@ -1109,8 +1104,6 @@ mdcache_dirent_rename(mdcache_entry_t *parent, const char *oldname,
 		 * purposes). Just abandon...
 		 */
 		/* dirent2 was never inserted */
-		mdcache_key_delete(&dirent2->ckey);
-		gsh_free(dirent2);
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 	}
 

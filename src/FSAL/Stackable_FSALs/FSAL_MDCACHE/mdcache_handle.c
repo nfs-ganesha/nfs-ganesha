@@ -53,7 +53,7 @@ static fsal_status_t mdc_add_dirent(mdcache_entry_t *parent, const char *name,
 
 	PTHREAD_RWLOCK_wrlock(&parent->content_lock);
 	/* Add this entry to the directory (also takes an internal ref) */
-	status = mdcache_dirent_add(parent, name, entry, NULL);
+	status = mdcache_dirent_add(parent, name, entry);
 	PTHREAD_RWLOCK_unlock(&parent->content_lock);
 
 	/* This function is called after a create, so go ahead and invalidate
@@ -685,8 +685,8 @@ static fsal_status_t mdcache_rename(struct fsal_obj_handle *obj_hdl,
 			mdcache_dirent_invalidate_all(mdc_newdir);
 		}
 
-		status = mdcache_dirent_add(mdc_newdir, new_name, mdc_obj,
-					    NULL);
+		status = mdcache_dirent_add(mdc_newdir, new_name, mdc_obj);
+
 		if (FSAL_IS_ERROR(status)) {
 			/* We're obviously out of date.  Throw out the cached
 			   directory */

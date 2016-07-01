@@ -152,28 +152,7 @@ static inline int cih_fh_cmpf(const struct avltree_node *lhs,
 	lk = avltree_container_of(lhs, mdcache_entry_t, fh_hk.node_k);
 	rk = avltree_container_of(rhs, mdcache_entry_t, fh_hk.node_k);
 
-	if (likely(lk->fh_hk.key.hk < rk->fh_hk.key.hk))
-		return -1;
-
-	if (likely(lk->fh_hk.key.hk > rk->fh_hk.key.hk))
-		return 1;
-
-	if (unlikely(lk->fh_hk.key.kv.len < rk->fh_hk.key.kv.len))
-		return -1;
-
-	if (unlikely(lk->fh_hk.key.kv.len > rk->fh_hk.key.kv.len))
-		return 1;
-
-	if (unlikely(lk->fh_hk.key.fsal < rk->fh_hk.key.fsal))
-		return -1;
-
-	if (unlikely(lk->fh_hk.key.fsal > rk->fh_hk.key.fsal))
-		return 1;
-
-	/* deep compare */
-	return memcmp(lk->fh_hk.key.kv.addr,
-		      rk->fh_hk.key.kv.addr,
-		      lk->fh_hk.key.kv.len);
+	return mdcache_key_cmp(&lk->fh_hk.key, &rk->fh_hk.key);
 }
 
 /**

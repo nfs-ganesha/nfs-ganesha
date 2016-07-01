@@ -184,8 +184,15 @@ mdcache_avl_insert_impl(mdcache_entry_t *entry, mdcache_dir_entry_t *v,
  * On return, the stored key is in v->hk.k, the iteration
  * count in v->hk.p.
  *
- * @param[in] entry The cache entry
- * @param[in] v     The dirent
+ * In the case of a name collision, assuming the ckey in the dirents matches,
+ * and the flags are the same,  then this will be treated as a success and the
+ * dirent passed in will be freed and the dirent will be set to the found one.
+ *
+ * If any error occurs, the passed in dirent will be freed and the dirent
+ * will be set to NULL.
+ *
+ * @param[in] entry  The cache entry
+ * @param[in] dirent The dirent
  *
  * @retval 0   Success
  * @retval -1  Hash collision after 2^65 attempts
@@ -193,8 +200,10 @@ mdcache_avl_insert_impl(mdcache_entry_t *entry, mdcache_dir_entry_t *v,
  *
  **/
 int
-mdcache_avl_qp_insert(mdcache_entry_t *entry, mdcache_dir_entry_t *v)
+mdcache_avl_qp_insert(mdcache_entry_t *entry, mdcache_dir_entry_t **dirent)
 {
+	mdcache_dir_entry_t *v = *dirent, *v2;
+
 #if AVL_HASH_MURMUR3
 	uint32_t hk[4];
 #endif
@@ -230,15 +239,29 @@ mdcache_avl_qp_insert(mdcache_entry_t *entry, mdcache_dir_entry_t *v)
 			return code;
 		/* detect name conflict */
 		if (j == 0) {
-			mdcache_dir_entry_t *v2 =
-				mdcache_avl_lookup_k(entry, v->hk.k,
+			v2 = mdcache_avl_lookup_k(entry, v->hk.k,
 						  MDCACHE_FLAG_ONLY_ACTIVE);
 			assert(v != v2);
 			if (v2 && (strcmp(v->name, v2->name) == 0)) {
 				LogDebug(COMPONENT_CACHE_INODE,
-					 "name conflict (%s, %s)",
-					 v->name, v2->name);
-				return -2;
+					 "name conflict dirent %p and %p both have name %s",
+					 v, v2, v->name);
+				if (mdcache_key_cmp(&v->ckey, &v2->ckey) == 0 &&
+				    v->flags == v2->flags) {
+					/* This appears to be the same entry,
+					 * return the one from the table (v2)
+					 * and free the passed in one and
+					 * return success.
+					 */
+					code = 0;
+				} else {
+					/* Discard the new dirent and set to
+					 * NULL.
+					 */
+					code = -2;
+					v2 = NULL;
+				}
+				goto out;
 			}
 		}
 	}
@@ -263,7 +286,16 @@ mdcache_avl_qp_insert(mdcache_entry_t *entry, mdcache_dir_entry_t *v)
 		"could not insert at j=%d (%s)", j,
 		v->name);
 
-	return -1;
+	code = -1;
+	v2 = NULL;
+
+out:
+
+	mdcache_key_delete(&v->ckey);
+	gsh_free(v);
+	*dirent = v2;
+
+	return code;
 }
 
 mdcache_dir_entry_t *

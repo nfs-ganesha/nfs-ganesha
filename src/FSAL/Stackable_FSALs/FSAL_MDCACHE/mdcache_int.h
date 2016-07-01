@@ -66,6 +66,33 @@ typedef struct mdcache_key {
 	struct gsh_buffdesc kv;		/*< fsal handle */
 } mdcache_key_t;
 
+static inline int mdcache_key_cmp(const struct mdcache_key *k1,
+				  const struct mdcache_key *k2)
+{
+	if (likely(k1->hk < k2->hk))
+		return -1;
+
+	if (likely(k1->hk > k2->hk))
+		return 1;
+
+	if (unlikely(k1->kv.len < k2->kv.len))
+		return -1;
+
+	if (unlikely(k1->kv.len > k2->kv.len))
+		return 1;
+
+	if (unlikely(k1->fsal < k2->fsal))
+		return -1;
+
+	if (unlikely(k1->fsal > k2->fsal))
+		return 1;
+
+	/* deep compare */
+	return memcmp(k1->kv.addr,
+		      k2->kv.addr,
+		      k1->kv.len);
+}
+
 /**
  * Data for tracking a cache entry's position the LRU.
  */
@@ -299,8 +326,7 @@ void mdcache_src_dest_unlock(mdcache_entry_t *src, mdcache_entry_t *dest);
 fsal_status_t mdcache_dirent_remove(mdcache_entry_t *parent, const char *name);
 fsal_status_t mdcache_dirent_add(mdcache_entry_t *parent,
 					const char *name,
-					mdcache_entry_t *entry,
-					mdcache_dir_entry_t **dir_entry);
+					mdcache_entry_t *entry);
 fsal_status_t mdcache_dirent_rename(mdcache_entry_t *parent,
 				    const char *oldname,
 				    const char *newname);
