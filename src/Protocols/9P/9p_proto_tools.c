@@ -46,6 +46,7 @@
 #include "idmapper.h"
 #include "uid2grp.h"
 #include "export_mgr.h"
+#include "fsal_convert.h"
 
 /**
  * @brief Allocate a new struct _9p_user_cred, with refcounter set to 1.
@@ -331,7 +332,8 @@ void _9p_openflags2FSAL(u32 *inflags, fsal_openflags_t *outflags)
 void free_fid(struct _9p_fid *pfid)
 {
 	if (pfid->state != NULL) {
-		if (pfid->pentry->fsal->m_ops.support_ex(pfid->pentry)) {
+		if ((pfid->pentry->type == REGULAR_FILE) && pfid->opens &&
+		    pfid->pentry->fsal->m_ops.support_ex(pfid->pentry)) {
 			/* We need to close the state before freeing the state.
 			 */
 			(void) pfid->pentry->obj_ops.close2(
@@ -410,6 +412,11 @@ int _9p_tools_clunk(struct _9p_fid *pfid)
 	if ((pfid->pentry->type == REGULAR_FILE) && pfid->opens) {
 		pfid->pentry->obj_ops.put_ref(pfid->pentry);
 		pfid->opens = 0;	/* dead */
+
+		LogDebug(COMPONENT_9P,
+			 "Calling close on %s entry %p",
+			 object_file_type_to_str(pfid->pentry->type),
+			 pfid->pentry);
 
 		if (pfid->pentry->fsal->m_ops.support_ex(pfid->pentry)) {
 			fsal_status =
