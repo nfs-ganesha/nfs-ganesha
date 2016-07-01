@@ -37,6 +37,7 @@
 #include "sal_functions.h"
 #include "fsal.h"
 #include "FSAL/fsal_commonlib.h"
+#include "fsal_convert.h"
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -1464,12 +1465,19 @@ mdcache_dirent_populate(mdcache_entry_t *dir)
  */
 
 void
-mdcache_kill_entry(mdcache_entry_t *entry)
+_mdcache_kill_entry(mdcache_entry_t *entry,
+		    char *file, int line, char *function)
 {
 	bool freed;
 
-	LogDebug(COMPONENT_CACHE_INODE,
-		 "entry %p", entry);
+	if (isDebug(COMPONENT_CACHE_INODE)) {
+		DisplayLogComponentLevel(COMPONENT_CACHE_INODE,
+					 file, line, function, NIV_DEBUG,
+					 "Kill %s entry %p obj_handle %p",
+					 object_file_type_to_str(
+							entry->obj_handle.type),
+					 entry, &entry->obj_handle);
+	}
 
 	freed = cih_remove_checked(entry); /* !reachable, drop sentinel ref */
 

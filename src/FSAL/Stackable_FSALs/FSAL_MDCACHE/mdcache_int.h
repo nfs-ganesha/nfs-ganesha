@@ -38,6 +38,7 @@
 #include "mdcache_ext.h"
 #include "sal_data.h"
 #include "fsal_up.h"
+#include "fsal_convert.h"
 
 typedef struct mdcache_fsal_obj_handle mdcache_entry_t;
 
@@ -370,7 +371,13 @@ static inline struct mdcache_fsal_export *mdc_cur_export(void)
 }
 
 void mdc_clean_entry(mdcache_entry_t *entry);
-void mdcache_kill_entry(mdcache_entry_t *entry);
+void _mdcache_kill_entry(mdcache_entry_t *entry,
+			 char *file, int line, char *function);
+
+#define mdcache_kill_entry(entry) \
+	_mdcache_kill_entry(entry, \
+			    (char *) __FILE__, __LINE__, (char *) __func__)
+
 
 extern struct config_block mdcache_param_blk;
 
@@ -584,8 +591,20 @@ mdc_has_state(mdcache_entry_t *entry)
  * @param[in] entry	Entry to mark
  */
 static inline void
-mdc_unreachable(mdcache_entry_t *entry)
+_mdc_unreachable(mdcache_entry_t *entry,
+		 char *file, int line, char *function)
 {
+	if (isDebug(COMPONENT_CACHE_INODE)) {
+		DisplayLogComponentLevel(COMPONENT_CACHE_INODE,
+					 file, line, function, NIV_DEBUG,
+					 "Unreachable %s entry %p %s state",
+					 object_file_type_to_str(
+							entry->obj_handle.type),
+					 entry,
+					 mdc_has_state(entry)
+						? "has" : "does't have");
+	}
+
 	if (!mdc_has_state(entry)) {
 		mdcache_kill_entry(entry);
 		return;
@@ -593,6 +612,10 @@ mdc_unreachable(mdcache_entry_t *entry)
 
 	atomic_set_uint32_t_bits(&entry->mde_flags, MDCACHE_UNREACHABLE);
 }
+
+#define mdc_unreachable(entry) \
+	_mdc_unreachable(entry, \
+			 (char *) __FILE__, __LINE__, (char *) __func__)
 
 
 /* Handle methods */
