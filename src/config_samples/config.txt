@@ -102,6 +102,12 @@ NFS_CORE_PARAM {}
 
 	RPC_Ioq_ThrdMax(uint32, range 1 to 1024*128 default 200)
 
+	RPC_GSS_Npart(uint32, range 1 to 1021, default 13)
+
+	RPC_GSS_Max_Ctx(uint32, range 1 to 1048576, default 16384)
+
+	RPC_GSS_Max_Gc(uint32, range 1 to 1048576, default 200)
+
 	Decoder_Fridge_Expiration_Delay(int64, range 0 to 7200, default 600)
 
 	Decoder_Fridge_Block_Timeout(int64, range 0 to 7200, default 600)

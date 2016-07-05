@@ -914,11 +914,15 @@ void nfs_Init_svc(void)
 	svc_params.svc_ioq_maxbuf =
 	    nfs_param.core_param.rpc.max_send_buffer_size;
 	svc_params.idle_timeout = nfs_param.core_param.rpc.idle_timeout_s;
-	svc_params.gss_ctx_hash_partitions = 17;
-	svc_params.gss_max_idle_gen = 1024;	/* GSS ctx cache expiration */
-	svc_params.gss_max_gc = 200;
 	svc_params.ioq_thrd_max = /* max ioq worker threads */
 		nfs_param.core_param.rpc.ioq_thrd_max;
+	/* GSS ctx cache tuning, expiration */
+	svc_params.gss_ctx_hash_partitions =
+		nfs_param.core_param.rpc.gss.ctx_hash_partitions;
+	svc_params.gss_max_ctx =
+		nfs_param.core_param.rpc.gss.max_ctx;
+	svc_params.gss_max_gc =
+		nfs_param.core_param.rpc.gss.max_gc;
 
 	/* Only after TI-RPC allocators, log channel are setup */
 	if (!svc_init(&svc_params))

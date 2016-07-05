@@ -326,6 +326,18 @@ typedef struct nfs_core_param {
 		/** TIRPC ioq max simultaneous io threads.  Defaults to
 		    200 and settable by RPC_Ioq_ThrdMax. */
 		uint32_t ioq_thrd_max;
+		struct {
+			/** Partitions in GSS ctx cache table (default 13). */
+			uint32_t ctx_hash_partitions;
+			/** Max GSS contexts in cache (i.e.,
+			 * max GSS clients, default 16K)
+			 */
+			uint32_t max_ctx;
+			/** Max entries to expire in one idle
+			 * check (default 200)
+			 */
+			uint32_t max_gc;
+		} gss;
 	} rpc;
 	/** How long (in seconds) to let unused decoder threads wait before
 	    exiting.  Settable with Decoder_Fridge_Expiration_Delay. */
