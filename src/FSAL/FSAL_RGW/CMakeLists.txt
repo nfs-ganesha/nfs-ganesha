@@ -8,6 +8,7 @@ add_definitions(
 IF(RGW_PREFIX)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I${RGW_PREFIX}/")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -L${RGW_PREFIX}/lib")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -L${RGW_PREFIX}/lib64")
 ELSE()
   message(WARNING "no rgw prefix")
 ENDIF()
