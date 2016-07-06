@@ -3490,10 +3490,7 @@ bool nfs3_Sattr_To_FSALattr(struct attrlist *FSAL_attr, sattr3 *sattr)
 		LogFullDebug(COMPONENT_NFSPROTO, "size = %lld",
 			     sattr->size.set_size3_u.size);
 		FSAL_attr->filesize = sattr->size.set_size3_u.size;
-		FSAL_attr->spaceused = sattr->size.set_size3_u.size;
-		/* Both ATTR_SIZE and ATTR_SPACEUSED are to be managed */
 		FSAL_attr->mask |= ATTR_SIZE;
-		FSAL_attr->mask |= ATTR_SPACEUSED;
 	}
 
 	if (sattr->atime.set_it != DONT_CHANGE) {
