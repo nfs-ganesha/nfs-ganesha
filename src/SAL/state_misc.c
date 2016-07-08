@@ -1028,9 +1028,13 @@ void dec_state_owner_ref(state_owner_t *owner)
 		if (!str_valid)
 			display_owner(&dspbuf, owner);
 
-		LogCrit(COMPONENT_STATE, "Unexpected owner {%s}", str);
+		LogCrit(COMPONENT_STATE, "Unexpected owner {%s}, type {%d}",
+			str, owner->so_type);
 
-		assert(ht_owner);
+		/** @todo: we need to understand how this situation occurs and
+		 * either prevent it from happening or provide an explanation
+		 * why this is ok.
+		 */
 
 		return;
 	}
