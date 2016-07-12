@@ -87,6 +87,8 @@ static fsal_status_t lookup(struct fsal_obj_handle *dir_pub,
 	struct handle *obj = NULL;
 	struct Inode *i = NULL;
 
+	LogFullDebug(COMPONENT_FSAL, "Lookup %s", path);
+
 	rc = ceph_ll_lookup(export->cmount, dir->i, path, &st, &i, 0, 0);
 
 	if (rc < 0)
@@ -689,6 +691,10 @@ static fsal_status_t ceph_fsal_unlink(struct fsal_obj_handle *dir_pub,
 	/* The private 'full' object handle */
 	struct handle *dir = container_of(dir_pub, struct handle, handle);
 
+	LogFullDebug(COMPONENT_FSAL,
+		     "Unlink %s, I think it's a %s",
+		     name, object_file_type_to_str(obj_pub->type));
+
 	rc = ceph_ll_unlink(export->cmount, dir->i, name,
 			    op_ctx->creds->caller_uid,
 			    op_ctx->creds->caller_gid);
@@ -698,8 +704,12 @@ static fsal_status_t ceph_fsal_unlink(struct fsal_obj_handle *dir_pub,
 				   op_ctx->creds->caller_gid);
 	}
 
-	if (rc < 0)
+	if (rc < 0) {
+		LogDebug(COMPONENT_FSAL,
+			 "Unlink %s returned %s (%d)",
+			 name, strerror(-rc), -rc);
 		return ceph2fsal_error(rc);
+	}
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -1893,8 +1903,13 @@ fsal_status_t ceph_setattr2(struct fsal_obj_handle *obj_hdl,
 	/* Mask of attributes to set */
 	uint32_t mask = 0;
 
-	if (attrib_set->mask & ~settable_attributes)
+	if (attrib_set->mask & ~settable_attributes) {
+		LogDebug(COMPONENT_FSAL,
+			 "bad mask %"PRIx64" not settable %"PRIx64,
+			 attrib_set->mask,
+			 attrib_set->mask & ~settable_attributes);
 		return fsalstat(ERR_FSAL_INVAL, 0);
+	}
 
 	LogAttrlist(COMPONENT_FSAL, NIV_FULL_DEBUG,
 		    "attrs ", attrib_set, false);
@@ -1937,9 +1952,9 @@ fsal_status_t ceph_setattr2(struct fsal_obj_handle *obj_hdl,
 
 		if (rc < 0) {
 			status = ceph2fsal_error(rc);
-			LogFullDebug(COMPONENT_FSAL,
-				     "ceph_ll_truncate status=%s",
-				     fsal_err_txt(status));
+			LogDebug(COMPONENT_FSAL,
+				 "truncate returned %s (%d)",
+				 strerror(-rc), -rc);
 			goto out;
 		}
 	}
@@ -1969,8 +1984,13 @@ fsal_status_t ceph_setattr2(struct fsal_obj_handle *obj_hdl,
 		struct timespec timestamp;
 
 		rc = clock_gettime(CLOCK_REALTIME, &timestamp);
-		if (rc != 0)
-			return ceph2fsal_error(rc);
+		if (rc != 0) {
+			LogDebug(COMPONENT_FSAL,
+				 "clock_gettime returned %s (%d)",
+				 strerror(-rc), -rc);
+			status = ceph2fsal_error(rc);
+			goto out;
+		}
 		st.st_atim = timestamp;
 	}
 
@@ -1983,8 +2003,13 @@ fsal_status_t ceph_setattr2(struct fsal_obj_handle *obj_hdl,
 		struct timespec timestamp;
 
 		rc = clock_gettime(CLOCK_REALTIME, &timestamp);
-		if (rc != 0)
-			return ceph2fsal_error(rc);
+		if (rc != 0) {
+			LogDebug(COMPONENT_FSAL,
+				 "clock_gettime returned %s (%d)",
+				 strerror(-rc), -rc);
+			status = ceph2fsal_error(rc);
+			goto out;
+		}
 		st.st_mtim = timestamp;
 	}
 
@@ -1995,10 +2020,15 @@ fsal_status_t ceph_setattr2(struct fsal_obj_handle *obj_hdl,
 
 	rc = ceph_ll_setattr(export->cmount, myself->i, &st, mask, 0, 0);
 
-	if (rc < 0)
+	if (rc < 0) {
+		LogDebug(COMPONENT_FSAL,
+			 "setattr returned %s (%d)",
+			 strerror(-rc), -rc);
 		status = ceph2fsal_error(rc);
-	else
+	} else {
+		/* Success */
 		status = fsalstat(ERR_FSAL_NO_ERROR, 0);
+	}
 
  out:
 
