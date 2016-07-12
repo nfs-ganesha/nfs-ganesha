@@ -648,7 +648,7 @@ fsal_status_t mdcache_open2(struct fsal_obj_handle *obj_hdl,
 	status = mdcache_alloc_and_check_handle(export, sub_handle,
 						new_obj, false,
 						&attrs, attrs_out,
-						"open2", mdc_parent, name,
+						"open2 ", mdc_parent, name,
 						createmode != FSAL_NO_CREATE,
 						state);
 

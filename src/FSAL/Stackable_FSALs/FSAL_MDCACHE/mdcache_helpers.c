@@ -899,6 +899,8 @@ fsal_status_t mdc_lookup(mdcache_entry_t *mdc_parent, const char *name,
 
 	if (!strcmp(name, "..")) {
 		struct mdcache_fsal_export *export = mdc_cur_export();
+
+		LogFullDebug(COMPONENT_CACHE_INODE, "Lookup parent (..)");
 		/* ".." doesn't end up in the cache */
 		status =  mdcache_locate_keyed(&mdc_parent->fsobj.fsdir.parent,
 					       export, new_entry, attrs_out);
@@ -1016,7 +1018,7 @@ fsal_status_t mdc_lookup_uncached(mdcache_entry_t *mdc_parent,
 
 	status = mdcache_alloc_and_check_handle(export, sub_handle, &new_obj,
 						false, &attrs, attrs_out,
-						"lookup", mdc_parent, name,
+						"lookup ", mdc_parent, name,
 						true, NULL);
 
 	fsal_release_attrs(&attrs);
