@@ -695,10 +695,11 @@ static fsal_status_t ceph_fsal_unlink(struct fsal_obj_handle *dir_pub,
 		     "Unlink %s, I think it's a %s",
 		     name, object_file_type_to_str(obj_pub->type));
 
-	rc = ceph_ll_unlink(export->cmount, dir->i, name,
-			    op_ctx->creds->caller_uid,
-			    op_ctx->creds->caller_gid);
-	if (rc == -EISDIR) {
+	if (obj_pub->type != DIRECTORY) {
+		rc = ceph_ll_unlink(export->cmount, dir->i, name,
+				    op_ctx->creds->caller_uid,
+				    op_ctx->creds->caller_gid);
+	} else {
 		rc = ceph_ll_rmdir(export->cmount, dir->i, name,
 				   op_ctx->creds->caller_uid,
 				   op_ctx->creds->caller_gid);
