@@ -107,6 +107,19 @@ static bool xdr_encode_nfs4_princ(XDR *xdrs, uint32_t id, bool group)
 	uint32_t not_a_size_t;
 	bool success = false;
 
+	if (nfs_param.nfsv4_param.only_numeric_owners) {
+		/* 2**32 is 10 digits long in decimal */
+		struct gsh_buffdesc name;
+		char namebuf[11];
+
+		name.addr = namebuf;
+		sprintf(namebuf, "%"PRIu32, id);
+		name.len = strlen(namebuf);
+		not_a_size_t = name.len;
+		return inline_xdr_bytes(xdrs, (char **)&name.addr,
+					&not_a_size_t, UINT32_MAX);
+	}
+
 	PTHREAD_RWLOCK_rdlock(group ? &idmapper_group_lock :
 			      &idmapper_user_lock);
 	if (group)
@@ -217,7 +230,7 @@ static bool xdr_encode_nfs4_princ(XDR *xdrs, uint32_t id, bool group)
 					"Lookup for %d failed, using numeric %s",
 					id, (group ? "group" : "owner"));
 				/* 2**32 is 10 digits long in decimal */
-				sprintf(namebuff, "%u", id);
+				sprintf(namebuff, "%"PRIu32, id);
 				new_name.len = strlen(namebuff);
 			} else {
 				LogInfo(COMPONENT_IDMAPPER,

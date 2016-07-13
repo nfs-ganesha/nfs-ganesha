@@ -168,6 +168,8 @@ NFSV4 {}
 
 	Allow_Numeric_Owners(bool, default true)
 
+	Only_Numeric_Owners(bool, default false)
+
 	Delegations(bool, default false)
 
 
