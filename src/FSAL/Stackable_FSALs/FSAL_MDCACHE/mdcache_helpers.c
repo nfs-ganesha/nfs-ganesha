@@ -131,9 +131,12 @@ static mdcache_entry_t *mdcache_alloc_handle(
 	/* mdcache handlers */
 	mdcache_handle_ops_init(&result->obj_handle.obj_ops);
 	/* state */
-	state_hdl_init(&result->fsobj.hdl, result->obj_handle.type,
+	if (sub_handle->type == DIRECTORY)
+		result->obj_handle.state_hdl = &result->fsobj.fsdir.dhdl;
+	else
+		result->obj_handle.state_hdl = &result->fsobj.hdl;
+	state_hdl_init(result->obj_handle.state_hdl, result->obj_handle.type,
 		       &result->obj_handle);
-	result->obj_handle.state_hdl = &result->fsobj.hdl;
 
 	/* Initialize common fields */
 	result->mde_flags = 0;

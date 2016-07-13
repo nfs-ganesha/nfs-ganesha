@@ -164,8 +164,7 @@ state_status_t state_add_impl(struct fsal_obj_handle *obj,
 	pnew_state->state_owner = owner_input;
 	fh_desc.addr = &pnew_state->state_obj.digest;
 	fh_desc.len = sizeof(pnew_state->state_obj.digest);
-	ostate->file.obj->obj_ops.handle_digest(ostate->file.obj,
-						FSAL_DIGEST_NFSV4, &fh_desc);
+	obj->obj_ops.handle_digest(obj, FSAL_DIGEST_NFSV4, &fh_desc);
 	pnew_state->state_obj.len = fh_desc.len;
 
 	/* Add the state to the related hashtable */
@@ -176,7 +175,7 @@ state_status_t state_add_impl(struct fsal_obj_handle *obj,
 
 		LogCrit(COMPONENT_STATE,
 			"Can't create a new state id %s for the obj %p (F)",
-			str, ostate->file.obj);
+			str, obj);
 
 		/* Return STATE_MALLOC_ERROR since most likely the
 		 * nfs4_State_Set failed to allocate memory.
