@@ -421,6 +421,11 @@ typedef struct nfs_version4_parameter {
 	    group identifiers.  Defaults to true and is settable with
 	    Allow_Numeric_Owners. */
 	bool allow_numeric_owners;
+	/** Whether to ONLY use bare numeric IDs in NFSv4 owner and
+	    group identifiers.  Defaults to false and is settable with
+	    Only_Numeric_Owners. NB., this is permissible for a server
+	    implementation (RFC 5661). */
+	bool only_numeric_owners;
 	/** Whether to allow delegations. Defaults to false and settable
 	    with Delegations */
 	bool allow_delegations;

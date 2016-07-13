@@ -234,6 +234,8 @@ static struct config_item version4_params[] = {
 		       nfs_version4_parameter, use_getpwnam),
 	CONF_ITEM_BOOL("Allow_Numeric_Owners", true,
 		       nfs_version4_parameter, allow_numeric_owners),
+	CONF_ITEM_BOOL("Only_Numeric_Owners", false,
+		       nfs_version4_parameter, only_numeric_owners),
 	CONF_ITEM_BOOL("Delegations", false,
 		       nfs_version4_parameter, allow_delegations),
 	CONF_ITEM_UI32("Deleg_Recall_Retry_Delay", 0, 10,
