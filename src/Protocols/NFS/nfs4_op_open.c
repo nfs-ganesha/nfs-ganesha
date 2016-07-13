@@ -1262,6 +1262,7 @@ static void open4_ex(OPEN4args *arg,
 					/* This will be a failure no matter'
 					 * what.
 					 */
+					looked_up_file_obj = true;
 					res_OPEN4->status = NFS4ERR_EXIST;
 					goto out;
 				} else {
