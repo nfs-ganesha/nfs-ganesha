@@ -286,12 +286,11 @@ mdcache_avl_qp_insert(mdcache_entry_t *entry, mdcache_dir_entry_t **dirent)
 	 * cookies  */
 	v->hk.k &= ~(1ULL << 63);
 #endif
-	for (j2 = 1 /* tried j=0 */; j2 < UINT64_MAX; j2++) {
+	for (j2 = 1 /* tried j=0 */; j2 < UINT64_MAX; j2 += 2) {
 		v->hk.k = v->hk.k + j2;
 		code = mdcache_avl_insert_impl(entry, v, j, j2);
 		if (code >= 0)
 			return code;
-		j2++;
 	}
 
 	LogCrit(COMPONENT_CACHE_INODE,
