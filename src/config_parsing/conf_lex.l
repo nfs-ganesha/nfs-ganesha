@@ -97,7 +97,7 @@ DECNUM       (0|[1-9][0-9]*)
 NINEP        9[pP]
 
 INCLPATH     \/?([a-zA-Z0-9\-\.\_])+(\/[a-zA-Z0-9\-\.\_]+)*
-PATHNAME     (\/[a-zA-Z0-9\-\.\_]+)\/?
+PATHNAME     \/([a-zA-Z0-9\-\.\_]+\/?)?
 LONGPATH     (\/?[a-zA-Z0-9\-\.\_]+(\/[a-zA-Z0-9\-\.\_]+)+)\/?
 TOKEN_CHARS  [a-zA-Z_\?][a-zA-Z0-9\._\-]*
 
