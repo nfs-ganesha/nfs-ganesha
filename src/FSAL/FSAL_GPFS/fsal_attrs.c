@@ -126,7 +126,7 @@ GPFSFSAL_getattrs(struct fsal_export *export, struct gpfs_filesystem *gpfs_fs,
 
 	st = fsal_get_xstat_by_handle(gpfs_fs->root_fd, gpfs_fh,
 				      &buffxstat, &expire_time_attr, expire,
-				      gpfs_export->use_acl);
+				      (obj_attr->mask & ATTR_ACL) != 0);
 	if (FSAL_IS_ERROR(st))
 		return st;
 

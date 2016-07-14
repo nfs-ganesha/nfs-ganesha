@@ -48,6 +48,9 @@
  * allocate and fill in a handle
  * this uses malloc/free for the time being.
  */
+
+#define ATTR_GPFS_ALLOC_HANDLE (ATTR_TYPE | ATTR_FILEID | ATTR_FSID)
+
 static struct gpfs_fsal_obj_handle *alloc_handle(struct gpfs_file_handle *fh,
 						 struct fsal_filesystem *fs,
 						 struct attrlist *attributes,
@@ -121,8 +124,10 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 		goto hdlerr;
 	}
 
-	fsal_prepare_attrs(&attrib, op_ctx->fsal_export->exp_ops.
-				    fs_supported_attrs(op_ctx->fsal_export));
+	fsal_prepare_attrs(&attrib, ATTR_GPFS_ALLOC_HANDLE);
+
+	if (attrs_out != NULL)
+		attrib.mask |= attrs_out->mask;
 
 	status = GPFSFSAL_lookup(op_ctx, parent, path, &attrib, fh, &fs);
 	if (FSAL_IS_ERROR(status))
@@ -172,8 +177,11 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 	memset(fh, 0, sizeof(struct gpfs_file_handle));
 	fh->handle_size = GPFS_MAX_FH_SIZE;
 
-	fsal_prepare_attrs(&attrib, op_ctx->fsal_export->exp_ops.
-				    fs_supported_attrs(op_ctx->fsal_export));
+	fsal_prepare_attrs(&attrib, ATTR_GPFS_ALLOC_HANDLE);
+
+	if (attrs_out != NULL)
+		attrib.mask |= attrs_out->mask;
+
 	status =
 	    GPFSFSAL_create(dir_hdl, name, op_ctx, attr_in->mode, fh, &attrib);
 	if (FSAL_IS_ERROR(status))
@@ -215,8 +223,11 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 	memset(fh, 0, sizeof(struct gpfs_file_handle));
 	fh->handle_size = GPFS_MAX_FH_SIZE;
 
-	fsal_prepare_attrs(&attrib, op_ctx->fsal_export->exp_ops.
-				    fs_supported_attrs(op_ctx->fsal_export));
+	fsal_prepare_attrs(&attrib, ATTR_GPFS_ALLOC_HANDLE);
+
+	if (attrs_out != NULL)
+		attrib.mask |= attrs_out->mask;
+
 	status =
 	    GPFSFSAL_mkdir(dir_hdl, name, op_ctx, attr_in->mode, fh, &attrib);
 	if (FSAL_IS_ERROR(status))
@@ -261,8 +272,11 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 	memset(fh, 0, sizeof(struct gpfs_file_handle));
 	fh->handle_size = GPFS_MAX_FH_SIZE;
 
-	fsal_prepare_attrs(&attrib, op_ctx->fsal_export->exp_ops.
-				    fs_supported_attrs(op_ctx->fsal_export));
+	fsal_prepare_attrs(&attrib, ATTR_GPFS_ALLOC_HANDLE);
+
+	if (attrs_out != NULL)
+		attrib.mask |= attrs_out->mask;
+
 	status =
 	    GPFSFSAL_mknode(dir_hdl, name, op_ctx, attr_in->mode, nodetype, dev,
 			    fh, &attrib);
@@ -311,8 +325,11 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 	memset(fh, 0, sizeof(struct gpfs_file_handle));
 	fh->handle_size = GPFS_MAX_FH_SIZE;
 
-	fsal_prepare_attrs(&attrib, op_ctx->fsal_export->exp_ops.
-				    fs_supported_attrs(op_ctx->fsal_export));
+	fsal_prepare_attrs(&attrib, ATTR_GPFS_ALLOC_HANDLE);
+
+	if (attrs_out != NULL)
+		attrib.mask |= attrs_out->mask;
+
 	status = GPFSFSAL_symlink(dir_hdl, name, link_path, op_ctx,
 				  attr_in->mode, fh, &attrib);
 	if (FSAL_IS_ERROR(status))
@@ -1001,8 +1018,10 @@ fsal_status_t gpfs_lookup_path(struct fsal_export *exp_hdl,
 
 	dir_fd = open_dir_by_path_walk(-1, path, &buffxstat.buffstat);
 
-	fsal_prepare_attrs(&attributes,
-			   exp_hdl->exp_ops.fs_supported_attrs(exp_hdl));
+	fsal_prepare_attrs(&attributes, ATTR_GPFS_ALLOC_HANDLE);
+
+	if (attrs_out != NULL)
+		attributes.mask |= attrs_out->mask;
 
 	if (dir_fd < 0) {
 		LogCrit(COMPONENT_FSAL,
@@ -1020,7 +1039,8 @@ fsal_status_t gpfs_lookup_path(struct fsal_export *exp_hdl,
 
 	fsal_status = fsal_get_xstat_by_handle(dir_fd, fh, &buffxstat,
 					       NULL, false,
-					       gpfs_export->use_acl);
+					       (attributes.mask & ATTR_ACL)
+									!= 0);
 	if (FSAL_IS_ERROR(fsal_status))
 		goto fileerr;
 	fsal_status = gpfsfsal_xstat_2_fsal_attributes(&buffxstat, &attributes,
@@ -1152,8 +1172,11 @@ fsal_status_t gpfs_create_handle(struct fsal_export *exp_hdl,
 
 	gpfs_fs = fs->private;
 
-	fsal_prepare_attrs(&attrib,
-			   exp_hdl->exp_ops.fs_supported_attrs(exp_hdl));
+	fsal_prepare_attrs(&attrib, ATTR_GPFS_ALLOC_HANDLE);
+
+	if (attrs_out != NULL)
+		attrib.mask |= attrs_out->mask;
+
 	status = GPFSFSAL_getattrs(exp_hdl, gpfs_fs, op_ctx, fh, &attrib);
 	if (FSAL_IS_ERROR(status))
 		return status;
