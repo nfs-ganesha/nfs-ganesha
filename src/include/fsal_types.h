@@ -395,12 +395,13 @@ typedef uint64_t attrmask_t;
 
 /* attributes that used for NFS v3 */
 
-#define ATTRS_NFS3   (ATTR_MODE     | ATTR_FILEID   | \
-		      ATTR_TYPE     | ATTR_RAWDEV   | \
-		      ATTR_NUMLINKS | ATTR_OWNER    | \
-		      ATTR_GROUP    | ATTR_SIZE     | \
-		      ATTR_ATIME    | ATTR_MTIME    | \
-		      ATTR_CTIME    | ATTR_SPACEUSED)
+#define ATTRS_NFS3   (ATTR_MODE     | ATTR_FILEID    | \
+		      ATTR_TYPE     | ATTR_RAWDEV    | \
+		      ATTR_NUMLINKS | ATTR_OWNER     | \
+		      ATTR_GROUP    | ATTR_SIZE      | \
+		      ATTR_ATIME    | ATTR_MTIME     | \
+		      ATTR_CTIME    | ATTR_SPACEUSED | \
+		      ATTR_FSID)
 
 #define ATTRS_TIME (ATTR_ATIME | ATTR_MTIME | ATTR_CTIME)
 #define ATTRS_CREDS (ATTR_OWNER | ATTR_GROUP)
