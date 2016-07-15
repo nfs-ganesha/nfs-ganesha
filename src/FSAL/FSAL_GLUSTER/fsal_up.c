@@ -143,6 +143,7 @@ void *GLUSTERFSAL_UP_Thread(void *Arg)
 	callback.fs = glfsexport->gl_fs;
 
 	/* Start querying for events and processing. */
+	/** @todo : Do batch processing instead */
 	while (!atomic_fetch_int8_t(&glfsexport->destroy_mode)) {
 		LogFullDebug(COMPONENT_FSAL_UP,
 			     "Requesting event from FSAL Callback interface for %p.",
@@ -190,14 +191,12 @@ void *GLUSTERFSAL_UP_Thread(void *Arg)
 			     "Received upcall event: reason(%d)",
 			     reason);
 
-		if (!reason) {
-			sleep(1);
-			continue;
-		}
-
 		/* Decide what type of event this is
 		 * inode update / invalidate? */
 		switch (reason) {
+		case GFAPI_CBK_EVENT_NULL:
+			usleep(10);
+			continue;
 		case GFAPI_INODE_INVALIDATE:
 			cbk_inode_arg =
 				(struct callback_inode_arg *)callback.event_arg;
