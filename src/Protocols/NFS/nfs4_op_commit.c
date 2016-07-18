@@ -102,7 +102,8 @@ int nfs4_op_commit(struct nfs_argop4 *op, compound_data_t *data,
 	verf_desc.addr = &res_COMMIT4->COMMIT4res_u.resok4.writeverf;
 	verf_desc.len = sizeof(verifier4);
 
-	op_ctx->fsal_export->exp_ops.get_write_verifier(&verf_desc);
+	op_ctx->fsal_export->exp_ops.get_write_verifier(op_ctx->fsal_export,
+							&verf_desc);
 
 	LogFullDebug(COMPONENT_NFS_V4,
 		     "Commit verifier %d-%d",

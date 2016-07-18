@@ -1108,9 +1108,11 @@ struct export_ops {
  * This function is called by write and commit to match the commit verifier
  * with the one returned on  write.
  *
+ * @param[in] exp_hdl	Export to query
  * @param[in,out] verf_desc Address and length of verifier
  */
-	void (*get_write_verifier)(struct gsh_buffdesc *verf_desc);
+	void (*get_write_verifier)(struct fsal_export *exp_hdl,
+				   struct gsh_buffdesc *verf_desc);
 
 /**@}*/
 

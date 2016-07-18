@@ -540,11 +540,12 @@ static size_t fs_loc_body_size(struct fsal_export *exp_hdl)
  * This function is called by write and commit to match the commit verifier
  * with the one returned on  write.
  *
- * @param[in/out] verf_desc Address and length of verifier
+ * @param[in,out] verf_desc Address and length of verifier
  *
  * @return No errors
  */
-static void global_verifier(struct gsh_buffdesc *verf_desc)
+static void global_verifier(struct fsal_export *exp_hdl,
+			    struct gsh_buffdesc *verf_desc)
 {
 	memcpy(verf_desc->addr, &NFS4_write_verifier, verf_desc->len);
 }

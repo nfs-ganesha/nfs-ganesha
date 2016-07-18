@@ -381,7 +381,8 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 
 		verf_desc.addr = res_WRITE4->WRITE4res_u.resok4.writeverf;
 		verf_desc.len = sizeof(verifier4);
-		op_ctx->fsal_export->exp_ops.get_write_verifier(&verf_desc);
+		op_ctx->fsal_export->exp_ops.get_write_verifier(
+					op_ctx->fsal_export, &verf_desc);
 
 		res_WRITE4->status = NFS4_OK;
 		goto done;
@@ -431,7 +432,8 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 
 	verf_desc.addr = res_WRITE4->WRITE4res_u.resok4.writeverf;
 	verf_desc.len = sizeof(verifier4);
-	op_ctx->fsal_export->exp_ops.get_write_verifier(&verf_desc);
+	op_ctx->fsal_export->exp_ops.get_write_verifier(op_ctx->fsal_export,
+							&verf_desc);
 
 	res_WRITE4->status = NFS4_OK;
 

@@ -473,6 +473,31 @@ static uint32_t mdcache_fs_xattr_access_rights(struct fsal_export *exp_hdl)
 }
 
 /**
+ * @brief Check quota on a file
+ *
+ * MDCACHE only caches metadata, so it imposes no restrictions itself.
+ *
+ * @param[in] exp_hdl	Export to query
+ * @param[in] filepath	Path to file to query
+ * @param[in] quota_type	Type of quota (user or group)
+ * @return FSAL status
+ */
+static fsal_status_t mdcache_check_quota(struct fsal_export *exp_hdl,
+					 const char *filepath, int quota_type)
+{
+	struct mdcache_fsal_export *exp = mdc_export(exp_hdl);
+	struct fsal_export *sub_export = exp->export.sub_export;
+	fsal_status_t status;
+
+	subcall_raw(exp,
+		status = sub_export->exp_ops.check_quota(sub_export, filepath,
+							 quota_type)
+	       );
+
+	return status;
+}
+
+/**
  * @brief Get quota information for a file
  *
  * MDCACHE only caches metadata, so it imposes no restrictions itself.
@@ -526,6 +551,138 @@ static fsal_status_t mdcache_set_quota(struct fsal_export *exp_hdl,
 	       );
 
 	return status;
+}
+
+/**
+ * @brief List pNFS devices
+ *
+ * MDCACHE only caches metadata, pass it through
+ *
+ * @param[in] exp_hdl	Export to query
+ * @param[in] type	Layout type for query
+ * @param[in] cb	Callback for devices
+ * @param[in] res	Devicelist result
+ * @return NFSv4 Status
+ */
+static nfsstat4 mdcache_getdevicelist(struct fsal_export *exp_hdl,
+					   layouttype4 type, void *opaque,
+					   bool (*cb)(void *opaque,
+						      const uint64_t id),
+					   struct fsal_getdevicelist_res *res)
+{
+	struct mdcache_fsal_export *exp = mdc_export(exp_hdl);
+	struct fsal_export *sub_export = exp->export.sub_export;
+	nfsstat4 status;
+
+	subcall_raw(exp,
+		status = sub_export->exp_ops.getdevicelist(sub_export, type,
+							   opaque, cb, res)
+	       );
+
+	return status;
+}
+
+/**
+ * @brief List supported pNFS layout types
+ *
+ * MDCACHE only caches metadata, pass it through
+ *
+ * @param[in] exp_hdl	Export to query
+ * @param[out] count	Number of types returned
+ * @param[out] types	Layout types supported
+ */
+static void mdcache_fs_layouttypes(struct fsal_export *exp_hdl,
+					    int32_t *count,
+					    const layouttype4 **types)
+{
+	struct mdcache_fsal_export *exp = mdc_export(exp_hdl);
+	struct fsal_export *sub_export = exp->export.sub_export;
+
+	subcall_raw(exp,
+		sub_export->exp_ops.fs_layouttypes(sub_export, count, types)
+	       );
+}
+
+/**
+ * @brief Get pNFS layout block size
+ *
+ * MDCACHE only caches metadata, pass it through
+ *
+ * @param[in] exp_hdl	Export to query
+ * @return Number of bytes in block
+ */
+static uint32_t mdcache_fs_layout_blocksize(struct fsal_export *exp_hdl)
+{
+	struct mdcache_fsal_export *exp = mdc_export(exp_hdl);
+	struct fsal_export *sub_export = exp->export.sub_export;
+	uint32_t status;
+
+	subcall_raw(exp,
+		status = sub_export->exp_ops.fs_layout_blocksize(sub_export)
+	       );
+
+	return status;
+}
+
+/**
+ * @brief Get pNFS maximum number of segments
+ *
+ * MDCACHE only caches metadata, pass it through
+ *
+ * @param[in] exp_hdl	Export to query
+ * @return Number of segments
+ */
+static uint32_t mdcache_fs_maximum_segments(struct fsal_export *exp_hdl)
+{
+	struct mdcache_fsal_export *exp = mdc_export(exp_hdl);
+	struct fsal_export *sub_export = exp->export.sub_export;
+	uint32_t status;
+
+	subcall_raw(exp,
+		status = sub_export->exp_ops.fs_maximum_segments(sub_export)
+	       );
+
+	return status;
+}
+
+/**
+ * @brief Get size of pNFS loc_body
+ *
+ * MDCACHE only caches metadata, pass it through
+ *
+ * @param[in] exp_hdl	Export to query
+ * @return Size of loc_body
+ */
+static size_t mdcache_fs_loc_body_size(struct fsal_export *exp_hdl)
+{
+	struct mdcache_fsal_export *exp = mdc_export(exp_hdl);
+	struct fsal_export *sub_export = exp->export.sub_export;
+	size_t status;
+
+	subcall_raw(exp,
+		status = sub_export->exp_ops.fs_loc_body_size(sub_export)
+	       );
+
+	return status;
+}
+
+/**
+ * @brief Get write verifier
+ *
+ * MDCACHE only caches metadata, pass it through
+ *
+ * @param[in] exp_hdl	Export to query
+ * @param[in,out] verf_desc Address and length of verifier
+ */
+static void mdcache_get_write_verifier(struct fsal_export *exp_hdl,
+				       struct gsh_buffdesc *verf_desc)
+{
+	struct mdcache_fsal_export *exp = mdc_export(exp_hdl);
+	struct fsal_export *sub_export = exp->export.sub_export;
+
+	subcall_raw(exp,
+		sub_export->exp_ops.get_write_verifier(sub_export, verf_desc)
+	       );
 }
 
 /**
@@ -620,8 +777,15 @@ void mdcache_export_ops_init(struct export_ops *ops)
 	ops->fs_supported_attrs = mdcache_fs_supported_attrs;
 	ops->fs_umask = mdcache_fs_umask;
 	ops->fs_xattr_access_rights = mdcache_fs_xattr_access_rights;
+	ops->check_quota = mdcache_check_quota;
 	ops->get_quota = mdcache_get_quota;
 	ops->set_quota = mdcache_set_quota;
+	ops->getdevicelist = mdcache_getdevicelist;
+	ops->fs_layouttypes = mdcache_fs_layouttypes;
+	ops->fs_layout_blocksize = mdcache_fs_layout_blocksize;
+	ops->fs_maximum_segments = mdcache_fs_maximum_segments;
+	ops->fs_loc_body_size = mdcache_fs_loc_body_size;
+	ops->get_write_verifier = mdcache_get_write_verifier;
 	ops->alloc_state = mdcache_alloc_state;
 	ops->free_state = mdcache_free_state;
 }

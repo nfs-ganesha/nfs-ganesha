@@ -405,7 +405,8 @@ static fsal_status_t gpfs_extract_handle(struct fsal_export *exp_hdl,
  */
 verifier4 GPFS_write_verifier;
 
-static void gpfs_verifier(struct gsh_buffdesc *verf_desc)
+static void gpfs_verifier(struct fsal_export *exp_hdl,
+			  struct gsh_buffdesc *verf_desc)
 {
 	memcpy(verf_desc->addr, &GPFS_write_verifier, verf_desc->len);
 }
