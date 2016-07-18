@@ -109,9 +109,8 @@ struct trace_arg
 int gpfs_ganesha(int op, void *oarg);
 
 #define OPENHANDLE_HANDLE_LEN 40
-#define OPENHANDLE_SHORT_HANDLE_LEN 32
 #define OPENHANDLE_KEY_LEN 28
-#define OPENHANDLE_VERSION 1
+#define OPENHANDLE_VERSION 2
 
 struct xstat_cred_t
 {

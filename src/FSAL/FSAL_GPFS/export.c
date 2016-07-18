@@ -384,12 +384,13 @@ static fsal_status_t gpfs_extract_handle(struct fsal_export *exp_hdl,
 		hdl->handle_key_size = bswap_16(hdl->handle_key_size);
 #endif
 	}
-	LogFullDebug(COMPONENT_FSAL,
-	  "flags 0x%X size %d type %d ver %d key_size %d FSID 0x%X:%X",
-	   flags, hdl->handle_size, hdl->handle_type, hdl->handle_version,
-	   hdl->handle_key_size, hdl->handle_fsid[0], hdl->handle_fsid[1]);
-
 	fh_size = gpfs_sizeof_handle(hdl);
+	LogFullDebug(COMPONENT_FSAL,
+	  "flags 0x%X size %d type %d ver %d key_size %d FSID 0x%X:%X fh_size %zu",
+	   flags, hdl->handle_size, hdl->handle_type, hdl->handle_version,
+	   hdl->handle_key_size, hdl->handle_fsid[0], hdl->handle_fsid[1],
+	   fh_size);
+
 	if (fh_desc->len != fh_size) {
 		LogMajor(COMPONENT_FSAL,
 			 "Size mismatch for handle.  should be %zu, got %zu",

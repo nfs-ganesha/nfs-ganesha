@@ -74,13 +74,7 @@ struct gpfs_ds {
 		ATTR_CHGTIME | ATTR_ACL | ATTR4_SPACE_RESERVED | \
 		ATTR4_FS_LOCATIONS | ATTR4_XATTR)
 
-/* GPFS_MAX_FH_SIZE will be OPENHANDLE_SHORT_HANDLE_LEN if
- * short_file_handle is enabled. Otherwise, it is set to
- * OPENHANDLE_HANDLE_LEN.
- */
-#define GPFS_MAX_FH_SIZE ((nfs_param.core_param.short_file_handle) ? \
-				(OPENHANDLE_SHORT_HANDLE_LEN) :      \
-				(OPENHANDLE_HANDLE_LEN))
+#define GPFS_MAX_FH_SIZE OPENHANDLE_HANDLE_LEN
 
 /* Define the buffer size for GPFS NFS4 ACL. */
 #define GPFS_ACL_BUF_SIZE 0x1000
@@ -98,7 +92,7 @@ typedef struct fsal_xstat__ {
 
 static inline size_t gpfs_sizeof_handle(const struct gpfs_file_handle *hdl)
 {
-	return offsetof(struct gpfs_file_handle, f_handle)+hdl->handle_size;
+	return hdl->handle_size;
 }
 
 void export_ops_init(struct export_ops *ops);

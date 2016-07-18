@@ -859,6 +859,9 @@ static fsal_status_t handle_digest(const struct fsal_obj_handle *obj_hdl,
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 	}
 	fh_desc->len = fh_size;
+	LogFullDebug(COMPONENT_FSAL,
+		"FSAL fh_size %zu type %d", fh_size, output_type);
+
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
  errout:
