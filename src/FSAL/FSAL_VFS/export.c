@@ -608,26 +608,16 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 		goto errout;	/* seriously bad */
 	}
 
-	retval = populate_posix_file_systems();
+
+	retval = resolve_posix_filesystem(op_ctx->export->fullpath,
+					  fsal_hdl, &myself->export,
+					  vfs_claim_filesystem,
+					  vfs_unclaim_filesystem,
+					  &myself->root_fs);
 
 	if (retval != 0) {
 		LogCrit(COMPONENT_FSAL,
-			"populate_posix_file_systems returned %s (%d)",
-			strerror(retval), retval);
-		fsal_error = posix2fsal_error(retval);
-		goto errout;
-	}
-
-	retval = claim_posix_filesystems(op_ctx->export->fullpath,
-					 fsal_hdl,
-					 &myself->export,
-					 vfs_claim_filesystem,
-					 vfs_unclaim_filesystem,
-					 &myself->root_fs);
-
-	if (retval != 0) {
-		LogCrit(COMPONENT_FSAL,
-			"claim_posix_filesystems(%s) returned %s (%d)",
+			"resolve_posix_filesystem(%s) returned %s (%d)",
 			op_ctx->export->fullpath,
 			strerror(retval), retval);
 		fsal_error = posix2fsal_error(retval);

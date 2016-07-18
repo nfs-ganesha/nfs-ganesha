@@ -831,6 +831,7 @@ void nfs_start(nfs_start_info_t *p_start_info)
 
 	/* Initialize all layers and service threads */
 	nfs_Init(p_start_info);
+	init_complete = true;
 
 	/* Spawns service threads */
 	nfs_Start_threads();
