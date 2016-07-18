@@ -52,8 +52,9 @@
  * This function is a wrapper of mdcache_alloc_handle. It adds error checking
  * and logging. It also cleans objects allocated in the subfsal if it fails.
  *
- * If parent and name are non-NULL, the caller MUST hold the content_lock for
- * write. This does not cause an ABBA lock conflict with the potential getattrs
+ * @note the caller must hold the content lock on the parent.
+ *
+ * This does not cause an ABBA lock conflict with the potential getattrs
  * if we lose a race to create the cache entry since our caller CAN NOT hold
  * any locks on the cache entry created.
  *
@@ -88,7 +89,6 @@ fsal_status_t mdcache_alloc_and_check_handle(
 {
 	fsal_status_t status;
 	mdcache_entry_t *new_entry;
-	const char *dispname = name != NULL ? name : "<by-handle>";
 
 	status = mdcache_new_entry(export, sub_handle, attrs_in, attrs_out,
 				   new_directory, &new_entry, state);
@@ -101,7 +101,7 @@ fsal_status_t mdcache_alloc_and_check_handle(
 	LogFullDebug(COMPONENT_CACHE_INODE,
 		     "%sCreated entry %p FSAL %s for %s",
 		     tag, new_entry, new_entry->sub_handle->fsal->name,
-		     dispname);
+		     name);
 
 	if (invalidate) {
 		/* This function is called after a create, so go ahead

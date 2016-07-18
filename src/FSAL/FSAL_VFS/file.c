@@ -342,8 +342,9 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
 
-	LogAttrlist(COMPONENT_FSAL, NIV_FULL_DEBUG,
-		    "attrib_set ", attrib_set, false);
+	if (setattrs)
+		LogAttrlist(COMPONENT_FSAL, NIV_FULL_DEBUG,
+			    "attrib_set ", attrib_set, false);
 
 	fsal2posix_openflags(openflags, &posix_flags);
 

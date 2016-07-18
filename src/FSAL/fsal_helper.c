@@ -887,21 +887,20 @@ fsal_status_t fsal_create(struct fsal_obj_handle *parent,
 					(*obj)->obj_ops.put_ref((*obj));
 					*obj = NULL;
 				}
-				if (type != REGULAR_FILE)
-					goto out;
-				/* Otherwise fall through to set size if 0 */
-				if ((attrs->mask & ATTR_SIZE) &&
-				    attrs->filesize == 0)
+				if ((type == REGULAR_FILE) &&
+				    (attrs->mask & ATTR_SIZE) &&
+				    attrs->filesize == 0) {
 					attrs->mask &= ATTR_SIZE;
-				else
-					goto out;
+					goto setattrs;
+				}
 			}
 		} else {
 			*obj = NULL;
-			goto out;
 		}
+		goto out;
 	}
 
+setattrs:
 	if (!support_ex) {
 		/* Handle setattr for old API */
 		attrs->mask = orig_mask;

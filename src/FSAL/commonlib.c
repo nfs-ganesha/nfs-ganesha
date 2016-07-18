@@ -2376,7 +2376,7 @@ fsal_status_t fsal_reopen_obj(struct fsal_obj_handle *obj_hdl,
 		 * share check, or didn't need it. In either case, there
 		 * is no need to open a file.
 		 */
-		*has_lock = check_share;
+		*has_lock = true;
 		return fsalstat(ERR_FSAL_NO_ERROR, 0);
 	}
 

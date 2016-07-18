@@ -437,8 +437,6 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 
 	*handle = &hdl->obj_handle;
 
-	close(dir_fd);
-
 	/* We handled the mode above. */
 	FSAL_UNSET_MASK(attrib->mask, ATTR_MODE);
 
@@ -481,6 +479,8 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 			attrs_out->mask &= ~ATTR_RDATTR_ERR;
 		}
 	}
+
+	close(dir_fd);
 
 	return status;
 
@@ -648,8 +648,6 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 
 	*handle = &hdl->obj_handle;
 
-	close(dir_fd);
-
 	/* We handled the mode above. */
 	FSAL_UNSET_MASK(attrib->mask, ATTR_MODE);
 
@@ -689,6 +687,8 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 			attrs_out->mask &= ~ATTR_RDATTR_ERR;
 		}
 	}
+
+	close(dir_fd);
 
 	return status;
 
@@ -837,8 +837,6 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 
 	*handle = &hdl->obj_handle;
 
-	close(dir_fd);
-
 	/* We handled the mode above. */
 	FSAL_UNSET_MASK(attrib->mask, ATTR_MODE);
 
@@ -878,6 +876,8 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 			attrs_out->mask &= ~ATTR_RDATTR_ERR;
 		}
 	}
+
+	close(dir_fd);
 
 	return status;
 
