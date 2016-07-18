@@ -155,10 +155,7 @@ config:
 
 
 deflist:
-{ /* empty */
-  $$ = NULL;
-}
-| definition
+definition
 {
   $$ = $1;
 }
@@ -195,6 +192,7 @@ statement:
 ;
 
 block:
+RCURLY_OP
 { /* empty */
   $$ = NULL;
 }
@@ -227,10 +225,8 @@ exprlist:
 }
 ;
 
-expression: /* empty */ {
-  $$ = NULL;
-}
-| TOK_PATH
+expression:
+TOK_PATH
 {
   $$ = config_term(NULL, $1, TERM_PATH, &@$, st);
 }
