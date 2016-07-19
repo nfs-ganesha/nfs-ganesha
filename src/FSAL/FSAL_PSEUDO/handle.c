@@ -315,7 +315,7 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 			    struct fsal_obj_handle **handle,
 			    struct attrlist *attrs_out)
 {
-	struct pseudo_fsal_obj_handle *myself, *hdl;
+	struct pseudo_fsal_obj_handle *myself, *hdl = NULL;
 	struct pseudo_fsal_obj_handle key[1];
 	struct avltree_node *node;
 	fsal_errors_t error = ERR_FSAL_NOENT;
