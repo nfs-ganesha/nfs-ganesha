@@ -580,6 +580,13 @@ select_ds(struct glfs_object *object, char *pathinfo, char *hostname,
 			break;
 	}
 
+	if (no_of_ds == 0) {
+		LogCrit(COMPONENT_PNFS,
+			"Invalid pathinfo(%s) attribute found while selecting DS.",
+			pathinfo);
+		goto out;
+	}
+
 	ret = glfs_h_extract_handle(object, key, GFAPI_HANDLE_LENGTH);
 	if (ret < 0)
 		goto out;
@@ -603,9 +610,9 @@ select_ds(struct glfs_object *object, char *pathinfo, char *hostname,
 	while (++start != end)
 		hostname[i++] = *start;
 	ret = 0;
+	LogDebug(COMPONENT_PNFS, "hostname %s", hostname);
 
 out:
-	LogDebug(COMPONENT_PNFS, "hostname %s", hostname);
 	return ret;
 }
 

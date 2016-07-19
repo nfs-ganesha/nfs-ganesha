@@ -1447,7 +1447,7 @@ static fsal_status_t glusterfs_open2(struct fsal_obj_handle *obj_hdl,
 	    container_of(op_ctx->fsal_export, struct glusterfs_export, export);
 	struct glusterfs_handle *myself, *parenthandle = NULL;
 	struct glusterfs_fd *my_fd = NULL, tmp_fd = {0};
-	struct stat sb;
+	struct stat sb = {0};
 	struct glfs_object *glhandle = NULL;
 	unsigned char globjhdl[GFAPI_HANDLE_LENGTH] = {'\0'};
 	char vol_uuid[GLAPI_UUID_LENGTH] = {'\0'};
@@ -2637,21 +2637,14 @@ static fsal_status_t glusterfs_setattr2(struct fsal_obj_handle *obj_hdl,
 	if (FSAL_IS_ERROR(status)) {
 		LogDebug(COMPONENT_FSAL,
 			 "fetch_attrs failed");
-		goto out;
 	}
-
-	errno = 0;
 
  out:
-	retval = errno;
-
-	if (retval != 0) {
-		LogDebug(COMPONENT_FSAL,
+	if (FSAL_IS_ERROR(status)) {
+		LogCrit(COMPONENT_FSAL,
 			 "setattrs failed with error %s",
-			 strerror(retval));
+			 strerror(status.minor));
 	}
-
-	status = fsalstat(posix2fsal_error(retval), retval);
 
 	if (closefd)
 		glusterfs_close_my_fd(&my_fd);
