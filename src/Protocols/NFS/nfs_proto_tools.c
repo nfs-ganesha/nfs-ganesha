@@ -3306,6 +3306,10 @@ nfsstat4 file_To_Fattr(compound_data_t *data,
 		PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
 	}
 
+	/* Fill in fileid and fsid into args */
+	args.fileid = data->current_obj->fileid;
+	args.fsid = data->current_obj->fsid;
+
 	status = data->current_obj->obj_ops.getattrs(data->current_obj, attr);
 	if (FSAL_IS_ERROR(status))
 		return nfs4_Errno_status(status);
