@@ -71,6 +71,12 @@ static struct fsal_staticfsinfo_t default_rgw_info = {
 static struct config_item rgw_items[] = {
 	CONF_ITEM_PATH("ceph_conf", 1, MAXPATHLEN, NULL,
 		rgw_fsal_module, conf_path),
+	CONF_ITEM_STR("name", 1, MAXPATHLEN, NULL,
+		rgw_fsal_module, name),
+	CONF_ITEM_STR("cluster", 1, MAXPATHLEN, NULL,
+		rgw_fsal_module, cluster),
+	CONF_ITEM_STR("init_args", 1, MAXPATHLEN, NULL,
+		rgw_fsal_module, init_args),
 	CONF_ITEM_MODE("umask", 0,
 			rgw_fsal_module, fs_info.umask),
 	CONF_ITEM_MODE("xattr_access_rights", 0,
@@ -183,16 +189,44 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 	if (!RGWFSM.rgw) {
 		PTHREAD_MUTEX_lock(&init_mtx);
 		if (!RGWFSM.rgw) {
-			int argc = 1;
-			char *argv[2] = { "nfs-ganesha", NULL };
 			char *conf_path = NULL;
+			char *inst_name = NULL;
+			char *cluster = NULL;
+
+			int argc = 1;
+			char *argv[5] = { "nfs-ganesha",
+					  NULL, NULL, NULL, NULL };
+			int clen;
 
 			if (RGWFSM.conf_path) {
-				int clen = strlen(RGWFSM.conf_path) + 4;
+				clen = strlen(RGWFSM.conf_path) + 8;
 				conf_path = (char *) gsh_malloc(clen);
-				sprintf(conf_path, "-c %s", RGWFSM.conf_path);
-				argc = 2;
-				argv[1] = conf_path;
+				sprintf(conf_path, "--conf=%s",
+					RGWFSM.conf_path);
+				argv[argc] = conf_path;
+				++argc;
+			}
+
+			if (RGWFSM.name) {
+				clen = strlen(RGWFSM.name) + 8;
+				inst_name = (char *) gsh_malloc(clen);
+				sprintf(inst_name, "--name=%s", RGWFSM.name);
+				argv[argc] = inst_name;
+				++argc;
+			}
+
+			if (RGWFSM.cluster) {
+				clen = strlen(RGWFSM.cluster) + 8;
+				cluster = (char *) gsh_malloc(clen);
+				sprintf(cluster, "--cluster=%s",
+					RGWFSM.cluster);
+				argv[argc] = cluster;
+				++argc;
+			}
+
+			if (RGWFSM.init_args) {
+				argv[argc] = RGWFSM.init_args;
+				++argc;
 			}
 
 			rc = librgw_create(&RGWFSM.rgw, argc, argv);
@@ -201,6 +235,11 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 					"RGW module: librgw init failed (%d)",
 					rc);
 			}
+
+			if (conf_path)
+				gsh_free(conf_path);
+			if (inst_name)
+				gsh_free(inst_name);
 		}
 		PTHREAD_MUTEX_unlock(&init_mtx);
 	}

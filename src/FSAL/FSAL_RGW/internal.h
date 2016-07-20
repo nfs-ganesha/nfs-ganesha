@@ -52,6 +52,9 @@ struct rgw_fsal_module {
 	struct fsal_module fsal;
 	fsal_staticfsinfo_t fs_info;
 	char *conf_path;
+	char *name;
+	char *cluster;
+	char *init_args;
 	librgw_t rgw;
 };
 extern struct rgw_fsal_module RGWFSM;
