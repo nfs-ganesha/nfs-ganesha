@@ -570,6 +570,18 @@ static int fsal_cfg_commit(void *node, void *link_mem, void *self_struct,
 			pathlen--;
 		export->fullpath[pathlen] = '\0';
 	}
+
+	/* Remove trailing slash */
+	if (export->pseudopath && export->pseudopath[0] == '/') {
+		int pathlen;
+
+		pathlen = strlen(export->pseudopath);
+		while ((export->pseudopath[pathlen - 1] == '/') &&
+		       (pathlen > 1))
+			pathlen--;
+		export->pseudopath[pathlen] = '\0';
+	}
+
 	status = fsal->m_ops.create_export(fsal,
 					   node, err_type,
 					  &fsal_up_top);
