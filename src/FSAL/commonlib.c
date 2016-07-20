@@ -1337,26 +1337,39 @@ int resolve_posix_filesystem(const char *path,
 	return retval;
 }
 
+static void release_posix_file_system(struct fsal_filesystem *fs)
+{
+	struct fsal_filesystem *child_fs;
+
+	if (fs->unclaim != NULL) {
+		LogWarn(COMPONENT_FSAL,
+			"Filesystem %s is still claimed",
+			fs->path);
+		unclaim_fs(fs);
+	}
+
+	while ((child_fs = glist_first_entry(&fs->children,
+					     struct fsal_filesystem,
+					     siblings))) {
+		release_posix_file_system(child_fs);
+	}
+
+	LogDebug(COMPONENT_FSAL,
+		 "Releasing filesystem %s (%p)",
+		 fs->path, fs);
+	remove_fs(fs);
+	free_fs(fs);
+}
+
 void release_posix_file_systems(void)
 {
-	struct glist_head *glist, *glistn;
 	struct fsal_filesystem *fs;
 
 	PTHREAD_RWLOCK_wrlock(&fs_lock);
 
-	glist_for_each_safe(glist, glistn, &posix_file_systems) {
-		fs = glist_entry(glist, struct fsal_filesystem, filesystems);
-		if (fs->unclaim != NULL) {
-			LogWarn(COMPONENT_FSAL,
-				"Fileystem %s is still claimed",
-				fs->path);
-			unclaim_fs(fs);
-		}
-		LogDebug(COMPONENT_FSAL,
-			 "Releasing filesystem %s",
-			 fs->path);
-		remove_fs(fs);
-		free_fs(fs);
+	while ((fs = glist_first_entry(&posix_file_systems,
+				       struct fsal_filesystem, filesystems))) {
+		release_posix_file_system(fs);
 	}
 
 	PTHREAD_RWLOCK_unlock(&fs_lock);
