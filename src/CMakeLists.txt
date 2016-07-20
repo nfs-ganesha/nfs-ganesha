@@ -191,6 +191,7 @@ option(USE_FSAL_PANFS "build PanFS support in VFS FSAL" OFF)
 option(USE_FSAL_GLUSTER "build GLUSTER FSAL shared library" ON)
 option(USE_FSAL_NULL "build NULL FSAL shared library" ON)
 option(USE_FSAL_RGW "build RGW FSAL shared library" OFF)
+option(USE_TOOL_MULTILOCK "build multilock tool" OFF)
 
 # nTIRPC
 option(USE_SYSTEM_NTIRPC "Use the system nTIRPC, rather than the submodule" OFF)
@@ -1045,6 +1046,7 @@ message(STATUS "USE_TSAN = ${USE_TSAN}")
 message(STATUS "USE_LTTNG = ${USE_LTTNG}")
 message(STATUS "USE_BLKIN = ${USE_BLKIN}")
 message(STATUS "USE_VSOCK = ${USE_VSOCK}")
+message(STATUS "USE_TOOL_MULTILOCK = ${USE_TOOL_MULTILOCK}")
 
 #force command line options to be stored in cache
 set(USE_FSAL_VFS ${USE_FSAL_VFS}

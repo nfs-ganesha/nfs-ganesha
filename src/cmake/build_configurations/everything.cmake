@@ -9,5 +9,6 @@ set(USE_FSAL_CEPH ON)
 set(USE_FSAL_RGW ON)
 set(USE_FSAL_GLUSTER ON)
 set(USE_FSAL_ZFS ON)
+set(USE_TOOL_MULTILOCK ON)
 
 message(STATUS "Building everything")
