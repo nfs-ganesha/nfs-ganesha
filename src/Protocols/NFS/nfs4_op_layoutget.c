@@ -183,7 +183,7 @@ static nfsstat4 acquire_layout_state(compound_data_t *data,
 		layout_data.layout.state_layout_type = layout_type;
 		layout_data.layout.state_return_on_close = false;
 
-		state_status = state_add(data->current_obj,
+		state_status = state_add_impl(data->current_obj,
 					      STATE_TYPE_LAYOUT,
 					      &layout_data,
 					      clientid_owner,
