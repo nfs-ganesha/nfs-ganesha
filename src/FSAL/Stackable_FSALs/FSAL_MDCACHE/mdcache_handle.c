@@ -664,6 +664,39 @@ unlock_dir:
 }
 
 /**
+ * @brief Check access for a given user against a given object
+ *
+ * Currently, all FSALs use the default method.  However, delegate to sub-fsal
+ * in case a FSAL wants to override.
+ *
+ * @param[in] obj_hdl     Handle to check
+ * @param[in] access_type Access requested
+ * @param[out] allowed    Returned access that could be granted
+ * @param[out] denied     Returned access that would be granted
+ * @param[in] owner_skip  Skip test if op_ctx->creds is owner
+ *
+ * @return FSAL status.
+ */
+static fsal_status_t mdcache_test_access(struct fsal_obj_handle *obj_hdl,
+					 fsal_accessflags_t access_type,
+					 fsal_accessflags_t *allowed,
+					 fsal_accessflags_t *denied,
+					 bool owner_skip)
+{
+	mdcache_entry_t *entry =
+		container_of(obj_hdl, mdcache_entry_t, obj_handle);
+	fsal_status_t status;
+
+	subcall(
+		status = entry->sub_handle->obj_ops.test_access(
+			entry->sub_handle, access_type, allowed, denied,
+			owner_skip)
+	       );
+
+	return status;
+}
+
+/**
  * @brief Rename an object
  *
  * Rename the given object from @a old_name in @a olddir_hdl to @a new_name in
@@ -1123,6 +1156,57 @@ static fsal_status_t mdcache_unlink(struct fsal_obj_handle *dir_hdl,
 }
 
 /**
+ * @brief get fs_locations
+ *
+ * This function returns the fs locations for an object.
+ *
+ * @param[in] obj_hdl	Object to get fs locations for
+ * @param[out] fs_locs	fs locations
+ *
+ * @return FSAL status
+ */
+static fsal_status_t mdcache_fs_locations(struct fsal_obj_handle *obj_hdl,
+					  struct fs_locations4 *fs_locs)
+{
+	mdcache_entry_t *entry =
+		container_of(obj_hdl, mdcache_entry_t, obj_handle);
+	fsal_status_t status;
+
+	subcall(
+		status = entry->sub_handle->obj_ops.fs_locations(
+			entry->sub_handle, fs_locs)
+	       );
+
+	return status;
+}
+
+/**
+ * @brief Test handle type
+ *
+ * All FSALs currently use the default, but delegate in case a FSAL wants to
+ * override.
+ *
+ * @param[in] obj_hdl	Handle to test
+ * @param[in] type	Type to test
+ * @retval true if it is.
+ * @retval false if it isn't.
+ */
+static bool mdcache_handle_is(struct fsal_obj_handle *obj_hdl,
+			      object_file_type_t type)
+{
+	mdcache_entry_t *entry =
+		container_of(obj_hdl, mdcache_entry_t, obj_handle);
+	bool status;
+
+	subcall(
+		status = entry->sub_handle->obj_ops.handle_is(
+			entry->sub_handle, type)
+	       );
+
+	return status;
+}
+
+/**
  * @brief Get the digest for a handle
  *
  * Just pass through to the underlying FSAL
@@ -1167,6 +1251,132 @@ static void mdcache_handle_to_key(struct fsal_obj_handle *obj_hdl,
 		entry->sub_handle->obj_ops.handle_to_key(entry->sub_handle,
 							  fh_desc)
 	       );
+}
+
+/**
+ * @brief Compare two handles
+ *
+ * All FSALs currently use the default, but delegate in case a FSAL wants to
+ * override.
+ *
+ * @param[in]     obj_hdl1    The first handle to compare
+ * @param[in]     obj_hdl2    The second handle to compare
+ *
+ * @return True if match, false otherwise
+ */
+static bool mdcache_handle_cmp(struct fsal_obj_handle *obj_hdl1,
+			       struct fsal_obj_handle *obj_hdl2)
+{
+	mdcache_entry_t *entry =
+		container_of(obj_hdl1, mdcache_entry_t, obj_handle);
+	bool status;
+
+	subcall(
+		status = entry->sub_handle->obj_ops.handle_cmp(
+			entry->sub_handle, obj_hdl2)
+	       );
+
+	return status;
+}
+
+/**
+ * @brief Grant a layout segment.
+ *
+ * Delegate to sub-FSAL
+ *
+ * @param[in]     obj_hdl  The handle of the file on which the layout is
+ *                         requested.
+ * @param[in]     req_ctx  Request context
+ * @param[out]    loc_body An XDR stream to which the FSAL must encode
+ *                         the layout specific portion of the granted
+ *                         layout segment.
+ * @param[in]     arg      Input arguments of the function
+ * @param[in,out] res      In/out and output arguments of the function
+ *
+ * @return Valid error codes in RFC 5661, pp. 366-7.
+ */
+static nfsstat4 mdcache_layoutget(struct fsal_obj_handle *obj_hdl,
+				  struct req_op_context *req_ctx,
+				  XDR *loc_body,
+				  const struct fsal_layoutget_arg *arg,
+				  struct fsal_layoutget_res *res)
+{
+	mdcache_entry_t *entry =
+		container_of(obj_hdl, mdcache_entry_t, obj_handle);
+	nfsstat4 status;
+
+	subcall(
+		status = entry->sub_handle->obj_ops.layoutget(
+			entry->sub_handle, req_ctx, loc_body, arg, res)
+	       );
+
+	return status;
+}
+
+/**
+ * @brief Potentially return one layout segment
+ *
+ * Delegate to sub-FSAL
+ *
+ * @param[in] obj_hdl  The object on which a segment is to be returned
+ * @param[in] req_ctx  Request context
+ * @param[in] lrf_body In the case of a non-synthetic return, this is
+ *                     an XDR stream corresponding to the layout
+ *                     type-specific argument to LAYOUTRETURN.  In
+ *                     the case of a synthetic or bulk return,
+ *                     this is a NULL pointer.
+ * @param[in] arg      Input arguments of the function
+ *
+ * @return Valid error codes in RFC 5661, p. 367.
+ */
+static nfsstat4 mdcache_layoutreturn(struct fsal_obj_handle *obj_hdl,
+				     struct req_op_context *req_ctx,
+				     XDR *lrf_body,
+				     const struct fsal_layoutreturn_arg *arg)
+{
+	mdcache_entry_t *entry =
+		container_of(obj_hdl, mdcache_entry_t, obj_handle);
+	nfsstat4 status;
+
+	subcall(
+		status = entry->sub_handle->obj_ops.layoutreturn(
+			entry->sub_handle, req_ctx, lrf_body, arg)
+	       );
+
+	return status;
+}
+
+/**
+ * @brief Commit a segment of a layout
+ *
+ * Delegate to sub-FSAL
+ *
+ * @param[in]     obj_hdl  The object on which to commit
+ * @param[in]     req_ctx  Request context
+ * @param[in]     lou_body An XDR stream containing the layout
+ *                         type-specific portion of the LAYOUTCOMMIT
+ *                         arguments.
+ * @param[in]     arg      Input arguments of the function
+ * @param[in,out] res      In/out and output arguments of the function
+ *
+ * @return Valid error codes in RFC 5661, p. 366.
+ */
+static nfsstat4 mdcache_layoutcommit(struct fsal_obj_handle *obj_hdl,
+				     struct req_op_context *req_ctx,
+				     XDR *lou_body,
+				     const struct fsal_layoutcommit_arg *arg,
+				     struct fsal_layoutcommit_res *res)
+{
+	mdcache_entry_t *entry =
+		container_of(obj_hdl, mdcache_entry_t, obj_handle);
+	nfsstat4 status;
+
+	subcall(
+		status = entry->sub_handle->obj_ops.layoutcommit(
+			entry->sub_handle, req_ctx, lou_body, arg, res)
+	       );
+
+	return status;
 }
 
 /**
@@ -1217,11 +1427,37 @@ static void mdcache_hdl_release(struct fsal_obj_handle *obj_hdl)
 	mdcache_kill_entry(entry);
 }
 
+/**
+ * @brief Merge a duplicate handle with an original handle
+ *
+ * Delegate to sub-FSAL.  This should not happen, because of the cache, but
+ * handle it anyway.
+ *
+ * @param[in]  orig_hdl  Original handle
+ * @param[in]  dupe_hdl Handle to merge into original
+ * @return FSAL status
+ */
+static fsal_status_t mdcache_merge(struct fsal_obj_handle *orig_hdl,
+				   struct fsal_obj_handle *dupe_hdl)
+{
+	mdcache_entry_t *entry =
+		container_of(orig_hdl, mdcache_entry_t, obj_handle);
+	fsal_status_t status;
+
+	subcall(
+		status = entry->sub_handle->obj_ops.merge(entry->sub_handle,
+							  dupe_hdl)
+	       );
+
+	return status;
+}
+
 void mdcache_handle_ops_init(struct fsal_obj_ops *ops)
 {
 	ops->get_ref = mdcache_get_ref;
 	ops->put_ref = mdcache_put_ref;
 	ops->release = mdcache_hdl_release;
+	ops->merge = mdcache_merge;
 	ops->lookup = mdcache_lookup;
 	ops->readdir = mdcache_readdir;
 	ops->create = mdcache_create;
@@ -1229,6 +1465,7 @@ void mdcache_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->mknode = mdcache_mknode;
 	ops->symlink = mdcache_symlink;
 	ops->readlink = mdcache_readlink;
+	ops->test_access = mdcache_test_access;
 	ops->getattrs = mdcache_getattrs;
 	ops->setattrs = mdcache_setattrs;
 	ops->link = mdcache_link;
@@ -1236,17 +1473,27 @@ void mdcache_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->unlink = mdcache_unlink;
 	ops->open = mdcache_open;
 	ops->reopen = mdcache_reopen;
+	ops->fs_locations = mdcache_fs_locations;
 	ops->status = mdcache_status;
 	ops->read = mdcache_read;
 	ops->read_plus = mdcache_read_plus;
 	ops->write = mdcache_write;
 	ops->write_plus = mdcache_write_plus;
+	ops->seek = mdcache_seek;
+	ops->io_advise = mdcache_io_advise;
 	ops->commit = mdcache_commit;
 	ops->lock_op = mdcache_lock_op;
 	ops->share_op = mdcache_share_op;
 	ops->close = mdcache_close;
+	ops->handle_is = mdcache_handle_is;
 	ops->handle_digest = mdcache_handle_digest;
 	ops->handle_to_key = mdcache_handle_to_key;
+	ops->handle_cmp = mdcache_handle_cmp;
+
+	/* pNFS */
+	ops->layoutget = mdcache_layoutget;
+	ops->layoutreturn = mdcache_layoutreturn;
+	ops->layoutcommit = mdcache_layoutcommit;
 
 	/* Multi-FD */
 	ops->open2 = mdcache_open2;

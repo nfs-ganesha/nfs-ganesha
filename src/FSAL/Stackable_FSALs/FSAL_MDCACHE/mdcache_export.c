@@ -764,6 +764,7 @@ void mdcache_export_ops_init(struct export_ops *ops)
 	ops->unexport = mdcache_unexport;
 	ops->release = mdcache_exp_release;
 	ops->lookup_path = mdcache_lookup_path;
+	/* lookup_junction unimplemented because deprecated */
 	ops->extract_handle = mdcache_extract_handle;
 	ops->create_handle = mdcache_create_handle;
 	ops->get_fs_dynamic_info = mdcache_get_dynamic_info;

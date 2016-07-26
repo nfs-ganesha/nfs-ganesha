@@ -289,6 +289,56 @@ fsal_status_t mdcache_write_plus(struct fsal_obj_handle *obj_hdl,
 }
 
 /**
+ * @brief Seek to data or hole
+ *
+ * Delegate to sub-FSAL
+ *
+ * @param[in]  obj_hdl      File to seek in
+ * @param[in,out] info      Information about the data
+ *
+ * @return FSAL status.
+ */
+fsal_status_t mdcache_seek(struct fsal_obj_handle *obj_hdl,
+			   struct io_info *info)
+{
+	mdcache_entry_t *entry =
+		container_of(obj_hdl, mdcache_entry_t, obj_handle);
+	fsal_status_t status;
+
+	subcall(
+		status = entry->sub_handle->obj_ops.seek(entry->sub_handle,
+							 info)
+	       );
+
+	return status;
+}
+
+/**
+ * @brief IO Advise
+ *
+ * Delegate to sub-FSAL
+ *
+ * @param[in]  obj_hdl      File to be written
+ * @param[in,out] info      Information about the data
+ *
+ * @return FSAL status.
+ */
+fsal_status_t mdcache_io_advise(struct fsal_obj_handle *obj_hdl,
+				struct io_hints *hints)
+{
+	mdcache_entry_t *entry =
+		container_of(obj_hdl, mdcache_entry_t, obj_handle);
+	fsal_status_t status;
+
+	subcall(
+		status = entry->sub_handle->obj_ops.io_advise(
+				entry->sub_handle, hints)
+	       );
+
+	return status;
+}
+
+/**
  * @brief Commit to a file
  *
  * Delegate to sub-FSAL
