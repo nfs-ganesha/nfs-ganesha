@@ -1146,6 +1146,9 @@ static fsal_status_t mdcache_unlink(struct fsal_obj_handle *dir_hdl,
 					   MDCACHE_TRUST_ATTRS);
 	}
 
+	if (entry->obj_handle.type == DIRECTORY)
+		mdcache_key_delete(&entry->fsobj.fsdir.parent);
+
 	mdc_unreachable(entry);
 
 	LogFullDebug(COMPONENT_CACHE_INODE,
