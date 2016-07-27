@@ -333,6 +333,11 @@ void free_client_id(nfs_client_id_t *clientid)
 		}
 	}
 
+	if (clientid->cid_recov_dir) {
+		gsh_free(clientid->cid_recov_dir);
+		clientid->cid_recov_dir = NULL;
+	}
+
 	PTHREAD_MUTEX_destroy(&clientid->cid_mutex);
 	PTHREAD_MUTEX_destroy(&clientid->cid_owner.so_mutex);
 	if (clientid->cid_minorversion == 0)
