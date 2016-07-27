@@ -378,23 +378,21 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 		anonymous_started = true;
 	}
 
-	if (state_open == NULL) {
-		/* Need to permission check the read. */
-		fsal_status = obj->obj_ops.test_access(obj, FSAL_READ_ACCESS,
-						       NULL, NULL, true);
+	/* Need to permission check the read. */
+	fsal_status = obj->obj_ops.test_access(obj, FSAL_READ_ACCESS,
+					       NULL, NULL, true);
 
-		if (fsal_status.major == ERR_FSAL_ACCESS) {
-			/* Test for execute permission */
-			fsal_status = fsal_access(obj,
-					  FSAL_MODE_MASK_SET(FSAL_X_OK) |
-					  FSAL_ACE4_MASK_SET
-					  (FSAL_ACE_PERM_EXECUTE), NULL, NULL);
-		}
+	if (fsal_status.major == ERR_FSAL_ACCESS) {
+		/* Test for execute permission */
+		fsal_status = fsal_access(obj,
+				  FSAL_MODE_MASK_SET(FSAL_X_OK) |
+				  FSAL_ACE4_MASK_SET
+				  (FSAL_ACE_PERM_EXECUTE), NULL, NULL);
+	}
 
-		if (FSAL_IS_ERROR(fsal_status)) {
-			res_READ4->status = nfs4_Errno_status(fsal_status);
-			goto done;
-		}
+	if (FSAL_IS_ERROR(fsal_status)) {
+		res_READ4->status = nfs4_Errno_status(fsal_status);
+		goto done;
 	}
 
 	/* Get the size and offset of the read operation */

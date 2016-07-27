@@ -314,15 +314,13 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 		anonymous_started = true;
 	}
 
-	if (state_open == NULL) {
-		/* Need to permission check the write. */
-		fsal_status = obj->obj_ops.test_access(obj, FSAL_WRITE_ACCESS,
-						       NULL, NULL, true);
+	/* Need to permission check the write. */
+	fsal_status = obj->obj_ops.test_access(obj, FSAL_WRITE_ACCESS,
+					       NULL, NULL, true);
 
-		if (FSAL_IS_ERROR(fsal_status)) {
-			res_WRITE4->status = nfs4_Errno_status(fsal_status);
-			goto done;
-		}
+	if (FSAL_IS_ERROR(fsal_status)) {
+		res_WRITE4->status = nfs4_Errno_status(fsal_status);
+		goto done;
 	}
 
 	/* Get the characteristics of the I/O to be made */
