@@ -363,6 +363,8 @@ not_junction:
 	args.data = data;
 	args.hdl4 = &entryFH;
 	args.mounted_on_fileid = mounted_on_fileid;
+	args.fileid = data->current_obj->fileid;
+	args.fsid = data->current_obj->fsid;
 
 	if (nfs4_FSALattr_To_Fattr(&args,
 				   tracker->req_attr,
