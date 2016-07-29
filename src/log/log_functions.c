@@ -451,8 +451,11 @@ static void _SetLevelDebug(int level_to_set)
 	if (level_to_set >= NB_LOG_LEVEL)
 		level_to_set = NB_LOG_LEVEL - 1;
 
-	for (i = COMPONENT_ALL; i < COMPONENT_COUNT; i++)
-		component_log_level[i] = level_to_set;
+	/* COMPONENT_ALL is a pseudo component, handle it separately */
+	component_log_level[COMPONENT_ALL] = level_to_set;
+	for (i = COMPONENT_ALL + 1; i < COMPONENT_COUNT; i++) {
+		SetComponentLogLevel(i, level_to_set);
+	}
 }				/* _SetLevelDebug */
 
 static void SetLevelDebug(int level_to_set)
@@ -465,16 +468,10 @@ static void SetLevelDebug(int level_to_set)
 
 void SetComponentLogLevel(log_components_t component, int level_to_set)
 {
-	if (component == COMPONENT_ALL) {
-		SetLevelDebug(level_to_set);
-		return;
-	}
 
-	if (level_to_set < NIV_NULL)
-		level_to_set = NIV_NULL;
-
-	if (level_to_set >= NB_LOG_LEVEL)
-		level_to_set = NB_LOG_LEVEL - 1;
+	assert(level_to_set >= NIV_NULL);
+	assert(level_to_set < NB_LOG_LEVEL);
+	assert(component != COMPONENT_ALL);
 
 	if (LogComponents[component].comp_env_set) {
 		LogWarn(COMPONENT_CONFIG,
@@ -638,7 +635,10 @@ static void set_logging_from_env(void)
 			continue;
 		}
 		oldlevel = component_log_level[component];
-		component_log_level[component] = newlevel;
+		if (component == COMPONENT_ALL)
+			_SetLevelDebug(newlevel);
+		else
+			SetComponentLogLevel(component, newlevel);
 		LogComponents[component].comp_env_set = true;
 		LogChanges(
 		     "Using environment variable to switch log level for %s from %s to %s",
@@ -1728,7 +1728,7 @@ static bool dbus_prop_set(log_components_t component, DBusMessageIter *arg)
 			   LogComponents[component].comp_name,
 			   ReturnLevelInt(component_log_level[component]),
 			   ReturnLevelInt(log_level));
-		component_log_level[component] = log_level;
+		SetComponentLogLevel(component, log_level);
 	}
 	return true;
 }
