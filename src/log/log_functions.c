@@ -46,6 +46,7 @@
 #include "log.h"
 #include "gsh_list.h"
 #include "rpc/rpc.h"
+#include "gsh_rpc.h"
 #include "common_utils.h"
 #include "abstract_mem.h"
 
@@ -482,13 +483,38 @@ void SetComponentLogLevel(log_components_t component, int level_to_set)
 		return;
 	}
 
-	if (component_log_level[component] != level_to_set) {
-		LogChanges("Changing log level of %s from %s to %s",
-			   LogComponents[component].comp_name,
-			   ReturnLevelInt(component_log_level[component]),
-			   ReturnLevelInt(level_to_set));
-		component_log_level[component] = level_to_set;
+	if (component_log_level[component] == level_to_set)
+		return;
+
+	LogChanges("Changing log level of %s from %s to %s",
+		   LogComponents[component].comp_name,
+		   ReturnLevelInt(component_log_level[component]),
+		   ReturnLevelInt(level_to_set));
+	component_log_level[component] = level_to_set;
+
+	if (component != COMPONENT_TIRPC)
+		return;
+
+	/* If the admin configured libntirpc debug flags to anything
+	 * other than the default, preserve those and don't modify the
+	 * flags.
+	 */
+	if (nfs_param.core_param.rpc.debug_flags != TIRPC_DEBUG_FLAGS)
+		return;
+
+	/* push TIRPC component log levels into libntirpc.
+	 *
+	 * Implement only FULL_DEBUG for now
+	 */
+	switch (level_to_set) {
+	case NIV_FULL_DEBUG:
+		ntirpc_pp.debug_flags = 0xFFFFFFFF; /* enable all flags */
+		break;
+	default:
+		ntirpc_pp.debug_flags = 0; /* disable all flags */
+		break;
 	}
+	(void)tirpc_control(TIRPC_PUT_PARAMETERS, &ntirpc_pp);
 }
 
 static inline int ReturnLevelDebug(void)
@@ -1522,6 +1548,7 @@ static log_levels_t default_log_levels[] = {
 	[COMPONENT_RW_LOCK] = NIV_EVENT,
 	[COMPONENT_NLM] = NIV_EVENT,
 	[COMPONENT_RPC] = NIV_EVENT,
+	[COMPONENT_TIRPC] = NIV_EVENT,
 	[COMPONENT_NFS_CB] = NIV_EVENT,
 	[COMPONENT_THREAD] = NIV_EVENT,
 	[COMPONENT_NFS_V4_ACL] = NIV_EVENT,
@@ -1617,6 +1644,9 @@ struct log_component_info LogComponents[COMPONENT_COUNT] = {
 	[COMPONENT_RPC] = {
 		.comp_name = "COMPONENT_RPC",
 		.comp_str = "RPC",},
+	[COMPONENT_TIRPC] = {
+		.comp_name = "COMPONENT_TIRPC",
+		.comp_str = "TIRPC",},
 	[COMPONENT_NFS_CB] = {
 		.comp_name = "COMPONENT_NFS_CB",
 		.comp_str = "NFS CB",},
@@ -1676,12 +1706,12 @@ void rpc_warnx(char *fmt, ...)
 {
 	va_list ap;
 
-	if (component_log_level[COMPONENT_RPC] < NIV_DEBUG)
+	if (component_log_level[COMPONENT_TIRPC] < NIV_DEBUG)
 		return;
 
 	va_start(ap, fmt);
 
-	display_log_component_level(COMPONENT_RPC, "<no-file>", 0, "rpc",
+	display_log_component_level(COMPONENT_TIRPC, "<no-file>", 0, "rpc",
 				    NIV_DEBUG, fmt, ap);
 
 	va_end(ap);
@@ -1794,6 +1824,7 @@ HANDLE_PROP(PNFS);
 HANDLE_PROP(RW_LOCK);
 HANDLE_PROP(NLM);
 HANDLE_PROP(RPC);
+HANDLE_PROP(TIRPC);
 HANDLE_PROP(NFS_CB);
 HANDLE_PROP(THREAD);
 HANDLE_PROP(NFS_V4_ACL);
@@ -1832,6 +1863,7 @@ static struct gsh_dbus_prop *log_props[] = {
 	LOG_PROPERTY_ITEM(RW_LOCK),
 	LOG_PROPERTY_ITEM(NLM),
 	LOG_PROPERTY_ITEM(RPC),
+	LOG_PROPERTY_ITEM(TIRPC),
 	LOG_PROPERTY_ITEM(NFS_CB),
 	LOG_PROPERTY_ITEM(THREAD),
 	LOG_PROPERTY_ITEM(NFS_V4_ACL),
@@ -2113,6 +2145,8 @@ static struct config_item component_levels[] = {
 			 COMPONENT_NLM, int),
 	CONF_INDEX_TOKEN("RPC", NB_LOG_LEVEL, log_levels,
 			 COMPONENT_RPC, int),
+	CONF_INDEX_TOKEN("TIRPC", NB_LOG_LEVEL, log_levels,
+			 COMPONENT_TIRPC, int),
 	CONF_INDEX_TOKEN("NFS_CB", NB_LOG_LEVEL, log_levels,
 			 COMPONENT_NFS_CB, int),
 	CONF_INDEX_TOKEN("THREAD", NB_LOG_LEVEL, log_levels,

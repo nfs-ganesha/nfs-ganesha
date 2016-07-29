@@ -858,7 +858,7 @@ void Register_program(protos prot, int flag, int vers)
 	}
 }
 
-static tirpc_pkg_params ntirpc_pp = {
+tirpc_pkg_params ntirpc_pp = {
 	0,
 	0,
 	(mem_format_t)rpc_warnx,

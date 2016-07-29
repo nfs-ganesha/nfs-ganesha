@@ -331,4 +331,5 @@ extern int ipstring_to_sockaddr(const char *, sockaddr_t *);
 CLIENT *gsh_clnt_create(char *, unsigned long, unsigned long, char *);
 void gsh_clnt_destroy(CLIENT *);
 
+extern tirpc_pkg_params ntirpc_pp;
 #endif /* GSH_RPC_H */
