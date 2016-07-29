@@ -105,13 +105,8 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 	now(&s_time);
 #endif
 
-#ifdef USE_GLUSTER_SYMLINK_MOUNT
-		glhandle = glfs_h_lookupat(glfs_export->gl_fs,
-					parenthandle->glhandle, path, &sb, 0);
-#else
-		glhandle = glfs_h_lookupat(glfs_export->gl_fs,
-					parenthandle->glhandle, path, &sb);
-#endif
+	glhandle = glfs_h_lookupat(glfs_export->gl_fs,
+				parenthandle->glhandle, path, &sb, 0);
 	if (glhandle == NULL) {
 		status = gluster2fsal_error(errno);
 		goto out;

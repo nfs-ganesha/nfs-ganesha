@@ -143,13 +143,8 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 		}
 	}
 
-#ifdef USE_GLUSTER_SYMLINK_MOUNT
-		glhandle = glfs_h_lookupat(glfs_export->gl_fs, NULL, realpath,
-					&sb, 1);
-#else
-		glhandle = glfs_h_lookupat(glfs_export->gl_fs, NULL, realpath,
-					&sb);
-#endif
+	glhandle = glfs_h_lookupat(glfs_export->gl_fs, NULL, realpath,
+				&sb, 1);
 	if (glhandle == NULL) {
 		status = gluster2fsal_error(errno);
 		goto out;
