@@ -1434,6 +1434,7 @@ static void _9p_execute(request_data_t *reqdata)
 	struct export_perms export_perms;
 
 	memset(&req_ctx, 0, sizeof(struct req_op_context));
+	memset(&export_perms, 0, sizeof(struct export_perms));
 	op_ctx = &req_ctx;
 	op_ctx->caller_addr = (sockaddr_t *)&reqdata->r_u._9p.pconn->addrpeer;
 	op_ctx->req_type = reqdata->rtype;
