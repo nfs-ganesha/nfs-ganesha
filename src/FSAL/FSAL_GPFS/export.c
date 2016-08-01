@@ -756,7 +756,8 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 
 	status.minor = fsal_internal_version();
 	LogInfo(COMPONENT_FSAL, "GPFS get version is %d options 0x%X id %d",
-		status.minor, op_ctx->export->export_perms.options,
+		status.minor,
+		op_ctx->export_perms ? op_ctx->export_perms->options : 0,
 		op_ctx->export->export_id);
 
 	fsal_export_init(&myself->export);
