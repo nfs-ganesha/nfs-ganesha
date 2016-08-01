@@ -1055,7 +1055,7 @@ fsal_status_t fsal_write2(struct fsal_obj_handle *obj,
 	/* Error return from FSAL calls */
 	fsal_status_t status = { 0, 0 };
 
-	if (op_ctx->export->export_perms.options & EXPORT_OPTION_COMMIT) {
+	if (op_ctx->export_perms->options & EXPORT_OPTION_COMMIT) {
 		/* Force sync if export requires it */
 		*sync = true;
 	}
@@ -1127,16 +1127,13 @@ fsal_status_t fsal_rdwr(struct fsal_obj_handle *obj,
 	    io_direction == FSAL_IO_READ_PLUS) {
 		openflags = FSAL_O_READ;
 	} else {
-		struct export_perms *perms;
-
 		/* Pretent that the caller requested sync (stable write)
 		 * if the export has COMMIT option. Note that
 		 * FSAL_O_SYNC is not always honored, so just setting
 		 * FSAL_O_SYNC has no guaranty that this write will be
 		 * a stable write.
 		 */
-		perms = &op_ctx->export->export_perms;
-		if (perms->options & EXPORT_OPTION_COMMIT)
+		if (op_ctx->export_perms->options & EXPORT_OPTION_COMMIT)
 			*sync = true;
 		openflags = FSAL_O_WRITE;
 		if (*sync)
