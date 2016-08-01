@@ -724,7 +724,6 @@ void nfs_rpc_execute(request_data_t *reqdata)
 	struct timespec timer_start;
 	enum auth_stat auth_rc;
 	int port;
-	int protocol_options = EXPORT_OPTION_NO_DELEGATIONS;
 	int rc = NFS_REQ_OK;
 #ifdef _USE_NFS3
 	int exportid = -1;
@@ -904,10 +903,10 @@ void nfs_rpc_execute(request_data_t *reqdata)
 		 */
 
 		progname = "NFS";
-		if (reqdata->r_u.req.svc.rq_vers == NFS_V3) {
 #ifdef _USE_NFS3
-			protocol_options |= EXPORT_OPTION_NFSV3;
+		if (reqdata->r_u.req.svc.rq_vers == NFS_V3) {
 			exportid = nfs3_FhandleToExportId((nfs_fh3 *) arg_nfs);
+
 			if (exportid < 0) {
 				LogInfo(COMPONENT_DISPATCH,
 					"NFS3 Request from client %s has badly formed handle",
@@ -919,7 +918,9 @@ void nfs_rpc_execute(request_data_t *reqdata)
 				rc = NFS_REQ_OK;
 				goto req_error;
 			}
+
 			op_ctx->export = get_gsh_export(exportid);
+
 			if (op_ctx->export == NULL) {
 				LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 					"NFS3 Request from client %s has invalid export %d",
@@ -930,39 +931,24 @@ void nfs_rpc_execute(request_data_t *reqdata)
 				rc = NFS_REQ_OK;
 				goto req_error;
 			}
+
 			op_ctx->fsal_export = op_ctx->export->fsal_export;
-			if ((op_ctx->export->export_perms.
-			     options & EXPORT_OPTION_NFSV3) == 0)
-				goto handle_err;
-			/* privileged port only makes sense for V3.
-			 * V4 can go thru firewalls and so all bets are off
-			 */
-			if ((op_ctx->export->export_perms.
-			     options & EXPORT_OPTION_PRIVILEGED_PORT)
-			    && (port >= IPPORT_RESERVED)) {
-				LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
-					"Port %d is too high for this export entry, rejecting client",
-					port);
-				auth_rc = AUTH_TOOWEAK;
-				goto auth_failure;
-			}
 
 			LogMidDebugAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 				    "Found export entry for path=%s as exportid=%d",
 				    op_ctx->export->fullpath,
 				    op_ctx->export->export_id);
-#endif /* _USE_NFS3 */
-		} else {	/* NFS V4 gets its own export id from the ops
-				 * in the compound */
-			protocol_options |= EXPORT_OPTION_NFSV4;
 		}
+#endif /* _USE_NFS3 */
+		/* NFS V4 gets its own export id from the ops
+		 * in the compound */
 #ifdef _USE_NLM
 	} else if (reqdata->r_u.req.svc.rq_prog
 		   == nfs_param.core_param.program[P_NLM]) {
 		netobj *pfh3 = NULL;
 
-		protocol_options |= EXPORT_OPTION_NFSV3;
 		progname = "NLM";
+
 		switch (reqdata->r_u.req.svc.rq_proc) {
 		case NLMPROC4_NULL:
 			/* caught above and short circuited */
@@ -1005,6 +991,7 @@ void nfs_rpc_execute(request_data_t *reqdata)
 		}
 		if (pfh3 != NULL) {
 			exportid = nlm4_FhandleToExportId(pfh3);
+
 			if (exportid < 0) {
 				LogInfo(COMPONENT_DISPATCH,
 					"NLM4 Request from client %s has badly formed handle",
@@ -1021,6 +1008,7 @@ void nfs_rpc_execute(request_data_t *reqdata)
 				 */
 			} else {
 				op_ctx->export = get_gsh_export(exportid);
+
 				if (op_ctx->export == NULL) {
 					LogInfoAlt(COMPONENT_DISPATCH,
 						   COMPONENT_EXPORT,
@@ -1038,10 +1026,6 @@ void nfs_rpc_execute(request_data_t *reqdata)
 					 */
 					op_ctx->fsal_export = NULL;
 				} else {
-					if ((op_ctx->export->export_perms
-					     .options & EXPORT_OPTION_NFSV3)
-					    == 0)
-						goto handle_err;
 					op_ctx->fsal_export =
 					    op_ctx->export->fsal_export;
 
@@ -1061,6 +1045,7 @@ void nfs_rpc_execute(request_data_t *reqdata)
 
 	/* Only do access check if we have an export. */
 	if (op_ctx->export != NULL) {
+		/* We ONLY get here for NFS v3 or NLM requests with a handle */
 		xprt_type_t xprt_type = svc_get_xprt_type(xprt);
 
 		LogMidDebugAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
@@ -1082,16 +1067,7 @@ void nfs_rpc_execute(request_data_t *reqdata)
 			goto auth_failure;
 		}
 
-		/* Check protocol version */
-		if ((protocol_options & EXPORT_OPTION_PROTOCOLS) == 0) {
-			LogCrit(COMPONENT_DISPATCH,
-				"Problem, request requires export but does not have a protocol version");
-
-			auth_rc = AUTH_FAILED;
-			goto auth_failure;
-		}
-
-		if ((protocol_options & export_perms.options) == 0) {
+		if ((EXPORT_OPTION_NFSV3 & export_perms.options) == 0) {
 			LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 				"%s Version %d not allowed on Export_Id %d %s for client %s",
 				progname, reqdata->r_u.req.svc.rq_vers,
@@ -1382,9 +1358,6 @@ void nfs_rpc_execute(request_data_t *reqdata)
 		dpq_status = nfs_dupreq_finish(&reqdata->r_u.req.svc, res_nfs);
 	goto freeargs;
 
-#if defined(_USE_NFS3) || defined(_USE_NLM)
- handle_err:
-#endif /* defined(_USE_NFS3) || defined(_USE_NLM) */
 	/* Reject the request for authentication reason (incompatible
 	 * file handle) */
 	if (isInfo(COMPONENT_DISPATCH) || isInfo(COMPONENT_EXPORT)) {
