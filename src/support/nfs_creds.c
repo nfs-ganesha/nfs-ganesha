@@ -485,8 +485,8 @@ void init_credentials(void)
 {
 	memset(op_ctx->creds, 0, sizeof(*op_ctx->creds));
 	memset(&op_ctx->original_creds, 0, sizeof(op_ctx->original_creds));
-	op_ctx->creds->caller_uid = (uid_t) ANON_UID;
-	op_ctx->creds->caller_gid = (gid_t) ANON_GID;
+	op_ctx->creds->caller_uid = op_ctx->export_perms->anonymous_uid;
+	op_ctx->creds->caller_gid = op_ctx->export_perms->anonymous_gid;
 	op_ctx->caller_gdata = NULL;
 	op_ctx->caller_garray_copy = NULL;
 	op_ctx->managed_garray_copy = NULL;

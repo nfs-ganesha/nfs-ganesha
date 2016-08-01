@@ -1488,9 +1488,7 @@ static int build_default_root(struct config_error_type *err_type)
 	export->PrefRead = FSAL_MAXIOSIZE;
 	export->PrefReaddir = 16384;
 
-	/* Default anonymous uid and gid */
-	export->export_perms.anonymous_uid = (uid_t) ANON_UID;
-	export->export_perms.anonymous_gid = (gid_t) ANON_GID;
+	/*Don't set anonymous uid and gid, they will actually be ignored */
 
 	/* Support only NFS v4 and TCP.
 	 * Root is allowed
@@ -2220,6 +2218,60 @@ sockaddr_t *convert_ipv6_to_ipv4(sockaddr_t *ipv6, sockaddr_t *ipv4)
 }
 
 /**
+ * @brief Get the best anonymous uid available.
+ *
+ * This is safe if there is no op_ctx or there is one but there is no
+ * export_perms attached.
+ *
+ */
+
+uid_t get_anonymous_uid(void)
+{
+	/* Default to code default. */
+	uid_t anon_uid = export_opt.def.anonymous_uid;
+
+	if (op_ctx != NULL) {
+		if (op_ctx->export_perms != NULL) {
+			/* We have export_perms, use it. */
+			anon_uid = op_ctx->export_perms->anonymous_uid;
+		} else if ((export_opt.conf.set & EXPORT_OPTION_ANON_UID_SET)
+									!= 0) {
+			/* Option was set in EXPORT_DEFAULTS */
+			anon_uid = export_opt.conf.anonymous_uid;
+		}
+	}
+
+	return anon_uid;
+}
+
+/**
+ * @brief Get the best anonymous gid available.
+ *
+ * This is safe if there is no op_ctx or there is one but there is no
+ * export_perms attached.
+ *
+ */
+
+gid_t get_anonymous_gid(void)
+{
+	/* Default to code default. */
+	gid_t anon_gid = export_opt.def.anonymous_gid;
+
+	if (op_ctx != NULL) {
+		if (op_ctx->export_perms != NULL) {
+			/* We have export_perms, use it. */
+			anon_gid = op_ctx->export_perms->anonymous_gid;
+		} else if ((export_opt.conf.set & EXPORT_OPTION_ANON_GID_SET)
+									!= 0) {
+			/* Option was set in EXPORT_DEFAULTS */
+			anon_gid = export_opt.conf.anonymous_gid;
+		}
+	}
+
+	return anon_gid;
+}
+
+/**
  * @brief Checks if a machine is authorized to access an export entry
  *
  * Permissions in the op context get updated based on export and client
@@ -2227,17 +2279,22 @@ sockaddr_t *convert_ipv6_to_ipv4(sockaddr_t *ipv6, sockaddr_t *ipv4)
 
 void export_check_access(void)
 {
-	exportlist_client_entry_t *client;
+	exportlist_client_entry_t *client = NULL;
 	sockaddr_t alt_hostaddr;
-	sockaddr_t *hostaddr;
+	sockaddr_t *hostaddr = NULL;
 
-	/* Initialize permissions to allow nothing */
-	op_ctx->export_perms->options = 0;
-	op_ctx->export_perms->set = 0;
-	op_ctx->export_perms->anonymous_uid = (uid_t) ANON_UID;
-	op_ctx->export_perms->anonymous_gid = (gid_t) ANON_GID;
+	assert(op_ctx != NULL);
+	assert(op_ctx->export_perms != NULL);
 
-	assert(op_ctx != NULL && op_ctx->export != NULL);
+	/* Initialize permissions to allow nothing, anonymous_uid and
+	 * anonymous_gid will get set farther down.
+	 */
+	memset(op_ctx->export_perms, 0, sizeof(*op_ctx->export_perms));
+
+	if (op_ctx->export == NULL) {
+		/* Shortcut if no export */
+		goto no_export;
+	}
 
 	hostaddr = convert_ipv6_to_ipv4(op_ctx->caller_addr, &alt_hostaddr);
 
@@ -2291,6 +2348,8 @@ void export_check_access(void)
 
 	op_ctx->export_perms->set |= op_ctx->export->export_perms.set;
 
+ no_export:
+
 	/* Any options not set by the client or export, take from the
 	 *  EXPORT_DEFAULTS block.
 	 */
@@ -2336,26 +2395,30 @@ void export_check_access(void)
 			display_reset_buffer(&dspbuf);
 		}
 
-		(void) StrExportOptions(&dspbuf, &op_ctx->export->export_perms);
-		LogMidDebug(COMPONENT_EXPORT,
-			    "EXPORT          (%s)",
-			    perms);
+		if (op_ctx->export != NULL) {
+			(void) StrExportOptions(&dspbuf,
+						&op_ctx->export->export_perms);
+			LogMidDebug(COMPONENT_EXPORT,
+				    "EXPORT          (%s)",
+				    perms);
+			display_reset_buffer(&dspbuf);
+		}
 
 		(void) StrExportOptions(&dspbuf, &export_opt.conf);
 		LogMidDebug(COMPONENT_EXPORT,
 			    "EXPORT_DEFAULTS (%s)",
 			    perms);
-
 		display_reset_buffer(&dspbuf);
+
 		(void) StrExportOptions(&dspbuf, &export_opt.def);
 		LogMidDebug(COMPONENT_EXPORT,
 			    "default options (%s)",
 			    perms);
-
 		display_reset_buffer(&dspbuf);
+
 		(void) StrExportOptions(&dspbuf, op_ctx->export_perms);
 		LogMidDebug(COMPONENT_EXPORT,
 			    "Final options   (%s)",
 			    perms);
 	}
-}				/* nfs_export_check_access */
+}

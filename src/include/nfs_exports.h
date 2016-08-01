@@ -202,6 +202,8 @@ typedef struct exportlist_client_entry__ {
 #define EXPORT_OPTION_NO_READDIR_PLUS 0x80000000 /*< Disallow readdir plus */
 
 /* Export list related functions */
+uid_t get_anonymous_uid(void);
+gid_t get_anonymous_gid(void);
 void export_check_access(void);
 
 bool export_check_security(struct svc_req *req);

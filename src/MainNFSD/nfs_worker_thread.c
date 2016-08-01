@@ -742,20 +742,19 @@ void nfs_rpc_execute(request_data_t *reqdata)
 		"rpc_execute-start");
 #endif
 
-	/* Initialize permissions to allow nothing */
-	export_perms.options = 0;
-	export_perms.anonymous_uid = (uid_t) ANON_UID;
-	export_perms.anonymous_gid = (gid_t) ANON_GID;
-
 	/* set up the request context
 	 */
-	memset(&req_ctx, 0, sizeof(struct req_op_context));
+	memset(&export_perms, 0, sizeof(export_perms));
+	memset(&req_ctx, 0, sizeof(req_ctx));
 	op_ctx = &req_ctx;
 	op_ctx->creds = &user_credentials;
 	op_ctx->caller_addr = (sockaddr_t *)svc_getrpccaller(xprt);
 	op_ctx->nfs_vers = reqdata->r_u.req.svc.rq_vers;
 	op_ctx->req_type = reqdata->rtype;
 	op_ctx->export_perms = &export_perms;
+
+	/* Set up initial export permissions that don't allow anything. */
+	export_check_access();
 
 	/* start the processing clock
 	 * we measure all time stats as intervals (elapsed nsecs) from
@@ -1410,7 +1409,7 @@ void nfs_rpc_execute(request_data_t *reqdata)
 	}
 
  freeargs:
-	clean_credentials();
+
 	/* XXX no need for xprt slock across SVC_FREEARGS */
 	DISP_SUNLOCK(xprt);
 
@@ -1433,10 +1432,15 @@ void nfs_rpc_execute(request_data_t *reqdata)
 		nfs_dupreq_rele(&reqdata->r_u.req.svc, reqdesc);
 
 	SetClientIP(NULL);
-	if (op_ctx->client != NULL)
+	if (op_ctx->client != NULL) {
 		put_gsh_client(op_ctx->client);
-	if (op_ctx->export != NULL)
+		op_ctx->client = NULL;
+	}
+	if (op_ctx->export != NULL) {
 		put_gsh_export(op_ctx->export);
+		op_ctx->export = NULL;
+	}
+	clean_credentials();
 	op_ctx = NULL;
 
 #ifdef USE_LTTNG

@@ -814,10 +814,7 @@ static fattr_xdr_result decode_acl(XDR *xdr, struct xdr_attrs_args *args)
 				if (!name2gid(
 					&gname,
 					&ace->who.gid,
-					args->data
-					? op_ctx->export
-					  ->export_perms .anonymous_gid
-					: -1))
+					get_anonymous_gid()))
 					goto baderr;
 
 				LogFullDebug(COMPONENT_NFS_V4,
@@ -831,10 +828,7 @@ static fattr_xdr_result decode_acl(XDR *xdr, struct xdr_attrs_args *args)
 				if (!name2uid(
 					&uname,
 					&ace->who.uid,
-					args->data
-					? op_ctx->export
-					  ->export_perms .anonymous_uid
-					: -1))
+					get_anonymous_uid()))
 					goto baderr;
 
 				LogFullDebug(COMPONENT_NFS_V4,
@@ -1543,11 +1537,7 @@ static fattr_xdr_result decode_owner(XDR *xdr, struct xdr_attrs_args *args)
 		return FATTR_XDR_FAILED;
 	}
 
-	if (!name2uid(&ownerdesc,
-		      &uid,
-		      args->data ?
-			op_ctx->export->export_perms.anonymous_uid
-			: -1)) {
+	if (!name2uid(&ownerdesc, &uid, get_anonymous_uid())) {
 		return FATTR_BADOWNER;
 	}
 
@@ -1590,11 +1580,7 @@ static fattr_xdr_result decode_group(XDR *xdr, struct xdr_attrs_args *args)
 		return FATTR_XDR_FAILED;
 	}
 
-	if (!name2gid(&groupdesc,
-		      &gid,
-		      args->data ?
-			op_ctx->export->export_perms.anonymous_gid
-			: -1))
+	if (!name2gid(&groupdesc, &gid, get_anonymous_gid()))
 		return FATTR_BADOWNER;
 
 	xdr_setpos(xdr, newpos);
