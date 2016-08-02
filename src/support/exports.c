@@ -1694,10 +1694,14 @@ void release_export_root(struct gsh_export *export)
 	PTHREAD_RWLOCK_unlock(&export->lock);
 	PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
 
+	/* Release sentinal ref */
+	obj->obj_ops.put_ref(obj);
+
 	LogDebug(COMPONENT_EXPORT,
 		 "Released root obj %p for path %s on export_id=%d",
 		 obj, export->fullpath, export->export_id);
 
+	/* Release ref taken above */
 	obj->obj_ops.put_ref(obj);
 }
 
