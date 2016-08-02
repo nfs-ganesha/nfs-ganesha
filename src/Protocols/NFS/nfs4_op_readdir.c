@@ -492,6 +492,8 @@ int nfs4_op_readdir(struct nfs_argop4 *op, compound_data_t *data,
 	struct nfs4_readdir_cb_data tracker;
 	fsal_status_t fsal_status = {0, 0};
 	attrmask_t attrmask;
+	bool use_cookie_verifier = op_ctx_export_has_option(
+					EXPORT_OPTION_USE_COOKIE_VERIFIER);
 
 	resp->resop = NFS4_OP_READDIR;
 	res_READDIR4->status = NFS4_OK;
@@ -559,7 +561,7 @@ int nfs4_op_readdir(struct nfs_argop4 *op, compound_data_t *data,
 	 * then only a set of zeros is returned (trivial value)
 	 */
 	memset(cookie_verifier, 0, NFS4_VERIFIER_SIZE);
-	if (op_ctx->export->options & EXPORT_OPTION_USE_COOKIE_VERIFIER) {
+	if (use_cookie_verifier) {
 		time_t change_time;
 		struct attrlist attrs;
 
@@ -595,8 +597,7 @@ int nfs4_op_readdir(struct nfs_argop4 *op, compound_data_t *data,
 	 * '.' and '..' are not returned, so all cookies will be offset by 2
 	 */
 
-	if ((cookie != 0) &&
-	    (op_ctx->export->options & EXPORT_OPTION_USE_COOKIE_VERIFIER)) {
+	if (cookie != 0 && use_cookie_verifier) {
 		if (memcmp(cookie_verifier,
 			   arg_READDIR4->cookieverf,
 			   NFS4_VERIFIER_SIZE) != 0) {

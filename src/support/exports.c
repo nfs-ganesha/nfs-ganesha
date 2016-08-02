@@ -52,18 +52,37 @@
 #include "sal_functions.h"
 #include "pnfs_utils.h"
 
-struct global_export_perms export_opt = {
-	.def.anonymous_uid = ANON_UID,
-	.def.anonymous_gid = ANON_GID,
-	/* Note: Access_Type defaults to None on purpose */
-	.def.options = EXPORT_OPTION_ROOT_SQUASH |
-		       EXPORT_OPTION_NO_ACCESS |
-		       EXPORT_OPTION_AUTH_DEFAULTS |
-		       EXPORT_OPTION_PROTO_DEFAULTS |
-		       EXPORT_OPTION_XPORT_DEFAULTS |
-		       EXPORT_OPTION_NO_DELEGATIONS,
-	.def.set = UINT32_MAX,
+/**
+ * @brief Protect EXPORT_DEFAULTS structure for dynamic update.
+ *
+ * If an export->lock is also held by the code, this lock MUST be
+ * taken AFTER the export->lock to avoid ABBA deadlock.
+ *
+ */
+pthread_rwlock_t export_opt_lock = PTHREAD_RWLOCK_INITIALIZER;
+
+#define GLOBAL_EXPORT_PERMS_INITIALIZER				\
+	.def.anonymous_uid = ANON_UID,				\
+	.def.anonymous_gid = ANON_GID,				\
+	/* Note: Access_Type defaults to None on purpose */	\
+	.def.options = EXPORT_OPTION_ROOT_SQUASH |		\
+		       EXPORT_OPTION_NO_ACCESS |		\
+		       EXPORT_OPTION_AUTH_DEFAULTS |		\
+		       EXPORT_OPTION_PROTO_DEFAULTS |		\
+		       EXPORT_OPTION_XPORT_DEFAULTS |		\
+		       EXPORT_OPTION_NO_DELEGATIONS,		\
+	.def.set = UINT32_MAX,					\
 	.expire_time_attr = 60,
+
+struct global_export_perms export_opt = {
+	GLOBAL_EXPORT_PERMS_INITIALIZER
+};
+
+/* A second copy used in configuration, so we can atomically update the
+ * primary set.
+ */
+struct global_export_perms export_opt_cfg = {
+	GLOBAL_EXPORT_PERMS_INITIALIZER
 };
 
 static void FreeClientList(struct glist_head *clients);
@@ -719,8 +738,12 @@ static int fsal_cfg_commit(void *node, void *link_mem, void *self_struct,
 					   node, err_type,
 					  &fsal_up_top);
 
+	PTHREAD_RWLOCK_rdlock(&export_opt_lock);
+
 	if ((export->options_set & EXPORT_OPTION_EXPIRE_SET) == 0)
 		export->expire_time_attr = export_opt.expire_time_attr;
+
+	PTHREAD_RWLOCK_rdlock(&export_opt_lock);
 
 	if (FSAL_IS_ERROR(status)) {
 		fsal_put(fsal);
@@ -1062,7 +1085,7 @@ err_out:
 static void *export_defaults_init(void *link_mem, void *self_struct)
 {
 	if (self_struct == NULL)
-		return &export_opt;
+		return &export_opt_cfg;
 	else
 		return NULL;
 }
@@ -1078,6 +1101,11 @@ static int export_defaults_commit(void *node, void *link_mem,
 				  void *self_struct,
 				  struct config_error_type *err_type)
 {
+	/* Update under lock. */
+	PTHREAD_RWLOCK_wrlock(&export_opt_lock);
+	export_opt = export_opt_cfg;
+	PTHREAD_RWLOCK_unlock(&export_opt_lock);
+
 	return 0;
 }
 
@@ -2224,19 +2252,24 @@ sockaddr_t *convert_ipv6_to_ipv4(sockaddr_t *ipv6, sockaddr_t *ipv4)
 
 uid_t get_anonymous_uid(void)
 {
-	/* Default to code default. */
-	uid_t anon_uid = export_opt.def.anonymous_uid;
+	uid_t anon_uid;
 
-	if (op_ctx != NULL) {
-		if (op_ctx->export_perms != NULL) {
-			/* We have export_perms, use it. */
-			anon_uid = op_ctx->export_perms->anonymous_uid;
-		} else if ((export_opt.conf.set & EXPORT_OPTION_ANON_UID_SET)
-									!= 0) {
-			/* Option was set in EXPORT_DEFAULTS */
-			anon_uid = export_opt.conf.anonymous_uid;
-		}
+	if (op_ctx != NULL &&  op_ctx->export_perms != NULL) {
+		/* We have export_perms, use it. */
+		return op_ctx->export_perms->anonymous_uid;
 	}
+
+	PTHREAD_RWLOCK_rdlock(&export_opt_lock);
+
+	if ((export_opt.conf.set & EXPORT_OPTION_ANON_UID_SET) != 0) {
+		/* Option was set in EXPORT_DEFAULTS */
+		anon_uid = export_opt.conf.anonymous_uid;
+	} else {
+		/* Default to code default. */
+		anon_uid = export_opt.def.anonymous_uid;
+	}
+
+	PTHREAD_RWLOCK_unlock(&export_opt_lock);
 
 	return anon_uid;
 }
@@ -2254,16 +2287,22 @@ gid_t get_anonymous_gid(void)
 	/* Default to code default. */
 	gid_t anon_gid = export_opt.def.anonymous_gid;
 
-	if (op_ctx != NULL) {
-		if (op_ctx->export_perms != NULL) {
-			/* We have export_perms, use it. */
-			anon_gid = op_ctx->export_perms->anonymous_gid;
-		} else if ((export_opt.conf.set & EXPORT_OPTION_ANON_GID_SET)
-									!= 0) {
-			/* Option was set in EXPORT_DEFAULTS */
-			anon_gid = export_opt.conf.anonymous_gid;
-		}
+	if (op_ctx != NULL &&  op_ctx->export_perms != NULL) {
+		/* We have export_perms, use it. */
+		return op_ctx->export_perms->anonymous_gid;
 	}
+
+	PTHREAD_RWLOCK_rdlock(&export_opt_lock);
+
+	if ((export_opt.conf.set & EXPORT_OPTION_ANON_GID_SET) != 0) {
+		/* Option was set in EXPORT_DEFAULTS */
+		anon_gid = export_opt.conf.anonymous_gid;
+	} else {
+		/* Default to code default. */
+		anon_gid = export_opt.def.anonymous_gid;
+	}
+
+	PTHREAD_RWLOCK_unlock(&export_opt_lock);
 
 	return anon_gid;
 }
@@ -2271,7 +2310,10 @@ gid_t get_anonymous_gid(void)
 /**
  * @brief Checks if a machine is authorized to access an export entry
  *
- * Permissions in the op context get updated based on export and client
+ * Permissions in the op context get updated based on export and client.
+ *
+ * Takes the export->lock in read mode to protect the client list and
+ * export permissions while performing this work.
  */
 
 void export_check_access(void)
@@ -2288,7 +2330,10 @@ void export_check_access(void)
 	 */
 	memset(op_ctx->export_perms, 0, sizeof(*op_ctx->export_perms));
 
-	if (op_ctx->export == NULL) {
+	if (op_ctx->export != NULL) {
+		/* Take lock */
+		PTHREAD_RWLOCK_rdlock(&op_ctx->export->lock);
+	} else {
 		/* Shortcut if no export */
 		goto no_export;
 	}
@@ -2346,6 +2391,8 @@ void export_check_access(void)
 	op_ctx->export_perms->set |= op_ctx->export->export_perms.set;
 
  no_export:
+
+	PTHREAD_RWLOCK_rdlock(&export_opt_lock);
 
 	/* Any options not set by the client or export, take from the
 	 *  EXPORT_DEFAULTS block.
@@ -2417,5 +2464,12 @@ void export_check_access(void)
 		LogMidDebug(COMPONENT_EXPORT,
 			    "Final options   (%s)",
 			    perms);
+	}
+
+	PTHREAD_RWLOCK_unlock(&export_opt_lock);
+
+	if (op_ctx->export != NULL) {
+		/* Release lock */
+		PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
 	}
 }

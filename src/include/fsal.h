@@ -35,6 +35,27 @@
  * @note  not called by other header files.
  */
 
+/**
+ * @brief Thread Local Storage (TLS).
+ *
+ * TLS variables look like globals but since they are global only in the
+ * context of a single thread, they do not require locks.  This is true
+ * of all thread either within or separate from a/the fridge.
+ *
+ * All thread local storage is declared extern here.  The actual
+ * storage declaration is in fridgethr.c.
+ */
+
+/**
+ * @brief Operation context (op_ctx).
+ *
+ * This carries everything relevant to a protocol operation.
+ * Space for the struct itself is allocated elsewhere.
+ * Test/assert opctx != NULL first (or let the SEGV kill you)
+ */
+
+extern __thread struct req_op_context *op_ctx;
+
 #ifndef FSAL_H
 #define FSAL_H
 
@@ -60,27 +81,6 @@ extern struct fsal_module *pnfs_fsal[];
  * This is actually defined in exports.c
  */
 extern struct config_item_list deleg_types[];
-
-/**
- * @brief Thread Local Storage (TLS).
- *
- * TLS variables look like globals but since they are global only in the
- * context of a single thread, they do not require locks.  This is true
- * of all thread either within or separate from a/the fridge.
- *
- * All thread local storage is declared extern here.  The actual
- * storage declaration is in fridgethr.c.
- */
-
-/**
- * @brief Operation context (op_ctx).
- *
- * This carries everything relevant to a protocol operation.
- * Space for the struct itself is allocated elsewhere.
- * Test/assert opctx != NULL first (or let the SEGV kill you)
- */
-
-extern __thread struct req_op_context *op_ctx;
 
 /* Export permissions for root op context, defined in protocol layer */
 extern uint32_t root_op_export_options;

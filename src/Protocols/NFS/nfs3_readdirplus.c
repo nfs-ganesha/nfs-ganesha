@@ -129,6 +129,8 @@ int nfs3_readdirplus(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		.error = NFS3_OK,
 	};
 	struct attrlist attrs_dir, attrs_parent;
+	bool use_cookie_verifier = op_ctx_export_has_option(
+					EXPORT_OPTION_USE_COOKIE_VERIFIER);
 
 	/* We have the option of not sending attributes, so set ATTR_RDATTR_ERR.
 	 */
@@ -155,7 +157,7 @@ int nfs3_readdirplus(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	res->res_readdir3.READDIR3res_u.resfail.dir_attributes.
 	    attributes_follow = FALSE;
 
-	if (op_ctx->export->options & EXPORT_OPTION_NO_READDIR_PLUS) {
+	if (op_ctx_export_has_option(EXPORT_OPTION_NO_READDIR_PLUS)) {
 		res->res_readdirplus3.status = NFS3ERR_NOTSUPP;
 		LogFullDebug(COMPONENT_NFS_READDIR,
 			     "Request not supported");
@@ -222,7 +224,7 @@ int nfs3_readdirplus(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	 * directory. If verifier is unused (as in many NFS Servers) then
 	 * only a set of zeros is returned (trivial value)
 	 */
-	if (op_ctx->export->options & EXPORT_OPTION_USE_COOKIE_VERIFIER) {
+	if (use_cookie_verifier) {
 		if (attrs_dir.mask == ATTR_RDATTR_ERR) {
 			res->res_readdir3.status = NFS3ERR_SERVERFAULT;
 			LogFullDebug(COMPONENT_NFS_READDIR,
@@ -235,8 +237,7 @@ int nfs3_readdirplus(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		       sizeof(attrs_dir.ctime.tv_sec));
 	}
 
-	if (op_ctx->export->options & EXPORT_OPTION_USE_COOKIE_VERIFIER
-	    && (begin_cookie != 0)) {
+	if (use_cookie_verifier && begin_cookie != 0) {
 		/* Not the first call, so we have to check the cookie
 		   verifier */
 		if (memcmp(cookie_verifier,

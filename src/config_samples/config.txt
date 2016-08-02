@@ -179,6 +179,8 @@ EXPORT_DEFAULTS {}
 	These options are all "export permissions" options, and will be
 	repeated in the EXPORT {} and EXPORT { CLIENT {} } blocks.
 
+	These options will all be dynamically updateable.
+
 	Access_Type(enum, values [None, RW, RO, MDONLY, MDONLY_RO],
 		    default None)
 
@@ -217,6 +219,9 @@ EXPORT {}
 
 	* Take all the "export permissions" options from EXPORT_DEFAULTS.
 
+	* The first 5 options are considered static from the perspective of
+	  dynamic update.
+
 	Path(path, no default, must be supplied)
 
 	Pseudo(path, no default)
@@ -224,6 +229,14 @@ EXPORT {}
 	Tag(string, no default)
 
 	Export_id(uint16, range 0 to UINT16_MAX, default 1)
+
+	Filesystem_id(fsid, format is uint64.uint64, default 666.666)
+
+		* Updating Filesystem_id would have an adverse impact on
+		  existing client mounts and it's not currently a type that
+		  can be atomically updated.
+
+	* The following options may be dynamically updated
 
 	MaxRead(uint64, range 512 to 64*1024*1024, default 64*1024*1024)
 
@@ -239,23 +252,35 @@ EXPORT {}
 
 	MaxOffsetRead(uint64, range 512 to UINT64_MAX, default UINT64_MAX)
 
-	Filesystem_id(fsid, format is uint64.uint64, default 666.666)
-
-	UseCookieVerifier(bool, default true)
-
 	DisableReaddirPlus(bool, default false)
 
 	Trust_Readdir_Negative_Cache(bool, default false)
 
+	* The following options may have limits on dynamic effect
+
+	UseCookieVerifier(bool, default true)
+
+		* Updating UseCookieVerifier while a readdir is in
+		  progress may result in unexpected behavior.
+
 	Disable_ACL(bool, default false)
 
+		* Disable_ACL is processed at create_export time currently
+		  which makes it effectively a static option.
+
 	Attr_Expiration_Time(int32, range -1 to INT32_MAX, default 60)
+
+		* Attr_Expiration_Time is evaluated when an MDCACHE entry
+		  is created, so the dynamic effect of this option may
+		  be constrained to new entries.
 
 
 EXPORT { CLIENT  {} }
 ---------------------
 
 	* Take all the "export permissions" options from EXPORT_DEFAULTS.
+
+	* The client lists are dynamically updateable.
 
 	Clients(client list, empty)
 

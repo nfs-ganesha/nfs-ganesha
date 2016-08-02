@@ -127,6 +127,8 @@ int nfs3_readdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	fsal_status_t fsal_status_gethandle = {0, 0};
 	int rc = NFS_REQ_OK;
 	struct nfs3_readdir_cb_data tracker = { NULL };
+	bool use_cookie_verifier = op_ctx_export_has_option(
+					EXPORT_OPTION_USE_COOKIE_VERIFIER);
 
 	if (isDebug(COMPONENT_NFSPROTO) || isDebug(COMPONENT_NFS_READDIR)) {
 		char str[LEN_FH_STR];
@@ -202,7 +204,7 @@ int nfs3_readdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	 * unused (as in many NFS Servers) then only a set of zeros
 	 * is returned (trivial value).
 	 */
-	if (op_ctx->export->options & EXPORT_OPTION_USE_COOKIE_VERIFIER) {
+	if (use_cookie_verifier) {
 		struct attrlist attrs;
 
 		fsal_prepare_attrs(&attrs, ATTR_CTIME);
@@ -226,8 +228,7 @@ int nfs3_readdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		fsal_release_attrs(&attrs);
 	}
 
-	if ((cookie != 0) &&
-	    (op_ctx->export->options & EXPORT_OPTION_USE_COOKIE_VERIFIER)) {
+	if (cookie != 0 && use_cookie_verifier) {
 		/* Not the first call, so we have to check the cookie
 		 * verifier
 		 */

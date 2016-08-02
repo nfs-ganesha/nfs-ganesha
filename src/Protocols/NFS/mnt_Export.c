@@ -85,6 +85,8 @@ static bool proc_export(struct gsh_export *export, void *arg)
 	new_expnode = gsh_calloc(1, sizeof(struct exportnode));
 	new_expnode->ex_dir = gsh_strdup(export->fullpath);
 
+	PTHREAD_RWLOCK_rdlock(&op_ctx->export->lock);
+
 	glist_for_each(glist_item, &export->clients) {
 		client =
 		    glist_entry(glist_item, exportlist_client_entry_t,
@@ -147,6 +149,8 @@ static bool proc_export(struct gsh_export *export, void *arg)
 			     export->fullpath, grp_name);
 		group->gr_name = gsh_strdup(grp_name);
 	}
+
+	PTHREAD_RWLOCK_unlock(&op_ctx->export->lock);
 
 	if (state->head == NULL)
 		state->head = new_expnode;

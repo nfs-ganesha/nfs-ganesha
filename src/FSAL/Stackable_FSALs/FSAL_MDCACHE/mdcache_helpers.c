@@ -52,10 +52,10 @@
 
 static inline bool trust_negative_cache(mdcache_entry_t *parent)
 {
-	return ((op_ctx->export->options &
-		 EXPORT_OPTION_TRUST_READIR_NEGATIVE_CACHE) != 0) &&
-		(parent->icreate_refcnt == 0) &&
-	       ((parent->mde_flags & MDCACHE_DIR_POPULATED) != 0);
+	return op_ctx_export_has_option(
+				  EXPORT_OPTION_TRUST_READIR_NEGATIVE_CACHE) &&
+		parent->icreate_refcnt == 0 &&
+		(parent->mde_flags & MDCACHE_DIR_POPULATED) != 0;
 }
 
 /**
@@ -478,7 +478,7 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 
 	if (nentry->attrs.expire_time_attr == 0) {
 		nentry->attrs.expire_time_attr =
-			op_ctx->export->expire_time_attr;
+		    atomic_fetch_uint32_t(&op_ctx->export->expire_time_attr);
 	}
 
 	/* Validate the attributes we just set. */

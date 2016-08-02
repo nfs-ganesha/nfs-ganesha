@@ -238,6 +238,8 @@ int nfs4_op_listxattr(struct nfs_argop4 *op, compound_data_t *data,
 	bool_t lr_eof;
 	component4 *entry;
 	int i;
+	bool use_cookie_verifier = op_ctx_export_has_option(
+					EXPORT_OPTION_USE_COOKIE_VERIFIER);
 
 	resp->resop = NFS4_OP_LISTXATTR;
 	res_LISTXATTR4->status = NFS4_OK;
@@ -263,8 +265,7 @@ int nfs4_op_listxattr(struct nfs_argop4 *op, compound_data_t *data,
 	la_cookie = arg_LISTXATTR4->la_cookie;
 	memset(la_cookieverf, 0, NFS4_VERIFIER_SIZE);
 
-	if ((la_cookie == 0) &&
-	    (op_ctx->export->options & EXPORT_OPTION_USE_COOKIE_VERIFIER)) {
+	if (la_cookie == 0 && use_cookie_verifier) {
 		if (memcmp(la_cookieverf, arg_LISTXATTR4->la_cookieverf,
 			   NFS4_VERIFIER_SIZE) != 0) {
 			res_LISTXATTR4->status = NFS4ERR_BAD_COOKIE;

@@ -166,6 +166,9 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 	bool anonymous_started = false;
 	struct gsh_buffdesc verf_desc;
 	state_owner_t *owner = NULL;
+	uint64_t MaxWrite = atomic_fetch_uint64_t(&op_ctx->export->MaxWrite);
+	uint64_t MaxOffsetWrite =
+			atomic_fetch_uint64_t(&op_ctx->export->MaxOffsetWrite);
 
 	/* Lock are not supported */
 	resp->resop = NFS4_OP_WRITE;
@@ -331,17 +334,17 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 		     "offset = %" PRIu64 "  length = %" PRIu64 "  stable = %d",
 		     offset, size, stable_how);
 
-	if (op_ctx->export->MaxOffsetWrite < UINT64_MAX) {
+	if (MaxOffsetWrite < UINT64_MAX) {
 		LogFullDebug(COMPONENT_NFS_V4,
 			     "Write offset=%" PRIu64 " count=%" PRIu64
 			     " MaxOffSet=%" PRIu64, offset, size,
-			     op_ctx->export->MaxOffsetWrite);
+			     MaxOffsetWrite);
 
-		if ((offset + size) > op_ctx->export->MaxOffsetWrite) {
+		if ((offset + size) > MaxOffsetWrite) {
 			LogEvent(COMPONENT_NFS_V4,
 				 "A client tryed to violate max file size %"
 				 PRIu64 " for exportid #%hu",
-				 op_ctx->export->MaxOffsetWrite,
+				 MaxOffsetWrite,
 				 op_ctx->export->export_id);
 
 			res_WRITE4->status = NFS4ERR_FBIG;
@@ -349,7 +352,7 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 		}
 	}
 
-	if (size > op_ctx->export->MaxWrite) {
+	if (size > MaxWrite) {
 		/*
 		 * The client asked for too much data, we
 		 * must restrict him
@@ -360,8 +363,8 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 			LogFullDebug(COMPONENT_NFS_V4,
 				     "write requested size = %" PRIu64
 				     " write allowed size = %" PRIu64,
-				     size, op_ctx->export->MaxWrite);
-			size = op_ctx->export->MaxWrite;
+				     size, MaxWrite);
+			size = MaxWrite;
 		}
 	}
 

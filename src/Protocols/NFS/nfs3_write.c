@@ -77,6 +77,9 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	bool eof_met = false;
 	bool sync = false;
 	int rc = NFS_REQ_OK;
+	uint64_t MaxWrite = atomic_fetch_uint64_t(&op_ctx->export->MaxWrite);
+	uint64_t MaxOffsetWrite =
+			atomic_fetch_uint64_t(&op_ctx->export->MaxOffsetWrite);
 
 	offset = arg->arg_write3.offset;
 	size = arg->arg_write3.count;
@@ -171,17 +174,17 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	data = arg->arg_write3.data.data_val;
 
 	/* Do not exceed maxium WRITE offset if set */
-	if (op_ctx->export->MaxOffsetWrite < UINT64_MAX) {
+	if (MaxOffsetWrite < UINT64_MAX) {
 		LogFullDebug(COMPONENT_NFSPROTO,
 			     "Write offset=%" PRIu64 " size=%zu"
 			     " MaxOffSet=%" PRIu64, offset, size,
-			     op_ctx->export->MaxOffsetWrite);
+			     MaxOffsetWrite);
 
-		if ((offset + size) > op_ctx->export->MaxOffsetWrite) {
+		if ((offset + size) > MaxOffsetWrite) {
 			LogEvent(COMPONENT_NFSPROTO,
 				 "A client tryed to violate max file size %"
 				 PRIu64 " for exportid #%hu",
-				 op_ctx->export->MaxOffsetWrite,
+				 MaxOffsetWrite,
 				 op_ctx->export->export_id);
 
 			res->res_write3.status = NFS3ERR_FBIG;
@@ -196,9 +199,9 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	}
 
 	/* We should take care not to exceed FSINFO wtmax field for the size */
-	if (size > op_ctx->export->MaxWrite) {
+	if (size > MaxWrite) {
 		/* The client asked for too much data, we must restrict him */
-		size = op_ctx->export->MaxWrite;
+		size = MaxWrite;
 	}
 
 	if (size == 0) {

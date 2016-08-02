@@ -591,8 +591,7 @@ static fattr_xdr_result encode_fsid(XDR *xdr, struct xdr_attrs_args *args)
 	fsid4 fsid = {0, 0};
 
 	if (args->data != NULL &&
-	    (op_ctx->export->options_set &
-	     EXPORT_OPTION_FSID_SET) != 0) {
+	    op_ctx_export_has_option_set(EXPORT_OPTION_FSID_SET)) {
 		fsid.major = op_ctx->export->filesystem_id.major;
 		fsid.minor = op_ctx->export->filesystem_id.minor;
 	} else {
@@ -1395,7 +1394,9 @@ static fattr_xdr_result decode_maxname(XDR *xdr, struct xdr_attrs_args *args)
 
 static fattr_xdr_result encode_maxread(XDR *xdr, struct xdr_attrs_args *args)
 {
-	if (!inline_xdr_u_int64_t(xdr, &op_ctx->export->MaxRead))
+	uint64_t MaxRead = atomic_fetch_uint64_t(&op_ctx->export->MaxRead);
+
+	if (!inline_xdr_u_int64_t(xdr, &MaxRead))
 		return FATTR_XDR_FAILED;
 	return FATTR_XDR_SUCCESS;
 }
@@ -1411,7 +1412,9 @@ static fattr_xdr_result decode_maxread(XDR *xdr, struct xdr_attrs_args *args)
 
 static fattr_xdr_result encode_maxwrite(XDR *xdr, struct xdr_attrs_args *args)
 {
-	if (!inline_xdr_u_int64_t(xdr, &op_ctx->export->MaxWrite))
+	uint64_t MaxWrite = atomic_fetch_uint64_t(&op_ctx->export->MaxWrite);
+
+	if (!inline_xdr_u_int64_t(xdr, &MaxWrite))
 		return FATTR_XDR_FAILED;
 	return FATTR_XDR_SUCCESS;
 }
@@ -3728,7 +3731,7 @@ void nfs3_FSALattr_To_Fattr(struct fsal_obj_handle *obj,
 			want & ~got);
 	}
 
-	if ((op_ctx->export->options_set & EXPORT_OPTION_FSID_SET) != 0) {
+	if (op_ctx_export_has_option_set(EXPORT_OPTION_FSID_SET)) {
 		/* xor filesystem_id major and rotated minor to create unique
 		 * on-wire fsid.
 		 */
