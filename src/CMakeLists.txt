@@ -328,31 +328,6 @@ IF(ENFORCE_GCC)
     set(CMAKE_C_COMPILER gcc)
 ENDIF(ENFORCE_GCC)
 
-# Build source locations and parameters
-IF(USE_FSAL_CEPH)
-  IF(CEPH_PREFIX)
-    set(CEPH_PREFIX ${CEPH_PREFIX} CACHE PATH "Path to Ceph installation")
-    LIST(APPEND CMAKE_PREFIX_PATH "${CEPH_PREFIX}")
-    LIST(APPEND CMAKE_LIBRARY_PATH "${CEPH_PREFIX}/lib")
-    LIST(APPEND CMAKE_REQUIRED_INCLUDES "${CEPH_PREFIX}/include")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I${CEPH_PREFIX}/include")
-    link_directories("${CEPH_PREFIX}/lib")
-  ELSE()
-    set(CEPH_PREFIX "/usr" CACHE PATH "Path to Ceph installation")
-  ENDIF()
-ENDIF()
-
-IF(USE_FSAL_RGW)
-  IF(RGW_PREFIX)
-    set(RGW_PREFIX ${RGW_PREFIX} CACHE PATH "Path to RGW installation")
-    LIST(APPEND CMAKE_PREFIX_PATH "${RGW_PREFIX}")
-    LIST(APPEND CMAKE_LIBRARY_PATH "${RGW_PREFIX}/lib")
-    LIST(APPEND CMAKE_REQUIRED_INCLUDES "${RGW_PREFIX}/include")
-  ELSE()
-    set(RGW_PREFIX "/usr" CACHE PATH "Path to RGW installation")
-  ENDIF()
-ENDIF()
-
 IF(USE_FSAL_GLUSTER)
   IF(GLUSTER_PREFIX)
     set(GLUSTER_PREFIX ${GLUSTER_PREFIX} CACHE PATH "Path to Gluster installation")
@@ -569,63 +544,27 @@ if(USE_FSAL_GLUSTER)
 endif(USE_FSAL_GLUSTER)
 
 if(USE_FSAL_CEPH)
-  find_library(CEPH_FS cephfs)
-  check_library_exists(
-    cephfs
-    ceph_ll_connectable_x
-    ${CEPH_PREFIX}
-    CEPH_FS
-    )
-  if(NOT CEPH_FS)
+  find_package(CephFS)
+  if(NOT CEPHFS_FOUND)
     if(STRICT_PACKAGE)
       message(FATAL_ERROR "STRICT_PACKAGE : Cannot find CEPH runtime.  Disabling CEPH fsal build")
     else(STRICT_PACKAGE)
       message(WARNING "Cannot find CEPH runtime.  Disabling CEPH fsal build")
       set(USE_FSAL_CEPH OFF)
     endif(STRICT_PACKAGE)
-  endif(NOT CEPH_FS)
-  check_library_exists(
-    cephfs
-    ceph_ll_mknod
-    ${CEPH_PREFIX}
-    CEPH_FS_MKNOD
-    )
-  if(NOT CEPH_FS_MKNOD)
-      message(WARNING "Cannot find ceph_ll_mknod.  Disabling CEPH fsal mknod method")
-      set(USE_FSAL_CEPH_MKNOD OFF)
-  else(CEPH_FS_MKNOD)
-      set(USE_FSAL_CEPH_MKNOD ON)
-  endif(NOT CEPH_FS_MKNOD)
-  check_library_exists(
-    cephfs
-    ceph_ll_setlk
-    ${CEPH_PREFIX}
-    CEPH_FS_SETLK
-    )
-  if(NOT CEPH_FS_SETLK)
-      message(WARNING "Cannot find ceph_ll_setlk.  Disabling CEPH fsal mknod method")
-      set(USE_FSAL_CEPH_SETLK OFF)
-  else(CEPH_FS_SETLK)
-      set(USE_FSAL_CEPH_SETLK ON)
-  endif(NOT CEPH_FS_SETLK)
+  endif(NOT CEPHFS_FOUND)
 endif(USE_FSAL_CEPH)
 
 if(USE_FSAL_RGW)
-  find_library(LIBRGW rgw)
-  check_library_exists(
-    rgw
-    ""
-    ${RGW_PREFIX}
-    LIBRGW
-    )
-  if(NOT LIBRGW)
+  find_package(RGW)
+  if(NOT RGW_FOUND)
     if(STRICT_PACKAGE)
       message(FATAL_ERROR "STRICT_PACKAGE : Cannot find RGW runtime.  Disabling RGW fsal build")
     else(STRICT_PACKAGE)
       message(WARNING "Cannot find RGW runtime.  Disabling RGW fsal build")
       set(USE_FSAL_RGW OFF)
     endif(STRICT_PACKAGE)
-  endif(NOT LIBRGW)
+  endif(NOT RGW_FOUND)
 endif(USE_FSAL_RGW)
 
 if(USE_FSAL_XFS)

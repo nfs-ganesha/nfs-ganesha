@@ -2,12 +2,9 @@ if(CEPH_FS_SETLK)
   add_definitions(
     -D_FILE_OFFSET_BITS=64
   )
+include_directories(${CEPHFS_INCLUDE_DIR})
 endif(CEPH_FS_SETLK)
 
-if(CEPH_PREFIX)
-  include_directories("${CEPH_PREFIX}/include")
-  link_directories(${CEPH_PREFIX}/lib)
-endif(CEPH_PREFIX)
 
 SET(multilock_SRCS
   ml_functions.c
@@ -34,5 +31,5 @@ if(CEPH_FS_SETLK)
     ${multilock_SRCS}
   )
 
-  target_link_libraries(ml_cephfs_client m pthread cephfs ${SYSTEM_LIBRARIES})
+  target_link_libraries(ml_cephfs_client m pthread ${CEPHFS_LIBRARIES} ${SYSTEM_LIBRARIES})
 endif(CEPH_FS_SETLK)
