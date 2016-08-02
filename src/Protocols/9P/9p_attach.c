@@ -59,7 +59,6 @@ int _9p_attach(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 	struct _9p_fid *pfid = NULL;
 
-	struct gsh_export *export = NULL;
 	fsal_status_t fsal_status;
 	char exppath[MAXPATHLEN];
 	struct gsh_buffdesc fh_desc;
@@ -86,23 +85,33 @@ int _9p_attach(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 	/*
 	 * Find the export for the aname (using as well Path or Tag)
+	 *
+	 * Keep it in the op_ctx.
 	 */
 	snprintf(exppath, MAXPATHLEN, "%.*s", (int)*aname_len, aname_str);
 
 	if (exppath[0] == '/')
-		export = get_gsh_export_by_path(exppath, false);
+		op_ctx->export = get_gsh_export_by_path(exppath, false);
 	else
-		export = get_gsh_export_by_tag(exppath);
+		op_ctx->export = get_gsh_export_by_tag(exppath);
 
 	/* Did we find something ? */
-	if (export == NULL) {
+	if (op_ctx->export == NULL) {
 		err = ENOENT;
 		goto errout;
 	}
 
+	/* Fill in more of the op_ctx */
+	op_ctx->fsal_export = op_ctx->export->fsal_export;
+	op_ctx->caller_addr = &req9p->pconn->addrpeer;
+	op_ctx->export_perms = &req9p->pconn->export_perms;
+
+	/* And fill in the op_ctx export_perms and then check them. */
+	export_check_access();
+
 	port = get_port(&req9p->pconn->addrpeer);
-	if (export->export_perms.options & EXPORT_OPTION_PRIVILEGED_PORT &&
-	    port >= IPPORT_RESERVED) {
+	if (op_ctx->export->export_perms.options & EXPORT_OPTION_PRIVILEGED_PORT
+	    && port >= IPPORT_RESERVED) {
 		LogInfo(COMPONENT_9P,
 			"Port %d is too high for this export entry, rejecting client",
 			port);
@@ -112,6 +121,10 @@ int _9p_attach(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 	/* Set export and fid id in fid */
 	pfid = gsh_calloc(1, sizeof(struct _9p_fid));
+
+	/* Copy the export into the pfid with reference. */
+	pfid->export = op_ctx->export;
+	get_gsh_export_ref(pfid->export);
 
 	pfid->fid = *fid;
 	req9p->pconn->fids[*fid] = pfid;
@@ -138,22 +151,14 @@ int _9p_attach(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		goto errout;
 	}
 
-	/* Keep track of the export in the req_ctx */
-	pfid->export = export;
-	get_gsh_export_ref(export);
-	op_ctx->export = export;
-	op_ctx->fsal_export = export->fsal_export;
-	op_ctx->caller_addr = &req9p->pconn->addrpeer;
-	op_ctx->export_perms = &req9p->pconn->export_perms;
-
-	export_check_access();
-
 	if (exppath[0] != '/' ||
-	    !strcmp(exppath, export->fullpath)) {
+	    !strcmp(exppath, op_ctx->export->fullpath)) {
 		/* Check if root object is correctly set, fetch it, and take an
 		 * LRU reference.
 		 */
-		fsal_status = nfs_export_get_root_entry(export, &pfid->pentry);
+		fsal_status =
+		    nfs_export_get_root_entry(op_ctx->export, &pfid->pentry);
+
 		if (FSAL_IS_ERROR(fsal_status)) {
 			err = _9p_tools_errno(fsal_status);
 			goto errout;
@@ -170,8 +175,8 @@ int _9p_attach(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 		pfsal_handle->obj_ops.handle_to_key(pfsal_handle,
 						 &fh_desc);
-		fsal_status = export->fsal_export->exp_ops.create_handle(
-				 export->fsal_export, &fh_desc, &pfid->pentry,
+		fsal_status = op_ctx->fsal_export->exp_ops.create_handle(
+				 op_ctx->fsal_export, &fh_desc, &pfid->pentry,
 				 NULL);
 		if (FSAL_IS_ERROR(fsal_status)) {
 			err = _9p_tools_errno(fsal_status);
@@ -215,17 +220,10 @@ int _9p_attach(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 errout:
 
-	if (export != NULL)
-		put_gsh_export(export);
+	_9p_release_opctx();
 
-	if (pfid != NULL) {
-		if (pfid->pentry != NULL)
-			pfid->pentry->obj_ops.put_ref(pfid->pentry);
-		if (pfid->ucred != NULL)
-			release_9p_user_cred_ref(pfid->ucred);
-
-		gsh_free(pfid);
-	}
+	if (pfid != NULL)
+		free_fid(pfid);
 
 	return _9p_rerror(req9p, msgtag, err, plenout, preply);
 }

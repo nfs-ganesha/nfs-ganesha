@@ -118,12 +118,9 @@ int _9p_init(void)
 
 void _9p_init_opctx(struct _9p_fid *pfid, struct _9p_request_data *req9p)
 {
-
-	struct gsh_export *export = pfid->export;
-
-	if (export != NULL) {
+	if (pfid->export != NULL) {
 		/* export affectation (require refcount handling). */
-		if (op_ctx->export != export) {
+		if (op_ctx->export != pfid->export) {
 			if (op_ctx->export != NULL) {
 				LogCrit(COMPONENT_9P,
 					"Op_ctx was already initialized, or was not allocated/cleaned up properly.");
@@ -137,11 +134,10 @@ void _9p_init_opctx(struct _9p_fid *pfid, struct _9p_request_data *req9p)
 				assert(false);
 			}
 
-			get_gsh_export_ref(export);
-			op_ctx->export = export;
+			get_gsh_export_ref(pfid->export);
+			op_ctx->export = pfid->export;
+			op_ctx->fsal_export = op_ctx->export->fsal_export;
 		}
-
-		op_ctx->fsal_export = export->fsal_export;
 	}
 
 	if (req9p != NULL)
@@ -152,18 +148,14 @@ void _9p_init_opctx(struct _9p_fid *pfid, struct _9p_request_data *req9p)
 
 void _9p_release_opctx(void)
 {
-	struct gsh_export *export = op_ctx->export;
-
-	if (export != NULL) {
+	if (op_ctx->export != NULL) {
+		put_gsh_export(op_ctx->export);
 		op_ctx->export = NULL;
-		put_gsh_export(export);
 	}
 
-	struct user_cred *creds = op_ctx->creds;
-
-	if (creds != NULL) {
+	if (op_ctx->creds != NULL) {
+		release_user_cred_ref(op_ctx->creds);
 		op_ctx->creds = NULL;
-		release_user_cred_ref(creds);
 	}
 }
 
@@ -346,6 +338,9 @@ void free_fid(struct _9p_fid *pfid)
 
 	if (pfid->pentry != NULL)
 		pfid->pentry->obj_ops.put_ref(pfid->pentry);
+
+	if (pfid->ppentry != NULL)
+		pfid->ppentry->obj_ops.put_ref(pfid->ppentry);
 
 	if (pfid->export != NULL)
 		put_gsh_export(pfid->export);

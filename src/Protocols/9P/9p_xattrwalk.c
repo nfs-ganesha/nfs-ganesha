@@ -216,6 +216,11 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	get_gsh_export_ref(pfid->export);
 	get_9p_user_cred_ref(pfid->ucred);
 
+	if (pxattrfid->ppentry != NULL) {
+		/* Increments refcount for ppentry */
+		pxattrfid->ppentry->obj_ops.get_ref(pxattrfid->ppentry);
+	}
+
 	/* Build the reply */
 	_9p_setinitptr(cursor, preply, _9P_RXATTRWALK);
 	_9p_setptr(cursor, msgtag, u16);

@@ -130,7 +130,9 @@ int _9p_walk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		}
 
 		pnewfid->fid = *newfid;
+
 		pnewfid->ppentry = pfid->pentry;
+
 		strncpy(pnewfid->name, name, MAXNAMLEN-1);
 
 		/* gdata ref is not hold : the pfid, which use same gdata */
@@ -203,6 +205,11 @@ int _9p_walk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	uid2grp_hold_group_data(pnewfid->gdata);
 	get_9p_user_cred_ref(pnewfid->ucred);
 	get_gsh_export_ref(pnewfid->export);
+
+	if (pnewfid->ppentry != NULL) {
+		/* Increments refcount for ppentry */
+		pnewfid->ppentry->obj_ops.get_ref(pnewfid->ppentry);
+	}
 
 	/* Build the reply */
 	_9p_setinitptr(cursor, preply, _9P_RWALK);
