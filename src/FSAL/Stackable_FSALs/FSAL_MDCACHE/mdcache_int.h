@@ -453,6 +453,22 @@ mdcache_key_dup(mdcache_key_t *tgt,
 }
 
 /**
+ * @brief Set the parent key of an entry
+ *
+ * If the parent key is not set, set it.  This keeps keys from being leaked.
+ *
+ * @param[in] entry	Entry to set
+ * @return Return description
+ */
+static inline void
+mdc_dir_add_parent(mdcache_entry_t *entry, mdcache_entry_t *mdc_parent)
+{
+	if (entry->fsobj.fsdir.parent.kv.len == 0)
+		mdcache_key_dup(&entry->fsobj.fsdir.parent,
+				&mdc_parent->fh_hk.key);
+}
+
+/**
  * @brief Delete a cache key.
  *
  * Delete a cache key.

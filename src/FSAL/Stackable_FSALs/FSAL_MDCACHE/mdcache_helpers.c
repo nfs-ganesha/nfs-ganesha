@@ -759,8 +759,7 @@ fsal_status_t mdc_add_cache(mdcache_entry_t *mdc_parent,
 
 	if (!FSAL_IS_ERROR(status) && new_entry->obj_handle.type == DIRECTORY) {
 		/* Insert Parent's key */
-		mdcache_key_dup(&new_entry->fsobj.fsdir.parent,
-				&mdc_parent->fh_hk.key);
+		mdc_dir_add_parent(new_entry, mdc_parent);
 	}
 
 	mdcache_put(new_entry);
@@ -1155,7 +1154,7 @@ mdcache_dirent_add(mdcache_entry_t *parent, const char *name,
 		return fsalstat(ERR_FSAL_NOTDIR, 0);
 
 	/* in cache avl, we always insert on pentry_parent */
-	new_dir_entry = gsh_malloc(sizeof(mdcache_dir_entry_t) + namesize);
+	new_dir_entry = gsh_calloc(1, sizeof(mdcache_dir_entry_t) + namesize);
 	new_dir_entry->flags = DIR_ENTRY_FLAG_NONE;
 
 	memcpy(&new_dir_entry->name, name, namesize);
@@ -1274,7 +1273,7 @@ mdcache_dirent_rename(mdcache_entry_t *parent, const char *oldname,
 	size_t newnamesize = strlen(newname) + 1;
 
 	/* try to rename--no longer in-place */
-	dirent2 = gsh_malloc(sizeof(mdcache_dir_entry_t) + newnamesize);
+	dirent2 = gsh_calloc(1, sizeof(mdcache_dir_entry_t) + newnamesize);
 	memcpy(dirent2->name, newname, newnamesize);
 	dirent2->flags = DIR_ENTRY_FLAG_NONE;
 	mdcache_key_dup(&dirent2->ckey, &dirent->ckey);
