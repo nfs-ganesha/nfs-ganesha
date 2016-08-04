@@ -116,6 +116,8 @@ char *pidfile_path = GANESHA_PIDFILE_PATH;
  * LOG { COMPONENTS {} }
  * LOG { FACILITY {} }
  * LOG { FORMAT {} }
+ * EXPORT {}
+ * EXPORT { CLIENT {} }
  *
  */
 
@@ -157,6 +159,11 @@ void reread_config(void)
 	status = read_log_config(config_struct, &err_type);
 	if (status < 0)
 		LogCrit(COMPONENT_CONFIG, "Error while parsing LOG entries");
+
+	/* Update the export configuration */
+	status = reread_exports(config_struct, &err_type);
+	if (status < 0)
+		LogCrit(COMPONENT_CONFIG, "Error while parsing EXPORT entries");
 
 	report_config_errors(&err_type, NULL, config_errs_to_log);
 	config_Free(config_struct);

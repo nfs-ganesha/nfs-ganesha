@@ -222,6 +222,8 @@ struct gsh_export *alloc_export(void)
 
 	export = &export_st->export;
 
+	LogFullDebug(COMPONENT_EXPORT, "Allocated export %p", export);
+
 	glist_init(&export->exp_state_list);
 	glist_init(&export->exp_lock_list);
 	glist_init(&export->exp_nlm_share_list);

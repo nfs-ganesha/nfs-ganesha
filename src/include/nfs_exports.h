@@ -221,6 +221,8 @@ void unexport(struct gsh_export *export);
 
 int ReadExports(config_file_t in_config,
 		struct config_error_type *err_type);
+int reread_exports(config_file_t in_config,
+		   struct config_error_type *err_type);
 void free_export_resources(struct gsh_export *export);
 void exports_pkginit(void);
 
