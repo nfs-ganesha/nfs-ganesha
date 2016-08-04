@@ -108,6 +108,61 @@ char *config_path = GANESHA_CONFIG_PATH;
 char *pidfile_path = GANESHA_PIDFILE_PATH;
 
 /**
+ * @brief Reread the configuration file to accomplish update of options.
+ *
+ * The following option blocks are currently supported for update:
+ *
+ * LOG {}
+ * LOG { COMPONENTS {} }
+ * LOG { FACILITY {} }
+ * LOG { FORMAT {} }
+ *
+ */
+
+void reread_config(void)
+{
+	int status = 0;
+	int i;
+	config_file_t config_struct;
+	struct config_error_type err_type;
+
+	/* Clear out the flag indicating component was set from environment. */
+	for (i = COMPONENT_ALL; i < COMPONENT_COUNT; i++)
+		LogComponents[i].comp_env_set = false;
+
+	/* If no configuration file is given, then the caller must want to
+	 * reparse the configuration file from startup.
+	 */
+	if (config_path[0] == '\0') {
+		LogCrit(COMPONENT_CONFIG,
+			"No configuration file was specified for reloading log config.");
+		return;
+	}
+
+	/* Create a memstream for parser+processing error messages */
+	if (!init_error_type(&err_type))
+		return;
+	/* Attempt to parse the new configuration file */
+	config_struct = config_ParseFile(config_path, &err_type);
+	if (!config_error_no_error(&err_type)) {
+		config_Free(config_struct);
+		LogCrit(COMPONENT_CONFIG,
+			"Error while parsing new configuration file %s",
+			config_path);
+		report_config_errors(&err_type, NULL, config_errs_to_log);
+		return;
+	}
+
+	/* Update the logging configuration */
+	status = read_log_config(config_struct, &err_type);
+	if (status < 0)
+		LogCrit(COMPONENT_CONFIG, "Error while parsing LOG entries");
+
+	report_config_errors(&err_type, NULL, config_errs_to_log);
+	config_Free(config_struct);
+}
+
+/**
  * @brief This thread is in charge of signal management
  *
  * @param[in] UnusedArg Unused
@@ -134,7 +189,7 @@ static void *sigmgr_thread(void *UnusedArg)
 		if (signal_caught == SIGHUP) {
 			LogEvent(COMPONENT_MAIN,
 				 "SIGHUP_HANDLER: Received SIGHUP.... initiating export list reload");
-			reread_log_config();
+			reread_config();
 			svcauth_gss_release_cred();
 		}
 	}
