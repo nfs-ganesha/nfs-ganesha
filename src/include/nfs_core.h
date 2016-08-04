@@ -185,7 +185,6 @@ extern struct config_block version4_param;
 
 void nfs_Init_admin_thread(void);
 void *admin_thread(void *UnusedArg);
-void admin_replace_exports(void);
 void admin_halt(void);
 
 /* Tools */

@@ -334,15 +334,6 @@ static void admin_issue_command(admin_command_t command)
 }
 
 /**
- * @brief Signal the admin thread to replace the exports
- */
-
-void admin_replace_exports(void)
-{
-	admin_issue_command(admin_command);
-}
-
-/**
  * @brief Signal the admin thread to shut down the system
  */
 
