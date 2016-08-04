@@ -70,194 +70,322 @@ struct global_export_perms export_opt = {
 
 static void FreeClientList(struct glist_head *clients);
 
-static void StrExportOptions(struct export_perms *p_perms, char *buffer)
+static int StrExportOptions(struct display_buffer *dspbuf,
+			    struct export_perms *p_perms)
 {
-	char *buf = buffer;
+	int b_left = display_start(dspbuf);
+
+	if (b_left <= 0)
+		return b_left;
+
+	b_left = display_printf(dspbuf, "options=%08"PRIx32, p_perms->options);
+
+	if (b_left <= 0)
+		return b_left;
 
 	if ((p_perms->set & EXPORT_OPTION_SQUASH_TYPES) != 0) {
 		if ((p_perms->options & EXPORT_OPTION_ROOT) != 0)
-			buf += sprintf(buf, "no_root_squash");
+			b_left = display_cat(dspbuf, "no_root_squash");
+
+		if (b_left <= 0)
+			return b_left;
 
 		if ((p_perms->options & EXPORT_OPTION_ALL_ANONYMOUS)  != 0)
-			buf += sprintf(buf, "all_squash    ");
+			b_left = display_cat(dspbuf, "all_squash    ");
+
+		if (b_left <= 0)
+			return b_left;
 
 		if ((p_perms->options &
 		     (EXPORT_OPTION_ROOT | EXPORT_OPTION_ALL_ANONYMOUS)) == 0)
-			buf += sprintf(buf, "root_squash   ");
+			b_left = display_cat(dspbuf, "root_squash   ");
 	} else
-		buf += sprintf(buf, "              ");
+		b_left = display_cat(dspbuf, "              ");
+
+	if (b_left <= 0)
+		return b_left;
 
 	if ((p_perms->set & EXPORT_OPTION_ACCESS_MASK) != 0) {
 		if ((p_perms->options & EXPORT_OPTION_READ_ACCESS) != 0)
-			buf += sprintf(buf, ", R");
+			b_left = display_cat(dspbuf, ", R");
 		else
-			buf += sprintf(buf, ", -");
+			b_left = display_cat(dspbuf, ", -");
+
+		if (b_left <= 0)
+			return b_left;
+
 		if ((p_perms->options & EXPORT_OPTION_WRITE_ACCESS) != 0)
-			buf += sprintf(buf, "W");
+			b_left = display_cat(dspbuf, "W");
 		else
-			buf += sprintf(buf, "-");
+			b_left = display_cat(dspbuf, "-");
+
+		if (b_left <= 0)
+			return b_left;
+
 		if ((p_perms->options & EXPORT_OPTION_MD_READ_ACCESS) != 0)
-			buf += sprintf(buf, "r");
+			b_left = display_cat(dspbuf, "r");
 		else
-			buf += sprintf(buf, "-");
+			b_left = display_cat(dspbuf, "-");
+
+		if (b_left <= 0)
+			return b_left;
+
 		if ((p_perms->options & EXPORT_OPTION_MD_WRITE_ACCESS) != 0)
-			buf += sprintf(buf, "w");
+			b_left = display_cat(dspbuf, "w");
 		else
-			buf += sprintf(buf, "-");
+			b_left = display_cat(dspbuf, "-");
 	} else
-		buf += sprintf(buf, ",     ");
+		b_left = display_cat(dspbuf, ",     ");
+
+	if (b_left <= 0)
+		return b_left;
 
 	if ((p_perms->set & EXPORT_OPTION_PROTOCOLS) != 0) {
 		if ((p_perms->options & EXPORT_OPTION_NFSV3) != 0)
-			buf += sprintf(buf, ", 3");
+			b_left = display_cat(dspbuf, ", 3");
 		else
-			buf += sprintf(buf, ", -");
+			b_left = display_cat(dspbuf, ", -");
+
+		if (b_left <= 0)
+			return b_left;
+
 		if ((p_perms->options & EXPORT_OPTION_NFSV4) != 0)
-			buf += sprintf(buf, "4");
+			b_left = display_cat(dspbuf, "4");
 		else
-			buf += sprintf(buf, "-");
+			b_left = display_cat(dspbuf, "-");
+
+		if (b_left <= 0)
+			return b_left;
+
 		if ((p_perms->options & EXPORT_OPTION_9P) != 0)
-			buf += sprintf(buf, "9");
+			b_left = display_cat(dspbuf, "9");
 		else
-			buf += sprintf(buf, "-");
+			b_left = display_cat(dspbuf, "-");
 	} else
-		buf += sprintf(buf, ",    ");
+		b_left = display_cat(dspbuf, ",    ");
+
+	if (b_left <= 0)
+		return b_left;
 
 	if ((p_perms->set & EXPORT_OPTION_TRANSPORTS) != 0) {
 		if ((p_perms->options & EXPORT_OPTION_UDP) != 0)
-			buf += sprintf(buf, ", UDP");
+			b_left = display_cat(dspbuf, ", UDP");
 		else
-			buf += sprintf(buf, ", ---");
+			b_left = display_cat(dspbuf, ", ---");
+
+		if (b_left <= 0)
+			return b_left;
+
 		if ((p_perms->options & EXPORT_OPTION_TCP) != 0)
-			buf += sprintf(buf, ", TCP");
+			b_left = display_cat(dspbuf, ", TCP");
 		else
-			buf += sprintf(buf, ", ---");
+			b_left = display_cat(dspbuf, ", ---");
+
+		if (b_left <= 0)
+			return b_left;
+
 		if ((p_perms->options & EXPORT_OPTION_RDMA) != 0)
-			buf += sprintf(buf, ", RDMA");
+			b_left = display_cat(dspbuf, ", RDMA");
 		else
-			buf += sprintf(buf, ", ----");
+			b_left = display_cat(dspbuf, ", ----");
 	} else
-		buf += sprintf(buf, ",               ");
+		b_left = display_cat(dspbuf, ",               ");
+
+	if (b_left <= 0)
+		return b_left;
 
 	if ((p_perms->set & EXPORT_OPTION_MANAGE_GIDS) == 0)
-		buf += sprintf(buf, ",               ");
+		b_left = display_cat(dspbuf, ",               ");
 	else if ((p_perms->options & EXPORT_OPTION_MANAGE_GIDS) != 0)
-		buf += sprintf(buf, ", Manage_Gids   ");
+		b_left = display_cat(dspbuf, ", Manage_Gids   ");
 	else
-		buf += sprintf(buf, ", No Manage_Gids");
+		b_left = display_cat(dspbuf, ", No Manage_Gids");
+
+	if (b_left <= 0)
+		return b_left;
 
 	if ((p_perms->set & EXPORT_OPTION_DELEGATIONS) != 0) {
 		if ((p_perms->options & EXPORT_OPTION_READ_DELEG) != 0)
-			buf += sprintf(buf, ", R");
+			b_left = display_cat(dspbuf, ", R");
 		else
-			buf += sprintf(buf, ", -");
+			b_left = display_cat(dspbuf, ", -");
+
+		if (b_left <= 0)
+			return b_left;
+
 		if ((p_perms->options & EXPORT_OPTION_WRITE_DELEG) != 0)
-			buf += sprintf(buf, "W Deleg");
+			b_left = display_cat(dspbuf, "W Deleg");
 		else
-			buf += sprintf(buf, "- Deleg");
+			b_left = display_cat(dspbuf, "- Deleg");
 	} else
-		buf += sprintf(buf, ",         ");
+		b_left = display_cat(dspbuf, ",         ");
+
+	if (b_left <= 0)
+		return b_left;
 
 	if ((p_perms->set & EXPORT_OPTION_ANON_UID_SET) != 0)
-		buf += sprintf(buf, ", anon_uid=%6d",
-			       (int)p_perms->anonymous_uid);
+		b_left = display_printf(dspbuf, ", anon_uid=%6d",
+					(int)p_perms->anonymous_uid);
 	else
-		buf += sprintf(buf, ",                ");
+		b_left = display_cat(dspbuf, ",                ");
+
+	if (b_left <= 0)
+		return b_left;
 
 	if ((p_perms->set & EXPORT_OPTION_ANON_GID_SET) != 0)
-		buf += sprintf(buf, ", anon_gid=%6d",
-			       (int)p_perms->anonymous_gid);
+		b_left = display_printf(dspbuf, ", anon_gid=%6d",
+					(int)p_perms->anonymous_gid);
 	else
-		buf += sprintf(buf, ",                ");
+		b_left = display_cat(dspbuf, ",                ");
+
+	if (b_left <= 0)
+		return b_left;
 
 	if ((p_perms->set & EXPORT_OPTION_AUTH_TYPES) != 0) {
 		if ((p_perms->options & EXPORT_OPTION_AUTH_NONE) != 0)
-			buf += sprintf(buf, ", none");
+			b_left = display_cat(dspbuf, ", none");
+
+		if (b_left <= 0)
+			return b_left;
+
 		if ((p_perms->options & EXPORT_OPTION_AUTH_UNIX) != 0)
-			buf += sprintf(buf, ", sys");
+			b_left = display_cat(dspbuf, ", sys");
+
+		if (b_left <= 0)
+			return b_left;
+
 		if ((p_perms->options & EXPORT_OPTION_RPCSEC_GSS_NONE) != 0)
-			buf += sprintf(buf, ", krb5");
+			b_left = display_cat(dspbuf, ", krb5");
+
+		if (b_left <= 0)
+			return b_left;
+
 		if ((p_perms->options & EXPORT_OPTION_RPCSEC_GSS_INTG) != 0)
-			buf += sprintf(buf, ", krb5i");
+			b_left = display_cat(dspbuf, ", krb5i");
+
+		if (b_left <= 0)
+			return b_left;
+
 		if ((p_perms->options & EXPORT_OPTION_RPCSEC_GSS_PRIV) != 0)
-			buf += sprintf(buf, ", krb5p");
+			b_left = display_cat(dspbuf, ", krb5p");
 	}
+
+	return b_left;
 }
 
-void LogClientListEntry(log_components_t component,
+static char *client_types[] = {
+	[PROTO_CLIENT] = "PROTO_CLIENT",
+	[HOSTIF_CLIENT] = "HOSTIF_CLIENT",
+	[NETWORK_CLIENT] = "NETWORK_CLIENT",
+	[NETGROUP_CLIENT] = "NETGROUP_CLIENT",
+	[WILDCARDHOST_CLIENT] = "WILDCARDHOST_CLIENT",
+	[GSSPRINCIPAL_CLIENT] = "GSSPRINCIPAL_CLIENT",
+	[HOSTIF_CLIENT_V6] = "HOSTIF_CLIENT_V6",
+	[MATCH_ANY_CLIENT] = "MATCH_ANY_CLIENT",
+	[BAD_CLIENT] = "BAD_CLIENT"
+	 };
+
+void LogClientListEntry(log_levels_t level,
+			log_components_t component,
+			int line,
+			char *func,
+			char *tag,
 			exportlist_client_entry_t *entry)
 {
 	char perms[1024];
+	struct display_buffer dspbuf = {sizeof(perms), perms, perms};
 	char addr[INET6_ADDRSTRLEN];
 	char *paddr = addr;
+	char *client_type;
 
-	StrExportOptions(&entry->client_perms, perms);
+	if (!isLevel(component, level))
+		return;
+
+	if (entry->type > BAD_CLIENT) {
+		sprintf(paddr, "0x%08x", entry->type);
+		client_type = "UNKNOWN_CLIENT_TYPE";
+	} else {
+		client_type = client_types[entry->type];
+	}
+
+	(void) StrExportOptions(&dspbuf, &entry->client_perms);
 
 	switch (entry->type) {
 	case HOSTIF_CLIENT:
-		if (inet_ntop
-		    (AF_INET, &(entry->client.hostif.clientaddr), addr,
-		     sizeof(addr)) == NULL) {
+		if (inet_ntop(AF_INET,
+			      &entry->client.hostif.clientaddr,
+			      addr,
+			      sizeof(addr)) == NULL) {
 			paddr = "Invalid Host address";
 		}
-		LogMidDebug(component, "  %p HOSTIF_CLIENT: %s (%s)", entry,
-			    paddr, perms);
-		return;
+		break;
 
 	case NETWORK_CLIENT:
-		if (inet_ntop
-		    (AF_INET, &(entry->client.network.netaddr), addr,
-		     sizeof(addr)) == NULL) {
+		if (inet_ntop(AF_INET,
+			      &entry->client.network.netaddr,
+			      addr,
+			      sizeof(addr)) == NULL) {
 			paddr = "Invalid Network address";
 		}
-		LogMidDebug(component, "  %p NETWORK_CLIENT: %s (%s)", entry,
-			    paddr, perms);
-		return;
+		break;
 
 	case NETGROUP_CLIENT:
-		LogMidDebug(component, "  %p NETWORK_CLIENT: %s (%s)", entry,
-			    entry->client.netgroup.netgroupname, perms);
-		return;
+		paddr = entry->client.netgroup.netgroupname;
+		break;
 
 	case WILDCARDHOST_CLIENT:
-		LogMidDebug(component, "  %p WILDCARDHOST_CLIENT: %s (%s)",
-			    entry, entry->client.wildcard.wildcard, perms);
-		return;
+		paddr = entry->client.wildcard.wildcard;
+		break;
 
 	case GSSPRINCIPAL_CLIENT:
-		LogMidDebug(component, "  %p NETWORK_CLIENT: %s (%s)", entry,
-			    entry->client.gssprinc.princname, perms);
-		return;
+		paddr = entry->client.gssprinc.princname;
+		break;
 
 	case HOSTIF_CLIENT_V6:
-		if (inet_ntop
-		    (AF_INET6, &(entry->client.hostif.clientaddr6), addr,
-		     sizeof(addr)) == NULL) {
+		if (inet_ntop(AF_INET6,
+			      &entry->client.hostif.clientaddr6,
+			      addr,
+			      sizeof(addr)) == NULL) {
 			paddr = "Invalid Host address";
 		}
-		LogMidDebug(component, "  %p HOSTIF_CLIENT_V6: %s (%s)", entry,
-			    paddr, perms);
-		return;
+		break;
 
 	case MATCH_ANY_CLIENT:
-		LogMidDebug(component, "  %p MATCH_ANY_CLIENT: * (%s)", entry,
-			    perms);
-		return;
+		paddr = "*";
+		break;
 
 	case PROTO_CLIENT:
-		LogCrit(component, "  %p PROTO_CLIENT: <unknown>(%s)", entry,
-			perms);
-		return;
 	case BAD_CLIENT:
-		LogCrit(component, "  %p BAD_CLIENT: <unknown>(%s)", entry,
-			perms);
-		return;
+		paddr = "<unknown>";
+		break;
 	}
 
-	LogCrit(component, "  %p UNKNOWN_CLIENT_TYPE: %08x (%s)", entry,
-		entry->type, perms);
+	DisplayLogComponentLevel(component, (char *) __FILE__, line, func,
+				 level, "%s%p %s: %s (%s)",
+				 tag, entry, client_type, paddr, perms);
 }
 
+static void display_clients(struct gsh_export *export)
+{
+	struct glist_head *glist;
+
+	PTHREAD_RWLOCK_rdlock(&export->lock);
+
+	glist_for_each(glist, &export->clients) {
+		exportlist_client_entry_t *client;
+
+		client = glist_entry(glist, exportlist_client_entry_t,
+				     cle_list);
+		LogClientListEntry(NIV_MID_DEBUG,
+				   COMPONENT_EXPORT,
+				   __LINE__,
+				   (char *) __func__,
+				   "",
+				   client);
+	}
+
+	PTHREAD_RWLOCK_unlock(&export->lock);
+}
 
 /**
  * @brief Expand the client name token into one or more client entries
@@ -412,7 +540,12 @@ static int add_client(struct glist_head *client_list,
 				} else
 					continue;
 				cli->client_perms = *perms;
-				LogClientListEntry(COMPONENT_CONFIG, cli);
+				LogClientListEntry(NIV_MID_DEBUG,
+						   COMPONENT_CONFIG,
+						   __LINE__,
+						   (char *) __func__,
+						   "",
+						   cli);
 				glist_add_tail(client_list, &cli->cle_list);
 				cli = NULL; /* let go of it */
 			}
@@ -436,7 +569,12 @@ static int add_client(struct glist_head *client_list,
 		goto out;
 	}
 	cli->client_perms = *perms;
-	LogClientListEntry(COMPONENT_CONFIG, cli);
+	LogClientListEntry(NIV_MID_DEBUG,
+			   COMPONENT_CONFIG,
+			   __LINE__,
+			   (char *) __func__,
+			   "",
+			   cli);
 	glist_add_tail(client_list, &cli->cle_list);
 	cli = NULL;
 out:
@@ -687,6 +825,7 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 	struct gsh_export *export, *probe_exp;
 	int errcnt = 0;
 	char perms[1024];
+	struct display_buffer dspbuf = {sizeof(perms), perms, perms};
 
 	export = self_struct;
 
@@ -826,7 +965,9 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 	if (!add_export && export->export_perms.options & EXPORT_OPTION_NFSV4)
 		export_add_to_mount_work(export);
 
-	StrExportOptions(&export->export_perms, perms);
+	display_clients(export);
+
+	(void) StrExportOptions(&dspbuf, &export->export_perms);
 
 	LogInfo(COMPONENT_CONFIG,
 		"Export %d created at pseudo (%s) with path (%s) and tag (%s) perms (%s)",
@@ -864,8 +1005,9 @@ static void export_display(const char *step, void *node,
 {
 	struct gsh_export *export = self_struct;
 	char perms[1024];
+	struct display_buffer dspbuf = {sizeof(perms), perms, perms};
 
-	StrExportOptions(&export->export_perms, perms);
+	(void) StrExportOptions(&dspbuf, &export->export_perms);
 
 	LogMidDebug(COMPONENT_CONFIG,
 		    "%s %p Export %d pseudo (%s) with path (%s) and tag (%s) perms (%s)",
@@ -954,8 +1096,9 @@ static void export_defaults_display(const char *step, void *node,
 {
 	struct export_perms *defaults = self_struct;
 	char perms[1024];
+	struct display_buffer dspbuf = {sizeof(perms), perms, perms};
 
-	StrExportOptions(defaults, perms);
+	(void) StrExportOptions(&dspbuf, defaults);
 
 	LogEvent(COMPONENT_CONFIG,
 		 "%s Export Defaults (%s)",
@@ -1724,18 +1867,6 @@ void unexport(struct gsh_export *export)
 	clean_up_export(export);
 }
 
-static char *client_types[] = {
-	[PROTO_CLIENT] = "PROTO_CLIENT",
-	[HOSTIF_CLIENT] = "HOSTIF_CLIENT",
-	[NETWORK_CLIENT] = "NETWORK_CLIENT",
-	[NETGROUP_CLIENT] = "NETGROUP_CLIENT",
-	[WILDCARDHOST_CLIENT] = "WILDCARDHOST_CLIENT",
-	[GSSPRINCIPAL_CLIENT] = "GSSPRINCIPAL_CLIENT",
-	[HOSTIF_CLIENT_V6] = "HOSTIF_CLIENT_V6",
-	[MATCH_ANY_CLIENT] = "MATCH_ANY_CLIENT",
-	[BAD_CLIENT] = "BAD_CLIENT"
-	 };
-
 /**
  * @brief Match a specific option in the client export list
  *
@@ -1761,12 +1892,12 @@ static exportlist_client_entry_t *client_match(sockaddr_t *hostaddr,
 
 		client = glist_entry(glist, exportlist_client_entry_t,
 				     cle_list);
-		LogMidDebug(COMPONENT_EXPORT,
-			    "Match %p, type = %s, options 0x%X",
-			    client,
-			    client_types[client->type],
-			    client->client_perms.options);
-		LogClientListEntry(COMPONENT_EXPORT, client);
+		LogClientListEntry(NIV_MID_DEBUG,
+				   COMPONENT_EXPORT,
+				   __LINE__,
+				   (char *) __func__,
+				   "Match V4: ",
+				   client);
 
 		switch (client->type) {
 		case HOSTIF_CLIENT:
@@ -1890,12 +2021,12 @@ static exportlist_client_entry_t *client_matchv6(struct in6_addr *paddrv6,
 
 		client = glist_entry(glist, exportlist_client_entry_t,
 				     cle_list);
-		LogMidDebug(COMPONENT_EXPORT,
-			    "Matchv6 %p, type = %s, options 0x%X",
-			    client,
-			    client_types[client->type],
-			    client->client_perms.options);
-		LogClientListEntry(COMPONENT_EXPORT, client);
+		LogClientListEntry(NIV_MID_DEBUG,
+				   COMPONENT_EXPORT,
+				   __LINE__,
+				   (char *) __func__,
+				   "Match V6: ",
+				   client);
 
 		switch (client->type) {
 		case HOSTIF_CLIENT:
@@ -2195,26 +2326,34 @@ void export_check_access(void)
 
 	if (isMidDebug(COMPONENT_EXPORT)) {
 		char perms[1024];
+		struct display_buffer dspbuf = {sizeof(perms), perms, perms};
 
 		if (client != NULL) {
-			StrExportOptions(&client->client_perms, perms);
+			(void) StrExportOptions(&dspbuf, &client->client_perms);
 			LogMidDebug(COMPONENT_EXPORT,
 				    "CLIENT          (%s)",
 				    perms);
+			display_reset_buffer(&dspbuf);
 		}
-		StrExportOptions(&op_ctx->export->export_perms, perms);
+
+		(void) StrExportOptions(&dspbuf, &op_ctx->export->export_perms);
 		LogMidDebug(COMPONENT_EXPORT,
 			    "EXPORT          (%s)",
 			    perms);
-		StrExportOptions(&export_opt.conf, perms);
+
+		(void) StrExportOptions(&dspbuf, &export_opt.conf);
 		LogMidDebug(COMPONENT_EXPORT,
 			    "EXPORT_DEFAULTS (%s)",
 			    perms);
-		StrExportOptions(&export_opt.def, perms);
+
+		display_reset_buffer(&dspbuf);
+		(void) StrExportOptions(&dspbuf, &export_opt.def);
 		LogMidDebug(COMPONENT_EXPORT,
 			    "default options (%s)",
 			    perms);
-		StrExportOptions(op_ctx->export_perms, perms);
+
+		display_reset_buffer(&dspbuf);
+		(void) StrExportOptions(&dspbuf, op_ctx->export_perms);
 		LogMidDebug(COMPONENT_EXPORT,
 			    "Final options   (%s)",
 			    perms);

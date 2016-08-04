@@ -206,9 +206,6 @@ void export_check_access(void);
 
 bool export_check_security(struct svc_req *req);
 
-void LogClientListEntry(log_components_t component,
-			exportlist_client_entry_t *entry);
-
 int init_export_root(struct gsh_export *exp);
 
 fsal_status_t nfs_export_get_root_entry(struct gsh_export *export,
