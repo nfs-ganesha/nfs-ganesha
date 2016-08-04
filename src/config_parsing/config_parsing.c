@@ -1351,6 +1351,14 @@ static bool proc_block(struct config_node *node,
 	}
 	if (item->u.blk.display != NULL)
 		item->u.blk.display("RESULT", node, link_mem, param_struct);
+
+	if (err_type->dispose) {
+		/* We had a config update case where this block must be
+		 * disposed of.
+		 */
+		(void)item->u.blk.init(link_mem, param_struct);
+	}
+
 	return true;
 
 err_out:

@@ -114,6 +114,8 @@ struct config_error_type {
 	bool exists:1;		/*< block already exists */
 	bool internal:1;        /*< internal error */
 	bool bogus:1;		/*< bogus (deprecated?) param */
+	bool dispose:1;		/*< Not actually an error, but we need to
+				    dispose of the config item anyway. */
 	uint32_t errors;	/*< cumulative error count for parse+proc */
 	char *diag_buf;		/*< buffer for scan+parse+processing msgs */
 	size_t diag_buf_size;	/*< size of diag buffer used by memstream */
@@ -150,7 +152,7 @@ static inline bool config_error_is_crit(struct config_error_type *err_type)
 static inline bool config_error_is_harmless(struct config_error_type *err_type)
 {
 	return !(config_error_is_crit(err_type) ||
-		 err_type->unique || err_type->exists);
+		 err_type->unique || err_type->exists || err_type->dispose);
 }
 
 /**
