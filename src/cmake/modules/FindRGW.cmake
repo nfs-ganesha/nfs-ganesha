@@ -49,7 +49,7 @@ if (NOT RGW_LIBRARY_DIR)
     DOC "The RGW libraries")
 endif (NOT RGW_LIBRARY_DIR)
 
-find_library(RGW_LIBRARY rgw PATHS ${RGW_LIBRARY_DIR})
+find_library(RGW_LIBRARY rgw PATHS ${RGW_LIBRARY_DIR} NO_DEFAULT_PATH)
 check_library_exists(rgw rgw_mount ${RGW_LIBRARY_DIR} RGWLIB)
 if (NOT RGWLIB)
   unset(RGW_LIBRARY_DIR CACHE)
@@ -57,6 +57,7 @@ if (NOT RGWLIB)
 endif (NOT RGWLIB)
 
 set(RGW_LIBRARIES ${RGW_LIBRARY})
+message(STATUS "Found rgw libraries: ${RGW_LIBRARIES}")
 
 # handle the QUIETLY and REQUIRED arguments and set PRELUDE_FOUND to TRUE if
 # all listed variables are TRUE

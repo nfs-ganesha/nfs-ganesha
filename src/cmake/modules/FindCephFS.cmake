@@ -50,7 +50,7 @@ if (NOT CEPHFS_LIBRARY_DIR)
     DOC "The CephFS libraries")
 endif (NOT CEPHFS_LIBRARY_DIR)
 
-find_library(CEPHFS_LIBRARY cephfs PATHS ${CEPHFS_LIBRARY_DIR})
+find_library(CEPHFS_LIBRARY cephfs PATHS ${CEPHFS_LIBRARY_DIR} NO_DEFAULT_PATH)
 check_library_exists(cephfs ceph_ll_lookup ${CEPHFS_LIBRARY_DIR} CEPH_FS)
 if (NOT CEPH_FS)
   unset(CEPHFS_LIBRARY_DIR CACHE)
@@ -73,6 +73,7 @@ else (NOT CEPH_FS)
 endif (NOT CEPH_FS)
 
 set(CEPHFS_LIBRARIES ${CEPHFS_LIBRARY})
+message(STATUS "Found cephfs libraries: ${CEPHFS_LIBRARIES}")
 
 # handle the QUIETLY and REQUIRED arguments and set PRELUDE_FOUND to TRUE if
 # all listed variables are TRUE
