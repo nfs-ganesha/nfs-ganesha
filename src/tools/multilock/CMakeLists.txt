@@ -2,7 +2,7 @@ if(CEPH_FS_SETLK)
   add_definitions(
     -D_FILE_OFFSET_BITS=64
   )
-include_directories(${CEPHFS_INCLUDE_DIR})
+  include_directories(${CEPHFS_INCLUDE_DIR})
 endif(CEPH_FS_SETLK)
 
 
