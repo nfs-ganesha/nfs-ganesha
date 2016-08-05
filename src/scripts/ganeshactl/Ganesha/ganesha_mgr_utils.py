@@ -155,6 +155,16 @@ class ExportMgr():
 
         return True, "Done: "+msg
 
+    def UpdateExport(self, conf_path, exp_expr):
+        update_export_method = self.dbusobj.get_dbus_method("UpdateExport",
+                                                            self.dbus_interface)
+        try:
+           msg = update_export_method(conf_path, exp_expr)
+        except dbus.exceptions.DBusException as e:
+           return False, e
+
+        return True, "Done: "+msg
+
     def RemoveExport(self, exp_id):
         rm_export_method = self.dbusobj.get_dbus_method("RemoveExport",
                                                         self.dbus_interface)

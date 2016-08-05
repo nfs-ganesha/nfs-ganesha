@@ -50,6 +50,10 @@ class ShowExports(QtCore.QObject):
         self.exportmgr.AddExport(conf_path, exp_expr)
         print "Add Export in %s" % conf_path
 
+    def updateexport(self, conf_path, exp_expr):
+        self.exportmgr.UpdateExport(conf_path, exp_expr)
+        print "Update Export in %s" % conf_path
+
     def removeexport(self, exp_id):
         self.exportmgr.RemoveExport(exp_id)
         print "Remove Export with id %d" % int(exp_id)
@@ -95,6 +99,8 @@ if __name__ == '__main__':
     exportmgr = ShowExports(sysbus)
     if sys.argv[1] == "add":
         exportmgr.addexport(sys.argv[2], sys.argv[3])
+    elif sys.argv[1] == "update":
+        exportmgr.updateexport(sys.argv[2], sys.argv[3])
     elif sys.argv[1] == "remove":
         exportmgr.removeexport(sys.argv[2])
     elif sys.argv[1] == "display":
