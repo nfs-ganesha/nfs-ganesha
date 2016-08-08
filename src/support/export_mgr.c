@@ -722,14 +722,25 @@ bool remove_one_export(struct gsh_export *export, void *state)
 void remove_all_exports(void)
 {
 	struct gsh_export *export;
+	struct root_op_context root_op_context;
+
+	/* Initialize req_ctx */
+	init_root_op_context(&root_op_context, NULL, NULL,
+				NFS_V4, 0, NFS_REQUEST);
 
 	/* Get a reference to the PseudoFS Root Export */
 	export = get_gsh_export_by_pseudo("/", true);
+
+	op_ctx->export = export;
+	op_ctx->fsal_export = export->fsal_export;
 
 	/* Clean up the whole PseudoFS */
 	pseudo_unmount_export(export);
 
 	put_gsh_export(export);
+
+	op_ctx->export = NULL;
+	op_ctx->fsal_export = NULL;
 
 	/* Put all exports on the unexport work list.
 	 * Ignore return since remove_one_export can't fail.
@@ -741,9 +752,18 @@ void remove_all_exports(void)
 		export = export_take_unexport_work();
 		if (export == NULL)
 			break;
+
+		op_ctx->export = export;
+		op_ctx->fsal_export = export->fsal_export;
+
 		unexport(export);
 		put_gsh_export(export);
+
+		op_ctx->export = NULL;
+		op_ctx->fsal_export = NULL;
 	}
+
+	release_root_op_context();
 }
 
 #ifdef USE_DBUS
