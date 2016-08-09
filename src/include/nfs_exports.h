@@ -170,6 +170,8 @@ typedef struct exportlist_client_entry__ {
 				       EXPORT_OPTION_RPCSEC_GSS_NONE | \
 				       EXPORT_OPTION_RPCSEC_GSS_INTG | \
 				       EXPORT_OPTION_RPCSEC_GSS_PRIV)
+#define EXPORT_OPTION_AUTH_DEFAULTS   (EXPORT_OPTION_AUTH_NONE	     | \
+				       EXPORT_OPTION_AUTH_UNIX)
 
 /* Protocol flags */
 #define EXPORT_OPTION_NFSV3 0x00100000	/*< NFSv3 operations are supported */
@@ -181,9 +183,13 @@ typedef struct exportlist_client_entry__ {
 #define EXPORT_OPTION_PROTOCOLS	      (EXPORT_OPTION_NFSV3	     | \
 				       EXPORT_OPTION_NFSV4	     | \
 				       EXPORT_OPTION_9P)
+#define EXPORT_OPTION_PROTO_DEFAULTS  (EXPORT_OPTION_NFSV3	     | \
+				       EXPORT_OPTION_NFSV4)
 #define EXPORT_OPTION_TRANSPORTS      (EXPORT_OPTION_UDP	     | \
 				       EXPORT_OPTION_TCP	     | \
 				       EXPORT_OPTION_RDMA)
+#define EXPORT_OPTION_XPORT_DEFAULTS  (EXPORT_OPTION_UDP	     | \
+				       EXPORT_OPTION_TCP)
 
 #define EXPORT_OPTION_READ_DELEG 0x10000000	/*< Enable read delegations */
 #define EXPORT_OPTION_WRITE_DELEG 0x20000000	/*< Using write delegations */

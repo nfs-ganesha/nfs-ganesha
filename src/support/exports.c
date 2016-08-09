@@ -61,12 +61,9 @@ struct global_export_perms export_opt = {
 	/* Note: Access_Type defaults to None on purpose */
 	.def.options = EXPORT_OPTION_ROOT_SQUASH |
 		       EXPORT_OPTION_NO_ACCESS |
-		       EXPORT_OPTION_AUTH_NONE |
-		       EXPORT_OPTION_AUTH_UNIX |
-		       EXPORT_OPTION_NFSV3 |
-		       EXPORT_OPTION_NFSV4 |
-		       EXPORT_OPTION_UDP |
-		       EXPORT_OPTION_TCP |
+		       EXPORT_OPTION_AUTH_DEFAULTS |
+		       EXPORT_OPTION_PROTO_DEFAULTS |
+		       EXPORT_OPTION_XPORT_DEFAULTS |
 		       EXPORT_OPTION_NO_DELEGATIONS,
 	.def.set = UINT32_MAX
 };
@@ -1076,10 +1073,10 @@ struct config_item_list deleg_types[] =  {
 		EXPORT_OPTION_ACCESS_MASK,				\
 		access_types, _struct_, _perms_.options, _perms_.set),	\
 	CONF_ITEM_LIST_BITS_SET("Protocols",				\
-		EXPORT_OPTION_PROTOCOLS, EXPORT_OPTION_PROTOCOLS,	\
+		EXPORT_OPTION_PROTO_DEFAULTS, EXPORT_OPTION_PROTOCOLS,	\
 		nfs_protocols, _struct_, _perms_.options, _perms_.set),	\
 	CONF_ITEM_LIST_BITS_SET("Transports",				\
-		EXPORT_OPTION_TRANSPORTS, EXPORT_OPTION_TRANSPORTS,	\
+		EXPORT_OPTION_XPORT_DEFAULTS, EXPORT_OPTION_TRANSPORTS,	\
 		transports, _struct_, _perms_.options, _perms_.set),	\
 	CONF_ITEM_ANON_ID_SET("Anonymous_uid",				\
 		ANON_UID, _struct_, _perms_.anonymous_uid,		\
@@ -1088,8 +1085,7 @@ struct config_item_list deleg_types[] =  {
 		ANON_GID, _struct_, _perms_.anonymous_gid,		\
 		EXPORT_OPTION_ANON_GID_SET, _perms_.set),		\
 	CONF_ITEM_LIST_BITS_SET("SecType",				\
-		EXPORT_OPTION_AUTH_NONE | EXPORT_OPTION_AUTH_UNIX,	\
-		EXPORT_OPTION_AUTH_TYPES,				\
+		EXPORT_OPTION_AUTH_DEFAULTS, EXPORT_OPTION_AUTH_TYPES,	\
 		sec_types, _struct_, _perms_.options, _perms_.set),	\
 	CONF_ITEM_BOOLBIT_SET("PrivilegedPort",				\
 		false, EXPORT_OPTION_PRIVILEGED_PORT,			\
