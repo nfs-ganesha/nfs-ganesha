@@ -300,7 +300,7 @@ bool idmapper_add_user(const struct gsh_buffdesc *name, uid_t uid,
 {
 	struct avltree_node *found_name;
 	struct avltree_node *found_id;
-	struct cache_user *tmp;
+	struct cache_user *old;
 	struct cache_user *new;
 
 	new = gsh_malloc(sizeof(struct cache_user) + name->len);
@@ -316,56 +316,77 @@ bool idmapper_add_user(const struct gsh_buffdesc *name, uid_t uid,
 		new->gid = -1;
 		new->gid_set = false;
 	}
+	new->in_uidtree = (gss_princ) ? false : true;
 
 	/*
-	 * The threads that lookup by-name or by-id use the read lock. If
-	 * they don't find an entry, then they release the read lock,
+	 * There are 3 cases why we find an existing cache entry.
+	 *
+	 * Case 1:
+	 * The threads that lookup by-name or by-id use the read lock.
+	 * If they don't find an entry, then they release the read lock,
 	 * acquire the write lock and then add the entry. So it is
 	 * possible that multiple threads may fail to find an entry at
 	 * one point and they all try to add. In this case, we will be
-	 * trying to insert same name,id mapping. It is also possible
-	 * that name got a different id or an id got a different name
-	 * causing us to find an existing entry when we are trying to
-	 * add an entry!
+	 * trying to insert same name,id mapping.
 	 *
-	 * If we find an existing entry, we remove it from both the name
-	 * and the id AVL trees, and then add the new entry.
+	 * Case 2:
+	 * It is also possible that name got a different id or an id got
+	 * a different name causing us to find an existing entry when we
+	 * are trying to add an entry. This case calls for removing the
+	 * stale entry and update with this new entry.
+	 *
+	 * Case 3:
+	 * The username to id mapping could be from plain nfs idmapping
+	 * in which case we will not have a valid gid. If this is for a
+	 * kerberos principal mapping, we will have uid and gid but we
+	 * will not have "uid to name" cache entry (the reverse
+	 * mapping). This case requires us to combine the old entry and
+	 * the new entry!
+	 *
+	 * Note that the 3rd case happens if and only if IDMAPD_DOMAIN
+	 * and LOCAL_REALMS are set to the same value!
 	 */
 	found_name = avltree_insert(&new->uname_node, &uname_tree);
 	if (unlikely(found_name)) {
-		tmp = avltree_container_of(found_name, struct cache_user,
+		old = avltree_container_of(found_name, struct cache_user,
 					   uname_node);
-		avltree_remove(found_name, &uname_tree);
-		if (tmp->in_uidtree) {
-			uid_cache[tmp->uid % id_cache_size] = NULL;
-			avltree_remove(&tmp->uid_node, &uid_tree);
+		/* Combine old into new if uid's match */
+		if (old->uid == new->uid) {
+			if (!new->gid_set && old->gid_set) {
+				new->gid = old->gid;
+				new->gid_set = true;
+			}
+			if (!new->in_uidtree && old->in_uidtree)
+				new->in_uidtree = true;
 		}
-		gsh_free(tmp);
+
+		/* Remove the old and insert the new */
+		avltree_remove(found_name, &uname_tree);
+		if (old->in_uidtree) {
+			uid_cache[old->uid % id_cache_size] = NULL;
+			avltree_remove(&old->uid_node, &uid_tree);
+		}
+		gsh_free(old);
 		found_name = avltree_insert(&new->uname_node, &uname_tree);
 		assert(found_name == NULL);
 	}
 
-	/* If this is gss principal, we don't add to uid_tree */
-	if (gss_princ) {
-		new->in_uidtree = false;
-		goto out;
-	}
+	if (!new->in_uidtree) /* all done */
+		return true;
 
-	new->in_uidtree = true; /* we will sure insert it! */
 	found_id = avltree_insert(&new->uid_node, &uid_tree);
 	if (unlikely(found_id)) {
-		tmp = avltree_container_of(found_id, struct cache_user,
+		old = avltree_container_of(found_id, struct cache_user,
 					   uid_node);
-		uid_cache[tmp->uid % id_cache_size] = NULL;
+		uid_cache[old->uid % id_cache_size] = NULL;
 		avltree_remove(found_id, &uid_tree);
-		avltree_remove(&tmp->uname_node, &uname_tree);
-		gsh_free(tmp);
+		avltree_remove(&old->uname_node, &uname_tree);
+		gsh_free(old);
 		found_id = avltree_insert(&new->uid_node, &uid_tree);
 		assert(found_id == NULL);
 	}
 	uid_cache[uid % id_cache_size] = &new->uid_node;
 
-out:
 	return true;
 }
 

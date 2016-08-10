@@ -646,8 +646,8 @@ bool principal2uid(char *principal, uid_t *uid, gid_t *gid)
 #endif
 {
 #ifdef USE_NFSIDMAP
-	uid_t gss_uid = ANON_UID;
-	gid_t gss_gid = ANON_GID;
+	uid_t gss_uid = -1;
+	gid_t gss_gid = -1;
 	const gid_t *gss_gidres = NULL;
 	int rc;
 	bool success;
@@ -664,8 +664,14 @@ bool principal2uid(char *principal, uid_t *uid, gid_t *gid)
 	PTHREAD_RWLOCK_rdlock(&idmapper_user_lock);
 	success =
 	    idmapper_lookup_by_uname(&princbuff, &gss_uid, &gss_gidres, true);
-	if (success && gss_gidres)
+
+	/* We do need uid and gid. If gid is not in the cache, treat it as a
+	 * failure.
+	 */
+	if (success && gss_gidres != NULL)
 		gss_gid = *gss_gidres;
+	else
+		success = false;
 	PTHREAD_RWLOCK_unlock(&idmapper_user_lock);
 	if (unlikely(!success)) {
 		if ((princbuff.len >= 4)
@@ -682,6 +688,7 @@ bool principal2uid(char *principal, uid_t *uid, gid_t *gid)
 			/* This is a "root" request made from the
 			   hostbased nfs principal, use root */
 			*uid = 0;
+			*gid = 0;
 			return true;
 		}
 		/* nfs4_gss_princ_to_ids required to extract uid/gid
