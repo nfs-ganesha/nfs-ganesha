@@ -104,8 +104,8 @@ static pthread_mutex_t init_mtx = PTHREAD_MUTEX_INITIALIZER;
  */
 
 static fsal_status_t init_config(struct fsal_module *module_in,
-				 config_file_t config_struct,
-				 struct config_error_type *err_type)
+				config_file_t config_struct,
+				struct config_error_type *err_type)
 {
 	struct rgw_fsal_module *myself =
 	    container_of(module_in, struct rgw_fsal_module, fsal);
@@ -123,6 +123,17 @@ static fsal_status_t init_config(struct fsal_module *module_in,
 		return fsalstat(ERR_FSAL_INVAL, 0);
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
+ /**
+ * @brief Indicate support for extended operations.
+ *
+ * @retval true if extended operations are supported.
+ */
+
+bool support_ex(struct fsal_obj_handle *obj)
+{
+	return true;
 }
 
 /**
@@ -363,6 +374,7 @@ MODULE_INIT void init(void)
 	/* Set up module operations */
 	myself->m_ops.create_export = create_export;
 	myself->m_ops.init_config = init_config;
+	myself->m_ops.support_ex = support_ex;
 }
 
 /**
