@@ -115,7 +115,7 @@ static bool xdr_encode_nfs4_princ(XDR *xdrs, uint32_t id, bool group)
 	if (nfs_param.nfsv4_param.only_numeric_owners) {
 		/* 2**32 is 10 digits long in decimal */
 		struct gsh_buffdesc name;
-		char namebuf[11];
+		char *namebuf = alloca(11);
 
 		name.addr = namebuf;
 		sprintf(namebuf, "%"PRIu32, id);
