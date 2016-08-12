@@ -49,9 +49,6 @@ struct mdcache_parameter {
 	/** Per-partition hash table size.  Defaults to 32633,
 	 * settable with Cache_Size. */
 	uint32_t cache_size;
-	/** Expiration time interval in seconds for attributes.  Settable with
-	    Attr_Expiration_Time. */
-	int32_t  expire_time_attr;
 	/** Use getattr for directory invalidation.  Defaults to
 	    false.  Settable with Use_Getattr_Directory_Invalidation. */
 	bool getattr_dir_invalidation;

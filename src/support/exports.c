@@ -52,9 +52,6 @@
 #include "sal_functions.h"
 #include "pnfs_utils.h"
 
-/* XXX dang this should be removed at some point */
-#include "../FSAL/Stackable_FSALs/FSAL_MDCACHE/mdcache_ext.h"
-
 struct global_export_perms export_opt = {
 	.def.anonymous_uid = ANON_UID,
 	.def.anonymous_gid = ANON_GID,
@@ -65,7 +62,8 @@ struct global_export_perms export_opt = {
 		       EXPORT_OPTION_PROTO_DEFAULTS |
 		       EXPORT_OPTION_XPORT_DEFAULTS |
 		       EXPORT_OPTION_NO_DELEGATIONS,
-	.def.set = UINT32_MAX
+	.def.set = UINT32_MAX,
+	.expire_time_attr = 60,
 };
 
 static void FreeClientList(struct glist_head *clients);
@@ -721,9 +719,8 @@ static int fsal_cfg_commit(void *node, void *link_mem, void *self_struct,
 					   node, err_type,
 					  &fsal_up_top);
 
-	/* XXX dang - Move this outside of MDCACHE ? */
 	if ((export->options_set & EXPORT_OPTION_EXPIRE_SET) == 0)
-		export->expire_time_attr = mdcache_param.expire_time_attr;
+		export->expire_time_attr = export_opt.expire_time_attr;
 
 	if (FSAL_IS_ERROR(status)) {
 		fsal_put(fsal);

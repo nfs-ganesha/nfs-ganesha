@@ -57,8 +57,6 @@ static struct config_item mdcache_params[] = {
 		       mdcache_parameter, nparts),
 	CONF_ITEM_UI32("Cache_Size", 1, UINT32_MAX, 32633,
 		       mdcache_parameter, cache_size),
-	CONF_ITEM_I32("Attr_Expiration_Time", -1, INT32_MAX, 60,
-		       mdcache_parameter, expire_time_attr),
 	CONF_ITEM_BOOL("Use_Getattr_Directory_Invalidation", false,
 		       mdcache_parameter, getattr_dir_invalidation),
 	CONF_ITEM_UI32("Dir_Max_Deleted", 1, UINT32_MAX, 65536,

@@ -75,6 +75,9 @@ typedef enum exportlist_client_type__ {
 struct global_export_perms {
 	struct export_perms def;
 	struct export_perms conf;
+	/** Expiration time interval in seconds for attributes.  Settable with
+	    Attr_Expiration_Time. */
+	int32_t  expire_time_attr;
 };
 
 #define GSS_DEFINE_LEN_TEMP 255
