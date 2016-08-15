@@ -370,8 +370,12 @@ static struct gssd_k5_kt_princ *new_ple(krb5_context context,
 	ple->realm = gsh_strdup(princ->realm);
 #endif
 	code = krb5_copy_principal(context, princ, &ple->princ);
-	if (code)
-		goto outerr;
+
+	if (code) {
+		gsh_free(ple->realm);
+		gsh_free(ple);
+		return NULL;
+	}
 
 	/*
 	 * Add new entry onto the list (if this is the default
@@ -399,12 +403,6 @@ static struct gssd_k5_kt_princ *new_ple(krb5_context context,
 	}
 
 	return ple;
- outerr:
-	if (ple) {
-		gsh_free(ple->realm);
-		gsh_free(ple);
-	}
-	return NULL;
 }
 
 /*

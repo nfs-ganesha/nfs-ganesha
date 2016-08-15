@@ -271,8 +271,11 @@ void delayed_start(void)
 			 "You can't execute tasks with zero threads.");
 	}
 
-	pthread_attr_init(&attr);
-	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+	if (pthread_attr_init(&attr) != 0)
+		LogFatal(COMPONENT_THREAD, "can't init pthread's attributes");
+
+	if (pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED) != 0)
+		LogFatal(COMPONENT_THREAD, "can't set pthread's join state");
 
 	PTHREAD_MUTEX_lock(&mtx);
 	delayed_state = delayed_running;

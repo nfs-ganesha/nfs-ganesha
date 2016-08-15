@@ -881,7 +881,7 @@ char *parse_response(char *line, struct response *resp)
 	char *rest;
 	long long int dummy_len;
 
-	if (resp->r_original == '\0')
+	if (resp->r_original[0] == '\0')
 		strcpy(resp->r_original, line);
 
 	resp->r_cmd = NUM_COMMANDS;

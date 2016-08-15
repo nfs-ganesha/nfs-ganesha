@@ -108,7 +108,15 @@ void _9p_rdma_cleanup_conn(msk_trans_t *trans)
 	    pthread_attr_setdetachstate(&attr_thr, PTHREAD_CREATE_DETACHED))
 		return;
 
-	pthread_create(&thr_id, &attr_thr, _9p_rdma_cleanup_conn_thread, trans);
+	if (pthread_create(&thr_id, &attr_thr, _9p_rdma_cleanup_conn_thread,
+			   trans))
+		LogMajor(COMPONENT_9P,
+			 "9P/RDMA : dispatcher cleanup could not spawn a related thread");
+	else
+		LogDebug(COMPONENT_9P,
+			 "9P/RDMA: thread #%x spawned to cleanup trans [%p]",
+			 (unsigned int)thr_id,
+			 trans);
 }
 
 /**
@@ -228,7 +236,6 @@ static void _9p_rdma_setup_pernic(msk_trans_t *trans, uint8_t *outrdmabuf)
 		LogFatal(COMPONENT_9P,
 			 "9P/RDMA: trans handler could not register rdmabuf, errno: %s (%d)",
 			 strerror(rc), rc);
-		goto error;
 	}
 
 	/* Get prepared to recv data */
@@ -250,24 +257,16 @@ static void _9p_rdma_setup_pernic(msk_trans_t *trans, uint8_t *outrdmabuf)
 			LogEvent(COMPONENT_9P,
 				 "9P/RDMA: trans handler could post_recv first byte of data[%u], rc=%u",
 				 i, rc);
-			goto error;
+			msk_dereg_mr(pernic->inmr);
+			msk_dereg_mr(pernic->outmr);
+			gsh_free(pernic->rdmabuf);
+			gsh_free(pernic->rdata);
+			gsh_free(pernic);
+			return;
 		}
 	}
 
-
 	msk_getpd(trans)->private = pernic;
-
-	return;
-error:
-	if (pernic) {
-		if (pernic->outmr)
-			msk_dereg_mr(pernic->outmr);
-		if (pernic->inmr)
-			msk_dereg_mr(pernic->inmr);
-		gsh_free(pernic->rdmabuf);
-		gsh_free(pernic->rdata);
-	}
-	gsh_free(pernic);
 }
 
 static void _9p_rdma_setup_global(uint8_t **poutrdmabuf, msk_data_t **pwdata,

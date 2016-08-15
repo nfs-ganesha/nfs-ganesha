@@ -418,8 +418,8 @@ static int new_file(char *name_tok,
 	if (filename[0] == '/') {
 		fullpath = gsh_strdup(filename);
 	} else {
-		fullpath = gsh_calloc(1, (strlen(filename) +
-					  strlen(confroot->conf_dir) + 2));
+		fullpath = gsh_malloc(strlen(filename) +
+				      strlen(confroot->conf_dir) + 2);
 
 		sprintf(fullpath, "%s/%s", confroot->conf_dir, filename);
 	}
@@ -466,12 +466,11 @@ errout:
 		st->err_type->resource = true;
 	else
 		st->err_type->scan = true;
-	if (flist != NULL)
-		gsh_free(flist);
-	if (bs != NULL)
-		gsh_free(bs);
-	if (fullpath != NULL)
-		gsh_free(fullpath);
+
+	gsh_free(flist);
+	gsh_free(bs);
+	gsh_free(fullpath);
+
 	return rc;
 }
 

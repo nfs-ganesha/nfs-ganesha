@@ -886,6 +886,7 @@ fsal_status_t fsal_create(struct fsal_obj_handle *parent,
 					/* Incompatible types, returns NULL */
 					(*obj)->obj_ops.put_ref((*obj));
 					*obj = NULL;
+					goto out;
 				}
 				if ((type == REGULAR_FILE) &&
 				    (attrs->mask & ATTR_SIZE) &&
@@ -1483,7 +1484,7 @@ fsal_remove(struct fsal_obj_handle *parent, const char *name)
 
 	if (parent->type != DIRECTORY) {
 		status = fsalstat(ERR_FSAL_NOTDIR, 0);
-		goto out;
+		goto out_no_obj;
 	}
 
 	/* Looks up for the entry to remove */
@@ -1546,7 +1547,10 @@ fsal_remove(struct fsal_obj_handle *parent, const char *name)
 	}
 
 out:
+
 	to_remove_obj->obj_ops.put_ref(to_remove_obj);
+
+out_no_obj:
 
 	LogFullDebug(COMPONENT_FSAL, "remove %s: status=%s", name,
 		     fsal_err_txt(status));

@@ -619,6 +619,7 @@ nfsstat4 nfs4_Errno_verbose(fsal_errors_t error, const char *where)
 
 	case ERR_FSAL_BAD_RANGE:
 		nfserror = NFS4ERR_BAD_RANGE;
+		break;
 
 	case ERR_FSAL_BADNAME:
 		nfserror = NFS4ERR_BADNAME;

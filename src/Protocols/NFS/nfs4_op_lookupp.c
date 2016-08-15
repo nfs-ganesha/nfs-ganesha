@@ -90,6 +90,7 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 	status = nfs_export_get_root_entry(original_export, &root_obj);
 	if (FSAL_IS_ERROR(status)) {
 		res_LOOKUPP4->status = nfs4_Errno_status(status);
+		PTHREAD_RWLOCK_unlock(&original_export->lock);
 		return res_LOOKUPP4->status;
 	}
 
