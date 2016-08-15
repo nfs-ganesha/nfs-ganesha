@@ -45,43 +45,24 @@
 #include "gsh_dbus.h"
 #endif
 
-struct glist_head temp_exportlist;
-
 /**
- * @brief Mutex protecting command and status
+ * @brief Mutex protecting shutdown flag.
  */
 
 static pthread_mutex_t admin_control_mtx = PTHREAD_MUTEX_INITIALIZER;
 
 /**
- * @brief Condition variable on which commands and states are
- * signalled.
+ * @brief Condition variable to signal change in shutdown flag.
  */
 
 static pthread_cond_t admin_control_cv = PTHREAD_COND_INITIALIZER;
 
 /**
- * @brief Commands issued to the admin thread
+ * @brief Flag to indicate shutdown Ganesha.
+ *
+ * Protected by admin_control_mtx and signaled by admin_control_cv.
  */
-
-typedef enum {
-	admin_none_pending,	/*< No command.  The admin thread sets this on
-				   startup and after */
-	admin_shutdown		/*< Shut down Ganesha */
-} admin_command_t;
-
-/**
- * @brief Current state of the admin thread
- */
-
-typedef enum {
-	admin_stable,		/*< The admin thread is not doing an action. */
-	admin_shutting_down,	/*< The admin thread is shutting down Ganesha */
-	admin_halted		/*< All threads should exit. */
-} admin_status_t;
-
-static admin_command_t admin_command;
-static admin_status_t admin_status;
+static bool admin_shutdown;
 
 #ifdef USE_DBUS
 
@@ -308,29 +289,10 @@ static struct gsh_dbus_interface *admin_interfaces[] = {
 
 void nfs_Init_admin_thread(void)
 {
-	admin_command = admin_none_pending;
-	admin_status = admin_stable;
 #ifdef USE_DBUS
 	gsh_dbus_register_path("admin", admin_interfaces);
 #endif				/* USE_DBUS */
 	LogEvent(COMPONENT_NFS_CB, "Admin thread initialized");
-}
-
-static void admin_issue_command(admin_command_t command)
-{
-	PTHREAD_MUTEX_lock(&admin_control_mtx);
-	while ((admin_command != admin_none_pending)
-	       && ((admin_status != admin_stable)
-		   || (admin_status != admin_halted))) {
-		pthread_cond_wait(&admin_control_cv, &admin_control_mtx);
-	}
-	if (admin_status == admin_halted) {
-		PTHREAD_MUTEX_unlock(&admin_control_mtx);
-		return;
-	}
-	admin_command = command;
-	pthread_cond_broadcast(&admin_control_cv);
-	PTHREAD_MUTEX_unlock(&admin_control_mtx);
 }
 
 /**
@@ -339,7 +301,14 @@ static void admin_issue_command(admin_command_t command)
 
 void admin_halt(void)
 {
-	admin_issue_command(admin_shutdown);
+	PTHREAD_MUTEX_lock(&admin_control_mtx);
+
+	if (!admin_shutdown) {
+		admin_shutdown = true;
+		pthread_cond_broadcast(&admin_control_cv);
+	}
+
+	PTHREAD_MUTEX_unlock(&admin_control_mtx);
 }
 
 static void do_shutdown(void)
@@ -448,21 +417,15 @@ void *admin_thread(void *UnusedArg)
 	SetNameFunction("Admin");
 
 	PTHREAD_MUTEX_lock(&admin_control_mtx);
-	while (admin_command != admin_shutdown) {
-		if (admin_command != admin_none_pending)
-			continue;
+
+	while (!admin_shutdown) {
+		/* Wait for shutdown indication. */
 		pthread_cond_wait(&admin_control_cv, &admin_control_mtx);
 	}
 
-	admin_command = admin_none_pending;
-	admin_status = admin_shutting_down;
-	pthread_cond_broadcast(&admin_control_cv);
-	PTHREAD_MUTEX_unlock(&admin_control_mtx);
-	do_shutdown();
-	PTHREAD_MUTEX_lock(&admin_control_mtx);
-	admin_status = admin_halted;
-	pthread_cond_broadcast(&admin_control_cv);
 	PTHREAD_MUTEX_unlock(&admin_control_mtx);
 
+	do_shutdown();
+
 	return NULL;
-}				/* admin_thread */
+}
