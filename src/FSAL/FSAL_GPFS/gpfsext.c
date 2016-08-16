@@ -29,6 +29,7 @@
 #include <sys/stat.h>
 #include "include/gpfs.h"
 #endif
+#include "fsal.h"
 
 #include "include/gpfs_nfs.h"
 
@@ -145,11 +146,10 @@ int gpfs_ganesha(int op, void *oarg)
 
 	if (gpfs_fd < 0) {
 		gpfs_fd = open(GPFS_DEVNAMEX, O_RDONLY);
-		if (gpfs_fd < 0) {
-			fprintf(stderr,
-				"Ganesha call to GPFS failed with ENOSYS\n");
-			return ENOSYS;
-		}
+		if (gpfs_fd < 0)
+			LogFatal(COMPONENT_FSAL,
+				"open of %s failed with errno %d",
+				GPFS_DEVNAMEX, errno);
 		(void)fcntl(gpfs_fd, F_SETFD, FD_CLOEXEC);
 	}
 
