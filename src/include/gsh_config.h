@@ -81,7 +81,7 @@ typedef enum protos {
 /**
  * @brief Default value for core_param.nb_worker
  */
-#define NB_WORKER_THREAD_DEFAULT 16
+#define NB_WORKER_THREAD_DEFAULT 256
 
 /**
  * @brief Default value for core_param.drc.tcp.npart

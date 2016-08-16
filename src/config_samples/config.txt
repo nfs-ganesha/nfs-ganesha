@@ -52,7 +52,7 @@ NFS_CORE_PARAM {}
 
 	Rquota_Program(uint32, range 1 to INT32_MAX, default  100011)
 
-	Nb_Worker(uint32, range 1 to 1024*128, default 16)
+	Nb_Worker(uint32, range 1 to 1024*128, default 256)
 
 	Drop_IO_Errors(bool, default false)
 
