@@ -59,13 +59,32 @@ endif (NOT RGWLIB)
 set(RGW_LIBRARIES ${RGW_LIBRARY})
 message(STATUS "Found rgw libraries: ${RGW_LIBRARIES}")
 
+set(RGW_FILE_HEADER "${RGW_INCLUDE_DIR}/include/rados/rgw_file.h")
+if (EXISTS ${RGW_FILE_HEADER})
+  file(STRINGS ${RGW_FILE_HEADER} RGW_MAJOR REGEX
+    "LIBRGW_FILE_VER_MAJOR (\\d*).*$")
+  string(REGEX REPLACE ".+LIBRGW_FILE_VER_MAJOR (\\d*)" "\\1" RGW_MAJOR
+    "${RGW_MAJOR}")
+
+  file(STRINGS ${RGW_FILE_HEADER} RGW_MINOR REGEX
+    "LIBRGW_FILE_VER_MINOR (\\d*).*$")
+  string(REGEX REPLACE ".+LIBRGW_FILE_VER_MINOR (\\d*)" "\\1" RGW_MINOR
+    "${RGW_MINOR}")
+
+  set(RGW_FILE_VERSION "${RGW_MAJOR}.${RGW_MINOR}")
+else()
+  set(RGW_FILE_VERSION "0.0")
+endif()
+
 # handle the QUIETLY and REQUIRED arguments and set PRELUDE_FOUND to TRUE if
 # all listed variables are TRUE
 include(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(RGW
-  REQUIRED_VARS RGW_INCLUDE_DIR RGW_LIBRARY_DIR)
+  REQUIRED_VARS RGW_INCLUDE_DIR RGW_LIBRARY_DIR
+  VERSION_VAR RGW_FILE_VERSION
+  )
 # VERSION FPHSA options not handled by CMake version < 2.8.2)
 #                                  VERSION_VAR)
+
 mark_as_advanced(RGW_INCLUDE_DIR)
 mark_as_advanced(RGW_LIBRARY_DIR)
-

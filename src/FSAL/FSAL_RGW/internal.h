@@ -44,6 +44,9 @@
 #include <include/rados/librgw.h>
 #include <include/rados/rgw_file.h>
 
+#if ((LIBRGW_FILE_VER_MAJOR != 1) || (LIBRGW_FILE_VER_MINOR < 1))
+#error rados/rgw_file.h version unsupported (require >= 1.1.0)
+#endif
 
 /**
  * RGW Main (global) module object
