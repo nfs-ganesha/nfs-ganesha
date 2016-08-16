@@ -32,6 +32,9 @@
 
 #include "config.h"
 
+#ifdef LINUX
+#include <sys/sysmacros.h> /* for makedev(3) */
+#endif
 #include <libgen.h>		/* used for 'dirname' */
 #include <pthread.h>
 #include <string.h>

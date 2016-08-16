@@ -21,6 +21,9 @@
  * -------------
  */
 
+#ifdef LINUX
+#include <sys/sysmacros.h> /* for makedev(3) */
+#endif
 #include <fcntl.h>
 #include "fsal.h"
 #include "gluster_internal.h"

@@ -31,6 +31,9 @@
  * fsal_obj_handle type.
  */
 
+#ifdef LINUX
+#include <sys/sysmacros.h> /* for makedev(3) */
+#endif
 #include <fcntl.h>
 #include <cephfs/libcephfs.h>
 #include "fsal.h"

@@ -41,6 +41,9 @@
 #include "config.h"
 
 #include <misc/queue.h> /* avoid conflicts with sys/queue.h */
+#ifdef LINUX
+#include <sys/sysmacros.h> /* for major(3), minor(3) */
+#endif
 #include <libgen.h>		/* used for 'dirname' */
 #include <pthread.h>
 #include <sys/stat.h>
