@@ -137,6 +137,13 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 
 		retry = 0;
 
+		/* flags is int, but only the least significant 2 bytes
+		 * are valid.  We are getting random bits into the upper
+		 * 2 bytes! Workaround this until the kernel module
+		 * gets fixed.
+		 */
+		flags = flags & 0xffff;
+
 		LogDebug(COMPONENT_FSAL_UP,
 			 "inode update: rc %d reason %d update ino %ld flags:%x",
 			 rc, reason, callback.buf->st_ino, flags);
