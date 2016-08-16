@@ -74,13 +74,13 @@ static struct _9p_user_cred *new_9p_user_creds()
  */
 static struct user_cred *get_user_cred_ref(struct _9p_user_cred *creds)
 {
-	atomic_inc_int64_t(&creds->refcount);
+	(void) atomic_inc_int64_t(&creds->refcount);
 	return &creds->creds;
 }
 
 void get_9p_user_cred_ref(struct _9p_user_cred *creds)
 {
-	atomic_inc_int64_t(&creds->refcount);
+	(void) atomic_inc_int64_t(&creds->refcount);
 }
 
 void release_9p_user_cred_ref(struct _9p_user_cred *creds)

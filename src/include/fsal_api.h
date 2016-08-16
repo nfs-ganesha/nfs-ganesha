@@ -2846,7 +2846,7 @@ struct fsal_module {
 
 static inline void fsal_get(struct fsal_module *fsal_hdl)
 {
-	atomic_inc_int32_t(&fsal_hdl->refcount);
+	(void) atomic_inc_int32_t(&fsal_hdl->refcount);
 	assert(fsal_hdl->refcount > 0);
 }
 
@@ -3039,7 +3039,7 @@ struct fsal_ds_handle {
 
 static inline void ds_handle_get_ref(struct fsal_ds_handle *const ds_hdl)
 {
-	atomic_inc_int64_t (&ds_hdl->refcount);
+	(void) atomic_inc_int64_t (&ds_hdl->refcount);
 }
 
 /**

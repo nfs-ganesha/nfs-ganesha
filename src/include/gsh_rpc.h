@@ -187,7 +187,7 @@ static inline void gsh_xprt_ref(SVCXPRT *xprt, uint32_t flags,
 				const int line)
 {
 	if (flags & XPRT_PRIVATE_FLAG_INCREQ)
-		atomic_inc_uint32_t(&xprt->xp_requests);
+		(void) atomic_inc_uint32_t(&xprt->xp_requests);
 
 	SVC_REF2(xprt, flags, tag, line);
 	/* !LOCKED */
@@ -207,7 +207,7 @@ static inline void gsh_xprt_unref(SVCXPRT *xprt, uint32_t flags,
 		xprt, xprt->xp_requests, xprt->xp_refs, tag, line);
 
 	if (flags & XPRT_PRIVATE_FLAG_DECREQ)
-		atomic_dec_uint32_t(&xprt->xp_requests);
+		(void) atomic_dec_uint32_t(&xprt->xp_requests);
 
 	if (flags & XPRT_PRIVATE_FLAG_DECODING) {
 		gsh_xprt_private_t *xu = (gsh_xprt_private_t *) xprt->xp_u1;

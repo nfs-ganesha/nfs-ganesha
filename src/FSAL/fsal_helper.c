@@ -1672,7 +1672,7 @@ fsal_status_t fsal_open(struct fsal_obj_handle *obj_hdl,
 		    && (status.major != ERR_FSAL_NOT_OPENED))
 			return status;
 		if (!FSAL_IS_ERROR(status) && closed)
-			atomic_dec_size_t(&open_fd_count);
+			(void) atomic_dec_size_t(&open_fd_count);
 
 		/* Potentially force re-openning */
 		current_flags = obj_hdl->obj_ops.status(obj_hdl);
@@ -1683,7 +1683,7 @@ fsal_status_t fsal_open(struct fsal_obj_handle *obj_hdl,
 		if (FSAL_IS_ERROR(status))
 			return status;
 
-		atomic_inc_size_t(&open_fd_count);
+		(void) atomic_inc_size_t(&open_fd_count);
 
 		LogDebug(COMPONENT_FSAL,
 			 "obj %p: openflags = %d, open_fd_count = %zd",

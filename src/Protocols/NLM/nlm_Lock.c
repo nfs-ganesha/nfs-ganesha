@@ -144,7 +144,7 @@ int nlm4_Lock(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 		rc = NFS_REQ_DROP;
 		goto out;
 	} else {
-		atomic_inc_uint32_t(&obj->state_hdl->file.anon_ops);
+		(void) atomic_inc_uint32_t(&obj->state_hdl->file.anon_ops);
 		PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
 	}
 
@@ -166,7 +166,7 @@ int nlm4_Lock(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	 * the lock. However, when attempting to get a delegation in the
 	 * future existing locks will result in a conflict. Thus, we can
 	 * decrement the anonymous operations counter now. */
-	atomic_dec_uint32_t(&obj->state_hdl->file.anon_ops);
+	(void) atomic_dec_uint32_t(&obj->state_hdl->file.anon_ops);
 
 	if (state_status != STATE_SUCCESS) {
 		res->res_nlm4test.test_stat.stat =

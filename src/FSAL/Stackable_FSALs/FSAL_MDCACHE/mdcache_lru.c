@@ -1196,7 +1196,7 @@ alloc_cache_entry(mdcache_entry_t **entry)
 		return fsalstat(ERR_FSAL_BAD_INIT, 0);
 	}
 
-	atomic_inc_int64_t(&lru_state.entries_used);
+	(void) atomic_inc_int64_t(&lru_state.entries_used);
 	*entry = nentry;
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -1383,7 +1383,7 @@ mdcache_lru_ref(mdcache_entry_t *entry, uint32_t flags)
 		if (lru->flags & LRU_CLEANUP)
 			return fsalstat(ERR_FSAL_STALE, 0);
 
-	atomic_inc_int32_t(&entry->lru.refcnt);
+	(void) atomic_inc_int32_t(&entry->lru.refcnt);
 
 	/* adjust LRU on initial refs */
 	if (flags & LRU_REQ_INITIAL) {
@@ -1499,7 +1499,7 @@ mdcache_lru_unref(mdcache_entry_t *entry, uint32_t flags)
 		pool_free(mdcache_entry_pool, entry);
 		freed = true;
 
-		atomic_dec_int64_t(&lru_state.entries_used);
+		(void) atomic_dec_int64_t(&lru_state.entries_used);
 	}			/* refcnt == 0 */
  out:
 	return freed;
@@ -1537,7 +1537,7 @@ mdcache_lru_putback(mdcache_entry_t *entry, uint32_t flags)
 
 	/* We do NOT call lru_clean_entry, since it was never initialized. */
 	pool_free(mdcache_entry_pool, entry);
-	atomic_dec_int64_t(&lru_state.entries_used);
+	(void) atomic_dec_int64_t(&lru_state.entries_used);
 
 	if (!qlocked)
 		QUNLOCK(qlane);

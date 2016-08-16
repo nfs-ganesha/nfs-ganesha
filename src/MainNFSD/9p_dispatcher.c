@@ -92,7 +92,7 @@ void DispatchWork9P(request_data_t *req)
 	}
 
 	/* increase connection refcount */
-	atomic_inc_uint32_t(&req->r_u._9p.pconn->refcount);
+	(void) atomic_inc_uint32_t(&req->r_u._9p.pconn->refcount);
 
 	/* new-style dispatch */
 	nfs_rpc_enqueue_req(req);

@@ -1462,7 +1462,7 @@ static void _9p_free_reqdata(struct _9p_request_data *req9p)
 		gsh_free(req9p->_9pmsg);
 
 	/* decrease connection refcount */
-	atomic_dec_uint32_t(&req9p->pconn->refcount);
+	(void) atomic_dec_uint32_t(&req9p->pconn->refcount);
 }
 #endif
 

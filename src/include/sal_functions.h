@@ -429,7 +429,7 @@ int nfs4_Init_state_id(void);
  */
 static inline void inc_state_t_ref(struct state_t *state)
 {
-	atomic_inc_int32_t(&state->state_refcount);
+	(void) atomic_inc_int32_t(&state->state_refcount);
 }
 
 void dec_nfs4_state_ref(struct state_t *state);

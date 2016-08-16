@@ -656,7 +656,7 @@ state_status_t state_share_anonymous_io_start(struct fsal_obj_handle *obj,
 
 	/* update a counter that says we are processing an anonymous
 	 * request and can't currently grant a new delegation */
-	atomic_inc_uint32_t(&obj->state_hdl->file.anon_ops);
+	(void) atomic_inc_uint32_t(&obj->state_hdl->file.anon_ops);
 
 	/* Temporarily bump the access counters, v4 mode doesn't matter
 	 * since there is no deny mode associated with anonymous I/O.
@@ -688,7 +688,7 @@ void state_share_anonymous_io_done(struct fsal_obj_handle *obj,
 
 	/* If we are this far, then delegations weren't recalled and we
 	 * incremented this variable. */
-	atomic_dec_uint32_t(&obj->state_hdl->file.anon_ops);
+	(void) atomic_dec_uint32_t(&obj->state_hdl->file.anon_ops);
 }
 
 #ifdef _USE_NLM

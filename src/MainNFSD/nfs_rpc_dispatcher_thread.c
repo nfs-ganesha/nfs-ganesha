@@ -1421,7 +1421,7 @@ void nfs_rpc_enqueue_req(request_data_t *reqdata)
 	++(q->size);
 	pthread_spin_unlock(&q->sp);
 
-	atomic_inc_uint32_t(&enqueued_reqs);
+	(void) atomic_inc_uint32_t(&enqueued_reqs);
 
 #if defined(HAVE_BLKIN)
 	/* log the queue depth */
@@ -1582,7 +1582,7 @@ request_data_t *nfs_rpc_dequeue_req(nfs_worker_data_t *worker)
 		/* anything? */
 		reqdata = nfs_rpc_consume_req(qpair);
 		if (reqdata) {
-			atomic_inc_uint32_t(&dequeued_reqs);
+			(void) atomic_inc_uint32_t(&dequeued_reqs);
 			break;
 		}
 

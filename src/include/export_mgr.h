@@ -182,7 +182,7 @@ static inline bool export_ready(struct gsh_export *export)
 
 static inline void get_gsh_export_ref(struct gsh_export *export)
 {
-	atomic_inc_int64_t(&export->refcnt);
+	(void) atomic_inc_int64_t(&export->refcnt);
 }
 
 void export_revert(struct gsh_export *export);

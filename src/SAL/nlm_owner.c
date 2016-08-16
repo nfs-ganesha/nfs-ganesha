@@ -764,7 +764,7 @@ int Init_nlm_hash(void)
  */
 void inc_nsm_client_ref(state_nsm_client_t *client)
 {
-	atomic_inc_int32_t(&client->ssc_refcount);
+	(void) atomic_inc_int32_t(&client->ssc_refcount);
 }
 
 /**
@@ -1055,7 +1055,7 @@ void free_nlm_client(state_nlm_client_t *client)
  */
 void inc_nlm_client_ref(state_nlm_client_t *client)
 {
-	atomic_inc_int32_t(&client->slc_refcount);
+	(void) atomic_inc_int32_t(&client->slc_refcount);
 }
 
 /**

@@ -2049,7 +2049,7 @@ int init_export_root(struct gsh_export *export)
 	glist_add_tail(&obj->state_hdl->dir.export_roots,
 		       &export->exp_root_list);
 	/* Protect this entry from removal (unlink) */
-	atomic_inc_int32_t(&obj->state_hdl->dir.exp_root_refcount);
+	(void) atomic_inc_int32_t(&obj->state_hdl->dir.exp_root_refcount);
 
 	PTHREAD_RWLOCK_unlock(&export->lock);
 	PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
@@ -2103,7 +2103,7 @@ void release_export_root(struct gsh_export *export)
 	export->exp_root_obj->obj_ops.put_ref(export->exp_root_obj);
 	export->exp_root_obj = NULL;
 
-	atomic_dec_int32_t(&obj->state_hdl->dir.exp_root_refcount);
+	(void) atomic_dec_int32_t(&obj->state_hdl->dir.exp_root_refcount);
 
 	PTHREAD_RWLOCK_unlock(&export->lock);
 	PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
