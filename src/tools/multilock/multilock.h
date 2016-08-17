@@ -45,8 +45,12 @@
 #include <netdb.h>
 #include <time.h>
 #include <stdbool.h>
+#include <sys/param.h>
 
 #define MAXSTR 1024
+#define MAXDATA MAX(PATH_MAX, MAXSTR + 1)
+/* Define the maximum request/response */
+#define MAXXFER (MAXDATA + MAXSTR * 3)
 #define MAXFPOS 16
 
 /* If not otherwise defined, define OFD locks */
@@ -118,7 +122,7 @@ struct client {
 	struct client *c_prev;
 	int c_socket;
 	struct sockaddr c_addr;
-	char c_name[MAXSTR];
+	char c_name[MAXSTR+1];
 	FILE *c_input;
 	FILE *c_output;
 	int c_refcount;
@@ -138,8 +142,8 @@ enum status {
 	STATUS_ERROR		/* must be last */
 };
 
-extern char errdetail[MAXSTR * 2];
-extern char badtoken[MAXSTR];
+extern char errdetail[MAXSTR * 2 + 1];
+extern char badtoken[MAXSTR + 1];
 extern struct client *client_list;
 extern FILE *input;
 extern FILE *output;
@@ -151,12 +155,38 @@ extern bool error_is_fatal;
 extern bool syntax;
 extern long int lno;
 extern long int global_tag;
+struct response;
 
 long int get_global_tag(bool increment);
 
+#define array_strcpy(dest, src)				\
+	do {						\
+		strncpy(dest, src, sizeof(dest) - 1);	\
+		dest[sizeof(dest) - 1] = '\0';		\
+	} while (0)
+
+#define array_strncpy(dest, src, len)			\
+	do {						\
+		if (len >= sizeof(dest))		\
+			len = sizeof(dest) - 1;		\
+							\
+		memcpy(dest, src, len);			\
+		dest[len] = '\0';			\
+	} while (0)
+
+#define array_sprintf(buf, fmt, args...)		\
+	snprintf(buf, sizeof(buf) - 1, fmt, ## args)	\
+
+#define sprint_left(buf, left, fmt, args...)			\
+	do {							\
+		int lx = snprintf(buf, left, fmt, ## args);	\
+		buf += lx;					\
+		left -= lx;					\
+	} while (0)
+
 #define fprintf_stderr(fmt, args...)			\
 	do {						\
-		if (duperrors)				\
+		if (duperrors && output != NULL)	\
 			fprintf(output, fmt, ## args);	\
 		fprintf(stderr, fmt, ## args);		\
 	} while (0)
@@ -165,7 +195,8 @@ long int get_global_tag(bool increment);
 	do {					\
 		fprintf_stderr(str, ## args);	\
 		fprintf_stderr("FAIL\n");	\
-		fflush(output);			\
+		if (output != NULL)		\
+			fflush(output);		\
 		fflush(stderr);			\
 		exit(1);			\
 	} while (0)
@@ -189,8 +220,8 @@ char *get_long(char *line, long int *value, enum requires_more requires_more,
 char *get_longlong(char *line, long long int *value,
 		   enum requires_more requires_more, const char *invalid);
 char *get_fpos(char *line, long int *fpos, enum requires_more requires_more);
-char *get_str(char *line, char *str, long long int *len,
-	      enum requires_more requires_more);
+char *get_rdata(char *line, struct response *resp, int max,
+		enum requires_more requires_more);
 char *get_lock_type(char *line, int *type);
 char *get_client(char *line, struct client **pclient, bool create,
 		 enum requires_more requires_more);
@@ -209,14 +240,15 @@ char *SkipWhite(char *line, enum requires_more requires_more, const char *who);
 
 void respond(struct response *resp);
 const char *str_lock_type(int type);
-void sprintf_resp(char *line, const char *lead, struct response *resp);
-void sprintf_req(char *line, const char *lead, struct response *req);
+void sprintf_resp(char *line, int size, const char *lead,
+		  struct response *resp);
+void sprintf_req(char *line, int size, const char *lead, struct response *req);
+
 void send_cmd(struct response *req);
 
 const char *str_status(enum status status);
 
 const char *str_read_write_flags(int flags);
-int sprintf_open_flags(char *line, int flags);
 
 enum status parse_status(char *str, int len);
 
@@ -245,8 +277,18 @@ struct response {
 	int r_flags;
 	int r_mode;
 	long int r_errno;
-	char r_data[MAXSTR * 2];
-	char r_original[MAXSTR * 3];
+	/**
+	 * @brief complex data for a request/response
+	 *
+	 * OPEN    - name of the file to open
+	 * READ    - data read (response)
+	 * WRITE   - date to write (request)
+	 * COMMENT - the string
+	 * HELLO   - name of the client
+	 * FORK    - name of the client
+	 */
+	char r_data[MAXDATA];
+	char r_original[MAXXFER];
 };
 
 extern struct command_def commands[NUM_COMMANDS + 1];

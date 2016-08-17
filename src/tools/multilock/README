@@ -175,6 +175,8 @@ created on open (other open flags may be supported in the future).
 The OFD option indicates that Open File Description locks (or equivalent) will
 be used on this file descriptor.
 
+file-name is allowed to be as long as PATH_MAX - 1.
+
 CLOSE
 -----
 
@@ -192,6 +194,9 @@ If the second form of the command is given, the length of the string is
 used as the read length (this form is to be used with console scripting command
 OK).
 
+At most 1024 characters may be read. Note that the file data is expected to
+be characters and should not have 0 bytes within.
+
 WRITE
 -----
 
@@ -200,6 +205,9 @@ position).
 
 This is fundamentally a record write, though the record contents are expected
 to be ascii strings.
+
+At most 1024 characters may be written. Note that the file data is expected to
+be characters and should not have 0 bytes within.
 
 SEEK
 ----
@@ -243,14 +251,21 @@ COMMENT
 -------
 
 Comment is a do nothing command. It allows the console to send some commentary to
-the clients.
+the clients. A comment is at most 1024 bytes.
 
 HELLO
 -----
 
 This is another do nothing command. It's real purpose is a response place holder
 for the console to be able to receive initial "HELLO" communications from the
-clients.
+clients. The name is expected to be no more than 1024 characters.
+
+FORK
+-----
+
+Causes the client to fork, open a new socket back to the console and send a
+HELLO response on that socket with the forked name. The name may not be longer
+than 1024 characters.
 
 ALARM
 -----
@@ -422,12 +437,6 @@ HELLO
 
 Returns OK and reflects back the original comment. Clients are expected to send
 a HELLO response to identify themselves when first connecting to the console.
-
-FORK
------
-
-Causes the client to fork, open a new socket back to the console and send a
-HELLO response on that socket with the forked name.
 
 ALARM
 -----
