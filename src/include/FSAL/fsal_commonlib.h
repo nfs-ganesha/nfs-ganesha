@@ -244,4 +244,6 @@ static inline struct state_t *init_state(struct state_t *state,
 
 bool check_verifier_stat(struct stat *st, fsal_verifier_t verifier);
 
+bool check_verifier_attrlist(struct attrlist *attrs, fsal_verifier_t verifier);
+
 #endif				/* FSAL_COMMONLIB_H */

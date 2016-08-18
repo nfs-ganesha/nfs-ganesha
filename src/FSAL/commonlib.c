@@ -2809,4 +2809,37 @@ bool check_verifier_stat(struct stat *st, fsal_verifier_t verifier)
 	       st->st_mtim.tv_sec == verf_lo;
 }
 
+/**
+ * @brief Check the exclusive create verifier for a file.
+ *
+ * The default behavior is to check verifier against atime and mtime.
+ *
+ * @param[in] attrlist    Attributes for the file
+ * @param[in] verifier    Verifier to use for exclusive create
+ *
+ * @retval true if verifier matches
+ */
+
+bool check_verifier_attrlist(struct attrlist *attrs, fsal_verifier_t verifier)
+{
+	uint32_t verf_hi = 0, verf_lo = 0;
+
+	memcpy(&verf_hi,
+	       verifier,
+	       sizeof(uint32_t));
+	memcpy(&verf_lo,
+	       verifier + sizeof(uint32_t),
+	       sizeof(uint32_t));
+
+	LogFullDebug(COMPONENT_FSAL,
+		     "Passed verifier %"PRIx32" %"PRIx32
+		     " file verifier %"PRIx32" %"PRIx32,
+		     verf_hi, verf_lo,
+		     (uint32_t) attrs->atime.tv_sec,
+		     (uint32_t) attrs->mtime.tv_sec);
+
+	return attrs->atime.tv_sec == verf_hi &&
+	       attrs->mtime.tv_sec == verf_lo;
+}
+
 /** @} */

@@ -63,6 +63,13 @@ struct gpfs_ds {
 	bool connected;		/*< True if the handle has been connected */
 };
 
+struct gpfs_fd {
+	/** The open and share mode etc. */
+	fsal_openflags_t openflags;
+	/** The gpfsfs file descriptor. */
+	int fd;
+};
+
 
 /* defined the set of attributes supported with POSIX */
 #define GPFS_SUPPORTED_ATTRIBUTES (                              \
@@ -281,6 +288,14 @@ fsal_status_t GPFSFSAL_lock_op(struct fsal_export *export,
 			       fsal_lock_op_t lock_op,
 			       fsal_lock_param_t request_lock,
 			       fsal_lock_param_t *conflicting_lock);
+
+fsal_status_t GPFSFSAL_lock_op2(int my_fd,
+				struct fsal_export *export,
+				struct fsal_obj_handle *obj_hdl,
+				void *p_owner,
+				fsal_lock_op_t lock_op,
+				fsal_lock_param_t *request_lock,
+				fsal_lock_param_t *conflicting_lock);
 
 fsal_status_t GPFSFSAL_share_op(int mntfd,
 				int fd,

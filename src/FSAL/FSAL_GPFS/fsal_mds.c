@@ -292,7 +292,7 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_hdl,
 	memcpy(&gpfs_ds_handle, myself->handle,
 	       sizeof(struct gpfs_file_handle));
 
-	larg.fd = myself->u.file.fd;
+	larg.fd = myself->u.file.fd.fd;
 	larg.args.lg_minlength = arg->minlength;
 	larg.args.lg_sbid = arg->export_id;
 	larg.args.lg_fh = &gpfs_ds_handle;
@@ -372,7 +372,7 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_hdl,
 	/* If we failed in encoding the lo_content, relinquish what we
 	   reserved for it. */
 
-	lrarg.mountdirfd = myself->u.file.fd;
+	lrarg.mountdirfd = myself->u.file.fd.fd;
 	lrarg.handle = &gpfs_ds_handle;
 	lrarg.args.lr_return_type = arg->type;
 	lrarg.args.lr_reclaim = false;
@@ -430,7 +430,7 @@ static nfsstat4 layoutreturn(struct fsal_obj_handle *obj_hdl,
 	gpfs_handle = myself->handle;
 
 	if (arg->dispose) {
-		larg.mountdirfd = myself->u.file.fd;
+		larg.mountdirfd = myself->u.file.fd.fd;
 		larg.handle = gpfs_handle;
 		larg.args.lr_return_type = arg->lo_type;
 		larg.args.lr_reclaim =
@@ -493,7 +493,7 @@ static nfsstat4 layoutcommit(struct fsal_obj_handle *obj_hdl,
 	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
 	gpfs_handle = myself->handle;
 
-	targ.mountdirfd = myself->u.file.fd;
+	targ.mountdirfd = myself->u.file.fd.fd;
 	targ.handle = gpfs_handle;
 	targ.xdr = NULL;
 	targ.offset = arg->segment.offset;
