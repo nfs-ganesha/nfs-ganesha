@@ -84,7 +84,7 @@ int upcall_inode_invalidate(struct glusterfs_export *glfsexport,
 	event_func = glfsexport->export.up_ops;
 
 	fsal_status = event_func->invalidate_close(
-					&glfsexport->export,
+					event_func->export,
 					&key,
 					FSAL_UP_INVALIDATE_CACHE);
 

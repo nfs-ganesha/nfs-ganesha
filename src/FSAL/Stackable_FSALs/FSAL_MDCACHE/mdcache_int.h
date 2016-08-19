@@ -50,6 +50,8 @@ struct mdcache_fsal_export {
 	char *name;
 	/** My up_ops */
 	struct fsal_up_vector up_ops;
+	/** Higher level up_ops for ops we don't consume */
+	struct fsal_up_vector super_up_ops;
 	/** The list of cache inode entries belonging to this export */
 	struct glist_head entry_list;
 	/** Lock protecting entry_list */
@@ -855,7 +857,8 @@ void mdcache_handle_ops_init(struct fsal_obj_ops *ops);
 
 /* Export functions */
 fsal_status_t mdc_init_export(struct fsal_module *fsal_hdl,
-			      const struct fsal_up_vector *mdc_up_ops);
+			      const struct fsal_up_vector *mdc_up_ops,
+			      const struct fsal_up_vector *super_up_ops);
 
 /* Upcall functions */
 fsal_status_t mdcache_export_up_ops_init(struct fsal_up_vector *my_up_ops,

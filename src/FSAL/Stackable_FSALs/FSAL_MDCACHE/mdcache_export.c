@@ -824,7 +824,8 @@ static struct config_block export_param = {
  */
 fsal_status_t
 mdc_init_export(struct fsal_module *fsal_hdl,
-		    const struct fsal_up_vector *mdc_up_ops)
+		    const struct fsal_up_vector *mdc_up_ops,
+		    const struct fsal_up_vector *super_up_ops)
 {
 	struct mdcache_fsal_export *myself;
 	int namelen;
@@ -840,6 +841,7 @@ mdc_init_export(struct fsal_module *fsal_hdl,
 
 	fsal_export_init(&myself->export);
 	mdcache_export_ops_init(&myself->export.exp_ops);
+	myself->super_up_ops = *super_up_ops; /* Struct copy */
 	myself->up_ops = *mdc_up_ops; /* Struct copy */
 	myself->up_ops.export = &myself->export;
 	myself->export.up_ops = &myself->up_ops;
@@ -920,7 +922,7 @@ mdcache_fsal_create_export(struct fsal_module *fsal_hdl, void *parse_node,
 	}
 
 	/* Wrap sub export with MDCACHE export */
-	status = mdc_init_export(fsal_hdl, &my_up_ops);
+	status = mdc_init_export(fsal_hdl, &my_up_ops, super_up_ops);
 	/* mdc_init_export took a ref on sub_fsal */
 	fsal_put(sub_fsal);
 
