@@ -394,6 +394,7 @@ int get_nlm_state(enum state_type state_type,
 	buffkey.len = sizeof(key.state_obj.digest);
 	state_obj->obj_ops.handle_digest(state_obj, FSAL_DIGEST_NFSV4,
 					 &buffkey);
+	key.state_obj.len = buffkey.len;
 
 	if (isFullDebug(COMPONENT_STATE)) {
 		display_nlm_state(&dspbuf, &key);
