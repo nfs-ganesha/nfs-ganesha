@@ -388,6 +388,10 @@ int _9p_tools_clunk(struct _9p_fid *pfid)
 					pfid->specdata.xattr.xattr_content,
 					pfid->specdata.xattr.xattr_size,
 					false);
+			if (FSAL_IS_ERROR(fsal_status)) {
+				free_fid(pfid);
+				return _9p_tools_errno(fsal_status);
+			}
 		} else {
 			/* Write the xattr content */
 			fsal_status =
