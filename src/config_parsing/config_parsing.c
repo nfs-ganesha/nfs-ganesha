@@ -1354,9 +1354,11 @@ static bool proc_block(struct config_node *node,
 
 	if (err_type->dispose) {
 		/* We had a config update case where this block must be
-		 * disposed of.
+		 * disposed of. Need to clear the flag so the next config
+		 * block processed gets a clear slate.
 		 */
 		(void)item->u.blk.init(link_mem, param_struct);
+		err_type->dispose = false;
 	}
 
 	return true;
