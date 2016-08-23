@@ -367,6 +367,21 @@ void state_del_locked(state_t *state)
 	 */
 	obj->state_hdl->no_cleanup = true;
 
+	/* Remove from the list of states for a particular file */
+	PTHREAD_MUTEX_lock(&state->state_mutex);
+	glist_del(&state->state_list);
+	memset(&state->state_obj, 0, sizeof(state->state_obj));
+	PTHREAD_MUTEX_unlock(&state->state_mutex);
+
+	if (obj->fsal->m_ops.support_ex(obj)) {
+		/* We need to close the state at this point. The state will
+		 * eventually be freed and it must be closed before free. This
+		 * is the last point we have a valid reference to the object
+		 * handle.
+		 */
+		(void) obj->obj_ops.close2(obj, state);
+	}
+
 	if (owner != NULL) {
 		bool owner_retain = false;
 		struct state_nfs4_owner_t *nfs4_owner;
@@ -423,21 +438,6 @@ void state_del_locked(state_t *state)
 
 			dec_state_owner_ref(owner);
 		}
-	}
-
-	/* Remove from the list of states for a particular file */
-	PTHREAD_MUTEX_lock(&state->state_mutex);
-	glist_del(&state->state_list);
-	memset(&state->state_obj, 0, sizeof(state->state_obj));
-	PTHREAD_MUTEX_unlock(&state->state_mutex);
-
-	if (obj->fsal->m_ops.support_ex(obj)) {
-		/* We need to close the state at this point. The state will
-		 * eventually be freed and it must be closed before free. This
-		 * is the last point we have a valid reference to the object
-		 * handle.
-		 */
-		(void) obj->obj_ops.close2(obj, state);
 	}
 
 	/* Remove from the list of lock states for a particular open state.
