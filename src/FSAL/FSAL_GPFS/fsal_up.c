@@ -147,7 +147,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 			 rc, reason, callback.buf->st_ino, flags);
 
 		LogFullDebug(COMPONENT_FSAL_UP,
-			     "inode update: flags:%x callback.handle:%p handle size = %u handle_type:%d handle_version:%d key_size = %u handle_fsid=%d.%d f_handle:%p expire: %d",
+			     "inode update: flags:%x callback.handle:%p handle size = %u handle_type:%d handle_version:%d key_size = %u handle_fsid=%X.%X f_handle:%p expire: %d",
 			     *callback.flags, callback.handle,
 			     callback.handle->handle_size,
 			     callback.handle->handle_type,

@@ -1047,12 +1047,12 @@ fsal_status_t gpfs_lock_op2(struct fsal_obj_handle *obj_hdl,
 		/* We may end up using global fd, don't fail on a deny mode */
 		bypass = true;
 		openflags = FSAL_O_ANY;
-	} else if (lock_op == FSAL_OP_LOCK) {
+	} else if (lock_op == FSAL_OP_LOCK || lock_op == FSAL_OP_LOCKB) {
 		if (request_lock->lock_type == FSAL_LOCK_R)
 			openflags = FSAL_O_READ;
 		else if (request_lock->lock_type == FSAL_LOCK_W)
 			openflags = FSAL_O_WRITE;
-	} else if (lock_op == FSAL_OP_UNLOCK) {
+	} else if (lock_op == FSAL_OP_UNLOCK || lock_op == FSAL_OP_CANCEL) {
 		openflags = FSAL_O_ANY;
 	} else {
 		LogDebug(COMPONENT_FSAL,
