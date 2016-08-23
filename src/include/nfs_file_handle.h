@@ -48,16 +48,16 @@
 
 static inline size_t nfs3_sizeof_handle(struct file_handle_v3 *hdl)
 {
-	int padding = 0;
-	int hsize = 0;
+	int hsize;
+	int aligned_hsize;
 
 	hsize = offsetof(struct file_handle_v3, fsopaque) + hdl->fs_len;
 
 	/* correct packet's fh length so it's divisible by 4 to trick dNFS into
 	   working. This is essentially sending the padding. */
-	padding = (4 - (hsize % 4)) % 4;
-	if ((hsize + padding) <= NFS3_FHSIZE)
-		hsize += padding;
+	aligned_hsize = roundup(hsize, 4);
+	if (aligned_hsize <= NFS3_FHSIZE)
+		hsize = aligned_hsize;
 
 	return hsize;
 }
