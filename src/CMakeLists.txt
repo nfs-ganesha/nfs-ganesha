@@ -14,7 +14,7 @@ endif( "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_GREATER "2.6" )
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules/")
 
-project(nfs-ganesha C)
+project(nfs-ganesha C CXX)
 # Project versioning
 set(GANESHA_MAJOR_VERSION 2)
 set(GANESHA_MINOR_VERSION 4)
