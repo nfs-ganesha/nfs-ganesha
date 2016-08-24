@@ -120,6 +120,8 @@ int nfs_libmain()
 		 "Ganesha Version " _GIT_DESCRIBE ", built at "
 		 __DATE__ " " __TIME__ " on " BUILD_HOST);
 
+	nfs_check_malloc();
+
 	/* Make sure Linux file i/o will return with error
 	 * if file size is exceeded. */
 #ifdef _LINUX

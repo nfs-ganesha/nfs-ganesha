@@ -135,7 +135,6 @@ int main(int argc, char *argv[])
 	int dsc;
 	int rc;
 	int pidfile;
-	void *p;
 #ifndef HAVE_DAEMON
 	int dev_null_fd = 0;
 	pid_t son_pid;
@@ -249,21 +248,7 @@ int main(int argc, char *argv[])
 		 "Ganesha Version " _GIT_DESCRIBE ", built at "
 		 __DATE__ " " __TIME__ " on " BUILD_HOST);
 
-	/* Check malloc(0) - Ganesha assumes malloc(0) returns non-NULL pointer.
-	 * Note we use malloc and calloc directly here and not gsh_malloc and
-	 * gsh_calloc because we don't want those functions to abort(), we
-	 * want to log a descriptive message.
-	 */
-	p = malloc(0);
-	if (p == NULL)
-		LogFatal(COMPONENT_MAIN,
-			 "Ganesha assumes malloc(0) returns a non-NULL pointer.");
-	free(p);
-	p = calloc(0, 0);
-	if (p == NULL)
-		LogFatal(COMPONENT_MAIN,
-			 "Ganesha assumes calloc(0, 0) returns a non-NULL pointer.");
-	free(p);
+	nfs_check_malloc();
 
 	/* Start in background, if wanted */
 	if (detach_flag) {

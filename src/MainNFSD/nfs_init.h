@@ -69,6 +69,30 @@ int init_server_pkgs(void);
  */
 void nfs_start(nfs_start_info_t *p_start_info);
 
+/**
+ * check for useable malloc implementation
+ */
+static inline void nfs_check_malloc(void)
+{
+	/* Check malloc(0) - Ganesha assumes malloc(0) returns non-NULL pointer.
+	 * Note we use malloc and calloc directly here and not gsh_malloc and
+	 * gsh_calloc because we don't want those functions to abort(), we
+	 * want to log a descriptive message.
+	 */
+	void *p;
+
+	p = malloc(0);
+	if (p == NULL)
+		LogFatal(COMPONENT_MAIN,
+			 "Ganesha assumes malloc(0) returns a non-NULL pointer.");
+	free(p);
+	p = calloc(0, 0);
+	if (p == NULL)
+		LogFatal(COMPONENT_MAIN,
+			 "Ganesha assumes calloc(0, 0) returns a non-NULL pointer.");
+	free(p);
+}
+
 /* in nfs_rpc_dispatcher_thread.c */
 
 enum xprt_stat thr_decode_rpc_request(void *context, SVCXPRT *xprt);
