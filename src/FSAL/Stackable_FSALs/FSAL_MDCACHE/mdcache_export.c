@@ -90,14 +90,6 @@ static void mdcache_unexport(struct fsal_export *exp_hdl)
 	mdcache_entry_t *entry;
 	struct entry_export_map *expmap;
 	fsal_status_t status;
-	struct req_op_context ctx = {0};
-
-	/* Lots of obj_ops may be called during cleanup; make sure that an
-	 * op_ctx exists */
-	if (!op_ctx) {
-		op_ctx = &ctx;
-		op_ctx->fsal_export = exp_hdl;
-	}
 
 	/* First unexport for the sub-FSAL */
 	subcall_raw(exp,

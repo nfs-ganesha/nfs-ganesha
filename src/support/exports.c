@@ -2265,12 +2265,25 @@ static inline void clean_up_export(struct gsh_export *export)
 
 void unexport(struct gsh_export *export)
 {
+	bool op_ctx_set = false;
+	struct root_op_context ctx;
 	/* Make the export unreachable */
 	LogDebug(COMPONENT_EXPORT,
 		 "Unexport %s, Pseduo %s",
 		 export->fullpath, export->pseudopath);
+
+	/* Lots of obj_ops may be called during cleanup; make sure that an
+	 * op_ctx exists */
+	if (!op_ctx) {
+		init_root_op_context(&ctx, export, export->fsal_export, 0, 0,
+				UNKNOWN_REQUEST);
+		op_ctx_set = true;
+	}
+
 	release_export_root(export);
 	clean_up_export(export);
+	if (op_ctx_set)
+		release_root_op_context();
 }
 
 /**
