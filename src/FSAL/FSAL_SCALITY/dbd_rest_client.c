@@ -137,12 +137,12 @@ dbd_get(struct scality_fsal_export *export,
 
 	if (object) {
 		char *tmp = curl_easy_escape(curl, object, strlen(object));
-		pos = snprintf(url, sizeof(url), "%s/%s/%s",
+		pos = snprintf(url, sizeof(url), "%s/default/bucket/%s/%s",
 			       export->module->dbd_url, export->bucket, tmp);
 		free(tmp);
 	}
 	else {
-		pos = snprintf(url, sizeof(url), "%s/%s%s",
+		pos = snprintf(url, sizeof(url), "%s/default/bucket/%s%s",
 			       export->module->dbd_url, export->bucket, query_string);
 	}
 
@@ -328,7 +328,7 @@ dbd_delete(struct scality_fsal_export *export,
 	}
 
 	char *tmp = curl_easy_escape(curl, object, strlen(object));
-	pos = snprintf(url, sizeof(url), "%s/%s/%s",
+	pos = snprintf(url, sizeof(url), "%s/default/bucket/%s/%s",
 		       export->module->dbd_url, export->bucket, tmp);
 	free(tmp);
 
@@ -934,7 +934,7 @@ dbd_post(struct scality_fsal_export* export,
 		.size = strlen(payload)
 	};
 	char *tmp = curl_easy_escape(curl, object_hdl->object, strlen(object_hdl->object));
-	snprintf(url, sizeof(url), "%s/%s/%s",
+	snprintf(url, sizeof(url), "%s/default/bucket/%s/%s",
 		 export->module->dbd_url, export->bucket, tmp);
 	free(tmp);
 	curl_easy_setopt(curl, CURLOPT_URL, url);
