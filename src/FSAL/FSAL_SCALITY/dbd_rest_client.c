@@ -35,6 +35,8 @@
 #include "random.h"
 
 #define DEFAULT_CONTENT_TYPE "application/octet-stream"
+#define BUCKET_BASE_PATH "/default/bucket"
+#define ATTRIBUTES_BASE_PATH "/default/attributes"
 
 struct dbd_response {
 	long http_status;
@@ -63,6 +65,7 @@ dbd_response_free(dbd_response_t *response)
 
 static dbd_response_t *
 dbd_get(struct scality_fsal_export *export,
+        const char *base_path,
 	const char *object,
 	dbd_get_parameters_t *parameters) {
 
@@ -137,13 +140,13 @@ dbd_get(struct scality_fsal_export *export,
 
 	if (object) {
 		char *tmp = curl_easy_escape(curl, object, strlen(object));
-		pos = snprintf(url, sizeof(url), "%s/default/bucket/%s/%s",
-			       export->module->dbd_url, export->bucket, tmp);
+		pos = snprintf(url, sizeof(url), "%s%s/%s/%s",
+			       export->module->dbd_url, base_path, export->bucket, tmp);
 		free(tmp);
 	}
 	else {
-		pos = snprintf(url, sizeof(url), "%s/default/bucket/%s%s",
-			       export->module->dbd_url, export->bucket, query_string);
+		pos = snprintf(url, sizeof(url), "%s%s/%s%s",
+			       export->module->dbd_url, base_path, export->bucket, query_string);
 	}
 
 	
@@ -254,7 +257,7 @@ dbd_lookup_object(struct scality_fsal_export *export,
 	dbd_response_t *response1 = NULL;
 	dbd_response_t *response2 = NULL;
 
-	response1 = dbd_get(export, prefix, NULL);
+	response1 = dbd_get(export, BUCKET_BASE_PATH, prefix, NULL);
 	if ( NULL == response1 )
 		goto end;
 
@@ -267,7 +270,7 @@ dbd_lookup_object(struct scality_fsal_export *export,
 		.maxkeys = 1
 	};
 
-	response2 = dbd_get(export, NULL, &parameters);
+	response2 = dbd_get(export, BUCKET_BASE_PATH, NULL, &parameters);
 	if ( NULL == response2 || response2->http_status != 200 )
 		goto end;
 
@@ -328,7 +331,7 @@ dbd_delete(struct scality_fsal_export *export,
 	}
 
 	char *tmp = curl_easy_escape(curl, object, strlen(object));
-	pos = snprintf(url, sizeof(url), "%s/default/bucket/%s/%s",
+	pos = snprintf(url, sizeof(url), "%s"BUCKET_BASE_PATH"/%s/%s",
 		       export->module->dbd_url, export->bucket, tmp);
 	free(tmp);
 
@@ -430,7 +433,7 @@ dbd_dirents(struct scality_fsal_export* export,
 		.delimiter = S3_DELIMITER,
 	};
 
-	response = dbd_get(export, NULL, &parameters);
+	response = dbd_get(export, BUCKET_BASE_PATH, NULL, &parameters);
 	if ( NULL == response )
 		return -1;
 	
@@ -547,6 +550,44 @@ dbd_readdir(struct scality_fsal_export* export,
 	return;
 }
 
+int
+dbd_collect_bucket_attributes(struct scality_fsal_export *export)
+{
+        int ret = 0;
+        dbd_response_t *response;
+        response = dbd_get(export, ATTRIBUTES_BASE_PATH, "", NULL);
+        if ( NULL != response && 200 == response->http_status ) {
+		json_t *js_owner = json_object_get(response->body, "owner");
+		json_t *js_owner_display_name = json_object_get(response->body, "ownerDisplayName");
+                const char *owner = NULL,
+                        *owner_display_name = NULL;
+                if (js_owner)
+                        owner = json_string_value(js_owner);
+                if (js_owner_display_name)
+                        owner_display_name = json_string_value(js_owner_display_name);
+                if ( NULL != owner && NULL != owner_display_name ) {
+                        export->owner_id = strdup(owner);
+                        export->owner_display_name = strdup(owner_display_name);
+                        if (NULL == export->owner_id || NULL == export->owner_display_name)
+                                ret = -1;
+                }
+                else {
+                        LogCrit(COMPONENT_FSAL,
+                                "dbd_collect_bucket_attributes(%s) missing owner information",
+                                export->bucket);
+                        ret = -1;
+                }
+        }
+        else {
+                LogCrit(COMPONENT_FSAL,
+			"dbd_collect_bucket_attributes(%s) request failed",
+			export->bucket);
+		ret = -1;
+        }
+	dbd_response_free(response);
+	return ret;
+}
+
 static int
 dbd_getattr_directory(struct scality_fsal_export* export,
 		      struct scality_fsal_obj_handle *object_hdl)
@@ -566,7 +607,7 @@ dbd_getattr_directory(struct scality_fsal_export* export,
 		.maxkeys = 1
 	};
 	dbd_response_t *response = NULL;
-	response = dbd_get(export, NULL, &parameters);
+	response = dbd_get(export, BUCKET_BASE_PATH, NULL, &parameters);
 	if ( NULL != response && response->http_status == 200 ) {
 
 		json_t *commonPrefixes = json_object_get(response->body, "CommonPrefixes");
@@ -620,7 +661,7 @@ dbd_getattr_regular_file(struct scality_fsal_export* export,
 {
 	int ret = 0;
 	dbd_response_t *response = NULL;
-	response = dbd_get(export, object_hdl->object ,NULL);
+	response = dbd_get(export, BUCKET_BASE_PATH, object_hdl->object ,NULL);
 	if ( NULL == response ) {
 		ret = -1;
 		goto out;
@@ -934,7 +975,7 @@ dbd_post(struct scality_fsal_export* export,
 		.size = strlen(payload)
 	};
 	char *tmp = curl_easy_escape(curl, object_hdl->object, strlen(object_hdl->object));
-	snprintf(url, sizeof(url), "%s/default/bucket/%s/%s",
+	snprintf(url, sizeof(url), "%s"BUCKET_BASE_PATH"/%s/%s",
 		 export->module->dbd_url, export->bucket, tmp);
 	free(tmp);
 	curl_easy_setopt(curl, CURLOPT_URL, url);

@@ -290,10 +290,6 @@ static struct config_item export_params[] = {
 	CONF_ITEM_NOOP("name"),
 	CONF_MAND_STR("bucket", 1, MAXPATHLEN, NULL,
 		      scality_fsal_export, bucket),
-	CONF_MAND_STR("owner_display_name", 1, MAXPATHLEN, NULL,
-		      scality_fsal_export, owner_display_name),
-	CONF_MAND_STR("owner_id", 1, MAXPATHLEN, NULL,
-		      scality_fsal_export, owner_id),
 	CONFIG_EOL
 };
 

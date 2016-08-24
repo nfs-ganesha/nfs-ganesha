@@ -951,6 +951,13 @@ fsal_status_t scality_lookup_path(struct fsal_export *exp_hdl,
 		if ( 0 == ret )
 			handle_keyp = handle_key;
 
+                ret = dbd_collect_bucket_attributes(myself);
+                if ( 0 != ret ) {
+                        LogCrit(COMPONENT_FSAL,
+                                "Cannot collect bucket attributes for %s",
+                                myself->export_path);
+                        return fsalstat(ERR_FSAL_NOENT, ENOENT);
+                }
 		myself->root_handle =
 			alloc_handle(object,
 				     handle_keyp,

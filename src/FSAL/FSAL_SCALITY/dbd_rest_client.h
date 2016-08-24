@@ -56,6 +56,9 @@ dbd_getattr(struct scality_fsal_export* export,
 	    struct scality_fsal_obj_handle *object_hdl);
 
 int
+dbd_collect_bucket_attributes(struct scality_fsal_export *export);
+
+int
 dbd_delete(struct scality_fsal_export *export,
 	   const char *object);
 int

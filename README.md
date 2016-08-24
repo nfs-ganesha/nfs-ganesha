@@ -37,17 +37,10 @@ $ docker build -t scality/nfsd .
 
 A configuration file must be provided, check the dbd and sproxyd urls and set the MYBUCKET shell var with the bucket name you want to be exported.
 
-OWNER_DISPLAY_NAME and OWNER_ID must be set in order to be able to read back from S3 data written through NFS. This information should be retrieved using a curl command on an existing object in the bucket
-```
-$ curl http://127.0.0.1:9004/default/bucket/$MYBUCKET/existing_object
-```
-
 
 ```
 $ mkdir conf logs
 $ MYBUCKET=mybucket
-$ OWNER_DISPLAY_NAME=ABC
-$ OWNER_ID=XYZ
 $ cat >conf/scality-nfsd.conf <<EOF
 SCALITY
 {
@@ -74,8 +67,6 @@ EXPORT
 	FSAL {
 		Name = "SCALITY";
 		bucket = "$MYBUCKET";
-		owner_display_name = "$OWNER_DISPLAY_NAME";
-		owner_id = "$OWNER_ID";
 	}
 }
 EOF
