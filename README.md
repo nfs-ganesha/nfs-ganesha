@@ -51,7 +51,7 @@ $ OWNER_ID=XYZ
 $ cat >conf/scality-nfsd.conf <<EOF
 SCALITY
 {
-	dbd_url = "http://127.0.0.1:9004/default/bucket";
+	dbd_url = "http://127.0.0.1:9004";
 	sproxyd_url = "http://127.0.0.1:8181/proxy/arc";
 }
 
