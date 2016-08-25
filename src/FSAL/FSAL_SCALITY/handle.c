@@ -41,6 +41,17 @@
 #include "redis_client.h"
 
 #define EXPIRE_TIME_ATTR 1
+/* from GNU coreutils documentation
+ * On most systems, if a directory’s set-group-ID bit is set, newly created
+ * subfiles inherit the same group as the directory, and newly created
+ * subdirectories inherit the set-group-ID bit of the parent directory. On a
+ * few systems, a directory’s set-user-ID bit has a similar effect on the
+ * ownership of new subfiles and the set-user-ID bits of new subdirectories.
+ * These mechanisms let users share files more easily, by lessening the need
+ * to use chmod or chown to share new files.
+ */
+#define DEFAULT_MODE_DIRECTORY 06777
+#define DEFAULT_MODE_REGULAR 0666
 
 /* Atomic uint64_t that is used to generate inode numbers in the Pseudo FS */
 
@@ -145,10 +156,14 @@ static struct scality_fsal_obj_handle
 *alloc_handle(const char *object,
 	      const char *handle_key,
 	      struct fsal_export *exp_hdl,
-	      dbd_dtype_t dtype,
-	      mode_t unix_mode)
+	      dbd_dtype_t dtype)
 {
 	struct scality_fsal_obj_handle *hdl;
+	struct scality_fsal_export *export;
+
+	export = container_of(op_ctx->fsal_export,
+			      struct scality_fsal_export,
+			      export);
 
 	hdl = gsh_calloc(1, sizeof(struct scality_fsal_obj_handle) +
 			    V4_FH_OPAQUE_SIZE);
@@ -186,6 +201,10 @@ static struct scality_fsal_obj_handle
 	hdl->attributes.fileid = *(uint64_t*)hdl->handle;
 	FSAL_SET_MASK(hdl->attributes.mask, ATTR_FILEID);
 
+        mode_t unix_mode =  (dtype == DBD_DTYPE_DIRECTORY)
+                ? DEFAULT_MODE_DIRECTORY
+                : DEFAULT_MODE_REGULAR;
+        unix_mode = unix_mode & ~export->umask;
 	hdl->attributes.mode = unix2fsal_mode(unix_mode);
 	FSAL_SET_MASK(hdl->attributes.mask, ATTR_MODE);
 
@@ -193,12 +212,14 @@ static struct scality_fsal_obj_handle
 	hdl->numlinks = 1;
 	FSAL_SET_MASK(hdl->attributes.mask, ATTR_NUMLINKS);
 
-	hdl->attributes.owner = op_ctx->creds->caller_uid;
-
+        // not using op_ctx->creds->caller_uid because caller is not the owner
+        // and user is squashed
+	hdl->attributes.owner = op_ctx->export->export_perms.anonymous_uid;
 	FSAL_SET_MASK(hdl->attributes.mask, ATTR_OWNER);
 
-	hdl->attributes.group = op_ctx->creds->caller_gid;
-
+        // not using op_ctx->creds->caller_gid because caller is not the owner
+        // and group is squashed
+	hdl->attributes.group = op_ctx->export->export_perms.anonymous_gid;
 	FSAL_SET_MASK(hdl->attributes.mask, ATTR_GROUP);
 
 	/* Use full timer resolution */
@@ -238,8 +259,20 @@ static struct scality_fsal_obj_handle
 	hdl->memory_used = 0;
 	hdl->delete_on_commit = NULL;
 	hdl->delete_on_rollback = NULL;
-	
+
 	return hdl;
+}
+
+static fsal_status_t
+test_access(struct fsal_obj_handle *obj_hdl,
+                 fsal_accessflags_t access_type,
+                 fsal_accessflags_t *allowed,
+                 fsal_accessflags_t *denied)
+{
+        fsal_status_t status;
+        status = fsal_test_access(obj_hdl, access_type, allowed, denied);
+        LogDebug(COMPONENT_FSAL, "fsal_test_access returned %d", status.major);
+        return status;
 }
 
 /* handle methods
@@ -307,7 +340,7 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 		case DBD_DTYPE_REGULAR:
 			hdl = alloc_handle(object,
 					   handle_keyp,
-					   op_ctx->fsal_export, dtype, 0644);
+					   op_ctx->fsal_export, dtype);
 			*handle = &hdl->obj_handle;
 			error = ERR_FSAL_NO_ERROR;
 			break;
@@ -318,7 +351,7 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 		case DBD_DTYPE_DIRECTORY:
 			hdl = alloc_handle(object,
 					   handle_keyp,
-					   op_ctx->fsal_export, DBD_DTYPE_DIRECTORY, 0755);
+					   op_ctx->fsal_export, DBD_DTYPE_DIRECTORY);
 			*handle = &hdl->obj_handle;
 			error = ERR_FSAL_NO_ERROR;
 			if ( found_in_not_backed_children &&
@@ -364,10 +397,7 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 
 	hdl = alloc_handle(object,
 			   handle_keyp,
-			   op_ctx->fsal_export, DBD_DTYPE_REGULAR, 0644);
-	hdl->attributes.mode = attrib->mode;
-	hdl->attributes.owner = attrib->owner;
-	hdl->attributes.group = attrib->group;
+			   op_ctx->fsal_export, DBD_DTYPE_REGULAR);
 	*handle = &hdl->obj_handle;
 
 	ret = dbd_post(export, hdl);
@@ -388,6 +418,8 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 			     struct fsal_obj_handle **handle)
 {
 	struct scality_fsal_obj_handle *myself, *hdl;
+        fsal_accessflags_t access_type;
+        fsal_status_t status;
 	fsal_errors_t error = ERR_FSAL_NO_ERROR;
 
 	myself = container_of(dir_hdl,
@@ -395,6 +427,12 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 			      obj_handle);
 	if ( not_backed_lookup(myself, name) )
 		return fsalstat(ERR_FSAL_EXIST, EEXIST);
+
+	access_type = FSAL_MODE_MASK_SET(FSAL_W_OK) |
+		FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_SUBDIRECTORY);
+	status = test_access(dir_hdl, access_type, NULL, NULL);
+	if (FSAL_IS_ERROR(status))
+		return status;
 
 	char object[MAX_URL_SIZE];
 	if ( '\0' == myself->object[0] )
@@ -412,10 +450,7 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 	
 	hdl = alloc_handle(object,
 			   handle_keyp,
-			   op_ctx->fsal_export, DBD_DTYPE_DIRECTORY, 0755);
-	hdl->attributes.mode = attrib->mode;
-	hdl->attributes.owner = attrib->owner;
-	hdl->attributes.group = attrib->group;
+			   op_ctx->fsal_export, DBD_DTYPE_DIRECTORY);
 	hdl->not_backed = true;
 	*handle = &hdl->obj_handle;
 
@@ -555,7 +590,7 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl)
 {
 	struct scality_fsal_obj_handle *myself;
 	struct scality_fsal_export *export;
-	
+
 	myself = container_of(obj_hdl,
 			      struct scality_fsal_obj_handle,
 			      obj_handle);
@@ -884,7 +919,7 @@ void scality_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->mknode = makenode;
 	ops->symlink = makesymlink;
 	ops->readlink = readsymlink;
-	ops->test_access = fsal_test_access;
+	ops->test_access = test_access;
 	ops->getattrs = getattrs;
 	ops->setattrs = setattrs;
 	ops->link = linkfile;
@@ -962,8 +997,7 @@ fsal_status_t scality_lookup_path(struct fsal_export *exp_hdl,
 			alloc_handle(object,
 				     handle_keyp,
 				     exp_hdl,
-				     DBD_DTYPE_DIRECTORY,
-				     0755);
+				     DBD_DTYPE_DIRECTORY);
 	}
 
 	*handle = &myself->root_handle->obj_handle;
@@ -1025,15 +1059,10 @@ fsal_status_t scality_create_handle(struct fsal_export *exp_hdl,
 	}
 	switch (dtype) {
 	case DBD_DTYPE_REGULAR:
-		hdl = alloc_handle(object,
-				   hdl_desc->addr,
-				   op_ctx->fsal_export, dtype, 0644);
-		*handle = &hdl->obj_handle;
-		return fsalstat(ERR_FSAL_NO_ERROR,0);
 	case DBD_DTYPE_DIRECTORY:
 		hdl = alloc_handle(object,
 				   hdl_desc->addr,
-				   op_ctx->fsal_export, dtype, 0755);
+				   op_ctx->fsal_export, dtype);
 		*handle = &hdl->obj_handle;
 		return fsalstat(ERR_FSAL_NO_ERROR,0);
 	case DBD_DTYPE_ENOENT:

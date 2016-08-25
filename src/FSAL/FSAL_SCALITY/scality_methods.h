@@ -71,6 +71,7 @@ struct scality_fsal_export {
 	char *bucket;
 	char *owner_display_name;
 	char *owner_id;
+	mode_t umask;
 
 	struct scality_fsal_obj_handle *root_handle;
 };
