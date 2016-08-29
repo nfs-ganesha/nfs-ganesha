@@ -21,6 +21,7 @@
  * -------------
  */
 
+#include "config.h"
 #ifdef LINUX
 #include <sys/sysmacros.h> /* for makedev(3) */
 #endif
