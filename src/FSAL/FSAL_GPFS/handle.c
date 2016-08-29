@@ -965,6 +965,7 @@ static void release(struct fsal_obj_handle *obj_hdl)
 	struct gpfs_fsal_obj_handle *myself;
 	object_file_type_t type = obj_hdl->type;
 
+	LogFullDebug(COMPONENT_FSAL, "type %d", type);
 	if (type == REGULAR_FILE)
 		gpfs_close(obj_hdl);
 

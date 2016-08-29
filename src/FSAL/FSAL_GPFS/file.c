@@ -205,7 +205,7 @@ fsal_status_t gpfs_open2(struct fsal_obj_handle *obj_hdl,
 	struct attrlist verifier_attr;
 	struct fsal_export *export = op_ctx->fsal_export;
 	struct gpfs_filesystem *gpfs_fs = obj_hdl->fs->private;
-	int *fd;
+	int *fd = NULL;
 
 	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
 
@@ -318,7 +318,7 @@ fsal_status_t gpfs_open2(struct fsal_obj_handle *obj_hdl,
 			/* Return success. */
 			return status;
 		}
-		(void) gpfs_close(obj_hdl);
+		(void) fsal_internal_close(*fd, state->state_owner, 0);
 
  undo_share:
 
@@ -473,7 +473,9 @@ fsal_status_t gpfs_open2(struct fsal_obj_handle *obj_hdl,
  fileerr:
 
 	/* Close the file we just opened. */
-	(void) gpfs_close(obj_hdl);
+	if (fd)
+		(void) fsal_internal_close(*fd,
+					   state?state->state_owner:NULL, 0);
 
 	if (created) {
 		/* Remove the file we just created */
@@ -717,6 +719,9 @@ fsal_status_t find_fd(int *fd,
 	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
 
 	fsal2posix_openflags(openflags, &posix_flags);
+
+	LogFullDebug(COMPONENT_FSAL, "openflags 0x%X posix_flags 0x%X",
+			openflags, posix_flags);
 
 	/* Handle nom-regular files */
 	switch (obj_hdl->type) {
@@ -1098,7 +1103,7 @@ fsal_status_t gpfs_lock_op2(struct fsal_obj_handle *obj_hdl,
 
 	/* Get a usable file descriptor */
 	status = find_fd(&my_fd, obj_hdl, bypass, state, openflags,
-			      &has_lock, &need_fsync, &closefd, true);
+			      &has_lock, &need_fsync, &closefd, false);
 
 	if (FSAL_IS_ERROR(status)) {
 		LogCrit(COMPONENT_FSAL, "Unable to find fd for lock operation");
@@ -1516,6 +1521,9 @@ fsal_status_t gpfs_close2(struct fsal_obj_handle *obj_hdl,
 	struct gpfs_fsal_obj_handle *myself;
 	struct gpfs_fd *my_fd = (struct gpfs_fd *)(state + 1);
 	state_owner_t *state_owner = NULL;
+	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
+
+	LogFullDebug(COMPONENT_FSAL, "state %p", state);
 
 	myself  = container_of(obj_hdl,
 			       struct gpfs_fsal_obj_handle,
@@ -1535,10 +1543,14 @@ fsal_status_t gpfs_close2(struct fsal_obj_handle *obj_hdl,
 
 		PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
 	}
-	if (state)
+	if (my_fd->fd > 0) {
+		LogFullDebug(COMPONENT_FSAL,
+			     "state %p fd %d", state, my_fd->fd);
 		state_owner = state->state_owner;
 
-	return fsal_internal_close(my_fd->fd, state_owner, 0);
+		return fsal_internal_close(my_fd->fd, state_owner, 0);
+	}
+	return status;
 }
 
 

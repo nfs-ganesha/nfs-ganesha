@@ -233,7 +233,8 @@ state_status_t state_add_impl(struct fsal_obj_handle *obj,
 	*state = pnew_state;
 
 	if (str_valid)
-		LogFullDebug(COMPONENT_STATE, "Add State: %s", str);
+		LogFullDebug(COMPONENT_STATE, "Add State: %p: %s",
+			     pnew_state, str);
 
 	/* Regular exit */
 	status = STATE_SUCCESS;

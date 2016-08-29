@@ -74,6 +74,9 @@ GPFSFSAL_open(struct fsal_obj_handle *obj_hdl,
 
 	fsal2posix_openflags(openflags, &posix_flags);
 
+	LogFullDebug(COMPONENT_FSAL, "openflags 0x%X posix_flags 0x%X",
+			openflags, posix_flags);
+
 	status = fsal_internal_handle2fd(gpfs_fs->root_fd, myself->handle,
 					 file_desc, posix_flags, reopen);
 
