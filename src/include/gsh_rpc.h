@@ -217,13 +217,13 @@ static inline void gsh_xprt_unref(SVCXPRT *xprt, uint32_t flags,
 						   XPRT_PRIVATE_FLAG_DECODING);
 	}
 
-	SVC_RELEASE2(xprt, flags, tag, line);
-	/* !LOCKED */
-
 	LogFullDebugAlt(COMPONENT_DISPATCH, COMPONENT_RPC,
-		"xprt %p postrelease xp_requests=%" PRIu32 " xp_refs=%" PRIu32
+		"xprt %p prerelease xp_requests=%" PRIu32 " xp_refs=%" PRIu32
 		" tag=%s line=%d",
 		xprt, xprt->xp_requests, xprt->xp_refs, tag, line);
+
+	SVC_RELEASE2(xprt, flags, tag, line);
+	/* !LOCKED */
 }
 
 static inline bool gsh_xprt_decoder_guard(SVCXPRT *xprt, uint32_t flags)

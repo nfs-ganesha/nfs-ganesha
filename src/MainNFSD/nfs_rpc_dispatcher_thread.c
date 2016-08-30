@@ -1877,7 +1877,7 @@ enum xprt_stat thr_decode_rpc_request(void *context, SVCXPRT *xprt)
 	LogFullDebug(COMPONENT_DISPATCH,
 		     "SVC_RECV on socket %d returned %s, xid=%u", xprt->xp_fd,
 		     (recv_status) ? "true" : "false",
-		     (reqdata->r_u.req.svc.rq_msg)
+		     (recv_status && reqdata->r_u.req.svc.rq_msg)
 		     ? reqdata->r_u.req.svc.rq_msg->rm_xid
 		     : 0);
 
