@@ -588,13 +588,6 @@ static void convert_inet_addr(struct config_node *node,
 			 &hints, &res);
 	if (rc == 0) {
 		memcpy(sock, res->ai_addr, res->ai_addrlen);
-		if (res->ai_next != NULL) {
-			config_proc_error(node, err_type,
-					  "Multiple addresses for %s",
-					  node->u.term.varvalue);
-			err_type->invalid = true;
-			err_type->errors++;
-		}
 	} else {
 		config_proc_error(node, err_type,
 				  "No IP address found for %s because:%s",
