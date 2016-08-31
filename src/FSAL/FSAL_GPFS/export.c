@@ -36,7 +36,6 @@
 #include <sys/types.h>
 #include <mntent.h>
 #include <sys/statfs.h>
-#include <sys/quota.h>
 #include "fsal.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
@@ -47,6 +46,7 @@
 #include "export_mgr.h"
 #include "pnfs_utils.h"
 #include "mdcache.h"
+#include "include/gpfs.h"
 
 /* export object methods
  */
@@ -221,11 +221,12 @@ static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 			       fsal_quota_t *pquota)
 {
 	struct gpfs_fsal_export *myself;
-	struct dqblk fs_quota;
+	gpfs_quotaInfo_t fs_quota;
 	struct stat path_stat;
 	uid_t id;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval;
+	struct quotactl_arg args;
 
 	myself = container_of(exp_hdl, struct gpfs_fsal_export, export);
 	retval = stat(filepath, &path_stat);
@@ -248,25 +249,28 @@ static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 		goto out;
 	}
 	id = (quota_type ==
-	      USRQUOTA) ? op_ctx->creds->caller_uid : op_ctx->creds->
+	      GPFS_USRQUOTA) ? op_ctx->creds->caller_uid : op_ctx->creds->
 	    caller_gid;
-	memset((char *)&fs_quota, 0, sizeof(struct dqblk));
-	retval = quotactl(QCMD(Q_GETQUOTA, quota_type), myself->root_fs->device,
-			  id, (caddr_t) &fs_quota);
+	memset((void *)&fs_quota, 0, sizeof(gpfs_quotaInfo_t));
+	args.pathname = filepath;
+	args.cmd = GPFS_QCMD(Q_GETQUOTA, quota_type);
+	args.qid = id;
+	args.bufferP = (void *) &fs_quota;
+	retval = gpfs_ganesha(OPENHANDLE_QUOTA, &args);
 	if (retval < 0) {
 		fsal_error = posix2fsal_error(errno);
 		retval = errno;
 		goto out;
 	}
-	pquota->bhardlimit = fs_quota.dqb_bhardlimit;
-	pquota->bsoftlimit = fs_quota.dqb_bsoftlimit;
-	pquota->curblocks = fs_quota.dqb_curspace;
-	pquota->fhardlimit = fs_quota.dqb_ihardlimit;
-	pquota->fsoftlimit = fs_quota.dqb_isoftlimit;
-	pquota->curfiles = fs_quota.dqb_curinodes;
-	pquota->btimeleft = fs_quota.dqb_btime;
-	pquota->ftimeleft = fs_quota.dqb_itime;
-	pquota->bsize = DEV_BSIZE;
+	pquota->bhardlimit = fs_quota.blockHardLimit;
+	pquota->bsoftlimit = fs_quota.blockSoftLimit;
+	pquota->curblocks = fs_quota.blockUsage;
+	pquota->fhardlimit = fs_quota.inodeHardLimit;
+	pquota->fsoftlimit = fs_quota.inodeSoftLimit;
+	pquota->curfiles = fs_quota.inodeUsage;
+	pquota->btimeleft = fs_quota.blockGraceTime;
+	pquota->ftimeleft = fs_quota.inodeGraceTime;
+	pquota->bsize = 1024;
 
  out:
 	return fsalstat(fsal_error, retval);
@@ -281,11 +285,12 @@ static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 			       fsal_quota_t *pquota, fsal_quota_t *presquota)
 {
 	struct gpfs_fsal_export *myself;
-	struct dqblk fs_quota;
+	gpfs_quotaInfo_t fs_quota;
 	struct stat path_stat;
 	uid_t id;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval;
+	struct quotactl_arg args;
 
 	myself = container_of(exp_hdl, struct gpfs_fsal_export, export);
 	retval = stat(filepath, &path_stat);
@@ -308,35 +313,32 @@ static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 		goto err;
 	}
 	id = (quota_type ==
-	      USRQUOTA) ? op_ctx->creds->caller_uid : op_ctx->creds->
+	      GPFS_USRQUOTA) ? op_ctx->creds->caller_uid : op_ctx->creds->
 	    caller_gid;
-	memset((char *)&fs_quota, 0, sizeof(struct dqblk));
+	memset((char *)&fs_quota, 0, sizeof(gpfs_quotaInfo_t));
 	if (pquota->bhardlimit != 0) {
-		fs_quota.dqb_bhardlimit = pquota->bhardlimit;
-		fs_quota.dqb_valid |= QIF_BLIMITS;
+		fs_quota.blockHardLimit = pquota->bhardlimit;
 	}
 	if (pquota->bsoftlimit != 0) {
-		fs_quota.dqb_bsoftlimit = pquota->bsoftlimit;
-		fs_quota.dqb_valid |= QIF_BLIMITS;
+		fs_quota.blockSoftLimit = pquota->bsoftlimit;
 	}
 	if (pquota->fhardlimit != 0) {
-		fs_quota.dqb_ihardlimit = pquota->fhardlimit;
-		fs_quota.dqb_valid |= QIF_ILIMITS;
+		fs_quota.inodeHardLimit = pquota->fhardlimit;
 	}
 	if (pquota->fsoftlimit != 0) {
-		fs_quota.dqb_isoftlimit = pquota->fsoftlimit;
-		fs_quota.dqb_valid |= QIF_ILIMITS;
+		fs_quota.inodeSoftLimit = pquota->fsoftlimit;
 	}
 	if (pquota->btimeleft != 0) {
-		fs_quota.dqb_btime = pquota->btimeleft;
-		fs_quota.dqb_valid |= QIF_BTIME;
+		fs_quota.blockGraceTime = pquota->btimeleft;
 	}
 	if (pquota->ftimeleft != 0) {
-		fs_quota.dqb_itime = pquota->ftimeleft;
-		fs_quota.dqb_valid |= QIF_ITIME;
+		fs_quota.inodeGraceTime = pquota->ftimeleft;
 	}
-	retval = quotactl(QCMD(Q_SETQUOTA, quota_type), myself->root_fs->device,
-			  id, (caddr_t) &fs_quota);
+	args.pathname = filepath;
+	args.cmd = GPFS_QCMD(Q_SETQUOTA, quota_type);
+	args.qid = id;
+	args.bufferP = (void *) &fs_quota;
+	retval = gpfs_ganesha(OPENHANDLE_QUOTA, &args);
 	if (retval < 0) {
 		fsal_error = posix2fsal_error(errno);
 		retval = errno;
