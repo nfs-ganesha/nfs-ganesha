@@ -1974,7 +1974,7 @@ fsal_status_t ceph_setattr2(struct fsal_obj_handle *obj_hdl,
 	}
 
 	if (FSAL_TEST_MASK(attrib_set->mask, ATTR_GROUP)) {
-		mask |= CEPH_SETATTR_UID;
+		mask |= CEPH_SETATTR_GID;
 		st.st_gid = attrib_set->group;
 	}
 
