@@ -561,12 +561,14 @@ if(USE_FSAL_RGW)
 endif(USE_FSAL_RGW)
 
 if(USE_FSAL_XFS)
-  check_library_exists(
-    handle
-    "open_by_handle"
-    ""
-    HAVE_XFS_LIB
-    )
+  if(EXISTS /lib/libhandle.so)
+    check_library_exists(handle "open_by_handle" "lib" HAVE_XFS_LIB)
+    if(HAVE_XFS_LIB)
+      set(PATH_LIBHANDLE "/lib/libhandle.so" CACHE INTERNAL "debian stretch and ubuntu xenial hack")
+    endif(HAVE_XFS_LIB)
+  else(EXISTS /lib/libhandle.so)
+    check_library_exists(handle "open_by_handle" "" HAVE_XFS_LIB)
+  endif(EXISTS /lib/libhandle.so)
   check_include_files("xfs/xfs.h" HAVE_XFS_H)
   if((NOT HAVE_XFS_LIB) OR (NOT HAVE_XFS_H))
    if(STRICT_PACKAGE)
