@@ -106,12 +106,6 @@ struct scality_part
 	struct scality_part *next;
 };
 
-struct scality_not_backed_dir
-{
-	char *name;
-	struct scality_not_backed_dir *next;
-};
-
 enum scality_fsal_obj_state {
 	SCALITY_FSAL_OBJ_STATE_CLEAN,
 	SCALITY_FSAL_OBJ_STATE_DIRTY,
@@ -128,11 +122,7 @@ struct scality_fsal_obj_handle {
 
 	struct scality_location *locations;
 	size_t n_locations;
-	
 	fsal_openflags_t openflags;
-
-	bool not_backed;
-	struct scality_not_backed_dir *not_backed_children;
 
 	enum scality_fsal_obj_state state;
 	size_t part_size;

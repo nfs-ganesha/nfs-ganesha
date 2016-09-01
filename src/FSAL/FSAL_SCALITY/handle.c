@@ -80,72 +80,6 @@ name_to_object(struct scality_fsal_obj_handle *parent,
 	return ret;
 }
 
-static bool
-not_backed_lookup(struct scality_fsal_obj_handle *myself, const char *name)
-{
-	struct scality_not_backed_dir *child;
-	for ( child = myself->not_backed_children ;
-	      child ;
-	      child = child->next ) {
-		if ( 0 == strcmp(name, child->name ) )
-			return true;
-	}
-	return false;
-}
-
-static void
-not_backed_insert(struct scality_fsal_obj_handle *myself, const char *name)
-{
-	struct scality_not_backed_dir *child;
-	child = gsh_malloc(sizeof(*child));
-	child->name = gsh_strdup(name);
-	child->next = myself->not_backed_children;
-	myself->not_backed_children = child;
-}
-
-static void
-not_backed_remove(struct scality_fsal_obj_handle *myself, const char *name)
-{
-	struct scality_not_backed_dir **childp;
-	for ( childp = &myself->not_backed_children ;
-	      *childp ;
-	      childp = &(*childp)->next ) {
-		if ( 0 == strcmp(name, (*childp)->name ) ) {
-			struct scality_not_backed_dir *child;
-			child = *childp;
-			*childp = child->next;
-			gsh_free(child->name);
-			gsh_free(child);
-			break;
-		}
-	}
-}
-
-static void
-not_backed_readdir(struct scality_fsal_obj_handle *myself,
-		   fsal_readdir_cb cb,
-		   void *dir_state,
-		   int *countp,
-		   bool *eof)
-{
-	struct scality_not_backed_dir *child, *next;
-	for ( child = myself->not_backed_children ;
-	      child ;
-	      child = next ) {
-		++(*countp);
-		/* child may be free'd by lookup during callback */
-		next = child->next;
-		char name[MAXPATHLEN];
-		snprintf(name, sizeof name, "%s", child->name);
-		if ( !cb(name, dir_state, *countp)) {
-			*eof = false;
-			break;
-		}
-	}
-}
-
-
-
 static void release(struct fsal_obj_handle *obj_hdl);
 
 /* alloc_handle
@@ -251,9 +185,6 @@ static struct scality_fsal_obj_handle
 
 	scality_handle_ops_init(&hdl->obj_handle.obj_ops);
 
-	hdl->not_backed = false;
-	hdl->not_backed_children = NULL;
-
 	hdl->state = SCALITY_FSAL_OBJ_STATE_CLEAN;
 	hdl->part_size = 0;
 	hdl->memory_used = 0;
@@ -319,9 +250,6 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 		goto out;
 	}
 
-	bool found_in_not_backed_children =
-		not_backed_lookup(myself, path);
-
 	ret = dbd_lookup(container_of(op_ctx->fsal_export,
 				      struct scality_fsal_export,
 				      export),
@@ -345,7 +273,6 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 			error = ERR_FSAL_NO_ERROR;
 			break;
 		case DBD_DTYPE_ENOENT:
-			if ( !found_in_not_backed_children )
 				break;
 			//fallthrough
 		case DBD_DTYPE_DIRECTORY:
@@ -354,10 +281,6 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 					   op_ctx->fsal_export, DBD_DTYPE_DIRECTORY);
 			*handle = &hdl->obj_handle;
 			error = ERR_FSAL_NO_ERROR;
-			if ( found_in_not_backed_children &&
-			     DBD_DTYPE_DIRECTORY == dtype ) {
-				not_backed_remove(myself, path);
-			}
 			break;			
 		default:break;
 		}
@@ -407,27 +330,26 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 		release(*handle);
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 	}
-	myself->not_backed = false;
 	
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
+static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
+			      struct attrlist *attrs);
+
 static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 			     const char *name,
-			     struct attrlist *attrib,
+			     struct attrlist *attrs,
 			     struct fsal_obj_handle **handle)
 {
 	struct scality_fsal_obj_handle *myself, *hdl;
         fsal_accessflags_t access_type;
         fsal_status_t status;
-	fsal_errors_t error = ERR_FSAL_NO_ERROR;
 
 	myself = container_of(dir_hdl,
 			      struct scality_fsal_obj_handle,
 			      obj_handle);
-	if ( not_backed_lookup(myself, name) )
-		return fsalstat(ERR_FSAL_EXIST, EEXIST);
-
+        
 	access_type = FSAL_MODE_MASK_SET(FSAL_W_OK) |
 		FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_SUBDIRECTORY);
 	status = test_access(dir_hdl, access_type, NULL, NULL);
@@ -451,12 +373,13 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 	hdl = alloc_handle(object,
 			   handle_keyp,
 			   op_ctx->fsal_export, DBD_DTYPE_DIRECTORY);
-	hdl->not_backed = true;
+
 	*handle = &hdl->obj_handle;
 
-	not_backed_insert(myself, name);
+        FSAL_SET_MASK(attrs->mask, ATTR_ATIME_SERVER);
+        FSAL_SET_MASK(attrs->mask, ATTR_MTIME_SERVER);
 
-	return fsalstat(error, 0);
+        return setattrs(*handle, attrs);
 }
 
 static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
@@ -559,13 +482,7 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 
 	int count = -1;
 
-	if ( !myself->not_backed) {
-		dbd_readdir(export, myself, seekloc, dir_state, cb, &count, eof);
-	}
-	if ( -1 != count )
-		myself->not_backed = false;
-
-	not_backed_readdir(myself, cb, dir_state, &count, eof);
+        dbd_readdir(export, myself, seekloc, dir_state, cb, &count, eof);
 
 	op_ctx->fsal_private = NULL;
 
@@ -601,8 +518,7 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl)
 	/* We need to update the numlinks under attr lock. */
 	myself->attributes.numlinks = atomic_fetch_uint32_t(&myself->numlinks);
 
-	if ( DIRECTORY != myself->attributes.type &&
-	     !myself->not_backed &&
+	if ( '\0' != myself->object[0] &&
 	     SCALITY_FSAL_OBJ_STATE_CLEAN == myself->state) {
 	
 		int ret;
@@ -654,9 +570,10 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 			      struct scality_fsal_obj_handle,
 			      obj_handle);
 
-	if ( REGULAR_FILE != myself->attributes.type ) {
+	if ( REGULAR_FILE != myself->attributes.type &&
+             DIRECTORY != myself->attributes.type) {
 		LogCrit(COMPONENT_FSAL,
-			"Invoking unsupported FSAL operation, setattrs on directory: %s",
+			"Invoking unsupported FSAL operation, setattrs on unsupported object type: %s",
 			myself->object);
 		return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 	}
@@ -688,6 +605,9 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 	}
 
 	if (FSAL_TEST_MASK(attrs->mask, ATTR_SIZE)) {
+                if (DIRECTORY == myself->attributes.type) {
+                        return fsalstat(ERR_FSAL_PERM, 0);
+                }
 		if ( 0 != attrs->filesize )
 			return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 		size_t i;
@@ -717,6 +637,24 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
+static void
+delete_parts(struct scality_fsal_export *export,
+             struct scality_fsal_obj_handle *obj_hdl)
+{
+        size_t i;
+        int ret;
+        for ( i = 0 ; i < obj_hdl->n_locations ; ++i ) {
+                ret = sproxyd_delete(export,
+                                     obj_hdl->locations[i].key);
+                if ( ret < 0 ) {
+                        LogWarn(COMPONENT_FSAL,
+                                "Unable to delete key %s from %s",
+                                obj_hdl->locations[i].key, obj_hdl->object);
+                }
+        }
+
+}
+
 /* file_unlink
  * unlink the named file in the directory
  */
@@ -739,72 +677,101 @@ static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
 		 "unlink(%s)",
 		 name);
 
-	bool found_in_not_backed_children =
-		not_backed_lookup(myself, name);
-
 	ret = dbd_lookup(export, myself, name, &dtype);
 	if ( 0 != ret )
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 
-	switch(dtype) {
-	case DBD_DTYPE_REGULAR: {
-		struct fsal_obj_handle *hdl;
-		fsal_status_t status = lookup(dir_hdl, name, &hdl);
-		if ( ERR_FSAL_NO_ERROR == status.major ) {
-			struct scality_fsal_obj_handle *obj_hdl;
-			obj_hdl = container_of(hdl,
-					       struct scality_fsal_obj_handle,
-					       obj_handle);
-			size_t i;
-			int ret;
-			ret = dbd_delete(export, obj_hdl->object);
-			if ( ret < 0 ) {
-				LogCrit(COMPONENT_FSAL, "Unable to de-index %s", obj_hdl->object);
-				release(hdl);
-				return fsalstat(ERR_FSAL_SERVERFAULT, 0);
-			}
-			for ( i = 0 ; i < obj_hdl->n_locations ; ++i ) {
-				ret = sproxyd_delete(export,
-					       obj_hdl->locations[i].key);
-				if ( ret < 0 ) {
-					LogWarn(COMPONENT_FSAL, "Unable to delete key %s from %s", obj_hdl->locations[i].key, obj_hdl->object);
-				}
-			}
-			scality_cleanup(export, myself, SCALITY_FSAL_CLEANUP_COMMIT|SCALITY_FSAL_CLEANUP_ROLLBACK);
-			release(hdl);
-		}
-
-		/*
-		 * if not marked as "not backed" last rm in a dir complains
-		 */
-		ret = dbd_lookup_object(export, myself->object, &dtype);
-		if ( 0 != ret )
-			return fsalstat(ERR_FSAL_SERVERFAULT, 0);
-		if ( DBD_DTYPE_ENOENT == dtype ) {
-			myself->not_backed = true;
-		}
-		
-		break;
-	}
+        switch(dtype) {
+	case DBD_DTYPE_REGULAR:
 	case DBD_DTYPE_DIRECTORY:
-		return fsalstat(ERR_FSAL_NOTEMPTY, 0);
+                break;
 	case DBD_DTYPE_ENOENT:
-		if ( found_in_not_backed_children) {
-			not_backed_remove(myself, name);
-		} else {
-			return fsalstat(ERR_FSAL_NOENT, ENOENT);
-		}
-		break;
+                return fsalstat(ERR_FSAL_NOENT, ENOENT);
 	default:break;
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 	}
 
-	char object[MAX_URL_SIZE];
-	ret = snprintf(object, sizeof object, "%s"S3_DELIMITER"%s", myself->object, name);
-	if ( ret < sizeof(object) ) {
-		redis_remove(object);
+        struct fsal_obj_handle *hdl;
+        fsal_status_t status = lookup(dir_hdl, name, &hdl);
+        if ( ERR_FSAL_NO_ERROR != status.major ) {
+                return status;
+        }
+        struct scality_fsal_obj_handle *obj_hdl;
+        obj_hdl = container_of(hdl,
+                               struct scality_fsal_obj_handle,
+                               obj_handle);
+        
+        ret = dbd_post(export, myself);
+        if ( 0 != ret ) {
+                LogCrit(COMPONENT_FSAL,
+                        "Unable to create the directory placeholder `%s/'",
+                        myself->object);
+                release(hdl);
+                return fsalstat(ERR_FSAL_SERVERFAULT, 0);
+        }
+        
+	switch(dtype) {
+	case DBD_DTYPE_REGULAR: {
+                int ret;
+                ret = dbd_delete(export, obj_hdl->object);
+                if ( ret < 0 ) {
+                        LogCrit(COMPONENT_FSAL,
+                                "Unable to de-index %s",
+                                obj_hdl->object);
+                        status = fsalstat(ERR_FSAL_SERVERFAULT, 0);
+                }
+                else {
+                        delete_parts(export, obj_hdl);
+                        scality_cleanup(export, myself,
+                                        SCALITY_FSAL_CLEANUP_COMMIT|
+                                        SCALITY_FSAL_CLEANUP_ROLLBACK);
+                }
+                break;
 	}
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	case DBD_DTYPE_DIRECTORY: {
+                int ret;
+                dbd_is_last_result_t result;
+                result = dbd_is_last(export, obj_hdl);
+                switch(result) {
+                case DBD_LOOKUP_IS_LAST: {
+                        char placeholder[MAX_URL_SIZE];
+                        snprintf(placeholder, sizeof placeholder,
+                                 "%s"S3_DELIMITER, obj_hdl->object);
+                        ret = dbd_delete(export, placeholder);
+                        if ( ret < 0 ) {
+                                LogCrit(COMPONENT_FSAL,
+                                        "Unable to de-index %s",
+                                        placeholder);
+                                status = fsalstat(ERR_FSAL_SERVERFAULT, 0);
+                        }
+                        //do things
+                        break;
+                }
+                case DBD_LOOKUP_IS_NOT_LAST:
+                        status = fsalstat(ERR_FSAL_NOTEMPTY, 0);
+                        break;
+                case DBD_LOOKUP_ENOENT:
+                        status = fsalstat(ERR_FSAL_NOENT, 0);
+                default:
+                        status = fsalstat(ERR_FSAL_SERVERFAULT, 0);
+                }
+                break;
+        }
+	default:
+                assert(!"Impossible");
+		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
+	}
+
+        release(hdl);
+
+        if ( ERR_FSAL_NO_ERROR != status.major ) {
+                char object[MAX_URL_SIZE];
+                ret = snprintf(object, sizeof object, "%s"S3_DELIMITER"%s", myself->object, name);
+                if ( ret < sizeof(object) ) {
+                        redis_remove(object);
+                }
+        }
+	return status;
 }
 
 /* handle_digest
@@ -879,9 +846,6 @@ static void release(struct fsal_obj_handle *obj_hdl)
 	myself = container_of(obj_hdl,
 			      struct scality_fsal_obj_handle,
 			      obj_handle);
-
-	if ( myself->not_backed )
-		LogCrit(COMPONENT_FSAL, "cleanup of a not_backed dir %s %p", myself->object, myself);
 
 	if ( SCALITY_FSAL_OBJ_STATE_DIRTY == myself->state ) {
 		fsal_status_t status;

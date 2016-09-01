@@ -27,6 +27,24 @@
 
 #ifndef __DBD_REST_CLIENT_H__
 #define __DBD_REST_CLIENT_H__
+typedef enum {
+        DBD_LOOKUP_IS_LAST,
+        DBD_LOOKUP_IS_NOT_LAST,
+        DBD_LOOKUP_ENOENT,
+        DBD_LOOKUP_ERROR,
+} dbd_is_last_result_t;
+
+/**
+ * @brief check if an object is the last in its prefix
+ *
+ * @param export - the export context
+ * @param dir_hdl - used as prefix in the query
+ * @return the result of the lookup query
+ */
+dbd_is_last_result_t
+dbd_is_last(struct scality_fsal_export *export,
+            struct scality_fsal_obj_handle *dir_hdl);
+
 
 typedef enum {
 	DBD_DTYPE_IOERR = -1,
@@ -34,11 +52,31 @@ typedef enum {
 	DBD_DTYPE_REGULAR,
 	DBD_DTYPE_DIRECTORY
 } dbd_dtype_t;
+
+/**
+ * @brief perform a lookup in a directory
+ *
+ * @param export - the export context
+ * @param parent_hdl - the object handle of the directory in which to perform the lookup
+ * @param name - the name of the object (either a regular file or a directory)
+ *                in the directory to lookup
+ * @param[out] dtypep - the type of the object looked up or DBD_DTUP_ENOENT
+ * @return 0 on success
+ */
 int
 dbd_lookup(struct scality_fsal_export *export,
 	   struct scality_fsal_obj_handle *parent_hdl,
 	   const char *name,
 	   dbd_dtype_t *dtypep);
+
+/**
+ * @brief perform a lookup in a bucket
+ *
+ * @param export - the export context
+ * @param object - the path to the object
+ * @param[out] dtypep - the type of the object looked up or DBD_DTUP_ENOENT
+ * @return 0 on success
+ */
 int
 dbd_lookup_object(struct scality_fsal_export *export,
 		  const char *object,

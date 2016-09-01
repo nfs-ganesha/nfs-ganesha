@@ -192,33 +192,23 @@ __. and ..__
 File creation is decoupled from open and write. A new entry is created in DBD. the metadata associated to the object notably contains:
  - a random content-md5 with char #32 set to '-'
  - Date and last-modified set to now()
- - owner-display-name and owner-id set to configured values
+ - owner-display-name and owner-id set to the values found in the bucket attributes
  - an empty locations array
- - Future: Do we have to remove the placeholder??
+ - Future: Do we have to remove or update the placeholder?
 
 This has the effect of creating instantly an empty file.
 
-
-## File removal
-
- - Future: If the object is the last with this prefix, create a placeholder
- - delete object entry from DBD bucket
- - delete all parts from sproxyd storage
-
-At this time, it's kind of broken when the file to remove is the last in the prefix.
-
 ### Directory creation
 
- - Future: Create a placeholder for the directory
-
-At this time, directory creation is badly implemented using internal states that can't be relied on.
+Directories are created as placeholders. A placeholder is an empty object named after the directory name with a trailing slash (```/```) with content-type set to ```application/x-directory```
 
 
-### Directory removal
+## File/Directory removal
 
- - Future: delete the placeholder if it is the last object with this prefix
-
-Today, it's almost broken
+ - create the placeholder and replace it if it already exists ! it is faster than a lookup
+ - if it is a directory removal, check if it is empty
+ - delete object entry from DBD bucket
+ - if it is a file delete all parts from sproxyd storage
 
 ### Open a file
 
@@ -255,12 +245,14 @@ When a commit is requested by the client, the object entry in DBD is updated wit
 
 On regular files (which are backed by real objects) getattrs requests the object's metadata from DBD.
  - Atime, mtime, ctime and chgtime are set to last-modified
- - uid/gid are left blank
+ - uid/gid are set to configured values
  - size is set to "content-length"
  - parts list is updated
 
 
-On directories, it's another story. A prefix/delimiter request is performed to check if the directory still exist. If it is the case, in memory structure is left unchanged.
+On directories, it's another story.
+ - Without a placeholder, a prefix/delimiter request is performed to check if the directory still exist. If it is the case, in memory structure is left unchanged.
+ - With a placeholder, placeholder content is loaded like regular files
 
 Regarding directories, there is something worth to mention. Directory content invalidation takes place here, in order to the client to get a fresh directory content. This invalidation is done using ganesha upcalls.
 
@@ -268,7 +260,7 @@ Regarding directories, there is something worth to mention. Directory content in
 
 ### setattrs
 
-Setattrs only applies on regular files.
+Setattrs only applies on regular files and directories, even without a placeholder.
 
 The following information is kept up to date by Scality NFS
  - FIXME: last-modified and Date are set to now()
