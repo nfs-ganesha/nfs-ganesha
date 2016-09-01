@@ -371,7 +371,7 @@ static fsal_status_t gpfs_extract_handle(struct fsal_export *exp_hdl,
 					 int flags)
 {
 	struct gpfs_file_handle *hdl;
-	size_t fh_size = 0;
+	size_t fh_size;
 
 	/* sanity checks */
 	if (!fh_desc || !fh_desc->addr)
@@ -400,7 +400,11 @@ static fsal_status_t gpfs_extract_handle(struct fsal_export *exp_hdl,
 	   hdl->handle_key_size, hdl->handle_fsid[0], hdl->handle_fsid[1],
 	   fh_size);
 
-	if (fh_desc->len != fh_size) {
+	/* Some older file handles include additional 16 bytes in fh_desc->len.
+	 * Honor those as well.
+	 */
+	if (fh_desc->len != fh_size &&
+	    fh_desc->len != fh_size + 16) {
 		LogMajor(COMPONENT_FSAL,
 			 "Size mismatch for handle.  should be %zu, got %zu",
 			 fh_size, fh_desc->len);
