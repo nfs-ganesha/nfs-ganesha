@@ -233,9 +233,6 @@ static bool ng_lookup(const char *group, const char *host, bool negative)
 	if (ng_expired(node))
 		goto expired;
 
-	info = avltree_container_of(node, struct ng_cache_info, ng_node);
-
-	cache_slot = (void **) &ng_cache[ng_hash_key(info)];
 	atomic_store_voidptr(cache_slot, node);
 
 	return true;
@@ -244,9 +241,21 @@ expired:
 	/* entry expired, acquire write mode lock for removal */
 	PTHREAD_RWLOCK_unlock(&ng_lock);
 	PTHREAD_RWLOCK_wrlock(&ng_lock);
-	info = avltree_container_of(node, struct ng_cache_info, ng_node);
-	ng_remove(info, negative);
-	ng_free(info);
+
+	/* Since we dropped the read mode lock and acquired write mode
+	 * lock, make sure that the entry is still in the tree.
+	 */
+	if (negative)
+		node = avltree_lookup(&prototype.ng_node, &neg_ng_tree);
+	else
+		node = avltree_lookup(&prototype.ng_node, &pos_ng_tree);
+
+	if (node) {
+		info = avltree_container_of(node, struct ng_cache_info,
+					    ng_node);
+		ng_remove(info, negative);
+		ng_free(info);
+	}
 	PTHREAD_RWLOCK_unlock(&ng_lock);
 	PTHREAD_RWLOCK_rdlock(&ng_lock);
 	return false;
