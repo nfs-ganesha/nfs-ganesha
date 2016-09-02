@@ -35,6 +35,9 @@ static __thread redisContext *ctx__ = NULL;
 
 //FIXME no context cleanup at exit
 
+#define TTL_HANDLE "86400"
+
+
 static void
 reset_redis_context(void)
 {
@@ -75,20 +78,45 @@ get_redis_context(void)
 	return ctx__;
 }
 
+#define REDIS_SIMPLE_CMD(ctx, fmt, ...)					\
+	({								\
+		redisContext *_x_ctx = ctx;				\
+		const char *_x_fmt = fmt;				\
+		int __ret = 0;						\
+		redisReply *reply = redisCommand(_x_ctx, _x_fmt, ##__VA_ARGS__); \
+		if (NULL == reply) {					\
+			LogCrit(COMPONENT_FSAL,				\
+				"Redis error: '%s' on %s",		\
+				_x_ctx->errstr, _x_fmt);		\
+			__ret = -1;					\
+		}							\
+		else if ( REDIS_REPLY_ERROR == reply->type ) {		\
+			LogCrit(COMPONENT_FSAL,				\
+				"Redis reply error: '%s' on %s",	\
+				reply->str, _x_fmt);			\
+			__ret = -1;					\
+		}							\
+		if (reply) freeReplyObject(reply);			\
+		__ret;							\
+	})
+
 int
 redis_get_object(char *buf, int buf_sz,
 		 char *obj, int obj_sz)
 {
 	assert(buf_sz == V4_FH_OPAQUE_SIZE);
+	struct scality_fsal_export *export;
+	export = container_of(op_ctx->fsal_export,
+			      struct scality_fsal_export,
+			      export);
 	int ret = 0;
 	redisContext *ctx = get_redis_context();
 	if ( NULL == ctx )
 		return -1;
-
 	redisReply *reply = redisCommand(ctx, "GET object:%b", buf, buf_sz);
 	if ( NULL == reply ) {
 		LogCrit(COMPONENT_FSAL,
-			"Redis error: %s", ctx__->errstr);
+			"Redis error: %s", ctx->errstr);
 		return -1;
 	}
 	switch(reply->type) {
@@ -109,10 +137,6 @@ redis_get_object(char *buf, int buf_sz,
 			ret = -1;
 			goto out;
 		}
-		struct scality_fsal_export *export;
-		export = container_of(op_ctx->fsal_export,
-				      struct scality_fsal_export,
-				      export);
 		size_t bucket_len = strlen(export->bucket);
 		if ( 0 != strncmp(reply->str, export->bucket, bucket_len) ||
 		     reply->str[bucket_len] != *S3_DELIMITER ) {
@@ -123,10 +147,18 @@ redis_get_object(char *buf, int buf_sz,
 		memcpy(obj, reply->str+bucket_len+1, reply->len-bucket_len-1);
 		obj[reply->len-bucket_len-1] = '\0';
 	}
+
+	if (0 == ret)
+		ret = REDIS_SIMPLE_CMD(ctx,
+				       "EXPIRE object:%b "TTL_HANDLE,
+				       buf, buf_sz);
+	if (0 == ret)
+		ret = REDIS_SIMPLE_CMD(ctx,
+				       "EXPIRE handle:%s/%s "TTL_HANDLE,
+				       export->bucket, obj);
  out:
 	freeReplyObject(reply);
 	return ret;
-
 }
 
 int
@@ -145,7 +177,7 @@ redis_get_handle_key(const char *obj, char *buf, int buf_sz)
 	redisReply *reply = redisCommand(ctx, "GET handle:%s/%s", export->bucket, obj);
 	if ( NULL == reply ) {
 		LogCrit(COMPONENT_FSAL,
-			"Redis error: %s", ctx__->errstr);
+			"Redis error: %s", ctx->errstr);
 		return -1;
 	}
 	switch(reply->type) {
@@ -170,6 +202,14 @@ redis_get_handle_key(const char *obj, char *buf, int buf_sz)
 		}
 	}
 	freeReplyObject(reply);
+	if (0 == ret)
+		ret = REDIS_SIMPLE_CMD(ctx,
+				       "EXPIRE object:%b "TTL_HANDLE,
+				       buf, buf_sz);
+	if (0 == ret)
+		ret = REDIS_SIMPLE_CMD(ctx,
+				       "EXPIRE handle:%s/%s "TTL_HANDLE,
+				       export->bucket, obj);
 	return ret;
 }
 
@@ -177,7 +217,6 @@ void redis_remove(const char *obj)
 {
 	char buf[V4_FH_OPAQUE_SIZE];
 	int ret;
-	redisReply *reply;
 	redisContext *ctx = get_redis_context();
 	if ( NULL == ctx )
 		return;
@@ -189,42 +228,8 @@ void redis_remove(const char *obj)
 	export = container_of(op_ctx->fsal_export,
 			      struct scality_fsal_export,
 			      export);
-	reply = redisCommand(ctx, "DEL handle:%s/%s", export->bucket, obj);
-	if ( NULL == reply ) {
-		LogCrit(COMPONENT_FSAL,
-			"Redis error on delete: %s", ctx__->errstr);
-		return;
-	}
-	switch(reply->type) {
-	default:
-		if ( REDIS_REPLY_ERROR == reply->type )
-			LogCrit(COMPONENT_FSAL,
-				"Redis reply error: %s", reply->str);
-		else {
-			LogCrit(COMPONENT_FSAL,
-				"Redis reply: unexpected data type");
-		}
-	case REDIS_REPLY_INTEGER:
-		break;
-	}
-	reply = redisCommand(ctx, "DEL object:%b", buf, sizeof buf);
-	if ( NULL == reply ) {
-		LogCrit(COMPONENT_FSAL,
-			"Redis error on delete: %s", ctx__->errstr);
-		return;
-	}
-	switch(reply->type) {
-	default:
-		if ( REDIS_REPLY_ERROR == reply->type )
-			LogCrit(COMPONENT_FSAL,
-				"Redis reply error: %s", reply->str);
-		else {
-			LogCrit(COMPONENT_FSAL,
-				"Redis reply: unexpected data type");
-		}
-	case REDIS_REPLY_INTEGER:
-		break;
-	}
+	(void)REDIS_SIMPLE_CMD(ctx, "DEL handle:%s/%s", export->bucket, obj);
+	(void)REDIS_SIMPLE_CMD(ctx, "DEL object:%b", buf, sizeof buf);
 }
 
 int
@@ -246,42 +251,15 @@ redis_create_handle_key(const char *obj, char *buf, int buf_sz)
 	export = container_of(op_ctx->fsal_export,
 			      struct scality_fsal_export,
 			      export);
-	redisReply *reply = redisCommand(ctx, "SET handle:%s/%s %b EX 86400",
-					 export->bucket, obj,
-					 buf, buf_sz);
-	if ( NULL == reply ) {
-		LogCrit(COMPONENT_FSAL,
-			"Redis error: %s", ctx__->errstr);
-		return -1;
-	}
-
 	int ret = 0;
-	if ( REDIS_REPLY_ERROR == reply->type ) {
-		LogCrit(COMPONENT_FSAL,
-			"Redis reply error: %s", reply->str);
-		ret = -1;
-		goto out;
-	}
-
-	reply = redisCommand(ctx, "SET object:%b %s/%s EX 86400",
-			     buf, buf_sz,
-			     export->bucket, obj);
-	if ( NULL == reply ) {
-		LogCrit(COMPONENT_FSAL,
-			"Redis error: %s", ctx__->errstr);
-		return -1;
-	}
-
-	ret = 0;
-	if ( REDIS_REPLY_ERROR == reply->type ) {
-		LogCrit(COMPONENT_FSAL,
-			"Redis reply error: %s", reply->str);
-		ret = -1;
-	}
-	
-
- out:
-	freeReplyObject(reply);
+	ret = REDIS_SIMPLE_CMD(ctx, "SET handle:%s/%s %b EX "TTL_HANDLE,
+			       export->bucket, obj,
+			       buf, buf_sz);
+	if (0 == ret)
+		ret = REDIS_SIMPLE_CMD(ctx,
+				       "SET object:%b %s/%s EX "TTL_HANDLE,
+				       buf, buf_sz,
+				       export->bucket, obj);
 	return ret;
 	
 }
