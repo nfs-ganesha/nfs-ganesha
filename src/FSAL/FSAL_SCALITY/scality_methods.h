@@ -69,6 +69,7 @@ struct scality_fsal_export {
 	struct scality_fsal_module *module;
 	char *export_path;
 	char *bucket;
+	struct timespec creation_date;
 	char *owner_display_name;
 	char *owner_id;
 	mode_t umask;

@@ -54,7 +54,47 @@ struct dbd_get_parameters {
 typedef struct dbd_response dbd_response_t;
 typedef struct dbd_get_parameters dbd_get_parameters_t;
 
- void
+
+static struct timespec
+iso8601_str2timespec(const char* ts_str)
+{
+	struct timespec result = {};
+	int y,M,d,h,m;
+	double s;
+	if (NULL != ts_str) {
+		int ret = sscanf(ts_str, "%d-%d-%dT%d:%d:%lfZ", &y, &M, &d, &h, &m, &s);
+		if ( 6 != ret ) {
+			LogCrit(COMPONENT_FSAL,
+				"malformed ISO8601  date %s. got %d fields",
+				ts_str, ret);
+		} else {
+			LogDebug(COMPONENT_FSAL,
+				 "ISO8601 date: %d-%d-%d %d:%d:%f",
+				 y, M, d, h, m, s);
+			struct tm tm = {
+				.tm_year = y-1900,
+				.tm_mon = M-1,
+				.tm_mday = d,
+				.tm_hour = h,
+				.tm_min = m,
+				.tm_sec = (int)s,
+				.tm_isdst = -1,
+			};
+			time_t t = timegm(&tm);
+			result = (struct timespec) {
+				.tv_sec = t,
+				.tv_nsec = (s-(int)s)*1000000000,
+			};
+		}
+	}
+	else {
+		LogCrit(COMPONENT_FSAL,
+			"null ISO8601  timestamp");
+	}
+	return result;
+}
+
+void
 dbd_response_free(dbd_response_t *response)
 {
 	if ( response ) {
@@ -617,8 +657,12 @@ dbd_collect_bucket_attributes(struct scality_fsal_export *export)
         if ( NULL != response && 200 == response->http_status ) {
 		json_t *js_owner = json_object_get(response->body, "owner");
 		json_t *js_owner_display_name = json_object_get(response->body, "ownerDisplayName");
+		json_t *js_creation_date = json_object_get(response->body, "creationDate");
                 const char *owner = NULL,
                         *owner_display_name = NULL;
+		if (js_creation_date)
+			export->creation_date =
+				iso8601_str2timespec(json_string_value(js_creation_date));
                 if (js_owner)
                         owner = json_string_value(js_owner);
                 if (js_owner_display_name)
@@ -773,34 +817,10 @@ dbd_getattr_regular_file(struct scality_fsal_export* export,
 	switch(json_typeof(last_modified)) {
 	case JSON_STRING: {
 		const char *ts_str = json_string_value(last_modified);
-		int y,M,d,h,m;
-		double s;
-		int ret = sscanf(ts_str, "%d-%d-%dT%d:%d:%lfZ", &y, &M, &d, &h, &m, &s);
-		if ( 6 != ret ) {
-			LogCrit(COMPONENT_FSAL, "sscanf failed for %s, on %s. got %d fields",
-				object_hdl->object, ts_str, ret);
-		} else {
-			LogDebug(COMPONENT_FSAL,"%s: last-modified: %d-%d-%d %d:%d:%f",
-				object_hdl->object, y, M, d, h, m, s);
-			struct tm tm = {
-				.tm_year = y-1900,
-				.tm_mon = M-1,
-				.tm_mday = d,
-				.tm_hour = h,
-				.tm_min = m,
-				.tm_sec = (int)s,
-				.tm_isdst = -1,
-			};
-			time_t t = timegm(&tm);
-			object_hdl->attributes.mtime = (struct timespec) {
-				.tv_sec = t,
-				.tv_nsec = (s-(int)s)*1000000000,
-			};
-			object_hdl->attributes.atime = object_hdl->attributes.mtime;
-			object_hdl->attributes.ctime = object_hdl->attributes.mtime;
-			object_hdl->attributes.chgtime = object_hdl->attributes.mtime;
-		}
-		
+		object_hdl->attributes.mtime = iso8601_str2timespec(ts_str);
+		object_hdl->attributes.atime = object_hdl->attributes.mtime;
+		object_hdl->attributes.ctime = object_hdl->attributes.mtime;
+		object_hdl->attributes.chgtime = object_hdl->attributes.mtime;
 		break;
 	}
 	default:

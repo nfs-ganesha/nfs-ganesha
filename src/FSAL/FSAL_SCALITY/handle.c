@@ -157,10 +157,7 @@ static struct scality_fsal_obj_handle
 	FSAL_SET_MASK(hdl->attributes.mask, ATTR_GROUP);
 
 	/* Use full timer resolution */
-	if ( DBD_DTYPE_DIRECTORY == dtype )
-		hdl->attributes.atime = (struct timespec){0, 0};
-	else
-		now(&hdl->attributes.atime);
+	hdl->attributes.atime = export->creation_date;
 	hdl->attributes.ctime = hdl->attributes.atime;
 	hdl->attributes.mtime = hdl->attributes.atime;
 	hdl->attributes.chgtime = hdl->attributes.atime;
