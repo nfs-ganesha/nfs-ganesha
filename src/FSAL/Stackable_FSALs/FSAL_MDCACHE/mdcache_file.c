@@ -546,8 +546,8 @@ static fsal_status_t mdc_open2_by_name(mdcache_entry_t *mdc_parent,
  * On a call with an existing object handle for an UNCHECKED create,
  * we can set the size to 0.
  *
- * If attributes are not set on create, the FSAL will set some minimal
- * attributes (for example, mode might be set to 0600).
+ * At least the mode attribute must be set if createmode is FSAL_UNCHECKED,
+ * FSAL_GUARDED, FSAL_EXCLUSIVE_41, or FSAL_EXCLUSIVE_9P.
  *
  * If an open by name succeeds and did not result in Ganesha creating a file,
  * the caller will need to do a subsequent permission check to confirm the
@@ -666,7 +666,6 @@ fsal_status_t mdcache_open2(struct fsal_obj_handle *obj_hdl,
 			 */
 			mdcache_kill_entry(mdc_parent);
 		}
-		fsal_release_attrs(attrs_in);
 		fsal_release_attrs(&attrs);
 		*new_obj = NULL;
 		return status;

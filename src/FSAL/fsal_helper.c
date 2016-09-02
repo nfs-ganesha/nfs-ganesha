@@ -1709,6 +1709,10 @@ fsal_status_t fsal_open(struct fsal_obj_handle *obj_hdl,
  * state can be NULL which indicates a stateless open (such as via the
  * NFS v3 CREATE operation).
  *
+ * At least the mode attribute must be set if createmode is not FSAL_NO_CREATE.
+ * Some FSALs may still have to pass a mode on a create call for exclusive,
+ * and even with FSAL_NO_CREATE, and empty set of attributes MUST be passed.
+ *
  * The caller is expected to invoke fsal_release_attrs to release any
  * resources held by the set attributes. The FSAL layer MAY have added an
  * inherited ACL.

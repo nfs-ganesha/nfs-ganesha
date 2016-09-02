@@ -2293,8 +2293,9 @@ struct fsal_obj_ops {
  * On a call with an existing object handle for an UNCHECKED create,
  * we can set the size to 0.
  *
- * If attributes are not set on create, the FSAL will set some minimal
- * attributes (for example, mode might be set to 0600).
+ * At least the mode attribute must be set if createmode is not FSAL_NO_CREATE.
+ * Some FSALs may still have to pass a mode on a create call for exclusive,
+ * and even with FSAL_NO_CREATE, and empty set of attributes MUST be passed.
  *
  * If an open by name succeeds and did not result in Ganesha creating a file,
  * the caller will need to do a subsequent permission check to confirm the

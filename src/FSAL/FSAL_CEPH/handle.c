@@ -985,17 +985,14 @@ fsal_status_t ceph_open2(struct fsal_obj_handle *obj_hdl,
 	struct handle *myself, *hdl = NULL;
 	struct stat stat;
 	bool truncated;
-	bool setattrs = attrib_set != NULL;
 	bool created = false;
-	struct attrlist verifier_attr;
 	struct export *export =
 	    container_of(op_ctx->fsal_export, struct export, export);
 	struct Inode *i = NULL;
 	Fh *fd;
 
-	if (setattrs)
-		LogAttrlist(COMPONENT_FSAL, NIV_FULL_DEBUG,
-			    "attrs ", attrib_set, false);
+	LogAttrlist(COMPONENT_FSAL, NIV_FULL_DEBUG,
+		    "attrs ", attrib_set, false);
 
 	if (state != NULL)
 		my_fd = (struct ceph_fd *)(state + 1);
@@ -1006,14 +1003,8 @@ fsal_status_t ceph_open2(struct fsal_obj_handle *obj_hdl,
 
 	truncated = (posix_flags & O_TRUNC) != 0;
 
-	/* Now fixup attrs for verifier if exclusive create */
 	if (createmode >= FSAL_EXCLUSIVE) {
-		if (!setattrs) {
-			/* We need to use verifier_attr */
-			attrib_set = &verifier_attr;
-			memset(&verifier_attr, 0, sizeof(verifier_attr));
-		}
-
+		/* Now fixup attrs for verifier if exclusive create */
 		set_common_verifier(attrib_set, verifier);
 	}
 
@@ -1178,20 +1169,29 @@ fsal_status_t ceph_open2(struct fsal_obj_handle *obj_hdl,
 	 * we can safely set attributes.
 	 */
 	if (createmode != FSAL_NO_CREATE) {
+		/* Now add in O_CREAT and O_EXCL. */
 		posix_flags |= O_CREAT;
 
-		if (createmode >= FSAL_GUARDED || setattrs)
+		/* And if we are at least FSAL_GUARDED, do an O_EXCL create. */
+		if (createmode >= FSAL_GUARDED)
 			posix_flags |= O_EXCL;
-	}
 
-	if (setattrs && FSAL_TEST_MASK(attrib_set->mask, ATTR_MODE)) {
+		/* Fetch the mode attribute to use in the openat system call. */
 		unix_mode = fsal2unix_mode(attrib_set->mode) &
 		    ~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
+
 		/* Don't set the mode if we later set the attributes */
 		FSAL_UNSET_MASK(attrib_set->mask, ATTR_MODE);
-	} else {
-		/* Default to mode 0600 */
-		unix_mode = 0600;
+	}
+
+	if (createmode == FSAL_UNCHECKED && (attrib_set->mask != 0)) {
+		/* If we have FSAL_UNCHECKED and want to set more attributes
+		 * than the mode, we attempt an O_EXCL create first, if that
+		 * succeeds, then we will be allowed to set the additional
+		 * attributes, otherwise, we don't know we created the file
+		 * and this can NOT set the attributes.
+		 */
+		posix_flags |= O_EXCL;
 	}
 
 	retval = ceph_ll_create(export->cmount,  myself->i, name, unix_mode,
@@ -1210,6 +1210,11 @@ fsal_status_t ceph_open2(struct fsal_obj_handle *obj_hdl,
 		 * Remove O_EXCL and retry, also remember not to set attributes.
 		 * We still try O_CREAT again just in case file disappears out
 		 * from under us.
+		 *
+		 * Note that because we have dropped O_EXCL, later on we will
+		 * not assume we created the file, and thus will not set
+		 * additional attributes. We don't need to separately track
+		 * the condition of not wanting to set attributes.
 		 */
 		posix_flags &= ~O_EXCL;
 		retval =
@@ -1256,13 +1261,13 @@ fsal_status_t ceph_open2(struct fsal_obj_handle *obj_hdl,
 
 	*new_obj = &hdl->handle;
 
-	if (created && setattrs && attrib_set->mask != 0) {
+	if (created && attrib_set->mask != 0) {
 		/* Set attributes using our newly opened file descriptor as the
 		 * share_fd if there are any left to set (mode and truncate
 		 * have already been handled).
 		 *
 		 * Note that we only set the attributes if we were responsible
-		 * for creating the file.
+		 * for creating the file and we have attributes to set.
 		 */
 		status = (*new_obj)->obj_ops.setattr2(*new_obj,
 						      false,

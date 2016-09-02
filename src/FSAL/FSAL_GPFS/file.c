@@ -167,8 +167,9 @@ fsal_openflags_t gpfs_status(struct fsal_obj_handle *obj_hdl)
  * On a call with an existing object handle for an UNCHECKED create,
  * we can set the size to 0.
  *
- * If attributes are not set on create, the FSAL will set some minimal
- * attributes (for example, mode might be set to 0600).
+ * At least the mode attribute must be set if createmode is not FSAL_NO_CREATE.
+ * Some FSALs may still have to pass a mode on a create call for exclusive,
+ * and even with FSAL_NO_CREATE, and empty set of attributes MUST be passed.
  *
  * If an open by name succeeds and did not result in Ganesha creating a file,
  * the caller will need to do a subsequent permission check to confirm the
@@ -207,9 +208,7 @@ fsal_status_t gpfs_open2(struct fsal_obj_handle *obj_hdl,
 	struct gpfs_fsal_obj_handle *hdl = NULL;
 	struct gpfs_file_handle fh;
 	bool truncated;
-	bool setattrs = attrib_set != NULL;
 	bool created = false;
-	struct attrlist verifier_attr;
 	struct fsal_export *export = op_ctx->fsal_export;
 	struct gpfs_filesystem *gpfs_fs = obj_hdl->fs->private;
 	int *fd = NULL;
@@ -221,9 +220,8 @@ fsal_status_t gpfs_open2(struct fsal_obj_handle *obj_hdl,
 	else
 		LogFullDebug(COMPONENT_FSAL, "no name");
 
-	if (setattrs)
-		LogAttrlist(COMPONENT_FSAL, NIV_FULL_DEBUG,
-			    "attrs ", attrib_set, false);
+	LogAttrlist(COMPONENT_FSAL, NIV_FULL_DEBUG,
+		    "attrs ", attrib_set, false);
 
 	if (state != NULL)
 		my_fd = (struct gpfs_fd *)(state + 1);
@@ -232,15 +230,11 @@ fsal_status_t gpfs_open2(struct fsal_obj_handle *obj_hdl,
 
 	truncated = (posix_flags & O_TRUNC) != 0;
 
-	/* Now fixup attrs for verifier if exclusive create */
 	if (createmode >= FSAL_EXCLUSIVE) {
-		if (!setattrs) {
-			/* We need to use verifier_attr */
-			attrib_set = &verifier_attr;
-			memset(&verifier_attr, 0, sizeof(verifier_attr));
-		}
+		/* Now fixup attrs for verifier if exclusive create */
 		set_common_verifier(attrib_set, verifier);
 	}
+
 	if (name == NULL) {
 		/* This is an open by handle */
 		if (state != NULL) {
@@ -389,25 +383,32 @@ fsal_status_t gpfs_open2(struct fsal_obj_handle *obj_hdl,
 		return status;
 	}
 
-	/* Now add in O_CREAT and O_EXCL.
-	 * Even with FSAL_UNGUARDED we try exclusive create first so
-	 * we can safely set attributes.
-	 */
-	if (createmode != FSAL_NO_CREATE) {
-		posix_flags |= O_CREAT;
+	/* Only proceed here if this is a create */
 
-		if (createmode >= FSAL_GUARDED || setattrs)
-			posix_flags |= O_EXCL;
+	/* Now add in O_CREAT and O_EXCL. */
+	posix_flags |= O_CREAT;
+
+	/* And if we are at least FSAL_GUARDED, do an O_EXCL create. */
+	if (createmode >= FSAL_GUARDED)
+		posix_flags |= O_EXCL;
+
+	/* Fetch the mode attribute to use in the openat system call. */
+	unix_mode = fsal2unix_mode(attrib_set->mode) &
+	    ~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
+
+	/* Don't set the mode if we later set the attributes */
+	FSAL_UNSET_MASK(attrib_set->mask, ATTR_MODE);
+
+	if (createmode == FSAL_UNCHECKED && (attrib_set->mask != 0)) {
+		/* If we have FSAL_UNCHECKED and want to set more attributes
+		 * than the mode, we attempt an O_EXCL create first, if that
+		 * succeeds, then we will be allowed to set the additional
+		 * attributes, otherwise, we don't know we created the file
+		 * and this can NOT set the attributes.
+		 */
+		posix_flags |= O_EXCL;
 	}
-	if (setattrs && FSAL_TEST_MASK(attrib_set->mask, ATTR_MODE)) {
-		unix_mode = fsal2unix_mode(attrib_set->mode) &
-		    ~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
-		/* Don't set the mode if we later set the attributes */
-		FSAL_UNSET_MASK(attrib_set->mask, ATTR_MODE);
-	} else {
-		/* Default to mode 0600 */
-		unix_mode = 0600;
-	}
+
 	status = GPFSFSAL_create2(obj_hdl, name, op_ctx, unix_mode, &fh,
 				  posix_flags, attrs_out);
 
@@ -416,6 +417,11 @@ fsal_status_t gpfs_open2(struct fsal_obj_handle *obj_hdl,
 		 * Remove O_EXCL and retry, also remember not to set attributes.
 		 * We still try O_CREAT again just in case file disappears out
 		 * from under us.
+		 *
+		 * Note that because we have dropped O_EXCL, later on we will
+		 * not assume we created the file, and thus will not set
+		 * additional attributes. We don't need to separately track
+		 * the condition of not wanting to set attributes.
 		 */
 		posix_flags &= ~O_EXCL;
 		status = GPFSFSAL_create2(obj_hdl, name, op_ctx, unix_mode, &fh,
@@ -423,6 +429,7 @@ fsal_status_t gpfs_open2(struct fsal_obj_handle *obj_hdl,
 		if (FSAL_IS_ERROR(status))
 			return status;
 	}
+
 	/* Remember if we were responsible for creating the file.
 	 * Note that in an UNCHECKED retry we MIGHT have re-created the
 	 * file and won't remember that. Oh well, so in that rare case we
@@ -445,7 +452,7 @@ fsal_status_t gpfs_open2(struct fsal_obj_handle *obj_hdl,
 
 	*new_obj = &hdl->obj_handle;
 
-	if (created && setattrs && attrib_set->mask != 0) {
+	if (created && attrib_set->mask != 0) {
 		/* Set attributes using our newly opened file descriptor as the
 		 * share_fd if there are any left to set (mode and truncate
 		 * have already been handled).

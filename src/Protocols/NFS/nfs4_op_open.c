@@ -1158,6 +1158,12 @@ static void open4_ex_create_args(OPEN4args *arg,
 		 */
 		squash_setattr(sattr);
 	}
+
+	if (!(sattr->mask & ATTR_MODE)) {
+		/* Make sure mode is set, even for exclusive create. */
+		sattr->mode = 0600;
+		sattr->mask |= ATTR_MODE;
+	}
 }
 
 /**

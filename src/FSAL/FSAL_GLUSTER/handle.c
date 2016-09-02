@@ -1485,9 +1485,7 @@ static fsal_status_t glusterfs_open2(struct fsal_obj_handle *obj_hdl,
 	unsigned char globjhdl[GFAPI_HANDLE_LENGTH] = {'\0'};
 	char vol_uuid[GLAPI_UUID_LENGTH] = {'\0'};
 	bool truncated;
-	bool setattrs = attrib_set != NULL;
 	bool created = false;
-	struct attrlist verifier_attr;
 	int retval = 0;
 	mode_t unix_mode;
 
@@ -1503,26 +1501,10 @@ static fsal_status_t glusterfs_open2(struct fsal_obj_handle *obj_hdl,
 
 	fsal2posix_openflags(openflags, &p_flags);
 
-	if (createmode != FSAL_NO_CREATE && setattrs &&
-	    FSAL_TEST_MASK(attrib_set->mask, ATTR_SIZE) &&
-	    attrib_set->filesize == 0) {
-		LogFullDebug(COMPONENT_FSAL, "Truncate");
-		/* Handle truncate to zero on open */
-		p_flags |= O_TRUNC;
-		/* Don't set the size if we later set the attributes */
-		FSAL_UNSET_MASK(attrib_set->mask, ATTR_SIZE);
-	}
-
 	truncated = (p_flags & O_TRUNC) != 0;
 
-	/* Now fixup attrs for verifier if exclusive create */
 	if (createmode >= FSAL_EXCLUSIVE) {
-		if (!setattrs) {
-			/* We need to use verifier_attr */
-			attrib_set = &verifier_attr;
-			memset(&verifier_attr, 0, sizeof(verifier_attr));
-		}
-
+		/* Now fixup attrs for verifier if exclusive create */
 		set_common_verifier(attrib_set, verifier);
 	}
 
@@ -1673,25 +1655,30 @@ static fsal_status_t glusterfs_open2(struct fsal_obj_handle *obj_hdl,
 	 * merged.
 	 */
 
-	/* Now add in O_CREAT and O_EXCL.
-	 * Even with FSAL_UNGUARDED we try exclusive create first so
-	 * we can safely set attributes.
-	 */
 	if (createmode != FSAL_NO_CREATE) {
+		/* Now add in O_CREAT and O_EXCL. */
 		p_flags |= O_CREAT;
 
-		if (createmode >= FSAL_GUARDED || setattrs)
+		/* And if we are at least FSAL_GUARDED, do an O_EXCL create. */
+		if (createmode >= FSAL_GUARDED)
 			p_flags |= O_EXCL;
-	}
 
-	if (setattrs && FSAL_TEST_MASK(attrib_set->mask, ATTR_MODE)) {
+		/* Fetch the mode attribute to use. */
 		unix_mode = fsal2unix_mode(attrib_set->mode) &
 		    ~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
+
 		/* Don't set the mode if we later set the attributes */
 		FSAL_UNSET_MASK(attrib_set->mask, ATTR_MODE);
-	} else {
-		/* Default to mode 0600 */
-		unix_mode = 0600;
+	}
+
+	if (createmode == FSAL_UNCHECKED && (attrib_set->mask != 0)) {
+		/* If we have FSAL_UNCHECKED and want to set more attributes
+		 * than the mode, we attempt an O_EXCL create first, if that
+		 * succeeds, then we will be allowed to set the additional
+		 * attributes, otherwise, we don't know we created the file
+		 * and this can NOT set the attributes.
+		 */
+		p_flags |= O_EXCL;
 	}
 
 	/** @todo: we do not have openat implemented yet..meanwhile
@@ -1750,9 +1737,13 @@ static fsal_status_t glusterfs_open2(struct fsal_obj_handle *obj_hdl,
 		 * Remove O_EXCL and retry, also remember not to set attributes.
 		 * We still try O_CREAT again just in case file disappears out
 		 * from under us.
+		 *
+		 * Note that because we have dropped O_EXCL, later on we will
+		 * not assume we created the file, and thus will not set
+		 * additional attributes. We don't need to separately track
+		 * the condition of not wanting to set attributes.
 		 */
 		p_flags &= ~O_EXCL;
-		setattrs = false;
 		glhandle =
 		    glfs_h_creat(glfs_export->gl_fs, parenthandle->glhandle,
 				 name, p_flags, unix_mode, &sb);
@@ -1827,13 +1818,13 @@ open:
 
 	*new_obj = &myself->handle;
 
-	if (setattrs && attrib_set->mask != 0) {
+	if (created && attrib_set->mask != 0) {
 		/* Set attributes using our newly opened file descriptor as the
 		 * share_fd if there are any left to set (mode and truncate
 		 * have already been handled).
 		 *
 		 * Note that we only set the attributes if we were responsible
-		 * for creating the file.
+		 * for creating the file and we have attributes to set.
 		 */
 		status = (*new_obj)->obj_ops.setattr2(*new_obj,
 						      false,
