@@ -36,7 +36,7 @@ static __thread redisContext *ctx__ = NULL;
 //FIXME no context cleanup at exit
 
 #define TTL_HANDLE "86400"
-
+#define CREATE_RETRY_COUNT 5
 
 static void
 reset_redis_context(void)
@@ -96,6 +96,9 @@ get_redis_context(void)
 				reply->str, _x_fmt);			\
 			__ret = -1;					\
 		}							\
+		else if ( REDIS_REPLY_NIL == reply->type ) {		\
+			__ret = -REDIS_REPLY_NIL;			\
+		}							\
 		if (reply) freeReplyObject(reply);			\
 		__ret;							\
 	})
@@ -104,7 +107,7 @@ int
 redis_get_object(char *buf, int buf_sz,
 		 char *obj, int obj_sz)
 {
-	assert(buf_sz == V4_FH_OPAQUE_SIZE);
+	assert(buf_sz == SCALITY_OPAQUE_SIZE);
 	struct scality_fsal_export *export;
 	export = container_of(op_ctx->fsal_export,
 			      struct scality_fsal_export,
@@ -164,7 +167,7 @@ redis_get_object(char *buf, int buf_sz,
 int
 redis_get_handle_key(const char *obj, char *buf, int buf_sz)
 {
-	assert(buf_sz == V4_FH_OPAQUE_SIZE);
+	assert(buf_sz == SCALITY_OPAQUE_SIZE);
 	int ret = 0;
 	redisContext *ctx = get_redis_context();
 	if ( NULL == ctx )
@@ -215,7 +218,7 @@ redis_get_handle_key(const char *obj, char *buf, int buf_sz)
 
 void redis_remove(const char *obj)
 {
-	char buf[V4_FH_OPAQUE_SIZE];
+	char buf[SCALITY_OPAQUE_SIZE];
 	int ret;
 	redisContext *ctx = get_redis_context();
 	if ( NULL == ctx )
@@ -235,26 +238,28 @@ void redis_remove(const char *obj)
 int
 redis_create_handle_key(const char *obj, char *buf, int buf_sz)
 {
-	assert(buf_sz == V4_FH_OPAQUE_SIZE);
-
+	assert(buf_sz == SCALITY_OPAQUE_SIZE);
+	int ret = 0;
+	int retries = CREATE_RETRY_COUNT;
+	size_t n_bytes;	
 	redisContext *ctx = get_redis_context();
 	if ( NULL == ctx )
 		return -1;
 	
-	size_t n_bytes;	
-	n_bytes = random_read(buf, buf_sz);
-	if ( V4_FH_OPAQUE_SIZE != n_bytes ) {
-		return -1;
-	}
-
 	struct scality_fsal_export *export;
 	export = container_of(op_ctx->fsal_export,
 			      struct scality_fsal_export,
 			      export);
-	int ret = 0;
-	ret = REDIS_SIMPLE_CMD(ctx, "SET handle:%s/%s %b EX "TTL_HANDLE,
-			       export->bucket, obj,
-			       buf, buf_sz);
+	do {
+		n_bytes = random_read(buf, buf_sz);
+		if ( SCALITY_OPAQUE_SIZE != n_bytes ) {
+			return -1;
+		}
+		ret = REDIS_SIMPLE_CMD(ctx, "SET handle:%s/%s %b EX "TTL_HANDLE,
+				       export->bucket, obj,
+				       buf, buf_sz);
+	}
+	while ( -REDIS_REPLY_NIL == ret && retries-- >= 0 );
 	if (0 == ret)
 		ret = REDIS_SIMPLE_CMD(ctx,
 				       "SET object:%b %s/%s EX "TTL_HANDLE,

@@ -37,6 +37,8 @@
 
 
 #define V4_FH_OPAQUE_SIZE (NFS4_FHSIZE - sizeof(struct file_handle_v4))
+#define SCALITY_OPAQUE_SIZE (sizeof(uint64_t))
+
 #define MAX_URL_SIZE 4096
 #define S3_DELIMITER "/"
 #define S3_DELIMITER_SZ (sizeof(S3_DELIMITER)-1)

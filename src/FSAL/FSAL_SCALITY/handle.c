@@ -100,7 +100,7 @@ static struct scality_fsal_obj_handle
 			      export);
 
 	hdl = gsh_calloc(1, sizeof(struct scality_fsal_obj_handle) +
-			    V4_FH_OPAQUE_SIZE);
+			 SCALITY_OPAQUE_SIZE);
 
 	hdl->obj_handle.attrs = &hdl->attributes;
 
@@ -114,9 +114,9 @@ static struct scality_fsal_obj_handle
 	hdl->n_locations = 0;
 
 	if ( NULL == handle_key )
-		redis_create_handle_key(hdl->object, hdl->handle, V4_FH_OPAQUE_SIZE);
+		redis_create_handle_key(hdl->object, hdl->handle, SCALITY_OPAQUE_SIZE);
 	else
-		memcpy(hdl->handle, handle_key, V4_FH_OPAQUE_SIZE);
+		memcpy(hdl->handle, handle_key, SCALITY_OPAQUE_SIZE);
 
 	hdl->obj_handle.type = (dtype == DBD_DTYPE_DIRECTORY) ? DIRECTORY : REGULAR_FILE;
 
@@ -255,7 +255,7 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 			 &dtype);
 	
 	if ( 0 == ret ) {
-		char handle_key[V4_FH_OPAQUE_SIZE];
+		char handle_key[SCALITY_OPAQUE_SIZE];
 		char *handle_keyp = NULL;
 		ret = redis_get_handle_key(object, handle_key, sizeof handle_key);
 		if ( 0 == ret )
@@ -308,7 +308,7 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 	else
 		snprintf(object, sizeof object, "%s"S3_DELIMITER"%s", myself->object, name);
 	LogDebug(COMPONENT_FSAL, "create %s", object);
-	char handle_key[V4_FH_OPAQUE_SIZE];
+	char handle_key[SCALITY_OPAQUE_SIZE];
 	char *handle_keyp = NULL;
 	int ret;
 	ret = redis_get_handle_key(object, handle_key, sizeof handle_key);
@@ -360,7 +360,7 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 		snprintf(object, sizeof object, "%s"S3_DELIMITER"%s", myself->object, name);
 	LogDebug(COMPONENT_FSAL, "makedir %s", object);
 
-	char handle_key[V4_FH_OPAQUE_SIZE];
+	char handle_key[SCALITY_OPAQUE_SIZE];
 	char *handle_keyp = NULL;
 	int ret;
 	ret = redis_get_handle_key(object, handle_key, sizeof handle_key);
@@ -791,16 +791,16 @@ static fsal_status_t handle_digest(const struct fsal_obj_handle *obj_hdl,
 	switch (output_type) {
 	case FSAL_DIGEST_NFSV3:
 	case FSAL_DIGEST_NFSV4:
-		if (fh_desc->len < V4_FH_OPAQUE_SIZE) {
+		if (fh_desc->len < SCALITY_OPAQUE_SIZE) {
 			LogMajor(COMPONENT_FSAL,
 				 "Space too small for handle.  need %lu, have %zu",
-				 ((unsigned long) V4_FH_OPAQUE_SIZE),
+				 ((unsigned long) SCALITY_OPAQUE_SIZE),
 				 fh_desc->len);
 			return fsalstat(ERR_FSAL_TOOSMALL, 0);
 		}
 
-		memcpy(fh_desc->addr, myself->handle, V4_FH_OPAQUE_SIZE);
-		fh_desc->len = V4_FH_OPAQUE_SIZE;
+		memcpy(fh_desc->addr, myself->handle, SCALITY_OPAQUE_SIZE);
+		fh_desc->len = SCALITY_OPAQUE_SIZE;
 		break;
 
 	default:
@@ -827,7 +827,7 @@ static void handle_to_key(struct fsal_obj_handle *obj_hdl,
 			      obj_handle);
 
 	fh_desc->addr = myself->handle;
-	fh_desc->len = V4_FH_OPAQUE_SIZE;
+	fh_desc->len = SCALITY_OPAQUE_SIZE;
 }
 
 /*
@@ -941,7 +941,7 @@ fsal_status_t scality_lookup_path(struct fsal_export *exp_hdl,
 		if ( ret < 0 ) {
 			return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 		}
-		char handle_key[V4_FH_OPAQUE_SIZE];
+		char handle_key[SCALITY_OPAQUE_SIZE];
 		char *handle_keyp = NULL;
 		ret = redis_get_handle_key(object, handle_key, sizeof handle_key);
 		if ( 0 == ret )
@@ -989,18 +989,18 @@ fsal_status_t scality_create_handle(struct fsal_export *exp_hdl,
 
 	*handle = NULL;
 
-	if (hdl_desc->len != V4_FH_OPAQUE_SIZE) {
+	if (hdl_desc->len != SCALITY_OPAQUE_SIZE) {
 		LogCrit(COMPONENT_FSAL,
 			"Invalid handle size %zu expected %lu",
 			hdl_desc->len,
-			((unsigned long) V4_FH_OPAQUE_SIZE));
+			((unsigned long) SCALITY_OPAQUE_SIZE));
 
 		return fsalstat(ERR_FSAL_BADHANDLE, 0);
 	}
 
 	char object[MAX_URL_SIZE];
 	int ret;
-	ret = redis_get_object(hdl_desc->addr, V4_FH_OPAQUE_SIZE,
+	ret = redis_get_object(hdl_desc->addr, SCALITY_OPAQUE_SIZE,
 			       object, sizeof object);
 	if ( ret < 0 ) {
 		LogDebug(COMPONENT_FSAL, "missed handle");
