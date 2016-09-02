@@ -879,34 +879,6 @@ fsal_status_t gpfs_setattr2(struct fsal_obj_handle *obj_hdl,
 	return status;
 }
 
-/**
- *  @brief compare two handles.
- *
- *  @param obj_hdl Handle
- *  @param other_hdl Handle
- *
- *  @return true for equal, false for anything else
- */
-bool gpfs_compare(struct fsal_obj_handle *obj_hdl,
-		  struct fsal_obj_handle *other_hdl)
-{
-	struct gpfs_fsal_obj_handle *myself, *other;
-
-	if (obj_hdl == other_hdl)
-		return true;
-	if (!other_hdl)
-		return false;
-	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
-	other =
-	    container_of(other_hdl, struct gpfs_fsal_obj_handle, obj_handle);
-	if ((obj_hdl->type != other_hdl->type)
-	    || (myself->handle->handle_type != other->handle->handle_type)
-	    || (myself->handle->handle_size != other->handle->handle_size))
-		return false;
-	return memcmp(myself->handle->f_handle, other->handle->f_handle,
-		      myself->handle->handle_size) ? false : true;
-}
-
 /* file_unlink
  * unlink the named file in the directory
  */

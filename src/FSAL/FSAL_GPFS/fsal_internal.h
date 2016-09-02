@@ -112,9 +112,6 @@ fsal_status_t fsal_internal_close(int fd, void *owner, int cflags);
 
 int fsal_internal_version(void);
 
-fsal_status_t fsal_internal_get_handle(const char *p_fsalpath,
-				struct gpfs_file_handle *p_handle);
-
 fsal_status_t fsal_internal_get_handle_at(int dfd,
 				const char *p_fsalname,
 				struct gpfs_file_handle *p_handle);

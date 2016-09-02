@@ -204,9 +204,6 @@ gpfs_create_export(struct fsal_module *fsal_hdl, void *parse_node,
 		   struct config_error_type *err_type,
 		   const struct fsal_up_vector *up_ops);
 
-bool gpfs_compare(struct fsal_obj_handle *obj_hdl,
-		  struct fsal_obj_handle *other_hdl);
-
 /* Multiple file descriptor methods */
 struct state_t *gpfs_alloc_state(struct fsal_export *exp_hdl,
 				 enum state_type state_type,

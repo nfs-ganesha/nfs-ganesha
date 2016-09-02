@@ -185,46 +185,6 @@ fsal_internal_handle2fd_at(int dirfd, struct gpfs_file_handle *gpfs_fh,
 }
 
 /**
- *  @brief Create a handle from a file path
- *
- *  @param fs_path Full path to the file
- *  @param gpfs_fh The handle that is found and returned
- *
- *  @return status of operation
- */
-fsal_status_t
-fsal_internal_get_handle(const char *fs_path, struct gpfs_file_handle *gpfs_fh)
-{
-	int rc;
-	struct name_handle_arg harg;
-	int errsv = 0;
-
-	if (!gpfs_fh || !fs_path)
-		return fsalstat(ERR_FSAL_FAULT, 0);
-
-	harg.handle = gpfs_fh;
-	harg.handle->handle_size = GPFS_MAX_FH_SIZE;
-	harg.handle->handle_key_size = OPENHANDLE_KEY_LEN;
-	harg.handle->handle_version = OPENHANDLE_VERSION;
-	harg.name = fs_path;
-	harg.dfd = AT_FDCWD;
-	harg.flag = 0;
-
-	LogFullDebug(COMPONENT_FSAL, "Lookup handle for %s", fs_path);
-
-	rc = gpfs_ganesha(OPENHANDLE_NAME_TO_HANDLE, &harg);
-	errsv = errno;
-
-	if (rc < 0) {
-		if (errsv == EUNATCH)
-			LogFatal(COMPONENT_FSAL, "GPFS Returned EUNATCH");
-		return fsalstat(posix2fsal_error(errsv), errsv);
-	}
-
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
-}
-
-/**
  *  @brief Create a handle from a directory pointer and filename
  *
  *  @param dfd Open directory handle
