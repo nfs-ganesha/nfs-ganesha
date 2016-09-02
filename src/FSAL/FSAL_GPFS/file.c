@@ -892,11 +892,6 @@ fsal_status_t gpfs_write2(struct fsal_obj_handle *obj_hdl,
 	bool closefd = false;
 	fsal_openflags_t openflags = FSAL_O_WRITE;
 
-	if (info != NULL) {
-		/* Currently we don't support WRITE_PLUS */
-		return fsalstat(ERR_FSAL_NOTSUPP, 0);
-	}
-
 	if (obj_hdl->fsal != obj_hdl->fs->fsal) {
 		LogDebug(COMPONENT_FSAL,
 			 "FSAL %s operation for handle belonging to FSAL %s, return EXDEV",
