@@ -41,6 +41,7 @@
 #include "delayed_exec.h"
 #include "export_mgr.h"
 #include "fsal.h"
+#include "netgroup_cache.h"
 #ifdef USE_DBUS
 #include "gsh_dbus.h"
 #endif
@@ -248,11 +249,48 @@ static struct gsh_dbus_method method_purge_gids = {
 		 END_ARG_LIST}
 };
 
+/**
+ * @brief Dbus method for flushing netgroup cache
+ *
+ * @param[in]  args
+ * @param[out] reply
+ */
+static bool admin_dbus_purge_netgroups(DBusMessageIter *args,
+				       DBusMessage *reply,
+				       DBusError *error)
+{
+	char *errormsg = "Purge netgroup cache";
+	bool success = true;
+	DBusMessageIter iter;
+
+	dbus_message_iter_init_append(reply, &iter);
+	if (args != NULL) {
+		errormsg = "Purge netgroup takes no arguments.";
+		success = false;
+		LogWarn(COMPONENT_DBUS, "%s", errormsg);
+		goto out;
+	}
+
+	ng_clear_cache();
+
+ out:
+	dbus_status_reply(&iter, success, errormsg);
+	return success;
+}
+
+static struct gsh_dbus_method method_purge_netgroups = {
+	.name = "purge_netgroups",
+	.method = admin_dbus_purge_netgroups,
+	.args = {STATUS_REPLY,
+		 END_ARG_LIST}
+};
+
 static struct gsh_dbus_method *admin_methods[] = {
 	&method_shutdown,
 	&method_grace_period,
 	&method_get_grace,
 	&method_purge_gids,
+	&method_purge_netgroups,
 	NULL
 };
 

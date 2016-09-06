@@ -160,6 +160,11 @@ class ServerAdmin():
         status, msg = self.admin.grace(ipaddr)
         self.status_message(status, msg)
 
+    def purge_netgroups(self):
+        print("Purging netgroups cache")
+        status, msg = self.admin.purge_netgroups()
+        self.status_message(status, msg)
+
     def status_message(self, status, errormsg):
         print "Returns: status = %s, %s" % (str(status), errormsg)
 
@@ -224,6 +229,7 @@ if __name__ == '__main__':
        "      add_export /etc/ganesha/gpfs.conf \"EXPORT(Export_ID=77)\"\n\n"\
        "   remove_export id: Removes the export with the given id    \n\n"   \
        "   shutdown: Shuts down the ganesha nfs server\n\n"                  \
+       "   purge netgroups: Purges netgroups cache\n\n"                      \
        "   grace ipaddr: Begins grace for the given IP\n\n"                  \
        "   get_log component: Gets the log level for the given component\n\n"\
        "   set_log component level: \n"                                      \
@@ -266,6 +272,16 @@ if __name__ == '__main__':
 
     elif sys.argv[1] == "shutdown":
         ganesha.shutdown()
+    elif sys.argv[1] == "purge":
+        if len(sys.argv) < 3:
+            msg = 'purge requires a cache name to purge, '
+            msg += 'Try "ganesha_mgr.py help" for more info'
+            sys.exit(msg)
+        if sys.argv[2] != 'netgroups':
+            msg = "Purging '%s' is not supported" % sys.argv[2]
+            sys.exit(msg)
+        ganesha.purge_netgroups()
+
     elif sys.argv[1] == "grace":
         if len(sys.argv) < 3:
            print "grace requires an IP."\
