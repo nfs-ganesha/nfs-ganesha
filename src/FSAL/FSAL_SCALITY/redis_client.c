@@ -35,6 +35,7 @@ static __thread redisContext *ctx__ = NULL;
 
 //FIXME no context cleanup at exit
 
+#define PREFIX "scality-nfs:"
 #define TTL_HANDLE "86400"
 #define CREATE_RETRY_COUNT 5
 
@@ -116,7 +117,7 @@ redis_get_object(char *buf, int buf_sz,
 	redisContext *ctx = get_redis_context();
 	if ( NULL == ctx )
 		return -1;
-	redisReply *reply = redisCommand(ctx, "GET object:%b", buf, buf_sz);
+	redisReply *reply = redisCommand(ctx, "GET " PREFIX "object:%b", buf, buf_sz);
 	if ( NULL == reply ) {
 		LogCrit(COMPONENT_FSAL,
 			"Redis error: %s", ctx->errstr);
@@ -153,11 +154,11 @@ redis_get_object(char *buf, int buf_sz,
 
 	if (0 == ret)
 		ret = REDIS_SIMPLE_CMD(ctx,
-				       "EXPIRE object:%b "TTL_HANDLE,
+				       "EXPIRE " PREFIX "object:%b "TTL_HANDLE,
 				       buf, buf_sz);
 	if (0 == ret)
 		ret = REDIS_SIMPLE_CMD(ctx,
-				       "EXPIRE handle:%s/%s "TTL_HANDLE,
+				       "EXPIRE " PREFIX "handle:%s/%s "TTL_HANDLE,
 				       export->bucket, obj);
  out:
 	freeReplyObject(reply);
@@ -177,7 +178,7 @@ redis_get_handle_key(const char *obj, char *buf, int buf_sz)
 	export = container_of(op_ctx->fsal_export,
 			      struct scality_fsal_export,
 			      export);
-	redisReply *reply = redisCommand(ctx, "GET handle:%s/%s", export->bucket, obj);
+	redisReply *reply = redisCommand(ctx, "GET " PREFIX "handle:%s/%s", export->bucket, obj);
 	if ( NULL == reply ) {
 		LogCrit(COMPONENT_FSAL,
 			"Redis error: %s", ctx->errstr);
@@ -207,11 +208,11 @@ redis_get_handle_key(const char *obj, char *buf, int buf_sz)
 	freeReplyObject(reply);
 	if (0 == ret)
 		ret = REDIS_SIMPLE_CMD(ctx,
-				       "EXPIRE object:%b "TTL_HANDLE,
+				       "EXPIRE " PREFIX "object:%b "TTL_HANDLE,
 				       buf, buf_sz);
 	if (0 == ret)
 		ret = REDIS_SIMPLE_CMD(ctx,
-				       "EXPIRE handle:%s/%s "TTL_HANDLE,
+				       "EXPIRE " PREFIX "handle:%s/%s "TTL_HANDLE,
 				       export->bucket, obj);
 	return ret;
 }
@@ -231,8 +232,8 @@ void redis_remove(const char *obj)
 	export = container_of(op_ctx->fsal_export,
 			      struct scality_fsal_export,
 			      export);
-	(void)REDIS_SIMPLE_CMD(ctx, "DEL handle:%s/%s", export->bucket, obj);
-	(void)REDIS_SIMPLE_CMD(ctx, "DEL object:%b", buf, sizeof buf);
+	(void)REDIS_SIMPLE_CMD(ctx, "DEL " PREFIX "handle:%s/%s", export->bucket, obj);
+	(void)REDIS_SIMPLE_CMD(ctx, "DEL " PREFIX "object:%b", buf, sizeof buf);
 }
 
 int
@@ -255,14 +256,14 @@ redis_create_handle_key(const char *obj, char *buf, int buf_sz)
 		if ( SCALITY_OPAQUE_SIZE != n_bytes ) {
 			return -1;
 		}
-		ret = REDIS_SIMPLE_CMD(ctx, "SET handle:%s/%s %b EX "TTL_HANDLE,
+		ret = REDIS_SIMPLE_CMD(ctx, "SET " PREFIX "handle:%s/%s %b EX "TTL_HANDLE,
 				       export->bucket, obj,
 				       buf, buf_sz);
 	}
 	while ( -REDIS_REPLY_NIL == ret && retries-- >= 0 );
 	if (0 == ret)
 		ret = REDIS_SIMPLE_CMD(ctx,
-				       "SET object:%b %s/%s EX "TTL_HANDLE,
+				       "SET " PREFIX "object:%b %s/%s EX "TTL_HANDLE,
 				       buf, buf_sz,
 				       export->bucket, obj);
 	return ret;
