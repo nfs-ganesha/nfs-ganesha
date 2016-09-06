@@ -1151,34 +1151,11 @@ mdcache_lru_pkgshutdown(void)
 	return fsalstat(posix2fsal_error(rc), rc);
 }
 
-static inline bool init_rw_locks(mdcache_entry_t *entry)
+static inline void init_rw_locks(mdcache_entry_t *entry)
 {
-	int rc;
-	bool attr_lock_init = false;
-
 	/* Initialize the entry locks */
-	rc = pthread_rwlock_init(&entry->attr_lock, NULL);
-
-	if (rc != 0)
-		goto fail;
-
-	attr_lock_init = true;
-
-	rc = pthread_rwlock_init(&entry->content_lock, NULL);
-
-	if (rc == 0)
-		return true;
-
-fail:
-
-	LogCrit(COMPONENT_CACHE_INODE,
-		"pthread_rwlock_init returned %d (%s)",
-		rc, strerror(rc));
-
-	if (attr_lock_init)
-		PTHREAD_RWLOCK_destroy(&entry->attr_lock);
-
-	return false;
+	PTHREAD_RWLOCK_init(&entry->attr_lock, NULL);
+	PTHREAD_RWLOCK_init(&entry->content_lock, NULL);
 }
 
 static fsal_status_t
@@ -1189,12 +1166,7 @@ alloc_cache_entry(mdcache_entry_t **entry)
 	nentry = pool_alloc(mdcache_entry_pool);
 
 	/* Initialize the entry locks */
-	if (!init_rw_locks(nentry)) {
-		/* Recycle */
-		pool_free(mdcache_entry_pool, nentry);
-		*entry = NULL;
-		return fsalstat(ERR_FSAL_BAD_INIT, 0);
-	}
+	init_rw_locks(nentry);
 
 	(void) atomic_inc_int64_t(&lru_state.entries_used);
 	*entry = nentry;
@@ -1228,13 +1200,7 @@ mdcache_lru_get(mdcache_entry_t **entry)
 			     "Recycling entry at %p.", nentry);
 		mdcache_lru_clean(nentry);
 		memset(&nentry->attrs, 0, sizeof(nentry->attrs));
-		if (!init_rw_locks(nentry)) {
-			/* Recycle */
-			status = fsalstat(ERR_FSAL_BAD_INIT, 0);
-			pool_free(mdcache_entry_pool, nentry);
-			nentry = NULL;
-			goto out;
-		}
+		init_rw_locks(nentry);
 	} else {
 		/* alloc entry */
 		status = alloc_cache_entry(&nentry);

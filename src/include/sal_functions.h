@@ -104,7 +104,7 @@ static inline void state_hdl_init(struct state_hdl *ostate,
 				  struct fsal_obj_handle *obj)
 {
 	memset(ostate, 0, sizeof(*ostate));
-	pthread_rwlock_init(&ostate->state_lock, NULL);
+	PTHREAD_RWLOCK_init(&ostate->state_lock, NULL);
 	switch (type) {
 	case REGULAR_FILE:
 		glist_init(&ostate->file.list_of_states);
