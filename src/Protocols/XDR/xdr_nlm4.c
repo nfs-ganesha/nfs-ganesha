@@ -8,24 +8,6 @@
 #include "nlm4.h"
 #include "nfs_fh.h"
 
-void xdr_handle_decode(XDR * xdrs, netobj * obj)
-{
-	if (obj->n_len >= offsetof(file_handle_v3_t, fsopaque)) {
-		file_handle_v3_t *fh = (file_handle_v3_t *)obj->n_bytes;
-
-		fh->exportid = ntohs(fh->exportid);
-	}
-}
-
-void xdr_handle_encode(XDR * xdrs, netobj * obj)
-{
-	if (obj->n_len >= offsetof(file_handle_v3_t, fsopaque)) {
-		file_handle_v3_t *fh = (file_handle_v3_t *)obj->n_bytes;
-
-		fh->exportid = htons(fh->exportid);
-	}
-}
-
 bool xdr_nlm4_stats(XDR * xdrs, nlm4_stats * objp)
 {
 	if (!xdr_enum(xdrs, (enum_t *) objp))
@@ -92,12 +74,8 @@ bool xdr_nlm4_lock(XDR * xdrs, nlm4_lock * objp)
 {
 	if (!xdr_string(xdrs, &objp->caller_name, LM_MAXSTRLEN))
 		return false;
-	if (xdrs->x_op == XDR_ENCODE)
-		xdr_handle_encode(xdrs, &objp->fh);
 	if (!xdr_netobj(xdrs, &objp->fh))
 		return false;
-	if (xdrs->x_op == XDR_DECODE)
-		xdr_handle_decode(xdrs, &objp->fh);
 	if (!xdr_netobj(xdrs, &objp->oh))
 		return false;
 	if (!xdr_int32_t(xdrs, &objp->svid))
@@ -177,12 +155,8 @@ bool xdr_nlm4_share(XDR * xdrs, nlm4_share * objp)
 {
 	if (!xdr_string(xdrs, &objp->caller_name, LM_MAXSTRLEN))
 		return false;
-	if (xdrs->x_op == XDR_ENCODE)
-		xdr_handle_encode(xdrs, &objp->fh);
 	if (!xdr_netobj(xdrs, &objp->fh))
 		return false;
-	if (xdrs->x_op == XDR_DECODE)
-		xdr_handle_decode(xdrs, &objp->fh);
 	if (!xdr_netobj(xdrs, &objp->oh))
 		return false;
 	if (!xdr_fsh4_mode(xdrs, &objp->mode))

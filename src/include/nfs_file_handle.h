@@ -161,7 +161,8 @@ static inline int nfs3_FhandleToExportId(nfs_fh3 *pfh3)
 
 	pfile_handle = (file_handle_v3_t *) (pfh3->data.data_val);
 
-	return pfile_handle->exportid;
+	/*exportid is in network byte order in nfs_fh3*/
+	return ntohs(pfile_handle->exportid);
 }				/* nfs3_FhandleToExportId */
 
 static inline int nlm4_FhandleToExportId(netobj *pfh3)
