@@ -57,12 +57,11 @@
  */
 fsal_status_t
 GPFSFSAL_open(struct fsal_obj_handle *obj_hdl,
-	      const struct req_op_context *op_ctx, fsal_openflags_t openflags,
+	      const struct req_op_context *op_ctx, int posix_flags,
 	      int *file_desc, bool reopen)
 {
 	struct gpfs_fsal_obj_handle *myself;
 	struct gpfs_filesystem *gpfs_fs;
-	int posix_flags = 0;
 	fsal_status_t status;
 
 	/* sanity checks. */
@@ -72,10 +71,7 @@ GPFSFSAL_open(struct fsal_obj_handle *obj_hdl,
 	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
 	gpfs_fs = obj_hdl->fs->private;
 
-	fsal2posix_openflags(openflags, &posix_flags);
-
-	LogFullDebug(COMPONENT_FSAL, "openflags 0x%X posix_flags 0x%X",
-			openflags, posix_flags);
+	LogFullDebug(COMPONENT_FSAL, "posix_flags 0x%X", posix_flags);
 
 	status = fsal_internal_handle2fd(gpfs_fs->root_fd, myself->handle,
 					 file_desc, posix_flags, reopen);

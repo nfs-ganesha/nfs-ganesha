@@ -44,6 +44,7 @@ gpfs_open_again(struct fsal_obj_handle *obj_hdl, fsal_openflags_t openflags,
 	struct gpfs_fsal_obj_handle *myself =
 		container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
 	fsal_status_t status;
+	int posix_flags = 0;
 	int fd = -1;
 
 	if (reopen) {
@@ -54,8 +55,9 @@ gpfs_open_again(struct fsal_obj_handle *obj_hdl, fsal_openflags_t openflags,
 		assert(myself->u.file.fd.fd == -1 &&
 		       myself->u.file.fd.openflags == FSAL_O_CLOSED);
 	}
+	fsal2posix_openflags(openflags, &posix_flags);
 
-	status = GPFSFSAL_open(obj_hdl, op_ctx, openflags, &fd, reopen);
+	status = GPFSFSAL_open(obj_hdl, op_ctx, posix_flags, &fd, reopen);
 	if (FSAL_IS_ERROR(status) == false) {
 		myself->u.file.fd.fd = fd;
 		myself->u.file.fd.openflags = openflags;
@@ -70,9 +72,12 @@ gpfs_open_func(struct fsal_obj_handle *obj_hdl, fsal_openflags_t openflags,
 {
 	fsal_status_t status;
 	struct gpfs_fd *my_fd = (struct gpfs_fd *)fd;
+	int posix_flags = 0;
 
 	my_fd->fd = -1;
-	status = GPFSFSAL_open(obj_hdl, op_ctx, openflags, &my_fd->fd, false);
+	fsal2posix_openflags(openflags, &posix_flags);
+
+	status = GPFSFSAL_open(obj_hdl, op_ctx, posix_flags, &my_fd->fd, false);
 	if (FSAL_IS_ERROR(status) == false)
 		my_fd->openflags = openflags;
 
@@ -195,10 +200,12 @@ fsal_status_t gpfs_open2(struct fsal_obj_handle *obj_hdl,
 			 bool *caller_perm_check)
 {
 	int posix_flags = 0;
+	mode_t unix_mode;
 	fsal_status_t status = {0, 0};
 	struct gpfs_fd *my_fd = NULL;
 	struct gpfs_fsal_obj_handle *myself;
 	struct gpfs_fsal_obj_handle *hdl = NULL;
+	struct gpfs_file_handle fh;
 	bool truncated;
 	bool setattrs = attrib_set != NULL;
 	bool created = false;
@@ -274,7 +281,7 @@ fsal_status_t gpfs_open2(struct fsal_obj_handle *obj_hdl,
 			myself->u.file.fd.openflags = openflags;
 			PTHREAD_RWLOCK_wrlock(&obj_hdl->lock);
 		}
-		status = GPFSFSAL_open(obj_hdl, op_ctx, openflags, fd, false);
+		status = GPFSFSAL_open(obj_hdl, op_ctx, posix_flags, fd, false);
 		if (FSAL_IS_ERROR(status)) {
 			if (state == NULL) {
 				/* Release the lock taken above, and return
@@ -345,6 +352,7 @@ fsal_status_t gpfs_open2(struct fsal_obj_handle *obj_hdl,
 	 * the share conflict will be resolved when the object handles are
 	 * merged.
 	 */
+
 	if (createmode == FSAL_NO_CREATE) {
 		/* Non creation case, libgpfs doesn't have open by name so we
 		 * have to do a lookup and then handle as an open by handle.
@@ -391,14 +399,30 @@ fsal_status_t gpfs_open2(struct fsal_obj_handle *obj_hdl,
 		if (createmode >= FSAL_GUARDED || setattrs)
 			posix_flags |= O_EXCL;
 	}
-	if (setattrs && FSAL_TEST_MASK(attrib_set->mask, ATTR_MODE))
+	if (setattrs && FSAL_TEST_MASK(attrib_set->mask, ATTR_MODE)) {
+		unix_mode = fsal2unix_mode(attrib_set->mode) &
+		    ~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
+		/* Don't set the mode if we later set the attributes */
 		FSAL_UNSET_MASK(attrib_set->mask, ATTR_MODE);
+	} else {
+		/* Default to mode 0600 */
+		unix_mode = 0600;
+	}
+	status = GPFSFSAL_create2(obj_hdl, name, op_ctx, unix_mode, &fh,
+				  posix_flags, attrs_out);
 
-	status = create(obj_hdl, name, attrib_set, new_obj, attrs_out);
-
-	if (FSAL_IS_ERROR(status))
-		return status;
-
+	if (status.major == ERR_FSAL_EXIST && createmode == FSAL_UNCHECKED) {
+		/* We tried to create O_EXCL to set attributes and failed.
+		 * Remove O_EXCL and retry, also remember not to set attributes.
+		 * We still try O_CREAT again just in case file disappears out
+		 * from under us.
+		 */
+		posix_flags &= ~O_EXCL;
+		status = GPFSFSAL_create2(obj_hdl, name, op_ctx, unix_mode, &fh,
+					  posix_flags, attrs_out);
+		if (FSAL_IS_ERROR(status))
+			return status;
+	}
 	/* Remember if we were responsible for creating the file.
 	 * Note that in an UNCHECKED retry we MIGHT have re-created the
 	 * file and won't remember that. Oh well, so in that rare case we
@@ -412,12 +436,15 @@ fsal_status_t gpfs_open2(struct fsal_obj_handle *obj_hdl,
 	*caller_perm_check = false;
 
 	/* allocate an obj_handle and fill it up */
-	hdl = alloc_handle(myself->handle, obj_hdl->fs, attrs_out,
+	hdl = alloc_handle(&fh, obj_hdl->fs, attrs_out,
 				NULL, op_ctx->fsal_export);
 	if (hdl == NULL) {
 		status = fsalstat(posix2fsal_error(ENOMEM), ENOMEM);
 		goto fileerr;
 	}
+
+	*new_obj = &hdl->obj_handle;
+
 	if (created && setattrs && attrib_set->mask != 0) {
 		/* Set attributes using our newly opened file descriptor as the
 		 * share_fd if there are any left to set (mode and truncate
@@ -641,6 +668,7 @@ fsal_status_t gpfs_reopen2(struct fsal_obj_handle *obj_hdl,
 	struct gpfs_fsal_obj_handle *myself;
 	fsal_status_t status = {0, 0};
 	fsal_openflags_t old_openflags;
+	int posix_flags = 0;
 
 	my_share_fd = (struct gpfs_fd *)(state + 1);
 
@@ -678,7 +706,9 @@ fsal_status_t gpfs_reopen2(struct fsal_obj_handle *obj_hdl,
 
 	PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
 
-	status = GPFSFSAL_open(obj_hdl, op_ctx, openflags, &fd.fd, false);
+	fsal2posix_openflags(openflags, &posix_flags);
+
+	status = GPFSFSAL_open(obj_hdl, op_ctx, posix_flags, &fd.fd, false);
 	if (!FSAL_IS_ERROR(status)) {
 		/* Close the existing file descriptor and copy the new
 		 * one over.

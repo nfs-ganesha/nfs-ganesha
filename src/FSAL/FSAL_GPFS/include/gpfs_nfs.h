@@ -98,6 +98,7 @@ struct flock
 #define OPENHANDLE_reserved       149
 #define OPENHANDLE_TRACE_ME       150
 #define OPENHANDLE_QUOTA          151
+#define OPENHANDLE_MKNODE_BY_NAME 152
 
 struct trace_arg
 {
@@ -568,7 +569,7 @@ struct create_name_arg
 {
     int mountdirfd;                 /* in     */
     struct gpfs_file_handle *dir_fh;/* in     */
-    uint32_t dev;                   /* in     */
+    uint32_t dev;                   /* in dev or posix flags */
     int mode;                       /* in     */
     int len;                        /* in     */
     const char *name;               /* in     */

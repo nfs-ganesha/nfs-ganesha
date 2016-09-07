@@ -62,6 +62,34 @@ GPFSFSAL_create(struct fsal_obj_handle *dir_hdl, const char *filename,
 				 op_ctx, gpfs_fh, fsal_attr);
 }
 
+fsal_status_t
+GPFSFSAL_create2(struct fsal_obj_handle *dir_hdl, const char *filename,
+		const struct req_op_context *op_ctx, mode_t unix_mode,
+		struct gpfs_file_handle *gpfs_fh, int posix_flags,
+		struct attrlist *fsal_attr)
+{
+	fsal_status_t status;
+
+	/* note : fsal_attr is optional. */
+	if (!dir_hdl || !op_ctx || !gpfs_fh || !filename)
+		return fsalstat(ERR_FSAL_FAULT, 0);
+
+	LogFullDebug(COMPONENT_FSAL, "Creation mode: 0%o", unix_mode);
+
+	/* call to filesystem */
+
+	fsal_set_credentials(op_ctx->creds);
+	status = fsal_internal_create(dir_hdl, filename, unix_mode | S_IFREG,
+				      posix_flags, gpfs_fh, NULL);
+	fsal_restore_ganesha_credentials();
+	if (FSAL_IS_ERROR(status))
+		return status;
+
+	/* retrieve file attributes */
+	return GPFSFSAL_getattrs(op_ctx->fsal_export, dir_hdl->fs->private,
+				 op_ctx, gpfs_fh, fsal_attr);
+}
+
 /**
  *  @brief Create a directory.
  *
@@ -219,7 +247,7 @@ GPFSFSAL_mknode(struct fsal_obj_handle *dir_hdl, const char *node_name,
 	}
 
 	fsal_set_credentials(op_ctx->creds);
-	status = fsal_internal_create(dir_hdl, node_name, unix_mode, unix_dev,
+	status = fsal_internal_mknode(dir_hdl, node_name, unix_mode, unix_dev,
 				      gpfs_fh, NULL);
 
 	fsal_restore_ganesha_credentials();

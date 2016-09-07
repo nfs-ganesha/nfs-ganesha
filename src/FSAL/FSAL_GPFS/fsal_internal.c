@@ -443,6 +443,48 @@ fsal_internal_unlink(int dirfd, struct gpfs_file_handle *gpfs_fh,
  */
 fsal_status_t
 fsal_internal_create(struct fsal_obj_handle *dir_hdl, const char *stat_name,
+		     mode_t mode, int posix_flags, struct gpfs_file_handle *fh,
+		     struct stat *buf)
+{
+	int rc;
+	struct create_name_arg crarg;
+	struct gpfs_filesystem *gpfs_fs;
+	struct gpfs_fsal_obj_handle *gpfs_hdl;
+	int errsv = 0;
+
+	if (!stat_name)
+		return fsalstat(ERR_FSAL_FAULT, 0);
+
+	gpfs_hdl =
+	   container_of(dir_hdl, struct gpfs_fsal_obj_handle, obj_handle);
+	gpfs_fs = dir_hdl->fs->private;
+
+	crarg.mountdirfd = gpfs_fs->root_fd;
+	crarg.mode = mode;
+	crarg.dev = posix_flags;
+	crarg.len = strlen(stat_name);
+	crarg.name = stat_name;
+	crarg.dir_fh = gpfs_hdl->handle;
+	crarg.new_fh = fh;
+	crarg.new_fh->handle_size = GPFS_MAX_FH_SIZE;
+	crarg.new_fh->handle_key_size = OPENHANDLE_KEY_LEN;
+	crarg.new_fh->handle_version = OPENHANDLE_VERSION;
+	crarg.buf = buf;
+
+	rc = gpfs_ganesha(OPENHANDLE_CREATE_BY_NAME, &crarg);
+	errsv = errno;
+
+	if (rc < 0) {
+		if (errsv == EUNATCH)
+			LogFatal(COMPONENT_FSAL, "GPFS Returned EUNATCH");
+		return fsalstat(posix2fsal_error(errsv), errsv);
+	}
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
+fsal_status_t
+fsal_internal_mknode(struct fsal_obj_handle *dir_hdl, const char *stat_name,
 		     mode_t mode, dev_t dev, struct gpfs_file_handle *fh,
 		     struct stat *buf)
 {
@@ -471,7 +513,7 @@ fsal_internal_create(struct fsal_obj_handle *dir_hdl, const char *stat_name,
 	crarg.new_fh->handle_version = OPENHANDLE_VERSION;
 	crarg.buf = buf;
 
-	rc = gpfs_ganesha(OPENHANDLE_CREATE_BY_NAME, &crarg);
+	rc = gpfs_ganesha(OPENHANDLE_MKNODE_BY_NAME, &crarg);
 	errsv = errno;
 
 	if (rc < 0) {
