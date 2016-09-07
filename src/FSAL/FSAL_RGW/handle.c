@@ -1345,8 +1345,8 @@ fsal_status_t rgw_fsal_commit2(struct fsal_obj_handle *obj_hdl,
 						handle);
 
 	LogFullDebug(COMPONENT_FSAL,
-		"%s enter obj_hdl %p offset %"PRIx64" length %"PRIx64,
-		__func__, obj_hdl, offset, len);
+		"%s enter obj_hdl %p offset %"PRIx64" length %zx",
+		__func__, obj_hdl, (uint64_t) offset, len);
 
 	rc = rgw_fsync(export->rgw_fs, handle->rgw_fh, RGW_FSYNC_FLAG_NONE);
 	if (rc < 0)
