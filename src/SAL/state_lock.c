@@ -390,6 +390,8 @@ static bool LogList(const char *reason, struct fsal_obj_handle *obj,
 /**
  * @brief Log blocked locks on list
  *
+ * Must hold blocked_locks_mutex.
+ *
  * @param[in] reason Arbitrary string
  * @param[in] obj  File
  * @param[in] list   List of lock entries
@@ -676,7 +678,9 @@ static void lock_entry_dec_ref(state_lock_entry_t *lock_entry)
 		/* Release block data if present */
 		if (lock_entry->sle_block_data != NULL) {
 			/* need to remove from the state_blocked_locks list */
+			PTHREAD_MUTEX_lock(&blocked_locks_mutex);
 			glist_del(&lock_entry->sle_block_data->sbd_list);
+			PTHREAD_MUTEX_unlock(&blocked_locks_mutex);
 			gsh_free(lock_entry->sle_block_data);
 		}
 #ifdef DEBUG_SAL
@@ -1781,6 +1785,15 @@ void try_to_grant_lock(state_lock_entry_t *lock_entry)
 			lock_entry->sle_blocked = blocked;
 			return;
 		}
+
+		/* At this point, we no longer need the entry on the
+		 * blocked lock list.
+		 */
+		PTHREAD_MUTEX_lock(&blocked_locks_mutex);
+
+		glist_del(&lock_entry->sle_block_data->sbd_list);
+
+		PTHREAD_MUTEX_unlock(&blocked_locks_mutex);
 
 		if (status == STATE_SUCCESS)
 			return;
@@ -3509,8 +3522,11 @@ static void find_blocked_lock_upcall(struct fsal_obj_handle *obj, void *owner,
 		if (different_lock(&found_entry->sle_lock, lock))
 			continue;
 
-		/* Put lock on list of locks granted by FSAL */
-		glist_del(&pblock->sbd_list);
+		/* Schedule async processing, leave the lock on the blocked
+		 * lock list for now (if we get multiple upcalls because our
+		 * async processing is slow for some reason, we don't want to
+		 * not find this lock entry and hit the LogFatal below...
+		 */
 		pblock->sbd_grant_type = grant_type;
 		if (state_block_schedule(pblock) != STATE_SUCCESS) {
 			LogMajor(COMPONENT_STATE,
