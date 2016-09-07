@@ -7,6 +7,7 @@ SET(rquota_STAT_SRCS
    rquota_getactivequota.c
    rquota_setquota.c
    rquota_setactivequota.c
+   rquota_common.c
 )
 
 add_library(rquota STATIC ${rquota_STAT_SRCS})
