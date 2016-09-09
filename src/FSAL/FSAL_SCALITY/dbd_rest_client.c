@@ -32,6 +32,7 @@
 #include "scality_methods.h"
 #include "dbd_rest_client.h"
 #include "sproxyd_client.h"
+#include "redis_client.h"
 #include "random.h"
 
 #define DEFAULT_CONTENT_TYPE "application/octet-stream"
@@ -542,6 +543,11 @@ dbd_dirents(struct scality_fsal_export* export,
 		int i;
 		for ( i = 0 ; i < json_array_size(commonPrefixes) ; ++i ) {
 			const char *dent = json_string_value(json_array_get(commonPrefixes,i));
+			if ( marker && strcmp(marker, dent) >= 0) {
+				LogWarn(COMPONENT_FSAL,
+					"got an unordered listing marker:%s >= dent:%s",
+					marker, dent);
+			}
 			size_t dent_len = 0;
 			if (NULL != dent)
 				dent_len = strlen(dent);
@@ -564,6 +570,11 @@ dbd_dirents(struct scality_fsal_export* export,
 		for ( i = 0 ; i < json_array_size(contents); ++i ) {
 			json_t *content = json_array_get(contents,i);
 			const char *dent = json_string_value(json_object_get(content,"key"));
+			if ( marker && strcmp(marker, dent) >= 0) {
+				LogWarn(COMPONENT_FSAL,
+					"got an unordered listing marker:%s >= dent:%s",
+					marker, dent);
+			}
                         if ( 0 == strcmp(dent, prefix) ) {
                                 //skip placeholder
                                 continue;
@@ -585,67 +596,90 @@ dbd_dirents(struct scality_fsal_export* export,
 				 dirent);
 		}
 	}
-	
+
 	if ( ! *is_lastp ) {
 		const char *nextMarker = json_string_value(json_object_get(response->body, "NextMarker"));
 		if ( NULL != nextMarker && marker  )
 			strcpy(marker, nextMarker);
 	}
-	
+
 	*direntsp = dirents;
 	dbd_response_free(response);
 	return 0;
 }
 
 	
-void
+int
 dbd_readdir(struct scality_fsal_export* export,
 	    struct scality_fsal_obj_handle *myself,
-	    fsal_cookie_t seekloc,
+	    fsal_cookie_t *whence,
 	    void *dir_state,
 	    fsal_readdir_cb cb,
-	    int *countp,
 	    bool *eof)
 {
+	int ret = 0;
 	char marker[MAX_URL_SIZE] = "";
 	int is_last;
 	dirent_t *dirents = NULL;
+	fsal_cookie_t seekloc;
+
+	if (whence != NULL)
+		seekloc = *whence;
+	else
+		seekloc = 0;
+
+	if (seekloc) {
+		int ret = redis_get_seekloc_marker(myself->object,
+						   seekloc,
+						   marker,
+						   sizeof(marker));
+		if  ( 0 != ret )
+			return -1;
+	}
 
 	LogDebug(COMPONENT_FSAL,
 		"readdir(%s) begin",
 		myself->object);
+	int count = 0;
 	do {
 		int ret = dbd_dirents(export, myself, marker, &dirents, &is_last);
-		if ( ret < 0 )
+		if ( ret < 0 ) {
+			ret = -1;
 			break;
+		}
 
 		dirent_t *p, *d = dirents;
 		while (d) {
 			p = d;
 			d = d->next;
-			
-			++(*countp);
-			if ( *countp < seekloc)
-				continue;
-		
 			LogDebug(COMPONENT_FSAL,
 				"readdir dent: %s",
 				p->name);
-			if (!cb(p->name, dir_state, *countp)) {
-				*eof = false;
+			if (!cb(p->name, dir_state, count++)) {
+				snprintf(marker, sizeof marker, p->dtype == DBD_DTYPE_DIRECTORY
+					 ? "%s"S3_DELIMITER"%s/"
+					 : "%s"S3_DELIMITER"%s/",
+					 myself->object, p->name);
+				ret = redis_set_seekloc_marker(myself->object, marker, whence);
+				if ( 0 != ret ) {
+					ret = -1;
+				}
+				else {
+					*eof = false;
+				}
 				goto exit_loop;
 			}
-
 		}
 		dirent_free(dirents);
 		dirents = NULL;
 	} while ( !is_last );
+	*eof = true;
 	LogDebug(COMPONENT_FSAL,
 		"readdir(%s) end",
 		myself->object);
  exit_loop:
 	dirent_free(dirents);
-	return;
+	return ret;
 }
 
 int

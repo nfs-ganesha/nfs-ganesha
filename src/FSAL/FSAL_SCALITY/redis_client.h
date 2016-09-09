@@ -39,5 +39,13 @@ redis_create_handle_key(const char *obj, char *buf, int buf_sz);
 
 void redis_remove(const char *obj);
 
+int
+redis_get_seekloc_marker(const char *obj,  fsal_cookie_t whence,
+			 char *marker_buf, int marker_buf_len);
+
+int
+redis_set_seekloc_marker(const char *obj, const char *marker,
+			 fsal_cookie_t *whencep);
+
 #endif /* __SCALITY_REDIS_CLIENT_H__ */
 

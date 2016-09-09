@@ -81,13 +81,12 @@ int
 dbd_lookup_object(struct scality_fsal_export *export,
 		  const char *object,
 		  dbd_dtype_t *dtypep);
-void
+int
 dbd_readdir(struct scality_fsal_export* export,
 	    struct scality_fsal_obj_handle *myself,
-	    fsal_cookie_t seekloc,
+	    fsal_cookie_t *whence,
 	    void *dir_state,
 	    fsal_readdir_cb cb,
-	    int *countp,
 	    bool *eof);
 int
 dbd_getattr(struct scality_fsal_export* export,

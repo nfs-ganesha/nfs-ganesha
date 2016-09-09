@@ -40,6 +40,8 @@
 #include "sproxyd_client.h"
 #include "redis_client.h"
 
+#define DISABLE_INVALIDATION 1
+
 #define EXPIRE_TIME_ATTR 1
 /* from GNU coreutils documentation
  * On most systems, if a directory’s set-group-ID bit is set, newly created
@@ -448,12 +450,6 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 				  bool *eof)
 {
 	struct scality_fsal_obj_handle *myself;
-	fsal_cookie_t seekloc;
-
-	if (whence != NULL)
-		seekloc = *whence;
-	else
-		seekloc = 0;
 
 	*eof = true;
 
@@ -477,14 +473,11 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 							 struct scality_fsal_export,
 							 export);
 
-	int count = -1;
-
-        dbd_readdir(export, myself, seekloc, dir_state, cb, &count, eof);
+        dbd_readdir(export, myself, whence, dir_state, cb, eof);
 
 	op_ctx->fsal_private = NULL;
 
 	PTHREAD_RWLOCK_unlock(&dir_hdl->lock);
-
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
@@ -529,6 +522,7 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl)
 		
 	}
 
+#if !defined(DISABLE_INVALIDATION)
 	if ( DIRECTORY == myself->attributes.type ) {
 		cache_inode_status_t status;
 		struct gsh_buffdesc handle_key;
@@ -539,7 +533,8 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl)
 			LogWarn(COMPONENT_FSAL, "Unable to invalidate directory content");
 		}
 	}
-	
+#endif
+
 	LogFullDebug(COMPONENT_FSAL,
 		     "hdl=%p, name=%s numlinks %"PRIu32,
 		     myself,

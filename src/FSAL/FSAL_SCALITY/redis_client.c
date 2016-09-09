@@ -26,7 +26,7 @@
  */
 
 #include <hiredis.h>
-
+#include <inttypes.h>
 #include "scality_methods.h"
 #include "random.h"
 
@@ -37,7 +37,9 @@ static __thread redisContext *ctx__ = NULL;
 
 #define PREFIX "scality-nfs:"
 #define TTL_HANDLE "86400"
+#define TTL_SEEKLOC "7200"
 #define CREATE_RETRY_COUNT 5
+#define SEEKLOC_FMT PREFIX "seekloc:%s:%s:%" PRIu64
 
 static void
 reset_redis_context(void)
@@ -268,4 +270,87 @@ redis_create_handle_key(const char *obj, char *buf, int buf_sz)
 				       export->bucket, obj);
 	return ret;
 	
+}
+
+enum static_assert_cookie_size {  static_assert_cookie_size_check = 1 / (sizeof(fsal_cookie_t) == sizeof(uint64_t)) };
+
+int
+redis_get_seekloc_marker(const char *obj,  fsal_cookie_t whence,
+			 char *marker_buf, int marker_buf_len)
+{
+	LogCrit(COMPONENT_FSAL, "GET SEEKLOC");
+	int ret = 0;
+	redisContext *ctx = get_redis_context();
+	if ( NULL == ctx )
+		return -1;
+	if ( 0 == whence )
+		return -1;
+
+	struct scality_fsal_export *export;
+	export = container_of(op_ctx->fsal_export,
+			      struct scality_fsal_export,
+			      export);
+	redisReply *reply = redisCommand(ctx, "GET " SEEKLOC_FMT,
+					 export->bucket, obj, (uint64_t)whence);
+	if ( NULL == reply ) {
+		LogCrit(COMPONENT_FSAL,
+			"Redis error: %s", ctx->errstr);
+		return -1;
+	}
+	switch(reply->type) {
+	default:
+		if ( REDIS_REPLY_ERROR == reply->type )
+			LogCrit(COMPONENT_FSAL,
+				"Redis reply error: %s", reply->str);
+		else
+			LogCrit(COMPONENT_FSAL,
+				"Redis reply: unexpected data type");
+		ret = -1;
+		break;
+	case REDIS_REPLY_STRING:
+		if ( reply->len > marker_buf_len - 1 ) {
+			LogCrit(COMPONENT_FSAL,
+				"Redis reply too long to fit in buffer, got %d expected %d",
+				reply->len, marker_buf_len);
+			ret = -1;
+		} else {
+			memcpy(marker_buf, reply->str, reply->len);
+			marker_buf[reply->len] = '\0';
+		}
+	}
+	freeReplyObject(reply);
+	if (0 == ret)
+		ret = REDIS_SIMPLE_CMD(ctx,
+				       "DEL " SEEKLOC_FMT,
+				       export->bucket, obj, (uint64_t)whence);
+	return ret;
+}
+
+int
+redis_set_seekloc_marker(const char *obj, const char *marker,
+			 fsal_cookie_t *whencep)
+{
+	LogCrit(COMPONENT_FSAL, "SET SEEKLOC");
+	int ret = 0;
+	redisContext *ctx = get_redis_context();
+	if ( NULL == ctx )
+		return -1;
+	if ( NULL == whencep )
+		return -1;
+
+	fsal_cookie_t whence;
+	do {
+		random_read((char*)&whence, sizeof(whence));
+		//whence == 0 is special
+	} while ( 0 == whence );
+	struct scality_fsal_export *export;
+	export = container_of(op_ctx->fsal_export,
+			      struct scality_fsal_export,
+			      export);
+	ret = REDIS_SIMPLE_CMD(ctx,
+			       "SET " SEEKLOC_FMT " %s EXPIRE " TTL_SEEKLOC,
+			       export->bucket, obj, (uint64_t)whence, marker);
+
+	*whencep = whence;
+	return ret;
 }

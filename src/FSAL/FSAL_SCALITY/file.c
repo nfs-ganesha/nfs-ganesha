@@ -421,6 +421,17 @@ enum cleanup_from {
 	FROM_CLOSE,
 	FROM_LRU_CLEANUP
 };
+static fsal_status_t
+cleanup_handle(struct fsal_obj_handle *obj_hdl,
+	       enum cleanup_from from)
+{
+	struct scality_fsal_obj_handle *myself = container_of(obj_hdl,
+							     struct scality_fsal_obj_handle,
+							     obj_handle);
+	if (FROM_CLOSE == from)
+		myself->openflags = FSAL_O_CLOSED;
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
 
 /* scality_close
  * Close the file if it is still open.
@@ -430,7 +441,7 @@ enum cleanup_from {
 
 fsal_status_t scality_close(struct fsal_obj_handle *obj_hdl)
 {
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	return cleanup_handle(obj_hdl, FROM_CLOSE);
 }
 
 /* scality_lru_cleanup
@@ -442,5 +453,5 @@ fsal_status_t scality_close(struct fsal_obj_handle *obj_hdl)
 fsal_status_t scality_lru_cleanup(struct fsal_obj_handle *obj_hdl,
 				 lru_actions_t requests)
 {
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	return cleanup_handle(obj_hdl, FROM_LRU_CLEANUP);
 }
