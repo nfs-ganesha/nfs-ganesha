@@ -665,8 +665,11 @@ unlock_dir:
 /**
  * @brief Check access for a given user against a given object
  *
- * Currently, all FSALs use the default method.  However, delegate to sub-fsal
- * in case a FSAL wants to override.
+ * Currently, all FSALs use the default method.  We call the default method
+ * directly, so that the test uses cached attributes, rather than having the
+ * lower level need to query attributes each call.  This works as long as all
+ * FSALs call the default method.  This should be revisited if a FSAL wants to
+ * override test_access().
  *
  * @param[in] obj_hdl     Handle to check
  * @param[in] access_type Access requested
@@ -682,6 +685,7 @@ static fsal_status_t mdcache_test_access(struct fsal_obj_handle *obj_hdl,
 					 fsal_accessflags_t *denied,
 					 bool owner_skip)
 {
+#if 0
 	mdcache_entry_t *entry =
 		container_of(obj_hdl, mdcache_entry_t, obj_handle);
 	fsal_status_t status;
@@ -693,6 +697,10 @@ static fsal_status_t mdcache_test_access(struct fsal_obj_handle *obj_hdl,
 	       );
 
 	return status;
+#else
+	return fsal_test_access(obj_hdl, access_type, allowed, denied,
+				owner_skip);
+#endif
 }
 
 /**
