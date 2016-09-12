@@ -128,6 +128,33 @@ static fsal_status_t init_config(struct fsal_module *module_in,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
+#ifdef CEPH_FS_LOOKUP_ROOT
+static fsal_status_t find_cephfs_root(struct ceph_mount_info *cmount,
+					Inode **pi)
+{
+	return ceph2fsal_error(ceph_ll_lookup_root(cmount, pi));
+}
+#else /* CEPH_FS_LOOKUP_ROOT */
+static fsal_status_t find_cephfs_root(struct ceph_mount_info *cmount,
+					Inode **pi)
+{
+	Inode *i;
+	vinodeno_t root;
+
+	root.ino.val = CEPH_INO_ROOT;
+#ifdef CEPH_NOSNAP
+	root.snapid.val = CEPH_NOSNAP;
+#else
+	root.snapid.val = 0;
+#endif /* CEPH_NOSNAP */
+	i = ceph_ll_get_inode(cmount, root);
+	if (!i)
+		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
+	*pi = i;
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+#endif /* CEPH_FS_LOOKUP_ROOT */
+
 /**
  * @brief Create a new export under this FSAL
  *
@@ -164,8 +191,6 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 	struct handle *handle = NULL;
 	/* Root inode */
 	struct Inode *i = NULL;
-	/* Root vinode */
-	vinodeno_t root;
 	/* Stat for root */
 	struct stat st;
 	/* Return code */
@@ -231,15 +256,9 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 		 "Ceph module export %s.",
 		 op_ctx->export->fullpath);
 
-	root.ino.val = CEPH_INO_ROOT;
-#ifdef CEPH_NOSNAP
-	root.snapid.val = CEPH_NOSNAP;
-#endif /* CEPH_NOSNAP */
-	i = ceph_ll_get_inode(export->cmount, root);
-	if (!i) {
-		status.major = ERR_FSAL_SERVERFAULT;
+	status = find_cephfs_root(export->cmount, &i);
+	if (FSAL_IS_ERROR(status))
 		goto error;
-	}
 
 	rc = ceph_ll_getattr(export->cmount, i, &st, 0, 0);
 	if (rc < 0) {
