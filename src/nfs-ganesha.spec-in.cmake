@@ -471,6 +471,7 @@ exit 0
 %postun
 %if ( 0%{?suse_version} )
 %service_del_postun nfs-ganesha-lock.service
+%debug_package
 %else
 %if %{with_systemd}
 %systemd_postun_with_restart nfs-ganesha-lock.service
