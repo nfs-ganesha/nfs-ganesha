@@ -144,6 +144,19 @@ struct token lock_modes[] = {
 	{"", 0, 0}
 };
 
+void sprintf_lock_modes(char **rest, int *left, int mode)
+{
+	int i;
+
+	for (i = 0; lock_modes[i].t_len != 0; i++) {
+		if (mode == lock_modes[i].t_value) {
+			/* Append lock mode to line */
+			sprint_left(*rest, *left, " %s", lock_modes[i].t_name);
+			break;
+		}
+	}
+}
+
 const char *str_lock_mode(int lock_mode)
 {
 	switch ((enum lock_mode) lock_mode) {
@@ -1617,6 +1630,7 @@ void sprintf_req(char *line, int size, const char *lead, struct response *req)
 		sprint_left(rest, left, " %ld %s", req->r_fpos,
 			    str_read_write_flags(req->r_flags));
 		sprintf_open_flags(&rest, &left, req->r_flags);
+		sprintf_lock_modes(&rest, &left, req->r_lock_type);
 		sprint_left(rest, left, " \"%s\"\n", req->r_data);
 		break;
 
