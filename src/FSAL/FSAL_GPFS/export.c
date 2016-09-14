@@ -218,15 +218,16 @@ static uint32_t fs_xattr_access_rights(struct fsal_export *exp_hdl)
 
 static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 			       const char *filepath, int quota_type,
+			       int quota_id,
 			       fsal_quota_t *pquota)
 {
 	struct gpfs_fsal_export *myself;
 	gpfs_quotaInfo_t fs_quota;
 	struct stat path_stat;
-	uid_t id;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval;
 	struct quotactl_arg args;
+	int errsv;
 
 	myself = container_of(exp_hdl, struct gpfs_fsal_export, export);
 	retval = stat(filepath, &path_stat);
@@ -248,18 +249,20 @@ static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 		retval = 0;
 		goto out;
 	}
-	id = (quota_type ==
-	      GPFS_USRQUOTA) ? op_ctx->creds->caller_uid : op_ctx->creds->
-	    caller_gid;
 	memset((void *)&fs_quota, 0, sizeof(gpfs_quotaInfo_t));
 	args.pathname = filepath;
 	args.cmd = GPFS_QCMD(Q_GETQUOTA, quota_type);
-	args.qid = id;
+	args.qid = quota_id;
 	args.bufferP = (void *) &fs_quota;
+
+	fsal_set_credentials(op_ctx->creds);
 	retval = gpfs_ganesha(OPENHANDLE_QUOTA, &args);
+	errsv = errno;
+	fsal_restore_ganesha_credentials();
+
 	if (retval < 0) {
-		fsal_error = posix2fsal_error(errno);
-		retval = errno;
+		fsal_error = posix2fsal_error(errsv);
+		retval = errsv;
 		goto out;
 	}
 	pquota->bhardlimit = fs_quota.blockHardLimit;
@@ -282,15 +285,16 @@ static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 
 static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 			       const char *filepath, int quota_type,
+			       int quota_id,
 			       fsal_quota_t *pquota, fsal_quota_t *presquota)
 {
 	struct gpfs_fsal_export *myself;
 	gpfs_quotaInfo_t fs_quota;
 	struct stat path_stat;
-	uid_t id;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval;
 	struct quotactl_arg args;
+	int errsv;
 
 	myself = container_of(exp_hdl, struct gpfs_fsal_export, export);
 	retval = stat(filepath, &path_stat);
@@ -312,9 +316,6 @@ static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 		retval = 0;
 		goto err;
 	}
-	id = (quota_type ==
-	      GPFS_USRQUOTA) ? op_ctx->creds->caller_uid : op_ctx->creds->
-	    caller_gid;
 	memset((char *)&fs_quota, 0, sizeof(gpfs_quotaInfo_t));
 	if (pquota->bhardlimit != 0) {
 		fs_quota.blockHardLimit = pquota->bhardlimit;
@@ -336,16 +337,22 @@ static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 	}
 	args.pathname = filepath;
 	args.cmd = GPFS_QCMD(Q_SETQUOTA, quota_type);
-	args.qid = id;
+	args.qid = quota_id;
 	args.bufferP = (void *) &fs_quota;
+
+	fsal_set_credentials(op_ctx->creds);
 	retval = gpfs_ganesha(OPENHANDLE_QUOTA, &args);
+	errsv = errno;
+	fsal_restore_ganesha_credentials();
+
 	if (retval < 0) {
-		fsal_error = posix2fsal_error(errno);
-		retval = errno;
+		fsal_error = posix2fsal_error(errsv);
+		retval = errsv;
 		goto err;
 	}
 	if (presquota != NULL)
-		return get_quota(exp_hdl, filepath, quota_type, presquota);
+		return get_quota(exp_hdl, filepath,
+				 quota_type, quota_id, presquota);
 
  err:
 	return fsalstat(fsal_error, retval);

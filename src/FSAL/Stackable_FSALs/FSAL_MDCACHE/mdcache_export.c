@@ -499,11 +499,13 @@ static fsal_status_t mdcache_check_quota(struct fsal_export *exp_hdl,
  * @param[in] exp_hdl	Export to query
  * @param[in] filepath	Path to file to query
  * @param[in] quota_type	Type of quota (user or group)
+ * @param[in] quota_id  Id for getting quota information
  * @param[out] pquota	Resulting quota information
  * @return FSAL status
  */
 static fsal_status_t mdcache_get_quota(struct fsal_export *exp_hdl,
 				       const char *filepath, int quota_type,
+				       int quota_id,
 				       fsal_quota_t *pquota)
 {
 	struct mdcache_fsal_export *exp = mdc_export(exp_hdl);
@@ -512,8 +514,8 @@ static fsal_status_t mdcache_get_quota(struct fsal_export *exp_hdl,
 
 	subcall_raw(exp,
 		status = sub_export->exp_ops.get_quota(sub_export, filepath,
-						       quota_type, pquota)
-	       );
+						       quota_type, quota_id,
+						       pquota));
 
 	return status;
 }
@@ -526,12 +528,14 @@ static fsal_status_t mdcache_get_quota(struct fsal_export *exp_hdl,
  * @param[in] exp_hdl	Export to query
  * @param[in] filepath	Path to file to query
  * @param[in] quota_type	Type of quota (user or group)
+ * @param[in] quota_id  Id for which quota is set
  * @param[in] pquota	Quota information to set
  * @param[out] presquota	Quota after set
  * @return FSAL status
  */
 static fsal_status_t mdcache_set_quota(struct fsal_export *exp_hdl,
 				       const char *filepath, int quota_type,
+				       int quota_id,
 				       fsal_quota_t *pquota,
 				       fsal_quota_t *presquota)
 {
@@ -541,7 +545,7 @@ static fsal_status_t mdcache_set_quota(struct fsal_export *exp_hdl,
 
 	subcall_raw(exp,
 		status = sub_export->exp_ops.set_quota(sub_export,
-			filepath, quota_type, pquota, presquota)
+			filepath, quota_type, quota_id, pquota, presquota)
 	       );
 
 	return status;

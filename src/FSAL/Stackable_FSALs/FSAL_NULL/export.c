@@ -274,6 +274,7 @@ static uint32_t fs_xattr_access_rights(struct fsal_export *exp_hdl)
 
 static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 			       const char *filepath, int quota_type,
+			       int quota_id,
 			       fsal_quota_t *pquota)
 {
 	struct nullfs_fsal_export *exp =
@@ -282,7 +283,8 @@ static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 	op_ctx->fsal_export = exp->export.sub_export;
 	fsal_status_t result =
 		exp->export.sub_export->exp_ops.get_quota(
-			exp->export.sub_export, filepath, quota_type, pquota);
+			exp->export.sub_export, filepath,
+			quota_type, quota_id, pquota);
 	op_ctx->fsal_export = &exp->export;
 
 	return result;
@@ -294,6 +296,7 @@ static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 
 static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 			       const char *filepath, int quota_type,
+			       int quota_id,
 			       fsal_quota_t *pquota, fsal_quota_t *presquota)
 {
 	struct nullfs_fsal_export *exp =
@@ -302,8 +305,8 @@ static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 	op_ctx->fsal_export = exp->export.sub_export;
 	fsal_status_t result =
 		exp->export.sub_export->exp_ops.set_quota(
-			exp->export.sub_export, filepath, quota_type, pquota,
-			presquota);
+			exp->export.sub_export, filepath, quota_type, quota_id,
+			pquota, presquota);
 	op_ctx->fsal_export = &exp->export;
 
 	return result;

@@ -56,12 +56,17 @@ int rquota_getquota(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	char *quota_path;
 	getquota_rslt *qres = &res->res_rquota_getquota;
 	char path[MAXPATHLEN];
+	int quota_id;
 
 	LogFullDebug(COMPONENT_NFSPROTO,
 		     "REQUEST PROCESSING: Calling rquota_getquota");
 
-	if (req->rq_vers == EXT_RQUOTAVERS)
+	if (req->rq_vers == EXT_RQUOTAVERS) {
 		quota_type = arg->arg_ext_rquota_getquota.gqa_type;
+		quota_id = arg->arg_ext_rquota_getquota.gqa_id;
+	} else {
+		quota_id = arg->arg_rquota_getquota.gqa_uid;
+	}
 	qres->status = Q_EPERM;
 
 	quota_path = check_handle_lead_slash(arg->arg_rquota_getquota.gqa_pathp,
@@ -80,7 +85,7 @@ int rquota_getquota(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	fsal_status =
 	    exp->fsal_export->exp_ops.get_quota(exp->fsal_export,
 					     quota_path, quota_type,
-					     &fsal_quota);
+					     quota_id, &fsal_quota);
 	if (FSAL_IS_ERROR(fsal_status)) {
 		if (fsal_status.major == ERR_FSAL_NO_QUOTA)
 			qres->status = Q_NOQUOTA;
