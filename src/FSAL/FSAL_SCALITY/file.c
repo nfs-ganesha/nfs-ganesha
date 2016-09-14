@@ -326,6 +326,7 @@ fsal_status_t scality_write(struct fsal_obj_handle *obj_hdl,
 		memcpy(location->content + location->size, buffer, to_write);
 		location->size += to_write;
 		myself->attributes.filesize += to_write;
+		myself->attributes.spaceused += to_write;
 		myself->state = SCALITY_FSAL_OBJ_STATE_DIRTY;
 		
 		if ( myself->memory_used >= FLUSH_THRESHOLD ) {
@@ -417,22 +418,6 @@ fsal_status_t scality_lock_op(struct fsal_obj_handle *obj_hdl,
 	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
-enum cleanup_from {
-	FROM_CLOSE,
-	FROM_LRU_CLEANUP
-};
-static fsal_status_t
-cleanup_handle(struct fsal_obj_handle *obj_hdl,
-	       enum cleanup_from from)
-{
-	struct scality_fsal_obj_handle *myself = container_of(obj_hdl,
-							     struct scality_fsal_obj_handle,
-							     obj_handle);
-	if (FROM_CLOSE == from)
-		myself->openflags = FSAL_O_CLOSED;
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
-}
-
 /* scality_close
  * Close the file if it is still open.
  * Yes, we ignor lock status.  Closing a file in POSIX
@@ -441,17 +426,9 @@ cleanup_handle(struct fsal_obj_handle *obj_hdl,
 
 fsal_status_t scality_close(struct fsal_obj_handle *obj_hdl)
 {
-	return cleanup_handle(obj_hdl, FROM_CLOSE);
-}
-
-/* scality_lru_cleanup
- * free non-essential resources at the request of cache inode's
- * LRU processing identifying this handle as stale enough for resource
- * trimming.
- */
-
-fsal_status_t scality_lru_cleanup(struct fsal_obj_handle *obj_hdl,
-				 lru_actions_t requests)
-{
-	return cleanup_handle(obj_hdl, FROM_LRU_CLEANUP);
+	struct scality_fsal_obj_handle *myself = container_of(obj_hdl,
+							      struct scality_fsal_obj_handle,
+							      obj_handle);
+	myself->openflags = FSAL_O_CLOSED;
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }

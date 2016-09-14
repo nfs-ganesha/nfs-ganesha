@@ -28,10 +28,10 @@
 #ifndef __DBD_REST_CLIENT_H__
 #define __DBD_REST_CLIENT_H__
 typedef enum {
-        DBD_LOOKUP_IS_LAST,
-        DBD_LOOKUP_IS_NOT_LAST,
-        DBD_LOOKUP_ENOENT,
-        DBD_LOOKUP_ERROR,
+	DBD_LOOKUP_IS_LAST,
+	DBD_LOOKUP_IS_NOT_LAST,
+	DBD_LOOKUP_ENOENT,
+	DBD_LOOKUP_ERROR,
 } dbd_is_last_result_t;
 
 /**
@@ -43,7 +43,7 @@ typedef enum {
  */
 dbd_is_last_result_t
 dbd_is_last(struct scality_fsal_export *export,
-            struct scality_fsal_obj_handle *dir_hdl);
+	    struct scality_fsal_obj_handle *dir_hdl);
 
 
 typedef enum {
@@ -81,12 +81,17 @@ int
 dbd_lookup_object(struct scality_fsal_export *export,
 		  const char *object,
 		  dbd_dtype_t *dtypep);
+
+
+typedef bool (*dbd_readdir_cb)(const char *name, void *user_data, fsal_cookie_t *cookiep);
+
+
 int
 dbd_readdir(struct scality_fsal_export* export,
 	    struct scality_fsal_obj_handle *myself,
-	    fsal_cookie_t *whence,
+	    const fsal_cookie_t *whence,
 	    void *dir_state,
-	    fsal_readdir_cb cb,
+	    dbd_readdir_cb cb,
 	    bool *eof);
 int
 dbd_getattr(struct scality_fsal_export* export,

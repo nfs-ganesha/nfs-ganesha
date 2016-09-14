@@ -43,19 +43,19 @@ sproxyd_head(struct scality_fsal_export* export,
 	int ret = 0;
 	long http_status;
 	double body_len;
-	
+
 	curl = curl_easy_init();
 	if ( NULL == curl ) {
 		LogCrit(COMPONENT_FSAL, "Unable to init HTTP request");
 		return -1;
-		
+
 	}
-	
+
 	snprintf(url, sizeof url, "%s/%s", export->module->sproxyd_url, id);
 	curl_easy_setopt(curl, CURLOPT_URL, url);
 	curl_easy_setopt(curl, CURLOPT_NOBODY, 1);
 	curl_easy_setopt(curl, CURLOPT_TIMEOUT, 300);
-	
+
 	LogDebug(COMPONENT_FSAL, "Perform HEAD %s", url);
 	curl_ret = curl_easy_perform(curl);
 	if ( CURLE_OK != curl_ret ) {
@@ -82,14 +82,13 @@ sproxyd_head(struct scality_fsal_export* export,
 		ret = -1;
 		goto end;
 	}
-	
 
 	//Success
 	*lenp = body_len;
 
  end:
 	curl_easy_cleanup(curl);
-	
+
 	return ret;
 }
 
@@ -109,12 +108,11 @@ sproxyd_get(struct scality_fsal_export* export,
 	size_t body_len = 0;
 	int ret = 0;
 	long http_status;
-	
+
 	curl = curl_easy_init();
 	if ( NULL == curl ) {
 		LogCrit(COMPONENT_FSAL, "Unable to init HTTP request");
 		return -1;
-		
 	}
 
 	body_stream = open_memstream(&body_text, &body_len);
@@ -123,7 +121,7 @@ sproxyd_get(struct scality_fsal_export* export,
 		ret = -1;
 		goto end;
 	}
-	
+
 	snprintf(url, sizeof url, "%s/%s", export->module->sproxyd_url, id);
 	curl_easy_setopt(curl, CURLOPT_URL, url);
 	if ( NULL != range ) {
@@ -170,7 +168,7 @@ sproxyd_get(struct scality_fsal_export* export,
 		fclose(body_stream);
 	if (body_text)
 		free(body_text);
-	
+
 	return ret;
 }
 
@@ -195,7 +193,7 @@ sproxyd_read(struct scality_fsal_export* export,
 			continue;
 		if ( 0 == size )
 			break;
-		
+
 		size_t read_start = offset-loc->start;
 		size_t read_size = loc->size-read_start;
 		if ( read_size > size )
@@ -204,7 +202,7 @@ sproxyd_read(struct scality_fsal_export* export,
 			continue;
 		snprintf(range, sizeof range, "%zu-%zu",
 			 read_start, read_start+read_size-1);
-		
+
 		ret = sproxyd_get(export, obj->locations[i].key, range,
 				  &frag, &frag_len);
 		if ( ret < 0 )
@@ -239,21 +237,21 @@ sproxyd_delete(struct scality_fsal_export* export,
 	char url[MAX_URL_SIZE];
 	int ret = 0;
 	long http_status;
-	
+
 	curl = curl_easy_init();
 	if ( NULL == curl ) {
 		LogCrit(COMPONENT_FSAL, "Unable to init HTTP request");
 		return -1;
-		
+
 	}
-	
+
 	snprintf(url, sizeof url, "%s/%s", export->module->sproxyd_url, id);
 	curl_easy_setopt(curl, CURLOPT_URL, url);
 	curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, noop_callback);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, NULL);
 	curl_easy_setopt(curl, CURLOPT_TIMEOUT, 300);
-	
+
 	LogDebug(COMPONENT_FSAL, "Perform DELETE %s", url);
 	curl_ret = curl_easy_perform(curl);
 	if ( CURLE_OK != curl_ret ) {
@@ -273,12 +271,12 @@ sproxyd_delete(struct scality_fsal_export* export,
 		ret = -1;
 		goto end;
 	}
-	
+
 	//Success
 
  end:
 	curl_easy_cleanup(curl);
-	
+
 	return ret;
 }
 
@@ -374,7 +372,7 @@ sproxyd_put(struct scality_fsal_export* export,
 		goto out;
 	}
 	ret = 0;
-	
+
  out:
 	if (curl)
 		curl_easy_cleanup(curl);

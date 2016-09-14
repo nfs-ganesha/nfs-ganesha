@@ -35,6 +35,7 @@
 #include "city.h"
 #include "nfs_file_handle.h"
 #include "display.h"
+#include "sal_functions.h"
 
 #include "dbd_rest_client.h"
 #include "sproxyd_client.h"
@@ -55,7 +56,10 @@
 #define DEFAULT_MODE_DIRECTORY 06777
 #define DEFAULT_MODE_REGULAR 0666
 
-/* Atomic uint64_t that is used to generate inode numbers in the Pseudo FS */
+static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
+			      struct attrlist *attrs_out);
+static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
+			      struct attrlist *attrs);
 
 static int
 name_to_object(struct scality_fsal_obj_handle *parent,
@@ -64,11 +68,21 @@ name_to_object(struct scality_fsal_obj_handle *parent,
 {
 	int ret;
 	if ( parent && parent->object ) {
-		size_t parent_len = strlen(parent->object);
-		if ( parent_len > 0 )
-			ret = snprintf(buf, buf_sz, "%s"S3_DELIMITER"%s", parent->object, name);
-		else
-			ret = snprintf(buf, buf_sz, "%s", name);
+		if (strcmp(name, "..") == 0) {
+			ret = snprintf(buf, buf_sz, "%s", parent->object);
+			if ( ret > 0 ) {
+				char *p = strrchr(buf, '/');
+				if ( p )
+					*p = '\0';
+			}
+		}
+		else {
+			size_t parent_len = strlen(parent->object);
+			if ( parent_len > 0 )
+				ret = snprintf(buf, buf_sz, "%s"S3_DELIMITER"%s", parent->object, name);
+			else
+				ret = snprintf(buf, buf_sz, "%s", name);
+		}
 	}
 	else {
 		buf[0]='\0';
@@ -104,7 +118,7 @@ static struct scality_fsal_obj_handle
 	hdl = gsh_calloc(1, sizeof(struct scality_fsal_obj_handle) +
 			 SCALITY_OPAQUE_SIZE);
 
-	hdl->obj_handle.attrs = &hdl->attributes;
+	fsal_prepare_attrs(&hdl->attributes, 0);
 
 	/* Create the handle */
 	hdl->handle = (char *) &hdl[1];
@@ -133,14 +147,19 @@ static struct scality_fsal_obj_handle
 	hdl->attributes.fsid.major = 0;
 	hdl->attributes.fsid.minor = 0;
 	FSAL_SET_MASK(hdl->attributes.mask, ATTR_FSID);
+	hdl->obj_handle.fsid = hdl->attributes.fsid;
 
+	hdl->obj_handle.fileid = *(uint64_t*)hdl->handle;
 	hdl->attributes.fileid = *(uint64_t*)hdl->handle;
 	FSAL_SET_MASK(hdl->attributes.mask, ATTR_FILEID);
 
-        mode_t unix_mode =  (dtype == DBD_DTYPE_DIRECTORY)
-                ? DEFAULT_MODE_DIRECTORY
-                : DEFAULT_MODE_REGULAR;
-        unix_mode = unix_mode & ~export->umask;
+	LogDebug(COMPONENT_FSAL,
+		 "object: %s, Inode is %llu", object, (long long int)hdl->attributes.fileid);
+
+	mode_t unix_mode =  (dtype == DBD_DTYPE_DIRECTORY)
+		? DEFAULT_MODE_DIRECTORY
+		: DEFAULT_MODE_REGULAR;
+	unix_mode = unix_mode & ~export->umask;
 	hdl->attributes.mode = unix2fsal_mode(unix_mode);
 	FSAL_SET_MASK(hdl->attributes.mask, ATTR_MODE);
 
@@ -148,14 +167,14 @@ static struct scality_fsal_obj_handle
 	hdl->numlinks = 1;
 	FSAL_SET_MASK(hdl->attributes.mask, ATTR_NUMLINKS);
 
-        // not using op_ctx->creds->caller_uid because caller is not the owner
-        // and user is squashed
-	hdl->attributes.owner = op_ctx->export->export_perms.anonymous_uid;
+	// not using op_ctx->creds->caller_uid because caller is not the owner
+	// and user is squashed
+	hdl->attributes.owner = op_ctx->ctx_export->export_perms.anonymous_uid;
 	FSAL_SET_MASK(hdl->attributes.mask, ATTR_OWNER);
 
-        // not using op_ctx->creds->caller_gid because caller is not the owner
-        // and group is squashed
-	hdl->attributes.group = op_ctx->export->export_perms.anonymous_gid;
+	// not using op_ctx->creds->caller_gid because caller is not the owner
+	// and group is squashed
+	hdl->attributes.group = op_ctx->ctx_export->export_perms.anonymous_gid;
 	FSAL_SET_MASK(hdl->attributes.mask, ATTR_GROUP);
 
 	/* Use full timer resolution */
@@ -190,19 +209,23 @@ static struct scality_fsal_obj_handle
 	hdl->delete_on_commit = NULL;
 	hdl->delete_on_rollback = NULL;
 
+	hdl->obj_handle.state_hdl = &hdl->obj_state;
+	hdl->ref_count = 1;
+	state_hdl_init(&hdl->obj_state, hdl->obj_handle.type, &hdl->obj_handle);
 	return hdl;
 }
 
 static fsal_status_t
 test_access(struct fsal_obj_handle *obj_hdl,
-                 fsal_accessflags_t access_type,
-                 fsal_accessflags_t *allowed,
-                 fsal_accessflags_t *denied)
+	    fsal_accessflags_t access_type,
+	    fsal_accessflags_t *allowed,
+	    fsal_accessflags_t *denied,
+	    bool skip_owner)
 {
-        fsal_status_t status;
-        status = fsal_test_access(obj_hdl, access_type, allowed, denied);
-        LogDebug(COMPONENT_FSAL, "fsal_test_access returned %d", status.major);
-        return status;
+	fsal_status_t status;
+	status = fsal_test_access(obj_hdl, access_type, allowed, denied, skip_owner);
+	LogDebug(COMPONENT_FSAL, "fsal_test_access returned %d", status.major);
+	return status;
 }
 
 /* handle methods
@@ -214,7 +237,8 @@ test_access(struct fsal_obj_handle *obj_hdl,
 
 static fsal_status_t lookup(struct fsal_obj_handle *parent,
 			    const char *path,
-			    struct fsal_obj_handle **handle)
+			    struct fsal_obj_handle **handle,
+			    struct attrlist *attrs_out)
 {
 	struct scality_fsal_obj_handle *myself, *hdl;
 	fsal_errors_t error = ERR_FSAL_NOENT;
@@ -224,15 +248,9 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 			      obj_handle);
 
 	LogDebug(COMPONENT_FSAL,
-		 "lookup(%s)",
+		 "lookup(%s, %s)",
+		 myself->object,
 		 path);
-
-
-	if (strcmp(path, "..") == 0) {
-		/* lookup parent - lookupp */
-		assert(!"Not Impl");
-		goto out;
-	}
 
 	/* Check if this context already holds the lock on
 	 * this directory.
@@ -249,13 +267,21 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 		goto out;
 	}
 
-	ret = dbd_lookup(container_of(op_ctx->fsal_export,
-				      struct scality_fsal_export,
-				      export),
-			 myself,
-			 path,
-			 &dtype);
-	
+	if (strcmp(path, "..") == 0) {
+		//NFSv3 performs lookups on ..
+		//assume that parent dir always exists
+		ret = 0;
+		dtype = DBD_DTYPE_DIRECTORY;
+	}
+	else {
+		ret = dbd_lookup(container_of(op_ctx->fsal_export,
+					      struct scality_fsal_export,
+					      export),
+				 myself,
+				 path,
+				 &dtype);
+	}
+
 	if ( 0 == ret ) {
 		char handle_key[SCALITY_OPAQUE_SIZE];
 		char *handle_keyp = NULL;
@@ -280,8 +306,18 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 					   op_ctx->fsal_export, DBD_DTYPE_DIRECTORY);
 			*handle = &hdl->obj_handle;
 			error = ERR_FSAL_NO_ERROR;
-			break;			
+			break;
 		default:break;
+		}
+		if (hdl && attrs_out) {
+			fsal_status_t status;
+			status = getattrs(&hdl->obj_handle, attrs_out);
+			if (FSAL_IS_ERROR(status)) {
+				LogCrit(COMPONENT_FSAL,
+					"Unable to getatr on %s",
+					hdl->object);
+				return status;
+			}
 		}
 	}
 
@@ -293,11 +329,12 @@ out:
 static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 			    const char *name,
 			    struct attrlist *attrib,
-			    struct fsal_obj_handle **handle)
+			    struct fsal_obj_handle **handle,
+			    struct attrlist *attrs_out)
 {
 	struct scality_fsal_obj_handle *myself, *hdl;
 	struct scality_fsal_export *export;
-	
+
 	export = container_of(op_ctx->fsal_export,
 			      struct scality_fsal_export,
 			      export);
@@ -322,6 +359,9 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 			   op_ctx->fsal_export, DBD_DTYPE_REGULAR);
 	*handle = &hdl->obj_handle;
 
+	if (attrs_out)
+		fsal_copy_attrs(attrs_out, &hdl->attributes, false);
+
 	ret = dbd_post(export, hdl);
 	if ( ret < 0 ) {
 		LogCrit(COMPONENT_FSAL, "create of %s"S3_DELIMITER"%s failed",
@@ -329,29 +369,27 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 		release(*handle);
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 	}
-	
+
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
-
-static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
-			      struct attrlist *attrs);
 
 static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 			     const char *name,
 			     struct attrlist *attrs,
-			     struct fsal_obj_handle **handle)
+			     struct fsal_obj_handle **handle,
+			     struct attrlist *attrs_out)
 {
 	struct scality_fsal_obj_handle *myself, *hdl;
-        fsal_accessflags_t access_type;
-        fsal_status_t status;
+	fsal_accessflags_t access_type;
+	fsal_status_t status;
 
 	myself = container_of(dir_hdl,
 			      struct scality_fsal_obj_handle,
 			      obj_handle);
-        
+
 	access_type = FSAL_MODE_MASK_SET(FSAL_W_OK) |
 		FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_SUBDIRECTORY);
-	status = test_access(dir_hdl, access_type, NULL, NULL);
+	status = test_access(dir_hdl, access_type, NULL, NULL, false);
 	if (FSAL_IS_ERROR(status))
 		return status;
 
@@ -368,17 +406,21 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 	ret = redis_get_handle_key(object, handle_key, sizeof handle_key);
 	if ( 0 == ret )
 		handle_keyp = handle_key;
-	
+
 	hdl = alloc_handle(object,
 			   handle_keyp,
 			   op_ctx->fsal_export, DBD_DTYPE_DIRECTORY);
 
 	*handle = &hdl->obj_handle;
 
-        FSAL_SET_MASK(attrs->mask, ATTR_ATIME_SERVER);
-        FSAL_SET_MASK(attrs->mask, ATTR_MTIME_SERVER);
+	if (attrs_out) {
+		fsal_copy_attrs(attrs_out, &hdl->attributes, false);
+	}
 
-        return setattrs(*handle, attrs);
+	FSAL_SET_MASK(attrs->mask, ATTR_ATIME_SERVER);
+	FSAL_SET_MASK(attrs->mask, ATTR_MTIME_SERVER);
+
+	return setattrs(*handle, attrs);
 }
 
 static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
@@ -386,7 +428,8 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 			      object_file_type_t nodetype,
 			      fsal_dev_t *dev,
 			      struct attrlist *attrib,
-			      struct fsal_obj_handle **handle)
+			      struct fsal_obj_handle **handle,
+			      struct attrlist *attrs_out)
 {
 	/* SCALITY doesn't support non-directory inodes */
 	LogCrit(COMPONENT_FSAL,
@@ -404,7 +447,8 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 				 const char *name,
 				 const char *link_path,
 				 struct attrlist *attrib,
-				 struct fsal_obj_handle **handle)
+				 struct fsal_obj_handle **handle,
+				 struct attrlist *attrs_out)
 {
 	/* SCALITY doesn't support non-directory inodes */
 	LogCrit(COMPONENT_FSAL,
@@ -432,6 +476,50 @@ static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
 	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
+
+struct read_dirents_data {
+	fsal_status_t status;
+	struct scality_fsal_export *export;
+	struct scality_fsal_obj_handle *parent_hdl;
+	void *dir_state;
+	fsal_readdir_cb cb;
+	attrmask_t attrmask;
+};
+
+/**
+ * callback suitable for dbd_readdir
+ *
+ * @param [out]cookiep return the wire handle of the current entry being processed
+ */
+static bool read_dirents_cb(const char *name, void *user_data, fsal_cookie_t *cookiep)
+{
+	bool ret = false;
+	struct read_dirents_data *data = user_data;
+	struct attrlist attrs;
+	fsal_prepare_attrs(&attrs, data->attrmask);
+	fsal_status_t fsal_status;
+	struct fsal_obj_handle *obj;
+	struct gsh_buffdesc wire_handle;
+	fsal_cookie_t cookie = 0;
+
+	fsal_status = lookup(&data->parent_hdl->obj_handle, name, &obj, &attrs);
+	if (FSAL_IS_ERROR(fsal_status)) {
+		data->status = fsal_status;
+		ret = false;
+		goto end;
+	}
+	obj->obj_ops.handle_to_key(obj, &wire_handle);
+	cookie = *(fsal_cookie_t*)wire_handle.addr;
+
+	ret = data->cb(name, obj, &attrs, data->dir_state, cookie);
+	release(obj);
+ end:
+	if (cookiep)
+		*cookiep = cookie;
+	fsal_release_attrs(&attrs);
+	return ret;
+}
+
 /**
  * read_dirents
  * read the directory and call through the callback function for
@@ -447,15 +535,20 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 				  fsal_cookie_t *whence,
 				  void *dir_state,
 				  fsal_readdir_cb cb,
+				  attrmask_t attrmask,
 				  bool *eof)
 {
+	struct scality_fsal_export *export;
 	struct scality_fsal_obj_handle *myself;
 
-	*eof = true;
-
+	export = container_of(op_ctx->fsal_export,
+			      struct scality_fsal_export,
+			      export);
 	myself = container_of(dir_hdl,
 			      struct scality_fsal_obj_handle,
 			      obj_handle);
+
+	LogDebug(COMPONENT_FSAL, "readdir in %s", myself->object);
 
 	LogDebug(COMPONENT_FSAL,
 		"readdir: hdl=%p, name=%s",
@@ -469,16 +562,21 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 	op_ctx->fsal_private = dir_hdl;
 
 
-	struct scality_fsal_export *export = container_of(op_ctx->fsal_export,
-							 struct scality_fsal_export,
-							 export);
+	struct read_dirents_data data = {
+		.status = { ERR_FSAL_NO_ERROR, 0},
+		.export = export,
+		.parent_hdl = myself,
+		.dir_state = dir_state,
+		.cb = cb,
+		.attrmask = attrmask,
+	};
 
-        dbd_readdir(export, myself, whence, dir_state, cb, eof);
+	dbd_readdir(export, myself, whence, &data, read_dirents_cb, eof);
 
 	op_ctx->fsal_private = NULL;
 
 	PTHREAD_RWLOCK_unlock(&dir_hdl->lock);
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	return data.status;
 }
 
 static fsal_status_t renamefile(struct fsal_obj_handle *obj_hdl,
@@ -493,7 +591,8 @@ static fsal_status_t renamefile(struct fsal_obj_handle *obj_hdl,
 	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
-static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl)
+static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
+			      struct attrlist *attrs_out)
 {
 	struct scality_fsal_obj_handle *myself;
 	struct scality_fsal_export *export;
@@ -510,16 +609,18 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl)
 
 	if ( '\0' != myself->object[0] &&
 	     SCALITY_FSAL_OBJ_STATE_CLEAN == myself->state) {
-	
+
 		int ret;
 		ret = dbd_getattr(export, myself);
 		if ( ret < 0 ) {
 			LogDebug(COMPONENT_FSAL,
 				 "Requesting attributes for non existing object name=%s",
 				 myself->object);
-			return fsalstat(ERR_FSAL_STALE, ESTALE);		
+			return fsalstat(ERR_FSAL_STALE, ESTALE);
 		}
-		
+	}
+	if (attrs_out) {
+		fsal_copy_attrs(attrs_out, &myself->attributes, false);
 	}
 
 #if !defined(DISABLE_INVALIDATION)
@@ -536,11 +637,12 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl)
 #endif
 
 	LogFullDebug(COMPONENT_FSAL,
-		     "hdl=%p, name=%s numlinks %"PRIu32,
+		     "hdl=%p, name=%s numlinks=%"PRIu32" fileid=%"PRIu64,
 		     myself,
 		     myself->object,
-		     myself->attributes.numlinks);
-	
+		     myself->attributes.numlinks,
+		     myself->attributes.fileid);
+
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
@@ -554,7 +656,7 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 {
 	struct scality_fsal_obj_handle *myself;
 	struct scality_fsal_export *export;
-	
+
 	export = container_of(op_ctx->fsal_export,
 			      struct scality_fsal_export,
 			      export);
@@ -563,7 +665,7 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 			      obj_handle);
 
 	if ( REGULAR_FILE != myself->attributes.type &&
-             DIRECTORY != myself->attributes.type) {
+	     DIRECTORY != myself->attributes.type) {
 		LogCrit(COMPONENT_FSAL,
 			"Invoking unsupported FSAL operation, setattrs on unsupported object type: %s",
 			myself->object);
@@ -576,18 +678,18 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 			.tv_nsec = 0
 		};
 	}
-	
+
 	if (FSAL_TEST_MASK(attrs->mask, ATTR_ATIME_SERVER)) {
 		myself->attributes.mtime = (struct timespec) {
 			.tv_sec = time(NULL),
 			.tv_nsec = 0
 		};
 	}
-	
+
 	if (FSAL_TEST_MASK(attrs->mask, ATTR_MTIME)) {
 		myself->attributes.mtime = attrs->mtime;
 	}
-	
+
 	if (FSAL_TEST_MASK(attrs->mask, ATTR_CTIME)) {
 		myself->attributes.ctime = attrs->ctime;
 	}
@@ -597,9 +699,9 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 	}
 
 	if (FSAL_TEST_MASK(attrs->mask, ATTR_SIZE)) {
-                if (DIRECTORY == myself->attributes.type) {
-                        return fsalstat(ERR_FSAL_PERM, 0);
-                }
+		if (DIRECTORY == myself->attributes.type) {
+			return fsalstat(ERR_FSAL_PERM, 0);
+		}
 		if ( 0 != attrs->filesize )
 			return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 		size_t i;
@@ -610,6 +712,7 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 			else if ( location->content )
 				gsh_free(location->content);
 		}
+		myself->attributes.spaceused = 0;
 		myself->attributes.filesize = 0;
 		gsh_free(myself->locations);
 		myself->memory_used = 0;
@@ -631,19 +734,19 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 
 static void
 delete_parts(struct scality_fsal_export *export,
-             struct scality_fsal_obj_handle *obj_hdl)
+	     struct scality_fsal_obj_handle *obj_hdl)
 {
-        size_t i;
-        int ret;
-        for ( i = 0 ; i < obj_hdl->n_locations ; ++i ) {
-                ret = sproxyd_delete(export,
-                                     obj_hdl->locations[i].key);
-                if ( ret < 0 ) {
-                        LogWarn(COMPONENT_FSAL,
-                                "Unable to delete key %s from %s",
-                                obj_hdl->locations[i].key, obj_hdl->object);
-                }
-        }
+	size_t i;
+	int ret;
+	for ( i = 0 ; i < obj_hdl->n_locations ; ++i ) {
+		ret = sproxyd_delete(export,
+				     obj_hdl->locations[i].key);
+		if ( ret < 0 ) {
+			LogWarn(COMPONENT_FSAL,
+				"Unable to delete key %s from %s",
+				obj_hdl->locations[i].key, obj_hdl->object);
+		}
+	}
 
 }
 
@@ -652,6 +755,7 @@ delete_parts(struct scality_fsal_export *export,
  */
 
 static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
+				 struct fsal_obj_handle *hdl,
 				 const char *name)
 {
 	int ret;
@@ -673,96 +777,89 @@ static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
 	if ( 0 != ret )
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 
-        switch(dtype) {
+	switch(dtype) {
 	case DBD_DTYPE_REGULAR:
 	case DBD_DTYPE_DIRECTORY:
-                break;
+		break;
 	case DBD_DTYPE_ENOENT:
-                return fsalstat(ERR_FSAL_NOENT, ENOENT);
+		return fsalstat(ERR_FSAL_NOENT, ENOENT);
 	default:break;
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 	}
 
-        struct fsal_obj_handle *hdl;
-        fsal_status_t status = lookup(dir_hdl, name, &hdl);
-        if ( ERR_FSAL_NO_ERROR != status.major ) {
-                return status;
-        }
-        struct scality_fsal_obj_handle *obj_hdl;
-        obj_hdl = container_of(hdl,
-                               struct scality_fsal_obj_handle,
-                               obj_handle);
-        
-        ret = dbd_post(export, myself);
-        if ( 0 != ret ) {
-                LogCrit(COMPONENT_FSAL,
-                        "Unable to create the directory placeholder `%s/'",
-                        myself->object);
-                release(hdl);
-                return fsalstat(ERR_FSAL_SERVERFAULT, 0);
-        }
-        
+	struct scality_fsal_obj_handle *obj_hdl;
+	obj_hdl = container_of(hdl,
+			       struct scality_fsal_obj_handle,
+			       obj_handle);
+
+	ret = dbd_post(export, myself);
+	if ( 0 != ret ) {
+		LogCrit(COMPONENT_FSAL,
+			"Unable to create the directory placeholder `%s/'",
+			myself->object);
+		release(hdl);
+		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
+	}
+	fsal_status_t status;
 	switch(dtype) {
 	case DBD_DTYPE_REGULAR: {
-                int ret;
-                ret = dbd_delete(export, obj_hdl->object);
-                if ( ret < 0 ) {
-                        LogCrit(COMPONENT_FSAL,
-                                "Unable to de-index %s",
-                                obj_hdl->object);
-                        status = fsalstat(ERR_FSAL_SERVERFAULT, 0);
-                }
-                else {
-                        delete_parts(export, obj_hdl);
-                        scality_cleanup(export, myself,
-                                        SCALITY_FSAL_CLEANUP_COMMIT|
-                                        SCALITY_FSAL_CLEANUP_ROLLBACK);
-                }
-                break;
+		int ret;
+		ret = dbd_delete(export, obj_hdl->object);
+		if ( ret < 0 ) {
+			LogCrit(COMPONENT_FSAL,
+				"Unable to de-index %s",
+				obj_hdl->object);
+			status = fsalstat(ERR_FSAL_SERVERFAULT, 0);
+		}
+		else {
+			delete_parts(export, obj_hdl);
+			scality_cleanup(export, myself,
+					SCALITY_FSAL_CLEANUP_COMMIT|
+					SCALITY_FSAL_CLEANUP_ROLLBACK);
+		}
+		break;
 	}
 	case DBD_DTYPE_DIRECTORY: {
-                int ret;
-                dbd_is_last_result_t result;
-                result = dbd_is_last(export, obj_hdl);
-                switch(result) {
-                case DBD_LOOKUP_IS_LAST: {
-                        char placeholder[MAX_URL_SIZE];
-                        snprintf(placeholder, sizeof placeholder,
-                                 "%s"S3_DELIMITER, obj_hdl->object);
-                        ret = dbd_delete(export, placeholder);
-                        if ( ret < 0 ) {
-                                LogCrit(COMPONENT_FSAL,
-                                        "Unable to de-index %s",
-                                        placeholder);
-                                status = fsalstat(ERR_FSAL_SERVERFAULT, 0);
-                        }
-                        //do things
-                        break;
-                }
-                case DBD_LOOKUP_IS_NOT_LAST:
-                        status = fsalstat(ERR_FSAL_NOTEMPTY, 0);
-                        break;
-                case DBD_LOOKUP_ENOENT:
-                        status = fsalstat(ERR_FSAL_NOENT, 0);
-                default:
-                        status = fsalstat(ERR_FSAL_SERVERFAULT, 0);
-                }
-                break;
-        }
+		int ret;
+		dbd_is_last_result_t result;
+		result = dbd_is_last(export, obj_hdl);
+		switch(result) {
+		case DBD_LOOKUP_IS_LAST: {
+			char placeholder[MAX_URL_SIZE];
+			snprintf(placeholder, sizeof placeholder,
+				 "%s"S3_DELIMITER, obj_hdl->object);
+			ret = dbd_delete(export, placeholder);
+			if ( ret < 0 ) {
+				LogCrit(COMPONENT_FSAL,
+					"Unable to de-index %s",
+					placeholder);
+				status = fsalstat(ERR_FSAL_SERVERFAULT, 0);
+			}
+			//do things
+			break;
+		}
+		case DBD_LOOKUP_IS_NOT_LAST:
+			status = fsalstat(ERR_FSAL_NOTEMPTY, 0);
+			break;
+		case DBD_LOOKUP_ENOENT:
+			status = fsalstat(ERR_FSAL_NOENT, 0);
+		default:
+			status = fsalstat(ERR_FSAL_SERVERFAULT, 0);
+		}
+		break;
+	}
 	default:
-                assert(!"Impossible");
+		assert(!"Impossible");
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 	}
 
-        release(hdl);
-
-        if ( ERR_FSAL_NO_ERROR != status.major ) {
-                char object[MAX_URL_SIZE];
-                ret = snprintf(object, sizeof object, "%s"S3_DELIMITER"%s", myself->object, name);
-                if ( ret < sizeof(object) ) {
-                        redis_remove(object);
-                }
-        }
+	if ( ERR_FSAL_NO_ERROR != status.major ) {
+		char object[MAX_URL_SIZE];
+		ret = snprintf(object, sizeof object, "%s"S3_DELIMITER"%s", myself->object, name);
+		if ( ret < sizeof(object) ) {
+			redis_remove(object);
+		}
+	}
 	return status;
 }
 
@@ -834,11 +931,12 @@ static void release(struct fsal_obj_handle *obj_hdl)
 {
 	struct scality_fsal_obj_handle *myself;
 	int i;
-	
+
 	myself = container_of(obj_hdl,
 			      struct scality_fsal_obj_handle,
 			      obj_handle);
 
+	LogDebug(COMPONENT_FSAL, "release('%s', %"PRIu64")", myself->object, obj_hdl->fileid);
 	if ( SCALITY_FSAL_OBJ_STATE_DIRTY == myself->state ) {
 		fsal_status_t status;
 		status = scality_commit(obj_hdl, 0, myself->attributes.filesize);
@@ -847,7 +945,7 @@ static void release(struct fsal_obj_handle *obj_hdl)
 		}
 	}
 
-	
+
 	fsal_obj_handle_fini(obj_hdl);
 
 	LogDebug(COMPONENT_FSAL,
@@ -861,8 +959,37 @@ static void release(struct fsal_obj_handle *obj_hdl)
 		gsh_free(myself->locations[i].key);
 	if (myself->locations)
 		gsh_free(myself->locations);
-	
+
 	gsh_free(myself);
+}
+
+static void handle_get_ref(struct fsal_obj_handle *obj_hdl)
+{
+	struct scality_fsal_obj_handle *myself;
+	myself = container_of(obj_hdl,
+			      struct scality_fsal_obj_handle,
+			      obj_handle);
+	atomic_postadd_int32_t(&myself->ref_count, 1);
+	LogDebug(COMPONENT_FSAL,
+		 "get_ref('%s', inode:%"PRIu64", p:%p)",
+		 myself->object, obj_hdl->fileid,
+		 myself);
+}
+
+static void handle_put_ref(struct fsal_obj_handle *obj_hdl)
+{
+	struct scality_fsal_obj_handle *myself;
+	myself = container_of(obj_hdl,
+			      struct scality_fsal_obj_handle,
+			      obj_handle);
+	LogDebug(COMPONENT_FSAL,
+		 "put_ref('%s', inode:%"PRIu64", p:%p)",
+		 myself->object, obj_hdl->fileid,
+		 myself);
+	int32_t old_ref_count = atomic_postsub_int32_t(&myself->ref_count, 1);
+	if (1 == old_ref_count) {
+		release(obj_hdl);
+	}
 }
 
 void scality_handle_ops_init(struct fsal_obj_ops *ops)
@@ -888,9 +1015,10 @@ void scality_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->commit = scality_commit;
 	ops->lock_op = scality_lock_op;
 	ops->close = scality_close;
-	ops->lru_cleanup = scality_lru_cleanup;
 	ops->handle_digest = handle_digest;
 	ops->handle_to_key = handle_to_key;
+	ops->get_ref = handle_get_ref;
+	ops->put_ref = handle_put_ref;
 
 	/* xattr related functions */
 	ops->list_ext_attrs = scality_list_ext_attrs;
@@ -899,7 +1027,6 @@ void scality_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->getextattr_value_by_id = scality_getextattr_value_by_id;
 	ops->setextattr_value = scality_setextattr_value;
 	ops->setextattr_value_by_id = scality_setextattr_value_by_id;
-	ops->getextattr_attrs = scality_getextattr_attrs;
 	ops->remove_extattr_by_id = scality_remove_extattr_by_id;
 	ops->remove_extattr_by_name = scality_remove_extattr_by_name;
 
@@ -914,12 +1041,15 @@ void scality_handle_ops_init(struct fsal_obj_ops *ops)
  */
 
 fsal_status_t scality_lookup_path(struct fsal_export *exp_hdl,
-				 const char *path,
-				 struct fsal_obj_handle **handle)
+				  const char *path,
+				  struct fsal_obj_handle **handle,
+				  struct attrlist *attrs_out)
 {
 	struct scality_fsal_export *myself;
 
 	myself = container_of(exp_hdl, struct scality_fsal_export, export);
+
+	LogCrit(COMPONENT_FSAL, "lookup_path(%s)", path);
 
 	if (strcmp(path, myself->export_path) != 0) {
 		/* Lookup of a path other than the export's root. */
@@ -942,18 +1072,29 @@ fsal_status_t scality_lookup_path(struct fsal_export *exp_hdl,
 		if ( 0 == ret )
 			handle_keyp = handle_key;
 
-                ret = dbd_collect_bucket_attributes(myself);
-                if ( 0 != ret ) {
-                        LogCrit(COMPONENT_FSAL,
-                                "Cannot collect bucket attributes for %s",
-                                myself->export_path);
-                        return fsalstat(ERR_FSAL_NOENT, ENOENT);
-                }
+		ret = dbd_collect_bucket_attributes(myself);
+		if ( 0 != ret ) {
+			LogCrit(COMPONENT_FSAL,
+				"Cannot collect bucket attributes for %s",
+				myself->export_path);
+			return fsalstat(ERR_FSAL_NOENT, ENOENT);
+		}
 		myself->root_handle =
 			alloc_handle(object,
 				     handle_keyp,
 				     exp_hdl,
 				     DBD_DTYPE_DIRECTORY);
+		if (attrs_out) {
+			fsal_status_t status;
+			status = getattrs(&myself->root_handle->obj_handle,
+					  attrs_out);
+			if (FSAL_IS_ERROR(status)) {
+				LogCrit(COMPONENT_FSAL,
+					"Unable to getatr on %s",
+					myself->root_handle->object);
+				return status;
+			}
+		}
 	}
 
 	*handle = &myself->root_handle->obj_handle;
@@ -974,8 +1115,9 @@ fsal_status_t scality_lookup_path(struct fsal_export *exp_hdl,
  */
 
 fsal_status_t scality_create_handle(struct fsal_export *exp_hdl,
-				   struct gsh_buffdesc *hdl_desc,
-				   struct fsal_obj_handle **handle)
+				    struct gsh_buffdesc *hdl_desc,
+				    struct fsal_obj_handle **handle,
+				    struct attrlist *attrs_out)
 {
 	struct scality_fsal_obj_handle *hdl;
 	struct scality_fsal_export *export;
@@ -1003,8 +1145,8 @@ fsal_status_t scality_create_handle(struct fsal_export *exp_hdl,
 	}
 
 	LogDebug(COMPONENT_FSAL, "handle match for %s", object);
-	
-	
+
+
 	dbd_dtype_t dtype = DBD_DTYPE_DIRECTORY;
 
 	if ( '\0' != object[0]  ) {
@@ -1020,6 +1162,17 @@ fsal_status_t scality_create_handle(struct fsal_export *exp_hdl,
 				   hdl_desc->addr,
 				   op_ctx->fsal_export, dtype);
 		*handle = &hdl->obj_handle;
+		if (attrs_out) {
+			fsal_status_t status;
+			status = getattrs(&hdl->obj_handle, attrs_out);
+			if (FSAL_IS_ERROR(status)) {
+				LogCrit(COMPONENT_FSAL,
+					"Unable to getatr on %s",
+					hdl->object);
+				return status;
+			}
+		}
+
 		return fsalstat(ERR_FSAL_NO_ERROR,0);
 	case DBD_DTYPE_ENOENT:
 		return fsalstat(ERR_FSAL_STALE, ESTALE);

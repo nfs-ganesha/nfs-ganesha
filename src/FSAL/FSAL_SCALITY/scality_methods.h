@@ -39,10 +39,12 @@
 #define V4_FH_OPAQUE_SIZE (NFS4_FHSIZE - sizeof(struct file_handle_v4))
 #define SCALITY_OPAQUE_SIZE (sizeof(uint64_t))
 
+enum static_assert_cookie_size {  static_assert_cookie_size_check = 1 / (sizeof(fsal_cookie_t) == SCALITY_OPAQUE_SIZE) };
+
 #define MAX_URL_SIZE 4096
 #define S3_DELIMITER "/"
 #define S3_DELIMITER_SZ (sizeof(S3_DELIMITER)-1)
-#define READDIR_MAX_KEYS 500
+#define READDIR_MAX_KEYS 50
 #define DEFAULT_PART_SIZE (5*(1<<20))
 #define FLUSH_THRESHOLD (15*(1<<20))
 
@@ -80,12 +82,14 @@ struct scality_fsal_export {
 };
 
 fsal_status_t scality_lookup_path(struct fsal_export *exp_hdl,
-				 const char *path,
-				 struct fsal_obj_handle **handle);
+				  const char *path,
+				  struct fsal_obj_handle **handle,
+				  struct attrlist *attrs_out);
 
 fsal_status_t scality_create_handle(struct fsal_export *exp_hdl,
-				   struct gsh_buffdesc *hdl_desc,
-				   struct fsal_obj_handle **handle);
+				    struct gsh_buffdesc *hdl_desc,
+				    struct fsal_obj_handle **handle,
+				    struct attrlist *attrs_out);
 
 /*
  * SCALITY internal object handle
@@ -117,9 +121,11 @@ enum scality_fsal_obj_state {
 
 struct scality_fsal_obj_handle {
 	struct fsal_obj_handle obj_handle;
+	struct state_hdl obj_state;
 	struct attrlist attributes;
 	char *handle;
 	uint32_t numlinks;
+	int32_t ref_count;
 
 	char *object; // object in the bucket (without any heading delimiter)
 
@@ -184,8 +190,6 @@ fsal_status_t scality_lock_op(struct fsal_obj_handle *obj_hdl,
 fsal_status_t scality_share_op(struct fsal_obj_handle *obj_hdl, void *p_owner,
 			      fsal_share_param_t request_share);
 fsal_status_t scality_close(struct fsal_obj_handle *obj_hdl);
-fsal_status_t scality_lru_cleanup(struct fsal_obj_handle *obj_hdl,
-				 lru_actions_t requests);
 
 /* extended attributes management */
 fsal_status_t scality_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
@@ -215,9 +219,6 @@ fsal_status_t scality_setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 					    unsigned int xattr_id,
 					    caddr_t buffer_addr,
 					    size_t buffer_size);
-fsal_status_t scality_getextattr_attrs(struct fsal_obj_handle *obj_hdl,
-				      unsigned int xattr_id,
-				      struct attrlist *p_attrs);
 fsal_status_t scality_remove_extattr_by_id(struct fsal_obj_handle *obj_hdl,
 					  unsigned int xattr_id);
 fsal_status_t scality_remove_extattr_by_name(struct fsal_obj_handle *obj_hdl,

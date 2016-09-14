@@ -200,6 +200,7 @@ static uint32_t fs_xattr_access_rights(struct fsal_export *exp_hdl)
 
 static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 			       const char *filepath, int quota_type,
+			       int quota_id,
 			       fsal_quota_t *pquota)
 {
 	/* SCALITY doesn't support quotas */
@@ -212,6 +213,7 @@ static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 
 static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 			       const char *filepath, int quota_type,
+			       int quota_id,
 			       fsal_quota_t *pquota, fsal_quota_t *presquota)
 {
 	/* SCALITY doesn't support quotas */
@@ -289,8 +291,8 @@ static struct config_item export_params[] = {
 	CONF_ITEM_NOOP("name"),
 	CONF_MAND_STR("bucket", 1, MAXPATHLEN, NULL,
 		      scality_fsal_export, bucket),
-        CONF_ITEM_MODE("umask", 0022,
-                       scality_fsal_export, umask),
+	CONF_ITEM_MODE("umask", 0022,
+		       scality_fsal_export, umask),
 	CONFIG_EOL
 };
 
@@ -335,9 +337,9 @@ fsal_status_t scality_create_export(struct fsal_module *fsal_hdl,
 	if (retval != 0) {
 		LogCrit(COMPONENT_FSAL,
 			"Incorrect or missing parameters for export %s",
-			op_ctx->export->fullpath);
+			op_ctx->ctx_export->fullpath);
 		return fsalstat(ERR_FSAL_FAULT, 0);
-	}	
+	}
 
 	fsal_export_init(&myself->export);
 	scality_export_ops_init(&myself->export.exp_ops);
@@ -364,14 +366,14 @@ fsal_status_t scality_create_export(struct fsal_module *fsal_hdl,
 	}
 
 	/* Save the export path. */
-	myself->export_path = gsh_strdup(op_ctx->export->fullpath);
+	myself->export_path = gsh_strdup(op_ctx->ctx_export->fullpath);
 	op_ctx->fsal_export = &myself->export;
 
 	LogDebug(COMPONENT_FSAL,
 		 "Created exp %p - %s",
 		 myself, myself->export_path);
 	LogEvent(COMPONENT_FSAL, "Volume %s exported at : '%s'",
-		 myself->bucket, op_ctx->export->fullpath);
+		 myself->bucket, op_ctx->ctx_export->fullpath);
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
