@@ -152,6 +152,8 @@ static struct config_item core_params[] = {
 		      nfs_core_param, decoder_fridge_expiration_delay),
 	CONF_ITEM_I64("Decoder_Fridge_Block_Timeout", 0, 7200, 600,
 		      nfs_core_param, decoder_fridge_block_timeout),
+	CONF_ITEM_I64("Blocked_Lock_Poller_Interval", 0, 180, 10,
+		      nfs_core_param, blocked_lock_poller_interval),
 	CONF_ITEM_LIST("NFS_Protocols", CORE_OPTION_ALL_VERS, protocols,
 		       nfs_core_param, core_options),
 	CONF_ITEM_LIST("Protocols", CORE_OPTION_ALL_VERS, protocols,

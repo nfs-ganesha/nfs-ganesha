@@ -999,6 +999,8 @@ void available_blocked_lock_upcall(struct fsal_obj_handle *obj, void *owner,
 
 void process_blocked_lock_upcall(state_block_data_t *block_data);
 
+void blocked_lock_polling(struct fridgethr_context *ctx);
+
 /******************************************************************************
  *
  * NFSv4 Recovery functions

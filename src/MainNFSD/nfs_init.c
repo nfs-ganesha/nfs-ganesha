@@ -262,6 +262,8 @@ void nfs_print_param_config(void)
 	       (uint64_t) nfs_param.core_param.decoder_fridge_expiration_delay);
 	printf("\tDecoder_Fridge_Block_Timeout = %" PRIu64 " ;\n",
 	       (uint64_t) nfs_param.core_param.decoder_fridge_block_timeout);
+	printf("\tBlocked_Lock_Poller_Interval = %" PRIu64 " ;\n",
+	       (uint64_t) nfs_param.core_param.blocked_lock_poller_interval);
 
 	printf("\tManage_Gids_Expiration = %" PRIu64 " ;\n",
 	       (uint64_t) nfs_param.core_param.manage_gids_expiration);

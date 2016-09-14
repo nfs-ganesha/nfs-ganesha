@@ -264,6 +264,22 @@ const char *str_blocked(state_blocking_t blocked)
 	return "unknown       ";
 }
 
+const char *str_block_type(state_block_type_t btype)
+{
+	switch (btype) {
+	case STATE_BLOCK_NONE:
+		return "STATE_BLOCK_NONE    ";
+	case STATE_BLOCK_INTERNAL:
+		return "STATE_BLOCK_INTERNAL";
+	case STATE_BLOCK_ASYNC:
+		return "STATE_BLOCK_ASYNC   ";
+	case STATE_BLOCK_POLL:
+		return "STATE_BLOCK_POLL    ";
+	}
+
+	return "unknown             ";
+}
+
 /******************************************************************************
  *
  * Function to compare lock parameters
@@ -317,7 +333,7 @@ log_entry_ref_count(const char *reason, state_lock_entry_t *le,
 			"%s Entry: %p obj=%p, fileid=%" PRIu64
 			", export=%u, type=%s, start=0x%"PRIx64
 			", end=0x%"PRIx64
-			", blocked=%s/%p, state=%p, refcount=%"PRIu32
+			", blocked=%s/%p/%s, state=%p, refcount=%"PRIu32
 			", owner={%s}",
 			reason, le, le->sle_obj,
 			(uint64_t) le->sle_obj->fileid,
@@ -326,6 +342,9 @@ log_entry_ref_count(const char *reason, state_lock_entry_t *le,
 			le->sle_lock.lock_start,
 			lock_end(&le->sle_lock),
 			str_blocked(le->sle_blocked), le->sle_block_data,
+			le->sle_block_data
+			    ? str_block_type(le->sle_block_data->sbd_block_type)
+			    : str_block_type(STATE_BLOCK_NONE),
 			le->sle_state, refcount, owner);
 	}
 }
@@ -1476,8 +1495,12 @@ state_status_t state_add_grant_cookie(struct fsal_obj_handle *obj,
 		status = STATE_INCONSISTENT_ENTRY;
 		break;
 
+	case STATE_GRANT_POLL:
 	case STATE_GRANT_FSAL_AVAILABLE:
-		/* Now that we are sure we can continue, acquire the FSAL lock.
+		/* A poll triggered by the polling thread actually looks
+		 * exactly like a poll triggered by an FSAL upcall...
+		 *
+		 * Now that we are sure we can continue, acquire the FSAL lock.
 		 * If we get STATE_LOCK_BLOCKED we need to return...
 		 */
 		status = do_lock_op(obj,
@@ -1779,10 +1802,12 @@ void try_to_grant_lock(state_lock_entry_t *lock_entry)
 		release_root_op_context();
 
 		if (status == STATE_LOCK_BLOCKED) {
-			/* The lock is still blocked,
-			 * restore it's type and leave it in the list
+			/* The lock is still blocked, restore it's type and
+			 * leave it in the list.
 			 */
 			lock_entry->sle_blocked = blocked;
+			lock_entry->sle_block_data->sbd_grant_type =
+							STATE_GRANT_NONE;
 			return;
 		}
 
@@ -2278,18 +2303,20 @@ state_status_t do_lock_op(struct fsal_obj_handle *obj,
 	if (fsal_export->exp_ops.fs_supports(fsal_export,
 					     fso_lock_support_owner)
 	    || lock_op != FSAL_OP_UNLOCK) {
+		fsal_lock_op_t fsal_lock_op = lock_op;
+
 		if (lock_op == FSAL_OP_LOCKB &&
 		    !fsal_export->exp_ops.fs_supports(
 						fsal_export,
 						fso_lock_support_async_block))
-			lock_op = FSAL_OP_LOCK;
+			fsal_lock_op = FSAL_OP_LOCK;
 
 		if (!obj->fsal->m_ops.support_ex(obj)) {
 			/* Call legacy lock_op */
 			fsal_status = obj->obj_ops.lock_op(
 					obj,
 					convert_lock_owner(fsal_export, owner),
-					lock_op,
+					fsal_lock_op,
 					lock,
 					&conflicting_lock);
 		} else {
@@ -2300,7 +2327,7 @@ state_status_t do_lock_op(struct fsal_obj_handle *obj,
 					obj,
 					state,
 					owner,
-					lock_op,
+					fsal_lock_op,
 					lock,
 					&conflicting_lock);
 		}
@@ -2310,13 +2337,22 @@ state_status_t do_lock_op(struct fsal_obj_handle *obj,
 		LogFullDebug(COMPONENT_STATE, "FSAL_lock_op returned %s",
 			     state_err_str(status));
 
-		if (status == STATE_LOCK_BLOCKED && lock_op != FSAL_OP_LOCKB) {
+		if (status == STATE_LOCK_BLOCKED
+		    && fsal_lock_op != FSAL_OP_LOCKB) {
 			/* This is an unexpected return code,
 			 * make sure caller reports an error
 			 */
 			LogMajor(COMPONENT_STATE,
 				 "FSAL returned unexpected STATE_LOCK_BLOCKED result");
 			status = STATE_FSAL_ERROR;
+		} else if (status == STATE_LOCK_CONFLICT
+			   && lock_op == FSAL_OP_LOCKB) {
+			/* This must be a non-async blocking lock that was
+			 * blocked, where we actually made a non-blocking
+			 * call. In that case, actually return
+			 * STATE_LOCK_BLOCKED.
+			 */
+			status = STATE_LOCK_BLOCKED;
 		}
 	} else {
 		status = do_unlock_no_owner(obj, lock);
@@ -2473,6 +2509,7 @@ state_status_t state_lock(struct fsal_obj_handle *obj,
 	fsal_lock_op_t lock_op;
 	state_status_t status = 0;
 	fsal_openflags_t openflags;
+	bool async;
 
 	/* If the FSAL doesn't support multiple file descriptors, we must
 	 * use the legacy fsal_open. Otherwise, the FSAL will manage
@@ -2647,17 +2684,16 @@ state_status_t state_lock(struct fsal_obj_handle *obj,
 	}
 
 	/* Decide how to proceed */
-	if (fsal_export->exp_ops.
-	    fs_supports(fsal_export, fso_lock_support_async_block)
-	    && blocking == STATE_NLM_BLOCKING) {
-		/* FSAL supports blocking locks, and this is an NLM blocking
-		 * lock request, request blocking lock from FSAL.
+	if (blocking == STATE_NLM_BLOCKING) {
+		/* do_lock_op will handle FSAL_OP_LOCKB for those FSALs that
+		 * do not support async blocking locks. It will make a
+		 * non-blocking call in that case, and it will return
+		 * STATE_LOCK_BLOCKED if the lock was not granted.
 		 */
 		lock_op = FSAL_OP_LOCKB;
-	} else if (allow || blocking == STATE_NLM_BLOCKING) {
-		/* No conflict found in Ganesha, or NLM blocking lock when FSAL
-		 * doesn't support blocking locks. In either case, proceed with
-		 * non-blocking request to FSAL.
+	} else if (allow) {
+		/* No conflict found in Ganesha, and this is not a blocking
+		 * request.
 		 */
 		lock_op = FSAL_OP_LOCK;
 	} else {
@@ -2722,12 +2758,14 @@ state_status_t state_lock(struct fsal_obj_handle *obj,
 					      state,
 					      lock);
 
+	/* Check for async blocking lock support. */
+	async = fsal_export->exp_ops.fs_supports(fsal_export,
+						 fso_lock_support_async_block);
+
 	/* If no conflict in lock list, or FSAL supports async blocking locks,
 	 * make FSAL call. Don't ask for conflict if we know about a conflict.
 	 */
-	if (allow
-	    || fsal_export->exp_ops.fs_supports(fsal_export,
-					     fso_lock_support_async_block)) {
+	if (allow || async) {
 		/* Prepare to make call to FSAL for this lock */
 		status = do_lock_op(obj,
 				    state,
@@ -2737,8 +2775,13 @@ state_status_t state_lock(struct fsal_obj_handle *obj,
 				    allow ? holder : NULL,
 				    allow ? conflict : NULL,
 				    overlap);
-	} else
+	} else {
+		/* FSAL does not support async blocking locks and we have
+		 * a blocking lock within Ganesha, no need to make an
+		 * FSAL call that will just return denied.
+		 */
 		status = STATE_LOCK_BLOCKED;
+	}
 
 	if (status == STATE_SUCCESS) {
 		/* Merge any touching or overlapping locks into this one */
@@ -2773,6 +2816,20 @@ state_status_t state_lock(struct fsal_obj_handle *obj,
 		found_entry->sle_block_data = block_data;
 		found_entry->sle_blocked = blocking;
 		block_data->sbd_lock_entry = found_entry;
+		if (async) {
+			/* Allow FSAL to signal when lock is granted or
+			 * available for retry.
+			 */
+			block_data->sbd_block_type = STATE_BLOCK_ASYNC;
+		} else if (allow) {
+			/* Actively poll for the lock. */
+			block_data->sbd_block_type = STATE_BLOCK_POLL;
+		} else {
+			/* Ganesha will attempt to grant the lock when
+			 * a conflicting lock is released.
+			 */
+			block_data->sbd_block_type = STATE_BLOCK_INTERNAL;
+		}
 
 		/* Insert entry into lock list */
 		LogEntry("FSAL block for", found_entry);
@@ -3481,6 +3538,56 @@ void state_export_unlock_all(void)
 			 "Could not complete cleanup of locks for %s",
 			 op_ctx->export->fullpath);
 	}
+}
+
+/**
+ * @brief Poll any blocked locks of type STATE_BLOCK_POLL
+ *
+ * @param[in] ctx Fridge Thread Context
+ *
+ */
+
+void blocked_lock_polling(struct fridgethr_context *ctx)
+{
+	state_lock_entry_t *found_entry;
+	struct glist_head *glist;
+	state_block_data_t *pblock;
+
+	SetNameFunction("lk_poll");
+
+	PTHREAD_MUTEX_lock(&blocked_locks_mutex);
+
+	if (isFullDebug(COMPONENT_STATE) && isFullDebug(COMPONENT_MEMLEAKS))
+		LogBlockedList("Blocked Lock List",
+			       NULL, &state_blocked_locks);
+
+	glist_for_each(glist, &state_blocked_locks) {
+		pblock = glist_entry(glist, state_block_data_t, sbd_list);
+
+		found_entry = pblock->sbd_lock_entry;
+
+		/* Check if got an entry */
+		if (found_entry == NULL)
+			continue;
+
+		/* Check if right type */
+		if (pblock->sbd_block_type != STATE_BLOCK_POLL)
+			continue;
+
+		/* Schedule async processing, leave the lock on the blocked
+		 * lock list since we might not succeed in granting this lock.
+		 */
+		pblock->sbd_grant_type = STATE_GRANT_POLL;
+
+		if (state_block_schedule(pblock) != STATE_SUCCESS) {
+			LogMajor(COMPONENT_STATE,
+				 "Unable to schedule lock notification.");
+		}
+
+		LogEntry("Blocked Lock found", found_entry);
+	}			/* glist_for_each_safe */
+
+	PTHREAD_MUTEX_unlock(&blocked_locks_mutex);
 }
 
 /**

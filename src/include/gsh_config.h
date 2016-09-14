@@ -346,6 +346,8 @@ typedef struct nfs_core_param {
 	    accept a task before erroring.  Settable with
 	    Decoder_Fridge_Block_Timeout. */
 	time_t decoder_fridge_block_timeout;
+	/** Polling interval for blocked lock polling thread. */
+	time_t blocked_lock_poller_interval;
 	/** Protocols to support.  Should probably be renamed.
 	    Defaults to CORE_OPTION_ALL_VERS and is settable with
 	    NFS_Protocols (as a comma-separated list of 3 and 4.) */
