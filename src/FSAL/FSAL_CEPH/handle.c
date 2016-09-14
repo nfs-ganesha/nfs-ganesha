@@ -1997,8 +1997,8 @@ fsal_status_t ceph_setattr2(struct fsal_obj_handle *obj_hdl,
 		if (rc != 0) {
 			LogDebug(COMPONENT_FSAL,
 				 "clock_gettime returned %s (%d)",
-				 strerror(-rc), -rc);
-			status = ceph2fsal_error(rc);
+				 strerror(errno), errno);
+			status = fsalstat(posix2fsal_error(errno), errno);
 			goto out;
 		}
 		st.st_atim = timestamp;
@@ -2016,8 +2016,8 @@ fsal_status_t ceph_setattr2(struct fsal_obj_handle *obj_hdl,
 		if (rc != 0) {
 			LogDebug(COMPONENT_FSAL,
 				 "clock_gettime returned %s (%d)",
-				 strerror(-rc), -rc);
-			status = ceph2fsal_error(rc);
+				 strerror(errno), errno);
+			status = fsalstat(posix2fsal_error(errno), errno);
 			goto out;
 		}
 		st.st_mtim = timestamp;
