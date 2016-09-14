@@ -688,7 +688,7 @@ void clean_export_paths(struct gsh_export *export)
 	 * with. But only if it's a non-root path starting
 	 * with /.
 	 */
-	if (export->fullpath[0] == '/') {
+	if (export->fullpath && export->fullpath[0] == '/') {
 		int pathlen;
 
 		pathlen = strlen(export->fullpath);

@@ -658,11 +658,17 @@ static nfsstat4 layoutcommit(struct fsal_obj_handle *obj_pub,
 		}
 	}
 
-	if ((arg->time_changed) &&
-	    (arg->new_time.seconds > stold.st_mtime))
+	if (arg->time_changed &&
+	    (arg->new_time.seconds > stold.st_mtime ||
+	     (arg->new_time.seconds == stold.st_mtime &&
+	      arg->new_time.nseconds > stold.st_mtim.tv_nsec))) {
 		stnew.st_mtime = arg->new_time.seconds;
-	else
-		stnew.st_mtime = time(NULL);
+		stnew.st_mtim.tv_nsec = arg->new_time.nseconds;
+	} else {
+		ceph_status = clock_gettime(CLOCK_REALTIME, &stnew.st_mtim);
+		if (ceph_status != 0)
+			return posix2nfs4_error(errno);
+	}
 
 	attrmask |= CEPH_SETATTR_MTIME;
 
