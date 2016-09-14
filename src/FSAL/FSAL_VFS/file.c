@@ -1313,9 +1313,9 @@ fsal_status_t vfs_lock_op2(struct fsal_obj_handle *obj_hdl,
 
 		if (conflicting_lock != NULL) {
 			/* Get the conflicting lock */
-			retval = fcntl(my_fd, F_GETLK, &lock_args);
+			int rc = fcntl(my_fd, F_GETLK, &lock_args);
 
-			if (retval) {
+			if (rc) {
 				retval = errno;	/* we lose the initial error */
 				LogCrit(COMPONENT_FSAL,
 					"After failing a lock request, I couldn't even get the details of who owns the lock.");
