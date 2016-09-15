@@ -1586,21 +1586,23 @@ static fsal_status_t glusterfs_open2(struct fsal_obj_handle *obj_hdl,
 		my_fd->openflags = tmp_fd.openflags;
 
 		if (createmode >= FSAL_EXCLUSIVE || truncated) {
-			/* Refresh the attributes to return client the
-			 * attributes which got set
+			/* Fetch the attributes to check against the
+			 * verifier in case of exclusive open/create.
 			 */
-			status = glusterfs_fetch_attrs(myself, my_fd);
+			struct stat stat;
 
-			if (FSAL_IS_ERROR(status)) {
-				FSAL_CLEAR_MASK(myself->attributes.mask);
-				FSAL_SET_MASK(myself->attributes.mask,
-					       ATTR_RDATTR_ERR);
-				/** @todo: should handle this
-				 * better.
-				 */
+			retval = glfs_fstat(my_fd->glfd, &stat);
+
+			if (retval == 0) {
+				LogFullDebug(COMPONENT_FSAL,
+					     "New size = %" PRIx64,
+					     stat.st_size);
+			} else {
+				if (errno == EBADF)
+					errno = ESTALE;
+				status = fsalstat(posix2fsal_error(errno),
+						  errno);
 			}
-			LogFullDebug(COMPONENT_FSAL, "New size = %"PRIx64,
-				     myself->attributes.filesize);
 
 			/* Now check verifier for exclusive, but not for
 			 * FSAL_EXCLUSIVE_9P.
@@ -1608,8 +1610,8 @@ static fsal_status_t glusterfs_open2(struct fsal_obj_handle *obj_hdl,
 			if (!FSAL_IS_ERROR(status) &&
 			    createmode >= FSAL_EXCLUSIVE &&
 			    createmode != FSAL_EXCLUSIVE_9P &&
-			    !obj_hdl->obj_ops.check_verifier(obj_hdl,
-							     verifier)) {
+			    !check_verifier_stat(&stat,
+						 verifier)) {
 				/* Verifier didn't match, return EEXIST */
 				status =
 				    fsalstat(posix2fsal_error(EEXIST), EEXIST);
