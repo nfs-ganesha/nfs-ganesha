@@ -436,6 +436,8 @@ static fattr_xdr_result decode_type(XDR *xdr, struct xdr_attrs_args *args)
 		/* For wanting of a better solution */
 		return FATTR_XDR_FAILED;
 	}
+	/*update both args->attrs->type and args->type*/
+	args->type = args->attrs->type;
 	return FATTR_XDR_SUCCESS;
 }
 
@@ -612,6 +614,9 @@ static fattr_xdr_result decode_fsid(XDR *xdr, struct xdr_attrs_args *args)
 		return FATTR_XDR_FAILED;
 	if (!xdr_u_int64_t(xdr, &args->fsid.minor))
 		return FATTR_XDR_FAILED;
+	/*update both : args->fsid and args->attrs->fsid*/
+	if (args->attrs != NULL)
+		args->attrs->fsid = args->fsid;
 	return FATTR_XDR_SUCCESS;
 }
 
@@ -1089,6 +1094,9 @@ static fattr_xdr_result decode_fileid(XDR *xdr, struct xdr_attrs_args *args)
 {
 	if (!inline_xdr_u_int64_t(xdr, &args->fileid))
 		return FATTR_XDR_FAILED;
+	/*update both : args->fileid and args->attrs->fileid*/
+	if (args->attrs != NULL)
+		args->attrs->fileid = args->fileid;
 	return FATTR_XDR_SUCCESS;
 }
 
