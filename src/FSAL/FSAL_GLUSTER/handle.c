@@ -2646,13 +2646,6 @@ static fsal_status_t glusterfs_setattr2(struct fsal_obj_handle *obj_hdl,
 		goto out;
 	}
 
-	status = glusterfs_fetch_attrs(myself, &my_fd);
-
-	if (FSAL_IS_ERROR(status)) {
-		LogDebug(COMPONENT_FSAL,
-			 "fetch_attrs failed");
-	}
-
  out:
 	if (FSAL_IS_ERROR(status)) {
 		LogCrit(COMPONENT_FSAL,
