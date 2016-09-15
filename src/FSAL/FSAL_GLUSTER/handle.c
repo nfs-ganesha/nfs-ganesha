@@ -2118,9 +2118,6 @@ static fsal_status_t glusterfs_write2(struct fsal_obj_handle *obj_hdl,
 	}
 #endif
 
-	if (*fsal_stable)
-		openflags |= FSAL_O_SYNC;
-
 	/* Get a usable file descriptor */
 	status = find_fd(&my_fd, obj_hdl, bypass, state, openflags,
 			 &has_lock, &need_fsync, &closefd, false);
@@ -2155,15 +2152,6 @@ static fsal_status_t glusterfs_write2(struct fsal_obj_handle *obj_hdl,
 		status = gluster2fsal_error(EPERM);
 		LogFatal(COMPONENT_FSAL, "Could not set Ganesha credentials");
 		goto out;
-	}
-
-	/* attempt stability if we aren't using an O_SYNC fd */
-	if (need_fsync) {
-		retval = glfs_fsync(my_fd.glfd);
-		if (retval == -1) {
-			retval = errno;
-			status = fsalstat(posix2fsal_error(retval), retval);
-		}
 	}
 
  out:
