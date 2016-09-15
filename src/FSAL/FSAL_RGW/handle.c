@@ -1438,6 +1438,22 @@ fsal_status_t rgw_fsal_close2(struct fsal_obj_handle *obj_hdl,
 }
 
 /**
+ * @brief Close the global FD for a file
+ *
+ * This function closes a file, freeing resources used for read/write
+ * access and releasing capabilities.
+  *
+ * @param[in] handle_pub File to close
+  *
+  * @return FSAL status.
+  */
+static fsal_status_t rgw_fsal_close(struct fsal_obj_handle *handle_pub)
+{
+	return rgw_fsal_close2(handle_pub, NULL);
+}
+
+
+/**
  * @brief Write wire handle
  *
  * This function writes a 'wire' handle to be sent to clients and
@@ -1521,6 +1537,7 @@ void handle_ops_init(struct fsal_obj_ops *ops)
 	ops->getattrs = getattrs;
 	ops->rename = rgw_fsal_rename;
 	ops->unlink = rgw_fsal_unlink;
+	ops->close = rgw_fsal_close;
 	ops->handle_digest = handle_digest;
 	ops->handle_to_key = handle_to_key;
 	ops->open2 = rgw_fsal_open2;
