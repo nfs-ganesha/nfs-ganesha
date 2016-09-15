@@ -166,6 +166,8 @@ static struct config_item core_params[] = {
 		       nfs_core_param, enable_NLM),
 	CONF_ITEM_BOOL("Enable_RQUOTA", true,
 		       nfs_core_param, enable_RQUOTA),
+	CONF_ITEM_BOOL("Enable_TCP_keepalive", false,
+		       nfs_core_param, enable_tcp_keepalive),
 	CONF_ITEM_BOOL("Enable_Fast_Stats", false,
 		       nfs_core_param, enable_FASTSTATS),
 	CONF_ITEM_BOOL("Short_File_Handle", false,

@@ -124,6 +124,8 @@ NFS_CORE_PARAM {}
 
 	Enable_RQUOTA(bool, default true)
 
+	Enable_TCP_keepalive(bool, default false)
+
 	Enable_Fast_Stats(bool, default false)
 
 	Short_File_Handle(bool, default false)

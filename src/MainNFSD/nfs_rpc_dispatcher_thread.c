@@ -621,10 +621,22 @@ static int alloc_socket_setopts(int p)
 		       SOL_SOCKET, SO_REUSEADDR,
 		       &one, sizeof(one))) {
 		LogWarn(COMPONENT_DISPATCH,
-			"Bad tcp socket options for %s, error %d(%s)",
+			"Bad tcp socket option reuseaddr for %s, error %d(%s)",
 			tags[p], errno, strerror(errno));
 
 		return -1;
+	}
+
+	if (nfs_param.core_param.enable_tcp_keepalive) {
+		if (setsockopt(tcp_socket[p],
+			       SOL_SOCKET, SO_KEEPALIVE,
+			       &one, sizeof(one))) {
+			LogWarn(COMPONENT_DISPATCH,
+				"Bad tcp socket option keepalive for %s, error %d(%s)",
+				tags[p], errno, strerror(errno));
+
+			return -1;
+		}
 	}
 
 	/* We prefer using non-blocking socket

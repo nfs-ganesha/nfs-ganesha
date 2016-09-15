@@ -368,6 +368,8 @@ typedef struct nfs_core_param {
 	bool enable_RQUOTA;
 	/** Whether to use fast stats.  Defaults to false. */
 	bool enable_FASTSTATS;
+	/** Whether tcp sockets should use SO_KEEPALIVE */
+	bool enable_tcp_keepalive;
 	/** Whether to use short NFS file handle to accommodate VMware
 	    NFS client. Enable this if you have a VMware NFSv3 client.
 	    VMware NFSv3 client has a max limit of 56 byte file handles!
