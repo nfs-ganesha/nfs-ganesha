@@ -310,7 +310,7 @@ be used with NFS-Ganesha to support PANFS
 Summary: The NFS-GANESHA's GLUSTER FSAL
 Group: Applications/System
 Requires:	nfs-ganesha = %{version}-%{release}
-BuildRequires:        glusterfs-api-devel >= 3.7.4
+BuildRequires:        glusterfs-api-devel >= 3.8
 BuildRequires:        libattr-devel, libacl-devel
 
 %description gluster
