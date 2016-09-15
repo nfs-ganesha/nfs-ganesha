@@ -1456,6 +1456,9 @@ out:
 	if (FSAL_IS_ERROR(status)
 		&& (myself->attributes.mask & ATTR_RDATTR_ERR)) {
 		myself->attributes.mask = ATTR_RDATTR_ERR;
+	} else {
+		/* Make sure ATTR_RDATTR_ERR is cleared on success. */
+		myself->attributes.mask &= ~ATTR_RDATTR_ERR;
 	}
 	return status;
 }
@@ -1858,6 +1861,7 @@ open:
 		posix2fsal_attributes(&sb, attrs_out);
 
 		/* Make sure ATTR_RDATTR_ERR is cleared on success. */
+		attrs_out->mask &= ~ATTR_RDATTR_ERR;
 	}
 
 
