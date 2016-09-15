@@ -73,7 +73,7 @@ static struct fsal_staticfsinfo_t default_gluster_info = {
 	.link_supports_permission_checks = true,
 };
 
-static struct glusterfs_fsal_module *glfsal_module;
+static struct glusterfs_fsal_module GlusterFS;
 
 static struct config_item glfs_params[] = {
 	CONF_ITEM_BOOL("pnfs_mds", false,
@@ -136,44 +136,43 @@ bool glusterfs_support_ex(struct fsal_obj_handle *obj)
 
 MODULE_INIT void glusterfs_init(void)
 {
-	/* register_fsal seems to expect zeroed memory. */
-	glfsal_module = gsh_calloc(1, sizeof(struct glusterfs_fsal_module));
+	struct fsal_module *myself = &GlusterFS.fsal;
 
-	if (register_fsal(&glfsal_module->fsal, glfsal_name, FSAL_MAJOR_VERSION,
+	/* register_fsal seems to expect zeroed memory. */
+	memset(myself, 0, sizeof(*myself));
+
+	if (register_fsal(myself, glfsal_name, FSAL_MAJOR_VERSION,
 			  FSAL_MINOR_VERSION, FSAL_ID_GLUSTER) != 0) {
-		gsh_free(glfsal_module);
 		LogCrit(COMPONENT_FSAL,
 			"Gluster FSAL module failed to register.");
+		return;
 	}
 
 	/* set up module operations */
-	glfsal_module->fsal.m_ops.create_export = glusterfs_create_export;
+	myself->m_ops.create_export = glusterfs_create_export;
 
 	/* setup global handle internals */
-	glfsal_module->fsal.m_ops.init_config = init_config;
+	myself->m_ops.init_config = init_config;
 
 	/* Enable extended fop support */
-	glfsal_module->fsal.m_ops.support_ex = glusterfs_support_ex;
+	myself->m_ops.support_ex = glusterfs_support_ex;
 	/*
 	 * Following inits needed for pNFS support
 	 * get device info will used by pnfs meta data server
 	 */
-	glfsal_module->fsal.m_ops.getdeviceinfo = getdeviceinfo;
-	glfsal_module->fsal.m_ops.fsal_pnfs_ds_ops = pnfs_ds_ops_init;
+	myself->m_ops.getdeviceinfo = getdeviceinfo;
+	myself->m_ops.fsal_pnfs_ds_ops = pnfs_ds_ops_init;
 
 	LogDebug(COMPONENT_FSAL, "FSAL Gluster initialized");
 }
 
 MODULE_FINI void glusterfs_unload(void)
 {
-	if (unregister_fsal(&glfsal_module->fsal) != 0) {
+	if (unregister_fsal(&GlusterFS.fsal) != 0) {
 		LogCrit(COMPONENT_FSAL,
 			"FSAL Gluster unable to unload.  Dying ...");
-		abort();
+		return;
 	}
-
-	gsh_free(glfsal_module);
-	glfsal_module = NULL;
 
 	LogDebug(COMPONENT_FSAL, "FSAL Gluster unloaded");
 }
