@@ -440,21 +440,18 @@ void posix2fsal_attributes(const struct stat *buffstat,
 	fsalattr->group = buffstat->st_gid;
 
 	/* Use full timer resolution */
-#ifdef LINUX
-	fsalattr->atime = buffstat->st_atim;
-	fsalattr->ctime = buffstat->st_ctim;
-	fsalattr->mtime = buffstat->st_mtim;
-	fsalattr->chgtime =
-	    (gsh_time_cmp(&buffstat->st_mtim, &buffstat->st_ctim) >
-	     0) ? fsalattr->mtime : fsalattr->ctime;
-#elif FREEBSD
+#ifdef FREEBSD
 	fsalattr->atime = buffstat->st_atimespec;
 	fsalattr->ctime = buffstat->st_ctimespec;
 	fsalattr->mtime = buffstat->st_mtimespec;
-	fsalattr->chgtime =
-	    (gsh_time_cmp(&buffstat->st_mtimespec, &buffstat->st_ctimespec) >
-	     0) ? fsalattr->mtime : fsalattr->ctime;
+#else
+	fsalattr->atime = buffstat->st_atim;
+	fsalattr->ctime = buffstat->st_ctim;
+	fsalattr->mtime = buffstat->st_mtim;
 #endif
+	fsalattr->chgtime =
+	    (gsh_time_cmp(&fsalattr->mtime, &fsalattr->ctime) > 0) ?
+		fsalattr->mtime : fsalattr->ctime;
 
 	fsalattr->change = timespec_to_nsecs(&fsalattr->chgtime);
 
