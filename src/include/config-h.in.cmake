@@ -54,6 +54,7 @@
 #cmakedefine USE_GLUSTER_SYMLINK_MOUNT 1
 #cmakedefine USE_FSAL_CEPH_MKNOD 1
 #cmakedefine USE_FSAL_CEPH_SETLK 1
+#cmakedefine USE_FSAL_CEPH_LL_LOOKUP_ROOT 1
 
 #define NFS_GANESHA 1
 
