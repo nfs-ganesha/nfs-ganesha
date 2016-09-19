@@ -210,7 +210,7 @@ fsal_status_t gpfs_open2(struct fsal_obj_handle *obj_hdl,
 	bool truncated;
 	bool created = false;
 	struct fsal_export *export = op_ctx->fsal_export;
-	struct gpfs_filesystem *gpfs_fs = obj_hdl->fs->private;
+	struct gpfs_filesystem *gpfs_fs = obj_hdl->fs->private_data;
 	int *fd = NULL;
 
 	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);

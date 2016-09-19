@@ -222,7 +222,7 @@ fsal_status_t GPFSFSAL_lock_op2(int my_fd,
 			 "Conflicting_lock argument can't be NULL with lock_op  = LOCKT");
 		return fsalstat(ERR_FSAL_FAULT, 0);
 	}
-	gpfs_fs = obj_hdl->fs->private;
+	gpfs_fs = obj_hdl->fs->private_data;
 	glock_args.lfd = my_fd;
 
 	LogFullDebug(COMPONENT_FSAL,

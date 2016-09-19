@@ -273,7 +273,7 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_hdl,
 	/* Descriptor for DS handle */
 	struct gsh_buffdesc ds_desc;
 	int errsv = 0;
-	struct gpfs_filesystem *gpfs_fs = obj_hdl->fs->private;
+	struct gpfs_filesystem *gpfs_fs = obj_hdl->fs->private_data;
 
 	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
 
@@ -417,7 +417,7 @@ static nfsstat4 layoutreturn(struct fsal_obj_handle *obj_hdl,
 	/* The private 'full' object handle */
 	struct gpfs_file_handle *gpfs_handle;
 	int errsv = 0;
-	struct gpfs_filesystem *gpfs_fs = obj_hdl->fs->private;
+	struct gpfs_filesystem *gpfs_fs = obj_hdl->fs->private_data;
 
 	int rc = 0;
 
@@ -484,7 +484,7 @@ static nfsstat4 layoutcommit(struct fsal_obj_handle *obj_hdl,
 	int rc = 0;
 	struct layoutcommit_arg targ;
 	int errsv = 0;
-	struct gpfs_filesystem *gpfs_fs = obj_hdl->fs->private;
+	struct gpfs_filesystem *gpfs_fs = obj_hdl->fs->private_data;
 
 	/* Sanity check on type */
 	if (arg->type != LAYOUT4_NFSV4_1_FILES) {

@@ -86,7 +86,7 @@ GPFSFSAL_create2(struct fsal_obj_handle *dir_hdl, const char *filename,
 		return status;
 
 	/* retrieve file attributes */
-	return GPFSFSAL_getattrs(op_ctx->fsal_export, dir_hdl->fs->private,
+	return GPFSFSAL_getattrs(op_ctx->fsal_export, dir_hdl->fs->private_data,
 				 op_ctx, gpfs_fh, fsal_attr);
 }
 
