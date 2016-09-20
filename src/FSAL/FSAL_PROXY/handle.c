@@ -2159,8 +2159,8 @@ fsal_status_t pxy_lookup_path(struct fsal_export *exp_hdl,
 		 * attributes of the terminal lookup.
 		 */
 		fsal_status_t st = pxy_lookup_impl(parent, exp_hdl, creds, p,
-						   &next, pnext == NULL ? NULL :
-						   attrs_out);
+						   &next, pnext == NULL ?
+						   attrs_out : NULL);
 		if (FSAL_IS_ERROR(st)) {
 			gsh_free(pcopy);
 			return st;
