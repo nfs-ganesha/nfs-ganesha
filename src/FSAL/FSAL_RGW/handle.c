@@ -479,7 +479,7 @@ fsal_status_t rgw_fsal_setattr2(struct fsal_obj_handle *obj_hdl,
 	}
 
 	if (FSAL_TEST_MASK(attrib_set->mask, ATTR_GROUP)) {
-		mask |= RGW_SETATTR_UID;
+		mask |= RGW_SETATTR_GID;
 		st.st_gid = attrib_set->group;
 	}
 
