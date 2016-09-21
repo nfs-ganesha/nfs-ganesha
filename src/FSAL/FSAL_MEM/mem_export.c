@@ -1,0 +1,349 @@
+/*
+ * vim:noexpandtab:shiftwidth=8:tabstop=8:
+ *
+ * Copyright (C) Panasas Inc., 2011
+ * Author: Jim Lieb jlieb@panasas.com
+ *
+ * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
+ *		Thomas LEIBOVICI  thomas.leibovici@cea.fr
+ *
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ *
+ * -------------
+ */
+
+/* export.c
+ * MEM FSAL export object
+ */
+
+#include "config.h"
+
+#include "fsal.h"
+#include <libgen.h>		/* used for 'dirname' */
+#include <pthread.h>
+#include <string.h>
+#include <sys/types.h>
+#include <os/mntent.h>
+#include <os/quota.h>
+#include <dlfcn.h>
+#include "fsal_convert.h"
+#include "FSAL/fsal_commonlib.h"
+#include "FSAL/fsal_config.h"
+#include "mem_methods.h"
+#include "nfs_exports.h"
+#include "export_mgr.h"
+
+#ifdef __FreeBSD__
+#include <sys/endian.h>
+
+#define bswap_16(x)     bswap16((x))
+#define bswap_64(x)     bswap64((x))
+#endif
+
+/* helpers to/from other MEM objects
+ */
+
+struct fsal_staticfsinfo_t *mem_staticinfo(struct fsal_module *hdl);
+
+/* export object methods
+ */
+
+static void mem_release_export(struct fsal_export *exp_hdl)
+{
+	struct mem_fsal_export *myself;
+
+	myself = container_of(exp_hdl, struct mem_fsal_export, export);
+
+	if (myself->root_handle != NULL) {
+		mem_clean_dir_tree(myself->root_handle);
+
+		fsal_obj_handle_fini(&myself->root_handle->obj_handle);
+
+		LogDebug(COMPONENT_FSAL,
+			 "Releasing hdl=%p, name=%s",
+			 myself->root_handle, myself->root_handle->m_name);
+
+		mem_free_handle(myself->root_handle);
+
+		myself->root_handle = NULL;
+	}
+
+	fsal_detach_export(exp_hdl->fsal, &exp_hdl->exports);
+	free_export_ops(exp_hdl);
+
+	if (myself->export_path != NULL)
+		gsh_free(myself->export_path);
+
+	gsh_free(myself);
+}
+
+static fsal_status_t mem_get_dynamic_info(struct fsal_export *exp_hdl,
+					  struct fsal_obj_handle *obj_hdl,
+					  fsal_dynamicfsinfo_t *infop)
+{
+	infop->total_bytes = 0;
+	infop->free_bytes = 0;
+	infop->avail_bytes = 0;
+	infop->total_files = 0;
+	infop->free_files = 0;
+	infop->avail_files = 0;
+	infop->time_delta.tv_sec = 1;
+	infop->time_delta.tv_nsec = 0;
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
+static bool mem_fs_supports(struct fsal_export *exp_hdl,
+			    fsal_fsinfo_options_t option)
+{
+	struct fsal_staticfsinfo_t *info;
+
+	info = mem_staticinfo(exp_hdl->fsal);
+	return fsal_supports(info, option);
+}
+
+static uint64_t mem_fs_maxfilesize(struct fsal_export *exp_hdl)
+{
+	struct fsal_staticfsinfo_t *info;
+
+	info = mem_staticinfo(exp_hdl->fsal);
+	return fsal_maxfilesize(info);
+}
+
+static uint32_t mem_fs_maxread(struct fsal_export *exp_hdl)
+{
+	struct fsal_staticfsinfo_t *info;
+
+	info = mem_staticinfo(exp_hdl->fsal);
+	return fsal_maxread(info);
+}
+
+static uint32_t mem_fs_maxwrite(struct fsal_export *exp_hdl)
+{
+	struct fsal_staticfsinfo_t *info;
+
+	info = mem_staticinfo(exp_hdl->fsal);
+	return fsal_maxwrite(info);
+}
+
+static uint32_t mem_fs_maxlink(struct fsal_export *exp_hdl)
+{
+	struct fsal_staticfsinfo_t *info;
+
+	info = mem_staticinfo(exp_hdl->fsal);
+	return fsal_maxlink(info);
+}
+
+static uint32_t mem_fs_maxnamelen(struct fsal_export *exp_hdl)
+{
+	struct fsal_staticfsinfo_t *info;
+
+	info = mem_staticinfo(exp_hdl->fsal);
+	return fsal_maxnamelen(info);
+}
+
+static uint32_t mem_fs_maxpathlen(struct fsal_export *exp_hdl)
+{
+	struct fsal_staticfsinfo_t *info;
+
+	info = mem_staticinfo(exp_hdl->fsal);
+	return fsal_maxpathlen(info);
+}
+
+static struct timespec mem_fs_lease_time(struct fsal_export *exp_hdl)
+{
+	struct fsal_staticfsinfo_t *info;
+
+	info = mem_staticinfo(exp_hdl->fsal);
+	return fsal_lease_time(info);
+}
+
+static fsal_aclsupp_t mem_fs_acl_support(struct fsal_export *exp_hdl)
+{
+	struct fsal_staticfsinfo_t *info;
+
+	info = mem_staticinfo(exp_hdl->fsal);
+	return fsal_acl_support(info);
+}
+
+static attrmask_t mem_fs_supported_attrs(struct fsal_export *exp_hdl)
+{
+	struct fsal_staticfsinfo_t *info;
+
+	info = mem_staticinfo(exp_hdl->fsal);
+	return fsal_supported_attrs(info);
+}
+
+static uint32_t mem_fs_umask(struct fsal_export *exp_hdl)
+{
+	struct fsal_staticfsinfo_t *info;
+
+	info = mem_staticinfo(exp_hdl->fsal);
+	return fsal_umask(info);
+}
+
+static uint32_t mem_fs_xattr_access_rights(struct fsal_export *exp_hdl)
+{
+	struct fsal_staticfsinfo_t *info;
+
+	info = mem_staticinfo(exp_hdl->fsal);
+	return fsal_xattr_access_rights(info);
+}
+
+/* extract a file handle from a buffer.
+ * do verification checks and flag any and all suspicious bits.
+ * Return an updated fh_desc into whatever was passed.  The most
+ * common behavior, done here is to just reset the length.  There
+ * is the option to also adjust the start pointer.
+ */
+
+static fsal_status_t mem_extract_handle(struct fsal_export *exp_hdl,
+					fsal_digesttype_t in_type,
+					struct gsh_buffdesc *fh_desc,
+					int flags)
+{
+	size_t fh_min;
+	uint64_t *hashkey;
+	ushort *len;
+
+	fh_min = 1;
+
+	if (fh_desc->len < fh_min) {
+		LogMajor(COMPONENT_FSAL,
+			 "Size mismatch for handle.  should be >= %zu, got %zu",
+			 fh_min, fh_desc->len);
+		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
+	}
+	hashkey = (uint64_t *)fh_desc->addr;
+	len = (ushort *)((char *)hashkey + sizeof(uint64_t));
+	if (flags & FH_FSAL_BIG_ENDIAN) {
+#if (BYTE_ORDER != BIG_ENDIAN)
+		*len = bswap_16(*len);
+		*hashkey = bswap_64(*hashkey);
+#endif
+	} else {
+#if (BYTE_ORDER == BIG_ENDIAN)
+		*len = bswap_16(*len);
+		*hashkey = bswap_64(*hashkey);
+#endif
+	}
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
+/**
+ * @brief Allocate a state_t structure
+ *
+ * Note that this is not expected to fail since memory allocation is
+ * expected to abort on failure.
+ *
+ * @param[in] exp_hdl               Export state_t will be associated with
+ * @param[in] state_type            Type of state to allocate
+ * @param[in] related_state         Related state if appropriate
+ *
+ * @returns a state structure.
+ */
+
+static struct state_t *mem_alloc_state(struct fsal_export *exp_hdl,
+				       enum state_type state_type,
+				       struct state_t *related_state)
+{
+	struct state_t *state;
+
+	state = init_state(gsh_calloc(1, sizeof(struct state_t)
+				      + sizeof(struct mem_fd)),
+			   exp_hdl, state_type, related_state);
+	return state;
+}
+
+/* mem_export_ops_init
+ * overwrite vector entries with the methods that we support
+ */
+
+void mem_export_ops_init(struct export_ops *ops)
+{
+	ops->release = mem_release_export;
+	ops->lookup_path = mem_lookup_path;
+	ops->extract_handle = mem_extract_handle;
+	ops->create_handle = mem_create_handle;
+	ops->get_fs_dynamic_info = mem_get_dynamic_info;
+	ops->fs_supports = mem_fs_supports;
+	ops->fs_maxfilesize = mem_fs_maxfilesize;
+	ops->fs_maxread = mem_fs_maxread;
+	ops->fs_maxwrite = mem_fs_maxwrite;
+	ops->fs_maxlink = mem_fs_maxlink;
+	ops->fs_maxnamelen = mem_fs_maxnamelen;
+	ops->fs_maxpathlen = mem_fs_maxpathlen;
+	ops->fs_lease_time = mem_fs_lease_time;
+	ops->fs_acl_support = mem_fs_acl_support;
+	ops->fs_supported_attrs = mem_fs_supported_attrs;
+	ops->fs_umask = mem_fs_umask;
+	ops->fs_xattr_access_rights = mem_fs_xattr_access_rights;
+	ops->alloc_state = mem_alloc_state;
+}
+
+/* create_export
+ * Create an export point and return a handle to it to be kept
+ * in the export list.
+ * First lookup the fsal, then create the export and then put the fsal back.
+ * returns the export with one reference taken.
+ */
+
+fsal_status_t mem_create_export(struct fsal_module *fsal_hdl,
+				void *parse_node,
+				struct config_error_type *err_type,
+				const struct fsal_up_vector *up_ops)
+{
+	struct mem_fsal_export *myself;
+	int retval = 0;
+
+	myself = gsh_calloc(1, sizeof(struct mem_fsal_export));
+
+	if (myself == NULL) {
+		LogMajor(COMPONENT_FSAL,
+			 "Could not allocate export");
+		return fsalstat(posix2fsal_error(errno), errno);
+	}
+
+	fsal_export_init(&myself->export);
+	mem_export_ops_init(&myself->export.exp_ops);
+
+	retval = fsal_attach_export(fsal_hdl, &myself->export.exports);
+
+	if (retval != 0) {
+		/* seriously bad */
+		LogMajor(COMPONENT_FSAL,
+			 "Could not attach export");
+		gsh_free(myself->export_path);
+		gsh_free(myself->root_handle);
+		free_export_ops(&myself->export);
+		gsh_free(myself);	/* elvis has left the building */
+
+		return fsalstat(posix2fsal_error(retval), retval);
+	}
+
+	myself->export.fsal = fsal_hdl;
+
+	/* Save the export path. */
+	myself->export_path = gsh_strdup(op_ctx->ctx_export->fullpath);
+	op_ctx->fsal_export = &myself->export;
+
+	LogDebug(COMPONENT_FSAL,
+		 "Created exp %p - %s",
+		 myself, myself->export_path);
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}

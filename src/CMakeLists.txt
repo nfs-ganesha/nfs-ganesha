@@ -198,6 +198,7 @@ option(USE_FSAL_PANFS "build PanFS support in VFS FSAL" OFF)
 option(USE_FSAL_GLUSTER "build GLUSTER FSAL shared library" ON)
 option(USE_FSAL_NULL "build NULL FSAL shared library" ON)
 option(USE_FSAL_RGW "build RGW FSAL shared library" OFF)
+option(USE_FSAL_MEM "build Memory FSAL shared library" ON)
 option(USE_TOOL_MULTILOCK "build multilock tool" OFF)
 
 # nTIRPC
@@ -964,6 +965,7 @@ message(STATUS "USE_FSAL_GPFS = ${USE_FSAL_GPFS}")
 message(STATUS "USE_FSAL_ZFS = ${USE_FSAL_ZFS}")
 message(STATUS "USE_FSAL_GLUSTER = ${USE_FSAL_GLUSTER}")
 message(STATUS "USE_FSAL_NULL = ${USE_FSAL_NULL}")
+message(STATUS "USE_FSAL_MEM = ${USE_FSAL_MEM}")
 message(STATUS "USE_SYSTEM_NTIRPC = ${USE_SYSTEM_NTIRPC}")
 message(STATUS "USE_DBUS = ${USE_DBUS}")
 message(STATUS "USE_CB_SIMULATOR = ${USE_CB_SIMULATOR}")
@@ -1062,6 +1064,11 @@ set(USE_FSAL_ZFS ${USE_FSAL_ZFS}
    FORCE)
 
 set(USE_FSAL_GLUSTER ${USE_FSAL_GLUSTER}
+  CACHE BOOL
+   "build GLUSTER FSAL"
+   FORCE)
+
+set(USE_FSAL_MEM ${USE_FSAL_MEM}
   CACHE BOOL
    "build GLUSTER FSAL"
    FORCE)
@@ -1240,6 +1247,12 @@ if(USE_FSAL_NULL)
 else(USE_FSAL_NULL)
     set(BCOND_NULLFS "%bcond_with")
 endif(USE_FSAL_NULL)
+
+if(USE_FSAL_MEM)
+    set(BCOND_MEM "%bcond_without")
+else(USE_FSAL_MEM)
+    set(BCOND_MEM "%bcond_with")
+endif(USE_FSAL_MEM)
 
 if(USE_9P_RDMA)
     set(BCOND_RDMA "%bcond_without")

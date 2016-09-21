@@ -36,6 +36,9 @@ Requires: sles-release >= 12
 @BCOND_NULLFS@ nullfs
 %global use_fsal_null %{on_off_switch nullfs}
 
+@BCOND_MEM@ mem
+%global use_fsal_mem %{on_off_switch mem}
+
 @BCOND_GPFS@ gpfs
 %global use_fsal_gpfs %{on_off_switch gpfs}
 
@@ -230,6 +233,18 @@ This package contains a Stackable FSAL shared object to
 be used with NFS-Ganesha. This is mostly a template for future (more sophisticated) stackable FSALs
 %endif
 
+# MEM
+%if %{with mem}
+%package mem
+Summary: The NFS-GANESHA's Memory backed testing FSAL
+Group: Applications/System
+Requires: nfs-ganesha = %{version}-%{release}
+
+%description mem
+This package contains a FSAL shared object to be used with NFS-Ganesha.  This
+is used for speed and latency testing.
+%endif
+
 # GPFS
 %if %{with gpfs}
 %package gpfs
@@ -327,6 +342,7 @@ be used with NFS-Ganesha to support Gluster
 cmake .	-DCMAKE_BUILD_TYPE=Debug			\
 	-DBUILD_CONFIG=rpmbuild				\
 	-DUSE_FSAL_NULL=%{use_fsal_null}		\
+	-DUSE_FSAL_MEM=%{use_fsal_mem}		\
 	-DUSE_FSAL_ZFS=%{use_fsal_zfs}			\
 	-DUSE_FSAL_XFS=%{use_fsal_xfs}			\
 	-DUSE_FSAL_CEPH=%{use_fsal_ceph}		\
@@ -499,6 +515,12 @@ killall -SIGHUP dbus-daemon >/dev/null 2>&1 || :
 %files nullfs
 %defattr(-,root,root,-)
 %{_libdir}/ganesha/libfsalnull*
+%endif
+
+%if %{with mem}
+%files mem
+%defattr(-,root,root,-)
+%{_libdir}/ganesha/libfsalmem*
 %endif
 
 %if %{with gpfs}
