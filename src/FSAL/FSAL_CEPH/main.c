@@ -184,7 +184,7 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 	/* The status code to return */
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	/* A fake argument list for Ceph */
-	const char *argv[] = { "FSAL_CEPH", op_ctx->export->fullpath };
+	const char *argv[] = { "FSAL_CEPH", op_ctx->ctx_export->fullpath };
 	/* The internal export object */
 	struct export *export = gsh_calloc(1, sizeof(struct export));
 	/* The 'private' root handle */
@@ -211,7 +211,7 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 		status.major = ERR_FSAL_SERVERFAULT;
 		LogCrit(COMPONENT_FSAL,
 			"Unable to create Ceph handle for %s.",
-			op_ctx->export->fullpath);
+			op_ctx->ctx_export->fullpath);
 		goto error;
 	}
 
@@ -220,7 +220,7 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 		status.major = ERR_FSAL_SERVERFAULT;
 		LogCrit(COMPONENT_FSAL,
 			"Unable to read Ceph configuration for %s.",
-			op_ctx->export->fullpath);
+			op_ctx->ctx_export->fullpath);
 		goto error;
 	}
 
@@ -229,7 +229,7 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 		status.major = ERR_FSAL_SERVERFAULT;
 		LogCrit(COMPONENT_FSAL,
 			"Unable to parse Ceph configuration for %s.",
-			op_ctx->export->fullpath);
+			op_ctx->ctx_export->fullpath);
 		goto error;
 	}
 
@@ -238,7 +238,7 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 		status.major = ERR_FSAL_SERVERFAULT;
 		LogCrit(COMPONENT_FSAL,
 			"Unable to mount Ceph cluster for %s.",
-			op_ctx->export->fullpath);
+			op_ctx->ctx_export->fullpath);
 		goto error;
 	}
 
@@ -246,7 +246,7 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 		status.major = ERR_FSAL_SERVERFAULT;
 		LogCrit(COMPONENT_FSAL,
 			"Unable to attach export for %s.",
-			op_ctx->export->fullpath);
+			op_ctx->ctx_export->fullpath);
 		goto error;
 	}
 
@@ -254,7 +254,7 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 
 	LogDebug(COMPONENT_FSAL,
 		 "Ceph module export %s.",
-		 op_ctx->export->fullpath);
+		 op_ctx->ctx_export->fullpath);
 
 	status = find_cephfs_root(export->cmount, &i);
 	if (FSAL_IS_ERROR(status))

@@ -623,7 +623,7 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 		.glfs_log = NULL};
 
 	LogDebug(COMPONENT_FSAL, "In args: export path = %s",
-		 op_ctx->export->fullpath);
+		 op_ctx->ctx_export->fullpath);
 
 	rc = load_config_from_node(parse_node,
 				   &export_param,
@@ -633,7 +633,7 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 	if (rc != 0) {
 		LogCrit(COMPONENT_FSAL,
 			"Incorrect or missing parameters for export %s",
-			op_ctx->export->fullpath);
+			op_ctx->ctx_export->fullpath);
 		status.major = ERR_FSAL_INVAL;
 		goto out;
 	}
@@ -650,7 +650,7 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 		status.major = ERR_FSAL_SERVERFAULT;
 		LogCrit(COMPONENT_FSAL,
 			"Unable to create new glfs. Export: %s",
-			op_ctx->export->fullpath);
+			op_ctx->ctx_export->fullpath);
 		goto out;
 	}
 
@@ -659,7 +659,7 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 		status.major = ERR_FSAL_SERVERFAULT;
 		LogCrit(COMPONENT_FSAL,
 			"Unable to set volume file. Export: %s",
-			op_ctx->export->fullpath);
+			op_ctx->ctx_export->fullpath);
 		goto out;
 	}
 
@@ -668,7 +668,7 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 		status.major = ERR_FSAL_SERVERFAULT;
 		LogCrit(COMPONENT_FSAL,
 			"Unable to set logging. Export: %s",
-			op_ctx->export->fullpath);
+			op_ctx->ctx_export->fullpath);
 		goto out;
 	}
 
@@ -677,7 +677,7 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 		status.major = ERR_FSAL_SERVERFAULT;
 		LogCrit(COMPONENT_FSAL,
 			"Unable to initialize volume. Export: %s",
-			op_ctx->export->fullpath);
+			op_ctx->ctx_export->fullpath);
 		goto out;
 	}
 
@@ -685,11 +685,11 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 	if (rc != 0) {
 		status.major = ERR_FSAL_SERVERFAULT;
 		LogCrit(COMPONENT_FSAL, "Unable to attach export. Export: %s",
-			op_ctx->export->fullpath);
+			op_ctx->ctx_export->fullpath);
 		goto out;
 	}
 
-	glfsexport->mount_path = op_ctx->export->fullpath;
+	glfsexport->mount_path = op_ctx->ctx_export->fullpath;
 	glfsexport->export_path = params.glvolpath;
 	glfsexport->gl_fs = fs;
 	glfsexport->saveduid = geteuid();
@@ -713,8 +713,8 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 			goto out;
 
 		/* special case: server_id matches export_id */
-		pds->id_servers = op_ctx->export->export_id;
-		pds->mds_export = op_ctx->export;
+		pds->id_servers = op_ctx->ctx_export->export_id;
+		pds->mds_export = op_ctx->ctx_export;
 
 		if (!pnfs_ds_insert(pds)) {
 			LogCrit(COMPONENT_CONFIG,
@@ -726,7 +726,7 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 
 		LogDebug(COMPONENT_PNFS,
 			 "glusterfs_fsal_create: pnfs ds was enabled for [%s]",
-			 op_ctx->export->fullpath);
+			 op_ctx->ctx_export->fullpath);
 	}
 
 	glfsexport->pnfs_mds_enabled =
@@ -735,7 +735,7 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 	if (glfsexport->pnfs_mds_enabled) {
 		LogDebug(COMPONENT_PNFS,
 			 "glusterfs_fsal_create: pnfs mds was enabled for [%s]",
-			 op_ctx->export->fullpath);
+			 op_ctx->ctx_export->fullpath);
 		export_ops_pnfs(&glfsexport->export.exp_ops);
 		fsal_ops_pnfs(&glfsexport->export.fsal->m_ops);
 	}
@@ -750,7 +750,7 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 	if (rc != 0) {
 		LogCrit(COMPONENT_FSAL,
 			"Unable to create GLUSTERFSAL_UP_Thread. Export: %s",
-			op_ctx->export->fullpath);
+			op_ctx->ctx_export->fullpath);
 		status.major = ERR_FSAL_FAULT;
 		goto out;
 	}
