@@ -178,6 +178,9 @@ void mdc_clean_entry(mdcache_entry_t *entry)
 
 	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 
+	/* Clear out first_export */
+	atomic_store_voidptr(&entry->first_export, NULL);
+
 	if (entry->obj_handle.type == DIRECTORY) {
 		PTHREAD_RWLOCK_wrlock(&entry->content_lock);
 
