@@ -1289,6 +1289,12 @@ fsal_status_t glusterfs_close_func(struct fsal_obj_handle *obj_hdl,
 	return glusterfs_close_my_fd((struct glusterfs_fd *)fd);
 }
 
+/**
+ * @brief Find a file descriptor for a read, write, setattr2 operation.
+ *
+ * We do not need file descriptors for non-regular files, so this never has to
+ * handle them.
+ */
 fsal_status_t find_fd(struct glusterfs_fd *my_fd,
 		      struct fsal_obj_handle *obj_hdl,
 		      bool bypass,
@@ -1301,79 +1307,24 @@ fsal_status_t find_fd(struct glusterfs_fd *my_fd,
 {
 	struct glusterfs_handle *myself;
 	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
-	int posix_flags;
 	struct glusterfs_fd  tmp_fd = {0}, *tmp2_fd = &tmp_fd;
-	struct glusterfs_export *glfs_export =
-	    container_of(op_ctx->fsal_export, struct glusterfs_export, export);
 
 	myself = container_of(obj_hdl, struct glusterfs_handle, handle);
 
-	fsal2posix_openflags(openflags, &posix_flags);
-
-	/* Handle non-regular files */
-	switch (obj_hdl->type) {
-	case SOCKET_FILE:
-	case CHARACTER_FILE:
-	case BLOCK_FILE:
-		/** @todo: check for O_NOACCESS. Refer vfs find_fd */
-		posix_flags = O_PATH;
-		break;
-
-	case REGULAR_FILE:
-		status = fsal_find_fd((struct fsal_fd **)&tmp2_fd, obj_hdl,
-				      (struct fsal_fd *)&myself->globalfd,
-				      &myself->share, bypass, state,
-				      openflags, glusterfs_open_func,
-				      glusterfs_close_func,
-				      has_lock, need_fsync,
-				      closefd, open_for_locks);
-
-		my_fd->glfd = tmp2_fd->glfd;
-		my_fd->openflags = tmp2_fd->openflags;
-		return status;
-
-	case SYMBOLIC_LINK:
-		posix_flags |= (O_PATH | O_RDWR | O_NOFOLLOW);
-		break;
-
-	case FIFO_FILE:
-		posix_flags |= O_NONBLOCK;
-		break;
-
-	case DIRECTORY:
-		my_fd->glfd = glfs_h_opendir(glfs_export->gl_fs,
-						myself->glhandle);
-		if (my_fd->glfd == NULL)
-			return gluster2fsal_error(errno);
-		*closefd = true;
-		return status;
-
-	case NO_FILE_TYPE:
-	case EXTENDED_ATTR:
+	/* Handle only regular files */
+	if (obj_hdl->type != REGULAR_FILE)
 		return fsalstat(posix2fsal_error(EINVAL), EINVAL);
-	}
 
-	/* Non-regular files */
-	status = glusterfs_open_my_fd(myself,
-				      openflags,
-				      posix_flags,
-				      &tmp_fd);
-	if (FSAL_IS_ERROR(status)) {
-		LogCrit(COMPONENT_FSAL,
-			 "Failed with %s openflags 0x%08x",
-			 strerror(errno), openflags);
-			return fsalstat(posix2fsal_error(errno), errno);
-	}
+	status = fsal_find_fd((struct fsal_fd **)&tmp2_fd, obj_hdl,
+			      (struct fsal_fd *)&myself->globalfd,
+			      &myself->share, bypass, state,
+			      openflags, glusterfs_open_func,
+			      glusterfs_close_func,
+			      has_lock, need_fsync,
+			      closefd, open_for_locks);
 
-	my_fd->glfd = tmp_fd.glfd;
-	my_fd->openflags = tmp_fd.openflags;
-
-	LogFullDebug(COMPONENT_FSAL,
-		     "Opened glfd=%p for file of type %s",
-		     my_fd->glfd,
-		     object_file_type_to_str(obj_hdl->type));
-	*closefd = true;
-
+	my_fd->glfd = tmp2_fd->glfd;
+	my_fd->openflags = tmp2_fd->openflags;
 	return status;
 }
 
@@ -2466,21 +2417,19 @@ static fsal_status_t glusterfs_setattr2(struct fsal_obj_handle *obj_hdl,
 		openflags = FSAL_O_RDWR;
 	}
 
-	/* Get a usable file descriptor. Share conflict is only possible if
-	 * size is being set. For special files, handle via handle.
-	 */
-	if ((obj_hdl->type == REGULAR_FILE) ||
-		 (obj_hdl->type == DIRECTORY)) {
+	/** TRUNCATE **/
+	if (FSAL_TEST_MASK(attrib_set->mask, ATTR_SIZE) &&
+	    (obj_hdl->type == REGULAR_FILE)) {
+		/* Get a usable file descriptor. Share conflict is only
+		 * possible if size is being set. For special files,
+		 * handle via handle.
+		 */
 		status = find_fd(&my_fd, obj_hdl, bypass, state, openflags,
 				 &has_lock, &need_fsync, &closefd, false);
 
 		if (FSAL_IS_ERROR(status))
 			goto out;
-	}
 
-	/** TRUNCATE **/
-	if (FSAL_TEST_MASK(attrib_set->mask, ATTR_SIZE) &&
-	    (obj_hdl->type == REGULAR_FILE)) {
 		retval = glfs_ftruncate(my_fd.glfd, attrib_set->filesize);
 		if (retval != 0) {
 			if (retval != 0) {
