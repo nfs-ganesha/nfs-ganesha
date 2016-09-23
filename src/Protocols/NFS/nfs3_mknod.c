@@ -209,7 +209,7 @@ int nfs3_mknod(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	if (!nfs3_FSALToFhandle(true,
 				&rok->obj.post_op_fh3_u.handle,
 				node_obj,
-				op_ctx->ctx_export) == 0) {
+				op_ctx->ctx_export)) {
 		res->res_mknod3.status = NFS3ERR_BADHANDLE;
 		rc = NFS_REQ_OK;
 		goto out;
