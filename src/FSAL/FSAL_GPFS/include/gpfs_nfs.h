@@ -50,6 +50,7 @@ struct flock
 #define kGanesha 140             /* Must be the same as Ganesha in enum kxOps */
 
 #define OPENHANDLE_GET_VERSION    100
+#define OPENHANDLE_GET_VERSION2   1002
 #define OPENHANDLE_NAME_TO_HANDLE 101
 #define OPENHANDLE_OPEN_BY_HANDLE 102
 #define OPENHANDLE_LAYOUT_TYPE    106
@@ -107,6 +108,9 @@ struct trace_arg
   char     *str;
 };
 
+#define ganesha_v1 1
+#define ganesha_v2 2
+
 int gpfs_ganesha(int op, void *oarg);
 
 #define OPENHANDLE_HANDLE_LEN 40
@@ -162,6 +166,7 @@ struct open_arg
   int flags;
   int openfd;
   struct gpfs_file_handle *handle;
+	const char *cli_ip;
 };
 
 struct link_fh_arg
