@@ -1066,6 +1066,7 @@ void gpfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->setattr2 = gpfs_setattr2;
 	ops->close2 = gpfs_close2;
 	ops->lock_op2 = gpfs_lock_op2;
+	ops->merge = gpfs_merge;
 }
 
 /**
