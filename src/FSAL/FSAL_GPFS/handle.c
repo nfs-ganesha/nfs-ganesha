@@ -799,7 +799,7 @@ static fsal_status_t listxattrs(struct fsal_obj_handle *obj_hdl,
 		next += 1;
 
 		LogDebug(COMPONENT_FSAL,
-		"nameP %s at offset %ld", name, (next - name));
+		"nameP %s at offset %td", name, (next - name));
 
 		if (entryCount >= *la_cookie) {
 			if ((((char *)entry - (char *)lr_names->entries) +
@@ -811,7 +811,7 @@ static fsal_status_t listxattrs(struct fsal_obj_handle *obj_hdl,
 				lr_names->entryCount = entryCount - *la_cookie;
 				*la_cookie += entryCount;
 				LogFullDebug(COMPONENT_FSAL,
-				   "out1 cookie %llu off %ld eof %d cookieverf %llx",
+				   "out1 cookie %llu off %td eof %d cookieverf %llx",
 				   (unsigned long long)*la_cookie,
 				   (next - name), *lr_eof,
 				   (unsigned long long)*

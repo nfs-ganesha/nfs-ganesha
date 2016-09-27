@@ -56,7 +56,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 	uint32_t expire_time_attr = 0;
 	uint32_t upflags = 0;
 	int errsv = 0;
-	fsal_status_t fsal_status;
+	fsal_status_t fsal_status = {0,};
 
 #ifdef _VALGRIND_MEMCHECK
 		memset(&handle, 0, sizeof(handle));
@@ -145,7 +145,8 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 		flags = flags & 0xffff;
 
 		LogDebug(COMPONENT_FSAL_UP,
-			 "inode update: rc %d reason %d update ino %ld flags:%x",
+			 "inode update: rc %d reason %d update ino %"
+			 PRId64 " flags:%x",
 			 rc, reason, callback.buf->st_ino, flags);
 
 		LogFullDebug(COMPONENT_FSAL_UP,
@@ -214,8 +215,8 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 
 		case BREAK_DELEGATION:	/* Delegation Event */
 			LogDebug(COMPONENT_FSAL_UP,
-				 "delegation recall: flags:%x ino %ld", flags,
-				 callback.buf->st_ino);
+				 "delegation recall: flags:%x ino %" PRId64,
+				 flags, callback.buf->st_ino);
 			fsal_status = up_async_delegrecall(general_fridge,
 						  event_func->up_export,
 						  &key, NULL, NULL);
@@ -229,8 +230,8 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 					.io_mode = LAYOUTIOMODE4_ANY
 				};
 				LogDebug(COMPONENT_FSAL_UP,
-					 "layout file recall: flags:%x ino %ld",
-					 flags, callback.buf->st_ino);
+					 "layout file recall: flags:%x ino %"
+					 PRId64, flags, callback.buf->st_ino);
 
 				fsal_status = up_async_layoutrecall(
 							general_fridge,
@@ -245,8 +246,8 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 
 		case LAYOUT_RECALL_ANY:	/* Recall all layouts Event */
 			LogDebug(COMPONENT_FSAL_UP,
-				 "layout recall any: flags:%x ino %ld", flags,
-				 callback.buf->st_ino);
+				 "layout recall any: flags:%x ino %" PRId64,
+				 flags, callback.buf->st_ino);
 
 	    /**
 	     * @todo This functionality needs to be implemented as a
@@ -260,8 +261,9 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 
 		case LAYOUT_NOTIFY_DEVICEID:	/* Device update Event */
 			LogDebug(COMPONENT_FSAL_UP,
-				"layout dev update: flags:%x ino %ld seq %d fd %d fsid 0x%"
-				PRIx64, flags,
+				 "layout dev update: flags:%x ino %"
+				 PRId64 " seq %d fd %d fsid 0x%" PRIx64,
+				 flags,
 				callback.buf->st_ino,
 				devid.device_id2,
 				devid.device_id4,
@@ -284,7 +286,8 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 				struct attrlist attr;
 
 				LogMidDebug(COMPONENT_FSAL_UP,
-					    "inode update: flags:%x update ino %ld n_link:%d",
+					    "inode update: flags:%x update ino %"
+					    PRId64 " n_link:%d",
 					    flags, callback.buf->st_ino,
 					    (int)callback.buf->st_nlink);
 
@@ -396,8 +399,8 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 
 		case INODE_INVALIDATE:
 			LogMidDebug(COMPONENT_FSAL_UP,
-				    "inode invalidate: flags:%x update ino %ld",
-				    flags, callback.buf->st_ino);
+				    "inode invalidate: flags:%x update ino %"
+				    PRId64, flags, callback.buf->st_ino);
 
 			upflags = FSAL_UP_INVALIDATE_CACHE;
 			fsal_status = event_func->invalidate_close(

@@ -43,7 +43,7 @@ gpfsfsal_xstat_2_fsal_attributes(gpfsfsal_xstat_t *gpfs_buf,
 
 	p_buffstat = &gpfs_buf->buffstat;
 
-	LogDebug(COMPONENT_FSAL, "inode %ld", p_buffstat->st_ino);
+	LogDebug(COMPONENT_FSAL, "inode %" PRId64, p_buffstat->st_ino);
 
 	/* Fills the output struct */
 	if (FSAL_TEST_MASK(fsal_attr->mask, ATTR_TYPE)) {
