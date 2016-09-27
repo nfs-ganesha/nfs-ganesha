@@ -621,9 +621,14 @@ PROXY {}
 
 	cansettime(bool, default true)
 
-	maxread(uint64, range 512 to 64*1024*1024, default 64*1024*1024)
+	/*MAX_READ_WRITE_SIZE == 1MB*/
+	/*FSAL_MAXIOSIZE = 64 MB*/
+	/*SEND_RECV_HEADER_SPACE == 512 Bytes*/
+	maxread(uint64, range 512 to FSAL_MAXIOSIZE - SEND_RECV_HEADER_SPACE,
+		default MAX_READ_WRITE_SIZE)
 
-	maxwrite(uint64, range 512 to 64*1024*1024, default 64*1024*1024)
+	maxwrite(uint64, range 512 to FSAL_MAXIOSIZE - SEND_RECV_HEADER_SPACE,
+		 default MAX_READ_WRITE_SIZE)
 
 	umask(mode, range 0 to 0777, default 0)
 
@@ -640,9 +645,18 @@ PROXY { Remote_Server {} }
 
 	NFS_Service(uint32, range 0 to UINT32_MAX, default 100003)
 
-	NFS_SendSize(uint32, range 512 to FSAL_MAXIOSIZE, default 32768)
+	/*NFS_SendSize must be greater than maxwrite+SEND_RECV_HEADER_SPACE .*/
+	/*NFS_RecvSize must be greater than maxread+SEND_RECV_HEADER_SPACE .*/
+	/*MAX_READ_WRITE_SIZE == 1 MB*/
+	/*SEND_RECV_HEADER_SPACE == 512 Bytes*/
+	/*FSAL_MAXIOSIZE = 64 MB*/
+	NFS_SendSize(uint32, range 512 + SEND_RECV_HEADER_SPACE
+					to FSAL_MAXIOSIZE,
+		     default MAX_READ_WRITE_SIZE + SEND_RECV_HEADER_SPACE)
 
-	NFS_RecvSize(uint32, range 512 to FSAL_MAXIOSIZE, default 32768)
+	NFS_RecvSize(uint32, range 512 + SEND_RECV_HEADER_SPACE
+					to FSAL_MAXIOSIZE,
+		     default MAX_READ_WRITE_SIZE + SEND_RECV_HEADER_SPACE)
 
 	NFS_Port(inet_port, range 0 to UINT16_MAX, default 2049)
 

@@ -74,6 +74,11 @@ static struct config_item_list sec_types[] = {
 };
 #endif
 
+/*512 bytes to store header*/
+#define SEND_RECV_HEADER_SPACE 512
+/*1MB of default maxsize*/
+#define DEFAULT_MAX_WRITE_READ 1048576
+
 static struct config_item proxy_remote_params[] = {
 	CONF_ITEM_UI32("Retry_SleepTime", 0, 60, 10,
 		       pxy_client_params, retry_sleeptime),
@@ -81,9 +86,13 @@ static struct config_item proxy_remote_params[] = {
 			  pxy_client_params, srv_addr),
 	CONF_ITEM_UI32("NFS_Service", 0, UINT32_MAX, 100003,
 		       pxy_client_params, srv_prognum),
-	CONF_ITEM_UI32("NFS_SendSize", 512, FSAL_MAXIOSIZE, 32768,
+	CONF_ITEM_UI32("NFS_SendSize", 512 + SEND_RECV_HEADER_SPACE,
+		       FSAL_MAXIOSIZE,
+		       DEFAULT_MAX_WRITE_READ + SEND_RECV_HEADER_SPACE,
 		       pxy_client_params, srv_sendsize),
-	CONF_ITEM_UI32("NFS_RecvSize", 512, FSAL_MAXIOSIZE, 32768,
+	CONF_ITEM_UI32("NFS_RecvSize", 512 + SEND_RECV_HEADER_SPACE,
+		       FSAL_MAXIOSIZE,
+		       DEFAULT_MAX_WRITE_READ + SEND_RECV_HEADER_SPACE,
 		       pxy_client_params, srv_recvsize),
 	CONF_ITEM_INET_PORT("NFS_Port", 0, UINT16_MAX, 2049,
 			    pxy_client_params, srv_port),
@@ -124,8 +133,21 @@ static int remote_commit(void *node, void *link_mem, void *self_struct,
 		       struct config_error_type *err_type)
 {
 	/* struct pxy_client_params *pcpi = self_struct; */
+	struct pxy_fsal_module *pxy;
 
-	/* Verifications/parameter checking to be added here */
+	pxy = container_of(link_mem, struct pxy_fsal_module, special);
+
+	if (pxy->fsinfo.maxwrite + SEND_RECV_HEADER_SPACE >
+			pxy->special.srv_sendsize ||
+	    pxy->fsinfo.maxread + SEND_RECV_HEADER_SPACE >
+			pxy->special.srv_recvsize) {
+		LogCrit(COMPONENT_CONFIG,
+"FSAL_PROXY CONF : maxwrite/maxread + header > Max_SendSize/Max_RecvSize");
+		err_type->invalid = true;
+		return 1;
+	}
+
+	/* Other verifications/parameter checking to be added here */
 
 	return 0;
 }
@@ -146,9 +168,13 @@ static struct config_item proxy_params[] = {
 		       pxy_fsal_module, fsinfo.symlink_support),
 	CONF_ITEM_BOOL("cansettime", true,
 		       pxy_fsal_module, fsinfo.cansettime),
-	CONF_ITEM_UI64("maxread", 512, FSAL_MAXIOSIZE, FSAL_MAXIOSIZE,
+	CONF_ITEM_UI64("maxread", 512,
+		       FSAL_MAXIOSIZE - SEND_RECV_HEADER_SPACE,
+		       DEFAULT_MAX_WRITE_READ,
 		       pxy_fsal_module, fsinfo.maxread),
-	CONF_ITEM_UI64("maxwrite", 512, FSAL_MAXIOSIZE, FSAL_MAXIOSIZE,
+	CONF_ITEM_UI64("maxwrite", 512,
+		       FSAL_MAXIOSIZE - SEND_RECV_HEADER_SPACE,
+		       DEFAULT_MAX_WRITE_READ,
 		       pxy_fsal_module, fsinfo.maxwrite),
 	CONF_ITEM_MODE("umask", 0,
 		       pxy_fsal_module, fsinfo.umask),
