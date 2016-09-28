@@ -631,6 +631,49 @@ static fsal_status_t rgw_fsal_unlink(struct fsal_obj_handle *dir_hdl,
 }
 
 /**
+ * @brief Merge a duplicate handle with an original handle
+ *
+ * This function is used if an upper layer detects that a duplicate
+ * object handle has been created. It allows the FSAL to merge anything
+ * from the duplicate back into the original.
+ *
+ * The caller must release the object (the caller may have to close
+ * files if the merge is unsuccessful).
+ *
+ * @param[in]  orig_hdl  Original handle
+ * @param[in]  dupe_hdl Handle to merge into original
+ *
+ * @return FSAL status.
+ *
+ */
+
+fsal_status_t rgw_merge(struct fsal_obj_handle *orig_hdl,
+			struct fsal_obj_handle *dupe_hdl)
+{
+	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
+
+	if (orig_hdl->type == REGULAR_FILE &&
+	    dupe_hdl->type == REGULAR_FILE) {
+		/* We need to merge the share reservations on this file.
+		 * This could result in ERR_FSAL_SHARE_DENIED.
+		 */
+		struct rgw_handle *orig, *dupe;
+
+		orig = container_of(orig_hdl, struct rgw_handle, handle);
+		dupe = container_of(dupe_hdl, struct rgw_handle, handle);
+
+		/* This can block over an I/O operation. */
+		PTHREAD_RWLOCK_wrlock(&orig_hdl->lock);
+
+		status = merge_share(&orig->share, &dupe->share);
+
+		PTHREAD_RWLOCK_unlock(&orig_hdl->lock);
+	}
+
+	return status;
+}
+
+/**
  * @brief Open a file descriptor for read or write and possibly create
  *
  * This function opens a file for read or write, possibly creating it.
@@ -1530,6 +1573,7 @@ static void handle_to_key(struct fsal_obj_handle *obj_hdl,
 void handle_ops_init(struct fsal_obj_ops *ops)
 {
 	ops->release = release;
+	ops->merge = rgw_merge;
 	ops->lookup = lookup;
 	ops->create = rgw_fsal_create;
 	ops->mkdir = rgw_fsal_mkdir;
