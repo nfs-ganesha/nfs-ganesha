@@ -473,7 +473,7 @@ int nlm_process_share_parms(struct svc_req *req, nlm4_share *share,
 				   0,
 				   state);
 
-		if (rc > 0) {
+		if (rc > 0 || !(*state)) {
 			LogDebug(COMPONENT_NLM, "Could not get NLM State");
 			goto out_put;
 		}
@@ -481,6 +481,7 @@ int nlm_process_share_parms(struct svc_req *req, nlm4_share *share,
 
 	LogFullDebug(COMPONENT_NLM, "Parameters Processed");
 
+	/* Return non NLM error code '-1' on success. */
 	return -1;
 
  out_put:

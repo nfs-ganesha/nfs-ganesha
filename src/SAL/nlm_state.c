@@ -383,6 +383,7 @@ int get_nlm_state(enum state_type state_type,
 	struct gsh_buffdesc buffkey, old_key;
 	struct gsh_buffdesc buffval, old_value;
 
+	*pstate = NULL;
 	memset(&key, 0, sizeof(key));
 
 	key.state_type = state_type;
