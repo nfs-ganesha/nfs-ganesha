@@ -105,6 +105,8 @@ struct scality_location
 	ssize_t size;
 	char *key;
 	char *content;
+	char *stencil;
+	struct avltree_node avltree_node;
 };
 
 struct scality_part
@@ -129,7 +131,7 @@ struct scality_fsal_obj_handle {
 
 	char *object; // object in the bucket (without any heading delimiter)
 
-	struct scality_location *locations;
+	struct avltree locations;
 	size_t n_locations;
 	fsal_openflags_t openflags;
 
@@ -144,7 +146,8 @@ struct scality_fsal_obj_handle {
 enum scality_fsal_cleanup_flag {
 	SCALITY_FSAL_CLEANUP_NONE = 0,
 	SCALITY_FSAL_CLEANUP_COMMIT = 1u<<0,
-	SCALITY_FSAL_CLEANUP_ROLLBACK = 1u<<1
+	SCALITY_FSAL_CLEANUP_ROLLBACK = 1u<<1,
+	SCALITY_FSAL_CLEANUP_PARTS = 1u<<2,
 };
 
 void
@@ -165,7 +168,14 @@ static inline bool scality_unopenable_type(object_file_type_t type)
 	}
 }
 
-	/* I/O management */
+
+struct scality_location *
+scality_location_new(const char *key, size_t start, size_t size);
+void
+scality_location_free(struct scality_location *location);
+
+
+/* I/O management */
 fsal_status_t scality_open(struct fsal_obj_handle *obj_hdl,
 			  fsal_openflags_t openflags);
 fsal_openflags_t scality_status(struct fsal_obj_handle *obj_hdl);
@@ -175,6 +185,9 @@ fsal_status_t scality_read(struct fsal_obj_handle *obj_hdl,
 			  size_t *read_amount, bool *end_of_file);
 void
 scality_add_to_free_list(struct scality_part **partp, char *key);
+fsal_status_t
+scality_truncate(struct scality_fsal_obj_handle *myself,
+		 size_t filesize);
 
 fsal_status_t scality_write(struct fsal_obj_handle *obj_hdl,
 			   uint64_t offset,

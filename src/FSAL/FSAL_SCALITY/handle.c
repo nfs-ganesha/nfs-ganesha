@@ -96,6 +96,32 @@ name_to_object(struct scality_fsal_obj_handle *parent,
 	return ret;
 }
 
+static int
+location_cmp(const struct avltree_node *nodep,
+	     const struct avltree_node *keyp)
+{
+	struct scality_location *node, *key;
+
+	node = avltree_container_of(nodep,
+				    struct scality_location,
+				    avltree_node);
+	key = avltree_container_of(keyp,
+				   struct scality_location,
+				   avltree_node);
+	/* this code relies on the fact that avltree compoares nodes and keys
+	   in that order */
+	if ( node->start >= key->start+key->size ) {
+		return 1;
+	}
+	else if ( node->start+node->size < key->start) {
+		return -1;
+	}
+	else {
+		return 0;
+	}
+}
+
+
 static void release(struct fsal_obj_handle *obj_hdl);
 
 /* alloc_handle
@@ -126,7 +152,7 @@ static struct scality_fsal_obj_handle
 	hdl->object = gsh_strdup(object);
 
 	hdl->openflags = FSAL_O_CLOSED;
-	hdl->locations = NULL;
+	avltree_init(&hdl->locations, location_cmp, 0);
 	hdl->n_locations = 0;
 
 	if ( NULL == handle_key )
@@ -702,23 +728,10 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 		if (DIRECTORY == myself->attributes.type) {
 			return fsalstat(ERR_FSAL_PERM, 0);
 		}
-		if ( 0 != attrs->filesize )
-			return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
-		size_t i;
-		for ( i = 0 ; i < myself->n_locations ; ++i ) {
-			struct scality_location *location = &myself->locations[i];
-			if ( location->key )
-				scality_add_to_free_list(&myself->delete_on_commit, location->key);
-			else if ( location->content )
-				gsh_free(location->content);
-		}
-		myself->attributes.spaceused = 0;
-		myself->attributes.filesize = 0;
-		gsh_free(myself->locations);
-		myself->memory_used = 0;
-		myself->locations = NULL;
-		myself->n_locations = 0;
-		myself->state = SCALITY_FSAL_OBJ_STATE_DIRTY;
+		fsal_status_t status;
+		status = scality_truncate(myself, attrs->filesize);
+		if (FSAL_IS_ERROR(status))
+			return status;
 	}
 
 	if ( SCALITY_FSAL_OBJ_STATE_CLEAN == myself->state ) {
@@ -732,28 +745,9 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-static void
-delete_parts(struct scality_fsal_export *export,
-	     struct scality_fsal_obj_handle *obj_hdl)
-{
-	size_t i;
-	int ret;
-	for ( i = 0 ; i < obj_hdl->n_locations ; ++i ) {
-		ret = sproxyd_delete(export,
-				     obj_hdl->locations[i].key);
-		if ( ret < 0 ) {
-			LogWarn(COMPONENT_FSAL,
-				"Unable to delete key %s from %s",
-				obj_hdl->locations[i].key, obj_hdl->object);
-		}
-	}
-
-}
-
 /* file_unlink
  * unlink the named file in the directory
  */
-
 static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
 				 struct fsal_obj_handle *hdl,
 				 const char *name)
@@ -812,10 +806,10 @@ static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
 			status = fsalstat(ERR_FSAL_SERVERFAULT, 0);
 		}
 		else {
-			delete_parts(export, obj_hdl);
 			scality_cleanup(export, myself,
 					SCALITY_FSAL_CLEANUP_COMMIT|
-					SCALITY_FSAL_CLEANUP_ROLLBACK);
+					SCALITY_FSAL_CLEANUP_ROLLBACK|
+					SCALITY_FSAL_CLEANUP_PARTS);
 		}
 		break;
 	}
@@ -930,7 +924,6 @@ static void handle_to_key(struct fsal_obj_handle *obj_hdl,
 static void release(struct fsal_obj_handle *obj_hdl)
 {
 	struct scality_fsal_obj_handle *myself;
-	int i;
 
 	myself = container_of(obj_hdl,
 			      struct scality_fsal_obj_handle,
@@ -955,10 +948,17 @@ static void release(struct fsal_obj_handle *obj_hdl)
 	if (myself->object != NULL)
 		gsh_free(myself->object);
 
-	for ( i = 0 ; i < myself->n_locations ; ++i )
-		gsh_free(myself->locations[i].key);
-	if (myself->locations)
-		gsh_free(myself->locations);
+	struct avltree_node *node;
+	for ( node = avltree_first(&myself->locations) ;
+	      node != NULL;
+	      node = avltree_first(&myself->locations) ) {
+		struct scality_location *location =
+			avltree_container_of(node,
+					     struct scality_location,
+					     avltree_node);
+		avltree_remove(node, &myself->locations);
+		scality_location_free(location);
+	}
 
 	gsh_free(myself);
 }

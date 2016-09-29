@@ -826,25 +826,31 @@ dbd_getattr_directory(struct scality_fsal_export* export,
 
 static int
 dbd_get_parts_size(struct scality_fsal_export *export,
-		   struct scality_fsal_obj_handle *object_hdl)
+		   struct scality_fsal_obj_handle *myself)
 {
-	size_t i;
 	size_t total = 0;
-	for ( i = 0 ; i < object_hdl->n_locations ; ++i ) {
+	struct avltree_node *node;
+	for ( node = avltree_first(&myself->locations) ;
+	      node != NULL ;
+	      node = avltree_next(node) ) {
+		struct scality_location *location;
+		location = avltree_container_of(node,
+						struct scality_location,
+						avltree_node);
 		size_t len;
 		int ret;
-		ret = sproxyd_head(export, object_hdl->locations[i].key, &len);
+		ret = sproxyd_head(export, location->key, &len);
 		if ( ret < 0 )
 			return ret;
-		object_hdl->locations[i].start = total;
-		object_hdl->locations[i].size = len;
+		location->start = total;
+		location->size = len;
 		total += len;
 
 		LogDebug(COMPONENT_FSAL,
 			 "HEAD on part: key=%s, start=%zd, size=%zd",
-			 object_hdl->locations[i].key,
-			 object_hdl->locations[i].start,
-			 object_hdl->locations[i].size);
+			 location->key,
+			 location->start,
+			 location->size);
 	}
 	return 0;
 }
@@ -912,84 +918,99 @@ dbd_getattr_regular_file(struct scality_fsal_export* export,
 		break;
 	}
 
-	int i = 0;
-	for ( i = 0 ; i < object_hdl->n_locations ; ++i ) {
-		gsh_free(object_hdl->locations[i].key);
+	struct avltree_node *node;
+	for ( node = avltree_first(&object_hdl->locations) ;
+	      node != NULL ;
+	      node = avltree_first(&object_hdl->locations) ) {
+		struct scality_location *location;
+		location = avltree_container_of(node,
+						struct scality_location,
+						avltree_node);
+		avltree_remove(node, &object_hdl->locations);
+		scality_location_free(location);
 	}
-	if ( object_hdl->locations )
-		gsh_free(object_hdl->locations);
-	object_hdl->locations = NULL;
 	object_hdl->n_locations = 0;
 
 	json_t *location = directory
 		? NULL
 		: json_object_get(response->body, "location");
-
+	struct scality_location *new_location;
 	switch(location? json_typeof(location) : JSON_NULL) {
 	case JSON_STRING:
-		object_hdl->locations = gsh_malloc(sizeof(struct scality_location));
-		object_hdl->locations[0].start = 0;
-		object_hdl->locations[0].size = filesize;
-		object_hdl->locations[0].key = gsh_strdup(json_string_value(location));
+		new_location = scality_location_new(json_string_value(location),
+						    0, filesize);
+		avltree_insert(&new_location->avltree_node,
+			       &object_hdl->locations);
 		object_hdl->n_locations = 1;
 		break;
 	case JSON_ARRAY: {
 		size_t i;
 		object_hdl->n_locations = json_array_size(location);
-		object_hdl->locations = gsh_calloc(object_hdl->n_locations,
-						   sizeof(struct scality_location));
 		bool incomplete = false;
 		for ( i = 0 ; i < object_hdl->n_locations ; ++i ) {
 			json_t *item = json_array_get(location, i);
 
 			switch (json_typeof(item)) {
 			case JSON_STRING: {
-				object_hdl->locations[i].start = -1;
-				object_hdl->locations[i].size = -1;
-				object_hdl->locations[i].key = gsh_strdup(json_string_value(json_array_get(location, i)));
+				const char *key = json_string_value(item);
+				new_location = scality_location_new(key,
+								    -1, -1);
+				avltree_insert(&new_location->avltree_node,
+					       &object_hdl->locations);
 				incomplete = true;
 				break;
 			}
 			case JSON_OBJECT: {
-				json_t *key = json_object_get(item, "key");
-				json_t *start = json_object_get(item, "start");
-				json_t *size = json_object_get(item, "size");
-				switch (json_typeof(start)) {
+				json_t *jkey = json_object_get(item, "key");
+				json_t *jstart = json_object_get(item, "start");
+				json_t *jsize = json_object_get(item, "size");
+				size_t start = -1, size = -1;
+				const char *key;
+				if ( JSON_STRING != json_typeof(jkey) ) {
+					LogCrit(COMPONENT_FSAL,
+						"Key is not a string");
+					ret = -1;
+					goto out;
+				}
+				switch (json_typeof(jstart)) {
 				case JSON_STRING:
-					object_hdl->locations[i].start =
-						atoll(json_string_value(start));
+					start = atoll(json_string_value(jstart));
 					break;
 				case JSON_INTEGER:
-					object_hdl->locations[i].start =
-						json_integer_value(start);
+					start = json_integer_value(jstart);
 					break;
-				default:break;
+				default:
+					incomplete = true;
+					break;
 				}
-				switch (json_typeof(size)) {
+				switch (json_typeof(jsize)) {
 				case JSON_STRING:
-					object_hdl->locations[i].size =
-						atoll(json_string_value(size));
+					size = atoll(json_string_value(jsize));
 					break;
 				case JSON_INTEGER:
-					object_hdl->locations[i].size =
-						json_integer_value(size);
+					size = json_integer_value(jsize);
 					break;
-				default:break;
+				default:
+					incomplete = true;
+					break;
 				}
-				if ( JSON_STRING == json_typeof(key) ) {
-					object_hdl->locations[i].key = gsh_strdup(json_string_value(key));
-					LogDebug(COMPONENT_FSAL,
-						 "key=%s, start=%zd, size=%zd",
-						 object_hdl->locations[i].key,
-						 object_hdl->locations[i].start,
-						 object_hdl->locations[i].size);
-
+				key = json_string_value(jkey);
+				new_location = scality_location_new(key,
+								    start,
+								    size);
+				avltree_insert(&new_location->avltree_node,
+					       &object_hdl->locations);
+				LogDebug(COMPONENT_FSAL,
+					 "key=%s, start=%zd, size=%zd",
+					 key,
+					 start,
+					 size);
 				}
 				break;
-			}
 			default:break;
 			}
 		}
+		
 		if ( incomplete )
 			ret = dbd_get_parts_size(export,
 						 object_hdl);
@@ -997,9 +1018,15 @@ dbd_getattr_regular_file(struct scality_fsal_export* export,
 	default:break;
 	}
 
+	struct scality_location * first_location;
+	node = avltree_first(&object_hdl->locations);
+	first_location = avltree_container_of(node,
+					      struct scality_location,
+					      avltree_node);
 	if ( 0 != object_hdl->n_locations &&
-	     object_hdl->locations[0].size >= DEFAULT_PART_SIZE )
-		object_hdl->part_size = object_hdl->locations[0].size;
+	     NULL != first_location &&
+	     first_location->size >= DEFAULT_PART_SIZE )
+		object_hdl->part_size = first_location->size;
 	else
 		object_hdl->part_size = DEFAULT_PART_SIZE;
 
@@ -1081,20 +1108,27 @@ get_payload(struct scality_fsal_export* export,
 	json_object_set(metadata, "x-amz-version-id", json_string("null"));
 
 	if ( object_hdl->n_locations ) {
-		json_t *locations = json_array();
-		int i ;
-		for ( i = 0 ; i < object_hdl->n_locations ; ++i ) {
-			json_t *location = json_object();
-			json_object_set(location, "key",
-					json_string(object_hdl->locations[i].key));
-			json_object_set(location, "start",
-					json_integer(object_hdl->locations[i].start));
-			json_object_set(location, "size",
-					json_integer(object_hdl->locations[i].size));
-			json_object_set(location, "dataStoreName", json_string("sproxyd"));
-			json_array_append(locations, location);
+		json_t *js_locations = json_array();
+		struct avltree_node *node;
+		for ( node = avltree_first(&object_hdl->locations) ;
+		      node != NULL ;
+		      node = avltree_next(node) ) {
+			struct scality_location *location;
+			location = avltree_container_of(node,
+							struct scality_location,
+							avltree_node);
+			json_t *js_location = json_object();
+			json_object_set(js_location, "key",
+					json_string(location->key));
+			json_object_set(js_location, "start",
+					json_integer(location->start));
+			json_object_set(js_location, "size",
+					json_integer(location->size));
+			json_object_set(js_location, "dataStoreName",
+					json_string("sproxyd"));
+			json_array_append(js_locations, js_location);
 		}
-		json_object_set(metadata, "location", locations);
+		json_object_set(metadata, "location", js_locations);
 	} else {
 		json_object_set(metadata, "location", json_null());
 	}

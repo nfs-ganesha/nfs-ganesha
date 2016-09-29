@@ -180,11 +180,17 @@ sproxyd_read(struct scality_fsal_export* export,
 {
 	char *frag;
 	size_t frag_len;
-	size_t i;
-	LogDebug(COMPONENT_FSAL, "sproxyd_read(%s, offset=%lu, size=%zu)", obj->object, offset, size);
+	LogDebug(COMPONENT_FSAL, "sproxyd_read(%s, offset=%lu, size=%zu)",
+		 obj->object, offset, size);
 
-	for ( i = 0 ; i < obj->n_locations ; ++i ) {
-		struct scality_location *loc = &obj->locations[i];
+	struct avltree_node *node;
+	for (node = avltree_first(&obj->locations) ;
+	     node !=  NULL ;
+	     node = avltree_next(node) ) {
+		struct scality_location *loc;
+		loc = avltree_container_of(node,
+					   struct scality_location,
+					   avltree_node);
 		char range[200];
 		int ret;
 
@@ -203,7 +209,7 @@ sproxyd_read(struct scality_fsal_export* export,
 		snprintf(range, sizeof range, "%zu-%zu",
 			 read_start, read_start+read_size-1);
 
-		ret = sproxyd_get(export, obj->locations[i].key, range,
+		ret = sproxyd_get(export, loc->key, range,
 				  &frag, &frag_len);
 		if ( ret < 0 )
 			return -1;
