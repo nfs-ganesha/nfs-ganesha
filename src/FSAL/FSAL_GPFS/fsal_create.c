@@ -82,12 +82,15 @@ GPFSFSAL_create2(struct fsal_obj_handle *dir_hdl, const char *filename,
 	status = fsal_internal_create(dir_hdl, filename, unix_mode | S_IFREG,
 				      posix_flags, gpfs_fh, NULL);
 	fsal_restore_ganesha_credentials();
-	if (FSAL_IS_ERROR(status))
-		return status;
 
-	/* retrieve file attributes */
-	return GPFSFSAL_getattrs(op_ctx->fsal_export, dir_hdl->fs->private_data,
-				 op_ctx, gpfs_fh, fsal_attr);
+	if (!FSAL_IS_ERROR(status) && fsal_attr != NULL) {
+		/* retrieve file attributes */
+		status = GPFSFSAL_getattrs(op_ctx->fsal_export,
+					   dir_hdl->fs->private_data,
+					   op_ctx, gpfs_fh, fsal_attr);
+	}
+
+	return status;
 }
 
 /**
