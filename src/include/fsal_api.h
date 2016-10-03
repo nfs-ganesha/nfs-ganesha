@@ -1200,6 +1200,20 @@ static inline int sizeof_fsid(enum fsid_type type)
 
 typedef uint64_t fsal_cookie_t;
 
+/**
+ * @brief Callback to provide readdir caller with each directory entry
+ *
+ * @param[in]  name      The name of the entry
+ * @param[in]  obj       The fsal_obj_handle describing the entry
+ * @param[in]  attrs     The requested attribues for the entry (see readdir
+ *                       attrmask parameter)
+ * @param[in]  dir_state Opaque pointer to be passed to callback
+ * @param[in]  cookie    An FSAL generated cookie for the entry
+ *
+ * @retval true if more entries are required
+ * @retval false if no more entries are required (and the current one
+ *               has not been consumed)
+ */
 typedef bool (*fsal_readdir_cb)(const char *name, struct fsal_obj_handle *obj,
 				struct attrlist *attrs,
 				void *dir_state, fsal_cookie_t cookie);
@@ -1316,11 +1330,10 @@ struct fsal_obj_ops {
  *                       start at beginning.
  * @param[in]  dir_state Opaque pointer to be passed to callback
  * @param[in]  cb        Callback to receive names
+ * @param[in]  attrmask  Indicate which attributes the caller is interested in
  * @param[out] eof       true if the last entry was reached
  *
- * @retval true if more entries are required
- * @retval false if no more entries are required (and the current one
- *               has not been consumed)
+ * @return FSAL status.
  */
 	 fsal_status_t (*readdir)(struct fsal_obj_handle *dir_hdl,
 				  fsal_cookie_t *whence,
