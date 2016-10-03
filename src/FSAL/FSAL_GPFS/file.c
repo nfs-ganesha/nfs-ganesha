@@ -259,7 +259,6 @@ fsal_status_t gpfs_open2(struct fsal_obj_handle *obj_hdl,
 	bool created = false;
 	struct fsal_export *export = op_ctx->fsal_export;
 	struct gpfs_filesystem *gpfs_fs = obj_hdl->fs->private_data;
-	int *fd = NULL;
 
 	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
 
@@ -285,6 +284,8 @@ fsal_status_t gpfs_open2(struct fsal_obj_handle *obj_hdl,
 
 	if (name == NULL) {
 		/* This is an open by handle */
+		int *fd;
+
 		if (state != NULL) {
 		       /* Prepare to take the share reservation, but only if we
 			* are called with a valid state (if state is NULL the
@@ -553,11 +554,6 @@ fsal_status_t gpfs_open2(struct fsal_obj_handle *obj_hdl,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
  fileerr:
-
-	/* Close the file we just opened. */
-	if (fd)
-		(void) fsal_internal_close(*fd,
-					   state?state->state_owner:NULL, 0);
 
 	if (created) {
 		/* Remove the file we just created */
