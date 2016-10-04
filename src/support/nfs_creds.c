@@ -151,7 +151,7 @@ bool nfs_compare_clientcred(nfs_client_cred_t *cred1,
 #ifdef _HAVE_GSSAPI
 	case RPCSEC_GSS:
 		maj_stat = gss_inquire_context(&min_stat,
-			cred1->auth_union.auth_gss.gss_context_id,
+			cred1->auth_union.auth_gss.gd->ctx,
 			&cred1_cred_name, NULL, NULL, NULL, NULL, NULL, NULL);
 
 		if (maj_stat != GSS_S_COMPLETE &&
@@ -159,7 +159,7 @@ bool nfs_compare_clientcred(nfs_client_cred_t *cred1,
 			return false;
 
 		 maj_stat = gss_inquire_context(&min_stat,
-			cred2->auth_union.auth_gss.gss_context_id,
+			cred2->auth_union.auth_gss.gd->ctx,
 			&cred2_cred_name, NULL, NULL, NULL, NULL, NULL, NULL);
 
 		if (maj_stat != GSS_S_COMPLETE &&
@@ -224,7 +224,7 @@ int nfs_rpc_req2client_cred(struct svc_req *req, nfs_client_cred_t *pcred)
 
 		pcred->auth_union.auth_gss.svc = (unsigned int)(gd->sec.svc);
 		pcred->auth_union.auth_gss.qop = (unsigned int)(gd->sec.qop);
-		pcred->auth_union.auth_gss.gss_context_id = gd->ctx;
+		pcred->auth_union.auth_gss.gd = gd;
 		break;
 #endif
 

@@ -263,7 +263,7 @@ typedef struct nfs_client_cred_gss {
 	unsigned int svc;
 	unsigned int qop;
 #ifdef _HAVE_GSSAPI
-	gss_ctx_id_t gss_context_id;
+	struct svc_rpc_gss_data *gd;
 #endif
 } nfs_client_cred_gss_t;
 
