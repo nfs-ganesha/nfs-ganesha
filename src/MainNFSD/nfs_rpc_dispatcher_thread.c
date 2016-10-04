@@ -778,7 +778,9 @@ void nfs_Init_svc(void)
 	svc_params.svc_ioq_maxbuf =
 	    nfs_param.core_param.rpc.max_send_buffer_size;
 	svc_params.idle_timeout = nfs_param.core_param.rpc.idle_timeout_s;
+#ifdef SVC_INIT_WARNX
 	svc_params.warnx = NULL;
+#endif /* SVC_INIT_WARNX */
 	svc_params.gss_ctx_hash_partitions = 17;
 	svc_params.gss_max_idle_gen = 1024;	/* GSS ctx cache expiration */
 	svc_params.gss_max_gc = 200;
@@ -788,9 +790,11 @@ void nfs_Init_svc(void)
 	if (!svc_init(&svc_params))
 		LogFatal(COMPONENT_INIT, "SVC initialization failed");
 
+#ifdef SVC_INIT_WARNX
 	/* Redirect TI-RPC allocators, log channel */
 	if (!tirpc_control(TIRPC_SET_WARNX, (warnx_t) rpc_warnx))
 		LogCrit(COMPONENT_INIT, "Failed redirecting TI-RPC __warnx");
+#endif /* SVC_INIT_WARNX */
 
 	/* Set TIRPC debug flags */
 	uint32_t tirpc_debug_flags = nfs_param.core_param.rpc.debug_flags;

@@ -116,6 +116,12 @@ const char *xprt_type_to_str(xprt_type_t type)
 		return "sctp";
 	case XPRT_RDMA:
 		return "rdma";
+#ifdef SVC_XPRT_FLAG_VSOCK
+	case XPRT_VSOCK:
+		return "vsock";
+	case XPRT_VSOCK_RENDEZVOUS:
+		return "vsock rendezvous";
+#endif /* SVC_XPRT_FLAG_VSOCK */
 	}
 	return "INVALID";
 }
