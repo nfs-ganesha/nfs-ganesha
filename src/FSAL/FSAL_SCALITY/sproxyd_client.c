@@ -1,4 +1,3 @@
-
 /* -*- mode: c; c-tab-always-indent: t; c-basic-offset: 8 -*-
  * vim:expandtab:shiftwidth=8:tabstop=8:
  *
@@ -172,58 +171,150 @@ sproxyd_get(struct scality_fsal_export* export,
 	return ret;
 }
 
+static ssize_t
+read_through(struct scality_fsal_export* export,
+	     struct scality_location *loc,
+	     uint64_t offset,
+	     size_t size, char *buf)
+{
+	size_t start = offset;
+	size_t length = 0;
+	enum { READ = 0, COPY = 1 } operation = READ;
+	assert(NULL != loc->content);
+	assert(NULL != loc->stencil);
+	
+	if ( 0 == loc->stencil[offset] ) {
+		operation = COPY;
+	}
+	while (start < size && start < loc->size) {
+		while ( loc->stencil[start+length] == operation &&
+			length < loc->size &&
+			length < size )
+			++length;
+		switch (operation) {
+		case READ: {
+			char range[200];
+			size_t frag_len;
+			char *frag;
+			snprintf(range, sizeof(range), "%zu-%zu",
+				 start, start+length-1);
+			int ret = sproxyd_get(export, loc->key,
+					      range, &frag, &frag_len);
+			if ( ret < 0 ) {
+				LogCrit(COMPONENT_FSAL,
+					"sproxyd GET failed for this"
+					" key (%s) and range (%s)",
+					loc->key, range);
+				return -1;
+			}
+			if ( frag_len != length ) {
+				LogWarn(COMPONENT_FSAL,
+					"sproxyd short GET for this"
+					" key (%s) and range (%s)",
+					loc->key, range);
+				length = frag_len;
+			}
+			memcpy(buf, frag, length);
+			free(frag);
+			break;
+		}
+		case COPY: {
+			memcpy(buf, &loc->content[start], length);
+			break;
+		}
+		}
+		buf += length;
+	}
+	return length;
+}
+
+/**
+ * @brief Read a slice from a file.
+ * the requested slice may overlap several parts and this function has
+ * the responsibility to pick data from the right place, whether it is
+ * from the dirty range of a chunk or from the storage.
+ *
+ * @param export - export definition from which to get sproxyd parameters
+ * @param obj - object to read
+ * @param offset - start position of the read within the file
+ * @param size - size to read (also match the buffer size)
+ * @param[out]  buf - buffer from the caller in which to put data
+ */
 int
 sproxyd_read(struct scality_fsal_export* export,
 	     struct scality_fsal_obj_handle *obj,
 	     uint64_t offset,
 	     size_t size, char *buf)
 {
-	char *frag;
-	size_t frag_len;
 	LogDebug(COMPONENT_FSAL, "sproxyd_read(%s, offset=%lu, size=%zu)",
 		 obj->object, offset, size);
 
 	struct avltree_node *node;
 	for (node = avltree_first(&obj->locations) ;
-	     node !=  NULL ;
+	     node !=  NULL && size != 0;
 	     node = avltree_next(node) ) {
+
 		struct scality_location *loc;
 		loc = avltree_container_of(node,
 					   struct scality_location,
 					   avltree_node);
-		char range[200];
-		int ret;
 
-		if ( offset > loc->start &&
-		     offset > loc->start+loc->size )
+		assert(offset >= loc->start);
+		if (offset >= loc->start + loc->size) {
+			//better chance on next part
 			continue;
-		if ( 0 == size )
-			break;
+		}
 
-		size_t read_start = offset-loc->start;
-		size_t read_size = loc->size-read_start;
+		size_t read_start = offset - loc->start;
+		size_t read_size = loc->size - read_start;
 		if ( read_size > size )
 			read_size = size;
-		if ( 0 == read_size )
+		if ( 0 == read_size ) {
+			//is it even possible?
 			continue;
-		snprintf(range, sizeof range, "%zu-%zu",
-			 read_start, read_start+read_size-1);
+		}
+		ssize_t bytes_read;
 
-		ret = sproxyd_get(export, loc->key, range,
-				  &frag, &frag_len);
-		if ( ret < 0 )
-			return -1;
-		if ( frag_len != read_size ) {
-			free(frag);
+		if ( NULL == loc->content || NULL == loc->stencil ) {
+			assert(NULL == loc->content && NULL == loc->stencil);
+			if ( NULL != loc->key ) {
+				int ret;
+				char range[200];
+				char *frag;
+				size_t frag_len;
+				snprintf(range, sizeof range, "%zu-%zu",
+					 read_start, read_start+read_size-1);
+				ret = sproxyd_get(export, loc->key, range,
+						  &frag, &frag_len);
+				if ( ret < 0 ) {
+					LogCrit(COMPONENT_FSAL,
+						"sproxyd_get failed");
+					return -1;
+				}
+				bytes_read = frag_len;
+				memcpy(buf, frag, frag_len);
+				free(frag);
+			}
+			else {
+				bytes_read = read_size;
+				memset(buf, 0, bytes_read);
+			}
+		}
+		else {
+			bytes_read = read_through(export,
+						  loc,
+						  read_start, size, buf);
+			if ( bytes_read < 0 )
+				return -1;
+		}
+		if ( bytes_read != read_size ) {
 			LogCrit(COMPONENT_FSAL, "read size mismatch expected %zu, got %zu",
-				read_size, frag_len);
+				read_size, bytes_read);
 			return -1;
 		}
-		memcpy(buf, frag, frag_len);
-		buf+=frag_len;
-		offset+=frag_len;
-		size-=frag_len;
-		free(frag);
+		buf+=bytes_read;
+		offset+=bytes_read;
+		size-=bytes_read;
 	}
 	return 0;
 }

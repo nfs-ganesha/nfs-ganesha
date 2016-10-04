@@ -71,10 +71,20 @@ fsal_openflags_t scality_status(struct fsal_obj_handle *obj_hdl)
 	return myself->openflags;
 }
 
-/* scality_read
- * concurrency (locks) is managed in cache_inode_*
+/**
+ * @brief Read a slice of the designated file.
+ * This function handles whole file boundaries and calls sproxyd_read with
+ * offset and size inside the file boundaries.
+ * it also handles the read_amount and end_of_file output parameters
+ *
+ * @param obj_hdl -  object to read
+ * @param offset - start position of the read
+ * @param buffer_size - size of the destination buffer,
+ *                      hence the maximum size to read
+ * @param[out] buffer - buffer in which to copy the content read
+ * @param[out] read_amount - number of bytes read from storage
+ * @param[out] end_of_file - set to true if end of file is reached
  */
-
 fsal_status_t scality_read(struct fsal_obj_handle *obj_hdl,
 			  uint64_t offset,
 			  size_t buffer_size, void *buffer,
