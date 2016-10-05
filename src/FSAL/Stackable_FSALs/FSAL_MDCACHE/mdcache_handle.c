@@ -528,6 +528,9 @@ static fsal_status_t mdcache_link(struct fsal_obj_handle *obj_hdl,
  * If necessary, populate the dirent cache from the underlying FSAL.  Then, walk
  * the dirent cache calling the callback.
  *
+ * @note The object passed into the callback is ref'd and must be unref'd by the
+ * callback.
+ *
  * @param dir_hdl [IN] the directory to read
  * @param whence [IN] where to start (next)
  * @param dir_state [IN] pass thru of state to callback
@@ -640,8 +643,6 @@ static fsal_status_t mdcache_readdir(struct fsal_obj_handle *dir_hdl,
 
 		cb_result = cb(dirent->name, &entry->obj_handle, &entry->attrs,
 			       dir_state, dirent->hk.k);
-
-		mdcache_put(entry);
 
 		if (!cb_result)
 			break;

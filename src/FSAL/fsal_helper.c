@@ -1278,6 +1278,7 @@ populate_dirent(const char *name,
 	struct fsal_readdir_cb_parms cb_parms = { state->opaque, name,
 		true, true };
 	fsal_status_t status = {0, 0};
+	bool retval = true;
 
 	status.major = state->cb(&cb_parms, obj, attrs, attrs->fileid,
 				 cookie, state->cb_state);
@@ -1316,7 +1317,8 @@ populate_dirent(const char *name,
 				state->cb_state = CB_PROBLEM;
 				(void) state->cb(&cb_parms, NULL, NULL, 0,
 						 cookie, state->cb_state);
-				return false;
+				retval = false;
+				goto out;
 			}
 		} else {
 			LogMajor(COMPONENT_FSAL,
@@ -1325,7 +1327,8 @@ populate_dirent(const char *name,
 			state->cb_state = CB_PROBLEM;
 			(void) state->cb(&cb_parms, NULL, NULL, 0, cookie,
 					 state->cb_state);
-			return false;
+			retval = false;
+			goto out;
 		}
 
 		/* Now we need to get the cross-junction attributes. */
@@ -1362,12 +1365,19 @@ populate_dirent(const char *name,
 		put_gsh_export(junction_export);
 	}
 
-	if (!cb_parms.in_result)
-		return false;
+	if (!cb_parms.in_result) {
+		retval = false;
+		goto out;
+	}
 
 	(*state->cb_nfound)++;
 
-	return true;
+out:
+
+	/* Put the ref on obj that readdir took */
+	obj->obj_ops.put_ref(obj);
+
+	return retval;
 }
 
 /**
