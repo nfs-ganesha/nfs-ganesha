@@ -1159,6 +1159,8 @@ state_owner_t *get_state_owner(care_t care, state_owner_t *key,
 				goto again;
 		}
 
+		hashtable_releaselatched(ht_owner, &latch);
+
 		/* Refresh an nfs4 open owner if needed. */
 		if (owner->so_type == STATE_OPEN_OWNER_NFSV4) {
 			refresh_nfs4_open_owner(&owner->so_owner.so_nfs4_owner);
@@ -1172,8 +1174,6 @@ state_owner_t *get_state_owner(care_t care, state_owner_t *key,
 				     "Found {%s} refcount now=%" PRId32,
 				     str, refcount);
 		}
-
-		hashtable_releaselatched(ht_owner, &latch);
 
 		return owner;
 	}
