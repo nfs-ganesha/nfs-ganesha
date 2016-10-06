@@ -60,6 +60,8 @@ fsal_status_t nullfs_create_handle(struct fsal_export *exp_hdl,
 struct nullfs_fsal_obj_handle {
 	struct fsal_obj_handle obj_handle; /*< Handle containing nullfs data.*/
 	struct fsal_obj_handle *sub_handle; /*< Handle of the sub fsal.*/
+	int32_t refcnt;		/*< Reference count.  This is signed to make
+				   mistakes easy to see. */
 };
 
 int nullfs_fsal_open(struct nullfs_fsal_obj_handle *, int, fsal_errors_t *);
@@ -97,6 +99,59 @@ fsal_status_t nullfs_lock_op(struct fsal_obj_handle *obj_hdl,
 fsal_status_t nullfs_share_op(struct fsal_obj_handle *obj_hdl, void *p_owner,
 			      fsal_share_param_t request_share);
 fsal_status_t nullfs_close(struct fsal_obj_handle *obj_hdl);
+
+/* Multi-FD */
+fsal_status_t nullfs_open2(struct fsal_obj_handle *obj_hdl,
+			   struct state_t *state,
+			   fsal_openflags_t openflags,
+			   enum fsal_create_mode createmode,
+			   const char *name,
+			   struct attrlist *attrs_in,
+			   fsal_verifier_t verifier,
+			   struct fsal_obj_handle **new_obj,
+			   struct attrlist *attrs_out,
+			   bool *caller_perm_check);
+bool nullfs_check_verifier(struct fsal_obj_handle *obj_hdl,
+			   fsal_verifier_t verifier);
+fsal_openflags_t nullfs_status2(struct fsal_obj_handle *obj_hdl,
+				struct state_t *state);
+fsal_status_t nullfs_reopen2(struct fsal_obj_handle *obj_hdl,
+			     struct state_t *state,
+			     fsal_openflags_t openflags);
+fsal_status_t nullfs_read2(struct fsal_obj_handle *obj_hdl,
+			   bool bypass,
+			   struct state_t *state,
+			   uint64_t offset,
+			   size_t buf_size,
+			   void *buffer,
+			   size_t *read_amount,
+			   bool *eof,
+			   struct io_info *info);
+fsal_status_t nullfs_write2(struct fsal_obj_handle *obj_hdl,
+			    bool bypass,
+			    struct state_t *state,
+			    uint64_t offset,
+			    size_t buf_size,
+			    void *buffer,
+			    size_t *write_amount,
+			    bool *fsal_stable,
+			    struct io_info *info);
+fsal_status_t nullfs_seek2(struct fsal_obj_handle *obj_hdl,
+			   struct state_t *state,
+			   struct io_info *info);
+fsal_status_t nullfs_io_advise2(struct fsal_obj_handle *obj_hdl,
+				struct state_t *state,
+				struct io_hints *hints);
+fsal_status_t nullfs_commit2(struct fsal_obj_handle *obj_hdl, off_t offset,
+			     size_t len);
+fsal_status_t nullfs_lock_op2(struct fsal_obj_handle *obj_hdl,
+			      struct state_t *state,
+			      void *p_owner,
+			      fsal_lock_op_t lock_op,
+			      fsal_lock_param_t *req_lock,
+			      fsal_lock_param_t *conflicting_lock);
+fsal_status_t nullfs_close2(struct fsal_obj_handle *obj_hdl,
+			    struct state_t *state);
 
 /* extended attributes management */
 fsal_status_t nullfs_list_ext_attrs(struct fsal_obj_handle *obj_hdl,

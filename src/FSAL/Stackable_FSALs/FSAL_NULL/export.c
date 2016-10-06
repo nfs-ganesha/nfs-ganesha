@@ -312,6 +312,33 @@ static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 	return result;
 }
 
+static struct state_t *nullfs_alloc_state(struct fsal_export *exp_hdl,
+					  enum state_type state_type,
+					  struct state_t *related_state)
+{
+	struct nullfs_fsal_export *exp =
+		container_of(exp_hdl, struct nullfs_fsal_export, export);
+
+	op_ctx->fsal_export = exp->export.sub_export;
+	state_t *state =
+		exp->export.sub_export->exp_ops.alloc_state(
+			exp->export.sub_export, state_type, related_state);
+	op_ctx->fsal_export = &exp->export;
+
+	return state;
+}
+
+static void nullfs_free_state(struct state_t *state)
+{
+	struct nullfs_fsal_export *exp = container_of(state->state_exp,
+					struct nullfs_fsal_export, export);
+
+	op_ctx->fsal_export = exp->export.sub_export;
+	exp->export.sub_export->exp_ops.free_state(state);
+	op_ctx->fsal_export = &exp->export;
+}
+
+
 /* extract a file handle from a buffer.
  * do verification checks and flag any and all suspicious bits.
  * Return an updated fh_desc into whatever was passed.  The most
@@ -361,6 +388,8 @@ void nullfs_export_ops_init(struct export_ops *ops)
 	ops->fs_xattr_access_rights = fs_xattr_access_rights;
 	ops->get_quota = get_quota;
 	ops->set_quota = set_quota;
+	ops->alloc_state = nullfs_alloc_state;
+	ops->free_state = nullfs_free_state;
 }
 
 struct nullfsal_args {

@@ -71,15 +71,15 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op, compound_data_t *data,
 	memset(resp, 0, sizeof(struct nfs_resop4));
 	resp->resop = NFS4_OP_PUTROOTFH;
 
+	/* Clear out current entry for now */
+	set_current_entry(data, NULL);
+
 	/* Release any old export reference */
 	if (op_ctx->ctx_export != NULL)
 		put_gsh_export(op_ctx->ctx_export);
 
 	op_ctx->ctx_export = NULL;
 	op_ctx->fsal_export = NULL;
-
-	/* Clear out current entry for now */
-	set_current_entry(data, NULL);
 
 	/* Get the root export of the Pseudo FS */
 	op_ctx->ctx_export = get_gsh_export_by_pseudo("/", true);

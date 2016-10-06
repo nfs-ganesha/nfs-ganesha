@@ -1437,7 +1437,7 @@ static nfsstat4 mdcache_layoutcommit(struct fsal_obj_handle *obj_hdl,
 /**
  * @brief Get a reference to the handle
  *
- * @param[in] obj_hdl	Handle to digest
+ * @param[in] obj_hdl	Handle to ref
  * @return FSAL status
  */
 static void mdcache_get_ref(struct fsal_obj_handle *obj_hdl)
@@ -1451,7 +1451,7 @@ static void mdcache_get_ref(struct fsal_obj_handle *obj_hdl)
 /**
  * @brief Put a reference to the handle
  *
- * @param[in] obj_hdl	Handle to digest
+ * @param[in] obj_hdl	Handle to unref
  * @return FSAL status
  */
 static void mdcache_put_ref(struct fsal_obj_handle *obj_hdl)
@@ -1467,7 +1467,7 @@ static void mdcache_put_ref(struct fsal_obj_handle *obj_hdl)
  *
  * This force cleans-up.
  *
- * @param[in] obj_hdl	Handle to digest
+ * @param[in] obj_hdl	Handle to release
  * @return FSAL status
  */
 static void mdcache_hdl_release(struct fsal_obj_handle *obj_hdl)
