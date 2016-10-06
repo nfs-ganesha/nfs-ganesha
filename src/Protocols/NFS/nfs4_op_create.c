@@ -195,11 +195,21 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 	case NF4CHR:
 		/* Create a new socket file */
 		type = CHARACTER_FILE;
+		sattr.rawdev.major =
+		    arg_CREATE4->objtype.createtype4_u.devdata.specdata1;
+		sattr.rawdev.minor =
+		    arg_CREATE4->objtype.createtype4_u.devdata.specdata2;
+		sattr.mask |= ATTR_RAWDEV;
 		break;
 
 	case NF4BLK:
 		/* Create a new socket file */
 		type = BLOCK_FILE;
+		sattr.rawdev.major =
+		    arg_CREATE4->objtype.createtype4_u.devdata.specdata1;
+		sattr.rawdev.minor =
+		    arg_CREATE4->objtype.createtype4_u.devdata.specdata2;
+		sattr.mask |= ATTR_RAWDEV;
 		break;
 
 	default:

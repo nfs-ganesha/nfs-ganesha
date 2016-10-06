@@ -134,6 +134,11 @@ int nfs3_mknod(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 			rc = NFS_REQ_OK;
 			goto out;
 		}
+		sattr.rawdev.major =
+		    arg->arg_mknod3.what.mknoddata3_u.device.spec.specdata1;
+		sattr.rawdev.minor =
+		    arg->arg_mknod3.what.mknoddata3_u.device.spec.specdata2;
+		sattr.mask |= ATTR_RAWDEV;
 
 		break;
 
