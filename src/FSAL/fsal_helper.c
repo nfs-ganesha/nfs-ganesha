@@ -924,6 +924,15 @@ setattrs:
 		    (op_ctx->creds->caller_gid == attrs->group))
 			FSAL_UNSET_MASK(attrs->mask, ATTR_GROUP);
 
+		/* Setting uid/gid works only for root. AIX or Irix NFS
+                 * clients send gid on create if the parent directory has
+                 * setgid bit. Clear the OWNER and GROUP attributes for
+                 * create requests for non-root users.
+		 */
+		if ((type != SYMBOLIC_LINK) &&
+                    (op_ctx->creds->caller_uid != 0))
+                	FSAL_UNSET_MASK(attrs->mask, ATTR_OWNER|ATTR_GROUP);
+
 		if (attrs->mask) {
 			/* If any attributes were left to set, set them now. */
 			status = fsal_setattr(*obj, false, NULL, attrs);
