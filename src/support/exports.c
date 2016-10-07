@@ -102,8 +102,14 @@ static int StrExportOptions(struct display_buffer *dspbuf,
 		return b_left;
 
 	if ((p_perms->set & EXPORT_OPTION_SQUASH_TYPES) != 0) {
-		if ((p_perms->options & EXPORT_OPTION_ROOT) != 0)
-			b_left = display_cat(dspbuf, "no_root_squash");
+		if ((p_perms->options & EXPORT_OPTION_ROOT_SQUASH) != 0)
+			b_left = display_cat(dspbuf, "root_squash   ");
+
+		if (b_left <= 0)
+			return b_left;
+
+		if ((p_perms->options & EXPORT_OPTION_ROOT_ID_SQUASH) != 0)
+			b_left = display_cat(dspbuf, "root_id_squash");
 
 		if (b_left <= 0)
 			return b_left;
@@ -114,9 +120,8 @@ static int StrExportOptions(struct display_buffer *dspbuf,
 		if (b_left <= 0)
 			return b_left;
 
-		if ((p_perms->options &
-		     (EXPORT_OPTION_ROOT | EXPORT_OPTION_ALL_ANONYMOUS)) == 0)
-			b_left = display_cat(dspbuf, "root_squash   ");
+		if ((p_perms->options & EXPORT_OPTION_SQUASH_TYPES) == 0)
+			b_left = display_cat(dspbuf, "no_root_squash");
 	} else
 		b_left = display_cat(dspbuf, "              ");
 
@@ -1506,6 +1511,9 @@ static struct config_item_list squash_types[] = {
 	CONFIG_LIST_TOK("No_Root_Squash", EXPORT_OPTION_ROOT),
 	CONFIG_LIST_TOK("None", EXPORT_OPTION_ROOT),
 	CONFIG_LIST_TOK("NoIdSquash", EXPORT_OPTION_ROOT),
+	CONFIG_LIST_TOK("RootId", EXPORT_OPTION_ROOT_ID_SQUASH),
+	CONFIG_LIST_TOK("Root_Id_Squash", EXPORT_OPTION_ROOT_ID_SQUASH),
+	CONFIG_LIST_TOK("RootIdSquash", EXPORT_OPTION_ROOT_ID_SQUASH),
 	CONFIG_LIST_EOL
 };
 

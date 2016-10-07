@@ -80,7 +80,10 @@ void squash_setattr(struct attrlist *attr)
 		if (op_ctx->export_perms->options &
 		    EXPORT_OPTION_ALL_ANONYMOUS)
 			attr->owner = op_ctx->export_perms->anonymous_uid;
-		else if (!(op_ctx->export_perms->options & EXPORT_OPTION_ROOT)
+		else if (((op_ctx->export_perms->options &
+			   EXPORT_OPTION_ROOT_SQUASH) ||
+			  (op_ctx->export_perms->options &
+			   EXPORT_OPTION_ROOT_ID_SQUASH))
 			 && (attr->owner == 0)
 			 && ((op_ctx->cred_flags & UID_SQUASHED) != 0))
 			attr->owner = op_ctx->export_perms->anonymous_uid;
@@ -97,7 +100,10 @@ void squash_setattr(struct attrlist *attr)
 		if (op_ctx->export_perms->options &
 		    EXPORT_OPTION_ALL_ANONYMOUS)
 			attr->group = op_ctx->export_perms->anonymous_gid;
-		else if (!(op_ctx->export_perms->options & EXPORT_OPTION_ROOT)
+		else if (((op_ctx->export_perms->options &
+			   EXPORT_OPTION_ROOT_SQUASH) ||
+			  (op_ctx->export_perms->options &
+			   EXPORT_OPTION_ROOT_ID_SQUASH))
 			 && (attr->group == 0)
 			 && ((op_ctx->cred_flags & (GID_SQUASHED |
 						     GARRAY_SQUASHED)) != 0))
@@ -357,8 +363,9 @@ nfsstat4 nfs_req_creds(struct svc_req *req)
 	if ((op_ctx->cred_flags & CREDS_ANON) != 0 ||
 	    ((op_ctx->export_perms->options &
 	      EXPORT_OPTION_ALL_ANONYMOUS) != 0) ||
-	    ((op_ctx->export_perms->options & EXPORT_OPTION_ROOT) == 0 &&
+	    ((op_ctx->export_perms->options & EXPORT_OPTION_ROOT_SQUASH) != 0 &&
 	      op_ctx->original_creds.caller_uid == 0)) {
+		/* Squash uid, gid, and discard groups */
 		op_ctx->creds->caller_uid =
 					op_ctx->export_perms->anonymous_uid;
 		op_ctx->creds->caller_gid =
@@ -371,15 +378,24 @@ nfsstat4 nfs_req_creds(struct svc_req *req)
 			    op_ctx->creds->caller_gid);
 		op_ctx->cred_flags |= UID_SQUASHED | GID_SQUASHED;
 		return NFS4_OK;
+	} else if ((op_ctx->export_perms->options &
+		    EXPORT_OPTION_ROOT_ID_SQUASH) != 0 &&
+		   op_ctx->original_creds.caller_uid == 0) {
+		/* Only squash root id, leave gid and groups alone for now */
+		op_ctx->creds->caller_uid =
+					op_ctx->export_perms->anonymous_uid;
+		op_ctx->cred_flags |= UID_SQUASHED;
+	} else {
+		/* Use original_creds uid */
+		op_ctx->creds->caller_uid = op_ctx->original_creds.caller_uid;
 	}
-
-	/* Now we will use the original_creds uid from original credential */
-	op_ctx->creds->caller_uid = op_ctx->original_creds.caller_uid;
 
 	/****************************************************************/
 	/* Now sqush group or use original_creds gid			*/
 	/****************************************************************/
-	if ((op_ctx->export_perms->options & EXPORT_OPTION_ROOT) == 0 &&
+	if (((op_ctx->export_perms->options & EXPORT_OPTION_ROOT_SQUASH) != 0 ||
+	     (op_ctx->export_perms->options &
+	      EXPORT_OPTION_ROOT_ID_SQUASH) != 0) &&
 	    op_ctx->original_creds.caller_gid == 0) {
 		/* Squash gid */
 		op_ctx->creds->caller_gid =
@@ -419,7 +435,7 @@ nfsstat4 nfs_req_creds(struct svc_req *req)
 	/****************************************************************/
 
 	/* If no root squashing in caller_garray, return now */
-	if ((op_ctx->export_perms->options & EXPORT_OPTION_ROOT) != 0 ||
+	if ((op_ctx->export_perms->options & EXPORT_OPTION_SQUASH_TYPES) == 0 ||
 	    op_ctx->creds->caller_glen == 0)
 		goto out;
 
@@ -458,9 +474,12 @@ nfsstat4 nfs_req_creds(struct svc_req *req)
 out:
 
 	LogMidDebugAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
-		    "%s creds mapped to uid=%u, gid=%u%s, glen=%d%s",
+		    "%s creds mapped to uid=%u%s, gid=%u%s, glen=%d%s",
 		    auth_label,
 		    op_ctx->creds->caller_uid,
+		    (op_ctx->cred_flags & UID_SQUASHED) != 0
+			? " (squashed)"
+			: "",
 		    op_ctx->creds->caller_gid,
 		    (op_ctx->cred_flags & GID_SQUASHED) != 0
 			? " (squashed)"
