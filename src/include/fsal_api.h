@@ -1595,6 +1595,10 @@ struct fsal_obj_ops {
  * resources held by the set attributes. The FSAL layer MAY have added an
  * inherited ACL.
  *
+ * Due to differences between protocols (9P, NFSv3 and NFSv4) and backends,
+ * FSALs may ignore request for modifying the ctime attribute without returning
+ * EINVAL or any error status.
+ *
  * @param[in] obj_hdl    The object to modify
  * @param[in] attrib_set Attributes to set
  *

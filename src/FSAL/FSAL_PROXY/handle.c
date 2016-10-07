@@ -1720,6 +1720,15 @@ static fsal_status_t pxy_setattrs(struct fsal_obj_handle *obj_hdl,
 	nfs_argop4 argoparray[FSAL_SETATTR_NB_OP_ALLOC];
 	nfs_resop4 resoparray[FSAL_SETATTR_NB_OP_ALLOC];
 
+	/*
+	* No way to update CTIME using a NFSv4 SETATTR.
+	* Server will return NFS4ERR_INVAL (22).
+	* time_metadata is a readonly attribute in NFSv4 and NFSv4.1.
+	* (section 5.7 in RFC7530 or RFC5651)
+	* Nevermind : this update is useless, we prevent it.
+	*/
+	FSAL_UNSET_MASK(attrs->mask, ATTR_CTIME);
+
 	if (FSAL_TEST_MASK(attrs->mask, ATTR_MODE))
 		attrs->mode &= ~op_ctx->fsal_export->exp_ops.
 				fs_umask(op_ctx->fsal_export);
