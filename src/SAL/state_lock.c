@@ -1201,7 +1201,7 @@ int display_lock_cookie_key(struct gsh_buffdesc *buff, char *str)
 {
 	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
 
-	display_lock_cookie(&dspbuf, buff->addr);
+	display_lock_cookie(&dspbuf, buff);
 	return display_buffer_len(&dspbuf);
 }
 
