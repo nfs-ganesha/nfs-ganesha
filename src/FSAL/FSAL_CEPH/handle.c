@@ -1089,14 +1089,19 @@ fsal_status_t ceph_open2(struct fsal_obj_handle *obj_hdl,
 
 		if (state == NULL) {
 			/* If no state, release the lock taken above and return
-			 * status.
+			 * status. If success, we haven't done any permission
+			 * check so ask the caller to do so.
 			 */
 			PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+			*caller_perm_check = !FSAL_IS_ERROR(status);
 			return status;
 		}
 
 		if (!FSAL_IS_ERROR(status)) {
-			/* Return success. */
+			/* Return success. We haven't done any permission
+			 * check so ask the caller to do so.
+			 */
+			*caller_perm_check = true;
 			return status;
 		}
 
@@ -1156,9 +1161,6 @@ fsal_status_t ceph_open2(struct fsal_obj_handle *obj_hdl,
 			LogFullDebug(COMPONENT_FSAL,
 				     "open returned %s",
 				     fsal_err_txt(status));
-		} else {
-			/* No permission check was actually done... */
-			*caller_perm_check = true;
 		}
 
 		return status;
@@ -1237,12 +1239,22 @@ fsal_status_t ceph_open2(struct fsal_obj_handle *obj_hdl,
 	 * Note that in an UNCHECKED retry we MIGHT have re-created the
 	 * file and won't remember that. Oh well, so in that rare case we
 	 * leak a partially created file if we have a subsequent error in here.
-	 * Since we were able to do the permission check even if we were not
-	 * creating the file, let the caller know the permission check has
-	 * already been done. Note it IS possible in the case of a race between
-	 * an UNCHECKED open and an external unlink, we did create the file.
 	 */
 	created = (posix_flags & O_EXCL) != 0;
+
+	/** @todo FSF: Note that the current implementation of ceph_ll_create
+	 *             does not accept an alt groups list, so it is possible
+	 *             a create (including an UNCHECKED create on an already
+	 *             existing file) would fail because the directory or
+	 *             file was owned by a group other than the primary group.
+	 *             Conversely, it could also succeed when it should have
+	 *             failed if other is granted more permission than
+	 *             one of the alt groups).
+	 */
+
+	/* Since we did the ceph_ll_create using the caller's credentials,
+	 * we don't need to do an additional permission check.
+	 */
 	*caller_perm_check = false;
 
 	construct_handle(&stat, i, export, &hdl);
