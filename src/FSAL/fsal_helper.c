@@ -408,7 +408,10 @@ fsal_status_t open2_by_name(struct fsal_obj_handle *in_obj,
 		 "Closing file check_open_permission failed %s-%s",
 		 reason, fsal_err_txt(status));
 
-	close_status = (*obj)->obj_ops.close2(*obj, state);
+	if (state != NULL)
+		close_status = (*obj)->obj_ops.close2(*obj, state);
+	else
+		close_status = (*obj)->obj_ops.close(*obj);
 
 	if (FSAL_IS_ERROR(close_status)) {
 		/* Just log but don't return this error (we want to
