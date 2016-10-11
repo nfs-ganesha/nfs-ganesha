@@ -177,55 +177,64 @@ read_through(struct scality_fsal_export* export,
 	     uint64_t offset,
 	     size_t size, char *buf)
 {
+	LogDebug(COMPONENT_FSAL, "offset=%lu, size=%zu)", offset, size);
 	size_t start = offset;
 	size_t length = 0;
-	enum { READ = 0, COPY = 1 } operation = READ;
+	stencil_byte_t operation = STENCIL_READ;
 	assert(NULL != loc->content);
 	assert(NULL != loc->stencil);
 	
-	if ( 0 == loc->stencil[offset] ) {
-		operation = COPY;
-	}
 	while (start < size && start < loc->size) {
-		while ( loc->stencil[start+length] == operation &&
-			length < loc->size &&
-			length < size )
+		operation = loc->stencil[start];
+		while ( start+length < loc->size &&
+			start+length < size &&
+			loc->stencil[start+length] == operation )
 			++length;
 		switch (operation) {
-		case READ: {
-			char range[200];
-			size_t frag_len;
-			char *frag;
-			snprintf(range, sizeof(range), "%zu-%zu",
-				 start, start+length-1);
-			int ret = sproxyd_get(export, loc->key,
-					      range, &frag, &frag_len);
-			if ( ret < 0 ) {
-				LogCrit(COMPONENT_FSAL,
-					"sproxyd GET failed for this"
-					" key (%s) and range (%s)",
-					loc->key, range);
-				return -1;
+		case STENCIL_READ: {
+			if ( NULL != loc->key ) {
+				char range[200];
+				size_t frag_len;
+				char *frag;
+				snprintf(range, sizeof(range), "%zu-%zu",
+					 start, start+length-1);
+				int ret = sproxyd_get(export, loc->key,
+						      range, &frag, &frag_len);
+				if ( ret < 0 ) {
+					LogCrit(COMPONENT_FSAL,
+						"sproxyd GET failed for this"
+						" key (%s) and range (%s)",
+						loc->key, range);
+					return -1;
+				}
+				if ( frag_len != length ) {
+					LogWarn(COMPONENT_FSAL,
+						"sproxyd short GET for this"
+						" key (%s) and range (%s)",
+						loc->key, range);
+					length = frag_len;
+				}
+				memcpy(buf, frag, length);
+				free(frag);
 			}
-			if ( frag_len != length ) {
-				LogWarn(COMPONENT_FSAL,
-					"sproxyd short GET for this"
-					" key (%s) and range (%s)",
-					loc->key, range);
-				length = frag_len;
+			else {
+				memset(buf, 0, length);
 			}
-			memcpy(buf, frag, length);
-			free(frag);
 			break;
 		}
-		case COPY: {
+		case STENCIL_COPY: {
 			memcpy(buf, &loc->content[start], length);
 			break;
 		}
+		case STENCIL_ZERO:
+			memset(buf, 0, length);
+			break;
 		}
 		buf += length;
+		start += length;
+		length = 0;
 	}
-	return length;
+	return start;
 }
 
 /**
@@ -249,7 +258,11 @@ sproxyd_read(struct scality_fsal_export* export,
 	LogDebug(COMPONENT_FSAL, "sproxyd_read(%s, offset=%lu, size=%zu)",
 		 obj->object, offset, size);
 
+	size_t last_end = 0;
+	int ret = -1;
+	int i = 0;
 	struct avltree_node *node;
+
 	for (node = avltree_first(&obj->locations) ;
 	     node !=  NULL && size != 0;
 	     node = avltree_next(node) ) {
@@ -258,7 +271,14 @@ sproxyd_read(struct scality_fsal_export* export,
 		loc = avltree_container_of(node,
 					   struct scality_location,
 					   avltree_node);
-
+		LogDebug(COMPONENT_FSAL,
+			 "i: %d, "
+			 "loc->start: %"PRIu64", "
+			 "loc->size: %"PRIu64", ",
+			 i, loc->start, loc->size);
+		assert(last_end == loc->start);
+		last_end = loc->start + loc->size;
+		++i;
 		assert(offset >= loc->start);
 		if (offset >= loc->start + loc->size) {
 			//better chance on next part
@@ -289,7 +309,26 @@ sproxyd_read(struct scality_fsal_export* export,
 				if ( ret < 0 ) {
 					LogCrit(COMPONENT_FSAL,
 						"sproxyd_get failed");
-					return -1;
+					{
+						size_t len;
+						int ret2 = sproxyd_head(export,
+									loc->key,
+									&len);
+						if (ret2<0) {
+							LogCrit(COMPONENT_FSAL,
+								"head failed on %s",
+								loc->key);
+						}
+						else {
+							LogDebug(COMPONENT_FSAL,
+								 "%s is %"PRIu64
+								 " bytes",
+								 loc->key,
+								 len);
+						}
+					}
+					ret =  -1;
+					goto out;
 				}
 				bytes_read = frag_len;
 				memcpy(buf, frag, frag_len);
@@ -303,20 +342,26 @@ sproxyd_read(struct scality_fsal_export* export,
 		else {
 			bytes_read = read_through(export,
 						  loc,
-						  read_start, size, buf);
-			if ( bytes_read < 0 )
-				return -1;
+						  read_start, read_size, buf);
+			if ( bytes_read < 0 ) {
+				ret = -1;
+				goto out;
+			}
 		}
 		if ( bytes_read != read_size ) {
-			LogCrit(COMPONENT_FSAL, "read size mismatch expected %zu, got %zu",
+			LogCrit(COMPONENT_FSAL,
+				"read size mismatch expected %zu, got %zu",
 				read_size, bytes_read);
-			return -1;
+			ret = -1;
+			goto out;
 		}
 		buf+=bytes_read;
 		offset+=bytes_read;
 		size-=bytes_read;
 	}
-	return 0;
+	ret = 0;
+ out:
+	return ret;
 }
 
 static size_t
@@ -329,6 +374,8 @@ int
 sproxyd_delete(struct scality_fsal_export* export,
 	       const char *id)
 {
+	LogDebug(COMPONENT_FSAL,
+		 "sproxyd_delete(%s)", id);
 	CURL *curl = NULL;
 	CURLcode curl_ret;
 	char url[MAX_URL_SIZE];
@@ -427,6 +474,8 @@ sproxyd_put(struct scality_fsal_export* export,
 	    char *buf,
 	    size_t size)
 {
+	LogDebug(COMPONENT_FSAL,
+		"sproxyd_put(%s)", id);
 	char url[MAX_URL_SIZE];
 	CURL *curl = NULL;
 	CURLcode curl_ret;

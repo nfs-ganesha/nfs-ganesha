@@ -19,7 +19,7 @@ S3 delimiter must be ```"/"```.
 
 To mitigate the effect of having data and metadata caches all the way down from the server to the client. No explicit caching is done in the module. Transcients states remains and write are still buffered, but an effort must be made in order to have consistent view of the storage from multiple connectors of different nature.
 
-Hence, it is advised to mount the exported bucket on the client with the ```to noac``` mount option to prevent lag in propagation of changes.
+Hence, it is advised to mount the exported bucket on the client with the ```-o noac``` mount option to prevent lag in propagation of changes.
 
 
 ### Accessing an exported bucket with NFS
@@ -30,21 +30,38 @@ Scality NFS doesn't access the bucket using the S3 connector. It makes direct us
 
 __DBD Server__
 
+This is the entry point of the Scality Metadata server.
+
+The url of the dbd server is defined with the ```dbd_url``` parameter in the ```SCALITY``` section of the configuration file.
+
 __Sproxyd Server__
+
+This is the entry point of the Scality RING.
+
+The url of the sproxyd server is defined with the ```sproxyd_url``` parameter in the ```SCALITY``` section of the configurqtion file.
 
 __Redis Server__
 
+The redis server is used to associate in both ways *wire handles* and *objects in the bucket*
+
 By default, Scality NFS connects to the redis server running on localhost.
-If more than one NFS servers share the same buckets, it may be wise to setup a common redis server. 
+If more than one NFS servers share the same buckets, it may be wise to setup a common redis server.
+
+Within the ```SCALITY``` section of the configuration file, you can point to a different redis server using ```redis_host``` and ```redis_port``` parameters.
 
 __Bucket__
 
-__Owner Id and Name__
- url of the dbd server
- url of the sproxyd server
- (redis is assumed running on localhost)
- owner id and display name of the objects
- TODO: uid/gid?
+The configuration requires the exported bucket to appear in mutliple places.
+
+Within the ```EXPORT``` section in ```Path``` and ```Pseudo``` parameters with a heading slash.
+
+Within the ```EXPORT/FSAL``` section as ```bucket``` parameter without any slash.
+
+__Default User__
+
+Unix users accessing the export will be squashed by values defined with ```Anonymous_uid``` and ```Anonymous_gid``` in the ```EXPORT``` section. Default permissions on directories and files will be altered by the ```umask``` parameter.
+
+*Owner Id* and *Owner Display Name* are fetched from the bucket attributes and used when accessing objects within the bucket.
 
 
 ### Note for future on data format
@@ -115,8 +132,6 @@ Jansson? because it seems to be the new json library of favour.
 
  - Hardlinks are not supported. Files have 1 link only.
  - directories announce only 1 link. This prevents tools such as find to fail on the system.
- - Truncate syscall is only supported to set the file size to 0.
- - Write can only append to files (new files or already existing one).
  - Extended attributes are not supported at this time.
  - Dynamic filesystem info (like df) is not supported at this time
  - Symlinks are not supported.
@@ -125,11 +140,10 @@ Jansson? because it seems to be the new json library of favour.
  - Writing to a deleted file (as posix permits) is probably broken and will never work.
  - locking is not supported
 
-## Implementation shortcuts
+## Implementation details
 
- - fileid is set to the value of the first 8 bytes of the wire handle, no collision checking is performed
- - TODO: make usage of placeholders for empty directories. Placeholder is an empty file named after the directory with a trailing slash and content type application/x-directory (cyberduck convention)
- - root handle object must be created in memory even if bucket (FUTURE: or any object of the specified prefix doesn't exist)
+ - fileid, wire handles and directory cookies share the same value. This trick permits to unambiguously identify an object in the bucket, even with NFSv3. It also permits to implement seekdir effectively.
+ - Directories are embodied by placeholders. Placeholder is an empty file named after the directory with a trailing slash and content type application/x-directory (cyberduck convention). These placeholder are overwritten (or at least created) at file removal, in order to keep existing directories from a sudden disapearance. 
  - Objects as a whole are no longer immutable when it comes to Scality NFS. With S3, the lack of precondition checking on metadata update only leads to potential leaks of replaced data when a race occurs. With Scality NFS, corruption may happen in such case since object's part locations list is partially updated.
 
 
@@ -149,16 +163,16 @@ Wire handles must be constant across restarts (and clients hopping from one serv
 
 When Scality NFS needs a new handle to be created. Whether it is for a new object or for the first access to an existing object. It first creates the pair ( bucket/object => handle ) and then create another pair ( handle => bucket/object ). Two pairs are created because lookup must be efficient in both ways.
 
-mappings are set to expire after 86400s.
 
-__TODO:__
+mappings are set to expire after 86400s and expiration time is renewed on access.
 
- - renew mappings expiration time on access
-  
+__8 bytes wire handles__
+
+Wire handles are made to accomodate both NFSv3 maximum size and ```readdir+``` cookie size. ```Readdir+``` returns for each entry a cookie that must be usable by the client to restart the listing from any entry in the directory. This way, making the *wire handle* and the *readdir+ cookies* the same thing, a single lookup in the redis key/value store permits to retrieve the object in the bucket corresponding to that cookie (a.k.a the wire handle) in order to provide a sensible marker to the DBD request.
 
 ### Object Lookup in directories
 
-When performing a lookup, we don't know in advance which kind of object we are looking for. It may be a regular file or a directory. Since directories do not really exist in a bucket, we have to perform different requests in order to get the result
+When performing a lookup, we don't know in advance which kind of object we are looking for. It may be a regular file or a directory. Since directories do not really exist in a bucket, we have to perform different requests in order to get the result.
 
  - Query #1: An exact match query on the object path without a trailing slash
  - Query #2: A prefix/marker/delimiter query for only 1 key with prefix set to the object path with a trailing slash.
@@ -167,24 +181,27 @@ If the result set of the query #2 is empty. The response from the query #1 tells
 
 If the result set of the query #2 returns an element. This tells us that a directory exist for the specified name. Moreover, if query #1 also returns something, we log something telling an object is in the way.
 
+Note that the Query #2 will list any placeholder in the ```Contents``` section of the response.
+
 
 __Future:__
- - lookup must not rely on the existence of the placeholder to work on directories.
- - Make sure that placeholders are caught by the Query #2
  - Reduce the number of round trips with an extension in DBD
 
 
 ### Directory listing
 
-Directory listing is performed using a prefix/marker/delimiter query on DBD.
+Directory listing is performed using a prefix/marker/delimiter query on DBD. As indicated earlier, ```readdir+``` cookies are used to lookup objects in redis key/value store in order to restart the listing from the expected position.
+
+When the DBD listing request is built, the ```prefix``` is composed of the object name (with a trailing slash) of the corresponding placeholder (even if it doesn't exist). The ```delimiter``` is *always* ```/```. The ```marker``` is set to the value given by the cookie. And finally, maxKeys is set to a compilation time value (current is 50).
 
 At this time
  - maxKeys has not been wisely chosen.
- - seekloc is not handled at all. We will need to map readdir cookies to nextmarkers.
 
 __. and ..__
 
-. and .. are not returned as part of the listing. It seems that NFS can handle it graciously.
+. and .. are not returned as part of the listing. Ganesha handles it gracefully for us.
+
+However, NFSv3 implementation requires the FSAL to respond intelligently to a ```lookup``` on ```".."```.
 
 
 ### File creation
@@ -194,7 +211,6 @@ File creation is decoupled from open and write. A new entry is created in DBD. t
  - Date and last-modified set to now()
  - owner-display-name and owner-id set to the values found in the bucket attributes
  - an empty locations array
- - Future: Do we have to remove or update the placeholder?
 
 This has the effect of creating instantly an empty file.
 
@@ -216,30 +232,43 @@ It's a no-op.
 
 ### Read a file
 
+__If the file is not dirty:__
+
 Data is not cached. Each read ends up as a sproxyd GET with range request in at least chunk. If read implies many chunks, multiple sproxyd requests are performed.
+
+__If the file to read is dirty:__
+
+The read function use the ```stencil``` buffer to decide if the read has to be made from sproxyd for unmodified sections of a part, or by reading the ```content``` buffer for dirty sections.
 
 ### Truncate a file
 
-Truncate only supports 0 as new size parameter. First object entry is updated in DBD. Its parts list is emptied. Then deleted parts are deleted from sproxyd storage.
+Depending on the ```filesize``` parameter, the truncate will whether grow or shrink the file.
+
+__Truncate that shrink the file__
+
+The truncate function will backward iterate on the part list and will whether put the part in the *commit free list* or reduce the part size, depending on the part being the last or not.
+
+__Truncate that grows the file__
+
+The current last part will be growed to its maximum and new parts will be added as required. If new parts are added, they will be referenced in the *rollback free list*.
 
 ### write to a file
 
 From an external point of view, operations are made in this order
- - write new parts
+ - New parts are written, whether they are replacement parts or a file grow parts.
  - update the object entry in DBD
- - on success: delete replaced or stale parts
- - on failure: delete newly created parts
+ - on success: delete replaced or stale parts (the *commit free list*)
+ - on failure: delete newly created parts (the *rollback free list*)
 
 The part size used for new parts is based on the penultimate size. If there is only one part, the greater value between 5MiB and the part size is used.
 
-The object handle holds a buffer that receive append writes.
+Parts are immutable.
 
-if the last part of the file is incomplete. It is loaded from the sproxyd storage in the object handle's buffer and write continues at the end of the buffer. Otherwise an new buffer is created.
+The object handle holds an associative array of all parts indexed by there offset. Each part description has a ```content``` buffer and a ```stencil``` buffer. These buffers are used to ammend the content of a part and track which section of a part has been modified. These buffers are allocated on demand when a modification in a part is required by a write.
 
-When the buffer size hits the defined part size, a new location is added in the in memory parts list and the buffer is flushed to the sproxyd storage using this new location. The buffer cursor is then reset and write continues targeting a new part.
+When the number of allocated buffers exceed a certain threshold, a partial commit happens and memory used by flushed parts is released. The partial commit doesn't cleanup old parts nor it registers object changes in the DBD server.
 
-When a commit is requested by the client, the object entry in DBD is updated with the new parts location list.
-
+When a commit is requested by the client, dirty parts are flushed to sproxyd and the object entry in DBD is updated with the new parts location list. Then the cleanup happens.
 
 ### getattrs
 
@@ -255,8 +284,6 @@ On directories, it's another story.
  - With a placeholder, placeholder content is loaded like regular files
 
 Regarding directories, there is something worth to mention. Directory content invalidation takes place here, in order to the client to get a fresh directory content. This invalidation is done using ganesha upcalls.
-
- 
 
 ### setattrs
 

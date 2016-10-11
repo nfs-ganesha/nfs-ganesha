@@ -305,6 +305,25 @@ static struct config_block export_param = {
 	.blk_desc.u.blk.commit = noop_conf_commit
 };
 
+
+static int
+handles_cmp(const struct avltree_node *haystackp,
+	    const struct avltree_node *needlep)
+{
+	struct scality_fsal_obj_handle *haystack, *needle;
+	haystack = avltree_container_of(haystackp,
+					struct scality_fsal_obj_handle,
+					avltree_node);
+	needle = avltree_container_of(needlep,
+				      struct scality_fsal_obj_handle,
+				      avltree_node);
+	fsal_cookie_t haystack_cookie = *(fsal_cookie_t*)haystack->handle;
+	fsal_cookie_t needle_cookie = *(fsal_cookie_t*)needle->handle;
+	return (haystack_cookie > needle_cookie) -
+		(haystack_cookie < needle_cookie);
+}
+
+
 /* create_export
  * Create an export point and return a handle to it to be kept
  * in the export list.
@@ -329,6 +348,9 @@ fsal_status_t scality_create_export(struct fsal_module *fsal_hdl,
 	}
 
 	myself->module = container_of(fsal_hdl, struct scality_fsal_module, fsal);
+	pthread_mutex_init(&myself->handles_mutex, NULL);
+	avltree_init(&myself->handles, handles_cmp, 0);
+
 	retval = load_config_from_node(parse_node,
 				       &export_param,
 				       myself,

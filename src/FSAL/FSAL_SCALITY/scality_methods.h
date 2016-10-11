@@ -46,7 +46,7 @@ enum static_assert_cookie_size {  static_assert_cookie_size_check = 1 / (sizeof(
 #define S3_DELIMITER_SZ (sizeof(S3_DELIMITER)-1)
 #define READDIR_MAX_KEYS 50
 #define DEFAULT_PART_SIZE (5*(1<<20))
-#define FLUSH_THRESHOLD (15*(1<<20))
+#define FLUSH_THRESHOLD (30*(1<<20))
 
 enum static_assert_s3_delimiter_size { static_assert_s3_delimiter_size_check = 1 / ( S3_DELIMITER_SZ == 1 ) };
 
@@ -78,6 +78,8 @@ struct scality_fsal_export {
 	char *owner_id;
 	mode_t umask;
 
+	struct avltree handles;
+	pthread_mutex_t handles_mutex;
 	struct scality_fsal_obj_handle *root_handle;
 };
 
@@ -91,6 +93,12 @@ fsal_status_t scality_create_handle(struct fsal_export *exp_hdl,
 				    struct fsal_obj_handle **handle,
 				    struct attrlist *attrs_out);
 
+typedef enum {
+	STENCIL_ZERO, //content is zero, happens when file is extended
+	STENCIL_READ, //content of the buffer is undefined, read the storage
+	STENCIL_COPY, //content of the buffer is set and dirty, copy it
+} stencil_byte_t;
+
 /*
  * SCALITY internal object handle
  * handle is a pointer because
@@ -103,6 +111,7 @@ struct scality_location
 {
 	ssize_t start;
 	ssize_t size;
+	ssize_t buffer_size;
 	char *key;
 	char *content;
 	char *stencil;
@@ -131,6 +140,7 @@ struct scality_fsal_obj_handle {
 
 	char *object; // object in the bucket (without any heading delimiter)
 
+	pthread_mutex_t content_mutex;
 	struct avltree locations;
 	size_t n_locations;
 	fsal_openflags_t openflags;
@@ -140,6 +150,8 @@ struct scality_fsal_obj_handle {
 	size_t memory_used;
 	struct scality_part *delete_on_commit;
 	struct scality_part *delete_on_rollback;
+
+	struct avltree_node avltree_node;
 };
 
 
@@ -149,6 +161,10 @@ enum scality_fsal_cleanup_flag {
 	SCALITY_FSAL_CLEANUP_ROLLBACK = 1u<<1,
 	SCALITY_FSAL_CLEANUP_PARTS = 1u<<2,
 };
+
+void
+scality_sanity_check_parts(struct scality_fsal_export *export,
+			   struct scality_fsal_obj_handle *myself);
 
 void
 scality_cleanup(struct scality_fsal_export *export,
@@ -168,12 +184,47 @@ static inline bool scality_unopenable_type(object_file_type_t type)
 	}
 }
 
+static inline void
+scality_content_lock(struct scality_fsal_obj_handle *myself)
+{
+	int content_lock_ret;
+	content_lock_ret = pthread_mutex_lock(&myself->content_mutex);
+	assert(0 == content_lock_ret);
+}
+
+static inline void
+scality_content_unlock(struct scality_fsal_obj_handle *myself)
+{
+	int content_unlock_ret;
+	content_unlock_ret = pthread_mutex_unlock(&myself->content_mutex);
+	assert(0 == content_unlock_ret);
+}
+
+static inline void
+scality_export_lock(struct scality_fsal_export *export)
+{
+	int export_lock_ret;
+	export_lock_ret = pthread_mutex_lock(&export->handles_mutex);
+	assert(0 == export_lock_ret);
+}
+
+static inline void
+scality_export_unlock(struct scality_fsal_export *export)
+{
+	int export_unlock_ret;
+	export_unlock_ret = pthread_mutex_unlock(&export->handles_mutex);
+	assert(0 == export_unlock_ret);
+}
 
 struct scality_location *
 scality_location_new(const char *key, size_t start, size_t size);
 void
 scality_location_free(struct scality_location *location);
 
+struct scality_location *
+scality_location_lookup(struct scality_fsal_obj_handle *myself,
+			uint64_t offset,
+			size_t size);
 
 /* I/O management */
 fsal_status_t scality_open(struct fsal_obj_handle *obj_hdl,
