@@ -1617,14 +1617,19 @@ static fsal_status_t glusterfs_open2(struct fsal_obj_handle *obj_hdl,
 
 		if (state == NULL) {
 			/* If no state, release the lock taken above and return
-			 * status.
+			 * status. If success, we haven't done any permission
+			 * check so ask the caller to do so.
 			 */
 			PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+			*caller_perm_check = !FSAL_IS_ERROR(status);
 			return status;
 		}
 
 		if (!FSAL_IS_ERROR(status)) {
-			/* Return success. */
+			/* Return success. We haven't done any permission
+			 * check so ask the caller to do so.
+			 */
+			*caller_perm_check = true;
 			return status;
 		}
 
@@ -1707,6 +1712,11 @@ static fsal_status_t glusterfs_open2(struct fsal_obj_handle *obj_hdl,
 		myself = container_of(*new_obj,
 				      struct glusterfs_handle,
 				      handle);
+
+		/* The open is not done with the caller's credentials so ask
+		 * the caller to perform a permission check.
+		 */
+		*caller_perm_check = true;
 		goto open;
 	}
 
@@ -1775,10 +1785,14 @@ static fsal_status_t glusterfs_open2(struct fsal_obj_handle *obj_hdl,
 	 * Also notify caller to do permission check if we DID NOT create the
 	 * file. Note it IS possible in the case of a race between an UNCHECKED
 	 * open and an external unlink, we did create the file, but we will
-	 * still force a permission check. Of course that permission check
-	 * SHOULD succeed since we also won't set the mode the caller requested
-	 * and the default file create permissions SHOULD allow the owner
-	 * read/write.
+	 * still force a permission check. That permission check might fail
+	 * if the file created after the unlink has a mode that doesn't allow
+	 * the caller/creator to open the file (on the other hand, one hopes
+	 * a non-exclusive open doesn't set a mode that doesn't allow read/write
+	 * since the application clearly expects that another process may have
+	 * created the file). This failure case really isn't too awful since
+	 * it would just look to the caller like someone else had created the
+	 * file with a mode that prevented the open this caller was attempting.
 	 */
 	created = (p_flags & O_EXCL) != 0;
 	*caller_perm_check = !created;
