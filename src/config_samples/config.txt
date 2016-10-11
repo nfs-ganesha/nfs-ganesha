@@ -206,8 +206,9 @@ EXPORT_DEFAULTS {}
 	Manage_Gids(bool, default false)
 
 	Squash(enum, values [root, root_squash, rootsquash,
+			     rootid, root_id_squash, rootidsquash,
 			     all, all_squash, allsquash,
-			     all_anomnymous, allanonymous,
+				all_anomnymous, allanonymous,
 			     no_root_squash, none, noidsquash],
 	       default root_squash)
 

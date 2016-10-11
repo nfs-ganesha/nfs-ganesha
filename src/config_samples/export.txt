@@ -32,11 +32,15 @@
 # Squash (Root_Squash)	What kind of user id squashing is performed:
 #			No_Root_Squash, NoIdSquash, None
 #				No user id squashing is performed
-#			Root, Root_Squash, RootSquash
+#			RootId, Root_Id_Squash, RootIdSquash
 #				uid 0 and gid 0 are squashed to the
 #				Anonymous_Uid and Anonymous_Gid
 #				gid 0 in alt_groups lists is also squashed
-#			All, All_Squash, AllSquash
+#			Root, Root_Squash, RootSquash
+#				uid 0 and gid of any value are squashed to the
+#				Anonymous_Uid and Anonymous_Gid
+#				alt_groups lists is discarded
+#			All, All_Squash, AllSquash, All_Anonymous, AllAnonymous
 #				All users are squashed
 #
 # Anonymous_Uid (-2)	If a user id is squashed, this is the uid used
