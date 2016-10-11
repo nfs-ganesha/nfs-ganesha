@@ -857,14 +857,19 @@ fsal_status_t rgw_fsal_open2(struct fsal_obj_handle *obj_hdl,
 
 		if (!state) {
 			/* If no state, release the lock taken above and return
-			 * status.
+			 * status. If success, we haven't done any permission
+			 * check so ask the caller to do so.
 			 */
 			PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+			*caller_perm_check = !FSAL_IS_ERROR(status);
 			return status;
 		}
 
 		if (!FSAL_IS_ERROR(status)) {
-			/* Return success. */
+			/* Return success. We haven't done any permission
+			 * check so ask the caller to do so.
+			 */
+			*caller_perm_check = true;
 			return status;
 		}
 
@@ -926,9 +931,6 @@ fsal_status_t rgw_fsal_open2(struct fsal_obj_handle *obj_hdl,
 			LogFullDebug(COMPONENT_FSAL,
 				     "open returned %s",
 				     fsal_err_txt(status));
-		} else {
-			/* No permission check was actually done... */
-			*caller_perm_check = true;
 		}
 
 		return status;
