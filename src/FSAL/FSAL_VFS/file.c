@@ -453,14 +453,19 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 
 		if (state == NULL) {
 			/* If no state, release the lock taken above and return
-			 * status.
+			 * status. If success, we haven't done any permission
+			 * check so ask the caller to do so.
 			 */
 			PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+			*caller_perm_check = !FSAL_IS_ERROR(status);
 			return status;
 		}
 
 		if (!FSAL_IS_ERROR(status)) {
-			/* Return success. */
+			/* Return success. We haven't done any permission
+			 * check so ask the caller to do so.
+			 */
+			*caller_perm_check = true;
 			return status;
 		}
 
@@ -588,6 +593,9 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 		 * additional attributes. We don't need to separately track
 		 * the condition of not wanting to set attributes.
 		 */
+		LogFullDebug(COMPONENT_FSAL,
+			     "File %s exists, retrying UNCHECKED create with out O_EXCL",
+			     name);
 		posix_flags &= ~O_EXCL;
 		fd = openat(dir_fd, name, posix_flags, unix_mode);
 	}
@@ -608,16 +616,41 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 	 * Note that in an UNCHECKED retry we MIGHT have re-created the
 	 * file and won't remember that. Oh well, so in that rare case we
 	 * leak a partially created file if we have a subsequent error in here.
-	 * Also notify caller to do permission check if we DID NOT create the
-	 * file. Note it IS possible in the case of a race between an UNCHECKED
-	 * open and an external unlink, we did create the file, but we will
-	 * still force a permission check. Of course that permission check
-	 * SHOULD succeed since we also won't set the mode the caller requested
-	 * and the default file create permissions SHOULD allow the owner
-	 * read/write.
 	 */
 	created = (posix_flags & O_EXCL) != 0;
-	*caller_perm_check = !created;
+
+	/** @todo FSF: If we are running with ENABLE_VFS_DEBUG_ACL or a
+	 *             VFS sub-FSAL that supports ACLs but doesn't permission
+	 *             check using those ACLs during openat, then there may be
+	 *             permission differences here...
+	 *
+	 *             There are three cases at issue:
+	 *             1. If the ACL is more permissive for the caller than
+	 *                the mode, and the ACLs are not evaluated by openat
+	 *                then a create might fail when the ACL would allow it.
+	 *                There's nothing to be done there. Ganesha doesn't
+	 *                evaluate directory permissions for create.
+	 *             2. An UNCHECKED create where the file already exists
+	 *                and the ACL is more permissive then the mode could
+	 *                fail. This COULD have been permission checked by
+	 *                Ganesha...
+	 *             3. An UNCHECKED create where the file already exists
+	 *                and the ACL is less permissive then the mode could
+	 *                succeed. This COULD have been permission checked by
+	 *                Ganesha...
+	 *
+	 *             These cases are only relevant for create, since if
+	 *             create is not in effect, we don't do openat using
+	 *             the caller's credentials and instead force Ganesha to
+	 *             perform the permission check.
+	 */
+
+	/* Do a permission check if we were not attempting to create. If we
+	 * were attempting any sort of create, then the openat call was made
+	 * with the caller's credentials active and as such was permission
+	 * checked.
+	 */
+	*caller_perm_check = createmode == FSAL_NO_CREATE;
 
 	vfs_alloc_handle(fh);
 
