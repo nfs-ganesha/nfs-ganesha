@@ -101,8 +101,19 @@ static bool fsal_not_in_group_list(gid_t gid)
 	return true;
 }
 
+/**
+ * @brief Check permissions on opening a file.
+ *
+ * @param[in]  obj               The file being opened
+ * @param[in]  openflags         The access reqested on opening the file
+ * @param[in]  exclusive_create  Indicates the file is being exclusive create
+ * @param[out] reason            Description of why the access failed.
+ *
+ * @returns Status of the permission check.
+ */
 static fsal_status_t check_open_permission(struct fsal_obj_handle *obj,
 					   fsal_openflags_t openflags,
+					   bool exclusive_create,
 					   char **reason)
 {
 	fsal_status_t status = {0, 0};
@@ -114,7 +125,12 @@ static fsal_status_t check_open_permission(struct fsal_obj_handle *obj,
 	if (openflags & FSAL_O_WRITE)
 		access_mask |= FSAL_WRITE_ACCESS;
 
-	status = fsal_access(obj, access_mask, NULL, NULL);
+	/* Ask for owner_skip on exclusive create (we will be checking the
+	 * verifier later, so this allows a replay of
+	 * open("foo", O_RDWR | O_CREAT | O_EXCL, 0) to succeed).
+	 */
+	status = obj->obj_ops.test_access(obj, access_mask,
+					  NULL, NULL, exclusive_create);
 
 	if (!FSAL_IS_ERROR(status)) {
 		*reason = "";
@@ -137,6 +153,12 @@ static fsal_status_t check_open_permission(struct fsal_obj_handle *obj,
 
 	/* If just a permission error and file was opened read
 	 * only, try execute permission.
+	 *
+	 * NOTE: We don't do anything special for exclusive create here, if an
+	 *       exclusive create replay failed the above permission check, it
+	 *       presumably is no longer exclusively the creator of the file
+	 *       because somehow the owner changed.
+	 *
 	 */
 	status = fsal_access(obj, FSAL_EXECUTE_ACCESS, NULL, NULL);
 
@@ -401,7 +423,8 @@ fsal_status_t open2_by_name(struct fsal_obj_handle *in_obj,
 		return status;
 
 	/* Do a permission check on the just opened file. */
-	status = check_open_permission(*obj, openflags, &reason);
+	status = check_open_permission(*obj, openflags,
+				       createmode >= FSAL_EXCLUSIVE, &reason);
 
 	if (!FSAL_IS_ERROR(status))
 		return status;
@@ -1805,7 +1828,8 @@ fsal_status_t fsal_open2(struct fsal_obj_handle *in_obj,
 		return fsalstat(ERR_FSAL_BADTYPE, 0);
 
 	/* Do a permission check on the file before opening. */
-	status = check_open_permission(in_obj, openflags, &reason);
+	status = check_open_permission(in_obj, openflags,
+				       createmode >= FSAL_EXCLUSIVE, &reason);
 
 	if (FSAL_IS_ERROR(status)) {
 		LogDebug(COMPONENT_FSAL,
@@ -1863,7 +1887,7 @@ fsal_status_t fsal_reopen2(struct fsal_obj_handle *obj,
 
 	if (check_permission) {
 		/* Do a permission check on the file before re-opening. */
-		status = check_open_permission(obj, openflags, &reason);
+		status = check_open_permission(obj, openflags, false, &reason);
 		if (FSAL_IS_ERROR(status))
 			goto out;
 	}
