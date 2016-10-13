@@ -747,6 +747,16 @@ static fsal_status_t mdcache_rename(struct fsal_obj_handle *obj_hdl,
 	if (FSAL_IS_ERROR(status))
 		goto out;
 
+	if (mdc_lookup_dst != NULL) {
+		/* Mark target file attributes as invalid */
+		atomic_clear_uint32_t_bits(&mdc_lookup_dst->mde_flags,
+					   MDCACHE_TRUST_ATTRS);
+	}
+
+	/* Mark renamed file attributes as invalid */
+	atomic_clear_uint32_t_bits(&mdc_obj->mde_flags,
+				   MDCACHE_TRUST_ATTRS);
+
 	/* Mark directory attributes as invalid */
 	atomic_clear_uint32_t_bits(&mdc_olddir->mde_flags,
 				   MDCACHE_TRUST_ATTRS);
