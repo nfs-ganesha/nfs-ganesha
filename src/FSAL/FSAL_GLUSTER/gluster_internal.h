@@ -247,6 +247,12 @@ void construct_handle(struct glusterfs_export *glexport, const struct stat *st,
 		      int len, struct glusterfs_handle **obj,
 		      const char *vol_uuid);
 
+fsal_status_t create_handle2(struct glusterfs_export *glfs_export,
+				   struct glfs_object *glhandle,
+				   struct fsal_obj_handle **pub_handle,
+				   struct stat *sb,
+				   struct attrlist *attrs_out);
+
 fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 				      void *parse_node,
 				      struct config_error_type *err_type,
