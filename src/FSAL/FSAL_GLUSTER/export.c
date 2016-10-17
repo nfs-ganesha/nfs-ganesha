@@ -268,6 +268,65 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 }
 
 /**
+ * @brief Given a glfs_object handle, construct handle for
+ * FSAL to use.
+ */
+
+fsal_status_t create_handle2(struct glusterfs_export *glfs_export,
+				   struct glfs_object *glhandle,
+				   struct fsal_obj_handle **pub_handle,
+				   struct stat *sb,
+				   struct attrlist *attrs_out)
+{
+	int rc = 0;
+	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
+	unsigned char globjhdl[GFAPI_HANDLE_LENGTH] = {'\0'};
+	struct glusterfs_handle *objhandle = NULL;
+	char vol_uuid[GLAPI_UUID_LENGTH] = {'\0'};
+#ifdef GLTIMING
+	struct timespec s_time, e_time;
+
+	now(&s_time);
+#endif
+
+	*pub_handle = NULL;
+
+	if (!glfs_export || !glhandle) {
+		status.major = ERR_FSAL_INVAL;
+		goto out;
+	}
+
+	rc = glfs_h_extract_handle(glhandle, globjhdl, GFAPI_HANDLE_LENGTH);
+	if (rc < 0) {
+		status = gluster2fsal_error(errno);
+		goto out;
+	}
+	rc = glfs_get_volumeid(glfs_export->gl_fs->fs, vol_uuid,
+				 GLAPI_UUID_LENGTH);
+	if (rc < 0) {
+		status = gluster2fsal_error(rc);
+		goto out;
+	}
+
+	construct_handle(glfs_export, sb, glhandle, globjhdl,
+			 GLAPI_HANDLE_LENGTH, &objhandle, vol_uuid);
+
+	if (attrs_out != NULL) {
+		posix2fsal_attributes_all(sb, attrs_out);
+	}
+
+	*pub_handle = &objhandle->handle;
+ out:
+	if (status.major != ERR_FSAL_NO_ERROR)
+		gluster_cleanup_vars(glhandle);
+#ifdef GLTIMING
+	now(&e_time);
+	latency_update(&s_time, &e_time, lat_create_handle);
+#endif
+	return status;
+}
+
+/**
  * @brief Implements GLUSTER FSAL exportoperation get_fs_dynamic_info
  */
 
@@ -305,8 +364,8 @@ static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
  * Note that this is not expected to fail since memory allocation is
  * expected to abort on failure.
  *
- * @param[in] exp_hdl               Export state_t will be associated with
- * @param[in] state_type            Type of state to allocate
+ * @param[in] exp_hdl	       Export state_t will be associated with
+ * @param[in] state_type	    Type of state to allocate
  * @param[in] related_state         Related state if appropriate
  *
  * @returns a state structure.
