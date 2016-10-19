@@ -850,6 +850,7 @@ mdc_init_export(struct fsal_module *fsal_hdl,
 	myself->up_ops.up_export = &myself->export;
 	myself->export.up_ops = &myself->up_ops;
 	myself->export.fsal = fsal_hdl;
+	fsal_attach_export(fsal_hdl, &myself->export.exports);
 	fsal_export_stack(op_ctx->fsal_export, &myself->export);
 
 	glist_init(&myself->entry_list);
