@@ -94,7 +94,7 @@ static int nfs4_ds_putfh(compound_data_t *data)
 		 * get_gsh_export_ref() was bumped in pnfs_ds_get()
 		 */
 		op_ctx->ctx_export = pds->mds_export;
-		op_ctx->fsal_export = op_ctx->ctx_export->fsal_export;
+		op_ctx->fsal_export = pds->mds_fsal_export;
 	} else {
 		/* export reference has been dropped. */
 		put_gsh_export(pds->mds_export);

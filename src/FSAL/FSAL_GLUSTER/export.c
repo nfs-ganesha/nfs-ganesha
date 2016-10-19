@@ -715,6 +715,7 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 		/* special case: server_id matches export_id */
 		pds->id_servers = op_ctx->ctx_export->export_id;
 		pds->mds_export = op_ctx->ctx_export;
+		pds->mds_fsal_export = op_ctx->fsal_export;
 
 		if (!pnfs_ds_insert(pds)) {
 			LogCrit(COMPONENT_CONFIG,

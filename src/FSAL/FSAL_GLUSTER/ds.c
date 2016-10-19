@@ -91,7 +91,7 @@ static nfsstat4 ds_read(struct fsal_ds_handle *const ds_pub,
 		container_of(ds_pub, struct glfs_ds_handle, ds);
 	int    rc = 0;
 	struct glusterfs_export *glfs_export =
-	container_of(ds_pub->pds->mds_export->fsal_export,
+	container_of(ds_pub->pds->mds_fsal_export,
 		     struct glusterfs_export, export);
 
 	if (ds->glhandle == NULL)
@@ -143,7 +143,7 @@ static nfsstat4 ds_write(struct fsal_ds_handle *const ds_pub,
 	struct glfs_ds_handle *ds =
 		container_of(ds_pub, struct glfs_ds_handle, ds);
 	struct glusterfs_export *glfs_export =
-	container_of(ds_pub->pds->mds_export->fsal_export,
+	container_of(ds_pub->pds->mds_fsal_export,
 		     struct glusterfs_export, export);
 	int    rc = 0;
 
@@ -199,7 +199,7 @@ static nfsstat4 ds_commit(struct fsal_ds_handle *const ds_pub,
 
 	if (ds->stability_got == FILE_SYNC4) {
 		struct glusterfs_export *glfs_export =
-			container_of(ds_pub->pds->mds_export->fsal_export,
+			container_of(ds_pub->pds->mds_fsal_export,
 				     struct glusterfs_export, export);
 		struct glfs_fd *glfd = NULL;
 
@@ -255,7 +255,7 @@ static nfsstat4 make_ds_handle(struct fsal_pnfs_ds *const pds,
 	unsigned char globjhdl[GFAPI_HANDLE_LENGTH] = {'\0'};
 	struct stat sb;
 	struct glusterfs_export *glfs_export =
-		container_of(pds->mds_export->fsal_export,
+		container_of(pds->mds_fsal_export,
 			     struct glusterfs_export, export);
 
 	*handle = NULL;

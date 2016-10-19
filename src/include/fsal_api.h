@@ -3028,6 +3028,8 @@ struct fsal_pnfs_ds {
 	struct fsal_module *fsal;	/*< Link back to fsal module */
 	struct fsal_pnfs_ds_ops s_ops;	/*< Operations vector */
 	struct gsh_export *mds_export;	/*< related export */
+	struct fsal_export *mds_fsal_export;	/*< related FSAL export (avoids
+						  MDS stacking) */
 
 	struct avltree_node ds_node;	/*< Node in tree of all Data Servers. */
 	pthread_rwlock_t lock;		/*< Lock to be held when
