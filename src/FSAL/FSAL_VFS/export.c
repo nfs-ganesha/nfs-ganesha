@@ -611,12 +611,7 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 
 	op_ctx->fsal_export = &myself->export;
 
-	/* Stack MDCACHE on top */
-	fsal_status = mdcache_export_init(up_ops, &myself->export.up_ops);
-	if (FSAL_IS_ERROR(fsal_status)) {
-		LogDebug(COMPONENT_FSAL, "MDCACHE creation failed for PSEUDO");
-		goto errout;
-	}
+	myself->export.up_ops = up_ops;
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 

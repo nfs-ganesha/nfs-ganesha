@@ -784,12 +784,7 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 	myself->export.fsal = fsal_hdl;
 	op_ctx->fsal_export = &myself->export;
 
-	/* Stack MDCACHE on top */
-	status = mdcache_export_init(up_ops, &myself->export.up_ops);
-	if (FSAL_IS_ERROR(status)) {
-		LogDebug(COMPONENT_FSAL, "MDCACHE creation failed for GPFS");
-		goto detach;
-	}
+	myself->export.up_ops = up_ops;
 
 	status.minor = resolve_posix_filesystem(op_ctx->ctx_export->fullpath,
 						fsal_hdl, &myself->export,
@@ -871,7 +866,6 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 
 uninit:
 	mdcache_export_uninit();
-detach:
 	fsal_detach_export(fsal_hdl, &myself->export.exports);
 errout:
 	free_export_ops(&myself->export);

@@ -362,12 +362,7 @@ fsal_status_t zfs_create_export(struct fsal_module *fsal_hdl,
 	myself->p_vfs = p_snapshots[0].p_vfs;
 	op_ctx->fsal_export = &myself->export;
 
-	/* Stack MDCACHE on top */
-	fsal_status = mdcache_export_init(up_ops, &myself->export.up_ops);
-	if (FSAL_IS_ERROR(fsal_status)) {
-		LogDebug(COMPONENT_FSAL, "MDCACHE creation failed for ZFS");
-		goto err_locked;
-	}
+	myself->export.up_ops = up_ops;
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 

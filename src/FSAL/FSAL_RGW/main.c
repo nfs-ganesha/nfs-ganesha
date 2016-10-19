@@ -329,12 +329,7 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 
 	op_ctx->fsal_export = &export->export;
 
-	/* Stack MDCACHE on top */
-	status = mdcache_export_init(up_ops, &export->export.up_ops);
-	if (FSAL_IS_ERROR(status)) {
-		LogDebug(COMPONENT_FSAL, "MDCACHE creation failed for RGW");
-		goto error;
-	}
+	export->export.up_ops = up_ops;
 
 	return status;
 

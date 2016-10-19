@@ -228,13 +228,79 @@ void mdcache_export_uninit(void)
 	op_ctx->fsal_module = sub_export->fsal;
 }
 
-/* Internal MDCACHE method linkage to export object
+/**
+ * @brief Create an export for MDCACHE
+ *
+ * Create the stacked export for MDCACHE to allow metadata caching on another
+ * export.  Unlike other Stackable FSALs, this one is created @b after the FSAL
+ * underneath.  It assumes the sub-FSAL's export is already created and
+ * available via the @e fsal_export member of @link op_ctx @endlink, the same
+ * way that this export is returned.
+ *
+ * There is currently no config; FSALs that want caching should call @ref
+ * mdcache_export_init
+ *
+ * @param[in] fsal_hdl		Sub-FSAL module handle
+ * @param[in] parse_node	Config node for export
+ * @param[out] err_type		Parse errors
+ * @param[in] up_ops		Upcall ops for export
+ * @return FSAL status
  */
+fsal_status_t
+mdcache_fsal_create_export(struct fsal_module *sub_fsal, void *parse_node,
+			   struct config_error_type *err_type,
+			   const struct fsal_up_vector *super_up_ops)
+{
+	fsal_status_t status = {0, 0};
+	struct mdcache_fsal_export *myself;
+	int namelen;
+	pthread_rwlockattr_t attrs;
 
-fsal_status_t mdcache_fsal_create_export(struct fsal_module *fsal_hdl,
-					 void *parse_node,
-					 struct config_error_type *err_type,
-					 const struct fsal_up_vector *up_ops);
+	myself = gsh_calloc(1, sizeof(struct mdcache_fsal_export));
+	namelen = strlen(sub_fsal->name) + 5;
+	myself->name = gsh_calloc(1, namelen);
+	snprintf(myself->name, namelen, "%s/MDC", sub_fsal->name);
+
+	fsal_export_init(&myself->export);
+	mdcache_export_ops_init(&myself->export.exp_ops);
+
+	myself->super_up_ops = *super_up_ops; /* Struct copy */
+	mdcache_export_up_ops_init(&myself->up_ops, super_up_ops);
+	myself->up_ops.up_export = &myself->export;
+	myself->export.up_ops = &myself->up_ops;
+	myself->export.fsal = &MDCACHE.fsal;
+
+	glist_init(&myself->entry_list);
+	pthread_rwlockattr_init(&attrs);
+#ifdef GLIBC
+	pthread_rwlockattr_setkind_np(&attrs,
+		PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
+#endif
+	PTHREAD_RWLOCK_init(&myself->mdc_exp_lock, &attrs);
+
+	status = sub_fsal->m_ops.create_export(sub_fsal,
+						 parse_node,
+						 err_type,
+						 &myself->up_ops);
+	if (FSAL_IS_ERROR(status)) {
+		LogMajor(COMPONENT_FSAL,
+			 "Failed to call create_export on underlying FSAL %s",
+			 sub_fsal->name);
+		fsal_put(sub_fsal);
+		return status;
+	}
+
+	/* Get ref for sub-FSAL */
+	fsal_get(myself->export.fsal);
+	fsal_export_stack(op_ctx->fsal_export, &myself->export);
+
+
+	/* Set up op_ctx */
+	op_ctx->fsal_export = &myself->export;
+	op_ctx->fsal_module = &MDCACHE.fsal;
+
+	return status;
+}
 
 /* Module initialization.
  * Called by dlopen() to register the module
@@ -299,7 +365,7 @@ void mdcache_fsal_init(void)
 		fprintf(stderr, "MDCACHE module failed to register");
 		return;
 	}
-	myself->m_ops.create_export = mdcache_fsal_create_export;
+	/*myself->m_ops.create_export = mdcache_fsal_create_export;*/
 	myself->m_ops.init_config = mdcache_fsal_init_config;
 	myself->m_ops.unload = mdcache_fsal_unload;
 	myself->m_ops.support_ex = mdcache_support_ex;
