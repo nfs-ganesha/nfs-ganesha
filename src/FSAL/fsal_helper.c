@@ -1787,16 +1787,18 @@ fsal_status_t fsal_open2(struct fsal_obj_handle *in_obj,
 	if (createmode >= FSAL_EXCLUSIVE && verifier == NULL)
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	if (name)
-		return open2_by_name(in_obj, state, openflags, createmode, name,
-				     attr, verifier, obj, attrs_out);
+		return open2_by_name(in_obj, state, openflags, createmode,
+				     name, attr, verifier, obj, attrs_out);
 
-	if (createmode != FSAL_NO_CREATE)
-		return fsalstat(ERR_FSAL_INVAL, 0);
+	/* No name, directories don't make sense */
+	if (in_obj->type == DIRECTORY) {
+		if (createmode != FSAL_NO_CREATE)
+			return fsalstat(ERR_FSAL_INVAL, 0);
 
-	/* Check type if not a create. */
-	if (in_obj->type == DIRECTORY)
 		return fsalstat(ERR_FSAL_ISDIR, 0);
-	else if (in_obj->type != REGULAR_FILE)
+	}
+
+	if (in_obj->type != REGULAR_FILE)
 		return fsalstat(ERR_FSAL_BADTYPE, 0);
 
 	/* Do a permission check on the file before opening. */
