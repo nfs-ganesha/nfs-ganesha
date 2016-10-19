@@ -1192,95 +1192,6 @@ fsal_status_t find_fd(struct glusterfs_fd *my_fd,
 	return status;
 }
 
-
-fsal_status_t glusterfs_fetch_attrs(struct glusterfs_handle *myself,
-				    struct glusterfs_fd *my_fd)
-{
-	int retval = 0;
-	fsal_status_t status = {0, 0};
-	const char *func = "unknown";
-	glusterfs_fsal_xstat_t buffxstat;
-	struct attrlist *fsalattr;
-	struct glusterfs_export *glfs_export =
-	    container_of(op_ctx->fsal_export, struct glusterfs_export, export);
-
-
-	/* Now stat the file as appropriate */
-	switch (myself->handle.type) {
-	case SOCKET_FILE:
-	case CHARACTER_FILE:
-	case BLOCK_FILE:
-	case SYMBOLIC_LINK: /** @todo: do we need glfd? */
-	case FIFO_FILE:
-		retval = glfs_h_stat(glfs_export->gl_fs, myself->glhandle,
-					&buffxstat.buffstat);
-		func = "stat";
-		break;
-	case REGULAR_FILE:
-	case DIRECTORY:
-		retval = glfs_fstat(my_fd->glfd, &buffxstat.buffstat);
-		func = "fstat";
-		break;
-
-	case NO_FILE_TYPE:
-	case EXTENDED_ATTR:
-		/* Caught during open with EINVAL */
-		break;
-	}
-
-	if (retval < 0) {
-		if (errno == ENOENT)
-			retval = ESTALE;
-		else
-			retval = errno;
-
-		LogDebug(COMPONENT_FSAL, "%s failed with %s", func,
-			 strerror(retval));
-
-		if (myself->attributes.mask & ATTR_RDATTR_ERR) {
-			/* Caller asked for error to be visible. */
-			myself->attributes.mask = ATTR_RDATTR_ERR;
-		}
-
-		status = gluster2fsal_error(retval);
-		goto out;
-	}
-
-	fsalattr = &myself->attributes;
-	stat2fsal_attributes(&buffxstat.buffstat, &myself->attributes);
-
-	if (myself->handle.type == DIRECTORY)
-		buffxstat.is_dir = true;
-	else
-		buffxstat.is_dir = false;
-
-	status = glusterfs_get_acl(glfs_export, myself->glhandle,
-				   &buffxstat, fsalattr);
-
-	/*
-	 * The error ENOENT is not an expected error for GETATTRS
-	 * Due to this, operations such as RENAME will fail when
-	 * it calls GETATTRS on removed file. But for dead links
-	 * we should not return error
-	 */
-	if (status.minor == ENOENT) {
-		if (myself->handle.type == SYMBOLIC_LINK)
-			status = fsalstat(ERR_FSAL_NO_ERROR, 0);
-		else
-			status = gluster2fsal_error(ESTALE);
-	}
-
-out:
-	if (FSAL_IS_ERROR(status)
-		&& (myself->attributes.mask & ATTR_RDATTR_ERR)) {
-		myself->attributes.mask = ATTR_RDATTR_ERR;
-	} else {
-		/* Make sure ATTR_RDATTR_ERR is cleared on success. */
-		myself->attributes.mask &= ~ATTR_RDATTR_ERR;
-	}
-	return status;
-}
-
 /**
  * @brief Merge a duplicate handle with an original handle
  *
@@ -1795,13 +1706,10 @@ static fsal_status_t glusterfs_reopen2(struct fsal_obj_handle *obj_hdl,
 	fsal_status_t status = {0, 0};
 	int posix_flags = 0;
 	fsal_openflags_t old_openflags;
-	bool truncated;
 
 	my_share_fd = (struct glusterfs_fd *)(state + 1);
 
 	fsal2posix_openflags(openflags, &posix_flags);
-
-	truncated = (posix_flags & O_TRUNC) != 0;
 
 	memset(my_fd, 0, sizeof(*my_fd));
 
@@ -1847,19 +1755,6 @@ static fsal_status_t glusterfs_reopen2(struct fsal_obj_handle *obj_hdl,
 		 */
 		glusterfs_close_my_fd(my_share_fd);
 		*my_share_fd = fd;
-
-		if (truncated) {
-			/* Refresh the attributes */
-			status = glusterfs_fetch_attrs(myself, my_share_fd);
-			if (FSAL_IS_ERROR(status)) {
-				FSAL_CLEAR_MASK(myself->attributes.mask);
-				FSAL_SET_MASK(myself->attributes.mask,
-					       ATTR_RDATTR_ERR);
-				 /** @todo: should handle this
-				   * better.
-				   */
-			}
-		}
 	} else {
 		/* We had a failure on open - we need to revert the share.
 		 * This can block over an I/O operation.

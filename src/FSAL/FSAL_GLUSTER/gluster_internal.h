@@ -160,7 +160,6 @@ struct glusterfs_handle {
 							   for wire handle */
 	struct glusterfs_fd globalfd;
 	struct fsal_obj_handle handle;	/* public FSAL handle */
-	struct attrlist attributes; /* Attributes of this Object. */
 	struct fsal_share share; /* share_reservations */
 
 	/* following added for pNFS support */
