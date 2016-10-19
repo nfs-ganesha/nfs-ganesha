@@ -548,7 +548,7 @@ static fsal_status_t mdcache_readdir(struct fsal_obj_handle *dir_hdl,
 	mdcache_entry_t *directory = container_of(dir_hdl, mdcache_entry_t,
 						  obj_handle);
 	mdcache_dir_entry_t *dirent = NULL;
-	struct avltree_node *dirent_node;
+	struct avltree_node *dirent_node = NULL;
 	fsal_status_t status = {0, 0};
 	bool cb_result = true;
 
@@ -572,6 +572,8 @@ static fsal_status_t mdcache_readdir(struct fsal_obj_handle *dir_hdl,
 	PTHREAD_RWLOCK_rdlock(&directory->content_lock);
 	/* Get initial starting position */
 	if (*whence > 0) {
+		enum mdcache_avl_err aerr;
+
 		/* Not a full directory walk */
 		if (*whence < 3) {
 			/* mdcache always uses 1 and 2 for . and .. */
@@ -580,26 +582,29 @@ static fsal_status_t mdcache_readdir(struct fsal_obj_handle *dir_hdl,
 			status = fsalstat(ERR_FSAL_BADCOOKIE, 0);
 			goto unlock_dir;
 		}
-		dirent = mdcache_avl_lookup_k(directory, *whence,
-						  MDCACHE_FLAG_NEXT_ACTIVE);
-		if (!dirent) {
-			/* May be offset of last entry */
-			if (mdcache_avl_lookup_k(directory, *whence,
-						     MDCACHE_FLAG_NONE)) {
-				/* yup, it was the last entry, not an error */
-				LogFullDebug(COMPONENT_NFS_READDIR,
-					     "EOD because empty result");
-				*eod_met = true;
-				status = fsalstat(ERR_FSAL_NOENT, 0);
-				goto unlock_dir;
-			}
+		aerr = mdcache_avl_lookup_k(directory, *whence,
+					    MDCACHE_FLAG_NEXT_ACTIVE, &dirent);
+		switch (aerr) {
+		case MDCACHE_AVL_NOT_FOUND:
 			LogFullDebug(COMPONENT_NFS_READDIR,
 				     "seek to cookie=%" PRIu64 " fail",
 				     *whence);
 			status = fsalstat(ERR_FSAL_BADCOOKIE, 0);
 			goto unlock_dir;
+		case MDCACHE_AVL_LAST:
+		case MDCACHE_AVL_DELETED:
+			/* dirent was last, or all dirents after this one are
+			 * deleted */
+			LogFullDebug(COMPONENT_NFS_READDIR,
+				     "EOD because empty result");
+			*eod_met = true;
+			status = fsalstat(ERR_FSAL_NOENT, 0);
+			goto unlock_dir;
+		case MDCACHE_AVL_NO_ERROR:
+			assert(dirent);
+			dirent_node = &dirent->node_hk;
+			break;
 		}
-		dirent_node = &dirent->node_hk;
 	} else {
 		/* Start at beginning */
 		dirent_node = avltree_first(&directory->fsobj.fsdir.avl.t);

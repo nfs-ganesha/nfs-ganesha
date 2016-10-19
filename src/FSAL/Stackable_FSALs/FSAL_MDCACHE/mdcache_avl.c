@@ -252,8 +252,9 @@ mdcache_avl_qp_insert(mdcache_entry_t *entry, mdcache_dir_entry_t **dirent)
 			return code;
 		/* detect name conflict */
 		if (j == 0) {
-			v2 = mdcache_avl_lookup_k(entry, v->hk.k,
-						  MDCACHE_FLAG_ONLY_ACTIVE);
+			(void) mdcache_avl_lookup_k(entry, v->hk.k,
+						    MDCACHE_FLAG_ONLY_ACTIVE,
+						    &v2);
 			assert(v != v2);
 			if (v2 && (strcmp(v->name, v2->name) == 0)) {
 				LogDebug(COMPONENT_CACHE_INODE,
@@ -310,14 +311,33 @@ out:
 	return code;
 }
 
-mdcache_dir_entry_t *
-mdcache_avl_lookup_k(mdcache_entry_t *entry, uint64_t k, uint32_t flags)
+/**
+ * @brief Look up a dirent by k-value
+ *
+ * Look up a dirent by k-value.  If @ref MDCACHE_FLAG_NEXT_ACTIVE is set in @a
+ * flags then the dirent after the give k-value is returend (this is for
+ * readdir).  If @ref MDCACHE_FLAG_ONLY_ACTIVE is set, then only the active tree
+ * is searched.  Otherwise, the deleted tree is searched, and, if found, the
+ * dirent after that deleted dirnet is returned.
+ *
+ * @param[in] entry	Directory to search in
+ * @param[in] k		K-value to find
+ * @param[in] flags	MDCACHE_FLAG_*
+ * @param[out] dirent	Returned dirent, if found, NULL otherwise
+ * @return MDCACHE_AVL_NO_ERROR if found; MDCACHE_AVL_NOT_FOUND if not found;
+ * MDCACHE_AVL_LAST if next requested and found was last; and
+ * MDCACHE_AVL_DELETED if all subsequent dirents are deleted.
+ */
+enum mdcache_avl_err
+mdcache_avl_lookup_k(mdcache_entry_t *entry, uint64_t k, uint32_t flags,
+		     mdcache_dir_entry_t **dirent)
 {
 	struct avltree *t = &entry->fsobj.fsdir.avl.t;
 	struct avltree *c = &entry->fsobj.fsdir.avl.c;
-	mdcache_dir_entry_t dirent_key[1], *dirent = NULL;
+	mdcache_dir_entry_t dirent_key[1];
 	struct avltree_node *node, *node2;
 
+	*dirent = NULL;
 	dirent_key->hk.k = k;
 
 	node = avltree_inline_lookup(&dirent_key->node_hk, t);
@@ -331,7 +351,7 @@ mdcache_avl_lookup_k(mdcache_entry_t *entry, uint64_t k, uint32_t flags)
 			LogFullDebug(COMPONENT_NFS_READDIR,
 				     "seek to cookie=%" PRIu64
 				     " fail (no next entry)", k);
-			goto out;
+			return MDCACHE_AVL_LAST;
 		}
 	}
 
@@ -343,19 +363,23 @@ mdcache_avl_lookup_k(mdcache_entry_t *entry, uint64_t k, uint32_t flags)
 	 * return its least upper bound in -t-, if any. */
 	if (!node) {
 		node2 = avltree_inline_lookup(&dirent_key->node_hk, c);
-		if (node2)
+		if (node2) {
 			node = avltree_sup(&dirent_key->node_hk, t);
+			if (!node)
+				return MDCACHE_AVL_DELETED;
+		}
 		LogDebug(COMPONENT_NFS_READDIR,
 			 "node %p found deleted supremum %p", node2, node);
 	}
 
 done:
-	if (node)
-		dirent =
+	if (node) {
+		*dirent =
 		    avltree_container_of(node, mdcache_dir_entry_t, node_hk);
+		return MDCACHE_AVL_NO_ERROR;
+	}
 
-out:
-	return dirent;
+	return MDCACHE_AVL_NOT_FOUND;
 }
 
 mdcache_dir_entry_t *
