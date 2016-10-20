@@ -358,6 +358,8 @@ fsal_status_t mdcache_dirent_rename(mdcache_entry_t *parent,
 void mdcache_dirent_invalidate_all(mdcache_entry_t *entry);
 
 fsal_status_t mdcache_dirent_populate(mdcache_entry_t *dir);
+void mdc_get_parent(struct mdcache_fsal_export *export,
+		    mdcache_entry_t *entry);
 
 static inline bool mdc_dircache_trusted(mdcache_entry_t *dir)
 {

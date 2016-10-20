@@ -267,6 +267,46 @@ again:
 	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 }
 
+void
+mdc_get_parent(struct mdcache_fsal_export *export, mdcache_entry_t *entry)
+{
+	struct fsal_obj_handle *sub_handle;
+	struct gsh_buffdesc fh_desc;
+	fsal_status_t status;
+
+	if (entry->obj_handle.type != DIRECTORY) {
+		/* Parent pointer only for directories */
+		return;
+	}
+
+	if (entry->fsobj.fsdir.parent.kv.len != 0) {
+		/* Already has a parent pointer */
+		return;
+	}
+
+	subcall_raw(export,
+		status = entry->sub_handle->obj_ops.lookup(
+			    entry->sub_handle, "..", &sub_handle, NULL)
+	       );
+
+	if (FSAL_IS_ERROR(status)) {
+		/* Top of filesystem */
+		return;
+	}
+
+	subcall_raw(export,
+		    sub_handle->obj_ops.handle_to_key(sub_handle, &fh_desc);
+		   );
+
+	cih_hash_key(&entry->fsobj.fsdir.parent,
+		     export->export.sub_export->fsal, &fh_desc, CIH_HASH_NONE);
+
+	/* Release parent handle */
+	subcall_raw(export,
+		    sub_handle->obj_ops.release(sub_handle)
+		   );
+}
+
 /**
  * @brief Invalidates and releases all cached entries for a directory
  *
