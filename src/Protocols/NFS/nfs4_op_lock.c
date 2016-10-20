@@ -510,9 +510,16 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 			 * a stateid. Do this here since it's impossible for
 			 * there to be such a state if the lock owner was
 			 * previously unknown.
+			 * This handles 4.0 replay locks with an open stateid
+			 * and new_lock_owner == true. It's not required for
+			 * 4.1 (the replay will be caught by the SEQUENCE op),
+			 * and 4.1 can get a concurrent FREE STATEID call
+			 * which would false-positive here and mess it up.
 			 */
-			lock_state = nfs4_State_Get_Obj(data->current_obj,
-							  lock_owner);
+			if (data->minorversion == 0)
+				lock_state = nfs4_State_Get_Obj(
+						data->current_obj,
+						lock_owner);
 		}
 
 		if (lock_state == NULL) {

@@ -567,10 +567,14 @@ int nfs4_State_Set(state_t *state)
 	buffval.addr = state;
 	buffval.len = sizeof(state_t);
 
+	/*
+	 * Allow overwrite here because we can get a new state with the
+	 * same file+owner if a FREE STATEID call comes in concurrently.
+	 */
 	err = hashtable_test_and_set(ht_state_obj,
 				     &buffkey,
 				     &buffval,
-				     HASHTABLE_SET_HOW_SET_NO_OVERWRITE);
+				     HASHTABLE_SET_HOW_SET_OVERWRITE);
 
 	if (err != HASHTABLE_SUCCESS) {
 		struct gsh_buffdesc buffkey, old_key, old_value;
@@ -732,6 +736,7 @@ struct state_t *nfs4_State_Get_Obj(struct fsal_obj_handle *obj,
 bool nfs4_State_Del(state_t *state)
 {
 	struct gsh_buffdesc buffkey, old_key, old_value;
+	struct hash_latch latch;
 	hash_error_t err;
 
 	buffkey.addr = state->stateid_other;
@@ -770,15 +775,27 @@ bool nfs4_State_Del(state_t *state)
 	buffkey.addr = old_value.addr;
 	buffkey.len = old_value.len;
 
-	err = HashTable_Del(ht_state_obj, &buffkey, &old_key, &old_value);
-
+	/* Get latch: we need to check we're deleting the right state */
+	err = hashtable_getlatch(ht_state_obj, &buffkey, &old_value, true,
+				 &latch);
 	if (err != HASHTABLE_SUCCESS) {
-		LogDebug(COMPONENT_STATE,
-			 "Failure to delete stateid %s",
-			 hash_table_err_to_str(err));
+		if (err == HASHTABLE_ERROR_NO_SUCH_KEY)
+			hashtable_releaselatched(ht_state_obj, &latch);
+
+		LogCrit(COMPONENT_STATE, "hashtable get latch failed: %d",
+			err);
+		return false;
 	}
 
-	return err == HASHTABLE_SUCCESS;
+	if (old_value.addr != state) {
+		/* state obj had already been swapped out */
+		hashtable_releaselatched(ht_state_obj, &latch);
+		return false;
+	}
+
+	hashtable_deletelatched(ht_state_obj, &buffkey, &latch, NULL, NULL);
+	hashtable_releaselatched(ht_state_obj, &latch);
+	return true;
 }
 
 /**
