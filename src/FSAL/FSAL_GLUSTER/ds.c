@@ -168,6 +168,10 @@ static nfsstat4 ds_write(struct fsal_ds_handle *const ds_pub,
 	*stability_got = stability_wanted;
 	ds->stability_got = stability_wanted;
 
+	/* Incase of MDS being DS, there shall not be upcalls sent from
+	 * backend. Hence invalidate the entry here */
+	(void)upcall_inode_invalidate(glfs_export, ds->glhandle);
+
 	return NFS4_OK;
 }
 
