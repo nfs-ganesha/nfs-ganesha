@@ -499,21 +499,31 @@ mdcache_key_delete(mdcache_key_t *key)
  * @note the caller MUST hold attr_lock for write
  *
  * @param[in,out] entry The entry on which we operate.
+ * @param[in]     attrs The attributes that have just been updated
+ *                      (we actually only care about the masks)
  */
 
 static inline void
-mdc_fixup_md(mdcache_entry_t *entry, attrmask_t mask)
+mdc_fixup_md(mdcache_entry_t *entry, struct attrlist *attrs)
 {
 	uint32_t flags = 0;
 
-	/* Check what attributes were originally requested for refresh. */
-	if (mask & ATTR_ACL)
+	/* As long as the ACL was requested, and we get here, we assume no
+	 * failure to fetch ACL (differentiated from no ACL to fetch), and
+	 * thus we only look at the fact that ACL was requested to determine
+	 * that we can trust the ACL.
+	 */
+	if (attrs->request_mask & ATTR_ACL)
 		flags |= MDCACHE_TRUST_ACL;
 
-	if (mask & ~ATTR_ACL)
+	/* If the other attributes were requested, we can trust the other
+	 * attributes. Note that if not all could be provided, we assumed
+	 * that an error occurred.
+	 */
+	if (attrs->request_mask & ~ATTR_ACL)
 		flags |= MDCACHE_TRUST_ATTRS;
 
-	if (entry->attrs.mask == ATTR_RDATTR_ERR) {
+	if (attrs->valid_mask == ATTR_RDATTR_ERR) {
 		/* The attribute fetch failed, mark the attributes and ACL as
 		 * untrusted.
 		 */
@@ -524,14 +534,14 @@ mdc_fixup_md(mdcache_entry_t *entry, attrmask_t mask)
 	}
 
 	/* Set the refresh time for the cache entry */
-	if (mask & ATTR_ACL) {
+	if (flags & MDCACHE_TRUST_ACL) {
 		if (entry->attrs.expire_time_attr > 0)
 			entry->acl_time = time(NULL);
 		else
 			entry->acl_time = 0;
 	}
 
-	if (mask & ~ATTR_ACL) {
+	if (flags & MDCACHE_TRUST_ATTRS) {
 		if (entry->attrs.expire_time_attr > 0)
 			entry->attr_time = time(NULL);
 		else
@@ -566,7 +576,7 @@ mdcache_is_attrs_valid(const mdcache_entry_t *entry, attrmask_t mask)
 	if ((entry->mde_flags & flags) != flags)
 		return false;
 
-	if (FSAL_TEST_MASK(entry->attrs.mask, ATTR_RDATTR_ERR))
+	if (entry->attrs.valid_mask == ATTR_RDATTR_ERR)
 		return false;
 
 	if (entry->obj_handle.type == DIRECTORY

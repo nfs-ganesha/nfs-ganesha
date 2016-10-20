@@ -641,8 +641,8 @@ static nfsstat4 open4_create(OPEN4args *arg, compound_data_t *data,
 			sattr_provided = true;
 		}
 		if (sattr_provided
-		    && ((FSAL_TEST_MASK(sattr.mask, ATTR_ATIME))
-		    || (FSAL_TEST_MASK(sattr.mask, ATTR_MTIME)))) {
+		    && ((FSAL_TEST_MASK(sattr.valid_mask, ATTR_ATIME))
+		    || (FSAL_TEST_MASK(sattr.valid_mask, ATTR_MTIME)))) {
 			res->status = NFS4ERR_INVAL;
 			return res->status;
 		}
@@ -671,10 +671,10 @@ static nfsstat4 open4_create(OPEN4args *arg, compound_data_t *data,
 
 	squash_setattr(&sattr);
 
-	if (!(sattr.mask & ATTR_MODE)) {
+	if (!(sattr.valid_mask & ATTR_MODE)) {
 		/* Make sure mode is set. */
 		sattr.mode = 0600;
-		sattr.mask |= ATTR_MODE;
+		sattr.valid_mask |= ATTR_MODE;
 	}
 
 	status = fsal_create(parent,
@@ -1147,8 +1147,8 @@ static void open4_ex_create_args(OPEN4args *arg,
 			/* Check that we aren't trying to set the verifier
 			 * attributes.
 			 */
-			if (FSAL_TEST_MASK(sattr->mask, ATTR_ATIME) ||
-			    FSAL_TEST_MASK(sattr->mask, ATTR_MTIME)) {
+			if (FSAL_TEST_MASK(sattr->valid_mask, ATTR_ATIME) ||
+			    FSAL_TEST_MASK(sattr->valid_mask, ATTR_MTIME)) {
 				res_OPEN4->status = NFS4ERR_INVAL;
 				return;
 			}
@@ -1160,10 +1160,10 @@ static void open4_ex_create_args(OPEN4args *arg,
 		squash_setattr(sattr);
 	}
 
-	if (!(sattr->mask & ATTR_MODE)) {
+	if (!(sattr->valid_mask & ATTR_MODE)) {
 		/* Make sure mode is set, even for exclusive create. */
 		sattr->mode = 0600;
-		sattr->mask |= ATTR_MODE;
+		sattr->valid_mask |= ATTR_MODE;
 	}
 }
 
@@ -1277,7 +1277,7 @@ static void open4_ex(OPEN4args *arg,
 					 * and we need to pass in the case
 					 * of fsal_reopen2 case.
 					 */
-					if (FSAL_TEST_MASK(sattr.mask,
+					if (FSAL_TEST_MASK(sattr.valid_mask,
 							   ATTR_SIZE) &&
 					    sattr.filesize == 0) {
 						LogFullDebug(COMPONENT_STATE,

@@ -75,7 +75,7 @@ uint32_t root_op_export_set = EXPORT_OPTION_SQUASH_TYPES |
 
 void squash_setattr(struct attrlist *attr)
 {
-	if (attr->mask & ATTR_OWNER &&
+	if (attr->valid_mask & ATTR_OWNER &&
 	    op_ctx->export_perms->anonymous_uid != 0) {
 		if (op_ctx->export_perms->options &
 		    EXPORT_OPTION_ALL_ANONYMOUS)
@@ -89,7 +89,7 @@ void squash_setattr(struct attrlist *attr)
 			attr->owner = op_ctx->export_perms->anonymous_uid;
 	}
 
-	if (attr->mask & ATTR_GROUP &&
+	if (attr->valid_mask & ATTR_GROUP &&
 	    op_ctx->export_perms->anonymous_gid != 0) {
 		/* If all squashed, then always squash the owner_group.
 		 *

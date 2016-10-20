@@ -438,10 +438,10 @@ bool fsal_is_open(struct fsal_obj_handle *obj);
  */
 
 static inline void fsal_prepare_attrs(struct attrlist *attrs,
-				      attrmask_t mask)
+				      attrmask_t request_mask)
 {
 	memset(attrs, 0, sizeof(*attrs));
-	attrs->mask = mask;
+	attrs->request_mask = request_mask;
 }
 
 /**
@@ -465,15 +465,15 @@ static inline void fsal_release_attrs(struct attrlist *attrs)
 
 		/* Poison the acl since we no longer hold a reference. */
 		attrs->acl = NULL;
-		attrs->mask &= ~ATTR_ACL;
+		attrs->valid_mask &= ~ATTR_ACL;
 	}
 }
 
 /**
  * @brief Copy a set of attributes
  *
- * If ACL is requested in dest->mask, then ACL reference is acquired, otherwise
- * acl pointer is set to NULL.
+ * If ACL is requested in dest->request_mask, then ACL reference is acquired,
+ * otherwise acl pointer is set to NULL.
  *
  * @param[in,out] dest       The attrlist to receive the copy (mask must be set)
  * @param[in]     src        The attrlist to make a copy of
@@ -485,17 +485,19 @@ static inline void fsal_copy_attrs(struct attrlist *dest,
 				   struct attrlist *src,
 				   bool pass_refs)
 {
-	bool acl_asked = dest->mask & ATTR_ACL;
+	attrmask_t save_request_mask = dest->request_mask;
 
+	/* Copy source to dest, but retain dest->request_mask */
 	*dest = *src;
+	dest->request_mask = save_request_mask;
 
-	if (pass_refs) {
+	if (pass_refs && ((save_request_mask & ATTR_ACL) != 0)) {
 		/* Pass any ACL reference to the dest, so remove from src
 		 * without adjusting the refcount.
 		 */
 		src->acl = NULL;
-		src->mask &= ~ATTR_ACL;
-	} else if (dest->acl != NULL && acl_asked) {
+		src->valid_mask &= ~ATTR_ACL;
+	} else if (dest->acl != NULL && ((save_request_mask & ATTR_ACL) != 0)) {
 		/* Take reference on ACL if necessary */
 		nfs4_acl_entry_inc_ref(dest->acl);
 	} else {
@@ -504,7 +506,7 @@ static inline void fsal_copy_attrs(struct attrlist *dest,
 		 * release the ACL reference).
 		 */
 		dest->acl = NULL;
-		dest->mask &= ~ATTR_ACL;
+		dest->valid_mask &= ~ATTR_ACL;
 	}
 }
 

@@ -102,7 +102,7 @@ mdc_up_update(struct fsal_export *export, struct gsh_buffdesc *handle,
 	/* These cannot be updated, changing any of them is
 	   tantamount to destroying and recreating the file. */
 	if (FSAL_TEST_MASK
-	    (attr->mask,
+	    (attr->valid_mask,
 	     ATTR_TYPE | ATTR_FSID | ATTR_FILEID | ATTR_RAWDEV | ATTR_RDATTR_ERR
 	     | ATTR_GENERATION)) {
 		return fsalstat(ERR_FSAL_INVAL, 0);
@@ -149,7 +149,7 @@ mdc_up_update(struct fsal_export *export, struct gsh_buffdesc *handle,
 			goto out;
 	}
 
-	if (attr->mask == 0) {
+	if (attr->valid_mask == 0) {
 		/* Done */
 		goto out;
 	}
@@ -159,7 +159,7 @@ mdc_up_update(struct fsal_export *export, struct gsh_buffdesc *handle,
 	if (attr->expire_time_attr != 0)
 		entry->attrs.expire_time_attr = attr->expire_time_attr;
 
-	if (FSAL_TEST_MASK(attr->mask, ATTR_SIZE)) {
+	if (FSAL_TEST_MASK(attr->valid_mask, ATTR_SIZE)) {
 		if (flags & fsal_up_update_filesize_inc) {
 			if (attr->filesize > entry->attrs.filesize) {
 				entry->attrs.filesize = attr->filesize;
@@ -171,7 +171,7 @@ mdc_up_update(struct fsal_export *export, struct gsh_buffdesc *handle,
 		}
 	}
 
-	if (FSAL_TEST_MASK(attr->mask, ATTR_SPACEUSED)) {
+	if (FSAL_TEST_MASK(attr->valid_mask, ATTR_SPACEUSED)) {
 		if (flags & fsal_up_update_spaceused_inc) {
 			if (attr->spaceused > entry->attrs.spaceused) {
 				entry->attrs.spaceused = attr->spaceused;
@@ -183,7 +183,7 @@ mdc_up_update(struct fsal_export *export, struct gsh_buffdesc *handle,
 		}
 	}
 
-	if (FSAL_TEST_MASK(attr->mask, ATTR_ACL)) {
+	if (FSAL_TEST_MASK(attr->valid_mask, ATTR_ACL)) {
 		/**
 		 * @todo Someone who knows the ACL code, please look
 		 * over this.  We assume that the FSAL takes a
@@ -198,27 +198,27 @@ mdc_up_update(struct fsal_export *export, struct gsh_buffdesc *handle,
 		mutatis_mutandis = true;
 	}
 
-	if (FSAL_TEST_MASK(attr->mask, ATTR_MODE)) {
+	if (FSAL_TEST_MASK(attr->valid_mask, ATTR_MODE)) {
 		entry->attrs.mode = attr->mode;
 		mutatis_mutandis = true;
 	}
 
-	if (FSAL_TEST_MASK(attr->mask, ATTR_NUMLINKS)) {
+	if (FSAL_TEST_MASK(attr->valid_mask, ATTR_NUMLINKS)) {
 		entry->attrs.numlinks = attr->numlinks;
 		mutatis_mutandis = true;
 	}
 
-	if (FSAL_TEST_MASK(attr->mask, ATTR_OWNER)) {
+	if (FSAL_TEST_MASK(attr->valid_mask, ATTR_OWNER)) {
 		entry->attrs.owner = attr->owner;
 		mutatis_mutandis = true;
 	}
 
-	if (FSAL_TEST_MASK(attr->mask, ATTR_GROUP)) {
+	if (FSAL_TEST_MASK(attr->valid_mask, ATTR_GROUP)) {
 		entry->attrs.group = attr->group;
 		mutatis_mutandis = true;
 	}
 
-	if (FSAL_TEST_MASK(attr->mask, ATTR_ATIME)
+	if (FSAL_TEST_MASK(attr->valid_mask, ATTR_ATIME)
 	    && ((flags & ~fsal_up_update_atime_inc)
 		||
 		(gsh_time_cmp(&attr->atime, &entry->attrs.atime) == 1))) {
@@ -226,7 +226,7 @@ mdc_up_update(struct fsal_export *export, struct gsh_buffdesc *handle,
 		mutatis_mutandis = true;
 	}
 
-	if (FSAL_TEST_MASK(attr->mask, ATTR_CREATION)
+	if (FSAL_TEST_MASK(attr->valid_mask, ATTR_CREATION)
 	    && ((flags & ~fsal_up_update_creation_inc)
 		||
 		(gsh_time_cmp(&attr->creation, &entry->attrs.creation) == 1))) {
@@ -234,7 +234,7 @@ mdc_up_update(struct fsal_export *export, struct gsh_buffdesc *handle,
 		mutatis_mutandis = true;
 	}
 
-	if (FSAL_TEST_MASK(attr->mask, ATTR_CTIME)
+	if (FSAL_TEST_MASK(attr->valid_mask, ATTR_CTIME)
 	    && ((flags & ~fsal_up_update_ctime_inc)
 		||
 		(gsh_time_cmp(&attr->ctime, &entry->attrs.ctime) == 1))) {
@@ -242,7 +242,7 @@ mdc_up_update(struct fsal_export *export, struct gsh_buffdesc *handle,
 		mutatis_mutandis = true;
 	}
 
-	if (FSAL_TEST_MASK(attr->mask, ATTR_MTIME)
+	if (FSAL_TEST_MASK(attr->valid_mask, ATTR_MTIME)
 	    && ((flags & ~fsal_up_update_mtime_inc)
 		||
 		(gsh_time_cmp(&attr->mtime, &entry->attrs.mtime) == 1))) {
@@ -250,7 +250,7 @@ mdc_up_update(struct fsal_export *export, struct gsh_buffdesc *handle,
 		mutatis_mutandis = true;
 	}
 
-	if (FSAL_TEST_MASK(attr->mask, ATTR_CHGTIME)
+	if (FSAL_TEST_MASK(attr->valid_mask, ATTR_CHGTIME)
 	    && ((flags & ~fsal_up_update_chgtime_inc)
 		||
 		(gsh_time_cmp(&attr->chgtime, &entry->attrs.chgtime) == 1))) {
@@ -258,13 +258,13 @@ mdc_up_update(struct fsal_export *export, struct gsh_buffdesc *handle,
 		mutatis_mutandis = true;
 	}
 
-	if (FSAL_TEST_MASK(attr->mask, ATTR_CHANGE)) {
+	if (FSAL_TEST_MASK(attr->valid_mask, ATTR_CHANGE)) {
 		entry->attrs.change = attr->change;
 		mutatis_mutandis = true;
 	}
 
 	if (mutatis_mutandis) {
-		mdc_fixup_md(entry, attr->mask);
+		mdc_fixup_md(entry, attr);
 		/* If directory can not trust content anymore. */
 		if (entry->obj_handle.type == DIRECTORY) {
 			atomic_clear_uint32_t_bits(&entry->mde_flags,

@@ -167,9 +167,6 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 
 	if (attrs_out != NULL) {
 		posix2fsal_attributes(&sb, attrs_out);
-
-		/* Make sure ATTR_RDATTR_ERR is cleared on success. */
-		attrs_out->mask &= ~ATTR_RDATTR_ERR;
 	}
 
 	*pub_handle = &objhandle->handle;
@@ -275,9 +272,6 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 
 	if (attrs_out != NULL) {
 		posix2fsal_attributes(&sb, attrs_out);
-
-		/* Make sure ATTR_RDATTR_ERR is cleared on success. */
-		attrs_out->mask &= ~ATTR_RDATTR_ERR;
 	}
 
 	*pub_handle = &objhandle->handle;
@@ -473,9 +467,15 @@ static fsal_aclsupp_t fs_acl_support(struct fsal_export *exp_hdl)
 static attrmask_t fs_supported_attrs(struct fsal_export *exp_hdl)
 {
 	struct fsal_staticfsinfo_t *info;
+	struct glusterfs_export *glfs_export =
+	    container_of(exp_hdl, struct glusterfs_export, export);
+	attrmask_t supported_mask;
 
 	info = gluster_staticinfo(exp_hdl->fsal);
-	return fsal_supported_attrs(info);
+	supported_mask = fsal_supported_attrs(info);
+	if (!NFSv4_ACL_SUPPORT)
+		supported_mask &= ~ATTR_ACL;
+	return supported_mask;
 }
 
 /**

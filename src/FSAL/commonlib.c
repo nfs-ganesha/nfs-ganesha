@@ -440,47 +440,51 @@ int display_attrlist(struct display_buffer *dspbuf,
 {
 	int b_left = display_start(dspbuf);
 
-	if (b_left > 0)
+	if (b_left > 0 && attr->request_mask != 0)
 		b_left = display_printf(dspbuf, "Mask = %08x",
-					(unsigned int) attr->mask);
+					(unsigned int) attr->request_mask);
+
+	if (b_left > 0 && attr->valid_mask != 0)
+		b_left = display_printf(dspbuf, "Mask = %08x",
+					(unsigned int) attr->valid_mask);
 
 	if (b_left > 0 && is_obj)
 		b_left = display_printf(dspbuf, " %s",
 					object_file_type_to_str(attr->type));
 
-	if (b_left > 0 && FSAL_TEST_MASK(attr->mask, ATTR_NUMLINKS))
+	if (b_left > 0 && FSAL_TEST_MASK(attr->valid_mask, ATTR_NUMLINKS))
 		b_left = display_printf(dspbuf, " numlinks=0x%"PRIu32,
 					attr->numlinks);
 
-	if (b_left > 0 && FSAL_TEST_MASK(attr->mask, ATTR_SIZE))
+	if (b_left > 0 && FSAL_TEST_MASK(attr->valid_mask, ATTR_SIZE))
 		b_left = display_printf(dspbuf, " size=0x%"PRIu64,
 					attr->filesize);
 
-	if (b_left > 0 && FSAL_TEST_MASK(attr->mask, ATTR_MODE))
+	if (b_left > 0 && FSAL_TEST_MASK(attr->valid_mask, ATTR_MODE))
 		b_left = display_printf(dspbuf, " mode=0%"PRIo32,
 					attr->mode);
 
-	if (b_left > 0 && FSAL_TEST_MASK(attr->mask, ATTR_OWNER))
+	if (b_left > 0 && FSAL_TEST_MASK(attr->valid_mask, ATTR_OWNER))
 		b_left = display_printf(dspbuf, " owner=0x%"PRIu64,
 					attr->owner);
 
-	if (b_left > 0 && FSAL_TEST_MASK(attr->mask, ATTR_GROUP))
+	if (b_left > 0 && FSAL_TEST_MASK(attr->valid_mask, ATTR_GROUP))
 		b_left = display_printf(dspbuf, " group=0x%"PRIu64,
 					attr->group);
 
-	if (b_left > 0 && FSAL_TEST_MASK(attr->mask, ATTR_ATIME_SERVER))
+	if (b_left > 0 && FSAL_TEST_MASK(attr->valid_mask, ATTR_ATIME_SERVER))
 		b_left = display_cat(dspbuf, " atime=SERVER");
 
-	if (b_left > 0 && FSAL_TEST_MASK(attr->mask, ATTR_MTIME_SERVER))
+	if (b_left > 0 && FSAL_TEST_MASK(attr->valid_mask, ATTR_MTIME_SERVER))
 		b_left = display_cat(dspbuf, " mtime=SERVER");
 
-	if (b_left > 0 && FSAL_TEST_MASK(attr->mask, ATTR_ATIME)) {
+	if (b_left > 0 && FSAL_TEST_MASK(attr->valid_mask, ATTR_ATIME)) {
 		b_left = display_cat(dspbuf, " atime=");
 		if (b_left > 0)
 			b_left = display_timespec(dspbuf, &attr->atime);
 	}
 
-	if (b_left > 0 && FSAL_TEST_MASK(attr->mask, ATTR_MTIME)) {
+	if (b_left > 0 && FSAL_TEST_MASK(attr->valid_mask, ATTR_MTIME)) {
 		b_left = display_cat(dspbuf, " mtime=");
 		if (b_left > 0)
 			b_left = display_timespec(dspbuf, &attr->mtime);
@@ -1774,7 +1778,7 @@ fsal_errors_t fsal_inherit_acls(struct attrlist *attrs, fsal_acl_t *sacl,
 		}
 	}
 	attrs->acl->naces = naces;
-	FSAL_SET_MASK(attrs->mask, ATTR_ACL);
+	FSAL_SET_MASK(attrs->valid_mask, ATTR_ACL);
 
 	return ERR_FSAL_NO_ERROR;
 }
@@ -1976,7 +1980,7 @@ fsal_mode_gen_acl(struct attrlist *attrs)
 
 	fsal_mode_gen_set(attrs->acl->aces, attrs->mode);
 
-	FSAL_SET_MASK(attrs->mask, ATTR_ACL);
+	FSAL_SET_MASK(attrs->valid_mask, ATTR_ACL);
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -1986,7 +1990,7 @@ fsal_status_t fsal_mode_to_acl(struct attrlist *attrs, fsal_acl_t *sacl)
 	int naces;
 	fsal_ace_t *sace, *dace;
 
-	if (!FSAL_TEST_MASK(attrs->mask, ATTR_MODE))
+	if (!FSAL_TEST_MASK(attrs->valid_mask, ATTR_MODE))
 		return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
 	if (!sacl || sacl->naces == 0)
@@ -2084,7 +2088,7 @@ fsal_status_t fsal_mode_to_acl(struct attrlist *attrs, fsal_acl_t *sacl)
 	fsal_mode_gen_set(dace, attrs->mode);
 
 	attrs->acl->naces = naces;
-	FSAL_SET_MASK(attrs->mask, ATTR_ACL);
+	FSAL_SET_MASK(attrs->valid_mask, ATTR_ACL);
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -2119,7 +2123,7 @@ fsal_status_t fsal_acl_to_mode(struct attrlist *attrs)
 	fsal_ace_t *ace = NULL;
 	uint32_t *modes;
 
-	if (!FSAL_TEST_MASK(attrs->mask, ATTR_ACL))
+	if (!FSAL_TEST_MASK(attrs->valid_mask, ATTR_ACL))
 		return fsalstat(ERR_FSAL_NO_ERROR, 0);
 	if (!attrs->acl || attrs->acl->naces == 0)
 		return fsalstat(ERR_FSAL_NO_ERROR, 0);
@@ -2145,7 +2149,7 @@ fsal_status_t fsal_acl_to_mode(struct attrlist *attrs)
 
 	}
 
-	FSAL_SET_MASK(attrs->mask, ATTR_MODE);
+	FSAL_SET_MASK(attrs->valid_mask, ATTR_MODE);
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
@@ -2165,8 +2169,8 @@ void set_common_verifier(struct attrlist *attrs, fsal_verifier_t verifier)
 		     verf_hi, verf_lo);
 
 	if (isDebug(COMPONENT_FSAL) &&
-	    (FSAL_TEST_MASK(attrs->mask, ATTR_ATIME) ||
-	    (FSAL_TEST_MASK(attrs->mask, ATTR_MTIME)))) {
+	    (FSAL_TEST_MASK(attrs->valid_mask, ATTR_ATIME) ||
+	    (FSAL_TEST_MASK(attrs->valid_mask, ATTR_MTIME)))) {
 		LogWarn(COMPONENT_FSAL,
 			"atime or mtime was already set in attributes%"
 			PRIx32" %"PRIx32,
@@ -2177,7 +2181,7 @@ void set_common_verifier(struct attrlist *attrs, fsal_verifier_t verifier)
 	attrs->atime.tv_sec = verf_hi;
 	attrs->mtime.tv_sec = verf_lo;
 
-	FSAL_SET_MASK(attrs->mask, ATTR_ATIME | ATTR_MTIME);
+	FSAL_SET_MASK(attrs->valid_mask, ATTR_ATIME | ATTR_MTIME);
 }
 
 /**

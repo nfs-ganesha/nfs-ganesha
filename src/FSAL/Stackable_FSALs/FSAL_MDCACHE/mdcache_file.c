@@ -558,8 +558,10 @@ static fsal_status_t mdc_open2_by_name(mdcache_entry_t *mdc_parent,
  * resources held by the set attributes. The FSAL layer MAY have added an
  * inherited ACL.
  *
- * The caller will set the mask in attrs_out to indicate the attributes of
- * interest.
+ * The caller will set the request_mask in attrs_out to indicate the attributes
+ * of interest. ATTR_ACL SHOULD NOT be requested and need not be provided. If
+ * not all the requested attributes can be provided, this method MUST return
+ * an error unless the ATTR_RDATTR_ERR bit was set in the request_mask.
  *
  * Since this method may instantiate a new fsal_obj_handle, it will be forced
  * to fetch at least some attributes in order to even know what the object
@@ -641,13 +643,16 @@ fsal_status_t mdcache_open2(struct fsal_obj_handle *obj_hdl,
 		}
 	}
 
-	/* We can survive if we don't actually succeed in fetching the
+	/* Ask for all supported attributes except ACL (we defer fetching ACL
+	 * until asked for it (including a permission check).
+	 *
+	 * We can survive if we don't actually succeed in fetching the
 	 * attributes.
 	 */
 	fsal_prepare_attrs(&attrs,
-			   op_ctx->fsal_export->exp_ops.
-				fs_supported_attrs(op_ctx->fsal_export) |
-				ATTR_RDATTR_ERR);
+			   (op_ctx->fsal_export->exp_ops.
+				   fs_supported_attrs(op_ctx->fsal_export)
+				& ~ATTR_ACL) | ATTR_RDATTR_ERR);
 
 	subcall(
 		status = mdc_parent->sub_handle->obj_ops.open2(

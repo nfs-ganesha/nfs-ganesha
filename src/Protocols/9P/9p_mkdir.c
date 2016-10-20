@@ -95,7 +95,7 @@ int _9p_mkdir(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	fsal_prepare_attrs(&sattr, ATTR_MODE);
 
 	sattr.mode = *mode;
-	sattr.mask = ATTR_MODE;
+	sattr.valid_mask = ATTR_MODE;
 
 	/* Create the directory */
 	/* BUGAZOMEU: @todo : the gid parameter is not used yet */

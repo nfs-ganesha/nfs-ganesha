@@ -194,8 +194,13 @@ static fsal_status_t mdcache_create(struct fsal_obj_handle *dir_hdl,
 	fsal_status_t status;
 	struct attrlist attrs;
 
-	fsal_prepare_attrs(&attrs, op_ctx->fsal_export->exp_ops.
-				   fs_supported_attrs(op_ctx->fsal_export));
+	/* Ask for all supported attributes except ACL (we defer fetching ACL
+	 * until asked for it (including a permission check).
+	 */
+	fsal_prepare_attrs(&attrs,
+			   op_ctx->fsal_export->exp_ops.
+				   fs_supported_attrs(op_ctx->fsal_export)
+				   & ~ATTR_ACL);
 
 	subcall_raw(export,
 		status = parent->sub_handle->obj_ops.create(
@@ -259,8 +264,13 @@ static fsal_status_t mdcache_mkdir(struct fsal_obj_handle *dir_hdl,
 
 	*handle = NULL;
 
-	fsal_prepare_attrs(&attrs, op_ctx->fsal_export->exp_ops.
-				   fs_supported_attrs(op_ctx->fsal_export));
+	/* Ask for all supported attributes except ACL (we defer fetching ACL
+	 * until asked for it (including a permission check).
+	 */
+	fsal_prepare_attrs(&attrs,
+			   op_ctx->fsal_export->exp_ops.
+				   fs_supported_attrs(op_ctx->fsal_export)
+				   & ~ATTR_ACL);
 
 	subcall_raw(export,
 		status = parent->sub_handle->obj_ops.mkdir(
@@ -328,8 +338,13 @@ static fsal_status_t mdcache_mknode(struct fsal_obj_handle *dir_hdl,
 
 	*handle = NULL;
 
-	fsal_prepare_attrs(&attrs, op_ctx->fsal_export->exp_ops.
-				   fs_supported_attrs(op_ctx->fsal_export));
+	/* Ask for all supported attributes except ACL (we defer fetching ACL
+	 * until asked for it (including a permission check).
+	 */
+	fsal_prepare_attrs(&attrs,
+			   op_ctx->fsal_export->exp_ops.
+				   fs_supported_attrs(op_ctx->fsal_export)
+				   & ~ATTR_ACL);
 
 	subcall_raw(export,
 		status = parent->sub_handle->obj_ops.mknode(
@@ -396,8 +411,13 @@ static fsal_status_t mdcache_symlink(struct fsal_obj_handle *dir_hdl,
 
 	*handle = NULL;
 
-	fsal_prepare_attrs(&attrs, op_ctx->fsal_export->exp_ops.
-				   fs_supported_attrs(op_ctx->fsal_export));
+	/* Ask for all supported attributes except ACL (we defer fetching ACL
+	 * until asked for it (including a permission check).
+	 */
+	fsal_prepare_attrs(&attrs,
+			   op_ctx->fsal_export->exp_ops.
+				   fs_supported_attrs(op_ctx->fsal_export)
+				   & ~ATTR_ACL);
 
 	subcall_raw(export,
 		status = parent->sub_handle->obj_ops.symlink(
@@ -876,8 +896,11 @@ fsal_status_t mdcache_refresh_attrs(mdcache_entry_t *entry, bool need_acl)
 
 	if (!need_acl) {
 		/* Don't request the ACL if not necessary. */
-		attrs.mask &= ~ATTR_ACL;
+		attrs.request_mask &= ~ATTR_ACL;
 	}
+
+	/* We will want all the requested attributes in the entry */
+	entry->attrs.request_mask = attrs.request_mask;
 
 	subcall(
 		status = entry->sub_handle->obj_ops.getattrs(
@@ -900,10 +923,13 @@ fsal_status_t mdcache_refresh_attrs(mdcache_entry_t *entry, bool need_acl)
 			nfs4_acl_release_entry(entry->attrs.acl);
 		} else {
 			/* The ACL wasn't requested, move it into the
-			 * new attributes so we will retain it.
+			 * new attributes so we will retain it and make
+			 * it such that the entry attrs DO request the
+			 * ACL.
 			 */
 			attrs.acl = entry->attrs.acl;
-			attrs.mask |= ATTR_ACL;
+			attrs.valid_mask |= ATTR_ACL;
+			entry->attrs.request_mask |= ATTR_ACL;
 		}
 
 		/* ACL was released or moved to new attributes. */
@@ -924,7 +950,7 @@ fsal_status_t mdcache_refresh_attrs(mdcache_entry_t *entry, bool need_acl)
 	 */
 	fsal_release_attrs(&attrs);
 
-	mdc_fixup_md(entry, attrs.mask);
+	mdc_fixup_md(entry, &attrs);
 
 	LogAttrlist(COMPONENT_CACHE_INODE, NIV_FULL_DEBUG,
 		    "attrs ", &entry->attrs, true);
@@ -952,7 +978,7 @@ static fsal_status_t mdcache_getattrs(struct fsal_obj_handle *obj_hdl,
 
 	PTHREAD_RWLOCK_rdlock(&entry->attr_lock);
 
-	if (mdcache_is_attrs_valid(entry, attrs_out->mask)) {
+	if (mdcache_is_attrs_valid(entry, attrs_out->request_mask)) {
 		/* Up-to-date */
 		goto unlock;
 	}
@@ -961,7 +987,7 @@ static fsal_status_t mdcache_getattrs(struct fsal_obj_handle *obj_hdl,
 	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 	PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
 
-	if (mdcache_is_attrs_valid(entry, attrs_out->mask)) {
+	if (mdcache_is_attrs_valid(entry, attrs_out->request_mask)) {
 		/* Someone beat us to it */
 		goto unlock;
 	}
@@ -969,16 +995,16 @@ static fsal_status_t mdcache_getattrs(struct fsal_obj_handle *obj_hdl,
 	/* Use this to detect if we should invalidate a directory. */
 	oldmtime = entry->attrs.mtime.tv_sec;
 
-	status = mdcache_refresh_attrs(entry,
-				       (attrs_out->mask & ATTR_ACL) != 0);
+	status = mdcache_refresh_attrs(
+			entry, (attrs_out->request_mask & ATTR_ACL) != 0);
 
 	if (FSAL_IS_ERROR(status)) {
 		/* We failed to fetch any attributes. Pass that fact back to
 		 * the caller. We do not change the validity of the current
 		 * entry attributes.
 		 */
-		if (attrs_out->mask & ATTR_RDATTR_ERR)
-			attrs_out->mask = ATTR_RDATTR_ERR;
+		if (attrs_out->request_mask & ATTR_RDATTR_ERR)
+			attrs_out->valid_mask = ATTR_RDATTR_ERR;
 		goto unlock_no_attrs;
 	}
 
@@ -1039,7 +1065,8 @@ static fsal_status_t mdcache_setattrs(struct fsal_obj_handle *obj_hdl,
 		goto unlock;
 	}
 
-	status = mdcache_refresh_attrs(entry, (attrs->mask & ATTR_ACL) != 0);
+	status = mdcache_refresh_attrs(
+				entry, (attrs->valid_mask & ATTR_ACL) != 0);
 
 	if (!FSAL_IS_ERROR(status) && change == entry->attrs.change) {
 		LogDebug(COMPONENT_CACHE_INODE,
@@ -1095,7 +1122,8 @@ static fsal_status_t mdcache_setattr2(struct fsal_obj_handle *obj_hdl,
 	if (FSAL_IS_ERROR(status))
 		goto unlock;
 
-	status = mdcache_refresh_attrs(entry, (attrs->mask & ATTR_ACL) != 0);
+	status = mdcache_refresh_attrs(
+				entry, (attrs->valid_mask & ATTR_ACL) != 0);
 
 	if (!FSAL_IS_ERROR(status) && change == entry->attrs.change) {
 		LogDebug(COMPONENT_CACHE_INODE,
@@ -1584,8 +1612,13 @@ fsal_status_t mdcache_lookup_path(struct fsal_export *exp_hdl,
 
 	*handle = NULL;
 
-	fsal_prepare_attrs(&attrs, op_ctx->fsal_export->exp_ops.
-				   fs_supported_attrs(op_ctx->fsal_export));
+	/* Ask for all supported attributes except ACL (we defer fetching ACL
+	 * until asked for it (including a permission check).
+	 */
+	fsal_prepare_attrs(&attrs,
+			   op_ctx->fsal_export->exp_ops.
+				   fs_supported_attrs(op_ctx->fsal_export)
+				   & ~ATTR_ACL);
 
 	subcall_raw(export,
 		status = sub_export->exp_ops.lookup_path(sub_export, path,

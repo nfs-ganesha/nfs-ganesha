@@ -199,7 +199,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 		    arg_CREATE4->objtype.createtype4_u.devdata.specdata1;
 		sattr.rawdev.minor =
 		    arg_CREATE4->objtype.createtype4_u.devdata.specdata2;
-		sattr.mask |= ATTR_RAWDEV;
+		sattr.valid_mask |= ATTR_RAWDEV;
 		break;
 
 	case NF4BLK:
@@ -209,7 +209,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 		    arg_CREATE4->objtype.createtype4_u.devdata.specdata1;
 		sattr.rawdev.minor =
 		    arg_CREATE4->objtype.createtype4_u.devdata.specdata2;
-		sattr.mask |= ATTR_RAWDEV;
+		sattr.valid_mask |= ATTR_RAWDEV;
 		break;
 
 	default:
@@ -220,13 +220,13 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 		goto out;
 	}			/* switch( arg_CREATE4.objtype.type ) */
 
-	if (!(sattr.mask & ATTR_MODE)) {
+	if (!(sattr.valid_mask & ATTR_MODE)) {
 		/* Make sure mode is set. */
 		if (type == DIRECTORY)
 			sattr.mode = 0700;
 		else
 			sattr.mode = 0600;
-		sattr.mask |= ATTR_MODE;
+		sattr.valid_mask |= ATTR_MODE;
 	}
 
 	fsal_status = fsal_create(obj_parent, name, type, &sattr, link_content,

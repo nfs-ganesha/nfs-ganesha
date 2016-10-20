@@ -398,14 +398,7 @@ fsal_status_t PanFS_getattrs(struct panfs_fsal_obj_handle *panfs_hdl,
 		/*return st;*/
 	}
 
-	st = panfs_acl_2_fsal_acl(&pattrs.acls, attrib);
-	if (FSAL_IS_ERROR(st)) {
-		FSAL_CLEAR_MASK(attrib->mask);
-		FSAL_SET_MASK(attrib->mask, ATTR_RDATTR_ERR);
-		return st;
-	}
-
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	return panfs_acl_2_fsal_acl(&pattrs.acls, attrib);
 }
 
 /**
@@ -430,11 +423,8 @@ fsal_status_t PanFS_setattrs(struct panfs_fsal_obj_handle *panfs_hdl,
 	pattrs.acls.aces = paces;
 
 	st = fsal_acl_2_panfs_acl(attrib, &pattrs.acls);
-	if (FSAL_IS_ERROR(st)) {
-		FSAL_CLEAR_MASK(attrib->mask);
-		FSAL_SET_MASK(attrib->mask, ATTR_RDATTR_ERR);
+	if (FSAL_IS_ERROR(st))
 		return st;
-	}
 
 	st = panfs_um_set_attr(fd, &pattrs);
 	if (FSAL_IS_ERROR(st))

@@ -127,7 +127,7 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 	fsal_prepare_attrs(&attrib, ATTR_GPFS_ALLOC_HANDLE);
 
 	if (attrs_out != NULL)
-		attrib.mask |= attrs_out->mask;
+		attrib.request_mask |= attrs_out->request_mask;
 
 	status = GPFSFSAL_lookup(op_ctx, parent, path, &attrib, fh, &fs);
 	if (FSAL_IS_ERROR(status))
@@ -180,7 +180,7 @@ fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 	fsal_prepare_attrs(&attrib, ATTR_GPFS_ALLOC_HANDLE);
 
 	if (attrs_out != NULL)
-		attrib.mask |= attrs_out->mask;
+		attrib.request_mask |= attrs_out->request_mask;
 
 	status =
 	    GPFSFSAL_create(dir_hdl, name, op_ctx, attr_in->mode, fh, &attrib);
@@ -226,7 +226,7 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 	fsal_prepare_attrs(&attrib, ATTR_GPFS_ALLOC_HANDLE);
 
 	if (attrs_out != NULL)
-		attrib.mask |= attrs_out->mask;
+		attrib.request_mask |= attrs_out->request_mask;
 
 	status =
 	    GPFSFSAL_mkdir(dir_hdl, name, op_ctx, attr_in->mode, fh, &attrib);
@@ -246,9 +246,9 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 	*handle = &hdl->obj_handle;
 
 	/* We handled the mode above. */
-	FSAL_UNSET_MASK(attr_in->mask, ATTR_MODE);
+	FSAL_UNSET_MASK(attr_in->valid_mask, ATTR_MODE);
 
-	if (attr_in->mask) {
+	if (attr_in->valid_mask) {
 		/* Now per support_ex API, if there are any other attributes
 		 * set, go ahead and get them set now.
 		 */
@@ -264,13 +264,8 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 		}
 	} else {
 		status = fsalstat(ERR_FSAL_NO_ERROR, 0);
-
-		if (attrs_out != NULL) {
-			/* Make sure ATTR_RDATTR_ERR is cleared on success. */
-			attrs_out->mask &= ~ATTR_RDATTR_ERR;
-		}
 	}
-	FSAL_SET_MASK(attr_in->mask, ATTR_MODE);
+	FSAL_SET_MASK(attr_in->valid_mask, ATTR_MODE);
 
 	return status;
 }
@@ -302,7 +297,7 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 	fsal_prepare_attrs(&attrib, ATTR_GPFS_ALLOC_HANDLE);
 
 	if (attrs_out != NULL)
-		attrib.mask |= attrs_out->mask;
+		attrib.request_mask |= attrs_out->request_mask;
 
 	status =
 	    GPFSFSAL_mknode(dir_hdl, name, op_ctx, attr_in->mode, nodetype, dev,
@@ -323,9 +318,9 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 	*handle = &hdl->obj_handle;
 
 	/* We handled the mode above. */
-	FSAL_UNSET_MASK(attr_in->mask, ATTR_MODE);
+	FSAL_UNSET_MASK(attr_in->valid_mask, ATTR_MODE);
 
-	if (attr_in->mask) {
+	if (attr_in->valid_mask) {
 		/* Now per support_ex API, if there are any other attributes
 		 * set, go ahead and get them set now.
 		 */
@@ -341,13 +336,8 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 		}
 	} else {
 		status = fsalstat(ERR_FSAL_NO_ERROR, 0);
-
-		if (attrs_out != NULL) {
-			/* Make sure ATTR_RDATTR_ERR is cleared on success. */
-			attrs_out->mask &= ~ATTR_RDATTR_ERR;
-		}
 	}
-	FSAL_SET_MASK(attr_in->mask, ATTR_MODE);
+	FSAL_SET_MASK(attr_in->valid_mask, ATTR_MODE);
 
 	return status;
 }
@@ -382,7 +372,7 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 	fsal_prepare_attrs(&attrib, ATTR_GPFS_ALLOC_HANDLE);
 
 	if (attrs_out != NULL)
-		attrib.mask |= attrs_out->mask;
+		attrib.request_mask |= attrs_out->request_mask;
 
 	status = GPFSFSAL_symlink(dir_hdl, name, link_path, op_ctx,
 				  attr_in->mode, fh, &attrib);
@@ -403,9 +393,9 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 	*handle = &hdl->obj_handle;
 
 	/* We handled the mode above. */
-	FSAL_UNSET_MASK(attr_in->mask, ATTR_MODE);
+	FSAL_UNSET_MASK(attr_in->valid_mask, ATTR_MODE);
 
-	if (attr_in->mask) {
+	if (attr_in->valid_mask) {
 		/* Now per support_ex API, if there are any other attributes
 		 * set, go ahead and get them set now.
 		 */
@@ -421,13 +411,8 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 		}
 	} else {
 		status = fsalstat(ERR_FSAL_NO_ERROR, 0);
-
-		if (attrs_out != NULL) {
-			/* Make sure ATTR_RDATTR_ERR is cleared on success. */
-			attrs_out->mask &= ~ATTR_RDATTR_ERR;
-		}
 	}
-	FSAL_SET_MASK(attr_in->mask, ATTR_MODE);
+	FSAL_SET_MASK(attr_in->valid_mask, ATTR_MODE);
 
 	return status;
 }
@@ -616,21 +601,14 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
 			      struct attrlist *attrs)
 {
 	struct gpfs_fsal_obj_handle *myself;
-	fsal_status_t status;
 
 	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle,
 			      obj_handle);
 
-	status = GPFSFSAL_getattrs(op_ctx->fsal_export,
-				obj_hdl->fs->private_data,
-				op_ctx, myself->handle,
-				attrs);
-
-	if (FSAL_IS_ERROR(status)) {
-		FSAL_CLEAR_MASK(attrs->mask);
-		FSAL_SET_MASK(attrs->mask, ATTR_RDATTR_ERR);
-	}
-	return status;
+	return GPFSFSAL_getattrs(op_ctx->fsal_export,
+				 obj_hdl->fs->private_data,
+				 op_ctx, myself->handle,
+				 attrs);
 }
 
 static fsal_status_t getxattrs(struct fsal_obj_handle *obj_hdl,
@@ -1104,7 +1082,7 @@ fsal_status_t gpfs_lookup_path(struct fsal_export *exp_hdl,
 	fsal_prepare_attrs(&attributes, ATTR_GPFS_ALLOC_HANDLE);
 
 	if (attrs_out != NULL)
-		attributes.mask |= attrs_out->mask;
+		attributes.request_mask |= attrs_out->request_mask;
 
 	if (dir_fd < 0) {
 		LogCrit(COMPONENT_FSAL,
@@ -1122,8 +1100,8 @@ fsal_status_t gpfs_lookup_path(struct fsal_export *exp_hdl,
 
 	fsal_status = fsal_get_xstat_by_handle(dir_fd, fh, &buffxstat,
 					       NULL, false,
-					       (attributes.mask & ATTR_ACL)
-									!= 0);
+					       (attributes.request_mask &
+							ATTR_ACL) != 0);
 	if (FSAL_IS_ERROR(fsal_status))
 		goto fileerr;
 	fsal_status = gpfsfsal_xstat_2_fsal_attributes(&buffxstat, &attributes,
@@ -1160,9 +1138,6 @@ fsal_status_t gpfs_lookup_path(struct fsal_export *exp_hdl,
 	LogDebug(COMPONENT_FSAL,
 		 "filesystem %s for path %s",
 		 fs->path, path);
-
-	/* Make sure ATTR_RDATTR_ERR is cleared on success. */
-	attributes.mask &= ~ATTR_RDATTR_ERR;
 
 	/* allocate an obj_handle and fill it up */
 	hdl = alloc_handle(fh, fs, &attributes, NULL, exp_hdl);
@@ -1258,7 +1233,7 @@ fsal_status_t gpfs_create_handle(struct fsal_export *exp_hdl,
 	fsal_prepare_attrs(&attrib, ATTR_GPFS_ALLOC_HANDLE);
 
 	if (attrs_out != NULL)
-		attrib.mask |= attrs_out->mask;
+		attrib.request_mask |= attrs_out->request_mask;
 
 	status = GPFSFSAL_getattrs(exp_hdl, gpfs_fs, op_ctx, fh, &attrib);
 	if (FSAL_IS_ERROR(status))

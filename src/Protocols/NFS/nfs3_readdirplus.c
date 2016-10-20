@@ -225,7 +225,7 @@ int nfs3_readdirplus(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	 * only a set of zeros is returned (trivial value)
 	 */
 	if (use_cookie_verifier) {
-		if (attrs_dir.mask == ATTR_RDATTR_ERR) {
+		if (attrs_dir.valid_mask == ATTR_RDATTR_ERR) {
 			res->res_readdir3.status = NFS3ERR_SERVERFAULT;
 			LogFullDebug(COMPONENT_NFS_READDIR,
 				     "Could not fetch ctime");

@@ -88,13 +88,13 @@ int nfs4_op_nverify(struct nfs_argop4 *op, compound_data_t *data,
 
 	res_NVERIFY4->status =
 		bitmap4_to_attrmask_t(&arg_NVERIFY4->obj_attributes.attrmask,
-				      &attrs.mask);
+				      &attrs.request_mask);
 
 	if (res_NVERIFY4->status != NFS4_OK)
 		return res_NVERIFY4->status;
 
 	res_NVERIFY4->status =
-		file_To_Fattr(data, attrs.mask, &attrs, &file_attr4,
+		file_To_Fattr(data, attrs.request_mask, &attrs, &file_attr4,
 			      &arg_NVERIFY4->obj_attributes.attrmask);
 
 	if (res_NVERIFY4->status != NFS4_OK)

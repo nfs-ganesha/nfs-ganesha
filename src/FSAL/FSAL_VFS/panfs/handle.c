@@ -63,7 +63,7 @@ static fsal_status_t panfs_setattrs(struct vfs_fsal_obj_handle *vfs_hdl,
 		st = PanFS_setattrs(panfs_hdl, fd, attrib_set);
 		if (FSAL_IS_ERROR(st))
 			return st;
-		FSAL_SET_MASK(attrib_set->mask, ATTR_ACL);
+		FSAL_SET_MASK(attrib_set->valid_mask, ATTR_ACL);
 	}
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);

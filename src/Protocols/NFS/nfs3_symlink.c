@@ -148,10 +148,10 @@ int nfs3_symlink(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	squash_setattr(&sattr);
 
-	if (!(sattr.mask & ATTR_MODE)) {
+	if (!(sattr.valid_mask & ATTR_MODE)) {
 		/* Make sure mode is set. */
 		sattr.mode = 0777;
-		sattr.mask |= ATTR_MODE;
+		sattr.valid_mask |= ATTR_MODE;
 	}
 
 	/* Make the symlink */

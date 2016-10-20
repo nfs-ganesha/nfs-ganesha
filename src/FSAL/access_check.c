@@ -822,7 +822,10 @@ fsal_status_t fsal_test_access(struct fsal_obj_handle *obj_hdl,
 	struct attrlist attrs;
 	fsal_status_t status;
 
-	fsal_prepare_attrs(&attrs, ATTRS_CREDS | ATTR_MODE | ATTR_ACL);
+	fsal_prepare_attrs(&attrs,
+			   op_ctx->fsal_export->
+				exp_ops.fs_supported_attrs(op_ctx->fsal_export)
+			   & (ATTRS_CREDS | ATTR_MODE | ATTR_ACL));
 
 	status = obj_hdl->obj_ops.getattrs(obj_hdl, &attrs);
 

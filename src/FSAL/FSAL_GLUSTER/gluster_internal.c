@@ -74,51 +74,44 @@ fsal_status_t gluster2fsal_error(const int err)
 void stat2fsal_attributes(const struct stat *buffstat,
 			  struct attrlist *fsalattr)
 {
+	/* Indicate which atrributes we have set without affecting the
+	 * other bits in the mask.
+	 */
+	fsalattr->valid_mask |= ATTRS_POSIX;
+
 	/* Fills the output struct */
-	if (FSAL_TEST_MASK(fsalattr->mask, ATTR_TYPE))
-		fsalattr->type = posix2fsal_type(buffstat->st_mode);
+	fsalattr->type = posix2fsal_type(buffstat->st_mode);
 
-	if (FSAL_TEST_MASK(fsalattr->mask, ATTR_SIZE))
-		fsalattr->filesize = buffstat->st_size;
+	fsalattr->filesize = buffstat->st_size;
 
-	if (FSAL_TEST_MASK(fsalattr->mask, ATTR_FSID))
-		fsalattr->fsid = posix2fsal_fsid(buffstat->st_dev);
+	fsalattr->fsid = posix2fsal_fsid(buffstat->st_dev);
 
-	if (FSAL_TEST_MASK(fsalattr->mask, ATTR_FILEID))
-		fsalattr->fileid = buffstat->st_ino;
+	fsalattr->fileid = buffstat->st_ino;
 
-	if (FSAL_TEST_MASK(fsalattr->mask, ATTR_MODE))
-		fsalattr->mode = unix2fsal_mode(buffstat->st_mode);
+	fsalattr->mode = unix2fsal_mode(buffstat->st_mode);
 
-	if (FSAL_TEST_MASK(fsalattr->mask, ATTR_NUMLINKS))
-		fsalattr->numlinks = buffstat->st_nlink;
+	fsalattr->numlinks = buffstat->st_nlink;
 
-	if (FSAL_TEST_MASK(fsalattr->mask, ATTR_OWNER))
-		fsalattr->owner = buffstat->st_uid;
+	fsalattr->owner = buffstat->st_uid;
 
-	if (FSAL_TEST_MASK(fsalattr->mask, ATTR_GROUP))
-		fsalattr->group = buffstat->st_gid;
+	fsalattr->group = buffstat->st_gid;
 
-	if (FSAL_TEST_MASK(fsalattr->mask, ATTR_ATIME))
-		fsalattr->atime = posix2fsal_time(buffstat->st_atime, 0);
+	/** @todo: gfapi currently only fills in the legacy time_t fields
+	 *         when it supports the timespec fields calls to this
+	 *         function should be replaced with calls to
+	 *         posix2fsal_attributes rather than changing this code.
+	 */
+	fsalattr->atime = posix2fsal_time(buffstat->st_atime, 0);
+	fsalattr->ctime = posix2fsal_time(buffstat->st_ctime, 0);
+	fsalattr->mtime = posix2fsal_time(buffstat->st_mtime, 0);
 
-	if (FSAL_TEST_MASK(fsalattr->mask, ATTR_CTIME))
-		fsalattr->ctime = posix2fsal_time(buffstat->st_ctime, 0);
-
-	if (FSAL_TEST_MASK(fsalattr->mask, ATTR_MTIME))
-		fsalattr->mtime = posix2fsal_time(buffstat->st_mtime, 0);
-
-	if (FSAL_TEST_MASK(fsalattr->mask, ATTR_CHGTIME)) {
-		fsalattr->chgtime = posix2fsal_time(MAX(buffstat->st_mtime,
+	fsalattr->chgtime = posix2fsal_time(MAX(buffstat->st_mtime,
 						buffstat->st_ctime), 0);
-		fsalattr->change = fsalattr->chgtime.tv_sec;
-	}
+	fsalattr->change = fsalattr->chgtime.tv_sec;
 
-	if (FSAL_TEST_MASK(fsalattr->mask, ATTR_SPACEUSED))
-		fsalattr->spaceused = buffstat->st_blocks * S_BLKSIZE;
+	fsalattr->spaceused = buffstat->st_blocks * S_BLKSIZE;
 
-	if (FSAL_TEST_MASK(fsalattr->mask, ATTR_RAWDEV))
-		fsalattr->rawdev = posix2fsal_devt(buffstat->st_rdev);
+	fsalattr->rawdev = posix2fsal_devt(buffstat->st_rdev);
 }
 
 struct fsal_staticfsinfo_t *gluster_staticinfo(struct fsal_module *hdl)
@@ -286,7 +279,7 @@ fsal_status_t glusterfs_get_acl(struct glusterfs_export *glfs_export,
 		fsalattr->acl = NULL;
 	}
 
-	if (NFSv4_ACL_SUPPORT && FSAL_TEST_MASK(fsalattr->mask, ATTR_ACL)) {
+	if (NFSv4_ACL_SUPPORT) {
 
 		buffxstat->e_acl = glfs_h_acl_get(glfs_export->gl_fs,
 						glhandle, ACL_TYPE_ACCESS);
@@ -345,6 +338,11 @@ fsal_status_t glusterfs_get_acl(struct glusterfs_export *glfs_export,
 			"failed to create a new acl entry");
 			return fsalstat(ERR_FSAL_NOMEM, -1);
 		}
+
+		fsalattr->valid_mask |= ATTR_ACL;
+	} else {
+		/* We were asked for ACL but do not support. */
+		status = fsalstat(ERR_FSAL_NOTSUPP, 0);
 	}
 
 	return status;

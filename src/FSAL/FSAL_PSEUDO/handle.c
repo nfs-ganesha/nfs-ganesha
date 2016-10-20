@@ -243,12 +243,12 @@ static struct pseudo_fsal_obj_handle
 	hdl->attributes.numlinks = 2;
 	hdl->numlinks = 2;
 
-	if ((attrs->mask & ATTR_OWNER) != 0)
+	if ((attrs->valid_mask & ATTR_OWNER) != 0)
 		hdl->attributes.owner = attrs->owner;
 	else
 		hdl->attributes.owner = op_ctx->creds->caller_uid;
 
-	if ((attrs->mask & ATTR_GROUP) != 0)
+	if ((attrs->valid_mask & ATTR_GROUP) != 0)
 		hdl->attributes.group = attrs->group;
 	else
 		hdl->attributes.group = op_ctx->creds->caller_gid;
@@ -257,12 +257,12 @@ static struct pseudo_fsal_obj_handle
 	now(&hdl->attributes.ctime);
 	hdl->attributes.chgtime = hdl->attributes.ctime;
 
-	if ((attrs->mask & ATTR_ATIME) != 0)
+	if ((attrs->valid_mask & ATTR_ATIME) != 0)
 		hdl->attributes.atime = attrs->atime;
 	else
 		hdl->attributes.atime = hdl->attributes.ctime;
 
-	if ((attrs->mask & ATTR_MTIME) != 0)
+	if ((attrs->valid_mask & ATTR_MTIME) != 0)
 		hdl->attributes.mtime = attrs->mtime;
 	else
 		hdl->attributes.mtime = hdl->attributes.ctime;
@@ -275,7 +275,7 @@ static struct pseudo_fsal_obj_handle
 	hdl->attributes.rawdev.minor = 0;
 
 	/* Set the mask at the end. */
-	hdl->attributes.mask = ATTRS_POSIX;
+	hdl->attributes.valid_mask = ATTRS_POSIX;
 
 	fsal_obj_handle_init(&hdl->obj_handle, exp_hdl, DIRECTORY);
 	pseudofs_handle_ops_init(&hdl->obj_handle.obj_ops);
@@ -726,7 +726,7 @@ fsal_status_t pseudofs_lookup_path(struct fsal_export *exp_hdl,
 		return fsalstat(ERR_FSAL_NOENT, ENOENT);
 	}
 
-	attrs.mask = ATTR_MODE;
+	attrs.valid_mask = ATTR_MODE;
 	attrs.mode = 0755;
 
 	if (myself->root_handle == NULL) {

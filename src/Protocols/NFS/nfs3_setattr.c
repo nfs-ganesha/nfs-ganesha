@@ -156,7 +156,7 @@ int nfs3_setattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		goto out;
 	}
 
-	if (setattr.mask != 0) {
+	if (setattr.valid_mask != 0) {
 		/* If owner or owner_group are set, and the credential was
 		 * squashed, then we must squash the set owner and owner_group.
 		 */
@@ -198,7 +198,7 @@ int nfs3_setattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	/* Build Weak Cache Coherency data */
 	res->res_setattr3.status = NFS3_OK;
 	if (arg->arg_setattr3.new_attributes.size.set_it
-	    && !(setattr.mask ^ (ATTR_SPACEUSED | ATTR_SIZE))) {
+	    && !(setattr.valid_mask ^ (ATTR_SPACEUSED | ATTR_SIZE))) {
 		res->res_setattr3.SETATTR3res_u.resfail.obj_wcc.before.
 		    attributes_follow = FALSE;
 		res->res_setattr3.SETATTR3res_u.resfail.obj_wcc.after.

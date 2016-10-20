@@ -106,7 +106,7 @@ int _9p_symlink(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	fsal_prepare_attrs(&object_attributes, ATTR_MODE);
 
 	object_attributes.mode = mode;
-	object_attributes.mask = ATTR_MODE;
+	object_attributes.valid_mask = ATTR_MODE;
 
 	/* Let's do the job */
 	/* BUGAZOMEU: @todo : the gid parameter is not used yet,

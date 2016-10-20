@@ -148,10 +148,10 @@ int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		}
 	}
 
-	if (!(sattr.mask & ATTR_MODE)) {
+	if (!(sattr.valid_mask & ATTR_MODE)) {
 		/* Make sure mode is set. */
 		sattr.mode = 0600;
-		sattr.mask |= ATTR_MODE;
+		sattr.valid_mask |= ATTR_MODE;
 	}
 
 	if (parent_obj->fsal->m_ops.support_ex(parent_obj)) {

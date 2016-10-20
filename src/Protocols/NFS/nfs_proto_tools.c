@@ -91,7 +91,7 @@ void nfs_SetPostOpAttr(struct fsal_obj_handle *obj,
 		(void) obj->obj_ops.getattrs(obj, pattrs);
 	}
 
-	if (pattrs->mask & ATTR_RDATTR_ERR) {
+	if (pattrs->valid_mask == ATTR_RDATTR_ERR) {
 		/* Indicate no attributes follow */
 		Fattr->attributes_follow = false;
 	} else {
@@ -1893,7 +1893,7 @@ static fattr_xdr_result decode_accesstime(XDR *xdr,
 static fattr_xdr_result encode_accesstimeset(XDR *xdr,
 					     struct xdr_attrs_args *args)
 {
-	if (FSAL_TEST_MASK(args->attrs->mask, ATTR_ATIME_SERVER))
+	if (FSAL_TEST_MASK(args->attrs->valid_mask, ATTR_ATIME_SERVER))
 		return encode_timeset_server(xdr);
 	else
 		return encode_timeset(xdr, &args->attrs->atime);
@@ -2008,7 +2008,7 @@ static fattr_xdr_result decode_modifytime(XDR *xdr,
 static fattr_xdr_result encode_modifytimeset(XDR *xdr,
 					     struct xdr_attrs_args *args)
 {
-	if (FSAL_TEST_MASK(args->attrs->mask, ATTR_MTIME_SERVER))
+	if (FSAL_TEST_MASK(args->attrs->valid_mask, ATTR_MTIME_SERVER))
 		return encode_timeset_server(xdr);
 	else
 		return encode_timeset(xdr, &args->attrs->mtime);
@@ -3208,17 +3208,17 @@ void nfs4_Fattr_Free(fattr4 *fattr)
  * Memory for bitmap_val and attr_val is dynamically allocated, the caller is
  * responsible for freeing it.
  *
- * @param[in]     data    NFSv4 compoud request's data
- * @param[in]     mask    The original request attribute mask
- * @param[in/out] attr    attrlist to fill in and mask to request
- * @param[out]    Fattr   NFSv4 Fattr buffer
- * @param[in]     Bitmap  Bitmap of attributes being requested
+ * @param[in]     data          NFSv4 compoud request's data
+ * @param[in]     request_mask  The original request attribute mask
+ * @param[in/out] attr          attrlist to fill in and mask to request
+ * @param[out]    Fattr         NFSv4 Fattr buffer
+ * @param[in]     Bitmap        Bitmap of attributes being requested
  *
  * @retval NFSv4 status
  */
 
 nfsstat4 file_To_Fattr(compound_data_t *data,
-		       attrmask_t mask,
+		       attrmask_t request_mask,
 		       struct attrlist *attr,
 		       fattr4 *Fattr,
 		       struct bitmap4 *Bitmap)
@@ -3301,7 +3301,7 @@ nfsstat4 file_To_Fattr(compound_data_t *data,
 		return nfs4_Errno_status(status);
 
 	/* Restore originally requested mask */
-	attr->mask = mask;
+	attr->request_mask = request_mask;
 
 	if (nfs4_FSALattr_To_Fattr(&args, Bitmap, Fattr) != 0) {
 		/* Done with the attrs, caller won't release, but we did
@@ -3479,34 +3479,34 @@ int nfs4_FSALattr_To_Fattr(struct xdr_attrs_args *args, struct bitmap4 *Bitmap,
  */
 bool nfs3_Sattr_To_FSALattr(struct attrlist *FSAL_attr, sattr3 *sattr)
 {
-	FSAL_attr->mask = 0;
+	FSAL_attr->valid_mask = 0;
 
 	if (sattr->mode.set_it) {
 		LogFullDebug(COMPONENT_NFSPROTO, "mode = %o",
 			     sattr->mode.set_mode3_u.mode);
 		FSAL_attr->mode = unix2fsal_mode(sattr->mode.set_mode3_u.mode);
-		FSAL_attr->mask |= ATTR_MODE;
+		FSAL_attr->valid_mask |= ATTR_MODE;
 	}
 
 	if (sattr->uid.set_it) {
 		LogFullDebug(COMPONENT_NFSPROTO, "uid = %d",
 			     sattr->uid.set_uid3_u.uid);
 		FSAL_attr->owner = sattr->uid.set_uid3_u.uid;
-		FSAL_attr->mask |= ATTR_OWNER;
+		FSAL_attr->valid_mask |= ATTR_OWNER;
 	}
 
 	if (sattr->gid.set_it) {
 		LogFullDebug(COMPONENT_NFSPROTO, "gid = %d",
 			     sattr->gid.set_gid3_u.gid);
 		FSAL_attr->group = sattr->gid.set_gid3_u.gid;
-		FSAL_attr->mask |= ATTR_GROUP;
+		FSAL_attr->valid_mask |= ATTR_GROUP;
 	}
 
 	if (sattr->size.set_it) {
 		LogFullDebug(COMPONENT_NFSPROTO, "size = %lld",
 			     sattr->size.set_size3_u.size);
 		FSAL_attr->filesize = sattr->size.set_size3_u.size;
-		FSAL_attr->mask |= ATTR_SIZE;
+		FSAL_attr->valid_mask |= ATTR_SIZE;
 	}
 
 	if (sattr->atime.set_it != DONT_CHANGE) {
@@ -3518,12 +3518,12 @@ bool nfs3_Sattr_To_FSALattr(struct attrlist *FSAL_attr, sattr3 *sattr)
 			FSAL_attr->atime.tv_sec =
 			    sattr->atime.set_atime_u.atime.tv_sec;
 			FSAL_attr->atime.tv_nsec = 0;
-			FSAL_attr->mask |= ATTR_ATIME;
+			FSAL_attr->valid_mask |= ATTR_ATIME;
 		} else if (sattr->atime.set_it == SET_TO_SERVER_TIME) {
 			/* Use the server's current time */
 			LogFullDebug(COMPONENT_NFSPROTO,
 				     "nfs3_Sattr_To_FSALattr: SET_TO_SERVER_TIME atime");
-			FSAL_attr->mask |= ATTR_ATIME_SERVER;
+			FSAL_attr->valid_mask |= ATTR_ATIME_SERVER;
 		} else {
 			LogCrit(COMPONENT_NFSPROTO,
 				"Unexpected value for sattr->atime.set_it = %d",
@@ -3540,12 +3540,12 @@ bool nfs3_Sattr_To_FSALattr(struct attrlist *FSAL_attr, sattr3 *sattr)
 			FSAL_attr->mtime.tv_sec =
 			    sattr->mtime.set_mtime_u.mtime.tv_sec;
 			FSAL_attr->mtime.tv_nsec = 0;
-			FSAL_attr->mask |= ATTR_MTIME;
+			FSAL_attr->valid_mask |= ATTR_MTIME;
 		} else if (sattr->mtime.set_it == SET_TO_SERVER_TIME) {
 			/* Use the server's current time */
 			LogFullDebug(COMPONENT_NFSPROTO,
 				     "nfs3_Sattr_To_FSALattr: SET_TO_SERVER_TIME Mtime");
-			FSAL_attr->mask |= ATTR_MTIME_SERVER;
+			FSAL_attr->valid_mask |= ATTR_MTIME_SERVER;
 		} else {
 			LogCrit(COMPONENT_NFSPROTO,
 				"Unexpected value for sattr->mtime.set_it = %d",
@@ -3579,7 +3579,7 @@ static void nfs3_FSALattr_To_PartialFattr(struct fsal_obj_handle *obj,
 {
 	*mask = 0;
 
-	if (FSAL_attr->mask & ATTR_TYPE) {
+	if (FSAL_attr->valid_mask & ATTR_TYPE) {
 		*mask |= ATTR_TYPE;
 		switch (FSAL_attr->type) {
 		case FIFO_FILE:
@@ -3619,43 +3619,43 @@ static void nfs3_FSALattr_To_PartialFattr(struct fsal_obj_handle *obj,
 		}
 	}
 
-	if (FSAL_attr->mask & ATTR_MODE) {
+	if (FSAL_attr->valid_mask & ATTR_MODE) {
 		Fattr->mode = fsal2unix_mode(FSAL_attr->mode);
 		*mask |= ATTR_MODE;
 	}
 
-	if (FSAL_attr->mask & ATTR_NUMLINKS) {
+	if (FSAL_attr->valid_mask & ATTR_NUMLINKS) {
 		Fattr->nlink = FSAL_attr->numlinks;
 		*mask |= ATTR_NUMLINKS;
 	}
 
-	if (FSAL_attr->mask & ATTR_OWNER) {
+	if (FSAL_attr->valid_mask & ATTR_OWNER) {
 		Fattr->uid = FSAL_attr->owner;
 		*mask |= ATTR_OWNER;
 	}
 
-	if (FSAL_attr->mask & ATTR_GROUP) {
+	if (FSAL_attr->valid_mask & ATTR_GROUP) {
 		Fattr->gid = FSAL_attr->group;
 		*mask |= ATTR_GROUP;
 	}
 
-	if (FSAL_attr->mask & ATTR_SIZE) {
+	if (FSAL_attr->valid_mask & ATTR_SIZE) {
 		Fattr->size = FSAL_attr->filesize;
 		*mask |= ATTR_SIZE;
 	}
 
-	if (FSAL_attr->mask & ATTR_SPACEUSED) {
+	if (FSAL_attr->valid_mask & ATTR_SPACEUSED) {
 		Fattr->used = FSAL_attr->spaceused;
 		*mask |= ATTR_SPACEUSED;
 	}
 
-	if (FSAL_attr->mask & ATTR_RAWDEV) {
+	if (FSAL_attr->valid_mask & ATTR_RAWDEV) {
 		Fattr->rdev.specdata1 = FSAL_attr->rawdev.major;
 		Fattr->rdev.specdata2 = FSAL_attr->rawdev.minor;
 		*mask |= ATTR_RAWDEV;
 	}
 
-	if (FSAL_attr->mask & ATTR_FSID) {
+	if (FSAL_attr->valid_mask & ATTR_FSID) {
 		/* xor filesystem_id major and rotated minor to create unique
 		 * on-wire fsid.
 		 */
@@ -3675,24 +3675,24 @@ static void nfs3_FSALattr_To_PartialFattr(struct fsal_obj_handle *obj,
 		*mask |= ATTR_FSID;
 	}
 
-	if (FSAL_attr->mask & ATTR_FILEID) {
+	if (FSAL_attr->valid_mask & ATTR_FILEID) {
 		Fattr->fileid = obj->fileid;
 		*mask |= ATTR_FILEID;
 	}
 
-	if (FSAL_attr->mask & ATTR_ATIME) {
+	if (FSAL_attr->valid_mask & ATTR_ATIME) {
 		Fattr->atime.tv_sec = FSAL_attr->atime.tv_sec;
 		Fattr->atime.tv_nsec = FSAL_attr->atime.tv_nsec;
 		*mask |= ATTR_ATIME;
 	}
 
-	if (FSAL_attr->mask & ATTR_MTIME) {
+	if (FSAL_attr->valid_mask & ATTR_MTIME) {
 		Fattr->mtime.tv_sec = FSAL_attr->mtime.tv_sec;
 		Fattr->mtime.tv_nsec = FSAL_attr->mtime.tv_nsec;
 		*mask |= ATTR_MTIME;
 	}
 
-	if (FSAL_attr->mask & ATTR_CTIME) {
+	if (FSAL_attr->valid_mask & ATTR_CTIME) {
 		Fattr->ctime.tv_sec = FSAL_attr->ctime.tv_sec;
 		Fattr->ctime.tv_nsec = FSAL_attr->ctime.tv_nsec;
 		*mask |= ATTR_CTIME;
@@ -4079,7 +4079,7 @@ static int Fattr4_To_FSAL_attr(struct attrlist *attrs, fattr4 *Fattr,
 	xdrmem_create(&attr_body, Fattr->attr_vals.attrlist4_val,
 		      Fattr->attr_vals.attrlist4_len, XDR_DECODE);
 	if (attrs)
-		FSAL_CLEAR_MASK(attrs->mask);
+		attrs->valid_mask = 0;
 	memset(&args, 0, sizeof(args));
 	args.attrs = attrs;
 	args.hdl4 = hdl4;
@@ -4101,13 +4101,17 @@ static int Fattr4_To_FSAL_attr(struct attrlist *attrs, fattr4 *Fattr,
 
 		if (xdr_res == FATTR_XDR_SUCCESS) {
 			if (attrs)
-				FSAL_SET_MASK(attrs->mask, f4e->attrmask);
+				attrs->valid_mask |= f4e->attrmask;
 			LogFullDebug(COMPONENT_NFS_V4,
 				     "Decode attr %d, name = %s",
 				     attribute_to_set, f4e->name);
 		} else if (xdr_res == FATTR_XDR_SUCCESS_EXP) {
+			/* Since we are setting a time attribute to
+			 * server time, we must use a different mask
+			 * position in attrmask_t.
+			 */
 			if (attrs)
-				FSAL_SET_MASK(attrs->mask, f4e->exp_attrmask);
+				attrs->valid_mask |= f4e->exp_attrmask;
 			LogFullDebug(COMPONENT_NFS_V4,
 				     "Decode (exp) attr %d, name = %s",
 				     attribute_to_set, f4e->name);
@@ -4167,7 +4171,7 @@ int bitmap4_to_attrmask_t(bitmap4 *bitmap4, attrmask_t *mask)
 			break;
 		}
 
-		*mask |= f4e->exp_attrmask;
+		*mask |= f4e->attrmask;
 
 		LogFullDebug(COMPONENT_NFS_V4,
 			     "Request attr %d, name = %s",

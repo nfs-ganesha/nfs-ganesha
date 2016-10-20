@@ -171,24 +171,24 @@ static fsal_aclsupp_t fs_acl_support(struct fsal_export *exp_hdl)
 static attrmask_t fs_supported_attrs(struct fsal_export *exp_hdl)
 {
 	struct fsal_staticfsinfo_t *info;
-	attrmask_t mask;
+	attrmask_t supported_mask;
 	struct gpfs_fsal_export *gpfs_export;
 
 	gpfs_export = container_of(exp_hdl, struct gpfs_fsal_export, export);
 
 	info = gpfs_staticinfo(exp_hdl->fsal);
 
-	mask = fsal_supported_attrs(info);
+	supported_mask = fsal_supported_attrs(info);
 
-	/* Fixup mask to indicate if ACL is actually supported for this
-	 * export.
+	/* Fixup supported_mask to indicate if ACL is actually supported for
+	 * this export.
 	 */
 	if (gpfs_export->use_acl)
-		mask |= ATTR_ACL;
+		supported_mask |= ATTR_ACL;
 	else
-		mask &= ~ATTR_ACL;
+		supported_mask &= ~ATTR_ACL;
 
-	return mask;
+	return supported_mask;
 }
 
 static uint32_t fs_umask(struct fsal_export *exp_hdl)

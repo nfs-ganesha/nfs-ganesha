@@ -178,7 +178,9 @@ static fsal_status_t fsal_check_setattr_perms(struct fsal_obj_handle *obj,
 	}
 
 	fsal_prepare_attrs(current,
-			   ATTR_MODE | ATTR_OWNER | ATTR_GROUP | ATTR_ACL);
+			   op_ctx->fsal_export->
+				exp_ops.fs_supported_attrs(op_ctx->fsal_export)
+			   & (ATTRS_CREDS | ATTR_MODE | ATTR_ACL));
 
 	status = obj->obj_ops.getattrs(obj, current);
 
@@ -188,7 +190,7 @@ static fsal_status_t fsal_check_setattr_perms(struct fsal_obj_handle *obj,
 	not_owner = (creds->caller_uid != current->owner);
 
 	/* Only ownership change need to be checked for owner */
-	if (FSAL_TEST_MASK(attr->mask, ATTR_OWNER)) {
+	if (FSAL_TEST_MASK(attr->valid_mask, ATTR_OWNER)) {
 		/* non-root is only allowed to "take ownership of file" */
 		if (attr->owner != creds->caller_uid) {
 			status = fsalstat(ERR_FSAL_PERM, 0);
@@ -205,7 +207,7 @@ static fsal_status_t fsal_check_setattr_perms(struct fsal_obj_handle *obj,
 				    "Change OWNER requires FSAL_ACE_PERM_WRITE_OWNER");
 		}
 	}
-	if (FSAL_TEST_MASK(attr->mask, ATTR_GROUP)) {
+	if (FSAL_TEST_MASK(attr->valid_mask, ATTR_GROUP)) {
 		/* non-root is only allowed to change group_owner to a group
 		 * user is a member of. */
 		int not_in_group = fsal_not_in_group_list(attr->group);
@@ -237,15 +239,15 @@ static fsal_status_t fsal_check_setattr_perms(struct fsal_obj_handle *obj,
 		goto out;
 	}
 
-	if (FSAL_TEST_MASK(attr->mask, ATTR_MODE)
-	    || FSAL_TEST_MASK(attr->mask, ATTR_ACL)) {
+	if (FSAL_TEST_MASK(attr->valid_mask, ATTR_MODE)
+	    || FSAL_TEST_MASK(attr->valid_mask, ATTR_ACL)) {
 		/* Changing mode or ACL requires ACE4_WRITE_ACL */
 		access_check |= FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_ACL);
 		LogDebug(COMPONENT_FSAL,
 			    "Change MODE or ACL requires FSAL_ACE_PERM_WRITE_ACL");
 	}
 
-	if (FSAL_TEST_MASK(attr->mask, ATTR_SIZE)) {
+	if (FSAL_TEST_MASK(attr->valid_mask, ATTR_SIZE)) {
 		/* Changing size requires owner or write permission */
 	  /** @todo: does FSAL_ACE_PERM_APPEND_DATA allow enlarging the file? */
 		access_check |= FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_DATA);
@@ -254,10 +256,10 @@ static fsal_status_t fsal_check_setattr_perms(struct fsal_obj_handle *obj,
 	}
 
 	/* Check if just setting atime and mtime to "now" */
-	if ((FSAL_TEST_MASK(attr->mask, ATTR_MTIME_SERVER)
-	     || FSAL_TEST_MASK(attr->mask, ATTR_ATIME_SERVER))
-	    && !FSAL_TEST_MASK(attr->mask, ATTR_MTIME)
-	    && !FSAL_TEST_MASK(attr->mask, ATTR_ATIME)) {
+	if ((FSAL_TEST_MASK(attr->valid_mask, ATTR_MTIME_SERVER)
+	     || FSAL_TEST_MASK(attr->valid_mask, ATTR_ATIME_SERVER))
+	    && !FSAL_TEST_MASK(attr->valid_mask, ATTR_MTIME)
+	    && !FSAL_TEST_MASK(attr->valid_mask, ATTR_ATIME)) {
 		/* If either atime and/or mtime are set to "now" then need only
 		 * have write permission.
 		 *
@@ -267,10 +269,10 @@ static fsal_status_t fsal_check_setattr_perms(struct fsal_obj_handle *obj,
 		access_check |= FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_DATA);
 		LogDebug(COMPONENT_FSAL,
 			    "Change ATIME and MTIME to NOW requires FSAL_ACE_PERM_WRITE_DATA");
-	} else if (FSAL_TEST_MASK(attr->mask, ATTR_MTIME_SERVER)
-		   || FSAL_TEST_MASK(attr->mask, ATTR_ATIME_SERVER)
-		   || FSAL_TEST_MASK(attr->mask, ATTR_MTIME)
-		   || FSAL_TEST_MASK(attr->mask, ATTR_ATIME)) {
+	} else if (FSAL_TEST_MASK(attr->valid_mask, ATTR_MTIME_SERVER)
+		   || FSAL_TEST_MASK(attr->valid_mask, ATTR_ATIME_SERVER)
+		   || FSAL_TEST_MASK(attr->valid_mask, ATTR_MTIME)
+		   || FSAL_TEST_MASK(attr->valid_mask, ATTR_ATIME)) {
 		/* Any other changes to atime or mtime require owner, root, or
 		 * ACES4_WRITE_ATTRIBUTES.
 		 *
@@ -447,7 +449,7 @@ fsal_status_t fsal_setattr(struct fsal_obj_handle *obj, bool bypass,
 	const struct user_cred *creds = op_ctx->creds;
 	struct attrlist current;
 
-	if ((attr->mask & (ATTR_SIZE | ATTR4_SPACE_RESERVED))
+	if ((attr->valid_mask & (ATTR_SIZE | ATTR4_SPACE_RESERVED))
 	     && (obj->type != REGULAR_FILE)) {
 		LogWarn(COMPONENT_FSAL,
 			"Attempt to truncate non-regular file: type=%d",
@@ -459,7 +461,7 @@ fsal_status_t fsal_setattr(struct fsal_obj_handle *obj, bool bypass,
 	if (!op_ctx->fsal_export->exp_ops.fs_supports(op_ctx->fsal_export,
 						      fso_cansettime) &&
 	    (FSAL_TEST_MASK
-	     (attr->mask,
+	     (attr->valid_mask,
 	      (ATTR_ATIME | ATTR_CREATION | ATTR_CTIME | ATTR_MTIME))))
 		return fsalstat(ERR_FSAL_INVAL, 0);
 
@@ -483,19 +485,19 @@ fsal_status_t fsal_setattr(struct fsal_obj_handle *obj, bool bypass,
 	 *
 	 */
 	if (creds->caller_uid != 0 &&
-	    (FSAL_TEST_MASK(attr->mask, ATTR_OWNER) ||
-	     FSAL_TEST_MASK(attr->mask, ATTR_GROUP)) &&
+	    (FSAL_TEST_MASK(attr->valid_mask, ATTR_OWNER) ||
+	     FSAL_TEST_MASK(attr->valid_mask, ATTR_GROUP)) &&
 	    ((current.mode & (S_IXOTH | S_IXUSR | S_IXGRP)) != 0) &&
 	    ((current.mode & (S_ISUID | S_ISGID)) != 0)) {
 		/* Non-priviledged user changing ownership on an executable
 		 * file with S_ISUID or S_ISGID bit set, need to be cleared.
 		 */
-		if (!FSAL_TEST_MASK(attr->mask, ATTR_MODE)) {
+		if (!FSAL_TEST_MASK(attr->valid_mask, ATTR_MODE)) {
 			/* Mode wasn't being set, so set it now, start with
 			 * the current attributes.
 			 */
 			attr->mode = current.mode;
-			FSAL_SET_MASK(attr->mask, ATTR_MODE);
+			FSAL_SET_MASK(attr->valid_mask, ATTR_MODE);
 		}
 
 		/* Don't clear S_ISGID if the file isn't group executable.
@@ -521,7 +523,7 @@ fsal_status_t fsal_setattr(struct fsal_obj_handle *obj, bool bypass,
 	 * membership since that is a bit more expensive.
 	 */
 	if (creds->caller_uid != 0 &&
-	    FSAL_TEST_MASK(attr->mask, ATTR_MODE) &&
+	    FSAL_TEST_MASK(attr->valid_mask, ATTR_MODE) &&
 	    (attr->mode & S_ISGID) != 0 &&
 	    fsal_not_in_group_list(current.group)) {
 		/* Clear S_ISGID */
@@ -753,10 +755,10 @@ fsal_create_set_verifier(struct attrlist *sattr, uint32_t verf_hi,
 {
 	sattr->atime.tv_sec = verf_hi;
 	sattr->atime.tv_nsec = 0;
-	FSAL_SET_MASK(sattr->mask, ATTR_ATIME);
+	FSAL_SET_MASK(sattr->valid_mask, ATTR_ATIME);
 	sattr->mtime.tv_sec = verf_lo;
 	sattr->mtime.tv_nsec = 0;
-	FSAL_SET_MASK(sattr->mask, ATTR_MTIME);
+	FSAL_SET_MASK(sattr->valid_mask, ATTR_MTIME);
 }
 
 /**
@@ -794,7 +796,7 @@ fsal_status_t fsal_create(struct fsal_obj_handle *parent,
 			  struct attrlist *attrs_out)
 {
 	fsal_status_t status = { 0, 0 };
-	attrmask_t orig_mask = attrs->mask;
+	attrmask_t orig_mask = attrs->valid_mask;
 	uint64_t owner = attrs->owner;
 	uint64_t group = attrs->group;
 	bool support_ex = parent->fsal->m_ops.support_ex(parent);
@@ -813,19 +815,19 @@ fsal_status_t fsal_create(struct fsal_obj_handle *parent,
 
 	if (!support_ex) {
 		/* For old API, make sure owner/group attr matches op_ctx */
-		attrs->mask |= ATTR_OWNER | ATTR_GROUP;
+		attrs->valid_mask |= ATTR_OWNER | ATTR_GROUP;
 		attrs->owner = op_ctx->creds->caller_uid;
 		attrs->group = op_ctx->creds->caller_gid;
 	} else {
 		/* For support_ex API, turn off owner and/or group attr
 		 * if they are the same as the credentials.
 		 */
-		if ((attrs->mask & ATTR_OWNER) &&
+		if ((attrs->valid_mask & ATTR_OWNER) &&
 		    attrs->owner == op_ctx->creds->caller_uid)
-			FSAL_UNSET_MASK(attrs->mask, ATTR_OWNER);
-		if ((attrs->mask & ATTR_GROUP) &&
+			FSAL_UNSET_MASK(attrs->valid_mask, ATTR_OWNER);
+		if ((attrs->valid_mask & ATTR_GROUP) &&
 		    attrs->group == op_ctx->creds->caller_gid)
-			FSAL_UNSET_MASK(attrs->mask, ATTR_GROUP);
+			FSAL_UNSET_MASK(attrs->valid_mask, ATTR_GROUP);
 	}
 
 	/* Permission checking will be done by the FSAL operation. */
@@ -892,9 +894,9 @@ fsal_status_t fsal_create(struct fsal_obj_handle *parent,
 					goto out;
 				}
 				if ((type == REGULAR_FILE) &&
-				    (attrs->mask & ATTR_SIZE) &&
+				    (attrs->valid_mask & ATTR_SIZE) &&
 				    attrs->filesize == 0) {
-					attrs->mask &= ATTR_SIZE;
+					attrs->valid_mask &= ATTR_SIZE;
 					goto setattrs;
 				}
 			}
@@ -907,33 +909,34 @@ fsal_status_t fsal_create(struct fsal_obj_handle *parent,
 setattrs:
 	if (!support_ex) {
 		/* Handle setattr for old API */
-		attrs->mask = orig_mask;
+		attrs->valid_mask = orig_mask;
 		attrs->owner = owner;
 		attrs->group = group;
 
 		/* We already handled mode */
-		FSAL_UNSET_MASK(attrs->mask, ATTR_MODE);
+		FSAL_UNSET_MASK(attrs->valid_mask, ATTR_MODE);
 
 		/* Check if attrs->owner was same as creds */
-		if ((attrs->mask & ATTR_OWNER) &&
+		if ((attrs->valid_mask & ATTR_OWNER) &&
 		    (op_ctx->creds->caller_uid == attrs->owner))
-			FSAL_UNSET_MASK(attrs->mask, ATTR_OWNER);
+			FSAL_UNSET_MASK(attrs->valid_mask, ATTR_OWNER);
 
 		/* Check if attrs->group was same as creds */
-		if ((attrs->mask & ATTR_GROUP) &&
+		if ((attrs->valid_mask & ATTR_GROUP) &&
 		    (op_ctx->creds->caller_gid == attrs->group))
-			FSAL_UNSET_MASK(attrs->mask, ATTR_GROUP);
+			FSAL_UNSET_MASK(attrs->valid_mask, ATTR_GROUP);
 
 		/* Setting uid/gid works only for root. AIX or Irix NFS
                  * clients send gid on create if the parent directory has
                  * setgid bit. Clear the OWNER and GROUP attributes for
                  * create requests for non-root users.
 		 */
-		if ((type != SYMBOLIC_LINK) &&
-                    (op_ctx->creds->caller_uid != 0))
-                	FSAL_UNSET_MASK(attrs->mask, ATTR_OWNER|ATTR_GROUP);
+		if (type != SYMBOLIC_LINK && op_ctx->creds->caller_uid != 0) {
+			FSAL_UNSET_MASK(attrs->valid_mask,
+					ATTR_OWNER|ATTR_GROUP);
+		}
 
-		if (attrs->mask) {
+		if (attrs->valid_mask) {
 			/* If any attributes were left to set, set them now. */
 			status = fsal_setattr(*obj, false, NULL, attrs);
 		}
@@ -942,7 +945,7 @@ setattrs:
  out:
 
 	/* Restore original mask so caller isn't bamboozled... */
-	attrs->mask = orig_mask;
+	attrs->valid_mask = orig_mask;
 
 	LogFullDebug(COMPONENT_FSAL,
 		     "Returning obj=%p status=%s for %s FSAL=%s", *obj,
@@ -973,8 +976,8 @@ bool fsal_create_verify(struct fsal_obj_handle *obj, uint32_t verf_hi,
 	fsal_prepare_attrs(&attrs, ATTR_ATIME | ATTR_MTIME);
 
 	obj->obj_ops.getattrs(obj, &attrs);
-	if (FSAL_TEST_MASK(attrs.mask, ATTR_ATIME)
-	    && FSAL_TEST_MASK(attrs.mask, ATTR_MTIME)
+	if (FSAL_TEST_MASK(attrs.valid_mask, ATTR_ATIME)
+	    && FSAL_TEST_MASK(attrs.valid_mask, ATTR_MTIME)
 	    && attrs.atime.tv_sec == verf_hi
 	    && attrs.mtime.tv_sec == verf_lo)
 		verified = true;
@@ -1775,13 +1778,13 @@ fsal_status_t fsal_open2(struct fsal_obj_handle *in_obj,
 	 * instead of setting ATTR_SIZE.
 	 */
 	if (attr != NULL &&
-	    FSAL_TEST_MASK(attr->mask, ATTR_SIZE) &&
+	    FSAL_TEST_MASK(attr->valid_mask, ATTR_SIZE) &&
 	    attr->filesize == 0) {
 		LogFullDebug(COMPONENT_FSAL, "Truncate");
 		/* Handle truncate to zero on open */
 		openflags |= FSAL_O_TRUNC;
 		/* Don't set the size if we later set the attributes */
-		FSAL_UNSET_MASK(attr->mask, ATTR_SIZE);
+		FSAL_UNSET_MASK(attr->valid_mask, ATTR_SIZE);
 	}
 
 	if (createmode >= FSAL_EXCLUSIVE && verifier == NULL)

@@ -83,11 +83,11 @@ fsal_status_t get_optional_attrs(struct fsal_obj_handle *obj_hdl,
 	status = obj_hdl->obj_ops.getattrs(obj_hdl, attrs_out);
 
 	if (FSAL_IS_ERROR(status)) {
-		if (attrs_out->mask & ATTR_RDATTR_ERR) {
+		if (attrs_out->request_mask & ATTR_RDATTR_ERR) {
 			/* Indicate the failure of requesting attributes by
 			 * marking the ATTR_RDATTR_ERR in the mask.
 			 */
-			attrs_out->mask = ATTR_RDATTR_ERR;
+			attrs_out->valid_mask = ATTR_RDATTR_ERR;
 			status = fsalstat(ERR_FSAL_NO_ERROR, 0);
 		} /* otherwise let the error stand. */
 	}
@@ -518,6 +518,11 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 	if (attrs_out != NULL)
 		fsal_copy_attrs(attrs_out, attrs_in, false);
 
+	/* Use the attrs_in request_mask because it will know if ACL was
+	 * requested or not (anyone calling mdcache_new_entry will have
+	 * requested all supported attributes including ACL).
+	 */
+	nentry->attrs.request_mask = attrs_in->request_mask;
 	fsal_copy_attrs(&nentry->attrs, attrs_in, true);
 
 	if (nentry->attrs.expire_time_attr == 0) {
@@ -527,7 +532,7 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 	}
 
 	/* Validate the attributes we just set. */
-	mdc_fixup_md(nentry, nentry->attrs.mask);
+	mdc_fixup_md(nentry, &nentry->attrs);
 
 	/* Hash and insert entry, after this would need attr_lock to
 	 * access attributes.
@@ -722,9 +727,13 @@ mdcache_locate_keyed(mdcache_key_t *key,
 		return status;
 	}
 
-	/* Cache miss, allocate a new entry */
-	fsal_prepare_attrs(&attrs, op_ctx->fsal_export->exp_ops.
-				   fs_supported_attrs(op_ctx->fsal_export));
+	/* Ask for all supported attributes except ACL (we defer fetching ACL
+	 * until asked for it (including a permission check).
+	 */
+	fsal_prepare_attrs(&attrs,
+			   op_ctx->fsal_export->exp_ops.
+				   fs_supported_attrs(op_ctx->fsal_export)
+				   & ~ATTR_ACL);
 
 	sub_export = export->export.sub_export;
 
@@ -875,8 +884,10 @@ fsal_status_t mdc_try_get_cached(mdcache_entry_t *mdc_parent,
  * miss occurs, then the underlying file is looked up and added to the cache, if
  * it exists.
  *
- * The caller will set the mask in attrs_out to indicate the attributes of
- * interest.
+ * The caller will set the request_mask in attrs_out to indicate the attributes
+ * of interest. ATTR_ACL SHOULD NOT be requested and need not be provided. If
+ * not all the requested attributes can be provided, this method MUST return
+ * an error unless the ATTR_RDATTR_ERR bit was set in the request_mask.
  *
  * Since this method instantiates a new fsal_obj_handle, it will be forced
  * to fetch at least some attributes in order to even know what the object
@@ -1005,9 +1016,13 @@ fsal_status_t mdc_lookup_uncached(mdcache_entry_t *mdc_parent,
 	struct mdcache_fsal_export *export = mdc_cur_export();
 	struct attrlist attrs;
 
-	fsal_prepare_attrs(&attrs, op_ctx->fsal_export->exp_ops.
-				   fs_supported_attrs(op_ctx->fsal_export));
-
+	/* Ask for all supported attributes except ACL (we defer fetching ACL
+	 * until asked for it (including a permission check).
+	 */
+	fsal_prepare_attrs(&attrs,
+			   op_ctx->fsal_export->exp_ops.
+				   fs_supported_attrs(op_ctx->fsal_export)
+				   & ~ATTR_ACL);
 
 	subcall(
 		status = mdc_parent->sub_handle->obj_ops.lookup(

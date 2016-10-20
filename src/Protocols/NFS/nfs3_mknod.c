@@ -138,7 +138,7 @@ int nfs3_mknod(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		    arg->arg_mknod3.what.mknoddata3_u.device.spec.specdata1;
 		sattr.rawdev.minor =
 		    arg->arg_mknod3.what.mknoddata3_u.device.spec.specdata2;
-		sattr.mask |= ATTR_RAWDEV;
+		sattr.valid_mask |= ATTR_RAWDEV;
 
 		break;
 
@@ -192,10 +192,10 @@ int nfs3_mknod(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	squash_setattr(&sattr);
 
-	if (!(sattr.mask & ATTR_MODE)) {
+	if (!(sattr.valid_mask & ATTR_MODE)) {
 		/* Make sure mode is set. */
 		sattr.mode = 0;
-		sattr.mask |= ATTR_MODE;
+		sattr.valid_mask |= ATTR_MODE;
 	}
 
 	/* Try to create it */

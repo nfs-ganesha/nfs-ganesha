@@ -127,9 +127,14 @@ GPFSFSAL_getattrs(struct fsal_export *export, struct gpfs_filesystem *gpfs_fs,
 	gpfs_export = container_of(export, struct gpfs_fsal_export, export);
 	st = fsal_get_xstat_by_handle(gpfs_fs->root_fd, gpfs_fh,
 				      &buffxstat, &expire_time_attr, expire,
-				      (obj_attr->mask & ATTR_ACL) != 0);
-	if (FSAL_IS_ERROR(st))
+				      (obj_attr->request_mask & ATTR_ACL) != 0);
+	if (FSAL_IS_ERROR(st)) {
+		if (obj_attr->request_mask & ATTR_RDATTR_ERR) {
+			/* Caller asked for error to be visible. */
+			obj_attr->valid_mask = ATTR_RDATTR_ERR;
+		}
 		return st;
+	}
 
 	/* convert attributes */
 	if (expire_time_attr != 0)
@@ -144,13 +149,12 @@ GPFSFSAL_getattrs(struct fsal_export *export, struct gpfs_filesystem *gpfs_fs,
 	st = gpfsfsal_xstat_2_fsal_attributes(&buffxstat, obj_attr,
 					      gpfs_export->use_acl);
 	if (FSAL_IS_ERROR(st)) {
-		FSAL_CLEAR_MASK(obj_attr->mask);
-		FSAL_SET_MASK(obj_attr->mask, ATTR_RDATTR_ERR);
+		if (obj_attr->request_mask & ATTR_RDATTR_ERR) {
+			/* Caller asked for error to be visible. */
+			obj_attr->valid_mask = ATTR_RDATTR_ERR;
+		}
 		return st;
 	}
-
-	/* Make sure ATTR_RDATTR_ERR is cleared on success. */
-	obj_attr->mask &= ~ATTR_RDATTR_ERR;
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -243,7 +247,7 @@ GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,
 
 	if (!ro_ctx->fsal_export->exp_ops.fs_supports(ro_ctx->fsal_export,
 						      fso_cansettime)) {
-		if (obj_attr->mask &
+		if (obj_attr->valid_mask &
 			(ATTR_ATIME | ATTR_CREATION | ATTR_CTIME | ATTR_MTIME
 			    | ATTR_MTIME_SERVER | ATTR_ATIME_SERVER)) {
 			/* handled as an unsettable attribute. */
@@ -252,7 +256,7 @@ GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,
 	}
 
 	/* apply umask, if mode attribute is to be changed */
-	if (FSAL_TEST_MASK(obj_attr->mask, ATTR_MODE)) {
+	if (FSAL_TEST_MASK(obj_attr->valid_mask, ATTR_MODE)) {
 		obj_attr->mode &=
 		    ~ro_ctx->fsal_export->exp_ops.fs_umask(ro_ctx->fsal_export);
 	}
@@ -261,7 +265,7 @@ GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,
    *  TRUNCATE  *
    **************/
 
-	if (FSAL_TEST_MASK(obj_attr->mask, ATTR_SIZE)) {
+	if (FSAL_TEST_MASK(obj_attr->valid_mask, ATTR_SIZE)) {
 		attr_changed |= XATTR_SIZE;
 		/* Fill wanted size. */
 		buffxstat.buffstat.st_size = obj_attr->filesize;
@@ -273,7 +277,7 @@ GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,
    *  SPACE RESERVED *
    ************)******/
 
-	if (FSAL_TEST_MASK(obj_attr->mask, ATTR4_SPACE_RESERVED)) {
+	if (FSAL_TEST_MASK(obj_attr->valid_mask, ATTR4_SPACE_RESERVED)) {
 		attr_changed |= XATTR_SPACE_RESERVED;
 		/* Fill wanted space. */
 		buffxstat.buffstat.st_size = obj_attr->filesize;
@@ -284,7 +288,7 @@ GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,
   /***********
    *  CHMOD  *
    ***********/
-	if (FSAL_TEST_MASK(obj_attr->mask, ATTR_MODE)) {
+	if (FSAL_TEST_MASK(obj_attr->valid_mask, ATTR_MODE)) {
 
 		/* The POSIX chmod call don't affect the symlink object, but
 		 * the entry it points to. So we must ignore it.
@@ -308,7 +312,7 @@ GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,
    ***********/
 
 	/* Fill wanted owner. */
-	if (FSAL_TEST_MASK(obj_attr->mask, ATTR_OWNER)) {
+	if (FSAL_TEST_MASK(obj_attr->valid_mask, ATTR_OWNER)) {
 		attr_changed |= XATTR_UID;
 		buffxstat.buffstat.st_uid = (int)obj_attr->owner;
 		LogDebug(COMPONENT_FSAL,
@@ -317,7 +321,7 @@ GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,
 	}
 
 	/* Fill wanted group. */
-	if (FSAL_TEST_MASK(obj_attr->mask, ATTR_GROUP)) {
+	if (FSAL_TEST_MASK(obj_attr->valid_mask, ATTR_GROUP)) {
 		attr_changed |= XATTR_GID;
 		buffxstat.buffstat.st_gid = (int)obj_attr->group;
 		LogDebug(COMPONENT_FSAL,
@@ -330,7 +334,7 @@ GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,
    ***********/
 
 	/* Fill wanted atime. */
-	if (FSAL_TEST_MASK(obj_attr->mask, ATTR_ATIME)) {
+	if (FSAL_TEST_MASK(obj_attr->valid_mask, ATTR_ATIME)) {
 		attr_changed |= XATTR_ATIME;
 		buffxstat.buffstat.st_atime = (time_t) obj_attr->atime.tv_sec;
 		buffxstat.buffstat.st_atim.tv_nsec = obj_attr->atime.tv_nsec;
@@ -339,7 +343,7 @@ GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,
 	}
 
 	/* Fill wanted mtime. */
-	if (FSAL_TEST_MASK(obj_attr->mask, ATTR_MTIME)) {
+	if (FSAL_TEST_MASK(obj_attr->valid_mask, ATTR_MTIME)) {
 		attr_changed |= XATTR_MTIME;
 		buffxstat.buffstat.st_mtime = (time_t) obj_attr->mtime.tv_sec;
 		buffxstat.buffstat.st_mtim.tv_nsec = obj_attr->mtime.tv_nsec;
@@ -347,12 +351,12 @@ GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,
 			 (unsigned long)buffxstat.buffstat.st_mtime);
 	}
 	/* Asking to set atime to NOW */
-	if (FSAL_TEST_MASK(obj_attr->mask, ATTR_ATIME_SERVER)) {
+	if (FSAL_TEST_MASK(obj_attr->valid_mask, ATTR_ATIME_SERVER)) {
 		attr_changed |= XATTR_ATIME | XATTR_ATIME_NOW;
 		LogDebug(COMPONENT_FSAL, "new atime = NOW");
 	}
 	/* Asking to set atime to NOW */
-	if (FSAL_TEST_MASK(obj_attr->mask, ATTR_MTIME_SERVER)) {
+	if (FSAL_TEST_MASK(obj_attr->valid_mask, ATTR_MTIME_SERVER)) {
 		attr_changed |= XATTR_MTIME | XATTR_MTIME_NOW;
 		LogDebug(COMPONENT_FSAL, "new mtime = NOW");
 	}
@@ -361,7 +365,7 @@ GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,
 	if (attr_changed != 0)
 		attr_valid |= XATTR_STAT;
 
-	if (use_acl && FSAL_TEST_MASK(obj_attr->mask, ATTR_ACL)) {
+	if (use_acl && FSAL_TEST_MASK(obj_attr->valid_mask, ATTR_ACL)) {
 		if (obj_attr->acl) {
 			attr_valid |= XATTR_ACL;
 			LogDebug(COMPONENT_FSAL, "setattr acl = %p",

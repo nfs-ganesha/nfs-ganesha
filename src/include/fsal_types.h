@@ -425,7 +425,8 @@ typedef uint64_t attrmask_t;
  */
 
 struct attrlist {
-	attrmask_t mask;	/*< Indicates the attributes to be set or
+	attrmask_t request_mask; /*< Indicates the requested from the FSAL. */
+	attrmask_t valid_mask;	/*< Indicates the attributes to be set or
 				   that have been filled in by the FSAL. */
 	object_file_type_t type;	/*< Type of this object */
 	uint64_t filesize;	/*< Logical size (amount of data that can be

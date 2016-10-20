@@ -546,10 +546,10 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 		    ~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
 
 		/* Don't set the mode if we later set the attributes */
-		FSAL_UNSET_MASK(attrib_set->mask, ATTR_MODE);
+		FSAL_UNSET_MASK(attrib_set->valid_mask, ATTR_MODE);
 	}
 
-	if (createmode == FSAL_UNCHECKED && (attrib_set->mask != 0)) {
+	if (createmode == FSAL_UNCHECKED && (attrib_set->valid_mask != 0)) {
 		/* If we have FSAL_UNCHECKED and want to set more attributes
 		 * than the mode, we attempt an O_EXCL create first, if that
 		 * succeeds, then we will be allowed to set the additional
@@ -693,7 +693,7 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 
 	*new_obj = &hdl->obj_handle;
 
-	if (created && attrib_set->mask != 0) {
+	if (created && attrib_set->valid_mask != 0) {
 		/* Set attributes using our newly opened file descriptor as the
 		 * share_fd if there are any left to set (mode and truncate
 		 * have already been handled).
@@ -720,7 +720,7 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 			status = (*new_obj)->obj_ops.getattrs(*new_obj,
 							      attrs_out);
 			if (FSAL_IS_ERROR(status) &&
-			    (attrs_out->mask & ATTR_RDATTR_ERR) == 0) {
+			    (attrs_out->request_mask & ATTR_RDATTR_ERR) == 0) {
 				/* Get attributes failed and caller expected
 				 * to get the attributes. Otherwise continue
 				 * with attrs_out indicating ATTR_RDATTR_ERR.
@@ -734,9 +734,6 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 		 * we used to create the fsal_obj_handle.
 		 */
 		posix2fsal_attributes(&stat, attrs_out);
-
-		/* Make sure ATTR_RDATTR_ERR is cleared on success. */
-		attrs_out->mask &= ~ATTR_RDATTR_ERR;
 	}
 
 	close(dir_fd);
@@ -1439,9 +1436,9 @@ fsal_status_t fetch_attrs(struct vfs_fsal_obj_handle *myself,
 		LogDebug(COMPONENT_FSAL, "%s failed with %s", func,
 			 strerror(retval));
 
-		if (attrs->mask & ATTR_RDATTR_ERR) {
+		if (attrs->request_mask & ATTR_RDATTR_ERR) {
 			/* Caller asked for error to be visible. */
-			attrs->mask = ATTR_RDATTR_ERR;
+			attrs->valid_mask = ATTR_RDATTR_ERR;
 		}
 
 		return fsalstat(posix2fsal_error(retval), retval);
@@ -1452,18 +1449,14 @@ fsal_status_t fetch_attrs(struct vfs_fsal_obj_handle *myself,
 
 	if (myself->sub_ops && myself->sub_ops->getattrs) {
 		status =
-		   myself->sub_ops->getattrs(myself, my_fd, attrs->mask, attrs);
+		   myself->sub_ops->getattrs(myself, my_fd, attrs->request_mask,
+					     attrs);
 
 		if (FSAL_IS_ERROR(status) &&
-		    (attrs->mask & ATTR_RDATTR_ERR) != 0) {
+		    (attrs->request_mask & ATTR_RDATTR_ERR) != 0) {
 			/* Caller asked for error to be visible. */
-			attrs->mask = ATTR_RDATTR_ERR;
+			attrs->valid_mask = ATTR_RDATTR_ERR;
 		}
-	}
-
-	if (!FSAL_IS_ERROR(status)) {
-		/* Make sure ATTR_RDATTR_ERR is cleared on success. */
-		attrs->mask &= ~ATTR_RDATTR_ERR;
 	}
 
 	return status;
@@ -1544,7 +1537,7 @@ fsal_status_t vfs_getattr2(struct fsal_obj_handle *obj_hdl,
  * @brief Set attributes on an object
  *
  * This function sets attributes on an object.  Which attributes are
- * set is determined by attrib_set->mask. The FSAL must manage bypass
+ * set is determined by attrib_set->valid_mask. The FSAL must manage bypass
  * or not of share reservations, and a state may be passed.
  *
  * @param[in] obj_hdl    File on which to operate
@@ -1569,7 +1562,7 @@ fsal_status_t vfs_setattr2(struct fsal_obj_handle *obj_hdl,
 	const char *func;
 
 	/* apply umask, if mode attribute is to be changed */
-	if (FSAL_TEST_MASK(attrib_set->mask, ATTR_MODE))
+	if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_MODE))
 		attrib_set->mode &=
 		    ~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
 
@@ -1587,8 +1580,8 @@ fsal_status_t vfs_setattr2(struct fsal_obj_handle *obj_hdl,
 
 #ifdef ENABLE_VFS_DEBUG_ACL
 #ifdef ENABLE_RFC_ACL
-	if (FSAL_TEST_MASK(attrib_set->mask, ATTR_MODE) &&
-	    !FSAL_TEST_MASK(attrib_set->mask, ATTR_ACL)) {
+	if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_MODE) &&
+	    !FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_ACL)) {
 		/* Set ACL from MODE */
 		struct attrlist attrs;
 
@@ -1606,7 +1599,7 @@ fsal_status_t vfs_setattr2(struct fsal_obj_handle *obj_hdl,
 	} else {
 		/* If ATTR_ACL is set, mode needs to be adjusted no matter what.
 		 * See 7530 s 6.4.1.3 */
-		if (!FSAL_TEST_MASK(attrib_set->mask, ATTR_MODE))
+		if (!FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_MODE))
 			attrib_set->mode = myself->mode;
 		status = fsal_acl_to_mode(attrib_set);
 	}
@@ -1632,7 +1625,7 @@ fsal_status_t vfs_setattr2(struct fsal_obj_handle *obj_hdl,
 	/* Test if size is being set, make sure file is regular and if so,
 	 * require a read/write file descriptor.
 	 */
-	if (FSAL_TEST_MASK(attrib_set->mask, ATTR_SIZE)) {
+	if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_SIZE)) {
 		if (obj_hdl->type != REGULAR_FILE) {
 			LogFullDebug(COMPONENT_FSAL,
 				     "Setting size on non-regular file");
@@ -1668,7 +1661,7 @@ fsal_status_t vfs_setattr2(struct fsal_obj_handle *obj_hdl,
 	}
 
 	/** TRUNCATE **/
-	if (FSAL_TEST_MASK(attrib_set->mask, ATTR_SIZE)) {
+	if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_SIZE)) {
 		retval = ftruncate(my_fd, attrib_set->filesize);
 		if (retval != 0) {
 			/** @todo FSF: is this still necessary?
@@ -1697,7 +1690,7 @@ fsal_status_t vfs_setattr2(struct fsal_obj_handle *obj_hdl,
 	}
 
 	/** CHMOD **/
-	if (FSAL_TEST_MASK(attrib_set->mask, ATTR_MODE)) {
+	if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_MODE)) {
 		/* The POSIX chmod call doesn't affect the symlink object, but
 		 * the entry it points to. So we must ignore it.
 		 */
@@ -1721,10 +1714,10 @@ fsal_status_t vfs_setattr2(struct fsal_obj_handle *obj_hdl,
 	}
 
 	/**  CHOWN  **/
-	if (FSAL_TEST_MASK(attrib_set->mask, ATTR_OWNER | ATTR_GROUP)) {
-		uid_t user = FSAL_TEST_MASK(attrib_set->mask, ATTR_OWNER)
+	if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_OWNER | ATTR_GROUP)) {
+		uid_t user = FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_OWNER)
 		    ? (int)attrib_set->owner : -1;
-		gid_t group = FSAL_TEST_MASK(attrib_set->mask, ATTR_GROUP)
+		gid_t group = FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_GROUP)
 		    ? (int)attrib_set->group : -1;
 
 		if (vfs_unopenable_type(obj_hdl->type))
@@ -1743,16 +1736,16 @@ fsal_status_t vfs_setattr2(struct fsal_obj_handle *obj_hdl,
 	}
 
 	/**  UTIME  **/
-	if (FSAL_TEST_MASK(attrib_set->mask, ATTRS_SET_TIME)) {
+	if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTRS_SET_TIME)) {
 		struct timespec timebuf[2];
 
 		if (obj_hdl->type == SYMBOLIC_LINK)
 			goto out; /* Setting time on symlinks is illegal */
 		/* Atime */
-		if (FSAL_TEST_MASK(attrib_set->mask, ATTR_ATIME_SERVER)) {
+		if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_ATIME_SERVER)) {
 			timebuf[0].tv_sec = 0;
 			timebuf[0].tv_nsec = UTIME_NOW;
-		} else if (FSAL_TEST_MASK(attrib_set->mask, ATTR_ATIME)) {
+		} else if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_ATIME)) {
 			timebuf[0] = attrib_set->atime;
 		} else {
 			timebuf[0].tv_sec = 0;
@@ -1760,10 +1753,10 @@ fsal_status_t vfs_setattr2(struct fsal_obj_handle *obj_hdl,
 		}
 
 		/* Mtime */
-		if (FSAL_TEST_MASK(attrib_set->mask, ATTR_MTIME_SERVER)) {
+		if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_MTIME_SERVER)) {
 			timebuf[1].tv_sec = 0;
 			timebuf[1].tv_nsec = UTIME_NOW;
-		} else if (FSAL_TEST_MASK(attrib_set->mask, ATTR_MTIME)) {
+		} else if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_MTIME)) {
 			timebuf[1] = attrib_set->mtime;
 		} else {
 			timebuf[1].tv_sec = 0;
@@ -1785,7 +1778,7 @@ fsal_status_t vfs_setattr2(struct fsal_obj_handle *obj_hdl,
 		status = myself->sub_ops->setattrs(
 					myself,
 					my_fd,
-					attrib_set->mask, attrib_set);
+					attrib_set->valid_mask, attrib_set);
 		if (FSAL_IS_ERROR(status))
 			goto out;
 	}

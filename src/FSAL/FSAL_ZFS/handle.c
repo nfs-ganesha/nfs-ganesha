@@ -232,9 +232,6 @@ static fsal_status_t tank_lookup(struct fsal_obj_handle *parent,
 
 	if (attrs_out != NULL) {
 		posix2fsal_attributes(&stat, attrs_out);
-
-		/* Make sure ATTR_RDATTR_ERR is cleared on success. */
-		attrs_out->mask &= ~ATTR_RDATTR_ERR;
 	}
 
 	*handle = &hdl->obj_handle;
@@ -284,9 +281,6 @@ fsal_status_t tank_lookup_path(struct fsal_export *exp_hdl,
 
 	if (attrs_out != NULL) {
 		posix2fsal_attributes(&stat, attrs_out);
-
-		/* Make sure ATTR_RDATTR_ERR is cleared on success. */
-		attrs_out->mask &= ~ATTR_RDATTR_ERR;
 	}
 
 	*handle = &hdl->obj_handle;
@@ -339,9 +333,6 @@ static fsal_status_t tank_create(struct fsal_obj_handle *dir_hdl,
 
 	if (attrs_out != NULL) {
 		posix2fsal_attributes(&stat, attrs_out);
-
-		/* Make sure ATTR_RDATTR_ERR is cleared on success. */
-		attrs_out->mask &= ~ATTR_RDATTR_ERR;
 	}
 
 	/* >> set output handle << */
@@ -397,9 +388,6 @@ static fsal_status_t tank_mkdir(struct fsal_obj_handle *dir_hdl,
 
 	if (attrs_out != NULL) {
 		posix2fsal_attributes(&stat, attrs_out);
-
-		/* Make sure ATTR_RDATTR_ERR is cleared on success. */
-		attrs_out->mask &= ~ATTR_RDATTR_ERR;
 	}
 
 	/* >> set output handle << */
@@ -475,9 +463,6 @@ static fsal_status_t tank_makesymlink(struct fsal_obj_handle *dir_hdl,
 
 	if (attrs_out != NULL) {
 		posix2fsal_attributes(&stat, attrs_out);
-
-		/* Make sure ATTR_RDATTR_ERR is cleared on success. */
-		attrs_out->mask &= ~ATTR_RDATTR_ERR;
 	}
 
 	*handle = &hdl->obj_handle;
@@ -778,9 +763,9 @@ static fsal_status_t tank_getattrs(struct fsal_obj_handle *obj_hdl,
 		}
 
 		if (retval) {
-			if (attrs->mask & ATTR_RDATTR_ERR) {
+			if (attrs->request_mask & ATTR_RDATTR_ERR) {
 				/* Caller asked for error to be visible. */
-				attrs->mask = ATTR_RDATTR_ERR;
+				attrs->valid_mask = ATTR_RDATTR_ERR;
 			}
 			goto errout;
 		}
@@ -790,9 +775,6 @@ static fsal_status_t tank_getattrs(struct fsal_obj_handle *obj_hdl,
  ok_file_opened_and_deleted:
 
 	posix2fsal_attributes(&stat, attrs);
-
-	/* Make sure ATTR_RDATTR_ERR is cleared on success. */
-	attrs->mask &= ~ATTR_RDATTR_ERR;
 
 	goto out;
 
@@ -822,7 +804,7 @@ static fsal_status_t tank_setattrs(struct fsal_obj_handle *obj_hdl,
 	struct stat new_stat = { 0 };
 
 	/* apply umask, if mode attribute is to be changed */
-	if (FSAL_TEST_MASK(attrs->mask, ATTR_MODE))
+	if (FSAL_TEST_MASK(attrs->valid_mask, ATTR_MODE))
 		attrs->mode &= ~op_ctx->fsal_export->exp_ops.
 				fs_umask(op_ctx->fsal_export);
 	myself = container_of(obj_hdl, struct zfs_fsal_obj_handle, obj_handle);
@@ -834,7 +816,7 @@ static fsal_status_t tank_setattrs(struct fsal_obj_handle *obj_hdl,
 	}
 
 	/* First, check that FSAL attributes */
-	if (FSAL_TEST_MASK(attrs->mask, ATTR_SIZE)) {
+	if (FSAL_TEST_MASK(attrs->valid_mask, ATTR_SIZE)) {
 		if (obj_hdl->type != REGULAR_FILE) {
 			fsal_error = ERR_FSAL_INVAL;
 			return fsalstat(fsal_error, retval);
@@ -846,23 +828,23 @@ static fsal_status_t tank_setattrs(struct fsal_obj_handle *obj_hdl,
 		if (retval != 0)
 			goto out;
 	}
-	if (FSAL_TEST_MASK(attrs->mask, ATTR_MODE)) {
+	if (FSAL_TEST_MASK(attrs->valid_mask, ATTR_MODE)) {
 		flags |= LZFSW_ATTR_MODE;
 		stats.st_mode = fsal2unix_mode(attrs->mode);
 	}
-	if (FSAL_TEST_MASK(attrs->mask, ATTR_OWNER)) {
+	if (FSAL_TEST_MASK(attrs->valid_mask, ATTR_OWNER)) {
 		flags |= LZFSW_ATTR_UID;
 		stats.st_uid = attrs->owner;
 	}
-	if (FSAL_TEST_MASK(attrs->mask, ATTR_GROUP)) {
+	if (FSAL_TEST_MASK(attrs->valid_mask, ATTR_GROUP)) {
 		flags |= LZFSW_ATTR_GID;
 		stats.st_gid = attrs->group;
 	}
-	if (FSAL_TEST_MASK(attrs->mask, ATTR_ATIME)) {
+	if (FSAL_TEST_MASK(attrs->valid_mask, ATTR_ATIME)) {
 		flags |= LZFSW_ATTR_ATIME;
 		stats.st_atime = attrs->atime.tv_sec;
 	}
-	if (FSAL_TEST_MASK(attrs->mask, ATTR_ATIME_SERVER)) {
+	if (FSAL_TEST_MASK(attrs->valid_mask, ATTR_ATIME_SERVER)) {
 		flags |= LZFSW_ATTR_ATIME;
 		struct timespec timestamp;
 
@@ -871,11 +853,11 @@ static fsal_status_t tank_setattrs(struct fsal_obj_handle *obj_hdl,
 			goto out;
 		stats.st_atim = timestamp;
 	}
-	if (FSAL_TEST_MASK(attrs->mask, ATTR_MTIME)) {
+	if (FSAL_TEST_MASK(attrs->valid_mask, ATTR_MTIME)) {
 		flags |= LZFSW_ATTR_MTIME;
 		stats.st_mtime = attrs->mtime.tv_sec;
 	}
-	if (FSAL_TEST_MASK(attrs->mask, ATTR_MTIME_SERVER)) {
+	if (FSAL_TEST_MASK(attrs->valid_mask, ATTR_MTIME_SERVER)) {
 		flags |= LZFSW_ATTR_MTIME;
 		struct timespec timestamp;
 
@@ -1132,9 +1114,6 @@ fsal_status_t tank_create_handle(struct fsal_export *exp_hdl,
 
 	if (attrs_out != NULL) {
 		posix2fsal_attributes(&stat, attrs_out);
-
-		/* Make sure ATTR_RDATTR_ERR is cleared on success. */
-		attrs_out->mask &= ~ATTR_RDATTR_ERR;
 	}
 
 	*handle = &hdl->obj_handle;

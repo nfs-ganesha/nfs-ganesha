@@ -297,9 +297,6 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 
 	if (attrs_out != NULL) {
 		posix2fsal_attributes(&stat, attrs_out);
-
-		/* Make sure ATTR_RDATTR_ERR is cleared on success. */
-		attrs_out->mask &= ~ATTR_RDATTR_ERR;
 	}
 
 	*handle = &hdl->obj_handle;
@@ -441,9 +438,9 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 	*handle = &hdl->obj_handle;
 
 	/* We handled the mode above. */
-	FSAL_UNSET_MASK(attrib->mask, ATTR_MODE);
+	FSAL_UNSET_MASK(attrib->valid_mask, ATTR_MODE);
 
-	if (attrib->mask) {
+	if (attrib->valid_mask) {
 		/* Now per support_ex API, if there are any other attributes
 		 * set, go ahead and get them set now.
 		 */
@@ -460,7 +457,7 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 			status = (*handle)->obj_ops.getattrs(*handle,
 							     attrs_out);
 			if (FSAL_IS_ERROR(status) &&
-			    (attrs_out->mask & ATTR_RDATTR_ERR) == 0) {
+			    (attrs_out->request_mask & ATTR_RDATTR_ERR) == 0) {
 				/* Get attributes failed and caller expected
 				 * to get the attributes.
 				 */
@@ -477,9 +474,6 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 			 * to create the fsal_obj_handle.
 			 */
 			posix2fsal_attributes(&stat, attrs_out);
-
-			/* Make sure ATTR_RDATTR_ERR is cleared on success. */
-			attrs_out->mask &= ~ATTR_RDATTR_ERR;
 		}
 	}
 
@@ -652,9 +646,9 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 	*handle = &hdl->obj_handle;
 
 	/* We handled the mode above. */
-	FSAL_UNSET_MASK(attrib->mask, ATTR_MODE);
+	FSAL_UNSET_MASK(attrib->valid_mask, ATTR_MODE);
 
-	if (attrib->mask) {
+	if (attrib->valid_mask) {
 		/* Now per support_ex API, if there are any other attributes
 		 * set, go ahead and get them set now.
 		 */
@@ -668,7 +662,7 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 			status = (*handle)->obj_ops.getattrs(*handle,
 							     attrs_out);
 			if (FSAL_IS_ERROR(status) &&
-			    (attrs_out->mask & ATTR_RDATTR_ERR) == 0) {
+			    (attrs_out->request_mask & ATTR_RDATTR_ERR) == 0) {
 				/* Get attributes failed and caller expected
 				 * to get the attributes.
 				 */
@@ -685,9 +679,6 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 			 * to create the fsal_obj_handle.
 			 */
 			posix2fsal_attributes(&stat, attrs_out);
-
-			/* Make sure ATTR_RDATTR_ERR is cleared on success. */
-			attrs_out->mask &= ~ATTR_RDATTR_ERR;
 		}
 	}
 
@@ -841,9 +832,9 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 	*handle = &hdl->obj_handle;
 
 	/* We handled the mode above. */
-	FSAL_UNSET_MASK(attrib->mask, ATTR_MODE);
+	FSAL_UNSET_MASK(attrib->valid_mask, ATTR_MODE);
 
-	if (attrib->mask) {
+	if (attrib->valid_mask) {
 		/* Now per support_ex API, if there are any other attributes
 		 * set, go ahead and get them set now.
 		 */
@@ -857,7 +848,7 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 			status = (*handle)->obj_ops.getattrs(*handle,
 							     attrs_out);
 			if (FSAL_IS_ERROR(status) &&
-			    (attrs_out->mask & ATTR_RDATTR_ERR) == 0) {
+			    (attrs_out->request_mask & ATTR_RDATTR_ERR) == 0) {
 				/* Get attributes failed and caller expected
 				 * to get the attributes.
 				 */
@@ -874,9 +865,6 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 			 * to create the fsal_obj_handle.
 			 */
 			posix2fsal_attributes(&stat, attrs_out);
-
-			/* Make sure ATTR_RDATTR_ERR is cleared on success. */
-			attrs_out->mask &= ~ATTR_RDATTR_ERR;
 		}
 	}
 
@@ -1648,9 +1636,6 @@ fsal_status_t vfs_lookup_path(struct fsal_export *exp_hdl,
 
 	if (attrs_out != NULL) {
 		posix2fsal_attributes(&stat, attrs_out);
-
-		/* Make sure ATTR_RDATTR_ERR is cleared on success. */
-		attrs_out->mask &= ~ATTR_RDATTR_ERR;
 	}
 
 	*handle = &hdl->obj_handle;
@@ -1802,9 +1787,6 @@ fsal_status_t vfs_create_handle(struct fsal_export *exp_hdl,
 
 	if (attrs_out != NULL) {
 		posix2fsal_attributes(&obj_stat, attrs_out);
-
-		/* Make sure ATTR_RDATTR_ERR is cleared on success. */
-		attrs_out->mask &= ~ATTR_RDATTR_ERR;
 	}
 
 	*handle = &hdl->obj_handle;

@@ -113,7 +113,7 @@ int _9p_lcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 		if (*flags & 0x10) {
 			/* Filesize is already 0. */
-			sattr.mask |= ATTR_SIZE;
+			sattr.valid_mask |= ATTR_SIZE;
 		}
 
 		if (*flags & 0x1000) {

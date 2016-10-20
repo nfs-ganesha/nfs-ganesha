@@ -697,8 +697,10 @@ struct export_ops {
  * This function looks up a path within the export, it is typically
  * used to get a handle for the root directory of the export.
  *
- * The caller will set the mask in attrs_out to indicate the attributes of
- * interest.
+ * The caller will set the request_mask in attrs_out to indicate the attributes
+ * of interest. ATTR_ACL SHOULD NOT be requested and need not be provided. If
+ * not all the requested attributes can be provided, this method MUST return
+ * an error unless the ATTR_RDATTR_ERR bit was set in the request_mask.
  *
  * Since this method instantiates a new fsal_obj_handle, it will be forced
  * to fetch at least some attributes in order to even know what the object
@@ -774,8 +776,10 @@ struct export_ops {
  * "wire" handle (when an object is no longer in cache but the client
  * still remembers the nandle).
  *
- * The caller will set the mask in attrs_out to indicate the attributes of
- * interest.
+ * The caller will set the request_mask in attrs_out to indicate the attributes
+ * of interest. ATTR_ACL SHOULD NOT be requested and need not be provided. If
+ * not all the requested attributes can be provided, this method MUST return
+ * an error unless the ATTR_RDATTR_ERR bit was set in the request_mask.
  *
  * Since this method instantiates a new fsal_obj_handle, it will be forced
  * to fetch at least some attributes in order to even know what the object
@@ -1296,8 +1300,10 @@ struct fsal_obj_ops {
  * NULL, a handle to the root of the export was returned.  This
  * special case is no longer supported and should not be implemented.
  *
- * The caller will set the mask in attrs_out to indicate the attributes of
- * interest.
+ * The caller will set the request_mask in attrs_out to indicate the attributes
+ * of interest. ATTR_ACL SHOULD NOT be requested and need not be provided. If
+ * not all the requested attributes can be provided, this method MUST return
+ * an error unless the ATTR_RDATTR_ERR bit was set in the request_mask.
  *
  * Since this method instantiates a new fsal_obj_handle, it will be forced
  * to fetch at least some attributes in order to even know what the object
@@ -1360,8 +1366,10 @@ struct fsal_obj_ops {
  * resources held by the set attributes. The FSAL layer MAY have added an
  * inherited ACL.
  *
- * The caller will set the mask in attrs_out to indicate the attributes of
- * interest.
+ * The caller will set the request_mask in attrs_out to indicate the attributes
+ * of interest. ATTR_ACL SHOULD NOT be requested and need not be provided. If
+ * not all the requested attributes can be provided, this method MUST return
+ * an error unless the ATTR_RDATTR_ERR bit was set in the request_mask.
  *
  * Since this method instantiates a new fsal_obj_handle, it will be forced
  * to fetch at least some attributes in order to even know what the object
@@ -1397,8 +1405,10 @@ struct fsal_obj_ops {
  * resources held by the set attributes. The FSAL layer MAY have added an
  * inherited ACL.
  *
- * The caller will set the mask in attrs_out to indicate the attributes of
- * interest.
+ * The caller will set the request_mask in attrs_out to indicate the attributes
+ * of interest. ATTR_ACL SHOULD NOT be requested and need not be provided. If
+ * not all the requested attributes can be provided, this method MUST return
+ * an error unless the ATTR_RDATTR_ERR bit was set in the request_mask.
  *
  * Since this method instantiates a new fsal_obj_handle, it will be forced
  * to fetch at least some attributes in order to even know what the object
@@ -1434,8 +1444,10 @@ struct fsal_obj_ops {
  * resources held by the set attributes. The FSAL layer MAY have added an
  * inherited ACL.
  *
- * The caller will set the mask in attrs_out to indicate the attributes of
- * interest.
+ * The caller will set the request_mask in attrs_out to indicate the attributes
+ * of interest. ATTR_ACL SHOULD NOT be requested and need not be provided. If
+ * not all the requested attributes can be provided, this method MUST return
+ * an error unless the ATTR_RDATTR_ERR bit was set in the request_mask.
  *
  * Since this method instantiates a new fsal_obj_handle, it will be forced
  * to fetch at least some attributes in order to even know what the object
@@ -1477,8 +1489,10 @@ struct fsal_obj_ops {
  * resources held by the set attributes. The FSAL layer MAY have added an
  * inherited ACL.
  *
- * The caller will set the mask in attrs_out to indicate the attributes of
- * interest.
+ * The caller will set the request_mask in attrs_out to indicate the attributes
+ * of interest. ATTR_ACL SHOULD NOT be requested and need not be provided. If
+ * not all the requested attributes can be provided, this method MUST return
+ * an error unless the ATTR_RDATTR_ERR bit was set in the request_mask.
  *
  * Since this method instantiates a new fsal_obj_handle, it will be forced
  * to fetch at least some attributes in order to even know what the object
@@ -1568,22 +1582,22 @@ struct fsal_obj_ops {
  * requested in the mask are copied out (though other attributes might
  * be copied out).
  *
+ * The caller will set the request_mask in attrs_out to indicate the attributes
+ * of interest. ATTR_ACL SHOULD NOT be requested and need not be provided. If
+ * not all the requested attributes can be provided, this method MUST return
+ * an error unless the ATTR_RDATTR_ERR bit was set in the request_mask.
+ *
  * The caller MUST call fsal_release_attrs when done with the copied
  * out attributes. This will release any attributes that might take
  * additional memory.
  *
- * If ATTR_RDATTR_ERR is set in the mask, and the attribute fetch fails,
- * then the returned attributes will have just ATTR_RDATTR_ERR in the
- * mask and the rest of the attributes are considered invalid. Otherwise
- * on failure, attrib_get is unchanged.
- *
  * @param[in]  obj_hdl    Object to query
- * @param[out] attrib_get Attribute list for file
+ * @param[out] attrs_out  Attribute list for file
  *
  * @return FSAL status.
  */
 	 fsal_status_t (*getattrs)(struct fsal_obj_handle *obj_hdl,
-				   struct attrlist *attrib_get);
+				   struct attrlist *attrs_out);
 
 /**
  * @brief Set attributes on an object
@@ -2327,8 +2341,10 @@ struct fsal_obj_ops {
  * resources held by the set attributes. The FSAL layer MAY have added an
  * inherited ACL.
  *
- * The caller will set the mask in attrs_out to indicate the attributes of
- * interest.
+ * The caller will set the request_mask in attrs_out to indicate the attributes
+ * of interest. ATTR_ACL SHOULD NOT be requested and need not be provided. If
+ * not all the requested attributes can be provided, this method MUST return
+ * an error unless the ATTR_RDATTR_ERR bit was set in the request_mask.
  *
  * Since this method may instantiate a new fsal_obj_handle, it will be forced
  * to fetch at least some attributes in order to even know what the object

@@ -128,9 +128,6 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 
 	if (attrs_out != NULL) {
 		posix2fsal_attributes(&st, attrs_out);
-
-		/* Make sure ATTR_RDATTR_ERR is cleared on success. */
-		attrs_out->mask &= ~ATTR_RDATTR_ERR;
 	}
 
 	return status;
@@ -225,9 +222,6 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 
 	if (attrs_out != NULL) {
 		posix2fsal_attributes(&st, attrs_out);
-
-		/* Make sure ATTR_RDATTR_ERR is cleared on success. */
-		attrs_out->mask &= ~ATTR_RDATTR_ERR;
 	}
 
 	return status;

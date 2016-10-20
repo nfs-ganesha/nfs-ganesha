@@ -112,9 +112,6 @@ static fsal_status_t lookup(struct fsal_obj_handle *dir_hdl,
 
 	if (attrs_out != NULL) {
 		posix2fsal_attributes(&st, attrs_out);
-
-		/* Make sure ATTR_RDATTR_ERR is cleared on success. */
-		attrs_out->mask &= ~ATTR_RDATTR_ERR;
 	}
 
 
@@ -251,9 +248,6 @@ static fsal_status_t rgw_fsal_create(struct fsal_obj_handle *dir_hdl,
 
 	if (attrs_out != NULL) {
 		posix2fsal_attributes(&st, attrs_out);
-
-		/* Make sure ATTR_RDATTR_ERR is cleared on success. */
-		attrs_out->mask &= ~ATTR_RDATTR_ERR;
 	}
 
 
@@ -322,9 +316,6 @@ static fsal_status_t rgw_fsal_mkdir(struct fsal_obj_handle *dir_hdl,
 
 	if (attrs_out != NULL) {
 		posix2fsal_attributes(&st, attrs_out);
-
-		/* Make sure ATTR_RDATTR_ERR is cleared on success. */
-		attrs_out->mask &= ~ATTR_RDATTR_ERR;
 	}
 
 
@@ -360,17 +351,14 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
 			RGW_GETATTR_FLAG_NONE);
 
 	if (rc < 0) {
-		if (attrs->mask & ATTR_RDATTR_ERR) {
+		if (attrs->request_mask & ATTR_RDATTR_ERR) {
 			/* Caller asked for error to be visible. */
-			attrs->mask = ATTR_RDATTR_ERR;
+			attrs->valid_mask = ATTR_RDATTR_ERR;
 		}
 		return rgw2fsal_error(rc);
 	}
 
 	posix2fsal_attributes(&st, attrs);
-
-	/* Make sure ATTR_RDATTR_ERR is cleared on success. */
-	attrs->mask &= ~ATTR_RDATTR_ERR;
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -379,7 +367,7 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
  * @brief Set attributes on an object
  *
  * This function sets attributes on an object.  Which attributes are
- * set is determined by attrib_set->mask. The FSAL must manage bypass
+ * set is determined by attrib_set->valid_mask. The FSAL must manage bypass
  * or not of share reservations, and a state may be passed.
  *
  * @param[in] obj_hdl    File on which to operate
@@ -411,11 +399,11 @@ fsal_status_t rgw_fsal_setattr2(struct fsal_obj_handle *obj_hdl,
 	LogFullDebug(COMPONENT_FSAL,
 		"%s enter obj_hdl %p state %p", __func__, obj_hdl, state);
 
-	if (attrib_set->mask & ~rgw_settable_attributes) {
+	if (attrib_set->valid_mask & ~rgw_settable_attributes) {
 		LogDebug(COMPONENT_FSAL,
 			"bad mask %"PRIx64" not settable %"PRIx64,
-			attrib_set->mask,
-			attrib_set->mask & ~rgw_settable_attributes);
+			attrib_set->valid_mask,
+			attrib_set->valid_mask & ~rgw_settable_attributes);
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	}
 
@@ -423,7 +411,7 @@ fsal_status_t rgw_fsal_setattr2(struct fsal_obj_handle *obj_hdl,
 		    "attrs ", attrib_set, false);
 
 	/* apply umask, if mode attribute is to be changed */
-	if (FSAL_TEST_MASK(attrib_set->mask, ATTR_MODE))
+	if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_MODE))
 		attrib_set->mode &=
 			~op_ctx->fsal_export->exp_ops.fs_umask(
 				op_ctx->fsal_export);
@@ -431,7 +419,7 @@ fsal_status_t rgw_fsal_setattr2(struct fsal_obj_handle *obj_hdl,
 	/* Test if size is being set, make sure file is regular and if so,
 	 * require a read/write file descriptor.
 	 */
-	if (FSAL_TEST_MASK(attrib_set->mask, ATTR_SIZE)) {
+	if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_SIZE)) {
 		if (obj_hdl->type != REGULAR_FILE) {
 			LogFullDebug(COMPONENT_FSAL,
 				"Setting size on non-regular file");
@@ -455,7 +443,7 @@ fsal_status_t rgw_fsal_setattr2(struct fsal_obj_handle *obj_hdl,
 
 	memset(&st, 0, sizeof(struct stat));
 
-	if (FSAL_TEST_MASK(attrib_set->mask, ATTR_SIZE)) {
+	if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_SIZE)) {
 		rc = rgw_truncate(export->rgw_fs, handle->rgw_fh,
 				attrib_set->filesize, RGW_TRUNCATE_FLAG_NONE);
 
@@ -468,27 +456,27 @@ fsal_status_t rgw_fsal_setattr2(struct fsal_obj_handle *obj_hdl,
 		}
 	}
 
-	if (FSAL_TEST_MASK(attrib_set->mask, ATTR_MODE)) {
+	if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_MODE)) {
 		mask |= RGW_SETATTR_MODE;
 		st.st_mode = fsal2unix_mode(attrib_set->mode);
 	}
 
-	if (FSAL_TEST_MASK(attrib_set->mask, ATTR_OWNER)) {
+	if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_OWNER)) {
 		mask |= RGW_SETATTR_UID;
 		st.st_uid = attrib_set->owner;
 	}
 
-	if (FSAL_TEST_MASK(attrib_set->mask, ATTR_GROUP)) {
+	if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_GROUP)) {
 		mask |= RGW_SETATTR_GID;
 		st.st_gid = attrib_set->group;
 	}
 
-	if (FSAL_TEST_MASK(attrib_set->mask, ATTR_ATIME)) {
+	if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_ATIME)) {
 		mask |= RGW_SETATTR_ATIME;
 		st.st_atim = attrib_set->atime;
 	}
 
-	if (FSAL_TEST_MASK(attrib_set->mask, ATTR_ATIME_SERVER)) {
+	if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_ATIME_SERVER)) {
 		mask |= RGW_SETATTR_ATIME;
 		struct timespec timestamp;
 
@@ -503,11 +491,11 @@ fsal_status_t rgw_fsal_setattr2(struct fsal_obj_handle *obj_hdl,
 		st.st_atim = timestamp;
 	}
 
-	if (FSAL_TEST_MASK(attrib_set->mask, ATTR_MTIME)) {
+	if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_MTIME)) {
 		mask |= RGW_SETATTR_MTIME;
 		st.st_mtim = attrib_set->mtime;
 	}
-	if (FSAL_TEST_MASK(attrib_set->mask, ATTR_MTIME_SERVER)) {
+	if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_MTIME_SERVER)) {
 		mask |= RGW_SETATTR_MTIME;
 		struct timespec timestamp;
 
@@ -522,7 +510,7 @@ fsal_status_t rgw_fsal_setattr2(struct fsal_obj_handle *obj_hdl,
 		st.st_mtim = timestamp;
 	}
 
-	if (FSAL_TEST_MASK(attrib_set->mask, ATTR_CTIME)) {
+	if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_CTIME)) {
 		mask |= RGW_SETATTR_CTIME;
 		st.st_ctim = attrib_set->ctime;
 	}
@@ -947,11 +935,11 @@ fsal_status_t rgw_fsal_open2(struct fsal_obj_handle *obj_hdl,
 			posix_flags |= O_EXCL;
 	}
 
-	if (setattrs && FSAL_TEST_MASK(attrib_set->mask, ATTR_MODE)) {
+	if (setattrs && FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_MODE)) {
 		unix_mode = fsal2unix_mode(attrib_set->mode) &
 		    ~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
 		/* Don't set the mode if we later set the attributes */
-		FSAL_UNSET_MASK(attrib_set->mask, ATTR_MODE);
+		FSAL_UNSET_MASK(attrib_set->valid_mask, ATTR_MODE);
 	} else {
 		/* Default to mode 0600 */
 		unix_mode = 0600;
@@ -1036,7 +1024,7 @@ fsal_status_t rgw_fsal_open2(struct fsal_obj_handle *obj_hdl,
 		goto fileerr;
 	}
 
-	if (created && setattrs && attrib_set->mask != 0) {
+	if (created && setattrs && attrib_set->valid_mask != 0) {
 		/* Set attributes using our newly opened file descriptor as the
 		 * share_fd if there are any left to set (mode and truncate
 		 * have already been handled).
@@ -1060,7 +1048,7 @@ fsal_status_t rgw_fsal_open2(struct fsal_obj_handle *obj_hdl,
 			status = (*new_obj)->obj_ops.getattrs(*new_obj,
 							      attrs_out);
 			if (FSAL_IS_ERROR(status) &&
-			    (attrs_out->mask & ATTR_RDATTR_ERR) == 0) {
+			    (attrs_out->request_mask & ATTR_RDATTR_ERR) == 0) {
 				/* Get attributes failed and caller expected
 				 * to get the attributes. Otherwise continue
 				 * with attrs_out indicating ATTR_RDATTR_ERR.
@@ -1074,9 +1062,6 @@ fsal_status_t rgw_fsal_open2(struct fsal_obj_handle *obj_hdl,
 		 * we used to create the fsal_obj_handle.
 		 */
 		posix2fsal_attributes(&st, attrs_out);
-
-		/* Make sure ATTR_RDATTR_ERR is cleared on success. */
-		attrs_out->mask &= ~ATTR_RDATTR_ERR;
 	}
 
 	if (state != NULL) {

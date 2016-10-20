@@ -452,9 +452,9 @@ fsal_status_t gpfs_open2(struct fsal_obj_handle *obj_hdl,
 	    ~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
 
 	/* Don't set the mode if we later set the attributes */
-	FSAL_UNSET_MASK(attrib_set->mask, ATTR_MODE);
+	FSAL_UNSET_MASK(attrib_set->valid_mask, ATTR_MODE);
 
-	if (createmode == FSAL_UNCHECKED && (attrib_set->mask != 0)) {
+	if (createmode == FSAL_UNCHECKED && (attrib_set->valid_mask != 0)) {
 		/* If we have FSAL_UNCHECKED and want to set more attributes
 		 * than the mode, we attempt an O_EXCL create first, if that
 		 * succeeds, then we will be allowed to set the additional
@@ -507,7 +507,7 @@ fsal_status_t gpfs_open2(struct fsal_obj_handle *obj_hdl,
 
 	*new_obj = &hdl->obj_handle;
 
-	if (created && attrib_set->mask != 0) {
+	if (created && attrib_set->valid_mask != 0) {
 		/* Set attributes using our newly opened file descriptor as the
 		 * share_fd if there are any left to set (mode and truncate
 		 * have already been handled).
@@ -529,7 +529,7 @@ fsal_status_t gpfs_open2(struct fsal_obj_handle *obj_hdl,
 			status = (*new_obj)->obj_ops.getattrs(*new_obj,
 							      attrs_out);
 			if (FSAL_IS_ERROR(status) &&
-			    (attrs_out->mask & ATTR_RDATTR_ERR) == 0) {
+			    (attrs_out->request_mask & ATTR_RDATTR_ERR) == 0) {
 				/* Get attributes failed and caller expected
 				 * to get the attributes. Otherwise continue
 				 * with attrs_out indicating ATTR_RDATTR_ERR.
@@ -537,10 +537,8 @@ fsal_status_t gpfs_open2(struct fsal_obj_handle *obj_hdl,
 				goto fileerr;
 			}
 		}
-	} else if (attrs_out != NULL) {
-		/* Make sure ATTR_RDATTR_ERR is cleared on success. */
-		attrs_out->mask &= ~ATTR_RDATTR_ERR;
 	}
+
 	if (state != NULL) {
 		/* Prepare to take the share reservation, but only if we are
 		 * called with a valid state (if state is NULL the caller is

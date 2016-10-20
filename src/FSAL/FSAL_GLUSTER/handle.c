@@ -133,9 +133,6 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 
 	if (attrs_out != NULL) {
 		posix2fsal_attributes(&sb, attrs_out);
-
-		/* Make sure ATTR_RDATTR_ERR is cleared on success. */
-		attrs_out->mask &= ~ATTR_RDATTR_ERR;
 	}
 
 	*handle = &objhandle->handle;
@@ -301,9 +298,6 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 
 	if (attrs_out != NULL) {
 		posix2fsal_attributes(&sb, attrs_out);
-
-		/* Make sure ATTR_RDATTR_ERR is cleared on success. */
-		attrs_out->mask &= ~ATTR_RDATTR_ERR;
 	}
 
 	*handle = &objhandle->handle;
@@ -389,17 +383,14 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 
 	if (attrs_out != NULL) {
 		posix2fsal_attributes(&sb, attrs_out);
-
-		/* Make sure ATTR_RDATTR_ERR is cleared on success. */
-		attrs_out->mask &= ~ATTR_RDATTR_ERR;
 	}
 
 	*handle = &objhandle->handle;
 
 	/* We handled the mode above. */
-	FSAL_UNSET_MASK(attrib->mask, ATTR_MODE);
+	FSAL_UNSET_MASK(attrib->valid_mask, ATTR_MODE);
 
-	if (attrib->mask) {
+	if (attrib->valid_mask) {
 		/* Now per support_ex API, if there are any other attributes
 		 * set, go ahead and get them set now.
 		 */
@@ -418,7 +409,7 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 		status.minor = 0;
 	}
 
-	FSAL_SET_MASK(attrib->mask, ATTR_MODE);
+	FSAL_SET_MASK(attrib->valid_mask, ATTR_MODE);
 
  out:
 	if (status.major != ERR_FSAL_NO_ERROR)
@@ -529,17 +520,14 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 
 	if (attrs_out != NULL) {
 		posix2fsal_attributes(&sb, attrs_out);
-
-		/* Make sure ATTR_RDATTR_ERR is cleared on success. */
-		attrs_out->mask &= ~ATTR_RDATTR_ERR;
 	}
 
 	*handle = &objhandle->handle;
 
 	/* We handled the mode above. */
-	FSAL_UNSET_MASK(attrib->mask, ATTR_MODE);
+	FSAL_UNSET_MASK(attrib->valid_mask, ATTR_MODE);
 
-	if (attrib->mask) {
+	if (attrib->valid_mask) {
 		/* Now per support_ex API, if there are any other attributes
 		 * set, go ahead and get them set now.
 		 */
@@ -558,7 +546,7 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 		status.minor = 0;
 	}
 
-	FSAL_SET_MASK(attrib->mask, ATTR_MODE);
+	FSAL_SET_MASK(attrib->valid_mask, ATTR_MODE);
 
  out:
 	if (status.major != ERR_FSAL_NO_ERROR)
@@ -640,14 +628,11 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 
 	if (attrs_out != NULL) {
 		posix2fsal_attributes(&sb, attrs_out);
-
-		/* Make sure ATTR_RDATTR_ERR is cleared on success. */
-		attrs_out->mask &= ~ATTR_RDATTR_ERR;
 	}
 
 	*handle = &objhandle->handle;
 
-	if (attrib->mask) {
+	if (attrib->valid_mask) {
 		/* Now per support_ex API, if there are any other attributes
 		 * set, go ahead and get them set now.
 		 */
@@ -776,9 +761,9 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
 		else
 			status = gluster2fsal_error(errno);
 
-		if (attrs->mask & ATTR_RDATTR_ERR) {
+		if (attrs->request_mask & ATTR_RDATTR_ERR) {
 			/* Caller asked for error to be visible. */
-			attrs->mask = ATTR_RDATTR_ERR;
+			attrs->valid_mask = ATTR_RDATTR_ERR;
 		}
 		goto out;
 	}
@@ -789,8 +774,15 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
 	else
 		buffxstat.is_dir = false;
 
-	status = glusterfs_get_acl(glfs_export, objhandle->glhandle,
-				   &buffxstat, attrs);
+	if (attrs->request_mask & ATTR_ACL) {
+		/* Fetch the ACL */
+		status = glusterfs_get_acl(glfs_export, objhandle->glhandle,
+					   &buffxstat, attrs);
+		if (!FSAL_IS_ERROR(status)) {
+			/* Success, so mark ACL as valid. */
+			attrs->valid_mask |= ATTR_ACL;
+		}
+	}
 
 	/* *
 	* The error ENOENT is not an expected error for GETATTRS
@@ -806,13 +798,10 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
 	}
 
 	if (FSAL_IS_ERROR(status)) {
-		if (attrs->mask & ATTR_RDATTR_ERR) {
+		if (attrs->request_mask & ATTR_RDATTR_ERR) {
 			/* Caller asked for error to be visible. */
-			attrs->mask = ATTR_RDATTR_ERR;
+			attrs->valid_mask = ATTR_RDATTR_ERR;
 		}
-	} else {
-		/* Make sure ATTR_RDATTR_ERR is cleared on success. */
-		attrs->mask &= ~ATTR_RDATTR_ERR;
 	}
 
  out:
@@ -1450,10 +1439,10 @@ static fsal_status_t glusterfs_open2(struct fsal_obj_handle *obj_hdl,
 		    ~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
 
 		/* Don't set the mode if we later set the attributes */
-		FSAL_UNSET_MASK(attrib_set->mask, ATTR_MODE);
+		FSAL_UNSET_MASK(attrib_set->valid_mask, ATTR_MODE);
 	}
 
-	if (createmode == FSAL_UNCHECKED && (attrib_set->mask != 0)) {
+	if (createmode == FSAL_UNCHECKED && (attrib_set->valid_mask != 0)) {
 		/* If we have FSAL_UNCHECKED and want to set more attributes
 		 * than the mode, we attempt an O_EXCL create first, if that
 		 * succeeds, then we will be allowed to set the additional
@@ -1609,7 +1598,7 @@ open:
 
 	*new_obj = &myself->handle;
 
-	if (created && attrib_set->mask != 0) {
+	if (created && attrib_set->valid_mask != 0) {
 		/* Set attributes using our newly opened file descriptor as the
 		 * share_fd if there are any left to set (mode and truncate
 		 * have already been handled).
@@ -1633,7 +1622,7 @@ open:
 			status = (*new_obj)->obj_ops.getattrs(*new_obj,
 							      attrs_out);
 			if (FSAL_IS_ERROR(status) &&
-			    (attrs_out->mask & ATTR_RDATTR_ERR) == 0) {
+			    (attrs_out->request_mask & ATTR_RDATTR_ERR) == 0) {
 				/* Get attributes failed and caller expected
 				 * to get the attributes. Otherwise continue
 				 * with attrs_out indicating ATTR_RDATTR_ERR.
@@ -1647,9 +1636,6 @@ open:
 		 * we used to create the fsal_obj_handle.
 		 */
 		posix2fsal_attributes(&sb, attrs_out);
-
-		/* Make sure ATTR_RDATTR_ERR is cleared on success. */
-		attrs_out->mask &= ~ATTR_RDATTR_ERR;
 	}
 
 
@@ -2176,7 +2162,7 @@ static fsal_status_t glusterfs_lock_op2(struct fsal_obj_handle *obj_hdl,
  * @brief Set attributes on an object
  *
  * This function sets attributes on an object.  Which attributes are
- * set is determined by attrib_set->mask. The FSAL must manage bypass
+ * set is determined by attrib_set->valid_mask. The FSAL must manage bypass
  * or not of share reservations, and a state may be passed.
  *
  * @param[in] obj_hdl    File on which to operate
@@ -2208,7 +2194,7 @@ static fsal_status_t glusterfs_setattr2(struct fsal_obj_handle *obj_hdl,
 
 	/** @todo: Handle special file symblic links etc */
 	/* apply umask, if mode attribute is to be changed */
-	if (FSAL_TEST_MASK(attrib_set->mask, ATTR_MODE))
+	if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_MODE))
 		attrib_set->mode &=
 		    ~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
 
@@ -2227,14 +2213,14 @@ static fsal_status_t glusterfs_setattr2(struct fsal_obj_handle *obj_hdl,
 	/* Test if size is being set, make sure file is regular and if so,
 	 * require a read/write file descriptor.
 	 */
-	if (FSAL_TEST_MASK(attrib_set->mask, ATTR_SIZE)) {
+	if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_SIZE)) {
 		if (obj_hdl->type != REGULAR_FILE)
 			return fsalstat(ERR_FSAL_INVAL, EINVAL);
 		openflags = FSAL_O_RDWR;
 	}
 
 	/** TRUNCATE **/
-	if (FSAL_TEST_MASK(attrib_set->mask, ATTR_SIZE) &&
+	if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_SIZE) &&
 	    (obj_hdl->type == REGULAR_FILE)) {
 		/* Get a usable file descriptor. Share conflict is only
 		 * possible if size is being set. For special files,
@@ -2255,27 +2241,27 @@ static fsal_status_t glusterfs_setattr2(struct fsal_obj_handle *obj_hdl,
 		}
 	}
 
-	if (FSAL_TEST_MASK(attrib_set->mask, ATTR_MODE)) {
+	if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_MODE)) {
 		FSAL_SET_MASK(mask, GLAPI_SET_ATTR_MODE);
 		buffxstat.buffstat.st_mode = fsal2unix_mode(attrib_set->mode);
 	}
 
-	if (FSAL_TEST_MASK(attrib_set->mask, ATTR_OWNER)) {
+	if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_OWNER)) {
 		FSAL_SET_MASK(mask, GLAPI_SET_ATTR_UID);
 		buffxstat.buffstat.st_uid = attrib_set->owner;
 	}
 
-	if (FSAL_TEST_MASK(attrib_set->mask, ATTR_GROUP)) {
+	if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_GROUP)) {
 		FSAL_SET_MASK(mask, GLAPI_SET_ATTR_GID);
 		buffxstat.buffstat.st_gid = attrib_set->group;
 	}
 
-	if (FSAL_TEST_MASK(attrib_set->mask, ATTR_ATIME)) {
+	if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_ATIME)) {
 		FSAL_SET_MASK(mask, GLAPI_SET_ATTR_ATIME);
 		buffxstat.buffstat.st_atim = attrib_set->atime;
 	}
 
-	if (FSAL_TEST_MASK(attrib_set->mask, ATTR_ATIME_SERVER)) {
+	if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_ATIME_SERVER)) {
 		FSAL_SET_MASK(mask, GLAPI_SET_ATTR_ATIME);
 		struct timespec timestamp;
 
@@ -2288,11 +2274,11 @@ static fsal_status_t glusterfs_setattr2(struct fsal_obj_handle *obj_hdl,
 	}
 
 	/* try to look at glfs_futimens() instead as done in vfs */
-	if (FSAL_TEST_MASK(attrib_set->mask, ATTR_MTIME)) {
+	if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_MTIME)) {
 		FSAL_SET_MASK(mask, GLAPI_SET_ATTR_MTIME);
 		buffxstat.buffstat.st_mtim = attrib_set->mtime;
 	}
-	if (FSAL_TEST_MASK(attrib_set->mask, ATTR_MTIME_SERVER)) {
+	if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_MTIME_SERVER)) {
 		FSAL_SET_MASK(mask, GLAPI_SET_ATTR_MTIME);
 		struct timespec timestamp;
 
@@ -2308,7 +2294,7 @@ static fsal_status_t glusterfs_setattr2(struct fsal_obj_handle *obj_hdl,
 	/* EATTRNOTSUPP error.  */
 
 	if (NFSv4_ACL_SUPPORT) {
-		if (FSAL_TEST_MASK(attrib_set->mask, ATTR_ACL)) {
+		if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_ACL)) {
 			if (obj_hdl->type == DIRECTORY)
 				buffxstat.is_dir = true;
 			else
@@ -2326,7 +2312,7 @@ static fsal_status_t glusterfs_setattr2(struct fsal_obj_handle *obj_hdl,
 			/* mode-bits too if not already passed */
 			FSAL_SET_MASK(mask, GLAPI_SET_ATTR_MODE);
 		}
-	} else if (FSAL_TEST_MASK(attrib_set->mask, ATTR_ACL)) {
+	} else if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_ACL)) {
 		status = fsalstat(ERR_FSAL_ATTRNOTSUPP, 0);
 		goto out;
 	}

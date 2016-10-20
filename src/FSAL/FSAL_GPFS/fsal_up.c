@@ -338,13 +338,13 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 					 */
 					posix2fsal_attributes(&buf, &attr);
 					/* Set the mask to what is changed */
-					attr.mask = 0;
+					attr.valid_mask = 0;
 					if (flags & UP_SIZE)
-						attr.mask |=
+						attr.valid_mask |=
 						   ATTR_CHGTIME | ATTR_CHANGE |
 						   ATTR_SIZE | ATTR_SPACEUSED;
 					if (flags & UP_SIZE_BIG) {
-						attr.mask |=
+						attr.valid_mask |=
 						   ATTR_CHGTIME | ATTR_CHANGE |
 						   ATTR_SIZE | ATTR_SPACEUSED;
 						upflags |=
@@ -352,20 +352,20 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 						   fsal_up_update_spaceused_inc;
 					}
 					if (flags & UP_MODE)
-						attr.mask |=
+						attr.valid_mask |=
 						   ATTR_CHGTIME | ATTR_CHANGE |
 						   ATTR_MODE;
 					if (flags & UP_OWN)
-						attr.mask |=
+						attr.valid_mask |=
 						   ATTR_CHGTIME | ATTR_CHANGE |
 						   ATTR_OWNER;
 					if (flags & UP_TIMES)
-						attr.mask |=
+						attr.valid_mask |=
 						   ATTR_CHGTIME | ATTR_CHANGE |
 						   ATTR_ATIME | ATTR_CTIME |
 						    ATTR_MTIME;
 					if (flags & UP_ATIME)
-						attr.mask |=
+						attr.valid_mask |=
 						   ATTR_CHGTIME | ATTR_CHANGE |
 						   ATTR_ATIME;
 
@@ -380,7 +380,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 					    && (attr.numlinks == 0)) {
 						upflags = fsal_up_nlink |
 							  fsal_up_close;
-						attr.mask = 0;
+						attr.valid_mask = 0;
 						fsal_status = up_async_update
 						    (general_fridge,
 						     event_func->up_export,

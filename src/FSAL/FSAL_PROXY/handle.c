@@ -301,7 +301,7 @@ static int pxy_fsalattr_to_fattr4(const struct attrlist *attrs, fattr4 *data)
 	struct xdr_attrs_args args;
 
 	for (i = 0; i < ARRAY_SIZE(fsal_mask2bit); i++) {
-		if (FSAL_TEST_MASK(attrs->mask, fsal_mask2bit[i].mask)) {
+		if (FSAL_TEST_MASK(attrs->valid_mask, fsal_mask2bit[i].mask)) {
 			if (fsal_mask2bit[i].fattr_bit > 31) {
 				bmap.map[1] |=
 				    1U << (fsal_mask2bit[i].fattr_bit - 32);
@@ -1196,7 +1196,7 @@ static fsal_status_t pxy_create(struct fsal_obj_handle *dir_hdl,
 		 getpid(), atomic_inc_uint64_t(&fcnt));
 	owner_len = strnlen(owner_val, sizeof(owner_val));
 
-	attrib->mask &= ATTR_MODE | ATTR_OWNER | ATTR_GROUP;
+	attrib->valid_mask &= ATTR_MODE | ATTR_OWNER | ATTR_GROUP;
 	if (pxy_fsalattr_to_fattr4(attrib, &input_attr) == -1)
 		return fsalstat(ERR_FSAL_INVAL, -1);
 
@@ -1272,7 +1272,7 @@ static fsal_status_t pxy_mkdir(struct fsal_obj_handle *dir_hdl,
 	 * The caller gives us partial attributes which include mode and owner
 	 * and expects the full attributes back at the end of the call.
 	 */
-	attrib->mask &= ATTR_MODE | ATTR_OWNER | ATTR_GROUP;
+	attrib->valid_mask &= ATTR_MODE | ATTR_OWNER | ATTR_GROUP;
 	if (pxy_fsalattr_to_fattr4(attrib, &input_attr) == -1)
 		return fsalstat(ERR_FSAL_INVAL, -1);
 
@@ -1358,7 +1358,7 @@ static fsal_status_t pxy_mknod(struct fsal_obj_handle *dir_hdl,
 	 * The caller gives us partial attributes which include mode and owner
 	 * and expects the full attributes back at the end of the call.
 	 */
-	attrib->mask &= ATTR_MODE | ATTR_OWNER | ATTR_GROUP;
+	attrib->valid_mask &= ATTR_MODE | ATTR_OWNER | ATTR_GROUP;
 	if (pxy_fsalattr_to_fattr4(attrib, &input_attr) == -1)
 		return fsalstat(ERR_FSAL_INVAL, -1);
 
@@ -1418,7 +1418,7 @@ static fsal_status_t pxy_symlink(struct fsal_obj_handle *dir_hdl,
 						  fso_symlink_support))
 		return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 
-	attrib->mask = ATTR_MODE;
+	attrib->valid_mask = ATTR_MODE;
 	if (pxy_fsalattr_to_fattr4(attrib, &input_attr) == -1)
 		return fsalstat(ERR_FSAL_INVAL, -1);
 
@@ -1679,9 +1679,9 @@ static fsal_status_t pxy_getattrs(struct fsal_obj_handle *obj_hdl,
 			    argoparray, resoparray);
 
 	if (rc != NFS4_OK) {
-		if (attrs->mask & ATTR_RDATTR_ERR) {
+		if (attrs->request_mask & ATTR_RDATTR_ERR) {
 			/* Caller asked for error to be visible. */
-			attrs->mask = ATTR_RDATTR_ERR;
+			attrs->valid_mask = ATTR_RDATTR_ERR;
 		}
 		return nfsstat4_to_fsal(rc);
 	}
@@ -1689,9 +1689,6 @@ static fsal_status_t pxy_getattrs(struct fsal_obj_handle *obj_hdl,
 	if (nfs4_Fattr_To_FSAL_attr(attrs, &atok->obj_attributes, NULL) !=
 	    NFS4_OK)
 		return fsalstat(ERR_FSAL_INVAL, 0);
-
-	/* Make sure ATTR_RDATTR_ERR is cleared on success. */
-	attrs->mask &= ~ATTR_RDATTR_ERR;
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -1727,9 +1724,9 @@ static fsal_status_t pxy_setattrs(struct fsal_obj_handle *obj_hdl,
 	* (section 5.7 in RFC7530 or RFC5651)
 	* Nevermind : this update is useless, we prevent it.
 	*/
-	FSAL_UNSET_MASK(attrs->mask, ATTR_CTIME);
+	FSAL_UNSET_MASK(attrs->valid_mask, ATTR_CTIME);
 
-	if (FSAL_TEST_MASK(attrs->mask, ATTR_MODE))
+	if (FSAL_TEST_MASK(attrs->valid_mask, ATTR_MODE))
 		attrs->mode &= ~op_ctx->fsal_export->exp_ops.
 				fs_umask(op_ctx->fsal_export);
 
