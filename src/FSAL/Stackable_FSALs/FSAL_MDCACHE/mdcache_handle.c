@@ -1399,6 +1399,10 @@ static nfsstat4 mdcache_layoutcommit(struct fsal_obj_handle *obj_hdl,
 			entry->sub_handle, req_ctx, lou_body, arg, res)
 	       );
 
+	if (status == NFS4_OK)
+		atomic_clear_uint32_t_bits(&entry->mde_flags,
+					   MDCACHE_TRUST_ATTRS);
+
 	return status;
 }
 
