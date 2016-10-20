@@ -191,7 +191,7 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 	/* Stat for root */
 	struct stat st;
 	/* Return code */
-	int rc;
+	int rc = 0;
 	/* Return code from RGW calls */
 	int rgw_status;
 	/* True if we have called fsal_export_init */
