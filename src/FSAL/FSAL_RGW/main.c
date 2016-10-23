@@ -173,7 +173,7 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 	/* The status code to return */
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	/* The internal export object */
-	struct rgw_export *export;
+	struct rgw_export *export = NULL;
 	/* The 'private' root handle */
 	struct rgw_handle *handle = NULL;
 	/* Stat for root */
@@ -242,6 +242,11 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 				gsh_free(inst_name);
 		}
 		PTHREAD_MUTEX_unlock(&init_mtx);
+	}
+
+	if (rc != 0) {
+		status.major = ERR_FSAL_BAD_INIT;
+		goto error;
 	}
 
 	export = gsh_calloc(1, sizeof(struct rgw_export));
