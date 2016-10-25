@@ -32,6 +32,8 @@
 #cmakedefine DEBUG_SAL 1
 #cmakedefine _VALGRIND_MEMCHECK 1
 #cmakedefine _NO_MOUNT_LIST 1
+#cmakedefine _NO_TCP_REDISTER 1
+#cmakedefine _NO_PORTMAPPER 1
 #cmakedefine HAVE_STDBOOL_H 1
 #cmakedefine HAVE_KRB5 1
 #cmakedefine KRB5_VERSION @KRB5_VERSION@

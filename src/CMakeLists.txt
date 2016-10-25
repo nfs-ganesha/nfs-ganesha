@@ -213,8 +213,8 @@ option(ENABLE_RFC_ACL "Use all RFC ACL checks" OFF)
 option(USE_EFENCE "link with efence memory debug library" OFF)
 
 # These are -D_FOO options, why ???  should be flags??
-option(_NO_TCP_REGISTER "disable registration of tcp services on portmapper" ON)
-option(_NO_PORTMAPPER "disable registration on portmapper" ON)
+option(_NO_TCP_REGISTER "disable registration of tcp services on portmapper" OFF)
+option(_NO_PORTMAPPER "disable registration on portmapper" OFF)
 option(_NO_XATTRD "disable ghost xattr directory and files support" ON)
 option(DEBUG_SAL "enable debugging of SAL by keeping list of all locks, stateids, and state owners" OFF)
 option(_VALGRIND_MEMCHECK "Initialize buffers passed to GPFS ioctl that valgrind doesn't understand" OFF)
