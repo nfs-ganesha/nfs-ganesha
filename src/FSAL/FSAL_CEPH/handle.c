@@ -1212,7 +1212,7 @@ fsal_status_t ceph_open2(struct fsal_obj_handle *obj_hdl,
 		posix_flags &= ~O_EXCL;
 		retval =
 		    ceph_ll_create(export->cmount,  myself->i, name, unix_mode,
-				   posix_flags, &stat, &i, &my_fd->fd,
+				   posix_flags, &stat, &i, &fd,
 				   op_ctx->creds->caller_uid,
 				   op_ctx->creds->caller_gid);
 		if (retval < 0) {
