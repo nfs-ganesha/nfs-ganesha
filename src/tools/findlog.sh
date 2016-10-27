@@ -94,6 +94,8 @@ find_funcs()
 			t again
 			}
 		/[^a-zA-Z_]$FUNC[ \t]*[\[\=]/d
+		/[^a-zA-Z_]$FUNC[^)]*)/d
+		/[^a-zA-Z_]$FUNC[^;()]*;/d
 		/[^a-zA-Z_]$FUNC[ \t\\]*$/{
 			=
 			N
