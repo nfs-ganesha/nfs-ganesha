@@ -185,14 +185,17 @@ fsal_status_t mdcache_export_init(const struct fsal_up_vector *super_up_ops,
 	struct fsal_up_vector my_up_ops;
 	fsal_status_t status;
 
+	/* Get ref on FSAL MDCACHE for sub FSAL. Done before mdc_init_export */
+	fsal_get(&MDCACHE.fsal);
+
 	*mdc_up_ops = NULL;
 	mdcache_export_up_ops_init(&my_up_ops, super_up_ops);
 	status =  mdc_init_export(&MDCACHE.fsal, &my_up_ops, super_up_ops);
-	if (FSAL_IS_ERROR(status))
+	if (FSAL_IS_ERROR(status)) {
+		fsal_put(&MDCACHE.fsal);
 		return status;
+	}
 
-	/* Get ref on FSAL MDCACHE for sub FSAL */
-	fsal_get(&MDCACHE.fsal);
 	exp = mdc_cur_export();
 	*mdc_up_ops = &exp->up_ops;
 
