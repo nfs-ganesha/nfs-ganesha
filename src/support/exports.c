@@ -1153,11 +1153,6 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 		goto success;
 	}
 
-	LogCrit(COMPONENT_EXPORT,
-		"Clients = (%p,%p) next = (%p, %p)",
-		export->clients.next, export->clients.prev,
-		export->clients.next->next, export->clients.next->prev);
-
 	if (commit_type == update_export) {
 		/* We found a new export during export update, consider it
 		 * an add_export for the rest of configuration.
