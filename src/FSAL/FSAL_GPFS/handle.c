@@ -1064,6 +1064,7 @@ fsal_status_t gpfs_lookup_path(struct fsal_export *exp_hdl,
 	fsal_status_t fsal_status;
 	int retval = 0;
 	int dir_fd;
+	int exp_fd = 0;
 	struct fsal_filesystem *fs;
 	struct gpfs_fsal_obj_handle *hdl;
 	struct attrlist attributes;
@@ -1092,7 +1093,7 @@ fsal_status_t gpfs_lookup_path(struct fsal_export *exp_hdl,
 		goto errout;
 	}
 
-	fsal_status = fsal_internal_fd2handle(dir_fd, fh);
+	fsal_status = fsal_internal_fd2handle(dir_fd, fh, &exp_fd);
 	if (FSAL_IS_ERROR(fsal_status))
 		goto fileerr;
 
@@ -1126,7 +1127,6 @@ fsal_status_t gpfs_lookup_path(struct fsal_export *exp_hdl,
 		retval = ENOENT;
 		goto errout;
 	}
-
 	if (fs->fsal != exp_hdl->fsal) {
 		LogInfo(COMPONENT_FSAL,
 			"File system for path %s did not belong to FSAL %s",

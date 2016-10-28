@@ -146,7 +146,8 @@ GPFSFSAL_symlink(struct fsal_obj_handle *dir_hdl, const char *linkname,
 
 	/* now get the associated handle, while there is a race, there is
 	   also a race lower down  */
-	status = fsal_internal_get_handle_at(fd, linkname, gpfs_fh);
+	status = fsal_internal_get_handle_at(fd, linkname, gpfs_fh,
+					     gpfs_fs->root_fd, NULL);
 
 	if (FSAL_IS_ERROR(status)) {
 		close(fd);

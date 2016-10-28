@@ -169,7 +169,7 @@ fsal_status_t gpfs_read_plus(struct fsal_obj_handle *obj_hdl,
 fsal_status_t gpfs_read_plus_fd(int my_fs,
 			uint64_t offset,
 			size_t buffer_size, void *buffer, size_t *read_amount,
-			bool *end_of_file, struct io_info *info);
+			bool *end_of_file, struct io_info *info, int expfd);
 fsal_status_t gpfs_write(struct fsal_obj_handle *obj_hdl,
 			 uint64_t offset,
 			 size_t buffer_size, void *buffer,
@@ -183,7 +183,7 @@ fsal_status_t gpfs_write_plus_fd(int my_fd,
 			 uint64_t offset,
 			 size_t buffer_size, void *buffer,
 			 size_t *write_amount, bool *fsal_stable,
-			 struct io_info *info);
+			 struct io_info *info, int expfd);
 fsal_status_t gpfs_seek(struct fsal_obj_handle *obj_hdl,
 			 struct io_info *info);
 fsal_status_t gpfs_io_advise(struct fsal_obj_handle *obj_hdl,

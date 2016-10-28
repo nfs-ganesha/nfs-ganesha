@@ -200,7 +200,8 @@ fsal_internal_handle2fd_at(int dirfd, struct gpfs_file_handle *gpfs_fh,
  */
 fsal_status_t
 fsal_internal_get_handle_at(int dfd, const char *fs_name,
-			    struct gpfs_file_handle *gpfs_fh)
+			    struct gpfs_file_handle *gpfs_fh,
+			    int expfd, int *expfdP)
 {
 	int rc;
 	struct name_handle_arg harg;
@@ -215,6 +216,7 @@ fsal_internal_get_handle_at(int dfd, const char *fs_name,
 	harg.handle->handle_key_size = OPENHANDLE_KEY_LEN;
 	harg.name = fs_name;
 	harg.dfd = dfd;
+	harg.expfd = expfd;
 	harg.flag = 0;
 
 	LogFullDebug(COMPONENT_FSAL, "Lookup handle at for %d %s", dfd,
@@ -228,7 +230,9 @@ fsal_internal_get_handle_at(int dfd, const char *fs_name,
 			LogFatal(COMPONENT_FSAL, "GPFS Returned EUNATCH");
 		return fsalstat(posix2fsal_error(errsv), errsv);
 	}
-
+	LogFullDebug(COMPONENT_FSAL, "Lookup fd %d for %s", rc, fs_name);
+	if (expfdP)
+		*expfdP = rc;
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
@@ -285,7 +289,7 @@ fsal_internal_get_fh(int dirfd, struct gpfs_file_handle *gpfs_fh,
  *  @return status of operation
  */
 fsal_status_t
-fsal_internal_fd2handle(int fd, struct gpfs_file_handle *gpfs_fh)
+fsal_internal_fd2handle(int fd, struct gpfs_file_handle *gpfs_fh, int *expfdP)
 {
 	int rc;
 	struct name_handle_arg harg;
@@ -301,6 +305,10 @@ fsal_internal_fd2handle(int fd, struct gpfs_file_handle *gpfs_fh)
 	harg.name = NULL;
 	harg.dfd = fd;
 	harg.flag = 0;
+	if (expfdP)
+		harg.expfd = *expfdP;
+	else
+		harg.expfd = 0;
 
 	LogFullDebug(COMPONENT_FSAL, "Lookup handle by fd for %d", fd);
 
@@ -312,6 +320,9 @@ fsal_internal_fd2handle(int fd, struct gpfs_file_handle *gpfs_fh)
 			LogFatal(COMPONENT_FSAL, "GPFS Returned EUNATCH");
 		return fsalstat(posix2fsal_error(errsv), errsv);
 	}
+	LogFullDebug(COMPONENT_FSAL, "get expfd in %d out %d", fd, rc);
+	if (expfdP)
+		*expfdP = rc;
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }

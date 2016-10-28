@@ -114,7 +114,8 @@ int fsal_internal_version(void);
 
 fsal_status_t fsal_internal_get_handle_at(int dfd,
 				const char *p_fsalname,
-				struct gpfs_file_handle *p_handle);
+				struct gpfs_file_handle *p_handle,
+				int expfd, int *expfdP);
 
 fsal_status_t gpfsfsal_xstat_2_fsal_attributes(
 					gpfsfsal_xstat_t *p_buffxstat,
@@ -149,7 +150,7 @@ fsal_status_t fsal_readlink_by_handle(int dirfd,
  * Get the handle for a path (posix or fid path)
  */
 fsal_status_t fsal_internal_fd2handle(int fd,
-				struct gpfs_file_handle *p_handle);
+				struct gpfs_file_handle *p_handle, int *expfdP);
 
 fsal_status_t fsal_internal_link_at(int srcfd, int dfd, char *name);
 
@@ -271,7 +272,8 @@ fsal_status_t GPFSFSAL_read(int fd,
 			    size_t buffer_size,
 			    caddr_t buffer,
 			    size_t *p_read_amount,
-			    bool *p_end_of_file);
+			    bool *p_end_of_file,
+			    int expfs);
 
 fsal_status_t GPFSFSAL_write(int fd,
 			     uint64_t offset,
@@ -279,7 +281,8 @@ fsal_status_t GPFSFSAL_write(int fd,
 			     caddr_t buffer,
 			     size_t *p_write_amount,
 			     bool *fsal_stable,
-			     const struct req_op_context *p_context);
+			     const struct req_op_context *p_context,
+			     int expfs);
 
 fsal_status_t GPFSFSAL_alloc(int fd,
 			     uint64_t offset,

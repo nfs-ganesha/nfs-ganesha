@@ -503,7 +503,8 @@ int open_root_fd(struct gpfs_filesystem *gpfs_fs)
 	}
 
 	status = fsal_internal_get_handle_at(gpfs_fs->root_fd,
-					     gpfs_fs->fs->path, fh);
+					     gpfs_fs->fs->path, fh,
+					     0, &gpfs_fs->root_fd);
 
 	if (FSAL_IS_ERROR(status)) {
 		retval = status.minor;
@@ -758,6 +759,7 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 	struct gpfs_fsal_export *myself;
 	struct readlink_arg varg;
 	struct gpfs_filesystem *gpfs_fs;
+	gpfsfsal_xstat_t buffxstat;
 	int rc;
 
 	myself = gsh_calloc(1, sizeof(struct gpfs_fsal_export));
@@ -803,8 +805,9 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 		status.major = posix2fsal_error(status.minor);
 		goto uninit;
 	}
-
 	gpfs_fs = myself->root_fs->private_data;
+	gpfs_fs->root_fd = open_dir_by_path_walk(-1,
+			   op_ctx->ctx_export->fullpath, &buffxstat.buffstat);
 	varg.fd = gpfs_fs->root_fd;
 	varg.buffer = (char *)&GPFS_write_verifier;
 	rc = gpfs_ganesha(OPENHANDLE_GET_VERIFIER, &varg);

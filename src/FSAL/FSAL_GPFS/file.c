@@ -586,12 +586,15 @@ gpfs_read(struct fsal_obj_handle *obj_hdl, uint64_t offset, size_t buffer_size,
 	struct gpfs_fsal_obj_handle *myself =
 		container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
 	fsal_status_t status;
+	struct gpfs_filesystem *gpfs_fs;
 
+	gpfs_fs = obj_hdl->fs->private_data;
 	assert(myself->u.file.fd.fd >= 0 &&
 	       myself->u.file.fd.openflags != FSAL_O_CLOSED);
 
 	status = GPFSFSAL_read(myself->u.file.fd.fd, offset, buffer_size,
-			       buffer, read_amount, end_of_file);
+			       buffer, read_amount, end_of_file,
+			       gpfs_fs->root_fd);
 
 	if (FSAL_IS_ERROR(status))
 		return status;
@@ -614,7 +617,7 @@ gpfs_read(struct fsal_obj_handle *obj_hdl, uint64_t offset, size_t buffer_size,
 fsal_status_t
 gpfs_read_plus_fd(int my_fd, uint64_t offset,
 		  size_t buffer_size, void *buffer, size_t *read_amount,
-		  bool *end_of_file, struct io_info *info)
+		  bool *end_of_file, struct io_info *info, int expfd)
 {
 	const fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
 	struct read_arg rarg = {0};
@@ -626,7 +629,7 @@ gpfs_read_plus_fd(int my_fd, uint64_t offset,
 
 	assert(my_fd >= 0);
 
-	rarg.mountdirfd = my_fd;
+	rarg.mountdirfd = expfd;
 	rarg.fd = my_fd;
 	rarg.bufP = buffer;
 	rarg.offset = offset;
@@ -685,6 +688,9 @@ gpfs_read_plus(struct fsal_obj_handle *obj_hdl, uint64_t offset,
 		container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
 	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
 	int my_fd;
+	struct gpfs_filesystem *gpfs_fs;
+
+	gpfs_fs = obj_hdl->fs->private_data;
 
 	if (!buffer || !read_amount || !end_of_file || !info)
 		return fsalstat(ERR_FSAL_FAULT, 0);
@@ -695,7 +701,7 @@ gpfs_read_plus(struct fsal_obj_handle *obj_hdl, uint64_t offset,
 
 	status = gpfs_read_plus_fd(my_fd, offset,  buffer_size,
 				   buffer, read_amount,
-				   end_of_file, info);
+				   end_of_file, info, gpfs_fs->root_fd);
 	return status;
 }
 
@@ -901,6 +907,9 @@ fsal_status_t gpfs_read2(struct fsal_obj_handle *obj_hdl,
 	bool has_lock = false;
 	bool need_fsync = false;
 	bool closefd = false;
+	struct gpfs_filesystem *gpfs_fs;
+
+	gpfs_fs = obj_hdl->fs->private_data;
 
 	if (obj_hdl->fsal != obj_hdl->fs->fsal) {
 		LogDebug(COMPONENT_FSAL,
@@ -918,10 +927,12 @@ fsal_status_t gpfs_read2(struct fsal_obj_handle *obj_hdl,
 
 	if (info)
 		status = gpfs_read_plus_fd(my_fd, offset, buffer_size,
-					buffer, read_amount, end_of_file, info);
+					buffer, read_amount, end_of_file, info,
+					gpfs_fs->root_fd);
 	else
 		status = GPFSFSAL_read(my_fd, offset, buffer_size, buffer,
-					read_amount, end_of_file);
+					read_amount, end_of_file,
+					gpfs_fs->root_fd);
 
  out:
 
@@ -975,6 +986,7 @@ fsal_status_t gpfs_write2(struct fsal_obj_handle *obj_hdl,
 	bool has_lock = false;
 	bool need_fsync = false;
 	bool closefd = false;
+	struct gpfs_filesystem *gpfs_fs;
 	fsal_openflags_t openflags = FSAL_O_WRITE;
 
 	if (obj_hdl->fsal != obj_hdl->fs->fsal) {
@@ -983,6 +995,7 @@ fsal_status_t gpfs_write2(struct fsal_obj_handle *obj_hdl,
 			 obj_hdl->fsal->name, obj_hdl->fs->fsal->name);
 		return fsalstat(posix2fsal_error(EXDEV), EXDEV);
 	}
+	gpfs_fs = obj_hdl->fs->private_data;
 
 	if (*fsal_stable)
 		openflags |= FSAL_O_SYNC;
@@ -999,10 +1012,11 @@ fsal_status_t gpfs_write2(struct fsal_obj_handle *obj_hdl,
 	if (info)
 		status = gpfs_write_plus_fd(my_fd, offset,
 				buffer_size, buffer, wrote_amount,
-				fsal_stable, info);
+				fsal_stable, info, gpfs_fs->root_fd);
 	else
 		status = GPFSFSAL_write(my_fd, offset, buffer_size, buffer,
-				wrote_amount, fsal_stable, op_ctx);
+				wrote_amount, fsal_stable, op_ctx,
+				gpfs_fs->root_fd);
 
 
 	if (FSAL_IS_ERROR(status))
@@ -1221,14 +1235,16 @@ fsal_status_t
 gpfs_write(struct fsal_obj_handle *obj_hdl, uint64_t offset, size_t buffer_size,
 	   void *buffer, size_t *write_amount, bool *fsal_stable)
 {
+	struct gpfs_filesystem *gpfs_fs;
 	struct gpfs_fsal_obj_handle *myself =
 		container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
 
 	assert(myself->u.file.fd.fd >= 0 &&
 	       myself->u.file.fd.openflags != FSAL_O_CLOSED);
-
+	gpfs_fs = obj_hdl->fs->private_data;
 	return GPFSFSAL_write(myself->u.file.fd.fd, offset, buffer_size, buffer,
-			      write_amount, fsal_stable, op_ctx);
+			      write_amount, fsal_stable, op_ctx,
+			      gpfs_fs->root_fd);
 }
 
 fsal_status_t
@@ -1236,10 +1252,13 @@ gpfs_write_fd(int my_fd, struct fsal_obj_handle *obj_hdl, uint64_t offset,
 	      size_t buffer_size, void *buffer, size_t *write_amount,
 	      bool *fsal_stable)
 {
+	struct gpfs_filesystem *gpfs_fs;
 	assert(my_fd >= 0);
 
+	gpfs_fs = obj_hdl->fs->private_data;
 	return GPFSFSAL_write(my_fd, offset, buffer_size, buffer,
-			     write_amount, fsal_stable, op_ctx);
+			     write_amount, fsal_stable, op_ctx,
+			     gpfs_fs->root_fd);
 }
 
 /**
@@ -1339,12 +1358,13 @@ gpfs_write_plus(struct fsal_obj_handle *obj_hdl, uint64_t offset,
 fsal_status_t
 gpfs_write_plus_fd(int my_fd, uint64_t offset,
 		   size_t buffer_size, void *buffer, size_t *write_amount,
-		   bool *fsal_stable, struct io_info *info)
+		   bool *fsal_stable, struct io_info *info, int expfd)
 {
 	switch (info->io_content.what) {
 	case NFS4_CONTENT_DATA:
 		return GPFSFSAL_write(my_fd, offset, buffer_size, buffer,
-				     write_amount, fsal_stable, op_ctx);
+				     write_amount, fsal_stable, op_ctx,
+				     expfd);
 	case NFS4_CONTENT_DEALLOCATE:
 		return gpfs_deallocate_fd(my_fd, offset, buffer_size);
 	case NFS4_CONTENT_ALLOCATE:

@@ -109,7 +109,7 @@ GPFSFSAL_open(struct fsal_obj_handle *obj_hdl,
  */
 fsal_status_t
 GPFSFSAL_read(int fd, uint64_t offset, size_t buf_size, caddr_t buf,
-	      size_t *read_amount, bool *end_of_file)
+	      size_t *read_amount, bool *end_of_file, int expfd)
 {
 	struct read_arg rarg = {0};
 	ssize_t nb_read;
@@ -119,7 +119,7 @@ GPFSFSAL_read(int fd, uint64_t offset, size_t buf_size, caddr_t buf,
 	if (!buf || !read_amount || !end_of_file)
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
-	rarg.mountdirfd = fd;
+	rarg.mountdirfd = expfd;
 	rarg.fd = fd;
 	rarg.bufP = buf;
 	rarg.offset = offset;
@@ -171,7 +171,7 @@ GPFSFSAL_read(int fd, uint64_t offset, size_t buf_size, caddr_t buf,
 fsal_status_t
 GPFSFSAL_write(int fd, uint64_t offset, size_t buf_size, caddr_t buf,
 	       size_t *write_amount, bool *fsal_stable,
-	       const struct req_op_context *op_ctx)
+	       const struct req_op_context *op_ctx, int expfd)
 {
 	struct write_arg warg = {0};
 	uint32_t stability_got = 0;
@@ -182,7 +182,7 @@ GPFSFSAL_write(int fd, uint64_t offset, size_t buf_size, caddr_t buf,
 	if (!buf || !write_amount)
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
-	warg.mountdirfd = fd;
+	warg.mountdirfd = expfd;
 	warg.fd = fd;
 	warg.bufP = buf;
 	warg.offset = offset;
