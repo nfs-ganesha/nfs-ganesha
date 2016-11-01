@@ -45,6 +45,13 @@ fsal_status_t nullfs_create_handle(struct fsal_export *exp_hdl,
 				   struct fsal_obj_handle **handle,
 				   struct attrlist *attrs_out);
 
+fsal_status_t nullfs_alloc_and_check_handle(
+		struct nullfs_fsal_export *export,
+		struct fsal_obj_handle *sub_handle,
+		struct fsal_filesystem *fs,
+		struct fsal_obj_handle **new_handle,
+		fsal_status_t subfsal_status);
+
 /*
  * NULLFS internal object handle
  *

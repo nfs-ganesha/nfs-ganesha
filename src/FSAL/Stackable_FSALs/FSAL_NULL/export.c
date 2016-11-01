@@ -325,16 +325,21 @@ static struct state_t *nullfs_alloc_state(struct fsal_export *exp_hdl,
 			exp->export.sub_export, state_type, related_state);
 	op_ctx->fsal_export = &exp->export;
 
+	/* Replace stored export with ours so stacking works */
+	state->state_exp = exp_hdl;
+
 	return state;
 }
 
-static void nullfs_free_state(struct state_t *state)
+static void nullfs_free_state(struct fsal_export *exp_hdl,
+			      struct state_t *state)
 {
-	struct nullfs_fsal_export *exp = container_of(state->state_exp,
+	struct nullfs_fsal_export *exp = container_of(exp_hdl,
 					struct nullfs_fsal_export, export);
 
 	op_ctx->fsal_export = exp->export.sub_export;
-	exp->export.sub_export->exp_ops.free_state(state);
+	exp->export.sub_export->exp_ops.free_state(exp->export.sub_export,
+						   state);
 	op_ctx->fsal_export = &exp->export;
 }
 

@@ -1637,7 +1637,8 @@ static void open4_ex(OPEN4args *arg,
 		/* Cleanup state on error */
 		if (*new_state)
 			(*file_state)
-				->state_exp->exp_ops.free_state(*file_state);
+				->state_exp->exp_ops.free_state(
+					(*file_state)->state_exp, *file_state);
 		else if (*file_state != NULL)
 			dec_state_t_ref(*file_state);
 		*file_state = NULL;

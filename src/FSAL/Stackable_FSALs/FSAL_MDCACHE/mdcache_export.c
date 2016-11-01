@@ -732,21 +732,26 @@ static struct state_t *mdcache_alloc_state(struct fsal_export *exp_hdl,
 							related_state)
 	       );
 
+	/* Replace stored export with ours so stacking works */
+	state->state_exp = exp_hdl;
+
 	return state;
 }
 
 /**
  * @brief Free state_t structure
  *
+ * @param[in] exp_hdl	Export state is associated with
  * @param[in] state	State to free
  */
-static void mdcache_free_state(struct state_t *state)
+static void mdcache_free_state(struct fsal_export *exp_hdl,
+			       struct state_t *state)
 {
-	struct mdcache_fsal_export *exp = mdc_export(state->state_exp);
+	struct mdcache_fsal_export *exp = mdc_export(exp_hdl);
 	struct fsal_export *sub_export = exp->export.sub_export;
 
 	subcall_raw(exp,
-		sub_export->exp_ops.free_state(state)
+		sub_export->exp_ops.free_state(sub_export, state)
 	       );
 }
 

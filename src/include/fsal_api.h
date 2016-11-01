@@ -1149,12 +1149,13 @@ struct export_ops {
 /**
  * @brief Free a state_t structure
  *
+ * @param[in] exp_hdl               Export state_t is associated with
  * @param[in] state                 state_t structure to free.
  *
  * @returns NULL on failure otherwise a state structure.
  */
 
-	void (*free_state)(struct state_t *state);
+	void (*free_state)(struct fsal_export *exp_hdl, struct state_t *state);
 };
 
 /**

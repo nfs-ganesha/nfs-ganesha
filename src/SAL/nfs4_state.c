@@ -251,7 +251,8 @@ errout:
 		 */
 		(void) obj->obj_ops.close2(obj, pnew_state);
 
-		pnew_state->state_exp->exp_ops.free_state(pnew_state);
+		pnew_state->state_exp->exp_ops.free_state(pnew_state->state_exp,
+							  pnew_state);
 	}
 
 	if (got_export_ref)

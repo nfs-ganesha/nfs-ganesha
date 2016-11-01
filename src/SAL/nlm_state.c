@@ -347,7 +347,7 @@ void dec_nlm_state_ref(state_t *state)
 		(void) obj->obj_ops.close2(obj, state);
 	}
 
-	state->state_exp->exp_ops.free_state(state);
+	state->state_exp->exp_ops.free_state(state->state_exp, state);
 
 	/* Release 2 refs: our sentinal one, plus the one from
 	 * get_state_obj_ref() */
@@ -514,7 +514,7 @@ int get_nlm_state(enum state_type state_type,
 		/* Free the ref taken above and the state.
 		 * No need to close here, the state was never opened.
 		 */
-		state->state_exp->exp_ops.free_state(state);
+		state->state_exp->exp_ops.free_state(state->state_exp, state);
 		state_obj->obj_ops.put_ref(state_obj);
 
 		*pstate = NULL;

@@ -101,7 +101,7 @@ static struct nullfs_fsal_obj_handle *nullfs_alloc_handle(
  *
  * @return An error code for the function.
  */
-static fsal_status_t nullfs_alloc_and_check_handle(
+fsal_status_t nullfs_alloc_and_check_handle(
 		struct nullfs_fsal_export *export,
 		struct fsal_obj_handle *sub_handle,
 		struct fsal_filesystem *fs,

@@ -581,7 +581,7 @@ struct state_t *alloc_state(struct fsal_export *exp_hdl,
  * @returns NULL on failure otherwise a state structure.
  */
 
-void free_state(struct state_t *state)
+void free_state(struct fsal_export *exp_hdl, struct state_t *state)
 {
 	gsh_free(state);
 }

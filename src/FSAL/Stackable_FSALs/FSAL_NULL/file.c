@@ -245,19 +245,27 @@ fsal_status_t nullfs_open2(struct fsal_obj_handle *obj_hdl,
 	struct nullfs_fsal_obj_handle *handle =
 		container_of(obj_hdl, struct nullfs_fsal_obj_handle,
 			     obj_handle);
-
 	struct nullfs_fsal_export *export =
 		container_of(op_ctx->fsal_export, struct nullfs_fsal_export,
 			     export);
+	struct fsal_obj_handle *sub_handle = NULL;
 
 	/* calling subfsal method */
 	op_ctx->fsal_export = export->export.sub_export;
 	fsal_status_t status =
 		handle->sub_handle->obj_ops.open2(handle->sub_handle, state,
 						  openflags, createmode, name,
-						  attrs_in, verifier, new_obj,
-						  attrs_out, caller_perm_check);
+						  attrs_in, verifier,
+						  &sub_handle, attrs_out,
+						  caller_perm_check);
 	op_ctx->fsal_export = &export->export;
+
+	if (sub_handle) {
+		/* wrap the subfsal handle in a nullfs handle. */
+		return nullfs_alloc_and_check_handle(export, sub_handle,
+						     obj_hdl->fs, new_obj,
+						     status);
+	}
 
 	return status;
 }
