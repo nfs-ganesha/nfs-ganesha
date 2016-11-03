@@ -50,8 +50,6 @@ bool fsal_error_is_event(fsal_status_t status);
  */
 bool fsal_error_is_info(fsal_status_t status);
 
-void set_gpfs_verifier(verifier4 *verifier);
-
 /**
  * The full, 'private' DS (data server) handle
  */

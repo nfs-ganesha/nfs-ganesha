@@ -1485,8 +1485,6 @@ gpfs_commit(struct fsal_obj_handle *obj_hdl, off_t offset, size_t len)
 		return fsalstat(posix2fsal_error(retval), retval);
 	}
 
-	set_gpfs_verifier(&writeverf);
-
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
