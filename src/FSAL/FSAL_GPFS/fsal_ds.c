@@ -300,8 +300,6 @@ static nfsstat4 ds_write(struct fsal_ds_handle *const ds_pub,
 			req_ctx->fsal_export, &key,
 			FSAL_UP_INVALIDATE_CACHE);
 
-	set_gpfs_verifier(writeverf);
-
 	*written_length = amount_written;
 
 	return NFS4_OK;
@@ -390,8 +388,6 @@ static nfsstat4 ds_write_plus(struct fsal_ds_handle *const ds_pub,
 	req_ctx->fsal_export->up_ops->invalidate(
 			req_ctx->fsal_export, &key,
 			FSAL_UP_INVALIDATE_CACHE);
-
-	set_gpfs_verifier(writeverf);
 
 	*written_length = amount_written;
 

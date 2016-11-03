@@ -410,26 +410,6 @@ static fsal_status_t gpfs_extract_handle(struct fsal_export *exp_hdl,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-/** \var GPFS_write_verifier
- *  @brief NFS V4 write verifier
- */
-verifier4 GPFS_write_verifier;
-
-static void gpfs_verifier(struct fsal_export *exp_hdl,
-			  struct gsh_buffdesc *verf_desc)
-{
-	memcpy(verf_desc->addr, &GPFS_write_verifier, verf_desc->len);
-}
-
-/**
- *  @brief set the global GPFS_write_verfier according to \a verifier
- *  @param verfier verifier4 type
- */
-void set_gpfs_verifier(verifier4 *verifier)
-{
-	memcpy(&GPFS_write_verifier, verifier, sizeof(verifier4));
-}
-
 /**
  *  @brief overwrite vector entries with the methods that we support
  *  @param ops tpye of struct export_ops
@@ -455,7 +435,6 @@ void gpfs_export_ops_init(struct export_ops *ops)
 	ops->fs_xattr_access_rights = fs_xattr_access_rights;
 	ops->get_quota = get_quota;
 	ops->set_quota = set_quota;
-	ops->get_write_verifier = gpfs_verifier;
 	ops->alloc_state = gpfs_alloc_state;
 }
 
@@ -757,10 +736,8 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 	/* The status code to return */
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	struct gpfs_fsal_export *myself;
-	struct readlink_arg varg;
 	struct gpfs_filesystem *gpfs_fs;
 	gpfsfsal_xstat_t buffxstat;
-	int rc;
 
 	myself = gsh_calloc(1, sizeof(struct gpfs_fsal_export));
 
@@ -803,19 +780,12 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 	gpfs_fs = myself->root_fs->private_data;
 	gpfs_fs->root_fd = open_dir_by_path_walk(-1,
 			   op_ctx->ctx_export->fullpath, &buffxstat.buffstat);
-	varg.fd = gpfs_fs->root_fd;
-	varg.buffer = (char *)&GPFS_write_verifier;
-	rc = gpfs_ganesha(OPENHANDLE_GET_VERIFIER, &varg);
-	if (rc != 0)
-		LogCrit(COMPONENT_FSAL,
-		    "OPENHANDLE_GET_VERIFIER failed with rc = %d", rc);
 
 	/* if the nodeid has not been obtained, get it now */
 	if (!g_nodeid) {
 		struct grace_period_arg gpa;
 		int nodeid;
 
-		gpfs_fs = myself->root_fs->private_data;
 		gpa.mountdirfd = gpfs_fs->root_fd;
 
 		nodeid = gpfs_ganesha(OPENHANDLE_GET_NODEID, &gpa);
