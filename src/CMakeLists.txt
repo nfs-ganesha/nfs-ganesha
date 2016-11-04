@@ -1430,6 +1430,11 @@ configure_file(
   "${PROJECT_SOURCE_DIR}/scripts/systemd/nfs-ganesha-config.service"
 )
 
+configure_file(
+  "${PROJECT_SOURCE_DIR}/scripts/systemd/sysconfig/nfs-ganesha-in.cmake"
+  "${PROJECT_SOURCE_DIR}/scripts/systemd/sysconfig/nfs-ganesha"
+)
+
 # Make a docker image
 set(DOCKER_TMP_INSTALL_PATH "${PROJECT_BINARY_DIR}/docker/root")
 find_package(LSB)
