@@ -315,7 +315,7 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_hdl,
 		LogDebug(COMPONENT_PNFS, "GPFSFSAL_layoutget rc %d", rc);
 		if (errsv == EUNATCH)
 			LogFatal(COMPONENT_PNFS, "GPFS Returned EUNATCH");
-		return NFS4ERR_UNKNOWN_LAYOUTTYPE;
+		return NFS4ERR_LAYOUTUNAVAILABLE;
 	}
 	fh = (int *)&(gpfs_ds_handle.f_handle);
 	LogDebug(COMPONENT_PNFS,
