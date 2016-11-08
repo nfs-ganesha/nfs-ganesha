@@ -576,8 +576,8 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 				       true,
 				       err_type);
 	if (retval != 0) {
-		retval = EINVAL;
-		goto errout;
+		fsal_status = posix2fsal_status(EINVAL);
+		goto err_free;
 	}
 	myself->export.fsal = fsal_hdl;
 	vfs_sub_init_export_ops(myself, op_ctx->ctx_export->fullpath);
@@ -585,7 +585,7 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 	retval = fsal_attach_export(fsal_hdl, &myself->export.exports);
 	if (retval != 0) {
 		fsal_status = posix2fsal_status(retval);
-		goto errout;	/* seriously bad */
+		goto err_free;	/* seriously bad */
 	}
 
 	retval = resolve_posix_filesystem(op_ctx->ctx_export->fullpath,
@@ -600,13 +600,13 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 			op_ctx->ctx_export->fullpath,
 			strerror(retval), retval);
 		fsal_status = posix2fsal_status(retval);
-		goto errout;
+		goto err_cleanup;
 	}
 
 	retval = vfs_sub_init_export(myself);
 	if (retval != 0) {
 		fsal_status = posix2fsal_status(retval);
-		goto errout;
+		goto err_cleanup;
 	}
 
 	op_ctx->fsal_export = &myself->export;
@@ -615,10 +615,10 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
- errout:
-
+err_cleanup:
 	vfs_unexport_filesystems(myself);
-
+	fsal_detach_export(fsal_hdl, &myself->export.exports);
+err_free:
 	free_export_ops(&myself->export);
 	gsh_free(myself);	/* elvis has left the building */
 	return fsal_status;
