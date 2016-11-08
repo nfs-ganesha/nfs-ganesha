@@ -2647,7 +2647,6 @@ again:
  * @param[in]     open_func      Function to open a file descriptor
  * @param[in]     close_func     Function to close a file descriptor
  * @param[out]    has_lock       Indicates that obj_hdl->lock is held read
- * @param[out]    need_fsync     Indicates that the file will need fsync
  * @param[out]    closefd        Indicates that file descriptor must be closed
  * @param[in]     open_for_locks Indicates file is open for locks
  *
@@ -2664,7 +2663,6 @@ fsal_status_t fsal_find_fd(struct fsal_fd **out_fd,
 			   fsal_open_func open_func,
 			   fsal_close_func close_func,
 			   bool *has_lock,
-			   bool *need_fsync,
 			   bool *closefd,
 			   bool open_for_locks)
 {
@@ -2689,7 +2687,6 @@ fsal_status_t fsal_find_fd(struct fsal_fd **out_fd,
 		LogFullDebug(COMPONENT_FSAL, "Use state_fd %p", state_fd);
 		if (out_fd)
 			*out_fd = state_fd;
-		*need_fsync = (openflags & FSAL_O_SYNC) != 0;
 		*has_lock = false;
 		return status;
 	}
@@ -2724,7 +2721,6 @@ fsal_status_t fsal_find_fd(struct fsal_fd **out_fd,
 			LogFullDebug(COMPONENT_FSAL,
 				     "Opened state_fd %p", state_fd);
 			*out_fd = state_fd;
-			*need_fsync = false;
 		}
 
 		*has_lock = false;
@@ -2755,7 +2751,6 @@ fsal_status_t fsal_find_fd(struct fsal_fd **out_fd,
 			if (out_fd)
 				*out_fd = related_fd;
 
-			*need_fsync = (openflags & FSAL_O_SYNC) != 0;
 			*has_lock = false;
 			return status;
 		}
@@ -2767,11 +2762,6 @@ fsal_status_t fsal_find_fd(struct fsal_fd **out_fd,
 	LogFullDebug(COMPONENT_FSAL,
 		     "Use global fd openflags = %x",
 		     openflags);
-
-	/* We will take the object handle lock in vfs_reopen_obj.
-	 * And we won't have to fsync.
-	 */
-	*need_fsync = false;
 
 	/* Make sure global is open as necessary otherwise return a
 	 * temporary file descriptor. Check share reservation if not

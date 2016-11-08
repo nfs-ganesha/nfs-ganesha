@@ -1452,7 +1452,6 @@ fsal_status_t ceph_find_fd(Fh **fd,
 			   struct state_t *state,
 			   fsal_openflags_t openflags,
 			   bool *has_lock,
-			   bool *need_fsync,
 			   bool *closefd,
 			   bool open_for_locks)
 {
@@ -1464,8 +1463,7 @@ fsal_status_t ceph_find_fd(Fh **fd,
 			      (struct fsal_fd *)&myself->fd, &myself->share,
 			      bypass, state, openflags,
 			      ceph_open_func, ceph_close_func,
-			      has_lock, need_fsync,
-			      closefd, open_for_locks);
+			      has_lock, closefd, open_for_locks);
 
 	LogFullDebug(COMPONENT_FSAL,
 		     "fd = %p", out_fd->fd);
@@ -1509,7 +1507,6 @@ fsal_status_t ceph_read2(struct fsal_obj_handle *obj_hdl,
 	ssize_t nb_read;
 	fsal_status_t status;
 	bool has_lock = false;
-	bool need_fsync = false;
 	bool closefd = false;
 	struct export *export =
 	    container_of(op_ctx->fsal_export, struct export, export);
@@ -1521,7 +1518,7 @@ fsal_status_t ceph_read2(struct fsal_obj_handle *obj_hdl,
 
 	/* Get a usable file descriptor */
 	status = ceph_find_fd(&my_fd, obj_hdl, bypass, state, FSAL_O_READ,
-			      &has_lock, &need_fsync, &closefd, false);
+			      &has_lock, &closefd, false);
 
 	if (FSAL_IS_ERROR(status))
 		goto out;
@@ -1606,7 +1603,6 @@ fsal_status_t ceph_write2(struct fsal_obj_handle *obj_hdl,
 	int retval = 0;
 	Fh *my_fd = NULL;
 	bool has_lock = false;
-	bool need_fsync = false;
 	bool closefd = false;
 	fsal_openflags_t openflags = FSAL_O_WRITE;
 	struct export *export =
@@ -1617,12 +1613,9 @@ fsal_status_t ceph_write2(struct fsal_obj_handle *obj_hdl,
 		return fsalstat(ERR_FSAL_NOTSUPP, 0);
 	}
 
-	if (*fsal_stable)
-		openflags |= FSAL_O_SYNC;
-
 	/* Get a usable file descriptor */
 	status = ceph_find_fd(&my_fd, obj_hdl, bypass, state, openflags,
-			      &has_lock, &need_fsync, &closefd, false);
+			      &has_lock, &closefd, false);
 
 	if (FSAL_IS_ERROR(status)) {
 		LogDebug(COMPONENT_FSAL,
@@ -1642,8 +1635,7 @@ fsal_status_t ceph_write2(struct fsal_obj_handle *obj_hdl,
 
 	*wrote_amount = nb_written;
 
-	/* attempt stability if we aren't using an O_SYNC fd */
-	if (need_fsync) {
+	if (*fsal_stable) {
 		retval = ceph_ll_fsync(export->cmount, my_fd, false);
 
 		if (retval < 0)
@@ -1752,7 +1744,6 @@ fsal_status_t ceph_lock_op2(struct fsal_obj_handle *obj_hdl,
 	int retval = 0;
 	Fh *my_fd = NULL;
 	bool has_lock = false;
-	bool need_fsync = false;
 	bool closefd = false;
 	bool bypass = false;
 	fsal_openflags_t openflags = FSAL_O_RDWR;
@@ -1820,7 +1811,7 @@ fsal_status_t ceph_lock_op2(struct fsal_obj_handle *obj_hdl,
 
 	/* Get a usable file descriptor */
 	status = ceph_find_fd(&my_fd, obj_hdl, bypass, state, openflags,
-			      &has_lock, &need_fsync, &closefd, true);
+			      &has_lock, &closefd, true);
 
 	if (FSAL_IS_ERROR(status)) {
 		LogCrit(COMPONENT_FSAL, "Unable to find fd for lock operation");
@@ -1914,7 +1905,6 @@ fsal_status_t ceph_setattr2(struct fsal_obj_handle *obj_hdl,
 	fsal_status_t status = {0, 0};
 	int rc = 0;
 	bool has_lock = false;
-	bool need_fsync = false;
 	bool closefd = false;
 	struct export *export =
 	    container_of(op_ctx->fsal_export, struct export, export);
@@ -1954,7 +1944,7 @@ fsal_status_t ceph_setattr2(struct fsal_obj_handle *obj_hdl,
 		 */
 		status = fsal_find_fd(NULL, obj_hdl, NULL, &myself->share,
 				      bypass, state, FSAL_O_RDWR, NULL, NULL,
-				      &has_lock, &need_fsync, &closefd, false);
+				      &has_lock, &closefd, false);
 
 		if (FSAL_IS_ERROR(status)) {
 			LogFullDebug(COMPONENT_FSAL,

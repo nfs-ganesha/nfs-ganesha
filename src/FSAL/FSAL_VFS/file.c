@@ -869,7 +869,6 @@ fsal_status_t find_fd(int *fd,
 		      struct state_t *state,
 		      fsal_openflags_t openflags,
 		      bool *has_lock,
-		      bool *need_fsync,
 		      bool *closefd,
 		      bool open_for_locks)
 {
@@ -909,8 +908,7 @@ fsal_status_t find_fd(int *fd,
 				      &myself->u.file.share,
 				      bypass, state, openflags,
 				      vfs_open_func, vfs_close_func,
-				      has_lock, need_fsync,
-				      closefd, open_for_locks);
+				      has_lock, closefd, open_for_locks);
 
 		*fd = out_fd->fd;
 		return status;
@@ -987,7 +985,6 @@ fsal_status_t vfs_read2(struct fsal_obj_handle *obj_hdl,
 	fsal_status_t status;
 	int retval = 0;
 	bool has_lock = false;
-	bool need_fsync = false;
 	bool closefd = false;
 
 	if (info != NULL) {
@@ -1004,7 +1001,7 @@ fsal_status_t vfs_read2(struct fsal_obj_handle *obj_hdl,
 
 	/* Get a usable file descriptor */
 	status = find_fd(&my_fd, obj_hdl, bypass, state, FSAL_O_READ,
-			 &has_lock, &need_fsync, &closefd, false);
+			 &has_lock, &closefd, false);
 
 	if (FSAL_IS_ERROR(status))
 		goto out;
@@ -1088,7 +1085,6 @@ fsal_status_t vfs_write2(struct fsal_obj_handle *obj_hdl,
 	int retval = 0;
 	int my_fd = -1;
 	bool has_lock = false;
-	bool need_fsync = false;
 	bool closefd = false;
 	fsal_openflags_t openflags = FSAL_O_WRITE;
 
@@ -1104,12 +1100,9 @@ fsal_status_t vfs_write2(struct fsal_obj_handle *obj_hdl,
 		return fsalstat(posix2fsal_error(EXDEV), EXDEV);
 	}
 
-	if (*fsal_stable)
-		openflags |= FSAL_O_SYNC;
-
 	/* Get a usable file descriptor */
 	status = find_fd(&my_fd, obj_hdl, bypass, state, openflags,
-			 &has_lock, &need_fsync, &closefd, false);
+			 &has_lock, &closefd, false);
 
 	if (FSAL_IS_ERROR(status)) {
 		LogDebug(COMPONENT_FSAL,
@@ -1129,8 +1122,7 @@ fsal_status_t vfs_write2(struct fsal_obj_handle *obj_hdl,
 
 	*wrote_amount = nb_written;
 
-	/* attempt stability if we aren't using an O_SYNC fd */
-	if (need_fsync) {
+	if (*fsal_stable) {
 		retval = fsync(my_fd);
 		if (retval == -1) {
 			retval = errno;
@@ -1248,7 +1240,6 @@ fsal_status_t vfs_lock_op2(struct fsal_obj_handle *obj_hdl,
 	int retval = 0;
 	int my_fd = -1;
 	bool has_lock = false;
-	bool need_fsync = false;
 	bool closefd = false;
 	bool bypass = false;
 	fsal_openflags_t openflags = FSAL_O_RDWR;
@@ -1325,7 +1316,7 @@ fsal_status_t vfs_lock_op2(struct fsal_obj_handle *obj_hdl,
 
 	/* Get a usable file descriptor */
 	status = find_fd(&my_fd, obj_hdl, bypass, state, openflags,
-			 &has_lock, &need_fsync, &closefd, true);
+			 &has_lock, &closefd, true);
 
 	if (FSAL_IS_ERROR(status)) {
 		LogCrit(COMPONENT_FSAL, "Unable to find fd for lock operation");
@@ -1480,7 +1471,6 @@ fsal_status_t vfs_getattr2(struct fsal_obj_handle *obj_hdl,
 	struct vfs_fsal_obj_handle *myself;
 	fsal_status_t status = {0, 0};
 	bool has_lock = false;
-	bool need_fsync = false;
 	bool closefd = false;
 	int my_fd;
 
@@ -1500,7 +1490,7 @@ fsal_status_t vfs_getattr2(struct fsal_obj_handle *obj_hdl,
 	 * won't conflict with any share reservation).
 	 */
 	status = find_fd(&my_fd, obj_hdl, false, NULL, FSAL_O_ANY,
-			 &has_lock, &need_fsync, &closefd, false);
+			 &has_lock, &closefd, false);
 
 	if (FSAL_IS_ERROR(status)) {
 		if (obj_hdl->type == SYMBOLIC_LINK &&
@@ -1556,7 +1546,6 @@ fsal_status_t vfs_setattr2(struct fsal_obj_handle *obj_hdl,
 	int retval = 0;
 	fsal_openflags_t openflags = FSAL_O_ANY;
 	bool has_lock = false;
-	bool need_fsync = false;
 	bool closefd = false;
 	int my_fd;
 	const char *func;
@@ -1638,7 +1627,7 @@ fsal_status_t vfs_setattr2(struct fsal_obj_handle *obj_hdl,
 	 * size is being set.
 	 */
 	status = find_fd(&my_fd, obj_hdl, bypass, state, openflags,
-			 &has_lock, &need_fsync, &closefd, false);
+			 &has_lock, &closefd, false);
 
 	if (FSAL_IS_ERROR(status)) {
 		if (obj_hdl->type == SYMBOLIC_LINK &&

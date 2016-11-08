@@ -559,9 +559,6 @@ enum fsal_create_mode nfs3_createmode_to_fsal(createmode3 createmode)
  * The caller may pass FSAL_O_ANY to indicate any mode of open (RDONLY,
  * WRONLY, or RDWR is useable - often just to fetch attributes or something).
  *
- * Note that FSAL_O_SYNC is considered by this function, so the caller
- * expects the fd to be considered not usable if O_SYNC doesn't match.
- *
  * @param[in] fd_openflags The openflags describing the fd
  * @param[in] to_openflags The openflags describing the desired mode
  */

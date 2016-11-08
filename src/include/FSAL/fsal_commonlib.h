@@ -212,7 +212,6 @@ fsal_status_t fsal_find_fd(struct fsal_fd **out_fd,
 			   fsal_open_func open_func,
 			   fsal_close_func close_func,
 			   bool *has_lock,
-			   bool *need_fsync,
 			   bool *closefd,
 			   bool open_for_locks);
 

@@ -1150,7 +1150,6 @@ fsal_status_t find_fd(struct glusterfs_fd *my_fd,
 		      struct state_t *state,
 		      fsal_openflags_t openflags,
 		      bool *has_lock,
-		      bool *need_fsync,
 		      bool *closefd,
 		      bool open_for_locks)
 {
@@ -1169,8 +1168,7 @@ fsal_status_t find_fd(struct glusterfs_fd *my_fd,
 			      &myself->share, bypass, state,
 			      openflags, glusterfs_open_func,
 			      glusterfs_close_func,
-			      has_lock, need_fsync,
-			      closefd, open_for_locks);
+			      has_lock, closefd, open_for_locks);
 
 	my_fd->glfd = tmp2_fd->glfd;
 	my_fd->openflags = tmp2_fd->openflags;
@@ -1770,7 +1768,6 @@ static fsal_status_t glusterfs_read2(struct fsal_obj_handle *obj_hdl,
 	fsal_status_t status;
 	int retval = 0;
 	bool has_lock = false;
-	bool need_fsync = false;
 	bool closefd = false;
 
 	if (info != NULL) {
@@ -1790,7 +1787,7 @@ static fsal_status_t glusterfs_read2(struct fsal_obj_handle *obj_hdl,
 
 	/* Get a usable file descriptor */
 	status = find_fd(&my_fd, obj_hdl, bypass, state, FSAL_O_READ,
-			 &has_lock, &need_fsync, &closefd, false);
+			 &has_lock, &closefd, false);
 
 	if (FSAL_IS_ERROR(status))
 		goto out;
@@ -1854,7 +1851,6 @@ static fsal_status_t glusterfs_write2(struct fsal_obj_handle *obj_hdl,
 	int retval = 0;
 	struct glusterfs_fd my_fd = {0};
 	bool has_lock = false;
-	bool need_fsync = false;
 	bool closefd = false;
 	fsal_openflags_t openflags = FSAL_O_WRITE;
 	struct glusterfs_export *glfs_export =
@@ -1878,7 +1874,7 @@ static fsal_status_t glusterfs_write2(struct fsal_obj_handle *obj_hdl,
 
 	/* Get a usable file descriptor */
 	status = find_fd(&my_fd, obj_hdl, bypass, state, openflags,
-			 &has_lock, &need_fsync, &closefd, false);
+			 &has_lock, &closefd, false);
 
 	if (FSAL_IS_ERROR(status))
 		goto out;
@@ -2009,7 +2005,6 @@ static fsal_status_t glusterfs_lock_op2(struct fsal_obj_handle *obj_hdl,
 	int retval = 0;
 	struct glusterfs_fd my_fd = {0};
 	bool has_lock = false;
-	bool need_fsync = false;
 	bool closefd = false;
 	bool bypass = false;
 	fsal_openflags_t openflags = FSAL_O_RDWR;
@@ -2089,7 +2084,7 @@ static fsal_status_t glusterfs_lock_op2(struct fsal_obj_handle *obj_hdl,
 
 	/* Get a usable file descriptor */
 	status = find_fd(&my_fd, obj_hdl, bypass, state, openflags,
-			 &has_lock, &need_fsync, &closefd, true);
+			 &has_lock, &closefd, true);
 
 	if (FSAL_IS_ERROR(status)) {
 		LogCrit(COMPONENT_FSAL, "Unable to find fd for lock operation");
@@ -2178,7 +2173,6 @@ static fsal_status_t glusterfs_setattr2(struct fsal_obj_handle *obj_hdl,
 	int retval = 0;
 	fsal_openflags_t openflags = FSAL_O_ANY;
 	bool has_lock = false;
-	bool need_fsync = false;
 	bool closefd = false;
 	struct glusterfs_fd my_fd = {0};
 	struct glusterfs_export *glfs_export =
@@ -2223,7 +2217,7 @@ static fsal_status_t glusterfs_setattr2(struct fsal_obj_handle *obj_hdl,
 		 * handle via handle.
 		 */
 		status = find_fd(&my_fd, obj_hdl, bypass, state, openflags,
-				 &has_lock, &need_fsync, &closefd, false);
+				 &has_lock, &closefd, false);
 
 		if (FSAL_IS_ERROR(status))
 			goto out;

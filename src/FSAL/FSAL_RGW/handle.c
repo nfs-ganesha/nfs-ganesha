@@ -385,7 +385,6 @@ fsal_status_t rgw_fsal_setattr2(struct fsal_obj_handle *obj_hdl,
 	fsal_status_t status = {0, 0};
 	int rc = 0;
 	bool has_lock = false;
-	bool need_fsync = false;
 	bool closefd = false;
 	struct stat st;
 	/* Mask of attributes to set */
@@ -431,7 +430,7 @@ fsal_status_t rgw_fsal_setattr2(struct fsal_obj_handle *obj_hdl,
 		 */
 		status = fsal_find_fd(NULL, obj_hdl, NULL, &handle->share,
 				bypass, state, FSAL_O_RDWR, NULL, NULL,
-				&has_lock, &need_fsync, &closefd, false);
+				&has_lock, &closefd, false);
 
 		if (FSAL_IS_ERROR(status)) {
 			LogFullDebug(COMPONENT_FSAL,
@@ -1310,8 +1309,6 @@ fsal_status_t rgw_fsal_write2(struct fsal_obj_handle *obj_hdl,
 			bool *fsal_stable,
 			struct io_info *info)
 {
-	fsal_openflags_t openflags = FSAL_O_WRITE;
-
 	struct rgw_export *export =
 		container_of(op_ctx->fsal_export, struct rgw_export, export);
 
@@ -1324,9 +1321,6 @@ fsal_status_t rgw_fsal_write2(struct fsal_obj_handle *obj_hdl,
 		/* Currently we don't support WRITE_PLUS */
 		return fsalstat(ERR_FSAL_NOTSUPP, 0);
 	}
-
-	if (*fsal_stable)
-		openflags |= FSAL_O_SYNC;
 
 	/* XXX note no call to fsal_find_fd (or wrapper) */
 
@@ -1341,7 +1335,12 @@ fsal_status_t rgw_fsal_write2(struct fsal_obj_handle *obj_hdl,
 	if (rc < 0)
 		return rgw2fsal_error(rc);
 
-	*fsal_stable = false;
+	if (*fsal_stable) {
+		rc = rgw_fsync(export->rgw_fs, handle->rgw_fh,
+			       RGW_WRITE_FLAG_NONE);
+		if (rc < 0)
+			return rgw2fsal_error(rc);
+	}
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }

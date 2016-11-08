@@ -1165,16 +1165,11 @@ fsal_status_t fsal_rdwr(struct fsal_obj_handle *obj,
 		openflags = FSAL_O_READ;
 	} else {
 		/* Pretent that the caller requested sync (stable write)
-		 * if the export has COMMIT option. Note that
-		 * FSAL_O_SYNC is not always honored, so just setting
-		 * FSAL_O_SYNC has no guaranty that this write will be
-		 * a stable write.
+		 * if the export has COMMIT option.
 		 */
 		if (op_ctx->export_perms->options & EXPORT_OPTION_COMMIT)
 			*sync = true;
 		openflags = FSAL_O_WRITE;
-		if (*sync)
-			openflags |= FSAL_O_SYNC;
 	}
 
 	assert(obj != NULL);
@@ -1227,8 +1222,7 @@ fsal_status_t fsal_rdwr(struct fsal_obj_handle *obj,
 		   supposed to be a stable write we can sync to the hard
 		   drive. */
 
-		if (*sync && !(loflags & FSAL_O_SYNC) && !fsal_sync &&
-		    !FSAL_IS_ERROR(fsal_status)) {
+		if (*sync && !fsal_sync && !FSAL_IS_ERROR(fsal_status)) {
 			fsal_status = obj->obj_ops.commit(obj, offset, io_size);
 		} else {
 			*sync = fsal_sync;
