@@ -1207,7 +1207,7 @@ static int log_to_file(log_header_t headers, void *private,
 	buffer->b_start[len] = '\n';
 	buffer->b_start[len + 1] = '\0';
 
-	fd = open(path, O_WRONLY | O_SYNC | O_APPEND | O_CREAT, log_mask);
+	fd = open(path, O_WRONLY | O_APPEND | O_CREAT, log_mask);
 
 	if (fd != -1) {
 		rc = write(fd, buffer->b_start, len + 1);
