@@ -158,6 +158,7 @@ static fsal_status_t ceph_fsal_readdir(struct fsal_obj_handle *dir_pub,
 	while (!(*eof)) {
 		struct ceph_statx stx;
 		struct dirent de;
+		struct Inode *i = NULL;
 
 		/*
 		 * FIXME: Note that for now we just pass in NULL here for the
@@ -170,7 +171,7 @@ static fsal_status_t ceph_fsal_readdir(struct fsal_obj_handle *dir_pub,
 			fsal_status = ceph2fsal_error(rc);
 			goto closedir;
 		} else if (rc == 1) {
-			struct fsal_obj_handle *obj;
+			struct handle *obj;
 			struct attrlist attrs;
 			bool cb_rc;
 
@@ -180,15 +181,21 @@ static fsal_status_t ceph_fsal_readdir(struct fsal_obj_handle *dir_pub,
 				continue;
 			}
 
-			fsal_prepare_attrs(&attrs, attrmask);
-
-			fsal_status = lookup(dir_pub, de.d_name, &obj, &attrs);
-			if (FSAL_IS_ERROR(fsal_status)) {
-				rc = 0; /* Return fsal_status directly */
+			rc = fsal_ceph_ll_lookup(export->cmount, dir->i,
+						 de.d_name, &i, &stx,
+						 true, op_ctx->creds);
+			if (rc < 0) {
+				fsal_status = ceph2fsal_error(rc);
 				goto closedir;
 			}
 
-			cb_rc = cb(de.d_name, obj, &attrs, dir_state, de.d_off);
+			construct_handle(&stx, i, export, &obj);
+
+			fsal_prepare_attrs(&attrs, attrmask);
+			ceph2fsal_attributes(&stx, &attrs);
+
+			cb_rc = cb(de.d_name, &obj->handle, &attrs, dir_state,
+					de.d_off);
 
 			fsal_release_attrs(&attrs);
 
