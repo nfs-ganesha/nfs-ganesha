@@ -183,8 +183,6 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 {
 	/* The status code to return */
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
-	/* A fake argument list for Ceph */
-	const char *argv[] = { "FSAL_CEPH", op_ctx->ctx_export->fullpath };
 	/* The internal export object */
 	struct export *export = gsh_calloc(1, sizeof(struct export));
 	/* The 'private' root handle */
@@ -220,15 +218,6 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 		status.major = ERR_FSAL_SERVERFAULT;
 		LogCrit(COMPONENT_FSAL,
 			"Unable to read Ceph configuration for %s.",
-			op_ctx->ctx_export->fullpath);
-		goto error;
-	}
-
-	ceph_status = ceph_conf_parse_argv(export->cmount, 2, argv);
-	if (ceph_status != 0) {
-		status.major = ERR_FSAL_SERVERFAULT;
-		LogCrit(COMPONENT_FSAL,
-			"Unable to parse Ceph configuration for %s.",
 			op_ctx->ctx_export->fullpath);
 		goto error;
 	}
