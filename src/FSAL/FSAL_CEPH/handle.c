@@ -45,6 +45,7 @@
 #include "nfs_exports.h"
 #include "FSAL/fsal_commonlib.h"
 #include "sal_data.h"
+#include "statx_compat.h"
 
 /**
  * @brief Release an object
@@ -83,7 +84,7 @@ static fsal_status_t lookup(struct fsal_obj_handle *dir_pub,
 	/* Generic status return */
 	int rc = 0;
 	/* Stat output */
-	struct stat st;
+	struct ceph_statx stx;
 	/* The private 'full' export */
 	struct export *export =
 	    container_of(op_ctx->fsal_export, struct export, export);
@@ -93,16 +94,15 @@ static fsal_status_t lookup(struct fsal_obj_handle *dir_pub,
 
 	LogFullDebug(COMPONENT_FSAL, "Lookup %s", path);
 
-	rc = ceph_ll_lookup(export->cmount, dir->i, path, &st, &i, 0, 0);
-
+	rc = fsal_ceph_ll_lookup(export->cmount, dir->i, path, &i, &stx,
+					!!attrs_out, op_ctx->creds);
 	if (rc < 0)
 		return ceph2fsal_error(rc);
 
-	construct_handle(&st, i, export, &obj);
+	construct_handle(&stx, i, export, &obj);
 
-	if (attrs_out != NULL) {
-		posix2fsal_attributes(&st, attrs_out);
-	}
+	if (attrs_out != NULL)
+		ceph2fsal_attributes(&stx, attrs_out);
 
 	*obj_pub = &obj->handle;
 
@@ -145,7 +145,8 @@ static fsal_status_t ceph_fsal_readdir(struct fsal_obj_handle *dir_pub,
 	/* Return status */
 	fsal_status_t fsal_status = { ERR_FSAL_NO_ERROR, 0 };
 
-	rc = ceph_ll_opendir(export->cmount, dir->i, &dir_desc, 0, 0);
+	rc = fsal_ceph_ll_opendir(export->cmount, dir->i, &dir_desc,
+				  op_ctx->creds);
 	if (rc < 0)
 		return ceph2fsal_error(rc);
 
@@ -155,12 +156,16 @@ static fsal_status_t ceph_fsal_readdir(struct fsal_obj_handle *dir_pub,
 	ceph_seekdir(export->cmount, dir_desc, start);
 
 	while (!(*eof)) {
-		struct stat st;
+		struct ceph_statx stx;
 		struct dirent de;
-		int stmask = 0;
 
-		rc = ceph_readdirplus_r(export->cmount, dir_desc, &de, &st,
-					&stmask);
+		/*
+		 * FIXME: Note that for now we just pass in NULL here for the
+		 * inode and leave it to ->lookup. That will be reworked in a
+		 * later patch.
+		 */
+		rc = fsal_ceph_readdirplus(export->cmount, dir_desc, &de,
+					   &stx, 0, AT_NO_ATTR_SYNC);
 		if (rc < 0) {
 			fsal_status = ceph2fsal_error(rc);
 			goto closedir;
@@ -240,7 +245,7 @@ static fsal_status_t ceph_fsal_mkdir(struct fsal_obj_handle *dir_hdl,
 	/* The private 'full' directory handle */
 	struct handle *dir = container_of(dir_hdl, struct handle, handle);
 	/* Stat result */
-	struct stat st;
+	struct ceph_statx stx;
 	mode_t unix_mode;
 	/* Newly created object */
 	struct handle *obj = NULL;
@@ -255,14 +260,12 @@ static fsal_status_t ceph_fsal_mkdir(struct fsal_obj_handle *dir_hdl,
 	unix_mode = fsal2unix_mode(attrib->mode)
 		& ~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
 
-	rc = ceph_ll_mkdir(export->cmount, dir->i, name, unix_mode, &st, &i,
-			   op_ctx->creds->caller_uid,
-			   op_ctx->creds->caller_gid);
-
+	rc = fsal_ceph_ll_mkdir(export->cmount, dir->i, name, unix_mode, &i,
+			&stx, !!attrs_out, op_ctx->creds);
 	if (rc < 0)
 		return ceph2fsal_error(rc);
 
-	construct_handle(&st, i, export, &obj);
+	construct_handle(&stx, i, export, &obj);
 
 	*new_obj = &obj->handle;
 
@@ -291,7 +294,7 @@ static fsal_status_t ceph_fsal_mkdir(struct fsal_obj_handle *dir_hdl,
 			 * was set on create, just use the stat results we used
 			 * to create the fsal_obj_handle.
 			 */
-			posix2fsal_attributes(&st, attrs_out);
+			ceph2fsal_attributes(&stx, attrs_out);
 		}
 	}
 
@@ -340,7 +343,7 @@ static fsal_status_t ceph_fsal_mknode(struct fsal_obj_handle *dir_hdl,
 	/* Newly opened file descriptor */
 	struct Inode *i = NULL;
 	/* Status after create */
-	struct stat st;
+	struct ceph_statx stx;
 	mode_t unix_mode;
 	dev_t unix_dev = 0;
 	/* Newly created object */
@@ -371,13 +374,12 @@ static fsal_status_t ceph_fsal_mknode(struct fsal_obj_handle *dir_hdl,
 		return fsalstat(ERR_FSAL_INVAL, EINVAL);
 	}
 
-	rc = ceph_ll_mknod(export->cmount, dir->i, name, unix_mode, unix_dev,
-			   &st, &i, op_ctx->creds->caller_uid,
-			   op_ctx->creds->caller_gid);
+	rc = fsal_ceph_ll_mknod(export->cmount, dir->i, name, unix_mode,
+			unix_dev, &i, &stx, !!attrs_out, op_ctx->creds);
 	if (rc < 0)
 		return ceph2fsal_error(rc);
 
-	construct_handle(&st, i, export, &obj);
+	construct_handle(&stx, i, export, &obj);
 
 	*new_obj = &obj->handle;
 
@@ -406,7 +408,7 @@ static fsal_status_t ceph_fsal_mknode(struct fsal_obj_handle *dir_hdl,
 			 * was set on create, just use the stat results we used
 			 * to create the fsal_obj_handle.
 			 */
-			posix2fsal_attributes(&st, attrs_out);
+			ceph2fsal_attributes(&stx, attrs_out);
 		}
 	}
 
@@ -452,19 +454,18 @@ static fsal_status_t ceph_fsal_symlink(struct fsal_obj_handle *dir_hdl,
 	/* The private 'full' directory handle */
 	struct handle *dir = container_of(dir_hdl, struct handle, handle);
 	/* Stat result */
-	struct stat st;
+	struct ceph_statx stx;
 	struct Inode *i = NULL;
 	/* Newly created object */
 	struct handle *obj = NULL;
 	fsal_status_t status;
 
-	rc = ceph_ll_symlink(export->cmount, dir->i, name, link_path, &st, &i,
-			     op_ctx->creds->caller_uid,
-			     op_ctx->creds->caller_gid);
+	rc = fsal_ceph_ll_symlink(export->cmount, dir->i, name, link_path,
+			      &i, &stx, !!attrs_out, op_ctx->creds);
 	if (rc < 0)
 		return ceph2fsal_error(rc);
 
-	construct_handle(&st, i, export, &obj);
+	construct_handle(&stx, i, export, &obj);
 
 	*new_obj = &obj->handle;
 
@@ -493,7 +494,7 @@ static fsal_status_t ceph_fsal_symlink(struct fsal_obj_handle *dir_hdl,
 			 * was set on create, just use the stat results we used
 			 * to create the fsal_obj_handle.
 			 */
-			posix2fsal_attributes(&st, attrs_out);
+			ceph2fsal_attributes(&stx, attrs_out);
 		}
 	}
 
@@ -530,7 +531,8 @@ static fsal_status_t ceph_fsal_readlink(struct fsal_obj_handle *link_pub,
 	/* Pointer to the Ceph link content */
 	char content[PATH_MAX];
 
-	rc = ceph_ll_readlink(export->cmount, link->i, content, PATH_MAX, 0, 0);
+	rc = fsal_ceph_ll_readlink(export->cmount, link->i, content,
+				   PATH_MAX, op_ctx->creds);
 	if (rc < 0)
 		return ceph2fsal_error(rc);
 
@@ -565,10 +567,10 @@ static fsal_status_t getattrs(struct fsal_obj_handle *handle_pub,
 	/* The private 'full' directory handle */
 	struct handle *handle = container_of(handle_pub, struct handle, handle);
 	/* Stat buffer */
-	struct stat st;
+	struct ceph_statx stx;
 
-	rc = ceph_ll_getattr(export->cmount, handle->i, &st, 0, 0);
-
+	rc = fsal_ceph_ll_getattr(export->cmount, handle->i, &stx,
+				CEPH_STATX_ATTR_MASK, op_ctx->creds);
 	if (rc < 0) {
 		if (attrs->request_mask & ATTR_RDATTR_ERR) {
 			/* Caller asked for error to be visible. */
@@ -577,7 +579,7 @@ static fsal_status_t getattrs(struct fsal_obj_handle *handle_pub,
 		return ceph2fsal_error(rc);
 	}
 
-	posix2fsal_attributes(&st, attrs);
+	ceph2fsal_attributes(&stx, attrs);
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -609,12 +611,9 @@ static fsal_status_t ceph_fsal_link(struct fsal_obj_handle *handle_pub,
 	/* The private 'full' destination directory handle */
 	struct handle *destdir =
 	    container_of(destdir_pub, struct handle, handle);
-	struct stat st;
 
-	rc = ceph_ll_link(export->cmount, handle->i, destdir->i, name, &st,
-			  op_ctx->creds->caller_uid,
-			  op_ctx->creds->caller_gid);
-
+	rc = fsal_ceph_ll_link(export->cmount, handle->i, destdir->i, name,
+				op_ctx->creds);
 	if (rc < 0)
 		return ceph2fsal_error(rc);
 
@@ -651,10 +650,8 @@ static fsal_status_t ceph_fsal_rename(struct fsal_obj_handle *obj_hdl,
 	/* The private 'full' destination directory handle */
 	struct handle *newdir = container_of(newdir_pub, struct handle, handle);
 
-	rc = ceph_ll_rename(export->cmount, olddir->i, old_name, newdir->i,
-			    new_name, op_ctx->creds->caller_uid,
-			    op_ctx->creds->caller_gid);
-
+	rc = fsal_ceph_ll_rename(export->cmount, olddir->i, old_name,
+					newdir->i, new_name, op_ctx->creds);
 	if (rc < 0)
 		return ceph2fsal_error(rc);
 
@@ -691,13 +688,11 @@ static fsal_status_t ceph_fsal_unlink(struct fsal_obj_handle *dir_pub,
 		     name, object_file_type_to_str(obj_pub->type));
 
 	if (obj_pub->type != DIRECTORY) {
-		rc = ceph_ll_unlink(export->cmount, dir->i, name,
-				    op_ctx->creds->caller_uid,
-				    op_ctx->creds->caller_gid);
+		rc = fsal_ceph_ll_unlink(export->cmount, dir->i, name,
+					op_ctx->creds);
 	} else {
-		rc = ceph_ll_rmdir(export->cmount, dir->i, name,
-				   op_ctx->creds->caller_uid,
-				   op_ctx->creds->caller_gid);
+		rc = fsal_ceph_ll_rmdir(export->cmount, dir->i, name,
+					op_ctx->creds);
 	}
 
 	if (rc < 0) {
@@ -741,8 +736,8 @@ fsal_status_t ceph_open_my_fd(struct handle *myself,
 		     "openflags = %x, posix_flags = %x",
 		     openflags, posix_flags);
 
-	rc = ceph_ll_open(export->cmount, myself->i, posix_flags,
-			  &my_fd->fd, 0, 0);
+	rc = fsal_ceph_ll_open(export->cmount, myself->i, posix_flags,
+				&my_fd->fd, op_ctx->creds);
 
 	if (rc < 0) {
 		my_fd->fd = NULL;
@@ -912,6 +907,25 @@ fsal_status_t ceph_merge(struct fsal_obj_handle *orig_hdl,
 	return status;
 }
 
+static bool
+ceph_check_verifier_stat(struct ceph_statx *stx, fsal_verifier_t verifier)
+{
+	uint32_t verf_hi, verf_lo;
+
+	memcpy(&verf_hi, verifier, sizeof(uint32_t));
+	memcpy(&verf_lo, verifier + sizeof(uint32_t), sizeof(uint32_t));
+
+	LogFullDebug(COMPONENT_FSAL,
+		     "Passed verifier %"PRIx32" %"PRIx32
+		     " file verifier %"PRIx32" %"PRIx32,
+		     verf_hi, verf_lo,
+		     (uint32_t)stx->stx_atime.tv_sec,
+		     (uint32_t)stx->stx_mtime.tv_sec);
+
+	return stx->stx_atime.tv_sec == verf_hi &&
+	       stx->stx_mtime.tv_sec == verf_lo;
+}
+
 /**
  * @brief Open a file descriptor for read or write and possibly create
  *
@@ -974,7 +988,7 @@ fsal_status_t ceph_open2(struct fsal_obj_handle *obj_hdl,
 	fsal_status_t status = {0, 0};
 	struct ceph_fd *my_fd = NULL;
 	struct handle *myself, *hdl = NULL;
-	struct stat stat;
+	struct ceph_statx stx;
 	bool truncated;
 	bool created = false;
 	struct export *export =
@@ -1051,13 +1065,14 @@ fsal_status_t ceph_open2(struct fsal_obj_handle *obj_hdl,
 
 		if (createmode >= FSAL_EXCLUSIVE || truncated) {
 			/* Refresh the attributes */
-			retval = ceph_ll_getattr(export->cmount, myself->i,
-						 &stat, 0, 0);
+			retval = fsal_ceph_ll_getattr(export->cmount,
+					myself->i, &stx, !!attrs_out,
+					op_ctx->creds);
 
 			if (retval == 0) {
 				LogFullDebug(COMPONENT_FSAL,
 					     "New size = %"PRIx64,
-					     stat.st_size);
+					     stx.stx_size);
 			} else {
 				/* Because we have an inode ref, we never
 				 * get EBADF like other FSALs might see.
@@ -1071,7 +1086,7 @@ fsal_status_t ceph_open2(struct fsal_obj_handle *obj_hdl,
 			if (!FSAL_IS_ERROR(status) &&
 			    createmode >= FSAL_EXCLUSIVE &&
 			    createmode != FSAL_EXCLUSIVE_9P &&
-			    !check_verifier_stat(&stat, verifier)) {
+			    !ceph_check_verifier_stat(&stx, verifier)) {
 				/* Verifier didn't match, return EEXIST */
 				status =
 				    fsalstat(posix2fsal_error(EEXIST), EEXIST);
@@ -1187,10 +1202,9 @@ fsal_status_t ceph_open2(struct fsal_obj_handle *obj_hdl,
 		posix_flags |= O_EXCL;
 	}
 
-	retval = ceph_ll_create(export->cmount,  myself->i, name, unix_mode,
-				posix_flags, &stat, &i, &fd,
-				op_ctx->creds->caller_uid,
-				op_ctx->creds->caller_gid);
+	retval = fsal_ceph_ll_create(export->cmount,  myself->i, name,
+				unix_mode, posix_flags, &i, &fd, &stx,
+				!!attrs_out, op_ctx->creds);
 
 	if (retval < 0) {
 		LogFullDebug(COMPONENT_FSAL,
@@ -1210,11 +1224,9 @@ fsal_status_t ceph_open2(struct fsal_obj_handle *obj_hdl,
 		 * the condition of not wanting to set attributes.
 		 */
 		posix_flags &= ~O_EXCL;
-		retval =
-		    ceph_ll_create(export->cmount,  myself->i, name, unix_mode,
-				   posix_flags, &stat, &i, &fd,
-				   op_ctx->creds->caller_uid,
-				   op_ctx->creds->caller_gid);
+		retval = fsal_ceph_ll_create(export->cmount,  myself->i,
+				name, unix_mode, posix_flags, &i, &fd,
+				&stx, !!attrs_out, op_ctx->creds);
 		if (retval < 0) {
 			LogFullDebug(COMPONENT_FSAL,
 				     "Non-exclusive Create %s failed with %s",
@@ -1248,7 +1260,7 @@ fsal_status_t ceph_open2(struct fsal_obj_handle *obj_hdl,
 	 */
 	*caller_perm_check = false;
 
-	construct_handle(&stat, i, export, &hdl);
+	construct_handle(&stx, i, export, &hdl);
 
 	/* If we didn't have a state above, use the global fd. At this point,
 	 * since we just created the global fd, no one else can have a
@@ -1301,7 +1313,7 @@ fsal_status_t ceph_open2(struct fsal_obj_handle *obj_hdl,
 		 * on create (if we even created), just use the stat results
 		 * we used to create the fsal_obj_handle.
 		 */
-		posix2fsal_attributes(&stat, attrs_out);
+		ceph2fsal_attributes(&stx, attrs_out);
 	}
 
 	if (state != NULL) {
@@ -1329,7 +1341,8 @@ fsal_status_t ceph_open2(struct fsal_obj_handle *obj_hdl,
 
 	if (created) {
 		/* Remove the file we just created */
-		ceph_ll_unlink(export->cmount, myself->i, name, 0, 0);
+		fsal_ceph_ll_unlink(export->cmount, myself->i, name,
+					op_ctx->creds);
 	}
 
 	return status;
@@ -1909,7 +1922,7 @@ fsal_status_t ceph_setattr2(struct fsal_obj_handle *obj_hdl,
 	struct export *export =
 	    container_of(op_ctx->fsal_export, struct export, export);
 	/* Stat buffer */
-	struct stat st;
+	struct ceph_statx stx;
 	/* Mask of attributes to set */
 	uint32_t mask = 0;
 
@@ -1954,7 +1967,7 @@ fsal_status_t ceph_setattr2(struct fsal_obj_handle *obj_hdl,
 		}
 	}
 
-	memset(&st, 0, sizeof(struct stat));
+	memset(&stx, 0, sizeof(stx));
 
 	if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_SIZE)) {
 		rc = ceph_ll_truncate(export->cmount, myself->i,
@@ -1971,28 +1984,28 @@ fsal_status_t ceph_setattr2(struct fsal_obj_handle *obj_hdl,
 
 	if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_MODE)) {
 		mask |= CEPH_SETATTR_MODE;
-		st.st_mode = fsal2unix_mode(attrib_set->mode);
+		stx.stx_mode = fsal2unix_mode(attrib_set->mode);
 	}
 
 	if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_OWNER)) {
 		mask |= CEPH_SETATTR_UID;
-		st.st_uid = attrib_set->owner;
+		stx.stx_uid = attrib_set->owner;
 	}
 
 	if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_GROUP)) {
 		mask |= CEPH_SETATTR_GID;
-		st.st_gid = attrib_set->group;
+		stx.stx_gid = attrib_set->group;
 	}
 
 	if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_ATIME)) {
 		mask |= CEPH_SETATTR_ATIME;
-		st.st_atim = attrib_set->atime;
+		stx.stx_atime = attrib_set->atime;
 	}
 
 	if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_ATIME_SERVER)) {
-		mask |= CEPH_SETATTR_ATIME;
 		struct timespec timestamp;
 
+		mask |= CEPH_SETATTR_ATIME;
 		rc = clock_gettime(CLOCK_REALTIME, &timestamp);
 		if (rc != 0) {
 			LogDebug(COMPONENT_FSAL,
@@ -2001,17 +2014,18 @@ fsal_status_t ceph_setattr2(struct fsal_obj_handle *obj_hdl,
 			status = fsalstat(posix2fsal_error(errno), errno);
 			goto out;
 		}
-		st.st_atim = timestamp;
+		stx.stx_atime = timestamp;
 	}
 
 	if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_MTIME)) {
 		mask |= CEPH_SETATTR_MTIME;
-		st.st_mtim = attrib_set->mtime;
+		stx.stx_mtime = attrib_set->mtime;
 	}
+
 	if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_MTIME_SERVER)) {
-		mask |= CEPH_SETATTR_MTIME;
 		struct timespec timestamp;
 
+		mask |= CEPH_SETATTR_MTIME;
 		rc = clock_gettime(CLOCK_REALTIME, &timestamp);
 		if (rc != 0) {
 			LogDebug(COMPONENT_FSAL,
@@ -2020,19 +2034,26 @@ fsal_status_t ceph_setattr2(struct fsal_obj_handle *obj_hdl,
 			status = fsalstat(posix2fsal_error(errno), errno);
 			goto out;
 		}
-		st.st_mtim = timestamp;
+		stx.stx_mtime = timestamp;
 	}
 
 	if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_CTIME)) {
 		mask |= CEPH_SETATTR_CTIME;
-		st.st_ctim = attrib_set->ctime;
+		stx.stx_ctime = attrib_set->ctime;
 	}
 
-	rc = ceph_ll_setattr(export->cmount, myself->i, &st, mask, 0, 0);
+#ifdef CEPH_SETATTR_BTIME
+	if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_CREATION)) {
+		mask |= CEPH_SETATTR_BTIME;
+		stx.stx_btime = attrib_set->creation;
+	}
+#endif
 
+	rc = fsal_ceph_ll_setattr(export->cmount, myself->i, &stx, mask,
+					op_ctx->creds);
 	if (rc < 0) {
 		LogDebug(COMPONENT_FSAL,
-			 "setattr returned %s (%d)",
+			 "setattrx returned %s (%d)",
 			 strerror(-rc), -rc);
 		status = ceph2fsal_error(rc);
 	} else {

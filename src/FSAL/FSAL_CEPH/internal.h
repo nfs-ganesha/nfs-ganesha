@@ -45,6 +45,7 @@
 #include "fsal_convert.h"
 #include <stdbool.h>
 #include <uuid/uuid.h>
+#include "statx_compat.h"
 
 /**
  * Ceph Main (global) module object
@@ -140,7 +141,7 @@ static inline fsal_staticfsinfo_t *ceph_staticinfo(struct fsal_module *hdl)
 
 /* Prototypes */
 
-void construct_handle(const struct stat *st, struct Inode *i,
+void construct_handle(const struct ceph_statx *stx, struct Inode *i,
 		      struct export *export, struct handle **obj);
 void deconstruct_handle(struct handle *obj);
 
@@ -159,6 +160,10 @@ static inline fsal_status_t ceph2fsal_error(const int ceph_errorcode)
 {
 	return fsalstat(posix2fsal_error(-ceph_errorcode), -ceph_errorcode);
 }
+
+unsigned int attrmask2ceph_want(attrmask_t mask);
+void ceph2fsal_attributes(const struct ceph_statx *stx,
+			  struct attrlist *fsalattr);
 
 void export_ops_init(struct export_ops *ops);
 void handle_ops_init(struct fsal_obj_ops *ops);

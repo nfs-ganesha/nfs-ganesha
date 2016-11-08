@@ -47,6 +47,7 @@
 #include "nfs_exports.h"
 #include "export_mgr.h"
 #include "mdcache.h"
+#include "statx_compat.h"
 
 /**
  * Ceph global module object.
@@ -190,7 +191,7 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 	/* Root inode */
 	struct Inode *i = NULL;
 	/* Stat for root */
-	struct stat st;
+	struct ceph_statx stx;
 	/* Return code */
 	int rc;
 	/* Return code from Ceph calls */
@@ -250,13 +251,14 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 	if (FSAL_IS_ERROR(status))
 		goto error;
 
-	rc = ceph_ll_getattr(export->cmount, i, &st, 0, 0);
+	rc = fsal_ceph_ll_getattr(export->cmount, i, &stx,
+				CEPH_STATX_HANDLE_MASK, op_ctx->creds);
 	if (rc < 0) {
 		status = ceph2fsal_error(rc);
 		goto error;
 	}
 
-	construct_handle(&st, i, export, &handle);
+	construct_handle(&stx, i, export, &handle);
 
 	export->root = handle;
 	op_ctx->fsal_export = &export->export;

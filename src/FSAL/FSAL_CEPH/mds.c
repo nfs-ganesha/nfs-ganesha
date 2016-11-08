@@ -30,6 +30,7 @@
 #include "internal.h"
 #include "nfs_exports.h"
 #include "FSAL/fsal_commonlib.h"
+#include "statx_compat.h"
 
 #ifdef CEPH_PNFS
 
@@ -619,9 +620,9 @@ static nfsstat4 layoutcommit(struct fsal_obj_handle *obj_pub,
 	/* The private 'full' object handle */
 	struct handle *handle = container_of(obj_pub, struct handle, handle);
 	/* Old stat, so we don't truncate file or reverse time */
-	struct stat stold;
+	struct ceph_statx stxold;
 	/* new stat to set time and size */
-	struct stat stnew;
+	struct ceph_statx stxnew;
 	/* Mask to determine exactly what gets set */
 	int attrmask = 0;
 	/* Error returns from Ceph */
@@ -637,10 +638,9 @@ static nfsstat4 layoutcommit(struct fsal_obj_handle *obj_pub,
 	/* A more proper and robust implementation of this would use
 	   Ceph caps, but we need to hack at the client to expose
 	   those before it can work. */
-
-	memset(&stold, 0, sizeof(struct stat));
-	ceph_status = ceph_ll_getattr(export->cmount, handle->wire.vi,
-				      &stold, 0, 0);
+	ceph_status = fsal_ceph_ll_getattr(export->cmount, handle->wire.vi,
+			&stxold, CEPH_STATX_SIZE|CEPH_STATX_MTIME,
+			op_ctx->creds);
 	if (ceph_status < 0) {
 		LogCrit(COMPONENT_PNFS,
 			"Error %d in attempt to get attributes of file %"
@@ -648,32 +648,36 @@ static nfsstat4 layoutcommit(struct fsal_obj_handle *obj_pub,
 		return posix2nfs4_error(-ceph_status);
 	}
 
-	memset(&stnew, 0, sizeof(struct stat));
+	stxnew->stx_mask = 0;
 	if (arg->new_offset) {
-		if (stold.st_size < arg->last_write + 1) {
+		if (stxold.stx_size < arg->last_write + 1) {
 			attrmask |= CEPH_SETATTR_SIZE;
-			stnew.st_size = arg->last_write + 1;
+			stxnew.stx_size = arg->last_write + 1;
 			res->size_supplied = true;
 			res->new_size = arg->last_write + 1;
 		}
 	}
 
 	if (arg->time_changed &&
-	    (arg->new_time.seconds > stold.st_mtime ||
-	     (arg->new_time.seconds == stold.st_mtime &&
-	      arg->new_time.nseconds > stold.st_mtim.tv_nsec))) {
-		stnew.st_mtime = arg->new_time.seconds;
-		stnew.st_mtim.tv_nsec = arg->new_time.nseconds;
+	    (arg->new_time.seconds > stxold.stx_mtime ||
+	     (arg->new_time.seconds == stxold.stx_mtime &&
+	      arg->new_time.nseconds > stxold.stx_mtime_ns))) {
+		stxnew.stx_mtime = arg->new_time.seconds;
+		stxnew.stx_mtime_ns = arg->new_time.nseconds;
 	} else {
-		ceph_status = clock_gettime(CLOCK_REALTIME, &stnew.st_mtim);
+		struct timespec now;
+
+		ceph_status = clock_gettime(CLOCK_REALTIME, &now);
 		if (ceph_status != 0)
 			return posix2nfs4_error(errno);
+		stxnew.stx_mtime = now.tv_sec;
+		stxnew.stx_mtime_ns = now.tv_nsec;
 	}
 
 	attrmask |= CEPH_SETATTR_MTIME;
 
-	ceph_status = ceph_ll_setattr(export->cmount, handle->wire.vi,
-				      &stnew, attrmask, 0, 0);
+	ceph_status = fsal_ceph_ll_setattr(export->cmount, handle->wire.vi,
+					&stxnew, attrmask, op_ctx->creds);
 	if (ceph_status < 0) {
 		LogCrit(COMPONENT_PNFS,
 			"Error %d in attempt to get attributes of file %"

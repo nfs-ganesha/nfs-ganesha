@@ -309,6 +309,11 @@ fsal_ceph_readdirplus(struct ceph_mount_info *cmount,
 	return ceph_readdirplus_r(cmount, dirp, de, stx, want, flags, NULL);
 }
 #else /* USE_FSAL_CEPH_STATX */
+
+#ifndef AT_NO_ATTR_SYNC
+#define AT_NO_ATTR_SYNC		0x4000
+#endif /* AT_NO_ATTR_SYNC */
+
 struct ceph_statx {
 	uint32_t	stx_mask;
 	uint32_t	stx_blksize;

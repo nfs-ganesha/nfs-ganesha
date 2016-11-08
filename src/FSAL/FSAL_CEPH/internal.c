@@ -37,10 +37,12 @@
  */
 
 #include <sys/stat.h>
+#include <cephfs/libcephfs.h>
 #include "fsal_types.h"
 #include "fsal.h"
 #include "fsal_convert.h"
 #include "FSAL/fsal_commonlib.h"
+#include "statx_compat.h"
 
 #define CEPH_INTERNAL_C
 #include "internal.h"
@@ -71,14 +73,14 @@ const attrmask_t settable_attributes = (
  * it to the export.  After this call the attributes have been filled
  * in and the handdle is up-to-date and usable.
  *
- * @param[in]  st     Stat data for the file
+ * @param[in]  stx    ceph_statx data for the file
  * @param[in]  export Export on which the object lives
  * @param[out] obj    Object created
  *
  * @return 0 on success, negative error codes on failure.
  */
 
-void construct_handle(const struct stat *st, struct Inode *i,
+void construct_handle(const struct ceph_statx *stx, struct Inode *i,
 		      struct export *export, struct handle **obj)
 {
 	/* Pointer to the handle under construction */
@@ -88,18 +90,18 @@ void construct_handle(const struct stat *st, struct Inode *i,
 
 	constructing = gsh_calloc(1, sizeof(struct handle));
 
-	constructing->vi.ino.val = st->st_ino;
+	constructing->vi.ino.val = stx->stx_ino;
 #ifdef CEPH_NOSNAP
-	constructing->vi.snapid.val = st->st_dev;
+	constructing->vi.snapid.val = stx->stx_dev;
 #endif /* CEPH_NOSNAP */
 	constructing->i = i;
 	constructing->up_ops = export->export.up_ops;
 
 	fsal_obj_handle_init(&constructing->handle, &export->export,
-			     posix2fsal_type(st->st_mode));
+			     posix2fsal_type(stx->stx_mode));
 	handle_ops_init(&constructing->handle.obj_ops);
-	constructing->handle.fsid = posix2fsal_fsid(st->st_dev);
-	constructing->handle.fileid = st->st_ino;
+	constructing->handle.fsid = posix2fsal_fsid(stx->stx_dev);
+	constructing->handle.fileid = stx->stx_ino;
 
 	constructing->export = export;
 
@@ -117,4 +119,105 @@ void deconstruct_handle(struct handle *obj)
 	ceph_ll_put(obj->export->cmount, obj->i);
 	fsal_obj_handle_fini(&obj->handle);
 	gsh_free(obj);
+}
+
+unsigned int
+attrmask2ceph_want(attrmask_t mask)
+{
+	unsigned int want = 0;
+
+	if (mask & ATTR_MODE)
+		want |= CEPH_STATX_MODE;
+	if (mask & ATTR_OWNER)
+		want |= CEPH_STATX_UID;
+	if (mask & ATTR_GROUP)
+		want |= CEPH_STATX_GID;
+	if (mask & ATTR_SIZE)
+		want |= CEPH_STATX_SIZE;
+	if (mask & ATTR_NUMLINKS)
+		want |= CEPH_STATX_NLINK;
+	if (mask & ATTR_SPACEUSED)
+		want |= CEPH_STATX_BLOCKS;
+	if (mask & ATTR_ATIME)
+		want |= CEPH_STATX_ATIME;
+	if (mask & ATTR_CTIME)
+		want |= CEPH_STATX_CTIME;
+	if (mask & ATTR_MTIME)
+		want |= CEPH_STATX_MTIME;
+	if (mask & ATTR_CREATION)
+		want |= CEPH_STATX_BTIME;
+	if (mask & ATTR_CHANGE)
+		want |= CEPH_STATX_VERSION;
+	if (mask & ATTR_CHGTIME)
+		want |= (CEPH_STATX_CTIME|CEPH_STATX_MTIME);
+
+	return want;
+}
+
+void ceph2fsal_attributes(const struct ceph_statx *stx,
+			  struct attrlist *fsalattr)
+{
+	/* These are always considered to be available */
+	fsalattr->valid_mask |= ATTR_TYPE|ATTR_FSID|ATTR_RAWDEV|ATTR_FILEID;
+	fsalattr->type = posix2fsal_type(stx->stx_mode);
+	fsalattr->rawdev = posix2fsal_devt(stx->stx_rdev);
+	fsalattr->fsid = posix2fsal_fsid(stx->stx_dev);
+	fsalattr->fileid = stx->stx_ino;
+
+	if (stx->stx_mask & CEPH_STATX_MODE) {
+		fsalattr->valid_mask |= ATTR_MODE;
+		fsalattr->mode = unix2fsal_mode(stx->stx_mode);
+	}
+	if (stx->stx_mask & CEPH_STATX_UID) {
+		fsalattr->valid_mask |= ATTR_OWNER;
+		fsalattr->owner = stx->stx_uid;
+	}
+	if (stx->stx_mask & CEPH_STATX_GID) {
+		fsalattr->valid_mask |= ATTR_GROUP;
+		fsalattr->group = stx->stx_gid;
+	}
+	if (stx->stx_mask & CEPH_STATX_SIZE) {
+		fsalattr->valid_mask |= ATTR_SIZE;
+		fsalattr->filesize = stx->stx_size;
+	}
+	if (stx->stx_mask & CEPH_STATX_NLINK) {
+		fsalattr->valid_mask |= ATTR_NUMLINKS;
+		fsalattr->numlinks = stx->stx_nlink;
+	}
+
+	if (stx->stx_mask & CEPH_STATX_BLOCKS) {
+		fsalattr->valid_mask |= ATTR_SPACEUSED;
+		fsalattr->spaceused = stx->stx_blocks * S_BLKSIZE;
+	}
+
+	/* Use full timer resolution */
+	if (stx->stx_mask & CEPH_STATX_ATIME) {
+		fsalattr->valid_mask |= ATTR_ATIME;
+		fsalattr->atime = stx->stx_atime;
+	}
+	if (stx->stx_mask & CEPH_STATX_CTIME) {
+		fsalattr->valid_mask |= ATTR_CTIME;
+		fsalattr->ctime = stx->stx_ctime;
+	}
+	if (stx->stx_mask & CEPH_STATX_MTIME) {
+		fsalattr->valid_mask |= ATTR_MTIME;
+		fsalattr->mtime = stx->stx_mtime;
+	}
+	if (stx->stx_mask & CEPH_STATX_BTIME) {
+		fsalattr->valid_mask |= ATTR_CREATION;
+		fsalattr->creation = stx->stx_btime;
+	}
+
+	if (stx->stx_mask & CEPH_STATX_VERSION) {
+		fsalattr->valid_mask |= ATTR_CHANGE;
+		fsalattr->change = stx->stx_version;
+	}
+
+	if ((stx->stx_mask & (CEPH_STATX_CTIME|CEPH_STATX_MTIME)) ==
+	     (CEPH_STATX_CTIME|CEPH_STATX_MTIME)) {
+		fsalattr->valid_mask |= ATTR_CHGTIME;
+		fsalattr->chgtime =
+		    (gsh_time_cmp(&fsalattr->mtime, &fsalattr->ctime) > 0) ?
+		    fsalattr->mtime : fsalattr->ctime;
+	}
 }
