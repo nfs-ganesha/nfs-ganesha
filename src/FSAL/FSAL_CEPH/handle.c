@@ -142,6 +142,8 @@ static fsal_status_t ceph_fsal_readdir(struct fsal_obj_handle *dir_pub,
 	struct ceph_dir_result *dir_desc = NULL;
 	/* Cookie marking the start of the readdir */
 	uint64_t start = 0;
+	/* ceph_statx want mask */
+	unsigned int want = attrmask2ceph_want(attrmask);
 	/* Return status */
 	fsal_status_t fsal_status = { ERR_FSAL_NO_ERROR, 0 };
 
@@ -160,13 +162,9 @@ static fsal_status_t ceph_fsal_readdir(struct fsal_obj_handle *dir_pub,
 		struct dirent de;
 		struct Inode *i = NULL;
 
-		/*
-		 * FIXME: Note that for now we just pass in NULL here for the
-		 * inode and leave it to ->lookup. That will be reworked in a
-		 * later patch.
-		 */
-		rc = fsal_ceph_readdirplus(export->cmount, dir_desc, &de,
-					   &stx, 0, AT_NO_ATTR_SYNC);
+		rc = fsal_ceph_readdirplus(export->cmount, dir_desc, dir->i,
+					   &de, &stx, want, 0, &i,
+					   op_ctx->creds);
 		if (rc < 0) {
 			fsal_status = ceph2fsal_error(rc);
 			goto closedir;
@@ -179,14 +177,6 @@ static fsal_status_t ceph_fsal_readdir(struct fsal_obj_handle *dir_pub,
 			if ((strcmp(de.d_name, ".") == 0)
 			    || (strcmp(de.d_name, "..") == 0)) {
 				continue;
-			}
-
-			rc = fsal_ceph_ll_lookup(export->cmount, dir->i,
-						 de.d_name, &i, &stx,
-						 true, op_ctx->creds);
-			if (rc < 0) {
-				fsal_status = ceph2fsal_error(rc);
-				goto closedir;
 			}
 
 			construct_handle(&stx, i, export, &obj);

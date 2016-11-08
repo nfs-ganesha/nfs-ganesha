@@ -179,9 +179,10 @@ int fsal_ceph_ll_setattr(struct ceph_mount_info *cmount, Inode *i,
 }
 
 int fsal_ceph_readdirplus(struct ceph_mount_info *cmount,
-			  struct ceph_dir_result *dirp, struct dirent *de,
-			  struct ceph_statx *stx, unsigned int want,
-			  unsigned int flags)
+			  struct ceph_dir_result *dirp, Inode *dir,
+			  struct dirent *de, struct ceph_statx *stx,
+			  unsigned int want, unsigned int flags, Inode **out,
+			  struct user_cred *cred)
 {
 	int		stmask, rc;
 	struct stat	st;
@@ -190,12 +191,13 @@ int fsal_ceph_readdirplus(struct ceph_mount_info *cmount,
 	if (rc <= 0)
 		return rc;
 
-#if 0
-	if (!(flags & AT_NO_ATTR_SYNC)) {
-		/* call lookup to fetch current attrs */
+	if (flags & AT_NO_ATTR_SYNC) {
+		posix2ceph_statx(&st, stx);
+	} else {
+		rc = fsal_ceph_ll_lookup(cmount, dir, de->d_name, out, stx,
+					 true, cred);
+		if (rc >= 0)
+			rc = 1;
 	}
-#endif
-
-	posix2ceph_statx(&st, stx);
 	return rc;
 }
