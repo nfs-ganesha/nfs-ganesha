@@ -272,7 +272,6 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 
 static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 			      const char *name, object_file_type_t nodetype,
-			      fsal_dev_t *dev,
 			      struct attrlist *attr_in,
 			      struct fsal_obj_handle **handle,
 			      struct attrlist *attrs_out)
@@ -300,8 +299,8 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 		attrib.request_mask |= attrs_out->request_mask;
 
 	status =
-	    GPFSFSAL_mknode(dir_hdl, name, op_ctx, attr_in->mode, nodetype, dev,
-			    fh, &attrib);
+	    GPFSFSAL_mknode(dir_hdl, name, op_ctx, attr_in->mode, nodetype,
+			    &attr_in->rawdev, fh, &attrib);
 	if (FSAL_IS_ERROR(status))
 		return status;
 

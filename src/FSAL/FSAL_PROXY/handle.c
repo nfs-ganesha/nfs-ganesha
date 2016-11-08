@@ -1310,7 +1310,7 @@ static fsal_status_t pxy_mkdir(struct fsal_obj_handle *dir_hdl,
 
 static fsal_status_t pxy_mknod(struct fsal_obj_handle *dir_hdl,
 			       const char *name, object_file_type_t nodetype,
-			       fsal_dev_t *dev, struct attrlist *attrib,
+			       struct attrlist *attrib,
 			       struct fsal_obj_handle **handle,
 			       struct attrlist *attrs_out)
 {
@@ -1331,17 +1331,13 @@ static fsal_status_t pxy_mknod(struct fsal_obj_handle *dir_hdl,
 
 	switch (nodetype) {
 	case CHARACTER_FILE:
-		if (!dev)
-			return fsalstat(ERR_FSAL_FAULT, EINVAL);
-		specdata.specdata1 = dev->major;
-		specdata.specdata2 = dev->minor;
+		specdata.specdata1 = attrib->rawdev.major;
+		specdata.specdata2 = attrib->rawdev.minor;
 		nf4type = NF4CHR;
 		break;
 	case BLOCK_FILE:
-		if (!dev)
-			return fsalstat(ERR_FSAL_FAULT, EINVAL);
-		specdata.specdata1 = dev->major;
-		specdata.specdata2 = dev->minor;
+		specdata.specdata1 = attrib->rawdev.major;
+		specdata.specdata2 = attrib->rawdev.minor;
 		nf4type = NF4BLK;
 		break;
 	case SOCKET_FILE:

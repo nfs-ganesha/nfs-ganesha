@@ -314,7 +314,6 @@ static fsal_status_t mdcache_mkdir(struct fsal_obj_handle *dir_hdl,
  * @param[in] dir_hdl	Parent directory handle
  * @param[in] name	Name of new node
  * @param[in] nodetype	Type of new node
- * @param[in] dev	Device information
  * @param[in] attrib	Attributes for new node
  * @param[out] handle	New object handle on success
  *
@@ -323,7 +322,6 @@ static fsal_status_t mdcache_mkdir(struct fsal_obj_handle *dir_hdl,
  */
 static fsal_status_t mdcache_mknode(struct fsal_obj_handle *dir_hdl,
 			      const char *name, object_file_type_t nodetype,
-			      fsal_dev_t *dev,	/* IN */
 			      struct attrlist *attrib,
 			      struct fsal_obj_handle **handle,
 			      struct attrlist *attrs_out)
@@ -348,7 +346,7 @@ static fsal_status_t mdcache_mknode(struct fsal_obj_handle *dir_hdl,
 
 	subcall_raw(export,
 		status = parent->sub_handle->obj_ops.mknode(
-			parent->sub_handle, name, nodetype, dev, attrib,
+			parent->sub_handle, name, nodetype, attrib,
 			&sub_handle, &attrs)
 	       );
 

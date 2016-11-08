@@ -216,7 +216,6 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 			      const char *name,
 			      object_file_type_t nodetype,
-			      fsal_dev_t *dev,
 			      struct attrlist *attrs_in,
 			      struct fsal_obj_handle **new_obj,
 			      struct attrlist *attrs_out)
@@ -238,7 +237,7 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 	/* Creating the node with a subfsal handle. */
 	op_ctx->fsal_export = export->export.sub_export;
 	fsal_status_t status = nullfs_dir->sub_handle->obj_ops.mknode(
-		nullfs_dir->sub_handle, name, nodetype, dev, attrs_in,
+		nullfs_dir->sub_handle, name, nodetype, attrs_in,
 		&sub_handle, attrs_out);
 	op_ctx->fsal_export = &export->export;
 

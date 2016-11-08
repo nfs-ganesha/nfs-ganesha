@@ -753,7 +753,7 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 
 static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 			      const char *name, object_file_type_t nodetype,
-			      fsal_dev_t *dev, struct attrlist *attrib,
+			      struct attrlist *attrib,
 			      struct fsal_obj_handle **handle,
 			      struct attrlist *attrs_out)
 {

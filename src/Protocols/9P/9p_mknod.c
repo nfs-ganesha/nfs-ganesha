@@ -115,6 +115,7 @@ int _9p_mknod(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 	object_attributes.rawdev.major = *major;
 	object_attributes.rawdev.minor = *minor;
+	object_attributes.valid_mask |= ATTR_RAWDEV;
 	object_attributes.mode = *mode;
 
 	/* Create the directory */

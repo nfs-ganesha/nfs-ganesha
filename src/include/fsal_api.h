@@ -1441,6 +1441,9 @@ struct fsal_obj_ops {
  * MUST include the mode attribute and SHOULD NOT include the owner or
  * group attributes if they are the same as the op_ctx->cred.
  *
+ * If the node type has rawdev info, then @a attrs_in MUST have the rawdev field
+ * set.
+ *
  * The caller is expected to invoke fsal_release_attrs to release any
  * resources held by the set attributes. The FSAL layer MAY have added an
  * inherited ACL.
@@ -1459,8 +1462,6 @@ struct fsal_obj_ops {
  * @param[in]     dir_hdl   Directory in which to create the object
  * @param[in]     name      Name of object to create
  * @param[in]     nodetype  Type of special file to create
- * @param[in]     dev       Major and minor device numbers for block or
- *                          character special
  * @param[in]     attrs_in  Attributes to set on newly created object
  * @param[out]    new_obj   Newly created object
  * @param[in,out] attrs_out Optional attributes for newly created object
@@ -1472,7 +1473,6 @@ struct fsal_obj_ops {
 	 fsal_status_t (*mknode)(struct fsal_obj_handle *dir_hdl,
 				 const char *name,
 				 object_file_type_t nodetype,
-				 fsal_dev_t *dev,
 				 struct attrlist *attrs_in,
 				 struct fsal_obj_handle **new_obj,
 				 struct attrlist *attrs_out);

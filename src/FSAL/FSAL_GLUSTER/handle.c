@@ -428,7 +428,7 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 
 static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 			      const char *name, object_file_type_t nodetype,
-			      fsal_dev_t *dev, struct attrlist *attrib,
+			      struct attrlist *attrib,
 			      struct fsal_obj_handle **handle,
 			      struct attrlist *attrs_out)
 {
@@ -453,16 +453,12 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 
 	switch (nodetype) {
 	case BLOCK_FILE:
-		if (!dev)
-			return fsalstat(ERR_FSAL_INVAL, 0);
 		/* FIXME: This needs a feature flag test? */
-		ndev = makedev(dev->major, dev->minor);
+		ndev = makedev(attrib->rawdev.major, attrib->rawdev.minor);
 		create_mode = S_IFBLK;
 		break;
 	case CHARACTER_FILE:
-		if (!dev)
-			return fsalstat(ERR_FSAL_INVAL, 0);
-		ndev = makedev(dev->major, dev->minor);
+		ndev = makedev(attrib->rawdev.major, attrib->rawdev.minor);
 		create_mode = S_IFCHR;
 		break;
 	case FIFO_FILE:

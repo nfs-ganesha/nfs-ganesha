@@ -493,7 +493,6 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 			      const char *name,
 			      object_file_type_t nodetype,	/* IN */
-			      fsal_dev_t *dev,	/* IN */
 			      struct attrlist *attrib,
 			      struct fsal_obj_handle **handle,
 			      struct attrlist *attrs_out)
@@ -571,11 +570,11 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 	switch (nodetype) {
 	case BLOCK_FILE:
 		unix_mode |= S_IFBLK;
-		unix_dev = makedev(dev->major, dev->minor);
+		unix_dev = makedev(attrib->rawdev.major, attrib->rawdev.minor);
 		break;
 	case CHARACTER_FILE:
 		unix_mode |= S_IFCHR;
-		unix_dev = makedev(dev->major, dev->minor);
+		unix_dev = makedev(attrib->rawdev.major, attrib->rawdev.minor);
 		break;
 	case FIFO_FILE:
 		unix_mode |= S_IFIFO;

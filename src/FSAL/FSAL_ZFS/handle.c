@@ -405,7 +405,6 @@ static fsal_status_t tank_mkdir(struct fsal_obj_handle *dir_hdl,
 static fsal_status_t tank_makenode(struct fsal_obj_handle *dir_hdl,
 				   const char *name,
 				   object_file_type_t nodetype,	/* IN */
-				   fsal_dev_t *dev,	/* IN */
 				   struct attrlist *attrib,
 				   struct fsal_obj_handle **handle,
 				   struct attrlist *attrs_out)
