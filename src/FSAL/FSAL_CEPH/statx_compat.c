@@ -172,6 +172,8 @@ int fsal_ceph_ll_setattr(struct ceph_mount_info *cmount, Inode *i,
 		st.st_mtim = stx->stx_mtime;
 	if (mask & CEPH_SETATTR_CTIME)
 		st.st_ctim = stx->stx_ctime;
+	if (mask & CEPH_SETATTR_SIZE)
+		st.st_size = stx->stx_size;
 	return ceph_ll_setattr(cmount, i, &st, mask,
 				cred->caller_uid, cred->caller_gid);
 }

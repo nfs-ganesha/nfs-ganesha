@@ -571,6 +571,7 @@ static fsal_status_t getattrs(struct fsal_obj_handle *handle_pub,
 
 	rc = fsal_ceph_ll_getattr(export->cmount, handle->i, &stx,
 				CEPH_STATX_ATTR_MASK, op_ctx->creds);
+	LogDebug(COMPONENT_FSAL, "getattr returned %d", rc);
 	if (rc < 0) {
 		if (attrs->request_mask & ATTR_RDATTR_ERR) {
 			/* Caller asked for error to be visible. */
@@ -1970,16 +1971,10 @@ fsal_status_t ceph_setattr2(struct fsal_obj_handle *obj_hdl,
 	memset(&stx, 0, sizeof(stx));
 
 	if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_SIZE)) {
-		rc = ceph_ll_truncate(export->cmount, myself->i,
-				      attrib_set->filesize, 0, 0);
-
-		if (rc < 0) {
-			status = ceph2fsal_error(rc);
-			LogDebug(COMPONENT_FSAL,
-				 "truncate returned %s (%d)",
-				 strerror(-rc), -rc);
-			goto out;
-		}
+		mask |= CEPH_SETATTR_SIZE;
+		stx.stx_size = attrib_set->filesize;
+		LogDebug(COMPONENT_FSAL,
+			     "setting size to %lu", stx.stx_size);
 	}
 
 	if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_MODE)) {
