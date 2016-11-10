@@ -1318,7 +1318,7 @@ int resolve_posix_filesystem(const char *path,
 	/* second attempt to resolve file system with force option in case of
 	 * ganesha isn't during startup.
 	 */
-	if (!init_complete || retval != ENOENT)
+	if (!init_complete || retval != EAGAIN)
 		return retval;
 
 	LogDebug(COMPONENT_FSAL,
@@ -1336,6 +1336,8 @@ int resolve_posix_filesystem(const char *path,
 					 claim, unclaim, root_fs);
 
 	if (retval != 0) {
+		if (retval == EAGAIN)
+			retval = ENOENT;
 		LogCrit(COMPONENT_FSAL,
 			"claim_posix_filesystems(%s) returned %s (%d)",
 			path, strerror(retval), retval);
@@ -1576,7 +1578,7 @@ int claim_posix_filesystems(const char *path,
 
 	/* Check if we found a filesystem */
 	if (root == NULL) {
-		retval = ENOENT;
+		retval = EAGAIN;
 		goto out;
 	}
 
