@@ -240,10 +240,10 @@ void mdcache_export_uninit(void)
  * There is currently no config; FSALs that want caching should call @ref
  * mdcache_export_init
  *
- * @param[in] fsal_hdl		Sub-FSAL module handle
+ * @param[in] sub_fsal		Sub-FSAL module handle
  * @param[in] parse_node	Config node for export
  * @param[out] err_type		Parse errors
- * @param[in] up_ops		Upcall ops for export
+ * @param[in] super_up_ops	Upcall ops for export
  * @return FSAL status
  */
 fsal_status_t
@@ -286,7 +286,8 @@ mdcache_fsal_create_export(struct fsal_module *sub_fsal, void *parse_node,
 		LogMajor(COMPONENT_FSAL,
 			 "Failed to call create_export on underlying FSAL %s",
 			 sub_fsal->name);
-		fsal_put(sub_fsal);
+		gsh_free(myself->name);
+		gsh_free(myself);
 		return status;
 	}
 
