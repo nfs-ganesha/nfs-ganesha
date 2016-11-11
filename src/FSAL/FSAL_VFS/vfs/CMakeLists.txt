@@ -19,7 +19,7 @@ if(ENABLE_VFS_DEBUG_ACL)
   set(fsalvfs_LIB_SRCS ${fsalvfs_LIB_SRCS} attrs.c)
 endif(ENABLE_VFS_DEBUG_ACL)
 
-add_library(fsalvfs SHARED ${fsalvfs_LIB_SRCS})
+add_library(fsalvfs MODULE ${fsalvfs_LIB_SRCS})
 
 target_link_libraries(fsalvfs
   gos

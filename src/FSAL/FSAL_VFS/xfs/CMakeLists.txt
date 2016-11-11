@@ -15,7 +15,7 @@ SET(fsalxfs_LIB_SRCS
    subfsal_xfs.c
   )
 
-add_library(fsalxfs SHARED ${fsalxfs_LIB_SRCS})
+add_library(fsalxfs MODULE ${fsalxfs_LIB_SRCS})
 if(PATH_LIBHANDLE)
 add_library(handle SHARED IMPORTED)
 set_target_properties(handle PROPERTIES IMPORTED_LOCATION ${PATH_LIBHANDLE})

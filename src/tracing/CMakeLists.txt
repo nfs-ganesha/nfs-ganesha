@@ -7,7 +7,7 @@ set(ganesha_trace_LIB_SRCS
   nfs_rpc.c
 )
 
-add_library(ganesha_trace SHARED ${ganesha_trace_LIB_SRCS})
+add_library(ganesha_trace MODULE ${ganesha_trace_LIB_SRCS})
 
 target_link_libraries(ganesha_trace
   ${LTTNG_LIBRARIES}

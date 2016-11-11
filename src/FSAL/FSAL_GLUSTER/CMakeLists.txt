@@ -27,7 +27,7 @@ SET(fsalgluster_LIB_SRCS
    posix_acls.c
 )
 
-add_library(fsalgluster SHARED ${fsalgluster_LIB_SRCS})
+add_library(fsalgluster MODULE ${fsalgluster_LIB_SRCS})
 
 target_link_libraries(fsalgluster
   ${SYSTEM_LIBRARIES}

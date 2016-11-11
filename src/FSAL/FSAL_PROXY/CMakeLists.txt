@@ -20,7 +20,7 @@ if(PROXY_HANDLE_MAPPING)
     )
 endif(PROXY_HANDLE_MAPPING)
 
-add_library(fsalproxy SHARED ${fsalproxy_LIB_SRCS})
+add_library(fsalproxy MODULE ${fsalproxy_LIB_SRCS})
 
 target_link_libraries(fsalproxy 
 		      ${SYSTEM_LIBRARIES}

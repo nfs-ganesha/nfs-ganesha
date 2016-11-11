@@ -24,7 +24,7 @@ SET(fsalgpfs_LIB_SRCS
   gpfsext.c
 )
 
-add_library(fsalgpfs SHARED ${fsalgpfs_LIB_SRCS})
+add_library(fsalgpfs MODULE ${fsalgpfs_LIB_SRCS})
 
 target_link_libraries(fsalgpfs ${SYSTEM_LIBRARIES})
 

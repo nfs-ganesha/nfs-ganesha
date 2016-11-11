@@ -19,7 +19,7 @@ SET(fsalpanfs_LIB_SRCS
    handle.c
   )
 
-add_library(fsalpanfs SHARED ${fsalpanfs_LIB_SRCS})
+add_library(fsalpanfs MODULE ${fsalpanfs_LIB_SRCS})
 
 target_link_libraries(fsalpanfs
   gos
