@@ -285,10 +285,9 @@ int _9p_readdir(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		 * If none is found CACHE_INODE_NOT_FOUND is returned
 		 * In the 9P logic, this situation just mean
 		 * "end of directory reached" */
-		if (fsal_status.major != ERR_FSAL_NOENT)
-			return _9p_rerror(req9p, msgtag,
-					  _9p_tools_errno(fsal_status),
-					  plenout, preply);
+		return _9p_rerror(req9p, msgtag,
+				  _9p_tools_errno(fsal_status),
+				  plenout, preply);
 	}
 
 	cursor = tracker.cursor;

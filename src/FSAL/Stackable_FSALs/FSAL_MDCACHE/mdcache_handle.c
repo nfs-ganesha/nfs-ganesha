@@ -616,7 +616,6 @@ static fsal_status_t mdcache_readdir(struct fsal_obj_handle *dir_hdl,
 			LogFullDebug(COMPONENT_NFS_READDIR,
 				     "EOD because empty result");
 			*eod_met = true;
-			status = fsalstat(ERR_FSAL_NOENT, 0);
 			goto unlock_dir;
 		case MDCACHE_AVL_NO_ERROR:
 			assert(dirent);
