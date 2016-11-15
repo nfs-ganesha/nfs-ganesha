@@ -1152,8 +1152,6 @@ int main(int argc, char **argv)
 	char *rest;
 	int oflags = 0;
 	int no_tag;
-	/* A fake argument list for Ceph */
-	static const char *ceph_argv[] = {"ml_cephfs_client", ceph_path};
 
 	/* Init the lists of work for each fno */
 	for (i = 0; i <= MAXFPOS; i++)
@@ -1273,11 +1271,6 @@ int main(int argc, char **argv)
 
 	if (rc != 0)
 		fatal("Unable to read ceph config\n");
-
-	rc = ceph_conf_parse_argv(cmount, 2, ceph_argv);
-
-	if (rc != 0)
-		fatal("Unable to parse Ceph configuration");
 
 	rc = ceph_mount(cmount, NULL);
 
