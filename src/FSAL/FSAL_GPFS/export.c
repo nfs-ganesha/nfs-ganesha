@@ -45,7 +45,6 @@
 #include "nfs_exports.h"
 #include "export_mgr.h"
 #include "pnfs_utils.h"
-#include "mdcache.h"
 #include "include/gpfs.h"
 
 /* export object methods
@@ -841,7 +840,6 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 	return status;
 
 uninit:
-	mdcache_export_uninit();
 	fsal_detach_export(fsal_hdl, &myself->export.exports);
 errout:
 	free_export_ops(&myself->export);

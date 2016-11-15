@@ -51,7 +51,6 @@
 #include "nfs_exports.h"
 #include "export_mgr.h"
 #include "subfsal.h"
-#include "mdcache.h"
 
 /* helpers to/from other VFS objects
  */

@@ -42,7 +42,6 @@
 #include "nfs_exports.h"
 #include "export_mgr.h"
 #include "pnfs_utils.h"
-#include "mdcache.h"
 #include "sal_data.h"
 
 /* The default location of gfapi log

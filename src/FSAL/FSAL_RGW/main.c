@@ -38,7 +38,6 @@
 #include "abstract_mem.h"
 #include "nfs_exports.h"
 #include "export_mgr.h"
-#include "mdcache.h"
 
 static const char *module_name = "RGW";
 

@@ -32,7 +32,6 @@
 #include "pxy_fsal_methods.h"
 #include "nfs_exports.h"
 #include "export_mgr.h"
-#include "mdcache.h"
 
 static void pxy_release(struct fsal_export *exp_hdl)
 {

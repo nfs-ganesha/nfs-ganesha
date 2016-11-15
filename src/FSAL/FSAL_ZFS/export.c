@@ -42,7 +42,6 @@
 #include "zfs_methods.h"
 #include "nfs_exports.h"
 #include "export_mgr.h"
-#include "mdcache.h"
 
 size_t i_snapshots = 0;
 snapshot_t *p_snapshots = NULL;

@@ -46,7 +46,6 @@
 #include "abstract_mem.h"
 #include "nfs_exports.h"
 #include "export_mgr.h"
-#include "mdcache.h"
 #include "statx_compat.h"
 
 /**
