@@ -1,9 +1,9 @@
-if(CEPH_FS_SETLK)
+if(CEPH_FS_CEPH_STATX)
   add_definitions(
     -D_FILE_OFFSET_BITS=64
   )
   include_directories(${CEPHFS_INCLUDE_DIR})
-endif(CEPH_FS_SETLK)
+endif(CEPH_FS_CEPH_STATX)
 
 
 SET(multilock_SRCS
@@ -25,11 +25,11 @@ add_executable(ml_posix_client
 
 target_link_libraries(ml_posix_client m pthread ${SYSTEM_LIBRARIES})
 
-if(CEPH_FS_SETLK)
+if(CEPH_FS_CEPH_STATX)
   add_executable(ml_cephfs_client
     ml_cephfs_client.c
     ${multilock_SRCS}
   )
 
   target_link_libraries(ml_cephfs_client m pthread ${CEPHFS_LIBRARIES} ${SYSTEM_LIBRARIES})
-endif(CEPH_FS_SETLK)
+endif(CEPH_FS_CEPH_STATX)
