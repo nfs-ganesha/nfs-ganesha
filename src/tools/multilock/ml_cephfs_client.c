@@ -98,6 +98,9 @@ enum thread_type a_poller = THREAD_POLL;
 /* The CephFS mount */
 struct ceph_mount_info *cmount;
 
+/* Default mount UserPerm */
+UserPerm *cephperms;
+
 void openserver(void)
 {
 	struct addrinfo *addr;
@@ -257,7 +260,7 @@ void do_open(struct response *resp)
 	int rc;
 	Fh *filehandle = NULL;
 	Inode *inode = NULL, *parent = NULL;
-	struct stat attrs;
+	struct ceph_statx stx;
 
 	if (filehandles[resp->r_fpos] != NULL) {
 		resp->r_status = STATUS_ERRNO;
@@ -278,12 +281,14 @@ void do_open(struct response *resp)
 		path = dirname(fullpath);
 		fprintf_stderr("path = '%s' name = '%s'\n", path, name);
 
-		rc = ceph_ll_walk(cmount, path, &parent, &attrs);
+		rc = ceph_ll_walk(cmount, path, &parent, &stx, 0,
+				  AT_NO_ATTR_SYNC, cephperms);
 
 		if (rc >= 0) {
 			rc = ceph_ll_create(cmount, parent, name, resp->r_mode,
-					    resp->r_flags, &attrs, &inode,
-					    &filehandle, -1, -1);
+					    resp->r_flags, &inode, &filehandle,
+					    &stx, 0, AT_NO_ATTR_SYNC,
+					    cephperms);
 
 			/* Release the parent directory. */
 			ceph_ll_put(cmount, parent);
@@ -294,11 +299,12 @@ void do_open(struct response *resp)
 			array_sprintf(errdetail, "ceph_ll_walk %s", path);
 		}
 	} else {
-		rc = ceph_ll_walk(cmount, resp->r_data, &inode, &attrs);
+		rc = ceph_ll_walk(cmount, resp->r_data, &inode, &stx, 0,
+				  AT_NO_ATTR_SYNC, cephperms);
 
 		if (rc >= 0) {
 			rc = ceph_ll_open(cmount, inode, resp->r_flags,
-					  &filehandle, -1, -1);
+					  &filehandle, cephperms);
 
 			if (rc < 0)
 				array_strcpy(errdetail, "ceph_ll_open");
@@ -1279,6 +1285,8 @@ int main(int argc, char **argv)
 			       strerror(-rc), rc);
 		fatal("Unable to mount Ceph cluster");
 	}
+
+	cephperms = ceph_mount_perms(cmount);
 
 	while (1) {
 		len = readln(input, line, sizeof(line));
