@@ -331,6 +331,7 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 
 	op_ctx->fsal_export = &export->export;
 
+	export->root = handle;
 	export->export.up_ops = up_ops;
 
 	return status;

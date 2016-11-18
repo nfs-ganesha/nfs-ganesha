@@ -75,6 +75,7 @@ extern struct rgw_fsal_module RGWFSM;
 struct rgw_export {
 	struct fsal_export export;	/*< The public export object */
 	struct rgw_fs *rgw_fs;		/*< "Opaque" fs handle */
+	struct rgw_handle *root;    /*< root handle */
 	char *rgw_name;
 	char *rgw_user_id;
 	char *rgw_access_key_id;
@@ -141,6 +142,7 @@ int construct_handle(struct rgw_export *export,
 		     struct rgw_file_handle *rgw_file_handle,
 		     struct stat *st,
 		     struct rgw_handle **obj);
+void deconstruct_handle(struct rgw_handle *obj);
 
 fsal_status_t rgw2fsal_error(const int errorcode);
 void export_ops_init(struct export_ops *ops);

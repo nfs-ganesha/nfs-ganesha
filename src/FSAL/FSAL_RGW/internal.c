@@ -217,3 +217,9 @@ int construct_handle(struct rgw_export *export,
 
 	return 0;
 }
+
+void deconstruct_handle(struct rgw_handle *obj)
+{
+	fsal_obj_handle_fini(&obj->handle);
+	gsh_free(obj);
+}
