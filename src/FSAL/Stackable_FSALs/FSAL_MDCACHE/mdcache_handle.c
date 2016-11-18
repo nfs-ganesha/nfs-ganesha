@@ -36,6 +36,7 @@
 #include "fsal_convert.h"
 #include "FSAL/fsal_commonlib.h"
 #include "nfs4_acls.h"
+#include "nfs_exports.h"
 #include <os/subr.h>
 
 #include "mdcache_lru.h"
@@ -1109,6 +1110,7 @@ static fsal_status_t mdcache_setattr2(struct fsal_obj_handle *obj_hdl,
 		container_of(obj_hdl, mdcache_entry_t, obj_handle);
 	fsal_status_t status;
 	uint64_t change;
+	bool need_acl = false;
 
 	PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
 
@@ -1122,8 +1124,16 @@ static fsal_status_t mdcache_setattr2(struct fsal_obj_handle *obj_hdl,
 	if (FSAL_IS_ERROR(status))
 		goto unlock;
 
-	status = mdcache_refresh_attrs(
-				entry, (attrs->valid_mask & ATTR_ACL) != 0);
+	/* In case of ACL enabled, any of the below attribute changes
+	 * result in change of ACL set as well.
+	 */
+	if (!op_ctx_export_has_option(EXPORT_OPTION_DISABLE_ACL) &&
+	    (FSAL_TEST_MASK(attrs->valid_mask,
+			   ATTR_MODE | ATTR_OWNER | ATTR_GROUP | ATTR_ACL))) {
+		need_acl = true;
+	}
+
+	status = mdcache_refresh_attrs(entry, need_acl);
 
 	if (!FSAL_IS_ERROR(status) && change == entry->attrs.change) {
 		LogDebug(COMPONENT_CACHE_INODE,
