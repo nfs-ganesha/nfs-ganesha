@@ -55,11 +55,8 @@ static void release(struct fsal_obj_handle *obj_hdl)
 		/* release RGW ref */
 		(void) rgw_fh_rele(export->rgw_fs, obj->rgw_fh,
 				0 /* flags */);
-
-		/* fsal API */
-		fsal_obj_handle_fini(&obj->handle);
-		gsh_free(obj);
 	}
+	deconstruct_handle(obj);
 }
 
 /**

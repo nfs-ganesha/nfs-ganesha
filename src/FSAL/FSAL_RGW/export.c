@@ -57,7 +57,9 @@ static void release(struct fsal_export *export_pub)
 
 	int rc = rgw_umount(export->rgw_fs, RGW_UMOUNT_FLAG_NONE);
 	assert(rc == 0);
+	deconstruct_handle(export->root);
 	export->rgw_fs = NULL;
+	export->root = NULL;
 
 	fsal_detach_export(export->export.fsal, &export->export.exports);
 	free_export_ops(&export->export);
