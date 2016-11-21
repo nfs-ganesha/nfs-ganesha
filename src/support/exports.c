@@ -1277,14 +1277,14 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 				err_type->resource = true;
 			}
 
-			return errcnt;
+			goto out;
 		}
 
 		if (!mount_gsh_export(export)) {
 			export_revert(export);
 			err_type->internal = true;
 			errcnt++;
-			return errcnt;
+			goto out;
 		}
 	}
 
@@ -1305,6 +1305,7 @@ success:
 		"Export %d has %zd defined clients", export->export_id,
 		glist_length(&export->clients));
 
+out:
 	if (commit_type != update_export) {
 		/* For initial or add export, insert_gsh_export gave out
 		 * two references, a sentinel reference for the export's
@@ -1318,7 +1319,7 @@ success:
 		put_gsh_export(export);
 	}
 
-	return 0;
+	return errcnt;
 }
 
 static int export_commit(void *node, void *link_mem, void *self_struct,
