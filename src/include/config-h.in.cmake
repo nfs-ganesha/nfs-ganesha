@@ -55,6 +55,10 @@
 #cmakedefine USE_FSAL_CEPH_MKNOD 1
 #cmakedefine USE_FSAL_CEPH_SETLK 1
 
+/* Handle some of the 64-bit offset changes when settable */
+#cmakedefine _FILE_OFFSET_BITS @_FILE_OFFSET_BITS@
+#cmakedefine _LARGEFILE_SOURCE 1
+
 #define NFS_GANESHA 1
 
 #define GANESHA_CONFIG_PATH "@SYSCONFDIR@/ganesha/ganesha.conf"
