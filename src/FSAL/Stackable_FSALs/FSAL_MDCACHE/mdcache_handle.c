@@ -552,15 +552,15 @@ static fsal_status_t mdcache_link(struct fsal_obj_handle *obj_hdl,
  * @note The object passed into the callback is ref'd and must be unref'd by the
  * callback.
  *
- * @param dir_hdl [IN] the directory to read
- * @param whence [IN] where to start (next)
- * @param dir_state [IN] pass thru of state to callback
- * @param cb [IN] callback function
- * @param eod_met [OUT] eod marker true == end of dir
+ * @param[in] dir_hdl the directory to read
+ * @param[in] whence where to start (next)
+ * @param[in] dir_state pass thru of state to callback
+ * @param[in] cb callback function
+ * @param[in] attrmask Which attributes to fill
+ * @param[out] eod_met eod marker true == end of dir
  *
  * @return FSAL status
  */
-
 static fsal_status_t mdcache_readdir(struct fsal_obj_handle *dir_hdl,
 				  fsal_cookie_t *whence, void *dir_state,
 				  fsal_readdir_cb cb, attrmask_t attrmask,
@@ -573,6 +573,16 @@ static fsal_status_t mdcache_readdir(struct fsal_obj_handle *dir_hdl,
 	fsal_status_t status = {0, 0};
 	bool cb_result = true;
 
+	if (!(directory->obj_handle.type == DIRECTORY))
+		return fsalstat(ERR_FSAL_NOTDIR, 0);
+
+	if (directory->mde_flags & MDCACHE_BYPASS_DIRCACHE) {
+		/* Not caching dirents; pass through directly to FSAL */
+		return mdcache_readdir_uncached(directory, whence, dir_state,
+						cb, attrmask, eod_met);
+	}
+
+	/* Dirent's are being cached; check to see if it needs updating */
 	if (!mdc_dircache_trusted(directory)) {
 		PTHREAD_RWLOCK_wrlock(&directory->content_lock);
 		status = mdcache_dirent_populate(directory);
@@ -582,6 +592,17 @@ static fsal_status_t mdcache_readdir(struct fsal_obj_handle *dir_hdl,
 				LogEvent(COMPONENT_NFS_READDIR,
 					 "FSAL returned STALE from readdir.");
 				mdcache_kill_entry(directory);
+			} else if (status.major == ERR_FSAL_OVERFLOW) {
+				/* Directory is too big.  Invalidate, set
+				 * MDCACHE_BYPASS_DIRCACHE and pass through */
+				atomic_set_uint32_t_bits(&directory->mde_flags,
+						 MDCACHE_BYPASS_DIRCACHE);
+				mdcache_dirent_invalidate_all(directory);
+				return mdcache_readdir_uncached(directory,
+								whence,
+								dir_state,
+								cb, attrmask,
+								eod_met);
 			}
 			LogFullDebug(COMPONENT_NFS_READDIR,
 				     "mdcache_dirent_populate status=%s",

@@ -1,7 +1,7 @@
 /*
  * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
- * Copyright 2015 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2015-2016 Red Hat, Inc. and/or its affiliates.
  * Author: Daniel Gryniewicz <dang@redhat.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -56,6 +56,8 @@ struct mdcache_parameter {
 		/** Max size of per-directory cache of removed
 		    entries */
 		uint32_t avl_max_deleted;
+		/** Max size of per-directory dirent cache */
+		uint32_t avl_max;
 	} dir;
 	/** High water mark for cache entries.  Defaults to 100000,
 	    settable by Entries_HWMark. */
