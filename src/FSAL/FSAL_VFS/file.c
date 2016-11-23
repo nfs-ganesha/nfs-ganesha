@@ -327,7 +327,7 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 	int posix_flags = 0;
 	int fd, dir_fd;
 	int retval = 0;
-	mode_t unix_mode;
+	mode_t unix_mode = 0000;
 	fsal_status_t status = {0, 0};
 	struct vfs_fd *my_fd = NULL;
 	struct vfs_fsal_obj_handle *myself, *hdl = NULL;
