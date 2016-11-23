@@ -126,6 +126,12 @@ NFS_CORE_PARAM {}
 
 	Enable_TCP_keepalive(bool, default false)
 
+	TCP_KEEPCNT(UINT32, range 0 to 255, default 0 -> use system defaults)
+
+	TCP_KEEPIDLE(UINT32, range 0 to 65535, default 0 -> use system defautls)
+
+	TCP_KEEPINTVL(INT32, range 0 to 65535, default 0 -> use system defaults)
+
 	Enable_Fast_Stats(bool, default false)
 
 	Short_File_Handle(bool, default false)

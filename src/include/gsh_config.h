@@ -370,6 +370,12 @@ typedef struct nfs_core_param {
 	bool enable_FASTSTATS;
 	/** Whether tcp sockets should use SO_KEEPALIVE */
 	bool enable_tcp_keepalive;
+	/** Maximum number of TCP probes before dropping the connection */
+	uint32_t tcp_keepcnt;
+	/** Idle time before TCP starts to send keepalive probes */
+	uint32_t tcp_keepidle;
+	/** Time between each keepalive probe */
+	uint32_t tcp_keepintvl;
 	/** Whether to use short NFS file handle to accommodate VMware
 	    NFS client. Enable this if you have a VMware NFSv3 client.
 	    VMware NFSv3 client has a max limit of 56 byte file handles!

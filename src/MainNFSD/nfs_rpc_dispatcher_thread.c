@@ -41,6 +41,8 @@
 #include <sys/socket.h>
 #include <linux/vm_sockets.h>
 #endif
+#include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <assert.h>
 #include "hashtable.h"
 #include "log.h"
@@ -604,6 +606,7 @@ void Bind_sockets(void)
 static int alloc_socket_setopts(int p)
 {
 	int one = 1;
+	const struct nfs_core_param *nfs_cp = &nfs_param.core_param;
 
 	/* Use SO_REUSEADDR in order to avoid wait
 	 * the 2MSL timeout */
@@ -627,7 +630,7 @@ static int alloc_socket_setopts(int p)
 		return -1;
 	}
 
-	if (nfs_param.core_param.enable_tcp_keepalive) {
+	if (nfs_cp->enable_tcp_keepalive) {
 		if (setsockopt(tcp_socket[p],
 			       SOL_SOCKET, SO_KEEPALIVE,
 			       &one, sizeof(one))) {
@@ -636,6 +639,42 @@ static int alloc_socket_setopts(int p)
 				tags[p], errno, strerror(errno));
 
 			return -1;
+		}
+
+		if (nfs_cp->tcp_keepcnt) {
+			if (setsockopt(tcp_socket[p], IPPROTO_TCP, TCP_KEEPCNT,
+				       &nfs_cp->tcp_keepcnt,
+				       sizeof(nfs_cp->tcp_keepcnt))) {
+				LogWarn(COMPONENT_DISPATCH,
+					"Bad tcp socket option TCP_KEEPCNT for %s, error %d(%s)",
+					tags[p], errno, strerror(errno));
+
+				return -1;
+			}
+		}
+
+		if (nfs_cp->tcp_keepidle) {
+			if (setsockopt(tcp_socket[p], IPPROTO_TCP, TCP_KEEPIDLE,
+				       &nfs_cp->tcp_keepidle,
+				       sizeof(nfs_cp->tcp_keepidle))) {
+				LogWarn(COMPONENT_DISPATCH,
+					"Bad tcp socket option TCP_KEEPIDLE for %s, error %d(%s)",
+					tags[p], errno, strerror(errno));
+
+				return -1;
+			}
+		}
+
+		if (nfs_cp->tcp_keepintvl) {
+			if (setsockopt(tcp_socket[p], IPPROTO_TCP,
+				       TCP_KEEPINTVL, &nfs_cp->tcp_keepintvl,
+				       sizeof(nfs_cp->tcp_keepintvl))) {
+				LogWarn(COMPONENT_DISPATCH,
+					"Bad tcp socket option TCP_KEEPINTVL for %s, error %d(%s)",
+					tags[p], errno, strerror(errno));
+
+				return -1;
+			}
 		}
 	}
 
