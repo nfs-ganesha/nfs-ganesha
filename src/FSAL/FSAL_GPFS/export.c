@@ -406,7 +406,7 @@ static fsal_status_t gpfs_extract_handle(struct fsal_export *exp_hdl,
 			 fh_size, fh_desc->len);
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 	}
-	fh_desc->len = hdl->handle_key_size;	/* pass back the key size */
+	fh_desc->len = hdl->handle_size;	/* pass back the size */
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
