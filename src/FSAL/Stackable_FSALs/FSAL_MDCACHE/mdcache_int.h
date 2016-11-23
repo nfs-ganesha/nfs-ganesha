@@ -173,7 +173,9 @@ struct entry_export_map {
 /** The directory has been populated (negative lookups are meaningful) */
 #define MDCACHE_DIR_POPULATED FSAL_UP_INVALIDATE_DIR_POPULATED
 /** The entry has been removed, but not unhashed due to state */
-static const uint32_t MDCACHE_UNREACHABLE = 0x00000008;
+static const uint32_t MDCACHE_UNREACHABLE = 0x100;
+/** The directory is too big; skip the dirent cache */
+static const uint32_t MDCACHE_BYPASS_DIRCACHE = 0x200;
 
 
 /**
@@ -358,13 +360,15 @@ fsal_status_t mdcache_dirent_rename(mdcache_entry_t *parent,
 void mdcache_dirent_invalidate_all(mdcache_entry_t *entry);
 
 fsal_status_t mdcache_dirent_populate(mdcache_entry_t *dir);
+fsal_status_t mdcache_readdir_uncached(mdcache_entry_t *directory, fsal_cookie_t
+				       *whence, void *dir_state,
+				       fsal_readdir_cb cb, attrmask_t attrmask,
+				       bool *eod_met);
 void mdc_get_parent(struct mdcache_fsal_export *export,
 		    mdcache_entry_t *entry);
 
 static inline bool mdc_dircache_trusted(mdcache_entry_t *dir)
 {
-	if (!(dir->obj_handle.type == DIRECTORY))
-		return false;
 	return ((dir->mde_flags & MDCACHE_TRUST_CONTENT) &&
 		(dir->mde_flags & MDCACHE_DIR_POPULATED));
 }

@@ -631,12 +631,12 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 		 * there is not a valid entry to use, or a merge failed
 		 * we must close that file before disposing of new_obj.
 		 */
-		fsal_status_t status = sub_handle->obj_ops.close2(sub_handle,
-								  state);
+		fsal_status_t cstatus = sub_handle->obj_ops.close2(sub_handle,
+								   state);
 
 		LogDebug(COMPONENT_CACHE_INODE,
 			 "Close of state during error processing returned %s",
-			 fsal_err_txt(status));
+			 fsal_err_txt(cstatus));
 	}
 
 	/* must free sub_handle if no new entry was created to reference it. */
@@ -780,7 +780,7 @@ mdcache_locate_keyed(mdcache_key_t *key,
  * @param[in]     sub_handle  Handle from sub-FSAL for new entry
  * @param[in]     attrs_in    Attributes for new entry
  *
- * @return FSAL status
+ * @return FSAL status (ERR_FSAL_OVERFLOW if dircache full)
  */
 
 fsal_status_t mdc_add_cache(mdcache_entry_t *mdc_parent,
@@ -791,6 +791,13 @@ fsal_status_t mdc_add_cache(mdcache_entry_t *mdc_parent,
 	struct mdcache_fsal_export *export = mdc_cur_export();
 	fsal_status_t status;
 	mdcache_entry_t *new_entry = NULL;
+
+	if (avltree_size(&mdc_parent->fsobj.fsdir.avl.t) >
+	    mdcache_param.dir.avl_max) {
+		LogFullDebug(COMPONENT_CACHE_INODE, "Parent %p at max",
+			     mdc_parent);
+		return fsalstat(ERR_FSAL_OVERFLOW, 0);
+	}
 
 	LogFullDebug(COMPONENT_CACHE_INODE, "Creating entry for %s", name);
 
@@ -850,6 +857,10 @@ fsal_status_t mdc_try_get_cached(mdcache_entry_t *mdc_parent,
 				? "yes" : "no");
 
 	*entry = NULL;
+
+	/* If parent isn't caching, return stale */
+	if (mdc_parent->mde_flags & MDCACHE_BYPASS_DIRCACHE)
+		return fsalstat(ERR_FSAL_STALE, 0);
 
 	/* If the dirent cache is untrustworthy, don't even ask it */
 	if (!(mdc_parent->mde_flags & MDCACHE_TRUST_CONTENT))
@@ -925,6 +936,11 @@ fsal_status_t mdc_lookup(mdcache_entry_t *mdc_parent, const char *name,
 		goto out;
 	}
 
+	if (mdc_parent->mde_flags & MDCACHE_BYPASS_DIRCACHE) {
+		/* Parent isn't caching dirents; call directly */
+		goto uncached;
+	}
+
 	/* We first try avltree_lookup by name.  If that fails, we dispatch to
 	 * the FSAL. */
 	status = mdc_try_get_cached(mdc_parent, name, new_entry);
@@ -982,6 +998,7 @@ fsal_status_t mdc_lookup(mdcache_entry_t *mdc_parent, const char *name,
 
 	LogDebug(COMPONENT_CACHE_INODE, "Cache Miss detected for %s", name);
 
+uncached:
 	status = mdc_lookup_uncached(mdc_parent, name, new_entry, attrs_out);
 
 out:
@@ -1213,6 +1230,10 @@ mdcache_dirent_add(mdcache_entry_t *parent, const char *name,
 	if (parent->obj_handle.type != DIRECTORY)
 		return fsalstat(ERR_FSAL_NOTDIR, 0);
 
+	/* Don't cache if parent is not being cached */
+	if (parent->mde_flags & MDCACHE_BYPASS_DIRCACHE)
+		return fsalstat(ERR_FSAL_NO_ERROR, 0);
+
 	/* in cache avl, we always insert on pentry_parent */
 	new_dir_entry = gsh_calloc(1, sizeof(mdcache_dir_entry_t) + namesize);
 	new_dir_entry->flags = DIR_ENTRY_FLAG_NONE;
@@ -1292,6 +1313,10 @@ mdcache_dirent_rename(mdcache_entry_t *parent, const char *oldname,
 		     "Rename dir entry %s to %s",
 		     oldname, newname);
 
+	/* Don't rename if parent is not being cached */
+	if (parent->mde_flags & MDCACHE_BYPASS_DIRCACHE)
+		return fsalstat(ERR_FSAL_NO_ERROR, 0);
+
 	status = mdcache_dirent_find(parent, oldname, &dirent);
 	if (FSAL_IS_ERROR(status))
 		return status;
@@ -1367,7 +1392,114 @@ struct mdcache_populate_cb_state {
 	mdcache_entry_t *dir;
 	fsal_status_t *status;
 	uint64_t offset_cookie;
+	fsal_readdir_cb cb;
+	void *dir_state;
 };
+
+/**
+ * @brief Handle a readdir callback on uncache dir
+ *
+ * Cache a sindle object, passing it up the stack to the caller.  This is for
+ * handling readdir on a directory that is not being cached, for example because
+ * is is too big.  Dirents are not created by this callback, just objects.
+ *
+ * @param[in]     name       Name of the directory entry
+ * @param[in]     sub_handle Object for entry
+ * @param[in]     attrs      Attributes requested for the object
+ * @param[in,out] dir_state  Callback state
+ * @param[in]     cookie     Directory cookie
+ *
+ * @retval true if more entries are requested
+ * @retval false if no more should be sent and the last was not processed
+ */
+
+static bool
+mdc_readdir_uncached_cb(const char *name, struct fsal_obj_handle *sub_handle,
+			struct attrlist *attrs, void *dir_state,
+			fsal_cookie_t cookie)
+{
+	struct mdcache_populate_cb_state *state = dir_state;
+	fsal_status_t status = { 0, 0 };
+	mdcache_entry_t *directory = container_of(&state->dir->obj_handle,
+						  mdcache_entry_t, obj_handle);
+	mdcache_entry_t *new_entry = NULL;
+	bool rv;
+
+	/* This is in the middle of a subcall. Do a supercall */
+	supercall_raw(state->export,
+		status = mdcache_new_entry(state->export, sub_handle, attrs,
+					   NULL, false, &new_entry, NULL)
+	);
+
+	if (FSAL_IS_ERROR(status)) {
+		*state->status = status;
+		if (status.major == ERR_FSAL_XDEV) {
+			LogInfo(COMPONENT_NFS_READDIR,
+				"Ignoring XDEV entry %s", name);
+			*state->status = fsalstat(ERR_FSAL_NO_ERROR, 0);
+			return true;
+		}
+		LogInfo(COMPONENT_CACHE_INODE,
+			"Lookup failed on %s in dir %p with %s",
+			name, directory, fsal_err_txt(*state->status));
+		return false;
+	}
+
+	/* Call up the stack.  Do a supercall */
+	supercall_raw(state->export,
+		      rv = state->cb(name, &new_entry->obj_handle, attrs,
+				     state->dir_state, cookie)
+	);
+
+	return rv;
+}
+
+/**
+ * Perform an uncached readdir
+ *
+ * Large directories do not have their dirents cached.  This performs readdir on
+ * such directories, by passing the sub-FSAL's results back up through the
+ * stack.
+ *
+ * @note The object passed into the callback is ref'd and must be unref'd by the
+ * callback.
+ *
+ * @param[in] directory the directory to read
+ * @param[in] whence where to start (next)
+ * @param[in] dir_state pass thru of state to callback
+ * @param[in] cb callback function
+ * @param[in] attrmask Which attributes to fill
+ * @param[out] eod_met eod marker true == end of dir
+ *
+ * @return FSAL status
+ */
+fsal_status_t
+mdcache_readdir_uncached(mdcache_entry_t *directory, fsal_cookie_t *whence,
+			 void *dir_state, fsal_readdir_cb cb,
+			 attrmask_t attrmask, bool *eod_met)
+{
+	fsal_status_t status = {0, 0};
+	fsal_status_t readdir_status = {0, 0};
+	struct mdcache_populate_cb_state state;
+
+	state.export = mdc_cur_export();
+	state.dir = directory;
+	state.status = &status;
+	state.offset_cookie = 0; /* Uncached dirs don't use cookie */
+	state.cb = cb;
+	state.dir_state = dir_state;
+
+	subcall(
+		readdir_status = directory->sub_handle->obj_ops.readdir(
+			directory->sub_handle, whence, &state,
+			mdc_readdir_uncached_cb, attrmask, eod_met)
+	       );
+
+	if (FSAL_IS_ERROR(readdir_status))
+		return readdir_status;
+
+	return status;
+}
 
 /**
  * @brief Populate a single dir entry
@@ -1468,6 +1600,8 @@ mdcache_dirent_populate(mdcache_entry_t *dir)
 	state.dir = dir;
 	state.status = &status;
 	state.offset_cookie = 0;
+	state.cb = NULL; /* cached dirs don't use callback */
+	state.dir_state = NULL; /* cached dirs don't use dir_state */
 
 	attrmask = op_ctx->fsal_export->exp_ops.fs_supported_attrs(
 					op_ctx->fsal_export) | ATTR_RDATTR_ERR;
@@ -1483,6 +1617,9 @@ mdcache_dirent_populate(mdcache_entry_t *dir)
 			 fsal_err_txt(fsal_status));
 		return fsal_status;
 	}
+
+	if (status.major == ERR_FSAL_OVERFLOW)
+		return status;
 
 	/* we were supposed to read to the end.... */
 	if (!eod && mdcache_param.retry_readdir) {
