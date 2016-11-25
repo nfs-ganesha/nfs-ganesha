@@ -222,6 +222,7 @@ struct gsh_client *get_gsh_client(sockaddr_t *client_ipaddr, bool lookup_only)
 	PTHREAD_RWLOCK_wrlock(&client_by_ip.lock);
 	node = avltree_insert(&cl->node_k, &client_by_ip.t);
 	if (node) {
+		gsh_free(cl->hostaddr_str);
 		gsh_free(server_st);	/* somebody beat us to it */
 		cl = avltree_container_of(node, struct gsh_client, node_k);
 	} else {
