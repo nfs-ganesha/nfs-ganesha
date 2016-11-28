@@ -1795,8 +1795,8 @@ static bool is_rpc_call_valid(struct svc_req *req)
 				hi_vers = NFS_V4;
 			goto progvers_err;
 		}
-	} else if (req->rq_prog == nfs_param.core_param.program[P_NLM]
 #ifdef _USE_NLM
+	} else if (req->rq_prog == nfs_param.core_param.program[P_NLM]
 		   && ((nfs_param.core_param.core_options & CORE_OPTION_NFSV3)
 		       != 0)) {
 		if (req->rq_vers == NLM4_VERS) {
@@ -1809,8 +1809,8 @@ static bool is_rpc_call_valid(struct svc_req *req)
 			hi_vers = NLM4_VERS;
 			goto progvers_err;
 		}
-	} else if (req->rq_prog == nfs_param.core_param.program[P_MNT]
 #endif /* _USE_NLM */
+	} else if (req->rq_prog == nfs_param.core_param.program[P_MNT]
 		   && ((nfs_param.core_param.core_options & CORE_OPTION_NFSV3)
 		       != 0)) {
 		/* Some clients may use the wrong mount version to umount, so
