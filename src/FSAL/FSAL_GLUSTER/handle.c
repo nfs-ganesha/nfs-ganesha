@@ -1936,7 +1936,7 @@ static fsal_status_t glusterfs_commit2(struct fsal_obj_handle *obj_hdl,
 {
 	fsal_status_t status;
 	int retval;
-	struct glusterfs_fd *out_fd = NULL;
+	struct glusterfs_fd tmp_fd = {0, NULL}, *out_fd = &tmp_fd;
 	struct glusterfs_handle *myself = NULL;
 	bool has_lock = false;
 	bool closefd = false;
