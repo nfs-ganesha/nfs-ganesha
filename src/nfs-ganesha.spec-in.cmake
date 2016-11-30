@@ -110,7 +110,7 @@ BuildRequires:	libblkid-devel
 BuildRequires:	libuuid-devel
 BuildRequires:	gcc-c++
 %if %{with system_ntirpc}
-BuildRequires: libntirpc-devel >= @NTIRPC_VERSION@
+BuildRequires: libntirpc-devel >= @NTIRPC_MIN_VERSION@
 %endif
 Requires:	nfs-utils
 %if ( 0%{?fedora} ) || ( 0%{?rhel} && 0%{?rhel} >= 6 ) || ( 0%{?suse_version} )
@@ -448,7 +448,7 @@ killall -SIGHUP dbus-daemon 2>&1 > /dev/null
 %defattr(-,root,root,-)
 %{_bindir}/ganesha.nfsd
 %if ! %{with system_ntirpc}
-%{_libdir}/libntirpc.so.@NTIRPC_VERSION@
+%{_libdir}/libntirpc.so.@NTIRPC_VERSION_EMBED@
 %{_libdir}/libntirpc.so.1.4
 %{_libdir}/libntirpc.so
 %{_libdir}/pkgconfig/libntirpc.pc
