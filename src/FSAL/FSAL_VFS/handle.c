@@ -154,20 +154,13 @@ struct vfs_fsal_obj_handle *alloc_handle(int dirfd,
 	return NULL;
 }
 
-/* handle methods
- */
-
-/* lookup
- * deprecated NULL parent && NULL path implies root handle
- */
-
-static fsal_status_t lookup(struct fsal_obj_handle *parent,
-			    const char *path, struct fsal_obj_handle **handle,
-			    struct attrlist *attrs_out)
+static fsal_status_t lookup_with_fd(struct vfs_fsal_obj_handle *parent_hdl,
+				    int dirfd, const char *path,
+				    struct fsal_obj_handle **handle,
+				    struct attrlist *attrs_out)
 {
-	struct vfs_fsal_obj_handle *parent_hdl, *hdl;
-	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
-	int retval, dirfd;
+	struct vfs_fsal_obj_handle *hdl;
+	int retval;
 	struct stat stat;
 	vfs_file_handle_t *fh = NULL;
 	fsal_dev_t dev;
@@ -177,34 +170,6 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 
 	vfs_alloc_handle(fh);
 
-	*handle = NULL;		/* poison it first */
-	parent_hdl =
-	    container_of(parent, struct vfs_fsal_obj_handle, obj_handle);
-	if (!parent->obj_ops.handle_is(parent, DIRECTORY)) {
-		LogCrit(COMPONENT_FSAL,
-			"Parent handle is not a directory. hdl = 0x%p", parent);
-		return fsalstat(ERR_FSAL_NOTDIR, 0);
-	}
-
-	if (parent->fsal != parent->fs->fsal) {
-		LogDebug(COMPONENT_FSAL,
-			 "FSAL %s operation for handle belonging to FSAL %s, return EXDEV",
-			 parent->fsal->name,
-			 parent->fs->fsal != NULL
-				? parent->fs->fsal->name
-				: "(none)");
-		return fsalstat(ERR_FSAL_XDEV, EXDEV);
-	}
-
-	fs = parent->fs;
-	dirfd = vfs_fsal_open(parent_hdl, O_PATH | O_NOACCESS, &fsal_error);
-
-	if (dirfd < 0) {
-		LogDebug(COMPONENT_FSAL, "Failed to open parent: %s",
-			 msg_fsal_err(fsal_error));
-		return fsalstat(fsal_error, -dirfd);
-	}
-
 	retval = fstatat(dirfd, path, &stat, AT_SYMLINK_NOFOLLOW);
 
 	if (retval < 0) {
@@ -212,11 +177,12 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 		LogDebug(COMPONENT_FSAL, "Failed to open stat %s: %s", path,
 			 msg_fsal_err(posix2fsal_error(retval)));
 		status = posix2fsal_status(retval);
-		goto direrr;
+		return status;
 	}
 
 	dev = posix2fsal_devt(stat.st_dev);
 
+	fs = parent_hdl->obj_handle.fs;
 	if ((dev.minor != parent_hdl->dev.minor) ||
 	    (dev.major != parent_hdl->dev.major)) {
 		/* XDEV */
@@ -227,10 +193,10 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 				 PRIu64".%"PRIu64,
 				 path, dev.major, dev.minor);
 			status = fsalstat(ERR_FSAL_XDEV, EXDEV);
-			goto direrr;
+			return status;
 		}
 
-		if (fs->fsal != parent->fsal) {
+		if (fs->fsal != parent_hdl->obj_handle.fsal) {
 			xfsal = true;
 			LogDebug(COMPONENT_FSAL,
 				 "Lookup of %s crosses filesystem boundary to file system %s into FSAL %s",
@@ -251,7 +217,7 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 		     (retval == EOPNOTSUPP) ||
 		     (retval == ENOTSUP) ||
 		     xfsal) &&
-		    (fs != parent->fs)) {
+		    (fs != parent_hdl->obj_handle.fs)) {
 			/* Crossed device into territory not handled by
 			 * this FSAL (XFS or VFS). Need to invent a handle.
 			 * The made up handle will be JUST the fsid, we
@@ -262,7 +228,7 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 			LogDebug(COMPONENT_FSAL,
 				 "vfs_name_to_handle %s, inventing FSAL %s handle for FSAL %s filesystem %s",
 				 xfsal ? "skipped" : "failed",
-				 parent->fsal->name,
+				 parent_hdl->obj_handle.fsal->name,
 				 fs->fsal != NULL
 					? fs->fsal->name
 					: "(none)",
@@ -273,14 +239,14 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 			if (retval < 0) {
 				retval = errno;
 				status = posix2fsal_status(retval);
-				goto direrr;
+				return status;
 			}
 
 			retval = 0;
 		} else {
 			/* Some other error */
 			status = posix2fsal_status(retval);
-			goto direrr;
+			return status;
 		}
 	}
 
@@ -290,10 +256,8 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 
 	if (hdl == NULL) {
 		status = fsalstat(ERR_FSAL_NOMEM, ENOMEM);
-		goto direrr;
+		return status;
 	}
-
-	close(dirfd);
 
 	if (attrs_out != NULL) {
 		posix2fsal_attributes(&stat, attrs_out);
@@ -301,8 +265,55 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 
 	*handle = &hdl->obj_handle;
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
 
- direrr:
+/* handle methods
+ */
+
+/* lookup
+ * deprecated NULL parent && NULL path implies root handle
+ */
+
+static fsal_status_t lookup(struct fsal_obj_handle *parent,
+			    const char *path, struct fsal_obj_handle **handle,
+			    struct attrlist *attrs_out)
+{
+	struct vfs_fsal_obj_handle *parent_hdl;
+	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
+	int dirfd;
+	fsal_status_t status;
+
+	*handle = NULL;		/* poison it first */
+	parent_hdl =
+	    container_of(parent, struct vfs_fsal_obj_handle, obj_handle);
+	if (!parent->obj_ops.handle_is(parent, DIRECTORY)) {
+		LogCrit(COMPONENT_FSAL,
+			"Parent handle is not a directory. hdl = 0x%p", parent);
+		return fsalstat(ERR_FSAL_NOTDIR, 0);
+	}
+
+	if (parent->fsal != parent->fs->fsal) {
+		LogDebug(COMPONENT_FSAL,
+			 "FSAL %s operation for handle belonging to FSAL %s, return EXDEV",
+			 parent->fsal->name,
+			 parent->fs->fsal != NULL
+				? parent->fs->fsal->name
+				: "(none)");
+		return fsalstat(ERR_FSAL_XDEV, EXDEV);
+	}
+
+	dirfd = vfs_fsal_open(parent_hdl, O_PATH | O_NOACCESS, &fsal_error);
+
+	if (dirfd < 0) {
+		LogDebug(COMPONENT_FSAL, "Failed to open parent: %s",
+			 msg_fsal_err(fsal_error));
+		status = fsalstat(fsal_error, -dirfd);
+		return status;
+	}
+
+	status = lookup_with_fd(parent_hdl, dirfd, path, handle, attrs_out);
+
+
 	close(dirfd);
 	return status;
 }
@@ -1075,6 +1086,7 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 	dirfd = vfs_fsal_open(myself, O_RDONLY | O_DIRECTORY, &status.major);
 	if (dirfd < 0) {
 		retval = -dirfd;
+		status = posix2fsal_status(retval);
 		goto out;
 	}
 	seekloc = lseek(dirfd, seekloc, SEEK_SET);
@@ -1106,11 +1118,12 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 
 			fsal_prepare_attrs(&attrs, attrmask);
 
-			status = lookup(dir_hdl, dentryp->vd_name,
+			status = lookup_with_fd(myself, dirfd, dentryp->vd_name,
 					&hdl, &attrs);
 
-			if (FSAL_IS_ERROR(status))
+			if (FSAL_IS_ERROR(status)) {
 				goto done;
+			}
 
 			/* callback to cache inode */
 			cb_rc = cb(dentryp->vd_name, hdl, &attrs, dir_state,
@@ -1131,7 +1144,6 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 	close(dirfd);
 
  out:
-	status.minor = retval;
 	return status;
 }
 
