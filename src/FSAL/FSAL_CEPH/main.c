@@ -129,13 +129,13 @@ static fsal_status_t init_config(struct fsal_module *module_in,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-#ifdef CEPH_FS_LOOKUP_ROOT
+#ifdef USE_FSAL_CEPH_LL_LOOKUP_ROOT
 static fsal_status_t find_cephfs_root(struct ceph_mount_info *cmount,
 					Inode **pi)
 {
 	return ceph2fsal_error(ceph_ll_lookup_root(cmount, pi));
 }
-#else /* CEPH_FS_LOOKUP_ROOT */
+#else /* USE_FSAL_CEPH_LL_LOOKUP_ROOT */
 static fsal_status_t find_cephfs_root(struct ceph_mount_info *cmount,
 					Inode **pi)
 {
@@ -154,7 +154,7 @@ static fsal_status_t find_cephfs_root(struct ceph_mount_info *cmount,
 	*pi = i;
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
-#endif /* CEPH_FS_LOOKUP_ROOT */
+#endif /* USE_FSAL_CEPH_LL_LOOKUP_ROOT */
 
 /**
  * @brief Create a new export under this FSAL
