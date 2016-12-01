@@ -139,20 +139,9 @@ static fsal_status_t find_cephfs_root(struct ceph_mount_info *cmount,
 static fsal_status_t find_cephfs_root(struct ceph_mount_info *cmount,
 					Inode **pi)
 {
-	Inode *i;
-	vinodeno_t root;
+	struct stat st;
 
-	root.ino.val = CEPH_INO_ROOT;
-#ifdef CEPH_NOSNAP
-	root.snapid.val = CEPH_NOSNAP;
-#else
-	root.snapid.val = 0;
-#endif /* CEPH_NOSNAP */
-	i = ceph_ll_get_inode(cmount, root);
-	if (!i)
-		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
-	*pi = i;
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	return ceph2fsal_error(ceph_ll_walk(cmount, "/", pi, &st));
 }
 #endif /* USE_FSAL_CEPH_LL_LOOKUP_ROOT */
 
@@ -223,7 +212,7 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 		goto error;
 	}
 
-	ceph_status = ceph_mount(export->cmount, NULL);
+	ceph_status = ceph_mount(export->cmount, op_ctx->ctx_export->fullpath);
 	if (ceph_status != 0) {
 		status.major = ERR_FSAL_SERVERFAULT;
 		LogCrit(COMPONENT_FSAL,
@@ -243,8 +232,7 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 	export->export.fsal = module_in;
 	export->export.up_ops = up_ops;
 
-	LogDebug(COMPONENT_FSAL,
-		 "Ceph module export %s.",
+	LogDebug(COMPONENT_FSAL, "Ceph module export %s.",
 		 op_ctx->ctx_export->fullpath);
 
 	status = find_cephfs_root(export->cmount, &i);
