@@ -166,7 +166,7 @@ static struct config_item core_params[] = {
 		       nfs_core_param, enable_NLM),
 	CONF_ITEM_BOOL("Enable_RQUOTA", true,
 		       nfs_core_param, enable_RQUOTA),
-	CONF_ITEM_BOOL("Enable_TCP_keepalive", false,
+	CONF_ITEM_BOOL("Enable_TCP_keepalive", true,
 		       nfs_core_param, enable_tcp_keepalive),
 	CONF_ITEM_UI32("TCP_KEEPCNT", 0, 255, 0,
 		       nfs_core_param, tcp_keepcnt),
