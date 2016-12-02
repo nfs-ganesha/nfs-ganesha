@@ -407,17 +407,17 @@ mdcache_lru_clean(mdcache_entry_t *entry)
 {
 	fsal_status_t status = {0, 0};
 
-	/* Make sure any FSAL global file descriptor is closed. */
-	status = fsal_close(&entry->obj_handle);
-
-	if (FSAL_IS_ERROR(status)) {
-		LogCrit(COMPONENT_CACHE_INODE_LRU,
-			"Error closing file in cleanup: %s",
-			fsal_err_txt(status));
-	}
-
 	/* Free SubFSAL resources */
 	if (entry->sub_handle) {
+		/* Make sure any FSAL global file descriptor is closed. */
+		status = fsal_close(&entry->obj_handle);
+
+		if (FSAL_IS_ERROR(status)) {
+			LogCrit(COMPONENT_CACHE_INODE_LRU,
+				"Error closing file in cleanup: %s",
+				fsal_err_txt(status));
+		}
+
 		subcall(
 			entry->sub_handle->obj_ops.release(entry->sub_handle)
 		       );
