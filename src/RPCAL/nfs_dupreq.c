@@ -1106,20 +1106,32 @@ dupreq_status_t nfs_dupreq_finish(struct svc_req *req, nfs_res_t *res_nfs)
 		if (likely(ov)) {
 			/* finished request count against retwnd */
 			drc_dec_retwnd(drc);
-			/* check refcnt */
+			/* Quick check without partition lock */
 			if (ov->refcnt > 0) {
 				/* ov still in use, apparently */
 				goto unlock;
 			}
-			/* remove q entry */
-			TAILQ_REMOVE(&drc->dupreq_q, ov, fifo_q);
-			--(drc->size);
 
 			/* remove dict entry */
 			t = rbtx_partition_of_scalar(&drc->xt, ov->hk);
 			/* interlock */
 			PTHREAD_MUTEX_unlock(&drc->mtx);
 			PTHREAD_MUTEX_lock(&t->mtx);	/* partition lock */
+
+			/* check refcnt again under partition lock.
+			 * nfs_dupreq_start() could use a 0 refcnt
+			 * dupreq and reference it.
+			 */
+			if (ov->refcnt > 0) {
+				PTHREAD_MUTEX_unlock(&t->mtx);
+				goto out;
+			}
+			PTHREAD_MUTEX_lock(&drc->mtx);
+			/* remove q entry */
+			TAILQ_REMOVE(&drc->dupreq_q, ov, fifo_q);
+			--(drc->size);
+			PTHREAD_MUTEX_unlock(&drc->mtx);
+
 			rbtree_x_cached_remove(&drc->xt, t, &ov->rbt_k, ov->hk);
 			PTHREAD_MUTEX_unlock(&t->mtx);
 
