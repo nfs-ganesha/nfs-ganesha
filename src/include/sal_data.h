@@ -569,10 +569,24 @@ struct state_nfs4_owner_t {
 						   open-owner under which
 						   the lock owner was
 						   created */
-	struct glist_head so_state_list; /*< States owned by this owner */
+	struct glist_head so_state_list; /*< This has 2 purposes: when there are
+					   active states, this is the head of a
+					   list of states owned by this owner.
+					   When there are no active states, this
+					   is an entry on the cached_open_owners
+					   list.  This is protected by the
+					   so_cache_expire field; if it's 0,
+					   there are states, and the first case
+					   holds.  If it's non-zero, this entry
+					   is cached, and the second case holds.
+					   so_mutex MUST be held when accessing
+					   this field. */
 	struct glist_head so_perclient;  /*< open owner entry to be
 					   linked to client */
-	time_t cache_expire; /* time cached OPEN owner will expire */
+	time_t so_cache_expire; /* time cached OPEN owner will expire.  If
+				   non-zero, so_state_list is an entry on
+				   cached_open_owners.  so_mutex MUST be held
+				   when accessing this field.*/
 };
 
 /**

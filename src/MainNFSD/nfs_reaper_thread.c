@@ -154,7 +154,7 @@ static int reap_expired_open_owners(void)
 
 		nfs4_owner = &owner->so_owner.so_nfs4_owner;
 
-		texpire = atomic_fetch_time_t(&nfs4_owner->cache_expire);
+		texpire = atomic_fetch_time_t(&nfs4_owner->so_cache_expire);
 
 		if (texpire > tnow) {
 			/* This owner has not yet expired. */

@@ -575,7 +575,7 @@ static inline bool owner_has_state(state_owner_t *owner)
 	/* If the owner is on the cached owners list, there can't be
 	 * active state.
 	 */
-	if (atomic_fetch_time_t(&nfs4_owner->cache_expire) != 0)
+	if (atomic_fetch_time_t(&nfs4_owner->so_cache_expire) != 0)
 		return false;
 
 	PTHREAD_MUTEX_lock(&owner->so_mutex);

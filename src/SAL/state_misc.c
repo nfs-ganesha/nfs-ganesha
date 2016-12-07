@@ -1005,7 +1005,7 @@ void uncache_nfs4_owner(struct state_nfs4_owner_t *nfs4_owner)
 
 	glist_init(&nfs4_owner->so_state_list);
 
-	atomic_store_time_t(&nfs4_owner->cache_expire, 0);
+	atomic_store_time_t(&nfs4_owner->so_cache_expire, 0);
 
 	dec_state_owner_ref(owner);
 }
@@ -1016,14 +1016,14 @@ void refresh_nfs4_open_owner(struct state_nfs4_owner_t *nfs4_owner)
 	time_t cache_expire;
 
 	/* Since this owner is active, reset cache_expire. */
-	cache_expire = atomic_fetch_time_t(&nfs4_owner->cache_expire);
+	cache_expire = atomic_fetch_time_t(&nfs4_owner->so_cache_expire);
 
 	if (cache_expire != 0) {
 		PTHREAD_MUTEX_lock(&cached_open_owners_lock);
 
 		/* Check again while holding the mutex. */
 
-		if (atomic_fetch_time_t(&nfs4_owner->cache_expire) != 0) {
+		if (atomic_fetch_time_t(&nfs4_owner->so_cache_expire) != 0) {
 			/* This is a cached open owner, uncache it for use. */
 			uncache_nfs4_owner(nfs4_owner);
 		}

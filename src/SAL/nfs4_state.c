@@ -413,7 +413,7 @@ void state_del_locked(state_t *state)
 			 */
 			PTHREAD_MUTEX_lock(&cached_open_owners_lock);
 
-			atomic_store_time_t(&nfs4_owner->cache_expire,
+			atomic_store_time_t(&nfs4_owner->so_cache_expire,
 					    nfs_param.nfsv4_param.lease_lifetime
 						+ time(NULL));
 			glist_add_tail(&cached_open_owners,
@@ -710,7 +710,7 @@ void release_openstate(state_owner_t *owner)
 
 		PTHREAD_MUTEX_lock(&owner->so_mutex);
 
-		if (atomic_fetch_time_t(&nfs4_owner->cache_expire) != 0) {
+		if (atomic_fetch_time_t(&nfs4_owner->so_cache_expire) != 0) {
 			/* This owner has no state, it is a cached open owner.
 			 * Take cached_open_owners_lock and verify.
 			 *
@@ -719,7 +719,7 @@ void release_openstate(state_owner_t *owner)
 			 */
 			PTHREAD_MUTEX_lock(&cached_open_owners_lock);
 
-			if (atomic_fetch_time_t(&nfs4_owner->cache_expire)
+			if (atomic_fetch_time_t(&nfs4_owner->so_cache_expire)
 			    != 0) {
 				/* We aren't racing with the reaper thread or
 				 * with get_state_owner.
