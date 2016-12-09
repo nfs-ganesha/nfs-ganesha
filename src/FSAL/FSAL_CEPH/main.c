@@ -148,6 +148,8 @@ static fsal_status_t find_cephfs_root(struct ceph_mount_info *cmount,
 static struct config_item export_params[] = {
 	CONF_ITEM_NOOP("name"),
 	CONF_ITEM_STR("user_id", 0, MAXUIDLEN, NULL, export, user_id),
+	CONF_ITEM_STR("secret_access_key", 0, MAXSECRETLEN, NULL, export,
+			secret_key),
 	CONFIG_EOL
 };
 
@@ -238,6 +240,18 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 			"Unable to read Ceph configuration for %s.",
 			op_ctx->ctx_export->fullpath);
 		goto error;
+	}
+
+	if (export->secret_key) {
+		ceph_status = ceph_conf_set(export->cmount, "key",
+					    export->secret_key);
+		if (ceph_status) {
+			status.major = ERR_FSAL_INVAL;
+			LogCrit(COMPONENT_FSAL,
+				"Unable to set Ceph secret key for %s: %d",
+				op_ctx->ctx_export->fullpath, ceph_status);
+			goto error;
+		}
 	}
 
 	ceph_status = ceph_mount(export->cmount, op_ctx->ctx_export->fullpath);

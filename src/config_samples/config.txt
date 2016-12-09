@@ -323,6 +323,12 @@ EXPORT { FSAL {} }
 	  what gets appended to "client.". If not set, the ceph client libs
 	  will sort this out based on ceph configuration.
 
+	Secret_Access_Key(string, no default)
+
+	* Secret_Access_Key: key to use for the session (if any). If not set,
+	  then it uses the normal search path for cephx keyring files to find
+	  a key.
+
 	FSAL_GLUSTER:
 	-------------
 
