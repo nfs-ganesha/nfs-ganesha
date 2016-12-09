@@ -583,6 +583,7 @@ struct state_nfs4_owner_t {
 					   this field. */
 	struct glist_head so_perclient;  /*< open owner entry to be
 					   linked to client */
+	struct glist_head so_cache_entry; /*< Entry on cached_open_owners */
 	time_t so_cache_expire; /* time cached OPEN owner will expire.  If
 				   non-zero, so_state_list is an entry on
 				   cached_open_owners.  so_mutex MUST be held

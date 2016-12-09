@@ -1001,9 +1001,8 @@ void uncache_nfs4_owner(struct state_nfs4_owner_t *nfs4_owner)
 		LogFullDebug(COMPONENT_STATE, "Uncache {%s}", str);
 	}
 
-	glist_del(&nfs4_owner->so_state_list);
-
-	glist_init(&nfs4_owner->so_state_list);
+	/* Remove owner from cached_open_owners */
+	glist_del(&nfs4_owner->so_cache_entry);
 
 	atomic_store_time_t(&nfs4_owner->so_cache_expire, 0);
 

@@ -147,7 +147,7 @@ static int reap_expired_open_owners(void)
 
 	owner = glist_first_entry(&cached_open_owners,
 				  state_owner_t,
-				  so_owner.so_nfs4_owner.so_state_list);
+				  so_owner.so_nfs4_owner.so_cache_entry);
 
 	while (owner != NULL) {
 		struct state_nfs4_owner_t *nfs4_owner;
