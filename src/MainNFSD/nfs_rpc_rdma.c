@@ -73,15 +73,12 @@ nfs_rdma_dispatcher_thread(void *nullarg)
 		.port = "20049",
 		.disconnect_cb = rpc_rdma_disconnect_callback,
 		.request_cb = thr_decode_rpc_request,
-		.timeout = 30000,		/* in ms */
 		.sq_depth = 32,			/* default was 50 */
 		.max_send_sge = 32,		/* minimum 2 */
 		.rq_depth = 32,			/* default was 50 */
 		.max_recv_sge = 31,		/* minimum 1 */
 		.backlog = 10,			/* minimum 2 */
 		.credits = 30,			/* default 10 */
-		.worker_count = 4,		/* default 0 */
-		.worker_queue_size = 256,	/* default 0 */
 		.destroy_on_disconnect = true,
 		.use_srq = false,
 	};
