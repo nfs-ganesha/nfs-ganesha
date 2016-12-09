@@ -506,6 +506,10 @@ CEPH {}
 
 	Ceph_Conf(path, default "")
 
+	umask(mode, range 0 to 0777, default 0)
+
+	xattr_access_rights(mode, range 0 to 0777, default 0)
+
 GPFS {}
 -------
 
