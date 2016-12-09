@@ -145,6 +145,21 @@ static fsal_status_t find_cephfs_root(struct ceph_mount_info *cmount,
 }
 #endif /* USE_FSAL_CEPH_LL_LOOKUP_ROOT */
 
+static struct config_item export_params[] = {
+	CONF_ITEM_NOOP("name"),
+	CONF_ITEM_STR("user_id", 0, MAXUIDLEN, NULL, export, user_id),
+	CONFIG_EOL
+};
+
+static struct config_block export_param_block = {
+	.dbus_interface_name = "org.ganesha.nfsd.config.fsal.ceph-export%d",
+	.blk_desc.name = "FSAL",
+	.blk_desc.type = CONFIG_BLOCK,
+	.blk_desc.u.blk.init = noop_conf_init,
+	.blk_desc.u.blk.params = export_params,
+	.blk_desc.u.blk.commit = noop_conf_commit
+};
+
 /**
  * @brief Create a new export under this FSAL
  *
@@ -191,10 +206,23 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 	fsal_export_init(&export->export);
 	export_ops_init(&export->export.exp_ops);
 
+	/* get params for this export, if any */
+	if (parse_node) {
+		rc = load_config_from_node(parse_node,
+					   &export_param_block,
+					   export,
+					   true,
+					   err_type);
+		if (rc != 0) {
+			gsh_free(export);
+			return fsalstat(ERR_FSAL_INVAL, 0);
+		}
+	}
+
 	initialized = true;
 
 	/* allocates ceph_mount_info */
-	ceph_status = ceph_create(&export->cmount, NULL);
+	ceph_status = ceph_create(&export->cmount, export->user_id);
 	if (ceph_status != 0) {
 		status.major = ERR_FSAL_SERVERFAULT;
 		LogCrit(COMPONENT_FSAL,

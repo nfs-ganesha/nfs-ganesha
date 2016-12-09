@@ -47,6 +47,8 @@
 #include <uuid/uuid.h>
 #include "statx_compat.h"
 
+/* Max length of a user_id string that we pass to ceph_mount */
+#define MAXUIDLEN	(64)
 /**
  * Ceph Main (global) module object
  */
@@ -68,6 +70,7 @@ struct export {
 					   access all Ceph methods on
 					   this export. */
 	struct handle *root;	/*< The root handle */
+	char *user_id;			/* cephx user_id for this mount */
 };
 
 struct ceph_fd {

@@ -315,6 +315,14 @@ EXPORT { FSAL {} }
 
 	Name(string, default "VFS")
 
+	FSAL_CEPH:
+	----------
+	User_Id(string, no default)
+
+	* User_Id: cephx userid used to open the MDS session. This string is
+	  what gets appended to "client.". If not set, the ceph client libs
+	  will sort this out based on ceph configuration.
+
 	FSAL_GLUSTER:
 	-------------
 
