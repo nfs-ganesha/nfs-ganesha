@@ -528,7 +528,7 @@ fsal_status_t rgw_fsal_setattr2(struct fsal_obj_handle *obj_hdl,
  out:
 
 	if (has_lock)
-		PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
 	return status;
 }
@@ -647,11 +647,11 @@ fsal_status_t rgw_merge(struct fsal_obj_handle *orig_hdl,
 		dupe = container_of(dupe_hdl, struct rgw_handle, handle);
 
 		/* This can block over an I/O operation. */
-		PTHREAD_RWLOCK_wrlock(&orig_hdl->lock);
+		PTHREAD_RWLOCK_wrlock(&orig_hdl->obj_lock);
 
 		status = merge_share(&orig->share, &dupe->share);
 
-		PTHREAD_RWLOCK_unlock(&orig_hdl->lock);
+		PTHREAD_RWLOCK_unlock(&orig_hdl->obj_lock);
 	}
 
 	return status;
@@ -767,14 +767,14 @@ fsal_status_t rgw_fsal_open2(struct fsal_obj_handle *obj_hdl,
 			 */
 
 			/* This can block over an I/O operation. */
-			PTHREAD_RWLOCK_wrlock(&obj_hdl->lock);
+			PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
 
 			/* Check share reservation conflicts. */
 			status = check_share_conflict(&handle->share,
 						      openflags, false);
 
 			if (FSAL_IS_ERROR(status)) {
-				PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+				PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 				return status;
 			}
 
@@ -784,7 +784,7 @@ fsal_status_t rgw_fsal_open2(struct fsal_obj_handle *obj_hdl,
 			update_share_counters(&handle->share, FSAL_O_CLOSED,
 					      openflags);
 
-			PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+			PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 		} else {
 			/* RGW doesn't have a file descriptor/open abstraction,
 			 * and actually forbids concurrent opens;  This is
@@ -795,7 +795,7 @@ fsal_status_t rgw_fsal_open2(struct fsal_obj_handle *obj_hdl,
 #if 0
 			my_fd = &hdl->fd;
 #endif
-			PTHREAD_RWLOCK_wrlock(&obj_hdl->lock);
+			PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
 		}
 
 		rc = rgw_open(export->rgw_fs, handle->rgw_fh, posix_flags,
@@ -806,7 +806,7 @@ fsal_status_t rgw_fsal_open2(struct fsal_obj_handle *obj_hdl,
 				/* Release the lock taken above, and return
 				 * since there is nothing to undo.
 				 */
-				PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+				PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 				return rgw2fsal_error(rc);
 			} else {
 				/* Error - need to release the share */
@@ -844,7 +844,7 @@ fsal_status_t rgw_fsal_open2(struct fsal_obj_handle *obj_hdl,
 			 * status. If success, we haven't done any permission
 			 * check so ask the caller to do so.
 			 */
-			PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+			PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 			*caller_perm_check = !FSAL_IS_ERROR(status);
 			return status;
 		}
@@ -869,11 +869,11 @@ fsal_status_t rgw_fsal_open2(struct fsal_obj_handle *obj_hdl,
 		 * and undo the update of the share counters.
 		 * This can block over an I/O operation.
 		 */
-		PTHREAD_RWLOCK_wrlock(&obj_hdl->lock);
+		PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
 
 		update_share_counters(&handle->share, openflags, FSAL_O_CLOSED);
 
-		PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
 		return status;
 	} /* !name */
@@ -1067,12 +1067,12 @@ fsal_status_t rgw_fsal_open2(struct fsal_obj_handle *obj_hdl,
 		 */
 
 		/* This can block over an I/O operation. */
-		PTHREAD_RWLOCK_wrlock(&(*new_obj)->lock);
+		PTHREAD_RWLOCK_wrlock(&(*new_obj)->obj_lock);
 
 		/* Take the share reservation now by updating the counters. */
 		update_share_counters(&handle->share, FSAL_O_CLOSED, openflags);
 
-		PTHREAD_RWLOCK_unlock(&(*new_obj)->lock);
+		PTHREAD_RWLOCK_unlock(&(*new_obj)->obj_lock);
 	}
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
@@ -1162,7 +1162,7 @@ fsal_status_t rgw_fsal_reopen2(struct fsal_obj_handle *obj_hdl,
 	fsal2posix_openflags(openflags, &posix_flags);
 
 	/* This can block over an I/O operation. */
-	PTHREAD_RWLOCK_wrlock(&obj_hdl->lock);
+	PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
 
 	old_openflags = handle->openflags;
 
@@ -1170,7 +1170,7 @@ fsal_status_t rgw_fsal_reopen2(struct fsal_obj_handle *obj_hdl,
 	status = check_share_conflict(&handle->share, openflags, false);
 
 	if (FSAL_IS_ERROR(status)) {
-		PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
 		return status;
 	}
@@ -1180,7 +1180,7 @@ fsal_status_t rgw_fsal_reopen2(struct fsal_obj_handle *obj_hdl,
 	 */
 	update_share_counters(&handle->share, old_openflags, openflags);
 
-	PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+	PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
 	/* perform a provider open iff not already open */
 	if (!fsal_is_open(obj_hdl)) {
@@ -1197,12 +1197,12 @@ fsal_status_t rgw_fsal_reopen2(struct fsal_obj_handle *obj_hdl,
 			/* We had a failure on open - we need to revert the
 			 * share. This can block over an I/O operation.
 			 */
-			PTHREAD_RWLOCK_wrlock(&obj_hdl->lock);
+			PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
 
 			update_share_counters(&handle->share, openflags,
 					old_openflags);
 
-			PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+			PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 		}
 
 		status = rgw2fsal_error(rc);
@@ -1444,13 +1444,13 @@ fsal_status_t rgw_fsal_close2(struct fsal_obj_handle *obj_hdl,
 			/* This is a share state, we must update the share
 			 * counters.  This can block over an I/O operation.
 			 */
-			PTHREAD_RWLOCK_wrlock(&obj_hdl->lock);
+			PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
 
 			update_share_counters(&handle->share,
 					handle->openflags,
 					FSAL_O_CLOSED);
 
-			PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+			PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 		}
 	}
 

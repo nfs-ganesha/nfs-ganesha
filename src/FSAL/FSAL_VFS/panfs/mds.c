@@ -210,14 +210,14 @@ nfsstat4 layoutget(struct fsal_obj_handle *obj_hdl,
 	_XDR_2_ioctlxdr_read_begin(loc_body, &pixdr);
 
 	/* Take read lock on object to protect file descriptor. */
-	PTHREAD_RWLOCK_rdlock(&obj_hdl->lock);
+	PTHREAD_RWLOCK_rdlock(&obj_hdl->obj_lock);
 
 	ret = panfs_um_layoutget(_get_obj_fd(obj_hdl), &pixdr, clientid,
 				 myself, arg, res);
 	if (!ret)
 		_XDR_2_ioctlxdr_read_end(loc_body, &pixdr);
 
-	PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+	PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
 	LogDebug(COMPONENT_FSAL,
 		 "layout[0x%lx,0x%lx,0x%x] ret => %d", res->segment.offset,
@@ -241,11 +241,11 @@ nfsstat4 layoutreturn(struct fsal_obj_handle *obj_hdl,
 	_XDR_2_ioctlxdr_write(lrf_body, &pixdr);
 
 	/* Take read lock on object to protect file descriptor. */
-	PTHREAD_RWLOCK_rdlock(&obj_hdl->lock);
+	PTHREAD_RWLOCK_rdlock(&obj_hdl->obj_lock);
 
 	ret = panfs_um_layoutreturn(_get_obj_fd(obj_hdl), &pixdr, arg);
 
-	PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+	PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
 	LogDebug(COMPONENT_FSAL,
 		 "layout[0x%lx,0x%lx,0x%x] ret => %d",
@@ -266,11 +266,11 @@ nfsstat4 layoutcommit(struct fsal_obj_handle *obj_hdl,
 	_XDR_2_ioctlxdr_write(lou_body, &pixdr);
 
 	/* Take read lock on object to protect file descriptor. */
-	PTHREAD_RWLOCK_rdlock(&obj_hdl->lock);
+	PTHREAD_RWLOCK_rdlock(&obj_hdl->obj_lock);
 
 	ret = panfs_um_layoutcommit(_get_obj_fd(obj_hdl), &pixdr, arg, res);
 
-	PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+	PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
 	LogDebug(COMPONENT_FSAL,
 		 "layout[0x%lx,0x%lx,0x%x] last_write=0x%lx ret => %d",

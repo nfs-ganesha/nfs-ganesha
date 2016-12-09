@@ -830,11 +830,11 @@ static fsal_status_t ceph_fsal_close(struct fsal_obj_handle *obj_hdl)
 	/* Take write lock on object to protect file descriptor.
 	 * This can block over an I/O operation.
 	 */
-	PTHREAD_RWLOCK_wrlock(&obj_hdl->lock);
+	PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
 
 	status = ceph_close_my_fd(handle, &handle->fd);
 
-	PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+	PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
 	return status;
 }
@@ -894,11 +894,11 @@ fsal_status_t ceph_merge(struct fsal_obj_handle *orig_hdl,
 		dupe = container_of(dupe_hdl, struct handle, handle);
 
 		/* This can block over an I/O operation. */
-		PTHREAD_RWLOCK_wrlock(&orig_hdl->lock);
+		PTHREAD_RWLOCK_wrlock(&orig_hdl->obj_lock);
 
 		status = merge_share(&orig->share, &dupe->share);
 
-		PTHREAD_RWLOCK_unlock(&orig_hdl->lock);
+		PTHREAD_RWLOCK_unlock(&orig_hdl->obj_lock);
 	}
 
 	return status;
@@ -1019,14 +1019,14 @@ fsal_status_t ceph_open2(struct fsal_obj_handle *obj_hdl,
 			 */
 
 			/* This can block over an I/O operation. */
-			PTHREAD_RWLOCK_wrlock(&obj_hdl->lock);
+			PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
 
 			/* Check share reservation conflicts. */
 			status = check_share_conflict(&myself->share,
 						      openflags, false);
 
 			if (FSAL_IS_ERROR(status)) {
-				PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+				PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 				return status;
 			}
 
@@ -1036,13 +1036,13 @@ fsal_status_t ceph_open2(struct fsal_obj_handle *obj_hdl,
 			update_share_counters(&myself->share, FSAL_O_CLOSED,
 					      openflags);
 
-			PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+			PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 		} else {
 			/* We need to use the global fd to continue, and take
 			 * the lock to protect it.
 			 */
 			my_fd = &myself->fd;
-			PTHREAD_RWLOCK_wrlock(&obj_hdl->lock);
+			PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
 		}
 
 		status = ceph_open_my_fd(myself, openflags, posix_flags, my_fd);
@@ -1052,7 +1052,7 @@ fsal_status_t ceph_open2(struct fsal_obj_handle *obj_hdl,
 				/* Release the lock taken above, and return
 				 * since there is nothing to undo.
 				 */
-				PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+				PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 				return status;
 			} else {
 				/* Error - need to release the share */
@@ -1095,7 +1095,7 @@ fsal_status_t ceph_open2(struct fsal_obj_handle *obj_hdl,
 			 * status. If success, we haven't done any permission
 			 * check so ask the caller to do so.
 			 */
-			PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+			PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 			*caller_perm_check = !FSAL_IS_ERROR(status);
 			return status;
 		}
@@ -1118,11 +1118,11 @@ fsal_status_t ceph_open2(struct fsal_obj_handle *obj_hdl,
 		 * and undo the update of the share counters.
 		 * This can block over an I/O operation.
 		 */
-		PTHREAD_RWLOCK_wrlock(&obj_hdl->lock);
+		PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
 
 		update_share_counters(&myself->share, openflags, FSAL_O_CLOSED);
 
-		PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
 		return status;
 	}
@@ -1320,12 +1320,12 @@ fsal_status_t ceph_open2(struct fsal_obj_handle *obj_hdl,
 		 */
 
 		/* This can block over an I/O operation. */
-		PTHREAD_RWLOCK_wrlock(&(*new_obj)->lock);
+		PTHREAD_RWLOCK_wrlock(&(*new_obj)->obj_lock);
 
 		/* Take the share reservation now by updating the counters. */
 		update_share_counters(&hdl->share, FSAL_O_CLOSED, openflags);
 
-		PTHREAD_RWLOCK_unlock(&(*new_obj)->lock);
+		PTHREAD_RWLOCK_unlock(&(*new_obj)->obj_lock);
 	}
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
@@ -1398,7 +1398,7 @@ fsal_status_t ceph_reopen2(struct fsal_obj_handle *obj_hdl,
 	memset(my_fd, 0, sizeof(*my_fd));
 
 	/* This can block over an I/O operation. */
-	PTHREAD_RWLOCK_wrlock(&obj_hdl->lock);
+	PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
 
 	old_openflags = my_share_fd->openflags;
 
@@ -1406,7 +1406,7 @@ fsal_status_t ceph_reopen2(struct fsal_obj_handle *obj_hdl,
 	status = check_share_conflict(&myself->share, openflags, false);
 
 	if (FSAL_IS_ERROR(status)) {
-		PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
 		return status;
 	}
@@ -1416,7 +1416,7 @@ fsal_status_t ceph_reopen2(struct fsal_obj_handle *obj_hdl,
 	 */
 	update_share_counters(&myself->share, old_openflags, openflags);
 
-	PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+	PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
 	status = ceph_open_my_fd(myself, openflags, posix_flags, my_fd);
 
@@ -1430,11 +1430,11 @@ fsal_status_t ceph_reopen2(struct fsal_obj_handle *obj_hdl,
 		/* We had a failure on open - we need to revert the share.
 		 * This can block over an I/O operation.
 		 */
-		PTHREAD_RWLOCK_wrlock(&obj_hdl->lock);
+		PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
 
 		update_share_counters(&myself->share, openflags, old_openflags);
 
-		PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 	}
 
 	return status;
@@ -1557,7 +1557,7 @@ fsal_status_t ceph_read2(struct fsal_obj_handle *obj_hdl,
 		(void) ceph_ll_close(myself->export->cmount, my_fd);
 
 	if (has_lock)
-		PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
 	return status;
 }
@@ -1648,7 +1648,7 @@ fsal_status_t ceph_write2(struct fsal_obj_handle *obj_hdl,
 		(void) ceph_ll_close(myself->export->cmount, my_fd);
 
 	if (has_lock)
-		PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
 	fsal_restore_ganesha_credentials();
 	return status;
@@ -1704,7 +1704,7 @@ fsal_status_t ceph_commit2(struct fsal_obj_handle *obj_hdl,
 		(void) ceph_ll_close(myself->export->cmount, out_fd->fd);
 
 	if (has_lock)
-		PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
 	return status;
 }
@@ -1877,7 +1877,7 @@ fsal_status_t ceph_lock_op2(struct fsal_obj_handle *obj_hdl,
 		(void) ceph_ll_close(myself->export->cmount, my_fd);
 
 	if (has_lock)
-		PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
 	return ceph2fsal_error(retval);
 }
@@ -2045,7 +2045,7 @@ fsal_status_t ceph_setattr2(struct fsal_obj_handle *obj_hdl,
  out:
 
 	if (has_lock)
-		PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
 	return status;
 }
@@ -2076,13 +2076,13 @@ fsal_status_t ceph_close2(struct fsal_obj_handle *obj_hdl,
 		/* This is a share state, we must update the share counters */
 
 		/* This can block over an I/O operation. */
-		PTHREAD_RWLOCK_wrlock(&obj_hdl->lock);
+		PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
 
 		update_share_counters(&myself->share,
 				      my_fd->openflags,
 				      FSAL_O_CLOSED);
 
-		PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 	}
 
 	return ceph_close_my_fd(myself, my_fd);

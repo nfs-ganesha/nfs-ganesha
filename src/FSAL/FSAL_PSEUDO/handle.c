@@ -285,12 +285,12 @@ static struct pseudo_fsal_obj_handle
 	hdl->next_i = 2;
 	if (parent != NULL) {
 		/* Attach myself to my parent */
-		PTHREAD_RWLOCK_wrlock(&parent->obj_handle.lock);
+		PTHREAD_RWLOCK_wrlock(&parent->obj_handle.obj_lock);
 		avltree_insert(&hdl->avl_n, &parent->avl_name);
 		hdl->index = (parent->next_i)++;
 		avltree_insert(&hdl->avl_i, &parent->avl_index);
 		hdl->inavl = true;
-		PTHREAD_RWLOCK_unlock(&parent->obj_handle.lock);
+		PTHREAD_RWLOCK_unlock(&parent->obj_handle.obj_lock);
 	}
 	return hdl;
 
@@ -328,7 +328,7 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 	 * this directory.
 	 */
 	if (op_ctx->fsal_private != parent)
-		PTHREAD_RWLOCK_rdlock(&parent->lock);
+		PTHREAD_RWLOCK_rdlock(&parent->obj_lock);
 	else
 		LogFullDebug(COMPONENT_FSAL,
 			     "Skipping lock for %s",
@@ -363,7 +363,7 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 out:
 
 	if (op_ctx->fsal_private != parent)
-		PTHREAD_RWLOCK_unlock(&parent->lock);
+		PTHREAD_RWLOCK_unlock(&parent->obj_lock);
 
 	if (error == ERR_FSAL_NO_ERROR && attrs_out != NULL) {
 		/* This is unlocked, however, for the most part, attributes
@@ -478,7 +478,7 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 		 "hdl=%p, name=%s",
 		 myself, myself->name);
 
-	PTHREAD_RWLOCK_rdlock(&dir_hdl->lock);
+	PTHREAD_RWLOCK_rdlock(&dir_hdl->obj_lock);
 
 	/* Use fsal_private to signal to lookup that we hold
 	 * the lock.
@@ -511,7 +511,7 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 
 	op_ctx->fsal_private = NULL;
 
-	PTHREAD_RWLOCK_unlock(&dir_hdl->lock);
+	PTHREAD_RWLOCK_unlock(&dir_hdl->obj_lock);
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -565,7 +565,7 @@ static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
 			      struct pseudo_fsal_obj_handle,
 			      obj_handle);
 
-	PTHREAD_RWLOCK_wrlock(&dir_hdl->lock);
+	PTHREAD_RWLOCK_wrlock(&dir_hdl->obj_lock);
 
 	/* Check if directory is empty */
 	numlinks = atomic_fetch_uint32_t(&hdl->numlinks);
@@ -591,7 +591,7 @@ static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
 	error = ERR_FSAL_NO_ERROR;
 
 unlock:
-	PTHREAD_RWLOCK_unlock(&dir_hdl->lock);
+	PTHREAD_RWLOCK_unlock(&dir_hdl->obj_lock);
 
 	return fsalstat(error, 0);
 }

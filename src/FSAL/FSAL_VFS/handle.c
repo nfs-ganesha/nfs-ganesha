@@ -976,7 +976,7 @@ static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
 	 * We only take a read lock because we are not changing the state of
 	 * the file descriptor.
 	 */
-	PTHREAD_RWLOCK_rdlock(&obj_hdl->lock);
+	PTHREAD_RWLOCK_rdlock(&obj_hdl->obj_lock);
 
 	if (obj_hdl->type == REGULAR_FILE &&
 	    myself->u.file.fd.openflags != FSAL_O_CLOSED) {
@@ -1034,7 +1034,7 @@ static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
 
  out_unlock:
 
-	PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+	PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
  out:
 	LogFullDebug(COMPONENT_FSAL, "returning %d, %d", fsal_error, retval);
@@ -1228,7 +1228,7 @@ static fsal_status_t renamefile(struct fsal_obj_handle *obj_hdl,
  * @brief Open file and get attributes.
  *
  * This function opens a file and returns the file descriptor and fetches
- * the attributes. The obj_hdl->lock MUST be held for this call.
+ * the attributes. The obj_hdl->obj_lock MUST be held for this call.
  *
  * @param[in]     exp         The fsal_export the file belongs to
  * @param[in]     myself      File to access
@@ -1489,11 +1489,11 @@ static void release(struct fsal_obj_handle *obj_hdl)
 		/* Take write lock on object to protect file descriptor.
 		 * This can block over an I/O operation.
 		 */
-		PTHREAD_RWLOCK_wrlock(&obj_hdl->lock);
+		PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
 
 		st = vfs_close_my_fd(&myself->u.file.fd);
 
-		PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
 		if (FSAL_IS_ERROR(st)) {
 			LogCrit(COMPONENT_FSAL,

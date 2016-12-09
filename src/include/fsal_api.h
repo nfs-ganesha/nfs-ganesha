@@ -2999,7 +2999,7 @@ struct fsal_obj_handle {
 	struct fsal_module *fsal;	/*< Link back to fsal module */
 	struct fsal_obj_ops obj_ops;	/*< Operations vector */
 
-	pthread_rwlock_t lock;		/*< Lock on handle */
+	pthread_rwlock_t obj_lock;		/*< Lock on handle */
 
 	/** Pointer to the cached attributes.
 	 *

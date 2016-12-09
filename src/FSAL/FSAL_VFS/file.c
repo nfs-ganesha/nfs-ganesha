@@ -165,11 +165,11 @@ fsal_status_t vfs_close(struct fsal_obj_handle *obj_hdl)
 	/* Take write lock on object to protect file descriptor.
 	 * This can block over an I/O operation.
 	 */
-	PTHREAD_RWLOCK_wrlock(&obj_hdl->lock);
+	PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
 
 	status = vfs_close_my_fd(&myself->u.file.fd);
 
-	PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+	PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
 	return status;
 }
@@ -242,11 +242,11 @@ fsal_status_t vfs_merge(struct fsal_obj_handle *orig_hdl,
 				    obj_handle);
 
 		/* This can block over an I/O operation. */
-		PTHREAD_RWLOCK_wrlock(&orig_hdl->lock);
+		PTHREAD_RWLOCK_wrlock(&orig_hdl->obj_lock);
 
 		status = merge_share(&orig->u.file.share, &dupe->u.file.share);
 
-		PTHREAD_RWLOCK_unlock(&orig_hdl->lock);
+		PTHREAD_RWLOCK_unlock(&orig_hdl->obj_lock);
 	}
 
 	return status;
@@ -378,7 +378,7 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 			 */
 
 			/* This can block over an I/O operation. */
-			PTHREAD_RWLOCK_wrlock(&obj_hdl->lock);
+			PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
 
 			/* Check share reservation conflicts. */
 			status = check_share_conflict(&myself->u.file.share,
@@ -386,7 +386,7 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 						      false);
 
 			if (FSAL_IS_ERROR(status)) {
-				PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+				PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 				return status;
 			}
 
@@ -397,13 +397,13 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 					      FSAL_O_CLOSED,
 					      openflags);
 
-			PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+			PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 		} else {
 			/* We need to use the global fd to continue, and take
 			 * the lock to protect it.
 			 */
 			my_fd = &hdl->u.file.fd;
-			PTHREAD_RWLOCK_wrlock(&obj_hdl->lock);
+			PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
 		}
 
 		status = vfs_open_my_fd(myself, openflags, posix_flags, my_fd);
@@ -413,7 +413,7 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 				/* Release the lock taken above, and return
 				 * since there is nothing to undo.
 				 */
-				PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+				PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 				return status;
 			} else {
 				/* Error - need to release the share */
@@ -456,7 +456,7 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 			 * status. If success, we haven't done any permission
 			 * check so ask the caller to do so.
 			 */
-			PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+			PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 			*caller_perm_check = !FSAL_IS_ERROR(status);
 			return status;
 		}
@@ -479,13 +479,13 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 		 * and undo the update of the share counters.
 		 * This can block over an I/O operation.
 		 */
-		PTHREAD_RWLOCK_wrlock(&obj_hdl->lock);
+		PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
 
 		update_share_counters(&myself->u.file.share,
 				      openflags,
 				      FSAL_O_CLOSED);
 
-		PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
 		return status;
 	}
@@ -745,14 +745,14 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 		 */
 
 		/* This can block over an I/O operation. */
-		PTHREAD_RWLOCK_wrlock(&(*new_obj)->lock);
+		PTHREAD_RWLOCK_wrlock(&(*new_obj)->obj_lock);
 
 		/* Take the share reservation now by updating the counters. */
 		update_share_counters(&hdl->u.file.share,
 				      FSAL_O_CLOSED,
 				      openflags);
 
-		PTHREAD_RWLOCK_unlock(&(*new_obj)->lock);
+		PTHREAD_RWLOCK_unlock(&(*new_obj)->obj_lock);
 	}
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
@@ -819,7 +819,7 @@ fsal_status_t vfs_reopen2(struct fsal_obj_handle *obj_hdl,
 	}
 
 	/* This can block over an I/O operation. */
-	PTHREAD_RWLOCK_wrlock(&obj_hdl->lock);
+	PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
 
 	old_openflags = my_share_fd->openflags;
 
@@ -827,7 +827,7 @@ fsal_status_t vfs_reopen2(struct fsal_obj_handle *obj_hdl,
 	status = check_share_conflict(&myself->u.file.share, openflags, false);
 
 	if (FSAL_IS_ERROR(status)) {
-		PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
 		return status;
 	}
@@ -837,7 +837,7 @@ fsal_status_t vfs_reopen2(struct fsal_obj_handle *obj_hdl,
 	 */
 	update_share_counters(&myself->u.file.share, old_openflags, openflags);
 
-	PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+	PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
 	status = vfs_open_my_fd(myself, openflags, posix_flags, my_fd);
 
@@ -851,13 +851,13 @@ fsal_status_t vfs_reopen2(struct fsal_obj_handle *obj_hdl,
 		/* We had a failure on open - we need to revert the share.
 		 * This can block over an I/O operation.
 		 */
-		PTHREAD_RWLOCK_wrlock(&obj_hdl->lock);
+		PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
 
 		update_share_counters(&myself->u.file.share,
 				      openflags,
 				      old_openflags);
 
-		PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 	}
 
 	return status;
@@ -1040,7 +1040,7 @@ fsal_status_t vfs_read2(struct fsal_obj_handle *obj_hdl,
 		close(my_fd);
 
 	if (has_lock)
-		PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
 	return status;
 }
@@ -1136,7 +1136,7 @@ fsal_status_t vfs_write2(struct fsal_obj_handle *obj_hdl,
 		close(my_fd);
 
 	if (has_lock)
-		PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
 	fsal_restore_ganesha_credentials();
 	return status;
@@ -1200,7 +1200,7 @@ fsal_status_t vfs_commit2(struct fsal_obj_handle *obj_hdl,
 		close(out_fd->fd);
 
 	if (has_lock)
-		PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
 	return status;
 }
@@ -1376,7 +1376,7 @@ fsal_status_t vfs_lock_op2(struct fsal_obj_handle *obj_hdl,
 		close(my_fd);
 
 	if (has_lock)
-		PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
 	return fsalstat(posix2fsal_error(retval), retval);
 }
@@ -1518,7 +1518,7 @@ fsal_status_t vfs_getattr2(struct fsal_obj_handle *obj_hdl,
 		close(my_fd);
 
 	if (has_lock)
-		PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
 	return status;
 }
@@ -1792,7 +1792,7 @@ fsal_status_t vfs_setattr2(struct fsal_obj_handle *obj_hdl,
 		close(my_fd);
 
 	if (has_lock)
-		PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
 	return status;
 }
@@ -1827,13 +1827,13 @@ fsal_status_t vfs_close2(struct fsal_obj_handle *obj_hdl,
 		/* This is a share state, we must update the share counters */
 
 		/* This can block over an I/O operation. */
-		PTHREAD_RWLOCK_wrlock(&obj_hdl->lock);
+		PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
 
 		update_share_counters(&myself->u.file.share,
 				      my_fd->openflags,
 				      FSAL_O_CLOSED);
 
-		PTHREAD_RWLOCK_unlock(&obj_hdl->lock);
+		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 	}
 
 	return vfs_close_my_fd(my_fd);
