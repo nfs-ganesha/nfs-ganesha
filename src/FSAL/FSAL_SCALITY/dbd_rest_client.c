@@ -39,6 +39,7 @@
 #define DIRECTORY_CONTENT_TYPE "application/x-directory"
 #define BUCKET_BASE_PATH "/default/bucket"
 #define ATTRIBUTES_BASE_PATH "/default/attributes"
+#define METADATA_INFORMATION_PATH "/default/metadataInformation"
 
 struct dbd_response {
 	long http_status;
@@ -696,7 +697,7 @@ dbd_readdir(struct scality_fsal_export* export,
 				break;
 			}
 
-                        int i;
+			int i;
 			for (i = 0 ; i < count ; ++i ) {
 				dirent_t *p = &dirents[i];
 				LogDebug(COMPONENT_FSAL,
@@ -1104,7 +1105,6 @@ get_payload(struct scality_fsal_export* export,
 	char date[64];
 	time_t time = object_hdl->attributes.mtime.tv_sec;
 	struct tm tm;
-	char size[32];
 	size_t ret;
 	char md5[36];
 	bool regular_file = REGULAR_FILE == object_hdl->attributes.type;
@@ -1140,10 +1140,10 @@ get_payload(struct scality_fsal_export* export,
 	json_object_set(metadata, "x-amz-server-side-encryption-customer-algorithm", json_string(""));
 	json_object_set(metadata, "x-amz-version-id", json_string("null"));
 
-	snprintf(size, sizeof(size), "%zu", regular_file
-		 ? object_hdl->attributes.filesize
-		 : 0 );
-	json_object_set(metadata, "content-length", json_string(size));
+	json_object_set(metadata, "content-length",
+			json_integer(regular_file
+				     ? object_hdl->attributes.filesize
+				     : 0));
 	if ( object_hdl->n_locations ) {
 		json_t *js_locations = json_array();
 		struct avltree_node *node;
@@ -1179,13 +1179,17 @@ get_payload(struct scality_fsal_export* export,
 	json_object_set(acl, "READ_ACP", json_array());
 
 	char *payload_str = json_dumps(metadata, JSON_COMPACT);
-	json_t *payload = json_object();
-	json_object_set(payload, "data", json_string(payload_str));
-	free(payload_str);
-	payload_str = json_dumps(payload, JSON_COMPACT);
+	json_t* payload = NULL;
+	if (export->metadata_version < 1) {
+		payload = json_object();
+		json_object_set(payload, "data", json_string(payload_str));
+		free(payload_str);
+		payload_str = json_dumps(payload, JSON_COMPACT);
+	}
 
 	json_decref(metadata);
-	json_decref(payload);
+	if (payload)
+		json_decref(payload);
 
 	return payload_str;
 }
@@ -1291,5 +1295,33 @@ dbd_post(struct scality_fsal_export* export,
 	if (curl)
 		curl_easy_cleanup(curl);
 	free(payload);
+	return ret;
+}
+
+
+int
+dbd_metadata_get_version(struct scality_fsal_export *export)
+{
+	int ret = 0;
+	dbd_response_t *response = NULL;
+
+	response = dbd_get(export, METADATA_INFORMATION_PATH, "", NULL);
+	if ( NULL == response ) {
+		ret = -1;
+	} else  if ( response->http_status == 404) {
+		export->metadata_version = 0;
+	} else if ( response->http_status == 200 ) {
+		json_t *metadata_version = json_object_get(response->body,
+							   "metadataVersion");
+		if ( json_typeof(metadata_version) != JSON_INTEGER )
+			ret = -1;
+		else
+			export->metadata_version =
+				json_integer_value(metadata_version);
+	} else {
+		return -1;
+	}
+	if (response)
+		dbd_response_free(response);
 	return ret;
 }

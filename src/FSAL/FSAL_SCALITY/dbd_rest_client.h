@@ -107,4 +107,6 @@ int
 dbd_post(struct scality_fsal_export* export,
 	 struct scality_fsal_obj_handle *object_hdl);
 
+int
+dbd_metadata_get_version(struct scality_fsal_export *export);
 #endif /* __DBD_REST_CLIENT_H__ */

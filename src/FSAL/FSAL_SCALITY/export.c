@@ -44,6 +44,7 @@
 #include "FSAL/fsal_commonlib.h"
 #include "FSAL/fsal_config.h"
 #include "scality_methods.h"
+#include "dbd_rest_client.h"
 #include "nfs_exports.h"
 #include "export_mgr.h"
 
@@ -338,6 +339,7 @@ fsal_status_t scality_create_export(struct fsal_module *fsal_hdl,
 {
 	struct scality_fsal_export *myself;
 	int retval = 0;
+	fsal_status_t status;
 
 	myself = gsh_calloc(1, sizeof(struct scality_fsal_export));
 
@@ -373,18 +375,23 @@ fsal_status_t scality_create_export(struct fsal_module *fsal_hdl,
 		/* seriously bad */
 		LogMajor(COMPONENT_FSAL,
 			 "Could not attach export");
-		gsh_free(myself->export_path);
-		gsh_free(myself->root_handle);
-		free_export_ops(&myself->export);
-		gsh_free(myself);	/* elvis has left the building */
 
-		return fsalstat(posix2fsal_error(retval), retval);
+		status = fsalstat(posix2fsal_error(retval), retval);
+		goto bad;
 	}
 
 	myself->export.fsal = fsal_hdl;
 
 	if ( up_ops ) {
 		myself->export.up_ops = up_ops;
+	}
+
+	retval = dbd_metadata_get_version(myself);
+	if (retval != 0) {
+		LogCrit(COMPONENT_FSAL,
+		        "Unable to retrieve metadata protocol version");
+		status = fsalstat(ERR_FSAL_SERVERFAULT, 0);
+		goto bad;
 	}
 
 	/* Save the export path. */
@@ -398,4 +405,10 @@ fsal_status_t scality_create_export(struct fsal_module *fsal_hdl,
 		 myself->bucket, op_ctx->ctx_export->fullpath);
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+ bad:
+	gsh_free(myself->export_path);
+	gsh_free(myself->root_handle);
+	free_export_ops(&myself->export);
+	gsh_free(myself);	/* elvis has left the building */
+	return status;
 }
