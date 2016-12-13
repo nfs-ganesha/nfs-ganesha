@@ -657,8 +657,6 @@ dbd_dirents(struct scality_fsal_export* export,
 	return 0;
 }
 
-__thread char *previous_entry = NULL;
-
 int
 dbd_readdir(struct scality_fsal_export* export,
 	    struct scality_fsal_obj_handle *myself,
@@ -690,20 +688,9 @@ dbd_readdir(struct scality_fsal_export* export,
 		 myself->object, seekloc);
 	if (!*eof)
 		do {
-			free(previous_entry);
-			asprintf(&previous_entry, "%s", marker);
 			int ret = dbd_dirents(export, myself, marker,
 					      dirents, &count,
 					      &is_last);
-			/*
-			if (!is_last) {
-				LogCrit(COMPONENT_FSAL, "=> FIRST dent  =%s"S3_DELIMITER"%s",
-					myself->object,
-					dirents->name);
-				LogCrit(COMPONENT_FSAL, "=> CONT. marker=%s",
-					marker);
-			}
-			*/
 			if ( ret < 0 ) {
 				ret = -1;
 				break;
@@ -715,24 +702,10 @@ dbd_readdir(struct scality_fsal_export* export,
 				LogDebug(COMPONENT_FSAL,
 					 "readdir dent: %s",
 					 p->name);
-				{
-					if (strcmp(previous_entry, p->name) > 0) {
-						LogCrit(COMPONENT_FSAL,
-							"doublon %s, %s, and i=%d",
-							previous_entry, p->name, i);
-					}
-					/*
-					else {
-						snprintf(previous_entry, sizeof previous_entry, "%s",
-							 p->name);
-					}
-					*/
-				}
 				if (!cb(p->name, dir_state, &seekloc)) {
 					LogCrit(COMPONENT_FSAL, "cb returned something true");
 					if ( is_last && i == count-1 )
 						*eof = true;
-					//LogCrit(COMPONENT_FSAL, "PLOP expect next readdir at [%s"S3_DELIMITER"%s]", myself->object, p->name );
 					dirent_deinit(dirents, count);
 					goto exit_loop;
 				}
