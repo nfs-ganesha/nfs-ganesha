@@ -373,7 +373,7 @@ static inline drc_t *alloc_tcp_drc(enum drc_type dtype)
 	drc->maxsize = nfs_param.core_param.drc.tcp.size;
 	drc->cachesz = nfs_param.core_param.drc.tcp.cachesz;
 	drc->npart = nfs_param.core_param.drc.tcp.npart;
-	drc->hiwat = nfs_param.core_param.drc.udp.hiwat;
+	drc->hiwat = nfs_param.core_param.drc.tcp.hiwat;
 
 	PTHREAD_MUTEX_init(&drc->mtx, NULL);
 
