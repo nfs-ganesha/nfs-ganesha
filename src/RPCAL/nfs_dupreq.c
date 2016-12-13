@@ -1078,6 +1078,7 @@ dupreq_status_t nfs_dupreq_finish(struct svc_req *req, nfs_res_t *res_nfs)
 	dupreq_entry_t *ov = NULL, *dv = (dupreq_entry_t *)req->rq_u1;
 	dupreq_status_t status = DUPREQ_SUCCESS;
 	struct rbtree_x_part *t;
+	struct rbtree_x_part *saved_part;
 	drc_t *drc = NULL;
 	int16_t cnt = 0;
 
@@ -1130,9 +1131,33 @@ dq_retry:
 
 			/* remove dict entry */
 			t = rbtx_partition_of_scalar(&drc->xt, ov->hk);
-			/* interlock */
+			saved_part = t;
+
+			/* Need to acquire partition lock, but the lock
+			 * order is partition lock followed by drc lock.
+			 * Drop drc lock and reacquire it!
+			 */
 			PTHREAD_MUTEX_unlock(&drc->mtx);
 			PTHREAD_MUTEX_lock(&t->mtx);	/* partition lock */
+			PTHREAD_MUTEX_lock(&drc->mtx);
+
+			/* Since we dropped drc lock and reacquired it,
+			 * the drc dupreq list may have changed. Get the
+			 * dupreq entry from the list again.
+			 */
+			ov = TAILQ_FIRST(&drc->dupreq_q);
+			t = rbtx_partition_of_scalar(&drc->xt, ov->hk);
+
+			/* Make sure that we have the correct partition
+			 * lock for the dupreq we are going to work on.
+			 * If the saved partition is different from the
+			 * partition of the current dupreq, we need to
+			 * backout.
+			 */
+			if (t != saved_part) {
+				PTHREAD_MUTEX_unlock(&t->mtx);
+				goto unlock;
+			}
 
 			/* check refcnt again under partition lock.
 			 * nfs_dupreq_start() could use a 0 refcnt
@@ -1140,9 +1165,9 @@ dq_retry:
 			 */
 			if (ov->refcnt > 0) {
 				PTHREAD_MUTEX_unlock(&t->mtx);
-				goto out;
+				goto unlock;
 			}
-			PTHREAD_MUTEX_lock(&drc->mtx);
+
 			/* remove q entry */
 			TAILQ_REMOVE(&drc->dupreq_q, ov, fifo_q);
 			--(drc->size);
