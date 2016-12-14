@@ -56,6 +56,16 @@ struct dbd_get_parameters {
 typedef struct dbd_response dbd_response_t;
 typedef struct dbd_get_parameters dbd_get_parameters_t;
 
+typedef struct dbd_dirent {
+	char *name;
+	dbd_dtype_t dtype;
+
+	struct timespec last_modified;
+	long long filesize;
+} dirent_t;
+
+static __thread struct dbd_dirent *listed_dirent = NULL;
+
 
 static struct timespec
 iso8601_str2timespec(const char* ts_str)
@@ -113,7 +123,17 @@ dbd_get(struct scality_fsal_export *export,
 	const char *object,
 	dbd_get_parameters_t *parameters) {
 
-
+	if (object) {
+		LogDebug(COMPONENT_FSAL,
+			 "dbd_get(%s..%s)", base_path, object);
+	}
+	else if ( parameters && parameters->prefix ) {
+		LogDebug(COMPONENT_FSAL,
+			 "dbd_get(%s..prefix=%s, marker=%s, delimiter=%s)",
+			 base_path, parameters->prefix,
+			 parameters->marker?:"",
+			 parameters->delimiter?:"");
+	}
 	if ( !object == !parameters ) {
 		LogCrit(COMPONENT_FSAL,
 			"BUG: Invalid parameters, object "
@@ -343,24 +363,123 @@ dbd_is_last(struct scality_fsal_export *export,
 int dbd_lookup(struct scality_fsal_export *export,
 	       struct scality_fsal_obj_handle *parent_hdl,
 	       const char *name,
-	       dbd_dtype_t *dtypep)
+	       dbd_dtype_t *dtypep,
+	       struct timespec *last_modifiedp,
+	       long long *filesizep,
+	       bool *attrs_loadedp)
 {
+	assert(NULL != dtypep);
+	assert(NULL != last_modifiedp);
+	assert(NULL != filesizep);
+	assert(NULL != attrs_loadedp);
 	char object[MAX_URL_SIZE];
 	int len;
+
+	if (listed_dirent) {
+		*dtypep = listed_dirent->dtype;
+		*last_modifiedp = listed_dirent->last_modified;
+		*filesizep = listed_dirent->filesize;
+		*attrs_loadedp = true;
+		return 0;
+	}
+	*attrs_loadedp = false;
+
 	len = snprintf(object, sizeof(object), "%s%s%s",
 		       parent_hdl->object?:"",
-		       parent_hdl->object && parent_hdl->object[0] != '\0' ?S3_DELIMITER:"", name);
+		       parent_hdl->object &&
+		       parent_hdl->object[0] != '\0' ?S3_DELIMITER:"", name);
 	if ( len >= sizeof(object) ) {
 		LogCrit(COMPONENT_FSAL, "object name too long");
 		return -1;
 	}
-	return dbd_lookup_object(export, object, dtypep);
+	return dbd_lookup_object(export, object, dtypep,
+				 last_modifiedp,
+				 filesizep,
+				 attrs_loadedp);
 }
+
+static int
+get_attributes_from_exact_match(json_t *body,
+				const char *object,
+				struct timespec *last_modifiedp,
+				long long *filesizep)
+{
+	json_t *content_length = json_object_get(body, "content-length");
+	if ( NULL == content_length ) {
+		LogCrit(COMPONENT_FSAL,
+			"content-length is not set on %s",
+			object);
+		return -1;
+	}
+	switch(json_typeof(content_length)) {
+	case JSON_STRING:
+		*filesizep = atoi(json_string_value(content_length));
+		break;
+	case JSON_INTEGER:
+		*filesizep = json_integer_value(content_length);
+		break;
+	case JSON_REAL:
+		*filesizep = json_real_value(content_length);
+		break;
+	default:
+		*filesizep = 0;
+	}
+	json_t *last_modified = json_object_get(body, "last-modified");
+	switch(json_typeof(last_modified)) {
+	case JSON_STRING: {
+		const char *ts_str = json_string_value(last_modified);
+		*last_modifiedp = iso8601_str2timespec(ts_str);
+		break;
+	}
+	default:
+		LogCrit(COMPONENT_FSAL,
+			"Unknown last-modified field type on %s",
+			object);
+		return -1;
+		break;
+	}
+	return 0;
+}
+
+static int
+get_attributes_from_listing_content(json_t *content,
+				    struct timespec *last_modifiedp,
+				    long long *filesizep)
+{
+	json_t *value = json_object_get(content, "value");
+	json_t *last_modified = NULL;
+	json_t *size = NULL;
+	if (NULL != value) {
+		last_modified = json_object_get(value,
+						"LastModified");
+		size = json_object_get(value,
+				       "Size");
+	}
+	if (NULL == value ||
+	    NULL == last_modified ||
+	    NULL == size) {
+		LogCrit(COMPONENT_FSAL,
+			"Could not get entry value from listing");
+		return -1;
+	}
+	if (last_modifiedp)
+		*last_modifiedp =
+			iso8601_str2timespec(json_string_value(last_modified));
+	if (filesizep)
+		*filesizep = json_integer_value(size);
+	return 0;
+}
+
+
+
 
 int
 dbd_lookup_object(struct scality_fsal_export *export,
 		  const char *object,
-		  dbd_dtype_t *dtypep)
+		  dbd_dtype_t *dtypep,
+		  struct timespec *last_modifiedp,
+		  long long *filesizep,
+		  bool *attrs_loadedp)
 {
 	int ret = -1;
 	char prefix[MAX_URL_SIZE];
@@ -369,53 +488,70 @@ dbd_lookup_object(struct scality_fsal_export *export,
 	len = snprintf(prefix, sizeof(prefix), "%s", object);
 
 	dbd_response_t *exact_match_response = NULL;
-	dbd_response_t *prefix_response = NULL;
 
+	LogDebug(COMPONENT_FSAL, "lookup exact match %s", object);
 	exact_match_response = dbd_get(export, BUCKET_BASE_PATH, prefix, NULL);
 	if ( NULL == exact_match_response )
 		goto end;
 
-	// add a trailing slash to lookup a common prefix
-	snprintf(prefix+len, sizeof(prefix)-len, "%s", S3_DELIMITER);
-	dbd_get_parameters_t parameters = {
-		.prefix = prefix,
-		.marker = NULL,
-		.delimiter = S3_DELIMITER,
-		.maxkeys = 1
-	};
 
-	prefix_response = dbd_get(export, BUCKET_BASE_PATH, NULL, &parameters);
-	if ( NULL == prefix_response || prefix_response->http_status != 200 )
-		goto end;
+	if ( 200 == exact_match_response->http_status ) {
+		dtype = DBD_DTYPE_REGULAR;
+		if (last_modifiedp && filesizep && attrs_loadedp) {
+			ret = get_attributes_from_exact_match(exact_match_response->body,
+							      object,
+							      last_modifiedp,
+							      filesizep);
+			if (0 == ret )
+				*attrs_loadedp = true;
+		}
+	} else if (404 == exact_match_response->http_status) {
+		dbd_response_t *prefix_response = NULL;
+		// add a trailing slash to lookup a common prefix
+		snprintf(prefix+len, sizeof(prefix)-len, "%s", S3_DELIMITER);
+		dbd_get_parameters_t parameters = {
+			.prefix = prefix,
+			.marker = NULL,
+			.delimiter = S3_DELIMITER,
+			.maxkeys = 1
+		};
+		LogDebug(COMPONENT_FSAL, "lookup prefix %s", prefix);
+		prefix_response = dbd_get(export, BUCKET_BASE_PATH,
+					  NULL, &parameters);
+		if ( NULL == prefix_response ||
+		     prefix_response->http_status != 200 )
+			goto end;
+		json_t *commonPrefixes = json_object_get(prefix_response->body,
+							 "CommonPrefixes");
+		json_t *contents = json_object_get(prefix_response->body,
+						   "Contents");
 
-	json_t *commonPrefixes = json_object_get(prefix_response->body, "CommonPrefixes");
-	json_t *contents = json_object_get(prefix_response->body, "Contents");
-
-	size_t commonPrefixes_sz = json_array_size(commonPrefixes);
-	size_t contents_sz = json_array_size(contents);
-	bool prefix_response_empty = ( 0 == commonPrefixes_sz + contents_sz );
-
-	if ( prefix_response_empty ) {
-		if ( 404 == exact_match_response->http_status ) {
+		size_t commonPrefixes_sz = json_array_size(commonPrefixes);
+		size_t contents_sz = json_array_size(contents);
+		bool prefix_response_empty =
+			( 0 == commonPrefixes_sz + contents_sz );
+		if ( prefix_response_empty ) {
 			dtype = DBD_DTYPE_ENOENT;
-		}
-		else if ( 200 == exact_match_response->http_status ) {
-			dtype = DBD_DTYPE_REGULAR;
-		}
-	}
-	else {
-		dtype = DBD_DTYPE_DIRECTORY;
-		if ( 200 == exact_match_response->http_status ) {
-			LogWarn(COMPONENT_FSAL,
-				"an object is in the way of %s, it will not be visible",
-				object);
+		} else {
 			dtype = DBD_DTYPE_DIRECTORY;
+			if (last_modifiedp && filesizep && attrs_loadedp &&
+			    contents_sz) {
+				json_t *content = json_array_get(contents, 0);
+				json_t *js_key = json_object_get(content,
+								 "Key");
+				const char *key = json_string_value(js_key);
+				if (key && 0 == strcmp(key, prefix)) {
+					ret = get_attributes_from_listing_content(content, last_modifiedp, filesizep);
+					if (attrs_loadedp && 0 == ret)
+						*attrs_loadedp = true;
+				}
+			}
 		}
+		dbd_response_free(prefix_response);
 	}
 	ret = 0;
  end:
 	dbd_response_free(exact_match_response);
-	dbd_response_free(prefix_response);
 	if (dtypep)
 		*dtypep = dtype;
 	return ret;
@@ -495,20 +631,17 @@ dbd_delete(struct scality_fsal_export *export,
 	return -!success;
 }
 
-
-
-typedef struct dbd_dirent {
-	char *name;
-	dbd_dtype_t dtype;
-} dirent_t;
-
 void
 dirent_init(dirent_t *dirent,
 	    const char *name,
-	    dbd_dtype_t dtype)
+	    dbd_dtype_t dtype,
+	    struct timespec last_modified,
+	    long long filesize)
 {
 	dirent->name = gsh_strdup(name);
 	dirent->dtype = dtype;
+	dirent->last_modified = last_modified;
+	dirent->filesize = filesize;
 }
 
 static void
@@ -625,7 +758,7 @@ dbd_dirents(struct scality_fsal_export* export,
 					       dirent, sizeof dirent);
 			if ( ret < 0 )
 				continue;
-			dirent_init(&dirents[count++], dirent, DBD_DTYPE_DIRECTORY);
+			dirent_init(&dirents[count++], dirent, DBD_DTYPE_DIRECTORY, (struct timespec){}, 0);
 		}
 	}
 	if ( contents_sz ) {
@@ -643,7 +776,17 @@ dbd_dirents(struct scality_fsal_export* export,
 					       dirent, sizeof dirent);
 			if ( ret < 0 )
 				continue;
-			dirent_init(&dirents[count++], dirent, DBD_DTYPE_REGULAR);
+			struct timespec last_modified;
+			long long filesize;
+			ret = get_attributes_from_listing_content(content,
+								  &last_modified,
+								  &filesize);
+			if ( ret < 0 )
+				continue;
+			dirent_init(&dirents[count++],
+				    dirent, DBD_DTYPE_REGULAR,
+				    last_modified,
+				    filesize);
 		}
 	}
 
@@ -700,16 +843,18 @@ dbd_readdir(struct scality_fsal_export* export,
 			int i;
 			for (i = 0 ; i < count ; ++i ) {
 				dirent_t *p = &dirents[i];
+				listed_dirent = p;
 				LogDebug(COMPONENT_FSAL,
 					 "readdir dent: %s",
 					 p->name);
 				if (!cb(p->name, dir_state, &seekloc)) {
-					LogCrit(COMPONENT_FSAL, "cb returned something true");
+					listed_dirent = NULL;
 					if ( is_last && i == count-1 )
 						*eof = true;
 					dirent_deinit(dirents, count);
 					goto exit_loop;
 				}
+				listed_dirent = NULL;
 			}
 			dirent_deinit(dirents, count);
 		} while ( !is_last );
@@ -764,56 +909,6 @@ dbd_collect_bucket_attributes(struct scality_fsal_export *export)
 }
 
 static int
-dbd_getattr_regular_file(struct scality_fsal_export* export,
-			 struct scality_fsal_obj_handle *object_hdl);
-
-static int
-dbd_getattr_directory(struct scality_fsal_export* export,
-		      struct scality_fsal_obj_handle *object_hdl)
-{
-	char prefix[MAX_URL_SIZE];
-	int ret = 0;
-	if ( '\0' == object_hdl->object[0] ) {
-		//if this fails for the root handle, export is killed by ganesha
-		return 0;
-	}
-
-	snprintf(prefix, sizeof(prefix), "%s"S3_DELIMITER, object_hdl->object);
-	dbd_get_parameters_t parameters = {
-		.prefix = prefix,
-		.marker = NULL,
-		.delimiter = S3_DELIMITER,
-		.maxkeys = 1
-	};
-	dbd_response_t *response = NULL;
-	response = dbd_get(export, BUCKET_BASE_PATH, NULL, &parameters);
-	if ( NULL != response && response->http_status == 200 ) {
-
-		json_t *commonPrefixes = json_object_get(response->body, "CommonPrefixes");
-		json_t *contents = json_object_get(response->body, "Contents");
-		size_t commonPrefixes_sz = json_array_size(commonPrefixes);
-		size_t contents_sz = json_array_size(contents);
-		bool response_empty = ( 0 == commonPrefixes_sz + contents_sz );
-
-		if ( response_empty ) {
-			//doesn't exist or prefix without the delimiter points to an object
-			ret = -1;
-		}
-	} else {
-		LogCrit(COMPONENT_FSAL,
-			"dbd_getattr_directory(%s) request failed",
-			object_hdl->object);
-		ret = -1;
-	}
-	dbd_response_free(response);
-
-	if ( 0 == ret ) {
-		(void)dbd_getattr_regular_file(export, object_hdl);
-	}
-	return ret;
-}
-
-static int
 dbd_get_parts_size(struct scality_fsal_export *export,
 		   struct scality_fsal_obj_handle *myself)
 {
@@ -849,6 +944,57 @@ dbd_get_parts_size(struct scality_fsal_export *export,
 
 static int
 dbd_getattr_regular_file(struct scality_fsal_export* export,
+			 struct scality_fsal_obj_handle *object_hdl);
+
+static int
+dbd_getattr_directory(struct scality_fsal_export* export,
+		      struct scality_fsal_obj_handle *object_hdl)
+{
+	char prefix[MAX_URL_SIZE];
+	int ret = 0;
+	if ( '\0' == object_hdl->object[0] ) {
+		//if this fails for the root handle, export is killed by ganesha
+		return 0;
+	}
+
+	snprintf(prefix, sizeof(prefix), "%s"S3_DELIMITER, object_hdl->object);
+	dbd_get_parameters_t parameters = {
+		.prefix = prefix,
+		.marker = NULL,
+		.delimiter = S3_DELIMITER,
+		.maxkeys = 1
+	};
+	dbd_response_t *response = NULL;
+	LogDebug(COMPONENT_FSAL, "getattr_dir(%s)", object_hdl->object);
+	response = dbd_get(export, BUCKET_BASE_PATH, NULL, &parameters);
+	if ( NULL != response && response->http_status == 200 ) {
+
+		json_t *commonPrefixes = json_object_get(response->body, "CommonPrefixes");
+		json_t *contents = json_object_get(response->body, "Contents");
+		size_t commonPrefixes_sz = json_array_size(commonPrefixes);
+		size_t contents_sz = json_array_size(contents);
+		bool response_empty = ( 0 == commonPrefixes_sz + contents_sz );
+
+		if ( response_empty ) {
+			//doesn't exist or prefix without the delimiter points to an object
+			ret = -1;
+		}
+	} else {
+		LogCrit(COMPONENT_FSAL,
+			"dbd_getattr_directory(%s) request failed",
+			object_hdl->object);
+		ret = -1;
+	}
+	dbd_response_free(response);
+
+	if ( 0 == ret ) {
+		(void)dbd_getattr_regular_file(export, object_hdl);
+	}
+	return ret;
+}
+
+static int
+dbd_getattr_regular_file(struct scality_fsal_export* export,
 			 struct scality_fsal_obj_handle *object_hdl)
 {
 	LogDebug(COMPONENT_FSAL,
@@ -861,11 +1007,11 @@ dbd_getattr_regular_file(struct scality_fsal_export* export,
 
 	scality_content_lock(object_hdl);
 
-	if (SCALITY_FSAL_OBJ_STATE_CLEAN != object_hdl->state ) {
+	if (object_hdl->state > SCALITY_FSAL_OBJ_STATE_CLEAN) {
 		ret = 0;
 		goto out;
 	}
-
+	object_hdl->state = SCALITY_FSAL_OBJ_STATE_CLEAN;
 	directory = DIRECTORY == object_hdl->attributes.type;
 
 	snprintf(object, sizeof object,
@@ -882,45 +1028,22 @@ dbd_getattr_regular_file(struct scality_fsal_export* export,
 		ret = -1;
 		goto out;
 	}
-	json_t *content_length = json_object_get(response->body, "content-length");
-	if ( NULL == content_length ) {
-		LogCrit(COMPONENT_FSAL,
-			"content-length is not set on %s",
-			object_hdl->object);
-		ret = -1;
-		goto out;
-	}
+	struct timespec last_modified;
 	long long filesize;
-	switch(json_typeof(content_length)) {
-	case JSON_STRING:
-		filesize = atoi(json_string_value(content_length));
-		break;
-	case JSON_INTEGER:
-		filesize = json_integer_value(content_length);
-		break;
-	case JSON_REAL:
-		filesize = json_real_value(content_length);
-		break;
-	default:
-		filesize = 0;
+	ret = get_attributes_from_exact_match(response->body,
+					      object_hdl->object,
+					      &last_modified,
+					      &filesize);
+	if (ret < 0) {
+		goto out;
 	}
 	object_hdl->attributes.filesize = filesize;
 	object_hdl->attributes.spaceused = filesize;
 
-	json_t *last_modified = json_object_get(response->body, "last-modified");
-	switch(json_typeof(last_modified)) {
-	case JSON_STRING: {
-		const char *ts_str = json_string_value(last_modified);
-		object_hdl->attributes.mtime = iso8601_str2timespec(ts_str);
-		object_hdl->attributes.atime = object_hdl->attributes.mtime;
-		object_hdl->attributes.ctime = object_hdl->attributes.mtime;
-		object_hdl->attributes.chgtime = object_hdl->attributes.mtime;
-		break;
-	}
-	default:
-		LogCrit(COMPONENT_FSAL, "Unknown last-modified field type");
-		break;
-	}
+	object_hdl->attributes.mtime = last_modified;
+	object_hdl->attributes.atime = object_hdl->attributes.mtime;
+	object_hdl->attributes.ctime = object_hdl->attributes.mtime;
+	object_hdl->attributes.chgtime = object_hdl->attributes.mtime;
 
 	struct avltree_node *node;
 	for ( node = avltree_first(&object_hdl->locations) ;
@@ -1087,6 +1210,20 @@ dbd_getattr(struct scality_fsal_export* export,
 		return dbd_getattr_directory(export, object_hdl);
 
 	case REGULAR_FILE:
+		if (listed_dirent) {
+			object_hdl->attributes.filesize =
+			object_hdl->attributes.spaceused =
+				listed_dirent->filesize;
+			object_hdl->attributes.mtime =
+				listed_dirent->last_modified;
+			object_hdl->attributes.atime =
+				object_hdl->attributes.mtime;
+			object_hdl->attributes.ctime =
+				object_hdl->attributes.mtime;
+			object_hdl->attributes.chgtime =
+				object_hdl->attributes.mtime;
+			return 0;
+		}
 		return dbd_getattr_regular_file(export, object_hdl);
 
 	default:

@@ -52,13 +52,22 @@
 fsal_status_t scality_open(struct fsal_obj_handle *obj_hdl,
 			  fsal_openflags_t openflags)
 {
+	fsal_status_t status = fsalstat(ERR_FSAL_NO_ERROR, 0);;
 	struct scality_fsal_obj_handle *myself = container_of(obj_hdl,
 							     struct scality_fsal_obj_handle,
 							     obj_handle);
 	LogDebug(COMPONENT_FSAL, "scality_open(%s)",myself->object);
 	myself->openflags = openflags;
+	if (myself->state == SCALITY_FSAL_OBJ_STATE_INCOMPLETE) {
+		struct attrlist dummy;
+		status = obj_hdl->obj_ops.getattrs(obj_hdl, &dummy);
+		if (FSAL_IS_ERROR(status)) {
+			myself->openflags = FSAL_O_CLOSED;
+		}
+		assert(myself->state == SCALITY_FSAL_OBJ_STATE_CLEAN);
+	}
 
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	return status;
 }
 
 /* scality_status
