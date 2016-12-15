@@ -254,6 +254,21 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 		}
 	}
 
+	/*
+	 * Workaround for broken libcephfs that doesn't handle the path
+	 * given in ceph_mount properly. Should be harmless for fixed
+	 * libcephfs as well (see http://tracker.ceph.com/issues/18254).
+	 */
+	ceph_status = ceph_conf_set(export->cmount, "client_mountpoint",
+				    op_ctx->ctx_export->fullpath);
+	if (ceph_status) {
+		status.major = ERR_FSAL_INVAL;
+		LogCrit(COMPONENT_FSAL,
+			"Unable to set Ceph client_mountpoint for %s: %d",
+			op_ctx->ctx_export->fullpath, ceph_status);
+		goto error;
+	}
+
 	ceph_status = ceph_mount(export->cmount, op_ctx->ctx_export->fullpath);
 	if (ceph_status != 0) {
 		status.major = ERR_FSAL_SERVERFAULT;
