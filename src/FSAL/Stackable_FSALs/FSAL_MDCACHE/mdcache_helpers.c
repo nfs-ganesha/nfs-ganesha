@@ -310,8 +310,9 @@ mdc_get_parent(struct mdcache_fsal_export *export, mdcache_entry_t *entry)
 /**
  * @brief Invalidates and releases all cached entries for a directory
  *
- * Invalidates all the entries for a cached directory.  The content
- * lock must be held for write when this function is called.
+ * Invalidates all the entries for a cached directory.
+ *
+ * @note The content lock MUST be held for write
  *
  * @param[in,out] entry  The directory to be managed
  *

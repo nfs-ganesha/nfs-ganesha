@@ -597,7 +597,9 @@ static fsal_status_t mdcache_readdir(struct fsal_obj_handle *dir_hdl,
 				 * MDCACHE_BYPASS_DIRCACHE and pass through */
 				atomic_set_uint32_t_bits(&directory->mde_flags,
 						 MDCACHE_BYPASS_DIRCACHE);
+				PTHREAD_RWLOCK_wrlock(&directory->content_lock);
 				mdcache_dirent_invalidate_all(directory);
+				PTHREAD_RWLOCK_unlock(&directory->content_lock);
 				return mdcache_readdir_uncached(directory,
 								whence,
 								dir_state,
@@ -824,7 +826,9 @@ static fsal_status_t mdcache_rename(struct fsal_obj_handle *obj_hdl,
 			LogDebug(COMPONENT_CACHE_INODE,
 				 "remove entry failed with status %s",
 				 fsal_err_txt(status));
+			PTHREAD_RWLOCK_wrlock(&mdc_newdir->content_lock);
 			mdcache_dirent_invalidate_all(mdc_newdir);
+			PTHREAD_RWLOCK_unlock(&mdc_newdir->content_lock);
 		}
 
 		/* Mark unreachable */
@@ -845,7 +849,9 @@ static fsal_status_t mdcache_rename(struct fsal_obj_handle *obj_hdl,
 		if (FSAL_IS_ERROR(status)) {
 			/* We're obviously out of date.  Throw out the cached
 			   directory */
+			PTHREAD_RWLOCK_wrlock(&mdc_newdir->content_lock);
 			mdcache_dirent_invalidate_all(mdc_newdir);
+			PTHREAD_RWLOCK_unlock(&mdc_newdir->content_lock);
 		}
 	} else {
 		LogDebug(COMPONENT_CACHE_INODE,
@@ -860,7 +866,9 @@ static fsal_status_t mdcache_rename(struct fsal_obj_handle *obj_hdl,
 			LogDebug(COMPONENT_CACHE_INODE,
 				 "Remove stale dirent returned %s",
 				 fsal_err_txt(status));
+			PTHREAD_RWLOCK_wrlock(&mdc_newdir->content_lock);
 			mdcache_dirent_invalidate_all(mdc_newdir);
+			PTHREAD_RWLOCK_unlock(&mdc_newdir->content_lock);
 		}
 
 		status = mdcache_dirent_add(mdc_newdir, new_name, mdc_obj);
@@ -870,7 +878,9 @@ static fsal_status_t mdcache_rename(struct fsal_obj_handle *obj_hdl,
 			   directory */
 			LogCrit(COMPONENT_CACHE_INODE, "Add dirent returned %s",
 				fsal_err_txt(status));
+			PTHREAD_RWLOCK_wrlock(&mdc_newdir->content_lock);
 			mdcache_dirent_invalidate_all(mdc_newdir);
+			PTHREAD_RWLOCK_unlock(&mdc_newdir->content_lock);
 		}
 
 		/* Remove the old entry */
@@ -879,7 +889,9 @@ static fsal_status_t mdcache_rename(struct fsal_obj_handle *obj_hdl,
 			LogDebug(COMPONENT_CACHE_INODE,
 				 "Remove old dirent returned %s",
 				 fsal_err_txt(status));
+			PTHREAD_RWLOCK_wrlock(&mdc_olddir->content_lock);
 			mdcache_dirent_invalidate_all(mdc_olddir);
+			PTHREAD_RWLOCK_unlock(&mdc_olddir->content_lock);
 		}
 	}
 
@@ -1215,8 +1227,11 @@ static fsal_status_t mdcache_unlink(struct fsal_obj_handle *dir_hdl,
 		if (status.major == ERR_FSAL_STALE)
 			(void)mdcache_kill_entry(parent);
 		else if (status.major == ERR_FSAL_NOTEMPTY &&
-			 (obj_hdl->type == DIRECTORY))
+			 (obj_hdl->type == DIRECTORY)) {
+			PTHREAD_RWLOCK_wrlock(&entry->content_lock);
 			mdcache_dirent_invalidate_all(entry);
+			PTHREAD_RWLOCK_unlock(&entry->content_lock);
+		}
 	} else {
 		/* Invalidate attributes of parent and entry */
 		atomic_clear_uint32_t_bits(&parent->mde_flags,
