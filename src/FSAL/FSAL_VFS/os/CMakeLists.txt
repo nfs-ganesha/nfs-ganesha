@@ -14,6 +14,7 @@ if(LINUX)
 endif(LINUX)
 
 add_library(fsal_os STATIC ${fsal_os_STAT_SRCS})
+add_sanitizers(fsal_os)
 
 ########### install files ###############
 

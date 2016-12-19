@@ -17,6 +17,7 @@ SET(gshdbus_STAT_SRCS
 )
 
 add_library(gshdbus STATIC ${gshdbus_STAT_SRCS})
+add_sanitizers(gshdbus)
 
 
 ########### install files ###############

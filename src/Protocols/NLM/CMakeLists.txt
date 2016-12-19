@@ -17,6 +17,7 @@ SET(nlm_STAT_SRCS
 )
 
 add_library(nlm STATIC ${nlm_STAT_SRCS})
+add_sanitizers(nlm)
 
 ########### next target ###############
 
@@ -26,6 +27,7 @@ if(LINUX)
    )
 
    add_executable(sm_notify.ganesha ${sm_notify_SRCS})
+   add_sanitizers(sm_notify.ganesha)
 
    target_link_libraries(sm_notify.ganesha
       ${PROTOCOLS}

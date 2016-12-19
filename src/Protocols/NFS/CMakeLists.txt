@@ -96,10 +96,12 @@ if(USE_NFS3)
 endif(USE_NFS3)
 
 add_library(nfsproto STATIC ${nfsproto_STAT_SRCS})
+add_sanitizers(nfsproto)
 
 set(nfs4callbackSRCS
    nfs4_cb_Compound.c
 )
 
 add_library(nfs4callbacks STATIC ${nfs4callbackSRCS})
+add_sanitizers(nfs4callbacks)
 

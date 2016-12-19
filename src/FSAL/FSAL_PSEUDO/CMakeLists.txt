@@ -15,5 +15,6 @@ SET(fsalpseudo_LIB_SRCS
 )
 
 add_library(fsalpseudo STATIC ${fsalpseudo_LIB_SRCS})
+add_sanitizers(fsalpseudo)
 
 ########### install files ###############

@@ -12,5 +12,6 @@ SET(idmap_STAT_SRCS
 )
 
 add_library(idmap STATIC ${idmap_STAT_SRCS})
+add_sanitizers(idmap)
 
 ########### install files ###############

@@ -13,6 +13,7 @@ set(string_utils_STAT_SRCS
 )
 
 add_library(string_utils STATIC ${string_utils_STAT_SRCS})
+add_sanitizers(string_utils)
 
 # hash function libraries
 
@@ -22,6 +23,7 @@ set(hash_SRCS
 )
 
 add_library(hash STATIC ${hash_SRCS})
+add_sanitizers(hash)
 
 # uid2grp mapper
 set( uid2grp_SRCS
@@ -29,13 +31,15 @@ set( uid2grp_SRCS
      uid2grp_cache.c
 )
 
-add_library( uid2grp STATIC ${uid2grp_SRCS} )
+add_library(uid2grp STATIC ${uid2grp_SRCS})
+add_sanitizers(uid2grp)
 
 # netgroup cache
 set(netgroup_cache_SRCS
     netgroup_cache.c
 )
-add_library(netgroup_cache STATIC ${netgroup_cache_SRCS} )
+add_library(netgroup_cache STATIC ${netgroup_cache_SRCS})
+add_sanitizers(netgroup_cache)
 
 ########### next target ###############
 
@@ -71,5 +75,6 @@ if(APPLE)
 endif(APPLE)
 
 add_library(support STATIC ${support_STAT_SRCS})
+add_sanitizers(support)
 
 ########### install files ###############

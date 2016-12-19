@@ -10,6 +10,7 @@ SET(NodeList_STAT_SRCS
 )
 
 add_library(NodeList STATIC ${NodeList_STAT_SRCS})
+add_sanitizers(NodeList)
 
 
 ########### install files ###############

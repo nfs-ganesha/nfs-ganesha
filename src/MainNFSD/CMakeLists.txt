@@ -64,6 +64,7 @@ if(USE_CB_SIMULATOR)
 endif(USE_CB_SIMULATOR)
 
 add_library(MainServices STATIC ${MainServices_STAT_SRCS})
+add_sanitizers(MainServices)
 
 # FSAL core sources
 # fsal_manager and fsal_destroyer are the only objects referenced by the
@@ -83,6 +84,7 @@ set(fsal_CORE_SRCS
    ../FSAL_UP/fsal_up_async.c
 )
 add_library(FsalCore STATIC ${fsal_CORE_SRCS})
+add_sanitizers(FsalCore)
 
 ########### next target ###############
 
@@ -94,6 +96,7 @@ add_executable(ganesha.nfsd
   ${ganesha.nfsd_SRCS}
   ${fsal_CORE_SRCS}
 )
+add_sanitizers(ganesha.nfsd)
 
 target_link_libraries(ganesha.nfsd
   MainServices

@@ -8,6 +8,7 @@ set(ganesha_trace_LIB_SRCS
 )
 
 add_library(ganesha_trace MODULE ${ganesha_trace_LIB_SRCS})
+add_sanitizers(ganesha_trace)
 
 target_link_libraries(ganesha_trace
   ${LTTNG_LIBRARIES}

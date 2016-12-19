@@ -18,6 +18,7 @@ if(LINUX)
 endif(LINUX)
 
 add_library(gos STATIC ${gos_STAT_SRCS})
+add_sanitizers(gos)
 
 ########### install files ###############
 

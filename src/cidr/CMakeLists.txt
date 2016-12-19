@@ -16,5 +16,6 @@ SET(cidr_STAT_SRCS
 )
 
 add_library(cidr STATIC ${cidr_STAT_SRCS})
+add_sanitizers(cidr)
 
 ########### install files ###############

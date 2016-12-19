@@ -11,6 +11,7 @@ SET(rquota_STAT_SRCS
 )
 
 add_library(rquota STATIC ${rquota_STAT_SRCS})
+add_sanitizers(rquota)
 
 target_link_libraries(rquota
   string_utils

@@ -38,5 +38,6 @@ SET(9p_STAT_SRCS
 )
 
 add_library(9p STATIC ${9p_STAT_SRCS})
+add_sanitizers(9p)
 
 ########### install files ###############

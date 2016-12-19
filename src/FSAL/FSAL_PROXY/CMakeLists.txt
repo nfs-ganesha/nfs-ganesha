@@ -21,6 +21,7 @@ if(PROXY_HANDLE_MAPPING)
 endif(PROXY_HANDLE_MAPPING)
 
 add_library(fsalproxy MODULE ${fsalproxy_LIB_SRCS})
+add_sanitizers(fsalproxy)
 
 target_link_libraries(fsalproxy 
 		      ${SYSTEM_LIBRARIES}

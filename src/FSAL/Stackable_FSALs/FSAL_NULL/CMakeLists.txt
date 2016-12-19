@@ -17,6 +17,7 @@ SET(fsalnull_LIB_SRCS
 )
 
 add_library(fsalnull MODULE ${fsalnull_LIB_SRCS})
+add_sanitizers(fsalnull)
 
 target_link_libraries(fsalnull
   gos

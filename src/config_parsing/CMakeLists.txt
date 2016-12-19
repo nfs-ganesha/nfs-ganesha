@@ -32,6 +32,7 @@ add_library(config_parsing STATIC
   ${BISON_ConfigParser_OUTPUTS}
   ${FLEX_ConfigScanner_OUTPUTS}
 )
+add_sanitizers(config_parsing)
 
 
 ########### next target ###############
@@ -41,6 +42,7 @@ SET(verif_syntax_SRCS
 )
 
 add_executable(verif_syntax EXCLUDE_FROM_ALL ${verif_syntax_SRCS})
+add_sanitizers(verif_syntax)
 
 target_link_libraries(verif_syntax config_parsing log ${CMAKE_THREAD_LIBS_INIT})
 
@@ -52,6 +54,7 @@ SET(test_parsing_SRCS
 )
 
 add_executable(test_parsing EXCLUDE_FROM_ALL ${test_parsing_SRCS})
+add_sanitizers(test_parsing)
 
 target_link_libraries(test_parsing config_parsing log ${CMAKE_THREAD_LIBS_INIT})
 

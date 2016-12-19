@@ -102,6 +102,7 @@ EXECUTE_PROCESS( COMMAND hostname
   )
 
 find_package(Toolchain REQUIRED)
+find_package(Sanitizers)
 
 # Add maintainer mode for (mainly) strict builds
 include(${CMAKE_SOURCE_DIR}/cmake/maintainer_mode.cmake)

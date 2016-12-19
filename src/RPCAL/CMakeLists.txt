@@ -10,5 +10,6 @@ if(_HAVE_GSSAPI)
 endif(_HAVE_GSSAPI)
 
 add_library(rpcal STATIC ${rpcal_STAT_SRCS})
+add_sanitizers(rpcal)
 
 ########### install files ###############

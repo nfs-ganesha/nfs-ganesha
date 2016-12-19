@@ -9,5 +9,6 @@ SET(avltree_STAT_SRCS
 )
 
 add_library(avltree STATIC ${avltree_STAT_SRCS})
+add_sanitizers(avltree)
 
 ########### install files ###############

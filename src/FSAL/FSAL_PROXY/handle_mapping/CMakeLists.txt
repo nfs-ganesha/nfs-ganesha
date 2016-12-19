@@ -10,6 +10,7 @@ SET(handlemapping_STAT_SRCS
 )
 
 add_library(handlemapping STATIC ${handlemapping_STAT_SRCS})
+add_sanitizers(handlemapping)
 
 
 ########### next target ###############

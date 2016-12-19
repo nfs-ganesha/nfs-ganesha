@@ -23,6 +23,7 @@ SET(log_STAT_SRCS
 )
 
 add_library(log STATIC ${log_STAT_SRCS})
+add_sanitizers(log)
 
 
 ########### next target ###############

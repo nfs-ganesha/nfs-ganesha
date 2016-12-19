@@ -33,5 +33,6 @@ SET(fsalmdcache_LIB_SRCS
 	)
 
 add_library(fsalmdcache STATIC ${fsalmdcache_LIB_SRCS})
+add_sanitizers(fsalmdcache)
 
 ########### install files ###############
