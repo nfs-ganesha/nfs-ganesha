@@ -63,6 +63,7 @@
 #define TRACEPOINT_PROBE_DYNAMIC_LINKAGE
 
 #include "gsh_lttng/logger.h"
+#include "gsh_lttng/mdcache.h"
 #include "gsh_lttng/nfs_rpc.h"
 #endif /* USE_LTTNG */
 

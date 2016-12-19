@@ -4,6 +4,7 @@ include_directories(
 
 set(ganesha_trace_LIB_SRCS
   logger.c
+  mdcache.c
   nfs_rpc.c
 )
 

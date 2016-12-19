@@ -56,6 +56,9 @@
 #include "gsh_intrinsic.h"
 #include "sal_functions.h"
 #include "nfs_exports.h"
+#ifdef USE_LTTNG
+#include "gsh_lttng/mdcache.h"
+#endif
 
 /**
  *
@@ -1214,6 +1217,10 @@ mdcache_lru_get(mdcache_entry_t **entry)
 	nentry->lru.cf = 0;
 	nentry->lru.lane = lru_lane_of_entry(nentry);
 
+#ifdef USE_LTTNG
+	tracepoint(mdcache, mdc_lru_ref,
+		   __func__, __LINE__, nentry, nentry->lru.refcnt);
+#endif
 	/* Enqueue. */
 	lru_insert_entry(nentry, &LRU[nentry->lru.lane].L1, LRU_LRU);
 
@@ -1339,17 +1346,29 @@ mdcache_is_noscan(mdcache_entry_t *entry)
  * @return FSAL status
  */
 fsal_status_t
-mdcache_lru_ref(mdcache_entry_t *entry, uint32_t flags)
+_mdcache_lru_ref(mdcache_entry_t *entry, uint32_t flags, const char *func,
+		 int line)
 {
 	mdcache_lru_t *lru = &entry->lru;
 	struct lru_q_lane *qlane = &LRU[lru->lane];
 	struct lru_q *q;
+#ifdef USE_LTTNG
+	int32_t refcnt;
+#endif
 
 	if ((flags & LRU_REQ_INITIAL) == 0)
 		if (lru->flags & LRU_CLEANUP)
 			return fsalstat(ERR_FSAL_STALE, 0);
 
-	(void) atomic_inc_int32_t(&entry->lru.refcnt);
+#ifdef USE_LTTNG
+	refcnt =
+#endif
+		atomic_inc_int32_t(&entry->lru.refcnt);
+
+#ifdef USE_LTTNG
+	tracepoint(mdcache, mdc_lru_ref,
+		   func, line, entry, refcnt);
+#endif
 
 	/* adjust LRU on initial refs */
 	if (flags & LRU_REQ_INITIAL) {
@@ -1404,7 +1423,8 @@ mdcache_lru_ref(mdcache_entry_t *entry, uint32_t flags)
  * @return true if entry freed, false otherwise
  */
 bool
-mdcache_lru_unref(mdcache_entry_t *entry, uint32_t flags)
+_mdcache_lru_unref(mdcache_entry_t *entry, uint32_t flags, const char *func,
+		   int line)
 {
 	int32_t refcnt;
 	bool do_cleanup = false;
@@ -1433,6 +1453,11 @@ mdcache_lru_unref(mdcache_entry_t *entry, uint32_t flags)
 	}
 
 	refcnt = atomic_dec_int32_t(&entry->lru.refcnt);
+
+#ifdef USE_LTTNG
+	tracepoint(mdcache, mdc_lru_unref,
+		   func, line, entry, refcnt);
+#endif
 
 	if (unlikely(refcnt == 0)) {
 
