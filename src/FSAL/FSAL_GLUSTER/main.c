@@ -73,8 +73,6 @@ static struct fsal_staticfsinfo_t default_gluster_info = {
 	.link_supports_permission_checks = true,
 };
 
-static struct glusterfs_fsal_module GlusterFS;
-
 static struct config_item glfs_params[] = {
 	CONF_ITEM_BOOL("pnfs_mds", false,
 		       fsal_staticfsinfo_t, pnfs_mds),
@@ -163,6 +161,9 @@ MODULE_INIT void glusterfs_init(void)
 	myself->m_ops.getdeviceinfo = getdeviceinfo;
 	myself->m_ops.fsal_pnfs_ds_ops = pnfs_ds_ops_init;
 
+	PTHREAD_MUTEX_init(&GlusterFS.lock, NULL);
+	glist_init(&GlusterFS.fs_obj);
+
 	LogDebug(COMPONENT_FSAL, "FSAL Gluster initialized");
 }
 
@@ -174,5 +175,11 @@ MODULE_FINI void glusterfs_unload(void)
 		return;
 	}
 
+	/* All the shares should have been unexported */
+	if (!glist_empty(&GlusterFS.fs_obj)) {
+		LogFatal(COMPONENT_FSAL,
+			"FSAL Gluster still contains active shares. Dying.. ");
+	}
+	PTHREAD_MUTEX_destroy(&GlusterFS.lock);
 	LogDebug(COMPONENT_FSAL, "FSAL Gluster unloaded");
 }

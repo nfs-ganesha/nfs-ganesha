@@ -281,7 +281,7 @@ fsal_status_t glusterfs_get_acl(struct glusterfs_export *glfs_export,
 
 	if (NFSv4_ACL_SUPPORT) {
 
-		buffxstat->e_acl = glfs_h_acl_get(glfs_export->gl_fs,
+		buffxstat->e_acl = glfs_h_acl_get(glfs_export->gl_fs->fs,
 						glhandle, ACL_TYPE_ACCESS);
 
 		if (!buffxstat->e_acl) {
@@ -292,7 +292,8 @@ fsal_status_t glusterfs_get_acl(struct glusterfs_export *glfs_export,
 		e_count = ace_count(buffxstat->e_acl);
 
 		if (buffxstat->is_dir) {
-			buffxstat->i_acl = glfs_h_acl_get(glfs_export->gl_fs,
+			buffxstat->i_acl =
+					 glfs_h_acl_get(glfs_export->gl_fs->fs,
 						glhandle, ACL_TYPE_DEFAULT);
 			i_count = ace_count(buffxstat->i_acl);
 		}
@@ -358,7 +359,7 @@ fsal_status_t glusterfs_set_acl(struct glusterfs_export *glfs_export,
 {
 	int rc = 0;
 
-	rc = glfs_h_acl_set(glfs_export->gl_fs, objhandle->glhandle,
+	rc = glfs_h_acl_set(glfs_export->gl_fs->fs, objhandle->glhandle,
 				ACL_TYPE_ACCESS, buffxstat->e_acl);
 	if (rc < 0) {
 		/** @todo: check if error is appropriate.*/
@@ -367,7 +368,7 @@ fsal_status_t glusterfs_set_acl(struct glusterfs_export *glfs_export,
 	}
 	/* For directories consider inherited acl too */
 	if (buffxstat->is_dir && buffxstat->i_acl) {
-		rc = glfs_h_acl_set(glfs_export->gl_fs, objhandle->glhandle,
+		rc = glfs_h_acl_set(glfs_export->gl_fs->fs, objhandle->glhandle,
 				ACL_TYPE_DEFAULT, buffxstat->i_acl);
 		if (rc < 0) {
 			LogMajor(COMPONENT_FSAL,
@@ -414,7 +415,7 @@ fsal_status_t glusterfs_process_acl(struct glfs *fs,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-int initiate_up_thread(struct glusterfs_export *glfsexport)
+int initiate_up_thread(struct glusterfs_fs *gl_fs)
 {
 
 	pthread_attr_t up_thr_attr;
@@ -460,10 +461,10 @@ int initiate_up_thread(struct glusterfs_export *glfsexport)
 	}
 
 	do {
-		err = pthread_create(&glfsexport->up_thread,
-					&up_thr_attr,
-					GLUSTERFSAL_UP_Thread,
-					glfsexport);
+		err = pthread_create(&gl_fs->up_thread,
+				     &up_thr_attr,
+				     GLUSTERFSAL_UP_Thread,
+				     gl_fs);
 		sleep(1);
 	} while (err && (err == EAGAIN) && (retries-- > 0));
 

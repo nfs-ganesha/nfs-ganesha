@@ -97,7 +97,7 @@ static nfsstat4 ds_read(struct fsal_ds_handle *const ds_pub,
 	if (ds->glhandle == NULL)
 		LogDebug(COMPONENT_PNFS, "ds_read glhandle NULL");
 
-	rc = glfs_h_anonymous_read(glfs_export->gl_fs, ds->glhandle,
+	rc = glfs_h_anonymous_read(glfs_export->gl_fs->fs, ds->glhandle,
 				   buffer, requested_length, offset);
 	if (rc < 0) {
 		LogMajor(COMPONENT_PNFS, "Read failed on DS");
@@ -152,7 +152,7 @@ static nfsstat4 ds_write(struct fsal_ds_handle *const ds_pub,
 	if (ds->glhandle == NULL)
 		LogDebug(COMPONENT_PNFS, "ds_write glhandle NULL");
 
-	rc = glfs_h_anonymous_write(glfs_export->gl_fs, ds->glhandle,
+	rc = glfs_h_anonymous_write(glfs_export->gl_fs->fs, ds->glhandle,
 				    buffer, write_length, offset);
 	if (rc < 0) {
 		LogMajor(COMPONENT_PNFS, "status after write %d", -rc);
@@ -170,7 +170,7 @@ static nfsstat4 ds_write(struct fsal_ds_handle *const ds_pub,
 
 	/* Incase of MDS being DS, there shall not be upcalls sent from
 	 * backend. Hence invalidate the entry here */
-	(void)upcall_inode_invalidate(glfs_export, ds->glhandle);
+	(void)upcall_inode_invalidate(glfs_export->gl_fs, ds->glhandle);
 
 	return NFS4_OK;
 }
@@ -207,7 +207,8 @@ static nfsstat4 ds_commit(struct fsal_ds_handle *const ds_pub,
 				     struct glusterfs_export, export);
 		struct glfs_fd *glfd = NULL;
 
-		glfd = glfs_h_open(glfs_export->gl_fs, ds->glhandle, O_RDWR);
+		glfd = glfs_h_open(glfs_export->gl_fs->fs, ds->glhandle,
+				   O_RDWR);
 		if (glfd == NULL) {
 			LogDebug(COMPONENT_PNFS, "glfd in ds_handle is NULL");
 			return NFS4ERR_SERVERFAULT;
@@ -275,7 +276,8 @@ static nfsstat4 make_ds_handle(struct fsal_pnfs_ds *const pds,
 	memcpy(globjhdl, hdl_desc->addr, GFAPI_HANDLE_LENGTH);
 
 	/* Create glfs_object for the DS handle */
-	ds->glhandle =	glfs_h_create_from_handle(glfs_export->gl_fs, globjhdl,
+	ds->glhandle =	glfs_h_create_from_handle(glfs_export->gl_fs->fs,
+						  globjhdl,
 						  GFAPI_HANDLE_LENGTH, &sb);
 	if (ds->glhandle == NULL) {
 		LogDebug(COMPONENT_PNFS,
