@@ -670,9 +670,11 @@ struct export_ops {
  * working data that is not necessary when unexported, but not free the export
  * itself, as there are still references to it.
  *
- * @param[in] exp_hdl The export to unexport.
+ * @param[in] exp_hdl	The export to unexport.
+ * @param[in] root_obj	The root object of the export
  */
-	 void (*unexport)(struct fsal_export *exp_hdl);
+	 void (*unexport)(struct fsal_export *exp_hdl,
+			  struct fsal_obj_handle *root_obj);
 
 /**
  * @brief Finalize an export

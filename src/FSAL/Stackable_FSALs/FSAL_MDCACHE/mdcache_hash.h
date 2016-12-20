@@ -384,7 +384,7 @@ cih_set_latched(mdcache_entry_t *entry, cih_latch_t *latch,
  * Remove cache entry with existence check.  The entry is assumed to
  * be hashed.
  *
- * @param entry [in] Entry to be removed.0
+ * @param entry [in] Entry to be removed.
  *
  * @return (void)
  */
