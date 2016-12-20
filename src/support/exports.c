@@ -2211,13 +2211,27 @@ out:
 	return my_status;
 }
 
+static inline void clean_up_export(struct gsh_export *export,
+				   struct fsal_obj_handle *root_obj)
+{
+	/* Make export unreachable */
+	pseudo_unmount_export(export);
+	remove_gsh_export(export->export_id);
+
+	/* Release state belonging to this export */
+	state_release_export(export);
+
+	/* Flush FSAL-specific state */
+	export->fsal_export->exp_ops.unexport(export->fsal_export, root_obj);
+}
+
 /**
- * @brief Release the root cache inode for an export.
+ * @brief Release all the export state, including the root object
  *
  * @param exp [IN] the export
  */
 
-void release_export_root(struct gsh_export *export)
+static void release_export(struct gsh_export *export)
 {
 	struct fsal_obj_handle *obj = NULL;
 	fsal_status_t fsal_status;
@@ -2248,28 +2262,14 @@ void release_export_root(struct gsh_export *export)
 	PTHREAD_RWLOCK_unlock(&export->lock);
 	PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
 
-	/* Release sentinal ref */
-	obj->obj_ops.put_ref(obj);
-
 	LogDebug(COMPONENT_EXPORT,
 		 "Released root obj %p for path %s on export_id=%d",
 		 obj, export->fullpath, export->export_id);
 
+	clean_up_export(export, obj);
+
 	/* Release ref taken above */
 	obj->obj_ops.put_ref(obj);
-}
-
-static inline void clean_up_export(struct gsh_export *export)
-{
-	/* Make export unreachable */
-	pseudo_unmount_export(export);
-	remove_gsh_export(export->export_id);
-
-	/* Release state belonging to this export */
-	state_release_export(export);
-
-	/* Flush FSAL-specific state */
-	export->fsal_export->exp_ops.unexport(export->fsal_export);
 }
 
 void unexport(struct gsh_export *export)
@@ -2289,8 +2289,8 @@ void unexport(struct gsh_export *export)
 		op_ctx_set = true;
 	}
 
-	release_export_root(export);
-	clean_up_export(export);
+	release_export(export);
+
 	if (op_ctx_set)
 		release_root_op_context();
 }

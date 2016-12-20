@@ -48,6 +48,7 @@
 #include "FSAL/fsal_commonlib.h"
 #include "FSAL/fsal_config.h"
 #include "mdcache_lru.h"
+#include "mdcache_hash.h"
 #include "nfs_exports.h"
 #include "export_mgr.h"
 
@@ -82,18 +83,22 @@ static const char *mdcache_get_name(struct fsal_export *exp_hdl)
  * Clean up all the cache entries on this export.
  *
  * @param[in] exp_hdl	Export to unexport
+ * @param[in] root_obj	Root object for export
  */
-static void mdcache_unexport(struct fsal_export *exp_hdl)
+static void mdcache_unexport(struct fsal_export *exp_hdl,
+			     struct fsal_obj_handle *root_obj)
 {
 	struct mdcache_fsal_export *exp = mdc_export(exp_hdl);
 	struct fsal_export *sub_export = exp->export.sub_export;
+	mdcache_entry_t *root_entry = container_of(root_obj, mdcache_entry_t,
+						   obj_handle);
 	mdcache_entry_t *entry;
 	struct entry_export_map *expmap;
 	fsal_status_t status;
 
 	/* First unexport for the sub-FSAL */
 	subcall_raw(exp,
-		sub_export->exp_ops.unexport(sub_export)
+		sub_export->exp_ops.unexport(sub_export, root_entry->sub_handle)
 	);
 
 	/* Next, clean up our cache entries on the export */
@@ -151,6 +156,9 @@ static void mdcache_unexport(struct fsal_export *exp_hdl)
 		/* Release above ref */
 		mdcache_put(entry);
 	};
+
+	/* Unhash the root object */
+	assert(!cih_remove_checked(root_entry));
 }
 
 /**

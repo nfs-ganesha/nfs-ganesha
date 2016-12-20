@@ -261,7 +261,8 @@ static const char *get_name(struct fsal_export *exp_hdl)
  * Nothing to do in the default case
  */
 
-static void export_unexport(struct fsal_export *exp_hdl)
+static void export_unexport(struct fsal_export *exp_hdl,
+			    struct fsal_obj_handle *root_obj)
 {
 	/* return */
 }
