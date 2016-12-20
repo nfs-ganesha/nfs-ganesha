@@ -2542,11 +2542,11 @@ bool export_check_security(struct svc_req *req)
 				op_ctx->ctx_export->fullpath);
 			return false;
 		} else {
-			struct svc_rpc_gss_data *gd;
+			struct rpc_gss_cred *gc;
 			rpc_gss_svc_t svc;
 
-			gd = SVCAUTH_PRIVATE(req->rq_auth);
-			svc = gd->sec.svc;
+			gc = (struct rpc_gss_cred *)req->rq_clntcred;
+			svc = gc->gc_svc;
 			LogFullDebug(COMPONENT_EXPORT, "Testing svc %d",
 				     (int)svc);
 			switch (svc) {
