@@ -192,7 +192,7 @@ static nfsstat4 pnfs_layout_get(struct fsal_obj_handle          *obj_pub,
 
 	util |= file_layout.stripe_type | file_layout.stripe_length;
 
-	rc = glfs_get_ds_addr(export->gl_fs, handle->glhandle,
+	rc = glfs_get_ds_addr(export->gl_fs->fs, handle->glhandle,
 				&deviceid.device_id4);
 
 	if (rc) {
@@ -314,7 +314,7 @@ static nfsstat4 pnfs_layout_commit(struct fsal_obj_handle *obj_pub,
 	}
 
 	/* Gets previous status of file in the MDS */
-	rc = glfs_h_stat(glfs_export->gl_fs,
+	rc = glfs_h_stat(glfs_export->gl_fs->fs,
 			 objhandle->glhandle, &old_stat);
 
 	if (rc != 0) {
@@ -329,7 +329,7 @@ static nfsstat4 pnfs_layout_commit(struct fsal_obj_handle *obj_pub,
 			new_stat.st_size = arg->last_write + 1;
 			res->size_supplied = true;
 			res->new_size = arg->last_write + 1;
-			rc = glfs_h_truncate(glfs_export->gl_fs,
+			rc = glfs_h_truncate(glfs_export->gl_fs->fs,
 					     objhandle->glhandle,
 					     res->new_size);
 			if (rc != 0) {
@@ -349,7 +349,7 @@ static nfsstat4 pnfs_layout_commit(struct fsal_obj_handle *obj_pub,
 
 	mask |= GLAPI_SET_ATTR_MTIME;
 
-	rc = glfs_h_setattrs(glfs_export->gl_fs,
+	rc = glfs_h_setattrs(glfs_export->gl_fs->fs,
 			     objhandle->glhandle,
 			     &new_stat,
 			     mask);

@@ -37,7 +37,7 @@
 #include <utime.h>
 #include <sys/time.h>
 
-int upcall_inode_invalidate(struct glusterfs_export *glfsexport,
+int upcall_inode_invalidate(struct glusterfs_fs *gl_fs,
 			     struct glfs_object *object)
 {
 	int	     rc                             = -1;
@@ -48,11 +48,11 @@ int upcall_inode_invalidate(struct glusterfs_export *glfsexport,
 	const struct fsal_up_vector *event_func;
 	fsal_status_t fsal_status = {0, 0};
 
-	fs = glfsexport->gl_fs;
+	fs = gl_fs->fs;
 	if (!fs) {
 		LogCrit(COMPONENT_FSAL_UP,
-			"Invalid fs object of the glfsexport(%p)",
-			 glfsexport);
+			"Invalid fs object of the glusterfs_fs(%p)",
+			 gl_fs);
 		goto out;
 	}
 
@@ -81,7 +81,7 @@ int upcall_inode_invalidate(struct glusterfs_export *glfsexport,
 	LogDebug(COMPONENT_FSAL_UP, "Received event to process for %p",
 		 fs);
 
-	event_func = glfsexport->export.up_ops;
+	event_func = gl_fs->up_ops;
 
 	fsal_status = event_func->invalidate_close(
 					event_func->up_export,
@@ -92,7 +92,7 @@ int upcall_inode_invalidate(struct glusterfs_export *glfsexport,
 	if (FSAL_IS_ERROR(fsal_status) && fsal_status.major != ERR_FSAL_NOENT) {
 		LogWarn(COMPONENT_FSAL_UP,
 			"Inode_Invalidate event could not be processed for fd %p, rc %d",
-			glfsexport->gl_fs, rc);
+			gl_fs->fs, rc);
 	}
 
 out:
@@ -101,7 +101,7 @@ out:
 
 void *GLUSTERFSAL_UP_Thread(void *Arg)
 {
-	struct glusterfs_export     *glfsexport         = Arg;
+	struct glusterfs_fs         *gl_fs              = Arg;
 	const struct fsal_up_vector *event_func;
 	char                        thr_name[16];
 	int                         rc                  = 0;
@@ -117,11 +117,11 @@ void *GLUSTERFSAL_UP_Thread(void *Arg)
 
 	snprintf(thr_name, sizeof(thr_name),
 		 "fsal_up_%p",
-		 glfsexport->gl_fs);
+		 gl_fs->fs);
 	SetNameFunction(thr_name);
 
 	/* Set the FSAL UP functions that will be used to process events. */
-	event_func = glfsexport->export.up_ops;
+	event_func = gl_fs->up_ops;
 
 	if (event_func == NULL) {
 		LogFatal(COMPONENT_FSAL_UP,
@@ -132,9 +132,9 @@ void *GLUSTERFSAL_UP_Thread(void *Arg)
 
 	LogFullDebug(COMPONENT_FSAL_UP,
 		     "Initializing FSAL Callback context for %p.",
-		     glfsexport->gl_fs);
+		     gl_fs->fs);
 
-	if (!glfsexport->gl_fs) {
+	if (!gl_fs->fs) {
 		LogCrit(COMPONENT_FSAL_UP,
 			"FSAL Callback interface - Null glfs context.");
 		goto out;
@@ -142,14 +142,14 @@ void *GLUSTERFSAL_UP_Thread(void *Arg)
 
 	/* Start querying for events and processing. */
 	/** @todo : Do batch processing instead */
-	while (!atomic_fetch_int8_t(&glfsexport->destroy_mode)) {
+	while (!atomic_fetch_int8_t(&gl_fs->destroy_mode)) {
 		LogFullDebug(COMPONENT_FSAL_UP,
 			     "Requesting event from FSAL Callback interface for %p.",
-			     glfsexport->gl_fs);
+			     gl_fs->fs);
 
 		reason = 0;
 
-		rc = glfs_h_poll_upcall(glfsexport->gl_fs, &cbk);
+		rc = glfs_h_poll_upcall(gl_fs->fs, &cbk);
 		errsv = errno;
 
 		if (rc != 0) {
@@ -165,18 +165,18 @@ void *GLUSTERFSAL_UP_Thread(void *Arg)
 				case ENOMEM:
 					LogMajor(COMPONENT_FSAL_UP,
 						 "Memory allocation failed during poll_upcall for (%p).",
-						 glfsexport->gl_fs);
+						 gl_fs->fs);
 					abort();
 
 				case ENOTSUP:
 					LogEvent(COMPONENT_FSAL_UP,
 						 "Upcall feature is not supported for (%p).",
-						 glfsexport->gl_fs);
+						 gl_fs->fs);
 					break;
 				default:
 					LogCrit(COMPONENT_FSAL_UP,
 						"Poll upcall failed for %p. rc %d errno %d (%s) reason %d",
-						glfsexport->gl_fs, rc, errsv,
+						gl_fs->fs, rc, errsv,
 						strerror(errsv), reason);
 				}
 				return NULL;
@@ -213,14 +213,13 @@ void *GLUSTERFSAL_UP_Thread(void *Arg)
 
 			object = glfs_upcall_inode_get_object(in_arg);
 			if (object)
-				upcall_inode_invalidate(glfsexport, object);
+				upcall_inode_invalidate(gl_fs, object);
 			p_object = glfs_upcall_inode_get_pobject(in_arg);
 			if (p_object)
-				upcall_inode_invalidate(glfsexport, p_object);
+				upcall_inode_invalidate(gl_fs, p_object);
 			oldp_object = glfs_upcall_inode_get_oldpobject(in_arg);
 			if (oldp_object)
-				upcall_inode_invalidate(glfsexport,
-							oldp_object);
+				upcall_inode_invalidate(gl_fs, oldp_object);
 			break;
 		default:
 			LogWarn(COMPONENT_FSAL_UP, "Unknown event: %d", reason);

@@ -57,8 +57,6 @@ static void export_release(struct fsal_export *exp_hdl)
 {
 	struct glusterfs_export *glfs_export =
 	    container_of(exp_hdl, struct glusterfs_export, export);
-	int *retval = NULL;
-	int err     = 0;
 
 	/* check activity on the export */
 
@@ -67,24 +65,8 @@ static void export_release(struct fsal_export *exp_hdl)
 			   &glfs_export->export.exports);
 	free_export_ops(&glfs_export->export);
 
-	atomic_add_int8_t (&glfs_export->destroy_mode, 1);
+	glusterfs_free_fs(glfs_export->gl_fs);
 
-	/* Wait for up_thread to exit */
-	err = pthread_join(glfs_export->up_thread, (void **)&retval);
-
-	if (retval && *retval) {
-		LogDebug(COMPONENT_FSAL, "Up_thread join returned value %d",
-			 *retval);
-	}
-
-	if (err) {
-		LogCrit(COMPONENT_FSAL, "Up_thread join failed (%s)",
-			strerror(err));
-		return;
-	}
-
-	/* Gluster and memory cleanup */
-	glfs_fini(glfs_export->gl_fs);
 	glfs_export->gl_fs = NULL;
 	gsh_free(glfs_export->export_path);
 	glfs_export->export_path = NULL;
@@ -142,7 +124,7 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 		}
 	}
 
-	glhandle = glfs_h_lookupat(glfs_export->gl_fs, NULL, realpath,
+	glhandle = glfs_h_lookupat(glfs_export->gl_fs->fs, NULL, realpath,
 				&sb, 1);
 	if (glhandle == NULL) {
 		status = gluster2fsal_error(errno);
@@ -155,7 +137,8 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 		goto out;
 	}
 
-	rc = glfs_get_volumeid(glfs_export->gl_fs, vol_uuid, GLAPI_UUID_LENGTH);
+	rc = glfs_get_volumeid(glfs_export->gl_fs->fs, vol_uuid,
+			       GLAPI_UUID_LENGTH);
 	if (rc < 0) {
 		status = gluster2fsal_error(rc);
 		goto out;
@@ -253,14 +236,15 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 	memcpy(globjhdl, fh_desc->addr+GLAPI_UUID_LENGTH, GFAPI_HANDLE_LENGTH);
 
 	glhandle =
-	    glfs_h_create_from_handle(glfs_export->gl_fs, globjhdl,
+	    glfs_h_create_from_handle(glfs_export->gl_fs->fs, globjhdl,
 				      GFAPI_HANDLE_LENGTH, &sb);
 	if (glhandle == NULL) {
 		status = gluster2fsal_error(errno);
 		goto out;
 	}
 
-	rc = glfs_get_volumeid(glfs_export->gl_fs, vol_uuid, GLAPI_UUID_LENGTH);
+	rc = glfs_get_volumeid(glfs_export->gl_fs->fs, vol_uuid,
+			       GLAPI_UUID_LENGTH);
 	if (rc < 0) {
 		status = gluster2fsal_error(rc);
 		goto out;
@@ -298,7 +282,8 @@ static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
 	struct glusterfs_export *glfs_export =
 	    container_of(exp_hdl, struct glusterfs_export, export);
 
-	rc = glfs_statvfs(glfs_export->gl_fs, glfs_export->export_path, &vfssb);
+	rc = glfs_statvfs(glfs_export->gl_fs->fs, glfs_export->export_path,
+			  &vfssb);
 	if (rc != 0)
 		return gluster2fsal_error(rc);
 
@@ -602,6 +587,154 @@ static struct config_block export_param = {
 	.blk_desc.u.blk.commit = noop_conf_commit
 };
 
+/*
+ * Given glusterfs_fs object, decrement the refcount. In case if it
+ * becomes zero, free the resources.
+ */
+void
+glusterfs_free_fs(struct glusterfs_fs *gl_fs)
+{
+	int64_t refcnt;
+	int *retval = NULL;
+	int err     = 0;
+
+	PTHREAD_MUTEX_lock(&GlusterFS.lock);
+
+	refcnt = --(gl_fs->refcnt);
+
+	assert(refcnt >= 0);
+
+	if (refcnt) {
+		LogDebug(COMPONENT_FSAL,
+			 "There are still (%ld)active shares for volume(%s)",
+			 gl_fs->refcnt, gl_fs->volname);
+		PTHREAD_MUTEX_unlock(&GlusterFS.lock);
+		return;
+	}
+
+	glist_del(&gl_fs->fs_obj);
+	PTHREAD_MUTEX_unlock(&GlusterFS.lock);
+
+	atomic_inc_int8_t(&gl_fs->destroy_mode);
+
+	/* Wait for up_thread to exit */
+	err = pthread_join(gl_fs->up_thread, (void **)&retval);
+
+	if (retval && *retval) {
+		LogDebug(COMPONENT_FSAL, "Up_thread join returned value %d",
+			 *retval);
+	}
+
+	if (err) {
+		LogCrit(COMPONENT_FSAL, "Up_thread join failed (%s)",
+			strerror(err));
+		return;
+	}
+
+	/* Gluster and memory cleanup */
+	glfs_fini(gl_fs->fs);
+	gsh_free(gl_fs->volname);
+	gsh_free(gl_fs);
+}
+
+/**
+ * @brief Given Gluster export params, find and return if there is
+ * already existing export entry. If not create one.
+ */
+struct glusterfs_fs*
+glusterfs_get_fs(struct glexport_params params,
+		 const struct fsal_up_vector *up_ops)
+{
+	int rc = 0;
+	struct glusterfs_fs *gl_fs = NULL;
+	glfs_t  *fs = NULL;
+	struct glist_head *glist, *glistn;
+
+	PTHREAD_MUTEX_lock(&GlusterFS.lock);
+
+	glist_for_each_safe(glist, glistn, &GlusterFS.fs_obj) {
+		gl_fs = glist_entry(glist, struct glusterfs_fs,
+				    fs_obj);
+		if (!strcmp(params.glvolname, gl_fs->volname)) {
+			goto found;
+		}
+	}
+
+	gl_fs = gsh_calloc(1, sizeof(struct glusterfs_fs));
+
+	glist_init(&gl_fs->fs_obj);
+
+	if (!gl_fs) {
+		LogCrit(COMPONENT_FSAL,
+			"Unable to allocate memory for glusterfs_fs object");
+		goto out;
+	}
+
+	fs = glfs_new(params.glvolname);
+	if (!fs) {
+		LogCrit(COMPONENT_FSAL,
+			"Unable to create new glfs. Volume: %s",
+			params.glvolname);
+		goto out;
+	}
+
+	rc = glfs_set_volfile_server(fs, "tcp", params.glhostname, 24007);
+	if (rc != 0) {
+		LogCrit(COMPONENT_FSAL,
+			"Unable to set volume file. Volume: %s",
+			params.glvolname);
+		goto out;
+	}
+
+	rc = glfs_set_logging(fs, params.glfs_log, 7);
+	if (rc != 0) {
+		LogCrit(COMPONENT_FSAL,
+			"Unable to set logging. Volume: %s",
+			params.glvolname);
+		goto out;
+	}
+
+	rc = glfs_init(fs);
+	if (rc != 0) {
+		LogCrit(COMPONENT_FSAL,
+			"Unable to initialize volume. Volume: %s",
+			params.glvolname);
+		goto out;
+	}
+
+	gl_fs->fs = fs;
+	gl_fs->volname = strdup(params.glvolname);
+	gl_fs->destroy_mode = 0;
+
+	gl_fs->up_ops = up_ops;
+	rc = initiate_up_thread(gl_fs);
+	if (rc != 0) {
+		LogCrit(COMPONENT_FSAL,
+			"Unable to create GLUSTERFSAL_UP_Thread. Volume: %s",
+			params.glvolname);
+		goto out;
+	}
+
+	glist_add(&GlusterFS.fs_obj, &gl_fs->fs_obj);
+
+found:
+	++(gl_fs->refcnt);
+	PTHREAD_MUTEX_unlock(&GlusterFS.lock);
+	return gl_fs;
+
+out:
+	PTHREAD_MUTEX_unlock(&GlusterFS.lock);
+	if (fs)
+		glfs_fini(fs);
+
+	if (gl_fs) {
+		glist_del(&gl_fs->fs_obj); /* not needed atm */
+		gsh_free(gl_fs);
+	}
+
+	return NULL;
+}
+
 /**
  * @brief Implements GLUSTER FSAL moduleoperation create_export
  */
@@ -614,7 +747,6 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 	int rc = 0;
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	struct glusterfs_export *glfsexport = NULL;
-	glfs_t *fs = NULL;
 	struct glexport_params params = {
 		.glvolname = NULL,
 		.glhostname = NULL,
@@ -644,40 +776,9 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 	fsal_export_init(&glfsexport->export);
 	export_ops_init(&glfsexport->export.exp_ops);
 
-	fs = glfs_new(params.glvolname);
-	if (!fs) {
+	glfsexport->gl_fs = glusterfs_get_fs(params, up_ops);
+	if (!glfsexport->gl_fs) {
 		status.major = ERR_FSAL_SERVERFAULT;
-		LogCrit(COMPONENT_FSAL,
-			"Unable to create new glusterfs volume object for %s"
-			" and Export : %s", params.glvolname,
-			op_ctx->ctx_export->fullpath);
-		goto out;
-	}
-
-	rc = glfs_set_volfile_server(fs, "tcp", params.glhostname, 24007);
-	if (rc != 0) {
-		status.major = ERR_FSAL_SERVERFAULT;
-		LogCrit(COMPONENT_FSAL,
-			"Unable to set volume file. Export: %s",
-			op_ctx->ctx_export->fullpath);
-		goto out;
-	}
-
-	rc = glfs_set_logging(fs, params.glfs_log, 7);
-	if (rc != 0) {
-		status.major = ERR_FSAL_SERVERFAULT;
-		LogCrit(COMPONENT_FSAL,
-			"Unable to set logging. Export: %s",
-			op_ctx->ctx_export->fullpath);
-		goto out;
-	}
-
-	rc = glfs_init(fs);
-	if (rc != 0) {
-		status.major = ERR_FSAL_SERVERFAULT;
-		LogCrit(COMPONENT_FSAL,
-			"Unable to initialize volume: %s for Export: %s",
-			params.glvolname, op_ctx->ctx_export->fullpath);
 		goto out;
 	}
 
@@ -691,13 +792,11 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 
 	glfsexport->mount_path = op_ctx->ctx_export->fullpath;
 	glfsexport->export_path = params.glvolpath;
-	glfsexport->gl_fs = fs;
 	glfsexport->saveduid = geteuid();
 	glfsexport->savedgid = getegid();
 	glfsexport->export.fsal = fsal_hdl;
 	glfsexport->acl_enable =
 		!op_ctx_export_has_option(EXPORT_OPTION_DISABLE_ACL);
-	glfsexport->destroy_mode = 0;
 
 	op_ctx->fsal_export = &glfsexport->export;
 
@@ -743,15 +842,6 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 
 	glfsexport->export.up_ops = up_ops;
 
-	rc = initiate_up_thread(glfsexport);
-	if (rc != 0) {
-		LogCrit(COMPONENT_FSAL,
-			"Unable to create GLUSTERFSAL_UP_Thread. Export: %s",
-			op_ctx->ctx_export->fullpath);
-		status.major = ERR_FSAL_FAULT;
-		goto out;
-	}
-
  out:
 	if (params.glvolname)
 		gsh_free(params.glvolname);
@@ -763,9 +853,6 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 	if (status.major != ERR_FSAL_NO_ERROR) {
 		if (params.glvolpath)
 			gsh_free(params.glvolpath);
-
-		if (fs)
-			glfs_fini(fs);
 
 		if (glfsexport)
 			gsh_free(glfsexport);

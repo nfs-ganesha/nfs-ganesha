@@ -128,10 +128,23 @@ struct latency_data {
 struct glusterfs_fsal_module {
 	struct fsal_staticfsinfo_t fs_info;
 	struct fsal_module fsal;
+	struct glist_head  fs_obj; /* list of glusterfs_fs filesystem objects */
+	pthread_mutex_t   lock; /* lock to protect above list */
+};
+struct glusterfs_fsal_module GlusterFS;
+
+struct glusterfs_fs {
+	struct glist_head fs_obj; /* link to glusterfs_fs filesystem objects */
+	char      *volname;
+	glfs_t    *fs;
+	const struct fsal_up_vector *up_ops;    /*< Upcall operations */
+	int64_t    refcnt;
+	pthread_t  up_thread; /* upcall thread */
+	int8_t destroy_mode;
 };
 
 struct glusterfs_export {
-	glfs_t *gl_fs;
+	struct glusterfs_fs *gl_fs;
 	char *mount_path;
 	char *export_path;
 	uid_t saveduid;
@@ -140,8 +153,6 @@ struct glusterfs_export {
 	bool acl_enable;
 	bool pnfs_ds_enabled;
 	bool pnfs_mds_enabled;
-	int8_t destroy_mode;
-	pthread_t up_thread; /* upcall thread */
 };
 
 struct glusterfs_fd {
@@ -252,6 +263,8 @@ fsal_status_t glusterfs_process_acl(struct glfs *fs,
 				    struct attrlist *attrs,
 				    glusterfs_fsal_xstat_t *buffxstat);
 
+void glusterfs_free_fs(struct glusterfs_fs *gl_fs);
+
 /*
  * Following have been introduced for pNFS support
  */
@@ -275,8 +288,8 @@ nfsstat4 getdeviceinfo(struct fsal_module *fsal_hdl,
 
 /* UP thread routines */
 void *GLUSTERFSAL_UP_Thread(void *Arg);
-int initiate_up_thread(struct glusterfs_export *glfsexport);
-int upcall_inode_invalidate(struct glusterfs_export *glfsexport,
+int initiate_up_thread(struct glusterfs_fs *gl_fs);
+int upcall_inode_invalidate(struct glusterfs_fs *gl_fs,
 			    struct glfs_object *object);
 
 #endif				/* GLUSTER_INTERNAL */
