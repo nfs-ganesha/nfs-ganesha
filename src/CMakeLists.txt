@@ -227,6 +227,7 @@ option(DEBUG_SAL "enable debugging of SAL by keeping list of all locks, stateids
 option(_VALGRIND_MEMCHECK "Initialize buffers passed to GPFS ioctl that valgrind doesn't understand" OFF)
 option(ENABLE_LOCKTRACE "Enable lock trace" OFF)
 option(PROXY_HANDLE_MAPPING "enable NFSv3 handle mapping for PROXY FSAL" OFF)
+option(ENABLE_LOCKTRACE "Turn on lock debug tracing" ON)
 
 # Debug symbols (-g) build flag
 option(DEBUG_SYMS "include debug symbols to binaries (-g option)" OFF)
