@@ -261,7 +261,7 @@ enum cb_state {
 	CB_PROBLEM,
 };
 
-typedef fsal_errors_t (*fsal_getattr_cb_t)
+typedef fsal_errors_t (*helper_readdir_cb)
 	(void *opaque,
 	 struct fsal_obj_handle *obj,
 	 const struct attrlist *attr,
@@ -376,7 +376,7 @@ fsal_status_t fsal_rdwr(struct fsal_obj_handle *obj,
 		      bool *sync, struct io_info *info);
 fsal_status_t fsal_readdir(struct fsal_obj_handle *directory, uint64_t cookie,
 			   unsigned int *nbfound, bool *eod_met,
-			   attrmask_t attrmask, fsal_getattr_cb_t cb,
+			   attrmask_t attrmask, helper_readdir_cb cb,
 			   void *opaque);
 fsal_status_t fsal_remove(struct fsal_obj_handle *parent, const char *name);
 fsal_status_t fsal_rename(struct fsal_obj_handle *dir_src,

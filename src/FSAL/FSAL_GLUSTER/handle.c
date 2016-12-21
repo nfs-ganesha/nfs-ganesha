@@ -191,7 +191,7 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 		rc = glfs_readdir_r(glfd, &de, &pde);
 		if (rc == 0 && pde != NULL) {
 			struct attrlist attrs;
-			bool cb_rc;
+			enum fsal_dir_result cb_rc;
 
 			/* skip . and .. */
 			if ((strcmp(de.d_name, ".") == 0)
@@ -205,11 +205,11 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 				goto out;
 
 			cb_rc = cb(de.d_name, obj, &attrs,
-				   dir_state, glfs_telldir(glfd));
+				   dir_state, glfs_telldir(glfd), NULL);
 
 			fsal_release_attrs(&attrs);
 
-			if (!cb_rc)
+			if (cb_rc >= DIR_TERMINATE)
 				goto out;
 		} else if (rc == 0 && pde == NULL) {
 			*eof = true;

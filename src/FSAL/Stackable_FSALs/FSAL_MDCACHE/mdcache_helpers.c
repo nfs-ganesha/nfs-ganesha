@@ -1412,21 +1412,20 @@ struct mdcache_populate_cb_state {
  * @param[in,out] dir_state  Callback state
  * @param[in]     cookie     Directory cookie
  *
- * @retval true if more entries are requested
- * @retval false if no more should be sent and the last was not processed
+ * @returns fsal_dir_result
  */
 
-static bool
+static enum fsal_dir_result
 mdc_readdir_uncached_cb(const char *name, struct fsal_obj_handle *sub_handle,
 			struct attrlist *attrs, void *dir_state,
-			fsal_cookie_t cookie)
+			fsal_cookie_t cookie, fsal_cookie_t *ret_cookie)
 {
 	struct mdcache_populate_cb_state *state = dir_state;
 	fsal_status_t status = { 0, 0 };
 	mdcache_entry_t *directory = container_of(&state->dir->obj_handle,
 						  mdcache_entry_t, obj_handle);
 	mdcache_entry_t *new_entry = NULL;
-	bool rv;
+	enum fsal_dir_result rv;
 
 	/* This is in the middle of a subcall. Do a supercall */
 	supercall_raw(state->export,
@@ -1440,18 +1439,18 @@ mdc_readdir_uncached_cb(const char *name, struct fsal_obj_handle *sub_handle,
 			LogInfo(COMPONENT_NFS_READDIR,
 				"Ignoring XDEV entry %s", name);
 			*state->status = fsalstat(ERR_FSAL_NO_ERROR, 0);
-			return true;
+			return DIR_CONTINUE;
 		}
 		LogInfo(COMPONENT_CACHE_INODE,
 			"Lookup failed on %s in dir %p with %s",
 			name, directory, fsal_err_txt(*state->status));
-		return false;
+		return DIR_TERMINATE;
 	}
 
 	/* Call up the stack.  Do a supercall */
 	supercall_raw(state->export,
 		      rv = state->cb(name, &new_entry->obj_handle, attrs,
-				     state->dir_state, cookie)
+				     state->dir_state, cookie, ret_cookie)
 	);
 
 	return rv;
@@ -1520,14 +1519,13 @@ mdcache_readdir_uncached(mdcache_entry_t *directory, fsal_cookie_t *whence,
  * @param[in,out] dir_state  Callback state
  * @param[in]     cookie     Directory cookie
  *
- * @retval true if more entries are requested
- * @retval false if no more should be sent and the last was not processed
+ * @returns fsal_dir_result
  */
 
-static bool
+static enum fsal_dir_result
 mdc_populate_dirent(const char *name, struct fsal_obj_handle *sub_handle,
 		    struct attrlist *attrs, void *dir_state,
-		    fsal_cookie_t cookie)
+		    fsal_cookie_t cookie, fsal_cookie_t *ret_cookie)
 {
 	struct mdcache_populate_cb_state *state = dir_state;
 	fsal_status_t status = { 0, 0 };
@@ -1545,7 +1543,7 @@ mdc_populate_dirent(const char *name, struct fsal_obj_handle *sub_handle,
 			LogInfo(COMPONENT_NFS_READDIR,
 				"Ignoring XDEV entry %s", name);
 			*state->status = fsalstat(ERR_FSAL_NO_ERROR, 0);
-			return true;
+			return DIR_CONTINUE;
 		}
 		if ((*state->status).major == ERR_FSAL_OVERFLOW) {
 			LogFullDebug(COMPONENT_CACHE_INODE,
@@ -1557,10 +1555,10 @@ mdc_populate_dirent(const char *name, struct fsal_obj_handle *sub_handle,
 				"Lookup failed on %s in dir %p with %s",
 				name, directory, fsal_err_txt(*state->status));
 		}
-		return false;
+		return DIR_TERMINATE;
 	}
 
-	return true;
+	return DIR_CONTINUE;
 }
 
 /**

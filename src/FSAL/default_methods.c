@@ -735,6 +735,16 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
+/* release_readdir_cookie
+ * default is NOOP
+ */
+
+void release_readdir_cookie(struct fsal_obj_handle *dir_hdl,
+			    fsal_cookie_t *cookie)
+{
+	/* return */
+}
+
 /* create
  * default case not supported
  */
@@ -1540,6 +1550,7 @@ struct fsal_obj_ops def_handle_ops = {
 	.merge = handle_merge,
 	.lookup = lookup,
 	.readdir = read_dirents,
+	.release_readdir_cookie = release_readdir_cookie,
 	.create = create,
 	.mkdir = makedir,
 	.mknode = makenode,

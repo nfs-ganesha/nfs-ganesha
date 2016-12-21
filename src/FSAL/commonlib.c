@@ -374,6 +374,25 @@ const char *msg_fsal_err(fsal_errors_t fsal_err)
 	return "Unknown FSAL error";
 }
 
+const char *fsal_dir_result_str(enum fsal_dir_result result)
+{
+	switch (result) {
+	case DIR_CONTINUE:
+		return "DIR_CONTINUE";
+
+	case DIR_CONTINUE_MARK:
+		return "DIR_CONTINUE_MARK";
+
+	case DIR_TERMINATE:
+		return "DIR_TERMINATE";
+
+	case DIR_TERMINATE_MARK:
+		return "DIR_TERMINATE_MARK";
+	}
+
+	return "<unknown>";
+}
+
 /**
  * @brief Dump and fsal_staticfsinfo_t to a log
  *

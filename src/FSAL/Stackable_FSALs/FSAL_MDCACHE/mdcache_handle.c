@@ -569,7 +569,7 @@ static fsal_status_t mdcache_readdir(struct fsal_obj_handle *dir_hdl,
 	mdcache_dir_entry_t *dirent = NULL;
 	struct avltree_node *dirent_node = NULL;
 	fsal_status_t status = {0, 0};
-	bool cb_result = true;
+	enum fsal_dir_result cb_result = DIR_CONTINUE;
 
 	if (!(directory->obj_handle.type == DIRECTORY))
 		return fsalstat(ERR_FSAL_NOTDIR, 0);
@@ -660,7 +660,7 @@ static fsal_status_t mdcache_readdir(struct fsal_obj_handle *dir_hdl,
 	 * the requested sequence or dirent sequence is exhausted */
 	*eod_met = false;
 
-	for (; cb_result && dirent_node;
+	for (; cb_result <= DIR_CONTINUE_MARK && dirent_node != NULL;
 	     dirent_node = avltree_next(dirent_node)) {
 		struct attrlist attrs;
 		mdcache_entry_t *entry = NULL;
@@ -702,19 +702,19 @@ static fsal_status_t mdcache_readdir(struct fsal_obj_handle *dir_hdl,
 		}
 
 		cb_result = cb(dirent->name, &entry->obj_handle, &attrs,
-			       dir_state, dirent->hk.k);
+			       dir_state, dirent->hk.k, NULL);
 
 		fsal_release_attrs(&attrs);
 
-		if (!cb_result)
+		if (cb_result >= DIR_TERMINATE)
 			break;
 	}
 
 	LogDebug(COMPONENT_NFS_READDIR,
-		 "dirent_node = %p, in_result = %s", dirent_node,
-		 cb_result ? "TRUE" : "FALSE");
+		 "dirent_node = %p, cb_result = %s",
+		 dirent_node, fsal_dir_result_str(cb_result));
 
-	if (!dirent_node && cb_result)
+	if (!dirent_node && cb_result < DIR_TERMINATE)
 		*eod_met = true;
 	else
 		*eod_met = false;

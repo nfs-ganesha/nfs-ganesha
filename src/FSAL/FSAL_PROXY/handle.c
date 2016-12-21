@@ -1629,7 +1629,7 @@ static fsal_status_t pxy_do_readdir(struct pxy_obj_handle *ph,
 		struct attrlist attrs;
 		char name[MAXNAMLEN + 1];
 		struct fsal_obj_handle *handle;
-		bool cb_rc;
+		enum fsal_dir_result cb_rc;
 
 		/* UTF8 name does not include trailing 0 */
 		if (e4->name.utf8string_len > sizeof(name) - 1)
@@ -1652,11 +1652,11 @@ static fsal_status_t pxy_do_readdir(struct pxy_obj_handle *ph,
 		if (FSAL_IS_ERROR(st))
 			break;
 
-		cb_rc = cb(name, handle, &attrs, cbarg, e4->cookie);
+		cb_rc = cb(name, handle, &attrs, cbarg, e4->cookie, NULL);
 
 		fsal_release_attrs(&attrs);
 
-		if (!cb_rc)
+		if (cb_rc >= DIR_TERMINATE)
 			break;
 	}
 	xdr_free((xdrproc_t) xdr_readdirres, resoparray);

@@ -75,7 +75,7 @@ struct nfs3_readdir_cb_data {
 
 static
 nfsstat3 nfs_readdir_dot_entry(struct fsal_obj_handle *obj, const char *name,
-			       uint64_t cookie, fsal_getattr_cb_t cb,
+			       uint64_t cookie, helper_readdir_cb cb,
 			       struct nfs3_readdir_cb_data *tracker)
 {
 	struct fsal_readdir_cb_parms cb_parms;
