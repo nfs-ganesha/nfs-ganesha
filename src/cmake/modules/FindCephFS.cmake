@@ -29,7 +29,7 @@ if(CEPH_PREFIX)
   find_path(CEPHFS_LIBRARY_DIR
     NAMES libcephfs.so
     PATHS ${CEPH_PREFIX}
-    PATH_SUFFIXES lib lib64
+    PATH_SUFFIXES lib/${CMAKE_LIBRARY_ARCHITECTURE} lib lib64
     NO_DEFAULT_PATH
     DOC "The CephFS libraries")
 endif(CEPH_PREFIX)
@@ -46,7 +46,7 @@ if (NOT CEPHFS_LIBRARY_DIR)
   find_path(CEPHFS_LIBRARY_DIR
     NAMES libcephfs.so
     PATHS ${CEPH_PREFIX}
-    PATH_SUFFIXES lib lib64
+    PATH_SUFFIXES lib/${CMAKE_LIBRARY_ARCHITECTURE} lib lib64
     DOC "The CephFS libraries")
 endif (NOT CEPHFS_LIBRARY_DIR)
 
