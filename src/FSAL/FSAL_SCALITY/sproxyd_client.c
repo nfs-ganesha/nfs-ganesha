@@ -183,13 +183,16 @@ read_through(struct scality_fsal_export* export,
 	stencil_byte_t operation = STENCIL_READ;
 	assert(NULL != loc->content);
 	assert(NULL != loc->stencil);
-	
-	while (start < size && start < loc->size) {
+
+	while (size != 0 && start < loc->size) {
 		operation = loc->stencil[start];
-		while ( start+length < loc->size &&
-			start+length < size &&
+		while ( start + length < loc->size &&
+			length < size &&
 			loc->stencil[start+length] == operation )
 			++length;
+		if (0 == length) {
+			break;
+		}
 		switch (operation) {
 		case STENCIL_READ: {
 			if ( NULL != loc->key ) {
@@ -232,9 +235,10 @@ read_through(struct scality_fsal_export* export,
 		}
 		buf += length;
 		start += length;
+		size -= length;
 		length = 0;
 	}
-	return start;
+	return start - offset;
 }
 
 /**
