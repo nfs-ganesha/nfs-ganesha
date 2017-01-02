@@ -1112,21 +1112,10 @@ dupreq_status_t nfs_dupreq_finish(struct svc_req *req, nfs_res_t *res_nfs)
 dq_again:
 	if (drc_should_retire(drc)) {
 		ov = TAILQ_FIRST(&drc->dupreq_q);
-dq_retry:
 		if (likely(ov)) {
 			/* quick check without partition lock */
-			if (unlikely(ov->refcnt > 0)) {
-				/* ov still in use, apparently */
-				if (cnt++ < DUPREQ_MAX_RETRIES) {
-					ov = TAILQ_NEXT(ov, fifo_q);
-					goto dq_retry;
-				}
-				LogWarn(COMPONENT_DUPREQ,
-					"DRC retire entries: unable to find reclaimable dupreq LRU entry after %d tries on DRC=%p, drc->size=%d",
-					DUPREQ_MAX_RETRIES, drc,
-					drc->size);
+			if (unlikely(ov->refcnt > 0))
 				goto unlock;
-			}
 
 			/* remove dict entry */
 			t = rbtx_partition_of_scalar(&drc->xt, ov->hk);
@@ -1149,7 +1138,7 @@ dq_retry:
 			/* Make sure that we are removing the entry we
 			 * expected (imperfect, but harmless).
 			 */
-			if (ov->hk != ov_hk) {
+			if (ov == NULL || ov->hk != ov_hk) {
 				PTHREAD_MUTEX_unlock(&t->mtx);
 				goto unlock;
 			}
