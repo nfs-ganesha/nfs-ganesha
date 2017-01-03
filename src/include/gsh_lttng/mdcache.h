@@ -64,6 +64,81 @@ TRACEPOINT_LOGLEVEL(
 	mdc_lru_unref,
 	TRACE_INFO)
 
+/**
+ * @brief Trace a reap (reuse) of an entry
+ *
+ * @param[in] entry	Address of entry
+ */
+TRACEPOINT_EVENT(
+	mdcache,
+	mdc_lru_reap,
+	TP_ARGS(const char *, function,
+		int, line,
+		void *, entry,
+		int32_t, refcnt),
+	TP_FIELDS(
+		ctf_string(function, function)
+		ctf_integer(int, line, line)
+		ctf_integer_hex(void *, entry, entry)
+		ctf_integer(int32_t, refcnt, refcnt)
+	)
+)
+
+TRACEPOINT_LOGLEVEL(
+	mdcache,
+	mdc_lru_reap,
+	TRACE_INFO)
+
+/**
+ * @brief Trace insertion of an entry in the LRU
+ *
+ * @param[in] entry	Address of entry
+ */
+TRACEPOINT_EVENT(
+	mdcache,
+	mdc_lru_insert,
+	TP_ARGS(const char *, function,
+		int, line,
+		void *, entry,
+		int32_t, refcnt),
+	TP_FIELDS(
+		ctf_string(function, function)
+		ctf_integer(int, line, line)
+		ctf_integer_hex(void *, entry, entry)
+		ctf_integer(int32_t, refcnt, refcnt)
+	)
+)
+
+TRACEPOINT_LOGLEVEL(
+	mdcache,
+	mdc_lru_insert,
+	TRACE_INFO)
+
+/**
+ * @brief Trace removal of an entry from the LRU
+ *
+ * @param[in] entry	Address of entry
+ */
+TRACEPOINT_EVENT(
+	mdcache,
+	mdc_lru_remove,
+	TP_ARGS(const char *, function,
+		int, line,
+		void *, entry,
+		int32_t, refcnt),
+	TP_FIELDS(
+		ctf_string(function, function)
+		ctf_integer(int, line, line)
+		ctf_integer_hex(void *, entry, entry)
+		ctf_integer(int32_t, refcnt, refcnt)
+	)
+)
+
+TRACEPOINT_LOGLEVEL(
+	mdcache,
+	mdc_lru_remove,
+	TRACE_INFO)
+
 #endif /* GANESHA_LTTNG_MDCACHE_TP_H */
 
 #undef TRACEPOINT_INCLUDE

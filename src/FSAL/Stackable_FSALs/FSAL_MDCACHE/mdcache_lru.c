@@ -506,6 +506,11 @@ lru_reap_impl(enum lru_q_id qid)
 				/* it worked */
 				struct lru_q *q = lru_queue_of(entry);
 
+#ifdef USE_LTTNG
+				tracepoint(mdcache, mdc_lru_reap, __func__,
+					   __LINE__, entry,
+					   entry->lru.refcnt);
+#endif
 				cih_remove_latched(entry, &latch,
 						   CIH_REMOVE_QLOCKED);
 				LRU_DQ_SAFE(lru, q);
@@ -1525,6 +1530,11 @@ mdcache_lru_putback(mdcache_entry_t *entry, uint32_t flags)
 		 * are LRU_ENTRY_NONE */
 		LRU_DQ_SAFE(&entry->lru, q);
 	}
+
+#ifdef USE_LTTNG
+	tracepoint(mdcache, mdc_lru_unref,
+		   __func__, __LINE__, entry, entry->lru.refcnt);
+#endif
 
 	/* We do NOT call lru_clean_entry, since it was never initialized. */
 	pool_free(mdcache_entry_pool, entry);
