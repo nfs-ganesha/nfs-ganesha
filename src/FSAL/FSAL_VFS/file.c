@@ -358,12 +358,6 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 
 	if (name == NULL) {
 		/* This is an open by handle */
-		struct vfs_fsal_obj_handle *myself;
-
-		myself = container_of(obj_hdl,
-				      struct vfs_fsal_obj_handle,
-				      obj_handle);
-
 		if (obj_hdl->fsal != obj_hdl->fs->fsal) {
 			LogDebug(COMPONENT_FSAL,
 				 "FSAL %s operation for handle belonging to FSAL %s, return EXDEV",
@@ -402,7 +396,7 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 			/* We need to use the global fd to continue, and take
 			 * the lock to protect it.
 			 */
-			my_fd = &hdl->u.file.fd;
+			my_fd = &myself->u.file.fd;
 			PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
 		}
 
