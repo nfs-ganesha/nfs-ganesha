@@ -120,29 +120,27 @@ struct lru_q_lane {
 		struct glist_head *glist;
 		struct glist_head *glistn;
 	} iter;
-#ifdef ENABLE_LOCKTRACE
-	struct {
-		char *func;
-		uint32_t line;
-	} locktrace;
-#endif
 	 CACHE_PAD(0);
 };
 
-#ifdef ENABLE_LOCKTRACE
+#ifdef USE_LTTNG
 #define QLOCK(qlane) \
 	do { \
 		PTHREAD_MUTEX_lock(&(qlane)->mtx); \
-		(qlane)->locktrace.func = (char *) __func__; \
-		(qlane)->locktrace.line = __LINE__; \
+		tracepoint(mdcache, qlock, __func__, __LINE__, qlane); \
+	} while (0)
+
+#define QUNLOCK(qlane) \
+	do { \
+		PTHREAD_MUTEX_unlock(&(qlane)->mtx); \
+		tracepoint(mdcache, qunlock, __func__, __LINE__, qlane); \
 	} while (0)
 #else
 #define QLOCK(qlane) \
 	PTHREAD_MUTEX_lock(&(qlane)->mtx)
-#endif
-
 #define QUNLOCK(qlane) \
 	PTHREAD_MUTEX_unlock(&(qlane)->mtx)
+#endif
 
 /**
  * A multi-level LRU algorithm inspired by MQ [Zhou].  Transition from

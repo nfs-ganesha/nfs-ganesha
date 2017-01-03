@@ -65,6 +65,54 @@ TRACEPOINT_LOGLEVEL(
 	TRACE_INFO)
 
 /**
+ * @brief Trace a QLOCK event
+ *
+ * @param[in] function	Name of function taking ref
+ * @param[in] line	Line number of call
+ */
+TRACEPOINT_EVENT(
+	mdcache,
+	qlock,
+	TP_ARGS(const char *, function,
+		int, line,
+		void *, qlane),
+	TP_FIELDS(
+		ctf_string(function, function)
+		ctf_integer(int, line, line)
+		ctf_integer_hex(void *, qlane, qlane)
+	)
+)
+
+TRACEPOINT_LOGLEVEL(
+	mdcache,
+	qlock,
+	TRACE_INFO)
+
+/**
+ * @brief Trace a QUNLOCK event
+ *
+ * @param[in] function	Name of function taking ref
+ * @param[in] line	Line number of call
+ */
+TRACEPOINT_EVENT(
+	mdcache,
+	qunlock,
+	TP_ARGS(const char *, function,
+		int, line,
+		void *, qlane),
+	TP_FIELDS(
+		ctf_string(function, function)
+		ctf_integer(int, line, line)
+		ctf_integer_hex(void *, qlane, qlane)
+	)
+)
+
+TRACEPOINT_LOGLEVEL(
+	mdcache,
+	qunlock,
+	TRACE_INFO)
+
+/**
  * @brief Trace a reap (reuse) of an entry
  *
  * @param[in] entry	Address of entry
