@@ -453,11 +453,11 @@ int display_attrlist(struct display_buffer *dspbuf,
 					object_file_type_to_str(attr->type));
 
 	if (b_left > 0 && FSAL_TEST_MASK(attr->valid_mask, ATTR_NUMLINKS))
-		b_left = display_printf(dspbuf, " numlinks=0x%"PRIu32,
+		b_left = display_printf(dspbuf, " numlinks=0x%"PRIx32,
 					attr->numlinks);
 
 	if (b_left > 0 && FSAL_TEST_MASK(attr->valid_mask, ATTR_SIZE))
-		b_left = display_printf(dspbuf, " size=0x%"PRIu64,
+		b_left = display_printf(dspbuf, " size=0x%"PRIx64,
 					attr->filesize);
 
 	if (b_left > 0 && FSAL_TEST_MASK(attr->valid_mask, ATTR_MODE))
@@ -465,11 +465,11 @@ int display_attrlist(struct display_buffer *dspbuf,
 					attr->mode);
 
 	if (b_left > 0 && FSAL_TEST_MASK(attr->valid_mask, ATTR_OWNER))
-		b_left = display_printf(dspbuf, " owner=0x%"PRIu64,
+		b_left = display_printf(dspbuf, " owner=0x%"PRIx64,
 					attr->owner);
 
 	if (b_left > 0 && FSAL_TEST_MASK(attr->valid_mask, ATTR_GROUP))
-		b_left = display_printf(dspbuf, " group=0x%"PRIu64,
+		b_left = display_printf(dspbuf, " group=0x%"PRIx64,
 					attr->group);
 
 	if (b_left > 0 && FSAL_TEST_MASK(attr->valid_mask, ATTR_ATIME_SERVER))
