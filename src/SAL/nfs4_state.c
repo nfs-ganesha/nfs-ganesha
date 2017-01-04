@@ -202,6 +202,8 @@ state_status_t state_add_impl(struct fsal_obj_handle *obj,
 	/* Add state to list for file */
 	PTHREAD_MUTEX_lock(&pnew_state->state_mutex);
 	glist_add_tail(&ostate->file.list_of_states, &pnew_state->state_list);
+	/* Get ref for this state entry */
+	obj->obj_ops.get_ref(obj);
 	PTHREAD_MUTEX_unlock(&pnew_state->state_mutex);
 
 	/* Add state to list for owner */
@@ -372,6 +374,8 @@ void state_del_locked(state_t *state)
 	/* Remove from the list of states for a particular file */
 	PTHREAD_MUTEX_lock(&state->state_mutex);
 	glist_del(&state->state_list);
+	/* Put ref for this state entry */
+	obj->obj_ops.put_ref(obj);
 	memset(&state->state_obj, 0, sizeof(state->state_obj));
 	PTHREAD_MUTEX_unlock(&state->state_mutex);
 
