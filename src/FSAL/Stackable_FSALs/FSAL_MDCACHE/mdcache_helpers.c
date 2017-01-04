@@ -580,7 +580,8 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 			mdcache_key_delete(&nentry->fh_hk.key);
 
 		/* Release the new entry we acquired. */
-		mdcache_lru_putback(nentry, LRU_FLAG_NONE);
+		mdcache_put(nentry);
+		mdcache_kill_entry(nentry);
 	}
 
  out_release:
