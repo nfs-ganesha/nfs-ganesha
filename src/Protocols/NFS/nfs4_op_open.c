@@ -1434,6 +1434,9 @@ static void open4_ex(OPEN4args *arg,
 		 *
 		 * fsal_open2 handles the permission check on the file
 		 * itself and also handles all the share reservation stuff.
+		 *
+		 * fsal_open2 returns with a ref on out_obj, which should be
+		 * passed to the state.
 		 */
 		LogFullDebug(COMPONENT_STATE,
 			     "Calling open2 for %s", filename);
@@ -1542,7 +1545,8 @@ static void open4_ex(OPEN4args *arg,
 		if (state_status != STATE_SUCCESS) {
 			/* state_add_impl failure closed and freed state.
 			 * file_state will also be NULL at this point. Also
-			 * release the LRU reference on file_obj.
+			 * release the ref on file_obj, since the state add
+			 * failed.
 			 */
 			file_obj->obj_ops.put_ref(file_obj);
 			res_OPEN4->status = nfs4_Errno_state(state_status);

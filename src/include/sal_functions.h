@@ -696,21 +696,28 @@ static inline void *convert_lock_owner(struct fsal_export *fsal_export,
  *
  ******************************************************************************/
 
-state_status_t state_add_impl(struct fsal_obj_handle *obj,
-			      enum state_type state_type,
-			      union state_data *state_data,
-			      state_owner_t *owner_input, state_t **state,
-			      struct state_refer *refer);
+#define state_add_impl(o, t, d, i, s, r) \
+	_state_add_impl(o, t, d, i, s, r, __func__, __LINE__)
+state_status_t _state_add_impl(struct fsal_obj_handle *obj,
+			       enum state_type state_type,
+			       union state_data *state_data,
+			       state_owner_t *owner_input, state_t **state,
+			       struct state_refer *refer,
+			       const char *func, int line);
 
-state_status_t state_add(struct fsal_obj_handle *obj,
-			 enum state_type state_type,
-			 union state_data *state_data,
-			 state_owner_t *owner_input,
-			 state_t **state, struct state_refer *refer);
+#define state_add(o, t, d, i, s, r) \
+	_state_add(o, t, d, i, s, r, __func__, __LINE__)
+state_status_t _state_add(struct fsal_obj_handle *obj,
+			  enum state_type state_type,
+			  union state_data *state_data,
+			  state_owner_t *owner_input,
+			  state_t **state, struct state_refer *refer,
+			  const char *func, int line);
 
 state_status_t state_set(state_t *state);
 
-void state_del_locked(state_t *state);
+#define state_del_locked(s) _state_del_locked(s, __func__, __LINE__)
+void _state_del_locked(state_t *state, const char *func, int line);
 
 void state_del(state_t *state);
 

@@ -52,6 +52,9 @@
 #include "fsal_up.h"
 #include "nfs_file_handle.h"
 #include "nfs_proto_tools.h"
+#ifdef USE_LTTNG
+#include "gsh_lttng/state.h"
+#endif
 
 #ifdef DEBUG_SAL
 struct glist_head state_v4_all = GLIST_HEAD_INIT(state_v4_all);
@@ -79,11 +82,12 @@ pthread_mutex_t all_state_v4_mutex = PTHREAD_MUTEX_INITIALIZER;
  *
  * @return Operation status
  */
-state_status_t state_add_impl(struct fsal_obj_handle *obj,
-			      enum state_type state_type,
-			      union state_data *state_data,
-			      state_owner_t *owner_input, state_t **state,
-			      struct state_refer *refer)
+state_status_t _state_add_impl(struct fsal_obj_handle *obj,
+			       enum state_type state_type,
+			       union state_data *state_data,
+			       state_owner_t *owner_input, state_t **state,
+			       struct state_refer *refer,
+			       const char *func, int line)
 {
 	state_t *pnew_state = *state;
 	struct state_hdl *ostate = obj->state_hdl;
@@ -204,6 +208,10 @@ state_status_t state_add_impl(struct fsal_obj_handle *obj,
 	glist_add_tail(&ostate->file.list_of_states, &pnew_state->state_list);
 	PTHREAD_MUTEX_unlock(&pnew_state->state_mutex);
 
+#ifdef USE_LTTNG
+	tracepoint(state, add, func, line, obj, state);
+#endif
+
 	/* Add state to list for owner */
 	PTHREAD_MUTEX_lock(&owner_input->so_mutex);
 	PTHREAD_MUTEX_lock(&pnew_state->state_mutex);
@@ -275,11 +283,12 @@ errout:
  *
  * @return Operation status
  */
-state_status_t state_add(struct fsal_obj_handle *obj,
-			 enum state_type state_type,
-			 union state_data *state_data,
-			 state_owner_t *owner_input,
-			 state_t **state, struct state_refer *refer)
+state_status_t _state_add(struct fsal_obj_handle *obj,
+			  enum state_type state_type,
+			  union state_data *state_data,
+			  state_owner_t *owner_input,
+			  state_t **state, struct state_refer *refer,
+			  const char *func, int line)
 {
 	state_status_t status = 0;
 
@@ -299,8 +308,8 @@ state_status_t state_add(struct fsal_obj_handle *obj,
 
 	PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
 	status =
-	    state_add_impl(obj, state_type, state_data, owner_input, state,
-			   refer);
+	    _state_add_impl(obj, state_type, state_data, owner_input, state,
+			    refer, func, line);
 	PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
 
 	return status;
@@ -315,7 +324,7 @@ state_status_t state_add(struct fsal_obj_handle *obj,
  *
  */
 
-void state_del_locked(state_t *state)
+void _state_del_locked(state_t *state, const char *func, int line)
 {
 	char str[LOG_BUFF_LEN];
 	struct display_buffer dspbuf = {sizeof(str), str, str};
@@ -359,6 +368,10 @@ void state_del_locked(state_t *state)
 		PTHREAD_MUTEX_unlock(&state->state_mutex);
 		return;
 	}
+
+#ifdef USE_LTTNG
+	tracepoint(state, delete, func, line, obj, state);
+#endif
 
 	export = state->state_export;
 	owner = state->state_owner;

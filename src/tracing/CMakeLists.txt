@@ -6,6 +6,7 @@ set(ganesha_trace_LIB_SRCS
   logger.c
   mdcache.c
   nfs_rpc.c
+  state.c
 )
 
 add_library(ganesha_trace MODULE ${ganesha_trace_LIB_SRCS})
