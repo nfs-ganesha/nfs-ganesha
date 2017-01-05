@@ -2097,6 +2097,7 @@ static fsal_status_t glusterfs_lock_op2(struct fsal_obj_handle *obj_hdl,
 
 	if (retval /* && lock_op == FSAL_OP_LOCK */) {
 		retval = errno;
+		int rc = 0;
 
 		LogDebug(COMPONENT_FSAL,
 			 "fcntl returned %d %s",
@@ -2104,10 +2105,10 @@ static fsal_status_t glusterfs_lock_op2(struct fsal_obj_handle *obj_hdl,
 
 		if (conflicting_lock != NULL) {
 			/* Get the conflicting lock */
-			retval = glfs_posix_lock(my_fd.glfd, F_GETLK,
+			rc = glfs_posix_lock(my_fd.glfd, F_GETLK,
 						 &lock_args);
 
-			if (retval) {
+			if (rc) {
 				retval = errno; /* we lose the initial error */
 				LogCrit(COMPONENT_FSAL,
 					"After failing a lock request, I couldn't even get the details of who owns the lock.");
