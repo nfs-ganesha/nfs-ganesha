@@ -48,7 +48,6 @@ struct flock
 
 #define GPFS_DEVNAMEX "/dev/ss0"  /* Must be the same as GPFS_DEVNAME */
 #define kGanesha 140             /* Must be the same as Ganesha in enum kxOps */
-#define kLWEvent 169             /* Must be the same as LWEvent in enum kxOps */
 
 #define OPENHANDLE_GET_VERSION    100
 #define OPENHANDLE_GET_VERSION2   1002
@@ -96,14 +95,11 @@ struct flock
 #define OPENHANDLE_SETXATTRS      145
 #define OPENHANDLE_REMOVEXATTRS   146
 #define OPENHANDLE_LISTXATTRS     147
-#define OPENHANDLE_FS_LOCATIONS   148
+#define OPENHANDLE_MKNODE_BY_NAME 148
 #define OPENHANDLE_reserved       149
 #define OPENHANDLE_TRACE_ME       150
 #define OPENHANDLE_QUOTA          151
-#define OPENHANDLE_MKNODE_BY_NAME 152
-
-#define LWE_UPDATE 201
-#define MAX_PATH_LEN 1024
+#define OPENHANDLE_FS_LOCATIONS   152
 
 struct trace_arg
 {
