@@ -39,4 +39,10 @@ redis_create_handle_key(const char *obj, char *buf, int buf_sz);
 
 void redis_remove(const char *obj);
 
+int
+redis_rename_object(const char *buf,
+                    int buf_sz,
+                    const char *old_obj,
+                    const char *new_obj);
+
 #endif /* __SCALITY_REDIS_CLIENT_H__ */

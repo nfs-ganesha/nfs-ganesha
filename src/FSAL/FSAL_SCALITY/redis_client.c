@@ -269,3 +269,42 @@ redis_create_handle_key(const char *obj, char *buf, int buf_sz)
 				       export->bucket, obj);
 	return ret;
 }
+
+int
+redis_rename_object(const char *buf,
+		    int buf_sz,
+		    const char *old_obj,
+		    const char *new_obj)
+{
+	redisContext *ctx = get_redis_context();
+	if ( NULL == ctx )
+		return -1;
+	struct scality_fsal_export *export;
+	export = container_of(op_ctx->fsal_export,
+			      struct scality_fsal_export,
+			      export);
+	int ret = 0;
+	if (0 == ret)
+		ret = REDIS_SIMPLE_CMD(ctx, "SET " PREFIX "handle:%s/%s %b EX "
+				       TTL_HANDLE,
+				       export->bucket, new_obj,
+				       buf, buf_sz);
+	if (0 == ret)
+		ret = REDIS_SIMPLE_CMD(ctx,
+				       "SET " PREFIX "object:%b %s/%s EX "
+				       TTL_HANDLE,
+				       buf, buf_sz,
+				       export->bucket, new_obj);
+
+	if (0 == ret) {
+		ret = REDIS_SIMPLE_CMD(ctx, "DEL " PREFIX "handle:%s/%s",
+				       export->bucket, old_obj);
+		if (0 != ret) {
+			LogWarn(COMPONENT_FSAL,
+				"Could not remove handle for %s/%s",
+				export->bucket, old_obj);
+			ret = 0;
+		}
+	}
+	return ret;
+}
