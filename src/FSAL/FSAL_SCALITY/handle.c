@@ -855,6 +855,7 @@ static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
 {
 	int ret;
 	dbd_dtype_t dtype;
+	fsal_status_t status = fsalstat(ERR_FSAL_NO_ERROR, 0);
 	struct scality_fsal_export *export;
 	struct scality_fsal_obj_handle *myself;
 	export = container_of(op_ctx->fsal_export,
@@ -868,21 +869,26 @@ static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
 		 "unlink(%s)",
 		 name);
 
-	scality_content_lock(myself);
-	assert(myself->state != SCALITY_FSAL_OBJ_STATE_INCOMPLETE);
 	ret = dbd_lookup(export, myself, name, &dtype, NULL, NULL, NULL);
-	assert(myself->state != SCALITY_FSAL_OBJ_STATE_INCOMPLETE);
 	if ( 0 != ret )
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
+	struct attrlist attrs = {};
+	status = getattrs(hdl, &attrs);
+	if (FSAL_IS_ERROR(status)) {
+		return status;
+	}
+	scality_content_lock(myself);
 
 	switch(dtype) {
 	case DBD_DTYPE_REGULAR:
 	case DBD_DTYPE_DIRECTORY:
 		break;
 	case DBD_DTYPE_ENOENT:
-		return fsalstat(ERR_FSAL_NOENT, ENOENT);
+		status = fsalstat(ERR_FSAL_NOENT, ENOENT);
+		goto end;
 	default:break;
-		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
+		status = fsalstat(ERR_FSAL_SERVERFAULT, 0);
+		goto end;
 	}
 
 	struct scality_fsal_obj_handle *obj_hdl;
@@ -896,9 +902,10 @@ static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
 			"Unable to create the directory placeholder `%s/'",
 			myself->object);
 		handle_put_ref(hdl);
-		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
+		status = fsalstat(ERR_FSAL_SERVERFAULT, 0);
+		goto end;
 	}
-	fsal_status_t status = fsalstat(ERR_FSAL_NO_ERROR, 0);
+
 	switch(dtype) {
 	case DBD_DTYPE_REGULAR: {
 		int ret;
@@ -910,7 +917,7 @@ static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
 			status = fsalstat(ERR_FSAL_SERVERFAULT, 0);
 		}
 		else {
-			scality_cleanup(export, myself,
+			scality_cleanup(export, obj_hdl,
 					SCALITY_FSAL_CLEANUP_COMMIT|
 					SCALITY_FSAL_CLEANUP_ROLLBACK|
 					SCALITY_FSAL_CLEANUP_PARTS);
@@ -958,6 +965,7 @@ static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
 			redis_remove(object);
 		}
 	}
+ end:
 	scality_content_unlock(myself);
 	return status;
 }
