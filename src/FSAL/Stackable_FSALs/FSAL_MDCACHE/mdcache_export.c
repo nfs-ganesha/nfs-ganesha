@@ -1,7 +1,7 @@
 /*
  * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
- * Copyright 2015-2016 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2015-2017 Red Hat, Inc. and/or its affiliates.
  * Author: Daniel Gryniewicz <dang@redhat.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -849,6 +849,7 @@ mdc_init_export(struct fsal_module *fsal_hdl,
 	struct mdcache_fsal_export *myself;
 	int namelen;
 	pthread_rwlockattr_t attrs;
+	fsal_status_t status = {0, 0};
 
 	myself = gsh_calloc(1, sizeof(struct mdcache_fsal_export));
 	namelen = strlen(op_ctx->fsal_export->fsal->name) + 5;
@@ -865,7 +866,11 @@ mdc_init_export(struct fsal_module *fsal_hdl,
 	myself->up_ops.up_export = &myself->export;
 	myself->export.up_ops = &myself->up_ops;
 	myself->export.fsal = fsal_hdl;
-	fsal_attach_export(fsal_hdl, &myself->export.exports);
+	status.minor = fsal_attach_export(fsal_hdl, &myself->export.exports);
+	if (status.minor != 0) {
+		status.major = posix2fsal_error(status.minor);
+		return status;
+	}
 	fsal_export_stack(op_ctx->fsal_export, &myself->export);
 
 	glist_init(&myself->entry_list);
