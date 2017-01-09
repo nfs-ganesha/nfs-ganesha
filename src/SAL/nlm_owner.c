@@ -1101,35 +1101,31 @@ void dec_nlm_client_ref(state_nlm_client_t *client)
 	rc = hashtable_getlatch(ht_nlm_client, &buffkey, &old_value, true,
 				&latch);
 
-	if (rc != HASHTABLE_SUCCESS) {
-		if (rc == HASHTABLE_ERROR_NO_SUCH_KEY)
-			hashtable_releaselatched(ht_nlm_client, &latch);
+	/* Since the refcnt is zero, another thread that needs this
+	 * entry may delete this nlm client to insert its own nlm
+	 * client. So expect not to find this nlm client or find someone
+	 * else's nlm client!
+	 */
+	switch (rc) {
+	case HASHTABLE_ERROR_NO_SUCH_KEY:
+		break;
 
+	case HASHTABLE_SUCCESS:
+		if (old_value.addr == client) { /* our nlm client */
+			hashtable_deletelatched(ht_nlm_client, &buffkey,
+						&latch, &old_key, &old_value);
+		}
+		break;
+
+	default:
 		if (!str_valid)
 			display_nlm_client(&dspbuf, client);
-
-		LogCrit(COMPONENT_STATE, "Error %s, could not find {%s}",
-			hash_table_err_to_str(rc), str);
-
+		LogCrit(COMPONENT_STATE,
+			"Error %s, could not find {%s}, client=%p",
+			hash_table_err_to_str(rc), str, client);
 		return;
 	}
 
-	refcount = atomic_fetch_int32_t(&client->slc_refcount);
-
-	if (refcount > 0) {
-		if (str_valid)
-			LogDebug(COMPONENT_STATE,
-				 "Did not release refcount now=%"PRId32" {%s}",
-				 refcount, str);
-
-		hashtable_releaselatched(ht_nlm_client, &latch);
-
-		return;
-	}
-
-	/* use the key to delete the entry */
-	hashtable_deletelatched(ht_nlm_client, &buffkey, &latch, &old_key,
-				&old_value);
 
 	/* Release the latch */
 	hashtable_releaselatched(ht_nlm_client, &latch);
@@ -1137,7 +1133,7 @@ void dec_nlm_client_ref(state_nlm_client_t *client)
 	if (str_valid)
 		LogFullDebug(COMPONENT_STATE, "Free {%s}", str);
 
-	free_nlm_client(old_value.addr);
+	free_nlm_client(client);
 }
 
 /**
@@ -1164,6 +1160,7 @@ state_nlm_client_t *get_nlm_client(care_t care, SVCXPRT *xprt,
 	struct gsh_buffdesc buffval;
 	struct sockaddr_storage local_addr;
 	socklen_t addr_len;
+	uint32_t refcount;
 
 	if (caller_name == NULL)
 		return NULL;
@@ -1199,22 +1196,30 @@ state_nlm_client_t *get_nlm_client(care_t care, SVCXPRT *xprt,
 	rc = hashtable_getlatch(ht_nlm_client, &buffkey, &buffval, true,
 				&latch);
 
-	/* If we found it, return it */
-	if (rc == HASHTABLE_SUCCESS) {
+	switch (rc) {
+	case HASHTABLE_SUCCESS:
 		pclient = buffval.addr;
 
-		/* Return the found NLM Client */
 		if (isFullDebug(COMPONENT_STATE)) {
 			display_nlm_client(&dspbuf, pclient);
 			LogFullDebug(COMPONENT_STATE, "Found {%s}", str);
 		}
 
-		/* Increment refcount under hash latch.
-		 * This prevents dec ref from removing this entry from hash
-		 * if a race occurs.
-		 */
-		inc_nlm_client_ref(pclient);
+		refcount = atomic_fetch_int32_t(&pclient->slc_refcount);
+		if (refcount == 0) {
+			/* This nlm client is in the process of getting
+			 * deleted. Let us delete it from the hash table
+			 * and pretend as though it isn't found in the
+			 * hash table. The thread that is trying to
+			 * delete this entry will not find it in the
+			 * hash table but will free its nlm client.
+			 */
+			hashtable_deletelatched(ht_nsm_client, &buffkey,
+						&latch, NULL, NULL);
+			goto not_found;
+		}
 
+		atomic_inc_int32_t(&pclient->slc_refcount);
 		hashtable_releaselatched(ht_nlm_client, &latch);
 
 		if (care == CARE_MONITOR && !nsm_monitor(nsm_client)) {
@@ -1223,10 +1228,11 @@ state_nlm_client_t *get_nlm_client(care_t care, SVCXPRT *xprt,
 		}
 
 		return pclient;
-	}
 
-	/* An error occurred, return NULL */
-	if (rc != HASHTABLE_ERROR_NO_SUCH_KEY) {
+	case HASHTABLE_ERROR_NO_SUCH_KEY:
+		goto not_found;
+
+	default:
 		display_nlm_client(&dspbuf, &key);
 
 		LogCrit(COMPONENT_STATE, "Error %s, could not find {%s}",
@@ -1235,6 +1241,7 @@ state_nlm_client_t *get_nlm_client(care_t care, SVCXPRT *xprt,
 		return NULL;
 	}
 
+not_found:
 	/* Not found, but we don't care, return NULL */
 	if (care == CARE_NOT) {
 		/* Return the found NLM Client */
