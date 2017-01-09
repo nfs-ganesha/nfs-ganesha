@@ -1,7 +1,7 @@
 /*
  * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
- * Copyright 2015-2016 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2015-2017 Red Hat, Inc. and/or its affiliates.
  * Author: Daniel Gryniewicz <dang@redhat.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -1329,7 +1329,7 @@ mdcache_dirent_rename(mdcache_entry_t *parent, const char *oldname,
 
 	if (dirent2) {
 		/* rename would cause a collision */
-		if (parent->mde_flags & MDCACHE_TRUST_CONTENT) {
+		if (dirent && parent->mde_flags & MDCACHE_TRUST_CONTENT) {
 			/* overwrite, replace entry and expire the old */
 			mdcache_entry_t *oldentry;
 
