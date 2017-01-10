@@ -683,16 +683,116 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 	return data.status;
 }
 
+
+static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
+				 struct fsal_obj_handle *hdl,
+				 const char *name);
+
 static fsal_status_t renamefile(struct fsal_obj_handle *obj_hdl,
 				struct fsal_obj_handle *olddir_hdl,
 				const char *old_name,
 				struct fsal_obj_handle *newdir_hdl,
 				const char *new_name)
 {
-	/* SCALITY doesn't support non-directory inodes */
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+	fsal_status_t status;
+	int ret;
+	struct scality_fsal_export *export;
+	struct scality_fsal_obj_handle *src_dir, *dst_dir;
+	struct scality_fsal_obj_handle *myself;
+	dbd_dtype_t src_dtype, dst_dtype;
+	//dbd_lookup unused parameters
+	struct timespec unused_last_modified;
+	long long	unused_filesize;
+	bool		unused_attrs_loaded;
+
+	export = container_of(op_ctx->fsal_export,
+			      struct scality_fsal_export,
+			      export);
+	myself = container_of(obj_hdl,
+			      struct scality_fsal_obj_handle,
+			      obj_handle);
+	src_dir = container_of(olddir_hdl,
+			       struct scality_fsal_obj_handle,
+			       obj_handle);
+	dst_dir = container_of(newdir_hdl,
+			       struct scality_fsal_obj_handle,
+			       obj_handle);
+
+	ret = dbd_lookup(export, src_dir, old_name, &src_dtype,
+			 &unused_last_modified,
+			 &unused_filesize,
+			 &unused_attrs_loaded);
+	if (0 != ret) {
+		status = fsalstat(ERR_FSAL_NOENT, 0);
+		goto end;
+	}
+
+	switch(src_dtype) {
+	case DBD_DTYPE_DIRECTORY:
+		LogCrit(COMPONENT_FSAL,
+			"Invoking unsupported FSAL operation");
+		status = fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+		goto end;
+	case DBD_DTYPE_REGULAR: break;
+	case DBD_DTYPE_ENOENT:
+		status = fsalstat(ERR_FSAL_NOENT, 0);
+		goto end;
+	default:
+		status = fsalstat(ERR_FSAL_SERVERFAULT, 0);
+		goto end;
+	}
+	ret = dbd_lookup(export, dst_dir, new_name, &dst_dtype,
+			 &unused_last_modified,
+			 &unused_filesize,
+			 &unused_attrs_loaded);
+	if (0 == ret) {
+		switch(dst_dtype) {
+		case DBD_DTYPE_DIRECTORY:
+			LogCrit(COMPONENT_FSAL,
+				"Invoking unsupported FSAL operation");
+			status = fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+			goto end;
+		case DBD_DTYPE_REGULAR: {
+			struct fsal_obj_handle *oldobj_hdl;
+			struct attrlist attrs;
+			fsal_prepare_attrs(&attrs, 0);
+			status = lookup(olddir_hdl, old_name,
+					&oldobj_hdl, &attrs);
+			fsal_release_attrs(&attrs);
+			if (FSAL_IS_ERROR(status)) {
+				goto end;
+			}
+			status = file_unlink(olddir_hdl,
+					     oldobj_hdl,
+					     old_name);
+			handle_put_ref(oldobj_hdl);
+			if (FSAL_IS_ERROR(status)) {
+				goto end;
+			}
+			break;
+		}
+		case DBD_DTYPE_ENOENT: break;
+		default:
+			status = fsalstat(ERR_FSAL_SERVERFAULT, 0);
+			goto end;
+		}
+	}
+	char *old_obj = myself->object;
+	char new_obj[MAX_URL_SIZE];
+	ret = name_to_object(dst_dir, new_name, new_obj, sizeof new_obj);
+	myself->object = gsh_strdup(new_obj);
+	ret = dbd_rename(export, old_obj, new_obj);
+	if (0 != ret) {
+		gsh_free(myself->object);
+		myself->object = old_obj;
+		goto end;
+	}
+	redis_rename_object(myself->handle, SCALITY_OPAQUE_SIZE,
+			    old_obj, new_obj);
+	gsh_free(old_obj);
+
+ end:
+	return status;
 }
 
 static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,

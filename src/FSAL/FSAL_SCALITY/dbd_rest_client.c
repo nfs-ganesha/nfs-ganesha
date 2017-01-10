@@ -1462,3 +1462,82 @@ dbd_metadata_get_version(struct scality_fsal_export *export)
 		dbd_response_free(response);
 	return ret;
 }
+
+int
+dbd_rename(struct scality_fsal_export *export,
+	   const char *src_obj,
+	   const char *dst_obj)
+{
+	int ret = -1;
+	dbd_response_t *response;
+	char url[MAX_URL_SIZE];
+	char *payload_str;
+	json_t* payload;
+	CURL *curl = NULL;
+	CURLcode curl_ret;
+	long http_status;
+
+	response = dbd_get(export, BUCKET_BASE_PATH, src_obj, NULL);
+	if (NULL == response || response->http_status != 200) {
+		LogCrit(COMPONENT_FSAL,
+			"get metatada on %s failed", src_obj);
+		goto out;
+	}
+
+	payload_str = json_dumps(response->body, JSON_COMPACT);
+	payload = NULL;
+	if (export->metadata_version < 1) {
+		payload = json_object();
+		json_object_set(payload, "data", json_string(payload_str));
+		free(payload_str);
+		payload_str = json_dumps(payload, JSON_COMPACT);
+	}
+
+	if ( NULL == payload_str )
+		return ret;
+
+	curl = curl_easy_init();
+	if ( NULL == curl ) {
+		return ret;
+	}
+
+	buffer_t buf = {
+		.buf = payload_str,
+		.size = strlen(payload_str)
+	};
+	char *tmp = curl_easy_escape(curl, dst_obj,
+				     strlen(dst_obj));
+	snprintf(url, sizeof(url), "%s"BUCKET_BASE_PATH"/%s/%s",
+		 export->module->dbd_url, export->bucket, tmp);
+	free(tmp);
+	curl_easy_setopt(curl, CURLOPT_URL, url);
+	curl_easy_setopt(curl, CURLOPT_POST, 1L);
+	curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, buf.size);
+	curl_easy_setopt(curl, CURLOPT_READFUNCTION, read_callback);
+	curl_easy_setopt(curl, CURLOPT_READDATA, &buf);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, noop_callback);
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA, NULL);
+	curl_easy_setopt(curl, CURLOPT_TIMEOUT, 300);
+
+	curl_ret = curl_easy_perform(curl);
+	if ( CURLE_OK != curl_ret ) {
+		LogCrit(COMPONENT_FSAL, "curl(%s) POST failed: %s", url, curl_easy_strerror(curl_ret));
+		goto out;
+	}
+	curl_ret = curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_status);
+	if ( CURLE_OK != curl_ret ) {
+		LogCrit(COMPONENT_FSAL, "Unable to retrieve HTTP status for %s", url);
+		goto out;
+	}
+	if ( http_status < 200 || http_status >= 300 ) {
+		goto out;
+	}
+
+	dbd_delete(export, src_obj);
+
+	ret = 0;
+
+
+ out:
+	return ret;
+}

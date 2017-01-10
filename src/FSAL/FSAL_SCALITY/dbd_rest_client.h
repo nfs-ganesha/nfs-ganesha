@@ -115,7 +115,10 @@ dbd_delete(struct scality_fsal_export *export,
 int
 dbd_post(struct scality_fsal_export* export,
 	 struct scality_fsal_obj_handle *object_hdl);
-
+int
+dbd_rename(struct scality_fsal_export *export,
+	   const char *src_obj,
+	   const char *dst_obj);
 int
 dbd_metadata_get_version(struct scality_fsal_export *export);
 #endif /* __DBD_REST_CLIENT_H__ */
