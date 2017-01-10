@@ -489,13 +489,27 @@ static int add_client(struct glist_head *client_list,
 	case TERM_V4ADDR:
 		rc = inet_pton(AF_INET, client_tok,
 			       &cli->client.hostif.clientaddr);
-		assert(rc == 1);  /* this had better be grok'd by now! */
+		if (rc != 1) {
+			config_proc_error(cnode, err_type,
+					  "IPv4 addr (%s) not in presentation format",
+					  client_tok);
+			err_type->invalid = true;
+			errcnt++;
+			goto out;
+		}
 		cli->type = HOSTIF_CLIENT;
 		break;
 	case TERM_V6ADDR:
 		rc = inet_pton(AF_INET6, client_tok,
 			       &cli->client.hostif.clientaddr6);
-		assert(rc == 1);  /* this had better be grok'd by now! */
+		if (rc != 1) {
+			config_proc_error(cnode, err_type,
+					  "IPv6 addr (%s) not in presentation format",
+					  client_tok);
+			err_type->invalid = true;
+			errcnt++;
+			goto out;
+		}
 		cli->type = HOSTIF_CLIENT_V6;
 		break;
 	case TERM_TOKEN: /* only dns names now. */
