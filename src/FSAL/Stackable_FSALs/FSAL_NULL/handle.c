@@ -339,15 +339,22 @@ static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
  *
  * @return Result coming from the upper layer.
  */
-static bool nullfs_readdir_cb(const char *name, struct fsal_obj_handle *obj,
+static bool nullfs_readdir_cb(const char *name,
+			      struct fsal_obj_handle *sub_handle,
 			      struct attrlist *attrs,
 			      void *dir_state, fsal_cookie_t cookie)
 {
 	struct nullfs_readdir_state *state =
 		(struct nullfs_readdir_state *) dir_state;
+	struct fsal_obj_handle *new_obj;
+
+	if (FSAL_IS_ERROR(nullfs_alloc_and_check_handle(state->exp, sub_handle,
+		sub_handle->fs, &new_obj, fsalstat(ERR_FSAL_NO_ERROR, 0)))) {
+		return false;
+	    }
 
 	op_ctx->fsal_export = &state->exp->export;
-	bool result = state->cb(name, obj, attrs, state->dir_state, cookie);
+	bool result = state->cb(name, new_obj, attrs, state->dir_state, cookie);
 
 	op_ctx->fsal_export = state->exp->export.sub_export;
 
