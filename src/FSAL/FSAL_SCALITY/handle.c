@@ -955,46 +955,55 @@ static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
 {
 	int ret;
 	dbd_dtype_t dtype;
+	//dbd_lookup unused parameters
+	struct timespec unused_last_modified;
+	long long	unused_filesize;
+	bool		unused_attrs_loaded;
+
 	fsal_status_t status = fsalstat(ERR_FSAL_NO_ERROR, 0);
 	struct scality_fsal_export *export;
 	struct scality_fsal_obj_handle *myself;
+	struct scality_fsal_obj_handle *obj_hdl;
 	export = container_of(op_ctx->fsal_export,
 			      struct scality_fsal_export,
 			      export);
 	myself = container_of(dir_hdl,
 			      struct scality_fsal_obj_handle,
 			      obj_handle);
+	obj_hdl = container_of(hdl,
+			       struct scality_fsal_obj_handle,
+			       obj_handle);
 
 	LogDebug(COMPONENT_FSAL,
 		 "unlink(%s)",
 		 name);
 
-	ret = dbd_lookup(export, myself, name, &dtype, NULL, NULL, NULL);
+	ret = dbd_lookup(export, myself, name, &dtype,
+			 &unused_last_modified,
+			 &unused_filesize,
+			 &unused_attrs_loaded);
 	if ( 0 != ret )
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
-	struct attrlist attrs = {};
-	status = getattrs(hdl, &attrs);
-	if (FSAL_IS_ERROR(status)) {
-		return status;
-	}
-	scality_content_lock(myself);
 
 	switch(dtype) {
-	case DBD_DTYPE_REGULAR:
 	case DBD_DTYPE_DIRECTORY:
+		// a directory is unlikely to have parts but make sure
+		// fallthrough
+	case DBD_DTYPE_REGULAR:
+		if (obj_hdl->state == SCALITY_FSAL_OBJ_STATE_INCOMPLETE) {
+			ret = dbd_getattr(export, obj_hdl);
+			if ( 0 != ret )
+				return fsalstat(ERR_FSAL_SERVERFAULT, 0);
+		}
 		break;
 	case DBD_DTYPE_ENOENT:
-		status = fsalstat(ERR_FSAL_NOENT, ENOENT);
-		goto end;
-	default:break;
-		status = fsalstat(ERR_FSAL_SERVERFAULT, 0);
-		goto end;
+		return fsalstat(ERR_FSAL_NOENT, ENOENT);
+	default:
+		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 	}
 
-	struct scality_fsal_obj_handle *obj_hdl;
-	obj_hdl = container_of(hdl,
-			       struct scality_fsal_obj_handle,
-			       obj_handle);
+	scality_content_lock(myself);
+
 
 	ret = dbd_post(export, myself);
 	if ( 0 != ret ) {
