@@ -165,7 +165,8 @@ static struct scality_fsal_obj_handle
 *alloc_handle(const char *object,
 	      const char *handle_key,
 	      struct fsal_export *exp_hdl,
-	      dbd_dtype_t dtype)
+	      dbd_dtype_t dtype,
+	      bool *is_newp)
 {
 	struct scality_fsal_obj_handle *hdl;
 	struct scality_fsal_export *export;
@@ -177,9 +178,13 @@ static struct scality_fsal_obj_handle
 
 	hdl = handle_lookup(export, handle_key);
 	if (NULL != hdl) {
+		if (is_newp)
+			*is_newp = false;
 		scality_export_unlock(export);
 		return hdl;
 	}
+	if (is_newp)
+	*is_newp = true;
 	hdl = gsh_calloc(1, sizeof(struct scality_fsal_obj_handle) +
 			 SCALITY_OPAQUE_SIZE);
 
@@ -329,6 +334,9 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 
 	//dbd stuffs!
 	dbd_dtype_t dtype;
+	struct timespec last_modified;
+	long long filesize;
+	bool attrs_loaded = false;
 	int ret;
 	char object[MAX_URL_SIZE];
 	ret = name_to_object(myself, path, object, sizeof object);
@@ -350,12 +358,16 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 					      export),
 				 myself,
 				 path,
-				 &dtype);
+				 &dtype,
+				 &last_modified,
+				 &filesize,
+				 &attrs_loaded);
 	}
 
 	if ( 0 == ret ) {
 		char handle_key[SCALITY_OPAQUE_SIZE];
 		char *handle_keyp = NULL;
+		bool handle_is_new;
 		ret = redis_get_handle_key(object, handle_key, sizeof handle_key);
 		if ( 0 == ret )
 			handle_keyp = handle_key;
@@ -364,7 +376,9 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 		case DBD_DTYPE_REGULAR:
 			hdl = alloc_handle(object,
 					   handle_keyp,
-					   op_ctx->fsal_export, dtype);
+					   op_ctx->fsal_export,
+					   dtype,
+					   &handle_is_new);
 			*handle = &hdl->obj_handle;
 			error = ERR_FSAL_NO_ERROR;
 			break;
@@ -374,20 +388,36 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 		case DBD_DTYPE_DIRECTORY:
 			hdl = alloc_handle(object,
 					   handle_keyp,
-					   op_ctx->fsal_export, DBD_DTYPE_DIRECTORY);
+					   op_ctx->fsal_export,
+					   DBD_DTYPE_DIRECTORY,
+					   &handle_is_new);
 			*handle = &hdl->obj_handle;
 			error = ERR_FSAL_NO_ERROR;
 			break;
 		default:break;
 		}
-		if (hdl && attrs_out) {
-			fsal_status_t status;
-			status = getattrs(&hdl->obj_handle, attrs_out);
-			if (FSAL_IS_ERROR(status)) {
-				LogCrit(COMPONENT_FSAL,
-					"Unable to getatr on %s",
-					hdl->object);
-				return status;
+		if (hdl) {
+			if (handle_is_new && attrs_loaded) {
+				hdl->state = SCALITY_FSAL_OBJ_STATE_INCOMPLETE;
+				hdl->attributes.filesize = filesize;
+				hdl->attributes.spaceused = filesize;
+				hdl->attributes.mtime = last_modified;
+				hdl->attributes.atime = hdl->attributes.mtime;
+				hdl->attributes.ctime = hdl->attributes.mtime;
+				hdl->attributes.chgtime = hdl->attributes.mtime;
+				if (attrs_out)
+					fsal_copy_attrs(attrs_out,
+							&hdl->attributes,
+							false);
+			} else if (attrs_out) {
+				fsal_status_t status;
+				status = getattrs(&hdl->obj_handle, attrs_out);
+				if (FSAL_IS_ERROR(status)) {
+					LogCrit(COMPONENT_FSAL,
+						"Unable to getatr on %s",
+						hdl->object);
+					return status;
+				}
 			}
 		}
 	}
@@ -424,10 +454,11 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 	ret = redis_get_handle_key(object, handle_key, sizeof handle_key);
 	if ( 0 == ret )
 		handle_keyp = handle_key;
-
 	hdl = alloc_handle(object,
 			   handle_keyp,
-			   op_ctx->fsal_export, DBD_DTYPE_REGULAR);
+			   op_ctx->fsal_export,
+			   DBD_DTYPE_REGULAR,
+			   NULL);
 	*handle = &hdl->obj_handle;
 
 	if (attrs_out)
@@ -480,7 +511,9 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 
 	hdl = alloc_handle(object,
 			   handle_keyp,
-			   op_ctx->fsal_export, DBD_DTYPE_DIRECTORY);
+			   op_ctx->fsal_export,
+			    DBD_DTYPE_DIRECTORY,
+			   NULL);
 
 	*handle = &hdl->obj_handle;
 
@@ -621,8 +654,6 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 			      struct scality_fsal_obj_handle,
 			      obj_handle);
 
-	LogDebug(COMPONENT_FSAL, "readdir in %s", myself->object);
-
 	LogDebug(COMPONENT_FSAL,
 		"readdir: hdl=%p, name=%s",
 		myself, myself->object);
@@ -675,7 +706,7 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
 			      obj_handle);
 	export = container_of(op_ctx->fsal_export, struct scality_fsal_export, export);
 	LogDebug(COMPONENT_FSAL,
-		"getattrs(%s)",myself->object);
+		 "getattrs(%s)",myself->object);
 
 	/* We need to update the numlinks under attr lock. */
 	myself->attributes.numlinks = atomic_fetch_uint32_t(&myself->numlinks);
@@ -683,7 +714,13 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
 	if ( '\0' != myself->object[0] ) {
 
 		int ret;
-		ret = dbd_getattr(export, myself);
+		if (myself->openflags == FSAL_O_CLOSED) {
+			LogDebug(COMPONENT_FSAL,
+				 "skipped getattr for %s", myself->object);
+			ret = 0;
+		} else {
+			ret = dbd_getattr(export, myself);
+		}
 		if ( ret < 0 ) {
 			LogDebug(COMPONENT_FSAL,
 				 "Requesting attributes for non existing object name=%s",
@@ -733,6 +770,16 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 			      struct scality_fsal_obj_handle,
 			      obj_handle);
 
+	if (myself->state == SCALITY_FSAL_OBJ_STATE_INCOMPLETE) {
+		struct attrlist dummy;
+		fsal_openflags_t saved_openflags = myself->openflags;
+		myself->openflags = FSAL_O_WRITE;
+		status = getattrs(obj_hdl, &dummy);
+		myself->openflags = saved_openflags;
+		if (FSAL_IS_ERROR(status))
+			goto out;
+		assert(myself->state == SCALITY_FSAL_OBJ_STATE_CLEAN);
+	}
 	scality_content_lock(myself);
 
 	if ( REGULAR_FILE != myself->attributes.type &&
@@ -822,7 +869,9 @@ static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
 		 name);
 
 	scality_content_lock(myself);
-	ret = dbd_lookup(export, myself, name, &dtype);
+	assert(myself->state != SCALITY_FSAL_OBJ_STATE_INCOMPLETE);
+	ret = dbd_lookup(export, myself, name, &dtype, NULL, NULL, NULL);
+	assert(myself->state != SCALITY_FSAL_OBJ_STATE_INCOMPLETE);
 	if ( 0 != ret )
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 
@@ -1161,7 +1210,8 @@ fsal_status_t scality_lookup_path(struct fsal_export *exp_hdl,
 			alloc_handle(object,
 				     handle_keyp,
 				     exp_hdl,
-				     DBD_DTYPE_DIRECTORY);
+				     DBD_DTYPE_DIRECTORY,
+				     NULL);
 		if (attrs_out) {
 			fsal_status_t status;
 			status = getattrs(&myself->root_handle->obj_handle,
@@ -1226,9 +1276,16 @@ fsal_status_t scality_create_handle(struct fsal_export *exp_hdl,
 
 
 	dbd_dtype_t dtype = DBD_DTYPE_DIRECTORY;
+	struct timespec last_modified;
+	long long filesize;
+	bool attrs_loaded = false;
+	bool handle_is_new;
 
 	if ( '\0' != object[0]  ) {
-		ret = dbd_lookup_object(export, object, &dtype);
+		ret = dbd_lookup_object(export, object, &dtype,
+					&last_modified,
+					&filesize,
+					&attrs_loaded);
 		if ( ret < 0 ) {
 			return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 		}
@@ -1238,9 +1295,23 @@ fsal_status_t scality_create_handle(struct fsal_export *exp_hdl,
 	case DBD_DTYPE_DIRECTORY:
 		hdl = alloc_handle(object,
 				   hdl_desc->addr,
-				   op_ctx->fsal_export, dtype);
+				   op_ctx->fsal_export,
+				   dtype,
+				   &handle_is_new);
 		*handle = &hdl->obj_handle;
-		if (attrs_out) {
+		if (handle_is_new && attrs_loaded) {
+			hdl->state = SCALITY_FSAL_OBJ_STATE_INCOMPLETE;
+			hdl->attributes.filesize = filesize;
+			hdl->attributes.spaceused = filesize;
+			hdl->attributes.mtime = last_modified;
+			hdl->attributes.atime = hdl->attributes.mtime;
+			hdl->attributes.ctime = hdl->attributes.mtime;
+			hdl->attributes.chgtime = hdl->attributes.mtime;
+			if (attrs_out)
+				fsal_copy_attrs(attrs_out,
+						&hdl->attributes,
+						false);
+		} else if (attrs_out) {
 			fsal_status_t status;
 			status = getattrs(&hdl->obj_handle, attrs_out);
 			if (FSAL_IS_ERROR(status)) {

@@ -297,3 +297,45 @@ The following information is kept up to date by Scality NFS
  - all other fields come from a compile time template
 
 FIXME: now() must be used only when {A,M}TIME_SERVER flags are set.
+
+### Optimized readdir+
+
+Previously, the code did not take benefit from the information returned by
+the listing and operations were decoupled to keep a simple design. This led
+to having:
+ - readdir cost of one roundtrip per 50 entries
+ - lookup cost of two roundtrips per entry in the listing
+ - getattr cost of one roundtrip per entry int the listing
+
+The lookup had to perform two roundtrips because of the possibility of clashes in names (e.g. an object named "foo" and a directory named "foo/")
+
+During a readdir+, the information gathered by the listing is used to evict
+all lookup.The code now considers the entry as existing and of the right type
+(thanks to commonPrefixes/contents separation). And furthermore, the getattr
+is not accomplished on regular files, thanks to the information from the
+listing which is enough to feed the object attributes.
+On directories, a Metadata request is performed because the commonPrefixes
+from the listing may not reflect actual object (remember placeholders).
+
+This optimization will only be possible as long as the only object attributes needed for the translation to posix attributes will be mtime and filesize.
+
+__Incomplete Attributes__
+
+Files attributes read during optimized listing are incomplete, parts location
+information is missing. Consequently, prior to a data read or a data write,
+a getattr has to be done in order to retrieve the locations of the parts
+constituting the file. 
+
+### Optimized lookup/getattrs
+
+On standalone, lookup/getattr operations, the lookup now performs a first
+exact match lookup to favor performance on files (rather than on directories).
+if it succeed the information retrieved from the content is used to build posix
+attributes.
+if no entry is found, then a delimiter/prefix lookup is performed on the
+path of the object with a slash appended and a maxkeys equal to 1. If an
+exact match is found in the contents section, the attributes retrieved are
+used to build the posix attributes. Otherwise, if both contents and
+comminPrefixes are empty, the posix attributes are built with the default
+values from the bucket (as it is in the current getattr).
+

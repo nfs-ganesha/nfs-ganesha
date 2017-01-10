@@ -61,13 +61,19 @@ typedef enum {
  * @param name - the name of the object (either a regular file or a directory)
  *                in the directory to lookup
  * @param[out] dtypep - the type of the object looked up or DBD_DTUP_ENOENT
+ * @param[out] last_modifiedp - value retrieved from the lookup request, if any
+ * @param[out] filesizep - value retrieved from the lookup request, if any
+ * @param[out] attrs_loaded - tell the caller that filesize and last_modified
+ *                            have been retrieved from the lookup request
  * @return 0 on success
  */
-int
-dbd_lookup(struct scality_fsal_export *export,
-	   struct scality_fsal_obj_handle *parent_hdl,
-	   const char *name,
-	   dbd_dtype_t *dtypep);
+int dbd_lookup(struct scality_fsal_export *export,
+	       struct scality_fsal_obj_handle *parent_hdl,
+	       const char *name,
+	       dbd_dtype_t *dtypep,
+	       struct timespec *last_modifiedp,
+	       long long *filesizep,
+	       bool *attrs_loadedp);
 
 /**
  * @brief perform a lookup in a bucket
@@ -80,7 +86,10 @@ dbd_lookup(struct scality_fsal_export *export,
 int
 dbd_lookup_object(struct scality_fsal_export *export,
 		  const char *object,
-		  dbd_dtype_t *dtypep);
+		  dbd_dtype_t *dtypep,
+		  struct timespec *last_modifiedp,
+		  long long *filesizep,
+		  bool *attrs_loadedp);
 
 
 typedef bool (*dbd_readdir_cb)(const char *name, void *user_data, fsal_cookie_t *cookiep);
