@@ -992,7 +992,7 @@ state_status_t state_nlm_share(struct fsal_obj_handle *obj,
 				   old_share_deny,
 				   share_access,
 				   share_deny,
-				   true);
+				   false);
 
 	/* Get the updated union of share states of this file. */
 	new_entry_share_access = state_share_get_share_access(obj->state_hdl);
@@ -1017,7 +1017,7 @@ state_status_t state_nlm_share(struct fsal_obj_handle *obj,
 						   share_deny,
 						   old_share_access,
 						   old_share_deny,
-						   true);
+						   false);
 
 			remove_nlm_share(state);
 
@@ -1100,7 +1100,7 @@ state_status_t state_nlm_unshare(struct fsal_obj_handle *obj,
 				   old_share_deny,
 				   new_share_access,
 				   new_share_deny,
-				   true);
+				   false);
 
 	/* Get the updated union of share states of this file. */
 	new_entry_share_access = state_share_get_share_access(obj->state_hdl);
@@ -1127,7 +1127,7 @@ state_status_t state_nlm_unshare(struct fsal_obj_handle *obj,
 						   new_share_deny,
 						   old_share_access,
 						   old_share_deny,
-						   true);
+						   false);
 
 			LogDebug(COMPONENT_STATE, "do_share_op failed");
 			goto out;
