@@ -1547,9 +1547,16 @@ mdc_populate_dirent(const char *name, struct fsal_obj_handle *sub_handle,
 			*state->status = fsalstat(ERR_FSAL_NO_ERROR, 0);
 			return true;
 		}
-		LogInfo(COMPONENT_CACHE_INODE,
-			"Lookup failed on %s in dir %p with %s",
-			name, directory, fsal_err_txt(*state->status));
+		if ((*state->status).major == ERR_FSAL_OVERFLOW) {
+			LogFullDebug(COMPONENT_CACHE_INODE,
+				     "Lookup failed on %s in dir %p with %s",
+				     name, directory,
+				     fsal_err_txt(*state->status));
+		} else {
+			LogInfo(COMPONENT_CACHE_INODE,
+				"Lookup failed on %s in dir %p with %s",
+				name, directory, fsal_err_txt(*state->status));
+		}
 		return false;
 	}
 
