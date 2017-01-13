@@ -691,23 +691,38 @@ void nfs_dupreq_put_drc(SVCXPRT *xprt, drc_t *drc, uint32_t flags)
 		break;
 	case DRC_TCP_V4:
 	case DRC_TCP_V3:
-		if (drc->refcnt == 0) {
-			if (!(drc->flags & DRC_FLAG_RECYCLE)) {
-				/* note t's lock order wrt drc->mtx is
-				 * the opposite of drc->xt[*].lock */
-				drc->d_u.tcp.recycle_time = time(NULL);
-				drc->flags |= DRC_FLAG_RECYCLE;
-				PTHREAD_MUTEX_unlock(&drc->mtx); /* !LOCKED */
-				DRC_ST_LOCK();
-				TAILQ_INSERT_TAIL(&drc_st->tcp_drc_recycle_q,
-						  drc, d_u.tcp.recycle_q);
-				++(drc_st->tcp_drc_recycle_qlen);
-				LogFullDebug(COMPONENT_DUPREQ,
-					     "enqueue drc %p for recycle", drc);
-				DRC_ST_UNLOCK();
-				return;
-			}
+		if (drc->refcnt != 0) /* quick path */
+			break;
+
+		/* note t's lock order wrt drc->mtx is the opposite of
+		 * drc->xt[*].lock. Drop and reacquire locks in correct
+		 * order.
+		 */
+		PTHREAD_MUTEX_unlock(&drc->mtx);
+
+		/* @todo: after dropping the lock above, there is no
+		 * guaranty that this drc is valid any more with the
+		 * current implementation!
+		 */
+		DRC_ST_LOCK();
+		PTHREAD_MUTEX_lock(&drc->mtx);
+
+		/* Since we dropped and reacquired the drc lock for the
+		 * correct lock order, we need to recheck the drc fields
+		 * again!
+		 */
+		if (drc->refcnt == 0 && !(drc->flags & DRC_FLAG_RECYCLE)) {
+			drc->d_u.tcp.recycle_time = time(NULL);
+			drc->flags |= DRC_FLAG_RECYCLE;
+			TAILQ_INSERT_TAIL(&drc_st->tcp_drc_recycle_q,
+					  drc, d_u.tcp.recycle_q);
+			++(drc_st->tcp_drc_recycle_qlen);
+			LogFullDebug(COMPONENT_DUPREQ,
+				     "enqueue drc %p for recycle", drc);
 		}
+		DRC_ST_UNLOCK();
+		break;
+
 	default:
 		break;
 	};
