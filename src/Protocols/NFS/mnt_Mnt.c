@@ -69,7 +69,7 @@ int mnt_Mnt(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	memset(res, 0, sizeof(nfs_res_t));
 
 	/* Quick escape if an unsupported MOUNT version */
-	if (req->rq_vers != MOUNT_V3) {
+	if (req->rq_msg.cb_vers != MOUNT_V3) {
 		res->res_mnt1.status = NFSERR_ACCES;
 		goto out;
 	}

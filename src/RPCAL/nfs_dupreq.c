@@ -52,8 +52,10 @@
 
 #define DUPREQ_BAD_ADDR1 0x01	/* safe for marked pointers, etc */
 #define DUPREQ_NOCACHE   0x02
-
 #define DUPREQ_MAX_RETRIES 5
+
+#define NFS_pcp nfs_param.core_param
+#define NFS_program NFS_pcp.program
 
 pool_t *dupreq_pool;
 pool_t *nfs_res_pool;
@@ -184,7 +186,7 @@ static inline int dupreq_tcp_cmpf(const struct opr_rbtree_node *lhs,
 
 	if (lk->hin.tcp.rq_xid == rk->hin.tcp.rq_xid) {
 		LogDebug(COMPONENT_DUPREQ,
-			 "xids eq (%u), ck1 %" PRIu64 " ck2 %" PRIu64,
+			 "xids eq %" PRIu32 ", ck1 %" PRIu64 " ck2 %" PRIu64,
 			 lk->hin.tcp.rq_xid, lk->hk, rk->hk);
 		return uint64_cmpf(lk->hk, rk->hk);
 	}
@@ -319,7 +321,7 @@ static inline enum drc_type get_drc_type(struct svc_req *req)
 	if (get_ipproto_by_xprt(req->rq_xprt) == IPPROTO_UDP)
 		return DRC_UDP_V234;
 	else {
-		if (req->rq_vers == 4)
+		if (req->rq_msg.cb_vers == 4)
 			return DRC_TCP_V4;
 	}
 	return DRC_TCP_V3;
@@ -692,7 +694,7 @@ static inline const nfs_function_desc_t *nfs_dupreq_func(dupreq_entry_t *dv)
 {
 	const nfs_function_desc_t *func = NULL;
 
-	if (dv->hin.rq_prog == nfs_param.core_param.program[P_NFS]) {
+	if (dv->hin.rq_prog == NFS_program[P_NFS]) {
 		switch (dv->hin.rq_vers) {
 #ifdef _USE_NFS3
 		case NFS_V3:
@@ -705,10 +707,10 @@ static inline const nfs_function_desc_t *nfs_dupreq_func(dupreq_entry_t *dv)
 		default:
 			/* not reached */
 			LogMajor(COMPONENT_DUPREQ,
-				 "NFS Protocol version %d unknown",
-				 (int)dv->hin.rq_vers);
+				 "NFS Protocol version %" PRIu32 " unknown",
+				 dv->hin.rq_vers);
 		}
-	} else if (dv->hin.rq_prog == nfs_param.core_param.program[P_MNT]) {
+	} else if (dv->hin.rq_prog == NFS_program[P_MNT]) {
 		switch (dv->hin.rq_vers) {
 		case MOUNT_V1:
 			func = &mnt1_func_desc[dv->hin.rq_proc];
@@ -719,19 +721,19 @@ static inline const nfs_function_desc_t *nfs_dupreq_func(dupreq_entry_t *dv)
 		default:
 			/* not reached */
 			LogMajor(COMPONENT_DUPREQ,
-				 "MOUNT Protocol version %d unknown",
-				 (int)dv->hin.rq_vers);
+				 "MOUNT Protocol version %" PRIu32 " unknown",
+				 dv->hin.rq_vers);
 			break;
 		}
 #ifdef _USE_NLM
-	} else if (dv->hin.rq_prog == nfs_param.core_param.program[P_NLM]) {
+	} else if (dv->hin.rq_prog == NFS_program[P_NLM]) {
 		switch (dv->hin.rq_vers) {
 		case NLM4_VERS:
 			func = &nlm4_func_desc[dv->hin.rq_proc];
 			break;
 		}
 #endif /* _USE_NLM */
-	} else if (dv->hin.rq_prog == nfs_param.core_param.program[P_RQUOTA]) {
+	} else if (dv->hin.rq_prog == NFS_program[P_RQUOTA]) {
 		switch (dv->hin.rq_vers) {
 		case RQUOTAVERS:
 			func = &rquota1_func_desc[dv->hin.rq_proc];
@@ -742,8 +744,9 @@ static inline const nfs_function_desc_t *nfs_dupreq_func(dupreq_entry_t *dv)
 		}
 	} else {
 		/* not reached */
-		LogMajor(COMPONENT_DUPREQ, "protocol %d is not managed",
-			 (int)dv->hin.rq_prog);
+		LogMajor(COMPONENT_DUPREQ,
+			 "protocol %" PRIu32 " is not managed",
+			 dv->hin.rq_prog);
 	}
 
 	return func;
@@ -930,22 +933,22 @@ dupreq_status_t nfs_dupreq_start(nfs_request_t *reqnfs,
 	switch (drc->type) {
 	case DRC_TCP_V4:
 	case DRC_TCP_V3:
-		dk->hin.tcp.rq_xid = req->rq_xid;
+		dk->hin.tcp.rq_xid = req->rq_msg.rm_xid;
 		/* XXX needed? */
-		dk->hin.rq_prog = req->rq_prog;
-		dk->hin.rq_vers = req->rq_vers;
-		dk->hin.rq_proc = req->rq_proc;
+		dk->hin.rq_prog = req->rq_msg.cb_prog;
+		dk->hin.rq_vers = req->rq_msg.cb_vers;
+		dk->hin.rq_proc = req->rq_msg.cb_proc;
 		break;
 	case DRC_UDP_V234:
-		dk->hin.tcp.rq_xid = req->rq_xid;
+		dk->hin.tcp.rq_xid = req->rq_msg.rm_xid;
 		if (unlikely(!copy_xprt_addr(&dk->hin.addr, req->rq_xprt))) {
 			nfs_dupreq_put_drc(req->rq_xprt, drc, DRC_FLAG_NONE);
 			nfs_dupreq_free_dupreq(dk);
 			return DUPREQ_INSERT_MALLOC_ERROR;
 		}
-		dk->hin.rq_prog = req->rq_prog;
-		dk->hin.rq_vers = req->rq_vers;
-		dk->hin.rq_proc = req->rq_proc;
+		dk->hin.rq_prog = req->rq_msg.cb_prog;
+		dk->hin.rq_vers = req->rq_msg.cb_vers;
+		dk->hin.rq_proc = req->rq_msg.cb_proc;
 		break;
 	default:
 		/* @todo: should this be an assert? */
@@ -983,8 +986,9 @@ dupreq_status_t nfs_dupreq_start(nfs_request_t *reqnfs,
 				(dv->refcnt)++;
 			}
 			LogDebug(COMPONENT_DUPREQ,
-				 "dupreq hit dv=%p, dv xid=%u cksum %" PRIu64
-				 " state=%s", dv, dv->hin.tcp.rq_xid, dv->hk,
+				 "dupreq hit dv=%p, dv xid=%" PRIu32
+				 " cksum %" PRIu64 " state=%s",
+				 dv, dv->hin.tcp.rq_xid, dv->hk,
 				 dupreq_state_table[dv->state]);
 			PTHREAD_MUTEX_unlock(&dv->mtx);
 		} else {
@@ -1009,10 +1013,11 @@ dupreq_status_t nfs_dupreq_start(nfs_request_t *reqnfs,
 	}
 
 	LogFullDebug(COMPONENT_DUPREQ,
-		"starting dv=%p xid=%u on DRC=%p state=%s, status=%s, refcnt=%d, drc->size=%d",
-		dv, dk->hin.tcp.rq_xid, drc,
+		"starting dv=%p xid=%" PRIu32
+		" on DRC=%p state=%s, status=%s, refcnt=%d, drc->size=%d",
+		dv, dv->hin.tcp.rq_xid, drc,
 		dupreq_state_table[dv->state], dupreq_status_table[status],
-		(dv) ? dv->refcnt : 0, drc->size);
+		dv->refcnt, drc->size);
 
 	return status;
 
@@ -1075,7 +1080,8 @@ dupreq_status_t nfs_dupreq_finish(struct svc_req *req, nfs_res_t *res_nfs)
 	PTHREAD_MUTEX_lock(&drc->mtx);
 
 	LogFullDebug(COMPONENT_DUPREQ,
-		     "completing dv=%p xid=%u on DRC=%p state=%s, status=%s, refcnt=%d, drc->size=%d",
+		     "completing dv=%p xid=%" PRIu32
+		     " on DRC=%p state=%s, status=%s, refcnt=%d, drc->size=%d",
 		dv, dv->hin.tcp.rq_xid, drc,
 		dupreq_state_table[dv->state], dupreq_status_table[status],
 		dv->refcnt, drc->size);
@@ -1138,7 +1144,8 @@ dq_again:
 			PTHREAD_MUTEX_unlock(&t->mtx);
 
 			LogDebug(COMPONENT_DUPREQ,
-				 "retiring ov=%p xid=%u on DRC=%p state=%s, status=%s, refcnt=%d",
+				 "retiring ov=%p xid=%" PRIu32
+				 " on DRC=%p state=%s, status=%s, refcnt=%d",
 				 ov, ov->hin.tcp.rq_xid,
 				 ov->hin.drc, dupreq_state_table[dv->state],
 				 dupreq_status_table[status], ov->refcnt);
@@ -1199,7 +1206,8 @@ dupreq_status_t nfs_dupreq_delete(struct svc_req *req)
 	PTHREAD_MUTEX_unlock(&dv->mtx);
 
 	LogFullDebug(COMPONENT_DUPREQ,
-		     "deleting dv=%p xid=%u on DRC=%p state=%s, status=%s, refcnt=%d",
+		     "deleting dv=%p xid=%" PRIu32
+		     " on DRC=%p state=%s, status=%s, refcnt=%d",
 		     dv, dv->hin.tcp.rq_xid, drc,
 		     dupreq_state_table[dv->state], dupreq_status_table[status],
 		     dv->refcnt);
@@ -1256,7 +1264,8 @@ void nfs_dupreq_rele(struct svc_req *req, const nfs_function_desc_t *func)
 	PTHREAD_MUTEX_lock(&dv->mtx);
 
 	LogFullDebug(COMPONENT_DUPREQ,
-		     "releasing dv=%p xid=%u on DRC=%p state=%s, refcnt=%d",
+		     "releasing dv=%p xid=%" PRIu32
+		     " on DRC=%p state=%s, refcnt=%d",
 		     dv, dv->hin.tcp.rq_xid, dv->hin.drc,
 		     dupreq_state_table[dv->state], dv->refcnt);
 
@@ -1275,8 +1284,6 @@ void nfs_dupreq_rele(struct svc_req *req, const nfs_function_desc_t *func)
 	/* dispose RPC header */
 	if (req->rq_auth)
 		SVCAUTH_RELEASE(req->rq_auth, req);
-
-	(void)free_rpc_msg(req->rq_msg);
 }
 
 /**

@@ -104,7 +104,7 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 			break;
 		}
 
-		nfs_FhandleToStr(req->rq_vers,
+		nfs_FhandleToStr(req->rq_msg.cb_vers,
 				 &arg->arg_write3.file,
 				 NULL,
 				 str);

@@ -81,12 +81,12 @@ int nfs3_rename(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	if (isDebug(COMPONENT_NFSPROTO)) {
 		char strto[LEN_FH_STR], strfrom[LEN_FH_STR];
 
-		nfs_FhandleToStr(req->rq_vers,
+		nfs_FhandleToStr(req->rq_msg.cb_vers,
 				 &arg->arg_rename3.from.dir,
 				 NULL,
 				 strfrom);
 
-		nfs_FhandleToStr(req->rq_vers,
+		nfs_FhandleToStr(req->rq_msg.cb_vers,
 				 &arg->arg_rename3.to.dir,
 				 NULL,
 				 strto);
@@ -114,7 +114,7 @@ int nfs3_rename(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	if (to_exportid < 0 || from_exportid < 0) {
 		LogInfo(COMPONENT_DISPATCH,
 			"NFS%d RENAME Request from client %s has badly formed handle for to dir",
-			req->rq_vers,
+			req->rq_msg.cb_vers,
 			op_ctx->client
 				? op_ctx->client->hostaddr_str
 				: "unknown client");

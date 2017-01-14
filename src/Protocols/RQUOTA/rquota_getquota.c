@@ -61,7 +61,7 @@ int rquota_getquota(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	LogFullDebug(COMPONENT_NFSPROTO,
 		     "REQUEST PROCESSING: Calling rquota_getquota");
 
-	if (req->rq_vers == EXT_RQUOTAVERS) {
+	if (req->rq_msg.cb_vers == EXT_RQUOTAVERS) {
 		quota_type = arg->arg_ext_rquota_getquota.gqa_type;
 		quota_id = arg->arg_ext_rquota_getquota.gqa_id;
 	} else {

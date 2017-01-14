@@ -77,7 +77,8 @@ int nfs3_lookup(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 		name = arg->arg_lookup3.what.name;
 
-		nfs_FhandleToStr(req->rq_vers, &(arg->arg_lookup3.what.dir),
+		nfs_FhandleToStr(req->rq_msg.cb_vers,
+				 &(arg->arg_lookup3.what.dir),
 				 NULL, str);
 		LogDebug(COMPONENT_NFSPROTO,
 			 "REQUEST PROCESSING: Calling nfs_Lookup handle: %s name: %s",

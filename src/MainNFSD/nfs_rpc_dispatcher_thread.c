@@ -63,6 +63,10 @@
 #include "nfs_file_handle.h"
 #include "fridgethr.h"
 
+#define NFS_pcp nfs_param.core_param
+#define NFS_options NFS_pcp.core_options
+#define NFS_program NFS_pcp.program
+
 /**
  * TI-RPC event channels.  Each channel is a thread servicing an event
  * demultiplexer.
@@ -110,7 +114,7 @@ const char *xprt_stat_s[4] = {
  * @param[in] ptr_req Unused
  * @param[in] ptr_svc Unused
  */
-void nfs_rpc_dispatch_dummy(struct svc_req *req, SVCXPRT *xprt)
+void nfs_rpc_dispatch_dummy(struct svc_req *req)
 {
 	LogMajor(COMPONENT_DISPATCH,
 		 "NFS DISPATCH DUMMY: Possible error, function nfs_rpc_dispatch_dummy should never be called");
@@ -178,26 +182,24 @@ static void unregister(const rpcprog_t prog, const rpcvers_t vers1,
 
 static void unregister_rpc(void)
 {
-	if ((nfs_param.core_param.core_options & CORE_OPTION_NFSV3) != 0) {
-		unregister(nfs_param.core_param.program[P_NFS], NFS_V2, NFS_V4);
-		unregister(nfs_param.core_param.program[P_MNT], MOUNT_V1,
-			   MOUNT_V3);
+	if ((NFS_options & CORE_OPTION_NFSV3) != 0) {
+		unregister(NFS_program[P_NFS], NFS_V2, NFS_V4);
+		unregister(NFS_program[P_MNT], MOUNT_V1, MOUNT_V3);
 	} else {
-		unregister(nfs_param.core_param.program[P_NFS], NFS_V4, NFS_V4);
+		unregister(NFS_program[P_NFS], NFS_V4, NFS_V4);
 	}
 #ifdef _USE_NLM
 	if (nfs_param.core_param.enable_NLM)
-		unregister(nfs_param.core_param.program[P_NLM], 1, NLM4_VERS);
+		unregister(NFS_program[P_NLM], 1, NLM4_VERS);
 #endif /* _USE_NLM */
 	if (nfs_param.core_param.enable_RQUOTA) {
-		unregister(nfs_param.core_param.program[P_RQUOTA], RQUOTAVERS,
-			   EXT_RQUOTAVERS);
+		unregister(NFS_program[P_RQUOTA], RQUOTAVERS, EXT_RQUOTAVERS);
 	}
 }
 
 static inline bool nfs_protocol_enabled(protos p)
 {
-	bool nfsv3 = nfs_param.core_param.core_options & CORE_OPTION_NFSV3;
+	bool nfsv3 = NFS_options & CORE_OPTION_NFSV3;
 
 	switch (p) {
 	case P_NFS:
@@ -858,18 +860,18 @@ void Clean_RPC(void)
 }
 
 #define UDP_REGISTER(prot, vers, netconfig) \
-	svc_reg(udp_xprt[prot], nfs_param.core_param.program[prot], \
+	svc_reg(udp_xprt[prot], NFS_program[prot], \
 		(u_long) vers,					    \
 		nfs_rpc_dispatch_dummy, netconfig)
 
 #define TCP_REGISTER(prot, vers, netconfig) \
-	svc_reg(tcp_xprt[prot], nfs_param.core_param.program[prot], \
+	svc_reg(tcp_xprt[prot], NFS_program[prot], \
 		(u_long) vers,					    \
 		nfs_rpc_dispatch_dummy, netconfig)
 
 void Register_program(protos prot, int flag, int vers)
 {
-	if ((nfs_param.core_param.core_options & flag) != 0) {
+	if ((NFS_options & flag) != 0) {
 		LogInfo(COMPONENT_DISPATCH, "Registering %s V%d/UDP",
 			tags[prot], (int)vers);
 
@@ -932,7 +934,7 @@ void nfs_Init_svc(void)
 	int ix, code __attribute__ ((unused)) = 0;
 
 	LogDebug(COMPONENT_DISPATCH, "NFS INIT: Core options = %d",
-		 nfs_param.core_param.core_options);
+		 NFS_options);
 
 	/* Init request queue before RPC stack */
 	nfs_rpc_queue_init();
@@ -954,7 +956,7 @@ void nfs_Init_svc(void)
 	if (!tirpc_control(TIRPC_PUT_PARAMETERS, &ntirpc_pp))
 		LogCrit(COMPONENT_INIT, "Setting nTI-RPC parameters failed");
 #ifdef RPC_VSOCK
-	vsock = nfs_param.core_param.core_options & CORE_OPTION_NFS_VSOCK;
+	vsock = NFS_options & CORE_OPTION_NFS_VSOCK;
 #endif
 
 	/* New TI-RPC package init function */
@@ -1030,7 +1032,7 @@ void nfs_Init_svc(void)
 	/* Allocate the UDP and TCP sockets for the RPC */
 	Allocate_sockets();
 
-	if ((nfs_param.core_param.core_options & CORE_OPTION_NFSV3) != 0) {
+	if ((NFS_options & CORE_OPTION_NFSV3) != 0) {
 		/* Some log that can be useful when debug ONC/RPC
 		 * and RPCSEC_GSS matter */
 		LogDebug(COMPONENT_DISPATCH,
@@ -1058,8 +1060,7 @@ void nfs_Init_svc(void)
 		 "Socket numbers are: rquota_udp=%u  rquota_tcp=%u",
 		 udp_socket[P_RQUOTA], tcp_socket[P_RQUOTA]);
 
-	if ((nfs_param.core_param.core_options &
-	     CORE_OPTION_ALL_NFS_VERS) != 0) {
+	if ((NFS_options & CORE_OPTION_ALL_NFS_VERS) != 0) {
 		/* Bind the tcp and udp sockets */
 		Bind_sockets();
 
@@ -1111,8 +1112,7 @@ void nfs_Init_svc(void)
 		Register_program(P_NLM, CORE_OPTION_NFSV3, NLM4_VERS);
 #endif /* _USE_NLM */
 	if (nfs_param.core_param.enable_RQUOTA &&
-	    (nfs_param.core_param.core_options & (CORE_OPTION_NFSV3 |
-						  CORE_OPTION_NFSV4))) {
+	    (NFS_options & (CORE_OPTION_NFSV3 | CORE_OPTION_NFSV4))) {
 		Register_program(P_RQUOTA, CORE_OPTION_ALL_VERS, RQUOTAVERS);
 		Register_program(P_RQUOTA, CORE_OPTION_ALL_VERS,
 				 EXT_RQUOTAVERS);
@@ -1436,8 +1436,8 @@ void nfs_rpc_enqueue_req(request_data_t *reqdata)
 	switch (reqdata->rtype) {
 	case NFS_REQUEST:
 		LogFullDebug(COMPONENT_DISPATCH,
-			     "enter rq_xid=%u lookahead.flags=%u",
-			     reqdata->r_u.req.svc.rq_xid,
+			     "enter rq_xid=%" PRIu32 " lookahead.flags=%u",
+			     reqdata->r_u.req.svc.rq_msg.rm_xid,
 			     reqdata->r_u.req.lookahead.flags);
 		if (reqdata->r_u.req.lookahead.flags & NFS_LOOKAHEAD_MOUNT) {
 			qpair = &(nfs_request_q->qset[REQ_Q_MOUNT]);
@@ -1735,8 +1735,6 @@ static inline void free_nfs_request(request_data_t *reqdata)
 	switch (reqdata->rtype) {
 	case NFS_REQUEST:
 		/* dispose RPC header */
-		if (reqdata->r_u.req.svc.rq_msg)
-			(void)free_rpc_msg(reqdata->r_u.req.svc.rq_msg);
 		if (reqdata->r_u.req.svc.rq_auth)
 			SVCAUTH_RELEASE(reqdata->r_u.req.svc.rq_auth,
 					&(reqdata->r_u.req.svc));
@@ -1765,20 +1763,18 @@ static bool is_rpc_call_valid(struct svc_req *req)
 	   we'll have to pass in the value of rlocked. */
 	int lo_vers, hi_vers;
 
-	if (req->rq_prog == nfs_param.core_param.program[P_NFS]) {
-		if (req->rq_vers == NFS_V3) {
+	if (req->rq_msg.cb_prog == NFS_program[P_NFS]) {
+		if (req->rq_msg.cb_vers == NFS_V3) {
 #ifdef _USE_NFS3
-			if ((nfs_param.core_param.
-			     core_options & CORE_OPTION_NFSV3)
-			    && req->rq_proc <= NFSPROC3_COMMIT)
+			if ((NFS_options & CORE_OPTION_NFSV3)
+			    && req->rq_msg.cb_proc <= NFSPROC3_COMMIT)
 				return true;
 			else
 #endif /* _USE_NFS3 */
 				goto noproc_err;
-		} else if (req->rq_vers == NFS_V4) {
-			if ((nfs_param.core_param.
-			     core_options & CORE_OPTION_NFSV4)
-			    && req->rq_proc <= NFSPROC4_COMPOUND)
+		} else if (req->rq_msg.cb_vers == NFS_V4) {
+			if ((NFS_options & CORE_OPTION_NFSV4)
+			    && req->rq_msg.cb_proc <= NFSPROC4_COMPOUND)
 				return true;
 			else
 				goto noproc_err;
@@ -1786,21 +1782,18 @@ static bool is_rpc_call_valid(struct svc_req *req)
 			lo_vers = NFS_V4;
 			hi_vers = NFS_V3;
 #ifdef _USE_NFS3
-			if ((nfs_param.core_param.
-			     core_options & CORE_OPTION_NFSV3) != 0)
+			if ((NFS_options & CORE_OPTION_NFSV3) != 0)
 				lo_vers = NFS_V3;
 #endif /* _USE_NFS3 */
-			if ((nfs_param.core_param.
-			     core_options & CORE_OPTION_NFSV4) != 0)
+			if ((NFS_options & CORE_OPTION_NFSV4) != 0)
 				hi_vers = NFS_V4;
 			goto progvers_err;
 		}
 #ifdef _USE_NLM
-	} else if (req->rq_prog == nfs_param.core_param.program[P_NLM]
-		   && ((nfs_param.core_param.core_options & CORE_OPTION_NFSV3)
-		       != 0)) {
-		if (req->rq_vers == NLM4_VERS) {
-			if (req->rq_proc <= NLMPROC4_FREE_ALL)
+	} else if (req->rq_msg.cb_prog == NFS_program[P_NLM]
+		   && ((NFS_options & CORE_OPTION_NFSV3) != 0)) {
+		if (req->rq_msg.cb_vers == NLM4_VERS) {
+			if (req->rq_msg.cb_proc <= NLMPROC4_FREE_ALL)
 				return true;
 			else
 				goto noproc_err;
@@ -1810,23 +1803,22 @@ static bool is_rpc_call_valid(struct svc_req *req)
 			goto progvers_err;
 		}
 #endif /* _USE_NLM */
-	} else if (req->rq_prog == nfs_param.core_param.program[P_MNT]
-		   && ((nfs_param.core_param.core_options & CORE_OPTION_NFSV3)
-		       != 0)) {
+	} else if (req->rq_msg.cb_prog == NFS_program[P_MNT]
+		   && ((NFS_options & CORE_OPTION_NFSV3) != 0)) {
 		/* Some clients may use the wrong mount version to umount, so
 		 * always allow umount, otherwise only allow request if the
 		 * appropriate mount version is enabled.  Also need to allow
 		 * dump and export, so just disallow mount if version not
 		 * supported.
 		 */
-		if (req->rq_vers == MOUNT_V3) {
-			if (req->rq_proc <= MOUNTPROC3_EXPORT)
+		if (req->rq_msg.cb_vers == MOUNT_V3) {
+			if (req->rq_msg.cb_proc <= MOUNTPROC3_EXPORT)
 				return true;
 			else
 				goto noproc_err;
-		} else if (req->rq_vers == MOUNT_V1) {
-			if (req->rq_proc <= MOUNTPROC2_EXPORT
-			    && req->rq_proc != MOUNTPROC2_MNT)
+		} else if (req->rq_msg.cb_vers == MOUNT_V1) {
+			if (req->rq_msg.cb_proc <= MOUNTPROC2_EXPORT
+			    && req->rq_msg.cb_proc != MOUNTPROC2_MNT)
 				return true;
 			else
 				goto noproc_err;
@@ -1835,15 +1827,14 @@ static bool is_rpc_call_valid(struct svc_req *req)
 			hi_vers = MOUNT_V3;
 			goto progvers_err;
 		}
-	} else if (req->rq_prog
-		   == nfs_param.core_param.program[P_RQUOTA]) {
-		if (req->rq_vers == RQUOTAVERS) {
-			if (req->rq_proc <= RQUOTAPROC_SETACTIVEQUOTA)
+	} else if (req->rq_msg.cb_prog == NFS_program[P_RQUOTA]) {
+		if (req->rq_msg.cb_vers == RQUOTAVERS) {
+			if (req->rq_msg.cb_proc <= RQUOTAPROC_SETACTIVEQUOTA)
 				return true;
 			else
 				goto noproc_err;
-		} else if (req->rq_vers == EXT_RQUOTAVERS) {
-			if (req->rq_proc <= RQUOTAPROC_SETACTIVEQUOTA)
+		} else if (req->rq_msg.cb_vers == EXT_RQUOTAVERS) {
+			if (req->rq_msg.cb_proc <= RQUOTAPROC_SETACTIVEQUOTA)
 				return true;
 			else
 				goto noproc_err;
@@ -1854,25 +1845,26 @@ static bool is_rpc_call_valid(struct svc_req *req)
 		}
 	} else {		/* No such program */
 		LogFullDebug(COMPONENT_DISPATCH,
-			     "Invalid Program number #%d",
-			     (int)req->rq_prog);
-		svcerr_noprog(req->rq_xprt, req);
+			     "Invalid Program number %" PRIu32,
+			     req->rq_msg.cb_prog);
+		svcerr_noprog(req);
 		return false;
 	}
 
  progvers_err:
 	LogFullDebug(COMPONENT_DISPATCH,
-		     "Invalid protocol Version #%d for program number #%d",
-		     (int)req->rq_vers,
-		     (int)req->rq_prog);
-	svcerr_progvers(req->rq_xprt, req, lo_vers, hi_vers);
+		     "Invalid protocol Version %" PRIu32
+		     " for program number %" PRIu32,
+		     req->rq_msg.cb_vers,
+		     req->rq_msg.cb_prog);
+	svcerr_progvers(req, lo_vers, hi_vers);
 	return false;
 
  noproc_err:
 	LogFullDebug(COMPONENT_DISPATCH,
-		     "Invalid protocol program number #%d",
-		     (int)req->rq_prog);
-	svcerr_noproc(req->rq_xprt, req);
+		     "Invalid protocol program number %" PRIu32,
+		     req->rq_msg.cb_prog);
+	svcerr_noproc(req);
 	return false;
 }				/* is_rpc_call_valid */
 
@@ -1912,7 +1904,7 @@ enum xprt_stat thr_decode_rpc_request(void *context, SVCXPRT *xprt)
 		&reqdata->r_u.req.svc.bl_trace, &xprt->blkin.endp, "pre-recv");
 #endif
 
-	recv_status = SVC_RECV(xprt, &reqdata->r_u.req.svc);
+	recv_status = SVC_RECV(&reqdata->r_u.req.svc);
 
 #if defined(HAVE_BLKIN)
 	BLKIN_TIMESTAMP(
@@ -1926,10 +1918,11 @@ enum xprt_stat thr_decode_rpc_request(void *context, SVCXPRT *xprt)
 #endif
 
 	LogFullDebug(COMPONENT_DISPATCH,
-		     "SVC_RECV on socket %d returned %s, xid=%u", xprt->xp_fd,
+		     "SVC_RECV on socket %d returned %s, xid=%" PRIu32,
+		     xprt->xp_fd,
 		     (recv_status) ? "true" : "false",
-		     (recv_status && reqdata->r_u.req.svc.rq_msg)
-		     ? reqdata->r_u.req.svc.rq_msg->rm_xid
+		     (recv_status)
+		     ? reqdata->r_u.req.svc.rq_msg.rm_xid
 		     : 0);
 
 	if (unlikely(!recv_status)) {
@@ -1988,11 +1981,15 @@ enum xprt_stat thr_decode_rpc_request(void *context, SVCXPRT *xprt)
 	reqdata->r_u.req.funcdesc = nfs_rpc_get_funcdesc(&reqdata->r_u.req);
 
 	LogFullDebug(COMPONENT_DISPATCH,
-		     "About to authenticate Prog=%d, vers=%d, proc=%d xid=%u xprt=%p",
-		     (int)reqdata->r_u.req.svc.rq_prog,
-		     (int)reqdata->r_u.req.svc.rq_vers,
-		     (int)reqdata->r_u.req.svc.rq_proc,
-		     reqdata->r_u.req.svc.rq_xid,
+		     "About to authenticate Prog=%" PRIu32
+		     ", vers=%" PRIu32
+		     ", proc=%" PRIu32
+		     ", xid=%" PRIu32
+		     ", xprt=%p",
+		     reqdata->r_u.req.svc.rq_msg.cb_prog,
+		     reqdata->r_u.req.svc.rq_msg.cb_vers,
+		     reqdata->r_u.req.svc.rq_msg.cb_proc,
+		     reqdata->r_u.req.svc.rq_msg.rm_xid,
 		     xprt);
 
 	/* If authentication is AUTH_NONE or AUTH_UNIX, then the value of
@@ -2004,21 +2001,22 @@ enum xprt_stat thr_decode_rpc_request(void *context, SVCXPRT *xprt)
 	 * GSSAPI. It should not be processed by the worker and SVC_STAT
 	 * should be returned to the dispatcher.
 	 */
-	why = svc_auth_authenticate(&reqdata->r_u.req.svc,
-				    reqdata->r_u.req.svc.rq_msg,
-				    &no_dispatch);
+	why = svc_auth_authenticate(&reqdata->r_u.req.svc, &no_dispatch);
 	if (why != AUTH_OK) {
 		LogInfo(COMPONENT_DISPATCH,
 			"Could not authenticate request... rejecting with AUTH_STAT=%s",
 			auth_stat2str(why));
-		svcerr_auth(xprt, &reqdata->r_u.req.svc, why);
+		svcerr_auth(&reqdata->r_u.req.svc, why);
 		goto finish;
 #ifdef _HAVE_GSSAPI
-	} else if (reqdata->r_u.req.svc.rq_verf.oa_flavor == RPCSEC_GSS) {
+	} else if (reqdata->r_u.req.svc.rq_msg.RPCM_ack.ar_verf.oa_flavor
+		   == RPCSEC_GSS) {
 		struct rpc_gss_cred *gc = (struct rpc_gss_cred *)
-			reqdata->r_u.req.svc.rq_clntcred;
+			reqdata->r_u.req.svc.rq_msg.rq_cred_body;
+
 		LogFullDebug(COMPONENT_DISPATCH,
-			     "RPCSEC_GSS no_dispatch=%d gc->gc_proc=(%u) %s",
+			     "RPCSEC_GSS no_dispatch=%d"
+			     " gc->gc_proc=(%" PRIu32 ") %s",
 			     no_dispatch, gc->gc_proc,
 			     str_gc_proc(gc->gc_proc));
 		if (no_dispatch)
@@ -2035,18 +2033,21 @@ enum xprt_stat thr_decode_rpc_request(void *context, SVCXPRT *xprt)
 		     "Before SVC_GETARGS on socket %d, xprt=%p",
 		     xprt->xp_fd, xprt);
 
-	if (!SVC_GETARGS(xprt, &reqdata->r_u.req.svc,
+	if (!SVC_GETARGS(&reqdata->r_u.req.svc,
 			 reqdata->r_u.req.funcdesc->xdr_decode_func,
 			 &reqdata->r_u.req.arg_nfs,
 			 &reqdata->r_u.req.lookahead)) {
 		LogInfo(COMPONENT_DISPATCH,
-			"SVC_GETARGS failed for Program %d, Version %d, Function %d xid=%u",
-			(int)reqdata->r_u.req.svc.rq_prog,
-			(int)reqdata->r_u.req.svc.rq_vers,
-			(int)reqdata->r_u.req.svc.rq_proc,
-			reqdata->r_u.req.svc.rq_xid);
+			"SVC_GETARGS failed for Program %" PRIu32
+			", Version %" PRIu32
+			", Function %" PRIu32
+			", xid=%" PRIu32,
+			reqdata->r_u.req.svc.rq_msg.cb_prog,
+			reqdata->r_u.req.svc.rq_msg.cb_vers,
+			reqdata->r_u.req.svc.rq_msg.cb_proc,
+			reqdata->r_u.req.svc.rq_msg.rm_xid);
 
-		svcerr_decode(xprt, &reqdata->r_u.req.svc);
+		svcerr_decode(&reqdata->r_u.req.svc);
 		goto finish;
 	}
 

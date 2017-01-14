@@ -134,7 +134,7 @@ int nfs3_readdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		char str[LEN_FH_STR];
 		log_components_t component;
 
-		nfs_FhandleToStr(req->rq_vers,
+		nfs_FhandleToStr(req->rq_msg.cb_vers,
 				 &(arg->arg_readdir3.dir),
 				 NULL,
 				 str);

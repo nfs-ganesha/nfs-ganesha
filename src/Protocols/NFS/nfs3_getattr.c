@@ -70,7 +70,8 @@ int nfs3_getattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	if (isDebug(COMPONENT_NFSPROTO)) {
 		char str[LEN_FH_STR];
 
-		nfs_FhandleToStr(req->rq_vers, &(arg->arg_getattr3.object),
+		nfs_FhandleToStr(req->rq_msg.cb_vers,
+				 &(arg->arg_getattr3.object),
 				 NULL, str);
 		LogDebug(COMPONENT_NFSPROTO,
 			 "REQUEST PROCESSING: Calling nfs3_getattr handle: %s",

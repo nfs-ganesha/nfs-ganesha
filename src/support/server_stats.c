@@ -72,6 +72,9 @@
 #define NFS_V42_NB_OPERATION (NFS4_OP_WRITE_SAME + 1)
 #define _9P_NB_COMMAND 33
 
+#define NFS_pcp nfs_param.core_param
+#define NFS_program NFS_pcp.program
+
 #ifdef USE_DBUS
 
 struct op_name {
@@ -850,12 +853,13 @@ static void record_stats(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
 			 bool global)
 {
 	struct svc_req *req = &reqdata->r_u.req.svc;
-	uint32_t proto_op = req->rq_proc;
+	uint32_t proto_op = req->rq_msg.cb_proc;
+	uint32_t program_op = req->rq_msg.cb_prog;
 
-	if (req->rq_prog == nfs_param.core_param.program[P_NFS]) {
+	if (program_op == NFS_program[P_NFS]) {
 		if (proto_op == 0)
 			return;	/* we don't count NULL ops */
-		if (req->rq_vers == NFS_V3) {
+		if (req->rq_msg.cb_vers == NFS_V3) {
 			struct nfsv3_stats *sp = get_v3(gsh_st, lock);
 
 			/* record stuff */
@@ -879,10 +883,10 @@ static void record_stats(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
 			/* We don't do V4 here and V2 is toast */
 			return;
 		}
-	} else if (req->rq_prog == nfs_param.core_param.program[P_MNT]) {
+	} else if (program_op == NFS_program[P_MNT]) {
 		struct mnt_stats *sp = get_mnt(gsh_st, lock);
 
-		if (global && req->rq_vers == MOUNT_V1)
+		if (global && req->rq_msg.cb_vers == MOUNT_V1)
 			record_op(&global_st.mnt.v1_ops, request_time,
 				  qwait_time, success, dup);
 		else if (global)
@@ -890,13 +894,13 @@ static void record_stats(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
 				  qwait_time, success, dup);
 
 		/* record stuff */
-		if (req->rq_vers == MOUNT_V1)
+		if (req->rq_msg.cb_vers == MOUNT_V1)
 			record_op(&sp->v1_ops, request_time, qwait_time,
 				  success, dup);
 		else
 			record_op(&sp->v3_ops, request_time, qwait_time,
 				  success, dup);
-	} else if (req->rq_prog == nfs_param.core_param.program[P_NLM]) {
+	} else if (program_op == NFS_program[P_NLM]) {
 		struct nlmv4_stats *sp = get_nlm4(gsh_st, lock);
 
 		if (global)
@@ -904,14 +908,14 @@ static void record_stats(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
 				  qwait_time, success, dup);
 		/* record stuff */
 		record_op(&sp->ops, request_time, qwait_time, success, dup);
-	} else if (req->rq_prog == nfs_param.core_param.program[P_RQUOTA]) {
+	} else if (program_op == NFS_program[P_RQUOTA]) {
 		struct rquota_stats *sp = get_rquota(gsh_st, lock);
 
 		if (global)
 			record_op(&global_st.rquota.ops, request_time,
 				  qwait_time, success, dup);
 		/* record stuff */
-		if (req->rq_vers == RQUOTAVERS)
+		if (req->rq_msg.cb_vers == RQUOTAVERS)
 			record_op(&sp->ops, request_time, qwait_time, success,
 				  dup);
 		else
@@ -1013,15 +1017,16 @@ void server_stats_nfs_done(request_data_t *reqdata, int rc, bool dup)
 	struct timespec current_time;
 	nsecs_elapsed_t stop_time;
 	struct svc_req *req = &reqdata->r_u.req.svc;
-	uint32_t proto_op = req->rq_proc;
+	uint32_t proto_op = req->rq_msg.cb_proc;
+	uint32_t program_op = req->rq_msg.cb_prog;
 
-	if (req->rq_prog == NFS_PROGRAM && op_ctx->nfs_vers == NFS_V3)
-			global_st.v3.op[proto_op]++;
-	else if (req->rq_prog == nfs_param.core_param.program[P_NLM])
+	if (program_op == NFS_PROGRAM && op_ctx->nfs_vers == NFS_V3)
+		global_st.v3.op[proto_op]++;
+	else if (program_op == NFS_program[P_NLM])
 		global_st.lm.op[proto_op]++;
-	else if (req->rq_prog == nfs_param.core_param.program[P_MNT])
+	else if (program_op == NFS_program[P_MNT])
 		global_st.mn.op[proto_op]++;
-	else if (req->rq_prog == nfs_param.core_param.program[P_RQUOTA])
+	else if (program_op == NFS_program[P_RQUOTA])
 		global_st.qt.op[proto_op]++;
 
 	if (nfs_param.core_param.enable_FASTSTATS)

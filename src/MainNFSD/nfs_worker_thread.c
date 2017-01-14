@@ -64,6 +64,9 @@
 #include "gsh_lttng/nfs_rpc.h"
 #endif
 
+#define NFS_pcp nfs_param.core_param
+#define NFS_program NFS_pcp.program
+
 pool_t *request_pool;
 
 static struct fridgethr *worker_fridge;
@@ -675,30 +678,26 @@ const nfs_function_desc_t *nfs_rpc_get_funcdesc(nfs_request_t *reqnfs)
 {
 	const nfs_function_desc_t *funcdesc = &invalid_funcdesc;
 
-	if (reqnfs->svc.rq_prog
-	    == nfs_param.core_param.program[P_NFS]) {
+	if (reqnfs->svc.rq_msg.cb_prog == NFS_program[P_NFS]) {
 		funcdesc =
 #ifdef _USE_NFS3
-			(reqnfs->svc.rq_vers == NFS_V3) ?
-			&nfs3_func_desc[reqnfs->svc.rq_proc] :
+			(reqnfs->svc.rq_msg.cb_vers == NFS_V3) ?
+			&nfs3_func_desc[reqnfs->svc.rq_msg.cb_proc] :
 #endif /* _USE_NFS3 */
-			&nfs4_func_desc[reqnfs->svc.rq_proc];
+			&nfs4_func_desc[reqnfs->svc.rq_msg.cb_proc];
 #ifdef _USE_NLM
-	} else if (reqnfs->svc.rq_prog
-		   == nfs_param.core_param.program[P_NLM]) {
-		funcdesc = &nlm4_func_desc[reqnfs->svc.rq_proc];
+	} else if (reqnfs->svc.rq_msg.cb_prog == NFS_program[P_NLM]) {
+		funcdesc = &nlm4_func_desc[reqnfs->svc.rq_msg.cb_proc];
 #endif /* _USE_NLM */
-	} else if (reqnfs->svc.rq_prog
-		   == nfs_param.core_param.program[P_MNT]) {
+	} else if (reqnfs->svc.rq_msg.cb_prog == NFS_program[P_MNT]) {
 		reqnfs->lookahead.flags |= NFS_LOOKAHEAD_MOUNT;
-		funcdesc = (reqnfs->svc.rq_vers == MOUNT_V1) ?
-			&mnt1_func_desc[reqnfs->svc.rq_proc] :
-			&mnt3_func_desc[reqnfs->svc.rq_proc];
-	} else if (reqnfs->svc.rq_prog
-		   == nfs_param.core_param.program[P_RQUOTA]) {
-		funcdesc = (reqnfs->svc.rq_vers == RQUOTAVERS) ?
-			&rquota1_func_desc[reqnfs->svc.rq_proc] :
-			&rquota2_func_desc[reqnfs->svc.rq_proc];
+		funcdesc = (reqnfs->svc.rq_msg.cb_vers == MOUNT_V1) ?
+			&mnt1_func_desc[reqnfs->svc.rq_msg.cb_proc] :
+			&mnt3_func_desc[reqnfs->svc.rq_msg.cb_proc];
+	} else if (reqnfs->svc.rq_msg.cb_prog == NFS_program[P_RQUOTA]) {
+		funcdesc = (reqnfs->svc.rq_msg.cb_vers == RQUOTAVERS) ?
+			&rquota1_func_desc[reqnfs->svc.rq_msg.cb_proc] :
+			&rquota2_func_desc[reqnfs->svc.rq_msg.cb_proc];
 	}
 	return funcdesc;
 }
@@ -748,7 +747,7 @@ void nfs_rpc_execute(request_data_t *reqdata)
 	op_ctx = &req_ctx;
 	op_ctx->creds = &user_credentials;
 	op_ctx->caller_addr = (sockaddr_t *)svc_getrpccaller(xprt);
-	op_ctx->nfs_vers = reqdata->r_u.req.svc.rq_vers;
+	op_ctx->nfs_vers = reqdata->r_u.req.svc.rq_msg.cb_vers;
 	op_ctx->req_type = reqdata->rtype;
 	op_ctx->export_perms = &export_perms;
 
@@ -781,21 +780,26 @@ void nfs_rpc_execute(request_data_t *reqdata)
 	op_ctx->client = get_gsh_client(op_ctx->caller_addr, false);
 	if (op_ctx->client == NULL) {
 		LogDebug(COMPONENT_DISPATCH,
-			 "Cannot get client block for Program %d, Version %d, Function %d",
-			 (int)reqdata->r_u.req.svc.rq_prog,
-			 (int)reqdata->r_u.req.svc.rq_vers,
-			 (int)reqdata->r_u.req.svc.rq_proc);
+			 "Cannot get client block for Program %" PRIu32
+			 ", Version %" PRIu32
+			 ", Function %" PRIu32,
+			 reqdata->r_u.req.svc.rq_msg.cb_prog,
+			 reqdata->r_u.req.svc.rq_msg.cb_vers,
+			 reqdata->r_u.req.svc.rq_msg.cb_proc);
 	} else {
 		/* Set the Client IP for this thread */
 		SetClientIP(op_ctx->client->hostaddr_str);
 		client_ip = op_ctx->client->hostaddr_str;
 		LogDebug(COMPONENT_DISPATCH,
-			 "Request from %s for Program %d, Version %d, Function %d has xid=%u",
+			 "Request from %s for Program %" PRIu32
+			 ", Version %" PRIu32
+			 ", Function %" PRIu32
+			 " has xid=%" PRIu32,
 			 client_ip,
-			 (int)reqdata->r_u.req.svc.rq_prog,
-			 (int)reqdata->r_u.req.svc.rq_vers,
-			 (int)reqdata->r_u.req.svc.rq_proc,
-			 reqdata->r_u.req.svc.rq_xid);
+			 reqdata->r_u.req.svc.rq_msg.cb_prog,
+			 reqdata->r_u.req.svc.rq_msg.cb_vers,
+			 reqdata->r_u.req.svc.rq_msg.cb_proc,
+			 reqdata->r_u.req.svc.rq_msg.rm_xid);
 	}
 
 #if defined(HAVE_BLKIN)
@@ -819,37 +823,44 @@ void nfs_rpc_execute(request_data_t *reqdata)
 			/* Found the request in the dupreq cache.
 			 * Send cached reply. */
 			LogFullDebug(COMPONENT_DISPATCH,
-				     "DUP: DupReq Cache Hit: using previous reply, rpcxid=%u",
-				     reqdata->r_u.req.svc.rq_xid);
+				     "DUP: DupReq Cache Hit: using previous reply,"
+				     " rpcxid=%" PRIu32,
+				     reqdata->r_u.req.svc.rq_msg.rm_xid);
 
 			LogFullDebug(COMPONENT_DISPATCH,
 				     "Before svc_sendreply on socket %d (dup req)",
 				     xprt->xp_fd);
 
 			DISP_SLOCK(xprt);
-			if (!svc_sendreply(xprt, &reqdata->r_u.req.svc,
+			if (!svc_sendreply(&reqdata->r_u.req.svc,
 					   reqdesc->xdr_encode_func,
 					   (caddr_t) res_nfs)) {
 				LogDebug(COMPONENT_DISPATCH,
-					 "NFS DISPATCHER: FAILURE: Error while calling svc_sendreply on a duplicate request. rpcxid=%u socket=%d function:%s client:%s program:%d nfs version:%d proc:%d xid:%u errno: %d",
-					 reqdata->r_u.req.svc.rq_xid,
+					 "NFS DISPATCHER: FAILURE: Error while calling svc_sendreply on a duplicate request."
+					 " rpcxid=%" PRIu32
+					 " socket=%d function:%s client:%s"
+					 " program:%" PRIu32
+					 " nfs version:%" PRIu32
+					 " proc:%" PRIu32
+					 " errno: %d",
+					 reqdata->r_u.req.svc.rq_msg.rm_xid,
 					 xprt->xp_fd,
 					 reqdesc->funcname,
 					 client_ip,
-					 (int)reqdata->r_u.req.svc.rq_prog,
-					 (int)reqdata->r_u.req.svc.rq_vers,
-					 (int)reqdata->r_u.req.svc.rq_proc,
-					 reqdata->r_u.req.svc.rq_xid,
+					 reqdata->r_u.req.svc.rq_msg.cb_prog,
+					 reqdata->r_u.req.svc.rq_msg.cb_vers,
+					 reqdata->r_u.req.svc.rq_msg.cb_proc,
 					 errno);
-				svcerr_systemerr(xprt, &reqdata->r_u.req.svc);
+				svcerr_systemerr(&reqdata->r_u.req.svc);
 			}
 			break;
 
 			/* Another thread owns the request */
 		case DUPREQ_BEING_PROCESSED:
 			LogFullDebug(COMPONENT_DISPATCH,
-				     "DUP: Request xid=%u is already being processed; the active thread will reply",
-				     reqdata->r_u.req.svc.rq_xid);
+				     "DUP: Request xid=%" PRIu32
+				     " is already being processed; the active thread will reply",
+				     reqdata->r_u.req.svc.rq_msg.rm_xid);
 			/* Free the arguments */
 			DISP_SLOCK(xprt);
 			/* Ignore the request, send no error */
@@ -861,7 +872,7 @@ void nfs_rpc_execute(request_data_t *reqdata)
 			LogCrit(COMPONENT_DISPATCH,
 				"DUP: Did not find the request in the duplicate request cache and couldn't add the request.");
 			DISP_SLOCK(xprt);
-			svcerr_systemerr(xprt, &reqdata->r_u.req.svc);
+			svcerr_systemerr(&reqdata->r_u.req.svc);
 			break;
 
 			/* oom */
@@ -869,14 +880,14 @@ void nfs_rpc_execute(request_data_t *reqdata)
 			LogCrit(COMPONENT_DISPATCH,
 				"DUP: Cannot process request, not enough memory available!");
 			DISP_SLOCK(xprt);
-			svcerr_systemerr(xprt, &reqdata->r_u.req.svc);
+			svcerr_systemerr(&reqdata->r_u.req.svc);
 			break;
 
 		default:
 			LogCrit(COMPONENT_DISPATCH,
 				"DUP: Unknown duplicate request cache status. This should never be reached!");
 			DISP_SLOCK(xprt);
-			svcerr_systemerr(xprt, &reqdata->r_u.req.svc);
+			svcerr_systemerr(&reqdata->r_u.req.svc);
 			break;
 		}
 		server_stats_nfs_done(reqdata, rc, true);
@@ -890,11 +901,10 @@ void nfs_rpc_execute(request_data_t *reqdata)
 	 */
 
 	if (reqdesc == &invalid_funcdesc
-	    || reqdata->r_u.req.svc.rq_proc == NFSPROC_NULL)
+	    || reqdata->r_u.req.svc.rq_msg.cb_proc == NFSPROC_NULL)
 		goto null_op;
 	/* Get the export entry */
-	if (reqdata->r_u.req.svc.rq_prog
-	    == nfs_param.core_param.program[P_NFS]) {
+	if (reqdata->r_u.req.svc.rq_msg.cb_prog == NFS_program[P_NFS]) {
 		/* The NFSv3 functions' arguments always begin with the file
 		 * handle (but not the NULL function).  This hook is used to
 		 * get the fhandle with the arguments and so determine the
@@ -904,7 +914,7 @@ void nfs_rpc_execute(request_data_t *reqdata)
 
 		progname = "NFS";
 #ifdef _USE_NFS3
-		if (reqdata->r_u.req.svc.rq_vers == NFS_V3) {
+		if (reqdata->r_u.req.svc.rq_msg.cb_vers == NFS_V3) {
 			exportid = nfs3_FhandleToExportId((nfs_fh3 *) arg_nfs);
 
 			if (exportid < 0) {
@@ -943,13 +953,12 @@ void nfs_rpc_execute(request_data_t *reqdata)
 		/* NFS V4 gets its own export id from the ops
 		 * in the compound */
 #ifdef _USE_NLM
-	} else if (reqdata->r_u.req.svc.rq_prog
-		   == nfs_param.core_param.program[P_NLM]) {
+	} else if (reqdata->r_u.req.svc.rq_msg.cb_prog == NFS_program[P_NLM]) {
 		netobj *pfh3 = NULL;
 
 		progname = "NLM";
 
-		switch (reqdata->r_u.req.svc.rq_proc) {
+		switch (reqdata->r_u.req.svc.rq_msg.cb_proc) {
 		case NLMPROC4_NULL:
 			/* caught above and short circuited */
 		case NLMPROC4_TEST_RES:
@@ -1038,8 +1047,7 @@ void nfs_rpc_execute(request_data_t *reqdata)
 			}
 		}
 #endif /* _USE_NLM */
-	} else if (reqdata->r_u.req.svc.rq_prog
-		   == nfs_param.core_param.program[P_MNT]) {
+	} else if (reqdata->r_u.req.svc.rq_msg.cb_prog == NFS_program[P_MNT]) {
 		progname = "MNT";
 	}
 
@@ -1056,12 +1064,14 @@ void nfs_rpc_execute(request_data_t *reqdata)
 
 		if ((export_perms.options & EXPORT_OPTION_ACCESS_MASK) == 0) {
 			LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
-				"Client %s is not allowed to access Export_Id %d %s, vers=%d, proc=%d",
+				"Client %s is not allowed to access Export_Id %d %s"
+				", vers=%" PRIu32
+				", proc=%" PRIu32,
 				client_ip,
 				op_ctx->ctx_export->export_id,
 				op_ctx->ctx_export->fullpath,
-				(int)reqdata->r_u.req.svc.rq_vers,
-				(int)reqdata->r_u.req.svc.rq_proc);
+				reqdata->r_u.req.svc.rq_msg.cb_vers,
+				reqdata->r_u.req.svc.rq_msg.cb_proc);
 
 			auth_rc = AUTH_TOOWEAK;
 			goto auth_failure;
@@ -1069,8 +1079,10 @@ void nfs_rpc_execute(request_data_t *reqdata)
 
 		if ((EXPORT_OPTION_NFSV3 & export_perms.options) == 0) {
 			LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
-				"%s Version %d not allowed on Export_Id %d %s for client %s",
-				progname, reqdata->r_u.req.svc.rq_vers,
+				"%s Version %" PRIu32
+				" not allowed on Export_Id %d %s for client %s",
+				progname,
+				reqdata->r_u.req.svc.rq_msg.cb_vers,
 				op_ctx->ctx_export->export_id,
 				op_ctx->ctx_export->fullpath,
 				client_ip);
@@ -1085,8 +1097,10 @@ void nfs_rpc_execute(request_data_t *reqdata)
 		    || ((xprt_type == XPRT_TCP)
 			&& ((export_perms.options & EXPORT_OPTION_TCP) == 0))) {
 			LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
-				"%s Version %d over %s not allowed on Export_Id %d %s for client %s",
-				progname, reqdata->r_u.req.svc.rq_vers,
+				"%s Version %" PRIu32
+				" over %s not allowed on Export_Id %d %s for client %s",
+				progname,
+				reqdata->r_u.req.svc.rq_msg.cb_vers,
 				xprt_type_to_str(xprt_type),
 				op_ctx->ctx_export->export_id,
 				op_ctx->ctx_export->fullpath,
@@ -1100,8 +1114,10 @@ void nfs_rpc_execute(request_data_t *reqdata)
 		if ((reqdesc->dispatch_behaviour & SUPPORTS_GSS)
 		 && !export_check_security(&reqdata->r_u.req.svc)) {
 			LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
-				"%s Version %d auth not allowed on Export_Id %d %s for client %s",
-				progname, reqdata->r_u.req.svc.rq_vers,
+				"%s Version %" PRIu32
+				" auth not allowed on Export_Id %d %s for client %s",
+				progname,
+				reqdata->r_u.req.svc.rq_msg.cb_vers,
 				op_ctx->ctx_export->export_id,
 				op_ctx->ctx_export->fullpath,
 				client_ip);
@@ -1112,8 +1128,7 @@ void nfs_rpc_execute(request_data_t *reqdata)
 
 		/* Check if client is using a privileged port,
 		 * but only for NFS protocol */
-		if ((reqdata->r_u.req.svc.rq_prog
-		     == nfs_param.core_param.program[P_NFS])
+		if ((reqdata->r_u.req.svc.rq_msg.cb_prog == NFS_program[P_NFS])
 		 && (export_perms.options & EXPORT_OPTION_PRIVILEGED_PORT)
 		 && (port >= IPPORT_RESERVED)) {
 			LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
@@ -1140,9 +1155,8 @@ void nfs_rpc_execute(request_data_t *reqdata)
 		 * (this error is known for not disturbing
 		 * the client's requests cache)
 		 */
-		if (reqdata->r_u.req.svc.rq_prog
-		    == nfs_param.core_param.program[P_NFS])
-			switch (reqdata->r_u.req.svc.rq_vers) {
+		if (reqdata->r_u.req.svc.rq_msg.cb_prog == NFS_program[P_NFS])
+			switch (reqdata->r_u.req.svc.rq_msg.cb_vers) {
 #ifdef _USE_NFS3
 			case NFS_V3:
 				LogDebugAlt(COMPONENT_DISPATCH,
@@ -1169,9 +1183,8 @@ void nfs_rpc_execute(request_data_t *reqdata)
 		   && (export_perms.options
 		       & (EXPORT_OPTION_WRITE_ACCESS
 			| EXPORT_OPTION_MD_WRITE_ACCESS)) == 0) {
-		if (reqdata->r_u.req.svc.rq_prog
-		    == nfs_param.core_param.program[P_NFS])
-			switch (reqdata->r_u.req.svc.rq_vers) {
+		if (reqdata->r_u.req.svc.rq_msg.cb_prog == NFS_program[P_NFS])
+			switch (reqdata->r_u.req.svc.rq_msg.cb_vers) {
 #ifdef _USE_NFS3
 			case NFS_V3:
 				LogDebugAlt(COMPONENT_DISPATCH,
@@ -1198,11 +1211,13 @@ void nfs_rpc_execute(request_data_t *reqdata)
 		       & (EXPORT_OPTION_READ_ACCESS
 			 | EXPORT_OPTION_MD_READ_ACCESS)) == 0) {
 		LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
-			"Client %s is not allowed to access Export_Id %d %s, vers=%d, proc=%d",
+			"Client %s is not allowed to access Export_Id %d %s"
+			", vers=%" PRIu32
+			", proc=%" PRIu32,
 			client_ip, op_ctx->ctx_export->export_id,
 			op_ctx->ctx_export->fullpath,
-			(int)reqdata->r_u.req.svc.rq_vers,
-			(int)reqdata->r_u.req.svc.rq_proc);
+			reqdata->r_u.req.svc.rq_msg.cb_vers,
+			reqdata->r_u.req.svc.rq_msg.cb_proc);
 		auth_rc = AUTH_TOOWEAK;
 		goto auth_failure;
 	} else {
@@ -1299,19 +1314,22 @@ void nfs_rpc_execute(request_data_t *reqdata)
 
 /* NFSv4 stats are handled in nfs4_compound()
  */
-	if (reqdata->r_u.req.svc.rq_prog != nfs_param.core_param.program[P_NFS]
-	    || reqdata->r_u.req.svc.rq_vers != NFS_V4)
+	if (reqdata->r_u.req.svc.rq_msg.cb_prog != NFS_program[P_NFS]
+	    || reqdata->r_u.req.svc.rq_msg.cb_vers != NFS_V4)
 		server_stats_nfs_done(reqdata, rc, false);
 
 	/* If request is dropped, no return to the client */
 	if (rc == NFS_REQ_DROP) {
 		/* The request was dropped */
 		LogDebug(COMPONENT_DISPATCH,
-			 "Drop request rpc_xid=%u, program %u, version %u, function %u",
-			 reqdata->r_u.req.svc.rq_xid,
-			 (int)reqdata->r_u.req.svc.rq_prog,
-			 (int)reqdata->r_u.req.svc.rq_vers,
-			 (int)reqdata->r_u.req.svc.rq_proc);
+			 "Drop request rpc_xid=%" PRIu32
+			 ", program %" PRIu32
+			 ", version %" PRIu32
+			 ", function %" PRIu32,
+			 reqdata->r_u.req.svc.rq_msg.rm_xid,
+			 reqdata->r_u.req.svc.rq_msg.cb_prog,
+			 reqdata->r_u.req.svc.rq_msg.cb_vers,
+			 reqdata->r_u.req.svc.rq_msg.cb_proc);
 
 		/* If the request is not normally cached, then the entry
 		 * will be removed later.  We only remove a reply that is
@@ -1331,18 +1349,25 @@ void nfs_rpc_execute(request_data_t *reqdata)
 		DISP_SLOCK(xprt);
 
 		/* encoding the result on xdr output */
-		if (!svc_sendreply(xprt, &reqdata->r_u.req.svc,
+		if (!svc_sendreply(&reqdata->r_u.req.svc,
 				   reqdesc->xdr_encode_func,
 				   (caddr_t) res_nfs)) {
 			LogDebug(COMPONENT_DISPATCH,
-				 "NFS DISPATCHER: FAILURE: Error while calling svc_sendreply on a new request. rpcxid=%u socket=%d function:%s client:%s program:%d nfs version:%d proc:%d xid:%u errno: %d",
-				 reqdata->r_u.req.svc.rq_xid, xprt->xp_fd,
+				 "NFS DISPATCHER: FAILURE: Error while calling svc_sendreply on a new request."
+				 " rpcxid=%" PRIu32
+				 " socket=%d function:%s client:%s"
+				 " program:%" PRIu32
+				 " nfs version:%" PRIu32
+				 " proc:%" PRIu32
+				 " errno: %d",
+				 reqdata->r_u.req.svc.rq_msg.rm_xid,
+				 xprt->xp_fd,
 				 reqdesc->funcname,
 				 client_ip,
-				 (int)reqdata->r_u.req.svc.rq_prog,
-				 (int)reqdata->r_u.req.svc.rq_vers,
-				 (int)reqdata->r_u.req.svc.rq_proc,
-				 reqdata->r_u.req.svc.rq_xid, errno);
+				 reqdata->r_u.req.svc.rq_msg.cb_prog,
+				 reqdata->r_u.req.svc.rq_msg.cb_vers,
+				 reqdata->r_u.req.svc.rq_msg.cb_proc,
+				 errno);
 			if (xprt->xp_type != XPRT_UDP)
 				svc_destroy(xprt);
 			goto freeargs;
@@ -1365,15 +1390,17 @@ void nfs_rpc_execute(request_data_t *reqdata)
 
 		sprint_fhandle3(dumpfh, (nfs_fh3 *) arg_nfs);
 		LogInfo(COMPONENT_DISPATCH,
-			"%s Request from host %s V3 not allowed on this export, proc=%d, FH=%s",
+			"%s Request from host %s V3 not allowed on this export"
+			", proc=%" PRIu32
+			", FH=%s",
 			progname, client_ip,
-			(int)reqdata->r_u.req.svc.rq_proc, dumpfh);
+			reqdata->r_u.req.svc.rq_msg.cb_proc, dumpfh);
 	}
 	auth_rc = AUTH_FAILED;
 
  auth_failure:
 	DISP_SLOCK(xprt);
-	svcerr_auth(xprt, &reqdata->r_u.req.svc, auth_rc);
+	svcerr_auth(&reqdata->r_u.req.svc, auth_rc);
 	/* nb, a no-op when req is uncacheable */
 	if (nfs_dupreq_delete(&reqdata->r_u.req.svc) != DUPREQ_SUCCESS) {
 		LogCrit(COMPONENT_DISPATCH,
@@ -1388,10 +1415,10 @@ void nfs_rpc_execute(request_data_t *reqdata)
 
 	/* Free the allocated resources once the work is done */
 	/* Free the arguments */
-	if ((reqdata->r_u.req.svc.rq_vers == 2)
-	 || (reqdata->r_u.req.svc.rq_vers == 3)
-	 || (reqdata->r_u.req.svc.rq_vers == 4)) {
-		if (!SVC_FREEARGS(xprt, &reqdata->r_u.req.svc,
+	if ((reqdata->r_u.req.svc.rq_msg.cb_vers == 2)
+	 || (reqdata->r_u.req.svc.rq_msg.cb_vers == 3)
+	 || (reqdata->r_u.req.svc.rq_msg.cb_vers == 4)) {
+		if (!SVC_FREEARGS(&reqdata->r_u.req.svc,
 				  reqdesc->xdr_decode_func,
 				  (caddr_t) arg_nfs)) {
 			LogCrit(COMPONENT_DISPATCH,

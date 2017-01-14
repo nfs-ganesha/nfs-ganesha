@@ -61,7 +61,8 @@ nfs3_verify_exportid(struct LINK3args *l3_arg, struct svc_req *req)
 	if (to_exportid < 0 || from_exportid < 0) {
 		LogInfo(COMPONENT_DISPATCH,
 			"NFS%d LINK Request from client %s has badly formed handle for link dir",
-			req->rq_vers, op_ctx->client ?
+			req->rq_msg.cb_vers,
+			op_ctx->client ?
 					op_ctx->client->hostaddr_str :
 					"unknown client");
 		return NFS3ERR_BADHANDLE;
@@ -103,8 +104,10 @@ int nfs3_link(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	if (isDebug(COMPONENT_NFSPROTO)) {
 		char strto[LEN_FH_STR], strfrom[LEN_FH_STR];
 
-		nfs_FhandleToStr(req->rq_vers, &l3_arg->file, NULL, strfrom);
-		nfs_FhandleToStr(req->rq_vers, &l3_arg->link.dir, NULL, strto);
+		nfs_FhandleToStr(req->rq_msg.cb_vers, &l3_arg->file,
+				 NULL, strfrom);
+		nfs_FhandleToStr(req->rq_msg.cb_vers, &l3_arg->link.dir,
+				 NULL, strto);
 
 		LogDebug(COMPONENT_NFSPROTO,
 			 "REQUEST PROCESSING: Calling nfs3_link handle: %s to handle: %s name: %s",

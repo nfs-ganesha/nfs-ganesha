@@ -2524,7 +2524,7 @@ static exportlist_client_entry_t *client_match_any(sockaddr_t *hostaddr,
  */
 bool export_check_security(struct svc_req *req)
 {
-	switch (req->rq_cred.oa_flavor) {
+	switch (req->rq_msg.cb_cred.oa_flavor) {
 	case AUTH_NONE:
 		if ((op_ctx->export_perms->options &
 		     EXPORT_OPTION_AUTH_NONE) == 0) {
@@ -2556,11 +2556,10 @@ bool export_check_security(struct svc_req *req)
 				op_ctx->ctx_export->fullpath);
 			return false;
 		} else {
-			struct rpc_gss_cred *gc;
-			rpc_gss_svc_t svc;
+			struct rpc_gss_cred *gc = (struct rpc_gss_cred *)
+				req->rq_msg.rq_cred_body;
+			rpc_gss_svc_t svc = gc->gc_svc;
 
-			gc = (struct rpc_gss_cred *)req->rq_clntcred;
-			svc = gc->gc_svc;
 			LogFullDebug(COMPONENT_EXPORT, "Testing svc %d",
 				     (int)svc);
 			switch (svc) {
@@ -2608,7 +2607,7 @@ bool export_check_security(struct svc_req *req)
 		LogInfo(COMPONENT_EXPORT,
 			"Export %s does not support unknown oa_flavor %d",
 			op_ctx->ctx_export->fullpath,
-			(int)req->rq_cred.oa_flavor);
+			(int)req->rq_msg.cb_cred.oa_flavor);
 		return false;
 	}
 

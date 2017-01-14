@@ -590,9 +590,9 @@ static enum clnt_stat pxy_process_reply(struct pxy_rpc_io_context *ctx,
 		XDR x;
 
 		memset(&reply, 0, sizeof(reply));
-		reply.acpted_rply.ar_results.proc =
+		reply.RPCM_ack.ar_results.proc =
 		    (xdrproc_t) xdr_COMPOUND4res;
-		reply.acpted_rply.ar_results.where = (caddr_t) res;
+		reply.RPCM_ack.ar_results.where = (caddr_t) res;
 
 		memset(&x, 0, sizeof(x));
 		xdrmem_create(&x, ctx->recvbuf, ctx->ioresult, XDR_DECODE);
@@ -640,8 +640,8 @@ static enum clnt_stat pxy_process_reply(struct pxy_rpc_io_context *ctx,
 			rc = RPC_CANTDECODERES;
 		}
 
-		reply.acpted_rply.ar_results.proc = (xdrproc_t) xdr_void;
-		reply.acpted_rply.ar_results.where = NULL;
+		reply.RPCM_ack.ar_results.proc = (xdrproc_t) xdr_void;
+		reply.RPCM_ack.ar_results.where = NULL;
 
 		xdr_free((xdrproc_t) xdr_replymsg, &reply);
 	}
@@ -685,9 +685,9 @@ static int pxy_compoundv4_call(struct pxy_rpc_io_context *pcontext,
 	rmsg.rm_direction = CALL;
 
 	rmsg.rm_call.cb_rpcvers = RPC_MSG_VERSION;
-	rmsg.rm_call.cb_prog = pcontext->nfs_prog;
-	rmsg.rm_call.cb_vers = FSAL_PROXY_NFS_V4;
-	rmsg.rm_call.cb_proc = NFSPROC4_COMPOUND;
+	rmsg.cb_prog = pcontext->nfs_prog;
+	rmsg.cb_vers = FSAL_PROXY_NFS_V4;
+	rmsg.cb_proc = NFSPROC4_COMPOUND;
 
 	if (cred) {
 		au = authunix_create(pxy_hostname, cred->caller_uid,
@@ -699,8 +699,8 @@ static int pxy_compoundv4_call(struct pxy_rpc_io_context *pcontext,
 	if (au == NULL)
 		return RPC_AUTHERROR;
 
-	rmsg.rm_call.cb_cred = au->ah_cred;
-	rmsg.rm_call.cb_verf = au->ah_verf;
+	rmsg.cb_cred = au->ah_cred;
+	rmsg.cb_verf = au->ah_verf;
 
 	memset(&x, 0, sizeof(x));
 	xdrmem_create(&x, pcontext->sendbuf + 4, pcontext->sendbuf_sz,

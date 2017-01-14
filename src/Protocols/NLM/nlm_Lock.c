@@ -60,7 +60,7 @@ int nlm4_Lock(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	/* Indicate if we let FSAL to handle requests during grace. */
 	bool_t fsal_grace = false;
 
-	if (req->rq_proc == NLMPROC4_NM_LOCK) {
+	if (req->rq_msg.cb_proc == NLMPROC4_NM_LOCK) {
 		/* If call is a NM lock, indicate that we care about NLM
 		 * client but will not monitor.
 		 */
@@ -119,7 +119,7 @@ int nlm4_Lock(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 				    &nlm_client,
 				    &nlm_owner,
 				    &pblock_data,
-				    req->rq_proc != NLMPROC4_NM_LOCK,
+				    req->rq_msg.cb_proc != NLMPROC4_NM_LOCK,
 				    arg->state,
 				    &nlm_state);
 

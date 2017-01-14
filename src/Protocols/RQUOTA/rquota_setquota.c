@@ -64,7 +64,7 @@ int rquota_setquota(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		     "REQUEST PROCESSING: Calling rquota_setquota");
 
 	/* check rquota version and extract arguments */
-	if (req->rq_vers == EXT_RQUOTAVERS) {
+	if (req->rq_msg.cb_vers == EXT_RQUOTAVERS) {
 		quota_path = arg->arg_ext_rquota_setquota.sqa_pathp;
 		quota_id = arg->arg_ext_rquota_setquota.sqa_id;
 		quota_type = arg->arg_ext_rquota_setquota.sqa_type;
