@@ -95,6 +95,60 @@ TRACEPOINT_LOGLEVEL(
 	op_end,
 	TRACE_INFO)
 
+/**
+ * @brief Trace the start of the NFSv4 op function
+ *
+ * @param op_num  - Op number within compound
+ * @param op_code  - Numerical opcode of op
+ * @param op_name  - Text name of op
+ */
+
+TRACEPOINT_EVENT(
+	nfs_rpc,
+	v4op_start,
+	TP_ARGS(int, op_num,
+		int, op_code,
+		const char *, op_name),
+	TP_FIELDS(
+		ctf_integer(int, op_num, op_num)
+		ctf_integer(int, op_code, op_code)
+		ctf_string(op_name, op_name)
+	)
+)
+
+TRACEPOINT_LOGLEVEL(
+	nfs_rpc,
+	v4op_start,
+	TRACE_INFO)
+
+/**
+ * @brief Trace the exit of the NFSv4 op function
+ *
+ * The timestamp difference is the latency of the request
+ *
+ * @param op_num  - Op number within compound
+ * @param op_code  - Numerical opcode of op
+ * @param op_name  - Text name of op
+ */
+
+TRACEPOINT_EVENT(
+	nfs_rpc,
+	v4op_end,
+	TP_ARGS(int, op_num,
+		int, op_code,
+		const char *, op_name),
+	TP_FIELDS(
+		ctf_integer(int, op_num, op_num)
+		ctf_integer(int, op_code, op_code)
+		ctf_string(op_name, op_name)
+	)
+)
+
+TRACEPOINT_LOGLEVEL(
+	nfs_rpc,
+	v4op_end,
+	TRACE_INFO)
+
 #endif /* GANESHA_LTTNG_NFS_RPC_H */
 
 #undef TRACEPOINT_INCLUDE

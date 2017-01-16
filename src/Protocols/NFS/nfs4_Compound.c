@@ -43,6 +43,10 @@
 #include "export_mgr.h"
 #include "nfs_creds.h"
 
+#ifdef USE_LTTNG
+#include "gsh_lttng/nfs_rpc.h"
+#endif
+
 struct nfs4_op_desc {
 	char *name;
 	int (*funct)(struct nfs_argop4 *,
@@ -731,9 +735,19 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 			}
 		}
 
+#ifdef USE_LTTNG
+		tracepoint(nfs_rpc, v4op_start, i, argarray[i].argop,
+			   optabv4[opcode].name);
+#endif
+
 		status = (optabv4[opcode].funct) (&argarray[i],
 						  &data,
 						  &resarray[i]);
+
+#ifdef USE_LTTNG
+		tracepoint(nfs_rpc, v4op_end, i, argarray[i].argop,
+			   optabv4[opcode].name);
+#endif
 
 		LogCompoundFH(&data);
 
