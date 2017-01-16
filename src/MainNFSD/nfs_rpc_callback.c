@@ -765,14 +765,16 @@ rpc_call_channel_t *nfs_rpc_get_chan(nfs_client_id_t *clientid, uint32_t flags)
 }
 
 /**
- * @brief Dispose of a v4.0 channel
+ * @brief Dispose of a channel
  *
  * The caller should hold the channel mutex.
  *
  * @param[in] chan The channel to dispose of
  */
-void nfs_rpc_destroy_v40_chan(rpc_call_channel_t *chan)
+static void _nfs_rpc_destroy_chan(rpc_call_channel_t *chan)
 {
+	assert(chan);
+
 	/* clean up auth, if any */
 	if (chan->auth) {
 		AUTH_DESTROY(chan->auth);
@@ -782,47 +784,10 @@ void nfs_rpc_destroy_v40_chan(rpc_call_channel_t *chan)
 	/* channel has a dedicated RPC client */
 	if (chan->clnt) {
 		/* destroy it */
-		clnt_destroy(chan->clnt);
-	}
-}
-
-/**
- * @brief Dispose of a v41 channel
- *
- * The caller should hold the channel mutex.
- *
- * @param[in] chan The channel to dispose of
- */
-void nfs_rpc_destroy_v41_chan(rpc_call_channel_t *chan)
-{
-	if (chan->auth) {
-		AUTH_DESTROY(chan->auth);
-		chan->auth = NULL;
-	}
-	if (chan->clnt)
-		chan->clnt->cl_ops->cl_release(chan->clnt,
-					       CLNT_RELEASE_FLAG_NONE);
-}
-
-/**
- * @brief Dispose of a channel
- *
- * @param[in] chan The channel to dispose of
- */
-static void _nfs_rpc_destroy_chan(rpc_call_channel_t *chan)
-{
-	assert(chan);
-
-	switch (chan->type) {
-	case RPC_CHAN_V40:
-		nfs_rpc_destroy_v40_chan(chan);
-		break;
-	case RPC_CHAN_V41:
-		nfs_rpc_destroy_v41_chan(chan);
-		break;
+		CLNT_DESTROY(chan->clnt);
+		chan->clnt = NULL;
 	}
 
-	chan->clnt = NULL;
 	chan->last_called = 0;
 }
 
@@ -1312,7 +1277,7 @@ int nfs_rpc_v41_single(nfs_client_id_t *clientid, nfs_cb_argop4 *op,
 				free_single_call(call);
 				release_cb_slot(session, slot, false);
 				PTHREAD_MUTEX_lock(&chan->mtx);
-				nfs_rpc_destroy_v41_chan(chan);
+				_nfs_rpc_destroy_chan(chan);
 				session->flags &= ~session_bc_up;
 				PTHREAD_MUTEX_unlock(&chan->mtx);
 			} else {
