@@ -95,6 +95,7 @@ static void mdcache_unexport(struct fsal_export *exp_hdl,
 	mdcache_entry_t *entry;
 	struct entry_export_map *expmap;
 	fsal_status_t status;
+	bool rc;
 
 	/* First unexport for the sub-FSAL */
 	subcall_raw(exp,
@@ -158,7 +159,8 @@ static void mdcache_unexport(struct fsal_export *exp_hdl,
 	};
 
 	/* Unhash the root object */
-	assert(!cih_remove_checked(root_entry));
+	rc = cih_remove_checked(root_entry);
+	assert(!rc);
 }
 
 /**
