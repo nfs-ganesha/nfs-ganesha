@@ -396,6 +396,10 @@ install -m 644 config_samples/zfs.conf %{buildroot}%{_sysconfdir}/ganesha
 install -m 644 config_samples/ceph.conf %{buildroot}%{_sysconfdir}/ganesha
 %endif
 
+%if %{with rgw}
+install -m 644 config_samples/rgw.conf %{buildroot}%{_sysconfdir}/ganesha
+%endif
+
 %if %{with gluster}
 install -m 644 config_samples/logrotate_fsal_gluster %{buildroot}%{_sysconfdir}/logrotate.d/ganesha-gfapi
 %endif
