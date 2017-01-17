@@ -114,6 +114,13 @@ typedef struct exportlist_client_entry__ {
 /** Controls whether a directory's dirent cache is trusted for
     negative results. */
 #define EXPORT_OPTION_TRUST_READIR_NEGATIVE_CACHE 0x00000008
+#define EXPORT_OPTION_MAXREAD_SET 0x00000010 /* Set if MaxRead was specified */
+#define EXPORT_OPTION_MAXWRITE_SET 0x00000020 /* Set if MaxWrite was
+						 specified */
+#define EXPORT_OPTION_PREFREAD_SET 0x00000040 /* Set if PrefRead was
+						 specified */
+#define EXPORT_OPTION_PREFWRITE_SET 0x00000080 /* Set if PrefWrite was
+						  specified */
 
 /* Constants for export permissions masks */
 #define EXPORT_OPTION_ROOT 0	/*< Allow root access as root uid */

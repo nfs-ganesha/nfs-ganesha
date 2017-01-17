@@ -1055,6 +1055,15 @@ static int do_block_load(struct config_node *blk,
 				if (convert_number(term_node, item,
 						   &num64, err_type))
 					*(uint64_t *)param_addr = num64;
+					if (item->flags & CONFIG_MARK_SET) {
+						void *mask_addr;
+
+						mask_addr =
+						((char *)param_struct
+						 + item->u.ui64.set_off);
+						*(uint32_t *)mask_addr
+						|= item->u.ui64.bit;
+					}
 				break;
 			case CONFIG_ANON_ID:
 				if (convert_number(term_node, item,

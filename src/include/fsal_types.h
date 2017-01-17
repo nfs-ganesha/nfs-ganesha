@@ -788,6 +788,8 @@ typedef struct fsal_dynamicfsinfo__ {
 	uint64_t total_files;
 	uint64_t free_files;
 	uint64_t avail_files;
+	uint64_t maxread;
+	uint64_t maxwrite;
 	struct timespec time_delta;
 } fsal_dynamicfsinfo_t;
 

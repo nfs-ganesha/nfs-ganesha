@@ -320,6 +320,8 @@ struct config_item {
 			uint64_t minval;
 			uint64_t maxval;
 			uint64_t def;
+			uint32_t bit;
+			size_t set_off;
 		} ui64;
 		struct { /* CONFIG_FSID */
 			int64_t def_maj;
@@ -764,6 +766,19 @@ struct config_item {
 	  .u.ui64.minval = _min_,		    \
 	  .u.ui64.maxval = _max_,		    \
 	  .u.ui64.def = _def_,			    \
+	  .off = offsetof(struct _struct_, _mem_)   \
+	}
+
+#define CONF_ITEM_UI64_SET(_name_, _min_, _max_, _def_, _struct_, \
+			  _mem_, _bit_, _set_)       \
+	{ .name = _name_,			    \
+	  .type = CONFIG_UINT64,		    \
+	  .flags = CONFIG_MARK_SET,		    \
+	  .u.ui64.minval = _min_,		    \
+	  .u.ui64.maxval = _max_,		    \
+	  .u.ui64.def = _def_,			    \
+	  .u.ui64.bit = _bit_,			    \
+	  .u.ui64.set_off = offsetof(struct _struct_, _set_),   \
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
 
