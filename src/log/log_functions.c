@@ -2326,7 +2326,7 @@ static int facility_commit(void *node, void *link_mem, void *self_struct,
 			"No facility name given");
 		err_type->missing = true;
 		errcnt++;
-		goto out;
+		return errcnt;
 	}
 	if (conf->dest != NULL) {
 		if (strcasecmp(conf->dest, "stderr") == 0) {
@@ -2355,7 +2355,7 @@ static int facility_commit(void *node, void *link_mem, void *self_struct,
 			conf->facility_name);
 		err_type->missing = true;
 		errcnt++;
-		goto out;
+		return errcnt;
 	}
 	if (conf->func != log_to_syslog && conf->headers < LH_ALL)
 		LogWarn(COMPONENT_CONFIG,
@@ -2366,10 +2366,6 @@ static int facility_commit(void *node, void *link_mem, void *self_struct,
 	fac_list = link_mem;
 	glist_add_tail(fac_list, &conf->fac_list);
 	return 0;
-
-out:
-	gsh_free(self_struct); /* got the bits, be done with it */
-	return errcnt;
 }
 
 static void *log_conf_init(void *link_mem, void *self_struct)
