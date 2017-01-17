@@ -74,6 +74,7 @@ static void handle_release(struct fsal_obj_handle *obj_hdl)
 				"glfs_h_close returned error %s(%d)",
 				strerror(errno), errno);
 		}
+		objhandle->glhandle = NULL;
 	}
 
 	gsh_free(objhandle);
@@ -402,6 +403,8 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 				     "setattr2 status=%s",
 				     fsal_err_txt(status));
 			(*handle)->obj_ops.release(*handle);
+			/* We released handle at this point */
+			glhandle = NULL;
 			*handle = NULL;
 		}
 	} else {
@@ -539,6 +542,8 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 				     "setattr2 status=%s",
 				     fsal_err_txt(status));
 			(*handle)->obj_ops.release(*handle);
+			/* We released handle at this point */
+			glhandle = NULL;
 			*handle = NULL;
 		}
 	} else {
@@ -644,6 +649,8 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 				     "setattr2 status=%s",
 				     fsal_err_txt(status));
 			(*handle)->obj_ops.release(*handle);
+			/* We released handle at this point */
+			glhandle = NULL;
 			*handle = NULL;
 		}
 	} else {
@@ -1614,6 +1621,8 @@ open:
 		if (FSAL_IS_ERROR(status)) {
 			/* Release the handle we just allocated. */
 			(*new_obj)->obj_ops.release(*new_obj);
+			/* We released handle at this point */
+			glhandle = NULL;
 			*new_obj = NULL;
 			goto fileerr;
 		}
