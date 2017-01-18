@@ -196,8 +196,8 @@ BuildRequires:	PyQt4-devel
 Requires:	PyQt4
 %endif
 %endif
-BuildRequires:  python-devel
-Requires: nfs-ganesha = %{version}-%{release}, python
+BuildRequires:  python2-devel
+Requires: nfs-ganesha = %{version}-%{release}, python2
 
 %description utils
 This package contains utility scripts for managing the NFS-GANESHA server
@@ -572,7 +572,7 @@ killall -SIGHUP dbus-daemon 2>&1 > /dev/null
 %if %{with utils}
 %files utils
 %defattr(-,root,root,-)
-%if ( 0%{?suse_version} || 0%{?fedora} )
+%if ( 0%{?suse_version} )
 %{python_sitelib}/Ganesha/*
 %{python_sitelib}/ganeshactl-*-info
 %else
