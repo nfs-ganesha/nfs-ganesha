@@ -159,11 +159,11 @@ bool support_ex(struct fsal_obj_handle *obj)
 
 static struct config_item export_params[] = {
 	CONF_ITEM_NOOP("name"),
-	CONF_ITEM_STR("user_id", 0, MAXUIDLEN, NULL,
+	CONF_MAND_STR("user_id", 0, MAXUIDLEN, NULL,
 		      rgw_export, rgw_user_id),
-	CONF_ITEM_STR("access_key_id", 0, MAXKEYLEN, NULL,
+	CONF_MAND_STR("access_key_id", 0, MAXKEYLEN, NULL,
 		      rgw_export, rgw_access_key_id),
-	CONF_ITEM_STR("secret_access_key", 0, MAXSECRETLEN, NULL,
+	CONF_MAND_STR("secret_access_key", 0, MAXSECRETLEN, NULL,
 		      rgw_export, rgw_secret_access_key),
 	CONFIG_EOL
 };
@@ -282,6 +282,7 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 					   export,
 					   true,
 					   err_type);
+
 		if (rc != 0) {
 			gsh_free(export);
 			return fsalstat(ERR_FSAL_INVAL, 0);

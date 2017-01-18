@@ -964,7 +964,7 @@ static int do_block_load(struct config_node *blk,
 		node = lookup_node(&blk->u.nterm.sub_nodes, item->name);
 		if ((item->flags & CONFIG_MANDATORY) && (node == NULL)) {
 			err_type->missing = true;
-			err_type->errors++;
+			errors = ++err_type->errors;
 			config_proc_error(blk, err_type,
 					  "Mandatory field, %s is missing from block (%s)",
 					  item->name, blk->u.nterm.name);
@@ -979,7 +979,7 @@ static int do_block_load(struct config_node *blk,
 						  "Parameter %s set more than once",
 						  next_node->u.nterm.name);
 				err_type->unique = true;
-				err_type->errors++;
+				errors = ++err_type->errors;
 				node = next_node;
 				continue;
 			}
@@ -1009,7 +1009,7 @@ static int do_block_load(struct config_node *blk,
 						  node->u.nterm.name,
 						  term_node->u.term.varvalue);
 				err_type->invalid = true;
-				err_type->errors++;
+				errors = ++err_type->errors;
 				node = next_node;
 				continue;
 			}
@@ -1206,7 +1206,7 @@ static int do_block_load(struct config_node *blk,
 						  "Cannot set value for type(%d) yet",
 						  item->type);
 				err_type->internal = true;
-				err_type->errors++;
+				errors = ++err_type->errors;
 				break;
 				}
 			node = next_node;
