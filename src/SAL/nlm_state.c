@@ -480,7 +480,7 @@ int get_nlm_state(enum state_type state_type,
 	state->state_export = op_ctx->ctx_export;
 	state->state_seqid = nsm_state;
 
-	assert(pthread_mutex_init(&state->state_mutex, NULL) == 0);
+	PTHREAD_MUTEX_init(&state->state_mutex, NULL);
 
 	if (state_type == STATE_TYPE_NLM_LOCK)
 		glist_init(&state->state_data.lock.state_locklist);
@@ -509,7 +509,7 @@ int get_nlm_state(enum state_type state_type,
 		LogCrit(COMPONENT_STATE, "Error %s, inserting {%s}",
 			hash_table_err_to_str(rc), str);
 
-		assert(pthread_mutex_destroy(&state->state_mutex) == 0);
+		PTHREAD_MUTEX_destroy(&state->state_mutex);
 
 		/* Free the ref taken above and the state.
 		 * No need to close here, the state was never opened.
