@@ -1037,16 +1037,18 @@ dupreq_status_t nfs_dupreq_start(nfs_request_t *reqnfs,
 			TAILQ_INSERT_TAIL(&drc->dupreq_q, dk, fifo_q);
 			++(drc->size);
 			PTHREAD_MUTEX_unlock(&drc->mtx);
-			dv = dk;
+
+			LogFullDebug(COMPONENT_DUPREQ,
+				     "starting dk=%p xid=%" PRIu32
+				     " on DRC=%p state=%s, status=%s, "
+				     "refcnt=%d, drc->size=%d",
+				     dk, dk->hin.tcp.rq_xid, drc,
+				     dupreq_state_table[dk->state],
+				     dupreq_status_table[status],
+				     dk->refcnt, drc->size);
 		}
 		PTHREAD_MUTEX_unlock(&t->mtx);
 	}
-
-	LogFullDebug(COMPONENT_DUPREQ,
-		"starting dv=%p xid=%u on DRC=%p state=%s, status=%s, refcnt=%d, drc->size=%d",
-		dv, dk->hin.tcp.rq_xid, drc,
-		dupreq_state_table[dv->state], dupreq_status_table[status],
-		(dv) ? dv->refcnt : 0, drc->size);
 
 	return status;
 
