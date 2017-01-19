@@ -73,6 +73,36 @@ const char *dupreq_state_table[] = {
 	"DUPREQ_DELETED",
 };
 
+/* drc_t holds the request/response cache. There is a single drc_t for
+ * all udp connections. There is a drc_t for each tcp connection (aka
+ * socket). Since a client could close a socket and reconnect, we would
+ * like to use the same drc cache for the reconnection. For this reason,
+ * we don't want to free the drc as soon as the tcp connection gets
+ * closed, but rather keep them in a recycle list for sometime.
+ *
+ * The life of tcp drc: it gets allocated when we process the first
+ * request on the connection. It is put into rbtree (tcp_drc_recycle_t).
+ * drc cache maintains a ref count. Every request as well as the xprt
+ * holds a ref count. Its ref count should go to zero when the
+ * connection's xprt gets freed (all requests should be completed on the
+ * xprt by this time). When the ref count goes to zero, it is also put
+ * into a recycle queue (tcp_drc_recycle_q). When a reconnection
+ * happens, we hope to find the same drc that was used before, and the
+ * ref count goes up again. At the same time, the drc will be removed
+ * from the recycle queue. Only drc's with ref count zero end up in the
+ * recycle queue. If a reconnection doesn't happen in time, the drc gets
+ * freed by drc_free_expired() after some period of inactivety.
+ *
+ * Most ref count methods assume that a ref count doesn't go up from
+ * zero, so a thread that decrements the ref count to zero would be the
+ * only one acting on it, and it could do so without any locks!  Since
+ * the drc ref count could go up from zero, care must be taken. The
+ * thread that decrements the ref count to zero will have to put the drc
+ * into the recycle queue. It will do so only after dropping the lock in
+ * the current implementation. If we let nfs_dupreq_get_drc() reuse the
+ * drc before it gets into recycle queue, we could end up with multiple
+ * threads that decrement the ref count to zero.
+ */
 struct drc_st {
 	pthread_mutex_t mtx;
 	drc_t udp_drc;		/* shared DRC */
@@ -545,6 +575,7 @@ nfs_dupreq_get_drc(struct svc_req *req)
 		(void)nfs_dupreq_ref_drc(drc);
 		DRC_ST_UNLOCK();
 		goto out;
+retry:
 	case DRC_TCP_V4:
 	case DRC_TCP_V3:
 		/* Idempotent address, no need for lock;
@@ -590,11 +621,21 @@ nfs_dupreq_get_drc(struct svc_req *req)
 			    opr_rbtree_lookup(&t->t, &drc_k.d_u.tcp.recycle_k);
 			if (ndrc) {
 				/* reuse old DRC */
-				tdrc =
-				    opr_containerof(ndrc, drc_t,
-						    d_u.tcp.recycle_k);
+				tdrc = opr_containerof(ndrc, drc_t,
+						       d_u.tcp.recycle_k);
 				PTHREAD_MUTEX_lock(&tdrc->mtx);	/* LOCKED */
-				if (tdrc->flags & DRC_FLAG_RECYCLE) {
+
+				/* If the refcnt is zero and it is not
+				 * in the recycle queue, wait for the
+				 * other thread to put it in the queue.
+				 */
+				if (tdrc->refcnt == 0) {
+					if (!(tdrc->flags & DRC_FLAG_RECYCLE)) {
+						PTHREAD_MUTEX_unlock(
+								&tdrc->mtx);
+						DRC_ST_UNLOCK();
+						goto retry;
+					}
 					TAILQ_REMOVE(&drc_st->tcp_drc_recycle_q,
 						     tdrc, d_u.tcp.recycle_q);
 					--(drc_st->tcp_drc_recycle_qlen);
@@ -605,6 +646,7 @@ nfs_dupreq_get_drc(struct svc_req *req)
 					     "recycle TCP DRC=%p for xprt=%p",
 					     tdrc, req->rq_xprt);
 			}
+
 			if (!drc) {
 				drc = alloc_tcp_drc(dtype);
 				LogFullDebug(COMPONENT_DUPREQ,
@@ -699,11 +741,6 @@ void nfs_dupreq_put_drc(SVCXPRT *xprt, drc_t *drc, uint32_t flags)
 		 * order.
 		 */
 		PTHREAD_MUTEX_unlock(&drc->mtx);
-
-		/* @todo: after dropping the lock above, there is no
-		 * guaranty that this drc is valid any more with the
-		 * current implementation!
-		 */
 		DRC_ST_LOCK();
 		PTHREAD_MUTEX_lock(&drc->mtx);
 
