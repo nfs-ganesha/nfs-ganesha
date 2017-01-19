@@ -313,6 +313,15 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 		goto error;
 	}
 
+	if (rgw_register_invalidate(export->rgw_fs, rgw_fs_invalidate,
+					up_ops->up_export,
+					RGW_REG_INVALIDATE_FLAG_NONE) != 0) {
+		LogCrit(COMPONENT_FSAL,
+			"Unable to register invalidates for %s.",
+			op_ctx->ctx_export->fullpath);
+		goto error;
+	}
+
 	export->export.fsal = module_in;
 
 	LogDebug(COMPONENT_FSAL,
