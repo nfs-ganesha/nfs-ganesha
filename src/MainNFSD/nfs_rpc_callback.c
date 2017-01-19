@@ -81,7 +81,7 @@ static inline void nfs_rpc_cb_init_ccache(const char *ccache)
 {
 	int code = 0;
 
-	if (mkdir(ccache, 700) < 0) {
+	if (mkdir(ccache, 0700) < 0) {
 		if (errno == EEXIST)
 			LogEvent(COMPONENT_INIT,
 				 "Callback creds directory (%s) already exists",
@@ -647,7 +647,8 @@ int nfs_rpc_create_chan_v41(nfs41_session_t *session, int num_sec_parms,
 	if (svc_get_xprt_type(session->xprt) == XPRT_RDMA) {
 		LogWarn(COMPONENT_NFS_CB,
 			"refusing to create back channel over RDMA for now");
-		return EINVAL;
+		code = EINVAL;
+		goto out;
 	}
 
 	/* connect an RPC client
