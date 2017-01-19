@@ -3,11 +3,12 @@ add_definitions(
 )
 
 SET(fsalrgw_LIB_SRCS
-   main.c
-   export.c
-   handle.c
-   internal.c
-   internal.h
+  up.c
+  main.c
+  export.c
+  handle.c
+  internal.c
+  internal.h
 )
 
 message("RGW_INCLUDE_DIR ${RGW_INCLUDE_DIR}")
