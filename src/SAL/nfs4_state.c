@@ -418,7 +418,11 @@ void _state_del_locked(state_t *state, const char *func, int line)
 
 		/* If we are dropping the last open state from an open
 		 * owner, we will want to retain a refcount and let the
-		 * reaper thread clean up with owner. */
+		 * reaper thread clean up with owner.
+		 *
+		 * @todo: should we make the following glist_null check
+		 * an assert or remove it altogether?
+		 */
 		owner_retain = owner->so_type == STATE_OPEN_OWNER_NFSV4 &&
 		    glist_empty(&nfs4_owner->so_state_list) &&
 		    glist_null(&nfs4_owner->so_cache_entry);
