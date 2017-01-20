@@ -1322,6 +1322,8 @@ mdcache_dirent_rename(mdcache_entry_t *parent, const char *oldname,
 	status = mdcache_dirent_find(parent, oldname, &dirent);
 	if (FSAL_IS_ERROR(status))
 		return status;
+	if (!dirent)
+		return status;
 
 	status = mdcache_dirent_find(parent, newname, &dirent2);
 	if (FSAL_IS_ERROR(status) && status.major != ERR_FSAL_NOENT)
@@ -1329,7 +1331,7 @@ mdcache_dirent_rename(mdcache_entry_t *parent, const char *oldname,
 
 	if (dirent2) {
 		/* rename would cause a collision */
-		if (dirent && parent->mde_flags & MDCACHE_TRUST_CONTENT) {
+		if (parent->mde_flags & MDCACHE_TRUST_CONTENT) {
 			/* overwrite, replace entry and expire the old */
 			mdcache_entry_t *oldentry;
 
