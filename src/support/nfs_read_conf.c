@@ -184,6 +184,8 @@ static struct config_item core_params[] = {
 		       nfs_core_param, ganesha_modules_loc),
 	CONF_ITEM_UI32("heartbeat_freq", 0, 5000, 1000,
 		       nfs_core_param, heartbeat_freq),
+	CONF_ITEM_BOOL("fsid_device", false,
+		       nfs_core_param, fsid_device),
 	CONFIG_EOL
 };
 

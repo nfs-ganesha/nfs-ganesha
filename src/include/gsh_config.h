@@ -390,6 +390,8 @@ typedef struct nfs_core_param {
 	char *ganesha_modules_loc;
 	/* Frequency of dbus health heartbeat in ms. Set to 0 to disable */
 	uint32_t heartbeat_freq;
+	/* Whether to use device major/minor for fsid. Defaults to false. */
+	bool fsid_device;
 } nfs_core_parameter_t;
 
 /** @} */

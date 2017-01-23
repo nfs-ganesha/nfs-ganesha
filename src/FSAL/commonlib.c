@@ -64,6 +64,7 @@
 #ifdef HAVE_MNTENT_H
 #include <mntent.h>
 #endif
+#include "gsh_config.h"
 #include "gsh_list.h"
 #ifdef USE_BLKID
 #include <blkid/blkid.h>
@@ -969,6 +970,13 @@ static bool posix_get_fsid(struct fsal_filesystem *fs)
 	}
 
 	fs->dev = posix2fsal_devt(mnt_stat.st_dev);
+
+	if (nfs_param.core_param.fsid_device) {
+		fs->fsid_type = FSID_DEVICE;
+		fs->fsid.major = fs->dev.major;
+		fs->fsid.minor = fs->dev.minor;
+		return true;
+	}
 
 #ifdef USE_BLKID
 	dev_name = blkid_devno_to_devname(mnt_stat.st_dev);

@@ -142,6 +142,8 @@ NFS_CORE_PARAM {}
 
 	heartbeat_freq(uint32, range 0 to 5000 default 1000)
 
+	fsid_device(bool, default false)
+
 NFS_IP_NAME {}
 --------------
 
