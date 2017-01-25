@@ -1031,18 +1031,22 @@ dupreq_status_t nfs_dupreq_start(nfs_request_t *reqnfs,
 				   extend window */
 				req->rq_u1 = dv;
 				reqnfs->res_nfs = req->rq_u2 = dv->res;
-				PTHREAD_MUTEX_lock(&drc->mtx);
-				drc_inc_retwnd(drc);
-				PTHREAD_MUTEX_unlock(&drc->mtx);
 				status = DUPREQ_EXISTS;
 				(dv->refcnt)++;
 			}
+			PTHREAD_MUTEX_unlock(&dv->mtx);
+
+			if (status == DUPREQ_EXISTS) {
+				PTHREAD_MUTEX_lock(&drc->mtx);
+				drc_inc_retwnd(drc);
+				PTHREAD_MUTEX_unlock(&drc->mtx);
+			}
+
 			LogDebug(COMPONENT_DUPREQ,
 				 "dupreq hit dv=%p, dv xid=%" PRIu32
 				 " cksum %" PRIu64 " state=%s",
 				 dv, dv->hin.tcp.rq_xid, dv->hk,
 				 dupreq_state_table[dv->state]);
-			PTHREAD_MUTEX_unlock(&dv->mtx);
 		} else {
 			/* new request */
 			req->rq_u1 = dk;
@@ -1181,7 +1185,9 @@ dq_again:
 			 * nfs_dupreq_start() could use a 0 refcnt
 			 * dupreq and reference it.
 			 */
+			PTHREAD_MUTEX_lock(&ov->mtx);
 			if (ov->refcnt > 0) {
+				PTHREAD_MUTEX_unlock(&ov->mtx);
 				PTHREAD_MUTEX_unlock(&t->mtx);
 				goto unlock;
 			}
@@ -1194,6 +1200,13 @@ dq_again:
 			/* drc->mtx gets unlocked in the above call! */
 
 			rbtree_x_cached_remove(&drc->xt, t, &ov->rbt_k, ov->hk);
+
+			/* dupreq is out of the hash table. Its refcnt
+			 * is zero and we hold the mutex, so no one else
+			 * should be accessing it now.
+			 */
+			PTHREAD_MUTEX_unlock(&ov->mtx);
+
 			PTHREAD_MUTEX_unlock(&t->mtx);
 
 			LogDebug(COMPONENT_DUPREQ,
