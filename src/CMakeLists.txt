@@ -371,7 +371,7 @@ IF(USE_FSAL_ZFS)
     LIST(APPEND CMAKE_LIBRARY_PATH "${ZFS_PREFIX}/local/lib64")
     LIST(APPEND CMAKE_REQUIRED_INCLUDES "${ZFS_PREFIX}/include")
   ELSE()
-    set(ZFS_PREFIX "/usr" CACHE PATH "Path to ZFS installation")
+    set(ZFS_PREFIX "" CACHE PATH "Path to ZFS installation")
   ENDIF()
 ENDIF()
 
