@@ -468,4 +468,8 @@ LogFullDebugOpaque(component, format, buf_size, value, length, args...) \
  */
 void rpc_warnx(/* const */ char *fmt, ...);
 
+#ifdef USE_DBUS
+extern struct gsh_dbus_interface log_interface;
+#endif
+
 #endif
