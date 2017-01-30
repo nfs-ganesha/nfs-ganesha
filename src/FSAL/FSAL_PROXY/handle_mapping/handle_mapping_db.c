@@ -193,7 +193,7 @@ snprintmem(char *target, size_t tgt_size, const void *source,
 	   size_t mem_size)
 {
 
-	const unsigned char *c = '\0';	/* the current char to be printed */
+	const unsigned char *c;	/* the current char to be printed */
 	char *str = target;	/* the current position in target buffer */
 	int wrote = 0;
 
