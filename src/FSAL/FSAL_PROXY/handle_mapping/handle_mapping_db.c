@@ -768,9 +768,7 @@ static void *database_worker_thread(void *arg)
 int handlemap_db_count(const char *dir)
 {
 	DIR *dir_hdl;
-	struct dirent direntry;
-	struct dirent *cookie;
-	int rc;
+	struct dirent *direntry;
 	char db_pattern[MAXPATHLEN + 1];
 
 	unsigned int count = 0;
@@ -788,22 +786,24 @@ int handlemap_db_count(const char *dir)
 	}
 
 	do {
-		rc = readdir_r(dir_hdl, &direntry, &cookie);
+		errno = 0;
+		direntry = readdir(dir_hdl);
 
-		if (rc == 0 && cookie != NULL) {
+		if (direntry != NULL) {
 			/* go to the next loop if the entry is . or .. */
-			if (!strcmp(".", direntry.d_name)
-			    || !strcmp("..", direntry.d_name))
+			if (!strcmp(".", direntry->d_name)
+			    || !strcmp("..", direntry->d_name))
 				continue;
 
 			/* does it match the expected db pattern ? */
-			if (!fnmatch(db_pattern, direntry.d_name, FNM_PATHNAME))
+			if (!fnmatch(db_pattern, direntry->d_name,
+				     FNM_PATHNAME))
 				count++;
 
-		} else if (rc == 0 && cookie == NULL) {
+		} else if (errno == 0) {
 			/* end of dir */
 			end_of_dir = true;
-		} else if (errno != 0) {
+		} else {
 			/* error */
 			LogCrit(COMPONENT_FSAL,
 				"ERROR: error reading directory %s: %s", dir,
@@ -811,9 +811,6 @@ int handlemap_db_count(const char *dir)
 
 			closedir(dir_hdl);
 			return -HANDLEMAP_SYSTEM_ERROR;
-		} else {
-			/* end of dir */
-			end_of_dir = true;
 		}
 
 	} while (!end_of_dir);
