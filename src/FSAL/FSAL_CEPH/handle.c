@@ -981,7 +981,7 @@ fsal_status_t ceph_open2(struct fsal_obj_handle *obj_hdl,
 {
 	int posix_flags = 0;
 	int retval = 0;
-	mode_t unix_mode;
+	mode_t unix_mode = 0;
 	fsal_status_t status = {0, 0};
 	struct ceph_fd *my_fd = NULL;
 	struct handle *myself, *hdl = NULL;
