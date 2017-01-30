@@ -305,10 +305,27 @@ struct fsal_readdir_cb_parms {
 fsal_status_t fsal_setattr(struct fsal_obj_handle *obj, bool bypass,
 			   struct state_t *state, struct attrlist *attr);
 
+/**
+ *
+ * @brief Checks the permissions on an object
+ *
+ * This function returns success if the supplied credentials possess
+ * permission required to meet the specified access.
+ *
+ * @param[in]  obj         The object to be checked
+ * @param[in]  access_type The kind of access to be checked
+ *
+ * @return FSAL status
+ *
+ */
+static inline
 fsal_status_t fsal_access(struct fsal_obj_handle *obj,
-			  fsal_accessflags_t access_type,
-			  fsal_accessflags_t *allowed,
-			  fsal_accessflags_t *denied);
+			  fsal_accessflags_t access_type)
+{
+	return
+	    obj->obj_ops.test_access(obj, access_type, NULL, NULL, false);
+}
+
 fsal_status_t fsal_link(struct fsal_obj_handle *obj,
 			struct fsal_obj_handle *dest_dir,
 			const char *name);

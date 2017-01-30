@@ -118,8 +118,7 @@ static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t *data,
 		access_mask |= FSAL_READ_ACCESS;
 
 	if (!skip_permission) {
-		status = fsal_access(data->current_obj, access_mask, NULL,
-				     NULL);
+		status = fsal_access(data->current_obj, access_mask);
 
 		if (FSAL_IS_ERROR(status)) {
 			/* If non-permission error, return it. */
@@ -145,8 +144,7 @@ static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t *data,
 			 */
 			status = fsal_access(data->current_obj,
 				FSAL_MODE_MASK_SET(FSAL_X_OK) |
-				FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_EXECUTE),
-				NULL, NULL);
+				FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_EXECUTE));
 
 			if (FSAL_IS_ERROR(status)) {
 				LogDebug(COMPONENT_STATE,

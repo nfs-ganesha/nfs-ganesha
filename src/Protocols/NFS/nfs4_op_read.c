@@ -391,7 +391,7 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 		fsal_status = fsal_access(obj,
 				  FSAL_MODE_MASK_SET(FSAL_X_OK) |
 				  FSAL_ACE4_MASK_SET
-				  (FSAL_ACE_PERM_EXECUTE), NULL, NULL);
+				  (FSAL_ACE_PERM_EXECUTE));
 	}
 
 	if (FSAL_IS_ERROR(fsal_status)) {

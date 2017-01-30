@@ -3240,9 +3240,9 @@ nfsstat4 file_To_Fattr(compound_data_t *data,
 			 "Permission check for ACL for obj %p",
 			 data->current_obj);
 
-		status = fsal_access(data->current_obj,
-				     FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_READ_ACL),
-				     NULL, NULL);
+		status =
+		    fsal_access(data->current_obj,
+				FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_READ_ACL));
 
 		if (FSAL_IS_ERROR(status)) {
 			LogDebug(COMPONENT_NFS_V4_ACL,
@@ -3256,9 +3256,9 @@ nfsstat4 file_To_Fattr(compound_data_t *data,
 			 "Permission check for ATTR for obj %p",
 			 data->current_obj);
 
-		status = fsal_access(data->current_obj, FSAL_ACE4_MASK_SET(
-					     FSAL_ACE_PERM_READ_ATTR),
-				     NULL, NULL);
+		status =
+		    fsal_access(data->current_obj,
+				FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_READ_ATTR));
 
 		if (FSAL_IS_ERROR(status)) {
 			LogDebug(COMPONENT_NFS_V4_ACL,

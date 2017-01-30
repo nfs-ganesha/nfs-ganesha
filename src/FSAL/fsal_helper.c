@@ -160,7 +160,7 @@ static fsal_status_t check_open_permission(struct fsal_obj_handle *obj,
 	 *       because somehow the owner changed.
 	 *
 	 */
-	status = fsal_access(obj, FSAL_EXECUTE_ACCESS, NULL, NULL);
+	status = fsal_access(obj, FSAL_EXECUTE_ACCESS);
 
 	if (!FSAL_IS_ERROR(status))
 		*reason = "";
@@ -392,7 +392,7 @@ fsal_status_t open2_by_name(struct fsal_obj_handle *in_obj,
 	}
 
 	/* Check directory permission for LOOKUP */
-	status = fsal_access(in_obj, FSAL_EXECUTE_ACCESS, NULL, NULL);
+	status = fsal_access(in_obj, FSAL_EXECUTE_ACCESS);
 	if (FSAL_IS_ERROR(status))
 		return status;
 
@@ -582,28 +582,6 @@ fsal_status_t fsal_setattr(struct fsal_obj_handle *obj, bool bypass,
 }
 
 /**
- *
- * @brief Checks the permissions on an object
- *
- * This function returns success if the supplied credentials possess
- * permission required to meet the specified access.
- *
- * @param[in]  obj         The object to be checked
- * @param[in]  access_type The kind of access to be checked
- *
- * @return FSAL status
- *
- */
-fsal_status_t fsal_access(struct fsal_obj_handle *obj,
-			  fsal_accessflags_t access_type,
-			  fsal_accessflags_t *allowed,
-			  fsal_accessflags_t *denied)
-{
-	return
-	    obj->obj_ops.test_access(obj, access_type, allowed, denied, false);
-}
-
-/**
  * @brief Read the contents of a symlink
  *
  * @param[in] obj	Symlink to read
@@ -655,8 +633,7 @@ fsal_status_t fsal_link(struct fsal_obj_handle *obj,
 			FSAL_MODE_MASK_SET(FSAL_W_OK) |
 			FSAL_MODE_MASK_SET(FSAL_X_OK) |
 			FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_EXECUTE) |
-			FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_FILE),
-			NULL, NULL);
+			FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_FILE));
 
 		if (FSAL_IS_ERROR(status))
 			return status;
@@ -697,7 +674,7 @@ fsal_status_t fsal_lookup(struct fsal_obj_handle *parent,
 		return fsalstat(ERR_FSAL_NOTDIR, 0);
 	}
 
-	fsal_status = fsal_access(parent, access_mask, NULL, NULL);
+	fsal_status = fsal_access(parent, access_mask);
 	if (FSAL_IS_ERROR(fsal_status))
 		return fsal_status;
 
@@ -1465,7 +1442,7 @@ fsal_status_t fsal_readdir(struct fsal_obj_handle *directory,
 		access_mask_attr |= FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_READ_ACL);
 	}
 
-	fsal_status = fsal_access(directory, access_mask, NULL, NULL);
+	fsal_status = fsal_access(directory, access_mask);
 	if (FSAL_IS_ERROR(fsal_status)) {
 		LogFullDebug(COMPONENT_NFS_READDIR,
 			     "permission check for directory status=%s",
@@ -1474,8 +1451,7 @@ fsal_status_t fsal_readdir(struct fsal_obj_handle *directory,
 	}
 	if (attrmask != 0) {
 		/* Check for access permission to get attributes */
-		attr_status = fsal_access(directory, access_mask_attr, NULL,
-					  NULL);
+		attr_status = fsal_access(directory, access_mask_attr);
 		if (FSAL_IS_ERROR(attr_status))
 			LogFullDebug(COMPONENT_NFS_READDIR,
 				     "permission check for attributes status=%s",
