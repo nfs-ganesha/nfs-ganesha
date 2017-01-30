@@ -97,7 +97,7 @@ static int StrExportOptions(struct display_buffer *dspbuf,
 	if (b_left <= 0)
 		return b_left;
 
-	b_left = display_printf(dspbuf, "options=%08 "PRIx32, p_perms->options);
+	b_left = display_printf(dspbuf, "options=%08"PRIx32, p_perms->options);
 
 	if (b_left <= 0)
 		return b_left;
