@@ -816,7 +816,7 @@ fsal_status_t rgw_fsal_open2(struct fsal_obj_handle *obj_hdl,
 
 		if (createmode >= FSAL_EXCLUSIVE || truncated) {
 			/* refresh attributes */
-			rc = rgw_getattr(export->rgw_fs, rgw_fh, &st,
+			rc = rgw_getattr(export->rgw_fs, handle->rgw_fh, &st,
 					RGW_GETATTR_FLAG_NONE);
 			if (rc < 0) {
 				status = rgw2fsal_error(rc);
