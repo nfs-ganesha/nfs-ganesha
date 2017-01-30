@@ -43,6 +43,7 @@
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
 #include "export_mgr.h"
+#include "common_utils.h"
 
 #define FSAL_PROXY_NFS_V4 4
 
@@ -129,6 +130,12 @@ static struct pxy_obj_handle *pxy_alloc_handle(struct fsal_export *exp,
 					       const nfs_fh4 *fh,
 					       fattr4 *obj_attributes,
 					       struct attrlist *attrs_out);
+
+#define FSAL_VERIFIER_T_TO_VERIFIER4(verif4, fsal_verif)		\
+do { \
+	BUILD_BUG_ON(sizeof(fsal_verifier_t) != sizeof(verifier4));	\
+	memcpy(verif4, fsal_verif, sizeof(fsal_verifier_t));		\
+} while (0)
 
 static fsal_status_t nfsstat4_to_fsal(nfsstat4 nfsstatus)
 {
@@ -2005,6 +2012,305 @@ static fsal_status_t pxy_close(struct fsal_obj_handle *obj_hdl)
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
+/*
+ * support_ex methods
+ *
+ * This first dirty version of support_ex in FSAL_PROXY doesn't take care of
+ * any state.
+ *
+ * The goal achieves by this first dirty version is only to be compliant with
+ * support_ex fsal api.
+ */
+
+/**
+ * @brief Fill share_access and share_deny fields of an OPEN4args struct
+ *
+ * This function fills share_access and share_deny fields of an OPEN4args
+ * struct to prepare an OPEN v4.1 call.
+ *
+ * @param[in]     openflags      fsal open flags
+ * @param[in,out] share_access   share_access field to be filled
+ * @param[in,out] share_deny     share_deny field to be filled
+ *
+ * @return FSAL status.
+ */
+static fsal_status_t  fill_share_OPEN4args(uint32_t *share_access,
+					   uint32_t *share_deny,
+					   fsal_openflags_t openflags)
+{
+
+	/* share access */
+	*share_access = 0;
+	if (openflags & FSAL_O_READ)
+		*share_access |= OPEN4_SHARE_ACCESS_READ;
+	if (openflags & FSAL_O_WRITE)
+		*share_access |= OPEN4_SHARE_ACCESS_WRITE;
+	/* share write */
+	*share_deny = OPEN4_SHARE_DENY_NONE;
+	if (openflags & FSAL_O_DENY_READ)
+		*share_deny |= OPEN4_SHARE_DENY_READ;
+	if (openflags & FSAL_O_DENY_WRITE ||
+	    openflags & FSAL_O_DENY_WRITE_MAND)
+		*share_deny |= OPEN4_SHARE_DENY_WRITE;
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
+/**
+ * @brief Fill openhow field of an OPEN4args struct
+ *
+ * This function fills an openflags4 openhow field of an OPEN4args struct
+ * to prepare an OPEN v4.1 call.
+ *
+ * @param[in]     attrs_in       open atributes
+ * @param[in]     create_mode    open create mode
+ * @param[in]     verifier       open verifier
+ * @param[in,out] openhow        openhow field to be filled
+ * @param[in,out] inattrs        created inattrs (need to be freed by calling
+ *                               nfs4_Fattr_Free)
+ *
+ * @return FSAL status.
+ */
+static fsal_status_t fill_openhow_OPEN4args(openflag4 *openhow,
+					    fattr4 inattrs,
+					    enum fsal_create_mode createmode,
+					    fsal_verifier_t verifier)
+{
+	if (openhow == NULL)
+		return fsalstat(ERR_FSAL_INVAL, -1);
+
+	/* openhow */
+	if (createmode != FSAL_NO_CREATE) {
+		createhow4 *how = &(openhow->openflag4_u.how);
+
+		openhow->opentype = OPEN4_CREATE;
+		switch (createmode) {
+		case FSAL_UNCHECKED:
+			how->mode = UNCHECKED4;
+			how->createhow4_u.createattrs = inattrs;
+			break;
+		case FSAL_GUARDED:
+		case FSAL_EXCLUSIVE_9P:
+			how->mode = GUARDED4;
+			how->createhow4_u.createattrs = inattrs;
+			break;
+		case FSAL_EXCLUSIVE:
+		case FSAL_EXCLUSIVE_41: /* waiting for a 4.1 FSAL_PROXY */
+			how->mode = EXCLUSIVE4;
+			FSAL_VERIFIER_T_TO_VERIFIER4(
+				how->createhow4_u.createverf, verifier);
+			break;
+		default:
+			return fsalstat(ERR_FSAL_FAULT,
+					EINVAL);
+		}
+	} else
+		openhow->opentype = OPEN4_NOCREATE;
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
+static fsal_status_t pxy_open2(struct fsal_obj_handle *obj_hdl,
+			       struct state_t *state,
+			       fsal_openflags_t openflags,
+			       enum fsal_create_mode createmode,
+			       const char *name,
+			       struct attrlist *attrs_in,
+			       fsal_verifier_t verifier,
+			       struct fsal_obj_handle **new_obj,
+			       struct attrlist *attrs_out,
+			       bool *caller_perm_check)
+{
+	struct pxy_obj_handle *ph;
+	int rc; /* return code of nfs call */
+	int opcnt = 0; /* nfs arg counter */
+	fsal_status_t st; /* return code of fsal call */
+	char padfilehandle[NFS4_FHSIZE]; /* gotten FH */
+	seqid4 open_owner_seqid = 0;
+	clientid4 cid;
+	char owner_val[128];
+	unsigned int owner_len = 0;
+	uint32_t share_access = 0;
+	uint32_t share_deny = 0;
+	openflag4 openhow;
+	fattr4 inattrs;
+	open_claim4 claim;
+	/* OPEN BY NAME : PUTFH, OPEN, GETFH, GETATTR */
+	/* OPEN BY HANDLE : PUTFH SETATTR GETATTR */
+	#define FSAL_OPEN_NB_OP 4
+	nfs_argop4 argoparray[FSAL_OPEN_NB_OP];
+	nfs_resop4 resoparray[FSAL_OPEN_NB_OP];
+	OPEN4resok *opok;
+	GETFH4resok *fhok;
+	GETATTR4resok *atok;
+	char fattr_blob[FATTR_BLOB_SZ];
+
+	/* we have not done yet any check */
+	*caller_perm_check = true;
+
+	/* get back proxy handle */
+	ph = container_of(obj_hdl, struct pxy_obj_handle, obj);
+
+	/* include TRUNCATE case in attrs_in */
+	if (openflags & FSAL_O_TRUNC) {
+		if (name)
+			attrs_in->valid_mask |= ATTR_SIZE;
+		else
+			attrs_in->valid_mask = ATTR_SIZE;
+		attrs_in->filesize = 0;
+	}
+
+	/* fill inattrs */
+	if (pxy_fsalattr_to_fattr4(attrs_in, &inattrs) == -1)
+		return fsalstat(ERR_FSAL_INVAL, -1);
+
+	if (name) {
+		/*
+		* We do the open to get handle, check perm, check share, trunc,
+		* create if needed ...
+		*/
+		/* open call will do the perm check */
+		*caller_perm_check = false;
+
+		/* prepare open call */
+		/* PUTFH */
+		COMPOUNDV4_ARG_ADD_OP_PUTFH(opcnt, argoparray, ph->fh4);
+
+		/* OPEN */
+		/* prepare answer */
+		opok =
+		    &resoparray[opcnt].nfs_resop4_u.opopen.OPEN4res_u.resok4;
+		opok->rflags = 0; /* set to NULL for safety */
+		opok->attrset = empty_bitmap; /* set to empty for safety */
+		/* prepare open input args */
+		/* share_access and share_deny */
+		st = fill_share_OPEN4args(&share_access, &share_deny,
+					  openflags);
+		if (FSAL_IS_ERROR(st)) {
+			nfs4_Fattr_Free(&inattrs);
+			return st;
+		}
+
+		/* owner */
+		pxy_get_clientid(&cid);
+		snprintf(owner_val, sizeof(owner_val),
+			 "GANESHA/PROXY: pid=%u %" PRIu64, getpid(),
+			 atomic_inc_uint64_t(&fcnt));
+		owner_len = strnlen(owner_val, sizeof(owner_val));
+		/* inattrs and openhow */
+		st = fill_openhow_OPEN4args(&openhow, inattrs, createmode,
+					    verifier);
+		if (FSAL_IS_ERROR(st)) {
+			nfs4_Fattr_Free(&inattrs);
+			return st;
+		}
+
+		/* claim : first support_ex version, no state -> no claim */
+		claim.claim = CLAIM_NULL;
+		claim.open_claim4_u.file.utf8string_val = (char *)name;
+		claim.open_claim4_u.file.utf8string_len = strlen(name);
+		/* add open */
+		COMPOUNDV4_ARGS_ADD_OP_OPEN(opcnt, argoparray,
+					    open_owner_seqid, share_access,
+					    share_deny, cid, owner_val,
+					    owner_len, openhow, claim);
+
+		/* GETFH */
+		/* prepare answer */
+		fhok =
+		    &resoparray[opcnt].nfs_resop4_u.opgetfh.GETFH4res_u.resok4;
+		fhok->object.nfs_fh4_val = padfilehandle;
+		fhok->object.nfs_fh4_len = sizeof(padfilehandle);
+		COMPOUNDV4_ARG_ADD_OP_GETFH(opcnt, argoparray);
+		/* GETATTR */
+		atok = pxy_fill_getattr_reply(resoparray + opcnt, fattr_blob,
+					      sizeof(fattr_blob));
+		COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, argoparray,
+					      pxy_bitmap_getattr);
+
+		/* nfs call*/
+		rc = pxy_nfsv4_call(op_ctx->fsal_export, op_ctx->creds, opcnt,
+				    argoparray, resoparray);
+		if (rc != NFS4_OK) {
+			nfs4_Fattr_Free(&inattrs);
+			return nfsstat4_to_fsal(rc);
+		}
+
+		/* See if a OPEN_CONFIRM is required */
+		if (opok->rflags & OPEN4_RESULT_CONFIRM) {
+			st = pxy_open_confirm(op_ctx->creds, &fhok->object,
+					      ++open_owner_seqid,
+					      &opok->stateid,
+					      op_ctx->fsal_export);
+			if (FSAL_IS_ERROR(st))
+				return st;
+		}
+
+		/* The created file is still opened, to preserve the correct
+		 * seqid for later use, we close it */
+		/* we don't manage state : immediately close state on server */
+		st = pxy_do_close(op_ctx->creds, &fhok->object,
+				  ++open_owner_seqid, &opok->stateid,
+				  op_ctx->fsal_export);
+	} else if (attrs_out || openflags & FSAL_O_TRUNC) {
+	/* open by handle */
+	/* we have nothing to do except getattr or truncate */
+	/* (Waiting v4.1 FSAL_PROXY to delete this additionnal setattr.) */
+
+		/* prepare open call */
+		/* PUTFH */
+		COMPOUNDV4_ARG_ADD_OP_PUTFH(opcnt, argoparray, ph->fh4);
+
+		/* SETATTR for truncate */
+		if (openflags & FSAL_O_TRUNC) {
+			resoparray[opcnt].nfs_resop4_u.opsetattr.attrsset =
+								empty_bitmap;
+			COMPOUNDV4_ARG_ADD_OP_SETATTR(opcnt, argoparray,
+						      inattrs);
+		}
+
+		/* GETATTR */
+		atok = pxy_fill_getattr_reply(resoparray + opcnt, fattr_blob,
+					      sizeof(fattr_blob));
+		COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, argoparray,
+					      pxy_bitmap_getattr);
+
+		/* nfs call*/
+		rc = pxy_nfsv4_call(op_ctx->fsal_export, op_ctx->creds, opcnt,
+				    argoparray, resoparray);
+		if (rc != NFS4_OK) {
+			nfs4_Fattr_Free(&inattrs);
+			return nfsstat4_to_fsal(rc);
+		}
+	}
+
+	/* cleaning inattrs */
+	nfs4_Fattr_Free(&inattrs);
+
+	/* create a new handle if asked and attrs_out by the way */
+	if (new_obj) {
+		if (name) {
+			/* create new_obj and set attrs_out*/
+			st = pxy_make_object(op_ctx->fsal_export,
+					     &atok->obj_attributes,
+					     &fhok->object,
+					     new_obj, attrs_out);
+			if (FSAL_IS_ERROR(st))
+				return st;
+		} else {
+			*new_obj = obj_hdl;
+		}
+	}
+	if (attrs_out && (!new_obj || (new_obj && !name))) {
+		rc = nfs4_Fattr_To_FSAL_attr(attrs_out, &atok->obj_attributes,
+					     NULL);
+		if (rc != NFS4_OK)
+			return nfsstat4_to_fsal(rc);
+	}
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
 void pxy_handle_ops_init(struct fsal_obj_ops *ops)
 {
 	ops->release = pxy_hdl_release;
@@ -2029,6 +2335,7 @@ void pxy_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->handle_is = pxy_handle_is;
 	ops->handle_digest = pxy_handle_digest;
 	ops->handle_to_key = pxy_handle_to_key;
+	ops->open2 = pxy_open2;
 }
 
 #ifdef PROXY_HANDLE_MAPPING

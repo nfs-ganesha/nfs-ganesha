@@ -40,6 +40,7 @@
 #include <dirent.h>		/* for MAXNAMLEN */
 
 #include "uid2grp.h"
+#include "nfsv41.h"
 
 /* Cookie to be used in FSAL_ListXAttrs() to bypass RO xattr */
 #define FSAL_XATTR_RW_COOKIE (~0)
@@ -858,7 +859,7 @@ typedef struct fsal_share_param_t {
 	bool share_reclaim;
 } fsal_share_param_t;
 
-typedef char fsal_verifier_t[8];
+typedef char fsal_verifier_t[NFS4_VERIFIER_SIZE];
 
 /**
  * @brief Generic file handle.
