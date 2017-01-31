@@ -243,7 +243,7 @@ EXTERNAL="$EXTERNAL|test/test_atomic_x86_86.c|avl/|FSAL/FSAL_GPFS/include"
 
 NO_EXTERNAL=0
 
-IGNORE="config_parsing|Protocols/XDR|NodeList|include/nodelist.h"
+IGNORE="config_parsing|Protocols/XDR"
 IGNORE="$IGNORE|include/gsh_intrinsic.h"
 
 NO_IGNORE=0
