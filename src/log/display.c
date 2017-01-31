@@ -117,8 +117,12 @@ void _display_complete_overflow(struct display_buffer *dspbuf, char *ptr)
 	int utf8len;
 	char *end;
 
-	/* end points after last byte that we will retain. */
-	end = ptr + 1;
+	/* ptr argument points after last byte that we will retain
+	 * set 'end' to that and 'ptr' to inspect previous byte if possible
+	 */
+	end = ptr;
+	if (ptr > dspbuf->b_start)
+		ptr--;
 
 	/* Now ptr points to last byte that will remain part of string.
 	 * Next we need to check if this byte is the end of a valid UTF-8
@@ -181,7 +185,7 @@ int display_start(struct display_buffer *dspbuf)
 		dspbuf->b_current++;
 		b_left--;
 
-		/* Back up 3 bytes before last byte (note that b_current
+		/* Back up 4 bytes before last byte (note that b_current
 		 * points PAST the last byte of the buffer since the
 		 * buffer has overflowed).
 		 */
@@ -224,7 +228,7 @@ int display_finish(struct display_buffer *dspbuf)
 
 	/* We validated above that buffer is at least 4 bytes... */
 
-	/* Back up 3 bytes before last byte (note that b_current points
+	/* Back up 4 bytes before last byte (note that b_current points
 	 * PAST the last byte of the buffer since the buffer has overflowed).
 	 */
 	_display_complete_overflow(dspbuf, dspbuf->b_current - 4);
@@ -249,8 +253,8 @@ int display_force_overflow(struct display_buffer *dspbuf)
 	if (b_left <= 0)
 		return b_left;
 
-	if (b_left < 3) {
-		/* There aren't at least 3 characters left, back up to allow for
+	if (b_left < 4) {
+		/* There aren't at least 4 characters left, back up to allow for
 		 * them. If there aren't room for 3 more non-0 bytes in the
 		 * buffer, then (baring multi-byte UTF-8 charts), the "..." will
 		 * always be at the very end of the buffer, that is determined
