@@ -38,7 +38,6 @@
 #include "nfs_dupreq.h"
 #include "config_parsing.h"
 #include "common_utils.h"
-#include "nodelist.h"
 #include <stdlib.h>
 #include <fnmatch.h>
 #include <sys/socket.h>
@@ -1628,9 +1627,6 @@ static int client_adder(const char *token,
 	proto_cli = container_of(param_addr,
 				 struct exportlist_client_entry__,
 				 cle_list);
-#ifdef USE_NODELIST
-#error "Node list expansion goes here but not yet"
-#endif
 	LogMidDebug(COMPONENT_CONFIG, "Adding client %s", token);
 	rc = add_client(&proto_cli->cle_list,
 			token, type_hint,
