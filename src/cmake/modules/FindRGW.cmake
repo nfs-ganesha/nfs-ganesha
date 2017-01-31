@@ -71,9 +71,14 @@ if (EXISTS ${RGW_FILE_HEADER})
   string(REGEX REPLACE ".+LIBRGW_FILE_VER_MINOR (\\d*)" "\\1" RGW_MINOR
     "${RGW_MINOR}")
 
-  set(RGW_FILE_VERSION "${RGW_MAJOR}.${RGW_MINOR}")
+  file(STRINGS ${RGW_FILE_HEADER} RGW_EXTRA REGEX
+    "LIBRGW_FILE_VER_EXTRA (\\d*).*$")
+  string(REGEX REPLACE ".+LIBRGW_FILE_VER_EXTRA (\\d*)" "\\1" RGW_EXTRA
+    "${RGW_EXTRA}")
+
+  set(RGW_FILE_VERSION "${RGW_MAJOR}.${RGW_MINOR}.${RGW_EXTRA}")
 else()
-  set(RGW_FILE_VERSION "0.0")
+  set(RGW_FILE_VERSION "0.0.0")
 endif()
 
 # handle the QUIETLY and REQUIRED arguments and set PRELUDE_FOUND to TRUE if
