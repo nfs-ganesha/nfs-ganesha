@@ -226,9 +226,9 @@ int load_fsal(const char *name,
 	PTHREAD_MUTEX_unlock(&fsal_lock);
 
 	LogDebug(COMPONENT_INIT, "Loading FSAL %s with %s", name, path);
-#ifdef LINUX
+#if defined(LINUX) && !defined(SANITIZE_ADDRESS)
 	dl = dlopen(path, RTLD_NOW | RTLD_LOCAL | RTLD_DEEPBIND);
-#elif FREEBSD
+#elif defined(FREEBSD) || defined(SANITIZE_ADDRESS)
 	dl = dlopen(path, RTLD_NOW | RTLD_LOCAL);
 #endif
 

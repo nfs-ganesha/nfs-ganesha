@@ -60,6 +60,7 @@
 #cmakedefine USE_FSAL_CEPH_LL_LOOKUP_ROOT 1
 #cmakedefine USE_FSAL_CEPH_STATX 1
 #cmakedefine ENABLE_LOCKTRACE 1
+#cmakedefine SANITIZE_ADDRESS 1
 
 #define NFS_GANESHA 1
 
