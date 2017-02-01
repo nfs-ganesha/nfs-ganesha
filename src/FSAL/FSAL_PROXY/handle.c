@@ -820,6 +820,7 @@ static int pxy_setclientid(clientid4 *resultclientid, uint32_t *lease_time)
 	nfs_argop4 arg[FSAL_CLIENTID_NB_OP_ALLOC];
 	nfs_resop4 res[FSAL_CLIENTID_NB_OP_ALLOC];
 	nfs_client_id4 nfsclientid;
+	uint64_t temp_verifier;
 	cb_client4 cbproxy;
 	char clientid_name[MAXNAMLEN + 1];
 	SETCLIENTID4resok *sok;
@@ -838,12 +839,11 @@ static int pxy_setclientid(clientid4 *resultclientid, uint32_t *lease_time)
 		 getpid());
 	nfsclientid.id.id_len = strlen(clientid_name);
 	nfsclientid.id.id_val = clientid_name;
-	if (sizeof(ServerBootTime.tv_sec) == NFS4_VERIFIER_SIZE)
-		memcpy(&nfsclientid.verifier, &ServerBootTime.tv_sec,
-		       sizeof(nfsclientid.verifier));
-	else
-		snprintf(nfsclientid.verifier, NFS4_VERIFIER_SIZE, "%08x",
-			 (int)ServerBootTime.tv_sec);
+
+	/* copy to intermediate uint64_t to 0-fill or truncate as needed */
+	temp_verifier = (uint64_t)ServerBootTime.tv_sec;
+	BUILD_BUG_ON(sizeof(nfsclientid.verifier) != sizeof(uint64_t));
+	memcpy(&nfsclientid.verifier, &temp_verifier, sizeof(uint64_t));
 
 	cbproxy.cb_program = 0;
 	cbproxy.cb_location.r_netid = "tcp";

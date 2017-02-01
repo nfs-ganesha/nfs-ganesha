@@ -55,7 +55,7 @@ int _9p_walk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	char *wnames_str;
 	fsal_status_t fsal_status;
 	struct fsal_obj_handle *pentry = NULL;
-	char name[MAXNAMLEN];
+	char name[MAXNAMLEN+1];
 
 	u16 *nwqid;
 
@@ -102,7 +102,12 @@ int _9p_walk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 		for (i = 0; i < *nwname; i++) {
 			_9p_getstr(cursor, wnames_len, wnames_str);
-			snprintf(name, MAXNAMLEN, "%.*s", *wnames_len,
+			if (*wnames_len >= sizeof(name)) {
+				gsh_free(pnewfid);
+				return _9p_rerror(req9p, msgtag, ENAMETOOLONG,
+						  plenout, preply);
+			}
+			snprintf(name, sizeof(name), "%.*s", *wnames_len,
 				 wnames_str);
 
 			LogDebug(COMPONENT_9P,
@@ -133,7 +138,7 @@ int _9p_walk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 		pnewfid->ppentry = pfid->pentry;
 
-		strncpy(pnewfid->name, name, MAXNAMLEN-1);
+		strncpy(pnewfid->name, name, MAXNAMLEN);
 
 		/* gdata ref is not hold : the pfid, which use same gdata */
 		/*  will be clunked after pnewfid */
