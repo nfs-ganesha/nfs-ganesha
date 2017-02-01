@@ -641,9 +641,9 @@ struct config_item {
 #define CONF_ITEM_INET_PORT(_name_, _min_, _max_, _def_, _struct_, _mem_) \
 	{ .name = _name_,			    \
 	  .type = CONFIG_INET_PORT,		    \
-	  .u.i16.minval = _min_,		    \
-	  .u.i16.maxval = _max_,		    \
-	  .u.i16.def = _def_,			    \
+	  .u.ui16.minval = _min_,		    \
+	  .u.ui16.maxval = _max_,		    \
+	  .u.ui16.def = _def_,			    \
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
 
@@ -651,9 +651,9 @@ struct config_item {
 	{ .name = _name_,			    \
 	  .type = CONFIG_INET_PORT,		    \
 	  .flags = CONFIG_UNIQUE|CONFIG_MANDATORY,  \
-	  .u.i16.minval = _min_,		    \
-	  .u.i16.maxval = _max_,		    \
-	  .u.i16.def = _def_,			    \
+	  .u.ui16.minval = _min_,		    \
+	  .u.ui16.maxval = _max_,		    \
+	  .u.ui16.def = _def_,			    \
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
 
