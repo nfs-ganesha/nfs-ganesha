@@ -898,6 +898,16 @@ static fsal_status_t mdcache_rename(struct fsal_obj_handle *obj_hdl,
 	/* unlock entries */
 	mdcache_src_dest_unlock(mdc_olddir, mdc_newdir);
 
+	/* If we're moving a directory out, update parent hash */
+	if (mdc_olddir != mdc_newdir && obj_hdl->type == DIRECTORY) {
+		PTHREAD_RWLOCK_wrlock(&mdc_obj->content_lock);
+
+		mdcache_key_delete(&mdc_obj->fsobj.fsdir.parent);
+		mdc_dir_add_parent(mdc_obj, mdc_newdir);
+
+		PTHREAD_RWLOCK_unlock(&mdc_obj->content_lock);
+	}
+
 out:
 	if (mdc_lookup_dst)
 		mdcache_put(mdc_lookup_dst);
