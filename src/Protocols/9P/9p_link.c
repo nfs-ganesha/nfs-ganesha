@@ -56,7 +56,7 @@ int _9p_link(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	struct _9p_fid *ptargetfid = NULL;
 
 	fsal_status_t fsal_status;
-	char link_name[MAXNAMLEN];
+	char link_name[MAXNAMLEN+1];
 
 	/* Get data */
 	_9p_getptr(cursor, msgtag, u16);
@@ -97,7 +97,13 @@ int _9p_link(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	}
 
 	/* Let's do the job */
-	snprintf(link_name, MAXNAMLEN, "%.*s", *name_len, name_str);
+	if (*name_len >= sizeof(link_name)) {
+		LogDebug(COMPONENT_9P, "request with name too long (%u)",
+			 *name_len);
+		return _9p_rerror(req9p, msgtag, ENAMETOOLONG, plenout,
+				  preply);
+	}
+	snprintf(link_name, sizeof(link_name), "%.*s", *name_len, name_str);
 
 	fsal_status = fsal_link(ptargetfid->pentry, pdfid->pentry, link_name);
 

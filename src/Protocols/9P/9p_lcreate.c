@@ -60,7 +60,7 @@ int _9p_lcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	u32 iounit = _9P_IOUNIT;
 
 	struct fsal_obj_handle *pentry_newfile = NULL;
-	char file_name[MAXNAMLEN];
+	char file_name[MAXNAMLEN+1];
 	fsal_status_t fsal_status;
 	fsal_openflags_t openflags = 0;
 
@@ -94,7 +94,13 @@ int _9p_lcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 				 EXPORT_OPTION_WRITE_ACCESS) == 0)
 		return _9p_rerror(req9p, msgtag, EROFS, plenout, preply);
 
-	snprintf(file_name, MAXNAMLEN, "%.*s", *name_len, name_str);
+	if (*name_len >= sizeof(file_name)) {
+		LogDebug(COMPONENT_9P, "request with name too long (%u)",
+			 *name_len);
+		return _9p_rerror(req9p, msgtag, ENAMETOOLONG, plenout,
+				  preply);
+	}
+	snprintf(file_name, sizeof(file_name), "%.*s", *name_len, name_str);
 
 	_9p_openflags2FSAL(flags, &openflags);
 	pfid->state->state_data.fid.share_access =

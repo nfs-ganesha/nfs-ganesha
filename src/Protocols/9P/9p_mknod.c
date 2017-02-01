@@ -59,7 +59,7 @@ int _9p_mknod(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	struct _9p_qid qid_newobj;
 
 	struct fsal_obj_handle *pentry_newobj = NULL;
-	char obj_name[MAXNAMLEN];
+	char obj_name[MAXNAMLEN+1];
 	uint64_t fileid = 0LL;
 	fsal_status_t fsal_status;
 	object_file_type_t nodetype;
@@ -97,7 +97,13 @@ int _9p_mknod(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 				 EXPORT_OPTION_WRITE_ACCESS) == 0)
 		return _9p_rerror(req9p, msgtag, EROFS, plenout, preply);
 
-	snprintf(obj_name, MAXNAMLEN, "%.*s", *name_len, name_str);
+	if (*name_len >= sizeof(obj_name)) {
+		LogDebug(COMPONENT_9P, "request with name too long (%u)",
+			 *name_len);
+		return _9p_rerror(req9p, msgtag, ENAMETOOLONG, plenout,
+				  preply);
+	}
+	snprintf(obj_name, sizeof(obj_name), "%.*s", *name_len, name_str);
 
 	/* Set the nodetype */
 	if (S_ISDIR(*mode))

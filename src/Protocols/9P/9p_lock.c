@@ -87,7 +87,7 @@ int _9p_lock(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	memset(&lock, 0, sizeof(lock));
 	memset(&conflict, 0, sizeof(conflict));
 
-	char name[MAXNAMLEN];
+	char name[MAXNAMLEN+1];
 
 	struct addrinfo hints, *result;
 	struct sockaddr_storage client_addr;
@@ -126,7 +126,13 @@ int _9p_lock(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	/* Tmp hook to avoid lock issue when compiling kernels.
 	 * This should not impact ONE client only
 	 * get the client's ip addr */
-	snprintf(name, MAXNAMLEN, "%.*s", *client_id_len, client_id_str);
+	if (*client_id_len >= sizeof(name)) {
+		LogDebug(COMPONENT_9P, "request with name too long (%u)",
+			 *client_id_len);
+		return _9p_rerror(req9p, msgtag, ENAMETOOLONG, plenout,
+				  preply);
+	}
+	snprintf(name, sizeof(name), "%.*s", *client_id_len, client_id_str);
 
 	memset((char *)&hints, 0, sizeof(struct addrinfo));
 	hints.ai_family = AF_INET;

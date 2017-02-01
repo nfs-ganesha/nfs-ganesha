@@ -304,7 +304,7 @@ struct _9p_fid {
 	struct _9p_qid qid;
 	struct state_t *state;
 	struct fsal_obj_handle *ppentry;
-	char name[MAXNAMLEN];
+	char name[MAXNAMLEN+1];
 	u32 opens;
 	union {
 		u32 iounit;

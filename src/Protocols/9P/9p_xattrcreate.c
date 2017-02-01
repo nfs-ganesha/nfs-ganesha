@@ -60,7 +60,7 @@ int _9p_xattrcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	struct _9p_fid *pfid = NULL;
 
 	fsal_status_t fsal_status;
-	char name[MAXNAMLEN];
+	char name[MAXNAMLEN+1];
 
 	/* Get data */
 	_9p_getptr(cursor, msgtag, u16);
@@ -92,7 +92,13 @@ int _9p_xattrcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 				 EXPORT_OPTION_WRITE_ACCESS) == 0)
 		return _9p_rerror(req9p, msgtag, EROFS, plenout, preply);
 
-	snprintf(name, MAXNAMLEN, "%.*s", *name_len, name_str);
+	if (*name_len >= sizeof(name)) {
+		LogDebug(COMPONENT_9P, "request with name too long (%u)",
+			 *name_len);
+		return _9p_rerror(req9p, msgtag, ENAMETOOLONG, plenout,
+				  preply);
+	}
+	snprintf(name, sizeof(name), "%.*s", *name_len, name_str);
 
 	if (*size == 0LL) {
 		/* Size == 0 : this is in fact a call to removexattr */

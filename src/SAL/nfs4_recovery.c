@@ -212,7 +212,7 @@ void nfs4_create_clid_name(nfs_client_record_t *cl_rec,
 	const char *str_client_addr = "(unknown)";
 	char cidstr[PATH_MAX] = { 0, };
 	struct display_buffer dspbuf = {sizeof(cidstr), cidstr, cidstr};
-	char cidstr_len[10];
+	char cidstr_len[20];
 	int total_len;
 
 	/* get the caller's IP addr */
@@ -256,7 +256,7 @@ void nfs4_create_clid_name41(nfs_client_record_t *cl_rec,
 	char *buf = "unknown";
 	char cidstr[PATH_MAX] = { 0, };
 	struct display_buffer       dspbuf = {sizeof(cidstr), cidstr, cidstr};
-	char                         cidstr_len[10];
+	char                         cidstr_len[20];
 	int total_len;
 
 	/* get the caller's IP addr */
@@ -1286,16 +1286,10 @@ static void nfs_release_nlm_state(char *release_ip)
 
 static int ip_match(char *ip, nfs_client_id_t *cid)
 {
-	LogDebug(COMPONENT_STATE, "NFS Server V4 match ip %s with (%s) or (%s)",
-		 ip, cid->cid_server_owner,
-		 cid->cid_client_record->cr_client_val);
+	LogDebug(COMPONENT_STATE, "NFS Server V4 match ip %s with (%s)",
+		 ip, cid->cid_client_record->cr_client_val);
 
 	if (strlen(ip) == 0)	/* No IP all are matching */
-		return 1;
-
-	if ((strlen(cid->cid_server_owner) > 0) &&	/* Set only for v4.1 */
-	    (strncmp(ip, cid->cid_server_owner, strlen(cid->cid_server_owner))
-	     == 0))
 		return 1;
 
 	if (strstr(cid->cid_client_record->cr_client_val, ip) != NULL)

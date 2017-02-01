@@ -58,8 +58,8 @@ int _9p_renameat(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 	fsal_status_t fsal_status;
 
-	char oldname[MAXNAMLEN];
-	char newname[MAXNAMLEN];
+	char oldname[MAXNAMLEN+1];
+	char newname[MAXNAMLEN+1];
 
 	/* Get data */
 	_9p_getptr(cursor, msgtag, u16);
@@ -103,8 +103,21 @@ int _9p_renameat(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		return _9p_rerror(req9p, msgtag, EROFS, plenout, preply);
 
 	/* Let's do the job */
-	snprintf(oldname, MAXNAMLEN, "%.*s", *oldname_len, oldname_str);
-	snprintf(newname, MAXNAMLEN, "%.*s", *newname_len, newname_str);
+	if (*oldname_len >= sizeof(oldname)) {
+		LogDebug(COMPONENT_9P, "request with names too long (%u or %u)",
+			 *oldname_len, *newname_len);
+		return _9p_rerror(req9p, msgtag, ENAMETOOLONG, plenout,
+				  preply);
+	}
+	snprintf(oldname, sizeof(oldname), "%.*s", *oldname_len, oldname_str);
+
+	if (*newname_len >= sizeof(newname)) {
+		LogDebug(COMPONENT_9P, "request with names too long (%u or %u)",
+			 *oldname_len, *newname_len);
+		return _9p_rerror(req9p, msgtag, ENAMETOOLONG, plenout,
+				  preply);
+	}
+	snprintf(newname, sizeof(newname), "%.*s", *newname_len, newname_str);
 
 	fsal_status = fsal_rename(poldfid->pentry, oldname, pnewfid->pentry,
 				  newname);
