@@ -1243,11 +1243,6 @@ static fsal_status_t mdcache_unlink(struct fsal_obj_handle *dir_hdl,
 		     "Unlink %p/%s (%p)",
 		     parent, name, entry);
 
-	PTHREAD_RWLOCK_wrlock(&parent->content_lock);
-	(void)mdcache_dirent_remove(parent, name);
-	PTHREAD_RWLOCK_unlock(&parent->content_lock);
-
-
 	if (FSAL_IS_ERROR(status)) {
 		LogDebug(COMPONENT_CACHE_INODE,
 			 "unlink %s returned %s",
@@ -1261,6 +1256,10 @@ static fsal_status_t mdcache_unlink(struct fsal_obj_handle *dir_hdl,
 			PTHREAD_RWLOCK_unlock(&entry->content_lock);
 		}
 	} else {
+		PTHREAD_RWLOCK_wrlock(&parent->content_lock);
+		(void)mdcache_dirent_remove(parent, name);
+		PTHREAD_RWLOCK_unlock(&parent->content_lock);
+
 		/* Invalidate attributes of parent and entry */
 		atomic_clear_uint32_t_bits(&parent->mde_flags,
 					   MDCACHE_TRUST_ATTRS);
