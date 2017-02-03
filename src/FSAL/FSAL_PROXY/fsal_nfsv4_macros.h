@@ -361,11 +361,12 @@ do { \
 	op->nfs_argop4_u.opread.count  = incount;			\
 } while (0)
 
-#define COMPOUNDV4_ARG_ADD_OP_WRITE(opcnt, argarray, inoffset, inbuf, inlen) \
+#define COMPOUNDV4_ARG_ADD_OP_WRITE(opcnt, argarray, inoffset, inbuf, inlen, \
+				    instable) \
 do { \
 	nfs_argop4 *op = argarray+opcnt; opcnt++;			\
 	op->argop = NFS4_OP_WRITE;					\
-	op->nfs_argop4_u.opwrite.stable = DATA_SYNC4;			\
+	op->nfs_argop4_u.opwrite.stable = instable;			\
 	memset(&op->nfs_argop4_u.opwrite.stateid, 0, sizeof(stateid4));	\
 	op->nfs_argop4_u.opwrite.offset = inoffset;			\
 	op->nfs_argop4_u.opwrite.data.data_val = inbuf;			\

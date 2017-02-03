@@ -1977,7 +1977,12 @@ static fsal_status_t pxy_write(struct fsal_obj_handle *obj_hdl,
 
 	COMPOUNDV4_ARG_ADD_OP_PUTFH(opcnt, argoparray, ph->fh4);
 	wok = &resoparray[opcnt].nfs_resop4_u.opwrite.WRITE4res_u.resok4;
-	COMPOUNDV4_ARG_ADD_OP_WRITE(opcnt, argoparray, offset, buffer, size);
+	if (*fsal_stable)
+		COMPOUNDV4_ARG_ADD_OP_WRITE(opcnt, argoparray, offset, buffer,
+					    size, DATA_SYNC4);
+	else
+		COMPOUNDV4_ARG_ADD_OP_WRITE(opcnt, argoparray, offset, buffer,
+					    size, UNSTABLE4);
 
 	rc = pxy_nfsv4_call(op_ctx->fsal_export, op_ctx->creds,
 			    opcnt, argoparray, resoparray);
@@ -1985,7 +1990,10 @@ static fsal_status_t pxy_write(struct fsal_obj_handle *obj_hdl,
 		return nfsstat4_to_fsal(rc);
 
 	*write_amount = wok->count;
-	*fsal_stable = false;
+	if (wok->committed == UNSTABLE4)
+		*fsal_stable = false;
+	else
+		*fsal_stable = true;
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -2367,6 +2375,65 @@ static fsal_status_t pxy_read2(struct fsal_obj_handle *obj_hdl,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
+static fsal_status_t pxy_write2(struct fsal_obj_handle *obj_hdl,
+				bool bypass,
+				struct state_t *state,
+				uint64_t offset,
+				size_t buffer_size,
+				void *buffer,
+				size_t *wrote_amount,
+				bool *fsal_stable,
+				struct io_info *info)
+{
+	int maxWriteSize;
+	int rc;
+	int opcnt = 0;
+#define FSAL_WRITE_NB_OP_ALLOC 2 /* PUTFH + WRITE */
+	nfs_argop4 argoparray[FSAL_WRITE_NB_OP_ALLOC];
+	nfs_resop4 resoparray[FSAL_WRITE_NB_OP_ALLOC];
+	WRITE4resok *wok;
+	struct pxy_obj_handle *ph;
+
+	if (info != NULL) {
+		/* Currently we don't support WRITE_PLUS */
+		return fsalstat(ERR_FSAL_NOTSUPP, 0);
+	}
+
+	ph = container_of(obj_hdl, struct pxy_obj_handle, obj);
+
+	/* check max write size */
+	maxWriteSize = op_ctx->fsal_export->exp_ops.fs_maxwrite(
+							op_ctx->fsal_export);
+	if (buffer_size > maxWriteSize)
+		buffer_size = maxWriteSize;
+
+	/* prepare PUTFH */
+	COMPOUNDV4_ARG_ADD_OP_PUTFH(opcnt, argoparray, ph->fh4);
+	/* prepare write */
+	wok = &resoparray[opcnt].nfs_resop4_u.opwrite.WRITE4res_u.resok4;
+	if (*fsal_stable)
+		COMPOUNDV4_ARG_ADD_OP_WRITE(opcnt, argoparray, offset, buffer,
+					    buffer_size, DATA_SYNC4);
+	else
+		COMPOUNDV4_ARG_ADD_OP_WRITE(opcnt, argoparray, offset, buffer,
+					    buffer_size, UNSTABLE4);
+
+	/* nfs call */
+	rc = pxy_nfsv4_call(op_ctx->fsal_export, op_ctx->creds,
+			    opcnt, argoparray, resoparray);
+	if (rc != NFS4_OK)
+		return nfsstat4_to_fsal(rc);
+
+	/* get res */
+	*wrote_amount = wok->count;
+	if (wok->committed == UNSTABLE4)
+		*fsal_stable = false;
+	else
+		*fsal_stable = true;
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
 void pxy_handle_ops_init(struct fsal_obj_ops *ops)
 {
 	ops->release = pxy_hdl_release;
@@ -2393,6 +2460,7 @@ void pxy_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->handle_to_key = pxy_handle_to_key;
 	ops->open2 = pxy_open2;
 	ops->read2 = pxy_read2;
+	ops->write2 = pxy_write2;
 }
 
 #ifdef PROXY_HANDLE_MAPPING

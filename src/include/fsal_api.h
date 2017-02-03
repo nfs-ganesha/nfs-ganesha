@@ -2486,6 +2486,7 @@ struct fsal_obj_ops {
  *                               bypass any non-mandatory deny write
  * @param[in]     state          state_t to use for this operation
  * @param[in]     offset         Position at which to write
+ * @param[in]     buffer_size    Amount of data to write
  * @param[in]     buffer         Data to be written
  * @param[in,out] fsal_stable    In, if on, the fsal is requested to write data
  *                               to stable store. Out, the fsal reports what
