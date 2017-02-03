@@ -170,17 +170,26 @@ int _9p_getattr(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	    (*request_mask & _9P_GETATTR_ATIME) ?
 		(u64) attrs.atime.tv_sec :
 		0LL;
-	atime_nsec = 0LL;
+	atime_nsec =
+	    (*request_mask & _9P_GETATTR_ATIME) ?
+		(u64) attrs.atime.tv_nsec :
+		0LL;
 	mtime_sec =
 	    (*request_mask & _9P_GETATTR_MTIME) ?
 		(u64) attrs.mtime.tv_sec :
 		0LL;
-	mtime_nsec = 0LL;
+	mtime_nsec =
+	    (*request_mask & _9P_GETATTR_MTIME) ?
+		(u64) attrs.mtime.tv_nsec :
+		0LL;
 	ctime_sec =
 	    (*request_mask & _9P_GETATTR_CTIME) ?
 		(u64) attrs.ctime.tv_sec :
 		0LL;
-	ctime_nsec = 0LL;
+	ctime_nsec =
+	    (*request_mask & _9P_GETATTR_CTIME) ?
+		(u64) attrs.ctime.tv_nsec :
+		0LL;
 
 	/* Not yet supported attributes */
 	btime_sec = 0LL;
