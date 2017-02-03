@@ -352,6 +352,15 @@ do { \
 	op->nfs_argop4_u.opread.count  = incount;			\
 } while (0)
 
+#define COMPOUNDV4_ARG_ADD_OP_READ_BYPASS(opcnt, argarray, inoffset, incount) \
+do { \
+	nfs_argop4 *op = argarray+opcnt; opcnt++;			\
+	op->argop = NFS4_OP_READ;					\
+	memset(&op->nfs_argop4_u.opread.stateid, 0xff, sizeof(stateid4)); \
+	op->nfs_argop4_u.opread.offset = inoffset;			\
+	op->nfs_argop4_u.opread.count  = incount;			\
+} while (0)
+
 #define COMPOUNDV4_ARG_ADD_OP_WRITE(opcnt, argarray, inoffset, inbuf, inlen) \
 do { \
 	nfs_argop4 *op = argarray+opcnt; opcnt++;			\

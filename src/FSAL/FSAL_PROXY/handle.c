@@ -2311,6 +2311,62 @@ static fsal_status_t pxy_open2(struct fsal_obj_handle *obj_hdl,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
+static fsal_status_t pxy_read2(struct fsal_obj_handle *obj_hdl,
+			       bool bypass,
+			       struct state_t *state,
+			       uint64_t offset,
+			       size_t buffer_size,
+			       void *buffer,
+			       size_t *read_amount,
+			       bool *end_of_file,
+			       struct io_info *info)
+{
+	int maxReadSize;
+	int rc;
+	int opcnt = 0;
+	struct pxy_obj_handle *ph;
+#define FSAL_READ2_NB_OP_ALLOC 2 /* PUTFH + READ */
+	nfs_argop4 argoparray[FSAL_READ2_NB_OP_ALLOC];
+	nfs_resop4 resoparray[FSAL_READ2_NB_OP_ALLOC];
+	READ4resok *rok;
+
+	ph = container_of(obj_hdl, struct pxy_obj_handle, obj);
+
+	maxReadSize = op_ctx->fsal_export->exp_ops.fs_maxread(
+							op_ctx->fsal_export);
+	if (buffer_size > maxReadSize)
+		buffer_size = maxReadSize;
+
+	/* prepare PUTFH */
+	COMPOUNDV4_ARG_ADD_OP_PUTFH(opcnt, argoparray, ph->fh4);
+	/* prepare READ */
+	rok = &resoparray[opcnt].nfs_resop4_u.opread.READ4res_u.resok4;
+	rok->data.data_val = buffer;
+	rok->data.data_len = buffer_size;
+	if (bypass)
+		COMPOUNDV4_ARG_ADD_OP_READ_BYPASS(opcnt, argoparray, offset,
+						  buffer_size);
+	else
+		COMPOUNDV4_ARG_ADD_OP_READ(opcnt, argoparray, offset,
+					   buffer_size);
+
+	/* nfs call */
+	rc = pxy_nfsv4_call(op_ctx->fsal_export, op_ctx->creds,
+			    opcnt, argoparray, resoparray);
+	if (rc != NFS4_OK)
+		return nfsstat4_to_fsal(rc);
+
+	*end_of_file = rok->eof;
+	*read_amount = rok->data.data_len;
+	if (info) {
+		info->io_content.what = NFS4_CONTENT_DATA;
+		info->io_content.data.d_offset = offset + *read_amount;
+		info->io_content.data.d_data.data_len = *read_amount;
+		info->io_content.data.d_data.data_val = buffer;
+	}
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
 void pxy_handle_ops_init(struct fsal_obj_ops *ops)
 {
 	ops->release = pxy_hdl_release;
@@ -2336,6 +2392,7 @@ void pxy_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->handle_digest = pxy_handle_digest;
 	ops->handle_to_key = pxy_handle_to_key;
 	ops->open2 = pxy_open2;
+	ops->read2 = pxy_read2;
 }
 
 #ifdef PROXY_HANDLE_MAPPING
