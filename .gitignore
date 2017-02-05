@@ -50,6 +50,7 @@ Doxyfile
 .project
 .checkpatch.conf
 src/scripts/systemd/nfs-ganesha-config.service
+<<<<<<< HEAD
 src/FSAL/FSAL_VFS/vfs/lustre_main.c
 src/FSAL/FSAL_VFS/vfs/main.c
 src/Protocols/NLM/sm_notify.ganesha
