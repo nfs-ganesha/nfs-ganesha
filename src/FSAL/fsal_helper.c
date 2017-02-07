@@ -876,10 +876,6 @@ fsal_status_t fsal_create(struct fsal_obj_handle *parent,
 
 	case SOCKET_FILE:
 	case FIFO_FILE:
-		status = parent->obj_ops.mknode(parent, name, type,
-						attrs, obj, attrs_out);
-		break;
-
 	case BLOCK_FILE:
 	case CHARACTER_FILE:
 		status = parent->obj_ops.mknode(parent, name, type,
