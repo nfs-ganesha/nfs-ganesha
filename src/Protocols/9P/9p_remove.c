@@ -91,8 +91,7 @@ int _9p_remove(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 	/* If object is an opened file, close it */
 	if ((pfid->pentry->type == REGULAR_FILE) && pfid->opens) {
-			pfid->pentry->obj_ops.put_ref(pfid->pentry);
-			pfid->opens = 0;	/* dead */
+		pfid->opens = 0;	/* dead */
 
 		if (pfid->pentry->fsal->m_ops.support_ex(pfid->pentry))
 			fsal_status = pfid->pentry->obj_ops.close2(pfid->pentry,

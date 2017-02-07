@@ -410,7 +410,6 @@ int _9p_tools_clunk(struct _9p_fid *pfid)
 
 	/* If object is an opened file, close it */
 	if ((pfid->pentry->type == REGULAR_FILE) && pfid->opens) {
-		pfid->pentry->obj_ops.put_ref(pfid->pentry);
 		pfid->opens = 0;	/* dead */
 
 		LogDebug(COMPONENT_9P,

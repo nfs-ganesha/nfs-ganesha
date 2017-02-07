@@ -180,9 +180,6 @@ int _9p_lcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		}
 	}
 
-	/* Get the open ref */
-	pentry_newfile->obj_ops.get_ref(pentry_newfile);
-
 	/* put parent directory entry */
 	pfid->pentry->obj_ops.put_ref(pfid->pentry);
 

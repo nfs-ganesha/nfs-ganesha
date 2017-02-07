@@ -97,11 +97,7 @@ int _9p_lopen(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 					  _9p_tools_errno(fsal_status),
 					  plenout, preply);
 
-		if (!atomic_postinc_uint32_t(&pfid->opens)) {
-			/* Get the open ref */
-			pfid->pentry->obj_ops.get_ref(pfid->pentry);
-		}
-
+		atomic_inc_uint32_t(&pfid->opens);
 	}
 
 	/* iounit = 0 by default */
