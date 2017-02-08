@@ -1395,7 +1395,6 @@ struct mdcache_populate_cb_state {
 	struct mdcache_fsal_export *export;
 	mdcache_entry_t *dir;
 	fsal_status_t *status;
-	uint64_t offset_cookie;
 	fsal_readdir_cb cb;
 	void *dir_state;
 };
@@ -1489,7 +1488,6 @@ mdcache_readdir_uncached(mdcache_entry_t *directory, fsal_cookie_t *whence,
 	state.export = mdc_cur_export();
 	state.dir = directory;
 	state.status = &status;
-	state.offset_cookie = 0; /* Uncached dirs don't use cookie */
 	state.cb = cb;
 	state.dir_state = dir_state;
 
@@ -1610,7 +1608,6 @@ mdcache_dirent_populate(mdcache_entry_t *dir)
 	state.export = mdc_cur_export();
 	state.dir = dir;
 	state.status = &status;
-	state.offset_cookie = 0;
 	state.cb = NULL; /* cached dirs don't use callback */
 	state.dir_state = NULL; /* cached dirs don't use dir_state */
 
