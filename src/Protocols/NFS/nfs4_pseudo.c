@@ -56,6 +56,31 @@ struct pseudofs_state {
 };
 
 /**
+ * @brief Check to see if an export is PSEUDO
+ *
+ * Can be PSEUDO, or MDCACHE on PSEUDO
+ *
+ * @param[in] export	Export to check
+ * @return true if PSEUDO, false otherwise
+ */
+static bool is_export_pseudo(struct gsh_export *export)
+{
+	/* If it's PSEUDO, it's PSEUDO */
+	if (strcmp(export->fsal_export->fsal->name, "PSEUDO") == 0)
+		return true;
+
+	/* If it's !MDCACHE, it's !PSEUDO */
+	if (strcmp(export->fsal_export->fsal->name, "MDCACHE") != 0)
+		return false;
+
+	/* If it's MDCACHE stacked on PSEUDO, it's PSEUDO */
+	if (strcmp(export->fsal_export->sub_export->fsal->name, "PSEUDO") == 0)
+		return true;
+
+	return false;
+}
+
+/**
  * @brief Delete the unecessary directories from pseudo FS
  *
  * @param pseudopath [IN] full path of the node
@@ -527,8 +552,7 @@ void pseudo_unmount_export(struct gsh_export *export)
 	PTHREAD_RWLOCK_unlock(&export->lock);
 
 	if (mounted_on_export != NULL) {
-		if (strcmp(mounted_on_export->fsal_export->fsal->name,
-			   "PSEUDO") == 0
+		if (is_export_pseudo(mounted_on_export)
 		    && junction_inode != NULL) {
 			char *pseudopath = gsh_strdup(export->pseudopath);
 
