@@ -144,6 +144,8 @@ NFS_CORE_PARAM {}
 
 	fsid_device(bool, default false)
 
+	mount_path_pseudo(bool, default false)
+
 NFS_IP_NAME {}
 --------------
 

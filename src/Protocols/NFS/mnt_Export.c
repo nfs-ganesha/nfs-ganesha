@@ -70,7 +70,7 @@ static bool proc_export(struct gsh_export *export, void *arg)
 	if (!(op_ctx->export_perms->options & EXPORT_OPTION_ACCESS_MASK)) {
 		LogFullDebug(COMPONENT_NFSPROTO,
 			     "Client is not allowed to access Export_Id %d %s",
-			     export->export_id, export->fullpath);
+			     export->export_id, export_path(export));
 
 		return true;
 	}
@@ -78,13 +78,13 @@ static bool proc_export(struct gsh_export *export, void *arg)
 	if (!(op_ctx->export_perms->options & EXPORT_OPTION_NFSV3)) {
 		LogFullDebug(COMPONENT_NFSPROTO,
 			     "Not exported for NFSv3, Export_Id %d %s",
-			     export->export_id, export->fullpath);
+			     export->export_id, export_path(export));
 
 		return true;
 	}
 
 	new_expnode = gsh_calloc(1, sizeof(struct exportnode));
-	new_expnode->ex_dir = gsh_strdup(export->fullpath);
+	new_expnode->ex_dir = gsh_strdup(export_path(export));
 
 	PTHREAD_RWLOCK_rdlock(&op_ctx->ctx_export->lock);
 
@@ -148,7 +148,7 @@ static bool proc_export(struct gsh_export *export, void *arg)
 		}
 		LogFullDebug(COMPONENT_NFSPROTO,
 			     "Export %s client %s",
-			     export->fullpath, grp_name);
+			     export_path(export), grp_name);
 		group->gr_name = gsh_strdup(grp_name);
 	}
 

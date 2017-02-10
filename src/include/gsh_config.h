@@ -388,10 +388,13 @@ typedef struct nfs_core_param {
 	/** Path to the directory containing server specific
 	    modules.  In particular, this is where FSALs live. */
 	char *ganesha_modules_loc;
-	/* Frequency of dbus health heartbeat in ms. Set to 0 to disable */
+	/** Frequency of dbus health heartbeat in ms. Set to 0 to disable */
 	uint32_t heartbeat_freq;
-	/* Whether to use device major/minor for fsid. Defaults to false. */
+	/** Whether to use device major/minor for fsid. Defaults to false. */
 	bool fsid_device;
+	/** Whether to use Pseudo (true) or Path (false) for NFS v3 and 9P
+	    mounts. */
+	bool mount_path_pseudo;
 } nfs_core_parameter_t;
 
 /** @} */

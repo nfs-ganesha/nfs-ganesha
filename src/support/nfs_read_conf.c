@@ -186,6 +186,8 @@ static struct config_item core_params[] = {
 		       nfs_core_param, heartbeat_freq),
 	CONF_ITEM_BOOL("fsid_device", false,
 		       nfs_core_param, fsid_device),
+	CONF_ITEM_BOOL("mount_path_pseudo", false,
+		       nfs_core_param, mount_path_pseudo),
 	CONFIG_EOL
 };
 

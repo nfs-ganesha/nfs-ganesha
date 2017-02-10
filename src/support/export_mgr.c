@@ -374,6 +374,10 @@ struct gsh_export *get_gsh_export_by_path_locked(char *path,
 	if (len_path > 1 && path[len_path - 1] == '/')
 		len_path--;
 
+	LogFullDebug(COMPONENT_EXPORT,
+		     "Searching for export matching path %s",
+		     path);
+
 	glist_for_each(glist, &exportlist) {
 		export = glist_entry(glist, struct gsh_export, exp_list);
 
@@ -476,6 +480,10 @@ struct gsh_export *get_gsh_export_by_pseudo_locked(char *path,
 	/* Ignore trailing slash in path */
 	if (len_path > 1 && path[len_path - 1] == '/')
 		len_path--;
+
+	LogFullDebug(COMPONENT_EXPORT,
+		     "Searching for export matching pseudo path %s",
+		     path);
 
 	glist_for_each(glist, &exportlist) {
 		export = glist_entry(glist, struct gsh_export, exp_list);

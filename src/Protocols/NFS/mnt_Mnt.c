@@ -87,11 +87,24 @@ int mnt_Mnt(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	    (arg->arg_mnt[strlen(arg->arg_mnt) - 1] == '/'))
 		arg->arg_mnt[strlen(arg->arg_mnt) - 1] = '\0';
 
-	/*  Find the export for the dirname (using as well Path or Tag) */
-	if (arg->arg_mnt[0] == '/')
-		export = get_gsh_export_by_path(arg->arg_mnt, false);
-	else
+	/*  Find the export for the dirname (using as well Path, Pseudo, or Tag)
+	 */
+	if (arg->arg_mnt[0] != '/') {
+		LogFullDebug(COMPONENT_NFSPROTO,
+			     "Searching for export by tag for %s",
+			     arg->arg_mnt);
 		export = get_gsh_export_by_tag(arg->arg_mnt);
+	} else if (nfs_param.core_param.mount_path_pseudo) {
+		LogFullDebug(COMPONENT_NFSPROTO,
+			     "Searching for export by pseudo for %s",
+			     arg->arg_mnt);
+		export = get_gsh_export_by_pseudo(arg->arg_mnt, false);
+	} else {
+		LogFullDebug(COMPONENT_NFSPROTO,
+			     "Searching for export by path for %s",
+			     arg->arg_mnt);
+		export = get_gsh_export_by_path(arg->arg_mnt, false);
+	}
 
 	if (export == NULL) {
 		/* No export found, return ACCESS error. */
@@ -116,7 +129,7 @@ int mnt_Mnt(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	if ((op_ctx->export_perms->options & EXPORT_OPTION_NFSV3) == 0) {
 		LogInfo(COMPONENT_NFSPROTO,
 			"MOUNT: Export entry %s does not support NFS v3 for client %s",
-			export->fullpath,
+			export_path(export),
 			op_ctx->client
 				? op_ctx->client->hostaddr_str
 				: "unknown client");
@@ -126,7 +139,7 @@ int mnt_Mnt(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	/* retrieve the associated NFS handle */
 	if (arg->arg_mnt[0] != '/' ||
-	    !strcmp(arg->arg_mnt, export->fullpath)) {
+	    !strcmp(arg->arg_mnt, export_path(export))) {
 		if (FSAL_IS_ERROR(nfs_export_get_root_entry(export, &obj))) {
 			res->res_mnt3.fhs_status = MNT3ERR_ACCES;
 			goto out;

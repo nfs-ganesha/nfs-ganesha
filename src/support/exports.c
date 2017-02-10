@@ -1028,6 +1028,18 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 			return errcnt;
 		}
 	}
+
+	/* If we are using mount_path_pseudo = true we MUST have a Pseudo Path.
+	 */
+	if (nfs_param.core_param.mount_path_pseudo &&
+	    export->pseudopath == NULL) {
+		LogCrit(COMPONENT_CONFIG,
+			"NFS_CORE_PARAM mount_path_pseudo is TRUE but no Pseudo path defined");
+		err_type->invalid = true;
+		errcnt++;
+		return errcnt;
+	}
+
 	if (export->pseudopath != NULL &&
 	    export->pseudopath[0] != '/') {
 		LogCrit(COMPONENT_CONFIG,
