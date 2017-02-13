@@ -1025,7 +1025,6 @@ void gpfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->seek = gpfs_seek;
 	ops->io_advise = gpfs_io_advise;
 	ops->commit = gpfs_commit;
-	ops->lock_op = gpfs_lock_op;
 	ops->share_op = share_op;
 	ops->close = gpfs_close;
 	ops->handle_digest = handle_digest;

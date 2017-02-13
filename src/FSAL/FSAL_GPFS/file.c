@@ -1091,6 +1091,38 @@ fsal_status_t gpfs_commit2(struct fsal_obj_handle *obj_hdl,
 	return status;
 }
 
+static fsal_status_t
+get_my_fd(int *fd, struct fsal_obj_handle *obj_hdl, struct state_t *state,
+	  bool *has_lock, bool *closefd, bool *bypass,
+	  fsal_openflags_t *openflags)
+{
+	fsal_status_t status = fsalstat(ERR_FSAL_NO_ERROR, 0);
+	struct gpfs_fd *gfd = &((struct gpfs_fsal_obj_handle *)
+				container_of(obj_hdl,
+					     struct gpfs_fsal_obj_handle,
+					     obj_handle))->u.file.fd;
+
+	if (state != (void *) ~0) {  /* version 2 */
+		status = find_fd(fd, obj_hdl, *bypass, state,
+				 *openflags, has_lock, closefd, false);
+
+		if (FSAL_IS_ERROR(status))
+			LogCrit(COMPONENT_FSAL,
+				"Unable to find fd for lock operation");
+		return status;
+	}
+
+	if (gfd->fd < 0 || gfd->openflags == FSAL_O_CLOSED) {
+		LogDebug(COMPONENT_FSAL,
+			 "Attempting to lock with no file descriptor open, fd %d",
+			 gfd->fd);
+		return fsalstat(ERR_FSAL_FAULT, 0);
+	}
+	*fd = gfd->fd;
+
+	return status;
+}
+
 /**
  * @brief Perform a lock operation
  *
@@ -1103,52 +1135,49 @@ fsal_status_t gpfs_commit2(struct fsal_obj_handle *obj_hdl,
  * For FSAL_VFS etc. we ignore owner, implicitly we have a lock_fd per
  * lock owner (i.e. per state).
  *
- * @param[in]  obj_hdl          File on which to operate
- * @param[in]  state            state_t to use for this operation
- * @param[in]  owner            Lock owner
- * @param[in]  lock_op          Operation to perform
- * @param[in]  request_lock     Lock to take/release/test
- * @param[out] conflicting_lock Conflicting lock
+ * @param[in]  obj_hdl		File on which to operate
+ * @param[in]  state		state_t to use for this operation
+ * @param[in]  owner		Lock owner
+ * @param[in]  lock_op		Operation to perform
+ * @param[in]  req_lock		Lock to take/release/test
+ * @param[out] conflicting_lock	Conflicting lock
  *
  * @return FSAL status.
  */
-fsal_status_t gpfs_lock_op2(struct fsal_obj_handle *obj_hdl,
-			   struct state_t *state,
-			   void *owner,
-			   fsal_lock_op_t lock_op,
-			   fsal_lock_param_t *request_lock,
-			   fsal_lock_param_t *conflicting_lock)
+fsal_status_t
+gpfs_lock_op2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
+	      void *owner, fsal_lock_op_t lock_op, fsal_lock_param_t *req_lock,
+	      fsal_lock_param_t *conflicting_lock)
 {
-	struct flock lock_args;
-	fsal_status_t status = {0, 0};
-	int my_fd = -1;
+	struct fsal_export *export = op_ctx->fsal_export;
+	struct glock glock_args;
+	struct set_get_lock_arg gpfs_sg_arg;
+	fsal_openflags_t openflags;
+	fsal_status_t status;
 	bool has_lock = false;
 	bool closefd = false;
 	bool bypass = false;
-	fsal_openflags_t openflags = FSAL_O_RDWR;
-	struct fsal_export *export = op_ctx->fsal_export;
 
 	LogFullDebug(COMPONENT_FSAL,
-		     "Locking: op:%d type:%d start:%" PRIu64 " length:%"
-		     PRIu64 " ",
-		     lock_op, request_lock->lock_type, request_lock->lock_start,
-		     request_lock->lock_length);
+		     "Locking: op:%d sle_type:%d type:%d start:%llu length:%llu owner:%p",
+		     lock_op, req_lock->lock_sle_type, req_lock->lock_type,
+		     (unsigned long long)req_lock->lock_start,
+		     (unsigned long long)req_lock->lock_length, owner);
 
-	if (lock_op == FSAL_OP_LOCKT) {
-		/* We may end up using global fd, don't fail on a deny mode */
-		bypass = true;
-		openflags = FSAL_O_ANY;
-	} else if (lock_op == FSAL_OP_LOCK || lock_op == FSAL_OP_LOCKB) {
-		if (request_lock->lock_type == FSAL_LOCK_R)
-			openflags = FSAL_O_READ;
-		else if (request_lock->lock_type == FSAL_LOCK_W)
-			openflags = FSAL_O_WRITE;
-	} else if (lock_op == FSAL_OP_UNLOCK || lock_op == FSAL_OP_CANCEL) {
-		openflags = FSAL_O_ANY;
-	} else {
+	if (obj_hdl == NULL) {
+		LogCrit(COMPONENT_FSAL, "obj_hdl arg is NULL.");
+		return fsalstat(ERR_FSAL_FAULT, 0);
+	}
+
+	if (owner == NULL) {
+		LogCrit(COMPONENT_FSAL, "owner arg is NULL.");
+		return fsalstat(ERR_FSAL_FAULT, 0);
+	}
+
+	if (conflicting_lock == NULL && lock_op == FSAL_OP_LOCKT) {
 		LogDebug(COMPONENT_FSAL,
-			 "ERROR: Lock operation requested was not TEST, READ, or WRITE.");
-		return fsalstat(ERR_FSAL_NOTSUPP, 0);
+			 "Conflicting_lock argument can't be NULL with lock_op = LOCKT");
+		return fsalstat(ERR_FSAL_FAULT, 0);
 	}
 
 	if (lock_op != FSAL_OP_LOCKT && state == NULL) {
@@ -1156,59 +1185,87 @@ fsal_status_t gpfs_lock_op2(struct fsal_obj_handle *obj_hdl,
 		return fsalstat(posix2fsal_error(EINVAL), EINVAL);
 	}
 
-	if (request_lock->lock_type == FSAL_LOCK_R) {
-		lock_args.l_type = F_RDLCK;
-	} else if (request_lock->lock_type == FSAL_LOCK_W) {
-		lock_args.l_type = F_WRLCK;
-	} else {
-		LogDebug(COMPONENT_FSAL,
-			 "ERROR: The requested lock type was not read or write.");
-		return fsalstat(ERR_FSAL_NOTSUPP, 0);
-	}
-
-	if (lock_op == FSAL_OP_UNLOCK)
-		lock_args.l_type = F_UNLCK;
-
-	lock_args.l_pid = 0;
-	lock_args.l_len = request_lock->lock_length;
-	lock_args.l_start = request_lock->lock_start;
-	lock_args.l_whence = SEEK_SET;
-
 	/* flock.l_len being signed long integer, larger lock ranges may
 	 * get mapped to negative values. As per 'man 3 fcntl', posix
 	 * locks can accept negative l_len values which may lead to
 	 * unlocking an unintended range. Better bail out to prevent that.
 	 */
-	if (lock_args.l_len < 0) {
+	if (req_lock->lock_length > LONG_MAX) {
 		LogCrit(COMPONENT_FSAL,
-			"The requested lock length is out of range- lock_args.l_len(%"
-			PRIu64 "), request_lock_length(%" PRIu64 ")",
-			(uint64_t) lock_args.l_len,
-			request_lock->lock_length);
+			"Requested lock length is out of range- MAX(%"PRIu64
+			"), req_lock_length(%" PRIu64 ")",
+			LONG_MAX, req_lock->lock_length);
 		return fsalstat(ERR_FSAL_BAD_RANGE, 0);
 	}
 
-	/* Get a usable file descriptor */
-	status = find_fd(&my_fd, obj_hdl, bypass, state, openflags,
-			      &has_lock, &closefd, false);
-
-	if (FSAL_IS_ERROR(status)) {
-		LogCrit(COMPONENT_FSAL, "Unable to find fd for lock operation");
-		return status;
+	switch (req_lock->lock_type) {
+	case FSAL_LOCK_R:
+		glock_args.flock.l_type = F_RDLCK;
+		openflags = FSAL_O_READ;
+		break;
+	case FSAL_LOCK_W:
+		glock_args.flock.l_type = F_WRLCK;
+		openflags = FSAL_O_WRITE;
+		break;
+	default:
+		LogDebug(COMPONENT_FSAL,
+			 "ERROR: The requested lock type was not read or write.");
+		return fsalstat(ERR_FSAL_NOTSUPP, 0);
 	}
 
-	status = GPFSFSAL_lock_op2(my_fd, export, obj_hdl, owner, lock_op,
-				   request_lock, conflicting_lock);
+	switch (lock_op) {
+	case FSAL_OP_LOCKT:
+		/* We may end up using global fd, don't fail on a deny mode */
+		bypass = true;
+		glock_args.cmd = F_GETLK;
+		openflags = FSAL_O_ANY;
+		break;
+	case FSAL_OP_UNLOCK:
+		glock_args.flock.l_type = F_UNLCK;
+		glock_args.cmd = F_SETLK;
+		openflags = FSAL_O_ANY;
+		break;
+	case FSAL_OP_LOCK:
+		glock_args.cmd = F_SETLK;
+		break;
+	case FSAL_OP_LOCKB:
+		glock_args.cmd = F_SETLKW;
+		break;
+	case FSAL_OP_CANCEL:
+		glock_args.cmd = GPFS_F_CANCELLK;
+		openflags = FSAL_O_ANY;
+		break;
+	default:
+		LogDebug(COMPONENT_FSAL,
+			 "ERROR: Lock operation requested was not TEST, GET, or SET.");
+		return fsalstat(ERR_FSAL_NOTSUPP, 0);
+	}
+
+	/* Get a usable file descriptor */
+	status = get_my_fd(&glock_args.lfd, obj_hdl, state, &has_lock, &closefd,
+			   &bypass, &openflags);
+
+	glock_args.flock.l_len = req_lock->lock_length;
+	glock_args.flock.l_start = req_lock->lock_start;
+	glock_args.flock.l_whence = SEEK_SET;
+	glock_args.lock_owner = owner;
+
+	gpfs_sg_arg.lock = &glock_args;
+	gpfs_sg_arg.reclaim = req_lock->lock_reclaim;
+	gpfs_sg_arg.mountdirfd = ((struct gpfs_filesystem *)
+					obj_hdl->fs->private_data)->root_fd;
+
+	status = GPFSFSAL_lock_op(export, lock_op, req_lock, conflicting_lock,
+				  &gpfs_sg_arg);
 
 	if (closefd)
-		status = fsal_internal_close(my_fd, NULL, 0);
+		status = fsal_internal_close(glock_args.lfd, NULL, 0);
 
 	if (has_lock)
 		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
 	return status;
 }
-
 
 /**
  *  @brief GPFS write command
@@ -1514,56 +1571,6 @@ gpfs_commit_fd(int my_fd, struct fsal_obj_handle *obj_hdl,
 	}
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
-}
-
-
-/**
- *  @brief GPFS lcok operation
- *
- *  @param obj_hdl FSAL object handle
- *  @param owner reference to void
- *  @param lock_op FSAL lock
- *  @param request_lock Request lock
- *  @param conflicting_lock Conflicting lock
- *  @return FSAL status
- *
- *  @brief lock a region of the file
- *
- *  throw an error if the fd is not open.  The old fsal didn't check this.
- */
-fsal_status_t
-gpfs_lock_op(struct fsal_obj_handle *obj_hdl, void *owner,
-	     fsal_lock_op_t lock_op, fsal_lock_param_t *request_lock,
-	     fsal_lock_param_t *conflicting_lock)
-{
-	struct gpfs_fsal_obj_handle *myself =
-		container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
-
-	if (myself->u.file.fd.fd < 0 ||
-	    myself->u.file.fd.openflags == FSAL_O_CLOSED) {
-		LogDebug(COMPONENT_FSAL,
-			 "Attempting to lock with no file descriptor open, fd %d",
-			 myself->u.file.fd.fd);
-		return fsalstat(ERR_FSAL_FAULT, 0);
-	}
-
-	if (conflicting_lock == NULL && lock_op == FSAL_OP_LOCKT) {
-		LogDebug(COMPONENT_FSAL,
-			 "conflicting_lock argument can't be NULL with lock_op  = LOCKT");
-		return fsalstat(ERR_FSAL_FAULT, 0);
-	}
-
-	LogFullDebug(COMPONENT_FSAL,
-		     "Locking: op:%d type:%d claim:%d start:%"
-		     PRIu64 " length:%" PRIu64,
-		     lock_op,
-		     request_lock->lock_type,
-		     request_lock->lock_reclaim,
-		     request_lock->lock_start,
-		     request_lock->lock_length);
-
-	return GPFSFSAL_lock_op(op_ctx->fsal_export, obj_hdl, owner, lock_op,
-				*request_lock, conflicting_lock);
 }
 
 /**

@@ -295,19 +295,10 @@ fsal_status_t GPFSFSAL_lookup(const struct req_op_context *p_context,
 			      struct fsal_filesystem **new_fs);
 
 fsal_status_t GPFSFSAL_lock_op(struct fsal_export *export,
-			       struct fsal_obj_handle *obj_hdl,
-			       void *p_owner,
 			       fsal_lock_op_t lock_op,
-			       fsal_lock_param_t request_lock,
-			       fsal_lock_param_t *conflicting_lock);
-
-fsal_status_t GPFSFSAL_lock_op2(int my_fd,
-				struct fsal_export *export,
-				struct fsal_obj_handle *obj_hdl,
-				void *p_owner,
-				fsal_lock_op_t lock_op,
-				fsal_lock_param_t *request_lock,
-				fsal_lock_param_t *conflicting_lock);
+			       fsal_lock_param_t *req_lock,
+			       fsal_lock_param_t *confl_lock,
+			       struct set_get_lock_arg *sg_lock_arg);
 
 fsal_status_t GPFSFSAL_share_op(int mntfd,
 				int fd,

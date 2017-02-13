@@ -192,11 +192,6 @@ fsal_status_t gpfs_commit(struct fsal_obj_handle *obj_hdl,	/* sync */
 			  off_t offset, size_t len);
 fsal_status_t gpfs_commit_fd(int my_fd, struct fsal_obj_handle *obj_hdl,
 			     off_t offset, size_t len);
-fsal_status_t gpfs_lock_op(struct fsal_obj_handle *obj_hdl,
-			   void *p_owner,
-			   fsal_lock_op_t lock_op,
-			   fsal_lock_param_t *request_lock,
-			   fsal_lock_param_t *conflicting_lock);
 fsal_status_t gpfs_share_op(struct fsal_obj_handle *obj_hdl, void *p_owner,
 			    fsal_share_param_t request_share);
 fsal_status_t gpfs_close(struct fsal_obj_handle *obj_hdl);
