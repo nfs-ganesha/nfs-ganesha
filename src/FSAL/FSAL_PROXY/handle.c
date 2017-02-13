@@ -2434,6 +2434,12 @@ static fsal_status_t pxy_write2(struct fsal_obj_handle *obj_hdl,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
+static fsal_status_t pxy_close2(struct fsal_obj_handle *obj_hdl,
+				struct state_t *state)
+{
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
 void pxy_handle_ops_init(struct fsal_obj_ops *ops)
 {
 	ops->release = pxy_hdl_release;
@@ -2461,6 +2467,7 @@ void pxy_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->open2 = pxy_open2;
 	ops->read2 = pxy_read2;
 	ops->write2 = pxy_write2;
+	ops->close2 = pxy_close2;
 }
 
 #ifdef PROXY_HANDLE_MAPPING
