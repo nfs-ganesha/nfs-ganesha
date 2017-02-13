@@ -2566,9 +2566,11 @@ state_status_t state_lock(struct fsal_obj_handle *obj,
 				LogEvent(COMPONENT_STATE,
 					 "Lock Owner Export Conflict, Lock held for export %d (%s), request for export %d (%s)",
 					 found_entry->sle_export->export_id,
-					 found_entry->sle_export->fullpath,
+					 op_ctx_export_path(
+						found_entry->sle_export),
 					 op_ctx->ctx_export->export_id,
-					 op_ctx->ctx_export->fullpath);
+					 op_ctx_export_path(
+							op_ctx->ctx_export));
 				LogEntry(
 					"Found lock entry belonging to another export",
 					found_entry);
@@ -2602,9 +2604,9 @@ state_status_t state_lock(struct fsal_obj_handle *obj,
 			LogEvent(COMPONENT_STATE,
 				 "Lock Owner Export Conflict, Lock held for export %d (%s), request for export %d (%s)",
 				 found_entry->sle_export->export_id,
-				 found_entry->sle_export->fullpath,
+				 op_ctx_export_path(found_entry->sle_export),
 				 op_ctx->ctx_export->export_id,
-				 op_ctx->ctx_export->fullpath);
+				 op_ctx_export_path(op_ctx->ctx_export));
 
 			LogEntry("Found lock entry belonging to another export",
 				 found_entry);
@@ -3537,7 +3539,7 @@ void state_export_unlock_all(void)
 	if (errcnt == STATE_ERR_MAX) {
 		LogFatal(COMPONENT_STATE,
 			 "Could not complete cleanup of locks for %s",
-			 op_ctx->ctx_export->fullpath);
+			 op_ctx_export_path(op_ctx->ctx_export));
 	}
 }
 

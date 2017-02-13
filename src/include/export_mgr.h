@@ -137,6 +137,15 @@ struct gsh_export {
 		? ((export)->pseudopath) \
 		: ((export)->fullpath))
 
+/* If op_ctx request is NFS_V4 always use pseudopath, otherwise use fullpath
+ * for export.
+ */
+#define op_ctx_export_path(export) \
+	((op_ctx->nfs_vers == NFS_V4) || \
+	 (nfs_param.core_param.mount_path_pseudo) \
+		? ((export)->pseudopath) \
+		: ((export)->fullpath))
+
 static inline bool op_ctx_export_has_option(uint32_t option)
 {
 	return atomic_fetch_uint32_t(&op_ctx->ctx_export->options) & option;

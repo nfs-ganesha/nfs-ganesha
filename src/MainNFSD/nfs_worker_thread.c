@@ -946,7 +946,7 @@ void nfs_rpc_execute(request_data_t *reqdata)
 
 			LogMidDebugAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 				    "Found export entry for path=%s as exportid=%d",
-				    op_ctx->ctx_export->fullpath,
+				    op_ctx_export_path(op_ctx->ctx_export),
 				    op_ctx->ctx_export->export_id);
 		}
 #endif /* _USE_NFS3 */
@@ -1041,7 +1041,8 @@ void nfs_rpc_execute(request_data_t *reqdata)
 					LogMidDebugAlt(COMPONENT_DISPATCH,
 						COMPONENT_EXPORT,
 						"Found export entry for dirname=%s as exportid=%d",
-						op_ctx->ctx_export->fullpath,
+						op_ctx_export_path(
+							op_ctx->ctx_export),
 						op_ctx->ctx_export->export_id);
 				}
 			}
@@ -1069,7 +1070,7 @@ void nfs_rpc_execute(request_data_t *reqdata)
 				", proc=%" PRIu32,
 				client_ip,
 				op_ctx->ctx_export->export_id,
-				op_ctx->ctx_export->fullpath,
+				op_ctx_export_path(op_ctx->ctx_export),
 				reqdata->r_u.req.svc.rq_msg.cb_vers,
 				reqdata->r_u.req.svc.rq_msg.cb_proc);
 
@@ -1084,7 +1085,7 @@ void nfs_rpc_execute(request_data_t *reqdata)
 				progname,
 				reqdata->r_u.req.svc.rq_msg.cb_vers,
 				op_ctx->ctx_export->export_id,
-				op_ctx->ctx_export->fullpath,
+				op_ctx_export_path(op_ctx->ctx_export),
 				client_ip);
 
 			auth_rc = AUTH_FAILED;
@@ -1103,7 +1104,7 @@ void nfs_rpc_execute(request_data_t *reqdata)
 				reqdata->r_u.req.svc.rq_msg.cb_vers,
 				xprt_type_to_str(xprt_type),
 				op_ctx->ctx_export->export_id,
-				op_ctx->ctx_export->fullpath,
+				op_ctx_export_path(op_ctx->ctx_export),
 				client_ip);
 
 			auth_rc = AUTH_FAILED;
@@ -1119,7 +1120,7 @@ void nfs_rpc_execute(request_data_t *reqdata)
 				progname,
 				reqdata->r_u.req.svc.rq_msg.cb_vers,
 				op_ctx->ctx_export->export_id,
-				op_ctx->ctx_export->fullpath,
+				op_ctx_export_path(op_ctx->ctx_export),
 				client_ip);
 
 			auth_rc = AUTH_TOOWEAK;
@@ -1134,7 +1135,7 @@ void nfs_rpc_execute(request_data_t *reqdata)
 			LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 				"Non-reserved Port %d is not allowed on Export_Id %d %s for client %s",
 				port, op_ctx->ctx_export->export_id,
-				op_ctx->ctx_export->fullpath,
+				op_ctx_export_path(op_ctx->ctx_export),
 				client_ip);
 
 			auth_rc = AUTH_TOOWEAK;
@@ -1215,7 +1216,7 @@ void nfs_rpc_execute(request_data_t *reqdata)
 			", vers=%" PRIu32
 			", proc=%" PRIu32,
 			client_ip, op_ctx->ctx_export->export_id,
-			op_ctx->ctx_export->fullpath,
+			op_ctx_export_path(op_ctx->ctx_export),
 			reqdata->r_u.req.svc.rq_msg.cb_vers,
 			reqdata->r_u.req.svc.rq_msg.cb_proc);
 		auth_rc = AUTH_TOOWEAK;
@@ -1290,8 +1291,8 @@ void nfs_rpc_execute(request_data_t *reqdata)
 			&reqdata->r_u.req.svc.bl_trace,
 			&reqdata->r_u.req.svc.rq_xprt->blkin.endp,
 			"export-id",
-			(op_ctx->export != NULL)
-			? op_ctx->export->export_id : -1);
+			(op_ctx->ctx_export != NULL)
+			? op_ctx->ctx_export->export_id : -1);
 #endif
 		rc = reqdesc->service_function(arg_nfs, &reqdata->r_u.req.svc,
 					res_nfs);
