@@ -146,10 +146,10 @@ fsal_errors_t nfs4_readdir_callback(void *opaque,
 		 * attributes.
 		 */
 		LogDebug(COMPONENT_EXPORT,
-			 "Offspring DIR %s is a junction Export_id %d Path %s",
+			 "Offspring DIR %s is a junction Export_id %d Pseudo %s",
 			 cb_parms->name,
 			 obj->state_hdl->dir.junction_export->export_id,
-			 obj->state_hdl->dir.junction_export->fullpath);
+			 obj->state_hdl->dir.junction_export->pseudopath);
 
 		/* Get a reference to the export and stash it in
 		 * compound data.
@@ -180,9 +180,9 @@ fsal_errors_t nfs4_readdir_callback(void *opaque,
 			 * skip the export.
 			 */
 			LogDebug(COMPONENT_EXPORT,
-				 "NFS4ERR_ACCESS Skipping Export_Id %d Path %s",
+				 "NFS4ERR_ACCESS Skipping Export_Id %d Pseudo %s",
 				 op_ctx->ctx_export->export_id,
-				 op_ctx->ctx_export->fullpath);
+				 op_ctx->ctx_export->pseudopath);
 
 			/* Restore export and creds */
 			restore_data(tracker);
@@ -212,7 +212,7 @@ fsal_errors_t nfs4_readdir_callback(void *opaque,
 				LogDebug(COMPONENT_EXPORT,
 					 "Ignoring NFS4ERR_WRONGSEC (only asked for MOUNTED_IN_FILEID) On ReadDir Export_Id %d Path %s",
 					 op_ctx->ctx_export->export_id,
-					 op_ctx->ctx_export->fullpath);
+					 op_ctx->ctx_export->pseudopath);
 
 				/* Because we are not asking for any attributes
 				 * which are a property of the exported file
@@ -236,9 +236,9 @@ fsal_errors_t nfs4_readdir_callback(void *opaque,
 				 * the name into the entry.
 				 */
 				LogDebug(COMPONENT_EXPORT,
-					 "NFS4ERR_WRONGSEC On ReadDir Export_Id %d Path %s",
+					 "NFS4ERR_WRONGSEC On ReadDir Export_Id %d Pseudo %s",
 					 op_ctx->ctx_export->export_id,
-					 op_ctx->ctx_export->fullpath);
+					 op_ctx->ctx_export->pseudopath);
 			}
 		} else if (rdattr_error == NFS4_OK) {
 			/* Now we must traverse the junction to get the
@@ -250,9 +250,9 @@ fsal_errors_t nfs4_readdir_callback(void *opaque,
 			 * across the junction.
 			 */
 			LogDebug(COMPONENT_EXPORT,
-				 "Need to cross junction to Export_Id %d Path %s",
+				 "Need to cross junction to Export_Id %d Pseudo %s",
 				op_ctx->ctx_export->export_id,
-				op_ctx->ctx_export->fullpath);
+				op_ctx->ctx_export->pseudopath);
 			PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
 			return ERR_FSAL_CROSS_JUNCTION;
 		}
@@ -263,9 +263,9 @@ fsal_errors_t nfs4_readdir_callback(void *opaque,
 		 * Restore export and creds.
 		 */
 		LogDebug(COMPONENT_EXPORT,
-			 "Need to report error for junction to Export_Id %d Path %s",
+			 "Need to report error for junction to Export_Id %d Pseudo %s",
 			 op_ctx->ctx_export->export_id,
-			 op_ctx->ctx_export->fullpath);
+			 op_ctx->ctx_export->pseudopath);
 		restore_data(tracker);
 	}
 

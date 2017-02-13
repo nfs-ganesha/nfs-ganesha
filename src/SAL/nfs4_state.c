@@ -1119,7 +1119,7 @@ void state_export_release_nfs4_state(void)
 	if (errcnt == STATE_ERR_MAX) {
 		LogFatal(COMPONENT_STATE,
 			 "Could not complete cleanup of layouts for export %s",
-			 op_ctx->ctx_export->fullpath);
+			 op_ctx->ctx_export->pseudopath);
 	}
 }
 

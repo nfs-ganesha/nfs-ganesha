@@ -1014,7 +1014,7 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 	if (export->export_perms.options & EXPORT_OPTION_NFSV4) {
 		if (export->pseudopath == NULL) {
 			LogCrit(COMPONENT_CONFIG,
-				"Exporting to NFSv4 but not Pseudo path defined");
+				"Exporting to NFSv4 but no Pseudo path defined");
 			err_type->invalid = true;
 			errcnt++;
 			return errcnt;
@@ -1050,7 +1050,7 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 		if ((export->export_perms.options &
 		     EXPORT_OPTION_PROTOCOLS) != EXPORT_OPTION_NFSV4) {
 			LogCrit(COMPONENT_CONFIG,
-				"Export id 0 must indicate Protocols=4");
+				"Export id 0 must include 4 in Protocols");
 			err_type->invalid = true;
 			errcnt++;
 		}

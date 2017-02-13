@@ -99,9 +99,9 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 
 		/* Handle reverse junction */
 		LogDebug(COMPONENT_EXPORT,
-			 "Handling reverse junction from Export_Id %d Path %s Parent=%p",
+			 "Handling reverse junction from Export_Id %d Pseudo %s Parent=%p",
 			 original_export->export_id,
-			 original_export->fullpath,
+			 original_export->pseudopath,
 			 original_export->exp_parent_exp);
 
 		if (original_export->exp_parent_exp == NULL) {
@@ -143,9 +143,9 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 			/* Export is in the process of dying */
 			PTHREAD_RWLOCK_unlock(&original_export->lock);
 			LogCrit(COMPONENT_EXPORT,
-				"Reverse junction from Export_Id %d Path %s Parent=%p is stale",
+				"Reverse junction from Export_Id %d Pseudo %s Parent=%p is stale",
 				original_export->export_id,
-				original_export->fullpath,
+				original_export->pseudopath,
 				parent_exp);
 			res_LOOKUPP4->status = NFS4ERR_STALE;
 			return res_LOOKUPP4->status;
@@ -186,9 +186,9 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 			 * hide it. It was not visible in READDIR response.
 			 */
 			LogDebug(COMPONENT_EXPORT,
-				 "NFS4ERR_ACCESS Hiding Export_Id %d Path %s with NFS4ERR_NOENT",
+				 "NFS4ERR_ACCESS Hiding Export_Id %d Pseudo %s with NFS4ERR_NOENT",
 				 parent_exp->export_id,
-				 parent_exp->fullpath);
+				 parent_exp->pseudopath);
 			res_LOOKUPP4->status = NFS4ERR_NOENT;
 			return res_LOOKUPP4->status;
 		}
