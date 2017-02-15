@@ -141,6 +141,14 @@ do { \
 	op->nfs_argop4_u.opsetattr.obj_attributes = inattr;		\
 } while (0)
 
+#define COMPOUNDV4_ARG_ADD_OP_SETATTR_BYPASS(opcnt, argarray, inattr)	\
+do { \
+	nfs_argop4 *op = argarray + opcnt; opcnt++;			\
+	op->argop = NFS4_OP_SETATTR;					\
+	memset(&op->nfs_argop4_u.opsetattr.stateid, 0xff, sizeof(stateid4)); \
+	op->nfs_argop4_u.opsetattr.obj_attributes = inattr;		\
+} while (0)
+
 #define COMPOUNDV4_ARG_ADD_OP_GETFH(opcnt, argarray) \
 do { \
 	argarray[opcnt].argop = NFS4_OP_GETFH;	     \
