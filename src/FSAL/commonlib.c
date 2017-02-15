@@ -1279,6 +1279,7 @@ int populate_posix_file_systems(bool force)
 	}
 #ifdef USE_BLKID
 	blkid_put_cache(cache);
+	cache = NULL;
 #endif
 
 	endmntent(fp);
