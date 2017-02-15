@@ -99,11 +99,13 @@ restart:
 			 */
 			if (client_rec != NULL)
 				inc_client_record_ref(client_rec);
+
 			PTHREAD_MUTEX_unlock(&client_id->cid_mutex);
+			PTHREAD_RWLOCK_unlock(&ht_reap->partitions[i].lock);
+
 			if (client_rec != NULL)
 				PTHREAD_MUTEX_lock(&client_rec->cr_mutex);
 
-			PTHREAD_RWLOCK_unlock(&ht_reap->partitions[i].lock);
 			nfs_client_id_expire(client_id, false);
 
 			if (client_rec != NULL) {
