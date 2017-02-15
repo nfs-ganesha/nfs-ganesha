@@ -494,7 +494,7 @@ static void CityHashCrc256Long(const char *s, size_t len, uint32 seed,
 		h = _mm_crc32_u64(h, c);				\
 		i = _mm_crc32_u64(i, d);				\
 		j = _mm_crc32_u64(j, e);				\
-		s += 40							\
+		s += 40;						\
 	} while (0)
 
 		CHUNK(1, 1);
