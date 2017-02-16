@@ -575,8 +575,7 @@ already_claimed:
 	return 0;
 
 errout:
-	if (gpfs_fs != NULL)
-		free_gpfs_filesystem(gpfs_fs);
+	free_gpfs_filesystem(gpfs_fs);
 
 	return retval;
 }
