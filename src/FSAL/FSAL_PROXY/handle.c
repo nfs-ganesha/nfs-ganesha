@@ -2507,6 +2507,16 @@ static fsal_openflags_t pxy_status2(struct fsal_obj_handle *obj_hdl,
 	return null_flags;
 }
 
+static fsal_status_t pxy_reopen2(struct fsal_obj_handle *obj_hdl,
+			  struct state_t *state,
+			  fsal_openflags_t openflags)
+{
+	/* no way to open by handle in v4 */
+	/* waiting for v4.1 or solid state to really do the job */
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
 void pxy_handle_ops_init(struct fsal_obj_ops *ops)
 {
 	ops->release = pxy_hdl_release;
@@ -2537,6 +2547,7 @@ void pxy_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->close2 = pxy_close2;
 	ops->setattr2 = pxy_setattr2;
 	ops->status2 = pxy_status2;
+	ops->reopen2 = pxy_reopen2;
 }
 
 #ifdef PROXY_HANDLE_MAPPING
