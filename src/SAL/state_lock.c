@@ -2453,17 +2453,21 @@ state_status_t state_test(struct fsal_obj_handle *obj,
 		status = do_lock_op(obj, state, FSAL_OP_LOCKT, owner,
 				    lock, holder, conflict, false);
 
-		if (status != STATE_SUCCESS && status != STATE_LOCK_CONFLICT) {
-			LogMajor(COMPONENT_STATE,
-				 "Got error from FSAL lock operation, error=%s",
-				 state_err_str(status));
-		}
-		if (status == STATE_SUCCESS)
-			LogFullDebug(COMPONENT_STATE, "No Conflict");
-		else
+		switch (status) {
+		case STATE_SUCCESS:
+			LogFullDebug(COMPONENT_STATE, "Lock success");
+			break;
+		case STATE_LOCK_CONFLICT:
 			LogLock(COMPONENT_STATE, NIV_FULL_DEBUG,
 				"Conflict from FSAL",
 				obj, *holder, conflict);
+			break;
+		default:
+			LogMajor(COMPONENT_STATE,
+				 "Got error from FSAL lock operation, error=%s",
+				 state_err_str(status));
+			break;
+		}
 	}
 
 	if (isFullDebug(COMPONENT_STATE) && isFullDebug(COMPONENT_MEMLEAKS))
