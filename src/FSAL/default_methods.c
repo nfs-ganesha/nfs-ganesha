@@ -587,6 +587,20 @@ void free_state(struct fsal_export *exp_hdl, struct state_t *state)
 	gsh_free(state);
 }
 
+/**
+ * @brief Check to see if a user is superuser
+ *
+ * @param[in] exp_hdl               Export state_t is associated with
+ * @param[in] creds                 Credentials to check for superuser
+ *
+ * @returns NULL on failure otherwise a state structure.
+ */
+
+bool is_superuser(struct fsal_export *exp_hdl, const struct user_cred *creds)
+{
+	return (creds->caller_uid == 0);
+}
+
 /* Default fsal export method vector.
  * copied to allocated vector at register time
  */
@@ -623,6 +637,7 @@ struct export_ops def_export_ops = {
 	.get_write_verifier = global_verifier,
 	.alloc_state = alloc_state,
 	.free_state = free_state,
+	.is_superuser = is_superuser,
 };
 
 /* fsal_obj_handle common methods

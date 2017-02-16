@@ -194,7 +194,8 @@ static fsal_status_t fsal_check_setattr_perms(struct fsal_obj_handle *obj,
 
 	/* Shortcut, if current user is root, then we can just bail out with
 	 * success. */
-	if (creds->caller_uid == 0) {
+	if (op_ctx->fsal_export->exp_ops.is_superuser(op_ctx->fsal_export,
+						      creds)) {
 		note = " (Ok for root user)";
 		goto out;
 	}
@@ -471,6 +472,7 @@ fsal_status_t fsal_setattr(struct fsal_obj_handle *obj, bool bypass,
 	fsal_status_t status = { 0, 0 };
 	const struct user_cred *creds = op_ctx->creds;
 	struct attrlist current;
+	bool is_superuser;
 
 	if ((attr->valid_mask & (ATTR_SIZE | ATTR4_SPACE_RESERVED))
 	     && (obj->type != REGULAR_FILE)) {
@@ -496,6 +498,8 @@ fsal_status_t fsal_setattr(struct fsal_obj_handle *obj, bool bypass,
 	if (FSAL_IS_ERROR(status))
 		return status;
 
+	is_superuser = op_ctx->fsal_export->exp_ops.is_superuser(
+					op_ctx->fsal_export, creds);
 	/* Test for the following condition from chown(2):
 	 *
 	 *     When the owner or group of an executable file are changed by an
@@ -507,7 +511,7 @@ fsal_status_t fsal_setattr(struct fsal_obj_handle *obj, bool bypass,
 	 *     mandatory locking, and is not cleared by a chown().
 	 *
 	 */
-	if (creds->caller_uid != 0 &&
+	if (!is_superuser &&
 	    (FSAL_TEST_MASK(attr->valid_mask, ATTR_OWNER) ||
 	     FSAL_TEST_MASK(attr->valid_mask, ATTR_GROUP)) &&
 	    ((current.mode & (S_IXOTH | S_IXUSR | S_IXGRP)) != 0) &&
@@ -545,7 +549,7 @@ fsal_status_t fsal_setattr(struct fsal_obj_handle *obj, bool bypass,
 	 * We test the actual mode being set before testing for group
 	 * membership since that is a bit more expensive.
 	 */
-	if (creds->caller_uid != 0 &&
+	if (!is_superuser &&
 	    FSAL_TEST_MASK(attr->valid_mask, ATTR_MODE) &&
 	    (attr->mode & S_ISGID) != 0 &&
 	    fsal_not_in_group_list(current.group)) {
@@ -573,7 +577,7 @@ fsal_status_t fsal_setattr(struct fsal_obj_handle *obj, bool bypass,
 		}
 	}
 
-	if (creds->caller_uid != 0) {
+	if (!is_superuser)  {
 		/* Done with the current attrs */
 		fsal_release_attrs(&current);
 	}
@@ -925,7 +929,9 @@ setattrs:
                  * setgid bit. Clear the OWNER and GROUP attributes for
                  * create requests for non-root users.
 		 */
-		if (type != SYMBOLIC_LINK && op_ctx->creds->caller_uid != 0) {
+		if (type != SYMBOLIC_LINK &&
+		    !op_ctx->fsal_export->exp_ops.is_superuser(
+					op_ctx->fsal_export, op_ctx->creds)) {
 			FSAL_UNSET_MASK(attrs->valid_mask,
 					ATTR_OWNER|ATTR_GROUP);
 		}

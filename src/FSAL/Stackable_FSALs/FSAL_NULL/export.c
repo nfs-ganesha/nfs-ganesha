@@ -343,6 +343,21 @@ static void nullfs_free_state(struct fsal_export *exp_hdl,
 	op_ctx->fsal_export = &exp->export;
 }
 
+static bool nullfs_is_superuser(struct fsal_export *exp_hdl,
+				const struct user_cred *creds)
+{
+	struct nullfs_fsal_export *exp = container_of(exp_hdl,
+					struct nullfs_fsal_export, export);
+	bool rv;
+
+	op_ctx->fsal_export = exp->export.sub_export;
+	rv = exp->export.sub_export->exp_ops.is_superuser(
+					exp->export.sub_export, creds);
+	op_ctx->fsal_export = &exp->export;
+
+	return rv;
+}
+
 
 /* extract a file handle from a buffer.
  * do verification checks and flag any and all suspicious bits.
@@ -395,6 +410,7 @@ void nullfs_export_ops_init(struct export_ops *ops)
 	ops->set_quota = set_quota;
 	ops->alloc_state = nullfs_alloc_state;
 	ops->free_state = nullfs_free_state;
+	ops->is_superuser = nullfs_is_superuser;
 }
 
 struct nullfsal_args {

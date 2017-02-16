@@ -474,7 +474,8 @@ static fsal_status_t fsal_check_access_acl(struct user_cred *creds,
 	gid = p_object_attributes->group;
 	pacl = p_object_attributes->acl;
 	is_dir = (p_object_attributes->type == DIRECTORY);
-	is_root = creds->caller_uid == 0;
+	is_root = op_ctx->fsal_export->exp_ops.is_superuser(
+						op_ctx->fsal_export, creds);
 
 	if (is_root) {
 		if (is_dir) {
@@ -721,7 +722,8 @@ fsal_check_access_no_acl(struct user_cred *creds,
 		     creds->caller_uid, creds->caller_gid,
 		     access_type);
 
-	if (creds->caller_uid == 0) {
+	if (op_ctx->fsal_export->exp_ops.is_superuser(op_ctx->fsal_export,
+						      creds)) {
 		if (p_object_attributes->type == DIRECTORY) {
 			if (allowed != NULL)
 				*allowed = access_type;

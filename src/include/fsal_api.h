@@ -1158,6 +1158,18 @@ struct export_ops {
  */
 
 	void (*free_state)(struct fsal_export *exp_hdl, struct state_t *state);
+
+/**
+ * @brief Check to see if a user is superuser
+ *
+ * @param[in] exp_hdl               Export state_t is associated with
+ * @param[in] creds                 Credentials to check for superuser
+ *
+ * @returns NULL on failure otherwise a state structure.
+ */
+
+	bool (*is_superuser)(struct fsal_export *exp_hdl,
+			     const struct user_cred *creds);
 };
 
 /**

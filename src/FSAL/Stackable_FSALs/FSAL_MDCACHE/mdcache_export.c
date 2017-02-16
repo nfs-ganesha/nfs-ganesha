@@ -765,6 +765,29 @@ static void mdcache_free_state(struct fsal_export *exp_hdl,
 	       );
 }
 
+/**
+ * @brief Check to see if a user is superuser
+ *
+ * @param[in] exp_hdl               Export state_t is associated with
+ * @param[in] creds                 Credentials to check for superuser
+ *
+ * @returns NULL on failure otherwise a state structure.
+ */
+
+static bool mdcache_is_superuser(struct fsal_export *exp_hdl,
+				 const struct user_cred *creds)
+{
+	struct mdcache_fsal_export *exp = mdc_export(exp_hdl);
+	struct fsal_export *sub_export = exp->export.sub_export;
+	bool status;
+
+	subcall_raw(exp,
+		status = sub_export->exp_ops.is_superuser(sub_export, creds)
+	       );
+
+	return status;
+}
+
 /* mdcache_export_ops_init
  * overwrite vector entries with the methods that we support
  */
@@ -802,6 +825,7 @@ void mdcache_export_ops_init(struct export_ops *ops)
 	ops->get_write_verifier = mdcache_get_write_verifier;
 	ops->alloc_state = mdcache_alloc_state;
 	ops->free_state = mdcache_free_state;
+	ops->is_superuser = mdcache_is_superuser;
 }
 
 #if 0

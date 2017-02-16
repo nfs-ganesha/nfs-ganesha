@@ -366,7 +366,8 @@ nfsstat4 nfs_req_creds(struct svc_req *req)
 	    ((op_ctx->export_perms->options &
 	      EXPORT_OPTION_ALL_ANONYMOUS) != 0) ||
 	    ((op_ctx->export_perms->options & EXPORT_OPTION_ROOT_SQUASH) != 0 &&
-	      op_ctx->original_creds.caller_uid == 0)) {
+	      op_ctx->fsal_export->exp_ops.is_superuser(op_ctx->fsal_export,
+					      &op_ctx->original_creds))) {
 		/* Squash uid, gid, and discard groups */
 		op_ctx->creds->caller_uid =
 					op_ctx->export_perms->anonymous_uid;
@@ -382,7 +383,8 @@ nfsstat4 nfs_req_creds(struct svc_req *req)
 		return NFS4_OK;
 	} else if ((op_ctx->export_perms->options &
 		    EXPORT_OPTION_ROOT_ID_SQUASH) != 0 &&
-		   op_ctx->original_creds.caller_uid == 0) {
+		   op_ctx->fsal_export->exp_ops.is_superuser(
+			op_ctx->fsal_export, &op_ctx->original_creds)) {
 		/* Only squash root id, leave gid and groups alone for now */
 		op_ctx->creds->caller_uid =
 					op_ctx->export_perms->anonymous_uid;
