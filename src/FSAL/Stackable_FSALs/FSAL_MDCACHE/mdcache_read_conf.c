@@ -63,6 +63,8 @@ static struct config_item mdcache_params[] = {
 		       mdcache_parameter, dir.avl_max_deleted),
 	CONF_ITEM_UI32("Dir_Max", 1, UINT32_MAX, 65536,
 		       mdcache_parameter, dir.avl_max),
+	CONF_ITEM_UI32("Dir_Chunk", 0, UINT32_MAX, 128,
+		       mdcache_parameter, dir.avl_chunk),
 	CONF_ITEM_UI32("Entries_HWMark", 1, UINT32_MAX, 100000,
 		       mdcache_parameter, entries_hwmark),
 	CONF_ITEM_UI32("LRU_Run_Interval", 1, 24 * 3600, 90,

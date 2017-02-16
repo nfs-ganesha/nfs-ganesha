@@ -480,6 +480,8 @@ CACHEINODE
 
 	Dir_Max(uint32, range 1 to UINT32_MAX, default 65536)
 
+	Dir_Chunk(uint32, range 0 to UINT32_MAX, default 128)
+
 	Entries_HWMark(uint32, range 1 to UINT32_MAX, default 100000)
 
 	LRU_Run_Interval(uint32, range 1 to 24 * 3600, default 90)

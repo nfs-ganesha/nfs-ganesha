@@ -58,6 +58,10 @@ struct mdcache_parameter {
 		uint32_t avl_max_deleted;
 		/** Max size of per-directory dirent cache */
 		uint32_t avl_max;
+		/** Size of per-directory dirent cache chunks, 0 means
+		 *  directory chunking is not enabled.
+		 */
+		uint32_t avl_chunk;
 	} dir;
 	/** High water mark for cache entries.  Defaults to 100000,
 	    settable by Entries_HWMark. */
