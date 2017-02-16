@@ -942,19 +942,17 @@ static bool posix_get_fsid(struct fsal_filesystem *fs)
 	struct statfs stat_fs;
 	struct stat mnt_stat;
 #ifdef USE_BLKID
-	char *dev_name = NULL, *uuid_str;
-	struct blkid_struct_dev *dev;
+	char *dev_name;
+	char *uuid_str;
 #endif
 
-	LogFullDebug(COMPONENT_FSAL,
-		     "statfs of %s pathlen %d",
-		     fs->path, fs->pathlen);
+	LogFullDebug(COMPONENT_FSAL, "statfs of %s pathlen %d", fs->path,
+		     fs->pathlen);
 
-	if (statfs(fs->path, &stat_fs) != 0) {
+	if (statfs(fs->path, &stat_fs) != 0)
 		LogCrit(COMPONENT_FSAL,
 			"stat_fs of %s resulted in error %s(%d)",
 			fs->path, strerror(errno), errno);
-	}
 
 #if __FreeBSD__
 	fs->namelen = stat_fs.f_namemax;
@@ -979,66 +977,50 @@ static bool posix_get_fsid(struct fsal_filesystem *fs)
 	}
 
 #ifdef USE_BLKID
+	if (cache == NULL)
+		goto out;
+
 	dev_name = blkid_devno_to_devname(mnt_stat.st_dev);
 
 	if (dev_name == NULL) {
 		LogInfo(COMPONENT_FSAL,
 			"blkid_devno_to_devname of %s failed for dev %d.%d",
-			fs->path,
-			major(mnt_stat.st_dev),
+			fs->path, major(mnt_stat.st_dev),
 			minor(mnt_stat.st_dev));
-		goto no_uuid_no_dev_name;
+		goto out;
 	}
 
-	if (cache == NULL && blkid_get_cache(&cache, NULL) != 0) {
-		LogInfo(COMPONENT_FSAL,
-			"blkid_get_cache of %s failed",
-			fs->path);
-		goto no_uuid;
-	}
-
-	dev = (struct blkid_struct_dev *)blkid_get_dev(cache,
-						       dev_name,
-						       BLKID_DEV_NORMAL);
-
-	if (dev == NULL) {
+	if (blkid_get_dev(cache, dev_name, BLKID_DEV_NORMAL) == NULL) {
 		LogInfo(COMPONENT_FSAL,
 			"blkid_get_dev of %s failed for devname %s",
 			fs->path, dev_name);
-		goto no_uuid;
+		free(dev_name);
+		goto out;
 	}
 
 	uuid_str = blkid_get_tag_value(cache, "UUID", dev_name);
+	free(dev_name);
 
 	if  (uuid_str == NULL) {
-		LogInfo(COMPONENT_FSAL,
-			"blkid_get_tag_value of %s failed",
+		LogInfo(COMPONENT_FSAL, "blkid_get_tag_value of %s failed",
 			fs->path);
-		goto no_uuid;
+		goto out;
 	}
 
 	if (uuid_parse(uuid_str, (char *) &fs->fsid) == -1) {
-		LogInfo(COMPONENT_FSAL,
-			"uuid_parse of %s failed for uuid %s",
+		LogInfo(COMPONENT_FSAL, "uuid_parse of %s failed for uuid %s",
 			fs->path, uuid_str);
 		free(uuid_str);
-		goto no_uuid;
+		goto out;
 	}
 
 	free(uuid_str);
 	fs->fsid_type = FSID_TWO_UINT64;
-	free(dev_name);
 
 	return true;
 
- no_uuid:
-
-	free(dev_name);
-
- no_uuid_no_dev_name:
-
+out:
 #endif
-
 	fs->fsid_type = FSID_TWO_UINT32;
 #if __FreeBSD__
 	fs->fsid.major = (unsigned) stat_fs.f_fsid.val[0];
@@ -1047,7 +1029,6 @@ static bool posix_get_fsid(struct fsal_filesystem *fs)
 	fs->fsid.major = (unsigned) stat_fs.f_fsid.__val[0];
 	fs->fsid.minor = (unsigned) stat_fs.f_fsid.__val[1];
 #endif
-
 	if ((fs->fsid.major == 0) && (fs->fsid.minor == 0)) {
 		fs->fsid.major = fs->dev.major;
 		fs->fsid.minor = fs->dev.minor;
@@ -1271,25 +1252,31 @@ int populate_posix_file_systems(bool force)
 		goto out;
 	}
 
+#ifdef USE_BLKID
+	if (blkid_get_cache(&cache, NULL) != 0)
+		LogInfo(COMPONENT_FSAL, "blkid_get_cache failed");
+#endif
+
 	while ((mnt = getmntent(fp)) != NULL) {
 		if (mnt->mnt_dir == NULL)
 			continue;
 
 		posix_create_file_system(mnt);
 	}
+
 #ifdef USE_BLKID
-	blkid_put_cache(cache);
-	cache = NULL;
+	if (cache) {
+		blkid_put_cache(cache);
+		cache = NULL;
+	}
 #endif
 
 	endmntent(fp);
 
 	/* build tree of POSIX file systems */
-	glist_for_each(glist, &posix_file_systems) {
-		posix_find_parent(glist_entry(glist,
-					      struct fsal_filesystem,
+	glist_for_each(glist, &posix_file_systems)
+		posix_find_parent(glist_entry(glist, struct fsal_filesystem,
 					      filesystems));
-	}
 
 	/* show tree */
 	glist_for_each(glist, &posix_file_systems) {
@@ -1299,7 +1286,6 @@ int populate_posix_file_systems(bool force)
 	}
 
  out:
-
 	PTHREAD_RWLOCK_unlock(&fs_lock);
 	return retval;
 }
