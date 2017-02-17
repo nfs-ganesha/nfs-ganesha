@@ -662,6 +662,7 @@ static fsal_status_t mdcache_readdir(struct fsal_obj_handle *dir_hdl,
 
 	for (; cb_result && dirent_node;
 	     dirent_node = avltree_next(dirent_node)) {
+		struct attrlist attrs;
 		mdcache_entry_t *entry = NULL;
 
 		dirent = avltree_container_of(dirent_node,
@@ -687,8 +688,23 @@ static fsal_status_t mdcache_readdir(struct fsal_obj_handle *dir_hdl,
 			goto unlock_dir;
 		}
 
-		cb_result = cb(dirent->name, &entry->obj_handle, &entry->attrs,
+		/* Ensure the attribute cache is valid.  The simplest way to do
+		 * this is to call getattrs().  We need a copy anyway, to ensure
+		 * thread safety. */
+		fsal_prepare_attrs(&attrs, attrmask);
+		status = entry->obj_handle.obj_ops.getattrs(&entry->obj_handle,
+							    &attrs);
+		if (FSAL_IS_ERROR(status)) {
+			LogFullDebug(COMPONENT_NFS_READDIR,
+				     "getattrs failed status=%s",
+				     fsal_err_txt(status));
+			goto unlock_dir;
+		}
+
+		cb_result = cb(dirent->name, &entry->obj_handle, &attrs,
 			       dir_state, dirent->hk.k);
+
+		fsal_release_attrs(&attrs);
 
 		if (!cb_result)
 			break;
