@@ -211,7 +211,7 @@ state_status_t _state_add_impl(struct fsal_obj_handle *obj,
 	PTHREAD_MUTEX_unlock(&pnew_state->state_mutex);
 
 #ifdef USE_LTTNG
-	tracepoint(state, add, func, line, obj, state);
+	tracepoint(state, add, func, line, obj, pnew_state);
 #endif
 
 	/* Add state to list for owner */
