@@ -2003,6 +2003,28 @@ static fsal_status_t pxy_commit(struct fsal_obj_handle *obj_hdl,
 				off_t offset,
 				size_t len)
 {
+	struct pxy_obj_handle *ph;
+	int rc; /* return code of nfs call */
+	int opcnt = 0; /* nfs arg counter */
+	/* PUTFH, COMMIT */
+#define FSAL_COMMIT_NB_OP 2
+	nfs_argop4 argoparray[FSAL_COMMIT_NB_OP];
+	nfs_resop4 resoparray[FSAL_COMMIT_NB_OP];
+
+	ph = container_of(obj_hdl, struct pxy_obj_handle, obj);
+
+	/* prepare PUTFH */
+	COMPOUNDV4_ARG_ADD_OP_PUTFH(opcnt, argoparray, ph->fh4);
+
+	/* prepare SETATTR */
+	COMPOUNDV4_ARG_ADD_OP_COMMIT(opcnt, argoparray, offset, len);
+
+	/* nfs call */
+	rc = pxy_nfsv4_call(op_ctx->fsal_export, op_ctx->creds,
+			    opcnt, argoparray, resoparray);
+	if (rc != NFS4_OK)
+		return nfsstat4_to_fsal(rc);
+
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
@@ -2517,6 +2539,35 @@ static fsal_status_t pxy_reopen2(struct fsal_obj_handle *obj_hdl,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
+static fsal_status_t pxy_commit2(struct fsal_obj_handle *obj_hdl,
+		      off_t offset,
+		      size_t len)
+{
+	struct pxy_obj_handle *ph;
+	int rc; /* return code of nfs call */
+	int opcnt = 0; /* nfs arg counter */
+	/* PUTFH, COMMIT */
+#define FSAL_COMMIT2_NB_OP 2
+	nfs_argop4 argoparray[FSAL_COMMIT2_NB_OP];
+	nfs_resop4 resoparray[FSAL_COMMIT2_NB_OP];
+
+	ph = container_of(obj_hdl, struct pxy_obj_handle, obj);
+
+	/* prepare PUTFH */
+	COMPOUNDV4_ARG_ADD_OP_PUTFH(opcnt, argoparray, ph->fh4);
+
+	/* prepare COMMIT */
+	COMPOUNDV4_ARG_ADD_OP_COMMIT(opcnt, argoparray, offset, len);
+
+	/* nfs call */
+	rc = pxy_nfsv4_call(op_ctx->fsal_export, op_ctx->creds,
+			    opcnt, argoparray, resoparray);
+	if (rc != NFS4_OK)
+		return nfsstat4_to_fsal(rc);
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
 void pxy_handle_ops_init(struct fsal_obj_ops *ops)
 {
 	ops->release = pxy_hdl_release;
@@ -2548,6 +2599,7 @@ void pxy_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->setattr2 = pxy_setattr2;
 	ops->status2 = pxy_status2;
 	ops->reopen2 = pxy_reopen2;
+	ops->commit2 = pxy_commit2;
 }
 
 #ifdef PROXY_HANDLE_MAPPING

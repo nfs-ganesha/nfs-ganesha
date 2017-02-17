@@ -381,6 +381,14 @@ do { \
 	op->nfs_argop4_u.opwrite.data.data_len = inlen;			\
 } while (0)
 
+#define COMPOUNDV4_ARG_ADD_OP_COMMIT(opcnt, argoparray, inoffset, inlen) \
+do { \
+	nfs_argop4 *op = argoparray+opcnt; opcnt++;			\
+	op->argop = NFS4_OP_COMMIT;					\
+	op->nfs_argop4_u.opcommit.offset = inoffset;			\
+	op->nfs_argop4_u.opcommit.count = inlen;			\
+} while (0)
+
 #define COMPOUNDV4_EXECUTE_SIMPLE(pcontext, argcompound, rescompound)   \
 	  clnt_call(pcontext->rpc_client, NFSPROC4_COMPOUND,		\
 		    (xdrproc_t)xdr_COMPOUND4args, (caddr_t)&argcompound, \
