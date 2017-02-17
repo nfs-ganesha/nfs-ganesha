@@ -110,11 +110,6 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 		errsv = errno;
 
 		if (rc != 0) {
-			LogCrit(COMPONENT_FSAL_UP,
-				"OPENHANDLE_INODE_UPDATE failed for %d. rc %d, errno %d (%s) reason %d",
-				gpfs_fs->root_fd, rc, errsv,
-				strerror(errsv), reason);
-
 			rc = -(rc);
 			if (rc > GPFS_INTERFACE_VERSION) {
 				LogFatal(COMPONENT_FSAL_UP,
@@ -122,12 +117,20 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 					 callback.interface_version, rc);
 				return NULL;
 			}
-			if (retry < 1000) {
-				retry++;
-				continue;
-			}
 
-			if (errsv == EUNATCH)
+			if (errsv == EINTR)
+				continue;
+
+			LogCrit(COMPONENT_FSAL_UP,
+				"OPENHANDLE_INODE_UPDATE failed for %d. rc %d, errno %d (%s) reason %d",
+				gpfs_fs->root_fd, rc, errsv,
+				strerror(errsv), reason);
+
+			/* @todo 1000 retry logic will go away once the
+			 * OPENHANDLE_INODE_UPDATE ioctl separates EINTR
+			 * and EUNATCH.
+			 */
+			if (errsv == EUNATCH && ++retry > 1000)
 				LogFatal(COMPONENT_FSAL_UP,
 					 "GPFS file system %d has gone away.",
 					 gpfs_fs->root_fd);
