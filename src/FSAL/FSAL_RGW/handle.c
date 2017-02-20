@@ -179,8 +179,15 @@ static fsal_status_t rgw_fsal_readdir(struct fsal_obj_handle *dir_hdl,
 	LogFullDebug(COMPONENT_FSAL,
 		"%s enter dir_hdl %p", __func__, dir_hdl);
 
-	rc = rgw_readdir(export->rgw_fs, dir->rgw_fh, &r_whence, rgw_cb,
-			&rgw_cb_arg, eof, RGW_READDIR_FLAG_NONE);
+	/* MDCACHE assumes we will reach eod, contrary to what the readdir
+	 * fsal op signature implies */
+	rc = 0;
+	*eof = false;
+	while ((rc == 0) &&
+		(!*eof)) {
+		rc = rgw_readdir(export->rgw_fs, dir->rgw_fh, &r_whence, rgw_cb,
+				&rgw_cb_arg, eof, RGW_READDIR_FLAG_NONE);
+	}
 	if (rc < 0)
 		return rgw2fsal_error(rc);
 
