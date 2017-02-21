@@ -138,9 +138,6 @@ fsal_status_t gpfs_write2(struct fsal_obj_handle *obj_hdl,
 fsal_status_t gpfs_commit2(struct fsal_obj_handle *obj_hdl,
 			   off_t offset,
 			   size_t len);
-fsal_status_t gpfs_commit_fd(int my_fd, struct fsal_obj_handle *obj_hdl,
-			   off_t offset,
-			   size_t len);
 fsal_status_t gpfs_lock_op2(struct fsal_obj_handle *obj_hdl,
 			    struct state_t *state,
 			    void *owner,
@@ -153,43 +150,15 @@ fsal_status_t gpfs_setattr2(struct fsal_obj_handle *obj_hdl,
 			    bool bypass,
 			    struct state_t *state,
 			    struct attrlist *attrib_set);
-fsal_status_t gpfs_reopen(struct fsal_obj_handle *obj_hdl,
-			  fsal_openflags_t openflags);
 fsal_openflags_t gpfs_status(struct fsal_obj_handle *obj_hdl);
-fsal_status_t gpfs_read(struct fsal_obj_handle *obj_hdl,
-			uint64_t offset,
-			size_t buffer_size, void *buffer, size_t *read_amount,
-			bool *end_of_file);
-fsal_status_t gpfs_read_plus(struct fsal_obj_handle *obj_hdl,
-			uint64_t offset,
-			size_t buffer_size, void *buffer, size_t *read_amount,
-			bool *end_of_file, struct io_info *info);
 fsal_status_t gpfs_read_plus_fd(int my_fs,
 			uint64_t offset,
 			size_t buffer_size, void *buffer, size_t *read_amount,
 			bool *end_of_file, struct io_info *info, int expfd);
-fsal_status_t gpfs_write(struct fsal_obj_handle *obj_hdl,
-			 uint64_t offset,
-			 size_t buffer_size, void *buffer,
-			 size_t *write_amount, bool *fsal_stable);
-fsal_status_t gpfs_write_plus(struct fsal_obj_handle *obj_hdl,
-			 uint64_t offset,
-			 size_t buffer_size, void *buffer,
-			 size_t *write_amount, bool *fsal_stable,
-			 struct io_info *info);
-fsal_status_t gpfs_write_plus_fd(int my_fd,
-			 uint64_t offset,
-			 size_t buffer_size, void *buffer,
-			 size_t *write_amount, bool *fsal_stable,
-			 struct io_info *info, int expfd);
 fsal_status_t gpfs_seek(struct fsal_obj_handle *obj_hdl,
 			 struct io_info *info);
 fsal_status_t gpfs_io_advise(struct fsal_obj_handle *obj_hdl,
 			 struct io_hints *hints);
-fsal_status_t gpfs_commit(struct fsal_obj_handle *obj_hdl,	/* sync */
-			  off_t offset, size_t len);
-fsal_status_t gpfs_commit_fd(int my_fd, struct fsal_obj_handle *obj_hdl,
-			     off_t offset, size_t len);
 fsal_status_t gpfs_share_op(struct fsal_obj_handle *obj_hdl, void *p_owner,
 			    fsal_share_param_t request_share);
 fsal_status_t gpfs_close(struct fsal_obj_handle *obj_hdl);

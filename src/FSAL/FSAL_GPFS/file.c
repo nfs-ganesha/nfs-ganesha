@@ -38,35 +38,6 @@
 #include "gpfs_methods.h"
 
 static fsal_status_t
-gpfs_open_again(struct fsal_obj_handle *obj_hdl, fsal_openflags_t openflags,
-		bool reopen)
-{
-	struct gpfs_fsal_obj_handle *myself =
-		container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
-	fsal_status_t status;
-	int posix_flags = 0;
-	int fd = -1;
-
-	if (reopen) {
-		assert(myself->u.file.fd.fd >= 0 &&
-		       myself->u.file.fd.openflags != FSAL_O_CLOSED);
-		fd = myself->u.file.fd.fd;
-	} else {
-		assert(myself->u.file.fd.fd == -1 &&
-		       myself->u.file.fd.openflags == FSAL_O_CLOSED);
-	}
-	fsal2posix_openflags(openflags, &posix_flags);
-
-	status = GPFSFSAL_open(obj_hdl, op_ctx, posix_flags, &fd, reopen);
-	if (FSAL_IS_ERROR(status) == false) {
-		myself->u.file.fd.fd = fd;
-		myself->u.file.fd.openflags = openflags;
-	}
-
-	return status;
-}
-
-static fsal_status_t
 gpfs_open_func(struct fsal_obj_handle *obj_hdl, fsal_openflags_t openflags,
 		struct fsal_fd *fd)
 {
@@ -143,22 +114,6 @@ fsal_status_t gpfs_merge(struct fsal_obj_handle *orig_hdl,
 	}
 
 	return status;
-}
-
-/**
- *  @brief called with appropriate locks taken at the cache inode level
- *
- *  @param obj_hdl FSAL object handle
- *  @param openflags FSAL open flags
- *  @return FSAL status
- *
- *  The file may have been already opened, so open the file again with
- *  given open flags without losing any locks associated with the file.
- */
-fsal_status_t
-gpfs_reopen(struct fsal_obj_handle *obj_hdl, fsal_openflags_t openflags)
-{
-	return gpfs_open_again(obj_hdl, openflags, true);
 }
 
 /**
@@ -531,42 +486,6 @@ gpfs_open2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 }
 
 /**
- *  @brief GPFS read command
- *
- *  @param obj_hdl FSAL object handle
- *  @param offset Offset
- *  @param buffer_size Size of buffer
- *  @param buffer void reference to buffer
- *  @param read_amount size_t reference to amount of data read
- *  @param end_of_file boolean indiocating the end of file
- *  @return FSAL status
- *
- *  concurrency (locks) is managed in cache_inode_*
- */
-fsal_status_t
-gpfs_read(struct fsal_obj_handle *obj_hdl, uint64_t offset, size_t buffer_size,
-	  void *buffer, size_t *read_amount, bool *end_of_file)
-{
-	struct gpfs_fsal_obj_handle *myself =
-		container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
-	fsal_status_t status;
-	struct gpfs_filesystem *gpfs_fs;
-
-	gpfs_fs = obj_hdl->fs->private_data;
-	assert(myself->u.file.fd.fd >= 0 &&
-	       myself->u.file.fd.openflags != FSAL_O_CLOSED);
-
-	status = GPFSFSAL_read(myself->u.file.fd.fd, offset, buffer_size,
-			       buffer, read_amount, end_of_file,
-			       gpfs_fs->root_fd);
-
-	if (FSAL_IS_ERROR(status))
-		return status;
-
-	return status;
-}
-
-/**
  *  @brief GPFS read plus
  *
  *  @param obj_hdl FSAL object handle / or fd
@@ -643,32 +562,6 @@ gpfs_read_plus_fd(int my_fd, uint64_t offset,
 	return status;
 }
 
-fsal_status_t
-gpfs_read_plus(struct fsal_obj_handle *obj_hdl, uint64_t offset,
-	       size_t buffer_size, void *buffer, size_t *read_amount,
-	       bool *end_of_file, struct io_info *info)
-{
-	struct gpfs_fsal_obj_handle *myself =
-		container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
-	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
-	int my_fd;
-	struct gpfs_filesystem *gpfs_fs;
-
-	gpfs_fs = obj_hdl->fs->private_data;
-
-	if (!buffer || !read_amount || !end_of_file || !info)
-		return fsalstat(ERR_FSAL_FAULT, 0);
-
-	my_fd = myself->u.file.fd.fd;
-	assert(my_fd >= 0 &&
-		myself->u.file.fd.openflags != FSAL_O_CLOSED);
-
-	status = gpfs_read_plus_fd(my_fd, offset,  buffer_size,
-				   buffer, read_amount,
-				   end_of_file, info, gpfs_fs->root_fd);
-	return status;
-}
-
 /**
  * @brief Re-open a file that may be already opened
  *
@@ -685,9 +578,9 @@ gpfs_read_plus(struct fsal_obj_handle *obj_hdl, uint64_t offset,
  * @return FSAL status.
  */
 
-fsal_status_t gpfs_reopen2(struct fsal_obj_handle *obj_hdl,
-			  struct state_t *state,
-			  fsal_openflags_t openflags)
+fsal_status_t
+gpfs_reopen2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
+	     fsal_openflags_t openflags)
 {
 	struct gpfs_fd fd, *my_fd = &fd, *my_share_fd;
 	struct gpfs_fsal_obj_handle *myself;
@@ -756,14 +649,10 @@ fsal_status_t gpfs_reopen2(struct fsal_obj_handle *obj_hdl,
 	return status;
 }
 
-fsal_status_t find_fd(int *fd,
-		      struct fsal_obj_handle *obj_hdl,
-		      bool bypass,
-		      struct state_t *state,
-		      fsal_openflags_t openflags,
-		      bool *has_lock,
-		      bool *closefd,
-		      bool open_for_locks)
+fsal_status_t
+find_fd(int *fd, struct fsal_obj_handle *obj_hdl, bool bypass,
+	struct state_t *state, fsal_openflags_t openflags, bool *has_lock,
+	bool *closefd, bool open_for_locks)
 {
 	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
 	struct gpfs_fsal_obj_handle *myself;
@@ -833,6 +722,25 @@ fsal_status_t find_fd(int *fd,
 	return status;
 }
 
+static fsal_status_t
+gpfs_write_plus_fd(int my_fd, uint64_t offset,
+		   size_t buffer_size, void *buffer, size_t *write_amount,
+		   bool *fsal_stable, struct io_info *info, int expfd)
+{
+	switch (info->io_content.what) {
+	case NFS4_CONTENT_DATA:
+		return GPFSFSAL_write(my_fd, offset, buffer_size, buffer,
+				     write_amount, fsal_stable, op_ctx,
+				     expfd);
+	case NFS4_CONTENT_DEALLOCATE:
+		return GPFSFSAL_alloc(my_fd, offset, buffer_size, false);
+	case NFS4_CONTENT_ALLOCATE:
+		return GPFSFSAL_alloc(my_fd, offset, buffer_size, true);
+	default:
+		return fsalstat(ERR_FSAL_UNION_NOTSUPP, 0);
+	}
+}
+
 /**
  * @brief Read data from a file
  *
@@ -853,16 +761,10 @@ fsal_status_t find_fd(int *fd,
  *
  * @return FSAL status.
  */
-
-fsal_status_t gpfs_read2(struct fsal_obj_handle *obj_hdl,
-			bool bypass,
-			struct state_t *state,
-			uint64_t offset,
-			size_t buffer_size,
-			void *buffer,
-			size_t *read_amount,
-			bool *end_of_file,
-			struct io_info *info)
+fsal_status_t
+gpfs_read2(struct fsal_obj_handle *obj_hdl, bool bypass, struct state_t *state,
+	   uint64_t offset, size_t buffer_size, void *buffer,
+	   size_t *read_amount, bool *end_of_file, struct io_info *info)
 {
 	int my_fd = -1;
 	fsal_status_t status;
@@ -931,15 +833,10 @@ fsal_status_t gpfs_read2(struct fsal_obj_handle *obj_hdl,
  * @return FSAL status.
  */
 
-fsal_status_t gpfs_write2(struct fsal_obj_handle *obj_hdl,
-			 bool bypass,
-			 struct state_t *state,
-			 uint64_t offset,
-			 size_t buffer_size,
-			 void *buffer,
-			 size_t *wrote_amount,
-			 bool *fsal_stable,
-			 struct io_info *info)
+fsal_status_t
+gpfs_write2(struct fsal_obj_handle *obj_hdl, bool bypass, struct state_t *state,
+	    uint64_t offset, size_t buffer_size, void *buffer,
+	    size_t *wrote_amount, bool *fsal_stable, struct io_info *info)
 {
 	fsal_status_t status;
 	int retval = 0;
@@ -999,6 +896,34 @@ fsal_status_t gpfs_write2(struct fsal_obj_handle *obj_hdl,
 	return status;
 }
 
+static fsal_status_t
+gpfs_commit_fd(int my_fd, struct fsal_obj_handle *obj_hdl, off_t offset,
+	       size_t len)
+{
+	struct gpfs_fsal_obj_handle *myself =
+		container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
+	struct fsync_arg arg = {0};
+	verifier4 writeverf = {0};
+	int retval;
+
+	assert(my_fd >= 0);
+
+	arg.mountdirfd = my_fd;
+	arg.handle = myself->handle;
+	arg.offset = offset;
+	arg.length = len;
+	arg.verifier4 = (int32_t *) &writeverf;
+
+	if (gpfs_ganesha(OPENHANDLE_FSYNC, &arg) == -1) {
+		retval = errno;
+		if (retval == EUNATCH)
+			LogFatal(COMPONENT_FSAL, "GPFS Returned EUNATCH");
+		return fsalstat(posix2fsal_error(retval), retval);
+	}
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
 /**
  * @brief Commit written data
  *
@@ -1016,9 +941,8 @@ fsal_status_t gpfs_write2(struct fsal_obj_handle *obj_hdl,
  * @return FSAL status.
  */
 
-fsal_status_t gpfs_commit2(struct fsal_obj_handle *obj_hdl,
-			  off_t offset,
-			  size_t len)
+fsal_status_t
+gpfs_commit2(struct fsal_obj_handle *obj_hdl, off_t offset, size_t len)
 {
 	fsal_status_t status;
 	struct gpfs_fsal_obj_handle *myself;
@@ -1232,162 +1156,6 @@ gpfs_lock_op2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 }
 
 /**
- *  @brief GPFS write command
- *
- *  @param obj_hdl FSAL object handle
- *  @param offset Offset
- *  @param buffer_size Size of buffer
- *  @param buffer void reference to buffer
- *  @param write_amount reference to amount written
- *  @param fsal_stable FSAL stable
- *  @return FSAL status
- *
- *  concurrency (locks) is managed in cache_inode_*
- */
-fsal_status_t
-gpfs_write(struct fsal_obj_handle *obj_hdl, uint64_t offset, size_t buffer_size,
-	   void *buffer, size_t *write_amount, bool *fsal_stable)
-{
-	struct gpfs_filesystem *gpfs_fs;
-	struct gpfs_fsal_obj_handle *myself =
-		container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
-
-	assert(myself->u.file.fd.fd >= 0 &&
-	       myself->u.file.fd.openflags != FSAL_O_CLOSED);
-	gpfs_fs = obj_hdl->fs->private_data;
-	return GPFSFSAL_write(myself->u.file.fd.fd, offset, buffer_size, buffer,
-			      write_amount, fsal_stable, op_ctx,
-			      gpfs_fs->root_fd);
-}
-
-fsal_status_t
-gpfs_write_fd(int my_fd, struct fsal_obj_handle *obj_hdl, uint64_t offset,
-	      size_t buffer_size, void *buffer, size_t *write_amount,
-	      bool *fsal_stable)
-{
-	struct gpfs_filesystem *gpfs_fs;
-	assert(my_fd >= 0);
-
-	gpfs_fs = obj_hdl->fs->private_data;
-	return GPFSFSAL_write(my_fd, offset, buffer_size, buffer,
-			     write_amount, fsal_stable, op_ctx,
-			     gpfs_fs->root_fd);
-}
-
-/**
- *  @brief GPFS deallocate command
- *
- *  @param obj_hdl FSAL object handle
- *  @param offset Offset
- *  @param length Length
- *  @return FSAL status
- *
- *  concurrency (locks) is managed in cache_inode_*
- */
-static fsal_status_t
-gpfs_deallocate(struct fsal_obj_handle *obj_hdl, uint64_t offset,
-		uint64_t length)
-{
-	struct gpfs_fsal_obj_handle *myself =
-		container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
-
-	assert(myself->u.file.fd.fd >= 0 &&
-	       myself->u.file.fd.openflags != FSAL_O_CLOSED);
-
-	return GPFSFSAL_alloc(myself->u.file.fd.fd, offset, length, false);
-}
-
-static fsal_status_t
-gpfs_deallocate_fd(int my_fd,
-	uint64_t offset, uint64_t length)
-{
-	assert(my_fd >= 0);
-
-	return GPFSFSAL_alloc(my_fd, offset, length, false);
-}
-
-/**
- *  @brief GPFS allocate command
- *
- *  @param obj_hdl FSAL object handle
- *  @param offset Offset
- *  @param length Length
- *  @return FSAL status
- *
- *  concurrency (locks) is managed in cache_inode_*
- */
-static fsal_status_t
-gpfs_allocate(struct fsal_obj_handle *obj_hdl, uint64_t offset, uint64_t length)
-{
-	struct gpfs_fsal_obj_handle *myself =
-		container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
-
-	assert(myself->u.file.fd.fd >= 0 &&
-	       myself->u.file.fd.openflags != FSAL_O_CLOSED);
-
-	return GPFSFSAL_alloc(myself->u.file.fd.fd, offset, length, true);
-}
-
-static fsal_status_t
-gpfs_allocate_fd(int my_fd, uint64_t offset, uint64_t length)
-{
-	assert(my_fd >= 0);
-
-	return GPFSFSAL_alloc(my_fd, offset, length, true);
-}
-
-/**
- *  @brief GPFS write plus command
- *
- *  @param obj_hdl FSAL object handle
- *  @param offset Offset
- *  @param buffer_size Size of buffer
- *  @param buffer void reference to buffer
- *  @param write_amount reference to amount written
- *  @param fsal_stable FSAL stable
- *  @param io_info I/O information
- *  @return FSAL status
- *
- *  default case not supported
- */
-fsal_status_t
-gpfs_write_plus(struct fsal_obj_handle *obj_hdl, uint64_t offset,
-		size_t buffer_size, void *buffer, size_t *write_amount,
-		bool *fsal_stable, struct io_info *info)
-{
-	switch (info->io_content.what) {
-	case NFS4_CONTENT_DATA:
-		return gpfs_write(obj_hdl, offset, buffer_size, buffer,
-				  write_amount, fsal_stable);
-	case NFS4_CONTENT_DEALLOCATE:
-		return gpfs_deallocate(obj_hdl, offset, buffer_size);
-	case NFS4_CONTENT_ALLOCATE:
-		return gpfs_allocate(obj_hdl, offset, buffer_size);
-	default:
-		return fsalstat(ERR_FSAL_UNION_NOTSUPP, 0);
-	}
-}
-
-fsal_status_t
-gpfs_write_plus_fd(int my_fd, uint64_t offset,
-		   size_t buffer_size, void *buffer, size_t *write_amount,
-		   bool *fsal_stable, struct io_info *info, int expfd)
-{
-	switch (info->io_content.what) {
-	case NFS4_CONTENT_DATA:
-		return GPFSFSAL_write(my_fd, offset, buffer_size, buffer,
-				     write_amount, fsal_stable, op_ctx,
-				     expfd);
-	case NFS4_CONTENT_DEALLOCATE:
-		return gpfs_deallocate_fd(my_fd, offset, buffer_size);
-	case NFS4_CONTENT_ALLOCATE:
-		return gpfs_allocate_fd(my_fd, offset, buffer_size);
-	default:
-		return fsalstat(ERR_FSAL_UNION_NOTSUPP, 0);
-	}
-}
-
-/**
  *  @brief GPFS seek command
  *
  *  @param obj_hdl FSAL object handle
@@ -1470,74 +1238,6 @@ gpfs_io_advise(struct fsal_obj_handle *obj_hdl, struct io_hints *hints)
 }
 
 /**
- *  @brief GPFS commit command
- *
- *  @param obj_hdl FSAL object handle
- *  @param offset Offset
- *  @param buffer_size Size of buffer
- *  @return FSAL status
- *
- *  @brief Commit a file range to storage.
- *
- *  for right now, fsync will have to do.
- */
-fsal_status_t
-gpfs_commit(struct fsal_obj_handle *obj_hdl, off_t offset, size_t len)
-{
-	struct gpfs_fsal_obj_handle *myself =
-		container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
-	struct fsync_arg arg = {0};
-	verifier4 writeverf = {0};
-	int retval;
-
-	assert(myself->u.file.fd.fd >= 0 &&
-	       myself->u.file.fd.openflags != FSAL_O_CLOSED);
-
-	arg.mountdirfd = myself->u.file.fd.fd;
-	arg.handle = myself->handle;
-	arg.offset = offset;
-	arg.length = len;
-	arg.verifier4 = (int32_t *) &writeverf;
-
-	if (gpfs_ganesha(OPENHANDLE_FSYNC, &arg) == -1) {
-		retval = errno;
-		if (retval == EUNATCH)
-			LogFatal(COMPONENT_FSAL, "GPFS Returned EUNATCH");
-		return fsalstat(posix2fsal_error(retval), retval);
-	}
-
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
-}
-
-fsal_status_t
-gpfs_commit_fd(int my_fd, struct fsal_obj_handle *obj_hdl,
-		off_t offset, size_t len)
-{
-	struct gpfs_fsal_obj_handle *myself =
-		container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
-	struct fsync_arg arg = {0};
-	verifier4 writeverf = {0};
-	int retval;
-
-	assert(my_fd >= 0);
-
-	arg.mountdirfd = my_fd;
-	arg.handle = myself->handle;
-	arg.offset = offset;
-	arg.length = len;
-	arg.verifier4 = (int32_t *) &writeverf;
-
-	if (gpfs_ganesha(OPENHANDLE_FSYNC, &arg) == -1) {
-		retval = errno;
-		if (retval == EUNATCH)
-			LogFatal(COMPONENT_FSAL, "GPFS Returned EUNATCH");
-		return fsalstat(posix2fsal_error(retval), retval);
-	}
-
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
-}
-
-/**
  *  @brief Close the file if it is still open.
  *
  *  @param obj_hdl FSAL object handle
@@ -1578,8 +1278,8 @@ fsal_status_t gpfs_close(struct fsal_obj_handle *obj_hdl)
  * @return FSAL status.
  */
 
-fsal_status_t gpfs_close2(struct fsal_obj_handle *obj_hdl,
-			  struct state_t *state)
+fsal_status_t
+gpfs_close2(struct fsal_obj_handle *obj_hdl, struct state_t *state)
 {
 	struct gpfs_fsal_obj_handle *myself;
 	struct gpfs_fd *my_fd = (struct gpfs_fd *)(state + 1);
@@ -1629,9 +1329,9 @@ fsal_status_t gpfs_close2(struct fsal_obj_handle *obj_hdl,
  *
  * @returns a state structure.
  */
-struct state_t *gpfs_alloc_state(struct fsal_export *exp_hdl,
-				enum state_type state_type,
-				struct state_t *related_state)
+struct state_t *
+gpfs_alloc_state(struct fsal_export *exp_hdl, enum state_type state_type,
+		 struct state_t *related_state)
 {
 	struct state_t *state;
 	struct gpfs_fd *my_fd;

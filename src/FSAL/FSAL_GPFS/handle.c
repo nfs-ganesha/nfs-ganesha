@@ -832,19 +832,6 @@ static fsal_status_t listxattrs(struct fsal_obj_handle *obj_hdl,
 /*
  * NOTE: this is done under protection of the attributes rwlock in cache entry.
  */
-static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
-			      struct attrlist *attrs)
-{
-	fsal_status_t status;
-
-	status = GPFSFSAL_setattrs(obj_hdl, op_ctx, attrs);
-
-	return status;
-}
-
-/*
- * NOTE: this is done under protection of the attributes rwlock in cache entry.
- */
 fsal_status_t gpfs_setattr2(struct fsal_obj_handle *obj_hdl,
 				   bool bypass,
 				   struct state_t *state,
@@ -941,13 +928,23 @@ static void handle_to_key(struct fsal_obj_handle *obj_hdl,
 static void release(struct fsal_obj_handle *obj_hdl)
 {
 	struct gpfs_fsal_obj_handle *myself;
-	object_file_type_t type = obj_hdl->type;
-
-	LogFullDebug(COMPONENT_FSAL, "type %d", type);
-	if (type == REGULAR_FILE)
-		gpfs_close(obj_hdl);
+	const object_file_type_t type = obj_hdl->type;
 
 	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
+
+	LogFullDebug(COMPONENT_FSAL, "type %d", type);
+	if (type == REGULAR_FILE) {
+		PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
+
+		if (myself->u.file.fd.fd >= 0 &&
+		    myself->u.file.fd.openflags != FSAL_O_CLOSED) {
+			fsal_internal_close(myself->u.file.fd.fd, NULL, 0);
+			myself->u.file.fd.fd = -1;
+			myself->u.file.fd.openflags = FSAL_O_CLOSED;
+		}
+
+		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
+	}
 
 	fsal_obj_handle_fini(obj_hdl);
 
@@ -1010,20 +1007,13 @@ void gpfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->symlink = makesymlink;
 	ops->readlink = readsymlink;
 	ops->getattrs = getattrs;
-	ops->setattrs = setattrs;
 	ops->link = linkfile;
 	ops->rename = renamefile;
 	ops->unlink = file_unlink;
-	ops->reopen = gpfs_reopen;
 	ops->fs_locations = gpfs_fs_locations;
 	ops->status = gpfs_status;
-	ops->read = gpfs_read;
-	ops->read_plus = gpfs_read_plus;
-	ops->write = gpfs_write;
-	ops->write_plus = gpfs_write_plus;
 	ops->seek = gpfs_seek;
 	ops->io_advise = gpfs_io_advise;
-	ops->commit = gpfs_commit;
 	ops->share_op = share_op;
 	ops->close = gpfs_close;
 	ops->handle_digest = handle_digest;
