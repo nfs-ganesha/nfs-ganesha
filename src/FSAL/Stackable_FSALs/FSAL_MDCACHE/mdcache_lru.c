@@ -1344,12 +1344,15 @@ mdcache_lru_ref(mdcache_entry_t *entry, uint32_t flags)
 	mdcache_lru_t *lru = &entry->lru;
 	struct lru_q_lane *qlane = &LRU[lru->lane];
 	struct lru_q *q;
+#ifdef USE_LTTNG
+	int32_t refcnt =
+#endif
+		atomic_inc_int32_t(&entry->lru.refcnt);
 
-	if ((flags & LRU_REQ_INITIAL) == 0)
-		if (lru->flags & LRU_CLEANUP)
-			return fsalstat(ERR_FSAL_STALE, 0);
-
-	(void) atomic_inc_int32_t(&entry->lru.refcnt);
+#ifdef USE_LTTNG
+	tracepoint(mdcache, mdc_lru_ref,
+		   func, line, entry, refcnt);
+#endif
 
 	/* adjust LRU on initial refs */
 	if (flags & LRU_REQ_INITIAL) {

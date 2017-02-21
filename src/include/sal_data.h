@@ -354,11 +354,6 @@ union state_data {
 extern char all_zero[OTHERSIZE];
 extern char all_ones[OTHERSIZE];
 
-struct state_obj {
-	char digest[58];
-	size_t len;
-};
-
 /**
  * @brief Structure representing a single NFSv4 state
  *
@@ -380,7 +375,7 @@ struct state_t {
 	struct gsh_export *state_export; /**< Export this entry belongs to */
 	/* Don't re-order or move these next two.  They are used for hashing */
 	state_owner_t *state_owner;	/**< State Owner related to state */
-	struct state_obj state_obj;	/**< digest of owning object */
+	struct fsal_obj_handle *state_obj; /**< owning object */
 	struct fsal_export *state_exp;  /**< FSAL export */
 	union state_data state_data;
 	enum state_type state_type;
