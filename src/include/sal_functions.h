@@ -723,31 +723,11 @@ void state_del(state_t *state);
 
 static inline struct fsal_obj_handle *get_state_obj_ref(state_t *state)
 {
-	struct fsal_obj_handle *obj = NULL;
-	fsal_status_t fsal_status;
-	struct gsh_buffdesc fh_desc;
-	struct gsh_export *save_exp = op_ctx->ctx_export;
-	struct fsal_export *save_fsal = op_ctx->fsal_export;
-
-	if (state->state_export == NULL)
+	if (!state->state_obj)
 		return NULL;
 
-	/* Need to look up in the correct export */
-	op_ctx->ctx_export = state->state_export;
-	op_ctx->fsal_export = state->state_export->fsal_export;
-
-	fh_desc.addr = state->state_obj.digest;
-	fh_desc.len = state->state_obj.len;
-	fsal_status =
-	  state->state_export->fsal_export->exp_ops.create_handle(
-		state->state_export->fsal_export, &fh_desc, &obj, NULL);
-
-	op_ctx->ctx_export = save_exp;
-	op_ctx->fsal_export = save_fsal;
-
-	if (FSAL_IS_ERROR(fsal_status))
-		return NULL;
-	return obj;
+	state->state_obj->obj_ops.get_ref(state->state_obj);
+	return state->state_obj;
 }
 
 static inline struct gsh_export *get_state_export_ref(state_t *state)

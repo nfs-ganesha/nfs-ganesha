@@ -140,8 +140,7 @@ int compare_nlm_state(state_t *state1, state_t *state2)
 	return state1->state_type != state2->state_type ||
 	       state1->state_owner != state2->state_owner ||
 	       state1->state_export != state2->state_export ||
-	       memcmp(&state1->state_obj, &state2->state_obj,
-		      sizeof(state1->state_obj));
+	       state1->state_obj != state2->state_obj;
 }
 
 /**
@@ -390,12 +389,7 @@ int get_nlm_state(enum state_type state_type,
 	key.state_owner = state_owner;
 	key.state_export = op_ctx->ctx_export;
 	key.state_seqid = nsm_state;
-	/* Temporarily use buffkey */
-	buffkey.addr = &key.state_obj.digest;
-	buffkey.len = sizeof(key.state_obj.digest);
-	state_obj->obj_ops.handle_digest(state_obj, FSAL_DIGEST_NFSV4,
-					 &buffkey);
-	key.state_obj.len = buffkey.len;
+	key.state_obj = state_obj;
 
 	if (isFullDebug(COMPONENT_STATE)) {
 		display_nlm_state(&dspbuf, &key);
@@ -475,7 +469,7 @@ int get_nlm_state(enum state_type state_type,
 							 NULL);
 
 	/* Copy everything over */
-	memcpy(&state->state_obj, &key.state_obj, sizeof(state->state_obj));
+	state->state_obj = state_obj;
 	state->state_owner = state_owner;
 	state->state_export = op_ctx->ctx_export;
 	state->state_seqid = nsm_state;

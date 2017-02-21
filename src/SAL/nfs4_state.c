@@ -98,7 +98,6 @@ state_status_t _state_add_impl(struct fsal_obj_handle *obj,
 	state_status_t status = 0;
 	bool mutex_init = false;
 	struct state_t *openstate = NULL;
-	struct gsh_buffdesc fh_desc;
 
 	if (isFullDebug(COMPONENT_STATE) && pnew_state != NULL) {
 		display_stateid(&dspbuf, pnew_state);
@@ -166,10 +165,7 @@ state_status_t _state_add_impl(struct fsal_obj_handle *obj,
 	 */
 	pnew_state->state_export = op_ctx->ctx_export;
 	pnew_state->state_owner = owner_input;
-	fh_desc.addr = &pnew_state->state_obj.digest;
-	fh_desc.len = sizeof(pnew_state->state_obj.digest);
-	obj->obj_ops.handle_digest(obj, FSAL_DIGEST_NFSV4, &fh_desc);
-	pnew_state->state_obj.len = fh_desc.len;
+	pnew_state->state_obj = obj;
 
 	/* Add the state to the related hashtable */
 	if (!nfs4_State_Set(pnew_state)) {
@@ -389,7 +385,7 @@ void _state_del_locked(state_t *state, const char *func, int line)
 	glist_del(&state->state_list);
 	/* Put ref for this state entry */
 	obj->obj_ops.put_ref(obj);
-	memset(&state->state_obj, 0, sizeof(state->state_obj));
+	state->state_obj = NULL;
 	PTHREAD_MUTEX_unlock(&state->state_mutex);
 
 	if (obj->fsal->m_ops.support_ex(obj)) {

@@ -1356,15 +1356,7 @@ _mdcache_lru_ref(mdcache_entry_t *entry, uint32_t flags, const char *func,
 	struct lru_q_lane *qlane = &LRU[lru->lane];
 	struct lru_q *q;
 #ifdef USE_LTTNG
-	int32_t refcnt;
-#endif
-
-	if ((flags & LRU_REQ_INITIAL) == 0)
-		if (lru->flags & LRU_CLEANUP)
-			return fsalstat(ERR_FSAL_STALE, 0);
-
-#ifdef USE_LTTNG
-	refcnt =
+	int32_t refcnt =
 #endif
 		atomic_inc_int32_t(&entry->lru.refcnt);
 
