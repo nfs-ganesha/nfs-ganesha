@@ -145,20 +145,6 @@ fsal_status_t gpfs_merge(struct fsal_obj_handle *orig_hdl,
 	return status;
 }
 
-
-/**
- * @brief called with appropriate locks taken at the cache inode level
- *
- * @param obj_hdl FSAL object handle
- * @param openflags FSAL open flags
- * @return FSAL status
- */
-fsal_status_t
-gpfs_open(struct fsal_obj_handle *obj_hdl, fsal_openflags_t openflags)
-{
-	return gpfs_open_again(obj_hdl, openflags, false);
-}
-
 /**
  *  @brief called with appropriate locks taken at the cache inode level
  *
@@ -189,6 +175,144 @@ fsal_openflags_t gpfs_status(struct fsal_obj_handle *obj_hdl)
 		container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
 
 	return myself->u.file.fd.openflags;
+}
+
+static fsal_status_t
+open_by_handle(struct fsal_obj_handle *obj_hdl, struct state_t *state,
+	       fsal_openflags_t openflags, int posix_flags,
+	       fsal_verifier_t verifier, struct attrlist *attrs_out,
+	       enum fsal_create_mode createmode, bool *cpm_check)
+{
+	struct fsal_export *export = op_ctx->fsal_export;
+	struct gpfs_fsal_obj_handle *gpfs_hdl;
+	struct gpfs_filesystem *gpfs_fs = obj_hdl->fs->private_data;
+	fsal_status_t status;
+	const bool truncated = (posix_flags & O_TRUNC) != 0;
+	int *fd;
+
+	/* This can block over an I/O operation. */
+	PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
+
+	gpfs_hdl = container_of(obj_hdl, struct gpfs_fsal_obj_handle,
+				obj_handle);
+
+	if (state != NULL) {
+		struct gpfs_fd *my_fd = (struct gpfs_fd *)(state + 1);
+
+	       /* Prepare to take the share reservation, but only if we
+		* are called with a valid state (if state is NULL the
+		* caller is a stateless create such as NFS v3 CREATE).
+		*/
+
+		/* Check share reservation conflicts. */
+		status = check_share_conflict(&gpfs_hdl->u.file.share,
+					      openflags, false);
+
+		if (FSAL_IS_ERROR(status))
+			goto out;
+
+		/* Take the share reservation now by updating the counters. */
+		update_share_counters(&gpfs_hdl->u.file.share, FSAL_O_CLOSED,
+				      openflags);
+
+		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
+
+		fd = &my_fd->fd;
+		my_fd->openflags = openflags;
+	} else {
+		/* We need to use the global fd to continue. */
+		fd = &gpfs_hdl->u.file.fd.fd;
+		gpfs_hdl->u.file.fd.openflags = openflags;
+	}
+
+	status = GPFSFSAL_open(obj_hdl, op_ctx, posix_flags, fd, false);
+	if (FSAL_IS_ERROR(status)) {
+		if (state == NULL)
+			goto out;
+		else
+			goto undo_share;
+	}
+
+	if (attrs_out && (createmode >= FSAL_EXCLUSIVE || truncated)) {
+		/* Refresh the attributes */
+		status = GPFSFSAL_getattrs(export, gpfs_fs, op_ctx,
+					   gpfs_hdl->handle, attrs_out);
+
+		if (!FSAL_IS_ERROR(status)) {
+			LogFullDebug(COMPONENT_FSAL, "New size = %"PRIx64,
+				     attrs_out->filesize);
+
+			/* Now check verifier for exclusive */
+			if (createmode >= FSAL_EXCLUSIVE &&
+			    !check_verifier_attrlist(attrs_out, verifier))
+				/* Verifier didn't match, return EEXIST */
+				status = fsalstat(posix2fsal_error(EEXIST),
+						  EEXIST);
+		}
+	}
+
+	if (state == NULL) {
+		/* If no state, return status. If success, we haven't done
+		 * any permission check so ask the caller to do so.
+		 */
+		*cpm_check = !FSAL_IS_ERROR(status);
+		goto out;
+	}
+
+	if (!FSAL_IS_ERROR(status)) {
+		/* Return success. We haven't done any permission
+		 * check so ask the caller to do so.
+		 */
+		*cpm_check = true;
+		return status;
+	}
+
+	(void) fsal_internal_close(*fd, state->state_owner, 0);
+
+ undo_share:
+	/* On error we need to release our share reservation
+	 * and undo the update of the share counters.
+	 * This can block over an I/O operation.
+	 */
+	PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
+
+	update_share_counters(&gpfs_hdl->u.file.share, openflags,
+			      FSAL_O_CLOSED);
+ out:
+	PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
+
+	return status;
+}
+
+static fsal_status_t
+open_by_name(struct fsal_obj_handle *obj_hdl, struct state_t *state,
+	     const char *name, fsal_openflags_t openflags, int posix_flags,
+	     fsal_verifier_t verifier, struct attrlist *attrs_out,
+	     bool *cpm_check)
+{
+	struct fsal_obj_handle *temp = NULL;
+	fsal_status_t status;
+
+	/* We don't have open by name... */
+	status = obj_hdl->obj_ops.lookup(obj_hdl, name, &temp, NULL);
+
+	if (FSAL_IS_ERROR(status)) {
+		LogFullDebug(COMPONENT_FSAL, "lookup returned %s",
+			     fsal_err_txt(status));
+		return status;
+	}
+
+	status = open_by_handle(temp, state, openflags, posix_flags,
+				verifier, attrs_out, FSAL_NO_CREATE, cpm_check);
+
+	if (FSAL_IS_ERROR(status)) {
+		/* Release the object we found by lookup. */
+		temp->obj_ops.release(temp);
+		LogFullDebug(COMPONENT_FSAL, "open returned %s",
+			     fsal_err_txt(status));
+	}
+
+	return status;
 }
 
 /**
@@ -229,7 +353,7 @@ fsal_openflags_t gpfs_status(struct fsal_obj_handle *obj_hdl)
  * @param[in] openflags             Mode for open
  * @param[in] createmode            Mode for create
  * @param[in] name                  Name for file if being created or opened
- * @param[in] attrib_set            Attributes to set on created file
+ * @param[in] attr_set              Attributes to set on created file
  * @param[in] verifier              Verifier to use for exclusive create
  * @param[in,out] new_obj           Newly created object
  * @param[in,out] attrs_out         Newly created object attributes
@@ -237,165 +361,34 @@ fsal_openflags_t gpfs_status(struct fsal_obj_handle *obj_hdl)
  *
  * @return FSAL status.
  */
-fsal_status_t gpfs_open2(struct fsal_obj_handle *obj_hdl,
-			 struct state_t *state,
-			 fsal_openflags_t openflags,
-			 enum fsal_create_mode createmode,
-			 const char *name,
-			 struct attrlist *attrib_set,
-			 fsal_verifier_t verifier,
-			 struct fsal_obj_handle **new_obj,
-			 struct attrlist *attrs_out,
-			 bool *caller_perm_check)
+fsal_status_t
+gpfs_open2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
+	   fsal_openflags_t openflags, enum fsal_create_mode createmode,
+	   const char *name, struct attrlist *attr_set,
+	   fsal_verifier_t verifier, struct fsal_obj_handle **new_obj,
+	   struct attrlist *attrs_out, bool *caller_perm_check)
 {
-	int posix_flags = 0;
-	mode_t unix_mode;
-	fsal_status_t status = {0, 0};
-	struct gpfs_fd *my_fd = NULL;
-	struct gpfs_fsal_obj_handle *myself;
 	struct gpfs_fsal_obj_handle *hdl = NULL;
-	struct gpfs_file_handle fh;
-	bool truncated;
-	bool created = false;
 	struct fsal_export *export = op_ctx->fsal_export;
-	struct gpfs_filesystem *gpfs_fs = obj_hdl->fs->private_data;
+	struct gpfs_file_handle fh;
+	int posix_flags = 0;
+	bool created = false;
+	fsal_status_t status;
+	mode_t unix_mode;
 
-	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
-
-	if (name)
-		LogFullDebug(COMPONENT_FSAL, "got name %s", name);
-	else
-		LogFullDebug(COMPONENT_FSAL, "no name");
-
-	LogAttrlist(COMPONENT_FSAL, NIV_FULL_DEBUG,
-		    "attrs ", attrib_set, false);
-
-	if (state != NULL)
-		my_fd = (struct gpfs_fd *)(state + 1);
+	LogAttrlist(COMPONENT_FSAL, NIV_FULL_DEBUG, "attrs ", attr_set, false);
 
 	fsal2posix_openflags(openflags, &posix_flags);
 
-	truncated = (posix_flags & O_TRUNC) != 0;
-
-	if (createmode >= FSAL_EXCLUSIVE) {
+	if (createmode >= FSAL_EXCLUSIVE)
 		/* Now fixup attrs for verifier if exclusive create */
-		set_common_verifier(attrib_set, verifier);
-	}
+		set_common_verifier(attr_set, verifier);
 
-	if (name == NULL) {
-		/* This is an open by handle */
-		int *fd;
+	if (name == NULL)
+		return open_by_handle(obj_hdl, state, openflags, posix_flags,
+				      verifier, attrs_out, createmode,
+				      caller_perm_check);
 
-		if (state != NULL) {
-		       /* Prepare to take the share reservation, but only if we
-			* are called with a valid state (if state is NULL the
-			* caller is a stateless create such as NFS v3 CREATE).
-			*/
-
-			/* This can block over an I/O operation. */
-			PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
-
-			/* Check share reservation conflicts. */
-			status = check_share_conflict(&myself->u.file.share,
-						      openflags,
-						      false);
-
-			if (FSAL_IS_ERROR(status)) {
-				PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
-				return status;
-			}
-
-			/* Take the share reservation now by updating the
-			 * counters.
-			 */
-			update_share_counters(&myself->u.file.share,
-					      FSAL_O_CLOSED,
-					      openflags);
-
-			PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
-
-			fd = &my_fd->fd;
-			my_fd->openflags = openflags;
-		} else {
-			/* We need to use the global fd to continue, and take
-			 * the lock to protect it.
-			 */
-			fd = &myself->u.file.fd.fd;
-			myself->u.file.fd.openflags = openflags;
-			PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
-		}
-		status = GPFSFSAL_open(obj_hdl, op_ctx, posix_flags, fd, false);
-		if (FSAL_IS_ERROR(status)) {
-			if (state == NULL) {
-				/* Release the lock taken above, and return
-				 * since there is nothing to undo.
-				 */
-				PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
-				return status;
-			}
-			/* Error - need to release the share */
-			goto undo_share;
-		}
-		if (attrs_out && (createmode >= FSAL_EXCLUSIVE || truncated)) {
-			/* Refresh the attributes */
-			status = GPFSFSAL_getattrs(export, gpfs_fs, op_ctx,
-						   myself->handle, attrs_out);
-			if (!FSAL_IS_ERROR(status)) {
-				LogFullDebug(COMPONENT_FSAL,
-					     "New size = %"PRIx64,
-					     attrs_out->filesize);
-			}
-			/* Now check verifier for exclusive, but not for
-			 * FSAL_EXCLUSIVE_9P.
-			 */
-			if (!FSAL_IS_ERROR(status) &&
-			    createmode >= FSAL_EXCLUSIVE &&
-			    createmode != FSAL_EXCLUSIVE_9P &&
-			    !check_verifier_attrlist(attrs_out, verifier)) {
-				/* Verifier didn't match, return EEXIST */
-				status =
-				    fsalstat(posix2fsal_error(EEXIST), EEXIST);
-			}
-		}
-
-		if (state == NULL) {
-			/* If no state, release the lock taken above and return
-			 * status. If success, we haven't done any permission
-			 * check so ask the caller to do so.
-			 */
-			PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
-			*caller_perm_check = !FSAL_IS_ERROR(status);
-			return status;
-		}
-
-		if (!FSAL_IS_ERROR(status)) {
-			/* Return success. We haven't done any permission
-			 * check so ask the caller to do so.
-			 */
-			*caller_perm_check = true;
-			return status;
-		}
-
-		(void) fsal_internal_close(*fd, state->state_owner, 0);
-
- undo_share:
-
-		/* Can only get here with state not NULL and an error */
-
-		/* On error we need to release our share reservation
-		 * and undo the update of the share counters.
-		 * This can block over an I/O operation.
-		 */
-		PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
-
-		update_share_counters(&myself->u.file.share,
-				      openflags,
-				      FSAL_O_CLOSED);
-
-		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
-
-		return status;
-	}
 	/* In this path where we are opening by name, we can't check share
 	 * reservation yet since we don't have an object_handle yet. If we
 	 * indeed create the object handle (there is no race with another
@@ -404,43 +397,14 @@ fsal_status_t gpfs_open2(struct fsal_obj_handle *obj_hdl,
 	 * merged.
 	 */
 
-	if (createmode == FSAL_NO_CREATE) {
-		/* Non creation case, libgpfs doesn't have open by name so we
-		 * have to do a lookup and then handle as an open by handle.
-		 */
-		struct fsal_obj_handle *temp = NULL;
+	/* Non creation case, libgpfs doesn't have open by name so we
+	 * have to do a lookup and then handle as an open by handle.
+	 */
+	if (createmode == FSAL_NO_CREATE)
+		return open_by_name(obj_hdl, state, name, openflags,
+				    posix_flags, verifier, attrs_out,
+				    caller_perm_check);
 
-		/* We don't have open by name... */
-		status = obj_hdl->obj_ops.lookup(obj_hdl, name, &temp, NULL);
-
-		if (FSAL_IS_ERROR(status)) {
-			LogFullDebug(COMPONENT_FSAL,
-				     "lookup returned %s",
-				     fsal_err_txt(status));
-			return status;
-		}
-
-		/* Now call ourselves without name and attributes to open. */
-		status = obj_hdl->obj_ops.open2(temp, state, openflags,
-						FSAL_NO_CREATE, NULL, NULL,
-						verifier, new_obj,
-						attrs_out,
-						caller_perm_check);
-
-		if (FSAL_IS_ERROR(status)) {
-			/* Release the object we found by lookup. */
-			temp->obj_ops.release(temp);
-			LogFullDebug(COMPONENT_FSAL,
-				     "open returned %s",
-				     fsal_err_txt(status));
-		}
-
-		return status;
-	}
-
-	/* Only proceed here if this is a create */
-
-	/* Now add in O_CREAT and O_EXCL. */
 	posix_flags |= O_CREAT;
 
 	/* And if we are at least FSAL_GUARDED, do an O_EXCL create. */
@@ -448,13 +412,13 @@ fsal_status_t gpfs_open2(struct fsal_obj_handle *obj_hdl,
 		posix_flags |= O_EXCL;
 
 	/* Fetch the mode attribute to use in the openat system call. */
-	unix_mode = fsal2unix_mode(attrib_set->mode) &
-	    ~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
+	unix_mode = fsal2unix_mode(attr_set->mode) &
+			~export->exp_ops.fs_umask(export);
 
 	/* Don't set the mode if we later set the attributes */
-	FSAL_UNSET_MASK(attrib_set->valid_mask, ATTR_MODE);
+	FSAL_UNSET_MASK(attr_set->valid_mask, ATTR_MODE);
 
-	if (createmode == FSAL_UNCHECKED && (attrib_set->valid_mask != 0)) {
+	if (createmode == FSAL_UNCHECKED && (attr_set->valid_mask != 0)) {
 		/* If we have FSAL_UNCHECKED and want to set more attributes
 		 * than the mode, we attempt an O_EXCL create first, if that
 		 * succeeds, then we will be allowed to set the additional
@@ -467,23 +431,26 @@ fsal_status_t gpfs_open2(struct fsal_obj_handle *obj_hdl,
 	status = GPFSFSAL_create2(obj_hdl, name, op_ctx, unix_mode, &fh,
 				  posix_flags, attrs_out);
 
-	if (status.major == ERR_FSAL_EXIST && createmode == FSAL_UNCHECKED) {
-		/* We tried to create O_EXCL to set attributes and failed.
-		 * Remove O_EXCL and retry, also remember not to set attributes.
-		 * We still try O_CREAT again just in case file disappears out
-		 * from under us.
+	if (status.major == ERR_FSAL_EXIST && createmode == FSAL_UNCHECKED &&
+	    (posix_flags & O_EXCL) != 0) {
+		/* If we tried to create O_EXCL to set attributes and
+		 * failed. Remove O_EXCL and retry, also remember not
+		 * to set attributes. We still try O_CREAT again just
+		 * in case file disappears out from under us.
 		 *
-		 * Note that because we have dropped O_EXCL, later on we will
-		 * not assume we created the file, and thus will not set
-		 * additional attributes. We don't need to separately track
-		 * the condition of not wanting to set attributes.
+		 * Note that because we have dropped O_EXCL, later on we
+		 * will not assume we created the file, and thus will
+		 * not set additional attributes. We don't need to
+		 * separately track the condition of not wanting to set
+		 * attributes.
 		 */
 		posix_flags &= ~O_EXCL;
 		status = GPFSFSAL_create2(obj_hdl, name, op_ctx, unix_mode, &fh,
 					  posix_flags, attrs_out);
-		if (FSAL_IS_ERROR(status))
-			return status;
 	}
+
+	if (FSAL_IS_ERROR(status))
+		return status;
 
 	/* Remember if we were responsible for creating the file.
 	 * Note that in an UNCHECKED retry we MIGHT have re-created the
@@ -498,8 +465,7 @@ fsal_status_t gpfs_open2(struct fsal_obj_handle *obj_hdl,
 	*caller_perm_check = false;
 
 	/* allocate an obj_handle and fill it up */
-	hdl = alloc_handle(&fh, obj_hdl->fs, attrs_out,
-				NULL, op_ctx->fsal_export);
+	hdl = alloc_handle(&fh, obj_hdl->fs, attrs_out, NULL, export);
 	if (hdl == NULL) {
 		status = fsalstat(posix2fsal_error(ENOMEM), ENOMEM);
 		goto fileerr;
@@ -507,7 +473,7 @@ fsal_status_t gpfs_open2(struct fsal_obj_handle *obj_hdl,
 
 	*new_obj = &hdl->obj_handle;
 
-	if (created && attrib_set->valid_mask != 0) {
+	if (created && attr_set->valid_mask != 0) {
 		/* Set attributes using our newly opened file descriptor as the
 		 * share_fd if there are any left to set (mode and truncate
 		 * have already been handled).
@@ -515,27 +481,21 @@ fsal_status_t gpfs_open2(struct fsal_obj_handle *obj_hdl,
 		 * Note that we only set the attributes if we were responsible
 		 * for creating the file.
 		 */
-		status = (*new_obj)->obj_ops.setattr2(*new_obj,
-						      false,
-						      state,
-						      attrib_set);
-		if (FSAL_IS_ERROR(status)) {
-			/* Release the handle we just allocated. */
-			(*new_obj)->obj_ops.release(*new_obj);
-			*new_obj = NULL;
+		status = (*new_obj)->obj_ops.setattr2(*new_obj, false, state,
+						      attr_set);
+		if (FSAL_IS_ERROR(status))
 			goto fileerr;
-		}
+
 		if (attrs_out != NULL) {
 			status = (*new_obj)->obj_ops.getattrs(*new_obj,
 							      attrs_out);
 			if (FSAL_IS_ERROR(status) &&
-			    (attrs_out->request_mask & ATTR_RDATTR_ERR) == 0) {
+			    (attrs_out->request_mask & ATTR_RDATTR_ERR) == 0)
 				/* Get attributes failed and caller expected
 				 * to get the attributes. Otherwise continue
 				 * with attrs_out indicating ATTR_RDATTR_ERR.
 				 */
 				goto fileerr;
-			}
 		}
 	}
 
@@ -549,8 +509,7 @@ fsal_status_t gpfs_open2(struct fsal_obj_handle *obj_hdl,
 		PTHREAD_RWLOCK_wrlock(&(*new_obj)->obj_lock);
 
 		/* Take the share reservation now by updating the counters. */
-		update_share_counters(&hdl->u.file.share,
-				      FSAL_O_CLOSED,
+		update_share_counters(&hdl->u.file.share, FSAL_O_CLOSED,
 				      openflags);
 
 		PTHREAD_RWLOCK_unlock(&(*new_obj)->obj_lock);
@@ -558,6 +517,11 @@ fsal_status_t gpfs_open2(struct fsal_obj_handle *obj_hdl,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
  fileerr:
+	if (hdl != NULL) {
+		/* Release the handle we just allocated. */
+		(*new_obj)->obj_ops.release(*new_obj);
+		*new_obj = NULL;
+	}
 
 	if (created) {
 		/* Remove the file we just created */

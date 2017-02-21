@@ -1014,7 +1014,6 @@ void gpfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->link = linkfile;
 	ops->rename = renamefile;
 	ops->unlink = file_unlink;
-	ops->open = gpfs_open;
 	ops->reopen = gpfs_reopen;
 	ops->fs_locations = gpfs_fs_locations;
 	ops->status = gpfs_status;
