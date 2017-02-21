@@ -652,7 +652,7 @@ int nfs_rpc_create_chan_v41(nfs41_session_t *session, int num_sec_parms,
 	 */
 	chan->clnt = clnt_vc_create_svc(session->xprt, session->cb_program,
 					NFS_CB /* Errata ID: 2291 */,
-					SVC_VC_CREATE_BOTHWAYS);
+					CLNT_CREATE_FLAG_NONE);
 
 	if (!chan->clnt) {
 		code = EINVAL;
