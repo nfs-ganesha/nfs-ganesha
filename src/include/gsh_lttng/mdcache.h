@@ -132,9 +132,29 @@ TRACEPOINT_EVENT(
 	)
 )
 
+/**
+ * @brief Trace a alloc of a new entry
+ *
+ * @param[in] entry	Address of entry
+ */
+TRACEPOINT_EVENT(
+	mdcache,
+	mdc_lru_get,
+	TP_ARGS(const char *, function,
+		int, line,
+		void *, entry,
+		int32_t, refcnt),
+	TP_FIELDS(
+		ctf_string(function, function)
+		ctf_integer(int, line, line)
+		ctf_integer_hex(void *, entry, entry)
+		ctf_integer(int32_t, refcnt, refcnt)
+	)
+)
+
 TRACEPOINT_LOGLEVEL(
 	mdcache,
-	mdc_lru_reap,
+	mdc_lru_alloc,
 	TRACE_INFO)
 
 /**
@@ -185,6 +205,83 @@ TRACEPOINT_EVENT(
 TRACEPOINT_LOGLEVEL(
 	mdcache,
 	mdc_lru_remove,
+	TRACE_INFO)
+
+/**
+ * @brief Trace killing of entry
+ *
+ * @param[in] entry	Address of entry
+ */
+TRACEPOINT_EVENT(
+	mdcache,
+	mdc_kill_entry,
+	TP_ARGS(const char *, function,
+		int, line,
+		void *, entry,
+		int32_t, refcnt,
+		int32_t, freed),
+	TP_FIELDS(
+		ctf_string(function, function)
+		ctf_integer(int, line, line)
+		ctf_integer_hex(void *, entry, entry)
+		ctf_integer(int32_t, refcnt, refcnt)
+		ctf_integer(int32_t, freed, freed)
+	)
+)
+
+TRACEPOINT_LOGLEVEL(
+	mdcache,
+	mdc_kill_entry,
+	TRACE_INFO)
+
+/**
+ * @brief Trace readdir cache populate
+ *
+ * @param[in] entry	Address of entry
+ */
+TRACEPOINT_EVENT(
+	mdcache,
+	mdc_readdir_populate,
+	TP_ARGS(const char *, function,
+		int, line,
+		void *, entry,
+		int32_t, refcnt),
+	TP_FIELDS(
+		ctf_string(function, function)
+		ctf_integer(int, line, line)
+		ctf_integer_hex(void *, entry, entry)
+		ctf_integer(int32_t, refcnt, refcnt)
+	)
+)
+
+TRACEPOINT_LOGLEVEL(
+	mdcache,
+	mdc_readdir_populate,
+	TRACE_INFO)
+
+/**
+ * @brief Trace readdir
+ *
+ * @param[in] entry	Address of entry
+ */
+TRACEPOINT_EVENT(
+	mdcache,
+	mdc_readdir,
+	TP_ARGS(const char *, function,
+		int, line,
+		void *, entry,
+		int32_t, refcnt),
+	TP_FIELDS(
+		ctf_string(function, function)
+		ctf_integer(int, line, line)
+		ctf_integer_hex(void *, entry, entry)
+		ctf_integer(int32_t, refcnt, refcnt)
+	)
+)
+
+TRACEPOINT_LOGLEVEL(
+	mdcache,
+	mdc_readdir,
 	TRACE_INFO)
 
 #endif /* GANESHA_LTTNG_MDCACHE_TP_H */

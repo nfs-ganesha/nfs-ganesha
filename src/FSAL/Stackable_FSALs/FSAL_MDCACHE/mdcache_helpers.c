@@ -49,6 +49,9 @@
 #include "mdcache_lru.h"
 #include "mdcache_hash.h"
 #include "mdcache_avl.h"
+#ifdef USE_LTTNG
+#include "gsh_lttng/mdcache.h"
+#endif
 
 static inline bool trust_negative_cache(mdcache_entry_t *parent)
 {
@@ -950,6 +953,10 @@ fsal_status_t mdc_add_cache(mdcache_entry_t *mdc_parent,
 	if (FSAL_IS_ERROR(status))
 		return status;
 
+#ifdef USE_LTTNG
+	tracepoint(mdcache, mdc_readdir_populate,
+		   __func__, __LINE__, new_entry, new_entry->lru.refcnt);
+#endif
 	LogFullDebug(COMPONENT_CACHE_INODE,
 		     "Created entry %p FSAL %s for %s",
 		     new_entry, new_entry->sub_handle->fsal->name, name);
@@ -1164,6 +1171,8 @@ out:
  * @param[in]     name		Name of entry to find
  * @param[out]    new_entry	New entry to return;
  * @param[in,out] attrs_out     Optional attributes for entry
+ *
+ * @note This returns an INITIAL ref'd entry on success
  *
  * @return FSAL status
  */
@@ -2989,6 +2998,10 @@ _mdcache_kill_entry(mdcache_entry_t *entry,
 	}
 
 	freed = cih_remove_checked(entry); /* !reachable, drop sentinel ref */
+#ifdef USE_LTTNG
+	tracepoint(mdcache, mdc_kill_entry,
+		   function, line, entry, entry->lru.refcnt, freed);
+#endif
 
 	if (!freed) {
 		/* queue for cleanup */

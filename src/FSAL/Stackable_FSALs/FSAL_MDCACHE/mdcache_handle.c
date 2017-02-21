@@ -765,6 +765,10 @@ static fsal_status_t mdcache_readdir(struct fsal_obj_handle *dir_hdl,
 			goto unlock_dir;
 		}
 
+#ifdef USE_LTTNG
+	tracepoint(mdcache, mdc_readdir,
+		   __func__, __LINE__, entry, entry->lru.refcnt);
+#endif
 		cb_result = cb(dirent->name, &entry->obj_handle, &attrs,
 			       dir_state, dirent->hk.k);
 

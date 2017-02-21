@@ -1172,7 +1172,7 @@ mdcache_entry_t *mdcache_lru_get(void)
 	nentry->lru.lane = lru_lane_of_entry(nentry);
 
 #ifdef USE_LTTNG
-	tracepoint(mdcache, mdc_lru_ref,
+	tracepoint(mdcache, mdc_lru_get,
 		   __func__, __LINE__, nentry, nentry->lru.refcnt);
 #endif
 	/* Enqueue. */
