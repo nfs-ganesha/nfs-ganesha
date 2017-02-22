@@ -725,7 +725,7 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 			/* An error occured, we do not manage the other requests
 			 * in the COMPOUND, this may be a regular behavior
 			 */
-			LogDebug(COMPONENT_NFS_V4,
+			LogInfo(COMPONENT_NFS_V4,
 				 "Status of %s in position %d = %s",
 				 optabv4[opcode].name, i,
 				 nfsstat4_to_str(status));
@@ -799,9 +799,30 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		PTHREAD_MUTEX_unlock(&data.preserved_clientid->cid_mutex);
 	}
 
-	if (status != NFS4_OK)
-		LogDebug(COMPONENT_NFS_V4, "End status = %s lastindex = %d",
+	if (status != NFS4_OK) {
+		if (likely(component_log_level[COMPONENT_NFS_V4] < NIV_DEBUG)) {
+			int j;
+
+			LogInfo(COMPONENT_NFS_V4,
+					"COMPOUND: There are %d operations",
+					argarray_len);
+			for (j = 0; j < argarray_len; j++) {
+				opcode = argarray[j].argop;
+
+				/* Handle opcode overflow */
+				if (opcode > LastOpcode[compound4_minor])
+					opcode = 0;
+
+				LogInfo(COMPONENT_NFS_V4,
+						"Request %d: opcode %d is %s",
+						j, argarray[j].argop,
+						optabv4[opcode].name);
+			}
+		}
+
+		LogInfo(COMPONENT_NFS_V4, "End status = %s lastindex = %d",
 			 nfsstat4_to_str(status), i);
+	}
 
 	compound_data_Free(&data);
 
