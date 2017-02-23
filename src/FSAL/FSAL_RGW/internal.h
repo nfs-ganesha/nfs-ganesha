@@ -46,7 +46,7 @@
 
 
 #if ((LIBRGW_FILE_VER_MAJOR != 1) || (LIBRGW_FILE_VER_MINOR < 1) || \
-	(LIBRGW_FILE_VER_EXTRA < 1))
+	(LIBRGW_FILE_VER_EXTRA < 2))
 #error rados/rgw_file.h version unsupported (require >= 1.1.1)
 #endif
 
