@@ -179,6 +179,7 @@ static int nfs4_mds_putfh(compound_data_t *data)
 
 	/* update _ctx fields needed by nfs4_export_check_access */
 	op_ctx->ctx_export = exporting;
+	op_ctx->fsal_export = export = exporting->fsal_export;
 
 	if (changed) {
 		int status;
@@ -192,7 +193,6 @@ static int nfs4_mds_putfh(compound_data_t *data)
 		}
 	}
 
-	op_ctx->fsal_export = export = exporting->fsal_export;
 	fh_desc.len = v4_handle->fs_len;
 	fh_desc.addr = &v4_handle->fsopaque;
 
