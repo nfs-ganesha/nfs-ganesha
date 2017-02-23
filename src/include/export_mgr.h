@@ -127,6 +127,9 @@ struct gsh_export {
 
 	uint8_t export_status;		/*< current condition */
 	bool has_pnfs_ds;		/*< id_servers matches export_id */
+
+	/** Superuser uid */
+	uid_t superuser_uid;
 };
 
 void export_pkginit(void);

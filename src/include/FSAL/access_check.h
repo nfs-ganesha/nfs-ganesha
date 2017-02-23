@@ -17,6 +17,9 @@ fsal_status_t fsal_test_access(struct fsal_obj_handle *obj_hdl,
 			       fsal_accessflags_t *allowed,
 			       fsal_accessflags_t *denied);
 
+fsal_status_t fsal_super_user(struct fsal_obj_handle *obj_hdl,
+				uid_t uid, gid_t gid, bool *superuser);
+
 int display_fsal_v4mask(struct display_buffer *dspbuf, fsal_aceperm_t v4mask,
 			bool is_dir);
 

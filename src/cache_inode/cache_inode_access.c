@@ -225,11 +225,19 @@ cache_inode_check_setattr_perms(cache_entry_t *entry,
 
 	/* Shortcut, if current user is root, then we can just bail out with
 	 * success. */
-	if (creds->caller_uid == 0) {
-		note = " (Ok for root user)";
+	struct fsal_obj_handle *pfsal_handle = entry->obj_handle;
+
+	bool superuser = false;
+	fsal_status_t ret =
+		pfsal_handle->obj_ops.super_user(
+					pfsal_handle,
+					creds->caller_uid,
+					creds->caller_gid,
+					&superuser);
+	if (!FSAL_IS_ERROR(ret) && superuser) {
+		note = " (Ok for superuser)";
 		goto out;
 	}
-
 	not_owner = (creds->caller_uid != entry->obj_handle->attrs->owner);
 
 	/* Only ownership change need to be checked for owner */
