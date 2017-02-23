@@ -45,13 +45,13 @@ gpfs_open_func(struct fsal_obj_handle *obj_hdl, fsal_openflags_t openflags,
 	struct gpfs_fd *my_fd = (struct gpfs_fd *)fd;
 	int posix_flags = 0;
 
-	my_fd->fd = -1;
 	fsal2posix_openflags(openflags, &posix_flags);
 
 	status = GPFSFSAL_open(obj_hdl, op_ctx, posix_flags, &my_fd->fd, false);
-	if (FSAL_IS_ERROR(status) == false)
-		my_fd->openflags = openflags;
+	if (FSAL_IS_ERROR(status))
+		return status;
 
+	my_fd->openflags = openflags;
 	LogFullDebug(COMPONENT_FSAL, "new fd %d", my_fd->fd);
 
 	return status;
@@ -582,20 +582,13 @@ fsal_status_t
 gpfs_reopen2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 	     fsal_openflags_t openflags)
 {
-	struct gpfs_fd fd, *my_fd = &fd, *my_share_fd;
-	struct gpfs_fsal_obj_handle *myself;
-	fsal_status_t status = {0, 0};
-	fsal_openflags_t old_openflags;
+	struct gpfs_fd *my_share_fd = (struct gpfs_fd *)(state + 1);
+	fsal_status_t status;
 	int posix_flags = 0;
-
-	my_share_fd = (struct gpfs_fd *)(state + 1);
-
-	memset(my_fd, 0, sizeof(*my_fd));
-	fd.fd = -1;
-
-	myself  = container_of(obj_hdl,
-			       struct gpfs_fsal_obj_handle,
-			       obj_handle);
+	int my_fd = -1;
+	struct fsal_share *share = &container_of(obj_hdl,
+						 struct gpfs_fsal_obj_handle,
+						 obj_handle)->u.file.share;
 
 	if (obj_hdl->fsal != obj_hdl->fs->fsal) {
 		LogDebug(COMPONENT_FSAL,
@@ -607,32 +600,30 @@ gpfs_reopen2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 	/* This can block over an I/O operation. */
 	PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
 
-	old_openflags = my_share_fd->openflags;
-
 	/* We can conflict with old share, so go ahead and check now. */
-	status = check_share_conflict(&myself->u.file.share, openflags, false);
+	status = check_share_conflict(share, openflags, false);
 
 	if (FSAL_IS_ERROR(status)) {
 		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
-
 		return status;
 	}
+
 	/* Set up the new share so we can drop the lock and not have a
 	 * conflicting share be asserted, updating the share counters.
 	 */
-	update_share_counters(&myself->u.file.share, old_openflags, openflags);
+	update_share_counters(share, my_share_fd->openflags, openflags);
 
 	PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
 	fsal2posix_openflags(openflags, &posix_flags);
 
-	status = GPFSFSAL_open(obj_hdl, op_ctx, posix_flags, &fd.fd, false);
+	status = GPFSFSAL_open(obj_hdl, op_ctx, posix_flags, &my_fd, false);
 	if (!FSAL_IS_ERROR(status)) {
 		/* Close the existing file descriptor and copy the new
 		 * one over.
 		 */
 		fsal_internal_close(my_share_fd->fd, NULL, 0);
-		my_share_fd->fd = fd.fd;
+		my_share_fd->fd = my_fd;
 		my_share_fd->openflags = openflags;
 	} else {
 		/* We had a failure on open - we need to revert the share.
@@ -640,12 +631,11 @@ gpfs_reopen2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 		 */
 		PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
 
-		update_share_counters(&myself->u.file.share,
-				      openflags,
-				      old_openflags);
+		update_share_counters(share, openflags, my_share_fd->openflags);
 
 		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 	}
+
 	return status;
 }
 
