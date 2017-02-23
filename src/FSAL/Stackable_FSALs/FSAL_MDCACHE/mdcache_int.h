@@ -39,6 +39,7 @@
 #include "sal_data.h"
 #include "fsal_up.h"
 #include "fsal_convert.h"
+#include "display.h"
 
 typedef struct mdcache_fsal_obj_handle mdcache_entry_t;
 
@@ -68,6 +69,8 @@ typedef struct mdcache_key {
 	void *fsal;		/*< sub-FSAL module */
 	struct gsh_buffdesc kv;		/*< fsal handle */
 } mdcache_key_t;
+
+int display_mdcache_key(struct display_buffer *dspbuf, mdcache_key_t *key);
 
 static inline int mdcache_key_cmp(const struct mdcache_key *k1,
 				  const struct mdcache_key *k2)
@@ -258,6 +261,8 @@ struct mdcache_fsal_obj_handle {
 	union mdcache_fsobj {
 		struct state_hdl hdl;
 		struct {
+			/** List of chunks in this directory, not ordered */
+			struct glist_head chunks;
 			/** @todo FSF
 			 *
 			 * This is somewhat fragile, however, a reorganization
@@ -277,16 +282,47 @@ struct mdcache_fsal_obj_handle {
 			uint32_t nbactive;
 			/** The parent of this directory ('..') */
 			mdcache_key_t parent;
+			/** The first dirent cookie in this directory.
+			 *  0 if not known.
+			 */
+			fsal_cookie_t first_ck;
 			struct {
-				/** Children */
+				/** Children by name hash */
 				struct avltree t;
-				/** Persist cookies */
+				/** Persist cookies for deleted entries */
 				struct avltree c;
+				/** Table of dirents by FSAL cookie */
+				struct avltree ck;
+				/** Table of dirents in sorted order. */
+				struct avltree sorted;
 				/** Heuristic. Expect 0. */
 				uint32_t collisions;
 			} avl;
 		} fsdir;		/**< DIRECTORY data */
 	} fsobj;
+};
+
+struct dir_chunk {
+	/** This chunk is part of a directory */
+	struct glist_head chunks;
+	/** List of dirents in this chunk */
+	struct glist_head dirents;
+	/** Directory this chunk belongs to */
+	struct mdcache_fsal_obj_handle *parent;
+	/** AVL tree for sorted dirents */
+	struct avltree dirents_avl;
+	/** The previous chunk, this pointer is only de-referenced during
+	 *  chunk population (where the content_lock prevents the previous
+	 *  chunk from going invalid), or used to double check but not
+	 *  de-referenced.
+	 */
+	struct dir_chunk *prev_chunk;
+	/** Cookie of first entry in sequentially next chunk, will be set to
+	 *  0 if there is no sequentially next chunk.
+	 */
+	fsal_cookie_t next_ck;
+	/** Number of entries in chunk */
+	int num_entries;
 };
 
 /**
@@ -298,16 +334,40 @@ struct mdcache_fsal_obj_handle {
 
 #define DIR_ENTRY_FLAG_NONE     0x0000
 #define DIR_ENTRY_FLAG_DELETED  0x0001
+#define DIR_ENTRY_COOKIE_MARKED 0x0002
+#define DIR_ENTRY_SORTED        0x0004
 
 typedef struct mdcache_dir_entry__ {
-	struct avltree_node node_hk;	/*< AVL node in tree */
+	/** This dirent is part of a chunk */
+	struct glist_head chunk_list;
+	/** The chunk this entry belongs to */
+	struct dir_chunk *chunk;
+	/** node in tree by name */
+	struct avltree_node node_hk;
+	/** AVL node in tree by cookie */
+	struct avltree_node node_ck;
+	/** AVL node in tree by sorted order */
+	struct avltree_node node_sorted;
+	/** Cookie value from FSAL
+	 *  This is the coookie that is the "key" to find THIS entry, however
+	 *  a readdir with whence will be looking for the NEXT entry.
+	 */
+	uint64_t ck;
+	/** Indicates if this dirent is the last dirent in a chunked directory.
+	 */
+	bool eod;
 	struct {
-		uint64_t k;	/*< Integer cookie */
-		uint32_t p;	/*< Number of probes, an efficiency metric */
+		/** Name Hash */
+		uint64_t k;
+		/** Number of probes, an efficiency metric */
+		uint32_t p;
 	} hk;
-	mdcache_key_t ckey;	/*< Key of cache entry */
-	uint32_t flags;		/*< Flags */
-	char name[];		/*< The NUL-terminated filename */
+	/** Key of cache entry */
+	mdcache_key_t ckey;
+	/** Flags */
+	uint32_t flags;
+	/** The NUL-terminated filename */
+	char name[];
 } mdcache_dir_entry_t;
 
 /* Helpers */
@@ -321,8 +381,28 @@ fsal_status_t mdcache_alloc_and_check_handle(
 		const char *tag,
 		mdcache_entry_t *parent,
 		const char *name,
-		bool invalidate,
+		bool *invalidate,
 		struct state_t *state);
+
+fsal_status_t mdcache_refresh_attrs(mdcache_entry_t *entry, bool need_acl,
+				    bool invalidate);
+
+static inline
+void mdcache_refresh_attrs_no_invalidate(mdcache_entry_t *entry)
+{
+	fsal_status_t status;
+
+	PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
+
+	status = mdcache_refresh_attrs(entry, false, false);
+
+	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+
+	if (FSAL_IS_ERROR(status)) {
+		LogDebug(COMPONENT_CACHE_INODE, "Refresh attributes failed %s",
+			 fsal_err_txt(status));
+	}
+}
 
 fsal_status_t get_optional_attrs(struct fsal_obj_handle *obj_hdl,
 				 struct attrlist *attrs_out);
@@ -351,8 +431,9 @@ void mdcache_src_dest_lock(mdcache_entry_t *src, mdcache_entry_t *dest);
 void mdcache_src_dest_unlock(mdcache_entry_t *src, mdcache_entry_t *dest);
 fsal_status_t mdcache_dirent_remove(mdcache_entry_t *parent, const char *name);
 fsal_status_t mdcache_dirent_add(mdcache_entry_t *parent,
-					const char *name,
-					mdcache_entry_t *entry);
+				 const char *name,
+				 mdcache_entry_t *entry,
+				 bool *invalidate);
 fsal_status_t mdcache_dirent_rename(mdcache_entry_t *parent,
 				    const char *oldname,
 				    const char *newname);
@@ -364,6 +445,15 @@ fsal_status_t mdcache_readdir_uncached(mdcache_entry_t *directory, fsal_cookie_t
 				       *whence, void *dir_state,
 				       fsal_readdir_cb cb, attrmask_t attrmask,
 				       bool *eod_met);
+bool add_dirent_to_chunk(mdcache_entry_t *parent_dir,
+			 mdcache_dir_entry_t *new_dir_entry);
+fsal_status_t mdcache_readdir_chunked(mdcache_entry_t *directory,
+				      fsal_cookie_t whence,
+				      void *dir_state,
+				      fsal_readdir_cb cb,
+				      attrmask_t attrmask,
+				      bool *eod_met);
+
 void mdc_get_parent(struct mdcache_fsal_export *export,
 		    mdcache_entry_t *entry);
 

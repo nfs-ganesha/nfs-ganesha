@@ -607,6 +607,7 @@ fsal_status_t mdcache_open2(struct fsal_obj_handle *obj_hdl,
 	struct attrlist attrs;
 	const char *dispname = name != NULL ? name : "<by-handle>";
 	struct mdcache_fsal_export *export = mdc_cur_export();
+	bool invalidate;
 
 	LogAttrlist(COMPONENT_CACHE_INODE, NIV_FULL_DEBUG,
 		    "attrs_in ", attrs_in, false);
@@ -696,6 +697,8 @@ fsal_status_t mdcache_open2(struct fsal_obj_handle *obj_hdl,
 		return status;
 	}
 
+	invalidate = createmode != FSAL_NO_CREATE;
+
 	PTHREAD_RWLOCK_wrlock(&mdc_parent->content_lock);
 
 	/* We will invalidate parent attrs if we did any form of create. */
@@ -703,12 +706,19 @@ fsal_status_t mdcache_open2(struct fsal_obj_handle *obj_hdl,
 						new_obj, false,
 						&attrs, attrs_out,
 						"open2 ", mdc_parent, name,
-						createmode != FSAL_NO_CREATE,
+						&invalidate,
 						state);
 
 	PTHREAD_RWLOCK_unlock(&mdc_parent->content_lock);
 
 	fsal_release_attrs(&attrs);
+
+	if (createmode != FSAL_NO_CREATE && !invalidate) {
+		/* Refresh destination directory attributes without
+		 * invalidating dirents.
+		 */
+		mdcache_refresh_attrs_no_invalidate(mdc_parent);
+	}
 
 	return status;
 }

@@ -73,9 +73,55 @@ static inline int avl_dirent_hk_cmpf(const struct avltree_node *lhs,
 	return 1;
 }
 
+static inline int avl_dirent_ck_cmpf(const struct avltree_node *lhs,
+				     const struct avltree_node *rhs)
+{
+	mdcache_dir_entry_t *lk, *rk;
+
+	lk = avltree_container_of(lhs, mdcache_dir_entry_t, node_ck);
+	rk = avltree_container_of(rhs, mdcache_dir_entry_t, node_ck);
+
+	if (lk->ck < rk->ck)
+		return -1;
+
+	if (lk->ck == rk->ck)
+		return 0;
+
+	return 1;
+}
+
+static inline int avl_dirent_sorted_cmpf(const struct avltree_node *lhs,
+					 const struct avltree_node *rhs)
+{
+	mdcache_dir_entry_t *lk, *rk;
+	int rc;
+
+	lk = avltree_container_of(lhs, mdcache_dir_entry_t, node_sorted);
+	rk = avltree_container_of(rhs, mdcache_dir_entry_t, node_sorted);
+
+	/* On create a dirent will not yet belong to a chunk, but only
+	 * one of the two nodes in comparison can not belong to a chunk.
+	 */
+	subcall(
+		if (lk->chunk != NULL)
+			rc = lk->chunk->parent->sub_handle->obj_ops.dirent_cmp(
+				lk->chunk->parent->sub_handle,
+				lk->name, lk->ck,
+				rk->name, rk->ck);
+	       else
+			rc = rk->chunk->parent->sub_handle->obj_ops.dirent_cmp(
+				rk->chunk->parent->sub_handle,
+				lk->name, lk->ck,
+				rk->name, rk->ck)
+	       );
+
+	return rc;
+}
+
 void avl_dirent_set_deleted(mdcache_entry_t *entry, mdcache_dir_entry_t *v);
 void mdcache_avl_init(mdcache_entry_t *entry);
 int mdcache_avl_qp_insert(mdcache_entry_t *entry, mdcache_dir_entry_t **dirent);
+int mdcache_avl_insert_ck(mdcache_entry_t *entry, mdcache_dir_entry_t *v);
 
 #define MDCACHE_FLAG_NONE        0x0000
 #define MDCACHE_FLAG_NEXT_ACTIVE 0x0001
@@ -91,10 +137,13 @@ enum mdcache_avl_err {
 enum mdcache_avl_err mdcache_avl_lookup_k(mdcache_entry_t *entry, uint64_t k,
 					  uint32_t flags,
 					  mdcache_dir_entry_t **dirent);
+bool mdcache_avl_lookup_ck(mdcache_entry_t *entry, uint64_t ck,
+			   mdcache_dir_entry_t **dirent);
 mdcache_dir_entry_t *mdcache_avl_qp_lookup_s(mdcache_entry_t *entry,
 					     const char *name, int maxj);
 void mdcache_avl_clean_tree(struct avltree *tree);
 
+void unchunk_dirent(mdcache_dir_entry_t *dirent);
 #endif				/* MDCACHE_AVL_H */
 
 /** @} */

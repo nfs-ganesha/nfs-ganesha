@@ -1232,7 +1232,7 @@ typedef uint64_t fsal_cookie_t;
  * sort order doesn't change which may allow for optimization of things like'
  * AVL trees.
  */
- #define FIRST_COOKIE 3
+#define FIRST_COOKIE 3
 
 enum fsal_dir_result {
 	/** Continue readdir, call back with another dirent. */

@@ -59,6 +59,11 @@
  * if we lose a race to create the cache entry since our caller CAN NOT hold
  * any locks on the cache entry created.
  *
+ * Invalidate can be changed from true to false if mdcache is able to add
+ * the new dirent to a chunk. In this case, the caller MUST refresh the
+ * parent's attributes (we can't do it here due to lock ordering) in a way that
+ * does not invalidate the dirent cache.
+ *
  * @param[in]     export         The mdcache export used by the handle.
  * @param[in,out] sub_handle     The handle used by the subfsal.
  * @param[in]     fs             The filesystem of the new handle.
@@ -68,7 +73,7 @@
  * @param[in,out] attrs_out      Optional attributes for newly created object.
  * @param[in]     parent         Parent directory to add dirent to.
  * @param[in]     name           Name of the dirent to add.
- * @param[in]     invalidate     Invalidate parent attr.
+ * @param[in,out] invalidate     Invalidate parent attr (and chunk cache)
  * @param[in]     state          Optional state_t representing open file.
  *
  * @note This returns an INITIAL ref'd entry on success
@@ -85,7 +90,7 @@ fsal_status_t mdcache_alloc_and_check_handle(
 		const char *tag,
 		mdcache_entry_t *parent,
 		const char *name,
-		bool invalidate,
+		bool *invalidate,
 		struct state_t *state)
 {
 	fsal_status_t status;
@@ -104,15 +109,9 @@ fsal_status_t mdcache_alloc_and_check_handle(
 		     tag, new_entry, new_entry->sub_handle->fsal->name,
 		     name);
 
-	if (invalidate) {
-		/* This function is called after a create, so go ahead
-		 * and invalidate the parent directory attributes.
-		 */
-		atomic_clear_uint32_t_bits(&parent->mde_flags,
-					   MDCACHE_TRUST_ATTRS);
-	}
-
-	status = mdcache_dirent_add(parent, name, new_entry);
+	/* Add this entry to the directory (also takes an internal ref)
+	 */
+	status = mdcache_dirent_add(parent, name, new_entry, invalidate);
 
 	if (FSAL_IS_ERROR(status)) {
 		LogDebug(COMPONENT_CACHE_INODE,
@@ -121,7 +120,7 @@ fsal_status_t mdcache_alloc_and_check_handle(
 
 		mdcache_put(new_entry);
 		*new_obj = NULL;
-		return status;
+		goto out;
 	}
 
 	if (new_entry->obj_handle.type == DIRECTORY) {
@@ -134,6 +133,16 @@ fsal_status_t mdcache_alloc_and_check_handle(
 	if (attrs_out != NULL) {
 		LogAttrlist(COMPONENT_CACHE_INODE, NIV_FULL_DEBUG,
 			    tag, attrs_out, true);
+	}
+
+out:
+
+	if (*invalidate) {
+		/* This function is called after a create, so go ahead
+		 * and invalidate the parent directory attributes.
+		 */
+		atomic_clear_uint32_t_bits(&parent->mde_flags,
+					   MDCACHE_TRUST_ATTRS);
 	}
 
 	return status;
@@ -194,6 +203,7 @@ static fsal_status_t mdcache_create(struct fsal_obj_handle *dir_hdl,
 	struct fsal_obj_handle *sub_handle;
 	fsal_status_t status;
 	struct attrlist attrs;
+	bool invalidate = true;
 
 	/* Ask for all supported attributes except ACL (we defer fetching ACL
 	 * until asked for it (including a permission check).
@@ -229,12 +239,19 @@ static fsal_status_t mdcache_create(struct fsal_obj_handle *dir_hdl,
 
 	status = mdcache_alloc_and_check_handle(export, sub_handle, new_obj,
 						false, &attrs, attrs_out,
-						"create ", parent, name, true,
-						NULL);
+						"create ", parent, name,
+						&invalidate, NULL);
 
 	PTHREAD_RWLOCK_unlock(&parent->content_lock);
 
 	fsal_release_attrs(&attrs);
+
+	if (!invalidate) {
+		/* Refresh destination directory attributes without
+		 * invalidating dirents.
+		 */
+		mdcache_refresh_attrs_no_invalidate(parent);
+	}
 
 	return status;
 }
@@ -262,6 +279,7 @@ static fsal_status_t mdcache_mkdir(struct fsal_obj_handle *dir_hdl,
 	struct fsal_obj_handle *sub_handle;
 	fsal_status_t status;
 	struct attrlist attrs;
+	bool invalidate = true;
 
 	*handle = NULL;
 
@@ -299,12 +317,19 @@ static fsal_status_t mdcache_mkdir(struct fsal_obj_handle *dir_hdl,
 
 	status = mdcache_alloc_and_check_handle(export, sub_handle, handle,
 						true, &attrs, attrs_out,
-						"mkdir ", parent, name, true,
-						NULL);
+						"mkdir ",  parent, name,
+						&invalidate, NULL);
 
 	PTHREAD_RWLOCK_unlock(&parent->content_lock);
 
 	fsal_release_attrs(&attrs);
+
+	if (!invalidate) {
+		/* Refresh destination directory attributes without
+		 * invalidating dirents.
+		 */
+		mdcache_refresh_attrs_no_invalidate(parent);
+	}
 
 	return status;
 }
@@ -334,6 +359,7 @@ static fsal_status_t mdcache_mknode(struct fsal_obj_handle *dir_hdl,
 	struct fsal_obj_handle *sub_handle;
 	fsal_status_t status;
 	struct attrlist attrs;
+	bool invalidate = true;
 
 	*handle = NULL;
 
@@ -372,12 +398,19 @@ static fsal_status_t mdcache_mknode(struct fsal_obj_handle *dir_hdl,
 
 	status = mdcache_alloc_and_check_handle(export, sub_handle, handle,
 						false, &attrs, attrs_out,
-						"mknode ", parent, name, true,
-						NULL);
+						"mknode ",  parent, name,
+						&invalidate, NULL);
 
 	PTHREAD_RWLOCK_unlock(&parent->content_lock);
 
 	fsal_release_attrs(&attrs);
+
+	if (!invalidate) {
+		/* Refresh destination directory attributes without
+		 * invalidating dirents.
+		 */
+		mdcache_refresh_attrs_no_invalidate(parent);
+	}
 
 	return status;
 }
@@ -407,6 +440,7 @@ static fsal_status_t mdcache_symlink(struct fsal_obj_handle *dir_hdl,
 	struct fsal_obj_handle *sub_handle;
 	fsal_status_t status;
 	struct attrlist attrs;
+	bool invalidate = true;
 
 	*handle = NULL;
 
@@ -445,12 +479,19 @@ static fsal_status_t mdcache_symlink(struct fsal_obj_handle *dir_hdl,
 
 	status = mdcache_alloc_and_check_handle(export, sub_handle, handle,
 						false, &attrs, attrs_out,
-						"symlink ", parent, name, true,
-						NULL);
+						"symlink ",  parent, name,
+						&invalidate, NULL);
 
 	PTHREAD_RWLOCK_unlock(&parent->content_lock);
 
 	fsal_release_attrs(&attrs);
+
+	if (!invalidate) {
+		/* Refresh destination directory attributes without
+		 * invalidating dirents.
+		 */
+		mdcache_refresh_attrs_no_invalidate(parent);
+	}
 
 	return status;
 }
@@ -514,11 +555,13 @@ static fsal_status_t mdcache_link(struct fsal_obj_handle *obj_hdl,
 	mdcache_entry_t *dest =
 		container_of(destdir_hdl, mdcache_entry_t, obj_handle);
 	fsal_status_t status;
+	bool invalidate = true;
 
 	subcall(
 		status = entry->sub_handle->obj_ops.link(
 			entry->sub_handle, dest->sub_handle, name)
 	       );
+
 	if (FSAL_IS_ERROR(status)) {
 		LogFullDebug(COMPONENT_CACHE_INODE,
 			     "link failed %s",
@@ -530,13 +573,22 @@ static fsal_status_t mdcache_link(struct fsal_obj_handle *obj_hdl,
 
 	/* Add this entry to the directory (also takes an internal ref)
 	 */
-	status = mdcache_dirent_add(dest, name, entry);
+	status = mdcache_dirent_add(dest, name, entry, &invalidate);
 
 	PTHREAD_RWLOCK_unlock(&dest->content_lock);
 
 	/* Invalidate attributes, so refresh will be forced */
 	atomic_clear_uint32_t_bits(&entry->mde_flags, MDCACHE_TRUST_ATTRS);
-	atomic_clear_uint32_t_bits(&dest->mde_flags, MDCACHE_TRUST_ATTRS);
+	if (invalidate) {
+		/* Invalidate attributes of destination directory. */
+		atomic_clear_uint32_t_bits(&dest->mde_flags,
+					   MDCACHE_TRUST_ATTRS);
+	} else {
+		/* Refresh destination directory attributes without
+		 * invalidating dirents.
+		 */
+		mdcache_refresh_attrs_no_invalidate(dest);
+	}
 
 	return status;
 }
@@ -578,6 +630,18 @@ static fsal_status_t mdcache_readdir(struct fsal_obj_handle *dir_hdl,
 		/* Not caching dirents; pass through directly to FSAL */
 		return mdcache_readdir_uncached(directory, whence, dir_state,
 						cb, attrmask, eod_met);
+	}
+
+	if (mdcache_param.dir.avl_chunk > 0) {
+		/* Dirent chunking is enabled. */
+		LogDebug(COMPONENT_NFS_READDIR,
+			 "Calling mdcache_readdir_chunked whence=%"PRIx64,
+			 whence ? *whence : (uint64_t) 0);
+
+		return mdcache_readdir_chunked(directory,
+					       whence ? *whence : (uint64_t) 0,
+					       dir_state, cb, attrmask,
+					       eod_met);
 	}
 
 	/* Dirent's are being cached; check to see if it needs updating */
@@ -831,6 +895,14 @@ static fsal_status_t mdcache_rename(struct fsal_obj_handle *obj_hdl,
 					   MDCACHE_TRUST_ATTRS);
 	}
 
+	/* NOTE: Below we mostly don't check if the directory is not
+	 *       cached. The cache manipulation functions we call already
+	 *       bail out if we aren't cached. However, for rename into a
+	 *       new directory, we need to bypass if not cached even if
+	 *       chunking is enabled, so we check in that case to make
+	 *       chunk management simpler.
+	 */
+
 	if (mdc_lookup_dst) {
 		/* Remove the entry from parent dir_entries avl */
 		status = mdcache_dirent_remove(mdc_newdir, new_name);
@@ -898,9 +970,26 @@ static fsal_status_t mdcache_rename(struct fsal_obj_handle *obj_hdl,
 			mdcache_dirent_invalidate_all(mdc_newdir);
 		}
 	} else {
+		bool invalidate = true;
+
 		LogDebug(COMPONENT_CACHE_INODE,
 			 "Rename (%p,%s)->(%p,%s) : moving entry", mdc_olddir,
 			 old_name, mdc_newdir, new_name);
+
+		/* Remove the old entry */
+		status = mdcache_dirent_remove(mdc_olddir, old_name);
+
+		if (FSAL_IS_ERROR(status)) {
+			LogDebug(COMPONENT_CACHE_INODE,
+				 "Remove old dirent returned %s",
+				 fsal_err_txt(status));
+			/* Protected by mdcache_src_dst_lock() above */
+			mdcache_dirent_invalidate_all(mdc_olddir);
+		}
+
+		/* Don't rename dirents if newdir is not being cached */
+		if (mdc_newdir->mde_flags & MDCACHE_BYPASS_DIRCACHE)
+			goto unlock;
 
 		/* We may have a cache entry for the destination
 		 * filename.  If we do, we must delete it : it is stale. */
@@ -914,7 +1003,8 @@ static fsal_status_t mdcache_rename(struct fsal_obj_handle *obj_hdl,
 			mdcache_dirent_invalidate_all(mdc_newdir);
 		}
 
-		status = mdcache_dirent_add(mdc_newdir, new_name, mdc_obj);
+		status = mdcache_dirent_add(mdc_newdir, new_name, mdc_obj,
+					    &invalidate);
 
 		if (FSAL_IS_ERROR(status)) {
 			/* We're obviously out of date.  Throw out the cached
@@ -923,18 +1013,15 @@ static fsal_status_t mdcache_rename(struct fsal_obj_handle *obj_hdl,
 				fsal_err_txt(status));
 			/* Protected by mdcache_src_dst_lock() above */
 			mdcache_dirent_invalidate_all(mdc_newdir);
-		}
-
-		/* Remove the old entry */
-		status = mdcache_dirent_remove(mdc_olddir, old_name);
-		if (FSAL_IS_ERROR(status)) {
-			LogDebug(COMPONENT_CACHE_INODE,
-				 "Remove old dirent returned %s",
-				 fsal_err_txt(status));
-			/* Protected by mdcache_src_dst_lock() above */
-			mdcache_dirent_invalidate_all(mdc_olddir);
+		} else if (!invalidate) {
+			/* Refresh destination directory attributes without
+			 * invalidating dirents.
+			 */
+			mdcache_refresh_attrs_no_invalidate(mdc_newdir);
 		}
 	}
+
+unlock:
 
 	/* unlock entries */
 	mdcache_src_dest_unlock(mdc_olddir, mdc_newdir);
@@ -964,14 +1051,21 @@ out:
  *       The caller must also call mdcache_kill_entry after releasing the
  *       attr_lock if ERR_FSAL_STALE is returned.
  *
- * @param[in] entry     The mdcache entry to refresh attributes for.
- * @param[in] need_acl  Indicates if the ACL needs updating.
+ * @param[in] entry       The mdcache entry to refresh attributes for.
+ * @param[in] need_acl    Indicates if the ACL needs updating.
+ * @param[in] invalidate  Invalidate the dirent cache if the entry is a
+ *                        directory.
  */
 
-fsal_status_t mdcache_refresh_attrs(mdcache_entry_t *entry, bool need_acl)
+fsal_status_t mdcache_refresh_attrs(mdcache_entry_t *entry, bool need_acl,
+				    bool invalidate)
 {
 	struct attrlist attrs;
 	fsal_status_t status = {0, 0};
+	struct timespec oldmtime;
+
+	/* Use this to detect if we should invalidate a directory. */
+	oldmtime = entry->attrs.mtime;
 
 	/* We always ask for all regular attributes, even if the caller was
 	 * only interested in the ACL.
@@ -1040,6 +1134,14 @@ fsal_status_t mdcache_refresh_attrs(mdcache_entry_t *entry, bool need_acl)
 	LogAttrlist(COMPONENT_CACHE_INODE, NIV_FULL_DEBUG,
 		    "attrs ", &entry->attrs, true);
 
+	if (invalidate && entry->obj_handle.type == DIRECTORY &&
+	    gsh_time_cmp(&oldmtime, &entry->attrs.mtime) < 0) {
+
+		PTHREAD_RWLOCK_wrlock(&entry->content_lock);
+		mdcache_dirent_invalidate_all(entry);
+		PTHREAD_RWLOCK_unlock(&entry->content_lock);
+	}
+
 	return status;
 }
 
@@ -1059,7 +1161,6 @@ static fsal_status_t mdcache_getattrs(struct fsal_obj_handle *obj_hdl,
 	mdcache_entry_t *entry =
 		container_of(obj_hdl, mdcache_entry_t, obj_handle);
 	fsal_status_t status = {0, 0};
-	time_t oldmtime = 0;
 
 	PTHREAD_RWLOCK_rdlock(&entry->attr_lock);
 
@@ -1077,11 +1178,8 @@ static fsal_status_t mdcache_getattrs(struct fsal_obj_handle *obj_hdl,
 		goto unlock;
 	}
 
-	/* Use this to detect if we should invalidate a directory. */
-	oldmtime = entry->attrs.mtime.tv_sec;
-
 	status = mdcache_refresh_attrs(
-			entry, (attrs_out->request_mask & ATTR_ACL) != 0);
+			entry, (attrs_out->request_mask & ATTR_ACL) != 0, true);
 
 	if (FSAL_IS_ERROR(status)) {
 		/* We failed to fetch any attributes. Pass that fact back to
@@ -1091,14 +1189,6 @@ static fsal_status_t mdcache_getattrs(struct fsal_obj_handle *obj_hdl,
 		if (attrs_out->request_mask & ATTR_RDATTR_ERR)
 			attrs_out->valid_mask = ATTR_RDATTR_ERR;
 		goto unlock_no_attrs;
-	}
-
-	if (obj_hdl->type == DIRECTORY &&
-	    oldmtime < entry->attrs.mtime.tv_sec) {
-
-		PTHREAD_RWLOCK_wrlock(&entry->content_lock);
-		mdcache_dirent_invalidate_all(entry);
-		PTHREAD_RWLOCK_unlock(&entry->content_lock);
 	}
 
 unlock:
@@ -1151,7 +1241,7 @@ static fsal_status_t mdcache_setattrs(struct fsal_obj_handle *obj_hdl,
 	}
 
 	status = mdcache_refresh_attrs(
-				entry, (attrs->valid_mask & ATTR_ACL) != 0);
+			entry, (attrs->valid_mask & ATTR_ACL) != 0, false);
 
 	if (!FSAL_IS_ERROR(status) && change == entry->attrs.change) {
 		LogDebug(COMPONENT_CACHE_INODE,
@@ -1217,7 +1307,7 @@ static fsal_status_t mdcache_setattr2(struct fsal_obj_handle *obj_hdl,
 		need_acl = true;
 	}
 
-	status = mdcache_refresh_attrs(entry, need_acl);
+	status = mdcache_refresh_attrs(entry, need_acl, false);
 
 	if (!FSAL_IS_ERROR(status) && change == entry->attrs.change) {
 		LogDebug(COMPONENT_CACHE_INODE,
