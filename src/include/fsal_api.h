@@ -1308,6 +1308,24 @@ struct fsal_obj_ops {
 				      fsal_accessflags_t *denied);
 
 /**
+ * @brief Check if the given uid is a superuser or not
+ *
+ * This function checks whether a given user is the
+ * superuser on the filesystem or not.
+ *
+ * @param[in] obj_hdl     Handle to check
+ * @param[in] uid         uid of the user to be checked
+ * @param[in] gid         gid of the user to be checked
+ * @param[out] superuser  true if the uid is of superuser,
+ *                        else false
+ *
+ * @return FSAL status.
+ */
+	 fsal_status_t (*super_user)(struct fsal_obj_handle *obj_hdl,
+						uid_t uid, gid_t gid,
+						bool *superuser);
+
+/**
  * @brief Get attributes
  *
  * This function freshens the cached attributes stored on the handle.

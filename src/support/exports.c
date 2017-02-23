@@ -1244,6 +1244,8 @@ static struct config_item export_params[] = {
 	CONF_ITEM_I32_SET("Attr_Expiration_Time", -1, INT32_MAX, 60,
 		       gsh_export, expire_time_attr,
 		       EXPORT_OPTION_EXPIRE_SET,  options_set),
+	CONF_ITEM_UI32("SuperUser_Uid", 0, UINT32_MAX, 0, gsh_export,
+		superuser_uid),
 
 	/* NOTE: the Client and FSAL sub-blocks must be the *last*
 	 * two entries in the list.  This is so all other

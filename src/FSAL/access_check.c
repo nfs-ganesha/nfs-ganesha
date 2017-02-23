@@ -831,6 +831,16 @@ fsal_status_t fsal_test_access(struct fsal_obj_handle *obj_hdl,
 	}
 }
 
+fsal_status_t fsal_super_user(struct fsal_obj_handle *obj_hdl,
+					uid_t uid, gid_t gid, bool *superuser)
+{
+	if (uid == 0)
+		*superuser = true;
+	else
+		*superuser = false;
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
 uid_t ganesha_uid;
 gid_t ganesha_gid;
 int ganesha_ngroups;
