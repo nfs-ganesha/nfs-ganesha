@@ -71,9 +71,12 @@ static void release(struct fsal_obj_handle *obj_hdl)
  *
  * @return FSAL status codes.
  */
-static fsal_status_t lookup(struct fsal_obj_handle *dir_hdl,
-			const char *path, struct fsal_obj_handle **obj_hdl,
-			struct attrlist *attrs_out)
+
+static fsal_status_t lookup_int(struct fsal_obj_handle *dir_hdl,
+				const char *path,
+				struct fsal_obj_handle **obj_hdl,
+				struct attrlist *attrs_out,
+				uint32_t flags)
 {
 	int rc;
 	struct stat st;
@@ -92,7 +95,7 @@ static fsal_status_t lookup(struct fsal_obj_handle *dir_hdl,
 	/* XXX presently, we can only fake attrs--maybe rgw_lookup should
 	 * take struct stat pointer OUT as libcephfs' does */
 	rc = rgw_lookup(export->rgw_fs, dir->rgw_fh, path, &rgw_fh,
-			RGW_LOOKUP_FLAG_NONE);
+			flags);
 	if (rc < 0)
 		return rgw2fsal_error(rc);
 
@@ -115,6 +118,14 @@ static fsal_status_t lookup(struct fsal_obj_handle *dir_hdl,
 	return fsalstat(0, 0);
 }
 
+static fsal_status_t lookup(struct fsal_obj_handle *dir_hdl,
+			const char *path, struct fsal_obj_handle **obj_hdl,
+			struct attrlist *attrs_out)
+{
+	return lookup_int(dir_hdl, path, obj_hdl, attrs_out,
+			RGW_LOOKUP_FLAG_NONE);
+}
+
 struct rgw_cb_arg {
 	fsal_readdir_cb cb;
 	void *fsal_arg;
@@ -132,7 +143,8 @@ static bool rgw_cb(const char *name, void *arg, uint64_t offset)
 
 	fsal_prepare_attrs(&attrs, rgw_cb_arg->attrmask);
 
-	status = lookup(rgw_cb_arg->dir_hdl, name, &obj, &attrs);
+	status = lookup_int(rgw_cb_arg->dir_hdl, name, &obj, &attrs,
+			RGW_LOOKUP_FLAG_RCB);
 	if (FSAL_IS_ERROR(status))
 		return false;
 
