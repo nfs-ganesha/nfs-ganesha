@@ -43,7 +43,6 @@
 #include "fsal_api.h"
 #include "internal.h"
 #include "nfs_exports.h"
-#include "FSAL/fsal_commonlib.h"
 #include "sal_data.h"
 #include "statx_compat.h"
 
@@ -856,9 +855,24 @@ struct state_t *ceph_alloc_state(struct fsal_export *exp_hdl,
 				 enum state_type state_type,
 				 struct state_t *related_state)
 {
-	return init_state(gsh_calloc(1, sizeof(struct state_t)
-					 + sizeof(struct ceph_fd)),
+	return init_state(gsh_calloc(1, sizeof(struct ceph_state_fd)),
 			  exp_hdl, state_type, related_state);
+}
+
+/**
+ * @brief free a ceph_state_fd structure
+ *
+ * @param[in] exp_hdl  Export state_t will be associated with
+ * @param[in] state    Related state if appropriate
+ *
+ */
+void ceph_free_state(struct fsal_export *exp_hdl, struct state_t *state)
+{
+	struct ceph_state_fd *state_fd = container_of(state,
+						      struct ceph_state_fd,
+						      state);
+
+	gsh_free(state_fd);
 }
 
 /**
@@ -997,7 +1011,8 @@ fsal_status_t ceph_open2(struct fsal_obj_handle *obj_hdl,
 		    "attrs ", attrib_set, false);
 
 	if (state != NULL)
-		my_fd = (struct ceph_fd *)(state + 1);
+		my_fd = &container_of(state, struct ceph_state_fd,
+				      state)->ceph_fd;
 
 	myself = container_of(obj_hdl, struct handle, handle);
 
@@ -1391,7 +1406,8 @@ fsal_status_t ceph_reopen2(struct fsal_obj_handle *obj_hdl,
 	int posix_flags = 0;
 	fsal_openflags_t old_openflags;
 
-	my_share_fd = (struct ceph_fd *)(state + 1);
+	my_share_fd = &container_of(state, struct ceph_state_fd,
+				    state)->ceph_fd;
 
 	fsal2posix_openflags(openflags, &posix_flags);
 
@@ -2068,7 +2084,8 @@ fsal_status_t ceph_close2(struct fsal_obj_handle *obj_hdl,
 			 struct state_t *state)
 {
 	struct handle *myself = container_of(obj_hdl, struct handle, handle);
-	struct ceph_fd *my_fd = (struct ceph_fd *)(state + 1);
+	struct ceph_fd *my_fd = &container_of(state, struct ceph_state_fd,
+					      state)->ceph_fd;
 
 	if (state->state_type == STATE_TYPE_SHARE ||
 	    state->state_type == STATE_TYPE_NLM_SHARE ||

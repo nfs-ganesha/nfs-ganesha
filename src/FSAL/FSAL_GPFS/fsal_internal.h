@@ -39,6 +39,7 @@
 #include "include/gpfs_nfs.h"
 #include "fsal_up.h"
 #include "gsh_config.h"
+#include "FSAL/fsal_commonlib.h"
 
 struct gpfs_filesystem;
 
@@ -68,6 +69,10 @@ struct gpfs_fd {
 	int fd;
 };
 
+struct gpfs_state_fd {
+	struct state_t state;
+	struct gpfs_fd gpfs_fd;
+};
 
 /* defined the set of attributes supported with POSIX */
 #define GPFS_SUPPORTED_ATTRIBUTES (                              \

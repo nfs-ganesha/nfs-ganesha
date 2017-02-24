@@ -34,7 +34,6 @@
 #include <sys/types.h>
 #include <pthread.h>
 #include "fsal.h"
-#include "FSAL/fsal_commonlib.h"
 #include "FSAL/fsal_config.h"
 #include "fsal_convert.h"
 #include "config_parsing.h"
@@ -312,7 +311,6 @@ static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
  *
  * @returns a state structure.
  */
-
 struct state_t *glusterfs_alloc_state(struct fsal_export *exp_hdl,
 				enum state_type state_type,
 				struct state_t *related_state)
@@ -320,15 +318,30 @@ struct state_t *glusterfs_alloc_state(struct fsal_export *exp_hdl,
 	struct state_t *state;
 	struct glusterfs_fd *my_fd;
 
-	state = init_state(gsh_calloc(1, sizeof(struct state_t)
-					 + sizeof(struct glusterfs_fd)),
+	state = init_state(gsh_calloc(1, sizeof(struct glusterfs_state_fd)),
 			   exp_hdl, state_type, related_state);
 
-	my_fd = (struct glusterfs_fd *)(state + 1);
+	my_fd = &container_of(state, struct glusterfs_state_fd,
+			      state)->glusterfs_fd;
 
 	my_fd->glfd = NULL;
 
 	return state;
+}
+
+/**
+ * @brief free a gluster_state_fd structure
+ *
+ * @param[in] exp_hdl  Export state_t will be associated with
+ * @param[in] state    Related state if appropriate
+ *
+ */
+void glusterfs_free_state(struct fsal_export *exp_hdl, struct state_t *state)
+{
+	struct glusterfs_state_fd *state_fd =
+		container_of(state, struct glusterfs_state_fd, state);
+
+	gsh_free(state_fd);
 }
 
 /** @todo: We have gone POSIX way for the APIs below, can consider the CEPH way
@@ -555,6 +568,7 @@ void export_ops_init(struct export_ops *ops)
 	ops->fs_umask = fs_umask;
 	ops->fs_xattr_access_rights = fs_xattr_access_rights;
 	ops->alloc_state = glusterfs_alloc_state;
+	ops->free_state = glusterfs_free_state;
 }
 
 struct glexport_params {

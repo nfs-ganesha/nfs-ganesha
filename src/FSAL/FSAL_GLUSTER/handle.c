@@ -1268,7 +1268,8 @@ static fsal_status_t glusterfs_open2(struct fsal_obj_handle *obj_hdl,
 #endif
 
 	if (state != NULL)
-		my_fd = (struct glusterfs_fd *)(state + 1);
+		my_fd = &container_of(state, struct glusterfs_state_fd,
+				      state)->glusterfs_fd;
 
 	fsal2posix_openflags(openflags, &p_flags);
 
@@ -1703,7 +1704,8 @@ static fsal_status_t glusterfs_reopen2(struct fsal_obj_handle *obj_hdl,
 	int posix_flags = 0;
 	fsal_openflags_t old_openflags;
 
-	my_share_fd = (struct glusterfs_fd *)(state + 1);
+	my_share_fd = &container_of(state, struct glusterfs_state_fd,
+				    state)->glusterfs_fd;
 
 	fsal2posix_openflags(openflags, &posix_flags);
 
@@ -2374,8 +2376,10 @@ static fsal_status_t glusterfs_setattr2(struct fsal_obj_handle *obj_hdl,
 static fsal_status_t glusterfs_close2(struct fsal_obj_handle *obj_hdl,
 				      struct state_t *state)
 {
-	struct glusterfs_fd *my_fd = (struct glusterfs_fd *)(state + 1);
 	struct glusterfs_handle *myself = NULL;
+	struct glusterfs_fd *my_fd = &container_of(state,
+						   struct glusterfs_state_fd,
+						   state)->glusterfs_fd;
 
 	myself = container_of(obj_hdl,
 			      struct glusterfs_handle,

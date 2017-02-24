@@ -30,6 +30,7 @@
 
 #include "fsal_handle_syscalls.h"
 #include "fsal_api.h"
+#include "FSAL/fsal_commonlib.h"
 
 struct vfs_fsal_obj_handle;
 struct vfs_fsal_export;
@@ -121,6 +122,11 @@ struct vfs_fd {
 	fsal_openflags_t openflags;
 	/** The kernel file descriptor. */
 	int fd;
+};
+
+struct vfs_state_fd {
+	struct state_t state;
+	struct vfs_fd vfs_fd;
 };
 
 /*
@@ -255,6 +261,7 @@ fsal_status_t vfs_close(struct fsal_obj_handle *obj_hdl);
 struct state_t *vfs_alloc_state(struct fsal_export *exp_hdl,
 				enum state_type state_type,
 				struct state_t *related_state);
+void vfs_free_state(struct fsal_export *exp_hdl, struct state_t *state);
 
 fsal_status_t vfs_merge(struct fsal_obj_handle *orig_hdl,
 			struct fsal_obj_handle *dupe_hdl);

@@ -34,7 +34,6 @@
 #include "fsal_internal.h"
 #include <unistd.h>
 #include <fcntl.h>
-#include "FSAL/fsal_commonlib.h"
 #include "gpfs_methods.h"
 
 static fsal_status_t
@@ -152,7 +151,9 @@ open_by_handle(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 				obj_handle);
 
 	if (state != NULL) {
-		struct gpfs_fd *my_fd = (struct gpfs_fd *)(state + 1);
+		struct gpfs_fd *my_fd = &container_of(state,
+						      struct gpfs_state_fd,
+						      state)->gpfs_fd;
 
 	       /* Prepare to take the share reservation, but only if we
 		* are called with a valid state (if state is NULL the
@@ -582,7 +583,8 @@ fsal_status_t
 gpfs_reopen2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 	     fsal_openflags_t openflags)
 {
-	struct gpfs_fd *my_share_fd = (struct gpfs_fd *)(state + 1);
+	struct gpfs_fd *my_share_fd = &container_of(state, struct gpfs_state_fd,
+						    state)->gpfs_fd;
 	fsal_status_t status;
 	int posix_flags = 0;
 	int my_fd = -1;
@@ -1272,9 +1274,10 @@ fsal_status_t
 gpfs_close2(struct fsal_obj_handle *obj_hdl, struct state_t *state)
 {
 	struct gpfs_fsal_obj_handle *myself;
-	struct gpfs_fd *my_fd = (struct gpfs_fd *)(state + 1);
 	state_owner_t *state_owner = NULL;
 	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
+	struct gpfs_fd *my_fd = &container_of(state, struct gpfs_state_fd,
+					      state)->gpfs_fd;
 
 	LogFullDebug(COMPONENT_FSAL, "state %p", state);
 
@@ -1306,33 +1309,3 @@ gpfs_close2(struct fsal_obj_handle *obj_hdl, struct state_t *state)
 	return status;
 }
 
-
-/**
- * @brief Allocate a state_t structure
- *
- * Note that this is not expected to fail since memory allocation is
- * expected to abort on failure.
- *
- * @param[in] exp_hdl               Export state_t will be associated with
- * @param[in] state_type            Type of state to allocate
- * @param[in] related_state         Related state if appropriate
- *
- * @returns a state structure.
- */
-struct state_t *
-gpfs_alloc_state(struct fsal_export *exp_hdl, enum state_type state_type,
-		 struct state_t *related_state)
-{
-	struct state_t *state;
-	struct gpfs_fd *my_fd;
-
-	state = init_state(gsh_calloc(1, sizeof(struct state_t)
-					+ sizeof(struct gpfs_fd)),
-			   exp_hdl, state_type, related_state);
-
-	my_fd = (struct gpfs_fd *)(state + 1);
-
-	my_fd->fd = -1;
-
-	return state;
-}

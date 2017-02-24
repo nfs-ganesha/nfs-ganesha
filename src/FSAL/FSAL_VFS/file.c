@@ -38,7 +38,6 @@
 #include "fsal_convert.h"
 #include <unistd.h>
 #include <fcntl.h>
-#include "FSAL/fsal_commonlib.h"
 #include "vfs_methods.h"
 #include "os/subr.h"
 #include "sal_data.h"
@@ -194,15 +193,29 @@ struct state_t *vfs_alloc_state(struct fsal_export *exp_hdl,
 	struct state_t *state;
 	struct vfs_fd *my_fd;
 
-	state = init_state(gsh_calloc(1, sizeof(struct state_t)
-					 + sizeof(struct vfs_fd)),
+	state = init_state(gsh_calloc(1, sizeof(struct vfs_state_fd)),
 			   exp_hdl, state_type, related_state);
 
-	my_fd = (struct vfs_fd *)(state + 1);
+	my_fd = &container_of(state, struct vfs_state_fd, state)->vfs_fd;
 
 	my_fd->fd = -1;
 
 	return state;
+}
+
+/**
+ * @brief free a vfs_state_fd structure
+ *
+ * @param[in] exp_hdl  Export state_t will be associated with
+ * @param[in] state    Related state if appropriate
+ *
+ */
+void vfs_free_state(struct fsal_export *exp_hdl, struct state_t *state)
+{
+	struct vfs_state_fd *state_fd = container_of(state, struct vfs_state_fd,
+						     state);
+
+	gsh_free(state_fd);
 }
 
 /**
@@ -337,7 +350,9 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 	bool created = false;
 
 	if (state != NULL)
-		my_fd = (struct vfs_fd *)(state + 1);
+		my_fd = &container_of(state, struct vfs_state_fd,
+				      state)->vfs_fd;
+
 
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
 
@@ -791,7 +806,8 @@ fsal_status_t vfs_reopen2(struct fsal_obj_handle *obj_hdl,
 	int posix_flags = 0;
 	fsal_openflags_t old_openflags;
 
-	my_share_fd = (struct vfs_fd *)(state + 1);
+	my_share_fd = &container_of(state, struct vfs_state_fd,
+				    state)->vfs_fd;
 
 	fsal2posix_openflags(openflags, &posix_flags);
 
@@ -1808,8 +1824,9 @@ fsal_status_t vfs_setattr2(struct fsal_obj_handle *obj_hdl,
 fsal_status_t vfs_close2(struct fsal_obj_handle *obj_hdl,
 			 struct state_t *state)
 {
-	struct vfs_fd *my_fd = (struct vfs_fd *)(state + 1);
 	struct vfs_fsal_obj_handle *myself = NULL;
+	struct vfs_fd *my_fd = &container_of(state, struct vfs_state_fd,
+					     state)->vfs_fd;
 
 	myself = container_of(obj_hdl,
 			      struct vfs_fsal_obj_handle,

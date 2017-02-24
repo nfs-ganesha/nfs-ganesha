@@ -28,6 +28,7 @@
 #include "fsal_types.h"
 #include "fsal_api.h"
 #include "posix_acls.h"
+#include "FSAL/fsal_commonlib.h"
 #include <glusterfs/api/glfs.h>
 #include <glusterfs/api/glfs-handles.h>
 
@@ -212,6 +213,11 @@ typedef struct fsal_xstat__ {
 	acl_t i_acl; /* stores inherited acl */
 	bool is_dir;
 } glusterfs_fsal_xstat_t;
+
+struct glusterfs_state_fd {
+	struct state_t state;
+	struct glusterfs_fd glusterfs_fd;
+};
 
 #ifdef GLTIMING
 struct latency_data glfsal_latencies[LATENCY_SLOTS];
