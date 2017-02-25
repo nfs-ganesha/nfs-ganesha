@@ -358,6 +358,7 @@ int main(int argc, char *argv[])
 	signal(SIGXFSZ, SIG_IGN);
 #endif
 
+	spawn_log_flusher();
 	/* Echo PID into pidfile */
 	pidfile = open(pidfile_path, O_CREAT | O_RDWR, 0644);
 	if (pidfile == -1) {
