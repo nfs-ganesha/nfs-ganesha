@@ -404,7 +404,7 @@ int init_server_pkgs(void)
 			state_err_str(state_status));
 		return -1;
 	}
-	LogInfo(COMPONENT_INIT, "Cache Inode library successfully initialized");
+	LogInfo(COMPONENT_INIT, "State lock layer successfully initialized");
 
 	/* Init the IP/name cache */
 	LogDebug(COMPONENT_INIT, "Now building IP/name cache");
