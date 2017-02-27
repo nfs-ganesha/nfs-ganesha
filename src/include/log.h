@@ -134,6 +134,8 @@ void SetClientIP(char *ip_str);
 
 void init_logging(const char *log_path, const int debug_level);
 
+int spawn_log_flusher(void);
+
 int ReturnLevelAscii(const char *LevelInAscii);
 char *ReturnLevelInt(int level);
 
