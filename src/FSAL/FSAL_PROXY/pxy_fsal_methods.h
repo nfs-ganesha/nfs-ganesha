@@ -12,7 +12,7 @@ struct pxy_client_params {
 	unsigned int srv_sendsize;
 	unsigned int srv_recvsize;
 	unsigned int srv_timeout;
-	unsigned short srv_port;
+	uint16_t srv_port;
 	unsigned int use_privileged_client_port;
 	char *remote_principal;
 	char *keytab;

@@ -77,7 +77,6 @@ enum config_type {
 	CONFIG_BOOL,
 	CONFIG_BOOLBIT,
 	CONFIG_IP_ADDR,
-	CONFIG_INET_PORT,
 	CONFIG_BLOCK,
 	CONFIG_PROC
 };
@@ -637,25 +636,6 @@ struct config_item {
 	  .type = CONFIG_IP_ADDR,		    \
 	  .flags = CONFIG_UNIQUE|CONFIG_MANDATORY,  \
 	  .u.ip.def = _def_,			    \
-	  .off = offsetof(struct _struct_, _mem_)   \
-	}
-
-#define CONF_ITEM_INET_PORT(_name_, _min_, _max_, _def_, _struct_, _mem_) \
-	{ .name = _name_,			    \
-	  .type = CONFIG_INET_PORT,		    \
-	  .u.ui16.minval = _min_,		    \
-	  .u.ui16.maxval = _max_,		    \
-	  .u.ui16.def = _def_,			    \
-	  .off = offsetof(struct _struct_, _mem_)   \
-	}
-
-#define CONF_MAND_INET_PORT(_name_, _min_, _max_, _def_, _struct_, _mem_) \
-	{ .name = _name_,			    \
-	  .type = CONFIG_INET_PORT,		    \
-	  .flags = CONFIG_UNIQUE|CONFIG_MANDATORY,  \
-	  .u.ui16.minval = _min_,		    \
-	  .u.ui16.maxval = _max_,		    \
-	  .u.ui16.def = _def_,			    \
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
 

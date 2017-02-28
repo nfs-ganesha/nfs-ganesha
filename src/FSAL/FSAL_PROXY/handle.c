@@ -495,7 +495,7 @@ static void *pxy_rpc_recv(void *arg)
 
 	memset(&addr_rpc, 0, sizeof(addr_rpc));
 	addr_rpc.sin_family = AF_INET;
-	addr_rpc.sin_port = info->srv_port;
+	addr_rpc.sin_port = htons(info->srv_port);
 	memcpy(&addr_rpc.sin_addr, &info_sock->sin_addr,
 	       sizeof(struct in_addr));
 
@@ -513,7 +513,7 @@ static void *pxy_rpc_recv(void *arg)
 							  &addr_rpc.sin_addr,
 							  addr,
 							  sizeof(addr)),
-						ntohs(info->srv_port));
+						info->srv_port);
 				PTHREAD_MUTEX_unlock(&listlock);
 				sleep(info->retry_sleeptime);
 				nsleeps++;
