@@ -275,7 +275,6 @@ nfsstat4 file_To_Fattr(compound_data_t *data,
 bool nfs4_Fattr_Check_Access(fattr4 *, int);
 bool nfs4_Fattr_Check_Access_Bitmap(struct bitmap4 *, int);
 bool nfs4_Fattr_Supported(fattr4 *);
-bool nfs4_Fattr_Supported_Bitmap(struct bitmap4 *);
 int nfs4_Fattr_cmp(fattr4 *, fattr4 *);
 
 void nfs3_FSALattr_To_Fattr(struct fsal_obj_handle *obj,

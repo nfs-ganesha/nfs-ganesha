@@ -263,6 +263,7 @@ static struct pseudo_fsal_obj_handle
 
 	/* Set the mask at the end. */
 	hdl->attributes.valid_mask = ATTRS_POSIX;
+	hdl->attributes.supported = ATTRS_POSIX;
 
 	fsal_obj_handle_init(&hdl->obj_handle, exp_hdl, DIRECTORY);
 	pseudofs_handle_ops_init(&hdl->obj_handle.obj_ops);

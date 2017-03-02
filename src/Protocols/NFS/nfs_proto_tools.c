@@ -315,6 +315,20 @@ static inline int nfs4_max_attr_index(compound_data_t *data)
 	return -1;
 }
 
+/**
+ * @brief Check if a specific attribute is supported by the FSAL or if
+ *        the attribute isn't indicated in attrmask, is it at least
+ *        supported by Ganesha.
+ *
+ * @param[in] attr            The NFSv4 attribute index of interest
+ * @param[in] fsal_supported  The FSAL attrmask_t indicating which are supported
+ */
+static inline bool atrib_supported(int attr, attrmask_t fsal_supported)
+{
+	return fattr4tab[attr].supported &&
+	       (fattr4tab[attr].attrmask == 0 ||
+		(fsal_supported & fattr4tab[attr].attrmask) != 0);
+}
 
 /* NFSv4.0+ Attribute management
  * XDR encode/decode/compare functions for FSAL <-> Fattr4 translations
@@ -344,7 +358,9 @@ static fattr_xdr_result encode_supported_attrs(XDR *xdr,
 
 	for (attr = FATTR4_SUPPORTED_ATTRS; attr <= max_attr_idx;
 	     attr++) {
-		if (fattr4tab[attr].supported) {
+		LogAttrlist(COMPONENT_NFS_V4, NIV_FULL_DEBUG,
+			    "attrs ", args->attrs, false);
+		if (atrib_supported(attr, args->attrs->supported)) {
 			bool res = set_attribute_in_bitmap(&bits, attr);
 
 			assert(res);
@@ -2456,6 +2472,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.name = "FATTR4_SUPPORTED_ATTRS",
 		.supported = 1,
 		.size_fattr4 = sizeof(fattr4_supported_attrs),
+		.attrmask = 0,
 		.encode = encode_supported_attrs,
 		.decode = decode_supported_attrs,
 		.access = FATTR4_ATTR_READ}
@@ -2473,6 +2490,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.name = "FATTR4_FH_EXPIRE_TYPE",
 		.supported = 1,
 		.size_fattr4 = sizeof(fattr4_fh_expire_type),
+		.attrmask = 0,
 		.encode = encode_expiretype,
 		.decode = decode_expiretype,
 		.access = FATTR4_ATTR_READ}
@@ -2499,6 +2517,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.name = "FATTR4_LINK_SUPPORT",
 		.supported = 1,
 		.size_fattr4 = sizeof(fattr4_link_support),
+		.attrmask = 0,
 		.encode = encode_linksupport,
 		.decode = decode_linksupport,
 		.access = FATTR4_ATTR_READ}
@@ -2507,6 +2526,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.name = "FATTR4_SYMLINK_SUPPORT",
 		.supported = 1,
 		.size_fattr4 = sizeof(fattr4_symlink_support),
+		.attrmask = 0,
 		.encode = encode_symlinksupport,
 		.decode = decode_symlinksupport,
 		.access = FATTR4_ATTR_READ}
@@ -2515,6 +2535,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.name = "FATTR4_NAMED_ATTR",
 		.supported = 1,
 		.size_fattr4 = sizeof(fattr4_named_attr),
+		.attrmask = 0,
 		.encode = encode_namedattrsupport,
 		.decode = decode_namedattrsupport,
 		.access = FATTR4_ATTR_READ}
@@ -2532,6 +2553,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.name = "FATTR4_UNIQUE_HANDLES",
 		.supported = 1,
 		.size_fattr4 = sizeof(fattr4_unique_handles),
+		.attrmask = 0,
 		.encode = encode_uniquehandles,
 		.decode = decode_uniquehandles,
 		.access = FATTR4_ATTR_READ}
@@ -2540,6 +2562,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.name = "FATTR4_LEASE_TIME",
 		.supported = 1,
 		.size_fattr4 = sizeof(fattr4_lease_time),
+		.attrmask = 0,
 		.encode = encode_leaselife,
 		.decode = decode_leaselife,
 		.access = FATTR4_ATTR_READ}
@@ -2548,6 +2571,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.name = "FATTR4_RDATTR_ERROR",
 		.supported = 1,
 		.size_fattr4 = sizeof(fattr4_rdattr_error),
+		.attrmask = 0,
 		.encode = encode_rdattr_error,
 		.decode = decode_rdattr_error,
 		.access = FATTR4_ATTR_READ}
@@ -2565,14 +2589,16 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.name = "FATTR4_ACLSUPPORT",
 		.supported = 1,
 		.size_fattr4 = sizeof(fattr4_aclsupport),
+		.attrmask = ATTR_ACL,
 		.encode = encode_aclsupport,
 		.decode = decode_aclsupport,
 		.access = FATTR4_ATTR_READ}
 	,
 	[FATTR4_ARCHIVE] = {
 		.name = "FATTR4_ARCHIVE",
-		.supported = 1,
+		.supported = 0,
 		.size_fattr4 = sizeof(fattr4_archive),
+		.attrmask = 0,
 		.encode = encode_archive,
 		.decode = decode_archive,
 		.access = FATTR4_ATTR_READ_WRITE}
@@ -2581,6 +2607,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.name = "FATTR4_CANSETTIME",
 		.supported = 1,
 		.size_fattr4 = sizeof(fattr4_cansettime),
+		.attrmask = 0,
 		.encode = encode_cansettime,
 		.decode = decode_cansettime,
 		.access = FATTR4_ATTR_READ}
@@ -2589,6 +2616,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.name = "FATTR4_CASE_INSENSITIVE",
 		.supported = 1,
 		.size_fattr4 = sizeof(fattr4_case_insensitive),
+		.attrmask = 0,
 		.encode = encode_case_insensitive,
 		.decode = decode_case_insensitive,
 		.access = FATTR4_ATTR_READ}
@@ -2597,6 +2625,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.name = "FATTR4_CASE_PRESERVING",
 		.supported = 1,
 		.size_fattr4 = sizeof(fattr4_case_preserving),
+		.attrmask = 0,
 		.encode = encode_case_preserving,
 		.decode = decode_case_preserving,
 		.access = FATTR4_ATTR_READ}
@@ -2605,6 +2634,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.name = "FATTR4_CHOWN_RESTRICTED",
 		.supported = 1,
 		.size_fattr4 = sizeof(fattr4_chown_restricted),
+		.attrmask = 0,
 		.encode = encode_chown_restricted,
 		.decode = decode_chown_restricted,
 		.access = FATTR4_ATTR_READ}
@@ -2613,6 +2643,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.name = "FATTR4_FILEHANDLE",
 		.supported = 1,
 		.size_fattr4 = sizeof(fattr4_filehandle),
+		.attrmask = 0,
 		.encode = encode_filehandle,
 		.decode = decode_filehandle,
 		.access = FATTR4_ATTR_READ}
@@ -2630,6 +2661,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.name = "FATTR4_FILES_AVAIL",
 		.supported = 1,
 		.size_fattr4 = sizeof(fattr4_files_avail),
+		.attrmask = 0,
 		.encode = encode_files_avail,
 		.decode = decode_files_avail,
 		.access = FATTR4_ATTR_READ}
@@ -2638,6 +2670,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.name = "FATTR4_FILES_FREE",
 		.supported = 1,
 		.size_fattr4 = sizeof(fattr4_files_free),
+		.attrmask = 0,
 		.encode = encode_files_free,
 		.decode = decode_files_free,
 		.access = FATTR4_ATTR_READ}
@@ -2646,6 +2679,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.name = "FATTR4_FILES_TOTAL",
 		.supported = 1,
 		.size_fattr4 = sizeof(fattr4_files_total),
+		.attrmask = 0,
 		.encode = encode_files_total,
 		.decode = decode_files_total,
 		.access = FATTR4_ATTR_READ}
@@ -2654,14 +2688,16 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.name = "FATTR4_FS_LOCATIONS",
 		.supported = 1,
 		.size_fattr4 = sizeof(fattr4_fs_locations),
+		.attrmask = ATTR4_FS_LOCATIONS,
 		.encode = encode_fs_locations,
 		.decode = decode_fs_locations,
 		.access = FATTR4_ATTR_READ}
 	,
 	[FATTR4_HIDDEN] = {
 		.name = "FATTR4_HIDDEN",
-		.supported = 1,
+		.supported = 0,
 		.size_fattr4 = sizeof(fattr4_hidden),
+		.attrmask = 0,
 		.encode = encode_hidden,
 		.decode = decode_hidden,
 		.access = FATTR4_ATTR_READ_WRITE}
@@ -2670,6 +2706,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.name = "FATTR4_HOMOGENEOUS",
 		.supported = 1,
 		.size_fattr4 = sizeof(fattr4_homogeneous),
+		.attrmask = 0,
 		.encode = encode_homogeneous,
 		.decode = decode_homogeneous,
 		.access = FATTR4_ATTR_READ}
@@ -2678,6 +2715,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.name = "FATTR4_MAXFILESIZE",
 		.supported = 1,
 		.size_fattr4 = sizeof(fattr4_maxfilesize),
+		.attrmask = 0,
 		.encode = encode_maxfilesize,
 		.decode = decode_maxfilesize,
 		.access = FATTR4_ATTR_READ}
@@ -2686,6 +2724,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.name = "FATTR4_MAXLINK",
 		.supported = 1,
 		.size_fattr4 = sizeof(fattr4_maxlink),
+		.attrmask = 0,
 		.encode = encode_maxlink,
 		.decode = decode_maxlink,
 		.access = FATTR4_ATTR_READ}
@@ -2694,6 +2733,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.name = "FATTR4_MAXNAME",
 		.supported = 1,
 		.size_fattr4 = sizeof(fattr4_maxname),
+		.attrmask = 0,
 		.encode = encode_maxname,
 		.decode = decode_maxname,
 		.access = FATTR4_ATTR_READ}
@@ -2702,6 +2742,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.name = "FATTR4_MAXREAD",
 		.supported = 1,
 		.size_fattr4 = sizeof(fattr4_maxread),
+		.attrmask = 0,
 		.encode = encode_maxread,
 		.decode = decode_maxread,
 		.access = FATTR4_ATTR_READ}
@@ -2710,6 +2751,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.name = "FATTR4_MAXWRITE",
 		.supported = 1,
 		.size_fattr4 = sizeof(fattr4_maxwrite),
+		.attrmask = 0,
 		.encode = encode_maxwrite,
 		.decode = decode_maxwrite,
 		.access = FATTR4_ATTR_READ}
@@ -2718,6 +2760,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.name = "FATTR4_MIMETYPE",
 		.supported = 0,
 		.size_fattr4 = sizeof(fattr4_mimetype),
+		.attrmask = 0,
 		.encode = encode_mimetype,
 		.decode = decode_mimetype,
 		.access = FATTR4_ATTR_READ_WRITE}
@@ -2735,6 +2778,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.name = "FATTR4_NO_TRUNC",
 		.supported = 1,
 		.size_fattr4 = sizeof(fattr4_no_trunc),
+		.attrmask = 0,
 		.encode = encode_no_trunc,
 		.decode = decode_no_trunc,
 		.access = FATTR4_ATTR_READ}
@@ -2770,6 +2814,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.name = "FATTR4_QUOTA_AVAIL_HARD",
 		.supported = 0,
 		.size_fattr4 = sizeof(fattr4_quota_avail_hard),
+		.attrmask = 0,
 		.encode = encode_quota_avail_hard,
 		.decode = decode_quota_avail_hard,
 		.access = FATTR4_ATTR_READ}
@@ -2778,6 +2823,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.name = "FATTR4_QUOTA_AVAIL_SOFT",
 		.supported = 0,
 		.size_fattr4 = sizeof(fattr4_quota_avail_soft),
+		.attrmask = 0,
 		.encode = encode_quota_avail_soft,
 		.decode = decode_quota_avail_soft,
 		.access = FATTR4_ATTR_READ}
@@ -2786,6 +2832,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.name = "FATTR4_QUOTA_USED",
 		.supported = 0,
 		.size_fattr4 = sizeof(fattr4_quota_used),
+		.attrmask = 0,
 		.encode = encode_quota_used,
 		.decode = decode_quota_used,
 		.access = FATTR4_ATTR_READ}
@@ -2804,6 +2851,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.name = "FATTR4_SPACE_AVAIL",
 		.supported = 1,
 		.size_fattr4 = sizeof(fattr4_space_avail),
+		.attrmask = 0,
 		.encode = encode_sace_avail,
 		.decode = decode_sace_avail,
 		.access = FATTR4_ATTR_READ}
@@ -2812,6 +2860,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.name = "FATTR4_SPACE_FREE",
 		.supported = 1,
 		.size_fattr4 = sizeof(fattr4_space_used),
+		.attrmask = 0,
 		.encode = encode_sace_free,
 		.decode = decode_sace_free,
 		.access = FATTR4_ATTR_READ}
@@ -2820,6 +2869,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.name = "FATTR4_SPACE_TOTAL",
 		.supported = 1,
 		.size_fattr4 = sizeof(fattr4_space_total),
+		.attrmask = 0,
 		.encode = encode_sace_total,
 		.decode = decode_sace_total,
 		.access = FATTR4_ATTR_READ}
@@ -2835,8 +2885,9 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 	,
 	[FATTR4_SYSTEM] = {
 		.name = "FATTR4_SYSTEM",
-		.supported = 1,
+		.supported = 0,
 		.size_fattr4 = sizeof(fattr4_system),
+		.attrmask = 0,
 		.encode = encode_system,
 		.decode = decode_system,
 		.access = FATTR4_ATTR_READ_WRITE}
@@ -2866,6 +2917,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.supported = 0,
 		/*( fattr4_time_backup ) not aligned on 32 bits */
 		.size_fattr4 = 12,
+		.attrmask = 0,
 		.encode = encode_backuptime,
 		.decode = decode_backuptime,
 		.access = FATTR4_ATTR_READ_WRITE}
@@ -2875,6 +2927,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.supported = 0,
 		/* ( fattr4_time_create ) not aligned on 32 bits */
 		.size_fattr4 = 12,
+		.attrmask = 0,
 		.encode = encode_createtime,
 		.decode = decode_createtime,
 		.access = FATTR4_ATTR_READ_WRITE}
@@ -2884,6 +2937,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.supported = 1,
 		/* ( fattr4_time_delta ) not aligned on 32 bits */
 		.size_fattr4 = 12,
+		.attrmask = 0,
 		.encode = encode_deltatime,
 		.decode = decode_deltatime,
 		.access = FATTR4_ATTR_READ}
@@ -2922,6 +2976,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.name = "FATTR4_MOUNTED_ON_FILEID",
 		.supported = 1,
 		.size_fattr4 = sizeof(fattr4_mounted_on_fileid),
+		.attrmask = 0,
 		.encode = encode_mounted_on_fileid,
 		.decode = decode_mounted_on_fileid,
 		.access = FATTR4_ATTR_READ}
@@ -2930,6 +2985,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.name = "FATTR4_DIR_NOTIF_DELAY",
 		.supported = 0,
 		.size_fattr4 = sizeof(fattr4_dir_notif_delay),
+		.attrmask = 0,
 		.encode = encode_dir_notif_delay,
 		.decode = decode_dir_notif_delay,
 		.access = FATTR4_ATTR_READ}
@@ -2938,6 +2994,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.name = "FATTR4_DIRENT_NOTIF_DELAY",
 		.supported = 0,
 		.size_fattr4 = sizeof(fattr4_dirent_notif_delay),
+		.attrmask = 0,
 		.encode = encode_dirent_notif_delay,
 		.decode = decode_dirent_notif_delay,
 		.access = FATTR4_ATTR_READ}
@@ -2946,6 +3003,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.name = "FATTR4_DACL",
 		.supported = 0,
 		.size_fattr4 = sizeof(fattr4_dacl),
+		.attrmask = 0,
 		.encode = encode_dacl,
 		.decode = decode_dacl,
 		.access = FATTR4_ATTR_READ_WRITE}
@@ -2962,6 +3020,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.name = "FATTR4_CHANGE_POLICY",
 		.supported = 0,
 		.size_fattr4 = sizeof(fattr4_change_policy),
+		.attrmask = 0,
 		.encode = encode_change_policy,
 		.decode = decode_change_policy,
 		.access = FATTR4_ATTR_READ}
@@ -2970,6 +3029,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.name = "FATTR4_FS_STATUS",
 		.supported = 0,
 		.size_fattr4 = sizeof(fattr4_fs_status),
+		.attrmask = 0,
 		.encode = encode_fs_status,
 		.decode = decode_fs_status,
 		.access = FATTR4_ATTR_READ}
@@ -2978,6 +3038,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.name = "FATTR4_FS_LAYOUT_TYPES",
 		.supported = 1,
 		.size_fattr4 = sizeof(fattr4_fs_layout_types),
+		.attrmask = 0,
 		.encode = encode_fs_layout_types,
 		.decode = decode_fs_layout_types,
 		.access = FATTR4_ATTR_READ}
@@ -2986,6 +3047,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.name = "FATTR4_LAYOUT_HINT",
 		.supported = 0,
 		.size_fattr4 = sizeof(fattr4_layout_hint),
+		.attrmask = 0,
 		.encode = encode_layout_hint,
 		.decode = decode_layout_hint,
 		.access = FATTR4_ATTR_WRITE}
@@ -2994,6 +3056,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.name = "FATTR4_LAYOUT_TYPES",
 		.supported = 0,
 		.size_fattr4 = sizeof(fattr4_layout_types),
+		.attrmask = 0,
 		.encode = encode_layout_types,
 		.decode = decode_layout_types,
 		.access = FATTR4_ATTR_READ}
@@ -3002,6 +3065,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.name = "FATTR4_LAYOUT_BLKSIZE",
 		.supported = 1,
 		.size_fattr4 = sizeof(fattr4_layout_blksize),
+		.attrmask = 0,
 		.encode = encode_layout_blocksize,
 		.decode = decode_layout_blocksize,
 		.access = FATTR4_ATTR_READ}
@@ -3010,6 +3074,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.name = "FATTR4_LAYOUT_ALIGNMENT",
 		.supported = 0,
 		.size_fattr4 = sizeof(fattr4_layout_alignment),
+		.attrmask = 0,
 		.encode = encode_layout_alignment,
 		.decode = decode_layout_alignment,
 		.access = FATTR4_ATTR_READ}
@@ -3018,6 +3083,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.name = "FATTR4_FS_LOCATIONS_INFO",
 		.supported = 0,
 		.size_fattr4 = sizeof(fattr4_fs_locations_info),
+		.attrmask = 0,
 		.encode = encode_fs_locations_info,
 		.decode = decode_fs_locations_info,
 		.access = FATTR4_ATTR_READ}
@@ -3026,6 +3092,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.name = "FATTR4_MDSTHRESHOLD",
 		.supported = 0,
 		.size_fattr4 = sizeof(fattr4_mdsthreshold),
+		.attrmask = 0,
 		.encode = encode_mdsthreshold,
 		.decode = decode_mdsthreshold,
 		.access = FATTR4_ATTR_READ}
@@ -3034,6 +3101,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.name = "FATTR4_RETENTION_GET",
 		.supported = 0,
 		.size_fattr4 = sizeof(fattr4_retention_get),
+		.attrmask = 0,
 		.encode = encode_retention_get,
 		.decode = decode_retention_get,
 		.access = FATTR4_ATTR_READ}
@@ -3042,6 +3110,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.name = "FATTR4_RETENTION_SET",
 		.supported = 0,
 		.size_fattr4 = sizeof(fattr4_retention_set),
+		.attrmask = 0,
 		.encode = encode_retention_set,
 		.decode = decode_retention_set,
 		.access = FATTR4_ATTR_WRITE}
@@ -3050,6 +3119,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.name = "FATTR4_RETENTEVT_GET",
 		.supported = 0,
 		.size_fattr4 = sizeof(fattr4_retentevt_get),
+		.attrmask = 0,
 		.encode = encode_retentevt_get,
 		.decode = decode_retentevt_get,
 		.access = FATTR4_ATTR_READ}
@@ -3058,6 +3128,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.name = "FATTR4_RETENTEVT_SET",
 		.supported = 0,
 		.size_fattr4 = sizeof(fattr4_retentevt_set),
+		.attrmask = 0,
 		.encode = encode_retentevt_set,
 		.decode = decode_retentevt_set,
 		.access = FATTR4_ATTR_WRITE}
@@ -3066,6 +3137,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.name = "FATTR4_RETENTION_HOLD",
 		.supported = 0,
 		.size_fattr4 = sizeof(fattr4_retention_hold),
+		.attrmask = 0,
 		.encode = encode_retention_hold,
 		.decode = decode_retention_hold,
 		.access = FATTR4_ATTR_READ_WRITE}
@@ -3074,6 +3146,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.name = "FATTR4_MODE_SET_MASKED",
 		.supported = 0,
 		.size_fattr4 = sizeof(fattr4_mode_set_masked),
+		.attrmask = 0,
 		.encode = encode_mode_set_masked,
 		.decode = decode_mode_set_masked,
 		.access = FATTR4_ATTR_WRITE}
@@ -3082,6 +3155,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.name = "FATTR4_SUPPATTR_EXCLCREAT",
 		.supported = 1,
 		.size_fattr4 = sizeof(fattr4_suppattr_exclcreat),
+		.attrmask = 0,
 		.encode = encode_support_exclusive_create,
 		.decode = decode_support_exclusive_create,
 		.access = FATTR4_ATTR_READ}
@@ -3090,6 +3164,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.name = "FATTR4_FS_CHARSET_CAP",
 		.supported = 0,
 		.size_fattr4 = sizeof(fattr4_fs_charset_cap),
+		.attrmask = 0,
 		.encode = encode_fs_charset_cap,
 		.decode = decode_fs_charset_cap,
 		.access = FATTR4_ATTR_READ}
@@ -3098,6 +3173,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.name = "FATTR4_XATTR_SUPPORT",
 		.supported = 1,
 		.size_fattr4 = sizeof(fattr4_fs_charset_cap),
+		.attrmask = ATTR4_XATTR,
 		.encode = encode_xattr_support,
 		.decode = decode_xattr_support,
 		.access = FATTR4_ATTR_READ}
@@ -3837,35 +3913,31 @@ void nfs4_bitmap4_Remove_Unsupported(struct bitmap4 *bitmap)
 
 bool nfs4_Fattr_Supported(fattr4 *Fattr)
 {
-	return nfs4_Fattr_Supported_Bitmap(&Fattr->attrmask);
-}				/* nfs4_Fattr_Supported */
-
-/**
- * @brief Check if an attribute is supported
- *
- * @param[in] bitmap NFSv4 attributes bitmap
- *
- * @return true if successful, false otherwise.
- *
- */
-
-bool nfs4_Fattr_Supported_Bitmap(struct bitmap4 *bitmap)
-{
 	int attribute;
+	attrmask_t fsal_supported;
 
-	for (attribute = next_attr_from_bitmap(bitmap, -1); attribute != -1;
-	     attribute = next_attr_from_bitmap(bitmap, attribute)) {
+	/* Get the set of supported attributes from the active export. */
+	fsal_supported = op_ctx->fsal_export->exp_ops.fs_supported_attrs(
+							op_ctx->fsal_export);
+
+	for (attribute = next_attr_from_bitmap(&Fattr->attrmask, -1);
+	     attribute != -1;
+	     attribute = next_attr_from_bitmap(&Fattr->attrmask, attribute)) {
+		bool supported = atrib_supported(attribute, fsal_supported);
+
 		LogFullDebug(COMPONENT_NFS_V4,
-			     "nfs4_Fattr_Supported  ==============> %s supported flag=%u | ",
+			     "Attribute %s Ganesha %s FSAL %s",
 			     fattr4tab[attribute].name,
-			     fattr4tab[attribute].supported);
+			     fattr4tab[attribute].supported
+					? "supported" : "not supported",
+			     supported ? "supported" : "not supported");
 
-		if (!fattr4tab[attribute].supported)
+		if (!supported)
 			return false;
 	}
 
 	return true;
-}				/* nfs4_Fattr_Supported */
+}
 
 /**
  *

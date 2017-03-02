@@ -429,6 +429,8 @@ struct attrlist {
 	attrmask_t request_mask; /*< Indicates the requested from the FSAL. */
 	attrmask_t valid_mask;	/*< Indicates the attributes to be set or
 				   that have been filled in by the FSAL. */
+	attrmask_t supported;	/*< Indicates which attributes the FSAL
+				    supports. */
 	object_file_type_t type;	/*< Type of this object */
 	uint64_t filesize;	/*< Logical size (amount of data that can be
 				   read) */

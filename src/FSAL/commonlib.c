@@ -461,15 +461,19 @@ int display_attrlist(struct display_buffer *dspbuf,
 	int b_left = display_start(dspbuf);
 
 	if (b_left > 0 && attr->request_mask != 0)
-		b_left = display_printf(dspbuf, "Mask = %08x",
+		b_left = display_printf(dspbuf, "Request Mask=%08x ",
 					(unsigned int) attr->request_mask);
 
 	if (b_left > 0 && attr->valid_mask != 0)
-		b_left = display_printf(dspbuf, "Mask = %08x",
+		b_left = display_printf(dspbuf, "Valid Mask=%08x ",
+					(unsigned int) attr->valid_mask);
+
+	if (b_left > 0 && attr->supported != 0)
+		b_left = display_printf(dspbuf, "Supported Mask=%08x ",
 					(unsigned int) attr->valid_mask);
 
 	if (b_left > 0 && is_obj)
-		b_left = display_printf(dspbuf, " %s",
+		b_left = display_printf(dspbuf, "%s",
 					object_file_type_to_str(attr->type));
 
 	if (b_left > 0 && FSAL_TEST_MASK(attr->valid_mask, ATTR_NUMLINKS))
