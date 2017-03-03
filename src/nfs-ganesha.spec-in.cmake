@@ -183,9 +183,9 @@ be used with NFS-Ganesha to support PROXY based filesystems
 Summary: The NFS-GANESHA's util scripts
 Group: Applications/System
 %if ( 0%{?suse_version} )
-Requires:	dbus-1-python, python-gobject2
+Requires:	dbus-1-python, python-gobject2, python-pyparsing
 %else
-Requires:	dbus-python, pygobject2
+Requires:	dbus-python, pygobject2, pyparsing
 %endif
 %if %{with gui_utils}
 %if ( 0%{?suse_version} )
@@ -595,6 +595,7 @@ killall -SIGHUP dbus-daemon 2>&1 > /dev/null
 %{_bindir}/ganesha_stats
 %{_bindir}/sm_notify.ganesha
 %{_bindir}/ganesha_mgr
+%{_bindir}/ganesha_conf
 %endif
 
 %changelog

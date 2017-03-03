@@ -15,6 +15,7 @@ set(GANESHA_BASE_SRCS
   Ganesha/io_stats.py
   Ganesha/glib_dbus_stats.py
   Ganesha/ganesha_mgr_utils.py
+  Ganesha/config_editor.py
   )
 
 # Command line scripts
@@ -25,6 +26,7 @@ set(SCRIPT_SRC
   purge_gids.py
   ganesha_mgr.py
   ganesha_stats.py
+  ganesha_conf
   )
 
 set(GUI_SCRIPT_SRC
