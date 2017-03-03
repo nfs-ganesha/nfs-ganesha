@@ -809,6 +809,9 @@ static fsal_status_t mdcache_rename(struct fsal_obj_handle *obj_hdl,
 	if (FSAL_IS_ERROR(status))
 		goto out;
 
+	/* Now update cached dirents.  Must take locks in the correct order */
+	mdcache_src_dest_lock(mdc_olddir, mdc_newdir);
+
 	if (mdc_lookup_dst != NULL) {
 		/* Mark target file attributes as invalid */
 		atomic_clear_uint32_t_bits(&mdc_lookup_dst->mde_flags,
@@ -827,9 +830,6 @@ static fsal_status_t mdcache_rename(struct fsal_obj_handle *obj_hdl,
 		atomic_clear_uint32_t_bits(&mdc_newdir->mde_flags,
 					   MDCACHE_TRUST_ATTRS);
 	}
-
-	/* Now update cached dirents.  Must take locks in the correct order */
-	mdcache_src_dest_lock(mdc_olddir, mdc_newdir);
 
 	if (mdc_lookup_dst) {
 		/* Remove the entry from parent dir_entries avl */
@@ -859,6 +859,13 @@ static fsal_status_t mdcache_rename(struct fsal_obj_handle *obj_hdl,
 
 		status = mdcache_dirent_rename(mdc_newdir, old_name, new_name);
 		if (FSAL_IS_ERROR(status)) {
+			if (status.major == ERR_FSAL_NOENT) {
+				/* Someone raced us, and reloaded the directory
+				 * after the sub-FSAL rename.  This is not an
+				 * error. Fall through to invalidate just in
+				 * case. */
+				status = fsalstat(ERR_FSAL_NO_ERROR, 0);
+			}
 			/* We're obviously out of date.  Throw out the cached
 			   directory */
 			/* Protected by mdcache_src_dst_lock() above */
