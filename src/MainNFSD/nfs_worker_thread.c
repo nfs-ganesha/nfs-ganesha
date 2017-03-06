@@ -727,7 +727,6 @@ void nfs_rpc_execute(request_data_t *reqdata)
 #ifdef _USE_NFS3
 	int exportid = -1;
 #endif /* _USE_NFS3 */
-	bool slocked = false;
 
 #ifdef USE_LTTNG
 	tracepoint(nfs_rpc, start, reqdata);
@@ -831,7 +830,6 @@ void nfs_rpc_execute(request_data_t *reqdata)
 				     "Before svc_sendreply on socket %d (dup req)",
 				     xprt->xp_fd);
 
-			DISP_SLOCK(xprt);
 			if (!svc_sendreply(&reqdata->r_u.req.svc,
 					   reqdesc->xdr_encode_func,
 					   (caddr_t) res_nfs)) {
@@ -862,7 +860,6 @@ void nfs_rpc_execute(request_data_t *reqdata)
 				     " is already being processed; the active thread will reply",
 				     reqdata->r_u.req.svc.rq_msg.rm_xid);
 			/* Free the arguments */
-			DISP_SLOCK(xprt);
 			/* Ignore the request, send no error */
 			break;
 
@@ -871,7 +868,6 @@ void nfs_rpc_execute(request_data_t *reqdata)
 		case DUPREQ_ERROR:
 			LogCrit(COMPONENT_DISPATCH,
 				"DUP: Did not find the request in the duplicate request cache and couldn't add the request.");
-			DISP_SLOCK(xprt);
 			svcerr_systemerr(&reqdata->r_u.req.svc);
 			break;
 
@@ -879,14 +875,12 @@ void nfs_rpc_execute(request_data_t *reqdata)
 		case DUPREQ_INSERT_MALLOC_ERROR:
 			LogCrit(COMPONENT_DISPATCH,
 				"DUP: Cannot process request, not enough memory available!");
-			DISP_SLOCK(xprt);
 			svcerr_systemerr(&reqdata->r_u.req.svc);
 			break;
 
 		default:
 			LogCrit(COMPONENT_DISPATCH,
 				"DUP: Unknown duplicate request cache status. This should never be reached!");
-			DISP_SLOCK(xprt);
 			svcerr_systemerr(&reqdata->r_u.req.svc);
 			break;
 		}
@@ -1347,8 +1341,6 @@ void nfs_rpc_execute(request_data_t *reqdata)
 		LogFullDebug(COMPONENT_DISPATCH,
 			     "Before svc_sendreply on socket %d", xprt->xp_fd);
 
-		DISP_SLOCK(xprt);
-
 		/* encoding the result on xdr output */
 		if (!svc_sendreply(&reqdata->r_u.req.svc,
 				   reqdesc->xdr_encode_func,
@@ -1400,7 +1392,6 @@ void nfs_rpc_execute(request_data_t *reqdata)
 	auth_rc = AUTH_FAILED;
 
  auth_failure:
-	DISP_SLOCK(xprt);
 	svcerr_auth(&reqdata->r_u.req.svc, auth_rc);
 	/* nb, a no-op when req is uncacheable */
 	if (nfs_dupreq_delete(&reqdata->r_u.req.svc) != DUPREQ_SUCCESS) {
@@ -1410,10 +1401,6 @@ void nfs_rpc_execute(request_data_t *reqdata)
 	}
 
  freeargs:
-
-	/* XXX no need for xprt slock across SVC_FREEARGS */
-	DISP_SUNLOCK(xprt);
-
 	/* Free the allocated resources once the work is done */
 	/* Free the arguments */
 	if ((reqdata->r_u.req.svc.rq_msg.cb_vers == 2)

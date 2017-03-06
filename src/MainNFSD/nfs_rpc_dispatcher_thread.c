@@ -285,10 +285,10 @@ void Create_udp(protos prot)
 void Create_tcp(protos prot)
 {
 	tcp_xprt[prot] =
-		svc_vc_create2(tcp_socket[prot],
-			       nfs_param.core_param.rpc.max_send_buffer_size,
-			       nfs_param.core_param.rpc.max_recv_buffer_size,
-			       SVC_VC_CREATE_LISTEN);
+		svc_vc_ncreatef(tcp_socket[prot],
+				nfs_param.core_param.rpc.max_send_buffer_size,
+				nfs_param.core_param.rpc.max_recv_buffer_size,
+				SVC_CREATE_FLAG_CLOSE | SVC_CREATE_FLAG_LISTEN);
 	if (tcp_xprt[prot] == NULL)
 		LogFatal(COMPONENT_DISPATCH, "Cannot allocate %s/TCP SVCXPRT",
 			 tags[prot]);
@@ -318,10 +318,10 @@ void Create_tcp(protos prot)
 void create_vsock(void)
 {
 	tcp_xprt[P_NFS_VSOCK] =
-		svc_vc_create2(tcp_socket[P_NFS_VSOCK],
-			       nfs_param.core_param.rpc.max_send_buffer_size,
-			       nfs_param.core_param.rpc.max_recv_buffer_size,
-			       SVC_VC_CREATE_LISTEN);
+		svc_vc_ncreatef(tcp_socket[P_NFS_VSOCK],
+				nfs_param.core_param.rpc.max_send_buffer_size,
+				nfs_param.core_param.rpc.max_recv_buffer_size,
+				SVC_CREATE_FLAG_CLOSE | SVC_CREATE_FLAG_LISTEN);
 	if (tcp_xprt[P_NFS_VSOCK] == NULL)
 		LogFatal(COMPONENT_DISPATCH,
 			"Cannot allocate %s/TCP VSOCK SVCXPRT",
@@ -1874,7 +1874,6 @@ enum xprt_stat thr_decode_rpc_request(void *context, SVCXPRT *xprt)
 	enum auth_stat why;
 	enum xprt_stat stat = XPRT_IDLE;
 	bool no_dispatch = false;
-	bool rlocked = false;
 	bool enqueued = false;
 	bool recv_status;
 
@@ -1896,8 +1895,6 @@ enum xprt_stat thr_decode_rpc_request(void *context, SVCXPRT *xprt)
 
 	/* pass private context to _recv */
 	reqdata->r_u.req.svc.rq_context = context;
-
-	DISP_RLOCK(xprt);
 
 #if defined(HAVE_BLKIN)
 	BLKIN_TIMESTAMP(
@@ -1948,7 +1945,6 @@ enum xprt_stat thr_decode_rpc_request(void *context, SVCXPRT *xprt)
 		}
 
 		stat = SVC_STAT(xprt);
-		DISP_RUNLOCK(xprt);
 
 		if (stat == XPRT_IDLE) {
 			/* typically, a new connection */
@@ -2052,8 +2048,9 @@ enum xprt_stat thr_decode_rpc_request(void *context, SVCXPRT *xprt)
 	}
 
 	if (context) {
+		/* release internal locks, result ignored */
+		stat = SVC_STAT(xprt);
 		/* already running worker thread, do not enqueue */
-		DISP_RUNLOCK(xprt);
 		nfs_rpc_execute(reqdata);
 		return XPRT_IDLE;
 	}
@@ -2067,7 +2064,6 @@ enum xprt_stat thr_decode_rpc_request(void *context, SVCXPRT *xprt)
 
  finish:
 	stat = SVC_STAT(xprt);
-	DISP_RUNLOCK(xprt);
 
  done:
 	/* if recv failed, request is not enqueued */
