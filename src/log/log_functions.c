@@ -251,7 +251,7 @@ static int log_to_stream(log_header_t headers, void *private,
 			 struct display_buffer *buffer, char *compstr,
 			 char *message);
 
-static void flush_log_file(int i, bool periodic);
+static void flush_log_file(int i, bool periodic, bool close_fd);
 
 static void *log_flusher(void *arg);
 
@@ -1427,13 +1427,13 @@ static int log_to_file2(log_header_t headers, void *private,
 	pthread_mutex_lock(&lbuffer_thr->lock);
 	if ((lbuffer_thr->buf_offset + len - 1) > LOG_BUFFER_SIZE) {
 		/* Hit the end of the log. Flush it to the disk. */
-		flush_log_file(file_picked, false /*periodic*/);
+		flush_log_file(file_picked, false /*periodic*/,
+			false /*close_fd*/);
 	}
 	offset = lbuffer_thr->buf_offset;
 	lbuffer_thr->buf_offset += len;
-	pthread_mutex_unlock(&lbuffer_thr->lock);
-
 	memcpy(&lbuffer_thr->buffer[offset], buffer->b_start, len);
+	pthread_mutex_unlock(&lbuffer_thr->lock);
 
 out:
 	if (err) {
@@ -1445,7 +1445,7 @@ out:
 	return len;
 }
 
-static void flush_log_file(int i, bool periodic)
+static void flush_log_file(int i, bool periodic, bool close_fd)
 {
 	log_file_t *file = lbuffer[i];
 	int fd = file->log_fd;
@@ -1481,22 +1481,30 @@ static void flush_log_file(int i, bool periodic)
 		return;
 	}
 
-	if (periodic)
+	if (periodic) {
 		fdatasync(fd);
+		if (close_fd) {
+			(void)close(fd);
+			file->log_fd = -1;
+		}
+	}
 
 	file->buf_offset = 0;
 }
 
 static void *log_flusher(void *arg)
 {
-	int i;
+	int i, count = 0;
 	log_file_t *file;
 
 	while (1) {
+		++count;
 		for (i = 0; i < log_files; i++) {
 			file = lbuffer[i];
 			pthread_mutex_lock(&file->lock);
-			flush_log_file(i, true /* periodic */);
+			/* close the fd every 5th iteration of while */
+			flush_log_file(i, true /*periodic*/,
+				!(count % 5) /*close_fd*/);
 			pthread_mutex_unlock(&file->lock);
 		}
 		sleep(60);
