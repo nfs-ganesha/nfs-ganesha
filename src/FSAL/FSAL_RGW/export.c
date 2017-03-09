@@ -97,7 +97,7 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 	/* FSAL status structure */
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	/* The buffer in which to store stat info */
-	struct stat st;
+	struct stat st, st_root;
 	/* Return code from Ceph */
 	int rc;
 	/* temp filehandle */
@@ -120,6 +120,14 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 	if (rc < 0) {
 		return rgw2fsal_error(rc);
 	}
+
+	/* fixup export fsid */
+	rc = rgw_getattr(export->rgw_fs, export->rgw_fs->root_fh,
+			 &st_root, RGW_GETATTR_FLAG_NONE);
+	if (rc < 0) {
+		return rgw2fsal_error(rc);
+	}
+	st.st_dev = st_root.st_dev;
 
 	rc = construct_handle(export, rgw_fh, &st, &handle);
 	if (rc < 0) {
