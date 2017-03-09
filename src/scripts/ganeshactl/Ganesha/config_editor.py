@@ -186,7 +186,7 @@ def r3_to_text(r3, level):
     s = indent + name + " {\n"
     for keypair in keypairs:
         key, value = keypair[0], keypair[1]
-        s += indent + "\t" + "%s = %s;\n" % (key, value)
+        s += indent + "\t" + "%s = %s;\n" % (key, value.strip())
     for sub in subs:
         s += r3_to_text(sub, level+1)
     s += indent + "}\n"
