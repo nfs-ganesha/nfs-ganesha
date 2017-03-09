@@ -666,10 +666,15 @@ void gpfs_unexport_filesystems(struct gpfs_fsal_export *exp)
 		PTHREAD_MUTEX_unlock(&map->fs->upvector_mutex);
 
 		if (glist_empty(&map->fs->exports)) {
+			struct fsal_filesystem *fs = map->fs->fs;
+
 			LogInfo(COMPONENT_FSAL,
 				"GPFS is no longer exporting filesystem %s",
-				map->fs->fs->path);
-			unclaim_fs(map->fs->fs);
+				fs->path);
+			unclaim_fs(fs);
+
+			if (glist_empty(&fs->children))
+				release_posix_file_system(fs);
 		}
 
 		/* And free it */

@@ -122,6 +122,8 @@ int resolve_posix_filesystem(const char *path,
 			     unclaim_filesystem_cb unclaim,
 			     struct fsal_filesystem **root_fs);
 
+void release_posix_file_system(struct fsal_filesystem *fs);
+
 void release_posix_file_systems(void);
 
 void release_posix_file_system(struct fsal_filesystem *fs);
