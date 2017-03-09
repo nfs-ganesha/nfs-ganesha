@@ -15,7 +15,7 @@ LOG { COMPONENTS {} }
 LOG { FACILITY {} }
 LOG { FORMAT {} }
 9P {}
-CACHEINODE
+CACHEINODE {}
 CEPH {}
 GPFS {}
 MEM {}
@@ -231,6 +231,9 @@ EXPORT_DEFAULTS {}
 
 	Delegations(enum, values [None, read, write, readwrite, r, w, rw],
 		    default None)
+
+	Attr_Expiration_Time(int32, range -1 to INT32_MAX, default 60)
+
 
 EXPORT {}
 ---------
@@ -480,8 +483,6 @@ CACHEINODE
 	NParts(uint32, range 1 to 32633, default 7)
 
 	Cache_Size(uint32, range 1 to UINT32_MAX, default 32633)
-
-	Attr_Expiration_Time(int32, range -1 to INT32_MAX, default 60)
 
 	Use_Getattr_Directory_Invalidation(bool, default false)
 
