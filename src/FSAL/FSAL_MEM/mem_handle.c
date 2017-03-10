@@ -38,6 +38,9 @@
 #include "city.h"
 #include "nfs_file_handle.h"
 #include "display.h"
+#ifdef USE_LTTNG
+#include "gsh_lttng/fsal_mem.h"
+#endif
 
 static void mem_release(struct fsal_obj_handle *obj_hdl);
 
@@ -301,6 +304,8 @@ static fsal_status_t mem_close_my_fd(struct mem_fd *my_fd)
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
+#define mem_alloc_handle(p, n, t, e, a) \
+	_mem_alloc_handle(p, n, t, e, a, __func__, __LINE__)
 /**
  * @brief Allocate a MEM handle
  *
@@ -311,12 +316,13 @@ static fsal_status_t mem_close_my_fd(struct mem_fd *my_fd)
  * @param[in] attrs	Attributes of new handle
  * @return Handle on success, NULL on failure
  */
-static struct mem_fsal_obj_handle
-*mem_alloc_handle(struct mem_fsal_obj_handle *parent,
+static struct mem_fsal_obj_handle *
+_mem_alloc_handle(struct mem_fsal_obj_handle *parent,
 		  const char *name,
 		  object_file_type_t type,
 		  struct fsal_export *exp_hdl,
-		  struct attrlist *attrs)
+		  struct attrlist *attrs,
+		  const char *func, int line)
 {
 	struct mem_fsal_obj_handle *hdl;
 	char path[MAXPATHLEN];
@@ -438,6 +444,9 @@ static struct mem_fsal_obj_handle
 		/* Attach myself to my parent */
 		mem_insert_obj(parent, hdl);
 	}
+#ifdef USE_LTTNG
+	tracepoint(fsalmem, mem_alloc, func, line, hdl);
+#endif
 	return hdl;
 
  spcerr:
@@ -849,6 +858,11 @@ static fsal_status_t mem_getattrs(struct fsal_obj_handle *obj_hdl,
 	myself->attrs.numlinks =
 		atomic_fetch_uint32_t(&myself->mh_dir.numlinks);
 
+#ifdef USE_LTTNG
+	tracepoint(fsalmem, mem_getattrs, __func__, __LINE__, myself,
+			   myself->m_name, myself->attrs.filesize,
+			   myself->attrs.numlinks, myself->attrs.change);
+#endif
 	LogFullDebug(COMPONENT_FSAL,
 		     "hdl=%p, name=%s numlinks %"PRIu32,
 		     myself,
@@ -1715,7 +1729,12 @@ static void mem_release(struct fsal_obj_handle *obj_hdl)
 			      obj_handle);
 
 	if (myself->parent == NULL || myself->inavl) {
-		/* Entry is still live */
+		/* Entry is still live: NULL parent means export handle, inavl
+		 * means used by parent */
+#ifdef USE_LTTNG
+		tracepoint(fsalmem, mem_inuse, __func__, __LINE__, myself,
+			   myself->inavl);
+#endif
 		LogDebug(COMPONENT_FSAL,
 			 "Releasing live hdl=%p, name=%s, don't deconstruct it",
 			 myself, myself->m_name);

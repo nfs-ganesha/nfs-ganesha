@@ -31,6 +31,9 @@
 
 #include "avltree.h"
 #include "gsh_list.h"
+#ifdef USE_LTTNG
+#include "gsh_lttng/fsal_mem.h"
+#endif
 
 struct mem_fsal_obj_handle;
 
@@ -126,6 +129,9 @@ fsal_status_t mem_create_export(struct fsal_module *fsal_hdl,
 static inline void _mem_free_handle(struct mem_fsal_obj_handle *hdl,
 				    const char *func, int line)
 {
+#ifdef USE_LTTNG
+	tracepoint(fsalmem, mem_free, func, line, hdl);
+#endif
 	if (hdl->m_name != NULL) {
 		gsh_free(hdl->m_name);
 		hdl->m_name = NULL;

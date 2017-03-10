@@ -72,4 +72,7 @@
  */
 #define DEFAULT_NFS_CCACHE_DIR "@SYSSTATEDIR@/run/ganesha"
 
+/* We're LGPL'd */
+#define _LGPL_SOURCE 1
+
 #endif /* CONFIG_H */

@@ -64,6 +64,8 @@
 
 #include "gsh_lttng/logger.h"
 #include "gsh_lttng/nfs_rpc.h"
+#include "gsh_lttng/mdcache.h"
+#include "gsh_lttng/fsal_mem.h"
 #endif /* USE_LTTNG */
 
 /* parameters for NFSd startup and default values */

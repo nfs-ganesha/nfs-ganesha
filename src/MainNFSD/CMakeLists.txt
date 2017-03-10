@@ -105,6 +105,7 @@ target_link_libraries(ganesha.nfsd
   config_parsing
   ${LIBTIRPC_LIBRARIES}
   ${SYSTEM_LIBRARIES}
+  ${LTTNG_LIBRARIES}
 )
 
 install(TARGETS ganesha.nfsd COMPONENT daemon DESTINATION bin)

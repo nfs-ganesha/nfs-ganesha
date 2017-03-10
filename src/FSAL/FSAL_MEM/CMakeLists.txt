@@ -17,7 +17,7 @@ SET(fsalmem_LIB_SRCS
 add_library(fsalmem SHARED ${fsalmem_LIB_SRCS})
 add_sanitizers(fsalmem)
 
-target_link_libraries(fsalmem ${SYSTEM_LIBRARIES})
+target_link_libraries(fsalmem ${SYSTEM_LIBRARIES} ${LTTNG_LIBRARIES})
 
 set_target_properties(fsalmem PROPERTIES VERSION 4.2.0 SOVERSION 4)
 install(TARGETS fsalmem COMPONENT fsal DESTINATION ${FSAL_DESTINATION} )
