@@ -1399,7 +1399,10 @@ static fattr_xdr_result encode_maxread(XDR *xdr, struct xdr_attrs_args *args)
 
 static fattr_xdr_result decode_maxread(XDR *xdr, struct xdr_attrs_args *args)
 {
-	return FATTR_XDR_NOOP;
+	return xdr_u_int64_t(xdr,
+			     &args->dynamicinfo->
+			     maxread) ? FATTR_XDR_SUCCESS :
+	    FATTR_XDR_FAILED;
 }
 
 /*
@@ -1418,7 +1421,10 @@ static fattr_xdr_result encode_maxwrite(XDR *xdr, struct xdr_attrs_args *args)
 
 static fattr_xdr_result decode_maxwrite(XDR *xdr, struct xdr_attrs_args *args)
 {
-	return FATTR_XDR_NOOP;
+	return xdr_u_int64_t(xdr,
+			     &args->dynamicinfo->
+			     maxwrite) ? FATTR_XDR_SUCCESS :
+	    FATTR_XDR_FAILED;
 }
 
 /*

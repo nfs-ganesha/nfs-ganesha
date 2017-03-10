@@ -275,6 +275,12 @@ static struct bitmap4 lease_bits = {
 	.bitmap4_len = 1
 };
 
+static struct bitmap4 pxy_bitmap_mread_mwrite = {
+	.map[0] = PXY_ATTR_BIT(FATTR4_MAXREAD),
+	.map[0] = PXY_ATTR_BIT(FATTR4_MAXWRITE),
+	.bitmap4_len = 1
+};
+
 #undef PXY_ATTR_BIT
 #undef PXY_ATTR_BIT2
 
@@ -1026,6 +1032,41 @@ static fsal_status_t pxy_make_object(struct fsal_export *export,
 }
 
 /*
+ * cap maxread and maxwrite config values to background server values
+ */
+static void pxy_check_maxread_maxwrite(struct fsal_export *export, fattr4 *f4)
+{
+	fsal_dynamicfsinfo_t info;
+	int rc;
+
+	rc = nfs4_Fattr_To_fsinfo(&info, f4);
+	if (rc != NFS4_OK) {
+		LogWarn(COMPONENT_FSAL,
+			"Unable to get maxread and maxwrite from background NFS server : %d",
+			rc);
+	} else {
+		struct pxy_fsal_module *pm =
+		    container_of(export->fsal, struct pxy_fsal_module, module);
+
+		if (info.maxread != 0 && pm->fsinfo.maxread > info.maxread) {
+			LogWarn(COMPONENT_FSAL,
+				"Reduced maxread from %"PRIu64
+				" to align with remote server %"PRIu64,
+				pm->fsinfo.maxread, info.maxread);
+			pm->fsinfo.maxread = info.maxread;
+		}
+
+		if (info.maxwrite != 0 && pm->fsinfo.maxwrite > info.maxwrite) {
+			LogWarn(COMPONENT_FSAL,
+				"Reduced maxwrite from %"PRIu64
+				" to align with remote server %"PRIu64,
+				pm->fsinfo.maxwrite, info.maxwrite);
+			pm->fsinfo.maxwrite = info.maxwrite;
+		}
+	}
+}
+
+/*
  * NULL parent pointer is only used by lookup_path when it starts
  * from the root handle and has its own export pointer, everybody
  * else is supposed to provide a real parent pointer and matching
@@ -1041,11 +1082,14 @@ static fsal_status_t pxy_lookup_impl(struct fsal_obj_handle *parent,
 	int rc;
 	uint32_t opcnt = 0;
 	GETATTR4resok *atok;
+	GETATTR4resok *atok_mread_mwrite;
 	GETFH4resok *fhok;
-#define FSAL_LOOKUP_NB_OP_ALLOC 4
+	/* PUTROOTFH/PUTFH LOOKUP GETFH GETATTR (GETATTR) */
+#define FSAL_LOOKUP_NB_OP_ALLOC 5
 	nfs_argop4 argoparray[FSAL_LOOKUP_NB_OP_ALLOC];
 	nfs_resop4 resoparray[FSAL_LOOKUP_NB_OP_ALLOC];
 	char fattr_blob[FATTR_BLOB_SZ];
+	char fattr_blob_mread_mwrite[FATTR_BLOB_SZ];
 	char padfilehandle[NFS4_FHSIZE];
 
 	if (!handle)
@@ -1089,12 +1133,26 @@ static fsal_status_t pxy_lookup_impl(struct fsal_obj_handle *parent,
 
 	COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, argoparray, pxy_bitmap_getattr);
 
+	/* Dynamic ask of server maxread and maxwrite */
+	if (!parent) {
+		atok_mread_mwrite =
+		    pxy_fill_getattr_reply(resoparray + opcnt,
+					   fattr_blob_mread_mwrite,
+					   sizeof(fattr_blob_mread_mwrite));
+		COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, argoparray,
+					      pxy_bitmap_mread_mwrite);
+	}
 	fhok->object.nfs_fh4_val = (char *)padfilehandle;
 	fhok->object.nfs_fh4_len = sizeof(padfilehandle);
 
 	rc = pxy_nfsv4_call(export, cred, opcnt, argoparray, resoparray);
 	if (rc != NFS4_OK)
 		return nfsstat4_to_fsal(rc);
+
+	/* Dynamic check of server maxread and maxwrite */
+	if (!parent)
+		pxy_check_maxread_maxwrite(export,
+					   &atok_mread_mwrite->obj_attributes);
 
 	return pxy_make_object(export, &atok->obj_attributes, &fhok->object,
 			       handle, attrs_out);
