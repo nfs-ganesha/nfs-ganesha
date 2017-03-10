@@ -47,6 +47,9 @@
 #include "vfs_methods.h"
 #include <os/subr.h>
 #include "subfsal.h"
+#include "city.h"
+#include "nfs_core.h"
+#include "nfs_proto_tools.h"
 
 /* helpers
  */
@@ -95,6 +98,9 @@ struct vfs_fsal_obj_handle *alloc_handle(int dirfd,
 	if (hdl->obj_handle.type == REGULAR_FILE) {
 		hdl->u.file.fd.fd = -1;	/* no open on this yet */
 		hdl->u.file.fd.openflags = FSAL_O_CLOSED;
+	} else if (hdl->obj_handle.type == DIRECTORY) {
+		hdl->u.directory.path = NULL;
+		hdl->u.directory.fs_location = NULL;
 	} else if (hdl->obj_handle.type == SYMBOLIC_LINK) {
 		ssize_t retlink;
 		size_t len = stat->st_size + 1;
@@ -160,13 +166,14 @@ static fsal_status_t lookup_with_fd(struct vfs_fsal_obj_handle *parent_hdl,
 				    struct attrlist *attrs_out)
 {
 	struct vfs_fsal_obj_handle *hdl;
-	int retval;
+	int retval, fd;
 	struct stat stat;
 	vfs_file_handle_t *fh = NULL;
 	fsal_dev_t dev;
 	struct fsal_filesystem *fs;
 	bool xfsal = false;
 	fsal_status_t status;
+	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 
 	vfs_alloc_handle(fh);
 
@@ -261,6 +268,110 @@ static fsal_status_t lookup_with_fd(struct vfs_fsal_obj_handle *parent_hdl,
 
 	if (attrs_out != NULL) {
 		posix2fsal_attributes(&stat, attrs_out);
+	}
+
+	/* if it is a directory and the sticky bit is set
+	 * let's look for referral information
+	 */
+
+	if (hdl->obj_handle.type == DIRECTORY &&
+	    attrs_out != NULL &&
+	    is_sticky_bit_set(&hdl->obj_handle, attrs_out) &&
+	    hdl->obj_handle.fs->private_data != NULL) {
+
+		caddr_t xattr_content;
+		size_t attrsize = 0;
+		char proclnk[MAXPATHLEN];
+		char path[MAXPATHLEN];
+		char *spath, *fspath;
+		ssize_t r;
+		uint64 hash;
+		fsal_status_t st;
+
+		struct vfs_filesystem *vfs_fs =
+			hdl->obj_handle.fs->private_data;
+
+		/* the real path of the referral directory is needed.
+		 * it get's stored in u.directory.path
+		 */
+
+		fd = vfs_fsal_open(hdl, O_DIRECTORY, &fsal_error);
+		if (fd < 0) {
+			close(fd);
+			return fsalstat(fsal_error, -fd);
+		}
+
+		sprintf(proclnk, "/proc/self/fd/%d", fd);
+		r = readlink(proclnk, path, MAXPATHLEN);
+		if (r < 0) {
+			LogEvent(COMPONENT_FSAL, "failed to readlink");
+		}
+		path[r] = '\0';
+		LogDebug(COMPONENT_FSAL, "fd -> path: %d -> %s",
+			 fd, path);
+		if (hdl->u.directory.path != NULL) {
+			LogFullDebug(COMPONENT_FSAL,
+				     "freeing old directory.path: %s",
+				     hdl->u.directory.path);
+			gsh_free(hdl->u.directory.path);
+		}
+
+		fspath = vfs_fs->fs->path;
+
+		spath = path;
+		if (strncmp(path, fspath, strlen(fspath)) == 0) {
+			spath += strlen(fspath);
+		}
+		hdl->u.directory.path = gsh_strdup(spath);
+
+		/* referral configuration is in a xattr "user.fs_location"
+		 * on the directory in the form
+		 * server:/path/to/referred/directory.
+		 * It gets storeded in u.directory.fs_location
+		 */
+
+		xattr_content = gsh_calloc(XATTR_BUFFERSIZE, sizeof(char));
+
+		st = vfs_getextattr_value_by_name((struct fsal_obj_handle *)hdl,
+						  "user.fs_location",
+						  xattr_content,
+						  XATTR_BUFFERSIZE,
+						  &attrsize);
+
+		if (!FSAL_IS_ERROR(st)) {
+			LogDebug(COMPONENT_FSAL, "user.fs_location: %s",
+				 xattr_content);
+			if (hdl->u.directory.fs_location != NULL) {
+				LogFullDebug(COMPONENT_FSAL,
+					     "freeing old directory.fs_location: %s",
+					     hdl->u.directory.fs_location);
+				gsh_free(hdl->u.directory.fs_location);
+			}
+			hdl->u.directory.fs_location =
+				gsh_strdup(xattr_content);
+
+			/* on a referral the filesystem id has to change
+			 * it get's calculated via a hash from the referral
+			 * and stored in the fsid object of the fsal_obj_handle
+			 */
+
+			hash = CityHash64(xattr_content, attrsize);
+			hdl->obj_handle.fsid.major = hash;
+			hdl->obj_handle.fsid.minor = hash;
+			LogDebug(COMPONENT_NFS_V4,
+				 "fsid.major = %"PRIu64", fsid.minor = %"PRIu64,
+				 hdl->obj_handle.fsid.major,
+				 hdl->obj_handle.fsid.minor);
+		}
+		gsh_free(xattr_content);
+		close(fd);
+
+	} else {
+		/* reset fsid if the sticky bit is not set,
+		 * because a referral was removed
+		 */
+
+		hdl->obj_handle.fsid = hdl->obj_handle.fs->fsid;
 	}
 
 	*handle = &hdl->obj_handle;
@@ -1513,6 +1624,11 @@ static void release(struct fsal_obj_handle *obj_hdl)
 
 		handle_to_key(obj_hdl, &key);
 		vfs_state_release(&key);
+	} else if (type == DIRECTORY) {
+		if (myself->u.directory.path != NULL)
+			gsh_free(myself->u.directory.path);
+		if (myself->u.directory.fs_location != NULL)
+			gsh_free(myself->u.directory.fs_location);
 	} else if (vfs_unopenable_type(type)) {
 		if (myself->u.unopenable.name != NULL)
 			gsh_free(myself->u.unopenable.name);
@@ -1525,6 +1641,65 @@ static void release(struct fsal_obj_handle *obj_hdl)
 		 obj_hdl, myself);
 
 	gsh_free(myself);
+}
+
+/* vfs_fs_locations
+ * returns the saved referral information to NFS protocol layer
+ */
+
+static fsal_status_t vfs_fs_locations(struct fsal_obj_handle *obj_hdl,
+					struct fs_locations4 *fs_locs)
+{
+	struct vfs_fsal_obj_handle *myself;
+
+	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
+	struct vfs_filesystem *vfs_fs = myself->obj_handle.fs->private_data;
+
+	LogFullDebug(COMPONENT_FSAL,
+		     "vfs_fs = %s root_fd = %d major = %d minor = %d",
+		     vfs_fs->fs->path, vfs_fs->root_fd,
+		     (int)vfs_fs->fs->fsid.major,
+		     (int)vfs_fs->fs->fsid.minor);
+
+	LogDebug(COMPONENT_FSAL,
+		 "fs_location = %p:%s",
+		 myself->u.directory.fs_location,
+		 myself->u.directory.fs_location);
+	if (myself->u.directory.fs_location != NULL) {
+		char *server;
+		char *path_sav, *path_work;
+
+		path_sav = gsh_strdup(myself->u.directory.fs_location);
+		path_work = path_sav;
+		server = strsep(&path_work, ":");
+
+		LogDebug(COMPONENT_FSAL,
+			 "fs_location server %s",
+			 server);
+		LogDebug(COMPONENT_FSAL,
+			 "fs_location path %s",
+			 path_work);
+
+		nfs4_pathname4_free(&fs_locs->fs_root);
+		nfs4_pathname4_alloc(&fs_locs->fs_root,
+				     myself->u.directory.path);
+		strncpy(fs_locs->locations.locations_val->
+			server.server_val->utf8string_val,
+			server, strlen(server));
+		fs_locs->locations.locations_val->
+			server.server_val->utf8string_len = strlen(server);
+		nfs4_pathname4_free(&fs_locs->
+				    locations.locations_val->rootpath);
+		nfs4_pathname4_alloc(&fs_locs->
+				     locations.locations_val->rootpath,
+				     path_work);
+
+		gsh_free(path_sav);
+	} else {
+		return fsalstat(ERR_FSAL_NOTSUPP, -1);
+	}
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 void vfs_handle_ops_init(struct fsal_obj_ops *ops)
@@ -1541,6 +1716,7 @@ void vfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->link = linkfile;
 	ops->rename = renamefile;
 	ops->unlink = file_unlink;
+	ops->fs_locations = vfs_fs_locations;
 	ops->close = vfs_close;
 	ops->handle_digest = handle_digest;
 	ops->handle_to_key = handle_to_key;

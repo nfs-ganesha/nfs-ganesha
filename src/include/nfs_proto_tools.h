@@ -302,4 +302,9 @@ enum nfs4_minor_vers {
 	NFS4_MINOR_VERS_1,
 	NFS4_MINOR_VERS_2
 };
+
+void nfs4_pathname4_alloc(pathname4 *, char *);
+
+void nfs4_pathname4_free(pathname4 *);
+
 #endif				/* _NFS_PROTO_TOOLS_H */

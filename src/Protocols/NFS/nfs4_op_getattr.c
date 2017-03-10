@@ -47,25 +47,15 @@ static inline bool check_fs_locations(struct fsal_obj_handle *obj)
 	fsal_status_t st;
 	fs_locations4 fs_locs;
 	fs_location4 fs_loc;
-	component4 fs_path;
-	component4 fs_root;
 	component4 fs_server;
-	char root[MAXPATHLEN];
-	char path[MAXPATHLEN];
 	char server[MAXHOSTNAMELEN];
 
-	fs_root.utf8string_len = sizeof(root);
-	fs_root.utf8string_val = root;
-	fs_path.utf8string_len = sizeof(path);
-	fs_path.utf8string_val = path;
-	fs_locs.fs_root.pathname4_len = 1;
-	fs_locs.fs_root.pathname4_val = &fs_path;
+	nfs4_pathname4_alloc(&fs_locs.fs_root, NULL);
 	fs_server.utf8string_len = sizeof(server);
 	fs_server.utf8string_val = server;
 	fs_loc.server.server_len = 1;
 	fs_loc.server.server_val = &fs_server;
-	fs_loc.rootpath.pathname4_len = 1;
-	fs_loc.rootpath.pathname4_val = &fs_root;
+	nfs4_pathname4_alloc(&fs_loc.rootpath, NULL);
 	fs_locs.locations.locations_len = 1;
 	fs_locs.locations.locations_val = &fs_loc;
 
@@ -75,6 +65,9 @@ static inline bool check_fs_locations(struct fsal_obj_handle *obj)
 	   server and update its length, can not be bigger than MAXHOSTNAMELEN
 	*/
 	st = obj->obj_ops.fs_locations(obj, &fs_locs);
+
+	nfs4_pathname4_free(&fs_locs.fs_root);
+	nfs4_pathname4_free(&fs_loc.rootpath);
 
 	return !FSAL_IS_ERROR(st);
 }
@@ -145,9 +138,9 @@ int nfs4_op_getattr(struct nfs_argop4 *op, compound_data_t *data,
 	if (data->current_obj->type == DIRECTORY &&
 	    is_sticky_bit_set(data->current_obj, &attrs) &&
 	    !attribute_is_set(&arg_GETATTR4->attr_request,
-			       FATTR4_FS_LOCATIONS) &&
+			      FATTR4_FS_LOCATIONS) &&
 	    check_fs_locations(data->current_obj))
-			res_GETATTR4->status = NFS4ERR_MOVED;
+		res_GETATTR4->status = NFS4ERR_MOVED;
 
 	/* Done with the attrs */
 	fsal_release_attrs(&attrs);
