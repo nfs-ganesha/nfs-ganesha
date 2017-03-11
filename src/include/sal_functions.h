@@ -996,8 +996,6 @@ void blocked_lock_polling(struct fridgethr_context *ctx);
 
 void nfs4_start_grace(nfs_grace_start_t *gsp);
 int nfs_in_grace(void);
-void nfs4_create_clid_name(nfs_client_record_t *, nfs_client_id_t *,
-			   struct svc_req *);
 void nfs4_add_clid(nfs_client_id_t *);
 void nfs4_rm_clid(const char *, char *, int);
 void nfs4_chk_clid(nfs_client_id_t *);

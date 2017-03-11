@@ -207,7 +207,7 @@ int convert_opaque_value_max_for_dir(struct display_buffer *dspbuf,
  * @param[in] svc      RPC transport
  */
 void nfs4_create_clid_name(nfs_client_record_t *cl_rec,
-			   nfs_client_id_t *clientid, struct svc_req *svc)
+			   nfs_client_id_t *clientid)
 {
 	const char *str_client_addr = "(unknown)";
 	char cidstr[PATH_MAX] = { 0, };
@@ -241,50 +241,6 @@ void nfs4_create_clid_name(nfs_client_record_t *cl_rec,
 }
 
 /**
- * @brief generate a name that identifies this 4.1 client
- *
- * This name will be used to know that a client was talking to the
- * server before a restart so that it will be allowed to do reclaims
- * during grace period.
- *
- * @param[in] cl_rec   Client name record
- * @param[in] clientid Client record
- */
-void nfs4_create_clid_name41(nfs_client_record_t *cl_rec,
-			     nfs_client_id_t *clientid)
-{
-	char *buf = "unknown";
-	char cidstr[PATH_MAX] = { 0, };
-	struct display_buffer       dspbuf = {sizeof(cidstr), cidstr, cidstr};
-	char                         cidstr_len[20];
-	int total_len;
-
-	/* get the caller's IP addr */
-	if (clientid->gsh_client != NULL)
-		buf = clientid->gsh_client->hostaddr_str;
-
-	if (convert_opaque_value_max_for_dir(&dspbuf,
-					     cl_rec->cr_client_val,
-					     cl_rec->cr_client_val_len,
-					     PATH_MAX) > 0) {
-		/* convert_opaque_value_max_for_dir does not prefix
-		 * the "(<length>:". So we need to do it here */
-		snprintf(cidstr_len, sizeof(cidstr_len), "%zd", strlen(cidstr));
-		total_len = strlen(cidstr) + strlen(buf) + 5 +
-			    strlen(cidstr_len);
-		/* hold both long form clientid and IP */
-		clientid->cid_recov_dir = gsh_malloc(total_len);
-
-		(void) snprintf(clientid->cid_recov_dir, total_len,
-				"%s-(%s:%s)",
-				buf, cidstr_len, cidstr);
-	}
-
-	LogDebug(COMPONENT_CLIENTID, "Created client name [%s]",
-		 clientid->cid_recov_dir);
-}
-
-/**
  * @brief Create an entry in the recovery directory
  *
  * This entry alows the client to reclaim state after a server
@@ -298,8 +254,7 @@ void nfs4_add_clid(nfs_client_id_t *clientid)
 	char path[PATH_MAX] = {0}, segment[NAME_MAX + 1] = {0};
 	int length, position = 0;
 
-	if (clientid->cid_minorversion > 0)
-		nfs4_create_clid_name41(clientid->cid_client_record, clientid);
+	nfs4_create_clid_name(clientid->cid_client_record, clientid);
 
 	/* break clientid down if it is greater than max dir name */
 	/* and create a directory hierachy to represent the clientid. */

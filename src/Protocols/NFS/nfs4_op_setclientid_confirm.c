@@ -423,9 +423,6 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op, compound_data_t *data,
 				     str);
 		}
 
-		/* Create client name for recovery */
-		nfs4_create_clid_name(client_record, unconf, data->req);
-
 		rc = nfs_client_id_confirm(unconf, COMPONENT_CLIENTID);
 
 		if (rc != CLIENT_ID_SUCCESS) {
