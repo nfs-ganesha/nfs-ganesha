@@ -2086,17 +2086,12 @@ static fsal_status_t pxy_commit(struct fsal_obj_handle *obj_hdl,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
+/*
+ * In this first FSAL_PROXY support_ex version without state
+ * nothing to do on close.
+ */
 static fsal_status_t pxy_close(struct fsal_obj_handle *obj_hdl)
 {
-	struct pxy_obj_handle *ph;
-
-	if (!obj_hdl)
-		return fsalstat(ERR_FSAL_FAULT, EINVAL);
-
-	ph = container_of(obj_hdl, struct pxy_obj_handle, obj);
-	if (ph->openflags == FSAL_O_CLOSED)
-		return fsalstat(ERR_FSAL_NOT_OPENED, EBADF);
-	ph->openflags = FSAL_O_CLOSED;
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
