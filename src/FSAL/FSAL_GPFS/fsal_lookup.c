@@ -72,11 +72,9 @@ GPFSFSAL_lookup(const struct req_op_context *op_ctx,
 	    container_of(parent, struct gpfs_fsal_obj_handle, obj_handle);
 	gpfs_fs = parent->fs->private_data;
 
-	status = fsal_internal_handle2fd_at(gpfs_fs->root_fd,
-					    parent_hdl->handle,
-					    &parent_fd,
-					    O_RDONLY,
-					    0);
+	status = fsal_internal_handle2fd(gpfs_fs->root_fd, parent_hdl->handle,
+					 &parent_fd, O_RDONLY, 0);
+
 	if (FSAL_IS_ERROR(status))
 		return status;
 

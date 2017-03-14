@@ -125,16 +125,9 @@ fsal_status_t gpfsfsal_xstat_2_fsal_attributes(
 					struct attrlist *p_fsalattr_out,
 					bool use_acl);
 
-/**
- * Gets a fd from a handle
- */
-fsal_status_t fsal_internal_handle2fd(int dirfd,
-				      struct gpfs_file_handle *phandle,
-				      int *pfd, int oflags, bool reopen);
-
-fsal_status_t fsal_internal_handle2fd_at(int dirfd,
-					 struct gpfs_file_handle *phandle,
-					 int *pfd, int oflags, bool reopen);
+fsal_status_t
+fsal_internal_handle2fd(int dirfd, struct gpfs_file_handle *phandle,
+			int *pfd, int oflags, bool reopen);
 /**
  * Gets a file handle from a parent handle and name
  */

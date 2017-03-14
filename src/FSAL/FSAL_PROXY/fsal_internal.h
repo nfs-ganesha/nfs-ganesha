@@ -15,11 +15,6 @@
 
 #define FSAL_PROXY_OWNER_LEN 256
 
-/* static filesystem info.
- * read access only.
- */
-extern fsal_staticfsinfo_t global_fs_info;
-
 #endif
 
 /**

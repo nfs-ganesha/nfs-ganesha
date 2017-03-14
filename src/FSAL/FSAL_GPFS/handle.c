@@ -515,8 +515,9 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 	myself = container_of(dir_hdl, struct gpfs_fsal_obj_handle, obj_handle);
 	gpfs_fs = dir_hdl->fs->private_data;
 
-	status = fsal_internal_handle2fd_at(gpfs_fs->root_fd, myself->handle,
-					    &dirfd, O_RDONLY | O_DIRECTORY, 0);
+	status = fsal_internal_handle2fd(gpfs_fs->root_fd, myself->handle,
+					 &dirfd, O_RDONLY | O_DIRECTORY, 0);
+
 	if (dirfd < 0)
 		return status;
 
