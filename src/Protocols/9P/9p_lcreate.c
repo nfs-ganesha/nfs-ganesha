@@ -111,9 +111,10 @@ int _9p_lcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		fsal_verifier_t verifier;
 		enum fsal_create_mode createmode = FSAL_UNCHECKED;
 
-		fsal_prepare_attrs(&sattr, ATTR_MODE | ATTR_GROUP);
 		memset(&verifier, 0, sizeof(verifier));
 
+		memset(&sattr, 0, sizeof(sattr));
+		sattr.valid_mask = ATTR_MODE | ATTR_GROUP;
 		sattr.mode = *mode;
 		sattr.group = *gid;
 
