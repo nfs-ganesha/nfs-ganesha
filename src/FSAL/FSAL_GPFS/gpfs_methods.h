@@ -1,6 +1,9 @@
 /* GPFS methods for handles
  */
 
+#ifndef GPFS_METHODS_H
+#define GPFS_METHODS_H
+
 #include <fcntl.h>
 #include "include/gpfs_nfs.h"
 
@@ -169,3 +172,4 @@ gpfs_create_export(struct fsal_module *fsal_hdl, void *parse_node,
 		   struct config_error_type *err_type,
 		   const struct fsal_up_vector *up_ops);
 
+#endif

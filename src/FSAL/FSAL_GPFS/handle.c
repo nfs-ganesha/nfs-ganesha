@@ -1048,7 +1048,6 @@ fsal_status_t gpfs_lookup_path(struct fsal_export *exp_hdl,
 			       struct fsal_obj_handle **handle,
 			       struct attrlist *attrs_out)
 {
-	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	fsal_status_t fsal_status;
 	int retval = 0;
 	int dir_fd;
@@ -1060,6 +1059,10 @@ fsal_status_t gpfs_lookup_path(struct fsal_export *exp_hdl,
 	struct gpfs_file_handle *fh = alloca(sizeof(struct gpfs_file_handle));
 	struct fsal_fsid__ fsid;
 	struct gpfs_fsal_export *gpfs_export;
+	gpfs_acl_t *acl_buf;
+	unsigned int acl_buflen;
+	bool use_acl;
+	int retry;
 
 	memset(fh, 0, sizeof(struct gpfs_file_handle));
 	fh->handle_size = GPFS_MAX_FH_SIZE;
@@ -1075,9 +1078,8 @@ fsal_status_t gpfs_lookup_path(struct fsal_export *exp_hdl,
 
 	if (dir_fd < 0) {
 		LogCrit(COMPONENT_FSAL,
-			"Could not open directory for path %s",
-			path);
-		retval = -dir_fd;
+			"Could not open directory for path %s", path);
+		fsal_status = fsalstat(posix2fsal_error(-dir_fd), retval);
 		goto errout;
 	}
 
@@ -1087,20 +1089,56 @@ fsal_status_t gpfs_lookup_path(struct fsal_export *exp_hdl,
 
 	gpfs_export = container_of(exp_hdl, struct gpfs_fsal_export, export);
 
-	fsal_status = fsal_get_xstat_by_handle(dir_fd, fh, &buffxstat,
-					       NULL, false,
-					       (attributes.request_mask &
-							ATTR_ACL) != 0);
+	/* Let us make the first request using the acl buffer that is
+	 * part of buffxstat itself. If that is not sufficient, we
+	 * allocate from heap and retry.
+	 */
+	use_acl = attributes.request_mask & ATTR_ACL;
+	for (retry = 0; retry < GPFS_ACL_MAX_RETRY; retry++) {
+		switch (retry) {
+		case 0: /* first attempt */
+			acl_buf = (gpfs_acl_t *)buffxstat.buffacl;
+			acl_buflen = GPFS_ACL_BUF_SIZE;
+			break;
+		case 1: /* first retry, don't free the old stack buffer */
+			acl_buflen = acl_buf->acl_len;
+			acl_buf = gsh_malloc(acl_buflen);
+			break;
+		default: /* second or later retry, free the old heap buffer */
+			acl_buflen = acl_buf->acl_len;
+			gsh_free(acl_buf);
+			acl_buf = gsh_malloc(acl_buflen);
+			break;
+		}
+
+		fsal_status = fsal_get_xstat_by_handle(dir_fd, fh, &buffxstat,
+				acl_buf, acl_buflen, NULL, false, use_acl);
+		if (FSAL_IS_ERROR(fsal_status) || !use_acl ||
+				acl_buflen >= acl_buf->acl_len)
+			break;
+	}
+
+	if (retry == GPFS_ACL_MAX_RETRY) { /* make up an error */
+		LogCrit(COMPONENT_FSAL, "unable to get ACLs");
+		fsal_status = fsalstat(ERR_FSAL_SERVERFAULT, 0);
+	}
+
 	if (FSAL_IS_ERROR(fsal_status))
-		goto fileerr;
+		goto xstat_err;
+
 	fsal_status = gpfsfsal_xstat_2_fsal_attributes(&buffxstat, &attributes,
-						       gpfs_export->use_acl);
+						acl_buf, gpfs_export->use_acl);
 	LogFullDebug(COMPONENT_FSAL,
 		     "fsid=0x%016"PRIx64".0x%016"PRIx64,
-		     attributes.fsid.major,
-		     attributes.fsid.minor);
+		     attributes.fsid.major, attributes.fsid.minor);
+
 	if (FSAL_IS_ERROR(fsal_status))
-		goto fileerr;
+		goto xstat_err;
+
+	if (acl_buflen != GPFS_ACL_BUF_SIZE) {
+		assert(acl_buf != (gpfs_acl_t *)buffxstat.buffacl);
+		gsh_free(acl_buf);
+	}
 
 	close(dir_fd);
 
@@ -1112,14 +1150,14 @@ fsal_status_t gpfs_lookup_path(struct fsal_export *exp_hdl,
 		LogInfo(COMPONENT_FSAL,
 			"Could not find file system for path %s",
 			path);
-		retval = ENOENT;
+		fsal_status = fsalstat(posix2fsal_error(ENOENT), ENOENT);
 		goto errout;
 	}
 	if (fs->fsal != exp_hdl->fsal) {
 		LogInfo(COMPONENT_FSAL,
 			"File system for path %s did not belong to FSAL %s",
 			path, exp_hdl->fsal->name);
-		retval = EACCES;
+		fsal_status = fsalstat(posix2fsal_error(EACCES), EACCES);
 		goto errout;
 	}
 
@@ -1141,17 +1179,20 @@ fsal_status_t gpfs_lookup_path(struct fsal_export *exp_hdl,
 	*handle = &hdl->obj_handle;
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
- fileerr:
-	retval = errno;
+xstat_err:
+	/* free if the acl buffer is from the heap */
+	if (acl_buflen != GPFS_ACL_BUF_SIZE) {
+		assert(acl_buf != (gpfs_acl_t *)buffxstat.buffacl);
+		gsh_free(acl_buf);
+	}
+
+fileerr:
 	close(dir_fd);
 
- errout:
-
+errout:
 	/* Done with attributes */
 	fsal_release_attrs(&attributes);
-
-	fsal_error = posix2fsal_error(retval);
-	return fsalstat(fsal_error, retval);
+	return fsal_status;
 }
 
 /**

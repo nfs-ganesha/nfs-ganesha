@@ -34,7 +34,8 @@ gpfs_acl_2_fsal_acl(struct attrlist *p_object_attributes,
  */
 fsal_status_t
 gpfsfsal_xstat_2_fsal_attributes(gpfsfsal_xstat_t *gpfs_buf,
-				 struct attrlist *fsal_attr, bool use_acl)
+				 struct attrlist *fsal_attr,
+				 gpfs_acl_t *acl_buf, bool use_acl)
 {
 	struct stat *p_buffstat;
 
@@ -88,8 +89,8 @@ gpfsfsal_xstat_2_fsal_attributes(gpfsfsal_xstat_t *gpfs_buf,
 
 		if (use_acl && gpfs_buf->attr_valid & XATTR_ACL) {
 			/* ACL is valid, so try to convert fsal acl. */
-			fsal_status_t status = gpfs_acl_2_fsal_acl(
-				fsal_attr, (gpfs_acl_t *) gpfs_buf->buffacl);
+			fsal_status_t status = gpfs_acl_2_fsal_acl(fsal_attr,
+								   acl_buf);
 			if (!FSAL_IS_ERROR(status)) {
 				/* Only mark ACL valid if we actually provide
 				 * one in fsal_attr.
@@ -285,52 +286,48 @@ gpfs_acl_2_fsal_acl(struct attrlist *p_object_attributes,
  */
 fsal_status_t
 fsal_acl_2_gpfs_acl(struct fsal_obj_handle *dir_hdl, fsal_acl_t *fsal_acl,
-		    gpfsfsal_xstat_t *gpfs_buf)
+		    gpfsfsal_xstat_t *gpfs_buf, gpfs_acl_t *acl_buf,
+		    unsigned int acl_buflen)
 {
 	int i;
 	fsal_ace_t *pace;
-	gpfs_acl_t *p_gpfsacl;
 
-	p_gpfsacl = (gpfs_acl_t *) gpfs_buf->buffacl;
-
-	p_gpfsacl->acl_level = 0;
-	p_gpfsacl->acl_version = GPFS_ACL_VERSION_NFS4;
-	p_gpfsacl->acl_type = GPFS_ACL_TYPE_NFS4;
-	p_gpfsacl->acl_nace = fsal_acl->naces;
-	p_gpfsacl->acl_len =
-	    ((int)(signed long)&(((gpfs_acl_t *) 0)->ace_v1)) +
-	    p_gpfsacl->acl_nace * sizeof(gpfs_ace_v4_t);
+	acl_buf->acl_level = 0;
+	acl_buf->acl_version = GPFS_ACL_VERSION_NFS4;
+	acl_buf->acl_type = GPFS_ACL_TYPE_NFS4;
+	acl_buf->acl_nace = fsal_acl->naces;
+	acl_buf->acl_len = acl_buflen;
 
 	for (pace = fsal_acl->aces, i = 0;
 	     pace < fsal_acl->aces + fsal_acl->naces; pace++, i++) {
-		p_gpfsacl->ace_v4[i].aceType = pace->type;
-		p_gpfsacl->ace_v4[i].aceFlags = pace->flag;
-		p_gpfsacl->ace_v4[i].aceIFlags = pace->iflag;
-		p_gpfsacl->ace_v4[i].aceMask = pace->perm;
+		acl_buf->ace_v4[i].aceType = pace->type;
+		acl_buf->ace_v4[i].aceFlags = pace->flag;
+		acl_buf->ace_v4[i].aceIFlags = pace->iflag;
+		acl_buf->ace_v4[i].aceMask = pace->perm;
 
 		if (IS_FSAL_ACE_SPECIAL_ID(*pace))
-			p_gpfsacl->ace_v4[i].aceWho = pace->who.uid;
+			acl_buf->ace_v4[i].aceWho = pace->who.uid;
 		else {
 			if (IS_FSAL_ACE_GROUP_ID(*pace))
-				p_gpfsacl->ace_v4[i].aceWho = pace->who.gid;
+				acl_buf->ace_v4[i].aceWho = pace->who.gid;
 			else
-				p_gpfsacl->ace_v4[i].aceWho = pace->who.uid;
+				acl_buf->ace_v4[i].aceWho = pace->who.uid;
 		}
 
 		LogMidDebug(COMPONENT_FSAL,
 			 "fsal_acl_2_gpfs_acl: gpfs ace: type = 0x%x, flag = 0x%x, perm = 0x%x, special = %d, %s = 0x%x",
-			 p_gpfsacl->ace_v4[i].aceType,
-			 p_gpfsacl->ace_v4[i].aceFlags,
-			 p_gpfsacl->ace_v4[i].aceMask,
-			 (p_gpfsacl->ace_v4[i].
+			 acl_buf->ace_v4[i].aceType,
+			 acl_buf->ace_v4[i].aceFlags,
+			 acl_buf->ace_v4[i].aceMask,
+			 (acl_buf->ace_v4[i].
 			  aceIFlags & FSAL_ACE_IFLAG_SPECIAL_ID) ? 1 : 0,
-			 (p_gpfsacl->ace_v4[i].
+			 (acl_buf->ace_v4[i].
 			  aceFlags & FSAL_ACE_FLAG_GROUP_ID) ? "gid" : "uid",
-			 p_gpfsacl->ace_v4[i].aceWho);
+			 acl_buf->ace_v4[i].aceWho);
 
 		/* It is invalid to set inherit flags on non dir objects */
 		if (dir_hdl->type != DIRECTORY &&
-		    (p_gpfsacl->ace_v4[i].aceFlags &
+		    (acl_buf->ace_v4[i].aceFlags &
 		    FSAL_ACE_FLAG_INHERIT) != 0) {
 			LogMidDebug(COMPONENT_FSAL,
 			   "attempt to set inherit flag to non dir object");
@@ -339,7 +336,7 @@ fsal_acl_2_gpfs_acl(struct fsal_obj_handle *dir_hdl, fsal_acl_t *fsal_acl,
 
 		/* It is invalid to set inherit only with
 		 * out an actual inherit flag */
-		if ((p_gpfsacl->ace_v4[i].aceFlags & FSAL_ACE_FLAG_INHERIT) ==
+		if ((acl_buf->ace_v4[i].aceFlags & FSAL_ACE_FLAG_INHERIT) ==
 			FSAL_ACE_FLAG_INHERIT_ONLY) {
 			LogMidDebug(COMPONENT_FSAL,
 			   "attempt to set inherit only without an inherit flag");

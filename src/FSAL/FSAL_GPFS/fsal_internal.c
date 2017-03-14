@@ -610,8 +610,9 @@ int fsal_internal_version(void)
  */
 fsal_status_t
 fsal_get_xstat_by_handle(int dirfd, struct gpfs_file_handle *gpfs_fh,
-			 gpfsfsal_xstat_t *buffxstat,
-			 uint32_t *expire_time_attr, bool expire, bool use_acl)
+			 gpfsfsal_xstat_t *buffxstat, gpfs_acl_t *acl_buf,
+			 unsigned int acl_buflen, uint32_t *expire_time_attr,
+			 bool expire, bool use_acl)
 {
 	struct xstat_arg xstatarg = {0};
 	int errsv;
@@ -622,14 +623,11 @@ fsal_get_xstat_by_handle(int dirfd, struct gpfs_file_handle *gpfs_fh,
 
 	/* Initialize acl header so that GPFS knows what we want. */
 	if (use_acl) {
-		gpfs_acl_t *pacl_gpfs;
-
-		pacl_gpfs = (gpfs_acl_t *) buffxstat->buffacl;
-		pacl_gpfs->acl_level = 0;
-		pacl_gpfs->acl_version = GPFS_ACL_VERSION_NFS4;
-		pacl_gpfs->acl_type = GPFS_ACL_TYPE_NFS4;
-		pacl_gpfs->acl_len = GPFS_ACL_BUF_SIZE;
-		xstatarg.acl = pacl_gpfs;
+		acl_buf->acl_level = 0;
+		acl_buf->acl_version = GPFS_ACL_VERSION_NFS4;
+		acl_buf->acl_type = GPFS_ACL_TYPE_NFS4;
+		acl_buf->acl_len = acl_buflen;
+		xstatarg.acl = acl_buf;
 		xstatarg.attr_valid = XATTR_STAT | XATTR_ACL;
 	} else {
 		xstatarg.acl = NULL;
@@ -653,7 +651,8 @@ fsal_get_xstat_by_handle(int dirfd, struct gpfs_file_handle *gpfs_fh,
 		 dirfd, rc, gpfs_fh->handle_size);
 
 	if (rc < 0) {
-		if (errsv == ENODATA) {
+		switch (errsv) {
+		case ENODATA:
 			/* For the special file that do not have ACL, GPFS
 			   returns ENODATA. In this case, return okay with
 			   stat.
@@ -662,7 +661,28 @@ fsal_get_xstat_by_handle(int dirfd, struct gpfs_file_handle *gpfs_fh,
 			LogFullDebug(COMPONENT_FSAL,
 				     "retrieved only stat, not acl");
 			return fsalstat(ERR_FSAL_NO_ERROR, 0);
-		} else {
+
+		case ENOSPC:
+			/* If the supplied acl buffer is too small, we
+			 * get this errno! acl_len will be updated to
+			 * the required length.
+			 *
+			 * Return success and let the caller check the length
+			 */
+			if (use_acl && acl_buf->acl_len > acl_buflen) {
+				LogFullDebug(COMPONENT_FSAL,
+					"fsal_get_xstat_by_handle returned buffer too small, passed len: %u, required len: %u, ",
+					acl_buflen, acl_buf->acl_len);
+				errno = 0;
+				break;
+			}
+
+			LogWarn(COMPONENT_FSAL,
+				"fsal_get_xstat_by_handle returned bogus ENOSPC, passed len: %u, required len: %u",
+				acl_buflen, acl_buf->acl_len);
+			return fsalstat(ERR_FSAL_SERVERFAULT, errsv);
+
+		default:
 			/* Handle other errors. */
 			LogFullDebug(COMPONENT_FSAL,
 				     "fsal_get_xstat_by_handle returned errno:%d -- %s",
@@ -697,7 +717,8 @@ fsal_get_xstat_by_handle(int dirfd, struct gpfs_file_handle *gpfs_fh,
 fsal_status_t
 fsal_set_xstat_by_handle(int dirfd, const struct req_op_context *op_ctx,
 			 struct gpfs_file_handle *gpfs_fh, int attr_valid,
-			 int attr_changed, gpfsfsal_xstat_t *buffxstat)
+			 int attr_changed, gpfsfsal_xstat_t *buffxstat,
+			 gpfs_acl_t *acl_buf)
 {
 	struct xstat_arg xstatarg = {0};
 	int errsv;
@@ -709,7 +730,7 @@ fsal_set_xstat_by_handle(int dirfd, const struct req_op_context *op_ctx,
 	xstatarg.attr_valid = attr_valid;
 	xstatarg.mountdirfd = dirfd;
 	xstatarg.handle = gpfs_fh;
-	xstatarg.acl = (gpfs_acl_t *) buffxstat->buffacl;
+	xstatarg.acl = acl_buf;
 	xstatarg.attr_changed = attr_changed;
 	xstatarg.buf = &buffxstat->buffstat;
 
@@ -757,7 +778,7 @@ fsal_trucate_by_handle(int dirfd, const struct req_op_context *op_ctx,
 	buffxstat.buffstat.st_size = size;
 
 	return fsal_set_xstat_by_handle(dirfd, op_ctx, gpfs_fh, XATTR_STAT,
-					XATTR_SIZE, &buffxstat);
+					XATTR_SIZE, &buffxstat, NULL);
 }
 
 /**
