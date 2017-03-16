@@ -27,6 +27,7 @@
 #include "fsal_types.h"
 #include "fsal_api.h"
 #include "fsal_up.h"
+#include "gsh_rpc.h"
 #include "gluster_internal.h"
 #include "FSAL/fsal_commonlib.h"
 #include "FSAL/fsal_config.h"
@@ -192,6 +193,7 @@ static nfsstat4 pnfs_layout_get(struct fsal_obj_handle          *obj_pub,
 
 	util |= file_layout.stripe_type | file_layout.stripe_length;
 
+	/* @todo need to handle IPv6 here */
 	rc = glfs_get_ds_addr(export->gl_fs->fs, handle->glhandle,
 				&deviceid.device_id4);
 
@@ -630,14 +632,16 @@ out:
 int
 glfs_get_ds_addr(struct glfs *fs, struct glfs_object *object, uint32_t *ds_addr)
 {
-	int             ret                  = 0;
-	char            pathinfo[1024]       = {0, };
-	char            hostname[1024]       = {0, };
-	struct addrinfo hints, *res;
-	struct in_addr  addr                 = {0, };
-	const char      *pathinfokey         = "trusted.glusterfs.pathinfo";
+	int             ret                    = 0;
+	char            pathinfo[1024]         = {0, };
+	char            hostname[256]          = {0, };
+	char		scratch[SOCK_NAME_MAX] = {0, };
+	struct addrinfo hints                  = {0, };
+	struct addrinfo *res                   = NULL;
+	const char      *pathinfokey           = "trusted.glusterfs.pathinfo";
 
-	ret = glfs_h_getxattrs(fs, object, pathinfokey, pathinfo, 1024);
+	ret = glfs_h_getxattrs(fs, object, pathinfokey, pathinfo,
+			       sizeof(pathinfo));
 
 	LogDebug(COMPONENT_PNFS, "pathinfo %s", pathinfo);
 
@@ -647,22 +651,19 @@ glfs_get_ds_addr(struct glfs *fs, struct glfs_object *object, uint32_t *ds_addr)
 		goto out;
 	}
 
-	memset(&hints, 0, sizeof(hints));
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_family = AF_INET;
 	ret = getaddrinfo(hostname, NULL, &hints, &res);
+	/* we trust getaddrinfo() never returns EAI_AGAIN! */
 	if (ret != 0) {
-		LogMajor(COMPONENT_PNFS, "error %d\n", ret);
+		*ds_addr = 0;
+		LogMajor(COMPONENT_PNFS, "error %s\n", gai_strerror(ret));
 		goto out;
 	}
-
-	addr.s_addr = ((struct sockaddr_in *)(res->ai_addr))->sin_addr.s_addr;
-
-	LogDebug(COMPONENT_PNFS, "ip address : %s", inet_ntoa(addr));
-
-	freeaddrinfo(res);
+	sprint_sockip((sockaddr_t *)res->ai_addr, scratch, sizeof(scratch));
+	LogDebug(COMPONENT_PNFS, "ip address : %s", scratch);
+	*ds_addr = ((struct sockaddr_in *)(res->ai_addr))->sin_addr.s_addr;
 out:
-
-	*ds_addr = addr.s_addr;
+	freeaddrinfo(res);
 	return ret;
 }
