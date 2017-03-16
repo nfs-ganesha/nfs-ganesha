@@ -62,16 +62,16 @@ static void valgrind_kganesha(struct kxArgs *args)
 	{
 		struct name_handle_arg *arg = (void *)args->arg2;
 
-		VALGRIND_MAKE_MEM_DEFINED(arg->handle->f_handle,
-					  arg->handle->handle_size);
+		VALGRIND_MAKE_MEM_DEFINED(arg->handle,
+					  sizeof(struct gpfs_file_handle));
 		break;
 	}
 	case OPENHANDLE_GET_HANDLE:
 	{
 		struct get_handle_arg *arg = (void *)args->arg2;
 
-		VALGRIND_MAKE_MEM_DEFINED(arg->out_fh->f_handle,
-					  arg->out_fh->handle_size);
+		VALGRIND_MAKE_MEM_DEFINED(arg->out_fh,
+					  sizeof(struct gpfs_file_handle));
 		break;
 	}
 	case OPENHANDLE_STAT_BY_NAME:
@@ -85,8 +85,8 @@ static void valgrind_kganesha(struct kxArgs *args)
 	{
 		struct create_name_arg *arg = (void *)args->arg2;
 
-		VALGRIND_MAKE_MEM_DEFINED(arg->new_fh->f_handle,
-					  arg->new_fh->handle_size);
+		VALGRIND_MAKE_MEM_DEFINED(arg->new_fh,
+					  sizeof(struct gpfs_file_handle));
 		break;
 	}
 	case OPENHANDLE_READLINK_BY_FH:
