@@ -429,7 +429,7 @@ make DESTDIR=%{buildroot} install
 %systemd_post nfs-ganesha-config.service
 %endif
 %endif
-killall -SIGHUP dbus-daemon 2>&1 > /dev/null
+killall -SIGHUP dbus-daemon >/dev/null 2>&1 || :
 
 %preun
 %if ( 0%{?suse_version} )
