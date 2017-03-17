@@ -335,6 +335,8 @@ void Cleanup(void)
 		c->clean();
 		c = c->next;
 	}
+
+	flush_all_logs(true /*close_fd*/);
 }
 
 void Fatal(void)
@@ -1492,21 +1494,27 @@ static void flush_log_file(int i, bool periodic, bool close_fd)
 	file->buf_offset = 0;
 }
 
+void flush_all_logs(bool close_fd)
+{
+	int i;
+	log_file_t *file;
+
+	for (i = 0; i < log_files; i++) {
+		file = lbuffer[i];
+		pthread_mutex_lock(&file->lock);
+		flush_log_file(i, true /*periodic*/, close_fd);
+		pthread_mutex_unlock(&file->lock);
+	}
+}
+
 static void *log_flusher(void *arg)
 {
-	int i, count = 0;
-	log_file_t *file;
+	int count = 0;
 
 	while (1) {
 		++count;
-		for (i = 0; i < log_files; i++) {
-			file = lbuffer[i];
-			pthread_mutex_lock(&file->lock);
-			/* close the fd every 5th iteration of while */
-			flush_log_file(i, true /*periodic*/,
-				!(count % 5) /*close_fd*/);
-			pthread_mutex_unlock(&file->lock);
-		}
+		/* close the fd every 5th iteration of while */
+		flush_all_logs(!(count % 5) /*close_fd*/);
 		sleep(60);
 	}
 

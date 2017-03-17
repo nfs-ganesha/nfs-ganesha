@@ -489,6 +489,7 @@ fatal_die:
 	report_config_errors(&err_type, NULL, config_errs_to_log);
 	LogFatal(COMPONENT_INIT,
 		 "Fatal errors.  Server exiting...");
+	flush_all_logs(true /*close_fd*/);
 	/* NOT REACHED */
 	return 2;
 }

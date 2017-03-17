@@ -464,6 +464,7 @@ static void do_shutdown(void)
 		LogEvent(COMPONENT_MAIN, "FSAL system destroyed.");
 	}
 
+	flush_all_logs(true /*close_fds*/);
 	unlink(pidfile_path);
 }
 
