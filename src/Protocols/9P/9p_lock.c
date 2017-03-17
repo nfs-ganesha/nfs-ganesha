@@ -171,7 +171,12 @@ int _9p_lock(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 		if (state_status == STATE_SUCCESS)
 			status = _9P_LOCK_SUCCESS;
-		else if (state_status == STATE_LOCK_BLOCKED)
+		else if (state_status == STATE_LOCK_BLOCKED ||
+			 state_status == STATE_LOCK_CONFLICT)
+			/**
+			 * Should handle _9P_LOCK_FLAGS_BLOCK in *flags,
+			 * but linux client replays blocking requests
+			 */
 			status = _9P_LOCK_BLOCKED;
 		else
 			status = _9P_LOCK_ERROR;
