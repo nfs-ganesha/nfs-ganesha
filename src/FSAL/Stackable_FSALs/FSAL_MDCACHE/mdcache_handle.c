@@ -850,7 +850,33 @@ static fsal_status_t mdcache_rename(struct fsal_obj_handle *obj_hdl,
 		mdc_unreachable(mdc_lookup_dst);
 	}
 
-	if (mdc_olddir == mdc_newdir) {
+
+	if (op_ctx->fsal_export->sub_export->exp_ops.fs_supports(
+		op_ctx->fsal_export->sub_export, fso_rename_changes_key)) {
+		LogDebug(COMPONENT_CACHE_INODE,
+			 "Rename (%p,%s)->(%p,%s) : key changing", mdc_olddir,
+			 old_name, mdc_newdir, new_name);
+
+		/* FSAL changes keys on rename.  Just remove the dirent(s) */
+
+		/* Old dirent first */
+		status = mdcache_dirent_remove(mdc_olddir, old_name);
+		if (FSAL_IS_ERROR(status)) {
+			LogDebug(COMPONENT_CACHE_INODE,
+				 "Remove stale dirent returned %s",
+				 fsal_err_txt(status));
+			/* Protected by mdcache_src_dst_lock() above */
+			mdcache_dirent_invalidate_all(mdc_olddir);
+		}
+
+		/* Now new directory.  Here, we just need to invalidate dirents,
+		 * since we have a known missing dirent */
+		mdcache_dirent_invalidate_all(mdc_newdir);
+
+		/* Handle key is changing.  This means the old handle is
+		 * useless.  Mark it unreachable, forcing a lookup next time */
+		mdc_unreachable(mdc_obj);
+	} else if (mdc_olddir == mdc_newdir) {
 		/* if the rename operation is made within the same dir, then we
 		 * use an optimization: mdcache_rename_dirent is used
 		 * instead of adding/removing dirent. This limits the use of
