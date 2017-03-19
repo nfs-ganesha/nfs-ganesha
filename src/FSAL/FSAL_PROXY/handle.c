@@ -276,8 +276,7 @@ static struct bitmap4 lease_bits = {
 };
 
 static struct bitmap4 pxy_bitmap_mread_mwrite = {
-	.map[0] = PXY_ATTR_BIT(FATTR4_MAXREAD),
-	.map[0] = PXY_ATTR_BIT(FATTR4_MAXWRITE),
+	.map[0] = PXY_ATTR_BIT(FATTR4_MAXREAD) | PXY_ATTR_BIT(FATTR4_MAXWRITE),
 	.bitmap4_len = 1
 };
 
