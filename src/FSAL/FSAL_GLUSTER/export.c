@@ -676,13 +676,13 @@ glusterfs_get_fs(struct glexport_params params,
 
 	gl_fs = gsh_calloc(1, sizeof(struct glusterfs_fs));
 
-	glist_init(&gl_fs->fs_obj);
-
 	if (!gl_fs) {
 		LogCrit(COMPONENT_FSAL,
 			"Unable to allocate memory for glusterfs_fs object");
 		goto out;
 	}
+
+	glist_init(&gl_fs->fs_obj);
 
 	fs = glfs_new(params.glvolname);
 	if (!fs) {
