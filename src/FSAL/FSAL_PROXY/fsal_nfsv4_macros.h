@@ -44,6 +44,67 @@ do { \
 do {gsh_free(argcompound.argarray_val); } while (0)
 
 /* OP specific macros */
+
+/**
+ * Notice about NFS4_OP_SEQUENCE argop filling :
+ * As rpc_context and slot are mutualized, sa_slotid and related sa_sequenceid
+ * are place holder filled later on pxy_compoundv4_execute function, only when
+ * the free pxy_rpc_io_context is chosen.
+ */
+#define COMPOUNDV4_ARG_ADD_OP_SEQUENCE(opcnt, argarray, sessionid, nb_slot) \
+do {									\
+	nfs_argop4 *op = argarray + opcnt; opcnt++;			\
+	op->argop = NFS4_OP_SEQUENCE;					\
+	memcpy(op->nfs_argop4_u.opsequence.sa_sessionid, sessionid,	\
+	       sizeof(sessionid4));					\
+	op->nfs_argop4_u.opsequence.sa_highest_slotid = nb_slot;	\
+	op->nfs_argop4_u.opsequence.sa_cachethis = false;		\
+} while (0)
+
+#define COMPOUNDV4_ARG_ADD_OP_GLOBAL_RECLAIM_COMPLETE(opcnt, argarray)	\
+do {									\
+	nfs_argop4 *op = argarray + opcnt; opcnt++;			\
+	op->argop = NFS4_OP_RECLAIM_COMPLETE;				\
+	op->nfs_argop4_u.opreclaim_complete.rca_one_fs = false;		\
+} while (0)
+
+#define COMPOUNDV4_ARG_ADD_OP_CREATE_SESSION(opcnt, argarray, cid, seqid, info)\
+do {									\
+	callback_sec_parms4 csa_sec_parms_val;				\
+	struct channel_attrs4 *fore_attrs;				\
+	struct channel_attrs4 *back_attrs;				\
+	CREATE_SESSION4args *opcreate_session;				\
+									\
+	nfs_argop4 *op = argarray + opcnt; opcnt++;			\
+	op->argop = NFS4_OP_CREATE_SESSION;				\
+	opcreate_session = &op->nfs_argop4_u.opcreate_session;		\
+	opcreate_session->csa_clientid = cid;				\
+	opcreate_session->csa_sequence = seqid;				\
+	opcreate_session->csa_flags = CREATE_SESSION4_FLAG_CONN_BACK_CHAN; \
+	fore_attrs = &opcreate_session->csa_fore_chan_attrs;		\
+	fore_attrs->ca_headerpadsize = 0;				\
+	fore_attrs->ca_maxrequestsize = info->srv_sendsize;		\
+	fore_attrs->ca_maxresponsesize = info->srv_recvsize;		\
+	fore_attrs->ca_maxresponsesize_cached = info->srv_recvsize;	\
+	fore_attrs->ca_maxoperations = NB_MAX_OPERATIONS;		\
+	fore_attrs->ca_maxrequests = NB_RPC_SLOT;			\
+	fore_attrs->ca_rdma_ird.ca_rdma_ird_len = 0;			\
+	fore_attrs->ca_rdma_ird.ca_rdma_ird_val = NULL;			\
+	back_attrs = &opcreate_session->csa_back_chan_attrs;		\
+	back_attrs->ca_headerpadsize = 0;				\
+	back_attrs->ca_maxrequestsize = info->srv_recvsize;		\
+	back_attrs->ca_maxresponsesize = info->srv_sendsize;		\
+	back_attrs->ca_maxresponsesize_cached = info->srv_recvsize;	\
+	back_attrs->ca_maxoperations = NB_MAX_OPERATIONS;		\
+	back_attrs->ca_maxrequests = NB_RPC_SLOT;			\
+	back_attrs->ca_rdma_ird.ca_rdma_ird_len = 0;			\
+	back_attrs->ca_rdma_ird.ca_rdma_ird_val = NULL;			\
+	opcreate_session->csa_cb_program = info->srv_prognum;		\
+	opcreate_session->csa_sec_parms.csa_sec_parms_len = 1;		\
+	csa_sec_parms_val.cb_secflavor = AUTH_NONE;			\
+	opcreate_session->csa_sec_parms.csa_sec_parms_val = &csa_sec_parms_val;\
+} while (0)
+
 #define COMPOUNDV4_ARG_ADD_OP_PUTROOTFH(opcnt, argarray)  \
 do {                                                       \
 	argarray[opcnt].argop = NFS4_OP_PUTROOTFH;	   \
@@ -113,6 +174,16 @@ do { \
 	op->nfs_argop4_u.opclose.open_stateid.seqid = 1;	\
 	memset(op->nfs_argop4_u.opclose.open_stateid.other, 0,\
 	       sizeof(op->nfs_argop4_u.opclose.open_stateid.other)); \
+} while (0)
+
+#define COMPOUNDV4_ARG_ADD_OP_CLOSE_4_1(opcnt, argarray, __stateid)	\
+do { \
+	nfs_argop4 *op = argarray + opcnt; opcnt++;		\
+	op->argop = NFS4_OP_CLOSE;				\
+	op->nfs_argop4_u.opclose.open_stateid.seqid		\
+		= __stateid->seqid;				\
+	memcpy(op->nfs_argop4_u.opclose.open_stateid.other,	\
+	       __stateid->other, 12);				\
 } while (0)
 
 #define COMPOUNDV4_ARG_ADD_OP_CLOSE(opcnt, argarray, __stateid, oo_seqid) \
@@ -230,6 +301,20 @@ do { \
 	op->nfs_argop4_u.opreaddir.attr_request = inbitmap;		\
 } while (0)
 
+#define COMPOUNDV4_ARGS_ADD_OP_OPEN_4_1(opcnt, args,  __share_access,	\
+				     __share_deny, __owner_val,		\
+				     __owner_len, __openhow, __claim)	\
+do { \
+	nfs_argop4 *op = args + opcnt; opcnt++;				\
+	op->argop = NFS4_OP_OPEN;					\
+	op->nfs_argop4_u.opopen.share_access = __share_access;		\
+	op->nfs_argop4_u.opopen.share_deny = __share_deny;		\
+	op->nfs_argop4_u.opopen.owner.owner.owner_len =  __owner_len;	\
+	op->nfs_argop4_u.opopen.owner.owner.owner_val =  __owner_val;	\
+	op->nfs_argop4_u.opopen.openhow = __openhow;			\
+	op->nfs_argop4_u.opopen.claim = __claim;			\
+} while (0)
+
 #define COMPOUNDV4_ARGS_ADD_OP_OPEN(opcnt, args, oo_seqid, __share_access,\
 				    __share_deny, inclientid, __owner_val,\
 				    __owner_len, __openhow, __claim)	\
@@ -248,11 +333,10 @@ do { \
 
 #define COMPOUNDV4_ARG_ADD_OP_OPEN_CREATE(opcnt, args, inname, inattrs, \
 					  inclientid, __owner_val, \
-					  __owner_len, oo_seqid)	\
+					  __owner_len)			\
 do { \
 	nfs_argop4 *op = args + opcnt; opcnt++;				\
 	op->argop = NFS4_OP_OPEN;					\
-	op->nfs_argop4_u.opopen.seqid = oo_seqid;			\
 	op->nfs_argop4_u.opopen.share_access = OPEN4_SHARE_ACCESS_BOTH;	\
 	op->nfs_argop4_u.opopen.share_deny = OPEN4_SHARE_DENY_NONE;	\
 	op->nfs_argop4_u.opopen.owner.clientid = inclientid;		\

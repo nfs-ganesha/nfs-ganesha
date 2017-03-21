@@ -7,7 +7,7 @@
 
 struct pxy_client_params {
 	unsigned int retry_sleeptime;
-	struct sockaddr srv_addr;
+	sockaddr_t srv_addr;
 	unsigned int srv_prognum;
 	unsigned int srv_sendsize;
 	unsigned int srv_recvsize;
@@ -109,6 +109,6 @@ fsal_status_t pxy_get_dynamic_info(struct fsal_export *,
 				   fsal_dynamicfsinfo_t *);
 
 fsal_status_t pxy_wire_to_host(struct fsal_export *, fsal_digesttype_t,
-			       struct gsh_buffdesc *, int);
+				 struct gsh_buffdesc *, int);
 
 #endif
