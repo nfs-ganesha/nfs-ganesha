@@ -596,6 +596,7 @@ killall -SIGHUP dbus-daemon >/dev/null 2>&1 || :
 %{_bindir}/sm_notify.ganesha
 %{_bindir}/ganesha_mgr
 %{_bindir}/ganesha_conf
+%{_mandir}/*/*
 %endif
 
 %changelog

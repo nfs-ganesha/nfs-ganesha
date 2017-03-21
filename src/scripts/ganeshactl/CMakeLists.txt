@@ -131,3 +131,15 @@ if(PYTHON)
     "execute_process(WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR} COMMAND ${PYTHON} ${SETUP_PY} install --skip-build --prefix=\$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX})"
     )
 endif(PYTHON)
+
+# Man page
+set(man8_file ganesha_conf.man)
+set(man8_page ganesha_conf.8)
+add_custom_command(
+	OUTPUT ${man8_page}
+	COMMAND cp "${CMAKE_CURRENT_SOURCE_DIR}/${man8_file}" ${man8_page}
+	DEPENDS ${man8_file}
+	)
+add_custom_target(man ALL DEPENDS ${man8_page})
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${man8_page}
+	DESTINATION ${CMAKE_INSTALL_PREFIX}/share/man/man8/)

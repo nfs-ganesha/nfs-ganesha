@@ -1,0 +1,230 @@
+.\" This is a comment
+.\" This is a comment
+.TH ganesha_conf 8 "21 Mar 2017"
+.SH NAME
+ganesha_conf \- Ganesha configuration editor
+
+.SH SYNOPSIS
+.B ganesha_conf set
+.I <block-description>
+.B [--key1 value1 [--key2 value2]...]
+.br
+.B ganesha_conf del
+.I <block-description>
+.B [--key1 [--key2 ]...]
+
+.SH DESCRIPTION
+.PP
+The
+.B set
+command adds or changes the given key value parameters in
+the block. It also creates the block if the block corresponding to
+the given
+.I block description
+(see section
+.B BLOCK DESCRIPTION
+below)
+is not present in the configuration.
+.PP
+The
+.B del
+command deletes given keys from the ganesha configuration
+block described by the block description. It will delete the block
+itself if no keys are provided.
+
+.SH BLOCK DESCRIPTION:
+.PP
+.I Block description
+is a list of block names and possibly some key value parameters that
+uniquely identify a ganesha configuration block.
+.PP
+NFS Ganesha configuration file contains a list of blocks. Each
+block starts with a block
+.B name
+followed by a
+.B left brace,
+then a list of
+.B key = value;
+entries. The block may optionally have
+.B sub blocks
+(note the recursive definition!).  Finally, the block
+ends with a
+.B right brace.
+(Note that
+.B key = value;
+entries can come after a sub block as well, but we don't allow this with
+ganesha_conf editor! All key value entries should come before any sub
+blocks.)
+
+An example of a ganesha configuration block:
+
+.PP
+.in +4n
+.nf
+nfs_core_param {
+    Nb_Worker = 256;
+    Clustered = TRUE;
+    NFS_Protocols = 3,4;
+}
+.fi
+.in
+.PP
+Since there should be only one
+.B nfs_core_param
+block, we just need the name of the block to uniquely identify it. So
+"nfs_core_param" would be its block description!
+.PP
+An example of a ganesha configuration block with a couple sub blocks:
+.PP
+.in +4n
+.nf
+log {
+    default_log_level = EVENT;
+    format {
+        date_format = ISO-8601;
+        time_format = ISO-8601;
+        thread_name = TRUE;
+    }
+    components {
+        all = EVENT;
+    }
+}
+.fi
+.in
+.PP
+Ganesha configuration should have only one
+.B log
+block as well, so "log" would identify the log block. To identify
+.B format
+sub block inside the
+.B log
+block, "log format" would be the block description for the above
+.B format
+sub block. Similarly "log components" would be the block description for
+the above
+.B components
+sub block.
+.PP
+An
+.B export
+block is special in that there can be many export
+blocks, one for each export. A
+.B client
+block is also special. There can be many
+.B client
+blocks and they are
+always sub blocks inside
+.B export
+blocks.
+.I export_id
+key value uniquely identifies an
+.B export
+block.
+.I clients
+key value uniquely identifies a
+.B client
+block inside a given
+.B export
+block.
+.PP
+Here are couple
+.B export
+blocks with couple
+.B client
+blocks in them:
+.PP
+.in +4n
+.nf
+export {
+    export_id = 1;
+    path = /fs1/export1;
+    pseudo = /fs1/export1;
+    manage_gids = true;
+    client {
+        clients = 192.168.122.31;
+        access_type = RW;
+    }
+    client {
+        clients = *;
+        access_type = RO;
+    }
+}
+
+export {
+    export_id = 2;
+    path = /fs1/export2;
+    pseudo = /fs1/export2;
+    manage_gids = true;
+    client {
+        clients = 192.168.122.31;
+        access_type = RW;
+    }
+    client {
+        clients = 192.168.122.32;
+        access_type = RO;
+    }
+}
+.fi
+.in
+.PP
+To identify the correct
+.B export
+block, we need to supply its
+.I export_id.
+For example "export export_id 2" identifies the second
+.B export
+block above.
+.B export
+blocks can be uniquely identified by
+.I pseudo
+or
+.I path
+keys in some environments. One could specify
+"export path /fs1/export2" to identify the second
+.B export
+block as well.  Similarly, a
+.B client
+block needs additional
+.I clients
+key value to identify the correct
+.B client
+block. For example, "export export_id 2 client clients 192.168.122.31" identifies the first
+.B client
+block in the second
+.B export
+block above!
+
+.SH EXAMPLES:
+1. To change number of ganesha worker threads:
+.PP
+ganesha_conf set nfs_core_param --nb_wroker 256
+.PP
+2. To change the date and time format of ganesha log messages:
+.PP
+ganesha_conf set log format --date_format ISO-8601 --time_format ISO-8601
+.PP
+3. Create an export and allow client with IP address 192.168.122.31
+to be able to do read write and all other clients to do read only:
+.PP
+ganesha_conf set export path /fs1/export2 --export_id 2 --pseudo /fs1/export2 --manage_gids true
+.br
+ganesha_conf set export path /fs1/export2 client clients 192.168.122.31 --access_type RW
+.br
+ganesha_conf set export path /fs1/export2 client clients 192.168.122.32 --access_type RO
+
+.SH NOTES:
+.B ganesha_conf
+by default uses /etc/ganesha/ganesha.conf file as the
+configuration file. If your environment uses a different file (or
+set of files), you can use
+.B CONFFILE
+environment variable to override the default configuration file.
+For example,
+"CONFFILE=/etc/ganesha/ganesha.main.conf ganesha_conf set nfs_core_param --nb_wroker 256"
+will use /etc/ganesha/ganesha.main.conf file for changing the worker threads.
+.PP
+.B ganesha_conf
+can't handle comments within a block at this point.
+.PP
+Neither block descriptions nor key value parameters are verified to
+be valid ganesha configuration blocks or parameter values currently.
