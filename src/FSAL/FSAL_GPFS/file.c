@@ -455,22 +455,11 @@ gpfs_open2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 		}
 	}
 
-	if (state != NULL) {
-		/* Prepare to take the share reservation, but only if we are
-		 * called with a valid state (if state is NULL the caller is
-		 * a stateless create such as NFS v3 CREATE).
-		 */
-
-		/* This can block over an I/O operation. */
-		PTHREAD_RWLOCK_wrlock(&(*new_obj)->obj_lock);
-
-		/* Take the share reservation now by updating the counters. */
-		update_share_counters(&hdl->u.file.share, FSAL_O_CLOSED,
-				      openflags);
-
-		PTHREAD_RWLOCK_unlock(&(*new_obj)->obj_lock);
-	}
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	/* Restore posix_flags as it was modified for create above */
+	fsal2posix_openflags(openflags, &posix_flags);
+	return open_by_handle(&hdl->obj_handle, state, openflags, posix_flags,
+			verifier, attrs_out, createmode,
+			caller_perm_check);
 
  fileerr:
 	if (hdl != NULL) {
