@@ -784,7 +784,7 @@ int display_owner(struct display_buffer *dspbuf, state_owner_t *owner)
  */
 void inc_state_owner_ref(state_owner_t *owner)
 {
-	char str[LOG_BUFF_LEN];
+	char str[LOG_BUFF_LEN] = "\0";
 	struct display_buffer dspbuf = {sizeof(str), str, str};
 	bool str_valid = false;
 	int32_t refcount;
@@ -809,7 +809,7 @@ void inc_state_owner_ref(state_owner_t *owner)
  */
 void free_state_owner(state_owner_t *owner)
 {
-	char str[LOG_BUFF_LEN];
+	char str[LOG_BUFF_LEN] = "\0";
 	struct display_buffer dspbuf = {sizeof(str), str, str};
 
 	switch (owner->so_type) {
@@ -890,7 +890,7 @@ hash_table_t *get_state_owner_hash_table(state_owner_t *owner)
  */
 void dec_state_owner_ref(state_owner_t *owner)
 {
-	char str[LOG_BUFF_LEN];
+	char str[LOG_BUFF_LEN] = "\0";
 	struct display_buffer dspbuf = {sizeof(str), str, str};
 	bool str_valid = false;
 	struct hash_latch latch;
@@ -993,7 +993,7 @@ void uncache_nfs4_owner(struct state_nfs4_owner_t *nfs4_owner)
 	 * 4. Release the reference held on behalf of the cache.
 	 */
 	if (isFullDebug(COMPONENT_STATE)) {
-		char str[LOG_BUFF_LEN];
+		char str[LOG_BUFF_LEN] = "\0";
 		struct display_buffer dspbuf = {sizeof(str), str, str};
 
 		display_owner(&dspbuf, owner);
@@ -1045,7 +1045,7 @@ state_owner_t *get_state_owner(care_t care, state_owner_t *key,
 			       state_owner_init_t init_owner, bool_t *isnew)
 {
 	state_owner_t *owner;
-	char str[LOG_BUFF_LEN];
+	char str[LOG_BUFF_LEN] = "\0";
 	struct display_buffer dspbuf = {sizeof(str), str, str};
 	bool str_valid = false;
 	struct hash_latch latch;
@@ -1317,7 +1317,7 @@ void dump_all_owners(void)
 	PTHREAD_MUTEX_lock(&all_state_owners_mutex);
 
 	if (!glist_empty(&state_owners_all)) {
-		char str[LOG_BUFF_LEN];
+		char str[LOG_BUFF_LEN] = "\0";
 		struct display_buffer dspbuf = {sizeof(str), str, str};
 		struct glist_head *glist;
 

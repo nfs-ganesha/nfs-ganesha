@@ -1028,7 +1028,7 @@ static enum recall_resp_action handle_recall_response(
 				rpc_call_t *call)
 {
 	enum recall_resp_action resp_action;
-	char str[DISPLAY_STATEID_OTHER_SIZE];
+	char str[DISPLAY_STATEID_OTHER_SIZE] = "\0";
 	struct display_buffer dspbuf = {sizeof(str), str, str};
 	bool str_valid = false;
 
@@ -1118,7 +1118,7 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 	struct delegrecall_context *deleg_ctx = arg;
 	struct state_t *state;
 	struct fsal_obj_handle *obj = NULL;
-	char str[LOG_BUFF_LEN];
+	char str[LOG_BUFF_LEN] = "\0";
 	struct display_buffer dspbuf = {sizeof(str), str, str};
 
 	LogDebug(COMPONENT_NFS_CB, "%p %s", call,
@@ -1139,7 +1139,7 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 	}
 
 	if (isDebug(COMPONENT_NFS_CB)) {
-		char str[LOG_BUFF_LEN];
+		char str[LOG_BUFF_LEN] = "\0";
 		struct display_buffer dspbuf = {sizeof(str), str, str};
 
 		display_stateid(&dspbuf, state);
@@ -1244,7 +1244,7 @@ void delegrecall_one(struct fsal_obj_handle *obj,
 	rpc_call_t *call = NULL;
 	nfs_cb_argop4 argop[1];
 	struct cf_deleg_stats *clfl_stats;
-	char str[LOG_BUFF_LEN];
+	char str[LOG_BUFF_LEN] = "\0";
 	struct display_buffer dspbuf = {sizeof(str), str, str};
 	bool str_valid = false;
 
@@ -1367,7 +1367,7 @@ static void delegrevoke_check(void *ctx)
 	struct fsal_obj_handle *obj = NULL;
 	struct state_t *state = NULL;
 	bool free_drc = true;
-	char str[LOG_BUFF_LEN];
+	char str[LOG_BUFF_LEN] = "\0";
 	struct display_buffer dspbuf = {sizeof(str), str, str};
 	bool str_valid = false;
 
@@ -1506,7 +1506,7 @@ state_status_t delegrecall_impl(struct fsal_obj_handle *obj)
 			continue;
 
 		if (isDebug(COMPONENT_NFS_CB)) {
-			char str[LOG_BUFF_LEN];
+			char str[LOG_BUFF_LEN] = "\0";
 			struct display_buffer dspbuf = {sizeof(str), str, str};
 
 			display_stateid(&dspbuf, state);

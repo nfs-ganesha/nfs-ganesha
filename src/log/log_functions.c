@@ -231,8 +231,8 @@ static struct log_facility *default_facility;
 
 log_header_t max_headers = LH_COMPONENT;
 
-char const_log_str[LOG_BUFF_LEN];
-char date_time_fmt[MAX_TD_FMT_LEN];
+char const_log_str[LOG_BUFF_LEN] = "\0";
+char date_time_fmt[MAX_TD_FMT_LEN] = "\0";
 
 typedef struct loglev {
 	char *str;

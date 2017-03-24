@@ -164,7 +164,7 @@ int display_vfs_handle(struct display_buffer *dspbuf,
 #define LogVFSHandle(fh)						\
 	do {								\
 		if (isMidDebug(COMPONENT_FSAL)) {			\
-			char buf[256];					\
+			char buf[256] = "\0";				\
 			struct display_buffer dspbuf =			\
 					{sizeof(buf), buf, buf};	\
 									\

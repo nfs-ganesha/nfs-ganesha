@@ -160,7 +160,7 @@ void free_grant_arg(state_async_queue_t *arg)
 static void nlm4_send_grant_msg(state_async_queue_t *arg)
 {
 	int retval;
-	char buffer[1024];
+	char buffer[1024] = "\0";
 	state_status_t state_status = STATE_SUCCESS;
 	state_cookie_entry_t *cookie_entry;
 	state_nlm_async_data_t *nlm_arg =
@@ -637,7 +637,7 @@ state_status_t nlm_granted_callback(struct fsal_obj_handle *obj,
 	inarg->alock.l_len = lock_entry->sle_lock.lock_length;
 
 	if (isDebug(COMPONENT_NLM)) {
-		char buffer[1024];
+		char buffer[1024] = "\0";
 
 		netobj_to_string(&inarg->cookie, buffer, sizeof(buffer));
 

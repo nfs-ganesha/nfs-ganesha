@@ -91,7 +91,7 @@ state_status_t _state_add_impl(struct fsal_obj_handle *obj,
 {
 	state_t *pnew_state = *state;
 	struct state_hdl *ostate = obj->state_hdl;
-	char str[DISPLAY_STATEID_OTHER_SIZE];
+	char str[DISPLAY_STATEID_OTHER_SIZE] = "\0";
 	struct display_buffer dspbuf = {sizeof(str), str, str};
 	bool str_valid = false;
 	bool got_export_ref = false;
@@ -324,7 +324,7 @@ state_status_t _state_add(struct fsal_obj_handle *obj,
 
 void _state_del_locked(state_t *state, const char *func, int line)
 {
-	char str[LOG_BUFF_LEN];
+	char str[LOG_BUFF_LEN] = "\0";
 	struct display_buffer dspbuf = {sizeof(str), str, str};
 	bool str_valid = false;
 	struct fsal_obj_handle *obj;
@@ -438,7 +438,7 @@ void _state_del_locked(state_t *state, const char *func, int line)
 				       &nfs4_owner->so_cache_entry);
 
 			if (isFullDebug(COMPONENT_STATE)) {
-				char str[LOG_BUFF_LEN];
+				char str[LOG_BUFF_LEN] = "\0";
 				struct display_buffer dspbuf = {
 						sizeof(str), str, str};
 
@@ -657,7 +657,7 @@ enum nfsstat4 release_lock_owner(state_owner_t *owner)
 	}
 
 	if (isDebug(COMPONENT_STATE)) {
-		char str[LOG_BUFF_LEN];
+		char str[LOG_BUFF_LEN] = "\0";
 		struct display_buffer dspbuf = {sizeof(str), str, str};
 
 		display_owner(&dspbuf, owner);
@@ -712,7 +712,7 @@ void release_openstate(state_owner_t *owner)
 	struct state_nfs4_owner_t *nfs4_owner = &owner->so_owner.so_nfs4_owner;
 
 	if (isFullDebug(COMPONENT_STATE)) {
-		char str[LOG_BUFF_LEN];
+		char str[LOG_BUFF_LEN] = "\0";
 		struct display_buffer dspbuf = {sizeof(str), str, str};
 
 		display_owner(&dspbuf, owner);
@@ -836,7 +836,7 @@ void release_openstate(state_owner_t *owner)
 	}
 
 	if (errcnt == STATE_ERR_MAX) {
-		char str[LOG_BUFF_LEN];
+		char str[LOG_BUFF_LEN] = "\0";
 		struct display_buffer dspbuf = {sizeof(str), str, str};
 
 		display_owner(&dspbuf, owner);
@@ -1136,8 +1136,8 @@ void dump_all_states(void)
 		LogFullDebug(COMPONENT_STATE, " =State List= ");
 
 		glist_for_each(glist, &state_v4_all) {
-			char str1[LOG_BUFF_LEN / 2];
-			char str2[LOG_BUFF_LEN / 2];
+			char str1[LOG_BUFF_LEN / 2] = "\0";
+			char str2[LOG_BUFF_LEN / 2] = "\0";
 			struct display_buffer dspbuf1 = {
 						sizeof(str1), str1, str1};
 			struct display_buffer dspbuf2 = {

@@ -61,7 +61,7 @@ restart:
 
 		/* go through all entries in the red-black-tree */
 		RBT_LOOP(head_rbt, pn) {
-			char str[LOG_BUFF_LEN];
+			char str[LOG_BUFF_LEN] = "\0";
 			struct display_buffer dspbuf = {sizeof(str), str, str};
 			bool str_valid = false;
 
@@ -159,7 +159,7 @@ static int reap_expired_open_owners(void)
 		if (texpire > tnow) {
 			/* This owner has not yet expired. */
 			if (isFullDebug(COMPONENT_STATE)) {
-				char str[LOG_BUFF_LEN];
+				char str[LOG_BUFF_LEN] = "\0";
 				struct display_buffer dspbuf = {
 						sizeof(str), str, str};
 

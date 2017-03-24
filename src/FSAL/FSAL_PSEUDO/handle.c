@@ -177,7 +177,7 @@ static struct pseudo_fsal_obj_handle
 			struct attrlist *attrs)
 {
 	struct pseudo_fsal_obj_handle *hdl;
-	char path[MAXPATHLEN];
+	char path[MAXPATHLEN] = "\0";
 	struct display_buffer pathbuf = {sizeof(path), path, path};
 	int rc;
 

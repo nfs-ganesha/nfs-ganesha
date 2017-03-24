@@ -391,7 +391,7 @@ static void fsal_print_access_by_acl(int naces, int ace_number,
 				     bool is_dir,
 				     struct user_cred *creds)
 {
-	char str[LOG_BUFF_LEN];
+	char str[LOG_BUFF_LEN] = "\0";
 	struct display_buffer dspbuf = { sizeof(str), str, str };
 	int b_left;
 
@@ -505,7 +505,7 @@ static fsal_status_t fsal_check_access_acl(struct user_cred *creds,
 		     "file acl=%p, file uid=%u, file gid=%u, ", pacl, uid, gid);
 
 	if (isFullDebug(COMPONENT_NFS_V4_ACL)) {
-		char str[LOG_BUFF_LEN];
+		char str[LOG_BUFF_LEN] = "\0";
 		struct display_buffer dspbuf = { sizeof(str), str, str };
 
 		(void)display_fsal_v4mask(&dspbuf, v4mask,

@@ -522,7 +522,7 @@ void log_attrlist(log_components_t component, log_levels_t level,
 		  const char *reason, struct attrlist *attr, bool is_obj,
 		  char *file, int line, char *function)
 {
-	char str[LOG_BUFF_LEN];
+	char str[LOG_BUFF_LEN] = "\0";
 	struct display_buffer dspbuf = {sizeof(str), str, str};
 
 	(void) display_attrlist(&dspbuf, attr, is_obj);

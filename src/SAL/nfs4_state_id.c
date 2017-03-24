@@ -247,8 +247,8 @@ int display_state_id_val(struct gsh_buffdesc *buff, char *str)
 int compare_state_id(struct gsh_buffdesc *buff1, struct gsh_buffdesc *buff2)
 {
 	if (isFullDebug(COMPONENT_STATE)) {
-		char str1[DISPLAY_STATEID_OTHER_SIZE];
-		char str2[DISPLAY_STATEID_OTHER_SIZE];
+		char str1[DISPLAY_STATEID_OTHER_SIZE] = "\0";
+		char str2[DISPLAY_STATEID_OTHER_SIZE] = "\0";
 		struct display_buffer dspbuf1 = {sizeof(str1), str1, str1};
 		struct display_buffer dspbuf2 = {sizeof(str2), str2, str2};
 
@@ -494,7 +494,7 @@ void nfs4_BuildStateId_Other(nfs_client_id_t *clientid, char *other)
  */
 void dec_nfs4_state_ref(struct state_t *state)
 {
-	char str[LOG_BUFF_LEN];
+	char str[LOG_BUFF_LEN] = "\0";
 	struct display_buffer dspbuf = {sizeof(str), str, str};
 	bool str_valid = false;
 	int32_t refcount;
@@ -587,7 +587,7 @@ int nfs4_State_Set(state_t *state)
 			hash_table_err_to_str(err), buffkey.addr);
 
 		if (isFullDebug(COMPONENT_STATE)) {
-			char str[LOG_BUFF_LEN];
+			char str[LOG_BUFF_LEN] = "\0";
 			struct display_buffer dspbuf = {sizeof(str), str, str};
 			state_t *state2;
 
@@ -730,7 +730,7 @@ bool nfs4_State_Del(state_t *state)
 		/* Already gone */
 		return false;
 	} else if (err != HASHTABLE_SUCCESS) {
-		char str[LOG_BUFF_LEN];
+		char str[LOG_BUFF_LEN] = "\0";
 		struct display_buffer dspbuf = {sizeof(str), str, str};
 
 		display_stateid(&dspbuf, state);
@@ -806,7 +806,7 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, struct fsal_obj_handle *fsal_obj,
 	state_t *state2 = NULL;
 	struct fsal_obj_handle *obj2 = NULL;
 	state_owner_t *owner2 = NULL;
-	char str[DISPLAY_STATEID4_SIZE];
+	char str[DISPLAY_STATEID4_SIZE] = "\0";
 	struct display_buffer dspbuf = {sizeof(str), str, str};
 	bool str_valid = false;
 	int32_t diff;
@@ -1265,7 +1265,7 @@ void update_stateid(state_t *state, stateid4 *resp, compound_data_t *data,
 	COPY_STATEID(resp, state);
 
 	if (isFullDebug(COMPONENT_STATE)) {
-		char str[DISPLAY_STATEID4_SIZE];
+		char str[DISPLAY_STATEID4_SIZE] = "\0";
 		struct display_buffer dspbuf = {sizeof(str), str, str};
 
 		display_stateid4(&dspbuf, resp);

@@ -156,7 +156,7 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 	inc_client_record_ref(client_record);
 
 	if (isFullDebug(component)) {
-		char str[LOG_BUFF_LEN];
+		char str[LOG_BUFF_LEN] = "\0";
 		struct display_buffer dspbuf = {sizeof(str), str, str};
 
 		display_client_record(&dspbuf, client_record);
@@ -181,7 +181,7 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 		 data->use_drc);
 
 	if (isFullDebug(component)) {
-		char str[LOG_BUFF_LEN];
+		char str[LOG_BUFF_LEN] = "\0";
 		struct display_buffer dspbuf = {sizeof(str), str, str};
 
 		display_client_id_rec(&dspbuf, found);
@@ -394,7 +394,7 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 	if (conf != NULL && conf->cid_clientid != clientid) {
 		/* Old confirmed record - need to expire it */
 		if (isDebug(component)) {
-			char str[LOG_BUFF_LEN];
+			char str[LOG_BUFF_LEN] = "\0";
 			struct display_buffer dspbuf = {sizeof(str), str, str};
 
 			display_client_id_rec(&dspbuf, conf);
@@ -426,7 +426,7 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 		}
 
 		if (isDebug(component)) {
-			char str[LOG_BUFF_LEN];
+			char str[LOG_BUFF_LEN] = "\0";
 			struct display_buffer dspbuf = {sizeof(str), str, str};
 
 			display_client_id_rec(&dspbuf, conf);
@@ -435,7 +435,7 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 	} else {
 		/* This is a new clientid */
 		if (isFullDebug(component)) {
-			char str[LOG_BUFF_LEN];
+			char str[LOG_BUFF_LEN] = "\0";
 			struct display_buffer dspbuf = {sizeof(str), str, str};
 
 			display_client_id_rec(&dspbuf, unconf);
@@ -463,7 +463,7 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 		unconf = NULL;
 
 		if (isDebug(component)) {
-			char str[LOG_BUFF_LEN];
+			char str[LOG_BUFF_LEN] = "\0";
 			struct display_buffer dspbuf = {sizeof(str), str, str};
 
 			display_client_id_rec(&dspbuf, conf);
@@ -479,7 +479,7 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 	dec_client_id_ref(conf);
 
 	if (isFullDebug(component)) {
-		char str[LOG_BUFF_LEN];
+		char str[LOG_BUFF_LEN] = "\0";
 		struct display_buffer dspbuf = {sizeof(str), str, str};
 
 		display_client_record(&dspbuf, client_record);
@@ -506,7 +506,7 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	if (isDebug(component)) {
-		char str[LOG_BUFF_LEN];
+		char str[LOG_BUFF_LEN] = "\0";
 		struct display_buffer dspbuf = {sizeof(str), str, str};
 
 		display_session(&dspbuf, nfs41_session);

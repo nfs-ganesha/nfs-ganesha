@@ -121,7 +121,7 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op, compound_data_t *data,
 		client_record = unconf->cid_client_record;
 
 		if (isFullDebug(COMPONENT_CLIENTID)) {
-			char str[LOG_BUFF_LEN];
+			char str[LOG_BUFF_LEN] = "\0";
 			struct display_buffer dspbuf = {sizeof(str), str, str};
 
 			display_client_id_rec(&dspbuf, unconf);
@@ -144,7 +144,7 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op, compound_data_t *data,
 		client_record = conf->cid_client_record;
 
 		if (isFullDebug(COMPONENT_CLIENTID)) {
-			char str[LOG_BUFF_LEN];
+			char str[LOG_BUFF_LEN] = "\0";
 			struct display_buffer dspbuf = {sizeof(str), str, str};
 
 			display_client_id_rec(&dspbuf, conf);
@@ -157,7 +157,7 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op, compound_data_t *data,
 	inc_client_record_ref(client_record);
 
 	if (isFullDebug(COMPONENT_CLIENTID)) {
-		char str[LOG_BUFF_LEN];
+		char str[LOG_BUFF_LEN] = "\0";
 		struct display_buffer dspbuf = {sizeof(str), str, str};
 
 		display_client_record(&dspbuf, client_record);
@@ -202,7 +202,7 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op, compound_data_t *data,
 			/* We must have raced with another
 			   SETCLIENTID_CONFIRM */
 			if (isDebug(COMPONENT_CLIENTID)) {
-				char str[LOG_BUFF_LEN];
+				char str[LOG_BUFF_LEN] = "\0";
 				struct display_buffer dspbuf = {
 					sizeof(str), str, str};
 
@@ -222,7 +222,7 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op, compound_data_t *data,
 			 * record.
 			 */
 			if (isDebug(COMPONENT_CLIENTID)) {
-				char str[LOG_BUFF_LEN];
+				char str[LOG_BUFF_LEN] = "\0";
 				struct display_buffer dspbuf = {
 					sizeof(str), str, str};
 
@@ -275,7 +275,7 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op, compound_data_t *data,
 			 * we have received a retry
 			 */
 			if (isDebug(COMPONENT_CLIENTID)) {
-				char str[LOG_BUFF_LEN];
+				char str[LOG_BUFF_LEN] = "\0";
 				struct display_buffer dspbuf = {
 					sizeof(str), str, str};
 
@@ -290,7 +290,7 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op, compound_data_t *data,
 			 * NFS4ERR_CLID_INUSE
 			 */
 			if (isDebug(COMPONENT_CLIENTID)) {
-				char str[LOG_BUFF_LEN];
+				char str[LOG_BUFF_LEN] = "\0";
 				struct display_buffer dspbuf = {
 					sizeof(str), str, str};
 				char str_conf_verifier[NFS4_VERIFIER_SIZE * 2 +
@@ -339,7 +339,7 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op, compound_data_t *data,
 	if (conf != NULL && conf->cid_clientid != clientid) {
 		/* Old confirmed record - need to expire it */
 		if (isDebug(COMPONENT_CLIENTID)) {
-			char str[LOG_BUFF_LEN];
+			char str[LOG_BUFF_LEN] = "\0";
 			struct display_buffer dspbuf = {sizeof(str), str, str};
 
 			display_client_id_rec(&dspbuf, conf);
@@ -360,7 +360,7 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op, compound_data_t *data,
 		 * unconfirmed record.
 		 */
 		if (isFullDebug(COMPONENT_CLIENTID)) {
-			char str[LOG_BUFF_LEN];
+			char str[LOG_BUFF_LEN] = "\0";
 			struct display_buffer dspbuf = {sizeof(str), str, str};
 
 			display_client_id_rec(&dspbuf, unconf);
@@ -391,7 +391,7 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op, compound_data_t *data,
 		dec_client_id_ref(unconf);
 
 		if (isDebug(COMPONENT_CLIENTID)) {
-			char str[LOG_BUFF_LEN];
+			char str[LOG_BUFF_LEN] = "\0";
 			struct display_buffer dspbuf = {sizeof(str), str, str};
 
 			display_client_id_rec(&dspbuf, conf);
@@ -414,7 +414,7 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op, compound_data_t *data,
 	} else {
 		/* This is a new clientid */
 		if (isFullDebug(COMPONENT_CLIENTID)) {
-			char str[LOG_BUFF_LEN];
+			char str[LOG_BUFF_LEN] = "\0";
 			struct display_buffer dspbuf = {sizeof(str), str, str};
 
 			display_client_id_rec(&dspbuf, unconf);
@@ -442,7 +442,7 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op, compound_data_t *data,
 		nfs4_chk_clid(unconf);
 
 		if (isDebug(COMPONENT_CLIENTID)) {
-			char str[LOG_BUFF_LEN];
+			char str[LOG_BUFF_LEN] = "\0";
 			struct display_buffer dspbuf = {sizeof(str), str, str};
 
 			display_client_id_rec(&dspbuf, unconf);
@@ -467,7 +467,7 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	if (isFullDebug(COMPONENT_CLIENTID)) {
-		char str[LOG_BUFF_LEN];
+		char str[LOG_BUFF_LEN] = "\0";
 		struct display_buffer dspbuf = {sizeof(str), str, str};
 
 		display_client_record(&dspbuf, client_record);

@@ -332,7 +332,7 @@ int nfs41_Session_Get_Pointer(char sessionid[NFS4_SESSIONID_SIZE],
 	struct gsh_buffdesc key;
 	struct gsh_buffdesc val;
 	struct hash_latch latch;
-	char str[LOG_BUFF_LEN];
+	char str[LOG_BUFF_LEN] = "\0";
 	struct display_buffer dspbuf = {sizeof(str), str, str};
 	bool str_valid = false;
 	hash_error_t code;

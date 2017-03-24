@@ -174,8 +174,8 @@ int display_nfs4_owner_val(struct gsh_buffdesc *buff, char *str)
 int compare_nfs4_owner(state_owner_t *owner1, state_owner_t *owner2)
 {
 	if (isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE)) {
-		char str1[LOG_BUFF_LEN / 2];
-		char str2[LOG_BUFF_LEN / 2];
+		char str1[LOG_BUFF_LEN / 2] = "\0";
+		char str2[LOG_BUFF_LEN / 2] = "\0";
 		struct display_buffer dspbuf1 = {sizeof(str1), str1, str1};
 		struct display_buffer dspbuf2 = {sizeof(str2), str2, str2};
 
@@ -220,8 +220,8 @@ int compare_nfs4_owner_key(struct gsh_buffdesc *buff1,
 	state_owner_t *pkey2 = buff2->addr;
 
 	if (isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE)) {
-		char str1[LOG_BUFF_LEN / 2];
-		char str2[LOG_BUFF_LEN / 2];
+		char str1[LOG_BUFF_LEN / 2] = "\0";
+		char str2[LOG_BUFF_LEN / 2] = "\0";
 		struct display_buffer dspbuf1 = {sizeof(str1), str1, str1};
 		struct display_buffer dspbuf2 = {sizeof(str2), str2, str2};
 
@@ -460,7 +460,7 @@ state_owner_t *create_nfs4_owner(state_nfs4_owner_name_t *name,
 #endif
 
 	if (isFullDebug(COMPONENT_STATE)) {
-		char str[LOG_BUFF_LEN];
+		char str[LOG_BUFF_LEN] = "\0";
 		struct display_buffer dspbuf = {sizeof(str), str, str};
 
 		display_owner(&dspbuf, &key);
@@ -479,8 +479,8 @@ state_owner_t *create_nfs4_owner(state_nfs4_owner_name_t *name,
 			    related_owner;
 		} else if (owner->so_owner.so_nfs4_owner.so_related_owner !=
 			   related_owner) {
-			char str1[LOG_BUFF_LEN / 2];
-			char str2[LOG_BUFF_LEN / 2];
+			char str1[LOG_BUFF_LEN / 2] = "\0";
+			char str2[LOG_BUFF_LEN / 2] = "\0";
 			struct display_buffer dspbuf1 = {
 						sizeof(str1), str1, str1};
 			struct display_buffer dspbuf2 = {
@@ -504,7 +504,7 @@ state_owner_t *create_nfs4_owner(state_nfs4_owner_name_t *name,
 
 	if (!isnew && owner != NULL && pisnew != NULL) {
 		if (isDebug(COMPONENT_STATE)) {
-			char str[LOG_BUFF_LEN];
+			char str[LOG_BUFF_LEN] = "\0";
 			struct display_buffer dspbuf = {sizeof(str), str, str};
 
 			display_owner(&dspbuf, owner);
@@ -689,7 +689,7 @@ bool Check_nfs4_seqid(state_owner_t *owner, seqid4 seqid, nfs_argop4 *args,
 		      const char *tag)
 {
 	seqid4 next;
-	char str[LOG_BUFF_LEN];
+	char str[LOG_BUFF_LEN] = "\0";
 	struct display_buffer dspbuf = {sizeof(str), str, str};
 	bool str_valid = false;
 

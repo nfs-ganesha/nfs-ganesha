@@ -44,7 +44,7 @@
 int nlm4_Granted_Res(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 {
 	nlm4_res *arg = &args->arg_nlm4_res;
-	char buffer[1024];
+	char buffer[1024] = "\0";
 	state_status_t state_status = STATE_SUCCESS;
 	state_cookie_entry_t *cookie_entry;
 

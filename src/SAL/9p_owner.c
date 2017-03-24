@@ -130,8 +130,8 @@ int display_9p_owner_val(struct gsh_buffdesc *buff, char *str)
 int compare_9p_owner(state_owner_t *owner1, state_owner_t *owner2)
 {
 	if (isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE)) {
-		char str1[LOG_BUFF_LEN / 2];
-		char str2[LOG_BUFF_LEN / 2];
+		char str1[LOG_BUFF_LEN / 2] = "\0";
+		char str2[LOG_BUFF_LEN / 2] = "\0";
 		struct display_buffer dspbuf1 = {sizeof(str1), str1, str1};
 		struct display_buffer dspbuf2 = {sizeof(str2), str2, str2};
 

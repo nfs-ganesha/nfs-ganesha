@@ -157,7 +157,7 @@ state_status_t state_share_add(struct fsal_obj_handle *obj,
 	}
 
 	if (isFullDebug(COMPONENT_NFS_V4_LOCK)) {
-		char str[LOG_BUFF_LEN];
+		char str[LOG_BUFF_LEN] = "\0";
 		struct display_buffer dspbuf = {sizeof(str), str, str};
 
 		display_stateid(&dspbuf, state);
@@ -239,7 +239,7 @@ state_status_t state_share_remove(struct fsal_obj_handle *obj,
 	}
 
 	if (isFullDebug(COMPONENT_NFS_V4_LOCK)) {
-		char str[LOG_BUFF_LEN];
+		char str[LOG_BUFF_LEN] = "\0";
 		struct display_buffer dspbuf = {sizeof(str), str, str};
 
 		display_stateid(&dspbuf, state);
@@ -330,7 +330,7 @@ state_status_t state_share_upgrade(struct fsal_obj_handle *obj,
 	state->state_data.share.share_deny = new_share_deny;
 
 	if (isFullDebug(COMPONENT_NFS_V4_LOCK)) {
-		char str[LOG_BUFF_LEN];
+		char str[LOG_BUFF_LEN] = "\0";
 		struct display_buffer dspbuf = {sizeof(str), str, str};
 
 		display_stateid(&dspbuf, state);
@@ -425,7 +425,7 @@ state_status_t state_share_downgrade(struct fsal_obj_handle *obj,
 	state->state_data.share.share_deny = new_share_deny;
 
 	if (isFullDebug(COMPONENT_NFS_V4_LOCK)) {
-		char str[LOG_BUFF_LEN];
+		char str[LOG_BUFF_LEN] = "\0";
 		struct display_buffer dspbuf = {sizeof(str), str, str};
 
 		display_stateid(&dspbuf, state);

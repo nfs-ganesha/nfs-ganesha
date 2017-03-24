@@ -323,7 +323,7 @@ log_entry_ref_count(const char *reason, state_lock_entry_t *le,
 		    int32_t refcount, char *file, int line, char *function)
 {
 	if (isFullDebug(COMPONENT_STATE)) {
-		char owner[LOG_BUFF_LEN];
+		char owner[LOG_BUFF_LEN] = "\0";
 		struct display_buffer dspbuf = {sizeof(owner), owner, owner};
 
 		display_owner(&dspbuf, le->sle_owner);
@@ -472,7 +472,7 @@ void log_lock(log_components_t component,
 	      char *function)
 {
 	if (isLevel(component, debug)) {
-		char str[LOG_BUFF_LEN];
+		char str[LOG_BUFF_LEN] = "\0";
 		struct display_buffer dspbuf = {sizeof(str), str, str};
 
 		if (owner != NULL)
@@ -1290,8 +1290,8 @@ int compare_lock_cookie_key(struct gsh_buffdesc *buff1,
 			    struct gsh_buffdesc *buff2)
 {
 	if (isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE)) {
-		char str1[LOG_BUFF_LEN / 2];
-		char str2[LOG_BUFF_LEN / 2];
+		char str1[LOG_BUFF_LEN / 2] = "\0";
+		char str2[LOG_BUFF_LEN / 2] = "\0";
 		struct display_buffer dspbuf1 = {sizeof(str1), str1, str1};
 		struct display_buffer dspbuf2 = {sizeof(str2), str2, str2};
 
@@ -1381,7 +1381,7 @@ uint64_t lock_cookie_rbt_hash_func(hash_parameter_t *hparam,
  */
 void free_cookie(state_cookie_entry_t *cookie_entry, bool unblock)
 {
-	char str[LOG_BUFF_LEN];
+	char str[LOG_BUFF_LEN] = "\0";
 	struct display_buffer dspbuf = {sizeof(str), str, str};
 	bool str_valid = false;
 	void *cookie = cookie_entry->sce_cookie;
@@ -1429,7 +1429,7 @@ state_status_t state_add_grant_cookie(struct fsal_obj_handle *obj,
 {
 	struct gsh_buffdesc buffkey, buffval;
 	state_cookie_entry_t *hash_entry;
-	char str[LOG_BUFF_LEN];
+	char str[LOG_BUFF_LEN] = "\0";
 	struct display_buffer dspbuf = {sizeof(str), str, str};
 	bool str_valid = false;
 	state_status_t status = 0;
@@ -1608,7 +1608,7 @@ state_status_t state_find_grant(void *cookie, int cookie_size,
 	struct gsh_buffdesc buffkey;
 	struct gsh_buffdesc buffval;
 	struct gsh_buffdesc buffused_key;
-	char str[LOG_BUFF_LEN];
+	char str[LOG_BUFF_LEN] = "\0";
 	struct display_buffer dspbuf = {sizeof(str), str, str};
 	bool str_valid = false;
 	state_status_t status = 0;
@@ -3070,7 +3070,7 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 			     0, 0, UNKNOWN_REQUEST);
 
 	if (isFullDebug(COMPONENT_STATE)) {
-		char str[LOG_BUFF_LEN];
+		char str[LOG_BUFF_LEN] = "\0";
 		struct display_buffer dspbuf = {sizeof(str), str, str};
 
 		display_nsm_client(&dspbuf, nsmclient);
@@ -3313,7 +3313,7 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 	}
 
 	if (errcnt == STATE_ERR_MAX) {
-		char str[LOG_BUFF_LEN];
+		char str[LOG_BUFF_LEN] = "\0";
 		struct display_buffer dspbuf = {sizeof(str), str, str};
 
 		display_nsm_client(&dspbuf, nsmclient);
@@ -3433,7 +3433,7 @@ void state_nfs4_owner_unlock_all(state_owner_t *owner)
 	}
 
 	if (errcnt == STATE_ERR_MAX) {
-		char str[LOG_BUFF_LEN];
+		char str[LOG_BUFF_LEN] = "\0";
 		struct display_buffer dspbuf = {sizeof(str), str, str};
 
 		display_owner(&dspbuf, owner);

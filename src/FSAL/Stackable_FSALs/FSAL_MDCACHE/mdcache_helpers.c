@@ -653,7 +653,7 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 	mdc_check_mapping(nentry);
 
 	if (isFullDebug(COMPONENT_CACHE_INODE)) {
-		char str[LOG_BUFF_LEN];
+		char str[LOG_BUFF_LEN] = "\0";
 		struct display_buffer dspbuf = {sizeof(str), str, str };
 
 		(void) display_mdcache_key(&dspbuf, &nentry->fh_hk.key);
@@ -790,7 +790,7 @@ mdcache_find_keyed(mdcache_key_t *key, mdcache_entry_t **entry)
 	}
 
 	if (isFullDebug(COMPONENT_CACHE_INODE)) {
-		char str[LOG_BUFF_LEN];
+		char str[LOG_BUFF_LEN] = "\0";
 		struct display_buffer dspbuf = { sizeof(str), str, str };
 
 		(void) display_mdcache_key(&dspbuf, key);

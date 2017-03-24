@@ -46,7 +46,7 @@ int nlm4_Share(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	nlm4_shareargs *arg = &args->arg_nlm4_share;
 	struct fsal_obj_handle *obj;
 	state_status_t state_status = STATE_SUCCESS;
-	char buffer[MAXNETOBJ_SZ * 2];
+	char buffer[MAXNETOBJ_SZ * 2] = "\0";
 	state_nsm_client_t *nsm_client;
 	state_nlm_client_t *nlm_client;
 	state_owner_t *nlm_owner;

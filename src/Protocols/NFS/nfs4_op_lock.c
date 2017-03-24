@@ -222,10 +222,10 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 
 		if (isDebug(COMPONENT_CLIENTID) && (clientid !=
 		    open_owner->so_owner.so_nfs4_owner.so_clientrec)) {
-			char str_open[LOG_BUFF_LEN / 2];
+			char str_open[LOG_BUFF_LEN / 2] = "\0";
 			struct display_buffer dspbuf_open = {
 				sizeof(str_open), str_open, str_open};
-			char str_lock[LOG_BUFF_LEN / 2];
+			char str_lock[LOG_BUFF_LEN / 2] = "\0";
 			struct display_buffer dspbuf_lock = {
 				sizeof(str_lock), str_lock, str_lock};
 
@@ -631,7 +631,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	if (isFullDebug(COMPONENT_NFS_V4_LOCK)) {
-		char str[LOG_BUFF_LEN];
+		char str[LOG_BUFF_LEN] = "\0";
 		struct display_buffer dspbuf = {sizeof(str), str, str};
 
 		display_stateid(&dspbuf, lock_state);

@@ -45,7 +45,7 @@ int nlm4_Unlock(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	nlm4_unlockargs *arg = &args->arg_nlm4_unlock;
 	struct fsal_obj_handle *obj;
 	state_status_t state_status = STATE_SUCCESS;
-	char buffer[MAXNETOBJ_SZ * 2];
+	char buffer[MAXNETOBJ_SZ * 2] = "\0";
 	state_nsm_client_t *nsm_client;
 	state_nlm_client_t *nlm_client;
 	state_owner_t *nlm_owner;
@@ -139,7 +139,7 @@ static void nlm4_unlock_message_resp(state_async_queue_t *arg)
 	    &arg->state_async_data.state_nlm_async_data;
 
 	if (isFullDebug(COMPONENT_NLM)) {
-		char buffer[1024];
+		char buffer[1024] = "\0";
 
 		netobj_to_string(&nlm_arg->nlm_async_args.nlm_async_res.
 				 res_nlm4test.cookie, buffer, 1024);

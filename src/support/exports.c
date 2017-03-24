@@ -315,7 +315,7 @@ void LogClientListEntry(log_levels_t level,
 			char *tag,
 			exportlist_client_entry_t *entry)
 {
-	char perms[1024];
+	char perms[1024] = "\0";
 	struct display_buffer dspbuf = {sizeof(perms), perms, perms};
 	char addr[INET6_ADDRSTRLEN];
 	char *paddr = addr;
@@ -1005,7 +1005,7 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 {
 	struct gsh_export *export = self_struct, *probe_exp;
 	int errcnt = 0;
-	char perms[1024];
+	char perms[1024] = "\0";
 	struct display_buffer dspbuf = {sizeof(perms), perms, perms};
 
 	LogFullDebug(COMPONENT_EXPORT, "Processing %p", export);
@@ -1365,7 +1365,7 @@ static void export_display(const char *step, void *node,
 			   void *link_mem, void *self_struct)
 {
 	struct gsh_export *export = self_struct;
-	char perms[1024];
+	char perms[1024] = "\0";
 	struct display_buffer dspbuf = {sizeof(perms), perms, perms};
 
 	(void) StrExportOptions(&dspbuf, &export->export_perms);
@@ -1426,7 +1426,7 @@ static int export_defaults_commit(void *node, void *link_mem,
 				  void *self_struct,
 				  struct config_error_type *err_type)
 {
-	char perms[1024];
+	char perms[1024] = "\0";
 	struct display_buffer dspbuf = {sizeof(perms), perms, perms};
 
 	(void) StrExportOptions(&dspbuf, &export_opt_cfg.conf);
@@ -1452,7 +1452,7 @@ static void export_defaults_display(const char *step, void *node,
 				    void *link_mem, void *self_struct)
 {
 	struct export_perms *defaults = self_struct;
-	char perms[1024];
+	char perms[1024] = "\0";
 	struct display_buffer dspbuf = {sizeof(perms), perms, perms};
 
 	(void) StrExportOptions(&dspbuf, defaults);
@@ -2931,7 +2931,7 @@ void export_check_access(void)
 	op_ctx->export_perms->set |= export_opt.def.set;
 
 	if (isMidDebug(COMPONENT_EXPORT)) {
-		char perms[1024];
+		char perms[1024] = "\0";
 		struct display_buffer dspbuf = {sizeof(perms), perms, perms};
 
 		if (client != NULL) {

@@ -263,7 +263,7 @@ int32_t inc_client_id_ref(nfs_client_id_t *clientid)
 	int32_t cid_refcount = atomic_inc_int32_t(&clientid->cid_refcount);
 
 	if (isFullDebug(COMPONENT_CLIENTID)) {
-		char str[LOG_BUFF_LEN];
+		char str[LOG_BUFF_LEN] = "\0";
 		struct display_buffer dspbuf = {sizeof(str), str, str};
 
 		display_client_id_rec(&dspbuf, clientid);
@@ -362,7 +362,7 @@ void free_client_id(nfs_client_id_t *clientid)
  */
 int32_t dec_client_id_ref(nfs_client_id_t *clientid)
 {
-	char str[LOG_BUFF_LEN];
+	char str[LOG_BUFF_LEN] = "\0";
 	struct display_buffer dspbuf = {sizeof(str), str, str};
 	int32_t cid_refcount;
 
@@ -766,7 +766,7 @@ clientid_status_t nfs_client_id_confirm(nfs_client_id_t *clientid,
 
 	if (rc != HASHTABLE_SUCCESS) {
 		if (isDebug(COMPONENT_CLIENTID)) {
-			char str[LOG_BUFF_LEN];
+			char str[LOG_BUFF_LEN] = "\0";
 			struct display_buffer dspbuf = {sizeof(str), str, str};
 
 			display_client_id_rec(&dspbuf, clientid);
@@ -787,7 +787,7 @@ clientid_status_t nfs_client_id_confirm(nfs_client_id_t *clientid,
 
 	if (rc != HASHTABLE_SUCCESS) {
 		if (isDebug(COMPONENT_CLIENTID)) {
-			char str[LOG_BUFF_LEN];
+			char str[LOG_BUFF_LEN] = "\0";
 			struct display_buffer dspbuf = {sizeof(str), str, str};
 
 			display_client_id_rec(&dspbuf, clientid);
@@ -878,7 +878,7 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid, bool make_stale)
 	struct gsh_buffdesc old_value;
 	hash_table_t *ht_expire;
 	nfs_client_record_t *record;
-	char str[LOG_BUFF_LEN];
+	char str[LOG_BUFF_LEN] = "\0";
 	struct display_buffer dspbuf = {sizeof(str), str, str};
 	bool str_valid = false;
 	struct root_op_context root_op_context;
@@ -995,7 +995,7 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid, bool make_stale)
 		state_nfs4_owner_unlock_all(owner);
 
 		if (isFullDebug(COMPONENT_CLIENTID)) {
-			char str[LOG_BUFF_LEN];
+			char str[LOG_BUFF_LEN] = "\0";
 			struct display_buffer dspbuf = {sizeof(str), str, str};
 			int32_t refcount =
 			    atomic_fetch_int32_t(&owner->so_refcount);
@@ -1052,7 +1052,7 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid, bool make_stale)
 		release_openstate(owner);
 
 		if (isFullDebug(COMPONENT_CLIENTID)) {
-			char str[LOG_BUFF_LEN];
+			char str[LOG_BUFF_LEN] = "\0";
 			struct display_buffer dspbuf = {sizeof(str), str, str};
 			int32_t refcount =
 			    atomic_fetch_int32_t(&owner->so_refcount);
@@ -1402,7 +1402,7 @@ int32_t inc_client_record_ref(nfs_client_record_t *record)
 	int32_t rec_refcnt = atomic_inc_int32_t(&record->cr_refcount);
 
 	if (isFullDebug(COMPONENT_CLIENTID)) {
-		char str[LOG_BUFF_LEN];
+		char str[LOG_BUFF_LEN] = "\0";
 		struct display_buffer dspbuf = {sizeof(str), str, str};
 
 		display_client_record(&dspbuf, record);
@@ -1433,7 +1433,7 @@ void free_client_record(nfs_client_record_t *record)
 
 int32_t dec_client_record_ref(nfs_client_record_t *record)
 {
-	char str[LOG_BUFF_LEN];
+	char str[LOG_BUFF_LEN] = "\0";
 	struct display_buffer dspbuf = {sizeof(str), str, str};
 	struct hash_latch latch;
 	hash_error_t rc;

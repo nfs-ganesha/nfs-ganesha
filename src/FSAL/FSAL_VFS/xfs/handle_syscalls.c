@@ -65,7 +65,7 @@ void display_xfs_handle(struct display_buffer *dspbuf,
 #define LogXFSHandle(fh)						\
 	do {								\
 		if (isMidDebug(COMPONENT_FSAL)) {			\
-			char buf[256];					\
+			char buf[256] = "\0";				\
 			struct display_buffer dspbuf =			\
 					{sizeof(buf), buf, buf};	\
 									\
@@ -320,7 +320,7 @@ bool vfs_valid_handle(struct gsh_buffdesc *desc)
 		return false;
 
 	if (isMidDebug(COMPONENT_FSAL)) {
-		char buf[256];
+		char buf[256] = "\0";
 		struct display_buffer dspbuf = {sizeof(buf), buf, buf};
 
 		(void) display_printf(&dspbuf,

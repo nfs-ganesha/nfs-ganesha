@@ -83,7 +83,7 @@ bool valid_lease(nfs_client_id_t *clientid)
 	valid = _valid_lease(clientid);
 
 	if (isFullDebug(COMPONENT_CLIENTID)) {
-		char str[LOG_BUFF_LEN];
+		char str[LOG_BUFF_LEN] = "\0";
 		struct display_buffer dspbuf = {sizeof(str), str, str};
 
 		display_client_id_rec(&dspbuf, clientid);
@@ -116,7 +116,7 @@ int reserve_lease(nfs_client_id_t *clientid)
 		clientid->cid_lease_reservations++;
 
 	if (isFullDebug(COMPONENT_CLIENTID)) {
-		char str[LOG_BUFF_LEN];
+		char str[LOG_BUFF_LEN] = "\0";
 		struct display_buffer dspbuf = {sizeof(str), str, str};
 
 		display_client_id_rec(&dspbuf, clientid);
@@ -149,7 +149,7 @@ void update_lease(nfs_client_id_t *clientid)
 		clientid->cid_last_renew = time(NULL);
 
 	if (isFullDebug(COMPONENT_CLIENTID)) {
-		char str[LOG_BUFF_LEN];
+		char str[LOG_BUFF_LEN] = "\0";
 		struct display_buffer dspbuf = {sizeof(str), str, str};
 
 		display_client_id_rec(&dspbuf, clientid);

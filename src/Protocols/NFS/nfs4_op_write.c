@@ -287,7 +287,7 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 			/* Bad open mode, return NFS4ERR_OPENMODE */
 			res_WRITE4->status = NFS4ERR_OPENMODE;
 				if (isDebug(COMPONENT_NFS_V4_LOCK)) {
-					char str[LOG_BUFF_LEN];
+					char str[LOG_BUFF_LEN] = "\0";
 					struct display_buffer dspbuf = {
 							sizeof(str), str, str};
 					display_stateid(&dspbuf, state_found);

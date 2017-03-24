@@ -137,7 +137,7 @@ int nfs4_op_setclientid(struct nfs_argop4 *op, compound_data_t *data,
 	PTHREAD_MUTEX_lock(&client_record->cr_mutex);
 
 	if (isFullDebug(COMPONENT_CLIENTID)) {
-		char str[LOG_BUFF_LEN];
+		char str[LOG_BUFF_LEN] = "\0";
 		struct display_buffer dspbuf = {sizeof(str), str, str};
 
 		display_client_record(&dspbuf, client_record);
@@ -280,7 +280,7 @@ int nfs4_op_setclientid(struct nfs_argop4 *op, compound_data_t *data,
 		 * cr_punconfirmed_id would have been NULL).
 		 */
 		if (isDebug(COMPONENT_CLIENTID)) {
-			char str[LOG_BUFF_LEN];
+			char str[LOG_BUFF_LEN] = "\0";
 			struct display_buffer dspbuf = {sizeof(str), str, str};
 
 			display_client_id_rec(&dspbuf, unconf);
@@ -341,7 +341,7 @@ int nfs4_op_setclientid(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	if (isDebug(COMPONENT_CLIENTID)) {
-		char str[LOG_BUFF_LEN];
+		char str[LOG_BUFF_LEN] = "\0";
 		struct display_buffer dspbuf = {sizeof(str), str, str};
 
 		sprint_mem(str_verifier, verifier, NFS4_VERIFIER_SIZE);

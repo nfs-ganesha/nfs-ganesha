@@ -71,7 +71,7 @@ state_status_t state_add_segment(state_t *state, struct pnfs_segment *segment,
 	state_layout_segment_t *new_segment = NULL;
 
 	if (state->state_type != STATE_TYPE_LAYOUT) {
-		char str[LOG_BUFF_LEN];
+		char str[LOG_BUFF_LEN] = "\0";
 		struct display_buffer dspbuf = {sizeof(str), str, str};
 
 		display_stateid(&dspbuf, state);
@@ -258,7 +258,7 @@ void revoke_owner_layouts(state_owner_t *client_owner)
 		PTHREAD_MUTEX_unlock(&client_owner->so_mutex);
 
 	if (errcnt == STATE_ERR_MAX) {
-		char str[LOG_BUFF_LEN];
+		char str[LOG_BUFF_LEN] = "\0";
 		struct display_buffer dspbuf = {sizeof(str), str, str};
 
 		display_owner(&dspbuf, client_owner);

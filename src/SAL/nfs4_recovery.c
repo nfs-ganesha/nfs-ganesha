@@ -424,7 +424,7 @@ void  nfs4_chk_clid_impl(nfs_client_id_t *clientid, clid_entry_t **clid_ent_arg)
 			     clientid->cid_recov_dir,
 			     PATH_MAX)) {
 			if (isDebug(COMPONENT_CLIENTID)) {
-				char str[LOG_BUFF_LEN];
+				char str[LOG_BUFF_LEN] = "\0";
 				struct display_buffer dspbuf = {
 					sizeof(str), str, str};
 

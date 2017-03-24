@@ -154,8 +154,8 @@ int compare_nsm_client(state_nsm_client_t *client1,
 		       state_nsm_client_t *client2)
 {
 	if (isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE)) {
-		char str1[LOG_BUFF_LEN / 2];
-		char str2[LOG_BUFF_LEN / 2];
+		char str1[LOG_BUFF_LEN / 2] = "\0";
+		char str2[LOG_BUFF_LEN / 2] = "\0";
 		struct display_buffer dspbuf1 = {sizeof(str1), str1, str1};
 		struct display_buffer dspbuf2 = {sizeof(str2), str2, str2};
 
@@ -369,8 +369,8 @@ int compare_nlm_client(state_nlm_client_t *client1,
 		       state_nlm_client_t *client2)
 {
 	if (isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE)) {
-		char str1[LOG_BUFF_LEN / 2];
-		char str2[LOG_BUFF_LEN / 2];
+		char str1[LOG_BUFF_LEN / 2] = "\0";
+		char str2[LOG_BUFF_LEN / 2] = "\0";
 		struct display_buffer dspbuf1 = {sizeof(str1), str1, str1};
 		struct display_buffer dspbuf2 = {sizeof(str2), str2, str2};
 
@@ -576,8 +576,8 @@ int display_nlm_owner_val(struct gsh_buffdesc *buff, char *str)
 int compare_nlm_owner(state_owner_t *owner1, state_owner_t *owner2)
 {
 	if (isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE)) {
-		char str1[LOG_BUFF_LEN / 2];
-		char str2[LOG_BUFF_LEN / 2];
+		char str1[LOG_BUFF_LEN / 2] = "\0";
+		char str2[LOG_BUFF_LEN / 2] = "\0";
 		struct display_buffer dspbuf1 = {sizeof(str1), str1, str1};
 		struct display_buffer dspbuf2 = {sizeof(str2), str2, str2};
 
@@ -792,7 +792,7 @@ void free_nsm_client(state_nsm_client_t *client)
  */
 void dec_nsm_client_ref(state_nsm_client_t *client)
 {
-	char str[LOG_BUFF_LEN];
+	char str[LOG_BUFF_LEN] = "\0";
 	struct display_buffer dspbuf = {sizeof(str), str, str};
 	bool str_valid = false;
 	struct hash_latch latch;
@@ -881,7 +881,7 @@ state_nsm_client_t *get_nsm_client(care_t care, SVCXPRT *xprt,
 {
 	state_nsm_client_t key;
 	state_nsm_client_t *pclient;
-	char str[LOG_BUFF_LEN];
+	char str[LOG_BUFF_LEN] = "\0";
 	struct display_buffer dspbuf = {sizeof(str), str, str};
 	struct hash_latch latch;
 	hash_error_t rc;
@@ -1065,7 +1065,7 @@ void inc_nlm_client_ref(state_nlm_client_t *client)
  */
 void dec_nlm_client_ref(state_nlm_client_t *client)
 {
-	char str[LOG_BUFF_LEN];
+	char str[LOG_BUFF_LEN] = "\0";
 	struct display_buffer dspbuf = {sizeof(str), str, str};
 	bool str_valid = false;
 	struct hash_latch latch;
@@ -1156,7 +1156,7 @@ state_nlm_client_t *get_nlm_client(care_t care, SVCXPRT *xprt,
 {
 	state_nlm_client_t key;
 	state_nlm_client_t *pclient;
-	char str[LOG_BUFF_LEN];
+	char str[LOG_BUFF_LEN] = "\0";
 	struct display_buffer dspbuf = {sizeof(str), str, str};
 	struct hash_latch latch;
 	hash_error_t rc;
