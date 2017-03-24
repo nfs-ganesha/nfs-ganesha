@@ -106,6 +106,8 @@ bool fsal_supports(struct fsal_staticfsinfo_t *info,
 		return !!info->link_supports_permission_checks;
 	case fso_rename_changes_key:
 		return !!info->rename_changes_key;
+	case fso_compute_readdir_cookie:
+		return !!info->compute_readdir_cookie;
 	default:
 		return false;	/* whatever I don't know about,
 				 * you can't do

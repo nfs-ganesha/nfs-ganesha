@@ -745,6 +745,29 @@ void release_readdir_cookie(struct fsal_obj_handle *dir_hdl,
 	/* return */
 }
 
+/* compute_readdir_cookie
+ * default is to return 0 which indicates not supported
+ */
+
+fsal_cookie_t compute_readdir_cookie(struct fsal_obj_handle *parent,
+				     const char *name)
+{
+	return 0;
+}
+
+/* dirent_cmp
+ * Sort dirents by name.
+ */
+
+int dirent_cmp(struct fsal_obj_handle *parent,
+	       const char *name1, fsal_cookie_t cookie1,
+	       const char *name2, fsal_cookie_t cookie2)
+{
+	/* Not supported by default. */
+	assert(false);
+	return 0;
+}
+
 /* create
  * default case not supported
  */
@@ -1551,6 +1574,8 @@ struct fsal_obj_ops def_handle_ops = {
 	.lookup = lookup,
 	.readdir = read_dirents,
 	.release_readdir_cookie = release_readdir_cookie,
+	.compute_readdir_cookie = compute_readdir_cookie,
+	.dirent_cmp = dirent_cmp,
 	.create = create,
 	.mkdir = makedir,
 	.mknode = makenode,

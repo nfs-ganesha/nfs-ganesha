@@ -432,6 +432,90 @@ void release_readdir_cookie(struct fsal_obj_handle *dir_hdl,
 	op_ctx->fsal_export = &export->export;
 }
 
+/**
+ * @brief Compute the readdir cookie for a given filename.
+ *
+ * Some FSALs are able to compute the cookie for a filename deterministically
+ * from the filename. They also have a defined order of entries in a directory
+ * based on the name (could be strcmp sort, could be strict alpha sort, could
+ * be deterministic order based on cookie - in any case, the dirent_cmp method
+ * will also be provided.
+ *
+ * The returned cookie is the cookie that can be passed as whence to FIND that
+ * directory entry. This is different than the cookie passed in the readdir
+ * callback (which is the cookie of the NEXT entry).
+ *
+ * @param[in]  parent  Directory file name belongs to.
+ * @param[in]  name    File name to produce the cookie for.
+ *
+ * @retval 0 if not supported.
+ * @returns The cookie value.
+ */
+
+fsal_cookie_t compute_readdir_cookie(struct fsal_obj_handle *parent,
+				     const char *name)
+{
+	fsal_cookie_t cookie;
+	struct nullfs_fsal_obj_handle *handle =
+		container_of(parent, struct nullfs_fsal_obj_handle,
+			     obj_handle);
+
+	struct nullfs_fsal_export *export =
+		container_of(op_ctx->fsal_export, struct nullfs_fsal_export,
+			     export);
+
+	/* calling subfsal method */
+	op_ctx->fsal_export = export->export.sub_export;
+	cookie = handle->sub_handle->obj_ops.compute_readdir_cookie(
+						handle->sub_handle, name);
+	op_ctx->fsal_export = &export->export;
+	return cookie;
+}
+
+/**
+ * @brief Help sort dirents.
+ *
+ * For FSALs that are able to compute the cookie for a filename
+ * deterministically from the filename, there must also be a defined order of
+ * entries in a directory based on the name (could be strcmp sort, could be
+ * strict alpha sort, could be deterministic order based on cookie).
+ *
+ * Although the cookies could be computed, the caller will already have them
+ * and thus will provide them to save compute time.
+ *
+ * @param[in]  parent   Directory entries belong to.
+ * @param[in]  name1    File name of first dirent
+ * @param[in]  cookie1  Cookie of first dirent
+ * @param[in]  name2    File name of second dirent
+ * @param[in]  cookie2  Cookie of second dirent
+ *
+ * @retval < 0 if name1 sorts before name2
+ * @retval == 0 if name1 sorts the same as name2
+ * @retval >0 if name1 sorts after name2
+ */
+
+int dirent_cmp(struct fsal_obj_handle *parent,
+	       const char *name1, fsal_cookie_t cookie1,
+	       const char *name2, fsal_cookie_t cookie2)
+{
+	int rc;
+	struct nullfs_fsal_obj_handle *handle =
+		container_of(parent, struct nullfs_fsal_obj_handle,
+			     obj_handle);
+
+	struct nullfs_fsal_export *export =
+		container_of(op_ctx->fsal_export, struct nullfs_fsal_export,
+			     export);
+
+	/* calling subfsal method */
+	op_ctx->fsal_export = export->export.sub_export;
+	rc = handle->sub_handle->obj_ops.dirent_cmp(handle->sub_handle,
+						    name1, cookie1,
+						    name2, cookie2);
+	op_ctx->fsal_export = &export->export;
+	return rc;
+}
+
 static fsal_status_t renamefile(struct fsal_obj_handle *obj_hdl,
 				struct fsal_obj_handle *olddir_hdl,
 				const char *old_name,
@@ -640,6 +724,8 @@ void nullfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->lookup = lookup;
 	ops->readdir = read_dirents;
 	ops->release_readdir_cookie = release_readdir_cookie,
+	ops->compute_readdir_cookie = compute_readdir_cookie,
+	ops->dirent_cmp = dirent_cmp,
 	ops->create = create;
 	ops->mkdir = makedir;
 	ops->mknode = makenode;

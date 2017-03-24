@@ -1219,6 +1219,21 @@ static inline int sizeof_fsid(enum fsid_type type)
 
 typedef uint64_t fsal_cookie_t;
 
+/* Cookie values 0, 1, and 2 are reserved by NFS:
+ * 0 is "start from beginning"
+ * 1 is the cookie associated with the "." entry
+ * 2 is the cookie associated with the ".." entry
+ *
+ * FSALs that support compute_readdir_cookie that are for some reason unable
+ * to compute the cookie for the very first entry (other than . and ..)
+ * should return FIRST_COOKIE. Caching layers such as MDCACHE should treat an
+ * insert of an entry with cookie 3 as inserting a new first entry, and then
+ * compute a new cookie for the old first entry - they can safely assume the
+ * sort order doesn't change which may allow for optimization of things like'
+ * AVL trees.
+ */
+ #define FIRST_COOKIE 3
+
 enum fsal_dir_result {
 	/** Continue readdir, call back with another dirent. */
 	DIR_CONTINUE,
@@ -1415,6 +1430,54 @@ struct fsal_obj_ops {
  */
 	void (*release_readdir_cookie)(struct fsal_obj_handle *dir_hdl,
 				       fsal_cookie_t *cookie);
+
+
+/**
+ * @brief Compute the readdir cookie for a given filename.
+ *
+ * Some FSALs are able to compute the cookie for a filename deterministically
+ * from the filename. They also have a defined order of entries in a directory
+ * based on the name (could be strcmp sort, could be strict alpha sort, could
+ * be deterministic order based on cookie - in any case, the dirent_cmp method
+ * will also be provided.
+ *
+ * The returned cookie is the cookie that can be passed as whence to FIND that
+ * directory entry. This is different than the cookie passed in the readdir
+ * callback (which is the cookie of the NEXT entry).
+ *
+ * @param[in]  parent  Directory file name belongs to.
+ * @param[in]  name    File name to produce the cookie for.
+ *
+ * @retval 0 if not supported.
+ * @returns The cookie value.
+ */
+	fsal_cookie_t (*compute_readdir_cookie)(struct fsal_obj_handle *parent,
+						const char *name);
+
+/**
+ * @brief Help sort dirents.
+ *
+ * For FSALs that are able to compute the cookie for a filename
+ * deterministically from the filename, there must also be a defined order of
+ * entries in a directory based on the name (could be strcmp sort, could be
+ * strict alpha sort, could be deterministic order based on cookie).
+ *
+ * Although the cookies could be computed, the caller will already have them
+ * and thus will provide them to save compute time.
+ *
+ * @param[in]  parent   Directory entries belong to.
+ * @param[in]  name1    File name of first dirent
+ * @param[in]  cookie1  Cookie of first dirent
+ * @param[in]  name2    File name of second dirent
+ * @param[in]  cookie2  Cookie of second dirent
+ *
+ * @retval < 0 if name1 sorts before name2
+ * @retval == 0 if name1 sorts the same as name2
+ * @retval >0 if name1 sorts after name2
+ */
+	int (*dirent_cmp)(struct fsal_obj_handle *parent,
+			  const char *name1, fsal_cookie_t cookie1,
+			  const char *name2, fsal_cookie_t cookie2);
 /**@}*/
 
 /**@{*/
