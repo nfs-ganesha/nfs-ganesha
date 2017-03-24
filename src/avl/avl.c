@@ -34,11 +34,6 @@ static inline void INIT_NODE(struct avltree_node *node)
 	node->balance = 0;
 }
 
-static inline signed get_balance(struct avltree_node *node)
-{
-	return node->balance;
-}
-
 static inline void set_balance(int balance, struct avltree_node *node)
 {
 	node->balance = balance;
@@ -77,11 +72,6 @@ static inline void INIT_NODE(struct avltree_node *node)
 	node->left = NULL;
 	node->right = NULL;
 	node->parent = 2;
-}
-
-static inline signed get_balance(struct avltree_node *node)
-{
-	return (int)(node->parent & 7) - 2;
 }
 
 static inline void set_balance(int balance, struct avltree_node *node)
@@ -127,16 +117,6 @@ static inline struct avltree_node *get_last(struct avltree_node *node)
 	while (node->right)
 		node = node->right;
 	return node;
-}
-
-struct avltree_node *avltree_first(const struct avltree *tree)
-{
-	return tree->first;
-}
-
-struct avltree_node *avltree_last(const struct avltree *tree)
-{
-	return tree->last;
 }
 
 struct avltree_node *avltree_next(const struct avltree_node *node)
@@ -216,49 +196,6 @@ static void rotate_right(struct avltree_node *node, struct avltree *tree)
 	if (p->left)
 		set_parent(p, p->left);
 	q->right = p;
-}
-
-/*
- * 'pparent', 'unbalanced' and 'is_left' are only used for
- * insertions. Normally GCC will notice this and get rid of them for
- * lookups.
- */
-static inline struct avltree_node *do_lookup(const struct avltree_node *key,
-					     const struct avltree *tree,
-					     struct avltree_node **pparent,
-					     struct avltree_node **unbalanced,
-					     int *is_left)
-{
-	struct avltree_node *node = tree->root;
-	int res = 0;
-
-	*pparent = NULL;
-	*unbalanced = node;
-	*is_left = 0;
-
-	while (node) {
-		if (get_balance(node) != 0)
-			*unbalanced = node;
-
-		res = tree->cmp_fn(node, key);
-		if (res == 0)
-			return node;
-		*pparent = node;
-		if ((*is_left = res > 0))
-			node = node->left;
-		else
-			node = node->right;
-	}
-	return NULL;
-}
-
-struct avltree_node *avltree_lookup(const struct avltree_node *key,
-				    const struct avltree *tree)
-{
-	struct avltree_node *parent, *unbalanced;
-	int is_left;
-
-	return do_lookup(key, tree, &parent, &unbalanced, &is_left);
 }
 
 struct avltree_node *avltree_inf(const struct avltree_node *key,
@@ -342,16 +279,12 @@ static void set_child(struct avltree_node *child, struct avltree_node *node,
 }
 
 /* Insertion never needs more than 2 rotations */
-struct avltree_node *avltree_insert(struct avltree_node *node,
-				    struct avltree *tree)
+void avltree_do_insert(struct avltree_node *node,
+		       struct avltree *tree,
+		       struct avltree_node *parent,
+		       struct avltree_node *unbalanced,
+		       int is_left)
 {
-	struct avltree_node *key, *parent, *unbalanced;
-	int is_left;
-
-	key = do_lookup(node, tree, &parent, &unbalanced, &is_left);
-	if (key)
-		return key;
-
 	INIT_NODE(node);
 
 	if (!parent) {
@@ -359,7 +292,7 @@ struct avltree_node *avltree_insert(struct avltree_node *node,
 		tree->first = tree->last = node;
 		tree->height++;
 		tree->size++;
-		return NULL;
+		return;
 	}
 	if (is_left) {
 		if (parent == tree->first)
@@ -450,7 +383,6 @@ struct avltree_node *avltree_insert(struct avltree_node *node,
 			break;
 		}
 	}
-	return NULL;
 }
 
 /* Deletion might require up to log(n) rotations */

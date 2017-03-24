@@ -175,19 +175,7 @@ static inline struct avltree_node *
 cih_fhcache_inline_lookup(const struct avltree *tree,
 			  const struct avltree_node *key)
 {
-	struct avltree_node *node = tree->root;
-	int res = 0;
-
-	while (node) {
-		res = cih_fh_cmpf(node, key);
-		if (res == 0)
-			return node;
-		if (res > 0)
-			node = node->left;
-		else
-			node = node->right;
-	}
-	return NULL;
+	return avltree_inline_lookup(key, tree, cih_fh_cmpf);
 }
 
 #define CIH_HASH_NONE           0x0000

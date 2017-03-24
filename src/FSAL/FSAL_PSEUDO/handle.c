@@ -78,23 +78,10 @@ pseudofs_i_cmpf(const struct avltree_node *lhs,
 }
 
 static inline struct avltree_node *
-avltree_inline_name_lookup(
-	const struct avltree_node *key,
-	const struct avltree *tree)
+avltree_inline_name_lookup(const struct avltree_node *key,
+			   const struct avltree *tree)
 {
-	struct avltree_node *node = tree->root;
-	int res = 0;
-
-	while (node) {
-		res = pseudofs_n_cmpf(node, key);
-		if (res == 0)
-			return node;
-		if (res > 0)
-			node = node->left;
-		else
-			node = node->right;
-	}
-	return NULL;
+	return avltree_inline_lookup(key, tree, pseudofs_n_cmpf);
 }
 
 /**

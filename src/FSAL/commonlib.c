@@ -676,21 +676,14 @@ fsal_fs_cmpf_fsid(const struct avltree_node *lhs,
 static inline struct fsal_filesystem *
 avltree_inline_fsid_lookup(const struct avltree_node *key)
 {
-	struct avltree_node *node = avl_fsid.root;
-	int res = 0;
+	struct avltree_node *node = avltree_inline_lookup(key, &avl_fsid,
+							  fsal_fs_cmpf_fsid);
 
-	while (node) {
-		res = fsal_fs_cmpf_fsid(node, key);
-		if (res == 0)
-			return avltree_container_of(node,
-						    struct fsal_filesystem,
-						    avl_fsid);
-		if (res > 0)
-			node = node->left;
-		else
-			node = node->right;
-	}
-	return NULL;
+	if (node != NULL)
+		return avltree_container_of(node, struct fsal_filesystem,
+					    avl_fsid);
+	else
+		return NULL;
 }
 
 static inline int
@@ -720,21 +713,14 @@ fsal_fs_cmpf_dev(const struct avltree_node *lhs,
 static inline struct fsal_filesystem *
 avltree_inline_dev_lookup(const struct avltree_node *key)
 {
-	struct avltree_node *node = avl_dev.root;
-	int res = 0;
+	struct avltree_node *node = avltree_inline_lookup(key, &avl_dev,
+							  fsal_fs_cmpf_dev);
 
-	while (node) {
-		res = fsal_fs_cmpf_dev(node, key);
-		if (res == 0)
-			return avltree_container_of(node,
-						    struct fsal_filesystem,
-						    avl_dev);
-		if (res > 0)
-			node = node->left;
-		else
-			node = node->right;
-	}
-	return NULL;
+	if (node != NULL)
+		return avltree_container_of(node, struct fsal_filesystem,
+					    avl_dev);
+	else
+		return NULL;
 }
 
 void remove_fs(struct fsal_filesystem *fs)

@@ -63,23 +63,10 @@ mdcache_avl_init(mdcache_entry_t *entry)
 }
 
 static inline struct avltree_node *
-avltree_inline_lookup(
-	const struct avltree_node *key,
-	const struct avltree *tree)
+avltree_inline_lookup_hk(const struct avltree_node *key,
+			 const struct avltree *tree)
 {
-	struct avltree_node *node = tree->root;
-	int res = 0;
-
-	while (node) {
-		res = avl_dirent_hk_cmpf(node, key);
-		if (res == 0)
-			return node;
-		if (res > 0)
-			node = node->left;
-		else
-			node = node->right;
-	}
-	return NULL;
+	return avltree_inline_lookup(key, tree, avl_dirent_hk_cmpf);
 }
 
 void
@@ -93,7 +80,7 @@ avl_dirent_set_deleted(mdcache_entry_t *entry, mdcache_dir_entry_t *v)
 
 	assert(!(v->flags & DIR_ENTRY_FLAG_DELETED));
 
-	node = avltree_inline_lookup(&v->node_hk, &entry->fsobj.fsdir.avl.t);
+	node = avltree_inline_lookup_hk(&v->node_hk, &entry->fsobj.fsdir.avl.t);
 	assert(node);
 	avltree_remove(&v->node_hk, &entry->fsobj.fsdir.avl.t);
 
@@ -131,7 +118,7 @@ mdcache_avl_insert_impl(mdcache_entry_t *entry, mdcache_dir_entry_t *v,
 		     v, v->name, j, j2);
 
 	/* first check for a previously-deleted entry */
-	node = avltree_inline_lookup(&v->node_hk, c);
+	node = avltree_inline_lookup_hk(&v->node_hk, c);
 
 	/* We must not allow persist-cookies to overrun resource
 	 * management processes.  Note this is not a limit on
@@ -340,7 +327,7 @@ mdcache_avl_lookup_k(mdcache_entry_t *entry, uint64_t k, uint32_t flags,
 	*dirent = NULL;
 	dirent_key->hk.k = k;
 
-	node = avltree_inline_lookup(&dirent_key->node_hk, t);
+	node = avltree_inline_lookup_hk(&dirent_key->node_hk, t);
 	if (node) {
 		if (flags & MDCACHE_FLAG_NEXT_ACTIVE)
 			/* client wants the cookie -after- the last we sent, and
@@ -362,7 +349,7 @@ mdcache_avl_lookup_k(mdcache_entry_t *entry, uint64_t k, uint32_t flags,
 	/* Try the deleted AVL.  If a node with hk.k == v->hk.k is found,
 	 * return its least upper bound in -t-, if any. */
 	if (!node) {
-		node2 = avltree_inline_lookup(&dirent_key->node_hk, c);
+		node2 = avltree_inline_lookup_hk(&dirent_key->node_hk, c);
 		if (node2) {
 			node = avltree_sup(&dirent_key->node_hk, t);
 			if (!node)
