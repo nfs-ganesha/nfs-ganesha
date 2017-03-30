@@ -819,10 +819,10 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 	/* Create stable storage directory, this needs to be done before
 	 * starting the recovery thread.
 	 */
-	nfs4_create_recov_dir();
+	nfs4_recovery_init();
 
 	/* read in the client IDs */
-	nfs4_load_recov_clids(NULL);
+	nfs4_recovery_load_clids(NULL);
 
 	/* Start grace period */
 	nfs4_start_grace(NULL);
@@ -970,7 +970,7 @@ void nfs_start(nfs_start_info_t *p_start_info)
 
 	/* if not in grace period, clean up the old state directory */
 	if (!nfs_in_grace())
-		nfs4_clean_old_recov_dir(v4_old_dir);
+		nfs4_recovery_cleanup();
 
 	Cleanup();
 

@@ -660,7 +660,7 @@ struct nfs_client_id_t {
 	nfs_client_cred_t cid_credential;	/*< Client credential */
 	int cid_allow_reclaim;	/*< Whether this client can still
 				   reclaim state */
-	char *cid_recov_dir;	/*< Recovery directory */
+	char *cid_recov_tag;	/*< Recovery tag */
 	nfs_client_record_t *cid_client_record;	/*< Record for managing
 						   confirmation and
 						   replacement */

@@ -340,9 +340,9 @@ void free_client_id(nfs_client_id_t *clientid)
 		}
 	}
 
-	if (clientid->cid_recov_dir) {
-		gsh_free(clientid->cid_recov_dir);
-		clientid->cid_recov_dir = NULL;
+	if (clientid->cid_recov_tag) {
+		gsh_free(clientid->cid_recov_tag);
+		clientid->cid_recov_tag = NULL;
 	}
 
 	PTHREAD_MUTEX_destroy(&clientid->cid_mutex);
@@ -1099,10 +1099,10 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid, bool make_stale)
 		}
 	}
 
-	if (clientid->cid_recov_dir != NULL && !make_stale) {
-		nfs4_rm_clid(clientid->cid_recov_dir, v4_recov_dir, 0);
-		gsh_free(clientid->cid_recov_dir);
-		clientid->cid_recov_dir = NULL;
+	if (clientid->cid_recov_tag != NULL && !make_stale) {
+		nfs4_rm_clid(clientid);
+		gsh_free(clientid->cid_recov_tag);
+		clientid->cid_recov_tag = NULL;
 	}
 
 	if (isDebug(COMPONENT_CLIENTID)) {
