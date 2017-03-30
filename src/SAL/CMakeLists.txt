@@ -14,6 +14,7 @@ SET(sal_STAT_SRCS
    nfs4_recovery.c
    nfs41_session_id.c
    nfs4_owner.c
+   recovery/recovery_fs.c
 )
 
 if(USE_NLM)
