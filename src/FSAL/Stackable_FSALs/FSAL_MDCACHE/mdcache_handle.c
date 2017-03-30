@@ -1260,14 +1260,14 @@ static fsal_status_t mdcache_unlink(struct fsal_obj_handle *dir_hdl,
 		container_of(obj_hdl, mdcache_entry_t, obj_handle);
 	fsal_status_t status;
 
+	LogFullDebug(COMPONENT_CACHE_INODE,
+		     "Unlink %p/%s (%p)",
+		     parent, name, entry);
+
 	subcall(
 		status = parent->sub_handle->obj_ops.unlink(
 			parent->sub_handle, entry->sub_handle, name)
 	       );
-
-	LogFullDebug(COMPONENT_CACHE_INODE,
-		     "Unlink %p/%s (%p)",
-		     parent, name, entry);
 
 	if (FSAL_IS_ERROR(status)) {
 		LogDebug(COMPONENT_CACHE_INODE,
@@ -1291,15 +1291,16 @@ static fsal_status_t mdcache_unlink(struct fsal_obj_handle *dir_hdl,
 					   MDCACHE_TRUST_ATTRS);
 		atomic_clear_uint32_t_bits(&entry->mde_flags,
 					   MDCACHE_TRUST_ATTRS);
+
+		if (entry->obj_handle.type == DIRECTORY)
+			mdcache_key_delete(&entry->fsobj.fsdir.parent);
+
+		mdc_unreachable(entry);
 	}
 
-	if (entry->obj_handle.type == DIRECTORY)
-		mdcache_key_delete(&entry->fsobj.fsdir.parent);
-
-	mdc_unreachable(entry);
-
 	LogFullDebug(COMPONENT_CACHE_INODE,
-		     "Unlink done %p/%s (%p)",
+		     "Unlink %s %p/%s (%p)",
+		     FSAL_IS_ERROR(status) ? "failed" : "done",
 		     parent, name, entry);
 
 	return status;
