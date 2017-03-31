@@ -156,7 +156,7 @@ fsal_status_t vfs_sub_getattrs(struct vfs_fsal_obj_handle *vfs_hdl,
 	fa = vfs_acl_locate(&vfs_hdl->obj_handle);
 	if (!fa->fa_acl.naces) {
 		/* No ACLs yet */
-		FSAL_UNSET_MASK(attrib->mask, ATTR_ACL);
+		FSAL_UNSET_MASK(attrib->valid_mask, ATTR_ACL);
 
 		return fsalstat(ERR_FSAL_NO_ERROR, 0);
 	}
@@ -173,7 +173,7 @@ fsal_status_t vfs_sub_getattrs(struct vfs_fsal_obj_handle *vfs_hdl,
 		return fsalstat(ERR_FSAL_FAULT, status);
 	fsal_print_acl(COMPONENT_FSAL, NIV_FULL_DEBUG, acl);
 	attrib->acl = acl;
-	FSAL_SET_MASK(attrib->mask, ATTR_ACL);
+	FSAL_SET_MASK(attrib->valid_mask, ATTR_ACL);
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -197,10 +197,10 @@ fsal_status_t vfs_sub_setattrs(struct vfs_fsal_obj_handle *vfs_hdl,
 	       fa->fa_acl.naces * sizeof(fsal_ace_t));
 	fsal_print_acl(COMPONENT_FSAL, NIV_FULL_DEBUG,
 		       (fsal_acl_t *)&fa->fa_acl);
-	if (attrib->mask & ATTR_MODE)
+	if (attrib->valid_mask & ATTR_MODE)
 		vfs_hdl->mode = attrib->mode;
 
-	FSAL_SET_MASK(attrib->mask, ATTR_ACL);
+	FSAL_SET_MASK(attrib->valid_mask, ATTR_ACL);
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
