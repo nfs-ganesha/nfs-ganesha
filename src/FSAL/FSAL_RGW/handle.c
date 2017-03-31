@@ -418,11 +418,11 @@ fsal_status_t rgw_fsal_setattr2(struct fsal_obj_handle *obj_hdl,
 	LogFullDebug(COMPONENT_FSAL,
 		"%s enter obj_hdl %p state %p", __func__, obj_hdl, state);
 
-	if (attrib_set->valid_mask & ~rgw_settable_attributes) {
+	if (attrib_set->valid_mask & ~RGW_SETTABLE_ATTRIBUTES) {
 		LogDebug(COMPONENT_FSAL,
 			"bad mask %"PRIx64" not settable %"PRIx64,
 			attrib_set->valid_mask,
-			attrib_set->valid_mask & ~rgw_settable_attributes);
+			attrib_set->valid_mask & ~RGW_SETTABLE_ATTRIBUTES);
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	}
 

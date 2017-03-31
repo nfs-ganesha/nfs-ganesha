@@ -131,7 +131,7 @@ static fsal_status_t zfs_init_config(struct fsal_module *fsal_hdl,
 	display_fsinfo(&zfs_me->fs_info);
 	LogFullDebug(COMPONENT_FSAL,
 		     "Supported attributes constant = 0x%" PRIx64,
-		     (uint64_t) ZFS_SUPPORTED_ATTRIBUTES);
+		     ZFS_SUPPORTED_ATTRIBUTES);
 	LogFullDebug(COMPONENT_FSAL,
 		     "Supported attributes default = 0x%" PRIx64,
 		     default_zfs_info.supported_attrs);

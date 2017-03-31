@@ -442,7 +442,7 @@ static fsal_aclsupp_t fs_acl_support(struct fsal_export *export_pub)
 
 static attrmask_t fs_supported_attrs(struct fsal_export *export_pub)
 {
-	return rgw_supported_attributes;
+	return RGW_SUPPORTED_ATTRIBUTES;
 }
 
 /**

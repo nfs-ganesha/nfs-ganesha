@@ -38,14 +38,12 @@ typedef struct {
 	unsigned int index;
 } snapshot_t;
 
-/* defined the set of attributes supported with POSIX */
-#define ZFS_SUPPORTED_ATTRIBUTES (                         \
-		ATTR_TYPE     | ATTR_SIZE     |		   \
-		ATTR_FSID     | ATTR_FILEID   |		   \
-		ATTR_MODE     | ATTR_NUMLINKS | ATTR_OWNER     |	\
-		ATTR_GROUP    | ATTR_ATIME    | ATTR_RAWDEV    |	\
-		ATTR_CTIME    | ATTR_MTIME    | ATTR_SPACEUSED |	\
-		ATTR_CHGTIME)
+/**
+ * The attributes this FSAL can interpret or supply.
+ * Currently FSAL_ZFS uses posix2fsal_attributes, so we should indicate support
+ * for at least those attributes.
+ */
+#define ZFS_SUPPORTED_ATTRIBUTES ((const attrmask_t) (ATTRS_POSIX))
 
 static inline size_t zfs_sizeof_handle(struct zfs_file_handle *hdl)
 {

@@ -192,7 +192,7 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 
 	LogFullDebug(COMPONENT_FSAL,
 		     "Supported attributes constant = 0x%" PRIx64,
-		     (uint64_t) GPFS_SUPPORTED_ATTRIBUTES);
+		     GPFS_SUPPORTED_ATTRIBUTES);
 	LogFullDebug(COMPONENT_FSAL,
 		     "Supported attributes default = 0x%" PRIx64,
 		     default_gpfs_info.supported_attrs);

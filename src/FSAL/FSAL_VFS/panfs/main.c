@@ -44,13 +44,7 @@
  */
 
 /* defined the set of attributes supported with POSIX */
-#define PANFS_SUPPORTED_ATTRIBUTES (                                       \
-		ATTR_TYPE     | ATTR_SIZE     |				\
-		ATTR_FSID     | ATTR_FILEID   |				\
-		ATTR_MODE     | ATTR_NUMLINKS | ATTR_OWNER     |	\
-		ATTR_GROUP    | ATTR_ATIME    | ATTR_RAWDEV    |	\
-		ATTR_CTIME    | ATTR_MTIME    | ATTR_SPACEUSED |	\
-		ATTR_CHGTIME  | ATTR_ACL)
+#define PANFS_SUPPORTED_ATTRIBUTES ((const attrmask_t) (ATTRS_POSIX | ATTR_ACL))
 
 struct panfs_fsal_module {
 	struct fsal_module fsal;
@@ -149,7 +143,7 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 	display_fsinfo(&panfs_me->fs_info);
 	LogFullDebug(COMPONENT_FSAL,
 		     "Supported attributes constant = 0x%" PRIx64,
-		     (uint64_t) PANFS_SUPPORTED_ATTRIBUTES);
+		     PANFS_SUPPORTED_ATTRIBUTES);
 	LogFullDebug(COMPONENT_FSAL,
 		     "Supported attributes default = 0x%" PRIx64,
 		     default_posix_info.supported_attrs);

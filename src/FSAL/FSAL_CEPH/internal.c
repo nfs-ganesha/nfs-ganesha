@@ -43,28 +43,7 @@
 #include "fsal_convert.h"
 #include "FSAL/fsal_commonlib.h"
 #include "statx_compat.h"
-
-#define CEPH_INTERNAL_C
 #include "internal.h"
-
-/**
- * The attributes tis FSAL can interpret or supply.
- */
-
-const attrmask_t supported_attributes = (
-	ATTR_TYPE      | ATTR_SIZE     | ATTR_FSID  | ATTR_FILEID |
-	ATTR_MODE      | ATTR_NUMLINKS | ATTR_OWNER | ATTR_GROUP  |
-	ATTR_ATIME     | ATTR_RAWDEV   | ATTR_CTIME | ATTR_MTIME  |
-	ATTR_SPACEUSED | ATTR_CHGTIME);
-
-/**
- * The attributes this FSAL can set.
- */
-
-const attrmask_t settable_attributes = (
-	ATTR_MODE  | ATTR_OWNER | ATTR_GROUP | ATTR_ATIME	 |
-	ATTR_CTIME | ATTR_MTIME | ATTR_SIZE  | ATTR_MTIME_SERVER |
-	ATTR_ATIME_SERVER);
 
 /**
  * @brief Construct a new filehandle
@@ -159,7 +138,7 @@ void ceph2fsal_attributes(const struct ceph_statx *stx,
 {
 	/* These are always considered to be available */
 	fsalattr->valid_mask |= ATTR_TYPE|ATTR_FSID|ATTR_RAWDEV|ATTR_FILEID;
-	fsalattr->supported = supported_attributes;
+	fsalattr->supported = CEPH_SUPPORTED_ATTRS;
 	fsalattr->type = posix2fsal_type(stx->stx_mode);
 	fsalattr->rawdev = posix2fsal_devt(stx->stx_rdev);
 	fsalattr->fsid = posix2fsal_fsid(stx->stx_dev);

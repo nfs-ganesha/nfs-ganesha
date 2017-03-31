@@ -44,15 +44,6 @@
 /* NULLFS FSAL module private storage
  */
 
-/* defined the set of attributes supported with POSIX */
-#define NULLFS_SUPPORTED_ATTRIBUTES (                    \
-	ATTR_TYPE     | ATTR_SIZE     |                  \
-	ATTR_FSID     | ATTR_FILEID   |                  \
-	ATTR_MODE     | ATTR_NUMLINKS | ATTR_OWNER     | \
-	ATTR_GROUP    | ATTR_ATIME    | ATTR_RAWDEV    | \
-	ATTR_CTIME    | ATTR_MTIME    | ATTR_SPACEUSED | \
-	ATTR_CHGTIME)
-
 struct nullfs_fsal_module {
 	struct fsal_module fsal;
 	struct fsal_staticfsinfo_t fs_info;
@@ -83,7 +74,7 @@ static struct fsal_staticfsinfo_t default_posix_info = {
 	.acl_support = FSAL_ACLSUPPORT_ALLOW,
 	.cansettime = true,
 	.homogenous = true,
-	.supported_attrs = NULLFS_SUPPORTED_ATTRIBUTES,
+	.supported_attrs = ALL_ATTRIBUTES,
 	.maxread = FSAL_MAXIOSIZE,
 	.maxwrite = FSAL_MAXIOSIZE,
 	.umask = 0,
@@ -133,9 +124,6 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 	 */
 
 	display_fsinfo(&nullfs_me->fs_info);
-	LogFullDebug(COMPONENT_FSAL,
-		     "Supported attributes constant = 0x%" PRIx64,
-		     (uint64_t) NULLFS_SUPPORTED_ATTRIBUTES);
 	LogFullDebug(COMPONENT_FSAL,
 		     "Supported attributes default = 0x%" PRIx64,
 		     default_posix_info.supported_attrs);

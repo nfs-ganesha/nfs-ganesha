@@ -44,13 +44,11 @@
  */
 
 /* defined the set of attributes supported with POSIX */
-#define XFS_SUPPORTED_ATTRIBUTES (                                       \
-		ATTR_TYPE     | ATTR_SIZE     |				\
-		ATTR_FSID     | ATTR_FILEID   |				\
-		ATTR_MODE     | ATTR_NUMLINKS | ATTR_OWNER     |	\
-		ATTR_GROUP    | ATTR_ATIME    | ATTR_RAWDEV    |	\
-		ATTR_CTIME    | ATTR_MTIME    | ATTR_SPACEUSED |	\
-		ATTR_CHGTIME)
+#ifndef ENABLE_VFS_DEBUG_ACL
+#define XFS_SUPPORTED_ATTRIBUTES ((const attrmask_t) (ATTRS_POSIX))
+#else
+#define XFS_SUPPORTED_ATTRIBUTES ((const attrmask_t) (ATTRS_POSIX | ATTR_ACL))
+#endif
 
 struct xfs_fsal_module {
 	struct fsal_module fsal;
@@ -191,7 +189,7 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 	display_fsinfo(&xfs_me->fs_info);
 	LogFullDebug(COMPONENT_FSAL,
 		     "Supported attributes constant = 0x%" PRIx64,
-		     (uint64_t) XFS_SUPPORTED_ATTRIBUTES);
+		     XFS_SUPPORTED_ATTRIBUTES);
 	LogFullDebug(COMPONENT_FSAL,
 		     "Supported attributes default = 0x%" PRIx64,
 		     default_posix_info.supported_attrs);

@@ -138,11 +138,13 @@ struct ds {
 
 #endif				/* CEPH_PNFS */
 
-#ifndef CEPH_INTERNAL_C
-/* Keep internal.c from clashing with itself */
-extern attrmask_t supported_attributes;
-extern attrmask_t settable_attributes;
-#endif				/* !CEPH_INTERNAL_C */
+#define CEPH_SUPPORTED_ATTRS ((const attrmask_t) (ATTRS_POSIX))
+
+#define CEPH_SETTABLE_ATTRIBUTES ((const attrmask_t) (			\
+	ATTR_MODE  | ATTR_OWNER | ATTR_GROUP | ATTR_ATIME	 |	\
+	ATTR_CTIME | ATTR_MTIME | ATTR_SIZE  | ATTR_MTIME_SERVER |	\
+	ATTR_ATIME_SERVER))
+
 
 /* private helper for export object */
 

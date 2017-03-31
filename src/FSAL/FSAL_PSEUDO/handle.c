@@ -262,8 +262,8 @@ static struct pseudo_fsal_obj_handle
 	hdl->attributes.rawdev.minor = 0;
 
 	/* Set the mask at the end. */
-	hdl->attributes.valid_mask = ATTRS_POSIX;
-	hdl->attributes.supported = ATTRS_POSIX;
+	hdl->attributes.valid_mask = PSEUDO_SUPPORTED_ATTRS;
+	hdl->attributes.supported = PSEUDO_SUPPORTED_ATTRS;
 
 	fsal_obj_handle_init(&hdl->obj_handle, exp_hdl, DIRECTORY);
 	pseudofs_handle_ops_init(&hdl->obj_handle.obj_ops);

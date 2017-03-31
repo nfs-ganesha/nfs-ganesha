@@ -38,13 +38,7 @@
 #define GLUSTER_VOLPATH_KEY  "volpath"
 
 /* defined the set of attributes supported with POSIX */
-#define GLUSTERFS_SUPPORTED_ATTRIBUTES (	 \
-ATTR_TYPE     | ATTR_SIZE     |		  \
-ATTR_FSID     | ATTR_FILEID   |		  \
-ATTR_MODE     | ATTR_NUMLINKS | ATTR_OWNER     | \
-ATTR_GROUP    | ATTR_ATIME    | ATTR_RAWDEV    | \
-ATTR_CTIME    | ATTR_MTIME    | ATTR_SPACEUSED | \
-ATTR_CHGTIME  | ATTR_ACL)
+#define GLUSTERFS_SUPPORTED_ATTRIBUTES (ATTRS_POSIX | ATTR_ACL)
 
 /**
  * The attributes this FSAL can set.

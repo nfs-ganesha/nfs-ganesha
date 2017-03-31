@@ -78,14 +78,9 @@ struct gpfs_state_fd {
 };
 
 /* defined the set of attributes supported with POSIX */
-#define GPFS_SUPPORTED_ATTRIBUTES (                              \
-		ATTR_TYPE     | ATTR_SIZE     |                  \
-		ATTR_FSID     | ATTR_FILEID   |                  \
-		ATTR_MODE     | ATTR_NUMLINKS | ATTR_OWNER     | \
-		ATTR_GROUP    | ATTR_ATIME    | ATTR_RAWDEV    | \
-		ATTR_CTIME    | ATTR_MTIME    | ATTR_SPACEUSED | \
-		ATTR_CHGTIME | ATTR_ACL | ATTR4_SPACE_RESERVED | \
-		ATTR4_FS_LOCATIONS | ATTR4_XATTR)
+#define GPFS_SUPPORTED_ATTRIBUTES ((const attrmask_t) (         \
+		ATTRS_POSIX | ATTR_ACL | ATTR4_SPACE_RESERVED | \
+		ATTR4_FS_LOCATIONS | ATTR4_XATTR))
 
 #define GPFS_MAX_FH_SIZE OPENHANDLE_HANDLE_LEN
 

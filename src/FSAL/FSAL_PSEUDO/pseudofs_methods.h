@@ -32,6 +32,8 @@
 #include "avltree.h"
 #include "gsh_list.h"
 
+#define PSEUDO_SUPPORTED_ATTRS ((const attrmask_t) (ATTRS_POSIX))
+
 struct pseudo_fsal_obj_handle;
 
 /*
