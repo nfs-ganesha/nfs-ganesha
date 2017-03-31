@@ -351,16 +351,14 @@ static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 /* extract a file handle from a buffer.
  * do verification checks and flag any and all suspicious bits.
  * Return an updated fh_desc into whatever was passed.  The most
- * common behavior, done here is to just reset the length.  There
- * is the option to also adjust the start pointer.
+ * common behavior, done here is to just reset the length.
  *
- * So, adjust the start pointer, check.  But setting the length
- * to sizeof(vfs_file_handle_t) coerces all handles to a value
- * too large for some applications (e.g., ESXi), and much larger
- * than necessary.  (On my Linux system, I'm seeing 12 byte file
- * handles (EXT4).  Since this routine has no idea what the
- * internal length was, it should not set the value (the length
- * comes from us anyway, it's up to us to get it right elsewhere).
+ * Setting the length to sizeof(vfs_file_handle_t) coerces all handles
+ * to a value too large for some applications (e.g., ESXi), and much
+ * larger than necessary.  (On my Linux system, I'm seeing 12 byte file
+ * handles (EXT4).  Since this routine has no idea what the internal
+ * length was, it should not set the value (the length comes from us
+ * anyway, it's up to us to get it right elsewhere).
  */
 
 static fsal_status_t extract_handle(struct fsal_export *exp_hdl,

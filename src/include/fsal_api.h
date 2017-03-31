@@ -760,10 +760,8 @@ struct export_ops {
  *                        buffer is given in @c fh_desc->buf and must
  *                        not be changed.  @c fh_desc->len is the
  *                        length of the data contained in the buffer,
- *                        and @c fh_desc->maxlen is the total size of
- *                        the buffer, should the FSAL wish to write a
- *                        longer handle.  @c fh_desc->len must be
- *                        updated to the correct size.
+ *                        @c fh_desc->len must be updated to the correct
+ *                        size.
  *
  * @return FSAL type.
  */

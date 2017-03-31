@@ -333,8 +333,7 @@ set_quota(struct fsal_export *exp_hdl, const char *filepath, int quota_type,
 /* extract a file handle from a buffer.
  * do verification checks and flag any and all suspicious bits.
  * Return an updated fh_desc into whatever was passed.  The most
- * common behavior, done here is to just reset the length.  There
- * is the option to also adjust the start pointer.
+ * common behavior, done here is to just reset the length.
  */
 
 static fsal_status_t
