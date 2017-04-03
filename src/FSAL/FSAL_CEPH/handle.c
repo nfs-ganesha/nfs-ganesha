@@ -188,7 +188,8 @@ static fsal_status_t ceph_fsal_readdir(struct fsal_obj_handle *dir_pub,
 
 			fsal_release_attrs(&attrs);
 
-			if (cb_rc >= DIR_TERMINATE)
+			/* Read ahead not supported by this FSAL. */
+			if (cb_rc >= DIR_READAHEAD)
 				goto closedir;
 
 		} else if (rc == 0) {

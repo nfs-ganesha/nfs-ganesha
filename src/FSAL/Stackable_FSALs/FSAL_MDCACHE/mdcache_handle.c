@@ -724,7 +724,7 @@ static fsal_status_t mdcache_readdir(struct fsal_obj_handle *dir_hdl,
 	 * the requested sequence or dirent sequence is exhausted */
 	*eod_met = false;
 
-	for (; cb_result <= DIR_CONTINUE_MARK && dirent_node != NULL;
+	for (; cb_result < DIR_TERMINATE && dirent_node != NULL;
 	     dirent_node = avltree_next(dirent_node)) {
 		struct attrlist attrs;
 		mdcache_entry_t *entry = NULL;

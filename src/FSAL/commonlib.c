@@ -383,6 +383,12 @@ const char *fsal_dir_result_str(enum fsal_dir_result result)
 	case DIR_CONTINUE_MARK:
 		return "DIR_CONTINUE_MARK";
 
+	case DIR_READAHEAD:
+		return "DIR_READAHEAD";
+
+	case DIR_READAHEAD_MARK:
+		return "DIR_READAHEAD_MARK";
+
 	case DIR_TERMINATE:
 		return "DIR_TERMINATE";
 

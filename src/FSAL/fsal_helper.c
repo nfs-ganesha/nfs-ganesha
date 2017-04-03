@@ -1340,6 +1340,7 @@ populate_dirent(const char *name,
 				state->cb_state = CB_PROBLEM;
 				(void) state->cb(&state->cb_parms, NULL, NULL,
 						 0, cookie, state->cb_state);
+				/* Protocol layers NEVER do readahead. */
 				retval = DIR_TERMINATE;
 				goto out;
 			}
@@ -1350,6 +1351,7 @@ populate_dirent(const char *name,
 			state->cb_state = CB_PROBLEM;
 			(void) state->cb(&state->cb_parms, NULL, NULL, 0,
 					 cookie, state->cb_state);
+			/* Protocol layers NEVER do readahead. */
 			retval = DIR_TERMINATE;
 			goto out;
 		}
@@ -1389,6 +1391,7 @@ populate_dirent(const char *name,
 	}
 
 	if (!state->cb_parms.in_result) {
+		/* Protocol layers NEVER do readahead. */
 		retval = DIR_TERMINATE;
 		goto out;
 	}
@@ -1409,6 +1412,8 @@ out:
 	 *       this entry, then returning DIR_TERMINATE as already set is
 	 *       appropriate, we will have marked the previous entrie's cookie
 	 *       and DIR_TERMINATE will indicate NOT to mark this cookie.
+	 *
+	 *       The protocol layers NEVER do readahead.
 	 */
 
 	/* Put the ref on obj that readdir took */

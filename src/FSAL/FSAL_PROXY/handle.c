@@ -1656,7 +1656,8 @@ static fsal_status_t pxy_do_readdir(struct pxy_obj_handle *ph,
 
 		fsal_release_attrs(&attrs);
 
-		if (cb_rc >= DIR_TERMINATE)
+		/* Read ahead not supported by this FSAL. */
+		if (cb_rc >= DIR_READAHEAD)
 			break;
 	}
 	xdr_free((xdrproc_t) xdr_readdirres, resoparray);

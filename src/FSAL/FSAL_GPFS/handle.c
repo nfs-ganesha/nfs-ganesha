@@ -561,7 +561,8 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 
 			fsal_release_attrs(&attrs);
 
-			if (cb_rc >= DIR_TERMINATE)
+			/* Read ahead not supported by this FSAL. */
+			if (cb_rc >= DIR_READAHEAD)
 				goto done;
  skip:
 			bpos += dentry->d_reclen;

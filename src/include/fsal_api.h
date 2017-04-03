@@ -1249,6 +1249,14 @@ enum fsal_dir_result {
 	 *  cookie for the final entry consumed.
 	 */
 	DIR_CONTINUE_MARK,
+	/** Continue supplying entries if readahead is supported, otherwise
+	 *  stop providing entries.
+	 */
+	DIR_READAHEAD,
+	/** Continue supplying entries if readahead is supported, otherwise
+	 *  stop providing entries. Mark this entry.
+	 */
+	DIR_READAHEAD_MARK,
 	/** Terminate readdir, no need to mark. */
 	DIR_TERMINATE,
 	/** Terminate readdir, mark here for resumption. This will be used

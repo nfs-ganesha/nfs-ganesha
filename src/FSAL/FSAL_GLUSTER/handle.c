@@ -209,7 +209,8 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 
 			fsal_release_attrs(&attrs);
 
-			if (cb_rc >= DIR_TERMINATE)
+			/* Read ahead not supported by this FSAL. */
+			if (cb_rc >= DIR_READAHEAD)
 				goto out;
 		} else if (rc == 0 && pde == NULL) {
 			*eof = true;
