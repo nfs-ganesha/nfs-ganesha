@@ -2584,7 +2584,7 @@ again:
 		}
 
 
-	} while (dirent != NULL);
+	}
 
 	if (chunk->next_ck != 0) {
 		/* If the chunk has a known chunk following it, use the first
