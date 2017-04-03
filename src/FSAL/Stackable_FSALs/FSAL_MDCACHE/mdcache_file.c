@@ -1,7 +1,7 @@
 /*
  * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
- * Copyright 2015-2016 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2015-2017 Red Hat, Inc. and/or its affiliates.
  * Author: Daniel Gryniewicz <dang@redhat.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -459,6 +459,8 @@ static fsal_status_t mdc_open2_by_name(mdcache_entry_t *mdc_parent,
 	mdcache_entry_t *entry;
 	struct fsal_obj_handle *sub_handle;
 
+	*new_entry = NULL;
+
 	if (!name)
 		return fsalstat(ERR_FSAL_INVAL, 0);
 
@@ -470,13 +472,12 @@ static fsal_status_t mdc_open2_by_name(mdcache_entry_t *mdc_parent,
 		 */
 		LogFullDebug(COMPONENT_CACHE_INODE,
 			     "Lookup failed");
-		*new_entry = NULL;
 		return status;
 	}
 
 	/* Found to exist */
 	if (createmode == FSAL_GUARDED) {
-		mdcache_put(*new_entry);
+		mdcache_put(entry);
 		return fsalstat(ERR_FSAL_EXIST, 0);
 	} else if (createmode == FSAL_EXCLUSIVE) {
 		/* Exclusive create with entry found, check verifier */
@@ -485,7 +486,6 @@ static fsal_status_t mdc_open2_by_name(mdcache_entry_t *mdc_parent,
 			LogFullDebug(COMPONENT_CACHE_INODE,
 				     "Verifier check failed.");
 			mdcache_put(entry);
-			*new_entry = NULL;
 			return fsalstat(ERR_FSAL_EXIST, 0);
 		}
 
@@ -506,7 +506,6 @@ static fsal_status_t mdc_open2_by_name(mdcache_entry_t *mdc_parent,
 			     "Open failed %s",
 			     msg_fsal_err(status.major));
 		mdcache_put(entry);
-		*new_entry = NULL;
 	} else {
 		LogFullDebug(COMPONENT_CACHE_INODE,
 			     "Opened entry %p, sub_handle %p",
