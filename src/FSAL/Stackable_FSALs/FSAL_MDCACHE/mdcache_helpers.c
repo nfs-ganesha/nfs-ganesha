@@ -1981,6 +1981,36 @@ mdc_readdir_chunk_object(const char *name, struct fsal_obj_handle *sub_handle,
 	fsal_status_t status;
 	enum fsal_dir_result result = DIR_CONTINUE;
 
+	if (chunk->num_entries == mdcache_param.dir.avl_chunk) {
+		/* We are being called readahead. */
+		struct dir_chunk *new_chunk;
+
+		LogFullDebug(COMPONENT_NFS_READDIR,
+			     "Readdir readahead first entry in new chunk %s",
+			     name);
+
+		/* Now add the previous chunk to the list of chunks for the
+		 * directory.
+		 */
+		glist_add_tail(&chunk->parent->fsobj.fsdir.chunks,
+			       &chunk->chunks);
+
+
+		/* Now start a new chunk. */
+		new_chunk = gsh_calloc(1, sizeof(struct dir_chunk));
+
+		/* Setup new chunk. */
+		glist_init(&new_chunk->dirents);
+		new_chunk->parent = chunk->parent;
+		new_chunk->prev_chunk = chunk;
+
+		/* And switch over to new chunk. */
+		state->dir_state = new_chunk;
+		chunk = new_chunk;
+
+		/* And start accepting entries into the new chunk. */
+	}
+
 	LogFullDebug(COMPONENT_CACHE_INODE,
 		     "Creating cache entry for %s cookie=0x%"PRIx64
 		     " sub_handle=0x%p",
@@ -2124,13 +2154,14 @@ mdc_readdir_chunk_object(const char *name, struct fsal_obj_handle *sub_handle,
 		chunk->num_entries++;
 	}
 
-	if (chunk->num_entries == mdcache_param.dir.avl_chunk ||
-	    new_dir_entry->chunk != chunk) {
-		/* Chunk is full or we have the situation where we have collided
-		 * with a previously used chunk (and thus we have a partial
-		 * chunk). Since dirent is pointing to the existing dirent and
-		 * the one we allocated above has been freed we don't need to do
-		 * any cleanup.
+	if (new_dir_entry->chunk != chunk) {
+		/* We have the situation where we have collided with a
+		 * previously used chunk (and thus we have a partial chunk).
+		 * Since dirent is pointing to the existing dirent and the one
+		 * we allocated above has been freed we don't need to do any
+		 * cleanup.
+		 *
+		 * Don't allow readahead in this case.
 		 */
 		if (ret_cookie != NULL) {
 			/* Caller cares about marking cookies. */
@@ -2139,6 +2170,21 @@ mdc_readdir_chunk_object(const char *name, struct fsal_obj_handle *sub_handle,
 		} else {
 			/* Just indicate this directory is terminated. */
 			result = DIR_TERMINATE;
+		}
+	} else if (chunk->num_entries == mdcache_param.dir.avl_chunk) {
+		/* Chunk is full. Since dirent is pointing to the existing
+		 * dirent and the one we allocated above has been freed we don't
+		 * need to do any cleanup.
+		 *
+		 * Allow readahead.
+		 */
+		if (ret_cookie != NULL) {
+			/* Caller cares about marking cookies. */
+			new_dir_entry->flags |= DIR_ENTRY_COOKIE_MARKED;
+			result = DIR_READAHEAD_MARK;
+		} else {
+			/* Just indicate this directory is terminated. */
+			result = DIR_READAHEAD;
 		}
 	}
 
@@ -2208,7 +2254,8 @@ fsal_status_t mdcache_populate_dir_chunk(mdcache_entry_t *directory,
 	fsal_status_t status = {0, 0};
 	fsal_status_t readdir_status = {0, 0};
 	struct mdcache_populate_cb_state state;
-	struct dir_chunk *chunk = gsh_calloc(1, sizeof(struct dir_chunk));
+	struct dir_chunk *first_chunk = gsh_calloc(1, sizeof(struct dir_chunk));
+	struct dir_chunk *chunk = first_chunk;
 	attrmask_t attrmask;
 	bool eod = false;
 
@@ -2249,23 +2296,32 @@ fsal_status_t mdcache_populate_dir_chunk(mdcache_entry_t *directory,
 		return status;
 	}
 
+	/* Recover the most recent chunk from dir_state, if we had readahead.
+	 * it might have changed.
+	 */
+	chunk = state.dir_state;
+
 	if (chunk->num_entries == 0) {
 		/* Chunk is empty - should only happen for an empty directory
 		 * but could happen if the FSAL failed to indicate end of
-		 * directory.
+		 * directory. This COULD happen on a readahead chunk, but it
+		 * would be unusual.
 		 */
 		LogFullDebug(COMPONENT_NFS_READDIR, "Empty chunk");
-		*dirent = NULL;
-		gsh_free(chunk);
-	} else {
-		/* Retain this chunk and return it's first entry.
-		 * Also make sure cookie for last entry is correct if
-		 * end of directory has been indicated.
-		 */
-		*dirent = glist_first_entry(&chunk->dirents,
-					    mdcache_dir_entry_t,
-					    chunk_list);
 
+		gsh_free(chunk);
+
+		if (chunk == first_chunk) {
+			/* We really got nothing on this readdir, so don't
+			 * return a dirent.
+			 */
+			*dirent = NULL;
+			return status;
+		}
+	} else {
+		/* Retain this chunk and if end of directory, mark last
+		 * dirent of current chunk as eod.
+		 */
 		if (eod) {
 			/* If end of directory, mark last dirent as eod. */
 			mdcache_dir_entry_t *last;
@@ -2286,6 +2342,11 @@ fsal_status_t mdcache_populate_dir_chunk(mdcache_entry_t *directory,
 		glist_add_tail(&directory->fsobj.fsdir.chunks,
 			       &chunk->chunks);
 	}
+
+	/* Return the first entry of the first chunk. */
+	*dirent = glist_first_entry(&first_chunk->dirents,
+				    mdcache_dir_entry_t,
+				    chunk_list);
 
 	return status;
 }
