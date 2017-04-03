@@ -476,7 +476,7 @@ int display_attrlist(struct display_buffer *dspbuf,
 
 	if (b_left > 0 && attr->supported != 0)
 		b_left = display_printf(dspbuf, "Supported Mask=%08x ",
-					(unsigned int) attr->valid_mask);
+					(unsigned int) attr->supported);
 
 	if (b_left > 0 && is_obj)
 		b_left = display_printf(dspbuf, "%s",
