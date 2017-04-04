@@ -1545,6 +1545,11 @@ static fattr_xdr_result decode_owner(XDR *xdr, struct xdr_attrs_args *args)
 	if (!inline_xdr_u_int(xdr, &len))
 		return FATTR_XDR_FAILED;
 
+	if (len == 0) {
+		args->nfs_status = NFS4ERR_INVAL;
+		return FATTR_XDR_FAILED;
+	}
+
 	pos = xdr_getpos(xdr);
 	newpos = pos + len;
 	if (len % 4 != 0)
@@ -1560,6 +1565,7 @@ static fattr_xdr_result decode_owner(XDR *xdr, struct xdr_attrs_args *args)
 	}
 
 	if (!name2uid(&ownerdesc, &uid, get_anonymous_uid())) {
+		args->nfs_status = NFS4ERR_BADOWNER;
 		return FATTR_BADOWNER;
 	}
 
@@ -1588,6 +1594,11 @@ static fattr_xdr_result decode_group(XDR *xdr, struct xdr_attrs_args *args)
 	if (!inline_xdr_u_int(xdr, &len))
 		return FATTR_XDR_FAILED;
 
+	if (len == 0) {
+		args->nfs_status = NFS4ERR_INVAL;
+		return FATTR_XDR_FAILED;
+	}
+
 	pos = xdr_getpos(xdr);
 	newpos = pos + len;
 	if (len % 4 != 0)
@@ -1602,8 +1613,10 @@ static fattr_xdr_result decode_group(XDR *xdr, struct xdr_attrs_args *args)
 		return FATTR_XDR_FAILED;
 	}
 
-	if (!name2gid(&groupdesc, &gid, get_anonymous_gid()))
+	if (!name2gid(&groupdesc, &gid, get_anonymous_gid())) {
+		args->nfs_status = NFS4ERR_BADOWNER;
 		return FATTR_BADOWNER;
+	}
 
 	xdr_setpos(xdr, newpos);
 	args->attrs->group = gid;
