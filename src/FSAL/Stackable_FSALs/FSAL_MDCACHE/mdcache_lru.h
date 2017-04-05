@@ -153,9 +153,6 @@ bool _mdcache_lru_unref(mdcache_entry_t *entry, uint32_t flags,
 			const char *func, int line);
 void mdcache_lru_putback(mdcache_entry_t *entry, uint32_t flags);
 void lru_wake_thread(void);
-fsal_status_t mdcache_inc_noscan_ref(mdcache_entry_t *entry);
-void mdcache_dec_noscan_ref(mdcache_entry_t *entry);
-bool mdcache_is_noscan(mdcache_entry_t *entry);
 void mdcache_lru_kill_for_shutdown(mdcache_entry_t *entry);
 
 /**
