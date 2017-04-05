@@ -770,7 +770,7 @@ _mdc_unreachable(mdcache_entry_t *entry,
 							entry->obj_handle.type),
 					 entry,
 					 mdc_has_state(entry)
-						? "has" : "does't have");
+						? "has" : "doesn't have");
 	}
 
 	if (!mdc_has_state(entry)) {

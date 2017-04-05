@@ -270,7 +270,7 @@ retry:
 	}
 
 	LogDebug(COMPONENT_EXPORT,
-		 "BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s CREATE %s obj %p state %p succeded",
+		 "BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s CREATE %s obj %p state %p succeeded",
 		 state->export->export_id,
 		 state->export->fullpath,
 		 state->export->pseudopath,

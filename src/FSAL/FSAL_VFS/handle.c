@@ -1688,7 +1688,7 @@ fsal_status_t vfs_check_handle(struct fsal_export *exp_hdl,
 		if (*fs == NULL) {
 			LogInfo(COMPONENT_FSAL,
 				"Could not map fsid=0x%016"PRIx64
-				".0x%016"PRIx64" to filesytem",
+				".0x%016"PRIx64" to filesystem",
 				fsid.major, fsid.minor);
 			retval = ESTALE;
 			fsal_error = posix2fsal_error(retval);

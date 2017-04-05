@@ -121,7 +121,7 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 	nullfs_me->fs_info = default_posix_info;
 
 	/* Configuration setting options:
-	 * 1. there are none that are changable. (this case)
+	 * 1. there are none that are changeable. (this case)
 	 *
 	 * 2. we set some here.  These must be independent of whatever
 	 *    may be set by lower level fsals.

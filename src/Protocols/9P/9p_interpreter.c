@@ -138,7 +138,7 @@ void _9p_tcp_process_request(struct _9p_request_data *req9p)
 		if (tcp_conn_send(req9p->pconn, replydata, outdatalen, 0) !=
 		    outdatalen)
 			LogMajor(COMPONENT_9P,
-				 "Could not send 9P/TCP reply correclty on socket #%lu",
+				 "Could not send 9P/TCP reply correctly on socket #%lu",
 				 req9p->pconn->trans_data.sockfd);
 	}
 	_9p_DiscardFlushHook(req9p);

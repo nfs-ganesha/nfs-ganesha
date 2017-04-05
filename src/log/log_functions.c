@@ -1038,7 +1038,7 @@ int set_log_destination(const char *name, char *dest)
 	} else {
 		PTHREAD_RWLOCK_unlock(&log_rwlock);
 		LogCrit(COMPONENT_LOG,
-			 "Log facility %s destination is not changable",
+			 "Log facility %s destination is not changeable",
 			facility->lf_name);
 		return -EINVAL;
 	}

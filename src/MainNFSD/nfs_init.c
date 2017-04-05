@@ -649,7 +649,7 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 
 	/* RPC Initialisation - exits on failure */
 	nfs_Init_svc();
-	LogInfo(COMPONENT_INIT, "RPC ressources successfully initialized");
+	LogInfo(COMPONENT_INIT, "RPC resources successfully initialized");
 
 	/* Admin initialisation */
 	nfs_Init_admin_thread();
