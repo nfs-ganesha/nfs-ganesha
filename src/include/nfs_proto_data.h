@@ -213,14 +213,16 @@ typedef struct rpc_call_channel {
 	time_t last_called;
 	CLIENT *clnt;
 	AUTH *auth;
+#ifdef _HAVE_GSSAPI
 	struct rpc_gss_sec gss_sec;
+#endif /* _HAVE_GSSAPI */
 } rpc_call_channel_t;
 
 /**
  * @todo Matt: this is automatically redundant, but in fact upstream
  * TI-RPC is not up-to-date with RFC 5665, will fix (Matt)
  *
- * @copyright 2012-2015, Linux Box Corp
+ * @copyright 2012-2017, Linux Box Corp
 */
 enum rfc_5665_nc_type {
 	_NC_ERR,

@@ -56,7 +56,9 @@ int nfs4_op_secinfo_no_name(struct nfs_argop4 *op, compound_data_t *data,
 {
 	SECINFO_NO_NAME4res * const res_SECINFO_NO_NAME4 =
 	    &resp->nfs_resop4_u.opsecinfo_no_name;
+#ifdef _HAVE_GSSAPI
 	sec_oid4 v5oid = { krb5oid.length, (char *)krb5oid.elements };
+#endif /* _HAVE_GSSAPI */
 	int num_entry = 0;
 
 	res_SECINFO_NO_NAME4->status = NFS4_OK;
@@ -111,6 +113,7 @@ int nfs4_op_secinfo_no_name(struct nfs_argop4 *op, compound_data_t *data,
 	 */
 	int idx = 0;
 
+#ifdef _HAVE_GSSAPI
 	if (op_ctx->export_perms->options &
 	    EXPORT_OPTION_RPCSEC_GSS_PRIV) {
 		res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.
@@ -156,6 +159,7 @@ int nfs4_op_secinfo_no_name(struct nfs_argop4 *op, compound_data_t *data,
 		    SECINFO4resok_val[idx++]
 		    .secinfo4_u.flavor_info.oid = v5oid;
 	}
+#endif /* _HAVE_GSSAPI */
 
 	if (op_ctx->export_perms->options & EXPORT_OPTION_AUTH_UNIX)
 		res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.

@@ -1769,17 +1769,22 @@ extern "C" {
 	};
 	typedef struct SECINFO4args SECINFO4args;
 
+#ifdef _HAVE_GSSAPI
 	struct rpcsec_gss_info {
 		sec_oid4 oid;
 		qop4 qop;
 		rpc_gss_svc_t service;
 	};
 	typedef struct rpcsec_gss_info rpcsec_gss_info;
+#endif /* _HAVE_GSSAPI */
 
 	struct secinfo4 {
 		uint32_t flavor;
 		union {
+#ifdef _HAVE_GSSAPI
 			rpcsec_gss_info flavor_info;
+#endif /* _HAVE_GSSAPI */
+			uint32_t unused;
 		} secinfo4_u;
 	};
 	typedef struct secinfo4 secinfo4;
@@ -1906,7 +1911,9 @@ extern "C" {
 	} gsshandle4_t;
 
 	struct gss_cb_handles4 {
+#ifdef _HAVE_GSSAPI
 		rpc_gss_svc_t gcbp_service;
+#endif /* _HAVE_GSSAPI */
 		gsshandle4_t gcbp_handle_from_server;
 		gsshandle4_t gcbp_handle_from_client;
 	};
@@ -6587,6 +6594,7 @@ extern "C" {
 		return true;
 	}
 
+#ifdef _HAVE_GSSAPI
 	static inline bool xdr_rpc_gss_svc_t(XDR * xdrs, rpc_gss_svc_t *objp)
 	{
 		if (!inline_xdr_enum(xdrs, (enum_t *) objp))
@@ -6605,18 +6613,21 @@ extern "C" {
 			return false;
 		return true;
 	}
+#endif /* _HAVE_GSSAPI */
 
 	static inline bool xdr_secinfo4(XDR * xdrs, secinfo4 *objp)
 	{
 		if (!inline_xdr_u_int32_t(xdrs, &objp->flavor))
 			return false;
 		switch (objp->flavor) {
+#ifdef _HAVE_GSSAPI
 		case RPCSEC_GSS:
 			if (!xdr_rpcsec_gss_info
 			    (xdrs, &objp->secinfo4_u.flavor_info))
 				return false;
 			break;
 		default:
+#endif /* _HAVE_GSSAPI */
 			break;
 		}
 		return true;
@@ -6826,6 +6837,7 @@ extern "C" {
 		return true;
 	}
 
+#ifdef _HAVE_GSSAPI
 	static inline bool xdr_gss_cb_handles4(XDR * xdrs,
 					       gss_cb_handles4 *objp)
 	{
@@ -6837,6 +6849,7 @@ extern "C" {
 			return false;
 		return true;
 	}
+#endif /* _HAVE_GSSAPI */
 
 	static inline bool xdr_callback_sec_parms4(XDR * xdrs,
 						   callback_sec_parms4 *objp)
@@ -6851,12 +6864,14 @@ extern "C" {
 			    (xdrs, &objp->callback_sec_parms4_u.cbsp_sys_cred))
 				return false;
 			break;
+#ifdef _HAVE_GSSAPI
 		case RPCSEC_GSS:
 			if (!xdr_gss_cb_handles4
 			    (xdrs,
 			     &objp->callback_sec_parms4_u.cbsp_gss_handles))
 				return false;
 			break;
+#endif /* _HAVE_GSSAPI */
 		default:
 			return false;
 		}

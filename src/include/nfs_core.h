@@ -82,7 +82,9 @@ typedef struct _rpc_call rpc_call_t;
 typedef int32_t(*rpc_call_func) (rpc_call_t *call, rpc_call_hook hook,
 				 void *arg, uint32_t flags);
 
+#ifdef _HAVE_GSSAPI
 extern gss_OID_desc krb5oid;
+#endif /* _HAVE_GSSAPI */
 
 struct _rpc_call {
 	rpc_call_channel_t *chan;

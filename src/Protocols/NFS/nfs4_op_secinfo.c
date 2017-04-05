@@ -61,7 +61,9 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 	char *secinfo_fh_name = NULL;
 	fsal_status_t fsal_status = {0, 0};
 	struct fsal_obj_handle *obj_src = NULL;
+#ifdef _HAVE_GSSAPI
 	sec_oid4 v5oid = { krb5oid.length, (char *)krb5oid.elements };
+#endif /* _HAVE_GSSAPI */
 	int num_entry = 0;
 	struct export_perms save_export_perms = { 0, };
 	struct gsh_export *saved_gsh_export = NULL;
@@ -207,6 +209,7 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 	int idx = 0;
 
 	/* List the security flavors in the order we prefer */
+#ifdef _HAVE_GSSAPI
 	if (op_ctx->export_perms->options &
 	    EXPORT_OPTION_RPCSEC_GSS_PRIV) {
 		res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx]
@@ -242,6 +245,7 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 		res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx++]
 		    .secinfo4_u.flavor_info.oid = v5oid;
 	}
+#endif /* _HAVE_GSSAPI */
 
 	if (op_ctx->export_perms->options & EXPORT_OPTION_AUTH_UNIX)
 		res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx++]

@@ -52,7 +52,9 @@
 #include "log.h"
 #include "nfs_rpc_callback.h"
 #include "nfs4.h"
+#ifdef _HAVE_GSSAPI
 #include "gss_credcache.h"
+#endif /* _HAVE_GSSAPI */
 #include "sal_data.h"
 #include <misc/timespec.h>
 
@@ -76,6 +78,7 @@ const struct __netid_nc_table netid_nc_table[9] = {
 
 static inline void nfs_rpc_cb_init_ccache(const char *ccache)
 {
+#ifdef _HAVE_GSSAPI
 	int code;
 
 	if (mkdir(ccache, 0700) < 0) {
@@ -98,6 +101,7 @@ static inline void nfs_rpc_cb_init_ccache(const char *ccache)
 		LogWarn(COMPONENT_INIT,
 			"gssd_refresh_krb5_machine_credential failed (%d:%d)",
 			code, errno);
+#endif /* _HAVE_GSSAPI */
 }
 
 /**
@@ -105,6 +109,7 @@ static inline void nfs_rpc_cb_init_ccache(const char *ccache)
  */
 void nfs_rpc_cb_pkginit(void)
 {
+#ifdef _HAVE_GSSAPI
 	/* ccache */
 	nfs_rpc_cb_init_ccache(nfs_param.krb5_param.ccache_dir);
 
@@ -112,6 +117,7 @@ void nfs_rpc_cb_pkginit(void)
 	if (gssd_check_mechs() != 0)
 		LogCrit(COMPONENT_INIT,
 			"sanity check: gssd_check_mechs() failed");
+#endif /* _HAVE_GSSAPI */
 }
 
 /**
@@ -128,7 +134,7 @@ void nfs_rpc_cb_pkgshutdown(void)
  * @todo This is automatically redundant, but in fact upstream TI-RPC is
  * not up-to-date with RFC 5665, will fix (Matt)
  *
- * @copyright 2012, Linux Box Corp
+ * @copyright 2012-2017, Linux Box Corp
  *
  * @param[in] netid The netid label dictating the protocol
  *
@@ -386,7 +392,9 @@ static inline bool supported_auth_flavor(int flavor)
  * This value comes from kerberos source, gssapi_krb5.c (Umich).
  */
 
+#ifdef _HAVE_GSSAPI
 gss_OID_desc krb5oid = { 9, "\052\206\110\206\367\022\001\002\002" };
+#endif /* _HAVE_GSSAPI */
 
 /**
  * @brief Format a principal name for an RPC call channel
@@ -445,6 +453,7 @@ static inline char *format_host_principal(rpc_call_channel_t *chan, char *buf,
  * @param[in]     cred GSS Credential
  */
 
+#ifdef _HAVE_GSSAPI
 static inline void nfs_rpc_callback_setup_gss(rpc_call_channel_t *chan,
 					      nfs_client_cred_t *cred)
 {
@@ -490,6 +499,7 @@ static inline void nfs_rpc_callback_setup_gss(rpc_call_channel_t *chan,
 			chan->auth = auth;
 	}
 }
+#endif /* _HAVE_GSSAPI */
 
 /**
  * @brief Create a channel for an NFSv4.0 client
@@ -555,9 +565,11 @@ int nfs_rpc_create_chan_v40(nfs_client_id_t *clientid, uint32_t flags)
 
 	/* channel protection */
 	switch (clientid->cid_credential.flavor) {
+#ifdef _HAVE_GSSAPI
 	case RPCSEC_GSS:
 		nfs_rpc_callback_setup_gss(chan, &clientid->cid_credential);
 		break;
+#endif /* _HAVE_GSSAPI */
 	case AUTH_SYS:
 		chan->auth = authunix_create_default();
 		if (!chan->auth)
