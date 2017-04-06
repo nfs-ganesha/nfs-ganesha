@@ -138,7 +138,7 @@ fsal_status_t mdcache_lru_pkgshutdown(void);
 
 extern size_t open_fd_count;
 
-fsal_status_t mdcache_lru_get(mdcache_entry_t **entry);
+mdcache_entry_t *mdcache_lru_get(void);
 #define mdcache_lru_ref(e, f) _mdcache_lru_ref(e, f, __func__, __LINE__)
 fsal_status_t _mdcache_lru_ref(mdcache_entry_t *entry, uint32_t flags,
 			       const char *func, int line);
@@ -151,7 +151,6 @@ void mdcache_lru_cleanup_try_push(mdcache_entry_t *entry);
 #define mdcache_lru_unref(e, f) _mdcache_lru_unref(e, f, __func__, __LINE__)
 bool _mdcache_lru_unref(mdcache_entry_t *entry, uint32_t flags,
 			const char *func, int line);
-void mdcache_lru_putback(mdcache_entry_t *entry, uint32_t flags);
 void lru_wake_thread(void);
 void mdcache_lru_kill_for_shutdown(mdcache_entry_t *entry);
 

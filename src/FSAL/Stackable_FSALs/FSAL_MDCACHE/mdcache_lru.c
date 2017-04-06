@@ -1123,8 +1123,7 @@ static inline void init_rw_locks(mdcache_entry_t *entry)
 	PTHREAD_RWLOCK_init(&entry->content_lock, NULL);
 }
 
-static fsal_status_t
-alloc_cache_entry(mdcache_entry_t **entry)
+mdcache_entry_t *alloc_cache_entry(void)
 {
 	mdcache_entry_t *nentry;
 
@@ -1134,8 +1133,8 @@ alloc_cache_entry(mdcache_entry_t **entry)
 	init_rw_locks(nentry);
 
 	(void) atomic_inc_int64_t(&lru_state.entries_used);
-	*entry = nentry;
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+
+	return nentry;
 }
 
 /**
@@ -1146,15 +1145,11 @@ alloc_cache_entry(mdcache_entry_t **entry)
  * this function always returns an entry with two references (one for the
  * sentinel, one to allow the caller's use.)
  *
- * @param[out] entry Returned status
- *
- * @return CACHE_INODE_SUCCESS or error.
+ * @return a usable entry
  */
-fsal_status_t
-mdcache_lru_get(mdcache_entry_t **entry)
+mdcache_entry_t *mdcache_lru_get(void)
 {
 	mdcache_lru_t *lru;
-	fsal_status_t status = {0, 0};
 	mdcache_entry_t *nentry = NULL;
 
 	lru = lru_try_reap_entry();
@@ -1167,10 +1162,8 @@ mdcache_lru_get(mdcache_entry_t **entry)
 		memset(&nentry->attrs, 0, sizeof(nentry->attrs));
 		init_rw_locks(nentry);
 	} else {
-		/* alloc entry */
-		status = alloc_cache_entry(&nentry);
-		if (!nentry)
-			goto out;
+		/* alloc entry (if fails, aborts) */
+		nentry = alloc_cache_entry();
 	}
 
 	/* Since the entry isn't in a queue, nobody can bump refcnt. */
@@ -1185,9 +1178,7 @@ mdcache_lru_get(mdcache_entry_t **entry)
 	/* Enqueue. */
 	lru_insert_entry(nentry, &LRU[nentry->lru.lane].L1, LRU_LRU);
 
- out:
-	*entry = nentry;
-	return status;
+	return nentry;
 }
 
 /**
@@ -1350,49 +1341,6 @@ _mdcache_lru_unref(mdcache_entry_t *entry, uint32_t flags, const char *func,
 	}			/* refcnt == 0 */
  out:
 	return freed;
-}
-
-/**
- * @brief Put back a raced initial reference
- *
- * This function returns an entry previously returned from
- * @ref mdcache_lru_get, in the uncommon circumstance that it will not
- * be used.
- *
- * @param[in] entry  The entry on which to release a reference
- * @param[in] flags  Currently significant are and LRU_FLAG_LOCKED
- *                   (indicating that the caller holds the LRU mutex
- *                   lock for this entry.)
- */
-void
-mdcache_lru_putback(mdcache_entry_t *entry, uint32_t flags)
-{
-	bool qlocked = flags & LRU_UNREF_QLOCKED;
-	uint32_t lane = entry->lru.lane;
-	struct lru_q_lane *qlane = &LRU[lane];
-	struct lru_q *q;
-
-	if (!qlocked)
-		QLOCK(qlane);
-
-	q = lru_queue_of(entry);
-	if (q) {
-		/* as of now, entries leaving the cleanup queue
-		 * are LRU_ENTRY_NONE */
-		LRU_DQ_SAFE(&entry->lru, q);
-	}
-
-#ifdef USE_LTTNG
-	tracepoint(mdcache, mdc_lru_unref,
-		   __func__, __LINE__, entry, entry->lru.refcnt);
-#endif
-
-	/* We do NOT call lru_clean_entry, since it was never initialized. */
-	pool_free(mdcache_entry_pool, entry);
-	(void) atomic_dec_int64_t(&lru_state.entries_used);
-
-	if (!qlocked)
-		QUNLOCK(qlane);
 }
 
 /**

@@ -114,9 +114,7 @@ static mdcache_entry_t *mdcache_alloc_handle(
 {
 	mdcache_entry_t *result;
 
-	mdcache_lru_get(&result);
-	if (!result)
-		return NULL;
+	result = mdcache_lru_get();
 
 	/* Base data */
 	result->sub_handle = sub_handle;
@@ -478,11 +476,6 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 
 	/* We did not find the object.  Pull an entry off the LRU. */
 	nentry = mdcache_alloc_handle(export, sub_handle, sub_handle->fs);
-	if (!nentry) {
-		LogCrit(COMPONENT_CACHE_INODE, "mdcache_alloc_handle failed");
-		status = fsalstat(ERR_FSAL_NOMEM, 0);
-		goto out_release;
-	}
 
 	/* See if someone raced us. */
 	oentry = cih_get_by_key_latch(&key, &latch, CIH_GET_WLOCK, __func__,
