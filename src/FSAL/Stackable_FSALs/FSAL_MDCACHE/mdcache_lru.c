@@ -147,6 +147,7 @@ struct lru_q_lane {
  */
 
 static struct lru_q_lane LRU[LRU_N_Q_LANES];
+static struct lru_q_lane CHUNK_LRU[LRU_N_Q_LANES];
 
 /**
  * The refcount mechanism distinguishes 3 key object states:
@@ -200,6 +201,19 @@ static const uint32_t FD_FALLBACK_LIMIT = 0x400;
 		--((q)->size); \
 	} while (0)
 
+#define CHUNK_LRU_DQ_SAFE(lru, qq) \
+	do { \
+		if ((lru)->qid == LRU_ENTRY_L1) { \
+			struct lru_q_lane *qlane = &CHUNK_LRU[(lru)->lane]; \
+			if (unlikely((qlane->iter.active) && \
+				     ((&(lru)->q) == qlane->iter.glistn))) { \
+				qlane->iter.glistn = (lru)->q.next; \
+			} \
+		} \
+		glist_del(&(lru)->q); \
+		--((qq)->size); \
+	} while (0)
+
 #define LRU_ENTRY_L1_OR_L2(e) \
 	(((e)->lru.qid == LRU_ENTRY_L2) || \
 	 ((e)->lru.qid == LRU_ENTRY_L1))
@@ -229,7 +243,10 @@ lru_init_queues(void)
 	int ix;
 
 	for (ix = 0; ix < LRU_N_Q_LANES; ++ix) {
-		struct lru_q_lane *qlane = &LRU[ix];
+		struct lru_q_lane *qlane;
+
+		/* Initialize mdcache_entry_t LRU */
+		qlane = &LRU[ix];
 
 		/* one mutex per lane */
 		PTHREAD_MUTEX_init(&qlane->mtx, NULL);
@@ -241,6 +258,20 @@ lru_init_queues(void)
 		lru_init_queue(&LRU[ix].L1, LRU_ENTRY_L1);
 		lru_init_queue(&LRU[ix].L2, LRU_ENTRY_L2);
 		lru_init_queue(&LRU[ix].cleanup, LRU_ENTRY_CLEANUP);
+
+		/* Initialize dir_chunk LRU */
+		qlane = &CHUNK_LRU[ix];
+
+		/* one mutex per lane */
+		PTHREAD_MUTEX_init(&qlane->mtx, NULL);
+
+		/* init iterator */
+		qlane->iter.active = false;
+
+		/* init lane queues */
+		lru_init_queue(&CHUNK_LRU[ix].L1, LRU_ENTRY_L1);
+		lru_init_queue(&CHUNK_LRU[ix].L2, LRU_ENTRY_L2);
+		lru_init_queue(&CHUNK_LRU[ix].cleanup, LRU_ENTRY_CLEANUP);
 	}
 }
 
@@ -281,17 +312,53 @@ lru_queue_of(mdcache_entry_t *entry)
 }
 
 /**
- * @brief Get the appropriate lane for a cache entry
+ * @brief Return a pointer to the current queue of chunk
+ *
+ * This function returns a pointer to the queue on which a chunk is linked,
+ * or NULL if chunk is not on any queue.
+ *
+ * @note The caller @a MUST hold the lane lock
+ *
+ * @param[in] chunk  The chunk.
+ *
+ * @return A pointer to chunk's current queue, NULL if none.
+ */
+static inline struct lru_q *
+chunk_lru_queue_of(struct dir_chunk *chunk)
+{
+	struct lru_q *q;
+
+	switch (chunk->chunk_lru.qid) {
+	case LRU_ENTRY_L1:
+		q = &CHUNK_LRU[(chunk->chunk_lru.lane)].L1;
+		break;
+	case LRU_ENTRY_L2:
+		q = &CHUNK_LRU[(chunk->chunk_lru.lane)].L2;
+		break;
+	case LRU_ENTRY_CLEANUP:
+		q = &CHUNK_LRU[(chunk->chunk_lru.lane)].cleanup;
+		break;
+	default:
+		/* LRU_NO_LANE */
+		q = NULL;
+		break;
+	}			/* switch */
+
+	return q;
+}
+
+/**
+ * @brief Get the appropriate lane for a LRU chunk or entry
  *
  * This function gets the LRU lane by taking the modulus of the
  * supplied pointer.
  *
- * @param[in] entry  A pointer to a cache entry
+ * @param[in] entry  A pointer to a LRU chunk or entry
  *
  * @return The LRU lane in which that entry should be stored.
  */
 static inline uint32_t
-lru_lane_of_entry(mdcache_entry_t *entry)
+lru_lane_of(void *entry)
 {
 	return (uint32_t) ((((uintptr_t) entry) / 2*sizeof(uintptr_t))
 				% LRU_N_Q_LANES);
@@ -347,6 +414,32 @@ lru_insert_entry(mdcache_entry_t *entry, struct lru_q *q, enum lru_edge edge)
 {
 	mdcache_lru_t *lru = &entry->lru;
 	struct lru_q_lane *qlane = &LRU[lru->lane];
+
+	QLOCK(qlane);
+
+	lru_insert(lru, q, edge);
+
+	QUNLOCK(qlane);
+}
+
+/**
+ * @brief Insert a chunk into the specified queue and lane with locking
+ *
+ * This function determines the queue corresponding to the supplied
+ * lane and flags, inserts the chunk into that queue, and updates the
+ * chunk to hold the flags and lane.
+ *
+ * @note The caller MUST NOT hold a lock on the queue lane.
+ *
+ * @param[in] lru    The LRU chunk to insert
+ * @param[in] q      The queue to insert on
+ * @param[in] edge   One of LRU_LRU or LRU_MRU
+ */
+static inline void
+lru_insert_chunk(struct dir_chunk *chunk, struct lru_q *q, enum lru_edge edge)
+{
+	mdcache_lru_t *lru = &chunk->chunk_lru;
+	struct lru_q_lane *qlane = &CHUNK_LRU[lru->lane];
 
 	QLOCK(qlane);
 
@@ -621,6 +714,197 @@ lru_try_reap_entry(void)
 		lru = lru_reap_impl(LRU_ENTRY_L1);
 
 	return lru;
+}
+
+/**
+ * @brief Try to pull an chunk off the queue
+ *
+ * This function examines the end of the specified queue and if the
+ * chunk found there can be re-used.  Otherwise, it returns NULL.
+ *
+ * This function follows the locking discipline detailed above.  It
+ * returns an lru object removed from the queue system and which we are
+ * permitted to dispose or recycle.
+ *
+ * This function can reap a chunk from the directory a chunk is requested
+ * for. In that case, since the content_lock is already held, we can
+ * proceed somewhat easier.
+ *
+ * @note The caller @a MUST @a NOT hold the lane lock
+ *
+ * @param[in] qid     Queue to reap
+ * @param[in] parent  The directory we desire a chunk for
+ *
+ * @return Available chunk if found, NULL otherwise
+ */
+
+static uint32_t chunk_reap_lane;
+
+static inline mdcache_lru_t *
+lru_reap_chunk_impl(enum lru_q_id qid, mdcache_entry_t *parent)
+{
+	uint32_t lane;
+	struct lru_q_lane *qlane;
+	struct lru_q *lq;
+	mdcache_lru_t *lru;
+	mdcache_entry_t *entry;
+	struct dir_chunk *chunk;
+	int ix;
+
+	lane = LRU_NEXT(chunk_reap_lane);
+
+	for (ix = 0;
+	     ix < LRU_N_Q_LANES;
+	     ++ix, lane = LRU_NEXT(chunk_reap_lane)) {
+
+		qlane = &CHUNK_LRU[lane];
+		lq = (qid == LRU_ENTRY_L1) ? &qlane->L1 : &qlane->L2;
+
+		QLOCK(qlane);
+		lru = glist_first_entry(&lq->q, mdcache_lru_t, q);
+
+		if (!lru)
+			goto next_lane;
+
+		/* Get the chunk and parent entry that owns the chunk, all of
+		 * this is valid because we hold the QLANE lock, the chunk was
+		 * in the LRU, and thus the chunk is not yet being destroyed,
+		 * and thus the parent entry must still also be valid.
+		 */
+		chunk = container_of(lru, struct dir_chunk, chunk_lru);
+		entry = chunk->parent;
+
+		/* If this chunk belongs to the parent seeking another chunk,
+		 * or if we can get the content_lock for the chunk's parent,
+		 * we can reap this chunk.
+		 */
+		if (entry == parent ||
+		    pthread_rwlock_trywrlock(&entry->content_lock) == 0) {
+			/* This chunk is eligible for reaping, we can proceed.
+			 */
+			if (entry != parent) {
+				/* We need an LRU ref on parent entry to protect
+				 * it while we do work on it's chunk.
+				 */
+				(void) atomic_inc_int32_t(&entry->lru.refcnt);
+			}
+
+			/* Dequeue the chunk so it won't show up anymore */
+			CHUNK_LRU_DQ_SAFE(lru, lq);
+			chunk->chunk_lru.qid = LRU_ENTRY_NONE;
+
+			/* Drop the lane lock, we can now safely clean up the
+			 * chunk. We hold the content_lock on the parent of
+			 * the chunk (even if the chunk belonged to the
+			 * directory a new chunk is requested for).
+			 */
+			QUNLOCK(qlane);
+
+#ifdef USE_LTTNG
+				tracepoint(mdcache, mdc_lru_reap_chunk,
+					   __func__, __LINE__,
+					   entry, chunk);
+#endif
+
+			/* Clean the chunk out. */
+			mdcache_clean_dirent_chunk(chunk);
+
+			/* Clean out the fields not touched by the cleanup. */
+			chunk->parent = NULL;
+			chunk->prev_chunk = NULL;
+			chunk->next_ck = 0;
+			chunk->num_entries = 0;
+
+			if (entry != parent) {
+				/* And now we're done with the parent of the
+				 * chunk if it wasn't the directory we are
+				 * acquiring a new chunk for.
+				 */
+				PTHREAD_RWLOCK_unlock(&entry->content_lock);
+				mdcache_put(entry);
+			}
+			return lru;
+		}
+
+		/* Couldn't get the content_lock, the parent is busy
+		 * doing something with dirents... This chunk is not
+		 * eligible for reaping. Try the next lane...
+		 */
+ next_lane:
+		QUNLOCK(qlane);
+	}			/* foreach lane */
+
+	/* ! reclaimable */
+	return NULL;
+}
+
+/**
+ * @brief Re-use or allocate a chunk
+ *
+ * This function repurposes a resident chunk in the LRU system if the system is
+ * above the high-water mark, and allocates a new one otherwise.
+ *
+ * @note The caller must hold the content_lock of the parent for write.
+ *
+ * @param[in] parent  The parent directory we desire a chunk for
+ *
+ * @return reused or allocated chunk
+ */
+struct dir_chunk *mdcache_get_chunk(mdcache_entry_t *parent)
+{
+	mdcache_lru_t *lru = NULL;
+	struct dir_chunk *chunk = NULL;
+
+	if (lru_state.chunks_used >= lru_state.chunks_hiwat) {
+		lru = lru_reap_chunk_impl(LRU_ENTRY_L2, parent);
+		if (!lru)
+			lru = lru_reap_chunk_impl(LRU_ENTRY_L1, parent);
+	}
+
+	if (lru) {
+		/* we uniquely hold chunk, it has already been cleaned up.
+		 * The dirents list is effectively properly initialized.
+		 */
+		chunk = container_of(lru, struct dir_chunk, chunk_lru);
+		LogFullDebug(COMPONENT_CACHE_INODE_LRU,
+			     "Recycling chunk at %p.", chunk);
+	} else {
+		/* alloc chunk (if fails, aborts) */
+		chunk = gsh_calloc(1, sizeof(struct dir_chunk));
+		glist_init(&chunk->dirents);
+		(void) atomic_inc_int64_t(&lru_state.chunks_used);
+	}
+
+	/* Set the chunk's parent. */
+	chunk->parent = parent;
+
+	/* Chunk refcnt is not used (chunks are always protected by content_lock
+	 * and outside of LRU operations are not found other than while holding
+	 * the content lock).
+	 */
+	chunk->chunk_lru.refcnt = 0;
+	chunk->chunk_lru.cf = 0;
+	chunk->chunk_lru.lane = lru_lane_of(chunk);
+
+	/* Enqueue into MRU of L2.
+	 *
+	 * NOTE: A newly allocated and filled chunk will be promoted to L1 LRU
+	 *       when readdir_chunked starts passing entries up to the caller.
+	 *       This gets us the expected positioning for a new chunk that is
+	 *       utilized to form a readdir response.
+	 *
+	 *       The benefit of this mechanism comes when the FSAL supports
+	 *       readahead. In that case, the chunks that are readahead will
+	 *       be left in L2 MRU. This helps keep the chunks associated with
+	 *       a particular FSAL readdir call including readahead from being
+	 *       immediate candidates for reaping, thus keeping the readahead
+	 *       from cannibalizing itself. Of course if the L2 queue is
+	 *       empty due to activity, and the readahead is significant, it
+	 *       is possible to cannibalize the chunks.
+	 */
+	lru_insert_chunk(chunk, &CHUNK_LRU[chunk->chunk_lru.lane].L2, LRU_MRU);
+
+	return chunk;
 }
 
 /**
@@ -1099,6 +1383,125 @@ lru_run(struct fridgethr_context *ctx)
 		     lru_state.fds_lowat);
 }
 
+/**
+ * @brief Function that executes in the lru thread to process one lane
+ *
+ * This function really just demotes chunks from L1 to L2, so very simple.
+ *
+ * @param[in]     lane          The lane to process
+ *
+ * @returns the number of chunks worked on (workdone)
+ *
+ */
+
+static inline size_t chunk_lru_run_lane(size_t lane)
+{
+	struct lru_q *q;
+	/* The amount of work done on this lane on this pass. */
+	size_t workdone = 0;
+	/* The lru object being examined */
+	mdcache_lru_t *lru = NULL;
+	/* Current queue lane */
+	struct lru_q_lane *qlane = &CHUNK_LRU[lane];
+
+	q = &qlane->L1;
+
+	LogDebug(COMPONENT_CACHE_INODE_LRU,
+		 "Reaping up to %d chunks from lane %zd",
+		 lru_state.per_lane_work, lane);
+
+	/* ACTIVE */
+	QLOCK(qlane);
+	qlane->iter.active = true;
+
+	/* While for_each_safe per se is NOT MT-safe, the iteration can be made
+	 * so by the convention that any competing thread which would invalidate
+	 * the iteration also adjusts glist and (in particular) glistn */
+	glist_for_each_safe(qlane->iter.glist, qlane->iter.glistn, &q->q) {
+		struct lru_q *q;
+
+		/* check per-lane work */
+		if (workdone >= lru_state.per_lane_work)
+			goto next_lane;
+
+		lru = glist_entry(qlane->iter.glist, mdcache_lru_t, q);
+
+		/* Move lru object to MRU of L2 */
+		q = &qlane->L1;
+		LRU_DQ_SAFE(lru, q);
+		lru->qid = LRU_ENTRY_L2;
+		q = &qlane->L2;
+		lru_insert(lru, q, LRU_MRU);
+		++(q->size);
+
+		++workdone;
+	} /* for_each_safe lru */
+
+next_lane:
+	qlane->iter.active = false; /* !ACTIVE */
+	QUNLOCK(qlane);
+	LogDebug(COMPONENT_CACHE_INODE_LRU,
+		 "Actually processed %zd chunks on lane %zd",
+		 workdone, lane);
+
+	return workdone;
+}
+
+/**
+ * @brief Function that executes in the lru thread
+ *
+ * This function reorganizes the L1 and L2 queues, demoting least recently
+ * used L1 chunks to L2.
+ *
+ * This function uses the lock discipline for functions accessing LRU
+ * entries through a queue partition.
+ *
+ * @param[in] ctx Fridge context
+ */
+
+static void chunk_lru_run(struct fridgethr_context *ctx)
+{
+	/* Index */
+	size_t lane;
+	/* A ratio computed to adjust wait time based on how close to high
+	 * water mark for number of chunks we are.
+	 */
+	float wait_ratio;
+	/* The computed wait time. */
+	time_t new_thread_wait;
+	/* Total work done (number of chunks demoted) across all lanes. */
+	size_t totalwork = 0;
+
+	SetNameFunction("chunk_lru");
+
+	LogFullDebug(COMPONENT_CACHE_INODE_LRU,
+		     "LRU awakes, lru chunks used: %" PRIu64,
+		     lru_state.chunks_used);
+
+	/* Total chunks demoted to L2 between all lanes and all current runs. */
+	for (lane = 0; lane < LRU_N_Q_LANES; ++lane) {
+		LogDebug(COMPONENT_CACHE_INODE_LRU,
+			 "Reaping up to %d chunks from lane %zd totalwork=%zd",
+			 lru_state.per_lane_work, lane, totalwork);
+
+		totalwork += chunk_lru_run_lane(lane);
+	}
+
+	/* Run more frequently the closer to max number of chunks we are. */
+	wait_ratio = 1.0 - (lru_state.chunks_used / lru_state.chunks_hiwat);
+
+	new_thread_wait = mdcache_param.lru_run_interval * wait_ratio;
+
+	if (new_thread_wait < mdcache_param.lru_run_interval / 10)
+		new_thread_wait = mdcache_param.lru_run_interval / 10;
+
+	fridgethr_setwait(ctx, new_thread_wait);
+
+	LogDebug(COMPONENT_CACHE_INODE_LRU,
+		 "After work, threadwait=%" PRIu64 " totalwork=%zd",
+		 ((uint64_t) new_thread_wait), totalwork);
+}
+
 /* Public functions */
 
 /**
@@ -1117,8 +1520,8 @@ mdcache_lru_pkginit(void)
 	struct fridgethr_params frp;
 
 	memset(&frp, 0, sizeof(struct fridgethr_params));
-	frp.thr_max = 1;
-	frp.thr_min = 1;
+	frp.thr_max = 2;
+	frp.thr_min = 2;
 	frp.thread_delay = mdcache_param.lru_run_interval;
 	frp.flavor = fridgethr_flavor_looper;
 
@@ -1128,6 +1531,11 @@ mdcache_lru_pkginit(void)
 	   bit fishy, so come back and revisit this. */
 	lru_state.entries_hiwat = mdcache_param.entries_hwmark;
 	lru_state.entries_used = 0;
+
+	/* Set high and low watermark for chunks.  XXX This seems a
+	   bit fishy, so come back and revisit this. */
+	lru_state.chunks_hiwat = mdcache_param.chunks_hwmark;
+	lru_state.chunks_used = 0;
 
 	/* Find out the system-imposed file descriptor limit */
 	if (getrlimit(RLIMIT_NOFILE, &rlim) != 0) {
@@ -1233,7 +1641,16 @@ err_open:
 	code = fridgethr_submit(lru_fridge, lru_run, NULL);
 	if (code != 0) {
 		LogMajor(COMPONENT_CACHE_INODE_LRU,
-			 "Unable to start LRU thread, error code %d.", code);
+			 "Unable to start Entry LRU thread, error code %d.",
+			 code);
+		return fsalstat(posix2fsal_error(code), code);
+	}
+
+	code = fridgethr_submit(lru_fridge, chunk_lru_run, NULL);
+	if (code != 0) {
+		LogMajor(COMPONENT_CACHE_INODE_LRU,
+			 "Unable to start Chunk LRU thread, error code %d.",
+			 code);
 		return fsalstat(posix2fsal_error(code), code);
 	}
 
@@ -1319,7 +1736,7 @@ mdcache_entry_t *mdcache_lru_get(void)
 	/* Since the entry isn't in a queue, nobody can bump refcnt. */
 	nentry->lru.refcnt = 2;
 	nentry->lru.cf = 0;
-	nentry->lru.lane = lru_lane_of_entry(nentry);
+	nentry->lru.lane = lru_lane_of(nentry);
 
 #ifdef USE_LTTNG
 	tracepoint(mdcache, mdc_lru_get,
@@ -1502,6 +1919,73 @@ _mdcache_lru_unref(mdcache_entry_t *entry, uint32_t flags, const char *func,
 	}			/* refcnt == 0 */
  out:
 	return freed;
+}
+
+/**
+ * @brief Remove a chunk from LRU, clean it, and free it.
+ *
+ * @param[in] chunk  The chunk to be removed from LRU
+ */
+void lru_remove_chunk(struct dir_chunk *chunk)
+{
+	uint32_t lane = chunk->chunk_lru.lane;
+	struct lru_q_lane *qlane = &CHUNK_LRU[lane];
+	struct lru_q *lq;
+
+	QLOCK(qlane);
+
+	/* Remove chunk and mark it as dead. */
+	lq = chunk_lru_queue_of(chunk);
+
+	if (lq) {
+		/* dequeue the chunk */
+		CHUNK_LRU_DQ_SAFE(&chunk->chunk_lru, lq);
+	}
+
+	QUNLOCK(qlane);
+
+	(void) atomic_dec_int64_t(&lru_state.chunks_used);
+
+	/* Then do the actual cleaning work. */
+	mdcache_clean_dirent_chunk(chunk);
+
+	/* And now we can free the chunk. */
+	gsh_free(chunk);
+}
+
+/**
+ * @brief Indicate that a chunk is being used, bump it up in the LRU
+ *
+ */
+void lru_bump_chunk(struct dir_chunk *chunk)
+{
+	mdcache_lru_t *lru = &chunk->chunk_lru;
+	struct lru_q_lane *qlane = &CHUNK_LRU[lru->lane];
+	struct lru_q *q = chunk_lru_queue_of(chunk);
+
+	QLOCK(qlane);
+
+	switch (lru->qid) {
+	case LRU_ENTRY_L1:
+		/* advance chunk to MRU (of L1) */
+		LRU_DQ_SAFE(lru, q);
+		lru_insert(lru, q, LRU_MRU);
+		++(q->size);
+		break;
+	case LRU_ENTRY_L2:
+		/* move chunk to LRU of L1 */
+		glist_del(&lru->q);	/* skip L1 fixups */
+		--(q->size);
+		q = &qlane->L1;
+		lru_insert(lru, q, LRU_LRU);
+		++(q->size);
+		break;
+	default:
+		/* do nothing */
+		break;
+	}
+
+	QUNLOCK(qlane);
 }
 
 /**

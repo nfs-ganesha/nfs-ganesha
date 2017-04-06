@@ -116,6 +116,7 @@ TRACEPOINT_LOGLEVEL(
  * @brief Trace a reap (reuse) of an entry
  *
  * @param[in] entry	Address of entry
+ * @param[in] refcnt	Reference count of entry
  */
 TRACEPOINT_EVENT(
 	mdcache,
@@ -154,6 +155,27 @@ TRACEPOINT_EVENT(
 		ctf_integer(int, line, line)
 		ctf_integer_hex(void *, entry, entry)
 		ctf_integer(int32_t, refcnt, refcnt)
+	)
+)
+
+/**
+ * @brief Trace a reap (reuse) of a chunk
+ *
+ * @param[in] parent	Address of parent
+ * @param[in] chunk	Address of chunk
+ */
+TRACEPOINT_EVENT(
+	mdcache,
+	mdc_lru_reap_chunk,
+	TP_ARGS(const char *, function,
+		int, line,
+		void *, parent,
+		void *, chunk),
+	TP_FIELDS(
+		ctf_string(function, function)
+		ctf_integer(int, line, line)
+		ctf_integer_hex(void *, parent, parent)
+		ctf_integer_hex(void *, chunk, chunk)
 	)
 )
 

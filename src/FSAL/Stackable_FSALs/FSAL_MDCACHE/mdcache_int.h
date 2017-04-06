@@ -314,6 +314,8 @@ struct dir_chunk {
 	struct glist_head dirents;
 	/** Directory this chunk belongs to */
 	struct mdcache_fsal_obj_handle *parent;
+	/** LRU link */
+	mdcache_lru_t chunk_lru;
 	/** The previous chunk, this pointer is only de-referenced during
 	 *  chunk population (where the content_lock prevents the previous
 	 *  chunk from going invalid), or used to double check but not
@@ -447,6 +449,7 @@ fsal_status_t mdcache_readdir_uncached(mdcache_entry_t *directory, fsal_cookie_t
 				       *whence, void *dir_state,
 				       fsal_readdir_cb cb, attrmask_t attrmask,
 				       bool *eod_met);
+void mdcache_clean_dirent_chunk(struct dir_chunk *chunk);
 bool add_dirent_to_chunk(mdcache_entry_t *parent_dir,
 			 mdcache_dir_entry_t *new_dir_entry);
 fsal_status_t mdcache_readdir_chunked(mdcache_entry_t *directory,

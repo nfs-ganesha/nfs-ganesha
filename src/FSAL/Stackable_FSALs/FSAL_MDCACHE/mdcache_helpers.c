@@ -419,9 +419,16 @@ void mdcache_clean_dirent_chunk(struct dir_chunk *chunk)
 		parent->fsobj.fsdir.nbactive--;
 	}
 
-	/* Remove chunk from directory and free it */
+	/* Remove chunk from directory. */
 	glist_del(&chunk->chunks);
-	gsh_free(chunk);
+
+	/* At this point the following is true about the chunk:
+	 *
+	 * chunks is {NULL, NULL} do to the glist_del
+	 * dirents is {&dirents, &dirents}, i.e. empty as a result of the
+	 *                                  glist_for_each_safe above
+	 * the other fields are untouched.
+	 */
 }
 
 /**
@@ -438,9 +445,7 @@ void mdcache_clean_dirent_chunks(mdcache_entry_t *entry)
 	struct glist_head *glist, *glistn;
 
 	glist_for_each_safe(glist, glistn, &entry->fsobj.fsdir.chunks) {
-		mdcache_clean_dirent_chunk(glist_entry(glist,
-						       struct dir_chunk,
-						       chunks));
+		lru_remove_chunk(glist_entry(glist, struct dir_chunk, chunks));
 	}
 }
 
@@ -1079,6 +1084,10 @@ fsal_status_t mdc_try_get_cached(mdcache_entry_t *mdc_parent,
 
 	dirent = mdcache_avl_qp_lookup_s(mdc_parent, name, 1);
 	if (dirent) {
+		if (dirent->chunk != NULL) {
+			/* Bump the chunk in the LRU */
+			lru_bump_chunk(dirent->chunk);
+		}
 		status = mdcache_find_keyed(&dirent->ckey, entry);
 		if (!FSAL_IS_ERROR(status))
 			return status;
@@ -2048,6 +2057,9 @@ bool add_dirent_to_chunk(mdcache_entry_t *parent_dir,
 	/* And now increment the number of entries in the chunk. */
 	new_dir_entry->chunk->num_entries++;
 
+	/* And bump the chunk in the LRU */
+	lru_bump_chunk(new_dir_entry->chunk);
+
 	new_dir_entry->flags |= DIR_ENTRY_SORTED;
 
 	return true;
@@ -2100,11 +2112,9 @@ mdc_readdir_chunk_object(const char *name, struct fsal_obj_handle *sub_handle,
 
 
 		/* Now start a new chunk. */
-		new_chunk = gsh_calloc(1, sizeof(struct dir_chunk));
+		new_chunk = mdcache_get_chunk(chunk->parent);
 
 		/* Setup new chunk. */
-		glist_init(&new_chunk->dirents);
-		new_chunk->parent = chunk->parent;
 		new_chunk->prev_chunk = chunk;
 
 		/* And switch over to new chunk. */
@@ -2393,7 +2403,7 @@ fsal_status_t mdcache_populate_dir_chunk(mdcache_entry_t *directory,
 	fsal_status_t status = {0, 0};
 	fsal_status_t readdir_status = {0, 0};
 	struct mdcache_populate_cb_state state;
-	struct dir_chunk *first_chunk = gsh_calloc(1, sizeof(struct dir_chunk));
+	struct dir_chunk *first_chunk = mdcache_get_chunk(directory);
 	struct dir_chunk *chunk = first_chunk;
 	attrmask_t attrmask;
 	bool eod = false;
@@ -2420,8 +2430,6 @@ again:
 	 * prev_chunk has been updated to point to the last cached chunk.
 	 */
 
-	glist_init(&chunk->dirents);
-	chunk->parent = directory;
 	chunk->prev_chunk = prev_chunk;
 
 	LogFullDebug(COMPONENT_NFS_READDIR, "Calling FSAL readdir");
@@ -2453,7 +2461,7 @@ again:
 		LogDebug(COMPONENT_NFS_READDIR, "FSAL readdir status=%s",
 			 fsal_err_txt(readdir_status));
 		*dirent = NULL;
-		gsh_free(chunk);
+		lru_remove_chunk(chunk);
 		return readdir_status;
 	}
 
@@ -2461,7 +2469,7 @@ again:
 		LogDebug(COMPONENT_NFS_READDIR, "status=%s",
 			 fsal_err_txt(status));
 		*dirent = NULL;
-		gsh_free(chunk);
+		lru_remove_chunk(chunk);
 		return status;
 	}
 
@@ -2481,7 +2489,7 @@ again:
 		 */
 		LogFullDebug(COMPONENT_NFS_READDIR, "Empty chunk");
 
-		gsh_free(chunk);
+		lru_remove_chunk(chunk);
 
 		if (chunk == first_chunk) {
 			/* We really got nothing on this readdir, so don't
@@ -2549,7 +2557,7 @@ again:
 		prev_chunk = chunk;
 
 		/* And we need to allocate a fresh chunk. */
-		chunk = gsh_calloc(1, sizeof(struct dir_chunk));
+		chunk = mdcache_get_chunk(directory);
 
 		/* And go start a new FSAL readdir call. */
 		goto again;
@@ -2737,6 +2745,9 @@ again:
 
 	/* dirent WILL be non-NULL, remember the chunk we are in. */
 	chunk = dirent->chunk;
+
+	/* Bump the chunk in the LRU */
+	lru_bump_chunk(chunk);
 
 	LogFullDebug(COMPONENT_NFS_READDIR,
 		     "About to read directory=%p cookie=%" PRIx64,

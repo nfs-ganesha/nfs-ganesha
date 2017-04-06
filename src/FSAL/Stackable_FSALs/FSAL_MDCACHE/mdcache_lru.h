@@ -67,6 +67,8 @@
 struct lru_state {
 	uint64_t entries_hiwat;
 	uint64_t entries_used;
+	uint64_t chunks_hiwat;
+	uint64_t chunks_used;
 	uint32_t fds_system_imposed;
 	uint32_t fds_hard_limit;
 	uint32_t fds_hiwat;
@@ -220,5 +222,10 @@ static inline bool mdcache_lru_caching_fds(void)
 {
 	return lru_state.caching_fds;
 }
+
+void lru_remove_chunk(struct dir_chunk *chunk);
+struct dir_chunk *mdcache_get_chunk(mdcache_entry_t *parent);
+void lru_bump_chunk(struct dir_chunk *chunk);
+
 #endif				/* MDCACHE_LRU_H */
 /** @} */
