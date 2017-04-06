@@ -145,7 +145,7 @@ typedef enum protos {
 /**
  * @brief Default value for core_param.rpc.debug_flags
  */
-#define TIRPC_DEBUG_FLAGS 0x0
+#define TIRPC_DEBUG_FLAGS TIRPC_DEBUG_FLAG_ERROR
 
 /**
  * Default value for core_param.rpc.max_send_buffer_size

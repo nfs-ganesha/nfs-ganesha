@@ -545,7 +545,7 @@ void SetComponentLogLevel(log_components_t component, int level_to_set)
 		tirpc_debug_flags = 0xFFFFFFFF; /* enable all flags */
 		break;
 	default:
-		tirpc_debug_flags = 0; /* disable all flags */
+		tirpc_debug_flags = TIRPC_DEBUG_FLAGS;
 		break;
 	}
 	(void)tirpc_control(TIRPC_SET_DEBUG_FLAGS, &tirpc_debug_flags);
@@ -1882,13 +1882,13 @@ void rpc_warnx(char *fmt, ...)
 {
 	va_list ap;
 
-	if (component_log_level[COMPONENT_TIRPC] < NIV_DEBUG)
+	if (component_log_level[COMPONENT_TIRPC] < NIV_WARN)
 		return;
 
 	va_start(ap, fmt);
 
 	display_log_component_level(COMPONENT_TIRPC, "<no-file>", 0, "rpc",
-				    NIV_DEBUG, fmt, ap);
+				    NIV_WARN, fmt, ap);
 
 	va_end(ap);
 
