@@ -470,7 +470,7 @@ static inline void drc_free_expired(void)
 	DRC_ST_LOCK();
 
 	if ((drc_st->tcp_drc_recycle_qlen < 1) ||
-	    (now - drc_st->last_expire_check) < 600) /* 10m */
+	    (now - drc_st->last_expire_check) < 120) /* 2m */
 		goto unlock;
 
 	do {
