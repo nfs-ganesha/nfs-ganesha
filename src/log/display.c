@@ -173,9 +173,9 @@ int display_start(struct display_buffer *dspbuf)
 {
 	int b_left = display_buffer_remain(dspbuf);
 
-	/* If buffer has already overflowed, just indicate no space is left. */
-	if (b_left == 0)
-		return 0;
+	/* If buffer has already overflowed, or is invalid, return that. */
+	if (b_left <= 0)
+		return b_left;
 
 	/* If buffer is already full, indicate overflow now, and indicate
 	 * no space is left (so caller doesn't bother to do anything.
@@ -190,6 +190,11 @@ int display_start(struct display_buffer *dspbuf)
 		 * buffer has overflowed).
 		 */
 		_display_complete_overflow(dspbuf, dspbuf->b_current - 4);
+	} else {
+		/* Some display functions might not put anything in the
+		 * buffer...
+		 */
+		*dspbuf->b_current = '\0';
 	}
 
 	/* Indicate buffer is ok by returning b_left. */
