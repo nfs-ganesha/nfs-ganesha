@@ -244,9 +244,13 @@ void log_attrlist(log_components_t component, log_levels_t level,
 		  const char *reason, struct attrlist *attr, bool is_obj,
 		  char *file, int line, char *function);
 
-#define LogAttrlist(component, level, reason, attr, is_obj) \
-	log_attrlist(component, level, reason, attr, is_obj, \
-		     (char *) __FILE__, __LINE__, (char *) __func__)
+#define LogAttrlist(component, level, reason, attr, is_obj)                  \
+	do {                                                                 \
+		if (unlikely(isLevel(component, level)))                     \
+			log_attrlist(component, level, reason, attr, is_obj, \
+				     (char *) __FILE__, __LINE__,            \
+				     (char *) __func__);                     \
+	} while (0)
 
 const char *msg_fsal_err(fsal_errors_t fsal_err);
 #define fsal_err_txt(s) msg_fsal_err((s).major)

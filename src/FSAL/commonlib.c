@@ -466,6 +466,10 @@ int display_attrlist(struct display_buffer *dspbuf,
 {
 	int b_left = display_start(dspbuf);
 
+	if (attr->request_mask == 0 && attr->valid_mask == 0 &&
+	    attr->supported == 0)
+		return display_cat(dspbuf, "No attributes");
+
 	if (b_left > 0 && attr->request_mask != 0)
 		b_left = display_printf(dspbuf, "Request Mask=%08x ",
 					(unsigned int) attr->request_mask);
@@ -531,10 +535,6 @@ void log_attrlist(log_components_t component, log_levels_t level,
 	struct display_buffer dspbuf = {sizeof(str), str, str};
 
 	(void) display_attrlist(&dspbuf, attr, is_obj);
-
-	if (!isLevel(component, level))
-		return;
-
 
 	DisplayLogComponentLevel(component, file, line, function, level,
 		"%s %s attributes %s",
