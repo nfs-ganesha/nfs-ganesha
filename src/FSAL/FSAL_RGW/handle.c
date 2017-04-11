@@ -133,7 +133,7 @@ struct rgw_cb_arg {
 	attrmask_t attrmask;
 };
 
-static bool rgw_cb(const char *name, void *arg, uint64_t offset)
+static bool rgw_cb(const char *name, void *arg, uint64_t offset, uint32_t flags)
 {
 	struct rgw_cb_arg *rgw_cb_arg = arg;
 	struct fsal_obj_handle *obj;
@@ -143,8 +143,10 @@ static bool rgw_cb(const char *name, void *arg, uint64_t offset)
 
 	fsal_prepare_attrs(&attrs, rgw_cb_arg->attrmask);
 
+	/* rgw_lookup now accepts type hints */
 	status = lookup_int(rgw_cb_arg->dir_hdl, name, &obj, &attrs,
-			RGW_LOOKUP_FLAG_RCB);
+			RGW_LOOKUP_FLAG_RCB|
+			(flags & (RGW_LOOKUP_FLAG_DIR|RGW_LOOKUP_FLAG_FILE)));
 	if (FSAL_IS_ERROR(status))
 		return false;
 
@@ -194,15 +196,10 @@ static fsal_status_t rgw_fsal_readdir(struct fsal_obj_handle *dir_hdl,
 	LogFullDebug(COMPONENT_FSAL,
 		"%s enter dir_hdl %p", __func__, dir_hdl);
 
-	/* MDCACHE assumes we will reach eod, contrary to what the readdir
-	 * fsal op signature implies */
 	rc = 0;
 	*eof = false;
-	while ((rc == 0) &&
-		(!*eof)) {
-		rc = rgw_readdir(export->rgw_fs, dir->rgw_fh, &r_whence, rgw_cb,
-				&rgw_cb_arg, eof, RGW_READDIR_FLAG_NONE);
-	}
+	rc = rgw_readdir(export->rgw_fs, dir->rgw_fh, &r_whence, rgw_cb,
+			&rgw_cb_arg, eof, RGW_READDIR_FLAG_NONE);
 	if (rc < 0)
 		return rgw2fsal_error(rc);
 
