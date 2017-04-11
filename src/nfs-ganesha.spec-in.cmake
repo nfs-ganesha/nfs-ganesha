@@ -398,6 +398,7 @@ install -m 644 config_samples/ceph.conf %{buildroot}%{_sysconfdir}/ganesha
 
 %if %{with rgw}
 install -m 644 config_samples/rgw.conf %{buildroot}%{_sysconfdir}/ganesha
+install -m 644 config_samples/rgw_bucket.conf %{buildroot}%{_sysconfdir}/ganesha
 %endif
 
 %if %{with gluster}
@@ -541,6 +542,7 @@ killall -SIGHUP dbus-daemon >/dev/null 2>&1 || :
 %defattr(-,root,root,-)
 %{_libdir}/ganesha/libfsalrgw*
 %config(noreplace) %{_sysconfdir}/ganesha/rgw.conf
+%config(noreplace) %{_sysconfdir}/ganesha/rgw_bucket.conf
 %endif
 
 %if %{with gluster}
