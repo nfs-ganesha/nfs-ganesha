@@ -297,14 +297,17 @@ static fsal_status_t lookup_with_fd(struct vfs_fsal_obj_handle *parent_hdl,
 
 		fd = vfs_fsal_open(hdl, O_DIRECTORY, &fsal_error);
 		if (fd < 0) {
-			close(fd);
 			return fsalstat(fsal_error, -fd);
 		}
 
 		sprintf(proclnk, "/proc/self/fd/%d", fd);
-		r = readlink(proclnk, path, MAXPATHLEN);
+		r = readlink(proclnk, path, MAXPATHLEN - 1);
 		if (r < 0) {
+			fsal_error = posix2fsal_error(errno);
+			r = errno;
 			LogEvent(COMPONENT_FSAL, "failed to readlink");
+			close(fd);
+			return fsalstat(fsal_error, r);
 		}
 		path[r] = '\0';
 		LogDebug(COMPONENT_FSAL, "fd -> path: %d -> %s",
