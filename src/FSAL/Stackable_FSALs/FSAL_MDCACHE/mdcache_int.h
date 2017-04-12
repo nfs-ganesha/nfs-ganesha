@@ -1,7 +1,7 @@
 /*
  * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
- * Copyright 2015-2016 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2015-2017 Red Hat, Inc. and/or its affiliates.
  * Author: Daniel Gryniewicz <dang@redhat.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -480,6 +480,12 @@ void _mdcache_kill_entry(mdcache_entry_t *entry,
 	_mdcache_kill_entry(entry, \
 			    (char *) __FILE__, __LINE__, (char *) __func__)
 
+fsal_status_t
+mdc_get_parent_handle(struct mdcache_fsal_export *export,
+		      mdcache_entry_t *entry,
+		      struct fsal_obj_handle *sub_parent);
+
+
 
 extern struct config_block mdcache_param_blk;
 
@@ -559,9 +565,17 @@ mdcache_key_dup(mdcache_key_t *tgt,
 static inline void
 mdc_dir_add_parent(mdcache_entry_t *entry, mdcache_entry_t *mdc_parent)
 {
-	if (entry->fsobj.fsdir.parent.kv.len == 0)
+	if (entry->fsobj.fsdir.parent.kv.len == 0) {
+		/* The parent key must be a full wire handle so that
+		 * create_handle() works in all cases.
+		 */
+		mdc_get_parent_handle(mdc_cur_export(), entry,
+				      mdc_parent->sub_handle);
+#if 0
 		mdcache_key_dup(&entry->fsobj.fsdir.parent,
 				&mdc_parent->fh_hk.key);
+#endif
+	}
 }
 
 /**

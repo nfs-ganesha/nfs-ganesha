@@ -265,11 +265,49 @@ again:
 	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 }
 
+fsal_status_t
+mdc_get_parent_handle(struct mdcache_fsal_export *export,
+		      mdcache_entry_t *entry,
+		      struct fsal_obj_handle *sub_parent)
+{
+	char buf[NFS4_FHSIZE];
+	struct gsh_buffdesc fh_desc = { buf, NFS4_FHSIZE };
+	struct fsal_export *sub_export = export->export.sub_export;
+	fsal_status_t status;
+
+	/* Get a wire handle that can be used with create_handle() */
+	subcall_raw(export,
+		    status = sub_parent->obj_ops.handle_digest(sub_parent,
+					FSAL_DIGEST_NFSV4, &fh_desc);
+		   );
+	if (FSAL_IS_ERROR(status))
+		return status;
+
+	/* Make sure wire handle is usable */
+	subcall_raw(export,
+		    status = sub_export->exp_ops.extract_handle(sub_export,
+					FSAL_DIGEST_NFSV4, &fh_desc,
+#if (BYTE_ORDER == BIG_ENDIAN)
+					FH_FSAL_BIG_ENDIAN
+#else
+					0
+#endif
+					);
+		   );
+	if (FSAL_IS_ERROR(status))
+		return status;
+
+	/* And store in the parent pointer */
+	cih_hash_key(&entry->fsobj.fsdir.parent, sub_export->fsal, &fh_desc,
+		     CIH_HASH_NONE);
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
 void
 mdc_get_parent(struct mdcache_fsal_export *export, mdcache_entry_t *entry)
 {
 	struct fsal_obj_handle *sub_handle;
-	struct gsh_buffdesc fh_desc;
 	fsal_status_t status;
 
 	if (entry->obj_handle.type != DIRECTORY) {
@@ -292,12 +330,7 @@ mdc_get_parent(struct mdcache_fsal_export *export, mdcache_entry_t *entry)
 		return;
 	}
 
-	subcall_raw(export,
-		    sub_handle->obj_ops.handle_to_key(sub_handle, &fh_desc);
-		   );
-
-	cih_hash_key(&entry->fsobj.fsdir.parent,
-		     export->export.sub_export->fsal, &fh_desc, CIH_HASH_NONE);
+	mdc_get_parent_handle(export, entry, sub_handle);
 
 	/* Release parent handle */
 	subcall_raw(export,
