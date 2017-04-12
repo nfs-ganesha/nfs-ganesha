@@ -1261,36 +1261,29 @@ void nfs4_pathname4_free(pathname4 *pathname4)
 {
 	int i;
 
-	if (pathname4 != NULL) {
+	if (pathname4 == NULL)
+		return;
 
-		i = pathname4->pathname4_len;
-		LogFullDebug(COMPONENT_NFSPROTO,
-			     "number of pathname components to free: %d", i);
+	i = pathname4->pathname4_len;
+	LogFullDebug(COMPONENT_NFSPROTO,
+		     "number of pathname components to free: %d", i);
 
-		if (pathname4->pathname4_val != NULL) {
-			while (i-- > 0) {
-				if (pathname4->pathname4_val[i].utf8string_val
-				    != NULL) {
-					LogFullDebug(COMPONENT_NFSPROTO,
-						     "freeing component %d: %s",
-						     i+1,
-						     pathname4->
-						     pathname4_val[i].
-						     utf8string_val);
-					if (i > 0) {
-						gsh_free(pathname4->
-							 pathname4_val[i]
-							 .utf8string_val);
-						pathname4->
-							pathname4_val[i]
-							.utf8string_val = NULL;
-					}
-				}
-			}
-			gsh_free(pathname4->pathname4_val);
-			pathname4->pathname4_val = NULL;
+	if (pathname4->pathname4_val == NULL)
+		return;
+
+	while (i-- > 0) {
+		if (pathname4->pathname4_val[i].utf8string_val != NULL) {
+			LogFullDebug(COMPONENT_NFSPROTO,
+				     "freeing component %d: %s",
+				     i+1,
+				     pathname4->pathname4_val[i].
+				     utf8string_val);
+			gsh_free(pathname4->pathname4_val[i].utf8string_val);
+			pathname4->pathname4_val[i].utf8string_val = NULL;
 		}
 	}
+	gsh_free(pathname4->pathname4_val);
+	pathname4->pathname4_val = NULL;
 }
 
 /*
