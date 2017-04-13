@@ -43,6 +43,8 @@ gpfsfsal_xstat_2_fsal_attributes(gpfsfsal_xstat_t *gpfs_buf,
 	if (!gpfs_buf || !fsal_attr)
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
+	fsal_attr->supported = GPFS_SUPPORTED_ATTRIBUTES;
+
 	p_buffstat = &gpfs_buf->buffstat;
 
 	LogDebug(COMPONENT_FSAL, "inode %" PRId64, p_buffstat->st_ino);

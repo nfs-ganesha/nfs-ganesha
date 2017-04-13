@@ -159,6 +159,7 @@ void ceph2fsal_attributes(const struct ceph_statx *stx,
 {
 	/* These are always considered to be available */
 	fsalattr->valid_mask |= ATTR_TYPE|ATTR_FSID|ATTR_RAWDEV|ATTR_FILEID;
+	fsalattr->supported = supported_attributes;
 	fsalattr->type = posix2fsal_type(stx->stx_mode);
 	fsalattr->rawdev = posix2fsal_devt(stx->stx_rdev);
 	fsalattr->fsid = posix2fsal_fsid(stx->stx_dev);
