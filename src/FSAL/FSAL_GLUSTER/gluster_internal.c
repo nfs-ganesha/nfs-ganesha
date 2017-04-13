@@ -78,6 +78,8 @@ void stat2fsal_attributes(const struct stat *buffstat,
 	 * other bits in the mask.
 	 */
 	fsalattr->valid_mask |= ATTRS_POSIX;
+	fsalattr->supported = op_ctx->fsal_export->exp_ops.fs_supported_attrs(
+							op_ctx->fsal_export);
 
 	/* Fills the output struct */
 	fsalattr->type = posix2fsal_type(buffstat->st_mode);
